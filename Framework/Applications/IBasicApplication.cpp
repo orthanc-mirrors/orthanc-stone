@@ -1,0 +1,284 @@
+/**
+ * Stone of Orthanc
+ * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
+ * Department, University Hospital of Liege, Belgium
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * In addition, as a special exception, the copyright holders of this
+ * program give permission to link the code of its release with the
+ * OpenSSL project's "OpenSSL" library (or with modified versions of it
+ * that use the same license as the "OpenSSL" library), and distribute
+ * the linked executables. You must obey the GNU General Public License
+ * in all respects for all of the code used other than "OpenSSL". If you
+ * modify file(s) with this exception, you may extend this exception to
+ * your version of the file(s), but you are not obligated to do so. If
+ * you do not wish to do so, delete this exception statement from your
+ * version. If you delete this exception statement from all source files
+ * in the program, then also delete it here.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ **/
+
+
+#include "IBasicApplication.h"
+
+#include "../Orthanc/Core/Logging.h"
+#include "../Orthanc/Core/HttpClient.h"
+#include "../Messaging/CurlOrthancConnection.h"
+#include "Sdl/SdlEngine.h"
+
+namespace OrthancStone
+{
+  // Anonymous namespace to avoid clashes against other compilation modules
+  namespace
+  {
+    class LogStatusBar : public IStatusBar
+    {
+    public:
+      virtual void ClearMessage()
+      {
+      }
+
+      virtual void SetMessage(const std::string& message)
+      {
+        LOG(WARNING) << message;
+      }
+    };
+  }
+
+
+#if ORTHANC_ENABLE_SDL == 1
+  static void DeclareSdlCommandLineOptions(boost::program_options::options_description& options)
+  {
+    // Declare the supported parameters
+    boost::program_options::options_description generic("Generic options");
+    generic.add_options()
+      ("help", "Display this help and exit")
+      ("verbose", "Be verbose in logs")
+      ("orthanc", boost::program_options::value<std::string>()->default_value("http://localhost:8042/"),
+       "URL to the Orthanc server")
+      ("username", "Username for the Orthanc server")
+      ("password", "Password for the Orthanc server")
+      ("https-verify", boost::program_options::value<bool>()->default_value(true), "Check HTTPS certificates")
+      ;
+
+    options.add(generic);
+
+    boost::program_options::options_description sdl("SDL options");
+    sdl.add_options()
+      ("width", boost::program_options::value<int>()->default_value(1024), "Initial width of the SDL window")
+      ("height", boost::program_options::value<int>()->default_value(768), "Initial height of the SDL window")
+      ("opengl", boost::program_options::value<bool>()->default_value(true), "Enable OpenGL in SDL")
+      ;
+
+    options.add(sdl);
+  }
+
+
+  int IBasicApplication::ExecuteWithSdl(IBasicApplication& application,
+                                        int argc, 
+                                        char* argv[])
+  {
+    /******************************************************************
+     * Initialize all the subcomponents of Orthanc Stone
+     ******************************************************************/
+
+    Orthanc::Logging::Initialize();
+    Orthanc::HttpClient::InitializeOpenSsl();
+    Orthanc::HttpClient::GlobalInitialize();
+    SdlEngine::GlobalInitialize();
+
+
+    /******************************************************************
+     * Declare and parse the command-line options of the application
+     ******************************************************************/
+
+    boost::program_options::options_description options;
+    DeclareSdlCommandLineOptions(options);   
+    application.DeclareCommandLineOptions(options);
+
+    boost::program_options::variables_map parameters;
+    bool error = false;
+
+    try
+    {
+      boost::program_options::store(boost::program_options::command_line_parser(argc, argv).
+                                    options(options).run(), parameters);
+      boost::program_options::notify(parameters);    
+    }
+    catch (boost::program_options::error& e)
+    {
+      LOG(ERROR) << "Error while parsing the command-line arguments: " << e.what();
+      error = true;
+    }
+
+
+    /******************************************************************
+     * Configure the application with the command-line parameters
+     ******************************************************************/
+
+    if (error || parameters.count("help")) 
+    {
+      std::cout << std::endl
+                << "Usage: " << argv[0] << " [OPTION]..."
+                << std::endl
+                << "Orthanc, lightweight, RESTful DICOM server for healthcare and medical research."
+                << std::endl << std::endl
+                << "Demonstration application of Orthanc Stone using SDL."
+                << std::endl;
+
+      std::cout << options << "\n";
+      return error ? -1 : 0;
+    }
+
+    if (parameters.count("https-verify") &&
+        !parameters["https-verify"].as<bool>())
+    {
+      LOG(WARNING) << "Turning off verification of HTTPS certificates (unsafe)";
+      Orthanc::HttpClient::ConfigureSsl(false, "");
+    }
+
+    if (parameters.count("verbose"))
+    {
+      Orthanc::Logging::EnableInfoLevel(true);
+    }
+
+    if (!parameters.count("width") ||
+        !parameters.count("height") ||
+        !parameters.count("opengl"))
+    {
+      LOG(ERROR) << "Parameter \"width\", \"height\" or \"opengl\" is missing";
+      return -1;
+    }
+
+    int w = parameters["width"].as<int>();
+    int h = parameters["height"].as<int>();
+    if (w <= 0 || h <= 0)
+    {
+      LOG(ERROR) << "Parameters \"width\" and \"height\" must be positive";
+      return -1;
+    }
+
+    unsigned int width = static_cast<unsigned int>(w);
+    unsigned int height = static_cast<unsigned int>(h);
+    LOG(WARNING) << "Initial display size: " << width << "x" << height;
+
+    bool opengl = parameters["opengl"].as<bool>();
+    if (opengl)
+    {
+      LOG(WARNING) << "OpenGL is enabled, disable it with option \"--opengl=off\" if the application crashes";
+    }
+    else
+    {
+      LOG(WARNING) << "OpenGL is disabled, enable it with option \"--opengl=on\" for best performance";
+    }
+
+    bool success = true;
+    try
+    {
+      /****************************************************************
+       * Initialize the connection to the Orthanc server
+       ****************************************************************/
+
+      Orthanc::WebServiceParameters webService;
+
+      if (parameters.count("orthanc"))
+      {
+        webService.SetUrl(parameters["orthanc"].as<std::string>());
+      }
+
+      if (parameters.count("username"))
+      {
+        webService.SetUsername(parameters["username"].as<std::string>());
+      }
+
+      if (parameters.count("password"))
+      {
+        webService.SetPassword(parameters["password"].as<std::string>());
+      }
+
+      LOG(WARNING) << "URL to the Orthanc REST API: " << webService.GetUrl();
+      CurlOrthancConnection orthanc(webService);
+
+      if (!MessagingToolbox::CheckOrthancVersion(orthanc))
+      {
+        LOG(ERROR) << "Your version of Orthanc is incompatible with Orthanc Stone, please upgrade";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
+      }
+
+
+      /****************************************************************
+       * Initialize the application
+       ****************************************************************/
+
+      LogStatusBar statusBar;
+      BasicApplicationContext context(orthanc);
+
+      application.Initialize(context, statusBar, parameters);
+      context.GetViewport().SetStatusBar(statusBar);
+
+      std::string title = application.GetTitle();
+      if (title.empty())
+      {
+        title = "Stone of Orthanc";
+      }
+
+      context.Start();
+
+      {
+        /**************************************************************
+         * Run the application inside a SDL window
+         **************************************************************/
+
+        LOG(WARNING) << "Starting the application";
+
+        SdlWindow window(title.c_str(), width, height, opengl);
+        SdlEngine sdl(window, context.GetViewport());
+
+        sdl.Run();
+
+        LOG(WARNING) << "Stopping the application";
+      }
+
+
+      /****************************************************************
+       * Finalize the application
+       ****************************************************************/
+
+      context.Stop();
+
+      LOG(WARNING) << "The application has stopped";
+
+      context.GetViewport().ResetStatusBar();
+      application.Finalize();
+    }
+    catch (Orthanc::OrthancException& e)
+    {
+      LOG(ERROR) << "EXCEPTION: " << e.What();
+      success = false;
+    }
+
+
+    /******************************************************************
+     * Finalize all the subcomponents of Orthanc Stone
+     ******************************************************************/
+
+    SdlEngine::GlobalFinalize();
+    Orthanc::HttpClient::GlobalFinalize();
+    Orthanc::HttpClient::FinalizeOpenSsl();
+
+    return (success ? 0 : -1);
+  }
+#endif
+
+}

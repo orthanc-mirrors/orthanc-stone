@@ -1,0 +1,118 @@
+/**
+ * Stone of Orthanc
+ * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
+ * Department, University Hospital of Liege, Belgium
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * In addition, as a special exception, the copyright holders of this
+ * program give permission to link the code of its release with the
+ * OpenSSL project's "OpenSSL" library (or with modified versions of it
+ * that use the same license as the "OpenSSL" library), and distribute
+ * the linked executables. You must obey the GNU General Public License
+ * in all respects for all of the code used other than "OpenSSL". If you
+ * modify file(s) with this exception, you may extend this exception to
+ * your version of the file(s), but you are not obligated to do so. If
+ * you do not wish to do so, delete this exception statement from your
+ * version. If you delete this exception statement from all source files
+ * in the program, then also delete it here.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ **/
+
+
+#pragma once
+
+#include "SampleInteractor.h"
+
+#include "../Framework/Toolbox/OrthancSeriesLoader.h"
+#include "../Framework/Layers/SeriesFrameRendererFactory.h"
+#include "../Framework/Layers/SiblingSliceLocationFactory.h"
+#include "../Framework/Widgets/LayoutWidget.h"
+#include "../Framework/Orthanc/Core/Logging.h"
+
+namespace OrthancStone
+{
+  namespace Samples
+  {
+    class SynchronizedSeriesApplication : public SampleApplicationBase
+    {
+    private:   
+      LayeredSceneWidget* CreateSeriesWidget(BasicApplicationContext& context,
+                                             const std::string& series)
+      {
+        std::auto_ptr<ISeriesLoader> loader(new OrthancSeriesLoader(context.GetOrthancConnection(), series));
+
+        std::auto_ptr<SampleInteractor> interactor(new SampleInteractor(*loader, false));
+
+        std::auto_ptr<LayeredSceneWidget> widget(new LayeredSceneWidget);
+        widget->AddLayer(new SeriesFrameRendererFactory(loader.release(), false));
+        widget->SetSlice(interactor->GetCursor().GetCurrentSlice());
+        widget->SetInteractor(*interactor);
+
+        context.AddInteractor(interactor.release());
+
+        return widget.release();
+      }
+
+    public:
+      virtual void DeclareCommandLineOptions(boost::program_options::options_description& options)
+      {
+        boost::program_options::options_description generic("Sample options");
+        generic.add_options()
+          ("a", boost::program_options::value<std::string>(), 
+           "Orthanc ID of the 1st series")
+          ("b", boost::program_options::value<std::string>(), 
+           "Orthanc ID of the 2nd series")
+          ("c", boost::program_options::value<std::string>(), 
+           "Orthanc ID of the 3rd series")
+          ;
+
+        options.add(generic);    
+      }
+
+      virtual void Initialize(BasicApplicationContext& context,
+                              IStatusBar& statusBar,
+                              const boost::program_options::variables_map& parameters)
+      {
+        if (parameters.count("a") != 1 ||
+            parameters.count("b") != 1 ||
+            parameters.count("c") != 1)
+        {
+          LOG(ERROR) << "At least one of the three series IDs is missing";
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        }
+
+        std::auto_ptr<LayeredSceneWidget> a(CreateSeriesWidget(context, parameters["a"].as<std::string>()));
+        std::auto_ptr<LayeredSceneWidget> b(CreateSeriesWidget(context, parameters["b"].as<std::string>()));
+        std::auto_ptr<LayeredSceneWidget> c(CreateSeriesWidget(context, parameters["c"].as<std::string>()));
+
+        SiblingSliceLocationFactory::Configure(*a, *b);
+        SiblingSliceLocationFactory::Configure(*a, *c);
+        SiblingSliceLocationFactory::Configure(*b, *c);
+
+        std::auto_ptr<LayoutWidget> layout(new LayoutWidget);
+        layout->SetPadding(5);
+        layout->AddWidget(a.release());
+
+        std::auto_ptr<LayoutWidget> layoutB(new LayoutWidget);
+        layoutB->SetVertical();
+        layoutB->SetPadding(5);
+        layoutB->AddWidget(b.release());
+        layoutB->AddWidget(c.release());
+        layout->AddWidget(layoutB.release());
+
+        context.SetCentralWidget(layout.release());        
+      }
+    };
+  }
+}

@@ -1,0 +1,102 @@
+/**
+ * Stone of Orthanc
+ * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
+ * Department, University Hospital of Liege, Belgium
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * In addition, as a special exception, the copyright holders of this
+ * program give permission to link the code of its release with the
+ * OpenSSL project's "OpenSSL" library (or with modified versions of it
+ * that use the same license as the "OpenSSL" library), and distribute
+ * the linked executables. You must obey the GNU General Public License
+ * in all respects for all of the code used other than "OpenSSL". If you
+ * modify file(s) with this exception, you may extend this exception to
+ * your version of the file(s), but you are not obligated to do so. If
+ * you do not wish to do so, delete this exception statement from your
+ * version. If you delete this exception statement from all source files
+ * in the program, then also delete it here.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ **/
+
+
+#include "SingleFrameRendererFactory.h"
+
+#include "FrameRenderer.h"
+#include "../Messaging/MessagingToolbox.h"
+#include "../Orthanc/Core/OrthancException.h"
+#include "../Toolbox/DicomFrameConverter.h"
+
+namespace OrthancStone
+{
+  SingleFrameRendererFactory::SingleFrameRendererFactory(IOrthancConnection& orthanc,
+                                                         const std::string& instanceId,
+                                                         unsigned int frame) :
+    orthanc_(orthanc),
+    dicom_(orthanc, instanceId),
+    instance_(instanceId),
+    frame_(frame)
+  {
+    DicomFrameConverter converter;
+    converter.ReadParameters(dicom_);
+    format_ = converter.GetExpectedPixelFormat();
+  }
+
+
+  SliceGeometry SingleFrameRendererFactory::GetSliceGeometry()
+  {
+    if (dicom_.HasTag(DICOM_TAG_IMAGE_POSITION_PATIENT) &&
+        dicom_.HasTag(DICOM_TAG_IMAGE_ORIENTATION_PATIENT))
+    {
+      return SliceGeometry(dicom_);
+    }
+    else
+    {
+      return SliceGeometry();
+    }
+  }
+
+
+  bool SingleFrameRendererFactory::GetExtent(double& x1,
+                                             double& y1,
+                                             double& x2,
+                                             double& y2,
+                                             const SliceGeometry& viewportSlice)
+  {
+    // Assume that PixelSpacingX == PixelSpacingY == 1
+
+    unsigned int width = dicom_.GetUnsignedIntegerValue(DICOM_TAG_COLUMNS);
+    unsigned int height = dicom_.GetUnsignedIntegerValue(DICOM_TAG_ROWS);
+
+    x1 = 0;
+    y1 = 0;
+    x2 = static_cast<double>(width);
+    y2 = static_cast<double>(height);
+
+    return true;
+  }
+
+
+  ILayerRenderer* SingleFrameRendererFactory::CreateLayerRenderer(const SliceGeometry& viewportSlice)
+  {
+    SliceGeometry frameSlice(dicom_);
+    return FrameRenderer::CreateRenderer(MessagingToolbox::DecodeFrame(orthanc_, instance_, frame_, format_), 
+                                         viewportSlice, frameSlice, dicom_, 1, 1, true);
+  }
+
+
+  ISliceableVolume& SingleFrameRendererFactory::GetSourceVolume() const
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+  }
+}

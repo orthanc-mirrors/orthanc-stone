@@ -1,0 +1,57 @@
+Stone of Orthanc
+================
+
+
+-------
+General
+-------
+
+* Documentation
+* LayoutPetCtFusionApplication: fix initial view
+
+
+---------------------------------
+Radiotherapy and nuclear medicine
+---------------------------------
+
+* Project RT-STRUCT in sagittal + coronal views
+* Speedup RT-STRUCT loading
+* Automatic segmentation + manual contouring
+* Display segments in mask
+
+
+-------------
+Optimizations
+-------------
+
+* Tune number of loading threads in LayeredSceneWidget
+* Add cache over IOrthancServices (for SDL/Qt/...)
+* LayoutWidget: Do not update full background if only 1 widget has changed
+* LayoutWidget: Threads to refresh each child
+* Implement binary search to speed up search for closest slice
+* Avoid the creation of new threads when updating the frame factory
+  (as seen with gdb)
+
+
+-----------------
+Platform-specific
+-----------------
+
+* Qt widget example
+* Add precompiled headers for Microsoft Visual Studio
+* Investigate crash in CurlOrthancConnection if using MinGW32 in Release mode
+
+
+---------------------
+Source code cosmetics
+---------------------
+
+* Remove #include "OrthancException.h" in "ObserversRegistry.h"
+* Use "SampleInteractor::AddWidget()" in all samples
+
+
+------
+Future
+------
+
+* Create a wrapper for Python

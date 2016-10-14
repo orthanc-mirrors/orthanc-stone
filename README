@@ -1,0 +1,102 @@
+Stone of Orthanc
+================
+
+
+General Information
+-------------------
+
+This repository contains the source code of the Stone of Orthanc.
+
+Stone of Orthanc is a lightweight, cross-platform C++ framework for
+the CPU-based rendering of medical images. It notably features support
+for MPR (multiplanar reconstruction of volume images), PET-CT fusion,
+and accurate physical world coordinates.
+
+Stone of Orthanc comes bundled with its own software-based rendering
+engine (based upon pixman). This engine will use CPU hardware
+acceleration if available (notably SSE2, SSSE3, and NEON instruction
+sets), but not the GPU. This makes Stone a highly versatile framework
+that can run even on low-performance platforms. Stone is able to
+display DICOM series without having to entirely store them in the RAM.
+
+Stone of Orthanc is conceived as a companion toolbox to the Orthanc
+VNA (vendor neutral archive, i.e. DICOM server). As a consequence,
+Stone will smoothly interface with Orthanc out of the
+box. Interestingly, Stone does not contain any DICOM toolkit: It
+entirely relies on the REST API of Orthanc to parse/decode DICOM
+images. However, thanks to the object-oriented architecture of Stone,
+it is possible to avoid this dependency upon Orthanc.
+
+
+Comparison
+----------
+
+Pay attention to the fact that Stone of Orthanc is a toolkit, and not
+a fully-featured application for the visualization of medical
+images. Such applications can be built on the top of Stone of Orthanc.
+
+Stone of Orthanc is quite similar to two other well-known toolkits:
+
+* Cornerstone, a client-side JavaScript toolkit to display medical
+  images in Web browsers, by Chris Hafey <chafey@gmail.com>:
+  https://github.com/chafey/cornerstone
+
+  Contrarily to Cornerstone, Stone of Orthanc can be embedded into
+  native, heavyweight applications.
+
+* VTK, a C++ toolkit for scientific visualization, by Kitware:
+  http://www.vtk.org/
+
+  Contrarily to VTK, Stone of Orthanc is focused on CPU-based, 2D
+  rendering: The GPU will not be used.
+
+
+Dependencies
+------------
+
+Stone of Orthanc is based upon the following projects:
+
+* Orthanc, a lightweight Vendor Neutral Archive (DICOM server):
+  http://www.orthanc-server.com/
+
+* Cairo and pixman, a cross-platform 2D graphics library:
+  https://www.cairographics.org/
+
+* Optionally, SDL, a cross-platform multimedia library:
+  https://www.libsdl.org/
+
+
+Installation and usage
+----------------------
+
+Build instructions are similar to that of Orthanc:
+https://orthanc.chu.ulg.ac.be/book/faq/compiling.html
+
+Stone of Orthanc comes with several sample applications in the
+"Samples" folder. These samples use SDL.
+
+
+Licensing
+---------
+
+Stone of Orthanc is licensed under the GPLv3 license, with the OpenSSL
+exception:
+http://people.gnome.org/~markmc/openssl-and-the-gpl.html
+
+We also kindly ask scientific works and clinical studies that make
+use of Orthanc to cite Orthanc in their associated publications.
+Similarly, we ask open-source and closed-source products that make
+use of Orthanc to warn us about this use. You can cite our work
+using the following BibTeX entry:
+
+@inproceedings{Jodogne:ISBI2013,
+  author = {Jodogne, S. and Bernard, C. and Devillers, M. and Lenaerts, E. and Coucke, P.},
+  title = {Orthanc -- {A} Lightweight, {REST}ful {DICOM} Server for Healthcare and Medical Research},
+  booktitle={Biomedical Imaging ({ISBI}), {IEEE} 10th International Symposium on}, 
+  year={2013}, 
+  pages={190-193}, 
+  ISSN={1945-7928},
+  month=apr,
+  url={http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=6556444},
+  address={San Francisco, {CA}, {USA}}
+}

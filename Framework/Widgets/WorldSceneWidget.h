@@ -1,0 +1,158 @@
+/**
+ * Stone of Orthanc
+ * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
+ * Department, University Hospital of Liege, Belgium
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * In addition, as a special exception, the copyright holders of this
+ * program give permission to link the code of its release with the
+ * OpenSSL project's "OpenSSL" library (or with modified versions of it
+ * that use the same license as the "OpenSSL" library), and distribute
+ * the linked executables. You must obey the GNU General Public License
+ * in all respects for all of the code used other than "OpenSSL". If you
+ * modify file(s) with this exception, you may extend this exception to
+ * your version of the file(s), but you are not obligated to do so. If
+ * you do not wish to do so, delete this exception statement from your
+ * version. If you delete this exception statement from all source files
+ * in the program, then also delete it here.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ **/
+
+
+#pragma once
+
+#include "CairoWidget.h"
+#include "IWorldSceneInteractor.h"
+
+#include "../Toolbox/SharedValue.h"
+#include "../Toolbox/ViewportGeometry.h"
+
+namespace OrthancStone
+{
+  class WorldSceneWidget : public CairoWidget
+  {
+  public:
+    // Must be thread-safe
+    class IWorldObserver : public boost::noncopyable
+    {
+    public:
+      virtual ~IWorldObserver()
+      {
+      }
+
+      virtual void NotifySizeChange(const WorldSceneWidget& source,
+                                    ViewportGeometry& view) = 0;  // Can be tuned by the observer
+
+      virtual void NotifyViewChange(const WorldSceneWidget& source,
+                                    const ViewportGeometry& view) = 0;
+    };
+
+  private:
+    struct ViewChangeFunctor;
+    struct SizeChangeFunctor;
+
+    class SceneMouseTracker;
+    class PanMouseTracker;
+    class ZoomMouseTracker;
+
+    typedef ObserversRegistry<WorldSceneWidget, IWorldObserver>  Observers;
+
+    SharedValue<ViewportGeometry>  view_;
+    Observers                      observers_;
+    IWorldSceneInteractor*         interactor_;
+
+
+  protected:
+    virtual bool RenderScene(CairoContext& context,
+                             const ViewportGeometry& view) = 0;
+
+    virtual bool HasUpdateThread() const
+    {
+      return false;
+    }
+
+    virtual void UpdateStep();
+
+    virtual bool RenderCairo(CairoContext& context);
+
+    virtual void RenderMouseOverCairo(CairoContext& context,
+                                      int x,
+                                      int y);
+
+    void SetSceneExtent(SharedValue<ViewportGeometry>::Locker& locker);
+
+  public:
+    WorldSceneWidget() :
+      interactor_(NULL)
+    {
+    }
+
+    using WidgetBase::Register;
+    using WidgetBase::Unregister;
+
+    void Register(IWorldObserver& observer)
+    {
+      observers_.Register(observer);
+    }
+
+    void Unregister(IWorldObserver& observer)
+    {
+      observers_.Unregister(observer);
+    }
+
+    virtual SliceGeometry GetSlice() = 0;
+
+    virtual void GetSceneExtent(double& x1,
+                                double& y1,
+                                double& x2,
+                                double& y2) = 0;
+
+    virtual void SetSize(unsigned int width,
+                         unsigned int height);
+
+    void SetInteractor(IWorldSceneInteractor& interactor);
+
+    virtual void Start();
+      
+    void SetDefaultView();
+
+    void SetView(const ViewportGeometry& view);
+
+    ViewportGeometry GetView();
+
+    virtual IMouseTracker* CreateMouseTracker(MouseButton button,
+                                              int x,
+                                              int y,
+                                              KeyboardModifiers modifiers);
+
+    virtual void RenderSceneMouseOver(CairoContext& context,
+                                      const ViewportGeometry& view,
+                                      double x,
+                                      double y);
+
+    virtual IWorldSceneMouseTracker* CreateMouseSceneTracker(const ViewportGeometry& view,
+                                                             MouseButton button,
+                                                             double x,
+                                                             double y,
+                                                             KeyboardModifiers modifiers);
+
+    virtual void MouseWheel(MouseWheelDirection direction,
+                            int x,
+                            int y,
+                            KeyboardModifiers modifiers);
+
+    virtual void KeyPressed(char key,
+                            KeyboardModifiers modifiers);
+  };
+}

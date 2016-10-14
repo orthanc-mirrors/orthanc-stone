@@ -3,7 +3,7 @@ project(OrthancStone)
 
 include(Resources/CMake/OrthancStone.cmake)
 
-add_library(OrthancStone ${ORTHANC_STONE_SOURCES})
+add_library(OrthancStone STATIC ${ORTHANC_STONE_SOURCES})
 
 macro(BuildSample Target Sample)
   add_executable(${Target} Samples/SampleMainSdl.cpp)

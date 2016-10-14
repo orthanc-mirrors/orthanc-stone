@@ -32,8 +32,9 @@ Comparison
 ----------
 
 Pay attention to the fact that Stone of Orthanc is a toolkit, and not
-a fully-featured application for the visualization of medical
-images. Such applications can be built on the top of Stone of Orthanc.
+a fully-featured application for the visualization of medical images
+(such as Horos/OsiriX or Ginkgo CADx). However, such applications
+could be built on the top of Stone of Orthanc.
 
 Stone of Orthanc is quite similar to two other well-known toolkits:
 

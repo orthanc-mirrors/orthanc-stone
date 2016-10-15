@@ -60,7 +60,7 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_SDL)
     #-DSDL_THREADS_DISABLED=1
     )
 
-  if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+  if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     file(GLOB TMP
       ${SDL_SOURCES_DIR}/src/core/linux/*.c
       ${SDL_SOURCES_DIR}/src/loadso/dlopen/*.c
@@ -96,7 +96,7 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_SDL)
 
     link_libraries(X11 Xext)
 
-  elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  elseif (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     file(GLOB TMP
       ${SDL_SOURCES_DIR}/src/audio/directsound/*.c
       ${SDL_SOURCES_DIR}/src/audio/disk/*.c
@@ -151,6 +151,38 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_SDL)
     endif()
     
     link_libraries(imm32 winmm version)
+
+  elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    file(GLOB TMP
+      ${SDL_SOURCES_DIR}/src/loadso/dlopen/*.c
+      ${SDL_SOURCES_DIR}/src/render/opengl/*.c
+      ${SDL_SOURCES_DIR}/src/render/opengles2/*.c
+      ${SDL_SOURCES_DIR}/src/render/software/*.c
+      ${SDL_SOURCES_DIR}/src/thread/pthread/*.c
+      ${SDL_SOURCES_DIR}/src/timer/unix/*.c
+      ${SDL_SOURCES_DIR}/src/video/cocoa/*.c
+      )
+
+    list(APPEND SDL_SOURCES ${TMP})
+
+    add_definitions(
+      -DSDL_LOADSO_DLOPEN=1
+      -DSDL_THREAD_PTHREAD=1
+      -DSDL_TIMER_UNIX=1
+      -DSDL_POWER_DISABLED=1
+
+      -DSDL_VIDEO_DRIVER_X11=1
+      -DSDL_VIDEO_OPENGL=1
+      -DSDL_VIDEO_OPENGL_ES2=1
+      -DSDL_VIDEO_RENDER_OGL=1
+      -DSDL_VIDEO_RENDER_OGL_ES2=1
+      -DSDL_VIDEO_OPENGL_GLX=1
+      -DSDL_VIDEO_OPENGL_EGL=1
+      
+      -DSDL_ASSEMBLY_ROUTINES=1
+      -DSDL_THREAD_PTHREAD_RECURSIVE_MUTEX=1
+      )
+
   endif()
 
 else()

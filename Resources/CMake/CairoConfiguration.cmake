@@ -189,21 +189,24 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_CAIRO)
 
   set(CAIRO_DEFINITIONS "HAS_PIXMAN_GLYPHS=1")
 
-  if (CMAKE_COMPILER_IS_GNUCXX)
+  if (${CMAKE_SYSTEM_NAME} STREQUAL "PNaCl")
+    # Disable vectorized instructions when targeting archicture-independent PNaCl
     set(CAIRO_DEFINITIONS "${CAIRO_DEFINITIONS};HAVE_STDINT_H=1;CAIRO_HAS_PTHREAD=1;HAVE_UINT64_T=1")
 
-    if (${CMAKE_SYSTEM_NAME} STREQUAL "PNaCl")
-      # Disable vectorized instructions when targeting archicture-independent PNaCl
-    else()
-      set(CAIRO_DEFINITIONS "${CAIRO_DEFINITIONS};CAIRO_HAS_REAL_PTHREAD=1;HAVE_GCC_VECTOR_EXTENSIONS;HAVE_FLOAT128")
+  elseif (CMAKE_COMPILER_IS_GNUCXX OR
+      CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+
+    set(CAIRO_DEFINITIONS "${CAIRO_DEFINITIONS};HAVE_STDINT_H=1;CAIRO_HAS_PTHREAD=1;HAVE_UINT64_T=1;CAIRO_HAS_REAL_PTHREAD=1;HAVE_GCC_VECTOR_EXTENSIONS;HAVE_FLOAT128")
+
+    if (CMAKE_COMPILER_IS_GNUCXX)
+      set_property(
+        SOURCE ${CAIRO_SOURCES}
+        PROPERTY COMPILE_FLAGS "-Wno-attributes"
+        )
     endif()
 
-    set_property(
-      SOURCE ${CAIRO_SOURCES}
-      PROPERTY COMPILE_FLAGS "-Wno-attributes"
-      )
-
   elseif (MSVC)
+    # The cairo source code comes with built-in support for Visual Studio
 
   else()
     message(FATAL_ERROR "Support your platform here")

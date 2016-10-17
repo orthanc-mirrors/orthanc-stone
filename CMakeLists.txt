@@ -1,9 +1,18 @@
 cmake_minimum_required(VERSION 2.8)
 project(OrthancStone)
 
-include(Resources/CMake/OrthancStone.cmake)
 
+#####################################################################
+## Build a static library containing the Orthanc Stone framework
+#####################################################################
+
+include(Resources/CMake/OrthancStone.cmake)
 add_library(OrthancStone STATIC ${ORTHANC_STONE_SOURCES})
+
+
+#####################################################################
+## Build all the sample applications
+#####################################################################
 
 macro(BuildSample Target Sample)
   add_executable(${Target} Samples/SampleMainSdl.cpp)
@@ -18,3 +27,23 @@ BuildSample(OrthancStoneSingleVolume 4)
 BuildSample(OrthancStoneBasicPetCtFusion 5)
 BuildSample(OrthancStoneSynchronizedSeries 6)
 BuildSample(OrthancStoneLayoutPetCtFusion 7)
+
+
+#####################################################################
+## Generate the documentation if Doxygen is present
+#####################################################################
+
+find_package(Doxygen)
+if (DOXYGEN_FOUND)
+  configure_file(
+    ${ORTHANC_STONE_DIR}/Resources/OrthancStone.doxygen
+    ${CMAKE_CURRENT_BINARY_DIR}/OrthancStone.doxygen
+    @ONLY)
+
+  add_custom_target(doc
+    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/OrthancStone.doxygen
+    COMMENT "Generating documentation with Doxygen" VERBATIM
+    )
+else()
+  message("Doxygen not found. The documentation will not be built.")
+endif()

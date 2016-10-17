@@ -160,7 +160,7 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_SDL)
       ${SDL_SOURCES_DIR}/src/render/software/*.c
       ${SDL_SOURCES_DIR}/src/thread/pthread/*.c
       ${SDL_SOURCES_DIR}/src/timer/unix/*.c
-      ${SDL_SOURCES_DIR}/src/video/cocoa/*.c
+      ${SDL_SOURCES_DIR}/src/video/cocoa/*.m
       )
 
     list(APPEND SDL_SOURCES ${TMP})
@@ -171,17 +171,20 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_SDL)
       -DSDL_TIMER_UNIX=1
       -DSDL_POWER_DISABLED=1
 
-      -DSDL_VIDEO_DRIVER_X11=1
+      -DSDL_VIDEO_DRIVER_COCOA=1
       -DSDL_VIDEO_OPENGL=1
-      -DSDL_VIDEO_OPENGL_ES2=1
+      -DSDL_VIDEO_OPENGL_CGL=1
       -DSDL_VIDEO_RENDER_OGL=1
-      -DSDL_VIDEO_RENDER_OGL_ES2=1
-      -DSDL_VIDEO_OPENGL_GLX=1
-      -DSDL_VIDEO_OPENGL_EGL=1
       
       -DSDL_ASSEMBLY_ROUTINES=1
       -DSDL_THREAD_PTHREAD_RECURSIVE_MUTEX=1
       )
+
+    find_library(CARBON_LIBRARY Carbon)
+    find_library(COCOA_LIBRARY Cocoa)
+    find_library(IOKIT_LIBRARY IOKit)
+    find_library(QUARTZ_LIBRARY QuartzCore)
+    link_libraries(${CARBON_LIBRARY} ${COCOA_LIBRARY} ${IOKIT_LIBRARY} ${QUARTZ_LIBRARY})
 
   endif()
 

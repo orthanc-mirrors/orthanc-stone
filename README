@@ -25,7 +25,8 @@ Stone will smoothly interface with Orthanc out of the
 box. Interestingly, Stone does not contain any DICOM toolkit: It
 entirely relies on the REST API of Orthanc to parse/decode DICOM
 images. However, thanks to the object-oriented architecture of Stone,
-it is possible to avoid this dependency upon Orthanc.
+it is possible to avoid this dependency upon Orthanc, e.g. to download
+DICOM datasets using DICOMweb.
 
 
 Comparison

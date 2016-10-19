@@ -16,17 +16,22 @@ Stone of Orthanc comes bundled with its own software-based rendering
 engine (based upon pixman). This engine will use CPU hardware
 acceleration if available (notably SSE2, SSSE3, and NEON instruction
 sets), but not the GPU. This makes Stone a highly versatile framework
-that can run even on low-performance platforms. Stone is able to
-display DICOM series without having to entirely store them in the RAM.
+that can run even on low-performance platforms. Note that Stone is
+able to display DICOM series without having to entirely store them in
+the RAM (i.e. frame by frame).
 
-Stone of Orthanc is conceived as a companion toolbox to the Orthanc
-VNA (vendor neutral archive, i.e. DICOM server). As a consequence,
-Stone will smoothly interface with Orthanc out of the
-box. Interestingly, Stone does not contain any DICOM toolkit: It
-entirely relies on the REST API of Orthanc to parse/decode DICOM
-images. However, thanks to the object-oriented architecture of Stone,
-it is possible to avoid this dependency upon Orthanc, e.g. to download
-DICOM datasets using DICOMweb.
+Thanks to its standalone rendering engine, Stone of Orthanc is also
+compatible with any GUI framework (such as Qt, wxWidgets, MFC...). The
+provided sample applications use the SDL framework.
+
+Stone is conceived as a companion toolbox to the Orthanc VNA (vendor
+neutral archive, i.e. DICOM server). As a consequence, Stone will
+smoothly interface with Orthanc out of the box. Interestingly, Stone
+does not contain any DICOM toolkit: It entirely relies on the REST API
+of Orthanc to parse/decode DICOM images. However, thanks to the
+object-oriented architecture of Stone, it is possible to avoid this
+dependency upon Orthanc, e.g. to download DICOM datasets using
+DICOMweb.
 
 
 Comparison

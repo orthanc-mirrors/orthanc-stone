@@ -94,7 +94,7 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    std::auto_ptr<Orthanc::Image> result(new Orthanc::Image(format_, height_, depth_));
+    std::auto_ptr<Orthanc::Image> result(new Orthanc::Image(format_, height_, depth_, false));
 
     unsigned int bytesPerPixel = Orthanc::GetBytesPerPixel(format_);
 
@@ -121,7 +121,7 @@ namespace OrthancStone
                                unsigned int width,
                                unsigned int height,
                                unsigned int depth) :
-    image_(format, width, height * depth),
+    image_(format, width, height * depth, false),
     format_(format),
     width_(width),
     height_(height),

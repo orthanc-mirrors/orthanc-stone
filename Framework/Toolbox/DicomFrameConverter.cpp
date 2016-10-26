@@ -132,7 +132,8 @@ namespace OrthancStone
     // This is the case of a grayscale frame. Convert it to Float32.
     std::auto_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_Float32, 
                                                                source->GetWidth(), 
-                                                               source->GetHeight()));
+                                                               source->GetHeight(),
+                                                               false));
     Orthanc::ImageProcessing::Convert(*converted, *source);
 
     source.reset(NULL);  // We don't need the source frame anymore

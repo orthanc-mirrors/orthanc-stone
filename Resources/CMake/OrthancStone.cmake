@@ -75,14 +75,14 @@ if (ENABLE_CURL)
 
   if (ENABLE_SSL)
     set(ENABLE_PKCS11 OFF)
-    add_definitions(-DORTHANC_SSL_ENABLED=1)
+    add_definitions(-DORTHANC_ENABLE_SSL=1)
     include(${ORTHANC_ROOT}/Resources/CMake/OpenSslConfiguration.cmake)
   else()
-    add_definitions(-DORTHANC_SSL_ENABLED=0)
+    add_definitions(-DORTHANC_ENABLE_SSL=0)
   endif()
 else()
   add_definitions(
-    -DORTHANC_SSL_ENABLED=0
+    -DORTHANC_ENABLE_SSL=0
     -DORTHANC_ENABLE_CURL=0
     )
 endif()
@@ -90,8 +90,8 @@ endif()
 add_definitions(
   -DORTHANC_ENABLE_MD5=0
   -DORTHANC_ENABLE_BASE64=1
-  -DORTHANC_PUGIXML_ENABLED=0
-  -DORTHANC_PKCS11_ENABLED=0
+  -DORTHANC_ENABLE_PUGIXML=0
+  -DORTHANC_ENABLE_PKCS11=0
   )
 
 

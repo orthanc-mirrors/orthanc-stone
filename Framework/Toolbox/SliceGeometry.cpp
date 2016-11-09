@@ -34,9 +34,9 @@
 
 #include "GeometryToolbox.h"
 
-#include "../Orthanc/Core/Logging.h"
-#include "../Orthanc/Core/Toolbox.h"
-#include "../Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/Logging.h"
+#include "../../Resources/Orthanc/Core/Toolbox.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
 
 namespace OrthancStone
 {

@@ -32,7 +32,7 @@
 
 #include "TestCairoWidget.h"
 
-#include "../Orthanc/Core/Toolbox.h"
+#include "../../Resources/Orthanc/Core/Toolbox.h"
 
 #include <stdio.h>
 

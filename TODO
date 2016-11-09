@@ -51,6 +51,13 @@ Source code cosmetics
 * Use "SampleInteractor::AddWidget()" in all samples
 
 
+---------
+Packaging
+---------
+
+* Publish history of code size on Web site
+
+
 ------
 Future
 ------

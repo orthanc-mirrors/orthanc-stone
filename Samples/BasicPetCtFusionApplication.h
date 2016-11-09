@@ -34,7 +34,7 @@
 
 #include "SampleInteractor.h"
 
-#include "../Framework/Orthanc/Core/Logging.h"
+#include "../Resources/Orthanc/Core/Logging.h"
 
 namespace OrthancStone
 {

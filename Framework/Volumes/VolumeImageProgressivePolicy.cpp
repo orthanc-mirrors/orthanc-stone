@@ -33,7 +33,7 @@
 #include "VolumeImageProgressivePolicy.h"
 
 #include "../Toolbox/DownloadStack.h"
-#include "../Orthanc/Core/Images/ImageProcessing.h"
+#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
 
 namespace OrthancStone
 {

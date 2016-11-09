@@ -32,8 +32,8 @@
 
 #include "GeometryToolbox.h"
 
-#include "../Orthanc/Core/OrthancException.h"
-#include "../Orthanc/Core/Toolbox.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/Toolbox.h"
 
 #include <stdio.h>
 #include <boost/lexical_cast.hpp>

@@ -11,7 +11,7 @@ import os
 import stat
 import urllib2
 
-TARGET = os.path.join(os.path.dirname(__file__), '../Framework/Orthanc')
+TARGET = os.path.join(os.path.dirname(__file__), 'Orthanc')
 REPOSITORY = 'https://bitbucket.org/sjodogne/orthanc/raw'
 
 FILES = [

@@ -33,10 +33,10 @@
 #include "OrthancSeriesLoader.h"
 
 #include "../Messaging/MessagingToolbox.h"
-#include "../Orthanc/Core/Images/Image.h"
-#include "../Orthanc/Core/Images/ImageProcessing.h"
-#include "../Orthanc/Core/Logging.h"
-#include "../Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/Images/Image.h"
+#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
+#include "../../Resources/Orthanc/Core/Logging.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
 #include "DicomFrameConverter.h"
 
 namespace OrthancStone

@@ -34,7 +34,7 @@
 
 #include "DicomDataset.h"
 
-#include "../Orthanc/Core/Images/ImageAccessor.h"
+#include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
 
 namespace OrthancStone
 {

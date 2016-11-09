@@ -34,7 +34,7 @@
 
 #include "FrameRenderer.h"
 #include "../Messaging/MessagingToolbox.h"
-#include "../Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
 #include "../Toolbox/DicomFrameConverter.h"
 
 namespace OrthancStone

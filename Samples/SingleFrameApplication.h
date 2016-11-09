@@ -36,7 +36,7 @@
 
 #include "../Framework/Layers/SingleFrameRendererFactory.h"
 #include "../Framework/Widgets/LayeredSceneWidget.h"
-#include "../Framework/Orthanc/Core/Logging.h"
+#include "../Resources/Orthanc/Core/Logging.h"
 
 namespace OrthancStone
 {

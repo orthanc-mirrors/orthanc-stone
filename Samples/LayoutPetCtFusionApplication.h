@@ -38,7 +38,7 @@
 #include "../Framework/Layers/DicomStructureSetRendererFactory.h"
 #include "../Framework/Widgets/LayoutWidget.h"
 
-#include "../Framework/Orthanc/Core/Logging.h"
+#include "../Resources/Orthanc/Core/Logging.h"
 
 namespace OrthancStone
 {

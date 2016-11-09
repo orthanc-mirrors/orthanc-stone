@@ -32,8 +32,8 @@
 
 #include "IBasicApplication.h"
 
-#include "../Orthanc/Core/Logging.h"
-#include "../Orthanc/Core/HttpClient.h"
+#include "../../Resources/Orthanc/Core/Logging.h"
+#include "../../Resources/Orthanc/Core/HttpClient.h"
 #include "../Messaging/CurlOrthancConnection.h"
 #include "Sdl/SdlEngine.h"
 

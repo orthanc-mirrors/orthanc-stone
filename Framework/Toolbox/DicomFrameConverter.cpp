@@ -32,10 +32,10 @@
 
 #include "DicomFrameConverter.h"
 
-#include "../Orthanc/Core/Images/Image.h"
-#include "../Orthanc/Core/Images/ImageProcessing.h"
-#include "../Orthanc/Core/OrthancException.h"
-#include "../Orthanc/Core/Toolbox.h"
+#include "../../Resources/Orthanc/Core/Images/Image.h"
+#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/Toolbox.h"
 
 namespace OrthancStone
 {

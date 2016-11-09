@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "../Orthanc/Core/Images/ImageAccessor.h"
+#include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
 
 #include <boost/noncopyable.hpp>
 #include <cairo.h>

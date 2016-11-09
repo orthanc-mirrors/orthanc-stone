@@ -34,10 +34,10 @@
 
 #include "SampleInteractor.h"
 
-#include "../Framework/Orthanc/Core/Toolbox.h"
+#include "../Resources/Orthanc/Core/Toolbox.h"
 #include "../Framework/Layers/LineMeasureTracker.h"
 #include "../Framework/Layers/CircleMeasureTracker.h"
-#include "../Framework/Orthanc/Core/Logging.h"
+#include "../Resources/Orthanc/Core/Logging.h"
 
 namespace OrthancStone
 {

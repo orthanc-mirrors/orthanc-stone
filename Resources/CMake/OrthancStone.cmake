@@ -30,7 +30,7 @@ SET(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 #####################################################################
 
 SET(ORTHANC_STONE_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
-SET(ORTHANC_ROOT ${ORTHANC_STONE_DIR}/Framework/Orthanc)
+SET(ORTHANC_ROOT ${ORTHANC_STONE_DIR}/Resources/Orthanc)
 
 include(CheckIncludeFiles)
 include(CheckIncludeFileCXX)

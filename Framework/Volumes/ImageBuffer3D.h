@@ -37,7 +37,7 @@
 #include "../Toolbox/SliceGeometry.h"
 #include "../Toolbox/ParallelSlices.h"
 
-#include "../Orthanc/Core/Images/Image.h"
+#include "../../Resources/Orthanc/Core/Images/Image.h"
 
 #include <boost/thread/shared_mutex.hpp>
 

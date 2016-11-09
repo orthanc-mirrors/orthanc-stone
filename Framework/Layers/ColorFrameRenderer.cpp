@@ -32,8 +32,8 @@
 
 #include "ColorFrameRenderer.h"
 
-#include "../Orthanc/Core/OrthancException.h"
-#include "../Orthanc/Core/Images/ImageProcessing.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
 
 namespace OrthancStone
 {

@@ -36,7 +36,7 @@
 
 #if ORTHANC_ENABLE_CURL == 1
 
-#include "../Orthanc/Core/WebServiceParameters.h"
+#include "../../Resources/Orthanc/Core/WebServiceParameters.h"
 
 namespace OrthancStone
 {

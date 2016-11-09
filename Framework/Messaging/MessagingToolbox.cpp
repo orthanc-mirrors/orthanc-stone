@@ -32,13 +32,13 @@
 
 #include "MessagingToolbox.h"
 
-#include "../Orthanc/Core/Images/Image.h"
-#include "../Orthanc/Core/Images/ImageProcessing.h"
-#include "../Orthanc/Core/Images/JpegReader.h"
-#include "../Orthanc/Core/Images/PngReader.h"
-#include "../Orthanc/Core/OrthancException.h"
-#include "../Orthanc/Core/Toolbox.h"
-#include "../Orthanc/Core/Logging.h"
+#include "../../Resources/Orthanc/Core/Images/Image.h"
+#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
+#include "../../Resources/Orthanc/Core/Images/JpegReader.h"
+#include "../../Resources/Orthanc/Core/Images/PngReader.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/Toolbox.h"
+#include "../../Resources/Orthanc/Core/Logging.h"
 
 #include <boost/lexical_cast.hpp>
 #include <json/reader.h>

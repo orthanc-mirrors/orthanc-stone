@@ -32,7 +32,7 @@
 
 #include "VolumeImage.h"
 
-#include "../Orthanc/Core/Logging.h"
+#include "../../Resources/Orthanc/Core/Logging.h"
 #include "../Layers/FrameRenderer.h"
 
 namespace OrthancStone

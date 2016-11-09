@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "../Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
 
 #include <boost/noncopyable.hpp>
 #include <boost/thread/mutex.hpp>

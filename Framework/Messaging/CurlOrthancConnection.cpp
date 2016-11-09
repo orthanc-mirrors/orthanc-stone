@@ -34,8 +34,8 @@
 
 #if ORTHANC_ENABLE_CURL == 1
 
-#include "../Orthanc/Core/HttpClient.h"
-#include "../Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/HttpClient.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
 
 namespace OrthancStone
 {

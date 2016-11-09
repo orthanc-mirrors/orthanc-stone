@@ -32,7 +32,7 @@
 
 #include "DownloadStack.h"
 
-#include "../Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
 
 #include <cassert>
 

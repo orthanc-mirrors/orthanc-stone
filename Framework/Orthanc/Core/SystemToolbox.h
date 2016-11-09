@@ -32,29 +32,69 @@
 
 #pragma once
 
-#if defined(_WIN32) && !defined(NOMINMAX)
-#define NOMINMAX
+#if !defined(ORTHANC_SANDBOXED)
+#  error The macro ORTHANC_SANDBOXED must be defined
 #endif
 
-#if ORTHANC_USE_PRECOMPILED_HEADERS == 1
-
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/locale.hpp>
-#include <boost/regex.hpp>
-#include <boost/thread.hpp>
-#include <boost/thread/shared_mutex.hpp>
-
-#include <json/value.h>
-
-#if ORTHANC_ENABLE_PUGIXML == 1
-#include <pugixml.hpp>
+#if ORTHANC_SANDBOXED == 1
+#  error The namespace SystemToolbox cannot be used in sandboxed environments
 #endif
 
 #include "Enumerations.h"
-#include "Logging.h"
-#include "OrthancException.h"
-#include "Toolbox.h"
 
+#include <vector>
+#include <string>
+#include <stdint.h>
+
+namespace Orthanc
+{
+  namespace SystemToolbox
+  {
+    ServerBarrierEvent ServerBarrier(const bool& stopFlag);
+
+    ServerBarrierEvent ServerBarrier();
+
+    void ReadFile(std::string& content,
+                  const std::string& path);
+
+    bool ReadHeader(std::string& header,
+                    const std::string& path,
+                    size_t headerSize);
+
+    void WriteFile(const void* content,
+                   size_t size,
+                   const std::string& path);
+
+    void WriteFile(const std::string& content,
+                   const std::string& path);
+
+    void RemoveFile(const std::string& path);
+
+    uint64_t GetFileSize(const std::string& path);
+
+    void MakeDirectory(const std::string& path);
+
+    bool IsExistingFile(const std::string& path);
+
+    std::string GetPathToExecutable();
+
+    std::string GetDirectoryOfExecutable();
+
+    void ExecuteSystemCommand(const std::string& command,
+                              const std::vector<std::string>& arguments);
+
+    int GetProcessId();
+
+    bool IsRegularFile(const std::string& path);
+
+    FILE* OpenFile(const std::string& path,
+                   FileMode mode);
+
+#if BOOST_HAS_DATE_TIME == 1
+    std::string GetNowIsoString();
+
+    void GetNowDicom(std::string& date,
+                     std::string& time);
 #endif
+  }
+}

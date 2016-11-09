@@ -92,6 +92,7 @@ add_definitions(
   -DORTHANC_ENABLE_BASE64=1
   -DORTHANC_ENABLE_PUGIXML=0
   -DORTHANC_ENABLE_PKCS11=0
+  -DORTHANC_SANDBOXED=0
   )
 
 
@@ -186,6 +187,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_ROOT}/Core/Images/JpegReader.cpp
   ${ORTHANC_ROOT}/Core/Images/PngReader.cpp
   ${ORTHANC_ROOT}/Core/Logging.cpp
+  ${ORTHANC_ROOT}/Core/SystemToolbox.cpp
   ${ORTHANC_ROOT}/Core/Toolbox.cpp
   ${ORTHANC_ROOT}/Core/WebServiceParameters.cpp
   ${ORTHANC_ROOT}/Resources/ThirdParty/base64/base64.cpp

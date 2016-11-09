@@ -44,6 +44,8 @@ FILES = [
     'Core/Logging.h',
     'Core/OrthancException.h',
     'Core/PrecompiledHeaders.h',
+    'Core/SystemToolbox.cpp',
+    'Core/SystemToolbox.h',
     'Core/Toolbox.cpp',
     'Core/Toolbox.h',
     'Core/WebServiceParameters.cpp',

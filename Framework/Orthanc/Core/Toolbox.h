@@ -163,6 +163,9 @@ namespace Orthanc
     std::string ConvertFromUtf8(const std::string& source,
                                 Encoding targetEncoding);
 
+    bool IsAsciiString(const void* data,
+                       size_t size);
+
     std::string ConvertToAscii(const std::string& source);
 
     std::string StripSpaces(const std::string& source);
@@ -195,7 +198,7 @@ namespace Orthanc
     bool IsExistingFile(const std::string& path);
 #endif
 
-#if ORTHANC_PUGIXML_ENABLED == 1
+#if ORTHANC_ENABLE_PUGIXML == 1
     void JsonToXml(std::string& target,
                    const Json::Value& source,
                    const std::string& rootElement = "root",

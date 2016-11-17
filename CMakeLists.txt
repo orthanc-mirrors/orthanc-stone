@@ -11,6 +11,16 @@ add_library(OrthancStone STATIC ${ORTHANC_STONE_SOURCES})
 
 
 #####################################################################
+## CMake parameters for Google Test
+#####################################################################
+
+SET(USE_SYSTEM_GOOGLE_TEST ON CACHE BOOL "Use the system version of Google Test")
+SET(USE_GTEST_DEBIAN_SOURCE_PACKAGE OFF CACHE BOOL "Use the sources of Google Test shipped with libgtest-dev (Debian only)")
+
+include(${ORTHANC_ROOT}/Resources/CMake/GoogleTestConfiguration.cmake)
+
+
+#####################################################################
 ## Build all the sample applications
 #####################################################################
 
@@ -27,6 +37,18 @@ BuildSample(OrthancStoneSingleVolume 4)
 BuildSample(OrthancStoneBasicPetCtFusion 5)
 BuildSample(OrthancStoneSynchronizedSeries 6)
 BuildSample(OrthancStoneLayoutPetCtFusion 7)
+
+
+#####################################################################
+## Build the unit tests
+#####################################################################
+
+add_executable(UnitTests
+  ${GTEST_SOURCES}
+  UnitTestsSources/UnitTestsMain.cpp
+  )
+
+target_link_libraries(UnitTests OrthancStone)
 
 
 #####################################################################

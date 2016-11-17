@@ -1,3 +1,6 @@
+# Version of the build, should always be "mainline" except in release branches
+set(ORTHANC_STONE_VERSION "mainline")
+
 #####################################################################
 ## Parameters of the build
 #####################################################################

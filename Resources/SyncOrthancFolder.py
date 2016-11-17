@@ -54,6 +54,7 @@ FILES = [
     'Resources/CMake/BoostConfiguration.cmake',
     'Resources/CMake/Compiler.cmake',
     'Resources/CMake/DownloadPackage.cmake',
+    'Resources/CMake/GoogleTestConfiguration.cmake',
     'Resources/CMake/JsonCppConfiguration.cmake',
     'Resources/CMake/LibCurlConfiguration.cmake',
     'Resources/CMake/LibIconvConfiguration.cmake',

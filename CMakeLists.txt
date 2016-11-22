@@ -7,6 +7,11 @@ project(OrthancStone)
 #####################################################################
 
 include(Resources/CMake/OrthancStone.cmake)
+
+add_definitions(
+  -DORTHANC_SANDBOXED=0
+  )
+
 add_library(OrthancStone STATIC ${ORTHANC_STONE_SOURCES})
 
 

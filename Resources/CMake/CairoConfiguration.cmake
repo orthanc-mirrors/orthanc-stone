@@ -213,6 +213,13 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_CAIRO)
 
   endif()
 
+
+  if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    # Explicitly request static building on Windows
+    add_definitions(-DCAIRO_WIN32_STATIC_BUILD=1)
+  endif()
+
+
   set_property(
     SOURCE ${CAIRO_SOURCES}
     PROPERTY COMPILE_DEFINITIONS "${CAIRO_DEFINITIONS}"

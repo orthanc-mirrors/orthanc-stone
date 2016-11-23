@@ -102,8 +102,15 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_PIXMAN)
       ${PIXMAN_SOURCES_DIR}/pixman/pixman-sse2.c
       ${PIXMAN_SOURCES_DIR}/pixman/pixman-ssse3.c
       )
+
+    if ("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")
+      # Only enable MMX on Windows 32
+      add_definitions(
+        -DUSE_X86_MMX=1
+        )
+    endif()
+
     add_definitions(
-      -DUSE_X86_MMX=1
       -DUSE_SSE2=1
       -DUSE_SSSE3=1
       )

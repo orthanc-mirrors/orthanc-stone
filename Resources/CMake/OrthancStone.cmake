@@ -55,6 +55,11 @@ include(${CMAKE_CURRENT_LIST_DIR}/BoostExtendedConfiguration.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/CairoConfiguration.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/PixmanConfiguration.cmake)
 
+if (MSVC)
+  # Remove some warnings on Visual Studio 2015
+  add_definitions(-D_SCL_SECURE_NO_WARNINGS=1) 
+endif()
+
 
 #####################################################################
 ## Configure optional third-party components

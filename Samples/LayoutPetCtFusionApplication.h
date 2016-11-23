@@ -145,7 +145,7 @@ namespace OrthancStone
         {
           RenderStyle style; 
           style.applyLut_ = true;
-          style.alpha_ = (layer == 0 ? 1.0 : 0.5);
+          style.alpha_ = (layer == 0 ? 1.0f : 0.5f);
           widget.SetLayerStyle(layer, style);
         }
       }

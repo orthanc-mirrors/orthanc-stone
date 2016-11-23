@@ -92,7 +92,7 @@ def Download(x):
     except:
         pass
 
-    url = '%s/%s/%s' % (REPOSITORY, branch, source)
+    url = '%s/%s/%s?aaiai' % (REPOSITORY, branch, source)
 
     with open(target, 'w') as f:
         f.write(urllib2.urlopen(url).read())

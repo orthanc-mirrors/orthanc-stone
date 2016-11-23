@@ -8,6 +8,7 @@ set(ORTHANC_STONE_VERSION "mainline")
 # Generic parameters
 SET(STATIC_BUILD OFF CACHE BOOL "Static build of the third-party libraries (necessary for Windows)")
 SET(ALLOW_DOWNLOADS OFF CACHE BOOL "Allow CMake to download packages")
+SET(STONE_SANDBOXED OFF CACHE BOOL "Whether Stone runs inside a sandboxed environment (such as Google NaCl)")
 
 # Optional components
 SET(ENABLE_CURL ON CACHE BOOL "Include support for libcurl")
@@ -59,35 +60,54 @@ include(${CMAKE_CURRENT_LIST_DIR}/PixmanConfiguration.cmake)
 ## Configure optional third-party components
 #####################################################################
 
-if (ENABLE_LOGGING)
-  add_definitions(-DORTHANC_ENABLE_LOGGING=1)
-else()
-  add_definitions(-DORTHANC_ENABLE_LOGGING=0)
-endif()
-
-if (ENABLE_SDL)
-  include(${CMAKE_CURRENT_LIST_DIR}/SdlConfiguration.cmake)  
-  add_definitions(-DORTHANC_ENABLE_SDL=1)
-else()
-  add_definitions(-DORTHANC_ENABLE_SDL=0)
-endif()
-
-if (ENABLE_CURL)
-  add_definitions(-DORTHANC_ENABLE_CURL=1)
-  include(${ORTHANC_ROOT}/Resources/CMake/LibCurlConfiguration.cmake)
-
-  if (ENABLE_SSL)
-    set(ENABLE_PKCS11 OFF)
-    add_definitions(-DORTHANC_ENABLE_SSL=1)
-    include(${ORTHANC_ROOT}/Resources/CMake/OpenSslConfiguration.cmake)
-  else()
-    add_definitions(-DORTHANC_ENABLE_SSL=0)
-  endif()
-else()
+if (STONE_SANDBOXED)
   add_definitions(
-    -DORTHANC_ENABLE_SSL=0
     -DORTHANC_ENABLE_CURL=0
+    -DORTHANC_ENABLE_LOGGING=0
+    -DORTHANC_ENABLE_SDL=0
+    -DORTHANC_ENABLE_SSL=0
+    -DORTHANC_SANDBOXED=1
     )
+else()
+  list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_ROOT}/Core/HttpClient.cpp
+    ${ORTHANC_ROOT}/Core/SystemToolbox.cpp
+    )
+
+  add_definitions(
+    -DORTHANC_SANDBOXED=0
+    )
+
+  if (ENABLE_LOGGING)
+    add_definitions(-DORTHANC_ENABLE_LOGGING=1)
+  else()
+    add_definitions(-DORTHANC_ENABLE_LOGGING=0)
+  endif()
+
+  if (ENABLE_SDL)
+    include(${CMAKE_CURRENT_LIST_DIR}/SdlConfiguration.cmake)  
+    add_definitions(-DORTHANC_ENABLE_SDL=1)
+  else()
+    add_definitions(-DORTHANC_ENABLE_SDL=0)
+  endif()
+
+  if (ENABLE_CURL)
+    add_definitions(-DORTHANC_ENABLE_CURL=1)
+    include(${ORTHANC_ROOT}/Resources/CMake/LibCurlConfiguration.cmake)
+
+    if (ENABLE_SSL)
+      set(ENABLE_PKCS11 OFF)
+      add_definitions(-DORTHANC_ENABLE_SSL=1)
+      include(${ORTHANC_ROOT}/Resources/CMake/OpenSslConfiguration.cmake)
+    else()
+      add_definitions(-DORTHANC_ENABLE_SSL=0)
+    endif()
+  else()
+    add_definitions(
+      -DORTHANC_ENABLE_SSL=0
+      -DORTHANC_ENABLE_CURL=0
+      )
+  endif()
 endif()
 
 add_definitions(
@@ -180,7 +200,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_ROOT}/Core/Compression/DeflateBaseCompressor.cpp
   ${ORTHANC_ROOT}/Core/Compression/GzipCompressor.cpp
   ${ORTHANC_ROOT}/Core/Enumerations.cpp
-  ${ORTHANC_ROOT}/Core/HttpClient.cpp
   ${ORTHANC_ROOT}/Core/Images/Image.cpp
   ${ORTHANC_ROOT}/Core/Images/ImageAccessor.cpp
   ${ORTHANC_ROOT}/Core/Images/ImageBuffer.cpp
@@ -189,7 +208,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_ROOT}/Core/Images/JpegReader.cpp
   ${ORTHANC_ROOT}/Core/Images/PngReader.cpp
   ${ORTHANC_ROOT}/Core/Logging.cpp
-  ${ORTHANC_ROOT}/Core/SystemToolbox.cpp
   ${ORTHANC_ROOT}/Core/Toolbox.cpp
   ${ORTHANC_ROOT}/Core/WebServiceParameters.cpp
   ${ORTHANC_ROOT}/Resources/ThirdParty/base64/base64.cpp

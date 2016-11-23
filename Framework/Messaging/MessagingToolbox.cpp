@@ -46,6 +46,7 @@
 #if defined(__native_client__)
 #  include <boost/math/special_functions/round.hpp>
 #else
+#  include <boost/date_time/posix_time/posix_time.hpp>
 #  include <boost/date_time/microsec_time_clock.hpp>
 #endif
 

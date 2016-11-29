@@ -1,6 +1,6 @@
 if (STATIC_BUILD OR NOT USE_SYSTEM_PIXMAN)
   SET(PIXMAN_SOURCES_DIR ${CMAKE_BINARY_DIR}/pixman-0.34.0)
-  SET(PIXMAN_URL "http://www.montefiore.ulg.ac.be/~jodogne/Orthanc/ThirdPartyDownloads/Stone/pixman-0.34.0.tar.gz")
+  SET(PIXMAN_URL "http://www.orthanc-server.com/downloads/third-party/Stone/pixman-0.34.0.tar.gz")
   SET(PIXMAN_MD5 "e80ebae4da01e77f68744319f01d52a3")
 
   if (IS_DIRECTORY "${PIXMAN_SOURCES_DIR}")

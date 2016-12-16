@@ -82,7 +82,7 @@ namespace OrthancStone
 
 
   SliceGeometry DicomStructureSet::ExtractSliceGeometry(double& sliceThickness,
-                                                        IOrthancConnection& orthanc,
+                                                        OrthancPlugins::IOrthancConnection& orthanc,
                                                         const Json::Value& contour)
   {
     const Json::Value& sequence = GetSequence(contour, 0x3006, 0x0016);
@@ -198,7 +198,7 @@ namespace OrthancStone
   }
 
 
-  DicomStructureSet::DicomStructureSet(IOrthancConnection& orthanc,
+  DicomStructureSet::DicomStructureSet(OrthancPlugins::IOrthancConnection& orthanc,
                                        const std::string& instanceId)
   {
     Json::Value instance;

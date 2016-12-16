@@ -153,7 +153,7 @@ namespace OrthancStone
   }
 
 
-  DicomDataset::DicomDataset(IOrthancConnection& orthanc,
+  DicomDataset::DicomDataset(OrthancPlugins::IOrthancConnection& orthanc,
                              const std::string& instanceId)
   {
     std::string content;

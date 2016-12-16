@@ -48,14 +48,15 @@ namespace OrthancStone
     typedef std::list<IWorldSceneInteractor*>  Interactors;
     typedef std::list<DicomStructureSet*>      StructureSets;
 
-    IOrthancConnection&  orthanc_;
-    WidgetViewport       viewport_;
-    Volumes              volumes_;
-    Interactors          interactors_;
-    StructureSets        structureSets_;
+    OrthancPlugins::IOrthancConnection&  orthanc_;
+
+    WidgetViewport   viewport_;
+    Volumes          volumes_;
+    Interactors      interactors_;
+    StructureSets    structureSets_;
 
   public:
-    BasicApplicationContext(IOrthancConnection& orthanc);
+    BasicApplicationContext(OrthancPlugins::IOrthancConnection& orthanc);
 
     ~BasicApplicationContext();
 
@@ -66,7 +67,7 @@ namespace OrthancStone
       return viewport_;
     }
 
-    IOrthancConnection& GetOrthancConnection()
+    OrthancPlugins::IOrthancConnection& GetOrthancConnection()
     {
       return orthanc_;
     }

@@ -70,7 +70,7 @@ namespace OrthancStone
     Vector       normal_;
 
     SliceGeometry ExtractSliceGeometry(double& sliceThickness,
-                                       IOrthancConnection& orthanc,
+                                       OrthancPlugins::IOrthancConnection& orthanc,
                                        const Json::Value& contour);
 
     const Structure& GetStructure(size_t index) const;
@@ -80,7 +80,7 @@ namespace OrthancStone
 
 
   public:
-    DicomStructureSet(IOrthancConnection& orthanc,
+    DicomStructureSet(OrthancPlugins::IOrthancConnection& orthanc,
                       const std::string& instanceId);
 
     size_t GetStructureCount() const

@@ -33,7 +33,7 @@
 #pragma once
 
 #include "GeometryToolbox.h"
-#include "../Messaging/IOrthancConnection.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
 
 #include <map>
 #include <stdint.h>
@@ -68,7 +68,7 @@ namespace OrthancStone
       Parse(content);
     }
 
-    DicomDataset(IOrthancConnection& orthanc,
+    DicomDataset(OrthancPlugins::IOrthancConnection& orthanc,
                  const std::string& instanceId);
 
     bool HasTag(const Tag& tag) const

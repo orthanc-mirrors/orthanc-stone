@@ -1,5 +1,5 @@
 /**
- * Stone of Orthanc
+ * Orthanc - A Lightweight, RESTful DICOM Store
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  *
@@ -32,62 +32,29 @@
 
 #pragma once
 
-#include "ISeriesLoader.h"
+#include "IDicomDataset.h"
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
-namespace OrthancStone
+namespace OrthancPlugins
 {
-  // This class is NOT thread-safe
-  // It sorts the slices from a given series, give access to their
-  // geometry and individual frames, making the assumption that there
-  // is a single frame in each instance of the series
-  class OrthancSeriesLoader : public ISeriesLoader
+  class DicomDatasetReader : public boost::noncopyable
   {
   private:
-    class Slice;
-    class SetOfSlices;
-
-    OrthancPlugins::IOrthancConnection&  orthanc_;
-    boost::shared_ptr<SetOfSlices>       slices_;
-    ParallelSlices                       geometry_;
-    Orthanc::PixelFormat                 format_;
-    unsigned int                         width_;
-    unsigned int                         height_;
-
-    void CheckFrame(const Orthanc::ImageAccessor& frame) const;
+    std::auto_ptr<IDicomDataset>  dataset_;
 
   public:
-    OrthancSeriesLoader(OrthancPlugins::IOrthancConnection& orthanc,
-                        const std::string& series);
-    
-    virtual Orthanc::PixelFormat GetPixelFormat()
+    DicomDatasetReader(IDicomDataset* dataset);  // takes ownership
+
+    IDicomDataset& GetDataset() const
     {
-      return format_;
+      return *dataset_;
     }
 
-    virtual ParallelSlices& GetGeometry()
-    {
-      return geometry_;
-    }
+    std::string GetMandatoryStringValue(const DicomPath& path) const;
 
-    virtual unsigned int GetWidth()
-    {
-      return width_;
-    }
+    int GetIntegerValue(const DicomPath& path);
 
-    virtual unsigned int GetHeight()
-    {
-      return height_;
-    }
-
-    virtual DicomDataset* DownloadDicom(size_t index);
-
-    virtual Orthanc::ImageAccessor* DownloadFrame(size_t index);
-
-    virtual Orthanc::ImageAccessor* DownloadJpegFrame(size_t index,
-                                                      unsigned int quality);
-
-    virtual bool IsJpegAvailable();
+    unsigned int GetUnsignedIntegerValue(const DicomPath& path);
   };
 }

@@ -1,5 +1,5 @@
 /**
- * Stone of Orthanc
+ * Orthanc - A Lightweight, RESTful DICOM Store
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  *
@@ -30,64 +30,57 @@
  **/
 
 
-#pragma once
+#include "DicomPath.h"
 
-#include "ISeriesLoader.h"
+#include "OrthancPluginException.h"
 
-#include <boost/shared_ptr.hpp>
-
-namespace OrthancStone
+namespace OrthancPlugins
 {
-  // This class is NOT thread-safe
-  // It sorts the slices from a given series, give access to their
-  // geometry and individual frames, making the assumption that there
-  // is a single frame in each instance of the series
-  class OrthancSeriesLoader : public ISeriesLoader
+  const DicomPath::Prefix& DicomPath::GetPrefixItem(size_t depth) const
   {
-  private:
-    class Slice;
-    class SetOfSlices;
-
-    OrthancPlugins::IOrthancConnection&  orthanc_;
-    boost::shared_ptr<SetOfSlices>       slices_;
-    ParallelSlices                       geometry_;
-    Orthanc::PixelFormat                 format_;
-    unsigned int                         width_;
-    unsigned int                         height_;
-
-    void CheckFrame(const Orthanc::ImageAccessor& frame) const;
-
-  public:
-    OrthancSeriesLoader(OrthancPlugins::IOrthancConnection& orthanc,
-                        const std::string& series);
-    
-    virtual Orthanc::PixelFormat GetPixelFormat()
+    if (depth >= prefix_.size())
     {
-      return format_;
+      ORTHANC_PLUGINS_THROW_EXCEPTION(ParameterOutOfRange);
     }
-
-    virtual ParallelSlices& GetGeometry()
+    else
     {
-      return geometry_;
+      return prefix_[depth];
     }
+  }
 
-    virtual unsigned int GetWidth()
-    {
-      return width_;
-    }
 
-    virtual unsigned int GetHeight()
-    {
-      return height_;
-    }
+  DicomPath::DicomPath(const DicomTag& sequence,
+                       size_t index,
+                       const DicomTag& tag) :
+    finalTag_(tag)
+  {
+    AddToPrefix(sequence, index);
+  }
 
-    virtual DicomDataset* DownloadDicom(size_t index);
 
-    virtual Orthanc::ImageAccessor* DownloadFrame(size_t index);
+  DicomPath::DicomPath(const DicomTag& sequence1,
+                       size_t index1,
+                       const DicomTag& sequence2,
+                       size_t index2,
+                       const DicomTag& tag) :
+    finalTag_(tag)
+  {
+    AddToPrefix(sequence1, index1);
+    AddToPrefix(sequence2, index2);
+  }
 
-    virtual Orthanc::ImageAccessor* DownloadJpegFrame(size_t index,
-                                                      unsigned int quality);
 
-    virtual bool IsJpegAvailable();
-  };
+  DicomPath::DicomPath(const DicomTag& sequence1,
+                       size_t index1,
+                       const DicomTag& sequence2,
+                       size_t index2,
+                       const DicomTag& sequence3,
+                       size_t index3,
+                       const DicomTag& tag) :
+    finalTag_(tag)
+  {
+    AddToPrefix(sequence1, index1);
+    AddToPrefix(sequence2, index2);
+    AddToPrefix(sequence3, index3);
+  }
 }

@@ -34,6 +34,7 @@
 
 #include "ParallelSlices.h"
 
+#include "IThreadSafety.h"
 #include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
 
 namespace OrthancStone

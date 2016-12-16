@@ -1,5 +1,5 @@
 /**
- * Stone of Orthanc
+ * Orthanc - A Lightweight, RESTful DICOM Store
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  *
@@ -32,62 +32,76 @@
 
 #pragma once
 
-#include "ISeriesLoader.h"
+#include "DicomTag.h"
 
-#include <boost/shared_ptr.hpp>
+#include <vector>
+#include <stddef.h>
 
-namespace OrthancStone
+namespace OrthancPlugins
 {
-  // This class is NOT thread-safe
-  // It sorts the slices from a given series, give access to their
-  // geometry and individual frames, making the assumption that there
-  // is a single frame in each instance of the series
-  class OrthancSeriesLoader : public ISeriesLoader
+  class DicomPath
   {
   private:
-    class Slice;
-    class SetOfSlices;
+    typedef std::pair<DicomTag, size_t>  Prefix;
 
-    OrthancPlugins::IOrthancConnection&  orthanc_;
-    boost::shared_ptr<SetOfSlices>       slices_;
-    ParallelSlices                       geometry_;
-    Orthanc::PixelFormat                 format_;
-    unsigned int                         width_;
-    unsigned int                         height_;
+    std::vector<Prefix>  prefix_;
+    DicomTag             finalTag_;
 
-    void CheckFrame(const Orthanc::ImageAccessor& frame) const;
+    const Prefix& GetPrefixItem(size_t depth) const;
 
   public:
-    OrthancSeriesLoader(OrthancPlugins::IOrthancConnection& orthanc,
-                        const std::string& series);
+    DicomPath(const DicomTag& finalTag) :
+    finalTag_(finalTag)
+    {
+    }
+
+    DicomPath(const DicomTag& sequence,
+              size_t index,
+              const DicomTag& tag);
+
+    DicomPath(const DicomTag& sequence1,
+              size_t index1,
+              const DicomTag& sequence2,
+              size_t index2,
+              const DicomTag& tag);
+
+    DicomPath(const DicomTag& sequence1,
+              size_t index1,
+              const DicomTag& sequence2,
+              size_t index2,
+              const DicomTag& sequence3,
+              size_t index3,
+              const DicomTag& tag);
+
+    void AddToPrefix(const DicomTag& tag,
+                     size_t position)
+    {
+      prefix_.push_back(std::make_pair(tag, position));
+    }
+
+    size_t GetPrefixLength() const
+    {
+      return prefix_.size();
+    }
     
-    virtual Orthanc::PixelFormat GetPixelFormat()
+    DicomTag GetPrefixTag(size_t depth) const
     {
-      return format_;
+      return GetPrefixItem(depth).first;
     }
 
-    virtual ParallelSlices& GetGeometry()
+    size_t GetPrefixIndex(size_t depth) const
     {
-      return geometry_;
+      return GetPrefixItem(depth).second;
+    }
+    
+    const DicomTag& GetFinalTag() const
+    {
+      return finalTag_;
     }
 
-    virtual unsigned int GetWidth()
+    void SetFinalTag(const DicomTag& tag)
     {
-      return width_;
+      finalTag_ = tag;
     }
-
-    virtual unsigned int GetHeight()
-    {
-      return height_;
-    }
-
-    virtual DicomDataset* DownloadDicom(size_t index);
-
-    virtual Orthanc::ImageAccessor* DownloadFrame(size_t index);
-
-    virtual Orthanc::ImageAccessor* DownloadJpegFrame(size_t index,
-                                                      unsigned int quality);
-
-    virtual bool IsJpegAvailable();
   };
 }

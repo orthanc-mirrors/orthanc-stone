@@ -39,14 +39,15 @@ namespace OrthancStone
   class SingleFrameRendererFactory : public ILayerRendererFactory
   {
   private:
-    IOrthancConnection&   orthanc_;
+    OrthancPlugins::IOrthancConnection&   orthanc_;
+
     DicomDataset          dicom_;
     std::string           instance_;
     unsigned int          frame_;
     Orthanc::PixelFormat  format_;
 
   public:
-    SingleFrameRendererFactory(IOrthancConnection& orthanc,
+    SingleFrameRendererFactory(OrthancPlugins::IOrthancConnection& orthanc,
                                const std::string& instanceId,
                                unsigned int frame);
 

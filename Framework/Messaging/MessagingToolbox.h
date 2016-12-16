@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "IOrthancConnection.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
 
 #include "../Enumerations.h"
 #include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
@@ -73,22 +73,22 @@ namespace OrthancStone
                    const std::string& source);
 
     void RestApiGet(Json::Value& target,
-                    IOrthancConnection& orthanc,
+                    OrthancPlugins::IOrthancConnection& orthanc,
                     const std::string& uri);
 
-    bool HasWebViewerInstalled(IOrthancConnection& orthanc);
+    bool HasWebViewerInstalled(OrthancPlugins::IOrthancConnection& orthanc);
 
-    bool CheckOrthancVersion(IOrthancConnection& orthanc);
+    bool CheckOrthancVersion(OrthancPlugins::IOrthancConnection& orthanc);
 
     // This downloads the image from Orthanc and keeps its pixel
     // format unchanged (will be either Grayscale8, Grayscale16,
     // SignedGrayscale16, or RGB24)
-    Orthanc::ImageAccessor* DecodeFrame(IOrthancConnection& orthanc,
+    Orthanc::ImageAccessor* DecodeFrame(OrthancPlugins::IOrthancConnection& orthanc,
                                         const std::string& instance,
                                         unsigned int frame,
                                         Orthanc::PixelFormat targetFormat);
 
-    Orthanc::ImageAccessor* DecodeJpegFrame(IOrthancConnection& orthanc,
+    Orthanc::ImageAccessor* DecodeJpegFrame(OrthancPlugins::IOrthancConnection& orthanc,
                                             const std::string& instance,
                                             unsigned int frame,
                                             unsigned int quality,

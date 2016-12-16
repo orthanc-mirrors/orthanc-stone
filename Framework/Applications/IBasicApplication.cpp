@@ -34,7 +34,7 @@
 
 #include "../../Resources/Orthanc/Core/Logging.h"
 #include "../../Resources/Orthanc/Core/HttpClient.h"
-#include "../Messaging/CurlOrthancConnection.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/OrthancHttpConnection.h"
 #include "Sdl/SdlEngine.h"
 
 namespace OrthancStone
@@ -208,7 +208,7 @@ namespace OrthancStone
       }
 
       LOG(WARNING) << "URL to the Orthanc REST API: " << webService.GetUrl();
-      CurlOrthancConnection orthanc(webService);
+      OrthancPlugins::OrthancHttpConnection orthanc(webService);
 
       if (!MessagingToolbox::CheckOrthancVersion(orthanc))
       {

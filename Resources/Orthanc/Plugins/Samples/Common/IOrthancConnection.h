@@ -1,5 +1,5 @@
 /**
- * Stone of Orthanc
+ * Orthanc - A Lightweight, RESTful DICOM Store
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  *
@@ -32,62 +32,49 @@
 
 #pragma once
 
-#include "ISeriesLoader.h"
+#include "DicomPath.h"
 
-#include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
+#include <string>
+#include <json/value.h>
 
-namespace OrthancStone
+namespace OrthancPlugins
 {
-  // This class is NOT thread-safe
-  // It sorts the slices from a given series, give access to their
-  // geometry and individual frames, making the assumption that there
-  // is a single frame in each instance of the series
-  class OrthancSeriesLoader : public ISeriesLoader
+  class IOrthancConnection : public boost::noncopyable
   {
-  private:
-    class Slice;
-    class SetOfSlices;
-
-    OrthancPlugins::IOrthancConnection&  orthanc_;
-    boost::shared_ptr<SetOfSlices>       slices_;
-    ParallelSlices                       geometry_;
-    Orthanc::PixelFormat                 format_;
-    unsigned int                         width_;
-    unsigned int                         height_;
-
-    void CheckFrame(const Orthanc::ImageAccessor& frame) const;
-
   public:
-    OrthancSeriesLoader(OrthancPlugins::IOrthancConnection& orthanc,
-                        const std::string& series);
-    
-    virtual Orthanc::PixelFormat GetPixelFormat()
+    virtual ~IOrthancConnection()
     {
-      return format_;
     }
 
-    virtual ParallelSlices& GetGeometry()
-    {
-      return geometry_;
-    }
+    virtual void RestApiGet(std::string& result,
+                            const std::string& uri) = 0;
 
-    virtual unsigned int GetWidth()
-    {
-      return width_;
-    }
+    virtual void RestApiPost(std::string& result,
+                             const std::string& uri,
+                             const std::string& body) = 0;
 
-    virtual unsigned int GetHeight()
-    {
-      return height_;
-    }
+    virtual void RestApiPut(std::string& result,
+                            const std::string& uri,
+                            const std::string& body) = 0;
 
-    virtual DicomDataset* DownloadDicom(size_t index);
+    virtual void RestApiDelete(const std::string& uri) = 0;
 
-    virtual Orthanc::ImageAccessor* DownloadFrame(size_t index);
+    static void ParseJson(Json::Value& result,
+                          const std::string& content);
 
-    virtual Orthanc::ImageAccessor* DownloadJpegFrame(size_t index,
-                                                      unsigned int quality);
+    static void RestApiGet(Json::Value& result,
+                           IOrthancConnection& orthanc,
+                           const std::string& uri);
 
-    virtual bool IsJpegAvailable();
+    static void RestApiPost(Json::Value& result,
+                            IOrthancConnection& orthanc,
+                            const std::string& uri,
+                            const std::string& body);
+
+    static void RestApiPut(Json::Value& result,
+                           IOrthancConnection& orthanc,
+                           const std::string& uri,
+                           const std::string& body);
   };
 }

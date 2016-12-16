@@ -173,7 +173,7 @@ namespace OrthancStone
     }
 
     void RestApiGet(Json::Value& target,
-                    IOrthancConnection& orthanc,
+                    OrthancPlugins::IOrthancConnection& orthanc,
                     const std::string& uri)
     {
       std::string tmp;
@@ -182,7 +182,7 @@ namespace OrthancStone
     }
 
 
-    bool HasWebViewerInstalled(IOrthancConnection& orthanc)
+    bool HasWebViewerInstalled(OrthancPlugins::IOrthancConnection& orthanc)
     {
       try
       {
@@ -197,7 +197,7 @@ namespace OrthancStone
     }
 
 
-    bool CheckOrthancVersion(IOrthancConnection& orthanc)
+    bool CheckOrthancVersion(OrthancPlugins::IOrthancConnection& orthanc)
     {
       Json::Value json;
       std::string version;
@@ -250,7 +250,7 @@ namespace OrthancStone
     }
 
 
-    Orthanc::ImageAccessor* DecodeFrame(IOrthancConnection& orthanc,
+    Orthanc::ImageAccessor* DecodeFrame(OrthancPlugins::IOrthancConnection& orthanc,
                                         const std::string& instance,
                                         unsigned int frame,
                                         Orthanc::PixelFormat targetFormat)
@@ -297,7 +297,7 @@ namespace OrthancStone
     }
 
 
-    Orthanc::ImageAccessor* DecodeJpegFrame(IOrthancConnection& orthanc,
+    Orthanc::ImageAccessor* DecodeJpegFrame(OrthancPlugins::IOrthancConnection& orthanc,
                                             const std::string& instance,
                                             unsigned int frame,
                                             unsigned int quality,

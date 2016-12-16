@@ -38,7 +38,7 @@
 
 namespace OrthancStone
 {
-  BasicApplicationContext::BasicApplicationContext(IOrthancConnection& orthanc) :
+  BasicApplicationContext::BasicApplicationContext(OrthancPlugins::IOrthancConnection& orthanc) :
     orthanc_(orthanc)
   {
   }

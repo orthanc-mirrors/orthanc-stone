@@ -39,7 +39,7 @@
 
 namespace OrthancStone
 {
-  SingleFrameRendererFactory::SingleFrameRendererFactory(IOrthancConnection& orthanc,
+  SingleFrameRendererFactory::SingleFrameRendererFactory(OrthancPlugins::IOrthancConnection& orthanc,
                                                          const std::string& instanceId,
                                                          unsigned int frame) :
     orthanc_(orthanc),

@@ -137,7 +137,7 @@ namespace OrthancStone
       std::sort(slices_.begin(), slices_.end(), comparator);
     }
 
-    void LoadSeriesFast(IOrthancConnection&  orthanc,
+    void LoadSeriesFast(OrthancPlugins::IOrthancConnection&  orthanc,
                         const std::string& series)
     {
       // Retrieve the orientation of this series
@@ -203,7 +203,7 @@ namespace OrthancStone
     }
 
       
-    void LoadSeriesSafe(IOrthancConnection& orthanc,
+    void LoadSeriesSafe(OrthancPlugins::IOrthancConnection& orthanc,
                         const std::string& seriesId)
     {
       Json::Value series;
@@ -331,7 +331,7 @@ namespace OrthancStone
 
 
 
-  OrthancSeriesLoader::OrthancSeriesLoader(IOrthancConnection& orthanc,
+  OrthancSeriesLoader::OrthancSeriesLoader(OrthancPlugins::IOrthancConnection& orthanc,
                                            const std::string& series) :
     orthanc_(orthanc),
     slices_(new SetOfSlices)

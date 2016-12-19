@@ -162,8 +162,9 @@ namespace OrthancStone
       }         
     }
 
-    void ParseJson(Json::Value& target,
-                   const std::string& source)
+
+    static void ParseJson(Json::Value& target,
+                          const std::string& source)
     {
       Json::Reader reader;
       if (!reader.parse(source, target))
@@ -172,12 +173,24 @@ namespace OrthancStone
       }
     }
 
+
     void RestApiGet(Json::Value& target,
                     OrthancPlugins::IOrthancConnection& orthanc,
                     const std::string& uri)
     {
       std::string tmp;
       orthanc.RestApiGet(tmp, uri);
+      ParseJson(target, tmp);
+    }
+
+
+    void RestApiPost(Json::Value& target,
+                     OrthancPlugins::IOrthancConnection& orthanc,
+                     const std::string& uri,
+                     const std::string& body)
+    {
+      std::string tmp;
+      orthanc.RestApiPost(tmp, uri, body);
       ParseJson(target, tmp);
     }
 

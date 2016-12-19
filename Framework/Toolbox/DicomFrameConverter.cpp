@@ -79,14 +79,12 @@ namespace OrthancStone
 
     Vector c, w;
     if (GeometryToolbox::ParseVector(c, dicom, OrthancPlugins::DICOM_TAG_WINDOW_CENTER) &&
-        GeometryToolbox::ParseVector(w, dicom, OrthancPlugins::DICOM_TAG_WINDOW_WIDTH))
+        GeometryToolbox::ParseVector(w, dicom, OrthancPlugins::DICOM_TAG_WINDOW_WIDTH) &&
+        c.size() > 0 && 
+        w.size() > 0)
     {
-      if (c.size() > 0 && 
-          w.size() > 0)
-      {
-        defaultWindowCenter_ = static_cast<float>(c[0]);
-        defaultWindowWidth_ = static_cast<float>(w[0]);
-      }
+      defaultWindowCenter_ = static_cast<float>(c[0]);
+      defaultWindowWidth_ = static_cast<float>(w[0]);
     }
 
     OrthancPlugins::DicomDatasetReader reader(dicom);

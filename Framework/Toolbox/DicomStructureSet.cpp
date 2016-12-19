@@ -95,25 +95,22 @@ namespace OrthancStone
                                                                      DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
                                                                      DICOM_TAG_REFERENCED_SOP_INSTANCE_UID));
 
-    std::string post;
-    orthanc.RestApiPost(post, "/tools/lookup", parentUid);
+    Json::Value parentLookup;
+    MessagingToolbox::RestApiPost(parentLookup, orthanc, "/tools/lookup", parentUid);
 
-    Json::Value tmp;
-    MessagingToolbox::ParseJson(tmp, post);
-
-    if (tmp.type() != Json::arrayValue ||
-        tmp.size() != 1 ||
-        !tmp[0].isMember("Type") ||
-        !tmp[0].isMember("Path") ||
-        tmp[0]["Type"].type() != Json::stringValue ||
-        tmp[0]["ID"].type() != Json::stringValue ||
-        tmp[0]["Type"].asString() != "Instance")
+    if (parentLookup.type() != Json::arrayValue ||
+        parentLookup.size() != 1 ||
+        !parentLookup[0].isMember("Type") ||
+        !parentLookup[0].isMember("Path") ||
+        parentLookup[0]["Type"].type() != Json::stringValue ||
+        parentLookup[0]["ID"].type() != Json::stringValue ||
+        parentLookup[0]["Type"].asString() != "Instance")
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_UnknownResource);          
     }
 
     Json::Value parentInstance;
-    MessagingToolbox::RestApiGet(parentInstance, orthanc, "/instances/" + tmp[0]["ID"].asString());
+    MessagingToolbox::RestApiGet(parentInstance, orthanc, "/instances/" + parentLookup[0]["ID"].asString());
 
     if (parentInstance.type() != Json::objectValue ||
         !parentInstance.isMember("ParentSeries") ||
@@ -135,7 +132,7 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
 
-    FullOrthancDataset parentTags(orthanc, "/instances/" + tmp[0]["ID"].asString() + "/tags");
+    FullOrthancDataset parentTags(orthanc, "/instances/" + parentLookup[0]["ID"].asString() + "/tags");
     SliceGeometry slice(parentTags);
 
     Vector v;

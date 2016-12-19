@@ -69,12 +69,14 @@ namespace OrthancStone
     };
 
 
-    void ParseJson(Json::Value& target,
-                   const std::string& source);
-
     void RestApiGet(Json::Value& target,
                     OrthancPlugins::IOrthancConnection& orthanc,
                     const std::string& uri);
+
+    void RestApiPost(Json::Value& target,
+                     OrthancPlugins::IOrthancConnection& orthanc,
+                     const std::string& uri,
+                     const std::string& body);
 
     bool HasWebViewerInstalled(OrthancPlugins::IOrthancConnection& orthanc);
 

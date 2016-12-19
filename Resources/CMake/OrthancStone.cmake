@@ -171,12 +171,12 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Layers/SeriesFrameRendererFactory.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/SiblingSliceLocationFactory.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/SingleFrameRendererFactory.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Messaging/MessagingToolbox.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/BinarySemaphore.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DicomFrameConverter.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DicomStructureSet.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DownloadStack.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/GeometryToolbox.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Toolbox/MessagingToolbox.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancSeriesLoader.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlices.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlicesCursor.cpp

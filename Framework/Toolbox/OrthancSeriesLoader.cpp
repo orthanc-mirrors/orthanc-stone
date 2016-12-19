@@ -32,7 +32,7 @@
 
 #include "OrthancSeriesLoader.h"
 
-#include "../Messaging/MessagingToolbox.h"
+#include "../Toolbox/MessagingToolbox.h"
 #include "../../Resources/Orthanc/Core/Images/Image.h"
 #include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
 #include "../../Resources/Orthanc/Core/Logging.h"

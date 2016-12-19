@@ -35,7 +35,7 @@
 #include "../../Resources/Orthanc/Core/Logging.h"
 #include "../../Resources/Orthanc/Core/OrthancException.h"
 #include "../../Resources/Orthanc/Plugins/Samples/Common/FullOrthancDataset.h"
-#include "../Messaging/MessagingToolbox.h"
+#include "../Toolbox/MessagingToolbox.h"
 
 #include <stdio.h>
 #include <boost/lexical_cast.hpp>

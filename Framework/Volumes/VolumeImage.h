@@ -35,8 +35,8 @@
 #include "ISliceableVolume.h"
 #include "ImageBuffer3D.h"
 #include "../Toolbox/ISeriesLoader.h"
+#include "../Toolbox/MessagingToolbox.h"
 #include "../Toolbox/ObserversRegistry.h"
-#include "../Messaging/MessagingToolbox.h"
 #include "../Layers/ILayerRendererFactory.h"
 
 #include <boost/thread.hpp>

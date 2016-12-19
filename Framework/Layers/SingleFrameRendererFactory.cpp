@@ -33,7 +33,7 @@
 #include "SingleFrameRendererFactory.h"
 
 #include "FrameRenderer.h"
-#include "../Messaging/MessagingToolbox.h"
+#include "../Toolbox/MessagingToolbox.h"
 #include "../../Resources/Orthanc/Core/OrthancException.h"
 #include "../../Resources/Orthanc/Plugins/Samples/Common/FullOrthancDataset.h"
 #include "../../Resources/Orthanc/Plugins/Samples/Common/DicomDatasetReader.h"

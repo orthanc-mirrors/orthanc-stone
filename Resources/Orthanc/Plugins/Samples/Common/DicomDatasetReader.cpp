@@ -68,20 +68,31 @@ namespace OrthancPlugins
   }
 
 
-  DicomDatasetReader::DicomDatasetReader(IDicomDataset* dataset) :  // takes ownership
+  DicomDatasetReader::DicomDatasetReader(const IDicomDataset& dataset) :
     dataset_(dataset)
   {
-    if (dataset == NULL)
-    {
-      ORTHANC_PLUGINS_THROW_EXCEPTION(ParameterOutOfRange);
-    }
   }
   
+
+  std::string DicomDatasetReader::GetStringValue(const DicomPath& path,
+                                                 const std::string& defaultValue) const
+  {
+    std::string s;
+    if (dataset_.GetStringValue(s, path))
+    {
+      return s;
+    }
+    else
+    {
+      return defaultValue;
+    }
+  }
+
 
   std::string DicomDatasetReader::GetMandatoryStringValue(const DicomPath& path) const
   {
     std::string s;
-    if (dataset_->GetStringValue(s, path))
+    if (dataset_.GetStringValue(s, path))
     {
       return s;
     }
@@ -92,12 +103,24 @@ namespace OrthancPlugins
   }
 
 
-  int DicomDatasetReader::GetIntegerValue(const DicomPath& path)
+  template <typename T>
+  static bool GetValueInternal(T& target,
+                               const IDicomDataset& dataset,
+                               const DicomPath& path)
   {
     try
     {
-      std::string s = StripSpaces(GetMandatoryStringValue(path));
-      return boost::lexical_cast<int>(s);
+      std::string s;
+
+      if (dataset.GetStringValue(s, path))
+      {
+        target = boost::lexical_cast<T>(StripSpaces(s));
+        return true;
+      }
+      else
+      {
+        return false;
+      }
     }
     catch (boost::bad_lexical_cast&)
     {
@@ -106,17 +129,44 @@ namespace OrthancPlugins
   }
 
 
-  unsigned int DicomDatasetReader::GetUnsignedIntegerValue(const DicomPath& path)
+  bool DicomDatasetReader::GetIntegerValue(int& target,
+                                           const DicomPath& path) const
   {
-    int value = GetIntegerValue(path);
+    return GetValueInternal<int>(target, dataset_, path);
+  }
 
-    if (value >= 0)
+
+  bool DicomDatasetReader::GetUnsignedIntegerValue(unsigned int& target,
+                                                   const DicomPath& path) const
+  {
+    int value;
+
+    if (!GetIntegerValue(value, path))
     {
-      return static_cast<unsigned int>(value);
+      return false;
+    }
+    else if (value >= 0)
+    {
+      target = static_cast<unsigned int>(value);
+      return true;
     }
     else
     {
       ORTHANC_PLUGINS_THROW_EXCEPTION(ParameterOutOfRange);
     }
+  }
+
+
+  bool DicomDatasetReader::GetFloatValue(float& target,
+                                         const DicomPath& path) const
+  {
+    return GetValueInternal<float>(target, dataset_, path);
+  }
+
+
+  bool DicomDatasetReader::GetDoubleValue(double& target,
+                                          const DicomPath& path) const
+  {
+    return GetValueInternal<double>(target, dataset_, path);
   }
 }

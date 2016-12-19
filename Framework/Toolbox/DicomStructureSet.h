@@ -34,6 +34,7 @@
 
 #include "SliceGeometry.h"
 #include "../Viewport/CairoContext.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
 
 #include <list>
 
@@ -71,7 +72,9 @@ namespace OrthancStone
 
     SliceGeometry ExtractSliceGeometry(double& sliceThickness,
                                        OrthancPlugins::IOrthancConnection& orthanc,
-                                       const Json::Value& contour);
+                                       const OrthancPlugins::IDicomDataset& tags,
+                                       size_t contourIndex,
+                                       size_t sliceIndex);
 
     const Structure& GetStructure(size_t index) const;
 

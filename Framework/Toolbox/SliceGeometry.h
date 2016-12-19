@@ -32,7 +32,8 @@
 
 #pragma once
 
-#include "DicomDataset.h"
+#include "GeometryToolbox.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/IDicomDataset.h"
 
 namespace OrthancStone
 {
@@ -62,7 +63,7 @@ namespace OrthancStone
                   const Vector& axisX,
                   const Vector& axisY);
 
-    SliceGeometry(const DicomDataset& dicom);
+    SliceGeometry(const OrthancPlugins::IDicomDataset& dicom);
 
     SliceGeometry(const std::string& imagePositionPatient,
                   const std::string& imageOrientationPatient)

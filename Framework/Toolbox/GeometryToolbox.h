@@ -34,6 +34,7 @@
 
 #include <boost/numeric/ublas/vector.hpp>
 
+#include "../../Resources/Orthanc/Plugins/Samples/Common/DicomDatasetReader.h"
 
 namespace OrthancStone
 {
@@ -44,7 +45,11 @@ namespace OrthancStone
     void Print(const Vector& v);
 
     bool ParseVector(Vector& target,
-                     const std::string& value);
+                     const std::string& s);
+
+    bool ParseVector(Vector& target,
+                     const OrthancPlugins::IDicomDataset& dataset,
+                     const OrthancPlugins::DicomPath& tag);
 
     void AssignVector(Vector& v,
                       double v1,
@@ -107,5 +112,9 @@ namespace OrthancStone
                              const double& ymin,
                              const double& xmax,
                              const double& ymax);
+
+    void GetPixelSpacing(double& spacingX, 
+                         double& spacingY,
+                         const OrthancPlugins::IDicomDataset& dicom);
   };
 }

@@ -32,6 +32,7 @@
 
 #include "GeometryToolbox.h"
 
+#include "../../Resources/Orthanc/Core/Logging.h"
 #include "../../Resources/Orthanc/Core/OrthancException.h"
 #include "../../Resources/Orthanc/Core/Toolbox.h"
 
@@ -74,6 +75,16 @@ namespace OrthancStone
       }
 
       return true;
+    }
+
+
+    bool ParseVector(Vector& target,
+                     const OrthancPlugins::IDicomDataset& dataset,
+                     const OrthancPlugins::DicomPath& tag)
+    {
+      std::string value;
+      return (dataset.GetStringValue(value, tag) &&
+              ParseVector(target, value));
     }
 
 
@@ -345,6 +356,37 @@ namespace OrthancStone
         y2 = b[1] / b[2];
 
         return true;
+      }
+    }
+
+
+    void GetPixelSpacing(double& spacingX, 
+                         double& spacingY,
+                         const OrthancPlugins::IDicomDataset& dicom)
+    {
+      Vector v;
+
+      if (ParseVector(v, dicom, OrthancPlugins::DICOM_TAG_PIXEL_SPACING))
+      {
+        if (v.size() != 2 ||
+            v[0] <= 0 ||
+            v[1] <= 0)
+        {
+          LOG(ERROR) << "Bad value for PixelSpacing tag";
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+        else
+        {
+          spacingX = v[0];
+          spacingY = v[1];
+        }
+      }
+      else
+      {
+        // The "PixelSpacing" is of type 1C: It could be absent, use
+        // default value in such a case
+        spacingX = 1;
+        spacingY = 1;
       }
     }
   }

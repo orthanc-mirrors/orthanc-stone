@@ -33,6 +33,7 @@
 #pragma once
 
 #include "ISeriesLoader.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
 
 #include <boost/shared_ptr.hpp>
 
@@ -81,7 +82,7 @@ namespace OrthancStone
       return height_;
     }
 
-    virtual DicomDataset* DownloadDicom(size_t index);
+    virtual OrthancPlugins::IDicomDataset* DownloadDicom(size_t index);
 
     virtual Orthanc::ImageAccessor* DownloadFrame(size_t index);
 

@@ -226,7 +226,7 @@ namespace OrthancStone
   ILayerRenderer* FrameRenderer::CreateRenderer(Orthanc::ImageAccessor* frame,
                                                 const SliceGeometry& viewportSlice,
                                                 const SliceGeometry& frameSlice,
-                                                const DicomDataset& dicom,
+                                                const OrthancPlugins::IDicomDataset& dicom,
                                                 double pixelSpacingX,
                                                 double pixelSpacingY,
                                                 bool isFullQuality)

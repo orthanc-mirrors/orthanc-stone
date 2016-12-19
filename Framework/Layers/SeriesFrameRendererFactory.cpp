@@ -34,6 +34,11 @@
 
 #include "FrameRenderer.h"
 #include "../../Resources/Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/Logging.h"
+#include "../../Resources/Orthanc/Core/Toolbox.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/OrthancPluginException.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/DicomDatasetReader.h"
+
 
 namespace OrthancStone
 {
@@ -66,7 +71,7 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
     
-    currentDataset_->GetPixelSpacing(spacingX, spacingY);
+    GeometryToolbox::GetPixelSpacing(spacingX, spacingY, *currentDataset_);
   }
 
 
@@ -77,16 +82,23 @@ namespace OrthancStone
       // There was no previous call "ReadCurrentFrameDataset()"
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
-      
-    if (currentDataset_->HasTag(DICOM_TAG_SLICE_THICKNESS))
+    
+    try
     {
-      return currentDataset_->GetFloatValue(DICOM_TAG_SLICE_THICKNESS);
+      OrthancPlugins::DicomDatasetReader reader(*currentDataset_);
+
+      double thickness;
+      if (reader.GetDoubleValue(thickness, OrthancPlugins::DICOM_TAG_SLICE_THICKNESS))
+      {
+        return thickness;
+      }
     }
-    else
+    catch (ORTHANC_PLUGINS_EXCEPTION_CLASS& e)
     {
-      // Some arbitrary large slice thickness
-      return std::numeric_limits<double>::infinity();
     }
+
+    // Some arbitrary large slice thickness
+    return std::numeric_limits<double>::infinity();
   }
 
 

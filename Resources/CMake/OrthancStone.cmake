@@ -173,7 +173,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Layers/SingleFrameRendererFactory.cpp
   ${ORTHANC_STONE_DIR}/Framework/Messaging/MessagingToolbox.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/BinarySemaphore.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/DicomDataset.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DicomFrameConverter.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DicomStructureSet.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DownloadStack.cpp

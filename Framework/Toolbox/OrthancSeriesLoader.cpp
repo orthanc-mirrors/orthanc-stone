@@ -37,6 +37,7 @@
 #include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
 #include "../../Resources/Orthanc/Core/Logging.h"
 #include "../../Resources/Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/FullOrthancDataset.h"
 #include "DicomFrameConverter.h"
 
 namespace OrthancStone
@@ -361,28 +362,33 @@ namespace OrthancStone
       geometry_.AddSlice(slices_->GetSlice(i).GetGeometry());
     }
 
-    std::auto_ptr<DicomDataset> dataset(new DicomDataset(orthanc_, slices_->GetSlice(0).GetInstanceId()));
-    if (!dataset->HasTag(DICOM_TAG_ROWS) ||
-        !dataset->HasTag(DICOM_TAG_COLUMNS))
+    std::string uri = "/instances/" + slices_->GetSlice(0).GetInstanceId() + "/tags";
+
+    OrthancPlugins::FullOrthancDataset dataset(orthanc_, uri);
+    OrthancPlugins::DicomDatasetReader reader(dataset);
+
+    if (!reader.GetUnsignedIntegerValue(width_, OrthancPlugins::DICOM_TAG_COLUMNS) ||
+        !reader.GetUnsignedIntegerValue(height_, OrthancPlugins::DICOM_TAG_ROWS))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentTag);
     }
 
     DicomFrameConverter converter;
-    converter.ReadParameters(*dataset);
-
+    converter.ReadParameters(dataset);
     format_ = converter.GetExpectedPixelFormat();
-    width_ = dataset->GetUnsignedIntegerValue(DICOM_TAG_COLUMNS);
-    height_ = dataset->GetUnsignedIntegerValue(DICOM_TAG_ROWS);
   }
     
 
-  DicomDataset* OrthancSeriesLoader::DownloadDicom(size_t index)
+  OrthancPlugins::IDicomDataset* OrthancSeriesLoader::DownloadDicom(size_t index)
   {
-    std::auto_ptr<DicomDataset> dataset(new DicomDataset(orthanc_, slices_->GetSlice(index).GetInstanceId()));
+    std::string uri = "/instances/" + slices_->GetSlice(index).GetInstanceId() + "/tags";
 
-    if (dataset->HasTag(DICOM_TAG_NUMBER_OF_FRAMES) &&
-        dataset->GetUnsignedIntegerValue(DICOM_TAG_NUMBER_OF_FRAMES) != 1)
+    std::auto_ptr<OrthancPlugins::IDicomDataset> dataset(new OrthancPlugins::FullOrthancDataset(orthanc_, uri));
+    OrthancPlugins::DicomDatasetReader reader(*dataset);
+
+    unsigned int frames;
+    if (reader.GetUnsignedIntegerValue(frames, OrthancPlugins::DICOM_TAG_NUMBER_OF_FRAMES) &&
+        frames != 1)
     {
       LOG(ERROR) << "One instance in this series has more than 1 frame";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);          

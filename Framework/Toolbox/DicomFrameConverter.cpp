@@ -32,6 +32,8 @@
 
 #include "DicomFrameConverter.h"
 
+#include "GeometryToolbox.h"
+
 #include "../../Resources/Orthanc/Core/Images/Image.h"
 #include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
 #include "../../Resources/Orthanc/Core/OrthancException.h"
@@ -71,33 +73,41 @@ namespace OrthancStone
   }
 
 
-  void DicomFrameConverter::ReadParameters(const DicomDataset& dicom)
+  void DicomFrameConverter::ReadParameters(const OrthancPlugins::IDicomDataset& dicom)
   {
     SetDefaultParameters();
 
-    if (dicom.HasTag(DICOM_TAG_WINDOW_CENTER))
+    Vector c, w;
+    if (GeometryToolbox::ParseVector(c, dicom, OrthancPlugins::DICOM_TAG_WINDOW_CENTER) &&
+        GeometryToolbox::ParseVector(c, dicom, OrthancPlugins::DICOM_TAG_WINDOW_WIDTH))
     {
-      Vector c, w;
-      dicom.GetVectorValue(c, DICOM_TAG_WINDOW_CENTER);
-      dicom.GetVectorValue(w, DICOM_TAG_WINDOW_WIDTH);
-
-      if (c.size() > 0 && w.size() > 0)
+      if (c.size() > 0 && 
+          w.size() > 0)
       {
         defaultWindowCenter_ = static_cast<float>(c[0]);
         defaultWindowWidth_ = static_cast<float>(w[0]);
       }
     }
 
-    isSigned_ = (dicom.GetIntegerValue(DICOM_TAG_PIXEL_REPRESENTATION) == 1);  // Type 1 tag, must be present
+    OrthancPlugins::DicomDatasetReader reader(dicom);
 
-    if (dicom.HasTag(DICOM_TAG_RESCALE_INTERCEPT))
+    int tmp;
+    if (!reader.GetIntegerValue(tmp, OrthancPlugins::DICOM_TAG_PIXEL_REPRESENTATION))
     {
-      rescaleIntercept_ = dicom.GetFloatValue(DICOM_TAG_RESCALE_INTERCEPT);
-      rescaleSlope_ = dicom.GetFloatValue(DICOM_TAG_RESCALE_SLOPE);
+      // Type 1 tag, must be present
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+    }
+
+    isSigned_ = (tmp == 1);
+
+    if (reader.GetFloatValue(rescaleIntercept_, OrthancPlugins::DICOM_TAG_RESCALE_INTERCEPT) &&
+        reader.GetFloatValue(rescaleSlope_, OrthancPlugins::DICOM_TAG_RESCALE_SLOPE))
+    {
       hasRescale_ = true;
     }
 
-    std::string photometric = dicom.GetStringValue(DICOM_TAG_PHOTOMETRIC_INTERPRETATION);  // Type 1 tag, must be present
+    // Type 1 tag, must be present
+    std::string photometric = reader.GetMandatoryStringValue(OrthancPlugins::DICOM_TAG_PHOTOMETRIC_INTERPRETATION);
     photometric = Orthanc::Toolbox::StripSpaces(photometric);
     isColor_ = (photometric != "MONOCHROME1" &&
                 photometric != "MONOCHROME2");

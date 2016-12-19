@@ -32,9 +32,10 @@
 
 #pragma once
 
-#include "DicomDataset.h"
-
 #include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/IDicomDataset.h"
+
+#include <memory>
 
 namespace OrthancStone
 {
@@ -66,7 +67,7 @@ namespace OrthancStone
 
     Orthanc::PixelFormat GetExpectedPixelFormat() const;
 
-    void ReadParameters(const DicomDataset& dicom);
+    void ReadParameters(const OrthancPlugins::IDicomDataset& dicom);
 
     float GetDefaultWindowCenter() const
     {

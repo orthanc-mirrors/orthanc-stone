@@ -42,9 +42,10 @@ namespace OrthancStone
   {
   private:
     std::auto_ptr<ISeriesLoader>  loader_;
-    std::auto_ptr<DicomDataset>   currentDataset_;
     size_t                        currentFrame_;
     bool                          fast_;
+
+    std::auto_ptr<OrthancPlugins::IDicomDataset>  currentDataset_;
 
     void ReadCurrentFrameDataset(size_t frame);
 

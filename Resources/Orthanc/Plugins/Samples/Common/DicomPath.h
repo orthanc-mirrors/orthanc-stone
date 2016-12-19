@@ -50,30 +50,30 @@ namespace OrthancPlugins
     const Prefix& GetPrefixItem(size_t depth) const;
 
   public:
-    DicomPath(const DicomTag& finalTag) :
+    DicomPath(DicomTag finalTag) :
     finalTag_(finalTag)
     {
     }
 
-    DicomPath(const DicomTag& sequence,
+    DicomPath(DicomTag sequence,
               size_t index,
-              const DicomTag& tag);
+              DicomTag tag);
 
-    DicomPath(const DicomTag& sequence1,
+    DicomPath(DicomTag sequence1,
               size_t index1,
-              const DicomTag& sequence2,
+              DicomTag sequence2,
               size_t index2,
-              const DicomTag& tag);
+              DicomTag tag);
 
-    DicomPath(const DicomTag& sequence1,
+    DicomPath(DicomTag sequence1,
               size_t index1,
-              const DicomTag& sequence2,
+              DicomTag sequence2,
               size_t index2,
-              const DicomTag& sequence3,
+              DicomTag sequence3,
               size_t index3,
-              const DicomTag& tag);
+              DicomTag tag);
 
-    void AddToPrefix(const DicomTag& tag,
+    void AddToPrefix(DicomTag tag,
                      size_t position)
     {
       prefix_.push_back(std::make_pair(tag, position));

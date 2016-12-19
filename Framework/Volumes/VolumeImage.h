@@ -64,16 +64,16 @@ namespace OrthancStone
 
 
   private:
-    std::auto_ptr<ISeriesLoader>         loader_;
-    std::auto_ptr<ImageBuffer3D>         buffer_;
-    std::vector<boost::thread*>          threads_;
-    bool                                 started_;
-    bool                                 continue_;
-    ObserversRegistry<ISliceableVolume>  observers_;
-    bool                                 loadingComplete_;
-    MessagingToolbox::Timestamp          lastUpdate_;
-    std::auto_ptr<DicomDataset>          referenceDataset_;
-    std::auto_ptr<IDownloadPolicy>       policy_;
+    std::auto_ptr<ISeriesLoader>                  loader_;
+    std::auto_ptr<ImageBuffer3D>                  buffer_;
+    std::vector<boost::thread*>                   threads_;
+    bool                                          started_;
+    bool                                          continue_;
+    ObserversRegistry<ISliceableVolume>           observers_;
+    bool                                          loadingComplete_;
+    MessagingToolbox::Timestamp                   lastUpdate_;
+    std::auto_ptr<OrthancPlugins::IDicomDataset>  referenceDataset_;
+    std::auto_ptr<IDownloadPolicy>                policy_;
     
     std::auto_ptr<ParallelSlices>        axialGeometry_;
     std::auto_ptr<ParallelSlices>        coronalGeometry_;

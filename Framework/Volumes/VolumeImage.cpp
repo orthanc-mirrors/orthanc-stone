@@ -140,7 +140,7 @@ namespace OrthancStone
     buffer_->SetAxialGeometry(loader_->GetGeometry().GetSlice(0));
 
     double spacingX, spacingY;
-    referenceDataset_->GetPixelSpacing(spacingX, spacingY);
+    GeometryToolbox::GetPixelSpacing(spacingX, spacingY, *referenceDataset_);
     buffer_->SetVoxelDimensions(spacingX, spacingY, spacingZ);
 
     // These 3 values are only used to speed up the LayerFactory

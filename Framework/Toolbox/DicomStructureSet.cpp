@@ -34,6 +34,7 @@
 
 #include "../../Resources/Orthanc/Core/Logging.h"
 #include "../../Resources/Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/FullOrthancDataset.h"
 #include "../Messaging/MessagingToolbox.h"
 
 #include <stdio.h>
@@ -41,27 +42,17 @@
 
 namespace OrthancStone
 {
-  static const Json::Value& GetSequence(const Json::Value& instance,
-                                        uint16_t group,
-                                        uint16_t element)
-  {
-    char buf[16];
-    sprintf(buf, "%04x,%04x", group, element);
-
-    if (instance.type() != Json::objectValue ||
-        !instance.isMember(buf) ||
-        instance[buf].type() != Json::objectValue ||
-        !instance[buf].isMember("Type") ||
-        !instance[buf].isMember("Value") ||
-        instance[buf]["Type"].type() != Json::stringValue ||
-        instance[buf]["Value"].type() != Json::arrayValue ||
-        instance[buf]["Type"].asString() != "Sequence")
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-    }
-
-    return instance[buf]["Value"];
-  }
+  static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_GEOMETRIC_TYPE(0x3006, 0x0042);
+  static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_IMAGE_SEQUENCE(0x3006, 0x0016);
+  static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_SEQUENCE(0x3006, 0x0040);
+  static const OrthancPlugins::DicomTag DICOM_TAG_NUMBER_OF_CONTOUR_POINTS(0x3006, 0x0046);
+  static const OrthancPlugins::DicomTag DICOM_TAG_REFERENCED_SOP_INSTANCE_UID(0x0008, 0x1155);
+  static const OrthancPlugins::DicomTag DICOM_TAG_ROI_CONTOUR_SEQUENCE(0x3006, 0x0039);
+  static const OrthancPlugins::DicomTag DICOM_TAG_ROI_DISPLAY_COLOR(0x3006, 0x002a);
+  static const OrthancPlugins::DicomTag DICOM_TAG_ROI_NAME(0x3006, 0x0026);
+  static const OrthancPlugins::DicomTag DICOM_TAG_RT_ROI_INTERPRETED_TYPE(0x3006, 0x00a4);
+  static const OrthancPlugins::DicomTag DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE(0x3006, 0x0080);
+  static const OrthancPlugins::DicomTag DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE(0x3006, 0x0020);
 
 
   static uint8_t ConvertColor(double v)
@@ -83,17 +74,26 @@ namespace OrthancStone
 
   SliceGeometry DicomStructureSet::ExtractSliceGeometry(double& sliceThickness,
                                                         OrthancPlugins::IOrthancConnection& orthanc,
-                                                        const Json::Value& contour)
+                                                        const OrthancPlugins::IDicomDataset& tags,
+                                                        size_t contourIndex,
+                                                        size_t sliceIndex)
   {
-    const Json::Value& sequence = GetSequence(contour, 0x3006, 0x0016);
+    using namespace OrthancPlugins;
 
-    if (sequence.size() != 1)
+    size_t size;
+    if (!tags.GetSequenceSize(size, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, contourIndex,
+                                              DICOM_TAG_CONTOUR_SEQUENCE, sliceIndex,
+                                              DICOM_TAG_CONTOUR_IMAGE_SEQUENCE)) ||
+        size != 1)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
     }
 
-    DicomDataset contourImageSequence(sequence[0]);
-    std::string parentUid = contourImageSequence.GetStringValue(std::make_pair(0x0008, 0x1155));
+    DicomDatasetReader reader(tags);
+    std::string parentUid = reader.GetMandatoryStringValue(DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, contourIndex,
+                                                                     DICOM_TAG_CONTOUR_SEQUENCE, sliceIndex,
+                                                                     DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
+                                                                     DICOM_TAG_REFERENCED_SOP_INSTANCE_UID));
 
     std::string post;
     orthanc.RestApiPost(post, "/tools/lookup", parentUid);
@@ -135,32 +135,18 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
 
-    Json::Value parentTags;
-    MessagingToolbox::RestApiGet(parentTags, orthanc, "/instances/" + tmp[0]["ID"].asString() + "/tags?simplify");
-      
-    if (parentTags.type() != Json::objectValue ||
-        !parentTags.isMember("ImageOrientationPatient") ||
-        !parentTags.isMember("ImagePositionPatient") ||
-        parentTags["ImageOrientationPatient"].type() != Json::stringValue ||
-        parentTags["ImagePositionPatient"].type() != Json::stringValue)
+    FullOrthancDataset parentTags(orthanc, "/instances/" + tmp[0]["ID"].asString() + "/tags");
+    SliceGeometry slice(parentTags);
+
+    Vector v;
+    if (GeometryToolbox::ParseVector(v, parentTags, DICOM_TAG_SLICE_THICKNESS) &&
+        v.size() > 0)
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);          
+      sliceThickness = v[0];
     }
-
-    SliceGeometry slice(parentTags["ImagePositionPatient"].asString(),
-                        parentTags["ImageOrientationPatient"].asString());
-                          
-    sliceThickness = 1;  // 1 mm by default
-
-    if (parentTags.isMember("SliceThickness") &&
-        parentTags["SliceThickness"].type() == Json::stringValue)
+    else
     {
-      Vector tmp;
-      GeometryToolbox::ParseVector(tmp, parentTags["SliceThickness"].asString());
-      if (tmp.size() > 0)
-      {
-        sliceThickness = tmp[0];
-      }
+      sliceThickness = 1;  // 1 mm by default
     }
 
     if (isFirst)
@@ -201,68 +187,87 @@ namespace OrthancStone
   DicomStructureSet::DicomStructureSet(OrthancPlugins::IOrthancConnection& orthanc,
                                        const std::string& instanceId)
   {
-    Json::Value instance;
-    MessagingToolbox::RestApiGet(instance, orthanc, "/instances/" + instanceId + "/tags");
- 
-    Json::Value rtRoiObservationSequence = GetSequence(instance, 0x3006, 0x0080);
-    Json::Value roiContourSequence = GetSequence(instance, 0x3006, 0x0039);
-    Json::Value structureSetRoiSequence = GetSequence(instance, 0x3006, 0x0020);
+    using namespace OrthancPlugins;
 
-    Json::Value::ArrayIndex count = rtRoiObservationSequence.size();
-    if (count != roiContourSequence.size() ||
-        count != structureSetRoiSequence.size())
+    FullOrthancDataset tags(orthanc, "/instances/" + instanceId + "/tags");
+    DicomDatasetReader reader(tags);
+    
+    size_t count, tmp;
+    if (!tags.GetSequenceSize(count, DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE) ||
+        !tags.GetSequenceSize(tmp, DICOM_TAG_ROI_CONTOUR_SEQUENCE) ||
+        tmp != count ||
+        !tags.GetSequenceSize(tmp, DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE) ||
+        tmp != count)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
-      
+
     structures_.resize(count);
-    for (Json::Value::ArrayIndex i = 0; i < count; i++)
+    for (size_t i = 0; i < count; i++)
     {
-      DicomDataset observation(rtRoiObservationSequence[i]);
-      DicomDataset roi(structureSetRoiSequence[i]);
-      DicomDataset content(roiContourSequence[i]);
+      structures_[i].interpretation_ = reader.GetStringValue(DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
+                                                                       DICOM_TAG_RT_ROI_INTERPRETED_TYPE),
+                                                             "No interpretation");
 
-      structures_[i].interpretation_ = observation.GetStringValue(std::make_pair(0x3006, 0x00a4), "No interpretation");
-      structures_[i].name_ = roi.GetStringValue(std::make_pair(0x3006, 0x0026), "No name");
-      structures_[i].red_ = 255;
-      structures_[i].green_ = 0;
-      structures_[i].blue_ = 0;
-
-      DicomDataset::Tag tag(0x3006, 0x002a);
+      structures_[i].name_ = reader.GetStringValue(DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
+                                                             DICOM_TAG_ROI_NAME),
+                                                   "No interpretation");
 
       Vector color;
-      if (content.HasTag(tag))
+      if (GeometryToolbox::ParseVector(color, tags, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                              DICOM_TAG_ROI_DISPLAY_COLOR)) &&
+          color.size() == 3)
       {
-        content.GetVectorValue(color, tag);
-        if (color.size() == 3)
-        {
-          structures_[i].red_ = ConvertColor(color[0]);
-          structures_[i].green_ = ConvertColor(color[1]);
-          structures_[i].blue_ = ConvertColor(color[2]);
-        }
+        structures_[i].red_ = ConvertColor(color[0]);
+        structures_[i].green_ = ConvertColor(color[1]);
+        structures_[i].blue_ = ConvertColor(color[2]);
+      }
+      else
+      {
+        structures_[i].red_ = 255;
+        structures_[i].green_ = 0;
+        structures_[i].blue_ = 0;
       }
 
-      const Json::Value& slices = GetSequence(roiContourSequence[i], 0x3006, 0x0040);
+      size_t countSlices;
+      if (!tags.GetSequenceSize(countSlices, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                       DICOM_TAG_CONTOUR_SEQUENCE)))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
 
       LOG(WARNING) << "New RT structure: \"" << structures_[i].name_ 
                    << "\" with interpretation \"" << structures_[i].interpretation_
-                   << "\" containing " << slices.size() << " slices (color: " 
+                   << "\" containing " << countSlices << " slices (color: " 
                    << static_cast<int>(structures_[i].red_) << "," 
                    << static_cast<int>(structures_[i].green_) << ","
                    << static_cast<int>(structures_[i].blue_) << ")";
 
-      for (Json::Value::ArrayIndex j = 0; j < slices.size(); j++)
+      for (size_t j = 0; j < countSlices; j++)
       {
-        DicomDataset slice(slices[j]);
+        unsigned int countPoints;
 
-        unsigned int npoints = slice.GetUnsignedIntegerValue(std::make_pair(0x3006, 0x0046));
-        LOG(INFO) << "Parsing slice containing " << npoints << " vertices";
-
-        if (slice.GetStringValue(std::make_pair(0x3006, 0x0042)) != "CLOSED_PLANAR")
+        if (!reader.GetUnsignedIntegerValue(countPoints, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                                   DICOM_TAG_CONTOUR_SEQUENCE, j,
+                                                                   DICOM_TAG_NUMBER_OF_CONTOUR_POINTS)))
         {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+            
+        LOG(INFO) << "Parsing slice containing " << countPoints << " vertices";
+
+        std::string type = reader.GetMandatoryStringValue(DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                                    DICOM_TAG_CONTOUR_SEQUENCE, j,
+                                                                    DICOM_TAG_CONTOUR_GEOMETRIC_TYPE));
+        if (type != "CLOSED_PLANAR")
+        {
+          LOG(ERROR) << "Cannot handle contour with geometry type: " << type;
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
         }
 
+        // The "CountourData" tag (3006,0050) is too large to be
+        // returned by the "/instances/{id}/tags" URI: Access it using
+        // the raw "/instances/{id}/content/{...}" endpoint
         std::string slicesData;
         orthanc.RestApiGet(slicesData, "/instances/" + instanceId + "/content/3006-0039/" +
                            boost::lexical_cast<std::string>(i) + "/3006-0040/" +
@@ -270,16 +275,16 @@ namespace OrthancStone
 
         Vector points;
         if (!GeometryToolbox::ParseVector(points, slicesData) ||
-            points.size() != 3 * npoints)
+            points.size() != 3 * countPoints)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);          
         }
 
         Polygon polygon;
-        SliceGeometry geometry = ExtractSliceGeometry(polygon.sliceThickness_, orthanc, slices[j]);
+        SliceGeometry geometry = ExtractSliceGeometry(polygon.sliceThickness_, orthanc, tags, i, j);
         polygon.projectionAlongNormal_ = geometry.ProjectAlongNormal(geometry.GetOrigin());
 
-        for (size_t k = 0; k < npoints; k++)
+        for (size_t k = 0; k < countPoints; k++)
         {
           Vector v(3);
           v[0] = points[3 * k];

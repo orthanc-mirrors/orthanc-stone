@@ -35,6 +35,8 @@
 #include "FrameRenderer.h"
 #include "../Messaging/MessagingToolbox.h"
 #include "../../Resources/Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/FullOrthancDataset.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/DicomDatasetReader.h"
 #include "../Toolbox/DicomFrameConverter.h"
 
 namespace OrthancStone
@@ -43,27 +45,14 @@ namespace OrthancStone
                                                          const std::string& instanceId,
                                                          unsigned int frame) :
     orthanc_(orthanc),
-    dicom_(orthanc, instanceId),
     instance_(instanceId),
     frame_(frame)
   {
+    dicom_.reset(new OrthancPlugins::FullOrthancDataset(orthanc, "/instances/" + instanceId + "/tags"));
+
     DicomFrameConverter converter;
-    converter.ReadParameters(dicom_);
+    converter.ReadParameters(*dicom_);
     format_ = converter.GetExpectedPixelFormat();
-  }
-
-
-  SliceGeometry SingleFrameRendererFactory::GetSliceGeometry()
-  {
-    if (dicom_.HasTag(DICOM_TAG_IMAGE_POSITION_PATIENT) &&
-        dicom_.HasTag(DICOM_TAG_IMAGE_ORIENTATION_PATIENT))
-    {
-      return SliceGeometry(dicom_);
-    }
-    else
-    {
-      return SliceGeometry();
-    }
   }
 
 
@@ -75,8 +64,15 @@ namespace OrthancStone
   {
     // Assume that PixelSpacingX == PixelSpacingY == 1
 
-    unsigned int width = dicom_.GetUnsignedIntegerValue(DICOM_TAG_COLUMNS);
-    unsigned int height = dicom_.GetUnsignedIntegerValue(DICOM_TAG_ROWS);
+    OrthancPlugins::DicomDatasetReader reader(*dicom_);
+
+    unsigned int width, height;
+
+    if (!reader.GetUnsignedIntegerValue(width, OrthancPlugins::DICOM_TAG_COLUMNS) ||
+        !reader.GetUnsignedIntegerValue(height, OrthancPlugins::DICOM_TAG_ROWS))
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+    }
 
     x1 = 0;
     y1 = 0;
@@ -89,9 +85,9 @@ namespace OrthancStone
 
   ILayerRenderer* SingleFrameRendererFactory::CreateLayerRenderer(const SliceGeometry& viewportSlice)
   {
-    SliceGeometry frameSlice(dicom_);
+    SliceGeometry frameSlice(*dicom_);
     return FrameRenderer::CreateRenderer(MessagingToolbox::DecodeFrame(orthanc_, instance_, frame_, format_), 
-                                         viewportSlice, frameSlice, dicom_, 1, 1, true);
+                                         viewportSlice, frameSlice, *dicom_, 1, 1, true);
   }
 
 

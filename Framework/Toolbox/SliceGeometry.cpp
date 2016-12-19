@@ -119,13 +119,14 @@ namespace OrthancStone
   }   
 
 
-  SliceGeometry::SliceGeometry(const DicomDataset& dicom)
+  SliceGeometry::SliceGeometry(const OrthancPlugins::IDicomDataset& dicom)
   {
-    if (dicom.HasTag(DICOM_TAG_IMAGE_POSITION_PATIENT) &&
-        dicom.HasTag(DICOM_TAG_IMAGE_ORIENTATION_PATIENT))
+    std::string a, b;
+
+    if (dicom.GetStringValue(a, OrthancPlugins::DICOM_TAG_IMAGE_POSITION_PATIENT) &&
+        dicom.GetStringValue(b, OrthancPlugins::DICOM_TAG_IMAGE_ORIENTATION_PATIENT))
     {
-      Setup(dicom.GetStringValue(DICOM_TAG_IMAGE_POSITION_PATIENT),
-            dicom.GetStringValue(DICOM_TAG_IMAGE_ORIENTATION_PATIENT));
+      Setup(a, b);
     }
     else
     {

@@ -36,6 +36,7 @@
 
 #include "IThreadSafety.h"
 #include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/IDicomDataset.h"
 
 namespace OrthancStone
 {
@@ -51,7 +52,7 @@ namespace OrthancStone
 
     virtual unsigned int GetHeight() = 0;
 
-    virtual DicomDataset* DownloadDicom(size_t index) = 0;
+    virtual OrthancPlugins::IDicomDataset* DownloadDicom(size_t index) = 0;
 
     // This downloads the frame from Orthanc. The resulting pixel
     // format must be Grayscale8, Grayscale16, SignedGrayscale16 or

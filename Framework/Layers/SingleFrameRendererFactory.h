@@ -33,15 +33,16 @@
 #pragma once
 
 #include "ILayerRendererFactory.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
 
 namespace OrthancStone
 {
   class SingleFrameRendererFactory : public ILayerRendererFactory
   {
   private:
-    OrthancPlugins::IOrthancConnection&   orthanc_;
+    OrthancPlugins::IOrthancConnection&           orthanc_;
+    std::auto_ptr<OrthancPlugins::IDicomDataset>  dicom_;
 
-    DicomDataset          dicom_;
     std::string           instance_;
     unsigned int          frame_;
     Orthanc::PixelFormat  format_;
@@ -51,12 +52,15 @@ namespace OrthancStone
                                const std::string& instanceId,
                                unsigned int frame);
 
-    const DicomDataset& GetDataset() const
+    const OrthancPlugins::IDicomDataset& GetDataset() const
     {
-      return dicom_;
+      return *dicom_;
     }
 
-    SliceGeometry GetSliceGeometry();
+    SliceGeometry GetSliceGeometry()
+    {
+      return SliceGeometry(*dicom_);
+    }
 
     virtual bool GetExtent(double& x1,
                            double& y1,

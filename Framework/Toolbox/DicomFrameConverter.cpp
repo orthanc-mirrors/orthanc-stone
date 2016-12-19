@@ -79,7 +79,7 @@ namespace OrthancStone
 
     Vector c, w;
     if (GeometryToolbox::ParseVector(c, dicom, OrthancPlugins::DICOM_TAG_WINDOW_CENTER) &&
-        GeometryToolbox::ParseVector(c, dicom, OrthancPlugins::DICOM_TAG_WINDOW_WIDTH))
+        GeometryToolbox::ParseVector(w, dicom, OrthancPlugins::DICOM_TAG_WINDOW_WIDTH))
     {
       if (c.size() > 0 && 
           w.size() > 0)

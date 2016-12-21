@@ -49,20 +49,20 @@ namespace OrthancPlugins
   }
 
 
-  DicomPath::DicomPath(DicomTag sequence,
+  DicomPath::DicomPath(const DicomTag& sequence,
                        size_t index,
-                       DicomTag tag) :
+                       const DicomTag& tag) :
     finalTag_(tag)
   {
     AddToPrefix(sequence, index);
   }
 
 
-  DicomPath::DicomPath(DicomTag sequence1,
+  DicomPath::DicomPath(const DicomTag& sequence1,
                        size_t index1,
-                       DicomTag sequence2,
+                       const DicomTag& sequence2,
                        size_t index2,
-                       DicomTag tag) :
+                       const DicomTag& tag) :
     finalTag_(tag)
   {
     AddToPrefix(sequence1, index1);
@@ -70,13 +70,13 @@ namespace OrthancPlugins
   }
 
 
-  DicomPath::DicomPath(DicomTag sequence1,
+  DicomPath::DicomPath(const DicomTag& sequence1,
                        size_t index1,
-                       DicomTag sequence2,
+                       const DicomTag& sequence2,
                        size_t index2,
-                       DicomTag sequence3,
+                       const DicomTag& sequence3,
                        size_t index3,
-                       DicomTag tag) :
+                       const DicomTag& tag) :
     finalTag_(tag)
   {
     AddToPrefix(sequence1, index1);

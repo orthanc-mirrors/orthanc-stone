@@ -81,7 +81,23 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_PIXMAN)
   endif()
 
 
-  if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  ##########################
+  ## Portable Google NaCl
+  ##########################
+
+  if (CMAKE_SYSTEM_NAME STREQUAL "PNaCl")
+    # No hardware acceleration
+    set(PIXMAN_DEFINITIONS "${PIXMAN_DEFINITIONS};TLS=__thread")
+
+  elseif (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    ##########################
+    ## Emscripten (asm.js)
+    ##########################
+
+    # No threading support
+    set(PIXMAN_DEFINITIONS "${PIXMAN_DEFINITIONS};PIXMAN_NO_TLS=1;HAVE_GCC_VECTOR_EXTENSIONS")
+
+  elseif (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
     ##########################
     ## Windows 32 or 64
@@ -182,14 +198,6 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_PIXMAN)
       ${PIXMAN_SOURCES_DIR}/pixman/pixman-arm-simd-asm-scaled.S
       ${PIXMAN_SOURCES_DIR}/pixman/pixman-arm-simd.c
       )
-
-    ##########################
-    ## Portable Google NaCl
-    ##########################
-
-  elseif (CMAKE_SYSTEM_NAME STREQUAL "PNaCl")
-    # No hardware acceleration
-    set(PIXMAN_DEFINITIONS "${PIXMAN_DEFINITIONS};TLS=__thread")
 
   else()
     message(FATAL_ERROR "Support your platform here")

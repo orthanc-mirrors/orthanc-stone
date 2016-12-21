@@ -32,7 +32,7 @@
 
 #include "TestCairoWidget.h"
 
-#include "../../Resources/Orthanc/Core/Toolbox.h"
+#include "../../Resources/Orthanc/Core/SystemToolbox.h"
 
 #include <stdio.h>
 
@@ -51,7 +51,7 @@ namespace OrthancStone
 
       NotifyChange();
 
-      Orthanc::Toolbox::USleep(25000);
+      Orthanc::SystemToolbox::USleep(25000);
     }
 
 

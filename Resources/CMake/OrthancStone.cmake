@@ -82,6 +82,7 @@ else()
 
   add_definitions(
     -DORTHANC_SANDBOXED=0
+    -DORTHANC_ENABLE_LOGGING_PLUGIN=0
     )
 
   if (ENABLE_LOGGING)

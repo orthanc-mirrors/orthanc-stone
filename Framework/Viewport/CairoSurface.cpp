@@ -77,8 +77,11 @@ namespace OrthancStone
 
   CairoSurface::CairoSurface(Orthanc::ImageAccessor& accessor)
   {
+    printf("Enter\n");
+
     if (accessor.GetFormat() != Orthanc::PixelFormat_BGRA32)
     {
+      printf("Error 1\n");
       throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
     }      
 
@@ -91,16 +94,20 @@ namespace OrthancStone
       (reinterpret_cast<unsigned char*>(buffer_), CAIRO_FORMAT_RGB24, width_, height_, pitch_);
     if (!surface_)
     {
+      printf("Error 2\n");
       // Should never occur
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
 
     if (cairo_surface_status(surface_) != CAIRO_STATUS_SUCCESS)
     {
+      printf("Error 3\n");
       LOG(ERROR) << "Bad pitch for a Cairo surface";
       cairo_surface_destroy(surface_);
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
+
+    printf("Success\n");
   }
 
 

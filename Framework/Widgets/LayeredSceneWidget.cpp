@@ -397,6 +397,8 @@ namespace OrthancStone
       Renderers::Merge(*renderers_, *pendingRenderers_);
       NotifyChange();
     }
+
+    // TODO Add sleep at this point
   }
     
 

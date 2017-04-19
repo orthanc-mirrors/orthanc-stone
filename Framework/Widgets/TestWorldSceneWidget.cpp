@@ -106,7 +106,7 @@ namespace OrthancStone
 
 
     bool TestWorldSceneWidget::RenderScene(CairoContext& context,
-                                           const ViewportGeometry& view)
+                                           const ViewportGeometry& view) 
     {
       cairo_t* cr = context.GetObject();
 
@@ -114,7 +114,8 @@ namespace OrthancStone
       cairo_set_source_rgb(cr, 0, 0, 0);
       cairo_paint(cr);
 
-      cairo_set_source_rgb(cr, 0, 1, 0);
+      float color = static_cast<float>(count_ % 16) / 15.0f;
+      cairo_set_source_rgb(cr, 0, 1.0f - color, color);
       cairo_rectangle(cr, -10, -.5, 20, 1);
       cairo_fill(cr);
 
@@ -122,8 +123,10 @@ namespace OrthancStone
     }
 
 
-    TestWorldSceneWidget::TestWorldSceneWidget() :
-      interactor_(new Interactor)
+    TestWorldSceneWidget::TestWorldSceneWidget(bool animate) :
+      interactor_(new Interactor),
+      animate_(animate),
+      count_(0)
     {
       SetInteractor(*interactor_);
     }
@@ -138,6 +141,20 @@ namespace OrthancStone
       x2 = 10;
       y1 = -.5;
       y2 = .5;
+    }
+
+
+    void TestWorldSceneWidget::UpdateContent()
+    {
+      if (animate_)
+      {
+        count_++;
+        NotifyChange();
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
     }
   }
 }

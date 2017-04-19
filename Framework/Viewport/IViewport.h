@@ -94,5 +94,9 @@ namespace OrthancStone
 
     virtual void KeyPressed(char key,
                             KeyboardModifiers modifiers) = 0;
+
+    virtual bool HasUpdateContent() = 0;
+
+    virtual void UpdateContent() = 0;
   };
 }

@@ -38,8 +38,6 @@
 #include "../Viewport/CairoContext.h"
 #include "../Toolbox/ObserversRegistry.h"
 
-#include <boost/thread.hpp>
-
 namespace OrthancStone
 {
   class WidgetBase : public IWidget
@@ -48,7 +46,6 @@ namespace OrthancStone
     IStatusBar*                  statusBar_;
     ObserversRegistry<IWidget>   observers_;
     bool                         started_;
-    boost::thread                thread_;
     bool                         backgroundCleared_;
     uint8_t                      backgroundColor_[3];
 
@@ -63,24 +60,18 @@ namespace OrthancStone
 
     void UpdateStatusBar(const std::string& message);
 
-    static void WorkerThread(WidgetBase* that);
-
     IStatusBar* GetStatusBar() const
     {
       return statusBar_;
     }
 
-    virtual bool HasUpdateThread() const = 0;
-
-    virtual void UpdateStep() = 0;
-
-  public:
-    WidgetBase();
-
     bool IsStarted() const
     {
       return started_;
     }
+
+  public:
+    WidgetBase();
 
     void SetBackgroundCleared(bool clear)
     {
@@ -119,5 +110,12 @@ namespace OrthancStone
     virtual void Stop();
 
     virtual bool Render(Orthanc::ImageAccessor& surface);
+
+    virtual bool HasUpdateContent() const
+    {
+      return false;
+    }
+
+    virtual void UpdateContent();
   };
 }

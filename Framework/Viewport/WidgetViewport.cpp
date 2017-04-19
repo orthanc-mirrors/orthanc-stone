@@ -178,18 +178,23 @@ namespace OrthancStone
     {
       return false;
     }
+    
+    Orthanc::ImageAccessor background = background_.GetAccessor();
 
-    if (backgroundChanged_)
+    if (backgroundChanged_ &&
+        !centralWidget_->Render(background))
     {
-      Orthanc::ImageAccessor accessor = background_.GetAccessor();
-      if (!centralWidget_->Render(accessor))
-      {
-        return false;
-      }
+      return false;
     }
 
-    Orthanc::ImageProcessing::Copy(surface, background_.GetAccessor());
+    if (background.GetWidth() != surface.GetWidth() ||
+        background.GetHeight() != surface.GetHeight())
+    {
+      return false;
+    }
 
+    Orthanc::ImageProcessing::Convert(surface, background);
+    
     if (mouseTracker_.get() != NULL)
     {
       mouseTracker_->Render(surface);
@@ -284,6 +289,14 @@ namespace OrthancStone
   {
     boost::mutex::scoped_lock lock(mutex_);
     isMouseOver_ = false;
+
+    if (started_ &&
+        mouseTracker_.get() != NULL)
+    {
+      mouseTracker_->MouseUp();
+      mouseTracker_.reset(NULL);
+    }
+
     observers_.NotifyChange(this);
   }
 
@@ -317,6 +330,32 @@ namespace OrthancStone
         mouseTracker_.get() == NULL)
     {
       centralWidget_->KeyPressed(key, modifiers);
+    }
+  }
+
+
+  bool WidgetViewport::HasUpdateContent()
+  {
+    boost::mutex::scoped_lock lock(mutex_);
+
+    if (centralWidget_.get() != NULL)
+    {
+      return centralWidget_->HasUpdateContent();
+    }
+    else
+    {
+      return false;
+    }
+  }
+   
+
+  void WidgetViewport::UpdateContent()
+  {
+    boost::mutex::scoped_lock lock(mutex_);
+
+    if (centralWidget_.get() != NULL)
+    {
+      centralWidget_->UpdateContent();
     }
   }
 }

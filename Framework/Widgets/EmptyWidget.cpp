@@ -43,4 +43,10 @@ namespace OrthancStone
     Orthanc::ImageProcessing::Set(surface, red_, green_, blue_, 255);
     return true;
   }
+
+  
+  void EmptyWidget::UpdateContent()
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+  }
 }

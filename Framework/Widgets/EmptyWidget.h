@@ -114,5 +114,12 @@ namespace OrthancStone
                             KeyboardModifiers modifiers)
     {
     }
+
+    virtual bool HasUpdateContent() const
+    {
+      return false;
+    }
+
+    virtual void UpdateContent();
   };
 }

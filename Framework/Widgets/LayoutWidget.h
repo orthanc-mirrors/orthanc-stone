@@ -60,15 +60,6 @@ namespace OrthancStone
 
     void ComputeChildrenExtents();
 
-  protected:
-    virtual bool HasUpdateThread() const 
-    {
-      return false;
-    }
-
-    virtual void UpdateStep();
-
-
   public:
     LayoutWidget();
 

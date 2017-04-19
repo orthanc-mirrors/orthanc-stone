@@ -72,13 +72,6 @@ namespace OrthancStone
     Observers                     observers_;
 
   protected:
-    virtual bool HasUpdateThread() const
-    {
-      return true;
-    }
-
-    virtual void UpdateStep();
-
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view);
 
@@ -132,5 +125,12 @@ namespace OrthancStone
     {
       observers_.Unregister(observer);
     }
+
+    virtual bool HasUpdateContent() const
+    {
+      return true;
+    }
+
+    virtual void UpdateContent();
   };
 }

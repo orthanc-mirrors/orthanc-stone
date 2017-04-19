@@ -264,12 +264,6 @@ namespace OrthancStone
   }
 
 
-  void LayoutWidget::UpdateStep()
-  {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-  }
-
-
   LayoutWidget::LayoutWidget() :
     isHorizontal_(true),
     started_(false),

@@ -78,13 +78,6 @@ namespace OrthancStone
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view) = 0;
 
-    virtual bool HasUpdateThread() const
-    {
-      return false;
-    }
-
-    virtual void UpdateStep();
-
     virtual bool RenderCairo(CairoContext& context);
 
     virtual void RenderMouseOverCairo(CairoContext& context,
@@ -112,7 +105,10 @@ namespace OrthancStone
       observers_.Unregister(observer);
     }
 
-    virtual SliceGeometry GetSlice() = 0;
+    virtual SliceGeometry GetSlice()
+    {
+      return SliceGeometry();
+    }
 
     virtual void GetSceneExtent(double& x1,
                                 double& y1,

@@ -47,13 +47,6 @@ namespace OrthancStone
       float         value_;
       bool          animate_;
 
-      virtual bool HasUpdateThread() const
-      {
-        return animate_;
-      }
-
-      virtual void UpdateStep();
-
     protected:
       virtual bool RenderCairo(CairoContext& context);
 
@@ -79,6 +72,13 @@ namespace OrthancStone
     
       virtual void KeyPressed(char key,
                               KeyboardModifiers modifiers);
+
+      virtual bool HasUpdateContent() const
+      {
+        return animate_;
+      }
+      
+      virtual void UpdateContent();
     };
   }
 }

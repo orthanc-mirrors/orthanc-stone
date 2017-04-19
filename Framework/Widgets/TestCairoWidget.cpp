@@ -33,8 +33,6 @@
 
 #include "TestCairoWidget.h"
 
-#include "../../Resources/Orthanc/Core/SystemToolbox.h"
-
 #include <stdio.h>
 
 
@@ -42,7 +40,7 @@ namespace OrthancStone
 {
   namespace Samples
   {
-    void TestCairoWidget::UpdateStep() 
+    void TestCairoWidget::UpdateContent() 
     {
       value_ -= 0.01f;
       if (value_ < 0)
@@ -51,8 +49,6 @@ namespace OrthancStone
       }
 
       NotifyChange();
-
-      Orthanc::SystemToolbox::USleep(25000);
     }
 
 

@@ -92,15 +92,6 @@ namespace OrthancStone
   }
 
 
-  void WidgetBase::WorkerThread(WidgetBase* that)
-  {
-    while (that->started_)
-    {
-      that->UpdateStep();
-    }
-  }
-
-
   WidgetBase::WidgetBase() :
     statusBar_(NULL),
     started_(false),
@@ -133,12 +124,22 @@ namespace OrthancStone
 
   void WidgetBase::Register(IChangeObserver& observer)
   {
+    if (started_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
     observers_.Register(observer);
   }
 
 
   void WidgetBase::Unregister(IChangeObserver& observer)
   {
+    if (started_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
     observers_.Unregister(observer);
   }
 
@@ -147,39 +148,35 @@ namespace OrthancStone
   {
     if (started_)
     {
-      LOG(ERROR) << "Cannot Start() twice";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-
-    started_ = true;
-
-    if (HasUpdateThread())
+    else
     {
-      thread_ = boost::thread(WorkerThread, this);
+      started_ = true;
     }
   }
 
-
+  
   void WidgetBase::Stop()
+  {
+    if (started_)
+    {
+      started_ = false;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+
+  
+  bool WidgetBase::Render(Orthanc::ImageAccessor& surface)
   {
     if (!started_)
     {
-      LOG(ERROR) << "Cannot Stop() if Start() has not been invoked";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-
-    started_ = false;
-
-    if (HasUpdateThread() &&
-        thread_.joinable())
-    {
-      thread_.join();
-    }
-  }
-
-
-  bool WidgetBase::Render(Orthanc::ImageAccessor& surface)
-  {
+    
 #if 0
     ClearBackgroundOrthanc(surface);
 #else
@@ -187,5 +184,11 @@ namespace OrthancStone
 #endif
 
     return true;
+  }
+
+  
+  void WidgetBase::UpdateContent()
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
   }
 }

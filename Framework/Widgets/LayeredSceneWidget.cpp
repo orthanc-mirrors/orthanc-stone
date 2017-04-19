@@ -369,7 +369,7 @@ namespace OrthancStone
   }
 
 
-  void LayeredSceneWidget::UpdateStep()
+  void LayeredSceneWidget::UpdateContent()
   {
     size_t layer = 0;
     bool isLast = true;

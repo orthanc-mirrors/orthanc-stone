@@ -248,12 +248,6 @@ namespace OrthancStone
   };
 
 
-  void WorldSceneWidget::UpdateStep()
-  {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-  }
-
-
   bool WorldSceneWidget::RenderCairo(CairoContext& context)
   {
     ViewportGeometry view;

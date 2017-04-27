@@ -189,6 +189,19 @@ namespace OrthancStone
         widget_->MouseWheel(direction, x - left_, y - top_, modifiers);
       }
     }
+    
+    bool HasRenderMouseOver(int x,
+                            int y)
+    {
+      if (Contains(x, y))
+      {
+        return widget_->HasRenderMouseOver(x - left_, y - top_);
+      }
+      else
+      {
+        return false;
+      }
+    }
   };
 
 
@@ -503,5 +516,20 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
+  }
+
+
+  bool LayoutWidget::HasRenderMouseOver(int x,
+                                        int y)
+  {
+    for (size_t i = 0; i < children_.size(); i++)
+    {
+      if (children_[i]->HasRenderMouseOver(x, y))
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

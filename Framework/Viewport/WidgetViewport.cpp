@@ -204,7 +204,7 @@ namespace OrthancStone
       mouseTracker_.reset(NULL);
     }      
 
-    observers_.NotifyChange(this);;
+    observers_.NotifyChange(this);
   }
 
 
@@ -219,7 +219,7 @@ namespace OrthancStone
     {
       mouseTracker_->MouseUp();
       mouseTracker_.reset(NULL);
-      observers_.NotifyChange(this);;
+      observers_.NotifyChange(this);
     }
   }
 
@@ -235,13 +235,23 @@ namespace OrthancStone
     lastMouseX_ = x;
     lastMouseY_ = y;
 
+    bool repaint = false;
+    
     if (mouseTracker_.get() != NULL)
     {
       mouseTracker_->MouseMove(x, y);
+      repaint = true;
+    }
+    else
+    {
+      repaint = centralWidget_->HasRenderMouseOver(x, y);
     }
 
-    // The scene must be repainted
-    observers_.NotifyChange(this);
+    if (repaint)
+    {
+      // The scene must be repainted, notify the observers
+      observers_.NotifyChange(this);
+    }
   }
 
 

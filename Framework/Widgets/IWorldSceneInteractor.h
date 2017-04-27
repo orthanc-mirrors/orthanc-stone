@@ -47,6 +47,11 @@ namespace OrthancStone
                                                         double y,
                                                         IStatusBar* statusBar) = 0;
 
+    virtual bool HasMouseOver(const WorldSceneWidget& widget,
+                              const SliceGeometry& slice,
+                              double x,
+                              double y) = 0;
+
     virtual void MouseOver(CairoContext& context,
                            WorldSceneWidget& widget,
                            const SliceGeometry& slice,

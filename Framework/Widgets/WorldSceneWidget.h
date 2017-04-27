@@ -137,5 +137,8 @@ namespace OrthancStone
 
     virtual void KeyPressed(char key,
                             KeyboardModifiers modifiers);
+    
+    virtual bool HasRenderMouseOver(int x,
+                                    int y);
   };
 }

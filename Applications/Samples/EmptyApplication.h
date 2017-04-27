@@ -21,26 +21,38 @@
 
 #pragma once
 
-#include "../Framework/Applications/IBasicApplication.h"
+#include "SampleApplicationBase.h"
+
+#include "../../Framework/Widgets/EmptyWidget.h"
 
 namespace OrthancStone
 {
   namespace Samples
   {
-    class SampleApplicationBase : public IBasicApplication
+    class EmptyApplication : public SampleApplicationBase
     {
     public:
-      virtual std::string GetTitle() const
-      {
-        return "Stone of Orthanc - Sample";
-      }
-
       virtual void DeclareCommandLineOptions(boost::program_options::options_description& options)
       {
+        boost::program_options::options_description generic("Sample options");
+        generic.add_options()
+          ("red", boost::program_options::value<int>()->default_value(255), "Background color: red channel")
+          ("green", boost::program_options::value<int>()->default_value(0), "Background color: green channel")
+          ("blue", boost::program_options::value<int>()->default_value(0), "Background color: blue channel")
+          ;
+
+        options.add(generic);    
       }
 
-      virtual void Finalize()
+      virtual void Initialize(BasicApplicationContext& context,
+                              IStatusBar& statusBar,
+                              const boost::program_options::variables_map& parameters)
       {
+        int red = parameters["red"].as<int>();
+        int green = parameters["green"].as<int>();
+        int blue = parameters["blue"].as<int>();
+
+        context.SetCentralWidget(new EmptyWidget(red, green, blue));
       }
     };
   }

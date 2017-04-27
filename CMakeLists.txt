@@ -26,7 +26,7 @@ include(${ORTHANC_ROOT}/Resources/CMake/GoogleTestConfiguration.cmake)
 #####################################################################
 
 macro(BuildSample Target Sample)
-  add_executable(${Target} Samples/SampleMainSdl.cpp)
+  add_executable(${Target} Applications/Samples/SampleMainSdl.cpp)
   set_target_properties(${Target} PROPERTIES COMPILE_DEFINITIONS ORTHANC_STONE_SAMPLE=${Sample})
   target_link_libraries(${Target} OrthancStone)
 endmacro()

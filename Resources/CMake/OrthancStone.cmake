@@ -176,11 +176,13 @@ endif()
 #####################################################################
 
 list(APPEND ORTHANC_STONE_SOURCES
-  ${ORTHANC_STONE_DIR}/Framework/Applications/BasicApplicationContext.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Applications/IBasicApplication.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Applications/Sdl/SdlBuffering.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Applications/Sdl/SdlEngine.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Applications/Sdl/SdlWindow.cpp
+  ${ORTHANC_STONE_DIR}/Applications/BasicApplicationContext.cpp
+  ${ORTHANC_STONE_DIR}/Applications/BinarySemaphore.cpp
+  ${ORTHANC_STONE_DIR}/Applications/IBasicApplication.cpp
+  ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlBuffering.cpp
+  ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlEngine.cpp
+  ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlWindow.cpp
+
   ${ORTHANC_STONE_DIR}/Framework/Layers/CircleMeasureTracker.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/ColorFrameRenderer.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/DicomStructureSetRendererFactory.cpp
@@ -192,7 +194,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Layers/SeriesFrameRendererFactory.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/SiblingSliceLocationFactory.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/SingleFrameRendererFactory.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/BinarySemaphore.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DicomFrameConverter.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DicomStructureSet.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DownloadStack.cpp

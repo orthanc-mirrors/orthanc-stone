@@ -24,7 +24,7 @@
 #if ORTHANC_ENABLE_SDL == 1
 
 #include "SdlBuffering.h"
-#include "../../Toolbox/BinarySemaphore.h"
+#include "../BinarySemaphore.h"
 
 #include <boost/thread.hpp>
 

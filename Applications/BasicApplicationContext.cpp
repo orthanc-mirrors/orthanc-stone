@@ -21,9 +21,9 @@
 
 #include "BasicApplicationContext.h"
 
-#include "../Toolbox/OrthancSeriesLoader.h"
-#include "../Volumes/VolumeImageSimplePolicy.h"
-#include "../Volumes/VolumeImageProgressivePolicy.h"
+#include "../../Framework/Toolbox/OrthancSeriesLoader.h"
+#include "../../Framework/Volumes/VolumeImageSimplePolicy.h"
+#include "../../Framework/Volumes/VolumeImageProgressivePolicy.h"
 
 namespace OrthancStone
 {

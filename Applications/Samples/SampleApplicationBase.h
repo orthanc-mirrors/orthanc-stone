@@ -21,40 +21,27 @@
 
 #pragma once
 
-#if ORTHANC_ENABLE_SDL == 1
-
-#include "SdlWindow.h"
-#include "../../Viewport/CairoSurface.h"
-#include "../../Viewport/IViewport.h"
-
-#include <boost/thread/mutex.hpp>
+#include "../IBasicApplication.h"
 
 namespace OrthancStone
 {
-  class SdlBuffering : public boost::noncopyable
+  namespace Samples
   {
-  private:
-    boost::mutex                 mutex_;
-    std::auto_ptr<CairoSurface>  offscreenSurface_;
-    std::auto_ptr<CairoSurface>  onscreenSurface_;
-    SDL_Surface*                 sdlSurface_;
-    bool                         pendingFrame_;
+    class SampleApplicationBase : public IBasicApplication
+    {
+    public:
+      virtual std::string GetTitle() const
+      {
+        return "Stone of Orthanc - Sample";
+      }
 
-  public:
-    SdlBuffering();
+      virtual void DeclareCommandLineOptions(boost::program_options::options_description& options)
+      {
+      }
 
-    ~SdlBuffering();
-
-    void SetSize(unsigned int width,
-                 unsigned int height,
-                 IViewport& viewport);
-
-    // Returns "true" if a new refresh of the display should be
-    // triggered afterwards
-    bool RenderOffscreen(IViewport& viewport);
-
-    void SwapToScreen(SdlWindow& window);
-  };
+      virtual void Finalize()
+      {
+      }
+    };
+  }
 }
-
-#endif

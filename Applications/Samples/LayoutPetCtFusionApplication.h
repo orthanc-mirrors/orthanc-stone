@@ -23,11 +23,11 @@
 
 #include "SampleInteractor.h"
 
-#include "../Framework/Layers/SiblingSliceLocationFactory.h"
-#include "../Framework/Layers/DicomStructureSetRendererFactory.h"
-#include "../Framework/Widgets/LayoutWidget.h"
+#include "../../Framework/Layers/SiblingSliceLocationFactory.h"
+#include "../../Framework/Layers/DicomStructureSetRendererFactory.h"
+#include "../../Framework/Widgets/LayoutWidget.h"
 
-#include "../Resources/Orthanc/Core/Logging.h"
+#include "../../Resources/Orthanc/Core/Logging.h"
 
 namespace OrthancStone
 {

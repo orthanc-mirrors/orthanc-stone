@@ -23,7 +23,7 @@
 
 #include "SampleInteractor.h"
 
-#include "../Resources/Orthanc/Core/Logging.h"
+#include "../../Resources/Orthanc/Core/Logging.h"
 
 namespace OrthancStone
 {

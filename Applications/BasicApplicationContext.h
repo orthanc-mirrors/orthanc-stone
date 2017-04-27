@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include "../Volumes/VolumeImage.h"
-#include "../Viewport/WidgetViewport.h"
-#include "../Widgets/IWorldSceneInteractor.h"
-#include "../Toolbox/DicomStructureSet.h"
+#include "../../Framework/Volumes/VolumeImage.h"
+#include "../../Framework/Viewport/WidgetViewport.h"
+#include "../../Framework/Widgets/IWorldSceneInteractor.h"
+#include "../../Framework/Toolbox/DicomStructureSet.h"
 
 #include <list>
 

@@ -89,9 +89,7 @@ Stone of Orthanc comes with several sample applications in the
 Licensing
 ---------
 
-Stone of Orthanc is licensed under the GPLv3 license, with the OpenSSL
-exception:
-http://people.gnome.org/~markmc/openssl-and-the-gpl.html
+Stone of Orthanc is licensed under the AGPL license.
 
 We also kindly ask scientific works and clinical studies that make
 use of Orthanc to cite Orthanc in their associated publications.

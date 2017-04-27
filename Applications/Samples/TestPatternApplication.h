@@ -23,9 +23,9 @@
 
 #include "SampleApplicationBase.h"
 
-#include "../Framework/Widgets/TestCairoWidget.h"
-#include "../Framework/Widgets/TestWorldSceneWidget.h"
-#include "../Framework/Widgets/LayoutWidget.h"
+#include "../../Framework/Widgets/TestCairoWidget.h"
+#include "../../Framework/Widgets/TestWorldSceneWidget.h"
+#include "../../Framework/Widgets/LayoutWidget.h"
 
 namespace OrthancStone
 {

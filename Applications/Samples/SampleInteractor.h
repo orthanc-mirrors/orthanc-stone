@@ -23,9 +23,9 @@
 
 #include "SampleApplicationBase.h"
 
-#include "../Framework/Widgets/LayeredSceneWidget.h"
-#include "../Framework/Widgets/IWorldSceneInteractor.h"
-#include "../Framework/Toolbox/ParallelSlicesCursor.h"
+#include "../../Framework/Widgets/LayeredSceneWidget.h"
+#include "../../Framework/Widgets/IWorldSceneInteractor.h"
+#include "../../Framework/Toolbox/ParallelSlicesCursor.h"
 
 namespace OrthancStone
 {

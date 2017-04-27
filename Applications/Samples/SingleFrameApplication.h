@@ -23,9 +23,9 @@
 
 #include "SampleApplicationBase.h"
 
-#include "../Framework/Layers/SingleFrameRendererFactory.h"
-#include "../Framework/Widgets/LayeredSceneWidget.h"
-#include "../Resources/Orthanc/Core/Logging.h"
+#include "../../Framework/Layers/SingleFrameRendererFactory.h"
+#include "../../Framework/Widgets/LayeredSceneWidget.h"
+#include "../../Resources/Orthanc/Core/Logging.h"
 
 namespace OrthancStone
 {

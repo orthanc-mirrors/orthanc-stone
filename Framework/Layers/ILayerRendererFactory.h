@@ -27,7 +27,7 @@
 
 namespace OrthancStone
 {
-  class ILayerRendererFactory : public IThreadUnsafe
+  class ILayerRendererFactory : public boost::noncopyable
   {
   public:
     virtual ~ILayerRendererFactory()

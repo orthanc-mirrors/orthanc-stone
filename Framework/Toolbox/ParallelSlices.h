@@ -25,8 +25,7 @@
 
 namespace OrthancStone
 {
-  // This class is NOT thread-safe
-  class ParallelSlices
+  class ParallelSlices : public boost::noncopyable
   {
   private:
     Vector                       normal_;

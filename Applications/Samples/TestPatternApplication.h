@@ -54,9 +54,10 @@ namespace OrthancStone
         layout->SetPadding(10);
         layout->SetBackgroundCleared(true);
         layout->AddWidget(new TestCairoWidget(parameters["animate"].as<bool>()));
-        layout->AddWidget(new TestWorldSceneWidget);
+        layout->AddWidget(new TestWorldSceneWidget(parameters["animate"].as<bool>()));
 
         context.SetCentralWidget(layout.release());
+        context.SetUpdateDelay(25);  // If animation, update the content each 25ms
       }
     };
   }

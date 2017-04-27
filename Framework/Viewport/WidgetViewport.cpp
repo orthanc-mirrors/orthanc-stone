@@ -50,8 +50,6 @@ namespace OrthancStone
 
   void WidgetViewport::SetStatusBar(IStatusBar& statusBar)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     statusBar_ = &statusBar;
 
     if (centralWidget_.get() != NULL)
@@ -63,8 +61,6 @@ namespace OrthancStone
 
   void WidgetViewport::ResetStatusBar()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     statusBar_ = NULL;
 
     if (centralWidget_.get() != NULL)
@@ -80,8 +76,6 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-
-    boost::mutex::scoped_lock lock(mutex_);
 
     if (widget == NULL)
     {
@@ -117,8 +111,6 @@ namespace OrthancStone
 
   void WidgetViewport::Start()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (centralWidget_.get() != NULL)
     {
       centralWidget_->Start();
@@ -130,8 +122,6 @@ namespace OrthancStone
 
   void WidgetViewport::Stop()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     started_ = false;
 
     if (centralWidget_.get() != NULL)
@@ -144,8 +134,6 @@ namespace OrthancStone
   void WidgetViewport::SetSize(unsigned int width,
                                unsigned int height)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     background_.SetSize(width, height);
 
     if (centralWidget_.get() != NULL)
@@ -159,8 +147,6 @@ namespace OrthancStone
 
   bool WidgetViewport::Render(Orthanc::ImageAccessor& surface)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (!started_ ||
         centralWidget_.get() == NULL)
     {
@@ -201,8 +187,6 @@ namespace OrthancStone
                                  int y,
                                  KeyboardModifiers modifiers)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (!started_)
     {
       return;
@@ -226,8 +210,6 @@ namespace OrthancStone
 
   void WidgetViewport::MouseUp()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (!started_)
     {
       return;
@@ -245,8 +227,6 @@ namespace OrthancStone
   void WidgetViewport::MouseMove(int x, 
                                  int y) 
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (!started_)
     {
       return;
@@ -267,7 +247,6 @@ namespace OrthancStone
 
   void WidgetViewport::MouseEnter()
   {
-    boost::mutex::scoped_lock lock(mutex_);
     isMouseOver_ = true;
     observers_.NotifyChange(this);
   }
@@ -275,7 +254,6 @@ namespace OrthancStone
 
   void WidgetViewport::MouseLeave()
   {
-    boost::mutex::scoped_lock lock(mutex_);
     isMouseOver_ = false;
 
     if (started_ &&
@@ -294,8 +272,6 @@ namespace OrthancStone
                                   int y,
                                   KeyboardModifiers modifiers)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (!started_)
     {
       return;
@@ -312,8 +288,6 @@ namespace OrthancStone
   void WidgetViewport::KeyPressed(char key,
                                   KeyboardModifiers modifiers)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (centralWidget_.get() != NULL &&
         mouseTracker_.get() == NULL)
     {
@@ -324,8 +298,6 @@ namespace OrthancStone
 
   bool WidgetViewport::HasUpdateContent()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (centralWidget_.get() != NULL)
     {
       return centralWidget_->HasUpdateContent();
@@ -339,8 +311,6 @@ namespace OrthancStone
 
   void WidgetViewport::UpdateContent()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (centralWidget_.get() != NULL)
     {
       centralWidget_->UpdateContent();

@@ -25,13 +25,13 @@
 
 #include "../Layers/ILayerRendererFactory.h"
 
+#include <boost/thread/mutex.hpp>  // TODO remove
 
 namespace OrthancStone
 {
   class LayeredSceneWidget : public WorldSceneWidget
   {
   public:
-    // Must be thread-safe
     class ISliceObserver : public boost::noncopyable
     {
     public:

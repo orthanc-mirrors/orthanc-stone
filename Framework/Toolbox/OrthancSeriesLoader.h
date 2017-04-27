@@ -28,10 +28,9 @@
 
 namespace OrthancStone
 {
-  // This class is NOT thread-safe
-  // It sorts the slices from a given series, give access to their
-  // geometry and individual frames, making the assumption that there
-  // is a single frame in each instance of the series
+  // This class sorts the slices from a given series, give access to
+  // their geometry and individual frames, making the assumption that
+  // there is a single frame in each instance of the series
   class OrthancSeriesLoader : public ISeriesLoader
   {
   private:

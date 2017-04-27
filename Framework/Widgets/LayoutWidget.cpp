@@ -82,13 +82,23 @@ namespace OrthancStone
     int                     top_;
     unsigned int            width_;
     unsigned int            height_;
+    bool                    hasUpdate_;
 
   public:
     ChildWidget(IWidget* widget) :
-      widget_(widget)
+      widget_(widget),
+      hasUpdate_(widget->HasUpdateContent())
     {
       assert(widget != NULL);
       SetEmpty();
+    }
+
+    void UpdateContent()
+    {
+      if (hasUpdate_)
+      {
+        widget_->UpdateContent();
+      }
     }
 
     IWidget& GetWidget() const
@@ -348,6 +358,11 @@ namespace OrthancStone
 
     ComputeChildrenExtents();
 
+    if (widget->HasUpdateContent())
+    {
+      hasUpdateContent_ = true;
+    }
+
     return *widget;
   }
 
@@ -471,6 +486,22 @@ namespace OrthancStone
     for (size_t i = 0; i < children_.size(); i++)
     {
       children_[i]->GetWidget().KeyPressed(key, modifiers);
+    }
+  }
+
+  
+  void LayoutWidget::UpdateContent()
+  {
+    if (hasUpdateContent_)
+    {
+      for (size_t i = 0; i < children_.size(); i++)
+      {
+        children_[i]->UpdateContent();
+      }
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
   }
 }

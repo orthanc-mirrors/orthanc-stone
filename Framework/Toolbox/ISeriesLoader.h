@@ -23,16 +23,18 @@
 
 #include "ParallelSlices.h"
 
-#include "IThreadSafety.h"
 #include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
 #include "../../Resources/Orthanc/Plugins/Samples/Common/IDicomDataset.h"
 
 namespace OrthancStone
 {
-  // This class is NOT thread-safe
-  class ISeriesLoader : public IThreadUnsafe
+  class ISeriesLoader : public boost::noncopyable
   {
   public:
+    virtual ~ISeriesLoader()
+    {
+    }
+    
     virtual ParallelSlices& GetGeometry() = 0;
 
     virtual Orthanc::PixelFormat GetPixelFormat() = 0;

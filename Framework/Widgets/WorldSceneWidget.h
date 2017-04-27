@@ -24,7 +24,6 @@
 #include "CairoWidget.h"
 #include "IWorldSceneInteractor.h"
 
-#include "../Toolbox/SharedValue.h"
 #include "../Toolbox/ViewportGeometry.h"
 
 namespace OrthancStone
@@ -32,7 +31,6 @@ namespace OrthancStone
   class WorldSceneWidget : public CairoWidget
   {
   public:
-    // Must be thread-safe
     class IWorldObserver : public boost::noncopyable
     {
     public:
@@ -57,9 +55,9 @@ namespace OrthancStone
 
     typedef ObserversRegistry<WorldSceneWidget, IWorldObserver>  Observers;
 
-    SharedValue<ViewportGeometry>  view_;
-    Observers                      observers_;
-    IWorldSceneInteractor*         interactor_;
+    ViewportGeometry       view_;
+    Observers              observers_;
+    IWorldSceneInteractor* interactor_;
 
 
   protected:
@@ -72,7 +70,7 @@ namespace OrthancStone
                                       int x,
                                       int y);
 
-    void SetSceneExtent(SharedValue<ViewportGeometry>::Locker& locker);
+    void SetSceneExtent(ViewportGeometry& geometry);
 
   public:
     WorldSceneWidget() :

@@ -23,7 +23,8 @@
 
 #include <vector>
 #include <boost/noncopyable.hpp>
-#include <boost/thread/mutex.hpp>
+
+#include <boost/thread/mutex.hpp>   // TODO remove
 
 namespace OrthancStone
 {
@@ -40,7 +41,6 @@ namespace OrthancStone
       bool  dequeued_;
     };
 
-    boost::mutex        mutex_;
     std::vector<Node>   nodes_;
     int                 firstNode_;
 
@@ -63,8 +63,8 @@ namespace OrthancStone
       
     public:
       Writer(DownloadStack& that) :
-        that_(that),
-        lock_(that.mutex_)
+        that_(that) 
+        //lock_(that.mutex_)
       {
       }
       

@@ -25,7 +25,6 @@
 
 namespace OrthancStone
 {
-  // Not thread-safe
   class ViewportGeometry
   {
   private:

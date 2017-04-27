@@ -24,7 +24,6 @@
 #include "../../Resources/Orthanc/Core/OrthancException.h"
 
 #include <boost/noncopyable.hpp>
-#include <boost/thread/mutex.hpp>
 #include <set>
 
 namespace OrthancStone
@@ -47,31 +46,17 @@ namespace OrthancStone
 
     typedef std::set<Observer*>  Observers;
 
-    boost::mutex  mutex_;
-    Observers     observers_;
-    bool          empty_;
+    Observers  observers_;
 
   public:
-    ObserversRegistry() : empty_(true)
-    {
-    }
-
     template <typename Functor>
     void Notify(const Source* source,
                 Functor& functor)
     {
-      if (empty_)
-      {
-        // Optimization to avoid the unnecessary locking of the mutex
-        return;
-      }
-
       if (source == NULL)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
-
-      boost::mutex::scoped_lock lock(mutex_);
 
       for (typename Observers::const_iterator observer = observers_.begin();
            observer != observers_.end(); ++observer)
@@ -95,31 +80,17 @@ namespace OrthancStone
 
     void Register(Observer& observer)
     {
-      empty_ = false;
-
-      boost::mutex::scoped_lock lock(mutex_);
       observers_.insert(&observer);
     }
 
     void Unregister(Observer& observer)
     {
-      boost::mutex::scoped_lock lock(mutex_);
       observers_.erase(&observer);
-
-      if (observers_.empty())
-      {
-        empty_ = true;
-      }
     }
 
     bool IsEmpty()
     {
-#if 0
-      boost::mutex::scoped_lock lock(mutex_);
       return observers_.empty();
-#else
-      return empty_;
-#endif
     }
   };
 }

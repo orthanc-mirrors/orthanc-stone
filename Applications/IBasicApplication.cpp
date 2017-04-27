@@ -214,7 +214,11 @@ namespace OrthancStone
       BasicApplicationContext context(orthanc);
 
       application.Initialize(context, statusBar, parameters);
-      context.GetViewport().SetStatusBar(statusBar);
+
+      {
+        BasicApplicationContext::ViewportLocker locker(context);
+        locker.GetViewport().SetStatusBar(statusBar);
+      }
 
       std::string title = application.GetTitle();
       if (title.empty())
@@ -232,7 +236,7 @@ namespace OrthancStone
         LOG(WARNING) << "Starting the application";
 
         SdlWindow window(title.c_str(), width, height, opengl);
-        SdlEngine sdl(window, context.GetViewport());
+        SdlEngine sdl(window, context);
 
         sdl.Run();
 
@@ -248,7 +252,11 @@ namespace OrthancStone
 
       LOG(WARNING) << "The application has stopped";
 
-      context.GetViewport().ResetStatusBar();
+      {
+        BasicApplicationContext::ViewportLocker locker(context);
+        locker.GetViewport().ResetStatusBar();
+      }
+      
       application.Finalize();
     }
     catch (Orthanc::OrthancException& e)

@@ -25,6 +25,8 @@
 #include "../Toolbox/ObserversRegistry.h"
 #include "../Widgets/IWidget.h"
 
+#include <memory>
+
 namespace OrthancStone
 {
   class WidgetViewport : 
@@ -32,7 +34,6 @@ namespace OrthancStone
     public IWidget::IChangeObserver    
   {
   private:
-    boost::mutex                  mutex_;
     std::auto_ptr<IWidget>        centralWidget_;
     IStatusBar*                   statusBar_;
     ObserversRegistry<IViewport>  observers_;

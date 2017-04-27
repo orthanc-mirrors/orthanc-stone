@@ -21,14 +21,13 @@
 
 #pragma once
 
-#include "../Toolbox/IThreadSafety.h"
+#include <boost/noncopyable.hpp>
 
 namespace OrthancStone
 {
-  class ISliceableVolume : public IThreadSafe
+  class ISliceableVolume : public boost::noncopyable
   {
   public:
-    // Must be thread-safe
     class IChangeObserver : public boost::noncopyable
     {
     public:
@@ -38,6 +37,10 @@ namespace OrthancStone
 
       virtual void NotifyChange(const ISliceableVolume& volume) = 0;
     };
+
+    virtual ~ISliceableVolume()
+    {
+    }
 
     virtual void Register(IChangeObserver& observer) = 0;
 

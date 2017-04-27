@@ -22,14 +22,17 @@
 #pragma once
 
 #include <string>
-#include "../Toolbox/IThreadSafety.h"
+#include <boost/noncopyable.hpp>
 
 namespace OrthancStone
 {
-  // This class must be thread-safe
-  class IStatusBar : public IThreadSafe
+  class IStatusBar : public boost::noncopyable
   {
   public:
+    virtual ~IStatusBar()
+    {
+    }
+    
     virtual void ClearMessage() = 0;
 
     virtual void SetMessage(const std::string& message) = 0;

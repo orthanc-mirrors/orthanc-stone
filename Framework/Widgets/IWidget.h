@@ -27,7 +27,7 @@
 
 namespace OrthancStone
 {
-  class IWidget : public IThreadUnsafe
+  class IWidget : public boost::noncopyable
   {
   public:
     class IChangeObserver : public boost::noncopyable
@@ -39,6 +39,10 @@ namespace OrthancStone
       
       virtual void NotifyChange(const IWidget& widget) = 0;
     };
+
+    virtual ~IWidget()
+    {
+    }
 
     virtual void SetStatusBar(IStatusBar& statusBar) = 0;
 

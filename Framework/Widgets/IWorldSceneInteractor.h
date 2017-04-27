@@ -32,9 +32,13 @@ namespace OrthancStone
 {
   class WorldSceneWidget;
 
-  class IWorldSceneInteractor : public IThreadSafe
+  class IWorldSceneInteractor : public boost::noncopyable
   {
   public:
+    virtual ~IWorldSceneInteractor()
+    {
+    }
+    
     virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
                                                         const SliceGeometry& slice,
                                                         const ViewportGeometry& view,

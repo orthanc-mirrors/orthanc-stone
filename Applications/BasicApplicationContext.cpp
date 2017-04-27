@@ -27,8 +27,24 @@
 
 namespace OrthancStone
 {
+  void BasicApplicationContext::UpdateThread(BasicApplicationContext* that)
+  {
+    while (!that->stopped_)
+    {
+      {
+        ViewportLocker locker(*that);
+        locker.GetViewport().UpdateContent();
+      }
+      
+      boost::this_thread::sleep(boost::posix_time::milliseconds(that->updateDelay_));
+    }
+  }
+  
+
   BasicApplicationContext::BasicApplicationContext(OrthancPlugins::IOrthancConnection& orthanc) :
-    orthanc_(orthanc)
+    orthanc_(orthanc),
+    stopped_(true),
+    updateDelay_(100)   // By default, 100ms between each refresh of the content
   {
   }
 
@@ -119,11 +135,24 @@ namespace OrthancStone
     }
 
     viewport_.Start();
+
+    if (viewport_.HasUpdateContent())
+    {
+      stopped_ = false;
+      updateThread_ = boost::thread(UpdateThread, this);
+    }
   }
 
 
   void BasicApplicationContext::Stop()
   {
+    stopped_ = true;
+    
+    if (updateThread_.joinable())
+    {
+      updateThread_.join();
+    }
+    
     viewport_.Stop();
 
     for (Volumes::iterator it = volumes_.begin(); it != volumes_.end(); ++it)

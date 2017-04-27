@@ -23,6 +23,8 @@
 
 #include "WidgetBase.h"
 
+#include <vector>
+#include <memory>
 
 namespace OrthancStone
 {
@@ -45,6 +47,7 @@ namespace OrthancStone
     unsigned int                  paddingRight_;
     unsigned int                  paddingBottom_;
     unsigned int                  paddingInternal_;
+    bool                          hasUpdateContent_;
 
     void ComputeChildrenExtents();
 
@@ -123,5 +126,12 @@ namespace OrthancStone
 
     virtual void KeyPressed(char key,
                             KeyboardModifiers modifiers);
+
+    virtual bool HasUpdateContent() const
+    {
+      return hasUpdateContent_;
+    }
+
+    virtual void UpdateContent();
   };
 }

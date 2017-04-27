@@ -40,8 +40,6 @@ namespace OrthancStone
 
   size_t ParallelSlicesCursor::GetSliceCount()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (slices_.get() == NULL)
     {
       return 0;
@@ -55,8 +53,6 @@ namespace OrthancStone
 
   SliceGeometry ParallelSlicesCursor::GetSlice(size_t slice)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (slices_.get() == NULL)
     {
       return SliceGeometry();
@@ -70,8 +66,6 @@ namespace OrthancStone
 
   void ParallelSlicesCursor::SetGeometry(const ParallelSlices& slices)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     slices_.reset(new ParallelSlices(slices));
 
     currentSlice_ = GetDefaultSlice();
@@ -80,8 +74,6 @@ namespace OrthancStone
 
   SliceGeometry ParallelSlicesCursor::GetCurrentSlice()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (slices_.get() != NULL &&
         currentSlice_ < slices_->GetSliceCount())
     {
@@ -96,8 +88,6 @@ namespace OrthancStone
 
   bool ParallelSlicesCursor::SetDefaultSlice()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     size_t slice = GetDefaultSlice();
 
     if (currentSlice_ != slice)
@@ -115,8 +105,6 @@ namespace OrthancStone
   bool ParallelSlicesCursor::ApplyOffset(SliceOffsetMode mode,
                                          int offset)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (slices_.get() == NULL)
     {
       return false;
@@ -215,8 +203,6 @@ namespace OrthancStone
 
   bool ParallelSlicesCursor::LookupSliceContainingPoint(const Vector& p)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     size_t slice;
     double distance;
 

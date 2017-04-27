@@ -99,8 +99,6 @@ namespace OrthancStone
 
   bool DownloadStack::Pop(unsigned int& value)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     assert(CheckInvariants());
 
     if (firstNode_ == NIL)

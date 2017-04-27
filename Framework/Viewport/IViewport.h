@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "../Toolbox/IThreadSafety.h"
 #include "IStatusBar.h"
 #include "../Enumerations.h"
 
@@ -29,8 +28,7 @@
 
 namespace OrthancStone
 {
-  // This class must be thread-safe
-  class IViewport : public IThreadSafe
+  class IViewport : public boost::noncopyable
   {
   public:
     class IChangeObserver : public boost::noncopyable
@@ -42,6 +40,10 @@ namespace OrthancStone
 
       virtual void NotifyChange(const IViewport& scene) = 0;
     };
+
+    virtual ~IViewport()
+    {
+    }
 
     virtual void Register(IChangeObserver& observer) = 0;
 

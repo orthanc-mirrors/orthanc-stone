@@ -25,6 +25,7 @@
 
 #include "SdlBuffering.h"
 #include "../BinarySemaphore.h"
+#include "../BasicApplicationContext.h"
 
 #include <boost/thread.hpp>
 
@@ -33,14 +34,14 @@ namespace OrthancStone
   class SdlEngine : public IViewport::IChangeObserver
   {
   private:
-    SdlWindow&        window_;
-    IViewport&        viewport_;
-    SdlBuffering      buffering_;
-    boost::thread     renderThread_;
-    bool              continue_;
-    BinarySemaphore   renderFrame_;
-    uint32_t          refreshEvent_;
-    bool              viewportChanged_;
+    SdlWindow&                window_;
+    BasicApplicationContext&  context_;
+    SdlBuffering              buffering_;
+    boost::thread             renderThread_;
+    bool                      continue_;
+    BinarySemaphore           renderFrame_;
+    uint32_t                  refreshEvent_;
+    bool                      viewportChanged_;
 
     void RenderFrame();
 
@@ -49,7 +50,8 @@ namespace OrthancStone
     static KeyboardModifiers GetKeyboardModifiers(const uint8_t* keyboardState,
                                                   const int scancodeCount);
 
-    void SetSize(unsigned int width,
+    void SetSize(BasicApplicationContext::ViewportLocker& locker,
+                 unsigned int width,
                  unsigned int height);
 
     void Stop();
@@ -58,7 +60,7 @@ namespace OrthancStone
 
   public:
     SdlEngine(SdlWindow& window,
-              IViewport& viewport);
+              BasicApplicationContext& context);
   
     virtual ~SdlEngine();
 

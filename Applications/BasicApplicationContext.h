@@ -27,6 +27,7 @@
 #include "../../Framework/Toolbox/DicomStructureSet.h"
 
 #include <list>
+#include <boost/thread.hpp>
 
 namespace OrthancStone
 {
@@ -37,24 +38,45 @@ namespace OrthancStone
     typedef std::list<IWorldSceneInteractor*>  Interactors;
     typedef std::list<DicomStructureSet*>      StructureSets;
 
+    static void UpdateThread(BasicApplicationContext* that);
+
     OrthancPlugins::IOrthancConnection&  orthanc_;
 
+    boost::mutex     viewportMutex_;
     WidgetViewport   viewport_;
     Volumes          volumes_;
     Interactors      interactors_;
     StructureSets    structureSets_;
+    boost::thread    updateThread_;
+    bool             stopped_;
+    unsigned int     updateDelay_;
 
   public:
+    class ViewportLocker : public boost::noncopyable
+    {
+    private:
+      boost::mutex::scoped_lock  lock_;
+      IViewport&                 viewport_;
+
+    public:
+      ViewportLocker(BasicApplicationContext& that) :
+        lock_(that.viewportMutex_),
+        viewport_(that.viewport_)
+      {
+      }
+
+      IViewport& GetViewport() const
+      {
+        return viewport_;
+      }
+    };
+
+    
     BasicApplicationContext(OrthancPlugins::IOrthancConnection& orthanc);
 
     ~BasicApplicationContext();
 
     IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
-
-    IViewport& GetViewport()
-    {
-      return viewport_;
-    }
 
     OrthancPlugins::IOrthancConnection& GetOrthancConnection()
     {
@@ -72,5 +94,10 @@ namespace OrthancStone
     void Start();
 
     void Stop();
+
+    void SetUpdateDelay(unsigned int delay)  // In milliseconds
+    {
+      updateDelay_ = delay;
+    }
   };
 }

@@ -26,7 +26,7 @@
 
 namespace OrthancStone
 {
-  // Geometry of a 3D plane, NOT thread-safe
+  // Geometry of a 3D plane
   class SliceGeometry
   {
   private:

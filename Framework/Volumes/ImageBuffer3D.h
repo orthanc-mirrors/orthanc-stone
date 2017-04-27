@@ -22,7 +22,6 @@
 #pragma once
 
 #include "../Enumerations.h"
-#include "../Toolbox/IThreadSafety.h"
 #include "../Toolbox/SliceGeometry.h"
 #include "../Toolbox/ParallelSlices.h"
 
@@ -36,7 +35,7 @@
 
 namespace OrthancStone
 {
-  class ImageBuffer3D : public IThreadSafe
+  class ImageBuffer3D : public boost::noncopyable
   {
   private:
     typedef boost::shared_mutex          Mutex;

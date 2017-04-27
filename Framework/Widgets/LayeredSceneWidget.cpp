@@ -26,6 +26,8 @@
 
 #include "../../Resources/Orthanc/Core/OrthancException.h"
 
+#include <boost/thread/condition_variable.hpp>   // TODO Remove
+
 namespace OrthancStone
 {
   class LayeredSceneWidget::Renderers : public boost::noncopyable

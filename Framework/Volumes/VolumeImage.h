@@ -35,9 +35,13 @@ namespace OrthancStone
   class VolumeImage : public ISliceableVolume
   {
   public:
-    class IDownloadPolicy : public IThreadSafe
+    class IDownloadPolicy : public boost::noncopyable
     {
     public:
+      virtual ~IDownloadPolicy()
+      {
+      }
+      
       virtual void Initialize(ImageBuffer3D& buffer,
                               ISeriesLoader& loader) = 0;
 

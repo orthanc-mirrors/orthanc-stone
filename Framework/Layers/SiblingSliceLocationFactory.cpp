@@ -49,7 +49,6 @@ namespace OrthancStone
 
   void SiblingSliceLocationFactory::SetLayerIndex(size_t layerIndex)
   {
-    boost::mutex::scoped_lock lock(mutex_);
     hasLayerIndex_ = true;
     layerIndex_ = layerIndex;
   }
@@ -57,21 +56,18 @@ namespace OrthancStone
 
   void SiblingSliceLocationFactory::SetStyle(const RenderStyle& style)
   {
-    boost::mutex::scoped_lock lock(mutex_);
     style_ = style;
   }
 
 
   RenderStyle SiblingSliceLocationFactory::GetRenderStyle()
   {
-    boost::mutex::scoped_lock lock(mutex_);
     return style_;
   }
 
 
   void SiblingSliceLocationFactory::SetSlice(const SliceGeometry& slice)
   {
-    boost::mutex::scoped_lock lock(mutex_);
     slice_ = slice;
 
     if (hasLayerIndex_)
@@ -84,21 +80,14 @@ namespace OrthancStone
   ILayerRenderer* SiblingSliceLocationFactory::CreateLayerRenderer(const SliceGeometry& viewportSlice)
   {
     Vector p, d;
-    RenderStyle style;
 
+    // Compute the line of intersection between the two slices
+    if (!GeometryToolbox::IntersectTwoPlanes(p, d, 
+                                             slice_.GetOrigin(), slice_.GetNormal(),
+                                             viewportSlice.GetOrigin(), viewportSlice.GetNormal()))
     {
-      boost::mutex::scoped_lock lock(mutex_);
-
-      style = style_;
-
-      // Compute the line of intersection between the two slices
-      if (!GeometryToolbox::IntersectTwoPlanes(p, d, 
-                                               slice_.GetOrigin(), slice_.GetNormal(),
-                                               viewportSlice.GetOrigin(), viewportSlice.GetNormal()))
-      {
-        // The two slice are parallel, don't try and display the intersection
-        return NULL;
-      }
+      // The two slice are parallel, don't try and display the intersection
+      return NULL;
     }
 
     double x1, y1, x2, y2;
@@ -113,7 +102,7 @@ namespace OrthancStone
                                              sx1, sy1, sx2, sy2))
     {
       std::auto_ptr<ILayerRenderer> layer(new LineLayerRenderer(x1, y1, x2, y2));
-      layer->SetLayerStyle(style);
+      layer->SetLayerStyle(style_);
       return layer.release();
     }
     else

@@ -22,14 +22,16 @@
 #pragma once
 
 #include "CairoSurface.h"
-#include "../Toolbox/IThreadSafety.h"
 
 namespace OrthancStone
 {
-  // Not thread-safe
-  class IMouseTracker : public IThreadUnsafe
+  class IMouseTracker : public boost::noncopyable
   {
   public:
+    virtual ~IMouseTracker()
+    {
+    }
+    
     virtual void Render(Orthanc::ImageAccessor& surface) = 0;
 
     virtual void MouseUp() = 0;

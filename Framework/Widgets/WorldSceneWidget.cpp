@@ -129,8 +129,7 @@ namespace OrthancStone
       downX_(x),
       downY_(y)
     {
-      SharedValue<ViewportGeometry>::Locker locker(that_.view_);
-      locker.GetValue().GetPan(previousPanX_, previousPanY_);
+      that_.view_.GetPan(previousPanX_, previousPanY_);
     }
 
     virtual void Render(Orthanc::ImageAccessor& surface)
@@ -144,11 +143,10 @@ namespace OrthancStone
     virtual void MouseMove(int x, 
                            int y)
     {
-      SharedValue<ViewportGeometry>::Locker locker(that_.view_);
-      locker.GetValue().SetPan(previousPanX_ + x - downX_,
-                               previousPanY_ + y - downY_);
+      that_.view_.SetPan(previousPanX_ + x - downX_,
+                         previousPanY_ + y - downY_);
 
-      ViewChangeFunctor functor(locker.GetValue());
+      ViewChangeFunctor functor(that_.view_);
       that_.observers_.Notify(&that_, functor);
     }
   };
@@ -172,9 +170,8 @@ namespace OrthancStone
       downX_(x),
       downY_(y)
     {
-      SharedValue<ViewportGeometry>::Locker locker(that_.view_);
-      oldZoom_ = locker.GetValue().GetZoom();
-      MapMouseToScene(centerX_, centerY_, locker.GetValue(), downX_, downY_);
+      oldZoom_ = that_.view_.GetZoom();
+      MapMouseToScene(centerX_, centerY_, that_.view_, downX_, downY_);
     }
 
     virtual void Render(Orthanc::ImageAccessor& surface)
@@ -191,15 +188,13 @@ namespace OrthancStone
       static const double MIN_ZOOM = -4;
       static const double MAX_ZOOM = 4;
 
-      SharedValue<ViewportGeometry>::Locker locker(that_.view_);
-
-      if (locker.GetValue().GetDisplayHeight() <= 3)
+      if (that_.view_.GetDisplayHeight() <= 3)
       {
         return;   // Cannot zoom on such a small image
       }
 
       double dy = (static_cast<double>(y - downY_) / 
-                   static_cast<double>(locker.GetValue().GetDisplayHeight() - 1)); // In the range [-1,1]
+                   static_cast<double>(that_.view_.GetDisplayHeight() - 1)); // In the range [-1,1]
       double z;
 
       // Linear interpolation from [-1, 1] to [MIN_ZOOM, MAX_ZOOM]
@@ -218,19 +213,19 @@ namespace OrthancStone
 
       z = pow(2.0, z);
 
-      locker.GetValue().SetZoom(oldZoom_ * z);
+      that_.view_.SetZoom(oldZoom_ * z);
 
       // Correct the pan so that the original click point is kept at
       // the same location on the display
       double panX, panY;
-      locker.GetValue().GetPan(panX, panY);
+      that_.view_.GetPan(panX, panY);
 
       int tx, ty;
-      locker.GetValue().MapSceneToDisplay(tx, ty, centerX_, centerY_);
-      locker.GetValue().SetPan(panX + static_cast<double>(downX_ - tx),
+      that_.view_.MapSceneToDisplay(tx, ty, centerX_, centerY_);
+      that_.view_.SetPan(panX + static_cast<double>(downX_ - tx),
                                panY + static_cast<double>(downY_ - ty));
 
-      ViewChangeFunctor functor(locker.GetValue());
+      ViewChangeFunctor functor(that_.view_);
       that_.observers_.Notify(&that_, functor);
     }
   };
@@ -238,16 +233,8 @@ namespace OrthancStone
 
   bool WorldSceneWidget::RenderCairo(CairoContext& context)
   {
-    ViewportGeometry view;
-
-    {
-      SharedValue<ViewportGeometry>::Locker locker(view_);
-      view = locker.GetValue();
-    }
-
-    view.ApplyTransform(context);
-
-    return RenderScene(context, view);
+    view_.ApplyTransform(context);
+    return RenderScene(context, view_);
   }
 
 
@@ -264,11 +251,11 @@ namespace OrthancStone
   }
 
 
-  void WorldSceneWidget::SetSceneExtent(SharedValue<ViewportGeometry>::Locker& locker)
+  void WorldSceneWidget::SetSceneExtent(ViewportGeometry& view)
   {
     double x1, y1, x2, y2;
     GetSceneExtent(x1, y1, x2, y2);
-    locker.GetValue().SetSceneExtent(x1, y1, x2, y2);
+    view.SetSceneExtent(x1, y1, x2, y2);
   }
 
 
@@ -277,21 +264,18 @@ namespace OrthancStone
   {
     CairoWidget::SetSize(width, height);
 
-    {
-      SharedValue<ViewportGeometry>::Locker locker(view_);
-      locker.GetValue().SetDisplaySize(width, height);
+    view_.SetDisplaySize(width, height);
 
-      if (observers_.IsEmpty())
-      {
-        // Without a size observer, use the default view
-        locker.GetValue().SetDefaultView();
-      }
-      else
-      {
-        // With a size observer, let it decide which view to use
-        SizeChangeFunctor functor(locker.GetValue());
-        observers_.Notify(this, functor);
-      }
+    if (observers_.IsEmpty())
+    {
+      // Without a size observer, use the default view
+      view_.SetDefaultView();
+    }
+    else
+    {
+      // With a size observer, let it decide which view to use
+      SizeChangeFunctor functor(view_);
+      observers_.Notify(this, functor);
     }
   }
 
@@ -309,57 +293,41 @@ namespace OrthancStone
 
   void WorldSceneWidget::Start()
   {
-    ViewportGeometry geometry;
-
-    {
-      SharedValue<ViewportGeometry>::Locker locker(view_);
-      SetSceneExtent(locker);
-      geometry = locker.GetValue();
-    }
-
+    SetSceneExtent(view_);
+    
     WidgetBase::Start();
 
-    ViewChangeFunctor functor(geometry);
+    ViewChangeFunctor functor(view_);
     observers_.Notify(this, functor);
   }
       
 
   void WorldSceneWidget::SetDefaultView()
   {
-    ViewportGeometry geometry;
-
-    {
-      SharedValue<ViewportGeometry>::Locker locker(view_);
-      SetSceneExtent(locker);
-      locker.GetValue().SetDefaultView();
-      geometry = locker.GetValue();
-    }
+    SetSceneExtent(view_);
+    view_.SetDefaultView();
 
     NotifyChange();
 
-    ViewChangeFunctor functor(geometry);
+    ViewChangeFunctor functor(view_);
     observers_.Notify(this, functor);
   }
 
 
   void WorldSceneWidget::SetView(const ViewportGeometry& view)
   {
-    {
-      SharedValue<ViewportGeometry>::Locker locker(view_);
-      locker.GetValue() = view;
-    }
+    view_ = view;
 
     NotifyChange();
 
-    ViewChangeFunctor functor(view);
+    ViewChangeFunctor functor(view_);
     observers_.Notify(this, functor);
   }
 
 
   ViewportGeometry WorldSceneWidget::GetView()
   {
-    SharedValue<ViewportGeometry>::Locker locker(view_);
-    return locker.GetValue();
+    return view_;
   }
 
 
@@ -368,15 +336,15 @@ namespace OrthancStone
                                                       int y,
                                                       KeyboardModifiers modifiers)
   {
-    ViewportGeometry view = GetView();
-
     double sceneX, sceneY;
-    MapMouseToScene(sceneX, sceneY, view, x, y);
+    MapMouseToScene(sceneX, sceneY, view_, x, y);
 
-    std::auto_ptr<IWorldSceneMouseTracker> tracker(CreateMouseSceneTracker(view, button, sceneX, sceneY, modifiers));
+    std::auto_ptr<IWorldSceneMouseTracker> tracker
+      (CreateMouseSceneTracker(view_, button, sceneX, sceneY, modifiers));
+
     if (tracker.get() != NULL)
     {
-      return new SceneMouseTracker(view, tracker.release());
+      return new SceneMouseTracker(view_, tracker.release());
     }
 
     switch (button)

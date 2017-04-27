@@ -24,15 +24,11 @@
 #include "ParallelSlices.h"
 #include "../Enumerations.h"
 
-#include <boost/thread/mutex.hpp>
-
 namespace OrthancStone
 {
-  // This class is thread-safe
   class ParallelSlicesCursor : public boost::noncopyable
   {
   private:
-    boost::mutex                   mutex_;
     std::auto_ptr<ParallelSlices>  slices_;
     size_t                         currentSlice_;
 

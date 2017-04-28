@@ -54,6 +54,11 @@ namespace OrthancStone
       }
 
       virtual void UpdateContent();
+
+      virtual bool HasRenderMouseOver()
+      {
+        return true;
+      }
     };
   }
 }

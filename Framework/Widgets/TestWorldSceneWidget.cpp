@@ -48,14 +48,6 @@ namespace OrthancStone
         return NULL;
       }
 
-      virtual bool HasMouseOver(const WorldSceneWidget& widget,
-                                const SliceGeometry& slice,
-                                double x,
-                                double y)
-      {
-        return true;
-      }
-
       virtual void MouseOver(CairoContext& context,
                              WorldSceneWidget& widget,
                              const SliceGeometry& slice,

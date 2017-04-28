@@ -70,8 +70,7 @@ namespace OrthancStone
                                  int x,
                                  int y) = 0;
 
-    virtual bool HasRenderMouseOver(int x,
-                                    int y) = 0;
+    virtual bool HasRenderMouseOver() = 0;
 
     virtual void MouseWheel(MouseWheelDirection direction,
                             int x,

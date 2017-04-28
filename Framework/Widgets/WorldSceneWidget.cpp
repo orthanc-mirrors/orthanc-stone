@@ -409,18 +409,4 @@ namespace OrthancStone
       interactor_->KeyPressed(*this, key, modifiers, GetStatusBar());
     }
   }
-
-  
-  bool WorldSceneWidget::HasRenderMouseOver(int x,
-                                            int y)
-  {
-    if (interactor_)
-    {
-      return interactor_->HasMouseOver(*this, GetSlice(), x, y);
-    }
-    else
-    {
-      return false;
-    }
-  }
 }

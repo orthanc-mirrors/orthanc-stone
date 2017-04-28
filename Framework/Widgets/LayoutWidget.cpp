@@ -190,17 +190,9 @@ namespace OrthancStone
       }
     }
     
-    bool HasRenderMouseOver(int x,
-                            int y)
+    bool HasRenderMouseOver()
     {
-      if (Contains(x, y))
-      {
-        return widget_->HasRenderMouseOver(x - left_, y - top_);
-      }
-      else
-      {
-        return false;
-      }
+      return widget_->HasRenderMouseOver();
     }
   };
 
@@ -519,12 +511,11 @@ namespace OrthancStone
   }
 
 
-  bool LayoutWidget::HasRenderMouseOver(int x,
-                                        int y)
+  bool LayoutWidget::HasRenderMouseOver()
   {
     for (size_t i = 0; i < children_.size(); i++)
     {
-      if (children_[i]->HasRenderMouseOver(x, y))
+      if (children_[i]->HasRenderMouseOver())
       {
         return true;
       }

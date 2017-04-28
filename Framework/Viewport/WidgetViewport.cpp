@@ -244,7 +244,7 @@ namespace OrthancStone
     }
     else
     {
-      repaint = centralWidget_->HasRenderMouseOver(x, y);
+      repaint = centralWidget_->HasRenderMouseOver();
     }
 
     if (repaint)

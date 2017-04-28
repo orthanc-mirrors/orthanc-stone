@@ -29,53 +29,25 @@
 
 namespace OrthancStone
 {
+  void SdlEngine::SetSize(BasicApplicationContext::ViewportLocker& locker,
+                          unsigned int width,
+                          unsigned int height)
+  {
+    locker.GetViewport().SetSize(width, height);
+    surface_.SetSize(width, height);
+  }
+    
+
   void SdlEngine::RenderFrame()
   {
-    if (!viewportChanged_)
-    {
-      return;
-    }
-
-    viewportChanged_ = false;
-
-    bool updated;
-    
+    if (viewportChanged_)
     {
       BasicApplicationContext::ViewportLocker locker(context_);
-      updated = buffering_.RenderOffscreen(locker.GetViewport());
-    }
+      surface_.Render(locker.GetViewport());
 
-    if (updated)
-    {
-      // Do not notify twice when a new frame was rendered, to avoid
-      // spoiling the SDL event queue
-      SDL_Event event;
-      SDL_memset(&event, 0, sizeof(event));
-      event.type = refreshEvent_;
-      event.user.code = 0;
-      event.user.data1 = 0;
-      event.user.data2 = 0;
-      SDL_PushEvent(&event);
+      viewportChanged_ = false;
     }
   }
-
-
-  void SdlEngine::RenderThread(SdlEngine* that)
-  {
-    for (;;)
-    {
-      that->renderFrame_.Wait();
-
-      if (that->continue_)
-      {
-        that->RenderFrame();
-      }
-      else
-      {
-        return;
-      }
-    }
-  }             
 
 
   KeyboardModifiers SdlEngine::GetKeyboardModifiers(const uint8_t* keyboardState,
@@ -126,55 +98,23 @@ namespace OrthancStone
   }
 
 
-  void SdlEngine::SetSize(BasicApplicationContext::ViewportLocker& locker,
-                          unsigned int width,
-                          unsigned int height)
-  {
-    buffering_.SetSize(width, height, locker.GetViewport());
-    viewportChanged_ = true;
-    Refresh();
-  }
-
-
-  void SdlEngine::Stop()
-  {
-    if (continue_)
-    {
-      continue_ = false;
-      renderFrame_.Signal();  // Unlock the render thread
-      renderThread_.join();
-    }
-  }
-
-
-  void SdlEngine::Refresh()
-  {
-    renderFrame_.Signal();
-  }
-
-
   SdlEngine::SdlEngine(SdlWindow& window,
                        BasicApplicationContext& context) :
     window_(window),
     context_(context),
-    continue_(true)
+    surface_(window),
+    viewportChanged_(true)
   {
-    refreshEvent_ = SDL_RegisterEvents(1);
-
     {
       BasicApplicationContext::ViewportLocker locker(context_);
       SetSize(locker, window_.GetWidth(), window_.GetHeight());
       locker.GetViewport().Register(*this);
     }
-
-    renderThread_ = boost::thread(RenderThread, this);
   }
   
 
   SdlEngine::~SdlEngine()
   {
-    Stop();
-
     {
       BasicApplicationContext::ViewportLocker locker(context_);
       locker.GetViewport().Unregister(*this);
@@ -190,11 +130,12 @@ namespace OrthancStone
     bool stop = false;
     while (!stop)
     {
-      Refresh();
+      RenderFrame();
 
       SDL_Event event;
 
-      while (SDL_PollEvent(&event))
+      while (!stop &&
+             SDL_PollEvent(&event))
       {
         BasicApplicationContext::ViewportLocker locker(context_);
 
@@ -202,10 +143,6 @@ namespace OrthancStone
         {
           stop = true;
           break;
-        }
-        else if (event.type == refreshEvent_)
-        {
-          buffering_.SwapToScreen(window_);
         }
         else if (event.type == SDL_MOUSEBUTTONDOWN)
         {
@@ -273,7 +210,8 @@ namespace OrthancStone
             locker.GetViewport().MouseWheel(MouseWheelDirection_Down, x, y, modifiers);
           }
         }
-        else if (event.type == SDL_KEYDOWN)
+        else if (event.type == SDL_KEYDOWN &&
+                 event.key.repeat == 0 /* Ignore key bounce */)
         {
           KeyboardModifiers modifiers = GetKeyboardModifiers(keyboardState, scancodeCount);
 
@@ -311,11 +249,7 @@ namespace OrthancStone
           }
         }
       }
-
-      SDL_Delay(10);   // Necessary for mouse wheel events to work
     }
-
-    Stop();
   }
 
 

@@ -177,10 +177,9 @@ endif()
 
 list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Applications/BasicApplicationContext.cpp
-  ${ORTHANC_STONE_DIR}/Applications/BinarySemaphore.cpp
   ${ORTHANC_STONE_DIR}/Applications/IBasicApplication.cpp
-  ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlBuffering.cpp
   ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlEngine.cpp
+  ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlSurface.cpp
   ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlWindow.cpp
 
   ${ORTHANC_STONE_DIR}/Framework/Layers/CircleMeasureTracker.cpp

@@ -39,7 +39,8 @@ namespace OrthancStone
       LayeredSceneWidget* CreateSeriesWidget(BasicApplicationContext& context,
                                              const std::string& series)
       {
-        std::auto_ptr<ISeriesLoader> loader(new OrthancSeriesLoader(context.GetOrthancConnection(), series));
+        std::auto_ptr<ISeriesLoader> loader
+          (new OrthancSeriesLoader(context.GetWebService().GetConnection(), series));
 
         std::auto_ptr<SampleInteractor> interactor(new SampleInteractor(*loader, false));
 

@@ -65,7 +65,8 @@ namespace OrthancStone
         int frame = parameters["frame"].as<unsigned int>();
 
         std::auto_ptr<SingleFrameRendererFactory>  renderer;
-        renderer.reset(new SingleFrameRendererFactory(context.GetOrthancConnection(), instance, frame));
+        renderer.reset
+          (new SingleFrameRendererFactory(context.GetWebService().GetConnection(), instance, frame));
 
         std::auto_ptr<LayeredSceneWidget> widget(new LayeredSceneWidget);
         widget->SetSlice(renderer->GetSliceGeometry());

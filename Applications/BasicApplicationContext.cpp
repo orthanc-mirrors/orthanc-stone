@@ -41,7 +41,7 @@ namespace OrthancStone
   }
   
 
-  BasicApplicationContext::BasicApplicationContext(OrthancPlugins::IOrthancConnection& orthanc) :
+  BasicApplicationContext::BasicApplicationContext(OrthancWebService& orthanc) :
     orthanc_(orthanc),
     stopped_(true),
     updateDelay_(100)   // By default, 100ms between each refresh of the content
@@ -82,7 +82,8 @@ namespace OrthancStone
                                                         bool isProgressiveDownload,
                                                         size_t downloadThreadCount)
   {
-    std::auto_ptr<VolumeImage> volume(new VolumeImage(new OrthancSeriesLoader(orthanc_, series)));
+    std::auto_ptr<VolumeImage> volume
+      (new VolumeImage(new OrthancSeriesLoader(GetWebService().GetConnection(), series)));
 
     if (isProgressiveDownload)
     {
@@ -104,7 +105,8 @@ namespace OrthancStone
 
   DicomStructureSet& BasicApplicationContext::AddStructureSet(const std::string& instance)
   {
-    std::auto_ptr<DicomStructureSet> structureSet(new DicomStructureSet(orthanc_, instance));
+    std::auto_ptr<DicomStructureSet> structureSet
+      (new DicomStructureSet(GetWebService().GetConnection(), instance));
 
     DicomStructureSet& result = *structureSet;
     structureSets_.push_back(structureSet.release());

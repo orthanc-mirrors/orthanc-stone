@@ -38,7 +38,7 @@ namespace OrthancStone
 {
   namespace MessagingToolbox
   {
-    class Timestamp
+    class Timestamp  // TODO REMOVE THIS
     {
     private:
 #if defined(__native_client__)

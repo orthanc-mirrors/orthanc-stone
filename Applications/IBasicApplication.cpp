@@ -197,9 +197,9 @@ namespace OrthancStone
       }
 
       LOG(WARNING) << "URL to the Orthanc REST API: " << webService.GetUrl();
-      OrthancPlugins::OrthancHttpConnection orthanc(webService);
+      OrthancWebService orthanc(webService);
 
-      if (!MessagingToolbox::CheckOrthancVersion(orthanc))
+      if (!MessagingToolbox::CheckOrthancVersion(orthanc.GetConnection()))
       {
         LOG(ERROR) << "Your version of Orthanc is incompatible with Orthanc Stone, please upgrade";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);

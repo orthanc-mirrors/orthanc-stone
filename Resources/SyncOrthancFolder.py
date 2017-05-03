@@ -26,6 +26,7 @@ FILES = [
     'Core/Enumerations.h',
     'Core/HttpClient.cpp',
     'Core/HttpClient.h',
+    'Core/IDynamicObject.h',
     'Core/Images/Image.cpp',
     'Core/Images/Image.h',
     'Core/Images/ImageAccessor.cpp',

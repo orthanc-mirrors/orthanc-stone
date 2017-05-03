@@ -25,6 +25,7 @@
 #include "../../Framework/Viewport/WidgetViewport.h"
 #include "../../Framework/Widgets/IWorldSceneInteractor.h"
 #include "../../Framework/Toolbox/DicomStructureSet.h"
+#include "../../Framework/Toolbox/OrthancWebService.h"
 
 #include <list>
 #include <boost/thread.hpp>
@@ -40,16 +41,15 @@ namespace OrthancStone
 
     static void UpdateThread(BasicApplicationContext* that);
 
-    OrthancPlugins::IOrthancConnection&  orthanc_;
-
-    boost::mutex     viewportMutex_;
-    WidgetViewport   viewport_;
-    Volumes          volumes_;
-    Interactors      interactors_;
-    StructureSets    structureSets_;
-    boost::thread    updateThread_;
-    bool             stopped_;
-    unsigned int     updateDelay_;
+    OrthancWebService&  orthanc_;
+    boost::mutex        viewportMutex_;
+    WidgetViewport      viewport_;
+    Volumes             volumes_;
+    Interactors         interactors_;
+    StructureSets       structureSets_;
+    boost::thread       updateThread_;
+    bool                stopped_;
+    unsigned int        updateDelay_;
 
   public:
     class ViewportLocker : public boost::noncopyable
@@ -72,17 +72,17 @@ namespace OrthancStone
     };
 
     
-    BasicApplicationContext(OrthancPlugins::IOrthancConnection& orthanc);
+    BasicApplicationContext(OrthancWebService& orthanc);
 
     ~BasicApplicationContext();
 
     IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
 
-    OrthancPlugins::IOrthancConnection& GetOrthancConnection()
+    OrthancWebService& GetWebService()
     {
       return orthanc_;
     }
-
+    
     VolumeImage& AddSeriesVolume(const std::string& series,
                                  bool isProgressiveDownload,
                                  size_t downloadThreadCount);

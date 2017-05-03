@@ -197,6 +197,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DicomStructureSet.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DownloadStack.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/GeometryToolbox.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancWebService.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/MessagingToolbox.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancSeriesLoader.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlices.cpp

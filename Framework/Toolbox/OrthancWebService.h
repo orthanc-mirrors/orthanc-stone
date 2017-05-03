@@ -44,11 +44,11 @@ namespace OrthancStone
       return *orthanc_;
     }
     
-    virtual void ScheduleGetRequest(IRequestObserver& observer,
+    virtual void ScheduleGetRequest(ICallback& callback,
                                     const std::string& uri,
                                     Orthanc::IDynamicObject* payload);
 
-    virtual void SchedulePostRequest(IRequestObserver& observer,
+    virtual void SchedulePostRequest(ICallback& callback,
                                      const std::string& uri,
                                      const std::string& body,
                                      Orthanc::IDynamicObject* payload);

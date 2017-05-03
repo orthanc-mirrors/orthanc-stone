@@ -40,7 +40,7 @@ namespace OrthancStone
     orthanc_.reset(new OrthancPlugins::OrthancHttpConnection(parameters));
   }    
 
-  void OrthancWebService::ScheduleGetRequest(IRequestObserver& observer,
+  void OrthancWebService::ScheduleGetRequest(ICallback& callback,
                                              const std::string& uri,
                                              Orthanc::IDynamicObject* payload)
   {
@@ -50,15 +50,15 @@ namespace OrthancStone
     {
       std::string answer;
       orthanc_->RestApiGet(answer, uri);
-      observer.NotifyAnswer(answer, tmp.release());
+      callback.NotifyAnswer(uri, answer, tmp.release());
     }
     catch (Orthanc::OrthancException&)
     {
-      observer.NotifyError(tmp.release());
+      callback.NotifyError(uri, tmp.release());
     }
   }
 
-  void OrthancWebService::SchedulePostRequest(IRequestObserver& observer,
+  void OrthancWebService::SchedulePostRequest(ICallback& callback,
                                               const std::string& uri,
                                               const std::string& body,
                                               Orthanc::IDynamicObject* payload)
@@ -69,11 +69,11 @@ namespace OrthancStone
     {
       std::string answer;
       orthanc_->RestApiPost(answer, uri, body);
-      observer.NotifyAnswer(answer, tmp.release());
+      callback.NotifyAnswer(uri, answer, tmp.release());
     }
     catch (Orthanc::OrthancException&)
     {
-      observer.NotifyError(tmp.release());
+      callback.NotifyError(uri, tmp.release());
     }
   }
 }

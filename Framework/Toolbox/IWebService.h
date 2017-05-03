@@ -30,16 +30,18 @@ namespace OrthancStone
   class IWebService : public boost::noncopyable
   {
   public:
-    class IRequestObserver : public boost::noncopyable
+    class ICallback : public boost::noncopyable
     {
     public:
-      virtual ~IRequestObserver()
+      virtual ~ICallback()
       {
       }
 
-      virtual void NotifyError(Orthanc::IDynamicObject* payload) = 0;
+      virtual void NotifyError(const std::string& uri,
+                               Orthanc::IDynamicObject* payload) = 0;
 
-      virtual void NotifyAnswer(const std::string& answer,
+      virtual void NotifyAnswer(const std::string& uri,
+                                const std::string& answer,
                                 Orthanc::IDynamicObject* payload) = 0;
     };
     
@@ -47,11 +49,11 @@ namespace OrthancStone
     {
     }
 
-    virtual void ScheduleGetRequest(IRequestObserver& observer,
+    virtual void ScheduleGetRequest(ICallback& callback,
                                     const std::string& uri,
                                     Orthanc::IDynamicObject* payload) = 0;
 
-    virtual void SchedulePostRequest(IRequestObserver& observer,
+    virtual void SchedulePostRequest(ICallback& callback,
                                      const std::string& uri,
                                      const std::string& body,
                                      Orthanc::IDynamicObject* payload) = 0;

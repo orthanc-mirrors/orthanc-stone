@@ -60,6 +60,11 @@ namespace OrthancStone
     Observers                     observers_;
 
   protected:
+    virtual void GetSceneExtent(double& x1,
+                                double& y1,
+                                double& x2,
+                                double& y2);
+
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view);
 
@@ -69,11 +74,6 @@ namespace OrthancStone
     virtual ~LayeredSceneWidget();
 
     virtual SliceGeometry GetSlice();
-
-    virtual void GetSceneExtent(double& x1,
-                                double& y1,
-                                double& x2,
-                                double& y2);
 
     ILayerRendererFactory& AddLayer(size_t& layerIndex,
                                     ILayerRendererFactory* factory);   // Takes ownership

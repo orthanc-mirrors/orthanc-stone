@@ -32,7 +32,6 @@ namespace OrthancStone
     while (!that->stopped_)
     {
       {
-        printf("GOSH\n"); fflush(stdout);
         ViewportLocker locker(*that);
         locker.GetViewport().UpdateContent();
       }

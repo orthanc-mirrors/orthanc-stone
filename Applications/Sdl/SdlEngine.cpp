@@ -247,8 +247,6 @@ namespace OrthancStone
         }
       }
     }
-
-    printf("BYE\n"); fflush(stdout);
   }
 
 

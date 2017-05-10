@@ -26,25 +26,22 @@
 
 namespace OrthancStone
 {
-  void WidgetViewport::UnregisterCentralWidget()
-  {
-    mouseTracker_.reset(NULL);
-
-    if (centralWidget_.get() != NULL)
-    {
-      centralWidget_->Unregister(*this);
-    }
-  }
-
-
   WidgetViewport::WidgetViewport() :
     statusBar_(NULL),
     isMouseOver_(false),
     lastMouseX_(0),
     lastMouseY_(0),
-    backgroundChanged_(false),
-    started_(false)
+    backgroundChanged_(false)
   {
+  }
+
+
+  void WidgetViewport::SetDefaultView()
+  {
+    if (centralWidget_.get() != NULL)
+    {
+      centralWidget_->SetDefaultView();
+    }
   }
 
 
@@ -59,39 +56,19 @@ namespace OrthancStone
   }
 
 
-  void WidgetViewport::ResetStatusBar()
-  {
-    statusBar_ = NULL;
-
-    if (centralWidget_.get() != NULL)
-    {
-      centralWidget_->ResetStatusBar();
-    }
-  }
-
-
   IWidget& WidgetViewport::SetCentralWidget(IWidget* widget)
   {
-    if (started_)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
     if (widget == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    UnregisterCentralWidget();
+    mouseTracker_.reset(NULL);
       
     centralWidget_.reset(widget);
-    centralWidget_->Register(*this);
+    centralWidget_->SetViewport(*this);
 
-    if (statusBar_ == NULL)
-    {
-      centralWidget_->ResetStatusBar();
-    }
-    else
+    if (statusBar_ != NULL)
     {
       centralWidget_->SetStatusBar(*statusBar_);
     }
@@ -106,28 +83,6 @@ namespace OrthancStone
   {
     backgroundChanged_ = true;
     observers_.NotifyChange(this);
-  }
-
-
-  void WidgetViewport::Start()
-  {
-    if (centralWidget_.get() != NULL)
-    {
-      centralWidget_->Start();
-    }
-
-    started_ = true;
-  }
-
-
-  void WidgetViewport::Stop()
-  {
-    started_ = false;
-
-    if (centralWidget_.get() != NULL)
-    {
-      centralWidget_->Stop();
-    }
   }
 
 
@@ -147,8 +102,7 @@ namespace OrthancStone
 
   bool WidgetViewport::Render(Orthanc::ImageAccessor& surface)
   {
-    if (!started_ ||
-        centralWidget_.get() == NULL)
+    if (centralWidget_.get() == NULL)
     {
       return false;
     }
@@ -187,11 +141,6 @@ namespace OrthancStone
                                  int y,
                                  KeyboardModifiers modifiers)
   {
-    if (!started_)
-    {
-      return;
-    }
-
     lastMouseX_ = x;
     lastMouseY_ = y;
 
@@ -210,11 +159,6 @@ namespace OrthancStone
 
   void WidgetViewport::MouseUp()
   {
-    if (!started_)
-    {
-      return;
-    }
-
     if (mouseTracker_.get() != NULL)
     {
       mouseTracker_->MouseUp();
@@ -227,7 +171,7 @@ namespace OrthancStone
   void WidgetViewport::MouseMove(int x, 
                                  int y) 
   {
-    if (!started_)
+    if (centralWidget_.get() == NULL)
     {
       return;
     }
@@ -266,8 +210,7 @@ namespace OrthancStone
   {
     isMouseOver_ = false;
 
-    if (started_ &&
-        mouseTracker_.get() != NULL)
+    if (mouseTracker_.get() != NULL)
     {
       mouseTracker_->MouseUp();
       mouseTracker_.reset(NULL);
@@ -282,11 +225,6 @@ namespace OrthancStone
                                   int y,
                                   KeyboardModifiers modifiers)
   {
-    if (!started_)
-    {
-      return;
-    }
-
     if (centralWidget_.get() != NULL &&
         mouseTracker_.get() == NULL)
     {

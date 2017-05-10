@@ -24,18 +24,17 @@
 #include "IWidget.h"
 
 #include "../Viewport/CairoContext.h"
-#include "../Toolbox/ObserversRegistry.h"
 
 namespace OrthancStone
 {
   class WidgetBase : public IWidget
   {
   private:
-    IStatusBar*                  statusBar_;
-    ObserversRegistry<IWidget>   observers_;
-    bool                         started_;
-    bool                         backgroundCleared_;
-    uint8_t                      backgroundColor_[3];
+    IWidget*     parent_;
+    IViewport*   viewport_;
+    IStatusBar*  statusBar_;
+    bool         backgroundCleared_;
+    uint8_t      backgroundColor_[3];
 
   protected:
     void ClearBackgroundOrthanc(Orthanc::ImageAccessor& target) const;
@@ -44,8 +43,6 @@ namespace OrthancStone
 
     void ClearBackgroundCairo(Orthanc::ImageAccessor& target) const;
 
-    void NotifyChange();
-
     void UpdateStatusBar(const std::string& message);
 
     IStatusBar* GetStatusBar() const
@@ -53,13 +50,16 @@ namespace OrthancStone
       return statusBar_;
     }
 
-    bool IsStarted() const
-    {
-      return started_;
-    }
-
   public:
     WidgetBase();
+
+    virtual void SetDefaultView()
+    {
+    }
+  
+    virtual void SetParent(IWidget& parent);
+    
+    virtual void SetViewport(IViewport& viewport);
 
     void SetBackgroundCleared(bool clear)
     {
@@ -79,23 +79,10 @@ namespace OrthancStone
                             uint8_t& green,
                             uint8_t& blue) const;
 
-    virtual void Register(IChangeObserver& observer);
-
-    virtual void Unregister(IChangeObserver& observer);
-    
     virtual void SetStatusBar(IStatusBar& statusBar)
     {
       statusBar_ = &statusBar;
     }
-
-    virtual void ResetStatusBar()
-    {
-      statusBar_ = NULL;
-    }    
-
-    virtual void Start();
-
-    virtual void Stop();
 
     virtual bool Render(Orthanc::ImageAccessor& surface);
 
@@ -110,5 +97,7 @@ namespace OrthancStone
     {
       return false;
     }
+
+    virtual void NotifyChange();
   };
 }

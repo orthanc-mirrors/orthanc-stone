@@ -24,6 +24,7 @@
 #include "CairoWidget.h"
 #include "IWorldSceneInteractor.h"
 
+#include "../Toolbox/ObserversRegistry.h"
 #include "../Toolbox/ViewportGeometry.h"
 
 namespace OrthancStone
@@ -83,9 +84,6 @@ namespace OrthancStone
     {
     }
 
-    using WidgetBase::Register;
-    using WidgetBase::Unregister;
-
     void Register(IWorldObserver& observer)
     {
       observers_.Register(observer);
@@ -101,9 +99,7 @@ namespace OrthancStone
 
     void SetInteractor(IWorldSceneInteractor& interactor);
 
-    virtual void Start();
-      
-    void SetDefaultView();
+    virtual void SetDefaultView();
 
     void SetView(const ViewportGeometry& view);
 

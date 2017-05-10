@@ -226,8 +226,6 @@ namespace OrthancStone
         title = "Stone of Orthanc";
       }
 
-      context.Start();
-
       {
         /**************************************************************
          * Run the application inside a SDL window
@@ -238,9 +236,23 @@ namespace OrthancStone
         SdlWindow window(title.c_str(), width, height, opengl);
         SdlEngine sdl(window, context);
 
+        {
+          BasicApplicationContext::ViewportLocker locker(context);
+          locker.GetViewport().Register(sdl);  // (*)
+        }
+
+        context.Start();
         sdl.Run();
 
         LOG(WARNING) << "Stopping the application";
+
+        // Don't move the "Stop()" command below out of the block,
+        // otherwise the application might crash, because the
+        // "SdlEngine" is an observer of the viewport (*) and the
+        // update thread started by "context.Start()" would call a
+        // destructed object (the "SdlEngine" is deleted with the
+        // lexical scope).
+        context.Stop();
       }
 
 
@@ -248,15 +260,7 @@ namespace OrthancStone
        * Finalize the application
        ****************************************************************/
 
-      context.Stop();
-
       LOG(WARNING) << "The application has stopped";
-
-      {
-        BasicApplicationContext::ViewportLocker locker(context);
-        locker.GetViewport().ResetStatusBar();
-      }
-      
       application.Finalize();
     }
     catch (Orthanc::OrthancException& e)

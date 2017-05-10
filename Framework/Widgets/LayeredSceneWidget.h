@@ -24,6 +24,7 @@
 #include "WorldSceneWidget.h"
 
 #include "../Layers/ILayerRendererFactory.h"
+#include "../Toolbox/ObserversRegistry.h"
 
 #include <boost/thread/mutex.hpp>  // TODO remove
 
@@ -96,10 +97,6 @@ namespace OrthancStone
     void InvalidateLayer(unsigned int layer);
 
     void InvalidateAllLayers();
-
-    virtual void Start();
-
-    virtual void Stop();
 
     using WorldSceneWidget::Register;
     using WorldSceneWidget::Unregister;

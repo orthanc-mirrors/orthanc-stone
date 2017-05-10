@@ -269,7 +269,6 @@ namespace OrthancStone
 
   LayoutWidget::LayoutWidget() :
     isHorizontal_(true),
-    started_(false),
     width_(0),
     height_(0),
     paddingLeft_(0),
@@ -285,11 +284,19 @@ namespace OrthancStone
   {
     for (size_t i = 0; i < children_.size(); i++)
     {
-      children_[i]->GetWidget().Unregister(*this);
       delete children_[i];
     }
   }
 
+
+  void LayoutWidget::SetDefaultView()
+  {
+    for (size_t i = 0; i < children_.size(); i++)
+    {
+      children_[i]->GetWidget().SetDefaultView();
+    }
+  }
+  
 
   void LayoutWidget::NotifyChange(const IWidget& widget)
   {
@@ -338,12 +345,6 @@ namespace OrthancStone
 
   IWidget& LayoutWidget::AddWidget(IWidget* widget)  // Takes ownership
   {
-    if (started_)
-    {
-      LOG(ERROR) << "Cannot add child once Start() has been invoked";
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
     if (widget == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
@@ -353,13 +354,9 @@ namespace OrthancStone
     {
       widget->SetStatusBar(*GetStatusBar());
     }
-    else
-    {
-      widget->ResetStatusBar();
-    }
 
     children_.push_back(new ChildWidget(widget));
-    widget->Register(*this);
+    widget->SetParent(*this);
 
     ComputeChildrenExtents();
 
@@ -379,39 +376,6 @@ namespace OrthancStone
     for (size_t i = 0; i < children_.size(); i++)
     {
       children_[i]->GetWidget().SetStatusBar(statusBar);
-    }
-  }
-
-
-  void LayoutWidget::ResetStatusBar()
-  {
-    WidgetBase::ResetStatusBar();
-
-    for (size_t i = 0; i < children_.size(); i++)
-    {
-      children_[i]->GetWidget().ResetStatusBar();
-    }
-  }  
-
-
-  void LayoutWidget::Start()
-  {
-    for (size_t i = 0; i < children_.size(); i++)
-    {
-      children_[i]->GetWidget().Start();
-    }
-
-    WidgetBase::Start();
-  }
-
-
-  void LayoutWidget::Stop()
-  {
-    WidgetBase::Stop();
-
-    for (size_t i = 0; i < children_.size(); i++)
-    {
-      children_[i]->GetWidget().Stop();
     }
   }
 

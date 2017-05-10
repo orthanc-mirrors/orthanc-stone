@@ -28,9 +28,7 @@
 
 namespace OrthancStone
 {
-  class LayoutWidget : 
-    public WidgetBase,
-    public IWidget::IChangeObserver
+  class LayoutWidget : public WidgetBase
   {
   private:
     class LayoutMouseTracker;
@@ -38,7 +36,6 @@ namespace OrthancStone
 
     std::vector<ChildWidget*>     children_;
     bool                          isHorizontal_;
-    bool                          started_;
     unsigned int                  width_;
     unsigned int                  height_;
     std::auto_ptr<IMouseTracker>  mouseTracker_;
@@ -55,6 +52,8 @@ namespace OrthancStone
     LayoutWidget();
 
     virtual ~LayoutWidget();
+
+    virtual void SetDefaultView();
 
     virtual void NotifyChange(const IWidget& widget);
 
@@ -98,12 +97,6 @@ namespace OrthancStone
     IWidget& AddWidget(IWidget* widget);  // Takes ownership
 
     virtual void SetStatusBar(IStatusBar& statusBar);
-
-    virtual void ResetStatusBar();
-
-    virtual void Start();
-
-    virtual void Stop();
 
     virtual void SetSize(unsigned int width,
                          unsigned int height);

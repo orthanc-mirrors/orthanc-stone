@@ -32,6 +32,7 @@ namespace OrthancStone
     while (!that->stopped_)
     {
       {
+        printf("GOSH\n"); fflush(stdout);
         ViewportLocker locker(*that);
         locker.GetViewport().UpdateContent();
       }
@@ -136,8 +137,6 @@ namespace OrthancStone
       (*it)->Start();
     }
 
-    viewport_.Start();
-
     if (viewport_.HasUpdateContent())
     {
       stopped_ = false;
@@ -155,8 +154,6 @@ namespace OrthancStone
       updateThread_.join();
     }
     
-    viewport_.Stop();
-
     for (Volumes::iterator it = volumes_.begin(); it != volumes_.end(); ++it)
     {
       assert(*it != NULL);

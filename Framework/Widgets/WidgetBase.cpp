@@ -27,6 +27,33 @@
 
 namespace OrthancStone
 {
+  void WidgetBase::NotifyChange()
+  {
+    if (parent_ != NULL)
+    {
+      parent_->NotifyChange();
+    }
+
+    if (viewport_ != NULL)
+    {
+      viewport_->NotifyChange(*this);
+    }
+  }
+
+
+  void WidgetBase::SetParent(IWidget& parent)
+  {
+    if (parent_ != NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      parent_ = &parent;
+    }
+  }    
+
+  
   void WidgetBase::ClearBackgroundOrthanc(Orthanc::ImageAccessor& target) const 
   {
     // Clear the background using Orthanc
@@ -65,12 +92,6 @@ namespace OrthancStone
   }
 
 
-  void WidgetBase::NotifyChange()
-  {
-    observers_.NotifyChange(this);
-  }
-
-
   void WidgetBase::UpdateStatusBar(const std::string& message)
   {
     if (statusBar_ != NULL)
@@ -81,8 +102,9 @@ namespace OrthancStone
 
 
   WidgetBase::WidgetBase() :
+    parent_(NULL),
+    viewport_(NULL),
     statusBar_(NULL),
-    started_(false),
     backgroundCleared_(false)
   {
     backgroundColor_[0] = 0;
@@ -91,6 +113,19 @@ namespace OrthancStone
   }
 
 
+  void WidgetBase::SetViewport(IViewport& viewport)
+  {
+    if (viewport_ != NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      viewport_ = &viewport;
+    }
+  }
+
+  
   void WidgetBase::SetBackgroundColor(uint8_t red,
                                       uint8_t green,
                                       uint8_t blue)
@@ -110,61 +145,8 @@ namespace OrthancStone
   }
 
 
-  void WidgetBase::Register(IChangeObserver& observer)
-  {
-    if (started_)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
-    observers_.Register(observer);
-  }
-
-
-  void WidgetBase::Unregister(IChangeObserver& observer)
-  {
-    if (started_)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
-    observers_.Unregister(observer);
-  }
-
-
-  void WidgetBase::Start()
-  {
-    if (started_)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    else
-    {
-      started_ = true;
-    }
-  }
-
-  
-  void WidgetBase::Stop()
-  {
-    if (started_)
-    {
-      started_ = false;
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-  }
-
-  
   bool WidgetBase::Render(Orthanc::ImageAccessor& surface)
   {
-    if (!started_)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    
 #if 0
     ClearBackgroundOrthanc(surface);
 #else

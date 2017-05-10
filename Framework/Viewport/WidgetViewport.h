@@ -29,9 +29,7 @@
 
 namespace OrthancStone
 {
-  class WidgetViewport : 
-    public IViewport,
-    public IWidget::IChangeObserver    
+  class WidgetViewport : public IViewport
   {
   private:
     std::auto_ptr<IWidget>        centralWidget_;
@@ -43,21 +41,13 @@ namespace OrthancStone
     int                           lastMouseY_;
     CairoSurface                  background_;
     bool                          backgroundChanged_;
-    bool                          started_;
-
-    void UnregisterCentralWidget();
 
   public:
     WidgetViewport();
 
-    virtual ~WidgetViewport()
-    {
-      UnregisterCentralWidget();
-    }
+    virtual void SetDefaultView();
 
     virtual void SetStatusBar(IStatusBar& statusBar);
-
-    virtual void ResetStatusBar();
 
     IWidget& SetCentralWidget(IWidget* widget);  // Takes ownership
 
@@ -67,15 +57,6 @@ namespace OrthancStone
     {
       observers_.Register(observer);
     }
-
-    virtual void Unregister(IViewport::IChangeObserver& observer)
-    {
-      observers_.Unregister(observer);
-    }
-
-    virtual void Start();
-
-    virtual void Stop();
 
     virtual void SetSize(unsigned int width,
                          unsigned int height);

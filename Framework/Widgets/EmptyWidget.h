@@ -46,27 +46,23 @@ namespace OrthancStone
     {
     }
 
+    virtual void SetDefaultView()
+    {
+    }
+  
+    virtual void SetParent(OrthancStone::IWidget& widget)
+    {
+    }
+    
+    virtual void SetViewport(IViewport& viewport)
+    {
+    }
+
+    virtual void NotifyChange()
+    {
+    }
+
     virtual void SetStatusBar(IStatusBar& statusBar)
-    {
-    }
-
-    virtual void ResetStatusBar()
-    {
-    }
-
-    virtual void Register(IChangeObserver& observer)
-    {
-    }
-
-    virtual void Unregister(IChangeObserver& observer)
-    {
-    }
-
-    virtual void Start()
-    {
-    }
-
-    virtual void Stop()
     {
     }
 

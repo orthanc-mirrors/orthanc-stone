@@ -24,37 +24,24 @@
 #include "../Enumerations.h"
 #include "../Viewport/IMouseTracker.h"
 #include "../Viewport/IStatusBar.h"
+#include "../Viewport/IViewport.h"
 
 namespace OrthancStone
 {
   class IWidget : public boost::noncopyable
   {
   public:
-    class IChangeObserver : public boost::noncopyable
-    {
-    public:
-      virtual ~IChangeObserver()
-      {
-      }
-      
-      virtual void NotifyChange(const IWidget& widget) = 0;
-    };
-
     virtual ~IWidget()
     {
     }
 
+    virtual void SetDefaultView() = 0;
+
+    virtual void SetParent(IWidget& parent) = 0;
+    
+    virtual void SetViewport(IViewport& viewport) = 0;
+
     virtual void SetStatusBar(IStatusBar& statusBar) = 0;
-
-    virtual void ResetStatusBar() = 0;
-
-    virtual void Register(IChangeObserver& observer) = 0;
-
-    virtual void Unregister(IChangeObserver& observer) = 0;
-
-    virtual void Start() = 0;
-
-    virtual void Stop() = 0;
 
     virtual void SetSize(unsigned int width, 
                          unsigned int height) = 0;
@@ -83,5 +70,7 @@ namespace OrthancStone
     virtual bool HasUpdateContent() const = 0;
 
     virtual void UpdateContent() = 0;
+
+    virtual void NotifyChange() = 0;
   };
 }

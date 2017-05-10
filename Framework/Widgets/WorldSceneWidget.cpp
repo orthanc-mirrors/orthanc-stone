@@ -282,25 +282,9 @@ namespace OrthancStone
 
   void WorldSceneWidget::SetInteractor(IWorldSceneInteractor& interactor)
   {
-    if (IsStarted())
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
     interactor_ = &interactor;
   }
 
-
-  void WorldSceneWidget::Start()
-  {
-    SetSceneExtent(view_);
-    
-    WidgetBase::Start();
-
-    ViewChangeFunctor functor(view_);
-    observers_.Notify(this, functor);
-  }
-      
 
   void WorldSceneWidget::SetDefaultView()
   {

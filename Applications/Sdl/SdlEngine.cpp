@@ -105,20 +105,11 @@ namespace OrthancStone
     surface_(window),
     viewportChanged_(true)
   {
-    {
-      BasicApplicationContext::ViewportLocker locker(context_);
-      SetSize(locker, window_.GetWidth(), window_.GetHeight());
-      locker.GetViewport().Register(*this);
-    }
   }
   
 
   SdlEngine::~SdlEngine()
   {
-    {
-      BasicApplicationContext::ViewportLocker locker(context_);
-      locker.GetViewport().Unregister(*this);
-    }
   }
 
 
@@ -127,6 +118,12 @@ namespace OrthancStone
     int scancodeCount = 0;
     const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
 
+    {
+      BasicApplicationContext::ViewportLocker locker(context_);
+      SetSize(locker, window_.GetWidth(), window_.GetHeight());
+      locker.GetViewport().SetDefaultView();
+    }
+    
     bool stop = false;
     while (!stop)
     {
@@ -250,6 +247,8 @@ namespace OrthancStone
         }
       }
     }
+
+    printf("BYE\n"); fflush(stdout);
   }
 
 

@@ -395,7 +395,6 @@ namespace OrthancStone
   bool LayeredSceneWidget::RenderScene(CairoContext& context,
                                        const ViewportGeometry& view) 
   {
-    assert(IsStarted());
     return renderers_->RenderScene(context, view);
   }
 
@@ -490,12 +489,6 @@ namespace OrthancStone
   ILayerRendererFactory& LayeredSceneWidget::AddLayer(size_t& layerIndex,
                                                       ILayerRendererFactory* factory)
   {
-    if (IsStarted())
-    {
-      // Start() has already been invoked
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
     layerIndex = layers_.size();
     layers_.push_back(new Layer(factory, *pendingLayers_, layers_.size()));
 
@@ -586,14 +579,9 @@ namespace OrthancStone
   }
 
 
+#if 0
   void LayeredSceneWidget::Start()
   {
-    if (IsStarted())
-    {
-      // Start() has already been invoked
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
     for (size_t i = 0; i < layers_.size(); i++)
     {
       layers_[i]->Start();
@@ -610,14 +598,7 @@ namespace OrthancStone
 
   void LayeredSceneWidget::Stop()
   {
-    if (!IsStarted())
-    {
-      // Stop() has already been invoked
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
     pendingLayers_->Stop();
-    WorldSceneWidget::Stop();
 
     renderers_.reset(NULL);
     pendingRenderers_.reset(NULL);
@@ -627,4 +608,5 @@ namespace OrthancStone
       layers_[i]->Stop();
     }
   }
+#endif
 }

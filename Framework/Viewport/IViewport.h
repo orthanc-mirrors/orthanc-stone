@@ -28,6 +28,8 @@
 
 namespace OrthancStone
 {
+  class IWidget;   // Forward declaration
+  
   class IViewport : public boost::noncopyable
   {
   public:
@@ -45,17 +47,11 @@ namespace OrthancStone
     {
     }
 
+    virtual void SetDefaultView() = 0;
+
     virtual void Register(IChangeObserver& observer) = 0;
 
-    virtual void Unregister(IChangeObserver& observer) = 0;
-
     virtual void SetStatusBar(IStatusBar& statusBar) = 0;
-
-    virtual void ResetStatusBar() = 0;
-
-    virtual void Start() = 0;
-
-    virtual void Stop() = 0;
 
     virtual void SetSize(unsigned int width,
                          unsigned int height) = 0;
@@ -88,5 +84,8 @@ namespace OrthancStone
     virtual bool HasUpdateContent() = 0;
 
     virtual void UpdateContent() = 0;
+
+    // Should only be called from IWidget
+    virtual void NotifyChange(const IWidget& widget) = 0;
   };
 }

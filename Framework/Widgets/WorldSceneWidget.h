@@ -96,11 +96,6 @@ namespace OrthancStone
       observers_.Unregister(observer);
     }
 
-    virtual SliceGeometry GetSlice()
-    {
-      return SliceGeometry();
-    }
-
     virtual void SetSize(unsigned int width,
                          unsigned int height);
 

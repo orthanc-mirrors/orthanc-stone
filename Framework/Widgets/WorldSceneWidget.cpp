@@ -368,7 +368,7 @@ namespace OrthancStone
   {
     if (interactor_)
     {
-      interactor_->MouseOver(context, *this, GetSlice(), view, x, y, GetStatusBar());
+      interactor_->MouseOver(context, *this, view, x, y, GetStatusBar());
     }
   }
 
@@ -380,7 +380,7 @@ namespace OrthancStone
   {
     if (interactor_)
     {
-      return interactor_->CreateMouseTracker(*this, GetSlice(), view, button, x, y, GetStatusBar());
+      return interactor_->CreateMouseTracker(*this, view, button, x, y, GetStatusBar());
     }
     else
     {

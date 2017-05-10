@@ -73,7 +73,7 @@ namespace OrthancStone
 
     virtual ~LayeredSceneWidget();
 
-    virtual SliceGeometry GetSlice();
+    SliceGeometry GetSlice();
 
     ILayerRendererFactory& AddLayer(size_t& layerIndex,
                                     ILayerRendererFactory* factory);   // Takes ownership

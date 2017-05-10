@@ -50,7 +50,7 @@ namespace OrthancStone
     {
       std::string answer;
       orthanc_->RestApiGet(answer, uri);
-      callback.NotifyAnswer(uri, answer, tmp.release());
+      callback.NotifySuccess(uri, answer.c_str(), answer.size(), tmp.release());
     }
     catch (Orthanc::OrthancException&)
     {
@@ -69,7 +69,7 @@ namespace OrthancStone
     {
       std::string answer;
       orthanc_->RestApiPost(answer, uri, body);
-      callback.NotifyAnswer(uri, answer, tmp.release());
+      callback.NotifySuccess(uri, answer.c_str(), answer.size(), tmp.release());
     }
     catch (Orthanc::OrthancException&)
     {

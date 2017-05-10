@@ -40,9 +40,10 @@ namespace OrthancStone
       virtual void NotifyError(const std::string& uri,
                                Orthanc::IDynamicObject* payload) = 0;
 
-      virtual void NotifyAnswer(const std::string& uri,
-                                const std::string& answer,
-                                Orthanc::IDynamicObject* payload) = 0;
+      virtual void NotifySuccess(const std::string& uri,
+                                 const void* answer,
+                                 size_t answerSize,
+                                 Orthanc::IDynamicObject* payload) = 0;
     };
     
     virtual ~IWebService()

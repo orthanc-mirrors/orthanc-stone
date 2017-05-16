@@ -22,6 +22,62 @@
 #include "gtest/gtest.h"
 
 #include "../Resources/Orthanc/Core/Logging.h"
+#include "../Framework/Toolbox/OrthancWebService.h"
+#include "../Framework/Layers/OrthancFrameLayerSource.h"
+
+
+namespace OrthancStone
+{
+  class Tata : public ILayerSource::IObserver
+  {
+  public:
+    virtual void NotifySourceChange(ILayerSource& source)
+    {
+      printf("Source change\n");
+
+      OrthancStone::SliceGeometry slice;
+      double x1, y1, x2, y2;
+      printf(">> %d: ", source.GetExtent(x1, y1, x2, y2, slice));
+      printf("(%f,%f) (%f,%f)\n", x1, y1, x2, y2);
+    }
+
+    virtual void NotifySliceChange(ILayerSource& source,
+                                   const SliceGeometry& slice)
+    {
+      printf("Slice change\n");
+    }
+
+    virtual void NotifyLayerReady(ILayerRenderer* layer,
+                                  ILayerSource& source,
+                                  const SliceGeometry& viewportSlice)
+    {
+      std::auto_ptr<ILayerRenderer> tmp(layer);
+      
+    }
+
+    virtual void NotifyLayerError(ILayerSource& source,
+                                  const SliceGeometry& viewportSlice)
+    {
+    }
+  };
+}
+
+
+
+TEST(Toto, Tutu)
+{
+  Orthanc::WebServiceParameters web;
+  OrthancStone::OrthancWebService orthanc(web);
+  OrthancStone::OrthancFrameLayerSource source(orthanc, "befb52a6-b4b04954-b5a019c3-fdada9d7-dddc9430", 0);
+
+  OrthancStone::Tata tata;
+  source.SetObserver(tata);
+
+  OrthancStone::SliceGeometry slice;
+  source.ScheduleLayerCreation(slice);
+}
+
+
 
 int main(int argc, char **argv)
 {

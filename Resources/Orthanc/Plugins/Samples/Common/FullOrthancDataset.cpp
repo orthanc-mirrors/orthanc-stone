@@ -169,7 +169,7 @@ namespace OrthancPlugins
   FullOrthancDataset::FullOrthancDataset(const void* content,
                                          size_t size)
   {
-    IOrthancConnection::ParseJson(root_, content);
+    IOrthancConnection::ParseJson(root_, content, size);
     CheckRoot();
   }
 

@@ -268,8 +268,8 @@ namespace OrthancStone
 
     if (observers_.IsEmpty())
     {
-      // Without a size observer, use the default view
-      view_.SetDefaultView();
+      // Without a size observer, reset to the default view
+      // view_.SetDefaultView();
     }
     else
     {

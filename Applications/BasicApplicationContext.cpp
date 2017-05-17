@@ -141,6 +141,8 @@ namespace OrthancStone
       stopped_ = false;
       updateThread_ = boost::thread(UpdateThread, this);
     }
+
+    viewport_.Start();
   }
 
 

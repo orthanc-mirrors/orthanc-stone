@@ -21,8 +21,9 @@
 
 #pragma once
 
-// Patch for Boost 1.64.0
+// Patch for ublas in Boost 1.64.0
 // https://github.com/dealii/dealii/issues/4302
+#include <boost/version.hpp>
 #if BOOST_VERSION >= 106300  // or 64, need to check
 #  include <boost/serialization/array_wrapper.hpp>
 #endif

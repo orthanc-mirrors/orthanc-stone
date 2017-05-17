@@ -23,13 +23,14 @@
 
 #include "LayerSourceBase.h"
 #include "../Toolbox/IWebService.h"
+#include "../Toolbox/IVolumeSlicesObserver.h"
 #include "../../Resources/Orthanc/Plugins/Samples/Common/FullOrthancDataset.h"
 
 namespace OrthancStone
-{
+{  
   class OrthancFrameLayerSource :
     public LayerSourceBase,
-    public IWebService::ICallback
+    public IWebService::ICallback   // TODO move this into a PImpl
   {
   private:
     enum Content
@@ -44,7 +45,15 @@ namespace OrthancStone
     std::string                                       instanceId_;
     unsigned int                                      frame_;
     std::auto_ptr<OrthancPlugins::FullOrthancDataset> dataset_;
+    unsigned int                                      frameWidth_;
+    unsigned int                                      frameHeight_;
     Orthanc::PixelFormat                              format_;
+    double                                            pixelSpacingX_;
+    double                                            pixelSpacingY_;
+    IVolumeSlicesObserver*                            observer2_;
+
+  protected:
+    virtual void StartInternal();
 
   public:
     OrthancFrameLayerSource(IWebService& orthanc,
@@ -52,6 +61,8 @@ namespace OrthancStone
                             unsigned int frame);
 
     virtual void SetObserver(IObserver& observer);
+
+    void SetObserver(IVolumeSlicesObserver& observer);
 
     virtual void NotifyError(const std::string& uri,
                              Orthanc::IDynamicObject* payload);

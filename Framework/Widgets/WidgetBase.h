@@ -99,5 +99,9 @@ namespace OrthancStone
     }
 
     virtual void NotifyChange();
+
+    virtual void Start()
+    {
+    }
   };
 }

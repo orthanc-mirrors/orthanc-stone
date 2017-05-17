@@ -74,6 +74,7 @@ namespace OrthancStone
     }
 
     backgroundChanged_ = true;
+    observers_.NotifyChange(this);
 
     return *widget;
   }
@@ -262,6 +263,15 @@ namespace OrthancStone
     if (centralWidget_.get() != NULL)
     {
       centralWidget_->UpdateContent();
+    }
+  }
+
+
+  void WidgetViewport::Start()
+  {
+    if (centralWidget_.get() != NULL)
+    {
+      centralWidget_->Start();
     }
   }
 }

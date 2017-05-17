@@ -25,8 +25,26 @@
 
 namespace OrthancStone
 {
+  void LayerSourceBase::NotifyGeometryReady()
+  {
+    if (!started_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
+    if (observer_ != NULL)
+    {
+      observer_->NotifyGeometryReady(*this);
+    }
+  }  
+    
   void LayerSourceBase::NotifySourceChange()
   {
+    if (!started_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
     if (observer_ != NULL)
     {
       observer_->NotifySourceChange(*this);
@@ -35,6 +53,11 @@ namespace OrthancStone
 
   void LayerSourceBase::NotifySliceChange(const SliceGeometry& slice)
   {
+    if (!started_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
     if (observer_ != NULL)
     {
       observer_->NotifySliceChange(*this, slice);
@@ -42,9 +65,15 @@ namespace OrthancStone
   }
 
   void LayerSourceBase::NotifyLayerReady(ILayerRenderer* layer,
-                                         ILayerSource& source,
                                          const SliceGeometry& viewportSlice)
   {
+    std::auto_ptr<ILayerRenderer> tmp(layer);
+    
+    if (!started_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
     if (layer == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
@@ -52,17 +81,17 @@ namespace OrthancStone
     
     if (observer_ != NULL)
     {
-      observer_->NotifyLayerReady(layer, *this, viewportSlice);
-    }
-    else
-    {
-      delete layer;
+      observer_->NotifyLayerReady(tmp.release(), *this, viewportSlice);
     }
   }
 
-  void LayerSourceBase::NotifyLayerError(ILayerSource& source,
-                                         const SliceGeometry& viewportSlice)
+  void LayerSourceBase::NotifyLayerError(const SliceGeometry& viewportSlice)
   {
+    if (!started_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
     if (observer_ != NULL)
     {
       observer_->NotifyLayerError(*this, viewportSlice);
@@ -71,6 +100,32 @@ namespace OrthancStone
 
   void LayerSourceBase::SetObserver(IObserver& observer)
   {
-    observer_ = &observer;
+    if (started_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
+    if (observer_ == NULL)
+    {
+      observer_ = &observer;
+    }
+    else
+    {
+      // Cannot add more than one observer
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+
+  void LayerSourceBase::Start()
+  {
+    if (started_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      started_ = true;
+      StartInternal();
+    }
   }
 }

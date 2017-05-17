@@ -21,45 +21,18 @@
 
 #pragma once
 
-#include "ILayerSource.h"
+#include "ParallelSlices.h"
 
 namespace OrthancStone
 {
-  class LayerSourceBase : public ILayerSource
+  class IVolumeSlicesObserver : public boost::noncopyable
   {
-  private:
-    IObserver*  observer_;
-    bool        started_;
-
-  protected:
-    bool IsStarted()
-    {
-      return started_;
-    }
-
-    void NotifyGeometryReady();
-    
-    void NotifySourceChange();
-
-    void NotifySliceChange(const SliceGeometry& slice);
-
-    // Takes ownership of "layer" (that cannot be "NULL")
-    void NotifyLayerReady(ILayerRenderer* layer,
-                          const SliceGeometry& viewportSlice);
-    
-    void NotifyLayerError(const SliceGeometry& viewportSlice);
-
-    virtual void StartInternal() = 0;
-
   public:
-    LayerSourceBase() :
-      observer_(NULL),
-      started_(false)
+    virtual ~IVolumeSlicesObserver()
     {
     }
-    
-    virtual void SetObserver(IObserver& observer);
 
-    virtual void Start();
+    virtual void NotifySlicesAvailable(const ParallelSlices& slices) = 0;
   };
 }
+

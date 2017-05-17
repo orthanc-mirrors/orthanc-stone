@@ -23,17 +23,45 @@
 
 #include "SampleApplicationBase.h"
 
-#include "../../Framework/Layers/SingleFrameRendererFactory.h"
-#include "../../Framework/Widgets/LayeredSceneWidget.h"
+#define OLD 0
+
+#if OLD == 1
+#  include "../../Framework/Layers/SingleFrameRendererFactory.h"
+#  include "../../Framework/Widgets/LayeredSceneWidget.h"
+#else
+#  include "../../Framework/Layers/OrthancFrameLayerSource.h"
+#  include "../../Framework/Widgets/LayerWidget.h"
+#endif
+
 #include "../../Resources/Orthanc/Core/Logging.h"
 
 namespace OrthancStone
 {
   namespace Samples
   {
-    class SingleFrameApplication : public SampleApplicationBase
+    class SingleFrameApplication :
+      public SampleApplicationBase,
+      public IVolumeSlicesObserver
     {
+    private:
+      LayerWidget* widget_;
+      
     public:
+      SingleFrameApplication() : widget_(NULL)
+      {
+      }
+      
+      virtual void NotifySlicesAvailable(const ParallelSlices& slices)
+      {
+        printf("ICI\n");
+        if (widget_ != NULL &&
+            slices.GetSliceCount() > 0)
+        {
+          printf("GO\n");
+          widget_->SetSlice(slices.GetSlice(0), 1.0 /* TODO */);
+        }
+      }
+      
       virtual void DeclareCommandLineOptions(boost::program_options::options_description& options)
       {
         boost::program_options::options_description generic("Sample options");
@@ -64,6 +92,7 @@ namespace OrthancStone
         std::string instance = parameters["instance"].as<std::string>();
         int frame = parameters["frame"].as<unsigned int>();
 
+#if OLD == 1
         std::auto_ptr<SingleFrameRendererFactory>  renderer;
         renderer.reset
           (new SingleFrameRendererFactory(context.GetWebService().GetConnection(), instance, frame));
@@ -80,6 +109,45 @@ namespace OrthancStone
         }
 
         context.SetCentralWidget(widget.release());
+
+#else
+        std::auto_ptr<LayerWidget> widget(new LayerWidget);
+
+#if 0
+        std::auto_ptr<OrthancFrameLayerSource> layer
+          (new OrthancFrameLayerSource(context.GetWebService(), instance, frame));
+        layer->SetObserver(*this);
+        widget->AddLayer(layer.release());
+
+        if (parameters["smooth"].as<bool>())
+        {
+          RenderStyle s; 
+          s.interpolation_ = ImageInterpolation_Linear;
+          widget->SetLayerStyle(0, s);
+        }
+#else
+        // 0178023P**
+        std::auto_ptr<OrthancFrameLayerSource> layer;
+        layer.reset(new OrthancFrameLayerSource(context.GetWebService(), "c804a1a2-142545c9-33b32fe2-3df4cec0-a2bea6d6", 0));
+        //layer.reset(new OrthancFrameLayerSource(context.GetWebService(), "4bd4304f-47478948-71b24af2-51f4f1bc-275b6c1b", 0));  // BAD SLICE
+        layer->SetObserver(*this);
+        widget->AddLayer(layer.release());
+
+        widget->AddLayer(new OrthancFrameLayerSource(context.GetWebService(), "a1c4dc6b-255d27f0-88069875-8daed730-2f5ee5c6", 0));
+
+        RenderStyle s;
+        //s.drawGrid_ = true;
+        s.alpha_ = 1;
+        widget->SetLayerStyle(0, s);
+        s.alpha_ = 0.5;
+        s.applyLut_ = true;
+        s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
+        widget->SetLayerStyle(1, s);
+#endif
+      
+        widget_ = widget.get();
+        context.SetCentralWidget(widget.release());
+#endif
       }
     };
   }

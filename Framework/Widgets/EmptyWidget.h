@@ -25,90 +25,97 @@
 
 namespace OrthancStone
 {
-  /**
-   * This is a test widget that simply fills its surface with an
-   * uniform color.
-   **/
-  class EmptyWidget : public IWidget
+  namespace Samples
   {
-  private:
-    uint8_t  red_;
-    uint8_t  green_;
-    uint8_t  blue_;
-
-  public:
-    EmptyWidget(uint8_t red,
-                uint8_t green,
-                uint8_t blue) :
-      red_(red),
-      green_(green),
-      blue_(blue)
+    /**
+     * This is a test widget that simply fills its surface with an
+     * uniform color.
+     **/
+    class EmptyWidget : public IWidget
     {
-    }
+    private:
+      uint8_t  red_;
+      uint8_t  green_;
+      uint8_t  blue_;
 
-    virtual void SetDefaultView()
-    {
-    }
+    public:
+      EmptyWidget(uint8_t red,
+                  uint8_t green,
+                  uint8_t blue) :
+        red_(red),
+        green_(green),
+        blue_(blue)
+      {
+      }
+
+      virtual void SetDefaultView()
+      {
+      }
   
-    virtual void SetParent(OrthancStone::IWidget& widget)
-    {
-    }
+      virtual void SetParent(OrthancStone::IWidget& widget)
+      {
+      }
     
-    virtual void SetViewport(IViewport& viewport)
-    {
-    }
+      virtual void SetViewport(IViewport& viewport)
+      {
+      }
 
-    virtual void NotifyChange()
-    {
-    }
+      virtual void NotifyChange()
+      {
+      }
 
-    virtual void SetStatusBar(IStatusBar& statusBar)
-    {
-    }
+      virtual void SetStatusBar(IStatusBar& statusBar)
+      {
+      }
 
-    virtual void SetSize(unsigned int width, 
-                         unsigned int height)
-    {
-    }
+      virtual void SetSize(unsigned int width, 
+                           unsigned int height)
+      {
+      }
  
-    virtual bool Render(Orthanc::ImageAccessor& surface);
+      virtual bool Render(Orthanc::ImageAccessor& surface);
 
-    virtual IMouseTracker* CreateMouseTracker(MouseButton button,
-                                              int x,
-                                              int y,
-                                              KeyboardModifiers modifiers)
-    {
-      return NULL;
-    }
+      virtual IMouseTracker* CreateMouseTracker(MouseButton button,
+                                                int x,
+                                                int y,
+                                                KeyboardModifiers modifiers)
+      {
+        return NULL;
+      }
 
-    virtual void RenderMouseOver(Orthanc::ImageAccessor& target,
-                                 int x,
-                                 int y)
-    {
-    }
+      virtual void RenderMouseOver(Orthanc::ImageAccessor& target,
+                                   int x,
+                                   int y)
+      {
+      }
 
-    virtual void MouseWheel(MouseWheelDirection direction,
-                            int x,
-                            int y,
-                            KeyboardModifiers modifiers)
-    {
-    }
+      virtual void MouseWheel(MouseWheelDirection direction,
+                              int x,
+                              int y,
+                              KeyboardModifiers modifiers)
+      {
+      }
 
-    virtual void KeyPressed(char key,
-                            KeyboardModifiers modifiers)
-    {
-    }
+      virtual void KeyPressed(char key,
+                              KeyboardModifiers modifiers)
+      {
+      }
 
-    virtual bool HasUpdateContent() const
-    {
-      return false;
-    }
+      virtual bool HasUpdateContent() const
+      {
+        return false;
+      }
 
-    virtual void UpdateContent();
+      virtual void UpdateContent();
 
-    virtual bool HasRenderMouseOver()
-    {
-      return false;
-    }
-  };
+      virtual bool HasRenderMouseOver()
+      {
+        return false;
+      }
+
+      virtual void Start()
+      {
+      }
+    };
+  }
 }

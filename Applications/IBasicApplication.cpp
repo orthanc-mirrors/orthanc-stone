@@ -210,6 +210,8 @@ namespace OrthancStone
        * Initialize the application
        ****************************************************************/
 
+      LOG(WARNING) << "Creating the widgets of the application";
+
       LogStatusBar statusBar;
       BasicApplicationContext context(orthanc);
 

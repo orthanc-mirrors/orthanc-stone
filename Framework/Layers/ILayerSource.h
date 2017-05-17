@@ -36,6 +36,10 @@ namespace OrthancStone
       {
       }
 
+      // Triggered as soon as the source has enough information to
+      // answer to "GetExtent()"
+      virtual void NotifyGeometryReady(ILayerSource& source) = 0;
+      
       // Triggered if the extent or the content of the volume has changed
       virtual void NotifySourceChange(ILayerSource& source) = 0;
 
@@ -67,5 +71,7 @@ namespace OrthancStone
                            const SliceGeometry& viewportSlice) = 0;
 
     virtual void ScheduleLayerCreation(const SliceGeometry& viewportSlice) = 0;
+
+    virtual void Start() = 0;
   };
 }

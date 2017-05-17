@@ -88,5 +88,7 @@ namespace OrthancStone
     virtual bool HasUpdateContent();
 
     virtual void UpdateContent();
+
+    virtual void Start();
   };
 }

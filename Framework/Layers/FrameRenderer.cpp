@@ -35,7 +35,9 @@ namespace OrthancStone
                                     double pixelSpacingY)
   {
     bool isOpposite;
-    if (!GeometryToolbox::IsParallelOrOpposite(isOpposite, viewportSlice.GetNormal(), frameSlice.GetNormal()))
+    if (!GeometryToolbox::IsParallelOrOpposite(isOpposite,
+                                               viewportSlice.GetNormal(),
+                                               frameSlice.GetNormal()))
     {
       return false;
     }
@@ -145,7 +147,8 @@ namespace OrthancStone
 
     if (display_.get() == NULL)
     {
-      if (!ComputePixelTransform(transform_, viewportSlice_, frameSlice_, pixelSpacingX_, pixelSpacingY_))
+      if (!ComputePixelTransform(transform_, viewportSlice_, frameSlice_,
+                                 pixelSpacingX_, pixelSpacingY_))
       {
         return true;
       }

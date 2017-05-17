@@ -74,5 +74,7 @@ namespace OrthancStone
     // Subclasses can call this method to signal the display of the
     // widget must be refreshed
     virtual void NotifyChange() = 0;
+
+    virtual void Start() = 0;
   };
 }

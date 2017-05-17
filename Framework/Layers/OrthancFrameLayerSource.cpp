@@ -65,14 +65,24 @@ namespace OrthancStone
                                                    unsigned int frame) :
     orthanc_(orthanc),
     instanceId_(instanceId),
-    frame_(frame)
+    frame_(frame),
+    frameWidth_(0),
+    frameHeight_(0),
+    pixelSpacingX_(1),
+    pixelSpacingY_(1),
+    observer2_(NULL)
   {
-    orthanc_.ScheduleGetRequest(*this,
-                                "/instances/" + instanceId + "/tags",
-                                new Operation(Content_Tags));
   }
 
+
+  void OrthancFrameLayerSource::StartInternal()
+  {
+    orthanc_.ScheduleGetRequest(*this,
+                                "/instances/" + instanceId_ + "/tags",
+                                new Operation(Content_Tags));
+  }
   
+
   void OrthancFrameLayerSource::SetObserver(IObserver& observer)
   {
     LayerSourceBase::SetObserver(observer);
@@ -83,11 +93,35 @@ namespace OrthancStone
     }
   }
 
+
+  void OrthancFrameLayerSource::SetObserver(IVolumeSlicesObserver& observer)
+  {
+    if (IsStarted())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    
+    if (observer2_ == NULL)
+    {
+      observer2_ = &observer;
+    }
+    else
+    {
+      // Cannot add more than one observer
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+
+
   void OrthancFrameLayerSource::NotifyError(const std::string& uri,
                                             Orthanc::IDynamicObject* payload)
   {
+    std::auto_ptr<Operation> operation(reinterpret_cast<Operation*>(payload));
+
     LOG(ERROR) << "Cannot download " << uri;
+    NotifyLayerError(operation->GetViewportSlice());
   }
+  
 
   void OrthancFrameLayerSource::NotifySuccess(const std::string& uri,
                                               const void* answer,
@@ -107,15 +141,36 @@ namespace OrthancStone
       DicomFrameConverter converter;
       converter.ReadParameters(*dataset_);
       format_ = converter.GetExpectedPixelFormat();
+      GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, *dataset_);
 
-      NotifySourceChange();
+      OrthancPlugins::DicomDatasetReader reader(*dataset_);
+      if (!reader.GetUnsignedIntegerValue(frameWidth_, OrthancPlugins::DICOM_TAG_COLUMNS) ||
+          !reader.GetUnsignedIntegerValue(frameHeight_, OrthancPlugins::DICOM_TAG_ROWS))
+      {
+        frameWidth_ = 0;
+        frameHeight_ = 0;
+        LOG(WARNING) << "Missing tags in a DICOM image: Columns or Rows";
+      }
+
+      if (observer2_ != NULL)
+      {
+        ParallelSlices slices;
+        slices.AddSlice(SliceGeometry(*dataset_));
+        observer2_->NotifySlicesAvailable(slices);
+      }
+      
+      NotifyGeometryReady();
     }
     else if (operation->GetContent() == Content_Frame)
     {
       std::auto_ptr<Orthanc::PngReader>  image(new Orthanc::PngReader);
       image->ReadFromMemory(answer, answerSize);
-        
-      if (format_ == Orthanc::PixelFormat_SignedGrayscale16)
+
+      bool ok = (image->GetWidth() == frameWidth_ ||
+                 image->GetHeight() == frameHeight_);
+      
+      if (ok &&
+          format_ == Orthanc::PixelFormat_SignedGrayscale16)
       {
         if (image->GetFormat() == Orthanc::PixelFormat_Grayscale16)
         {
@@ -123,15 +178,23 @@ namespace OrthancStone
         }
         else
         {
-          NotifyLayerReady(NULL, *this, operation->GetViewportSlice());
+          ok = false;
         }
       }
-        
-      SliceGeometry frameSlice(*dataset_);
-      NotifyLayerReady(FrameRenderer::CreateRenderer(image.release(),
-                                                     operation->GetViewportSlice(),
-                                                     frameSlice, *dataset_, 1, 1, true),
-                       *this, operation->GetViewportSlice());
+
+      if (ok)
+      {
+        SliceGeometry frameSlice(*dataset_);
+        NotifyLayerReady(FrameRenderer::CreateRenderer(image.release(),
+                                                       operation->GetViewportSlice(),
+                                                       frameSlice, *dataset_,
+                                                       pixelSpacingX_, pixelSpacingY_, true),
+                         operation->GetViewportSlice());
+      }
+      else
+      {
+        NotifyLayerError(operation->GetViewportSlice());
+      }
     }
     else
     {
@@ -146,39 +209,32 @@ namespace OrthancStone
                                           double& y2,
                                           const SliceGeometry& viewportSlice /* ignored */)
   {
-    if (dataset_.get() == NULL)
+    if (!IsStarted() ||
+        dataset_.get() == NULL)
     {
       return false;
     }
     else
     {
-      // Assume that PixelSpacingX == PixelSpacingY == 1
-
-      OrthancPlugins::DicomDatasetReader reader(*dataset_);
-    
-      unsigned int width, height;
-
-      if (!reader.GetUnsignedIntegerValue(width, OrthancPlugins::DICOM_TAG_COLUMNS) ||
-          !reader.GetUnsignedIntegerValue(height, OrthancPlugins::DICOM_TAG_ROWS))
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-      }
-
-      x1 = 0;
-      y1 = 0;
-      x2 = static_cast<double>(width);
-      y2 = static_cast<double>(height);
-
-      return true;
+      SliceGeometry frameSlice(*dataset_);
+      return FrameRenderer::ComputeFrameExtent(x1, y1, x2, y2,
+                                               viewportSlice, frameSlice,
+                                               frameWidth_, frameHeight_,
+                                               pixelSpacingX_, pixelSpacingY_);
     }
   }
 
   
   void OrthancFrameLayerSource::ScheduleLayerCreation(const SliceGeometry& viewportSlice)
   {
+    if (!IsStarted())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    
     if (dataset_.get() == NULL)
     {
-      NotifyLayerReady(NULL, *this, viewportSlice);
+      NotifyLayerError(viewportSlice);
     }
     else
     {

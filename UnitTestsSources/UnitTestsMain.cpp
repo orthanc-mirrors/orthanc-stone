@@ -24,6 +24,7 @@
 #include "../Resources/Orthanc/Core/Logging.h"
 #include "../Framework/Toolbox/OrthancWebService.h"
 #include "../Framework/Layers/OrthancFrameLayerSource.h"
+#include "../Framework/Widgets/LayerWidget.h"
 
 
 namespace OrthancStone
@@ -60,6 +61,97 @@ namespace OrthancStone
     {
     }
   };
+
+
+
+  /*class OrthancInstanceLoader : public IWebService::ICallback
+  {
+  public:
+    class ICallback : public boost::noncopyable
+    {
+    public:
+      virtual ~ICallback()
+      {
+      }
+      
+      virtual void NotifyInstanceLoaded(const std::string& instanceId,
+                                        const OrthancPlugins::FullOrthancDataset& dicom) = 0;
+      
+      virtual void NotifyInstanceError(const std::string& instanceId) = 0;
+    };
+
+  private:
+    class Operation : public Orthanc::IDynamicObject
+    {
+    private:
+      ICallback&   callback_;
+      std::string  instanceId_;
+
+    public:
+      Operation(ICallback& callback,
+                const std::string& instanceId) :
+        callback_(callback),
+        instanceId_(instanceId)
+      {
+      }
+
+      ICallback& GetCallback()
+      {
+        return callback_;
+      }
+
+      const std::string& GetInstanceId() const
+      {
+        return instanceId_;
+      }
+    };
+
+    IWebService&  orthanc_;
+
+  public:
+    OrthancInstanceLoader(IWebService&  orthanc) :
+      orthanc_(orthanc)
+    {
+    }
+
+    void ScheduleLoadInstance(ICallback& callback,
+                              const std::string& instanceId)
+    {
+      orthanc_.ScheduleGetRequest(*this,
+                                  "/instances/" + instanceId + "/tags",
+                                  new Operation(callback, instanceId));
+    }
+    
+    void NotifySuccess(const std::string& uri,
+                       const void* answer,
+                       size_t answerSize,
+                       Orthanc::IDynamicObject* payload)
+    {
+      std::auto_ptr<Operation> operation(reinterpret_cast<Operation*>(payload));
+
+      try
+      {
+        OrthancPlugins::FullOrthancDataset dataset(answer, answerSize);
+        operation->GetCallback().NotifyInstanceLoaded(operation->GetInstanceId(), dataset);
+      }
+      catch (Orthanc::OrthancException&)
+      {
+        operation->GetCallback().NotifyInstanceError(operation->GetInstanceId());
+      }
+    }
+      
+    void NotifyError(const std::string& uri,
+                     Orthanc::IDynamicObject* payload)
+    {
+      std::auto_ptr<Operation> operation(reinterpret_cast<Operation*>(payload));
+
+      LOG(ERROR) << "Cannot download " << uri;
+      operation->GetCallback().NotifyInstanceError(operation->GetInstanceId());
+    }
+    };*/
+
+  
+
 }
 
 
@@ -75,6 +167,10 @@ TEST(Toto, Tutu)
 
   OrthancStone::SliceGeometry slice;
   source.ScheduleLayerCreation(slice);
+
+
+  OrthancStone::LayerWidget widget;
+  printf(">> %d\n", widget.AddLayer(new OrthancStone::OrthancFrameLayerSource(orthanc, "befb52a6-b4b04954-b5a019c3-fdada9d7-dddc9430", 0)));
 }
 
 

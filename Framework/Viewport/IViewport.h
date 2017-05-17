@@ -87,5 +87,7 @@ namespace OrthancStone
 
     // Should only be called from IWidget
     virtual void NotifyChange(const IWidget& widget) = 0;
+
+    virtual void Start() = 0;
   };
 }

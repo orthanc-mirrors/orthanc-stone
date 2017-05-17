@@ -222,6 +222,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Widgets/TestCairoWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/TestWorldSceneWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/WidgetBase.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Widgets/LayerWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/WorldSceneWidget.cpp
 
   ${ORTHANC_ROOT}/Core/ChunkedBuffer.cpp

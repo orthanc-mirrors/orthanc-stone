@@ -152,8 +152,19 @@ namespace OrthancStone
     }
 
 
-    static void ParseJson(Json::Value& target,
-                          const std::string& source)
+    bool ParseJson(Json::Value& target,
+                   const void* content,
+                   size_t size)
+    {
+      Json::Reader reader;
+      return reader.parse(reinterpret_cast<const char*>(content),
+                          reinterpret_cast<const char*>(content) + size,
+                          target);
+    }
+
+
+    static void ParseJsonException(Json::Value& target,
+                                   const std::string& source)
     {
       Json::Reader reader;
       if (!reader.parse(source, target))
@@ -169,7 +180,7 @@ namespace OrthancStone
     {
       std::string tmp;
       orthanc.RestApiGet(tmp, uri);
-      ParseJson(target, tmp);
+      ParseJsonException(target, tmp);
     }
 
 
@@ -180,7 +191,7 @@ namespace OrthancStone
     {
       std::string tmp;
       orthanc.RestApiPost(tmp, uri, body);
-      ParseJson(target, tmp);
+      ParseJsonException(target, tmp);
     }
 
 

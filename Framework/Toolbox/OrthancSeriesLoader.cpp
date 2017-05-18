@@ -327,7 +327,7 @@ namespace OrthancStone
     slices_(new SetOfSlices)
   {
     /**
-     * The function "LoadSeriesFast()" might now behave properly if
+     * The function "LoadSeriesFast()" might not behave properly if
      * some slice has some outsider value for its normal, which
      * happens sometimes on reprojected series (e.g. coronal and
      * sagittal of Delphine). Don't use it.

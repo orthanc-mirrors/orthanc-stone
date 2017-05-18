@@ -58,6 +58,10 @@ namespace OrthancStone
     };
 
 
+    bool ParseJson(Json::Value& target,
+                   const void* content,
+                   size_t size);
+
     void RestApiGet(Json::Value& target,
                     OrthancPlugins::IOrthancConnection& orthanc,
                     const std::string& uri);

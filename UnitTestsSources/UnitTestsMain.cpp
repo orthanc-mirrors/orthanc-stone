@@ -22,7 +22,7 @@
 #include "gtest/gtest.h"
 
 #include "../Resources/Orthanc/Core/Logging.h"
-#include "../Framework/Toolbox/OrthancWebService.h"
+#include "../Framework/Toolbox/OrthancSynchronousWebService.h"
 #include "../Framework/Layers/OrthancFrameLayerSource.h"
 #include "../Framework/Widgets/LayerWidget.h"
 
@@ -733,7 +733,7 @@ namespace OrthancStone
 TEST(Toto, Tutu)
 {
   Orthanc::WebServiceParameters web;
-  OrthancStone::OrthancWebService orthanc(web);
+  OrthancStone::OrthancSynchronousWebService orthanc(web);
 
   OrthancStone::Tata tata;
   OrthancStone::OrthancSliceLoader loader(tata, orthanc);

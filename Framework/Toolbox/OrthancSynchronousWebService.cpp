@@ -19,14 +19,14 @@
  **/
 
 
-#include "OrthancWebService.h"
+#include "OrthancSynchronousWebService.h"
 
 #include "../../Resources/Orthanc/Core/OrthancException.h"
 #include "../../Resources/Orthanc/Plugins/Samples/Common/OrthancHttpConnection.h"
 
 namespace OrthancStone
 {
-  OrthancWebService::OrthancWebService(OrthancPlugins::IOrthancConnection* orthanc) :
+  OrthancSynchronousWebService::OrthancSynchronousWebService(OrthancPlugins::IOrthancConnection* orthanc) :
     orthanc_(orthanc)
   {
     if (orthanc == NULL)
@@ -35,12 +35,12 @@ namespace OrthancStone
     }
   }
   
-  OrthancWebService::OrthancWebService(const Orthanc::WebServiceParameters& parameters)
+  OrthancSynchronousWebService::OrthancSynchronousWebService(const Orthanc::WebServiceParameters& parameters)
   {
     orthanc_.reset(new OrthancPlugins::OrthancHttpConnection(parameters));
   }    
 
-  void OrthancWebService::ScheduleGetRequest(ICallback& callback,
+  void OrthancSynchronousWebService::ScheduleGetRequest(ICallback& callback,
                                              const std::string& uri,
                                              Orthanc::IDynamicObject* payload)
   {
@@ -58,7 +58,7 @@ namespace OrthancStone
     }
   }
 
-  void OrthancWebService::SchedulePostRequest(ICallback& callback,
+  void OrthancSynchronousWebService::SchedulePostRequest(ICallback& callback,
                                               const std::string& uri,
                                               const std::string& body,
                                               Orthanc::IDynamicObject* payload)

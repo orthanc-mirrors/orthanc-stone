@@ -197,7 +197,7 @@ namespace OrthancStone
       }
 
       LOG(WARNING) << "URL to the Orthanc REST API: " << webService.GetUrl();
-      OrthancWebService orthanc(webService);
+      OrthancSynchronousWebService orthanc(webService);
 
       if (!MessagingToolbox::CheckOrthancVersion(orthanc.GetConnection()))
       {

@@ -29,15 +29,15 @@
 
 namespace OrthancStone
 {
-  class OrthancWebService : public IWebService
+  class OrthancSynchronousWebService : public IWebService
   {
   private:
     std::auto_ptr<OrthancPlugins::IOrthancConnection>  orthanc_;
     
   public:
-    OrthancWebService(OrthancPlugins::IOrthancConnection* orthanc);  // Takes ownership
+    OrthancSynchronousWebService(OrthancPlugins::IOrthancConnection* orthanc);  // Takes ownership
     
-    OrthancWebService(const Orthanc::WebServiceParameters& parameters);
+    OrthancSynchronousWebService(const Orthanc::WebServiceParameters& parameters);
 
     OrthancPlugins::IOrthancConnection& GetConnection()
     {

@@ -41,7 +41,7 @@ namespace OrthancStone
   }
   
 
-  BasicApplicationContext::BasicApplicationContext(OrthancWebService& orthanc) :
+  BasicApplicationContext::BasicApplicationContext(OrthancSynchronousWebService& orthanc) :
     orthanc_(orthanc),
     stopped_(true),
     updateDelay_(100)   // By default, 100ms between each refresh of the content

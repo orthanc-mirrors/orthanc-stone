@@ -25,7 +25,7 @@
 #include "../../Framework/Viewport/WidgetViewport.h"
 #include "../../Framework/Widgets/IWorldSceneInteractor.h"
 #include "../../Framework/Toolbox/DicomStructureSet.h"
-#include "../../Framework/Toolbox/OrthancWebService.h"
+#include "../../Framework/Toolbox/OrthancSynchronousWebService.h"
 
 #include <list>
 #include <boost/thread.hpp>
@@ -41,7 +41,7 @@ namespace OrthancStone
 
     static void UpdateThread(BasicApplicationContext* that);
 
-    OrthancWebService&  orthanc_;
+    OrthancSynchronousWebService&  orthanc_;
     boost::mutex        viewportMutex_;
     WidgetViewport      viewport_;
     Volumes             volumes_;
@@ -72,13 +72,13 @@ namespace OrthancStone
     };
 
     
-    BasicApplicationContext(OrthancWebService& orthanc);
+    BasicApplicationContext(OrthancSynchronousWebService& orthanc);
 
     ~BasicApplicationContext();
 
     IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
 
-    OrthancWebService& GetWebService()
+    OrthancSynchronousWebService& GetWebService()
     {
       return orthanc_;
     }

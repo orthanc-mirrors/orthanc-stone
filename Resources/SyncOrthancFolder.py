@@ -43,6 +43,8 @@ FILES = [
     'Core/Images/PngReader.h',
     'Core/Logging.cpp',
     'Core/Logging.h',
+    'Core/MultiThreading/SharedMessageQueue.cpp',
+    'Core/MultiThreading/SharedMessageQueue.h',
     'Core/OrthancException.h',
     'Core/PrecompiledHeaders.h',
     'Core/SystemToolbox.cpp',

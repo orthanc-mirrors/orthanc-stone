@@ -25,27 +25,22 @@
 #include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
 #include "../../Resources/Orthanc/Core/WebServiceParameters.h"
 
-#include <memory>
-
-// TODO REMOVE THIS
+#include <boost/shared_ptr.hpp>
 
 namespace OrthancStone
 {
-  class OrthancSynchronousWebService : public IWebService
+  class OrthancAsynchronousWebService : public IWebService
   {
   private:
-    std::auto_ptr<OrthancPlugins::IOrthancConnection>  orthanc_;
+    class PendingRequest;
+    class PImpl;
+    
+    boost::shared_ptr<PImpl>  pimpl_;
     
   public:
-    OrthancSynchronousWebService(OrthancPlugins::IOrthancConnection* orthanc);  // Takes ownership
-    
-    OrthancSynchronousWebService(const Orthanc::WebServiceParameters& parameters);
+    OrthancAsynchronousWebService(const Orthanc::WebServiceParameters& parameters,
+                                  unsigned int threadCount);
 
-    OrthancPlugins::IOrthancConnection& GetConnection()
-    {
-      return *orthanc_;
-    }
-    
     virtual void ScheduleGetRequest(ICallback& callback,
                                     const std::string& uri,
                                     Orthanc::IDynamicObject* payload);
@@ -55,12 +50,8 @@ namespace OrthancStone
                                      const std::string& body,
                                      Orthanc::IDynamicObject* payload);
 
-    virtual void Start()
-    {
-    }
+    virtual void Start();
 
-    virtual void Stop()
-    {
-    }
+    virtual void Stop();
   };
 }

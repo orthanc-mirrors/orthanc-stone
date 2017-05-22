@@ -41,8 +41,8 @@ namespace OrthancStone
   }    
 
   void OrthancSynchronousWebService::ScheduleGetRequest(ICallback& callback,
-                                             const std::string& uri,
-                                             Orthanc::IDynamicObject* payload)
+                                                        const std::string& uri,
+                                                        Orthanc::IDynamicObject* payload)
   {
     std::auto_ptr<Orthanc::IDynamicObject> tmp(payload);
 
@@ -59,9 +59,9 @@ namespace OrthancStone
   }
 
   void OrthancSynchronousWebService::SchedulePostRequest(ICallback& callback,
-                                              const std::string& uri,
-                                              const std::string& body,
-                                              Orthanc::IDynamicObject* payload)
+                                                         const std::string& uri,
+                                                         const std::string& body,
+                                                         Orthanc::IDynamicObject* payload)
   {
     std::auto_ptr<Orthanc::IDynamicObject> tmp(payload);
 

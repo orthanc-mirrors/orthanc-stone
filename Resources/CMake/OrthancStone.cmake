@@ -200,6 +200,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DownloadStack.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/GeometryToolbox.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/MessagingToolbox.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancAsynchronousWebService.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancSeriesLoader.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancSynchronousWebService.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlices.cpp
@@ -237,6 +238,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_ROOT}/Core/Images/JpegReader.cpp
   ${ORTHANC_ROOT}/Core/Images/PngReader.cpp
   ${ORTHANC_ROOT}/Core/Logging.cpp
+  ${ORTHANC_ROOT}/Core/MultiThreading/SharedMessageQueue.cpp
   ${ORTHANC_ROOT}/Core/Toolbox.cpp
   ${ORTHANC_ROOT}/Core/WebServiceParameters.cpp
   ${ORTHANC_ROOT}/Resources/ThirdParty/base64/base64.cpp

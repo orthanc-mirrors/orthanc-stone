@@ -21,6 +21,7 @@
 
 #include "gtest/gtest.h"
 
+#include "../Framework/Toolbox/OrthancAsynchronousWebService.h"
 #include "../Resources/Orthanc/Core/Logging.h"
 #include "../Framework/Toolbox/OrthancSynchronousWebService.h"
 #include "../Framework/Layers/OrthancFrameLayerSource.h"
@@ -32,6 +33,8 @@
 #include "../Framework/Toolbox/DicomFrameConverter.h"
 
 #include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/thread/thread.hpp> 
 
 namespace OrthancStone
 {
@@ -399,16 +402,16 @@ namespace OrthancStone
       {
       }
 
-      virtual void NotifyGeometryReady(const OrthancSliceLoader& loader) = 0;
+      virtual void NotifyGeometryReady(OrthancSliceLoader& loader) = 0;
 
-      virtual void NotifyGeometryError(const OrthancSliceLoader& loader) = 0;
+      virtual void NotifyGeometryError(OrthancSliceLoader& loader) = 0;
 
-      virtual void NotifySliceImageReady(const OrthancSliceLoader& loader,
+      virtual void NotifySliceImageReady(OrthancSliceLoader& loader,
                                          unsigned int sliceIndex,
                                          const Slice& slice,
                                          Orthanc::ImageAccessor* image) = 0;
 
-      virtual void NotifySliceImageError(const OrthancSliceLoader& loader,
+      virtual void NotifySliceImageError(OrthancSliceLoader& loader,
                                          unsigned int sliceIndex,
                                          const Slice& slice) = 0;
     };
@@ -522,6 +525,8 @@ namespace OrthancStone
           ok = true;
         }
       }
+
+      state_ = State_GeometryReady;
 
       if (ok)
       {
@@ -662,7 +667,6 @@ namespace OrthancStone
       {
         case Mode_SeriesGeometry:
           ParseSeriesGeometry(answer, answerSize);
-          state_ = State_GeometryReady;
           break;
 
         case Mode_LoadImage:
@@ -701,26 +705,31 @@ namespace OrthancStone
   class Tata : public OrthancSliceLoader::ICallback
   {
   public:
-    virtual void NotifyGeometryReady(const OrthancSliceLoader& loader)
+    virtual void NotifyGeometryReady(OrthancSliceLoader& loader)
     {
-      printf("Done\n");
+      printf(">> %d\n", loader.GetSliceCount());
+
+      for (size_t i = 0; i < loader.GetSliceCount(); i++)
+      {
+        loader.ScheduleLoadSliceImage(i);
+      }
     }
 
-    virtual void NotifyGeometryError(const OrthancSliceLoader& loader)
+    virtual void NotifyGeometryError(OrthancSliceLoader& loader)
     {
       printf("Error\n");
     }
 
-    virtual void NotifySliceImageReady(const OrthancSliceLoader& loader,
+    virtual void NotifySliceImageReady(OrthancSliceLoader& loader,
                                        unsigned int sliceIndex,
                                        const Slice& slice,
                                        Orthanc::ImageAccessor* image)
     {
       std::auto_ptr<Orthanc::ImageAccessor> tmp(image);
-      printf("Slice OK\n");
+      printf("Slice OK %dx%d\n", tmp->GetWidth(), tmp->GetHeight());
     }
 
-    virtual void NotifySliceImageError(const OrthancSliceLoader& loader,
+    virtual void NotifySliceImageError(OrthancSliceLoader& loader,
                                        unsigned int sliceIndex,
                                        const Slice& slice)
     {
@@ -733,15 +742,20 @@ namespace OrthancStone
 TEST(Toto, Tutu)
 {
   Orthanc::WebServiceParameters web;
-  OrthancStone::OrthancSynchronousWebService orthanc(web);
+  OrthancStone::OrthancAsynchronousWebService orthanc(web, 4);
+  orthanc.Start();
 
   OrthancStone::Tata tata;
   OrthancStone::OrthancSliceLoader loader(tata, orthanc);
   //loader.ScheduleLoadSeries("c1c4cb95-05e3bd11-8da9f5bb-87278f71-0b2b43f5");
   loader.ScheduleLoadSeries("67f1b334-02c16752-45026e40-a5b60b6b-030ecab5");
 
-  printf(">> %d\n", loader.GetSliceCount());
-  loader.ScheduleLoadSliceImage(31);
+  /*printf(">> %d\n", loader.GetSliceCount());
+    loader.ScheduleLoadSliceImage(31);*/
+
+  boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+
+  orthanc.Stop();
 }
 
 

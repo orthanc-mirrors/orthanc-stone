@@ -197,12 +197,15 @@ namespace OrthancStone
       }
 
       LOG(WARNING) << "URL to the Orthanc REST API: " << webService.GetUrl();
-      OrthancSynchronousWebService orthanc(webService);
 
-      if (!MessagingToolbox::CheckOrthancVersion(orthanc.GetConnection()))
       {
-        LOG(ERROR) << "Your version of Orthanc is incompatible with Orthanc Stone, please upgrade";
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
+        OrthancSynchronousWebService orthanc(webService);
+
+        if (!MessagingToolbox::CheckOrthancVersion(orthanc.GetConnection()))
+        {
+          LOG(ERROR) << "Your version of Orthanc is incompatible with Orthanc Stone, please upgrade";
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
+        }
       }
 
 
@@ -213,7 +216,7 @@ namespace OrthancStone
       LOG(WARNING) << "Creating the widgets of the application";
 
       LogStatusBar statusBar;
-      BasicApplicationContext context(orthanc);
+      BasicApplicationContext context(webService);
 
       application.Initialize(context, statusBar, parameters);
 

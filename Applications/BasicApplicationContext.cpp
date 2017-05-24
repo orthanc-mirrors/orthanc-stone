@@ -41,8 +41,9 @@ namespace OrthancStone
   }
   
 
-  BasicApplicationContext::BasicApplicationContext(OrthancSynchronousWebService& orthanc) :
-    orthanc_(orthanc),
+  BasicApplicationContext::BasicApplicationContext(Orthanc::WebServiceParameters& orthanc) :
+    oracle_(viewportMutex_, 4),  // Use 4 threads to download
+    webService_(oracle_, orthanc),
     stopped_(true),
     updateDelay_(100)   // By default, 100ms between each refresh of the content
   {
@@ -82,7 +83,7 @@ namespace OrthancStone
                                                         bool isProgressiveDownload,
                                                         size_t downloadThreadCount)
   {
-    std::auto_ptr<VolumeImage> volume
+    /*std::auto_ptr<VolumeImage> volume
       (new VolumeImage(new OrthancSeriesLoader(GetWebService().GetConnection(), series)));
 
     if (isProgressiveDownload)
@@ -99,19 +100,23 @@ namespace OrthancStone
     VolumeImage& result = *volume;
     volumes_.push_back(volume.release());
 
-    return result;
+    return result;*/
+
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
 
 
   DicomStructureSet& BasicApplicationContext::AddStructureSet(const std::string& instance)
   {
-    std::auto_ptr<DicomStructureSet> structureSet
+    /*std::auto_ptr<DicomStructureSet> structureSet
       (new DicomStructureSet(GetWebService().GetConnection(), instance));
 
     DicomStructureSet& result = *structureSet;
     structureSets_.push_back(structureSet.release());
 
-    return result;
+    return result;*/
+
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
 
 
@@ -130,6 +135,8 @@ namespace OrthancStone
 
   void BasicApplicationContext::Start()
   {
+    oracle_.Start();
+
     for (Volumes::iterator it = volumes_.begin(); it != volumes_.end(); ++it)
     {
       assert(*it != NULL);
@@ -160,5 +167,7 @@ namespace OrthancStone
       assert(*it != NULL);
       (*it)->Stop();
     }
+
+    oracle_.Stop();
   }
 }

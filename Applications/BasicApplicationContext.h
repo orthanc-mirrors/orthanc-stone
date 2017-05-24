@@ -26,6 +26,7 @@
 #include "../../Framework/Widgets/IWorldSceneInteractor.h"
 #include "../../Framework/Toolbox/DicomStructureSet.h"
 #include "../../Framework/Toolbox/OrthancSynchronousWebService.h"
+#include "../../Platforms/Generic/OracleWebService.h"
 
 #include <list>
 #include <boost/thread.hpp>
@@ -41,7 +42,8 @@ namespace OrthancStone
 
     static void UpdateThread(BasicApplicationContext* that);
 
-    OrthancSynchronousWebService&  orthanc_;
+    Oracle              oracle_;
+    OracleWebService    webService_;
     boost::mutex        viewportMutex_;
     WidgetViewport      viewport_;
     Volumes             volumes_;
@@ -72,15 +74,15 @@ namespace OrthancStone
     };
 
     
-    BasicApplicationContext(OrthancSynchronousWebService& orthanc);
+    BasicApplicationContext(Orthanc::WebServiceParameters& orthanc);
 
     ~BasicApplicationContext();
 
     IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
 
-    OrthancSynchronousWebService& GetWebService()
+    IWebService& GetWebService()
     {
-      return orthanc_;
+      return webService_;
     }
     
     VolumeImage& AddSeriesVolume(const std::string& series,

@@ -202,10 +202,13 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/MessagingToolbox.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancAsynchronousWebService.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancSeriesLoader.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancSlicesLoader.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancSynchronousWebService.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlices.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlicesCursor.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Toolbox/Slice.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/SliceGeometry.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ViewportGeometry.cpp
   ${ORTHANC_STONE_DIR}/Framework/Viewport/CairoContext.cpp
   ${ORTHANC_STONE_DIR}/Framework/Viewport/CairoFont.cpp

@@ -56,7 +56,7 @@ namespace OrthancStone
         if (widget_ != NULL &&
             slices.GetSliceCount() > 0)
         {
-          widget_->SetSlice(slices.GetSlice(0), 1.0 /* TODO */);
+          widget_->SetSlice(slices.GetSlice(0));
         }
       }
       

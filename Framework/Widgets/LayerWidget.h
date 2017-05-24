@@ -42,7 +42,6 @@ namespace OrthancStone
     std::vector<ILayerSource*>  layers_;
     std::vector<RenderStyle>    styles_;
     SliceGeometry               slice_;
-    double                      sliceThickness_;
     std::auto_ptr<Scene>        currentScene_;
     std::auto_ptr<Scene>        pendingScene_;
 
@@ -93,8 +92,7 @@ namespace OrthancStone
     void SetLayerStyle(size_t layer,
                        const RenderStyle& style);
 
-    void SetSlice(const SliceGeometry& slice,
-                  double sliceThickness);
+    void SetSlice(const SliceGeometry& slice);
 
     virtual void Start();
   };

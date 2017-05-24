@@ -91,12 +91,6 @@ namespace OrthancStone
       return countMissing_ == 0;
     }
 
-    bool IsSamePlane(const SliceGeometry& slice,
-                     double sliceThickness)
-    {
-      return slice_.IsSamePlane(slice, sliceThickness);
-    }
-
     bool RenderScene(CairoContext& context,
                      const ViewportGeometry& view)
     {
@@ -277,13 +271,13 @@ namespace OrthancStone
     renderer->SetLayerStyle(styles_[index]);
 
     if (currentScene_.get() != NULL &&
-        currentScene_->IsSamePlane(slice.GetGeometry(), sliceThickness_))
+        slice.ContainsPlane(currentScene_->GetSlice()))
     {
       currentScene_->SetLayer(index, tmp.release());
       NotifyChange();
     }
     else if (pendingScene_.get() != NULL &&
-             pendingScene_->IsSamePlane(slice.GetGeometry(), sliceThickness_))
+             slice.ContainsPlane(pendingScene_->GetSlice()))
     {
       pendingScene_->SetLayer(index, tmp.release());
 
@@ -298,8 +292,7 @@ namespace OrthancStone
 
   
   LayerWidget::LayerWidget() :
-    started_(false),
-    sliceThickness_(1)
+    started_(false)
   {
     SetBackgroundCleared(true);
   }
@@ -358,8 +351,7 @@ namespace OrthancStone
   }
   
 
-  void LayerWidget::SetSlice(const SliceGeometry& slice,
-                             double sliceThickness)
+  void LayerWidget::SetSlice(const SliceGeometry& slice)
   {
     if (!slice_.IsSamePlane(slice, 100.0 * std::numeric_limits<double>::epsilon()))
     {
@@ -371,7 +363,6 @@ namespace OrthancStone
       }
         
       slice_ = slice;
-      sliceThickness_ = sliceThickness;
       ResetPendingScene();
 
       if (started_)

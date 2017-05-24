@@ -381,10 +381,11 @@ namespace OrthancStone
   {
     size_t i;
     if (LookupLayer(i, source))
+    {
       LOG(INFO) << "Geometry ready for layer " << i;
-
-    SetDefaultView();
-    layers_[i]->ScheduleLayerCreation(slice_);
+      SetDefaultView();
+      layers_[i]->ScheduleLayerCreation(slice_);
+    }
   }
   
 

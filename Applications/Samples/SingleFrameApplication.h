@@ -23,16 +23,8 @@
 
 #include "SampleApplicationBase.h"
 
-#define OLD 0
-
-#if OLD == 1
-#  include "../../Framework/Layers/SingleFrameRendererFactory.h"
-#  include "../../Framework/Widgets/LayeredSceneWidget.h"
-#else
-#  include "../../Framework/Layers/OrthancFrameLayerSource.h"
-#  include "../../Framework/Widgets/LayerWidget.h"
-#endif
-
+#include "../../Framework/Layers/OrthancFrameLayerSource.h"
+#include "../../Framework/Widgets/LayerWidget.h"
 #include "../../Resources/Orthanc/Core/Logging.h"
 
 namespace OrthancStone
@@ -90,28 +82,9 @@ namespace OrthancStone
         std::string instance = parameters["instance"].as<std::string>();
         int frame = parameters["frame"].as<unsigned int>();
 
-#if OLD == 1
-        std::auto_ptr<SingleFrameRendererFactory>  renderer;
-        renderer.reset
-          (new SingleFrameRendererFactory(context.GetWebService().GetConnection(), instance, frame));
-
-        std::auto_ptr<LayeredSceneWidget> widget(new LayeredSceneWidget);
-        widget->SetSlice(renderer->GetSliceGeometry());
-        widget->AddLayer(renderer.release());
-
-        if (parameters["smooth"].as<bool>())
-        {
-          RenderStyle s; 
-          s.interpolation_ = ImageInterpolation_Linear;
-          widget->SetLayerStyle(0, s);
-        }
-
-        context.SetCentralWidget(widget.release());
-
-#else
         std::auto_ptr<LayerWidget> widget(new LayerWidget);
 
-#if 1
+#if 0
         std::auto_ptr<OrthancFrameLayerSource> layer
           (new OrthancFrameLayerSource(context.GetWebService(), instance, frame));
         layer->SetObserver(*this);
@@ -145,7 +118,6 @@ namespace OrthancStone
       
         widget_ = widget.get();
         context.SetCentralWidget(widget.release());
-#endif
       }
     };
   }

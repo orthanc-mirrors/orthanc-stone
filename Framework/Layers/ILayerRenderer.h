@@ -22,6 +22,7 @@
 #pragma once
 
 #include "../Viewport/CairoContext.h"
+#include "../Toolbox/SliceGeometry.h"
 #include "../Toolbox/ViewportGeometry.h"
 #include "RenderStyle.h"
 
@@ -35,7 +36,8 @@ namespace OrthancStone
     }
     
     virtual bool RenderLayer(CairoContext& context,
-                             const ViewportGeometry& view) = 0;
+                             const ViewportGeometry& view,
+                             const SliceGeometry& viewportSlice) = 0;
 
     virtual void SetLayerStyle(const RenderStyle& style) = 0;
 

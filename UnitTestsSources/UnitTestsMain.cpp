@@ -77,9 +77,9 @@ TEST(Toto, Tutu)
   OrthancStone::Tata tata;
   OrthancStone::OrthancSlicesLoader loader(tata, orthanc);
   //loader.ScheduleLoadSeries("c1c4cb95-05e3bd11-8da9f5bb-87278f71-0b2b43f5");
-  loader.ScheduleLoadSeries("67f1b334-02c16752-45026e40-a5b60b6b-030ecab5");
+  //loader.ScheduleLoadSeries("67f1b334-02c16752-45026e40-a5b60b6b-030ecab5");
 
-  //loader.ScheduleLoadInstance("19816330-cb02e1cf-df3a8fe8-bf510623-ccefe9f5", 0);
+  loader.ScheduleLoadInstance("19816330-cb02e1cf-df3a8fe8-bf510623-ccefe9f5", 0);
 
   /*printf(">> %d\n", loader.GetSliceCount());
     loader.ScheduleLoadSliceImage(31);*/

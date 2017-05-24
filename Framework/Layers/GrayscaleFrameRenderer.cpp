@@ -107,12 +107,11 @@ namespace OrthancStone
 
   GrayscaleFrameRenderer::GrayscaleFrameRenderer(Orthanc::ImageAccessor* frame,
                                                  const DicomFrameConverter& converter,
-                                                 const SliceGeometry& viewportSlice,
                                                  const SliceGeometry& frameSlice,
                                                  double pixelSpacingX,
                                                  double pixelSpacingY,
                                                  bool isFullQuality) :
-    FrameRenderer(viewportSlice, frameSlice, pixelSpacingX, pixelSpacingY, isFullQuality),
+    FrameRenderer(frameSlice, pixelSpacingX, pixelSpacingY, isFullQuality),
     frame_(frame),
     defaultWindowCenter_(converter.GetDefaultWindowCenter()),
     defaultWindowWidth_(converter.GetDefaultWindowWidth())

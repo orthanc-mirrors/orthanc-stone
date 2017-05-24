@@ -100,7 +100,8 @@ namespace OrthancStone
     }
 
     bool RenderScene(CairoContext& context,
-                     const ViewportGeometry& view)
+                     const ViewportGeometry& view,
+                     const SliceGeometry& slice)
     {
       boost::mutex::scoped_lock lock(mutex_);
 
@@ -109,7 +110,7 @@ namespace OrthancStone
       for (size_t i = 0; i < renderers_.size(); i++)
       {
         if (renderers_[i] != NULL &&
-            !renderers_[i]->RenderLayer(context, view))
+            !renderers_[i]->RenderLayer(context, view, slice))
         {
           return false;
         }
@@ -395,7 +396,7 @@ namespace OrthancStone
   bool LayeredSceneWidget::RenderScene(CairoContext& context,
                                        const ViewportGeometry& view) 
   {
-    return renderers_->RenderScene(context, view);
+    return renderers_->RenderScene(context, view, slice_);
   }
 
 

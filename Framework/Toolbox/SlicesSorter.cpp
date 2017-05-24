@@ -192,4 +192,23 @@ namespace OrthancStone
 
     return found;
   }
+
+
+  bool SlicesSorter::LookupSlice(size_t& index,
+                                 const SliceGeometry& slice) const
+  {
+    // TODO Turn this linear-time lookup into a log-time lookup,
+    // keeping track of whether the slices are sorted along the normal
+
+    for (size_t i = 0; i < slices_.size(); i++)
+    {
+      if (slices_[i]->GetSlice().ContainsPlane(slice))
+      {
+        index = i;
+        return true;
+      }
+    }
+
+    return false;
+  }
 }

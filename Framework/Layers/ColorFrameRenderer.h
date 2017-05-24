@@ -35,7 +35,6 @@ namespace OrthancStone
 
   public:
     ColorFrameRenderer(Orthanc::ImageAccessor* frame,    // Takes ownership
-                       const SliceGeometry& viewportSlice,
                        const SliceGeometry& frameSlice,
                        double pixelSpacingX,
                        double pixelSpacingY,

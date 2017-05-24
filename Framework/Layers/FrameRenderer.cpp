@@ -76,12 +76,10 @@ namespace OrthancStone
   }
 
 
-  FrameRenderer::FrameRenderer(const SliceGeometry& viewportSlice,
-                               const SliceGeometry& frameSlice,
+  FrameRenderer::FrameRenderer(const SliceGeometry& frameSlice,
                                double pixelSpacingX,
                                double pixelSpacingY,
                                bool isFullQuality) :
-    viewportSlice_(viewportSlice),
     frameSlice_(frameSlice),
     pixelSpacingX_(pixelSpacingX),
     pixelSpacingY_(pixelSpacingY),
@@ -138,7 +136,8 @@ namespace OrthancStone
 
 
   bool FrameRenderer::RenderLayer(CairoContext& context,
-                                  const ViewportGeometry& view)
+                                  const ViewportGeometry& view,
+                                  const SliceGeometry& viewportSlice)
   {
     if (!style_.visible_)
     {
@@ -147,7 +146,7 @@ namespace OrthancStone
 
     if (display_.get() == NULL)
     {
-      if (!ComputePixelTransform(transform_, viewportSlice_, frameSlice_,
+      if (!ComputePixelTransform(transform_, viewportSlice, frameSlice_,
                                  pixelSpacingX_, pixelSpacingY_))
       {
         return true;
@@ -216,7 +215,6 @@ namespace OrthancStone
 
 
   ILayerRenderer* FrameRenderer::CreateRenderer(Orthanc::ImageAccessor* frame,
-                                                const SliceGeometry& viewportSlice,
                                                 const SliceGeometry& frameSlice,
                                                 const OrthancPlugins::IDicomDataset& dicom,
                                                 double pixelSpacingX,
@@ -227,15 +225,34 @@ namespace OrthancStone
 
     if (frame->GetFormat() == Orthanc::PixelFormat_RGB24)
     {
-      return new ColorFrameRenderer(protect.release(), viewportSlice, frameSlice, 
+      return new ColorFrameRenderer(protect.release(), frameSlice, 
                                     pixelSpacingX, pixelSpacingY, isFullQuality);
     }
     else
     {
       DicomFrameConverter converter;
       converter.ReadParameters(dicom);
-      return new GrayscaleFrameRenderer(protect.release(), converter, viewportSlice, frameSlice, 
+      return new GrayscaleFrameRenderer(protect.release(), converter, frameSlice, 
                                         pixelSpacingX, pixelSpacingY, isFullQuality);
+    }
+  }
+
+
+  ILayerRenderer* FrameRenderer::CreateRenderer(Orthanc::ImageAccessor* frame,
+                                                const Slice& slice,
+                                                bool isFullQuality)
+  {
+    std::auto_ptr<Orthanc::ImageAccessor> protect(frame);
+
+    if (frame->GetFormat() == Orthanc::PixelFormat_RGB24)
+    {
+      return new ColorFrameRenderer(protect.release(), slice.GetGeometry(), 
+                                    slice.GetPixelSpacingX(), slice.GetPixelSpacingY(), isFullQuality);
+    }
+    else
+    {
+      return new GrayscaleFrameRenderer(protect.release(), slice.GetConverter(), slice.GetGeometry(), 
+                                        slice.GetPixelSpacingX(), slice.GetPixelSpacingY(), isFullQuality);
     }
   }
 }

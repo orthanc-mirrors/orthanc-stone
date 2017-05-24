@@ -76,7 +76,7 @@ namespace OrthancStone
   {
     SliceGeometry frameSlice(*dicom_);
     return FrameRenderer::CreateRenderer(MessagingToolbox::DecodeFrame(orthanc_, instance_, frame_, format_), 
-                                         viewportSlice, frameSlice, *dicom_, 1, 1, true);
+                                         frameSlice, *dicom_, 1, 1, true);
   }
 
 

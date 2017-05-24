@@ -78,5 +78,10 @@ namespace OrthancStone
     unsigned int GetHeight() const;
 
     const DicomFrameConverter& GetConverter() const;
+
+    bool ContainsPlane(const SliceGeometry& plane) const
+    {
+      return geometry_.IsSamePlane(plane, thickness_);
+    }
   };
 }

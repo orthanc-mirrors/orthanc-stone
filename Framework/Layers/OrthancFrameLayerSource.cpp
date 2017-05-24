@@ -32,44 +32,63 @@
 
 namespace OrthancStone
 {
-  class OrthancFrameLayerSource::Operation : public Orthanc::IDynamicObject
+  void OrthancFrameLayerSource::NotifyGeometryReady(const OrthancSlicesLoader& loader)
   {
-  private:
-    Content        content_;
-    SliceGeometry  viewportSlice_;
-
-  public:
-    Operation(Content content) : content_(content)
+    if (loader.GetSliceCount() > 0)
     {
+      // Make sure all the slices are parallel. TODO Alleviate this constraint
+      for (size_t i = 1; i < loader.GetSliceCount(); i++)
+      {
+        if (!GeometryToolbox::IsParallel(loader.GetSlice(i).GetGeometry().GetNormal(),
+                                         loader.GetSlice(0).GetGeometry().GetNormal()))
+        {
+          LayerSourceBase::NotifyGeometryError();
+          return;
+        }
+      }
     }
 
-    void SetViewportSlice(const SliceGeometry& slice)
+    if (observer2_ != NULL)
     {
-      viewportSlice_ = slice;
-    }
+      ParallelSlices slices;
 
-    const SliceGeometry& GetViewportSlice() const
-    {
-      return viewportSlice_;
-    } 
+      for (size_t i = 0; i < loader.GetSliceCount(); i++)
+      {
+        slices.AddSlice(loader.GetSlice(i).GetGeometry());
+      }
 
-    Content GetContent() const
-    {
-      return content_;
+      observer2_->NotifySlicesAvailable(slices);
     }
-  };
-    
+      
+    LayerSourceBase::NotifyGeometryReady();
+  }
+
+  void OrthancFrameLayerSource::NotifyGeometryError(const OrthancSlicesLoader& loader)
+  {
+    LayerSourceBase::NotifyGeometryError();
+  }
+
+  void OrthancFrameLayerSource::NotifySliceImageReady(const OrthancSlicesLoader& loader,
+                                                      unsigned int sliceIndex,
+                                                      const Slice& slice,
+                                                      Orthanc::ImageAccessor* image)
+  {
+    LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(image, slice, true), slice);
+  }
+
+  void OrthancFrameLayerSource::NotifySliceImageError(const OrthancSlicesLoader& loader,
+                                                      unsigned int sliceIndex,
+                                                      const Slice& slice)
+  {
+    LayerSourceBase::NotifyLayerError(slice.GetGeometry());
+  }
 
   OrthancFrameLayerSource::OrthancFrameLayerSource(IWebService& orthanc,
                                                    const std::string& instanceId,
                                                    unsigned int frame) :
-    orthanc_(orthanc),
     instanceId_(instanceId),
     frame_(frame),
-    frameWidth_(0),
-    frameHeight_(0),
-    pixelSpacingX_(1),
-    pixelSpacingY_(1),
+    loader_(*this, orthanc),
     observer2_(NULL)
   {
   }
@@ -77,22 +96,9 @@ namespace OrthancStone
 
   void OrthancFrameLayerSource::StartInternal()
   {
-    orthanc_.ScheduleGetRequest(*this,
-                                "/instances/" + instanceId_ + "/tags",
-                                new Operation(Content_Tags));
+    loader_.ScheduleLoadInstance(instanceId_, frame_);
   }
   
-
-  void OrthancFrameLayerSource::SetObserver(IObserver& observer)
-  {
-    LayerSourceBase::SetObserver(observer);
-
-    if (dataset_.get() != NULL)
-    {
-      NotifySourceChange();
-    }
-  }
-
 
   void OrthancFrameLayerSource::SetObserver(IVolumeSlicesObserver& observer)
   {
@@ -112,96 +118,6 @@ namespace OrthancStone
     }
   }
 
-
-  void OrthancFrameLayerSource::NotifyError(const std::string& uri,
-                                            Orthanc::IDynamicObject* payload)
-  {
-    std::auto_ptr<Operation> operation(reinterpret_cast<Operation*>(payload));
-
-    LOG(ERROR) << "Cannot download " << uri;
-    NotifyLayerError(operation->GetViewportSlice());
-  }
-  
-
-  void OrthancFrameLayerSource::NotifySuccess(const std::string& uri,
-                                              const void* answer,
-                                              size_t answerSize,
-                                              Orthanc::IDynamicObject* payload)
-  {
-    std::auto_ptr<Operation> operation(reinterpret_cast<Operation*>(payload));
-
-    if (operation.get() == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-    }
-    else if (operation->GetContent() == Content_Tags)
-    {
-      dataset_.reset(new OrthancPlugins::FullOrthancDataset(answer, answerSize));
-
-      DicomFrameConverter converter;
-      converter.ReadParameters(*dataset_);
-      format_ = converter.GetExpectedPixelFormat();
-      GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, *dataset_);
-
-      OrthancPlugins::DicomDatasetReader reader(*dataset_);
-      if (!reader.GetUnsignedIntegerValue(frameWidth_, OrthancPlugins::DICOM_TAG_COLUMNS) ||
-          !reader.GetUnsignedIntegerValue(frameHeight_, OrthancPlugins::DICOM_TAG_ROWS))
-      {
-        frameWidth_ = 0;
-        frameHeight_ = 0;
-        LOG(WARNING) << "Missing tags in a DICOM image: Columns or Rows";
-      }
-
-      if (observer2_ != NULL)
-      {
-        ParallelSlices slices;
-        slices.AddSlice(SliceGeometry(*dataset_));
-        observer2_->NotifySlicesAvailable(slices);
-      }
-      
-      NotifyGeometryReady();
-    }
-    else if (operation->GetContent() == Content_Frame)
-    {
-      std::auto_ptr<Orthanc::PngReader>  image(new Orthanc::PngReader);
-      image->ReadFromMemory(answer, answerSize);
-
-      bool ok = (image->GetWidth() == frameWidth_ ||
-                 image->GetHeight() == frameHeight_);
-      
-      if (ok &&
-          format_ == Orthanc::PixelFormat_SignedGrayscale16)
-      {
-        if (image->GetFormat() == Orthanc::PixelFormat_Grayscale16)
-        {
-          image->SetFormat(Orthanc::PixelFormat_SignedGrayscale16);
-        }
-        else
-        {
-          ok = false;
-        }
-      }
-
-      if (ok)
-      {
-        SliceGeometry frameSlice(*dataset_);
-        NotifyLayerReady(FrameRenderer::CreateRenderer(image.release(),
-                                                       operation->GetViewportSlice(),
-                                                       frameSlice, *dataset_,
-                                                       pixelSpacingX_, pixelSpacingY_, true),
-                         operation->GetViewportSlice());
-      }
-      else
-      {
-        NotifyLayerError(operation->GetViewportSlice());
-      }
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-    }
-  }
-
   
   bool OrthancFrameLayerSource::GetExtent(double& x1,
                                           double& y1,
@@ -209,61 +125,57 @@ namespace OrthancStone
                                           double& y2,
                                           const SliceGeometry& viewportSlice /* ignored */)
   {
-    if (!IsStarted() ||
-        dataset_.get() == NULL)
+    bool ok = false;
+
+    if (IsStarted() &&
+        loader_.IsGeometryReady())
     {
-      return false;
+      double tx1, ty1, tx2, ty2;
+
+      for (size_t i = 0; i < loader_.GetSliceCount(); i++)
+      {
+        if (FrameRenderer::ComputeFrameExtent(tx1, ty1, tx2, ty2, viewportSlice, loader_.GetSlice(i)))
+        {
+          if (ok)
+          {
+            x1 = std::min(x1, tx1);
+            y1 = std::min(y1, ty1);
+            x2 = std::min(x2, tx2);
+            y2 = std::min(y2, ty2);
+          }
+          else
+          {
+            // This is the first slice parallel to the viewport
+            x1 = tx1;
+            y1 = ty1;
+            x2 = tx2;
+            y2 = ty2;
+            ok = true;
+          }
+        }
+      }
     }
-    else
-    {
-      SliceGeometry frameSlice(*dataset_);
-      return FrameRenderer::ComputeFrameExtent(x1, y1, x2, y2,
-                                               viewportSlice, frameSlice,
-                                               frameWidth_, frameHeight_,
-                                               pixelSpacingX_, pixelSpacingY_);
-    }
+
+    return ok;
   }
 
   
   void OrthancFrameLayerSource::ScheduleLayerCreation(const SliceGeometry& viewportSlice)
   {
-    if (!IsStarted())
+    size_t index;
+
+    if (!IsStarted() ||
+        !loader_.IsGeometryReady())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-    
-    if (dataset_.get() == NULL)
+    else if (loader_.LookupSlice(index, viewportSlice))
     {
-      NotifyLayerError(viewportSlice);
+      loader_.ScheduleLoadSliceImage(index);
     }
     else
     {
-      std::string uri = ("/instances/" + instanceId_ + "/frames/" + 
-                         boost::lexical_cast<std::string>(frame_));
-
-      std::string compressed;
-
-      switch (format_)
-      {
-        case Orthanc::PixelFormat_RGB24:
-          uri += "/preview";
-          break;
-
-        case Orthanc::PixelFormat_Grayscale16:
-          uri += "/image-uint16";
-          break;
-
-        case Orthanc::PixelFormat_SignedGrayscale16:
-          uri += "/image-int16";
-          break;
-
-        default:
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-
-      std::auto_ptr<Operation> operation(new Operation(Content_Frame));
-      operation->SetViewportSlice(viewportSlice);
-      orthanc_.ScheduleGetRequest(*this, uri, operation.release());
+      LayerSourceBase::NotifyLayerError(viewportSlice);
     }
   }
 }

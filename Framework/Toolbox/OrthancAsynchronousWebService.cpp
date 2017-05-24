@@ -90,6 +90,7 @@ namespace OrthancStone
       catch (Orthanc::OrthancException&)
       {
         callback_.NotifyError(uri_, payload_.release());
+        return;
       }
 
       callback_.NotifySuccess(uri_, answer.c_str(), answer.size(), payload_.release());
@@ -220,14 +221,15 @@ namespace OrthancStone
       
       for (size_t i = 0; i < threads_.size(); i++)
       {
-        assert(threads_[i] != NULL);
-
-        if (threads_[i]->joinable())
+        if (threads_[i] != NULL)
         {
-          threads_[i]->join();
-        }
+          if (threads_[i]->joinable())
+          {
+            threads_[i]->join();
+          }
 
-        delete threads_[i];
+          delete threads_[i];
+        }
       }
     }
   };

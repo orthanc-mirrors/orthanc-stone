@@ -30,7 +30,7 @@ namespace OrthancStone
 {
   class LayerWidget :
     public WorldSceneWidget,
-    public ILayerSource::IObserver   // TODO move this as PImpl
+    private ILayerSource::IObserver
   {
   private:
     class Scene;
@@ -50,6 +50,23 @@ namespace OrthancStone
     bool LookupLayer(size_t& index /* out */,
                      ILayerSource& layer) const;
     
+
+    virtual void NotifyGeometryReady(ILayerSource& source);
+
+    virtual void NotifyGeometryError(ILayerSource& source);
+
+    virtual void NotifySourceChange(ILayerSource& source);
+
+    virtual void NotifySliceChange(ILayerSource& source,
+                                   const Slice& slice);
+
+    virtual void NotifyLayerReady(ILayerRenderer* renderer,
+                                  ILayerSource& source,
+                                  const Slice& slice);
+
+    virtual void NotifyLayerError(ILayerSource& source,
+                                  const SliceGeometry& slice);
+
         
   protected:
     virtual void GetSceneExtent(double& x1,
@@ -64,7 +81,7 @@ namespace OrthancStone
 
     void UpdateLayer(size_t index,
                      ILayerRenderer* renderer,
-                     const SliceGeometry& slice);
+                     const Slice& slice);
     
   public:
     LayerWidget();
@@ -78,20 +95,6 @@ namespace OrthancStone
 
     void SetSlice(const SliceGeometry& slice,
                   double sliceThickness);
-
-    virtual void NotifyGeometryReady(ILayerSource& source);
-
-    virtual void NotifySourceChange(ILayerSource& source);
-
-    virtual void NotifySliceChange(ILayerSource& source,
-                                   const SliceGeometry& slice);
-
-    virtual void NotifyLayerReady(ILayerRenderer* renderer,
-                                  ILayerSource& source,
-                                  const SliceGeometry& viewportSlice);
-
-    virtual void NotifyLayerError(ILayerSource& source,
-                                  const SliceGeometry& viewportSlice);
 
     virtual void Start();
   };

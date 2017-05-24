@@ -38,6 +38,19 @@ namespace OrthancStone
     }
   }  
     
+  void LayerSourceBase::NotifyGeometryError()
+  {
+    if (!started_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
+    if (observer_ != NULL)
+    {
+      observer_->NotifyGeometryError(*this);
+    }
+  }  
+    
   void LayerSourceBase::NotifySourceChange()
   {
     if (!started_)
@@ -51,7 +64,7 @@ namespace OrthancStone
     }
   }
 
-  void LayerSourceBase::NotifySliceChange(const SliceGeometry& slice)
+  void LayerSourceBase::NotifySliceChange(const Slice& slice)
   {
     if (!started_)
     {
@@ -65,7 +78,7 @@ namespace OrthancStone
   }
 
   void LayerSourceBase::NotifyLayerReady(ILayerRenderer* layer,
-                                         const SliceGeometry& viewportSlice)
+                                         const Slice& slice)
   {
     std::auto_ptr<ILayerRenderer> tmp(layer);
     
@@ -81,11 +94,11 @@ namespace OrthancStone
     
     if (observer_ != NULL)
     {
-      observer_->NotifyLayerReady(tmp.release(), *this, viewportSlice);
+      observer_->NotifyLayerReady(tmp.release(), *this, slice);
     }
   }
 
-  void LayerSourceBase::NotifyLayerError(const SliceGeometry& viewportSlice)
+  void LayerSourceBase::NotifyLayerError(const SliceGeometry& slice)
   {
     if (!started_)
     {
@@ -94,7 +107,7 @@ namespace OrthancStone
 
     if (observer_ != NULL)
     {
-      observer_->NotifyLayerError(*this, viewportSlice);
+      observer_->NotifyLayerError(*this, slice);
     }
   }
 

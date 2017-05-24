@@ -39,15 +39,17 @@ namespace OrthancStone
 
     void NotifyGeometryReady();
     
+    void NotifyGeometryError();
+    
     void NotifySourceChange();
 
-    void NotifySliceChange(const SliceGeometry& slice);
+    void NotifySliceChange(const Slice& slice);
 
     // Takes ownership of "layer" (that cannot be "NULL")
     void NotifyLayerReady(ILayerRenderer* layer,
-                          const SliceGeometry& viewportSlice);
+                          const Slice& slice);
     
-    void NotifyLayerError(const SliceGeometry& viewportSlice);
+    void NotifyLayerError(const SliceGeometry& slice);
 
     virtual void StartInternal() = 0;
 

@@ -335,6 +335,12 @@ namespace OrthancStone
   }
   
 
+  bool OrthancSlicesLoader::IsGeometryReady() const
+  {
+    return state_ == State_GeometryReady;
+  }
+
+
   size_t OrthancSlicesLoader::GetSliceCount() const
   {
     if (state_ != State_GeometryReady)
@@ -354,6 +360,18 @@ namespace OrthancStone
     }
 
     return slices_.GetSlice(index);
+  }
+  
+
+  bool OrthancSlicesLoader::LookupSlice(size_t& index,
+                                        const SliceGeometry& plane) const
+  {
+    if (state_ != State_GeometryReady)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
+    return slices_.LookupSlice(index, plane);
   }
   
 

@@ -24,53 +24,44 @@
 #include "LayerSourceBase.h"
 #include "../Toolbox/IWebService.h"
 #include "../Toolbox/IVolumeSlicesObserver.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/FullOrthancDataset.h"
+#include "../Toolbox/OrthancSlicesLoader.h"
 
 namespace OrthancStone
 {  
   class OrthancFrameLayerSource :
     public LayerSourceBase,
-    public IWebService::ICallback   // TODO move this into a PImpl
+    private OrthancSlicesLoader::ICallback
   {
   private:
-    enum Content
-    {
-      Content_Tags,
-      Content_Frame
-    };
+    std::string             instanceId_;
+    unsigned int            frame_;
+    OrthancSlicesLoader     loader_;
+    IVolumeSlicesObserver*  observer2_;
 
-    class Operation;
-    
-    IWebService&                                      orthanc_;
-    std::string                                       instanceId_;
-    unsigned int                                      frame_;
-    std::auto_ptr<OrthancPlugins::FullOrthancDataset> dataset_;
-    unsigned int                                      frameWidth_;
-    unsigned int                                      frameHeight_;
-    Orthanc::PixelFormat                              format_;
-    double                                            pixelSpacingX_;
-    double                                            pixelSpacingY_;
-    IVolumeSlicesObserver*                            observer2_;
+    virtual void NotifyGeometryReady(const OrthancSlicesLoader& loader);
+
+    virtual void NotifyGeometryError(const OrthancSlicesLoader& loader);
+
+    virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
+                                       unsigned int sliceIndex,
+                                       const Slice& slice,
+                                       Orthanc::ImageAccessor* image);
+
+    virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
+                                       unsigned int sliceIndex,
+                                       const Slice& slice);
 
   protected:
     virtual void StartInternal();
 
   public:
+    using LayerSourceBase::SetObserver;
+
     OrthancFrameLayerSource(IWebService& orthanc,
                             const std::string& instanceId,
                             unsigned int frame);
 
-    virtual void SetObserver(IObserver& observer);
-
     void SetObserver(IVolumeSlicesObserver& observer);
-
-    virtual void NotifyError(const std::string& uri,
-                             Orthanc::IDynamicObject* payload);
-
-    virtual void NotifySuccess(const std::string& uri,
-                               const void* answer,
-                               size_t answerSize,
-                               Orthanc::IDynamicObject* payload);
 
     virtual bool GetExtent(double& x1,
                            double& y1,

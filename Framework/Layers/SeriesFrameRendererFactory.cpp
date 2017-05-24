@@ -155,7 +155,6 @@ namespace OrthancStone
     {
       SliceGeometry frameSlice(*currentDataset_);
       return FrameRenderer::CreateRenderer(loader_->DownloadFrame(closest), 
-                                           viewportSlice, 
                                            frameSlice,
                                            *currentDataset_, 
                                            spacingX, spacingY,

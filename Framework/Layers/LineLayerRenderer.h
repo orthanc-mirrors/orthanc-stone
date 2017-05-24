@@ -42,7 +42,8 @@ namespace OrthancStone
                       double y2);
 
     virtual bool RenderLayer(CairoContext& context,
-                             const ViewportGeometry& view);
+                             const ViewportGeometry& view,
+                             const SliceGeometry& slice);
 
     virtual void SetLayerStyle(const RenderStyle& style);
 

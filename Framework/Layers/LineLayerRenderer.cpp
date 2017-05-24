@@ -38,7 +38,8 @@ namespace OrthancStone
 
 
   bool LineLayerRenderer::RenderLayer(CairoContext& context,
-                                      const ViewportGeometry& view)
+                                      const ViewportGeometry& view,
+                                      const SliceGeometry& slice)
   {
     if (visible_)
     {

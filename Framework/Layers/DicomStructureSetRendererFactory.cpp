@@ -42,7 +42,8 @@ namespace OrthancStone
     }
 
     virtual bool RenderLayer(CairoContext& context,
-                             const ViewportGeometry& view)
+                             const ViewportGeometry& view,
+                             const SliceGeometry& viewportSlice)
     {
       if (visible_)
       {

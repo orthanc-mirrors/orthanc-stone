@@ -38,12 +38,11 @@ namespace OrthancStone
 
 
   ColorFrameRenderer::ColorFrameRenderer(Orthanc::ImageAccessor* frame,
-                                         const SliceGeometry& viewportSlice,
                                          const SliceGeometry& frameSlice,
                                          double pixelSpacingX,
                                          double pixelSpacingY,
                                          bool isFullQuality) :
-    FrameRenderer(viewportSlice, frameSlice, pixelSpacingX, pixelSpacingY, isFullQuality),
+    FrameRenderer(frameSlice, pixelSpacingX, pixelSpacingY, isFullQuality),
     frame_(frame)
   {
     if (frame == NULL)

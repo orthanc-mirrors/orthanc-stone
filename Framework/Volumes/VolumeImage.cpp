@@ -387,7 +387,6 @@ namespace OrthancStone
       }
 
       return FrameRenderer::CreateRenderer(frame.release(), 
-                                           viewportSlice, 
                                            frameSlice, 
                                            *that_.referenceDataset_, 
                                            spacing[0], spacing[1],

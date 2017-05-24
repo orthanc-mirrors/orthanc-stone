@@ -89,7 +89,7 @@ namespace OrthancStone
                       double& offsetY,
                       const Vector& point) const;
 
-    bool IsSamePlane(const SliceGeometry& other,
+    bool IsSamePlane(const SliceGeometry& slice,
                      double sliceThickness) const;
   };
 }

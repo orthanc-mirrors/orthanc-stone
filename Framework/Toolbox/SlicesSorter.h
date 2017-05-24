@@ -64,5 +64,8 @@ namespace OrthancStone
     void FilterNormal(const Vector& normal);
     
     bool SelectNormal(Vector& normal) const;
+
+    bool LookupSlice(size_t& index,
+                     const SliceGeometry& slice) const;
   };
 }

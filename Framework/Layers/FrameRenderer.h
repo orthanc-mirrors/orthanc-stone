@@ -23,14 +23,13 @@
 
 #include "ILayerRenderer.h"
 
-#include "../Toolbox/SliceGeometry.h"
+#include "../Toolbox/Slice.h"
 
 namespace OrthancStone
 {
   class FrameRenderer : public ILayerRenderer
   {
   private:
-    SliceGeometry                 viewportSlice_;
     SliceGeometry                 frameSlice_;
     double                        pixelSpacingX_;
     double                        pixelSpacingY_;
@@ -44,12 +43,12 @@ namespace OrthancStone
     virtual CairoSurface* GenerateDisplay(const RenderStyle& style) = 0;
 
   public:
-    FrameRenderer(const SliceGeometry& viewportSlice,
-                  const SliceGeometry& frameSlice,
+    FrameRenderer(const SliceGeometry& frameSlice,
                   double pixelSpacingX,
                   double pixelSpacingY,
                   bool isFullQuality);
 
+    // TODO Remove this overload
     static bool ComputeFrameExtent(double& x1,
                                    double& y1,
                                    double& x2,
@@ -61,8 +60,21 @@ namespace OrthancStone
                                    double pixelSpacingX,
                                    double pixelSpacingY);
 
+    static bool ComputeFrameExtent(double& x1,
+                                   double& y1,
+                                   double& x2,
+                                   double& y2,
+                                   const SliceGeometry& viewportSlice,
+                                   const Slice& slice)
+    {
+      return ComputeFrameExtent(x1, y1, x2, y2, viewportSlice,
+                                slice.GetGeometry(), slice.GetWidth(), slice.GetHeight(),
+                                slice.GetPixelSpacingX(), slice.GetPixelSpacingY());
+    }
+
     virtual bool RenderLayer(CairoContext& context,
-                             const ViewportGeometry& view);
+                             const ViewportGeometry& view,
+                             const SliceGeometry& viewportSlice);
 
     virtual void SetLayerStyle(const RenderStyle& style);
 
@@ -71,12 +83,16 @@ namespace OrthancStone
       return isFullQuality_;
     }
 
+    // TODO Remove this overload
     static ILayerRenderer* CreateRenderer(Orthanc::ImageAccessor* frame,
-                                          const SliceGeometry& viewportSlice,
                                           const SliceGeometry& frameSlice,
                                           const OrthancPlugins::IDicomDataset& dicom,
                                           double pixelSpacingX,
                                           double pixelSpacingY,
+                                          bool isFullQuality);
+
+    static ILayerRenderer* CreateRenderer(Orthanc::ImageAccessor* frame,
+                                          const Slice& slice,
                                           bool isFullQuality);
   };
 }

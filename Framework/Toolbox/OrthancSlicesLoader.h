@@ -101,9 +101,14 @@ namespace OrthancStone
     void ScheduleLoadInstance(const std::string& instanceId,
                               unsigned int frame);
 
+    bool IsGeometryReady() const;
+
     size_t GetSliceCount() const;
 
     const Slice& GetSlice(size_t index) const;
+
+    bool LookupSlice(size_t& index,
+                     const SliceGeometry& plane) const;
 
     void ScheduleLoadSliceImage(size_t index);
   };

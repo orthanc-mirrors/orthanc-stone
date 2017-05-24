@@ -22,16 +22,19 @@
 #pragma once
 
 #include "ILayerRendererFactory.h"
-#include "../Toolbox/OrthancSlicesLoader.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
 
 namespace OrthancStone
 {
-  class SingleFrameRendererFactory :
-    public ILayerRendererFactory,
-    public OrthancSlicesLoader::ICallback   // TODO PImpl
+  class SingleFrameRendererFactory : public ILayerRendererFactory
   {
   private:
-    OrthancSlicesLoader   loader_;
+    OrthancPlugins::IOrthancConnection&           orthanc_;
+    std::auto_ptr<OrthancPlugins::IDicomDataset>  dicom_;
+
+    std::string           instance_;
+    unsigned int          frame_;
+    Orthanc::PixelFormat  format_;
 
   public:
     SingleFrameRendererFactory(OrthancPlugins::IOrthancConnection& orthanc,

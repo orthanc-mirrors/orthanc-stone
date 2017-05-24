@@ -189,8 +189,7 @@ namespace OrthancStone
           std::swap(ay, by);
         }
 
-        //LOG(INFO) << "Extent of layer " << i << ": (" << ax << "," << ay << ")->(" << bx << "," << by << ")";
-        printf("Extent %d: (%f,%f) -> (%f,%f)\n", (int) i, ax, ay, bx, by);
+        LOG(INFO) << "Extent of layer " << i << ": (" << ax << "," << ay << ")->(" << bx << "," << by << ")";
 
         if (first)
         {
@@ -260,7 +259,7 @@ namespace OrthancStone
                                 ILayerRenderer* renderer,
                                 const SliceGeometry& slice)
   {
-    printf("Updating layer %d\n", (int) index);
+    LOG(INFO) << "Updating layer " << index;
     
     std::auto_ptr<ILayerRenderer> tmp(renderer);
 
@@ -391,7 +390,7 @@ namespace OrthancStone
   {
     size_t i;
     if (LookupLayer(i, source))
-      printf("Geometry ready for layer %d\n", (int) i);
+      LOG(INFO) << "Geometry ready for layer " << i;
 
     SetDefaultView();
     layers_[i]->ScheduleLayerCreation(slice_);
@@ -422,7 +421,7 @@ namespace OrthancStone
 
     size_t i;
     if (LookupLayer(i, source))
-      printf("Renderer ready for layer %d\n", (int) i);
+      LOG(INFO) << "Renderer ready for layer " << i;
 
     size_t index;
     if (LookupLayer(index, source))

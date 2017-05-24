@@ -90,13 +90,16 @@ namespace OrthancStone
 
       std::string position, orientation;
       if (dataset.GetStringValue(position, OrthancPlugins::DICOM_TAG_IMAGE_POSITION_PATIENT) &&
-          dataset.GetStringValue(orientation, OrthancPlugins::DICOM_TAG_IMAGE_ORIENTATION_PATIENT) &&
-          reader.GetUnsignedIntegerValue(width_, OrthancPlugins::DICOM_TAG_COLUMNS) &&
+          dataset.GetStringValue(orientation, OrthancPlugins::DICOM_TAG_IMAGE_ORIENTATION_PATIENT))
+      {
+        geometry_ = SliceGeometry(position, orientation);
+      }
+      
+      if (reader.GetUnsignedIntegerValue(width_, OrthancPlugins::DICOM_TAG_COLUMNS) &&
           reader.GetUnsignedIntegerValue(height_, OrthancPlugins::DICOM_TAG_ROWS))
       {
         orthancInstanceId_ = instanceId;
         frame_ = frame;
-        geometry_ = SliceGeometry(position, orientation);
         converter_.ReadParameters(dataset);
 
         type_ = Type_OrthancInstance;
@@ -428,6 +431,7 @@ namespace OrthancStone
     enum Mode
     {
       Mode_SeriesGeometry,
+      Mode_InstanceGeometry,
       Mode_LoadImage
     };
 
@@ -435,8 +439,10 @@ namespace OrthancStone
     {
     private:
       Mode          mode_;
+      unsigned int  frame_;
       unsigned int  sliceIndex_;
       const Slice*  slice_;
+      std::string   instanceId_;
 
       Operation(Mode mode) :
         mode_(mode)
@@ -460,10 +466,31 @@ namespace OrthancStone
         assert(mode_ == Mode_LoadImage && slice_ != NULL);
         return *slice_;
       }
+
+      unsigned int GetFrame() const
+      {
+        assert(mode_ == Mode_InstanceGeometry);
+        return frame_;
+      }
+      
+      const std::string& GetInstanceId() const
+      {
+        assert(mode_ == Mode_InstanceGeometry);
+        return instanceId_;
+      }
       
       static Operation* DownloadSeriesGeometry()
       {
         return new Operation(Mode_SeriesGeometry);
+      }
+
+      static Operation* DownloadInstanceGeometry(const std::string& instanceId,
+                                                 unsigned int frame)
+      {
+        std::auto_ptr<Operation> operation(new Operation(Mode_InstanceGeometry));
+        operation->instanceId_ = instanceId;
+        operation->frame_ = frame;
+        return operation.release();
       }
 
       static Operation* DownloadSliceImage(unsigned int  sliceIndex,
@@ -541,6 +568,38 @@ namespace OrthancStone
     }
 
 
+    void ParseInstanceGeometry(const std::string& instanceId,
+                               unsigned int frame,
+                               const void* answer,
+                               size_t size)
+    {
+      Json::Value tags;
+      if (!MessagingToolbox::ParseJson(tags, answer, size) ||
+          tags.type() != Json::objectValue)
+      {
+        callback_.NotifyGeometryError(*this);
+        return;
+      }
+
+      OrthancPlugins::FullOrthancDataset dataset(tags);
+
+      state_ = State_GeometryReady;
+      
+      Slice slice;
+      if (slice.ParseOrthancFrame(dataset, instanceId, frame))
+      {
+        LOG(INFO) << "Loaded instance " << instanceId;
+        slices_.AddSlice(slice);
+        callback_.NotifyGeometryReady(*this);
+      }
+      else
+      {
+        LOG(WARNING) << "Skipping invalid instance " << instanceId;
+        callback_.NotifyGeometryError(*this);
+      }
+    }
+
+
     void ParseSliceImage(const Operation& operation,
                          const void* answer,
                          size_t size)
@@ -598,6 +657,22 @@ namespace OrthancStone
         state_ = State_LoadingGeometry;
         std::string uri = "/series/" + seriesId + "/instances-tags";
         orthanc_.ScheduleGetRequest(*this, uri, Operation::DownloadSeriesGeometry());
+      }
+    }
+
+    void ScheduleLoadInstance(const std::string& instanceId,
+                              unsigned int frame)
+    {
+      if (state_ != State_Initialization)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        state_ = State_LoadingGeometry;
+        std::string uri = "/instances/" + instanceId + "/tags";
+        orthanc_.ScheduleGetRequest
+          (*this, uri, Operation::DownloadInstanceGeometry(instanceId, frame));
       }
     }
 
@@ -667,6 +742,10 @@ namespace OrthancStone
       {
         case Mode_SeriesGeometry:
           ParseSeriesGeometry(answer, answerSize);
+          break;
+
+        case Mode_InstanceGeometry:
+          ParseInstanceGeometry(operation->GetInstanceId(), operation->GetFrame(), answer, answerSize);
           break;
 
         case Mode_LoadImage:
@@ -748,7 +827,9 @@ TEST(Toto, Tutu)
   OrthancStone::Tata tata;
   OrthancStone::OrthancSliceLoader loader(tata, orthanc);
   //loader.ScheduleLoadSeries("c1c4cb95-05e3bd11-8da9f5bb-87278f71-0b2b43f5");
-  loader.ScheduleLoadSeries("67f1b334-02c16752-45026e40-a5b60b6b-030ecab5");
+  //loader.ScheduleLoadSeries("67f1b334-02c16752-45026e40-a5b60b6b-030ecab5");
+
+  loader.ScheduleLoadInstance("19816330-cb02e1cf-df3a8fe8-bf510623-ccefe9f5", 0);
 
   /*printf(">> %d\n", loader.GetSliceCount());
     loader.ScheduleLoadSliceImage(31);*/

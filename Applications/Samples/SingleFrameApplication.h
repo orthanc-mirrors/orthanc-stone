@@ -53,11 +53,9 @@ namespace OrthancStone
       
       virtual void NotifySlicesAvailable(const ParallelSlices& slices)
       {
-        printf("ICI\n");
         if (widget_ != NULL &&
             slices.GetSliceCount() > 0)
         {
-          printf("GO\n");
           widget_->SetSlice(slices.GetSlice(0), 1.0 /* TODO */);
         }
       }
@@ -113,7 +111,7 @@ namespace OrthancStone
 #else
         std::auto_ptr<LayerWidget> widget(new LayerWidget);
 
-#if 0
+#if 1
         std::auto_ptr<OrthancFrameLayerSource> layer
           (new OrthancFrameLayerSource(context.GetWebService(), instance, frame));
         layer->SetObserver(*this);

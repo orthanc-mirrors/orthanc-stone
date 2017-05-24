@@ -54,13 +54,5 @@ namespace OrthancStone
                                      const std::string& uri,
                                      const std::string& body,
                                      Orthanc::IDynamicObject* payload);
-
-    virtual void Start()
-    {
-    }
-
-    virtual void Stop()
-    {
-    }
   };
 }

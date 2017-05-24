@@ -21,37 +21,40 @@
 
 #pragma once
 
-#include "IWebService.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
-#include "../../Resources/Orthanc/Core/WebServiceParameters.h"
-
-#include <boost/shared_ptr.hpp>
+#include "../../Framework/Toolbox/IWebService.h"
+#include "Oracle.h"
+#include "WebServiceGetCommand.h"
+#include "WebServicePostCommand.h"
 
 namespace OrthancStone
 {
-  class OrthancAsynchronousWebService : public IWebService
+  class OracleWebService : public IWebService
   {
   private:
-    class PendingRequest;
-    class PImpl;
-    
-    boost::shared_ptr<PImpl>  pimpl_;
-    
+    Oracle&                        oracle_;
+    Orthanc::WebServiceParameters  parameters_;
+
   public:
-    OrthancAsynchronousWebService(const Orthanc::WebServiceParameters& parameters,
-                                  unsigned int threadCount);
+    OracleWebService(Oracle& oracle,
+                     const Orthanc::WebServiceParameters& parameters) : 
+      oracle_(oracle),
+      parameters_(parameters)
+    {
+    }
 
     virtual void ScheduleGetRequest(ICallback& callback,
                                     const std::string& uri,
-                                    Orthanc::IDynamicObject* payload);
+                                    Orthanc::IDynamicObject* payload)
+    {
+      oracle_.Submit(new WebServiceGetCommand(callback, parameters_, uri, payload));
+    }
 
     virtual void SchedulePostRequest(ICallback& callback,
                                      const std::string& uri,
                                      const std::string& body,
-                                     Orthanc::IDynamicObject* payload);
-
-    void Start();
-
-    void Stop();
+                                     Orthanc::IDynamicObject* payload)
+    {
+      oracle_.Submit(new WebServicePostCommand(callback, parameters_, uri, body, payload));
+    }
   };
 }

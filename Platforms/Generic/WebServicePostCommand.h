@@ -21,37 +21,35 @@
 
 #pragma once
 
-#include "IWebService.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
+#include "IOracleCommand.h"
+
+#include "../../Framework/Toolbox/IWebService.h"
 #include "../../Resources/Orthanc/Core/WebServiceParameters.h"
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace OrthancStone
 {
-  class OrthancAsynchronousWebService : public IWebService
+  class WebServicePostCommand : public IOracleCommand
   {
   private:
-    class PendingRequest;
-    class PImpl;
-    
-    boost::shared_ptr<PImpl>  pimpl_;
-    
+    IWebService::ICallback&                 callback_;
+    Orthanc::WebServiceParameters           parameters_;
+    std::string                             uri_;
+    std::string                             body_;
+    std::auto_ptr<Orthanc::IDynamicObject>  payload_;
+    bool                                    success_;
+    std::string                             answer_;
+
   public:
-    OrthancAsynchronousWebService(const Orthanc::WebServiceParameters& parameters,
-                                  unsigned int threadCount);
+    WebServicePostCommand(IWebService::ICallback& callback,
+                          const Orthanc::WebServiceParameters& parameters,
+                          const std::string& uri,
+                          const std::string& body,
+                          Orthanc::IDynamicObject* payload /* takes ownership */);
 
-    virtual void ScheduleGetRequest(ICallback& callback,
-                                    const std::string& uri,
-                                    Orthanc::IDynamicObject* payload);
+    virtual void Execute();
 
-    virtual void SchedulePostRequest(ICallback& callback,
-                                     const std::string& uri,
-                                     const std::string& body,
-                                     Orthanc::IDynamicObject* payload);
-
-    void Start();
-
-    void Stop();
+    virtual void Commit();
   };
 }

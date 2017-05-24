@@ -175,6 +175,12 @@ endif()
 ## All the source files required to build Stone of Orthanc
 #####################################################################
 
+set(PLATFORM_SOURCES
+  ${ORTHANC_STONE_DIR}/Platforms/Generic/WebServiceGetCommand.cpp
+  ${ORTHANC_STONE_DIR}/Platforms/Generic/WebServicePostCommand.cpp
+  ${ORTHANC_STONE_DIR}/Platforms/Generic/Oracle.cpp
+  )
+
 list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Applications/BasicApplicationContext.cpp
   ${ORTHANC_STONE_DIR}/Applications/IBasicApplication.cpp
@@ -228,6 +234,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Widgets/WidgetBase.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/LayerWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/WorldSceneWidget.cpp
+
+  ${PLATFORM_SOURCES}
 
   ${ORTHANC_ROOT}/Core/ChunkedBuffer.cpp
   ${ORTHANC_ROOT}/Core/Compression/DeflateBaseCompressor.cpp

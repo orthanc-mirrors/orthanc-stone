@@ -21,37 +21,30 @@
 
 #pragma once
 
-#include "IWebService.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
-#include "../../Resources/Orthanc/Core/WebServiceParameters.h"
+#include "IOracleCommand.h"
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/mutex.hpp>
 
 namespace OrthancStone
 {
-  class OrthancAsynchronousWebService : public IWebService
+  class Oracle : public boost::noncopyable
   {
   private:
-    class PendingRequest;
     class PImpl;
-    
+  
     boost::shared_ptr<PImpl>  pimpl_;
-    
+
   public:
-    OrthancAsynchronousWebService(const Orthanc::WebServiceParameters& parameters,
-                                  unsigned int threadCount);
+    Oracle(boost::mutex& globalMutex,
+           unsigned int threadCount);
 
-    virtual void ScheduleGetRequest(ICallback& callback,
-                                    const std::string& uri,
-                                    Orthanc::IDynamicObject* payload);
-
-    virtual void SchedulePostRequest(ICallback& callback,
-                                     const std::string& uri,
-                                     const std::string& body,
-                                     Orthanc::IDynamicObject* payload);
+    Oracle(unsigned int threadCount);
 
     void Start();
 
+    void Submit(IOracleCommand* command);
+        
     void Stop();
   };
 }

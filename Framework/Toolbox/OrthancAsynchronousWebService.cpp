@@ -109,7 +109,7 @@ namespace OrthancStone
     boost::mutex                   mutex_;
     State                          state_;
     Orthanc::WebServiceParameters  orthanc_;
-    std::vector<boost::thread>     threads_;
+    std::vector<boost::thread*>    threads_;
     Orthanc::SharedMessageQueue    queue_;
 
     static void Worker(PImpl* that)
@@ -125,7 +125,6 @@ namespace OrthancStone
           state = that->state_;
         }
 
-        printf("."); fflush(stdout);
         if (state == State_Stopped)
         {
           break;
@@ -200,7 +199,7 @@ namespace OrthancStone
       
       for (size_t i = 0; i < threads_.size(); i++)
       {
-        threads_[i] = boost::thread(Worker, this);
+        threads_[i] = new boost::thread(Worker, this);
       }
 
       state_ = State_Started;
@@ -221,10 +220,14 @@ namespace OrthancStone
       
       for (size_t i = 0; i < threads_.size(); i++)
       {
-        if (threads_[i].joinable())
+        assert(threads_[i] != NULL);
+
+        if (threads_[i]->joinable())
         {
-          threads_[i].join();
+          threads_[i]->join();
         }
+
+        delete threads_[i];
       }
     }
   };

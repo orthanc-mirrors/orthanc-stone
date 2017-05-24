@@ -25,7 +25,6 @@
 #include "../../Framework/Viewport/WidgetViewport.h"
 #include "../../Framework/Widgets/IWorldSceneInteractor.h"
 #include "../../Framework/Toolbox/DicomStructureSet.h"
-#include "../../Framework/Toolbox/OrthancSynchronousWebService.h"
 #include "../../Platforms/Generic/OracleWebService.h"
 
 #include <list>

@@ -22,7 +22,6 @@
 #include "gtest/gtest.h"
 
 #include "../Platforms/Generic/OracleWebService.h"
-#include "../Framework/Toolbox/OrthancAsynchronousWebService.h"
 #include "../Framework/Toolbox/OrthancSlicesLoader.h"
 #include "../Resources/Orthanc/Core/HttpClient.h"
 #include "../Resources/Orthanc/Core/Logging.h"

@@ -219,6 +219,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Viewport/CairoSurface.cpp
   ${ORTHANC_STONE_DIR}/Framework/Viewport/WidgetViewport.cpp
   ${ORTHANC_STONE_DIR}/Framework/Volumes/ImageBuffer3D.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Volumes/SlicedVolumeBase.cpp
   #${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeImage.cpp
   #${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeImagePolicyBase.cpp
   #${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeImageProgressivePolicy.cpp

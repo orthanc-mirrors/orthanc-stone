@@ -30,6 +30,7 @@
 
 #include "../Framework/Toolbox/IVolumeSlicesObserver.h"
 #include "../Framework/Volumes/ImageBuffer3D.h"
+#include "../Framework/Volumes/SlicedVolumeBase.h"
 #include "../Framework/Toolbox/DownloadStack.h"
 #include "../Resources/Orthanc/Core/Images/ImageProcessing.h"
 
@@ -75,7 +76,9 @@ namespace OrthancStone
   };
 
 
-  class OrthancVolumeImageLoader : private OrthancSlicesLoader::ICallback
+  class OrthancVolumeImageLoader : 
+    public SlicedVolumeBase,
+    private OrthancSlicesLoader::ICallback
   { 
   private:
     OrthancSlicesLoader           loader_;
@@ -143,6 +146,7 @@ namespace OrthancStone
       if (loader.GetSliceCount() == 0)
       {
         LOG(ERROR) << "Empty volume image";
+        SlicedVolumeBase::NotifyGeometryError();
         return;
       }
 
@@ -150,6 +154,7 @@ namespace OrthancStone
       {
         if (!IsCompatible(loader.GetSlice(0), loader.GetSlice(i)))
         {
+          SlicedVolumeBase::NotifyGeometryError();
           return;
         }
       }
@@ -172,6 +177,7 @@ namespace OrthancStone
         if (!GeometryToolbox::IsNear(spacingZ, GetDistance(loader.GetSlice(i - 1), loader.GetSlice(i))))
         {
           LOG(ERROR) << "The distance between successive slices is not constant in a volume image";
+          SlicedVolumeBase::NotifyGeometryError();
           return;
         }
       }
@@ -189,6 +195,8 @@ namespace OrthancStone
       image_->Clear();
 
       downloadStack_.reset(new DownloadStack(loader.GetSliceCount()));
+
+      SlicedVolumeBase::NotifyGeometryReady();
 
       for (unsigned int i = 0; i < 4; i++)  // Limit to 4 simultaneous downloads
       {
@@ -209,9 +217,11 @@ namespace OrthancStone
       std::auto_ptr<Orthanc::ImageAccessor> protection(image);
 
       {
-        ImageBuffer3D::SliceWriter writer(*image_, VolumeProjection_Axial, 0);
+        ImageBuffer3D::SliceWriter writer(*image_, VolumeProjection_Axial, sliceIndex);
         Orthanc::ImageProcessing::Copy(writer.GetAccessor(), *protection);
       }
+
+      SlicedVolumeBase::NotifySliceChange(sliceIndex, slice);
 
       ScheduleSliceDownload();
     }
@@ -240,6 +250,16 @@ namespace OrthancStone
                               unsigned int frame)
     {
       loader_.ScheduleLoadInstance(instanceId, frame);
+    }
+
+    virtual size_t GetSliceCount() const
+    {
+      return loader_.GetSliceCount();
+    }
+
+    virtual const Slice& GetSlice(size_t index) const
+    {
+      return loader_.GetSlice(index);
     }
 
     void SetObserver(IVolumeSlicesObserver& observer)

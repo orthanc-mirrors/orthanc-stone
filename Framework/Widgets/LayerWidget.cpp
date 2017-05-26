@@ -144,7 +144,7 @@ namespace OrthancStone
 
   
   bool LayerWidget::LookupLayer(size_t& index /* out */,
-                                ILayerSource& layer) const
+                                const ILayerSource& layer) const
   {
     LayersIndex::const_iterator found = layersIndex_.find(&layer);
 
@@ -394,7 +394,7 @@ namespace OrthancStone
   }
 
   
-  void LayerWidget::NotifyGeometryReady(ILayerSource& source)
+  void LayerWidget::NotifyGeometryReady(const ILayerSource& source)
   {
     size_t i;
     if (LookupLayer(i, source))
@@ -405,30 +405,38 @@ namespace OrthancStone
   }
   
 
-  void LayerWidget::NotifyGeometryError(ILayerSource& source)
+  void LayerWidget::NotifyGeometryError(const ILayerSource& source)
   {
     LOG(ERROR) << "Cannot get geometry";
   }
   
 
-  void LayerWidget::NotifySourceChange(ILayerSource& source)
+  void LayerWidget::NotifyContentChange(const ILayerSource& source)
   {
-    source.ScheduleLayerCreation(slice_);
+    size_t index;
+    if (LookupLayer(index, source))
+    {
+      layers_[index]->ScheduleLayerCreation(slice_);
+    }
   }
   
 
-  void LayerWidget::NotifySliceChange(ILayerSource& source,
+  void LayerWidget::NotifySliceChange(const ILayerSource& source,
                                       const Slice& slice)
   {
     if (slice.ContainsPlane(slice_))
     {
-      source.ScheduleLayerCreation(slice_);
+      size_t index;
+      if (LookupLayer(index, source))
+      {
+        layers_[index]->ScheduleLayerCreation(slice_);
+      }
     }
   }
   
 
   void LayerWidget::NotifyLayerReady(ILayerRenderer* renderer,
-                                     ILayerSource& source,
+                                     const ILayerSource& source,
                                      const Slice& slice)
   {
     std::auto_ptr<ILayerRenderer> tmp(renderer);
@@ -443,7 +451,7 @@ namespace OrthancStone
   }
 
   
-  void LayerWidget::NotifyLayerError(ILayerSource& source,
+  void LayerWidget::NotifyLayerError(const ILayerSource& source,
                                      const SliceGeometry& slice)
   {
     size_t index;
@@ -454,7 +462,7 @@ namespace OrthancStone
       LOG(INFO) << "Unable to load a slice from layer " << index;
 
       double x1, y1, x2, y2;
-      if (GetAndFixExtent(x1, y1, x2, y2, source))
+      if (GetAndFixExtent(x1, y1, x2, y2, *layers_[index]))
       {
         UpdateLayer(index, new MissingLayerRenderer(x1, y1, x2, y2), Slice(slice, THIN_SLICE_THICKNESS));
       }

@@ -27,22 +27,11 @@
 
 #include "../../Resources/Orthanc/Core/Images/Image.h"
 
-#include <boost/thread/shared_mutex.hpp>
-
-#if defined(_WIN32)
-#  include <boost/thread/win32/mutex.hpp>
-#endif
-
 namespace OrthancStone
 {
   class ImageBuffer3D : public boost::noncopyable
   {
   private:
-    typedef boost::shared_mutex          Mutex;
-    typedef boost::unique_lock<Mutex>    WriteLock;
-    typedef boost::shared_lock<Mutex>    ReadLock;
-
-    Mutex                  mutex_;
     SliceGeometry          axialGeometry_;
     Vector                 voxelDimensions_;
     Orthanc::Image         image_;
@@ -107,7 +96,6 @@ namespace OrthancStone
     class SliceReader : public boost::noncopyable
     {
     private:
-      ReadLock                       lock_;
       Orthanc::ImageAccessor         accessor_;
       std::auto_ptr<Orthanc::Image>  sagittal_;  // Unused for axial and coronal
 
@@ -126,7 +114,7 @@ namespace OrthancStone
     class SliceWriter : public boost::noncopyable
     {
     private:
-      WriteLock                      lock_;
+      bool                           modified_;
       Orthanc::ImageAccessor         accessor_;
       std::auto_ptr<Orthanc::Image>  sagittal_;  // Unused for axial and coronal
 
@@ -142,8 +130,14 @@ namespace OrthancStone
         Flush();
       }
 
+      const Orthanc::ImageAccessor& GetAccessor() const
+      {
+        return accessor_;
+      }
+
       Orthanc::ImageAccessor& GetAccessor()
       {
+        modified_ = true;
         return accessor_;
       }
     };

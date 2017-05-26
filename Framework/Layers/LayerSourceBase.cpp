@@ -41,11 +41,11 @@ namespace OrthancStone
     }
   }  
     
-  void LayerSourceBase::NotifySourceChange()
+  void LayerSourceBase::NotifyContentChange()
   {
     if (observer_ != NULL)
     {
-      observer_->NotifySourceChange(*this);
+      observer_->NotifyContentChange(*this);
     }
   }
 

@@ -24,6 +24,8 @@
 #include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
 #include "../../Resources/Orthanc/Core/OrthancException.h"
 
+#include <string.h>
+
 namespace OrthancStone
 {
   Orthanc::ImageAccessor ImageBuffer3D::GetAxialSliceAccessor(unsigned int slice,
@@ -122,14 +124,12 @@ namespace OrthancStone
 
   void ImageBuffer3D::Clear()
   {
-    WriteLock lock(mutex_);
-    Orthanc::ImageProcessing::Set(image_, 0);
+    memset(image_.GetBuffer(), 0, image_.GetHeight() * image_.GetPitch());
   }
 
 
   void ImageBuffer3D::SetAxialGeometry(const SliceGeometry& geometry)
   {
-    WriteLock lock(mutex_);
     axialGeometry_ = geometry;
   }
 
@@ -146,7 +146,6 @@ namespace OrthancStone
     }
 
     {
-      WriteLock lock(mutex_);
       GeometryToolbox::AssignVector(voxelDimensions_, x, y, z);
     }
   }
@@ -154,8 +153,6 @@ namespace OrthancStone
 
   Vector ImageBuffer3D::GetVoxelDimensions(VolumeProjection projection)
   {
-    ReadLock lock(mutex_);
-
     Vector result;
     switch (projection)
     {
@@ -260,8 +257,7 @@ namespace OrthancStone
 
   ImageBuffer3D::SliceReader::SliceReader(ImageBuffer3D& that,
                                           VolumeProjection projection,
-                                          unsigned int slice) :
-  lock_(that.mutex_)
+                                          unsigned int slice)
   {
     switch (projection)
     {
@@ -286,10 +282,13 @@ namespace OrthancStone
 
   void ImageBuffer3D::SliceWriter::Flush()
   {
-    if (sagittal_.get() != NULL)
+    if (modified_)
     {
-      // TODO
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
+      if (sagittal_.get() != NULL)
+      {
+        // TODO
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
+      }
     }
   }
 
@@ -297,7 +296,7 @@ namespace OrthancStone
   ImageBuffer3D::SliceWriter::SliceWriter(ImageBuffer3D& that,
                                           VolumeProjection projection,
                                           unsigned int slice) :
-  lock_(that.mutex_)
+  modified_(false)
   {
     switch (projection)
     {

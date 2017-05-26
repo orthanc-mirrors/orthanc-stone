@@ -35,7 +35,7 @@ namespace OrthancStone
     
     void NotifyGeometryError();
     
-    void NotifySourceChange();
+    void NotifyContentChange();
 
     void NotifySliceChange(const Slice& slice);
 

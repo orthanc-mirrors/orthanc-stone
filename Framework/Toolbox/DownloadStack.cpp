@@ -174,23 +174,23 @@ namespace OrthancStone
   }
 
   
-  void DownloadStack::Writer::SetTopNode(unsigned int value)
+  void DownloadStack::SetTopNode(unsigned int value)
   {
-    if (value >= that_.nodes_.size())
+    if (value >= nodes_.size())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    that_.SetTopNodeInternal(value);
+    SetTopNodeInternal(value);
   }
 
 
-  void DownloadStack::Writer::SetTopNodePermissive(int value)
+  void DownloadStack::SetTopNodePermissive(int value)
   {
     if (value >= 0 &&
-        value < static_cast<int>(that_.nodes_.size()))
+        value < static_cast<int>(nodes_.size()))
     {
-      that_.SetTopNodeInternal(value);
+      SetTopNodeInternal(value);
     }
   }
 }

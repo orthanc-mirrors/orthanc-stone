@@ -35,7 +35,7 @@ namespace OrthancStone
   private:
     class Scene;
     
-    typedef std::map<ILayerSource*, size_t>  LayersIndex;
+    typedef std::map<const ILayerSource*, size_t>  LayersIndex;
 
     bool                        started_;
     LayersIndex                 layersIndex_;
@@ -47,7 +47,7 @@ namespace OrthancStone
 
 
     bool LookupLayer(size_t& index /* out */,
-                     ILayerSource& layer) const;
+                     const ILayerSource& layer) const;
 
     bool GetAndFixExtent(double& x1,
                          double& y1,
@@ -55,20 +55,20 @@ namespace OrthancStone
                          double& y2,
                          ILayerSource& source) const;
 
-    virtual void NotifyGeometryReady(ILayerSource& source);
+    virtual void NotifyGeometryReady(const ILayerSource& source);
 
-    virtual void NotifyGeometryError(ILayerSource& source);
+    virtual void NotifyGeometryError(const ILayerSource& source);
 
-    virtual void NotifySourceChange(ILayerSource& source);
+    virtual void NotifyContentChange(const ILayerSource& source);
 
-    virtual void NotifySliceChange(ILayerSource& source,
+    virtual void NotifySliceChange(const ILayerSource& source,
                                    const Slice& slice);
 
     virtual void NotifyLayerReady(ILayerRenderer* renderer,
-                                  ILayerSource& source,
+                                  const ILayerSource& source,
                                   const Slice& slice);
 
-    virtual void NotifyLayerError(ILayerSource& source,
+    virtual void NotifyLayerError(const ILayerSource& source,
                                   const SliceGeometry& slice);
 
         

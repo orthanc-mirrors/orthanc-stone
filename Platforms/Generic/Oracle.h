@@ -45,6 +45,8 @@ namespace OrthancStone
 
     void Submit(IOracleCommand* command);
         
+    void WaitEmpty();  // For unit tests
+
     void Stop();
   };
 }

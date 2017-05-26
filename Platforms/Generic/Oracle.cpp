@@ -98,6 +98,11 @@ namespace OrthancStone
       }
     }
 
+    Orthanc::SharedMessageQueue& GetQueue()
+    {
+      return queue_;
+    }
+
     void Submit(IOracleCommand* command)
     {
       std::auto_ptr<IOracleCommand> protection(command);
@@ -201,5 +206,11 @@ namespace OrthancStone
   void Oracle::Stop()
   {
     pimpl_->Stop();
+  }
+
+
+  void Oracle::WaitEmpty()
+  {
+    pimpl_->GetQueue().WaitEmpty(50);
   }
 }

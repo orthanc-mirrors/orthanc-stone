@@ -26,6 +26,7 @@
 #include "../../Resources/Orthanc/Core/OrthancException.h"
 
 #include <vector>
+#include <stdio.h>
 
 namespace OrthancStone
 {
@@ -66,6 +67,9 @@ namespace OrthancStone
         {
           IOracleCommand& command = dynamic_cast<IOracleCommand&>(*item);
           command.Execute();
+
+          // Random sleeping to test
+          //boost::this_thread::sleep(boost::posix_time::milliseconds(50 * (1 + rand() % 10)));
 
           if (that->globalMutex_ != NULL)
           {

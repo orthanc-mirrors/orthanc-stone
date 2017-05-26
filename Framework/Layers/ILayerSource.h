@@ -36,19 +36,15 @@ namespace OrthancStone
       {
       }
 
-      // Triggered as soon as the source has enough information to
-      // answer to "GetExtent()"
-      virtual void NotifyGeometryReady(const ILayerSource& source) = 0;
-      
-      virtual void NotifyGeometryError(const ILayerSource& source) = 0;
-      
-      // Triggered if the content of the volume has changed
+      // Triggered if the content of several slices in the source
+      // volume has changed
       virtual void NotifyContentChange(const ILayerSource& source) = 0;
 
-      // Triggered if the content of some slice in the source volume has changed
+      // Triggered if the content of some individual slice in the
+      // source volume has changed
       virtual void NotifySliceChange(const ILayerSource& source,
                                      const Slice& slice) = 0;
-
+ 
       // The layer must be deleted by the observer. "layer" will never
       // be "NULL", otherwise "NotifyLayerError()" would have been
       // called.

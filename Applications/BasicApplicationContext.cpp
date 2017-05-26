@@ -47,6 +47,7 @@ namespace OrthancStone
     stopped_(true),
     updateDelay_(100)   // By default, 100ms between each refresh of the content
   {
+    srand(time(NULL)); 
   }
 
 

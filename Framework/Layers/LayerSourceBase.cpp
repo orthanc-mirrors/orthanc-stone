@@ -25,22 +25,6 @@
 
 namespace OrthancStone
 {
-  void LayerSourceBase::NotifyGeometryReady()
-  {
-    if (observer_ != NULL)
-    {
-      observer_->NotifyGeometryReady(*this);
-    }
-  }  
-    
-  void LayerSourceBase::NotifyGeometryError()
-  {
-    if (observer_ != NULL)
-    {
-      observer_->NotifyGeometryError(*this);
-    }
-  }  
-    
   void LayerSourceBase::NotifyContentChange()
   {
     if (observer_ != NULL)

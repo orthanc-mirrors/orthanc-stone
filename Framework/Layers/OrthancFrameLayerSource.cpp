@@ -30,10 +30,14 @@
 #include <boost/lexical_cast.hpp>
 
 
+// TODO REMOVE THIS
+#include "../Widgets/LayerWidget.h"
+
 namespace OrthancStone
 {
   void OrthancFrameLayerSource::NotifyGeometryReady(const OrthancSlicesLoader& loader)
   {
+#if 0
     if (loader.GetSliceCount() > 0)
     {
       // Make sure all the slices are parallel. TODO Alleviate this constraint
@@ -49,23 +53,20 @@ namespace OrthancStone
     }
 
     LayerSourceBase::NotifyGeometryReady();
+#endif
 
-    if (observer2_ != NULL)
+    // TODO REMOVE THIS
+    /*if (GetObserver() != NULL)
     {
-      ParallelSlices slices;
-
-      for (size_t i = 0; i < loader.GetSliceCount(); i++)
-      {
-        slices.AddSlice(loader.GetSlice(i).GetGeometry());
-      }
-
-      observer2_->NotifySlicesAvailable(slices);
-    }
+      dynamic_cast<LayerWidget*>(GetObserver())->SetSlice(loader.GetSlice(0).GetGeometry());
+      }*/
   }
 
   void OrthancFrameLayerSource::NotifyGeometryError(const OrthancSlicesLoader& loader)
   {
+#if 0
     LayerSourceBase::NotifyGeometryError();
+#endif
   }
 
   void OrthancFrameLayerSource::NotifySliceImageReady(const OrthancSlicesLoader& loader,
@@ -88,27 +89,12 @@ namespace OrthancStone
                                                    unsigned int frame) :
     instanceId_(instanceId),
     frame_(frame),
-    loader_(*this, orthanc),
-    observer2_(NULL)
+    loader_(*this, orthanc)
   {
     loader_.ScheduleLoadInstance(instanceId_, frame_);
   }
 
 
-  void OrthancFrameLayerSource::SetObserver(IVolumeSlicesObserver& observer)
-  {
-    if (observer2_ == NULL)
-    {
-      observer2_ = &observer;
-    }
-    else
-    {
-      // Cannot add more than one observer
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-  }
-
-  
   bool OrthancFrameLayerSource::GetExtent(double& x1,
                                           double& y1,
                                           double& x2,

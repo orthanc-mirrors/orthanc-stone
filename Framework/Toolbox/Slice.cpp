@@ -170,4 +170,18 @@ namespace OrthancStone
         
     return converter_;
   }
+
+
+  bool Slice::ContainsPlane(const SliceGeometry& plane) const
+  {
+    if (type_ == Type_Invalid)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+        
+    return (GeometryToolbox::IsParallel(GetGeometry().GetNormal(), plane.GetNormal()) &&
+            GeometryToolbox::IsNear(GetGeometry().ProjectAlongNormal(GetGeometry().GetOrigin()),
+                                    GetGeometry().ProjectAlongNormal(plane.GetOrigin()),
+                                    thickness_ / 2.0));
+  }
 }

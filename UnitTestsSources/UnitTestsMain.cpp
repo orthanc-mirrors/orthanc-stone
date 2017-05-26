@@ -28,7 +28,6 @@
 #include "../Resources/Orthanc/Core/MultiThreading/SharedMessageQueue.h"
 #include "../Resources/Orthanc/Core/OrthancException.h"
 
-#include "../Framework/Toolbox/IVolumeSlicesObserver.h"
 #include "../Framework/Volumes/ImageBuffer3D.h"
 #include "../Framework/Volumes/SlicedVolumeBase.h"
 #include "../Framework/Toolbox/DownloadStack.h"
@@ -82,7 +81,6 @@ namespace OrthancStone
   { 
   private:
     OrthancSlicesLoader           loader_;
-    IVolumeSlicesObserver*        observer_;
     std::auto_ptr<ImageBuffer3D>  image_;
     std::auto_ptr<DownloadStack>  downloadStack_;
 
@@ -236,8 +234,7 @@ namespace OrthancStone
 
   public:
     OrthancVolumeImageLoader(IWebService& orthanc) : 
-      loader_(*this, orthanc),
-      observer_(NULL)
+      loader_(*this, orthanc)
     {
     }
 
@@ -261,20 +258,6 @@ namespace OrthancStone
     {
       return loader_.GetSlice(index);
     }
-
-    void SetObserver(IVolumeSlicesObserver& observer)
-    {
-      if (observer_ == NULL)
-      {
-        observer_ = &observer;
-      }
-      else
-      {
-        // Cannot add more than one observer
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-    }
-
   };
 }
 

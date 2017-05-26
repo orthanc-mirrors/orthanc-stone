@@ -88,8 +88,5 @@ namespace OrthancStone
     void ProjectPoint(double& offsetX,
                       double& offsetY,
                       const Vector& point) const;
-
-    bool IsSamePlane(const SliceGeometry& slice,
-                     double sliceThickness) const;
   };
 }

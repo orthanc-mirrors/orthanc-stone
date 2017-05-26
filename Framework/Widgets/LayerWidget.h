@@ -55,10 +55,6 @@ namespace OrthancStone
                          double& y2,
                          ILayerSource& source) const;
 
-    virtual void NotifyGeometryReady(const ILayerSource& source);
-
-    virtual void NotifyGeometryError(const ILayerSource& source);
-
     virtual void NotifyContentChange(const ILayerSource& source);
 
     virtual void NotifySliceChange(const ILayerSource& source,
@@ -86,6 +82,10 @@ namespace OrthancStone
     void UpdateLayer(size_t index,
                      ILayerRenderer* renderer,
                      const Slice& slice);
+
+    void InvalidateAllLayers();
+
+    void InvalidateLayer(size_t layer);
     
   public:
     LayerWidget();
@@ -93,6 +93,11 @@ namespace OrthancStone
     virtual ~LayerWidget();
 
     size_t AddLayer(ILayerSource* layer);  // Takes ownership
+
+    size_t GetLayerCount() const
+    {
+      return layers_.size();
+    }
 
     void SetLayerStyle(size_t layer,
                        const RenderStyle& style);

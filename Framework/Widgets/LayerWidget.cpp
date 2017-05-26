@@ -94,6 +94,11 @@ namespace OrthancStone
       return countMissing_ == 0;
     }
 
+    unsigned int GetCountMissing() const
+    {
+      return countMissing_;
+    }
+
     bool RenderScene(CairoContext& context,
                      const ViewportGeometry& view)
     {
@@ -101,6 +106,11 @@ namespace OrthancStone
 
       for (size_t i = 0; i < renderers_.size(); i++)
       {
+        if (renderers_[i] != NULL)
+        {
+          LOG(ERROR) << "...............";
+        }
+
         if (renderers_[i] != NULL &&
             !renderers_[i]->RenderLayer(context, view, slice_))
         {
@@ -302,6 +312,7 @@ namespace OrthancStone
       pendingScene_->SetLayer(index, tmp.release());
 
       if (currentScene_.get() == NULL ||
+          !currentScene_->IsComplete() ||
           pendingScene_->IsComplete())
       {
         currentScene_ = pendingScene_;
@@ -340,6 +351,7 @@ namespace OrthancStone
     layersIndex_[layer] = index;
 
     ResetPendingScene();
+    LOG(ERROR) << "*****************************";
     layer->SetObserver(*this);
 
     return index;
@@ -373,43 +385,39 @@ namespace OrthancStone
 
   void LayerWidget::SetSlice(const SliceGeometry& slice)
   {
-    if (!slice_.IsSamePlane(slice, THIN_SLICE_THICKNESS))
+    if (currentScene_.get() == NULL ||
+        (pendingScene_.get() != NULL &&
+         pendingScene_->IsComplete()))
     {
-      if (currentScene_.get() == NULL ||
-          (pendingScene_.get() != NULL &&
-           pendingScene_->IsComplete()))
-      {
-        currentScene_ = pendingScene_;
-      }
-        
-      slice_ = slice;
-      ResetPendingScene();
-
-      for (size_t i = 0; i < layers_.size(); i++)
-      {
-        assert(layers_[i] != NULL);
-        layers_[i]->ScheduleLayerCreation(slice_);
-      }
+      currentScene_ = pendingScene_;
     }
+
+    slice_ = slice;
+    ResetPendingScene();
   }
 
-  
-  void LayerWidget::NotifyGeometryReady(const ILayerSource& source)
+
+  void LayerWidget::InvalidateAllLayers()
   {
-    size_t i;
-    if (LookupLayer(i, source))
+    for (size_t i = 0; i < layers_.size(); i++)
     {
-      LOG(INFO) << "Geometry ready for layer " << i;
+      assert(layers_[i] != NULL);
       layers_[i]->ScheduleLayerCreation(slice_);
     }
   }
-  
 
-  void LayerWidget::NotifyGeometryError(const ILayerSource& source)
+
+  void LayerWidget::InvalidateLayer(size_t layer)
   {
-    LOG(ERROR) << "Cannot get geometry";
+    if (layer >= layers_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    assert(layers_[layer] != NULL);
+    layers_[layer]->ScheduleLayerCreation(slice_);
   }
-  
+
 
   void LayerWidget::NotifyContentChange(const ILayerSource& source)
   {
@@ -434,7 +442,7 @@ namespace OrthancStone
     }
   }
   
-
+  
   void LayerWidget::NotifyLayerReady(ILayerRenderer* renderer,
                                      const ILayerSource& source,
                                      const Slice& slice)
@@ -456,8 +464,10 @@ namespace OrthancStone
   {
     size_t index;
 
+    Slice expected(slice_, THIN_SLICE_THICKNESS);
+
     if (LookupLayer(index, source) &&
-        slice.IsSamePlane(slice_, THIN_SLICE_THICKNESS))  // Whether the slice comes from an older request
+        expected.ContainsPlane(slice))  // Whether the slice comes from an older request
     {
       LOG(INFO) << "Unable to load a slice from layer " << index;
 

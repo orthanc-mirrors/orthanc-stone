@@ -152,14 +152,4 @@ namespace OrthancStone
     offsetX = boost::numeric::ublas::inner_prod(axisX_, projection - origin_);
     offsetY = boost::numeric::ublas::inner_prod(axisY_, projection - origin_);
   }
-
-  
-  bool SliceGeometry::IsSamePlane(const SliceGeometry& other,
-                                  double sliceThickness) const
-  {
-    return (GeometryToolbox::IsParallel(GetNormal(), other.GetNormal()) &&
-            GeometryToolbox::IsNear(ProjectAlongNormal(other.GetOrigin()),
-                                    ProjectAlongNormal(GetOrigin()),
-                                    sliceThickness / 2.0));
-  }
 }

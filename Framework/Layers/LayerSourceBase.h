@@ -31,10 +31,11 @@ namespace OrthancStone
     IObserver*  observer_;
 
   protected:
-    void NotifyGeometryReady();
-    
-    void NotifyGeometryError();
-    
+    IObserver* GetObserver() const
+    {
+      return observer_;  // TODO REMOVE THIS, FOR TEST
+    }
+
     void NotifyContentChange();
 
     void NotifySliceChange(const Slice& slice);

@@ -95,9 +95,6 @@ namespace OrthancStone
 
     const DicomFrameConverter& GetConverter() const;
 
-    bool ContainsPlane(const SliceGeometry& plane) const
-    {
-      return geometry_.IsSamePlane(plane, thickness_);
-    }
+    bool ContainsPlane(const SliceGeometry& plane) const;
   };
 }

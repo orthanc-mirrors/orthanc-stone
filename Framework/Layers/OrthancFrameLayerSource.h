@@ -23,7 +23,6 @@
 
 #include "LayerSourceBase.h"
 #include "../Toolbox/IWebService.h"
-#include "../Toolbox/IVolumeSlicesObserver.h"
 #include "../Toolbox/OrthancSlicesLoader.h"
 
 namespace OrthancStone
@@ -36,7 +35,6 @@ namespace OrthancStone
     std::string             instanceId_;
     unsigned int            frame_;
     OrthancSlicesLoader     loader_;
-    IVolumeSlicesObserver*  observer2_;
 
     virtual void NotifyGeometryReady(const OrthancSlicesLoader& loader);
 
@@ -52,13 +50,19 @@ namespace OrthancStone
                                        const Slice& slice);
 
   public:
-    using LayerSourceBase::SetObserver;
-
     OrthancFrameLayerSource(IWebService& orthanc,
                             const std::string& instanceId,
                             unsigned int frame);
 
-    void SetObserver(IVolumeSlicesObserver& observer);
+    virtual size_t GetSliceCount() const
+    {
+      return loader_.GetSliceCount();
+    }
+
+    virtual const Slice& GetSlice(size_t slice) const 
+    {
+      return loader_.GetSlice(slice);
+    }
 
     virtual bool GetExtent(double& x1,
                            double& y1,

@@ -48,7 +48,12 @@ namespace OrthancStone
 
     bool LookupLayer(size_t& index /* out */,
                      ILayerSource& layer) const;
-    
+
+    bool GetAndFixExtent(double& x1,
+                         double& y1,
+                         double& x2,
+                         double& y2,
+                         ILayerSource& source) const;
 
     virtual void NotifyGeometryReady(ILayerSource& source);
 
@@ -93,6 +98,11 @@ namespace OrthancStone
                        const RenderStyle& style);
 
     void SetSlice(const SliceGeometry& slice);
+
+    const SliceGeometry& GetSlice() const
+    {
+      return slice_;
+    }
 
     virtual void Start();
   };

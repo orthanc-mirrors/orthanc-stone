@@ -35,6 +35,7 @@ namespace OrthancStone
     IStatusBar*  statusBar_;
     bool         backgroundCleared_;
     uint8_t      backgroundColor_[3];
+    bool         transmitMouseOver_;
 
   protected:
     void ClearBackgroundOrthanc(Orthanc::ImageAccessor& target) const;
@@ -71,6 +72,11 @@ namespace OrthancStone
       return backgroundCleared_;
     }
 
+    void SetTransmitMouseOver(bool transmit)
+    {
+      transmitMouseOver_ = transmit;
+    }
+
     void SetBackgroundColor(uint8_t red,
                             uint8_t green,
                             uint8_t blue);
@@ -95,7 +101,7 @@ namespace OrthancStone
 
     virtual bool HasRenderMouseOver()
     {
-      return false;
+      return transmitMouseOver_;
     }
 
     virtual void NotifyChange();

@@ -22,6 +22,7 @@
 #pragma once
 
 #include "SampleApplicationBase.h"
+#include "SampleInteractor.h"
 
 #include "../../Framework/Layers/OrthancFrameLayerSource.h"
 #include "../../Framework/Widgets/LayerWidget.h"
@@ -36,6 +37,61 @@ namespace OrthancStone
       public IVolumeSlicesObserver
     {
     private:
+      class Interactor : public IWorldSceneInteractor
+      {
+      public:
+        virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
+                                                            const ViewportGeometry& view,
+                                                            MouseButton button,
+                                                            double x,
+                                                            double y,
+                                                            IStatusBar* statusBar)
+        {
+          return NULL;
+        }
+
+        virtual void MouseOver(CairoContext& context,
+                               WorldSceneWidget& widget,
+                               const ViewportGeometry& view,
+                               double x,
+                               double y,
+                               IStatusBar* statusBar)
+        {
+          if (statusBar != NULL)
+          {
+            Vector p = dynamic_cast<LayerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
+            
+            char buf[64];
+            sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)", 
+                    p[0] / 10.0, p[1] / 10.0, p[2] / 10.0);
+            statusBar->SetMessage(buf);
+          }
+        }
+
+        virtual void MouseWheel(WorldSceneWidget& widget,
+                                MouseWheelDirection direction,
+                                KeyboardModifiers modifiers,
+                                IStatusBar* statusBar)
+        {
+        }
+
+        virtual void KeyPressed(WorldSceneWidget& widget,
+                                char key,
+                                KeyboardModifiers modifiers,
+                                IStatusBar* statusBar)
+        {
+          switch (key)
+          {
+            case 's':
+              widget.SetDefaultView();
+              break;
+
+            default:
+              break;
+          }
+        }
+      };
+
       LayerWidget* widget_;
       
     public:
@@ -49,6 +105,7 @@ namespace OrthancStone
             slices.GetSliceCount() > 0)
         {
           widget_->SetSlice(slices.GetSlice(0));
+          widget_->SetDefaultView();
         }
       }
       
@@ -73,6 +130,8 @@ namespace OrthancStone
       {
         using namespace OrthancStone;
 
+        statusBar.SetMessage("Use the key \"s\" to reinitialize the layout");
+
         if (parameters.count("instance") != 1)
         {
           LOG(ERROR) << "The instance ID is missing";
@@ -84,7 +143,7 @@ namespace OrthancStone
 
         std::auto_ptr<LayerWidget> widget(new LayerWidget);
 
-#if 0
+#if 1
         std::auto_ptr<OrthancFrameLayerSource> layer
           (new OrthancFrameLayerSource(context.GetWebService(), instance, frame));
         layer->SetObserver(*this);
@@ -106,17 +165,26 @@ namespace OrthancStone
 
         widget->AddLayer(new OrthancFrameLayerSource(context.GetWebService(), "a1c4dc6b-255d27f0-88069875-8daed730-2f5ee5c6", 0));
 
-        RenderStyle s;
-        //s.drawGrid_ = true;
-        s.alpha_ = 1;
-        widget->SetLayerStyle(0, s);
-        s.alpha_ = 0.5;
-        s.applyLut_ = true;
-        s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
-        widget->SetLayerStyle(1, s);
+        {
+          RenderStyle s;
+          s.alpha_ = 1;
+          widget->SetLayerStyle(0, s);
+        }
+
+        {
+          RenderStyle s;
+          s.drawGrid_ = true;
+          s.SetColor(255, 0, 0);  // Draw missing PET layer in red
+          s.alpha_ = 0.5;
+          s.applyLut_ = true;
+          s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
+          widget->SetLayerStyle(1, s);
+        }
 #endif
-      
+
         widget_ = widget.get();
+        widget_->SetTransmitMouseOver(true);
+        widget_->SetInteractor(context.AddInteractor(new Interactor));
         context.SetCentralWidget(widget.release());
       }
     };

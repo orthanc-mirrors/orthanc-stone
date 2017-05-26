@@ -21,8 +21,6 @@
 
 #include "WorldSceneWidget.h"
 
-#include "../../Resources/Orthanc/Core/OrthancException.h"
-
 namespace OrthancStone
 {
   static void MapMouseToScene(double& sceneX,

@@ -22,6 +22,9 @@
 #include "LayerWidget.h"
 
 #include "../../Resources/Orthanc/Core/Logging.h"
+#include "../Layers/MissingLayerRenderer.h"
+
+static const double THIN_SLICE_THICKNESS = 100.0 * std::numeric_limits<double>::epsilon();
 
 namespace OrthancStone
 {
@@ -158,6 +161,33 @@ namespace OrthancStone
     }
   }
     
+
+  bool LayerWidget::GetAndFixExtent(double& x1,
+                                    double& y1,
+                                    double& x2,
+                                    double& y2,
+                                    ILayerSource& source) const
+  {
+    if (source.GetExtent(x1, y1, x2, y2, slice_))
+    {
+      if (x1 > x2)
+      {
+        std::swap(x1, x2);
+      }
+
+      if (y1 > y2)
+      {
+        std::swap(y1, y2);
+      }
+
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
         
   void LayerWidget::GetSceneExtent(double& x1,
                                    double& y1,
@@ -171,18 +201,8 @@ namespace OrthancStone
       double ax, ay, bx, by;
 
       assert(layers_[i] != NULL);
-      if (layers_[i]->GetExtent(ax, ay, bx, by, slice_))
+      if (GetAndFixExtent(ax, ay, bx, by, *layers_[i]))
       {
-        if (ax > bx)
-        {
-          std::swap(ax, bx);
-        }
-
-        if (ay > by)
-        {
-          std::swap(ay, by);
-        }
-
         LOG(INFO) << "Extent of layer " << i << ": (" << ax << "," << ay << ")->(" << bx << "," << by << ")";
 
         if (first)
@@ -353,7 +373,7 @@ namespace OrthancStone
 
   void LayerWidget::SetSlice(const SliceGeometry& slice)
   {
-    if (!slice_.IsSamePlane(slice, 100.0 * std::numeric_limits<double>::epsilon()))
+    if (!slice_.IsSamePlane(slice, THIN_SLICE_THICKNESS))
     {
       if (currentScene_.get() == NULL ||
           (pendingScene_.get() != NULL &&
@@ -365,13 +385,10 @@ namespace OrthancStone
       slice_ = slice;
       ResetPendingScene();
 
-      if (started_)
+      for (size_t i = 0; i < layers_.size(); i++)
       {
-        for (size_t i = 0; i < layers_.size(); i++)
-        {
-          assert(layers_[i] != NULL);
-          layers_[i]->ScheduleLayerCreation(slice_);
-        }
+        assert(layers_[i] != NULL);
+        layers_[i]->ScheduleLayerCreation(slice_);
       }
     }
   }
@@ -383,7 +400,6 @@ namespace OrthancStone
     if (LookupLayer(i, source))
     {
       LOG(INFO) << "Geometry ready for layer " << i;
-      SetDefaultView();
       layers_[i]->ScheduleLayerCreation(slice_);
     }
   }
@@ -418,7 +434,8 @@ namespace OrthancStone
     std::auto_ptr<ILayerRenderer> tmp(renderer);
 
     size_t index;
-    if (LookupLayer(index, source))
+    if (LookupLayer(index, source) &&
+        slice.ContainsPlane(slice_))  // Whether the slice comes from an older request
     {
       LOG(INFO) << "Renderer ready for layer " << index;
       UpdateLayer(index, tmp.release(), slice);
@@ -427,11 +444,21 @@ namespace OrthancStone
 
   
   void LayerWidget::NotifyLayerError(ILayerSource& source,
-                                     const SliceGeometry& viewportSlice)
+                                     const SliceGeometry& slice)
   {
-    size_t i;
-    if (LookupLayer(i, source))
-      LOG(ERROR) << "Error on layer " << i;
+    size_t index;
+
+    if (LookupLayer(index, source) &&
+        slice.IsSamePlane(slice_, THIN_SLICE_THICKNESS))  // Whether the slice comes from an older request
+    {
+      LOG(ERROR) << "Error on layer " << index;
+
+      double x1, y1, x2, y2;
+      if (GetAndFixExtent(x1, y1, x2, y2, source))
+      {
+        UpdateLayer(index, new MissingLayerRenderer(x1, y1, x2, y2), Slice(slice, THIN_SLICE_THICKNESS));
+      }
+    }
   }    
 
 

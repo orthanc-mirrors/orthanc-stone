@@ -48,6 +48,8 @@ namespace OrthancStone
       }
     }
 
+    LayerSourceBase::NotifyGeometryReady();
+
     if (observer2_ != NULL)
     {
       ParallelSlices slices;
@@ -59,8 +61,6 @@ namespace OrthancStone
 
       observer2_->NotifySlicesAvailable(slices);
     }
-      
-    LayerSourceBase::NotifyGeometryReady();
   }
 
   void OrthancFrameLayerSource::NotifyGeometryError(const OrthancSlicesLoader& loader)
@@ -123,12 +123,11 @@ namespace OrthancStone
                                           double& y1,
                                           double& x2,
                                           double& y2,
-                                          const SliceGeometry& viewportSlice /* ignored */)
+                                          const SliceGeometry& viewportSlice)
   {
     bool ok = false;
 
-    if (IsStarted() &&
-        loader_.IsGeometryReady())
+    if (loader_.IsGeometryReady())
     {
       double tx1, ty1, tx2, ty2;
 
@@ -164,12 +163,8 @@ namespace OrthancStone
   {
     size_t index;
 
-    if (!IsStarted() ||
-        !loader_.IsGeometryReady())
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    else if (loader_.LookupSlice(index, viewportSlice))
+    if (loader_.IsGeometryReady() &&
+        loader_.LookupSlice(index, viewportSlice))
     {
       loader_.ScheduleLoadSliceImage(index);
     }

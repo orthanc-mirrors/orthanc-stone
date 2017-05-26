@@ -32,6 +32,7 @@ namespace OrthancStone
     enum Type
     {
       Type_Invalid,
+      Type_Detached,
       Type_OrthancInstance
       // TODO A slice could come from some DICOM file (URL)
     };
@@ -50,6 +51,21 @@ namespace OrthancStone
   public:
     Slice() : type_(Type_Invalid)
     {        
+    }
+
+    // TODO Is this constructor the best way to go to tackle missing
+    // layers within LayerWidget?
+    Slice(const SliceGeometry& plane,
+          double thickness) :
+      type_(Type_Detached),
+      frame_(0),
+      geometry_(plane),
+      pixelSpacingX_(1),
+      pixelSpacingY_(1),
+      thickness_(thickness),
+      width_(0),
+      height_(0)
+    {      
     }
 
     bool ParseOrthancFrame(const OrthancPlugins::IDicomDataset& dataset,

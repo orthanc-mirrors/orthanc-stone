@@ -65,11 +65,11 @@ namespace OrthancStone
                                    double& x2,
                                    double& y2,
                                    const SliceGeometry& viewportSlice,
-                                   const Slice& slice)
+                                   const Slice& frame)
     {
       return ComputeFrameExtent(x1, y1, x2, y2, viewportSlice,
-                                slice.GetGeometry(), slice.GetWidth(), slice.GetHeight(),
-                                slice.GetPixelSpacingX(), slice.GetPixelSpacingY());
+                                frame.GetGeometry(), frame.GetWidth(), frame.GetHeight(),
+                                frame.GetPixelSpacingX(), frame.GetPixelSpacingY());
     }
 
     virtual bool RenderLayer(CairoContext& context,
@@ -92,7 +92,7 @@ namespace OrthancStone
                                           bool isFullQuality);
 
     static ILayerRenderer* CreateRenderer(Orthanc::ImageAccessor* frame,
-                                          const Slice& slice,
+                                          const Slice& frameSlice,
                                           bool isFullQuality);
   };
 }

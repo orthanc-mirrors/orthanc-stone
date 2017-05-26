@@ -105,7 +105,8 @@ namespace OrthancStone
     parent_(NULL),
     viewport_(NULL),
     statusBar_(NULL),
-    backgroundCleared_(false)
+    backgroundCleared_(false),
+    transmitMouseOver_(false)
   {
     backgroundColor_[0] = 0;
     backgroundColor_[1] = 0;

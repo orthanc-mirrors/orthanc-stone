@@ -111,7 +111,7 @@ namespace OrthancStone
       {
         return true;
       }
-      
+
       x1 = 0;
       y1 = 0;
       cairo_matrix_transform_point(&transform, &x1, &y1);
@@ -239,20 +239,20 @@ namespace OrthancStone
 
 
   ILayerRenderer* FrameRenderer::CreateRenderer(Orthanc::ImageAccessor* frame,
-                                                const Slice& slice,
+                                                const Slice& frameSlice,
                                                 bool isFullQuality)
   {
     std::auto_ptr<Orthanc::ImageAccessor> protect(frame);
 
     if (frame->GetFormat() == Orthanc::PixelFormat_RGB24)
     {
-      return new ColorFrameRenderer(protect.release(), slice.GetGeometry(), 
-                                    slice.GetPixelSpacingX(), slice.GetPixelSpacingY(), isFullQuality);
+      return new ColorFrameRenderer(protect.release(), frameSlice.GetGeometry(), 
+                                    frameSlice.GetPixelSpacingX(), frameSlice.GetPixelSpacingY(), isFullQuality);
     }
     else
     {
-      return new GrayscaleFrameRenderer(protect.release(), slice.GetConverter(), slice.GetGeometry(), 
-                                        slice.GetPixelSpacingX(), slice.GetPixelSpacingY(), isFullQuality);
+      return new GrayscaleFrameRenderer(protect.release(), frameSlice.GetConverter(), frameSlice.GetGeometry(), 
+                                        frameSlice.GetPixelSpacingX(), frameSlice.GetPixelSpacingY(), isFullQuality);
     }
   }
 }

@@ -137,6 +137,7 @@ namespace OrthancStone
   {
     oracle_.Start();
 
+    // TODO REMOVE THIS
     for (Volumes::iterator it = volumes_.begin(); it != volumes_.end(); ++it)
     {
       assert(*it != NULL);
@@ -148,8 +149,6 @@ namespace OrthancStone
       stopped_ = false;
       updateThread_ = boost::thread(UpdateThread, this);
     }
-
-    viewport_.Start();
   }
 
 
@@ -162,6 +161,7 @@ namespace OrthancStone
       updateThread_.join();
     }
     
+    // TODO REMOVE THIS
     for (Volumes::iterator it = volumes_.begin(); it != volumes_.end(); ++it)
     {
       assert(*it != NULL);

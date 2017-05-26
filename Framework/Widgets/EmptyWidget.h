@@ -112,10 +112,6 @@ namespace OrthancStone
       {
         return false;
       }
-
-      virtual void Start()
-      {
-      }
     };
   }
 }

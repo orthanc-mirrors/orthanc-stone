@@ -265,13 +265,4 @@ namespace OrthancStone
       centralWidget_->UpdateContent();
     }
   }
-
-
-  void WidgetViewport::Start()
-  {
-    if (centralWidget_.get() != NULL)
-    {
-      centralWidget_->Start();
-    }
-  }
 }

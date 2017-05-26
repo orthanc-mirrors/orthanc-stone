@@ -91,22 +91,12 @@ namespace OrthancStone
     loader_(*this, orthanc),
     observer2_(NULL)
   {
-  }
-
-
-  void OrthancFrameLayerSource::StartInternal()
-  {
     loader_.ScheduleLoadInstance(instanceId_, frame_);
   }
-  
+
 
   void OrthancFrameLayerSource::SetObserver(IVolumeSlicesObserver& observer)
   {
-    if (IsStarted())
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    
     if (observer2_ == NULL)
     {
       observer2_ = &observer;
@@ -163,14 +153,16 @@ namespace OrthancStone
   {
     size_t index;
 
-    if (loader_.IsGeometryReady() &&
-        loader_.LookupSlice(index, viewportSlice))
+    if (loader_.IsGeometryReady())
     {
-      loader_.ScheduleLoadSliceImage(index);
-    }
-    else
-    {
-      LayerSourceBase::NotifyLayerError(viewportSlice);
+      if (loader_.LookupSlice(index, viewportSlice))
+      {
+        loader_.ScheduleLoadSliceImage(index);
+      }
+      else
+      {
+        LayerSourceBase::NotifyLayerError(viewportSlice);
+      }
     }
   }
 }

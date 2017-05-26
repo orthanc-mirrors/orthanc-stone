@@ -112,9 +112,6 @@ namespace OrthancStone
       switch (state_)
       {
         case State_Init:
-          LOG(ERROR) << "You must call Oracle::Start()";
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-
         case State_Started:
           queue_.Enqueue(protection.release());
           break;

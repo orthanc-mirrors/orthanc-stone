@@ -29,14 +29,8 @@ namespace OrthancStone
   {
   private:
     IObserver*  observer_;
-    bool        started_;
 
   protected:
-    bool IsStarted()
-    {
-      return started_;
-    }
-
     void NotifyGeometryReady();
     
     void NotifyGeometryError();
@@ -51,17 +45,12 @@ namespace OrthancStone
     
     void NotifyLayerError(const SliceGeometry& slice);
 
-    virtual void StartInternal() = 0;
-
   public:
     LayerSourceBase() :
-      observer_(NULL),
-      started_(false)
+      observer_(NULL)
     {
     }
     
     virtual void SetObserver(IObserver& observer);
-
-    virtual void Start();
   };
 }

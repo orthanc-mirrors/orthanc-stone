@@ -103,7 +103,5 @@ namespace OrthancStone
     {
       return slice_;
     }
-
-    virtual void Start();
   };
 }

@@ -451,7 +451,7 @@ namespace OrthancStone
     if (LookupLayer(index, source) &&
         slice.IsSamePlane(slice_, THIN_SLICE_THICKNESS))  // Whether the slice comes from an older request
     {
-      LOG(ERROR) << "Error on layer " << index;
+      LOG(INFO) << "Unable to load a slice from layer " << index;
 
       double x1, y1, x2, y2;
       if (GetAndFixExtent(x1, y1, x2, y2, source))
@@ -460,19 +460,4 @@ namespace OrthancStone
       }
     }
   }    
-
-
-  void LayerWidget::Start()
-  {
-    if (started_)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);      
-    }
-    
-    for (size_t i = 0; i < layers_.size(); i++)
-    {
-      assert(layers_[i] != NULL);
-      layers_[i]->Start();
-    }
-  }
 }

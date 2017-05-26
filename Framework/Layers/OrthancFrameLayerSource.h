@@ -51,9 +51,6 @@ namespace OrthancStone
                                        unsigned int sliceIndex,
                                        const Slice& slice);
 
-  protected:
-    virtual void StartInternal();
-
   public:
     using LayerSourceBase::SetObserver;
 

@@ -73,7 +73,5 @@ namespace OrthancStone
                            const SliceGeometry& viewportSlice) = 0;
 
     virtual void ScheduleLayerCreation(const SliceGeometry& viewportSlice) = 0;
-
-    virtual void Start() = 0;
   };
 }

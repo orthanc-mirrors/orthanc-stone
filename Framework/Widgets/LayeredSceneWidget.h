@@ -45,7 +45,6 @@ namespace OrthancStone
     };
 
   private:
-    struct SliceChangeFunctor;
     class Renderers;
     class PendingLayers;
     class Layer;

@@ -535,23 +535,6 @@ namespace OrthancStone
 
 
 
-  struct LayeredSceneWidget::SliceChangeFunctor
-  {
-    const SliceGeometry& slice_;
-
-    SliceChangeFunctor(const SliceGeometry& slice) :
-      slice_(slice)
-    {
-    }
-
-    void operator() (ISliceObserver& observer,
-                     const LayeredSceneWidget& source)
-    {
-      observer.NotifySliceChange(source, slice_);
-    }
-  };
-
-
   void LayeredSceneWidget::SetSlice(const SliceGeometry& slice)
   {
     { 
@@ -561,8 +544,7 @@ namespace OrthancStone
 
     InvalidateAllLayers();
 
-    SliceChangeFunctor functor(slice);
-    observers_.Notify(*this, functor);
+    observers_.Apply(*this, &ISliceObserver::NotifySliceChange, slice);
   }
 
 

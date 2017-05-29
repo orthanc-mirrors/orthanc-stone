@@ -393,7 +393,7 @@ namespace OrthancStone
       slice_ = slice;
       ResetPendingScene();
 
-      InvalidateAllLayers();
+      InvalidateAllLayers();   // TODO Removing this line avoid loading twice the image in WASM
     }
   }
 

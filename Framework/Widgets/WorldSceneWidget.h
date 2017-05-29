@@ -47,7 +47,6 @@ namespace OrthancStone
     };
 
   private:
-    struct ViewChangeFunctor;
     struct SizeChangeFunctor;
 
     class SceneMouseTracker;

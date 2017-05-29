@@ -94,6 +94,10 @@ namespace OrthancStone
 
       virtual void NotifyGeometryReady(const ILayerSource& source)
       {
+        // Once the geometry of the series is downloaded from Orthanc,
+        // display its first slice, and adapt the viewport to fit this
+        // slice
+        
         const OrthancFrameLayerSource& frame =
           dynamic_cast<const OrthancFrameLayerSource&>(source);
 

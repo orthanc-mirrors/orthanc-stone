@@ -39,6 +39,10 @@ namespace OrthancStone
         layer_(layer),
         slice_(slice)
       {
+        if (layer == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        }
       }
 
       void operator() (ILayerSource::IObserver& observer,
@@ -72,11 +76,6 @@ namespace OrthancStone
   void LayerSourceBase::NotifyLayerReady(ILayerRenderer* layer,
                                          const Slice& slice)
   {
-    if (layer == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-
     LayerReadyFunctor functor(layer, slice);
     observers_.Notify(*this, functor);
   }

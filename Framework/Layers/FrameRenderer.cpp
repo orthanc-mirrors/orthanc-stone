@@ -138,7 +138,7 @@ namespace OrthancStone
   bool FrameRenderer::RenderLayer(CairoContext& context,
                                   const ViewportGeometry& view,
                                   const SliceGeometry& viewportSlice)
-  {
+  {    
     if (!style_.visible_)
     {
       return true;

@@ -376,7 +376,7 @@ namespace OrthancStone
     {
       NotifySliceImageError(operation);
       return;
-    }          
+    }
 
     bool isSigned = false;
     bool isStretched = info["Stretched"].asBool();
@@ -385,7 +385,8 @@ namespace OrthancStone
     {
       if (info["IsSigned"].type() != Json::booleanValue)
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
+        NotifySliceImageError(operation);
+        return;
       }          
       else
       {
@@ -397,6 +398,7 @@ namespace OrthancStone
     Orthanc::Toolbox::DecodeBase64(jpeg, info["PixelData"].asString());
 
     std::auto_ptr<Orthanc::JpegReader> reader(new Orthanc::JpegReader);
+
     try
     {
       reader->ReadFromMemory(jpeg);
@@ -482,6 +484,8 @@ namespace OrthancStone
     float offset = static_cast<float>(stretchLow) / scaling;
       
     Orthanc::ImageProcessing::Convert(*image, *reader);
+    reader.reset(NULL);
+    
     Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling);
 
     NotifySliceImageSuccess(operation, image.release());
@@ -625,7 +629,7 @@ namespace OrthancStone
     
     // This requires the official Web viewer plugin to be installed!
     const Slice& slice = GetSlice(index);
-    std::string uri = ("web-viewer/instances/jpeg" + 
+    std::string uri = ("/web-viewer/instances/jpeg" + 
                        boost::lexical_cast<std::string>(value) + 
                        "-" + slice.GetOrthancInstanceId() + "_" + 
                        boost::lexical_cast<std::string>(slice.GetFrame()));

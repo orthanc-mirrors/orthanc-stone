@@ -28,7 +28,7 @@
 
 namespace OrthancStone
 {
-  class SdlEngine : public IViewport::IChangeObserver
+  class SdlEngine : public IViewport::IObserver
   {
   private:
     SdlWindow&                window_;

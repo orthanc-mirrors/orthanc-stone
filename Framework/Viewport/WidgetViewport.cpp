@@ -74,7 +74,7 @@ namespace OrthancStone
     }
 
     backgroundChanged_ = true;
-    observers_.NotifyChange(this);
+    observers_.Apply(*this, &IObserver::NotifyChange);
 
     return *widget;
   }
@@ -83,7 +83,7 @@ namespace OrthancStone
   void WidgetViewport::NotifyChange(const IWidget& widget)
   {
     backgroundChanged_ = true;
-    observers_.NotifyChange(this);
+    observers_.Apply(*this, &IObserver::NotifyChange);
   }
 
 
@@ -97,7 +97,7 @@ namespace OrthancStone
       centralWidget_->SetSize(width, height);
     }
 
-    observers_.NotifyChange(this);
+    observers_.Apply(*this, &IObserver::NotifyChange);
   }
 
 
@@ -154,7 +154,7 @@ namespace OrthancStone
       mouseTracker_.reset(NULL);
     }      
 
-    observers_.NotifyChange(this);
+    observers_.Apply(*this, &IObserver::NotifyChange);
   }
 
 
@@ -164,7 +164,7 @@ namespace OrthancStone
     {
       mouseTracker_->MouseUp();
       mouseTracker_.reset(NULL);
-      observers_.NotifyChange(this);
+      observers_.Apply(*this, &IObserver::NotifyChange);
     }
   }
 
@@ -195,7 +195,7 @@ namespace OrthancStone
     if (repaint)
     {
       // The scene must be repainted, notify the observers
-      observers_.NotifyChange(this);
+      observers_.Apply(*this, &IObserver::NotifyChange);
     }
   }
 
@@ -203,7 +203,7 @@ namespace OrthancStone
   void WidgetViewport::MouseEnter()
   {
     isMouseOver_ = true;
-    observers_.NotifyChange(this);
+    observers_.Apply(*this, &IObserver::NotifyChange);
   }
 
 
@@ -217,7 +217,7 @@ namespace OrthancStone
       mouseTracker_.reset(NULL);
     }
 
-    observers_.NotifyChange(this);
+    observers_.Apply(*this, &IObserver::NotifyChange);
   }
 
 

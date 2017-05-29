@@ -53,7 +53,7 @@ namespace OrthancStone
 
     virtual void NotifyChange(const IWidget& widget);
 
-    virtual void Register(IViewport::IChangeObserver& observer)
+    virtual void Register(IObserver& observer)
     {
       observers_.Register(observer);
     }

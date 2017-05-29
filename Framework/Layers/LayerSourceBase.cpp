@@ -78,7 +78,7 @@ namespace OrthancStone
     }
 
     LayerReadyFunctor functor(layer, slice);
-    observers_.Notify(this, functor);
+    observers_.Notify(*this, functor);
   }
 
   void LayerSourceBase::NotifyLayerError(const SliceGeometry& slice)

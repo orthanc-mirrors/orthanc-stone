@@ -38,23 +38,6 @@ namespace OrthancStone
   }
 
 
-  struct WorldSceneWidget::ViewChangeFunctor
-  {
-    const ViewportGeometry& view_;
-
-    ViewChangeFunctor(const ViewportGeometry& view) :
-      view_(view)
-    {
-    }
-
-    void operator() (IWorldObserver& observer,
-                     const WorldSceneWidget& source)
-    {
-      observer.NotifyViewChange(source, view_);
-    }
-  };
-
-
   struct WorldSceneWidget::SizeChangeFunctor
   {
     ViewportGeometry& view_;
@@ -144,8 +127,7 @@ namespace OrthancStone
       that_.view_.SetPan(previousPanX_ + x - downX_,
                          previousPanY_ + y - downY_);
 
-      ViewChangeFunctor functor(that_.view_);
-      that_.observers_.Notify(&that_, functor);
+      that_.observers_.Apply(that_, &IWorldObserver::NotifyViewChange, that_.view_);
     }
   };
 
@@ -223,8 +205,7 @@ namespace OrthancStone
       that_.view_.SetPan(panX + static_cast<double>(downX_ - tx),
                                panY + static_cast<double>(downY_ - ty));
 
-      ViewChangeFunctor functor(that_.view_);
-      that_.observers_.Notify(&that_, functor);
+      that_.observers_.Apply(that_, &IWorldObserver::NotifyViewChange, that_.view_);
     }
   };
 
@@ -273,7 +254,7 @@ namespace OrthancStone
     {
       // With a size observer, let it decide which view to use
       SizeChangeFunctor functor(view_);
-      observers_.Notify(this, functor);
+      observers_.Notify(*this, functor);
     }
   }
 
@@ -291,8 +272,7 @@ namespace OrthancStone
 
     NotifyChange();
 
-    ViewChangeFunctor functor(view_);
-    observers_.Notify(this, functor);
+    observers_.Apply(*this, &IWorldObserver::NotifyViewChange, view_);
   }
 
 
@@ -302,8 +282,7 @@ namespace OrthancStone
 
     NotifyChange();
 
-    ViewChangeFunctor functor(view_);
-    observers_.Notify(this, functor);
+    observers_.Apply(*this, &IWorldObserver::NotifyViewChange, view_);
   }
 
 

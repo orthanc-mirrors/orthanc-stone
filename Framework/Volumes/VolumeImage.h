@@ -98,9 +98,9 @@ namespace OrthancStone
       return threads_.size();
     }
 
-    virtual void Register(IChangeObserver& observer);
+    virtual void Register(IObserver& observer);
 
-    virtual void Unregister(IChangeObserver& observer);
+    virtual void Unregister(IObserver& observer);
 
     virtual void Start();
 

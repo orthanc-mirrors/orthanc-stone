@@ -33,10 +33,10 @@ namespace OrthancStone
   class IViewport : public boost::noncopyable
   {
   public:
-    class IChangeObserver : public boost::noncopyable
+    class IObserver : public boost::noncopyable
     {
     public:
-      virtual ~IChangeObserver()
+      virtual ~IObserver()
       {
       }
 
@@ -49,7 +49,7 @@ namespace OrthancStone
 
     virtual void SetDefaultView() = 0;
 
-    virtual void Register(IChangeObserver& observer) = 0;
+    virtual void Register(IObserver& observer) = 0;
 
     virtual void SetStatusBar(IStatusBar& statusBar) = 0;
 

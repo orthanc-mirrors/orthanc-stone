@@ -258,7 +258,7 @@ namespace OrthancStone
   };
 
 
-  class LayeredSceneWidget::Layer : public ISliceableVolume::IChangeObserver
+  class LayeredSceneWidget::Layer : public ISliceableVolume::IObserver
   {
   private:
     boost::mutex                          mutex_;
@@ -562,7 +562,7 @@ namespace OrthancStone
     InvalidateAllLayers();
 
     SliceChangeFunctor functor(slice);
-    observers_.Notify(this, functor);
+    observers_.Notify(*this, functor);
   }
 
 

@@ -28,10 +28,10 @@ namespace OrthancStone
   class ISliceableVolume : public boost::noncopyable
   {
   public:
-    class IChangeObserver : public boost::noncopyable
+    class IObserver : public boost::noncopyable
     {
     public:
-      virtual ~IChangeObserver()
+      virtual ~IObserver()
       {
       }
 
@@ -42,9 +42,9 @@ namespace OrthancStone
     {
     }
 
-    virtual void Register(IChangeObserver& observer) = 0;
+    virtual void Register(IObserver& observer) = 0;
 
-    virtual void Unregister(IChangeObserver& observer) = 0;
+    virtual void Unregister(IObserver& observer) = 0;
 
     virtual void Start() = 0;
 

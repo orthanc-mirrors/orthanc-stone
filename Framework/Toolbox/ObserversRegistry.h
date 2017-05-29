@@ -30,52 +30,25 @@ namespace OrthancStone
 {
   template <
     typename Source,
-    typename Observer = typename Source::IChangeObserver
+    typename Observer = typename Source::IObserver
     >
   class ObserversRegistry : public boost::noncopyable
   {
   private:
-    struct ChangeFunctor : public boost::noncopyable
-    {
-      void operator() (Observer& observer,
-                       const Source& source)
-      {
-        observer.NotifyChange(source);
-      }
-    };
-
     typedef std::set<Observer*>  Observers;
 
     Observers  observers_;
 
   public:
     template <typename Functor>
-    void Notify(const Source* source,
+    void Notify(const Source& source,
                 Functor& functor)
     {
-      if (source == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-
       for (typename Observers::const_iterator observer = observers_.begin();
            observer != observers_.end(); ++observer)
       {
-        functor(**observer, *source);
+        functor(**observer, source);
       }
-    }
-
-    template <typename Functor>
-    void Notify(const Source* source)
-    {
-      // Use the default functor
-      Functor functor;
-      Notify(source, functor);
-    }
-
-    void NotifyChange(const Source* source)
-    {
-      Notify<ChangeFunctor>(source);
     }
 
     void Register(Observer& observer)

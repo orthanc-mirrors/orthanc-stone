@@ -182,13 +182,13 @@ namespace OrthancStone
   }
 
 
-  void VolumeImage::Register(IChangeObserver& observer)
+  void VolumeImage::Register(IObserver& observer)
   {
     observers_.Register(observer);
   }
 
 
-  void VolumeImage::Unregister(IChangeObserver& observer)
+  void VolumeImage::Unregister(IObserver& observer)
   {
     observers_.Unregister(observer);
   }

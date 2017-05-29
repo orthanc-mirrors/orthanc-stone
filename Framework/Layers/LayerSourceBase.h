@@ -22,36 +22,32 @@
 #pragma once
 
 #include "ILayerSource.h"
+#include "../Toolbox/ObserversRegistry.h"
 
 namespace OrthancStone
 {
   class LayerSourceBase : public ILayerSource
   {
   private:
-    IObserver*  observer_;
+    typedef ObserversRegistry<ILayerSource, IObserver>  Observers;
+
+    Observers  observers_;
 
   protected:
-    IObserver* GetObserver() const
-    {
-      return observer_;  // TODO REMOVE THIS, FOR TEST
-    }
+    void NotifyGeometryReady();
+    
+    void NotifyGeometryError();
 
     void NotifyContentChange();
 
     void NotifySliceChange(const Slice& slice);
 
-    // Takes ownership of "layer" (that cannot be "NULL")
     void NotifyLayerReady(ILayerRenderer* layer,
                           const Slice& slice);
     
     void NotifyLayerError(const SliceGeometry& slice);
 
   public:
-    LayerSourceBase() :
-      observer_(NULL)
-    {
-    }
-    
-    virtual void SetObserver(IObserver& observer);
+    virtual void Register(IObserver& observer);
   };
 }

@@ -55,12 +55,16 @@ namespace OrthancStone
                          double& y2,
                          ILayerSource& source) const;
 
+    virtual void NotifyGeometryReady(const ILayerSource& source);
+
+    virtual void NotifyGeometryError(const ILayerSource& source);
+
     virtual void NotifyContentChange(const ILayerSource& source);
 
     virtual void NotifySliceChange(const ILayerSource& source,
                                    const Slice& slice);
 
-    virtual void NotifyLayerReady(ILayerRenderer* renderer,
+    virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& renderer,
                                   const ILayerSource& source,
                                   const Slice& slice);
 

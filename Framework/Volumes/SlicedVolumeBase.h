@@ -29,7 +29,7 @@ namespace OrthancStone
   class SlicedVolumeBase : public ISlicedVolume
   {
   private:
-    typedef ObserversRegistry<SlicedVolumeBase, IObserver>  Observers;
+    typedef ObserversRegistry<ISlicedVolume, IObserver>  Observers;
 
     Observers  observers_;
 
@@ -40,7 +40,7 @@ namespace OrthancStone
     
     virtual void NotifyContentChange();
 
-    virtual void NotifySliceChange(size_t sliceIndex,
+    virtual void NotifySliceChange(const size_t& sliceIndex,
                                    const Slice& slice);
 
   public:

@@ -94,6 +94,14 @@ namespace OrthancStone
 
       virtual void NotifyGeometryReady(const ILayerSource& source)
       {
+        const OrthancFrameLayerSource& frame =
+          dynamic_cast<const OrthancFrameLayerSource&>(source);
+
+        if (frame.GetSliceCount() > 0)
+        {
+          widget_->SetSlice(frame.GetSlice(0).GetGeometry());
+          widget_->SetDefaultView();
+        }
       }
       
       virtual void NotifyGeometryError(const ILayerSource& source)
@@ -109,7 +117,7 @@ namespace OrthancStone
       {
       }
  
-      virtual void NotifyLayerReady(ILayerRenderer *layer,
+      virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& layer,
                                     const ILayerSource& source,
                                     const Slice& slice)
       {
@@ -162,9 +170,10 @@ namespace OrthancStone
 
         std::auto_ptr<LayerWidget> widget(new LayerWidget);
 
-#if 1
+#if 0
         std::auto_ptr<OrthancFrameLayerSource> layer
           (new OrthancFrameLayerSource(context.GetWebService(), instance, frame));
+        layer->Register(*this);
         widget->AddLayer(layer.release());
 
         if (parameters["smooth"].as<bool>())
@@ -178,6 +187,7 @@ namespace OrthancStone
         std::auto_ptr<OrthancFrameLayerSource> ct;
         ct.reset(new OrthancFrameLayerSource(context.GetWebService(), "c804a1a2-142545c9-33b32fe2-3df4cec0-a2bea6d6", 0));
         //ct.reset(new OrthancFrameLayerSource(context.GetWebService(), "4bd4304f-47478948-71b24af2-51f4f1bc-275b6c1b", 0));  // BAD SLICE
+        ct->Register(*this);
         widget->AddLayer(ct.release());
 
         std::auto_ptr<OrthancFrameLayerSource> pet;

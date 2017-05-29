@@ -37,7 +37,6 @@ namespace OrthancStone
 {
   void OrthancFrameLayerSource::NotifyGeometryReady(const OrthancSlicesLoader& loader)
   {
-#if 0
     if (loader.GetSliceCount() > 0)
     {
       // Make sure all the slices are parallel. TODO Alleviate this constraint
@@ -53,20 +52,11 @@ namespace OrthancStone
     }
 
     LayerSourceBase::NotifyGeometryReady();
-#endif
-
-    // TODO REMOVE THIS
-    /*if (GetObserver() != NULL)
-    {
-      dynamic_cast<LayerWidget*>(GetObserver())->SetSlice(loader.GetSlice(0).GetGeometry());
-      }*/
   }
 
   void OrthancFrameLayerSource::NotifyGeometryError(const OrthancSlicesLoader& loader)
   {
-#if 0
     LayerSourceBase::NotifyGeometryError();
-#endif
   }
 
   void OrthancFrameLayerSource::NotifySliceImageReady(const OrthancSlicesLoader& loader,

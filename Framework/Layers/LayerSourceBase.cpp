@@ -25,56 +25,69 @@
 
 namespace OrthancStone
 {
+  namespace
+  {
+    class LayerReadyFunctor : public boost::noncopyable
+    {
+    private:
+      std::auto_ptr<ILayerRenderer>  layer_;
+      const Slice&                   slice_;
+      
+    public:
+      LayerReadyFunctor(ILayerRenderer* layer,
+                        const Slice& slice) :
+        layer_(layer),
+        slice_(slice)
+      {
+      }
+
+      void operator() (ILayerSource::IObserver& observer,
+                       const ILayerSource& source)
+      {
+        observer.NotifyLayerReady(layer_, source, slice_);
+      }
+    };
+  }
+
+  void LayerSourceBase::NotifyGeometryReady()
+  {
+    observers_.Apply(*this, &IObserver::NotifyGeometryReady);
+  }
+    
+  void LayerSourceBase::NotifyGeometryError()
+  {
+    observers_.Apply(*this, &IObserver::NotifyGeometryError);
+  }  
+    
   void LayerSourceBase::NotifyContentChange()
   {
-    if (observer_ != NULL)
-    {
-      observer_->NotifyContentChange(*this);
-    }
+    observers_.Apply(*this, &IObserver::NotifyContentChange);
   }
 
   void LayerSourceBase::NotifySliceChange(const Slice& slice)
   {
-    if (observer_ != NULL)
-    {
-      observer_->NotifySliceChange(*this, slice);
-    }
+    observers_.Apply(*this, &IObserver::NotifySliceChange, slice);
   }
 
   void LayerSourceBase::NotifyLayerReady(ILayerRenderer* layer,
                                          const Slice& slice)
   {
-    std::auto_ptr<ILayerRenderer> tmp(layer);
-    
     if (layer == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-    
-    if (observer_ != NULL)
-    {
-      observer_->NotifyLayerReady(tmp.release(), *this, slice);
-    }
+
+    LayerReadyFunctor functor(layer, slice);
+    observers_.Notify(this, functor);
   }
 
   void LayerSourceBase::NotifyLayerError(const SliceGeometry& slice)
   {
-    if (observer_ != NULL)
-    {
-      observer_->NotifyLayerError(*this, slice);
-    }
+    observers_.Apply(*this, &IObserver::NotifyLayerError, slice);
   }
 
-  void LayerSourceBase::SetObserver(IObserver& observer)
+  void LayerSourceBase::Register(IObserver& observer)
   {
-    if (observer_ == NULL)
-    {
-      observer_ = &observer;
-    }
-    else
-    {
-      // Cannot add more than one observer
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
+    observers_.Register(observer);
   }
 }

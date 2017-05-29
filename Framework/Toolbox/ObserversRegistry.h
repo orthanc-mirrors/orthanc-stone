@@ -92,5 +92,41 @@ namespace OrthancStone
     {
       return observers_.empty();
     }
+
+    void Apply(const Source& source,
+               void (Observer::*method) (const Source&))
+    {
+      for (typename Observers::const_iterator it = observers_.begin();
+           it != observers_.end(); ++it)
+      {
+        ((*it)->*method) (source);
+      }
+    }
+
+    template <typename Argument0>
+    void Apply(const Source& source,
+               void (Observer::*method) (const Source&, const Argument0&),
+               const Argument0& argument0)
+    {
+      for (typename Observers::const_iterator it = observers_.begin();
+           it != observers_.end(); ++it)
+      {
+        ((*it)->*method) (source, argument0);
+      }
+    }
+
+    template <typename Argument0,
+              typename Argument1>
+    void Apply(const Source& source,
+               void (Observer::*method) (const Source&, const Argument0&, const Argument1&),
+               const Argument0& argument0,
+               const Argument1& argument1)
+    {
+      for (typename Observers::const_iterator it = observers_.begin();
+           it != observers_.end(); ++it)
+      {
+        ((*it)->*method) (source, argument0, argument1);
+      }
+    }
   };
 }

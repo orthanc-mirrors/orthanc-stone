@@ -23,77 +23,24 @@
 
 namespace OrthancStone
 {
-  namespace
-  {
-    struct GeometryReadyFunctor
-    {
-      void operator() (ISlicedVolume::IObserver& observer,
-                       const ISlicedVolume& source)
-      {
-        observer.NotifyGeometryReady(source);
-      }
-    };
-
-    struct GeometryErrorFunctor
-    {
-      void operator() (ISlicedVolume::IObserver& observer,
-                       const ISlicedVolume& source)
-      {
-        observer.NotifyGeometryError(source);
-      }
-    };
-
-    struct ContentChangeFunctor
-    {
-      void operator() (ISlicedVolume::IObserver& observer,
-                       const ISlicedVolume& source)
-      {
-        observer.NotifyContentChange(source);
-      }
-    };
-
-    struct SliceChangeFunctor
-    {
-      size_t sliceIndex_;
-      const Slice& slice_;
-
-      SliceChangeFunctor(size_t sliceIndex,
-                         const Slice& slice) :
-        sliceIndex_(sliceIndex),
-        slice_(slice)
-      {
-      }
-
-      void operator() (ISlicedVolume::IObserver& observer,
-                       const ISlicedVolume& source)
-      {
-        observer.NotifySliceChange(source, sliceIndex_, slice_);
-      }
-    };
-  }
-
   void SlicedVolumeBase::NotifyGeometryReady()
   {
-    GeometryReadyFunctor functor;
-    observers_.Notify(this, functor);
+    observers_.Apply(*this, &IObserver::NotifyGeometryReady);
   }
       
   void SlicedVolumeBase::NotifyGeometryError()
   {
-    GeometryErrorFunctor functor;
-    observers_.Notify(this, functor);
+    observers_.Apply(*this, &IObserver::NotifyGeometryError);
   }
     
   void SlicedVolumeBase::NotifyContentChange()
   {
-    ContentChangeFunctor functor;
-    observers_.Notify(this, functor);
+    observers_.Apply(*this, &IObserver::NotifyContentChange);
   }
 
-  void SlicedVolumeBase::NotifySliceChange(size_t sliceIndex,
+  void SlicedVolumeBase::NotifySliceChange(const size_t& sliceIndex,
                                            const Slice& slice)
   {
-    SliceChangeFunctor functor(sliceIndex, slice);
-    observers_.Notify(this, functor);
+    observers_.Apply(*this, &IObserver::NotifySliceChange, sliceIndex, slice);
   }
 }

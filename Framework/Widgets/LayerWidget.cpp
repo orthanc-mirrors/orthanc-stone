@@ -106,11 +106,6 @@ namespace OrthancStone
 
       for (size_t i = 0; i < renderers_.size(); i++)
       {
-        if (renderers_[i] != NULL)
-        {
-          LOG(ERROR) << "...............";
-        }
-
         if (renderers_[i] != NULL &&
             !renderers_[i]->RenderLayer(context, view, slice_))
         {
@@ -351,8 +346,7 @@ namespace OrthancStone
     layersIndex_[layer] = index;
 
     ResetPendingScene();
-    LOG(ERROR) << "*****************************";
-    layer->SetObserver(*this);
+    layer->Register(*this);
 
     return index;
   }
@@ -385,17 +379,41 @@ namespace OrthancStone
 
   void LayerWidget::SetSlice(const SliceGeometry& slice)
   {
-    if (currentScene_.get() == NULL ||
-        (pendingScene_.get() != NULL &&
-         pendingScene_->IsComplete()))
-    {
-      currentScene_ = pendingScene_;
-    }
+    Slice displayedSlice(slice_, THIN_SLICE_THICKNESS);
 
-    slice_ = slice;
-    ResetPendingScene();
+    if (!displayedSlice.ContainsPlane(slice))
+    {
+      if (currentScene_.get() == NULL ||
+          (pendingScene_.get() != NULL &&
+           pendingScene_->IsComplete()))
+      {
+        currentScene_ = pendingScene_;
+      }
+
+      slice_ = slice;
+      ResetPendingScene();
+
+      InvalidateAllLayers();
+    }
   }
 
+
+  void LayerWidget::NotifyGeometryReady(const ILayerSource& source)
+  {
+    size_t i;
+    if (LookupLayer(i, source))
+    {
+      LOG(INFO) << "Geometry ready for layer " << i;
+      layers_[i]->ScheduleLayerCreation(slice_);
+    }
+  }
+  
+
+  void LayerWidget::NotifyGeometryError(const ILayerSource& source)
+  {
+    LOG(ERROR) << "Cannot get geometry";
+  }
+  
 
   void LayerWidget::InvalidateAllLayers()
   {
@@ -443,18 +461,16 @@ namespace OrthancStone
   }
   
   
-  void LayerWidget::NotifyLayerReady(ILayerRenderer* renderer,
+  void LayerWidget::NotifyLayerReady(std::auto_ptr<ILayerRenderer>& renderer,
                                      const ILayerSource& source,
                                      const Slice& slice)
   {
-    std::auto_ptr<ILayerRenderer> tmp(renderer);
-
     size_t index;
     if (LookupLayer(index, source) &&
         slice.ContainsPlane(slice_))  // Whether the slice comes from an older request
     {
       LOG(INFO) << "Renderer ready for layer " << index;
-      UpdateLayer(index, tmp.release(), slice);
+      UpdateLayer(index, renderer.release(), slice);
     }
   }
 

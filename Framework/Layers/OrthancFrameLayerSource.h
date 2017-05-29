@@ -43,11 +43,13 @@ namespace OrthancStone
     virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
                                        unsigned int sliceIndex,
                                        const Slice& slice,
-                                       Orthanc::ImageAccessor* image);
+                                       Orthanc::ImageAccessor* image,
+                                       SliceImageQuality quality);
 
     virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
                                        unsigned int sliceIndex,
-                                       const Slice& slice);
+                                       const Slice& slice,
+                                       SliceImageQuality quality);
 
   public:
     OrthancFrameLayerSource(IWebService& orthanc,

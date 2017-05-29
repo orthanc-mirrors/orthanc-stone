@@ -89,6 +89,11 @@ namespace OrthancStone
       return slice_;
     }
 
+    bool HasRenderer(size_t index)
+    {
+      return renderers_[index] != NULL;
+    }
+
     bool IsComplete() const
     {
       return countMissing_ == 0;
@@ -208,7 +213,8 @@ namespace OrthancStone
       assert(layers_[i] != NULL);
       if (GetAndFixExtent(ax, ay, bx, by, *layers_[i]))
       {
-        LOG(INFO) << "Extent of layer " << i << ": (" << ax << "," << ay << ")->(" << bx << "," << by << ")";
+        LOG(INFO) << "Extent of layer " << i << ": (" << ax << "," << ay
+                  << ")->(" << bx << "," << by << ")";
 
         if (first)
         {
@@ -379,6 +385,10 @@ namespace OrthancStone
 
   void LayerWidget::SetSlice(const SliceGeometry& slice)
   {
+    LOG(INFO) << "Setting slice origin: (" << slice.GetOrigin()[0]
+              << "," << slice.GetOrigin()[1]
+              << "," << slice.GetOrigin()[2] << ")";
+    
     Slice displayedSlice(slice_, THIN_SLICE_THICKNESS);
 
     if (!displayedSlice.ContainsPlane(slice))
@@ -490,6 +500,7 @@ namespace OrthancStone
       double x1, y1, x2, y2;
       if (GetAndFixExtent(x1, y1, x2, y2, *layers_[index]))
       {
+        printf("**%d** %f %f %f %f\n", index, x1, y1, x2, y2);
         UpdateLayer(index, new MissingLayerRenderer(x1, y1, x2, y2), Slice(slice, THIN_SLICE_THICKNESS));
       }
     }

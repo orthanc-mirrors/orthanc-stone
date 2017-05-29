@@ -29,29 +29,18 @@
 
 #include <boost/lexical_cast.hpp>
 
-
-// TODO REMOVE THIS
-#include "../Widgets/LayerWidget.h"
-
 namespace OrthancStone
 {
   void OrthancFrameLayerSource::NotifyGeometryReady(const OrthancSlicesLoader& loader)
   {
     if (loader.GetSliceCount() > 0)
     {
-      // Make sure all the slices are parallel. TODO Alleviate this constraint
-      for (size_t i = 1; i < loader.GetSliceCount(); i++)
-      {
-        if (!GeometryToolbox::IsParallel(loader.GetSlice(i).GetGeometry().GetNormal(),
-                                         loader.GetSlice(0).GetGeometry().GetNormal()))
-        {
-          LayerSourceBase::NotifyGeometryError();
-          return;
-        }
-      }
+      LayerSourceBase::NotifyGeometryReady();
     }
-
-    LayerSourceBase::NotifyGeometryReady();
+    else
+    {
+      LayerSourceBase::NotifyGeometryError();
+    }
   }
 
   void OrthancFrameLayerSource::NotifyGeometryError(const OrthancSlicesLoader& loader)
@@ -62,14 +51,17 @@ namespace OrthancStone
   void OrthancFrameLayerSource::NotifySliceImageReady(const OrthancSlicesLoader& loader,
                                                       unsigned int sliceIndex,
                                                       const Slice& slice,
-                                                      Orthanc::ImageAccessor* image)
+                                                      Orthanc::ImageAccessor* image,
+                                                      SliceImageQuality quality)
   {
-    LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(image, slice, true), slice);
+    bool isFull = (quality == SliceImageQuality_Full);
+    LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(image, slice, isFull), slice);
   }
 
   void OrthancFrameLayerSource::NotifySliceImageError(const OrthancSlicesLoader& loader,
                                                       unsigned int sliceIndex,
-                                                      const Slice& slice)
+                                                      const Slice& slice,
+                                                      SliceImageQuality quality)
   {
     LayerSourceBase::NotifyLayerError(slice.GetGeometry());
   }
@@ -133,7 +125,8 @@ namespace OrthancStone
     {
       if (loader_.LookupSlice(index, viewportSlice))
       {
-        loader_.ScheduleLoadSliceImage(index);
+        //loader_.ScheduleLoadSliceImage(index, SliceImageQuality_Full);
+        loader_.ScheduleLoadSliceImage(index, SliceImageQuality_Jpeg50);
       }
       else
       {

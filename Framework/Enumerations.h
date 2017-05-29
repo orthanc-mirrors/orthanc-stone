@@ -71,4 +71,12 @@ namespace OrthancStone
     KeyboardModifiers_Control = (1 << 1),
     KeyboardModifiers_Alt = (1 << 2)
   };
+
+  enum SliceImageQuality
+  {
+    SliceImageQuality_Full,
+    SliceImageQuality_Jpeg50,
+    SliceImageQuality_Jpeg90,
+    SliceImageQuality_Jpeg95
+  };
 }

@@ -48,7 +48,7 @@ namespace OrthancStone
 
       for (size_t i = 0; i < loader.GetSliceCount(); i++)
       {
-        const_cast<OrthancSlicesLoader&>(loader).ScheduleLoadSliceImage(i);
+        const_cast<OrthancSlicesLoader&>(loader).ScheduleLoadSliceImage(i, SliceImageQuality_Full);
       }
     }
 
@@ -60,7 +60,8 @@ namespace OrthancStone
     virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
                                        unsigned int sliceIndex,
                                        const Slice& slice,
-                                       Orthanc::ImageAccessor* image)
+                                       Orthanc::ImageAccessor* image,
+                                       SliceImageQuality quality)
     {
       std::auto_ptr<Orthanc::ImageAccessor> tmp(image);
       printf("Slice OK %dx%d\n", tmp->GetWidth(), tmp->GetHeight());
@@ -68,14 +69,15 @@ namespace OrthancStone
 
     virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
                                        unsigned int sliceIndex,
-                                       const Slice& slice)
+                                       const Slice& slice,
+                                       SliceImageQuality quality)
     {
       printf("ERROR 2\n");
     }
   };
 
 
-  class OrthancVolumeImageLoader : 
+  class OrthancVolumeImage : 
     public SlicedVolumeBase,
     private OrthancSlicesLoader::ICallback
   { 
@@ -92,7 +94,7 @@ namespace OrthancStone
       unsigned int slice;
       if (downloadStack_->Pop(slice))
       {
-        loader_.ScheduleLoadSliceImage(slice);
+        loader_.ScheduleLoadSliceImage(slice, SliceImageQuality_Full);
       }
     }
 
@@ -172,7 +174,11 @@ namespace OrthancStone
       
       for (size_t i = 1; i < loader.GetSliceCount(); i++)
       {
-        if (!GeometryToolbox::IsNear(spacingZ, GetDistance(loader.GetSlice(i - 1), loader.GetSlice(i))))
+        printf("%d %s %f\n", i, loader.GetSlice(i).GetOrthancInstanceId().c_str(),
+               GetDistance(loader.GetSlice(i - 1), loader.GetSlice(i)));
+        
+        if (!GeometryToolbox::IsNear(spacingZ, GetDistance(loader.GetSlice(i - 1), loader.GetSlice(i)),
+                                     0.001 /* this is expressed in mm */))
         {
           LOG(ERROR) << "The distance between successive slices is not constant in a volume image";
           SlicedVolumeBase::NotifyGeometryError();
@@ -210,7 +216,8 @@ namespace OrthancStone
     virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
                                        unsigned int sliceIndex,
                                        const Slice& slice,
-                                       Orthanc::ImageAccessor* image)
+                                       Orthanc::ImageAccessor* image,
+                                       SliceImageQuality quality)
     {
       std::auto_ptr<Orthanc::ImageAccessor> protection(image);
 
@@ -226,14 +233,15 @@ namespace OrthancStone
 
     virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
                                        unsigned int sliceIndex,
-                                       const Slice& slice)
+                                       const Slice& slice,
+                                       SliceImageQuality quality)
     {
       LOG(ERROR) << "Cannot download slice " << sliceIndex << " in a volume image";
       ScheduleSliceDownload();
     }
 
   public:
-    OrthancVolumeImageLoader(IWebService& orthanc) : 
+    OrthancVolumeImage(IWebService& orthanc) : 
       loader_(*this, orthanc)
     {
     }
@@ -257,6 +265,18 @@ namespace OrthancStone
     virtual const Slice& GetSlice(size_t index) const
     {
       return loader_.GetSlice(index);
+    }
+
+    ImageBuffer3D& GetImage()
+    {
+      if (image_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        return *image_;
+      }
     }
   };
 }
@@ -296,11 +316,13 @@ TEST(Toto, Tata)
 
   Orthanc::WebServiceParameters web;
   OrthancStone::OracleWebService orthanc(oracle, web);
-  OrthancStone::OrthancVolumeImageLoader volume(orthanc);
+  OrthancStone::OrthancVolumeImage volume(orthanc);
 
-  volume.ScheduleLoadInstance("19816330-cb02e1cf-df3a8fe8-bf510623-ccefe9f5", 0);
+  //volume.ScheduleLoadInstance("19816330-cb02e1cf-df3a8fe8-bf510623-ccefe9f5", 0);
   //volume.ScheduleLoadSeries("318603c5-03e8cffc-a82b6ee1-3ccd3c1e-18d7e3bb"); // COMUNIX PET
+  //volume.ScheduleLoadSeries("7124dba7-09803f33-98b73826-33f14632-ea842d29"); // COMUNIX CT
   //volume.ScheduleLoadSeries("5990e39c-51e5f201-fe87a54c-31a55943-e59ef80e"); // Delphine sagital
+  volume.ScheduleLoadSeries("6f1b492a-e181e200-44e51840-ef8db55e-af529ab6"); // Delphine ax 2.5
 
   boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 

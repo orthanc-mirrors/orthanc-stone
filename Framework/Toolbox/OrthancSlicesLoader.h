@@ -23,6 +23,7 @@
 
 #include "IWebService.h"
 #include "SlicesSorter.h"
+#include "../Enumerations.h"
 
 #include <boost/shared_ptr.hpp>
 
@@ -45,11 +46,13 @@ namespace OrthancStone
       virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
                                          unsigned int sliceIndex,
                                          const Slice& slice,
-                                         Orthanc::ImageAccessor* image) = 0;
+                                         Orthanc::ImageAccessor* image,
+                                         SliceImageQuality quality) = 0;
 
       virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
                                          unsigned int sliceIndex,
-                                         const Slice& slice) = 0;
+                                         const Slice& slice,
+                                         SliceImageQuality quality) = 0;
     };
     
   private:
@@ -78,7 +81,11 @@ namespace OrthancStone
     State         state_;
     SlicesSorter  slices_;
 
-
+    void NotifySliceImageSuccess(const Operation& operation,
+                                 Orthanc::ImageAccessor* image) const;
+  
+    void NotifySliceImageError(const Operation& operation) const;
+    
     void ParseSeriesGeometry(const void* answer,
                              size_t size);
 
@@ -87,10 +94,18 @@ namespace OrthancStone
                                const void* answer,
                                size_t size);
 
-    void ParseSliceImage(const Operation& operation,
-                         const void* answer,
-                         size_t size);
+    void ParseSliceImagePng(const Operation& operation,
+                            const void* answer,
+                            size_t size);
+
+    void ParseSliceImageJpeg(const Operation& operation,
+                             const void* answer,
+                             size_t size);
+
+    void ScheduleSliceImagePng(size_t index);
     
+    void ScheduleSliceImageJpeg(size_t index,
+                                SliceImageQuality quality);
     
   public:
     OrthancSlicesLoader(ICallback& callback,
@@ -110,6 +125,7 @@ namespace OrthancStone
     bool LookupSlice(size_t& index,
                      const SliceGeometry& plane) const;
 
-    void ScheduleLoadSliceImage(size_t index);
+    void ScheduleLoadSliceImage(size_t index,
+                                SliceImageQuality quality);
   };
 }

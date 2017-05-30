@@ -21,27 +21,63 @@
 
 #pragma once
 
-#include "../Viewport/CairoContext.h"
-#include "../Toolbox/SliceGeometry.h"
-#include "../Toolbox/ViewportGeometry.h"
-#include "RenderStyle.h"
-
 namespace OrthancStone
 {
-  class ILayerRenderer : public boost::noncopyable
+  class Extent
   {
+  private:
+    bool    empty_;
+    double  x1_;
+    double  y1_;
+    double  x2_;
+    double  y2_;
+
   public:
-    virtual ~ILayerRenderer()
+    Extent()
     {
+      Reset();
     }
-    
-    virtual bool RenderLayer(CairoContext& context,
-                             const ViewportGeometry& view) = 0;
 
-    virtual void SetLayerStyle(const RenderStyle& style) = 0;
+    void Reset();
 
-    virtual const SliceGeometry& GetLayerSlice() = 0;
-    
-    virtual bool IsFullQuality() = 0;
+    void AddPoint(double x,
+                  double y);
+
+    void Union(const Extent& other);
+
+    bool IsEmpty() const
+    {
+      return empty_;
+    }
+
+    double GetX1() const
+    {
+      return x1_;
+    }
+
+    double GetY1() const
+    {
+      return y1_;
+    }
+
+    double GetX2() const
+    {
+      return x2_;
+    }
+
+    double GetY2() const
+    {
+      return y2_;
+    }
+
+    double GetWidth() const
+    {
+      return x2_ - x1_;
+    }
+
+    double GetHeight() const
+    {
+      return y2_ - y1_;
+    }
   };
 }

@@ -77,43 +77,32 @@ namespace OrthancStone
   }
 
 
-  bool OrthancFrameLayerSource::GetExtent(double& x1,
-                                          double& y1,
-                                          double& x2,
-                                          double& y2,
+  bool OrthancFrameLayerSource::GetExtent(std::vector<Vector>& points,
                                           const SliceGeometry& viewportSlice)
   {
-    bool ok = false;
-
-    if (loader_.IsGeometryReady())
+    size_t index;
+    if (loader_.IsGeometryReady() &&
+        loader_.LookupSlice(index, viewportSlice))
     {
-      double tx1, ty1, tx2, ty2;
+      const Slice& slice = loader_.GetSlice(index);
+      const SliceGeometry& plane = slice.GetGeometry();
 
-      for (size_t i = 0; i < loader_.GetSliceCount(); i++)
-      {
-        if (FrameRenderer::ComputeFrameExtent(tx1, ty1, tx2, ty2, viewportSlice, loader_.GetSlice(i)))
-        {
-          if (ok)
-          {
-            x1 = std::min(x1, tx1);
-            y1 = std::min(y1, ty1);
-            x2 = std::min(x2, tx2);
-            y2 = std::min(y2, ty2);
-          }
-          else
-          {
-            // This is the first slice parallel to the viewport
-            x1 = tx1;
-            y1 = ty1;
-            x2 = tx2;
-            y2 = ty2;
-            ok = true;
-          }
-        }
-      }
+      double sx = slice.GetPixelSpacingX();
+      double sy = slice.GetPixelSpacingY();
+      double w = static_cast<double>(slice.GetWidth());
+      double h = static_cast<double>(slice.GetHeight());
+
+      points.clear();
+      points.push_back(plane.MapSliceToWorldCoordinates(-0.5      * sx, -0.5      * sy));
+      points.push_back(plane.MapSliceToWorldCoordinates((w - 0.5) * sx, -0.5      * sy));
+      points.push_back(plane.MapSliceToWorldCoordinates(-0.5      * sx, (h - 0.5) * sy));
+      points.push_back(plane.MapSliceToWorldCoordinates((w - 0.5) * sx, (h - 0.5) * sy));
+      return true;
     }
-
-    return ok;
+    else
+    {
+      return false;
+    }
   }
 
   
@@ -125,8 +114,8 @@ namespace OrthancStone
     {
       if (loader_.LookupSlice(index, viewportSlice))
       {
-        //loader_.ScheduleLoadSliceImage(index, SliceImageQuality_Full);
-        loader_.ScheduleLoadSliceImage(index, SliceImageQuality_Jpeg50);
+        loader_.ScheduleLoadSliceImage(index, SliceImageQuality_Full);
+        //loader_.ScheduleLoadSliceImage(index, SliceImageQuality_Jpeg50);
       }
       else
       {

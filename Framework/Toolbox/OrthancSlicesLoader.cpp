@@ -176,6 +176,7 @@ namespace OrthancStone
 
       switch (operation->GetMode())
       {
+        case Mode_InstanceGeometry:
         case Mode_SeriesGeometry:
           that_.userCallback_.NotifyGeometryError(that_);
           that_.state_ = State_Error;

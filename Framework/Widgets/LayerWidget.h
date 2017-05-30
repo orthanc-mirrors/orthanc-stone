@@ -23,6 +23,7 @@
 
 #include "WorldSceneWidget.h"
 #include "../Layers/ILayerSource.h"
+#include "../Toolbox/Extent.h"
 
 #include <map>
 
@@ -49,11 +50,8 @@ namespace OrthancStone
     bool LookupLayer(size_t& index /* out */,
                      const ILayerSource& layer) const;
 
-    bool GetAndFixExtent(double& x1,
-                         double& y1,
-                         double& x2,
-                         double& y2,
-                         ILayerSource& source) const;
+    void GetLayerExtent(Extent& extent,
+                        ILayerSource& source) const;
 
     virtual void NotifyGeometryReady(const ILayerSource& source);
 

@@ -103,7 +103,22 @@ namespace OrthancStone
 
         if (frame.GetSliceCount() > 0)
         {
+#if 1
+          GeometryToolbox::Print(frame.GetSlice(0).GetGeometry().GetOrigin());
           widget_->SetSlice(frame.GetSlice(0).GetGeometry());
+#else
+          // TEST for scene extents - Rotate the axes
+          double a = 15.0 / 180.0 * M_PI;
+          
+          Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
+          Vector y; GeometryToolbox::AssignVector(y, -sin(a), cos(a), 0);
+          GeometryToolbox::Print(frame.GetSlice(0).GetGeometry().GetOrigin());
+          GeometryToolbox::Print(x);
+          GeometryToolbox::Print(y);
+          SliceGeometry s(frame.GetSlice(0).GetGeometry().GetOrigin(), x, y);
+          widget_->SetSlice(s);
+#endif
+          
           widget_->SetDefaultView();
         }
       }
@@ -176,14 +191,18 @@ namespace OrthancStone
         layer->Register(*this);
         widget->AddLayer(layer.release());
 
+        RenderStyle s;
+
         if (parameters["smooth"].as<bool>())
         {
-          RenderStyle s; 
           s.interpolation_ = ImageInterpolation_Linear;
-          widget->SetLayerStyle(0, s);
         }
+
+        //s.drawGrid_ = true;
+        widget->SetLayerStyle(0, s);
 #else
         // 0178023P**
+        // Extent of the CT layer: (-35.068 -20.368) => (34.932 49.632)
         std::auto_ptr<OrthancFrameLayerSource> ct;
         ct.reset(new OrthancFrameLayerSource(context.GetWebService(), "c804a1a2-142545c9-33b32fe2-3df4cec0-a2bea6d6", 0));
         //ct.reset(new OrthancFrameLayerSource(context.GetWebService(), "4bd4304f-47478948-71b24af2-51f4f1bc-275b6c1b", 0));  // BAD SLICE
@@ -196,6 +215,7 @@ namespace OrthancStone
 
         {
           RenderStyle s;
+          //s.drawGrid_ = true;
           s.alpha_ = 1;
           widget->SetLayerStyle(0, s);
         }

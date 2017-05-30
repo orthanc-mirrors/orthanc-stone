@@ -105,16 +105,51 @@ namespace OrthancStone
     }
 
     bool RenderScene(CairoContext& context,
-                     const ViewportGeometry& view)
+                     const ViewportGeometry& view,
+                     const SliceGeometry& viewportSlice)
     {
       bool fullQuality = true;
+      cairo_t *cr = context.GetObject();
 
       for (size_t i = 0; i < renderers_.size(); i++)
       {
-        if (renderers_[i] != NULL &&
-            !renderers_[i]->RenderLayer(context, view, slice_))
+        if (renderers_[i] != NULL)
         {
-          return false;
+          const SliceGeometry& frameSlice = renderers_[i]->GetLayerSlice();
+          
+          double x0, y0, x1, y1, x2, y2;
+          viewportSlice.ProjectPoint(x0, y0, frameSlice.GetOrigin());
+          viewportSlice.ProjectPoint(x1, y1, frameSlice.GetOrigin() + frameSlice.GetAxisX());
+          viewportSlice.ProjectPoint(x2, y2, frameSlice.GetOrigin() + frameSlice.GetAxisY());
+
+          /**
+           * Now we solve the system of linear equations Ax + b = x', given:
+           *   A [0 ; 0] + b = [x0 ; y0]
+           *   A [1 ; 0] + b = [x1 ; y1]
+           *   A [0 ; 1] + b = [x2 ; y2]
+           * <=>
+           *   b = [x0 ; y0]
+           *   A [1 ; 0] = [x1 ; y1] - b = [x1 - x0 ; y1 - y0]
+           *   A [0 ; 1] = [x2 ; y2] - b = [x2 - x0 ; y2 - y0]
+           * <=>
+           *   b = [x0 ; y0]
+           *   [a11 ; a21] = [x1 - x0 ; y1 - y0]
+           *   [a12 ; a22] = [x2 - x0 ; y2 - y0]
+           **/
+
+          cairo_matrix_t transform;
+          cairo_matrix_init(&transform, x1 - x0, y1 - y0, x2 - x0, y2 - y0, x0, y0);
+
+          cairo_save(cr);
+          cairo_transform(cr, &transform);
+          
+          if (!renderers_[i]->RenderLayer(context, view))
+          {
+            cairo_restore(cr);
+            return false;
+          }
+
+          cairo_restore(cr);
         }
 
         if (renderers_[i] != NULL &&
@@ -129,7 +164,6 @@ namespace OrthancStone
         double x, y;
         view.MapDisplayToScene(x, y, static_cast<double>(view.GetDisplayWidth()) / 2.0, 10);
 
-        cairo_t *cr = context.GetObject();
         cairo_translate(cr, x, y);
 
 #if 1
@@ -180,29 +214,20 @@ namespace OrthancStone
   }
     
 
-  bool LayerWidget::GetAndFixExtent(double& x1,
-                                    double& y1,
-                                    double& x2,
-                                    double& y2,
-                                    ILayerSource& source) const
+  void LayerWidget::GetLayerExtent(Extent& extent,
+                                   ILayerSource& source) const
   {
-    if (source.GetExtent(x1, y1, x2, y2, slice_))
+    extent.Reset();
+    
+    std::vector<Vector> points;
+    if (source.GetExtent(points, slice_))
     {
-      if (x1 > x2)
+      for (size_t i = 0; i < points.size(); i++)
       {
-        std::swap(x1, x2);
+        double x, y;
+        slice_.ProjectPoint(x, y, points[i]);
+        extent.AddPoint(x, y);
       }
-
-      if (y1 > y2)
-      {
-        std::swap(y1, y2);
-      }
-
-      return true;
-    }
-    else
-    {
-      return false;
     }
   }
 
@@ -212,37 +237,20 @@ namespace OrthancStone
                                    double& x2,
                                    double& y2)
   {
-    bool first = true;
+    Extent sceneExtent;
 
     for (size_t i = 0; i < layers_.size(); i++)
     {
       double ax, ay, bx, by;
 
       assert(layers_[i] != NULL);
-      if (GetAndFixExtent(ax, ay, bx, by, *layers_[i]))
-      {
-        LOG(INFO) << "Extent of layer " << i << ": (" << ax << "," << ay
-                  << ")->(" << bx << "," << by << ")";
+      Extent layerExtent;
+      GetLayerExtent(layerExtent, *layers_[i]);
 
-        if (first)
-        {
-          x1 = ax;
-          y1 = ay;
-          x2 = bx;
-          y2 = by;
-          first = false;
-        }
-        else
-        {
-          x1 = std::min(x1, ax);
-          y1 = std::min(y1, ay);
-          x2 = std::max(x2, bx);
-          y2 = std::max(y2, by);
-        }
-      }
+      sceneExtent.Union(layerExtent);
     }
 
-    if (first)
+    if (sceneExtent.IsEmpty())
     {
       // Set a default extent of (-1,-1) -> (0,0)
       x1 = -1;
@@ -250,20 +258,27 @@ namespace OrthancStone
       x2 = 1;
       y2 = 1;
     }
-
-    // Ensure the extent is non-empty
-    if (x1 >= x2)
+    else
     {
-      double tmp = x1;
-      x1 = tmp - 0.5;
-      x2 = tmp + 0.5;
-    }
+      x1 = sceneExtent.GetX1();
+      y1 = sceneExtent.GetY1();
+      x2 = sceneExtent.GetX2();
+      y2 = sceneExtent.GetY2();
 
-    if (y1 >= y2)
-    {
-      double tmp = y1;
-      y1 = tmp - 0.5;
-      y2 = tmp + 0.5;
+      // Ensure the extent is non-empty
+      if (x1 >= x2)
+      {
+        double tmp = x1;
+        x1 = tmp - 0.5;
+        x2 = tmp + 0.5;
+      }
+
+      if (y1 >= y2)
+      {
+        double tmp = y1;
+        y1 = tmp - 0.5;
+        y2 = tmp + 0.5;
+      }
     }
   }
 
@@ -273,7 +288,7 @@ namespace OrthancStone
   {
     if (currentScene_.get() != NULL)
     {
-      return currentScene_->RenderScene(context, view);
+      return currentScene_->RenderScene(context, view, slice_);
     }
     else
     {
@@ -399,7 +414,7 @@ namespace OrthancStone
     
     Slice displayedSlice(slice_, THIN_SLICE_THICKNESS);
 
-    if (!displayedSlice.ContainsPlane(slice))
+    //if (!displayedSlice.ContainsPlane(slice))
     {
       if (currentScene_.get() == NULL ||
           (pendingScene_.get() != NULL &&

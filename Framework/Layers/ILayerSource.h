@@ -65,10 +65,7 @@ namespace OrthancStone
 
     virtual void Register(IObserver& observer) = 0;
 
-    virtual bool GetExtent(double& x1,
-                           double& y1,
-                           double& x2,
-                           double& y2,
+    virtual bool GetExtent(std::vector<Vector>& points,
                            const SliceGeometry& viewportSlice) = 0;
 
     virtual void ScheduleLayerCreation(const SliceGeometry& viewportSlice) = 0;

@@ -66,11 +66,8 @@ namespace OrthancStone
       return loader_.GetSlice(slice);
     }
 
-    virtual bool GetExtent(double& x1,
-                           double& y1,
-                           double& x2,
-                           double& y2,
-                           const SliceGeometry& viewportSlice /* ignored */);
+    virtual bool GetExtent(std::vector<Vector>& points,
+                           const SliceGeometry& viewportSlice);
 
     virtual void ScheduleLayerCreation(const SliceGeometry& viewportSlice);
   };

@@ -35,9 +35,7 @@ namespace OrthancStone
     double                        pixelSpacingY_;
     RenderStyle                   style_;
     bool                          isFullQuality_;
-
     std::auto_ptr<CairoSurface>   display_;
-    cairo_matrix_t                transform_;
 
   protected:
     virtual CairoSurface* GenerateDisplay(const RenderStyle& style) = 0;
@@ -48,33 +46,13 @@ namespace OrthancStone
                   double pixelSpacingY,
                   bool isFullQuality);
 
-    // TODO Remove this overload
-    static bool ComputeFrameExtent(double& x1,
-                                   double& y1,
-                                   double& x2,
-                                   double& y2,
-                                   const SliceGeometry& viewportSlice,
-                                   const SliceGeometry& frameSlice,
-                                   unsigned int frameWidth,
-                                   unsigned int frameHeight,
-                                   double pixelSpacingX,
-                                   double pixelSpacingY);
-
-    static bool ComputeFrameExtent(double& x1,
-                                   double& y1,
-                                   double& x2,
-                                   double& y2,
-                                   const SliceGeometry& viewportSlice,
-                                   const Slice& frame)
-    {
-      return ComputeFrameExtent(x1, y1, x2, y2, viewportSlice,
-                                frame.GetGeometry(), frame.GetWidth(), frame.GetHeight(),
-                                frame.GetPixelSpacingX(), frame.GetPixelSpacingY());
-    }
-
     virtual bool RenderLayer(CairoContext& context,
-                             const ViewportGeometry& view,
-                             const SliceGeometry& viewportSlice);
+                             const ViewportGeometry& view);
+
+    virtual const SliceGeometry& GetLayerSlice()
+    {
+      return frameSlice_;
+    }
 
     virtual void SetLayerStyle(const RenderStyle& style);
 
@@ -82,14 +60,6 @@ namespace OrthancStone
     {
       return isFullQuality_;
     }
-
-    // TODO Remove this overload
-    static ILayerRenderer* CreateRenderer(Orthanc::ImageAccessor* frame,
-                                          const SliceGeometry& frameSlice,
-                                          const OrthancPlugins::IDicomDataset& dicom,
-                                          double pixelSpacingX,
-                                          double pixelSpacingY,
-                                          bool isFullQuality);
 
     static ILayerRenderer* CreateRenderer(Orthanc::ImageAccessor* frame,
                                           const Slice& frameSlice,

@@ -155,9 +155,6 @@ namespace OrthancStone
           
           Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
           Vector y; GeometryToolbox::AssignVector(y, -sin(a), cos(a), 0);
-          GeometryToolbox::Print(source_->GetSlice(slice_).GetGeometry().GetOrigin());
-          GeometryToolbox::Print(x);
-          GeometryToolbox::Print(y);
           SliceGeometry s(source_->GetSlice(slice_).GetGeometry().GetOrigin(), x, y);
           widget_->SetSlice(s);
 #endif
@@ -247,6 +244,7 @@ namespace OrthancStone
 #if 1
         std::auto_ptr<OrthancFrameLayerSource> layer
           (new OrthancFrameLayerSource(context.GetWebService()));
+        //layer->SetImageQuality(SliceImageQuality_Jpeg50);
         layer->LoadInstance(instance, frame);
         //layer->LoadSeries("6f1b492a-e181e200-44e51840-ef8db55e-af529ab6");
         layer->Register(*this);
@@ -269,6 +267,7 @@ namespace OrthancStone
         ct.reset(new OrthancFrameLayerSource(context.GetWebService()));
         //ct->LoadInstance("c804a1a2-142545c9-33b32fe2-3df4cec0-a2bea6d6", 0);
         //ct->LoadInstance("4bd4304f-47478948-71b24af2-51f4f1bc-275b6c1b", 0);  // BAD SLICE
+        ct->SetImageQuality(SliceImageQuality_Jpeg50);
         ct->LoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
 
         ct->Register(*this);

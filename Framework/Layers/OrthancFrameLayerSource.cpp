@@ -68,7 +68,8 @@ namespace OrthancStone
 
 
   OrthancFrameLayerSource::OrthancFrameLayerSource(IWebService& orthanc) :
-    loader_(*this, orthanc)
+    loader_(*this, orthanc),
+    quality_(SliceImageQuality_Full)
   {
   }
 
@@ -123,8 +124,7 @@ namespace OrthancStone
     {
       if (loader_.LookupSlice(index, viewportSlice))
       {
-        loader_.ScheduleLoadSliceImage(index, SliceImageQuality_Full);
-        //loader_.ScheduleLoadSliceImage(index, SliceImageQuality_Jpeg50);
+        loader_.ScheduleLoadSliceImage(index, quality_);
       }
       else
       {

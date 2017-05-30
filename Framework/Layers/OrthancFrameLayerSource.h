@@ -32,7 +32,8 @@ namespace OrthancStone
     private OrthancSlicesLoader::ICallback
   {
   private:
-    OrthancSlicesLoader     loader_;
+    OrthancSlicesLoader  loader_;
+    SliceImageQuality    quality_;
 
     virtual void NotifyGeometryReady(const OrthancSlicesLoader& loader);
 
@@ -56,6 +57,11 @@ namespace OrthancStone
                       unsigned int frame);
 
     void LoadSeries(const std::string& seriesId);
+
+    void SetImageQuality(SliceImageQuality quality)
+    {
+      quality_ = quality;
+    }
 
     virtual size_t GetSliceCount() const
     {

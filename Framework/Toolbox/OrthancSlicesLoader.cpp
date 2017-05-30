@@ -35,6 +35,36 @@
 
 #include <boost/lexical_cast.hpp>
 
+
+
+/**
+ * TODO This is a SLOW implementation of base64 decoding, because
+ * "Orthanc::Toolbox::DecodeBase64()" does not work properly with
+ * WASM. UNDERSTAND WHY.
+ * https://stackoverflow.com/a/34571089/881731
+ **/
+static std::string base64_decode(const std::string &in)
+{
+  std::string out;
+
+  std::vector<int> T(256,-1);
+  for (int i=0; i<64; i++) T["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[i]] = i; 
+
+  int val=0, valb=-8;
+  for (unsigned char c : in) {
+    if (T[c] == -1) break;
+    val = (val<<6) + T[c];
+    valb += 6;
+    if (valb>=0) {
+      out.push_back(char((val>>valb)&0xFF));
+      valb-=8;
+    }
+  }
+  return out;
+}
+
+
+
 namespace OrthancStone
 {
   class OrthancSlicesLoader::Operation : public Orthanc::IDynamicObject
@@ -348,9 +378,9 @@ namespace OrthancStone
     }
 
     NotifySliceImageSuccess(operation, image);
-  }
-    
-    
+  } 
+
+  
   void OrthancSlicesLoader::ParseSliceImageJpeg(const Operation& operation,
                                                 const void* answer,
                                                 size_t size)
@@ -394,20 +424,23 @@ namespace OrthancStone
       }
     }
 
-    std::string jpeg;
-    Orthanc::Toolbox::DecodeBase64(jpeg, info["PixelData"].asString());
-
     std::auto_ptr<Orthanc::ImageAccessor> reader;
 
-    try
     {
-      reader.reset(new Orthanc::JpegReader);
-      dynamic_cast<Orthanc::JpegReader&>(*reader).ReadFromMemory(jpeg);
-    }
-    catch (Orthanc::OrthancException&)
-    {
-      NotifySliceImageError(operation);
-      return;
+      std::string jpeg;
+      //Orthanc::Toolbox::DecodeBase64(jpeg, info["PixelData"].asString());
+      jpeg = base64_decode(info["PixelData"].asString());
+
+      try
+      {
+        reader.reset(new Orthanc::JpegReader);
+        dynamic_cast<Orthanc::JpegReader&>(*reader).ReadFromMemory(jpeg);
+      }
+      catch (Orthanc::OrthancException&)
+      {
+        NotifySliceImageError(operation);
+        return;
+      }
     }
 
     Orthanc::PixelFormat expectedFormat =

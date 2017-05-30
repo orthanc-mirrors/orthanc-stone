@@ -39,7 +39,15 @@ namespace OrthancStone
     private:
       class Interactor : public IWorldSceneInteractor
       {
+      private:
+        SingleFrameApplication&  application_;
+        
       public:
+        Interactor(SingleFrameApplication&  application) :
+          application_(application)
+        {
+        }
+        
         virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
                                                             const ViewportGeometry& view,
                                                             MouseButton button,
@@ -73,6 +81,21 @@ namespace OrthancStone
                                 KeyboardModifiers modifiers,
                                 IStatusBar* statusBar)
         {
+          unsigned int scale = (modifiers & KeyboardModifiers_Control ? 10 : 1);
+          
+          switch (direction)
+          {
+            case MouseWheelDirection_Up:
+              application_.OffsetSlice(-scale);
+              break;
+
+            case MouseWheelDirection_Down:
+              application_.OffsetSlice(scale);
+              break;
+
+            default:
+              break;
+          }
         }
 
         virtual void KeyPressed(WorldSceneWidget& widget,
@@ -92,35 +115,67 @@ namespace OrthancStone
         }
       };
 
-      virtual void NotifyGeometryReady(const ILayerSource& source)
-      {
-        // Once the geometry of the series is downloaded from Orthanc,
-        // display its first slice, and adapt the viewport to fit this
-        // slice
-        
-        const OrthancFrameLayerSource& frame =
-          dynamic_cast<const OrthancFrameLayerSource&>(source);
 
-        if (frame.GetSliceCount() > 0)
+      void OffsetSlice(int offset)
+      {
+        if (source_ != NULL)
         {
+          int slice = static_cast<int>(slice_) + offset;
+
+          if (slice < 0)
+          {
+            slice = 0;
+          }
+
+          if (slice >= static_cast<int>(source_->GetSliceCount()))
+          {
+            slice = source_->GetSliceCount() - 1;
+          }
+
+          if (slice != static_cast<int>(slice_)) 
+          {
+            SetSlice(slice);
+          }   
+        }
+      }
+      
+
+      void SetSlice(size_t index)
+      {
+        if (source_ != NULL &&
+            index < source_->GetSliceCount())
+        {
+          slice_ = index;
+          
 #if 1
-          GeometryToolbox::Print(frame.GetSlice(0).GetGeometry().GetOrigin());
-          widget_->SetSlice(frame.GetSlice(0).GetGeometry());
+          widget_->SetSlice(source_->GetSlice(slice_).GetGeometry());
 #else
           // TEST for scene extents - Rotate the axes
           double a = 15.0 / 180.0 * M_PI;
           
           Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
           Vector y; GeometryToolbox::AssignVector(y, -sin(a), cos(a), 0);
-          GeometryToolbox::Print(frame.GetSlice(0).GetGeometry().GetOrigin());
+          GeometryToolbox::Print(source_->GetSlice(slice_).GetGeometry().GetOrigin());
           GeometryToolbox::Print(x);
           GeometryToolbox::Print(y);
-          SliceGeometry s(frame.GetSlice(0).GetGeometry().GetOrigin(), x, y);
+          SliceGeometry s(source_->GetSlice(slice_).GetGeometry().GetOrigin(), x, y);
           widget_->SetSlice(s);
 #endif
-          
-          widget_->SetDefaultView();
         }
+      }
+        
+      
+      virtual void NotifyGeometryReady(const ILayerSource& source)
+      {
+        // Once the geometry of the series is downloaded from Orthanc,
+        // display its first slice, and adapt the viewport to fit this
+        // slice
+        if (source_ == &source)
+        {
+          SetSlice(source_->GetSliceCount() / 2);
+        }
+
+        widget_->SetDefaultView();
       }
       
       virtual void NotifyGeometryError(const ILayerSource& source)
@@ -143,11 +198,15 @@ namespace OrthancStone
       {
       }
 
-      LayerWidget*    widget_;
+      LayerWidget*                    widget_;
+      const OrthancFrameLayerSource*  source_;
+      unsigned int                    slice_;
       
     public:
       SingleFrameApplication() : 
-        widget_(NULL)
+        widget_(NULL),
+        source_(NULL),
+        slice_(0)
       {
       }
       
@@ -187,8 +246,11 @@ namespace OrthancStone
 
 #if 1
         std::auto_ptr<OrthancFrameLayerSource> layer
-          (new OrthancFrameLayerSource(context.GetWebService(), instance, frame));
+          (new OrthancFrameLayerSource(context.GetWebService()));
+        layer->LoadInstance(instance, frame);
+        //layer->LoadSeries("6f1b492a-e181e200-44e51840-ef8db55e-af529ab6");
         layer->Register(*this);
+        source_ = layer.get();
         widget->AddLayer(layer.release());
 
         RenderStyle s;
@@ -204,13 +266,20 @@ namespace OrthancStone
         // 0178023P**
         // Extent of the CT layer: (-35.068 -20.368) => (34.932 49.632)
         std::auto_ptr<OrthancFrameLayerSource> ct;
-        ct.reset(new OrthancFrameLayerSource(context.GetWebService(), "c804a1a2-142545c9-33b32fe2-3df4cec0-a2bea6d6", 0));
-        //ct.reset(new OrthancFrameLayerSource(context.GetWebService(), "4bd4304f-47478948-71b24af2-51f4f1bc-275b6c1b", 0));  // BAD SLICE
+        ct.reset(new OrthancFrameLayerSource(context.GetWebService()));
+        //ct->LoadInstance("c804a1a2-142545c9-33b32fe2-3df4cec0-a2bea6d6", 0);
+        //ct->LoadInstance("4bd4304f-47478948-71b24af2-51f4f1bc-275b6c1b", 0);  // BAD SLICE
+        ct->LoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
+
         ct->Register(*this);
         widget->AddLayer(ct.release());
 
         std::auto_ptr<OrthancFrameLayerSource> pet;
-        pet.reset(new OrthancFrameLayerSource(context.GetWebService(), "a1c4dc6b-255d27f0-88069875-8daed730-2f5ee5c6", 0));
+        pet.reset(new OrthancFrameLayerSource(context.GetWebService()));
+        //pet->LoadInstance("a1c4dc6b-255d27f0-88069875-8daed730-2f5ee5c6", 0);
+        pet->LoadSeries("aabad2e7-80702b5d-e599d26c-4f13398e-38d58a9e");
+        pet->Register(*this);
+        source_ = pet.get();
         widget->AddLayer(pet.release());
 
         {
@@ -227,13 +296,14 @@ namespace OrthancStone
           s.alpha_ = 0.5;
           s.applyLut_ = true;
           s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
+          s.interpolation_ = ImageInterpolation_Linear;
           widget->SetLayerStyle(1, s);
         }
 #endif
 
         widget_ = widget.get();
         widget_->SetTransmitMouseOver(true);
-        widget_->SetInteractor(context.AddInteractor(new Interactor));
+        widget_->SetInteractor(context.AddInteractor(new Interactor(*this)));
         context.SetCentralWidget(widget.release());
       }
     };

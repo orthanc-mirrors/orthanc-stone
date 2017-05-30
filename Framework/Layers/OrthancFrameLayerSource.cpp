@@ -66,14 +66,23 @@ namespace OrthancStone
     LayerSourceBase::NotifyLayerReady(NULL, slice, true);
   }
 
-  OrthancFrameLayerSource::OrthancFrameLayerSource(IWebService& orthanc,
-                                                   const std::string& instanceId,
-                                                   unsigned int frame) :
-    instanceId_(instanceId),
-    frame_(frame),
+
+  OrthancFrameLayerSource::OrthancFrameLayerSource(IWebService& orthanc) :
     loader_(*this, orthanc)
   {
-    loader_.ScheduleLoadInstance(instanceId_, frame_);
+  }
+
+  
+  void OrthancFrameLayerSource::LoadInstance(const std::string& instanceId,
+                                             unsigned int frame)
+  {
+    loader_.ScheduleLoadInstance(instanceId, frame);
+  }
+
+
+  void OrthancFrameLayerSource::LoadSeries(const std::string& seriesId)
+  {
+    loader_.ScheduleLoadSeries(seriesId);
   }
 
 

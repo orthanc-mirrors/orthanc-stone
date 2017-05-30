@@ -131,11 +131,19 @@ namespace OrthancStone
 
         cairo_t *cr = context.GetObject();
         cairo_translate(cr, x, y);
+
+#if 1
+        double s = 5.0 / view.GetZoom();
+        cairo_rectangle(cr, -s, -s, 2.0 * s, 2.0 * s);
+#else
+        // TODO Drawing circles makes WebAssembly crash!
         cairo_arc(cr, 0, 0, 5.0 / view.GetZoom(), 0, 2 * M_PI);
+#endif
+        
         cairo_set_line_width(cr, 2.0 / view.GetZoom());
         cairo_set_source_rgb(cr, 1, 1, 1); 
         cairo_stroke_preserve(cr);
-        cairo_set_source_rgb(cr, 1, 0, 0); 
+        cairo_set_source_rgb(cr, 1, 0, 0);
         cairo_fill(cr);
       }
 

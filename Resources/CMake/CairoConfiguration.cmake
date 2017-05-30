@@ -21,9 +21,9 @@
 
 
 if (STATIC_BUILD OR NOT USE_SYSTEM_CAIRO)
-  SET(CAIRO_SOURCES_DIR ${CMAKE_BINARY_DIR}/cairo-1.14.6)
-  SET(CAIRO_URL "http://www.orthanc-server.com/downloads/third-party/Stone/cairo-1.14.6.tar.xz")
-  SET(CAIRO_MD5 "23a0b2f0235431d35238df1d3a517fdb")
+  SET(CAIRO_SOURCES_DIR ${CMAKE_BINARY_DIR}/cairo-1.14.8)
+  SET(CAIRO_URL "http://www.orthanc-server.com/downloads/third-party/Stone/cairo-1.14.8.tar.xz")
+  SET(CAIRO_MD5 "4ef0db2eacb271c74f8a3fd87822aa98")
 
   DownloadPackage(${CAIRO_MD5} ${CAIRO_URL} "${CAIRO_SOURCES_DIR}")
 

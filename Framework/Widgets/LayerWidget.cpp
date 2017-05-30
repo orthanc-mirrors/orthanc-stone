@@ -22,7 +22,7 @@
 #include "LayerWidget.h"
 
 #include "../../Resources/Orthanc/Core/Logging.h"
-#include "../Layers/MissingLayerRenderer.h"
+#include "../Layers/SliceOutlineRenderer.h"
 
 static const double THIN_SLICE_THICKNESS = 100.0 * std::numeric_limits<double>::epsilon();
 
@@ -241,8 +241,6 @@ namespace OrthancStone
 
     for (size_t i = 0; i < layers_.size(); i++)
     {
-      double ax, ay, bx, by;
-
       assert(layers_[i] != NULL);
       Extent layerExtent;
       GetLayerExtent(layerExtent, *layers_[i]);
@@ -500,7 +498,7 @@ namespace OrthancStone
                                      bool isError)
   {
     size_t index;
-    if (renderer.get() != NULL &&
+    if (slice.IsValid() &&
         LookupLayer(index, source) &&
         slice.ContainsPlane(slice_))  // Whether the slice comes from an older request
     {
@@ -513,7 +511,14 @@ namespace OrthancStone
         LOG(INFO) << "Renderer ready for layer " << index;
       }
       
-      UpdateLayer(index, renderer.release(), slice);
+      if (renderer.get() != NULL)
+      {
+        UpdateLayer(index, renderer.release(), slice);
+      }
+      else if (isError)
+      {
+        UpdateLayer(index, new SliceOutlineRenderer(slice), slice);
+      }
     }
   }
 }

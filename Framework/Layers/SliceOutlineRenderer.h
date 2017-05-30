@@ -22,65 +22,33 @@
 #pragma once
 
 #include "ILayerRenderer.h"
+#include "../Toolbox/Slice.h"
 
 namespace OrthancStone
 {
-  class MissingLayerRenderer : public ILayerRenderer
+  class SliceOutlineRenderer : public ILayerRenderer
   {
   private:
-    double       x1_;
-    double       y1_;
-    double       x2_;
-    double       y2_;
+    Slice        slice_;
     RenderStyle  style_;
 
   public:
-    MissingLayerRenderer(double x1,
-                         double y1,
-                         double x2,
-                         double y2) : 
-      x1_(x1),
-      y1_(y1),
-      x2_(x2),
-      y2_(y2)
+    SliceOutlineRenderer(const Slice& slice) : 
+      slice_(slice)
     {
-      if (x1_ > x2_)
-      {
-        std::swap(x1_, x2_);
-      }
-
-      if (y1_ > y2_)
-      {
-        std::swap(y1_, y2_);
-      }
     }
 
     virtual bool RenderLayer(CairoContext& context,
-                             const ViewportGeometry& view,
-                             const SliceGeometry& viewportSlice)
-    {
-      if (style_.visible_)
-      {
-        view.ApplyTransform(context);
-        context.SetSourceColor(style_.drawColor_);
-
-        cairo_t *cr = context.GetObject();
-        cairo_set_line_width(cr, 1.0 / view.GetZoom());
-        cairo_rectangle(cr, x1_, y1_, x2_ - x1_, y2_ - y1_);
-
-        double handleSize = 10.0f / view.GetZoom();
-        cairo_move_to(cr, x1_ + handleSize, y1_);
-        cairo_line_to(cr, x1_, y1_ + handleSize);
-
-        cairo_stroke(cr);
-      }
-
-      return true;
-    }
+                             const ViewportGeometry& view);
 
     virtual void SetLayerStyle(const RenderStyle& style)
     {
       style_ = style;
+    }
+
+    virtual const SliceGeometry& GetLayerSlice()
+    {
+      return slice_.GetGeometry();
     }
 
     virtual bool IsFullQuality()

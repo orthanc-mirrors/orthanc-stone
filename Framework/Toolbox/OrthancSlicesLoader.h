@@ -46,7 +46,7 @@ namespace OrthancStone
       virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
                                          unsigned int sliceIndex,
                                          const Slice& slice,
-                                         Orthanc::ImageAccessor* image,
+                                         std::auto_ptr<Orthanc::ImageAccessor>& image,
                                          SliceImageQuality quality) = 0;
 
       virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
@@ -82,7 +82,7 @@ namespace OrthancStone
     SlicesSorter  slices_;
 
     void NotifySliceImageSuccess(const Operation& operation,
-                                 Orthanc::ImageAccessor* image) const;
+                                 std::auto_ptr<Orthanc::ImageAccessor>& image) const;
   
     void NotifySliceImageError(const Operation& operation) const;
     

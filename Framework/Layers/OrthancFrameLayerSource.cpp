@@ -22,7 +22,6 @@
 #include "OrthancFrameLayerSource.h"
 
 #include "FrameRenderer.h"
-#include "../../Resources/Orthanc/Core/Images/PngReader.h"
 #include "../../Resources/Orthanc/Core/Logging.h"
 #include "../../Resources/Orthanc/Core/OrthancException.h"
 #include "../Toolbox/DicomFrameConverter.h"
@@ -51,11 +50,12 @@ namespace OrthancStone
   void OrthancFrameLayerSource::NotifySliceImageReady(const OrthancSlicesLoader& loader,
                                                       unsigned int sliceIndex,
                                                       const Slice& slice,
-                                                      Orthanc::ImageAccessor* image,
+                                                      std::auto_ptr<Orthanc::ImageAccessor>& image,
                                                       SliceImageQuality quality)
   {
     bool isFull = (quality == SliceImageQuality_Full);
-    LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(image, slice, isFull), slice, false);
+    LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(image.release(), slice, isFull),
+                                      slice, false);
   }
 
   void OrthancFrameLayerSource::NotifySliceImageError(const OrthancSlicesLoader& loader,

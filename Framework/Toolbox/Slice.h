@@ -68,6 +68,11 @@ namespace OrthancStone
     {      
     }
 
+    bool IsValid() const
+    {
+      return type_ != Type_Invalid;
+    } 
+
     bool ParseOrthancFrame(const OrthancPlugins::IDicomDataset& dataset,
                            const std::string& instanceId,
                            unsigned int frame);

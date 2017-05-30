@@ -76,8 +76,8 @@ namespace OrthancStone
 
     x1_ = std::min(x1_, other.x1_);
     y1_ = std::min(y1_, other.y1_);
-    x2_ = std::min(x2_, other.x2_);
-    y2_ = std::min(y2_, other.y2_);
+    x2_ = std::max(x2_, other.x2_);
+    y2_ = std::max(y2_, other.y2_);
 
     assert(x1_ <= x2_ &&
            y1_ <= y2_);    // This is the invariant of the structure

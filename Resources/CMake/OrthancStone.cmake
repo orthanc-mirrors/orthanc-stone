@@ -188,13 +188,17 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlSurface.cpp
   ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlWindow.cpp
 
+  #${ORTHANC_STONE_DIR}/Framework/Layers/DicomStructureSetRendererFactory.cpp
+  #${ORTHANC_STONE_DIR}/Framework/Layers/SeriesFrameRendererFactory.cpp
+  #${ORTHANC_STONE_DIR}/Framework/Layers/SiblingSliceLocationFactory.cpp
+  #${ORTHANC_STONE_DIR}/Framework/Layers/SingleFrameRendererFactory.cpp
   #${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeImage.cpp
   #${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeImagePolicyBase.cpp
   #${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeImageProgressivePolicy.cpp
   #${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeImageSimplePolicy.cpp
+  #${ORTHANC_STONE_DIR}/Framework/Widgets/LayeredSceneWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/CircleMeasureTracker.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/ColorFrameRenderer.cpp
-  #${ORTHANC_STONE_DIR}/Framework/Layers/DicomStructureSetRendererFactory.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/FrameRenderer.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/GrayscaleFrameRenderer.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/LayerSourceBase.cpp
@@ -202,9 +206,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Layers/LineMeasureTracker.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/OrthancFrameLayerSource.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/RenderStyle.cpp
-  #${ORTHANC_STONE_DIR}/Framework/Layers/SeriesFrameRendererFactory.cpp
-  #${ORTHANC_STONE_DIR}/Framework/Layers/SiblingSliceLocationFactory.cpp
-  #${ORTHANC_STONE_DIR}/Framework/Layers/SingleFrameRendererFactory.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Layers/SliceOutlineRenderer.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DicomFrameConverter.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DicomStructureSet.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DownloadStack.cpp
@@ -228,7 +230,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Widgets/CairoWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/EmptyWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/LayerWidget.cpp
-  #${ORTHANC_STONE_DIR}/Framework/Widgets/LayeredSceneWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/LayoutWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/TestCairoWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/TestWorldSceneWidget.cpp

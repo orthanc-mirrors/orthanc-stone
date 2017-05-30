@@ -197,9 +197,9 @@ namespace OrthancStone
 
   
   void OrthancSlicesLoader::NotifySliceImageSuccess(const Operation& operation,
-                                                    Orthanc::ImageAccessor* image) const
+                                                    std::auto_ptr<Orthanc::ImageAccessor>& image) const
   {
-    if (image == NULL)
+    if (image.get() == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
@@ -313,13 +313,12 @@ namespace OrthancStone
                                                const void* answer,
                                                size_t size)
   {
-    std::auto_ptr<Orthanc::PngReader>  image(new Orthanc::PngReader);
+    std::auto_ptr<Orthanc::ImageAccessor>  image;
 
-    bool ok = false;
-    
     try
     {
-      image->ReadFromMemory(answer, size);
+      image.reset(new Orthanc::PngReader);
+      dynamic_cast<Orthanc::PngReader&>(*image).ReadFromMemory(answer, size);
     }
     catch (Orthanc::OrthancException&)
     {
@@ -348,7 +347,7 @@ namespace OrthancStone
       }
     }
 
-    NotifySliceImageSuccess(operation, image.release());
+    NotifySliceImageSuccess(operation, image);
   }
     
     
@@ -398,11 +397,12 @@ namespace OrthancStone
     std::string jpeg;
     Orthanc::Toolbox::DecodeBase64(jpeg, info["PixelData"].asString());
 
-    std::auto_ptr<Orthanc::JpegReader> reader(new Orthanc::JpegReader);
+    std::auto_ptr<Orthanc::ImageAccessor> reader;
 
     try
     {
-      reader->ReadFromMemory(jpeg);
+      reader.reset(new Orthanc::JpegReader);
+      dynamic_cast<Orthanc::JpegReader&>(*reader).ReadFromMemory(jpeg);
     }
     catch (Orthanc::OrthancException&)
     {
@@ -428,7 +428,7 @@ namespace OrthancStone
       }
       else
       {
-        NotifySliceImageSuccess(operation, reader.release());
+        NotifySliceImageSuccess(operation, reader);
         return;
       }
     }
@@ -448,7 +448,7 @@ namespace OrthancStone
       }
       else
       {
-        NotifySliceImageSuccess(operation, reader.release());
+        NotifySliceImageSuccess(operation, reader);
         return;
       }
     }
@@ -489,7 +489,7 @@ namespace OrthancStone
     
     Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling);
 
-    NotifySliceImageSuccess(operation, image.release());
+    NotifySliceImageSuccess(operation, image);
   }
     
     

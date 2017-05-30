@@ -51,15 +51,12 @@ namespace OrthancStone
       virtual void NotifySliceChange(const ILayerSource& source,
                                      const Slice& slice) = 0;
  
-      // The layer must be deleted by the observer. "layer" will never
-      // be "NULL", otherwise "NotifyLayerError()" would have been
-      // called.
+      // The layer must be deleted by the observer that releases the
+      // std::auto_ptr
       virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& layer,
                                     const ILayerSource& source,
-                                    const Slice& slice) = 0;
-
-      virtual void NotifyLayerError(const ILayerSource& source,
-                                    const SliceGeometry& slice) = 0;
+                                    const Slice& slice,
+                                    bool isError) = 0;
     };
     
     virtual ~ILayerSource()

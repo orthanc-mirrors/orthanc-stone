@@ -481,36 +481,24 @@ namespace OrthancStone
   
   void LayerWidget::NotifyLayerReady(std::auto_ptr<ILayerRenderer>& renderer,
                                      const ILayerSource& source,
-                                     const Slice& slice)
+                                     const Slice& slice,
+                                     bool isError)
   {
     size_t index;
-    if (LookupLayer(index, source) &&
+    if (renderer.get() != NULL &&
+        LookupLayer(index, source) &&
         slice.ContainsPlane(slice_))  // Whether the slice comes from an older request
     {
-      LOG(INFO) << "Renderer ready for layer " << index;
+      if (isError)
+      {
+        LOG(ERROR) << "Using error renderer on layer " << index;
+      }
+      else
+      {
+        LOG(INFO) << "Renderer ready for layer " << index;
+      }
+      
       UpdateLayer(index, renderer.release(), slice);
     }
   }
-
-  
-  void LayerWidget::NotifyLayerError(const ILayerSource& source,
-                                     const SliceGeometry& slice)
-  {
-    size_t index;
-
-    Slice expected(slice_, THIN_SLICE_THICKNESS);
-
-    if (LookupLayer(index, source) &&
-        expected.ContainsPlane(slice))  // Whether the slice comes from an older request
-    {
-      LOG(INFO) << "Unable to load a slice from layer " << index;
-
-      double x1, y1, x2, y2;
-      if (GetAndFixExtent(x1, y1, x2, y2, *layers_[index]))
-      {
-        printf("**%d** %f %f %f %f\n", index, x1, y1, x2, y2);
-        UpdateLayer(index, new MissingLayerRenderer(x1, y1, x2, y2), Slice(slice, THIN_SLICE_THICKNESS));
-      }
-    }
-  }    
 }

@@ -123,12 +123,8 @@ namespace OrthancStone
  
       virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& layer,
                                     const ILayerSource& source,
-                                    const Slice& slice)
-      {
-      }
-
-      virtual void NotifyLayerError(const ILayerSource& source,
-                                    const SliceGeometry& slice)
+                                    const Slice& slice,
+                                    bool isError)
       {
       }
 

@@ -43,9 +43,8 @@ namespace OrthancStone
     void NotifySliceChange(const Slice& slice);
 
     void NotifyLayerReady(ILayerRenderer* layer,
-                          const Slice& slice);
-    
-    void NotifyLayerError(const SliceGeometry& slice);
+                          const Slice& slice,
+                          bool isError);
 
   public:
     virtual void Register(IObserver& observer);

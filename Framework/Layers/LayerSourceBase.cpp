@@ -32,23 +32,22 @@ namespace OrthancStone
     private:
       std::auto_ptr<ILayerRenderer>  layer_;
       const Slice&                   slice_;
+      bool                           isError_;
       
     public:
       LayerReadyFunctor(ILayerRenderer* layer,
-                        const Slice& slice) :
+                        const Slice& slice,
+                        bool isError) :
         layer_(layer),
-        slice_(slice)
+        slice_(slice),
+        isError_(isError)
       {
-        if (layer == NULL)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-        }
       }
 
       void operator() (ILayerSource::IObserver& observer,
                        const ILayerSource& source)
       {
-        observer.NotifyLayerReady(layer_, source, slice_);
+        observer.NotifyLayerReady(layer_, source, slice_, isError_);
       }
     };
   }
@@ -74,15 +73,11 @@ namespace OrthancStone
   }
 
   void LayerSourceBase::NotifyLayerReady(ILayerRenderer* layer,
-                                         const Slice& slice)
+                                         const Slice& slice,
+                                         bool isError)
   {
-    LayerReadyFunctor functor(layer, slice);
+    LayerReadyFunctor functor(layer, slice, isError);
     observers_.Notify(*this, functor);
-  }
-
-  void LayerSourceBase::NotifyLayerError(const SliceGeometry& slice)
-  {
-    observers_.Apply(*this, &IObserver::NotifyLayerError, slice);
   }
 
   void LayerSourceBase::Register(IObserver& observer)

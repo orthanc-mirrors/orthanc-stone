@@ -80,32 +80,16 @@ namespace OrthancStone
   }
 
 
-  VolumeImage& BasicApplicationContext::AddSeriesVolume(const std::string& series,
-                                                        bool isProgressiveDownload,
-                                                        size_t downloadThreadCount)
+  ISlicedVolume& BasicApplicationContext::AddVolume(ISlicedVolume* volume)
   {
-    /*std::auto_ptr<VolumeImage> volume
-      (new VolumeImage(new OrthancSeriesLoader(GetWebService().GetConnection(), series)));
-
-    if (isProgressiveDownload)
+    if (volume == NULL)
     {
-      volume->SetDownloadPolicy(new VolumeImageProgressivePolicy);
-    }
-    else
-    {
-      volume->SetDownloadPolicy(new VolumeImageSimplePolicy);
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
 
-    volume->SetThreadCount(downloadThreadCount);
-
-    VolumeImage& result = *volume;
-    volumes_.push_back(volume.release());
-
-    return result;*/
-
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    volumes_.push_back(volume);
+    return *volume;
   }
-
 
   DicomStructureSet& BasicApplicationContext::AddStructureSet(const std::string& instance)
   {
@@ -125,7 +109,7 @@ namespace OrthancStone
   {
     if (interactor == NULL)
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
 
     interactors_.push_back(interactor);
@@ -137,13 +121,6 @@ namespace OrthancStone
   void BasicApplicationContext::Start()
   {
     oracle_.Start();
-
-    // TODO REMOVE THIS
-    for (Volumes::iterator it = volumes_.begin(); it != volumes_.end(); ++it)
-    {
-      assert(*it != NULL);
-      (*it)->Start();
-    }
 
     if (viewport_.HasUpdateContent())
     {
@@ -162,13 +139,6 @@ namespace OrthancStone
       updateThread_.join();
     }
     
-    // TODO REMOVE THIS
-    for (Volumes::iterator it = volumes_.begin(); it != volumes_.end(); ++it)
-    {
-      assert(*it != NULL);
-      (*it)->Stop();
-    }
-
     oracle_.Stop();
   }
 }

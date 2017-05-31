@@ -19,6 +19,7 @@
  **/
 
 
+#include "../Framework/dev.h"
 #include "gtest/gtest.h"
 
 #include "../Platforms/Generic/OracleWebService.h"
@@ -31,11 +32,15 @@
 #include "../Framework/Volumes/ImageBuffer3D.h"
 #include "../Framework/Volumes/SlicedVolumeBase.h"
 #include "../Framework/Toolbox/DownloadStack.h"
+#include "../Framework/Layers/LayerSourceBase.h"
+#include "../Framework/Layers/FrameRenderer.h"
 #include "../Resources/Orthanc/Core/Images/ImageProcessing.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/thread/thread.hpp> 
+#include <boost/math/special_functions/round.hpp>
+
 
 namespace OrthancStone
 {
@@ -60,7 +65,7 @@ namespace OrthancStone
     virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
                                        unsigned int sliceIndex,
                                        const Slice& slice,
-                                       Orthanc::ImageAccessor* image,
+                                       std::auto_ptr<Orthanc::ImageAccessor>& image,
                                        SliceImageQuality quality)
     {
       std::auto_ptr<Orthanc::ImageAccessor> tmp(image);
@@ -73,210 +78,6 @@ namespace OrthancStone
                                        SliceImageQuality quality)
     {
       printf("ERROR 2\n");
-    }
-  };
-
-
-  class OrthancVolumeImage : 
-    public SlicedVolumeBase,
-    private OrthancSlicesLoader::ICallback
-  { 
-  private:
-    OrthancSlicesLoader           loader_;
-    std::auto_ptr<ImageBuffer3D>  image_;
-    std::auto_ptr<DownloadStack>  downloadStack_;
-
-    
-    void ScheduleSliceDownload()
-    {
-      assert(downloadStack_.get() != NULL);
-
-      unsigned int slice;
-      if (downloadStack_->Pop(slice))
-      {
-        loader_.ScheduleLoadSliceImage(slice, SliceImageQuality_Full);
-      }
-    }
-
-
-    static bool IsCompatible(const Slice& a, 
-                             const Slice& b)
-    {
-      if (!GeometryToolbox::IsParallel(a.GetGeometry().GetNormal(),
-                                       b.GetGeometry().GetNormal()))
-      {
-        LOG(ERROR) << "Some slice in the volume image is not parallel to the others";
-        return false;
-      }
-
-      if (a.GetConverter().GetExpectedPixelFormat() != b.GetConverter().GetExpectedPixelFormat())
-      {
-        LOG(ERROR) << "The pixel format changes across the slices of the volume image";
-        return false;
-      }
-
-      if (a.GetWidth() != b.GetWidth() ||
-          a.GetHeight() != b.GetHeight())
-      {
-        LOG(ERROR) << "The width/height of the slices change across the volume image";
-        return false;
-      }
-
-      if (!GeometryToolbox::IsNear(a.GetPixelSpacingX(), b.GetPixelSpacingX()) ||
-          !GeometryToolbox::IsNear(a.GetPixelSpacingY(), b.GetPixelSpacingY()))
-      {
-        LOG(ERROR) << "The pixel spacing of the slices change across the volume image";
-        return false;
-      }
-
-      return true;
-    }
-
-
-    static double GetDistance(const Slice& a, 
-                              const Slice& b)
-    {
-      return fabs(a.GetGeometry().ProjectAlongNormal(a.GetGeometry().GetOrigin()) - 
-                  a.GetGeometry().ProjectAlongNormal(b.GetGeometry().GetOrigin()));
-    }
-
-
-    virtual void NotifyGeometryReady(const OrthancSlicesLoader& loader)
-    {
-      if (loader.GetSliceCount() == 0)
-      {
-        LOG(ERROR) << "Empty volume image";
-        SlicedVolumeBase::NotifyGeometryError();
-        return;
-      }
-
-      for (size_t i = 1; i < loader.GetSliceCount(); i++)
-      {
-        if (!IsCompatible(loader.GetSlice(0), loader.GetSlice(i)))
-        {
-          SlicedVolumeBase::NotifyGeometryError();
-          return;
-        }
-      }
-
-      double spacingZ;
-
-      if (loader.GetSliceCount() > 1)
-      {
-        spacingZ = GetDistance(loader.GetSlice(0), loader.GetSlice(1));
-      }
-      else
-      {
-        // This is a volume with one single slice: Choose a dummy
-        // z-dimension for voxels
-        spacingZ = 1;
-      }
-      
-      for (size_t i = 1; i < loader.GetSliceCount(); i++)
-      {
-        printf("%d %s %f\n", i, loader.GetSlice(i).GetOrthancInstanceId().c_str(),
-               GetDistance(loader.GetSlice(i - 1), loader.GetSlice(i)));
-        
-        if (!GeometryToolbox::IsNear(spacingZ, GetDistance(loader.GetSlice(i - 1), loader.GetSlice(i)),
-                                     0.001 /* this is expressed in mm */))
-        {
-          LOG(ERROR) << "The distance between successive slices is not constant in a volume image";
-          SlicedVolumeBase::NotifyGeometryError();
-          return;
-        }
-      }
-
-      unsigned int width = loader.GetSlice(0).GetWidth();
-      unsigned int height = loader.GetSlice(0).GetHeight();
-      Orthanc::PixelFormat format = loader.GetSlice(0).GetConverter().GetExpectedPixelFormat();
-      LOG(INFO) << "Creating a volume image of size " << width << "x" << height 
-                << "x" << loader.GetSliceCount() << " in " << Orthanc::EnumerationToString(format);
-
-      image_.reset(new ImageBuffer3D(format, width, height, loader.GetSliceCount()));
-      image_->SetAxialGeometry(loader.GetSlice(0).GetGeometry());
-      image_->SetVoxelDimensions(loader.GetSlice(0).GetPixelSpacingX(), 
-                                 loader.GetSlice(0).GetPixelSpacingY(), spacingZ);
-      image_->Clear();
-
-      downloadStack_.reset(new DownloadStack(loader.GetSliceCount()));
-
-      SlicedVolumeBase::NotifyGeometryReady();
-
-      for (unsigned int i = 0; i < 4; i++)  // Limit to 4 simultaneous downloads
-      {
-        ScheduleSliceDownload();
-      }
-    }
-
-    virtual void NotifyGeometryError(const OrthancSlicesLoader& loader)
-    {
-      LOG(ERROR) << "Unable to download a volume image";
-    }
-
-    virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
-                                       unsigned int sliceIndex,
-                                       const Slice& slice,
-                                       Orthanc::ImageAccessor* image,
-                                       SliceImageQuality quality)
-    {
-      std::auto_ptr<Orthanc::ImageAccessor> protection(image);
-
-      {
-        ImageBuffer3D::SliceWriter writer(*image_, VolumeProjection_Axial, sliceIndex);
-        Orthanc::ImageProcessing::Copy(writer.GetAccessor(), *protection);
-      }
-
-      SlicedVolumeBase::NotifySliceChange(sliceIndex, slice);
-
-      ScheduleSliceDownload();
-    }
-
-    virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
-                                       unsigned int sliceIndex,
-                                       const Slice& slice,
-                                       SliceImageQuality quality)
-    {
-      LOG(ERROR) << "Cannot download slice " << sliceIndex << " in a volume image";
-      ScheduleSliceDownload();
-    }
-
-  public:
-    OrthancVolumeImage(IWebService& orthanc) : 
-      loader_(*this, orthanc)
-    {
-    }
-
-    void ScheduleLoadSeries(const std::string& seriesId)
-    {
-      loader_.ScheduleLoadSeries(seriesId);
-    }
-
-    void ScheduleLoadInstance(const std::string& instanceId,
-                              unsigned int frame)
-    {
-      loader_.ScheduleLoadInstance(instanceId, frame);
-    }
-
-    virtual size_t GetSliceCount() const
-    {
-      return loader_.GetSliceCount();
-    }
-
-    virtual const Slice& GetSlice(size_t index) const
-    {
-      return loader_.GetSlice(index);
-    }
-
-    ImageBuffer3D& GetImage()
-    {
-      if (image_.get() == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      else
-      {
-        return *image_;
-      }
     }
   };
 }

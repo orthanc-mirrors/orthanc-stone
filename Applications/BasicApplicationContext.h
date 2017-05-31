@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../../Framework/Volumes/VolumeImage.h"
+#include "../../Framework/Volumes/ISlicedVolume.h"
 #include "../../Framework/Viewport/WidgetViewport.h"
 #include "../../Framework/Widgets/IWorldSceneInteractor.h"
 #include "../../Framework/Toolbox/DicomStructureSet.h"
@@ -35,7 +35,7 @@ namespace OrthancStone
   class BasicApplicationContext : public boost::noncopyable
   {
   private:
-    typedef std::list<ISliceableVolume*>       Volumes;
+    typedef std::list<ISlicedVolume*>          Volumes;
     typedef std::list<IWorldSceneInteractor*>  Interactors;
     typedef std::list<DicomStructureSet*>      StructureSets;
 
@@ -84,9 +84,7 @@ namespace OrthancStone
       return webService_;
     }
     
-    VolumeImage& AddSeriesVolume(const std::string& series,
-                                 bool isProgressiveDownload,
-                                 size_t downloadThreadCount);
+    ISlicedVolume& AddVolume(ISlicedVolume* volume);
 
     DicomStructureSet& AddStructureSet(const std::string& instance);
 

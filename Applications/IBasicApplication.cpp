@@ -21,10 +21,12 @@
 
 #include "IBasicApplication.h"
 
+#include "../Framework/Toolbox/MessagingToolbox.h"
+#include "Sdl/SdlEngine.h"
+
 #include "../../Resources/Orthanc/Core/Logging.h"
 #include "../../Resources/Orthanc/Core/HttpClient.h"
 #include "../../Resources/Orthanc/Plugins/Samples/Common/OrthancHttpConnection.h"
-#include "Sdl/SdlEngine.h"
 
 namespace OrthancStone
 {

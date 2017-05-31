@@ -22,7 +22,6 @@
 #pragma once
 
 #include "SampleApplicationBase.h"
-#include "SampleInteractor.h"
 
 #include "../../Framework/Layers/OrthancFrameLayerSource.h"
 #include "../../Framework/Widgets/LayerWidget.h"
@@ -81,7 +80,7 @@ namespace OrthancStone
                                 KeyboardModifiers modifiers,
                                 IStatusBar* statusBar)
         {
-          unsigned int scale = (modifiers & KeyboardModifiers_Control ? 10 : 1);
+          int scale = (modifiers & KeyboardModifiers_Control ? 10 : 1);
           
           switch (direction)
           {
@@ -163,9 +162,6 @@ namespace OrthancStone
 #endif
           
           SliceGeometry s(source_->GetSlice(slice_).GetGeometry().GetOrigin(), x, y);
-          GeometryToolbox::Print(s.GetAxisX());
-          GeometryToolbox::Print(s.GetAxisY());
-          GeometryToolbox::Print(s.GetNormal());
           widget_->SetSlice(s);
 #endif
         }
@@ -251,7 +247,7 @@ namespace OrthancStone
 
         std::auto_ptr<LayerWidget> widget(new LayerWidget);
 
-#if 0
+#if 1
         std::auto_ptr<OrthancFrameLayerSource> layer
           (new OrthancFrameLayerSource(context.GetWebService()));
         //layer->SetImageQuality(SliceImageQuality_Jpeg50);

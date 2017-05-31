@@ -94,19 +94,7 @@ namespace OrthancStone
     if (loader_.IsGeometryReady() &&
         loader_.LookupSlice(index, viewportSlice))
     {
-      const Slice& slice = loader_.GetSlice(index);
-      const SliceGeometry& plane = slice.GetGeometry();
-
-      double sx = slice.GetPixelSpacingX();
-      double sy = slice.GetPixelSpacingY();
-      double w = static_cast<double>(slice.GetWidth());
-      double h = static_cast<double>(slice.GetHeight());
-
-      points.clear();
-      points.push_back(plane.MapSliceToWorldCoordinates(-0.5      * sx, -0.5      * sy));
-      points.push_back(plane.MapSliceToWorldCoordinates((w - 0.5) * sx, -0.5      * sy));
-      points.push_back(plane.MapSliceToWorldCoordinates(-0.5      * sx, (h - 0.5) * sy));
-      points.push_back(plane.MapSliceToWorldCoordinates((w - 0.5) * sx, (h - 0.5) * sy));
+      loader_.GetSlice(index).GetExtent(points);
       return true;
     }
     else

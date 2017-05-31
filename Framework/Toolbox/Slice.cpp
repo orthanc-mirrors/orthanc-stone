@@ -187,4 +187,19 @@ namespace OrthancStone
                                     GetGeometry().ProjectAlongNormal(plane.GetOrigin()),
                                     thickness_ / 2.0));
   }
+
+  
+  void Slice::GetExtent(std::vector<Vector>& points) const
+  {
+    double sx = GetPixelSpacingX();
+    double sy = GetPixelSpacingY();
+    double w = static_cast<double>(GetWidth());
+    double h = static_cast<double>(GetHeight());
+
+    points.clear();
+    points.push_back(GetGeometry().MapSliceToWorldCoordinates(-0.5      * sx, -0.5      * sy));
+    points.push_back(GetGeometry().MapSliceToWorldCoordinates((w - 0.5) * sx, -0.5      * sy));
+    points.push_back(GetGeometry().MapSliceToWorldCoordinates(-0.5      * sx, (h - 0.5) * sy));
+    points.push_back(GetGeometry().MapSliceToWorldCoordinates((w - 0.5) * sx, (h - 0.5) * sy));
+  }
 }

@@ -19,7 +19,7 @@
  **/
 
 
-#include "SdlBuffering.h"
+#include "SdlSurface.h"
 
 #if ORTHANC_ENABLE_SDL == 1
 
@@ -28,14 +28,14 @@
 
 namespace OrthancStone
 {
-  SdlBuffering::SdlBuffering() :
-    sdlSurface_(NULL),
-    pendingFrame_(false)
+  SdlSurface::SdlSurface(SdlWindow& window) :
+    window_(window),
+    sdlSurface_(NULL)
   {
   }
 
 
-  SdlBuffering::~SdlBuffering()
+  SdlSurface::~SdlSurface()
   {
     if (sdlSurface_)
     {
@@ -44,26 +44,14 @@ namespace OrthancStone
   }
 
 
-  void SdlBuffering::SetSize(unsigned int width,
-                             unsigned int height,
-                             IViewport& viewport)
+  void SdlSurface::SetSize(unsigned int width,
+                           unsigned int height)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
-    viewport.SetSize(width, height);
-
-    if (offscreenSurface_.get() == NULL ||
-        offscreenSurface_->GetWidth() != width ||
-        offscreenSurface_->GetHeight() != height)
+    if (cairoSurface_.get() == NULL ||
+        cairoSurface_->GetWidth() != width ||
+        cairoSurface_->GetHeight() != height)
     {
-      offscreenSurface_.reset(new CairoSurface(width, height));
-    }
-
-    if (onscreenSurface_.get() == NULL ||
-        onscreenSurface_->GetWidth() != width ||
-        onscreenSurface_->GetHeight() != height)
-    {
-      onscreenSurface_.reset(new CairoSurface(width, height));
+      cairoSurface_.reset(new CairoSurface(width, height));
 
       // TODO Big endian?
       static const uint32_t rmask = 0x00ff0000;
@@ -75,59 +63,30 @@ namespace OrthancStone
         SDL_FreeSurface(sdlSurface_);
       }
 
-      sdlSurface_ = SDL_CreateRGBSurfaceFrom(onscreenSurface_->GetBuffer(), width, height, 32,
-                                             onscreenSurface_->GetPitch(), rmask, gmask, bmask, 0);
+      sdlSurface_ = SDL_CreateRGBSurfaceFrom(cairoSurface_->GetBuffer(), width, height, 32,
+                                             cairoSurface_->GetPitch(), rmask, gmask, bmask, 0);
       if (!sdlSurface_)
       {
         LOG(ERROR) << "Cannot create a SDL surface from a Cairo surface";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }    
-    }
-
-    pendingFrame_ = false;
-  }
-
-
-  bool SdlBuffering::RenderOffscreen(IViewport& viewport)
-  {
-    boost::mutex::scoped_lock lock(mutex_);
-
-    if (offscreenSurface_.get() == NULL)
-    {
-      return false;
-    }
-
-    Orthanc::ImageAccessor target = offscreenSurface_->GetAccessor();
-
-    if (viewport.Render(target) &&
-        !pendingFrame_)
-    {
-      pendingFrame_ = true;
-      return true;
-    }
-    else
-    {
-      return false;
+      }
     }
   }
 
 
-  void SdlBuffering::SwapToScreen(SdlWindow& window)
+  void SdlSurface::Render(IViewport& viewport)
   {
-    if (!pendingFrame_ ||
-        offscreenSurface_.get() == NULL ||
-        onscreenSurface_.get() == NULL)
+    if (cairoSurface_.get() == NULL)
     {
-      return;
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
 
+    Orthanc::ImageAccessor target = cairoSurface_->GetAccessor();
+
+    if (viewport.Render(target))
     {
-      boost::mutex::scoped_lock lock(mutex_);
-      onscreenSurface_->Copy(*offscreenSurface_);
+      window_.Render(sdlSurface_);
     }
-    
-    window.Render(sdlSurface_);
-    pendingFrame_ = false;
   }
 }
 

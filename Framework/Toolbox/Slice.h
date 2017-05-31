@@ -32,7 +32,7 @@ namespace OrthancStone
     enum Type
     {
       Type_Invalid,
-      Type_Detached,
+      Type_Standalone,
       Type_OrthancInstance
       // TODO A slice could come from some DICOM file (URL)
     };
@@ -57,7 +57,7 @@ namespace OrthancStone
     // layers within LayerWidget?
     Slice(const SliceGeometry& plane,
           double thickness) :
-      type_(Type_Detached),
+      type_(Type_Standalone),
       frame_(0),
       geometry_(plane),
       pixelSpacingX_(1),
@@ -66,6 +66,24 @@ namespace OrthancStone
       width_(0),
       height_(0)
     {      
+    }
+
+    Slice(const SliceGeometry& plane,
+          double pixelSpacingX,
+          double pixelSpacingY,
+          double thickness,
+          unsigned int width,
+          unsigned int height,
+          const DicomFrameConverter& converter) :
+      type_(Type_Standalone),
+      geometry_(plane),
+      pixelSpacingX_(pixelSpacingX),
+      pixelSpacingY_(pixelSpacingY),
+      thickness_(thickness),
+      width_(width),
+      height_(height),
+      converter_(converter)
+    {
     }
 
     bool IsValid() const
@@ -101,5 +119,7 @@ namespace OrthancStone
     const DicomFrameConverter& GetConverter() const;
 
     bool ContainsPlane(const SliceGeometry& plane) const;
+
+    void GetExtent(std::vector<Vector>& points) const;
   };
 }

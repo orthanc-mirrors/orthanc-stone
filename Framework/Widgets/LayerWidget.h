@@ -45,7 +45,7 @@ namespace OrthancStone
     SliceGeometry               slice_;
     std::auto_ptr<Scene>        currentScene_;
     std::auto_ptr<Scene>        pendingScene_;
-
+    std::vector<bool>           changedLayers_;
 
     bool LookupLayer(size_t& index /* out */,
                      const ILayerSource& layer) const;
@@ -67,6 +67,7 @@ namespace OrthancStone
                                   const Slice& slice,
                                   bool isError);
 
+    void ResetChangedLayers();
         
   protected:
     virtual void GetSceneExtent(double& x1,
@@ -108,5 +109,12 @@ namespace OrthancStone
     {
       return slice_;
     }
+
+    virtual bool HasUpdateContent() const
+    {
+      return true;
+    }
+
+    virtual void UpdateContent();
   };
 }

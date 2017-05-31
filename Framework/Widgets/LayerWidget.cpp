@@ -375,6 +375,8 @@ namespace OrthancStone
     ResetPendingScene();
     layer->Register(*this);
 
+    ResetChangedLayers();
+
     return index;
   }
 
@@ -435,7 +437,9 @@ namespace OrthancStone
     if (LookupLayer(i, source))
     {
       LOG(INFO) << "Geometry ready for layer " << i;
-      layers_[i]->ScheduleLayerCreation(slice_);
+
+      changedLayers_[i] = true;
+      //layers_[i]->ScheduleLayerCreation(slice_);
     }
   }
   
@@ -451,7 +455,9 @@ namespace OrthancStone
     for (size_t i = 0; i < layers_.size(); i++)
     {
       assert(layers_[i] != NULL);
-      layers_[i]->ScheduleLayerCreation(slice_);
+      changedLayers_[i] = true;
+      
+      //layers_[i]->ScheduleLayerCreation(slice_);
     }
   }
 
@@ -464,7 +470,9 @@ namespace OrthancStone
     }
 
     assert(layers_[layer] != NULL);
-    layers_[layer]->ScheduleLayerCreation(slice_);
+    changedLayers_[layer] = true;
+
+    //layers_[layer]->ScheduleLayerCreation(slice_);
   }
 
 
@@ -473,7 +481,7 @@ namespace OrthancStone
     size_t index;
     if (LookupLayer(index, source))
     {
-      layers_[index]->ScheduleLayerCreation(slice_);
+      InvalidateLayer(index);
     }
   }
   
@@ -486,7 +494,7 @@ namespace OrthancStone
       size_t index;
       if (LookupLayer(index, source))
       {
-        layers_[index]->ScheduleLayerCreation(slice_);
+        InvalidateLayer(index);
       }
     }
   }
@@ -520,5 +528,32 @@ namespace OrthancStone
         UpdateLayer(index, new SliceOutlineRenderer(slice), slice);
       }
     }
+  }
+
+
+  void LayerWidget::ResetChangedLayers()
+  {
+    changedLayers_.resize(layers_.size());
+
+    for (size_t i = 0; i < changedLayers_.size(); i++)
+    {
+      changedLayers_[i] = false;
+    }
+  }
+
+
+  void LayerWidget::UpdateContent()
+  {
+    assert(changedLayers_.size() <= layers_.size());
+    
+    for (size_t i = 0; i < changedLayers_.size(); i++)
+    {
+      if (changedLayers_[i])
+      {
+        layers_[i]->ScheduleLayerCreation(slice_);
+      }
+    }
+    
+    ResetChangedLayers();
   }
 }

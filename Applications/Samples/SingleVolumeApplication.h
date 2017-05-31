@@ -120,7 +120,7 @@ namespace OrthancStone
 
 
       LayerWidget*                        widget_;
-      OrthancVolumeImage*                 volume_;
+      const OrthancVolumeImage*           volume_;
       VolumeProjection                    projection_;
       std::auto_ptr<VolumeImageGeometry>  slices_;
       size_t                              slice_;

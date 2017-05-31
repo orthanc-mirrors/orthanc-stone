@@ -152,10 +152,20 @@ namespace OrthancStone
 #else
           // TEST for scene extents - Rotate the axes
           double a = 15.0 / 180.0 * M_PI;
-          
+
+#if 1
           Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
           Vector y; GeometryToolbox::AssignVector(y, -sin(a), cos(a), 0);
+#else
+          // Flip the normal
+          Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
+          Vector y; GeometryToolbox::AssignVector(y, sin(a), -cos(a), 0);
+#endif
+          
           SliceGeometry s(source_->GetSlice(slice_).GetGeometry().GetOrigin(), x, y);
+          GeometryToolbox::Print(s.GetAxisX());
+          GeometryToolbox::Print(s.GetAxisY());
+          GeometryToolbox::Print(s.GetNormal());
           widget_->SetSlice(s);
 #endif
         }
@@ -241,7 +251,7 @@ namespace OrthancStone
 
         std::auto_ptr<LayerWidget> widget(new LayerWidget);
 
-#if 1
+#if 0
         std::auto_ptr<OrthancFrameLayerSource> layer
           (new OrthancFrameLayerSource(context.GetWebService()));
         //layer->SetImageQuality(SliceImageQuality_Jpeg50);
@@ -267,7 +277,7 @@ namespace OrthancStone
         ct.reset(new OrthancFrameLayerSource(context.GetWebService()));
         //ct->LoadInstance("c804a1a2-142545c9-33b32fe2-3df4cec0-a2bea6d6", 0);
         //ct->LoadInstance("4bd4304f-47478948-71b24af2-51f4f1bc-275b6c1b", 0);  // BAD SLICE
-        ct->SetImageQuality(SliceImageQuality_Jpeg50);
+        //ct->SetImageQuality(SliceImageQuality_Jpeg50);
         ct->LoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
 
         ct->Register(*this);

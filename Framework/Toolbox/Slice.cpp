@@ -178,8 +178,11 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-        
-    return (GeometryToolbox::IsParallel(GetGeometry().GetNormal(), plane.GetNormal()) &&
+
+    bool opposite;
+    return (GeometryToolbox::IsParallelOrOpposite(opposite,
+                                                  GetGeometry().GetNormal(),
+                                                  plane.GetNormal()) &&
             GeometryToolbox::IsNear(GetGeometry().ProjectAlongNormal(GetGeometry().GetOrigin()),
                                     GetGeometry().ProjectAlongNormal(plane.GetOrigin()),
                                     thickness_ / 2.0));

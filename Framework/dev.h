@@ -24,6 +24,7 @@
 #include "Layers/FrameRenderer.h"
 #include "Layers/LayerSourceBase.h"
 #include "Layers/SliceOutlineRenderer.h"
+#include "Widgets/LayerWidget.h"
 #include "Toolbox/DownloadStack.h"
 #include "Toolbox/OrthancSlicesLoader.h"
 #include "Volumes/ImageBuffer3D.h"
@@ -600,6 +601,162 @@ namespace OrthancStone
       // Error
       Slice slice;
       LayerSourceBase::NotifyLayerReady(NULL, slice, true);
+    }
+  };
+
+
+  class VolumeImageInteractor :
+    public IWorldSceneInteractor,
+    private ISlicedVolume::IObserver
+  {
+  private:
+    LayerWidget&                        widget_;
+    VolumeProjection                    projection_;
+    std::auto_ptr<VolumeImageGeometry>  slices_;
+    size_t                              slice_;
+ 
+    virtual void NotifyGeometryReady(const ISlicedVolume& volume)
+    {
+      if (slices_.get() == NULL)
+      {
+        const OrthancVolumeImage& image = dynamic_cast<const OrthancVolumeImage&>(volume);
+          
+        slices_.reset(new VolumeImageGeometry(image, projection_));
+        SetSlice(slices_->GetSliceCount() / 2);
+          
+        widget_.SetDefaultView();
+      }
+    }
+      
+    virtual void NotifyGeometryError(const ISlicedVolume& volume)
+    {
+    }
+      
+    virtual void NotifyContentChange(const ISlicedVolume& volume)
+    {
+    }
+
+    virtual void NotifySliceChange(const ISlicedVolume& volume,
+                                   const size_t& sliceIndex,
+                                   const Slice& slice)
+    {
+    }
+
+    virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
+                                                        const ViewportGeometry& view,
+                                                        MouseButton button,
+                                                        double x,
+                                                        double y,
+                                                        IStatusBar* statusBar)
+    {
+      return NULL;
+    }
+
+    virtual void MouseOver(CairoContext& context,
+                           WorldSceneWidget& widget,
+                           const ViewportGeometry& view,
+                           double x,
+                           double y,
+                           IStatusBar* statusBar)
+    {
+    }
+
+    virtual void MouseWheel(WorldSceneWidget& widget,
+                            MouseWheelDirection direction,
+                            KeyboardModifiers modifiers,
+                            IStatusBar* statusBar)
+    {
+      int scale = (modifiers & KeyboardModifiers_Control ? 10 : 1);
+          
+      switch (direction)
+      {
+        case MouseWheelDirection_Up:
+          OffsetSlice(-scale);
+          break;
+
+        case MouseWheelDirection_Down:
+          OffsetSlice(scale);
+          break;
+
+        default:
+          break;
+      }
+    }
+
+    virtual void KeyPressed(WorldSceneWidget& widget,
+                            char key,
+                            KeyboardModifiers modifiers,
+                            IStatusBar* statusBar)
+    {
+      switch (key)
+      {
+        case 's':
+          widget.SetDefaultView();
+          break;
+
+        default:
+          break;
+      }
+    }
+      
+  public:
+    VolumeImageInteractor(OrthancVolumeImage& volume,
+                          LayerWidget& widget,
+                          VolumeProjection projection) :
+      widget_(widget),
+      projection_(projection)
+    {
+      volume.Register(*this);
+      widget.SetInteractor(*this);
+    }
+
+    bool IsGeometryReady() const
+    {
+      return slices_.get() != NULL;
+    }
+
+    size_t GetSliceCount() const
+    {
+      if (slices_.get() == NULL)
+      {
+        return 0;
+      }
+      else
+      {
+        return slices_->GetSliceCount();
+      }
+    }
+
+    void OffsetSlice(int offset)
+    {
+      if (slices_.get() != NULL)
+      {
+        int slice = static_cast<int>(slice_) + offset;
+
+        if (slice < 0)
+        {
+          slice = 0;
+        }
+
+        if (slice >= static_cast<int>(slices_->GetSliceCount()))
+        {
+          slice = slices_->GetSliceCount() - 1;
+        }
+
+        if (slice != static_cast<int>(slice_)) 
+        {
+          SetSlice(slice);
+        }   
+      }
+    }
+      
+    void SetSlice(size_t slice)
+    {
+      if (slices_.get() != NULL)
+      {
+        slice_ = slice;
+        widget_.SetSlice(slices_->GetSlice(slice_).GetGeometry());
+      }
     }
   };
 }

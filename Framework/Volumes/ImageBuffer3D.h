@@ -92,6 +92,8 @@ namespace OrthancStone
 
     ParallelSlices* GetGeometry(VolumeProjection projection);
     
+    uint64_t GetEstimatedMemorySize() const;
+
 
     class SliceReader : public boost::noncopyable
     {

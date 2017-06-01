@@ -22,6 +22,7 @@
 #include "ImageBuffer3D.h"
 
 #include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
+#include "../../Resources/Orthanc/Core/Logging.h"
 #include "../../Resources/Orthanc/Core/OrthancException.h"
 
 #include <string.h>
@@ -119,6 +120,9 @@ namespace OrthancStone
     depth_(depth)
   {
     GeometryToolbox::AssignVector(voxelDimensions_, 1, 1, 1);
+
+    LOG(INFO) << "Created an image of "
+              << (GetEstimatedMemorySize() / (1024ll * 1024ll)) << "MB";
   }
 
 
@@ -254,6 +258,12 @@ namespace OrthancStone
     return result.release();
   }
     
+
+  uint64_t ImageBuffer3D::GetEstimatedMemorySize() const
+  {
+    return image_.GetPitch() * image_.GetHeight() * Orthanc::GetBytesPerPixel(format_);
+  }
+
 
   ImageBuffer3D::SliceReader::SliceReader(ImageBuffer3D& that,
                                           VolumeProjection projection,

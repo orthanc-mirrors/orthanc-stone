@@ -100,10 +100,7 @@ namespace OrthancStone
         std::auto_ptr<OrthancVolumeImage> volume(new OrthancVolumeImage(context.GetWebService()));
         volume->ScheduleLoadSeries(series);
 
-        {
-          std::auto_ptr<VolumeImageSource> source(new VolumeImageSource(*volume));
-          widget->AddLayer(source.release());
-        }
+        widget->AddLayer(new VolumeImageSource(*volume));
 
         context.AddInteractor(new VolumeImageInteractor(*volume, *widget, projection));
         context.AddVolume(volume.release());
@@ -114,18 +111,10 @@ namespace OrthancStone
         std::auto_ptr<OrthancVolumeImage> pet(new OrthancVolumeImage(context.GetWebService()));
         pet->ScheduleLoadSeries("aabad2e7-80702b5d-e599d26c-4f13398e-38d58a9e");
 
+        widget->AddLayer(new VolumeImageSource(*ct));
+        widget->AddLayer(new VolumeImageSource(*pet));
+        
         context.AddInteractor(new VolumeImageInteractor(*pet, *widget, projection));
-
-        {
-          std::auto_ptr<VolumeImageSource> source(new VolumeImageSource(*ct));
-          widget->AddLayer(source.release());
-        }
-
-        {
-          std::auto_ptr<VolumeImageSource> source(new VolumeImageSource(*pet));
-          widget->AddLayer(source.release());
-        }
-
         context.AddVolume(ct.release());
         context.AddVolume(pet.release());
 

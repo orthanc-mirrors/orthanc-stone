@@ -51,14 +51,17 @@ namespace OrthancStone
 
       lut = reinterpret_cast<const uint8_t*>(Orthanc::EmbeddedResources::GetFileResourceBuffer(style.lut_));
     }
-      
+
     Orthanc::ImageAccessor target = result->GetAccessor();
-    for (unsigned int y = 0; y < target.GetHeight(); y++)
+    const unsigned int width = target.GetWidth();
+    const unsigned int height = target.GetHeight();
+    
+    for (unsigned int y = 0; y < height; y++)
     {
       const float* p = reinterpret_cast<const float*>(frame_->GetConstRow(y));
       uint8_t* q = reinterpret_cast<uint8_t*>(target.GetRow(y));
 
-      for (unsigned int x = 0; x < target.GetWidth(); x++, p++, q += 4)
+      for (unsigned int x = 0; x < width; x++, p++, q += 4)
       {
         uint8_t v = 0;
         if (windowWidth >= 0.001f)  // Avoid division by zero

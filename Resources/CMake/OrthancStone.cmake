@@ -28,6 +28,7 @@ set(ORTHANC_STONE_VERSION "mainline")
 SET(STATIC_BUILD OFF CACHE BOOL "Static build of the third-party libraries (necessary for Windows)")
 SET(ALLOW_DOWNLOADS OFF CACHE BOOL "Allow CMake to download packages")
 SET(STONE_SANDBOXED OFF CACHE BOOL "Whether Stone runs inside a sandboxed environment (such as Google NaCl)")
+SET(ENABLE_PROFILING OFF CACHE BOOL "Whether to enable the generation of profiling information with gprof")
 
 # Optional components
 SET(ENABLE_CURL ON CACHE BOOL "Include support for libcurl")

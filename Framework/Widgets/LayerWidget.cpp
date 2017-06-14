@@ -232,10 +232,7 @@ namespace OrthancStone
   }
 
         
-  void LayerWidget::GetSceneExtent(double& x1,
-                                   double& y1,
-                                   double& x2,
-                                   double& y2)
+  Extent LayerWidget::GetSceneExtent()
   {
     Extent sceneExtent;
 
@@ -248,36 +245,7 @@ namespace OrthancStone
       sceneExtent.Union(layerExtent);
     }
 
-    if (sceneExtent.IsEmpty())
-    {
-      // Set a default extent of (-1,-1) -> (0,0)
-      x1 = -1;
-      y1 = -1;
-      x2 = 1;
-      y2 = 1;
-    }
-    else
-    {
-      x1 = sceneExtent.GetX1();
-      y1 = sceneExtent.GetY1();
-      x2 = sceneExtent.GetX2();
-      y2 = sceneExtent.GetY2();
-
-      // Ensure the extent is non-empty
-      if (x1 >= x2)
-      {
-        double tmp = x1;
-        x1 = tmp - 0.5;
-        x2 = tmp + 0.5;
-      }
-
-      if (y1 >= y2)
-      {
-        double tmp = y1;
-        y1 = tmp - 0.5;
-        y2 = tmp + 0.5;
-      }
-    }
+    return sceneExtent;
   }
 
   

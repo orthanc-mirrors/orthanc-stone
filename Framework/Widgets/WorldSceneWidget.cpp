@@ -232,9 +232,7 @@ namespace OrthancStone
 
   void WorldSceneWidget::SetSceneExtent(ViewportGeometry& view)
   {
-    double x1, y1, x2, y2;
-    GetSceneExtent(x1, y1, x2, y2);
-    view.SetSceneExtent(x1, y1, x2, y2);
+    view.SetSceneExtent(GetSceneExtent());
   }
 
 

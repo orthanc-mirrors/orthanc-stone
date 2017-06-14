@@ -118,15 +118,9 @@ namespace OrthancStone
     }
 
 
-    void TestWorldSceneWidget::GetSceneExtent(double& x1,
-                                              double& y1,
-                                              double& x2,
-                                              double& y2)
+    Extent TestWorldSceneWidget::GetSceneExtent()
     {
-      x1 = -10;
-      x2 = 10;
-      y1 = -.5;
-      y2 = .5;
+      return Extent(-10, -.5, 10, .5);
     }
 
 

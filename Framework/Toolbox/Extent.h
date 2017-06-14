@@ -38,6 +38,11 @@ namespace OrthancStone
       Reset();
     }
 
+    Extent(double x1,
+           double y1,
+           double x2,
+           double y2);
+
     void Reset();
 
     void AddPoint(double x,
@@ -45,10 +50,7 @@ namespace OrthancStone
 
     void Union(const Extent& other);
 
-    bool IsEmpty() const
-    {
-      return empty_;
-    }
+    bool IsEmpty() const;
 
     double GetX1() const
     {

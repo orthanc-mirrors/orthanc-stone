@@ -26,6 +26,28 @@
 
 namespace OrthancStone
 {
+  Extent::Extent(double x1,
+                 double y1,
+                 double x2,
+                 double y2) :
+    empty_(false),
+    x1_(x1),
+    y1_(y1),
+    x2_(x2),
+    y2_(y2)
+  {
+    if (x1_ > x2_)
+    {
+      std::swap(x1_, x2_);
+    }
+
+    if (y1_ > y2_)
+    {
+      std::swap(y1_, y2_);
+    }
+  }
+
+
   void Extent::Reset()
   {
     empty_ = true;
@@ -61,18 +83,18 @@ namespace OrthancStone
 
   void Extent::Union(const Extent& other)
   {
-    if (other.IsEmpty())
+    if (other.empty_)
     {
       return;
     }
 
-    if (IsEmpty())
+    if (empty_)
     {
       *this = other;
       return;
     }
 
-    assert(!IsEmpty());
+    assert(!empty_);
 
     x1_ = std::min(x1_, other.x1_);
     y1_ = std::min(y1_, other.y1_);
@@ -83,4 +105,19 @@ namespace OrthancStone
            y1_ <= y2_);    // This is the invariant of the structure
   }
 
+
+  bool Extent::IsEmpty() const
+  {
+    if (empty_)
+    {
+      return true;
+    }
+    else
+    {
+      assert(x1_ <= x2_ &&
+             y1_ <= y2_);
+      return (x2_ <= x1_ + 10 * std::numeric_limits<double>::epsilon() ||
+              y2_ <= y1_ + 10 * std::numeric_limits<double>::epsilon());
+    }
+  }
 }

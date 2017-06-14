@@ -43,10 +43,7 @@ namespace OrthancStone
     public:
       TestWorldSceneWidget(bool animate);
 
-      virtual void GetSceneExtent(double& x1,
-                                  double& y1,
-                                  double& x2,
-                                  double& y2);
+      virtual Extent GetSceneExtent();
 
       virtual bool HasUpdateContent() const
       {

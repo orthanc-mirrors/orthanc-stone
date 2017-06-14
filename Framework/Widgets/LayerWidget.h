@@ -70,10 +70,7 @@ namespace OrthancStone
     void ResetChangedLayers();
         
   protected:
-    virtual void GetSceneExtent(double& x1,
-                                double& y1,
-                                double& x2,
-                                double& y2);
+    virtual Extent GetSceneExtent();
  
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view);

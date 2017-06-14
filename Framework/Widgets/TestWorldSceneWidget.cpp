@@ -119,9 +119,9 @@ namespace OrthancStone
     }
 
 
-    Extent TestWorldSceneWidget::GetSceneExtent()
+    Extent2D TestWorldSceneWidget::GetSceneExtent()
     {
-      return Extent(-10, -.5, 10, .5);
+      return Extent2D(-10, -.5, 10, .5);
     }
 
 

@@ -79,7 +79,7 @@ namespace OrthancStone
   }
 
 
-  void ViewportGeometry::SetSceneExtent(const Extent& extent)
+  void ViewportGeometry::SetSceneExtent(const Extent2D& extent)
   {
     LOG(INFO) << "New scene extent: ("
               << extent.GetX1() << "," << extent.GetY1() << ") => ("

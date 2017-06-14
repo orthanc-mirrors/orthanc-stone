@@ -19,17 +19,17 @@
  **/
 
 
-#include "Extent.h"
+#include "Extent2D.h"
 
 #include <algorithm>
 #include <cassert>
 
 namespace OrthancStone
 {
-  Extent::Extent(double x1,
-                 double y1,
-                 double x2,
-                 double y2) :
+  Extent2D::Extent2D(double x1,
+                     double y1,
+                     double x2,
+                     double y2) :
     empty_(false),
     x1_(x1),
     y1_(y1),
@@ -48,7 +48,7 @@ namespace OrthancStone
   }
 
 
-  void Extent::Reset()
+  void Extent2D::Reset()
   {
     empty_ = true;
     x1_ = 0;
@@ -57,8 +57,8 @@ namespace OrthancStone
     y2_ = 0;      
   }
 
-  void Extent::AddPoint(double x,
-                        double y)
+  void Extent2D::AddPoint(double x,
+                          double y)
   {
     if (empty_)
     {
@@ -81,7 +81,7 @@ namespace OrthancStone
   }
 
 
-  void Extent::Union(const Extent& other)
+  void Extent2D::Union(const Extent2D& other)
   {
     if (other.empty_)
     {
@@ -106,7 +106,7 @@ namespace OrthancStone
   }
 
 
-  bool Extent::IsEmpty() const
+  bool Extent2D::IsEmpty() const
   {
     if (empty_)
     {

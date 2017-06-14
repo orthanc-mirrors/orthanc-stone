@@ -214,7 +214,7 @@ namespace OrthancStone
   }
     
 
-  void LayerWidget::GetLayerExtent(Extent& extent,
+  void LayerWidget::GetLayerExtent(Extent2D& extent,
                                    ILayerSource& source) const
   {
     extent.Reset();
@@ -232,14 +232,14 @@ namespace OrthancStone
   }
 
         
-  Extent LayerWidget::GetSceneExtent()
+  Extent2D LayerWidget::GetSceneExtent()
   {
-    Extent sceneExtent;
+    Extent2D sceneExtent;
 
     for (size_t i = 0; i < layers_.size(); i++)
     {
       assert(layers_[i] != NULL);
-      Extent layerExtent;
+      Extent2D layerExtent;
       GetLayerExtent(layerExtent, *layers_[i]);
 
       sceneExtent.Union(layerExtent);

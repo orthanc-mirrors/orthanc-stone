@@ -23,7 +23,7 @@
 
 #include "WorldSceneWidget.h"
 #include "../Layers/ILayerSource.h"
-#include "../Toolbox/Extent.h"
+#include "../Toolbox/Extent2D.h"
 
 #include <map>
 
@@ -50,7 +50,7 @@ namespace OrthancStone
     bool LookupLayer(size_t& index /* out */,
                      const ILayerSource& layer) const;
 
-    void GetLayerExtent(Extent& extent,
+    void GetLayerExtent(Extent2D& extent,
                         ILayerSource& source) const;
 
     virtual void NotifyGeometryReady(const ILayerSource& source);
@@ -70,7 +70,7 @@ namespace OrthancStone
     void ResetChangedLayers();
         
   protected:
-    virtual Extent GetSceneExtent();
+    virtual Extent2D GetSceneExtent();
  
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view);

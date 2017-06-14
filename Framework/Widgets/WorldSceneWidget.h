@@ -61,7 +61,7 @@ namespace OrthancStone
 
 
   protected:
-    virtual Extent GetSceneExtent() = 0;
+    virtual Extent2D GetSceneExtent() = 0;
     
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view) = 0;

@@ -23,7 +23,7 @@
 
 namespace OrthancStone
 {
-  class Extent
+  class Extent2D
   {
   private:
     bool    empty_;
@@ -33,22 +33,22 @@ namespace OrthancStone
     double  y2_;
 
   public:
-    Extent()
+    Extent2D()
     {
       Reset();
     }
 
-    Extent(double x1,
-           double y1,
-           double x2,
-           double y2);
+    Extent2D(double x1,
+             double y1,
+             double x2,
+             double y2);
 
     void Reset();
 
     void AddPoint(double x,
                   double y);
 
-    void Union(const Extent& other);
+    void Union(const Extent2D& other);
 
     bool IsEmpty() const;
 

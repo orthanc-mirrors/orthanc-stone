@@ -193,11 +193,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   #${ORTHANC_STONE_DIR}/Framework/Layers/SeriesFrameRendererFactory.cpp
   #${ORTHANC_STONE_DIR}/Framework/Layers/SiblingSliceLocationFactory.cpp
   #${ORTHANC_STONE_DIR}/Framework/Layers/SingleFrameRendererFactory.cpp
-  #${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeImage.cpp
-  #${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeImagePolicyBase.cpp
-  #${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeImageProgressivePolicy.cpp
-  #${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeImageSimplePolicy.cpp
-  #${ORTHANC_STONE_DIR}/Framework/Widgets/LayeredSceneWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/CircleMeasureTracker.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/ColorFrameRenderer.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/FrameRenderer.cpp

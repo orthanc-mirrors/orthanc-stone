@@ -44,9 +44,9 @@ namespace OrthancStone
 
     size_t GetSliceCount();
 
-    SliceGeometry GetSlice(size_t slice);
+    CoordinateSystem3D GetSlice(size_t slice);
 
-    SliceGeometry GetCurrentSlice();
+    CoordinateSystem3D GetCurrentSlice();
 
     // Returns "true" iff. the slice has actually changed
     bool SetDefaultSlice();

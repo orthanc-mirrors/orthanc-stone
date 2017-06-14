@@ -34,9 +34,9 @@ namespace OrthancStone
   class OrthancSeriesLoader::Slice : public boost::noncopyable
   {
   private:
-    std::string     instanceId_;
-    SliceGeometry   geometry_;
-    double          projectionAlongNormal_;
+    std::string         instanceId_;
+    CoordinateSystem3D  geometry_;
+    double              projectionAlongNormal_;
 
   public:
     Slice(const std::string& instanceId,
@@ -52,7 +52,7 @@ namespace OrthancStone
       return instanceId_;
     }
 
-    const SliceGeometry& GetGeometry() const
+    const CoordinateSystem3D& GetGeometry() const
     {
       return geometry_;
     }

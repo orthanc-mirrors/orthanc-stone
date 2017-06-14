@@ -21,6 +21,7 @@
 
 #include "TestWorldSceneWidget.h"
 
+#include <math.h>
 #include <stdio.h>
 
 namespace OrthancStone

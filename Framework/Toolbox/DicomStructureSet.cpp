@@ -61,7 +61,7 @@ namespace OrthancStone
   }
 
 
-  SliceGeometry DicomStructureSet::ExtractSliceGeometry(double& sliceThickness,
+  CoordinateSystem3D DicomStructureSet::ExtractSliceGeometry(double& sliceThickness,
                                                         OrthancPlugins::IOrthancConnection& orthanc,
                                                         const OrthancPlugins::IDicomDataset& tags,
                                                         size_t contourIndex,
@@ -122,7 +122,7 @@ namespace OrthancStone
     }
 
     FullOrthancDataset parentTags(orthanc, "/instances/" + parentLookup[0]["ID"].asString() + "/tags");
-    SliceGeometry slice(parentTags);
+    CoordinateSystem3D slice(parentTags);
 
     Vector v;
     if (GeometryToolbox::ParseVector(v, parentTags, DICOM_TAG_SLICE_THICKNESS) &&
@@ -161,7 +161,7 @@ namespace OrthancStone
 
 
   bool DicomStructureSet::IsPolygonOnSlice(const Polygon& polygon,
-                                           const SliceGeometry& geometry) const
+                                           const CoordinateSystem3D& geometry) const
   {
     double d = boost::numeric::ublas::inner_prod(geometry.GetOrigin(), normal_);
 
@@ -267,7 +267,7 @@ namespace OrthancStone
         }
 
         Polygon polygon;
-        SliceGeometry geometry = ExtractSliceGeometry(polygon.sliceThickness_, orthanc, tags, i, j);
+        CoordinateSystem3D geometry = ExtractSliceGeometry(polygon.sliceThickness_, orthanc, tags, i, j);
         polygon.projectionAlongNormal_ = geometry.ProjectAlongNormal(geometry.GetOrigin());
 
         for (size_t k = 0; k < countPoints; k++)
@@ -351,7 +351,7 @@ namespace OrthancStone
 
 
   void DicomStructureSet::Render(CairoContext& context,
-                                 const SliceGeometry& slice) const
+                                 const CoordinateSystem3D& slice) const
   {
     cairo_t* cr = context.GetObject();
 

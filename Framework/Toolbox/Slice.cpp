@@ -53,7 +53,7 @@ namespace OrthancStone
     if (dataset.GetStringValue(position, OrthancPlugins::DICOM_TAG_IMAGE_POSITION_PATIENT) &&
         dataset.GetStringValue(orientation, OrthancPlugins::DICOM_TAG_IMAGE_ORIENTATION_PATIENT))
     {
-      geometry_ = SliceGeometry(position, orientation);
+      geometry_ = CoordinateSystem3D(position, orientation);
     }
       
     if (reader.GetUnsignedIntegerValue(width_, OrthancPlugins::DICOM_TAG_COLUMNS) &&
@@ -95,7 +95,7 @@ namespace OrthancStone
   }
 
   
-  const SliceGeometry& Slice::GetGeometry() const
+  const CoordinateSystem3D& Slice::GetGeometry() const
   {
     if (type_ == Type_Invalid)
     {
@@ -172,7 +172,7 @@ namespace OrthancStone
   }
 
 
-  bool Slice::ContainsPlane(const SliceGeometry& plane) const
+  bool Slice::ContainsPlane(const CoordinateSystem3D& plane) const
   {
     if (type_ == Type_Invalid)
     {

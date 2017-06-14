@@ -28,7 +28,7 @@
 
 namespace OrthancStone
 {
-  FrameRenderer::FrameRenderer(const SliceGeometry& frameSlice,
+  FrameRenderer::FrameRenderer(const CoordinateSystem3D& frameSlice,
                                double pixelSpacingX,
                                double pixelSpacingY,
                                bool isFullQuality) :

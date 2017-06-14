@@ -31,7 +31,7 @@
 namespace OrthancStone
 {
   CircleMeasureTracker::CircleMeasureTracker(IStatusBar* statusBar,
-                                             const SliceGeometry& slice,
+                                             const CoordinateSystem3D& slice,
                                              double x, 
                                              double y,
                                              uint8_t red,

@@ -38,7 +38,7 @@ namespace OrthancStone
 
 
   ColorFrameRenderer::ColorFrameRenderer(Orthanc::ImageAccessor* frame,
-                                         const SliceGeometry& frameSlice,
+                                         const CoordinateSystem3D& frameSlice,
                                          double pixelSpacingX,
                                          double pixelSpacingY,
                                          bool isFullQuality) :

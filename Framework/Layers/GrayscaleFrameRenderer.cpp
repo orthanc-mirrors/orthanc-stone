@@ -110,7 +110,7 @@ namespace OrthancStone
 
   GrayscaleFrameRenderer::GrayscaleFrameRenderer(Orthanc::ImageAccessor* frame,
                                                  const DicomFrameConverter& converter,
-                                                 const SliceGeometry& frameSlice,
+                                                 const CoordinateSystem3D& frameSlice,
                                                  double pixelSpacingX,
                                                  double pixelSpacingY,
                                                  bool isFullQuality) :

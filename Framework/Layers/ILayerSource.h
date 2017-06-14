@@ -66,8 +66,8 @@ namespace OrthancStone
     virtual void Register(IObserver& observer) = 0;
 
     virtual bool GetExtent(std::vector<Vector>& points,
-                           const SliceGeometry& viewportSlice) = 0;
+                           const CoordinateSystem3D& viewportSlice) = 0;
 
-    virtual void ScheduleLayerCreation(const SliceGeometry& viewportSlice) = 0;
+    virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice) = 0;
   };
 }

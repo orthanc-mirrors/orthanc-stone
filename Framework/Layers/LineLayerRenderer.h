@@ -43,7 +43,7 @@ namespace OrthancStone
 
     virtual bool RenderLayer(CairoContext& context,
                              const ViewportGeometry& view,
-                             const SliceGeometry& slice);
+                             const CoordinateSystem3D& slice);
 
     virtual void SetLayerStyle(const RenderStyle& style);
 

@@ -19,7 +19,7 @@
  **/
 
 
-#include "SliceGeometry.h"
+#include "CoordinateSystem3D.h"
 
 #include "GeometryToolbox.h"
 
@@ -29,7 +29,7 @@
 
 namespace OrthancStone
 {
-  void SliceGeometry::CheckAndComputeNormal()
+  void CoordinateSystem3D::CheckAndComputeNormal()
   {
     // DICOM expects normal vectors to define the axes: "The row and
     // column direction cosine vectors shall be normal, i.e., the dot
@@ -59,7 +59,7 @@ namespace OrthancStone
   }
 
 
-  void SliceGeometry::SetupCanonical()
+  void CoordinateSystem3D::SetupCanonical()
   {
     GeometryToolbox::AssignVector(origin_, 0, 0, 0);
     GeometryToolbox::AssignVector(axisX_, 1, 0, 0);
@@ -68,9 +68,9 @@ namespace OrthancStone
   }
 
 
-  SliceGeometry::SliceGeometry(const Vector& origin,
-                               const Vector& axisX,
-                               const Vector& axisY) :
+  CoordinateSystem3D::CoordinateSystem3D(const Vector& origin,
+                                         const Vector& axisX,
+                                         const Vector& axisY) :
     origin_(origin),
     axisX_(axisX),
     axisY_(axisY)
@@ -79,8 +79,8 @@ namespace OrthancStone
   }
 
 
-  void SliceGeometry::Setup(const std::string& imagePositionPatient,
-                            const std::string& imageOrientationPatient)
+  void CoordinateSystem3D::Setup(const std::string& imagePositionPatient,
+                                 const std::string& imageOrientationPatient)
   {
     std::string tmpPosition = Orthanc::Toolbox::StripSpaces(imagePositionPatient);
     std::string tmpOrientation = Orthanc::Toolbox::StripSpaces(imageOrientationPatient);
@@ -108,7 +108,7 @@ namespace OrthancStone
   }   
 
 
-  SliceGeometry::SliceGeometry(const OrthancPlugins::IDicomDataset& dicom)
+  CoordinateSystem3D::CoordinateSystem3D(const OrthancPlugins::IDicomDataset& dicom)
   {
     std::string a, b;
 
@@ -124,22 +124,22 @@ namespace OrthancStone
   }   
 
 
-  Vector SliceGeometry::MapSliceToWorldCoordinates(double x,
-                                                   double y) const
+  Vector CoordinateSystem3D::MapSliceToWorldCoordinates(double x,
+                                                        double y) const
   {
     return origin_ + x * axisX_ + y * axisY_;
   }
 
 
-  double SliceGeometry::ProjectAlongNormal(const Vector& point) const
+  double CoordinateSystem3D::ProjectAlongNormal(const Vector& point) const
   {
     return boost::numeric::ublas::inner_prod(point, normal_);
   }
 
 
-  void SliceGeometry::ProjectPoint(double& offsetX,
-                                   double& offsetY,
-                                   const Vector& point) const
+  void CoordinateSystem3D::ProjectPoint(double& offsetX,
+                                        double& offsetY,
+                                        const Vector& point) const
   {
     // Project the point onto the slice
     Vector projection;

@@ -195,7 +195,7 @@ namespace OrthancStone
 
 
   bool SlicesSorter::LookupSlice(size_t& index,
-                                 const SliceGeometry& slice) const
+                                 const CoordinateSystem3D& slice) const
   {
     // TODO Turn this linear-time lookup into a log-time lookup,
     // keeping track of whether the slices are sorted along the normal

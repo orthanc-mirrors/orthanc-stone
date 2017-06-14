@@ -66,6 +66,6 @@ namespace OrthancStone
     bool SelectNormal(Vector& normal) const;
 
     bool LookupSlice(size_t& index,
-                     const SliceGeometry& slice) const;
+                     const CoordinateSystem3D& slice) const;
   };
 }

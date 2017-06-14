@@ -123,7 +123,7 @@ namespace OrthancStone
     const Slice& GetSlice(size_t index) const;
 
     bool LookupSlice(size_t& index,
-                     const SliceGeometry& plane) const;
+                     const CoordinateSystem3D& plane) const;
 
     void ScheduleLoadSliceImage(size_t index,
                                 SliceImageQuality quality);

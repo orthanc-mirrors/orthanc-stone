@@ -39,7 +39,7 @@ namespace OrthancStone
   public:
     GrayscaleFrameRenderer(Orthanc::ImageAccessor* frame,    // Takes ownership
                            const DicomFrameConverter& converter,
-                           const SliceGeometry& frameSlice,
+                           const CoordinateSystem3D& frameSlice,
                            double pixelSpacingX,
                            double pixelSpacingY,
                            bool isFullQuality);

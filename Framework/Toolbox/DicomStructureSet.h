@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "SliceGeometry.h"
+#include "CoordinateSystem3D.h"
 #include "../Viewport/CairoContext.h"
 #include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
 
@@ -59,16 +59,16 @@ namespace OrthancStone
     std::string  parentSeriesId_;
     Vector       normal_;
 
-    SliceGeometry ExtractSliceGeometry(double& sliceThickness,
-                                       OrthancPlugins::IOrthancConnection& orthanc,
-                                       const OrthancPlugins::IDicomDataset& tags,
-                                       size_t contourIndex,
-                                       size_t sliceIndex);
+    CoordinateSystem3D ExtractSliceGeometry(double& sliceThickness,
+                                            OrthancPlugins::IOrthancConnection& orthanc,
+                                            const OrthancPlugins::IDicomDataset& tags,
+                                            size_t contourIndex,
+                                            size_t sliceIndex);
 
     const Structure& GetStructure(size_t index) const;
 
     bool IsPolygonOnSlice(const Polygon& polygon,
-                          const SliceGeometry& geometry) const;
+                          const CoordinateSystem3D& geometry) const;
 
 
   public:
@@ -97,6 +97,6 @@ namespace OrthancStone
     }
 
     void Render(CairoContext& context,
-                const SliceGeometry& slice) const;
+                const CoordinateSystem3D& slice) const;
   };
 }

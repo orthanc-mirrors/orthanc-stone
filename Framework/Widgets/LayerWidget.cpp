@@ -31,7 +31,7 @@ namespace OrthancStone
   class LayerWidget::Scene : public boost::noncopyable
   {
   private:
-    SliceGeometry                 slice_;
+    CoordinateSystem3D            slice_;
     size_t                        countMissing_;
     std::vector<ILayerRenderer*>  renderers_;
 
@@ -54,7 +54,7 @@ namespace OrthancStone
     }
       
   public:
-    Scene(const SliceGeometry& slice,
+    Scene(const CoordinateSystem3D& slice,
           size_t countLayers) :
       slice_(slice),
       countMissing_(countLayers),
@@ -84,7 +84,7 @@ namespace OrthancStone
       countMissing_--;
     }
 
-    const SliceGeometry& GetSlice() const
+    const CoordinateSystem3D& GetSlice() const
     {
       return slice_;
     }
@@ -106,7 +106,7 @@ namespace OrthancStone
 
     bool RenderScene(CairoContext& context,
                      const ViewportGeometry& view,
-                     const SliceGeometry& viewportSlice)
+                     const CoordinateSystem3D& viewportSlice)
     {
       bool fullQuality = true;
       cairo_t *cr = context.GetObject();
@@ -115,7 +115,7 @@ namespace OrthancStone
       {
         if (renderers_[i] != NULL)
         {
-          const SliceGeometry& frameSlice = renderers_[i]->GetLayerSlice();
+          const CoordinateSystem3D& frameSlice = renderers_[i]->GetLayerSlice();
           
           double x0, y0, x1, y1, x2, y2;
           viewportSlice.ProjectPoint(x0, y0, frameSlice.GetOrigin());
@@ -374,7 +374,7 @@ namespace OrthancStone
   }
   
 
-  void LayerWidget::SetSlice(const SliceGeometry& slice)
+  void LayerWidget::SetSlice(const CoordinateSystem3D& slice)
   {
     LOG(INFO) << "Setting slice origin: (" << slice.GetOrigin()[0]
               << "," << slice.GetOrigin()[1]

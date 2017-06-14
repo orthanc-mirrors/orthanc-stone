@@ -214,7 +214,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlices.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlicesCursor.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/Slice.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/SliceGeometry.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Toolbox/CoordinateSystem3D.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ViewportGeometry.cpp
   ${ORTHANC_STONE_DIR}/Framework/Viewport/CairoContext.cpp

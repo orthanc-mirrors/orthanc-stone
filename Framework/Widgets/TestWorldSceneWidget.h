@@ -23,6 +23,8 @@
 
 #include "WorldSceneWidget.h"
 
+#include <memory>
+
 namespace OrthancStone
 {
   namespace Samples

@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "SliceGeometry.h"
+#include "CoordinateSystem3D.h"
 #include "DicomFrameConverter.h"
 
 namespace OrthancStone
@@ -40,7 +40,7 @@ namespace OrthancStone
     Type                 type_;
     std::string          orthancInstanceId_;
     unsigned int         frame_;
-    SliceGeometry        geometry_;
+    CoordinateSystem3D   geometry_;
     double               pixelSpacingX_;
     double               pixelSpacingY_;
     double               thickness_;
@@ -55,7 +55,7 @@ namespace OrthancStone
 
     // TODO Is this constructor the best way to go to tackle missing
     // layers within LayerWidget?
-    Slice(const SliceGeometry& plane,
+    Slice(const CoordinateSystem3D& plane,
           double thickness) :
       type_(Type_Standalone),
       frame_(0),
@@ -68,7 +68,7 @@ namespace OrthancStone
     {      
     }
 
-    Slice(const SliceGeometry& plane,
+    Slice(const CoordinateSystem3D& plane,
           double pixelSpacingX,
           double pixelSpacingY,
           double thickness,
@@ -104,7 +104,7 @@ namespace OrthancStone
 
     unsigned int GetFrame() const;
 
-    const SliceGeometry& GetGeometry() const;
+    const CoordinateSystem3D& GetGeometry() const;
 
     double GetThickness() const;
 
@@ -118,7 +118,7 @@ namespace OrthancStone
 
     const DicomFrameConverter& GetConverter() const;
 
-    bool ContainsPlane(const SliceGeometry& plane) const;
+    bool ContainsPlane(const CoordinateSystem3D& plane) const;
 
     void GetExtent(std::vector<Vector>& points) const;
   };

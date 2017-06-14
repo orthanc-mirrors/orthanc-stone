@@ -132,7 +132,7 @@ namespace OrthancStone
   }
 
 
-  void ImageBuffer3D::SetAxialGeometry(const SliceGeometry& geometry)
+  void ImageBuffer3D::SetAxialGeometry(const CoordinateSystem3D& geometry)
   {
     axialGeometry_ = geometry;
   }

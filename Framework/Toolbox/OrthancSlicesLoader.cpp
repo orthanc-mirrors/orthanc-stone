@@ -597,7 +597,7 @@ namespace OrthancStone
   
 
   bool OrthancSlicesLoader::LookupSlice(size_t& index,
-                                        const SliceGeometry& plane) const
+                                        const CoordinateSystem3D& plane) const
   {
     if (state_ != State_GeometryReady)
     {

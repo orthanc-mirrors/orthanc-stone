@@ -23,7 +23,6 @@
 
 #include "IWorldSceneMouseTracker.h"
 
-#include "../Toolbox/SliceGeometry.h"
 #include "../Toolbox/ViewportGeometry.h"
 #include "../Enumerations.h"
 #include "../Viewport/IStatusBar.h"

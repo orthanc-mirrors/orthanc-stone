@@ -46,7 +46,7 @@ namespace OrthancStone
       style_ = style;
     }
 
-    virtual const SliceGeometry& GetLayerSlice()
+    virtual const CoordinateSystem3D& GetLayerSlice()
     {
       return slice_.GetGeometry();
     }

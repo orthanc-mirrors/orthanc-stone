@@ -250,7 +250,7 @@ namespace OrthancStone
     double               pixelSpacingX_;
     double               pixelSpacingY_;
     double               sliceThickness_;
-    SliceGeometry        reference_;
+    CoordinateSystem3D   reference_;
     DicomFrameConverter  converter_;
     
     double ComputeAxialThickness(const OrthancVolumeImage& volume) const
@@ -315,7 +315,7 @@ namespace OrthancStone
       origin += (static_cast<double>(volume.GetSliceCount() - 1) *
                  axialThickness * axial.GetGeometry().GetNormal());
       
-      reference_ = SliceGeometry(origin,
+      reference_ = CoordinateSystem3D(origin,
                                  axial.GetGeometry().GetAxisX(), 
                                  -axial.GetGeometry().GetNormal());
     }
@@ -337,7 +337,7 @@ namespace OrthancStone
       origin += (static_cast<double>(volume.GetSliceCount() - 1) *
                  axialThickness * axial.GetGeometry().GetNormal());
       
-      reference_ = SliceGeometry(origin,
+      reference_ = CoordinateSystem3D(origin,
                                  axial.GetGeometry().GetAxisY(), 
                                  axial.GetGeometry().GetNormal());
     }
@@ -383,7 +383,7 @@ namespace OrthancStone
     }
     
     bool LookupSlice(size_t& index,
-                     const SliceGeometry& slice) const
+                     const CoordinateSystem3D& slice) const
     {
       bool opposite;
       if (!GeometryToolbox::IsParallelOrOpposite(opposite,
@@ -419,7 +419,7 @@ namespace OrthancStone
       }
       else
       {
-        SliceGeometry origin(reference_.GetOrigin() +
+        CoordinateSystem3D origin(reference_.GetOrigin() +
                              static_cast<double>(slice) * sliceThickness_ * reference_.GetNormal(),
                              reference_.GetAxisX(),
                              reference_.GetAxisY());
@@ -505,7 +505,7 @@ namespace OrthancStone
 
 
     bool DetectProjection(VolumeProjection& projection,
-                          const SliceGeometry& viewportSlice)
+                          const CoordinateSystem3D& viewportSlice)
     {
       bool isOpposite;  // Ignored
 
@@ -545,7 +545,7 @@ namespace OrthancStone
     }
 
     virtual bool GetExtent(std::vector<Vector>& points,
-                           const SliceGeometry& viewportSlice)
+                           const CoordinateSystem3D& viewportSlice)
     {
       VolumeProjection projection;
       
@@ -565,7 +565,7 @@ namespace OrthancStone
     }
     
 
-    virtual void ScheduleLayerCreation(const SliceGeometry& viewportSlice)
+    virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
     {
       VolumeProjection projection;
       

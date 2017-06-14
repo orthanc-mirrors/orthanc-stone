@@ -27,7 +27,7 @@
 namespace OrthancStone
 {
   // Geometry of a 3D plane
-  class SliceGeometry
+  class CoordinateSystem3D
   {
   private:
     Vector    origin_;
@@ -43,19 +43,19 @@ namespace OrthancStone
     void SetupCanonical();
 
   public:
-    SliceGeometry()
+    CoordinateSystem3D()
     {
       SetupCanonical();
     }
 
-    SliceGeometry(const Vector& origin,
-                  const Vector& axisX,
-                  const Vector& axisY);
+    CoordinateSystem3D(const Vector& origin,
+                       const Vector& axisX,
+                       const Vector& axisY);
 
-    SliceGeometry(const OrthancPlugins::IDicomDataset& dicom);
+    CoordinateSystem3D(const OrthancPlugins::IDicomDataset& dicom);
 
-    SliceGeometry(const std::string& imagePositionPatient,
-                  const std::string& imageOrientationPatient)
+    CoordinateSystem3D(const std::string& imagePositionPatient,
+                       const std::string& imageOrientationPatient)
     {
       Setup(imagePositionPatient, imageOrientationPatient);
     }

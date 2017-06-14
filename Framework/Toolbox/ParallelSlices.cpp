@@ -41,7 +41,7 @@ namespace OrthancStone
     for (size_t i = 0; i < slices_.size(); i++)
     {
       assert(other.slices_[i] != NULL);
-      slices_[i] = new SliceGeometry(*other.slices_[i]);
+      slices_[i] = new CoordinateSystem3D(*other.slices_[i]);
     }
   }
 
@@ -59,16 +59,16 @@ namespace OrthancStone
   }
 
 
-  void ParallelSlices::AddSlice(const SliceGeometry& slice)
+  void ParallelSlices::AddSlice(const CoordinateSystem3D& slice)
   {
     if (slices_.empty())
     {
       normal_ = slice.GetNormal();
-      slices_.push_back(new SliceGeometry(slice));
+      slices_.push_back(new CoordinateSystem3D(slice));
     }
     else if (GeometryToolbox::IsParallel(slice.GetNormal(), normal_))
     {
-      slices_.push_back(new SliceGeometry(slice));
+      slices_.push_back(new CoordinateSystem3D(slice));
     }
     else
     {
@@ -82,12 +82,12 @@ namespace OrthancStone
                                 const Vector& axisX,
                                 const Vector& axisY)
   {
-    SliceGeometry slice(origin, axisX, axisY);
+    CoordinateSystem3D slice(origin, axisX, axisY);
     AddSlice(slice);
   }
 
 
-  const SliceGeometry& ParallelSlices::GetSlice(size_t index) const
+  const CoordinateSystem3D& ParallelSlices::GetSlice(size_t index) const
   {
     if (index >= slices_.size())
     {
@@ -135,7 +135,7 @@ namespace OrthancStone
 
     for (size_t i = slices_.size(); i > 0; i--)
     {
-      const SliceGeometry& slice = *slices_[i - 1];
+      const CoordinateSystem3D& slice = *slices_[i - 1];
 
       reversed->AddSlice(slice.GetOrigin(),
                          -slice.GetAxisX(),

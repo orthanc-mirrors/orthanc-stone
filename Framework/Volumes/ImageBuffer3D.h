@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Enumerations.h"
-#include "../Toolbox/SliceGeometry.h"
+#include "../Toolbox/CoordinateSystem3D.h"
 #include "../Toolbox/ParallelSlices.h"
 
 #include "../../Resources/Orthanc/Core/Images/Image.h"
@@ -32,7 +32,7 @@ namespace OrthancStone
   class ImageBuffer3D : public boost::noncopyable
   {
   private:
-    SliceGeometry          axialGeometry_;
+    CoordinateSystem3D     axialGeometry_;
     Vector                 voxelDimensions_;
     Orthanc::Image         image_;
     Orthanc::PixelFormat   format_;
@@ -58,7 +58,7 @@ namespace OrthancStone
 
     // Set the geometry of the first axial slice (i.e. the one whose
     // depth == 0)
-    void SetAxialGeometry(const SliceGeometry& geometry);
+    void SetAxialGeometry(const CoordinateSystem3D& geometry);
 
     void SetVoxelDimensions(double x,
                             double y,

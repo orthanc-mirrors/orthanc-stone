@@ -88,7 +88,7 @@ namespace OrthancStone
 
 
   bool OrthancFrameLayerSource::GetExtent(std::vector<Vector>& points,
-                                          const SliceGeometry& viewportSlice)
+                                          const CoordinateSystem3D& viewportSlice)
   {
     size_t index;
     if (loader_.IsGeometryReady() &&
@@ -104,7 +104,7 @@ namespace OrthancStone
   }
 
   
-  void OrthancFrameLayerSource::ScheduleLayerCreation(const SliceGeometry& viewportSlice)
+  void OrthancFrameLayerSource::ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
   {
     size_t index;
 

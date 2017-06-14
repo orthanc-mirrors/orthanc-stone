@@ -24,25 +24,25 @@
 #include "../Widgets/IWorldSceneMouseTracker.h"
 
 #include "../Viewport/IStatusBar.h"
-#include "../Toolbox/SliceGeometry.h"
+#include "../Toolbox/CoordinateSystem3D.h"
 
 namespace OrthancStone
 {
   class LineMeasureTracker : public IWorldSceneMouseTracker
   {
   private:
-    IStatusBar*    statusBar_;
-    SliceGeometry  slice_;
-    double         x1_;
-    double         y1_;
-    double         x2_;
-    double         y2_;
-    uint8_t        color_[3];
-    unsigned int   fontSize_;
+    IStatusBar*         statusBar_;
+    CoordinateSystem3D  slice_;
+    double              x1_;
+    double              y1_;
+    double              x2_;
+    double              y2_;
+    uint8_t             color_[3];
+    unsigned int        fontSize_;
 
   public:
     LineMeasureTracker(IStatusBar* statusBar,
-                       const SliceGeometry& slice,
+                       const CoordinateSystem3D& slice,
                        double x, 
                        double y,
                        uint8_t red,

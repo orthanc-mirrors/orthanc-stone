@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Viewport/CairoContext.h"
-#include "../Toolbox/SliceGeometry.h"
+#include "../Toolbox/CoordinateSystem3D.h"
 #include "../Toolbox/ViewportGeometry.h"
 #include "RenderStyle.h"
 
@@ -40,7 +40,7 @@ namespace OrthancStone
 
     virtual void SetLayerStyle(const RenderStyle& style) = 0;
 
-    virtual const SliceGeometry& GetLayerSlice() = 0;
+    virtual const CoordinateSystem3D& GetLayerSlice() = 0;
     
     virtual bool IsFullQuality() = 0;
   };

@@ -21,6 +21,10 @@
 
 #include "WorldSceneWidget.h"
 
+#include <math.h>
+#include <memory>
+#include <cassert>
+
 namespace OrthancStone
 {
   static void MapMouseToScene(double& sceneX,

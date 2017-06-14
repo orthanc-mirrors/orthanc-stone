@@ -51,11 +51,11 @@ namespace OrthancStone
   }
 
 
-  SliceGeometry ParallelSlicesCursor::GetSlice(size_t slice)
+  CoordinateSystem3D ParallelSlicesCursor::GetSlice(size_t slice)
   {
     if (slices_.get() == NULL)
     {
-      return SliceGeometry();
+      return CoordinateSystem3D();
     }
     else
     {
@@ -72,7 +72,7 @@ namespace OrthancStone
   }
 
 
-  SliceGeometry ParallelSlicesCursor::GetCurrentSlice()
+  CoordinateSystem3D ParallelSlicesCursor::GetCurrentSlice()
   {
     if (slices_.get() != NULL &&
         currentSlice_ < slices_->GetSliceCount())
@@ -81,7 +81,7 @@ namespace OrthancStone
     }
     else
     {
-      return SliceGeometry();  // No slice is available, return the canonical geometry
+      return CoordinateSystem3D();  // No slice is available, return the canonical geometry
     }
   }
 

@@ -42,7 +42,7 @@ namespace OrthancStone
     LayersIndex                 layersIndex_;
     std::vector<ILayerSource*>  layers_;
     std::vector<RenderStyle>    styles_;
-    SliceGeometry               slice_;
+    CoordinateSystem3D          slice_;
     std::auto_ptr<Scene>        currentScene_;
     std::auto_ptr<Scene>        pendingScene_;
     std::vector<bool>           changedLayers_;
@@ -100,9 +100,9 @@ namespace OrthancStone
     void SetLayerStyle(size_t layer,
                        const RenderStyle& style);
 
-    void SetSlice(const SliceGeometry& slice);
+    void SetSlice(const CoordinateSystem3D& slice);
 
-    const SliceGeometry& GetSlice() const
+    const CoordinateSystem3D& GetSlice() const
     {
       return slice_;
     }

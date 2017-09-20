@@ -54,9 +54,12 @@ SET(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 ## Configure the Orthanc Framework
 #####################################################################
 
-if (NOT STONE_SANDBOXED)
+if (STONE_SANDBOXED)
+  UNSET(ENABLE_CURL CACHE)
+  UNSET(ENABLE_LOGGING CACHE)
+  UNSET(ENABLE_SDL CACHE)
+else()
   SET(ORTHANC_BOOST_COMPONENTS program_options)
-  SET(ENABLE_CURL ON)
   SET(ENABLE_CRYPTO_OPTIONS ON)
   SET(ENABLE_WEB_CLIENT ON)
 endif()
@@ -162,6 +165,15 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows" AND
     ENABLE_SDL)
   # This is necessary when compiling EXE for Windows using MinGW
   link_libraries(mingw32)
+endif()
+
+if (STONE_SANDBOXED)
+  # Remove functions not suitable for a sandboxed environment
+  list(REMOVE_ITEM ORTHANC_CORE_SOURCES
+    ${ZLIB_SOURCES_DIR}/gzlib.c
+    ${ZLIB_SOURCES_DIR}/gzwrite.c
+    ${ZLIB_SOURCES_DIR}/gzread.c
+    )
 endif()
 
 

@@ -7,7 +7,7 @@ project(OrthancStone)
 #####################################################################
 
 SET(STONE_SANDBOXED OFF)
-include(Resources/CMake/OrthancStone.cmake)
+include(../../Resources/CMake/OrthancStone.cmake)
 add_library(OrthancStone STATIC ${ORTHANC_STONE_SOURCES})
 
 
@@ -17,7 +17,7 @@ add_library(OrthancStone STATIC ${ORTHANC_STONE_SOURCES})
 
 macro(BuildSample Target Sample)
   add_executable(${Target}
-    Applications/Samples/SampleMainSdl.cpp
+    ${ORTHANC_STONE_DIR}/Applications/Samples/SampleMainSdl.cpp
     ${APPLICATIONS_SOURCES}
     )
   set_target_properties(${Target} PROPERTIES COMPILE_DEFINITIONS ORTHANC_STONE_SAMPLE=${Sample})
@@ -41,7 +41,7 @@ endmacro()
 
 add_executable(UnitTests
   ${GOOGLE_TEST_SOURCES}
-  UnitTestsSources/UnitTestsMain.cpp
+  ${ORTHANC_STONE_DIR}/UnitTestsSources/UnitTestsMain.cpp
   )
 
 target_link_libraries(UnitTests OrthancStone)

@@ -68,10 +68,11 @@ namespace OrthancStone
                                   bool isError);
 
     void ResetChangedLayers();
-        
-  protected:
+
+  public:
     virtual Extent2D GetSceneExtent();
  
+  protected:
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view);
 

@@ -24,6 +24,7 @@
 #include "Layers/FrameRenderer.h"
 #include "Layers/LayerSourceBase.h"
 #include "Layers/SliceOutlineRenderer.h"
+#include "Layers/LineLayerRenderer.h"
 #include "Widgets/LayerWidget.h"
 #include "Toolbox/DownloadStack.h"
 #include "Toolbox/OrthancSlicesLoader.h"
@@ -758,5 +759,65 @@ namespace OrthancStone
         widget_.SetSlice(slices_->GetSlice(slice_).GetGeometry());
       }
     }
+  };
+
+
+
+  class SliceLocationSource : public LayerSourceBase
+  {
+  private:
+    LayerWidget&  otherPlane_;
+
+  public:
+    SliceLocationSource(LayerWidget&  otherPlane) :
+      otherPlane_(otherPlane)
+    {
+      NotifyGeometryReady();
+    }
+
+    virtual bool GetExtent(std::vector<Vector>& points,
+                           const CoordinateSystem3D& viewportSlice)
+    {
+      return false;
+    }
+
+    virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
+    {
+      Slice reference(viewportSlice, 0.001);
+      
+      Vector p, d;
+
+      const CoordinateSystem3D& slice = otherPlane_.GetSlice();
+
+      // Compute the line of intersection between the two slices
+      if (!GeometryToolbox::IntersectTwoPlanes(p, d, 
+                                               slice.GetOrigin(), slice.GetNormal(),
+                                               viewportSlice.GetOrigin(), viewportSlice.GetNormal()))
+      {
+        // The two slice are parallel, don't try and display the intersection
+        NotifyLayerReady(NULL, reference, false);
+      }
+      else
+      {
+        double x1, y1, x2, y2;
+        viewportSlice.ProjectPoint(x1, y1, p);
+        viewportSlice.ProjectPoint(x2, y2, p + 1000.0 * d);
+
+        const Extent2D extent = otherPlane_.GetSceneExtent();
+        
+        if (GeometryToolbox::ClipLineToRectangle(x1, y1, x2, y2, 
+                                                 x1, y1, x2, y2,
+                                                 extent.GetX1(), extent.GetY1(),
+                                                 extent.GetX2(), extent.GetY2()))
+        {
+          NotifyLayerReady(new LineLayerRenderer(x1, y1, x2, y2, slice), reference, false);
+        }
+        else
+        {
+          // Parallel slices
+          NotifyLayerReady(NULL, reference, false);
+        }
+      }
+    }      
   };
 }

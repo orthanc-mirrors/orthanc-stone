@@ -55,8 +55,8 @@ namespace OrthancStone
       // std::auto_ptr
       virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& layer,
                                     const ILayerSource& source,
-                                    const Slice& slice,
-                                    bool isError) = 0;
+                                    const Slice& slice,  // TODO Shouldn't this be CoordinateSystem3D? Is it necessary given ILayerS::GetLayerSlice()?
+                                    bool isError) = 0;  // TODO Shouldn't this be separate as NotifyLayerError?
     };
     
     virtual ~ILayerSource()

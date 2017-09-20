@@ -26,11 +26,13 @@ namespace OrthancStone
   LineLayerRenderer::LineLayerRenderer(double x1,
                                        double y1,
                                        double x2,
-                                       double y2) : 
+                                       double y2,
+                                       const CoordinateSystem3D& slice) : 
     x1_(x1),
     y1_(y1),
     x2_(x2),
-    y2_(y2)
+    y2_(y2),
+    slice_(slice)
   {
     RenderStyle style;
     SetLayerStyle(style);
@@ -38,8 +40,7 @@ namespace OrthancStone
 
 
   bool LineLayerRenderer::RenderLayer(CairoContext& context,
-                                      const ViewportGeometry& view,
-                                      const CoordinateSystem3D& slice)
+                                      const ViewportGeometry& view)
   {
     if (visible_)
     {

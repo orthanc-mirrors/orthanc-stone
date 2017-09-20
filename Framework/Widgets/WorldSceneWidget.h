@@ -59,10 +59,10 @@ namespace OrthancStone
     Observers              observers_;
     IWorldSceneInteractor* interactor_;
 
+  public:
+    virtual Extent2D GetSceneExtent() = 0;
 
   protected:
-    virtual Extent2D GetSceneExtent() = 0;
-    
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view) = 0;
 

@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 
 #####################################################################
-## Configuration of Emscripten for WebAssembly target
+## Configuration of the Emscripten compiler for WebAssembly target
 #####################################################################
 
 set(WASM_FLAGS "-s WASM=1")
@@ -24,14 +24,23 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1 -
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s DEMANGLE_SUPPORT=1 -s ASSERTIONS=2")
 
 
-
 #####################################################################
 ## Build a static library containing the Orthanc Stone framework
 #####################################################################
 
-SET(STONE_SANDBOXED ON)
-include(../../Resources/CMake/OrthancStone.cmake)
+include(../../Resources/CMake/OrthancStoneParameters.cmake)
+
+SET(ORTHANC_SANDBOXED ON)
+SET(ENABLE_SDL OFF)
+
+include(../../Resources/CMake/OrthancStoneConfiguration.cmake)
+
 add_library(OrthancStone STATIC ${ORTHANC_STONE_SOURCES})
+
+
+
+
+
 
 # Regenerate a dummy "library.c" file each time the "library.js" file
 # is modified, so as to force a new execution of the linking

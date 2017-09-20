@@ -19,52 +19,9 @@
 
 
 #####################################################################
-## Import the parameters of the Orthanc Framework
-#####################################################################
-
-# TODO => Import
-SET(ORTHANC_ROOT /home/jodogne/Subversion/orthanc)
-
-include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkParameters.cmake)
-
-# Optional components of the Orthanc Framework
-SET(ENABLE_CURL ON CACHE BOOL "Include support for libcurl")
-SET(ENABLE_SSL OFF CACHE BOOL "Include support for SSL")
-SET(ENABLE_LOGGING ON CACHE BOOL "Enable logging facilities from Orthanc")
-
-
-
-#####################################################################
-## Parameters of the Stone of Orthanc
-#####################################################################
-
-# Generic parameters
-SET(STONE_SANDBOXED OFF CACHE BOOL "Whether Stone runs inside a sandboxed environment (such as Google NaCl or WebAssembly)")
-
-# Optional components of Stone
-SET(ENABLE_SDL ON CACHE BOOL "Include support for SDL")
-
-# Advanced parameters to fine-tune linking against system libraries
-SET(USE_SYSTEM_CAIRO ON CACHE BOOL "Use the system version of Cairo")
-SET(USE_SYSTEM_PIXMAN ON CACHE BOOL "Use the system version of Pixman")
-SET(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
-
-
-#####################################################################
 ## Configure the Orthanc Framework
 #####################################################################
 
-if (STONE_SANDBOXED)
-  UNSET(ENABLE_CURL CACHE)
-  UNSET(ENABLE_LOGGING CACHE)
-  UNSET(ENABLE_SDL CACHE)
-else()
-  SET(ORTHANC_BOOST_COMPONENTS program_options)
-  SET(ENABLE_CRYPTO_OPTIONS ON)
-  SET(ENABLE_WEB_CLIENT ON)
-endif()
-  
-SET(ENABLE_GOOGLE_TEST ON)
 SET(ENABLE_JPEG ON)
 SET(ENABLE_PNG ON)
 
@@ -74,27 +31,10 @@ include_directories(${ORTHANC_ROOT})
 
 
 #####################################################################
-## Configure mandatory third-party components
+## Sanity check of the configuration
 #####################################################################
 
-SET(ORTHANC_STONE_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
-
-include(FindPkgConfig)
-include(${CMAKE_CURRENT_LIST_DIR}/BoostExtendedConfiguration.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/CairoConfiguration.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/PixmanConfiguration.cmake)
-
-if (MSVC)
-  # Remove some warnings on Visual Studio 2015
-  add_definitions(-D_SCL_SECURE_NO_WARNINGS=1) 
-endif()
-
-
-#####################################################################
-## Configure optional third-party components
-#####################################################################
-
-if (STONE_SANDBOXED)
+if (ORTHANC_SANDBOXED)
   if (ENABLE_CURL)
     message(FATAL_ERROR "Cannot enable curl in sandboxed environments")
   endif()
@@ -110,18 +50,29 @@ if (STONE_SANDBOXED)
   if (ENABLE_SSL)
     message(FATAL_ERROR "Cannot enable SSL in sandboxed environments")
   endif()
+endif()
+  
 
-  add_definitions(
-    -DORTHANC_SANDBOXED=1
-    )
+#####################################################################
+## Configure mandatory third-party components
+#####################################################################
 
-else()
+SET(ORTHANC_STONE_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
+
+include(FindPkgConfig)
+include(${CMAKE_CURRENT_LIST_DIR}/BoostExtendedConfiguration.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/CairoConfiguration.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/PixmanConfiguration.cmake)
+
+
+
+#####################################################################
+## Configure optional third-party components
+#####################################################################
+
+if (NOT ORTHANC_SANDBOXED)
   list(APPEND ORTHANC_STONE_SOURCES
     ${ORTHANC_ROOT}/Plugins/Samples/Common/OrthancHttpConnection.cpp
-    )
-
-  add_definitions(
-    -DORTHANC_SANDBOXED=0
     )
 endif()
 
@@ -130,15 +81,25 @@ if (ENABLE_SDL)
   include(${CMAKE_CURRENT_LIST_DIR}/SdlConfiguration.cmake)  
   add_definitions(-DORTHANC_ENABLE_SDL=1)
 else()
+  unset(USE_SYSTEM_SDL CACHE)
   add_definitions(-DORTHANC_ENABLE_SDL=0)
 endif()
 
+
+
+#####################################################################
+## Configuration of the C/C++ macros
+#####################################################################
+
+if (MSVC)
+  # Remove some warnings on Visual Studio 2015
+  add_definitions(-D_SCL_SECURE_NO_WARNINGS=1) 
+endif()
 
 add_definitions(
   -DHAS_ORTHANC_EXCEPTION=1
   -DORTHANC_ENABLE_LOGGING_PLUGIN=0
   )
-
 
 
 
@@ -167,7 +128,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows" AND
   link_libraries(mingw32)
 endif()
 
-if (STONE_SANDBOXED)
+if (ORTHANC_SANDBOXED)
   # Remove functions not suitable for a sandboxed environment
   list(REMOVE_ITEM ORTHANC_CORE_SOURCES
     ${ZLIB_SOURCES_DIR}/gzlib.c
@@ -182,7 +143,7 @@ endif()
 ## All the source files required to build Stone of Orthanc
 #####################################################################
 
-if (NOT STONE_SANDBOXED)
+if (NOT ORTHANC_SANDBOXED)
   set(PLATFORM_SOURCES
     ${ORTHANC_STONE_DIR}/Platforms/Generic/WebServiceGetCommand.cpp
     ${ORTHANC_STONE_DIR}/Platforms/Generic/WebServicePostCommand.cpp

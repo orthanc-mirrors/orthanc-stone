@@ -6,8 +6,16 @@ project(OrthancStone)
 ## Build a static library containing the Orthanc Stone framework
 #####################################################################
 
-SET(STONE_SANDBOXED OFF)
-include(../../Resources/CMake/OrthancStone.cmake)
+include(../../Resources/CMake/OrthancStoneParameters.cmake)
+
+SET(ORTHANC_SANDBOXED OFF)
+SET(ORTHANC_BOOST_COMPONENTS program_options)
+SET(ENABLE_CRYPTO_OPTIONS ON)
+SET(ENABLE_GOOGLE_TEST ON)
+SET(ENABLE_WEB_CLIENT ON)
+
+include(../../Resources/CMake/OrthancStoneConfiguration.cmake)
+
 add_library(OrthancStone STATIC ${ORTHANC_STONE_SOURCES})
 
 

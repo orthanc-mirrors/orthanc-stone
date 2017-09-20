@@ -23,8 +23,8 @@
 
 #include "ParallelSlices.h"
 
-#include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/IDicomDataset.h"
+#include <Core/Images/ImageAccessor.h>
+#include <Plugins/Samples/Common/IDicomDataset.h>
 
 namespace OrthancStone
 {

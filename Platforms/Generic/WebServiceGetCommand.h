@@ -24,7 +24,8 @@
 #include "IOracleCommand.h"
 
 #include "../../Framework/Toolbox/IWebService.h"
-#include "../../Resources/Orthanc/Core/WebServiceParameters.h"
+
+#include <Core/WebServiceParameters.h>
 
 #include <memory>
 

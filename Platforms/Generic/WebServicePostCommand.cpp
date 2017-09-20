@@ -21,7 +21,7 @@
 
 #include "WebServicePostCommand.h"
 
-#include "../../Resources/Orthanc/Core/HttpClient.h"
+#include <Core/HttpClient.h>
 
 namespace OrthancStone
 {

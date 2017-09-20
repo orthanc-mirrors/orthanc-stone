@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
-
 #include "../Enumerations.h"
-#include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
+
+#include <Plugins/Samples/Common/IOrthancConnection.h>
+#include <Core/Images/ImageAccessor.h>
 
 #include <json/value.h>
 

@@ -21,10 +21,11 @@
 
 #include "DicomStructureSet.h"
 
-#include "../../Resources/Orthanc/Core/Logging.h"
-#include "../../Resources/Orthanc/Core/OrthancException.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/FullOrthancDataset.h"
 #include "../Toolbox/MessagingToolbox.h"
+
+#include <Core/Logging.h>
+#include <Core/OrthancException.h>
+#include <Plugins/Samples/Common/FullOrthancDataset.h>
 
 #include <stdio.h>
 #include <boost/lexical_cast.hpp>

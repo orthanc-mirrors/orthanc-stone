@@ -25,7 +25,7 @@
 #include "../Toolbox/CoordinateSystem3D.h"
 #include "../Toolbox/ParallelSlices.h"
 
-#include "../../Resources/Orthanc/Core/Images/Image.h"
+#include <Core/Images/Image.h>
 
 namespace OrthancStone
 {

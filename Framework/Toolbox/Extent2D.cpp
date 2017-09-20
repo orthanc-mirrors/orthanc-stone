@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <limits>
 
 namespace OrthancStone
 {

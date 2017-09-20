@@ -22,7 +22,7 @@
 #pragma once
 
 #include "ILayerRendererFactory.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
+#include <Plugins/Samples/Common/IOrthancConnection.h>
 
 namespace OrthancStone
 {

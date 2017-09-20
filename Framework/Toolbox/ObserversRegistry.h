@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include <Core/OrthancException.h>
 
 #include <boost/noncopyable.hpp>
 #include <set>

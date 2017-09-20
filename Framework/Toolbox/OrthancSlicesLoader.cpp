@@ -23,15 +23,15 @@
 
 #include "MessagingToolbox.h"
 
-#include "../../Resources/Orthanc/Core/Images/Image.h"
-#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
-#include "../../Resources/Orthanc/Core/Images/JpegReader.h"
-#include "../../Resources/Orthanc/Core/Images/PngReader.h"
-#include "../../Resources/Orthanc/Core/Logging.h"
-#include "../../Resources/Orthanc/Core/OrthancException.h"
-#include "../../Resources/Orthanc/Core/Toolbox.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/DicomDatasetReader.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/FullOrthancDataset.h"
+#include <Core/Images/Image.h>
+#include <Core/Images/ImageProcessing.h>
+#include <Core/Images/JpegReader.h>
+#include <Core/Images/PngReader.h>
+#include <Core/Logging.h>
+#include <Core/OrthancException.h>
+#include <Core/Toolbox.h>
+#include <Plugins/Samples/Common/DicomDatasetReader.h>
+#include <Plugins/Samples/Common/FullOrthancDataset.h>
 
 #include <boost/lexical_cast.hpp>
 

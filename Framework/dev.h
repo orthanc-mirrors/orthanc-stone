@@ -31,8 +31,8 @@
 #include "Volumes/ImageBuffer3D.h"
 #include "Volumes/SlicedVolumeBase.h"
 
-#include "../Resources/Orthanc/Core/Logging.h"
-#include "../Resources/Orthanc/Core/Images/ImageProcessing.h"
+#include <Core/Logging.h>
+#include <Core/Images/ImageProcessing.h>
 
 #include <boost/math/special_functions/round.hpp>
 

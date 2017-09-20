@@ -12,29 +12,24 @@ add_library(OrthancStone STATIC ${ORTHANC_STONE_SOURCES})
 
 
 #####################################################################
-## CMake parameters for Google Test
-#####################################################################
-
-SET(USE_SYSTEM_GOOGLE_TEST ON CACHE BOOL "Use the system version of Google Test")
-SET(USE_GTEST_DEBIAN_SOURCE_PACKAGE OFF CACHE BOOL "Use the sources of Google Test shipped with libgtest-dev (Debian only)")
-
-include(${ORTHANC_ROOT}/Resources/CMake/GoogleTestConfiguration.cmake)
-
-
-#####################################################################
 ## Build all the sample applications
 #####################################################################
 
 macro(BuildSample Target Sample)
-  add_executable(${Target} Applications/Samples/SampleMainSdl.cpp)
+  add_executable(${Target}
+    Applications/Samples/SampleMainSdl.cpp
+    ${APPLICATIONS_SOURCES}
+    )
   set_target_properties(${Target} PROPERTIES COMPILE_DEFINITIONS ORTHANC_STONE_SAMPLE=${Sample})
   target_link_libraries(${Target} OrthancStone)
 endmacro()
 
-BuildSample(OrthancStoneEmpty 1)
-BuildSample(OrthancStoneTestPattern 2)
-BuildSample(OrthancStoneSingleFrame 3)
-BuildSample(OrthancStoneSingleVolume 4)
+# TODO - Re-enable this stuff!
+
+#BuildSample(OrthancStoneEmpty 1)
+#BuildSample(OrthancStoneTestPattern 2)
+#BuildSample(OrthancStoneSingleFrame 3)
+#BuildSample(OrthancStoneSingleVolume 4)
 #BuildSample(OrthancStoneBasicPetCtFusion 5)
 #BuildSample(OrthancStoneSynchronizedSeries 6)
 #BuildSample(OrthancStoneLayoutPetCtFusion 7)
@@ -45,7 +40,7 @@ BuildSample(OrthancStoneSingleVolume 4)
 #####################################################################
 
 add_executable(UnitTests
-  ${GTEST_SOURCES}
+  ${GOOGLE_TEST_SOURCES}
   UnitTestsSources/UnitTestsMain.cpp
   )
 

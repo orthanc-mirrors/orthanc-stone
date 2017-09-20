@@ -23,10 +23,11 @@
 
 #include "FrameRenderer.h"
 #include "../Toolbox/MessagingToolbox.h"
-#include "../../Resources/Orthanc/Core/OrthancException.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/FullOrthancDataset.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/DicomDatasetReader.h"
 #include "../Toolbox/DicomFrameConverter.h"
+
+#include <Core/OrthancException.h>
+#include <Plugins/Samples/Common/FullOrthancDataset.h>
+#include <Plugins/Samples/Common/DicomDatasetReader.h>
 
 namespace OrthancStone
 {

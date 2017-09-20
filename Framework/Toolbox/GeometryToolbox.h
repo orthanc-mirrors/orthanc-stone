@@ -30,7 +30,7 @@
 
 #include <boost/numeric/ublas/vector.hpp>
 
-#include "../../Resources/Orthanc/Plugins/Samples/Common/DicomDatasetReader.h"
+#include <Plugins/Samples/Common/DicomDatasetReader.h>
 
 namespace OrthancStone
 {

@@ -21,8 +21,9 @@
 
 #include "LayerWidget.h"
 
-#include "../../Resources/Orthanc/Core/Logging.h"
 #include "../Layers/SliceOutlineRenderer.h"
+
+#include <Core/Logging.h>
 
 static const double THIN_SLICE_THICKNESS = 100.0 * std::numeric_limits<double>::epsilon();
 

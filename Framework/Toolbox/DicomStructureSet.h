@@ -23,7 +23,8 @@
 
 #include "CoordinateSystem3D.h"
 #include "../Viewport/CairoContext.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
+
+#include <Plugins/Samples/Common/IOrthancConnection.h>
 
 #include <list>
 

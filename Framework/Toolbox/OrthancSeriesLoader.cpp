@@ -22,11 +22,13 @@
 #include "OrthancSeriesLoader.h"
 
 #include "../Toolbox/MessagingToolbox.h"
-#include "../../Resources/Orthanc/Core/Images/Image.h"
-#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
-#include "../../Resources/Orthanc/Core/Logging.h"
-#include "../../Resources/Orthanc/Core/OrthancException.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/FullOrthancDataset.h"
+
+#include <Core/Images/Image.h>
+#include <Core/Images/ImageProcessing.h>
+#include <Core/Logging.h>
+#include <Core/OrthancException.h>
+#include <Plugins/Samples/Common/FullOrthancDataset.h>
+
 #include "DicomFrameConverter.h"
 
 namespace OrthancStone

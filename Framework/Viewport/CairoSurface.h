@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
+#include <Core/Images/ImageAccessor.h>
 
 #include <boost/noncopyable.hpp>
 #include <cairo.h>

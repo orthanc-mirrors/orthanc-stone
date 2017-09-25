@@ -32,12 +32,13 @@ macro(BuildSample Target Sample)
   target_link_libraries(${Target} OrthancStone)
 endmacro()
 
-# TODO - Re-enable this stuff!
 
-#BuildSample(OrthancStoneEmpty 1)
-#BuildSample(OrthancStoneTestPattern 2)
-#BuildSample(OrthancStoneSingleFrame 3)
-#BuildSample(OrthancStoneSingleVolume 4)
+# TODO - Re-enable all these samples!
+
+BuildSample(OrthancStoneEmpty 1)
+BuildSample(OrthancStoneTestPattern 2)
+BuildSample(OrthancStoneSingleFrame 3)
+BuildSample(OrthancStoneSingleVolume 4)
 #BuildSample(OrthancStoneBasicPetCtFusion 5)
 #BuildSample(OrthancStoneSynchronizedSeries 6)
 #BuildSample(OrthancStoneLayoutPetCtFusion 7)

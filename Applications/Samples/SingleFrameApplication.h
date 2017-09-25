@@ -25,7 +25,8 @@
 
 #include "../../Framework/Layers/OrthancFrameLayerSource.h"
 #include "../../Framework/Widgets/LayerWidget.h"
-#include "../../Resources/Orthanc/Core/Logging.h"
+
+#include <Core/Logging.h>
 
 namespace OrthancStone
 {

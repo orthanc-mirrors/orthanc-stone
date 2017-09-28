@@ -75,16 +75,22 @@ namespace OrthancStone
   }
 
   
-  void OrthancFrameLayerSource::LoadInstance(const std::string& instanceId,
-                                             unsigned int frame)
-  {
-    loader_.ScheduleLoadInstance(instanceId, frame);
-  }
-
-
   void OrthancFrameLayerSource::LoadSeries(const std::string& seriesId)
   {
     loader_.ScheduleLoadSeries(seriesId);
+  }
+
+
+  void OrthancFrameLayerSource::LoadInstance(const std::string& instanceId)
+  {
+    loader_.ScheduleLoadInstance(instanceId);
+  }
+
+
+  void OrthancFrameLayerSource::LoadFrame(const std::string& instanceId,
+                                          unsigned int frame)
+  {
+    loader_.ScheduleLoadFrame(instanceId, frame);
   }
 
 

@@ -53,10 +53,12 @@ namespace OrthancStone
   public:
     OrthancFrameLayerSource(IWebService& orthanc);
 
-    void LoadInstance(const std::string& instanceId,
-                      unsigned int frame);
-
     void LoadSeries(const std::string& seriesId);
+
+    void LoadInstance(const std::string& instanceId);
+
+    void LoadFrame(const std::string& instanceId,
+                   unsigned int frame);
 
     void SetImageQuality(SliceImageQuality quality)
     {

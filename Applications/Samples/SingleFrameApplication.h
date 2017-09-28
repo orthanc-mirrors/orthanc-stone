@@ -252,7 +252,7 @@ namespace OrthancStone
         std::auto_ptr<OrthancFrameLayerSource> layer
           (new OrthancFrameLayerSource(context.GetWebService()));
         //layer->SetImageQuality(SliceImageQuality_Jpeg50);
-        layer->LoadInstance(instance, frame);
+        layer->LoadFrame(instance, frame);
         //layer->LoadSeries("6f1b492a-e181e200-44e51840-ef8db55e-af529ab6");
         layer->Register(*this);
         source_ = layer.get();

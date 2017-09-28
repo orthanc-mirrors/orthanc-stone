@@ -33,13 +33,19 @@ namespace OrthancStone
     {
       Type_Invalid,
       Type_Standalone,
-      Type_OrthancInstance
+      Type_OrthancDecodableFrame,
+      Type_OrthancRawFrame
       // TODO A slice could come from some DICOM file (URL)
     };
 
+    bool ComputeRTDoseGeometry(const OrthancPlugins::DicomDatasetReader& reader,
+                               unsigned int frame);
+
     Type                 type_;
     std::string          orthancInstanceId_;
+    std::string          sopClassUid_;
     unsigned int         frame_;
+    unsigned int         frameCount_;
     CoordinateSystem3D   geometry_;
     double               pixelSpacingX_;
     double               pixelSpacingY_;
@@ -59,6 +65,7 @@ namespace OrthancStone
           double thickness) :
       type_(Type_Standalone),
       frame_(0),
+      frameCount_(0),
       geometry_(plane),
       pixelSpacingX_(1),
       pixelSpacingY_(1),
@@ -76,6 +83,7 @@ namespace OrthancStone
           unsigned int height,
           const DicomFrameConverter& converter) :
       type_(Type_Standalone),
+      frameCount_(1),
       geometry_(plane),
       pixelSpacingX_(pixelSpacingX),
       pixelSpacingY_(pixelSpacingY),
@@ -95,9 +103,9 @@ namespace OrthancStone
                            const std::string& instanceId,
                            unsigned int frame);
 
-    bool IsOrthancInstance() const
+    bool HasOrthancDecoding() const
     {
-      return type_ == Type_OrthancInstance;
+      return type_ == Type_OrthancDecodableFrame;
     }
 
     const std::string GetOrthancInstanceId() const;

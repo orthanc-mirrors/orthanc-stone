@@ -47,7 +47,7 @@ namespace OrthancStone
                                          unsigned int sliceIndex,
                                          const Slice& slice,
                                          std::auto_ptr<Orthanc::ImageAccessor>& image,
-                                         SliceImageQuality quality) = 0;
+                                         SliceImageQuality effectiveQuality) = 0;
 
       virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
                                          unsigned int sliceIndex,
@@ -68,7 +68,9 @@ namespace OrthancStone
     {
       Mode_SeriesGeometry,
       Mode_InstanceGeometry,
-      Mode_LoadImage
+      Mode_FrameGeometry,
+      Mode_LoadImage,
+      Mode_LoadRawImage
     };
 
     class Operation;
@@ -90,9 +92,13 @@ namespace OrthancStone
                              size_t size);
 
     void ParseInstanceGeometry(const std::string& instanceId,
-                               unsigned int frame,
                                const void* answer,
                                size_t size);
+
+    void ParseFrameGeometry(const std::string& instanceId,
+                            unsigned int frame,
+                            const void* answer,
+                            size_t size);
 
     void ParseSliceImagePng(const Operation& operation,
                             const void* answer,
@@ -102,9 +108,15 @@ namespace OrthancStone
                              const void* answer,
                              size_t size);
 
-    void ScheduleSliceImagePng(size_t index);
+    void ParseSliceRawImage(const Operation& operation,
+                            const void* answer,
+                            size_t size);
+
+    void ScheduleSliceImagePng(const Slice& slice,
+                               size_t index);
     
-    void ScheduleSliceImageJpeg(size_t index,
+    void ScheduleSliceImageJpeg(const Slice& slice,
+                                size_t index,
                                 SliceImageQuality quality);
     
   public:
@@ -113,8 +125,10 @@ namespace OrthancStone
 
     void ScheduleLoadSeries(const std::string& seriesId);
 
-    void ScheduleLoadInstance(const std::string& instanceId,
-                              unsigned int frame);
+    void ScheduleLoadInstance(const std::string& instanceId);
+
+    void ScheduleLoadFrame(const std::string& instanceId,
+                           unsigned int frame);
 
     bool IsGeometryReady() const;
 
@@ -126,6 +140,6 @@ namespace OrthancStone
                      const CoordinateSystem3D& plane) const;
 
     void ScheduleLoadSliceImage(size_t index,
-                                SliceImageQuality quality);
+                                SliceImageQuality requestedQuality);
   };
 }

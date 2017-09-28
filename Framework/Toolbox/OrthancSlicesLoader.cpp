@@ -27,6 +27,7 @@
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Images/JpegReader.h>
 #include <Core/Images/PngReader.h>
+#include <Core/Compression/GzipCompressor.h>
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
@@ -96,25 +97,29 @@ namespace OrthancStone
 
     unsigned int GetSliceIndex() const
     {
-      assert(mode_ == Mode_LoadImage);
+      assert(mode_ == Mode_LoadImage ||
+             mode_ == Mode_LoadRawImage);
       return sliceIndex_;
     }
 
     const Slice& GetSlice() const
     {
-      assert(mode_ == Mode_LoadImage && slice_ != NULL);
+      assert(mode_ == Mode_LoadImage ||
+             mode_ == Mode_LoadRawImage);
+      assert(slice_ != NULL);
       return *slice_;
     }
 
     unsigned int GetFrame() const
     {
-      assert(mode_ == Mode_InstanceGeometry);
+      assert(mode_ == Mode_FrameGeometry);
       return frame_;
     }
       
     const std::string& GetInstanceId() const
     {
-      assert(mode_ == Mode_InstanceGeometry);
+      assert(mode_ == Mode_FrameGeometry ||
+             mode_ == Mode_InstanceGeometry);
       return instanceId_;
     }
       
@@ -123,10 +128,17 @@ namespace OrthancStone
       return new Operation(Mode_SeriesGeometry);
     }
 
-    static Operation* DownloadInstanceGeometry(const std::string& instanceId,
-                                               unsigned int frame)
+    static Operation* DownloadInstanceGeometry(const std::string& instanceId)
     {
       std::auto_ptr<Operation> operation(new Operation(Mode_InstanceGeometry));
+      operation->instanceId_ = instanceId;
+      return operation.release();
+    }
+
+    static Operation* DownloadFrameGeometry(const std::string& instanceId,
+                                            unsigned int frame)
+    {
+      std::auto_ptr<Operation> operation(new Operation(Mode_FrameGeometry));
       operation->instanceId_ = instanceId;
       operation->frame_ = frame;
       return operation.release();
@@ -140,6 +152,15 @@ namespace OrthancStone
       tmp->sliceIndex_ = sliceIndex;
       tmp->slice_ = &slice;
       tmp->quality_ = quality;
+      return tmp.release();
+    }
+
+    static Operation* DownloadSliceRawImage(unsigned int  sliceIndex,
+                                            const Slice&  slice)
+    {
+      std::auto_ptr<Operation> tmp(new Operation(Mode_LoadRawImage));
+      tmp->sliceIndex_ = sliceIndex;
+      tmp->slice_ = &slice;
       return tmp.release();
     }
   };
@@ -170,8 +191,12 @@ namespace OrthancStone
           break;
 
         case Mode_InstanceGeometry:
-          that_.ParseInstanceGeometry(operation->GetInstanceId(),
-                                      operation->GetFrame(), answer, answerSize);
+          that_.ParseInstanceGeometry(operation->GetInstanceId(), answer, answerSize);
+          break;
+
+        case Mode_FrameGeometry:
+          that_.ParseFrameGeometry(operation->GetInstanceId(),
+                                   operation->GetFrame(), answer, answerSize);
           break;
 
         case Mode_LoadImage:
@@ -193,6 +218,10 @@ namespace OrthancStone
                 
           break;
 
+        case Mode_LoadRawImage:
+          that_.ParseSliceRawImage(*operation, answer, answerSize);
+          break;
+
         default:
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
@@ -206,7 +235,7 @@ namespace OrthancStone
 
       switch (operation->GetMode())
       {
-        case Mode_InstanceGeometry:
+        case Mode_FrameGeometry:
         case Mode_SeriesGeometry:
           that_.userCallback_.NotifyGeometryError(that_);
           that_.state_ = State_Error;
@@ -266,15 +295,25 @@ namespace OrthancStone
     for (size_t i = 0; i < instances.size(); i++)
     {
       OrthancPlugins::FullOrthancDataset dataset(series[instances[i]]);
-
-      Slice slice;
-      if (slice.ParseOrthancFrame(dataset, instances[i], 0 /* todo */))
+      OrthancPlugins::DicomDatasetReader reader(dataset);
+      
+      unsigned int frames;
+      if (!reader.GetUnsignedIntegerValue(frames, OrthancPlugins::DICOM_TAG_NUMBER_OF_FRAMES))
       {
-        slices_.AddSlice(slice);
+        frames = 1;
       }
-      else
+
+      for (unsigned int frame = 0; frame < frames; frame++)
       {
-        LOG(WARNING) << "Skipping invalid instance " << instances[i];
+        Slice slice;
+        if (slice.ParseOrthancFrame(dataset, instances[i], frame))
+        {
+          slices_.AddSlice(slice);
+        }
+        else
+        {
+          LOG(WARNING) << "Skipping invalid frame " << frame << " within instance " << instances[i];
+        }
       }
     }
 
@@ -308,9 +347,53 @@ namespace OrthancStone
 
 
   void OrthancSlicesLoader::ParseInstanceGeometry(const std::string& instanceId,
-                                                  unsigned int frame,
                                                   const void* answer,
                                                   size_t size)
+  {
+    Json::Value tags;
+    if (!MessagingToolbox::ParseJson(tags, answer, size) ||
+        tags.type() != Json::objectValue)
+    {
+      userCallback_.NotifyGeometryError(*this);
+      return;
+    }
+
+    OrthancPlugins::FullOrthancDataset dataset(tags);
+    OrthancPlugins::DicomDatasetReader reader(dataset);
+
+    unsigned int frames;
+    if (!reader.GetUnsignedIntegerValue(frames, OrthancPlugins::DICOM_TAG_NUMBER_OF_FRAMES))
+    {
+      frames = 1;
+    }
+    
+    LOG(INFO) << "Instance " << instanceId << " contains " << frames << " frame(s)";
+
+    state_ = State_GeometryReady;
+
+    for (unsigned int frame = 0; frame < frames; frame++)
+    {
+      Slice slice;
+      if (slice.ParseOrthancFrame(dataset, instanceId, frame))
+      {
+        slices_.AddSlice(slice);
+      }
+      else
+      {
+        LOG(WARNING) << "Skipping invalid multi-frame instance " << instanceId;
+        userCallback_.NotifyGeometryError(*this);
+        return;
+      }
+    }
+
+    userCallback_.NotifyGeometryReady(*this);
+  }
+
+
+  void OrthancSlicesLoader::ParseFrameGeometry(const std::string& instanceId,
+                                               unsigned int frame,
+                                               const void* answer,
+                                               size_t size)
   {
     Json::Value tags;
     if (!MessagingToolbox::ParseJson(tags, answer, size) ||
@@ -526,6 +609,19 @@ namespace OrthancStone
   }
     
     
+  void OrthancSlicesLoader::ParseSliceRawImage(const Operation& operation,
+                                               const void* answer,
+                                               size_t size)
+  {
+    Orthanc::GzipCompressor compressor;
+
+    std::string raw;
+    compressor.Uncompress(raw, answer, size);
+    
+    printf("[%d => %d]\n", size, raw.size());
+  }
+
+
   OrthancSlicesLoader::OrthancSlicesLoader(ICallback& callback,
                                            IWebService& orthanc) :
     webCallback_(new WebCallback(*this)),
@@ -551,8 +647,27 @@ namespace OrthancStone
   }
 
 
-  void OrthancSlicesLoader::ScheduleLoadInstance(const std::string& instanceId,
-                                                 unsigned int frame)
+  void OrthancSlicesLoader::ScheduleLoadInstance(const std::string& instanceId)
+  {
+    if (state_ != State_Initialization)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      state_ = State_LoadingGeometry;
+
+      // Tag "3004-000c" is "Grid Frame Offset Vector", which is
+      // mandatory to read RT DOSE, but is too long to be returned by default
+      std::string uri = "/instances/" + instanceId + "/tags?ignore-length=3004-000c";
+      orthanc_.ScheduleGetRequest
+        (*webCallback_, uri, Operation::DownloadInstanceGeometry(instanceId));
+    }
+  }
+  
+
+  void OrthancSlicesLoader::ScheduleLoadFrame(const std::string& instanceId,
+                                              unsigned int frame)
   {
     if (state_ != State_Initialization)
     {
@@ -563,7 +678,7 @@ namespace OrthancStone
       state_ = State_LoadingGeometry;
       std::string uri = "/instances/" + instanceId + "/tags";
       orthanc_.ScheduleGetRequest
-        (*webCallback_, uri, Operation::DownloadInstanceGeometry(instanceId, frame));
+        (*webCallback_, uri, Operation::DownloadFrameGeometry(instanceId, frame));
     }
   }
   
@@ -608,10 +723,9 @@ namespace OrthancStone
   }
   
 
-  void OrthancSlicesLoader::ScheduleSliceImagePng(size_t index)
+  void OrthancSlicesLoader::ScheduleSliceImagePng(const Slice& slice,
+                                                  size_t index)
   {
-    const Slice& slice = GetSlice(index);
-
     std::string uri = ("/instances/" + slice.GetOrthancInstanceId() + "/frames/" + 
                        boost::lexical_cast<std::string>(slice.GetFrame()));
 
@@ -638,7 +752,8 @@ namespace OrthancStone
   }
 
 
-  void OrthancSlicesLoader::ScheduleSliceImageJpeg(size_t index,
+  void OrthancSlicesLoader::ScheduleSliceImageJpeg(const Slice& slice,
+                                                   size_t index,
                                                    SliceImageQuality quality)
   {
     unsigned int value;
@@ -662,7 +777,6 @@ namespace OrthancStone
     }
     
     // This requires the official Web viewer plugin to be installed!
-    const Slice& slice = GetSlice(index);
     std::string uri = ("/web-viewer/instances/jpeg" + 
                        boost::lexical_cast<std::string>(value) + 
                        "-" + slice.GetOrthancInstanceId() + "_" + 
@@ -673,6 +787,7 @@ namespace OrthancStone
   }
 
 
+
   void OrthancSlicesLoader::ScheduleLoadSliceImage(size_t index,
                                                    SliceImageQuality quality)
   {
@@ -681,13 +796,25 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
 
-    if (quality == SliceImageQuality_Full)
+    const Slice& slice = GetSlice(index);
+
+    if (slice.HasOrthancDecoding())
     {
-      ScheduleSliceImagePng(index);
+      if (quality == SliceImageQuality_Full)
+      {
+        ScheduleSliceImagePng(slice, index);
+      }
+      else
+      {
+        ScheduleSliceImageJpeg(slice, index, quality);
+      }
     }
     else
     {
-      ScheduleSliceImageJpeg(index, quality);
+      std::string uri = ("/instances/" + slice.GetOrthancInstanceId() + "/frames/" + 
+                         boost::lexical_cast<std::string>(slice.GetFrame()) + "/raw.gz");
+      orthanc_.ScheduleGetRequest(*webCallback_, uri,
+                                  Operation::DownloadSliceRawImage(index, slice));
     }
   }
 }

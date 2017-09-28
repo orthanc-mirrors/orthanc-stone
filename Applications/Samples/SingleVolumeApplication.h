@@ -45,6 +45,8 @@ namespace OrthancStone
         generic.add_options()
           ("series", boost::program_options::value<std::string>(), 
            "Orthanc ID of the series")
+          ("instance", boost::program_options::value<std::string>(), 
+           "Orthanc ID of a multi-frame instance that describes a 3D volume")
           ("threads", boost::program_options::value<unsigned int>()->default_value(3), 
            "Number of download threads")
           ("projection", boost::program_options::value<std::string>()->default_value("axial"), 
@@ -62,13 +64,39 @@ namespace OrthancStone
       {
         using namespace OrthancStone;
 
-        if (parameters.count("series") != 1)
+        if (parameters.count("series") > 1 ||
+            parameters.count("instance") > 1)
         {
-          LOG(ERROR) << "The series ID is missing";
+          LOG(ERROR) << "Only one series or instance is allowed";
           throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
         }
 
-        std::string series = parameters["series"].as<std::string>();
+        if (parameters.count("series") == 1 &&
+            parameters.count("instance") == 1)
+        {
+          LOG(ERROR) << "Cannot specify both a series and an instance";
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        }
+
+        std::string series;
+        if (parameters.count("series") == 1)
+        {
+          series = parameters["series"].as<std::string>();
+        }
+        
+        std::string instance;
+        if (parameters.count("instance") == 1)
+        {
+          instance = parameters["instance"].as<std::string>();
+        }
+        
+        if (series.empty() &&
+            instance.empty())
+        {
+          LOG(ERROR) << "The series ID or instance ID is missing";
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        }
+
         unsigned int threads = parameters["threads"].as<unsigned int>();
         bool reverse = parameters["reverse"].as<bool>();
 
@@ -98,7 +126,14 @@ namespace OrthancStone
 
 #if 1
         std::auto_ptr<OrthancVolumeImage> volume(new OrthancVolumeImage(context.GetWebService()));
-        volume->ScheduleLoadSeries(series);
+        if (series.empty())
+        {
+          volume->ScheduleLoadInstance(instance);
+        }
+        else
+        {
+          volume->ScheduleLoadSeries(series);
+        }
 
         widget->AddLayer(new VolumeImageSource(*volume));
 

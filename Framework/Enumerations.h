@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace OrthancStone
 {
   enum SliceOffsetMode
@@ -79,4 +81,12 @@ namespace OrthancStone
     SliceImageQuality_Jpeg90,
     SliceImageQuality_Jpeg95
   };
+
+  enum SopClassUid
+  {
+    SopClassUid_RTDose
+  };
+
+  bool StringToSopClassUid(SopClassUid& result,
+                           const std::string& source);
 }

@@ -41,6 +41,7 @@ namespace OrthancStone
 
   BasicApplicationContext::BasicApplicationContext(Orthanc::WebServiceParameters& orthanc) :
     oracle_(viewportMutex_, 4),  // Use 4 threads to download
+    //oracle_(viewportMutex_, 1),  // Disable threading to be reproducible
     webService_(oracle_, orthanc),
     stopped_(true),
     updateDelay_(100)   // By default, 100ms between each refresh of the content

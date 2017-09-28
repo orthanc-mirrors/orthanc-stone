@@ -211,10 +211,15 @@ namespace OrthancStone
       loader_.ScheduleLoadSeries(seriesId);
     }
 
-    void ScheduleLoadInstance(const std::string& instanceId,
-                              unsigned int frame)
+    void ScheduleLoadInstance(const std::string& instanceId)
     {
-      loader_.ScheduleLoadInstance(instanceId, frame);
+      loader_.ScheduleLoadInstance(instanceId);
+    }
+
+    void ScheduleLoadFrame(const std::string& instanceId,
+                           unsigned int frame)
+    {
+      loader_.ScheduleLoadFrame(instanceId, frame);
     }
 
     virtual size_t GetSliceCount() const

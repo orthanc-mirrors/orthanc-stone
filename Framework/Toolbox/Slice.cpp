@@ -21,31 +21,134 @@
 
 #include "Slice.h"
 
+#include "../Enumerations.h"
+
+#include <Core/Logging.h>
 #include <Core/OrthancException.h>
+#include <Core/Toolbox.h>
+
+#include <boost/lexical_cast.hpp>
 
 namespace OrthancStone
 {
-  bool Slice::ParseOrthancFrame(const OrthancPlugins::IDicomDataset& dataset,
-                                const std::string& instanceId,
-                                unsigned int frame)
+  static bool ParseDouble(double& target,
+                          const std::string& source)
   {
-    OrthancPlugins::DicomDatasetReader reader(dataset);
-
-    unsigned int frameCount;
-    if (!reader.GetUnsignedIntegerValue(frameCount, OrthancPlugins::DICOM_TAG_NUMBER_OF_FRAMES))
+    try
     {
-      frameCount = 1;   // Assume instance with one frame
+      target = boost::lexical_cast<double>(source);
+      return true;
+    }
+    catch (boost::bad_lexical_cast&)
+    {
+      return false;
+    }
+  }
+  
+  bool Slice::ComputeRTDoseGeometry(const OrthancPlugins::DicomDatasetReader& reader,
+                                    unsigned int frame)
+  {
+    // http://dicom.nema.org/medical/Dicom/2016a/output/chtml/part03/sect_C.8.8.3.2.html
+    static const OrthancPlugins::DicomTag DICOM_TAG_GRID_FRAME_OFFSET_VECTOR(0x3004, 0x000c);
+    static const OrthancPlugins::DicomTag DICOM_TAG_FRAME_INCREMENT_POINTER(0x0028, 0x0009);
+
+    std::string increment = reader.GetStringValue(DICOM_TAG_FRAME_INCREMENT_POINTER, "");
+    std::string offsetTag;
+
+    bool ok = reader.GetDataset().GetStringValue(offsetTag, DICOM_TAG_GRID_FRAME_OFFSET_VECTOR);
+    if (!ok)
+    {
+      LOG(ERROR) << "Cannot read the \"GridFrameOffsetVector\" tag, check you are using Orthanc >= 1.3.1";
+      return false;
     }
 
-    if (frame >= frameCount)
+    Orthanc::Toolbox::ToUpperCase(increment);
+    if (increment != "3004,000C" ||
+        offsetTag.empty())
     {
       return false;
     }
 
-    if (!reader.GetDoubleValue(thickness_, OrthancPlugins::DICOM_TAG_SLICE_THICKNESS))
+    std::vector<std::string> offsets;
+    Orthanc::Toolbox::TokenizeString(offsets, offsetTag, '\\');
+
+    if (frameCount_ == 0 ||
+        offsets.size() != frameCount_ ||
+        frame >= frameCount_)
     {
-      thickness_ = 100.0 * std::numeric_limits<double>::epsilon();
+      LOG(ERROR) << "No information about the 3D location of some slice(s) in a RT DOSE";
+      return false;
     }
+
+    double offset0, z;
+
+    if (!ParseDouble(offset0, offsets[0]) ||
+        !ParseDouble(z, offsets[frame]))
+    {
+      LOG(ERROR) << "Invalid syntax";
+      return false;
+    }
+
+    if (!GeometryToolbox::IsCloseToZero(offset0))
+    {
+      LOG(ERROR) << "Invalid syntax";
+      return false;
+    }
+
+    geometry_ = CoordinateSystem3D(geometry_.GetOrigin() + z * geometry_.GetNormal(),
+                                   geometry_.GetAxisX(),
+                                   geometry_.GetAxisY());
+    
+    return true;
+  }
+
+  
+  bool Slice::ParseOrthancFrame(const OrthancPlugins::IDicomDataset& dataset,
+                                const std::string& instanceId,
+                                unsigned int frame)
+  {
+    orthancInstanceId_ = instanceId;
+    frame_ = frame;
+    type_ = Type_OrthancDecodableFrame;
+
+    OrthancPlugins::DicomDatasetReader reader(dataset);
+
+    sopClassUid_ = reader.GetStringValue(OrthancPlugins::DICOM_TAG_SOP_CLASS_UID, "");
+    if (sopClassUid_.empty())
+    {
+      LOG(ERROR) << "Instance without a SOP class UID";
+      return false; 
+    }
+  
+    if (!reader.GetUnsignedIntegerValue(frameCount_, OrthancPlugins::DICOM_TAG_NUMBER_OF_FRAMES))
+    {
+      frameCount_ = 1;   // Assume instance with one frame
+    }
+
+    if (frame >= frameCount_)
+    {
+      return false;
+    }
+
+    if (!reader.GetUnsignedIntegerValue(width_, OrthancPlugins::DICOM_TAG_COLUMNS) ||
+        !reader.GetUnsignedIntegerValue(height_, OrthancPlugins::DICOM_TAG_ROWS))
+    {
+      return false;
+    }
+
+    thickness_ = 100.0 * std::numeric_limits<double>::epsilon();
+
+    std::string tmp;
+    if (dataset.GetStringValue(tmp, OrthancPlugins::DICOM_TAG_SLICE_THICKNESS))
+    {
+      if (!tmp.empty() &&
+          !ParseDouble(thickness_, tmp))
+      {
+        return false;  // Syntax error
+      }
+    }
+    
+    converter_.ReadParameters(dataset);
 
     GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, dataset);
 
@@ -54,33 +157,47 @@ namespace OrthancStone
         dataset.GetStringValue(orientation, OrthancPlugins::DICOM_TAG_IMAGE_ORIENTATION_PATIENT))
     {
       geometry_ = CoordinateSystem3D(position, orientation);
-    }
-      
-    if (reader.GetUnsignedIntegerValue(width_, OrthancPlugins::DICOM_TAG_COLUMNS) &&
-        reader.GetUnsignedIntegerValue(height_, OrthancPlugins::DICOM_TAG_ROWS))
-    {
-      orthancInstanceId_ = instanceId;
-      frame_ = frame;
-      converter_.ReadParameters(dataset);
 
-      type_ = Type_OrthancInstance;
-      return true;
+      bool ok = true;
+      SopClassUid tmp;
+
+      if (StringToSopClassUid(tmp, sopClassUid_))
+      {
+        switch (tmp)
+        {
+          case SopClassUid_RTDose:
+            type_ = Type_OrthancRawFrame;
+            ok = ComputeRTDoseGeometry(reader, frame);
+            break;
+            
+          default:
+            break;
+        }
+      }
+
+      if (!ok)
+      {
+        LOG(ERROR) << "Cannot deduce the 3D location of frame " << frame
+                   << " in instance " << instanceId << ", whose SOP class UID is: " << sopClassUid_;
+        return false;
+      }
     }
-    else
-    {
-      return false;
-    }
+
+    return true;
   }
 
   
   const std::string Slice::GetOrthancInstanceId() const
   {
-    if (type_ != Type_OrthancInstance)
+    if (type_ == Type_OrthancDecodableFrame ||
+        type_ == Type_OrthancRawFrame)
+    {
+      return orthancInstanceId_;
+    }
+    else
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-        
-    return orthancInstanceId_;
+    }   
   }
 
   

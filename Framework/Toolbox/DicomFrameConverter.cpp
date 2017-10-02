@@ -39,26 +39,7 @@ namespace OrthancStone
     rescaleSlope_ = 1;
     defaultWindowCenter_ = 128;
     defaultWindowWidth_ = 256;
-  }
-
-
-  Orthanc::PixelFormat DicomFrameConverter::GetExpectedPixelFormat() const
-  {
-    // TODO Add more checks, e.g. on the number of bytes per value
-    // (cf. DicomImageInformation.h in Orthanc)
-
-    if (isColor_)
-    {
-      return Orthanc::PixelFormat_RGB24;
-    }
-    else if (isSigned_)
-    {
-      return Orthanc::PixelFormat_SignedGrayscale16;
-    }
-    else
-    {
-      return Orthanc::PixelFormat_Grayscale16;
-    }
+    expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
   }
 
 
@@ -85,10 +66,21 @@ namespace OrthancStone
 
     isSigned_ = (tmp == 1);
 
-    if (dicom.ParseFloat(rescaleIntercept_, Orthanc::DICOM_TAG_RESCALE_INTERCEPT) &&
-        dicom.ParseFloat(rescaleSlope_, Orthanc::DICOM_TAG_RESCALE_SLOPE))
+    double doseGridScaling;
+    bool isRTDose = false;
+    
+    if (dicom.ParseDouble(rescaleIntercept_, Orthanc::DICOM_TAG_RESCALE_INTERCEPT) &&
+        dicom.ParseDouble(rescaleSlope_, Orthanc::DICOM_TAG_RESCALE_SLOPE))
     {
       hasRescale_ = true;
+    }
+    else if (dicom.ParseDouble(doseGridScaling, Orthanc::DICOM_TAG_DOSE_GRID_SCALING))
+    {
+      // This is for RT-DOSE
+      hasRescale_ = true;
+      isRTDose = true;
+      rescaleIntercept_ = 0;
+      rescaleSlope_ = doseGridScaling;
     }
 
     std::string photometric;
@@ -104,6 +96,26 @@ namespace OrthancStone
     
     isColor_ = (photometric != "MONOCHROME1" &&
                 photometric != "MONOCHROME2");
+
+    // TODO Add more checks, e.g. on the number of bytes per value
+    // (cf. DicomImageInformation.h in Orthanc)
+
+    if (isRTDose)
+    {
+      expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale32;
+    }
+    else if (isColor_)
+    {
+      expectedPixelFormat_ = Orthanc::PixelFormat_RGB24;
+    }
+    else if (isSigned_)
+    {
+      expectedPixelFormat_ = Orthanc::PixelFormat_SignedGrayscale16;
+    }
+    else
+    {
+      expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
+    }
   }
 
 
@@ -130,6 +142,7 @@ namespace OrthancStone
     }
 
     assert(sourceFormat == Orthanc::PixelFormat_Grayscale16 ||
+           sourceFormat == Orthanc::PixelFormat_Grayscale32 ||
            sourceFormat == Orthanc::PixelFormat_SignedGrayscale16);
 
     // This is the case of a grayscale frame. Convert it to Float32.
@@ -142,25 +155,51 @@ namespace OrthancStone
     source.reset(NULL);  // We don't need the source frame anymore
 
     // Correct rescale slope/intercept if need be
-    if (hasRescale_)
-    {
-      for (unsigned int y = 0; y < converted->GetHeight(); y++)
-      {
-        float* p = reinterpret_cast<float*>(converted->GetRow(y));
-        for (unsigned int x = 0; x < converted->GetWidth(); x++, p++)
-        {
-          float value = *p;
-
-          if (hasRescale_)
-          {
-            value = value * rescaleSlope_ + rescaleIntercept_;
-          }
-            
-          *p = value;
-        }
-      }
-    }
+    ApplyRescale(*converted, sourceFormat != Orthanc::PixelFormat_Grayscale32);
       
     source = converted;
   }
+
+
+  void DicomFrameConverter::ApplyRescale(Orthanc::ImageAccessor& image,
+                                         bool useDouble) const
+  {
+    if (image.GetFormat() != Orthanc::PixelFormat_Float32)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+    }
+    
+    if (hasRescale_)
+    {
+      for (unsigned int y = 0; y < image.GetHeight(); y++)
+      {
+        float* p = reinterpret_cast<float*>(image.GetRow(y));
+
+        if (useDouble)
+        {
+          // Slower, accurate implementation using double
+          for (unsigned int x = 0; x < image.GetWidth(); x++, p++)
+          {
+            double value = static_cast<double>(*p);
+            *p = static_cast<float>(value * rescaleSlope_ + rescaleIntercept_);
+          }
+        }
+        else
+        {
+          // Fast, approximate implementation using float
+          for (unsigned int x = 0; x < image.GetWidth(); x++, p++)
+          {
+            *p = (*p) * static_cast<float>(rescaleSlope_) + static_cast<float>(rescaleIntercept_);
+          }
+        }
+      }
+    }
+  }
+
+  
+  double DicomFrameConverter::Apply(double x) const
+  {
+    return x * rescaleSlope_ + rescaleIntercept_;
+  }
+
 }

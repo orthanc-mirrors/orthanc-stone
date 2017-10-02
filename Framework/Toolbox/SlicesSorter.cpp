@@ -28,20 +28,25 @@ namespace OrthancStone
   class SlicesSorter::SliceWithDepth : public boost::noncopyable
   {
   private:
-    Slice   slice_;
-    double  depth_;
+    std::auto_ptr<Slice>   slice_;
+    double                 depth_;
 
   public:
-    SliceWithDepth(const Slice& slice) :
+    SliceWithDepth(Slice* slice) :
       slice_(slice),
       depth_(0)
     {
+      if (slice == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
     }
 
     void SetNormal(const Vector& normal)
     {
+      assert(slice_.get() != NULL);
       depth_ = boost::numeric::ublas::inner_prod
-        (slice_.GetGeometry().GetOrigin(), normal);
+        (slice_->GetGeometry().GetOrigin(), normal);
     }
 
     double GetDepth() const
@@ -51,7 +56,8 @@ namespace OrthancStone
 
     const Slice& GetSlice() const
     {
-      return slice_;
+      assert(slice_.get() != NULL);
+      return *slice_;
     }
   };
 
@@ -76,7 +82,7 @@ namespace OrthancStone
   }
 
 
-  void SlicesSorter::AddSlice(const Slice& slice)
+  void SlicesSorter::AddSlice(Slice* slice)
   {
     slices_.push_back(new SliceWithDepth(slice));
   }

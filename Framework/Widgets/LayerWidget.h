@@ -98,6 +98,8 @@ namespace OrthancStone
       return layers_.size();
     }
 
+    const RenderStyle& GetLayerStyle(size_t layer) const;
+
     void SetLayerStyle(size_t layer,
                        const RenderStyle& style);
 

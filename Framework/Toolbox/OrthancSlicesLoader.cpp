@@ -90,7 +90,8 @@ namespace OrthancStone
 
     SliceImageQuality GetQuality() const
     {
-      assert(mode_ == Mode_LoadImage);
+      assert(mode_ == Mode_LoadImage ||
+             mode_ == Mode_LoadRawImage);
       return quality_;
     }
 
@@ -160,6 +161,7 @@ namespace OrthancStone
       std::auto_ptr<Operation> tmp(new Operation(Mode_LoadRawImage));
       tmp->sliceIndex_ = sliceIndex;
       tmp->slice_ = &slice;
+      tmp->quality_ = SliceImageQuality_Full;
       return tmp.release();
     }
   };
@@ -306,10 +308,10 @@ namespace OrthancStone
 
       for (unsigned int frame = 0; frame < frames; frame++)
       {
-        Slice slice;
-        if (slice.ParseOrthancFrame(dicom, instances[i], frame))
+        std::auto_ptr<Slice> slice(new Slice);
+        if (slice->ParseOrthancFrame(dicom, instances[i], frame))
         {
-          slices_.AddSlice(slice);
+          slices_.AddSlice(slice.release());
         }
         else
         {
@@ -376,10 +378,10 @@ namespace OrthancStone
 
     for (unsigned int frame = 0; frame < frames; frame++)
     {
-      Slice slice;
-      if (slice.ParseOrthancFrame(dicom, instanceId, frame))
+      std::auto_ptr<Slice> slice(new Slice);
+      if (slice->ParseOrthancFrame(dicom, instanceId, frame))
       {
-        slices_.AddSlice(slice);
+        slices_.AddSlice(slice.release());
       }
       else
       {
@@ -413,11 +415,11 @@ namespace OrthancStone
     Orthanc::DicomMap dicom;
     MessagingToolbox::ConvertDataset(dicom, dataset);
 
-    Slice slice;
-    if (slice.ParseOrthancFrame(dicom, instanceId, frame))
+    std::auto_ptr<Slice> slice(new Slice);
+    if (slice->ParseOrthancFrame(dicom, instanceId, frame))
     {
       LOG(INFO) << "Loaded instance " << instanceId;
-      slices_.AddSlice(slice);
+      slices_.AddSlice(slice.release());
       userCallback_.NotifyGeometryReady(*this);
     }
     else
@@ -613,8 +615,36 @@ namespace OrthancStone
 
     NotifySliceImageSuccess(operation, image);
   }
+
+
+  class StringImage :
+    public Orthanc::ImageAccessor,
+    public boost::noncopyable
+  {
+  private:
+    std::string  buffer_;
     
-    
+  public:
+    StringImage(Orthanc::PixelFormat format,
+                unsigned int width,
+                unsigned int height,
+                std::string& buffer)
+    {
+      if (buffer.size() != Orthanc::GetBytesPerPixel(format) * width * height)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+      }
+
+      buffer_.swap(buffer);  // The source buffer is now empty
+
+      void* data = (buffer_.empty() ? NULL : &buffer_[0]);
+
+      AssignWritable(format, width, height,
+                     Orthanc::GetBytesPerPixel(format) * width, data);
+    }
+  };
+
+  
   void OrthancSlicesLoader::ParseSliceRawImage(const Operation& operation,
                                                const void* answer,
                                                size_t size)
@@ -624,7 +654,39 @@ namespace OrthancStone
     std::string raw;
     compressor.Uncompress(raw, answer, size);
     
-    printf("[%d => %d]\n", size, raw.size());
+    const Orthanc::DicomImageInformation& info = operation.GetSlice().GetImageInformation();
+    unsigned int frame = operation.GetSlice().GetFrame();
+    
+    if (info.GetBitsAllocated() == 32 &&
+        info.GetBitsStored() == 32 &&
+        info.GetHighBit() == 31 &&
+        info.GetChannelCount() == 1 &&
+        !info.IsSigned() &&
+        info.GetPhotometricInterpretation() == Orthanc::PhotometricInterpretation_Monochrome2 &&
+        raw.size() == info.GetWidth() * info.GetHeight() * 4)
+    {
+      // This is the case of RT-DOSE (uint32_t values)
+      
+      std::auto_ptr<Orthanc::ImageAccessor> image
+        (new StringImage(Orthanc::PixelFormat_Grayscale32, info.GetWidth(),
+                         info.GetHeight(), raw));
+
+      for (unsigned int y = 0; y < image->GetHeight(); y++)
+      {
+        uint32_t *p = reinterpret_cast<uint32_t*>(image->GetRow(y));
+        for (unsigned int x = 0; x < image->GetWidth(); x++, p++)
+        {
+          *p = le32toh(*p);
+        }
+      }
+
+      NotifySliceImageSuccess(operation, image);
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
+        
   }
 
 

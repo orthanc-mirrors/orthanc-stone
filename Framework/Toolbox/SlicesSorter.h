@@ -48,7 +48,7 @@ namespace OrthancStone
       slices_.reserve(count);
     }
 
-    void AddSlice(const Slice& slice);
+    void AddSlice(Slice* slice);  // Takes ownership
 
     size_t GetSliceCount() const
     {

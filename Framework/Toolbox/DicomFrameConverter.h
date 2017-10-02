@@ -41,10 +41,12 @@ namespace OrthancStone
     bool    isSigned_;
     bool    isColor_;
     bool    hasRescale_;
-    float   rescaleIntercept_;
-    float   rescaleSlope_;
-    float   defaultWindowCenter_;
-    float   defaultWindowWidth_;
+    double  rescaleIntercept_;
+    double  rescaleSlope_;
+    double  defaultWindowCenter_;
+    double  defaultWindowWidth_;
+
+    Orthanc::PixelFormat  expectedPixelFormat_;
 
     void SetDefaultParameters();
 
@@ -54,20 +56,28 @@ namespace OrthancStone
       SetDefaultParameters();
     }
 
-    Orthanc::PixelFormat GetExpectedPixelFormat() const;
+    Orthanc::PixelFormat GetExpectedPixelFormat() const
+    {
+      return expectedPixelFormat_;
+    }
 
     void ReadParameters(const Orthanc::DicomMap& dicom);
 
-    float GetDefaultWindowCenter() const
+    double GetDefaultWindowCenter() const
     {
       return defaultWindowCenter_;
     }
     
-    float GetDefaultWindowWidth() const
+    double GetDefaultWindowWidth() const
     {
       return defaultWindowWidth_;
     }
 
-    void ConvertFrame(std::auto_ptr<Orthanc::ImageAccessor>& source) const;  
+    void ConvertFrame(std::auto_ptr<Orthanc::ImageAccessor>& source) const;
+
+    void ApplyRescale(Orthanc::ImageAccessor& image,
+                      bool useDouble) const;
+
+    double Apply(double x) const;
   };
 }

@@ -107,6 +107,7 @@ namespace OrthancStone
     orthancInstanceId_ = instanceId;
     frame_ = frame;
     type_ = Type_OrthancDecodableFrame;
+    imageInformation_.reset(new Orthanc::DicomImageInformation(dataset));
 
     if (!dataset.CopyToString(sopClassUid_, Orthanc::DICOM_TAG_SOP_CLASS_UID, false) ||
         sopClassUid_.empty())
@@ -313,5 +314,19 @@ namespace OrthancStone
     points.push_back(GetGeometry().MapSliceToWorldCoordinates((w - 0.5) * sx, -0.5      * sy));
     points.push_back(GetGeometry().MapSliceToWorldCoordinates(-0.5      * sx, (h - 0.5) * sy));
     points.push_back(GetGeometry().MapSliceToWorldCoordinates((w - 0.5) * sx, (h - 0.5) * sy));
+  }
+
+
+  const Orthanc::DicomImageInformation& Slice::GetImageInformation() const
+  {
+    if (imageInformation_.get() == NULL)
+    {
+      // Only available if constructing the "Slice" object with a DICOM map
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      return *imageInformation_;
+    }
   }
 }

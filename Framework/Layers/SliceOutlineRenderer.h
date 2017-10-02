@@ -29,12 +29,20 @@ namespace OrthancStone
   class SliceOutlineRenderer : public ILayerRenderer
   {
   private:
-    Slice        slice_;
-    RenderStyle  style_;
+    CoordinateSystem3D  geometry_;
+    double              pixelSpacingX_;
+    double              pixelSpacingY_;
+    unsigned int        width_;
+    unsigned int        height_;
+    RenderStyle         style_;
 
   public:
-    SliceOutlineRenderer(const Slice& slice) : 
-      slice_(slice)
+    SliceOutlineRenderer(const Slice& slice) :
+      geometry_(slice.GetGeometry()),
+      pixelSpacingX_(slice.GetPixelSpacingX()),
+      pixelSpacingY_(slice.GetPixelSpacingY()),
+      width_(slice.GetWidth()),
+      height_(slice.GetHeight())
     {
     }
 
@@ -48,7 +56,7 @@ namespace OrthancStone
 
     virtual const CoordinateSystem3D& GetLayerSlice()
     {
-      return slice_.GetGeometry();
+      return geometry_;
     }
 
     virtual bool IsFullQuality()

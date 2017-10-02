@@ -23,8 +23,7 @@
 
 #include "SampleApplicationBase.h"
 #include "../../Framework/dev.h"
-//#include "SampleInteractor.h"
-#include "../../Framework/Widgets/LayerWidget.h"
+#include "../../Framework/Layers/ILayerSource.h"
 #include "../../Framework/Layers/LineMeasureTracker.h"
 #include "../../Framework/Layers/CircleMeasureTracker.h"
 
@@ -35,9 +34,44 @@ namespace OrthancStone
 {
   namespace Samples
   {
-    class SingleVolumeApplication :
-      public SampleApplicationBase
+    class SingleVolumeApplication : public SampleApplicationBase
     {
+    private:
+      class Interactor : public VolumeImageInteractor
+      {
+      private:
+        LayerWidget&  widget_;
+        size_t        layer_;
+        
+      protected:
+        virtual void NotifySliceChange(const ISlicedVolume& volume,
+                                       const size_t& sliceIndex,
+                                       const Slice& slice)
+        {
+          const OrthancVolumeImage& image = dynamic_cast<const OrthancVolumeImage&>(volume);
+
+          RenderStyle s = widget_.GetLayerStyle(layer_);
+
+          if (image.FitWindowingToRange(s, slice.GetConverter()))
+          {
+            //printf("ICI: %f => %f\n", s.customWindowCenter_, s.customWindowWidth_);
+            widget_.SetLayerStyle(layer_, s);
+          }
+        }
+      
+      public:
+        Interactor(OrthancVolumeImage& volume,
+                   LayerWidget& widget,
+                   VolumeProjection projection,
+                   size_t layer) :
+          VolumeImageInteractor(volume, widget, projection),
+          widget_(widget),
+          layer_(layer)
+        {
+          printf("OOO\n");
+        }
+      };
+
     public:
       virtual void DeclareCommandLineOptions(boost::program_options::options_description& options)
       {
@@ -124,8 +158,8 @@ namespace OrthancStone
 
         std::auto_ptr<LayerWidget> widget(new LayerWidget);
 
-#if 1
-        std::auto_ptr<OrthancVolumeImage> volume(new OrthancVolumeImage(context.GetWebService()));
+#if 0
+        std::auto_ptr<OrthancVolumeImage> volume(new OrthancVolumeImage(context.GetWebService(), true));
         if (series.empty())
         {
           volume->ScheduleLoadInstance(instance);
@@ -137,19 +171,33 @@ namespace OrthancStone
 
         widget->AddLayer(new VolumeImageSource(*volume));
 
-        context.AddInteractor(new VolumeImageInteractor(*volume, *widget, projection));
+        context.AddInteractor(new Interactor(*volume, *widget, projection, 0));
         context.AddVolume(volume.release());
-#else
-        std::auto_ptr<OrthancVolumeImage> ct(new OrthancVolumeImage(context.GetWebService()));
-        ct->ScheduleLoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
 
-        std::auto_ptr<OrthancVolumeImage> pet(new OrthancVolumeImage(context.GetWebService()));
-        pet->ScheduleLoadSeries("aabad2e7-80702b5d-e599d26c-4f13398e-38d58a9e");
+        {
+          RenderStyle s;
+          s.alpha_ = 1;
+          s.applyLut_ = true;
+          s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
+          s.interpolation_ = ImageInterpolation_Linear;
+          widget->SetLayerStyle(0, s);
+        }
+#else
+        std::auto_ptr<OrthancVolumeImage> ct(new OrthancVolumeImage(context.GetWebService(), false));
+        //ct->ScheduleLoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
+        //ct->ScheduleLoadSeries("3025d8df-a82f3b00-83942fa3-ee6a6be3-a8bf32e8");
+        ct->ScheduleLoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");
+
+        std::auto_ptr<OrthancVolumeImage> pet(new OrthancVolumeImage(context.GetWebService(), true));
+        //pet->ScheduleLoadSeries("aabad2e7-80702b5d-e599d26c-4f13398e-38d58a9e");
+        //pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");
+        //pet->ScheduleLoadInstance("337876a1-a68a9718-f15abccd-38faafa1-b99b496a");
+        pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");
 
         widget->AddLayer(new VolumeImageSource(*ct));
         widget->AddLayer(new VolumeImageSource(*pet));
         
-        context.AddInteractor(new VolumeImageInteractor(*pet, *widget, projection));
+        context.AddInteractor(new Interactor(*pet, *widget, projection, 1));
         context.AddVolume(ct.release());
         context.AddVolume(pet.release());
 
@@ -165,7 +213,7 @@ namespace OrthancStone
           RenderStyle s;
           //s.drawGrid_ = true;
           s.SetColor(255, 0, 0);  // Draw missing PET layer in red
-          s.alpha_ = 0.3;
+          s.alpha_ = 0.5;
           s.applyLut_ = true;
           s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
           s.interpolation_ = ImageInterpolation_Linear;

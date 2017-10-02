@@ -422,6 +422,7 @@ namespace OrthancStone
       AddTag(target, source, Orthanc::DICOM_TAG_BITS_ALLOCATED);
       AddTag(target, source, Orthanc::DICOM_TAG_BITS_STORED);
       AddTag(target, source, Orthanc::DICOM_TAG_COLUMNS);
+      AddTag(target, source, Orthanc::DICOM_TAG_DOSE_GRID_SCALING);
       AddTag(target, source, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER);
       AddTag(target, source, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR);
       AddTag(target, source, Orthanc::DICOM_TAG_HIGH_BIT);

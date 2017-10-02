@@ -24,11 +24,11 @@
 #include "CoordinateSystem3D.h"
 #include "DicomFrameConverter.h"
 
-#include <Core/DicomFormat/DicomMap.h>
+#include <Core/DicomFormat/DicomImageInformation.h>
 
 namespace OrthancStone
 {
-  class Slice
+  class Slice : public boost::noncopyable
   {
   private:
     enum Type
@@ -47,17 +47,20 @@ namespace OrthancStone
     std::string          orthancInstanceId_;
     std::string          sopClassUid_;
     unsigned int         frame_;
-    unsigned int         frameCount_;
+    unsigned int         frameCount_;   // TODO : Redundant with "imageInformation_"
     CoordinateSystem3D   geometry_;
     double               pixelSpacingX_;
     double               pixelSpacingY_;
     double               thickness_;
-    unsigned int         width_;
-    unsigned int         height_;
-    DicomFrameConverter  converter_;
-      
+    unsigned int         width_;   // TODO : Redundant with "imageInformation_"
+    unsigned int         height_;   // TODO : Redundant with "imageInformation_"
+    DicomFrameConverter  converter_;   // TODO : Partially redundant with "imageInformation_"
+
+    std::auto_ptr<Orthanc::DicomImageInformation>  imageInformation_;
+
   public:
-    Slice() : type_(Type_Invalid)
+    Slice() :
+      type_(Type_Invalid)
     {        
     }
 
@@ -131,5 +134,7 @@ namespace OrthancStone
     bool ContainsPlane(const CoordinateSystem3D& plane) const;
 
     void GetExtent(std::vector<Vector>& points) const;
+
+    const Orthanc::DicomImageInformation& GetImageInformation() const;
   };
 }

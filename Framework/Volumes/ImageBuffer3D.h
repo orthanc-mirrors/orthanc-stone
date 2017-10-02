@@ -22,7 +22,9 @@
 #pragma once
 
 #include "../Enumerations.h"
+#include "../Layers/RenderStyle.h"
 #include "../Toolbox/CoordinateSystem3D.h"
+#include "../Toolbox/DicomFrameConverter.h"
 #include "../Toolbox/ParallelSlices.h"
 
 #include <Core/Images/Image.h>
@@ -39,6 +41,12 @@ namespace OrthancStone
     unsigned int           width_;
     unsigned int           height_;
     unsigned int           depth_;
+    bool                   computeRange_;
+    bool                   hasRange_;
+    float                  minValue_;
+    float                  maxValue_;
+
+    void ExtendImageRange(const Orthanc::ImageAccessor& slice);
 
     Orthanc::ImageAccessor GetAxialSliceAccessor(unsigned int slice,
                                                  bool readOnly);
@@ -52,7 +60,8 @@ namespace OrthancStone
     ImageBuffer3D(Orthanc::PixelFormat format,
                   unsigned int width,
                   unsigned int height,
-                  unsigned int depth);
+                  unsigned int depth,
+                  bool computeRange);
 
     void Clear();
 
@@ -94,6 +103,12 @@ namespace OrthancStone
     
     uint64_t GetEstimatedMemorySize() const;
 
+    bool GetRange(float& minValue,
+                  float& maxValue) const;
+
+    bool FitWindowingToRange(RenderStyle& style,
+                             const DicomFrameConverter& converter) const;
+
 
     class SliceReader : public boost::noncopyable
     {
@@ -116,6 +131,7 @@ namespace OrthancStone
     class SliceWriter : public boost::noncopyable
     {
     private:
+      ImageBuffer3D&                 that_;
       bool                           modified_;
       Orthanc::ImageAccessor         accessor_;
       std::auto_ptr<Orthanc::Image>  sagittal_;  // Unused for axial and coronal

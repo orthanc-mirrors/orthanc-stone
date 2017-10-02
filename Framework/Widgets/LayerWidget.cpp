@@ -350,6 +350,18 @@ namespace OrthancStone
   }
 
   
+  const RenderStyle& LayerWidget::GetLayerStyle(size_t layer) const
+  {
+    if (layer >= layers_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    assert(layers_.size() == styles_.size());
+    return styles_[layer];
+  }
+  
+
   void LayerWidget::SetLayerStyle(size_t layer,
                                   const RenderStyle& style)
   {

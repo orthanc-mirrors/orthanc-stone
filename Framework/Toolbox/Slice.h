@@ -24,6 +24,8 @@
 #include "CoordinateSystem3D.h"
 #include "DicomFrameConverter.h"
 
+#include <Core/DicomFormat/DicomMap.h>
+
 namespace OrthancStone
 {
   class Slice
@@ -38,7 +40,7 @@ namespace OrthancStone
       // TODO A slice could come from some DICOM file (URL)
     };
 
-    bool ComputeRTDoseGeometry(const OrthancPlugins::DicomDatasetReader& reader,
+    bool ComputeRTDoseGeometry(const Orthanc::DicomMap& dataset,
                                unsigned int frame);
 
     Type                 type_;
@@ -99,7 +101,7 @@ namespace OrthancStone
       return type_ != Type_Invalid;
     } 
 
-    bool ParseOrthancFrame(const OrthancPlugins::IDicomDataset& dataset,
+    bool ParseOrthancFrame(const Orthanc::DicomMap& dataset,
                            const std::string& instanceId,
                            unsigned int frame);
 

@@ -62,13 +62,13 @@ namespace OrthancStone
   }
 
 
-  void DicomFrameConverter::ReadParameters(const OrthancPlugins::IDicomDataset& dicom)
+  void DicomFrameConverter::ReadParameters(const Orthanc::DicomMap& dicom)
   {
     SetDefaultParameters();
 
     Vector c, w;
-    if (GeometryToolbox::ParseVector(c, dicom, OrthancPlugins::DICOM_TAG_WINDOW_CENTER) &&
-        GeometryToolbox::ParseVector(w, dicom, OrthancPlugins::DICOM_TAG_WINDOW_WIDTH) &&
+    if (GeometryToolbox::ParseVector(c, dicom, Orthanc::DICOM_TAG_WINDOW_CENTER) &&
+        GeometryToolbox::ParseVector(w, dicom, Orthanc::DICOM_TAG_WINDOW_WIDTH) &&
         c.size() > 0 && 
         w.size() > 0)
     {
@@ -76,10 +76,8 @@ namespace OrthancStone
       defaultWindowWidth_ = static_cast<float>(w[0]);
     }
 
-    OrthancPlugins::DicomDatasetReader reader(dicom);
-
-    int tmp;
-    if (!reader.GetIntegerValue(tmp, OrthancPlugins::DICOM_TAG_PIXEL_REPRESENTATION))
+    int32_t tmp;
+    if (!dicom.ParseInteger32(tmp, Orthanc::DICOM_TAG_PIXEL_REPRESENTATION))
     {
       // Type 1 tag, must be present
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
@@ -87,15 +85,23 @@ namespace OrthancStone
 
     isSigned_ = (tmp == 1);
 
-    if (reader.GetFloatValue(rescaleIntercept_, OrthancPlugins::DICOM_TAG_RESCALE_INTERCEPT) &&
-        reader.GetFloatValue(rescaleSlope_, OrthancPlugins::DICOM_TAG_RESCALE_SLOPE))
+    if (dicom.ParseFloat(rescaleIntercept_, Orthanc::DICOM_TAG_RESCALE_INTERCEPT) &&
+        dicom.ParseFloat(rescaleSlope_, Orthanc::DICOM_TAG_RESCALE_SLOPE))
     {
       hasRescale_ = true;
     }
 
-    // Type 1 tag, must be present
-    std::string photometric = reader.GetMandatoryStringValue(OrthancPlugins::DICOM_TAG_PHOTOMETRIC_INTERPRETATION);
-    photometric = Orthanc::Toolbox::StripSpaces(photometric);
+    std::string photometric;
+    if (dicom.CopyToString(photometric, Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION, false))
+    {
+      photometric = Orthanc::Toolbox::StripSpaces(photometric);
+    }
+    else
+    {
+      // Type 1 tag, must be present
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+    }
+    
     isColor_ = (photometric != "MONOCHROME1" &&
                 photometric != "MONOCHROME2");
   }

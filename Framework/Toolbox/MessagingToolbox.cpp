@@ -32,58 +32,10 @@
 #include <boost/lexical_cast.hpp>
 #include <json/reader.h>
 
-#if defined(__native_client__)
-#  include <boost/math/special_functions/round.hpp>
-#else
-#  include <boost/date_time/posix_time/posix_time.hpp>
-#  include <boost/date_time/microsec_time_clock.hpp>
-#endif
-
 namespace OrthancStone
 {
   namespace MessagingToolbox
   {
-#if defined(__native_client__)
-    static pp::Core* core_ = NULL;
-
-    void Timestamp::Initialize(pp::Core* core)
-    {
-      if (core == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }
-
-      core_ = core;
-    }
-
-    Timestamp::Timestamp()
-    {
-      if (core_ == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }
-
-      time_ = core_->GetTimeTicks();
-    }
-
-    int Timestamp::GetMillisecondsSince(const Timestamp& other)
-    {
-      double difference = time_ - other.time_;
-      return static_cast<int>(boost::math::iround(difference * 1000.0));
-    }
-#else
-    Timestamp::Timestamp()
-    {
-      time_ = boost::posix_time::microsec_clock::local_time();
-    }
-
-    int Timestamp::GetMillisecondsSince(const Timestamp& other)
-    {
-      boost::posix_time::time_duration difference = time_ - other.time_;
-      return static_cast<int>(difference.total_milliseconds());
-    }
-#endif
-
     static bool ParseVersion(std::string& version,
                              unsigned int& major,
                              unsigned int& minor,
@@ -445,6 +397,49 @@ namespace OrthancStone
 #endif
 
       return image.release();
+    }
+
+
+    static void AddTag(Orthanc::DicomMap& target,
+                       const OrthancPlugins::IDicomDataset& source,
+                       const Orthanc::DicomTag& tag)
+    {
+      OrthancPlugins::DicomTag key(tag.GetGroup(), tag.GetElement());
+      
+      std::string value;
+      if (source.GetStringValue(value, key))
+      {
+        target.SetValue(tag, value, false);
+      }
+    }
+
+    
+    void ConvertDataset(Orthanc::DicomMap& target,
+                        const OrthancPlugins::IDicomDataset& source)
+    {
+      target.Clear();
+
+      AddTag(target, source, Orthanc::DICOM_TAG_BITS_ALLOCATED);
+      AddTag(target, source, Orthanc::DICOM_TAG_BITS_STORED);
+      AddTag(target, source, Orthanc::DICOM_TAG_COLUMNS);
+      AddTag(target, source, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER);
+      AddTag(target, source, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR);
+      AddTag(target, source, Orthanc::DICOM_TAG_HIGH_BIT);
+      AddTag(target, source, Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT);
+      AddTag(target, source, Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT);
+      AddTag(target, source, Orthanc::DICOM_TAG_NUMBER_OF_FRAMES);
+      AddTag(target, source, Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION);
+      AddTag(target, source, Orthanc::DICOM_TAG_PIXEL_REPRESENTATION);
+      AddTag(target, source, Orthanc::DICOM_TAG_PIXEL_SPACING);
+      AddTag(target, source, Orthanc::DICOM_TAG_PLANAR_CONFIGURATION);
+      AddTag(target, source, Orthanc::DICOM_TAG_RESCALE_INTERCEPT);
+      AddTag(target, source, Orthanc::DICOM_TAG_RESCALE_SLOPE);
+      AddTag(target, source, Orthanc::DICOM_TAG_ROWS);
+      AddTag(target, source, Orthanc::DICOM_TAG_SAMPLES_PER_PIXEL);
+      AddTag(target, source, Orthanc::DICOM_TAG_SLICE_THICKNESS);
+      AddTag(target, source, Orthanc::DICOM_TAG_SOP_CLASS_UID);
+      AddTag(target, source, Orthanc::DICOM_TAG_WINDOW_CENTER);
+      AddTag(target, source, Orthanc::DICOM_TAG_WINDOW_WIDTH);
     }
   }
 }

@@ -356,16 +356,18 @@ namespace OrthancStone
     std::string uri = "/instances/" + slices_->GetSlice(0).GetInstanceId() + "/tags";
 
     OrthancPlugins::FullOrthancDataset dataset(orthanc_, uri);
-    OrthancPlugins::DicomDatasetReader reader(dataset);
 
-    if (!reader.GetUnsignedIntegerValue(width_, OrthancPlugins::DICOM_TAG_COLUMNS) ||
-        !reader.GetUnsignedIntegerValue(height_, OrthancPlugins::DICOM_TAG_ROWS))
+    Orthanc::DicomMap dicom;
+    MessagingToolbox::ConvertDataset(dicom, dataset);
+ 
+    if (!dicom.ParseUnsignedInteger32(width_, Orthanc::DICOM_TAG_COLUMNS) ||
+        !dicom.ParseUnsignedInteger32(height_, Orthanc::DICOM_TAG_ROWS))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentTag);
     }
 
     DicomFrameConverter converter;
-    converter.ReadParameters(dataset);
+    converter.ReadParameters(dicom);
     format_ = converter.GetExpectedPixelFormat();
   }
     
@@ -375,10 +377,12 @@ namespace OrthancStone
     std::string uri = "/instances/" + slices_->GetSlice(index).GetInstanceId() + "/tags";
 
     std::auto_ptr<OrthancPlugins::IDicomDataset> dataset(new OrthancPlugins::FullOrthancDataset(orthanc_, uri));
-    OrthancPlugins::DicomDatasetReader reader(*dataset);
 
-    unsigned int frames;
-    if (reader.GetUnsignedIntegerValue(frames, OrthancPlugins::DICOM_TAG_NUMBER_OF_FRAMES) &&
+    Orthanc::DicomMap dicom;
+    MessagingToolbox::ConvertDataset(dicom, *dataset);
+ 
+    uint32_t frames;
+    if (dicom.ParseUnsignedInteger32(frames, Orthanc::DICOM_TAG_NUMBER_OF_FRAMES) &&
         frames != 1)
     {
       LOG(ERROR) << "One instance in this series has more than 1 frame";

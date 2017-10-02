@@ -26,6 +26,7 @@
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
+#include <Plugins/Samples/Common/DicomDatasetReader.h>
 
 #include <stdio.h>
 #include <boost/lexical_cast.hpp>
@@ -62,11 +63,21 @@ namespace OrthancStone
   }
 
 
-  CoordinateSystem3D DicomStructureSet::ExtractSliceGeometry(double& sliceThickness,
-                                                        OrthancPlugins::IOrthancConnection& orthanc,
-                                                        const OrthancPlugins::IDicomDataset& tags,
-                                                        size_t contourIndex,
-                                                        size_t sliceIndex)
+  static bool ParseVector(Vector& target,
+                          const OrthancPlugins::IDicomDataset& dataset,
+                          const OrthancPlugins::DicomPath& tag)
+  {
+    std::string value;
+    return (dataset.GetStringValue(value, tag) &&
+            GeometryToolbox::ParseVector(target, value));
+  }
+
+  CoordinateSystem3D DicomStructureSet::
+  ExtractSliceGeometry(double& sliceThickness,
+                       OrthancPlugins::IOrthancConnection& orthanc,
+                       const OrthancPlugins::IDicomDataset& tags,
+                       size_t contourIndex,
+                       size_t sliceIndex)
   {
     using namespace OrthancPlugins;
 
@@ -80,10 +91,11 @@ namespace OrthancStone
     }
 
     DicomDatasetReader reader(tags);
-    std::string parentUid = reader.GetMandatoryStringValue(DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, contourIndex,
-                                                                     DICOM_TAG_CONTOUR_SEQUENCE, sliceIndex,
-                                                                     DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
-                                                                     DICOM_TAG_REFERENCED_SOP_INSTANCE_UID));
+    std::string parentUid = reader.GetMandatoryStringValue
+      (DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, contourIndex,
+                 DICOM_TAG_CONTOUR_SEQUENCE, sliceIndex,
+                 DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
+                 DICOM_TAG_REFERENCED_SOP_INSTANCE_UID));
 
     Json::Value parentLookup;
     MessagingToolbox::RestApiPost(parentLookup, orthanc, "/tools/lookup", parentUid);
@@ -126,7 +138,7 @@ namespace OrthancStone
     CoordinateSystem3D slice(parentTags);
 
     Vector v;
-    if (GeometryToolbox::ParseVector(v, parentTags, DICOM_TAG_SLICE_THICKNESS) &&
+    if (ParseVector(v, parentTags, DICOM_TAG_SLICE_THICKNESS) &&
         v.size() > 0)
     {
       sliceThickness = v[0];
@@ -201,8 +213,8 @@ namespace OrthancStone
                                                    "No interpretation");
 
       Vector color;
-      if (GeometryToolbox::ParseVector(color, tags, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                              DICOM_TAG_ROI_DISPLAY_COLOR)) &&
+      if (ParseVector(color, tags, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                             DICOM_TAG_ROI_DISPLAY_COLOR)) &&
           color.size() == 3)
       {
         structures_[i].red_ = ConvertColor(color[0]);

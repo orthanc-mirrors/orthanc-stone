@@ -31,7 +31,6 @@
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
-#include <Plugins/Samples/Common/DicomDatasetReader.h>
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 
 #include <boost/lexical_cast.hpp>
@@ -295,10 +294,12 @@ namespace OrthancStone
     for (size_t i = 0; i < instances.size(); i++)
     {
       OrthancPlugins::FullOrthancDataset dataset(series[instances[i]]);
-      OrthancPlugins::DicomDatasetReader reader(dataset);
+
+      Orthanc::DicomMap dicom;
+      MessagingToolbox::ConvertDataset(dicom, dataset);
       
       unsigned int frames;
-      if (!reader.GetUnsignedIntegerValue(frames, OrthancPlugins::DICOM_TAG_NUMBER_OF_FRAMES))
+      if (!dicom.ParseUnsignedInteger32(frames, Orthanc::DICOM_TAG_NUMBER_OF_FRAMES))
       {
         frames = 1;
       }
@@ -306,7 +307,7 @@ namespace OrthancStone
       for (unsigned int frame = 0; frame < frames; frame++)
       {
         Slice slice;
-        if (slice.ParseOrthancFrame(dataset, instances[i], frame))
+        if (slice.ParseOrthancFrame(dicom, instances[i], frame))
         {
           slices_.AddSlice(slice);
         }
@@ -359,10 +360,12 @@ namespace OrthancStone
     }
 
     OrthancPlugins::FullOrthancDataset dataset(tags);
-    OrthancPlugins::DicomDatasetReader reader(dataset);
 
+    Orthanc::DicomMap dicom;
+    MessagingToolbox::ConvertDataset(dicom, dataset);
+      
     unsigned int frames;
-    if (!reader.GetUnsignedIntegerValue(frames, OrthancPlugins::DICOM_TAG_NUMBER_OF_FRAMES))
+    if (!dicom.ParseUnsignedInteger32(frames, Orthanc::DICOM_TAG_NUMBER_OF_FRAMES))
     {
       frames = 1;
     }
@@ -374,7 +377,7 @@ namespace OrthancStone
     for (unsigned int frame = 0; frame < frames; frame++)
     {
       Slice slice;
-      if (slice.ParseOrthancFrame(dataset, instanceId, frame))
+      if (slice.ParseOrthancFrame(dicom, instanceId, frame))
       {
         slices_.AddSlice(slice);
       }
@@ -406,9 +409,12 @@ namespace OrthancStone
     OrthancPlugins::FullOrthancDataset dataset(tags);
 
     state_ = State_GeometryReady;
-      
+
+    Orthanc::DicomMap dicom;
+    MessagingToolbox::ConvertDataset(dicom, dataset);
+
     Slice slice;
-    if (slice.ParseOrthancFrame(dataset, instanceId, frame))
+    if (slice.ParseOrthancFrame(dicom, instanceId, frame))
     {
       LOG(INFO) << "Loaded instance " << instanceId;
       slices_.AddSlice(slice);

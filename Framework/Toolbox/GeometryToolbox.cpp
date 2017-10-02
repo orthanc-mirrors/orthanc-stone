@@ -68,11 +68,11 @@ namespace OrthancStone
 
 
     bool ParseVector(Vector& target,
-                     const OrthancPlugins::IDicomDataset& dataset,
-                     const OrthancPlugins::DicomPath& tag)
+                     const Orthanc::DicomMap& dataset,
+                     const Orthanc::DicomTag& tag)
     {
       std::string value;
-      return (dataset.GetStringValue(value, tag) &&
+      return (dataset.CopyToString(value, tag, false) &&
               ParseVector(target, value));
     }
 
@@ -351,11 +351,11 @@ namespace OrthancStone
 
     void GetPixelSpacing(double& spacingX, 
                          double& spacingY,
-                         const OrthancPlugins::IDicomDataset& dicom)
+                         const Orthanc::DicomMap& dicom)
     {
       Vector v;
 
-      if (ParseVector(v, dicom, OrthancPlugins::DICOM_TAG_PIXEL_SPACING))
+      if (ParseVector(v, dicom, Orthanc::DICOM_TAG_PIXEL_SPACING))
       {
         if (v.size() != 2 ||
             v[0] <= 0 ||

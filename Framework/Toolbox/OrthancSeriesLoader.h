@@ -42,8 +42,8 @@ namespace OrthancStone
     boost::shared_ptr<SetOfSlices>       slices_;
     ParallelSlices                       geometry_;
     Orthanc::PixelFormat                 format_;
-    unsigned int                         width_;
-    unsigned int                         height_;
+    uint32_t                             width_;
+    uint32_t                             height_;
 
     void CheckFrame(const Orthanc::ImageAccessor& frame) const;
 

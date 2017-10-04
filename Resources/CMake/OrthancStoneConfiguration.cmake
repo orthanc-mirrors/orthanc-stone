@@ -160,13 +160,13 @@ if (NOT ORTHANC_SANDBOXED)
 endif()
 
 list(APPEND ORTHANC_STONE_SOURCES
-  #${ORTHANC_STONE_DIR}/Framework/Layers/DicomStructureSetRendererFactory.cpp
   #${ORTHANC_STONE_DIR}/Framework/Layers/SeriesFrameRendererFactory.cpp
   #${ORTHANC_STONE_DIR}/Framework/Layers/SiblingSliceLocationFactory.cpp
   #${ORTHANC_STONE_DIR}/Framework/Layers/SingleFrameRendererFactory.cpp
   ${ORTHANC_STONE_DIR}/Framework/Enumerations.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/CircleMeasureTracker.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/ColorFrameRenderer.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Layers/DicomStructureSetRendererFactory.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/FrameRenderer.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/GrayscaleFrameRenderer.cpp
   ${ORTHANC_STONE_DIR}/Framework/Layers/LayerSourceBase.cpp

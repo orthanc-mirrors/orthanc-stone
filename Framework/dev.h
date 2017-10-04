@@ -615,13 +615,13 @@ namespace OrthancStone
           LayerSourceBase::NotifyLayerReady(
             FrameRenderer::CreateRenderer(frame.release(), *slice, isFullQuality),
             //new SliceOutlineRenderer(slice),
-            *slice, false);
+            slice->GetGeometry(), false);
           return;
         }
       }
 
       // Error
-      Slice slice;
+      CoordinateSystem3D slice;
       LayerSourceBase::NotifyLayerReady(NULL, slice, true);
     }
   };
@@ -819,7 +819,7 @@ namespace OrthancStone
                                                viewportSlice.GetOrigin(), viewportSlice.GetNormal()))
       {
         // The two slice are parallel, don't try and display the intersection
-        NotifyLayerReady(NULL, reference, false);
+        NotifyLayerReady(NULL, reference.GetGeometry(), false);
       }
       else
       {
@@ -834,12 +834,12 @@ namespace OrthancStone
                                                  extent.GetX1(), extent.GetY1(),
                                                  extent.GetX2(), extent.GetY2()))
         {
-          NotifyLayerReady(new LineLayerRenderer(x1, y1, x2, y2, slice), reference, false);
+          NotifyLayerReady(new LineLayerRenderer(x1, y1, x2, y2, slice), reference.GetGeometry(), false);
         }
         else
         {
           // Parallel slices
-          NotifyLayerReady(NULL, reference, false);
+          NotifyLayerReady(NULL, reference.GetGeometry(), false);
         }
       }
     }      

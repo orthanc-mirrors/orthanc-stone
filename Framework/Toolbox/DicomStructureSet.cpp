@@ -232,7 +232,7 @@ namespace OrthancStone
       if (!tags.GetSequenceSize(countSlices, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
                                                        DICOM_TAG_CONTOUR_SEQUENCE)))
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        countSlices = 0;
       }
 
       LOG(WARNING) << "New RT structure: \"" << structures_[i].name_ 
@@ -253,7 +253,7 @@ namespace OrthancStone
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
             
-        LOG(INFO) << "Parsing slice containing " << countPoints << " vertices";
+        //LOG(INFO) << "Parsing slice containing " << countPoints << " vertices";
 
         std::string type = reader.GetMandatoryStringValue(DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
                                                                     DICOM_TAG_CONTOUR_SEQUENCE, j,
@@ -371,6 +371,19 @@ namespace OrthancStone
     for (Structures::const_iterator structure = structures_.begin();
          structure != structures_.end(); ++structure)
     {
+      if (structure->name_ != "SKIN" &&
+          structure->name_ != "HEART" &&
+          //structure->name_ != "CORD" &&
+          structure->name_ != "ESOPHAGUS" &&
+          structure->name_ != "LUNG_LT" &&
+          structure->name_ != "LUNG_RT" &&
+          structure->name_ != "GTV_EXH_PRIMARY" &&
+          structure->name_ != "GTV_INH_PRIMARY" &&
+          structure->name_ != "GTV_PRIMARY")
+      {
+        continue;
+      }
+      
       for (Polygons::const_iterator polygon = structure->polygons_.begin();
            polygon != structure->polygons_.end(); ++polygon)
       {
@@ -394,10 +407,10 @@ namespace OrthancStone
 
           slice.ProjectPoint(x, y, *polygon->points_.begin());
           cairo_line_to(cr, x, y);
+
+          cairo_stroke(cr);
         }
       }
     }
-
-    cairo_stroke(cr);
   }
 }

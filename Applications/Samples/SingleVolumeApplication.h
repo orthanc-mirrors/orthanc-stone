@@ -30,6 +30,9 @@
 #include <Core/Toolbox.h>
 #include <Core/Logging.h>
 
+#include <Plugins/Samples/Common/OrthancHttpConnection.h>   // TODO REMOVE
+#include "../../Framework/Layers/DicomStructureSetRendererFactory.h"   // TODO REMOVE
+
 namespace OrthancStone
 {
   namespace Samples
@@ -80,9 +83,12 @@ namespace OrthancStone
           widget_(widget),
           layer_(layer)
         {
-          printf("OOO\n");
         }
       };
+
+
+      std::auto_ptr<DicomStructureSet>  struct_;
+      
 
     public:
       virtual void DeclareCommandLineOptions(boost::program_options::options_description& options)
@@ -170,7 +176,7 @@ namespace OrthancStone
 
         std::auto_ptr<LayerWidget> widget(new LayerWidget);
 
-#if 0
+#if 1
         std::auto_ptr<OrthancVolumeImage> volume(new OrthancVolumeImage(context.GetWebService(), true));
         if (series.empty())
         {
@@ -195,6 +201,12 @@ namespace OrthancStone
           widget->SetLayerStyle(0, s);
         }
 #else
+        {
+          OrthancPlugins::OrthancHttpConnection orthanc;
+          struct_.reset(new DicomStructureSet(orthanc, "54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9"));  // IBA
+          //struct_.reset(new DicomStructureSet(orthanc, "17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20"));  // 0522c0001 TCIA
+        }
+        
         std::auto_ptr<OrthancVolumeImage> ct(new OrthancVolumeImage(context.GetWebService(), false));
         //ct->ScheduleLoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
         ct->ScheduleLoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // IBA
@@ -209,9 +221,10 @@ namespace OrthancStone
 
         widget->AddLayer(new VolumeImageSource(*ct));
         widget->AddLayer(new VolumeImageSource(*pet));
+        widget->AddLayer(new DicomStructureSetRendererFactory(*struct_));
         
-        //context.AddInteractor(new Interactor(*pet, *widget, projection, 1));
-        context.AddInteractor(new VolumeImageInteractor(*ct, *widget, projection));
+        context.AddInteractor(new Interactor(*pet, *widget, projection, 1));
+        //context.AddInteractor(new VolumeImageInteractor(*ct, *widget, projection));
         context.AddVolume(ct.release());
         context.AddVolume(pet.release());
 

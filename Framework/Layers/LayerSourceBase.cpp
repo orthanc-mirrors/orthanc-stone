@@ -31,12 +31,12 @@ namespace OrthancStone
     {
     private:
       std::auto_ptr<ILayerRenderer>  layer_;
-      const Slice&                   slice_;
+      const CoordinateSystem3D&      slice_;
       bool                           isError_;
       
     public:
       LayerReadyFunctor(ILayerRenderer* layer,
-                        const Slice& slice,
+                        const CoordinateSystem3D& slice,
                         bool isError) :
         layer_(layer),
         slice_(slice),
@@ -73,7 +73,7 @@ namespace OrthancStone
   }
 
   void LayerSourceBase::NotifyLayerReady(ILayerRenderer* layer,
-                                         const Slice& slice,
+                                         const CoordinateSystem3D& slice,
                                          bool isError)
   {
     LayerReadyFunctor functor(layer, slice, isError);

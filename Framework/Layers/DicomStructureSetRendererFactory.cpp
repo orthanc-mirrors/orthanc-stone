@@ -29,12 +29,12 @@ namespace OrthancStone
   {
   private:
     const DicomStructureSet&  structureSet_;
-    SliceGeometry             slice_;
+    CoordinateSystem3D        slice_;
     bool                      visible_;
 
   public:
     Renderer(const DicomStructureSet& structureSet,
-             const SliceGeometry& slice) :
+             const CoordinateSystem3D& slice) :
       structureSet_(structureSet),
       slice_(slice),
       visible_(true)
@@ -42,8 +42,7 @@ namespace OrthancStone
     }
 
     virtual bool RenderLayer(CairoContext& context,
-                             const ViewportGeometry& view,
-                             const SliceGeometry& viewportSlice)
+                             const ViewportGeometry& view)
     {
       if (visible_)
       {
@@ -52,6 +51,11 @@ namespace OrthancStone
       }
 
       return true;
+    }
+
+    virtual const CoordinateSystem3D& GetLayerSlice()
+    {
+      return slice_;
     }
 
     virtual void SetLayerStyle(const RenderStyle& style)
@@ -66,22 +70,12 @@ namespace OrthancStone
   };
 
 
-  ILayerRenderer* DicomStructureSetRendererFactory::CreateLayerRenderer(const SliceGeometry& displaySlice)
+  void DicomStructureSetRendererFactory::ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
   {
     bool isOpposite;
-    if (GeometryToolbox::IsParallelOrOpposite(isOpposite, displaySlice.GetNormal(), structureSet_.GetNormal()))
+    if (GeometryToolbox::IsParallelOrOpposite(isOpposite, viewportSlice.GetNormal(), structureSet_.GetNormal()))
     {
-      return new Renderer(structureSet_, displaySlice);
+      NotifyLayerReady(new Renderer(structureSet_, viewportSlice), viewportSlice, false);
     }
-    else
-    {
-      return NULL;
-    }
-  }
-
-
-  ISliceableVolume& DicomStructureSetRendererFactory::GetSourceVolume() const
-  {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
   }
 }

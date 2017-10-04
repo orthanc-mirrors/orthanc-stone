@@ -117,7 +117,7 @@ TEST(Toto, Tata)
 
   Orthanc::WebServiceParameters web;
   OrthancStone::OracleWebService orthanc(oracle, web);
-  OrthancStone::OrthancVolumeImage volume(orthanc);
+  OrthancStone::OrthancVolumeImage volume(orthanc, true);
 
   //volume.ScheduleLoadInstance("19816330-cb02e1cf-df3a8fe8-bf510623-ccefe9f5", 0);
   //volume.ScheduleLoadSeries("318603c5-03e8cffc-a82b6ee1-3ccd3c1e-18d7e3bb"); // COMUNIX PET

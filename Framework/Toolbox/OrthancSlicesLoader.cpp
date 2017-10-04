@@ -659,7 +659,6 @@ namespace OrthancStone
     compressor.Uncompress(raw, answer, size);
     
     const Orthanc::DicomImageInformation& info = operation.GetSlice().GetImageInformation();
-    unsigned int frame = operation.GetSlice().GetFrame();
     
     if (info.GetBitsAllocated() == 32 &&
         info.GetBitsStored() == 32 &&

@@ -197,7 +197,7 @@ namespace OrthancStone
  
       virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& layer,
                                     const ILayerSource& source,
-                                    const Slice& slice,
+                                    const CoordinateSystem3D& slice,
                                     bool isError)
       {
       }

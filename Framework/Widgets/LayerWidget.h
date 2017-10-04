@@ -64,7 +64,7 @@ namespace OrthancStone
 
     virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& renderer,
                                   const ILayerSource& source,
-                                  const Slice& slice,
+                                  const CoordinateSystem3D& slice,
                                   bool isError);
 
     void ResetChangedLayers();
@@ -80,7 +80,7 @@ namespace OrthancStone
 
     void UpdateLayer(size_t index,
                      ILayerRenderer* renderer,
-                     const Slice& slice);
+                     const CoordinateSystem3D& slice);
 
     void InvalidateAllLayers();
 

@@ -33,6 +33,7 @@ namespace OrthancStone
   {
   private:
     CoordinateSystem3D            slice_;
+    double                        thickness_;
     size_t                        countMissing_;
     std::vector<ILayerRenderer*>  renderers_;
 
@@ -56,11 +57,17 @@ namespace OrthancStone
       
   public:
     Scene(const CoordinateSystem3D& slice,
+          double thickness,
           size_t countLayers) :
       slice_(slice),
+      thickness_(thickness),
       countMissing_(countLayers),
       renderers_(countLayers, NULL)
     {
+      if (thickness <= 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
     }
 
     ~Scene()
@@ -193,6 +200,34 @@ namespace OrthancStone
         renderers_[index]->SetLayerStyle(style);
       }
     }
+
+    bool ContainsPlane(const CoordinateSystem3D& slice) const
+    {
+      bool isOpposite;
+      if (!GeometryToolbox::IsParallelOrOpposite(isOpposite,
+                                                 slice.GetNormal(),
+                                                 slice_.GetNormal()))
+      {
+        return false;
+      }
+      else
+      {
+        double z = (slice_.ProjectAlongNormal(slice.GetOrigin()) -
+                    slice_.ProjectAlongNormal(slice_.GetOrigin()));
+      
+        if (z < 0)
+        {
+          z = -z;
+        }
+
+        return z <= thickness_;
+      }
+    }
+
+    double GetThickness() const
+    {
+      return thickness_;
+    }
   };
 
   
@@ -266,13 +301,23 @@ namespace OrthancStone
   
   void LayerWidget::ResetPendingScene()
   {
-    pendingScene_.reset(new Scene(slice_, layers_.size()));
+    double thickness;
+    if (pendingScene_.get() == NULL)
+    {
+      thickness = 1.0;
+    }
+    else
+    {
+      thickness = pendingScene_->GetThickness();
+    }
+    
+    pendingScene_.reset(new Scene(slice_, thickness, layers_.size()));
   }
   
 
   void LayerWidget::UpdateLayer(size_t index,
                                 ILayerRenderer* renderer,
-                                const Slice& slice)
+                                const CoordinateSystem3D& slice)
   {
     LOG(INFO) << "Updating layer " << index;
     
@@ -292,13 +337,13 @@ namespace OrthancStone
     renderer->SetLayerStyle(styles_[index]);
 
     if (currentScene_.get() != NULL &&
-        slice.ContainsPlane(currentScene_->GetSlice()))
+        currentScene_->ContainsPlane(slice))
     {
       currentScene_->SetLayer(index, tmp.release());
       NotifyChange();
     }
     else if (pendingScene_.get() != NULL &&
-             slice.ContainsPlane(pendingScene_->GetSlice()))
+             pendingScene_->ContainsPlane(slice))
     {
       pendingScene_->SetLayer(index, tmp.release());
 
@@ -483,13 +528,11 @@ namespace OrthancStone
   
   void LayerWidget::NotifyLayerReady(std::auto_ptr<ILayerRenderer>& renderer,
                                      const ILayerSource& source,
-                                     const Slice& slice,
+                                     const CoordinateSystem3D& slice,
                                      bool isError)
   {
     size_t index;
-    if (slice.IsValid() &&
-        LookupLayer(index, source) &&
-        slice.ContainsPlane(slice_))  // Whether the slice comes from an older request
+    if (LookupLayer(index, source))
     {
       if (isError)
       {
@@ -506,7 +549,8 @@ namespace OrthancStone
       }
       else if (isError)
       {
-        UpdateLayer(index, new SliceOutlineRenderer(slice), slice);
+        // TODO
+        //UpdateLayer(index, new SliceOutlineRenderer(slice), slice);
       }
     }
   }

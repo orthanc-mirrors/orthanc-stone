@@ -22,11 +22,11 @@
 #pragma once
 
 #include "../Toolbox/DicomStructureSet.h"
-#include "ILayerRendererFactory.h"
+#include "LayerSourceBase.h"
 
 namespace OrthancStone
 {
-  class DicomStructureSetRendererFactory : public ILayerRendererFactory
+  class DicomStructureSetRendererFactory : public LayerSourceBase
   {
   private:
     class Renderer;
@@ -34,27 +34,17 @@ namespace OrthancStone
     const DicomStructureSet&  structureSet_;
 
   public:
-    DicomStructureSetRendererFactory(const DicomStructureSet&  structureSet) :
+    DicomStructureSetRendererFactory(const DicomStructureSet& structureSet) :
       structureSet_(structureSet)
     {
     }
 
-    virtual bool GetExtent(double& x1,
-                           double& y1,
-                           double& x2,
-                           double& y2,
-                           const SliceGeometry& displaySlice)
+    virtual bool GetExtent(std::vector<Vector>& points,
+                           const CoordinateSystem3D& viewportSlice)
     {
       return false;
     }
 
-    virtual ILayerRenderer* CreateLayerRenderer(const SliceGeometry& displaySlice);
-
-    virtual bool HasSourceVolume() const
-    {
-      return false;
-    }
-
-    virtual ISliceableVolume& GetSourceVolume() const;
+    virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice);
   };
 }

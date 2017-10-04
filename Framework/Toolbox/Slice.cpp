@@ -104,9 +104,6 @@ namespace OrthancStone
       thickness_ = -thickness_;
     }
 
-    printf("%d: %f %f %f\n", frame_, geometry_.GetOrigin()[0], geometry_.GetOrigin()[1], geometry_.GetOrigin()[2]);
-    //printf("%f %f %f\n", pixelSpacingX_, pixelSpacingY_, thickness_);
-    
     return true;
   }
 

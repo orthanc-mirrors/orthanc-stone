@@ -56,7 +56,7 @@ namespace OrthancStone
   {
     bool isFull = (quality == SliceImageQuality_Full);
     LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(image.release(), slice, isFull),
-                                      slice, false);
+                                      slice.GetGeometry(), false);
   }
 
   void OrthancFrameLayerSource::NotifySliceImageError(const OrthancSlicesLoader& loader,
@@ -64,7 +64,7 @@ namespace OrthancStone
                                                       const Slice& slice,
                                                       SliceImageQuality quality)
   {
-    LayerSourceBase::NotifyLayerReady(NULL, slice, true);
+    LayerSourceBase::NotifyLayerReady(NULL, slice.GetGeometry(), true);
   }
 
 
@@ -124,7 +124,7 @@ namespace OrthancStone
       else
       {
         Slice slice;
-        LayerSourceBase::NotifyLayerReady(NULL, slice, true);
+        LayerSourceBase::NotifyLayerReady(NULL, slice.GetGeometry(), true);
       }
     }
   }

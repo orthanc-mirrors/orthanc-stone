@@ -118,6 +118,8 @@ namespace OrthancStone
     void ScheduleSliceImageJpeg(const Slice& slice,
                                 size_t index,
                                 SliceImageQuality quality);
+
+    void SortAndFinalizeSlices();
     
   public:
     OrthancSlicesLoader(ICallback& callback,

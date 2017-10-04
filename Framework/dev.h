@@ -133,7 +133,7 @@ namespace OrthancStone
         // z-dimension for voxels
         spacingZ = 1;
       }
-      
+
       for (size_t i = 1; i < loader.GetSliceCount(); i++)
       {
         if (!GeometryToolbox::IsNear(spacingZ, GetDistance(loader.GetSlice(i - 1), loader.GetSlice(i)),
@@ -156,7 +156,7 @@ namespace OrthancStone
       image_->SetVoxelDimensions(loader.GetSlice(0).GetPixelSpacingX(), 
                                  loader.GetSlice(0).GetPixelSpacingY(), spacingZ);
       image_->Clear();
-
+      
       downloadStack_.reset(new DownloadStack(loader.GetSliceCount()));
 
       for (unsigned int i = 0; i < 4; i++)  // Limit to 4 simultaneous downloads
@@ -391,8 +391,6 @@ namespace OrthancStone
         default:
           throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
-
-      //sliceThickness_ = 3.0f;  // TODO XXXXX
     }
 
     size_t GetSliceCount() const
@@ -645,10 +643,10 @@ namespace OrthancStone
       if (slices_.get() == NULL)
       {
         const OrthancVolumeImage& image = dynamic_cast<const OrthancVolumeImage&>(volume);
-          
+
         slices_.reset(new VolumeImageGeometry(image, projection_));
         SetSlice(slices_->GetSliceCount() / 2);
-          
+
         widget_.SetDefaultView();
       }
     }

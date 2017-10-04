@@ -277,6 +277,37 @@ namespace OrthancStone
       (*this, operation.GetSliceIndex(), operation.GetSlice(), operation.GetQuality());
   }
 
+
+  void OrthancSlicesLoader::SortAndFinalizeSlices()
+  {
+    bool ok = false;
+    
+    if (slices_.GetSliceCount() > 0)
+    {
+      Vector normal;
+      if (slices_.SelectNormal(normal))
+      {
+        slices_.FilterNormal(normal);
+        slices_.SetNormal(normal);
+        slices_.Sort();
+        ok = true;
+      }
+    }
+
+    state_ = State_GeometryReady;
+
+    if (ok)
+    {
+      LOG(INFO) << "Loaded a series with " << slices_.GetSliceCount() << " slice(s)";
+      userCallback_.NotifyGeometryReady(*this);
+    }
+    else
+    {
+      LOG(ERROR) << "This series is empty";
+      userCallback_.NotifyGeometryError(*this);
+    }
+  }
+
   
   void OrthancSlicesLoader::ParseSeriesGeometry(const void* answer,
                                                 size_t size)
@@ -320,32 +351,7 @@ namespace OrthancStone
       }
     }
 
-    bool ok = false;
-      
-    if (slices_.GetSliceCount() > 0)
-    {
-      Vector normal;
-      if (slices_.SelectNormal(normal))
-      {
-        slices_.FilterNormal(normal);
-        slices_.SetNormal(normal);
-        slices_.Sort();
-        ok = true;
-      }
-    }
-
-    state_ = State_GeometryReady;
-
-    if (ok)
-    {
-      LOG(INFO) << "Loaded a series with " << slices_.GetSliceCount() << " slice(s)";
-      userCallback_.NotifyGeometryReady(*this);
-    }
-    else
-    {
-      LOG(ERROR) << "This series is empty";
-      userCallback_.NotifyGeometryError(*this);
-    }
+    SortAndFinalizeSlices();
   }
 
 
@@ -374,8 +380,6 @@ namespace OrthancStone
     
     LOG(INFO) << "Instance " << instanceId << " contains " << frames << " frame(s)";
 
-    state_ = State_GeometryReady;
-
     for (unsigned int frame = 0; frame < frames; frame++)
     {
       std::auto_ptr<Slice> slice(new Slice);
@@ -391,7 +395,7 @@ namespace OrthancStone
       }
     }
 
-    userCallback_.NotifyGeometryReady(*this);
+    SortAndFinalizeSlices();
   }
 
 
@@ -671,6 +675,7 @@ namespace OrthancStone
         (new StringImage(Orthanc::PixelFormat_Grayscale32, info.GetWidth(),
                          info.GetHeight(), raw));
 
+      // TODO - Only for big endian
       for (unsigned int y = 0; y < image->GetHeight(); y++)
       {
         uint32_t *p = reinterpret_cast<uint32_t*>(image->GetRow(y));
@@ -679,6 +684,22 @@ namespace OrthancStone
           *p = le32toh(*p);
         }
       }
+
+      NotifySliceImageSuccess(operation, image);
+    }
+    else if (info.GetBitsAllocated() == 16 &&
+             info.GetBitsStored() == 16 &&
+             info.GetHighBit() == 15 &&
+             info.GetChannelCount() == 1 &&
+             !info.IsSigned() &&
+             info.GetPhotometricInterpretation() == Orthanc::PhotometricInterpretation_Monochrome2 &&
+             raw.size() == info.GetWidth() * info.GetHeight() * 2)
+    {
+      std::auto_ptr<Orthanc::ImageAccessor> image
+        (new StringImage(Orthanc::PixelFormat_Grayscale16, info.GetWidth(),
+                         info.GetHeight(), raw));
+
+      // TODO - Big endian ?
 
       NotifySliceImageSuccess(operation, image);
     }

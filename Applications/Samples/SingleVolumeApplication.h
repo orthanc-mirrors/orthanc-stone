@@ -54,9 +54,21 @@ namespace OrthancStone
 
           if (image.FitWindowingToRange(s, slice.GetConverter()))
           {
-            //printf("ICI: %f => %f\n", s.customWindowCenter_, s.customWindowWidth_);
+            //printf("Windowing: %f => %f\n", s.customWindowCenter_, s.customWindowWidth_);
             widget_.SetLayerStyle(layer_, s);
           }
+        }
+
+        virtual void MouseOver(CairoContext& context,
+                               WorldSceneWidget& widget,
+                               const ViewportGeometry& view,
+                               double x,
+                               double y,
+                               IStatusBar* statusBar)
+        {
+          const LayerWidget& w = dynamic_cast<const LayerWidget&>(widget);
+          Vector p = w.GetSlice().MapSliceToWorldCoordinates(x, y);
+          printf("%f %f %f\n", p[0], p[1], p[2]);
         }
       
       public:
@@ -185,19 +197,21 @@ namespace OrthancStone
 #else
         std::auto_ptr<OrthancVolumeImage> ct(new OrthancVolumeImage(context.GetWebService(), false));
         //ct->ScheduleLoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
-        //ct->ScheduleLoadSeries("3025d8df-a82f3b00-83942fa3-ee6a6be3-a8bf32e8");
-        ct->ScheduleLoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");
-
+        ct->ScheduleLoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // IBA
+        //ct->ScheduleLoadSeries("03677739-1d8bca40-db1daf59-d74ff548-7f6fc9c0");  // 0522c0001 TCIA
+  
         std::auto_ptr<OrthancVolumeImage> pet(new OrthancVolumeImage(context.GetWebService(), true));
         //pet->ScheduleLoadSeries("aabad2e7-80702b5d-e599d26c-4f13398e-38d58a9e");
-        //pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");
-        //pet->ScheduleLoadInstance("337876a1-a68a9718-f15abccd-38faafa1-b99b496a");
-        pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");
+        pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb"); // IBA 1
+        //pet->ScheduleLoadInstance("337876a1-a68a9718-f15abccd-38faafa1-b99b496a"); // IBA 2
+        //pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // IBA 3
+        //pet->ScheduleLoadInstance("269f26f4-0c83eeeb-2e67abbd-5467a40f-f1bec90c");  // 0522c0001 TCIA
 
         widget->AddLayer(new VolumeImageSource(*ct));
         widget->AddLayer(new VolumeImageSource(*pet));
         
-        context.AddInteractor(new Interactor(*pet, *widget, projection, 1));
+        //context.AddInteractor(new Interactor(*pet, *widget, projection, 1));
+        context.AddInteractor(new VolumeImageInteractor(*ct, *widget, projection));
         context.AddVolume(ct.release());
         context.AddVolume(pet.release());
 
@@ -217,6 +231,9 @@ namespace OrthancStone
           s.applyLut_ = true;
           s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
           s.interpolation_ = ImageInterpolation_Linear;
+          s.windowing_ = ImageWindowing_Custom;
+          s.customWindowCenter_ = 0;
+          s.customWindowWidth_ = 128;
           widget->SetLayerStyle(1, s);
         }
 #endif

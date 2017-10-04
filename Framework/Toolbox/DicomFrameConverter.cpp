@@ -81,6 +81,26 @@ namespace OrthancStone
       isRTDose = true;
       rescaleIntercept_ = 0;
       rescaleSlope_ = doseGridScaling;
+
+      if (!dicom.ParseInteger32(tmp, Orthanc::DICOM_TAG_BITS_STORED))
+      {
+        // Type 1 tag, must be present
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
+
+      switch (tmp)
+      {
+        case 16:
+          expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
+          break;
+
+        case 32:
+          expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale32;
+          break;
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
     }
 
     std::string photometric;
@@ -100,21 +120,20 @@ namespace OrthancStone
     // TODO Add more checks, e.g. on the number of bytes per value
     // (cf. DicomImageInformation.h in Orthanc)
 
-    if (isRTDose)
+    if (!isRTDose)
     {
-      expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale32;
-    }
-    else if (isColor_)
-    {
-      expectedPixelFormat_ = Orthanc::PixelFormat_RGB24;
-    }
-    else if (isSigned_)
-    {
-      expectedPixelFormat_ = Orthanc::PixelFormat_SignedGrayscale16;
-    }
-    else
-    {
-      expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
+      if (isColor_)
+      {
+        expectedPixelFormat_ = Orthanc::PixelFormat_RGB24;
+      }
+      else if (isSigned_)
+      {
+        expectedPixelFormat_ = Orthanc::PixelFormat_SignedGrayscale16;
+      }
+      else
+      {
+        expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
+      }
     }
   }
 

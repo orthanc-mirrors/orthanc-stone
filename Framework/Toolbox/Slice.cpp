@@ -69,7 +69,7 @@ namespace OrthancStone
     std::vector<std::string> offsets;
     Orthanc::Toolbox::TokenizeString(offsets, offsetTag, '\\');
 
-    if (frameCount_ == 0 ||
+    if (frameCount_ <= 1 ||
         offsets.size() != frameCount_ ||
         frame >= frameCount_)
     {
@@ -77,9 +77,10 @@ namespace OrthancStone
       return false;
     }
 
-    double offset0, z;
+    double offset0, offset1, z;
 
     if (!ParseDouble(offset0, offsets[0]) ||
+        !ParseDouble(offset1, offsets[1]) ||
         !ParseDouble(z, offsets[frame]))
     {
       LOG(ERROR) << "Invalid syntax";
@@ -93,8 +94,18 @@ namespace OrthancStone
     }
 
     geometry_ = CoordinateSystem3D(geometry_.GetOrigin() + z * geometry_.GetNormal(),
+                                   //+ 650 * geometry_.GetAxisX(),
                                    geometry_.GetAxisX(),
                                    geometry_.GetAxisY());
+
+    thickness_ = offset1 - offset0;
+    if (thickness_ < 0)
+    {
+      thickness_ = -thickness_;
+    }
+
+    printf("%d: %f %f %f\n", frame_, geometry_.GetOrigin()[0], geometry_.GetOrigin()[1], geometry_.GetOrigin()[2]);
+    //printf("%f %f %f\n", pixelSpacingX_, pixelSpacingY_, thickness_);
     
     return true;
   }

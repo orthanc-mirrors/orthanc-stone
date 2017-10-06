@@ -31,10 +31,10 @@ namespace OrthancStone
   private:
     class Renderer;
 
-    const DicomStructureSet&  structureSet_;
+    DicomStructureSet&  structureSet_;
 
   public:
-    DicomStructureSetRendererFactory(const DicomStructureSet& structureSet) :
+    DicomStructureSetRendererFactory(DicomStructureSet& structureSet) :
       structureSet_(structureSet)
     {
     }

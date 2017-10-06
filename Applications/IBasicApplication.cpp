@@ -204,7 +204,7 @@ namespace OrthancStone
         OrthancPlugins::OrthancHttpConnection orthanc(webService);
         if (!MessagingToolbox::CheckOrthancVersion(orthanc))
         {
-          LOG(ERROR) << "Your version of Orthanc is incompatible with Orthanc Stone, please upgrade";
+          LOG(ERROR) << "Your version of Orthanc is incompatible with Stone of Orthanc, please upgrade";
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
         }
       }

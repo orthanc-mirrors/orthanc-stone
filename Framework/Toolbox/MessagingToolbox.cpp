@@ -183,11 +183,12 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
       }
 
-      LOG(WARNING) << "Version of the Orthanc core (must be above 1.1.0): " << version;
+      LOG(WARNING) << "Version of the Orthanc core (must be above 1.3.1): " << version;
 
-      // Stone is only compatible with Orthanc >= 1.1.0, otherwise deadlocks might occur
+      // Stone is only compatible with Orthanc >= 1.3.1
       if (major < 1 ||
-          (major == 1 && minor < 1))
+          (major == 1 && minor < 3) ||
+          (major == 1 && minor == 3 && patch < 1))
       {
         return false;
       }
@@ -437,8 +438,10 @@ namespace OrthancStone
       AddTag(target, source, Orthanc::DICOM_TAG_RESCALE_SLOPE);
       AddTag(target, source, Orthanc::DICOM_TAG_ROWS);
       AddTag(target, source, Orthanc::DICOM_TAG_SAMPLES_PER_PIXEL);
+      AddTag(target, source, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID);
       AddTag(target, source, Orthanc::DICOM_TAG_SLICE_THICKNESS);
       AddTag(target, source, Orthanc::DICOM_TAG_SOP_CLASS_UID);
+      AddTag(target, source, Orthanc::DICOM_TAG_SOP_INSTANCE_UID);
       AddTag(target, source, Orthanc::DICOM_TAG_WINDOW_CENTER);
       AddTag(target, source, Orthanc::DICOM_TAG_WINDOW_WIDTH);
     }

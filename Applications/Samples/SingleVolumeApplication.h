@@ -32,6 +32,7 @@
 
 #include <Plugins/Samples/Common/OrthancHttpConnection.h>   // TODO REMOVE
 #include "../../Framework/Layers/DicomStructureSetRendererFactory.h"   // TODO REMOVE
+#include "../../Framework/Toolbox/MessagingToolbox.h"   // TODO REMOVE
 
 namespace OrthancStone
 {
@@ -176,7 +177,7 @@ namespace OrthancStone
 
         std::auto_ptr<LayerWidget> widget(new LayerWidget);
 
-#if 1
+#if 0
         std::auto_ptr<OrthancVolumeImage> volume(new OrthancVolumeImage(context.GetWebService(), true));
         if (series.empty())
         {
@@ -202,9 +203,11 @@ namespace OrthancStone
         }
 #else
         {
+          const std::string s = "54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9";  // IBA
+          //const std::string s = "17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20";  // 0522c0001 TCIA
+          
           OrthancPlugins::OrthancHttpConnection orthanc;
-          struct_.reset(new DicomStructureSet(orthanc, "54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9"));  // IBA
-          //struct_.reset(new DicomStructureSet(orthanc, "17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20"));  // 0522c0001 TCIA
+          struct_.reset(DicomStructureSet::SynchronousLoad(orthanc, s));
         }
         
         std::auto_ptr<OrthancVolumeImage> ct(new OrthancVolumeImage(context.GetWebService(), false));

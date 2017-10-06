@@ -121,7 +121,23 @@ namespace OrthancStone
     {
       SetupCanonical();
     }
-  }   
+  }
+
+
+  CoordinateSystem3D::CoordinateSystem3D(const Orthanc::DicomMap& dicom)
+  {
+    std::string a, b;
+
+    if (dicom.CopyToString(a, Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT, false) &&
+        dicom.CopyToString(b, Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT, false))
+    {
+      Setup(a, b);
+    }
+    else
+    {
+      SetupCanonical();
+    }    
+  }
 
 
   Vector CoordinateSystem3D::MapSliceToWorldCoordinates(double x,

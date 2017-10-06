@@ -28,12 +28,12 @@ namespace OrthancStone
   class DicomStructureSetRendererFactory::Renderer : public ILayerRenderer
   {
   private:
-    const DicomStructureSet&  structureSet_;
-    CoordinateSystem3D        slice_;
-    bool                      visible_;
+    DicomStructureSet&  structureSet_;
+    CoordinateSystem3D  slice_;
+    bool                visible_;
 
   public:
-    Renderer(const DicomStructureSet& structureSet,
+    Renderer(DicomStructureSet& structureSet,
              const CoordinateSystem3D& slice) :
       structureSet_(structureSet),
       slice_(slice),

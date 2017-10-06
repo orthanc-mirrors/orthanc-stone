@@ -112,5 +112,11 @@ namespace OrthancStone
     void GetPixelSpacing(double& spacingX, 
                          double& spacingY,
                          const Orthanc::DicomMap& dicom);
+
+    inline double ProjectAlongNormal(const Vector& point,
+                                     const Vector& normal)
+    {
+      return boost::numeric::ublas::inner_prod(point, normal);
+    }
   };
 }

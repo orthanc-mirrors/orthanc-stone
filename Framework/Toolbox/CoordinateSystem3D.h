@@ -61,6 +61,8 @@ namespace OrthancStone
       Setup(imagePositionPatient, imageOrientationPatient);
     }
 
+    CoordinateSystem3D(const Orthanc::DicomMap& dicom);
+
     const Vector& GetNormal() const
     {
       return normal_;

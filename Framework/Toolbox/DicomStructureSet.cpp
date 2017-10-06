@@ -36,6 +36,7 @@ namespace OrthancStone
   static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_GEOMETRIC_TYPE(0x3006, 0x0042);
   static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_IMAGE_SEQUENCE(0x3006, 0x0016);
   static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_SEQUENCE(0x3006, 0x0040);
+  static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_DATA(0x3006, 0x0050);
   static const OrthancPlugins::DicomTag DICOM_TAG_NUMBER_OF_CONTOUR_POINTS(0x3006, 0x0046);
   static const OrthancPlugins::DicomTag DICOM_TAG_REFERENCED_SOP_INSTANCE_UID(0x0008, 0x1155);
   static const OrthancPlugins::DicomTag DICOM_TAG_ROI_CONTOUR_SEQUENCE(0x3006, 0x0039);
@@ -72,96 +73,81 @@ namespace OrthancStone
             GeometryToolbox::ParseVector(target, value));
   }
 
-  CoordinateSystem3D DicomStructureSet::
-  ExtractSliceGeometry(double& sliceThickness,
-                       OrthancPlugins::IOrthancConnection& orthanc,
-                       const OrthancPlugins::IDicomDataset& tags,
-                       size_t contourIndex,
-                       size_t sliceIndex)
+
+  void DicomStructureSet::Polygon::CheckPoint(const Vector& v)
   {
-    using namespace OrthancPlugins;
-
-    size_t size;
-    if (!tags.GetSequenceSize(size, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, contourIndex,
-                                              DICOM_TAG_CONTOUR_SEQUENCE, sliceIndex,
-                                              DICOM_TAG_CONTOUR_IMAGE_SEQUENCE)) ||
-        size != 1)
+    if (hasSlice_)
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
+      if (!GeometryToolbox::IsNear(GeometryToolbox::ProjectAlongNormal(v, normal_),
+                                   projectionAlongNormal_, 
+                                   sliceThickness_ / 2.0 /* in mm */))
+      {
+        LOG(ERROR) << "This RT-STRUCT contains a point that is off the slice of its instance";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);          
+      }
     }
-
-    DicomDatasetReader reader(tags);
-    std::string parentUid = reader.GetMandatoryStringValue
-      (DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, contourIndex,
-                 DICOM_TAG_CONTOUR_SEQUENCE, sliceIndex,
-                 DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
-                 DICOM_TAG_REFERENCED_SOP_INSTANCE_UID));
-
-    Json::Value parentLookup;
-    MessagingToolbox::RestApiPost(parentLookup, orthanc, "/tools/lookup", parentUid);
-
-    if (parentLookup.type() != Json::arrayValue ||
-        parentLookup.size() != 1 ||
-        !parentLookup[0].isMember("Type") ||
-        !parentLookup[0].isMember("Path") ||
-        parentLookup[0]["Type"].type() != Json::stringValue ||
-        parentLookup[0]["ID"].type() != Json::stringValue ||
-        parentLookup[0]["Type"].asString() != "Instance")
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_UnknownResource);          
-    }
-
-    Json::Value parentInstance;
-    MessagingToolbox::RestApiGet(parentInstance, orthanc, "/instances/" + parentLookup[0]["ID"].asString());
-
-    if (parentInstance.type() != Json::objectValue ||
-        !parentInstance.isMember("ParentSeries") ||
-        parentInstance["ParentSeries"].type() != Json::stringValue)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);          
-    }
-
-    std::string parentSeriesId = parentInstance["ParentSeries"].asString();
-    bool isFirst = parentSeriesId_.empty();
-
-    if (isFirst)
-    {
-      parentSeriesId_ = parentSeriesId;
-    }
-    else if (parentSeriesId_ != parentSeriesId)
-    {
-      LOG(ERROR) << "This RT-STRUCT refers to several different series";
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-    }
-
-    FullOrthancDataset parentTags(orthanc, "/instances/" + parentLookup[0]["ID"].asString() + "/tags");
-    CoordinateSystem3D slice(parentTags);
-
-    Vector v;
-    if (ParseVector(v, parentTags, DICOM_TAG_SLICE_THICKNESS) &&
-        v.size() > 0)
-    {
-      sliceThickness = v[0];
-    }
-    else
-    {
-      sliceThickness = 1;  // 1 mm by default
-    }
-
-    if (isFirst)
-    {
-      normal_ = slice.GetNormal();
-    }
-    else if (!GeometryToolbox::IsParallel(normal_, slice.GetNormal()))
-    {
-      LOG(ERROR) << "Incompatible orientation of slices in this RT-STRUCT";
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-    }
-
-    return slice;
   }
 
 
+  void DicomStructureSet::Polygon::AddPoint(const Vector& v)
+  {
+    CheckPoint(v);
+    points_.push_back(v);
+  }
+
+
+  bool DicomStructureSet::Polygon::UpdateReferencedSlice(const ReferencedSlices& slices)
+  {
+    if (hasSlice_)
+    {
+      return true;
+    }
+    else
+    {
+      ReferencedSlices::const_iterator it = slices.find(sopInstanceUid_);
+      
+      if (it == slices.end())
+      {
+        return false;
+      }
+      else
+      {
+        const CoordinateSystem3D& geometry = it->second.geometry_;
+        
+        hasSlice_ = true;
+        normal_ = geometry.GetNormal();
+        projectionAlongNormal_ = GeometryToolbox::ProjectAlongNormal(geometry.GetOrigin(), normal_);
+        sliceThickness_ = it->second.thickness_;
+
+        for (Points::const_iterator it = points_.begin(); it != points_.end(); ++it)
+        {
+          CheckPoint(*it);
+        }
+
+        return true;
+      }
+    }
+  }
+
+
+  bool DicomStructureSet::Polygon::IsOnSlice(const CoordinateSystem3D& slice) const
+  {
+    bool isOpposite;
+
+    if (points_.empty() ||
+        !hasSlice_ ||
+        !GeometryToolbox::IsParallelOrOpposite(isOpposite, slice.GetNormal(), normal_))
+    {
+      return false;
+    }
+    
+    double d = GeometryToolbox::ProjectAlongNormal(slice.GetOrigin(), normal_);
+
+    return (GeometryToolbox::IsNear(d, projectionAlongNormal_,
+                                    sliceThickness_ / 2.0));
+  }
+
+  
   const DicomStructureSet::Structure& DicomStructureSet::GetStructure(size_t index) const
   {
     if (index >= structures_.size())
@@ -173,22 +159,10 @@ namespace OrthancStone
   }
 
 
-  bool DicomStructureSet::IsPolygonOnSlice(const Polygon& polygon,
-                                           const CoordinateSystem3D& geometry) const
-  {
-    double d = boost::numeric::ublas::inner_prod(geometry.GetOrigin(), normal_);
-
-    return (GeometryToolbox::IsNear(d, polygon.projectionAlongNormal_, polygon.sliceThickness_ / 2.0) &&
-            !polygon.points_.empty());
-  }
-
-
-  DicomStructureSet::DicomStructureSet(OrthancPlugins::IOrthancConnection& orthanc,
-                                       const std::string& instanceId)
+  DicomStructureSet::DicomStructureSet(const OrthancPlugins::FullOrthancDataset& tags)
   {
     using namespace OrthancPlugins;
 
-    FullOrthancDataset tags(orthanc, "/instances/" + instanceId + "/tags");
     DicomDatasetReader reader(tags);
     
     size_t count, tmp;
@@ -204,13 +178,15 @@ namespace OrthancStone
     structures_.resize(count);
     for (size_t i = 0; i < count; i++)
     {
-      structures_[i].interpretation_ = reader.GetStringValue(DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
-                                                                       DICOM_TAG_RT_ROI_INTERPRETED_TYPE),
-                                                             "No interpretation");
+      structures_[i].interpretation_ = reader.GetStringValue
+        (DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
+                   DICOM_TAG_RT_ROI_INTERPRETED_TYPE),
+         "No interpretation");
 
-      structures_[i].name_ = reader.GetStringValue(DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
-                                                             DICOM_TAG_ROI_NAME),
-                                                   "No interpretation");
+      structures_[i].name_ = reader.GetStringValue
+        (DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
+                   DICOM_TAG_ROI_NAME),
+         "No interpretation");
 
       Vector color;
       if (ParseVector(color, tags, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
@@ -246,31 +222,45 @@ namespace OrthancStone
       {
         unsigned int countPoints;
 
-        if (!reader.GetUnsignedIntegerValue(countPoints, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                                   DICOM_TAG_CONTOUR_SEQUENCE, j,
-                                                                   DICOM_TAG_NUMBER_OF_CONTOUR_POINTS)))
+        if (!reader.GetUnsignedIntegerValue
+            (countPoints, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                    DICOM_TAG_CONTOUR_SEQUENCE, j,
+                                    DICOM_TAG_NUMBER_OF_CONTOUR_POINTS)))
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
             
         //LOG(INFO) << "Parsing slice containing " << countPoints << " vertices";
 
-        std::string type = reader.GetMandatoryStringValue(DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                                    DICOM_TAG_CONTOUR_SEQUENCE, j,
-                                                                    DICOM_TAG_CONTOUR_GEOMETRIC_TYPE));
+        std::string type = reader.GetMandatoryStringValue
+          (DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                     DICOM_TAG_CONTOUR_SEQUENCE, j,
+                     DICOM_TAG_CONTOUR_GEOMETRIC_TYPE));
         if (type != "CLOSED_PLANAR")
         {
           LOG(ERROR) << "Cannot handle contour with geometry type: " << type;
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
         }
 
-        // The "CountourData" tag (3006,0050) is too large to be
-        // returned by the "/instances/{id}/tags" URI: Access it using
-        // the raw "/instances/{id}/content/{...}" endpoint
-        std::string slicesData;
-        orthanc.RestApiGet(slicesData, "/instances/" + instanceId + "/content/3006-0039/" +
-                           boost::lexical_cast<std::string>(i) + "/3006-0040/" +
-                           boost::lexical_cast<std::string>(j) + "/3006-0050");
+        size_t size;
+        if (!tags.GetSequenceSize(size, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                  DICOM_TAG_CONTOUR_SEQUENCE, j,
+                                                  DICOM_TAG_CONTOUR_IMAGE_SEQUENCE)) ||
+            size != 1)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
+        }
+
+        std::string sopInstanceUid = reader.GetMandatoryStringValue
+          (DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                     DICOM_TAG_CONTOUR_SEQUENCE, j,
+                     DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
+                     DICOM_TAG_REFERENCED_SOP_INSTANCE_UID));
+        
+        std::string slicesData = reader.GetMandatoryStringValue
+          (DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                     DICOM_TAG_CONTOUR_SEQUENCE, j,
+                     DICOM_TAG_CONTOUR_DATA));
 
         Vector points;
         if (!GeometryToolbox::ParseVector(points, slicesData) ||
@@ -279,9 +269,7 @@ namespace OrthancStone
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);          
         }
 
-        Polygon polygon;
-        CoordinateSystem3D geometry = ExtractSliceGeometry(polygon.sliceThickness_, orthanc, tags, i, j);
-        polygon.projectionAlongNormal_ = geometry.ProjectAlongNormal(geometry.GetOrigin());
+        Polygon polygon(sopInstanceUid);
 
         for (size_t k = 0; k < countPoints; k++)
         {
@@ -289,26 +277,11 @@ namespace OrthancStone
           v[0] = points[3 * k];
           v[1] = points[3 * k + 1];
           v[2] = points[3 * k + 2];
-
-          if (!GeometryToolbox::IsNear(geometry.ProjectAlongNormal(v), 
-                                       polygon.projectionAlongNormal_, 
-                                       polygon.sliceThickness_ / 2.0 /* in mm */))
-          {
-            LOG(ERROR) << "This RT-STRUCT contains a point that is off the slice of its instance";
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);          
-          }
-
-          polygon.points_.push_back(v);
+          polygon.AddPoint(v);
         }
 
         structures_[i].polygons_.push_back(polygon);
       }
-    }
-
-    if (parentSeriesId_.empty() ||
-        normal_.size() != 3)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);          
     }
   }
 
@@ -329,9 +302,9 @@ namespace OrthancStone
     for (Polygons::const_iterator polygon = structure.polygons_.begin();
          polygon != structure.polygons_.end(); ++polygon)
     {
-      if (!polygon->points_.empty())
+      if (!polygon->GetPoints().empty())
       {
-        center += polygon->points_.front() / n;
+        center += polygon->GetPoints().front() / n;
       }
     }
 
@@ -364,48 +337,37 @@ namespace OrthancStone
 
 
   void DicomStructureSet::Render(CairoContext& context,
-                                 const CoordinateSystem3D& slice) const
+                                 const CoordinateSystem3D& slice)
   {
     cairo_t* cr = context.GetObject();
 
-    for (Structures::const_iterator structure = structures_.begin();
+    for (Structures::iterator structure = structures_.begin();
          structure != structures_.end(); ++structure)
     {
-      if (structure->name_ != "SKIN" &&
-          structure->name_ != "HEART" &&
-          //structure->name_ != "CORD" &&
-          structure->name_ != "ESOPHAGUS" &&
-          structure->name_ != "LUNG_LT" &&
-          structure->name_ != "LUNG_RT" &&
-          structure->name_ != "GTV_EXH_PRIMARY" &&
-          structure->name_ != "GTV_INH_PRIMARY" &&
-          structure->name_ != "GTV_PRIMARY")
-      {
-        continue;
-      }
-      
-      for (Polygons::const_iterator polygon = structure->polygons_.begin();
+      for (Polygons::iterator polygon = structure->polygons_.begin();
            polygon != structure->polygons_.end(); ++polygon)
       {
-        if (IsPolygonOnSlice(*polygon, slice))
+        polygon->UpdateReferencedSlice(referencedSlices_);
+          
+        if (polygon->IsOnSlice(slice))
         {
           context.SetSourceColor(structure->red_, structure->green_, structure->blue_);
 
-          Points::const_iterator p = polygon->points_.begin();
+          Points::const_iterator p = polygon->GetPoints().begin();
 
           double x, y;
           slice.ProjectPoint(x, y, *p);
           cairo_move_to(cr, x, y);
           ++p;
             
-          while (p != polygon->points_.end())
+          while (p != polygon->GetPoints().end())
           {
             slice.ProjectPoint(x, y, *p);
             cairo_line_to(cr, x, y);
             ++p;
           }
 
-          slice.ProjectPoint(x, y, *polygon->points_.begin());
+          slice.ProjectPoint(x, y, *polygon->GetPoints().begin());
           cairo_line_to(cr, x, y);
 
           cairo_stroke(cr);
@@ -413,4 +375,161 @@ namespace OrthancStone
       }
     }
   }
+
+
+  void DicomStructureSet::GetReferencedInstances(std::set<std::string>& instances)
+  {
+    for (Structures::const_iterator structure = structures_.begin();
+         structure != structures_.end(); ++structure)
+    {
+      for (Polygons::const_iterator polygon = structure->polygons_.begin();
+           polygon != structure->polygons_.end(); ++polygon)
+      {
+        instances.insert(polygon->GetSopInstanceUid());
+      }
+    }
+  }
+
+
+  void DicomStructureSet::AddReferencedSlice(const std::string& sopInstanceUid,
+                                             const std::string& seriesInstanceUid,
+                                             const CoordinateSystem3D& geometry,
+                                             double thickness)
+  {
+    if (referencedSlices_.find(sopInstanceUid) != referencedSlices_.end())
+    {
+      // This geometry is already known
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      if (thickness < 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+        
+      if (!referencedSlices_.empty())
+      {
+        const ReferencedSlice& reference = referencedSlices_.begin()->second;
+
+        if (reference.seriesInstanceUid_ != seriesInstanceUid)
+        {
+          LOG(ERROR) << "This RT-STRUCT refers to several different series";
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+
+        if (!GeometryToolbox::IsParallel(reference.geometry_.GetNormal(), geometry.GetNormal()))
+        {
+          LOG(ERROR) << "The slices in this RT-STRUCT are not parallel";
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+      }
+        
+      referencedSlices_[sopInstanceUid] = ReferencedSlice(seriesInstanceUid, geometry, thickness);
+    }
+  }
+
+
+  void DicomStructureSet::AddReferencedSlice(const Orthanc::DicomMap& dataset)
+  {
+    CoordinateSystem3D slice(dataset);
+
+    double thickness = 1;  // 1 mm by default
+
+    std::string s;
+    Vector v;
+    if (dataset.CopyToString(s, Orthanc::DICOM_TAG_SLICE_THICKNESS, false) &&
+        GeometryToolbox::ParseVector(v, s) &&
+        v.size() > 0)
+    {
+      thickness = v[0];
+    }
+
+    std::string instance, series;
+    if (dataset.CopyToString(instance, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false) &&
+        dataset.CopyToString(series, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false))
+    {
+      AddReferencedSlice(instance, series, slice, thickness);
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+    }
+  }
+
+
+  void DicomStructureSet::CheckReferencedSlices()
+  {
+    for (Structures::iterator structure = structures_.begin();
+         structure != structures_.end(); ++structure)
+    {
+      for (Polygons::iterator polygon = structure->polygons_.begin();
+           polygon != structure->polygons_.end(); ++polygon)
+      {
+        if (!polygon->UpdateReferencedSlice(referencedSlices_))
+        {
+          LOG(ERROR) << "Missing information about referenced instance: "
+                     << polygon->GetSopInstanceUid();
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+        }
+      }
+    }
+  }
+
+
+  Vector DicomStructureSet::GetNormal() const
+  {
+    if (!referencedSlices_.empty())
+    {
+      Vector v;
+      GeometryToolbox::AssignVector(v, 0, 0, 1);
+      return v;
+    }
+    else
+    {
+      return referencedSlices_.begin()->second.geometry_.GetNormal();
+    }
+  }
+
+  
+  DicomStructureSet* DicomStructureSet::SynchronousLoad(OrthancPlugins::IOrthancConnection& orthanc,
+                                                        const std::string& instanceId)
+  {
+    const std::string uri = "/instances/" + instanceId + "/tags?ignore-length=3006-0050";
+    OrthancPlugins::FullOrthancDataset dataset(orthanc, uri);
+
+    std::auto_ptr<DicomStructureSet> result(new DicomStructureSet(dataset));
+
+    std::set<std::string> instances;
+    result->GetReferencedInstances(instances);
+
+    for (std::set<std::string>::const_iterator it = instances.begin();
+         it != instances.end(); ++it)
+    {
+      Json::Value lookup;
+      MessagingToolbox::RestApiPost(lookup, orthanc, "/tools/lookup", *it);
+
+      if (lookup.type() != Json::arrayValue ||
+          lookup.size() != 1 ||
+          !lookup[0].isMember("Type") ||
+          !lookup[0].isMember("Path") ||
+          lookup[0]["Type"].type() != Json::stringValue ||
+          lookup[0]["ID"].type() != Json::stringValue ||
+          lookup[0]["Type"].asString() != "Instance")
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_UnknownResource);          
+      }
+
+      OrthancPlugins::FullOrthancDataset slice
+        (orthanc, "/instances/" + lookup[0]["ID"].asString() + "/tags");
+      Orthanc::DicomMap m;
+      MessagingToolbox::ConvertDataset(m, slice);
+      result->AddReferencedSlice(m);
+    }
+
+    result->CheckReferencedSlices();
+
+    return result.release();
+  }
+
 }

@@ -22,22 +22,33 @@
 #pragma once
 
 #include "../Toolbox/DicomStructureSet.h"
+#include "../Toolbox/IWebService.h"
 #include "LayerSourceBase.h"
 
 namespace OrthancStone
 {
-  class DicomStructureSetRendererFactory : public LayerSourceBase
+  class DicomStructureSetRendererFactory :
+    public LayerSourceBase,
+    private IWebService::ICallback
   {
   private:
     class Renderer;
+    class Operation;
 
-    DicomStructureSet&  structureSet_;
+    virtual void NotifyError(const std::string& uri,
+                             Orthanc::IDynamicObject* payload);
+
+    virtual void NotifySuccess(const std::string& uri,
+                               const void* answer,
+                               size_t answerSize,
+                               Orthanc::IDynamicObject* payload);
+
+    IWebService&                      orthanc_;
+    std::auto_ptr<DicomStructureSet>  structureSet_;
 
   public:
-    DicomStructureSetRendererFactory(DicomStructureSet& structureSet) :
-      structureSet_(structureSet)
-    {
-    }
+    DicomStructureSetRendererFactory(IWebService& orthanc,
+                                     const std::string& instance);
 
     virtual bool GetExtent(std::vector<Vector>& points,
                            const CoordinateSystem3D& viewportSlice)

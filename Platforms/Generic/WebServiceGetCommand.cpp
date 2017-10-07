@@ -40,6 +40,7 @@ namespace OrthancStone
   void WebServiceGetCommand::Execute()
   {
     Orthanc::HttpClient client(parameters_, uri_);
+    client.SetTimeout(60);
     client.SetMethod(Orthanc::HttpMethod_Get);
     success_ = client.Apply(answer_);
   }

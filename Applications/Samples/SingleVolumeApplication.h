@@ -88,9 +88,6 @@ namespace OrthancStone
       };
 
 
-      std::auto_ptr<DicomStructureSet>  struct_;
-      
-
     public:
       virtual void DeclareCommandLineOptions(boost::program_options::options_description& options)
       {
@@ -202,14 +199,6 @@ namespace OrthancStone
           widget->SetLayerStyle(0, s);
         }
 #else
-        {
-          const std::string s = "54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9";  // IBA
-          //const std::string s = "17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20";  // 0522c0001 TCIA
-          
-          OrthancPlugins::OrthancHttpConnection orthanc;
-          struct_.reset(DicomStructureSet::SynchronousLoad(orthanc, s));
-        }
-        
         std::auto_ptr<OrthancVolumeImage> ct(new OrthancVolumeImage(context.GetWebService(), false));
         //ct->ScheduleLoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
         ct->ScheduleLoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // IBA
@@ -222,9 +211,12 @@ namespace OrthancStone
         //pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // IBA 3
         //pet->ScheduleLoadInstance("269f26f4-0c83eeeb-2e67abbd-5467a40f-f1bec90c");  // 0522c0001 TCIA
 
+        const std::string s = "54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9";  // IBA
+        //const std::string s = "17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20";  // 0522c0001 TCIA
+        
         widget->AddLayer(new VolumeImageSource(*ct));
         widget->AddLayer(new VolumeImageSource(*pet));
-        widget->AddLayer(new DicomStructureSetRendererFactory(*struct_));
+        widget->AddLayer(new DicomStructureSetRendererFactory(context.GetWebService(), s));
         
         context.AddInteractor(new Interactor(*pet, *widget, projection, 1));
         //context.AddInteractor(new VolumeImageInteractor(*ct, *widget, projection));

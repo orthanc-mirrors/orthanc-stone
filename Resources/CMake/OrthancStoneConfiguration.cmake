@@ -182,7 +182,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/Extent2D.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/GeometryToolbox.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/MessagingToolbox.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancSeriesLoader.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancSlicesLoader.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlices.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlicesCursor.cpp

@@ -21,8 +21,6 @@
 
 #include "BasicApplicationContext.h"
 
-#include "../../Framework/Toolbox/OrthancSeriesLoader.h"
-
 namespace OrthancStone
 {
   void BasicApplicationContext::UpdateThread(BasicApplicationContext* that)

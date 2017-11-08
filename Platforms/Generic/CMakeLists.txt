@@ -15,8 +15,12 @@ SET(ENABLE_GOOGLE_TEST ON)
 SET(ENABLE_WEB_CLIENT ON)
 
 include(../../Resources/CMake/OrthancStoneConfiguration.cmake)
+include(../../Resources/CMake/BoostExtendedConfiguration.cmake)
 
-add_library(OrthancStone STATIC ${ORTHANC_STONE_SOURCES})
+add_library(OrthancStone STATIC
+  ${ORTHANC_STONE_SOURCES}
+  ${BOOST_EXTENDED_SOURCES}
+  )
 
 
 #####################################################################

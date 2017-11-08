@@ -23,6 +23,7 @@
 
 #include "MessagingToolbox.h"
 
+#include <Core/Endianness.h>
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Images/JpegReader.h>

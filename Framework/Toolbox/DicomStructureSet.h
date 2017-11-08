@@ -22,7 +22,6 @@
 #pragma once
 
 #include "CoordinateSystem3D.h"
-#include "../Viewport/CairoContext.h"
 
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 
@@ -32,6 +31,9 @@ namespace OrthancStone
 {
   class DicomStructureSet : public boost::noncopyable
   {
+  public:
+    typedef std::pair<double, double> PolygonPoint;
+    
   private:
     struct ReferencedSlice
     {
@@ -112,6 +114,12 @@ namespace OrthancStone
 
     const Structure& GetStructure(size_t index) const;
 
+    Structure& GetStructure(size_t index);
+  
+    bool ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
+                          Structure& structure,
+                          const CoordinateSystem3D& slice);
+
   public:
     DicomStructureSet(const OrthancPlugins::FullOrthancDataset& instance);
 
@@ -142,12 +150,16 @@ namespace OrthancStone
 
     void CheckReferencedSlices();
 
-    void Render(CairoContext& context,
-                const CoordinateSystem3D& slice);
-
     Vector GetNormal() const;
 
     static DicomStructureSet* SynchronousLoad(OrthancPlugins::IOrthancConnection& orthanc,
                                               const std::string& instanceId);
+
+    bool ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
+                          size_t index,
+                          const CoordinateSystem3D& slice)
+    {
+      return ProjectStructure(polygons, GetStructure(index), slice);
+    }
   };
 }

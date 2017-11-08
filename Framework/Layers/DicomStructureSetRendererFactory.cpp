@@ -49,7 +49,33 @@ namespace OrthancStone
       if (visible_)
       {
         cairo_set_line_width(context.GetObject(), 3.0f / view.GetZoom());
-        structureSet_.Render(context, slice_);
+
+        cairo_t* cr = context.GetObject();
+
+        for (size_t k = 0; k < structureSet_.GetStructureCount(); k++)
+        {
+          std::vector< std::vector<DicomStructureSet::PolygonPoint> >  polygons;
+
+          if (structureSet_.ProjectStructure(polygons, k, slice_))
+          {
+            uint8_t red, green, blue;
+            structureSet_.GetStructureColor(red, green, blue, k);
+            context.SetSourceColor(red, green, blue);
+
+            for (size_t i = 0; i < polygons.size(); i++)
+            {
+              cairo_move_to(cr, polygons[i][0].first, polygons[i][0].second);
+
+              for (size_t j = 1; j < polygons[i].size(); j++)
+              {
+                cairo_line_to(cr, polygons[i][j].first, polygons[i][j].second);
+              }
+
+              cairo_line_to(cr, polygons[i][0].first, polygons[i][0].second);
+              cairo_stroke(cr);
+            }
+          }
+        }
       }
 
       return true;
@@ -199,11 +225,7 @@ namespace OrthancStone
   
   void DicomStructureSetRendererFactory::ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
   {
-    bool isOpposite;
-    if (structureSet_.get() != NULL &&
-        GeometryToolbox::IsParallelOrOpposite(isOpposite,
-                                              viewportSlice.GetNormal(),
-                                              structureSet_->GetNormal()))
+    if (structureSet_.get() != NULL)
     {
       NotifyLayerReady(new Renderer(*structureSet_, viewportSlice), viewportSlice, false);
     }

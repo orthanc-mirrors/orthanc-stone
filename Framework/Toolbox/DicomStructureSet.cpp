@@ -152,7 +152,18 @@ namespace OrthancStone
   {
     if (index >= structures_.size())
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    return structures_[index];
+  }
+
+
+  DicomStructureSet::Structure& DicomStructureSet::GetStructure(size_t index)
+  {
+    if (index >= structures_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
     return structures_[index];
@@ -336,47 +347,6 @@ namespace OrthancStone
   }
 
 
-  void DicomStructureSet::Render(CairoContext& context,
-                                 const CoordinateSystem3D& slice)
-  {
-    cairo_t* cr = context.GetObject();
-
-    for (Structures::iterator structure = structures_.begin();
-         structure != structures_.end(); ++structure)
-    {
-      for (Polygons::iterator polygon = structure->polygons_.begin();
-           polygon != structure->polygons_.end(); ++polygon)
-      {
-        polygon->UpdateReferencedSlice(referencedSlices_);
-          
-        if (polygon->IsOnSlice(slice))
-        {
-          context.SetSourceColor(structure->red_, structure->green_, structure->blue_);
-
-          Points::const_iterator p = polygon->GetPoints().begin();
-
-          double x, y;
-          slice.ProjectPoint(x, y, *p);
-          cairo_move_to(cr, x, y);
-          ++p;
-            
-          while (p != polygon->GetPoints().end())
-          {
-            slice.ProjectPoint(x, y, *p);
-            cairo_line_to(cr, x, y);
-            ++p;
-          }
-
-          slice.ProjectPoint(x, y, *polygon->GetPoints().begin());
-          cairo_line_to(cr, x, y);
-
-          cairo_stroke(cr);
-        }
-      }
-    }
-  }
-
-
   void DicomStructureSet::GetReferencedInstances(std::set<std::string>& instances)
   {
     for (Structures::const_iterator structure = structures_.begin();
@@ -532,4 +502,51 @@ namespace OrthancStone
     return result.release();
   }
 
+
+  bool DicomStructureSet::ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
+                                           Structure& structure,
+                                           const CoordinateSystem3D& slice)
+  {
+    polygons.clear();
+
+    Vector normal = GetNormal();
+    
+    bool isOpposite;    
+    if (GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, slice.GetNormal()))
+    {
+      // This is an axial projection
+
+      for (Polygons::iterator polygon = structure.polygons_.begin();
+           polygon != structure.polygons_.end(); ++polygon)
+      {
+        polygon->UpdateReferencedSlice(referencedSlices_);
+          
+        if (polygon->IsOnSlice(slice))
+        {
+          polygons.push_back(std::vector<PolygonPoint>());
+          
+          for (Points::const_iterator p = polygon->GetPoints().begin();
+               p != polygon->GetPoints().end(); ++p)
+          {
+            double x, y;
+            slice.ProjectPoint(x, y, *p);
+            polygons.back().push_back(std::make_pair(x, y));
+          }
+        }
+      }
+
+      return true;
+    }
+    else if (GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, slice.GetAxisX()) ||
+             GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, slice.GetAxisY()))
+    {
+      // Sagittal or coronal projections
+      
+      return false;
+    }
+    else
+    {
+      return false;
+    }
+  }
 }

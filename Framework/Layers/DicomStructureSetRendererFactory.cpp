@@ -54,6 +54,11 @@ namespace OrthancStone
 
         for (size_t k = 0; k < structureSet_.GetStructureCount(); k++)
         {
+          /*if (structureSet_.GetStructureName(k) != "CORD")
+          {
+            continue;
+            }*/
+          
           std::vector< std::vector<DicomStructureSet::PolygonPoint> >  polygons;
 
           if (structureSet_.ProjectStructure(polygons, k, slice_))

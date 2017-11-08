@@ -93,6 +93,11 @@ namespace OrthancStone
       {
         return points_;
       }
+
+      double GetSliceThickness() const
+      {
+        return sliceThickness_;
+      }
     };
 
     typedef std::list<Polygon>  Polygons;

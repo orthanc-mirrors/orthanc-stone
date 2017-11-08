@@ -28,8 +28,61 @@
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 
+#include <limits>
 #include <stdio.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
+
+typedef boost::geometry::model::d2::point_xy<double> BoostPoint;
+typedef boost::geometry::model::polygon<BoostPoint> BoostPolygon;
+typedef boost::geometry::model::multi_polygon<BoostPolygon>  BoostMultiPolygon;
+
+
+static void Union(BoostMultiPolygon& output,
+                  std::vector<BoostPolygon>& input)
+{
+  for (size_t i = 0; i < input.size(); i++)
+  {
+    boost::geometry::correct(input[i]);
+  }
+  
+  if (input.size() == 0)
+  {
+    output.clear();
+  }
+  else if (input.size() == 1)
+  {
+    output.resize(1);
+    output[0] = input[0];
+  }
+  else
+  {
+    boost::geometry::union_(input[0], input[1], output);
+
+    for (size_t i = 0; i < input.size(); i++)
+    {
+      BoostMultiPolygon tmp;
+      boost::geometry::union_(output, input[i], tmp);
+      output = tmp;
+    }
+  }
+}
+
+
+static BoostPolygon CreateRectangle(float x1, float y1,
+                                    float x2, float y2)
+{
+  BoostPolygon r;
+  boost::geometry::append(r, BoostPoint(x1, y1));
+  boost::geometry::append(r, BoostPoint(x1, y2));
+  boost::geometry::append(r, BoostPoint(x2, y2));
+  boost::geometry::append(r, BoostPoint(x2, y1));
+  return r;
+}
+
+
 
 namespace OrthancStone
 {
@@ -449,7 +502,7 @@ namespace OrthancStone
 
   Vector DicomStructureSet::GetNormal() const
   {
-    if (!referencedSlices_.empty())
+    if (referencedSlices_.empty())
     {
       Vector v;
       GeometryToolbox::AssignVector(v, 0, 0, 1);
@@ -540,9 +593,81 @@ namespace OrthancStone
     else if (GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, slice.GetAxisX()) ||
              GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, slice.GetAxisY()))
     {
-      // Sagittal or coronal projections
+      // Sagittal or coronal projection
+
+      std::vector<BoostPolygon> projected;
+  
+      for (Polygons::iterator polygon = structure.polygons_.begin();
+           polygon != structure.polygons_.end(); ++polygon)
+      {
+        polygon->UpdateReferencedSlice(referencedSlices_);
+
+        // First, check that the polygon intersects the input slice
+        double zmin = std::numeric_limits<double>::infinity();
+        double zmax = -std::numeric_limits<double>::infinity();
+
+        double zref = slice.ProjectAlongNormal(slice.GetOrigin());
+        
+        for (Points::const_iterator p = polygon->GetPoints().begin();
+             p != polygon->GetPoints().end(); ++p)
+        {
+          double z = slice.ProjectAlongNormal(*p);
+          zmin = std::min(zmin, z);
+          zmax = std::max(zmax, z);
+        }
+
+        if (zmin < zref && zref < zmax)
+        {
+          // The polygon intersect the input slice, project the polygon
+          double xmin = std::numeric_limits<double>::infinity();
+          double xmax = -std::numeric_limits<double>::infinity();
+          double ymin = std::numeric_limits<double>::infinity();
+          double ymax = -std::numeric_limits<double>::infinity();
+
+          for (Points::const_iterator p = polygon->GetPoints().begin();
+               p != polygon->GetPoints().end(); ++p)
+          {
+            double x, y;
+            slice.ProjectPoint(x, y, *p);
+            xmin = std::min(xmin, x);
+            xmax = std::max(xmax, x);
+            ymin = std::min(ymin, y);
+            ymax = std::max(ymax, y);
+          }
+
+          if (GeometryToolbox::IsNear(xmin, xmax))
+          {
+            projected.push_back(CreateRectangle(xmin - polygon->GetSliceThickness() / 2.0, ymin,
+                                                xmax + polygon->GetSliceThickness() / 2.0, ymax));
+          }
+          else if (GeometryToolbox::IsNear(ymin, ymax))
+          {
+            projected.push_back(CreateRectangle(xmin, ymin - polygon->GetSliceThickness() / 2.0,
+                                                xmax, ymax + polygon->GetSliceThickness() / 2.0));
+          }
+          else
+          {
+            // Should not happen
+          }
+        }
+      }
+
+      BoostMultiPolygon merged;
+      Union(merged, projected);
+
+      polygons.resize(merged.size());
+      for (size_t i = 0; i < merged.size(); i++)
+      {
+        const std::vector<BoostPoint>& outer = merged[i].outer();
+
+        polygons[i].resize(outer.size());
+        for (size_t j = 0; j < outer.size(); j++)
+        {
+          polygons[i][j] = std::make_pair(outer[j].x(), outer[j].y());
+        }
+      }  
       
-      return false;
+      return true;
     }
     else
     {

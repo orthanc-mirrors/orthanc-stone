@@ -203,7 +203,7 @@ namespace OrthancStone
         //ct->ScheduleLoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
         ct->ScheduleLoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // IBA
         //ct->ScheduleLoadSeries("03677739-1d8bca40-db1daf59-d74ff548-7f6fc9c0");  // 0522c0001 TCIA
-  
+        
         std::auto_ptr<OrthancVolumeImage> pet(new OrthancVolumeImage(context.GetWebService(), true));
         //pet->ScheduleLoadSeries("aabad2e7-80702b5d-e599d26c-4f13398e-38d58a9e");
         pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb"); // IBA 1
@@ -220,6 +220,7 @@ namespace OrthancStone
         
         context.AddInteractor(new Interactor(*pet, *widget, projection, 1));
         //context.AddInteractor(new VolumeImageInteractor(*ct, *widget, projection));
+
         context.AddVolume(ct.release());
         context.AddVolume(pet.release());
 

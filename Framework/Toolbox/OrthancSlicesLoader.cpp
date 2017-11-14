@@ -52,7 +52,8 @@ static std::string base64_decode(const std::string &in)
   for (int i=0; i<64; i++) T["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[i]] = i; 
 
   int val=0, valb=-8;
-  for (unsigned char c : in) {
+  for (size_t i = 0; i < in.size(); i++) {
+    unsigned char c = in[i];
     if (T[c] == -1) break;
     val = (val<<6) + T[c];
     valb += 6;
@@ -870,7 +871,7 @@ namespace OrthancStone
                        boost::lexical_cast<std::string>(value) + 
                        "-" + slice.GetOrthancInstanceId() + "_" + 
                        boost::lexical_cast<std::string>(slice.GetFrame()));
-
+      
     orthanc_.ScheduleGetRequest(*webCallback_, uri,
                                 Operation::DownloadSliceImage(index, slice, quality));
   }

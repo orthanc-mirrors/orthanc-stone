@@ -27,13 +27,37 @@
 
 namespace OrthancStone
 {
-  class DicomStructureSetRendererFactory :
-    public LayerSourceBase,
-    private IWebService::ICallback
+  class DicomStructureSetRendererFactory : public LayerSourceBase
   {
   private:
     class Renderer;
     class Operation;
+    
+    class Loader : public IWebService::ICallback
+    {
+    private:
+      DicomStructureSetRendererFactory&  that_;
+
+    public:
+      Loader(DicomStructureSetRendererFactory& that) :
+        that_(that)
+      {
+      }
+
+      virtual void NotifyError(const std::string& uri,
+                               Orthanc::IDynamicObject* payload)
+      {
+        that_.NotifyError(uri, payload);
+      }
+
+      virtual void NotifySuccess(const std::string& uri,
+                                 const void* answer,
+                                 size_t answerSize,
+                                 Orthanc::IDynamicObject* payload)
+      {
+        that_.NotifySuccess(uri, answer, answerSize, payload);
+      }
+    };
 
     virtual void NotifyError(const std::string& uri,
                              Orthanc::IDynamicObject* payload);
@@ -43,12 +67,14 @@ namespace OrthancStone
                                size_t answerSize,
                                Orthanc::IDynamicObject* payload);
 
+    Loader                            loader_;
     IWebService&                      orthanc_;
     std::auto_ptr<DicomStructureSet>  structureSet_;
 
   public:
-    DicomStructureSetRendererFactory(IWebService& orthanc,
-                                     const std::string& instance);
+    DicomStructureSetRendererFactory(IWebService& orthanc);
+
+    void ScheduleLoadInstance(const std::string& instance);
 
     virtual bool GetExtent(std::vector<Vector>& points,
                            const CoordinateSystem3D& viewportSlice)

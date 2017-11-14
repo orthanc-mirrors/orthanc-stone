@@ -27,6 +27,8 @@ SET(ORTHANC_ROOT /home/jodogne/Subversion/orthanc)
 
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkParameters.cmake)
 
+SET(ORTHANC_STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
+
 
 #####################################################################
 ## CMake parameters tunable by the user

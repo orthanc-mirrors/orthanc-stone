@@ -211,12 +211,13 @@ namespace OrthancStone
         //pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // IBA 3
         //pet->ScheduleLoadInstance("269f26f4-0c83eeeb-2e67abbd-5467a40f-f1bec90c");  // 0522c0001 TCIA
 
-        const std::string s = "54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9";  // IBA
-        //const std::string s = "17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20";  // 0522c0001 TCIA
+        std::auto_ptr<DicomStructureSetRendererFactory> rtStruct(new DicomStructureSetRendererFactory(context.GetWebService()));
+        rtStruct->ScheduleLoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // IBA
+        //rtStruct->ScheduleLoadInstance("17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20");  // 0522c0001 TCIA
         
         widget->AddLayer(new VolumeImageSource(*ct));
         widget->AddLayer(new VolumeImageSource(*pet));
-        widget->AddLayer(new DicomStructureSetRendererFactory(context.GetWebService(), s));
+        widget->AddLayer(rtStruct.release());
         
         context.AddInteractor(new Interactor(*pet, *widget, projection, 1));
         //context.AddInteractor(new VolumeImageInteractor(*ct, *widget, projection));

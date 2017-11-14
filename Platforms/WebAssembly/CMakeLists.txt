@@ -1,6 +1,5 @@
-# Usage:
-# cmake -DCMAKE_TOOLCHAIN_FILE=~/Downloads/emsdk/emscripten/incoming/cmake/Modules/Platform/Emscripten.cmake ~/Subversion/orthanc-stone/Platforms/WebAssembly
-
+# Usage (Linux):
+# source ~/Downloads/emsdk/emsdk_env.sh && cmake -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake ..
 
 cmake_minimum_required(VERSION 2.8.3)
 

@@ -164,7 +164,7 @@ namespace OrthancStone
         for (std::set<std::string>::const_iterator it = instances.begin();
              it != instances.end(); ++it)
         {
-          orthanc_.SchedulePostRequest(loader_, "/tools/lookup", *it,
+          orthanc_.SchedulePostRequest(*this, "/tools/lookup", *it,
                                        new Operation(Operation::Type_LookupSopInstanceUid, *it));
         }
         
@@ -189,7 +189,7 @@ namespace OrthancStone
           }
 
           const std::string& instance = lookup[0]["ID"].asString();
-          orthanc_.ScheduleGetRequest(loader_, "/instances/" + instance + "/tags",
+          orthanc_.ScheduleGetRequest(*this, "/instances/" + instance + "/tags",
                                       new Operation(Operation::Type_LoadReferencedSlice, instance));
         }
         else
@@ -220,7 +220,6 @@ namespace OrthancStone
 
   
   DicomStructureSetRendererFactory::DicomStructureSetRendererFactory(IWebService& orthanc) :
-    loader_(*this),
     orthanc_(orthanc)
   {
   }
@@ -235,7 +234,7 @@ namespace OrthancStone
     else
     {
       const std::string uri = "/instances/" + instance + "/tags?ignore-length=3006-0050";
-      orthanc_.ScheduleGetRequest(loader_, uri, new Operation(Operation::Type_LoadStructureSet, instance));
+      orthanc_.ScheduleGetRequest(*this, uri, new Operation(Operation::Type_LoadStructureSet, instance));
     }
   }
   

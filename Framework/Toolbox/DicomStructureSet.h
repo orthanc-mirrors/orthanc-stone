@@ -22,9 +22,9 @@
 #pragma once
 
 #include "CoordinateSystem3D.h"
+#include "Extent2D.h"
 
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
-
 #include <list>
 
 namespace OrthancStone
@@ -62,12 +62,13 @@ namespace OrthancStone
     class Polygon
     {
     private:
-      std::string sopInstanceUid_;
-      bool        hasSlice_;
-      Vector      normal_;
-      double      projectionAlongNormal_;
-      double      sliceThickness_;  // In millimeters
-      Points      points_;
+      std::string         sopInstanceUid_;
+      bool                hasSlice_;
+      CoordinateSystem3D  geometry_;
+      double              projectionAlongNormal_;
+      double              sliceThickness_;  // In millimeters
+      Points              points_;
+      Extent2D            extent_;
 
       void CheckPoint(const Vector& v);
 
@@ -98,6 +99,12 @@ namespace OrthancStone
       {
         return sliceThickness_;
       }
+
+      bool Project(double& x1,
+                   double& y1,
+                   double& x2,
+                   double& y2,
+                   const CoordinateSystem3D& slice) const;
     };
 
     typedef std::list<Polygon>  Polygons;

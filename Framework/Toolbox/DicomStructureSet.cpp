@@ -131,7 +131,7 @@ namespace OrthancStone
   {
     if (hasSlice_)
     {
-      if (!GeometryToolbox::IsNear(GeometryToolbox::ProjectAlongNormal(v, normal_),
+      if (!GeometryToolbox::IsNear(GeometryToolbox::ProjectAlongNormal(v, geometry_.GetNormal()),
                                    projectionAlongNormal_, 
                                    sliceThickness_ / 2.0 /* in mm */))
       {
@@ -168,13 +168,19 @@ namespace OrthancStone
         const CoordinateSystem3D& geometry = it->second.geometry_;
         
         hasSlice_ = true;
-        normal_ = geometry.GetNormal();
-        projectionAlongNormal_ = GeometryToolbox::ProjectAlongNormal(geometry.GetOrigin(), normal_);
+        geometry_ = geometry;
+        projectionAlongNormal_ = GeometryToolbox::ProjectAlongNormal(geometry.GetOrigin(), geometry.GetNormal());
         sliceThickness_ = it->second.thickness_;
 
+        extent_.Reset();
+        
         for (Points::const_iterator it = points_.begin(); it != points_.end(); ++it)
         {
           CheckPoint(*it);
+
+          double x, y;
+          geometry.ProjectPoint(x, y, *it);
+          extent_.AddPoint(x, y);
         }
 
         return true;
@@ -189,15 +195,79 @@ namespace OrthancStone
 
     if (points_.empty() ||
         !hasSlice_ ||
-        !GeometryToolbox::IsParallelOrOpposite(isOpposite, slice.GetNormal(), normal_))
+        !GeometryToolbox::IsParallelOrOpposite(isOpposite, slice.GetNormal(), geometry_.GetNormal()))
     {
       return false;
     }
     
-    double d = GeometryToolbox::ProjectAlongNormal(slice.GetOrigin(), normal_);
+    double d = GeometryToolbox::ProjectAlongNormal(slice.GetOrigin(), geometry_.GetNormal());
 
     return (GeometryToolbox::IsNear(d, projectionAlongNormal_,
                                     sliceThickness_ / 2.0));
+  }
+
+  
+  bool DicomStructureSet::Polygon::Project(double& x1,
+                                           double& y1,
+                                           double& x2,
+                                           double& y2,
+                                           const CoordinateSystem3D& slice) const
+  {
+    if (!hasSlice_ ||
+        points_.empty())
+    {
+      return false;
+    }
+
+    double x, y;
+    geometry_.ProjectPoint(x, y, slice.GetOrigin());
+      
+    bool isOpposite;
+    if (GeometryToolbox::IsParallelOrOpposite
+        (isOpposite, slice.GetNormal(), geometry_.GetAxisY()))
+    {
+      if (y >= extent_.GetY1() &&
+          y <= extent_.GetY2())
+      {
+        Vector p1 = (geometry_.MapSliceToWorldCoordinates(extent_.GetX1(), y) +
+                     sliceThickness_ / 2.0 * geometry_.GetNormal());
+        Vector p2 = (geometry_.MapSliceToWorldCoordinates(extent_.GetX2(), y) -
+                     sliceThickness_ / 2.0 * geometry_.GetNormal());
+
+        slice.ProjectPoint(x1, y1, p1);
+        slice.ProjectPoint(x2, y2, p2);
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+    else if (GeometryToolbox::IsParallelOrOpposite
+             (isOpposite, slice.GetNormal(), geometry_.GetAxisX()))
+    {
+      if (x >= extent_.GetX1() &&
+          x <= extent_.GetX2())
+      {
+        Vector p1 = (geometry_.MapSliceToWorldCoordinates(x, extent_.GetY1()) +
+                     sliceThickness_ / 2.0 * geometry_.GetNormal());
+        Vector p2 = (geometry_.MapSliceToWorldCoordinates(x, extent_.GetY2()) -
+                     sliceThickness_ / 2.0 * geometry_.GetNormal());
+
+        slice.ProjectPoint(x1, y1, p1);
+        slice.ProjectPoint(x2, y2, p2);
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+    else
+    {
+      // Should not happen
+      return false;
+    }
   }
 
   
@@ -449,6 +519,16 @@ namespace OrthancStone
       }
         
       referencedSlices_[sopInstanceUid] = ReferencedSlice(seriesInstanceUid, geometry, thickness);
+
+      for (Structures::iterator structure = structures_.begin();
+           structure != structures_.end(); ++structure)
+      {
+        for (Polygons::iterator polygon = structure->polygons_.begin();
+             polygon != structure->polygons_.end(); ++polygon)
+        {
+          polygon->UpdateReferencedSlice(referencedSlices_);
+        }
+      }
     }
   }
 
@@ -572,8 +652,6 @@ namespace OrthancStone
       for (Polygons::iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
-        polygon->UpdateReferencedSlice(referencedSlices_);
-          
         if (polygon->IsOnSlice(slice))
         {
           polygons.push_back(std::vector<PolygonPoint>());
@@ -594,61 +672,15 @@ namespace OrthancStone
              GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, slice.GetAxisY()))
     {
       // Sagittal or coronal projection
-
       std::vector<BoostPolygon> projected;
   
       for (Polygons::iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
-        polygon->UpdateReferencedSlice(referencedSlices_);
-
-        // First, check that the polygon intersects the input slice
-        double zmin = std::numeric_limits<double>::infinity();
-        double zmax = -std::numeric_limits<double>::infinity();
-
-        double zref = slice.ProjectAlongNormal(slice.GetOrigin());
-        
-        for (Points::const_iterator p = polygon->GetPoints().begin();
-             p != polygon->GetPoints().end(); ++p)
+        double x1, y1, x2, y2;
+        if (polygon->Project(x1, y1, x2, y2, slice))
         {
-          double z = slice.ProjectAlongNormal(*p);
-          zmin = std::min(zmin, z);
-          zmax = std::max(zmax, z);
-        }
-
-        if (zmin < zref && zref < zmax)
-        {
-          // The polygon intersect the input slice, project the polygon
-          double xmin = std::numeric_limits<double>::infinity();
-          double xmax = -std::numeric_limits<double>::infinity();
-          double ymin = std::numeric_limits<double>::infinity();
-          double ymax = -std::numeric_limits<double>::infinity();
-
-          for (Points::const_iterator p = polygon->GetPoints().begin();
-               p != polygon->GetPoints().end(); ++p)
-          {
-            double x, y;
-            slice.ProjectPoint(x, y, *p);
-            xmin = std::min(xmin, x);
-            xmax = std::max(xmax, x);
-            ymin = std::min(ymin, y);
-            ymax = std::max(ymax, y);
-          }
-
-          if (GeometryToolbox::IsNear(xmin, xmax))
-          {
-            projected.push_back(CreateRectangle(xmin - polygon->GetSliceThickness() / 2.0, ymin,
-                                                xmax + polygon->GetSliceThickness() / 2.0, ymax));
-          }
-          else if (GeometryToolbox::IsNear(ymin, ymax))
-          {
-            projected.push_back(CreateRectangle(xmin, ymin - polygon->GetSliceThickness() / 2.0,
-                                                xmax, ymax + polygon->GetSliceThickness() / 2.0));
-          }
-          else
-          {
-            // Should not happen
-          }
+          projected.push_back(CreateRectangle(x1, y1, x2, y2));
         }
       }
 

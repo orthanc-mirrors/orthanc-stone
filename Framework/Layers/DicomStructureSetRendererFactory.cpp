@@ -21,10 +21,6 @@
 
 #include "DicomStructureSetRendererFactory.h"
 
-#include "../Toolbox/MessagingToolbox.h"
-
-#include <Core/OrthancException.h>
-
 namespace OrthancStone
 {
   class DicomStructureSetRendererFactory::Renderer : public ILayerRenderer
@@ -103,147 +99,11 @@ namespace OrthancStone
   };
 
 
-  class DicomStructureSetRendererFactory::Operation : public Orthanc::IDynamicObject
-  {
-  public:
-    enum Type
-    {
-      Type_LoadStructureSet,
-      Type_LookupSopInstanceUid,
-      Type_LoadReferencedSlice
-    };
-    
-  private:
-    Type         type_;
-    std::string  value_;
-
-  public:
-    Operation(Type type,
-              const std::string& value) :
-      type_(type),
-      value_(value)
-    {
-    }
-
-    Type GetType() const
-    {
-      return type_;
-    }
-
-    const std::string& GetIdentifier() const
-    {
-      return value_;
-    }
-  };
-
-
-  void DicomStructureSetRendererFactory::NotifyError(const std::string& uri,
-                                                     Orthanc::IDynamicObject* payload)
-  {
-    // TODO
-  }
-
-  
-  void DicomStructureSetRendererFactory::NotifySuccess(const std::string& uri,
-                                                       const void* answer,
-                                                       size_t answerSize,
-                                                       Orthanc::IDynamicObject* payload)
-  {
-    std::auto_ptr<Operation> op(dynamic_cast<Operation*>(payload));
-
-    switch (op->GetType())
-    {
-      case Operation::Type_LoadStructureSet:
-      {
-        OrthancPlugins::FullOrthancDataset dataset(answer, answerSize);
-        structureSet_.reset(new DicomStructureSet(dataset));
-
-        std::set<std::string> instances;
-        structureSet_->GetReferencedInstances(instances);
-
-        for (std::set<std::string>::const_iterator it = instances.begin();
-             it != instances.end(); ++it)
-        {
-          orthanc_.SchedulePostRequest(*this, "/tools/lookup", *it,
-                                       new Operation(Operation::Type_LookupSopInstanceUid, *it));
-        }
-        
-        break;
-      }
-        
-      case Operation::Type_LookupSopInstanceUid:
-      {
-        Json::Value lookup;
-        
-        if (MessagingToolbox::ParseJson(lookup, answer, answerSize))
-        {
-          if (lookup.type() != Json::arrayValue ||
-              lookup.size() != 1 ||
-              !lookup[0].isMember("Type") ||
-              !lookup[0].isMember("Path") ||
-              lookup[0]["Type"].type() != Json::stringValue ||
-              lookup[0]["ID"].type() != Json::stringValue ||
-              lookup[0]["Type"].asString() != "Instance")
-          {
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);          
-          }
-
-          const std::string& instance = lookup[0]["ID"].asString();
-          orthanc_.ScheduleGetRequest(*this, "/instances/" + instance + "/tags",
-                                      new Operation(Operation::Type_LoadReferencedSlice, instance));
-        }
-        else
-        {
-          // TODO
-        }
-        
-        break;
-      }
-
-      case Operation::Type_LoadReferencedSlice:
-      {
-        OrthancPlugins::FullOrthancDataset dataset(answer, answerSize);
-
-        Orthanc::DicomMap slice;
-        MessagingToolbox::ConvertDataset(slice, dataset);
-        structureSet_->AddReferencedSlice(slice);
-
-        LayerSourceBase::NotifyContentChange();
-
-        break;
-      }
-      
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-    }
-  } 
-
-  
-  DicomStructureSetRendererFactory::DicomStructureSetRendererFactory(IWebService& orthanc) :
-    orthanc_(orthanc)
-  {
-  }
-  
-
-  void DicomStructureSetRendererFactory::ScheduleLoadInstance(const std::string& instance)
-  {
-    if (structureSet_.get() != NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    else
-    {
-      const std::string uri = "/instances/" + instance + "/tags?ignore-length=3006-0050";
-      orthanc_.ScheduleGetRequest(*this, uri, new Operation(Operation::Type_LoadStructureSet, instance));
-    }
-  }
-  
-
   void DicomStructureSetRendererFactory::ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
   {
-    if (structureSet_.get() != NULL)
+    if (loader_.HasStructureSet())
     {
-      NotifyLayerReady(new Renderer(*structureSet_, viewportSlice), viewportSlice, false);
+      NotifyLayerReady(new Renderer(loader_.GetStructureSet(), viewportSlice), viewportSlice, false);
     }
   }
 }

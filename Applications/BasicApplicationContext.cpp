@@ -56,13 +56,13 @@ namespace OrthancStone
       delete *it;
     }
 
-    for (Volumes::iterator it = volumes_.begin(); it != volumes_.end(); ++it)
+    for (SlicedVolumes::iterator it = slicedVolumes_.begin(); it != slicedVolumes_.end(); ++it)
     {
       assert(*it != NULL);
       delete *it;
     }
 
-    for (StructureSets::iterator it = structureSets_.begin(); it != structureSets_.end(); ++it)
+    for (VolumeLoaders::iterator it = volumeLoaders_.begin(); it != volumeLoaders_.end(); ++it)
     {
       assert(*it != NULL);
       delete *it;
@@ -77,28 +77,31 @@ namespace OrthancStone
   }
 
 
-  ISlicedVolume& BasicApplicationContext::AddVolume(ISlicedVolume* volume)
+  ISlicedVolume& BasicApplicationContext::AddSlicedVolume(ISlicedVolume* volume)
   {
     if (volume == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
-
-    volumes_.push_back(volume);
-    return *volume;
+    else
+    {
+      slicedVolumes_.push_back(volume);
+      return *volume;
+    }
   }
 
-  DicomStructureSet& BasicApplicationContext::AddStructureSet(const std::string& instance)
+
+  IVolumeLoader& BasicApplicationContext::AddVolumeLoader(IVolumeLoader* loader)
   {
-    /*std::auto_ptr<DicomStructureSet> structureSet
-      (new DicomStructureSet(GetWebService().GetConnection(), instance));
-
-    DicomStructureSet& result = *structureSet;
-    structureSets_.push_back(structureSet.release());
-
-    return result;*/
-
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    if (loader == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+    else
+    {
+      volumeLoaders_.push_back(loader);
+      return *loader;
+    }
   }
 
 

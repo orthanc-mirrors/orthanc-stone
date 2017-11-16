@@ -188,7 +188,7 @@ namespace OrthancStone
         widget->AddLayer(new VolumeImageSource(*volume));
 
         context.AddInteractor(new Interactor(*volume, *widget, projection, 0));
-        context.AddVolume(volume.release());
+        context.AddSlicedVolume(volume.release());
 
         {
           RenderStyle s;
@@ -211,19 +211,20 @@ namespace OrthancStone
         //pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // IBA 3
         //pet->ScheduleLoadInstance("269f26f4-0c83eeeb-2e67abbd-5467a40f-f1bec90c");  // 0522c0001 TCIA
 
-        std::auto_ptr<DicomStructureSetRendererFactory> rtStruct(new DicomStructureSetRendererFactory(context.GetWebService()));
+        std::auto_ptr<StructureSetLoader> rtStruct(new StructureSetLoader(context.GetWebService()));
         rtStruct->ScheduleLoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // IBA
         //rtStruct->ScheduleLoadInstance("17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20");  // 0522c0001 TCIA
         
         widget->AddLayer(new VolumeImageSource(*ct));
         widget->AddLayer(new VolumeImageSource(*pet));
-        widget->AddLayer(rtStruct.release());
+        widget->AddLayer(new DicomStructureSetRendererFactory(*rtStruct));
         
         context.AddInteractor(new Interactor(*pet, *widget, projection, 1));
         //context.AddInteractor(new VolumeImageInteractor(*ct, *widget, projection));
 
-        context.AddVolume(ct.release());
-        context.AddVolume(pet.release());
+        context.AddSlicedVolume(ct.release());
+        context.AddSlicedVolume(pet.release());
+        context.AddVolumeLoader(rtStruct.release());
 
         {
           RenderStyle s;

@@ -21,35 +21,41 @@
 
 #pragma once
 
-#include "../Toolbox/DicomStructureSet.h"
-#include "../Toolbox/IWebService.h"
 #include "LayerSourceBase.h"
+#include "../Volumes/StructureSetLoader.h"
 
 namespace OrthancStone
 {
   class DicomStructureSetRendererFactory :
     public LayerSourceBase,
-    private IWebService::ICallback
+    private IVolumeLoader::IObserver
   {
   private:
     class Renderer;
-    class Operation;
+
+    virtual void NotifyGeometryReady(const IVolumeLoader& loader)
+    {
+      LayerSourceBase::NotifyGeometryReady();
+    }
+      
+    virtual void NotifyGeometryError(const IVolumeLoader& loader)
+    {
+      LayerSourceBase::NotifyGeometryError();
+    }
+      
+    virtual void NotifyContentChange(const IVolumeLoader& loader)
+    {
+      LayerSourceBase::NotifyContentChange();
+    }
     
-    virtual void NotifyError(const std::string& uri,
-                             Orthanc::IDynamicObject* payload);
-
-    virtual void NotifySuccess(const std::string& uri,
-                               const void* answer,
-                               size_t answerSize,
-                               Orthanc::IDynamicObject* payload);
-
-    IWebService&                      orthanc_;
-    std::auto_ptr<DicomStructureSet>  structureSet_;
+    StructureSetLoader& loader_;
 
   public:
-    DicomStructureSetRendererFactory(IWebService& orthanc);
-
-    void ScheduleLoadInstance(const std::string& instance);
+    DicomStructureSetRendererFactory(StructureSetLoader& loader) :
+      loader_(loader)
+    {
+      loader_.Register(*this);
+    }
 
     virtual bool GetExtent(std::vector<Vector>& points,
                            const CoordinateSystem3D& viewportSlice)

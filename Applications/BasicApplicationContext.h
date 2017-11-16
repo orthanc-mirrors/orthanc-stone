@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include "../../Framework/Volumes/ISlicedVolume.h"
 #include "../../Framework/Viewport/WidgetViewport.h"
+#include "../../Framework/Volumes/ISlicedVolume.h"
+#include "../../Framework/Volumes/IVolumeLoader.h"
 #include "../../Framework/Widgets/IWorldSceneInteractor.h"
-#include "../../Framework/Toolbox/DicomStructureSet.h"
 #include "../../Platforms/Generic/OracleWebService.h"
 
 #include <list>
@@ -35,9 +35,9 @@ namespace OrthancStone
   class BasicApplicationContext : public boost::noncopyable
   {
   private:
-    typedef std::list<ISlicedVolume*>          Volumes;
+    typedef std::list<ISlicedVolume*>          SlicedVolumes;
+    typedef std::list<IVolumeLoader*>          VolumeLoaders;
     typedef std::list<IWorldSceneInteractor*>  Interactors;
-    typedef std::list<DicomStructureSet*>      StructureSets;
 
     static void UpdateThread(BasicApplicationContext* that);
 
@@ -45,9 +45,9 @@ namespace OrthancStone
     OracleWebService    webService_;
     boost::mutex        viewportMutex_;
     WidgetViewport      viewport_;
-    Volumes             volumes_;
+    SlicedVolumes       slicedVolumes_;
+    VolumeLoaders       volumeLoaders_;
     Interactors         interactors_;
-    StructureSets       structureSets_;
     boost::thread       updateThread_;
     bool                stopped_;
     unsigned int        updateDelay_;
@@ -84,9 +84,9 @@ namespace OrthancStone
       return webService_;
     }
     
-    ISlicedVolume& AddVolume(ISlicedVolume* volume);
+    ISlicedVolume& AddSlicedVolume(ISlicedVolume* volume);
 
-    DicomStructureSet& AddStructureSet(const std::string& instance);
+    IVolumeLoader& AddVolumeLoader(IVolumeLoader* loader);
 
     IWorldSceneInteractor& AddInteractor(IWorldSceneInteractor* interactor);
 

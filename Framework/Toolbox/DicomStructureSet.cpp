@@ -213,8 +213,10 @@ namespace OrthancStone
                                            double& y2,
                                            const CoordinateSystem3D& slice) const
   {
+    // TODO Optimize this method using a sweep-line algorithm for polygons
+    
     if (!hasSlice_ ||
-        points_.empty())
+        points_.size() <= 1)
     {
       return false;
     }
@@ -226,41 +228,109 @@ namespace OrthancStone
     if (GeometryToolbox::IsParallelOrOpposite
         (isOpposite, slice.GetNormal(), geometry_.GetAxisY()))
     {
-      if (y >= extent_.GetY1() &&
-          y <= extent_.GetY2())
+      if (y < extent_.GetY1() ||
+          y > extent_.GetY2())
       {
-        Vector p1 = (geometry_.MapSliceToWorldCoordinates(extent_.GetX1(), y) +
-                     sliceThickness_ / 2.0 * geometry_.GetNormal());
-        Vector p2 = (geometry_.MapSliceToWorldCoordinates(extent_.GetX2(), y) -
-                     sliceThickness_ / 2.0 * geometry_.GetNormal());
+        // The polygon does not intersect the input slice
+        return false;
+      }
+        
+      bool isFirst = true;
+      double xmin = std::numeric_limits<double>::infinity();
+      double xmax = -std::numeric_limits<double>::infinity();
 
-        slice.ProjectPoint(x1, y1, p1);
-        slice.ProjectPoint(x2, y2, p2);
-        return true;
+      double prevX, prevY;
+      geometry_.ProjectPoint(prevX, prevY, points_[points_.size() - 1]);
+        
+      for (size_t i = 0; i < points_.size(); i++)
+      {
+        // Reference: ../../Resources/Computations/IntersectSegmentAndHorizontalLine.py
+        double curX, curY;
+        geometry_.ProjectPoint(curX, curY, points_[i]);
+
+        if ((prevY < y && curY > y) ||
+            (prevY > y && curY < y))
+        {
+          double p = (curX * prevY - curY * prevX + y * (prevX - curX)) / (prevY - curY);
+          xmin = std::min(xmin, p);
+          xmax = std::max(xmax, p);
+          isFirst = false;
+        }
+
+        prevX = curX;
+        prevY = curY;
+      }
+        
+      if (isFirst)
+      {
+        return false;
       }
       else
       {
-        return false;
+        Vector p1 = (geometry_.MapSliceToWorldCoordinates(xmin, y) +
+                     sliceThickness_ / 2.0 * geometry_.GetNormal());
+        Vector p2 = (geometry_.MapSliceToWorldCoordinates(xmax, y) -
+                     sliceThickness_ / 2.0 * geometry_.GetNormal());
+          
+        slice.ProjectPoint(x1, y1, p1);
+        slice.ProjectPoint(x2, y2, p2);
+        return true;
       }
     }
     else if (GeometryToolbox::IsParallelOrOpposite
              (isOpposite, slice.GetNormal(), geometry_.GetAxisX()))
     {
-      if (x >= extent_.GetX1() &&
-          x <= extent_.GetX2())
+      if (x < extent_.GetX1() ||
+          x > extent_.GetX2())
       {
-        Vector p1 = (geometry_.MapSliceToWorldCoordinates(x, extent_.GetY1()) +
+        return false;
+      }
+
+      bool isFirst = true;
+      double ymin = std::numeric_limits<double>::infinity();
+      double ymax = -std::numeric_limits<double>::infinity();
+
+      double prevX, prevY;
+      geometry_.ProjectPoint(prevX, prevY, points_[points_.size() - 1]);
+        
+      for (size_t i = 0; i < points_.size(); i++)
+      {
+        // Reference: ../../Resources/Computations/IntersectSegmentAndVerticalLine.py
+        double curX, curY;
+        geometry_.ProjectPoint(curX, curY, points_[i]);
+
+        if ((prevX < x && curX > x) ||
+            (prevX > x && curX < x))
+        {
+          double p = (curX * prevY - curY * prevX + x * (curY - prevY)) / (curX - prevX);
+          ymin = std::min(ymin, p);
+          ymax = std::max(ymax, p);
+          isFirst = false;
+        }
+
+        prevX = curX;
+        prevY = curY;
+      }
+        
+      if (isFirst)
+      {
+        return false;
+      }
+      else
+      {
+        Vector p1 = (geometry_.MapSliceToWorldCoordinates(x, ymin) +
                      sliceThickness_ / 2.0 * geometry_.GetNormal());
-        Vector p2 = (geometry_.MapSliceToWorldCoordinates(x, extent_.GetY2()) -
+        Vector p2 = (geometry_.MapSliceToWorldCoordinates(x, ymax) -
                      sliceThickness_ / 2.0 * geometry_.GetNormal());
 
         slice.ProjectPoint(x1, y1, p1);
         slice.ProjectPoint(x2, y2, p2);
+
+        // TODO WHY THIS???
+        y1 = -y1;
+        y2 = -y2;
+
         return true;
-      }
-      else
-      {
-        return false;
       }
     }
     else
@@ -404,6 +474,7 @@ namespace OrthancStone
         }
 
         Polygon polygon(sopInstanceUid);
+        polygon.Reserve(countPoints);
 
         for (size_t k = 0; k < countPoints; k++)
         {
@@ -671,6 +742,7 @@ namespace OrthancStone
     else if (GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, slice.GetAxisX()) ||
              GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, slice.GetAxisY()))
     {
+#if 1
       // Sagittal or coronal projection
       std::vector<BoostPolygon> projected;
   
@@ -698,6 +770,22 @@ namespace OrthancStone
           polygons[i][j] = std::make_pair(outer[j].x(), outer[j].y());
         }
       }  
+#else
+      for (Polygons::iterator polygon = structure.polygons_.begin();
+           polygon != structure.polygons_.end(); ++polygon)
+      {
+        double x1, y1, x2, y2;
+        if (polygon->Project(x1, y1, x2, y2, slice))
+        {
+          std::vector<PolygonPoint> p(4);
+          p[0] = std::make_pair(x1, y1);
+          p[1] = std::make_pair(x2, y1);
+          p[2] = std::make_pair(x2, y2);
+          p[3] = std::make_pair(x1, y2);
+          polygons.push_back(p);
+        }
+      }
+#endif
       
       return true;
     }

@@ -57,7 +57,7 @@ namespace OrthancStone
 
     typedef std::map<std::string, ReferencedSlice>  ReferencedSlices;
     
-    typedef std::list<Vector>  Points;
+    typedef std::vector<Vector>  Points;
 
     class Polygon
     {
@@ -77,6 +77,11 @@ namespace OrthancStone
         sopInstanceUid_(sopInstanceUid),
         hasSlice_(false)
       {
+      }
+
+      void Reserve(size_t n)
+      {
+        points_.reserve(n);
       }
 
       void AddPoint(const Vector& v);

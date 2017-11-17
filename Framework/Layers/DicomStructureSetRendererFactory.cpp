@@ -26,57 +26,85 @@ namespace OrthancStone
   class DicomStructureSetRendererFactory::Renderer : public ILayerRenderer
   {
   private:
-    DicomStructureSet&  structureSet_;
-    CoordinateSystem3D  slice_;
-    bool                visible_;
+    class Structure
+    {
+    private:
+      bool                                                         visible_;
+      uint8_t                                                      red_;
+      uint8_t                                                      green_;
+      uint8_t                                                      blue_;
+      std::string                                                  name_;
+      std::vector< std::vector<DicomStructureSet::PolygonPoint> >  polygons_;
 
+    public:
+      Structure(DicomStructureSet& structureSet,
+                const CoordinateSystem3D& slice,
+                size_t index) :
+        name_(structureSet.GetStructureName(index))
+      {
+        structureSet.GetStructureColor(red_, green_, blue_, index);
+        visible_ = structureSet.ProjectStructure(polygons_, index, slice);
+      }
+
+      void Render(CairoContext& context)
+      {
+        if (visible_)
+        {
+          cairo_t* cr = context.GetObject();
+        
+          context.SetSourceColor(red_, green_, blue_);
+
+          for (size_t i = 0; i < polygons_.size(); i++)
+          {
+            cairo_move_to(cr, polygons_[i][0].first, polygons_[i][0].second);
+
+            for (size_t j = 1; j < polygons_[i].size(); j++)
+            {
+              cairo_line_to(cr, polygons_[i][j].first, polygons_[i][j].second);
+            }
+
+            cairo_line_to(cr, polygons_[i][0].first, polygons_[i][0].second);
+            cairo_stroke(cr);
+          }
+        }
+      }
+    };
+
+    typedef std::list<Structure*>  Structures;
+    
+    CoordinateSystem3D  slice_;
+    Structures          structures_;
+    
   public:
     Renderer(DicomStructureSet& structureSet,
              const CoordinateSystem3D& slice) :
-      structureSet_(structureSet),
-      slice_(slice),
-      visible_(true)
+      slice_(slice)
     {
+      for (size_t k = 0; k < structureSet.GetStructureCount(); k++)
+      {
+        structures_.push_back(new Structure(structureSet, slice, k));
+      }
+    }
+
+    virtual ~Renderer()
+    {
+      for (Structures::iterator it = structures_.begin();
+           it != structures_.end(); ++it)
+      {
+        delete *it;
+      }
     }
 
     virtual bool RenderLayer(CairoContext& context,
                              const ViewportGeometry& view)
     {
-      if (visible_)
+      cairo_set_line_width(context.GetObject(), 2.0f / view.GetZoom());
+
+      for (Structures::const_iterator it = structures_.begin();
+           it != structures_.end(); ++it)
       {
-        cairo_set_line_width(context.GetObject(), 3.0f / view.GetZoom());
-
-        cairo_t* cr = context.GetObject();
-
-        for (size_t k = 0; k < structureSet_.GetStructureCount(); k++)
-        {
-          /*if (structureSet_.GetStructureName(k) != "CORD")
-          {
-            continue;
-            }*/
-          
-          std::vector< std::vector<DicomStructureSet::PolygonPoint> >  polygons;
-
-          if (structureSet_.ProjectStructure(polygons, k, slice_))
-          {
-            uint8_t red, green, blue;
-            structureSet_.GetStructureColor(red, green, blue, k);
-            context.SetSourceColor(red, green, blue);
-
-            for (size_t i = 0; i < polygons.size(); i++)
-            {
-              cairo_move_to(cr, polygons[i][0].first, polygons[i][0].second);
-
-              for (size_t j = 1; j < polygons[i].size(); j++)
-              {
-                cairo_line_to(cr, polygons[i][j].first, polygons[i][j].second);
-              }
-
-              cairo_line_to(cr, polygons[i][0].first, polygons[i][0].second);
-              cairo_stroke(cr);
-            }
-          }
-        }
+        assert(*it != NULL);
+        (*it)->Render(context);
       }
 
       return true;
@@ -89,9 +117,8 @@ namespace OrthancStone
 
     virtual void SetLayerStyle(const RenderStyle& style)
     {
-      visible_ = style.visible_;
     }
-
+    
     virtual bool IsFullQuality()
     {
       return true;

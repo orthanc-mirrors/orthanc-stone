@@ -69,11 +69,16 @@ namespace OrthancStone
     // depth == 0)
     void SetAxialGeometry(const CoordinateSystem3D& geometry);
 
+    const CoordinateSystem3D& GetAxialGeometry() const
+    {
+      return axialGeometry_;
+    }
+
     void SetVoxelDimensions(double x,
                             double y,
                             double z);
 
-    Vector GetVoxelDimensions(VolumeProjection projection);
+    Vector GetVoxelDimensions(VolumeProjection projection) const;
 
     void GetSliceSize(unsigned int& width,
                       unsigned int& height,
@@ -99,7 +104,7 @@ namespace OrthancStone
       return format_;
     }
 
-    ParallelSlices* GetGeometry(VolumeProjection projection);
+    ParallelSlices* GetGeometry(VolumeProjection projection) const;
     
     uint64_t GetEstimatedMemorySize() const;
 
@@ -108,6 +113,10 @@ namespace OrthancStone
 
     bool FitWindowingToRange(RenderStyle& style,
                              const DicomFrameConverter& converter) const;
+
+    uint16_t GetPixelGrayscale16(unsigned int x,
+                                 unsigned int y,
+                                 unsigned int z) const;
 
 
     class SliceReader : public boost::noncopyable

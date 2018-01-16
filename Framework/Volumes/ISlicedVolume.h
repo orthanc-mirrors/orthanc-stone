@@ -48,6 +48,9 @@ namespace OrthancStone
       virtual void NotifySliceChange(const ISlicedVolume& volume,
                                      const size_t& sliceIndex,
                                      const Slice& slice) = 0;
+
+      // Triggered when the geometry *and* the content of the volume are available
+      virtual void NotifyVolumeReady(const ISlicedVolume& volume) = 0;
     };
     
     virtual ~ISlicedVolume()

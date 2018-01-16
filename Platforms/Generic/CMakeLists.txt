@@ -9,7 +9,7 @@ project(OrthancStone)
 include(../../Resources/CMake/OrthancStoneParameters.cmake)
 
 SET(ORTHANC_SANDBOXED OFF)
-SET(ORTHANC_BOOST_COMPONENTS program_options)
+LIST(APPEND ORTHANC_BOOST_COMPONENTS program_options)
 SET(ENABLE_CRYPTO_OPTIONS ON)
 SET(ENABLE_GOOGLE_TEST ON)
 SET(ENABLE_WEB_CLIENT ON)

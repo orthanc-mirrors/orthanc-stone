@@ -39,6 +39,7 @@
 
 namespace OrthancStone
 {
+  // TODO: Handle errors while loading
   class OrthancVolumeImage : 
     public SlicedVolumeBase,
     private OrthancSlicesLoader::ICallback
@@ -48,6 +49,7 @@ namespace OrthancStone
     std::auto_ptr<ImageBuffer3D>  image_;
     std::auto_ptr<DownloadStack>  downloadStack_;
     bool                          computeRange_;
+    size_t                        pendingSlices_;
     
     void ScheduleSliceDownload()
     {
@@ -158,6 +160,7 @@ namespace OrthancStone
       image_->Clear();
       
       downloadStack_.reset(new DownloadStack(loader.GetSliceCount()));
+      pendingSlices_ = loader.GetSliceCount();
 
       for (unsigned int i = 0; i < 4; i++)  // Limit to 4 simultaneous downloads
       {
@@ -186,7 +189,17 @@ namespace OrthancStone
         Orthanc::ImageProcessing::Copy(writer.GetAccessor(), *image);
       }
 
-      SlicedVolumeBase::NotifySliceChange(sliceIndex, slice);
+      SlicedVolumeBase::NotifySliceChange(sliceIndex, slice);     
+
+      if (pendingSlices_ == 1)
+      {
+        SlicedVolumeBase::NotifyVolumeReady();
+        pendingSlices_ = 0;
+      }
+      else if (pendingSlices_ > 1)
+      {
+        pendingSlices_ -= 1;
+      }
 
       ScheduleSliceDownload();
     }
@@ -204,7 +217,8 @@ namespace OrthancStone
     OrthancVolumeImage(IWebService& orthanc,
                        bool computeRange) : 
       loader_(*this, orthanc),
-      computeRange_(computeRange)
+      computeRange_(computeRange),
+      pendingSlices_(0)
     {
     }
 

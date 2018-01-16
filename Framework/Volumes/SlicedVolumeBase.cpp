@@ -43,4 +43,9 @@ namespace OrthancStone
   {
     observers_.Apply(*this, &IObserver::NotifySliceChange, sliceIndex, slice);
   }
+
+  void SlicedVolumeBase::NotifyVolumeReady()
+  {
+    observers_.Apply(*this, &IObserver::NotifyVolumeReady);
+  }
 }

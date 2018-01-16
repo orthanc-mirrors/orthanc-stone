@@ -514,6 +514,9 @@ namespace OrthancStone
       LayerSourceBase::NotifyContentChange();
     }
 
+    virtual void NotifyVolumeReady(const ISlicedVolume& volume)
+    {
+    }
 
     const VolumeImageGeometry& GetProjectionGeometry(VolumeProjection projection)
     {
@@ -676,6 +679,10 @@ namespace OrthancStone
     virtual void NotifySliceChange(const ISlicedVolume& volume,
                                    const size_t& sliceIndex,
                                    const Slice& slice)
+    {
+    }
+
+    virtual void NotifyVolumeReady(const ISlicedVolume& volume)
     {
     }
 

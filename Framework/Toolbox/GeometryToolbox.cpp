@@ -259,40 +259,40 @@ namespace OrthancStone
       // (2005). This is a direct, non-optimized translation of Algorithm
       // 2 in the paper.
 
-      static uint8_t tab1[16] = { 255 /* none */,
-                                  0,
-                                  0,
-                                  1,
-                                  1,
-                                  255 /* na */,
-                                  0,
-                                  2,
-                                  2,
-                                  0,
-                                  255 /* na */,
-                                  1,
-                                  1,
-                                  0,
-                                  0,
-                                  255 /* none */ };
+      static const uint8_t tab1[16] = { 255 /* none */,
+                                        0,
+                                        0,
+                                        1,
+                                        1,
+                                        255 /* na */,
+                                        0,
+                                        2,
+                                        2,
+                                        0,
+                                        255 /* na */,
+                                        1,
+                                        1,
+                                        0,
+                                        0,
+                                        255 /* none */ };
 
 
-      static uint8_t tab2[16] = { 255 /* none */,
-                                  3,
-                                  1,
-                                  3,
-                                  2,
-                                  255 /* na */,
-                                  2,
-                                  3,
-                                  3,
-                                  2,
-                                  255 /* na */,
-                                  2,
-                                  3,
-                                  1,
-                                  3,
-                                  255 /* none */ };
+      static const uint8_t tab2[16] = { 255 /* none */,
+                                        3,
+                                        1,
+                                        3,
+                                        2,
+                                        255 /* na */,
+                                        2,
+                                        3,
+                                        3,
+                                        2,
+                                        255 /* na */,
+                                        2,
+                                        3,
+                                        1,
+                                        3,
+                                        255 /* none */ };
 
       // Create the coordinates of the rectangle
       Vector x[4];
@@ -378,5 +378,59 @@ namespace OrthancStone
         spacingY = 1;
       }
     }
+
+    
+    Matrix CreateRotationMatrixAlongX(double a)
+    {
+      // Rotate along X axis (R_x)
+      // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
+      Matrix r(3, 3);
+      r(0,0) = 1;
+      r(0,1) = 0;
+      r(0,2) = 0;
+      r(1,0) = 0;
+      r(1,1) = cos(a);
+      r(1,2) = -sin(a);
+      r(2,0) = 0;
+      r(2,1) = sin(a);
+      r(2,2) = cos(a);
+      return r;
+    }
+    
+
+    Matrix CreateRotationMatrixAlongY(double a)
+    {
+      // Rotate along Y axis (R_y)
+      // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
+      Matrix r(3, 3);
+      r(0,0) = cos(a);
+      r(0,1) = 0;
+      r(0,2) = sin(a);
+      r(1,0) = 0;
+      r(1,1) = 1;
+      r(1,2) = 0;
+      r(2,0) = -sin(a);
+      r(2,1) = 0;
+      r(2,2) = cos(a);
+      return r;
+    }
+
+
+    Matrix CreateRotationMatrixAlongZ(double a)
+    {
+      // Rotate along Z axis (R_z)
+      // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
+      Matrix r(3, 3);
+      r(0,0) = cos(a);
+      r(0,1) = -sin(a);
+      r(0,2) = 0;
+      r(1,0) = sin(a);
+      r(1,1) = cos(a);
+      r(1,2) = 0;
+      r(2,0) = 0;
+      r(2,1) = 0;
+      r(2,2) = 1;
+      return r;
+    }    
   }
 }

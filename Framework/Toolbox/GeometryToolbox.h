@@ -28,12 +28,14 @@
 #  include <boost/serialization/array_wrapper.hpp>
 #endif
 
+#include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 
 #include <Core/DicomFormat/DicomMap.h>
 
 namespace OrthancStone
 {
+  typedef boost::numeric::ublas::matrix<double>   Matrix;
   typedef boost::numeric::ublas::vector<double>   Vector;
 
   namespace GeometryToolbox
@@ -118,5 +120,11 @@ namespace OrthancStone
     {
       return boost::numeric::ublas::inner_prod(point, normal);
     }
+
+    Matrix CreateRotationMatrixAlongX(double a);
+
+    Matrix CreateRotationMatrixAlongY(double a);
+
+    Matrix CreateRotationMatrixAlongZ(double a);    
   };
 }

@@ -422,6 +422,28 @@ namespace OrthancStone
   }
 
 
+  uint8_t ImageBuffer3D::GetPixelGrayscale8(unsigned int x,
+                                            unsigned int y,
+                                            unsigned int z) const
+  {
+    if (format_ != Orthanc::PixelFormat_Grayscale8)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+    }
+
+    if (x >= width_ ||
+        y >= height_ ||
+        z >= depth_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    const void* p = image_.GetConstRow(y + height_ * (depth_ - 1 - z));
+
+    return reinterpret_cast<const uint8_t*>(p) [x];
+  }
+
+
   uint16_t ImageBuffer3D::GetPixelGrayscale16(unsigned int x,
                                               unsigned int y,
                                               unsigned int z) const
@@ -442,5 +464,4 @@ namespace OrthancStone
 
     return reinterpret_cast<const uint16_t*>(p) [x];
   }
-
 }

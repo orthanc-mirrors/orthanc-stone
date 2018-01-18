@@ -114,6 +114,10 @@ namespace OrthancStone
     bool FitWindowingToRange(RenderStyle& style,
                              const DicomFrameConverter& converter) const;
 
+    uint8_t GetPixelGrayscale8(unsigned int x,
+                               unsigned int y,
+                               unsigned int z) const;
+
     uint16_t GetPixelGrayscale16(unsigned int x,
                                  unsigned int y,
                                  unsigned int z) const;

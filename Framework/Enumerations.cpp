@@ -22,6 +22,7 @@
 #include "Enumerations.h"
 
 #include <Core/Logging.h>
+#include <Core/OrthancException.h>
 
 namespace OrthancStone
 {  
@@ -39,4 +40,33 @@ namespace OrthancStone
       return false;
     }
   }  
+
+
+  void ComputeWindowing(float& targetCenter,
+                        float& targetWidth,
+                        ImageWindowing windowing,
+                        float defaultCenter,
+                        float defaultWidth)
+  {
+    switch (windowing)
+    {
+      case ImageWindowing_Default:
+        targetCenter = defaultCenter;
+        targetWidth = defaultWidth;
+        break;
+
+      case ImageWindowing_Bone:
+        targetCenter = 300;
+        targetWidth = 2000;
+        break;
+
+      case ImageWindowing_Lung:
+        targetCenter = -600;
+        targetWidth = 1600;
+        break;
+
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+  }
 }

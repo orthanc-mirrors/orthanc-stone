@@ -91,4 +91,10 @@ namespace OrthancStone
 
   bool StringToSopClassUid(SopClassUid& result,
                            const std::string& source);
+
+  void ComputeWindowing(float& targetCenter,
+                        float& targetWidth,
+                        ImageWindowing windowing,
+                        float defaultCenter,
+                        float defaultWidth);
 }

@@ -28,10 +28,11 @@
 #  include <boost/serialization/array_wrapper.hpp>
 #endif
 
+#include <Core/DicomFormat/DicomMap.h>
+
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
-
-#include <Core/DicomFormat/DicomMap.h>
+#include <cassert>
 
 namespace OrthancStone
 {
@@ -125,6 +126,93 @@ namespace OrthancStone
 
     Matrix CreateRotationMatrixAlongY(double a);
 
-    Matrix CreateRotationMatrixAlongZ(double a);    
+    Matrix CreateRotationMatrixAlongZ(double a);
+
+    inline float ComputeBilinearInterpolationInternal(float x,
+                                                      float y,
+                                                      float f00,    // source(x, y)
+                                                      float f01,    // source(x + 1, y)
+                                                      float f10,    // source(x, y + 1)
+                                                      float f11);   // source(x + 1, y + 1)
+
+    inline float ComputeBilinearInterpolation(float x,
+                                              float y,
+                                              float f00,    // source(x, y)
+                                              float f01,    // source(x + 1, y)
+                                              float f10,    // source(x, y + 1)
+                                              float f11);   // source(x + 1, y + 1)
+
+    inline float ComputeTrilinearInterpolation(float x,
+                                               float y,
+                                               float z,
+                                               float f000,   // source(x, y, z)
+                                               float f001,   // source(x + 1, y, z)
+                                               float f010,   // source(x, y + 1, z)
+                                               float f011,   // source(x + 1, y + 1, z)
+                                               float f100,   // source(x, y, z + 1)
+                                               float f101,   // source(x + 1, y, z + 1)
+                                               float f110,   // source(x, y + 1, z + 1)
+                                               float f111);  // source(x + 1, y + 1, z + 1)
   };
+}
+
+
+float OrthancStone::GeometryToolbox::ComputeBilinearInterpolationInternal(float x,
+                                                                          float y,
+                                                                          float f00,
+                                                                          float f01,
+                                                                          float f10,
+                                                                          float f11)
+{
+  // This function works on fractional parts
+  assert(x >= 0 && y >= 0 && x < 1 && y < 1);
+
+  // https://en.wikipedia.org/wiki/Bilinear_interpolation#Unit_square
+  return f00 * (1 - x) * (1 - y) + f01 * x * (1 - y) + f10 * (1 - x) * y + f11 * x * y;
+}
+
+
+float OrthancStone::GeometryToolbox::ComputeBilinearInterpolation(float x,
+                                                                  float y,
+                                                                  float f00,
+                                                                  float f01,
+                                                                  float f10,
+                                                                  float f11)
+{
+  assert(x >= 0 && y >= 0);
+
+  // Compute the fractional part of (x,y) (this is the "floor()"
+  // operation on positive integers)
+  float xx = x - static_cast<float>(static_cast<int>(x));
+  float yy = y - static_cast<float>(static_cast<int>(y));
+
+  return ComputeBilinearInterpolationInternal(xx, yy, f00, f01, f10, f11);
+}
+
+
+float OrthancStone::GeometryToolbox::ComputeTrilinearInterpolation(float x,
+                                                                   float y,
+                                                                   float z,
+                                                                   float f000,
+                                                                   float f001,
+                                                                   float f010,
+                                                                   float f011,
+                                                                   float f100,
+                                                                   float f101,
+                                                                   float f110,
+                                                                   float f111)
+{
+  assert(x >= 0 && y >= 0 && z >= 0);
+
+  float xx = x - static_cast<float>(static_cast<int>(x));
+  float yy = y - static_cast<float>(static_cast<int>(y));
+  float zz = z - static_cast<float>(static_cast<int>(z));
+
+  // "In practice, a trilinear interpolation is identical to two
+  // bilinear interpolation combined with a linear interpolation"
+  // https://en.wikipedia.org/wiki/Trilinear_interpolation#Method
+  float a = ComputeBilinearInterpolationInternal(xx, yy, f000, f001, f010, f011);
+  float b = ComputeBilinearInterpolationInternal(xx, yy, f100, f101, f110, f111);
+
+  return (1 - zz) * a + zz * b;
 }

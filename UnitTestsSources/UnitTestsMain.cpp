@@ -42,6 +42,7 @@
 #include <boost/math/special_functions/round.hpp>
 
 
+#if 0
 namespace OrthancStone
 {
   class Tata : public OrthancSlicesLoader::ICallback
@@ -128,6 +129,18 @@ TEST(Toto, Tata)
   boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 
   oracle.Stop();
+}
+#endif
+
+
+TEST(GeometryToolbox, Interpolation)
+{
+  // https://en.wikipedia.org/wiki/Bilinear_interpolation#Application_in_image_processing
+  ASSERT_FLOAT_EQ(146.1f, OrthancStone::GeometryToolbox::ComputeBilinearInterpolation(20.5f, 14.2f, 91, 210, 162, 95));
+
+  ASSERT_FLOAT_EQ(123.35f, OrthancStone::GeometryToolbox::ComputeTrilinearInterpolation(20.5f, 15.2f, 5.7f,
+                                                                                        91, 210, 162, 95,
+                                                                                        51, 190, 80, 92));
 }
 
 

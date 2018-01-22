@@ -8,18 +8,17 @@ project(OrthancStone)
 
 include(../../Resources/CMake/OrthancStoneParameters.cmake)
 
-SET(ORTHANC_SANDBOXED OFF)
 LIST(APPEND ORTHANC_BOOST_COMPONENTS program_options)
+
+SET(ORTHANC_SANDBOXED OFF)
 SET(ENABLE_CRYPTO_OPTIONS ON)
 SET(ENABLE_GOOGLE_TEST ON)
 SET(ENABLE_WEB_CLIENT ON)
 
 include(../../Resources/CMake/OrthancStoneConfiguration.cmake)
-include(../../Resources/CMake/BoostExtendedConfiguration.cmake)
 
 add_library(OrthancStone STATIC
   ${ORTHANC_STONE_SOURCES}
-  ${BOOST_EXTENDED_SOURCES}
   )
 
 

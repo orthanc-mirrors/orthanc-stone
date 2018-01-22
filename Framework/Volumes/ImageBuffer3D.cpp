@@ -422,7 +422,7 @@ namespace OrthancStone
   }
 
 
-  uint8_t ImageBuffer3D::GetPixelGrayscale8(unsigned int x,
+  uint8_t ImageBuffer3D::GetVoxelGrayscale8(unsigned int x,
                                             unsigned int y,
                                             unsigned int z) const
   {
@@ -439,12 +439,11 @@ namespace OrthancStone
     }
 
     const void* p = image_.GetConstRow(y + height_ * (depth_ - 1 - z));
-
     return reinterpret_cast<const uint8_t*>(p) [x];
   }
 
 
-  uint16_t ImageBuffer3D::GetPixelGrayscale16(unsigned int x,
+  uint16_t ImageBuffer3D::GetVoxelGrayscale16(unsigned int x,
                                               unsigned int y,
                                               unsigned int z) const
   {
@@ -461,7 +460,6 @@ namespace OrthancStone
     }
 
     const void* p = image_.GetConstRow(y + height_ * (depth_ - 1 - z));
-
     return reinterpret_cast<const uint16_t*>(p) [x];
   }
 }

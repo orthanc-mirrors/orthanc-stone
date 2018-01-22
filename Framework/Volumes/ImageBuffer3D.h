@@ -56,6 +56,16 @@ namespace OrthancStone
 
     Orthanc::Image*  ExtractSagittalSlice(unsigned int slice) const;
 
+    template <typename T>
+    T GetPixelUnchecked(unsigned int x,
+                        unsigned int y,
+                        unsigned int z) const
+    {
+      const uint8_t* buffer = reinterpret_cast<const uint8_t*>(image_.GetConstBuffer());
+      const uint8_t* row = buffer + (y + height_ * (depth_ - 1 - z)) * image_.GetPitch();
+      return reinterpret_cast<const T*>(row) [x];
+    }
+
   public:
     ImageBuffer3D(Orthanc::PixelFormat format,
                   unsigned int width,
@@ -114,11 +124,25 @@ namespace OrthancStone
     bool FitWindowingToRange(RenderStyle& style,
                              const DicomFrameConverter& converter) const;
 
-    uint8_t GetPixelGrayscale8(unsigned int x,
+    uint8_t GetVoxelGrayscale8Unchecked(unsigned int x,
+                                        unsigned int y,
+                                        unsigned int z) const
+    {
+      return GetPixelUnchecked<uint8_t>(x, y, z);
+    }
+
+    uint16_t GetVoxelGrayscale16Unchecked(unsigned int x,
+                                          unsigned int y,
+                                          unsigned int z) const
+    {
+      return GetPixelUnchecked<uint16_t>(x, y, z);
+    }
+
+    uint8_t GetVoxelGrayscale8(unsigned int x,
                                unsigned int y,
                                unsigned int z) const;
 
-    uint16_t GetPixelGrayscale16(unsigned int x,
+    uint16_t GetVoxelGrayscale16(unsigned int x,
                                  unsigned int y,
                                  unsigned int z) const;
 

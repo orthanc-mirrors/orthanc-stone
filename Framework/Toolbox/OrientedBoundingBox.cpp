@@ -264,4 +264,28 @@ namespace OrthancStone
 
     GeometryToolbox::AssignVector(target, x, y, z);
   }
+
+
+  bool OrientedBoundingBox::ComputeExtent(Extent2D& extent,
+                                          const CoordinateSystem3D& plane) const
+  {
+    extent.Reset();
+    
+    std::vector<Vector> points;
+    if (HasIntersection(points, plane))
+    {
+      for (size_t i = 0; i < points.size(); i++)
+      {
+        double x, y;
+        plane.ProjectPoint(x, y, points[i]);
+        extent.AddPoint(x, y);
+      }
+      
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
 }

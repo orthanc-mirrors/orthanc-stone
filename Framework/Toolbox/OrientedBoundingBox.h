@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "Extent2D.h"
 #include "GeometryToolbox.h"
 #include "../Volumes/ImageBuffer3D.h"
 
@@ -39,6 +40,11 @@ namespace OrthancStone
 
   public:
     OrientedBoundingBox(const ImageBuffer3D& image);
+
+    const Vector& GetCenter() const
+    {
+      return c_;
+    }
 
     bool HasIntersectionWithPlane(std::vector<Vector>& points,
                                   const Vector& normal,
@@ -60,10 +66,8 @@ namespace OrthancStone
     void ToInternalCoordinates(Vector& target,
                                const Vector& source) const;
 
-    const Vector& GetCenter() const
-    {
-      return c_;
-    }
+    bool ComputeExtent(Extent2D& extent,
+                       const CoordinateSystem3D& plane) const;
   };
 }
 

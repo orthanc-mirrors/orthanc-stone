@@ -223,7 +223,7 @@ namespace OrthancStone
           ("frame", boost::program_options::value<unsigned int>()->default_value(0),
            "Number of the frame, for multi-frame DICOM instances")
           ("smooth", boost::program_options::value<bool>()->default_value(true), 
-           "Enable linear interpolation to smooth the image")
+           "Enable bilinear interpolation to smooth the image")
           ;
 
         options.add(generic);    
@@ -262,7 +262,7 @@ namespace OrthancStone
 
         if (parameters["smooth"].as<bool>())
         {
-          s.interpolation_ = ImageInterpolation_Linear;
+          s.interpolation_ = ImageInterpolation_Bilinear;
         }
 
         //s.drawGrid_ = true;
@@ -302,7 +302,7 @@ namespace OrthancStone
           s.alpha_ = 0.5;
           s.applyLut_ = true;
           s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
-          s.interpolation_ = ImageInterpolation_Linear;
+          s.interpolation_ = ImageInterpolation_Bilinear;
           widget->SetLayerStyle(1, s);
         }
 #endif

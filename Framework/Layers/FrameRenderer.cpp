@@ -74,7 +74,7 @@ namespace OrthancStone
         cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_NEAREST);
         break;
 
-      case ImageInterpolation_Linear:
+      case ImageInterpolation_Bilinear:
         cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_BILINEAR);
         break;
 

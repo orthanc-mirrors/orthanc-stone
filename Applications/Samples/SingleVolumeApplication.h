@@ -195,7 +195,7 @@ namespace OrthancStone
           s.alpha_ = 1;
           s.applyLut_ = true;
           s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
-          s.interpolation_ = ImageInterpolation_Linear;
+          s.interpolation_ = ImageInterpolation_Bilinear;
           widget->SetLayerStyle(0, s);
         }
 #else
@@ -241,7 +241,7 @@ namespace OrthancStone
           s.alpha_ = 0.5;
           s.applyLut_ = true;
           s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
-          s.interpolation_ = ImageInterpolation_Linear;
+          s.interpolation_ = ImageInterpolation_Bilinear;
           s.windowing_ = ImageWindowing_Custom;
           s.customWindowCenter_ = 0;
           s.customWindowWidth_ = 128;

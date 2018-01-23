@@ -63,7 +63,6 @@ namespace OrthancStone
   enum ImageInterpolation
   {
     ImageInterpolation_Nearest,
-    ImageInterpolation_Linear,
     ImageInterpolation_Bilinear,
     ImageInterpolation_Trilinear
   };

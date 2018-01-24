@@ -138,6 +138,13 @@ namespace OrthancStone
       return GetPixelUnchecked<uint16_t>(x, y, z);
     }
 
+    int16_t GetVoxelSignedGrayscale16Unchecked(unsigned int x,
+                                               unsigned int y,
+                                               unsigned int z) const
+    {
+      return GetPixelUnchecked<int16_t>(x, y, z);
+    }
+
     uint8_t GetVoxelGrayscale8(unsigned int x,
                                unsigned int y,
                                unsigned int z) const;

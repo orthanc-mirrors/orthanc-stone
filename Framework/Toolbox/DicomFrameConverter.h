@@ -73,6 +73,16 @@ namespace OrthancStone
       return defaultWindowWidth_;
     }
 
+    double GetRescaleIntercept() const
+    {
+      return rescaleIntercept_;
+    }
+      
+    double GetRescaleSlope() const
+    {
+      return rescaleSlope_;
+    }
+
     void ConvertFrame(std::auto_ptr<Orthanc::ImageAccessor>& source) const;
 
     void ApplyRescale(Orthanc::ImageAccessor& image,

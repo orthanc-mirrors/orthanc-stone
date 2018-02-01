@@ -170,22 +170,11 @@ namespace OrthancStone
   }
 
 
-  bool CoordinateSystem3D::IntersectSegment(double& x,
-                                            double& y,
+  bool CoordinateSystem3D::IntersectSegment(Vector& p,
                                             const Vector& edgeFrom,
                                             const Vector& edgeTo) const
   {
-    Vector p;
     double d = -(normal_[0] * origin_[0] + normal_[1] * origin_[1] + normal_[2] * origin_[2]);
-    if (GeometryToolbox::IntersectPlaneAndSegment(p, normal_, d, edgeFrom, edgeTo))
-    {
-      ProjectPoint(x, y, p);  // TODO could be optimized, as the point
-                              // is on the plane by construction
-      return true;
-    }
-    else
-    {
-      return false;
-    }
+    return GeometryToolbox::IntersectPlaneAndSegment(p, normal_, d, edgeFrom, edgeTo);
   }
 }

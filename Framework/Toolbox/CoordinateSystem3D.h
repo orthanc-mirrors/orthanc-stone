@@ -92,8 +92,7 @@ namespace OrthancStone
                       double& offsetY,
                       const Vector& point) const;
 
-    bool IntersectSegment(double& x,
-                          double& y,
+    bool IntersectSegment(Vector& p,
                           const Vector& edgeFrom,
                           const Vector& edgeTo) const;
   };

@@ -91,5 +91,10 @@ namespace OrthancStone
     void ProjectPoint(double& offsetX,
                       double& offsetY,
                       const Vector& point) const;
+
+    bool IntersectSegment(double& x,
+                          double& y,
+                          const Vector& edgeFrom,
+                          const Vector& edgeTo) const;
   };
 }

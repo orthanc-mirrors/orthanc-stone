@@ -27,43 +27,6 @@
 
 namespace OrthancStone
 {
-  static bool IntersectPlaneAndSegment(Vector& p,
-                                       const Vector& normal,
-                                       double d,
-                                       const Vector& edgeFrom,
-                                       const Vector& edgeTo)
-  {
-    // http://geomalgorithms.com/a05-_intersect-1.html#Line-Plane-Intersection
-
-    // Check for parallel line and plane
-    Vector direction = edgeTo - edgeFrom;
-    double denominator = boost::numeric::ublas::inner_prod(direction, normal);
-
-    if (fabs(denominator) < 100.0 * std::numeric_limits<double>::epsilon())
-    {
-      return false;
-    }
-    else
-    {
-      // Compute intersection
-      double t = -(normal[0] * edgeFrom[0] + 
-                   normal[1] * edgeFrom[1] + 
-                   normal[2] * edgeFrom[2] + d) / denominator;
-
-      if (t >= 0 && t <= 1)
-      {
-        // The intersection lies inside edge segment
-        p = edgeFrom + t * direction;
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-    }
-  }
-
-
   OrientedBoundingBox::OrientedBoundingBox(const ImageBuffer3D& image)
   {
     unsigned int n = image.GetDepth();
@@ -115,88 +78,100 @@ namespace OrthancStone
       // bounding box, and check whether they intersect the plane
         
       // X-aligned edges
-      if (IntersectPlaneAndSegment(p, normal, d,
-                                   c_ - u_ * hu_ - v_ * hv_ - w_ * hw_,
-                                   c_ + u_ * hu_ - v_ * hv_ - w_ * hw_))
+      if (GeometryToolbox::IntersectPlaneAndSegment
+          (p, normal, d,
+           c_ - u_ * hu_ - v_ * hv_ - w_ * hw_,
+           c_ + u_ * hu_ - v_ * hv_ - w_ * hw_))
       {
         points.push_back(p);
       }
 
-      if (IntersectPlaneAndSegment(p, normal, d,
-                                   c_ - u_ * hu_ + v_ * hv_ - w_ * hw_,
-                                   c_ + u_ * hu_ + v_ * hv_ - w_ * hw_))
+      if (GeometryToolbox::IntersectPlaneAndSegment
+          (p, normal, d,
+           c_ - u_ * hu_ + v_ * hv_ - w_ * hw_,
+           c_ + u_ * hu_ + v_ * hv_ - w_ * hw_))
       {
         points.push_back(p);
       }
 
-      if (IntersectPlaneAndSegment(p, normal, d,
-                                   c_ - u_ * hu_ - v_ * hv_ + w_ * hw_,
-                                   c_ + u_ * hu_ - v_ * hv_ + w_ * hw_))
+      if (GeometryToolbox::IntersectPlaneAndSegment
+          (p, normal, d,
+           c_ - u_ * hu_ - v_ * hv_ + w_ * hw_,
+           c_ + u_ * hu_ - v_ * hv_ + w_ * hw_))
       {
         points.push_back(p);
       }
 
-      if (IntersectPlaneAndSegment(p, normal, d,
-                                   c_ - u_ * hu_ + v_ * hv_ + w_ * hw_,
-                                   c_ + u_ * hu_ + v_ * hv_ + w_ * hw_))
+      if (GeometryToolbox::IntersectPlaneAndSegment
+          (p, normal, d,
+           c_ - u_ * hu_ + v_ * hv_ + w_ * hw_,
+           c_ + u_ * hu_ + v_ * hv_ + w_ * hw_))
       {
         points.push_back(p);
       }
 
       // Y-aligned edges
-      if (IntersectPlaneAndSegment(p, normal, d,
-                                   c_ - u_ * hu_ - v_ * hv_ - w_ * hw_,
-                                   c_ - u_ * hu_ + v_ * hv_ - w_ * hw_))
+      if (GeometryToolbox::IntersectPlaneAndSegment
+          (p, normal, d,
+           c_ - u_ * hu_ - v_ * hv_ - w_ * hw_,
+           c_ - u_ * hu_ + v_ * hv_ - w_ * hw_))
       {
         points.push_back(p);
       }
 
-      if (IntersectPlaneAndSegment(p, normal, d,
-                                   c_ + u_ * hu_ - v_ * hv_ - w_ * hw_,
-                                   c_ + u_ * hu_ + v_ * hv_ - w_ * hw_))
+      if (GeometryToolbox::IntersectPlaneAndSegment
+          (p, normal, d,
+           c_ + u_ * hu_ - v_ * hv_ - w_ * hw_,
+           c_ + u_ * hu_ + v_ * hv_ - w_ * hw_))
       {
         points.push_back(p);
       }
 
-      if (IntersectPlaneAndSegment(p, normal, d,
-                                   c_ - u_ * hu_ - v_ * hv_ + w_ * hw_,
-                                   c_ - u_ * hu_ + v_ * hv_ + w_ * hw_))
+      if (GeometryToolbox::IntersectPlaneAndSegment
+          (p, normal, d,
+           c_ - u_ * hu_ - v_ * hv_ + w_ * hw_,
+           c_ - u_ * hu_ + v_ * hv_ + w_ * hw_))
       {
         points.push_back(p);
       }
 
-      if (IntersectPlaneAndSegment(p, normal, d,
-                                   c_ + u_ * hu_ - v_ * hv_ + w_ * hw_,
-                                   c_ + u_ * hu_ + v_ * hv_ + w_ * hw_))
+      if (GeometryToolbox::IntersectPlaneAndSegment
+          (p, normal, d,
+           c_ + u_ * hu_ - v_ * hv_ + w_ * hw_,
+           c_ + u_ * hu_ + v_ * hv_ + w_ * hw_))
       {
         points.push_back(p);
       }
 
       // Z-aligned edges
-      if (IntersectPlaneAndSegment(p, normal, d,
-                                   c_ - u_ * hu_ - v_ * hv_ - w_ * hw_,
-                                   c_ - u_ * hu_ - v_ * hv_ + w_ * hw_))
+      if (GeometryToolbox::IntersectPlaneAndSegment
+          (p, normal, d,
+           c_ - u_ * hu_ - v_ * hv_ - w_ * hw_,
+           c_ - u_ * hu_ - v_ * hv_ + w_ * hw_))
       {
         points.push_back(p);
       }
 
-      if (IntersectPlaneAndSegment(p, normal, d,
-                                   c_ + u_ * hu_ - v_ * hv_ - w_ * hw_,
-                                   c_ + u_ * hu_ - v_ * hv_ + w_ * hw_))
+      if (GeometryToolbox::IntersectPlaneAndSegment
+          (p, normal, d,
+           c_ + u_ * hu_ - v_ * hv_ - w_ * hw_,
+           c_ + u_ * hu_ - v_ * hv_ + w_ * hw_))
       {
         points.push_back(p);
       }
 
-      if (IntersectPlaneAndSegment(p, normal, d,
-                                   c_ - u_ * hu_ + v_ * hv_ - w_ * hw_,
-                                   c_ - u_ * hu_ + v_ * hv_ + w_ * hw_))
+      if (GeometryToolbox::IntersectPlaneAndSegment
+          (p, normal, d,
+           c_ - u_ * hu_ + v_ * hv_ - w_ * hw_,
+           c_ - u_ * hu_ + v_ * hv_ + w_ * hw_))
       {
         points.push_back(p);
       }
 
-      if (IntersectPlaneAndSegment(p, normal, d,
-                                   c_ + u_ * hu_ + v_ * hv_ - w_ * hw_,
-                                   c_ + u_ * hu_ + v_ * hv_ + w_ * hw_))
+      if (GeometryToolbox::IntersectPlaneAndSegment
+          (p, normal, d,
+           c_ + u_ * hu_ + v_ * hv_ - w_ * hw_,
+           c_ + u_ * hu_ + v_ * hv_ + w_ * hw_))
       {
         points.push_back(p);
       }

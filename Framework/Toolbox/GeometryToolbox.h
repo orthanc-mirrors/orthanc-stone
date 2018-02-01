@@ -130,6 +130,12 @@ namespace OrthancStone
 
     Matrix CreateRotationMatrixAlongZ(double a);
 
+    bool IntersectPlaneAndSegment(Vector& p,
+                                  const Vector& normal,
+                                  double d,
+                                  const Vector& edgeFrom,
+                                  const Vector& edgeTo);
+
     inline float ComputeBilinearInterpolationInternal(float x,
                                                       float y,
                                                       float f00,    // source(x, y)

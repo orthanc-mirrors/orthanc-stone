@@ -42,6 +42,19 @@ namespace OrthancStone
     }
 
 
+    void Print(const Matrix& m)
+    {
+      for (size_t i = 0; i < m.size1(); i++)
+      {
+        for (size_t j = 0; j < m.size2(); j++)
+        {
+          printf("%8.2f  ", m(i,j));
+        }
+        printf("\n");        
+      }
+    }
+
+
     bool ParseVector(Vector& target,
                      const std::string& value)
     {

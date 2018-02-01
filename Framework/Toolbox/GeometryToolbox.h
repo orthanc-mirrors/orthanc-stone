@@ -43,6 +43,8 @@ namespace OrthancStone
   {
     void Print(const Vector& v);
 
+    void Print(const Matrix& m);
+
     bool ParseVector(Vector& target,
                      const std::string& s);
 

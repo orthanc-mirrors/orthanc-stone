@@ -189,7 +189,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/Slice.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ViewportGeometry.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/VolumeReslicer.cpp
   ${ORTHANC_STONE_DIR}/Framework/Viewport/CairoContext.cpp
   ${ORTHANC_STONE_DIR}/Framework/Viewport/CairoFont.cpp
   ${ORTHANC_STONE_DIR}/Framework/Viewport/CairoSurface.cpp
@@ -197,6 +196,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Volumes/ImageBuffer3D.cpp
   ${ORTHANC_STONE_DIR}/Framework/Volumes/SlicedVolumeBase.cpp
   ${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeLoaderBase.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeReslicer.cpp
   ${ORTHANC_STONE_DIR}/Framework/Volumes/StructureSetLoader.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/CairoWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/EmptyWidget.cpp

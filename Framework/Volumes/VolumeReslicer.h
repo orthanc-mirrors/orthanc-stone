@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Extent2D.h"
-#include "OrientedBoundingBox.h"
-#include "../Volumes/ImageBuffer3D.h"
+#include "../Toolbox/Extent2D.h"
+#include "../Toolbox/OrientedBoundingBox.h"
+#include "ImageBuffer3D.h"
 
 namespace OrthancStone
 {

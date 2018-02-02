@@ -189,6 +189,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/Slice.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ViewportGeometry.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Toolbox/VolumeReslicer.cpp
   ${ORTHANC_STONE_DIR}/Framework/Viewport/CairoContext.cpp
   ${ORTHANC_STONE_DIR}/Framework/Viewport/CairoFont.cpp
   ${ORTHANC_STONE_DIR}/Framework/Viewport/CairoSurface.cpp

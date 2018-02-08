@@ -482,5 +482,51 @@ namespace OrthancStone
         }
       }
     }
+
+
+    void FillMatrix(Matrix& target,
+                    size_t rows,
+                    size_t columns,
+                    const double values[])
+    {
+      target.resize(rows, columns);
+
+      size_t index = 0;
+
+      for (size_t y = 0; y < rows; y++)
+      {
+        for (size_t x = 0; x < columns; x++, index++)
+        {
+          target(y, x) = values[index];
+        }
+      }
+    }
+
+
+    void FillVector(Vector& target,
+                    size_t size,
+                    const double values[])
+    {
+      target.resize(size);
+
+      for (size_t i = 0; i < size; i++)
+      {
+        target[i] = values[i];
+      }
+    }
+
+
+    void Convert(Matrix& target,
+                 const Vector& source)
+    {
+      const size_t n = source.size();
+
+      target.resize(n, 1);
+
+      for (size_t i = 0; i < n; i++)
+      {
+        target(i, 0) = source[i];
+      }      
+    }
   }
 }

@@ -136,6 +136,18 @@ namespace OrthancStone
                                   const Vector& edgeFrom,
                                   const Vector& edgeTo);
 
+    void FillMatrix(Matrix& target,
+                    size_t rows,
+                    size_t columns,
+                    const double values[]);
+
+    void FillVector(Vector& target,
+                    size_t size,
+                    const double values[]);
+
+    void Convert(Matrix& target,
+                 const Vector& source);
+
     inline float ComputeBilinearInterpolationInternal(float x,
                                                       float y,
                                                       float f00,    // source(x, y)

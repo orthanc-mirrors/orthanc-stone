@@ -136,6 +136,12 @@ namespace OrthancStone
                                   const Vector& edgeFrom,
                                   const Vector& edgeTo);
 
+    bool IntersectPlaneAndLine(Vector& p,
+                               const Vector& normal,
+                               double d,
+                               const Vector& origin,
+                               const Vector& direction);
+
     void FillMatrix(Matrix& target,
                     size_t rows,
                     size_t columns,

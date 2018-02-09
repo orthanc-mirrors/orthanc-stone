@@ -35,6 +35,7 @@ namespace OrthancStone
     Vector    normal_;
     Vector    axisX_;
     Vector    axisY_;
+    double    d_;
 
     void CheckAndComputeNormal();
 
@@ -42,6 +43,8 @@ namespace OrthancStone
                const std::string& imageOrientationPatient);
 
     void SetupCanonical();
+
+    double GetOffset() const;
 
   public:
     CoordinateSystem3D()
@@ -95,5 +98,9 @@ namespace OrthancStone
     bool IntersectSegment(Vector& p,
                           const Vector& edgeFrom,
                           const Vector& edgeTo) const;
+
+    bool IntersectLine(Vector& p,
+                       const Vector& origin,
+                       const Vector& direction) const;
   };
 }

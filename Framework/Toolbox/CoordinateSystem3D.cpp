@@ -54,6 +54,8 @@ namespace OrthancStone
 
     GeometryToolbox::CrossProduct(normal_, axisX_, axisY_);
 
+    d_ = -(normal_[0] * origin_[0] + normal_[1] * origin_[1] + normal_[2] * origin_[2]);
+
     // Just a sanity check, it should be useless by construction
     assert(GeometryToolbox::IsNear(boost::numeric::ublas::norm_2(normal_), 1.0));
   }
@@ -174,7 +176,14 @@ namespace OrthancStone
                                             const Vector& edgeFrom,
                                             const Vector& edgeTo) const
   {
-    double d = -(normal_[0] * origin_[0] + normal_[1] * origin_[1] + normal_[2] * origin_[2]);
-    return GeometryToolbox::IntersectPlaneAndSegment(p, normal_, d, edgeFrom, edgeTo);
+    return GeometryToolbox::IntersectPlaneAndSegment(p, normal_, d_, edgeFrom, edgeTo);
+  }
+
+
+  bool CoordinateSystem3D::IntersectLine(Vector& p,
+                                         const Vector& origin,
+                                         const Vector& direction) const
+  {
+    return GeometryToolbox::IntersectPlaneAndLine(p, normal_, d_, origin, direction);
   }
 }

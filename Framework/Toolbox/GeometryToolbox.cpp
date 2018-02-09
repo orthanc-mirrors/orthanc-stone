@@ -36,7 +36,8 @@ namespace OrthancStone
     {
       for (size_t i = 0; i < v.size(); i++)
       {
-        printf("%8.2f\n", v[i]);
+        printf("%g\n", v[i]);
+        //printf("%8.2f\n", v[i]);
       }
       printf("\n");
     }
@@ -48,10 +49,12 @@ namespace OrthancStone
       {
         for (size_t j = 0; j < m.size2(); j++)
         {
-          printf("%8.2f  ", m(i,j));
+          printf("%g  ", m(i,j));
+          //printf("%8.2f  ", m(i,j));
         }
         printf("\n");        
       }
+      printf("\n");        
     }
 
 
@@ -480,6 +483,34 @@ namespace OrthancStone
         {
           return false;
         }
+      }
+    }
+
+
+    bool IntersectPlaneAndLine(Vector& p,
+                               const Vector& normal,
+                               double d,
+                               const Vector& origin,
+                               const Vector& direction)
+    {
+      // http://geomalgorithms.com/a05-_intersect-1.html#Line-Plane-Intersection
+
+      // Check for parallel line and plane
+      double denominator = boost::numeric::ublas::inner_prod(direction, normal);
+
+      if (fabs(denominator) < 100.0 * std::numeric_limits<double>::epsilon())
+      {
+        return false;
+      }
+      else
+      {
+        // Compute intersection
+        double t = -(normal[0] * origin[0] + 
+                     normal[1] * origin[1] + 
+                     normal[2] * origin[2] + d) / denominator;
+
+        p = origin + t * direction;
+        return true;
       }
     }
 

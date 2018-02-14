@@ -849,7 +849,7 @@ namespace OrthancStone
         slow.GetNearestCoordinates(qx, qy, qz);
 
         Vector d;
-        GeometryToolbox::AssignVector(d, px - qx, py - qy, pz - qz);
+        LinearAlgebra::AssignVector(d, px - qx, py - qy, pz - qz);
         double norm = boost::numeric::ublas::norm_2(d);
         if (norm > 0.0001)
         {

@@ -124,7 +124,7 @@ namespace OrthancStone
   {
     std::string value;
     return (dataset.GetStringValue(value, tag) &&
-            GeometryToolbox::ParseVector(target, value));
+            LinearAlgebra::ParseVector(target, value));
   }
 
 
@@ -132,9 +132,9 @@ namespace OrthancStone
   {
     if (hasSlice_)
     {
-      if (!GeometryToolbox::IsNear(GeometryToolbox::ProjectAlongNormal(v, geometry_.GetNormal()),
-                                   projectionAlongNormal_, 
-                                   sliceThickness_ / 2.0 /* in mm */))
+      if (!LinearAlgebra::IsNear(GeometryToolbox::ProjectAlongNormal(v, geometry_.GetNormal()),
+                                 projectionAlongNormal_, 
+                                 sliceThickness_ / 2.0 /* in mm */))
       {
         LOG(ERROR) << "This RT-STRUCT contains a point that is off the slice of its instance";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);          
@@ -203,8 +203,8 @@ namespace OrthancStone
     
     double d = GeometryToolbox::ProjectAlongNormal(slice.GetOrigin(), geometry_.GetNormal());
 
-    return (GeometryToolbox::IsNear(d, projectionAlongNormal_,
-                                    sliceThickness_ / 2.0));
+    return (LinearAlgebra::IsNear(d, projectionAlongNormal_,
+                                  sliceThickness_ / 2.0));
   }
 
   
@@ -468,7 +468,7 @@ namespace OrthancStone
                      DICOM_TAG_CONTOUR_DATA));
 
         Vector points;
-        if (!GeometryToolbox::ParseVector(points, slicesData) ||
+        if (!LinearAlgebra::ParseVector(points, slicesData) ||
             points.size() != 3 * countPoints)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);          
@@ -497,7 +497,7 @@ namespace OrthancStone
     const Structure& structure = GetStructure(index);
 
     Vector center;
-    GeometryToolbox::AssignVector(center, 0, 0, 0);
+    LinearAlgebra::AssignVector(center, 0, 0, 0);
     if (structure.polygons_.empty())
     {
       return center;
@@ -614,7 +614,7 @@ namespace OrthancStone
     std::string s;
     Vector v;
     if (dataset.CopyToString(s, Orthanc::DICOM_TAG_SLICE_THICKNESS, false) &&
-        GeometryToolbox::ParseVector(v, s) &&
+        LinearAlgebra::ParseVector(v, s) &&
         v.size() > 0)
     {
       thickness = v[0];
@@ -657,7 +657,7 @@ namespace OrthancStone
     if (referencedSlices_.empty())
     {
       Vector v;
-      GeometryToolbox::AssignVector(v, 0, 0, 1);
+      LinearAlgebra::AssignVector(v, 0, 0, 1);
       return v;
     }
     else

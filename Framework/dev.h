@@ -86,8 +86,8 @@ namespace OrthancStone
         return false;
       }
 
-      if (!GeometryToolbox::IsNear(a.GetPixelSpacingX(), b.GetPixelSpacingX()) ||
-          !GeometryToolbox::IsNear(a.GetPixelSpacingY(), b.GetPixelSpacingY()))
+      if (!LinearAlgebra::IsNear(a.GetPixelSpacingX(), b.GetPixelSpacingX()) ||
+          !LinearAlgebra::IsNear(a.GetPixelSpacingY(), b.GetPixelSpacingY()))
       {
         LOG(ERROR) << "The pixel spacing of the slices change across the volume image";
         return false;
@@ -138,8 +138,8 @@ namespace OrthancStone
 
       for (size_t i = 1; i < loader.GetSliceCount(); i++)
       {
-        if (!GeometryToolbox::IsNear(spacingZ, GetDistance(loader.GetSlice(i - 1), loader.GetSlice(i)),
-                                     0.001 /* this is expressed in mm */))
+        if (!LinearAlgebra::IsNear(spacingZ, GetDistance(loader.GetSlice(i - 1), loader.GetSlice(i)),
+                                   0.001 /* this is expressed in mm */))
         {
           LOG(ERROR) << "The distance between successive slices is not constant in a volume image";
           SlicedVolumeBase::NotifyGeometryError();

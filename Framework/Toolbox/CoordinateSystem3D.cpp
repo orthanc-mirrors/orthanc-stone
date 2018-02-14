@@ -21,6 +21,7 @@
 
 #include "CoordinateSystem3D.h"
 
+#include "LinearAlgebra.h"
 #include "GeometryToolbox.h"
 
 #include <Core/Logging.h>
@@ -36,8 +37,8 @@ namespace OrthancStone
     // product of each direction cosine vector with itself shall be
     // unity."
     // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.2.html
-    if (!GeometryToolbox::IsNear(boost::numeric::ublas::norm_2(axisX_), 1.0) ||
-        !GeometryToolbox::IsNear(boost::numeric::ublas::norm_2(axisY_), 1.0))
+    if (!LinearAlgebra::IsNear(boost::numeric::ublas::norm_2(axisX_), 1.0) ||
+        !LinearAlgebra::IsNear(boost::numeric::ublas::norm_2(axisY_), 1.0))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
@@ -47,25 +48,25 @@ namespace OrthancStone
     // column direction cosine vectors shall be orthogonal, i.e.,
     // their dot product shall be zero."
     // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.2.html
-    if (!GeometryToolbox::IsCloseToZero(boost::numeric::ublas::inner_prod(axisX_, axisY_)))
+    if (!LinearAlgebra::IsCloseToZero(boost::numeric::ublas::inner_prod(axisX_, axisY_)))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
 
-    GeometryToolbox::CrossProduct(normal_, axisX_, axisY_);
+    LinearAlgebra::CrossProduct(normal_, axisX_, axisY_);
 
     d_ = -(normal_[0] * origin_[0] + normal_[1] * origin_[1] + normal_[2] * origin_[2]);
 
     // Just a sanity check, it should be useless by construction
-    assert(GeometryToolbox::IsNear(boost::numeric::ublas::norm_2(normal_), 1.0));
+    assert(LinearAlgebra::IsNear(boost::numeric::ublas::norm_2(normal_), 1.0));
   }
 
 
   void CoordinateSystem3D::SetupCanonical()
   {
-    GeometryToolbox::AssignVector(origin_, 0, 0, 0);
-    GeometryToolbox::AssignVector(axisX_, 1, 0, 0);
-    GeometryToolbox::AssignVector(axisY_, 0, 1, 0);
+    LinearAlgebra::AssignVector(origin_, 0, 0, 0);
+    LinearAlgebra::AssignVector(axisX_, 1, 0, 0);
+    LinearAlgebra::AssignVector(axisY_, 0, 1, 0);
     CheckAndComputeNormal();
   }
 
@@ -88,8 +89,8 @@ namespace OrthancStone
     std::string tmpOrientation = Orthanc::Toolbox::StripSpaces(imageOrientationPatient);
 
     Vector orientation;
-    if (!GeometryToolbox::ParseVector(origin_, tmpPosition) ||
-        !GeometryToolbox::ParseVector(orientation, tmpOrientation) ||
+    if (!LinearAlgebra::ParseVector(origin_, tmpPosition) ||
+        !LinearAlgebra::ParseVector(orientation, tmpOrientation) ||
         origin_.size() != 3 ||
         orientation.size() != 6)
     {

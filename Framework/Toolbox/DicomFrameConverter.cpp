@@ -21,7 +21,7 @@
 
 #include "DicomFrameConverter.h"
 
-#include "GeometryToolbox.h"
+#include "LinearAlgebra.h"
 
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
@@ -48,8 +48,8 @@ namespace OrthancStone
     SetDefaultParameters();
 
     Vector c, w;
-    if (GeometryToolbox::ParseVector(c, dicom, Orthanc::DICOM_TAG_WINDOW_CENTER) &&
-        GeometryToolbox::ParseVector(w, dicom, Orthanc::DICOM_TAG_WINDOW_WIDTH) &&
+    if (LinearAlgebra::ParseVector(c, dicom, Orthanc::DICOM_TAG_WINDOW_CENTER) &&
+        LinearAlgebra::ParseVector(w, dicom, Orthanc::DICOM_TAG_WINDOW_WIDTH) &&
         c.size() > 0 && 
         w.size() > 0)
     {

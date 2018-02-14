@@ -181,6 +181,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DownloadStack.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/Extent2D.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/GeometryToolbox.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Toolbox/LinearAlgebra.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/MessagingToolbox.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrientedBoundingBox.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancSlicesLoader.cpp
@@ -195,9 +196,9 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Viewport/WidgetViewport.cpp
   ${ORTHANC_STONE_DIR}/Framework/Volumes/ImageBuffer3D.cpp
   ${ORTHANC_STONE_DIR}/Framework/Volumes/SlicedVolumeBase.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Volumes/StructureSetLoader.cpp
   ${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeLoaderBase.cpp
   ${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeReslicer.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Volumes/StructureSetLoader.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/CairoWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/EmptyWidget.cpp
   ${ORTHANC_STONE_DIR}/Framework/Widgets/LayerWidget.cpp

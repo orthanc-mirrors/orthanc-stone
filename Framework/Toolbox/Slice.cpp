@@ -87,7 +87,7 @@ namespace OrthancStone
       return false;
     }
 
-    if (!GeometryToolbox::IsCloseToZero(offset0))
+    if (!LinearAlgebra::IsCloseToZero(offset0))
     {
       LOG(ERROR) << "Invalid syntax";
       return false;
@@ -304,9 +304,9 @@ namespace OrthancStone
     return (GeometryToolbox::IsParallelOrOpposite(opposite,
                                                   GetGeometry().GetNormal(),
                                                   plane.GetNormal()) &&
-            GeometryToolbox::IsNear(GetGeometry().ProjectAlongNormal(GetGeometry().GetOrigin()),
-                                    GetGeometry().ProjectAlongNormal(plane.GetOrigin()),
-                                    thickness_ / 2.0));
+            LinearAlgebra::IsNear(GetGeometry().ProjectAlongNormal(GetGeometry().GetOrigin()),
+                                  GetGeometry().ProjectAlongNormal(plane.GetOrigin()),
+                                  thickness_ / 2.0));
   }
 
   

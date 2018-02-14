@@ -122,7 +122,7 @@ namespace OrthancStone
     computeRange_(computeRange),
     hasRange_(false)
   {
-    GeometryToolbox::AssignVector(voxelDimensions_, 1, 1, 1);
+    LinearAlgebra::AssignVector(voxelDimensions_, 1, 1, 1);
 
     LOG(INFO) << "Created an image of "
               << (GetEstimatedMemorySize() / (1024ll * 1024ll)) << "MB";
@@ -153,7 +153,7 @@ namespace OrthancStone
     }
 
     {
-      GeometryToolbox::AssignVector(voxelDimensions_, x, y, z);
+      LinearAlgebra::AssignVector(voxelDimensions_, x, y, z);
     }
   }
 
@@ -168,11 +168,11 @@ namespace OrthancStone
         break;
 
       case VolumeProjection_Coronal:
-        GeometryToolbox::AssignVector(result, voxelDimensions_[0], voxelDimensions_[2], voxelDimensions_[1]);
+        LinearAlgebra::AssignVector(result, voxelDimensions_[0], voxelDimensions_[2], voxelDimensions_[1]);
         break;
 
       case VolumeProjection_Sagittal:
-        GeometryToolbox::AssignVector(result, voxelDimensions_[1], voxelDimensions_[2], voxelDimensions_[0]);
+        LinearAlgebra::AssignVector(result, voxelDimensions_[1], voxelDimensions_[2], voxelDimensions_[0]);
         break;
 
       default:

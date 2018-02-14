@@ -237,7 +237,7 @@ namespace OrthancStone
     double y = boost::numeric::ublas::inner_prod(q, v_) / (2.0 * hv_) + 0.5;
     double z = boost::numeric::ublas::inner_prod(q, w_) / (2.0 * hw_) + 0.5;
 
-    GeometryToolbox::AssignVector(target, x, y, z);
+    LinearAlgebra::AssignVector(target, x, y, z);
   }
 
 

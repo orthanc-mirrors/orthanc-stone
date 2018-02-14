@@ -21,67 +21,12 @@
 
 #pragma once
 
-// Patch for ublas in Boost 1.64.0
-// https://github.com/dealii/dealii/issues/4302
-#include <boost/version.hpp>
-#if BOOST_VERSION >= 106300  // or 64, need to check
-#  include <boost/serialization/array_wrapper.hpp>
-#endif
-
-#include <Core/DicomFormat/DicomMap.h>
-
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/vector.hpp>
-#include <cassert>
+#include "LinearAlgebra.h"
 
 namespace OrthancStone
 {
-  typedef boost::numeric::ublas::matrix<double>   Matrix;
-  typedef boost::numeric::ublas::vector<double>   Vector;
-
   namespace GeometryToolbox
   {
-    void Print(const Vector& v);
-
-    void Print(const Matrix& m);
-
-    bool ParseVector(Vector& target,
-                     const std::string& s);
-
-    bool ParseVector(Vector& target,
-                     const Orthanc::DicomMap& dataset,
-                     const Orthanc::DicomTag& tag);
-
-    void AssignVector(Vector& v,
-                      double v1,
-                      double v2);
-
-    void AssignVector(Vector& v,
-                      double v1,
-                      double v2,
-                      double v3);
-
-    inline bool IsNear(double x,
-                       double y,
-                       double threshold)
-    {
-      return fabs(x - y) < threshold;
-    }
-
-    bool IsNear(double x,
-                double y);
-
-    inline bool IsCloseToZero(double x)
-    {
-      return IsNear(x, 0.0);
-    }
-
-    void NormalizeVector(Vector& u);
-
-    void CrossProduct(Vector& result,
-                      const Vector& u,
-                      const Vector& v);
-
     void ProjectPointOntoPlane(Vector& result,
                                const Vector& point,
                                const Vector& planeNormal,
@@ -141,18 +86,6 @@ namespace OrthancStone
                                double d,
                                const Vector& origin,
                                const Vector& direction);
-
-    void FillMatrix(Matrix& target,
-                    size_t rows,
-                    size_t columns,
-                    const double values[]);
-
-    void FillVector(Vector& target,
-                    size_t size,
-                    const double values[]);
-
-    void Convert(Matrix& target,
-                 const Vector& source);
 
     inline float ComputeBilinearInterpolationInternal(float x,
                                                       float y,

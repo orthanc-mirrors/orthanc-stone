@@ -28,7 +28,7 @@ namespace OrthancStone
 {
   ParallelSlices::ParallelSlices()
   {
-    GeometryToolbox::AssignVector(normal_, 0, 0, 1);
+    LinearAlgebra::AssignVector(normal_, 0, 0, 1);
   }
 
 

@@ -59,7 +59,7 @@ namespace OrthancStone
     double y = (y1_ + y2_) / 2.0;
 
     Vector tmp;
-    GeometryToolbox::AssignVector(tmp, x2_ - x1_, y2_ - y1_);
+    LinearAlgebra::AssignVector(tmp, x2_ - x1_, y2_ - y1_);
     double r = boost::numeric::ublas::norm_2(tmp) / 2.0;
 
     context.SetSourceColor(color_[0], color_[1], color_[2]);

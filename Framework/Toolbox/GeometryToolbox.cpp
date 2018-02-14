@@ -23,142 +23,20 @@
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
 
-#include <stdio.h>
-#include <boost/lexical_cast.hpp>
+#include <cassert>
 
 namespace OrthancStone
 {
   namespace GeometryToolbox
   {
-    void Print(const Vector& v)
-    {
-      for (size_t i = 0; i < v.size(); i++)
-      {
-        printf("%g\n", v[i]);
-        //printf("%8.2f\n", v[i]);
-      }
-      printf("\n");
-    }
-
-
-    void Print(const Matrix& m)
-    {
-      for (size_t i = 0; i < m.size1(); i++)
-      {
-        for (size_t j = 0; j < m.size2(); j++)
-        {
-          printf("%g  ", m(i,j));
-          //printf("%8.2f  ", m(i,j));
-        }
-        printf("\n");        
-      }
-      printf("\n");        
-    }
-
-
-    bool ParseVector(Vector& target,
-                     const std::string& value)
-    {
-      std::vector<std::string> items;
-      Orthanc::Toolbox::TokenizeString(items, value, '\\');
-
-      target.resize(items.size());
-
-      for (size_t i = 0; i < items.size(); i++)
-      {
-        try
-        {
-          target[i] = boost::lexical_cast<double>(Orthanc::Toolbox::StripSpaces(items[i]));
-        }
-        catch (boost::bad_lexical_cast&)
-        {
-          target.clear();
-          return false;
-        }
-      }
-
-      return true;
-    }
-
-
-    bool ParseVector(Vector& target,
-                     const Orthanc::DicomMap& dataset,
-                     const Orthanc::DicomTag& tag)
-    {
-      std::string value;
-      return (dataset.CopyToString(value, tag, false) &&
-              ParseVector(target, value));
-    }
-
-
-    void AssignVector(Vector& v,
-                      double v1,
-                      double v2)
-    {
-      v.resize(2);
-      v[0] = v1;
-      v[1] = v2;
-    }
-
-
-    void AssignVector(Vector& v,
-                      double v1,
-                      double v2,
-                      double v3)
-    {
-      v.resize(3);
-      v[0] = v1;
-      v[1] = v2;
-      v[2] = v3;
-    }
-
-
-    bool IsNear(double x,
-                double y)
-    {
-      // As most input is read as single-precision numbers, we take the
-      // epsilon machine for float32 into consideration to compare numbers
-      return IsNear(x, y, 10.0 * std::numeric_limits<float>::epsilon());
-    }
-
-
-    void NormalizeVector(Vector& u)
-    {
-      double norm = boost::numeric::ublas::norm_2(u);
-      if (!IsCloseToZero(norm))
-      {
-        u = u / norm;
-      }
-    }
-
-
-    void CrossProduct(Vector& result,
-                      const Vector& u,
-                      const Vector& v)
-    {
-      if (u.size() != 3 ||
-          v.size() != 3)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-
-      result.resize(3);
-
-      result[0] = u[1] * v[2] - u[2] * v[1];
-      result[1] = u[2] * v[0] - u[0] * v[2];
-      result[2] = u[0] * v[1] - u[1] * v[0];
-    }
-
-
     void ProjectPointOntoPlane(Vector& result,
                                const Vector& point,
                                const Vector& planeNormal,
                                const Vector& planeOrigin)
     {
       double norm =  boost::numeric::ublas::norm_2(planeNormal);
-      if (IsCloseToZero(norm))
+      if (LinearAlgebra::IsCloseToZero(norm))
       {
         // Division by zero
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
@@ -187,8 +65,8 @@ namespace OrthancStone
       double normU = boost::numeric::ublas::norm_2(u);
       double normV = boost::numeric::ublas::norm_2(v);
 
-      if (IsCloseToZero(normU) ||
-          IsCloseToZero(normV))
+      if (LinearAlgebra::IsCloseToZero(normU) ||
+          LinearAlgebra::IsCloseToZero(normV))
       {
         return false;
       }
@@ -198,12 +76,12 @@ namespace OrthancStone
       // The angle must be zero, so the cosine must be almost equal to
       // cos(0) == 1 (or cos(180) == -1 if allowOppositeDirection == true)
 
-      if (IsCloseToZero(cosAngle - 1.0))
+      if (LinearAlgebra::IsCloseToZero(cosAngle - 1.0))
       {
         isOpposite = false;
         return true;
       }
-      else if (IsCloseToZero(fabs(cosAngle) - 1.0))
+      else if (LinearAlgebra::IsCloseToZero(fabs(cosAngle) - 1.0))
       {
         isOpposite = true;
         return true;
@@ -237,10 +115,10 @@ namespace OrthancStone
 
       // The direction of the line of intersection is orthogonal to the
       // normal of both planes
-      CrossProduct(direction, normal1, normal2);
+      LinearAlgebra::CrossProduct(direction, normal1, normal2);
 
       double norm = boost::numeric::ublas::norm_2(direction);
-      if (IsCloseToZero(norm))
+      if (LinearAlgebra::IsCloseToZero(norm))
       {
         // The two planes are parallel or coincident
         return false;
@@ -250,7 +128,7 @@ namespace OrthancStone
       double d2 = -boost::numeric::ublas::inner_prod(normal2, origin2);
       Vector tmp = d2 * normal1 - d1 * normal2;
 
-      CrossProduct(p, tmp, direction);
+      LinearAlgebra::CrossProduct(p, tmp, direction);
       p /= norm;
 
       return true;
@@ -312,19 +190,19 @@ namespace OrthancStone
 
       // Create the coordinates of the rectangle
       Vector x[4];
-      AssignVector(x[0], xmin, ymin, 1.0);
-      AssignVector(x[1], xmax, ymin, 1.0);
-      AssignVector(x[2], xmax, ymax, 1.0);
-      AssignVector(x[3], xmin, ymax, 1.0);
+      LinearAlgebra::AssignVector(x[0], xmin, ymin, 1.0);
+      LinearAlgebra::AssignVector(x[1], xmax, ymin, 1.0);
+      LinearAlgebra::AssignVector(x[2], xmax, ymax, 1.0);
+      LinearAlgebra::AssignVector(x[3], xmin, ymax, 1.0);
 
       // Move to homogoneous coordinates in 2D
       Vector p;
 
       {
         Vector a, b;
-        AssignVector(a, ax, ay, 1.0);
-        AssignVector(b, bx, by, 1.0);
-        CrossProduct(p, a, b);
+        LinearAlgebra::AssignVector(a, ax, ay, 1.0);
+        LinearAlgebra::AssignVector(b, bx, by, 1.0);
+        LinearAlgebra::CrossProduct(p, a, b);
       }
 
       uint8_t c = 0;
@@ -349,10 +227,10 @@ namespace OrthancStone
       else
       {
         Vector a, b, e;
-        CrossProduct(e, x[i], x[(i + 1) % 4]);
-        CrossProduct(a, p, e);
-        CrossProduct(e, x[j], x[(j + 1) % 4]);
-        CrossProduct(b, p, e);
+        LinearAlgebra::CrossProduct(e, x[i], x[(i + 1) % 4]);
+        LinearAlgebra::CrossProduct(a, p, e);
+        LinearAlgebra::CrossProduct(e, x[j], x[(j + 1) % 4]);
+        LinearAlgebra::CrossProduct(b, p, e);
 
         // Go back to non-homogeneous coordinates
         x1 = a[0] / a[2];
@@ -371,7 +249,7 @@ namespace OrthancStone
     {
       Vector v;
 
-      if (ParseVector(v, dicom, Orthanc::DICOM_TAG_PIXEL_SPACING))
+      if (LinearAlgebra::ParseVector(v, dicom, Orthanc::DICOM_TAG_PIXEL_SPACING))
       {
         if (v.size() != 2 ||
             v[0] <= 0 ||
@@ -512,52 +390,6 @@ namespace OrthancStone
         p = origin + t * direction;
         return true;
       }
-    }
-
-
-    void FillMatrix(Matrix& target,
-                    size_t rows,
-                    size_t columns,
-                    const double values[])
-    {
-      target.resize(rows, columns);
-
-      size_t index = 0;
-
-      for (size_t y = 0; y < rows; y++)
-      {
-        for (size_t x = 0; x < columns; x++, index++)
-        {
-          target(y, x) = values[index];
-        }
-      }
-    }
-
-
-    void FillVector(Vector& target,
-                    size_t size,
-                    const double values[])
-    {
-      target.resize(size);
-
-      for (size_t i = 0; i < size; i++)
-      {
-        target[i] = values[i];
-      }
-    }
-
-
-    void Convert(Matrix& target,
-                 const Vector& source)
-    {
-      const size_t n = source.size();
-
-      target.resize(n, 1);
-
-      for (size_t i = 0; i < n; i++)
-      {
-        target(i, 0) = source[i];
-      }      
     }
   }
 }

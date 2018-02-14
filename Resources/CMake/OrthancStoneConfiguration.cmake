@@ -180,6 +180,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DicomStructureSet.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/DownloadStack.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/Extent2D.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Toolbox/FiniteProjectiveCamera.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/GeometryToolbox.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/LinearAlgebra.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/MessagingToolbox.cpp

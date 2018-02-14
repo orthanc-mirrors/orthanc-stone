@@ -115,6 +115,20 @@ namespace OrthancStone
     }
 
 
+    void AssignVector(Vector& v,
+                      double v1,
+                      double v2,
+                      double v3,
+                      double v4)
+    {
+      v.resize(4);
+      v[0] = v1;
+      v[1] = v2;
+      v[2] = v3;
+      v[3] = v4;
+    }
+
+
     bool IsNear(double x,
                 double y)
     {

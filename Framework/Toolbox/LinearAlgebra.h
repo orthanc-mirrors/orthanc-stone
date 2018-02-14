@@ -60,6 +60,12 @@ namespace OrthancStone
                       double v2,
                       double v3);
 
+    void AssignVector(Vector& v,
+                      double v1,
+                      double v2,
+                      double v3,
+                      double v4);
+
     inline bool IsNear(double x,
                        double y,
                        double threshold)

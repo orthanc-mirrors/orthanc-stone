@@ -147,7 +147,58 @@ TEST(GeometryToolbox, Interpolation)
 }
 
 
-TEST(FiniteProjectiveCamera, Decomposition)
+static bool CompareMatrix(const OrthancStone::Matrix& a,
+                          const OrthancStone::Matrix& b,
+                          double threshold = 0.00000001)
+{
+  if (a.size1() != b.size1() ||
+      a.size2() != b.size2())
+  {
+    return false;
+  }
+
+  for (size_t i = 0; i < a.size1(); i++)
+  {
+    for (size_t j = 0; j < a.size2(); j++)
+    {
+      if (fabs(a(i, j) - b(i, j)) > threshold)
+      {
+        LOG(ERROR) << "Too large difference in component ("
+                   << i << "," << j << "): " << a(i,j) << " != " << b(i,j);
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+
+static bool CompareVector(const OrthancStone::Vector& a,
+                          const OrthancStone::Vector& b,
+                          double threshold = 0.00000001)
+{
+  if (a.size() != b.size())
+  {
+    return false;
+  }
+
+  for (size_t i = 0; i < a.size(); i++)
+  {
+    if (fabs(a(i) - b(i)) > threshold)
+    {
+      LOG(ERROR) << "Too large difference in component "
+                 << i << ": " << a(i) << " != " << b(i);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+
+TEST(FiniteProjectiveCamera, Decomposition1)
 {
   // Example 6.2 of "Multiple View Geometry in Computer Vision - 2nd
   // edition" (page 163)
@@ -196,21 +247,192 @@ TEST(FiniteProjectiveCamera, Decomposition)
   OrthancStone::FiniteProjectiveCamera camera2(camera.GetIntrinsicParameters(),
                                                camera.GetRotation(),
                                                camera.GetCenter());
-  ASSERT_EQ(3u, camera2.GetMatrix().size1());
-  ASSERT_EQ(4u, camera2.GetMatrix().size2());
-  ASSERT_EQ(3u, camera2.GetIntrinsicParameters().size1());
-  ASSERT_EQ(3u, camera2.GetIntrinsicParameters().size2());
-  ASSERT_EQ(3u, camera2.GetRotation().size1());
-  ASSERT_EQ(3u, camera2.GetRotation().size2());
-  ASSERT_EQ(3u, camera2.GetCenter().size());
 
-  for (size_t i = 0; i < 3; i++)
+  ASSERT_TRUE(CompareMatrix(camera.GetMatrix(), camera2.GetMatrix()));
+  ASSERT_TRUE(CompareMatrix(camera.GetIntrinsicParameters(), camera2.GetIntrinsicParameters()));
+  ASSERT_TRUE(CompareMatrix(camera.GetRotation(), camera2.GetRotation()));
+  ASSERT_TRUE(CompareVector(camera.GetCenter(), camera2.GetCenter()));
+}
+
+
+TEST(FiniteProjectiveCamera, Decomposition2)
+{
+  const double p[] = { 1188.111986, 580.205341, -808.445330, 128000.000000, -366.466264, 1446.510501, 418.499736, 128000.000000, -0.487118, 0.291726, -0.823172, 500.000000 };
+  const double k[] = { -1528.494743, 0.000000, 256.000000, 0.000000, 1528.494743, 256.000000, 0.000000, 0.000000, 1.000000 };
+  const double r[] = { -0.858893, -0.330733, 0.391047, -0.158171, 0.897503, 0.411668, -0.487118, 0.291726, -0.823172 };
+  const double c[] = { 243.558936, -145.863085, 411.585964 };
+
+  OrthancStone::FiniteProjectiveCamera camera(p);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(camera.GetRotation()));
+
+  OrthancStone::FiniteProjectiveCamera camera2(k, r, c);
+  ASSERT_TRUE(CompareMatrix(camera.GetMatrix(), camera2.GetMatrix(), 1));
+  ASSERT_TRUE(CompareMatrix(camera.GetIntrinsicParameters(), camera2.GetIntrinsicParameters(), 0.001));
+  ASSERT_TRUE(CompareMatrix(camera.GetRotation(), camera2.GetRotation(), 0.000001));
+  ASSERT_TRUE(CompareVector(camera.GetCenter(), camera2.GetCenter(), 0.0001));
+}
+
+
+TEST(FiniteProjectiveCamera, Decomposition3)
+{
+  const double p[] = { 10, 0, 0, 0,
+                       0, 20, 0, 0,
+                       0, 0, 30, 0 };
+
+  OrthancStone::FiniteProjectiveCamera camera(p);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(camera.GetRotation()));
+  ASSERT_DOUBLE_EQ(10, camera.GetIntrinsicParameters() (0, 0));
+  ASSERT_DOUBLE_EQ(20, camera.GetIntrinsicParameters() (1, 1));
+  ASSERT_DOUBLE_EQ(30, camera.GetIntrinsicParameters() (2, 2));
+  ASSERT_DOUBLE_EQ(1, camera.GetRotation() (0, 0));
+  ASSERT_DOUBLE_EQ(1, camera.GetRotation() (1, 1));
+  ASSERT_DOUBLE_EQ(1, camera.GetRotation() (2, 2));
+  ASSERT_DOUBLE_EQ(0, camera.GetCenter() (0));
+  ASSERT_DOUBLE_EQ(0, camera.GetCenter() (1));
+  ASSERT_DOUBLE_EQ(0, camera.GetCenter() (2));
+}
+
+
+TEST(FiniteProjectiveCamera, Decomposition4)
+{
+  const double p[] = { 1, 0, 0, 10,
+                       0, 1, 0, 20,
+                       0, 0, 1, 30 };
+
+  OrthancStone::FiniteProjectiveCamera camera(p);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(camera.GetRotation()));
+  ASSERT_DOUBLE_EQ(1, camera.GetIntrinsicParameters() (0, 0));
+  ASSERT_DOUBLE_EQ(1, camera.GetIntrinsicParameters() (1, 1));
+  ASSERT_DOUBLE_EQ(1, camera.GetIntrinsicParameters() (2, 2));
+  ASSERT_DOUBLE_EQ(1, camera.GetRotation() (0, 0));
+  ASSERT_DOUBLE_EQ(1, camera.GetRotation() (1, 1));
+  ASSERT_DOUBLE_EQ(1, camera.GetRotation() (2, 2));
+  ASSERT_DOUBLE_EQ(-10, camera.GetCenter() (0));
+  ASSERT_DOUBLE_EQ(-20, camera.GetCenter() (1));
+  ASSERT_DOUBLE_EQ(-30, camera.GetCenter() (2));
+}
+
+
+TEST(FiniteProjectiveCamera, Decomposition5)
+{
+  const double p[] = { 0, 0, 10, 0,
+                       0, 20, 0, 0,
+                       30, 0, 0, 0 };
+
+  OrthancStone::FiniteProjectiveCamera camera(p);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(camera.GetRotation()));
+  ASSERT_DOUBLE_EQ(-10, camera.GetIntrinsicParameters() (0, 0));
+  ASSERT_DOUBLE_EQ(20, camera.GetIntrinsicParameters() (1, 1));
+  ASSERT_DOUBLE_EQ(30, camera.GetIntrinsicParameters() (2, 2));
+  ASSERT_DOUBLE_EQ(-1, camera.GetRotation() (0, 2));
+  ASSERT_DOUBLE_EQ(1, camera.GetRotation() (1, 1));
+  ASSERT_DOUBLE_EQ(1, camera.GetRotation() (2, 0));
+  ASSERT_DOUBLE_EQ(0, camera.GetCenter() (0));
+  ASSERT_DOUBLE_EQ(0, camera.GetCenter() (1));
+  ASSERT_DOUBLE_EQ(0, camera.GetCenter() (2));
+
+  OrthancStone::FiniteProjectiveCamera camera2(camera.GetIntrinsicParameters(),
+                                               camera.GetRotation(),
+                                               camera.GetCenter());
+  ASSERT_TRUE(CompareMatrix(camera.GetMatrix(), camera2.GetMatrix()));
+  ASSERT_TRUE(CompareMatrix(camera.GetIntrinsicParameters(), camera2.GetIntrinsicParameters()));
+  ASSERT_TRUE(CompareMatrix(camera.GetRotation(), camera2.GetRotation()));
+  ASSERT_TRUE(CompareVector(camera.GetCenter(), camera2.GetCenter()));
+}
+
+
+static double GetCosAngle(const OrthancStone::Vector& a,
+                          const OrthancStone::Vector& b)
+{
+  // Returns the cosine of the angle between two vectors
+  // https://en.wikipedia.org/wiki/Dot_product#Geometric_definition
+  return boost::numeric::ublas::inner_prod(a, b) / 
+    (boost::numeric::ublas::norm_2(a) * boost::numeric::ublas::norm_2(b));
+}
+
+
+TEST(FiniteProjectiveCamera, Ray)
+{
+  const double pp[] = { -1499.650894, 2954.618773, -259.737419, 637891.819097,
+                        -2951.517707, -1501.019129, -285.785281, 637891.819097,
+                        0.008528, 0.003067, -0.999959, 2491.764918 };
+
+  const OrthancStone::FiniteProjectiveCamera camera(pp);
+
+  ASSERT_NEAR(-21.2492, camera.GetCenter() (0), 0.0001);
+  ASSERT_NEAR(-7.64234, camera.GetCenter() (1), 0.00001);
+  ASSERT_NEAR(2491.66, camera.GetCenter() (2), 0.01);
+
+  // Image plane that led to these parameters, with principal point at
+  // (256,256). The image has dimensions 512x512.
+  OrthancStone::Vector o, ax, ay;
+  OrthancStone::LinearAlgebra::AssignVector(o, 7.009620, 2.521030, -821.942000);
+  OrthancStone::LinearAlgebra::AssignVector(ax, -0.453219, 0.891399, -0.001131 );
+  OrthancStone::LinearAlgebra::AssignVector(ay,  -0.891359, -0.453210, -0.008992);
+  OrthancStone::CoordinateSystem3D imagePlane(o, ax, ay);
+
+  // Back-projection of the principal point
   {
-    for (size_t j = 0; j < 4; j++)
+    OrthancStone::Vector ray = camera.GetRayDirection(256, 256);
+
+    // The principal axis vector is orthogonal to the image plane
+    // (i.e. parallel to the plane normal), in the opposite direction
+    // ("-1" corresponds to "cos(pi)").
+    ASSERT_NEAR(-1, GetCosAngle(ray, imagePlane.GetNormal()), 0.0000001);
+
+    // Forward projection of principal axis, resulting in the principal point
+    double x, y;
+    camera.ApplyFinite(x, y, camera.GetCenter() - ray);
+
+    ASSERT_NEAR(256, x, 0.00001);
+    ASSERT_NEAR(256, y, 0.00001);
+  }
+
+  // Back-projection of the 4 corners of the image
+  std::vector<double> cx, cy;
+  cx.push_back(0);
+  cy.push_back(0);
+  cx.push_back(512);
+  cy.push_back(0);
+  cx.push_back(512);
+  cy.push_back(512);
+  cx.push_back(0);
+  cy.push_back(512);
+
+  bool first = true;
+  double angle;
+
+  for (size_t i = 0; i < cx.size(); i++)
+  {
+    OrthancStone::Vector ray = camera.GetRayDirection(cx[i], cy[i]);
+
+    // Check that the angle wrt. principal axis is the same for all
+    // the 4 corners
+    double a = GetCosAngle(ray, imagePlane.GetNormal());
+    if (first)
     {
-      ASSERT_NEAR(camera.GetMatrix() (i, j),
-                  camera2.GetMatrix() (i, j), 0.00000001);
+      first = false;
+      angle = a;
     }
+    else
+    {
+      ASSERT_NEAR(angle, a, 0.000001);
+    }
+
+    // Forward projection of the ray, going back to the original point
+    double x, y;
+    camera.ApplyFinite(x, y, camera.GetCenter() - ray);
+    
+    ASSERT_NEAR(cx[i], x, 0.00001);
+    ASSERT_NEAR(cy[i], y, 0.00001);
+
+    // Alternative construction, by computing the intersection of the
+    // ray with the image plane
+    OrthancStone::Vector p;
+    ASSERT_TRUE(imagePlane.IntersectLine(p, camera.GetCenter(), -ray));
+    imagePlane.ProjectPoint(x, y, p);
+    ASSERT_NEAR(cx[i], x + 256, 0.01);
+    ASSERT_NEAR(cy[i], y + 256, 0.01);
   }
 }
 

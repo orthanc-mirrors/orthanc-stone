@@ -441,7 +441,10 @@ TEST(Matrix, Inverse1)
 {
   OrthancStone::Matrix a, b;
 
-  ASSERT_THROW(OrthancStone::LinearAlgebra::InvertMatrix(b, a), Orthanc::OrthancException);
+  a.resize(0, 0);
+  OrthancStone::LinearAlgebra::InvertMatrix(b, a);
+  ASSERT_EQ(0u, b.size1());
+  ASSERT_EQ(0u, b.size2());
 
   a.resize(2, 3);
   ASSERT_THROW(OrthancStone::LinearAlgebra::InvertMatrix(b, a), Orthanc::OrthancException);
@@ -549,6 +552,52 @@ TEST(Matrix, Inverse3)
   ASSERT_DOUBLE_EQ(1, b(2, 0));
   ASSERT_DOUBLE_EQ(0, b(2, 1));
   ASSERT_DOUBLE_EQ(-1, b(2, 2));
+}
+
+
+TEST(Matrix, Inverse4)
+{
+  OrthancStone::Matrix a, b;
+  a.resize(4, 4);
+  a(0, 0) = 2;
+  a(0, 1) = 1;
+  a(0, 2) = 2;
+  a(0, 3) = -3;
+  a(1, 0) = -2;
+  a(1, 1) = 2;
+  a(1, 2) = -1;
+  a(1, 3) = -1;
+  a(2, 0) = 2;
+  a(2, 1) = 2;
+  a(2, 2) = -3;
+  a(2, 3) = -1;
+  a(3, 0) = 3;
+  a(3, 1) = -2;
+  a(3, 2) = -3;
+  a(3, 3) = -1;
+
+  OrthancStone::LinearAlgebra::InvertMatrix(b, a);
+  ASSERT_EQ(4u, b.size1());
+  ASSERT_EQ(4u, b.size2());
+
+  b *= 134.0;  // This is the determinant
+
+  ASSERT_DOUBLE_EQ(8, b(0, 0));
+  ASSERT_DOUBLE_EQ(-44, b(0, 1));
+  ASSERT_DOUBLE_EQ(30, b(0, 2));
+  ASSERT_DOUBLE_EQ(-10, b(0, 3));
+  ASSERT_DOUBLE_EQ(2, b(1, 0));
+  ASSERT_DOUBLE_EQ(-11, b(1, 1));
+  ASSERT_DOUBLE_EQ(41, b(1, 2));
+  ASSERT_DOUBLE_EQ(-36, b(1, 3));
+  ASSERT_DOUBLE_EQ(16, b(2, 0));
+  ASSERT_DOUBLE_EQ(-21, b(2, 1));
+  ASSERT_DOUBLE_EQ(-7, b(2, 2));
+  ASSERT_DOUBLE_EQ(-20, b(2, 3));
+  ASSERT_DOUBLE_EQ(-28, b(3, 0));
+  ASSERT_DOUBLE_EQ(-47, b(3, 1));
+  ASSERT_DOUBLE_EQ(29, b(3, 2));
+  ASSERT_DOUBLE_EQ(-32, b(3, 3));
 }
 
 

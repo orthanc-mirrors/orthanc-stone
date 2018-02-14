@@ -124,5 +124,8 @@ namespace OrthancStone
     void RQDecomposition3x3(Matrix& r,
                             Matrix& q,
                             const Matrix& a);
+
+    void InvertMatrix(Matrix& target,
+                      const Matrix& source);
   };
 }

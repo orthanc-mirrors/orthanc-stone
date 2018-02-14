@@ -437,6 +437,121 @@ TEST(FiniteProjectiveCamera, Ray)
 }
 
 
+TEST(Matrix, Inverse1)
+{
+  OrthancStone::Matrix a, b;
+
+  ASSERT_THROW(OrthancStone::LinearAlgebra::InvertMatrix(b, a), Orthanc::OrthancException);
+
+  a.resize(2, 3);
+  ASSERT_THROW(OrthancStone::LinearAlgebra::InvertMatrix(b, a), Orthanc::OrthancException);
+
+  a.resize(1, 1);
+  a(0, 0) = 45.0;
+
+  ASSERT_DOUBLE_EQ(45, OrthancStone::LinearAlgebra::ComputeDeterminant(a));
+  OrthancStone::LinearAlgebra::InvertMatrix(b, a);
+  ASSERT_EQ(1u, b.size1());
+  ASSERT_EQ(1u, b.size2());
+  ASSERT_DOUBLE_EQ(1.0 / 45.0, b(0, 0));
+
+  a(0, 0) = 0;
+  ASSERT_DOUBLE_EQ(0, OrthancStone::LinearAlgebra::ComputeDeterminant(a));
+  ASSERT_THROW(OrthancStone::LinearAlgebra::InvertMatrix(b, a), Orthanc::OrthancException);
+}
+
+
+TEST(Matrix, Inverse2)
+{
+  OrthancStone::Matrix a, b;
+  a.resize(2, 2);
+  a(0, 0) = 4;
+  a(0, 1) = 3;
+  a(1, 0) = 3;
+  a(1, 1) = 2;
+
+  ASSERT_DOUBLE_EQ(-1, OrthancStone::LinearAlgebra::ComputeDeterminant(a));
+  OrthancStone::LinearAlgebra::InvertMatrix(b, a);
+  ASSERT_EQ(2u, b.size1());
+  ASSERT_EQ(2u, b.size2());
+
+  ASSERT_DOUBLE_EQ(-2, b(0, 0));
+  ASSERT_DOUBLE_EQ(3, b(0, 1));
+  ASSERT_DOUBLE_EQ(3, b(1, 0));
+  ASSERT_DOUBLE_EQ(-4, b(1, 1));
+
+  a(0, 0) = 1;
+  a(0, 1) = 2;
+  a(1, 0) = 3;
+  a(1, 1) = 4;
+
+  ASSERT_DOUBLE_EQ(-2, OrthancStone::LinearAlgebra::ComputeDeterminant(a));
+  OrthancStone::LinearAlgebra::InvertMatrix(b, a);
+
+  ASSERT_DOUBLE_EQ(-2, b(0, 0));
+  ASSERT_DOUBLE_EQ(1, b(0, 1));
+  ASSERT_DOUBLE_EQ(1.5, b(1, 0));
+  ASSERT_DOUBLE_EQ(-0.5, b(1, 1));
+}
+
+
+TEST(Matrix, Inverse3)
+{
+  OrthancStone::Matrix a, b;
+  a.resize(3, 3);
+  a(0, 0) = 7;
+  a(0, 1) = 2;
+  a(0, 2) = 1;
+  a(1, 0) = 0;
+  a(1, 1) = 3;
+  a(1, 2) = -1;
+  a(2, 0) = -3;
+  a(2, 1) = 4;
+  a(2, 2) = -2;
+
+  ASSERT_DOUBLE_EQ(1, OrthancStone::LinearAlgebra::ComputeDeterminant(a));
+  OrthancStone::LinearAlgebra::InvertMatrix(b, a);
+  ASSERT_EQ(3u, b.size1());
+  ASSERT_EQ(3u, b.size2());
+
+  ASSERT_DOUBLE_EQ(-2, b(0, 0));
+  ASSERT_DOUBLE_EQ(8, b(0, 1));
+  ASSERT_DOUBLE_EQ(-5, b(0, 2));
+  ASSERT_DOUBLE_EQ(3, b(1, 0));
+  ASSERT_DOUBLE_EQ(-11, b(1, 1));
+  ASSERT_DOUBLE_EQ(7, b(1, 2));
+  ASSERT_DOUBLE_EQ(9, b(2, 0));
+  ASSERT_DOUBLE_EQ(-34, b(2, 1));
+  ASSERT_DOUBLE_EQ(21, b(2, 2));
+
+
+  a(0, 0) = 1;
+  a(0, 1) = 2;
+  a(0, 2) = 2;
+  a(1, 0) = 1;
+  a(1, 1) = 0;
+  a(1, 2) = 1;
+  a(2, 0) = 1;
+  a(2, 1) = 2;
+  a(2, 2) = 1;
+
+  ASSERT_DOUBLE_EQ(2, OrthancStone::LinearAlgebra::ComputeDeterminant(a));
+  OrthancStone::LinearAlgebra::InvertMatrix(b, a);
+  ASSERT_EQ(3u, b.size1());
+  ASSERT_EQ(3u, b.size2());
+
+  ASSERT_DOUBLE_EQ(-1, b(0, 0));
+  ASSERT_DOUBLE_EQ(1, b(0, 1));
+  ASSERT_DOUBLE_EQ(1, b(0, 2));
+  ASSERT_DOUBLE_EQ(0, b(1, 0));
+  ASSERT_DOUBLE_EQ(-0.5, b(1, 1));
+  ASSERT_DOUBLE_EQ(0.5, b(1, 2));
+  ASSERT_DOUBLE_EQ(1, b(2, 0));
+  ASSERT_DOUBLE_EQ(0, b(2, 1));
+  ASSERT_DOUBLE_EQ(-1, b(2, 2));
+}
+
+
 int main(int argc, char **argv)
 {
   Orthanc::Logging::Initialize();

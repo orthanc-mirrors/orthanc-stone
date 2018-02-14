@@ -449,5 +449,68 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
     }
+
+    
+    void InvertMatrix(Matrix& target,
+                      const Matrix& source)
+    {
+      if (source.size1() != source.size2())
+      {
+        LOG(ERROR) << "Inverse only exists for square matrices";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+
+      double determinant = ComputeDeterminant(source);
+
+      if (IsCloseToZero(determinant))
+      {
+        LOG(ERROR) << "Cannot invert singular matrix";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+
+      double denominator = 1.0 / determinant;
+
+      target.resize(source.size1(), source.size2());
+
+      if (source.size1() == 1)
+      {
+        target(0, 0) = denominator;
+      }
+      else if (source.size1() == 2)
+      {
+        // https://en.wikipedia.org/wiki/Invertible_matrix#Inversion_of_2_%C3%97_2_matrices
+        target(0, 0) =  source(1, 1) * denominator;
+        target(0, 1) = -source(0, 1) * denominator;
+        target(1, 0) = -source(1, 0) * denominator;
+        target(1, 1) =  source(0, 0) * denominator;
+      }
+      else if (source.size1() == 3)
+      {
+        // https://en.wikipedia.org/wiki/Invertible_matrix#Inversion_of_3_%C3%97_3_matrices
+        const double a = source(0, 0);
+        const double b = source(0, 1);
+        const double c = source(0, 2);
+        const double d = source(1, 0);
+        const double e = source(1, 1);
+        const double f = source(1, 2);
+        const double g = source(2, 0);
+        const double h = source(2, 1);
+        const double i = source(2, 2);
+        
+        target(0, 0) =  (e * i - f * h) * denominator;
+        target(0, 1) = -(b * i - c * h) * denominator;
+        target(0, 2) =  (b * f - c * e) * denominator;
+        target(1, 0) = -(d * i - f * g) * denominator;
+        target(1, 1) =  (a * i - c * g) * denominator;
+        target(1, 2) = -(a * f - c * d) * denominator;
+        target(2, 0) =  (d * h - e * g) * denominator;
+        target(2, 1) = -(a * h - b * g) * denominator;
+        target(2, 2) =  (a * e - b * d) * denominator;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+    }
   }
 }

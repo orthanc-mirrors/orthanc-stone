@@ -22,7 +22,7 @@
 #pragma once
 
 #include "Extent2D.h"
-#include "GeometryToolbox.h"
+#include "LinearAlgebra.h"
 #include "../Volumes/ImageBuffer3D.h"
 
 namespace OrthancStone

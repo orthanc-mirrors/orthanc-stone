@@ -21,6 +21,8 @@
 
 #include "ParallelSlices.h"
 
+#include "GeometryToolbox.h"
+
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 

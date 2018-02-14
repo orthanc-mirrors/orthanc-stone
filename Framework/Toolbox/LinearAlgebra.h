@@ -92,5 +92,31 @@ namespace OrthancStone
 
     void Convert(Matrix& target,
                  const Vector& source);
+
+    double ComputeDeterminant(const Matrix& a);
+
+    bool IsOrthogonalMatrix(const Matrix& q,
+                            double threshold);
+
+    bool IsOrthogonalMatrix(const Matrix& q);
+
+    bool IsRotationMatrix(const Matrix& r,
+                          double threshold);
+
+    bool IsRotationMatrix(const Matrix& r);
+
+    void InvertUpperTriangularMatrix(Matrix& output,
+                                     const Matrix& k); 
+
+    /**
+     * This function computes the RQ decomposition of a 3x3 matrix,
+     * using Givens rotations. Reference: Algorithm A4.1 (page 579) of
+     * "Multiple View Geometry in Computer Vision" (2nd edition).  The
+     * output matrix "Q" is a rotation matrix, and "R" is upper
+     * triangular.
+     **/
+    void RQDecomposition3x3(Matrix& r,
+                            Matrix& q,
+                            const Matrix& a);
   };
 }

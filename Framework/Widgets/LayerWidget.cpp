@@ -22,6 +22,7 @@
 #include "LayerWidget.h"
 
 #include "../Layers/SliceOutlineRenderer.h"
+#include "../Toolbox/GeometryToolbox.h"
 
 #include <Core/Logging.h>
 

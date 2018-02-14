@@ -21,6 +21,7 @@
 
 #include "DicomStructureSet.h"
 
+#include "../Toolbox/GeometryToolbox.h"
 #include "../Toolbox/MessagingToolbox.h"
 
 #include <Core/Logging.h>

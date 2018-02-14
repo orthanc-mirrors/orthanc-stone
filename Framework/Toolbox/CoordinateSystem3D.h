@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "GeometryToolbox.h"
+#include "LinearAlgebra.h"
 
 #include <Plugins/Samples/Common/IDicomDataset.h>
 

@@ -21,6 +21,8 @@
 
 #include "OrientedBoundingBox.h"
 
+#include "GeometryToolbox.h"
+
 #include <Core/OrthancException.h>
 
 #include <cassert>

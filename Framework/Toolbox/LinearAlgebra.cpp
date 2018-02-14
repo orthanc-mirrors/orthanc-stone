@@ -196,5 +196,244 @@ namespace OrthancStone
         target(i, 0) = source[i];
       }      
     }
+
+    
+    double ComputeDeterminant(const Matrix& a)
+    {
+      if (a.size1() != a.size2())
+      {
+        LOG(ERROR) << "Determinant only exists for square matrices";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+    
+      // https://en.wikipedia.org/wiki/Rule_of_Sarrus
+      if (a.size1() == 1)
+      {
+        return a(0,0);
+      }
+      else if (a.size1() == 2)
+      {
+        return a(0,0) * a(1,1) - a(0,1) * a(1,0);
+      }
+      else if (a.size1() == 3)
+      {
+        return (a(0,0) * a(1,1) * a(2,2) + 
+                a(0,1) * a(1,2) * a(2,0) +
+                a(0,2) * a(1,0) * a(2,1) -
+                a(2,0) * a(1,1) * a(0,2) -
+                a(2,1) * a(1,2) * a(0,0) -
+                a(2,2) * a(1,0) * a(0,1));
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+    }
+    
+
+    bool IsOrthogonalMatrix(const Matrix& q,
+                            double threshold)
+    {
+      // https://en.wikipedia.org/wiki/Orthogonal_matrix
+
+      using namespace boost::numeric::ublas;
+
+      const Matrix check = prod(trans(q), q) - identity_matrix<double>(3);
+
+      typename type_traits<double>::real_type norm = norm_inf(check);
+
+      return (norm <= threshold);
+    }
+
+
+    bool IsOrthogonalMatrix(const Matrix& q)
+    {
+      return IsOrthogonalMatrix(q, 10.0 * std::numeric_limits<float>::epsilon());
+    }
+
+
+    bool IsRotationMatrix(const Matrix& r,
+                          double threshold)
+    {
+      return (IsOrthogonalMatrix(r, threshold) &&
+              IsNear(ComputeDeterminant(r), 1.0, threshold));
+    }
+
+
+    bool IsRotationMatrix(const Matrix& r)
+    {
+      return IsRotationMatrix(r, 10.0 * std::numeric_limits<float>::epsilon());
+    }
+
+
+    void InvertUpperTriangularMatrix(Matrix& output,
+                                     const Matrix& k)
+    {
+      if (k.size1() != k.size2())
+      {
+        LOG(ERROR) << "Determinant only exists for square matrices";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+
+      output.resize(k.size1(), k.size2());
+
+      for (size_t i = 1; i < k.size1(); i++)
+      {
+        for (size_t j = 0; j < i; j++)
+        {
+          if (!IsCloseToZero(k(i, j)))
+          {
+            LOG(ERROR) << "Not an upper triangular matrix";
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+          }
+
+          output(i, j) = 0;  // The output is also upper triangular
+        }
+      }
+
+      if (k.size1() == 3)
+      {
+        // https://math.stackexchange.com/a/1004181
+        double a = k(0, 0);
+        double b = k(0, 1);
+        double c = k(0, 2);
+        double d = k(1, 1);
+        double e = k(1, 2);
+        double f = k(2, 2);
+
+        if (IsCloseToZero(a) ||
+            IsCloseToZero(d) ||
+            IsCloseToZero(f))
+        {
+          LOG(ERROR) << "Singular upper triangular matrix";
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        }
+        else
+        {
+          output(0, 0) = 1.0 / a;
+          output(0, 1) = -b / (a * d);
+          output(0, 2) = (b * e - c * d) / (a * f * d);
+          output(1, 1) = 1.0 / d;
+          output(1, 2) = -e / (f * d);
+          output(2, 2) = 1.0 / f;
+        }
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+    }
+
+
+    static void GetGivensComponent(double& c,
+                                   double& s,
+                                   const Matrix& a,
+                                   size_t i,
+                                   size_t j)
+    {
+      assert(i < 3 && j < 3);
+
+      double x = a(i, i);
+      double y = a(i, j);
+      double n = sqrt(x * x + y * y);
+
+      if (IsCloseToZero(n))
+      {
+        c = 1;
+        s = 0;
+      }
+      else
+      {
+        c = x / n;
+        s = -y / n;
+      }
+    }
+
+
+    /**
+     * This function computes the RQ decomposition of a 3x3 matrix,
+     * using Givens rotations. Reference: Algorithm A4.1 (page 579) of
+     * "Multiple View Geometry in Computer Vision" (2nd edition).  The
+     * output matrix "Q" is a rotation matrix, and "R" is upper
+     * triangular.
+     **/
+    void RQDecomposition3x3(Matrix& r,
+                            Matrix& q,
+                            const Matrix& a)
+    {
+      using namespace boost::numeric::ublas;
+      
+      if (a.size1() != 3 ||
+          a.size2() != 3)
+      {
+        LOG(ERROR) << "Only applicable to a 3x3 matrix";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+
+      r.resize(3, 3);
+      q.resize(3, 3);
+
+      r = a;
+      q = identity_matrix<double>(3);
+
+      {
+        // Set A(2,1) to zero
+        double c, s;
+        GetGivensComponent(c, s, r, 2, 1);
+
+        double v[9] = { 1, 0, 0, 
+                        0, c, -s,
+                        0, s, c };
+
+        Matrix g;
+        FillMatrix(g, 3, 3, v);
+
+        r = prod(r, g);
+        q = prod(trans(g), q);
+      }
+
+
+      {
+        // Set A(2,0) to zero
+        double c, s;
+        GetGivensComponent(c, s, r, 2, 0);
+
+        double v[9] = { c, 0, -s, 
+                        0, 1, 0,
+                        s, 0, c };
+
+        Matrix g;
+        FillMatrix(g, 3, 3, v);
+
+        r = prod(r, g);
+        q = prod(trans(g), q);
+      }
+
+
+      {
+        // Set A(1,0) to zero
+        double c, s;
+        GetGivensComponent(c, s, r, 1, 0);
+
+        double v[9] = { c, -s, 0, 
+                        s, c, 0,
+                        0, 0, 1 };
+
+        Matrix g;
+        FillMatrix(g, 3, 3, v);
+
+        r = prod(r, g);
+        q = prod(trans(g), q);
+      }
+
+      if (!IsCloseToZero(norm_inf(prod(r, q) - a)) ||
+          !IsRotationMatrix(q) ||
+          !IsCloseToZero(r(1, 0)) ||
+          !IsCloseToZero(r(2, 0)) ||
+          !IsCloseToZero(r(2, 1)))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+    }
   }
 }

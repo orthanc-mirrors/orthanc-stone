@@ -21,6 +21,8 @@
 
 #include "SlicesSorter.h"
 
+#include "GeometryToolbox.h"
+
 #include <Core/OrthancException.h>
 
 namespace OrthancStone

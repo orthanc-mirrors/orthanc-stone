@@ -27,6 +27,7 @@
 #include "Layers/LineLayerRenderer.h"
 #include "Widgets/LayerWidget.h"
 #include "Toolbox/DownloadStack.h"
+#include "Toolbox/GeometryToolbox.h"
 #include "Toolbox/OrthancSlicesLoader.h"
 #include "Volumes/ImageBuffer3D.h"
 #include "Volumes/SlicedVolumeBase.h"

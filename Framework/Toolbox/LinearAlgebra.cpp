@@ -240,7 +240,7 @@ namespace OrthancStone
 
       const Matrix check = prod(trans(q), q) - identity_matrix<double>(3);
 
-      typename type_traits<double>::real_type norm = norm_inf(check);
+      type_traits<double>::real_type norm = norm_inf(check);
 
       return (norm <= threshold);
     }

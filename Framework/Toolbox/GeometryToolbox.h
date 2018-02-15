@@ -75,6 +75,14 @@ namespace OrthancStone
 
     Matrix CreateRotationMatrixAlongZ(double a);
 
+    Matrix CreateTranslationMatrix(double dx,
+                                   double dy,
+                                   double dz);
+
+    Matrix CreateScalingMatrix(double sx,
+                               double sy,
+                               double sz);
+    
     bool IntersectPlaneAndSegment(Vector& p,
                                   const Vector& normal,
                                   double d,

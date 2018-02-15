@@ -365,10 +365,13 @@ TEST(FiniteProjectiveCamera, Ray)
 
   // Image plane that led to these parameters, with principal point at
   // (256,256). The image has dimensions 512x512.
-  OrthancStone::Vector o, ax, ay;
-  OrthancStone::LinearAlgebra::AssignVector(o, 7.009620, 2.521030, -821.942000);
-  OrthancStone::LinearAlgebra::AssignVector(ax, -0.453219, 0.891399, -0.001131 );
-  OrthancStone::LinearAlgebra::AssignVector(ay,  -0.891359, -0.453210, -0.008992);
+  OrthancStone::Vector o =
+    OrthancStone::LinearAlgebra::CreateVector(7.009620, 2.521030, -821.942000);
+  OrthancStone::Vector ax =
+    OrthancStone::LinearAlgebra::CreateVector(-0.453219, 0.891399, -0.001131);
+  OrthancStone::Vector ay =
+    OrthancStone::LinearAlgebra::CreateVector(-0.891359, -0.453210, -0.008992);
+
   OrthancStone::CoordinateSystem3D imagePlane(o, ax, ay);
 
   // Back-projection of the principal point

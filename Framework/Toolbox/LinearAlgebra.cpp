@@ -105,6 +105,14 @@ namespace OrthancStone
 
 
     void AssignVector(Vector& v,
+                      double v1)
+    {
+      v.resize(1);
+      v[0] = v1;
+    }
+
+
+    void AssignVector(Vector& v,
                       double v1,
                       double v2,
                       double v3)
@@ -127,6 +135,44 @@ namespace OrthancStone
       v[1] = v2;
       v[2] = v3;
       v[3] = v4;
+    }
+
+
+    Vector CreateVector(double v1)
+    {
+      Vector v;
+      AssignVector(v, v1);
+      return v;
+    }
+
+    
+    Vector CreateVector(double v1,
+                        double v2)
+    {
+      Vector v;
+      AssignVector(v, v1, v2);
+      return v;
+    }
+
+    
+    Vector CreateVector(double v1,
+                        double v2,
+                        double v3)
+    {
+      Vector v;
+      AssignVector(v, v1, v2, v3);
+      return v;
+    }
+
+    
+    Vector CreateVector(double v1,
+                        double v2,
+                        double v3,
+                        double v4)
+    {
+      Vector v;
+      AssignVector(v, v1, v2, v3, v4);
+      return v;
     }
 
 
@@ -542,6 +588,170 @@ namespace OrthancStone
         target = boost::numeric::ublas::identity_matrix<double>(source.size1());
         lu_substitute(a, permutation, target);
       }
+    }
+
+    
+    void CreateSkewSymmetric(Matrix& s,
+                             const Vector& v)
+    {
+      assert(v.size() == 3);
+
+      s.resize(3, 3);
+      s(0,0) = 0;
+      s(0,1) = -v[2];
+      s(0,2) = v[1];
+      s(1,0) = v[2];
+      s(1,1) = 0;
+      s(1,2) = -v[0];
+      s(2,0) = -v[1];
+      s(2,1) = v[0];
+      s(2,2) = 0;
+    }
+
+  
+    void AlignVectorsWithRotation(Matrix& r,
+                                  const Vector& a,
+                                  const Vector& b)
+    {
+      // This is Rodrigues' rotation formula:
+      // https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula#Matrix_notation
+
+      // Check also result A4.6 from "Multiple View Geometry in Computer
+      // Vision - 2nd edition" (p. 584)
+  
+      if (a.size() != 3 ||
+          b.size() != 3)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+
+      double aNorm = boost::numeric::ublas::norm_2(a);
+      double bNorm = boost::numeric::ublas::norm_2(b);
+
+      if (LinearAlgebra::IsCloseToZero(aNorm) ||
+          LinearAlgebra::IsCloseToZero(bNorm))
+      {
+        LOG(ERROR) << "Vector with zero norm";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);      
+      }
+
+      Vector aUnit, bUnit;
+      aUnit = a / aNorm;
+      bUnit = b / bNorm;
+
+      Vector v;
+      LinearAlgebra::CrossProduct(v, aUnit, bUnit);
+
+      double cosine = boost::numeric::ublas::inner_prod(aUnit, bUnit);
+
+      if (LinearAlgebra::IsCloseToZero(1 + cosine))
+      {
+        // "a == -b": TODO
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+
+      Matrix k;
+      CreateSkewSymmetric(k, v);
+
+#if 0
+      double sine = boost::numeric::ublas::norm_2(v);
+
+      r = (boost::numeric::ublas::identity_matrix<double>(3) +
+           sine * k + 
+           (1 - cosine) * boost::numeric::ublas::prod(k, k));
+#else
+      r = (boost::numeric::ublas::identity_matrix<double>(3) +
+           k + 
+           boost::numeric::ublas::prod(k, k) / (1 + cosine));
+#endif
+    }
+
+
+    Matrix InvertScaleTranslationMatrix(const Matrix& t)
+    {
+      if (t.size1() != 4 ||
+          t.size2() != 4 ||
+          !LinearAlgebra::IsCloseToZero(t(0,1)) ||
+          !LinearAlgebra::IsCloseToZero(t(0,2)) ||
+          !LinearAlgebra::IsCloseToZero(t(1,0)) ||
+          !LinearAlgebra::IsCloseToZero(t(1,2)) ||
+          !LinearAlgebra::IsCloseToZero(t(2,0)) ||
+          !LinearAlgebra::IsCloseToZero(t(2,1)) ||
+          !LinearAlgebra::IsCloseToZero(t(3,0)) ||
+          !LinearAlgebra::IsCloseToZero(t(3,1)) ||
+          !LinearAlgebra::IsCloseToZero(t(3,2)))
+      {
+        LOG(ERROR) << "This matrix is more than a zoom/translate transform";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      const double sx = t(0,0);
+      const double sy = t(1,1);
+      const double sz = t(2,2);
+      const double w = t(3,3);
+
+      if (LinearAlgebra::IsCloseToZero(sx) ||
+          LinearAlgebra::IsCloseToZero(sy) ||
+          LinearAlgebra::IsCloseToZero(sz) ||
+          LinearAlgebra::IsCloseToZero(w))
+      {
+        LOG(ERROR) << "Singular transform";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+    
+      const double tx = t(0,3);
+      const double ty = t(1,3);
+      const double tz = t(2,3);
+    
+      Matrix m = IdentityMatrix(4);
+
+      m(0,0) = 1.0 / sx;
+      m(1,1) = 1.0 / sy;
+      m(2,2) = 1.0 / sz;
+      m(3,3) = 1.0 / w;
+
+      m(0,3) = -tx / (sx * w);
+      m(1,3) = -ty / (sy * w);
+      m(2,3) = -tz / (sz * w);
+
+      return m;
+    }
+
+
+    bool IsShearMatrix(const Matrix& shear)
+    {
+      return (shear.size1() == 4 &&
+              shear.size2() == 4 &&
+              LinearAlgebra::IsNear(1.0, shear(0,0)) &&
+              LinearAlgebra::IsNear(0.0, shear(0,1)) &&
+              LinearAlgebra::IsNear(0.0, shear(0,3)) &&
+              LinearAlgebra::IsNear(0.0, shear(1,0)) &&
+              LinearAlgebra::IsNear(1.0, shear(1,1)) &&
+              LinearAlgebra::IsNear(0.0, shear(1,3)) &&
+              LinearAlgebra::IsNear(0.0, shear(2,0)) &&
+              LinearAlgebra::IsNear(0.0, shear(2,1)) &&
+              LinearAlgebra::IsNear(1.0, shear(2,2)) &&
+              LinearAlgebra::IsNear(0.0, shear(2,3)) &&
+              LinearAlgebra::IsNear(0.0, shear(3,0)) &&
+              LinearAlgebra::IsNear(0.0, shear(3,1)) &&
+              LinearAlgebra::IsNear(1.0, shear(3,3)));
+    }
+  
+
+    Matrix InvertShearMatrix(const Matrix& shear)
+    {
+      if (!IsShearMatrix(shear))
+      {
+        LOG(ERROR) << "Not a valid shear matrix";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      Matrix m = IdentityMatrix(4);
+      m(0,2) = -shear(0,2);
+      m(1,2) = -shear(1,2);
+      m(3,2) = -shear(3,2);
+
+      return m;
     }
   }
 }

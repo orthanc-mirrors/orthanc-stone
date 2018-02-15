@@ -52,6 +52,9 @@ namespace OrthancStone
                      const Orthanc::DicomTag& tag);
 
     void AssignVector(Vector& v,
+                      double v1);
+
+    void AssignVector(Vector& v,
                       double v1,
                       double v2);
 
@@ -65,6 +68,20 @@ namespace OrthancStone
                       double v2,
                       double v3,
                       double v4);
+
+    Vector CreateVector(double v1);
+
+    Vector CreateVector(double v1,
+                        double v2);
+
+    Vector CreateVector(double v1,
+                        double v2,
+                        double v3);
+    
+    Vector CreateVector(double v1,
+                        double v2,
+                        double v3,
+                        double v4);
 
     inline bool IsNear(double x,
                        double y,
@@ -99,6 +116,74 @@ namespace OrthancStone
     void Convert(Matrix& target,
                  const Vector& source);
 
+    inline Matrix Transpose(const Matrix& a)
+    {
+      return boost::numeric::ublas::trans(a);
+    }
+
+
+    inline Matrix IdentityMatrix(size_t size)
+    {
+      return boost::numeric::ublas::identity_matrix<double>(size);
+    }
+
+
+    inline Matrix ZeroMatrix(size_t size1,
+                             size_t size2)
+    {
+      return boost::numeric::ublas::zero_matrix<double>(size1, size2);
+    }
+
+
+    inline Matrix Product(const Matrix& a,
+                          const Matrix& b)
+    {
+      return boost::numeric::ublas::prod(a, b);
+    }
+
+
+    inline Vector Product(const Matrix& a,
+                          const Vector& b)
+    {
+      return boost::numeric::ublas::prod(a, b);
+    }
+
+
+    inline Matrix Product(const Matrix& a,
+                          const Matrix& b,
+                          const Matrix& c)
+    {
+      return Product(a, Product(b, c));
+    }
+
+
+    inline Matrix Product(const Matrix& a,
+                          const Matrix& b,
+                          const Matrix& c,
+                          const Matrix& d)
+    {
+      return Product(a, Product(b, c, d));
+    }
+
+
+    inline Matrix Product(const Matrix& a,
+                          const Matrix& b,
+                          const Matrix& c,
+                          const Matrix& d,
+                          const Matrix& e)
+    {
+      return Product(a, Product(b, c, d, e));
+    }
+
+
+    inline Vector Product(const Matrix& a,
+                          const Matrix& b,
+                          const Vector& c)
+    {
+      return Product(Product(a, b), c);
+    }
+
+
     double ComputeDeterminant(const Matrix& a);
 
     bool IsOrthogonalMatrix(const Matrix& q,
@@ -127,5 +212,18 @@ namespace OrthancStone
 
     void InvertMatrix(Matrix& target,
                       const Matrix& source);
+
+    void CreateSkewSymmetric(Matrix& s,
+                             const Vector& v);
+  
+    void AlignVectorsWithRotation(Matrix& r,
+                                  const Vector& a,
+                                  const Vector& b);
+
+    Matrix InvertScaleTranslationMatrix(const Matrix& t);
+
+    bool IsShearMatrix(const Matrix& shear);  
+
+    Matrix InvertShearMatrix(const Matrix& shear);
   };
 }

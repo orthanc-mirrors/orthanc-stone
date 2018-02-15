@@ -328,6 +328,30 @@ namespace OrthancStone
     }    
 
 
+    Matrix CreateTranslationMatrix(double dx,
+                                   double dy,
+                                   double dz)
+    {
+      Matrix m = LinearAlgebra::IdentityMatrix(4);
+      m(0,3) = dx;
+      m(1,3) = dy;
+      m(2,3) = dz;
+      return m;    
+    }
+
+
+    Matrix CreateScalingMatrix(double sx,
+                               double sy,
+                               double sz)
+    {
+      Matrix m = LinearAlgebra::IdentityMatrix(4);
+      m(0,0) = sx;
+      m(1,1) = sy;
+      m(2,2) = sz;
+      return m;    
+    }
+
+
     bool IntersectPlaneAndSegment(Vector& p,
                                   const Vector& normal,
                                   double d,

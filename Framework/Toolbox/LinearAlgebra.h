@@ -184,6 +184,15 @@ namespace OrthancStone
     }
 
 
+    inline Vector Product(const Matrix& a,
+                          const Matrix& b,
+                          const Matrix& c,
+                          const Vector& d)
+    {
+      return Product(Product(a, b, c), d);
+    }
+
+
     double ComputeDeterminant(const Matrix& a);
 
     bool IsOrthogonalMatrix(const Matrix& q,
@@ -220,7 +229,7 @@ namespace OrthancStone
                                   const Vector& a,
                                   const Vector& b);
 
-    Matrix InvertScaleTranslationMatrix(const Matrix& t);
+    Matrix InvertScalingTranslationMatrix(const Matrix& t);
 
     bool IsShearMatrix(const Matrix& shear);  
 

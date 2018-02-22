@@ -667,7 +667,7 @@ namespace OrthancStone
     }
 
 
-    Matrix InvertScaleTranslationMatrix(const Matrix& t)
+    Matrix InvertScalingTranslationMatrix(const Matrix& t)
     {
       if (t.size1() != 4 ||
           t.size2() != 4 ||

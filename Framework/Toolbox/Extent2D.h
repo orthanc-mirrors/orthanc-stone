@@ -81,5 +81,15 @@ namespace OrthancStone
     {
       return y2_ - y1_;
     }
+
+    double GetCenterX() const
+    {
+      return (x1_ + x2_) / 2.0;
+    }
+
+    double GetCenterY() const
+    {
+      return (y1_ + y2_) / 2.0;
+    }
   };
 }

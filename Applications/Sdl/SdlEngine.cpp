@@ -214,32 +214,42 @@ namespace OrthancStone
 
           switch (event.key.keysym.sym)
           {
-            case SDLK_a:  locker.GetViewport().KeyPressed('a', modifiers);  break;
-            case SDLK_b:  locker.GetViewport().KeyPressed('b', modifiers);  break;
-            case SDLK_c:  locker.GetViewport().KeyPressed('c', modifiers);  break;
-            case SDLK_d:  locker.GetViewport().KeyPressed('d', modifiers);  break;
-            case SDLK_e:  locker.GetViewport().KeyPressed('e', modifiers);  break;
-            case SDLK_f:  window_.ToggleMaximize();                         break;
-            case SDLK_g:  locker.GetViewport().KeyPressed('g', modifiers);  break;
-            case SDLK_h:  locker.GetViewport().KeyPressed('h', modifiers);  break;
-            case SDLK_i:  locker.GetViewport().KeyPressed('i', modifiers);  break;
-            case SDLK_j:  locker.GetViewport().KeyPressed('j', modifiers);  break;
-            case SDLK_k:  locker.GetViewport().KeyPressed('k', modifiers);  break;
-            case SDLK_l:  locker.GetViewport().KeyPressed('l', modifiers);  break;
-            case SDLK_m:  locker.GetViewport().KeyPressed('m', modifiers);  break;
-            case SDLK_n:  locker.GetViewport().KeyPressed('n', modifiers);  break;
-            case SDLK_o:  locker.GetViewport().KeyPressed('o', modifiers);  break;
-            case SDLK_p:  locker.GetViewport().KeyPressed('p', modifiers);  break;
-            case SDLK_q:  stop = true;                                      break;
-            case SDLK_r:  locker.GetViewport().KeyPressed('r', modifiers);  break;
-            case SDLK_s:  locker.GetViewport().KeyPressed('s', modifiers);  break;
-            case SDLK_t:  locker.GetViewport().KeyPressed('t', modifiers);  break;
-            case SDLK_u:  locker.GetViewport().KeyPressed('u', modifiers);  break;
-            case SDLK_v:  locker.GetViewport().KeyPressed('v', modifiers);  break;
-            case SDLK_w:  locker.GetViewport().KeyPressed('w', modifiers);  break;
-            case SDLK_x:  locker.GetViewport().KeyPressed('x', modifiers);  break;
-            case SDLK_y:  locker.GetViewport().KeyPressed('y', modifiers);  break;
-            case SDLK_z:  locker.GetViewport().KeyPressed('z', modifiers);  break;
+            case SDLK_a:    locker.GetViewport().KeyPressed('a', modifiers);  break;
+            case SDLK_b:    locker.GetViewport().KeyPressed('b', modifiers);  break;
+            case SDLK_c:    locker.GetViewport().KeyPressed('c', modifiers);  break;
+            case SDLK_d:    locker.GetViewport().KeyPressed('d', modifiers);  break;
+            case SDLK_e:    locker.GetViewport().KeyPressed('e', modifiers);  break;
+            case SDLK_f:    window_.ToggleMaximize();                         break;
+            case SDLK_g:    locker.GetViewport().KeyPressed('g', modifiers);  break;
+            case SDLK_h:    locker.GetViewport().KeyPressed('h', modifiers);  break;
+            case SDLK_i:    locker.GetViewport().KeyPressed('i', modifiers);  break;
+            case SDLK_j:    locker.GetViewport().KeyPressed('j', modifiers);  break;
+            case SDLK_k:    locker.GetViewport().KeyPressed('k', modifiers);  break;
+            case SDLK_l:    locker.GetViewport().KeyPressed('l', modifiers);  break;
+            case SDLK_m:    locker.GetViewport().KeyPressed('m', modifiers);  break;
+            case SDLK_n:    locker.GetViewport().KeyPressed('n', modifiers);  break;
+            case SDLK_o:    locker.GetViewport().KeyPressed('o', modifiers);  break;
+            case SDLK_p:    locker.GetViewport().KeyPressed('p', modifiers);  break;
+            case SDLK_q:    stop = true;                                      break;
+            case SDLK_r:    locker.GetViewport().KeyPressed('r', modifiers);  break;
+            case SDLK_s:    locker.GetViewport().KeyPressed('s', modifiers);  break;
+            case SDLK_t:    locker.GetViewport().KeyPressed('t', modifiers);  break;
+            case SDLK_u:    locker.GetViewport().KeyPressed('u', modifiers);  break;
+            case SDLK_v:    locker.GetViewport().KeyPressed('v', modifiers);  break;
+            case SDLK_w:    locker.GetViewport().KeyPressed('w', modifiers);  break;
+            case SDLK_x:    locker.GetViewport().KeyPressed('x', modifiers);  break;
+            case SDLK_y:    locker.GetViewport().KeyPressed('y', modifiers);  break;
+            case SDLK_z:    locker.GetViewport().KeyPressed('z', modifiers);  break;
+            case SDLK_KP_0: locker.GetViewport().KeyPressed('0', modifiers);  break;
+            case SDLK_KP_1: locker.GetViewport().KeyPressed('1', modifiers);  break;
+            case SDLK_KP_2: locker.GetViewport().KeyPressed('2', modifiers);  break;
+            case SDLK_KP_3: locker.GetViewport().KeyPressed('3', modifiers);  break;
+            case SDLK_KP_4: locker.GetViewport().KeyPressed('4', modifiers);  break;
+            case SDLK_KP_5: locker.GetViewport().KeyPressed('5', modifiers);  break;
+            case SDLK_KP_6: locker.GetViewport().KeyPressed('6', modifiers);  break;
+            case SDLK_KP_7: locker.GetViewport().KeyPressed('7', modifiers);  break;
+            case SDLK_KP_8: locker.GetViewport().KeyPressed('8', modifiers);  break;
+            case SDLK_KP_9: locker.GetViewport().KeyPressed('9', modifiers);  break;
 
             default:
               break;

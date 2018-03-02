@@ -222,6 +222,10 @@ namespace OrthancStone
     void InvertMatrix(Matrix& target,
                       const Matrix& source);
 
+    // This is the same as "InvertMatrix()", but without exception
+    bool InvertMatrixUnsafe(Matrix& target,
+                            const Matrix& source);
+
     void CreateSkewSymmetric(Matrix& s,
                              const Vector& v);
   

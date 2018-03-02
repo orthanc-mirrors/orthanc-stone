@@ -497,9 +497,9 @@ namespace OrthancStone
       }
     }
 
-    
-    void InvertMatrix(Matrix& target,
-                      const Matrix& source)
+
+    bool InvertMatrixUnsafe(Matrix& target,
+                            const Matrix& source)
     {
       if (source.size1() != source.size2())
       {
@@ -516,15 +516,14 @@ namespace OrthancStone
         {
           // By convention, the inverse of the empty matrix, is itself the empty matrix
           target.resize(0, 0);
-          return;
+          return true;
         }
 
         double determinant = ComputeDeterminant(source);
 
         if (IsCloseToZero(determinant))
         {
-          LOG(ERROR) << "Cannot invert singular matrix";
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+          return false;
         }
 
         double denominator = 1.0 / determinant;
@@ -534,6 +533,8 @@ namespace OrthancStone
         if (source.size1() == 1)
         {
           target(0, 0) = denominator;
+
+          return true;
         }
         else if (source.size1() == 2)
         {
@@ -542,6 +543,8 @@ namespace OrthancStone
           target(0, 1) = -source(0, 1) * denominator;
           target(1, 0) = -source(1, 0) * denominator;
           target(1, 1) =  source(0, 0) * denominator;
+
+          return true;
         }
         else if (source.size1() == 3)
         {
@@ -565,6 +568,8 @@ namespace OrthancStone
           target(2, 0) =  (d * h - e * g) * denominator;
           target(2, 1) = -(a * h - b * g) * denominator;
           target(2, 2) =  (a * e - b * d) * denominator;
+
+          return true;
         }
         else
         {
@@ -581,12 +586,26 @@ namespace OrthancStone
         
         if (boost::numeric::ublas::lu_factorize(a, permutation) != 0)
         {
-          LOG(ERROR) << "Cannot invert singular matrix";
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+          return false;
         }
+        else
+        {
+          target = boost::numeric::ublas::identity_matrix<double>(source.size1());
+          lu_substitute(a, permutation, target);
+          return true;
+        }
+      }
+    }
+    
 
-        target = boost::numeric::ublas::identity_matrix<double>(source.size1());
-        lu_substitute(a, permutation, target);
+    
+    void InvertMatrix(Matrix& target,
+                      const Matrix& source)
+    {
+      if (!InvertMatrixUnsafe(target, source))
+      {
+        LOG(ERROR) << "Cannot invert singular matrix";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
     }
 

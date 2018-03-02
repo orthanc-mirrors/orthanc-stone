@@ -121,4 +121,19 @@ namespace OrthancStone
               y2_ <= y1_ + 10 * std::numeric_limits<double>::epsilon());
     }
   }
+
+
+  bool Extent2D::Contains(double x,
+                          double y) const
+  {
+    if (empty_)
+    {
+      return false;
+    }
+    else
+    {
+      return (x >= x1_ && x <= x2_ &&
+              y >= y1_ && y <= y2_);
+    }
+  }
 }

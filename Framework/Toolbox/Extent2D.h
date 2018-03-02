@@ -91,5 +91,8 @@ namespace OrthancStone
     {
       return (y1_ + y2_) / 2.0;
     }
+
+    bool Contains(double x,
+                  double y) const;
   };
 }

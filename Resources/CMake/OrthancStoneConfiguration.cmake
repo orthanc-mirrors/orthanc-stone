@@ -39,10 +39,6 @@ if (ORTHANC_SANDBOXED)
     message(FATAL_ERROR "Cannot enable curl in sandboxed environments")
   endif()
 
-  if (ENABLE_LOGGING)
-    message(FATAL_ERROR "Cannot enable logging in sandboxed environments")
-  endif()
-
   if (ENABLE_SDL)
     message(FATAL_ERROR "Cannot enable SDL in sandboxed environments")
   endif()

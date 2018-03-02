@@ -251,6 +251,14 @@ namespace OrthancStone
             case SDLK_KP_8: locker.GetViewport().KeyPressed('8', modifiers);  break;
             case SDLK_KP_9: locker.GetViewport().KeyPressed('9', modifiers);  break;
 
+            case SDLK_PLUS:
+            case SDLK_KP_PLUS:
+              locker.GetViewport().KeyPressed('+', modifiers);  break;
+
+            case SDLK_MINUS:
+            case SDLK_KP_MINUS:
+              locker.GetViewport().KeyPressed('-', modifiers);  break;
+
             default:
               break;
           }

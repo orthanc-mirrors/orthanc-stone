@@ -131,7 +131,7 @@ float OrthancStone::GeometryToolbox::ComputeBilinearInterpolationInternal(float 
                                                                           float f10,
                                                                           float f11)
 {
-  // This function works on fractional parts
+  // This function only works on fractional parts
   assert(x >= 0 && y >= 0 && x < 1 && y < 1);
 
   // https://en.wikipedia.org/wiki/Bilinear_interpolation#Unit_square

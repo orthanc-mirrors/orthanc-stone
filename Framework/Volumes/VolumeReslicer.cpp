@@ -409,7 +409,7 @@ namespace OrthancStone
         if (GetNearestCoordinates(sourceX, sourceY, sourceZ, worldX, worldY, worldZ))
         {
           float f00, f10, f01, f11;
-          SampleVoxels(f00, f10, f01, f11, sourceX, sourceY, sourceZ);          
+          SampleVoxels(f00, f10, f01, f11, sourceX, sourceY, sourceZ);
           return GeometryToolbox::ComputeBilinearInterpolation(worldX, worldY, f00, f01, f10, f11);
         }
         else

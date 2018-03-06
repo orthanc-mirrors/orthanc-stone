@@ -148,10 +148,9 @@ float OrthancStone::GeometryToolbox::ComputeBilinearInterpolation(float x,
 {
   assert(x >= 0 && y >= 0);
 
-  // Compute the fractional part of (x,y) (this is the "floor()"
-  // operation on positive integers)
-  float xx = x - static_cast<float>(static_cast<int>(x));
-  float yy = y - static_cast<float>(static_cast<int>(y));
+  // Compute the fractional part of (x,y)
+  float xx = x - std::floor(x);
+  float yy = y - std::floor(y);
 
   return ComputeBilinearInterpolationInternal(xx, yy, f00, f01, f10, f11);
 }
@@ -171,9 +170,9 @@ float OrthancStone::GeometryToolbox::ComputeTrilinearInterpolation(float x,
 {
   assert(x >= 0 && y >= 0 && z >= 0);
 
-  float xx = x - static_cast<float>(static_cast<int>(x));
-  float yy = y - static_cast<float>(static_cast<int>(y));
-  float zz = z - static_cast<float>(static_cast<int>(z));
+  float xx = x - std::floor(x);
+  float yy = y - std::floor(y);
+  float zz = z - std::floor(z);
 
   // "In practice, a trilinear interpolation is identical to two
   // bilinear interpolation combined with a linear interpolation"

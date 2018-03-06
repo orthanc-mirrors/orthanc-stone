@@ -1129,8 +1129,8 @@ namespace OrthancStone
 
     // Secondly, the extent together with the voxel size gives the
     // size of the output image
-    unsigned int width = boost::math::round(extent_.GetWidth() / voxelSize);
-    unsigned int height = boost::math::round(extent_.GetHeight() / voxelSize);
+    unsigned int width = boost::math::iround(extent_.GetWidth() / voxelSize);
+    unsigned int height = boost::math::iround(extent_.GetHeight() / voxelSize);
 
     slice_.reset(new Orthanc::Image(outputFormat_, width, height, false));
 

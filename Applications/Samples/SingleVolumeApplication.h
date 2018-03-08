@@ -213,7 +213,8 @@ namespace OrthancStone
         //pet->ScheduleLoadInstance("337876a1-a68a9718-f15abccd-38faafa1-b99b496a"); // IBA 2
         //pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // IBA 3
         //pet->ScheduleLoadInstance("269f26f4-0c83eeeb-2e67abbd-5467a40f-f1bec90c");  // 0522c0001 TCIA
-        pet->ScheduleLoadInstance("f080888c-0ab7528a-f7d9c28c-84980eb1-ff3b0ae6");  // Captain
+        pet->ScheduleLoadInstance("f080888c-0ab7528a-f7d9c28c-84980eb1-ff3b0ae6");  // Captain 1
+        //pet->ScheduleLoadInstance("4f78055b-6499a2c5-1e089290-394acc05-3ec781c1");  // Captain 2
 
         std::auto_ptr<StructureSetLoader> rtStruct(new StructureSetLoader(context.GetWebService()));
         //rtStruct->ScheduleLoadInstance("c2ebc17b-6b3548db-5e5da170-b8ecab71-ea03add3");  // 0178023P

@@ -23,13 +23,16 @@
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
+#include <Core/Toolbox.h>
 
 namespace OrthancStone
 {  
   bool StringToSopClassUid(SopClassUid& result,
                            const std::string& source)
   {
-    if (source == "1.2.840.10008.5.1.4.1.1.481.2")
+    std::string s = Orthanc::Toolbox::StripSpaces(source);
+
+    if (s == "1.2.840.10008.5.1.4.1.1.481.2")
     {
       result = SopClassUid_RTDose;
       return true;

@@ -51,19 +51,26 @@ namespace OrthancStone
   {
     // http://dicom.nema.org/medical/Dicom/2016a/output/chtml/part03/sect_C.8.8.3.2.html
 
-    std::string increment, offsetTag;
-
-    if (!dataset.CopyToString(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false) ||
-        !dataset.CopyToString(offsetTag, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR, false))
     {
-      LOG(ERROR) << "Cannot read the \"GridFrameOffsetVector\" tag, check you are using Orthanc >= 1.3.1";
-      return false;
+      std::string increment;
+
+      if (dataset.CopyToString(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
+      {
+        Orthanc::Toolbox::ToUpperCase(increment);
+        if (increment != "3004,000C")  // This is the "Grid Frame Offset Vector" tag
+        {
+          LOG(ERROR) << "Bad value for the \"FrameIncrementPointer\" tag";
+          return false;
+        }
+      }
     }
 
-    Orthanc::Toolbox::ToUpperCase(increment);
-    if (increment != "3004,000C" ||
+    std::string offsetTag;
+
+    if (!dataset.CopyToString(offsetTag, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR, false) ||
         offsetTag.empty())
     {
+      LOG(ERROR) << "Cannot read the \"GridFrameOffsetVector\" tag, check you are using Orthanc >= 1.3.1";
       return false;
     }
 
@@ -71,7 +78,8 @@ namespace OrthancStone
     Orthanc::Toolbox::TokenizeString(offsets, offsetTag, '\\');
 
     if (frameCount_ <= 1 ||
-        offsets.size() != frameCount_ ||
+        offsets.size() < frameCount_ ||
+        offsets.size() < 2 ||
         frame >= frameCount_)
     {
       LOG(ERROR) << "No information about the 3D location of some slice(s) in a RT DOSE";

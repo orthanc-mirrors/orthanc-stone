@@ -444,8 +444,8 @@ namespace OrthancStone
                      DICOM_TAG_CONTOUR_GEOMETRIC_TYPE));
         if (type != "CLOSED_PLANAR")
         {
-          LOG(ERROR) << "Cannot handle contour with geometry type: " << type;
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
+          LOG(WARNING) << "Ignoring contour with geometry type: " << type;
+          continue;
         }
 
         size_t size;

@@ -200,20 +200,26 @@ namespace OrthancStone
         }
 #else
         std::auto_ptr<OrthancVolumeImage> ct(new OrthancVolumeImage(context.GetWebService(), false));
+        //ct->ScheduleLoadSeries("15a6f44a-ac7b88fe-19c462d9-dddd918e-b01550d8");  // 0178023P
         //ct->ScheduleLoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
-        ct->ScheduleLoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // IBA
+        //ct->ScheduleLoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // IBA
         //ct->ScheduleLoadSeries("03677739-1d8bca40-db1daf59-d74ff548-7f6fc9c0");  // 0522c0001 TCIA
+        ct->ScheduleLoadSeries("295e8a13-dfed1320-ba6aebb2-9a13e20f-1b3eb953");  // Captain
         
         std::auto_ptr<OrthancVolumeImage> pet(new OrthancVolumeImage(context.GetWebService(), true));
+        //pet->ScheduleLoadSeries("48d2997f-8e25cd81-dd715b64-bd79cdcc-e8fcee53");  // 0178023P
         //pet->ScheduleLoadSeries("aabad2e7-80702b5d-e599d26c-4f13398e-38d58a9e");
-        pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb"); // IBA 1
+        //pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb"); // IBA 1
         //pet->ScheduleLoadInstance("337876a1-a68a9718-f15abccd-38faafa1-b99b496a"); // IBA 2
         //pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // IBA 3
         //pet->ScheduleLoadInstance("269f26f4-0c83eeeb-2e67abbd-5467a40f-f1bec90c");  // 0522c0001 TCIA
+        pet->ScheduleLoadInstance("f080888c-0ab7528a-f7d9c28c-84980eb1-ff3b0ae6");  // Captain
 
         std::auto_ptr<StructureSetLoader> rtStruct(new StructureSetLoader(context.GetWebService()));
-        rtStruct->ScheduleLoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // IBA
+        //rtStruct->ScheduleLoadInstance("c2ebc17b-6b3548db-5e5da170-b8ecab71-ea03add3");  // 0178023P
+        //rtStruct->ScheduleLoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // IBA
         //rtStruct->ScheduleLoadInstance("17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20");  // 0522c0001 TCIA
+        rtStruct->ScheduleLoadInstance("96c889ab-29fe5c54-dda6e66c-3949e4da-58f90d75");  // Captain
         
         widget->AddLayer(new VolumeImageSource(*ct));
         widget->AddLayer(new VolumeImageSource(*pet));

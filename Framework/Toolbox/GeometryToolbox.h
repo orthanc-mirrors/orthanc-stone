@@ -135,7 +135,10 @@ float OrthancStone::GeometryToolbox::ComputeBilinearInterpolationInternal(float 
   assert(x >= 0 && y >= 0 && x < 1 && y < 1);
 
   // https://en.wikipedia.org/wiki/Bilinear_interpolation#Unit_square
-  return f00 * (1 - x) * (1 - y) + f01 * x * (1 - y) + f10 * (1 - x) * y + f11 * x * y;
+  return (f00 * (1.0f - x) * (1.0f - y) +
+          f01 * x * (1.0f - y) +
+          f10 * (1.0f - x) * y +
+          f11 * x * y);
 }
 
 
@@ -146,8 +149,6 @@ float OrthancStone::GeometryToolbox::ComputeBilinearInterpolation(float x,
                                                                   float f10,
                                                                   float f11)
 {
-  assert(x >= 0 && y >= 0);
-
   // Compute the fractional part of (x,y)
   float xx = x - std::floor(x);
   float yy = y - std::floor(y);
@@ -168,8 +169,6 @@ float OrthancStone::GeometryToolbox::ComputeTrilinearInterpolation(float x,
                                                                    float f110,
                                                                    float f111)
 {
-  assert(x >= 0 && y >= 0 && z >= 0);
-
   float xx = x - std::floor(x);
   float yy = y - std::floor(y);
   float zz = z - std::floor(z);
@@ -180,5 +179,5 @@ float OrthancStone::GeometryToolbox::ComputeTrilinearInterpolation(float x,
   float a = ComputeBilinearInterpolationInternal(xx, yy, f000, f001, f010, f011);
   float b = ComputeBilinearInterpolationInternal(xx, yy, f100, f101, f110, f111);
 
-  return (1 - zz) * a + zz * b;
+  return (1.0f - zz) * a + zz * b;
 }

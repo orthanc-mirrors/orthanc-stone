@@ -136,28 +136,30 @@ TEST(Toto, Tata)
 
 TEST(GeometryToolbox, Interpolation)
 {
+  using namespace OrthancStone::GeometryToolbox;
+  
   // https://en.wikipedia.org/wiki/Bilinear_interpolation#Application_in_image_processing
-  ASSERT_FLOAT_EQ(146.1f, OrthancStone::GeometryToolbox::ComputeBilinearInterpolation
-                  (20.5f, 14.2f, 91, 210, 162, 95));
+  ASSERT_FLOAT_EQ(146.1f, ComputeBilinearInterpolationUnitSquare(0.5f, 0.2f, 91, 210, 162, 95));
 
-  ASSERT_NEAR(146.1f, OrthancStone::GeometryToolbox::ComputeBilinearInterpolation
-              (-20.5f, 14.2f, 91, 210, 162, 95), 0.0001f);
+  ASSERT_FLOAT_EQ(91,  ComputeBilinearInterpolationUnitSquare(0, 0, 91, 210, 162, 95));
+  ASSERT_FLOAT_EQ(210, ComputeBilinearInterpolationUnitSquare(1, 0, 91, 210, 162, 95));
+  ASSERT_FLOAT_EQ(162, ComputeBilinearInterpolationUnitSquare(0, 1, 91, 210, 162, 95));
+  ASSERT_FLOAT_EQ(95,  ComputeBilinearInterpolationUnitSquare(1, 1, 91, 210, 162, 95));
 
-  ASSERT_NEAR(146.1f, OrthancStone::GeometryToolbox::ComputeBilinearInterpolation
-              (-20.5f, -8.8f, 91, 210, 162, 95), 0.0001f);
-
-  ASSERT_NEAR(146.1f, OrthancStone::GeometryToolbox::ComputeBilinearInterpolation
-              (20.5f, -8.8f, 91, 210, 162, 95), 0.0001f);
-
-  ASSERT_FLOAT_EQ(123.35f, OrthancStone::GeometryToolbox::ComputeTrilinearInterpolation
-                  (20.5f, 15.2f, 5.7f,
+  ASSERT_FLOAT_EQ(123.35f, ComputeTrilinearInterpolationUnitSquare
+                  (0.5f, 0.2f, 0.7f,
                    91, 210, 162, 95,
                    51, 190, 80, 92));
 
-  ASSERT_FLOAT_EQ(123.35f, OrthancStone::GeometryToolbox::ComputeTrilinearInterpolation
-                  (20.5f, 15.2f, -6.3f,
-                   91, 210, 162, 95,
-                   51, 190, 80, 92));
+  ASSERT_FLOAT_EQ(ComputeBilinearInterpolationUnitSquare(0.5f, 0.2f, 91, 210, 162, 95),
+                  ComputeTrilinearInterpolationUnitSquare(0.5f, 0.2f, 0,
+                                                          91, 210, 162, 95,
+                                                          51, 190, 80, 92));
+
+  ASSERT_FLOAT_EQ(ComputeBilinearInterpolationUnitSquare(0.5f, 0.2f, 51, 190, 80, 92),
+                  ComputeTrilinearInterpolationUnitSquare(0.5f, 0.2f, 1,
+                                                          91, 210, 162, 95,
+                                                          51, 190, 80, 92));
 }
 
 

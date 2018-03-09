@@ -95,44 +95,37 @@ namespace OrthancStone
                                const Vector& origin,
                                const Vector& direction);
 
-    inline float ComputeBilinearInterpolationInternal(float x,
-                                                      float y,
-                                                      float f00,    // source(x, y)
-                                                      float f01,    // source(x + 1, y)
-                                                      float f10,    // source(x, y + 1)
-                                                      float f11);   // source(x + 1, y + 1)
+    inline float ComputeBilinearInterpolationUnitSquare(float x,
+                                                        float y,
+                                                        float f00,    // source(0, 0)
+                                                        float f01,    // source(1, 0)
+                                                        float f10,    // source(0, 1)
+                                                        float f11);   // source(1, 1)
 
-    inline float ComputeBilinearInterpolation(float x,
-                                              float y,
-                                              float f00,    // source(x, y)
-                                              float f01,    // source(x + 1, y)
-                                              float f10,    // source(x, y + 1)
-                                              float f11);   // source(x + 1, y + 1)
-
-    inline float ComputeTrilinearInterpolation(float x,
-                                               float y,
-                                               float z,
-                                               float f000,   // source(x, y, z)
-                                               float f001,   // source(x + 1, y, z)
-                                               float f010,   // source(x, y + 1, z)
-                                               float f011,   // source(x + 1, y + 1, z)
-                                               float f100,   // source(x, y, z + 1)
-                                               float f101,   // source(x + 1, y, z + 1)
-                                               float f110,   // source(x, y + 1, z + 1)
-                                               float f111);  // source(x + 1, y + 1, z + 1)
+    inline float ComputeTrilinearInterpolationUnitSquare(float x,
+                                                         float y,
+                                                         float z,
+                                                         float f000,   // source(0, 0, 0)
+                                                         float f001,   // source(1, 0, 0)
+                                                         float f010,   // source(0, 1, 0)
+                                                         float f011,   // source(1, 1, 0)
+                                                         float f100,   // source(0, 0, 1)
+                                                         float f101,   // source(1, 0, 1)
+                                                         float f110,   // source(0, 1, 1)
+                                                         float f111);  // source(1, 1, 1)
   };
 }
 
 
-float OrthancStone::GeometryToolbox::ComputeBilinearInterpolationInternal(float x,
-                                                                          float y,
-                                                                          float f00,
-                                                                          float f01,
-                                                                          float f10,
-                                                                          float f11)
+float OrthancStone::GeometryToolbox::ComputeBilinearInterpolationUnitSquare(float x,
+                                                                            float y,
+                                                                            float f00,
+                                                                            float f01,
+                                                                            float f10,
+                                                                            float f11)
 {
-  // This function only works on fractional parts
-  assert(x >= 0 && y >= 0 && x < 1 && y < 1);
+  // This function only works within the unit square
+  assert(x >= 0 && y >= 0 && x <= 1 && y <= 1);
 
   // https://en.wikipedia.org/wiki/Bilinear_interpolation#Unit_square
   return (f00 * (1.0f - x) * (1.0f - y) +
@@ -142,42 +135,23 @@ float OrthancStone::GeometryToolbox::ComputeBilinearInterpolationInternal(float 
 }
 
 
-float OrthancStone::GeometryToolbox::ComputeBilinearInterpolation(float x,
-                                                                  float y,
-                                                                  float f00,
-                                                                  float f01,
-                                                                  float f10,
-                                                                  float f11)
+float OrthancStone::GeometryToolbox::ComputeTrilinearInterpolationUnitSquare(float x,
+                                                                             float y,
+                                                                             float z,
+                                                                             float f000,
+                                                                             float f001,
+                                                                             float f010,
+                                                                             float f011,
+                                                                             float f100,
+                                                                             float f101,
+                                                                             float f110,
+                                                                             float f111)
 {
-  // Compute the fractional part of (x,y)
-  float xx = x - std::floor(x);
-  float yy = y - std::floor(y);
-
-  return ComputeBilinearInterpolationInternal(xx, yy, f00, f01, f10, f11);
-}
-
-
-float OrthancStone::GeometryToolbox::ComputeTrilinearInterpolation(float x,
-                                                                   float y,
-                                                                   float z,
-                                                                   float f000,
-                                                                   float f001,
-                                                                   float f010,
-                                                                   float f011,
-                                                                   float f100,
-                                                                   float f101,
-                                                                   float f110,
-                                                                   float f111)
-{
-  float xx = x - std::floor(x);
-  float yy = y - std::floor(y);
-  float zz = z - std::floor(z);
-
   // "In practice, a trilinear interpolation is identical to two
   // bilinear interpolation combined with a linear interpolation"
   // https://en.wikipedia.org/wiki/Trilinear_interpolation#Method
-  float a = ComputeBilinearInterpolationInternal(xx, yy, f000, f001, f010, f011);
-  float b = ComputeBilinearInterpolationInternal(xx, yy, f100, f101, f110, f111);
+  float a = ComputeBilinearInterpolationUnitSquare(x, y, f000, f001, f010, f011);
+  float b = ComputeBilinearInterpolationUnitSquare(x, y, f100, f101, f110, f111);
 
-  return (1.0f - zz) * a + zz * b;
+  return (1.0f - z) * a + z * b;
 }

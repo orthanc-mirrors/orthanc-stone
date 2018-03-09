@@ -234,56 +234,84 @@ namespace OrthancStone
 
 
 
-    class VoxelReaderBase
+    class VoxelReaderBase : public boost::noncopyable
     {
-    protected:
-      const ImageBuffer3D&  source_;
-      unsigned int          sourceWidth_;
-      unsigned int          sourceHeight_;
-      unsigned int          sourceDepth_;
+    private:
+      const ImageBuffer3D&  image_;
+      unsigned int          width_;
+      unsigned int          height_;
+      unsigned int          depth_;
+      float                 widthFloat_;
+      float                 heightFloat_;
+      float                 depthFloat_;
 
     public:
-      VoxelReaderBase(const ImageBuffer3D& source) :
-        source_(source),
-        sourceWidth_(source.GetWidth()),
-        sourceHeight_(source.GetHeight()),
-        sourceDepth_(source.GetDepth())
+      VoxelReaderBase(const ImageBuffer3D& image) :
+        image_(image),
+        width_(image.GetWidth()),
+        height_(image.GetHeight()),
+        depth_(image.GetDepth()),
+        widthFloat_(static_cast<float>(image.GetWidth())),
+        heightFloat_(static_cast<float>(image.GetHeight())),
+        depthFloat_(static_cast<float>(image.GetDepth()))
       {
       }
 
-      unsigned int GetSourceWidth() const
+      const ImageBuffer3D& GetImage() const
       {
-        return sourceWidth_;
+        return image_;
       }
 
-      unsigned int GetSourceHeight() const
+      const unsigned int GetImageWidth() const
       {
-        return sourceHeight_;
+        return width_;
       }
 
-      unsigned int GetSourceDepth() const
+      const unsigned int GetImageHeight() const
       {
-        return sourceDepth_;
+        return height_;
       }
 
-      bool GetNearestCoordinates(unsigned int& sourceX,
-                                 unsigned int& sourceY,
-                                 unsigned int& sourceZ,
-                                 float worldX,
-                                 float worldY,
-                                 float worldZ) const
+      const unsigned int GetImageDepth() const
       {
-        if (worldX >= 0 &&
-            worldY >= 0 &&
-            worldZ >= 0)
+        return depth_;
+      }
+
+      bool GetNearestCoordinates(unsigned int& imageX,
+                                 unsigned int& imageY,
+                                 unsigned int& imageZ,
+                                 float& fractionalX,
+                                 float& fractionalY,
+                                 float& fractionalZ,
+                                 float volumeX,
+                                 float volumeY,
+                                 float volumeZ) const
+      {
+        if (volumeX >= 0 &&
+            volumeY >= 0 &&
+            volumeZ >= 0)
         {
-          sourceX = static_cast<unsigned int>(worldX * static_cast<float>(sourceWidth_));
-          sourceY = static_cast<unsigned int>(worldY * static_cast<float>(sourceHeight_));
-          sourceZ = static_cast<unsigned int>(worldZ * static_cast<float>(sourceDepth_));
+          const float x = volumeX * widthFloat_;
+          const float y = volumeY * heightFloat_;
+          const float z = volumeZ * depthFloat_;
+          
+          imageX = static_cast<unsigned int>(std::floor(x));
+          imageY = static_cast<unsigned int>(std::floor(y));
+          imageZ = static_cast<unsigned int>(std::floor(z));
 
-          return (sourceX < sourceWidth_ &&
-                  sourceY < sourceHeight_ &&
-                  sourceZ < sourceDepth_);
+          if (imageX < width_ &&
+              imageY < height_ &&
+              imageZ < depth_)
+          {
+            fractionalX = x - static_cast<float>(imageX);
+            fractionalY = y - static_cast<float>(imageY);
+            fractionalZ = z - static_cast<float>(imageZ);
+            return true;
+          }
+          else
+          {
+            return false;
+          }
         }
         else
         {
@@ -305,32 +333,35 @@ namespace OrthancStone
     public:
       typedef typename PixelTraits<InputFormat>::PixelType   InputPixelType;
 
-      VoxelReader(const ImageBuffer3D& source) :
-        VoxelReaderBase(source)
+      VoxelReader(const ImageBuffer3D& image) :
+        VoxelReaderBase(image)
       {
       }
 
       ORTHANC_STONE_FORCE_INLINE
-      float GetFloatValue(float worldX,
-                          float worldY,
-                          float worldZ) const
+      float GetFloatValue(float volumeX,
+                          float volumeY,
+                          float volumeZ) const
       {
         InputPixelType value;
-        GetValue(value, worldX, worldY, worldZ);
+        GetValue(value, volumeX, volumeY, volumeZ);
         return static_cast<float>(value);
       }
 
       ORTHANC_STONE_FORCE_INLINE
       void GetValue(InputPixelType& target,
-                    float worldX,
-                    float worldY,
-                    float worldZ) const
+                    float volumeX,
+                    float volumeY,
+                    float volumeZ) const
       {
-        unsigned int sourceX, sourceY, sourceZ;
+        unsigned int imageX, imageY, imageZ;
+        float fractionalX, fractionalY, fractionalZ;  // unused
 
-        if (GetNearestCoordinates(sourceX, sourceY, sourceZ, worldX, worldY, worldZ))
+        if (GetNearestCoordinates(imageX, imageY, imageZ,
+                                  fractionalX, fractionalY, fractionalZ,
+                                  volumeX, volumeY, volumeZ))
         {
-          PixelTraits<InputFormat>::GetVoxel(target, source_, sourceX, sourceY, sourceZ);
+          PixelTraits<InputFormat>::GetVoxel(target, GetImage(), imageX, imageY, imageZ);
         }
         else
         {
@@ -348,8 +379,8 @@ namespace OrthancStone
       float outOfVolume_;
       
     public:
-      VoxelReader(const ImageBuffer3D& source) :
-        VoxelReaderBase(source)
+      VoxelReader(const ImageBuffer3D& image) :
+        VoxelReaderBase(image)
       {
         typename PixelTraits<InputFormat>::PixelType value;
         PixelTraits<InputFormat>::SetOutOfVolume(value);
@@ -357,37 +388,37 @@ namespace OrthancStone
       }
 
       void SampleVoxels(float& f00,
-                        float& f10,
                         float& f01,
+                        float& f10,
                         float& f11,
-                        unsigned int sourceX,
-                        unsigned int sourceY,
-                        unsigned int sourceZ) const
+                        unsigned int imageX,
+                        unsigned int imageY,
+                        unsigned int imageZ) const
       {
-        f00 = PixelTraits<InputFormat>::GetFloatVoxel(source_, sourceX, sourceY, sourceZ);
+        f00 = PixelTraits<InputFormat>::GetFloatVoxel(GetImage(), imageX, imageY, imageZ);
 
-        if (sourceX + 1 < sourceWidth_)
+        if (imageX + 1 < GetImageWidth())
         {
-          f01 = PixelTraits<InputFormat>::GetFloatVoxel(source_, sourceX + 1, sourceY, sourceZ);
+          f01 = PixelTraits<InputFormat>::GetFloatVoxel(GetImage(), imageX + 1, imageY, imageZ);
         }
         else
         {
           f01 = f00;
         }
 
-        if (sourceY + 1 < sourceHeight_)
+        if (imageY + 1 < GetImageWidth())
         {
-          f10 = PixelTraits<InputFormat>::GetFloatVoxel(source_, sourceX, sourceY + 1, sourceZ);
+          f10 = PixelTraits<InputFormat>::GetFloatVoxel(GetImage(), imageX, imageY + 1, imageZ);
         }
         else
         {
           f10 = f00;
         }
 
-        if (sourceX + 1 < sourceWidth_ &&
-            sourceY + 1 < sourceHeight_)
+        if (imageX + 1 < GetImageWidth() &&
+            imageY + 1 < GetImageHeight())
         {
-          f11 = PixelTraits<InputFormat>::GetFloatVoxel(source_, sourceX + 1, sourceY + 1, sourceZ);
+          f11 = PixelTraits<InputFormat>::GetFloatVoxel(GetImage(), imageX + 1, imageY + 1, imageZ);
         }
         else
         {
@@ -400,17 +431,21 @@ namespace OrthancStone
         return outOfVolume_;
       }
       
-      float GetFloatValue(float worldX,
-                          float worldY,
-                          float worldZ) const
+      float GetFloatValue(float volumeX,
+                          float volumeY,
+                          float volumeZ) const
       {
-        unsigned int sourceX, sourceY, sourceZ;
+        unsigned int imageX, imageY, imageZ;
+        float fractionalX, fractionalY, fractionalZ;
 
-        if (GetNearestCoordinates(sourceX, sourceY, sourceZ, worldX, worldY, worldZ))
+        if (GetNearestCoordinates(imageX, imageY, imageZ,
+                                  fractionalX, fractionalY, fractionalZ,
+                                  volumeX, volumeY, volumeZ))
         {
-          float f00, f10, f01, f11;
-          SampleVoxels(f00, f10, f01, f11, sourceX, sourceY, sourceZ);
-          return GeometryToolbox::ComputeBilinearInterpolation(worldX, worldY, f00, f01, f10, f11);
+          float f00, f01, f10, f11;
+          SampleVoxels(f00, f01, f10, f11, imageX, imageY, imageZ);
+          return GeometryToolbox::ComputeBilinearInterpolationUnitSquare
+            (fractionalX, fractionalY, f00, f01, f10, f11);
         }
         else
         {
@@ -421,42 +456,49 @@ namespace OrthancStone
 
 
     template <Orthanc::PixelFormat InputFormat>
-    class VoxelReader<InputFormat, ImageInterpolation_Trilinear>
+    class VoxelReader<InputFormat, ImageInterpolation_Trilinear> :
+      public VoxelReaderBase
     {
     private:
       typedef VoxelReader<InputFormat, ImageInterpolation_Bilinear>  Bilinear;
 
       Bilinear      bilinear_;
-      unsigned int  sourceDepth_;
+      unsigned int  imageDepth_;
 
     public:
-      VoxelReader(const ImageBuffer3D& source) :
-        bilinear_(source),
-        sourceDepth_(source.GetDepth())
+      VoxelReader(const ImageBuffer3D& image) :
+        VoxelReaderBase(image),
+        bilinear_(image),
+        imageDepth_(image.GetDepth())
       {
       }
 
-      float GetFloatValue(float worldX,
-                          float worldY,
-                          float worldZ) const
+      float GetFloatValue(float volumeX,
+                          float volumeY,
+                          float volumeZ) const
       {
-        unsigned int sourceX, sourceY, sourceZ;
+        unsigned int imageX, imageY, imageZ;
+        float fractionalX, fractionalY, fractionalZ;
 
-        if (bilinear_.GetNearestCoordinates(sourceX, sourceY, sourceZ, worldX, worldY, worldZ))
+        if (GetNearestCoordinates(imageX, imageY, imageZ,
+                                  fractionalX, fractionalY, fractionalZ,
+                                  volumeX, volumeY, volumeZ))
         {
-          float f000, f010, f001, f011, f100, f110, f101, f111;
+          float f000, f001, f010, f011;
+          bilinear_.SampleVoxels(f000, f001, f010, f011, imageX, imageY, imageZ);
 
-          bilinear_.SampleVoxels(f000, f010, f001, f011, sourceX, sourceY, sourceZ);
-
-          if (sourceZ + 1 < sourceDepth_)
+          if (imageZ + 1 < imageDepth_)
           {
-            bilinear_.SampleVoxels(f100, f110, f101, f111, sourceX, sourceY, sourceZ + 1);
-            return GeometryToolbox::ComputeTrilinearInterpolation
-              (worldX, worldY, worldZ, f000, f001, f010, f011, f100, f110, f101, f111);
+            float f100, f101, f110, f111;
+            bilinear_.SampleVoxels(f100, f101, f110, f111, imageX, imageY, imageZ + 1);
+            return GeometryToolbox::ComputeTrilinearInterpolationUnitSquare
+              (fractionalX, fractionalY, fractionalZ,
+               f000, f001, f010, f011, f100, f101, f110, f111);
           }
           else
           {
-            return GeometryToolbox::ComputeBilinearInterpolation(worldX, worldY, f000, f001, f010, f011);
+            return GeometryToolbox::ComputeBilinearInterpolationUnitSquare
+              (fractionalX, fractionalY, f000, f001, f010, f011);
           }
         }
         else
@@ -491,13 +533,13 @@ namespace OrthancStone
       
       ORTHANC_STONE_FORCE_INLINE
       void Apply(typename PixelWriter::OutputPixelType* pixel,
-                 float worldX,
-                 float worldY,
-                 float worldZ)
+                 float volumeX,
+                 float volumeY,
+                 float volumeZ)
       {
-        typename VoxelReader::InputPixelType source;
-        reader_.GetValue(source, worldX, worldY, worldZ);
-        writer_.SetValue(pixel, source);
+        typename VoxelReader::InputPixelType image;
+        reader_.GetValue(image, volumeX, volumeY, volumeZ);
+        writer_.SetValue(pixel, image);
       }        
     };
 
@@ -520,11 +562,11 @@ namespace OrthancStone
       
       ORTHANC_STONE_FORCE_INLINE
       void Apply(typename PixelWriter::OutputPixelType* pixel,
-                 float worldX,
-                 float worldY,
-                 float worldZ)
+                 float volumeX,
+                 float volumeY,
+                 float volumeZ)
       {
-        writer_.SetFloatValue(pixel, reader_.GetFloatValue(worldX, worldY, worldZ));
+        writer_.SetFloatValue(pixel, reader_.GetFloatValue(volumeX, volumeY, volumeZ));
       }        
     };
 
@@ -551,11 +593,11 @@ namespace OrthancStone
       
       ORTHANC_STONE_FORCE_INLINE
       void Apply(typename PixelWriter::OutputPixelType* pixel,
-                 float worldX,
-                 float worldY,
-                 float worldZ)
+                 float volumeX,
+                 float volumeY,
+                 float volumeZ)
       {
-        writer_.SetFloatValue(pixel, scaling_ * reader_.GetFloatValue(worldX, worldY, worldZ) + offset_);
+        writer_.SetFloatValue(pixel, scaling_ * reader_.GetFloatValue(volumeX, volumeY, volumeZ) + offset_);
       }        
     };
 
@@ -609,9 +651,9 @@ namespace OrthancStone
       }
 
       ORTHANC_STONE_FORCE_INLINE
-      void GetNearestCoordinates(float& x,
-                                 float& y,
-                                 float& z) const
+      void GetVolumeCoordinates(float& x,
+                                float& y,
+                                float& z) const
       {
         x = position_[0];
         y = position_[1];
@@ -651,9 +693,9 @@ namespace OrthancStone
         x_++;
       }
 
-      void GetNearestCoordinates(float& x,
-                                 float& y,
-                                 float& z) const
+      void GetVolumeCoordinates(float& x,
+                                float& y,
+                                float& z) const
       {
         assert(x_ < slice_.GetWidth());
         
@@ -704,9 +746,9 @@ namespace OrthancStone
 
         for (unsigned int x = 0; x < outputWidth; x++, p++)
         {
-          float worldX, worldY, worldZ;
-          it.GetNearestCoordinates(worldX, worldY, worldZ);
-          shader.Apply(p, worldX, worldY, worldZ);
+          float volumeX, volumeY, volumeZ;
+          it.GetVolumeCoordinates(volumeX, volumeY, volumeZ);
+          shader.Apply(p, volumeX, volumeY, volumeZ);
           it.Next();
         }
       }
@@ -845,10 +887,10 @@ namespace OrthancStone
       for (unsigned int x = 0; x < slice_->GetWidth(); x++)
       {
         float px, py, pz;
-        fast.GetNearestCoordinates(px, py, pz);
+        fast.GetVolumeCoordinates(px, py, pz);
 
         float qx, qy, qz;
-        slow.GetNearestCoordinates(qx, qy, qz);
+        slow.GetVolumeCoordinates(qx, qy, qz);
 
         Vector d;
         LinearAlgebra::AssignVector(d, px - qx, py - qy, pz - qz);

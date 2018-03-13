@@ -8,14 +8,6 @@
 
 #include <boost/math/special_functions/round.hpp>
 
-#if defined(_MSC_VER)
-#  define ORTHANC_STONE_FORCE_INLINE __forceinline
-#elif defined(__GNUC__) || defined(__clang__) || defined(__EMSCRIPTEN__)
-#  define ORTHANC_STONE_FORCE_INLINE inline __attribute((always_inline))
-#else
-#  error Please support your compiler here
-#endif
-
 
 namespace OrthancStone
 {
@@ -58,14 +50,14 @@ namespace OrthancStone
       }
 
     public:
-      ORTHANC_STONE_FORCE_INLINE
+      ORTHANC_FORCE_INLINE
       void SetFloatValue(OutputPixelType* pixel,
                          float value) const
       {
         SetValueInternal<float>(pixel, value);
       }
       
-      ORTHANC_STONE_FORCE_INLINE
+      ORTHANC_FORCE_INLINE
       void SetValue(OutputPixelType* pixel,
                     const InputPixelType& value) const
       {
@@ -108,14 +100,14 @@ namespace OrthancStone
       }
 
     public:
-      ORTHANC_STONE_FORCE_INLINE
+      ORTHANC_FORCE_INLINE
       void SetFloatValue(OutputPixelType* pixel,
                          float value) const
       {
         SetValueInternal<float>(pixel, value);
       }
 
-      ORTHANC_STONE_FORCE_INLINE
+      ORTHANC_FORCE_INLINE
       void SetValue(OutputPixelType* pixel,
                     const InputPixelType& value) const
       {
@@ -229,7 +221,7 @@ namespace OrthancStone
       {
       }
 
-      ORTHANC_STONE_FORCE_INLINE
+      ORTHANC_FORCE_INLINE
       float GetFloatValue(float volumeX,
                           float volumeY,
                           float volumeZ) const
@@ -239,7 +231,7 @@ namespace OrthancStone
         return static_cast<float>(value);
       }
 
-      ORTHANC_STONE_FORCE_INLINE
+      ORTHANC_FORCE_INLINE
       void GetValue(InputPixelType& target,
                     float volumeX,
                     float volumeY,
@@ -426,7 +418,7 @@ namespace OrthancStone
       {
       }
       
-      ORTHANC_STONE_FORCE_INLINE
+      ORTHANC_FORCE_INLINE
       void Apply(typename PixelWriter::OutputPixelType* pixel,
                  float volumeX,
                  float volumeY,
@@ -455,7 +447,7 @@ namespace OrthancStone
       {
       }
       
-      ORTHANC_STONE_FORCE_INLINE
+      ORTHANC_FORCE_INLINE
       void Apply(typename PixelWriter::OutputPixelType* pixel,
                  float volumeX,
                  float volumeY,
@@ -486,7 +478,7 @@ namespace OrthancStone
       {
       }
       
-      ORTHANC_STONE_FORCE_INLINE
+      ORTHANC_FORCE_INLINE
       void Apply(typename PixelWriter::OutputPixelType* pixel,
                  float volumeX,
                  float volumeY,
@@ -537,7 +529,7 @@ namespace OrthancStone
         offset_[2] = static_cast<float>(tmp[2]);
       }
 
-      ORTHANC_STONE_FORCE_INLINE
+      ORTHANC_FORCE_INLINE
       void Next()
       {
         position_[0] += offset_[0];
@@ -545,7 +537,7 @@ namespace OrthancStone
         position_[2] += offset_[2];
       }
 
-      ORTHANC_STONE_FORCE_INLINE
+      ORTHANC_FORCE_INLINE
       void GetVolumeCoordinates(float& x,
                                 float& y,
                                 float& z) const

@@ -94,6 +94,11 @@ namespace OrthancStone
                       unsigned int& height,
                       VolumeProjection projection);
 
+    const Orthanc::ImageAccessor& GetInternalImage() const
+    {
+      return image_;
+    }
+
     unsigned int GetWidth() const
     {
       return width_;

@@ -2,6 +2,7 @@
 
 #include "../Toolbox/GeometryToolbox.h"
 
+#include <Core/Images/ImageTraits.h>
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 
@@ -28,124 +29,14 @@ namespace OrthancStone
       TransferFunction_Linear
     };
 
-
-    template <Orthanc::PixelFormat Format>
-    struct PixelTraits;
-
-    template <>
-    struct PixelTraits<Orthanc::PixelFormat_Grayscale8>
-    {
-      typedef uint8_t  PixelType;
-
-      static void SetOutOfVolume(PixelType& target)
-      {
-        target = 0;
-      }
-
-      static void GetVoxel(PixelType& target,
-                           const ImageBuffer3D& image,
-                           unsigned int x,
-                           unsigned int y,
-                           unsigned int z)
-      {
-        assert(x < image.GetWidth() && y < image.GetHeight() && z < image.GetDepth());
-        target = image.GetVoxelGrayscale8Unchecked(x, y, z);
-      }
-
-      static float GetFloatVoxel(const ImageBuffer3D& image,
-                                 unsigned int x,
-                                 unsigned int y,
-                                 unsigned int z)
-      {
-        assert(x < image.GetWidth() && y < image.GetHeight() && z < image.GetDepth());
-        return static_cast<float>(image.GetVoxelGrayscale8Unchecked(x, y, z));
-      }
-    };
-
-    template <>
-    struct PixelTraits<Orthanc::PixelFormat_Grayscale16>
-    {
-      typedef uint16_t  PixelType;
-
-      static void SetOutOfVolume(PixelType& target)
-      {
-        target = 0;
-      }
-
-      static void GetVoxel(PixelType& target,
-                           const ImageBuffer3D& image,
-                           unsigned int x,
-                           unsigned int y,
-                           unsigned int z)
-      {
-        assert(x < image.GetWidth() && y < image.GetHeight() && z < image.GetDepth());
-        target = image.GetVoxelGrayscale16Unchecked(x, y, z);
-      }
-
-      static float GetFloatVoxel(const ImageBuffer3D& image,
-                                 unsigned int x,
-                                 unsigned int y,
-                                 unsigned int z)
-      {
-        assert(x < image.GetWidth() && y < image.GetHeight() && z < image.GetDepth());
-        return static_cast<float>(image.GetVoxelGrayscale16Unchecked(x, y, z));
-      }
-    };
-    
-
-    template <>
-    struct PixelTraits<Orthanc::PixelFormat_SignedGrayscale16>
-    {
-      typedef int16_t  PixelType;
-
-      static void SetOutOfVolume(PixelType& target)
-      {
-        target = std::numeric_limits<PixelType>::min();
-      }
-
-      static void GetVoxel(PixelType& target,
-                           const ImageBuffer3D& image,
-                           unsigned int x,
-                           unsigned int y,
-                           unsigned int z)
-      {
-        assert(x < image.GetWidth() && y < image.GetHeight() && z < image.GetDepth());
-        target = image.GetVoxelSignedGrayscale16Unchecked(x, y, z);
-      }
-
-      static float GetFloatVoxel(const ImageBuffer3D& image,
-                                 unsigned int x,
-                                 unsigned int y,
-                                 unsigned int z)
-      {
-        assert(x < image.GetWidth() && y < image.GetHeight() && z < image.GetDepth());
-        return static_cast<float>(image.GetVoxelSignedGrayscale16Unchecked(x, y, z));
-      }
-    };
-    
-
-    template <>
-    struct PixelTraits<Orthanc::PixelFormat_BGRA32>
-    {
-      struct PixelType
-      {
-        uint8_t  blue_;
-        uint8_t  green_;
-        uint8_t  red_;
-        uint8_t  alpha_;
-      };
-    };
-    
-
-    
     template <Orthanc::PixelFormat InputFormat,
               Orthanc::PixelFormat OutputFormat>
     class PixelWriter
     {
     public:
-      typedef typename PixelTraits<InputFormat>::PixelType   InputPixelType;
-      typedef PixelTraits<OutputFormat>                      OutputPixelTraits;
-      typedef typename PixelTraits<OutputFormat>::PixelType  OutputPixelType;
+      typedef typename Orthanc::PixelTraits<InputFormat>::PixelType   InputPixelType;
+      typedef Orthanc::PixelTraits<OutputFormat>                      OutputPixelTraits;
+      typedef typename Orthanc::PixelTraits<OutputFormat>::PixelType  OutputPixelType;
 
     private:
       template <typename T>
@@ -187,9 +78,9 @@ namespace OrthancStone
     class PixelWriter<InputFormat, Orthanc::PixelFormat_BGRA32>
     {
     public:
-      typedef typename PixelTraits<InputFormat>::PixelType         InputPixelType;
-      typedef PixelTraits<Orthanc::PixelFormat_BGRA32>             OutputPixelTraits;
-      typedef PixelTraits<Orthanc::PixelFormat_BGRA32>::PixelType  OutputPixelType;
+      typedef typename Orthanc::PixelTraits<InputFormat>::PixelType         InputPixelType;
+      typedef Orthanc::PixelTraits<Orthanc::PixelFormat_BGRA32>             OutputPixelTraits;
+      typedef Orthanc::PixelTraits<Orthanc::PixelFormat_BGRA32>::PixelType  OutputPixelType;
 
     private:
       template <typename T>
@@ -237,17 +128,17 @@ namespace OrthancStone
     class VoxelReaderBase : public boost::noncopyable
     {
     private:
-      const ImageBuffer3D&  image_;
-      unsigned int          width_;
-      unsigned int          height_;
-      unsigned int          depth_;
-      float                 widthFloat_;
-      float                 heightFloat_;
-      float                 depthFloat_;
+      const Orthanc::ImageAccessor&  image_;
+      unsigned int                   width_;
+      unsigned int                   height_;
+      unsigned int                   depth_;
+      float                          widthFloat_;
+      float                          heightFloat_;
+      float                          depthFloat_;
 
     public:
       VoxelReaderBase(const ImageBuffer3D& image) :
-        image_(image),
+        image_(image.GetInternalImage()),
         width_(image.GetWidth()),
         height_(image.GetHeight()),
         depth_(image.GetDepth()),
@@ -257,7 +148,7 @@ namespace OrthancStone
       {
       }
 
-      const ImageBuffer3D& GetImage() const
+      const Orthanc::ImageAccessor& GetImage() const
       {
         return image_;
       }
@@ -331,7 +222,7 @@ namespace OrthancStone
       public VoxelReaderBase
     {
     public:
-      typedef typename PixelTraits<InputFormat>::PixelType   InputPixelType;
+      typedef typename Orthanc::PixelTraits<InputFormat>::PixelType   InputPixelType;
 
       VoxelReader(const ImageBuffer3D& image) :
         VoxelReaderBase(image)
@@ -361,11 +252,12 @@ namespace OrthancStone
                                   fractionalX, fractionalY, fractionalZ,
                                   volumeX, volumeY, volumeZ))
         {
-          PixelTraits<InputFormat>::GetVoxel(target, GetImage(), imageX, imageY, imageZ);
+          Orthanc::ImageTraits<InputFormat>::GetPixel(target, GetImage(), imageX, 
+                                                      imageY + imageZ * GetImageHeight());
         }
         else
         {
-          PixelTraits<InputFormat>::SetOutOfVolume(target);
+          target = std::numeric_limits<InputPixelType>::min();
         }
       }
     };
@@ -382,9 +274,8 @@ namespace OrthancStone
       VoxelReader(const ImageBuffer3D& image) :
         VoxelReaderBase(image)
       {
-        typename PixelTraits<InputFormat>::PixelType value;
-        PixelTraits<InputFormat>::SetOutOfVolume(value);
-        outOfVolume_ = static_cast<float>(value);
+        typedef typename Orthanc::PixelTraits<InputFormat>::PixelType Pixel;
+        outOfVolume_ = static_cast<float>(std::numeric_limits<Pixel>::min());
       }
 
       void SampleVoxels(float& f00,
@@ -395,11 +286,13 @@ namespace OrthancStone
                         unsigned int imageY,
                         unsigned int imageZ) const
       {
-        f00 = PixelTraits<InputFormat>::GetFloatVoxel(GetImage(), imageX, imageY, imageZ);
+        f00 = Orthanc::ImageTraits<InputFormat>::GetFloatPixel
+          (GetImage(), imageX, imageY + imageZ * GetImageHeight());
 
         if (imageX + 1 < GetImageWidth())
         {
-          f01 = PixelTraits<InputFormat>::GetFloatVoxel(GetImage(), imageX + 1, imageY, imageZ);
+          f01 = Orthanc::ImageTraits<InputFormat>::GetFloatPixel
+            (GetImage(), imageX + 1, imageY + imageZ * GetImageHeight());
         }
         else
         {
@@ -408,7 +301,8 @@ namespace OrthancStone
 
         if (imageY + 1 < GetImageWidth())
         {
-          f10 = PixelTraits<InputFormat>::GetFloatVoxel(GetImage(), imageX, imageY + 1, imageZ);
+          f10 = Orthanc::ImageTraits<InputFormat>::GetFloatPixel
+            (GetImage(), imageX, imageY + 1 + imageZ * GetImageHeight());
         }
         else
         {
@@ -418,7 +312,8 @@ namespace OrthancStone
         if (imageX + 1 < GetImageWidth() &&
             imageY + 1 < GetImageHeight())
         {
-          f11 = PixelTraits<InputFormat>::GetFloatVoxel(GetImage(), imageX + 1, imageY + 1, imageZ);
+          f11 = Orthanc::ImageTraits<InputFormat>::GetFloatPixel
+            (GetImage(), imageX + 1, imageY + 1 + imageZ * GetImageHeight());
         }
         else
         {
@@ -740,7 +635,8 @@ namespace OrthancStone
 
       for (unsigned int y = 0; y < outputHeight; y++)
       {
-        typename Writer::OutputPixelType* p = reinterpret_cast<typename Writer::OutputPixelType*>(slice.GetRow(y));
+        typename Writer::OutputPixelType* p = 
+          reinterpret_cast<typename Writer::OutputPixelType*>(slice.GetRow(y));
 
         RowIterator it(slice, extent, plane, box, y);
 

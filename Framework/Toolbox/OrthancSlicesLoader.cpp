@@ -617,7 +617,7 @@ namespace OrthancStone
     Orthanc::ImageProcessing::Convert(*image, *reader);
     reader.reset(NULL);
     
-    Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling);
+    Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling, true);
 
     NotifySliceImageSuccess(operation, image);
   }

@@ -386,7 +386,7 @@ namespace OrthancStone
       float offset = static_cast<float>(stretchLow) / scaling;
       
       Orthanc::ImageProcessing::Convert(*image, *reader);
-      Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling);
+      Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling, true);
 
 #if 0
       /*info.removeMember("PixelData");

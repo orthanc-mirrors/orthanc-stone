@@ -51,37 +51,87 @@ namespace OrthancStone
                      const Orthanc::DicomMap& dataset,
                      const Orthanc::DicomTag& tag);
 
-    void AssignVector(Vector& v,
-                      double v1);
+    inline void AssignVector(Vector& v,
+                             double v1,
+                             double v2)
+    {
+      v.resize(2);
+      v[0] = v1;
+      v[1] = v2;
+    }
 
-    void AssignVector(Vector& v,
-                      double v1,
-                      double v2);
 
-    void AssignVector(Vector& v,
-                      double v1,
-                      double v2,
-                      double v3);
+    inline void AssignVector(Vector& v,
+                             double v1)
+    {
+      v.resize(1);
+      v[0] = v1;
+    }
 
-    void AssignVector(Vector& v,
-                      double v1,
-                      double v2,
-                      double v3,
-                      double v4);
 
-    Vector CreateVector(double v1);
+    inline void AssignVector(Vector& v,
+                             double v1,
+                             double v2,
+                             double v3)
+    {
+      v.resize(3);
+      v[0] = v1;
+      v[1] = v2;
+      v[2] = v3;
+    }
 
-    Vector CreateVector(double v1,
-                        double v2);
 
-    Vector CreateVector(double v1,
-                        double v2,
-                        double v3);
+    inline void AssignVector(Vector& v,
+                             double v1,
+                             double v2,
+                             double v3,
+                             double v4)
+    {
+      v.resize(4);
+      v[0] = v1;
+      v[1] = v2;
+      v[2] = v3;
+      v[3] = v4;
+    }
+
+
+    inline Vector CreateVector(double v1)
+    {
+      Vector v;
+      AssignVector(v, v1);
+      return v;
+    }
+
     
-    Vector CreateVector(double v1,
-                        double v2,
-                        double v3,
-                        double v4);
+    inline Vector CreateVector(double v1,
+                               double v2)
+    {
+      Vector v;
+      AssignVector(v, v1, v2);
+      return v;
+    }
+
+    
+    inline Vector CreateVector(double v1,
+                               double v2,
+                               double v3)
+    {
+      Vector v;
+      AssignVector(v, v1, v2, v3);
+      return v;
+    }
+
+    
+    inline Vector CreateVector(double v1,
+                               double v2,
+                               double v3,
+                               double v4)
+    {
+      Vector v;
+      AssignVector(v, v1, v2, v3, v4);
+      return v;
+    }
+
 
     inline bool IsNear(double x,
                        double y,
@@ -90,8 +140,13 @@ namespace OrthancStone
       return fabs(x - y) < threshold;
     }
 
-    bool IsNear(double x,
-                double y);
+    inline bool IsNear(double x,
+                       double y)
+    {
+      // As most input is read as single-precision numbers, we take the
+      // epsilon machine for float32 into consideration to compare numbers
+      return IsNear(x, y, 10.0 * std::numeric_limits<float>::epsilon());
+    }
 
     inline bool IsCloseToZero(double x)
     {

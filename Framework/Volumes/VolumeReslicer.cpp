@@ -9,6 +9,7 @@
 
 #include <boost/math/special_functions/round.hpp>
 
+#include <stdio.h>
 
 namespace OrthancStone
 {
@@ -23,17 +24,62 @@ namespace OrthancStone
     };
 
 
-    template <typename VoxelReader,
-              typename PixelWriter,
+    template <Orthanc::PixelFormat InputFormat,
+              Orthanc::PixelFormat OutputFormat,
+              ImageInterpolation Interpolation,
               TransferFunction Function>
     class PixelShader;
 
     
-    template <typename VoxelReader,
-              typename PixelWriter>
-    class PixelShader<VoxelReader, PixelWriter, TransferFunction_Copy>
+    template <Orthanc::PixelFormat Format>
+    class PixelShader<Format, 
+                      Format, 
+                      ImageInterpolation_Nearest, 
+                      TransferFunction_Copy>
     {
     private:
+      typedef SubvoxelReader<Format, ImageInterpolation_Nearest>  VoxelReader;
+      typedef Orthanc::PixelTraits<Format>                        PixelWriter;
+
+      VoxelReader  reader_;
+      
+    public:
+      PixelShader(const ImageBuffer3D& image,
+                  float /* scaling */,
+                  float /* offset */) :
+        reader_(image)
+      {
+      }
+      
+      ORTHANC_FORCE_INLINE
+      void Apply(typename PixelWriter::PixelType* pixel,
+                 float volumeX,
+                 float volumeY,
+                 float volumeZ)
+      {
+        typename VoxelReader::PixelType value;
+
+        if (!reader_.GetValue(value, volumeX, volumeY, volumeZ))
+        {
+          VoxelReader::Traits::SetMinValue(value);
+        }
+
+        *pixel = value;
+      }        
+    };
+
+    
+    template <Orthanc::PixelFormat InputFormat,
+              Orthanc::PixelFormat OutputFormat>
+    class PixelShader<InputFormat, 
+                      OutputFormat, 
+                      ImageInterpolation_Nearest, 
+                      TransferFunction_Copy>
+    {
+    private:
+      typedef SubvoxelReader<InputFormat, ImageInterpolation_Nearest>  VoxelReader;
+      typedef Orthanc::PixelTraits<OutputFormat>                       PixelWriter;
+
       VoxelReader  reader_;
       
     public:
@@ -62,11 +108,18 @@ namespace OrthancStone
     };
 
     
-    template <typename VoxelReader,
-              typename PixelWriter>
-    class PixelShader<VoxelReader, PixelWriter, TransferFunction_Float>
+    template <Orthanc::PixelFormat InputFormat,
+              Orthanc::PixelFormat OutputFormat,
+              ImageInterpolation Interpolation>
+    class PixelShader<InputFormat,
+                      OutputFormat,
+                      Interpolation,
+                      TransferFunction_Float>
     {
     private:
+      typedef SubvoxelReader<InputFormat, Interpolation>  VoxelReader;
+      typedef Orthanc::PixelTraits<OutputFormat>          PixelWriter;
+
       VoxelReader  reader_;
       float        outOfVolume_;
       
@@ -97,11 +150,18 @@ namespace OrthancStone
     };
 
     
-    template <typename VoxelReader,
-              typename PixelWriter>
-    class PixelShader<VoxelReader, PixelWriter, TransferFunction_Linear>
+   template <Orthanc::PixelFormat InputFormat,
+             Orthanc::PixelFormat OutputFormat,
+             ImageInterpolation Interpolation>
+    class PixelShader<InputFormat,
+                      OutputFormat,
+                      Interpolation,
+                      TransferFunction_Linear>
     {
     private:
+      typedef SubvoxelReader<InputFormat, Interpolation>  VoxelReader;
+      typedef Orthanc::PixelTraits<OutputFormat>          PixelWriter;
+
       VoxelReader  reader_;
       float        scaling_;
       float        offset_;
@@ -267,9 +327,7 @@ namespace OrthancStone
                              float scaling,
                              float offset)
     {
-      typedef SubvoxelReader<InputFormat, Interpolation>   Reader;
-      typedef Orthanc::PixelTraits<OutputFormat>           Writer;
-      typedef PixelShader<Reader, Writer, Function>        Shader;
+      typedef PixelShader<InputFormat, OutputFormat, Interpolation, Function>   Shader;
 
       const unsigned int outputWidth = slice.GetWidth();
       const unsigned int outputHeight = slice.GetHeight();
@@ -282,8 +340,8 @@ namespace OrthancStone
 
       for (unsigned int y = 0; y < outputHeight; y++)
       {
-        typename Writer::PixelType* p = 
-          reinterpret_cast<typename Writer::PixelType*>(slice.GetRow(y));
+        typedef typename Orthanc::ImageTraits<OutputFormat>::PixelType PixelType;
+        PixelType* p = reinterpret_cast<PixelType*>(slice.GetRow(y));
 
         RowIterator it(slice, extent, plane, box, y);
 

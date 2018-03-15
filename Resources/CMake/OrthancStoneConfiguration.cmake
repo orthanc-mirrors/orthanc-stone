@@ -178,6 +178,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/Extent2D.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/FiniteProjectiveCamera.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/GeometryToolbox.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Toolbox/ImageGeometry.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/LinearAlgebra.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/MessagingToolbox.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrientedBoundingBox.cpp

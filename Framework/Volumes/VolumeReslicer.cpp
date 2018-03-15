@@ -22,100 +22,6 @@ namespace OrthancStone
       TransferFunction_Linear
     };
 
-    template <Orthanc::PixelFormat InputFormat,
-              Orthanc::PixelFormat OutputFormat>
-    class PixelWriter
-    {
-    public:
-      typedef typename Orthanc::PixelTraits<InputFormat>::PixelType   InputPixelType;
-      typedef Orthanc::PixelTraits<OutputFormat>                      OutputPixelTraits;
-      typedef typename Orthanc::PixelTraits<OutputFormat>::PixelType  OutputPixelType;
-
-    private:
-      template <typename T>
-      static void SetValueInternal(OutputPixelType* pixel,
-                                   const T& value)
-      {
-        if (value < std::numeric_limits<OutputPixelType>::min())
-        {
-          *pixel = std::numeric_limits<OutputPixelType>::min();
-        }
-        else if (value > std::numeric_limits<OutputPixelType>::max())
-        {
-          *pixel = std::numeric_limits<OutputPixelType>::max();
-        }
-        else
-        {
-          *pixel = static_cast<OutputPixelType>(value);
-        }
-      }
-
-    public:
-      ORTHANC_FORCE_INLINE
-      void SetFloatValue(OutputPixelType* pixel,
-                         float value) const
-      {
-        SetValueInternal<float>(pixel, value);
-      }
-      
-      ORTHANC_FORCE_INLINE
-      void SetValue(OutputPixelType* pixel,
-                    const InputPixelType& value) const
-      {
-        SetValueInternal<InputPixelType>(pixel, value);
-      }
-    };
-
-
-    template <Orthanc::PixelFormat InputFormat>
-    class PixelWriter<InputFormat, Orthanc::PixelFormat_BGRA32>
-    {
-    public:
-      typedef typename Orthanc::PixelTraits<InputFormat>::PixelType         InputPixelType;
-      typedef Orthanc::PixelTraits<Orthanc::PixelFormat_BGRA32>             OutputPixelTraits;
-      typedef Orthanc::PixelTraits<Orthanc::PixelFormat_BGRA32>::PixelType  OutputPixelType;
-
-    private:
-      template <typename T>
-      static void SetValueInternal(OutputPixelType* pixel,
-                                   const T& value)
-      {
-        uint8_t v;
-        if (value < 0)
-        {
-          v = 0;
-        }
-        else if (value >= 255.0f)
-        {
-          v = 255;
-        }
-        else
-        {
-          v = static_cast<uint8_t>(value);
-        }
-
-        pixel->blue_ = v;
-        pixel->green_ = v;
-        pixel->red_ = v;
-        pixel->alpha_ = 255;
-      }
-
-    public:
-      ORTHANC_FORCE_INLINE
-      void SetFloatValue(OutputPixelType* pixel,
-                         float value) const
-      {
-        SetValueInternal<float>(pixel, value);
-      }
-
-      ORTHANC_FORCE_INLINE
-      void SetValue(OutputPixelType* pixel,
-                    const InputPixelType& value) const
-      {
-        SetValueInternal<InputPixelType>(pixel, value);
-      }
-    };
-
 
     template <typename VoxelReader,
               typename PixelWriter,
@@ -129,7 +35,6 @@ namespace OrthancStone
     {
     private:
       VoxelReader  reader_;
-      PixelWriter  writer_;
       
     public:
       PixelShader(const ImageBuffer3D& image,
@@ -140,7 +45,7 @@ namespace OrthancStone
       }
       
       ORTHANC_FORCE_INLINE
-      void Apply(typename PixelWriter::OutputPixelType* pixel,
+      void Apply(typename PixelWriter::PixelType* pixel,
                  float volumeX,
                  float volumeY,
                  float volumeZ)
@@ -152,7 +57,7 @@ namespace OrthancStone
           VoxelReader::Traits::SetMinValue(value);
         }
 
-        writer_.SetValue(pixel, value);
+        PixelWriter::FloatToPixel(*pixel, VoxelReader::Traits::PixelToFloat(value));
       }        
     };
 
@@ -163,7 +68,6 @@ namespace OrthancStone
     {
     private:
       VoxelReader  reader_;
-      PixelWriter  writer_;
       float        outOfVolume_;
       
     public:
@@ -176,7 +80,7 @@ namespace OrthancStone
       }
       
       ORTHANC_FORCE_INLINE
-      void Apply(typename PixelWriter::OutputPixelType* pixel,
+      void Apply(typename PixelWriter::PixelType* pixel,
                  float volumeX,
                  float volumeY,
                  float volumeZ)
@@ -188,7 +92,7 @@ namespace OrthancStone
           value = outOfVolume_;
         }
 
-        writer_.SetFloatValue(pixel, value);
+        PixelWriter::FloatToPixel(*pixel, value);
       }
     };
 
@@ -199,7 +103,6 @@ namespace OrthancStone
     {
     private:
       VoxelReader  reader_;
-      PixelWriter  writer_;
       float        scaling_;
       float        offset_;
       float        outOfVolume_;
@@ -216,7 +119,7 @@ namespace OrthancStone
       }
       
       ORTHANC_FORCE_INLINE
-      void Apply(typename PixelWriter::OutputPixelType* pixel,
+      void Apply(typename PixelWriter::PixelType* pixel,
                  float volumeX,
                  float volumeY,
                  float volumeZ)
@@ -232,7 +135,7 @@ namespace OrthancStone
           value = outOfVolume_;
         }
 
-        writer_.SetFloatValue(pixel, value);
+        PixelWriter::FloatToPixel(*pixel, value);
       }        
     };
 
@@ -365,7 +268,7 @@ namespace OrthancStone
                              float offset)
     {
       typedef SubvoxelReader<InputFormat, Interpolation>   Reader;
-      typedef PixelWriter<InputFormat, OutputFormat>       Writer;
+      typedef Orthanc::PixelTraits<OutputFormat>           Writer;
       typedef PixelShader<Reader, Writer, Function>        Shader;
 
       const unsigned int outputWidth = slice.GetWidth();
@@ -379,8 +282,8 @@ namespace OrthancStone
 
       for (unsigned int y = 0; y < outputHeight; y++)
       {
-        typename Writer::OutputPixelType* p = 
-          reinterpret_cast<typename Writer::OutputPixelType*>(slice.GetRow(y));
+        typename Writer::PixelType* p = 
+          reinterpret_cast<typename Writer::PixelType*>(slice.GetRow(y));
 
         RowIterator it(slice, extent, plane, box, y);
 

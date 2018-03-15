@@ -30,8 +30,6 @@
 
 #include <boost/math/special_functions/round.hpp>
 
-#include <stdio.h>
-
 namespace OrthancStone
 {
   // Anonymous namespace to avoid clashes between compilation modules

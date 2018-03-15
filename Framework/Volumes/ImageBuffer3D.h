@@ -158,6 +158,12 @@ namespace OrthancStone
                                  unsigned int y,
                                  unsigned int z) const;
 
+    // Get the 3D position of a point in the volume, where x, y and z
+    // lie in the [0;1] range
+    Vector GetCoordinates(float x,
+                          float y,
+                          float z) const;
+
 
     class SliceReader : public boost::noncopyable
     {

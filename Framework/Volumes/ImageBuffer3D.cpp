@@ -462,4 +462,22 @@ namespace OrthancStone
     const void* p = image_.GetConstRow(y + height_ * (depth_ - 1 - z));
     return reinterpret_cast<const uint16_t*>(p) [x];
   }
+
+
+  Vector ImageBuffer3D::GetCoordinates(float x,
+                                       float y,
+                                       float z) const
+  {
+    Vector ps = GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
+
+    const CoordinateSystem3D& axial = GetAxialGeometry();
+    
+    Vector origin = (axial.MapSliceToWorldCoordinates(-0.5 * ps[0], -0.5 * ps[1]) -
+                     0.5 * ps[2] * axial.GetNormal());
+
+    return (origin +
+            axial.GetAxisX() * ps[0] * x * static_cast<double>(GetWidth()) +
+            axial.GetAxisY() * ps[1] * y * static_cast<double>(GetHeight()) +
+            axial.GetNormal() * ps[2] * z * static_cast<double>(GetDepth()));
+  }
 }

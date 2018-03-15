@@ -1,6 +1,7 @@
 #include "VolumeReslicer.h"
 
 #include "../Toolbox/GeometryToolbox.h"
+#include "../Toolbox/SubvoxelReader.h"
 
 #include <Core/Images/ImageTraits.h>
 #include <Core/Logging.h>
@@ -116,286 +117,6 @@ namespace OrthancStone
     };
 
 
-
-    class VoxelReaderBase : public boost::noncopyable
-    {
-    private:
-      const Orthanc::ImageAccessor&  image_;
-      unsigned int                   width_;
-      unsigned int                   height_;
-      unsigned int                   depth_;
-      float                          widthFloat_;
-      float                          heightFloat_;
-      float                          depthFloat_;
-
-    public:
-      VoxelReaderBase(const ImageBuffer3D& image) :
-        image_(image.GetInternalImage()),
-        width_(image.GetWidth()),
-        height_(image.GetHeight()),
-        depth_(image.GetDepth()),
-        widthFloat_(static_cast<float>(image.GetWidth())),
-        heightFloat_(static_cast<float>(image.GetHeight())),
-        depthFloat_(static_cast<float>(image.GetDepth()))
-      {
-      }
-
-      const Orthanc::ImageAccessor& GetImage() const
-      {
-        return image_;
-      }
-
-      const unsigned int GetImageWidth() const
-      {
-        return width_;
-      }
-
-      const unsigned int GetImageHeight() const
-      {
-        return height_;
-      }
-
-      const unsigned int GetImageDepth() const
-      {
-        return depth_;
-      }
-
-      bool GetNearestCoordinates(unsigned int& imageX,
-                                 unsigned int& imageY,
-                                 unsigned int& imageZ,
-                                 float& fractionalX,
-                                 float& fractionalY,
-                                 float& fractionalZ,
-                                 float volumeX,
-                                 float volumeY,
-                                 float volumeZ) const
-      {
-        if (volumeX >= 0 &&
-            volumeY >= 0 &&
-            volumeZ >= 0)
-        {
-          const float x = volumeX * widthFloat_;
-          const float y = volumeY * heightFloat_;
-          const float z = volumeZ * depthFloat_;
-          
-          imageX = static_cast<unsigned int>(std::floor(x));
-          imageY = static_cast<unsigned int>(std::floor(y));
-          imageZ = static_cast<unsigned int>(std::floor(z));
-
-          if (imageX < width_ &&
-              imageY < height_ &&
-              imageZ < depth_)
-          {
-            fractionalX = x - static_cast<float>(imageX);
-            fractionalY = y - static_cast<float>(imageY);
-            fractionalZ = z - static_cast<float>(imageZ);
-            return true;
-          }
-          else
-          {
-            return false;
-          }
-        }
-        else
-        {
-          return false;
-        }
-      }
-    };
-
-
-    template <Orthanc::PixelFormat InputFormat,
-              ImageInterpolation Interpolation>
-    class VoxelReader;
-
-    
-    template <Orthanc::PixelFormat InputFormat>
-    class VoxelReader<InputFormat, ImageInterpolation_Nearest> :
-      public VoxelReaderBase
-    {
-    public:
-      typedef typename Orthanc::PixelTraits<InputFormat>::PixelType   InputPixelType;
-
-      VoxelReader(const ImageBuffer3D& image) :
-        VoxelReaderBase(image)
-      {
-      }
-
-      ORTHANC_FORCE_INLINE
-      float GetFloatValue(float volumeX,
-                          float volumeY,
-                          float volumeZ) const
-      {
-        InputPixelType value;
-        GetValue(value, volumeX, volumeY, volumeZ);
-        return static_cast<float>(value);
-      }
-
-      ORTHANC_FORCE_INLINE
-      void GetValue(InputPixelType& target,
-                    float volumeX,
-                    float volumeY,
-                    float volumeZ) const
-      {
-        unsigned int imageX, imageY, imageZ;
-        float fractionalX, fractionalY, fractionalZ;  // unused
-
-        if (GetNearestCoordinates(imageX, imageY, imageZ,
-                                  fractionalX, fractionalY, fractionalZ,
-                                  volumeX, volumeY, volumeZ))
-        {
-          Orthanc::ImageTraits<InputFormat>::GetPixel(target, GetImage(), imageX, 
-                                                      imageY + imageZ * GetImageHeight());
-        }
-        else
-        {
-          target = std::numeric_limits<InputPixelType>::min();
-        }
-      }
-    };
-    
-    
-    template <Orthanc::PixelFormat InputFormat>
-    class VoxelReader<InputFormat, ImageInterpolation_Bilinear> :
-      public VoxelReaderBase
-    {
-    private:
-      float outOfVolume_;
-      
-    public:
-      VoxelReader(const ImageBuffer3D& image) :
-        VoxelReaderBase(image)
-      {
-        typedef typename Orthanc::PixelTraits<InputFormat>::PixelType Pixel;
-        outOfVolume_ = static_cast<float>(std::numeric_limits<Pixel>::min());
-      }
-
-      void SampleVoxels(float& f00,
-                        float& f01,
-                        float& f10,
-                        float& f11,
-                        unsigned int imageX,
-                        unsigned int imageY,
-                        unsigned int imageZ) const
-      {
-        f00 = Orthanc::ImageTraits<InputFormat>::GetFloatPixel
-          (GetImage(), imageX, imageY + imageZ * GetImageHeight());
-
-        if (imageX + 1 < GetImageWidth())
-        {
-          f01 = Orthanc::ImageTraits<InputFormat>::GetFloatPixel
-            (GetImage(), imageX + 1, imageY + imageZ * GetImageHeight());
-        }
-        else
-        {
-          f01 = f00;
-        }
-
-        if (imageY + 1 < GetImageWidth())
-        {
-          f10 = Orthanc::ImageTraits<InputFormat>::GetFloatPixel
-            (GetImage(), imageX, imageY + 1 + imageZ * GetImageHeight());
-        }
-        else
-        {
-          f10 = f00;
-        }
-
-        if (imageX + 1 < GetImageWidth() &&
-            imageY + 1 < GetImageHeight())
-        {
-          f11 = Orthanc::ImageTraits<InputFormat>::GetFloatPixel
-            (GetImage(), imageX + 1, imageY + 1 + imageZ * GetImageHeight());
-        }
-        else
-        {
-          f11 = f00;
-        }
-      }
-
-      float GetOutOfVolume() const
-      {
-        return outOfVolume_;
-      }
-      
-      float GetFloatValue(float volumeX,
-                          float volumeY,
-                          float volumeZ) const
-      {
-        unsigned int imageX, imageY, imageZ;
-        float fractionalX, fractionalY, fractionalZ;
-
-        if (GetNearestCoordinates(imageX, imageY, imageZ,
-                                  fractionalX, fractionalY, fractionalZ,
-                                  volumeX, volumeY, volumeZ))
-        {
-          float f00, f01, f10, f11;
-          SampleVoxels(f00, f01, f10, f11, imageX, imageY, imageZ);
-          return GeometryToolbox::ComputeBilinearInterpolationUnitSquare
-            (fractionalX, fractionalY, f00, f01, f10, f11);
-        }
-        else
-        {
-          return outOfVolume_;
-        }
-      }
-    };
-
-
-    template <Orthanc::PixelFormat InputFormat>
-    class VoxelReader<InputFormat, ImageInterpolation_Trilinear> :
-      public VoxelReaderBase
-    {
-    private:
-      typedef VoxelReader<InputFormat, ImageInterpolation_Bilinear>  Bilinear;
-
-      Bilinear      bilinear_;
-      unsigned int  imageDepth_;
-
-    public:
-      VoxelReader(const ImageBuffer3D& image) :
-        VoxelReaderBase(image),
-        bilinear_(image),
-        imageDepth_(image.GetDepth())
-      {
-      }
-
-      float GetFloatValue(float volumeX,
-                          float volumeY,
-                          float volumeZ) const
-      {
-        unsigned int imageX, imageY, imageZ;
-        float fractionalX, fractionalY, fractionalZ;
-
-        if (GetNearestCoordinates(imageX, imageY, imageZ,
-                                  fractionalX, fractionalY, fractionalZ,
-                                  volumeX, volumeY, volumeZ))
-        {
-          float f000, f001, f010, f011;
-          bilinear_.SampleVoxels(f000, f001, f010, f011, imageX, imageY, imageZ);
-
-          if (imageZ + 1 < imageDepth_)
-          {
-            float f100, f101, f110, f111;
-            bilinear_.SampleVoxels(f100, f101, f110, f111, imageX, imageY, imageZ + 1);
-            return GeometryToolbox::ComputeTrilinearInterpolationUnitSquare
-              (fractionalX, fractionalY, fractionalZ,
-               f000, f001, f010, f011, f100, f101, f110, f111);
-          }
-          else
-          {
-            return GeometryToolbox::ComputeBilinearInterpolationUnitSquare
-              (fractionalX, fractionalY, f000, f001, f010, f011);
-          }
-        }
-        else
-        {
-          return bilinear_.GetOutOfVolume();
-        }
-      }
-    };
-
-
     template <typename VoxelReader,
               typename PixelWriter,
               TransferFunction Function>
@@ -424,9 +145,14 @@ namespace OrthancStone
                  float volumeY,
                  float volumeZ)
       {
-        typename VoxelReader::InputPixelType image;
-        reader_.GetValue(image, volumeX, volumeY, volumeZ);
-        writer_.SetValue(pixel, image);
+        typename VoxelReader::PixelType value;
+
+        if (!reader_.GetValue(value, volumeX, volumeY, volumeZ))
+        {
+          VoxelReader::Traits::SetMinValue(value);
+        }
+
+        writer_.SetValue(pixel, value);
       }        
     };
 
@@ -438,12 +164,14 @@ namespace OrthancStone
     private:
       VoxelReader  reader_;
       PixelWriter  writer_;
+      float        outOfVolume_;
       
     public:
       PixelShader(const ImageBuffer3D& image,
                   float /* scaling */,
                   float /* offset */) :
-        reader_(image)
+        reader_(image),
+        outOfVolume_(static_cast<float>(std::numeric_limits<typename VoxelReader::PixelType>::min()))
       {
       }
       
@@ -453,8 +181,15 @@ namespace OrthancStone
                  float volumeY,
                  float volumeZ)
       {
-        writer_.SetFloatValue(pixel, reader_.GetFloatValue(volumeX, volumeY, volumeZ));
-      }        
+        float value;
+
+        if (!reader_.GetFloatValue(value, volumeX, volumeY, volumeZ))
+        {
+          value = outOfVolume_;
+        }
+
+        writer_.SetFloatValue(pixel, value);
+      }
     };
 
     
@@ -467,6 +202,7 @@ namespace OrthancStone
       PixelWriter  writer_;
       float        scaling_;
       float        offset_;
+      float        outOfVolume_;
       
     public:
       PixelShader(const ImageBuffer3D& image,
@@ -474,7 +210,8 @@ namespace OrthancStone
                   float offset) :
         reader_(image),
         scaling_(scaling),
-        offset_(offset)
+        offset_(offset),
+        outOfVolume_(static_cast<float>(std::numeric_limits<typename VoxelReader::PixelType>::min()))
       {
       }
       
@@ -484,7 +221,18 @@ namespace OrthancStone
                  float volumeY,
                  float volumeZ)
       {
-        writer_.SetFloatValue(pixel, scaling_ * reader_.GetFloatValue(volumeX, volumeY, volumeZ) + offset_);
+        float value;
+
+        if (reader_.GetFloatValue(value, volumeX, volumeY, volumeZ))
+        {
+          value = scaling_ * value + offset_;
+        }
+        else
+        {
+          value = outOfVolume_;
+        }
+
+        writer_.SetFloatValue(pixel, value);
       }        
     };
 
@@ -616,12 +364,16 @@ namespace OrthancStone
                              float scaling,
                              float offset)
     {
-      typedef VoxelReader<InputFormat, Interpolation>   Reader;
-      typedef PixelWriter<InputFormat, OutputFormat>    Writer;
-      typedef PixelShader<Reader, Writer, Function>     Shader;
+      typedef SubvoxelReader<InputFormat, Interpolation>   Reader;
+      typedef PixelWriter<InputFormat, OutputFormat>       Writer;
+      typedef PixelShader<Reader, Writer, Function>        Shader;
 
       const unsigned int outputWidth = slice.GetWidth();
       const unsigned int outputHeight = slice.GetHeight();
+
+      const float sourceWidth = static_cast<float>(source.GetWidth());
+      const float sourceHeight = static_cast<float>(source.GetHeight());
+      const float sourceDepth = static_cast<float>(source.GetDepth());
 
       Shader shader(source, scaling, offset);
 
@@ -636,7 +388,11 @@ namespace OrthancStone
         {
           float volumeX, volumeY, volumeZ;
           it.GetVolumeCoordinates(volumeX, volumeY, volumeZ);
-          shader.Apply(p, volumeX, volumeY, volumeZ);
+
+          shader.Apply(p, 
+                       volumeX * sourceWidth, 
+                       volumeY * sourceHeight, 
+                       volumeZ * sourceDepth);
           it.Next();
         }
       }

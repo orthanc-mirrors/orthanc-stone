@@ -90,7 +90,12 @@ namespace OrthancStone
     inline bool GetValue(PixelType& target,
                          float x,
                          float y) const;
+
+    inline bool GetFloatValue(float& target,
+                              float x,
+                              float y) const;
   };
+
     
     
   template <Orthanc::PixelFormat Format>
@@ -106,9 +111,13 @@ namespace OrthancStone
     {
     }
 
+    inline bool GetFloatValue(float& target,
+                              float x,
+                              float y) const;
+
     inline bool GetValue(PixelType& target,
                          float x,
-                         float y);
+                         float y) const;
   };
 
 
@@ -144,9 +153,49 @@ namespace OrthancStone
 
 
   template <Orthanc::PixelFormat Format>
+  bool SubpixelReader<Format, ImageInterpolation_Nearest>::GetFloatValue(float& target,
+                                                                         float x,
+                                                                         float y) const
+  {
+    PixelType value;
+    
+    if (GetValue(value, x, y))
+    {
+      target = Traits::PixelToFloat(value);
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+
+
+  template <Orthanc::PixelFormat Format>
   bool SubpixelReader<Format, ImageInterpolation_Bilinear>::GetValue(PixelType& target,
                                                                      float x,
-                                                                     float y)
+                                                                     float y) const
+  {
+    float value;
+
+    if (GetFloatValue(value, x, y))
+    {
+      Traits::FloatToPixel(target, value);
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+
+
+  template <Orthanc::PixelFormat Format>
+  bool SubpixelReader<Format, ImageInterpolation_Bilinear>::GetFloatValue(float& target,
+                                                                          float x,
+                                                                          float y) const
   {
     x -= 0.5f;
     y -= 0.5f;
@@ -203,9 +252,8 @@ namespace OrthancStone
 
       float ax = x - static_cast<float>(ux);
       float ay = y - static_cast<float>(uy);
-      float value = GeometryToolbox::ComputeBilinearInterpolationUnitSquare(ax, ay, f00, f01, f10, f11);
+      target = GeometryToolbox::ComputeBilinearInterpolationUnitSquare(ax, ay, f00, f01, f10, f11);
           
-      Traits::FloatToPixel(target, value);
       return true;
     }
   }

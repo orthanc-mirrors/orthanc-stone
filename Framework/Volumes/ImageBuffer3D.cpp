@@ -30,7 +30,7 @@
 namespace OrthancStone
 {
   Orthanc::ImageAccessor ImageBuffer3D::GetAxialSliceAccessor(unsigned int slice,
-                                                              bool readOnly)
+                                                              bool readOnly) const
   {
     if (slice >= depth_)
     {
@@ -55,7 +55,7 @@ namespace OrthancStone
 
 
   Orthanc::ImageAccessor ImageBuffer3D::GetCoronalSliceAccessor(unsigned int slice,
-                                                                bool readOnly)
+                                                                bool readOnly) const
   {
     if (slice >= height_)
     {
@@ -353,7 +353,7 @@ namespace OrthancStone
   }
 
 
-  ImageBuffer3D::SliceReader::SliceReader(ImageBuffer3D& that,
+  ImageBuffer3D::SliceReader::SliceReader(const ImageBuffer3D& that,
                                           VolumeProjection projection,
                                           unsigned int slice)
   {

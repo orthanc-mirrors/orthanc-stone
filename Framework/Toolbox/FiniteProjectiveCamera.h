@@ -22,6 +22,7 @@
 #pragma once
 
 #include "LinearAlgebra.h"
+#include "../Volumes/ImageBuffer3D.h"
 
 namespace OrthancStone
 {
@@ -106,5 +107,11 @@ namespace OrthancStone
     // Apply the camera to a 3D point "v" that is possibly at
     // infinity. The result is a 2D point in homogeneous coordinates.
     Vector ApplyGeneral(const Vector& v) const;
+
+    Orthanc::ImageAccessor* ApplyRaytracer(const ImageBuffer3D& source,
+                                           Orthanc::PixelFormat targetFormat,
+                                           unsigned int targetWidth,
+                                           unsigned int targetHeight,
+                                           bool mip) const;
   };
 }

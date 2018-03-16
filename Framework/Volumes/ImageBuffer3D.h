@@ -49,10 +49,10 @@ namespace OrthancStone
     void ExtendImageRange(const Orthanc::ImageAccessor& slice);
 
     Orthanc::ImageAccessor GetAxialSliceAccessor(unsigned int slice,
-                                                 bool readOnly);
+                                                 bool readOnly) const;
 
     Orthanc::ImageAccessor GetCoronalSliceAccessor(unsigned int slice,
-                                                   bool readOnly);
+                                                   bool readOnly) const;
 
     Orthanc::Image*  ExtractSagittalSlice(unsigned int slice) const;
 
@@ -172,7 +172,7 @@ namespace OrthancStone
       std::auto_ptr<Orthanc::Image>  sagittal_;  // Unused for axial and coronal
 
     public:
-      SliceReader(ImageBuffer3D& that,
+      SliceReader(const ImageBuffer3D& that,
                   VolumeProjection projection,
                   unsigned int slice);
 

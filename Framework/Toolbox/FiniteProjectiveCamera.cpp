@@ -22,9 +22,12 @@
 #include "FiniteProjectiveCamera.h"
 
 #include "GeometryToolbox.h"
+#include "SubpixelReader.h"
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
+#include <Core/Images/Image.h>
+#include <Core/Images/ImageProcessing.h>
 
 namespace OrthancStone
 {
@@ -287,5 +290,169 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
     }
+  }
+
+
+  template <Orthanc::PixelFormat TargetFormat,
+            Orthanc::PixelFormat SourceFormat,
+            bool MIP>
+  static void ApplyRaytracerInternal(Orthanc::ImageAccessor& target,
+                                     const FiniteProjectiveCamera& camera,
+                                     const ImageBuffer3D& source,
+                                     VolumeProjection projection)
+  {
+    if (source.GetFormat() != SourceFormat ||
+        target.GetFormat() != TargetFormat ||
+        !std::numeric_limits<float>::is_iec559 ||
+        sizeof(float) != 4)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+
+    LOG(WARNING) << "Input volume size: " << source.GetWidth() << "x"
+                 << source.GetHeight() << "x" << source.GetDepth();
+    LOG(WARNING) << "Input pixel format: " << Orthanc::EnumerationToString(source.GetFormat());
+    LOG(WARNING) << "Output image size: " << target.GetWidth() << "x" << target.GetHeight();
+    LOG(WARNING) << "Output pixel format: " << Orthanc::EnumerationToString(target.GetFormat());
+
+    std::auto_ptr<OrthancStone::ParallelSlices> slices(source.GetGeometry(projection));
+    const OrthancStone::Vector pixelSpacing = source.GetVoxelDimensions(projection);
+    const unsigned int targetWidth = target.GetWidth();
+    const unsigned int targetHeight = target.GetHeight();
+
+    Orthanc::Image accumulator(Orthanc::PixelFormat_Float32, targetWidth, targetHeight, false);
+    Orthanc::Image counter(Orthanc::PixelFormat_Grayscale16, targetWidth, targetHeight, false);
+    Orthanc::ImageProcessing::Set(accumulator, 0);
+    Orthanc::ImageProcessing::Set(counter, 0);
+
+    typedef SubpixelReader<SourceFormat, ImageInterpolation_Nearest>  SourceReader;
+    
+    for (size_t z = 0; z < slices->GetSliceCount(); z++)
+    {
+      LOG(INFO) << "Applying raytracer on slice: " << z << "/" << slices->GetSliceCount();
+      
+      const OrthancStone::CoordinateSystem3D& slice = slices->GetSlice(z);
+      OrthancStone::ImageBuffer3D::SliceReader sliceReader(source, projection, z);
+
+      SourceReader pixelReader(sliceReader.GetAccessor());
+      
+      for (unsigned int y = 0; y < targetHeight; y++)
+      {
+        float *qacc = reinterpret_cast<float*>(accumulator.GetRow(y));
+        uint16_t *qcount = reinterpret_cast<uint16_t*>(counter.GetRow(y));
+
+        for (unsigned int x = 0; x < targetWidth; x++)
+        {
+          // Backproject the ray originating from the center of the target pixel
+          OrthancStone::Vector direction = camera.GetRayDirection(static_cast<double>(x + 0.5),
+                                                                  static_cast<double>(y + 0.5));
+
+          // Compute the 3D intersection of the ray with the slice plane
+          OrthancStone::Vector p;
+          if (slice.IntersectLine(p, camera.GetCenter(), direction))
+          {
+            // Compute the 2D coordinates of the intersections, in slice coordinates
+            double ix, iy;
+            slice.ProjectPoint(ix, iy, p);
+
+            ix /= pixelSpacing[0];
+            iy /= pixelSpacing[1];
+
+            // Read and accumulate the value of the pixel
+            float pixel;
+            if (pixelReader.GetFloatValue(pixel, ix, iy))
+            {
+              if (MIP)
+              {
+                // MIP rendering
+                if (*qcount == 0)
+                {
+                  (*qacc) = pixel;
+                  (*qcount) = 1;
+                }
+                else if (pixel > *qacc)
+                {
+                  (*qacc) = pixel;
+                }
+              }
+              else
+              {
+                // Mean intensity
+                (*qacc) += pixel;
+                (*qcount) ++;
+              }
+            }
+          }
+
+          qacc++;
+          qcount++;
+        }
+      }
+    }
+
+
+    typedef Orthanc::PixelTraits<TargetFormat>  TargetTraits;
+
+    // "Flatten" the accumulator image to create the target image
+    for (unsigned int y = 0; y < targetHeight; y++)
+    {
+      const float *qacc = reinterpret_cast<const float*>(accumulator.GetConstRow(y));
+      const uint16_t *qcount = reinterpret_cast<const uint16_t*>(counter.GetConstRow(y));
+      typename TargetTraits::PixelType *p = reinterpret_cast<typename TargetTraits::PixelType*>(target.GetRow(y));
+
+      for (unsigned int x = 0; x < targetWidth; x++)
+      {
+        if (*qcount == 0)
+        {
+          TargetTraits::SetZero(*p);
+        }
+        else
+        {
+          TargetTraits::FloatToPixel(*p, *qacc / static_cast<float>(*qcount));
+        }
+        
+        p++;
+        qacc++;
+        qcount++;
+      }
+    }
+  }
+
+
+  Orthanc::ImageAccessor*
+  FiniteProjectiveCamera::ApplyRaytracer(const ImageBuffer3D& source,
+                                         Orthanc::PixelFormat targetFormat,
+                                         unsigned int targetWidth,
+                                         unsigned int targetHeight,
+                                         bool mip) const
+  {
+    // TODO - We consider the axial projection of the volume, but we
+    // should choose the projection that is the "most perpendicular"
+    // to the line joining the camera center and the principal point
+    const VolumeProjection projection = VolumeProjection_Axial;
+
+    std::auto_ptr<Orthanc::ImageAccessor> target
+      (new Orthanc::Image(targetFormat, targetWidth, targetHeight, false));
+    
+    if (targetFormat == Orthanc::PixelFormat_Grayscale16 &&
+        source.GetFormat() == Orthanc::PixelFormat_Grayscale16 && mip)
+    {
+      ApplyRaytracerInternal<Orthanc::PixelFormat_Grayscale16,
+                             Orthanc::PixelFormat_Grayscale16, true>
+        (*target, *this, source, projection);
+    }
+    else if (targetFormat == Orthanc::PixelFormat_Grayscale16 &&
+             source.GetFormat() == Orthanc::PixelFormat_Grayscale16 && !mip)
+    {
+      ApplyRaytracerInternal<Orthanc::PixelFormat_Grayscale16,
+                             Orthanc::PixelFormat_Grayscale16, false>
+        (*target, *this, source, projection);
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
+
+    return target.release();
   }
 }

@@ -206,7 +206,8 @@ namespace OrthancStone
                                      target.GetWidth(), target.GetHeight()))
     {
       const size_t targetPitch = target.GetPitch();
-      uint8_t *targetRow = reinterpret_cast<uint8_t*>(reinterpret_cast<PixelType*>(target.GetRow(y1)) + x1);
+      uint8_t *targetRow = reinterpret_cast<uint8_t*>
+        (reinterpret_cast<PixelType*>(target.GetRow(y1)) + x1);
 
       for (unsigned int y = y1; y <= y2; y++)
       {
@@ -382,7 +383,8 @@ namespace OrthancStone
                                      target.GetWidth(), target.GetHeight()))
     {
       const size_t targetPitch = target.GetPitch();
-      uint8_t *targetRow = reinterpret_cast<uint8_t*>(reinterpret_cast<PixelType*>(target.GetRow(y1)) + x1);
+      uint8_t *targetRow = reinterpret_cast<uint8_t*>
+        (reinterpret_cast<PixelType*>(target.GetRow(y1)) + x1);
 
       for (unsigned int y = y1; y <= y2; y++)
       {

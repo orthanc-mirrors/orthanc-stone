@@ -185,6 +185,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancSlicesLoader.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlices.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlicesCursor.cpp
+  ${ORTHANC_STONE_DIR}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/Slice.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_DIR}/Framework/Toolbox/ViewportGeometry.cpp

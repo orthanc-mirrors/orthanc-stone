@@ -32,7 +32,7 @@ namespace OrthancStone
   // Returns the "useful" portion of the target image when applying a
   // 3x3 perspective transform "a" (i.e. the bounding box where points
   // of the source image are mapped to)
-  bool GetPerpectiveTransformExtent(unsigned int& x1,
+  bool GetProjectiveTransformExtent(unsigned int& x1,
                                     unsigned int& y1,
                                     unsigned int& x2,
                                     unsigned int& y2,
@@ -52,8 +52,8 @@ namespace OrthancStone
                             double b2,
                             ImageInterpolation interpolation);
 
-  void ApplyPerspectiveTransform(Orthanc::ImageAccessor& target,
-                                 const Orthanc::ImageAccessor& source,
-                                 const Matrix& a,
-                                 ImageInterpolation interpolation);
+  void ApplyProjectiveTransform(Orthanc::ImageAccessor& target,
+                                const Orthanc::ImageAccessor& source,
+                                const Matrix& a,
+                                ImageInterpolation interpolation);
 }

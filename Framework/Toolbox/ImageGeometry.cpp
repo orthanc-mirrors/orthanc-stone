@@ -47,7 +47,7 @@ namespace OrthancStone
   }
   
   
-  bool GetPerpectiveTransformExtent(unsigned int& x1,
+  bool GetProjectiveTransformExtent(unsigned int& x1,
                                     unsigned int& y1,
                                     unsigned int& x2,
                                     unsigned int& y2,
@@ -201,7 +201,7 @@ namespace OrthancStone
 
     unsigned int x1, y1, x2, y2;
 
-    if (GetPerpectiveTransformExtent(x1, y1, x2, y2, a,
+    if (GetProjectiveTransformExtent(x1, y1, x2, y2, a,
                                      source.GetWidth(), source.GetHeight(),
                                      target.GetWidth(), target.GetHeight()))
     {
@@ -360,10 +360,10 @@ namespace OrthancStone
 
   template <Orthanc::PixelFormat Format,
             ImageInterpolation Interpolation>
-  static void ApplyPerspectiveInternal(Orthanc::ImageAccessor& target,
-                                       const Orthanc::ImageAccessor& source,
-                                       const Matrix& a,
-                                       const Matrix& inva)
+  static void ApplyProjectiveInternal(Orthanc::ImageAccessor& target,
+                                      const Orthanc::ImageAccessor& source,
+                                      const Matrix& a,
+                                      const Matrix& inva)
   {
     assert(target.GetFormat() == Format &&
            source.GetFormat() == Format);
@@ -377,7 +377,7 @@ namespace OrthancStone
     const float floatWidth = source.GetWidth();
     const float floatHeight = source.GetHeight();
 
-    if (GetPerpectiveTransformExtent(x1, y1, x2, y2, a,
+    if (GetProjectiveTransformExtent(x1, y1, x2, y2, a,
                                      source.GetWidth(), source.GetHeight(),
                                      target.GetWidth(), target.GetHeight()))
     {
@@ -403,7 +403,7 @@ namespace OrthancStone
           
           // Make sure no integer overflow will occur after truncation
           // (the static_cast<unsigned int> could otherwise throw an
-          // exception in WebAssembly if strong perspective effects)
+          // exception in WebAssembly if strong projective effects)
           if (sourceX < floatWidth &&
               sourceY < floatHeight)
           { 
@@ -423,10 +423,10 @@ namespace OrthancStone
   }
 
     
-  void ApplyPerspectiveTransform(Orthanc::ImageAccessor& target,
-                                 const Orthanc::ImageAccessor& source,
-                                 const Matrix& a,
-                                 ImageInterpolation interpolation)
+  void ApplyProjectiveTransform(Orthanc::ImageAccessor& target,
+                                const Orthanc::ImageAccessor& source,
+                                const Matrix& a,
+                                ImageInterpolation interpolation)
   {
     if (source.GetFormat() != target.GetFormat())
     {
@@ -452,7 +452,7 @@ namespace OrthancStone
       double w = a(2, 2);
       if (LinearAlgebra::IsCloseToZero(w))
       {
-        LOG(ERROR) << "Singular perspective matrix";
+        LOG(ERROR) << "Singular projective matrix";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
       else
@@ -486,13 +486,13 @@ namespace OrthancStone
         switch (interpolation)
         {
           case ImageInterpolation_Nearest:
-            ApplyPerspectiveInternal<Orthanc::PixelFormat_Grayscale8, 
-                                     ImageInterpolation_Nearest>(target, source, a, inva);
+            ApplyProjectiveInternal<Orthanc::PixelFormat_Grayscale8, 
+                                    ImageInterpolation_Nearest>(target, source, a, inva);
             break;
 
           case ImageInterpolation_Bilinear:
-            ApplyPerspectiveInternal<Orthanc::PixelFormat_Grayscale8, 
-                                     ImageInterpolation_Bilinear>(target, source, a, inva);
+            ApplyProjectiveInternal<Orthanc::PixelFormat_Grayscale8, 
+                                    ImageInterpolation_Bilinear>(target, source, a, inva);
             break;
 
           default:
@@ -504,13 +504,13 @@ namespace OrthancStone
         switch (interpolation)
         {
           case ImageInterpolation_Nearest:
-            ApplyPerspectiveInternal<Orthanc::PixelFormat_Grayscale16, 
-                                     ImageInterpolation_Nearest>(target, source, a, inva);
+            ApplyProjectiveInternal<Orthanc::PixelFormat_Grayscale16, 
+                                    ImageInterpolation_Nearest>(target, source, a, inva);
             break;
 
           case ImageInterpolation_Bilinear:
-            ApplyPerspectiveInternal<Orthanc::PixelFormat_Grayscale16, 
-                                     ImageInterpolation_Bilinear>(target, source, a, inva);
+            ApplyProjectiveInternal<Orthanc::PixelFormat_Grayscale16, 
+                                    ImageInterpolation_Bilinear>(target, source, a, inva);
             break;
 
           default:
@@ -522,13 +522,13 @@ namespace OrthancStone
         switch (interpolation)
         {
           case ImageInterpolation_Nearest:
-            ApplyPerspectiveInternal<Orthanc::PixelFormat_SignedGrayscale16, 
-                                     ImageInterpolation_Nearest>(target, source, a, inva);
+            ApplyProjectiveInternal<Orthanc::PixelFormat_SignedGrayscale16, 
+                                    ImageInterpolation_Nearest>(target, source, a, inva);
             break;
 
           case ImageInterpolation_Bilinear:
-            ApplyPerspectiveInternal<Orthanc::PixelFormat_SignedGrayscale16, 
-                                     ImageInterpolation_Bilinear>(target, source, a, inva);
+            ApplyProjectiveInternal<Orthanc::PixelFormat_SignedGrayscale16, 
+                                    ImageInterpolation_Bilinear>(target, source, a, inva);
             break;
 
           default:
@@ -540,8 +540,8 @@ namespace OrthancStone
         switch (interpolation)
         {
           case ImageInterpolation_Nearest:
-            ApplyPerspectiveInternal<Orthanc::PixelFormat_RGB24, 
-                                     ImageInterpolation_Nearest>(target, source, a, inva);
+            ApplyProjectiveInternal<Orthanc::PixelFormat_RGB24, 
+                                    ImageInterpolation_Nearest>(target, source, a, inva);
             break;
 
           default:

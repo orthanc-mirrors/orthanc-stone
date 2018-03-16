@@ -284,10 +284,6 @@ namespace OrthancStone
     void CreateSkewSymmetric(Matrix& s,
                              const Vector& v);
   
-    void AlignVectorsWithRotation(Matrix& r,
-                                  const Vector& a,
-                                  const Vector& b);
-
     Matrix InvertScalingTranslationMatrix(const Matrix& t);
 
     bool IsShearMatrix(const Matrix& shear);  

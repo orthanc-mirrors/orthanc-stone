@@ -415,5 +415,63 @@ namespace OrthancStone
         return true;
       }
     }
+
+
+    void AlignVectorsWithRotation(Matrix& r,
+                                  const Vector& a,
+                                  const Vector& b)
+    {
+      // This is Rodrigues' rotation formula:
+      // https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula#Matrix_notation
+
+      // Check also result A4.6 from "Multiple View Geometry in Computer
+      // Vision - 2nd edition" (p. 584)
+  
+      if (a.size() != 3 ||
+          b.size() != 3)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+
+      double aNorm = boost::numeric::ublas::norm_2(a);
+      double bNorm = boost::numeric::ublas::norm_2(b);
+
+      if (LinearAlgebra::IsCloseToZero(aNorm) ||
+          LinearAlgebra::IsCloseToZero(bNorm))
+      {
+        LOG(ERROR) << "Vector with zero norm";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);      
+      }
+
+      Vector aUnit, bUnit;
+      aUnit = a / aNorm;
+      bUnit = b / bNorm;
+
+      Vector v;
+      LinearAlgebra::CrossProduct(v, aUnit, bUnit);
+
+      double cosine = boost::numeric::ublas::inner_prod(aUnit, bUnit);
+
+      if (LinearAlgebra::IsCloseToZero(1 + cosine))
+      {
+        // "a == -b": TODO
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+
+      Matrix k;
+      LinearAlgebra::CreateSkewSymmetric(k, v);
+
+#if 0
+      double sine = boost::numeric::ublas::norm_2(v);
+
+      r = (boost::numeric::ublas::identity_matrix<double>(3) +
+           sine * k + 
+           (1 - cosine) * boost::numeric::ublas::prod(k, k));
+#else
+      r = (boost::numeric::ublas::identity_matrix<double>(3) +
+           k + 
+           boost::numeric::ublas::prod(k, k) / (1 + cosine));
+#endif
+    }
   }
 }

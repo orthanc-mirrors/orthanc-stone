@@ -95,6 +95,10 @@ namespace OrthancStone
                                const Vector& origin,
                                const Vector& direction);
 
+    void AlignVectorsWithRotation(Matrix& r,
+                                  const Vector& a,
+                                  const Vector& b);
+
     inline float ComputeBilinearInterpolationUnitSquare(float x,
                                                         float y,
                                                         float f00,    // source(0, 0)

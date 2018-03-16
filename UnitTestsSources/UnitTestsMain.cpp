@@ -658,6 +658,73 @@ TEST(FiniteProjectiveCamera, Calibration)
 }
 
 
+static bool IsEqualVector(OrthancStone::Vector a,
+                          OrthancStone::Vector b)
+{
+  if (a.size() == 3 &&
+      b.size() == 3)
+  {
+    OrthancStone::LinearAlgebra::NormalizeVector(a);
+    OrthancStone::LinearAlgebra::NormalizeVector(b);
+    return OrthancStone::LinearAlgebra::IsCloseToZero(boost::numeric::ublas::norm_2(a - b));
+  }
+  else
+  {
+    return false;
+  } 
+}
+
+
+TEST(GeometryToolbox, AlignVectorsWithRotation)
+{
+  OrthancStone::Vector a, b;
+  OrthancStone::Matrix r;
+
+  OrthancStone::LinearAlgebra::AssignVector(a, -200, 200, -846.63);
+  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
+
+  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
+  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, a), b));
+
+  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, b, a);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
+  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, b), a));
+
+  OrthancStone::LinearAlgebra::AssignVector(a, 1, 0, 0);
+  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
+  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
+  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, a), b));
+
+  OrthancStone::LinearAlgebra::AssignVector(a, 0, 1, 0);
+  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
+  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
+  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, a), b));
+
+  OrthancStone::LinearAlgebra::AssignVector(a, 0, 0, 1);
+  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
+  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
+  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, a), b));
+
+  OrthancStone::LinearAlgebra::AssignVector(a, 0, 0, 0);
+  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
+  ASSERT_THROW(OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b), Orthanc::OrthancException);
+
+  // TODO: Deal with opposite vectors
+
+  /*
+  OrthancStone::LinearAlgebra::AssignVector(a, 0, 0, -1);
+  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
+  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
+  OrthancStone::LinearAlgebra::Print(r);
+  OrthancStone::LinearAlgebra::Print(boost::numeric::ublas::prod(r, a));
+  */
+}
+
+
 int main(int argc, char **argv)
 {
   Orthanc::Logging::Initialize();

@@ -253,8 +253,8 @@ namespace OrthancStone
     }
       
     Matrix a;
-    LinearAlgebra::AlignVectorsWithRotation(a, camera - principalPoint,
-                                            LinearAlgebra::CreateVector(0, 0, -1));
+    GeometryToolbox::AlignVectorsWithRotation(a, camera - principalPoint,
+                                              LinearAlgebra::CreateVector(0, 0, -1));
 
     Matrix r = LinearAlgebra::Product(GeometryToolbox::CreateRotationMatrixAlongZ(angle), a);
 

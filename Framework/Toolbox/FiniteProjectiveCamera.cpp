@@ -21,6 +21,8 @@
 
 #include "FiniteProjectiveCamera.h"
 
+#include "GeometryToolbox.h"
+
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 
@@ -43,8 +45,6 @@ namespace OrthancStone
                                      const Matrix& r,
                                      const Vector& c)
   {
-    using namespace boost::numeric::ublas;
-
     if (k.size1() != 3 ||
         k.size2() != 3 ||
         !LinearAlgebra::IsCloseToZero(k(1, 0)) ||
@@ -80,21 +80,22 @@ namespace OrthancStone
 
     ComputeMInverse();
       
-    Matrix tmp = identity_matrix<double>(3);
+    Matrix tmp = LinearAlgebra::IdentityMatrix(3);
     tmp.resize(3, 4);
     tmp(0, 3) = -c[0];
     tmp(1, 3) = -c[1];
     tmp(2, 3) = -c[2];
 
-    tmp = prod(r, tmp);
-    p_ = prod(k, tmp);
+    p_ = LinearAlgebra::Product(k, r, tmp);
+
+    assert(p_.size1() == 3 &&
+           p_.size2() == 4);
+
   }
 
     
   void FiniteProjectiveCamera::Setup(const Matrix& p)
   {
-    using namespace boost::numeric::ublas;
-
     if (p.size1() != 3 ||
         p.size2() != 4)
     {
@@ -118,7 +119,7 @@ namespace OrthancStone
     LinearAlgebra::RQDecomposition3x3(k_, r_, m);
     ComputeMInverse();
 
-    c_ = prod(-minv_, p4);
+    c_ = LinearAlgebra::Product(-minv_, p4);
   }
 
 
@@ -217,5 +218,74 @@ namespace OrthancStone
   Vector FiniteProjectiveCamera::ApplyGeneral(const Vector& v) const
   {
     return boost::numeric::ublas::prod(p_, SetupApply(v, true));
+  }
+
+
+  static Vector AddHomogeneousCoordinate(const Vector& p)
+  {
+    assert(p.size() == 3);
+    return LinearAlgebra::CreateVector(p[0], p[1], p[2], 1);
+  }
+
+
+  FiniteProjectiveCamera::FiniteProjectiveCamera(const Vector& camera,
+                                                 const Vector& principalPoint,
+                                                 double angle,
+                                                 unsigned int imageWidth,
+                                                 unsigned int imageHeight,
+                                                 double pixelSpacingX,
+                                                 double pixelSpacingY)
+  {
+    if (camera.size() != 3 ||
+        principalPoint.size() != 3 ||
+        LinearAlgebra::IsCloseToZero(pixelSpacingX) ||
+        LinearAlgebra::IsCloseToZero(pixelSpacingY))
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    
+    const double focal = boost::numeric::ublas::norm_2(camera - principalPoint);
+
+    if (LinearAlgebra::IsCloseToZero(focal))
+    {
+      LOG(ERROR) << "Camera lies on the image plane";
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+      
+    Matrix a;
+    LinearAlgebra::AlignVectorsWithRotation(a, camera - principalPoint,
+                                            LinearAlgebra::CreateVector(0, 0, -1));
+
+    Matrix r = LinearAlgebra::Product(GeometryToolbox::CreateRotationMatrixAlongZ(angle), a);
+
+    Matrix k = LinearAlgebra::ZeroMatrix(3, 3);
+    k(0,0) = focal / pixelSpacingX;
+    k(1,1) = focal / pixelSpacingY;
+    k(0,2) = static_cast<double>(imageWidth) / 2.0;
+    k(1,2) = static_cast<double>(imageHeight) / 2.0;
+    k(2,2) = 1;
+
+    Setup(k, r, camera);
+ 
+    {
+      // Sanity checks
+      Vector v1 = LinearAlgebra::Product(p_, AddHomogeneousCoordinate(camera));
+      Vector v2 = LinearAlgebra::Product(p_, AddHomogeneousCoordinate(principalPoint));
+
+      if (!LinearAlgebra::IsCloseToZero(v1[2]) ||   // Camera is mapped to singularity
+          LinearAlgebra::IsCloseToZero(v2[2]))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      // The principal point must be mapped to the center of the image
+      v2 /= v2[2];
+
+      if (!LinearAlgebra::IsNear(v2[0], static_cast<double>(imageWidth) / 2.0) ||
+          !LinearAlgebra::IsNear(v2[1], static_cast<double>(imageHeight) / 2.0))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+    }
   }
 }

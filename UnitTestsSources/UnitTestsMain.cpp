@@ -620,6 +620,44 @@ TEST(Matrix, Inverse4)
 }
 
 
+TEST(FiniteProjectiveCamera, Calibration)
+{
+  unsigned int volumeWidth = 512;
+  unsigned int volumeHeight = 512;
+  unsigned int volumeDepth = 110;
+
+  OrthancStone::Vector camera = OrthancStone::LinearAlgebra::CreateVector
+    (-1000, -5000, -static_cast<double>(volumeDepth) * 32);
+
+  OrthancStone::Vector principalPoint = OrthancStone::LinearAlgebra::CreateVector
+    (volumeWidth/2, volumeHeight/2, volumeDepth * 2);
+
+  OrthancStone::FiniteProjectiveCamera c(camera, principalPoint, 0, 512, 512, 1, 1);
+
+  double swapv[9] = { 1, 0, 0,
+                      0, -1, 512,
+                      0, 0, 1 };
+  OrthancStone::Matrix swap;
+  OrthancStone::LinearAlgebra::FillMatrix(swap, 3, 3, swapv);
+
+  OrthancStone::Matrix p = OrthancStone::LinearAlgebra::Product(swap, c.GetMatrix());
+  p /= p(2,3);
+
+  ASSERT_NEAR( 1.04437,     p(0,0), 0.00001);
+  ASSERT_NEAR(-0.0703111,   p(0,1), 0.00000001);
+  ASSERT_NEAR(-0.179283,    p(0,2), 0.000001);
+  ASSERT_NEAR( 61.7431,     p(0,3), 0.0001);
+  ASSERT_NEAR( 0.11127,     p(1,0), 0.000001);
+  ASSERT_NEAR(-0.595541,    p(1,1), 0.000001);
+  ASSERT_NEAR( 0.872211,    p(1,2), 0.000001);
+  ASSERT_NEAR( 203.748,     p(1,3), 0.001);
+  ASSERT_NEAR( 3.08593e-05, p(2,0), 0.0000000001);
+  ASSERT_NEAR( 0.000129138, p(2,1), 0.000000001);
+  ASSERT_NEAR( 9.18901e-05, p(2,2), 0.0000000001);
+  ASSERT_NEAR( 1,           p(2,3), 0.0000001);
+}
+
+
 int main(int argc, char **argv)
 {
   Orthanc::Logging::Initialize();

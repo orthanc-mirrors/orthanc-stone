@@ -62,6 +62,15 @@ namespace OrthancStone
 
     FiniteProjectiveCamera(const double p[12]);
 
+    // Constructor that implements camera calibration
+    FiniteProjectiveCamera(const Vector& camera,
+                           const Vector& principalPoint,
+                           double angle,
+                           unsigned int imageWidth,
+                           unsigned int imageHeight,
+                           double pixelSpacingX,
+                           double pixelSpacingY);
+
     const Matrix& GetMatrix() const
     {
       return p_;

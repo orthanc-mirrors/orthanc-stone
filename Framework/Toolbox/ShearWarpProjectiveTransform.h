@@ -88,5 +88,17 @@ namespace OrthancStone
     static Matrix CalibrateView(const Vector& camera,
                                 const Vector& principalPoint,
                                 double angle);
+
+    static Orthanc::ImageAccessor* ApplyAxial(float& maxValue,
+                                              const Matrix& M_view,  // cf. "CalibrateView()"
+                                              const ImageBuffer3D& source,
+                                              Orthanc::PixelFormat targetFormat,
+                                              unsigned int targetWidth,
+                                              unsigned int targetHeight,
+                                              bool mip,
+                                              double pixelSpacing,
+                                              unsigned int countSlices,
+                                              ImageInterpolation shearInterpolation,
+                                              ImageInterpolation warpInterpolation);
   };
 }

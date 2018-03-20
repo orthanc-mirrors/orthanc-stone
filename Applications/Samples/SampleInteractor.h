@@ -82,7 +82,6 @@ namespace OrthancStone
       }
 
       virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
-                                                          const SliceGeometry& slice,
                                                           const ViewportGeometry& view,
                                                           MouseButton button,
                                                           double x,
@@ -94,7 +93,6 @@ namespace OrthancStone
 
       virtual void MouseOver(CairoContext& context,
                              WorldSceneWidget& widget,
-                             const SliceGeometry& slice,
                              const ViewportGeometry& view,
                              double x,
                              double y,

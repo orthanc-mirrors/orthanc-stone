@@ -21,14 +21,17 @@
 
 #pragma once
 
-#include "../Toolbox/IThreadSafety.h"
 #include "../Viewport/CairoContext.h"
 
 namespace OrthancStone
 {
-  class IWorldSceneMouseTracker : public IThreadUnsafe
+  class IWorldSceneMouseTracker : public boost::noncopyable
   {
   public:
+    virtual ~IWorldSceneMouseTracker()
+    {
+    }
+    
     virtual void Render(CairoContext& context,
                         double zoom) = 0;
     

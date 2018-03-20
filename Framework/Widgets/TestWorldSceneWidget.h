@@ -23,6 +23,8 @@
 
 #include "WorldSceneWidget.h"
 
+#include <memory>
+
 namespace OrthancStone
 {
   namespace Samples
@@ -33,23 +35,29 @@ namespace OrthancStone
       class Interactor;
 
       std::auto_ptr<Interactor>   interactor_;
+      bool                        animate_;
+      unsigned int                count_;
 
     protected:
-      virtual SliceGeometry GetSlice()
-      {
-        return SliceGeometry();
-      }
-
       virtual bool RenderScene(CairoContext& context,
                                const ViewportGeometry& view);
 
     public:
-      TestWorldSceneWidget();
+      TestWorldSceneWidget(bool animate);
 
-      virtual void GetSceneExtent(double& x1,
-                                  double& y1,
-                                  double& x2,
-                                  double& y2);
+      virtual Extent2D GetSceneExtent();
+
+      virtual bool HasUpdateContent() const
+      {
+        return animate_;
+      }
+
+      virtual void UpdateContent();
+
+      virtual bool HasRenderMouseOver()
+      {
+        return true;
+      }
     };
   }
 }

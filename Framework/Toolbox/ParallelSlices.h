@@ -21,16 +21,15 @@
 
 #pragma once
 
-#include "SliceGeometry.h"
+#include "CoordinateSystem3D.h"
 
 namespace OrthancStone
 {
-  // This class is NOT thread-safe
-  class ParallelSlices
+  class ParallelSlices : public boost::noncopyable
   {
   private:
-    Vector                       normal_;
-    std::vector<SliceGeometry*>  slices_;
+    Vector                            normal_;
+    std::vector<CoordinateSystem3D*>  slices_;
     
     ParallelSlices& operator= (const ParallelSlices& other);  // Forbidden
 
@@ -46,7 +45,7 @@ namespace OrthancStone
       return normal_;
     }
 
-    void AddSlice(const SliceGeometry& slice);
+    void AddSlice(const CoordinateSystem3D& slice);
 
     void AddSlice(const Vector& origin,
                   const Vector& axisX,
@@ -57,7 +56,7 @@ namespace OrthancStone
       return slices_.size();
     }
 
-    const SliceGeometry& GetSlice(size_t index) const;
+    const CoordinateSystem3D& GetSlice(size_t index) const;
 
     bool ComputeClosestSlice(size_t& closestSlice,
                              double& closestDistance,

@@ -23,42 +23,31 @@
 
 #if ORTHANC_ENABLE_SDL == 1
 
-#include "SdlBuffering.h"
-#include "../BinarySemaphore.h"
-
-#include <boost/thread.hpp>
+#include "SdlSurface.h"
+#include "../BasicApplicationContext.h"
 
 namespace OrthancStone
 {
-  class SdlEngine : public IViewport::IChangeObserver
+  class SdlEngine : public IViewport::IObserver
   {
   private:
-    SdlWindow&        window_;
-    IViewport&        viewport_;
-    SdlBuffering      buffering_;
-    boost::thread     renderThread_;
-    bool              continue_;
-    BinarySemaphore   renderFrame_;
-    uint32_t          refreshEvent_;
-    bool              viewportChanged_;
+    SdlWindow&                window_;
+    BasicApplicationContext&  context_;
+    SdlSurface                surface_;
+    bool                      viewportChanged_;
 
+    void SetSize(BasicApplicationContext::ViewportLocker& locker,
+                 unsigned int width,
+                 unsigned int height);
+    
     void RenderFrame();
-
-    static void RenderThread(SdlEngine* that);
 
     static KeyboardModifiers GetKeyboardModifiers(const uint8_t* keyboardState,
                                                   const int scancodeCount);
 
-    void SetSize(unsigned int width,
-                 unsigned int height);
-
-    void Stop();
-
-    void Refresh();
-
   public:
     SdlEngine(SdlWindow& window,
-              IViewport& viewport);
+              BasicApplicationContext& context);
   
     virtual ~SdlEngine();
 

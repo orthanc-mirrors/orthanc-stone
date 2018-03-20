@@ -21,8 +21,8 @@
 
 #include "ViewportGeometry.h"
 
-#include "../../Resources/Orthanc/Core/Logging.h"
-#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include <Core/Logging.h>
+#include <Core/OrthancException.h>
 
 #include <boost/math/special_functions/round.hpp>
 
@@ -43,18 +43,15 @@ namespace OrthancStone
     cairo_matrix_multiply(&transform_, &tmp, &transform_);
 
     // Bring the center of the scene to (0,0)
-    cairo_matrix_init_translate(&tmp, -(x1_ + x2_) / 2.0, -(y1_ + y2_) / 2.0);
+    cairo_matrix_init_translate(&tmp,
+                                -(sceneExtent_.GetX1() + sceneExtent_.GetX2()) / 2.0,
+                                -(sceneExtent_.GetY1() + sceneExtent_.GetY2()) / 2.0);
     cairo_matrix_multiply(&transform_, &tmp, &transform_);
   }
 
 
   ViewportGeometry::ViewportGeometry()
   {
-    x1_ = 0;
-    y1_ = 0;
-    x2_ = 0;
-    y2_ = 0;
-
     width_ = 0;
     height_ = 0;
 
@@ -82,46 +79,14 @@ namespace OrthancStone
   }
 
 
-  void ViewportGeometry::SetSceneExtent(double x1,
-                                        double y1,
-                                        double x2,
-                                        double y2)
+  void ViewportGeometry::SetSceneExtent(const Extent2D& extent)
   {
-    if (x1 == x1_ &&
-        y1 == y1_ &&
-        x2 == x2_ &&
-        y2 == y2_)
-    {
-      return;
-    }
-    else if (x1 > x2 || 
-             y1 > y2)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-    else
-    {
-      LOG(INFO) << "New scene extent: (" << x1 << "," << y1 << ") => (" << x2 << "," << y2 << ")";
+    LOG(INFO) << "New scene extent: ("
+              << extent.GetX1() << "," << extent.GetY1() << ") => ("
+              << extent.GetX2() << "," << extent.GetY2() << ")";
 
-      x1_ = x1;
-      y1_ = y1;
-      x2_ = x2;
-      y2_ = y2;
-
-      ComputeTransform();
-    }
-  }
-
-
-  void ViewportGeometry::GetSceneExtent(double& x1,
-                                        double& y1,
-                                        double& x2,
-                                        double& y2) const
-  {
-    x1 = x1_;
-    y1 = y1_;
-    x2 = x2_;
-    y2 = y2_;
+    sceneExtent_ = extent;
+    ComputeTransform();
   }
 
 
@@ -160,11 +125,10 @@ namespace OrthancStone
   {
     if (width_ > 0 &&
         height_ > 0 &&
-        x2_ > x1_ + 10 * std::numeric_limits<double>::epsilon() &&
-        y2_ > y1_ + 10 * std::numeric_limits<double>::epsilon())
+        !sceneExtent_.IsEmpty())
     {
-      double zoomX = static_cast<double>(width_) / (x2_ - x1_);
-      double zoomY = static_cast<double>(height_) / (y2_ - y1_);
+      double zoomX = static_cast<double>(width_) / (sceneExtent_.GetX2() - sceneExtent_.GetX1());
+      double zoomY = static_cast<double>(height_) / (sceneExtent_.GetY2() - sceneExtent_.GetY1());
       zoom_ = zoomX < zoomY ? zoomX : zoomY;
 
       panX_ = 0;

@@ -28,24 +28,31 @@ namespace OrthancStone
   class LineLayerRenderer : public ILayerRenderer
   {
   private:
-    double   x1_;
-    double   y1_;
-    double   x2_;
-    double   y2_;
-    bool     visible_;
-    uint8_t  color_[3];
+    double              x1_;
+    double              y1_;
+    double              x2_;
+    double              y2_;
+    CoordinateSystem3D  slice_;
+    bool                visible_;
+    uint8_t             color_[3];
 
   public:
     LineLayerRenderer(double x1,
                       double y1,
                       double x2,
-                      double y2);
+                      double y2,
+                      const CoordinateSystem3D& slice);
 
     virtual bool RenderLayer(CairoContext& context,
                              const ViewportGeometry& view);
 
     virtual void SetLayerStyle(const RenderStyle& style);
 
+    virtual const CoordinateSystem3D& GetLayerSlice()
+    {
+      return slice_;
+    }
+    
     virtual bool IsFullQuality()
     {
       return true;

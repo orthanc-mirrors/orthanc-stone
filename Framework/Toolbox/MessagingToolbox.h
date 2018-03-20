@@ -21,42 +21,22 @@
 
 #pragma once
 
-#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
+#include "../StoneEnumerations.h"
 
-#include "../Enumerations.h"
-#include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
+#include <Plugins/Samples/Common/IOrthancConnection.h>
+#include <Plugins/Samples/Common/IDicomDataset.h>
+#include <Core/Images/ImageAccessor.h>
+#include <Core/DicomFormat/DicomMap.h>
 
 #include <json/value.h>
-
-#if defined(__native_client__)
-#  include <ppapi/cpp/core.h>
-#else
-#  include <boost/date_time/posix_time/ptime.hpp>
-#endif
 
 namespace OrthancStone
 {
   namespace MessagingToolbox
   {
-    class Timestamp
-    {
-    private:
-#if defined(__native_client__)
-      PP_TimeTicks   time_;
-#else
-      boost::posix_time::ptime   time_;
-#endif
-
-    public:
-      Timestamp();
-
-#if defined(__native_client__)
-      static void Initialize(pp::Core* core);
-#endif
-
-      int GetMillisecondsSince(const Timestamp& other);
-    };
-
+    bool ParseJson(Json::Value& target,
+                   const void* content,
+                   size_t size);
 
     void RestApiGet(Json::Value& target,
                     OrthancPlugins::IOrthancConnection& orthanc,
@@ -84,5 +64,8 @@ namespace OrthancStone
                                             unsigned int frame,
                                             unsigned int quality,
                                             Orthanc::PixelFormat targetFormat);
+
+    void ConvertDataset(Orthanc::DicomMap& target,
+                        const OrthancPlugins::IDicomDataset& source);
   }
 }

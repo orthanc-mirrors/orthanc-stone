@@ -21,8 +21,8 @@
 
 #include "ColorFrameRenderer.h"
 
-#include "../../Resources/Orthanc/Core/OrthancException.h"
-#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
+#include <Core/OrthancException.h>
+#include <Core/Images/ImageProcessing.h>
 
 namespace OrthancStone
 {
@@ -38,12 +38,11 @@ namespace OrthancStone
 
 
   ColorFrameRenderer::ColorFrameRenderer(Orthanc::ImageAccessor* frame,
-                                         const SliceGeometry& viewportSlice,
-                                         const SliceGeometry& frameSlice,
+                                         const CoordinateSystem3D& frameSlice,
                                          double pixelSpacingX,
                                          double pixelSpacingY,
                                          bool isFullQuality) :
-    FrameRenderer(viewportSlice, frameSlice, pixelSpacingX, pixelSpacingY, isFullQuality),
+    FrameRenderer(frameSlice, pixelSpacingX, pixelSpacingY, isFullQuality),
     frame_(frame)
   {
     if (frame == NULL)

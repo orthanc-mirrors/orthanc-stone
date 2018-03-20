@@ -21,55 +21,12 @@
 
 #pragma once
 
-#include <boost/numeric/ublas/vector.hpp>
-
-#include "../../Resources/Orthanc/Plugins/Samples/Common/DicomDatasetReader.h"
+#include "LinearAlgebra.h"
 
 namespace OrthancStone
 {
-  typedef boost::numeric::ublas::vector<double>   Vector;
-
   namespace GeometryToolbox
   {
-    void Print(const Vector& v);
-
-    bool ParseVector(Vector& target,
-                     const std::string& s);
-
-    bool ParseVector(Vector& target,
-                     const OrthancPlugins::IDicomDataset& dataset,
-                     const OrthancPlugins::DicomPath& tag);
-
-    void AssignVector(Vector& v,
-                      double v1,
-                      double v2);
-
-    void AssignVector(Vector& v,
-                      double v1,
-                      double v2,
-                      double v3);
-
-    inline bool IsNear(double x,
-                       double y,
-                       double threshold)
-    {
-      return fabs(x - y) < threshold;
-    }
-
-    bool IsNear(double x,
-                double y);
-
-    inline bool IsCloseToZero(double x)
-    {
-      return IsNear(x, 0.0);
-    }
-
-    void NormalizeVector(Vector& u);
-
-    void CrossProduct(Vector& result,
-                      const Vector& u,
-                      const Vector& v);
-
     void ProjectPointOntoPlane(Vector& result,
                                const Vector& point,
                                const Vector& planeNormal,
@@ -104,6 +61,101 @@ namespace OrthancStone
 
     void GetPixelSpacing(double& spacingX, 
                          double& spacingY,
-                         const OrthancPlugins::IDicomDataset& dicom);
+                         const Orthanc::DicomMap& dicom);
+
+    inline double ProjectAlongNormal(const Vector& point,
+                                     const Vector& normal)
+    {
+      return boost::numeric::ublas::inner_prod(point, normal);
+    }
+
+    Matrix CreateRotationMatrixAlongX(double a);
+
+    Matrix CreateRotationMatrixAlongY(double a);
+
+    Matrix CreateRotationMatrixAlongZ(double a);
+
+    Matrix CreateTranslationMatrix(double dx,
+                                   double dy,
+                                   double dz);
+
+    Matrix CreateScalingMatrix(double sx,
+                               double sy,
+                               double sz);
+    
+    bool IntersectPlaneAndSegment(Vector& p,
+                                  const Vector& normal,
+                                  double d,
+                                  const Vector& edgeFrom,
+                                  const Vector& edgeTo);
+
+    bool IntersectPlaneAndLine(Vector& p,
+                               const Vector& normal,
+                               double d,
+                               const Vector& origin,
+                               const Vector& direction);
+
+    void AlignVectorsWithRotation(Matrix& r,
+                                  const Vector& a,
+                                  const Vector& b);
+
+    inline float ComputeBilinearInterpolationUnitSquare(float x,
+                                                        float y,
+                                                        float f00,    // source(0, 0)
+                                                        float f01,    // source(1, 0)
+                                                        float f10,    // source(0, 1)
+                                                        float f11);   // source(1, 1)
+
+    inline float ComputeTrilinearInterpolationUnitSquare(float x,
+                                                         float y,
+                                                         float z,
+                                                         float f000,   // source(0, 0, 0)
+                                                         float f001,   // source(1, 0, 0)
+                                                         float f010,   // source(0, 1, 0)
+                                                         float f011,   // source(1, 1, 0)
+                                                         float f100,   // source(0, 0, 1)
+                                                         float f101,   // source(1, 0, 1)
+                                                         float f110,   // source(0, 1, 1)
+                                                         float f111);  // source(1, 1, 1)
   };
+}
+
+
+float OrthancStone::GeometryToolbox::ComputeBilinearInterpolationUnitSquare(float x,
+                                                                            float y,
+                                                                            float f00,
+                                                                            float f01,
+                                                                            float f10,
+                                                                            float f11)
+{
+  // This function only works within the unit square
+  assert(x >= 0 && y >= 0 && x <= 1 && y <= 1);
+
+  // https://en.wikipedia.org/wiki/Bilinear_interpolation#Unit_square
+  return (f00 * (1.0f - x) * (1.0f - y) +
+          f01 * x * (1.0f - y) +
+          f10 * (1.0f - x) * y +
+          f11 * x * y);
+}
+
+
+float OrthancStone::GeometryToolbox::ComputeTrilinearInterpolationUnitSquare(float x,
+                                                                             float y,
+                                                                             float z,
+                                                                             float f000,
+                                                                             float f001,
+                                                                             float f010,
+                                                                             float f011,
+                                                                             float f100,
+                                                                             float f101,
+                                                                             float f110,
+                                                                             float f111)
+{
+  // "In practice, a trilinear interpolation is identical to two
+  // bilinear interpolation combined with a linear interpolation"
+  // https://en.wikipedia.org/wiki/Trilinear_interpolation#Method
+  float a = ComputeBilinearInterpolationUnitSquare(x, y, f000, f001, f010, f011);
+  float b = ComputeBilinearInterpolationUnitSquare(x, y, f100, f101, f110, f111);
+
+  return (1.0f - z) * a + z * b;
 }

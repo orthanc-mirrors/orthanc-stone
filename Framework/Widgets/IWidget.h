@@ -21,36 +21,27 @@
 
 #pragma once
 
-#include "../Enumerations.h"
+#include "../StoneEnumerations.h"
 #include "../Viewport/IMouseTracker.h"
 #include "../Viewport/IStatusBar.h"
+#include "../Viewport/IViewport.h"
 
 namespace OrthancStone
 {
-  class IWidget : public IThreadUnsafe
+  class IWidget : public boost::noncopyable
   {
   public:
-    class IChangeObserver : public boost::noncopyable
+    virtual ~IWidget()
     {
-    public:
-      virtual ~IChangeObserver()
-      {
-      }
-      
-      virtual void NotifyChange(const IWidget& widget) = 0;
-    };
+    }
+
+    virtual void SetDefaultView() = 0;
+
+    virtual void SetParent(IWidget& parent) = 0;
+    
+    virtual void SetViewport(IViewport& viewport) = 0;
 
     virtual void SetStatusBar(IStatusBar& statusBar) = 0;
-
-    virtual void ResetStatusBar() = 0;
-
-    virtual void Register(IChangeObserver& observer) = 0;
-
-    virtual void Unregister(IChangeObserver& observer) = 0;
-
-    virtual void Start() = 0;
-
-    virtual void Stop() = 0;
 
     virtual void SetSize(unsigned int width, 
                          unsigned int height) = 0;
@@ -66,6 +57,8 @@ namespace OrthancStone
                                  int x,
                                  int y) = 0;
 
+    virtual bool HasRenderMouseOver() = 0;
+
     virtual void MouseWheel(MouseWheelDirection direction,
                             int x,
                             int y,
@@ -73,5 +66,13 @@ namespace OrthancStone
 
     virtual void KeyPressed(char key,
                             KeyboardModifiers modifiers) = 0;
+
+    virtual bool HasUpdateContent() const = 0;
+
+    virtual void UpdateContent() = 0;
+
+    // Subclasses can call this method to signal the display of the
+    // widget must be refreshed
+    virtual void NotifyChange() = 0;
   };
 }

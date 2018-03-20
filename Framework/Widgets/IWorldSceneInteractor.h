@@ -23,20 +23,22 @@
 
 #include "IWorldSceneMouseTracker.h"
 
-#include "../Toolbox/SliceGeometry.h"
 #include "../Toolbox/ViewportGeometry.h"
-#include "../Enumerations.h"
+#include "../StoneEnumerations.h"
 #include "../Viewport/IStatusBar.h"
 
 namespace OrthancStone
 {
   class WorldSceneWidget;
 
-  class IWorldSceneInteractor : public IThreadSafe
+  class IWorldSceneInteractor : public boost::noncopyable
   {
   public:
+    virtual ~IWorldSceneInteractor()
+    {
+    }
+    
     virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
-                                                        const SliceGeometry& slice,
                                                         const ViewportGeometry& view,
                                                         MouseButton button,
                                                         double x,
@@ -45,7 +47,6 @@ namespace OrthancStone
 
     virtual void MouseOver(CairoContext& context,
                            WorldSceneWidget& widget,
-                           const SliceGeometry& slice,
                            const ViewportGeometry& view,
                            double x,
                            double y,

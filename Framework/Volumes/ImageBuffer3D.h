@@ -21,66 +21,83 @@
 
 #pragma once
 
-#include "../Enumerations.h"
-#include "../Toolbox/IThreadSafety.h"
-#include "../Toolbox/SliceGeometry.h"
+#include "../StoneEnumerations.h"
+#include "../Layers/RenderStyle.h"
+#include "../Toolbox/CoordinateSystem3D.h"
+#include "../Toolbox/DicomFrameConverter.h"
 #include "../Toolbox/ParallelSlices.h"
 
-#include "../../Resources/Orthanc/Core/Images/Image.h"
-
-#include <boost/thread/shared_mutex.hpp>
-
-#if defined(_WIN32)
-#  include <boost/thread/win32/mutex.hpp>
-#endif
+#include <Core/Images/Image.h>
 
 namespace OrthancStone
 {
-  class ImageBuffer3D : public IThreadSafe
+  class ImageBuffer3D : public boost::noncopyable
   {
   private:
-    typedef boost::shared_mutex          Mutex;
-    typedef boost::unique_lock<Mutex>    WriteLock;
-    typedef boost::shared_lock<Mutex>    ReadLock;
-
-    Mutex                  mutex_;
-    SliceGeometry          axialGeometry_;
+    CoordinateSystem3D     axialGeometry_;
     Vector                 voxelDimensions_;
     Orthanc::Image         image_;
     Orthanc::PixelFormat   format_;
     unsigned int           width_;
     unsigned int           height_;
     unsigned int           depth_;
+    bool                   computeRange_;
+    bool                   hasRange_;
+    float                  minValue_;
+    float                  maxValue_;
+
+    void ExtendImageRange(const Orthanc::ImageAccessor& slice);
 
     Orthanc::ImageAccessor GetAxialSliceAccessor(unsigned int slice,
-                                                 bool readOnly);
+                                                 bool readOnly) const;
 
     Orthanc::ImageAccessor GetCoronalSliceAccessor(unsigned int slice,
-                                                   bool readOnly);
+                                                   bool readOnly) const;
 
     Orthanc::Image*  ExtractSagittalSlice(unsigned int slice) const;
+
+    template <typename T>
+    T GetPixelUnchecked(unsigned int x,
+                        unsigned int y,
+                        unsigned int z) const
+    {
+      const uint8_t* buffer = reinterpret_cast<const uint8_t*>(image_.GetConstBuffer());
+      const uint8_t* row = buffer + (y + height_ * (depth_ - 1 - z)) * image_.GetPitch();
+      return reinterpret_cast<const T*>(row) [x];
+    }
 
   public:
     ImageBuffer3D(Orthanc::PixelFormat format,
                   unsigned int width,
                   unsigned int height,
-                  unsigned int depth);
+                  unsigned int depth,
+                  bool computeRange);
 
     void Clear();
 
     // Set the geometry of the first axial slice (i.e. the one whose
     // depth == 0)
-    void SetAxialGeometry(const SliceGeometry& geometry);
+    void SetAxialGeometry(const CoordinateSystem3D& geometry);
+
+    const CoordinateSystem3D& GetAxialGeometry() const
+    {
+      return axialGeometry_;
+    }
 
     void SetVoxelDimensions(double x,
                             double y,
                             double z);
 
-    Vector GetVoxelDimensions(VolumeProjection projection);
+    Vector GetVoxelDimensions(VolumeProjection projection) const;
 
     void GetSliceSize(unsigned int& width,
                       unsigned int& height,
                       VolumeProjection projection);
+
+    const Orthanc::ImageAccessor& GetInternalImage() const
+    {
+      return image_;
+    }
 
     unsigned int GetWidth() const
     {
@@ -102,18 +119,60 @@ namespace OrthancStone
       return format_;
     }
 
-    ParallelSlices* GetGeometry(VolumeProjection projection);
+    ParallelSlices* GetGeometry(VolumeProjection projection) const;
     
+    uint64_t GetEstimatedMemorySize() const;
+
+    bool GetRange(float& minValue,
+                  float& maxValue) const;
+
+    bool FitWindowingToRange(RenderStyle& style,
+                             const DicomFrameConverter& converter) const;
+
+    uint8_t GetVoxelGrayscale8Unchecked(unsigned int x,
+                                        unsigned int y,
+                                        unsigned int z) const
+    {
+      return GetPixelUnchecked<uint8_t>(x, y, z);
+    }
+
+    uint16_t GetVoxelGrayscale16Unchecked(unsigned int x,
+                                          unsigned int y,
+                                          unsigned int z) const
+    {
+      return GetPixelUnchecked<uint16_t>(x, y, z);
+    }
+
+    int16_t GetVoxelSignedGrayscale16Unchecked(unsigned int x,
+                                               unsigned int y,
+                                               unsigned int z) const
+    {
+      return GetPixelUnchecked<int16_t>(x, y, z);
+    }
+
+    uint8_t GetVoxelGrayscale8(unsigned int x,
+                               unsigned int y,
+                               unsigned int z) const;
+
+    uint16_t GetVoxelGrayscale16(unsigned int x,
+                                 unsigned int y,
+                                 unsigned int z) const;
+
+    // Get the 3D position of a point in the volume, where x, y and z
+    // lie in the [0;1] range
+    Vector GetCoordinates(float x,
+                          float y,
+                          float z) const;
+
 
     class SliceReader : public boost::noncopyable
     {
     private:
-      ReadLock                       lock_;
       Orthanc::ImageAccessor         accessor_;
       std::auto_ptr<Orthanc::Image>  sagittal_;  // Unused for axial and coronal
 
     public:
-      SliceReader(ImageBuffer3D& that,
+      SliceReader(const ImageBuffer3D& that,
                   VolumeProjection projection,
                   unsigned int slice);
 
@@ -127,7 +186,8 @@ namespace OrthancStone
     class SliceWriter : public boost::noncopyable
     {
     private:
-      WriteLock                      lock_;
+      ImageBuffer3D&                 that_;
+      bool                           modified_;
       Orthanc::ImageAccessor         accessor_;
       std::auto_ptr<Orthanc::Image>  sagittal_;  // Unused for axial and coronal
 
@@ -143,8 +203,14 @@ namespace OrthancStone
         Flush();
       }
 
+      const Orthanc::ImageAccessor& GetAccessor() const
+      {
+        return accessor_;
+      }
+
       Orthanc::ImageAccessor& GetAccessor()
       {
+        modified_ = true;
         return accessor_;
       }
     };

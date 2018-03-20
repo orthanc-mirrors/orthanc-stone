@@ -23,7 +23,6 @@
 
 #include <vector>
 #include <boost/noncopyable.hpp>
-#include <boost/thread/mutex.hpp>
 
 namespace OrthancStone
 {
@@ -40,7 +39,6 @@ namespace OrthancStone
       bool  dequeued_;
     };
 
-    boost::mutex        mutex_;
     std::vector<Node>   nodes_;
     int                 firstNode_;
 
@@ -55,22 +53,8 @@ namespace OrthancStone
 
     bool Pop(unsigned int& value);
 
-    class Writer : public boost::noncopyable
-    {
-    private:
-      DownloadStack&              that_;
-      boost::mutex::scoped_lock   lock_;
-      
-    public:
-      Writer(DownloadStack& that) :
-        that_(that),
-        lock_(that.mutex_)
-      {
-      }
-      
-      void SetTopNode(unsigned int value);  
+    void SetTopNode(unsigned int value);  
 
-      void SetTopNodePermissive(int value);
-    };
+    void SetTopNodePermissive(int value);
   };
 }

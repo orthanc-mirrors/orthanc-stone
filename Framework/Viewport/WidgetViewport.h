@@ -25,14 +25,13 @@
 #include "../Toolbox/ObserversRegistry.h"
 #include "../Widgets/IWidget.h"
 
+#include <memory>
+
 namespace OrthancStone
 {
-  class WidgetViewport : 
-    public IViewport,
-    public IWidget::IChangeObserver    
+  class WidgetViewport : public IViewport
   {
   private:
-    boost::mutex                  mutex_;
     std::auto_ptr<IWidget>        centralWidget_;
     IStatusBar*                   statusBar_;
     ObserversRegistry<IViewport>  observers_;
@@ -42,39 +41,22 @@ namespace OrthancStone
     int                           lastMouseY_;
     CairoSurface                  background_;
     bool                          backgroundChanged_;
-    bool                          started_;
-
-    void UnregisterCentralWidget();
 
   public:
     WidgetViewport();
 
-    virtual ~WidgetViewport()
-    {
-      UnregisterCentralWidget();
-    }
+    virtual void SetDefaultView();
 
     virtual void SetStatusBar(IStatusBar& statusBar);
-
-    virtual void ResetStatusBar();
 
     IWidget& SetCentralWidget(IWidget* widget);  // Takes ownership
 
     virtual void NotifyChange(const IWidget& widget);
 
-    virtual void Register(IViewport::IChangeObserver& observer)
+    virtual void Register(IObserver& observer)
     {
       observers_.Register(observer);
     }
-
-    virtual void Unregister(IViewport::IChangeObserver& observer)
-    {
-      observers_.Unregister(observer);
-    }
-
-    virtual void Start();
-
-    virtual void Stop();
 
     virtual void SetSize(unsigned int width,
                          unsigned int height);
@@ -102,5 +84,9 @@ namespace OrthancStone
 
     virtual void KeyPressed(char key,
                             KeyboardModifiers modifiers);
+
+    virtual bool HasUpdateContent();
+
+    virtual void UpdateContent();
   };
 }

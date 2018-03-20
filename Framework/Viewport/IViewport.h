@@ -21,39 +21,37 @@
 
 #pragma once
 
-#include "../Toolbox/IThreadSafety.h"
 #include "IStatusBar.h"
-#include "../Enumerations.h"
+#include "../StoneEnumerations.h"
 
-#include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
+#include <Core/Images/ImageAccessor.h>
 
 namespace OrthancStone
 {
-  // This class must be thread-safe
-  class IViewport : public IThreadSafe
+  class IWidget;   // Forward declaration
+  
+  class IViewport : public boost::noncopyable
   {
   public:
-    class IChangeObserver : public boost::noncopyable
+    class IObserver : public boost::noncopyable
     {
     public:
-      virtual ~IChangeObserver()
+      virtual ~IObserver()
       {
       }
 
       virtual void NotifyChange(const IViewport& scene) = 0;
     };
 
-    virtual void Register(IChangeObserver& observer) = 0;
+    virtual ~IViewport()
+    {
+    }
 
-    virtual void Unregister(IChangeObserver& observer) = 0;
+    virtual void SetDefaultView() = 0;
+
+    virtual void Register(IObserver& observer) = 0;
 
     virtual void SetStatusBar(IStatusBar& statusBar) = 0;
-
-    virtual void ResetStatusBar() = 0;
-
-    virtual void Start() = 0;
-
-    virtual void Stop() = 0;
 
     virtual void SetSize(unsigned int width,
                          unsigned int height) = 0;
@@ -82,5 +80,12 @@ namespace OrthancStone
 
     virtual void KeyPressed(char key,
                             KeyboardModifiers modifiers) = 0;
+
+    virtual bool HasUpdateContent() = 0;
+
+    virtual void UpdateContent() = 0;
+
+    // Should only be called from IWidget
+    virtual void NotifyChange(const IWidget& widget) = 0;
   };
 }

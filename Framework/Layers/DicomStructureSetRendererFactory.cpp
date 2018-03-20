@@ -21,43 +21,104 @@
 
 #include "DicomStructureSetRendererFactory.h"
 
-#include "../../Resources/Orthanc/Core/OrthancException.h"
-
 namespace OrthancStone
 {
   class DicomStructureSetRendererFactory::Renderer : public ILayerRenderer
   {
   private:
-    const DicomStructureSet&  structureSet_;
-    SliceGeometry             slice_;
-    bool                      visible_;
-
-  public:
-    Renderer(const DicomStructureSet& structureSet,
-             const SliceGeometry& slice) :
-      structureSet_(structureSet),
-      slice_(slice),
-      visible_(true)
+    class Structure
     {
+    private:
+      bool                                                         visible_;
+      uint8_t                                                      red_;
+      uint8_t                                                      green_;
+      uint8_t                                                      blue_;
+      std::string                                                  name_;
+      std::vector< std::vector<DicomStructureSet::PolygonPoint> >  polygons_;
+
+    public:
+      Structure(DicomStructureSet& structureSet,
+                const CoordinateSystem3D& slice,
+                size_t index) :
+        name_(structureSet.GetStructureName(index))
+      {
+        structureSet.GetStructureColor(red_, green_, blue_, index);
+        visible_ = structureSet.ProjectStructure(polygons_, index, slice);
+      }
+
+      void Render(CairoContext& context)
+      {
+        if (visible_)
+        {
+          cairo_t* cr = context.GetObject();
+        
+          context.SetSourceColor(red_, green_, blue_);
+
+          for (size_t i = 0; i < polygons_.size(); i++)
+          {
+            cairo_move_to(cr, polygons_[i][0].first, polygons_[i][0].second);
+
+            for (size_t j = 1; j < polygons_[i].size(); j++)
+            {
+              cairo_line_to(cr, polygons_[i][j].first, polygons_[i][j].second);
+            }
+
+            cairo_line_to(cr, polygons_[i][0].first, polygons_[i][0].second);
+            cairo_stroke(cr);
+          }
+        }
+      }
+    };
+
+    typedef std::list<Structure*>  Structures;
+    
+    CoordinateSystem3D  slice_;
+    Structures          structures_;
+    
+  public:
+    Renderer(DicomStructureSet& structureSet,
+             const CoordinateSystem3D& slice) :
+      slice_(slice)
+    {
+      for (size_t k = 0; k < structureSet.GetStructureCount(); k++)
+      {
+        structures_.push_back(new Structure(structureSet, slice, k));
+      }
+    }
+
+    virtual ~Renderer()
+    {
+      for (Structures::iterator it = structures_.begin();
+           it != structures_.end(); ++it)
+      {
+        delete *it;
+      }
     }
 
     virtual bool RenderLayer(CairoContext& context,
                              const ViewportGeometry& view)
     {
-      if (visible_)
+      cairo_set_line_width(context.GetObject(), 2.0f / view.GetZoom());
+
+      for (Structures::const_iterator it = structures_.begin();
+           it != structures_.end(); ++it)
       {
-        cairo_set_line_width(context.GetObject(), 3.0f / view.GetZoom());
-        structureSet_.Render(context, slice_);
+        assert(*it != NULL);
+        (*it)->Render(context);
       }
 
       return true;
     }
 
-    virtual void SetLayerStyle(const RenderStyle& style)
+    virtual const CoordinateSystem3D& GetLayerSlice()
     {
-      visible_ = style.visible_;
+      return slice_;
     }
 
+    virtual void SetLayerStyle(const RenderStyle& style)
+    {
+    }
+    
     virtual bool IsFullQuality()
     {
       return true;
@@ -65,22 +126,11 @@ namespace OrthancStone
   };
 
 
-  ILayerRenderer* DicomStructureSetRendererFactory::CreateLayerRenderer(const SliceGeometry& displaySlice)
+  void DicomStructureSetRendererFactory::ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
   {
-    bool isOpposite;
-    if (GeometryToolbox::IsParallelOrOpposite(isOpposite, displaySlice.GetNormal(), structureSet_.GetNormal()))
+    if (loader_.HasStructureSet())
     {
-      return new Renderer(structureSet_, displaySlice);
+      NotifyLayerReady(new Renderer(loader_.GetStructureSet(), viewportSlice), viewportSlice, false);
     }
-    else
-    {
-      return NULL;
-    }
-  }
-
-
-  ISliceableVolume& DicomStructureSetRendererFactory::GetSourceVolume() const
-  {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
   }
 }

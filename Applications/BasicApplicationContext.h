@@ -21,56 +21,82 @@
 
 #pragma once
 
-#include "../../Framework/Volumes/VolumeImage.h"
-#include "../../Framework/Viewport/WidgetViewport.h"
-#include "../../Framework/Widgets/IWorldSceneInteractor.h"
-#include "../../Framework/Toolbox/DicomStructureSet.h"
+#include "../Framework/Viewport/WidgetViewport.h"
+#include "../Framework/Volumes/ISlicedVolume.h"
+#include "../Framework/Volumes/IVolumeLoader.h"
+#include "../Framework/Widgets/IWorldSceneInteractor.h"
+#include "../Platforms/Generic/OracleWebService.h"
 
 #include <list>
+#include <boost/thread.hpp>
 
 namespace OrthancStone
 {
   class BasicApplicationContext : public boost::noncopyable
   {
   private:
-    typedef std::list<ISliceableVolume*>       Volumes;
+    typedef std::list<ISlicedVolume*>          SlicedVolumes;
+    typedef std::list<IVolumeLoader*>          VolumeLoaders;
     typedef std::list<IWorldSceneInteractor*>  Interactors;
-    typedef std::list<DicomStructureSet*>      StructureSets;
 
-    OrthancPlugins::IOrthancConnection&  orthanc_;
+    static void UpdateThread(BasicApplicationContext* that);
 
-    WidgetViewport   viewport_;
-    Volumes          volumes_;
-    Interactors      interactors_;
-    StructureSets    structureSets_;
+    Oracle              oracle_;
+    OracleWebService    webService_;
+    boost::mutex        viewportMutex_;
+    WidgetViewport      viewport_;
+    SlicedVolumes       slicedVolumes_;
+    VolumeLoaders       volumeLoaders_;
+    Interactors         interactors_;
+    boost::thread       updateThread_;
+    bool                stopped_;
+    unsigned int        updateDelay_;
 
   public:
-    BasicApplicationContext(OrthancPlugins::IOrthancConnection& orthanc);
+    class ViewportLocker : public boost::noncopyable
+    {
+    private:
+      boost::mutex::scoped_lock  lock_;
+      IViewport&                 viewport_;
+
+    public:
+      ViewportLocker(BasicApplicationContext& that) :
+        lock_(that.viewportMutex_),
+        viewport_(that.viewport_)
+      {
+      }
+
+      IViewport& GetViewport() const
+      {
+        return viewport_;
+      }
+    };
+
+    
+    BasicApplicationContext(Orthanc::WebServiceParameters& orthanc);
 
     ~BasicApplicationContext();
 
     IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
 
-    IViewport& GetViewport()
+    IWebService& GetWebService()
     {
-      return viewport_;
+      return webService_;
     }
+    
+    ISlicedVolume& AddSlicedVolume(ISlicedVolume* volume);
 
-    OrthancPlugins::IOrthancConnection& GetOrthancConnection()
-    {
-      return orthanc_;
-    }
-
-    VolumeImage& AddSeriesVolume(const std::string& series,
-                                 bool isProgressiveDownload,
-                                 size_t downloadThreadCount);
-
-    DicomStructureSet& AddStructureSet(const std::string& instance);
+    IVolumeLoader& AddVolumeLoader(IVolumeLoader* loader);
 
     IWorldSceneInteractor& AddInteractor(IWorldSceneInteractor* interactor);
 
     void Start();
 
     void Stop();
+
+    void SetUpdateDelay(unsigned int delay)  // In milliseconds
+    {
+      updateDelay_ = delay;
+    }
   };
 }

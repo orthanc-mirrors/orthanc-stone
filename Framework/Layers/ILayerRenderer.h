@@ -22,20 +22,26 @@
 #pragma once
 
 #include "../Viewport/CairoContext.h"
-#include "../Toolbox/IThreadSafety.h"
+#include "../Toolbox/CoordinateSystem3D.h"
 #include "../Toolbox/ViewportGeometry.h"
 #include "RenderStyle.h"
 
 namespace OrthancStone
 {
-  class ILayerRenderer : public IThreadUnsafe
+  class ILayerRenderer : public boost::noncopyable
   {
   public:
+    virtual ~ILayerRenderer()
+    {
+    }
+    
     virtual bool RenderLayer(CairoContext& context,
                              const ViewportGeometry& view) = 0;
 
     virtual void SetLayerStyle(const RenderStyle& style) = 0;
 
+    virtual const CoordinateSystem3D& GetLayerSlice() = 0;
+    
     virtual bool IsFullQuality() = 0;
   };
 }

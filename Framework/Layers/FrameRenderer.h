@@ -23,46 +23,36 @@
 
 #include "ILayerRenderer.h"
 
-#include "../Toolbox/SliceGeometry.h"
+#include "../Toolbox/Slice.h"
 
 namespace OrthancStone
 {
   class FrameRenderer : public ILayerRenderer
   {
   private:
-    SliceGeometry                 viewportSlice_;
-    SliceGeometry                 frameSlice_;
+    CoordinateSystem3D            frameSlice_;
     double                        pixelSpacingX_;
     double                        pixelSpacingY_;
     RenderStyle                   style_;
     bool                          isFullQuality_;
-
     std::auto_ptr<CairoSurface>   display_;
-    cairo_matrix_t                transform_;
 
   protected:
     virtual CairoSurface* GenerateDisplay(const RenderStyle& style) = 0;
 
   public:
-    FrameRenderer(const SliceGeometry& viewportSlice,
-                  const SliceGeometry& frameSlice,
+    FrameRenderer(const CoordinateSystem3D& frameSlice,
                   double pixelSpacingX,
                   double pixelSpacingY,
                   bool isFullQuality);
 
-    static bool ComputeFrameExtent(double& x1,
-                                   double& y1,
-                                   double& x2,
-                                   double& y2,
-                                   const SliceGeometry& viewportSlice,
-                                   const SliceGeometry& frameSlice,
-                                   unsigned int frameWidth,
-                                   unsigned int frameHeight,
-                                   double pixelSpacingX,
-                                   double pixelSpacingY);
-
     virtual bool RenderLayer(CairoContext& context,
                              const ViewportGeometry& view);
+
+    virtual const CoordinateSystem3D& GetLayerSlice()
+    {
+      return frameSlice_;
+    }
 
     virtual void SetLayerStyle(const RenderStyle& style);
 
@@ -72,11 +62,7 @@ namespace OrthancStone
     }
 
     static ILayerRenderer* CreateRenderer(Orthanc::ImageAccessor* frame,
-                                          const SliceGeometry& viewportSlice,
-                                          const SliceGeometry& frameSlice,
-                                          const OrthancPlugins::IDicomDataset& dicom,
-                                          double pixelSpacingX,
-                                          double pixelSpacingY,
+                                          const Slice& frameSlice,
                                           bool isFullQuality);
   };
 }

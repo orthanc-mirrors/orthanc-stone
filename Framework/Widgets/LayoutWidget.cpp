@@ -21,8 +21,8 @@
 
 #include "LayoutWidget.h"
 
-#include "../../Resources/Orthanc/Core/Logging.h"
-#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include <Core/Logging.h>
+#include <Core/OrthancException.h>
 
 #include <boost/math/special_functions/round.hpp>
 
@@ -82,13 +82,23 @@ namespace OrthancStone
     int                     top_;
     unsigned int            width_;
     unsigned int            height_;
+    bool                    hasUpdate_;
 
   public:
     ChildWidget(IWidget* widget) :
-      widget_(widget)
+      widget_(widget),
+      hasUpdate_(widget->HasUpdateContent())
     {
       assert(widget != NULL);
       SetEmpty();
+    }
+
+    void UpdateContent()
+    {
+      if (hasUpdate_)
+      {
+        widget_->UpdateContent();
+      }
     }
 
     IWidget& GetWidget() const
@@ -179,6 +189,11 @@ namespace OrthancStone
         widget_->MouseWheel(direction, x - left_, y - top_, modifiers);
       }
     }
+    
+    bool HasRenderMouseOver()
+    {
+      return widget_->HasRenderMouseOver();
+    }
   };
 
 
@@ -252,15 +267,8 @@ namespace OrthancStone
   }
 
 
-  void LayoutWidget::UpdateStep()
-  {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-  }
-
-
   LayoutWidget::LayoutWidget() :
     isHorizontal_(true),
-    started_(false),
     width_(0),
     height_(0),
     paddingLeft_(0),
@@ -276,11 +284,19 @@ namespace OrthancStone
   {
     for (size_t i = 0; i < children_.size(); i++)
     {
-      children_[i]->GetWidget().Unregister(*this);
       delete children_[i];
     }
   }
 
+
+  void LayoutWidget::SetDefaultView()
+  {
+    for (size_t i = 0; i < children_.size(); i++)
+    {
+      children_[i]->GetWidget().SetDefaultView();
+    }
+  }
+  
 
   void LayoutWidget::NotifyChange(const IWidget& widget)
   {
@@ -329,12 +345,6 @@ namespace OrthancStone
 
   IWidget& LayoutWidget::AddWidget(IWidget* widget)  // Takes ownership
   {
-    if (started_)
-    {
-      LOG(ERROR) << "Cannot add child once Start() has been invoked";
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
     if (widget == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
@@ -344,15 +354,16 @@ namespace OrthancStone
     {
       widget->SetStatusBar(*GetStatusBar());
     }
-    else
-    {
-      widget->ResetStatusBar();
-    }
 
     children_.push_back(new ChildWidget(widget));
-    widget->Register(*this);
+    widget->SetParent(*this);
 
     ComputeChildrenExtents();
+
+    if (widget->HasUpdateContent())
+    {
+      hasUpdateContent_ = true;
+    }
 
     return *widget;
   }
@@ -365,39 +376,6 @@ namespace OrthancStone
     for (size_t i = 0; i < children_.size(); i++)
     {
       children_[i]->GetWidget().SetStatusBar(statusBar);
-    }
-  }
-
-
-  void LayoutWidget::ResetStatusBar()
-  {
-    WidgetBase::ResetStatusBar();
-
-    for (size_t i = 0; i < children_.size(); i++)
-    {
-      children_[i]->GetWidget().ResetStatusBar();
-    }
-  }  
-
-
-  void LayoutWidget::Start()
-  {
-    for (size_t i = 0; i < children_.size(); i++)
-    {
-      children_[i]->GetWidget().Start();
-    }
-
-    WidgetBase::Start();
-  }
-
-
-  void LayoutWidget::Stop()
-  {
-    WidgetBase::Stop();
-
-    for (size_t i = 0; i < children_.size(); i++)
-    {
-      children_[i]->GetWidget().Stop();
     }
   }
 
@@ -478,5 +456,35 @@ namespace OrthancStone
     {
       children_[i]->GetWidget().KeyPressed(key, modifiers);
     }
+  }
+
+  
+  void LayoutWidget::UpdateContent()
+  {
+    if (hasUpdateContent_)
+    {
+      for (size_t i = 0; i < children_.size(); i++)
+      {
+        children_[i]->UpdateContent();
+      }
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+  }
+
+
+  bool LayoutWidget::HasRenderMouseOver()
+  {
+    for (size_t i = 0; i < children_.size(); i++)
+    {
+      if (children_[i]->HasRenderMouseOver())
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

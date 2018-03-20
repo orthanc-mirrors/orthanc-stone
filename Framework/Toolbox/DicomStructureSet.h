@@ -21,24 +21,95 @@
 
 #pragma once
 
-#include "SliceGeometry.h"
-#include "../Viewport/CairoContext.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
+#include "CoordinateSystem3D.h"
+#include "Extent2D.h"
 
+#include <Plugins/Samples/Common/FullOrthancDataset.h>
 #include <list>
 
 namespace OrthancStone
 {
   class DicomStructureSet : public boost::noncopyable
   {
+  public:
+    typedef std::pair<double, double> PolygonPoint;
+    
   private:
-    typedef std::list<Vector>  Points;
-
-    struct Polygon
+    struct ReferencedSlice
     {
-      double  projectionAlongNormal_;
-      double  sliceThickness_;  // In millimeters
-      Points  points_;
+      std::string          seriesInstanceUid_;
+      CoordinateSystem3D   geometry_;
+      double               thickness_;
+
+      ReferencedSlice()
+      {
+      }
+      
+      ReferencedSlice(const std::string& seriesInstanceUid,
+                      const CoordinateSystem3D& geometry,
+                      double thickness) :
+        seriesInstanceUid_(seriesInstanceUid),
+        geometry_(geometry),
+        thickness_(thickness)
+      {
+      }
+    };
+
+    typedef std::map<std::string, ReferencedSlice>  ReferencedSlices;
+    
+    typedef std::vector<Vector>  Points;
+
+    class Polygon
+    {
+    private:
+      std::string         sopInstanceUid_;
+      bool                hasSlice_;
+      CoordinateSystem3D  geometry_;
+      double              projectionAlongNormal_;
+      double              sliceThickness_;  // In millimeters
+      Points              points_;
+      Extent2D            extent_;
+
+      void CheckPoint(const Vector& v);
+
+    public:
+      Polygon(const std::string& sopInstanceUid) :
+        sopInstanceUid_(sopInstanceUid),
+        hasSlice_(false)
+      {
+      }
+
+      void Reserve(size_t n)
+      {
+        points_.reserve(n);
+      }
+
+      void AddPoint(const Vector& v);
+
+      bool UpdateReferencedSlice(const ReferencedSlices& slices);
+
+      bool IsOnSlice(const CoordinateSystem3D& geometry) const;
+
+      const std::string& GetSopInstanceUid() const
+      {
+        return sopInstanceUid_;
+      }
+
+      const Points& GetPoints() const
+      {
+        return points_;
+      }
+
+      double GetSliceThickness() const
+      {
+        return sliceThickness_;
+      }
+
+      bool Project(double& x1,
+                   double& y1,
+                   double& x2,
+                   double& y2,
+                   const CoordinateSystem3D& slice) const;
     };
 
     typedef std::list<Polygon>  Polygons;
@@ -55,25 +126,19 @@ namespace OrthancStone
 
     typedef std::vector<Structure>  Structures;
 
-    Structures   structures_;
-    std::string  parentSeriesId_;
-    Vector       normal_;
-
-    SliceGeometry ExtractSliceGeometry(double& sliceThickness,
-                                       OrthancPlugins::IOrthancConnection& orthanc,
-                                       const OrthancPlugins::IDicomDataset& tags,
-                                       size_t contourIndex,
-                                       size_t sliceIndex);
+    Structures        structures_;
+    ReferencedSlices  referencedSlices_;
 
     const Structure& GetStructure(size_t index) const;
 
-    bool IsPolygonOnSlice(const Polygon& polygon,
-                          const SliceGeometry& geometry) const;
-
+    Structure& GetStructure(size_t index);
+  
+    bool ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
+                          Structure& structure,
+                          const CoordinateSystem3D& slice);
 
   public:
-    DicomStructureSet(OrthancPlugins::IOrthancConnection& orthanc,
-                      const std::string& instanceId);
+    DicomStructureSet(const OrthancPlugins::FullOrthancDataset& instance);
 
     size_t GetStructureCount() const
     {
@@ -91,12 +156,27 @@ namespace OrthancStone
                            uint8_t& blue,
                            size_t index) const;
 
-    const Vector& GetNormal() const
-    {
-      return normal_;
-    }
+    void GetReferencedInstances(std::set<std::string>& instances);
 
-    void Render(CairoContext& context,
-                const SliceGeometry& slice) const;
+    void AddReferencedSlice(const std::string& sopInstanceUid,
+                            const std::string& seriesInstanceUid,
+                            const CoordinateSystem3D& geometry,
+                            double thickness);
+
+    void AddReferencedSlice(const Orthanc::DicomMap& dataset);
+
+    void CheckReferencedSlices();
+
+    Vector GetNormal() const;
+
+    static DicomStructureSet* SynchronousLoad(OrthancPlugins::IOrthancConnection& orthanc,
+                                              const std::string& instanceId);
+
+    bool ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
+                          size_t index,
+                          const CoordinateSystem3D& slice)
+    {
+      return ProjectStructure(polygons, GetStructure(index), slice);
+    }
   };
 }

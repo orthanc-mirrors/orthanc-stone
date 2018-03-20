@@ -24,21 +24,18 @@
 #include "IWidget.h"
 
 #include "../Viewport/CairoContext.h"
-#include "../Toolbox/ObserversRegistry.h"
-
-#include <boost/thread.hpp>
 
 namespace OrthancStone
 {
   class WidgetBase : public IWidget
   {
   private:
-    IStatusBar*                  statusBar_;
-    ObserversRegistry<IWidget>   observers_;
-    bool                         started_;
-    boost::thread                thread_;
-    bool                         backgroundCleared_;
-    uint8_t                      backgroundColor_[3];
+    IWidget*     parent_;
+    IViewport*   viewport_;
+    IStatusBar*  statusBar_;
+    bool         backgroundCleared_;
+    uint8_t      backgroundColor_[3];
+    bool         transmitMouseOver_;
 
   protected:
     void ClearBackgroundOrthanc(Orthanc::ImageAccessor& target) const;
@@ -47,28 +44,23 @@ namespace OrthancStone
 
     void ClearBackgroundCairo(Orthanc::ImageAccessor& target) const;
 
-    void NotifyChange();
-
     void UpdateStatusBar(const std::string& message);
-
-    static void WorkerThread(WidgetBase* that);
 
     IStatusBar* GetStatusBar() const
     {
       return statusBar_;
     }
 
-    virtual bool HasUpdateThread() const = 0;
-
-    virtual void UpdateStep() = 0;
-
   public:
     WidgetBase();
 
-    bool IsStarted() const
+    virtual void SetDefaultView()
     {
-      return started_;
     }
+  
+    virtual void SetParent(IWidget& parent);
+    
+    virtual void SetViewport(IViewport& viewport);
 
     void SetBackgroundCleared(bool clear)
     {
@@ -80,6 +72,11 @@ namespace OrthancStone
       return backgroundCleared_;
     }
 
+    void SetTransmitMouseOver(bool transmit)
+    {
+      transmitMouseOver_ = transmit;
+    }
+
     void SetBackgroundColor(uint8_t red,
                             uint8_t green,
                             uint8_t blue);
@@ -88,24 +85,25 @@ namespace OrthancStone
                             uint8_t& green,
                             uint8_t& blue) const;
 
-    virtual void Register(IChangeObserver& observer);
-
-    virtual void Unregister(IChangeObserver& observer);
-    
     virtual void SetStatusBar(IStatusBar& statusBar)
     {
       statusBar_ = &statusBar;
     }
 
-    virtual void ResetStatusBar()
-    {
-      statusBar_ = NULL;
-    }    
-
-    virtual void Start();
-
-    virtual void Stop();
-
     virtual bool Render(Orthanc::ImageAccessor& surface);
+
+    virtual bool HasUpdateContent() const
+    {
+      return false;
+    }
+
+    virtual void UpdateContent();
+
+    virtual bool HasRenderMouseOver()
+    {
+      return transmitMouseOver_;
+    }
+
+    virtual void NotifyChange();
   };
 }

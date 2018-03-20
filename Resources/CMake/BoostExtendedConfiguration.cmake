@@ -17,12 +17,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-SET(ORTHANC_BOOST_COMPONENTS program_options)
-
-include(${ORTHANC_ROOT}/Resources/CMake/BoostConfiguration.cmake)
-
 if (BOOST_STATIC)
-  list(APPEND BOOST_SOURCES
+  list(APPEND BOOST_EXTENDED_SOURCES
     ${BOOST_SOURCES_DIR}/libs/program_options/src/cmdline.cpp
     ${BOOST_SOURCES_DIR}/libs/program_options/src/config_file.cpp
     ${BOOST_SOURCES_DIR}/libs/program_options/src/convert.cpp

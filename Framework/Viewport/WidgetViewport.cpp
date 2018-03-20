@@ -21,37 +21,32 @@
 
 #include "WidgetViewport.h"
 
-#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
-#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include <Core/Images/ImageProcessing.h>
+#include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
-  void WidgetViewport::UnregisterCentralWidget()
-  {
-    mouseTracker_.reset(NULL);
-
-    if (centralWidget_.get() != NULL)
-    {
-      centralWidget_->Unregister(*this);
-    }
-  }
-
-
   WidgetViewport::WidgetViewport() :
     statusBar_(NULL),
     isMouseOver_(false),
     lastMouseX_(0),
     lastMouseY_(0),
-    backgroundChanged_(false),
-    started_(false)
+    backgroundChanged_(false)
   {
+  }
+
+
+  void WidgetViewport::SetDefaultView()
+  {
+    if (centralWidget_.get() != NULL)
+    {
+      centralWidget_->SetDefaultView();
+    }
   }
 
 
   void WidgetViewport::SetStatusBar(IStatusBar& statusBar)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     statusBar_ = &statusBar;
 
     if (centralWidget_.get() != NULL)
@@ -61,48 +56,25 @@ namespace OrthancStone
   }
 
 
-  void WidgetViewport::ResetStatusBar()
-  {
-    boost::mutex::scoped_lock lock(mutex_);
-
-    statusBar_ = NULL;
-
-    if (centralWidget_.get() != NULL)
-    {
-      centralWidget_->ResetStatusBar();
-    }
-  }
-
-
   IWidget& WidgetViewport::SetCentralWidget(IWidget* widget)
   {
-    if (started_)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (widget == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    UnregisterCentralWidget();
+    mouseTracker_.reset(NULL);
       
     centralWidget_.reset(widget);
-    centralWidget_->Register(*this);
+    centralWidget_->SetViewport(*this);
 
-    if (statusBar_ == NULL)
-    {
-      centralWidget_->ResetStatusBar();
-    }
-    else
+    if (statusBar_ != NULL)
     {
       centralWidget_->SetStatusBar(*statusBar_);
     }
 
     backgroundChanged_ = true;
+    observers_.Apply(*this, &IObserver::NotifyChange);
 
     return *widget;
   }
@@ -111,41 +83,13 @@ namespace OrthancStone
   void WidgetViewport::NotifyChange(const IWidget& widget)
   {
     backgroundChanged_ = true;
-    observers_.NotifyChange(this);
-  }
-
-
-  void WidgetViewport::Start()
-  {
-    boost::mutex::scoped_lock lock(mutex_);
-
-    if (centralWidget_.get() != NULL)
-    {
-      centralWidget_->Start();
-    }
-
-    started_ = true;
-  }
-
-
-  void WidgetViewport::Stop()
-  {
-    boost::mutex::scoped_lock lock(mutex_);
-
-    started_ = false;
-
-    if (centralWidget_.get() != NULL)
-    {
-      centralWidget_->Stop();
-    }
+    observers_.Apply(*this, &IObserver::NotifyChange);
   }
 
 
   void WidgetViewport::SetSize(unsigned int width,
                                unsigned int height)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     background_.SetSize(width, height);
 
     if (centralWidget_.get() != NULL)
@@ -153,31 +97,33 @@ namespace OrthancStone
       centralWidget_->SetSize(width, height);
     }
 
-    observers_.NotifyChange(this);
+    observers_.Apply(*this, &IObserver::NotifyChange);
   }
 
 
   bool WidgetViewport::Render(Orthanc::ImageAccessor& surface)
   {
-    boost::mutex::scoped_lock lock(mutex_);
+    if (centralWidget_.get() == NULL)
+    {
+      return false;
+    }
+    
+    Orthanc::ImageAccessor background = background_.GetAccessor();
 
-    if (!started_ ||
-        centralWidget_.get() == NULL)
+    if (backgroundChanged_ &&
+        !centralWidget_->Render(background))
     {
       return false;
     }
 
-    if (backgroundChanged_)
+    if (background.GetWidth() != surface.GetWidth() ||
+        background.GetHeight() != surface.GetHeight())
     {
-      Orthanc::ImageAccessor accessor = background_.GetAccessor();
-      if (!centralWidget_->Render(accessor))
-      {
-        return false;
-      }
+      return false;
     }
 
-    Orthanc::ImageProcessing::Copy(surface, background_.GetAccessor());
-
+    Orthanc::ImageProcessing::Convert(surface, background);
+    
     if (mouseTracker_.get() != NULL)
     {
       mouseTracker_->Render(surface);
@@ -196,13 +142,6 @@ namespace OrthancStone
                                  int y,
                                  KeyboardModifiers modifiers)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
-    if (!started_)
-    {
-      return;
-    }
-
     lastMouseX_ = x;
     lastMouseY_ = y;
 
@@ -215,24 +154,17 @@ namespace OrthancStone
       mouseTracker_.reset(NULL);
     }      
 
-    observers_.NotifyChange(this);;
+    observers_.Apply(*this, &IObserver::NotifyChange);
   }
 
 
   void WidgetViewport::MouseUp()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
-    if (!started_)
-    {
-      return;
-    }
-
     if (mouseTracker_.get() != NULL)
     {
       mouseTracker_->MouseUp();
       mouseTracker_.reset(NULL);
-      observers_.NotifyChange(this);;
+      observers_.Apply(*this, &IObserver::NotifyChange);
     }
   }
 
@@ -240,9 +172,7 @@ namespace OrthancStone
   void WidgetViewport::MouseMove(int x, 
                                  int y) 
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
-    if (!started_)
+    if (centralWidget_.get() == NULL)
     {
       return;
     }
@@ -250,29 +180,44 @@ namespace OrthancStone
     lastMouseX_ = x;
     lastMouseY_ = y;
 
+    bool repaint = false;
+    
     if (mouseTracker_.get() != NULL)
     {
       mouseTracker_->MouseMove(x, y);
+      repaint = true;
+    }
+    else
+    {
+      repaint = centralWidget_->HasRenderMouseOver();
     }
 
-    // The scene must be repainted
-    observers_.NotifyChange(this);
+    if (repaint)
+    {
+      // The scene must be repainted, notify the observers
+      observers_.Apply(*this, &IObserver::NotifyChange);
+    }
   }
 
 
   void WidgetViewport::MouseEnter()
   {
-    boost::mutex::scoped_lock lock(mutex_);
     isMouseOver_ = true;
-    observers_.NotifyChange(this);
+    observers_.Apply(*this, &IObserver::NotifyChange);
   }
 
 
   void WidgetViewport::MouseLeave()
   {
-    boost::mutex::scoped_lock lock(mutex_);
     isMouseOver_ = false;
-    observers_.NotifyChange(this);
+
+    if (mouseTracker_.get() != NULL)
+    {
+      mouseTracker_->MouseUp();
+      mouseTracker_.reset(NULL);
+    }
+
+    observers_.Apply(*this, &IObserver::NotifyChange);
   }
 
 
@@ -281,13 +226,6 @@ namespace OrthancStone
                                   int y,
                                   KeyboardModifiers modifiers)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
-    if (!started_)
-    {
-      return;
-    }
-
     if (centralWidget_.get() != NULL &&
         mouseTracker_.get() == NULL)
     {
@@ -299,12 +237,32 @@ namespace OrthancStone
   void WidgetViewport::KeyPressed(char key,
                                   KeyboardModifiers modifiers)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (centralWidget_.get() != NULL &&
         mouseTracker_.get() == NULL)
     {
       centralWidget_->KeyPressed(key, modifiers);
+    }
+  }
+
+
+  bool WidgetViewport::HasUpdateContent()
+  {
+    if (centralWidget_.get() != NULL)
+    {
+      return centralWidget_->HasUpdateContent();
+    }
+    else
+    {
+      return false;
+    }
+  }
+   
+
+  void WidgetViewport::UpdateContent()
+  {
+    if (centralWidget_.get() != NULL)
+    {
+      centralWidget_->UpdateContent();
     }
   }
 }

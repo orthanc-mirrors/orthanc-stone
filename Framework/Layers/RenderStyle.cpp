@@ -21,7 +21,7 @@
 
 #include "RenderStyle.h"
 
-#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
@@ -49,30 +49,15 @@ namespace OrthancStone
                                      float defaultCenter,
                                      float defaultWidth) const
   {
-    switch (windowing_)
+    if (windowing_ == ImageWindowing_Custom)
     {
-      case ImageWindowing_Default:
-        targetCenter = defaultCenter;
-        targetWidth = defaultWidth;
-        break;
-
-      case ImageWindowing_Bone:
-        targetCenter = 300;
-        targetWidth = 2000;
-        break;
-
-      case ImageWindowing_Lung:
-        targetCenter = -600;
-        targetWidth = 1600;
-        break;
-
-      case ImageWindowing_Custom:
-        targetCenter = customWindowCenter_;
-        targetWidth = customWindowWidth_;
-        break;
-
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      targetCenter = customWindowCenter_;
+      targetWidth = customWindowWidth_;
+    }
+    else
+    {
+      return ::OrthancStone::ComputeWindowing
+        (targetCenter, targetWidth, windowing_, defaultCenter, defaultWidth);
     }
   }
 

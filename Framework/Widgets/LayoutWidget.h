@@ -23,12 +23,12 @@
 
 #include "WidgetBase.h"
 
+#include <vector>
+#include <memory>
 
 namespace OrthancStone
 {
-  class LayoutWidget : 
-    public WidgetBase,
-    public IWidget::IChangeObserver
+  class LayoutWidget : public WidgetBase
   {
   private:
     class LayoutMouseTracker;
@@ -36,7 +36,6 @@ namespace OrthancStone
 
     std::vector<ChildWidget*>     children_;
     bool                          isHorizontal_;
-    bool                          started_;
     unsigned int                  width_;
     unsigned int                  height_;
     std::auto_ptr<IMouseTracker>  mouseTracker_;
@@ -45,22 +44,16 @@ namespace OrthancStone
     unsigned int                  paddingRight_;
     unsigned int                  paddingBottom_;
     unsigned int                  paddingInternal_;
+    bool                          hasUpdateContent_;
 
     void ComputeChildrenExtents();
-
-  protected:
-    virtual bool HasUpdateThread() const 
-    {
-      return false;
-    }
-
-    virtual void UpdateStep();
-
 
   public:
     LayoutWidget();
 
     virtual ~LayoutWidget();
+
+    virtual void SetDefaultView();
 
     virtual void NotifyChange(const IWidget& widget);
 
@@ -105,12 +98,6 @@ namespace OrthancStone
 
     virtual void SetStatusBar(IStatusBar& statusBar);
 
-    virtual void ResetStatusBar();
-
-    virtual void Start();
-
-    virtual void Stop();
-
     virtual void SetSize(unsigned int width,
                          unsigned int height);
 
@@ -132,5 +119,14 @@ namespace OrthancStone
 
     virtual void KeyPressed(char key,
                             KeyboardModifiers modifiers);
+
+    virtual bool HasUpdateContent() const
+    {
+      return hasUpdateContent_;
+    }
+
+    virtual void UpdateContent();
+
+    virtual bool HasRenderMouseOver();
   };
 }

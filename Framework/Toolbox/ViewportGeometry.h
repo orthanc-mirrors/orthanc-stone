@@ -22,18 +22,15 @@
 #pragma once
 
 #include "../Viewport/CairoContext.h"
+#include "../Toolbox/Extent2D.h"
 
 namespace OrthancStone
 {
-  // Not thread-safe
   class ViewportGeometry
   {
   private:
     // Extent of the scene (in world units)
-    double   x1_;
-    double   y1_;
-    double   x2_;
-    double   y2_;
+    Extent2D   sceneExtent_;
 
     // Size of the display (in pixels)
     unsigned int  width_;
@@ -54,15 +51,12 @@ namespace OrthancStone
     void SetDisplaySize(unsigned int width,
                         unsigned int height);
 
-    void SetSceneExtent(double x1,
-                        double y1,
-                        double x2,
-                        double y2);
+    void SetSceneExtent(const Extent2D& extent);
 
-    void GetSceneExtent(double& x1,
-                        double& y1,
-                        double& x2,
-                        double& y2) const;
+    const Extent2D& GetSceneExtent() const
+    {
+      return sceneExtent_;
+    }
 
     void MapDisplayToScene(double& sceneX /* out */,
                            double& sceneY /* out */,

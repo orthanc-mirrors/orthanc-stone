@@ -21,7 +21,7 @@
 
 #include "ParallelSlicesCursor.h"
 
-#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
@@ -40,8 +40,6 @@ namespace OrthancStone
 
   size_t ParallelSlicesCursor::GetSliceCount()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (slices_.get() == NULL)
     {
       return 0;
@@ -53,13 +51,11 @@ namespace OrthancStone
   }
 
 
-  SliceGeometry ParallelSlicesCursor::GetSlice(size_t slice)
+  CoordinateSystem3D ParallelSlicesCursor::GetSlice(size_t slice)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (slices_.get() == NULL)
     {
-      return SliceGeometry();
+      return CoordinateSystem3D();
     }
     else
     {
@@ -70,18 +66,14 @@ namespace OrthancStone
 
   void ParallelSlicesCursor::SetGeometry(const ParallelSlices& slices)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     slices_.reset(new ParallelSlices(slices));
 
     currentSlice_ = GetDefaultSlice();
   }
 
 
-  SliceGeometry ParallelSlicesCursor::GetCurrentSlice()
+  CoordinateSystem3D ParallelSlicesCursor::GetCurrentSlice()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (slices_.get() != NULL &&
         currentSlice_ < slices_->GetSliceCount())
     {
@@ -89,15 +81,13 @@ namespace OrthancStone
     }
     else
     {
-      return SliceGeometry();  // No slice is available, return the canonical geometry
+      return CoordinateSystem3D();  // No slice is available, return the canonical geometry
     }
   }
 
 
   bool ParallelSlicesCursor::SetDefaultSlice()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     size_t slice = GetDefaultSlice();
 
     if (currentSlice_ != slice)
@@ -115,8 +105,6 @@ namespace OrthancStone
   bool ParallelSlicesCursor::ApplyOffset(SliceOffsetMode mode,
                                          int offset)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     if (slices_.get() == NULL)
     {
       return false;
@@ -215,8 +203,6 @@ namespace OrthancStone
 
   bool ParallelSlicesCursor::LookupSliceContainingPoint(const Vector& p)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     size_t slice;
     double distance;
 

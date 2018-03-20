@@ -21,69 +21,21 @@
 
 #include "MessagingToolbox.h"
 
-#include "../../Resources/Orthanc/Core/Images/Image.h"
-#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
-#include "../../Resources/Orthanc/Core/Images/JpegReader.h"
-#include "../../Resources/Orthanc/Core/Images/PngReader.h"
-#include "../../Resources/Orthanc/Core/OrthancException.h"
-#include "../../Resources/Orthanc/Core/Toolbox.h"
-#include "../../Resources/Orthanc/Core/Logging.h"
+#include <Core/Images/Image.h>
+#include <Core/Images/ImageProcessing.h>
+#include <Core/Images/JpegReader.h>
+#include <Core/Images/PngReader.h>
+#include <Core/OrthancException.h>
+#include <Core/Toolbox.h>
+#include <Core/Logging.h>
 
 #include <boost/lexical_cast.hpp>
 #include <json/reader.h>
-
-#if defined(__native_client__)
-#  include <boost/math/special_functions/round.hpp>
-#else
-#  include <boost/date_time/posix_time/posix_time.hpp>
-#  include <boost/date_time/microsec_time_clock.hpp>
-#endif
 
 namespace OrthancStone
 {
   namespace MessagingToolbox
   {
-#if defined(__native_client__)
-    static pp::Core* core_ = NULL;
-
-    void Timestamp::Initialize(pp::Core* core)
-    {
-      if (core == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }
-
-      core_ = core;
-    }
-
-    Timestamp::Timestamp()
-    {
-      if (core_ == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }
-
-      time_ = core_->GetTimeTicks();
-    }
-
-    int Timestamp::GetMillisecondsSince(const Timestamp& other)
-    {
-      double difference = time_ - other.time_;
-      return static_cast<int>(boost::math::iround(difference * 1000.0));
-    }
-#else
-    Timestamp::Timestamp()
-    {
-      time_ = boost::posix_time::microsec_clock::local_time();
-    }
-
-    int Timestamp::GetMillisecondsSince(const Timestamp& other)
-    {
-      boost::posix_time::time_duration difference = time_ - other.time_;
-      return static_cast<int>(difference.total_milliseconds());
-    }
-#endif
-
     static bool ParseVersion(std::string& version,
                              unsigned int& major,
                              unsigned int& minor,
@@ -152,8 +104,19 @@ namespace OrthancStone
     }
 
 
-    static void ParseJson(Json::Value& target,
-                          const std::string& source)
+    bool ParseJson(Json::Value& target,
+                   const void* content,
+                   size_t size)
+    {
+      Json::Reader reader;
+      return reader.parse(reinterpret_cast<const char*>(content),
+                          reinterpret_cast<const char*>(content) + size,
+                          target);
+    }
+
+
+    static void ParseJsonException(Json::Value& target,
+                                   const std::string& source)
     {
       Json::Reader reader;
       if (!reader.parse(source, target))
@@ -169,7 +132,7 @@ namespace OrthancStone
     {
       std::string tmp;
       orthanc.RestApiGet(tmp, uri);
-      ParseJson(target, tmp);
+      ParseJsonException(target, tmp);
     }
 
 
@@ -180,7 +143,7 @@ namespace OrthancStone
     {
       std::string tmp;
       orthanc.RestApiPost(tmp, uri, body);
-      ParseJson(target, tmp);
+      ParseJsonException(target, tmp);
     }
 
 
@@ -220,11 +183,12 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
       }
 
-      LOG(WARNING) << "Version of the Orthanc core (must be above 1.1.0): " << version;
+      LOG(WARNING) << "Version of the Orthanc core (must be above 1.3.1): " << version;
 
-      // Stone is only compatible with Orthanc >= 1.1.0, otherwise deadlocks might occur
+      // Stone is only compatible with Orthanc >= 1.3.1
       if (major < 1 ||
-          (major == 1 && minor < 1))
+          (major == 1 && minor < 3) ||
+          (major == 1 && minor == 3 && patch < 1))
       {
         return false;
       }
@@ -422,7 +386,7 @@ namespace OrthancStone
       float offset = static_cast<float>(stretchLow) / scaling;
       
       Orthanc::ImageProcessing::Convert(*image, *reader);
-      Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling);
+      Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling, true);
 
 #if 0
       /*info.removeMember("PixelData");
@@ -434,6 +398,52 @@ namespace OrthancStone
 #endif
 
       return image.release();
+    }
+
+
+    static void AddTag(Orthanc::DicomMap& target,
+                       const OrthancPlugins::IDicomDataset& source,
+                       const Orthanc::DicomTag& tag)
+    {
+      OrthancPlugins::DicomTag key(tag.GetGroup(), tag.GetElement());
+      
+      std::string value;
+      if (source.GetStringValue(value, key))
+      {
+        target.SetValue(tag, value, false);
+      }
+    }
+
+    
+    void ConvertDataset(Orthanc::DicomMap& target,
+                        const OrthancPlugins::IDicomDataset& source)
+    {
+      target.Clear();
+
+      AddTag(target, source, Orthanc::DICOM_TAG_BITS_ALLOCATED);
+      AddTag(target, source, Orthanc::DICOM_TAG_BITS_STORED);
+      AddTag(target, source, Orthanc::DICOM_TAG_COLUMNS);
+      AddTag(target, source, Orthanc::DICOM_TAG_DOSE_GRID_SCALING);
+      AddTag(target, source, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER);
+      AddTag(target, source, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR);
+      AddTag(target, source, Orthanc::DICOM_TAG_HIGH_BIT);
+      AddTag(target, source, Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT);
+      AddTag(target, source, Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT);
+      AddTag(target, source, Orthanc::DICOM_TAG_NUMBER_OF_FRAMES);
+      AddTag(target, source, Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION);
+      AddTag(target, source, Orthanc::DICOM_TAG_PIXEL_REPRESENTATION);
+      AddTag(target, source, Orthanc::DICOM_TAG_PIXEL_SPACING);
+      AddTag(target, source, Orthanc::DICOM_TAG_PLANAR_CONFIGURATION);
+      AddTag(target, source, Orthanc::DICOM_TAG_RESCALE_INTERCEPT);
+      AddTag(target, source, Orthanc::DICOM_TAG_RESCALE_SLOPE);
+      AddTag(target, source, Orthanc::DICOM_TAG_ROWS);
+      AddTag(target, source, Orthanc::DICOM_TAG_SAMPLES_PER_PIXEL);
+      AddTag(target, source, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID);
+      AddTag(target, source, Orthanc::DICOM_TAG_SLICE_THICKNESS);
+      AddTag(target, source, Orthanc::DICOM_TAG_SOP_CLASS_UID);
+      AddTag(target, source, Orthanc::DICOM_TAG_SOP_INSTANCE_UID);
+      AddTag(target, source, Orthanc::DICOM_TAG_WINDOW_CENTER);
+      AddTag(target, source, Orthanc::DICOM_TAG_WINDOW_WIDTH);
     }
   }
 }

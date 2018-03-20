@@ -21,7 +21,7 @@
 
 #include "GrayscaleFrameRenderer.h"
 
-#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
@@ -51,14 +51,17 @@ namespace OrthancStone
 
       lut = reinterpret_cast<const uint8_t*>(Orthanc::EmbeddedResources::GetFileResourceBuffer(style.lut_));
     }
-      
+
     Orthanc::ImageAccessor target = result->GetAccessor();
-    for (unsigned int y = 0; y < target.GetHeight(); y++)
+    const unsigned int width = target.GetWidth();
+    const unsigned int height = target.GetHeight();
+    
+    for (unsigned int y = 0; y < height; y++)
     {
       const float* p = reinterpret_cast<const float*>(frame_->GetConstRow(y));
       uint8_t* q = reinterpret_cast<uint8_t*>(target.GetRow(y));
 
-      for (unsigned int x = 0; x < target.GetWidth(); x++, p++, q += 4)
+      for (unsigned int x = 0; x < width; x++, p++, q += 4)
       {
         uint8_t v = 0;
         if (windowWidth >= 0.001f)  // Avoid division by zero
@@ -107,12 +110,11 @@ namespace OrthancStone
 
   GrayscaleFrameRenderer::GrayscaleFrameRenderer(Orthanc::ImageAccessor* frame,
                                                  const DicomFrameConverter& converter,
-                                                 const SliceGeometry& viewportSlice,
-                                                 const SliceGeometry& frameSlice,
+                                                 const CoordinateSystem3D& frameSlice,
                                                  double pixelSpacingX,
                                                  double pixelSpacingY,
                                                  bool isFullQuality) :
-    FrameRenderer(viewportSlice, frameSlice, pixelSpacingX, pixelSpacingY, isFullQuality),
+    FrameRenderer(frameSlice, pixelSpacingX, pixelSpacingY, isFullQuality),
     frame_(frame),
     defaultWindowCenter_(converter.GetDefaultWindowCenter()),
     defaultWindowWidth_(converter.GetDefaultWindowWidth())

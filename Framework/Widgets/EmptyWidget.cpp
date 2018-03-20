@@ -21,14 +21,24 @@
 
 #include "EmptyWidget.h"
 
-#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
+#include <Core/Images/ImageProcessing.h>
+#include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
-  bool EmptyWidget::Render(Orthanc::ImageAccessor& surface)
+  namespace Samples
   {
-    // Note: This call is slow
-    Orthanc::ImageProcessing::Set(surface, red_, green_, blue_, 255);
-    return true;
+    bool EmptyWidget::Render(Orthanc::ImageAccessor& surface)
+    {
+      // Note: This call is slow
+      Orthanc::ImageProcessing::Set(surface, red_, green_, blue_, 255);
+      return true;
+    }
+
+  
+    void EmptyWidget::UpdateContent()
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
   }
 }

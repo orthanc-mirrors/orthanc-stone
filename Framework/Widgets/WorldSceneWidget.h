@@ -24,7 +24,7 @@
 #include "CairoWidget.h"
 #include "IWorldSceneInteractor.h"
 
-#include "../Toolbox/SharedValue.h"
+#include "../Toolbox/ObserversRegistry.h"
 #include "../Toolbox/ViewportGeometry.h"
 
 namespace OrthancStone
@@ -32,7 +32,6 @@ namespace OrthancStone
   class WorldSceneWidget : public CairoWidget
   {
   public:
-    // Must be thread-safe
     class IWorldObserver : public boost::noncopyable
     {
     public:
@@ -48,7 +47,6 @@ namespace OrthancStone
     };
 
   private:
-    struct ViewChangeFunctor;
     struct SizeChangeFunctor;
 
     class SceneMouseTracker;
@@ -57,21 +55,16 @@ namespace OrthancStone
 
     typedef ObserversRegistry<WorldSceneWidget, IWorldObserver>  Observers;
 
-    SharedValue<ViewportGeometry>  view_;
-    Observers                      observers_;
-    IWorldSceneInteractor*         interactor_;
+    ViewportGeometry       view_;
+    Observers              observers_;
+    IWorldSceneInteractor* interactor_;
 
+  public:
+    virtual Extent2D GetSceneExtent() = 0;
 
   protected:
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view) = 0;
-
-    virtual bool HasUpdateThread() const
-    {
-      return false;
-    }
-
-    virtual void UpdateStep();
 
     virtual bool RenderCairo(CairoContext& context);
 
@@ -79,16 +72,13 @@ namespace OrthancStone
                                       int x,
                                       int y);
 
-    void SetSceneExtent(SharedValue<ViewportGeometry>::Locker& locker);
+    void SetSceneExtent(ViewportGeometry& geometry);
 
   public:
     WorldSceneWidget() :
       interactor_(NULL)
     {
     }
-
-    using WidgetBase::Register;
-    using WidgetBase::Unregister;
 
     void Register(IWorldObserver& observer)
     {
@@ -100,21 +90,12 @@ namespace OrthancStone
       observers_.Unregister(observer);
     }
 
-    virtual SliceGeometry GetSlice() = 0;
-
-    virtual void GetSceneExtent(double& x1,
-                                double& y1,
-                                double& x2,
-                                double& y2) = 0;
-
     virtual void SetSize(unsigned int width,
                          unsigned int height);
 
     void SetInteractor(IWorldSceneInteractor& interactor);
 
-    virtual void Start();
-      
-    void SetDefaultView();
+    virtual void SetDefaultView();
 
     void SetView(const ViewportGeometry& view);
 

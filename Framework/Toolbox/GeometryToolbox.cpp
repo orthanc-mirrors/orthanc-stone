@@ -21,128 +21,22 @@
 
 #include "GeometryToolbox.h"
 
-#include "../../Resources/Orthanc/Core/Logging.h"
-#include "../../Resources/Orthanc/Core/OrthancException.h"
-#include "../../Resources/Orthanc/Core/Toolbox.h"
+#include <Core/Logging.h>
+#include <Core/OrthancException.h>
 
-#include <stdio.h>
-#include <boost/lexical_cast.hpp>
+#include <cassert>
 
 namespace OrthancStone
 {
   namespace GeometryToolbox
   {
-    void Print(const Vector& v)
-    {
-      for (size_t i = 0; i < v.size(); i++)
-      {
-        printf("%8.2f\n", v[i]);
-      }
-      printf("\n");
-    }
-
-
-    bool ParseVector(Vector& target,
-                     const std::string& value)
-    {
-      std::vector<std::string> items;
-      Orthanc::Toolbox::TokenizeString(items, value, '\\');
-
-      target.resize(items.size());
-
-      for (size_t i = 0; i < items.size(); i++)
-      {
-        try
-        {
-          target[i] = boost::lexical_cast<double>(Orthanc::Toolbox::StripSpaces(items[i]));
-        }
-        catch (boost::bad_lexical_cast&)
-        {
-          target.clear();
-          return false;
-        }
-      }
-
-      return true;
-    }
-
-
-    bool ParseVector(Vector& target,
-                     const OrthancPlugins::IDicomDataset& dataset,
-                     const OrthancPlugins::DicomPath& tag)
-    {
-      std::string value;
-      return (dataset.GetStringValue(value, tag) &&
-              ParseVector(target, value));
-    }
-
-
-    void AssignVector(Vector& v,
-                      double v1,
-                      double v2)
-    {
-      v.resize(2);
-      v[0] = v1;
-      v[1] = v2;
-    }
-
-
-    void AssignVector(Vector& v,
-                      double v1,
-                      double v2,
-                      double v3)
-    {
-      v.resize(3);
-      v[0] = v1;
-      v[1] = v2;
-      v[2] = v3;
-    }
-
-
-    bool IsNear(double x,
-                double y)
-    {
-      // As most input is read as single-precision numbers, we take the
-      // epsilon machine for float32 into consideration to compare numbers
-      return IsNear(x, y, 10.0 * std::numeric_limits<float>::epsilon());
-    }
-
-
-    void NormalizeVector(Vector& u)
-    {
-      double norm = boost::numeric::ublas::norm_2(u);
-      if (!IsCloseToZero(norm))
-      {
-        u = u / norm;
-      }
-    }
-
-
-    void CrossProduct(Vector& result,
-                      const Vector& u,
-                      const Vector& v)
-    {
-      if (u.size() != 3 ||
-          v.size() != 3)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-
-      result.resize(3);
-
-      result[0] = u[1] * v[2] - u[2] * v[1];
-      result[1] = u[2] * v[0] - u[0] * v[2];
-      result[2] = u[0] * v[1] - u[1] * v[0];
-    }
-
-
     void ProjectPointOntoPlane(Vector& result,
                                const Vector& point,
                                const Vector& planeNormal,
                                const Vector& planeOrigin)
     {
       double norm =  boost::numeric::ublas::norm_2(planeNormal);
-      if (IsCloseToZero(norm))
+      if (LinearAlgebra::IsCloseToZero(norm))
       {
         // Division by zero
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
@@ -171,8 +65,8 @@ namespace OrthancStone
       double normU = boost::numeric::ublas::norm_2(u);
       double normV = boost::numeric::ublas::norm_2(v);
 
-      if (IsCloseToZero(normU) ||
-          IsCloseToZero(normV))
+      if (LinearAlgebra::IsCloseToZero(normU) ||
+          LinearAlgebra::IsCloseToZero(normV))
       {
         return false;
       }
@@ -182,12 +76,12 @@ namespace OrthancStone
       // The angle must be zero, so the cosine must be almost equal to
       // cos(0) == 1 (or cos(180) == -1 if allowOppositeDirection == true)
 
-      if (IsCloseToZero(cosAngle - 1.0))
+      if (LinearAlgebra::IsCloseToZero(cosAngle - 1.0))
       {
         isOpposite = false;
         return true;
       }
-      else if (IsCloseToZero(fabs(cosAngle) - 1.0))
+      else if (LinearAlgebra::IsCloseToZero(fabs(cosAngle) - 1.0))
       {
         isOpposite = true;
         return true;
@@ -221,10 +115,10 @@ namespace OrthancStone
 
       // The direction of the line of intersection is orthogonal to the
       // normal of both planes
-      CrossProduct(direction, normal1, normal2);
+      LinearAlgebra::CrossProduct(direction, normal1, normal2);
 
       double norm = boost::numeric::ublas::norm_2(direction);
-      if (IsCloseToZero(norm))
+      if (LinearAlgebra::IsCloseToZero(norm))
       {
         // The two planes are parallel or coincident
         return false;
@@ -234,7 +128,7 @@ namespace OrthancStone
       double d2 = -boost::numeric::ublas::inner_prod(normal2, origin2);
       Vector tmp = d2 * normal1 - d1 * normal2;
 
-      CrossProduct(p, tmp, direction);
+      LinearAlgebra::CrossProduct(p, tmp, direction);
       p /= norm;
 
       return true;
@@ -259,56 +153,56 @@ namespace OrthancStone
       // (2005). This is a direct, non-optimized translation of Algorithm
       // 2 in the paper.
 
-      static uint8_t tab1[16] = { 255 /* none */,
-                                  0,
-                                  0,
-                                  1,
-                                  1,
-                                  255 /* na */,
-                                  0,
-                                  2,
-                                  2,
-                                  0,
-                                  255 /* na */,
-                                  1,
-                                  1,
-                                  0,
-                                  0,
-                                  255 /* none */ };
+      static const uint8_t tab1[16] = { 255 /* none */,
+                                        0,
+                                        0,
+                                        1,
+                                        1,
+                                        255 /* na */,
+                                        0,
+                                        2,
+                                        2,
+                                        0,
+                                        255 /* na */,
+                                        1,
+                                        1,
+                                        0,
+                                        0,
+                                        255 /* none */ };
 
 
-      static uint8_t tab2[16] = { 255 /* none */,
-                                  3,
-                                  1,
-                                  3,
-                                  2,
-                                  255 /* na */,
-                                  2,
-                                  3,
-                                  3,
-                                  2,
-                                  255 /* na */,
-                                  2,
-                                  3,
-                                  1,
-                                  3,
-                                  255 /* none */ };
+      static const uint8_t tab2[16] = { 255 /* none */,
+                                        3,
+                                        1,
+                                        3,
+                                        2,
+                                        255 /* na */,
+                                        2,
+                                        3,
+                                        3,
+                                        2,
+                                        255 /* na */,
+                                        2,
+                                        3,
+                                        1,
+                                        3,
+                                        255 /* none */ };
 
       // Create the coordinates of the rectangle
       Vector x[4];
-      AssignVector(x[0], xmin, ymin, 1.0);
-      AssignVector(x[1], xmax, ymin, 1.0);
-      AssignVector(x[2], xmax, ymax, 1.0);
-      AssignVector(x[3], xmin, ymax, 1.0);
+      LinearAlgebra::AssignVector(x[0], xmin, ymin, 1.0);
+      LinearAlgebra::AssignVector(x[1], xmax, ymin, 1.0);
+      LinearAlgebra::AssignVector(x[2], xmax, ymax, 1.0);
+      LinearAlgebra::AssignVector(x[3], xmin, ymax, 1.0);
 
       // Move to homogoneous coordinates in 2D
       Vector p;
 
       {
         Vector a, b;
-        AssignVector(a, ax, ay, 1.0);
-        AssignVector(b, bx, by, 1.0);
-        CrossProduct(p, a, b);
+        LinearAlgebra::AssignVector(a, ax, ay, 1.0);
+        LinearAlgebra::AssignVector(b, bx, by, 1.0);
+        LinearAlgebra::CrossProduct(p, a, b);
       }
 
       uint8_t c = 0;
@@ -333,10 +227,10 @@ namespace OrthancStone
       else
       {
         Vector a, b, e;
-        CrossProduct(e, x[i], x[(i + 1) % 4]);
-        CrossProduct(a, p, e);
-        CrossProduct(e, x[j], x[(j + 1) % 4]);
-        CrossProduct(b, p, e);
+        LinearAlgebra::CrossProduct(e, x[i], x[(i + 1) % 4]);
+        LinearAlgebra::CrossProduct(a, p, e);
+        LinearAlgebra::CrossProduct(e, x[j], x[(j + 1) % 4]);
+        LinearAlgebra::CrossProduct(b, p, e);
 
         // Go back to non-homogeneous coordinates
         x1 = a[0] / a[2];
@@ -351,11 +245,11 @@ namespace OrthancStone
 
     void GetPixelSpacing(double& spacingX, 
                          double& spacingY,
-                         const OrthancPlugins::IDicomDataset& dicom)
+                         const Orthanc::DicomMap& dicom)
     {
       Vector v;
 
-      if (ParseVector(v, dicom, OrthancPlugins::DICOM_TAG_PIXEL_SPACING))
+      if (LinearAlgebra::ParseVector(v, dicom, Orthanc::DICOM_TAG_PIXEL_SPACING))
       {
         if (v.size() != 2 ||
             v[0] <= 0 ||
@@ -377,6 +271,207 @@ namespace OrthancStone
         spacingX = 1;
         spacingY = 1;
       }
+    }
+
+    
+    Matrix CreateRotationMatrixAlongX(double a)
+    {
+      // Rotate along X axis (R_x)
+      // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
+      Matrix r(3, 3);
+      r(0,0) = 1;
+      r(0,1) = 0;
+      r(0,2) = 0;
+      r(1,0) = 0;
+      r(1,1) = cos(a);
+      r(1,2) = -sin(a);
+      r(2,0) = 0;
+      r(2,1) = sin(a);
+      r(2,2) = cos(a);
+      return r;
+    }
+    
+
+    Matrix CreateRotationMatrixAlongY(double a)
+    {
+      // Rotate along Y axis (R_y)
+      // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
+      Matrix r(3, 3);
+      r(0,0) = cos(a);
+      r(0,1) = 0;
+      r(0,2) = sin(a);
+      r(1,0) = 0;
+      r(1,1) = 1;
+      r(1,2) = 0;
+      r(2,0) = -sin(a);
+      r(2,1) = 0;
+      r(2,2) = cos(a);
+      return r;
+    }
+
+
+    Matrix CreateRotationMatrixAlongZ(double a)
+    {
+      // Rotate along Z axis (R_z)
+      // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
+      Matrix r(3, 3);
+      r(0,0) = cos(a);
+      r(0,1) = -sin(a);
+      r(0,2) = 0;
+      r(1,0) = sin(a);
+      r(1,1) = cos(a);
+      r(1,2) = 0;
+      r(2,0) = 0;
+      r(2,1) = 0;
+      r(2,2) = 1;
+      return r;
+    }    
+
+
+    Matrix CreateTranslationMatrix(double dx,
+                                   double dy,
+                                   double dz)
+    {
+      Matrix m = LinearAlgebra::IdentityMatrix(4);
+      m(0,3) = dx;
+      m(1,3) = dy;
+      m(2,3) = dz;
+      return m;    
+    }
+
+
+    Matrix CreateScalingMatrix(double sx,
+                               double sy,
+                               double sz)
+    {
+      Matrix m = LinearAlgebra::IdentityMatrix(4);
+      m(0,0) = sx;
+      m(1,1) = sy;
+      m(2,2) = sz;
+      return m;    
+    }
+
+
+    bool IntersectPlaneAndSegment(Vector& p,
+                                  const Vector& normal,
+                                  double d,
+                                  const Vector& edgeFrom,
+                                  const Vector& edgeTo)
+    {
+      // http://geomalgorithms.com/a05-_intersect-1.html#Line-Plane-Intersection
+
+      // Check for parallel line and plane
+      Vector direction = edgeTo - edgeFrom;
+      double denominator = boost::numeric::ublas::inner_prod(direction, normal);
+
+      if (fabs(denominator) < 100.0 * std::numeric_limits<double>::epsilon())
+      {
+        return false;
+      }
+      else
+      {
+        // Compute intersection
+        double t = -(normal[0] * edgeFrom[0] + 
+                     normal[1] * edgeFrom[1] + 
+                     normal[2] * edgeFrom[2] + d) / denominator;
+
+        if (t >= 0 && t <= 1)
+        {
+          // The intersection lies inside edge segment
+          p = edgeFrom + t * direction;
+          return true;
+        }
+        else
+        {
+          return false;
+        }
+      }
+    }
+
+
+    bool IntersectPlaneAndLine(Vector& p,
+                               const Vector& normal,
+                               double d,
+                               const Vector& origin,
+                               const Vector& direction)
+    {
+      // http://geomalgorithms.com/a05-_intersect-1.html#Line-Plane-Intersection
+
+      // Check for parallel line and plane
+      double denominator = boost::numeric::ublas::inner_prod(direction, normal);
+
+      if (fabs(denominator) < 100.0 * std::numeric_limits<double>::epsilon())
+      {
+        return false;
+      }
+      else
+      {
+        // Compute intersection
+        double t = -(normal[0] * origin[0] + 
+                     normal[1] * origin[1] + 
+                     normal[2] * origin[2] + d) / denominator;
+
+        p = origin + t * direction;
+        return true;
+      }
+    }
+
+
+    void AlignVectorsWithRotation(Matrix& r,
+                                  const Vector& a,
+                                  const Vector& b)
+    {
+      // This is Rodrigues' rotation formula:
+      // https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula#Matrix_notation
+
+      // Check also result A4.6 from "Multiple View Geometry in Computer
+      // Vision - 2nd edition" (p. 584)
+  
+      if (a.size() != 3 ||
+          b.size() != 3)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+
+      double aNorm = boost::numeric::ublas::norm_2(a);
+      double bNorm = boost::numeric::ublas::norm_2(b);
+
+      if (LinearAlgebra::IsCloseToZero(aNorm) ||
+          LinearAlgebra::IsCloseToZero(bNorm))
+      {
+        LOG(ERROR) << "Vector with zero norm";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);      
+      }
+
+      Vector aUnit, bUnit;
+      aUnit = a / aNorm;
+      bUnit = b / bNorm;
+
+      Vector v;
+      LinearAlgebra::CrossProduct(v, aUnit, bUnit);
+
+      double cosine = boost::numeric::ublas::inner_prod(aUnit, bUnit);
+
+      if (LinearAlgebra::IsCloseToZero(1 + cosine))
+      {
+        // "a == -b": TODO
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+
+      Matrix k;
+      LinearAlgebra::CreateSkewSymmetric(k, v);
+
+#if 0
+      double sine = boost::numeric::ublas::norm_2(v);
+
+      r = (boost::numeric::ublas::identity_matrix<double>(3) +
+           sine * k + 
+           (1 - cosine) * boost::numeric::ublas::prod(k, k));
+#else
+      r = (boost::numeric::ublas::identity_matrix<double>(3) +
+           k + 
+           boost::numeric::ublas::prod(k, k) / (1 + cosine));
+#endif
     }
   }
 }

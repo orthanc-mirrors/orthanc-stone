@@ -21,15 +21,30 @@
 
 #include "BasicApplicationContext.h"
 
-#include "../../Framework/Toolbox/OrthancSeriesLoader.h"
-#include "../../Framework/Volumes/VolumeImageSimplePolicy.h"
-#include "../../Framework/Volumes/VolumeImageProgressivePolicy.h"
-
 namespace OrthancStone
 {
-  BasicApplicationContext::BasicApplicationContext(OrthancPlugins::IOrthancConnection& orthanc) :
-    orthanc_(orthanc)
+  void BasicApplicationContext::UpdateThread(BasicApplicationContext* that)
   {
+    while (!that->stopped_)
+    {
+      {
+        ViewportLocker locker(*that);
+        locker.GetViewport().UpdateContent();
+      }
+      
+      boost::this_thread::sleep(boost::posix_time::milliseconds(that->updateDelay_));
+    }
+  }
+  
+
+  BasicApplicationContext::BasicApplicationContext(Orthanc::WebServiceParameters& orthanc) :
+    oracle_(viewportMutex_, 4),  // Use 4 threads to download
+    //oracle_(viewportMutex_, 1),  // Disable threading to be reproducible
+    webService_(oracle_, orthanc),
+    stopped_(true),
+    updateDelay_(100)   // By default, 100ms between each refresh of the content
+  {
+    srand(time(NULL)); 
   }
 
 
@@ -41,13 +56,13 @@ namespace OrthancStone
       delete *it;
     }
 
-    for (Volumes::iterator it = volumes_.begin(); it != volumes_.end(); ++it)
+    for (SlicedVolumes::iterator it = slicedVolumes_.begin(); it != slicedVolumes_.end(); ++it)
     {
       assert(*it != NULL);
       delete *it;
     }
 
-    for (StructureSets::iterator it = structureSets_.begin(); it != structureSets_.end(); ++it)
+    for (VolumeLoaders::iterator it = volumeLoaders_.begin(); it != volumeLoaders_.end(); ++it)
     {
       assert(*it != NULL);
       delete *it;
@@ -62,38 +77,31 @@ namespace OrthancStone
   }
 
 
-  VolumeImage& BasicApplicationContext::AddSeriesVolume(const std::string& series,
-                                                        bool isProgressiveDownload,
-                                                        size_t downloadThreadCount)
+  ISlicedVolume& BasicApplicationContext::AddSlicedVolume(ISlicedVolume* volume)
   {
-    std::auto_ptr<VolumeImage> volume(new VolumeImage(new OrthancSeriesLoader(orthanc_, series)));
-
-    if (isProgressiveDownload)
+    if (volume == NULL)
     {
-      volume->SetDownloadPolicy(new VolumeImageProgressivePolicy);
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
     else
     {
-      volume->SetDownloadPolicy(new VolumeImageSimplePolicy);
+      slicedVolumes_.push_back(volume);
+      return *volume;
     }
-
-    volume->SetThreadCount(downloadThreadCount);
-
-    VolumeImage& result = *volume;
-    volumes_.push_back(volume.release());
-
-    return result;
   }
 
 
-  DicomStructureSet& BasicApplicationContext::AddStructureSet(const std::string& instance)
+  IVolumeLoader& BasicApplicationContext::AddVolumeLoader(IVolumeLoader* loader)
   {
-    std::auto_ptr<DicomStructureSet> structureSet(new DicomStructureSet(orthanc_, instance));
-
-    DicomStructureSet& result = *structureSet;
-    structureSets_.push_back(structureSet.release());
-
-    return result;
+    if (loader == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+    else
+    {
+      volumeLoaders_.push_back(loader);
+      return *loader;
+    }
   }
 
 
@@ -101,7 +109,7 @@ namespace OrthancStone
   {
     if (interactor == NULL)
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
 
     interactors_.push_back(interactor);
@@ -112,24 +120,25 @@ namespace OrthancStone
 
   void BasicApplicationContext::Start()
   {
-    for (Volumes::iterator it = volumes_.begin(); it != volumes_.end(); ++it)
-    {
-      assert(*it != NULL);
-      (*it)->Start();
-    }
+    oracle_.Start();
 
-    viewport_.Start();
+    if (viewport_.HasUpdateContent())
+    {
+      stopped_ = false;
+      updateThread_ = boost::thread(UpdateThread, this);
+    }
   }
 
 
   void BasicApplicationContext::Stop()
   {
-    viewport_.Stop();
-
-    for (Volumes::iterator it = volumes_.begin(); it != volumes_.end(); ++it)
+    stopped_ = true;
+    
+    if (updateThread_.joinable())
     {
-      assert(*it != NULL);
-      (*it)->Stop();
+      updateThread_.join();
     }
+    
+    oracle_.Stop();
   }
 }

@@ -22,17 +22,13 @@
 #pragma once
 
 #include "ParallelSlices.h"
-#include "../Enumerations.h"
-
-#include <boost/thread/mutex.hpp>
+#include "../StoneEnumerations.h"
 
 namespace OrthancStone
 {
-  // This class is thread-safe
   class ParallelSlicesCursor : public boost::noncopyable
   {
   private:
-    boost::mutex                   mutex_;
     std::auto_ptr<ParallelSlices>  slices_;
     size_t                         currentSlice_;
 
@@ -48,9 +44,9 @@ namespace OrthancStone
 
     size_t GetSliceCount();
 
-    SliceGeometry GetSlice(size_t slice);
+    CoordinateSystem3D GetSlice(size_t slice);
 
-    SliceGeometry GetCurrentSlice();
+    CoordinateSystem3D GetCurrentSlice();
 
     // Returns "true" iff. the slice has actually changed
     bool SetDefaultSlice();

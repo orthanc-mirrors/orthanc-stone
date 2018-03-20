@@ -21,12 +21,18 @@
 
 #pragma once
 
-#include "SampleInteractor.h"
-
-#include "../../Resources/Orthanc/Core/Toolbox.h"
+#include "SampleApplicationBase.h"
+#include "../../Framework/dev.h"
+#include "../../Framework/Layers/ILayerSource.h"
 #include "../../Framework/Layers/LineMeasureTracker.h"
 #include "../../Framework/Layers/CircleMeasureTracker.h"
-#include "../../Resources/Orthanc/Core/Logging.h"
+
+#include <Core/Toolbox.h>
+#include <Core/Logging.h>
+
+#include <Plugins/Samples/Common/OrthancHttpConnection.h>   // TODO REMOVE
+#include "../../Framework/Layers/DicomStructureSetRendererFactory.h"   // TODO REMOVE
+#include "../../Framework/Toolbox/MessagingToolbox.h"   // TODO REMOVE
 
 namespace OrthancStone
 {
@@ -35,173 +41,49 @@ namespace OrthancStone
     class SingleVolumeApplication : public SampleApplicationBase
     {
     private:
-      class Interactor : public SampleInteractor
+      class Interactor : public VolumeImageInteractor
       {
       private:
-        enum MouseMode
-        {
-          MouseMode_None,
-          MouseMode_TrackCoordinates,
-          MouseMode_LineMeasure,
-          MouseMode_CircleMeasure
-        };
-
-        MouseMode mouseMode_;
-
-        void SetMouseMode(MouseMode mode,
-                          IStatusBar* statusBar)
-        {
-          if (mouseMode_ == mode)
-          {
-            mouseMode_ = MouseMode_None;
-          }
-          else
-          {
-            mouseMode_ = mode;
-          }
-
-          if (statusBar)
-          {
-            switch (mouseMode_)
-            {
-              case MouseMode_None:
-                statusBar->SetMessage("Disabling the mouse tools");
-                break;
-
-              case MouseMode_TrackCoordinates:
-                statusBar->SetMessage("Tracking the mouse coordinates");
-                break;
-
-              case MouseMode_LineMeasure:
-                statusBar->SetMessage("Mouse clicks will now measure the distances");
-                break;
-
-              case MouseMode_CircleMeasure:
-                statusBar->SetMessage("Mouse clicks will now draw circles");
-                break;
-
-              default:
-                break;
-            }
-          }
-        }
-
-      public:
-        Interactor(VolumeImage& volume,
-                   VolumeProjection projection, 
-                   bool reverse) :
-          SampleInteractor(volume, projection, reverse),
-          mouseMode_(MouseMode_None)
-        {
-        }
+        LayerWidget&  widget_;
+        size_t        layer_;
         
-        virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
-                                                            const SliceGeometry& slice,
-                                                            const ViewportGeometry& view,
-                                                            MouseButton button,
-                                                            double x,
-                                                            double y,
-                                                            IStatusBar* statusBar)
+      protected:
+        virtual void NotifySliceChange(const ISlicedVolume& volume,
+                                       const size_t& sliceIndex,
+                                       const Slice& slice)
         {
-          if (button == MouseButton_Left)
+          const OrthancVolumeImage& image = dynamic_cast<const OrthancVolumeImage&>(volume);
+
+          RenderStyle s = widget_.GetLayerStyle(layer_);
+
+          if (image.FitWindowingToRange(s, slice.GetConverter()))
           {
-            switch (mouseMode_)
-            {
-              case MouseMode_LineMeasure:
-                return new LineMeasureTracker(NULL, slice, x, y, 255, 0, 0, 14 /* font size */);
-              
-              case MouseMode_CircleMeasure:
-                return new CircleMeasureTracker(NULL, slice, x, y, 255, 0, 0, 14 /* font size */);
-
-              default:
-                break;
-            }
+            //printf("Windowing: %f => %f\n", s.customWindowCenter_, s.customWindowWidth_);
+            widget_.SetLayerStyle(layer_, s);
           }
-
-          return NULL;
         }
 
         virtual void MouseOver(CairoContext& context,
                                WorldSceneWidget& widget,
-                               const SliceGeometry& slice,
                                const ViewportGeometry& view,
                                double x,
                                double y,
                                IStatusBar* statusBar)
         {
-          if (mouseMode_ == MouseMode_TrackCoordinates &&
-              statusBar != NULL)
-          {
-            Vector p = slice.MapSliceToWorldCoordinates(x, y);
-            
-            char buf[64];
-            sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)", p[0] / 10.0, p[1] / 10.0, p[2] / 10.0);
-            statusBar->SetMessage(buf);
-          }
+          const LayerWidget& w = dynamic_cast<const LayerWidget&>(widget);
+          Vector p = w.GetSlice().MapSliceToWorldCoordinates(x, y);
+          printf("%f %f %f\n", p[0], p[1], p[2]);
         }
-
-
-        virtual void KeyPressed(WorldSceneWidget& widget,
-                                char key,
-                                KeyboardModifiers modifiers,
-                                IStatusBar* statusBar)
+      
+      public:
+        Interactor(OrthancVolumeImage& volume,
+                   LayerWidget& widget,
+                   VolumeProjection projection,
+                   size_t layer) :
+          VolumeImageInteractor(volume, widget, projection),
+          widget_(widget),
+          layer_(layer)
         {
-          switch (key)
-          {
-            case 't':
-              SetMouseMode(MouseMode_TrackCoordinates, statusBar);
-              break;
-
-            case 'm':
-              SetMouseMode(MouseMode_LineMeasure, statusBar);
-              break;
-
-            case 'c':
-              SetMouseMode(MouseMode_CircleMeasure, statusBar);
-              break;
-
-            case 'b':
-            {
-              if (statusBar)
-              {
-                statusBar->SetMessage("Setting Hounsfield window to bones");
-              }
-
-              RenderStyle style;
-              style.windowing_ = ImageWindowing_Bone;
-              dynamic_cast<LayeredSceneWidget&>(widget).SetLayerStyle(0, style);
-              break;
-            }
-
-            case 'l':
-            {
-              if (statusBar)
-              {
-                statusBar->SetMessage("Setting Hounsfield window to lung");
-              }
-
-              RenderStyle style;
-              style.windowing_ = ImageWindowing_Lung;
-              dynamic_cast<LayeredSceneWidget&>(widget).SetLayerStyle(0, style);
-              break;
-            }
-
-            case 'd':
-            {
-              if (statusBar)
-              {
-                statusBar->SetMessage("Setting Hounsfield window to what is written in the DICOM file");
-              }
-
-              RenderStyle style;
-              style.windowing_ = ImageWindowing_Default;
-              dynamic_cast<LayeredSceneWidget&>(widget).SetLayerStyle(0, style);
-              break;
-            }
-
-            default:
-              break;
-          }
         }
       };
 
@@ -213,6 +95,8 @@ namespace OrthancStone
         generic.add_options()
           ("series", boost::program_options::value<std::string>(), 
            "Orthanc ID of the series")
+          ("instance", boost::program_options::value<std::string>(), 
+           "Orthanc ID of a multi-frame instance that describes a 3D volume")
           ("threads", boost::program_options::value<unsigned int>()->default_value(3), 
            "Number of download threads")
           ("projection", boost::program_options::value<std::string>()->default_value("axial"), 
@@ -230,19 +114,45 @@ namespace OrthancStone
       {
         using namespace OrthancStone;
 
-        if (parameters.count("series") != 1)
+        if (parameters.count("series") > 1 ||
+            parameters.count("instance") > 1)
         {
-          LOG(ERROR) << "The series ID is missing";
+          LOG(ERROR) << "Only one series or instance is allowed";
           throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
         }
 
-        std::string series = parameters["series"].as<std::string>();
+        if (parameters.count("series") == 1 &&
+            parameters.count("instance") == 1)
+        {
+          LOG(ERROR) << "Cannot specify both a series and an instance";
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        }
+
+        std::string series;
+        if (parameters.count("series") == 1)
+        {
+          series = parameters["series"].as<std::string>();
+        }
+        
+        std::string instance;
+        if (parameters.count("instance") == 1)
+        {
+          instance = parameters["instance"].as<std::string>();
+        }
+        
+        if (series.empty() &&
+            instance.empty())
+        {
+          LOG(ERROR) << "The series ID or instance ID is missing";
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        }
+
         unsigned int threads = parameters["threads"].as<unsigned int>();
         bool reverse = parameters["reverse"].as<bool>();
 
         std::string tmp = parameters["projection"].as<std::string>();
         Orthanc::Toolbox::ToLowerCase(tmp);
-        
+
         VolumeProjection projection;
         if (tmp == "axial")
         {
@@ -262,22 +172,98 @@ namespace OrthancStone
           throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
         }
 
-        VolumeImage& volume = context.AddSeriesVolume(series, true /* progressive download */, threads);
+        std::auto_ptr<LayerWidget> widget(new LayerWidget);
 
-        std::auto_ptr<Interactor> interactor(new Interactor(volume, projection, reverse));
+#if 0
+        std::auto_ptr<OrthancVolumeImage> volume(new OrthancVolumeImage(context.GetWebService(), true));
+        if (series.empty())
+        {
+          volume->ScheduleLoadInstance(instance);
+        }
+        else
+        {
+          volume->ScheduleLoadSeries(series);
+        }
 
-        std::auto_ptr<LayeredSceneWidget> widget(new LayeredSceneWidget);
-        widget->AddLayer(new VolumeImage::LayerFactory(volume));
-        widget->SetSlice(interactor->GetCursor().GetCurrentSlice());
-        widget->SetInteractor(*interactor);
+        widget->AddLayer(new VolumeImageSource(*volume));
 
-        context.AddInteractor(interactor.release());
-        context.SetCentralWidget(widget.release());
+        context.AddInteractor(new Interactor(*volume, *widget, projection, 0));
+        context.AddSlicedVolume(volume.release());
+
+        {
+          RenderStyle s;
+          s.alpha_ = 1;
+          s.applyLut_ = true;
+          s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
+          s.interpolation_ = ImageInterpolation_Bilinear;
+          widget->SetLayerStyle(0, s);
+        }
+#else
+        std::auto_ptr<OrthancVolumeImage> ct(new OrthancVolumeImage(context.GetWebService(), false));
+        //ct->ScheduleLoadSeries("15a6f44a-ac7b88fe-19c462d9-dddd918e-b01550d8");  // 0178023P
+        //ct->ScheduleLoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
+        //ct->ScheduleLoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // IBA
+        //ct->ScheduleLoadSeries("03677739-1d8bca40-db1daf59-d74ff548-7f6fc9c0");  // 0522c0001 TCIA
+        ct->ScheduleLoadSeries("295e8a13-dfed1320-ba6aebb2-9a13e20f-1b3eb953");  // Captain
+        
+        std::auto_ptr<OrthancVolumeImage> pet(new OrthancVolumeImage(context.GetWebService(), true));
+        //pet->ScheduleLoadSeries("48d2997f-8e25cd81-dd715b64-bd79cdcc-e8fcee53");  // 0178023P
+        //pet->ScheduleLoadSeries("aabad2e7-80702b5d-e599d26c-4f13398e-38d58a9e");
+        //pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb"); // IBA 1
+        //pet->ScheduleLoadInstance("337876a1-a68a9718-f15abccd-38faafa1-b99b496a"); // IBA 2
+        //pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // IBA 3
+        //pet->ScheduleLoadInstance("269f26f4-0c83eeeb-2e67abbd-5467a40f-f1bec90c");  // 0522c0001 TCIA
+        pet->ScheduleLoadInstance("f080888c-0ab7528a-f7d9c28c-84980eb1-ff3b0ae6");  // Captain 1
+        //pet->ScheduleLoadInstance("4f78055b-6499a2c5-1e089290-394acc05-3ec781c1");  // Captain 2
+
+        std::auto_ptr<StructureSetLoader> rtStruct(new StructureSetLoader(context.GetWebService()));
+        //rtStruct->ScheduleLoadInstance("c2ebc17b-6b3548db-5e5da170-b8ecab71-ea03add3");  // 0178023P
+        //rtStruct->ScheduleLoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // IBA
+        //rtStruct->ScheduleLoadInstance("17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20");  // 0522c0001 TCIA
+        rtStruct->ScheduleLoadInstance("96c889ab-29fe5c54-dda6e66c-3949e4da-58f90d75");  // Captain
+        
+        widget->AddLayer(new VolumeImageSource(*ct));
+        widget->AddLayer(new VolumeImageSource(*pet));
+        widget->AddLayer(new DicomStructureSetRendererFactory(*rtStruct));
+        
+        context.AddInteractor(new Interactor(*pet, *widget, projection, 1));
+        //context.AddInteractor(new VolumeImageInteractor(*ct, *widget, projection));
+
+        context.AddSlicedVolume(ct.release());
+        context.AddSlicedVolume(pet.release());
+        context.AddVolumeLoader(rtStruct.release());
+
+        {
+          RenderStyle s;
+          //s.drawGrid_ = true;
+          s.alpha_ = 1;
+          s.windowing_ = ImageWindowing_Bone;
+          widget->SetLayerStyle(0, s);
+        }
+
+        {
+          RenderStyle s;
+          //s.drawGrid_ = true;
+          s.SetColor(255, 0, 0);  // Draw missing PET layer in red
+          s.alpha_ = 0.5;
+          s.applyLut_ = true;
+          s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
+          s.interpolation_ = ImageInterpolation_Bilinear;
+          s.windowing_ = ImageWindowing_Custom;
+          s.customWindowCenter_ = 0;
+          s.customWindowWidth_ = 128;
+          widget->SetLayerStyle(1, s);
+        }
+#endif
+
 
         statusBar.SetMessage("Use the keys \"b\", \"l\" and \"d\" to change Hounsfield windowing");
         statusBar.SetMessage("Use the keys \"t\" to track the (X,Y,Z) mouse coordinates");
         statusBar.SetMessage("Use the keys \"m\" to measure distances");
         statusBar.SetMessage("Use the keys \"c\" to draw circles");
+
+        widget->SetTransmitMouseOver(true);
+        context.SetCentralWidget(widget.release());
       }
     };
   }

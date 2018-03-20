@@ -21,12 +21,39 @@
 
 #include "WidgetBase.h"
 
-#include "../../Resources/Orthanc/Core/OrthancException.h"
-#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
-#include "../../Resources/Orthanc/Core/Logging.h"
+#include <Core/OrthancException.h>
+#include <Core/Images/ImageProcessing.h>
+#include <Core/Logging.h>
 
 namespace OrthancStone
 {
+  void WidgetBase::NotifyChange()
+  {
+    if (parent_ != NULL)
+    {
+      parent_->NotifyChange();
+    }
+
+    if (viewport_ != NULL)
+    {
+      viewport_->NotifyChange(*this);
+    }
+  }
+
+
+  void WidgetBase::SetParent(IWidget& parent)
+  {
+    if (parent_ != NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      parent_ = &parent;
+    }
+  }    
+
+  
   void WidgetBase::ClearBackgroundOrthanc(Orthanc::ImageAccessor& target) const 
   {
     // Clear the background using Orthanc
@@ -65,12 +92,6 @@ namespace OrthancStone
   }
 
 
-  void WidgetBase::NotifyChange()
-  {
-    observers_.NotifyChange(this);
-  }
-
-
   void WidgetBase::UpdateStatusBar(const std::string& message)
   {
     if (statusBar_ != NULL)
@@ -80,19 +101,12 @@ namespace OrthancStone
   }
 
 
-  void WidgetBase::WorkerThread(WidgetBase* that)
-  {
-    while (that->started_)
-    {
-      that->UpdateStep();
-    }
-  }
-
-
   WidgetBase::WidgetBase() :
+    parent_(NULL),
+    viewport_(NULL),
     statusBar_(NULL),
-    started_(false),
-    backgroundCleared_(false)
+    backgroundCleared_(false),
+    transmitMouseOver_(false)
   {
     backgroundColor_[0] = 0;
     backgroundColor_[1] = 0;
@@ -100,6 +114,19 @@ namespace OrthancStone
   }
 
 
+  void WidgetBase::SetViewport(IViewport& viewport)
+  {
+    if (viewport_ != NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      viewport_ = &viewport;
+    }
+  }
+
+  
   void WidgetBase::SetBackgroundColor(uint8_t red,
                                       uint8_t green,
                                       uint8_t blue)
@@ -119,53 +146,6 @@ namespace OrthancStone
   }
 
 
-  void WidgetBase::Register(IChangeObserver& observer)
-  {
-    observers_.Register(observer);
-  }
-
-
-  void WidgetBase::Unregister(IChangeObserver& observer)
-  {
-    observers_.Unregister(observer);
-  }
-
-
-  void WidgetBase::Start()
-  {
-    if (started_)
-    {
-      LOG(ERROR) << "Cannot Start() twice";
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
-    started_ = true;
-
-    if (HasUpdateThread())
-    {
-      thread_ = boost::thread(WorkerThread, this);
-    }
-  }
-
-
-  void WidgetBase::Stop()
-  {
-    if (!started_)
-    {
-      LOG(ERROR) << "Cannot Stop() if Start() has not been invoked";
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
-    started_ = false;
-
-    if (HasUpdateThread() &&
-        thread_.joinable())
-    {
-      thread_.join();
-    }
-  }
-
-
   bool WidgetBase::Render(Orthanc::ImageAccessor& surface)
   {
 #if 0
@@ -175,5 +155,11 @@ namespace OrthancStone
 #endif
 
     return true;
+  }
+
+  
+  void WidgetBase::UpdateContent()
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
   }
 }

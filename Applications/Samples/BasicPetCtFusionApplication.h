@@ -87,13 +87,13 @@ namespace OrthancStone
         {
           RenderStyle style = widget.GetLayerStyle(layer);
          
-          if (style.interpolation_ == ImageInterpolation_Linear)
+          if (style.interpolation_ == ImageInterpolation_Bilinear)
           {
             style.interpolation_ = ImageInterpolation_Nearest;
           }
           else
           {
-            style.interpolation_ = ImageInterpolation_Linear;
+            style.interpolation_ = ImageInterpolation_Bilinear;
           }
 
           widget.SetLayerStyle(layer, style);

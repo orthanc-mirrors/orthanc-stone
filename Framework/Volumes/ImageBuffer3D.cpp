@@ -21,13 +21,16 @@
 
 #include "ImageBuffer3D.h"
 
-#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
-#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include <Core/Images/ImageProcessing.h>
+#include <Core/Logging.h>
+#include <Core/OrthancException.h>
+
+#include <string.h>
 
 namespace OrthancStone
 {
   Orthanc::ImageAccessor ImageBuffer3D::GetAxialSliceAccessor(unsigned int slice,
-                                                              bool readOnly)
+                                                              bool readOnly) const
   {
     if (slice >= depth_)
     {
@@ -52,7 +55,7 @@ namespace OrthancStone
 
 
   Orthanc::ImageAccessor ImageBuffer3D::GetCoronalSliceAccessor(unsigned int slice,
-                                                                bool readOnly)
+                                                                bool readOnly) const
   {
     if (slice >= height_)
     {
@@ -109,27 +112,31 @@ namespace OrthancStone
   ImageBuffer3D::ImageBuffer3D(Orthanc::PixelFormat format,
                                unsigned int width,
                                unsigned int height,
-                               unsigned int depth) :
+                               unsigned int depth,
+                               bool computeRange) :
     image_(format, width, height * depth, false),
     format_(format),
     width_(width),
     height_(height),
-    depth_(depth)
+    depth_(depth),
+    computeRange_(computeRange),
+    hasRange_(false)
   {
-    GeometryToolbox::AssignVector(voxelDimensions_, 1, 1, 1);
+    LinearAlgebra::AssignVector(voxelDimensions_, 1, 1, 1);
+
+    LOG(INFO) << "Created an image of "
+              << (GetEstimatedMemorySize() / (1024ll * 1024ll)) << "MB";
   }
 
 
   void ImageBuffer3D::Clear()
   {
-    WriteLock lock(mutex_);
-    Orthanc::ImageProcessing::Set(image_, 0);
+    memset(image_.GetBuffer(), 0, image_.GetHeight() * image_.GetPitch());
   }
 
 
-  void ImageBuffer3D::SetAxialGeometry(const SliceGeometry& geometry)
+  void ImageBuffer3D::SetAxialGeometry(const CoordinateSystem3D& geometry)
   {
-    WriteLock lock(mutex_);
     axialGeometry_ = geometry;
   }
 
@@ -146,16 +153,13 @@ namespace OrthancStone
     }
 
     {
-      WriteLock lock(mutex_);
-      GeometryToolbox::AssignVector(voxelDimensions_, x, y, z);
+      LinearAlgebra::AssignVector(voxelDimensions_, x, y, z);
     }
   }
 
 
-  Vector ImageBuffer3D::GetVoxelDimensions(VolumeProjection projection)
+  Vector ImageBuffer3D::GetVoxelDimensions(VolumeProjection projection) const
   {
-    ReadLock lock(mutex_);
-
     Vector result;
     switch (projection)
     {
@@ -164,11 +168,11 @@ namespace OrthancStone
         break;
 
       case VolumeProjection_Coronal:
-        GeometryToolbox::AssignVector(result, voxelDimensions_[0], voxelDimensions_[2], voxelDimensions_[1]);
+        LinearAlgebra::AssignVector(result, voxelDimensions_[0], voxelDimensions_[2], voxelDimensions_[1]);
         break;
 
       case VolumeProjection_Sagittal:
-        GeometryToolbox::AssignVector(result, voxelDimensions_[1], voxelDimensions_[2], voxelDimensions_[0]);
+        LinearAlgebra::AssignVector(result, voxelDimensions_[1], voxelDimensions_[2], voxelDimensions_[0]);
         break;
 
       default:
@@ -206,7 +210,7 @@ namespace OrthancStone
   }
 
 
-  ParallelSlices* ImageBuffer3D::GetGeometry(VolumeProjection projection)
+  ParallelSlices* ImageBuffer3D::GetGeometry(VolumeProjection projection) const
   {
     std::auto_ptr<ParallelSlices> result(new ParallelSlices);
 
@@ -258,10 +262,100 @@ namespace OrthancStone
   }
     
 
-  ImageBuffer3D::SliceReader::SliceReader(ImageBuffer3D& that,
+  uint64_t ImageBuffer3D::GetEstimatedMemorySize() const
+  {
+    return image_.GetPitch() * image_.GetHeight() * Orthanc::GetBytesPerPixel(format_);
+  }
+
+
+  void ImageBuffer3D::ExtendImageRange(const Orthanc::ImageAccessor& slice)
+  {
+    if (!computeRange_ ||
+        slice.GetWidth() == 0 ||
+        slice.GetHeight() == 0)
+    {
+      return;
+    }
+
+    float sliceMin, sliceMax;
+      
+    switch (slice.GetFormat())
+    {
+      case Orthanc::PixelFormat_Grayscale8:
+      case Orthanc::PixelFormat_Grayscale16:
+      case Orthanc::PixelFormat_Grayscale32:
+      case Orthanc::PixelFormat_SignedGrayscale16:
+      {
+        int64_t a, b;
+        Orthanc::ImageProcessing::GetMinMaxIntegerValue(a, b, slice);
+        sliceMin = static_cast<float>(a);
+        sliceMax = static_cast<float>(b);
+        break;
+      }
+
+      case Orthanc::PixelFormat_Float32:
+        Orthanc::ImageProcessing::GetMinMaxFloatValue(sliceMin, sliceMax, slice);
+        break;
+
+      default:
+        return;
+    }
+
+    if (hasRange_)
+    {
+      minValue_ = std::min(minValue_, sliceMin);
+      maxValue_ = std::max(maxValue_, sliceMax);
+    }
+    else
+    {
+      hasRange_ = true;
+      minValue_ = sliceMin;
+      maxValue_ = sliceMax;
+    }
+  }
+
+
+  bool ImageBuffer3D::GetRange(float& minValue,
+                               float& maxValue) const
+  {
+    if (hasRange_)
+    {
+      minValue = minValue_;
+      maxValue = maxValue_;
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+
+  bool ImageBuffer3D::FitWindowingToRange(RenderStyle& style,
+                                          const DicomFrameConverter& converter) const
+  {
+    if (hasRange_)
+    {
+      style.windowing_ = ImageWindowing_Custom;
+      style.customWindowCenter_ = converter.Apply((minValue_ + maxValue_) / 2.0);
+      style.customWindowWidth_ = converter.Apply(maxValue_ - minValue_);
+      
+      if (style.customWindowWidth_ > 1)
+      {
+        return true;
+      }
+    }
+
+    style.windowing_ = ImageWindowing_Custom;
+    style.customWindowCenter_ = 128.0;
+    style.customWindowWidth_ = 256.0;
+    return false;
+  }
+
+
+  ImageBuffer3D::SliceReader::SliceReader(const ImageBuffer3D& that,
                                           VolumeProjection projection,
-                                          unsigned int slice) :
-  lock_(that.mutex_)
+                                          unsigned int slice)
   {
     switch (projection)
     {
@@ -286,10 +380,17 @@ namespace OrthancStone
 
   void ImageBuffer3D::SliceWriter::Flush()
   {
-    if (sagittal_.get() != NULL)
+    if (modified_)
     {
-      // TODO
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
+      if (sagittal_.get() != NULL)
+      {
+        // TODO
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
+      }
+
+      // Update the dynamic range of the underlying image, if
+      // "computeRange_" is set to true
+      that_.ExtendImageRange(accessor_);
     }
   }
 
@@ -297,7 +398,8 @@ namespace OrthancStone
   ImageBuffer3D::SliceWriter::SliceWriter(ImageBuffer3D& that,
                                           VolumeProjection projection,
                                           unsigned int slice) :
-  lock_(that.mutex_)
+    that_(that),
+    modified_(false)
   {
     switch (projection)
     {
@@ -317,5 +419,65 @@ namespace OrthancStone
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);          
     }
+  }
+
+
+  uint8_t ImageBuffer3D::GetVoxelGrayscale8(unsigned int x,
+                                            unsigned int y,
+                                            unsigned int z) const
+  {
+    if (format_ != Orthanc::PixelFormat_Grayscale8)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+    }
+
+    if (x >= width_ ||
+        y >= height_ ||
+        z >= depth_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    const void* p = image_.GetConstRow(y + height_ * (depth_ - 1 - z));
+    return reinterpret_cast<const uint8_t*>(p) [x];
+  }
+
+
+  uint16_t ImageBuffer3D::GetVoxelGrayscale16(unsigned int x,
+                                              unsigned int y,
+                                              unsigned int z) const
+  {
+    if (format_ != Orthanc::PixelFormat_Grayscale16)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+    }
+
+    if (x >= width_ ||
+        y >= height_ ||
+        z >= depth_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    const void* p = image_.GetConstRow(y + height_ * (depth_ - 1 - z));
+    return reinterpret_cast<const uint16_t*>(p) [x];
+  }
+
+
+  Vector ImageBuffer3D::GetCoordinates(float x,
+                                       float y,
+                                       float z) const
+  {
+    Vector ps = GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
+
+    const CoordinateSystem3D& axial = GetAxialGeometry();
+    
+    Vector origin = (axial.MapSliceToWorldCoordinates(-0.5 * ps[0], -0.5 * ps[1]) -
+                     0.5 * ps[2] * axial.GetNormal());
+
+    return (origin +
+            axial.GetAxisX() * ps[0] * x * static_cast<double>(GetWidth()) +
+            axial.GetAxisY() * ps[1] * y * static_cast<double>(GetHeight()) +
+            axial.GetNormal() * ps[2] * z * static_cast<double>(GetDepth()));
   }
 }

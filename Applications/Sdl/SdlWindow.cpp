@@ -23,8 +23,8 @@
 
 #if ORTHANC_ENABLE_SDL == 1
 
-#include "../../Resources/Orthanc/Core/Logging.h"
-#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include <Core/Logging.h>
+#include <Core/OrthancException.h>
 
 namespace OrthancStone
 {

@@ -30,7 +30,6 @@ namespace OrthancStone
     public LayeredSceneWidget::ISliceObserver
   {
   private:
-    boost::mutex          mutex_;
     LayeredSceneWidget&   owner_;
     LayeredSceneWidget&   sibling_;
     SliceGeometry         slice_;

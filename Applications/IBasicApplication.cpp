@@ -21,10 +21,12 @@
 
 #include "IBasicApplication.h"
 
-#include "../../Resources/Orthanc/Core/Logging.h"
-#include "../../Resources/Orthanc/Core/HttpClient.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/OrthancHttpConnection.h"
+#include "../Framework/Toolbox/MessagingToolbox.h"
 #include "Sdl/SdlEngine.h"
+
+#include <Core/Logging.h>
+#include <Core/HttpClient.h>
+#include <Plugins/Samples/Common/OrthancHttpConnection.h>
 
 namespace OrthancStone
 {
@@ -197,12 +199,14 @@ namespace OrthancStone
       }
 
       LOG(WARNING) << "URL to the Orthanc REST API: " << webService.GetUrl();
-      OrthancPlugins::OrthancHttpConnection orthanc(webService);
 
-      if (!MessagingToolbox::CheckOrthancVersion(orthanc))
       {
-        LOG(ERROR) << "Your version of Orthanc is incompatible with Orthanc Stone, please upgrade";
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
+        OrthancPlugins::OrthancHttpConnection orthanc(webService);
+        if (!MessagingToolbox::CheckOrthancVersion(orthanc))
+        {
+          LOG(ERROR) << "Your version of Orthanc is incompatible with Stone of Orthanc, please upgrade";
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
+        }
       }
 
 
@@ -210,19 +214,23 @@ namespace OrthancStone
        * Initialize the application
        ****************************************************************/
 
+      LOG(WARNING) << "Creating the widgets of the application";
+
       LogStatusBar statusBar;
-      BasicApplicationContext context(orthanc);
+      BasicApplicationContext context(webService);
 
       application.Initialize(context, statusBar, parameters);
-      context.GetViewport().SetStatusBar(statusBar);
+
+      {
+        BasicApplicationContext::ViewportLocker locker(context);
+        locker.GetViewport().SetStatusBar(statusBar);
+      }
 
       std::string title = application.GetTitle();
       if (title.empty())
       {
         title = "Stone of Orthanc";
       }
-
-      context.Start();
 
       {
         /**************************************************************
@@ -232,11 +240,25 @@ namespace OrthancStone
         LOG(WARNING) << "Starting the application";
 
         SdlWindow window(title.c_str(), width, height, opengl);
-        SdlEngine sdl(window, context.GetViewport());
+        SdlEngine sdl(window, context);
 
+        {
+          BasicApplicationContext::ViewportLocker locker(context);
+          locker.GetViewport().Register(sdl);  // (*)
+        }
+
+        context.Start();
         sdl.Run();
 
         LOG(WARNING) << "Stopping the application";
+
+        // Don't move the "Stop()" command below out of the block,
+        // otherwise the application might crash, because the
+        // "SdlEngine" is an observer of the viewport (*) and the
+        // update thread started by "context.Start()" would call a
+        // destructed object (the "SdlEngine" is deleted with the
+        // lexical scope).
+        context.Stop();
       }
 
 
@@ -244,11 +266,7 @@ namespace OrthancStone
        * Finalize the application
        ****************************************************************/
 
-      context.Stop();
-
       LOG(WARNING) << "The application has stopped";
-
-      context.GetViewport().ResetStatusBar();
       application.Finalize();
     }
     catch (Orthanc::OrthancException& e)

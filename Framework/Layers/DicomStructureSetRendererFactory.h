@@ -21,40 +21,48 @@
 
 #pragma once
 
-#include "../Toolbox/DicomStructureSet.h"
-#include "ILayerRendererFactory.h"
+#include "LayerSourceBase.h"
+#include "../Volumes/StructureSetLoader.h"
 
 namespace OrthancStone
 {
-  class DicomStructureSetRendererFactory : public ILayerRendererFactory
+  class DicomStructureSetRendererFactory :
+    public LayerSourceBase,
+    private IVolumeLoader::IObserver
   {
   private:
     class Renderer;
 
-    const DicomStructureSet&  structureSet_;
+    virtual void NotifyGeometryReady(const IVolumeLoader& loader)
+    {
+      LayerSourceBase::NotifyGeometryReady();
+    }
+      
+    virtual void NotifyGeometryError(const IVolumeLoader& loader)
+    {
+      LayerSourceBase::NotifyGeometryError();
+    }
+      
+    virtual void NotifyContentChange(const IVolumeLoader& loader)
+    {
+      LayerSourceBase::NotifyContentChange();
+    }
+    
+    StructureSetLoader& loader_;
 
   public:
-    DicomStructureSetRendererFactory(const DicomStructureSet&  structureSet) :
-      structureSet_(structureSet)
+    DicomStructureSetRendererFactory(StructureSetLoader& loader) :
+      loader_(loader)
     {
+      loader_.Register(*this);
     }
 
-    virtual bool GetExtent(double& x1,
-                           double& y1,
-                           double& x2,
-                           double& y2,
-                           const SliceGeometry& displaySlice)
+    virtual bool GetExtent(std::vector<Vector>& points,
+                           const CoordinateSystem3D& viewportSlice)
     {
       return false;
     }
 
-    virtual ILayerRenderer* CreateLayerRenderer(const SliceGeometry& displaySlice);
-
-    virtual bool HasSourceVolume() const
-    {
-      return false;
-    }
-
-    virtual ISliceableVolume& GetSourceVolume() const;
+    virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice);
   };
 }

@@ -21,6 +21,7 @@
 
 #include "TestWorldSceneWidget.h"
 
+#include <math.h>
 #include <stdio.h>
 
 namespace OrthancStone
@@ -31,7 +32,6 @@ namespace OrthancStone
     {
     public:
       virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
-                                                          const SliceGeometry& slice,
                                                           const ViewportGeometry& view,
                                                           MouseButton button,
                                                           double x,
@@ -50,7 +50,6 @@ namespace OrthancStone
 
       virtual void MouseOver(CairoContext& context,
                              WorldSceneWidget& widget,
-                             const SliceGeometry& slice,
                              const ViewportGeometry& view,
                              double x,
                              double y,
@@ -94,7 +93,7 @@ namespace OrthancStone
 
 
     bool TestWorldSceneWidget::RenderScene(CairoContext& context,
-                                           const ViewportGeometry& view)
+                                           const ViewportGeometry& view) 
     {
       cairo_t* cr = context.GetObject();
 
@@ -102,7 +101,8 @@ namespace OrthancStone
       cairo_set_source_rgb(cr, 0, 0, 0);
       cairo_paint(cr);
 
-      cairo_set_source_rgb(cr, 0, 1, 0);
+      float color = static_cast<float>(count_ % 16) / 15.0f;
+      cairo_set_source_rgb(cr, 0, 1.0f - color, color);
       cairo_rectangle(cr, -10, -.5, 20, 1);
       cairo_fill(cr);
 
@@ -110,22 +110,32 @@ namespace OrthancStone
     }
 
 
-    TestWorldSceneWidget::TestWorldSceneWidget() :
-      interactor_(new Interactor)
+    TestWorldSceneWidget::TestWorldSceneWidget(bool animate) :
+      interactor_(new Interactor),
+      animate_(animate),
+      count_(0)
     {
       SetInteractor(*interactor_);
     }
 
 
-    void TestWorldSceneWidget::GetSceneExtent(double& x1,
-                                              double& y1,
-                                              double& x2,
-                                              double& y2)
+    Extent2D TestWorldSceneWidget::GetSceneExtent()
     {
-      x1 = -10;
-      x2 = 10;
-      y1 = -.5;
-      y2 = .5;
+      return Extent2D(-10, -.5, 10, .5);
+    }
+
+
+    void TestWorldSceneWidget::UpdateContent()
+    {
+      if (animate_)
+      {
+        count_++;
+        NotifyChange();
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
     }
   }
 }

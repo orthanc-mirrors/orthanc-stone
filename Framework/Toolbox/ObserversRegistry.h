@@ -21,105 +21,85 @@
 
 #pragma once
 
-#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include <Core/OrthancException.h>
 
 #include <boost/noncopyable.hpp>
-#include <boost/thread/mutex.hpp>
 #include <set>
 
 namespace OrthancStone
 {
   template <
     typename Source,
-    typename Observer = typename Source::IChangeObserver
+    typename Observer = typename Source::IObserver
     >
   class ObserversRegistry : public boost::noncopyable
   {
   private:
-    struct ChangeFunctor : public boost::noncopyable
-    {
-      void operator() (Observer& observer,
-                       const Source& source)
-      {
-        observer.NotifyChange(source);
-      }
-    };
-
     typedef std::set<Observer*>  Observers;
 
-    boost::mutex  mutex_;
-    Observers     observers_;
-    bool          empty_;
+    Observers  observers_;
 
   public:
-    ObserversRegistry() : empty_(true)
-    {
-    }
-
     template <typename Functor>
-    void Notify(const Source* source,
+    void Notify(const Source& source,
                 Functor& functor)
     {
-      if (empty_)
-      {
-        // Optimization to avoid the unnecessary locking of the mutex
-        return;
-      }
-
-      if (source == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-
-      boost::mutex::scoped_lock lock(mutex_);
-
       for (typename Observers::const_iterator observer = observers_.begin();
            observer != observers_.end(); ++observer)
       {
-        functor(**observer, *source);
+        functor(**observer, source);
       }
-    }
-
-    template <typename Functor>
-    void Notify(const Source* source)
-    {
-      // Use the default functor
-      Functor functor;
-      Notify(source, functor);
-    }
-
-    void NotifyChange(const Source* source)
-    {
-      Notify<ChangeFunctor>(source);
     }
 
     void Register(Observer& observer)
     {
-      empty_ = false;
-
-      boost::mutex::scoped_lock lock(mutex_);
       observers_.insert(&observer);
     }
 
     void Unregister(Observer& observer)
     {
-      boost::mutex::scoped_lock lock(mutex_);
       observers_.erase(&observer);
-
-      if (observers_.empty())
-      {
-        empty_ = true;
-      }
     }
 
     bool IsEmpty()
     {
-#if 0
-      boost::mutex::scoped_lock lock(mutex_);
       return observers_.empty();
-#else
-      return empty_;
-#endif
+    }
+
+    void Apply(const Source& source,
+               void (Observer::*method) (const Source&))
+    {
+      for (typename Observers::const_iterator it = observers_.begin();
+           it != observers_.end(); ++it)
+      {
+        ((*it)->*method) (source);
+      }
+    }
+
+    template <typename Argument0>
+    void Apply(const Source& source,
+               void (Observer::*method) (const Source&, const Argument0&),
+               const Argument0& argument0)
+    {
+      for (typename Observers::const_iterator it = observers_.begin();
+           it != observers_.end(); ++it)
+      {
+        ((*it)->*method) (source, argument0);
+      }
+    }
+
+    template <typename Argument0,
+              typename Argument1>
+    void Apply(const Source& source,
+               void (Observer::*method) (const Source&, const Argument0&, const Argument1&),
+               const Argument0& argument0,
+               const Argument1& argument1)
+    {
+      for (typename Observers::const_iterator it = observers_.begin();
+           it != observers_.end(); ++it)
+      {
+        ((*it)->*method) (source, argument0, argument1);
+      }
     }
   };
 }

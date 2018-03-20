@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../Enumerations.h"
+#include "../StoneEnumerations.h"
 #include "../Viewport/IMouseTracker.h"
 #include "../Viewport/IStatusBar.h"
 #include "../Viewport/IViewport.h"

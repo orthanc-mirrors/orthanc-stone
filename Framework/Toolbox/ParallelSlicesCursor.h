@@ -22,7 +22,7 @@
 #pragma once
 
 #include "ParallelSlices.h"
-#include "../Enumerations.h"
+#include "../StoneEnumerations.h"
 
 namespace OrthancStone
 {

@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../Enumerations.h"
+#include "../StoneEnumerations.h"
 #include "GeometryToolbox.h"
 
 #include <Core/Images/ImageTraits.h>

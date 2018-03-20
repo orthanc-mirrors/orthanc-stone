@@ -19,7 +19,7 @@
  **/
 
 
-#include "Enumerations.h"
+#include "StoneEnumerations.h"
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>

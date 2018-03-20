@@ -22,7 +22,7 @@
 #pragma once
 
 #include "IStatusBar.h"
-#include "../Enumerations.h"
+#include "../StoneEnumerations.h"
 
 #include <Core/Images/ImageAccessor.h>
 

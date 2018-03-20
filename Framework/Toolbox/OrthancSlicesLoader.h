@@ -23,7 +23,7 @@
 
 #include "IWebService.h"
 #include "SlicesSorter.h"
-#include "../Enumerations.h"
+#include "../StoneEnumerations.h"
 
 #include <boost/shared_ptr.hpp>
 

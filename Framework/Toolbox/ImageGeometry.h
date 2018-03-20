@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../Enumerations.h"
+#include "../StoneEnumerations.h"
 #include "LinearAlgebra.h"
 
 #include <Core/Images/ImageAccessor.h>

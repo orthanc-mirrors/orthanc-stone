@@ -24,7 +24,7 @@
 #include "IWorldSceneMouseTracker.h"
 
 #include "../Toolbox/ViewportGeometry.h"
-#include "../Enumerations.h"
+#include "../StoneEnumerations.h"
 #include "../Viewport/IStatusBar.h"
 
 namespace OrthancStone

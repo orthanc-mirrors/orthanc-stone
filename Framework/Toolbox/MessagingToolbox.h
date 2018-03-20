@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../Enumerations.h"
+#include "../StoneEnumerations.h"
 
 #include <Plugins/Samples/Common/IOrthancConnection.h>
 #include <Plugins/Samples/Common/IDicomDataset.h>

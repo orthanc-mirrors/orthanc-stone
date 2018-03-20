@@ -21,7 +21,7 @@
 
 #include "Slice.h"
 
-#include "../Enumerations.h"
+#include "../StoneEnumerations.h"
 #include "GeometryToolbox.h"
 
 #include <Core/Logging.h>

@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../Enumerations.h"
+#include "../StoneEnumerations.h"
 #include "../Layers/RenderStyle.h"
 #include "../Toolbox/CoordinateSystem3D.h"
 #include "../Toolbox/DicomFrameConverter.h"

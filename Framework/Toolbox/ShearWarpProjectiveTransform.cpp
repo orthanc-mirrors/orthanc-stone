@@ -637,6 +637,14 @@ namespace OrthancStone
         (*target, maxValue, M_view, source, mip, pixelSpacing,
          countSlices, shearInterpolation, warpInterpolation);
     }
+    else if (source.GetFormat() == Orthanc::PixelFormat_SignedGrayscale16 &&
+             targetFormat == Orthanc::PixelFormat_SignedGrayscale16)
+    {
+      ApplyAxialInternal2<Orthanc::PixelFormat_SignedGrayscale16,
+                          Orthanc::PixelFormat_SignedGrayscale16>
+        (*target, maxValue, M_view, source, mip, pixelSpacing,
+         countSlices, shearInterpolation, warpInterpolation);
+    }
     else
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);

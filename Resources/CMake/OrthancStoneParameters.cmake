@@ -22,12 +22,10 @@
 ## Import the parameters of the Orthanc Framework
 #####################################################################
 
-# TODO => Import
-SET(ORTHANC_ROOT /home/jodogne/Subversion/orthanc)
+set(ORTHANC_STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
+set(ORTHANC_ROOT ${ORTHANC_STONE_ROOT}/Resources/Orthanc)
 
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkParameters.cmake)
-
-SET(ORTHANC_STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
 
 
 #####################################################################
@@ -35,9 +33,9 @@ SET(ORTHANC_STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
 #####################################################################
 
 # Advanced parameters to fine-tune linking against system libraries
-SET(USE_SYSTEM_CAIRO ON CACHE BOOL "Use the system version of Cairo")
-SET(USE_SYSTEM_PIXMAN ON CACHE BOOL "Use the system version of Pixman")
-SET(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
+set(USE_SYSTEM_CAIRO ON CACHE BOOL "Use the system version of Cairo")
+set(USE_SYSTEM_PIXMAN ON CACHE BOOL "Use the system version of Pixman")
+set(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 
 
 #####################################################################
@@ -45,4 +43,4 @@ SET(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 ## the Stone of Orthanc
 #####################################################################
 
-SET(ENABLE_SDL ON CACHE INTERNAL "Include support for SDL")
+set(ENABLE_SDL ON CACHE INTERNAL "Include support for SDL")

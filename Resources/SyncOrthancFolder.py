@@ -1,0 +1,216 @@
+#!/usr/bin/python
+
+#
+# This maintenance script updates the content of the "Orthanc" folder
+# to match the latest version of the Orthanc source code.
+#
+
+import multiprocessing
+import os
+import stat
+import sys
+import urllib2
+
+TARGET = os.path.join(os.path.dirname(__file__), 'Orthanc')
+BRANCH = 'default'
+REPOSITORY = 'https://bitbucket.org/sjodogne/orthanc/raw'
+
+FILES = [
+    'Core/Cache/ICachePageProvider.h',
+    'Core/Cache/LeastRecentlyUsedIndex.h',
+    'Core/Cache/MemoryCache.cpp',
+    'Core/Cache/MemoryCache.h',
+    'Core/Cache/SharedArchive.cpp',
+    'Core/Cache/SharedArchive.h',
+    'Core/ChunkedBuffer.cpp',
+    'Core/ChunkedBuffer.h',
+    'Core/Compression/DeflateBaseCompressor.cpp',
+    'Core/Compression/DeflateBaseCompressor.h',
+    'Core/Compression/GzipCompressor.cpp',
+    'Core/Compression/GzipCompressor.h',
+    'Core/Compression/HierarchicalZipWriter.cpp',
+    'Core/Compression/HierarchicalZipWriter.h',
+    'Core/Compression/IBufferCompressor.h',
+    'Core/Compression/ZipWriter.cpp',
+    'Core/Compression/ZipWriter.h',
+    'Core/Compression/ZlibCompressor.cpp',
+    'Core/Compression/ZlibCompressor.h',
+    'Core/DicomFormat/DicomArray.cpp',
+    'Core/DicomFormat/DicomArray.h',
+    'Core/DicomFormat/DicomElement.h',
+    'Core/DicomFormat/DicomImageInformation.cpp',
+    'Core/DicomFormat/DicomImageInformation.h',
+    'Core/DicomFormat/DicomInstanceHasher.cpp',
+    'Core/DicomFormat/DicomInstanceHasher.h',
+    'Core/DicomFormat/DicomIntegerPixelAccessor.cpp',
+    'Core/DicomFormat/DicomIntegerPixelAccessor.h',
+    'Core/DicomFormat/DicomMap.cpp',
+    'Core/DicomFormat/DicomMap.h',
+    'Core/DicomFormat/DicomTag.cpp',
+    'Core/DicomFormat/DicomTag.h',
+    'Core/DicomFormat/DicomValue.cpp',
+    'Core/DicomFormat/DicomValue.h',
+    'Core/Endianness.h',
+    'Core/Enumerations.cpp',
+    'Core/Enumerations.h',
+    'Core/FileStorage/FileInfo.h',
+    'Core/FileStorage/FilesystemStorage.cpp',
+    'Core/FileStorage/FilesystemStorage.h',
+    'Core/FileStorage/IStorageArea.h',
+    'Core/FileStorage/StorageAccessor.cpp',
+    'Core/FileStorage/StorageAccessor.h',
+    'Core/HttpClient.cpp',
+    'Core/HttpClient.h',
+    'Core/ICommand.h',
+    'Core/IDynamicObject.h',
+    'Core/Images/Font.cpp',
+    'Core/Images/Font.h',
+    'Core/Images/FontRegistry.cpp',
+    'Core/Images/FontRegistry.h',
+    'Core/Images/IImageWriter.cpp',
+    'Core/Images/IImageWriter.h',
+    'Core/Images/Image.cpp',
+    'Core/Images/Image.h',
+    'Core/Images/ImageAccessor.cpp',
+    'Core/Images/ImageAccessor.h',
+    'Core/Images/ImageBuffer.cpp',
+    'Core/Images/ImageBuffer.h',
+    'Core/Images/ImageProcessing.cpp',
+    'Core/Images/ImageProcessing.h',
+    'Core/Images/ImageTraits.h',
+    'Core/Images/JpegErrorManager.cpp',
+    'Core/Images/JpegErrorManager.h',
+    'Core/Images/JpegReader.cpp',
+    'Core/Images/JpegReader.h',
+    'Core/Images/JpegWriter.cpp',
+    'Core/Images/JpegWriter.h',
+    'Core/Images/PixelTraits.h',
+    'Core/Images/PngReader.cpp',
+    'Core/Images/PngReader.h',
+    'Core/Images/PngWriter.cpp',
+    'Core/Images/PngWriter.h',
+    'Core/Logging.cpp',
+    'Core/Logging.h',
+    'Core/MultiThreading/BagOfTasks.h',
+    'Core/MultiThreading/BagOfTasksProcessor.cpp',
+    'Core/MultiThreading/BagOfTasksProcessor.h',
+    'Core/MultiThreading/ILockable.h',
+    'Core/MultiThreading/IRunnableBySteps.h',
+    'Core/MultiThreading/Mutex.cpp',
+    'Core/MultiThreading/Mutex.h',
+    'Core/MultiThreading/ReaderWriterLock.cpp',
+    'Core/MultiThreading/ReaderWriterLock.h',
+    'Core/MultiThreading/RunnableWorkersPool.cpp',
+    'Core/MultiThreading/RunnableWorkersPool.h',
+    'Core/MultiThreading/Semaphore.cpp',
+    'Core/MultiThreading/Semaphore.h',
+    'Core/MultiThreading/SharedMessageQueue.cpp',
+    'Core/MultiThreading/SharedMessageQueue.h',
+    'Core/OrthancException.h',
+    'Core/PrecompiledHeaders.cpp',
+    'Core/PrecompiledHeaders.h',
+    'Core/SharedLibrary.cpp',
+    'Core/SharedLibrary.h',
+    'Core/SystemToolbox.cpp',
+    'Core/SystemToolbox.h',
+    'Core/TemporaryFile.cpp',
+    'Core/TemporaryFile.h',
+    'Core/Toolbox.cpp',
+    'Core/Toolbox.h',
+    'Core/WebServiceParameters.cpp',
+    'Core/WebServiceParameters.h',
+    'NEWS',
+    'Plugins/Samples/Common/DicomDatasetReader.cpp',
+    'Plugins/Samples/Common/DicomDatasetReader.h',
+    'Plugins/Samples/Common/DicomPath.cpp',
+    'Plugins/Samples/Common/DicomPath.h',
+    'Plugins/Samples/Common/DicomTag.h',
+    'Plugins/Samples/Common/FullOrthancDataset.cpp',
+    'Plugins/Samples/Common/FullOrthancDataset.h',
+    'Plugins/Samples/Common/IDicomDataset.h',
+    'Plugins/Samples/Common/IOrthancConnection.cpp',
+    'Plugins/Samples/Common/IOrthancConnection.h',
+    'Plugins/Samples/Common/OrthancHttpConnection.cpp',
+    'Plugins/Samples/Common/OrthancHttpConnection.h',
+    'Plugins/Samples/Common/OrthancPluginException.h',
+    'Resources/CMake/AutoGeneratedCode.cmake',
+    'Resources/CMake/BoostConfiguration.cmake',
+    'Resources/CMake/Compiler.cmake',
+    'Resources/CMake/DownloadPackage.cmake',
+    'Resources/CMake/GoogleTestConfiguration.cmake',
+    'Resources/CMake/JsonCppConfiguration.cmake',
+    'Resources/CMake/LibCurlConfiguration.cmake',
+    'Resources/CMake/LibJpegConfiguration.cmake',
+    'Resources/CMake/LibPngConfiguration.cmake',
+    'Resources/CMake/OpenSslConfiguration.cmake',
+    'Resources/CMake/OrthancFrameworkConfiguration.cmake',
+    'Resources/CMake/OrthancFrameworkParameters.cmake',
+    'Resources/CMake/UuidConfiguration.cmake',
+    'Resources/CMake/ZlibConfiguration.cmake',
+    'Resources/EmbedResources.py',
+    'Resources/LinuxStandardBaseToolchain.cmake',
+    'Resources/MinGW-W64-Toolchain32.cmake',
+    'Resources/MinGW-W64-Toolchain64.cmake',
+    'Resources/MinGWToolchain.cmake',
+    'Resources/Patches/boost-1.65.1-linux-standard-base.patch',
+    'Resources/ThirdParty/VisualStudio/stdint.h',
+    'Resources/ThirdParty/base64/base64.cpp',
+    'Resources/ThirdParty/base64/base64.h',
+    'Resources/ThirdParty/md5/md5.c',
+    'Resources/ThirdParty/md5/md5.h',
+    'Resources/ThirdParty/minizip/NOTES',
+    'Resources/ThirdParty/minizip/crypt.h',
+    'Resources/ThirdParty/minizip/ioapi.c',
+    'Resources/ThirdParty/minizip/ioapi.h',
+    'Resources/ThirdParty/minizip/zip.c',
+    'Resources/ThirdParty/minizip/zip.h',
+    'Resources/ThirdParty/patch/NOTES.txt',
+    'Resources/ThirdParty/patch/msys-1.0.dll',
+    'Resources/ThirdParty/patch/patch.exe',
+    'Resources/ThirdParty/patch/patch.exe.manifest',
+    'Resources/WindowsResources.py',
+    'Resources/WindowsResources.rc',
+]
+
+EXE = [
+    'Resources/EmbedResources.py',
+    'Resources/WindowsResources.py',
+]
+
+
+def Download(x):
+    branch = x[0]
+    source = x[1]
+    target = os.path.join(TARGET, x[2])
+    print target
+
+    try:
+        os.makedirs(os.path.dirname(target))
+    except:
+        pass
+
+    url = '%s/%s/%s' % (REPOSITORY, branch, source)
+
+    try:
+        with open(target, 'w') as f:
+            f.write(urllib2.urlopen(url).read())
+    except:
+        sys.stderr.write('Cannot download: %s\n' % url)
+        raise
+
+
+commands = []
+
+for f in FILES:
+    commands.append([ BRANCH, f, f ])
+
+pool = multiprocessing.Pool(10)  # simultaneous downloads
+
+# https://stackoverflow.com/a/1408476/881731
+pool.map_async(Download, commands).get(timeout = 20)
+
+
+for exe in EXE:
+    path = os.path.join(TARGET, exe)
+    st = os.stat(path)
+    os.chmod(path, st.st_mode | stat.S_IEXEC)

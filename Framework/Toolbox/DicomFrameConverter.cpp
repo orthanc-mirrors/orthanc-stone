@@ -23,10 +23,10 @@
 
 #include "LinearAlgebra.h"
 
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
+#include "../../Resources/Orthanc/Core/Images/Image.h"
+#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/Toolbox.h"
 
 namespace OrthancStone
 {

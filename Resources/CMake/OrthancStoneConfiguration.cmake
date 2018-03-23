@@ -27,8 +27,6 @@ SET(ENABLE_PNG ON)
 
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
 
-include_directories(${ORTHANC_ROOT})
-
 
 #####################################################################
 ## Sanity check of the configuration

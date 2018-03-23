@@ -24,7 +24,7 @@
 #include "IStatusBar.h"
 #include "../StoneEnumerations.h"
 
-#include <Core/Images/ImageAccessor.h>
+#include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
 
 namespace OrthancStone
 {

@@ -21,8 +21,8 @@
 
 #include "CairoFont.h"
 
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
+#include "../../Resources/Orthanc/Core/Logging.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
 
 namespace OrthancStone
 {

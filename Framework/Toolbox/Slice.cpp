@@ -24,9 +24,9 @@
 #include "../StoneEnumerations.h"
 #include "GeometryToolbox.h"
 
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
+#include "../../Resources/Orthanc/Core/Logging.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/Toolbox.h"
 
 #include <boost/lexical_cast.hpp>
 

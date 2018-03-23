@@ -153,6 +153,8 @@ FILES = [
     'Resources/MinGW-W64-Toolchain64.cmake',
     'Resources/MinGWToolchain.cmake',
     'Resources/Patches/boost-1.65.1-linux-standard-base.patch',
+    'Resources/Patches/curl-7.57.0-cmake.patch',
+    'Resources/Patches/dcmtk-3.6.2-linux-standard-base.patch',
     'Resources/ThirdParty/VisualStudio/stdint.h',
     'Resources/ThirdParty/base64/base64.cpp',
     'Resources/ThirdParty/base64/base64.h',

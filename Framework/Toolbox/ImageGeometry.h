@@ -24,7 +24,7 @@
 #include "../StoneEnumerations.h"
 #include "LinearAlgebra.h"
 
-#include <Core/Images/ImageAccessor.h>
+#include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
 
 
 namespace OrthancStone

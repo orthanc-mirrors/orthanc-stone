@@ -24,9 +24,9 @@
 #include "LinearAlgebra.h"
 #include "GeometryToolbox.h"
 
-#include <Core/Logging.h>
-#include <Core/Toolbox.h>
-#include <Core/OrthancException.h>
+#include "../../Resources/Orthanc/Core/Logging.h"
+#include "../../Resources/Orthanc/Core/Toolbox.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
 
 namespace OrthancStone
 {

@@ -24,7 +24,7 @@
 #include "CoordinateSystem3D.h"
 #include "DicomFrameConverter.h"
 
-#include <Core/DicomFormat/DicomImageInformation.h>
+#include "../../Resources/Orthanc/Core/DicomFormat/DicomImageInformation.h"
 
 namespace OrthancStone
 {

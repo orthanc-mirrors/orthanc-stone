@@ -23,9 +23,9 @@
 
 #include "FrameRenderer.h"
 
-#include <Core/OrthancException.h>
-#include <Core/Logging.h>
-#include <Core/Toolbox.h>
+#include "../../Resources/Orthanc/OrthancException.h"
+#include "../../Resources/Orthanc/Logging.h"
+#include "../../Resources/Orthanc/Toolbox.h"
 #include <Plugins/Samples/Common/OrthancPluginException.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 

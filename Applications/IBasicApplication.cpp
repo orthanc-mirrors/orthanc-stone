@@ -24,9 +24,9 @@
 #include "../Framework/Toolbox/MessagingToolbox.h"
 #include "Sdl/SdlEngine.h"
 
-#include <Core/Logging.h>
-#include <Core/HttpClient.h>
-#include <Plugins/Samples/Common/OrthancHttpConnection.h>
+#include "../Resources/Orthanc/Core/Logging.h"
+#include "../Resources/Orthanc/Core/HttpClient.h"
+#include "../Resources/Orthanc/Plugins/Samples/Common/OrthancHttpConnection.h"
 
 namespace OrthancStone
 {

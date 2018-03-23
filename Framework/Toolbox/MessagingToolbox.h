@@ -23,10 +23,10 @@
 
 #include "../StoneEnumerations.h"
 
-#include <Plugins/Samples/Common/IOrthancConnection.h>
-#include <Plugins/Samples/Common/IDicomDataset.h>
-#include <Core/Images/ImageAccessor.h>
-#include <Core/DicomFormat/DicomMap.h>
+#include "../../Resources/Orthanc/Core/DicomFormat/DicomMap.h"
+#include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/IDicomDataset.h"
+#include "../../Resources/Orthanc/Plugins/Samples/Common/IOrthancConnection.h"
 
 #include <json/value.h>
 

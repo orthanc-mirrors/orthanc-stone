@@ -24,7 +24,7 @@
 #include "../Layers/SliceOutlineRenderer.h"
 #include "../Toolbox/GeometryToolbox.h"
 
-#include <Core/Logging.h>
+#include "../../Resources/Orthanc/Core/Logging.h"
 
 static const double THIN_SLICE_THICKNESS = 100.0 * std::numeric_limits<double>::epsilon();
 

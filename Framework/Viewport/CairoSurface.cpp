@@ -21,9 +21,9 @@
 
 #include "CairoSurface.h"
 
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
-#include <Core/Images/ImageProcessing.h>
+#include "../../Resources/Orthanc/Core/Logging.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
 
 namespace OrthancStone
 {

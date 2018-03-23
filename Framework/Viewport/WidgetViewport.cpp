@@ -21,8 +21,8 @@
 
 #include "WidgetViewport.h"
 
-#include <Core/Images/ImageProcessing.h>
-#include <Core/OrthancException.h>
+#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
 
 namespace OrthancStone
 {

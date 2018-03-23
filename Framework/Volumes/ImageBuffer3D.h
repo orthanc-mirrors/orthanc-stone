@@ -27,7 +27,7 @@
 #include "../Toolbox/DicomFrameConverter.h"
 #include "../Toolbox/ParallelSlices.h"
 
-#include <Core/Images/Image.h>
+#include "../../Resources/Orthanc/Core/Images/Image.h"
 
 namespace OrthancStone
 {

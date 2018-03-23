@@ -25,7 +25,7 @@
 #include "../Toolbox/MessagingToolbox.h"
 #include "../Toolbox/DicomFrameConverter.h"
 
-#include <Core/OrthancException.h>
+#include "../../Resources/Orthanc/OrthancException.h"
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 

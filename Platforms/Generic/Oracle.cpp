@@ -21,9 +21,9 @@
 
 #include "Oracle.h"
 
-#include <Core/Logging.h>
-#include <Core/MultiThreading/SharedMessageQueue.h>
-#include <Core/OrthancException.h>
+#include "../../Resources/Orthanc/Core/Logging.h"
+#include "../../Resources/Orthanc/Core/MultiThreading/SharedMessageQueue.h"
+#include "../../Resources/Orthanc/Core/OrthancException.h"
 
 #include <vector>
 #include <stdio.h>

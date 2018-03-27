@@ -610,14 +610,17 @@ namespace OrthancStone
     // Decode a grayscale JPEG 8bpp image coming from the Web viewer
     std::auto_ptr<Orthanc::ImageAccessor> image
       (new Orthanc::Image(expectedFormat, reader->GetWidth(), reader->GetHeight(), false));
-
-    float scaling = static_cast<float>(stretchHigh - stretchLow) / 255.0f;
-    float offset = static_cast<float>(stretchLow) / scaling;
-      
+     
     Orthanc::ImageProcessing::Convert(*image, *reader);
     reader.reset(NULL);
-    
-    Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling, true);
+
+    float scaling = static_cast<float>(stretchHigh - stretchLow) / 255.0f;
+
+    if (!LinearAlgebra::IsCloseToZero(scaling))
+    {
+      float offset = static_cast<float>(stretchLow) / scaling;
+      Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling, true);
+    }
 
     NotifySliceImageSuccess(operation, image);
   }

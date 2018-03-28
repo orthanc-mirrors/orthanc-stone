@@ -24,6 +24,7 @@
 
 SET(ENABLE_JPEG ON)
 SET(ENABLE_PNG ON)
+SET(ENABLE_ZLIB ON)
 
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
 

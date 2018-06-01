@@ -31,7 +31,7 @@
 
 namespace OrthancStone
 {
-  class SdlSurface : public boost::noncopyable
+  class SdlCairoSurface : public boost::noncopyable
   {
   private:
     std::auto_ptr<CairoSurface>  cairoSurface_;
@@ -39,9 +39,9 @@ namespace OrthancStone
     SDL_Surface*                 sdlSurface_;
 
   public:
-    SdlSurface(SdlWindow& window);
+    SdlCairoSurface(SdlWindow& window);
 
-    ~SdlSurface();
+    ~SdlCairoSurface();
 
     void SetSize(unsigned int width,
                  unsigned int height);

@@ -23,7 +23,7 @@
 
 #if ORTHANC_ENABLE_SDL == 1
 
-#include "SdlSurface.h"
+#include "SdlCairoSurface.h"
 #include "../BasicApplicationContext.h"
 
 namespace OrthancStone
@@ -33,7 +33,7 @@ namespace OrthancStone
   private:
     SdlWindow&                window_;
     BasicApplicationContext&  context_;
-    SdlSurface                surface_;
+    SdlCairoSurface           surface_;
     bool                      viewportChanged_;
 
     void SetSize(BasicApplicationContext::ViewportLocker& locker,

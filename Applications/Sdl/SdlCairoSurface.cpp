@@ -19,7 +19,7 @@
  **/
 
 
-#include "SdlSurface.h"
+#include "SdlCairoSurface.h"
 
 #if ORTHANC_ENABLE_SDL == 1
 
@@ -28,14 +28,14 @@
 
 namespace OrthancStone
 {
-  SdlSurface::SdlSurface(SdlWindow& window) :
+  SdlCairoSurface::SdlCairoSurface(SdlWindow& window) :
     window_(window),
     sdlSurface_(NULL)
   {
   }
 
 
-  SdlSurface::~SdlSurface()
+  SdlCairoSurface::~SdlCairoSurface()
   {
     if (sdlSurface_)
     {
@@ -44,8 +44,8 @@ namespace OrthancStone
   }
 
 
-  void SdlSurface::SetSize(unsigned int width,
-                           unsigned int height)
+  void SdlCairoSurface::SetSize(unsigned int width,
+                                unsigned int height)
   {
     if (cairoSurface_.get() == NULL ||
         cairoSurface_->GetWidth() != width ||
@@ -74,7 +74,7 @@ namespace OrthancStone
   }
 
 
-  void SdlSurface::Render(IViewport& viewport)
+  void SdlCairoSurface::Render(IViewport& viewport)
   {
     if (cairoSurface_.get() == NULL)
     {

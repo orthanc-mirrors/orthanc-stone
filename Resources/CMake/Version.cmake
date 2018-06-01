@@ -1,0 +1,5 @@
+set(ORTHANC_STONE_VERSION "mainline")
+
+add_definitions(
+  -DORTHANC_STONE_VERSION="${ORTHANC_WSI_VERSION}"
+  )

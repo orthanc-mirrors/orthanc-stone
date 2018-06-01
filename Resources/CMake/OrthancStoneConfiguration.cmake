@@ -22,11 +22,8 @@
 ## Configure the Orthanc Framework
 #####################################################################
 
-SET(ENABLE_JPEG ON)
-SET(ENABLE_PNG ON)
-SET(ENABLE_ZLIB ON)
-
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
+include_directories(${ORTHANC_ROOT})
 
 
 #####################################################################

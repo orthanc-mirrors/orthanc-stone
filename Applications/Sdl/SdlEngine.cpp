@@ -23,7 +23,7 @@
 
 #if ORTHANC_ENABLE_SDL == 1
 
-#include "../../Resources/Orthanc/Core/Logging.h"
+#include <Core/Logging.h>
 
 #include <SDL.h>
 

@@ -24,10 +24,10 @@
 #include "../Toolbox/GeometryToolbox.h"
 #include "../Toolbox/MessagingToolbox.h"
 
-#include "../../Resources/Orthanc/Core/Logging.h"
-#include "../../Resources/Orthanc/Core/OrthancException.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/FullOrthancDataset.h"
-#include "../../Resources/Orthanc/Plugins/Samples/Common/DicomDatasetReader.h"
+#include <Core/Logging.h>
+#include <Core/OrthancException.h>
+#include <Plugins/Samples/Common/FullOrthancDataset.h>
+#include <Plugins/Samples/Common/DicomDatasetReader.h>
 
 #include <limits>
 #include <stdio.h>

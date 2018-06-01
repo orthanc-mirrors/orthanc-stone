@@ -21,7 +21,7 @@
 
 #include "DownloadStack.h"
 
-#include "../../Resources/Orthanc/Core/OrthancException.h"
+#include <Core/OrthancException.h>
 
 #include <cassert>
 

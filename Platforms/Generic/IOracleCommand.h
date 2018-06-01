@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../../Resources/Orthanc/Core/IDynamicObject.h"
+#include <Core/IDynamicObject.h>
 
 namespace OrthancStone
 {

@@ -23,7 +23,7 @@
 
 #include "LinearAlgebra.h"
 
-#include "../../Resources/Orthanc/Plugins/Samples/Common/IDicomDataset.h"
+#include <Plugins/Samples/Common/IDicomDataset.h>
 
 namespace OrthancStone
 {

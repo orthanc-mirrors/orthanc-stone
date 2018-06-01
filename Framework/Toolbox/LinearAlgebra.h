@@ -28,7 +28,7 @@
 #  include <boost/serialization/array_wrapper.hpp>
 #endif
 
-#include "../../Resources/Orthanc/Core/DicomFormat/DicomMap.h"
+#include <Core/DicomFormat/DicomMap.h>
 
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>

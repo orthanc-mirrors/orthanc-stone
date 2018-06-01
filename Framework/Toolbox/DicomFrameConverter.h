@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "../../Resources/Orthanc/Core/DicomFormat/DicomMap.h"
-#include "../../Resources/Orthanc/Core/Images/ImageAccessor.h"
+#include <Core/DicomFormat/DicomMap.h>
+#include <Core/Images/ImageAccessor.h>
 
 #include <memory>
 

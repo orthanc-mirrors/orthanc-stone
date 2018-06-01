@@ -24,7 +24,7 @@
 #include "CoordinateSystem3D.h"
 #include "Extent2D.h"
 
-#include "../../Resources/Orthanc/Plugins/Samples/Common/FullOrthancDataset.h"
+#include <Plugins/Samples/Common/FullOrthancDataset.h>
 
 #include <list>
 

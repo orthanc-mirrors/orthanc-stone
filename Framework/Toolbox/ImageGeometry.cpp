@@ -24,8 +24,8 @@
 #include "Extent2D.h"
 #include "SubpixelReader.h"
 
-#include "../../Resources/Orthanc/Core/Images/ImageProcessing.h"
-#include "../../Resources/Orthanc/Core/Logging.h"
+#include <Core/Images/ImageProcessing.h>
+#include <Core/Logging.h>
 
 
 namespace OrthancStone

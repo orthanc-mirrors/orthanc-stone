@@ -27,7 +27,8 @@
 #include "../../Framework/Layers/SeriesFrameRendererFactory.h"
 #include "../../Framework/Layers/SiblingSliceLocationFactory.h"
 #include "../../Framework/Widgets/LayoutWidget.h"
-#include "../../Resources/Orthanc/Core/Logging.h"
+
+#include <Core/Logging.h>
 
 namespace OrthancStone
 {

@@ -31,11 +31,11 @@
 #include "../Framework/Volumes/SlicedVolumeBase.h"
 #include "../Platforms/Generic/OracleWebService.h"
 
-#include "../Resources/Orthanc/Core/HttpClient.h"
-#include "../Resources/Orthanc/Core/Images/ImageProcessing.h"
-#include "../Resources/Orthanc/Core/Logging.h"
-#include "../Resources/Orthanc/Core/MultiThreading/SharedMessageQueue.h"
-#include "../Resources/Orthanc/Core/OrthancException.h"
+#include <Core/HttpClient.h>
+#include <Core/Images/ImageProcessing.h>
+#include <Core/Logging.h>
+#include <Core/MultiThreading/SharedMessageQueue.h>
+#include <Core/OrthancException.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>

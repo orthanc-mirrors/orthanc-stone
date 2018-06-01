@@ -27,10 +27,10 @@
 #include "../../Framework/Layers/LineMeasureTracker.h"
 #include "../../Framework/Layers/CircleMeasureTracker.h"
 
-#include "../../Resources/Orthanc/Core/Toolbox.h"
-#include "../../Resources/Orthanc/Core/Logging.h"
+#include <Core/Toolbox.h>
+#include <Core/Logging.h>
 
-#include "../../Resources/Orthanc/Plugins/Samples/Common/OrthancHttpConnection.h"   // TODO REMOVE
+#include <Plugins/Samples/Common/OrthancHttpConnection.h>   // TODO REMOVE
 #include "../../Framework/Layers/DicomStructureSetRendererFactory.h"   // TODO REMOVE
 #include "../../Framework/Toolbox/MessagingToolbox.h"   // TODO REMOVE
 

@@ -269,18 +269,6 @@ namespace OrthancStone
       SDL_Delay(1);
     }
   }
-
-
-  void SdlEngine::GlobalInitialize()
-  {
-    SDL_Init(SDL_INIT_VIDEO);
-  }
-
-
-  void SdlEngine::GlobalFinalize()
-  {
-    SDL_Quit();
-  }
 }
 
 #endif

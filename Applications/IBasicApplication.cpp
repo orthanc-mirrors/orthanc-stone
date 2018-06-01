@@ -87,7 +87,7 @@ namespace OrthancStone
     Orthanc::Logging::Initialize();
     Orthanc::HttpClient::InitializeOpenSsl();
     Orthanc::HttpClient::GlobalInitialize();
-    SdlEngine::GlobalInitialize();
+    SdlWindow::GlobalInitialize();
 
 
     /******************************************************************
@@ -280,7 +280,7 @@ namespace OrthancStone
      * Finalize all the subcomponents of Orthanc Stone
      ******************************************************************/
 
-    SdlEngine::GlobalFinalize();
+    SdlWindow::GlobalFinalize();
     Orthanc::HttpClient::GlobalFinalize();
     Orthanc::HttpClient::FinalizeOpenSsl();
 

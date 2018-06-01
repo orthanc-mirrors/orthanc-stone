@@ -23,40 +23,31 @@
 
 #if ORTHANC_ENABLE_SDL == 1
 
-#include "SdlCairoSurface.h"
-#include "../BasicApplicationContext.h"
+#include "SdlWindow.h"
+
+#include <Core/Images/ImageAccessor.h>
+#include <boost/thread/mutex.hpp>
 
 namespace OrthancStone
 {
-  class SdlEngine : public IViewport::IObserver
+  class SdlOrthancSurface : public boost::noncopyable
   {
   private:
-    SdlWindow&                window_;
-    BasicApplicationContext&  context_;
-    SdlCairoSurface           surface_;
-    bool                      viewportChanged_;
-
-    void SetSize(BasicApplicationContext::ViewportLocker& locker,
-                 unsigned int width,
-                 unsigned int height);
-    
-    void RenderFrame();
-
-    static KeyboardModifiers GetKeyboardModifiers(const uint8_t* keyboardState,
-                                                  const int scancodeCount);
+    std::auto_ptr<Orthanc::ImageAccessor>  image_;
+    SdlWindow&                             window_;
+    SDL_Surface*                           sdlSurface_;
 
   public:
-    SdlEngine(SdlWindow& window,
-              BasicApplicationContext& context);
-  
-    virtual ~SdlEngine();
+    SdlOrthancSurface(SdlWindow& window);
 
-    virtual void NotifyChange(const IViewport& viewport)
-    {
-      viewportChanged_ = true;
-    }
+    ~SdlOrthancSurface();
 
-    void Run();
+    void SetSize(unsigned int width,
+                 unsigned int height);
+
+    Orthanc::ImageAccessor& GetImage();
+
+    void Render();
   };
 }
 

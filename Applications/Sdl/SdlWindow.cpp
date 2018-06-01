@@ -26,6 +26,8 @@
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 
+#include <SDL.h>
+
 namespace OrthancStone
 {
   SdlWindow::SdlWindow(const char* title,
@@ -144,6 +146,22 @@ namespace OrthancStone
       SDL_MaximizeWindow(window_);
       maximized_ = true;
     }
+  }
+
+
+  void SdlWindow::GlobalInitialize()
+  {
+    if (SDL_Init(SDL_INIT_VIDEO) != 0)
+    {
+      LOG(ERROR) << "Cannot initialize SDL";
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+  }
+
+
+  void SdlWindow::GlobalFinalize()
+  {
+    SDL_Quit();
   }
 }
 

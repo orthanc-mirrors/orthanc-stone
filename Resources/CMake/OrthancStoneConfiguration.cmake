@@ -147,6 +147,7 @@ if (NOT ORTHANC_SANDBOXED)
     ${ORTHANC_STONE_DIR}/Applications/IBasicApplication.cpp
     ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlEngine.cpp
     ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlCairoSurface.cpp
+    ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlOrthancSurface.cpp
     ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlWindow.cpp
     )
 endif()

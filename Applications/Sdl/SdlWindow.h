@@ -51,6 +51,10 @@ namespace OrthancStone
     void Render(SDL_Surface* surface);
 
     void ToggleMaximize();
+
+    static void GlobalInitialize();
+
+    static void GlobalFinalize();
   };
 }
 

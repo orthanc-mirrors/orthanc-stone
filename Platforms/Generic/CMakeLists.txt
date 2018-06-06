@@ -47,7 +47,7 @@ add_library(OrthancStone STATIC
 
 macro(BuildSample Target Sample)
   add_executable(${Target}
-    ${ORTHANC_STONE_DIR}/Applications/Samples/SampleMainSdl.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleMainSdl.cpp
     ${APPLICATIONS_SOURCES}
     )
   set_target_properties(${Target} PROPERTIES COMPILE_DEFINITIONS ORTHANC_STONE_SAMPLE=${Sample})
@@ -72,7 +72,7 @@ BuildSample(OrthancStoneSingleVolume 4)
 
 add_executable(UnitTests
   ${GOOGLE_TEST_SOURCES}
-  ${ORTHANC_STONE_DIR}/UnitTestsSources/UnitTestsMain.cpp
+  ${ORTHANC_STONE_ROOT}/UnitTestsSources/UnitTestsMain.cpp
   )
 
 target_link_libraries(UnitTests OrthancStone)
@@ -85,7 +85,7 @@ target_link_libraries(UnitTests OrthancStone)
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
   configure_file(
-    ${ORTHANC_STONE_DIR}/Resources/OrthancStone.doxygen
+    ${ORTHANC_STONE_ROOT}/Resources/OrthancStone.doxygen
     ${CMAKE_CURRENT_BINARY_DIR}/OrthancStone.doxygen
     @ONLY)
 

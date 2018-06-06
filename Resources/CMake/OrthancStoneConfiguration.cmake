@@ -49,7 +49,7 @@ endif()
 ## Configure mandatory third-party components
 #####################################################################
 
-SET(ORTHANC_STONE_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
+SET(ORTHANC_STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
 
 include(FindPkgConfig)
 include(${CMAKE_CURRENT_LIST_DIR}/BoostExtendedConfiguration.cmake)
@@ -100,11 +100,11 @@ add_definitions(
 #####################################################################
 
 EmbedResources(
-  COLORMAP_HOT    ${ORTHANC_STONE_DIR}/Resources/Colormaps/hot.lut
-  COLORMAP_JET    ${ORTHANC_STONE_DIR}/Resources/Colormaps/jet.lut
-  COLORMAP_RED    ${ORTHANC_STONE_DIR}/Resources/Colormaps/red.lut
-  COLORMAP_GREEN  ${ORTHANC_STONE_DIR}/Resources/Colormaps/green.lut
-  COLORMAP_BLUE   ${ORTHANC_STONE_DIR}/Resources/Colormaps/blue.lut
+  COLORMAP_HOT    ${ORTHANC_STONE_ROOT}/Resources/Colormaps/hot.lut
+  COLORMAP_JET    ${ORTHANC_STONE_ROOT}/Resources/Colormaps/jet.lut
+  COLORMAP_RED    ${ORTHANC_STONE_ROOT}/Resources/Colormaps/red.lut
+  COLORMAP_GREEN  ${ORTHANC_STONE_ROOT}/Resources/Colormaps/green.lut
+  COLORMAP_BLUE   ${ORTHANC_STONE_ROOT}/Resources/Colormaps/blue.lut
   )
 
 
@@ -137,72 +137,72 @@ endif()
 
 if (NOT ORTHANC_SANDBOXED)
   set(PLATFORM_SOURCES
-    ${ORTHANC_STONE_DIR}/Platforms/Generic/WebServiceGetCommand.cpp
-    ${ORTHANC_STONE_DIR}/Platforms/Generic/WebServicePostCommand.cpp
-    ${ORTHANC_STONE_DIR}/Platforms/Generic/Oracle.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceGetCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServicePostCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/Oracle.cpp
     )
 
   set(APPLICATIONS_SOURCES
-    ${ORTHANC_STONE_DIR}/Applications/BasicApplicationContext.cpp
-    ${ORTHANC_STONE_DIR}/Applications/IBasicApplication.cpp
-    ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlEngine.cpp
-    ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlCairoSurface.cpp
-    ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlOrthancSurface.cpp
-    ${ORTHANC_STONE_DIR}/Applications/Sdl/SdlWindow.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/BasicApplicationContext.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/IBasicApplication.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlCairoSurface.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOrthancSurface.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlWindow.cpp
     )
 endif()
 
 list(APPEND ORTHANC_STONE_SOURCES
-  #${ORTHANC_STONE_DIR}/Framework/Layers/SeriesFrameRendererFactory.cpp
-  #${ORTHANC_STONE_DIR}/Framework/Layers/SiblingSliceLocationFactory.cpp
-  #${ORTHANC_STONE_DIR}/Framework/Layers/SingleFrameRendererFactory.cpp
-  ${ORTHANC_STONE_DIR}/Framework/StoneEnumerations.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Layers/CircleMeasureTracker.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Layers/ColorFrameRenderer.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Layers/DicomStructureSetRendererFactory.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Layers/FrameRenderer.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Layers/GrayscaleFrameRenderer.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Layers/LayerSourceBase.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Layers/LineLayerRenderer.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Layers/LineMeasureTracker.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Layers/OrthancFrameLayerSource.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Layers/RenderStyle.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Layers/SliceOutlineRenderer.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/CoordinateSystem3D.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/DicomFrameConverter.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/DicomStructureSet.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/DownloadStack.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/Extent2D.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/FiniteProjectiveCamera.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/GeometryToolbox.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/ImageGeometry.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/LinearAlgebra.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/MessagingToolbox.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrientedBoundingBox.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/OrthancSlicesLoader.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlices.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/ParallelSlicesCursor.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/Slice.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/SlicesSorter.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Toolbox/ViewportGeometry.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Viewport/CairoContext.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Viewport/CairoFont.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Viewport/CairoSurface.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Viewport/WidgetViewport.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Volumes/ImageBuffer3D.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Volumes/SlicedVolumeBase.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Volumes/StructureSetLoader.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeLoaderBase.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Volumes/VolumeReslicer.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Widgets/CairoWidget.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Widgets/EmptyWidget.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Widgets/LayerWidget.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Widgets/LayoutWidget.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Widgets/TestCairoWidget.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Widgets/TestWorldSceneWidget.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Widgets/WidgetBase.cpp
-  ${ORTHANC_STONE_DIR}/Framework/Widgets/WorldSceneWidget.cpp
+  #${ORTHANC_STONE_ROOT}/Framework/Layers/SeriesFrameRendererFactory.cpp
+  #${ORTHANC_STONE_ROOT}/Framework/Layers/SiblingSliceLocationFactory.cpp
+  #${ORTHANC_STONE_ROOT}/Framework/Layers/SingleFrameRendererFactory.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/CircleMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/ColorFrameRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/DicomStructureSetRendererFactory.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/FrameRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/GrayscaleFrameRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/LayerSourceBase.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/LineLayerRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/LineMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/OrthancFrameLayerSource.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/RenderStyle.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/SliceOutlineRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/CoordinateSystem3D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomFrameConverter.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DownloadStack.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Extent2D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/FiniteProjectiveCamera.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/MessagingToolbox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrientedBoundingBox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrthancSlicesLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlices.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlicesCursor.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Slice.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ViewportGeometry.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoFont.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Viewport/WidgetViewport.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/ImageBuffer3D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/SlicedVolumeBase.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/StructureSetLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeLoaderBase.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeReslicer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/CairoWidget.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/EmptyWidget.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/LayerWidget.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/LayoutWidget.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/TestCairoWidget.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/TestWorldSceneWidget.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/WidgetBase.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/WorldSceneWidget.cpp
 
   ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomPath.cpp
   ${ORTHANC_ROOT}/Plugins/Samples/Common/IOrthancConnection.cpp

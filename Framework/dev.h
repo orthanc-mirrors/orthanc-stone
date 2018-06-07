@@ -448,8 +448,7 @@ namespace OrthancStone
 
     Slice* GetSlice(size_t slice) const
     {
-      if (slice < 0 ||
-          slice >= depth_)
+      if (slice >= depth_)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }

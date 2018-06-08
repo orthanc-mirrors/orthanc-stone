@@ -395,7 +395,29 @@ namespace OrthancStone
     return index;
   }
 
-  
+  void LayerWidget::ReplaceLayer(size_t index, ILayerSource* layer)  // Takes ownership
+  {
+    if (layer == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+
+    if (index >= layers_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    delete layers_[index];
+    layers_[index] = layer;
+    layersIndex_[layer] = index;
+
+    ResetPendingScene();
+    layer->Register(*this);
+
+    InvalidateLayer(index);
+  }
+
+
   const RenderStyle& LayerWidget::GetLayerStyle(size_t layer) const
   {
     if (layer >= layers_.size())

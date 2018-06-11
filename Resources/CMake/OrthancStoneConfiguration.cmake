@@ -135,6 +135,10 @@ endif()
 ## All the source files required to build Stone of Orthanc
 #####################################################################
 
+set(APPLICATIONS_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/IBasicApplication.h
+    )
+
 if (NOT ORTHANC_SANDBOXED)
   set(PLATFORM_SOURCES
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceGetCommand.cpp
@@ -142,13 +146,17 @@ if (NOT ORTHANC_SANDBOXED)
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/Oracle.cpp
     )
 
-  set(APPLICATIONS_SOURCES
+  list(APPEND APPLICATIONS_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/BasicApplicationContext.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/IBasicApplication.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Sdl/BasicSdlApplication.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlCairoSurface.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOrthancSurface.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlWindow.cpp
+    )
+else()
+  list(APPEND APPLICATIONS_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/Wasm/BasicWasmApplication.cpp
     )
 endif()
 
@@ -222,3 +230,4 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${SDL_SOURCES}
   ${BOOST_EXTENDED_SOURCES}
   )
+

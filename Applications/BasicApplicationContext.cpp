@@ -48,73 +48,10 @@ namespace OrthancStone
   }
 
 
-  BasicApplicationContext::~BasicApplicationContext()
-  {
-    for (Interactors::iterator it = interactors_.begin(); it != interactors_.end(); ++it)
-    {
-      assert(*it != NULL);
-      delete *it;
-    }
-
-    for (SlicedVolumes::iterator it = slicedVolumes_.begin(); it != slicedVolumes_.end(); ++it)
-    {
-      assert(*it != NULL);
-      delete *it;
-    }
-
-    for (VolumeLoaders::iterator it = volumeLoaders_.begin(); it != volumeLoaders_.end(); ++it)
-    {
-      assert(*it != NULL);
-      delete *it;
-    }
-  }
-
-
   IWidget& BasicApplicationContext::SetCentralWidget(IWidget* widget)   // Takes ownership
   {
-    viewport_.SetCentralWidget(widget);
+    centralViewport_.SetCentralWidget(widget);
     return *widget;
-  }
-
-
-  ISlicedVolume& BasicApplicationContext::AddSlicedVolume(ISlicedVolume* volume)
-  {
-    if (volume == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-    else
-    {
-      slicedVolumes_.push_back(volume);
-      return *volume;
-    }
-  }
-
-
-  IVolumeLoader& BasicApplicationContext::AddVolumeLoader(IVolumeLoader* loader)
-  {
-    if (loader == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-    else
-    {
-      volumeLoaders_.push_back(loader);
-      return *loader;
-    }
-  }
-
-
-  IWorldSceneInteractor& BasicApplicationContext::AddInteractor(IWorldSceneInteractor* interactor)
-  {
-    if (interactor == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-
-    interactors_.push_back(interactor);
-
-    return *interactor;
   }
 
 
@@ -122,7 +59,7 @@ namespace OrthancStone
   {
     oracle_.Start();
 
-    if (viewport_.HasUpdateContent())
+    if (centralViewport_.HasUpdateContent())
     {
       stopped_ = false;
       updateThread_ = boost::thread(UpdateThread, this);

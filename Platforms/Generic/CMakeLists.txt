@@ -45,9 +45,13 @@ add_library(OrthancStone STATIC
 ## Build all the sample applications
 #####################################################################
 
-macro(BuildSample Target Sample)
+macro(BuildSample Target Header Sample)
   add_executable(${Target}
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleMainSdl.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationContext.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleInteractor.h
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationBase.h
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/${Header}
     ${APPLICATIONS_SOURCES}
     )
   set_target_properties(${Target} PROPERTIES COMPILE_DEFINITIONS ORTHANC_STONE_SAMPLE=${Sample})
@@ -57,10 +61,10 @@ endmacro()
 
 # TODO - Re-enable all these samples!
 
-BuildSample(OrthancStoneEmpty 1)
-BuildSample(OrthancStoneTestPattern 2)
-BuildSample(OrthancStoneSingleFrame 3)
-BuildSample(OrthancStoneSingleVolume 4)
+BuildSample(OrthancStoneEmpty EmptyApplication.h 1)
+BuildSample(OrthancStoneTestPattern TestPatternApplication.h 2)
+BuildSample(OrthancStoneSingleFrame SingleFrameApplication.h 3)
+BuildSample(OrthancStoneSingleVolume SingleVolumeApplication.h 4)
 #BuildSample(OrthancStoneBasicPetCtFusion 5)
 #BuildSample(OrthancStoneSynchronizedSeries 6)
 #BuildSample(OrthancStoneLayoutPetCtFusion 7)

@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -21,38 +21,29 @@
 
 #pragma once
 
-#include "../../Applications/Sdl/BasicSdlApplication.h"
-#include "SampleApplicationContext.h"
+#include "../BasicApplicationContext.h"
+#include "../IBasicApplication.h"
+
+#include <boost/program_options.hpp>
+
+#if ORTHANC_ENABLE_SDL != 1
+#error this file shall be included only with the ORTHANC_ENABLE_SDL set to 1
+#endif
+
+#include <SDL.h>   // Necessary to avoid undefined reference to `SDL_main'
 
 namespace OrthancStone
 {
-  namespace Samples
+  class BasicSdlApplication : public IBasicApplication
   {
-
-#ifdef ORTHANC_ENABLE_SDL
-    class SampleSdlApplicationBase : BasicSdlApplication {
-    private:
-      std::unique_ptr<SampleApplicationContext> context_;
-
-      BasicApplicationContext& CreateApplicationContext(Orthanc::WebServiceParameters& orthanc) {
-        context_.reset(new SampleApplicationContext(orthanc));
-      }
-    };
-
-    typedef SampleApplicationBase_ SampleSdlApplicationBase;
-#else
-
-#endif
-
-    class SampleApplicationBase : public SampleApplicationBase_
+  public:
+    virtual ~BasicSdlApplication()
     {
-    public:
-      virtual std::string GetTitle() const
-      {
-        return "Stone of Orthanc - Sample";
-      }
-    };
+    }
 
+    static int ExecuteWithSdl(BasicSdlApplication& application,
+                              int argc,
+                              char* argv[]);
+  };
 
-  }
 }

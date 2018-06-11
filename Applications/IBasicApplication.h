@@ -22,36 +22,62 @@
 #pragma once
 
 #include "BasicApplicationContext.h"
-
 #include <boost/program_options.hpp>
-
-#if ORTHANC_ENABLE_SDL == 1
-#  include <SDL.h>   // Necessary to avoid undefined reference to `SDL_main'
-#endif
 
 namespace OrthancStone
 {
   class IBasicApplication : public boost::noncopyable
   {
+  protected:
+//    struct StartupOptionValue {
+//      enum Type {
+//        boolean,
+//        string,
+//        integer
+//      };
+//      Type type;
+//      std::string value;
+
+//      int asInt() {return std::stoi(value);}
+//      bool asBool() {return value == "true"; }
+//      std::string asString() {return value; }
+//    };
+
+//    struct StartupOptionDefinition {
+//      std::string name;
+//      std::string helpText;
+//      std::string defaultValue;
+//      StartupOptionValue::Type type;
+//    };
+
+//    typedef std::list<StartupOptionDefinition> StartupOptions;
+
+//    StartupOptions startupOptions_;
+
   public:
     virtual ~IBasicApplication()
     {
     }
 
-    virtual void DeclareCommandLineOptions(boost::program_options::options_description& options) = 0;
+    virtual void DeclareStartupOptions(boost::program_options::options_description& options) = 0;
+    virtual void Initialize(IStatusBar& statusBar,
+                            const boost::program_options::variables_map& parameters) = 0;
+
+    virtual BasicApplicationContext& CreateApplicationContext(Orthanc::WebServiceParameters& orthanc) = 0;
+
 
     virtual std::string GetTitle() const = 0;
 
-    virtual void Initialize(BasicApplicationContext& context,
-                            IStatusBar& statusBar,
-                            const boost::program_options::variables_map& parameters) = 0;
+//    virtual void Initialize(BasicApplicationContext& context,
+//                            IStatusBar& statusBar,
+//                            const std::map<std::string, std::string>& startupOptions) = 0;
 
     virtual void Finalize() = 0;
 
-#if ORTHANC_ENABLE_SDL == 1
-    static int ExecuteWithSdl(IBasicApplication& application,
-                              int argc, 
-                              char* argv[]);
-#endif
+//protected:
+//    virtual void DeclareStringStartupOption(const std::string& name, const std::string& defaultValue, const std::string& helpText);
+//    virtual void DeclareIntegerStartupOption(const std::string& name, const int& defaultValue, const std::string& helpText);
+//    virtual void DeclareBoolStartupOption(const std::string& name, bool defaultValue, const std::string& helpText);
   };
+
 }

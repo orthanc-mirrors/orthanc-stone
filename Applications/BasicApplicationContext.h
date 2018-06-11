@@ -35,19 +35,14 @@ namespace OrthancStone
   class BasicApplicationContext : public boost::noncopyable
   {
   private:
-    typedef std::list<ISlicedVolume*>          SlicedVolumes;
-    typedef std::list<IVolumeLoader*>          VolumeLoaders;
-    typedef std::list<IWorldSceneInteractor*>  Interactors;
 
     static void UpdateThread(BasicApplicationContext* that);
+
 
     Oracle              oracle_;
     OracleWebService    webService_;
     boost::mutex        viewportMutex_;
-    WidgetViewport      viewport_;
-    SlicedVolumes       slicedVolumes_;
-    VolumeLoaders       volumeLoaders_;
-    Interactors         interactors_;
+    WidgetViewport      centralViewport_;
     boost::thread       updateThread_;
     bool                stopped_;
     unsigned int        updateDelay_;
@@ -62,7 +57,7 @@ namespace OrthancStone
     public:
       ViewportLocker(BasicApplicationContext& that) :
         lock_(that.viewportMutex_),
-        viewport_(that.viewport_)
+        viewport_(that.centralViewport_)
       {
       }
 
@@ -75,7 +70,7 @@ namespace OrthancStone
     
     BasicApplicationContext(Orthanc::WebServiceParameters& orthanc);
 
-    ~BasicApplicationContext();
+    virtual ~BasicApplicationContext() {}
 
     IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
 
@@ -84,12 +79,6 @@ namespace OrthancStone
       return webService_;
     }
     
-    ISlicedVolume& AddSlicedVolume(ISlicedVolume* volume);
-
-    IVolumeLoader& AddVolumeLoader(IVolumeLoader* loader);
-
-    IWorldSceneInteractor& AddInteractor(IWorldSceneInteractor* interactor);
-
     void Start();
 
     void Stop();

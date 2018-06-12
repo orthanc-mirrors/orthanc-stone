@@ -23,6 +23,7 @@
 
 #include "BasicApplicationContext.h"
 #include <boost/program_options.hpp>
+#include "../Framework/Viewport/WidgetViewport.h"
 
 namespace OrthancStone
 {
@@ -63,8 +64,11 @@ namespace OrthancStone
     virtual void Initialize(IStatusBar& statusBar,
                             const boost::program_options::variables_map& parameters) = 0;
 
-    virtual BasicApplicationContext& CreateApplicationContext(Orthanc::WebServiceParameters& orthanc) = 0;
-
+#if ORTHANC_ENABLE_SDL == 1
+  virtual BasicApplicationContext& CreateApplicationContext(Orthanc::WebServiceParameters& orthancWebService) = 0;
+#else
+  virtual BasicApplicationContext& CreateApplicationContext(IWebService& orthancWebService, std::shared_ptr<WidgetViewport> centralViewport) = 0;
+#endif
 
     virtual std::string GetTitle() const = 0;
 

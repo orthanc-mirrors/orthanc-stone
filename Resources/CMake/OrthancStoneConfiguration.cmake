@@ -137,6 +137,7 @@ endif()
 
 set(APPLICATIONS_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/IBasicApplication.h
+    ${ORTHANC_STONE_ROOT}/Applications/BasicApplicationContext.cpp
     )
 
 if (NOT ORTHANC_SANDBOXED)
@@ -147,8 +148,8 @@ if (NOT ORTHANC_SANDBOXED)
     )
 
   list(APPEND APPLICATIONS_SOURCES
-    ${ORTHANC_STONE_ROOT}/Applications/BasicApplicationContext.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Sdl/BasicSdlApplication.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Sdl/BasicSdlApplicationContext.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlCairoSurface.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOrthancSurface.cpp
@@ -157,6 +158,7 @@ if (NOT ORTHANC_SANDBOXED)
 else()
   list(APPEND APPLICATIONS_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/Wasm/BasicWasmApplication.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Wasm/BasicWasmApplicationContext.cpp
     )
 endif()
 
@@ -197,6 +199,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoFont.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Viewport/IStatusBar.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/WidgetViewport.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/ImageBuffer3D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/SlicedVolumeBase.cpp

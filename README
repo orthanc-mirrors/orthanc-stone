@@ -72,6 +72,10 @@ Stone of Orthanc is based upon the following projects:
 * Optionally, SDL, a cross-platform multimedia library:
   https://www.libsdl.org/
 
+Prerequisites to compile on Ubuntu: 
+```
+sudo apt-get install -y libcairo-dev libpixman-1-dev libsdl2-dev
+```
 
 Installation and usage
 ----------------------

@@ -243,12 +243,12 @@ namespace OrthancStone
       LOG(WARNING) << "Creating the widgets of the application";
 
       LogStatusBar statusBar;
-      BasicApplicationContext& context = application.CreateApplicationContext(webService);
+      BasicSdlApplicationContext& context = dynamic_cast<BasicSdlApplicationContext&>(application.CreateApplicationContext(webService));
 
       application.Initialize(statusBar, parameters);
 
       {
-        BasicApplicationContext::ViewportLocker locker(context);
+        BasicSdlApplicationContext::ViewportLocker locker(context);
         locker.GetViewport().SetStatusBar(statusBar);
       }
 
@@ -269,7 +269,7 @@ namespace OrthancStone
         SdlEngine sdl(window, context);
 
         {
-          BasicApplicationContext::ViewportLocker locker(context);
+          BasicSdlApplicationContext::ViewportLocker locker(context);
           locker.GetViewport().Register(sdl);  // (*)
         }
 

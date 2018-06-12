@@ -25,6 +25,7 @@
 #include "../IBasicApplication.h"
 
 #include <boost/program_options.hpp>
+#include <tuple>
 
 #if ORTHANC_ENABLE_SDL == 1
 #error this file shall be included only with the ORTHANC_ENABLE_SDL set to 0
@@ -34,10 +35,18 @@ namespace OrthancStone
 {
   class BasicWasmApplication : public IBasicApplication
   {
+    typedef std::list<std::tuple<std::string, std::string>> StartupParameters;
+    StartupParameters startupParameters_;
+
   public:
     virtual ~BasicWasmApplication()
     {
     }
+
+    void SetStartupParameter(const char* name, const char* value);
+    void GetStartupParameters(boost::program_options::variables_map& parameters_);
+    
+    virtual IWidget* GetCentralWidget() = 0;
 
     //static int ExecuteWithWasm(BasicWasmApplication& application);
   };

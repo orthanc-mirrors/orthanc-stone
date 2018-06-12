@@ -29,7 +29,7 @@
 
 namespace OrthancStone
 {
-  void SdlEngine::SetSize(BasicApplicationContext::ViewportLocker& locker,
+  void SdlEngine::SetSize(BasicSdlApplicationContext::ViewportLocker& locker,
                           unsigned int width,
                           unsigned int height)
   {
@@ -42,7 +42,7 @@ namespace OrthancStone
   {
     if (viewportChanged_)
     {
-      BasicApplicationContext::ViewportLocker locker(context_);
+      BasicSdlApplicationContext::ViewportLocker locker(context_);
       surface_.Render(locker.GetViewport());
 
       viewportChanged_ = false;
@@ -99,7 +99,7 @@ namespace OrthancStone
 
 
   SdlEngine::SdlEngine(SdlWindow& window,
-                       BasicApplicationContext& context) :
+                       BasicSdlApplicationContext& context) :
     window_(window),
     context_(context),
     surface_(window),
@@ -119,7 +119,7 @@ namespace OrthancStone
     const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
 
     {
-      BasicApplicationContext::ViewportLocker locker(context_);
+      BasicSdlApplicationContext::ViewportLocker locker(context_);
       SetSize(locker, window_.GetWidth(), window_.GetHeight());
       locker.GetViewport().SetDefaultView();
     }
@@ -134,7 +134,7 @@ namespace OrthancStone
       while (!stop &&
              SDL_PollEvent(&event))
       {
-        BasicApplicationContext::ViewportLocker locker(context_);
+        BasicSdlApplicationContext::ViewportLocker locker(context_);
 
         if (event.type == SDL_QUIT) 
         {

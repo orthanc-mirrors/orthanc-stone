@@ -21,71 +21,22 @@
 
 #pragma once
 
-#include "../Framework/Viewport/WidgetViewport.h"
-#include "../Framework/Volumes/ISlicedVolume.h"
-#include "../Framework/Volumes/IVolumeLoader.h"
-#include "../Framework/Widgets/IWorldSceneInteractor.h"
 #include "../Platforms/Generic/OracleWebService.h"
+#include "../Framework/Viewport/WidgetViewport.h"
 
 #include <list>
-#include <boost/thread.hpp>
 
 namespace OrthancStone
 {
   class BasicApplicationContext : public boost::noncopyable
   {
-  private:
-
-    static void UpdateThread(BasicApplicationContext* that);
-
-
-    Oracle              oracle_;
-    OracleWebService    webService_;
-    boost::mutex        viewportMutex_;
-    WidgetViewport      centralViewport_;
-    boost::thread       updateThread_;
-    bool                stopped_;
-    unsigned int        updateDelay_;
 
   public:
-    class ViewportLocker : public boost::noncopyable
-    {
-    private:
-      boost::mutex::scoped_lock  lock_;
-      IViewport&                 viewport_;
+    BasicApplicationContext() {}
 
-    public:
-      ViewportLocker(BasicApplicationContext& that) :
-        lock_(that.viewportMutex_),
-        viewport_(that.centralViewport_)
-      {
-      }
-
-      IViewport& GetViewport() const
-      {
-        return viewport_;
-      }
-    };
-
-    
-    BasicApplicationContext(Orthanc::WebServiceParameters& orthanc);
+    virtual IWebService& GetWebService() = 0;
+    virtual IWidget& SetCentralWidget(IWidget* widget) = 0;   // Takes ownership
 
     virtual ~BasicApplicationContext() {}
-
-    IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
-
-    IWebService& GetWebService()
-    {
-      return webService_;
-    }
-    
-    void Start();
-
-    void Stop();
-
-    void SetUpdateDelay(unsigned int delay)  // In milliseconds
-    {
-      updateDelay_ = delay;
-    }
   };
 }

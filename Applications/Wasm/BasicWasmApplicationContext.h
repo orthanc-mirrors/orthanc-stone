@@ -21,43 +21,32 @@
 
 #pragma once
 
-#if ORTHANC_ENABLE_SDL == 1
+#include "../BasicApplicationContext.h"
 
-#include "SdlCairoSurface.h"
-#include "BasicSdlApplicationContext.h"
+#include <list>
 
 namespace OrthancStone
 {
-  class SdlEngine : public IViewport::IObserver
+  class BasicWasmApplicationContext : public BasicApplicationContext
   {
   private:
-    SdlWindow&                window_;
-    BasicSdlApplicationContext&  context_;
-    SdlCairoSurface           surface_;
-    bool                      viewportChanged_;
-
-    void SetSize(BasicSdlApplicationContext::ViewportLocker& locker,
-                 unsigned int width,
-                 unsigned int height);
-    
-    void RenderFrame();
-
-    static KeyboardModifiers GetKeyboardModifiers(const uint8_t* keyboardState,
-                                                  const int scancodeCount);
-
+    std::shared_ptr<WidgetViewport>  centralViewport_;
+    IWebService& webService_;
   public:
-    SdlEngine(SdlWindow& window,
-              BasicSdlApplicationContext& context);
-  
-    virtual ~SdlEngine();
-
-    virtual void NotifyChange(const IViewport& viewport)
+    BasicWasmApplicationContext(IWebService& webService, std::shared_ptr<WidgetViewport> centralViewport)  //shared ownership of centralViewport
+    : webService_(webService),
+      centralViewport_(centralViewport)
     {
-      viewportChanged_ = true;
+        
     }
 
-    void Run();
+    virtual IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership of central widget
+
+    IWebService& GetWebService()
+    {
+      return webService_;
+    }
+
+    virtual ~BasicWasmApplicationContext() {}
   };
 }
-
-#endif

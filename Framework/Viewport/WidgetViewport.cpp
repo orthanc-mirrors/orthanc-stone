@@ -64,7 +64,7 @@ namespace OrthancStone
     }
 
     mouseTracker_.reset(NULL);
-      
+
     centralWidget_.reset(widget);
     centralWidget_->SetViewport(*this);
 

@@ -87,7 +87,7 @@ function InitializeWasmApplication(canvasId)
     }
   }
 
-  StartWasmApplication();
+  StartWasmApplication(viewport.GetCppViewport());
   /************************************** */
 
   UpdateContentThread();

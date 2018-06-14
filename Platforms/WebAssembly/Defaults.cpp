@@ -5,6 +5,7 @@
 #include "Framework/Widgets/TestCairoWidget.h"
 #include <Framework/Viewport/WidgetViewport.h>
 #include <Framework/Widgets/LayerWidget.h>
+#include <algorithm>
 
 static unsigned int width_ = 0;
 static unsigned int height_ = 0;
@@ -12,12 +13,20 @@ static unsigned int height_ = 0;
 /**********************************/
 
 static std::auto_ptr<OrthancStone::BasicWasmApplication> application;
-static std::shared_ptr<OrthancStone::WidgetViewport> viewport_;
 static OrthancStone::ChangeObserver changeObserver_;
 static OrthancStone::StatusBar statusBar_;
 
 
 static std::list<std::shared_ptr<OrthancStone::WidgetViewport>> viewports_;
+
+std::shared_ptr<OrthancStone::WidgetViewport> FindViewportSharedPtr(ViewportHandle viewport) {
+  for (const auto& v : viewports_) {
+    if (v.get() == viewport) {
+      return v;
+    }
+    assert(false);
+  }
+}
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,8 +47,6 @@ extern "C" {
     viewport->SetStatusBar(statusBar_);
     viewport->Register(changeObserver_);
 
-    // TODO: remove once we really want to handle multiple viewports
-    viewport_ = viewport;
     return viewport.get();
   }
 
@@ -49,7 +56,6 @@ extern "C" {
 
     printf("There are now %d viewports in C++\n", viewports_.size());
   }
-
 
   void EMSCRIPTEN_KEEPALIVE CreateWasmApplication(ViewportHandle viewport) {
 
@@ -66,7 +72,7 @@ extern "C" {
     application->SetStartupParameter(keyc, value);
   }
 
-  void EMSCRIPTEN_KEEPALIVE StartWasmApplication() {
+  void EMSCRIPTEN_KEEPALIVE StartWasmApplication(ViewportHandle viewport) {
 
     printf("StartWasmApplication\n");
 
@@ -74,79 +80,36 @@ extern "C" {
     boost::program_options::variables_map parameters;
     application->GetStartupParameters(parameters);
 
-    BasicWasmApplicationContext& context = dynamic_cast<BasicWasmApplicationContext&>(application->CreateApplicationContext(OrthancStone::WasmWebService::GetInstance(), viewport_));;
+    BasicWasmApplicationContext& context = dynamic_cast<BasicWasmApplicationContext&>(application->CreateApplicationContext(OrthancStone::WasmWebService::GetInstance(), FindViewportSharedPtr(viewport)));
     application->Initialize(statusBar_, parameters);
 
-    viewport_->SetSize(width_, height_);
+    viewport->SetSize(width_, height_);
     printf("StartWasmApplication - completed\n");
   }
-
-  // void EMSCRIPTEN_KEEPALIVE ViewportUpdate(const char* _instanceId) {
-  //   printf("updating viewport content, Instance = [%s]\n", instanceId.c_str());
-
-  //   layerSource->LoadFrame(instanceId, 0);
-  //   printf("frame loaded\n");
-  //   instanceWidget->UpdateContent();
-
-  //   printf("update should be done\n");
-  // }
   
-  // void EMSCRIPTEN_KEEPALIVE ViewportStart()
-  // {
-
-  //   viewport_.reset(new OrthancStone::WidgetViewport);
-  //   viewport_->SetStatusBar(statusBar_);
-  //   viewport_->Register(changeObserver_);
-  //   instanceWidget.reset(new OrthancStone::LayerWidget);
-  //   layerSource = new OrthancStone::OrthancFrameLayerSource(OrthancStone::WasmWebService::GetInstance());
-
-  //   if (!instanceId.empty())
-  //   {
-  //     layerSource->LoadFrame(instanceId, 0);
-  //   } else {
-  //     printf("No instance provided so far\n");
-  //   }
-
-  //   instanceWidget->AddLayer(layerSource);
-
-  //   {
-  //     OrthancStone::RenderStyle s;
-  //     //s.drawGrid_ = true;
-  //     s.alpha_ = 1;
-  //     s.windowing_ = OrthancStone::ImageWindowing_Bone;
-  //     instanceWidget->SetLayerStyle(0, s);
-  //   }
-
-  //   viewport_->SetCentralWidget(instanceWidget.release());
-  //   viewport_->SetSize(width_, height_);
-
-
-  // }
-
   void EMSCRIPTEN_KEEPALIVE NotifyUpdateContent()
   {
-    // TODO Only launch the JavaScript timer if "HasUpdateContent()"
-    if (viewport_.get() != NULL &&
-        viewport_->HasUpdateContent())
-    {
-      viewport_->UpdateContent();
+    for (auto viewport : viewports_) {
+      // TODO Only launch the JavaScript timer if "HasUpdateContent()"
+      if (viewport->HasUpdateContent())
+      {
+        viewport->UpdateContent();
+      }
+
     }
 
   }
   
 
-  void EMSCRIPTEN_KEEPALIVE ViewportSetSize(unsigned int width, unsigned int height)
+  void EMSCRIPTEN_KEEPALIVE ViewportSetSize(ViewportHandle viewport, unsigned int width, unsigned int height)
   {
     width_ = width;
     height_ = height;
     
-    if (viewport_.get() != NULL)
-    {
-      viewport_->SetSize(width, height);
-    }
+    viewport->SetSize(width, height);
   }
 
-  int EMSCRIPTEN_KEEPALIVE ViewportRender(OrthancStone::WidgetViewport* viewport,
+  int EMSCRIPTEN_KEEPALIVE ViewportRender(ViewportHandle viewport,
                                           unsigned int width,
                                           unsigned int height,
                                           uint8_t* data)
@@ -184,7 +147,8 @@ extern "C" {
   }
 
 
-  void EMSCRIPTEN_KEEPALIVE ViewportMouseDown(unsigned int rawButton,
+  void EMSCRIPTEN_KEEPALIVE ViewportMouseDown(ViewportHandle viewport,
+                                              unsigned int rawButton,
                                               int x,
                                               int y,
                                               unsigned int rawModifiers)
@@ -208,20 +172,17 @@ extern "C" {
         return;  // Unknown button
     }
 
-    if (viewport_.get() != NULL)
-    {
-      viewport_->MouseDown(button, x, y, OrthancStone::KeyboardModifiers_None /* TODO */);
-    }
+    viewport->MouseDown(button, x, y, OrthancStone::KeyboardModifiers_None /* TODO */);
   }
   
 
-  void EMSCRIPTEN_KEEPALIVE ViewportMouseWheel(int deltaY,
+  void EMSCRIPTEN_KEEPALIVE ViewportMouseWheel(ViewportHandle viewport,
+                                               int deltaY,
                                                int x,
                                                int y,
                                                int isControl)
   {
-    if (viewport_.get() != NULL &&
-        deltaY != 0)
+    if (deltaY != 0)
     {
       OrthancStone::MouseWheelDirection direction = (deltaY < 0 ?
                                                      OrthancStone::MouseWheelDirection_Up :
@@ -233,68 +194,55 @@ extern "C" {
         modifiers = OrthancStone::KeyboardModifiers_Control;
       }
 
-      viewport_->MouseWheel(direction, x, y, modifiers);
+      viewport->MouseWheel(direction, x, y, modifiers);
     }
   }
   
 
-  void EMSCRIPTEN_KEEPALIVE ViewportMouseMove(int x,
+  void EMSCRIPTEN_KEEPALIVE ViewportMouseMove(ViewportHandle viewport,
+                                              int x,
                                               int y)
   {
-    if (viewport_.get() != NULL)
-    {
-      viewport_->MouseMove(x, y);
-    }
+    viewport->MouseMove(x, y);
   }
   
-  void EMSCRIPTEN_KEEPALIVE ViewportKeyPressed(const char* key, 
+  void EMSCRIPTEN_KEEPALIVE ViewportKeyPressed(ViewportHandle viewport,
+                                               const char* key, 
                                                bool isShiftPressed, 
                                                bool isControlPressed,
                                                bool isAltPressed)
                                                
   {
-    if (viewport_.get() != NULL)
-    {
-      OrthancStone::KeyboardModifiers modifiers = OrthancStone::KeyboardModifiers_None;
-      if (isShiftPressed) {
-        modifiers = static_cast<OrthancStone::KeyboardModifiers>(modifiers + OrthancStone::KeyboardModifiers_Shift);
-      }
-      if (isControlPressed) {
-        modifiers = static_cast<OrthancStone::KeyboardModifiers>(modifiers + OrthancStone::KeyboardModifiers_Control);
-      }
-      if (isAltPressed) {
-        modifiers = static_cast<OrthancStone::KeyboardModifiers>(modifiers + OrthancStone::KeyboardModifiers_Alt);
-      }
-      printf("key pressed : %c\n", key[0]);
-      viewport_->KeyPressed(key[0], modifiers);
+    OrthancStone::KeyboardModifiers modifiers = OrthancStone::KeyboardModifiers_None;
+    if (isShiftPressed) {
+      modifiers = static_cast<OrthancStone::KeyboardModifiers>(modifiers + OrthancStone::KeyboardModifiers_Shift);
     }
+    if (isControlPressed) {
+      modifiers = static_cast<OrthancStone::KeyboardModifiers>(modifiers + OrthancStone::KeyboardModifiers_Control);
+    }
+    if (isAltPressed) {
+      modifiers = static_cast<OrthancStone::KeyboardModifiers>(modifiers + OrthancStone::KeyboardModifiers_Alt);
+    }
+    printf("key pressed : %c\n", key[0]);
+    viewport->KeyPressed(key[0], modifiers);
   }
   
 
-  void EMSCRIPTEN_KEEPALIVE ViewportMouseUp()
+  void EMSCRIPTEN_KEEPALIVE ViewportMouseUp(ViewportHandle viewport)
   {
-    if (viewport_.get() != NULL)
-    {
-      viewport_->MouseUp();
-    }
+    viewport->MouseUp();
   }
   
 
-  void EMSCRIPTEN_KEEPALIVE ViewportMouseEnter()
+  void EMSCRIPTEN_KEEPALIVE ViewportMouseEnter(ViewportHandle viewport)
   {
-    if (viewport_.get() != NULL)
-    {
-      viewport_->MouseEnter();
-    }
+    viewport->MouseEnter();
   }
   
 
-  void EMSCRIPTEN_KEEPALIVE ViewportMouseLeave()
+  void EMSCRIPTEN_KEEPALIVE ViewportMouseLeave(ViewportHandle viewport)
   {
-    if (viewport_.get() != NULL)
-    {
-      viewport_->MouseLeave();
-    }
+    viewport->MouseLeave();
   }
 
 

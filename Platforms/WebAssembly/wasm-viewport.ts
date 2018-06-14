@@ -37,15 +37,19 @@ module Stone {
       this.htmlCanvas_ = document.getElementById(this.canvasId_) as HTMLCanvasElement;
       this.context_ = this.htmlCanvas_.getContext('2d');
 
-      this.ViewportSetSize = this.module_.cwrap('ViewportSetSize', null, [ 'number', 'number' ]);
+      this.ViewportSetSize = this.module_.cwrap('ViewportSetSize', null, [ 'any', 'number', 'number' ]);
       this.ViewportRender = this.module_.cwrap('ViewportRender', null, [ 'any', 'number', 'number', 'number' ]);
-      this.ViewportMouseDown = this.module_.cwrap('ViewportMouseDown', null, [ 'number', 'number', 'number', 'number' ]);
-      this.ViewportMouseMove = this.module_.cwrap('ViewportMouseMove', null, [ 'number', 'number' ]);
-      this.ViewportMouseUp = this.module_.cwrap('ViewportMouseUp', null, [ ]);
-      this.ViewportMouseEnter = this.module_.cwrap('ViewportMouseEnter', null, []);
-      this.ViewportMouseLeave = this.module_.cwrap('ViewportMouseLeave', null, []);
-      this.ViewportMouseWheel = this.module_.cwrap('ViewportMouseWheel', null, [ 'number', 'number', 'number', 'number' ]);
-      this.ViewportKeyPressed = this.module_.cwrap('ViewportKeyPressed', null, [ 'string', 'number', 'number' ]);
+      this.ViewportMouseDown = this.module_.cwrap('ViewportMouseDown', null, [ 'any', 'number', 'number', 'number', 'number' ]);
+      this.ViewportMouseMove = this.module_.cwrap('ViewportMouseMove', null, [ 'any', 'number', 'number' ]);
+      this.ViewportMouseUp = this.module_.cwrap('ViewportMouseUp', null, [ 'any' ]);
+      this.ViewportMouseEnter = this.module_.cwrap('ViewportMouseEnter', null, [ 'any' ]);
+      this.ViewportMouseLeave = this.module_.cwrap('ViewportMouseLeave', null, [ 'any' ]);
+      this.ViewportMouseWheel = this.module_.cwrap('ViewportMouseWheel', null, [ 'any', 'number', 'number', 'number', 'number' ]);
+      this.ViewportKeyPressed = this.module_.cwrap('ViewportKeyPressed', null, [ 'any', 'string', 'number', 'number' ]);
+    }
+
+    public GetCppViewport() : any {
+      return this.pimpl_;
     }
 
     public Redraw() {
@@ -76,12 +80,12 @@ module Stone {
         this.imageData_ = null;
       }
       
-      this.htmlCanvas_.width = window.innerWidth;
+      this.htmlCanvas_.width = window.innerWidth;  
       this.htmlCanvas_.height = window.innerHeight;
   
       if (this.imageData_ === null) {
         this.imageData_ = this.context_.getImageData(0, 0, this.htmlCanvas_.width, this.htmlCanvas_.height);
-        this.ViewportSetSize(this.htmlCanvas_.width, this.htmlCanvas_.height);
+        this.ViewportSetSize(this.pimpl_, this.htmlCanvas_.width, this.htmlCanvas_.height);
   
         if (this.renderingBuffer_ != null) {
           this.module_._free(this.renderingBuffer_);
@@ -100,53 +104,53 @@ module Stone {
       // Force the rendering of the viewport for the first time
       this.Resize();
     
+      var that : WasmViewport = this;
       // Register an event listener to call the Resize() function 
       // each time the window is resized.
-      window.addEventListener('resize', this.Resize, false);
+      window.addEventListener('resize', function(event) {
+        that.Resize();
+      }, false);
   
-      var that = this;
-    
       this.htmlCanvas_.addEventListener('contextmenu', function(event) {
         // Prevent right click on the canvas
         event.preventDefault();
       }, false);
       
       this.htmlCanvas_.addEventListener('mouseleave', function(event) {
-        that.ViewportMouseLeave();
+        that.ViewportMouseLeave(that.pimpl_);
       });
       
       this.htmlCanvas_.addEventListener('mouseenter', function(event) {
-        that.ViewportMouseEnter();
+        that.ViewportMouseEnter(that.pimpl_);
       });
     
       this.htmlCanvas_.addEventListener('mousedown', function(event) {
         var x = event.pageX - this.offsetLeft;
         var y = event.pageY - this.offsetTop;
-        that.ViewportMouseDown(event.button, x, y, 0 /* TODO */);    
+        that.ViewportMouseDown(that.pimpl_, event.button, x, y, 0 /* TODO */);    
       });
     
       this.htmlCanvas_.addEventListener('mousemove', function(event) {
         var x = event.pageX - this.offsetLeft;
         var y = event.pageY - this.offsetTop;
-        that.ViewportMouseMove(x, y);
+        that.ViewportMouseMove(that.pimpl_, x, y);
       });
     
       this.htmlCanvas_.addEventListener('mouseup', function(event) {
-        that.ViewportMouseUp();
+        that.ViewportMouseUp(that.pimpl_);
       });
     
       window.addEventListener('keydown', function(event) {
-        that.ViewportKeyPressed(event.key, event.shiftKey, event.ctrlKey, event.altKey);
+        that.ViewportKeyPressed(that.pimpl_, event.key, event.shiftKey, event.ctrlKey, event.altKey);
       });
     
       this.htmlCanvas_.addEventListener('wheel', function(event) {
         var x = event.pageX - this.offsetLeft;
         var y = event.pageY - this.offsetTop;
-        that.ViewportMouseWheel(event.deltaY, x, y, event.ctrlKey);
+        that.ViewportMouseWheel(that.pimpl_, event.deltaY, x, y, event.ctrlKey);
         event.preventDefault();
       });
 
-      var that = this;
       this.htmlCanvas_.addEventListener('touchstart', function(event) {
         that.ResetTouch();
       });
@@ -158,26 +162,28 @@ module Stone {
       this.htmlCanvas_.addEventListener('touchmove', function(event) {
         if (that.touchTranslation_.length == 2) {
           var t = that.GetTouchTranslation(event);
-          that.ViewportMouseMove(t[0], t[1]);
+          that.ViewportMouseMove(that.pimpl_, t[0], t[1]);
         }
         else if (that.touchZoom_.length == 3) {
           var z0 = that.touchZoom_;
           var z1 = that.GetTouchZoom(event);
-          that.ViewportMouseMove(z0[0], z0[1] - z0[2] + z1[2]);
+          that.ViewportMouseMove(that.pimpl_, z0[0], z0[1] - z0[2] + z1[2]);
         }
         else {
           // Realize the gesture event
           if (event.targetTouches.length == 1) {
             // Exactly one finger inside the canvas => Setup a translation
             that.touchTranslation_ = that.GetTouchTranslation(event);
-            that.ViewportMouseDown(1 /* middle button */,
+            that.ViewportMouseDown(that.pimpl_, 
+                                  1 /* middle button */,
                                   that.touchTranslation_[0],
                                   that.touchTranslation_[1], 0);
           } else if (event.targetTouches.length == 2) {
             // Exactly 2 fingers inside the canvas => Setup a pinch/zoom
             that.touchZoom_ = that.GetTouchZoom(event);
             var z0 = that.touchZoom_;
-            that.ViewportMouseDown(2 /* right button */,
+            that.ViewportMouseDown(that.pimpl_, 
+                                  2 /* right button */,
                                   z0[0],
                                   z0[1], 0);
           }        
@@ -188,7 +194,7 @@ module Stone {
   public ResetTouch() {
     if (this.touchTranslation_ ||
         this.touchZoom_) {
-      this.ViewportMouseUp();
+      this.ViewportMouseUp(this.pimpl_);
     }
 
     this.touchTranslation_ = false;

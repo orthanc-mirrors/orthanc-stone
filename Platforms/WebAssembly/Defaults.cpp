@@ -17,19 +17,43 @@ static OrthancStone::ChangeObserver changeObserver_;
 static OrthancStone::StatusBar statusBar_;
 
 
+static std::list<std::shared_ptr<OrthancStone::WidgetViewport>> viewports_;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
   using namespace OrthancStone;
-  
-  void EMSCRIPTEN_KEEPALIVE CreateWasmApplication() {
+
+  // when WASM needs a C++ viewport
+  ViewportHandle EMSCRIPTEN_KEEPALIVE CreateCppViewport() {
+    
+    std::shared_ptr<OrthancStone::WidgetViewport> viewport(new OrthancStone::WidgetViewport);
+    printf("viewport %x\n", viewport.get());
+
+    viewports_.push_back(viewport);
+
+    printf("There are now %d viewports in C++\n", viewports_.size());
+
+    viewport->SetStatusBar(statusBar_);
+    viewport->Register(changeObserver_);
+
+    // TODO: remove once we really want to handle multiple viewports
+    viewport_ = viewport;
+    return viewport.get();
+  }
+
+  // when WASM does not need a viewport anymore, it should release it 
+  void EMSCRIPTEN_KEEPALIVE ReleaseCppViewport(ViewportHandle viewport) {
+    viewports_.remove_if([viewport](const std::shared_ptr<OrthancStone::WidgetViewport>& v) { return v.get() == viewport;});
+
+    printf("There are now %d viewports in C++\n", viewports_.size());
+  }
+
+
+  void EMSCRIPTEN_KEEPALIVE CreateWasmApplication(ViewportHandle viewport) {
 
     printf("CreateWasmApplication\n");
-    viewport_.reset(new OrthancStone::WidgetViewport);
-    viewport_->SetStatusBar(statusBar_);
-    viewport_->Register(changeObserver_);
-
 
     application.reset(CreateUserApplication());
 
@@ -122,7 +146,8 @@ extern "C" {
     }
   }
 
-  int EMSCRIPTEN_KEEPALIVE ViewportRender(unsigned int width,
+  int EMSCRIPTEN_KEEPALIVE ViewportRender(OrthancStone::WidgetViewport* viewport,
+                                          unsigned int width,
                                           unsigned int height,
                                           uint8_t* data)
   {
@@ -138,10 +163,7 @@ extern "C" {
     Orthanc::ImageAccessor surface;
     surface.AssignWritable(Orthanc::PixelFormat_BGRA32, width, height, 4 * width, data);
 
-    if (viewport_.get() != NULL)
-    {
-      viewport_->Render(surface);
-    }
+    viewport->Render(surface);
 
     // Convert from BGRA32 memory layout (only color mode supported by
     // Cairo, which corresponds to CAIRO_FORMAT_ARGB32) to RGBA32 (as

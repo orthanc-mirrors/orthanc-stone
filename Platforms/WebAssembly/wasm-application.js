@@ -47,26 +47,23 @@ function GetUriParameters()
 function InitializeWasmApplication(canvasId)
 {
   console.log("Initializing wasm-app");
-  viewport = new Stone.WasmViewport(StoneFrameworkModule, 'canvas');
-  viewport.Initialize();
 
-  /******************** */
+  console.log("Connecting C++ methods to JS methods");
   SetStartupParameter = StoneFrameworkModule.cwrap('SetStartupParameter', null, [ 'string', 'string' ]);
-  CreateWasmApplication = StoneFrameworkModule.cwrap('CreateWasmApplication', null, [ ], [ ]);
+  CreateWasmApplication = StoneFrameworkModule.cwrap('CreateWasmApplication', null, [ 'any' ], [ ]);
+  CreateCppViewport = StoneFrameworkModule.cwrap('CreateCppViewport', 'any', [ ], [ ]);
+  ReleaseCppViewport = StoneFrameworkModule.cwrap('ReleaseCppViewport', null, [ 'any' ], [ ]);
   StartWasmApplication = StoneFrameworkModule.cwrap('StartWasmApplication', null, [ ], [ ]);
-                                 
-  /******************** */
-
-  // NotifyGlobalParameter = StoneFrameworkModule.cwrap('NotifyGlobalParameter', null,
-  //                                      [ 'string', 'string' ]);
-  // ViewportUpdate = StoneFrameworkModule.cwrap('ViewportUpdate', null,
-  //                                      [ 'string' ]);
   WasmWebService_NotifySuccess = StoneFrameworkModule.cwrap('WasmWebService_NotifySuccess', null,
                                               [ 'number', 'string', 'array', 'number', 'number' ]);
   WasmWebService_NotifyError = StoneFrameworkModule.cwrap('WasmWebService_NotifyError', null,
                                             [ 'number', 'string', 'number' ]);
-  //NotifyRestApiGet = Module.cwrap('NotifyRestApiGet', null, [ 'number', 'array', 'number' ]);
   NotifyUpdateContent = StoneFrameworkModule.cwrap('NotifyUpdateContent', null, [  ]);
+                                 
+  console.log("Creating main viewport");
+
+  viewport = new Stone.WasmViewport(StoneFrameworkModule, 'canvas');
+  viewport.Initialize(CreateCppViewport());
 
   // Prevent scrolling
   document.body.addEventListener('touchmove', function(event) {

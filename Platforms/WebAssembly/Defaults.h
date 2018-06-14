@@ -9,6 +9,8 @@
 #include <Applications/Wasm/BasicWasmApplication.h>
 #include <Applications/Wasm/BasicWasmApplicationContext.h>
 
+typedef OrthancStone::WidgetViewport* ViewportHandle; // the objects exchanged between JS and C++
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -17,7 +19,7 @@ extern "C" {
   extern void ScheduleRedraw();
   
   // C++ methods accessible from JS
-  extern void EMSCRIPTEN_KEEPALIVE CreateWasmApplication();
+  extern void EMSCRIPTEN_KEEPALIVE CreateWasmApplication(ViewportHandle viewport);
 //   extern void EMSCRIPTEN_KEEPALIVE SetStartupParameter(const char* keyc, const char* value);
 //   extern void EMSCRIPTEN_KEEPALIVE StartWasmApplication();
 

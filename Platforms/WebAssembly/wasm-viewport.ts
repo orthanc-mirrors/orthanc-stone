@@ -1,17 +1,16 @@
+var isPendingRedraw = false;
 
-  var isPendingRedraw = false;
-
-  function ScheduleWebViewportRedraw(cppViewportHandle: any) : void
-  {
-    if (!isPendingRedraw) {
-      isPendingRedraw = true;
-      console.log('Scheduling a refresh of the viewport, as its content changed');
-      window.requestAnimationFrame(function() {
-        isPendingRedraw = false;
-        Stone.WasmViewport.GetFromCppViewport(cppViewportHandle).Redraw();
-      });
-    }
+function ScheduleWebViewportRedraw(cppViewportHandle: any) : void
+{
+  if (!isPendingRedraw) {
+    isPendingRedraw = true;
+    console.log('Scheduling a refresh of the viewport, as its content changed');
+    window.requestAnimationFrame(function() {
+      isPendingRedraw = false;
+      Stone.WasmViewport.GetFromCppViewport(cppViewportHandle).Redraw();
+    });
   }
+}
 
 module Stone {
   

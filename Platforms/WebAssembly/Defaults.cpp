@@ -24,8 +24,9 @@ std::shared_ptr<OrthancStone::WidgetViewport> FindViewportSharedPtr(ViewportHand
     if (v.get() == viewport) {
       return v;
     }
-    assert(false);
   }
+  assert(false);
+  return std::shared_ptr<OrthancStone::WidgetViewport>();
 }
 
 #ifdef __cplusplus

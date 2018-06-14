@@ -4,7 +4,6 @@
 var viewport = null;
 var WasmWebService_NotifyError = null;
 var WasmWebService_NotifySuccess = null;
-//var NotifyRestApiGet = null;
 var NotifyUpdateContent = null;
 
 function UpdateContentThread()
@@ -62,7 +61,7 @@ function InitializeWasmApplication(canvasId)
                                  
   console.log("Creating main viewport");
 
-  viewport = new Stone.WasmViewport(StoneFrameworkModule, 'canvas');
+  viewport = new Stone.WasmViewport(StoneFrameworkModule, canvasId);
   viewport.Initialize(CreateCppViewport());
 
   // Prevent scrolling
@@ -70,7 +69,7 @@ function InitializeWasmApplication(canvasId)
     event.preventDefault();
   }, false);
   
-  document.getElementById('canvas').onclick = function() {
+  document.getElementById(canvasId).onclick = function() {
     viewport.Redraw();
   };
 

@@ -1,4 +1,18 @@
 
+  var isPendingRedraw = false;
+
+  function ScheduleWebViewportRedraw(cppViewportHandle: any) : void
+  {
+    if (!isPendingRedraw) {
+      isPendingRedraw = true;
+      console.log('Scheduling a refresh of the viewport, as its content changed');
+      window.requestAnimationFrame(function() {
+        isPendingRedraw = false;
+        Stone.WasmViewport.GetFromCppViewport(cppViewportHandle).Redraw();
+      });
+    }
+  }
+
 module Stone {
   
 //  export declare type InitializationCallback = () => void;
@@ -7,8 +21,10 @@ module Stone {
   
   //const ASSETS_FOLDER : string = "assets/lib";
   //const WASM_FILENAME : string = "orthanc-framework";
-  
+
   export class WasmViewport {
+
+    private static cppWebViewportsMaps_ : Map<any, WasmViewport> = new Map<any, WasmViewport>();
 
     private module_ : any;
     private canvasId_ : string;
@@ -50,6 +66,14 @@ module Stone {
 
     public GetCppViewport() : any {
       return this.pimpl_;
+    }
+
+    public static GetFromCppViewport(cppViewportHandle: any) : WasmViewport {
+      if (WasmViewport.cppWebViewportsMaps_[cppViewportHandle] !== undefined) {
+        return WasmViewport.cppWebViewportsMaps_[cppViewportHandle];
+      }
+      console.log("WasmViewport not found !");
+      return undefined;
     }
 
     public Redraw() {
@@ -99,6 +123,7 @@ module Stone {
 
     public Initialize(cppViewport: any) {
       this.pimpl_ = cppViewport;
+      WasmViewport.cppWebViewportsMaps_[this.pimpl_] = this;
       
       console.log(this.pimpl_);
       // Force the rendering of the viewport for the first time

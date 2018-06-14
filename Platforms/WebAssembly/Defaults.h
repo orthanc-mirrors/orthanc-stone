@@ -9,17 +9,17 @@
 #include <Applications/Wasm/BasicWasmApplication.h>
 #include <Applications/Wasm/BasicWasmApplicationContext.h>
 
-typedef OrthancStone::WidgetViewport* ViewportHandle; // the objects exchanged between JS and C++
+typedef OrthancStone::IViewport* ViewportHandle; // the objects exchanged between JS and C++
 
 #ifdef __cplusplus
 extern "C" {
 #endif
   
   // JS methods accessible from C++
-  extern void ScheduleRedraw();
+  extern void ScheduleWebViewportRedrawFromCpp(ViewportHandle cppViewportHandle);
   
   // C++ methods accessible from JS
-  extern void EMSCRIPTEN_KEEPALIVE CreateWasmApplication(ViewportHandle viewport);
+  extern void EMSCRIPTEN_KEEPALIVE CreateWasmApplication(ViewportHandle cppViewportHandle);
 
 #ifdef __cplusplus
 }
@@ -48,11 +48,11 @@ namespace OrthancStone {
       isScheduled_ = false;
     }
 
-    virtual void NotifyChange(const OrthancStone::IViewport &scene)
+    virtual void NotifyChange(const OrthancStone::IViewport &viewport)
     {
       if (!isScheduled_)
       {
-        ScheduleRedraw();
+        ScheduleWebViewportRedrawFromCpp((ViewportHandle)&viewport);  // loosing constness when transmitted to Web
         isScheduled_ = true;
       }
     }

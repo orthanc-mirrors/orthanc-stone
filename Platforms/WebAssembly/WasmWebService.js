@@ -43,9 +43,5 @@ mergeInto(LibraryManager.library, {
     }
 
     xhr.send(new Uint8ClampedArray(HEAPU8.buffer, body, bodySize));
-  },
-
-  ScheduleRedraw: function() {
-    ScheduleRedraw();
   }
 });

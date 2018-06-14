@@ -12,6 +12,17 @@ function ScheduleWebViewportRedraw(cppViewportHandle: any) : void
   }
 }
 
+declare function UTF8ToString(any): string;
+
+function CreateWasmViewport(htmlCanvasId: string) : any {
+  var cppViewportHandle = CreateCppViewport();
+  var canvasId = UTF8ToString(htmlCanvasId);
+  var webViewport = new Stone.WasmViewport(StoneFrameworkModule, canvasId, cppViewportHandle);  // viewports are stored in a static map in WasmViewport -> won't be deleted
+  webViewport.Initialize();
+
+  return cppViewportHandle;
+}
+
 module Stone {
   
 //  export declare type InitializationCallback = () => void;
@@ -46,7 +57,11 @@ module Stone {
 
     private pimpl_ : any; // Private pointer to the underlying WebAssembly C++ object
 
-    public constructor(module: any, canvasId: string) {
+    public constructor(module: any, canvasId: string, cppViewport: any) {
+      
+      this.pimpl_ = cppViewport;
+      WasmViewport.cppWebViewportsMaps_[this.pimpl_] = this;
+
       this.module_ = module;
       this.canvasId_ = canvasId;
       this.htmlCanvas_ = document.getElementById(this.canvasId_) as HTMLCanvasElement;
@@ -120,11 +135,8 @@ module Stone {
       this.Redraw();
     }
 
-    public Initialize(cppViewport: any) {
-      this.pimpl_ = cppViewport;
-      WasmViewport.cppWebViewportsMaps_[this.pimpl_] = this;
+    public Initialize() {
       
-      console.log(this.pimpl_);
       // Force the rendering of the viewport for the first time
       this.Resize();
     

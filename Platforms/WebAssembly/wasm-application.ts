@@ -7,8 +7,6 @@ if (!('WebAssembly' in window)) {
 
 declare var StoneFrameworkModule : Stone.Framework;
 
-var viewport = null;
-
 // global functions
 var WasmWebService_NotifyError: Function = null;
 var WasmWebService_NotifySuccess: Function = null;
@@ -77,16 +75,6 @@ module Stone {
 
 function InitializeWasmApplication(canvasId: string): void {
 
-    console.log("Creating main viewport");
-
-    viewport = new Stone.WasmViewport(StoneFrameworkModule, canvasId);
-    viewport.Initialize(CreateCppViewport());
-
-    document.getElementById(canvasId).onclick = function () {
-        viewport.Redraw();
-    };
-
-
     /************************************** */
     CreateWasmApplication();
 
@@ -99,7 +87,7 @@ function InitializeWasmApplication(canvasId: string): void {
         }
     }
 
-    StartWasmApplication(viewport.GetCppViewport());
+    StartWasmApplication();
     /************************************** */
 
     UpdateContentThread();
@@ -112,9 +100,9 @@ Stone.Framework.Initialize(true, function () {
     console.log("Connecting C++ methods to JS methods");
     
     SetStartupParameter = StoneFrameworkModule.cwrap('SetStartupParameter', null, ['string', 'string']);
-    CreateWasmApplication = StoneFrameworkModule.cwrap('CreateWasmApplication', null, ['any']);
-    CreateCppViewport = StoneFrameworkModule.cwrap('CreateCppViewport', 'any', []);
-    ReleaseCppViewport = StoneFrameworkModule.cwrap('ReleaseCppViewport', null, ['any']);
+    CreateWasmApplication = StoneFrameworkModule.cwrap('CreateWasmApplication', null, ['number']);
+    CreateCppViewport = StoneFrameworkModule.cwrap('CreateCppViewport', 'number', []);
+    ReleaseCppViewport = StoneFrameworkModule.cwrap('ReleaseCppViewport', null, ['number']);
     StartWasmApplication = StoneFrameworkModule.cwrap('StartWasmApplication', null, []);
 
     WasmWebService_NotifySuccess = StoneFrameworkModule.cwrap('WasmWebService_NotifySuccess', null, ['number', 'string', 'array', 'number', 'number']);

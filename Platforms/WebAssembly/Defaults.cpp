@@ -73,7 +73,7 @@ extern "C" {
     application->SetStartupParameter(keyc, value);
   }
 
-  void EMSCRIPTEN_KEEPALIVE StartWasmApplication(ViewportHandle viewport) {
+  void EMSCRIPTEN_KEEPALIVE StartWasmApplication() {
 
     printf("StartWasmApplication\n");
 
@@ -81,10 +81,10 @@ extern "C" {
     boost::program_options::variables_map parameters;
     application->GetStartupParameters(parameters);
 
-    BasicWasmApplicationContext& context = dynamic_cast<BasicWasmApplicationContext&>(application->CreateApplicationContext(OrthancStone::WasmWebService::GetInstance(), FindViewportSharedPtr(viewport)));
+    BasicWasmApplicationContext& context = dynamic_cast<BasicWasmApplicationContext&>(application->CreateApplicationContext(OrthancStone::WasmWebService::GetInstance()));
     application->Initialize(statusBar_, parameters);
 
-    viewport->SetSize(width_, height_);
+//    viewport->SetSize(width_, height_);
     printf("StartWasmApplication - completed\n");
   }
   

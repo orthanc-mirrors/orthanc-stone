@@ -30,17 +30,13 @@ namespace OrthancStone
   class BasicWasmApplicationContext : public BasicApplicationContext
   {
   private:
-    std::shared_ptr<WidgetViewport>  centralViewport_;
     IWebService& webService_;
   public:
-    BasicWasmApplicationContext(IWebService& webService, std::shared_ptr<WidgetViewport> centralViewport)  //shared ownership of centralViewport
-    : webService_(webService),
-      centralViewport_(centralViewport)
+    BasicWasmApplicationContext(IWebService& webService)
+    : webService_(webService)
     {
         
     }
-
-    virtual IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership of central widget
 
     IWebService& GetWebService()
     {

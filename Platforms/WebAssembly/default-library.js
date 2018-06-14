@@ -3,6 +3,9 @@
 mergeInto(LibraryManager.library, {
   ScheduleWebViewportRedrawFromCpp: function(cppViewportHandle) {
     ScheduleWebViewportRedraw(cppViewportHandle);
-    }
-  });
+  },
+  CreateWasmViewportFromCpp: function(htmlCanvasId) {
+    return CreateWasmViewport(htmlCanvasId);
+  }
+});
   

@@ -35,7 +35,7 @@ namespace OrthancStone
     BasicApplicationContext() {}
 
     virtual IWebService& GetWebService() = 0;
-    virtual IWidget& SetCentralWidget(IWidget* widget) = 0;   // Takes ownership
+//    virtual IWidget& SetCentralWidget(IWidget* widget) = 0;   // Takes ownership
 
     virtual ~BasicApplicationContext() {}
   };

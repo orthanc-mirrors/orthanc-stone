@@ -47,7 +47,8 @@ function GetUriParameters()
 function InitializeWasmApplication(canvasId)
 {
   console.log("Initializing wasm-app");
-  viewport = WebAssemblyViewport(StoneFrameworkModule, 'canvas');
+  viewport = new Stone.WasmViewport(StoneFrameworkModule, 'canvas');
+  viewport.Initialize();
 
   /******************** */
   SetStartupParameter = StoneFrameworkModule.cwrap('SetStartupParameter', null, [ 'string', 'string' ]);

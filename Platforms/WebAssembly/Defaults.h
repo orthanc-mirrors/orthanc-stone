@@ -1,23 +1,35 @@
 #pragma once
 
+#include <emscripten/emscripten.h>
+
 #include <Framework/dev.h>
 #include <Framework/Viewport/WidgetViewport.h>
 #include <Framework/Widgets/LayerWidget.h>
 #include <Framework/Widgets/LayoutWidget.h>
+#include <Applications/Wasm/BasicWasmApplication.h>
+#include <Applications/Wasm/BasicWasmApplicationContext.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
   
+  // JS methods accessible from C++
   extern void ScheduleRedraw();
   
+  // C++ methods accessible from JS
+  extern void EMSCRIPTEN_KEEPALIVE CreateWasmApplication();
+//   extern void EMSCRIPTEN_KEEPALIVE SetStartupParameter(const char* keyc, const char* value);
+//   extern void EMSCRIPTEN_KEEPALIVE StartWasmApplication();
+
 #ifdef __cplusplus
 }
 #endif
 
+extern OrthancStone::BasicWasmApplication* CreateUserApplication();
 
 namespace OrthancStone {
 
+  // default Ovserver to trigger Viewport redraw when something changes in the Viewport
   class ChangeObserver :
     public OrthancStone::IViewport::IObserver
   {
@@ -46,7 +58,7 @@ namespace OrthancStone {
     }
   };
 
-
+  // default status bar to log messages on the console/stdout
   class StatusBar : public OrthancStone::IStatusBar
   {
   public:

@@ -82,12 +82,10 @@ namespace OrthancStone
     int                     top_;
     unsigned int            width_;
     unsigned int            height_;
-    bool                    hasUpdate_;
 
   public:
     ChildWidget(IWidget* widget) :
-      widget_(widget),
-      hasUpdate_(widget->HasUpdateContent())
+      widget_(widget)
     {
       assert(widget != NULL);
       SetEmpty();
@@ -95,7 +93,7 @@ namespace OrthancStone
 
     void UpdateContent()
     {
-      if (hasUpdate_)
+      if (widget_->HasUpdateContent())
       {
         widget_->UpdateContent();
       }

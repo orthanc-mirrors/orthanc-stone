@@ -42,7 +42,7 @@ namespace OrthancStone
     Oracle              oracle_;
     OracleWebService    webService_;
     boost::mutex        viewportMutex_;
-    WidgetViewport      centralViewport_;
+    std::unique_ptr<WidgetViewport>      centralViewport_;
     boost::thread       updateThread_;
     bool                stopped_;
     unsigned int        updateDelay_;
@@ -57,7 +57,7 @@ namespace OrthancStone
     public:
       ViewportLocker(BasicSdlApplicationContext& that) :
         lock_(that.viewportMutex_),
-        viewport_(that.centralViewport_)
+        viewport_(*(that.centralViewport_.get()))
       {
       }
 
@@ -68,7 +68,7 @@ namespace OrthancStone
     };
 
     
-    BasicSdlApplicationContext(Orthanc::WebServiceParameters& orthanc);
+    BasicSdlApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport);
 
     virtual ~BasicSdlApplicationContext() {}
 

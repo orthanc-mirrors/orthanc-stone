@@ -25,7 +25,7 @@ namespace OrthancStone
 {
   IWidget& BasicSdlApplicationContext::SetCentralWidget(IWidget* widget)   // Takes ownership
   {
-    centralViewport_.SetCentralWidget(widget);
+    centralViewport_->SetCentralWidget(widget);
     return *widget;
   }
 
@@ -44,10 +44,11 @@ namespace OrthancStone
   }
   
 
-  BasicSdlApplicationContext::BasicSdlApplicationContext(Orthanc::WebServiceParameters& orthanc) :
+  BasicSdlApplicationContext::BasicSdlApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) :
     oracle_(viewportMutex_, 4),  // Use 4 threads to download
     //oracle_(viewportMutex_, 1),  // Disable threading to be reproducible
     webService_(oracle_, orthanc),
+    centralViewport_(centralViewport),
     stopped_(true),
     updateDelay_(100)   // By default, 100ms between each refresh of the content
   {
@@ -59,7 +60,7 @@ namespace OrthancStone
   {
     oracle_.Start();
 
-    if (centralViewport_.HasUpdateContent())
+    if (centralViewport_->HasUpdateContent())
     {
       stopped_ = false;
       updateThread_ = boost::thread(UpdateThread, this);

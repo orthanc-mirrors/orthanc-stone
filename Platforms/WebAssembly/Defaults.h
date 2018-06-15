@@ -9,7 +9,7 @@
 #include <Applications/Wasm/BasicWasmApplication.h>
 #include <Applications/Wasm/BasicWasmApplicationContext.h>
 
-typedef OrthancStone::IViewport* ViewportHandle; // the objects exchanged between JS and C++
+typedef OrthancStone::WidgetViewport* ViewportHandle; // the objects exchanged between JS and C++
 
 #ifdef __cplusplus
 extern "C" {

@@ -65,9 +65,9 @@ namespace OrthancStone
                             const boost::program_options::variables_map& parameters) = 0;
 
 #if ORTHANC_ENABLE_SDL == 1
-  virtual BasicApplicationContext& CreateApplicationContext(Orthanc::WebServiceParameters& orthancWebService) = 0;
+  virtual BasicApplicationContext& CreateApplicationContext(Orthanc::WebServiceParameters& orthancWebService, OrthancStone::WidgetViewport* centralViewport) = 0;
 #else
-  virtual BasicApplicationContext& CreateApplicationContext(IWebService& orthancWebService) = 0;
+  virtual BasicApplicationContext& CreateApplicationContext(IWebService& orthancWebService, std::shared_ptr<WidgetViewport> centralViewport) = 0;
 #endif
 
     virtual std::string GetTitle() const = 0;

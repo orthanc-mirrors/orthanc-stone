@@ -103,7 +103,7 @@ Stone.Framework.Initialize(true, function () {
     CreateWasmApplication = StoneFrameworkModule.cwrap('CreateWasmApplication', null, ['number']);
     CreateCppViewport = StoneFrameworkModule.cwrap('CreateCppViewport', 'number', []);
     ReleaseCppViewport = StoneFrameworkModule.cwrap('ReleaseCppViewport', null, ['number']);
-    StartWasmApplication = StoneFrameworkModule.cwrap('StartWasmApplication', null, []);
+    StartWasmApplication = StoneFrameworkModule.cwrap('StartWasmApplication', null, ['number']);
 
     WasmWebService_NotifySuccess = StoneFrameworkModule.cwrap('WasmWebService_NotifySuccess', null, ['number', 'string', 'array', 'number', 'number']);
     WasmWebService_NotifyError = StoneFrameworkModule.cwrap('WasmWebService_NotifyError', null, ['number', 'string', 'number']);

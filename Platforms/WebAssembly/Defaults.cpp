@@ -81,7 +81,7 @@ extern "C" {
     boost::program_options::variables_map parameters;
     application->GetStartupParameters(parameters);
 
-    BasicWasmApplicationContext& context = dynamic_cast<BasicWasmApplicationContext&>(application->CreateApplicationContext(OrthancStone::WasmWebService::GetInstance()));
+    BasicWasmApplicationContext& context = dynamic_cast<BasicWasmApplicationContext&>(application->CreateApplicationContext(OrthancStone::WasmWebService::GetInstance(), NULL));
     application->Initialize(statusBar_, parameters);
 
 //    viewport->SetSize(width_, height_);

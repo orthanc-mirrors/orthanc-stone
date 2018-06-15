@@ -243,7 +243,8 @@ namespace OrthancStone
       LOG(WARNING) << "Creating the widgets of the application";
 
       LogStatusBar statusBar;
-      BasicSdlApplicationContext& context = dynamic_cast<BasicSdlApplicationContext&>(application.CreateApplicationContext(webService));
+      OrthancStone::WidgetViewport* centralViewport = new OrthancStone::WidgetViewport();
+      BasicSdlApplicationContext& context = dynamic_cast<BasicSdlApplicationContext&>(application.CreateApplicationContext(webService, centralViewport));
 
       application.Initialize(statusBar, parameters);
 

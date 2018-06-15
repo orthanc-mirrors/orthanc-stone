@@ -34,7 +34,7 @@ module Stone {
 
   export class WasmViewport {
 
-    private static cppWebViewportsMaps_ : Map<any, WasmViewport> = new Map<any, WasmViewport>();
+    private static cppWebViewportsMaps_ : Map<number, WasmViewport> = new Map<number, WasmViewport>();
 
     private module_ : any;
     private canvasId_ : string;
@@ -67,22 +67,22 @@ module Stone {
       this.htmlCanvas_ = document.getElementById(this.canvasId_) as HTMLCanvasElement;
       this.context_ = this.htmlCanvas_.getContext('2d');
 
-      this.ViewportSetSize = this.module_.cwrap('ViewportSetSize', null, [ 'any', 'number', 'number' ]);
-      this.ViewportRender = this.module_.cwrap('ViewportRender', null, [ 'any', 'number', 'number', 'number' ]);
-      this.ViewportMouseDown = this.module_.cwrap('ViewportMouseDown', null, [ 'any', 'number', 'number', 'number', 'number' ]);
-      this.ViewportMouseMove = this.module_.cwrap('ViewportMouseMove', null, [ 'any', 'number', 'number' ]);
-      this.ViewportMouseUp = this.module_.cwrap('ViewportMouseUp', null, [ 'any' ]);
-      this.ViewportMouseEnter = this.module_.cwrap('ViewportMouseEnter', null, [ 'any' ]);
-      this.ViewportMouseLeave = this.module_.cwrap('ViewportMouseLeave', null, [ 'any' ]);
-      this.ViewportMouseWheel = this.module_.cwrap('ViewportMouseWheel', null, [ 'any', 'number', 'number', 'number', 'number' ]);
-      this.ViewportKeyPressed = this.module_.cwrap('ViewportKeyPressed', null, [ 'any', 'string', 'number', 'number' ]);
+      this.ViewportSetSize = this.module_.cwrap('ViewportSetSize', null, [ 'number', 'number', 'number' ]);
+      this.ViewportRender = this.module_.cwrap('ViewportRender', null, [ 'number', 'number', 'number', 'number' ]);
+      this.ViewportMouseDown = this.module_.cwrap('ViewportMouseDown', null, [ 'number', 'number', 'number', 'number', 'number' ]);
+      this.ViewportMouseMove = this.module_.cwrap('ViewportMouseMove', null, [ 'number', 'number', 'number' ]);
+      this.ViewportMouseUp = this.module_.cwrap('ViewportMouseUp', null, [ 'number' ]);
+      this.ViewportMouseEnter = this.module_.cwrap('ViewportMouseEnter', null, [ 'number' ]);
+      this.ViewportMouseLeave = this.module_.cwrap('ViewportMouseLeave', null, [ 'number' ]);
+      this.ViewportMouseWheel = this.module_.cwrap('ViewportMouseWheel', null, [ 'number', 'number', 'number', 'number', 'number' ]);
+      this.ViewportKeyPressed = this.module_.cwrap('ViewportKeyPressed', null, [ 'number', 'string', 'number', 'number' ]);
     }
 
-    public GetCppViewport() : any {
+    public GetCppViewport() : number {
       return this.pimpl_;
     }
 
-    public static GetFromCppViewport(cppViewportHandle: any) : WasmViewport {
+    public static GetFromCppViewport(cppViewportHandle: number) : WasmViewport {
       if (WasmViewport.cppWebViewportsMaps_[cppViewportHandle] !== undefined) {
         return WasmViewport.cppWebViewportsMaps_[cppViewportHandle];
       }
@@ -118,9 +118,15 @@ module Stone {
         this.imageData_ = null;
       }
       
-      this.htmlCanvas_.width = window.innerWidth;  
-      this.htmlCanvas_.height = window.innerHeight;
-  
+      // width/height can be defined in percent of window width/height through html attributes like data-width-ratio="50" and data-height-ratio="20"
+      var widthRatio = Number(this.htmlCanvas_.dataset["widthRatio"]) || 100;
+      var heightRatio = Number(this.htmlCanvas_.dataset["heightRatio"]) || 100;
+
+      this.htmlCanvas_.width = window.innerWidth * (widthRatio / 100);  
+      this.htmlCanvas_.height = window.innerHeight * (heightRatio / 100);
+
+      console.log("resizing WasmViewport: ", this.htmlCanvas_.width, "x", this.htmlCanvas_.height);
+
       if (this.imageData_ === null) {
         this.imageData_ = this.context_.getImageData(0, 0, this.htmlCanvas_.width, this.htmlCanvas_.height);
         this.ViewportSetSize(this.pimpl_, this.htmlCanvas_.width, this.htmlCanvas_.height);

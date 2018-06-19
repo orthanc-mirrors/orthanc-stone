@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -26,19 +26,16 @@
 
 namespace OrthancStone
 {
-  namespace Samples
+  bool EmptyWidget::Render(Orthanc::ImageAccessor& surface)
   {
-    bool EmptyWidget::Render(Orthanc::ImageAccessor& surface)
-    {
-      // Note: This call is slow
-      Orthanc::ImageProcessing::Set(surface, red_, green_, blue_, 255);
-      return true;
-    }
+    // Note: This call is slow
+    Orthanc::ImageProcessing::Set(surface, red_, green_, blue_, 255);
+    return true;
+  }
 
-  
-    void EmptyWidget::UpdateContent()
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-    }
+
+  void EmptyWidget::UpdateContent()
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
   }
 }

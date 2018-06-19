@@ -32,7 +32,7 @@ namespace OrthancStone
     class EmptyApplication : public SampleApplicationBase
     {
     public:
-      virtual void DeclareCommandLineOptions(boost::program_options::options_description& options)
+      virtual void DeclareStartupOptions(boost::program_options::options_description& options)
       {
         boost::program_options::options_description generic("Sample options");
         generic.add_options()
@@ -44,15 +44,14 @@ namespace OrthancStone
         options.add(generic);    
       }
 
-      virtual void Initialize(BasicApplicationContext& context,
-                              IStatusBar& statusBar,
+      virtual void Initialize(IStatusBar& statusBar,
                               const boost::program_options::variables_map& parameters)
       {
         int red = parameters["red"].as<int>();
         int green = parameters["green"].as<int>();
         int blue = parameters["blue"].as<int>();
 
-        context.SetCentralWidget(new EmptyWidget(red, green, blue));
+        context_->SetCentralWidget(new EmptyWidget(red, green, blue));
       }
     };
   }

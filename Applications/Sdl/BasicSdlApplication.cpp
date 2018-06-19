@@ -78,29 +78,6 @@ namespace OrthancStone
     options.add(sdl);
   }
 
-//  void BasicSdlApplication::DeclareCommandLineOptions(boost::program_options::options_description &options) {
-//    boost::program_options::options_description app("Application specifi options");
-
-//    for (IBasicApplication::StartupOptions::const_iterator it = startupOptions_.begin(); it != startupOptions_.end(); it++) {
-//      switch (it->type) {
-//      case IBasicApplication::StartupOptionValue::boolean:
-//        app.add_options()
-//            (it->name.c_str(), boost::program_options::value<int>()->default_value(std::stoi(it->defaultValue)), it->helpText.c_str());
-//        break;
-//      case IBasicApplication::StartupOptionValue::integer:
-//        app.add_options()
-//            (it->name.c_str(), boost::program_options::value<bool>()->default_value(it->defaultValue == "true"), it->helpText.c_str());
-//        break;
-//      case IBasicApplication::StartupOptionValue::string:
-//        app.add_options()
-//            (it->name.c_str(), boost::program_options::value<std::string>()->default_value(it->defaultValue), it->helpText.c_str());
-//        break;
-//      default:
-//        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-//      }
-//    }
-//    options.add(app);
-//  }
 
   int BasicSdlApplication::ExecuteWithSdl(BasicSdlApplication& application,
                                         int argc,

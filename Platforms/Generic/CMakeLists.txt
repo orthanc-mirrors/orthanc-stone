@@ -68,6 +68,7 @@ BuildSample(OrthancStoneSingleVolume SingleVolumeApplication.h 4)
 #BuildSample(OrthancStoneBasicPetCtFusion 5)
 #BuildSample(OrthancStoneSynchronizedSeries 6)
 #BuildSample(OrthancStoneLayoutPetCtFusion 7)
+BuildSample(OrthancStoneSimpleViewer SimpleViewerApplication.h 8)
 
 
 #####################################################################

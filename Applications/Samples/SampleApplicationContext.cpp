@@ -23,8 +23,8 @@
 
 namespace OrthancStone
 {
-  SampleApplicationContext::SampleApplicationContext(Orthanc::WebServiceParameters& orthanc) :
-    BaseApplicationContext(orthanc)
+  SampleApplicationContext::SampleApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) :
+    BasicApplicationContext_(orthanc, centralViewport)
   {
   }
 

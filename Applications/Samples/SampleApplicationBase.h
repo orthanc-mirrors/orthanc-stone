@@ -22,6 +22,7 @@
 #pragma once
 
 #include "../../Applications/Sdl/BasicSdlApplication.h"
+#include "../../Framework/Viewport/WidgetViewport.h"
 #include "SampleApplicationContext.h"
 
 namespace OrthancStone
@@ -30,16 +31,18 @@ namespace OrthancStone
   {
 
 #ifdef ORTHANC_ENABLE_SDL
-    class SampleSdlApplicationBase : BasicSdlApplication {
-    private:
+    class SampleSdlApplicationBase : public BasicSdlApplication {
+    protected:
       std::unique_ptr<SampleApplicationContext> context_;
+    public:
+      BasicApplicationContext& CreateApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) {
+        context_.reset(new SampleApplicationContext(orthanc, centralViewport));
 
-      BasicApplicationContext& CreateApplicationContext(Orthanc::WebServiceParameters& orthanc) {
-        context_.reset(new SampleApplicationContext(orthanc));
+        return *context_;
       }
     };
 
-    typedef SampleApplicationBase_ SampleSdlApplicationBase;
+    typedef SampleSdlApplicationBase SampleApplicationBase_;
 #else
 
 #endif

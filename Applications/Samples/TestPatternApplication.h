@@ -34,7 +34,7 @@ namespace OrthancStone
     class TestPatternApplication : public SampleApplicationBase
     {
     public:
-      virtual void DeclareCommandLineOptions(boost::program_options::options_description& options)
+      virtual void DeclareStartupOptions(boost::program_options::options_description& options)
       {
         boost::program_options::options_description generic("Sample options");
         generic.add_options()
@@ -44,8 +44,7 @@ namespace OrthancStone
         options.add(generic);    
       }
 
-      virtual void Initialize(BasicApplicationContext& context,
-                              IStatusBar& statusBar,
+      virtual void Initialize(IStatusBar& statusBar,
                               const boost::program_options::variables_map& parameters)
       {
         using namespace OrthancStone;
@@ -56,8 +55,8 @@ namespace OrthancStone
         layout->AddWidget(new TestCairoWidget(parameters["animate"].as<bool>()));
         layout->AddWidget(new TestWorldSceneWidget(parameters["animate"].as<bool>()));
 
-        context.SetCentralWidget(layout.release());
-        context.SetUpdateDelay(25);  // If animation, update the content each 25ms
+        context_->SetCentralWidget(layout.release());
+        context_->SetUpdateDelay(25);  // If animation, update the content each 25ms
       }
     };
   }

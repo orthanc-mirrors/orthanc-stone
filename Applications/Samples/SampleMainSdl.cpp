@@ -49,6 +49,10 @@ typedef OrthancStone::Samples::SynchronizedSeriesApplication Application;
 #include "LayoutPetCtFusionApplication.h"
 typedef OrthancStone::Samples::LayoutPetCtFusionApplication Application;
 
+#elif ORTHANC_STONE_SAMPLE == 8
+#include "SimpleViewerApplication.h"
+typedef OrthancStone::Samples::SimpleViewerApplication Application;
+
 #else
 #error Please set the ORTHANC_STONE_SAMPLE macro
 #endif
@@ -58,5 +62,5 @@ int main(int argc, char* argv[])
 {
   Application application;
 
-  return OrthancStone::IBasicApplication::ExecuteWithSdl(application, argc, argv);
+  return OrthancStone::BasicSdlApplication::ExecuteWithSdl(application, argc, argv);
 }

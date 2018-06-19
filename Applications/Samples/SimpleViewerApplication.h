@@ -25,6 +25,7 @@
 
 #include "../../Framework/Layers/OrthancFrameLayerSource.h"
 #include "../../Framework/Widgets/LayerWidget.h"
+#include "../../Framework/Widgets/LayoutWidget.h"
 
 #include <Core/Logging.h>
 
@@ -32,7 +33,7 @@ namespace OrthancStone
 {
   namespace Samples
   {
-    class SingleFrameApplication :
+    class SimpleViewerApplication :
       public SampleApplicationBase,
       private ILayerSource::IObserver
     {
@@ -40,10 +41,10 @@ namespace OrthancStone
       class Interactor : public IWorldSceneInteractor
       {
       private:
-        SingleFrameApplication&  application_;
+        SimpleViewerApplication&  application_;
         
       public:
-        Interactor(SingleFrameApplication&  application) :
+        Interactor(SimpleViewerApplication&  application) :
           application_(application)
         {
         }
@@ -81,21 +82,21 @@ namespace OrthancStone
                                 KeyboardModifiers modifiers,
                                 IStatusBar* statusBar)
         {
-          int scale = (modifiers & KeyboardModifiers_Control ? 10 : 1);
+//          int scale = (modifiers & KeyboardModifiers_Control ? 10 : 1);
           
-          switch (direction)
-          {
-            case MouseWheelDirection_Up:
-              application_.OffsetSlice(-scale);
-              break;
+//          switch (direction)
+//          {
+//            case MouseWheelDirection_Up:
+//              application_.OffsetSlice(-scale);
+//              break;
 
-            case MouseWheelDirection_Down:
-              application_.OffsetSlice(scale);
-              break;
+//            case MouseWheelDirection_Down:
+//              application_.OffsetSlice(scale);
+//              break;
 
-            default:
-              break;
-          }
+//            default:
+//              break;
+//          }
         }
 
         virtual void KeyPressed(WorldSceneWidget& widget,
@@ -116,57 +117,57 @@ namespace OrthancStone
       };
 
 
-      void OffsetSlice(int offset)
-      {
-        if (source_ != NULL)
-        {
-          int slice = static_cast<int>(slice_) + offset;
+//      void OffsetSlice(int offset)
+//      {
+//        if (source_ != NULL)
+//        {
+//          int slice = static_cast<int>(slice_) + offset;
 
-          if (slice < 0)
-          {
-            slice = 0;
-          }
+//          if (slice < 0)
+//          {
+//            slice = 0;
+//          }
 
-          if (slice >= static_cast<int>(source_->GetSliceCount()))
-          {
-            slice = source_->GetSliceCount() - 1;
-          }
+//          if (slice >= static_cast<int>(source_->GetSliceCount()))
+//          {
+//            slice = source_->GetSliceCount() - 1;
+//          }
 
-          if (slice != static_cast<int>(slice_)) 
-          {
-            SetSlice(slice);
-          }   
-        }
-      }
+//          if (slice != static_cast<int>(slice_))
+//          {
+//            SetSlice(slice);
+//          }
+//        }
+//      }
       
 
-      void SetSlice(size_t index)
-      {
-        if (source_ != NULL &&
-            index < source_->GetSliceCount())
-        {
-          slice_ = index;
+//      void SetSlice(size_t index)
+//      {
+//        if (source_ != NULL &&
+//            index < source_->GetSliceCount())
+//        {
+//          slice_ = index;
           
-#if 1
-          widget_->SetSlice(source_->GetSlice(slice_).GetGeometry());
-#else
-          // TEST for scene extents - Rotate the axes
-          double a = 15.0 / 180.0 * M_PI;
+//#if 1
+//          widget_->SetSlice(source_->GetSlice(slice_).GetGeometry());
+//#else
+//          // TEST for scene extents - Rotate the axes
+//          double a = 15.0 / 180.0 * M_PI;
 
-#if 1
-          Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
-          Vector y; GeometryToolbox::AssignVector(y, -sin(a), cos(a), 0);
-#else
-          // Flip the normal
-          Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
-          Vector y; GeometryToolbox::AssignVector(y, sin(a), -cos(a), 0);
-#endif
+//#if 1
+//          Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
+//          Vector y; GeometryToolbox::AssignVector(y, -sin(a), cos(a), 0);
+//#else
+//          // Flip the normal
+//          Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
+//          Vector y; GeometryToolbox::AssignVector(y, sin(a), -cos(a), 0);
+//#endif
           
-          SliceGeometry s(source_->GetSlice(slice_).GetGeometry().GetOrigin(), x, y);
-          widget_->SetSlice(s);
-#endif
-        }
-      }
+//          SliceGeometry s(source_->GetSlice(slice_).GetGeometry().GetOrigin(), x, y);
+//          widget_->SetSlice(s);
+//#endif
+//        }
+//      }
         
       
       virtual void NotifyGeometryReady(const ILayerSource& source)
@@ -176,10 +177,10 @@ namespace OrthancStone
         // slice
         if (source_ == &source)
         {
-          SetSlice(source_->GetSliceCount() / 2);
+          //SetSlice(source_->GetSliceCount() / 2);
         }
 
-        widget_->SetDefaultView();
+        mainLayout_->SetDefaultView();
       }
       
       virtual void NotifyGeometryError(const ILayerSource& source)
@@ -202,13 +203,20 @@ namespace OrthancStone
       {
       }
 
-      LayerWidget*                    widget_;
-      const OrthancFrameLayerSource*  source_;
+      LayoutWidget*                   mainLayout_;
+      LayoutWidget*                   thumbnailsLayout_;
+      LayerWidget*                    mainViewport_;
+      std::vector<LayerWidget*>       thumbnails_;
+      std::vector<std::string>        instances_;
+      unsigned int                    currentInstanceIndex_;
+
+      OrthancFrameLayerSource*        source_;
       unsigned int                    slice_;
       
     public:
-      SingleFrameApplication() : 
-        widget_(NULL),
+      SimpleViewerApplication() :
+        mainLayout_(NULL),
+        currentInstanceIndex_(0),
         source_(NULL),
         slice_(0)
       {
@@ -218,12 +226,12 @@ namespace OrthancStone
       {
         boost::program_options::options_description generic("Sample options");
         generic.add_options()
-          ("instance", boost::program_options::value<std::string>(), 
-           "Orthanc ID of the instance")
-          ("frame", boost::program_options::value<unsigned int>()->default_value(0),
-           "Number of the frame, for multi-frame DICOM instances")
-          ("smooth", boost::program_options::value<bool>()->default_value(true), 
-           "Enable bilinear interpolation to smooth the image")
+//          ("study", boost::program_options::value<std::string>(),
+//           "Orthanc ID of the study")
+          ("instance1", boost::program_options::value<std::string>(),
+           "Orthanc ID of the instances")
+            ("instance2", boost::program_options::value<std::string>(),
+             "Orthanc ID of the instances")
           ;
 
         options.add(generic);    
@@ -236,80 +244,58 @@ namespace OrthancStone
 
         statusBar.SetMessage("Use the key \"s\" to reinitialize the layout");
 
-        if (parameters.count("instance") != 1)
+        if (parameters.count("instance1") < 1)
         {
           LOG(ERROR) << "The instance ID is missing";
           throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
         }
-
-        std::string instance = parameters["instance"].as<std::string>();
-        int frame = parameters["frame"].as<unsigned int>();
-
-        std::auto_ptr<LayerWidget> widget(new LayerWidget);
-
-#if 1
-        std::auto_ptr<OrthancFrameLayerSource> layer
-          (new OrthancFrameLayerSource(context_->GetWebService()));
-        //layer->SetImageQuality(SliceImageQuality_Jpeg50);
-        layer->LoadFrame(instance, frame);
-        //layer->LoadSeries("6f1b492a-e181e200-44e51840-ef8db55e-af529ab6");
-        layer->Register(*this);
-        source_ = layer.get();
-        widget->AddLayer(layer.release());
-
-        RenderStyle s;
-
-        if (parameters["smooth"].as<bool>())
+        if (parameters.count("instance2") < 1)
         {
-          s.interpolation_ = ImageInterpolation_Bilinear;
+          LOG(ERROR) << "The instance ID is missing";
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
         }
+        instances_.push_back(parameters["instance1"].as<std::string>());
+        instances_.push_back(parameters["instance2"].as<std::string>());
 
-        //s.drawGrid_ = true;
-        widget->SetLayerStyle(0, s);
-#else
-        // 0178023P**
-        // Extent of the CT layer: (-35.068 -20.368) => (34.932 49.632)
-        std::auto_ptr<OrthancFrameLayerSource> ct;
-        ct.reset(new OrthancFrameLayerSource(context_->GetWebService()));
-        //ct->LoadInstance("c804a1a2-142545c9-33b32fe2-3df4cec0-a2bea6d6", 0);
-        //ct->LoadInstance("4bd4304f-47478948-71b24af2-51f4f1bc-275b6c1b", 0);  // BAD SLICE
-        //ct->SetImageQuality(SliceImageQuality_Jpeg50);
-        ct->LoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
+        mainLayout_ = new LayoutWidget();
+        mainLayout_->SetPadding(10);
+        mainLayout_->SetBackgroundCleared(true);
+        mainLayout_->SetBackgroundColor(0, 0, 0);
+        mainLayout_->SetHorizontal();
 
-        ct->Register(*this);
-        widget->AddLayer(ct.release());
+        thumbnailsLayout_ = new LayoutWidget();
+        thumbnailsLayout_->SetPadding(10);
+        thumbnailsLayout_->SetBackgroundCleared(true);
+        thumbnailsLayout_->SetBackgroundColor(50, 50, 50);
+        thumbnailsLayout_->SetVertical();
 
-        std::auto_ptr<OrthancFrameLayerSource> pet;
-        pet.reset(new OrthancFrameLayerSource(context_->GetWebService()));
-        //pet->LoadInstance("a1c4dc6b-255d27f0-88069875-8daed730-2f5ee5c6", 0);
-        pet->LoadSeries("aabad2e7-80702b5d-e599d26c-4f13398e-38d58a9e");
-        pet->Register(*this);
-        source_ = pet.get();
-        widget->AddLayer(pet.release());
+        mainViewport_ = new LayerWidget();
+        thumbnails_.push_back(new LayerWidget());
+        thumbnails_.push_back(new LayerWidget());
 
-        {
-          RenderStyle s;
-          //s.drawGrid_ = true;
-          s.alpha_ = 1;
-          widget->SetLayerStyle(0, s);
-        }
+        // hierarchy
+        mainLayout_->AddWidget(thumbnailsLayout_);
+        mainLayout_->AddWidget(mainViewport_);
+        thumbnailsLayout_->AddWidget(thumbnails_[0]);
+        thumbnailsLayout_->AddWidget(thumbnails_[1]);
 
-        {
-          RenderStyle s;
-          //s.drawGrid_ = true;
-          s.SetColor(255, 0, 0);  // Draw missing PET layer in red
-          s.alpha_ = 0.5;
-          s.applyLut_ = true;
-          s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
-          s.interpolation_ = ImageInterpolation_Bilinear;
-          widget->SetLayerStyle(1, s);
-        }
-#endif
+        // sources
+        source_ = new OrthancFrameLayerSource(context_->GetWebService());
+        source_->LoadFrame(instances_[currentInstanceIndex_], 0);
 
-        widget_ = widget.get();
-        widget_->SetTransmitMouseOver(true);
-        widget_->SetInteractor(context_->AddInteractor(new Interactor(*this)));
-        context_->SetCentralWidget(widget.release());
+        mainViewport_->AddLayer(source_);
+
+        OrthancFrameLayerSource* thumb0 = new OrthancFrameLayerSource(context_->GetWebService());
+        thumb0->LoadFrame(instances_[0], 0);
+        OrthancFrameLayerSource* thumb1 = new OrthancFrameLayerSource(context_->GetWebService());
+        thumb1->LoadFrame(instances_[1], 0);
+
+        thumbnails_[0]->AddLayer(thumb0);
+        thumbnails_[1]->AddLayer(thumb1);
+
+        mainLayout_->SetTransmitMouseOver(true);
+        mainViewport_->SetInteractor(context_->AddInteractor(new Interactor(*this)));
+        context_->SetCentralWidget(mainLayout_);
       }
     };
   }

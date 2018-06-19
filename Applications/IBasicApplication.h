@@ -29,32 +29,6 @@ namespace OrthancStone
 {
   class IBasicApplication : public boost::noncopyable
   {
-  protected:
-//    struct StartupOptionValue {
-//      enum Type {
-//        boolean,
-//        string,
-//        integer
-//      };
-//      Type type;
-//      std::string value;
-
-//      int asInt() {return std::stoi(value);}
-//      bool asBool() {return value == "true"; }
-//      std::string asString() {return value; }
-//    };
-
-//    struct StartupOptionDefinition {
-//      std::string name;
-//      std::string helpText;
-//      std::string defaultValue;
-//      StartupOptionValue::Type type;
-//    };
-
-//    typedef std::list<StartupOptionDefinition> StartupOptions;
-
-//    StartupOptions startupOptions_;
-
   public:
     virtual ~IBasicApplication()
     {
@@ -78,10 +52,6 @@ namespace OrthancStone
 
     virtual void Finalize() = 0;
 
-//protected:
-//    virtual void DeclareStringStartupOption(const std::string& name, const std::string& defaultValue, const std::string& helpText);
-//    virtual void DeclareIntegerStartupOption(const std::string& name, const int& defaultValue, const std::string& helpText);
-//    virtual void DeclareBoolStartupOption(const std::string& name, bool defaultValue, const std::string& helpText);
   };
 
 }

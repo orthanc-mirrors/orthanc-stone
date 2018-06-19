@@ -89,7 +89,7 @@ namespace OrthancStone
 
 
     public:
-      virtual void DeclareCommandLineOptions(boost::program_options::options_description& options)
+      virtual void DeclareStartupOptions(boost::program_options::options_description& options)
       {
         boost::program_options::options_description generic("Sample options");
         generic.add_options()
@@ -108,8 +108,7 @@ namespace OrthancStone
         options.add(generic);    
       }
 
-      virtual void Initialize(BasicApplicationContext& context,
-                              IStatusBar& statusBar,
+      virtual void Initialize(IStatusBar& statusBar,
                               const boost::program_options::variables_map& parameters)
       {
         using namespace OrthancStone;
@@ -147,8 +146,8 @@ namespace OrthancStone
           throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
         }
 
-        unsigned int threads = parameters["threads"].as<unsigned int>();
-        bool reverse = parameters["reverse"].as<bool>();
+        //unsigned int threads = parameters["threads"].as<unsigned int>();
+        //bool reverse = parameters["reverse"].as<bool>();
 
         std::string tmp = parameters["projection"].as<std::string>();
         Orthanc::Toolbox::ToLowerCase(tmp);
@@ -175,7 +174,7 @@ namespace OrthancStone
         std::auto_ptr<LayerWidget> widget(new LayerWidget);
 
 #if 0
-        std::auto_ptr<OrthancVolumeImage> volume(new OrthancVolumeImage(context.GetWebService(), true));
+        std::auto_ptr<OrthancVolumeImage> volume(new OrthancVolumeImage(context_->GetWebService(), true));
         if (series.empty())
         {
           volume->ScheduleLoadInstance(instance);
@@ -187,8 +186,8 @@ namespace OrthancStone
 
         widget->AddLayer(new VolumeImageSource(*volume));
 
-        context.AddInteractor(new Interactor(*volume, *widget, projection, 0));
-        context.AddSlicedVolume(volume.release());
+        context_->AddInteractor(new Interactor(*volume, *widget, projection, 0));
+        context_->AddSlicedVolume(volume.release());
 
         {
           RenderStyle s;
@@ -199,14 +198,14 @@ namespace OrthancStone
           widget->SetLayerStyle(0, s);
         }
 #else
-        std::auto_ptr<OrthancVolumeImage> ct(new OrthancVolumeImage(context.GetWebService(), false));
+        std::auto_ptr<OrthancVolumeImage> ct(new OrthancVolumeImage(context_->GetWebService(), false));
         //ct->ScheduleLoadSeries("15a6f44a-ac7b88fe-19c462d9-dddd918e-b01550d8");  // 0178023P
         //ct->ScheduleLoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
         //ct->ScheduleLoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // IBA
         //ct->ScheduleLoadSeries("03677739-1d8bca40-db1daf59-d74ff548-7f6fc9c0");  // 0522c0001 TCIA
         ct->ScheduleLoadSeries("295e8a13-dfed1320-ba6aebb2-9a13e20f-1b3eb953");  // Captain
         
-        std::auto_ptr<OrthancVolumeImage> pet(new OrthancVolumeImage(context.GetWebService(), true));
+        std::auto_ptr<OrthancVolumeImage> pet(new OrthancVolumeImage(context_->GetWebService(), true));
         //pet->ScheduleLoadSeries("48d2997f-8e25cd81-dd715b64-bd79cdcc-e8fcee53");  // 0178023P
         //pet->ScheduleLoadSeries("aabad2e7-80702b5d-e599d26c-4f13398e-38d58a9e");
         //pet->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb"); // IBA 1
@@ -216,7 +215,7 @@ namespace OrthancStone
         pet->ScheduleLoadInstance("f080888c-0ab7528a-f7d9c28c-84980eb1-ff3b0ae6");  // Captain 1
         //pet->ScheduleLoadInstance("4f78055b-6499a2c5-1e089290-394acc05-3ec781c1");  // Captain 2
 
-        std::auto_ptr<StructureSetLoader> rtStruct(new StructureSetLoader(context.GetWebService()));
+        std::auto_ptr<StructureSetLoader> rtStruct(new StructureSetLoader(context_->GetWebService()));
         //rtStruct->ScheduleLoadInstance("c2ebc17b-6b3548db-5e5da170-b8ecab71-ea03add3");  // 0178023P
         //rtStruct->ScheduleLoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // IBA
         //rtStruct->ScheduleLoadInstance("17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20");  // 0522c0001 TCIA
@@ -226,12 +225,12 @@ namespace OrthancStone
         widget->AddLayer(new VolumeImageSource(*pet));
         widget->AddLayer(new DicomStructureSetRendererFactory(*rtStruct));
         
-        context.AddInteractor(new Interactor(*pet, *widget, projection, 1));
-        //context.AddInteractor(new VolumeImageInteractor(*ct, *widget, projection));
+        context_->AddInteractor(new Interactor(*pet, *widget, projection, 1));
+        //context_->AddInteractor(new VolumeImageInteractor(*ct, *widget, projection));
 
-        context.AddSlicedVolume(ct.release());
-        context.AddSlicedVolume(pet.release());
-        context.AddVolumeLoader(rtStruct.release());
+        context_->AddSlicedVolume(ct.release());
+        context_->AddSlicedVolume(pet.release());
+        context_->AddVolumeLoader(rtStruct.release());
 
         {
           RenderStyle s;
@@ -263,7 +262,7 @@ namespace OrthancStone
         statusBar.SetMessage("Use the keys \"c\" to draw circles");
 
         widget->SetTransmitMouseOver(true);
-        context.SetCentralWidget(widget.release());
+        context_->SetCentralWidget(widget.release());
       }
     };
   }

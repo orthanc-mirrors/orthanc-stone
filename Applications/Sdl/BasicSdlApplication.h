@@ -44,6 +44,8 @@ namespace OrthancStone
     static int ExecuteWithSdl(BasicSdlApplication& application,
                               int argc,
                               char* argv[]);
+
+    virtual void Finalize() {}
   };
 
 }

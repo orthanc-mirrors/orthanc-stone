@@ -32,15 +32,19 @@
 #include <boost/thread.hpp>
 
 
+#if ORTHANC_ENABLE_SDL==1
+#include "../Sdl/BasicSdlApplicationContext.h"
+#else
+#include "../Wasm/BasicWasmApplicationContext.h"
+#endif
+
 namespace OrthancStone
 {
 
-#if ORTHANC_ENABLE_SDL
-#include "../Sdl/BasicSdlApplicationContext.h"
-typedef BasicSdlApplicationContext BasicApplicationContext_;
+#if ORTHANC_ENABLE_SDL==1
+  typedef BasicSdlApplicationContext BasicApplicationContext_;
 #else
-#include "../Wasm/BasicWasmApplicationContext.h"
-typedef BasicWasmApplicationContext BasicApplicationContext_;
+  typedef BasicWasmApplicationContext BasicApplicationContext_;
 #endif
 
   class SampleApplicationContext : public BasicApplicationContext_
@@ -56,7 +60,7 @@ typedef BasicWasmApplicationContext BasicApplicationContext_;
 
   public:
 
-    SampleApplicationContext(Orthanc::WebServiceParameters& orthanc);
+    SampleApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport);
 
     virtual ~SampleApplicationContext();
 

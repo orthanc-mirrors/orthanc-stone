@@ -21,55 +21,58 @@
 
 #pragma once
 
-#if ORTHANC_ENABLE_SDL==1
-#include "../../Applications/Sdl/BasicSdlApplication.h"
-#else
-#include "../../Applications/Wasm/BasicWasmApplication.h"
-#endif
+//#if ORTHANC_ENABLE_SDL==1
+//#include "../../Applications/Sdl/BasicSdlApplication.h"
+//#else
+//#include "../../Applications/Wasm/BasicWasmApplication.h"
+//#endif
+#include "../../Applications/IBasicApplication.h"
 #include "../../Framework/Viewport/WidgetViewport.h"
-#include "SampleApplicationContext.h"
+//#include "SampleApplicationContext.h"
 
 namespace OrthancStone
 {
   namespace Samples
   {
 
-#if ORTHANC_ENABLE_SDL==1
-    class SampleSdlApplicationBase : public BasicSdlApplication {
-    protected:
-      std::unique_ptr<SampleApplicationContext> context_;
-    public:
-      virtual BasicApplicationContext& CreateApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) {
-        context_.reset(new SampleApplicationContext(orthanc, centralViewport));
+//#if ORTHANC_ENABLE_SDL==1
+//    class SampleSdlApplicationBase : public BasicSdlApplication {
+//    protected:
+//    public:
+//      virtual BasicApplicationContext& CreateApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) {
+//        context_.reset(new SampleApplicationContext(orthanc, centralViewport));
 
-        return *context_;
-      }
-    };
+//        return *context_;
+//      }
+//    };
 
-    typedef SampleSdlApplicationBase SampleApplicationBase_;
-#else
-    class SampleWasmApplicationBase : public BasicWasmApplication {
-    protected:
-      std::unique_ptr<SampleApplicationContext> context_;
-    public:
-      virtual BasicApplicationContext& CreateApplicationContext(IWebService& orthancWebService, std::shared_ptr<WidgetViewport> centralViewport) {
-        context_.reset(new SampleApplicationContext(orthancWebService));
-        return *context_;
-      }
+//    typedef SampleSdlApplicationBase SampleApplicationBase_;
+//#else
+//    class SampleWasmApplicationBase : public BasicWasmApplication {
+//    protected:
+//      std::unique_ptr<SampleApplicationContext> context_;
+//    public:
+//      virtual BasicApplicationContext& CreateApplicationContext(IWebService& orthancWebService, std::shared_ptr<WidgetViewport> centralViewport) {
+//        context_.reset(new SampleApplicationContext(orthancWebService));
+//        return *context_;
+//      }
 
-    };
+//    };
 
-    typedef SampleWasmApplicationBase SampleApplicationBase_;
+//    typedef SampleWasmApplicationBase SampleApplicationBase_;
 
-#endif
+//#endif
 
-    class SampleApplicationBase : public SampleApplicationBase_
+    class SampleApplicationBase : public IBasicApplication
     {
     public:
       virtual std::string GetTitle() const
       {
         return "Stone of Orthanc - Sample";
       }
+
+      virtual void CustomInitialize() {}
+
     };
 
 

@@ -31,10 +31,15 @@ namespace OrthancStone
   class BasicApplicationContext : public boost::noncopyable
   {
 
+  protected:
+    IWebService& webService_;
   public:
-    BasicApplicationContext() {}
+    BasicApplicationContext(IWebService& webService)
+      : webService_(webService)
+    {
+    }
 
-    virtual IWebService& GetWebService() = 0;
+    virtual IWebService& GetWebService() {return webService_;}
 //    virtual IWidget& SetCentralWidget(IWidget* widget) = 0;   // Takes ownership
 
     virtual ~BasicApplicationContext() {}

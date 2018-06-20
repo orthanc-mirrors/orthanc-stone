@@ -26,12 +26,7 @@
 #include "SampleList.h"
 
 
-OrthancStone::BasicWasmApplication* CreateUserApplication() {
+OrthancStone::IBasicApplication* CreateUserApplication() {
   
-  printf("C++: CreateUserApplication\n");
-  OrthancStone::WidgetViewport* viewport = CreateWasmViewportFromCpp("canvas");  
-  OrthancStone::WidgetViewport* viewport2 = CreateWasmViewportFromCpp("canvas2");  
-  printf("C++: CreateUserApplication - wasm viewport created\n");
-  
-  return new Application(viewport, viewport2);
+  return new Application();
 }

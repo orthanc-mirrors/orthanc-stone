@@ -30,34 +30,5 @@
 
 namespace OrthancStone
 {
-    void IBasicApplication::DeclareStringStartupOption(const std::string& name, const std::string& defaultValue, const std::string& helpText) {
-        StartupOption option;
-        option.name = name;
-        option.defaultValue = defaultValue;
-        option.helpText = helpText = helpText;
-        option.type = StartupOption::string;
-
-        startupOptions_.push_back(option);
-    }
-
-    void IBasicApplication::DeclareBoolStartupOption(const std::string& name, bool defaultValue, const std::string& helpText) {
-        StartupOption option;
-        option.name = name;
-        option.defaultValue = (defaultValue ? "true" : "false");
-        option.helpText = helpText = helpText;
-        option.type = StartupOption::boolean;
-
-        startupOptions_.push_back(option);
-    }
-
-    void IBasicApplication::DeclareIntegerStartupOption(const std::string& name, const int& defaultValue, const std::string& helpText) {
-        StartupOption option;
-        option.name = name;
-        option.defaultValue = std::to_string(defaultValue);
-        option.helpText = helpText = helpText;
-        option.type = StartupOption::integer;
-
-        startupOptions_.push_back(option);
-    }
 
 }

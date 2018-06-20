@@ -41,11 +41,12 @@
 namespace OrthancStone
 {
 
-#if ORTHANC_ENABLE_SDL==1
-  class SampleApplicationContext : public BasicSdlApplicationContext
-#else
+//#if ORTHANC_ENABLE_SDL==1
+//  class SampleApplicationContext : public BasicSdlApplicationContext
+//#else
+//  class SampleApplicationContext : public BasicWasmApplicationContext
+//#endif
   class SampleApplicationContext : public BasicWasmApplicationContext
-#endif
   {
   private:
     typedef std::list<ISlicedVolume*>          SlicedVolumes;  // this is actually used by the samples and shall be moved to a SampleApplicationContext

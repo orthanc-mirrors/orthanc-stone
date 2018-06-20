@@ -48,7 +48,7 @@ add_library(OrthancStone STATIC
 macro(BuildSample Target Header Sample)
   add_executable(${Target}
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleMainSdl.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationContext.cpp
+#    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationContext.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleInteractor.h
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationBase.h
     ${ORTHANC_STONE_ROOT}/Applications/Samples/${Header}
@@ -61,13 +61,13 @@ endmacro()
 
 # TODO - Re-enable all these samples!
 
-BuildSample(OrthancStoneEmpty EmptyApplication.h 1)
-BuildSample(OrthancStoneTestPattern TestPatternApplication.h 2)
-BuildSample(OrthancStoneSingleFrame SingleFrameApplication.h 3)
-BuildSample(OrthancStoneSingleVolume SingleVolumeApplication.h 4)
-#BuildSample(OrthancStoneBasicPetCtFusion 5)
-#BuildSample(OrthancStoneSynchronizedSeries 6)
-#BuildSample(OrthancStoneLayoutPetCtFusion 7)
+#BuildSample(OrthancStoneEmpty EmptyApplication.h 1)
+#BuildSample(OrthancStoneTestPattern TestPatternApplication.h 2)
+#BuildSample(OrthancStoneSingleFrame SingleFrameApplication.h 3)
+#BuildSample(OrthancStoneSingleVolume SingleVolumeApplication.h 4)
+##BuildSample(OrthancStoneBasicPetCtFusion 5)
+##BuildSample(OrthancStoneSynchronizedSeries 6)
+##BuildSample(OrthancStoneLayoutPetCtFusion 7)
 BuildSample(OrthancStoneSimpleViewer SimpleViewerApplication.h 8)
 
 

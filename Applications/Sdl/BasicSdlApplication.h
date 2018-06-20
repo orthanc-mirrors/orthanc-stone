@@ -41,7 +41,7 @@ namespace OrthancStone
     {
     }
 
-    static int ExecuteWithSdl(BasicSdlApplication& application,
+    static int ExecuteWithSdl(IBasicApplication& application,
                               int argc,
                               char* argv[]);
 

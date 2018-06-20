@@ -1,16 +1,16 @@
-#include "BasicWasmApplication.h"
+#include "StartupParametersBuilder.h"
 
 namespace OrthancStone
 {
+    void StartupParametersBuilder::Clear() {
+        startupParameters_.clear();
+    }
 
-
-    void BasicWasmApplication::SetStartupParameter(const char* name, const char* value) {
+    void StartupParametersBuilder::SetStartupParameter(const char* name, const char* value) {
         startupParameters_.push_back(std::make_tuple(name, value));
     }
 
-    void BasicWasmApplication::GetStartupParameters(boost::program_options::variables_map& parameters) {
-        boost::program_options::options_description options;
-        DeclareStartupOptions(options);
+    void StartupParametersBuilder::GetStartupParameters(boost::program_options::variables_map& parameters, const boost::program_options::options_description& options) {
         
         const char* argv[startupParameters_.size() + 1];
         int argCounter = 0;

@@ -18,7 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+
 #include "SampleList.h"
+#include "../Sdl/BasicSdlApplication.h"
 
 int main(int argc, char* argv[]) 
 {

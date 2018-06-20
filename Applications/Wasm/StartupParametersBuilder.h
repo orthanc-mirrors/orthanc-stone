@@ -21,9 +21,6 @@
 
 #pragma once
 
-#include "../BasicApplicationContext.h"
-#include "../IBasicApplication.h"
-
 #include <boost/program_options.hpp>
 #include <tuple>
 
@@ -33,22 +30,21 @@
 
 namespace OrthancStone
 {
-  class BasicWasmApplication : public IBasicApplication
+  // This class is used to generate boost program options from a dico.
+  // In a Wasm context, startup options are passed as URI arguments that
+  // are then passed to this class as a dico.
+  // This class regenerates a fake command-line and parses it to produce
+  // the same output as if the app was started at command-line.
+  class StartupParametersBuilder
   {
     typedef std::list<std::tuple<std::string, std::string>> StartupParameters;
     StartupParameters startupParameters_;
 
   public:
-    virtual ~BasicWasmApplication()
-    {
-    }
 
+    void Clear();
     void SetStartupParameter(const char* name, const char* value);
-    void GetStartupParameters(boost::program_options::variables_map& parameters_);
-    
-    virtual IWidget* GetCentralWidget() = 0;
-
-    //static int ExecuteWithWasm(BasicWasmApplication& application);
+    void GetStartupParameters(boost::program_options::variables_map& parameters_, const boost::program_options::options_description& options);
   };
 
 }

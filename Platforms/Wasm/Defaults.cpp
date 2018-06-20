@@ -6,13 +6,17 @@
 #include <Framework/Viewport/WidgetViewport.h>
 #include <Framework/Widgets/LayerWidget.h>
 #include <algorithm>
+#include "Applications/Wasm/StartupParametersBuilder.h"
 
 static unsigned int width_ = 0;
 static unsigned int height_ = 0;
 
 /**********************************/
 
-static std::auto_ptr<OrthancStone::BasicWasmApplication> application;
+static std::unique_ptr<OrthancStone::IBasicApplication> application;
+static std::unique_ptr<OrthancStone::BasicApplicationContext> context;
+static OrthancStone::StartupParametersBuilder startupParametersBuilder;
+
 static OrthancStone::ChangeObserver changeObserver_;
 static OrthancStone::StatusBar statusBar_;
 
@@ -64,13 +68,12 @@ extern "C" {
 
     application.reset(CreateUserApplication());
 
-    boost::program_options::options_description options;
-    application->DeclareStartupOptions(options);
+    startupParametersBuilder.Clear();
   }
 
   void EMSCRIPTEN_KEEPALIVE SetStartupParameter(const char* keyc,
                                                   const char* value) {
-    application->SetStartupParameter(keyc, value);
+    startupParametersBuilder.SetStartupParameter(keyc, value);
   }
 
   void EMSCRIPTEN_KEEPALIVE StartWasmApplication() {
@@ -79,10 +82,13 @@ extern "C" {
 
     // recreate a command line from uri arguments and parse it
     boost::program_options::variables_map parameters;
-    application->GetStartupParameters(parameters);
+    boost::program_options::options_description options;
+    application->DeclareStartupOptions(options);
+    startupParametersBuilder.GetStartupParameters(parameters, options);
 
-    BasicWasmApplicationContext& context = dynamic_cast<BasicWasmApplicationContext&>(application->CreateApplicationContext(OrthancStone::WasmWebService::GetInstance(), NULL));
-    application->Initialize(statusBar_, parameters);
+    context.reset(new OrthancStone::BasicApplicationContext(OrthancStone::WasmWebService::GetInstance()));
+    application->Initialize(context.get(), statusBar_, parameters);
+    application->InitializeWasm();
 
 //    viewport->SetSize(width_, height_);
     printf("StartWasmApplication - completed\n");

@@ -79,7 +79,7 @@ namespace OrthancStone
   }
 
 
-  int BasicSdlApplication::ExecuteWithSdl(BasicSdlApplication& application,
+  int BasicSdlApplication::ExecuteWithSdl(IBasicApplication& application,
                                         int argc,
                                         char* argv[])
   {
@@ -184,27 +184,27 @@ namespace OrthancStone
        * Initialize the connection to the Orthanc server
        ****************************************************************/
 
-      Orthanc::WebServiceParameters webService;
+      Orthanc::WebServiceParameters webServiceParameters;
 
       if (parameters.count("orthanc"))
       {
-        webService.SetUrl(parameters["orthanc"].as<std::string>());
+        webServiceParameters.SetUrl(parameters["orthanc"].as<std::string>());
       }
 
       if (parameters.count("username"))
       {
-        webService.SetUsername(parameters["username"].as<std::string>());
+        webServiceParameters.SetUsername(parameters["username"].as<std::string>());
       }
 
       if (parameters.count("password"))
       {
-        webService.SetPassword(parameters["password"].as<std::string>());
+        webServiceParameters.SetPassword(parameters["password"].as<std::string>());
       }
 
-      LOG(WARNING) << "URL to the Orthanc REST API: " << webService.GetUrl();
+      LOG(WARNING) << "URL to the Orthanc REST API: " << webServiceParameters.GetUrl();
 
       {
-        OrthancPlugins::OrthancHttpConnection orthanc(webService);
+        OrthancPlugins::OrthancHttpConnection orthanc(webServiceParameters);
         if (!MessagingToolbox::CheckOrthancVersion(orthanc))
         {
           LOG(ERROR) << "Your version of Orthanc is incompatible with Stone of Orthanc, please upgrade";
@@ -220,13 +220,17 @@ namespace OrthancStone
       LOG(WARNING) << "Creating the widgets of the application";
 
       LogStatusBar statusBar;
-      OrthancStone::WidgetViewport* centralViewport = new OrthancStone::WidgetViewport();
-      BasicSdlApplicationContext& context = dynamic_cast<BasicSdlApplicationContext&>(application.CreateApplicationContext(webService, centralViewport));
 
-      application.Initialize(statusBar, parameters);
+      boost::mutex stoneGlobalMutex;
+      Oracle oracle(stoneGlobalMutex, 4); // use 4 threads to download content
+      OracleWebService webService(oracle, webServiceParameters);
+      BasicSdlApplicationContext context(webService);
+
+      application.Initialize(&context, statusBar, parameters);
 
       {
         BasicSdlApplicationContext::ViewportLocker locker(context);
+        context.SetCentralWidget(application.GetCentralWidget());
         locker.GetViewport().SetStatusBar(statusBar);
       }
 

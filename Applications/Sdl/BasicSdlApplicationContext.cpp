@@ -44,11 +44,13 @@ namespace OrthancStone
   }
   
 
-  BasicSdlApplicationContext::BasicSdlApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) :
-    oracle_(viewportMutex_, 4),  // Use 4 threads to download
-    //oracle_(viewportMutex_, 1),  // Disable threading to be reproducible
-    webService_(oracle_, orthanc),
-    centralViewport_(centralViewport),
+  BasicSdlApplicationContext::BasicSdlApplicationContext(OracleWebService& webService) : // Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) :
+    BasicApplicationContext(webService),
+    oracleWebService_(&webService),
+//    oracle_(viewportMutex_, 4),  // Use 4 threads to download
+//    webService_(oracle_, orthanc),
+//    centralViewport_(centralViewport),
+    centralViewport_(new OrthancStone::WidgetViewport()),
     stopped_(true),
     updateDelay_(100)   // By default, 100ms between each refresh of the content
   {
@@ -58,7 +60,7 @@ namespace OrthancStone
 
   void BasicSdlApplicationContext::Start()
   {
-    oracle_.Start();
+    oracleWebService_->Start();
 
     if (centralViewport_->HasUpdateContent())
     {
@@ -77,6 +79,6 @@ namespace OrthancStone
       updateThread_.join();
     }
     
-    oracle_.Stop();
+    oracleWebService_->Stop();
   }
 }

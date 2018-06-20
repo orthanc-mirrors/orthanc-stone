@@ -29,26 +29,24 @@ namespace OrthancStone
 {
   class IBasicApplication : public boost::noncopyable
   {
+  protected:
+    BasicApplicationContext* context_;
+
   public:
     virtual ~IBasicApplication()
     {
     }
 
     virtual void DeclareStartupOptions(boost::program_options::options_description& options) = 0;
-    virtual void Initialize(IStatusBar& statusBar,
+    virtual void Initialize(BasicApplicationContext* context,
+                            IStatusBar& statusBar,
                             const boost::program_options::variables_map& parameters) = 0;
-
-#if ORTHANC_ENABLE_SDL == 1
-  virtual BasicApplicationContext& CreateApplicationContext(Orthanc::WebServiceParameters& orthancWebService, OrthancStone::WidgetViewport* centralViewport) = 0;
-#else
-  virtual BasicApplicationContext& CreateApplicationContext(IWebService& orthancWebService, std::shared_ptr<WidgetViewport> centralViewport) = 0;
+#if ORTHANC_ENABLE_SDL==0
+    virtual void InitializeWasm() {}  // specific initialization when the app is running in WebAssembly.  This is called after the other Initialize()
 #endif
 
     virtual std::string GetTitle() const = 0;
-
-//    virtual void Initialize(BasicApplicationContext& context,
-//                            IStatusBar& statusBar,
-//                            const std::map<std::string, std::string>& startupOptions) = 0;
+    virtual IWidget* GetCentralWidget() = 0;
 
     virtual void Finalize() = 0;
 

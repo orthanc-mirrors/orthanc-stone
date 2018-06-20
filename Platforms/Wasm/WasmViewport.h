@@ -14,3 +14,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+extern void AttachWidgetToWasmViewport(const char* htmlCanvasId, OrthancStone::IWidget* centralWidget);

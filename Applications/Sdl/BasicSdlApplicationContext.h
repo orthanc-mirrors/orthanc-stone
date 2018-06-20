@@ -39,8 +39,7 @@ namespace OrthancStone
 
     static void UpdateThread(BasicSdlApplicationContext* that);
 
-    Oracle              oracle_;
-    OracleWebService    webService_;
+    OracleWebService*   oracleWebService_;
     boost::mutex        viewportMutex_;
     std::unique_ptr<WidgetViewport>      centralViewport_;
     boost::thread       updateThread_;
@@ -68,7 +67,7 @@ namespace OrthancStone
     };
 
     
-    BasicSdlApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport);
+    BasicSdlApplicationContext(OracleWebService& webService);
 
     virtual ~BasicSdlApplicationContext() {}
 

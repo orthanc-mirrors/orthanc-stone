@@ -56,5 +56,15 @@ namespace OrthancStone
     {
       oracle_.Submit(new WebServicePostCommand(callback, parameters_, uri, body, payload));
     }
+
+    void Start()
+    {
+        oracle_.Start();
+    }
+
+    void Stop()
+    {
+        oracle_.Start();
+    }
   };
 }

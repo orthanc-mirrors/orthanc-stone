@@ -63,9 +63,10 @@ macro(BuildSample Target Header Sample)
   add_executable(${Target}
     ${ORTHANC_STONE_ROOT}/Platforms/Wasm/Defaults.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Wasm/WasmWebService.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Wasm/WasmViewport.cpp
 
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleMainWasm.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationContext.cpp
+#    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationContext.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleInteractor.h
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationBase.h
     ${ORTHANC_STONE_ROOT}/Applications/Samples/${Header}

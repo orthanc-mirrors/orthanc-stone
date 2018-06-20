@@ -203,6 +203,7 @@ namespace OrthancStone
       {
       }
 
+      std::unique_ptr<Interactor>     interactor_;
       LayoutWidget*                   mainLayout_;
       LayoutWidget*                   thumbnailsLayout_;
       LayerWidget*                    mainViewport_;
@@ -216,13 +217,13 @@ namespace OrthancStone
       unsigned int                    slice_;
       
     public:
-      SimpleViewerApplication(OrthancStone::WidgetViewport* wasmViewport1, OrthancStone::WidgetViewport* wasmViewport2) :
+      SimpleViewerApplication() :
         mainLayout_(NULL),
         currentInstanceIndex_(0),
         source_(NULL),
         slice_(0),
-        wasmViewport1_(wasmViewport1),
-        wasmViewport2_(wasmViewport2)
+        wasmViewport1_(NULL),
+        wasmViewport2_(NULL)
       {
       }
       
@@ -244,11 +245,13 @@ namespace OrthancStone
         options.add(generic);    
       }
 
-      virtual void Initialize(IStatusBar& statusBar,
+      virtual void Initialize(BasicApplicationContext* context,
+                              IStatusBar& statusBar,
                               const boost::program_options::variables_map& parameters)
       {
         using namespace OrthancStone;
 
+        context_ = context;
         statusBar.SetMessage("Use the key \"s\" to reinitialize the layout");
 
         if (parameters.count("instance1") < 1)
@@ -301,15 +304,17 @@ namespace OrthancStone
         thumbnails_[1]->AddLayer(thumb1);
 
         mainLayout_->SetTransmitMouseOver(true);
-        mainViewport_->SetInteractor(context_->AddInteractor(new Interactor(*this)));
-#if ORTHANC_ENABLE_SDL == 1
-        context_->SetCentralWidget(mainLayout_);
-#else
-  wasmViewport1_->SetCentralWidget(thumbnailsLayout_);
-  wasmViewport2_->SetCentralWidget(mainViewport_);
-
-#endif
+        interactor_.reset(new Interactor(*this));
+        mainViewport_->SetInteractor(*interactor_);
       }
+
+#if ORTHANC_ENABLE_SDL==0
+      virtual void InitializeWasm() {
+
+        AttachWidgetToWasmViewport("canvas", thumbnailsLayout_);
+        AttachWidgetToWasmViewport("canvas2", mainViewport_);
+      }
+#endif
     };
   }
 }

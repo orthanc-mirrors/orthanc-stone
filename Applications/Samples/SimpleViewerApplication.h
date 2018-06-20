@@ -292,6 +292,7 @@ namespace OrthancStone
         // sources
         source_ = new OrthancFrameLayerSource(context_->GetWebService());
         source_->LoadFrame(instances_[currentInstanceIndex_], 0);
+        source_->Register(*this);
 
         mainViewport_->AddLayer(source_);
 

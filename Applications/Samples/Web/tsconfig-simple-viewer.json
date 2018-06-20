@@ -1,16 +1,9 @@
 {
+    "extends" : "./tsconfig-samples",
     "compilerOptions": {
-        "outFile": "../../../Platforms/Wasm/build-web/app-simple-viewer.js",
-        "sourceMap": false,
-        "lib" : [
-            "es2017",
-            "dom"
-        ]
+        "outFile": "../../../Platforms/Wasm/build-web/app-simple-viewer.js"
     },
     "include" : [
-        "simple-viewer.ts",
-        "../../../Platforms/Wasm/stone-framework-loader.ts",
-        "../../../Platforms/Wasm/wasm-application.ts",
-        "../../../Platforms/Wasm/wasm-viewport.ts"
+        "simple-viewer.ts"
     ]
 }

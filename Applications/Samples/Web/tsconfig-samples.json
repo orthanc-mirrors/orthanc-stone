@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+    "sourceMap": false,
+    "lib" : [
+        "es2017",
+        "dom"
+    ]
+    },
+    "include" : [
+        "../../../Platforms/Wasm/stone-framework-loader.ts",
+        "../../../Platforms/Wasm/wasm-application.ts",
+        "../../../Platforms/Wasm/wasm-viewport.ts"
+    ]
+}

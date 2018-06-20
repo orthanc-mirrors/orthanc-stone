@@ -86,7 +86,7 @@ function _InitializeWasmApplication(canvasId: string): void {
   UpdateContentThread();
 }
 
-function InitializeWasmApplication(wasmModuleName: string) {
+function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: string) {
   
   Stone.Framework.Configure(wasmModuleName);
 
@@ -105,6 +105,8 @@ function InitializeWasmApplication(wasmModuleName: string) {
     WasmWebService_NotifySuccess = StoneFrameworkModule.cwrap('WasmWebService_NotifySuccess', null, ['number', 'string', 'array', 'number', 'number']);
     WasmWebService_NotifyError = StoneFrameworkModule.cwrap('WasmWebService_NotifyError', null, ['number', 'string', 'number']);
     NotifyUpdateContent = StoneFrameworkModule.cwrap('NotifyUpdateContent', null, []);
+
+    StoneFrameworkModule.ccall('WasmWebService_SetBaseUrl', null, ['string'], [orthancBaseUrl]);
 
     // Prevent scrolling
     document.body.addEventListener('touchmove', function (event) {

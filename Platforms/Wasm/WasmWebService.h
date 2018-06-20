@@ -11,7 +11,7 @@ namespace OrthancStone
 
     // Private constructor => Singleton design pattern
     WasmWebService() :
-      base_("../../")   // TODO: this should be configurable from the JS code !
+      base_("../../")   // note: this is configurable from the JS code by calling WasmWebService_SetBaseUrl
     {
     }
 

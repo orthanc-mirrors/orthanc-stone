@@ -48,6 +48,11 @@ extern "C" {
    }
   }
 
+  void EMSCRIPTEN_KEEPALIVE WasmWebService_SetBaseUrl(const char* baseUrl)
+  {
+    OrthancStone::WasmWebService::GetInstance().SetBaseUrl(baseUrl);
+  }
+
 #ifdef __cplusplus
 }
 #endif

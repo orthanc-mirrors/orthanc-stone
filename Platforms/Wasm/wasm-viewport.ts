@@ -65,6 +65,9 @@ module Stone {
       this.module_ = module;
       this.canvasId_ = canvasId;
       this.htmlCanvas_ = document.getElementById(this.canvasId_) as HTMLCanvasElement;
+      if (this.htmlCanvas_ == null) {
+        console.log("Can not create WasmViewport, did not find the canvas whose id is '", this.canvasId_, "'");
+      }
       this.context_ = this.htmlCanvas_.getContext('2d');
 
       this.ViewportSetSize = this.module_.cwrap('ViewportSetSize', null, [ 'number', 'number', 'number' ]);

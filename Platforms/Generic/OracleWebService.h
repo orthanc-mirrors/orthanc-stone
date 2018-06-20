@@ -64,7 +64,7 @@ namespace OrthancStone
 
     void Stop()
     {
-        oracle_.Start();
+        oracle_.Stop();
     }
   };
 }

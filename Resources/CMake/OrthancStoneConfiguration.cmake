@@ -158,7 +158,6 @@ if (NOT ORTHANC_SANDBOXED)
 else()
   list(APPEND APPLICATIONS_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/Wasm/StartupParametersBuilder.cpp
-    # ${ORTHANC_STONE_ROOT}/Applications/Wasm/BasicWasmApplicationContext.cpp
     )
 endif()
 

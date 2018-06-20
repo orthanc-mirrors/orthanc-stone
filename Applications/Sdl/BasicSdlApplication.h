@@ -21,10 +21,7 @@
 
 #pragma once
 
-#include "../BasicApplicationContext.h"
 #include "../IBasicApplication.h"
-
-#include <boost/program_options.hpp>
 
 #if ORTHANC_ENABLE_SDL != 1
 #error this file shall be included only with the ORTHANC_ENABLE_SDL set to 1
@@ -34,18 +31,13 @@
 
 namespace OrthancStone
 {
-  class BasicSdlApplication : public IBasicApplication
+  class BasicSdlApplication
   {
   public:
-    virtual ~BasicSdlApplication()
-    {
-    }
 
     static int ExecuteWithSdl(IBasicApplication& application,
                               int argc,
                               char* argv[]);
-
-    virtual void Finalize() {}
   };
 
 }

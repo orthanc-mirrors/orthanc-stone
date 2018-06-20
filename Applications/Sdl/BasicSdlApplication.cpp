@@ -24,6 +24,7 @@
 #endif
 
 #include "BasicSdlApplication.h"
+#include <boost/program_options.hpp>
 
 #include "../../Framework/Toolbox/MessagingToolbox.h"
 #include "SdlEngine.h"

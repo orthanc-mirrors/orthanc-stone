@@ -82,7 +82,8 @@ module Stone {
         // Dynamic loading of the JavaScript wrapper around WebAssembly
         var script = document.createElement('script');
         script.type = 'application/javascript';
-        script.src = "orthanc-stone.js"; // ASSETS_FOLDER + '/' + WASM_FILENAME + '.js';
+        //script.src = "orthanc-stone.js"; // ASSETS_FOLDER + '/' + WASM_FILENAME + '.js';
+        script.src = "OrthancStoneSimpleViewer.js"; // ASSETS_FOLDER + '/' + WASM_FILENAME + '.js';
         script.async = true;
         document.head.appendChild(script);
       }

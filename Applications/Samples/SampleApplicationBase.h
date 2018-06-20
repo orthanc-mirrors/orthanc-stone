@@ -21,7 +21,11 @@
 
 #pragma once
 
+#if ORTHANC_ENABLE_SDL==1
 #include "../../Applications/Sdl/BasicSdlApplication.h"
+#else
+#include "../../Applications/Wasm/BasicWasmApplication.h"
+#endif
 #include "../../Framework/Viewport/WidgetViewport.h"
 #include "SampleApplicationContext.h"
 
@@ -30,12 +34,12 @@ namespace OrthancStone
   namespace Samples
   {
 
-#ifdef ORTHANC_ENABLE_SDL
+#if ORTHANC_ENABLE_SDL==1
     class SampleSdlApplicationBase : public BasicSdlApplication {
     protected:
       std::unique_ptr<SampleApplicationContext> context_;
     public:
-      BasicApplicationContext& CreateApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) {
+      virtual BasicApplicationContext& CreateApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) {
         context_.reset(new SampleApplicationContext(orthanc, centralViewport));
 
         return *context_;
@@ -44,6 +48,18 @@ namespace OrthancStone
 
     typedef SampleSdlApplicationBase SampleApplicationBase_;
 #else
+    class SampleWasmApplicationBase : public BasicWasmApplication {
+    protected:
+      std::unique_ptr<SampleApplicationContext> context_;
+    public:
+      virtual BasicApplicationContext& CreateApplicationContext(IWebService& orthancWebService, std::shared_ptr<WidgetViewport> centralViewport) {
+        context_.reset(new SampleApplicationContext(orthancWebService));
+        return *context_;
+      }
+
+    };
+
+    typedef SampleWasmApplicationBase SampleApplicationBase_;
 
 #endif
 

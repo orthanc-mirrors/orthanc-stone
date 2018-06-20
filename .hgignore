@@ -1,2 +1,6 @@
 Platforms/Generic/CMakeLists.txt.user
 Platforms/Generic/ThirdPartyDownloads/
+Platforms/Wasm/CMakeLists.txt.user
+Platforms/Wasm/build/
+Pltaforms/Wasm/build-web/
+Platforms/Wasm/ThirdPartyDownloads/

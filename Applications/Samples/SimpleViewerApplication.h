@@ -209,19 +209,26 @@ namespace OrthancStone
       std::vector<LayerWidget*>       thumbnails_;
       std::vector<std::string>        instances_;
       unsigned int                    currentInstanceIndex_;
+      OrthancStone::WidgetViewport*                wasmViewport1_;
+      OrthancStone::WidgetViewport*                wasmViewport2_;
 
       OrthancFrameLayerSource*        source_;
       unsigned int                    slice_;
       
     public:
-      SimpleViewerApplication() :
+      SimpleViewerApplication(OrthancStone::WidgetViewport* wasmViewport1, OrthancStone::WidgetViewport* wasmViewport2) :
         mainLayout_(NULL),
         currentInstanceIndex_(0),
         source_(NULL),
-        slice_(0)
+        slice_(0),
+        wasmViewport1_(wasmViewport1),
+        wasmViewport2_(wasmViewport2)
       {
       }
       
+      virtual void Finalize() {}
+      virtual IWidget* GetCentralWidget() {return mainLayout_;}
+
       virtual void DeclareStartupOptions(boost::program_options::options_description& options)
       {
         boost::program_options::options_description generic("Sample options");
@@ -295,7 +302,13 @@ namespace OrthancStone
 
         mainLayout_->SetTransmitMouseOver(true);
         mainViewport_->SetInteractor(context_->AddInteractor(new Interactor(*this)));
+#if ORTHANC_ENABLE_SDL == 1
         context_->SetCentralWidget(mainLayout_);
+#else
+  wasmViewport1_->SetCentralWidget(thumbnailsLayout_);
+  wasmViewport2_->SetCentralWidget(mainViewport_);
+
+#endif
       }
     };
   }

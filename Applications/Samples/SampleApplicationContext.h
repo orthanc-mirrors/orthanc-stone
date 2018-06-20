@@ -42,12 +42,10 @@ namespace OrthancStone
 {
 
 #if ORTHANC_ENABLE_SDL==1
-  typedef BasicSdlApplicationContext BasicApplicationContext_;
+  class SampleApplicationContext : public BasicSdlApplicationContext
 #else
-  typedef BasicWasmApplicationContext BasicApplicationContext_;
+  class SampleApplicationContext : public BasicWasmApplicationContext
 #endif
-
-  class SampleApplicationContext : public BasicApplicationContext_
   {
   private:
     typedef std::list<ISlicedVolume*>          SlicedVolumes;  // this is actually used by the samples and shall be moved to a SampleApplicationContext
@@ -60,7 +58,15 @@ namespace OrthancStone
 
   public:
 
-    SampleApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport);
+#if ORTHANC_ENABLE_SDL==1
+    SampleApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport)
+    : BasicSdlApplicationContext(orthanc, centralViewport) {
+    }
+#else
+    SampleApplicationContext(IWebService& webService)
+    : BasicWasmApplicationContext(webService) {
+    }
+#endif
 
     virtual ~SampleApplicationContext();
 

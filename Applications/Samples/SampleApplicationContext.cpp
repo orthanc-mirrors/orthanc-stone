@@ -23,12 +23,6 @@
 
 namespace OrthancStone
 {
-  SampleApplicationContext::SampleApplicationContext(Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) :
-    BasicApplicationContext_(orthanc, centralViewport)
-  {
-  }
-
-
   SampleApplicationContext::~SampleApplicationContext()
   {
     for (Interactors::iterator it = interactors_.begin(); it != interactors_.end(); ++it)

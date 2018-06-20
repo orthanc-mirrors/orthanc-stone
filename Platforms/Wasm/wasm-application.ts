@@ -2,7 +2,7 @@
 ///<reference path='wasm-viewport.ts'/>
 
 if (!('WebAssembly' in window)) {
-    alert('Sorry, your browser does not support WebAssembly :(');
+  alert('Sorry, your browser does not support WebAssembly :(');
 }
 
 declare var StoneFrameworkModule : Stone.Framework;
@@ -19,83 +19,80 @@ var StartWasmApplication: Function = null;
 
 
 function UpdateContentThread() {
-    if (NotifyUpdateContent != null) {
-        NotifyUpdateContent();
-    }
+  if (NotifyUpdateContent != null) {
+    NotifyUpdateContent();
+  }
 
-    setTimeout(UpdateContentThread, 100);  // Update the viewport content every 100ms if need be
+  setTimeout(UpdateContentThread, 100);  // Update the viewport content every 100ms if need be
 }
 
 
 function GetUriParameters() {
-    var parameters = window.location.search.substr(1);
+  var parameters = window.location.search.substr(1);
 
-    if (parameters != null &&
-        parameters != '') {
-        var result = {};
-        var tokens = parameters.split('&');
+  if (parameters != null &&
+    parameters != '') {
+    var result = {};
+    var tokens = parameters.split('&');
 
-        for (var i = 0; i < tokens.length; i++) {
-            var tmp = tokens[i].split('=');
-            if (tmp.length == 2) {
-                result[tmp[0]] = decodeURIComponent(tmp[1]);
-            }
-        }
-
-        return result;
+    for (var i = 0; i < tokens.length; i++) {
+      var tmp = tokens[i].split('=');
+      if (tmp.length == 2) {
+        result[tmp[0]] = decodeURIComponent(tmp[1]);
+      }
     }
-    else {
-        return {};
-    }
+
+    return result;
+  }
+  else {
+    return {};
+  }
 }
 
 module Stone {
 
-    //  export declare type InitializationCallback = () => void;
+  export class WasmApplication {
 
-    //  export declare var StoneFrameworkModule : any;
+    private viewport_: WasmViewport;
+    private canvasId_: string;
 
-    //const ASSETS_FOLDER : string = "assets/lib";
-    //const WASM_FILENAME : string = "orthanc-framework";
+    private pimpl_: any; // Private pointer to the underlying WebAssembly C++ object
 
-    export class WasmApplication {
-
-        private viewport_: WasmViewport;
-        private canvasId_: string;
-
-        private pimpl_: any; // Private pointer to the underlying WebAssembly C++ object
-
-        public constructor(canvasId: string) {
-            this.canvasId_ = canvasId;
-            //this.module_ = module;
-        }
+    public constructor(canvasId: string) {
+      this.canvasId_ = canvasId;
+      //this.module_ = module;
     }
+  }
 }
 
 
-function InitializeWasmApplication(canvasId: string): void {
+function _InitializeWasmApplication(canvasId: string): void {
 
-    /************************************** */
-    CreateWasmApplication();
+  /************************************** */
+  CreateWasmApplication();
 
-    // parse uri and transmit the parameters to the app before initializing it
-    var parameters = GetUriParameters();
+  // parse uri and transmit the parameters to the app before initializing it
+  var parameters = GetUriParameters();
 
-    for (var key in parameters) {
-        if (parameters.hasOwnProperty(key)) {
-            SetStartupParameter(key, parameters[key]);
-        }
+  for (var key in parameters) {
+    if (parameters.hasOwnProperty(key)) {
+      SetStartupParameter(key, parameters[key]);
     }
+  }
 
-    StartWasmApplication();
-    /************************************** */
+  StartWasmApplication();
+  /************************************** */
 
-    UpdateContentThread();
+  UpdateContentThread();
 }
 
-// Wait for the Orthanc Framework to be initialized (this initializes
-// the WebAssembly environment) and then, create and initialize the Wasm application
-Stone.Framework.Initialize(true, function () {
+function InitializeWasmApplication(wasmModuleName: string) {
+  
+  Stone.Framework.Configure(wasmModuleName);
+
+  // Wait for the Orthanc Framework to be initialized (this initializes
+  // the WebAssembly environment) and then, create and initialize the Wasm application
+  Stone.Framework.Initialize(true, function () {
 
     console.log("Connecting C++ methods to JS methods");
     
@@ -111,9 +108,9 @@ Stone.Framework.Initialize(true, function () {
 
     // Prevent scrolling
     document.body.addEventListener('touchmove', function (event) {
-        event.preventDefault();
+      event.preventDefault();
     }, false);
 
-
-    InitializeWasmApplication("canvas");
-});
+    _InitializeWasmApplication("canvas");
+  });
+}

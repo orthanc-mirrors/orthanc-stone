@@ -15,7 +15,12 @@ module Stone {
     export class Framework
     {
       private static singleton_ : Framework = null;
-    
+      private static wasmModuleName_ : string = null;
+
+      public static Configure(wasmModuleName: string) {
+        this.wasmModuleName_ = wasmModuleName;
+      }
+
       private constructor(verbose : boolean) 
       {
         //this.ccall('Initialize', null, [ 'number' ], [ verbose ]);
@@ -52,7 +57,7 @@ module Stone {
       public static Initialize(verbose: boolean,
                                callback: InitializationCallback)
       {
-        console.log('Initializing WebAssembly');
+        console.log('Initializing WebAssembly Module');
     
         (<any> window).StoneFrameworkModule = {
           preRun: [ 
@@ -83,7 +88,7 @@ module Stone {
         var script = document.createElement('script');
         script.type = 'application/javascript';
         //script.src = "orthanc-stone.js"; // ASSETS_FOLDER + '/' + WASM_FILENAME + '.js';
-        script.src = "OrthancStoneSimpleViewer.js"; // ASSETS_FOLDER + '/' + WASM_FILENAME + '.js';
+        script.src = this.wasmModuleName_ + ".js";//  "OrthancStoneSimpleViewer.js"; // ASSETS_FOLDER + '/' + WASM_FILENAME + '.js';
         script.async = true;
         document.head.appendChild(script);
       }

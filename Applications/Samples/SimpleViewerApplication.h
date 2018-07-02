@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -34,8 +34,8 @@ namespace OrthancStone
   namespace Samples
   {
     class SimpleViewerApplication :
-      public SampleApplicationBase,
-      private ILayerSource::IObserver
+        public SampleApplicationBase,
+        private ILayerSource::IObserver
     {
     private:
       class Interactor : public IWorldSceneInteractor
@@ -71,7 +71,7 @@ namespace OrthancStone
             Vector p = dynamic_cast<LayerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
             
             char buf[64];
-            sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)", 
+            sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)",
                     p[0] / 10.0, p[1] / 10.0, p[2] / 10.0);
             statusBar->SetMessage(buf);
           }
@@ -82,21 +82,21 @@ namespace OrthancStone
                                 KeyboardModifiers modifiers,
                                 IStatusBar* statusBar)
         {
-//          int scale = (modifiers & KeyboardModifiers_Control ? 10 : 1);
+          //          int scale = (modifiers & KeyboardModifiers_Control ? 10 : 1);
           
-//          switch (direction)
-//          {
-//            case MouseWheelDirection_Up:
-//              application_.OffsetSlice(-scale);
-//              break;
+          //          switch (direction)
+          //          {
+          //            case MouseWheelDirection_Up:
+          //              application_.OffsetSlice(-scale);
+          //              break;
 
-//            case MouseWheelDirection_Down:
-//              application_.OffsetSlice(scale);
-//              break;
+          //            case MouseWheelDirection_Down:
+          //              application_.OffsetSlice(scale);
+          //              break;
 
-//            default:
-//              break;
-//          }
+          //            default:
+          //              break;
+          //          }
         }
 
         virtual void KeyPressed(WorldSceneWidget& widget,
@@ -106,69 +106,72 @@ namespace OrthancStone
         {
           switch (key)
           {
-            case 's':
-              widget.SetDefaultView();
-              break;
+          case 's':
+            widget.SetDefaultView();
+            break;
+          case 'n':
+            application_.NextImage(widget);
+            break;
 
-            default:
-              break;
+          default:
+            break;
           }
         }
       };
 
 
-//      void OffsetSlice(int offset)
-//      {
-//        if (source_ != NULL)
-//        {
-//          int slice = static_cast<int>(slice_) + offset;
+      //      void OffsetSlice(int offset)
+      //      {
+      //        if (source_ != NULL)
+      //        {
+      //          int slice = static_cast<int>(slice_) + offset;
 
-//          if (slice < 0)
-//          {
-//            slice = 0;
-//          }
+      //          if (slice < 0)
+      //          {
+      //            slice = 0;
+      //          }
 
-//          if (slice >= static_cast<int>(source_->GetSliceCount()))
-//          {
-//            slice = source_->GetSliceCount() - 1;
-//          }
+      //          if (slice >= static_cast<int>(source_->GetSliceCount()))
+      //          {
+      //            slice = source_->GetSliceCount() - 1;
+      //          }
 
-//          if (slice != static_cast<int>(slice_))
-//          {
-//            SetSlice(slice);
-//          }
-//        }
-//      }
+      //          if (slice != static_cast<int>(slice_))
+      //          {
+      //            SetSlice(slice);
+      //          }
+      //        }
+      //      }
       
 
-//      void SetSlice(size_t index)
-//      {
-//        if (source_ != NULL &&
-//            index < source_->GetSliceCount())
-//        {
-//          slice_ = index;
-          
-//#if 1
-//          widget_->SetSlice(source_->GetSlice(slice_).GetGeometry());
-//#else
-//          // TEST for scene extents - Rotate the axes
-//          double a = 15.0 / 180.0 * M_PI;
+      //      void SetSlice(size_t index)
+      //      {
+      //        if (source_ != NULL &&
+      //            index < source_->GetSliceCount())
+      //        {
+      //          slice_ = index;
 
-//#if 1
-//          Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
-//          Vector y; GeometryToolbox::AssignVector(y, -sin(a), cos(a), 0);
-//#else
-//          // Flip the normal
-//          Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
-//          Vector y; GeometryToolbox::AssignVector(y, sin(a), -cos(a), 0);
-//#endif
-          
-//          SliceGeometry s(source_->GetSlice(slice_).GetGeometry().GetOrigin(), x, y);
-//          widget_->SetSlice(s);
-//#endif
-//        }
-//      }
-        
+      //#if 1
+      //          widget_->SetSlice(source_->GetSlice(slice_).GetGeometry());
+      //#else
+      //          // TEST for scene extents - Rotate the axes
+      //          double a = 15.0 / 180.0 * M_PI;
+
+      //#if 1
+      //          Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
+      //          Vector y; GeometryToolbox::AssignVector(y, -sin(a), cos(a), 0);
+      //#else
+      //          // Flip the normal
+      //          Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
+      //          Vector y; GeometryToolbox::AssignVector(y, sin(a), -cos(a), 0);
+      //#endif
+
+      //          SliceGeometry s(source_->GetSlice(slice_).GetGeometry().GetOrigin(), x, y);
+      //          widget_->SetSlice(s);
+      //#endif
+      //        }
+      //      }
+
       
       virtual void NotifyGeometryReady(const ILayerSource& source)
       {
@@ -195,7 +198,7 @@ namespace OrthancStone
                                      const Slice& slice)
       {
       }
- 
+
       virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& layer,
                                     const ILayerSource& source,
                                     const CoordinateSystem3D& slice,
@@ -234,15 +237,15 @@ namespace OrthancStone
       {
         boost::program_options::options_description generic("Sample options");
         generic.add_options()
-//          ("study", boost::program_options::value<std::string>(),
-//           "Orthanc ID of the study")
-          ("instance1", boost::program_options::value<std::string>(),
-           "Orthanc ID of the instances")
+            //          ("study", boost::program_options::value<std::string>(),
+            //           "Orthanc ID of the study")
+            ("instance1", boost::program_options::value<std::string>(),
+             "Orthanc ID of the instances")
             ("instance2", boost::program_options::value<std::string>(),
              "Orthanc ID of the instances")
-          ;
+            ;
 
-        options.add(generic);    
+        options.add(generic);
       }
 
       virtual void Initialize(BasicApplicationContext* context,
@@ -316,6 +319,21 @@ namespace OrthancStone
         AttachWidgetToWasmViewport("canvas2", mainViewport_);
       }
 #endif
+
+      void NextImage(WorldSceneWidget& widget) {
+        assert(context_);
+
+        currentInstanceIndex_ = (currentInstanceIndex_ + 1) % instances_.size();
+
+        std::auto_ptr<OrthancFrameLayerSource> layer
+            (new OrthancFrameLayerSource(context_->GetWebService()));
+        layer->LoadFrame(instances_[currentInstanceIndex_], 0);
+
+        mainViewport_->ReplaceLayer(0, layer.release());
+        //  source_->LoadFrame("45b7e6bc-168e8ed1-063dc08d-cffd6431-133a276a", 0);
+      }
     };
+
+
   }
 }

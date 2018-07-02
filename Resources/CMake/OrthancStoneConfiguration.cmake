@@ -145,6 +145,7 @@ if (NOT ORTHANC_SANDBOXED)
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceGetCommand.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServicePostCommand.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/Oracle.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleWebService.h
     )
 
   list(APPEND APPLICATIONS_SOURCES
@@ -174,6 +175,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Layers/DicomStructureSetRendererFactory.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/FrameRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/GrayscaleFrameRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/ILayerSource.h
   ${ORTHANC_STONE_ROOT}/Framework/Layers/LayerSourceBase.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/LineLayerRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/LineMeasureTracker.cpp

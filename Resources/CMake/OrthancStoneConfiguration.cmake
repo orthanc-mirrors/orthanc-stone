@@ -142,6 +142,7 @@ set(APPLICATIONS_SOURCES
 
 if (NOT ORTHANC_SANDBOXED)
   set(PLATFORM_SOURCES
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceCommandBase.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceGetCommand.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServicePostCommand.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/Oracle.cpp

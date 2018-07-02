@@ -27,6 +27,7 @@
 #include <map>
 #include <list>
 #include <set>
+
 namespace OrthancStone
 {
   class IObserver;

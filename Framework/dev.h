@@ -215,9 +215,10 @@ namespace OrthancStone
     }
 
   public:
-    OrthancVolumeImage(IWebService& orthanc,
+    OrthancVolumeImage(MessageBroker& broker,
+                       IWebService& orthanc,
                        bool computeRange) : 
-      loader_(*this, orthanc),
+      loader_(broker, *this, orthanc),
       computeRange_(computeRange),
       pendingSlices_(0)
     {
@@ -576,7 +577,8 @@ namespace OrthancStone
 
 
   public:
-    VolumeImageSource(OrthancVolumeImage&  volume) :
+    VolumeImageSource(MessageBroker& broker, OrthancVolumeImage&  volume) :
+      LayerSourceBase(broker),
       volume_(volume)
     {
       volume_.Register(*this);
@@ -814,7 +816,8 @@ namespace OrthancStone
     LayerWidget&  otherPlane_;
 
   public:
-    SliceLocationSource(LayerWidget&  otherPlane) :
+    SliceLocationSource(MessageBroker& broker, LayerWidget&  otherPlane) :
+      LayerSourceBase(broker),
       otherPlane_(otherPlane)
     {
       NotifyGeometryReady();

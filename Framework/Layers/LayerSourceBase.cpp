@@ -25,63 +25,65 @@
 
 namespace OrthancStone
 {
-  namespace
-  {
-    class LayerReadyFunctor : public boost::noncopyable
-    {
-    private:
-      std::auto_ptr<ILayerRenderer>  layer_;
-      const CoordinateSystem3D&      slice_;
-      bool                           isError_;
+//  namespace
+//  {
+//    class LayerReadyFunctor : public boost::noncopyable
+//    {
+//    private:
+//      std::auto_ptr<ILayerRenderer>  layer_;
+//      const CoordinateSystem3D&      slice_;
+//      bool                           isError_;
       
-    public:
-      LayerReadyFunctor(ILayerRenderer* layer,
-                        const CoordinateSystem3D& slice,
-                        bool isError) :
-        layer_(layer),
-        slice_(slice),
-        isError_(isError)
-      {
-      }
+//    public:
+//      LayerReadyFunctor(ILayerRenderer* layer,
+//                        const CoordinateSystem3D& slice,
+//                        bool isError) :
+//        layer_(layer),
+//        slice_(slice),
+//        isError_(isError)
+//      {
+//      }
 
-      void operator() (ILayerSource::IObserver& observer,
-                       const ILayerSource& source)
-      {
-        observer.NotifyLayerReady(layer_, source, slice_, isError_);
-      }
-    };
-  }
+//      void operator() (ILayerSource::IObserver& observer,
+//                       const ILayerSource& source)
+//      {
+//        observer.NotifyLayerReady(layer_, source, slice_, isError_);
+//      }
+//    };
+//  }
 
   void LayerSourceBase::NotifyGeometryReady()
   {
-    observers_.Apply(*this, &IObserver::NotifyGeometryReady);
+    Emit(IMessage(MessageType_GeometryReady));
   }
     
   void LayerSourceBase::NotifyGeometryError()
   {
-    observers_.Apply(*this, &IObserver::NotifyGeometryError);
-  }  
+    Emit(IMessage(MessageType_GeometryError));
+  }
     
   void LayerSourceBase::NotifyContentChange()
   {
-    observers_.Apply(*this, &IObserver::NotifyContentChange);
+    Emit(IMessage(MessageType_ContentChanged));
   }
 
   void LayerSourceBase::NotifySliceChange(const Slice& slice)
   {
-    observers_.Apply(*this, &IObserver::NotifySliceChange, slice);
+    Emit(ILayerSource::SliceChangedMessage(slice));
   }
 
   void LayerSourceBase::NotifyLayerReady(ILayerRenderer* layer,
                                          const CoordinateSystem3D& slice,
                                          bool isError)
   {
-    LayerReadyFunctor functor(layer, slice, isError);
-    observers_.Notify(*this, functor);
+    std::auto_ptr<ILayerRenderer> renderer(layer);
+    Emit(ILayerSource::LayerReadyMessage(renderer, slice, isError));
+//    LayerReadyFunctor functor(layer, slice, isError);
+//    observers_.Notify(*this, functor);
   }
 
   void LayerSourceBase::Register(IObserver& observer)
   {
-    observers_.Register(observer);
+    RegisterObserver(observer);
   }
 }

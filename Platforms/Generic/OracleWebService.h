@@ -35,8 +35,10 @@ namespace OrthancStone
     Orthanc::WebServiceParameters  parameters_;
 
   public:
-    OracleWebService(Oracle& oracle,
+    OracleWebService(MessageBroker& broker,
+                     Oracle& oracle,
                      const Orthanc::WebServiceParameters& parameters) : 
+      IWebService(broker),
       oracle_(oracle),
       parameters_(parameters)
     {
@@ -46,7 +48,7 @@ namespace OrthancStone
                                     const std::string& uri,
                                     Orthanc::IDynamicObject* payload)
     {
-      oracle_.Submit(new WebServiceGetCommand(callback, parameters_, uri, payload));
+      oracle_.Submit(new WebServiceGetCommand(broker_, callback, parameters_, uri, payload));
     }
 
     virtual void SchedulePostRequest(ICallback& callback,
@@ -54,7 +56,7 @@ namespace OrthancStone
                                      const std::string& body,
                                      Orthanc::IDynamicObject* payload)
     {
-      oracle_.Submit(new WebServicePostCommand(callback, parameters_, uri, body, payload));
+      oracle_.Submit(new WebServicePostCommand(broker_, callback, parameters_, uri, body, payload));
     }
 
     void Start()

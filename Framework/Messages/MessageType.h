@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#pragma once
 
 namespace OrthancStone {
 
@@ -25,6 +26,14 @@ namespace OrthancStone {
   {
     MessageType_Generic,
 
-    MessageType_GeometryReady
+    MessageType_GeometryReady,
+    MessageType_GeometryError,
+    MessageType_ContentChanged,
+    MessageType_SliceChanged,
+    MessageType_LayerReady,
+
+    MessageType_HttpRequestSuccess,
+    MessageType_HttpRequestError
+
   };
 }

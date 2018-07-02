@@ -25,16 +25,14 @@
 
 namespace OrthancStone
 {
-  WebServicePostCommand::WebServicePostCommand(IWebService::ICallback& callback,
+  WebServicePostCommand::WebServicePostCommand(MessageBroker& broker,
+                                               IWebService::ICallback& callback,
                                                const Orthanc::WebServiceParameters& parameters,
                                                const std::string& uri,
                                                const std::string& body,
                                                Orthanc::IDynamicObject* payload /* takes ownership */) :
-    callback_(callback),
-    parameters_(parameters),
-    uri_(uri),
-    body_(body),
-    payload_(payload)
+    WebServiceCommandBase(broker, callback, parameters, uri, payload),
+    body_(body)
   {
   }
 
@@ -47,15 +45,4 @@ namespace OrthancStone
     success_ = client.Apply(answer_);
   }
 
-  void WebServicePostCommand::Commit()
-  {
-    if (success_)
-    {
-      callback_.NotifySuccess(uri_, answer_.c_str(), answer_.size(), payload_.release());
-    }
-    else
-    {
-      callback_.NotifyError(uri_, payload_.release());
-    }
-  }
 }

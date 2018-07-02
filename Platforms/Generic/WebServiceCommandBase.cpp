@@ -13,34 +13,44 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
 
-#include "WebServiceGetCommand.h"
+#include "WebServiceCommandBase.h"
 
 #include <Core/HttpClient.h>
 
 namespace OrthancStone
 {
-  WebServiceGetCommand::WebServiceGetCommand(MessageBroker& broker,
+  WebServiceCommandBase::WebServiceCommandBase(MessageBroker& broker,
                                              IWebService::ICallback& callback,
                                              const Orthanc::WebServiceParameters& parameters,
                                              const std::string& uri,
                                              Orthanc::IDynamicObject* payload /* takes ownership */) :
-    WebServiceCommandBase(broker, callback, parameters, uri, payload)
+    IObservable(broker),
+    callback_(callback),
+    parameters_(parameters),
+    uri_(uri),
+    payload_(payload)
   {
+    RegisterObserver(callback);
   }
 
 
-  void WebServiceGetCommand::Execute()
+  void WebServiceCommandBase::Commit()
   {
-    Orthanc::HttpClient client(parameters_, uri_);
-    client.SetTimeout(60);
-    client.SetMethod(Orthanc::HttpMethod_Get);
-    success_ = client.Apply(answer_);
+    if (success_)
+    {
+      IWebService::ICallback::HttpRequestSuccessMessage message(uri_, answer_.c_str(), answer_.size(), payload_.release());
+      Emit(message);
+    }
+    else
+    {
+      IWebService::ICallback::HttpRequestErrorMessage message(uri_, payload_.release());
+      Emit(message);
+    }
   }
-
 }

@@ -26,6 +26,7 @@
 #include "../../Framework/Layers/OrthancFrameLayerSource.h"
 #include "../../Framework/Widgets/LayerWidget.h"
 #include "../../Framework/Widgets/LayoutWidget.h"
+#include "../../Framework/Messages/IObserver.h"
 
 #include <Core/Logging.h>
 
@@ -35,7 +36,7 @@ namespace OrthancStone
   {
     class SimpleViewerApplication :
         public SampleApplicationBase,
-        private ILayerSource::IObserver
+        public IObserver
     {
     private:
       class Interactor : public IWorldSceneInteractor
@@ -172,38 +173,13 @@ namespace OrthancStone
       //        }
       //      }
 
-      
-      virtual void NotifyGeometryReady(const ILayerSource& source)
-      {
-        // Once the geometry of the series is downloaded from Orthanc,
-        // display its first slice, and adapt the viewport to fit this
-        // slice
-        if (source_ == &source)
-        {
-          //SetSlice(source_->GetSliceCount() / 2);
+
+      virtual void HandleMessage(IObservable& from, const IMessage& message) {
+        switch (message.GetType()) {
+        case MessageType_GeometryReady:
+          mainLayout_->SetDefaultView();
+          break;
         }
-
-        mainLayout_->SetDefaultView();
-      }
-      
-      virtual void NotifyGeometryError(const ILayerSource& source)
-      {
-      }
-      
-      virtual void NotifyContentChange(const ILayerSource& source)
-      {
-      }
-
-      virtual void NotifySliceChange(const ILayerSource& source,
-                                     const Slice& slice)
-      {
-      }
-
-      virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& layer,
-                                    const ILayerSource& source,
-                                    const CoordinateSystem3D& slice,
-                                    bool isError)
-      {
       }
 
       std::unique_ptr<Interactor>     interactor_;
@@ -218,18 +194,19 @@ namespace OrthancStone
 
       OrthancFrameLayerSource*        source_;
       unsigned int                    slice_;
-      
+
     public:
-      SimpleViewerApplication() :
+      SimpleViewerApplication(MessageBroker& broker) :
         mainLayout_(NULL),
         currentInstanceIndex_(0),
         source_(NULL),
         slice_(0),
         wasmViewport1_(NULL),
-        wasmViewport2_(NULL)
+        wasmViewport2_(NULL),
+        IObserver(broker)
       {
       }
-      
+
       virtual void Finalize() {}
       virtual IWidget* GetCentralWidget() {return mainLayout_;}
 
@@ -282,9 +259,9 @@ namespace OrthancStone
         thumbnailsLayout_->SetBackgroundColor(50, 50, 50);
         thumbnailsLayout_->SetVertical();
 
-        mainViewport_ = new LayerWidget();
-        thumbnails_.push_back(new LayerWidget());
-        thumbnails_.push_back(new LayerWidget());
+        mainViewport_ = new LayerWidget(broker_);
+        thumbnails_.push_back(new LayerWidget(broker_));
+        thumbnails_.push_back(new LayerWidget(broker_));
 
         // hierarchy
         mainLayout_->AddWidget(thumbnailsLayout_);
@@ -293,15 +270,15 @@ namespace OrthancStone
         thumbnailsLayout_->AddWidget(thumbnails_[1]);
 
         // sources
-        source_ = new OrthancFrameLayerSource(context_->GetWebService());
+        source_ = new OrthancFrameLayerSource(broker_, context_->GetWebService());
         source_->LoadFrame(instances_[currentInstanceIndex_], 0);
         source_->Register(*this);
 
         mainViewport_->AddLayer(source_);
 
-        OrthancFrameLayerSource* thumb0 = new OrthancFrameLayerSource(context_->GetWebService());
+        OrthancFrameLayerSource* thumb0 = new OrthancFrameLayerSource(broker_, context_->GetWebService());
         thumb0->LoadFrame(instances_[0], 0);
-        OrthancFrameLayerSource* thumb1 = new OrthancFrameLayerSource(context_->GetWebService());
+        OrthancFrameLayerSource* thumb1 = new OrthancFrameLayerSource(broker_, context_->GetWebService());
         thumb1->LoadFrame(instances_[1], 0);
 
         thumbnails_[0]->AddLayer(thumb0);
@@ -326,7 +303,7 @@ namespace OrthancStone
         currentInstanceIndex_ = (currentInstanceIndex_ + 1) % instances_.size();
 
         std::auto_ptr<OrthancFrameLayerSource> layer
-            (new OrthancFrameLayerSource(context_->GetWebService()));
+            (new OrthancFrameLayerSource(broker_, context_->GetWebService()));
         layer->LoadFrame(instances_[currentInstanceIndex_], 0);
 
         mainViewport_->ReplaceLayer(0, layer.release());

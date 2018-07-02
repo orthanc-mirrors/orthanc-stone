@@ -28,11 +28,6 @@ namespace OrthancStone
 {
   class LayerSourceBase : public ILayerSource
   {
-  private:
-    typedef ObserversRegistry<ILayerSource, IObserver>  Observers;
-
-    Observers  observers_;
-
   protected:
     void NotifyGeometryReady();
     
@@ -45,6 +40,10 @@ namespace OrthancStone
     void NotifyLayerReady(ILayerRenderer* layer,
                           const CoordinateSystem3D& slice,
                           bool isError);
+
+    LayerSourceBase(MessageBroker& broker)
+      : ILayerSource(broker)
+    {}
 
   public:
     virtual void Register(IObserver& observer);

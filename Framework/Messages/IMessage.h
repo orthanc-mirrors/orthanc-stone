@@ -23,15 +23,18 @@
 
 #include "MessageType.h"
 
+#include <boost/noncopyable.hpp>
+
 namespace OrthancStone {
 
-  class IMessage  : public boost::noncopyable
+  struct IMessage  : public boost::noncopyable
   {
     MessageType messageType_;
   public:
     IMessage(const MessageType& messageType)
       : messageType_(messageType)
     {}
+    virtual ~IMessage() {}
 
     MessageType GetType() const {return messageType_;}
   };

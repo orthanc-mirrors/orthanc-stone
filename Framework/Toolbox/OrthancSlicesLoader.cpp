@@ -175,12 +175,13 @@ namespace OrthancStone
     OrthancSlicesLoader&  that_;
 
   public:
-    WebCallback(OrthancSlicesLoader&  that) :
+    WebCallback(MessageBroker& broker, OrthancSlicesLoader&  that) :
+      IWebService::ICallback(broker),
       that_(that)
     {
     }
 
-    virtual void NotifySuccess(const std::string& uri,
+    virtual void OnHttpRequestSuccess(const std::string& uri,
                                const void* answer,
                                size_t answerSize,
                                Orthanc::IDynamicObject* payload)
@@ -230,7 +231,7 @@ namespace OrthancStone
       }
     }
 
-    virtual void NotifyError(const std::string& uri,
+    virtual void OnHttpRequestError(const std::string& uri,
                              Orthanc::IDynamicObject* payload)
     {
       std::auto_ptr<Operation> operation(dynamic_cast<Operation*>(payload));
@@ -715,9 +716,10 @@ namespace OrthancStone
   }
 
 
-  OrthancSlicesLoader::OrthancSlicesLoader(ICallback& callback,
+  OrthancSlicesLoader::OrthancSlicesLoader(MessageBroker& broker,
+                                           ICallback& callback,
                                            IWebService& orthanc) :
-    webCallback_(new WebCallback(*this)),
+    webCallback_(new WebCallback(broker, *this)),
     userCallback_(callback),
     orthanc_(orthanc),
     state_(State_Initialization)

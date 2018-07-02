@@ -68,8 +68,9 @@ namespace OrthancStone
   }
 
 
-  OrthancFrameLayerSource::OrthancFrameLayerSource(IWebService& orthanc) :
-    loader_(*this, orthanc),
+  OrthancFrameLayerSource::OrthancFrameLayerSource(MessageBroker& broker, IWebService& orthanc) :
+    LayerSourceBase(broker),
+    loader_(broker, *this, orthanc),
     quality_(SliceImageQuality_Full)
   {
   }

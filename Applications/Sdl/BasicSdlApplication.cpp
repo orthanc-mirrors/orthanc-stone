@@ -80,7 +80,8 @@ namespace OrthancStone
   }
 
 
-  int BasicSdlApplication::ExecuteWithSdl(IBasicApplication& application,
+  int BasicSdlApplication::ExecuteWithSdl(MessageBroker& broker,
+                                          IBasicApplication& application,
                                         int argc,
                                         char* argv[])
   {
@@ -224,7 +225,7 @@ namespace OrthancStone
 
       boost::mutex stoneGlobalMutex;
       Oracle oracle(stoneGlobalMutex, 4); // use 4 threads to download content
-      OracleWebService webService(oracle, webServiceParameters);
+      OracleWebService webService(broker, oracle, webServiceParameters);
       BasicSdlApplicationContext context(webService);
 
       application.Initialize(&context, statusBar, parameters);

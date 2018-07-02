@@ -34,10 +34,10 @@ namespace OrthancStone
   private:
     class Operation;
     
-    virtual void NotifyError(const std::string& uri,
+    virtual void OnHttpRequestError(const std::string& uri,
                              Orthanc::IDynamicObject* payload);
 
-    virtual void NotifySuccess(const std::string& uri,
+    virtual void OnHttpRequestSuccess(const std::string& uri,
                                const void* answer,
                                size_t answerSize,
                                Orthanc::IDynamicObject* payload);
@@ -46,7 +46,7 @@ namespace OrthancStone
     std::auto_ptr<DicomStructureSet>  structureSet_;
 
   public:
-    StructureSetLoader(IWebService& orthanc);
+    StructureSetLoader(MessageBroker& broker, IWebService& orthanc);
 
     void ScheduleLoadInstance(const std::string& instance);
 

@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -21,19 +21,36 @@
 
 #pragma once
 
-#include "WebServiceCommandBase.h"
+#include "IOracleCommand.h"
+
+#include "../../Framework/Toolbox/IWebService.h"
+#include "../../Framework/Messages/IObservable.h"
+
+#include <Core/WebServiceParameters.h>
+
+#include <memory>
 
 namespace OrthancStone
 {
-  class WebServiceGetCommand : public WebServiceCommandBase
+  class WebServiceCommandBase : public IOracleCommand, IObservable
   {
+  protected:
+    IWebService::ICallback&                 callback_;
+    Orthanc::WebServiceParameters           parameters_;
+    std::string                             uri_;
+    std::auto_ptr<Orthanc::IDynamicObject>  payload_;
+    bool                                    success_;
+    std::string                             answer_;
+
   public:
-    WebServiceGetCommand(MessageBroker& broker,
+    WebServiceCommandBase(MessageBroker& broker,
                          IWebService::ICallback& callback,
                          const Orthanc::WebServiceParameters& parameters,
                          const std::string& uri,
                          Orthanc::IDynamicObject* payload /* takes ownership */);
 
-    virtual void Execute();
+    virtual void Execute() = 0;
+
+    virtual void Commit();
   };
 }

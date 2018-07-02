@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -23,47 +23,80 @@
 
 #include "ILayerRenderer.h"
 #include "../Toolbox/Slice.h"
+#include "../../Framework/Messages/IObservable.h"
+#include "../../Framework/Messages/IMessage.h"
 
 namespace OrthancStone
 {
-  class ILayerSource : public boost::noncopyable
+  class ILayerSource : public boost::noncopyable, public IObservable
   {
   public:
-    class IObserver : public boost::noncopyable
+    struct SliceChangedMessage : public IMessage
     {
-    public:
-      virtual ~IObserver()
+      const Slice& slice;
+      SliceChangedMessage(const Slice& slice)
+        : IMessage(MessageType_SliceChanged),
+          slice(slice)
       {
       }
-
-      // Triggered as soon as the source has enough information to
-      // answer to "GetExtent()"
-      virtual void NotifyGeometryReady(const ILayerSource& source) = 0;
-      
-      virtual void NotifyGeometryError(const ILayerSource& source) = 0;
-      
-      // Triggered if the content of several slices in the source
-      // volume has changed
-      virtual void NotifyContentChange(const ILayerSource& source) = 0;
-
-      // Triggered if the content of some individual slice in the
-      // source volume has changed
-      virtual void NotifySliceChange(const ILayerSource& source,
-                                     const Slice& slice) = 0;
- 
-      // The layer must be deleted by the observer that releases the
-      // std::auto_ptr
-      virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& layer,
-                                    const ILayerSource& source,
-                                    const CoordinateSystem3D& slice,
-                                    bool isError) = 0;  // TODO Shouldn't this be separate as NotifyLayerError?
     };
+
+    struct LayerReadyMessage : public IMessage
+    {
+      std::auto_ptr<ILayerRenderer>& layer;
+      const CoordinateSystem3D& slice;
+      bool isError;
+
+      LayerReadyMessage(std::auto_ptr<ILayerRenderer>& layer,
+                        const CoordinateSystem3D& slice,
+                        bool isError)  // TODO Shouldn't this be separate as NotifyLayerError?
+        : IMessage(MessageType_LayerReady),
+          layer(layer),
+          slice(slice),
+          isError(isError)
+      {
+      }
+    };
+
+    //    class IObserver : public boost::noncopyable
+    //    {
+    //    public:
+    //      virtual ~IObserver()
+    //      {
+    //      }
+
+    //      // Triggered as soon as the source has enough information to
+    //      // answer to "GetExtent()"
+    //      virtual void NotifyGeometryReady(const ILayerSource& source) = 0;
+
+    //      virtual void NotifyGeometryError(const ILayerSource& source) = 0;
+
+    //      // Triggered if the content of several slices in the source
+    //      // volume has changed
+    //      virtual void NotifyContentChange(const ILayerSource& source) = 0;
+
+    //      // Triggered if the content of some individual slice in the
+    //      // source volume has changed
+    //      virtual void NotifySliceChange(const ILayerSource& source,
+    //                                     const Slice& slice) = 0;
+
+    //      // The layer must be deleted by the observer that releases the
+    //      // std::auto_ptr
+    //      virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& layer,
+    //                                    const ILayerSource& source,
+    //                                    const CoordinateSystem3D& slice,
+    //                                    bool isError) = 0;  // TODO Shouldn't this be separate as NotifyLayerError?
+    //    };
     
+    ILayerSource(MessageBroker& broker)
+      : IObservable(broker)
+    {}
+
     virtual ~ILayerSource()
     {
     }
 
-    virtual void Register(IObserver& observer) = 0;
+    //    virtual void Register(IObserver& observer) = 0;
 
     virtual bool GetExtent(std::vector<Vector>& points,
                            const CoordinateSystem3D& viewportSlice) = 0;

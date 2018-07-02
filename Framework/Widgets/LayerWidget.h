@@ -24,6 +24,7 @@
 #include "WorldSceneWidget.h"
 #include "../Layers/ILayerSource.h"
 #include "../Toolbox/Extent2D.h"
+#include "../../Framework/Messages/IObserver.h"
 
 #include <map>
 
@@ -31,7 +32,7 @@ namespace OrthancStone
 {
   class LayerWidget :
     public WorldSceneWidget,
-    private ILayerSource::IObserver
+    public IObserver
   {
   private:
     class Scene;
@@ -53,23 +54,26 @@ namespace OrthancStone
     void GetLayerExtent(Extent2D& extent,
                         ILayerSource& source) const;
 
-    virtual void NotifyGeometryReady(const ILayerSource& source);
+    void OnGeometryReady(const ILayerSource& source);
 
-    virtual void NotifyGeometryError(const ILayerSource& source);
+    virtual void OnContentChanged(const ILayerSource& source);
 
-    virtual void NotifyContentChange(const ILayerSource& source);
-
-    virtual void NotifySliceChange(const ILayerSource& source,
+    virtual void OnSliceChanged(const ILayerSource& source,
                                    const Slice& slice);
 
-    virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& renderer,
+    virtual void OnLayerReady(std::auto_ptr<ILayerRenderer>& renderer,
                                   const ILayerSource& source,
                                   const CoordinateSystem3D& slice,
                                   bool isError);
 
+
     void ResetChangedLayers();
 
   public:
+    LayerWidget(MessageBroker& broker);
+
+    virtual void HandleMessage(IObservable& from, const IMessage& message);
+
     virtual Extent2D GetSceneExtent();
  
   protected:

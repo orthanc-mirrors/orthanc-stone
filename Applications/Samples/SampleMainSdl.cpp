@@ -21,10 +21,12 @@
 
 #include "SampleList.h"
 #include "../Sdl/BasicSdlApplication.h"
+#include "../../Framework/Messages/MessageBroker.h"
 
 int main(int argc, char* argv[]) 
 {
-  Application application;
+  OrthancStone::MessageBroker broker;
+  Application application(broker);
 
-  return OrthancStone::BasicSdlApplication::ExecuteWithSdl(application, argc, argv);
+  return OrthancStone::BasicSdlApplication::ExecuteWithSdl(broker, application, argc, argv);
 }

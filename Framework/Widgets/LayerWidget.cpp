@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -55,7 +55,7 @@ namespace OrthancStone
         countMissing_++;
       }
     }
-      
+
   public:
     Scene(const CoordinateSystem3D& slice,
           double thickness,
@@ -184,7 +184,7 @@ namespace OrthancStone
 #endif
         
         cairo_set_line_width(cr, 2.0 / view.GetZoom());
-        cairo_set_source_rgb(cr, 1, 1, 1); 
+        cairo_set_source_rgb(cr, 1, 1, 1);
         cairo_stroke_preserve(cr);
         cairo_set_source_rgb(cr, 1, 0, 0);
         cairo_fill(cr);
@@ -215,7 +215,7 @@ namespace OrthancStone
       {
         double z = (slice_.ProjectAlongNormal(slice.GetOrigin()) -
                     slice_.ProjectAlongNormal(slice_.GetOrigin()));
-      
+
         if (z < 0)
         {
           z = -z;
@@ -249,7 +249,7 @@ namespace OrthancStone
       return true;
     }
   }
-    
+
 
   void LayerWidget::GetLayerExtent(Extent2D& extent,
                                    ILayerSource& source) const
@@ -268,7 +268,7 @@ namespace OrthancStone
     }
   }
 
-        
+
   Extent2D LayerWidget::GetSceneExtent()
   {
     Extent2D sceneExtent;
@@ -359,7 +359,8 @@ namespace OrthancStone
   }
 
   
-  LayerWidget::LayerWidget() :
+  LayerWidget::LayerWidget(MessageBroker& broker) :
+    IObserver(broker),
     started_(false)
   {
     SetBackgroundCleared(true);
@@ -388,7 +389,7 @@ namespace OrthancStone
     layersIndex_[layer] = index;
 
     ResetPendingScene();
-    layer->Register(*this);
+    layer->RegisterObserver(*this);
 
     ResetChangedLayers();
 
@@ -412,7 +413,7 @@ namespace OrthancStone
     layersIndex_[layer] = index;
 
     ResetPendingScene();
-    layer->Register(*this);
+    layer->RegisterObserver(*this);
 
     InvalidateLayer(index);
   }
@@ -479,8 +480,35 @@ namespace OrthancStone
     }
   }
 
+  void LayerWidget::HandleMessage(IObservable& from, const IMessage& message)
+  {
+    switch (message.GetType()) {
+    case MessageType_GeometryReady:
+      OnGeometryReady(dynamic_cast<ILayerSource&>(from));
+      break;
+    case MessageType_GeometryError:
+      LOG(ERROR) << "Cannot get geometry";
+      break;
+    case MessageType_ContentChanged:
+      OnContentChanged(dynamic_cast<ILayerSource&>(from));
+      break;
+    case MessageType_SliceChanged:
+      OnSliceChanged(dynamic_cast<ILayerSource&>(from), dynamic_cast<const ILayerSource::SliceChangedMessage&>(message).slice);
+      break;
+    case MessageType_LayerReady:
+    {
+      const ILayerSource::LayerReadyMessage& layerReadyMessage = dynamic_cast<const ILayerSource::LayerReadyMessage&>(message);
+      OnLayerReady(layerReadyMessage.layer,
+                   dynamic_cast<ILayerSource&>(from),
+                   layerReadyMessage.slice,
+                   layerReadyMessage.isError);
+    }; break;
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
+  }
 
-  void LayerWidget::NotifyGeometryReady(const ILayerSource& source)
+  void LayerWidget::OnGeometryReady(const ILayerSource& source)
   {
     size_t i;
     if (LookupLayer(i, source))
@@ -492,13 +520,6 @@ namespace OrthancStone
     }
   }
   
-
-  void LayerWidget::NotifyGeometryError(const ILayerSource& source)
-  {
-    LOG(ERROR) << "Cannot get geometry";
-  }
-  
-
   void LayerWidget::InvalidateAllLayers()
   {
     for (size_t i = 0; i < layers_.size(); i++)
@@ -525,7 +546,7 @@ namespace OrthancStone
   }
 
 
-  void LayerWidget::NotifyContentChange(const ILayerSource& source)
+  void LayerWidget::OnContentChanged(const ILayerSource& source)
   {
     size_t index;
     if (LookupLayer(index, source))
@@ -535,8 +556,8 @@ namespace OrthancStone
   }
   
 
-  void LayerWidget::NotifySliceChange(const ILayerSource& source,
-                                      const Slice& slice)
+  void LayerWidget::OnSliceChanged(const ILayerSource& source,
+                                   const Slice& slice)
   {
     if (slice.ContainsPlane(slice_))
     {
@@ -549,10 +570,10 @@ namespace OrthancStone
   }
   
   
-  void LayerWidget::NotifyLayerReady(std::auto_ptr<ILayerRenderer>& renderer,
-                                     const ILayerSource& source,
-                                     const CoordinateSystem3D& slice,
-                                     bool isError)
+  void LayerWidget::OnLayerReady(std::auto_ptr<ILayerRenderer>& renderer,
+                                 const ILayerSource& source,
+                                 const CoordinateSystem3D& slice,
+                                 bool isError)
   {
     size_t index;
     if (LookupLayer(index, source))

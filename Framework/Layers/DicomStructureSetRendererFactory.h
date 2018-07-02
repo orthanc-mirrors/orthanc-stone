@@ -37,21 +37,22 @@ namespace OrthancStone
     {
       LayerSourceBase::NotifyGeometryReady();
     }
-      
+
     virtual void NotifyGeometryError(const IVolumeLoader& loader)
     {
       LayerSourceBase::NotifyGeometryError();
     }
-      
+
     virtual void NotifyContentChange(const IVolumeLoader& loader)
     {
       LayerSourceBase::NotifyContentChange();
     }
-    
+
     StructureSetLoader& loader_;
 
   public:
-    DicomStructureSetRendererFactory(StructureSetLoader& loader) :
+    DicomStructureSetRendererFactory(MessageBroker& broker, StructureSetLoader& loader) :
+      LayerSourceBase(broker),
       loader_(loader)
     {
       loader_.Register(*this);

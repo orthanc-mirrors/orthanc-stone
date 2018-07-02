@@ -122,7 +122,8 @@ namespace OrthancStone
     void SortAndFinalizeSlices();
     
   public:
-    OrthancSlicesLoader(ICallback& callback,
+    OrthancSlicesLoader(MessageBroker& broker,
+                        ICallback& callback,
                         IWebService& orthanc);
 
     void ScheduleLoadSeries(const std::string& seriesId);

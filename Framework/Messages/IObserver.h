@@ -22,14 +22,16 @@
 #pragma once
 
 #include "MessageBroker.h"
+#include "IMessage.h"
+#include "IObservable.h"
 
 namespace OrthancStone {
 
   class IObservable;
-  class IMessage;
 
   class IObserver : public boost::noncopyable
   {
+  protected:
     MessageBroker&                    broker_;
 
   public:

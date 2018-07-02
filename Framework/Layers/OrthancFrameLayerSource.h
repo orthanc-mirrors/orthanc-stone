@@ -51,7 +51,7 @@ namespace OrthancStone
                                        SliceImageQuality quality);
 
   public:
-    OrthancFrameLayerSource(IWebService& orthanc);
+    OrthancFrameLayerSource(MessageBroker& broker, IWebService& orthanc);
 
     void LoadSeries(const std::string& seriesId);
 

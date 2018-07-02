@@ -77,6 +77,7 @@ BuildSample(OrthancStoneSimpleViewer SimpleViewerApplication.h 8)
 
 add_executable(UnitTests
   ${GOOGLE_TEST_SOURCES}
+  ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestMessageBroker.cpp
   ${ORTHANC_STONE_ROOT}/UnitTestsSources/UnitTestsMain.cpp
   )
 

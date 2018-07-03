@@ -1,28 +1,40 @@
 #pragma once
 
 #include <Framework/Toolbox/IWebService.h>
+#include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
   class WasmWebService : public IWebService
   {
   private:
-    std::string  base_;
+    std::string  baseUri_;
+    static MessageBroker* broker_;
 
     // Private constructor => Singleton design pattern
-    WasmWebService() :
-      base_("../../")   // note: this is configurable from the JS code by calling WasmWebService_SetBaseUrl
+    WasmWebService(MessageBroker& broker) :
+      IWebService(broker),
+      baseUri_("../../")   // note: this is configurable from the JS code by calling WasmWebService_SetBaseUri
     {
     }
 
   public:
     static WasmWebService& GetInstance()
     {
-      static WasmWebService instance;
+      if (broker_ == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      static WasmWebService instance(*broker_);
       return instance;
     }
 
-    void SetBaseUrl(const std::string base);
+    static void SetBroker(MessageBroker& broker)
+    {
+      broker_ = &broker;
+    }
+
+    void SetBaseUri(const std::string baseUri);
 
     virtual void ScheduleGetRequest(ICallback& callback,
                                     const std::string& uri,

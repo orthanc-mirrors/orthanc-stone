@@ -106,7 +106,7 @@ function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: strin
     WasmWebService_NotifyError = StoneFrameworkModule.cwrap('WasmWebService_NotifyError', null, ['number', 'string', 'number']);
     NotifyUpdateContent = StoneFrameworkModule.cwrap('NotifyUpdateContent', null, []);
 
-    StoneFrameworkModule.ccall('WasmWebService_SetBaseUrl', null, ['string'], [orthancBaseUrl]);
+    StoneFrameworkModule.ccall('WasmWebService_SetBaseUri', null, ['string'], [orthancBaseUrl]);
 
     // Prevent scrolling
     document.body.addEventListener('touchmove', function (event) {

@@ -27,7 +27,7 @@ extern "C" {
     else
     {
       reinterpret_cast<OrthancStone::IWebService::ICallback*>(callback)->
-        NotifyError(uri, reinterpret_cast<Orthanc::IDynamicObject*>(payload));
+        OnHttpRequestError(uri, reinterpret_cast<Orthanc::IDynamicObject*>(payload));
     }
   }
 
@@ -44,13 +44,13 @@ extern "C" {
     else
     {
       reinterpret_cast<OrthancStone::IWebService::ICallback*>(callback)->
-        NotifySuccess(uri, body, bodySize, reinterpret_cast<Orthanc::IDynamicObject*>(payload)); 
+        OnHttpRequestSuccess(uri, body, bodySize, reinterpret_cast<Orthanc::IDynamicObject*>(payload)); 
    }
   }
 
-  void EMSCRIPTEN_KEEPALIVE WasmWebService_SetBaseUrl(const char* baseUrl)
+  void EMSCRIPTEN_KEEPALIVE WasmWebService_SetBaseUri(const char* baseUri)
   {
-    OrthancStone::WasmWebService::GetInstance().SetBaseUrl(baseUrl);
+    OrthancStone::WasmWebService::GetInstance().SetBaseUri(baseUri);
   }
 
 #ifdef __cplusplus
@@ -61,35 +61,37 @@ extern "C" {
 
 namespace OrthancStone
 {
-  void WasmWebService::SetBaseUrl(const std::string base)
+  MessageBroker* WasmWebService::broker_ = NULL;
+
+  void WasmWebService::SetBaseUri(const std::string baseUri)
   {
     // Make sure the base url ends with "/"
-    if (base.empty() ||
-        base[base.size() - 1] != '/')
+    if (baseUri.empty() ||
+        baseUri[baseUri.size() - 1] != '/')
     {
-      base_ = base + "/";
+      baseUri_ = baseUri + "/";
     }
     else
     {
-      base_ = base;
+      baseUri_ = baseUri;
     }
   }
 
   void WasmWebService::ScheduleGetRequest(ICallback& callback,
-                                          const std::string& uri,
+                                          const std::string& relativeUri,
                                           Orthanc::IDynamicObject* payload)
   {
-    std::string url = base_ + uri;
-    WasmWebService_ScheduleGetRequest(&callback, url.c_str(), payload);
+    std::string uri = baseUri_ + relativeUri;
+    WasmWebService_ScheduleGetRequest(&callback, uri.c_str(), payload);
   }
 
   void WasmWebService::SchedulePostRequest(ICallback& callback,
-                                           const std::string& uri,
+                                           const std::string& relativeUri,
                                            const std::string& body,
                                            Orthanc::IDynamicObject* payload)
   {
-    std::string url = base_ + uri;
-    WasmWebService_SchedulePostRequest(&callback, url.c_str(),
+    std::string uri = baseUri_ + relativeUri;
+    WasmWebService_SchedulePostRequest(&callback, uri.c_str(),
                                        body.c_str(), body.size(), payload);
   }
 }

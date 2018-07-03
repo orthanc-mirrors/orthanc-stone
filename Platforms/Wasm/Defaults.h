@@ -24,7 +24,7 @@ extern "C" {
 }
 #endif
 
-extern OrthancStone::IBasicApplication* CreateUserApplication();
+extern OrthancStone::IBasicApplication* CreateUserApplication(OrthancStone::MessageBroker& broker);
 
 namespace OrthancStone {
 

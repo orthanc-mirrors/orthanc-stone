@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <vector>
 
 #include "IObserver.h"
 #include "MessageType.h"

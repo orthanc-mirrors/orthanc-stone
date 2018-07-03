@@ -179,6 +179,8 @@ namespace OrthancStone
         case MessageType_GeometryReady:
           mainLayout_->SetDefaultView();
           break;
+        default:
+          VLOG("unhandled message type" << message.GetType());
         }
       }
 

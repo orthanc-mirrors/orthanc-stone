@@ -26,7 +26,7 @@
 #include "SampleList.h"
 
 
-OrthancStone::IBasicApplication* CreateUserApplication() {
+OrthancStone::IBasicApplication* CreateUserApplication(OrthancStone::MessageBroker& broker) {
   
-  return new Application();
+  return new Application(broker);
 }

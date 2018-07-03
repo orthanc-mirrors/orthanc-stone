@@ -194,6 +194,7 @@ namespace OrthancStone
       OrthancStone::WidgetViewport*                wasmViewport1_;
       OrthancStone::WidgetViewport*                wasmViewport2_;
 
+      IStatusBar*                     statusBar_;
       OrthancFrameLayerSource*        source_;
       unsigned int                    slice_;
 
@@ -234,7 +235,9 @@ namespace OrthancStone
         using namespace OrthancStone;
 
         context_ = context;
+        statusBar_ = &statusBar;
         statusBar.SetMessage("Use the key \"s\" to reinitialize the layout");
+        statusBar.SetMessage("Use the key \"n\" to go to next image in the main viewport");
 
         if (parameters.count("instance1") < 1)
         {
@@ -273,14 +276,16 @@ namespace OrthancStone
 
         // sources
         source_ = new OrthancFrameLayerSource(broker_, context_->GetWebService());
+        source_->RegisterObserver(*this);
         source_->LoadFrame(instances_[currentInstanceIndex_], 0);
-        source_->Register(*this);
 
         mainViewport_->AddLayer(source_);
 
         OrthancFrameLayerSource* thumb0 = new OrthancFrameLayerSource(broker_, context_->GetWebService());
+        thumb0->RegisterObserver(*this);
         thumb0->LoadFrame(instances_[0], 0);
         OrthancFrameLayerSource* thumb1 = new OrthancFrameLayerSource(broker_, context_->GetWebService());
+        thumb1->RegisterObserver(*this);
         thumb1->LoadFrame(instances_[1], 0);
 
         thumbnails_[0]->AddLayer(thumb0);
@@ -301,15 +306,16 @@ namespace OrthancStone
 
       void NextImage(WorldSceneWidget& widget) {
         assert(context_);
+        statusBar_->SetMessage("displaying next image");
 
         currentInstanceIndex_ = (currentInstanceIndex_ + 1) % instances_.size();
 
         std::auto_ptr<OrthancFrameLayerSource> layer
             (new OrthancFrameLayerSource(broker_, context_->GetWebService()));
+        layer->RegisterObserver(*this);
         layer->LoadFrame(instances_[currentInstanceIndex_], 0);
 
         mainViewport_->ReplaceLayer(0, layer.release());
-        //  source_->LoadFrame("45b7e6bc-168e8ed1-063dc08d-cffd6431-133a276a", 0);
       }
     };
 

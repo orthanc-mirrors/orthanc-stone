@@ -12,4 +12,4 @@ make -j 5
 
 echo "-- building the web application -- "
 cd $currentDir
-#./build-web.sh
+./build-web.sh

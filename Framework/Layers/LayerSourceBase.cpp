@@ -78,12 +78,6 @@ namespace OrthancStone
   {
     std::auto_ptr<ILayerRenderer> renderer(layer);
     Emit(ILayerSource::LayerReadyMessage(renderer, slice, isError));
-//    LayerReadyFunctor functor(layer, slice, isError);
-//    observers_.Notify(*this, functor);
   }
 
-  void LayerSourceBase::Register(IObserver& observer)
-  {
-    RegisterObserver(observer);
-  }
 }

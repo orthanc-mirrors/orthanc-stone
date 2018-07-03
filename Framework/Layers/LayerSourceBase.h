@@ -45,7 +45,5 @@ namespace OrthancStone
       : ILayerSource(broker)
     {}
 
-  public:
-    virtual void Register(IObserver& observer);
   };
 }

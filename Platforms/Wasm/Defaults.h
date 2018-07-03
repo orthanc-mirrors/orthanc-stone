@@ -19,6 +19,8 @@ extern "C" {
   
   // C++ methods accessible from JS
   extern void EMSCRIPTEN_KEEPALIVE CreateWasmApplication(ViewportHandle cppViewportHandle);
+  extern void EMSCRIPTEN_KEEPALIVE SetStartupParameter(const char* keyc, const char* value);
+  
 
 #ifdef __cplusplus
 }

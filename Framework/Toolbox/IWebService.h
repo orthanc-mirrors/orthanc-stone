@@ -24,6 +24,7 @@
 #include <Core/IDynamicObject.h>
 #include "../../Framework/Messages/IObserver.h"
 #include <string>
+#include <Core/Logging.h>
 
 namespace OrthancStone
 {
@@ -90,7 +91,8 @@ namespace OrthancStone
                                          msg.AnswerSize,
                                          msg.Payload);
                 }; break;
-
+                default:
+                  VLOG("unhandled message type" << message.GetType());
                 }
             }
 

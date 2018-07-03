@@ -32,24 +32,70 @@ namespace OrthancStone
   class OrthancSlicesLoader : public boost::noncopyable
   {
   public:
-    class ICallback : public boost::noncopyable
+    struct SliceImageReadyMessage : public IMessage
+    {
+      unsigned int sliceIndex_;
+      const Slice& slice_;
+      std::auto_ptr<Orthanc::ImageAccessor>& image_;
+      SliceImageQuality effectiveQuality_;
+
+      SliceImageReadyMessage(unsigned int sliceIndex,
+                        const Slice& slice,
+                        std::auto_ptr<Orthanc::ImageAccessor>& image,
+                        SliceImageQuality effectiveQuality)
+        : IMessage(MessageType_SliceImageReady),
+          sliceIndex_(sliceIndex),
+          slice_(slice),
+          image_(image),
+          effectiveQuality_(effectiveQuality)
+      {
+      }
+    };
+
+    struct SliceImageErrorMessage : public IMessage
+    {
+      const Slice& slice_;
+      unsigned int sliceIndex_;
+      SliceImageQuality effectiveQuality_;
+
+      SliceImageErrorMessage(unsigned int sliceIndex,
+                        const Slice& slice,
+                        SliceImageQuality effectiveQuality)
+        : IMessage(MessageType_SliceImageError),
+          slice_(slice),
+          sliceIndex_(sliceIndex),
+          effectiveQuality_(effectiveQuality)
+      {
+      }
+    };
+
+  public:
+    class ISliceLoaderObserver : public IObserver
     {
     public:
-      virtual ~ICallback()
+
+      ISliceLoaderObserver(MessageBroker& broker)
+        : IObserver(broker)
       {
       }
 
-      virtual void NotifyGeometryReady(const OrthancSlicesLoader& loader) = 0;
+      virtual ~ISliceLoaderObserver()
+      {
+      }
 
-      virtual void NotifyGeometryError(const OrthancSlicesLoader& loader) = 0;
+      virtual void HandleMessage(IObservable& from, const IMessage& message);
 
-      virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
+      virtual void OnSliceGeometryReady(const OrthancSlicesLoader& loader) = 0;
+
+      virtual void OnSliceGeometryError(const OrthancSlicesLoader& loader) = 0;
+
+      virtual void OnSliceImageReady(const OrthancSlicesLoader& loader,
                                          unsigned int sliceIndex,
                                          const Slice& slice,
                                          std::auto_ptr<Orthanc::ImageAccessor>& image,
                                          SliceImageQuality effectiveQuality) = 0;
 
-      virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
+      virtual void OnSliceImageError(const OrthancSlicesLoader& loader,
                                          unsigned int sliceIndex,
                                          const Slice& slice,
                                          SliceImageQuality quality) = 0;
@@ -78,7 +124,7 @@ namespace OrthancStone
 
     boost::shared_ptr<WebCallback>  webCallback_;  // This is a PImpl pattern
 
-    ICallback&    userCallback_;
+    ISliceLoaderObserver&    userCallback_;
     IWebService&  orthanc_;
     State         state_;
     SlicesSorter  slices_;
@@ -123,7 +169,7 @@ namespace OrthancStone
     
   public:
     OrthancSlicesLoader(MessageBroker& broker,
-                        ICallback& callback,
+                        ISliceLoaderObserver& callback,
                         IWebService& orthanc);
 
     void ScheduleLoadSeries(const std::string& seriesId);

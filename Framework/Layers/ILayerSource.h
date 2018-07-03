@@ -28,32 +28,32 @@
 
 namespace OrthancStone
 {
-  class ILayerSource : public boost::noncopyable, public IObservable
+  class ILayerSource : public IObservable
   {
   public:
     struct SliceChangedMessage : public IMessage
     {
-      const Slice& slice;
+      const Slice& slice_;
       SliceChangedMessage(const Slice& slice)
         : IMessage(MessageType_SliceChanged),
-          slice(slice)
+          slice_(slice)
       {
       }
     };
 
     struct LayerReadyMessage : public IMessage
     {
-      std::auto_ptr<ILayerRenderer>& layer;
-      const CoordinateSystem3D& slice;
-      bool isError;
+      std::auto_ptr<ILayerRenderer>& layer_;
+      const CoordinateSystem3D& slice_;
+      bool isError_;
 
       LayerReadyMessage(std::auto_ptr<ILayerRenderer>& layer,
                         const CoordinateSystem3D& slice,
                         bool isError)  // TODO Shouldn't this be separate as NotifyLayerError?
         : IMessage(MessageType_LayerReady),
-          layer(layer),
-          slice(slice),
-          isError(isError)
+          layer_(layer),
+          slice_(slice),
+          isError_(isError)
       {
       }
     };

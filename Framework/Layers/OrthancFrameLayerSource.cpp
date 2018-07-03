@@ -31,7 +31,7 @@
 
 namespace OrthancStone
 {
-  void OrthancFrameLayerSource::NotifyGeometryReady(const OrthancSlicesLoader& loader)
+  void OrthancFrameLayerSource::OnSliceGeometryReady(const OrthancSlicesLoader& loader)
   {
     if (loader.GetSliceCount() > 0)
     {
@@ -43,12 +43,12 @@ namespace OrthancStone
     }
   }
 
-  void OrthancFrameLayerSource::NotifyGeometryError(const OrthancSlicesLoader& loader)
+  void OrthancFrameLayerSource::OnSliceGeometryError(const OrthancSlicesLoader& loader)
   {
     LayerSourceBase::NotifyGeometryError();
   }
 
-  void OrthancFrameLayerSource::NotifySliceImageReady(const OrthancSlicesLoader& loader,
+  void OrthancFrameLayerSource::OnSliceImageReady(const OrthancSlicesLoader& loader,
                                                       unsigned int sliceIndex,
                                                       const Slice& slice,
                                                       std::auto_ptr<Orthanc::ImageAccessor>& image,
@@ -59,7 +59,7 @@ namespace OrthancStone
                                       slice.GetGeometry(), false);
   }
 
-  void OrthancFrameLayerSource::NotifySliceImageError(const OrthancSlicesLoader& loader,
+  void OrthancFrameLayerSource::OnSliceImageError(const OrthancSlicesLoader& loader,
                                                       unsigned int sliceIndex,
                                                       const Slice& slice,
                                                       SliceImageQuality quality)
@@ -70,6 +70,7 @@ namespace OrthancStone
 
   OrthancFrameLayerSource::OrthancFrameLayerSource(MessageBroker& broker, IWebService& orthanc) :
     LayerSourceBase(broker),
+    OrthancSlicesLoader::ISliceLoaderObserver(broker),
     loader_(broker, *this, orthanc),
     quality_(SliceImageQuality_Full)
   {

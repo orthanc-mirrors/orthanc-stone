@@ -32,6 +32,11 @@ namespace OrthancStone {
     MessageType_SliceChanged,
     MessageType_LayerReady,
 
+    MessageType_SliceGeometryReady,
+    MessageType_SliceGeometryError,
+    MessageType_SliceImageReady,
+    MessageType_SliceImageError,
+
     MessageType_HttpRequestSuccess,
     MessageType_HttpRequestError
 

@@ -43,7 +43,7 @@ namespace OrthancStone
   // TODO: Handle errors while loading
   class OrthancVolumeImage : 
     public SlicedVolumeBase,
-    private OrthancSlicesLoader::ICallback
+    private OrthancSlicesLoader::ISliceLoaderObserver
   { 
   private:
     OrthancSlicesLoader           loader_;
@@ -106,7 +106,7 @@ namespace OrthancStone
     }
 
 
-    virtual void NotifyGeometryReady(const OrthancSlicesLoader& loader)
+    virtual void OnSliceGeometryReady(const OrthancSlicesLoader& loader)
     {
       if (loader.GetSliceCount() == 0)
       {
@@ -173,13 +173,13 @@ namespace OrthancStone
       SlicedVolumeBase::NotifyGeometryReady();
     }
 
-    virtual void NotifyGeometryError(const OrthancSlicesLoader& loader)
+    virtual void OnSliceGeometryError(const OrthancSlicesLoader& loader)
     {
       LOG(ERROR) << "Unable to download a volume image";
       SlicedVolumeBase::NotifyGeometryError();
     }
 
-    virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
+    virtual void OnSliceImageReady(const OrthancSlicesLoader& loader,
                                        unsigned int sliceIndex,
                                        const Slice& slice,
                                        std::auto_ptr<Orthanc::ImageAccessor>& image,
@@ -205,7 +205,7 @@ namespace OrthancStone
       ScheduleSliceDownload();
     }
 
-    virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
+    virtual void OnSliceImageError(const OrthancSlicesLoader& loader,
                                        unsigned int sliceIndex,
                                        const Slice& slice,
                                        SliceImageQuality quality)
@@ -218,6 +218,7 @@ namespace OrthancStone
     OrthancVolumeImage(MessageBroker& broker,
                        IWebService& orthanc,
                        bool computeRange) : 
+      OrthancSlicesLoader::ISliceLoaderObserver(broker),
       loader_(broker, *this, orthanc),
       computeRange_(computeRange),
       pendingSlices_(0)

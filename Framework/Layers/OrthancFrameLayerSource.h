@@ -29,23 +29,23 @@ namespace OrthancStone
 {  
   class OrthancFrameLayerSource :
     public LayerSourceBase,
-    private OrthancSlicesLoader::ICallback
+    private OrthancSlicesLoader::ISliceLoaderObserver
   {
   private:
     OrthancSlicesLoader  loader_;
     SliceImageQuality    quality_;
 
-    virtual void NotifyGeometryReady(const OrthancSlicesLoader& loader);
+    virtual void OnSliceGeometryReady(const OrthancSlicesLoader& loader);
 
-    virtual void NotifyGeometryError(const OrthancSlicesLoader& loader);
+    virtual void OnSliceGeometryError(const OrthancSlicesLoader& loader);
 
-    virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
+    virtual void OnSliceImageReady(const OrthancSlicesLoader& loader,
                                        unsigned int sliceIndex,
                                        const Slice& slice,
                                        std::auto_ptr<Orthanc::ImageAccessor>& image,
                                        SliceImageQuality quality);
 
-    virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
+    virtual void OnSliceImageError(const OrthancSlicesLoader& loader,
                                        unsigned int sliceIndex,
                                        const Slice& slice,
                                        SliceImageQuality quality);

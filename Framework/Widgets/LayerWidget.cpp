@@ -493,15 +493,15 @@ namespace OrthancStone
       OnContentChanged(dynamic_cast<ILayerSource&>(from));
       break;
     case MessageType_SliceChanged:
-      OnSliceChanged(dynamic_cast<ILayerSource&>(from), dynamic_cast<const ILayerSource::SliceChangedMessage&>(message).slice);
+      OnSliceChanged(dynamic_cast<ILayerSource&>(from), dynamic_cast<const ILayerSource::SliceChangedMessage&>(message).slice_);
       break;
     case MessageType_LayerReady:
     {
       const ILayerSource::LayerReadyMessage& layerReadyMessage = dynamic_cast<const ILayerSource::LayerReadyMessage&>(message);
-      OnLayerReady(layerReadyMessage.layer,
+      OnLayerReady(layerReadyMessage.layer_,
                    dynamic_cast<ILayerSource&>(from),
-                   layerReadyMessage.slice,
-                   layerReadyMessage.isError);
+                   layerReadyMessage.slice_,
+                   layerReadyMessage.isError_);
     }; break;
     default:
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);

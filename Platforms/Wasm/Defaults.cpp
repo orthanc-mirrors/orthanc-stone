@@ -67,6 +67,7 @@ extern "C" {
     printf("CreateWasmApplication\n");
 
     application.reset(CreateUserApplication(broker));
+    WasmWebService::SetBroker(broker);
 
     startupParametersBuilder.Clear();
   }
@@ -86,7 +87,6 @@ extern "C" {
     application->DeclareStartupOptions(options);
     startupParametersBuilder.GetStartupParameters(parameters, options);
 
-    WasmWebService::SetBroker(broker);
     context.reset(new OrthancStone::BasicApplicationContext(OrthancStone::WasmWebService::GetInstance()));
     application->Initialize(context.get(), statusBar_, parameters);
     application->InitializeWasm();

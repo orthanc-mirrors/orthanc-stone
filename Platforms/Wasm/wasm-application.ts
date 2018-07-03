@@ -10,6 +10,7 @@ declare var StoneFrameworkModule : Stone.Framework;
 // global functions
 var WasmWebService_NotifyError: Function = null;
 var WasmWebService_NotifySuccess: Function = null;
+var WasmWebService_SetBaseUri: Function = null;
 var NotifyUpdateContent: Function = null;
 var SetStartupParameter: Function = null;
 var CreateWasmApplication: Function = null;
@@ -66,10 +67,12 @@ module Stone {
 }
 
 
-function _InitializeWasmApplication(canvasId: string): void {
+function _InitializeWasmApplication(canvasId: string, orthancBaseUrl: string): void {
 
   /************************************** */
   CreateWasmApplication();
+  WasmWebService_SetBaseUri(orthancBaseUrl);
+
 
   // parse uri and transmit the parameters to the app before initializing it
   var parameters = GetUriParameters();
@@ -104,15 +107,16 @@ function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: strin
 
     WasmWebService_NotifySuccess = StoneFrameworkModule.cwrap('WasmWebService_NotifySuccess', null, ['number', 'string', 'array', 'number', 'number']);
     WasmWebService_NotifyError = StoneFrameworkModule.cwrap('WasmWebService_NotifyError', null, ['number', 'string', 'number']);
+    WasmWebService_SetBaseUri = StoneFrameworkModule.cwrap('WasmWebService_SetBaseUri', null, ['string']);
     NotifyUpdateContent = StoneFrameworkModule.cwrap('NotifyUpdateContent', null, []);
 
-    StoneFrameworkModule.ccall('WasmWebService_SetBaseUri', null, ['string'], [orthancBaseUrl]);
+    console.log("Connecting C++ methods to JS methods - done - 2");
 
     // Prevent scrolling
     document.body.addEventListener('touchmove', function (event) {
       event.preventDefault();
     }, false);
 
-    _InitializeWasmApplication("canvas");
+    _InitializeWasmApplication("canvas", orthancBaseUrl);
   });
 }

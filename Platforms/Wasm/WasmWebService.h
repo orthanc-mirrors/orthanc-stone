@@ -23,6 +23,7 @@ namespace OrthancStone
     {
       if (broker_ == NULL)
       {
+        printf("WasmWebService::GetInstance(): broker not initialized\n");
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
       static WasmWebService instance(*broker_);

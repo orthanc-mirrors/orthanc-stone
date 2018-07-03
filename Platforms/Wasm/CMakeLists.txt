@@ -61,6 +61,7 @@ include_directories(${ORTHANC_STONE_ROOT})
 
 macro(BuildSample Target Header Sample)
   add_executable(${Target}
+    ${STONE_WASM_SOURCES}
 
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleMainWasm.cpp
 #    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationContext.cpp

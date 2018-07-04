@@ -28,9 +28,10 @@ include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkParameters.cmake)
 set(ENABLE_LOCALE OFF)         # Disable support for locales (notably in Boost)
 set(ENABLE_GOOGLE_TEST ON)
 set(ENABLE_SQLITE OFF)
-SET(ENABLE_JPEG ON)
-SET(ENABLE_PNG ON)
-SET(ENABLE_ZLIB ON)
+set(ENABLE_JPEG ON)
+set(ENABLE_PNG ON)
+set(ENABLE_ZLIB ON)
+set(HAS_EMBEDDED_RESOURCES ON)
 
 
 #####################################################################

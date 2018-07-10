@@ -35,6 +35,7 @@ namespace OrthancStone
                           IWebService::ICallback& callback,
                           const Orthanc::WebServiceParameters& parameters,
                           const std::string& uri,
+                          const IWebService::Headers& headers,
                           const std::string& body,
                           Orthanc::IDynamicObject* payload /* takes ownership */);
 

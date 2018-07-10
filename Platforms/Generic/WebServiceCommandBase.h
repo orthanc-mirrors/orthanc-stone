@@ -38,6 +38,7 @@ namespace OrthancStone
     IWebService::ICallback&                 callback_;
     Orthanc::WebServiceParameters           parameters_;
     std::string                             uri_;
+    std::map<std::string, std::string>      headers_;
     std::auto_ptr<Orthanc::IDynamicObject>  payload_;
     bool                                    success_;
     std::string                             answer_;
@@ -47,6 +48,7 @@ namespace OrthancStone
                          IWebService::ICallback& callback,
                          const Orthanc::WebServiceParameters& parameters,
                          const std::string& uri,
+                         const std::map<std::string, std::string>& headers,
                          Orthanc::IDynamicObject* payload /* takes ownership */);
 
     virtual void Execute() = 0;

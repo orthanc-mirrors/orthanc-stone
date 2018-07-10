@@ -55,7 +55,7 @@ namespace OrthancStone
 
       for (size_t i = 0; i < loader.GetSliceCount(); i++)
       {
-        const_cast<OrthancSlicesLoader&>(loader).ScheduleLoadSliceImage(i, SliceImageQuality_Full);
+        const_cast<OrthancSlicesLoader&>(loader).ScheduleLoadSliceImage(i, SliceImageQuality_FullPng);
       }
     }
 

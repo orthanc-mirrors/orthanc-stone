@@ -29,8 +29,9 @@ namespace OrthancStone
                                              IWebService::ICallback& callback,
                                              const Orthanc::WebServiceParameters& parameters,
                                              const std::string& uri,
+                                             const IWebService::Headers& headers,
                                              Orthanc::IDynamicObject* payload /* takes ownership */) :
-    WebServiceCommandBase(broker, callback, parameters, uri, payload)
+    WebServiceCommandBase(broker, callback, parameters, uri, headers, payload)
   {
   }
 
@@ -40,6 +41,12 @@ namespace OrthancStone
     Orthanc::HttpClient client(parameters_, uri_);
     client.SetTimeout(60);
     client.SetMethod(Orthanc::HttpMethod_Get);
+
+    for (IWebService::Headers::const_iterator it = headers_.begin(); it != headers_.end(); it++ )
+    {
+      client.AddHeader(it->first, it->second);
+    }
+
     success_ = client.Apply(answer_);
   }
 

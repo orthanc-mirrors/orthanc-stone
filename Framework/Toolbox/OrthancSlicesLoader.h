@@ -116,7 +116,8 @@ namespace OrthancStone
       Mode_InstanceGeometry,
       Mode_FrameGeometry,
       Mode_LoadImage,
-      Mode_LoadRawImage
+      Mode_LoadRawImage,
+      Mode_LoadDicomFile
     };
 
     class Operation;
@@ -150,6 +151,10 @@ namespace OrthancStone
                             const void* answer,
                             size_t size);
 
+    void ParseSliceImagePam(const Operation& operation,
+                            const void* answer,
+                            size_t size);
+
     void ParseSliceImageJpeg(const Operation& operation,
                              const void* answer,
                              size_t size);
@@ -160,7 +165,10 @@ namespace OrthancStone
 
     void ScheduleSliceImagePng(const Slice& slice,
                                size_t index);
-    
+
+    void ScheduleSliceImagePam(const Slice& slice,
+                               size_t index);
+
     void ScheduleSliceImageJpeg(const Slice& slice,
                                 size_t index,
                                 SliceImageQuality quality);

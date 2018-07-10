@@ -88,7 +88,7 @@ namespace OrthancStone
         for (std::set<std::string>::const_iterator it = instances.begin();
              it != instances.end(); ++it)
         {
-          orthanc_.SchedulePostRequest(*this, "/tools/lookup", *it,
+          orthanc_.SchedulePostRequest(*this, "/tools/lookup", IWebService::Headers(), *it,
                                        new Operation(Operation::Type_LookupSopInstanceUid, *it));
         }
         
@@ -115,7 +115,7 @@ namespace OrthancStone
           }
 
           const std::string& instance = lookup[0]["ID"].asString();
-          orthanc_.ScheduleGetRequest(*this, "/instances/" + instance + "/tags",
+          orthanc_.ScheduleGetRequest(*this, "/instances/" + instance + "/tags", IWebService::Headers(),
                                       new Operation(Operation::Type_LoadReferencedSlice, instance));
         }
         else
@@ -161,7 +161,7 @@ namespace OrthancStone
     else
     {
       const std::string uri = "/instances/" + instance + "/tags?ignore-length=3006-0050";
-      orthanc_.ScheduleGetRequest(*this, uri, new Operation(Operation::Type_LoadStructureSet, instance));
+      orthanc_.ScheduleGetRequest(*this, uri, IWebService::Headers(), new Operation(Operation::Type_LoadStructureSet, instance));
     }
   }
 

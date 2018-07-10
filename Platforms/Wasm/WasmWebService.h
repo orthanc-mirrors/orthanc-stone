@@ -39,10 +39,12 @@ namespace OrthancStone
 
     virtual void ScheduleGetRequest(ICallback& callback,
                                     const std::string& uri,
+                                    const Headers& headers,
                                     Orthanc::IDynamicObject* payload);
 
     virtual void SchedulePostRequest(ICallback& callback,
                                      const std::string& uri,
+                                     const Headers& headers,
                                      const std::string& body,
                                      Orthanc::IDynamicObject* payload);
 

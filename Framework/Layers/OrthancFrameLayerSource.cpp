@@ -54,7 +54,7 @@ namespace OrthancStone
                                                       std::auto_ptr<Orthanc::ImageAccessor>& image,
                                                       SliceImageQuality quality)
   {
-    bool isFull = (quality == SliceImageQuality_Full);
+    bool isFull = (quality == SliceImageQuality_FullPng || quality == SliceImageQuality_FullPam);
     LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(image.release(), slice, isFull),
                                       slice.GetGeometry(), false);
   }
@@ -72,7 +72,7 @@ namespace OrthancStone
     LayerSourceBase(broker),
     OrthancSlicesLoader::ISliceLoaderObserver(broker),
     loader_(broker, *this, orthanc),
-    quality_(SliceImageQuality_Full)
+    quality_(SliceImageQuality_FullPng)
   {
   }
 

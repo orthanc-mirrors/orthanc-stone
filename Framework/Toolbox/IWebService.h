@@ -33,6 +33,8 @@ namespace OrthancStone
     protected:
         MessageBroker& broker_;
     public:
+        typedef std::map<std::string, std::string> Headers;
+
         class ICallback : public IObserver
         {
         public:
@@ -115,10 +117,12 @@ namespace OrthancStone
 
         virtual void ScheduleGetRequest(ICallback& callback,
                                         const std::string& uri,
+                                        const Headers& headers,
                                         Orthanc::IDynamicObject* payload) = 0;
 
         virtual void SchedulePostRequest(ICallback& callback,
                                          const std::string& uri,
+                                         const Headers& headers,
                                          const std::string& body,
                                          Orthanc::IDynamicObject* payload) = 0;
     };

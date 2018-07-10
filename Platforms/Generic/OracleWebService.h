@@ -46,17 +46,19 @@ namespace OrthancStone
 
     virtual void ScheduleGetRequest(ICallback& callback,
                                     const std::string& uri,
+                                    const Headers& headers,
                                     Orthanc::IDynamicObject* payload)
     {
-      oracle_.Submit(new WebServiceGetCommand(broker_, callback, parameters_, uri, payload));
+      oracle_.Submit(new WebServiceGetCommand(broker_, callback, parameters_, uri, headers, payload));
     }
 
     virtual void SchedulePostRequest(ICallback& callback,
                                      const std::string& uri,
+                                     const Headers& headers,
                                      const std::string& body,
                                      Orthanc::IDynamicObject* payload)
     {
-      oracle_.Submit(new WebServicePostCommand(broker_, callback, parameters_, uri, body, payload));
+      oracle_.Submit(new WebServicePostCommand(broker_, callback, parameters_, uri, headers, body, payload));
     }
 
     void Start()

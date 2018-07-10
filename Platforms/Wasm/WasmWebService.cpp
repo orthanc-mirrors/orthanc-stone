@@ -1,5 +1,6 @@
 #include "WasmWebService.h"
-
+#include "json/value.h"
+#include "json/writer.h"
 #include <emscripten/emscripten.h>
 
 #ifdef __cplusplus
@@ -8,10 +9,12 @@ extern "C" {
 
   extern void WasmWebService_ScheduleGetRequest(void* callback,
                                                 const char* uri,
+                                                const char* headersInJsonString,
                                                 void* payload);
   
   extern void WasmWebService_SchedulePostRequest(void* callback,
                                                  const char* uri,
+                                                 const char* headersInJsonString,
                                                  const void* body,
                                                  size_t bodySize,
                                                  void* payload);
@@ -77,21 +80,43 @@ namespace OrthancStone
     }
   }
 
+  void ToJsonString(std::string& output, const IWebService::Headers& headers)
+  {
+    Json::Value jsonHeaders;
+    for (IWebService::Headers::const_iterator it = headers.begin(); it != headers.end(); it++ )
+    {
+      jsonHeaders[it->first] = it->second;
+    }
+
+    Json::StreamWriterBuilder builder;
+    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+    std::ostringstream outputStr;
+
+    writer->write(jsonHeaders, &outputStr);
+    output = outputStr.str();
+  }
+
   void WasmWebService::ScheduleGetRequest(ICallback& callback,
                                           const std::string& relativeUri,
+                                          const Headers& headers,
                                           Orthanc::IDynamicObject* payload)
   {
     std::string uri = baseUri_ + relativeUri;
-    WasmWebService_ScheduleGetRequest(&callback, uri.c_str(), payload);
+    std::string headersInJsonString;
+    ToJsonString(headersInJsonString, headers);
+    WasmWebService_ScheduleGetRequest(&callback, uri.c_str(), headersInJsonString.c_str(), payload);
   }
 
   void WasmWebService::SchedulePostRequest(ICallback& callback,
                                            const std::string& relativeUri,
+                                           const Headers& headers,
                                            const std::string& body,
                                            Orthanc::IDynamicObject* payload)
   {
     std::string uri = baseUri_ + relativeUri;
-    WasmWebService_SchedulePostRequest(&callback, uri.c_str(),
+    std::string headersInJsonString;
+    ToJsonString(headersInJsonString, headers);
+    WasmWebService_SchedulePostRequest(&callback, uri.c_str(), headersInJsonString.c_str(),
                                        body.c_str(), body.size(), payload);
   }
 }

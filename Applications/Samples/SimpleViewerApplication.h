@@ -277,15 +277,18 @@ namespace OrthancStone
         // sources
         source_ = new OrthancFrameLayerSource(broker_, context_->GetWebService());
         source_->RegisterObserver(*this);
+        source_->SetImageQuality(SliceImageQuality_FullPam);
         source_->LoadFrame(instances_[currentInstanceIndex_], 0);
 
         mainViewport_->AddLayer(source_);
 
         OrthancFrameLayerSource* thumb0 = new OrthancFrameLayerSource(broker_, context_->GetWebService());
         thumb0->RegisterObserver(*this);
+        thumb0->SetImageQuality(SliceImageQuality_FullPam);
         thumb0->LoadFrame(instances_[0], 0);
         OrthancFrameLayerSource* thumb1 = new OrthancFrameLayerSource(broker_, context_->GetWebService());
         thumb1->RegisterObserver(*this);
+        thumb1->SetImageQuality(SliceImageQuality_FullPam);
         thumb1->LoadFrame(instances_[1], 0);
 
         thumbnails_[0]->AddLayer(thumb0);
@@ -312,6 +315,7 @@ namespace OrthancStone
 
         std::auto_ptr<OrthancFrameLayerSource> layer
             (new OrthancFrameLayerSource(broker_, context_->GetWebService()));
+        layer->SetImageQuality(SliceImageQuality_FullPam);
         layer->RegisterObserver(*this);
         layer->LoadFrame(instances_[currentInstanceIndex_], 0);
 

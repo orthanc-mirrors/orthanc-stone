@@ -29,11 +29,13 @@ namespace OrthancStone
                                              IWebService::ICallback& callback,
                                              const Orthanc::WebServiceParameters& parameters,
                                              const std::string& uri,
+                                             const IWebService::Headers& headers,
                                              Orthanc::IDynamicObject* payload /* takes ownership */) :
     IObservable(broker),
     callback_(callback),
     parameters_(parameters),
     uri_(uri),
+    headers_(headers),
     payload_(payload)
   {
     RegisterObserver(callback);

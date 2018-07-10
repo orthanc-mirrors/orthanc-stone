@@ -47,12 +47,12 @@ namespace OrthancStone
     if (success_)
     {
       IWebService::ICallback::HttpRequestSuccessMessage message(uri_, answer_.c_str(), answer_.size(), payload_.release());
-      Emit(message);
+      EmitMessage(message);
     }
     else
     {
       IWebService::ICallback::HttpRequestErrorMessage message(uri_, payload_.release());
-      Emit(message);
+      EmitMessage(message);
     }
   }
 }

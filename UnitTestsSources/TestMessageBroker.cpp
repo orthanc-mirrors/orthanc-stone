@@ -58,7 +58,7 @@ TEST(MessageBroker, NormalUsage)
   OrthancStone::IMessage genericMessage(OrthancStone::MessageType_Generic);
 
   // no observers have been registered -> nothing shall happen
-  observable.Emit(genericMessage);
+  observable.EmitMessage(genericMessage);
 
   ASSERT_EQ(0, globalCounter);
 
@@ -66,20 +66,20 @@ TEST(MessageBroker, NormalUsage)
   MyObserver observer(broker);
   observable.RegisterObserver(observer);
 
-  observable.Emit(genericMessage);
+  observable.EmitMessage(genericMessage);
 
   ASSERT_EQ(1, globalCounter);
 
   // check the observer is not called when another message is issued
   OrthancStone::IMessage wrongMessage(OrthancStone::MessageType_GeometryReady);
   // no observers have been registered
-  observable.Emit(wrongMessage);
+  observable.EmitMessage(wrongMessage);
 
   ASSERT_EQ(1, globalCounter);
 
   // unregister the observer, make sure nothing happens afterwards
   observable.UnregisterObserver(observer);
-  observable.Emit(genericMessage);
+  observable.EmitMessage(genericMessage);
   ASSERT_EQ(1, globalCounter);
 }
 
@@ -97,13 +97,13 @@ TEST(MessageBroker, DeleteObserverWhileRegistered)
     MyObserver observer(broker);
     observable.RegisterObserver(observer);
 
-    observable.Emit(genericMessage);
+    observable.EmitMessage(genericMessage);
 
     ASSERT_EQ(1, globalCounter);
   }
 
   // at this point, the observer has been deleted, the handle shall not be called again (and it shall not crash !)
-  observable.Emit(genericMessage);
+  observable.EmitMessage(genericMessage);
 
   ASSERT_EQ(1, globalCounter);
 }

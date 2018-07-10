@@ -28,6 +28,7 @@ namespace OrthancStone {
 
   class IObservable : public boost::noncopyable
   {
+  protected:
     MessageBroker&                     broker_;
 
     std::set<IObserver*>              observers_;
@@ -42,9 +43,9 @@ namespace OrthancStone {
     {
     }
 
-    void Emit(const IMessage& message)
+    void EmitMessage(const IMessage& message)
     {
-      broker_.Emit(*this, observers_, message);
+      broker_.EmitMessage(*this, observers_, message);
     }
 
     void RegisterObserver(IObserver& observer)

@@ -27,6 +27,7 @@
 #include "../../Framework/Widgets/LayerWidget.h"
 #include "../../Framework/Widgets/LayoutWidget.h"
 #include "../../Framework/Messages/IObserver.h"
+#include "../../Framework/SmartLoader.h"
 
 #include <Core/Logging.h>
 
@@ -195,18 +196,17 @@ namespace OrthancStone
       OrthancStone::WidgetViewport*                wasmViewport2_;
 
       IStatusBar*                     statusBar_;
-      OrthancFrameLayerSource*        source_;
       unsigned int                    slice_;
+      std::unique_ptr<SmartLoader>    smartLoader_;
 
     public:
       SimpleViewerApplication(MessageBroker& broker) :
+        IObserver(broker),
         mainLayout_(NULL),
         currentInstanceIndex_(0),
-        source_(NULL),
-        slice_(0),
         wasmViewport1_(NULL),
         wasmViewport2_(NULL),
-        IObserver(broker)
+        slice_(0)
       {
       }
 
@@ -275,24 +275,13 @@ namespace OrthancStone
         thumbnailsLayout_->AddWidget(thumbnails_[1]);
 
         // sources
-        source_ = new OrthancFrameLayerSource(broker_, context_->GetWebService());
-        source_->RegisterObserver(*this);
-        source_->SetImageQuality(SliceImageQuality_FullPam);
-        source_->LoadFrame(instances_[currentInstanceIndex_], 0);
+        smartLoader_.reset(new SmartLoader(broker_, context_->GetWebService()));
+        smartLoader_->SetImageQuality(SliceImageQuality_FullPam);
+        smartLoader_->RegisterObserver(*this);
 
-        mainViewport_->AddLayer(source_);
-
-        OrthancFrameLayerSource* thumb0 = new OrthancFrameLayerSource(broker_, context_->GetWebService());
-        thumb0->RegisterObserver(*this);
-        thumb0->SetImageQuality(SliceImageQuality_FullPam);
-        thumb0->LoadFrame(instances_[0], 0);
-        OrthancFrameLayerSource* thumb1 = new OrthancFrameLayerSource(broker_, context_->GetWebService());
-        thumb1->RegisterObserver(*this);
-        thumb1->SetImageQuality(SliceImageQuality_FullPam);
-        thumb1->LoadFrame(instances_[1], 0);
-
-        thumbnails_[0]->AddLayer(thumb0);
-        thumbnails_[1]->AddLayer(thumb1);
+        mainViewport_->AddLayer(smartLoader_->GetFrame(instances_[currentInstanceIndex_], 0));
+        thumbnails_[0]->AddLayer(smartLoader_->GetFrame(instances_[0], 0));
+        thumbnails_[1]->AddLayer(smartLoader_->GetFrame(instances_[1], 0));
 
         mainLayout_->SetTransmitMouseOver(true);
         interactor_.reset(new Interactor(*this));
@@ -313,13 +302,8 @@ namespace OrthancStone
 
         currentInstanceIndex_ = (currentInstanceIndex_ + 1) % instances_.size();
 
-        std::auto_ptr<OrthancFrameLayerSource> layer
-            (new OrthancFrameLayerSource(broker_, context_->GetWebService()));
-        layer->SetImageQuality(SliceImageQuality_FullPam);
-        layer->RegisterObserver(*this);
-        layer->LoadFrame(instances_[currentInstanceIndex_], 0);
+        mainViewport_->ReplaceLayer(0, smartLoader_->GetFrame(instances_[currentInstanceIndex_], 0));
 
-        mainViewport_->ReplaceLayer(0, layer.release());
       }
     };
 

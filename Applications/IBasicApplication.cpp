@@ -26,6 +26,7 @@
 
 #include <Core/Logging.h>
 #include <Core/HttpClient.h>
+#include <Core/Toolbox.h>
 #include <Plugins/Samples/Common/OrthancHttpConnection.h>
 
 namespace OrthancStone
@@ -85,7 +86,7 @@ namespace OrthancStone
      ******************************************************************/
 
     Orthanc::Logging::Initialize();
-    Orthanc::HttpClient::InitializeOpenSsl();
+    Orthanc::Toolbox::InitializeOpenSsl();
     Orthanc::HttpClient::GlobalInitialize();
     SdlWindow::GlobalInitialize();
 
@@ -282,7 +283,7 @@ namespace OrthancStone
 
     SdlWindow::GlobalFinalize();
     Orthanc::HttpClient::GlobalFinalize();
-    Orthanc::HttpClient::FinalizeOpenSsl();
+    Orthanc::Toolbox::FinalizeOpenSsl();
 
     return (success ? 0 : -1);
   }

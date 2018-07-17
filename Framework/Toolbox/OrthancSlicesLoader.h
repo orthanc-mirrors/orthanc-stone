@@ -125,7 +125,7 @@ namespace OrthancStone
 
     boost::shared_ptr<WebCallback>  webCallback_;  // This is a PImpl pattern
 
-    ISliceLoaderObserver&    userCallback_;
+    ISliceLoaderObserver&    userCallback_; // TODO: instead of passing a userCallback, use the generic messages
     IWebService&  orthanc_;
     State         state_;
     SlicesSorter  slices_;

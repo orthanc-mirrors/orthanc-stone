@@ -33,12 +33,29 @@ namespace OrthancStone
 
   void SmartLoader::HandleMessage(IObservable& from, const IMessage& message)
   {
+    switch (message.GetType()) {
+    case MessageType_SliceGeometryReady:
+      // TODO keep track of objects that have been loaded already
+      break;
+    case MessageType_SliceImageReady:
+      // TODO keep track of objects that have been loaded already
+      break;
+    default:
+      VLOG("unhandled message type" << message.GetType());
+    }
+
     // forward messages to its own observers
     IObservable::broker_.EmitMessage(from, IObservable::observers_, message);
   }
 
   ILayerSource* SmartLoader::GetFrame(const std::string& instanceId, unsigned int frame)
   {
+    // TODO: check if this frame has already been loaded or is already being loaded.
+    // - if already loaded: create a "clone" that will emit the GeometryReady/ImageReady messages "immediately"
+    //   (it can not be immediate because Observers needs to register first and this is done after this method returns)
+    // - if currently loading, we need to return an object that will observe the existing LayerSource and forward
+    //   the messages to its observables
+    // in both cases, we must be carefull about objects lifecycle !!!
     std::auto_ptr<OrthancFrameLayerSource> layerSource (new OrthancFrameLayerSource(IObserver::broker_, webService_));
     layerSource->SetImageQuality(imageQuality_);
     layerSource->RegisterObserver(*this);

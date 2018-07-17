@@ -25,33 +25,6 @@
 
 namespace OrthancStone
 {
-//  namespace
-//  {
-//    class LayerReadyFunctor : public boost::noncopyable
-//    {
-//    private:
-//      std::auto_ptr<ILayerRenderer>  layer_;
-//      const CoordinateSystem3D&      slice_;
-//      bool                           isError_;
-      
-//    public:
-//      LayerReadyFunctor(ILayerRenderer* layer,
-//                        const CoordinateSystem3D& slice,
-//                        bool isError) :
-//        layer_(layer),
-//        slice_(slice),
-//        isError_(isError)
-//      {
-//      }
-
-//      void operator() (ILayerSource::IObserver& observer,
-//                       const ILayerSource& source)
-//      {
-//        observer.NotifyLayerReady(layer_, source, slice_, isError_);
-//      }
-//    };
-//  }
-
   void LayerSourceBase::NotifyGeometryReady()
   {
     EmitMessage(IMessage(MessageType_GeometryReady));

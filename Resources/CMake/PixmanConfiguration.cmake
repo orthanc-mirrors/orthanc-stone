@@ -108,7 +108,8 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_PIXMAN)
     # No hardware acceleration
     set(PIXMAN_DEFINITIONS "${PIXMAN_DEFINITIONS};TLS=__thread")
 
-  elseif (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  elseif (CMAKE_SYSTEM_NAME STREQUAL "Emscripten" OR
+          CMAKE_SYSTEM_NAME STREQUAL "Android")
     ##########################
     ## Emscripten (asm.js)
     ##########################

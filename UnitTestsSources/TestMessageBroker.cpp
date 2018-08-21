@@ -38,7 +38,7 @@ public:
   {}
 
 
-  void HandleMessage(OrthancStone::IObservable& from, const OrthancStone::IMessage& message) {
+  void HandleMessage(const OrthancStone::IObservable& from, const OrthancStone::IMessage& message) {
     if (message.GetType() == OrthancStone::MessageType_Generic) {
       globalCounter++;
     }

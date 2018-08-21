@@ -46,7 +46,7 @@ namespace OrthancStone {
       broker_.Unregister(*this);
     }
 
-    virtual void HandleMessage(IObservable& from, const IMessage& message) = 0;
+    virtual void HandleMessage(const IObservable& from, const IMessage& message) = 0;
   };
 
 }

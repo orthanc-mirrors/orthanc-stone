@@ -56,7 +56,7 @@ namespace OrthancStone
       activeObservers_.erase(&observer);
     }
 
-    void EmitMessage(IObservable& from, std::set<IObserver*> observers, const IMessage& message);
+    void EmitMessage(const IObservable& from, std::set<IObserver*> observers, const IMessage& message);
   };
 
 }

@@ -31,49 +31,55 @@
 
 namespace OrthancStone
 {
-  void OrthancFrameLayerSource::OnSliceGeometryReady(const OrthancSlicesLoader& loader)
+  void OrthancFrameLayerSource::HandleMessage(const IObservable& from, const IMessage& message)
   {
-    if (loader.GetSliceCount() > 0)
+    switch (message.GetType())
     {
-      LayerSourceBase::NotifyGeometryReady();
-    }
-    else
+    case MessageType_SliceGeometryReady:
     {
+      const OrthancSlicesLoader& loader = dynamic_cast<const OrthancSlicesLoader&>(from);
+      if (loader.GetSliceCount() > 0)
+      {
+        LayerSourceBase::NotifyGeometryReady();
+      }
+      else
+      {
+        LayerSourceBase::NotifyGeometryError();
+      }
+
+    }; break;
+    case MessageType_SliceGeometryError:
+    {
+      const OrthancSlicesLoader& loader = dynamic_cast<const OrthancSlicesLoader&>(from);
       LayerSourceBase::NotifyGeometryError();
+    }; break;
+    case MessageType_SliceImageReady:
+    {
+      const OrthancSlicesLoader::SliceImageReadyMessage& msg = dynamic_cast<const OrthancSlicesLoader::SliceImageReadyMessage&>(message);
+      bool isFull = (msg.effectiveQuality_ == SliceImageQuality_FullPng || msg.effectiveQuality_ == SliceImageQuality_FullPam);
+      LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(msg.image_.release(), msg.slice_, isFull),
+                                        msg.slice_.GetGeometry(), false);
+
+    }; break;
+    case MessageType_SliceImageError:
+    {
+      const OrthancSlicesLoader::SliceImageErrorMessage& msg = dynamic_cast<const OrthancSlicesLoader::SliceImageErrorMessage&>(message);
+      LayerSourceBase::NotifyLayerReady(NULL, msg.slice_.GetGeometry(), true);
+    }; break;
+    default:
+      VLOG("unhandled message type" << message.GetType());
     }
-  }
-
-  void OrthancFrameLayerSource::OnSliceGeometryError(const OrthancSlicesLoader& loader)
-  {
-    LayerSourceBase::NotifyGeometryError();
-  }
-
-  void OrthancFrameLayerSource::OnSliceImageReady(const OrthancSlicesLoader& loader,
-                                                      unsigned int sliceIndex,
-                                                      const Slice& slice,
-                                                      std::auto_ptr<Orthanc::ImageAccessor>& image,
-                                                      SliceImageQuality quality)
-  {
-    bool isFull = (quality == SliceImageQuality_FullPng || quality == SliceImageQuality_FullPam);
-    LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(image.release(), slice, isFull),
-                                      slice.GetGeometry(), false);
-  }
-
-  void OrthancFrameLayerSource::OnSliceImageError(const OrthancSlicesLoader& loader,
-                                                      unsigned int sliceIndex,
-                                                      const Slice& slice,
-                                                      SliceImageQuality quality)
-  {
-    LayerSourceBase::NotifyLayerReady(NULL, slice.GetGeometry(), true);
   }
 
 
   OrthancFrameLayerSource::OrthancFrameLayerSource(MessageBroker& broker, IWebService& orthanc) :
     LayerSourceBase(broker),
-    OrthancSlicesLoader::ISliceLoaderObserver(broker),
-    loader_(broker, *this, orthanc),
+    IObserver(broker),
+    //OrthancSlicesLoader::ISliceLoaderObserver(broker),
+    loader_(broker, orthanc),
     quality_(SliceImageQuality_FullPng)
   {
+    loader_.RegisterObserver(*this);
   }
 
   

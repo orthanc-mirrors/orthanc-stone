@@ -253,15 +253,17 @@ namespace OrthancStone
       {
       case Mode_FrameGeometry:
       case Mode_SeriesGeometry:
-        that_.userCallback_.OnSliceGeometryError(that_);
+        that_.EmitMessage(IMessage(MessageType_SliceGeometryError));
         that_.state_ = State_Error;
         break;
         
       case Mode_LoadImage:
-        that_.userCallback_.OnSliceImageError(that_, operation->GetSliceIndex(),
-                                              operation->GetSlice(),
-                                              operation->GetQuality());
-        break;
+      {
+        OrthancSlicesLoader::SliceImageErrorMessage msg(operation->GetSliceIndex(),
+                                   operation->GetSlice(),
+                                   operation->GetQuality());
+        that_.EmitMessage(msg);
+      }; break;
 
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
@@ -269,36 +271,10 @@ namespace OrthancStone
     }
   };
   
-  void OrthancSlicesLoader::ISliceLoaderObserver::HandleMessage(IObservable& from, const IMessage& message)
+  void OrthancSlicesLoader::HandleMessage(const IObservable& from, const IMessage& message)
   {
-    switch (message.GetType())
-    {
-    case MessageType_SliceGeometryReady:
-      OnSliceGeometryReady(dynamic_cast<OrthancSlicesLoader&>(from));
-      break;
-    case MessageType_SliceGeometryError:
-      OnSliceGeometryError(dynamic_cast<OrthancSlicesLoader&>(from));
-      break;
-    case MessageType_SliceImageReady:
-    {
-      const SliceImageReadyMessage& msg = dynamic_cast<const SliceImageReadyMessage&>(message);
-      OnSliceImageReady(dynamic_cast<OrthancSlicesLoader&>(from),
-                        msg.sliceIndex_,
-                        msg.slice_,
-                        msg.image_,
-                        msg.effectiveQuality_);
-    }; break;
-    case MessageType_SliceImageError:
-    {
-      const SliceImageErrorMessage& msg = dynamic_cast<const SliceImageErrorMessage&>(message);
-      OnSliceImageError(dynamic_cast<OrthancSlicesLoader&>(from),
-                        msg.sliceIndex_,
-                        msg.slice_,
-                        msg.effectiveQuality_);
-    }; break;
-    default:
-      VLOG("unhandled message type" << message.GetType());
-    }
+    // forward messages to its own observers
+    IObservable::broker_.EmitMessage(from, IObservable::observers_, message);
   }
 
   
@@ -311,16 +287,16 @@ namespace OrthancStone
     }
     else
     {
-      userCallback_.OnSliceImageReady
-          (*this, operation.GetSliceIndex(), operation.GetSlice(), image, operation.GetQuality());
+      OrthancSlicesLoader::SliceImageReadyMessage msg(operation.GetSliceIndex(), operation.GetSlice(), image, operation.GetQuality());
+      EmitMessage(msg);
     }
   }
   
   
   void OrthancSlicesLoader::NotifySliceImageError(const Operation& operation) const
   {
-    userCallback_.OnSliceImageError
-        (*this, operation.GetSliceIndex(), operation.GetSlice(), operation.GetQuality());
+    OrthancSlicesLoader::SliceImageErrorMessage msg(operation.GetSliceIndex(), operation.GetSlice(), operation.GetQuality());
+    EmitMessage(msg);
   }
   
   
@@ -345,12 +321,12 @@ namespace OrthancStone
     if (ok)
     {
       LOG(INFO) << "Loaded a series with " << slices_.GetSliceCount() << " slice(s)";
-      userCallback_.OnSliceGeometryReady(*this);
+      EmitMessage(IMessage(MessageType_SliceGeometryReady));
     }
     else
     {
       LOG(ERROR) << "This series is empty";
-      userCallback_.OnSliceGeometryError(*this);
+      EmitMessage(IMessage(MessageType_SliceGeometryError));
     }
   }
   
@@ -362,7 +338,7 @@ namespace OrthancStone
     if (!MessagingToolbox::ParseJson(series, answer, size) ||
         series.type() != Json::objectValue)
     {
-      userCallback_.OnSliceGeometryError(*this);
+      EmitMessage(IMessage(MessageType_SliceGeometryError));
       return;
     }
     
@@ -409,7 +385,7 @@ namespace OrthancStone
     if (!MessagingToolbox::ParseJson(tags, answer, size) ||
         tags.type() != Json::objectValue)
     {
-      userCallback_.OnSliceGeometryError(*this);
+      EmitMessage(IMessage(MessageType_SliceGeometryError));
       return;
     }
     
@@ -436,7 +412,7 @@ namespace OrthancStone
       else
       {
         LOG(WARNING) << "Skipping invalid multi-frame instance " << instanceId;
-        userCallback_.OnSliceGeometryError(*this);
+        EmitMessage(IMessage(MessageType_SliceGeometryError));
         return;
       }
     }
@@ -454,7 +430,7 @@ namespace OrthancStone
     if (!MessagingToolbox::ParseJson(tags, answer, size) ||
         tags.type() != Json::objectValue)
     {
-      userCallback_.OnSliceGeometryError(*this);
+      EmitMessage(IMessage(MessageType_SliceGeometryError));
       return;
     }
     
@@ -468,14 +444,14 @@ namespace OrthancStone
     std::auto_ptr<Slice> slice(new Slice);
     if (slice->ParseOrthancFrame(dicom, instanceId, frame))
     {
-      LOG(INFO) << "Loaded instance " << instanceId;
+      LOG(INFO) << "Loaded instance geometry " << instanceId;
       slices_.AddSlice(slice.release());
-      userCallback_.OnSliceGeometryReady(*this);
+      EmitMessage(IMessage(MessageType_SliceGeometryReady));
     }
     else
     {
       LOG(WARNING) << "Skipping invalid instance " << instanceId;
-      userCallback_.OnSliceGeometryError(*this);
+      EmitMessage(IMessage(MessageType_SliceGeometryError));
     }
   }
   
@@ -800,10 +776,11 @@ namespace OrthancStone
   
   
   OrthancSlicesLoader::OrthancSlicesLoader(MessageBroker& broker,
-                                           ISliceLoaderObserver& callback,
+                                           //ISliceLoaderObserver& callback,
                                            IWebService& orthanc) :
+    IObservable(broker),
     webCallback_(new WebCallback(broker, *this)),
-    userCallback_(callback),
+    //userCallback_(callback),
     orthanc_(orthanc),
     state_(State_Initialization)
   {

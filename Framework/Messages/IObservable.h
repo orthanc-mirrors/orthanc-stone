@@ -43,7 +43,7 @@ namespace OrthancStone {
     {
     }
 
-    void EmitMessage(const IMessage& message)
+    void EmitMessage(const IMessage& message) const
     {
       broker_.EmitMessage(*this, observers_, message);
     }

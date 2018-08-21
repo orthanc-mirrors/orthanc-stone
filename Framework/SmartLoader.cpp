@@ -21,6 +21,7 @@
 
 #include "SmartLoader.h"
 #include "Layers/OrthancFrameLayerSource.h"
+#include "Layers/OrthancFrameLayer.h"
 
 namespace OrthancStone
 {
@@ -31,15 +32,19 @@ namespace OrthancStone
     webService_(webService)
   {}
 
-  void SmartLoader::HandleMessage(IObservable& from, const IMessage& message)
+  void SmartLoader::HandleMessage(const IObservable& from, const IMessage& message)
   {
     switch (message.GetType()) {
     case MessageType_SliceGeometryReady:
+    {
+      const OrthancFrameLayerSource* layerSource=dynamic_cast<const OrthancFrameLayerSource*>(&from);
       // TODO keep track of objects that have been loaded already
-      break;
+    }; break;
     case MessageType_SliceImageReady:
+    {
+      const OrthancFrameLayerSource* layerSource=dynamic_cast<const OrthancFrameLayerSource*>(&from);
       // TODO keep track of objects that have been loaded already
-      break;
+    }; break;
     default:
       VLOG("unhandled message type" << message.GetType());
     }
@@ -62,6 +67,17 @@ namespace OrthancStone
     layerSource->LoadFrame(instanceId, frame);
 
     return layerSource.release();
+  }
+
+
+  void PreloadStudy(const std::string studyId)
+  {
+    /* TODO */
+  }
+
+  void PreloadSeries(const std::string seriesId)
+  {
+    /* TODO */
   }
 
 

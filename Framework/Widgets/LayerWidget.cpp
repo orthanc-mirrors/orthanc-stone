@@ -480,26 +480,26 @@ namespace OrthancStone
     }
   }
 
-  void LayerWidget::HandleMessage(IObservable& from, const IMessage& message)
+  void LayerWidget::HandleMessage(const IObservable& from, const IMessage& message)
   {
     switch (message.GetType()) {
     case MessageType_GeometryReady:
-      OnGeometryReady(dynamic_cast<ILayerSource&>(from));
+      OnGeometryReady(dynamic_cast<const ILayerSource&>(from));
       break;
     case MessageType_GeometryError:
       LOG(ERROR) << "Cannot get geometry";
       break;
     case MessageType_ContentChanged:
-      OnContentChanged(dynamic_cast<ILayerSource&>(from));
+      OnContentChanged(dynamic_cast<const ILayerSource&>(from));
       break;
     case MessageType_SliceChanged:
-      OnSliceChanged(dynamic_cast<ILayerSource&>(from), dynamic_cast<const ILayerSource::SliceChangedMessage&>(message).slice_);
+      OnSliceChanged(dynamic_cast<const ILayerSource&>(from), dynamic_cast<const ILayerSource::SliceChangedMessage&>(message).slice_);
       break;
     case MessageType_LayerReady:
     {
       const ILayerSource::LayerReadyMessage& layerReadyMessage = dynamic_cast<const ILayerSource::LayerReadyMessage&>(message);
       OnLayerReady(layerReadyMessage.layer_,
-                   dynamic_cast<ILayerSource&>(from),
+                   dynamic_cast<const ILayerSource&>(from),
                    layerReadyMessage.slice_,
                    layerReadyMessage.isError_);
     }; break;

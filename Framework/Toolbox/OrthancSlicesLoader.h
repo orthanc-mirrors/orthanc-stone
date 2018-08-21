@@ -29,7 +29,7 @@
 
 namespace OrthancStone
 {
-  class OrthancSlicesLoader : public boost::noncopyable
+  class OrthancSlicesLoader : public IObservable
   {
   public:
     struct SliceImageReadyMessage : public IMessage
@@ -68,38 +68,6 @@ namespace OrthancStone
       {
       }
     };
-
-  public:
-    class ISliceLoaderObserver : public IObserver
-    {
-    public:
-
-      ISliceLoaderObserver(MessageBroker& broker)
-        : IObserver(broker)
-      {
-      }
-
-      virtual ~ISliceLoaderObserver()
-      {
-      }
-
-      virtual void HandleMessage(IObservable& from, const IMessage& message);
-
-      virtual void OnSliceGeometryReady(const OrthancSlicesLoader& loader) = 0;
-
-      virtual void OnSliceGeometryError(const OrthancSlicesLoader& loader) = 0;
-
-      virtual void OnSliceImageReady(const OrthancSlicesLoader& loader,
-                                         unsigned int sliceIndex,
-                                         const Slice& slice,
-                                         std::auto_ptr<Orthanc::ImageAccessor>& image,
-                                         SliceImageQuality effectiveQuality) = 0;
-
-      virtual void OnSliceImageError(const OrthancSlicesLoader& loader,
-                                         unsigned int sliceIndex,
-                                         const Slice& slice,
-                                         SliceImageQuality quality) = 0;
-    };
     
   private:
     enum State
@@ -125,7 +93,6 @@ namespace OrthancStone
 
     boost::shared_ptr<WebCallback>  webCallback_;  // This is a PImpl pattern
 
-    ISliceLoaderObserver&    userCallback_; // TODO: instead of passing a userCallback, use the generic messages
     IWebService&  orthanc_;
     State         state_;
     SlicesSorter  slices_;
@@ -177,7 +144,7 @@ namespace OrthancStone
     
   public:
     OrthancSlicesLoader(MessageBroker& broker,
-                        ISliceLoaderObserver& callback,
+                        //ISliceLoaderObserver& callback,
                         IWebService& orthanc);
 
     void ScheduleLoadSeries(const std::string& seriesId);
@@ -198,5 +165,7 @@ namespace OrthancStone
 
     void ScheduleLoadSliceImage(size_t index,
                                 SliceImageQuality requestedQuality);
+
+    virtual void HandleMessage(const IObservable& from, const IMessage& message);
   };
 }

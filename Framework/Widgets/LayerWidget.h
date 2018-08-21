@@ -72,7 +72,7 @@ namespace OrthancStone
   public:
     LayerWidget(MessageBroker& broker);
 
-    virtual void HandleMessage(IObservable& from, const IMessage& message);
+    virtual void HandleMessage(const IObservable& from, const IMessage& message);
 
     virtual Extent2D GetSceneExtent();
  

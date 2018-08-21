@@ -27,28 +27,17 @@
 
 namespace OrthancStone
 {  
+  // this class is in charge of loading a Frame.
+  // once it's been loaded (first the geometry and then the image),
+  // messages are sent to observers so they can use it
   class OrthancFrameLayerSource :
     public LayerSourceBase,
-    private OrthancSlicesLoader::ISliceLoaderObserver
+    public IObserver
+    //private OrthancSlicesLoader::ISliceLoaderObserver
   {
   private:
     OrthancSlicesLoader  loader_;
     SliceImageQuality    quality_;
-
-    virtual void OnSliceGeometryReady(const OrthancSlicesLoader& loader);
-
-    virtual void OnSliceGeometryError(const OrthancSlicesLoader& loader);
-
-    virtual void OnSliceImageReady(const OrthancSlicesLoader& loader,
-                                       unsigned int sliceIndex,
-                                       const Slice& slice,
-                                       std::auto_ptr<Orthanc::ImageAccessor>& image,
-                                       SliceImageQuality quality);
-
-    virtual void OnSliceImageError(const OrthancSlicesLoader& loader,
-                                       unsigned int sliceIndex,
-                                       const Slice& slice,
-                                       SliceImageQuality quality);
 
   public:
     OrthancFrameLayerSource(MessageBroker& broker, IWebService& orthanc);
@@ -79,5 +68,7 @@ namespace OrthancStone
                            const CoordinateSystem3D& viewportSlice);
 
     virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice);
+
+    virtual void HandleMessage(const IObservable& from, const IMessage& message);
   };
 }

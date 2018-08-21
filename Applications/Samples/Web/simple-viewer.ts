@@ -1,3 +1,3 @@
 ///<reference path='../../../Platforms/Wasm/wasm-application.ts'/>
 
-InitializeWasmApplication("OrthancStoneSimpleViewer", "../../../stone-orthanc");
+InitializeWasmApplication("OrthancStoneSimpleViewer", "/orthanc");

@@ -87,7 +87,24 @@ Usage details are available as part of the Orthanc Book:
 http://book.orthanc-server.com/developers/stone.html
 
 Stone of Orthanc comes with several sample applications in the
-"Samples" folder. These samples use SDL.
+"Samples" folder. These samples can be compiled into Web Assembly
+or into native SDL applications.
+
+to build the WASM samples:
+```
+cd ~/orthanc-stone/Platforms/Wasm
+./build-wasm.sh
+```
+
+to serve the WASM samples:
+```
+# launch an Orthanc listening on 8042 port:
+Orthanc
+
+# launch an nginx that will serve the WASM static files and reverse proxy Orthanc
+sudo nginx -p $(pwd) -c nginx.local.conf
+```
+Now, you can open the samples in http://localhost:9977
 
 
 Licensing

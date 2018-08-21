@@ -91,6 +91,7 @@ Stone of Orthanc comes with several sample applications in the
 or into native SDL applications.
 
 to build the WASM samples:
+-------------------------
 ```
 cd ~/orthanc-stone/Platforms/Wasm
 ./build-wasm.sh
@@ -105,6 +106,24 @@ Orthanc
 sudo nginx -p $(pwd) -c nginx.local.conf
 ```
 Now, you can open the samples in http://localhost:9977
+
+to build the SDL native samples (SimpleViewer only):
+-------------------------------
+```
+mkdir -p ~/builds/orthanc-stone-build
+cd ~/builds/orthanc-stone-build
+cmake -DALLOW_DOWNLOADS=ON ~/orthanc-stone/
+cmake --build . --target OrthancStoneSimpleViewer -- -j 5
+```
+
+to execute the native samples:
+```
+# launch an Orthanc listening on 8042 port:
+Orthanc
+
+# launch the sample
+./OrthancStoneSimpleViewer --instance1=XX --instance2=XX
+``` 
 
 
 Licensing

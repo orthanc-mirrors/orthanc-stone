@@ -271,7 +271,7 @@ namespace OrthancStone
     }
   };
   
-  void OrthancSlicesLoader::HandleMessage(const IObservable& from, const IMessage& message)
+  void OrthancSlicesLoader::HandleMessage(IObservable& from, const IMessage& message)
   {
     // forward messages to its own observers
     IObservable::broker_.EmitMessage(from, IObservable::observers_, message);
@@ -279,7 +279,7 @@ namespace OrthancStone
 
   
   void OrthancSlicesLoader::NotifySliceImageSuccess(const Operation& operation,
-                                                    std::auto_ptr<Orthanc::ImageAccessor>& image) const
+                                                    std::auto_ptr<Orthanc::ImageAccessor>& image)
   {
     if (image.get() == NULL)
     {
@@ -293,7 +293,7 @@ namespace OrthancStone
   }
   
   
-  void OrthancSlicesLoader::NotifySliceImageError(const Operation& operation) const
+  void OrthancSlicesLoader::NotifySliceImageError(const Operation& operation)
   {
     OrthancSlicesLoader::SliceImageErrorMessage msg(operation.GetSliceIndex(), operation.GetSlice(), operation.GetQuality());
     EmitMessage(msg);

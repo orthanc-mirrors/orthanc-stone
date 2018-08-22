@@ -98,9 +98,9 @@ namespace OrthancStone
     SlicesSorter  slices_;
 
     void NotifySliceImageSuccess(const Operation& operation,
-                                 std::auto_ptr<Orthanc::ImageAccessor>& image) const;
+                                 std::auto_ptr<Orthanc::ImageAccessor>& image);
   
-    void NotifySliceImageError(const Operation& operation) const;
+    void NotifySliceImageError(const Operation& operation);
     
     void ParseSeriesGeometry(const void* answer,
                              size_t size);
@@ -166,6 +166,6 @@ namespace OrthancStone
     void ScheduleLoadSliceImage(size_t index,
                                 SliceImageQuality requestedQuality);
 
-    virtual void HandleMessage(const IObservable& from, const IMessage& message);
+    virtual void HandleMessage(IObservable& from, const IMessage& message);
   };
 }

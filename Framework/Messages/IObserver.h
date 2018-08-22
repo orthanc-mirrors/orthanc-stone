@@ -49,14 +49,14 @@ namespace OrthancStone {
       broker_.Unregister(*this);
     }
 
-    void HandleMessage_(const IObservable &from, const IMessage &message)
+    void HandleMessage_(IObservable &from, const IMessage &message)
     {
       assert(handledMessages_.find(message.GetType()) != handledMessages_.end()); // please declare the messages that you're handling
 
       HandleMessage(from, message);
     }
 
-    virtual void HandleMessage(const IObservable& from, const IMessage& message) = 0;
+    virtual void HandleMessage(IObservable& from, const IMessage& message) = 0;
 
 
     const std::set<MessageType>& GetHandledMessages() const

@@ -175,10 +175,10 @@ namespace OrthancStone
       //      }
 
 
-      virtual void HandleMessage(const IObservable& from, const IMessage& message) {
+      virtual void HandleMessage(IObservable& from, const IMessage& message) {
         switch (message.GetType()) {
         case MessageType_Widget_GeometryChanged:
-          //TODO remove constness !! dynamic_cast<const LayerWidget&>(from).SetDefaultView();
+          dynamic_cast<LayerWidget&>(from).SetDefaultView();
           break;
         default:
           VLOG("unhandled message type" << message.GetType());

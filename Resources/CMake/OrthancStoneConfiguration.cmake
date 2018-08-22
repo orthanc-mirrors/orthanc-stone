@@ -204,6 +204,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/FiniteProjectiveCamera.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/IWebService.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/MessagingToolbox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrientedBoundingBox.cpp

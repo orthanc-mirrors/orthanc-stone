@@ -61,7 +61,7 @@ namespace OrthancStone {
     {
     }
 
-    void EmitMessage(const IMessage& message) const
+    void EmitMessage(const IMessage& message)
     {
       if (emittableMessages_.find(message.GetType()) == emittableMessages_.end())
       {

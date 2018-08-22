@@ -31,7 +31,7 @@
 
 namespace OrthancStone
 {
-  void OrthancFrameLayerSource::HandleMessage(const IObservable& from, const IMessage& message)
+  void OrthancFrameLayerSource::HandleMessage(IObservable& from, const IMessage& message)
   {
     switch (message.GetType())
     {

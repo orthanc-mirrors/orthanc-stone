@@ -30,7 +30,7 @@
 
 namespace OrthancStone {
 
-  void MessageBroker::EmitMessage(const IObservable& from, std::set<IObserver*> observers, const IMessage& message)
+  void MessageBroker::EmitMessage(IObservable& from, std::set<IObserver*> observers, const IMessage& message)
   {
     std::vector<IObserver*> activeObservers;
     std::set_intersection(observers.begin(),

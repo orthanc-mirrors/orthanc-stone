@@ -490,7 +490,7 @@ namespace OrthancStone
     }
   }
 
-  void LayerWidget::HandleMessage(const IObservable& from, const IMessage& message)
+  void LayerWidget::HandleMessage(IObservable& from, const IMessage& message)
   {
     switch (message.GetType()) {
     case MessageType_LayerSource_GeometryReady:

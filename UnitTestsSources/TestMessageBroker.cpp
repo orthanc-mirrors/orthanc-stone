@@ -42,7 +42,7 @@ public:
   }
 
 
-  void HandleMessage(const OrthancStone::IObservable& from, const OrthancStone::IMessage& message) {
+  void HandleMessage(OrthancStone::IObservable& from, const OrthancStone::IMessage& message) {
     switch (message.GetType())
     {
     case OrthancStone::MessageType_Test1:
@@ -70,7 +70,7 @@ public:
   }
 
 
-  void HandleMessage(const OrthancStone::IObservable& from, const OrthancStone::IMessage& message) {
+  void HandleMessage(OrthancStone::IObservable& from, const OrthancStone::IMessage& message) {
     switch (message.GetType())
     {
     case OrthancStone::MessageType_Test1:

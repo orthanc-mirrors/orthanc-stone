@@ -36,7 +36,7 @@ namespace OrthancStone
   public:
     SmartLoader(MessageBroker& broker, IWebService& webService);  // TODO: add maxPreloadStorageSizeInBytes
 
-    virtual void HandleMessage(const IObservable& from, const IMessage& message);
+    virtual void HandleMessage(IObservable& from, const IMessage& message);
 
     void PreloadStudy(const std::string studyId);
     void PreloadSeries(const std::string seriesId);

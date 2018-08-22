@@ -69,6 +69,6 @@ namespace OrthancStone
 
     virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice);
 
-    virtual void HandleMessage(const IObservable& from, const IMessage& message);
+    virtual void HandleMessage(IObservable& from, const IMessage& message);
   };
 }

@@ -38,7 +38,7 @@ namespace OrthancStone
     DeclareIgnoredMessage(MessageType_LayerSource_SliceChanged);
   }
 
-  void SmartLoader::HandleMessage(const IObservable& from, const IMessage& message)
+  void SmartLoader::HandleMessage(IObservable& from, const IMessage& message)
   {
     switch (message.GetType()) {
     case MessageType_LayerSource_GeometryReady:

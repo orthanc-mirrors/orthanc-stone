@@ -177,8 +177,8 @@ namespace OrthancStone
 
       virtual void HandleMessage(const IObservable& from, const IMessage& message) {
         switch (message.GetType()) {
-        case MessageType_GeometryReady:
-          mainLayout_->SetDefaultView();
+        case MessageType_Widget_GeometryChanged:
+          //TODO remove constness !! dynamic_cast<const LayerWidget&>(from).SetDefaultView();
           break;
         default:
           VLOG("unhandled message type" << message.GetType());
@@ -208,6 +208,8 @@ namespace OrthancStone
         wasmViewport2_(NULL),
         slice_(0)
       {
+        DeclareIgnoredMessage(MessageType_Widget_ContentChanged);
+        DeclareHandledMessage(MessageType_Widget_GeometryChanged);
       }
 
       virtual void Finalize() {}
@@ -267,6 +269,9 @@ namespace OrthancStone
         mainViewport_ = new LayerWidget(broker_);
         thumbnails_.push_back(new LayerWidget(broker_));
         thumbnails_.push_back(new LayerWidget(broker_));
+        mainViewport_->RegisterObserver(*this);
+        thumbnails_[0]->RegisterObserver(*this);
+        thumbnails_[1]->RegisterObserver(*this);
 
         // hierarchy
         mainLayout_->AddWidget(thumbnailsLayout_);
@@ -277,7 +282,6 @@ namespace OrthancStone
         // sources
         smartLoader_.reset(new SmartLoader(broker_, context_->GetWebService()));
         smartLoader_->SetImageQuality(SliceImageQuality_FullPam);
-        smartLoader_->RegisterObserver(*this);
 
         mainViewport_->AddLayer(smartLoader_->GetFrame(instances_[currentInstanceIndex_], 0));
         thumbnails_[0]->AddLayer(smartLoader_->GetFrame(instances_[0], 0));

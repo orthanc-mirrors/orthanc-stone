@@ -93,7 +93,9 @@ add_definitions(
   -DORTHANC_ENABLE_LOGGING_PLUGIN=0
   )
 
-
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  add_definitions(-DCHECK_OBSERVERS_MESSAGES)
+endif()
 
 #####################################################################
 ## Embed the colormaps into the binaries

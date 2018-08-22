@@ -21,10 +21,27 @@
 
 #pragma once
 
-#include "MessageBroker.h"
 #include <set>
+#include <assert.h>
+#include <algorithm>
+#include <iostream>
+
+#include "MessageBroker.h"
+#include "MessageType.h"
+#include "IObserver.h"
 
 namespace OrthancStone {
+
+  class MessageNotDeclaredException : public std::logic_error
+  {
+    MessageType messageType_;
+  public:
+    MessageNotDeclaredException(MessageType messageType)
+      : std::logic_error("Message not declared by observer."),
+        messageType_(messageType)
+    {
+    }
+  };
 
   class IObservable : public boost::noncopyable
   {
@@ -32,6 +49,7 @@ namespace OrthancStone {
     MessageBroker&                     broker_;
 
     std::set<IObserver*>              observers_;
+    std::set<MessageType>             emittableMessages_;
 
   public:
 
@@ -45,17 +63,48 @@ namespace OrthancStone {
 
     void EmitMessage(const IMessage& message) const
     {
+      if (emittableMessages_.find(message.GetType()) == emittableMessages_.end())
+      {
+        throw MessageNotDeclaredException(message.GetType());
+      }
+
       broker_.EmitMessage(*this, observers_, message);
     }
 
     void RegisterObserver(IObserver& observer)
     {
+      CheckObserverDeclaredAllObservableMessages(observer);
       observers_.insert(&observer);
     }
 
     void UnregisterObserver(IObserver& observer)
     {
       observers_.erase(&observer);
+    }
+
+    const std::set<MessageType>& GetEmittableMessages() const
+    {
+      return emittableMessages_;
+    }
+
+  protected:
+
+    void DeclareEmittableMessage(MessageType messageType)
+    {
+      emittableMessages_.insert(messageType);
+    }
+
+    void CheckObserverDeclaredAllObservableMessages(IObserver& observer)
+    {
+      for (std::set<MessageType>::const_iterator it = emittableMessages_.begin(); it != emittableMessages_.end(); it++)
+      {
+        // the observer must have "declared" all observable messages
+        if (observer.GetHandledMessages().find(*it) == observer.GetHandledMessages().end()
+            && observer.GetIgnoredMessages().find(*it) == observer.GetIgnoredMessages().end())
+        {
+          throw MessageNotDeclaredException(*it);
+        }
+      }
     }
   };
 

@@ -27,17 +27,17 @@ namespace OrthancStone
 {
   void LayerSourceBase::NotifyGeometryReady()
   {
-    EmitMessage(IMessage(MessageType_GeometryReady));
+    EmitMessage(IMessage(MessageType_LayerSource_GeometryReady));
   }
     
   void LayerSourceBase::NotifyGeometryError()
   {
-    EmitMessage(IMessage(MessageType_GeometryError));
+    EmitMessage(IMessage(MessageType_LayerSource_GeometryError));
   }
     
   void LayerSourceBase::NotifyContentChange()
   {
-    EmitMessage(IMessage(MessageType_ContentChanged));
+    EmitMessage(IMessage(MessageType_LayerSource_ContentChanged));
   }
 
   void LayerSourceBase::NotifySliceChange(const Slice& slice)

@@ -28,21 +28,74 @@
 #include "../Framework/StoneEnumerations.h"
 
 
-static int globalCounter = 0;
-class MyObserver : public OrthancStone::IObserver
+static int test1Counter = 0;
+static int test2Counter = 0;
+class MyFullObserver : public OrthancStone::IObserver
 {
 
 public:
-  MyObserver(OrthancStone::MessageBroker& broker)
+  MyFullObserver(OrthancStone::MessageBroker& broker)
     : OrthancStone::IObserver(broker)
-  {}
+  {
+    DeclareHandledMessage(OrthancStone::MessageType_Test1);
+    DeclareIgnoredMessage(OrthancStone::MessageType_Test2);
+  }
 
 
   void HandleMessage(const OrthancStone::IObservable& from, const OrthancStone::IMessage& message) {
-    if (message.GetType() == OrthancStone::MessageType_Generic) {
-      globalCounter++;
+    switch (message.GetType())
+    {
+    case OrthancStone::MessageType_Test1:
+      test1Counter++;
+      break;
+    case OrthancStone::MessageType_Test2:
+      test2Counter++;
+      break;
+    default:
+      throw OrthancStone::MessageNotDeclaredException(message.GetType());
     }
+  }
 
+};
+
+class MyPartialObserver : public OrthancStone::IObserver
+{
+
+public:
+  MyPartialObserver(OrthancStone::MessageBroker& broker)
+    : OrthancStone::IObserver(broker)
+  {
+    DeclareHandledMessage(OrthancStone::MessageType_Test1);
+    // don't declare Test2 on purpose
+  }
+
+
+  void HandleMessage(const OrthancStone::IObservable& from, const OrthancStone::IMessage& message) {
+    switch (message.GetType())
+    {
+    case OrthancStone::MessageType_Test1:
+      test1Counter++;
+      break;
+    case OrthancStone::MessageType_Test2:
+      test2Counter++;
+      break;
+    default:
+      throw OrthancStone::MessageNotDeclaredException(message.GetType());
+    }
+  }
+
+};
+
+
+class MyObservable : public OrthancStone::IObservable
+{
+
+public:
+  MyObservable(OrthancStone::MessageBroker& broker)
+    : OrthancStone::IObservable(broker)
+  {
+    DeclareEmittableMessage(OrthancStone::MessageType_Test1);
+    DeclareEmittableMessage(OrthancStone::MessageType_Test2);
   }
 
 };
@@ -51,59 +104,55 @@ public:
 TEST(MessageBroker, NormalUsage)
 {
   OrthancStone::MessageBroker broker;
-  OrthancStone::IObservable observable(broker);
+  MyObservable observable(broker);
 
-  globalCounter = 0;
-
-  OrthancStone::IMessage genericMessage(OrthancStone::MessageType_Generic);
+  test1Counter = 0;
 
   // no observers have been registered -> nothing shall happen
-  observable.EmitMessage(genericMessage);
+  observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_Test1));
 
-  ASSERT_EQ(0, globalCounter);
+  ASSERT_EQ(0, test1Counter);
 
   // register an observer, check it is called
-  MyObserver observer(broker);
-  observable.RegisterObserver(observer);
+  MyFullObserver fullObserver(broker);
+  ASSERT_NO_THROW(observable.RegisterObserver(fullObserver));
 
-  observable.EmitMessage(genericMessage);
+  observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_Test1));
 
-  ASSERT_EQ(1, globalCounter);
+  ASSERT_EQ(1, test1Counter);
 
-  // check the observer is not called when another message is issued
-  OrthancStone::IMessage wrongMessage(OrthancStone::MessageType_GeometryReady);
-  // no observers have been registered
-  observable.EmitMessage(wrongMessage);
+  // register an invalid observer, check it raises an exception
+  MyPartialObserver partialObserver(broker);
+  ASSERT_THROW(observable.RegisterObserver(partialObserver), OrthancStone::MessageNotDeclaredException);
 
-  ASSERT_EQ(1, globalCounter);
+  // check an exception is thrown when the observable emits an undeclared message
+  ASSERT_THROW(observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_LayerSource_GeometryReady)), OrthancStone::MessageNotDeclaredException);
 
   // unregister the observer, make sure nothing happens afterwards
-  observable.UnregisterObserver(observer);
-  observable.EmitMessage(genericMessage);
-  ASSERT_EQ(1, globalCounter);
+  observable.UnregisterObserver(fullObserver);
+  observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_Test1));
+  ASSERT_EQ(1, test1Counter);
 }
 
 TEST(MessageBroker, DeleteObserverWhileRegistered)
 {
   OrthancStone::MessageBroker broker;
-  OrthancStone::IObservable observable(broker);
+  MyObservable observable(broker);
 
-  globalCounter = 0;
-
-  OrthancStone::IMessage genericMessage(OrthancStone::MessageType_Generic);
+  test1Counter = 0;
 
   {
     // register an observer, check it is called
-    MyObserver observer(broker);
+    MyFullObserver observer(broker);
     observable.RegisterObserver(observer);
 
-    observable.EmitMessage(genericMessage);
+    observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_Test1));
 
-    ASSERT_EQ(1, globalCounter);
+    ASSERT_EQ(1, test1Counter);
   }
 
   // at this point, the observer has been deleted, the handle shall not be called again (and it shall not crash !)
-  observable.EmitMessage(genericMessage);
+  observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_Test1));
 
-  ASSERT_EQ(1, globalCounter);
+  ASSERT_EQ(1, test1Counter);
 }

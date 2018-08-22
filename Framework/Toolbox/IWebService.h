@@ -70,7 +70,10 @@ namespace OrthancStone
 
             ICallback(MessageBroker& broker)
                 : IObserver(broker)
-            {}
+            {
+                DeclareHandledMessage(MessageType_HttpRequestError);
+                DeclareHandledMessage(MessageType_HttpRequestSuccess);
+            }
             virtual ~ICallback()
             {
             }

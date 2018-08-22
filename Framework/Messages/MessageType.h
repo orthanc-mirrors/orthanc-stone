@@ -24,21 +24,26 @@ namespace OrthancStone {
 
   enum MessageType
   {
-    MessageType_Generic,
+    MessageType_Widget_GeometryChanged,
+    MessageType_Widget_ContentChanged,
 
-    MessageType_GeometryReady,
-    MessageType_GeometryError,
-    MessageType_ContentChanged,
-    MessageType_SliceChanged,
-    MessageType_LayerReady,
+    MessageType_LayerSource_GeometryReady,
+    MessageType_LayerSource_GeometryError,
+    MessageType_LayerSource_ContentChanged,
+    MessageType_LayerSource_SliceChanged,
+    MessageType_LayerSource_LayerReady,
 
-    MessageType_SliceGeometryReady,
-    MessageType_SliceGeometryError,
-    MessageType_SliceImageReady,
-    MessageType_SliceImageError,
+    MessageType_SliceLoader_GeometryReady,
+    MessageType_SliceLoader_GeometryError,
+    MessageType_SliceLoader_ImageReady,
+    MessageType_SliceLoader_ImageError,
 
     MessageType_HttpRequestSuccess,
-    MessageType_HttpRequestError
+    MessageType_HttpRequestError,
 
+
+    // used in unit tests only
+    MessageType_Test1,
+    MessageType_Test2
   };
 }

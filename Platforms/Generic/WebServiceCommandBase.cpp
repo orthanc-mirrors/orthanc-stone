@@ -38,6 +38,8 @@ namespace OrthancStone
     headers_(headers),
     payload_(payload)
   {
+    DeclareEmittableMessage(MessageType_HttpRequestError);
+    DeclareEmittableMessage(MessageType_HttpRequestSuccess);
     RegisterObserver(callback);
   }
 

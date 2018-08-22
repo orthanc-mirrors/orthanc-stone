@@ -203,14 +203,14 @@ namespace OrthancStone
     {
       switch (message.GetType())
       {
-      case MessageType_SliceGeometryReady:
+      case MessageType_SliceLoader_GeometryReady:
         OnSliceGeometryReady(dynamic_cast<const OrthancSlicesLoader&>(from));
-      case MessageType_SliceGeometryError:
+      case MessageType_SliceLoader_GeometryError:
       {
         LOG(ERROR) << "Unable to download a volume image";
         SlicedVolumeBase::NotifyGeometryError();
       }; break;
-      case MessageType_SliceImageReady:
+      case MessageType_SliceLoader_ImageReady:
       {
         const OrthancSlicesLoader::SliceImageReadyMessage& msg = dynamic_cast<const OrthancSlicesLoader::SliceImageReadyMessage&>(message);
         OnSliceImageReady(dynamic_cast<const OrthancSlicesLoader&>(from),
@@ -219,7 +219,7 @@ namespace OrthancStone
                           msg.image_,
                           msg.effectiveQuality_);
       }; break;
-      case MessageType_SliceImageError:
+      case MessageType_SliceLoader_ImageError:
       {
           const OrthancSlicesLoader::SliceImageErrorMessage& msg = dynamic_cast<const OrthancSlicesLoader::SliceImageErrorMessage&>(message);
           LOG(ERROR) << "Cannot download slice " << msg.sliceIndex_ << " in a volume image";

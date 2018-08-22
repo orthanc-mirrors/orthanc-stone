@@ -361,8 +361,18 @@ namespace OrthancStone
   
   LayerWidget::LayerWidget(MessageBroker& broker) :
     IObserver(broker),
+    IObservable(broker),
     started_(false)
   {
+    DeclareHandledMessage(MessageType_LayerSource_GeometryReady);
+    DeclareHandledMessage(MessageType_LayerSource_ContentChanged);
+    DeclareHandledMessage(MessageType_LayerSource_LayerReady);
+    DeclareHandledMessage(MessageType_LayerSource_SliceChanged);
+    DeclareHandledMessage(MessageType_LayerSource_GeometryError);
+
+    DeclareEmittableMessage(MessageType_Widget_GeometryChanged);
+    DeclareEmittableMessage(MessageType_Widget_ContentChanged);
+
     SetBackgroundCleared(true);
   }
   
@@ -483,19 +493,19 @@ namespace OrthancStone
   void LayerWidget::HandleMessage(const IObservable& from, const IMessage& message)
   {
     switch (message.GetType()) {
-    case MessageType_GeometryReady:
+    case MessageType_LayerSource_GeometryReady:
       OnGeometryReady(dynamic_cast<const ILayerSource&>(from));
       break;
-    case MessageType_GeometryError:
+    case MessageType_LayerSource_GeometryError:
       LOG(ERROR) << "Cannot get geometry";
       break;
-    case MessageType_ContentChanged:
+    case MessageType_LayerSource_ContentChanged:
       OnContentChanged(dynamic_cast<const ILayerSource&>(from));
       break;
-    case MessageType_SliceChanged:
+    case MessageType_LayerSource_SliceChanged:
       OnSliceChanged(dynamic_cast<const ILayerSource&>(from), dynamic_cast<const ILayerSource::SliceChangedMessage&>(message).slice_);
       break;
-    case MessageType_LayerReady:
+    case MessageType_LayerSource_LayerReady:
     {
       const ILayerSource::LayerReadyMessage& layerReadyMessage = dynamic_cast<const ILayerSource::LayerReadyMessage&>(message);
       OnLayerReady(layerReadyMessage.layer_,
@@ -518,6 +528,7 @@ namespace OrthancStone
       changedLayers_[i] = true;
       //layers_[i]->ScheduleLayerCreation(slice_);
     }
+    EmitMessage(IMessage(MessageType_Widget_GeometryChanged));
   }
   
   void LayerWidget::InvalidateAllLayers()

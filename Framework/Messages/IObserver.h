@@ -23,7 +23,8 @@
 
 #include "MessageBroker.h"
 #include "IMessage.h"
-#include "IObservable.h"
+#include <set>
+#include <assert.h>
 
 namespace OrthancStone {
 
@@ -33,6 +34,8 @@ namespace OrthancStone {
   {
   protected:
     MessageBroker&                    broker_;
+    std::set<MessageType>             handledMessages_;
+    std::set<MessageType>             ignoredMessages_;
 
   public:
     IObserver(MessageBroker& broker)
@@ -46,7 +49,40 @@ namespace OrthancStone {
       broker_.Unregister(*this);
     }
 
+    void HandleMessage_(const IObservable &from, const IMessage &message)
+    {
+      assert(handledMessages_.find(message.GetType()) != handledMessages_.end()); // please declare the messages that you're handling
+
+      HandleMessage(from, message);
+    }
+
     virtual void HandleMessage(const IObservable& from, const IMessage& message) = 0;
+
+
+    const std::set<MessageType>& GetHandledMessages() const
+    {
+      return handledMessages_;
+    }
+
+    const std::set<MessageType>& GetIgnoredMessages() const
+    {
+      return ignoredMessages_;
+    }
+
+  protected:
+
+    // when you connect an IObserver to an IObservable, the observer must handle all observable messages (this is checked during the registration)
+    // so, all messages that may be emitted by the observable must be declared "handled" or "ignored" by the observer
+    void DeclareHandledMessage(MessageType messageType)
+    {
+      handledMessages_.insert(messageType);
+    }
+
+    void DeclareIgnoredMessage(MessageType messageType)
+    {
+      ignoredMessages_.insert(messageType);
+    }
+
   };
 
 }

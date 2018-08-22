@@ -24,7 +24,7 @@
 #include "IWebService.h"
 #include "SlicesSorter.h"
 #include "../StoneEnumerations.h"
-
+#include "../Messages/IObservable.h"
 #include <boost/shared_ptr.hpp>
 
 namespace OrthancStone
@@ -43,7 +43,7 @@ namespace OrthancStone
                         const Slice& slice,
                         std::auto_ptr<Orthanc::ImageAccessor>& image,
                         SliceImageQuality effectiveQuality)
-        : IMessage(MessageType_SliceImageReady),
+        : IMessage(MessageType_SliceLoader_ImageReady),
           sliceIndex_(sliceIndex),
           slice_(slice),
           image_(image),
@@ -61,7 +61,7 @@ namespace OrthancStone
       SliceImageErrorMessage(unsigned int sliceIndex,
                         const Slice& slice,
                         SliceImageQuality effectiveQuality)
-        : IMessage(MessageType_SliceImageError),
+        : IMessage(MessageType_SliceLoader_ImageError),
           slice_(slice),
           sliceIndex_(sliceIndex),
           effectiveQuality_(effectiveQuality)

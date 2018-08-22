@@ -35,7 +35,7 @@ namespace OrthancStone
   {
     switch (message.GetType())
     {
-    case MessageType_SliceGeometryReady:
+    case MessageType_SliceLoader_GeometryReady:
     {
       const OrthancSlicesLoader& loader = dynamic_cast<const OrthancSlicesLoader&>(from);
       if (loader.GetSliceCount() > 0)
@@ -48,12 +48,12 @@ namespace OrthancStone
       }
 
     }; break;
-    case MessageType_SliceGeometryError:
+    case MessageType_SliceLoader_GeometryError:
     {
       const OrthancSlicesLoader& loader = dynamic_cast<const OrthancSlicesLoader&>(from);
       LayerSourceBase::NotifyGeometryError();
     }; break;
-    case MessageType_SliceImageReady:
+    case MessageType_SliceLoader_ImageReady:
     {
       const OrthancSlicesLoader::SliceImageReadyMessage& msg = dynamic_cast<const OrthancSlicesLoader::SliceImageReadyMessage&>(message);
       bool isFull = (msg.effectiveQuality_ == SliceImageQuality_FullPng || msg.effectiveQuality_ == SliceImageQuality_FullPam);
@@ -61,7 +61,7 @@ namespace OrthancStone
                                         msg.slice_.GetGeometry(), false);
 
     }; break;
-    case MessageType_SliceImageError:
+    case MessageType_SliceLoader_ImageError:
     {
       const OrthancSlicesLoader::SliceImageErrorMessage& msg = dynamic_cast<const OrthancSlicesLoader::SliceImageErrorMessage&>(message);
       LayerSourceBase::NotifyLayerReady(NULL, msg.slice_.GetGeometry(), true);
@@ -79,6 +79,10 @@ namespace OrthancStone
     loader_(broker, orthanc),
     quality_(SliceImageQuality_FullPng)
   {
+    DeclareHandledMessage(MessageType_SliceLoader_GeometryReady);
+    DeclareHandledMessage(MessageType_SliceLoader_GeometryError);
+    DeclareHandledMessage(MessageType_SliceLoader_ImageReady);
+    DeclareHandledMessage(MessageType_SliceLoader_ImageError);
     loader_.RegisterObserver(*this);
   }
 

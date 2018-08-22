@@ -35,7 +35,7 @@ namespace OrthancStone
     {
       const Slice& slice_;
       SliceChangedMessage(const Slice& slice)
-        : IMessage(MessageType_SliceChanged),
+        : IMessage(MessageType_LayerSource_SliceChanged),
           slice_(slice)
       {
       }
@@ -50,7 +50,7 @@ namespace OrthancStone
       LayerReadyMessage(std::auto_ptr<ILayerRenderer>& layer,
                         const CoordinateSystem3D& slice,
                         bool isError)  // TODO Shouldn't this be separate as NotifyLayerError?
-        : IMessage(MessageType_LayerReady),
+        : IMessage(MessageType_LayerSource_LayerReady),
           layer_(layer),
           slice_(slice),
           isError_(isError)

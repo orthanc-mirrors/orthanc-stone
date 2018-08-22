@@ -42,7 +42,14 @@ namespace OrthancStone {
 
     for (std::vector<IObserver*>::iterator observer = activeObservers.begin(); observer != activeObservers.end(); observer++)
     {
-      (*observer)->HandleMessage(from, message);
+      if ((*observer)->GetHandledMessages().find(message.GetType()) != (*observer)->GetHandledMessages().end())
+      {
+        (*observer)->HandleMessage_(from, message);
+      }
+      else
+      {
+        assert((*observer)->GetIgnoredMessages().find(message.GetType()) != (*observer)->GetIgnoredMessages().end()); // message has not been declared by Observer (this should already have been checked during registration)
+      }
     }
   }
 

@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -31,8 +31,9 @@
 namespace OrthancStone
 {
   class LayerWidget :
-    public WorldSceneWidget,
-    public IObserver
+      public WorldSceneWidget,
+      public IObserver,
+      public IObservable
   {
   private:
     class Scene;
@@ -59,12 +60,12 @@ namespace OrthancStone
     virtual void OnContentChanged(const ILayerSource& source);
 
     virtual void OnSliceChanged(const ILayerSource& source,
-                                   const Slice& slice);
+                                const Slice& slice);
 
     virtual void OnLayerReady(std::auto_ptr<ILayerRenderer>& renderer,
-                                  const ILayerSource& source,
-                                  const CoordinateSystem3D& slice,
-                                  bool isError);
+                              const ILayerSource& source,
+                              const CoordinateSystem3D& slice,
+                              bool isError);
 
 
     void ResetChangedLayers();
@@ -75,7 +76,7 @@ namespace OrthancStone
     virtual void HandleMessage(const IObservable& from, const IMessage& message);
 
     virtual Extent2D GetSceneExtent();
- 
+
   protected:
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view);

@@ -30,17 +30,23 @@ namespace OrthancStone
     IObserver(broker),
     imageQuality_(SliceImageQuality_FullPam),
     webService_(webService)
-  {}
+  {
+    DeclareHandledMessage(MessageType_LayerSource_GeometryReady);
+    DeclareHandledMessage(MessageType_LayerSource_LayerReady);
+    DeclareIgnoredMessage(MessageType_LayerSource_GeometryError);
+    DeclareIgnoredMessage(MessageType_LayerSource_ContentChanged);
+    DeclareIgnoredMessage(MessageType_LayerSource_SliceChanged);
+  }
 
   void SmartLoader::HandleMessage(const IObservable& from, const IMessage& message)
   {
     switch (message.GetType()) {
-    case MessageType_SliceGeometryReady:
+    case MessageType_LayerSource_GeometryReady:
     {
       const OrthancFrameLayerSource* layerSource=dynamic_cast<const OrthancFrameLayerSource*>(&from);
       // TODO keep track of objects that have been loaded already
     }; break;
-    case MessageType_SliceImageReady:
+    case MessageType_LayerSource_LayerReady:
     {
       const OrthancFrameLayerSource* layerSource=dynamic_cast<const OrthancFrameLayerSource*>(&from);
       // TODO keep track of objects that have been loaded already

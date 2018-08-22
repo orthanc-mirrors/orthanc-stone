@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -43,7 +43,13 @@ namespace OrthancStone
 
     LayerSourceBase(MessageBroker& broker)
       : ILayerSource(broker)
-    {}
+    {
+      DeclareEmittableMessage(MessageType_LayerSource_GeometryReady);
+      DeclareEmittableMessage(MessageType_LayerSource_GeometryError);
+      DeclareEmittableMessage(MessageType_LayerSource_ContentChanged);
+      DeclareEmittableMessage(MessageType_LayerSource_SliceChanged);
+      DeclareEmittableMessage(MessageType_LayerSource_LayerReady);
+    }
 
   };
 }

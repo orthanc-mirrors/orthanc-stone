@@ -253,7 +253,7 @@ namespace OrthancStone
       {
       case Mode_FrameGeometry:
       case Mode_SeriesGeometry:
-        that_.EmitMessage(IMessage(MessageType_SliceGeometryError));
+        that_.EmitMessage(IMessage(MessageType_SliceLoader_GeometryError));
         that_.state_ = State_Error;
         break;
         
@@ -321,12 +321,12 @@ namespace OrthancStone
     if (ok)
     {
       LOG(INFO) << "Loaded a series with " << slices_.GetSliceCount() << " slice(s)";
-      EmitMessage(IMessage(MessageType_SliceGeometryReady));
+      EmitMessage(IMessage(MessageType_SliceLoader_GeometryReady));
     }
     else
     {
       LOG(ERROR) << "This series is empty";
-      EmitMessage(IMessage(MessageType_SliceGeometryError));
+      EmitMessage(IMessage(MessageType_SliceLoader_GeometryError));
     }
   }
   
@@ -338,7 +338,7 @@ namespace OrthancStone
     if (!MessagingToolbox::ParseJson(series, answer, size) ||
         series.type() != Json::objectValue)
     {
-      EmitMessage(IMessage(MessageType_SliceGeometryError));
+      EmitMessage(IMessage(MessageType_SliceLoader_GeometryError));
       return;
     }
     
@@ -385,7 +385,7 @@ namespace OrthancStone
     if (!MessagingToolbox::ParseJson(tags, answer, size) ||
         tags.type() != Json::objectValue)
     {
-      EmitMessage(IMessage(MessageType_SliceGeometryError));
+      EmitMessage(IMessage(MessageType_SliceLoader_GeometryError));
       return;
     }
     
@@ -412,7 +412,7 @@ namespace OrthancStone
       else
       {
         LOG(WARNING) << "Skipping invalid multi-frame instance " << instanceId;
-        EmitMessage(IMessage(MessageType_SliceGeometryError));
+        EmitMessage(IMessage(MessageType_SliceLoader_GeometryError));
         return;
       }
     }
@@ -430,7 +430,7 @@ namespace OrthancStone
     if (!MessagingToolbox::ParseJson(tags, answer, size) ||
         tags.type() != Json::objectValue)
     {
-      EmitMessage(IMessage(MessageType_SliceGeometryError));
+      EmitMessage(IMessage(MessageType_SliceLoader_GeometryError));
       return;
     }
     
@@ -446,12 +446,12 @@ namespace OrthancStone
     {
       LOG(INFO) << "Loaded instance geometry " << instanceId;
       slices_.AddSlice(slice.release());
-      EmitMessage(IMessage(MessageType_SliceGeometryReady));
+      EmitMessage(IMessage(MessageType_SliceLoader_GeometryReady));
     }
     else
     {
       LOG(WARNING) << "Skipping invalid instance " << instanceId;
-      EmitMessage(IMessage(MessageType_SliceGeometryError));
+      EmitMessage(IMessage(MessageType_SliceLoader_GeometryError));
     }
   }
   
@@ -784,6 +784,10 @@ namespace OrthancStone
     orthanc_(orthanc),
     state_(State_Initialization)
   {
+    DeclareEmittableMessage(MessageType_SliceLoader_GeometryReady);
+    DeclareEmittableMessage(MessageType_SliceLoader_GeometryError);
+    DeclareEmittableMessage(MessageType_SliceLoader_ImageError);
+    DeclareEmittableMessage(MessageType_SliceLoader_ImageReady);
   }
   
   

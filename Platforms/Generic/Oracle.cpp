@@ -27,6 +27,7 @@
 
 #include <vector>
 #include <stdio.h>
+#include <boost/thread/mutex.hpp>
 
 namespace OrthancStone
 {
@@ -40,7 +41,6 @@ namespace OrthancStone
       State_Stopped
     };
 
-    boost::mutex*                  globalMutex_;
     boost::mutex                   oracleMutex_;
     State                          state_;
     std::vector<boost::thread*>    threads_;
@@ -71,23 +71,13 @@ namespace OrthancStone
           // Random sleeping to test
           //boost::this_thread::sleep(boost::posix_time::milliseconds(50 * (1 + rand() % 10)));
 
-          if (that->globalMutex_ != NULL)
-          {
-            boost::mutex::scoped_lock lock(*that->globalMutex_);
-            command.Commit();
-          }
-          else
-          {
-            command.Commit();
-          }
+          command.Commit();
         }
       }
     }
     
   public:
-    PImpl(boost::mutex* globalMutex,
-          unsigned int threadCount) :
-      globalMutex_(globalMutex),
+    PImpl(unsigned int threadCount) :
       state_(State_Init),
       threads_(threadCount)
     {
@@ -182,18 +172,10 @@ namespace OrthancStone
   };
   
 
-  Oracle::Oracle(boost::mutex& globalMutex,
-                 unsigned int threadCount) :
-    pimpl_(new PImpl(&globalMutex, threadCount))
-  {
-  }
-
-
   Oracle::Oracle(unsigned int threadCount) :
-    pimpl_(new PImpl(NULL, threadCount))
+    pimpl_(new PImpl(threadCount))
   {
   }
-
 
   void Oracle::Start()
   {

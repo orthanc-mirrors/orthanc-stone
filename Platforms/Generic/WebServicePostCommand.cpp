@@ -31,8 +31,9 @@ namespace OrthancStone
                                                const std::string& uri,
                                                const IWebService::Headers& headers,
                                                const std::string& body,
-                                               Orthanc::IDynamicObject* payload /* takes ownership */) :
-    WebServiceCommandBase(broker, callback, parameters, uri, headers, payload),
+                                               Orthanc::IDynamicObject* payload /* takes ownership */,
+                                               BasicSdlApplicationContext& context) :
+    WebServiceCommandBase(broker, callback, parameters, uri, headers, payload, context),
     body_(body)
   {
   }

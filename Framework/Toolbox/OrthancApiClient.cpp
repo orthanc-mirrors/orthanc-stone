@@ -58,7 +58,7 @@ namespace OrthancStone {
   // Once the response is ready, it will emit a message to the responseObserver
   // the responseObserver must handle only that message (and not all messages from the OrthancApiClient)
   class OrthancApiClient::BaseRequest:
-      public IObserver,
+//      public IObserver,
       public IObservable,
       public Orthanc::IDynamicObject
   {
@@ -75,7 +75,8 @@ namespace OrthancStone {
                    const std::string& uri,
                    MessageType messageToEmitWhenResponseReady,
                    OrthancApiClient::Mode mode)
-      : IObserver(orthanc.broker_),
+      :
+        //IObserver(orthanc.broker_),
         IObservable(orthanc.broker_),
         uri_(uri),
         orthanc_(orthanc),
@@ -85,30 +86,30 @@ namespace OrthancStone {
       // this object will emit only a single message, the one the final responseObserver is expecting
       DeclareEmittableMessage(messageToEmitWhenResponseReady);
 
-      // this object is observing the OrthancApi so it must handle all messages
-      DeclareHandledMessage(MessageType_OrthancApi_InternalGetJsonResponseReady);
-      DeclareIgnoredMessage(MessageType_OrthancApi_InternalGetJsonResponseError);
+//      // this object is observing the OrthancApi so it must handle all messages
+//      DeclareHandledMessage(MessageType_OrthancApi_InternalGetJsonResponseReady);
+//      DeclareIgnoredMessage(MessageType_OrthancApi_InternalGetJsonResponseError);
 
-      orthanc_.RegisterObserver(*this);
+      //orthanc_.RegisterObserver(*this);
       this->RegisterObserver(responseObserver);
     }
     virtual ~BaseRequest() {}
 
-    // mainly maps OrthancApi internal messages to a message that is expected by the responseObserver
-    virtual void HandleMessage(IObservable& from, const IMessage& message)
-    {
-      switch (message.GetType())
-      {
-        case MessageType_OrthancApi_InternalGetJsonResponseReady:
-      {
-        const OrthancApiClient::InternalGetJsonResponseReadyMessage& messageReceived = dynamic_cast<const OrthancApiClient::InternalGetJsonResponseReadyMessage&>(message);
-        EmitMessage(OrthancApiClient::GetJsonResponseReadyMessage(messageToEmitWhenResponseReady_, messageReceived.request_->uri_, messageReceived.response_));
-        orthanc_.ReleaseRequest(messageReceived.request_);
-      }; break;
-      default:
-        throw MessageNotDeclaredException(message.GetType());
-      }
-    }
+//    // mainly maps OrthancApi internal messages to a message that is expected by the responseObserver
+//    virtual void HandleMessage(IObservable& from, const IMessage& message)
+//    {
+//      switch (message.GetType())
+//      {
+//        case MessageType_OrthancApi_InternalGetJsonResponseReady:
+//      {
+//        const OrthancApiClient::InternalGetJsonResponseReadyMessage& messageReceived = dynamic_cast<const OrthancApiClient::InternalGetJsonResponseReadyMessage&>(message);
+//        EmitMessage(OrthancApiClient::GetJsonResponseReadyMessage(messageToEmitWhenResponseReady_, messageReceived.request_->uri_, messageReceived.response_));
+//        orthanc_.ReleaseRequest(messageReceived.request_);
+//      }; break;
+//      default:
+//        throw MessageNotDeclaredException(message.GetType());
+//      }
+//    }
 
   };
 
@@ -139,20 +140,19 @@ namespace OrthancStone {
         Json::Value response;
         if (MessagingToolbox::ParseJson(response, answer, answerSize))
         {
-          OrthancApiClient::InternalGetJsonResponseReadyMessage msg(request, response);
-          that_.EmitMessage(msg);
+          request->EmitMessage(OrthancApiClient::GetJsonResponseReadyMessage(request->messageToEmitWhenResponseReady_, request->uri_, response));
         }
         else
         {
-          OrthancApiClient::InternalGetJsonResponseErrorMessage msg(request);
-          that_.EmitMessage(msg);
+//          OrthancApiClient::InternalGetJsonResponseErrorMessage msg(request);
+//          that_.EmitMessage(msg);
         }
       };  break;
 
       default:
-        that_.ReleaseRequest(request);
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
+      that_.ReleaseRequest(request);
     }
 
     virtual void OnHttpRequestError(const std::string& uri,
@@ -164,14 +164,15 @@ namespace OrthancStone {
       {
       case OrthancApiClient::Mode_GetJson:
       {
-        OrthancApiClient::InternalGetJsonResponseErrorMessage msg(request);
-        that_.EmitMessage(msg);
+//        OrthancApiClient::InternalGetJsonResponseErrorMessage msg(request);
+//        that_.EmitMessage(msg);
+          // TODO: the request shall send an error message
       };  break;
 
       default:
-        that_.ReleaseRequest(request);
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
+      that_.ReleaseRequest(request);
     }
   };
 

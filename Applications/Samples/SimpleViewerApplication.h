@@ -162,8 +162,6 @@ namespace OrthancStone
       {
         boost::program_options::options_description generic("Sample options");
         generic.add_options()
-            //          ("study", boost::program_options::value<std::string>(),
-            //           "Orthanc ID of the study")
             ("studyId", boost::program_options::value<std::string>(),
              "Orthanc ID of the study")
             ;
@@ -193,7 +191,7 @@ namespace OrthancStone
           thumbnailsLayout_->SetBackgroundColor(50, 50, 50);
           thumbnailsLayout_->SetVertical();
 
-          mainViewport_ = new LayerWidget(broker_);
+          mainViewport_ = new LayerWidget(broker_, "main-viewport");
           mainViewport_->RegisterObserver(*this);
 
           // hierarchy
@@ -203,10 +201,6 @@ namespace OrthancStone
           // sources
           smartLoader_.reset(new SmartLoader(broker_, context_->GetWebService()));
           smartLoader_->SetImageQuality(SliceImageQuality_FullPam);
-
-//          mainViewport_->AddLayer(smartLoader_->GetFrame(instances_[currentInstanceIndex_], 0));
-//          thumbnails_[0]->AddLayer(smartLoader_->GetFrame(instances_[0], 0));
-//          thumbnails_[1]->AddLayer(smartLoader_->GetFrame(instances_[1], 0));
 
           mainLayout_->SetTransmitMouseOver(true);
           interactor_.reset(new Interactor(*this));
@@ -253,19 +247,16 @@ namespace OrthancStone
         {
           LoadThumbnailForSeries(response["ID"].asString(), response["Instances"][0].asString());
         }
-        //TODO: create layout and start loading frames
-        //mainViewport_->AddLayer(smartLoader_->GetFrame(instances_[currentInstanceIndex_], 0));
-        //thumbnails_[0]->AddLayer(smartLoader_->GetFrame(instances_[0], 0));
-        //thumbnails_[1]->AddLayer(smartLoader_->GetFrame(instances_[1], 0));
       }
 
       void LoadThumbnailForSeries(const std::string& seriesId, const std::string& instanceId)
       {
-        LayerWidget* thumbnailWidget = new LayerWidget(broker_);
+        LOG(INFO) << "Loading thumbnail for series " << seriesId;
+        LayerWidget* thumbnailWidget = new LayerWidget(broker_, "thumbnail-series-" + seriesId);
+        thumbnails_.push_back(thumbnailWidget);
+        thumbnailsLayout_->AddWidget(thumbnailWidget);
         thumbnailWidget->RegisterObserver(*this);
         thumbnailWidget->AddLayer(smartLoader_->GetFrame(instanceId, 0));
-        thumbnailsLayout_->AddWidget(thumbnailWidget);
-        thumbnails_.push_back(thumbnailWidget);
       }
 
       void SelectStudy(const std::string& studyId)
@@ -273,15 +264,10 @@ namespace OrthancStone
         orthancApiClient_->ScheduleGetStudy(*this, studyId);
       }
 
-      void LoadSeries(const std::vector<std::string>& seriesIds)
-      {
-//        instances_.push_back(parameters["studyId"].as<std::string>());
-//        instances_.push_back(parameters["instance2"].as<std::string>());
-      }
-
       virtual void HandleMessage(IObservable& from, const IMessage& message) {
         switch (message.GetType()) {
         case MessageType_Widget_GeometryChanged:
+          LOG(INFO) << "Widget geometry ready: " << dynamic_cast<LayerWidget&>(from).GetName();
           dynamic_cast<LayerWidget&>(from).SetDefaultView();
           break;
         case MessageType_OrthancApi_GetStudyIds_Ready:

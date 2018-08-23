@@ -36,8 +36,7 @@ namespace OrthancStone
     SdlCairoSurface           surface_;
     bool                      viewportChanged_;
 
-    void SetSize(BasicSdlApplicationContext::ViewportLocker& locker,
-                 unsigned int width,
+    void SetSize(unsigned int width,
                  unsigned int height);
     
     void RenderFrame();

@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../Platforms/Generic/OracleWebService.h"
+#include "../Framework/Toolbox/IWebService.h"
 #include "../Framework/Viewport/WidgetViewport.h"
 
 #include <list>
@@ -32,14 +32,18 @@ namespace OrthancStone
   {
 
   protected:
-    IWebService& webService_;
+    IWebService* webService_;
   public:
-    BasicApplicationContext(IWebService& webService)
-      : webService_(webService)
+    BasicApplicationContext()
+      : webService_(NULL)
     {
     }
 
-    virtual IWebService& GetWebService() {return webService_;}
+    IWebService& GetWebService() {return *webService_;}
+    void SetWebService(IWebService& webService)
+    {
+      webService_ = &webService;
+    }
 //    virtual IWidget& SetCentralWidget(IWidget* widget) = 0;   // Takes ownership
 
     virtual ~BasicApplicationContext() {}

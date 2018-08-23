@@ -25,7 +25,6 @@
 #include "../../Framework/Volumes/ISlicedVolume.h"
 #include "../../Framework/Volumes/IVolumeLoader.h"
 #include "../../Framework/Widgets/IWorldSceneInteractor.h"
-#include "../../Platforms/Generic/OracleWebService.h"
 
 #include <list>
 #include <boost/thread.hpp>
@@ -39,45 +38,49 @@ namespace OrthancStone
 
     static void UpdateThread(BasicSdlApplicationContext* that);
 
-    OracleWebService*   oracleWebService_;
-    boost::mutex        viewportMutex_;
+    boost::mutex        globalMutex_;
     std::unique_ptr<WidgetViewport>      centralViewport_;
     boost::thread       updateThread_;
     bool                stopped_;
     unsigned int        updateDelay_;
 
   public:
-    class ViewportLocker : public boost::noncopyable
+    class GlobalMutexLocker: public boost::noncopyable
     {
-    private:
       boost::mutex::scoped_lock  lock_;
-      IViewport&                 viewport_;
-
     public:
-      ViewportLocker(BasicSdlApplicationContext& that) :
-        lock_(that.viewportMutex_),
-        viewport_(*(that.centralViewport_.get()))
-      {
-      }
-
-      IViewport& GetViewport() const
-      {
-        return viewport_;
-      }
+      GlobalMutexLocker(BasicSdlApplicationContext& that):
+        lock_(that.globalMutex_)
+      {}
     };
 
+//    class ViewportLocker : public boost::noncopyable
+//    {
+//    private:
+//      boost::mutex::scoped_lock  lock_;
+//      IViewport&                 viewport_;
+
+//    public:
+//      ViewportLocker(BasicSdlApplicationContext& that) :
+//        lock_(that.viewportMutex_),
+//        viewport_(*(that.centralViewport_.get()))
+//      {
+//      }
+
+//      IViewport& GetViewport() const
+//      {
+//        return viewport_;
+//      }
+//    };
+
     
-    BasicSdlApplicationContext(OracleWebService& webService);
+    BasicSdlApplicationContext();
 
     virtual ~BasicSdlApplicationContext() {}
 
     virtual IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
+    IViewport& GetCentralViewport() {return *(centralViewport_.get());}
 
-    virtual IWebService& GetWebService()
-    {
-      return webService_;
-    }
-    
     void Start();
 
     void Stop();

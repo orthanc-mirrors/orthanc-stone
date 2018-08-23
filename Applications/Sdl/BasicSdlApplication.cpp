@@ -33,6 +33,7 @@
 #include <Core/HttpClient.h>
 #include <Core/Toolbox.h>
 #include <Plugins/Samples/Common/OrthancHttpConnection.h>
+#include "../../Platforms/Generic/OracleWebService.h"
 
 namespace OrthancStone
 {
@@ -224,17 +225,17 @@ namespace OrthancStone
 
       LogStatusBar statusBar;
 
-      boost::mutex stoneGlobalMutex;
-      Oracle oracle(stoneGlobalMutex, 4); // use 4 threads to download content
-      OracleWebService webService(broker, oracle, webServiceParameters);
-      BasicSdlApplicationContext context(webService);
+      BasicSdlApplicationContext context;
+      Oracle oracle(4); // use 4 threads to download content
+      OracleWebService webService(broker, oracle, webServiceParameters, context);
+      context.SetWebService(webService);
 
       application.Initialize(&context, statusBar, parameters);
 
       {
-        BasicSdlApplicationContext::ViewportLocker locker(context);
+        BasicSdlApplicationContext::GlobalMutexLocker locker(context);
         context.SetCentralWidget(application.GetCentralWidget());
-        locker.GetViewport().SetStatusBar(statusBar);
+        context.GetCentralViewport().SetStatusBar(statusBar);
       }
 
       std::string title = application.GetTitle();
@@ -254,8 +255,8 @@ namespace OrthancStone
         SdlEngine sdl(window, context);
 
         {
-          BasicSdlApplicationContext::ViewportLocker locker(context);
-          locker.GetViewport().Register(sdl);  // (*)
+          BasicSdlApplicationContext::GlobalMutexLocker locker(context);
+          context.GetCentralViewport().Register(sdl);  // (*)
         }
 
         context.Start();

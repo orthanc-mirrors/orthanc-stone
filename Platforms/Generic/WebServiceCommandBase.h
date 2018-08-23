@@ -25,6 +25,7 @@
 
 #include "../../Framework/Toolbox/IWebService.h"
 #include "../../Framework/Messages/IObservable.h"
+#include "../../Applications/Sdl/BasicSdlApplicationContext.h"
 
 #include <Core/WebServiceParameters.h>
 
@@ -42,14 +43,16 @@ namespace OrthancStone
     std::auto_ptr<Orthanc::IDynamicObject>  payload_;
     bool                                    success_;
     std::string                             answer_;
+    BasicSdlApplicationContext&             context_;
 
   public:
     WebServiceCommandBase(MessageBroker& broker,
-                         IWebService::ICallback& callback,
-                         const Orthanc::WebServiceParameters& parameters,
-                         const std::string& uri,
-                         const std::map<std::string, std::string>& headers,
-                         Orthanc::IDynamicObject* payload /* takes ownership */);
+                          IWebService::ICallback& callback,
+                          const Orthanc::WebServiceParameters& parameters,
+                          const std::string& uri,
+                          const std::map<std::string, std::string>& headers,
+                          Orthanc::IDynamicObject* payload /* takes ownership */,
+                          BasicSdlApplicationContext& context);
 
     virtual void Execute() = 0;
 

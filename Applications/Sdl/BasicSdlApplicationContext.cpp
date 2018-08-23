@@ -20,6 +20,7 @@
 
 
 #include "BasicSdlApplicationContext.h"
+#include "../../Platforms/Generic/OracleWebService.h"
 
 namespace OrthancStone
 {
@@ -35,8 +36,8 @@ namespace OrthancStone
     while (!that->stopped_)
     {
       {
-        ViewportLocker locker(*that);
-        locker.GetViewport().UpdateContent();
+        GlobalMutexLocker locker(*that);
+        that->GetCentralViewport().UpdateContent();
       }
       
       boost::this_thread::sleep(boost::posix_time::milliseconds(that->updateDelay_));
@@ -44,12 +45,7 @@ namespace OrthancStone
   }
   
 
-  BasicSdlApplicationContext::BasicSdlApplicationContext(OracleWebService& webService) : // Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) :
-    BasicApplicationContext(webService),
-    oracleWebService_(&webService),
-//    oracle_(viewportMutex_, 4),  // Use 4 threads to download
-//    webService_(oracle_, orthanc),
-//    centralViewport_(centralViewport),
+  BasicSdlApplicationContext::BasicSdlApplicationContext() : // Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) :
     centralViewport_(new OrthancStone::WidgetViewport()),
     stopped_(true),
     updateDelay_(100)   // By default, 100ms between each refresh of the content
@@ -60,7 +56,7 @@ namespace OrthancStone
 
   void BasicSdlApplicationContext::Start()
   {
-    oracleWebService_->Start();
+    dynamic_cast<OracleWebService*>(webService_)->Start();
 
     if (centralViewport_->HasUpdateContent())
     {
@@ -79,6 +75,6 @@ namespace OrthancStone
       updateThread_.join();
     }
     
-    oracleWebService_->Stop();
+    dynamic_cast<OracleWebService*>(webService_)->Stop();
   }
 }

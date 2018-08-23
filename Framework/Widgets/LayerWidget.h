@@ -48,6 +48,7 @@ namespace OrthancStone
     std::auto_ptr<Scene>        currentScene_;
     std::auto_ptr<Scene>        pendingScene_;
     std::vector<bool>           changedLayers_;
+    std::string                 name_;
 
     bool LookupLayer(size_t& index /* out */,
                      const ILayerSource& layer) const;
@@ -71,7 +72,7 @@ namespace OrthancStone
     void ResetChangedLayers();
 
   public:
-    LayerWidget(MessageBroker& broker);
+    LayerWidget(MessageBroker& broker, const std::string& name);
 
     virtual void HandleMessage(IObservable& from, const IMessage& message);
 
@@ -92,9 +93,9 @@ namespace OrthancStone
     void InvalidateLayer(size_t layer);
     
   public:
-    LayerWidget();
-
     virtual ~LayerWidget();
+
+    const std::string& GetName() const {return name_;}
 
     size_t AddLayer(ILayerSource* layer);  // Takes ownership
 

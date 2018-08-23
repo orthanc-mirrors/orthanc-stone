@@ -26,17 +26,19 @@
 namespace OrthancStone
 {
   WebServiceCommandBase::WebServiceCommandBase(MessageBroker& broker,
-                                             IWebService::ICallback& callback,
-                                             const Orthanc::WebServiceParameters& parameters,
-                                             const std::string& uri,
-                                             const IWebService::Headers& headers,
-                                             Orthanc::IDynamicObject* payload /* takes ownership */) :
+                                               IWebService::ICallback& callback,
+                                               const Orthanc::WebServiceParameters& parameters,
+                                               const std::string& uri,
+                                               const IWebService::Headers& headers,
+                                               Orthanc::IDynamicObject* payload /* takes ownership */,
+                                               BasicSdlApplicationContext& context) :
     IObservable(broker),
     callback_(callback),
     parameters_(parameters),
     uri_(uri),
     headers_(headers),
-    payload_(payload)
+    payload_(payload),
+    context_(context)
   {
     DeclareEmittableMessage(MessageType_HttpRequestError);
     DeclareEmittableMessage(MessageType_HttpRequestSuccess);
@@ -46,6 +48,8 @@ namespace OrthancStone
 
   void WebServiceCommandBase::Commit()
   {
+    BasicSdlApplicationContext::GlobalMutexLocker lock(context_);  // we want to make sure that, i.e, the UpdateThread is not triggered while we are updating the "model" with the result of a WebServiceCommand
+
     if (success_)
     {
       IWebService::ICallback::HttpRequestSuccessMessage message(uri_, answer_.c_str(), answer_.size(), payload_.release());

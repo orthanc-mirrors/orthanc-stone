@@ -25,6 +25,7 @@
 #include "Oracle.h"
 #include "WebServiceGetCommand.h"
 #include "WebServicePostCommand.h"
+#include "../../Applications/Sdl/BasicSdlApplicationContext.h"
 
 namespace OrthancStone
 {
@@ -32,14 +33,17 @@ namespace OrthancStone
   {
   private:
     Oracle&                        oracle_;
+    BasicSdlApplicationContext&    context_;
     Orthanc::WebServiceParameters  parameters_;
 
   public:
     OracleWebService(MessageBroker& broker,
                      Oracle& oracle,
-                     const Orthanc::WebServiceParameters& parameters) : 
+                     const Orthanc::WebServiceParameters& parameters,
+                     BasicSdlApplicationContext& context) :
       IWebService(broker),
       oracle_(oracle),
+      context_(context),
       parameters_(parameters)
     {
     }
@@ -49,7 +53,7 @@ namespace OrthancStone
                                     const Headers& headers,
                                     Orthanc::IDynamicObject* payload)
     {
-      oracle_.Submit(new WebServiceGetCommand(broker_, callback, parameters_, uri, headers, payload));
+      oracle_.Submit(new WebServiceGetCommand(broker_, callback, parameters_, uri, headers, payload, context_));
     }
 
     virtual void SchedulePostRequest(ICallback& callback,
@@ -58,7 +62,7 @@ namespace OrthancStone
                                      const std::string& body,
                                      Orthanc::IDynamicObject* payload)
     {
-      oracle_.Submit(new WebServicePostCommand(broker_, callback, parameters_, uri, headers, body, payload));
+      oracle_.Submit(new WebServicePostCommand(broker_, callback, parameters_, uri, headers, body, payload, context_));
     }
 
     void Start()

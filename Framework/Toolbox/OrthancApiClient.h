@@ -50,8 +50,8 @@ namespace OrthancStone
                                   const std::string& uri,
                                   const Json::Value& response)
         : IMessage(messageType),
-          uri_(uri),
-          response_(response)
+          response_(response),
+          uri_(uri)
       {
       }
     };

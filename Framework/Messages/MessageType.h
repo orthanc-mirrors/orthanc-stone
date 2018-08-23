@@ -41,6 +41,12 @@ namespace OrthancStone {
     MessageType_HttpRequestSuccess,
     MessageType_HttpRequestError,
 
+    MessageType_OrthancApi_InternalGetJsonResponseReady,
+    MessageType_OrthancApi_InternalGetJsonResponseError,
+
+    MessageType_OrthancApi_GetStudyIds_Ready,
+    MessageType_OrthancApi_GetStudy_Ready,
+    MessageType_OrthancApi_GetSeries_Ready,
 
     // used in unit tests only
     MessageType_Test1,

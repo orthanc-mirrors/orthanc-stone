@@ -209,6 +209,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/MessagingToolbox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrientedBoundingBox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrthancSlicesLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrthancApiClient.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlices.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlicesCursor.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp

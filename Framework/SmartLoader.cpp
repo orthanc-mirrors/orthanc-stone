@@ -29,13 +29,17 @@ namespace OrthancStone
     IObservable(broker),
     IObserver(broker),
     imageQuality_(SliceImageQuality_FullPam),
-    webService_(webService)
+    webService_(webService),
+    orthancApiClient_(broker, webService)
   {
     DeclareHandledMessage(MessageType_LayerSource_GeometryReady);
     DeclareHandledMessage(MessageType_LayerSource_LayerReady);
     DeclareIgnoredMessage(MessageType_LayerSource_GeometryError);
     DeclareIgnoredMessage(MessageType_LayerSource_ContentChanged);
     DeclareIgnoredMessage(MessageType_LayerSource_SliceChanged);
+
+//    DeclareHandledMessage(MessageType_OrthancApi_InternalGetJsonResponseReady);
+//    DeclareIgnoredMessage(MessageType_OrthancApi_InternalGetJsonResponseError);
   }
 
   void SmartLoader::HandleMessage(IObservable& from, const IMessage& message)
@@ -51,6 +55,12 @@ namespace OrthancStone
       const OrthancFrameLayerSource* layerSource=dynamic_cast<const OrthancFrameLayerSource*>(&from);
       // TODO keep track of objects that have been loaded already
     }; break;
+//    case MessageType_OrthancApi_GetStudyIds_Ready:
+//    {
+
+//      const OrthancApiClient::GetJsonResponseReadyMessage& msg = dynamic_cast<OrthancApiClient::GetJsonResponseReadyMessage&>(message);
+
+//    }; break;
     default:
       VLOG("unhandled message type" << message.GetType());
     }
@@ -75,6 +85,10 @@ namespace OrthancStone
     return layerSource.release();
   }
 
+  void SmartLoader::LoadStudyList()
+  {
+//    orthancApiClient_.ScheduleGetJsonRequest("/studies");
+  }
 
   void PreloadStudy(const std::string studyId)
   {

@@ -47,7 +47,7 @@ add_library(OrthancStone STATIC
 
 macro(BuildSample Target Header Sample)
   add_executable(${Target}
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleMainSdl.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleMainNative.cpp
 #    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationContext.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleInteractor.h
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationBase.h

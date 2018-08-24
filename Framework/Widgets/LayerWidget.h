@@ -48,7 +48,6 @@ namespace OrthancStone
     std::auto_ptr<Scene>        currentScene_;
     std::auto_ptr<Scene>        pendingScene_;
     std::vector<bool>           changedLayers_;
-    std::string                 name_;
 
     bool LookupLayer(size_t& index /* out */,
                      const ILayerSource& layer) const;
@@ -94,8 +93,6 @@ namespace OrthancStone
     
   public:
     virtual ~LayerWidget();
-
-    const std::string& GetName() const {return name_;}
 
     size_t AddLayer(ILayerSource* layer);  // Takes ownership
 

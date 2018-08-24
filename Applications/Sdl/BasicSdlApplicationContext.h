@@ -24,7 +24,6 @@
 #include "../../Framework/Viewport/WidgetViewport.h"
 #include "../../Framework/Volumes/ISlicedVolume.h"
 #include "../../Framework/Volumes/IVolumeLoader.h"
-#include "../../Framework/Widgets/IWorldSceneInteractor.h"
 
 #include <list>
 #include <boost/thread.hpp>

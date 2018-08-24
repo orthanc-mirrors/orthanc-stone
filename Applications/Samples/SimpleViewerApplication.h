@@ -40,6 +40,51 @@ namespace OrthancStone
         public IObserver
     {
     private:
+      class ThumbnailInteractor : public IWorldSceneInteractor
+      {
+      private:
+        SimpleViewerApplication&  application_;
+      public:
+        ThumbnailInteractor(SimpleViewerApplication&  application) :
+          application_(application)
+        {
+        }
+
+        virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
+                                                            const ViewportGeometry& view,
+                                                            MouseButton button,
+                                                            double x,
+                                                            double y,
+                                                            IStatusBar* statusBar)
+        {
+          if (button == MouseButton_Left)
+          {
+            statusBar->SetMessage("trying to drag the thumbnail from " + widget.GetName());
+          }
+          return NULL;
+        }
+        virtual void MouseOver(CairoContext& context,
+                               WorldSceneWidget& widget,
+                               const ViewportGeometry& view,
+                               double x,
+                               double y,
+                               IStatusBar* statusBar)
+        {}
+
+        virtual void MouseWheel(WorldSceneWidget& widget,
+                                MouseWheelDirection direction,
+                                KeyboardModifiers modifiers,
+                                IStatusBar* statusBar)
+        {}
+
+        virtual void KeyPressed(WorldSceneWidget& widget,
+                                char key,
+                                KeyboardModifiers modifiers,
+                                IStatusBar* statusBar)
+        {};
+
+      };
+
       class Interactor : public IWorldSceneInteractor
       {
       private:
@@ -123,9 +168,10 @@ namespace OrthancStone
 
 
       std::unique_ptr<Interactor>     interactor_;
+      std::unique_ptr<ThumbnailInteractor>  thumbnailInteractor_;
       LayoutWidget*                   mainLayout_;
       LayoutWidget*                   thumbnailsLayout_;
-      LayerWidget*                    mainViewport_;
+      LayerWidget*                    mainWidget_;
       std::vector<LayerWidget*>       thumbnails_;
       std::vector<std::string>        instances_;
 
@@ -179,24 +225,24 @@ namespace OrthancStone
         statusBar_ = &statusBar;
 
         {// initialize viewports and layout
-          mainLayout_ = new LayoutWidget();
+          mainLayout_ = new LayoutWidget("main-layout");
           mainLayout_->SetPadding(10);
           mainLayout_->SetBackgroundCleared(true);
           mainLayout_->SetBackgroundColor(0, 0, 0);
           mainLayout_->SetHorizontal();
 
-          thumbnailsLayout_ = new LayoutWidget();
+          thumbnailsLayout_ = new LayoutWidget("thumbnail-layout");
           thumbnailsLayout_->SetPadding(10);
           thumbnailsLayout_->SetBackgroundCleared(true);
           thumbnailsLayout_->SetBackgroundColor(50, 50, 50);
           thumbnailsLayout_->SetVertical();
 
-          mainViewport_ = new LayerWidget(broker_, "main-viewport");
-          mainViewport_->RegisterObserver(*this);
+          mainWidget_ = new LayerWidget(broker_, "main-viewport");
+          mainWidget_->RegisterObserver(*this);
 
           // hierarchy
           mainLayout_->AddWidget(thumbnailsLayout_);
-          mainLayout_->AddWidget(mainViewport_);
+          mainLayout_->AddWidget(mainWidget_);
 
           // sources
           smartLoader_.reset(new SmartLoader(broker_, context_->GetWebService()));
@@ -204,7 +250,8 @@ namespace OrthancStone
 
           mainLayout_->SetTransmitMouseOver(true);
           interactor_.reset(new Interactor(*this));
-          mainViewport_->SetInteractor(*interactor_);
+          mainWidget_->SetInteractor(*interactor_);
+          thumbnailInteractor_.reset(new ThumbnailInteractor(*this));
         }
 
         statusBar.SetMessage("Use the key \"s\" to reinitialize the layout");
@@ -257,6 +304,7 @@ namespace OrthancStone
         thumbnailsLayout_->AddWidget(thumbnailWidget);
         thumbnailWidget->RegisterObserver(*this);
         thumbnailWidget->AddLayer(smartLoader_->GetFrame(instanceId, 0));
+        //thumbnailWidget->SetInteractor(*thumbnailInteractor_);
       }
 
       void SelectStudy(const std::string& studyId)
@@ -298,7 +346,7 @@ namespace OrthancStone
 
         currentInstanceIndex_ = (currentInstanceIndex_ + 1) % instances_.size();
 
-        mainViewport_->ReplaceLayer(0, smartLoader_->GetFrame(instances_[currentInstanceIndex_], 0));
+        mainWidget_->ReplaceLayer(0, smartLoader_->GetFrame(instances_[currentInstanceIndex_], 0));
 
       }
     };

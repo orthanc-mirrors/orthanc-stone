@@ -265,7 +265,8 @@ namespace OrthancStone
   }
 
 
-  LayoutWidget::LayoutWidget() :
+  LayoutWidget::LayoutWidget(const std::string& name) :
+    WidgetBase(name),
     isHorizontal_(true),
     width_(0),
     height_(0),

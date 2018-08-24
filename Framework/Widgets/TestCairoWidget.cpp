@@ -77,7 +77,8 @@ namespace OrthancStone
     }
 
 
-    TestCairoWidget::TestCairoWidget(bool animate) :
+    TestCairoWidget::TestCairoWidget(const std::string& name, bool animate) :
+      CairoWidget(name),
       width_(0),
       height_(0),
       value_(1),

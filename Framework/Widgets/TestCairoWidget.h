@@ -43,7 +43,7 @@ namespace OrthancStone
                                         int y);
 
     public:
-      TestCairoWidget(bool animate);
+      TestCairoWidget(const std::string& name, bool animate);
 
       virtual void SetSize(unsigned int width, 
                            unsigned int height);

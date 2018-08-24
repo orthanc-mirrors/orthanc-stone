@@ -43,7 +43,7 @@ namespace OrthancStone
                                const ViewportGeometry& view);
 
     public:
-      TestWorldSceneWidget(bool animate);
+      TestWorldSceneWidget(const std::string& name, bool animate);
 
       virtual Extent2D GetSceneExtent();
 

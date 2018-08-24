@@ -110,7 +110,8 @@ namespace OrthancStone
     }
 
 
-    TestWorldSceneWidget::TestWorldSceneWidget(bool animate) :
+    TestWorldSceneWidget::TestWorldSceneWidget(const std::string& name, bool animate) :
+      WorldSceneWidget(name),
       interactor_(new Interactor),
       animate_(animate),
       count_(0)

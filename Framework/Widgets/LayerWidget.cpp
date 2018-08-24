@@ -360,10 +360,10 @@ namespace OrthancStone
 
   
   LayerWidget::LayerWidget(MessageBroker& broker, const std::string& name) :
+    WorldSceneWidget(name),
     IObserver(broker),
     IObservable(broker),
-    started_(false),
-    name_(name)
+    started_(false)
   {
     DeclareHandledMessage(MessageType_LayerSource_GeometryReady);
     DeclareHandledMessage(MessageType_LayerSource_ContentChanged);
@@ -524,7 +524,7 @@ namespace OrthancStone
     size_t i;
     if (LookupLayer(i, source))
     {
-      LOG(INFO) << ": Geometry ready for layer " << i << " in " << name_;
+      LOG(INFO) << ": Geometry ready for layer " << i << " in " << GetName();
 
       changedLayers_[i] = true;
       //layers_[i]->ScheduleLayerCreation(slice_);

@@ -75,7 +75,8 @@ namespace OrthancStone
     void SetSceneExtent(ViewportGeometry& geometry);
 
   public:
-    WorldSceneWidget() :
+    WorldSceneWidget(const std::string& name) :
+      CairoWidget(name),
       interactor_(NULL)
     {
     }

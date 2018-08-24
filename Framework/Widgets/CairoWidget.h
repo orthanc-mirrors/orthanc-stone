@@ -38,6 +38,8 @@ namespace OrthancStone
                                       int y) = 0;
     
   public:
+    CairoWidget(const std::string& name);
+
     virtual void SetSize(unsigned int width,
                          unsigned int height);
 

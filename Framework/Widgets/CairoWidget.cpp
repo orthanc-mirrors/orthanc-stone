@@ -32,6 +32,10 @@ namespace OrthancStone
     return true;
   }
 
+  CairoWidget::CairoWidget(const std::string& name)
+    : WidgetBase(name)
+  {
+  }
 
   void CairoWidget::SetSize(unsigned int width,
                             unsigned int height)

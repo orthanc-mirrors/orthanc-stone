@@ -49,7 +49,7 @@ namespace OrthancStone
     void ComputeChildrenExtents();
 
   public:
-    LayoutWidget();
+    LayoutWidget(const std::string& name);
 
     virtual ~LayoutWidget();
 

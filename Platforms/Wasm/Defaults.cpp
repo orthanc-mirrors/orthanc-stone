@@ -87,7 +87,8 @@ extern "C" {
     application->DeclareStartupOptions(options);
     startupParametersBuilder.GetStartupParameters(parameters, options);
 
-    context.reset(new OrthancStone::BasicApplicationContext(OrthancStone::WasmWebService::GetInstance()));
+    context.reset(new OrthancStone::BasicApplicationContext());
+    context->SetWebService(OrthancStone::WasmWebService::GetInstance());
     application->Initialize(context.get(), statusBar_, parameters);
     application->InitializeWasm();
 

@@ -524,7 +524,7 @@ namespace OrthancStone
     size_t i;
     if (LookupLayer(i, source))
     {
-      LOG(INFO) << name_ << ": Geometry ready for layer " << i;
+      LOG(INFO) << ": Geometry ready for layer " << i << " in " << name_;
 
       changedLayers_[i] = true;
       //layers_[i]->ScheduleLayerCreation(slice_);

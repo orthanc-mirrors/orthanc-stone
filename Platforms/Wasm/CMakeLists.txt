@@ -31,7 +31,9 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s EXPORT_NAME='\"${WASM_M
 include(../../Resources/CMake/OrthancStoneParameters.cmake)
 
 SET(ORTHANC_SANDBOXED ON)
+SET(ENABLE_QT OFF)
 SET(ENABLE_SDL OFF)
+add_definitions(-DORTHANC_ENABLE_WASM=1)
 
 include(../../Resources/CMake/OrthancStoneConfiguration.cmake)
 

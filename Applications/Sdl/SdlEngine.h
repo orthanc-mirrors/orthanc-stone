@@ -24,7 +24,7 @@
 #if ORTHANC_ENABLE_SDL == 1
 
 #include "SdlCairoSurface.h"
-#include "BasicSdlApplicationContext.h"
+#include "../Generic/BasicNativeApplicationContext.h"
 
 namespace OrthancStone
 {
@@ -32,7 +32,7 @@ namespace OrthancStone
   {
   private:
     SdlWindow&                window_;
-    BasicSdlApplicationContext&  context_;
+    BasicNativeApplicationContext&  context_;
     SdlCairoSurface           surface_;
     bool                      viewportChanged_;
 
@@ -46,7 +46,7 @@ namespace OrthancStone
 
   public:
     SdlEngine(SdlWindow& window,
-              BasicSdlApplicationContext& context);
+              BasicNativeApplicationContext& context);
   
     virtual ~SdlEngine();
 

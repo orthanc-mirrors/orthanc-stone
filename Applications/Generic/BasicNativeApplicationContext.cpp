@@ -19,19 +19,19 @@
  **/
 
 
-#include "BasicSdlApplicationContext.h"
+#include "BasicNativeApplicationContext.h"
 #include "../../Platforms/Generic/OracleWebService.h"
 
 namespace OrthancStone
 {
-  IWidget& BasicSdlApplicationContext::SetCentralWidget(IWidget* widget)   // Takes ownership
+  IWidget& BasicNativeApplicationContext::SetCentralWidget(IWidget* widget)   // Takes ownership
   {
     centralViewport_->SetCentralWidget(widget);
     return *widget;
   }
 
 
-  void BasicSdlApplicationContext::UpdateThread(BasicSdlApplicationContext* that)
+  void BasicNativeApplicationContext::UpdateThread(BasicNativeApplicationContext* that)
   {
     while (!that->stopped_)
     {
@@ -45,7 +45,7 @@ namespace OrthancStone
   }
   
 
-  BasicSdlApplicationContext::BasicSdlApplicationContext() : // Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) :
+  BasicNativeApplicationContext::BasicNativeApplicationContext() : // Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) :
     centralViewport_(new OrthancStone::WidgetViewport()),
     stopped_(true),
     updateDelay_(100)   // By default, 100ms between each refresh of the content
@@ -54,7 +54,7 @@ namespace OrthancStone
   }
 
 
-  void BasicSdlApplicationContext::Start()
+  void BasicNativeApplicationContext::Start()
   {
     dynamic_cast<OracleWebService*>(webService_)->Start();
 
@@ -66,7 +66,7 @@ namespace OrthancStone
   }
 
 
-  void BasicSdlApplicationContext::Stop()
+  void BasicNativeApplicationContext::Stop()
   {
     stopped_ = true;
     

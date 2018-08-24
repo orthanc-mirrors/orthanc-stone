@@ -39,6 +39,10 @@ if (ORTHANC_SANDBOXED)
     message(FATAL_ERROR "Cannot enable SDL in sandboxed environments")
   endif()
 
+  if (ENABLE_QT)
+    message(FATAL_ERROR "Cannot enable QT in sandboxed environments")
+  endif()
+
   if (ENABLE_SSL)
     message(FATAL_ERROR "Cannot enable SSL in sandboxed environments")
   endif()
@@ -69,12 +73,21 @@ if (NOT ORTHANC_SANDBOXED)
 endif()
 
 
-if (ENABLE_SDL)
+if (ENABLE_SDL AND ENABLE_QT)
+    message("SDL and QT may not be defined together")
+elseif(ENABLE_SDL)
   include(${CMAKE_CURRENT_LIST_DIR}/SdlConfiguration.cmake)  
+  add_definitions(-DORTHANC_ENABLE_NATIVE=1)
   add_definitions(-DORTHANC_ENABLE_SDL=1)
+elseif(ENABLE_QT)
+    include(${CMAKE_CURRENT_LIST_DIR}/QtConfiguration.cmake)
+    add_definitions(-DORTHANC_ENABLE_NATIVE=1)
+    add_definitions(-DORTHANC_ENABLE_QT=1)
 else()
   unset(USE_SYSTEM_SDL CACHE)
   add_definitions(-DORTHANC_ENABLE_SDL=0)
+  add_definitions(-DORTHANC_ENABLE_QT=0)
+  add_definitions(-DORTHANC_ENABLE_NATIVE=0)
 endif()
 
 
@@ -157,14 +170,21 @@ if (NOT ORTHANC_SANDBOXED)
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleWebService.h
     )
 
-  list(APPEND APPLICATIONS_SOURCES
-    ${ORTHANC_STONE_ROOT}/Applications/Sdl/BasicSdlApplication.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Sdl/BasicSdlApplicationContext.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlCairoSurface.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOrthancSurface.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlWindow.cpp
-    )
+  if (ENABLE_SDL OR ENABLE_QT)
+    list(APPEND APPLICATIONS_SOURCES
+      ${ORTHANC_STONE_ROOT}/Applications/Generic/BasicNativeApplication.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Generic/BasicNativeApplicationContext.cpp
+      )
+    if (ENABLE_SDL)
+      list(APPEND APPLICATIONS_SOURCES
+        ${ORTHANC_STONE_ROOT}/Applications/Sdl/BasicSdlApplication.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlCairoSurface.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOrthancSurface.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlWindow.cpp
+        )
+    endif()
+  endif()
 else()
   list(APPEND APPLICATIONS_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/Wasm/StartupParametersBuilder.cpp

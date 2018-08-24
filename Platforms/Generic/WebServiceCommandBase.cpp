@@ -31,7 +31,7 @@ namespace OrthancStone
                                                const std::string& uri,
                                                const IWebService::Headers& headers,
                                                Orthanc::IDynamicObject* payload /* takes ownership */,
-                                               BasicSdlApplicationContext& context) :
+                                               BasicNativeApplicationContext& context) :
     IObservable(broker),
     callback_(callback),
     parameters_(parameters),
@@ -48,7 +48,7 @@ namespace OrthancStone
 
   void WebServiceCommandBase::Commit()
   {
-    BasicSdlApplicationContext::GlobalMutexLocker lock(context_);  // we want to make sure that, i.e, the UpdateThread is not triggered while we are updating the "model" with the result of a WebServiceCommand
+    BasicNativeApplicationContext::GlobalMutexLocker lock(context_);  // we want to make sure that, i.e, the UpdateThread is not triggered while we are updating the "model" with the result of a WebServiceCommand
 
     if (success_)
     {

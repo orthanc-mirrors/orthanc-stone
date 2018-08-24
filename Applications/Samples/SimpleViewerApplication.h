@@ -332,11 +332,11 @@ namespace OrthancStone
         }
       }
 
-#if ORTHANC_ENABLE_SDL==0
+#if ORTHANC_ENABLE_WASM==1
       virtual void InitializeWasm() {
 
         AttachWidgetToWasmViewport("canvas", thumbnailsLayout_);
-        AttachWidgetToWasmViewport("canvas2", mainViewport_);
+        AttachWidgetToWasmViewport("canvas2", mainWidget_);
       }
 #endif
 

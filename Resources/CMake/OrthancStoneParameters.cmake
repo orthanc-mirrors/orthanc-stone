@@ -50,3 +50,4 @@ set(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 #####################################################################
 
 set(ENABLE_SDL ON CACHE INTERNAL "Include support for SDL")
+set(ENABLE_QT OFF CACHE INTERNAL "Include support for Qt")

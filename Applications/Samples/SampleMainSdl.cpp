@@ -28,5 +28,6 @@ int main(int argc, char* argv[])
   OrthancStone::MessageBroker broker;
   Application application(broker);
 
-  return OrthancStone::BasicSdlApplication::ExecuteWithSdl(broker, application, argc, argv);
+  OrthancStone::BasicSdlApplication sdlApplication;
+  return sdlApplication.Execute(broker, application, argc, argv);
 }

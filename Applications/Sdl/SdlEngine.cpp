@@ -41,7 +41,7 @@ namespace OrthancStone
   {
     if (viewportChanged_)
     {
-      BasicSdlApplicationContext::GlobalMutexLocker locker(context_);
+      BasicNativeApplicationContext::GlobalMutexLocker locker(context_);
       surface_.Render(context_.GetCentralViewport());
 
       viewportChanged_ = false;
@@ -98,7 +98,7 @@ namespace OrthancStone
 
 
   SdlEngine::SdlEngine(SdlWindow& window,
-                       BasicSdlApplicationContext& context) :
+                       BasicNativeApplicationContext& context) :
     window_(window),
     context_(context),
     surface_(window),
@@ -118,7 +118,7 @@ namespace OrthancStone
     const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
 
     {
-      BasicSdlApplicationContext::GlobalMutexLocker locker(context_);
+      BasicNativeApplicationContext::GlobalMutexLocker locker(context_);
       SetSize(window_.GetWidth(), window_.GetHeight());
       context_.GetCentralViewport().SetDefaultView();
     }
@@ -133,7 +133,7 @@ namespace OrthancStone
       while (!stop &&
              SDL_PollEvent(&event))
       {
-        BasicSdlApplicationContext::GlobalMutexLocker locker(context_);
+        BasicNativeApplicationContext::GlobalMutexLocker locker(context_);
 
         if (event.type == SDL_QUIT) 
         {

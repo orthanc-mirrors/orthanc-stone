@@ -25,7 +25,7 @@
 #include "Oracle.h"
 #include "WebServiceGetCommand.h"
 #include "WebServicePostCommand.h"
-#include "../../Applications/Sdl/BasicSdlApplicationContext.h"
+#include "../../Applications/Generic/BasicNativeApplicationContext.h"
 
 namespace OrthancStone
 {
@@ -33,14 +33,14 @@ namespace OrthancStone
   {
   private:
     Oracle&                        oracle_;
-    BasicSdlApplicationContext&    context_;
+    BasicNativeApplicationContext& context_;
     Orthanc::WebServiceParameters  parameters_;
 
   public:
     OracleWebService(MessageBroker& broker,
                      Oracle& oracle,
                      const Orthanc::WebServiceParameters& parameters,
-                     BasicSdlApplicationContext& context) :
+                     BasicNativeApplicationContext& context) :
       IWebService(broker),
       oracle_(oracle),
       context_(context),

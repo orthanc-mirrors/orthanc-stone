@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -21,23 +21,29 @@
 
 #pragma once
 
-#include "../../Applications/IBasicApplication.h"
-#include "../../Framework/Viewport/WidgetViewport.h"
+#include "../IBasicApplication.h"
+
+#if ORTHANC_ENABLE_NATIVE != 1
+#error this file shall be included only with the ORTHANC_ENABLE_NATIVE set to 1
+#endif
 
 namespace OrthancStone
 {
-  namespace Samples
+  class BasicNativeApplicationContext;
+
+  class BasicNativeApplication
   {
-    class SampleApplicationBase : public IBasicApplication
-    {
-    public:
-      virtual std::string GetTitle() const
-      {
-        return "Stone of Orthanc - Sample";
-      }
+  public:
 
-      virtual void CustomInitialize() {}
+    int Execute(MessageBroker& broker,
+                IBasicApplication& application,
+                int argc,
+                char* argv[]);
 
-    };
-  }
+    virtual void Initialize() = 0;
+    virtual void DeclareCommandLineOptions(boost::program_options::options_description& options) = 0;
+    virtual void Run(BasicNativeApplicationContext& context, const std::string& title, unsigned int width, unsigned int height, bool enableOpenGl) = 0;
+    virtual void Finalize() = 0;
+  };
+
 }

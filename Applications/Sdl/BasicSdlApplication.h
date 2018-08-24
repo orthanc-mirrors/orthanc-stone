@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../IBasicApplication.h"
+#include "../Generic/BasicNativeApplication.h"
 
 #if ORTHANC_ENABLE_SDL != 1
 #error this file shall be included only with the ORTHANC_ENABLE_SDL set to 1
@@ -31,14 +31,13 @@
 
 namespace OrthancStone
 {
-  class BasicSdlApplication
+  class BasicSdlApplication : public BasicNativeApplication
   {
   public:
-
-    static int ExecuteWithSdl(MessageBroker& broker,
-                              IBasicApplication& application,
-                              int argc,
-                              char* argv[]);
+    virtual void Initialize();
+    virtual void DeclareCommandLineOptions(boost::program_options::options_description& options);
+    virtual void Run(BasicNativeApplicationContext& context, const std::string& title, unsigned int width, unsigned int height, bool enableOpenGl);
+    virtual void Finalize();
   };
 
 }

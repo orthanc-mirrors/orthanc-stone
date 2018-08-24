@@ -41,7 +41,7 @@ namespace OrthancStone
     virtual void Initialize(BasicApplicationContext* context,
                             IStatusBar& statusBar,
                             const boost::program_options::variables_map& parameters) = 0;
-#if ORTHANC_ENABLE_SDL==0
+#if ORTHANC_ENABLE_WASM==1
     virtual void InitializeWasm() {}  // specific initialization when the app is running in WebAssembly.  This is called after the other Initialize()
 #endif
 

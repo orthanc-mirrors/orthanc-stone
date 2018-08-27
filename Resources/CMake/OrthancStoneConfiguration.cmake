@@ -74,16 +74,21 @@ endif()
 
 
 if (ENABLE_SDL AND ENABLE_QT)
-    message("SDL and QT may not be defined together")
+  message("SDL and QT may not be defined together")
 elseif(ENABLE_SDL)
-  include(${CMAKE_CURRENT_LIST_DIR}/SdlConfiguration.cmake)  
+  message("SDL is enabled")
+  include(${CMAKE_CURRENT_LIST_DIR}/SdlConfiguration.cmake)
   add_definitions(-DORTHANC_ENABLE_NATIVE=1)
+  add_definitions(-DORTHANC_ENABLE_QT=0)
   add_definitions(-DORTHANC_ENABLE_SDL=1)
 elseif(ENABLE_QT)
-    include(${CMAKE_CURRENT_LIST_DIR}/QtConfiguration.cmake)
-    add_definitions(-DORTHANC_ENABLE_NATIVE=1)
-    add_definitions(-DORTHANC_ENABLE_QT=1)
+  message("QT is enabled")
+  include(${CMAKE_CURRENT_LIST_DIR}/QtConfiguration.cmake)
+  add_definitions(-DORTHANC_ENABLE_NATIVE=1)
+  add_definitions(-DORTHANC_ENABLE_QT=1)
+  add_definitions(-DORTHANC_ENABLE_SDL=0)
 else()
+  message("SDL and QT are both disabled")
   unset(USE_SYSTEM_SDL CACHE)
   add_definitions(-DORTHANC_ENABLE_SDL=0)
   add_definitions(-DORTHANC_ENABLE_QT=0)
@@ -278,6 +283,7 @@ list(APPEND ORTHANC_STONE_SOURCES
 
   # Optional components
   ${SDL_SOURCES}
+  ${QT_SOURCES}
   ${BOOST_EXTENDED_SOURCES}
   )
 

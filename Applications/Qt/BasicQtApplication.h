@@ -23,24 +23,19 @@
 
 #include "../Generic/BasicNativeApplication.h"
 
-#if ORTHANC_ENABLE_SDL != 1
-#error this file shall be included only with the ORTHANC_ENABLE_SDL set to 1
+#if ORTHANC_ENABLE_QT != 1
+#error this file shall be included only with the ORTHANC_ENABLE_QT set to 1
 #endif
-
-#include <SDL.h>   // Necessary to avoid undefined reference to `SDL_main'
 
 namespace OrthancStone
 {
-  class BasicSdlApplication : public BasicNativeApplication
+  class BasicQtApplication : public BasicNativeApplication
   {
-    unsigned int width_;
-    unsigned int height_;
-    bool enableOpenGl_;
   public:
     virtual void Initialize();
     virtual void DeclareCommandLineOptions(boost::program_options::options_description& options);
+    virtual void ParseCommandLineOptions(const boost::program_options::variables_map& parameters) {}
     virtual void Run(BasicNativeApplicationContext& context, const std::string& title, int argc, char* argv[]);
-    virtual void ParseCommandLineOptions(const boost::program_options::variables_map& parameters);
     virtual void Finalize();
   };
 

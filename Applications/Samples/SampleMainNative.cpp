@@ -20,7 +20,12 @@
 
 
 #include "SampleList.h"
+#if ORTHANC_ENABLE_SDL==1
 #include "../Sdl/BasicSdlApplication.h"
+#endif
+#if ORTHANC_ENABLE_QT==1
+#include "../Qt/BasicQtApplication.h"
+#endif
 #include "../../Framework/Messages/MessageBroker.h"
 
 int main(int argc, char* argv[]) 
@@ -28,6 +33,12 @@ int main(int argc, char* argv[])
   OrthancStone::MessageBroker broker;
   Application application(broker);
 
+#if ORTHANC_ENABLE_SDL==1
   OrthancStone::BasicSdlApplication sdlApplication;
   return sdlApplication.Execute(broker, application, argc, argv);
+#endif
+#if ORTHANC_ENABLE_QT==1
+  OrthancStone::BasicQtApplication qtApplication;
+  return qtApplication.Execute(broker, application, argc, argv);
+#endif
 }

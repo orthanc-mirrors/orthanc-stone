@@ -44,20 +44,6 @@ namespace OrthancStone
 
   void BasicSdlApplication::DeclareCommandLineOptions(boost::program_options::options_description& options)
   {
-    // Declare the supported parameters
-    boost::program_options::options_description generic("Generic options");
-    generic.add_options()
-        ("help", "Display this help and exit")
-        ("verbose", "Be verbose in logs")
-        ("orthanc", boost::program_options::value<std::string>()->default_value("http://localhost:8042/"),
-         "URL to the Orthanc server")
-        ("username", "Username for the Orthanc server")
-        ("password", "Password for the Orthanc server")
-        ("https-verify", boost::program_options::value<bool>()->default_value(true), "Check HTTPS certificates")
-        ;
-
-    options.add(generic);
-
     boost::program_options::options_description sdl("SDL options");
     sdl.add_options()
         ("width", boost::program_options::value<int>()->default_value(1024), "Initial width of the SDL window")
@@ -68,7 +54,41 @@ namespace OrthancStone
     options.add(sdl);
   }
 
-  void BasicSdlApplication::Run(BasicNativeApplicationContext& context, const std::string& title, unsigned int width, unsigned int height, bool enableOpenGl)
+  void BasicSdlApplication::ParseCommandLineOptions(const boost::program_options::variables_map& parameters)
+  {
+    if (!parameters.count("width") ||
+        !parameters.count("height") ||
+        !parameters.count("opengl"))
+    {
+      LOG(ERROR) << "Parameter \"width\", \"height\" or \"opengl\" is missing";
+      return -1;
+    }
+
+    int w = parameters["width"].as<int>();
+    int h = parameters["height"].as<int>();
+    if (w <= 0 || h <= 0)
+    {
+      LOG(ERROR) << "Parameters \"width\" and \"height\" must be positive";
+      return -1;
+    }
+
+    width_ = static_cast<unsigned int>(w);
+    height_ = static_cast<unsigned int>(h);
+    LOG(WARNING) << "Initial display size: " << width_ << "x" << height_;
+
+    opengl_ = parameters["opengl"].as<bool>();
+    if (opengl_)
+    {
+      LOG(WARNING) << "OpenGL is enabled, disable it with option \"--opengl=off\" if the application crashes";
+    }
+    else
+    {
+      LOG(WARNING) << "OpenGL is disabled, enable it with option \"--opengl=on\" for best performance";
+    }
+
+  }
+
+  void BasicSdlApplication::Run(BasicNativeApplicationContext& context, const std::string& title, int argc, char* argv[])
   {
     /**************************************************************
      * Run the application inside a SDL window
@@ -76,7 +96,7 @@ namespace OrthancStone
 
     LOG(WARNING) << "Starting the application";
 
-    SdlWindow window(title.c_str(), width, height, enableOpenGl);
+    SdlWindow window(title.c_str(), width_, height_, enableOpenGl_);
     SdlEngine sdl(window, context);
 
     {

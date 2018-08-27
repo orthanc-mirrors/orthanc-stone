@@ -29,6 +29,8 @@ include(../../Resources/CMake/OrthancStoneParameters.cmake)
 
 LIST(APPEND ORTHANC_BOOST_COMPONENTS program_options)
 
+SET(ENABLE_SDL OFF)
+SET(ENABLE_QT ON)
 SET(ORTHANC_SANDBOXED OFF)
 SET(ENABLE_CRYPTO_OPTIONS ON)
 SET(ENABLE_GOOGLE_TEST ON)
@@ -48,7 +50,6 @@ add_library(OrthancStone STATIC
 macro(BuildSample Target Header Sample)
   add_executable(${Target}
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleMainNative.cpp
-#    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationContext.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleInteractor.h
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationBase.h
     ${ORTHANC_STONE_ROOT}/Applications/Samples/${Header}

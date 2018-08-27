@@ -42,7 +42,9 @@ namespace OrthancStone
 
     virtual void Initialize() = 0;
     virtual void DeclareCommandLineOptions(boost::program_options::options_description& options) = 0;
-    virtual void Run(BasicNativeApplicationContext& context, const std::string& title, unsigned int width, unsigned int height, bool enableOpenGl) = 0;
+    virtual void ParseCommandLineOptions(const boost::program_options::variables_map& parameters) = 0;
+
+    virtual void Run(BasicNativeApplicationContext& context, const std::string& title, int argc, char* argv[]) = 0;
     virtual void Finalize() = 0;
   };
 

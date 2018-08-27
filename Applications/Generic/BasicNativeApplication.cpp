@@ -74,7 +74,26 @@ namespace OrthancStone
      ******************************************************************/
 
     boost::program_options::options_description options;
+
+    { // generic options
+      boost::program_options::options_description generic("Generic options");
+      generic.add_options()
+          ("help", "Display this help and exit")
+          ("verbose", "Be verbose in logs")
+          ("orthanc", boost::program_options::value<std::string>()->default_value("http://localhost:8042/"),
+          "URL to the Orthanc server")
+          ("username", "Username for the Orthanc server")
+          ("password", "Password for the Orthanc server")
+          ("https-verify", boost::program_options::value<bool>()->default_value(true), "Check HTTPS certificates")
+          ;
+
+      options.add(generic);
+    }
+
+    // platform specific options
     DeclareCommandLineOptions(options);
+    
+    // application specific options
     application.DeclareStartupOptions(options);
 
     boost::program_options::variables_map parameters;
@@ -123,35 +142,8 @@ namespace OrthancStone
       Orthanc::Logging::EnableInfoLevel(true);
     }
 
-    if (!parameters.count("width") ||
-        !parameters.count("height") ||
-        !parameters.count("opengl"))
-    {
-      LOG(ERROR) << "Parameter \"width\", \"height\" or \"opengl\" is missing";
-      return -1;
-    }
+    ParseCommandLineOptions(parameters);
 
-    int w = parameters["width"].as<int>();
-    int h = parameters["height"].as<int>();
-    if (w <= 0 || h <= 0)
-    {
-      LOG(ERROR) << "Parameters \"width\" and \"height\" must be positive";
-      return -1;
-    }
-
-    unsigned int width = static_cast<unsigned int>(w);
-    unsigned int height = static_cast<unsigned int>(h);
-    LOG(WARNING) << "Initial display size: " << width << "x" << height;
-
-    bool opengl = parameters["opengl"].as<bool>();
-    if (opengl)
-    {
-      LOG(WARNING) << "OpenGL is enabled, disable it with option \"--opengl=off\" if the application crashes";
-    }
-    else
-    {
-      LOG(WARNING) << "OpenGL is disabled, enable it with option \"--opengl=on\" for best performance";
-    }
 
     bool success = true;
     try
@@ -220,8 +212,7 @@ namespace OrthancStone
        * Run the application
        ****************************************************************/
 
-      Run(context, title, width, height, opengl);
-
+      Run(context, title, argc, argv);
 
       /****************************************************************
        * Finalize the application

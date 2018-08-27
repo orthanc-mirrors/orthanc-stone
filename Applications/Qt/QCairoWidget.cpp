@@ -7,33 +7,30 @@
 
 QCairoWidget::QCairoWidget(QWidget *parent) :
   QWidget(parent),
-  context_(NULL),
-  isMouseOver_(false),
-  mouseOverX_(0),
-  mouseOverY_(0)
+  context_(NULL)
 {
-  setMouseTracking(true);
-  updateNeeded_ = true;
 }
-
-
 
 QCairoWidget::~QCairoWidget()
 {
 }
 
+void QCairoWidget::SetContext(OrthancStone::BasicNativeApplicationContext& context)
+{
+  context_ = &context;
+  context_->GetCentralViewport().Register(*this); // get notified each time the content of the central viewport changes
+}
 
-void QCairoWidget::paintEvent(QPaintEvent* event)
+void QCairoWidget::paintEvent(QPaintEvent* /*event*/)
 {
   QPainter painter(this);
 
   if (image_.get() != NULL && context_ != NULL)
   {
     OrthancStone::BasicNativeApplicationContext::GlobalMutexLocker locker(*context_);
-    OrthancStone::IViewport& vp = context_->GetCentralViewport();
+    OrthancStone::IViewport& viewport = context_->GetCentralViewport();
     Orthanc::ImageAccessor a = surface_.GetAccessor();
-    vp.Render(a);
-    //image_->fill(0);
+    viewport.Render(a);
     painter.drawImage(0, 0, *image_);
   }
   else
@@ -42,150 +39,80 @@ void QCairoWidget::paintEvent(QPaintEvent* event)
   }
 }
 
+OrthancStone::KeyboardModifiers GetKeyboardModifiers(QInputEvent* event)
+{
+  Qt::KeyboardModifiers qtModifiers = event->modifiers();
+  int stoneModifiers = static_cast<int>(OrthancStone::KeyboardModifiers_None);
+  if ((qtModifiers & Qt::AltModifier) != 0)
+  {
+    stoneModifiers |= static_cast<int>(OrthancStone::KeyboardModifiers_Alt);
+  }
+  if ((qtModifiers & Qt::ControlModifier) != 0)
+  {
+    stoneModifiers |= static_cast<int>(OrthancStone::KeyboardModifiers_Control);
+  }
+  if ((qtModifiers & Qt::ShiftModifier) != 0)
+  {
+    stoneModifiers |= static_cast<int>(OrthancStone::KeyboardModifiers_Shift);
+  }
+  return static_cast<OrthancStone::KeyboardModifiers>(stoneModifiers);
+}
 
-//static void GetPixelCenter(double& x,
-//                           double& y,
-//                           const QMouseEvent* event)
-//{
-//  x = static_cast<double>(event->x()) + 0.5;
-//  y = static_cast<double>(event->y()) + 0.5;
-//}
+void QCairoWidget::mousePressEvent(QMouseEvent* event)
+{
+  OrthancStone::KeyboardModifiers stoneModifiers = GetKeyboardModifiers(event);
 
+  OrthancStone::MouseButton button;
 
-//void QCairoWidget::mousePressEvent(QMouseEvent* event)
-//{
-//  if (mouseTracker_.get() == NULL)
-//  {
-//    OrthancStone::MouseButton button;
+  switch (event->button())
+  {
+    case Qt::LeftButton:
+      button = OrthancStone::MouseButton_Left;
+      break;
 
-//    switch (event->button())
-//    {
-//      case Qt::LeftButton:
-//        button = OrthancStone::MouseButton_Left;
-//        break;
+    case Qt::RightButton:
+      button = OrthancStone::MouseButton_Right;
+      break;
 
-//      case Qt::RightButton:
-//        button = OrthancStone::MouseButton_Right;
-//        break;
+    case Qt::MiddleButton:
+      button = OrthancStone::MouseButton_Middle;
+      break;
 
-//      case Qt::MiddleButton:
-//        button = OrthancStone::MouseButton_Middle;
-//        break;
-
-//      default:
-//        return;  // Unsupported button
-//    }
-
-//    double x, y;
-//    GetPixelCenter(x, y, event);
-////TODO    mouseTracker_.reset(viewport_.CreateMouseTracker(*scene_, button, x, y));
-//    repaint();
-//  }
-//}
-
-
-//void QCairoWidget::mouseReleaseEvent(QMouseEvent* event)
-//{
-//  if (mouseTracker_.get() != NULL)
-//  {
-//    mouseTracker_->MouseUp();
-//    mouseTracker_.reset(NULL);
-//    repaint();
-//  }
-//}
+    default:
+      return;  // Unsupported button
+  }
+  context_->GetCentralViewport().MouseDown(button, event->pos().x(), event->pos().y(), stoneModifiers);
+}
 
 
-//void QCairoWidget::mouseMoveEvent(QMouseEvent* event)
-//{
-//  if (mouseTracker_.get() == NULL)
-//  {
-//    if (rect().contains(event->pos()))
-//    {
-//      // Mouse over widget
-//      isMouseOver_ = true;
-//      mouseOverX_ = event->x();
-//      mouseOverY_ = event->y();
-//    }
-//    else
-//    {
-//      // Mouse out of widget
-//      isMouseOver_ = false;
-//    }
-//  }
-//  else
-//  {
-//    double x, y;
-//    GetPixelCenter(x, y, event);
-//    mouseTracker_->MouseMove(x, y);
-//    isMouseOver_ = false;
-//  }
-
-////  if (isMouseOver_)
-////  {
-////    UpdateMouseCoordinates(event->x(), event->y());
-////  }
-
-//  repaint();
-//}
+void QCairoWidget::mouseReleaseEvent(QMouseEvent* /*eventNotUsed*/)
+{
+  context_->GetCentralViewport().MouseLeave();
+}
 
 
-//void QCairoWidget::wheelEvent(QWheelEvent * event)
-//{
-//  if (mouseTracker_.get() == NULL)
-//  {
-//#if 0
-//    double x = static_cast<double>(event->x()) + 0.5;
-//    double y = static_cast<double>(event->y()) + 0.5;
-//    mouseTracker_.reset(viewport_.CreateMouseTracker(*scene_, MouseButton_Middle, x, y));
+void QCairoWidget::mouseMoveEvent(QMouseEvent* event)
+{
+  context_->GetCentralViewport().MouseMove(event->pos().x(), event->pos().y());
+}
 
-//    switch (event->orientation())
-//    {
-//      case Qt::Horizontal:
-//        x += event->delta();
-//        break;
 
-//      case Qt::Vertical:
-//        y += event->delta();
-//        break;
+void QCairoWidget::wheelEvent(QWheelEvent * event)
+{
+  OrthancStone::KeyboardModifiers stoneModifiers = GetKeyboardModifiers(event);
 
-//      default:
-//        break;
-//    }
-
-//    mouseTracker_->MouseMove(x, y);
-//    mouseTracker_->MouseUp();
-//    mouseTracker_.reset(NULL);
-
-//    repaint();
-//#else
-//    if (event->orientation() == Qt::Vertical)
-//    {
-//      unsigned int slice = scene_->GetCurrentSlice();
-
-//      if (event->delta() < 0)
-//      {
-//        if (slice > 0)
-//        {
-//          scene_->SetCurrentSlice(slice - 1);
-//          emit SliceChanged(slice - 1);
-//        }
-//      }
-//      else
-//      {
-//        if (slice + 1 < scene_->GetSlicesCount())
-//        {
-//          scene_->SetCurrentSlice(slice + 1);
-//          emit SliceChanged(slice + 1);
-//        }
-//      }
-
-//      repaint();
-//    }
-//#endif
-//  }
-
-//  UpdateMouseCoordinates(event->x(), event->y());
-//}
+  if (event->orientation() == Qt::Vertical)
+  {
+    if (event->delta() < 0)  // TODO: compare direction with SDL and make sure we send the same directions
+    {
+       context_->GetCentralViewport().MouseWheel(OrthancStone::MouseWheelDirection_Up, event->pos().x(), event->pos().y(), stoneModifiers);
+    }
+    else
+    {
+      context_->GetCentralViewport().MouseWheel(OrthancStone::MouseWheelDirection_Down, event->pos().x(), event->pos().y(), stoneModifiers);
+    }
+  }
+}
 
 
 
@@ -208,50 +135,3 @@ void QCairoWidget::resizeEvent(QResizeEvent* event)
 
   }
 }
-
-//void QCairoWidget::UpdateMouseCoordinates(int x,
-//                                         int y)
-//{
-//  if (scene_ != NULL)
-//  {
-//    double cx = static_cast<double>(x) + 0.5;
-//    double cy = static_cast<double>(y) + 0.5;
-
-//    std::string coordinates;
-//    viewport_.FormatCoordinates(coordinates, *scene_, cx, cy);
-        
-//    emit PositionChanged(QString(coordinates.c_str()));
-//  }
-//}
-
-
-//void QCairoWidget::SetDefaultView()
-//{
-//  viewport_.SetDefaultView();
-//  repaint();
-//}
-
-
-//void QCairoWidget::Refresh()
-//{
-//  if (scene_ != NULL &&
-//      updateNeeded_)
-//  {
-//    updateNeeded_ = false;
-//    emit ContentChanged();
-//    repaint();
-//  }
-//}
-
-
-//void QCairoWidget::SetSlice(int index)
-//{
-//  if (scene_ != NULL &&
-//      index >= 0 &&
-//      index < static_cast<int>(scene_->GetSlicesCount()))
-//  {
-//    scene_->SetCurrentSlice(index);
-//    emit SliceChanged(index);
-//    repaint();
-//  }
-//}

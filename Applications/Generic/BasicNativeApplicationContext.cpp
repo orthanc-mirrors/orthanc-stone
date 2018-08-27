@@ -40,15 +40,15 @@ namespace OrthancStone
         that->GetCentralViewport().UpdateContent();
       }
       
-      boost::this_thread::sleep(boost::posix_time::milliseconds(that->updateDelay_));
+      boost::this_thread::sleep(boost::posix_time::milliseconds(that->updateDelayInMs_));
     }
   }
   
 
-  BasicNativeApplicationContext::BasicNativeApplicationContext() : // Orthanc::WebServiceParameters& orthanc, WidgetViewport* centralViewport) :
+  BasicNativeApplicationContext::BasicNativeApplicationContext() :
     centralViewport_(new OrthancStone::WidgetViewport()),
     stopped_(true),
-    updateDelay_(100)   // By default, 100ms between each refresh of the content
+    updateDelayInMs_(100)   // By default, 100ms between each refresh of the content
   {
     srand(time(NULL)); 
   }

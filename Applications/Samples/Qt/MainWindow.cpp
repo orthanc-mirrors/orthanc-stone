@@ -11,19 +11,14 @@ MainWindow::MainWindow(OrthancStone::BasicNativeApplicationContext& context, QWi
   ui_(new Ui::MainWindow),
   context_(context)
 {
-  refreshTimer_ = new QTimer(this);
   ui_->setupUi(this);
   cairoCentralWidget_ = ui_->cairoCentralWidget;
   cairoCentralWidget_->SetContext(context_);
-
-  //connect(refreshTimer_, SIGNAL(timeout()), ui_->ca, SLOT(Refresh()));
-  refreshTimer_->start(100);
 }
 
 MainWindow::~MainWindow()
 {
   delete ui_;
-  delete refreshTimer_;
 }
 
 

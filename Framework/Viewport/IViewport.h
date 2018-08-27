@@ -40,7 +40,7 @@ namespace OrthancStone
       {
       }
 
-      virtual void NotifyChange(const IViewport& scene) = 0;
+      virtual void OnViewportContentChanged(const IViewport& scene) = 0;
     };
 
     virtual ~IViewport()

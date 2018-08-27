@@ -41,7 +41,7 @@ namespace OrthancStone
     std::unique_ptr<WidgetViewport>      centralViewport_;
     boost::thread       updateThread_;
     bool                stopped_;
-    unsigned int        updateDelay_;
+    unsigned int        updateDelayInMs_;
 
   public:
     class GlobalMutexLocker: public boost::noncopyable
@@ -64,9 +64,10 @@ namespace OrthancStone
 
     void Stop();
 
-    void SetUpdateDelay(unsigned int delay)  // In milliseconds
+    void SetUpdateDelay(unsigned int delayInMs)
     {
-      updateDelay_ = delay;
+      updateDelayInMs_ = delayInMs;
     }
+
   };
 }

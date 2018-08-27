@@ -50,7 +50,7 @@ namespace OrthancStone
   
     virtual ~SdlEngine();
 
-    virtual void NotifyChange(const IViewport& viewport)
+    virtual void OnViewportContentChanged(const IViewport& viewport)
     {
       viewportChanged_ = true;
     }

@@ -2,7 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QTimer>
 
 #include "../../Qt/QCairoWidget.h"
 #include "../../Generic/BasicNativeApplicationContext.h"
@@ -20,7 +19,6 @@ public:
 
 private:
   Ui::MainWindow        *ui_;
-  QTimer                *refreshTimer_;
   OrthancStone::BasicNativeApplicationContext& context_;
   QCairoWidget          *cairoCentralWidget_;
 

@@ -61,7 +61,7 @@ namespace OrthancStone
         !parameters.count("opengl"))
     {
       LOG(ERROR) << "Parameter \"width\", \"height\" or \"opengl\" is missing";
-      return -1;
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
     int w = parameters["width"].as<int>();
@@ -69,15 +69,15 @@ namespace OrthancStone
     if (w <= 0 || h <= 0)
     {
       LOG(ERROR) << "Parameters \"width\" and \"height\" must be positive";
-      return -1;
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
     width_ = static_cast<unsigned int>(w);
     height_ = static_cast<unsigned int>(h);
     LOG(WARNING) << "Initial display size: " << width_ << "x" << height_;
 
-    opengl_ = parameters["opengl"].as<bool>();
-    if (opengl_)
+    enableOpenGl_ = parameters["opengl"].as<bool>();
+    if (enableOpenGl_)
     {
       LOG(WARNING) << "OpenGL is enabled, disable it with option \"--opengl=off\" if the application crashes";
     }

@@ -20,6 +20,7 @@
 
 
 #pragma once
+#include <map>
 
 #include "Layers/ILayerSource.h"
 #include "Messages/IObservable.h"
@@ -35,6 +36,7 @@ namespace OrthancStone
     OrthancApiClient      orthancApiClient_;
 
     int studyListRequest_;
+
   public:
     SmartLoader(MessageBroker& broker, IWebService& webService);  // TODO: add maxPreloadStorageSizeInBytes
 
@@ -47,6 +49,8 @@ namespace OrthancStone
     void SetImageQuality(SliceImageQuality imageQuality) { imageQuality_ = imageQuality; }
 
     ILayerSource* GetFrame(const std::string& instanceId, unsigned int frame);
+
+    void GetFirstInstanceIdForSeries(std::string& output, const std::string& seriesId);
 
   };
 

@@ -59,7 +59,9 @@ namespace OrthancStone
         {
           if (button == MouseButton_Left)
           {
-            statusBar->SetMessage("trying to drag the thumbnail from " + widget.GetName());
+            statusBar->SetMessage("selected thumbnail " + widget.GetName());
+            std::string seriesId = widget.GetName().substr(strlen("thumbnail-series-"));
+            application_.SelectSeriesInMainViewport(seriesId);
           }
           return NULL;
         }
@@ -156,9 +158,6 @@ namespace OrthancStone
           case 's':
             widget.SetDefaultView();
             break;
-          case 'n':
-            application_.NextImage(widget);
-            break;
 
           default:
             break;
@@ -173,7 +172,7 @@ namespace OrthancStone
       LayoutWidget*                   thumbnailsLayout_;
       LayerWidget*                    mainWidget_;
       std::vector<LayerWidget*>       thumbnails_;
-      std::vector<std::string>        instances_;
+      std::map<std::string, std::vector<std::string>> instancesIdsPerSeriesId_;
 
       unsigned int                    currentInstanceIndex_;
       OrthancStone::WidgetViewport*   wasmViewport1_;
@@ -292,7 +291,23 @@ namespace OrthancStone
       {
         if (response.isObject() && response["Instances"].isArray() && response["Instances"].size() > 0)
         {
-          LoadThumbnailForSeries(response["ID"].asString(), response["Instances"][0].asString());
+          // keep track of all instances IDs
+          const std::string& seriesId = response["ID"].asString();
+          instancesIdsPerSeriesId_[seriesId] = std::vector<std::string>();
+          for (size_t i = 0; i < response["Instances"].size(); i++)
+          {
+            const std::string& instanceId = response["Instances"][static_cast<int>(i)].asString();
+            instancesIdsPerSeriesId_[seriesId].push_back(instanceId);
+          }
+
+          // load the first instance in the thumbnail
+          LoadThumbnailForSeries(seriesId, instancesIdsPerSeriesId_[seriesId][0]);
+
+          // if this is the first thumbnail loaded, load the first instance in the mainWidget
+          if (mainWidget_->GetLayerCount() == 0)
+          {
+              mainWidget_->AddLayer(smartLoader_->GetFrame(instancesIdsPerSeriesId_[seriesId][0], 0));
+          }
         }
       }
 
@@ -304,7 +319,7 @@ namespace OrthancStone
         thumbnailsLayout_->AddWidget(thumbnailWidget);
         thumbnailWidget->RegisterObserver(*this);
         thumbnailWidget->AddLayer(smartLoader_->GetFrame(instanceId, 0));
-        //thumbnailWidget->SetInteractor(*thumbnailInteractor_);
+        thumbnailWidget->SetInteractor(*thumbnailInteractor_);
       }
 
       void SelectStudy(const std::string& studyId)
@@ -340,14 +355,9 @@ namespace OrthancStone
       }
 #endif
 
-      void NextImage(WorldSceneWidget& widget) {
-        assert(context_);
-        statusBar_->SetMessage("displaying next image");
-
-        currentInstanceIndex_ = (currentInstanceIndex_ + 1) % instances_.size();
-
-        mainWidget_->ReplaceLayer(0, smartLoader_->GetFrame(instances_[currentInstanceIndex_], 0));
-
+      void SelectSeriesInMainViewport(const std::string& seriesId)
+      {
+        mainWidget_->ReplaceLayer(0, smartLoader_->GetFrame(instancesIdsPerSeriesId_[seriesId][0], 0));
       }
     };
 

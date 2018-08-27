@@ -55,7 +55,7 @@ namespace OrthancStone
 
     virtual void SetDefaultView();
 
-    virtual void NotifyChange(const IWidget& widget);
+    virtual void NotifyContentChanged(const IWidget& widget);
 
     void SetHorizontal();
 

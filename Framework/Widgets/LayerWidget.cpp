@@ -341,7 +341,7 @@ namespace OrthancStone
         currentScene_->ContainsPlane(slice))
     {
       currentScene_->SetLayer(index, tmp.release());
-      NotifyChange();
+      NotifyContentChanged();
     }
     else if (pendingScene_.get() != NULL &&
              pendingScene_->ContainsPlane(slice))
@@ -353,7 +353,7 @@ namespace OrthancStone
           pendingScene_->IsComplete())
       {
         currentScene_ = pendingScene_;
-        NotifyChange();
+        NotifyContentChanged();
       }
     }
   }
@@ -463,7 +463,7 @@ namespace OrthancStone
       pendingScene_->SetLayerStyle(layer, style);
     }
 
-    NotifyChange();
+    NotifyContentChanged();
   }
   
 

@@ -18,7 +18,7 @@ static std::unique_ptr<OrthancStone::BasicApplicationContext> context;
 static OrthancStone::StartupParametersBuilder startupParametersBuilder;
 static OrthancStone::MessageBroker broker;
 
-static OrthancStone::ChangeObserver changeObserver_;
+static OrthancStone::ViewportContentChangedObserver viewportContentChangedObserver_;
 static OrthancStone::StatusBar statusBar_;
 
 static std::list<std::shared_ptr<OrthancStone::WidgetViewport>> viewports_;
@@ -50,7 +50,7 @@ extern "C" {
     printf("There are now %d viewports in C++\n", viewports_.size());
 
     viewport->SetStatusBar(statusBar_);
-    viewport->Register(changeObserver_);
+    viewport->Register(viewportContentChangedObserver_);
 
     return viewport.get();
   }
@@ -123,7 +123,7 @@ extern "C" {
                                           unsigned int height,
                                           uint8_t* data)
   {
-    changeObserver_.Reset();
+    viewportContentChangedObserver_.Reset();
 
     //printf("ViewportRender called %dx%d\n", width, height);
     if (width == 0 ||

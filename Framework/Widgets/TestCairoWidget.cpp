@@ -36,7 +36,7 @@ namespace OrthancStone
         value_ = 1;
       }
 
-      NotifyChange();
+      NotifyContentChanged();
     }
 
 

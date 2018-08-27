@@ -58,7 +58,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void NotifyChange()
+    virtual void NotifyContentChanged()
     {
     }
 

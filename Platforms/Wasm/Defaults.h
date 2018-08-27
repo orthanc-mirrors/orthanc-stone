@@ -31,7 +31,7 @@ extern OrthancStone::IBasicApplication* CreateUserApplication(OrthancStone::Mess
 namespace OrthancStone {
 
   // default Ovserver to trigger Viewport redraw when something changes in the Viewport
-  class ChangeObserver :
+  class ViewportContentChangedObserver :
     public OrthancStone::IViewport::IObserver
   {
   private:
@@ -39,7 +39,7 @@ namespace OrthancStone {
     bool isScheduled_; 
 
   public:
-    ChangeObserver() :
+    ViewportContentChangedObserver() :
       isScheduled_(false)
     {
     }
@@ -49,7 +49,7 @@ namespace OrthancStone {
       isScheduled_ = false;
     }
 
-    virtual void NotifyChange(const OrthancStone::IViewport &viewport)
+    virtual void OnViewportContentChanged(const OrthancStone::IViewport &viewport)
     {
       if (!isScheduled_)
       {

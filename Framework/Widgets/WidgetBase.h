@@ -105,7 +105,7 @@ namespace OrthancStone
       return transmitMouseOver_;
     }
 
-    virtual void NotifyChange();
+    virtual void NotifyContentChanged();
 
     const std::string& GetName() const
     {

@@ -261,7 +261,7 @@ namespace OrthancStone
       }
     }
 
-    NotifyChange(*this);
+    NotifyContentChanged(*this);
   }
 
 
@@ -297,10 +297,10 @@ namespace OrthancStone
   }
   
 
-  void LayoutWidget::NotifyChange(const IWidget& widget)
+  void LayoutWidget::NotifyContentChanged(const IWidget& widget)
   {
     // One of the children has changed
-    WidgetBase::NotifyChange();
+    WidgetBase::NotifyContentChanged();
   }
 
 

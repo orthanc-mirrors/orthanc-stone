@@ -272,7 +272,7 @@ namespace OrthancStone
     SetSceneExtent(view_);
     view_.SetDefaultView();
 
-    NotifyChange();
+    NotifyContentChanged();
 
     observers_.Apply(*this, &IWorldObserver::NotifyViewChange, view_);
   }
@@ -282,7 +282,7 @@ namespace OrthancStone
   {
     view_ = view;
 
-    NotifyChange();
+    NotifyContentChanged();
 
     observers_.Apply(*this, &IWorldObserver::NotifyViewChange, view_);
   }

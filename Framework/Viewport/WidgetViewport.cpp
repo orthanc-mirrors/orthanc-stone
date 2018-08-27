@@ -80,7 +80,7 @@ namespace OrthancStone
   }
 
 
-  void WidgetViewport::NotifyChange(const IWidget& widget)
+  void WidgetViewport::NotifyContentChanged(const IWidget& widget)
   {
     backgroundChanged_ = true;
     observers_.Apply(*this, &IObserver::OnViewportContentChanged);

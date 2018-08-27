@@ -27,16 +27,16 @@
 
 namespace OrthancStone
 {
-  void WidgetBase::NotifyChange()
+  void WidgetBase::NotifyContentChanged()
   {
     if (parent_ != NULL)
     {
-      parent_->NotifyChange();
+      parent_->NotifyContentChanged();
     }
 
     if (viewport_ != NULL)
     {
-      viewport_->NotifyChange(*this);
+      viewport_->NotifyContentChanged(*this);
     }
   }
 

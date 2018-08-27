@@ -51,7 +51,7 @@ namespace OrthancStone
 
     IWidget& SetCentralWidget(IWidget* widget);  // Takes ownership
 
-    virtual void NotifyChange(const IWidget& widget);
+    virtual void NotifyContentChanged(const IWidget& widget);
 
     virtual void Register(IObserver& observer)
     {

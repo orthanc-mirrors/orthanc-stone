@@ -131,7 +131,7 @@ namespace OrthancStone
       if (animate_)
       {
         count_++;
-        NotifyChange();
+        NotifyContentChanged();
       }
       else
       {

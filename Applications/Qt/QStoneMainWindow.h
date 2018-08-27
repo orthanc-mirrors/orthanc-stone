@@ -17,26 +17,26 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
+#pragma once
 
-#include "MainWindow.h"
+#include <QMainWindow>
 
-/**
- * Don't use "ui_MainWindow.h" instead of <ui_MainWindow.h> below, as
- * this makes CMake unable to detect when the UI file changes.
- **/
-#include <ui_MainWindow.h>
+#include "QCairoWidget.h"
+#include "../Generic/BasicNativeApplicationContext.h"
 
-MainWindow::MainWindow(OrthancStone::BasicNativeApplicationContext& context, QWidget *parent) :
-  QStoneMainWindow(context, parent),
-  ui_(new Ui::MainWindow)
+class QStoneMainWindow : public QMainWindow
 {
-  ui_->setupUi(this);
-  SetCentralStoneWidget(ui_->cairoCentralWidget);
-}
+  Q_OBJECT
 
-MainWindow::~MainWindow()
-{
-  delete ui_;
-}
+private:
+  OrthancStone::BasicNativeApplicationContext& context_;
+  QCairoWidget          *cairoCentralWidget_;
 
+protected:  // you must inherit this class
+  QStoneMainWindow(OrthancStone::BasicNativeApplicationContext& context, QWidget *parent = 0);
+  void SetCentralStoneWidget(QCairoWidget* centralWidget);
+public:
+  virtual ~QStoneMainWindow();
+
+};
 

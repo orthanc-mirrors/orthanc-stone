@@ -18,25 +18,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "MainWindow.h"
+#include "QStoneMainWindow.h"
 
-/**
- * Don't use "ui_MainWindow.h" instead of <ui_MainWindow.h> below, as
- * this makes CMake unable to detect when the UI file changes.
- **/
-#include <ui_MainWindow.h>
-
-MainWindow::MainWindow(OrthancStone::BasicNativeApplicationContext& context, QWidget *parent) :
-  QStoneMainWindow(context, parent),
-  ui_(new Ui::MainWindow)
+QStoneMainWindow::QStoneMainWindow(OrthancStone::BasicNativeApplicationContext& context, QWidget *parent) :
+  QMainWindow(parent),
+  context_(context)
 {
-  ui_->setupUi(this);
-  SetCentralStoneWidget(ui_->cairoCentralWidget);
 }
 
-MainWindow::~MainWindow()
+void QStoneMainWindow::SetCentralStoneWidget(QCairoWidget *centralWidget)
 {
-  delete ui_;
+  cairoCentralWidget_ = centralWidget;
+  cairoCentralWidget_->SetContext(context_);
+}
+
+QStoneMainWindow::~QStoneMainWindow()
+{
 }
 
 

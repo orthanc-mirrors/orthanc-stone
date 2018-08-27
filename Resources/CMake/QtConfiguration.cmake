@@ -26,16 +26,10 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5Widgets)
 find_package(Qt5Core)
 
-#qt5_wrap_ui(UI_HEADERS
-#    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/MainWindow.ui
-#)
-set_property(SOURCE ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/MainWindow.h PROPERTY SKIP_AUTOMOC ON)
-
 list(APPEND QT_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Qt/BasicQtApplication.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/MainWindow.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/MainWindow.ui
+    ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.cpp
 )
 
 include_directories(${ORTHANC_STONE_ROOT}/Applications/Qt/)

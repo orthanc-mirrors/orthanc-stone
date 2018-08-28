@@ -12,6 +12,7 @@ General
 * Allow Interactor to create Pan/ZoomMouseTracker in IWorldSceneMouseTracker* CreateMouseTracker 
   (problem: PanMouseTracker is a IMouseTracker and CreateMouseTracker shall return a IWorldSceneMouseTracker).
   WorldSceneWidet shall not create Pan/ZoomMouseTracker when the Interactor does not create one
+* Update SimpleViewer sample to have 2 buttons to select the measure tracker
 
 ---------------------------------
 Radiotherapy and nuclear medicine

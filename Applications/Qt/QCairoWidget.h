@@ -51,6 +51,8 @@ protected:
 
   virtual void wheelEvent(QWheelEvent *event);
 
+  virtual void keyPressEvent(QKeyEvent *event);
+
 public:
   explicit QCairoWidget(QWidget *parent);
  

@@ -29,6 +29,7 @@ QCairoWidget::QCairoWidget(QWidget *parent) :
   QWidget(parent),
   context_(NULL)
 {
+  setFocusPolicy(Qt::StrongFocus); // catch keyPressEvents
 }
 
 QCairoWidget::~QCairoWidget()
@@ -134,6 +135,12 @@ void QCairoWidget::wheelEvent(QWheelEvent * event)
   }
 }
 
+void QCairoWidget::keyPressEvent(QKeyEvent *event)
+{
+  OrthancStone::KeyboardModifiers stoneModifiers = GetKeyboardModifiers(event);
+
+  context_->GetCentralViewport().KeyPressed(event->text()[0].toLatin1(), stoneModifiers);
+}
 
 
 void QCairoWidget::resizeEvent(QResizeEvent* event)

@@ -31,13 +31,20 @@ namespace OrthancStone
 {
   class BasicNativeApplicationContext;
 
-  class BasicNativeApplication
+  class BasicNativeApplicationRunner
   {
+  protected:
+    MessageBroker&      broker_;
+    IBasicApplication&  application_;
   public:
 
-    int Execute(MessageBroker& broker,
-                IBasicApplication& application,
-                int argc,
+    BasicNativeApplicationRunner(MessageBroker& broker,
+                                 IBasicApplication& application)
+      : broker_(broker),
+        application_(application)
+    {
+    }
+    int Execute(int argc,
                 char* argv[]);
 
     virtual void Initialize() = 0;

@@ -21,7 +21,6 @@
 
 #include "SmartLoader.h"
 #include "Layers/OrthancFrameLayerSource.h"
-#include "Layers/OrthancFrameLayer.h"
 
 namespace OrthancStone
 {

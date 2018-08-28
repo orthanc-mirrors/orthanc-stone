@@ -24,18 +24,33 @@
 
 namespace Ui 
 {
-  class MainWindow;
+  class SampleMainWindow;
 }
 
-
-class MainWindow : public QStoneMainWindow
+namespace OrthancStone
 {
-  Q_OBJECT
+  namespace Samples
+  {
 
-private:
-  Ui::MainWindow        *ui_;
+    class SampleApplicationBase;
 
-public:
-  explicit MainWindow(OrthancStone::BasicNativeApplicationContext& context, QWidget *parent = 0);
-  ~MainWindow();
-};
+    class SampleMainWindow : public QStoneMainWindow
+    {
+      Q_OBJECT
+
+    private:
+      Ui::SampleMainWindow*   ui_;
+      SampleApplicationBase&  stoneSampleApplication_;
+
+    public:
+      explicit SampleMainWindow(OrthancStone::BasicNativeApplicationContext& context, SampleApplicationBase& stoneSampleApplication, QWidget *parent = 0);
+      ~SampleMainWindow();
+
+    private slots:
+      void tool1Clicked();
+      void tool2Clicked();
+      void pushButton1Clicked();
+      void pushButton2Clicked();
+    };
+  }
+}

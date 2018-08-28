@@ -22,7 +22,6 @@
 #pragma once
 
 #include "../../Applications/IBasicApplication.h"
-#include "../../Framework/Viewport/WidgetViewport.h"
 
 namespace OrthancStone
 {
@@ -31,12 +30,34 @@ namespace OrthancStone
     class SampleApplicationBase : public IBasicApplication
     {
     public:
+      virtual void Initialize(BasicApplicationContext* context,
+                              IStatusBar& statusBar,
+                              const boost::program_options::variables_map& parameters)
+      {
+    }
+
+
+
       virtual std::string GetTitle() const
       {
         return "Stone of Orthanc - Sample";
       }
 
-      virtual void CustomInitialize() {}
+      virtual void OnPushButton1Clicked() {}
+      virtual void OnPushButton2Clicked() {}
+      virtual void OnTool1Clicked() {}
+      virtual void OnTool2Clicked() {}
+
+      virtual void GetButtonNames(std::string& pushButton1, 
+      std::string& pushButton2, 
+      std::string& tool1, 
+      std::string& tool2
+      ) {
+        pushButton1 = "action1";
+        pushButton2 = "action2";
+        tool1 = "tool1";
+        tool2 = "tool2";
+      }
 
     };
   }

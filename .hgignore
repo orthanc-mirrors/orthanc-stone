@@ -4,3 +4,4 @@ Platforms/Wasm/CMakeLists.txt.user
 Platforms/Wasm/build/
 Platforms/Wasm/build-web/
 Platforms/Wasm/ThirdPartyDownloads/
+Applications/Qt/archive/

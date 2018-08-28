@@ -23,7 +23,7 @@
 #error this file shall be included only with the ORTHANC_ENABLE_NATIVE set to 1
 #endif
 
-#include "BasicNativeApplication.h"
+#include "BasicNativeApplicationRunner.h"
 #include "BasicNativeApplicationContext.h"
 #include <boost/program_options.hpp>
 
@@ -54,10 +54,8 @@ namespace OrthancStone
     };
   }
 
-  int BasicNativeApplication::Execute(MessageBroker& broker,
-                                   IBasicApplication& application,
-                                   int argc,
-                                   char* argv[])
+  int BasicNativeApplicationRunner::Execute(int argc,
+                                            char* argv[])
   {
     /******************************************************************
      * Initialize all the subcomponents of Orthanc Stone
@@ -81,7 +79,7 @@ namespace OrthancStone
           ("help", "Display this help and exit")
           ("verbose", "Be verbose in logs")
           ("orthanc", boost::program_options::value<std::string>()->default_value("http://localhost:8042/"),
-          "URL to the Orthanc server")
+           "URL to the Orthanc server")
           ("username", "Username for the Orthanc server")
           ("password", "Password for the Orthanc server")
           ("https-verify", boost::program_options::value<bool>()->default_value(true), "Check HTTPS certificates")
@@ -94,7 +92,7 @@ namespace OrthancStone
     DeclareCommandLineOptions(options);
     
     // application specific options
-    application.DeclareStartupOptions(options);
+    application_.DeclareStartupOptions(options);
 
     boost::program_options::variables_map parameters;
     bool error = false;
@@ -191,18 +189,18 @@ namespace OrthancStone
 
       BasicNativeApplicationContext context;
       Oracle oracle(4); // use 4 threads to download content
-      OracleWebService webService(broker, oracle, webServiceParameters, context);
+      OracleWebService webService(broker_, oracle, webServiceParameters, context);
       context.SetWebService(webService);
 
-      application.Initialize(&context, statusBar, parameters);
+      application_.Initialize(&context, statusBar, parameters);
 
       {
         BasicNativeApplicationContext::GlobalMutexLocker locker(context);
-        context.SetCentralWidget(application.GetCentralWidget());
+        context.SetCentralWidget(application_.GetCentralWidget());
         context.GetCentralViewport().SetStatusBar(statusBar);
       }
 
-      std::string title = application.GetTitle();
+      std::string title = application_.GetTitle();
       if (title.empty())
       {
         title = "Stone of Orthanc";
@@ -218,8 +216,8 @@ namespace OrthancStone
        * Finalize the application
        ****************************************************************/
 
-      LOG(WARNING) << "The application has stopped";
-      application.Finalize();
+      LOG(WARNING) << "The application is stopping";
+      application_.Finalize();
     }
     catch (Orthanc::OrthancException& e)
     {

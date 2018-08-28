@@ -177,7 +177,7 @@ if (NOT ORTHANC_SANDBOXED)
 
   if (ENABLE_SDL OR ENABLE_QT)
     list(APPEND APPLICATIONS_SOURCES
-      ${ORTHANC_STONE_ROOT}/Applications/Generic/BasicNativeApplication.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Generic/BasicNativeApplicationRunner.cpp
       ${ORTHANC_STONE_ROOT}/Applications/Generic/BasicNativeApplicationContext.cpp
       )
     if (ENABLE_SDL)
@@ -217,7 +217,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Layers/LayerSourceBase.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/LineLayerRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/LineMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/OrthancFrameLayer.h
   ${ORTHANC_STONE_ROOT}/Framework/Layers/OrthancFrameLayerSource.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/RenderStyle.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/SliceOutlineRenderer.cpp

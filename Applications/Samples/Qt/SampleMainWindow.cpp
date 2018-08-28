@@ -1,0 +1,75 @@
+/**
+ * Stone of Orthanc
+ * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
+ * Department, University Hospital of Liege, Belgium
+ * Copyright (C) 2017-2018 Osimis S.A., Belgium
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ **/
+
+#include "SampleMainWindow.h"
+
+/**
+ * Don't use "ui_MainWindow.h" instead of <ui_MainWindow.h> below, as
+ * this makes CMake unable to detect when the UI file changes.
+ **/
+#include <ui_SampleMainWindow.h>
+#include "../../Applications/Samples/SampleApplicationBase.h"
+
+namespace OrthancStone
+{
+  namespace Samples
+  {
+
+    SampleMainWindow::SampleMainWindow(OrthancStone::BasicNativeApplicationContext& context, OrthancStone::Samples::SampleApplicationBase& stoneSampleApplication, QWidget *parent) :
+      QStoneMainWindow(context, parent),
+      ui_(new Ui::SampleMainWindow),
+      stoneSampleApplication_(stoneSampleApplication)
+    {
+      ui_->setupUi(this);
+      SetCentralStoneWidget(ui_->cairoCentralWidget);
+
+      connect(ui_->toolButton1, &QToolButton::clicked, this, &SampleMainWindow::tool1Clicked);
+      connect(ui_->toolButton2, &QToolButton::clicked, this, &SampleMainWindow::tool2Clicked);
+      connect(ui_->pushButton1, &QPushButton::clicked, this, &SampleMainWindow::pushButton1Clicked);
+      connect(ui_->pushButton1, &QPushButton::clicked, this, &SampleMainWindow::pushButton2Clicked);
+    }
+
+    SampleMainWindow::~SampleMainWindow()
+    {
+      delete ui_;
+    }
+
+    void SampleMainWindow::tool1Clicked()
+    {
+      stoneSampleApplication_.OnTool1Clicked();
+    }
+
+    void SampleMainWindow::tool2Clicked()
+    {
+      stoneSampleApplication_.OnTool2Clicked();
+    }
+
+    void SampleMainWindow::pushButton1Clicked()
+    {
+      stoneSampleApplication_.OnPushButton1Clicked();
+    }
+
+    void SampleMainWindow::pushButton2Clicked()
+    {
+      stoneSampleApplication_.OnPushButton2Clicked();
+    }
+
+  }
+}

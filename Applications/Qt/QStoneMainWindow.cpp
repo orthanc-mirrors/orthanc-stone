@@ -20,20 +20,22 @@
 
 #include "QStoneMainWindow.h"
 
-QStoneMainWindow::QStoneMainWindow(OrthancStone::BasicNativeApplicationContext& context, QWidget *parent) :
-  QMainWindow(parent),
-  context_(context)
+namespace OrthancStone
 {
+
+  QStoneMainWindow::QStoneMainWindow(BasicNativeApplicationContext& context, QWidget *parent) :
+    QMainWindow(parent),
+    context_(context)
+  {
+  }
+
+  void QStoneMainWindow::SetCentralStoneWidget(QCairoWidget *centralWidget)
+  {
+    cairoCentralWidget_ = centralWidget;
+    cairoCentralWidget_->SetContext(context_);
+  }
+
+  QStoneMainWindow::~QStoneMainWindow()
+  {
+  }
 }
-
-void QStoneMainWindow::SetCentralStoneWidget(QCairoWidget *centralWidget)
-{
-  cairoCentralWidget_ = centralWidget;
-  cairoCentralWidget_->SetContext(context_);
-}
-
-QStoneMainWindow::~QStoneMainWindow()
-{
-}
-
-

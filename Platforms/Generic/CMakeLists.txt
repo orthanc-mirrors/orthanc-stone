@@ -49,12 +49,13 @@ add_library(OrthancStone STATIC
 
 if (ENABLE_QT)
   list(APPEND APPLICATIONS_SOURCES
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/MainWindow.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/MainWindow.ui
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleQtApplicationRunner.h
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindow.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindow.ui
     )
 endif()
 
-macro(BuildSample Target Header Sample)
+macro(BuildSingeFileSample Target Header Sample)
   add_executable(${Target}
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleMainNative.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleInteractor.h
@@ -76,7 +77,7 @@ endmacro()
 ##BuildSample(OrthancStoneBasicPetCtFusion 5)
 ##BuildSample(OrthancStoneSynchronizedSeries 6)
 ##BuildSample(OrthancStoneLayoutPetCtFusion 7)
-BuildSample(OrthancStoneSimpleViewer SimpleViewerApplication.h 8)
+BuildSingeFileSample(OrthancStoneSimpleViewer SimpleViewerApplication.h 8)
 
 
 #####################################################################

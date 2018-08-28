@@ -14,6 +14,11 @@ General
   WorldSceneWidet shall not create Pan/ZoomMouseTracker when the Interactor does not create one
 * Update SimpleViewer sample to have 2 buttons to select the measure tracker
 
+Bugs
+----
+* LineMeasureTracker rendering generates "memory access out of bounds" in WASM
+
+
 ---------------------------------
 Radiotherapy and nuclear medicine
 ---------------------------------

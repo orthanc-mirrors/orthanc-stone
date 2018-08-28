@@ -24,21 +24,21 @@
 #include "../Sdl/BasicSdlApplication.h"
 #endif
 #if ORTHANC_ENABLE_QT==1
-#include "../Qt/BasicQtApplication.h"
+#include "Qt/SampleQtApplicationRunner.h"
 #endif
 #include "../../Framework/Messages/MessageBroker.h"
 
 int main(int argc, char* argv[]) 
 {
   OrthancStone::MessageBroker broker;
-  Application application(broker);
+  SampleApplication sampleStoneApplication(broker);
 
 #if ORTHANC_ENABLE_SDL==1
   OrthancStone::BasicSdlApplication sdlApplication;
-  return sdlApplication.Execute(broker, application, argc, argv);
+  return sdlApplication.Execute(broker, sampleStoneApplication, argc, argv);
 #endif
 #if ORTHANC_ENABLE_QT==1
-  OrthancStone::BasicQtApplication qtApplication;
-  return qtApplication.Execute(broker, application, argc, argv);
+  OrthancStone::Samples::SampleQtApplicationRunner qtAppRunner(broker, sampleStoneApplication);
+  return qtAppRunner.Execute(argc, argv);
 #endif
 }

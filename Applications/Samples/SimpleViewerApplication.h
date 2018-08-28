@@ -24,6 +24,7 @@
 #include "SampleApplicationBase.h"
 
 #include "../../Framework/Layers/OrthancFrameLayerSource.h"
+#include "../../Framework/Layers/CircleMeasureTracker.h"
 #include "../../Framework/Layers/LineMeasureTracker.h"
 #include "../../Framework/Widgets/LayerWidget.h"
 #include "../../Framework/Widgets/LayoutWidget.h"
@@ -110,7 +111,14 @@ namespace OrthancStone
         {
           if (button == MouseButton_Left)
           {
-            return new LineMeasureTracker(statusBar, dynamic_cast<LayerWidget&>(widget).GetSlice(), x, y, 255, 0, 0, 10);
+            if (application_.currentTool_ == Tools_LineMeasure)
+            {
+              return new LineMeasureTracker(statusBar, dynamic_cast<LayerWidget&>(widget).GetSlice(), x, y, 255, 0, 0, 10);
+            }
+            else if (application_.currentTool_ == Tools_CircleMeasure)
+            {
+              return new CircleMeasureTracker(statusBar, dynamic_cast<LayerWidget&>(widget).GetSlice(), x, y, 255, 0, 0, 10);
+            }
           }
           return NULL;
         }
@@ -138,21 +146,6 @@ namespace OrthancStone
                                 KeyboardModifiers modifiers,
                                 IStatusBar* statusBar)
         {
-          //          int scale = (modifiers & KeyboardModifiers_Control ? 10 : 1);
-          
-          //          switch (direction)
-          //          {
-          //            case MouseWheelDirection_Up:
-          //              application_.OffsetSlice(-scale);
-          //              break;
-
-          //            case MouseWheelDirection_Down:
-          //              application_.OffsetSlice(scale);
-          //              break;
-
-          //            default:
-          //              break;
-          //          }
         }
 
         virtual void KeyPressed(WorldSceneWidget& widget,
@@ -172,7 +165,12 @@ namespace OrthancStone
         }
       };
 
+      enum Tools {
+        Tools_LineMeasure,
+        Tools_CircleMeasure
+      };
 
+      Tools                           currentTool_;
       std::unique_ptr<MainWidgetInteractor> mainWidgetInteractor_;
       std::unique_ptr<ThumbnailInteractor>  thumbnailInteractor_;
       LayoutWidget*                   mainLayout_;
@@ -186,18 +184,17 @@ namespace OrthancStone
       OrthancStone::WidgetViewport*   wasmViewport2_;
 
       IStatusBar*                     statusBar_;
-      unsigned int                    slice_;
       std::unique_ptr<SmartLoader>    smartLoader_;
       std::unique_ptr<OrthancApiClient>      orthancApiClient_;
 
     public:
       SimpleViewerApplication(MessageBroker& broker) :
         IObserver(broker),
+        currentTool_(Tools_LineMeasure),
         mainLayout_(NULL),
         currentInstanceIndex_(0),
         wasmViewport1_(NULL),
-        wasmViewport2_(NULL),
-        slice_(0)
+        wasmViewport2_(NULL)
       {
         DeclareIgnoredMessage(MessageType_Widget_ContentChanged);
         DeclareHandledMessage(MessageType_Widget_GeometryChanged);
@@ -313,7 +310,7 @@ namespace OrthancStone
           // if this is the first thumbnail loaded, load the first instance in the mainWidget
           if (mainWidget_->GetLayerCount() == 0)
           {
-              mainWidget_->AddLayer(smartLoader_->GetFrame(instancesIdsPerSeriesId_[seriesId][0], 0));
+            mainWidget_->AddLayer(smartLoader_->GetFrame(instancesIdsPerSeriesId_[seriesId][0], 0));
           }
         }
       }
@@ -362,9 +359,27 @@ namespace OrthancStone
       }
 #endif
 
+
+
       void SelectSeriesInMainViewport(const std::string& seriesId)
       {
         mainWidget_->ReplaceLayer(0, smartLoader_->GetFrame(instancesIdsPerSeriesId_[seriesId][0], 0));
+      }
+
+      virtual void OnPushButton1Clicked() {}
+      virtual void OnPushButton2Clicked() {}
+      virtual void OnTool1Clicked() { currentTool_ = Tools_LineMeasure;}
+      virtual void OnTool2Clicked() { currentTool_ = Tools_CircleMeasure;}
+
+      virtual void GetButtonNames(std::string& pushButton1,
+                                  std::string& pushButton2,
+                                  std::string& tool1,
+                                  std::string& tool2
+                                  ) {
+        tool1 = "line";
+        tool2 = "circle";
+        pushButton1 = "action1";
+        pushButton2 = "action2";
       }
     };
 

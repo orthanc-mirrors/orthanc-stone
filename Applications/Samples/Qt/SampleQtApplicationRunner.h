@@ -18,25 +18,34 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "MainWindow.h"
 
-/**
- * Don't use "ui_MainWindow.h" instead of <ui_MainWindow.h> below, as
- * this makes CMake unable to detect when the UI file changes.
- **/
-#include <ui_MainWindow.h>
+#pragma once
 
-MainWindow::MainWindow(OrthancStone::BasicNativeApplicationContext& context, QWidget *parent) :
-  QStoneMainWindow(context, parent),
-  ui_(new Ui::MainWindow)
+#include "../../Qt/BasicQtApplicationRunner.h"
+#include "SampleMainWindow.h"
+
+#if ORTHANC_ENABLE_QT != 1
+#error this file shall be included only with the ORTHANC_ENABLE_QT set to 1
+#endif
+
+namespace OrthancStone
 {
-  ui_->setupUi(this);
-  SetCentralStoneWidget(ui_->cairoCentralWidget);
+  namespace Samples
+  {
+    class SampleQtApplicationRunner : public OrthancStone::BasicQtApplicationRunner
+    {
+    protected:
+      virtual void InitializeMainWindow(OrthancStone::BasicNativeApplicationContext& context)
+      {
+        window_.reset(new SampleMainWindow(context, dynamic_cast<OrthancStone::Samples::SampleApplicationBase&>(application_)));
+      }
+    public:
+      SampleQtApplicationRunner(MessageBroker& broker,
+                                SampleApplicationBase& application)
+        : OrthancStone::BasicQtApplicationRunner(broker, application)
+      {
+      }
+
+    };
+  }
 }
-
-MainWindow::~MainWindow()
-{
-  delete ui_;
-}
-
-

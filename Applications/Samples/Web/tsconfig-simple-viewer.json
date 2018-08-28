@@ -4,6 +4,7 @@
         "outFile": "../../../Platforms/Wasm/build-web/app-simple-viewer.js"
     },
     "include" : [
-        "simple-viewer.ts"
+        "simple-viewer.ts",
+        "common-samples.ts"
     ]
 }

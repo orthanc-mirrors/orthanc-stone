@@ -28,5 +28,5 @@
 
 OrthancStone::IBasicApplication* CreateUserApplication(OrthancStone::MessageBroker& broker) {
   
-  return new Application(broker);
+  return new SampleApplication(broker);
 }

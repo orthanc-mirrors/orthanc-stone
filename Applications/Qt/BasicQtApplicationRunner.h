@@ -19,50 +19,37 @@
  **/
 
 
+#pragma once
+
+#include "../Generic/BasicNativeApplicationRunner.h"
+#include "QStoneMainWindow.h"
+
 #if ORTHANC_ENABLE_QT != 1
 #error this file shall be included only with the ORTHANC_ENABLE_QT set to 1
 #endif
 
-#include "BasicQtApplication.h"
-#include <boost/program_options.hpp>
-#include <QApplication>
-
-#include "../../Framework/Toolbox/MessagingToolbox.h"
-
-#include <Core/Logging.h>
-#include <Core/HttpClient.h>
-#include <Core/Toolbox.h>
-#include <Plugins/Samples/Common/OrthancHttpConnection.h>
-#include "../../Platforms/Generic/OracleWebService.h"
-#include "../../Applications/Samples/Qt/MainWindow.h"
-
-
 namespace OrthancStone
 {
-  void BasicQtApplication::Initialize()
+  class BasicQtApplicationRunner : public BasicNativeApplicationRunner
   {
-  }
+  protected:
+    std::auto_ptr<QStoneMainWindow> window_;
 
-  void BasicQtApplication::DeclareCommandLineOptions(boost::program_options::options_description& options)
-  {
-  }
+    virtual void InitializeMainWindow(BasicNativeApplicationContext& context) = 0;
+  public:
+    BasicQtApplicationRunner(MessageBroker& broker,
+                             IBasicApplication& application)
+      : BasicNativeApplicationRunner(broker, application)
+    {
+    }
 
-  void BasicQtApplication::Run(BasicNativeApplicationContext& context, const std::string& title, int argc, char* argv[])
-  {
-    context.Start();
 
-    QApplication app(argc, argv);
-    MainWindow window(context);
+    virtual void Initialize();
 
-    window.show();
-    app.exec();
-
-    context.Stop();
-  }
-
-  void BasicQtApplication::Finalize()
-  {
-  }
-
+    virtual void DeclareCommandLineOptions(boost::program_options::options_description& options);
+    virtual void ParseCommandLineOptions(const boost::program_options::variables_map& parameters) {}
+    virtual void Run(BasicNativeApplicationContext& context, const std::string& title, int argc, char* argv[]);
+    virtual void Finalize();
+  };
 
 }

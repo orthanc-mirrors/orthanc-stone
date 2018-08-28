@@ -24,19 +24,22 @@
 #include "QCairoWidget.h"
 #include "../Generic/BasicNativeApplicationContext.h"
 
-class QStoneMainWindow : public QMainWindow
+namespace OrthancStone
 {
-  Q_OBJECT
+  class QStoneMainWindow : public QMainWindow
+  {
+    Q_OBJECT
 
-private:
-  OrthancStone::BasicNativeApplicationContext& context_;
-  QCairoWidget          *cairoCentralWidget_;
+  private:
+    OrthancStone::BasicNativeApplicationContext& context_;
+    QCairoWidget          *cairoCentralWidget_;
 
-protected:  // you must inherit this class
-  QStoneMainWindow(OrthancStone::BasicNativeApplicationContext& context, QWidget *parent = 0);
-  void SetCentralStoneWidget(QCairoWidget* centralWidget);
-public:
-  virtual ~QStoneMainWindow();
+  protected:  // you must inherit this class
+    QStoneMainWindow(BasicNativeApplicationContext& context, QWidget *parent = 0);
+    void SetCentralStoneWidget(QCairoWidget* centralWidget);
+  public:
+    virtual ~QStoneMainWindow();
 
-};
+  };
 
+}

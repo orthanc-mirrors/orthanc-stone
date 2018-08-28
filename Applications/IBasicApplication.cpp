@@ -189,14 +189,22 @@ namespace OrthancStone
         webService.SetUrl(parameters["orthanc"].as<std::string>());
       }
 
+      std::string username, password;
+      
       if (parameters.count("username"))
       {
-        webService.SetUsername(parameters["username"].as<std::string>());
+        username = parameters["username"].as<std::string>();
       }
 
       if (parameters.count("password"))
       {
-        webService.SetPassword(parameters["password"].as<std::string>());
+        password = parameters["password"].as<std::string>();
+      }
+
+      if (!username.empty() ||
+          !password.empty())
+      {
+        webService.SetCredentials(username, password);
       }
 
       LOG(WARNING) << "URL to the Orthanc REST API: " << webService.GetUrl();

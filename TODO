@@ -9,7 +9,9 @@ General
 * Documentation
 * Interface with DICOMweb
 * LayoutPetCtFusionApplication: fix initial view
-
+* Allow Interactor to create Pan/ZoomMouseTracker in IWorldSceneMouseTracker* CreateMouseTracker 
+  (problem: PanMouseTracker is a IMouseTracker and CreateMouseTracker shall return a IWorldSceneMouseTracker).
+  WorldSceneWidet shall not create Pan/ZoomMouseTracker when the Interactor does not create one
 
 ---------------------------------
 Radiotherapy and nuclear medicine
@@ -25,8 +27,8 @@ Radiotherapy and nuclear medicine
 Optimizations
 -------------
 
+* Add cache in "SmartLoader" by returning a "OrthancFrameLayerSource" for a frame that has already been loaded
 * Tune number of loading threads in LayeredSceneWidget
-* Add cache over IOrthancServices (for SDL/Qt/...)
 * LayoutWidget: Do not update full background if only 1 widget has changed
 * LayoutWidget: Threads to refresh each child
 * Implement binary search to speed up search for closest slice
@@ -38,7 +40,6 @@ Optimizations
 Platform-specific
 -----------------
 
-* Qt widget example
 * Add precompiled headers for Microsoft Visual Studio
 * Investigate crash in CurlOrthancConnection if using MinGW32 in Release mode
 

@@ -41,6 +41,7 @@ namespace OrthancStone
     virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
                                                         const ViewportGeometry& view,
                                                         MouseButton button,
+                                                        KeyboardModifiers modifiers,
                                                         double x,
                                                         double y,
                                                         IStatusBar* statusBar) = 0;

@@ -253,6 +253,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeReslicer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/CairoWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/EmptyWidget.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/IWorldSceneMouseTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/LayerWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/LayoutWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/TestCairoWidget.cpp

@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -46,12 +46,49 @@ namespace OrthancStone
                                     const ViewportGeometry& view) = 0;
     };
 
+    class PanMouseTracker : public IMouseTracker
+    {
+    private:
+      WorldSceneWidget&  that_;
+      double             previousPanX_;
+      double             previousPanY_;
+      double             downX_;
+      double             downY_;
+
+    public:
+      PanMouseTracker(WorldSceneWidget& that, int x, int y);
+
+      virtual void Render(Orthanc::ImageAccessor& surface) {}
+
+      virtual void MouseUp() {}
+
+      virtual void MouseMove(int x, int y);
+    };
+
+    class ZoomMouseTracker : public IMouseTracker
+    {
+    private:
+      WorldSceneWidget&  that_;
+      int                downX_;
+      int                downY_;
+      double             centerX_;
+      double             centerY_;
+      double             oldZoom_;
+
+    public:
+      ZoomMouseTracker(WorldSceneWidget&  that, int x, int y);
+
+      void Render(Orthanc::ImageAccessor& surface) {}
+
+      virtual void MouseUp() {}
+
+      virtual void MouseMove(int x, int y);
+    };
+
   private:
     struct SizeChangeFunctor;
 
     class SceneMouseTracker;
-    class PanMouseTracker;
-    class ZoomMouseTracker;
 
     typedef ObserversRegistry<WorldSceneWidget, IWorldObserver>  Observers;
 

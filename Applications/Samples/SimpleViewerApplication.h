@@ -24,6 +24,7 @@
 #include "SampleApplicationBase.h"
 
 #include "../../Framework/Layers/OrthancFrameLayerSource.h"
+#include "../../Framework/Layers/LineMeasureTracker.h"
 #include "../../Framework/Widgets/LayerWidget.h"
 #include "../../Framework/Widgets/LayoutWidget.h"
 #include "../../Framework/Messages/IObserver.h"
@@ -53,6 +54,7 @@ namespace OrthancStone
         virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
                                                             const ViewportGeometry& view,
                                                             MouseButton button,
+                                                            KeyboardModifiers modifiers,
                                                             double x,
                                                             double y,
                                                             IStatusBar* statusBar)
@@ -83,17 +85,17 @@ namespace OrthancStone
                                 char key,
                                 KeyboardModifiers modifiers,
                                 IStatusBar* statusBar)
-        {};
+        {}
 
       };
 
-      class Interactor : public IWorldSceneInteractor
+      class MainWidgetInteractor : public IWorldSceneInteractor
       {
       private:
         SimpleViewerApplication&  application_;
         
       public:
-        Interactor(SimpleViewerApplication&  application) :
+        MainWidgetInteractor(SimpleViewerApplication&  application) :
           application_(application)
         {
         }
@@ -101,10 +103,15 @@ namespace OrthancStone
         virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
                                                             const ViewportGeometry& view,
                                                             MouseButton button,
+                                                            KeyboardModifiers modifiers,
                                                             double x,
                                                             double y,
                                                             IStatusBar* statusBar)
         {
+          if (button == MouseButton_Left)
+          {
+            return new LineMeasureTracker(statusBar, dynamic_cast<LayerWidget&>(widget).GetSlice(), x, y, 255, 0, 0, 10);
+          }
           return NULL;
         }
 
@@ -166,7 +173,7 @@ namespace OrthancStone
       };
 
 
-      std::unique_ptr<Interactor>     interactor_;
+      std::unique_ptr<MainWidgetInteractor> mainWidgetInteractor_;
       std::unique_ptr<ThumbnailInteractor>  thumbnailInteractor_;
       LayoutWidget*                   mainLayout_;
       LayoutWidget*                   thumbnailsLayout_;
@@ -248,8 +255,8 @@ namespace OrthancStone
           smartLoader_->SetImageQuality(SliceImageQuality_FullPam);
 
           mainLayout_->SetTransmitMouseOver(true);
-          interactor_.reset(new Interactor(*this));
-          mainWidget_->SetInteractor(*interactor_);
+          mainWidgetInteractor_.reset(new MainWidgetInteractor(*this));
+          mainWidget_->SetInteractor(*mainWidgetInteractor_);
           thumbnailInteractor_.reset(new ThumbnailInteractor(*this));
         }
 

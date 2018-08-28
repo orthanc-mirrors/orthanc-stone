@@ -25,6 +25,9 @@
 
 namespace OrthancStone
 {
+  // this is tracking a mouse in screen coordinates/pixels unlike
+  // the IWorldSceneMouseTracker that is tracking a mouse
+  // in scene coordinates/mm.
   class IMouseTracker : public boost::noncopyable
   {
   public:

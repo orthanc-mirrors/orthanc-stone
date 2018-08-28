@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -59,12 +59,16 @@ namespace OrthancStone
   };
 
 
+  // this is an adapter between a IWorldSceneMouseTracker
+  // that is tracking a mouse in scene coordinates/mm and
+  // an IMouseTracker that is tracking a mouse
+  // in screen coordinates/pixels.
   class WorldSceneWidget::SceneMouseTracker : public IMouseTracker
   {
   private:
     ViewportGeometry                       view_;
     std::auto_ptr<IWorldSceneMouseTracker>  tracker_;
-      
+
   public:
     SceneMouseTracker(const ViewportGeometry& view,
                       IWorldSceneMouseTracker* tracker) :
@@ -77,17 +81,17 @@ namespace OrthancStone
     virtual void Render(Orthanc::ImageAccessor& target)
     {
       CairoSurface surface(target);
-      CairoContext context(surface); 
+      CairoContext context(surface);
       view_.ApplyTransform(context);
       tracker_->Render(context, view_.GetZoom());
     }
 
-    virtual void MouseUp() 
+    virtual void MouseUp()
     {
       tracker_->MouseUp();
     }
 
-    virtual void MouseMove(int x, 
+    virtual void MouseMove(int x,
                            int y)
     {
       double sceneX, sceneY;
@@ -97,121 +101,80 @@ namespace OrthancStone
   };
 
 
-  class WorldSceneWidget::PanMouseTracker : public IMouseTracker
+  WorldSceneWidget::PanMouseTracker::PanMouseTracker(WorldSceneWidget& that,
+                                                     int x,
+                                                     int y) :
+    that_(that),
+    downX_(x),
+    downY_(y)
   {
-  private:
-    WorldSceneWidget&  that_;  
-    double             previousPanX_;
-    double             previousPanY_;
-    double             downX_;
-    double             downY_;
+    that_.view_.GetPan(previousPanX_, previousPanY_);
+  }
 
-  public:
-    PanMouseTracker(WorldSceneWidget& that,
-                    int x,
-                    int y) :
-      that_(that),
-      downX_(x),
-      downY_(y)
-    {
-      that_.view_.GetPan(previousPanX_, previousPanY_);
-    }
-
-    virtual void Render(Orthanc::ImageAccessor& surface)
-    {
-    }
-
-    virtual void MouseUp() 
-    {
-    }
-
-    virtual void MouseMove(int x, 
-                           int y)
-    {
-      that_.view_.SetPan(previousPanX_ + x - downX_,
-                         previousPanY_ + y - downY_);
-
-      that_.observers_.Apply(that_, &IWorldObserver::NotifyViewChange, that_.view_);
-    }
-  };
-
-
-  class WorldSceneWidget::ZoomMouseTracker : public IMouseTracker
+  void WorldSceneWidget::PanMouseTracker::MouseMove(int x, int y)
   {
-  private:
-    WorldSceneWidget&  that_;  
-    int                downX_;
-    int                downY_;
-    double             centerX_;
-    double             centerY_;
-    double             oldZoom_;
+    that_.view_.SetPan(previousPanX_ + x - downX_,
+                       previousPanY_ + y - downY_);
 
-  public:
-    ZoomMouseTracker(WorldSceneWidget&  that,
-                     int x,
-                     int y) :
-      that_(that),
-      downX_(x),
-      downY_(y)
+    that_.observers_.Apply(that_, &IWorldObserver::NotifyViewChange, that_.view_);
+  }
+
+  WorldSceneWidget::ZoomMouseTracker::ZoomMouseTracker(WorldSceneWidget&  that,
+                                                       int x,
+                                                       int y) :
+    that_(that),
+    downX_(x),
+    downY_(y)
+  {
+    oldZoom_ = that_.view_.GetZoom();
+    MapMouseToScene(centerX_, centerY_, that_.view_, downX_, downY_);
+  }
+
+  void WorldSceneWidget::ZoomMouseTracker::MouseMove(int x,
+                                                     int y)
+  {
+    static const double MIN_ZOOM = -4;
+    static const double MAX_ZOOM = 4;
+
+    if (that_.view_.GetDisplayHeight() <= 3)
     {
-      oldZoom_ = that_.view_.GetZoom();
-      MapMouseToScene(centerX_, centerY_, that_.view_, downX_, downY_);
+      return;   // Cannot zoom on such a small image
     }
 
-    virtual void Render(Orthanc::ImageAccessor& surface)
+    double dy = (static_cast<double>(y - downY_) /
+                 static_cast<double>(that_.view_.GetDisplayHeight() - 1)); // In the range [-1,1]
+    double z;
+
+    // Linear interpolation from [-1, 1] to [MIN_ZOOM, MAX_ZOOM]
+    if (dy < -1.0)
     {
+      z = MIN_ZOOM;
+    }
+    else if (dy > 1.0)
+    {
+      z = MAX_ZOOM;
+    }
+    else
+    {
+      z = MIN_ZOOM + (MAX_ZOOM - MIN_ZOOM) * (dy + 1.0) / 2.0;
     }
 
-    virtual void MouseUp() 
-    {
-    }
+    z = pow(2.0, z);
 
-    virtual void MouseMove(int x, 
-                           int y)
-    {
-      static const double MIN_ZOOM = -4;
-      static const double MAX_ZOOM = 4;
+    that_.view_.SetZoom(oldZoom_ * z);
 
-      if (that_.view_.GetDisplayHeight() <= 3)
-      {
-        return;   // Cannot zoom on such a small image
-      }
+    // Correct the pan so that the original click point is kept at
+    // the same location on the display
+    double panX, panY;
+    that_.view_.GetPan(panX, panY);
 
-      double dy = (static_cast<double>(y - downY_) / 
-                   static_cast<double>(that_.view_.GetDisplayHeight() - 1)); // In the range [-1,1]
-      double z;
+    int tx, ty;
+    that_.view_.MapSceneToDisplay(tx, ty, centerX_, centerY_);
+    that_.view_.SetPan(panX + static_cast<double>(downX_ - tx),
+                       panY + static_cast<double>(downY_ - ty));
 
-      // Linear interpolation from [-1, 1] to [MIN_ZOOM, MAX_ZOOM]
-      if (dy < -1.0)
-      {
-        z = MIN_ZOOM;
-      }
-      else if (dy > 1.0)
-      {
-        z = MAX_ZOOM;
-      }
-      else
-      {
-        z = MIN_ZOOM + (MAX_ZOOM - MIN_ZOOM) * (dy + 1.0) / 2.0;
-      }
-
-      z = pow(2.0, z);
-
-      that_.view_.SetZoom(oldZoom_ * z);
-
-      // Correct the pan so that the original click point is kept at
-      // the same location on the display
-      double panX, panY;
-      that_.view_.GetPan(panX, panY);
-
-      int tx, ty;
-      that_.view_.MapSceneToDisplay(tx, ty, centerX_, centerY_);
-      that_.view_.SetPan(panX + static_cast<double>(downX_ - tx),
-                               panY + static_cast<double>(downY_ - ty));
-
-      that_.observers_.Apply(that_, &IWorldObserver::NotifyViewChange, that_.view_);
-    }
-  };
+    that_.observers_.Apply(that_, &IWorldObserver::NotifyViewChange, that_.view_);
+  }
 
 
   bool WorldSceneWidget::RenderCairo(CairoContext& context)
@@ -302,24 +265,25 @@ namespace OrthancStone
     double sceneX, sceneY;
     MapMouseToScene(sceneX, sceneY, view_, x, y);
 
+    // asks the Widget Interactor to provide a mouse tracker
     std::auto_ptr<IWorldSceneMouseTracker> tracker
-      (CreateMouseSceneTracker(view_, button, sceneX, sceneY, modifiers));
+        (CreateMouseSceneTracker(view_, button, sceneX, sceneY, modifiers));
 
     if (tracker.get() != NULL)
     {
       return new SceneMouseTracker(view_, tracker.release());
     }
-
+    //TODO: allow Interactor to create Pan & Zoom
     switch (button)
     {
-      case MouseButton_Middle:
-        return new PanMouseTracker(*this, x, y);
+    case MouseButton_Middle:
+      return new PanMouseTracker(*this, x, y);
 
-      case MouseButton_Right:
-        return new ZoomMouseTracker(*this, x, y);
+    case MouseButton_Right:
+      return new ZoomMouseTracker(*this, x, y);
 
-      default:
-        return NULL;
+    default:
+      return NULL;
     }
   }
 
@@ -343,7 +307,7 @@ namespace OrthancStone
   {
     if (interactor_)
     {
-      return interactor_->CreateMouseTracker(*this, view, button, x, y, GetStatusBar());
+      return interactor_->CreateMouseTracker(*this, view, button, modifiers, x, y, GetStatusBar());
     }
     else
     {
@@ -355,7 +319,7 @@ namespace OrthancStone
   void WorldSceneWidget::MouseWheel(MouseWheelDirection direction,
                                     int x,
                                     int y,
-                                    KeyboardModifiers modifiers) 
+                                    KeyboardModifiers modifiers)
   {
     if (interactor_)
     {

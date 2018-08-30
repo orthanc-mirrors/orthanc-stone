@@ -23,7 +23,7 @@
 #error this file shall be included only with the ORTHANC_ENABLE_SDL set to 1
 #endif
 
-#include "BasicSdlApplication.h"
+#include "SdlStoneApplicationRunner.h"
 #include <boost/program_options.hpp>
 
 #include "../../Framework/Toolbox/MessagingToolbox.h"

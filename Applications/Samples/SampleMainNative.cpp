@@ -21,7 +21,7 @@
 
 #include "SampleList.h"
 #if ORTHANC_ENABLE_SDL==1
-#include "../Sdl/BasicSdlApplication.h"
+#include "../Sdl/SdlStoneApplicationRunner.h"
 #endif
 #if ORTHANC_ENABLE_QT==1
 #include "Qt/SampleQtApplicationRunner.h"

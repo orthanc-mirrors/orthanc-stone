@@ -182,7 +182,7 @@ if (NOT ORTHANC_SANDBOXED)
       )
     if (ENABLE_SDL)
       list(APPEND APPLICATIONS_SOURCES
-        ${ORTHANC_STONE_ROOT}/Applications/Sdl/BasicSdlApplication.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlStoneApplicationRunner.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlCairoSurface.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOrthancSurface.cpp

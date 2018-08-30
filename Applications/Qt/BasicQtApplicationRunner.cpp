@@ -46,7 +46,7 @@ namespace OrthancStone
   {
   }
 
-  void BasicQtApplicationRunner::Run(BasicNativeApplicationContext& context, const std::string& title, int argc, char* argv[])
+  void BasicQtApplicationRunner::Run(NativeStoneApplicationContext& context, const std::string& title, int argc, char* argv[])
   {
     context.Start();
 

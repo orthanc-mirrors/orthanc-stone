@@ -31,11 +31,11 @@
 
 namespace OrthancStone
 {
-  class BasicNativeApplicationContext : public StoneApplicationContext
+  class NativeStoneApplicationContext : public StoneApplicationContext
   {
   private:
 
-    static void UpdateThread(BasicNativeApplicationContext* that);
+    static void UpdateThread(NativeStoneApplicationContext* that);
 
     boost::mutex        globalMutex_;
     std::unique_ptr<WidgetViewport>      centralViewport_;
@@ -48,14 +48,14 @@ namespace OrthancStone
     {
       boost::mutex::scoped_lock  lock_;
     public:
-      GlobalMutexLocker(BasicNativeApplicationContext& that):
+      GlobalMutexLocker(NativeStoneApplicationContext& that):
         lock_(that.globalMutex_)
       {}
     };
 
-    BasicNativeApplicationContext();
+    NativeStoneApplicationContext();
 
-    virtual ~BasicNativeApplicationContext() {}
+    virtual ~NativeStoneApplicationContext() {}
 
     virtual IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
     IViewport& GetCentralViewport() {return *(centralViewport_.get());}

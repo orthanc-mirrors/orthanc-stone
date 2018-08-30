@@ -23,8 +23,8 @@
 #error this file shall be included only with the ORTHANC_ENABLE_NATIVE set to 1
 #endif
 
-#include "BasicNativeApplicationRunner.h"
-#include "BasicNativeApplicationContext.h"
+#include "NativeStoneApplicationRunner.h"
+#include "NativeStoneApplicationContext.h"
 #include <boost/program_options.hpp>
 
 #include "../../Framework/Toolbox/MessagingToolbox.h"
@@ -54,7 +54,7 @@ namespace OrthancStone
     };
   }
 
-  int BasicNativeApplicationRunner::Execute(int argc,
+  int NativeStoneApplicationRunner::Execute(int argc,
                                             char* argv[])
   {
     /******************************************************************
@@ -187,7 +187,7 @@ namespace OrthancStone
 
       LogStatusBar statusBar;
 
-      BasicNativeApplicationContext context;
+      NativeStoneApplicationContext context;
       Oracle oracle(4); // use 4 threads to download content
       OracleWebService webService(broker_, oracle, webServiceParameters, context);
       context.SetWebService(webService);
@@ -195,7 +195,7 @@ namespace OrthancStone
       application_.Initialize(&context, statusBar, parameters);
 
       {
-        BasicNativeApplicationContext::GlobalMutexLocker locker(context);
+        NativeStoneApplicationContext::GlobalMutexLocker locker(context);
         context.SetCentralWidget(application_.GetCentralWidget());
         context.GetCentralViewport().SetStatusBar(statusBar);
       }

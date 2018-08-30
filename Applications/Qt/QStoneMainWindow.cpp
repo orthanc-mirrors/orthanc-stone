@@ -23,7 +23,7 @@
 namespace OrthancStone
 {
 
-  QStoneMainWindow::QStoneMainWindow(BasicNativeApplicationContext& context, QWidget *parent) :
+  QStoneMainWindow::QStoneMainWindow(NativeStoneApplicationContext& context, QWidget *parent) :
     QMainWindow(parent),
     context_(context)
   {

@@ -34,7 +34,7 @@ namespace OrthancStone
                          const std::string& uri,
                          const IWebService::Headers& headers,
                          Orthanc::IDynamicObject* payload /* takes ownership */,
-                         BasicNativeApplicationContext& context);
+                         NativeStoneApplicationContext& context);
 
     virtual void Execute();
   };

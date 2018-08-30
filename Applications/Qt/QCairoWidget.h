@@ -21,7 +21,7 @@
 #pragma once
 
 #include "../../Framework/Widgets/CairoWidget.h"
-#include "../../Applications/Generic/BasicNativeApplicationContext.h"
+#include "../../Applications/Generic/NativeStoneApplicationContext.h"
 #include "../../Framework/Viewport/CairoSurface.h"
 
 #include <QWidget>
@@ -36,7 +36,7 @@ class QCairoWidget : public QWidget, public OrthancStone::IViewport::IObserver
 private:
   std::auto_ptr<QImage>         image_;
   OrthancStone::CairoSurface    surface_;
-  OrthancStone::BasicNativeApplicationContext* context_;
+  OrthancStone::NativeStoneApplicationContext* context_;
 
 protected:
   virtual void paintEvent(QPaintEvent *event);
@@ -58,7 +58,7 @@ public:
  
   virtual ~QCairoWidget();
 
-  void SetContext(OrthancStone::BasicNativeApplicationContext& context);
+  void SetContext(OrthancStone::NativeStoneApplicationContext& context);
 
   virtual void OnViewportContentChanged(const OrthancStone::IViewport& /*sceneNotUsed*/)
   {

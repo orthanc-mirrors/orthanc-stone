@@ -177,8 +177,8 @@ if (NOT ORTHANC_SANDBOXED)
 
   if (ENABLE_SDL OR ENABLE_QT)
     list(APPEND APPLICATIONS_SOURCES
-      ${ORTHANC_STONE_ROOT}/Applications/Generic/BasicNativeApplicationRunner.cpp
-      ${ORTHANC_STONE_ROOT}/Applications/Generic/BasicNativeApplicationContext.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Generic/NativeStoneApplicationRunner.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Generic/NativeStoneApplicationContext.cpp
       )
     if (ENABLE_SDL)
       list(APPEND APPLICATIONS_SOURCES

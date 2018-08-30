@@ -29,16 +29,16 @@
 
 namespace OrthancStone
 {
-  class BasicNativeApplicationContext;
+  class NativeStoneApplicationContext;
 
-  class BasicNativeApplicationRunner
+  class NativeStoneApplicationRunner
   {
   protected:
     MessageBroker&      broker_;
     IStoneApplication&  application_;
   public:
 
-    BasicNativeApplicationRunner(MessageBroker& broker,
+    NativeStoneApplicationRunner(MessageBroker& broker,
                                  IStoneApplication& application)
       : broker_(broker),
         application_(application)
@@ -51,7 +51,7 @@ namespace OrthancStone
     virtual void DeclareCommandLineOptions(boost::program_options::options_description& options) = 0;
     virtual void ParseCommandLineOptions(const boost::program_options::variables_map& parameters) = 0;
 
-    virtual void Run(BasicNativeApplicationContext& context, const std::string& title, int argc, char* argv[]) = 0;
+    virtual void Run(NativeStoneApplicationContext& context, const std::string& title, int argc, char* argv[]) = 0;
     virtual void Finalize() = 0;
   };
 

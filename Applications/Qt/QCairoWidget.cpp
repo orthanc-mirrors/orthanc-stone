@@ -36,7 +36,7 @@ QCairoWidget::~QCairoWidget()
 {
 }
 
-void QCairoWidget::SetContext(OrthancStone::BasicNativeApplicationContext& context)
+void QCairoWidget::SetContext(OrthancStone::NativeStoneApplicationContext& context)
 {
   context_ = &context;
   context_->GetCentralViewport().Register(*this); // get notified each time the content of the central viewport changes
@@ -48,7 +48,7 @@ void QCairoWidget::paintEvent(QPaintEvent* /*event*/)
 
   if (image_.get() != NULL && context_ != NULL)
   {
-    OrthancStone::BasicNativeApplicationContext::GlobalMutexLocker locker(*context_);
+    OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
     OrthancStone::IViewport& viewport = context_->GetCentralViewport();
     Orthanc::ImageAccessor a = surface_.GetAccessor();
     viewport.Render(a);

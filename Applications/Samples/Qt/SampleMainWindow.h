@@ -43,7 +43,7 @@ namespace OrthancStone
       SampleApplicationBase&  stoneSampleApplication_;
 
     public:
-      explicit SampleMainWindow(OrthancStone::BasicNativeApplicationContext& context, SampleApplicationBase& stoneSampleApplication, QWidget *parent = 0);
+      explicit SampleMainWindow(OrthancStone::NativeStoneApplicationContext& context, SampleApplicationBase& stoneSampleApplication, QWidget *parent = 0);
       ~SampleMainWindow();
 
     private slots:

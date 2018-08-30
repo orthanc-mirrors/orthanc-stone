@@ -32,7 +32,7 @@ namespace OrthancStone
   namespace Samples
   {
 
-    SampleMainWindow::SampleMainWindow(OrthancStone::BasicNativeApplicationContext& context, OrthancStone::Samples::SampleApplicationBase& stoneSampleApplication, QWidget *parent) :
+    SampleMainWindow::SampleMainWindow(OrthancStone::NativeStoneApplicationContext& context, OrthancStone::Samples::SampleApplicationBase& stoneSampleApplication, QWidget *parent) :
       QStoneMainWindow(context, parent),
       ui_(new Ui::SampleMainWindow),
       stoneSampleApplication_(stoneSampleApplication)

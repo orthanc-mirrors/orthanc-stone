@@ -35,7 +35,7 @@ namespace OrthancStone
     class SampleQtApplicationRunner : public OrthancStone::BasicQtApplicationRunner
     {
     protected:
-      virtual void InitializeMainWindow(OrthancStone::BasicNativeApplicationContext& context)
+      virtual void InitializeMainWindow(OrthancStone::NativeStoneApplicationContext& context)
       {
         window_.reset(new SampleMainWindow(context, dynamic_cast<OrthancStone::Samples::SampleApplicationBase&>(application_)));
       }

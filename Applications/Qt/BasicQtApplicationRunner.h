@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../Generic/BasicNativeApplicationRunner.h"
+#include "../Generic/NativeStoneApplicationRunner.h"
 #include "QStoneMainWindow.h"
 
 #if ORTHANC_ENABLE_QT != 1
@@ -30,16 +30,16 @@
 
 namespace OrthancStone
 {
-  class BasicQtApplicationRunner : public BasicNativeApplicationRunner
+  class BasicQtApplicationRunner : public NativeStoneApplicationRunner
   {
   protected:
     std::auto_ptr<QStoneMainWindow> window_;
 
-    virtual void InitializeMainWindow(BasicNativeApplicationContext& context) = 0;
+    virtual void InitializeMainWindow(NativeStoneApplicationContext& context) = 0;
   public:
     BasicQtApplicationRunner(MessageBroker& broker,
                              IStoneApplication& application)
-      : BasicNativeApplicationRunner(broker, application)
+      : NativeStoneApplicationRunner(broker, application)
     {
     }
 
@@ -48,7 +48,7 @@ namespace OrthancStone
 
     virtual void DeclareCommandLineOptions(boost::program_options::options_description& options);
     virtual void ParseCommandLineOptions(const boost::program_options::variables_map& parameters) {}
-    virtual void Run(BasicNativeApplicationContext& context, const std::string& title, int argc, char* argv[]);
+    virtual void Run(NativeStoneApplicationContext& context, const std::string& title, int argc, char* argv[]);
     virtual void Finalize();
   };
 

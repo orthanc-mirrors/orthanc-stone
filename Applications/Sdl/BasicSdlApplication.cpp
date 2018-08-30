@@ -37,12 +37,12 @@
 
 namespace OrthancStone
 {
-  void BasicSdlApplication::Initialize()
+  void SdlStoneApplicationRunner::Initialize()
   {
     SdlWindow::GlobalInitialize();
   }
 
-  void BasicSdlApplication::DeclareCommandLineOptions(boost::program_options::options_description& options)
+  void SdlStoneApplicationRunner::DeclareCommandLineOptions(boost::program_options::options_description& options)
   {
     boost::program_options::options_description sdl("SDL options");
     sdl.add_options()
@@ -54,7 +54,7 @@ namespace OrthancStone
     options.add(sdl);
   }
 
-  void BasicSdlApplication::ParseCommandLineOptions(const boost::program_options::variables_map& parameters)
+  void SdlStoneApplicationRunner::ParseCommandLineOptions(const boost::program_options::variables_map& parameters)
   {
     if (!parameters.count("width") ||
         !parameters.count("height") ||
@@ -88,7 +88,7 @@ namespace OrthancStone
 
   }
 
-  void BasicSdlApplication::Run(BasicNativeApplicationContext& context, const std::string& title, int argc, char* argv[])
+  void SdlStoneApplicationRunner::Run(NativeStoneApplicationContext& context, const std::string& title, int argc, char* argv[])
   {
     /**************************************************************
      * Run the application inside a SDL window
@@ -100,7 +100,7 @@ namespace OrthancStone
     SdlEngine sdl(window, context);
 
     {
-      BasicNativeApplicationContext::GlobalMutexLocker locker(context);
+      NativeStoneApplicationContext::GlobalMutexLocker locker(context);
       context.GetCentralViewport().Register(sdl);  // (*)
     }
 
@@ -118,7 +118,7 @@ namespace OrthancStone
     context.Stop();
   }
 
-  void BasicSdlApplication::Finalize()
+  void SdlStoneApplicationRunner::Finalize()
   {
     SdlWindow::GlobalFinalize();
   }

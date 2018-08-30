@@ -34,8 +34,8 @@ int main(int argc, char* argv[])
   SampleApplication sampleStoneApplication(broker);
 
 #if ORTHANC_ENABLE_SDL==1
-  OrthancStone::BasicSdlApplication sdlApplication;
-  return sdlApplication.Execute(broker, sampleStoneApplication, argc, argv);
+  OrthancStone::SdlStoneApplicationRunner sdlApplicationRunner(broker, sampleStoneApplication);
+  return sdlApplicationRunner.Execute(argc, argv);
 #endif
 #if ORTHANC_ENABLE_QT==1
   OrthancStone::Samples::SampleQtApplicationRunner qtAppRunner(broker, sampleStoneApplication);

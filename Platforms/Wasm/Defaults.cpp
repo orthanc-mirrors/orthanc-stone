@@ -7,6 +7,7 @@
 #include <Framework/Widgets/LayerWidget.h>
 #include <algorithm>
 #include "Applications/Wasm/StartupParametersBuilder.h"
+#include "Platforms/Wasm/IStoneApplicationToWebApplicationAdapter.h"
 
 static unsigned int width_ = 0;
 static unsigned int height_ = 0;
@@ -14,6 +15,7 @@ static unsigned int height_ = 0;
 /**********************************/
 
 static std::unique_ptr<OrthancStone::IBasicApplication> application;
+static OrthancStone::IStoneApplicationToWebApplicationAdapter* applicationWebAdapter = NULL;
 static std::unique_ptr<OrthancStone::BasicApplicationContext> context;
 static OrthancStone::StartupParametersBuilder startupParametersBuilder;
 static OrthancStone::MessageBroker broker;
@@ -43,7 +45,7 @@ extern "C" {
   ViewportHandle EMSCRIPTEN_KEEPALIVE CreateCppViewport() {
     
     std::shared_ptr<OrthancStone::WidgetViewport> viewport(new OrthancStone::WidgetViewport);
-    printf("viewport %x\n", viewport.get());
+    printf("viewport %x\n", (int)viewport.get());
 
     viewports_.push_back(viewport);
 
@@ -67,6 +69,7 @@ extern "C" {
     printf("CreateWasmApplication\n");
 
     application.reset(CreateUserApplication(broker));
+    applicationWebAdapter = dynamic_cast<OrthancStone::IStoneApplicationToWebApplicationAdapter*>(application.get()); 
     WasmWebService::SetBroker(broker);
 
     startupParametersBuilder.Clear();
@@ -252,6 +255,18 @@ extern "C" {
   void EMSCRIPTEN_KEEPALIVE ViewportMouseLeave(ViewportHandle viewport)
   {
     viewport->MouseLeave();
+  }
+
+  const char* EMSCRIPTEN_KEEPALIVE SendMessageToStoneApplication(const char* message) 
+  {
+    static std::string output; // we don't want the string to be deallocated when we return to JS code so we always use the same string (this is fine since JS is single-thread)
+
+    if (applicationWebAdapter != NULL) {
+      printf("sending message to C++");
+      applicationWebAdapter->HandleMessageFromWeb(output, std::string(message));
+      return output.c_str();
+    }
+    return "This stone application does not have a Web Adapter";
   }
 
 

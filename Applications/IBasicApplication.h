@@ -24,6 +24,7 @@
 #include "BasicApplicationContext.h"
 #include <boost/program_options.hpp>
 #include "../Framework/Viewport/WidgetViewport.h"
+#include "json/json.h"
 
 namespace OrthancStone
 {
@@ -49,7 +50,6 @@ namespace OrthancStone
     virtual IWidget* GetCentralWidget() = 0;
 
     virtual void Finalize() = 0;
-
   };
 
 }

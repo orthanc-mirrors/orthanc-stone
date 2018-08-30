@@ -76,8 +76,10 @@ namespace OrthancStone
     if (fontSize_ != 0)
     {
       cairo_move_to(cr, x, y);
+#if ORTHANC_ENABLE_NATIVE==1 // text rendering currently fails in wasm
       CairoFont font("sans-serif", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
       font.Draw(context, FormatRadius(), static_cast<double>(fontSize_) / zoom);
+#endif
     }
   }
     

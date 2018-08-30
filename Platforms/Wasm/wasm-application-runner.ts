@@ -17,6 +17,7 @@ var CreateWasmApplication: Function = null;
 var CreateCppViewport: Function = null;
 var ReleaseCppViewport: Function = null;
 var StartWasmApplication: Function = null;
+var SendMessageToStoneApplication: Function = null;
 
 
 function UpdateContentThread() {
@@ -50,22 +51,9 @@ function GetUriParameters() {
   }
 }
 
-module Stone {
-
-  export class WasmApplication {
-
-    private viewport_: WasmViewport;
-    private canvasId_: string;
-
-    private pimpl_: any; // Private pointer to the underlying WebAssembly C++ object
-
-    public constructor(canvasId: string) {
-      this.canvasId_ = canvasId;
-      //this.module_ = module;
-    }
-  }
-}
-
+// function UpdateWebApplication(statusUpdateMessage: string) {
+//   console.log(statusUpdateMessage);
+// }
 
 function _InitializeWasmApplication(canvasId: string, orthancBaseUrl: string): void {
 
@@ -110,7 +98,9 @@ function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: strin
     WasmWebService_SetBaseUri = StoneFrameworkModule.cwrap('WasmWebService_SetBaseUri', null, ['string']);
     NotifyUpdateContent = StoneFrameworkModule.cwrap('NotifyUpdateContent', null, []);
 
-    console.log("Connecting C++ methods to JS methods - done - 2");
+    SendMessageToStoneApplication = StoneFrameworkModule.cwrap('SendMessageToStoneApplication', 'string', ['string']);
+
+    console.log("Connecting C++ methods to JS methods - done");
 
     // Prevent scrolling
     document.body.addEventListener('touchmove', function (event) {

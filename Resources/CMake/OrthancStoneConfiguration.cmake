@@ -199,6 +199,7 @@ else()
     ${ORTHANC_STONE_ROOT}/Platforms/Wasm/Defaults.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Wasm/WasmWebService.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Wasm/WasmViewport.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Wasm/IStoneApplicationToWebApplicationAdapter.h
   )
 endif()
 

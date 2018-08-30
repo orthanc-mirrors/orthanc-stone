@@ -16,6 +16,7 @@ extern "C" {
   
   // JS methods accessible from C++
   extern void ScheduleWebViewportRedrawFromCpp(ViewportHandle cppViewportHandle);
+  extern void UpdateStoneApplicationStatusFromCpp(const char* statusUpdateMessage);
   
   // C++ methods accessible from JS
   extern void EMSCRIPTEN_KEEPALIVE CreateWasmApplication(ViewportHandle cppViewportHandle);
@@ -30,7 +31,7 @@ extern OrthancStone::IBasicApplication* CreateUserApplication(OrthancStone::Mess
 
 namespace OrthancStone {
 
-  // default Ovserver to trigger Viewport redraw when something changes in the Viewport
+  // default Observer to trigger Viewport redraw when something changes in the Viewport
   class ViewportContentChangedObserver :
     public OrthancStone::IViewport::IObserver
   {

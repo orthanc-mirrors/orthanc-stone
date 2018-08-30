@@ -31,6 +31,10 @@
 #include "../../Framework/Messages/IObserver.h"
 #include "../../Framework/SmartLoader.h"
 
+#if ORTHANC_ENABLE_WASM==1
+#include "../../Platforms/Wasm/IStoneApplicationToWebApplicationAdapter.h"
+#include "../../Platforms/Wasm/Defaults.h"
+#endif
 #include <Core/Logging.h>
 
 namespace OrthancStone
@@ -39,6 +43,9 @@ namespace OrthancStone
   {
     class SimpleViewerApplication :
         public SampleApplicationBase,
+#if ORTHANC_ENABLE_WASM==1
+        public IStoneApplicationToWebApplicationAdapter,
+#endif
         public IObserver
     {
     private:
@@ -178,6 +185,7 @@ namespace OrthancStone
       LayerWidget*                    mainWidget_;
       std::vector<LayerWidget*>       thumbnails_;
       std::map<std::string, std::vector<std::string>> instancesIdsPerSeriesId_;
+      std::map<std::string, Json::Value> seriesTags_;
 
       unsigned int                    currentInstanceIndex_;
       OrthancStone::WidgetViewport*   wasmViewport1_;
@@ -297,6 +305,7 @@ namespace OrthancStone
         {
           // keep track of all instances IDs
           const std::string& seriesId = response["ID"].asString();
+          seriesTags_[seriesId] = response;
           instancesIdsPerSeriesId_[seriesId] = std::vector<std::string>();
           for (size_t i = 0; i < response["Instances"].size(); i++)
           {
@@ -351,19 +360,12 @@ namespace OrthancStone
         }
       }
 
-#if ORTHANC_ENABLE_WASM==1
-      virtual void InitializeWasm() {
-
-        AttachWidgetToWasmViewport("canvas", thumbnailsLayout_);
-        AttachWidgetToWasmViewport("canvas2", mainWidget_);
-      }
-#endif
-
-
-
       void SelectSeriesInMainViewport(const std::string& seriesId)
       {
         mainWidget_->ReplaceLayer(0, smartLoader_->GetFrame(instancesIdsPerSeriesId_[seriesId][0], 0));
+#if ORTHANC_ENABLE_WASM==1
+        NotifyStatusUpdateFromCppToWeb("series-description=" + seriesTags_[seriesId]["MainDicomTags"]["SeriesDescription"].asString());
+#endif
       }
 
       virtual void OnPushButton1Clicked() {}
@@ -381,6 +383,33 @@ namespace OrthancStone
         pushButton1 = "action1";
         pushButton2 = "action2";
       }
+
+#if ORTHANC_ENABLE_WASM==1
+      virtual void HandleMessageFromWeb(std::string& output, const std::string& input) {
+        if (input == "select-tool:line-measure")
+        {
+          currentTool_ = Tools_LineMeasure;
+          NotifyStatusUpdateFromCppToWeb("currentTool=line-measure");
+        }
+        else if (input == "select-tool:circle-measure")
+        {
+          currentTool_ = Tools_CircleMeasure;
+          NotifyStatusUpdateFromCppToWeb("currentTool=circle-measure");
+        }
+
+        output = "ok";
+      }
+
+      virtual void NotifyStatusUpdateFromCppToWeb(const std::string& statusUpdateMessage) {
+        UpdateStoneApplicationStatusFromCpp(statusUpdateMessage.c_str());
+      }
+
+      virtual void InitializeWasm() {
+
+        AttachWidgetToWasmViewport("canvas", thumbnailsLayout_);
+        AttachWidgetToWasmViewport("canvas2", mainWidget_);
+      }
+#endif
     };
 
 

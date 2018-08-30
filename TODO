@@ -9,14 +9,6 @@ General
 * Documentation
 * Interface with DICOMweb
 * LayoutPetCtFusionApplication: fix initial view
-* Allow Interactor to create Pan/ZoomMouseTracker in IWorldSceneMouseTracker* CreateMouseTracker 
-  (problem: PanMouseTracker is a IMouseTracker and CreateMouseTracker shall return a IWorldSceneMouseTracker).
-  WorldSceneWidet shall not create Pan/ZoomMouseTracker when the Interactor does not create one
-* Update SimpleViewer sample to have 2 buttons to select the measure tracker
-
-Bugs
-----
-* LineMeasureTracker rendering generates "memory access out of bounds" in WASM
 
 
 ---------------------------------
@@ -33,7 +25,6 @@ Radiotherapy and nuclear medicine
 Optimizations
 -------------
 
-* Add cache in "SmartLoader" by returning a "OrthancFrameLayerSource" for a frame that has already been loaded
 * Tune number of loading threads in LayeredSceneWidget
 * LayoutWidget: Do not update full background if only 1 widget has changed
 * LayoutWidget: Threads to refresh each child

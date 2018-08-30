@@ -13,15 +13,20 @@
     <link href="samples-styles.css" rel="stylesheet" />
 
 <body>
+  <div id="breadcrumb">
+    <span id="patient-id"></span>
+    <span id="study-description"></span>
+    <span id="series-description"></span>
+  </div>
   <div>
     <canvas id="canvas" data-width-ratio="20" data-height-ratio="50"></canvas>
     <canvas id="canvas2" data-width-ratio="70" data-height-ratio="50"></canvas>
   </div>
-  <div>
-    <button id="tool1">tool1</button>
-    <button id="tool2">tool2</button>
-    <button id="pushBouton1">action1</button>
-    <button id="pushBouton2">action2</button>
+  <div id="toolbox">
+    <input tool-selector="line-measure" type="radio" name="radio-tool-selector" class="tool-selector">line
+    <input tool-selector="circle-measure" type="radio" name="radio-tool-selector" class="tool-selector">circle
+    <button action-trigger="action1" class="action-trigger">action1</button>
+    <button action-trigger="action2" class="action-trigger">action2</button>
   </div>
   <script type="text/javascript" src="app-simple-viewer.js"></script>
 </body>

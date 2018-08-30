@@ -108,7 +108,8 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_PIXMAN)
     # No hardware acceleration
     set(PIXMAN_DEFINITIONS "${PIXMAN_DEFINITIONS};TLS=__thread")
 
-  elseif (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  elseif (CMAKE_SYSTEM_NAME STREQUAL "Emscripten" OR
+          CMAKE_SYSTEM_NAME STREQUAL "Android")
     ##########################
     ## Emscripten (asm.js)
     ##########################
@@ -189,6 +190,7 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_PIXMAN)
 
   elseif (CMAKE_SYSTEM_PROCESSOR STREQUAL "armv5te" OR
       CMAKE_SYSTEM_PROCESSOR STREQUAL "armv6" OR
+      CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7l" OR
       CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7-a" OR
       CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
 

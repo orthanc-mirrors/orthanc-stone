@@ -212,7 +212,8 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_CAIRO)
     # Disable vectorized instructions when targeting archicture-independent PNaCl
     set(CAIRO_DEFINITIONS "${CAIRO_DEFINITIONS};HAVE_STDINT_H=1;CAIRO_HAS_PTHREAD=1;HAVE_UINT64_T=1")
 
-  elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
+  elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten" OR
+          ${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     # Disable vectorized instructions and threading if targeting asm.js
     set(CAIRO_DEFINITIONS "${CAIRO_DEFINITIONS};HAVE_STDINT_H=1;CAIRO_HAS_PTHREAD=0;CAIRO_NO_MUTEX=1;HAVE_UINT64_T=1")
 

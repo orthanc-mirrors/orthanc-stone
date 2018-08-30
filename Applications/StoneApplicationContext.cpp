@@ -19,7 +19,7 @@
  **/
 
 
-#include "BasicApplicationContext.h"
+#include "StoneApplicationContext.h"
 
 namespace OrthancStone
 {

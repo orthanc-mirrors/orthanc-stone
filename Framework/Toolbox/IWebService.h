@@ -28,6 +28,11 @@
 
 namespace OrthancStone
 {
+  // The IWebService performs HTTP requests.
+  // Since applications can run in native or WASM environment and, since
+  // in a WASM environment, the WebService is asynchronous, the IWebservice
+  // also implements an asynchronous interface: you must schedule a request
+  // and you'll be notified when the response/error is ready.
   class IWebService
   {
   protected:

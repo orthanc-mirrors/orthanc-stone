@@ -28,13 +28,19 @@
 
 namespace OrthancStone
 {
-  class BasicApplicationContext : public boost::noncopyable
+  // a StoneApplicationContext contains the services that a StoneApplication
+  // uses and that depends on the environment in which the Application executes.
+  // I.e, the StoneApplicationContext provides a WebService interface such that
+  // the StoneApplication can perform HTTP requests.  In a WASM environment,
+  // the WebService is provided by the browser while, in a native environment,
+  // the WebService is provided by the OracleWebService (a C++ Http client)
+  class StoneApplicationContext : public boost::noncopyable
   {
 
   protected:
     IWebService* webService_;
   public:
-    BasicApplicationContext()
+    StoneApplicationContext()
       : webService_(NULL)
     {
     }
@@ -44,8 +50,7 @@ namespace OrthancStone
     {
       webService_ = &webService;
     }
-//    virtual IWidget& SetCentralWidget(IWidget* widget) = 0;   // Takes ownership
 
-    virtual ~BasicApplicationContext() {}
+    virtual ~StoneApplicationContext() {}
   };
 }

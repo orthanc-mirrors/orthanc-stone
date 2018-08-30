@@ -226,7 +226,7 @@ namespace OrthancStone
         options.add(generic);
       }
 
-      virtual void Initialize(BasicApplicationContext* context,
+      virtual void Initialize(StoneApplicationContext* context,
                               IStatusBar& statusBar,
                               const boost::program_options::variables_map& parameters)
       {

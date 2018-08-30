@@ -21,16 +21,16 @@
 
 #pragma once
 
-#include "../../Applications/IBasicApplication.h"
+#include "../../Applications/IStoneApplication.h"
 
 namespace OrthancStone
 {
   namespace Samples
   {
-    class SampleApplicationBase : public IBasicApplication
+    class SampleApplicationBase : public IStoneApplication
     {
     public:
-      virtual void Initialize(BasicApplicationContext* context,
+      virtual void Initialize(StoneApplicationContext* context,
                               IStatusBar& statusBar,
                               const boost::program_options::variables_map& parameters)
       {

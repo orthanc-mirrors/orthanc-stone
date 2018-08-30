@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../IBasicApplication.h"
+#include "../IStoneApplication.h"
 
 #if ORTHANC_ENABLE_NATIVE != 1
 #error this file shall be included only with the ORTHANC_ENABLE_NATIVE set to 1
@@ -35,11 +35,11 @@ namespace OrthancStone
   {
   protected:
     MessageBroker&      broker_;
-    IBasicApplication&  application_;
+    IStoneApplication&  application_;
   public:
 
     BasicNativeApplicationRunner(MessageBroker& broker,
-                                 IBasicApplication& application)
+                                 IStoneApplication& application)
       : broker_(broker),
         application_(application)
     {

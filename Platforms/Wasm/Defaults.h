@@ -6,7 +6,7 @@
 #include <Framework/Viewport/WidgetViewport.h>
 #include <Framework/Widgets/LayerWidget.h>
 #include <Framework/Widgets/LayoutWidget.h>
-#include <Applications/IBasicApplication.h>
+#include <Applications/IStoneApplication.h>
 
 typedef OrthancStone::WidgetViewport* ViewportHandle; // the objects exchanged between JS and C++
 
@@ -27,7 +27,7 @@ extern "C" {
 }
 #endif
 
-extern OrthancStone::IBasicApplication* CreateUserApplication(OrthancStone::MessageBroker& broker);
+extern OrthancStone::IStoneApplication* CreateUserApplication(OrthancStone::MessageBroker& broker);
 
 namespace OrthancStone {
 

@@ -21,48 +21,38 @@
 
 #pragma once
 
-#include "BasicApplicationContext.h"
-
+#include "StoneApplicationContext.h"
 #include <boost/program_options.hpp>
-
-#if ORTHANC_ENABLE_SDL == 1
-#  include <SDL.h>   // Necessary to avoid undefined reference to `SDL_main'
-#endif
+#include "../Framework/Viewport/WidgetViewport.h"
+#include "json/json.h"
 
 namespace OrthancStone
 {
-  class IBasicApplication : public boost::noncopyable
+  // a StoneApplication is an application that can actually be executed
+  // in multiple environments.  i.e: it can run natively integrated in a QtApplication
+  // or it can be executed as part of a WebPage when compiled into WebAssembly.
+  class IStoneApplication : public boost::noncopyable
   {
+  protected:
+    StoneApplicationContext* context_;
+
   public:
-    virtual ~IBasicApplication()
+    virtual ~IStoneApplication()
     {
     }
 
-    virtual void DeclareStartupOption(const std::string& name, const std::string& defaultValue, const std::string& helpText) = 0;
-    virtual void Initialize(IStatusBar& statusBar, const std::map<std::string, std::string> startupOptions);
-
-
-    virtual void DeclareCommandLineOptions(boost::program_options::options_description& options) = 0;
-
-    virtual std::string GetTitle() const = 0;
-
-    virtual void Initialize(BasicApplicationContext& context,
+    virtual void DeclareStartupOptions(boost::program_options::options_description& options) = 0;
+    virtual void Initialize(StoneApplicationContext* context,
                             IStatusBar& statusBar,
                             const boost::program_options::variables_map& parameters) = 0;
+#if ORTHANC_ENABLE_WASM==1
+    virtual void InitializeWasm() {}  // specific initialization when the app is running in WebAssembly.  This is called after the other Initialize()
+#endif
+
+    virtual std::string GetTitle() const = 0;
+    virtual IWidget* GetCentralWidget() = 0;
 
     virtual void Finalize() = 0;
-
-#if ORTHANC_ENABLE_SDL == 1
-    static int ExecuteWithSdl(IBasicApplication& application,
-                              int argc, 
-                              char* argv[]);
-#endif
   };
 
-  class IBasicSdlApplication : public IBasicApplication
-  {
-    public:
-
-    
-  }
 }

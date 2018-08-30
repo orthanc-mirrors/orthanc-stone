@@ -29,6 +29,7 @@
 
 namespace OrthancStone
 {
+  // The OracleWebService performs HTTP requests in a native environment.
   class OracleWebService : public IWebService
   {
   private:

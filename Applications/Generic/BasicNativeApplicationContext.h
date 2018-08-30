@@ -27,11 +27,11 @@
 
 #include <list>
 #include <boost/thread.hpp>
-#include "../BasicApplicationContext.h"
+#include "../StoneApplicationContext.h"
 
 namespace OrthancStone
 {
-  class BasicNativeApplicationContext : public BasicApplicationContext
+  class BasicNativeApplicationContext : public StoneApplicationContext
   {
   private:
 

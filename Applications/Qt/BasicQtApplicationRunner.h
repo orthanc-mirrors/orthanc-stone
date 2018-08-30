@@ -38,7 +38,7 @@ namespace OrthancStone
     virtual void InitializeMainWindow(BasicNativeApplicationContext& context) = 0;
   public:
     BasicQtApplicationRunner(MessageBroker& broker,
-                             IBasicApplication& application)
+                             IStoneApplication& application)
       : BasicNativeApplicationRunner(broker, application)
     {
     }

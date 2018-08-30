@@ -14,9 +14,9 @@ static unsigned int height_ = 0;
 
 /**********************************/
 
-static std::unique_ptr<OrthancStone::IBasicApplication> application;
+static std::unique_ptr<OrthancStone::IStoneApplication> application;
 static OrthancStone::IStoneApplicationToWebApplicationAdapter* applicationWebAdapter = NULL;
-static std::unique_ptr<OrthancStone::BasicApplicationContext> context;
+static std::unique_ptr<OrthancStone::StoneApplicationContext> context;
 static OrthancStone::StartupParametersBuilder startupParametersBuilder;
 static OrthancStone::MessageBroker broker;
 
@@ -90,7 +90,7 @@ extern "C" {
     application->DeclareStartupOptions(options);
     startupParametersBuilder.GetStartupParameters(parameters, options);
 
-    context.reset(new OrthancStone::BasicApplicationContext());
+    context.reset(new OrthancStone::StoneApplicationContext());
     context->SetWebService(OrthancStone::WasmWebService::GetInstance());
     application->Initialize(context.get(), statusBar_, parameters);
     application->InitializeWasm();

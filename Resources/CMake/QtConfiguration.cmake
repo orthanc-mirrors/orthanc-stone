@@ -28,7 +28,7 @@ find_package(Qt5Core)
 
 list(APPEND QT_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Qt/BasicQtApplicationRunner.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Qt/QtStoneApplicationRunner.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.cpp
 )
 

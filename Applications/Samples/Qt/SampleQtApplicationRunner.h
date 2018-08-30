@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../../Qt/BasicQtApplicationRunner.h"
+#include "../../Qt/QtStoneApplicationRunner.h"
 #include "SampleMainWindow.h"
 
 #if ORTHANC_ENABLE_QT != 1
@@ -32,7 +32,7 @@ namespace OrthancStone
 {
   namespace Samples
   {
-    class SampleQtApplicationRunner : public OrthancStone::BasicQtApplicationRunner
+    class SampleQtApplicationRunner : public OrthancStone::QtStoneApplicationRunner
     {
     protected:
       virtual void InitializeMainWindow(OrthancStone::NativeStoneApplicationContext& context)
@@ -42,7 +42,7 @@ namespace OrthancStone
     public:
       SampleQtApplicationRunner(MessageBroker& broker,
                                 SampleApplicationBase& application)
-        : OrthancStone::BasicQtApplicationRunner(broker, application)
+        : OrthancStone::QtStoneApplicationRunner(broker, application)
       {
       }
 

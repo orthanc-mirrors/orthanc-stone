@@ -93,7 +93,7 @@ or into native SDL applications.
 to build the WASM samples:
 -------------------------
 ```
-cd ~/orthanc-stone/Platforms/Wasm
+cd ~/orthanc-stone/Applications/Samples
 ./build-wasm.sh
 ```
 
@@ -112,7 +112,7 @@ to build the SDL native samples (SimpleViewer only):
 ```
 mkdir -p ~/builds/orthanc-stone-build
 cd ~/builds/orthanc-stone-build
-cmake -DALLOW_DOWNLOADS=ON ~/orthanc-stone/
+cmake -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ~/orthanc-stone/Applications/Samples/
 cmake --build . --target OrthancStoneSimpleViewer -- -j 5
 ```
 
@@ -122,7 +122,7 @@ to execute the native samples:
 Orthanc
 
 # launch the sample
-./OrthancStoneSimpleViewer --instance1=XX --instance2=XX
+./OrthancStoneSimpleViewer --studyId=XX
 ``` 
 
 

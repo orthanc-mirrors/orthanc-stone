@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -34,9 +34,7 @@ namespace OrthancStone
                               IStatusBar& statusBar,
                               const boost::program_options::variables_map& parameters)
       {
-    }
-
-
+      }
 
       virtual std::string GetTitle() const
       {
@@ -48,11 +46,11 @@ namespace OrthancStone
       virtual void OnTool1Clicked() {}
       virtual void OnTool2Clicked() {}
 
-      virtual void GetButtonNames(std::string& pushButton1, 
-      std::string& pushButton2, 
-      std::string& tool1, 
-      std::string& tool2
-      ) {
+      virtual void GetButtonNames(std::string& pushButton1,
+                                  std::string& pushButton2,
+                                  std::string& tool1,
+                                  std::string& tool2
+                                  ) {
         pushButton1 = "action1";
         pushButton2 = "action2";
         tool1 = "tool1";

@@ -30,6 +30,8 @@
 namespace OrthancStone
 {
   // The OracleWebService performs HTTP requests in a native environment.
+  // It uses a thread pool to handle multiple HTTP requests in a same time.
+  // It works asynchronously to mimick the behaviour of the WebService running in a WASM environment.
   class OracleWebService : public IWebService
   {
   private:

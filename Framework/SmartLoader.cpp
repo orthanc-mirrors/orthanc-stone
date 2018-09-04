@@ -46,12 +46,12 @@ namespace OrthancStone
     switch (message.GetType()) {
     case MessageType_LayerSource_GeometryReady:
     {
-      const OrthancFrameLayerSource* layerSource=dynamic_cast<const OrthancFrameLayerSource*>(&from);
+      //const OrthancFrameLayerSource* layerSource=dynamic_cast<const OrthancFrameLayerSource*>(&from);
       // TODO keep track of objects that have been loaded already
     }; break;
     case MessageType_LayerSource_LayerReady:
     {
-      const OrthancFrameLayerSource* layerSource=dynamic_cast<const OrthancFrameLayerSource*>(&from);
+      //const OrthancFrameLayerSource* layerSource=dynamic_cast<const OrthancFrameLayerSource*>(&from);
       // TODO keep track of objects that have been loaded already
     }; break;
 //    case MessageType_OrthancApi_GetStudyIds_Ready:

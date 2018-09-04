@@ -1,7 +1,6 @@
-Platforms/Generic/CMakeLists.txt.user
+CMakeLists.txt.user
 Platforms/Generic/ThirdPartyDownloads/
-Platforms/Wasm/CMakeLists.txt.user
-Platforms/Wasm/build/
-Platforms/Wasm/build-web/
-Platforms/Wasm/ThirdPartyDownloads/
 Applications/Qt/archive/
+Applications/Samples/ThirdPartyDownloads/
+Applications/Samples/build-wasm/
+Applications/Samples/build-web/

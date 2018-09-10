@@ -121,7 +121,7 @@ namespace OrthancStone
                 << std::endl
                 << "Orthanc, lightweight, RESTful DICOM server for healthcare and medical research."
                 << std::endl << std::endl
-                << "Demonstration application of Orthanc Stone using SDL."
+                << "Demonstration application of Orthanc Stone in native environment."
                 << std::endl;
 
       std::cout << options << "\n";
@@ -157,14 +157,10 @@ namespace OrthancStone
         webServiceParameters.SetUrl(parameters["orthanc"].as<std::string>());
       }
 
-      if (parameters.count("username"))
+      if (parameters.count("username") && parameters.count("password"))
       {
-        webServiceParameters.SetUsername(parameters["username"].as<std::string>());
-      }
-
-      if (parameters.count("password"))
-      {
-        webServiceParameters.SetPassword(parameters["password"].as<std::string>());
+        webServiceParameters.SetCredentials(parameters["username"].as<std::string>(),
+            parameters["password"].as<std::string>());
       }
 
       LOG(WARNING) << "URL to the Orthanc REST API: " << webServiceParameters.GetUrl();

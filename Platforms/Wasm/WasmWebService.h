@@ -48,6 +48,12 @@ namespace OrthancStone
                                      const std::string& body,
                                      Orthanc::IDynamicObject* payload);
 
+    virtual void GetAsync(const std::string& relativeUri,
+                          const Headers& headers,
+                          Orthanc::IDynamicObject* payload,
+                          MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,
+                          MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback);
+
     virtual void Start()
     {
     }

@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -38,4 +38,20 @@ namespace OrthancStone
 
     virtual void Execute();
   };
+
+  class NewWebServiceGetCommand : public NewWebServiceCommandBase
+  {
+  public:
+    NewWebServiceGetCommand(MessageBroker& broker,
+                            MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,  // takes ownership
+                            MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,  // takes ownership
+                            const Orthanc::WebServiceParameters& parameters,
+                            const std::string& uri,
+                            const IWebService::Headers& headers,
+                            Orthanc::IDynamicObject* payload /* takes ownership */,
+                            NativeStoneApplicationContext& context);
+
+    virtual void Execute();
+  };
+
 }

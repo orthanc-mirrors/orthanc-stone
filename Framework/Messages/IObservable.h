@@ -25,9 +25,11 @@
 #include <assert.h>
 #include <algorithm>
 #include <iostream>
+#include <map>
 
 #include "MessageBroker.h"
 #include "MessageType.h"
+#include "ICallable.h"
 #include "IObserver.h"
 
 namespace OrthancStone {
@@ -48,7 +50,8 @@ namespace OrthancStone {
   protected:
     MessageBroker&                     broker_;
 
-    std::set<IObserver*>              observers_;
+    typedef std::map<int, std::set<ICallable*> >   Callables;
+    Callables                         callables_;
     std::set<MessageType>             emittableMessages_;
 
   public:
@@ -59,6 +62,22 @@ namespace OrthancStone {
     }
     virtual ~IObservable()
     {
+      for (Callables::const_iterator it = callables_.begin();
+           it != callables_.end(); ++it)
+      {
+        for (std::set<ICallable*>::const_iterator
+               it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+        {
+          delete *it2;
+        }
+      }
+    }
+
+    void RegisterObserverCallback(ICallable* callable)
+    {
+      MessageType messageType = callable->GetMessageType();
+
+      callables_[messageType].insert(callable);
     }
 
     void EmitMessage(const IMessage& message)
@@ -68,25 +87,24 @@ namespace OrthancStone {
         throw MessageNotDeclaredException(message.GetType());
       }
 
-      broker_.EmitMessage(*this, observers_, message);
-    }
+      Callables::const_iterator found = callables_.find(message.GetType());
 
-    void RegisterObserver(IObserver& observer)
-    {
-      CheckObserverDeclaredAllObservableMessages(observer);
-      observers_.insert(&observer);
+      if (found != callables_.end())
+      {
+        for (std::set<ICallable*>::const_iterator
+               it = found->second.begin(); it != found->second.end(); ++it)
+        {
+          if (broker_.IsActive((*it)->GetObserver()))
+          {
+            (*it)->Apply(message);
+          }
+        }
+      }
     }
-
-    void UnregisterObserver(IObserver& observer)
-    {
-      observers_.erase(&observer);
-    }
-
     const std::set<MessageType>& GetEmittableMessages() const
     {
       return emittableMessages_;
     }
-
   protected:
 
     void DeclareEmittableMessage(MessageType messageType)
@@ -94,18 +112,6 @@ namespace OrthancStone {
       emittableMessages_.insert(messageType);
     }
 
-    void CheckObserverDeclaredAllObservableMessages(IObserver& observer)
-    {
-      for (std::set<MessageType>::const_iterator it = emittableMessages_.begin(); it != emittableMessages_.end(); it++)
-      {
-        // the observer must have "declared" all observable messages
-        if (observer.GetHandledMessages().find(*it) == observer.GetHandledMessages().end()
-            && observer.GetIgnoredMessages().find(*it) == observer.GetIgnoredMessages().end())
-        {
-          throw MessageNotDeclaredException(*it);
-        }
-      }
-    }
   };
 
 }

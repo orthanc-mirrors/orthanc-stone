@@ -31,6 +31,11 @@ namespace OrthancStone
   class ILayerSource : public IObservable
   {
   public:
+
+    typedef NoPayloadMessage<MessageType_LayerSource_GeometryReady> GeometryReadyMessage;
+    typedef NoPayloadMessage<MessageType_LayerSource_GeometryError> GeometryErrorMessage;
+    typedef NoPayloadMessage<MessageType_LayerSource_ContentChanged> ContentChangedMessage;
+
     struct SliceChangedMessage : public IMessage
     {
       const Slice& slice_;

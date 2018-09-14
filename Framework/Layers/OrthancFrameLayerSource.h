@@ -69,6 +69,11 @@ namespace OrthancStone
 
     virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice);
 
-    virtual void HandleMessage(IObservable& from, const IMessage& message);
+protected:
+    void OnSliceGeometryReady(const OrthancSlicesLoader::SliceGeometryReadyMessage& message);
+    void OnSliceGeometryError(const OrthancSlicesLoader::SliceGeometryErrorMessage& message);
+    void OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message);
+    void OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message);
+//    virtual void HandleMessage(IObservable& from, const IMessage& message);
   };
 }

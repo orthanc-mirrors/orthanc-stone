@@ -51,4 +51,31 @@ namespace OrthancStone
     success_ = client.Apply(answer_);
   }
 
+  NewWebServiceGetCommand::NewWebServiceGetCommand(MessageBroker& broker,
+                                                   MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,  // takes ownership
+                                                   MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,  // takes ownership
+                                             const Orthanc::WebServiceParameters& parameters,
+                                             const std::string& uri,
+                                             const IWebService::Headers& headers,
+                                             Orthanc::IDynamicObject* payload /* takes ownership */,
+                                             NativeStoneApplicationContext& context) :
+    NewWebServiceCommandBase(broker, successCallback, failureCallback, parameters, uri, headers, payload, context)
+  {
+  }
+
+
+  void NewWebServiceGetCommand::Execute()
+  {
+    Orthanc::HttpClient client(parameters_, uri_);
+    client.SetTimeout(60);
+    client.SetMethod(Orthanc::HttpMethod_Get);
+
+    for (IWebService::Headers::const_iterator it = headers_.begin(); it != headers_.end(); it++ )
+    {
+      client.AddHeader(it->first, it->second);
+    }
+
+    success_ = client.Apply(answer_);
+  }
+
 }

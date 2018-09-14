@@ -31,11 +31,11 @@ namespace OrthancStone
     webService_(webService),
     orthancApiClient_(broker, webService)
   {
-    DeclareHandledMessage(MessageType_LayerSource_GeometryReady);
-    DeclareHandledMessage(MessageType_LayerSource_LayerReady);
-    DeclareIgnoredMessage(MessageType_LayerSource_GeometryError);
-    DeclareIgnoredMessage(MessageType_LayerSource_ContentChanged);
-    DeclareIgnoredMessage(MessageType_LayerSource_SliceChanged);
+//    DeclareHandledMessage(MessageType_LayerSource_GeometryReady);
+//    DeclareHandledMessage(MessageType_LayerSource_LayerReady);
+//    DeclareIgnoredMessage(MessageType_LayerSource_GeometryError);
+//    DeclareIgnoredMessage(MessageType_LayerSource_ContentChanged);
+//    DeclareIgnoredMessage(MessageType_LayerSource_SliceChanged);
 
 //    DeclareHandledMessage(MessageType_OrthancApi_InternalGetJsonResponseReady);
 //    DeclareIgnoredMessage(MessageType_OrthancApi_InternalGetJsonResponseError);
@@ -65,7 +65,7 @@ namespace OrthancStone
     }
 
     // forward messages to its own observers
-    IObservable::broker_.EmitMessage(from, IObservable::observers_, message);
+    // TODO TODO TODO  IObservable::broker_.EmitMessage(from, IObservable::observers_, message);
   }
 
   ILayerSource* SmartLoader::GetFrame(const std::string& instanceId, unsigned int frame)
@@ -78,7 +78,7 @@ namespace OrthancStone
     // in both cases, we must be carefull about objects lifecycle !!!
     std::auto_ptr<OrthancFrameLayerSource> layerSource (new OrthancFrameLayerSource(IObserver::broker_, webService_));
     layerSource->SetImageQuality(imageQuality_);
-    layerSource->RegisterObserver(*this);
+    //layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::GeometryReadyMessage>(*this, &SmartLoader::....));
     layerSource->LoadFrame(instanceId, frame);
 
     return layerSource.release();

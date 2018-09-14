@@ -32,7 +32,11 @@ namespace OrthancStone
   class OrthancSlicesLoader : public IObservable
   {
   public:
-    struct SliceImageReadyMessage : public IMessage
+
+    typedef OriginMessage<MessageType_SliceLoader_GeometryReady, OrthancSlicesLoader> SliceGeometryReadyMessage;
+    typedef OriginMessage<MessageType_SliceLoader_GeometryError, OrthancSlicesLoader> SliceGeometryErrorMessage;
+
+    struct SliceImageReadyMessage : public BaseMessage<MessageType_SliceLoader_ImageReady>
     {
       unsigned int sliceIndex_;
       const Slice& slice_;
@@ -43,7 +47,7 @@ namespace OrthancStone
                         const Slice& slice,
                         std::auto_ptr<Orthanc::ImageAccessor>& image,
                         SliceImageQuality effectiveQuality)
-        : IMessage(MessageType_SliceLoader_ImageReady),
+        : BaseMessage(),
           sliceIndex_(sliceIndex),
           slice_(slice),
           image_(image),
@@ -52,7 +56,7 @@ namespace OrthancStone
       }
     };
 
-    struct SliceImageErrorMessage : public IMessage
+    struct SliceImageErrorMessage : public BaseMessage<MessageType_SliceLoader_ImageError>
     {
       const Slice& slice_;
       unsigned int sliceIndex_;
@@ -61,7 +65,7 @@ namespace OrthancStone
       SliceImageErrorMessage(unsigned int sliceIndex,
                         const Slice& slice,
                         SliceImageQuality effectiveQuality)
-        : IMessage(MessageType_SliceLoader_ImageError),
+        : BaseMessage(),
           slice_(slice),
           sliceIndex_(sliceIndex),
           effectiveQuality_(effectiveQuality)
@@ -166,6 +170,6 @@ namespace OrthancStone
     void ScheduleLoadSliceImage(size_t index,
                                 SliceImageQuality requestedQuality);
 
-    virtual void HandleMessage(IObservable& from, const IMessage& message);
+//    virtual void HandleMessage(IObservable& from, const IMessage& message);
   };
 }

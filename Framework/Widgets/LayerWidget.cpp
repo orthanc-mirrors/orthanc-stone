@@ -365,14 +365,14 @@ namespace OrthancStone
     IObservable(broker),
     started_(false)
   {
-    DeclareHandledMessage(MessageType_LayerSource_GeometryReady);
-    DeclareHandledMessage(MessageType_LayerSource_ContentChanged);
-    DeclareHandledMessage(MessageType_LayerSource_LayerReady);
-    DeclareHandledMessage(MessageType_LayerSource_SliceChanged);
-    DeclareHandledMessage(MessageType_LayerSource_GeometryError);
+//    DeclareHandledMessage(MessageType_LayerSource_GeometryReady);
+//    DeclareHandledMessage(MessageType_LayerSource_ContentChanged);
+//    DeclareHandledMessage(MessageType_LayerSource_LayerReady);
+//    DeclareHandledMessage(MessageType_LayerSource_SliceChanged);
+//    DeclareHandledMessage(MessageType_LayerSource_GeometryError);
 
-    DeclareEmittableMessage(MessageType_Widget_GeometryChanged);
-    DeclareEmittableMessage(MessageType_Widget_ContentChanged);
+//    DeclareEmittableMessage(MessageType_Widget_GeometryChanged);
+//    DeclareEmittableMessage(MessageType_Widget_ContentChanged);
 
     SetBackgroundCleared(true);
   }
@@ -400,7 +400,7 @@ namespace OrthancStone
     layersIndex_[layer] = index;
 
     ResetPendingScene();
-    layer->RegisterObserver(*this);
+//    layer->RegisterObserver(*this);
 
     ResetChangedLayers();
 
@@ -424,7 +424,7 @@ namespace OrthancStone
     layersIndex_[layer] = index;
 
     ResetPendingScene();
-    layer->RegisterObserver(*this);
+//    layer->RegisterObserver(*this);
 
     InvalidateLayer(index);
   }
@@ -529,7 +529,7 @@ namespace OrthancStone
       changedLayers_[i] = true;
       //layers_[i]->ScheduleLayerCreation(slice_);
     }
-    EmitMessage(IMessage(MessageType_Widget_GeometryChanged));
+    EmitMessage(GeometryChangedMessage(*this));
   }
   
   void LayerWidget::InvalidateAllLayers()

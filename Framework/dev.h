@@ -239,7 +239,7 @@ namespace OrthancStone
       computeRange_(computeRange),
       pendingSlices_(0)
     {
-        loader_.RegisterObserver(*this);
+        // TODO: replace with new callables loader_.RegisterObserver(*this);
     }
 
     void ScheduleLoadSeries(const std::string& seriesId)

@@ -27,16 +27,61 @@
 
 namespace OrthancStone {
 
-  struct IMessage  : public boost::noncopyable
+
+  // base message that are exchanged between IObservable and IObserver
+  struct IMessage : public boost::noncopyable
   {
     MessageType messageType_;
-  public:
+  protected:
     IMessage(const MessageType& messageType)
       : messageType_(messageType)
     {}
+  public:
     virtual ~IMessage() {}
 
     MessageType GetType() const {return messageType_;}
+  };
+
+
+  // base class to derive from to implement your own messages
+  // it handles the message type for you
+  template <MessageType type>
+  struct BaseMessage : public IMessage
+  {
+    enum
+    {
+      Type = type
+    };
+
+    BaseMessage()
+      : IMessage(static_cast<MessageType>(Type))
+    {}
+  };
+
+  // simple message implementation when no payload is needed
+  // sample usage:
+  // typedef NoPayloadMessage<MessageType_LayerSource_GeometryReady> GeometryReadyMessage;
+  template <MessageType type>
+  struct NoPayloadMessage : public BaseMessage<type>
+  {
+    NoPayloadMessage()
+      : BaseMessage<type>()
+    {}
+
+  };
+
+  // simple message implementation when no payload is needed but the origin is required
+  // sample usage:
+  // typedef OriginMessage<MessageType_SliceLoader_GeometryError, OrthancSlicesLoader> SliceGeometryErrorMessage;
+  template <MessageType type, typename TOrigin>
+  struct OriginMessage : public BaseMessage<type>
+  {
+    TOrigin& origin_;
+    OriginMessage(TOrigin& origin)
+      : BaseMessage<type>(),
+        origin_(origin)
+    {}
+
   };
 
 }

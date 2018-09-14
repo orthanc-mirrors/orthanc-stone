@@ -10,6 +10,8 @@ declare var StoneFrameworkModule : Stone.Framework;
 // global functions
 var WasmWebService_NotifyError: Function = null;
 var WasmWebService_NotifySuccess: Function = null;
+var WasmWebService_NewNotifyError: Function = null;
+var WasmWebService_NewNotifySuccess: Function = null;
 var WasmWebService_SetBaseUri: Function = null;
 var NotifyUpdateContent: Function = null;
 var SetStartupParameter: Function = null;
@@ -95,6 +97,8 @@ function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: strin
 
     WasmWebService_NotifySuccess = StoneFrameworkModule.cwrap('WasmWebService_NotifySuccess', null, ['number', 'string', 'array', 'number', 'number']);
     WasmWebService_NotifyError = StoneFrameworkModule.cwrap('WasmWebService_NotifyError', null, ['number', 'string', 'number']);
+    WasmWebService_NewNotifySuccess = StoneFrameworkModule.cwrap('WasmWebService_NewNotifySuccess', null, ['number', 'string', 'array', 'number', 'number']);
+    WasmWebService_NewNotifyError = StoneFrameworkModule.cwrap('WasmWebService_NewNotifyError', null, ['number', 'string', 'number']);
     WasmWebService_SetBaseUri = StoneFrameworkModule.cwrap('WasmWebService_SetBaseUri', null, ['string']);
     NotifyUpdateContent = StoneFrameworkModule.cwrap('NotifyUpdateContent', null, []);
 

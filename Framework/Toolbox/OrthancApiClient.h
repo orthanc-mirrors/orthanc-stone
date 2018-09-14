@@ -26,7 +26,7 @@
 
 #include "IWebService.h"
 #include "../Messages/IObservable.h"
-
+#include "../Messages/Promise.h"
 
 namespace OrthancStone
 {
@@ -56,6 +56,32 @@ namespace OrthancStone
       }
     };
 
+    struct NewGetJsonResponseReadyMessage : public BaseMessage<MessageType_OrthancApi_GenericGetJson_Ready>
+    {
+      Json::Value   response_;
+      std::string   uri_;
+
+      NewGetJsonResponseReadyMessage(const std::string& uri,
+                                     const Json::Value& response)
+        : BaseMessage(),
+          response_(response),
+          uri_(uri)
+      {
+      }
+    };
+
+    struct NewHttpErrorMessage : public BaseMessage<MessageType_OrthancApi_GenericHttpError_Ready>
+    {
+      std::string   uri_;
+
+      NewHttpErrorMessage(const std::string& uri)
+        : BaseMessage(),
+          uri_(uri)
+      {
+      }
+    };
+
+
   public:
 
     enum Mode
@@ -69,13 +95,13 @@ namespace OrthancStone
     boost::shared_ptr<WebCallback>    webCallback_;  // This is a PImpl pattern
     std::set<BaseRequest*>            requestsInProgress_;
 
-//    int ScheduleGetJsonRequest(const std::string& uri);
+    //    int ScheduleGetJsonRequest(const std::string& uri);
 
     void ReleaseRequest(BaseRequest* request);
 
   public:
     OrthancApiClient(MessageBroker& broker,
-                        IWebService& orthanc);
+                     IWebService& orthanc);
     virtual ~OrthancApiClient() {}
 
     // schedule a GET request expecting a JSON request.
@@ -85,6 +111,12 @@ namespace OrthancStone
     void ScheduleGetStudyIds(IObserver& responseObserver) {ScheduleGetJsonRequest(responseObserver, "/studies", MessageType_OrthancApi_GetStudyIds_Ready);}
     void ScheduleGetStudy(IObserver& responseObserver, const std::string& studyId) {ScheduleGetJsonRequest(responseObserver, "/studies/" + studyId, MessageType_OrthancApi_GetStudy_Ready);}
     void ScheduleGetSeries(IObserver& responseObserver, const std::string& seriesId) {ScheduleGetJsonRequest(responseObserver, "/series/" + seriesId, MessageType_OrthancApi_GetSeries_Ready);}
+
+    void GetJsonAsync(const std::string& uri,
+                      MessageHandler<NewGetJsonResponseReadyMessage>* successCallback,
+                      MessageHandler<NewHttpErrorMessage>* failureCallback = NULL);
+
+
 
   };
 }

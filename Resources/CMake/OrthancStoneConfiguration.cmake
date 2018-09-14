@@ -280,11 +280,13 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/WidgetBase.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/WorldSceneWidget.cpp
 
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IObservable.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IObserver.h
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageBroker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageBroker.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageType.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/Promise.h
 
   ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomPath.cpp
   ${ORTHANC_ROOT}/Plugins/Samples/Common/IOrthancConnection.cpp

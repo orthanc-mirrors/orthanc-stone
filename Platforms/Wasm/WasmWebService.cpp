@@ -11,7 +11,13 @@ extern "C" {
                                                 const char* uri,
                                                 const char* headersInJsonString,
                                                 void* payload);
-  
+
+  extern void WasmWebService_NewScheduleGetRequest(void* callableSuccess,
+                                                void* callableFailure,
+                                                const char* uri,
+                                                const char* headersInJsonString,
+                                                void* payload);
+
   extern void WasmWebService_SchedulePostRequest(void* callback,
                                                  const char* uri,
                                                  const char* headersInJsonString,
@@ -48,6 +54,38 @@ extern "C" {
     {
       reinterpret_cast<OrthancStone::IWebService::ICallback*>(callback)->
         OnHttpRequestSuccess(uri, body, bodySize, reinterpret_cast<Orthanc::IDynamicObject*>(payload)); 
+   }
+  }
+
+  void EMSCRIPTEN_KEEPALIVE WasmWebService_NewNotifyError(void* failureCallable,
+                                                       const char* uri,
+                                                       void* payload)
+  {
+    if (failureCallable == NULL)
+    {
+      throw;
+    }
+    else
+    {
+      reinterpret_cast<OrthancStone::MessageHandler<OrthancStone::IWebService::NewHttpRequestErrorMessage>*>(failureCallable)->
+        Apply(OrthancStone::IWebService::NewHttpRequestErrorMessage(uri, reinterpret_cast<Orthanc::IDynamicObject*>(payload)));
+    }
+  }
+
+  void EMSCRIPTEN_KEEPALIVE WasmWebService_NewNotifySuccess(void* successCallable,
+                                                         const char* uri,
+                                                         const void* body,
+                                                         size_t bodySize,
+                                                         void* payload)
+  {
+    if (successCallable == NULL)
+    {
+      throw;
+    }
+    else
+    {
+      reinterpret_cast<OrthancStone::MessageHandler<OrthancStone::IWebService::NewHttpRequestSuccessMessage>*>(successCallable)->
+        Apply(OrthancStone::IWebService::NewHttpRequestSuccessMessage(uri, body, bodySize, reinterpret_cast<Orthanc::IDynamicObject*>(payload)));
    }
   }
 
@@ -119,4 +157,17 @@ namespace OrthancStone
     WasmWebService_SchedulePostRequest(&callback, uri.c_str(), headersInJsonString.c_str(),
                                        body.c_str(), body.size(), payload);
   }
+
+   void WasmWebService::GetAsync(const std::string& relativeUri,
+                          const Headers& headers,
+                          Orthanc::IDynamicObject* payload,
+                          MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallable,
+                          MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallable)
+  {
+    std::string uri = baseUri_ + relativeUri;
+    std::string headersInJsonString;
+    ToJsonString(headersInJsonString, headers);
+    WasmWebService_NewScheduleGetRequest(successCallable, failureCallable, uri.c_str(), headersInJsonString.c_str(), payload);
+  }
+
 }

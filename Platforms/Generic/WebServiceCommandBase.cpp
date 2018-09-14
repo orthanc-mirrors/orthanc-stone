@@ -42,7 +42,7 @@ namespace OrthancStone
   {
     DeclareEmittableMessage(MessageType_HttpRequestError);
     DeclareEmittableMessage(MessageType_HttpRequestSuccess);
-    RegisterObserver(callback);
+    // TODO ? RegisterObserver(callback);
   }
 
 
@@ -61,4 +61,40 @@ namespace OrthancStone
       EmitMessage(message);
     }
   }
+
+  NewWebServiceCommandBase::NewWebServiceCommandBase(MessageBroker& broker,
+                                                     MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,
+                                                     MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,
+                                               const Orthanc::WebServiceParameters& parameters,
+                                               const std::string& uri,
+                                               const IWebService::Headers& headers,
+                                               Orthanc::IDynamicObject* payload /* takes ownership */,
+                                               NativeStoneApplicationContext& context) :
+    IObservable(broker),
+    successCallback_(successCallback),
+    failureCallback_(failureCallback),
+    parameters_(parameters),
+    uri_(uri),
+    headers_(headers),
+    payload_(payload),
+    context_(context)
+  {
+  }
+
+
+  void NewWebServiceCommandBase::Commit()
+  {
+    NativeStoneApplicationContext::GlobalMutexLocker lock(context_);  // we want to make sure that, i.e, the UpdateThread is not triggered while we are updating the "model" with the result of a WebServiceCommand
+
+    if (success_ && successCallback_.get() != NULL)
+    {
+      successCallback_->Apply(IWebService::NewHttpRequestSuccessMessage(uri_, answer_.c_str(), answer_.size(), payload_.release()));
+    }
+    else if (!success_ && failureCallback_.get() != NULL)
+    {
+      successCallback_->Apply(IWebService::NewHttpRequestErrorMessage(uri_, payload_.release()));
+    }
+
+  }
+
 }

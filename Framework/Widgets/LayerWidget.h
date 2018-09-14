@@ -35,6 +35,10 @@ namespace OrthancStone
       public IObserver,
       public IObservable
   {
+  public:
+    typedef OriginMessage<MessageType_Widget_GeometryChanged, LayerWidget> GeometryChangedMessage;
+    typedef OriginMessage<MessageType_Widget_ContentChanged, LayerWidget> ContentChangedMessage;
+
   private:
     class Scene;
     

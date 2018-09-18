@@ -26,14 +26,15 @@
 namespace OrthancStone
 {
   WebServicePostCommand::WebServicePostCommand(MessageBroker& broker,
-                                               IWebService::ICallback& callback,
+                                               MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,  // takes ownership
+                                               MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,  // takes ownership
                                                const Orthanc::WebServiceParameters& parameters,
                                                const std::string& uri,
                                                const IWebService::Headers& headers,
                                                const std::string& body,
                                                Orthanc::IDynamicObject* payload /* takes ownership */,
                                                NativeStoneApplicationContext& context) :
-    WebServiceCommandBase(broker, callback, parameters, uri, headers, payload, context),
+    WebServiceCommandBase(broker, successCallback, failureCallback, parameters, uri, headers, payload, context),
     body_(body)
   {
   }

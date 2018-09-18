@@ -26,10 +26,11 @@
 #include "../StoneEnumerations.h"
 #include "../Messages/IObservable.h"
 #include <boost/shared_ptr.hpp>
+#include "OrthancApiClient.h"
 
 namespace OrthancStone
 {
-  class OrthancSlicesLoader : public IObservable
+  class OrthancSlicesLoader : public IObservable, public IObserver
   {
   public:
 
@@ -93,11 +94,8 @@ namespace OrthancStone
     };
 
     class Operation;
-    class WebCallback;
 
-    boost::shared_ptr<WebCallback>  webCallback_;  // This is a PImpl pattern
-
-    IWebService&  orthanc_;
+    OrthancApiClient&  orthanc_;
     State         state_;
     SlicesSorter  slices_;
 
@@ -105,34 +103,23 @@ namespace OrthancStone
                                  std::auto_ptr<Orthanc::ImageAccessor>& image);
   
     void NotifySliceImageError(const Operation& operation);
-    
-    void ParseSeriesGeometry(const void* answer,
-                             size_t size);
 
-    void ParseInstanceGeometry(const std::string& instanceId,
-                               const void* answer,
-                               size_t size);
+    void OnGeometryError(const OrthancApiClient::HttpErrorMessage& message);
+    void OnSliceImageError(const OrthancApiClient::HttpErrorMessage& message);
 
-    void ParseFrameGeometry(const std::string& instanceId,
-                            unsigned int frame,
-                            const void* answer,
-                            size_t size);
+    void ParseSeriesGeometry(const OrthancApiClient::JsonResponseReadyMessage& message);
 
-    void ParseSliceImagePng(const Operation& operation,
-                            const void* answer,
-                            size_t size);
+    void ParseInstanceGeometry(const OrthancApiClient::JsonResponseReadyMessage& message);
 
-    void ParseSliceImagePam(const Operation& operation,
-                            const void* answer,
-                            size_t size);
+    void ParseFrameGeometry(const OrthancApiClient::JsonResponseReadyMessage& message);
 
-    void ParseSliceImageJpeg(const Operation& operation,
-                             const void* answer,
-                             size_t size);
+    void ParseSliceImagePng(const OrthancApiClient::BinaryResponseReadyMessage& message);
 
-    void ParseSliceRawImage(const Operation& operation,
-                            const void* answer,
-                            size_t size);
+    void ParseSliceImagePam(const OrthancApiClient::BinaryResponseReadyMessage& message);
+
+    void ParseSliceImageJpeg(const OrthancApiClient::JsonResponseReadyMessage& message);
+
+    void ParseSliceRawImage(const OrthancApiClient::BinaryResponseReadyMessage& message);
 
     void ScheduleSliceImagePng(const Slice& slice,
                                size_t index);
@@ -149,7 +136,7 @@ namespace OrthancStone
   public:
     OrthancSlicesLoader(MessageBroker& broker,
                         //ISliceLoaderObserver& callback,
-                        IWebService& orthanc);
+                        OrthancApiClient& orthancApi);
 
     void ScheduleLoadSeries(const std::string& seriesId);
 
@@ -170,6 +157,6 @@ namespace OrthancStone
     void ScheduleLoadSliceImage(size_t index,
                                 SliceImageQuality requestedQuality);
 
-//    virtual void HandleMessage(IObservable& from, const IMessage& message);
+
   };
 }

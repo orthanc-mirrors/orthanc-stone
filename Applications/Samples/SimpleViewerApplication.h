@@ -268,7 +268,7 @@ namespace OrthancStone
         if (parameters.count("studyId") < 1)
         {
           LOG(WARNING) << "The study ID is missing, will take the first studyId found in Orthanc";
-          orthancApiClient_->GetJsonAsync("/studies", new Callable<SimpleViewerApplication, OrthancApiClient::NewGetJsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyListReceived));
+          orthancApiClient_->GetJsonAsync("/studies", new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyListReceived));
         }
         else
         {
@@ -276,31 +276,31 @@ namespace OrthancStone
         }
       }
 
-      void OnStudyListReceived(const OrthancApiClient::NewGetJsonResponseReadyMessage& message)
+      void OnStudyListReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
       {
-        const Json::Value& response = message.response_;
+        const Json::Value& response = message.Response;
 
         if (response.isArray() && response.size() > 1)
         {
           SelectStudy(response[0].asString());
         }
       }
-      void OnStudyReceived(const OrthancApiClient::NewGetJsonResponseReadyMessage& message)
+      void OnStudyReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
       {
-        const Json::Value& response = message.response_;
+        const Json::Value& response = message.Response;
 
         if (response.isObject() && response["Series"].isArray())
         {
           for (size_t i=0; i < response["Series"].size(); i++)
           {
-            orthancApiClient_->GetJsonAsync("/series/" + response["Series"][(int)i].asString(), new Callable<SimpleViewerApplication, OrthancApiClient::NewGetJsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnSeriesReceived));
+            orthancApiClient_->GetJsonAsync("/series/" + response["Series"][(int)i].asString(), new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnSeriesReceived));
           }
         }
       }
 
-      void OnSeriesReceived(const OrthancApiClient::NewGetJsonResponseReadyMessage& message)
+      void OnSeriesReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
       {
-        const Json::Value& response = message.response_;
+        const Json::Value& response = message.Response;
 
         if (response.isObject() && response["Instances"].isArray() && response["Instances"].size() > 0)
         {
@@ -338,7 +338,7 @@ namespace OrthancStone
 
       void SelectStudy(const std::string& studyId)
       {
-        orthancApiClient_->GetJsonAsync("/studies/" + studyId, new Callable<SimpleViewerApplication, OrthancApiClient::NewGetJsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyReceived));
+        orthancApiClient_->GetJsonAsync("/studies/" + studyId, new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyReceived));
       }
 
       void OnWidgetGeometryChanged(const LayerWidget::GeometryChangedMessage& message)

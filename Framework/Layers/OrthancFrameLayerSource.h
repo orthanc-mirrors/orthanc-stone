@@ -24,6 +24,7 @@
 #include "LayerSourceBase.h"
 #include "../Toolbox/IWebService.h"
 #include "../Toolbox/OrthancSlicesLoader.h"
+#include "../Toolbox/OrthancApiClient.h"
 
 namespace OrthancStone
 {  
@@ -40,7 +41,7 @@ namespace OrthancStone
     SliceImageQuality    quality_;
 
   public:
-    OrthancFrameLayerSource(MessageBroker& broker, IWebService& orthanc);
+    OrthancFrameLayerSource(MessageBroker& broker, OrthancApiClient& orthanc);
 
     void LoadSeries(const std::string& seriesId);
 

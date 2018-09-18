@@ -26,45 +26,8 @@
 namespace OrthancStone
 {
   WebServiceCommandBase::WebServiceCommandBase(MessageBroker& broker,
-                                               IWebService::ICallback& callback,
-                                               const Orthanc::WebServiceParameters& parameters,
-                                               const std::string& uri,
-                                               const IWebService::Headers& headers,
-                                               Orthanc::IDynamicObject* payload /* takes ownership */,
-                                               NativeStoneApplicationContext& context) :
-    IObservable(broker),
-    callback_(callback),
-    parameters_(parameters),
-    uri_(uri),
-    headers_(headers),
-    payload_(payload),
-    context_(context)
-  {
-    DeclareEmittableMessage(MessageType_HttpRequestError);
-    DeclareEmittableMessage(MessageType_HttpRequestSuccess);
-    // TODO ? RegisterObserver(callback);
-  }
-
-
-  void WebServiceCommandBase::Commit()
-  {
-    NativeStoneApplicationContext::GlobalMutexLocker lock(context_);  // we want to make sure that, i.e, the UpdateThread is not triggered while we are updating the "model" with the result of a WebServiceCommand
-
-    if (success_)
-    {
-      IWebService::ICallback::HttpRequestSuccessMessage message(uri_, answer_.c_str(), answer_.size(), payload_.release());
-      EmitMessage(message);
-    }
-    else
-    {
-      IWebService::ICallback::HttpRequestErrorMessage message(uri_, payload_.release());
-      EmitMessage(message);
-    }
-  }
-
-  NewWebServiceCommandBase::NewWebServiceCommandBase(MessageBroker& broker,
-                                                     MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,
-                                                     MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,
+                                               MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,
+                                               MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,
                                                const Orthanc::WebServiceParameters& parameters,
                                                const std::string& uri,
                                                const IWebService::Headers& headers,
@@ -82,7 +45,7 @@ namespace OrthancStone
   }
 
 
-  void NewWebServiceCommandBase::Commit()
+  void WebServiceCommandBase::Commit()
   {
     NativeStoneApplicationContext::GlobalMutexLocker lock(context_);  // we want to make sure that, i.e, the UpdateThread is not triggered while we are updating the "model" with the result of a WebServiceCommand
 

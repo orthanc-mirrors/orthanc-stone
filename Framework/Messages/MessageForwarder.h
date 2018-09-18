@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -21,38 +21,33 @@
 
 #pragma once
 
-#include "../Toolbox/DicomStructureSet.h"
-#include "../Toolbox/OrthancApiClient.h"
-#include "VolumeLoaderBase.h"
+#include "ICallable.h"
+#include "IObservable.h"
+#include "IObserver.h"
 
-namespace OrthancStone
-{
-  class StructureSetLoader :
-    public VolumeLoaderBase,
-    public OrthancStone::IObserver
+#include <boost/noncopyable.hpp>
+
+namespace OrthancStone {
+
+
+  template<typename TMessage>
+  class MessageForwarder : public IObserver, public Callable<MessageForwarder<TMessage>, TMessage>
   {
-  private:
-
-    OrthancApiClient&                      orthanc_;
-    std::auto_ptr<DicomStructureSet>  structureSet_;
-
+    IObservable& observable_;
   public:
-    StructureSetLoader(MessageBroker& broker, OrthancApiClient& orthanc);
-
-    void ScheduleLoadInstance(const std::string& instance);
-
-    bool HasStructureSet() const
+    MessageForwarder(MessageBroker& broker,
+                     IObservable& observable // the object that will emit the forwarded message
+                     )
+      : IObserver(broker),
+        Callable<MessageForwarder<TMessage>, TMessage>(*this, &MessageForwarder::ForwardMessage),
+        observable_(observable)
     {
-      return structureSet_.get() != NULL;
     }
 
-    DicomStructureSet& GetStructureSet();
-
   protected:
-    void OnReferencedSliceLoaded(const OrthancApiClient::JsonResponseReadyMessage& message);
-
-    void OnStructureSetLoaded(const OrthancApiClient::JsonResponseReadyMessage& message);
-
-    void OnLookupCompleted(const OrthancApiClient::JsonResponseReadyMessage& message);
+    void ForwardMessage(const TMessage& message)
+    {
+      observable_.EmitMessage(message);
+    }
   };
 }

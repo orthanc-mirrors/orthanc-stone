@@ -34,17 +34,6 @@
 
 namespace OrthancStone {
 
-  class MessageNotDeclaredException : public std::logic_error
-  {
-    MessageType messageType_;
-  public:
-    MessageNotDeclaredException(MessageType messageType)
-      : std::logic_error("Message not declared by observer."),
-        messageType_(messageType)
-    {
-    }
-  };
-
   class IObservable : public boost::noncopyable
   {
   protected:
@@ -52,7 +41,6 @@ namespace OrthancStone {
 
     typedef std::map<int, std::set<ICallable*> >   Callables;
     Callables                         callables_;
-    std::set<MessageType>             emittableMessages_;
 
   public:
 
@@ -82,11 +70,6 @@ namespace OrthancStone {
 
     void EmitMessage(const IMessage& message)
     {
-      if (emittableMessages_.find(message.GetType()) == emittableMessages_.end())
-      {
-        throw MessageNotDeclaredException(message.GetType());
-      }
-
       Callables::const_iterator found = callables_.find(message.GetType());
 
       if (found != callables_.end())
@@ -100,16 +83,6 @@ namespace OrthancStone {
           }
         }
       }
-    }
-    const std::set<MessageType>& GetEmittableMessages() const
-    {
-      return emittableMessages_;
-    }
-  protected:
-
-    void DeclareEmittableMessage(MessageType messageType)
-    {
-      emittableMessages_.insert(messageType);
     }
 
   };

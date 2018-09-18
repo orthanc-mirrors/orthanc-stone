@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -25,46 +25,21 @@
 
 namespace OrthancStone
 {
+
   WebServiceGetCommand::WebServiceGetCommand(MessageBroker& broker,
-                                             IWebService::ICallback& callback,
+                                             MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,  // takes ownership
+                                             MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,  // takes ownership
                                              const Orthanc::WebServiceParameters& parameters,
                                              const std::string& uri,
                                              const IWebService::Headers& headers,
                                              Orthanc::IDynamicObject* payload /* takes ownership */,
                                              NativeStoneApplicationContext& context) :
-    WebServiceCommandBase(broker, callback, parameters, uri, headers, payload, context)
+    WebServiceCommandBase(broker, successCallback, failureCallback, parameters, uri, headers, payload, context)
   {
   }
 
 
   void WebServiceGetCommand::Execute()
-  {
-    Orthanc::HttpClient client(parameters_, uri_);
-    client.SetTimeout(60);
-    client.SetMethod(Orthanc::HttpMethod_Get);
-
-    for (IWebService::Headers::const_iterator it = headers_.begin(); it != headers_.end(); it++ )
-    {
-      client.AddHeader(it->first, it->second);
-    }
-
-    success_ = client.Apply(answer_);
-  }
-
-  NewWebServiceGetCommand::NewWebServiceGetCommand(MessageBroker& broker,
-                                                   MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,  // takes ownership
-                                                   MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,  // takes ownership
-                                             const Orthanc::WebServiceParameters& parameters,
-                                             const std::string& uri,
-                                             const IWebService::Headers& headers,
-                                             Orthanc::IDynamicObject* payload /* takes ownership */,
-                                             NativeStoneApplicationContext& context) :
-    NewWebServiceCommandBase(broker, successCallback, failureCallback, parameters, uri, headers, payload, context)
-  {
-  }
-
-
-  void NewWebServiceGetCommand::Execute()
   {
     Orthanc::HttpClient client(parameters_, uri_);
     client.SetTimeout(60);

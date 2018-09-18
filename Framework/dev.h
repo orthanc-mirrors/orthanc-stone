@@ -232,7 +232,7 @@ namespace OrthancStone
 
   public:
     OrthancVolumeImage(MessageBroker& broker,
-                       IWebService& orthanc,
+                       OrthancApiClient& orthanc,
                        bool computeRange) : 
       OrthancStone::IObserver(broker),
       loader_(broker, orthanc),

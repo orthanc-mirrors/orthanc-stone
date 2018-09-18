@@ -32,7 +32,8 @@ namespace OrthancStone
 
   public:
     WebServicePostCommand(MessageBroker& broker,
-                          IWebService::ICallback& callback,
+                          MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,  // takes ownership
+                          MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,  // takes ownership
                           const Orthanc::WebServiceParameters& parameters,
                           const std::string& uri,
                           const IWebService::Headers& headers,

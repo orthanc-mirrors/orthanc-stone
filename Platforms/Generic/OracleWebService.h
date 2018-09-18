@@ -51,30 +51,23 @@ namespace OrthancStone
     {
     }
 
-    virtual void ScheduleGetRequest(ICallback& callback,
-                                    const std::string& uri,
-                                    const Headers& headers,
-                                    Orthanc::IDynamicObject* payload)
-    {
-      oracle_.Submit(new WebServiceGetCommand(broker_, callback, parameters_, uri, headers, payload, context_));
-    }
-
     virtual void GetAsync(const std::string& uri,
                           const Headers& headers,
-                          Orthanc::IDynamicObject* payload,
+                          Orthanc::IDynamicObject* payload, // takes ownership
                           MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,   // takes ownership
                           MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback = NULL)// takes ownership
     {
-      oracle_.Submit(new NewWebServiceGetCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, payload, context_));
+      oracle_.Submit(new WebServiceGetCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, payload, context_));
     }
 
-    virtual void SchedulePostRequest(ICallback& callback,
-                                     const std::string& uri,
-                                     const Headers& headers,
-                                     const std::string& body,
-                                     Orthanc::IDynamicObject* payload)
+    virtual void PostAsync(const std::string& uri,
+                           const Headers& headers,
+                           const std::string& body,
+                           Orthanc::IDynamicObject* payload, // takes ownership
+                           MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback, // takes ownership
+                           MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback) // takes ownership
     {
-      oracle_.Submit(new WebServicePostCommand(broker_, callback, parameters_, uri, headers, body, payload, context_));
+      oracle_.Submit(new WebServicePostCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, body, payload, context_));
     }
 
     void Start()

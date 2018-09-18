@@ -29,27 +29,13 @@ namespace OrthancStone
   {
   public:
     WebServiceGetCommand(MessageBroker& broker,
-                         IWebService::ICallback& callback,
+                         MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,  // takes ownership
+                         MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,  // takes ownership
                          const Orthanc::WebServiceParameters& parameters,
                          const std::string& uri,
                          const IWebService::Headers& headers,
                          Orthanc::IDynamicObject* payload /* takes ownership */,
                          NativeStoneApplicationContext& context);
-
-    virtual void Execute();
-  };
-
-  class NewWebServiceGetCommand : public NewWebServiceCommandBase
-  {
-  public:
-    NewWebServiceGetCommand(MessageBroker& broker,
-                            MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,  // takes ownership
-                            MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,  // takes ownership
-                            const Orthanc::WebServiceParameters& parameters,
-                            const std::string& uri,
-                            const IWebService::Headers& headers,
-                            Orthanc::IDynamicObject* payload /* takes ownership */,
-                            NativeStoneApplicationContext& context);
 
     virtual void Execute();
   };

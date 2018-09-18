@@ -45,6 +45,7 @@ namespace OrthancStone {
     MessageType_OrthancApi_InternalGetJsonResponseError,
 
     MessageType_OrthancApi_GenericGetJson_Ready,
+    MessageType_OrthancApi_GenericGetBinary_Ready,
     MessageType_OrthancApi_GenericHttpError_Ready,
     MessageType_OrthancApi_GetStudyIds_Ready,
     MessageType_OrthancApi_GetStudy_Ready,

@@ -61,17 +61,12 @@ namespace OrthancStone
     LayerSourceBase::NotifyLayerReady(NULL, message.slice_.GetGeometry(), true);
   }
 
-  OrthancFrameLayerSource::OrthancFrameLayerSource(MessageBroker& broker, IWebService& orthanc) :
+  OrthancFrameLayerSource::OrthancFrameLayerSource(MessageBroker& broker, OrthancApiClient& orthanc) :
     LayerSourceBase(broker),
     IObserver(broker),
-    //OrthancSlicesLoader::ISliceLoaderObserver(broker),
     loader_(broker, orthanc),
     quality_(SliceImageQuality_FullPng)
   {
-//    DeclareHandledMessage(MessageType_SliceLoader_GeometryReady);
-//    DeclareHandledMessage(MessageType_SliceLoader_GeometryError);
-//    DeclareHandledMessage(MessageType_SliceLoader_ImageReady);
-//    DeclareHandledMessage(MessageType_SliceLoader_ImageError);
     loader_.RegisterObserverCallback(new Callable<OrthancFrameLayerSource, OrthancSlicesLoader::SliceGeometryReadyMessage>(*this, &OrthancFrameLayerSource::OnSliceGeometryReady));
     loader_.RegisterObserverCallback(new Callable<OrthancFrameLayerSource, OrthancSlicesLoader::SliceGeometryErrorMessage>(*this, &OrthancFrameLayerSource::OnSliceGeometryError));
     loader_.RegisterObserverCallback(new Callable<OrthancFrameLayerSource, OrthancSlicesLoader::SliceImageReadyMessage>(*this, &OrthancFrameLayerSource::OnSliceImageReady));

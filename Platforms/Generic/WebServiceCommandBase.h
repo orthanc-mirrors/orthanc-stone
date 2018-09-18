@@ -37,32 +37,6 @@ namespace OrthancStone
   class WebServiceCommandBase : public IOracleCommand, IObservable
   {
   protected:
-    IWebService::ICallback&                 callback_;
-    Orthanc::WebServiceParameters           parameters_;
-    std::string                             uri_;
-    std::map<std::string, std::string>      headers_;
-    std::auto_ptr<Orthanc::IDynamicObject>  payload_;
-    bool                                    success_;
-    std::string                             answer_;
-    NativeStoneApplicationContext&          context_;
-
-  public:
-    WebServiceCommandBase(MessageBroker& broker,
-                          IWebService::ICallback& callback,
-                          const Orthanc::WebServiceParameters& parameters,
-                          const std::string& uri,
-                          const std::map<std::string, std::string>& headers,
-                          Orthanc::IDynamicObject* payload /* takes ownership */,
-                          NativeStoneApplicationContext& context);
-
-    virtual void Execute() = 0;
-
-    virtual void Commit();
-  };
-
-  class NewWebServiceCommandBase : public IOracleCommand, IObservable
-  {
-  protected:
     std::auto_ptr<MessageHandler<IWebService::NewHttpRequestSuccessMessage>>                              successCallback_;
     std::auto_ptr<MessageHandler<IWebService::NewHttpRequestErrorMessage>>                                failureCallback_;
     Orthanc::WebServiceParameters           parameters_;
@@ -74,7 +48,7 @@ namespace OrthancStone
     NativeStoneApplicationContext&          context_;
 
   public:
-    NewWebServiceCommandBase(MessageBroker& broker,
+    WebServiceCommandBase(MessageBroker& broker,
                           MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,  // takes ownership
                           MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,  // takes ownership
                           const Orthanc::WebServiceParameters& parameters,

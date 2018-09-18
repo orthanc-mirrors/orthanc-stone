@@ -48,29 +48,29 @@ namespace OrthancStone {
     {
     }
 
-    void ConvertResponseToJson(const IWebService::NewHttpRequestSuccessMessage& message)
+    void ConvertResponseToJson(const IWebService::HttpRequestSuccessMessage& message)
     {
       Json::Value response;
-      if (MessagingToolbox::ParseJson(response, message.Answer, message.AnswerSize))
+      if (MessagingToolbox::ParseJson(response, message.answer_, message.answerSize_))
       {
         if (orthancApiSuccessCallback_.get() != NULL)
         {
-          orthancApiSuccessCallback_->Apply(OrthancApiClient::JsonResponseReadyMessage(message.Uri, response, message.Payload));
+          orthancApiSuccessCallback_->Apply(OrthancApiClient::JsonResponseReadyMessage(message.uri_, response, message.payload_));
         }
       }
       else if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.Uri, message.Payload));
+        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.uri_, message.payload_));
       }
 
       delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
     }
 
-    void ConvertError(const IWebService::NewHttpRequestErrorMessage& message)
+    void ConvertError(const IWebService::HttpRequestErrorMessage& message)
     {
       if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.Uri));
+        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.uri_));
       }
 
       delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
@@ -94,25 +94,25 @@ namespace OrthancStone {
     {
     }
 
-    void ConvertResponseToBinary(const IWebService::NewHttpRequestSuccessMessage& message)
+    void ConvertResponseToBinary(const IWebService::HttpRequestSuccessMessage& message)
     {
       if (orthancApiSuccessCallback_.get() != NULL)
       {
-        orthancApiSuccessCallback_->Apply(OrthancApiClient::BinaryResponseReadyMessage(message.Uri, message.Answer, message.AnswerSize, message.Payload));
+        orthancApiSuccessCallback_->Apply(OrthancApiClient::BinaryResponseReadyMessage(message.uri_, message.answer_, message.answerSize_, message.payload_));
       }
       else if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.Uri, message.Payload));
+        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.uri_, message.payload_));
       }
 
       delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
     }
 
-    void ConvertError(const IWebService::NewHttpRequestErrorMessage& message)
+    void ConvertError(const IWebService::HttpRequestErrorMessage& message)
     {
       if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.Uri));
+        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.uri_));
       }
 
       delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
@@ -126,8 +126,8 @@ namespace OrthancStone {
   {
     HttpResponseToJsonConverter* converter = new HttpResponseToJsonConverter(broker_, successCallback, failureCallback);  // it is currently deleting itself after being used
     orthanc_.GetAsync(uri, IWebService::Headers(), payload,
-                      new Callable<HttpResponseToJsonConverter, IWebService::NewHttpRequestSuccessMessage>(*converter, &HttpResponseToJsonConverter::ConvertResponseToJson),
-                      new Callable<HttpResponseToJsonConverter, IWebService::NewHttpRequestErrorMessage>(*converter, &HttpResponseToJsonConverter::ConvertError));
+                      new Callable<HttpResponseToJsonConverter, IWebService::HttpRequestSuccessMessage>(*converter, &HttpResponseToJsonConverter::ConvertResponseToJson),
+                      new Callable<HttpResponseToJsonConverter, IWebService::HttpRequestErrorMessage>(*converter, &HttpResponseToJsonConverter::ConvertError));
 
   }
 
@@ -139,8 +139,8 @@ namespace OrthancStone {
   {
     HttpResponseToBinaryConverter* converter = new HttpResponseToBinaryConverter(broker_, successCallback, failureCallback);  // it is currently deleting itself after being used
     orthanc_.GetAsync(uri, headers, payload,
-                      new Callable<HttpResponseToBinaryConverter, IWebService::NewHttpRequestSuccessMessage>(*converter, &HttpResponseToBinaryConverter::ConvertResponseToBinary),
-                      new Callable<HttpResponseToBinaryConverter, IWebService::NewHttpRequestErrorMessage>(*converter, &HttpResponseToBinaryConverter::ConvertError));
+                      new Callable<HttpResponseToBinaryConverter, IWebService::HttpRequestSuccessMessage>(*converter, &HttpResponseToBinaryConverter::ConvertResponseToBinary),
+                      new Callable<HttpResponseToBinaryConverter, IWebService::HttpRequestErrorMessage>(*converter, &HttpResponseToBinaryConverter::ConvertError));
   }
 
   void OrthancApiClient::PostBinaryAsyncExpectJson(const std::string& uri,
@@ -151,8 +151,8 @@ namespace OrthancStone {
   {
     HttpResponseToJsonConverter* converter = new HttpResponseToJsonConverter(broker_, successCallback, failureCallback);  // it is currently deleting itself after being used
     orthanc_.PostAsync(uri, IWebService::Headers(), body, payload,
-                       new Callable<HttpResponseToJsonConverter, IWebService::NewHttpRequestSuccessMessage>(*converter, &HttpResponseToJsonConverter::ConvertResponseToJson),
-                       new Callable<HttpResponseToJsonConverter, IWebService::NewHttpRequestErrorMessage>(*converter, &HttpResponseToJsonConverter::ConvertError));
+                       new Callable<HttpResponseToJsonConverter, IWebService::HttpRequestSuccessMessage>(*converter, &HttpResponseToJsonConverter::ConvertResponseToJson),
+                       new Callable<HttpResponseToJsonConverter, IWebService::HttpRequestErrorMessage>(*converter, &HttpResponseToJsonConverter::ConvertError));
 
   }
 

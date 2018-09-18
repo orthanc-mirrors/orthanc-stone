@@ -54,8 +54,8 @@ namespace OrthancStone
     virtual void GetAsync(const std::string& uri,
                           const Headers& headers,
                           Orthanc::IDynamicObject* payload, // takes ownership
-                          MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,   // takes ownership
-                          MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback = NULL)// takes ownership
+                          MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,   // takes ownership
+                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL)// takes ownership
     {
       oracle_.Submit(new WebServiceGetCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, payload, context_));
     }
@@ -64,8 +64,8 @@ namespace OrthancStone
                            const Headers& headers,
                            const std::string& body,
                            Orthanc::IDynamicObject* payload, // takes ownership
-                           MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback, // takes ownership
-                           MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback) // takes ownership
+                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback, // takes ownership
+                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback) // takes ownership
     {
       oracle_.Submit(new WebServicePostCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, body, payload, context_));
     }

@@ -37,8 +37,8 @@ namespace OrthancStone
   class WebServiceCommandBase : public IOracleCommand, IObservable
   {
   protected:
-    std::auto_ptr<MessageHandler<IWebService::NewHttpRequestSuccessMessage>>                              successCallback_;
-    std::auto_ptr<MessageHandler<IWebService::NewHttpRequestErrorMessage>>                                failureCallback_;
+    std::auto_ptr<MessageHandler<IWebService::HttpRequestSuccessMessage>>                              successCallback_;
+    std::auto_ptr<MessageHandler<IWebService::HttpRequestErrorMessage>>                                failureCallback_;
     Orthanc::WebServiceParameters           parameters_;
     std::string                             uri_;
     std::map<std::string, std::string>      headers_;
@@ -49,8 +49,8 @@ namespace OrthancStone
 
   public:
     WebServiceCommandBase(MessageBroker& broker,
-                          MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,  // takes ownership
-                          MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,  // takes ownership
+                          MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                           const Orthanc::WebServiceParameters& parameters,
                           const std::string& uri,
                           const std::map<std::string, std::string>& headers,

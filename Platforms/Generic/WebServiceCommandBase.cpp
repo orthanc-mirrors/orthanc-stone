@@ -26,8 +26,8 @@
 namespace OrthancStone
 {
   WebServiceCommandBase::WebServiceCommandBase(MessageBroker& broker,
-                                               MessageHandler<IWebService::NewHttpRequestSuccessMessage>* successCallback,
-                                               MessageHandler<IWebService::NewHttpRequestErrorMessage>* failureCallback,
+                                               MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                                               MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                                const Orthanc::WebServiceParameters& parameters,
                                                const std::string& uri,
                                                const IWebService::Headers& headers,
@@ -51,11 +51,11 @@ namespace OrthancStone
 
     if (success_ && successCallback_.get() != NULL)
     {
-      successCallback_->Apply(IWebService::NewHttpRequestSuccessMessage(uri_, answer_.c_str(), answer_.size(), payload_.release()));
+      successCallback_->Apply(IWebService::HttpRequestSuccessMessage(uri_, answer_.c_str(), answer_.size(), payload_.release()));
     }
     else if (!success_ && failureCallback_.get() != NULL)
     {
-      successCallback_->Apply(IWebService::NewHttpRequestErrorMessage(uri_, payload_.release()));
+      successCallback_->Apply(IWebService::HttpRequestErrorMessage(uri_, payload_.release()));
     }
 
   }

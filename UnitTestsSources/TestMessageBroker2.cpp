@@ -286,22 +286,22 @@ namespace {
 //    }
 
 //  };
-
-
-//  enum CustomMessageType
-//  {
-//    CustomMessageType_First = MessageType_LastGenericStoneMessage + 1,
-
-//    CustomMessageType_Completed,
-//    CustomMessageType_Increment
-//  };
-
   using namespace OrthancStone;
+
+
+  enum CustomMessageType
+  {
+    CustomMessageType_First = MessageType_CustomMessage + 1,
+
+    CustomMessageType_Completed,
+    CustomMessageType_Increment
+  };
+
 
   class MyObservable : public IObservable
   {
   public:
-    struct MyCustomMessage: public BaseMessage<MessageType_Test1>
+    struct MyCustomMessage: public BaseMessage<CustomMessageType_Completed>
     {
       int payload_;
 
@@ -466,6 +466,46 @@ TEST(MessageBroker2, TestMessageForwarderSimpleUseCase)
   ASSERT_EQ(20, testCounter);
 }
 
+
+TEST(MessageBroker2, TestMessageForwarderDeleteIntermediate)
+{
+  MessageBroker broker;
+  MyObservable  observable(broker);
+  MyIntermediate* intermediate = new MyIntermediate(broker, observable);
+  MyObserver    observer(broker);
+
+  // let the observer observers the intermediate that is actually forwarding the messages from the observable
+  intermediate->RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
+
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  ASSERT_EQ(12, testCounter);
+
+  delete intermediate;
+
+  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  ASSERT_EQ(12, testCounter);
+}
+
+TEST(MessageBroker2, TestCustomMessage)
+{
+  MessageBroker broker;
+  MyObservable  observable(broker);
+  MyIntermediate intermediate(broker, observable);
+  MyObserver    observer(broker);
+
+  // let the observer observers the intermediate that is actually forwarding the messages from the observable
+  intermediate.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
+
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  ASSERT_EQ(12, testCounter);
+
+  // the connection is permanent; if we emit the same message again, the observer will be notified again
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  ASSERT_EQ(20, testCounter);
+}
 
 
 TEST(MessageBroker2, TestPromiseSuccessFailure)

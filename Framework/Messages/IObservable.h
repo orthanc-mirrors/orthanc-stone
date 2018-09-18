@@ -27,12 +27,15 @@
 #include <iostream>
 #include <map>
 
+
 #include "MessageBroker.h"
 #include "MessageType.h"
 #include "ICallable.h"
 #include "IObserver.h"
+#include "MessageForwarder.h"
 
 namespace OrthancStone {
+
 
   class IObservable : public boost::noncopyable
   {
@@ -42,6 +45,9 @@ namespace OrthancStone {
     typedef std::map<int, std::set<ICallable*> >   Callables;
     Callables                         callables_;
 
+    typedef std::set<IMessageForwarder*>      Forwarders;
+    Forwarders                        forwarders_;
+
   public:
 
     IObservable(MessageBroker& broker)
@@ -50,6 +56,7 @@ namespace OrthancStone {
     }
     virtual ~IObservable()
     {
+      // delete all callables (this will also unregister them from the broker)
       for (Callables::const_iterator it = callables_.begin();
            it != callables_.end(); ++it)
       {
@@ -58,6 +65,13 @@ namespace OrthancStone {
         {
           delete *it2;
         }
+      }
+
+      // unregister the forwarders but don't delete them (they'll be deleted by the observable they are observing as any other callable)
+      for (Forwarders::iterator it = forwarders_.begin();
+           it != forwarders_.end(); ++it)
+      {
+        broker_.Unregister(dynamic_cast<IObserver&>(**it));
       }
     }
 
@@ -83,6 +97,11 @@ namespace OrthancStone {
           }
         }
       }
+    }
+
+    void RegisterForwarder(IMessageForwarder* forwarder)
+    {
+      forwarders_.insert(forwarder);
     }
 
   };

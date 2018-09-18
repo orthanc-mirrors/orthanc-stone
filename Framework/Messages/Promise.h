@@ -26,6 +26,7 @@
 #include "IMessage.h"
 
 #include <boost/noncopyable.hpp>
+#include <memory>
 
 namespace OrthancStone {
 
@@ -34,14 +35,12 @@ namespace OrthancStone {
   protected:
     MessageBroker&                    broker_;
 
-    ICallable* successCallable_;
-    ICallable* failureCallable_;
+    std::auto_ptr<ICallable> successCallable_;
+    std::auto_ptr<ICallable> failureCallable_;
 
   public:
     Promise(MessageBroker& broker)
-      : broker_(broker),
-        successCallable_(NULL),
-        failureCallable_(NULL)
+      : broker_(broker)
     {
     }
 
@@ -65,21 +64,21 @@ namespace OrthancStone {
 
     Promise& Then(ICallable* successCallable)
     {
-      if (successCallable_ != NULL)
+      if (successCallable_.get() != NULL)
       {
         // TODO: throw throw new "Promise may only have a single success target"
       }
-      successCallable_ = successCallable;
+      successCallable_.reset(successCallable);
       return *this;
     }
 
     Promise& Else(ICallable* failureCallable)
     {
-      if (failureCallable_ != NULL)
+      if (failureCallable_.get() != NULL)
       {
         // TODO: throw throw new "Promise may only have a single failure target"
       }
-      failureCallable_ = failureCallable;
+      failureCallable_.reset(failureCallable);
       return *this;
     }
 

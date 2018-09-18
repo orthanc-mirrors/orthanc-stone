@@ -53,6 +53,8 @@ namespace OrthancStone {
 
     // used in unit tests only
     MessageType_Test1,
-    MessageType_Test2
+    MessageType_Test2,
+
+    MessageType_CustomMessage // Custom messages ids ust be greater than this (this one must remain in last position)
   };
 }

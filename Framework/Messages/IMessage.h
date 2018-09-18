@@ -31,21 +31,21 @@ namespace OrthancStone {
   // base message that are exchanged between IObservable and IObserver
   struct IMessage : public boost::noncopyable
   {
-    MessageType messageType_;
+    int messageType_;
   protected:
-    IMessage(const MessageType& messageType)
+    IMessage(const int& messageType)
       : messageType_(messageType)
     {}
   public:
     virtual ~IMessage() {}
 
-    MessageType GetType() const {return messageType_;}
+    virtual int GetType() const {return messageType_;}
   };
 
 
   // base class to derive from to implement your own messages
   // it handles the message type for you
-  template <MessageType type>
+  template <int type>
   struct BaseMessage : public IMessage
   {
     enum
@@ -54,7 +54,7 @@ namespace OrthancStone {
     };
 
     BaseMessage()
-      : IMessage(static_cast<MessageType>(Type))
+      : IMessage(static_cast<int>(Type))
     {}
   };
 

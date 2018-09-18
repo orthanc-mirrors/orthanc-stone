@@ -22,32 +22,66 @@
 #pragma once
 
 #include "ICallable.h"
-#include "IObservable.h"
 #include "IObserver.h"
 
 #include <boost/noncopyable.hpp>
 
-namespace OrthancStone {
+namespace OrthancStone
+{
 
+  class IObservable;
 
-  template<typename TMessage>
-  class MessageForwarder : public IObserver, public Callable<MessageForwarder<TMessage>, TMessage>
+  class IMessageForwarder : public boost::noncopyable
   {
-    IObservable& observable_;
+    IObservable& emitter_;
   public:
-    MessageForwarder(MessageBroker& broker,
-                     IObservable& observable // the object that will emit the forwarded message
-                     )
-      : IObserver(broker),
-        Callable<MessageForwarder<TMessage>, TMessage>(*this, &MessageForwarder::ForwardMessage),
-        observable_(observable)
-    {
-    }
+    IMessageForwarder(IObservable& emitter)
+      : emitter_(emitter)
+    {}
+    virtual ~IMessageForwarder() {}
 
   protected:
+    void ForwardMessageInternal(const IMessage& message);
+    void RegisterForwarderInEmitter();
+
+  };
+
+  /* When an Observer (B) simply needs to re-emit a message it has received, instead of implementing
+   * a specific member function to forward the message, it can create a MessageForwarder.
+   * The MessageForwarder will re-emit the message "in the name of (B)"
+   *
+   * Consider the chain where
+   * A is an observable
+   * |
+   * B is an observer of A and observable
+   * |
+   * C is an observer of B and knows that B is re-emitting many messages from A
+   *
+   * instead of implementing a callback, B will create a MessageForwarder that will emit the messages in his name:
+   * A.RegisterObserverCallback(new MessageForwarder<A::MessageType>(broker, *this)  // where this is B
+   *
+   * in C:
+   * B.RegisterObserverCallback(new Callable<C, A:MessageTyper>(*this, &B::MyCallback))   // where this is C
+   */
+  template<typename TMessage>
+  class MessageForwarder : public IMessageForwarder, public IObserver, public Callable<MessageForwarder<TMessage>, TMessage>
+  {
+  public:
+    MessageForwarder(MessageBroker& broker,
+                     IObservable& emitter // the object that will emit the messages to forward
+                     )
+      : IMessageForwarder(emitter),
+        IObserver(broker),
+        Callable<MessageForwarder<TMessage>, TMessage>(*this, &MessageForwarder::ForwardMessage)
+    {
+      RegisterForwarderInEmitter();
+    }
+
+protected:
     void ForwardMessage(const TMessage& message)
     {
-      observable_.EmitMessage(message);
+      ForwardMessageInternal(message);
     }
+
   };
 }

@@ -61,7 +61,7 @@ namespace OrthancStone {
   // simple message implementation when no payload is needed
   // sample usage:
   // typedef NoPayloadMessage<MessageType_LayerSource_GeometryReady> GeometryReadyMessage;
-  template <MessageType type>
+  template <int type>
   struct NoPayloadMessage : public BaseMessage<type>
   {
     NoPayloadMessage()
@@ -73,7 +73,7 @@ namespace OrthancStone {
   // simple message implementation when no payload is needed but the origin is required
   // sample usage:
   // typedef OriginMessage<MessageType_SliceLoader_GeometryError, OrthancSlicesLoader> SliceGeometryErrorMessage;
-  template <MessageType type, typename TOrigin>
+  template <int type, typename TOrigin>
   struct OriginMessage : public BaseMessage<type>
   {
     TOrigin& origin_;

@@ -18,33 +18,21 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "BaseCommandFactory.h"
-#include "Core/OrthancException.h"
+#pragma once
+
+#include <map>
+#include <memory>
+
+#include "ICommand.h"
+#include "../../Applications/Commands/ICommandBuilder.h"
+
+// TODO: must be reworked completely (check trello)
 
 namespace OrthancStone
 {
-  ICommand* BaseCommandFactory::CreateFromJson(const Json::Value& commandJson)
+  class BaseCommandBuilder : public ICommandBuilder
   {
-    if (!commandJson.isObject() || !commandJson["command"].isString())
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_UnknownResource);  // TODO: use StoneException ?
-    }
-
-    std::string commandName = commandJson["command"].asString();
-    CommandCreationFunctions::const_iterator it = commands_.find(commandName);
-    if (it == commands_.end())
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_UnknownResource);  // TODO: use StoneException ?
-    }
-
-    // call the CreateCommandFn to build the command
-    ICommand* command = it->second();
-    if (commandJson["args"].isObject())
-    {
-      command->Configure(commandJson["args"]);
-    }
-
-    return command;
-  }
-
+  public:
+    virtual ICommand* CreateFromJson(const Json::Value& commandJson);
+  };
 }

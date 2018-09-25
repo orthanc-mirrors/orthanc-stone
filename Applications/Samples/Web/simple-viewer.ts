@@ -3,11 +3,23 @@
 InitializeWasmApplication("OrthancStoneSimpleViewer", "/orthanc");
 
 function SelectTool(toolName: string) {
-    SendMessageToStoneApplication("select-tool:" + toolName);
+    var command = {
+        command: "selectTool",
+        args: {
+            toolName: toolName
+        }
+    };
+    SendMessageToStoneApplication(JSON.stringify(command));
+
 }
 
-function PerformAction(actionName: string) {
-    SendMessageToStoneApplication("perform-action:" + actionName);
+function PerformAction(commandName: string) {
+    var command = {
+        command: commandName,
+        commandType: "simple",
+        args: {}
+    };
+    SendMessageToStoneApplication(JSON.stringify(command));
 }
 
 //initializes the buttons

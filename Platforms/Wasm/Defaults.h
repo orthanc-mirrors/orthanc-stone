@@ -7,6 +7,7 @@
 #include <Framework/Widgets/LayerWidget.h>
 #include <Framework/Widgets/LayoutWidget.h>
 #include <Applications/IStoneApplication.h>
+#include <Platforms/Wasm/WasmPlatformApplicationAdapter.h>
 
 typedef OrthancStone::WidgetViewport* ViewportHandle; // the objects exchanged between JS and C++
 
@@ -27,7 +28,9 @@ extern "C" {
 }
 #endif
 
+// these methods must be implemented in the custom app "mainWasm.cpp"
 extern OrthancStone::IStoneApplication* CreateUserApplication(OrthancStone::MessageBroker& broker);
+extern OrthancStone::WasmPlatformApplicationAdapter* CreateWasmApplicationAdapter(OrthancStone::MessageBroker& broker, OrthancStone::IStoneApplication* application);
 
 namespace OrthancStone {
 

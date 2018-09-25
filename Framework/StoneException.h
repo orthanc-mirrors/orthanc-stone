@@ -32,9 +32,11 @@ namespace OrthancStone
     ErrorCode_OrthancError, // this StoneException is actually an OrthancException with an Orthanc error code
     ErrorCode_ApplicationException, // this StoneException is specific to an application (and should have its own internal error code)
     ErrorCode_NotImplemented, // case not implemented
+
     ErrorCode_PromiseSingleSuccessHandler, // a Promise can only have a single success handler
     ErrorCode_PromiseSingleFailureHandler, // a Promise can only have a single failure handler
 
+    ErrorCode_CommandJsonInvalidFormat,
     ErrorCode_Last
   };
 

@@ -7,7 +7,7 @@
 #include <Framework/Widgets/LayerWidget.h>
 #include <algorithm>
 #include "Applications/Wasm/StartupParametersBuilder.h"
-#include "Platforms/Wasm/IStoneApplicationToWebApplicationAdapter.h"
+#include "Platforms/Wasm/WasmPlatformApplicationAdapter.h"
 
 static unsigned int width_ = 0;
 static unsigned int height_ = 0;
@@ -15,7 +15,7 @@ static unsigned int height_ = 0;
 /**********************************/
 
 static std::unique_ptr<OrthancStone::IStoneApplication> application;
-static OrthancStone::IStoneApplicationToWebApplicationAdapter* applicationWebAdapter = NULL;
+static std::unique_ptr<OrthancStone::WasmPlatformApplicationAdapter> applicationWasmAdapter = NULL;
 static std::unique_ptr<OrthancStone::StoneApplicationContext> context;
 static OrthancStone::StartupParametersBuilder startupParametersBuilder;
 static OrthancStone::MessageBroker broker;
@@ -69,7 +69,7 @@ extern "C" {
     printf("CreateWasmApplication\n");
 
     application.reset(CreateUserApplication(broker));
-    applicationWebAdapter = dynamic_cast<OrthancStone::IStoneApplicationToWebApplicationAdapter*>(application.get()); 
+    applicationWasmAdapter.reset(CreateWasmApplicationAdapter(broker, application.get())); 
     WasmWebService::SetBroker(broker);
 
     startupParametersBuilder.Clear();
@@ -261,12 +261,16 @@ extern "C" {
   {
     static std::string output; // we don't want the string to be deallocated when we return to JS code so we always use the same string (this is fine since JS is single-thread)
 
-    if (applicationWebAdapter != NULL) {
-      printf("sending message to C++");
-      applicationWebAdapter->HandleMessageFromWeb(output, std::string(message));
+    printf("SendMessageToStoneApplication\n");
+    printf(message);
+
+    if (applicationWasmAdapter.get() != NULL) {
+      printf("sending message to C++\n");
+      applicationWasmAdapter->HandleMessageFromWeb(output, std::string(message));
       return output.c_str();
     }
-    return "This stone application does not have a Web Adapter";
+    printf("This stone application does not have a Web Adapter");
+    return NULL;
   }
 
 

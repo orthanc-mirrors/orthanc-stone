@@ -29,10 +29,9 @@
 namespace OrthancStone
 {
 
-  class ICommandFactory : public boost::noncopyable
+  class ICommandBuilder : public boost::noncopyable
   {
   public:
     virtual ICommand* CreateFromJson(const Json::Value& commandJson) = 0;
-    template<typename TCommand> void RegisterCommandClass();
   };
 }

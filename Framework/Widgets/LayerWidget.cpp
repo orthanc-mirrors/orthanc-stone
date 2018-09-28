@@ -548,6 +548,7 @@ namespace OrthancStone
     {
       InvalidateLayer(index);
     }
+    EmitMessage(LayerWidget::ContentChangedMessage(*this));
   }
   
 
@@ -561,6 +562,7 @@ namespace OrthancStone
         InvalidateLayer(index);
       }
     }
+    EmitMessage(LayerWidget::ContentChangedMessage(*this));
   }
   
   
@@ -588,6 +590,7 @@ namespace OrthancStone
         //UpdateLayer(index, new SliceOutlineRenderer(slice), slice);
       }
     }
+    EmitMessage(LayerWidget::ContentChangedMessage(*this));
   }
 
 

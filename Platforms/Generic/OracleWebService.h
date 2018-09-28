@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -55,9 +55,10 @@ namespace OrthancStone
                           const Headers& headers,
                           Orthanc::IDynamicObject* payload, // takes ownership
                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,   // takes ownership
-                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL)// takes ownership
+                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,// takes ownership
+                          unsigned int timeoutInSeconds = 60)
     {
-      oracle_.Submit(new WebServiceGetCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, payload, context_));
+      oracle_.Submit(new WebServiceGetCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, payload, context_));
     }
 
     virtual void PostAsync(const std::string& uri,
@@ -65,19 +66,20 @@ namespace OrthancStone
                            const std::string& body,
                            Orthanc::IDynamicObject* payload, // takes ownership
                            MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback, // takes ownership
-                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback) // takes ownership
+                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL, // takes ownership
+                           unsigned int timeoutInSeconds = 60)
     {
-      oracle_.Submit(new WebServicePostCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, body, payload, context_));
+      oracle_.Submit(new WebServicePostCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, body, payload, context_));
     }
 
     void Start()
     {
-        oracle_.Start();
+      oracle_.Start();
     }
 
     void Stop()
     {
-        oracle_.Stop();
+      oracle_.Stop();
     }
   };
 }

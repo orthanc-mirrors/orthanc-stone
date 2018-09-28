@@ -31,10 +31,11 @@ namespace OrthancStone
                                                const Orthanc::WebServiceParameters& parameters,
                                                const std::string& uri,
                                                const IWebService::Headers& headers,
+                                               unsigned int timeoutInSeconds,
                                                const std::string& body,
                                                Orthanc::IDynamicObject* payload /* takes ownership */,
                                                NativeStoneApplicationContext& context) :
-    WebServiceCommandBase(broker, successCallback, failureCallback, parameters, uri, headers, payload, context),
+    WebServiceCommandBase(broker, successCallback, failureCallback, parameters, uri, headers, timeoutInSeconds, payload, context),
     body_(body)
   {
   }
@@ -42,7 +43,7 @@ namespace OrthancStone
   void WebServicePostCommand::Execute()
   {
     Orthanc::HttpClient client(parameters_, uri_);
-    client.SetTimeout(60);
+    client.SetTimeout(timeoutInSeconds_);
     client.SetMethod(Orthanc::HttpMethod_Post);
     client.GetBody().swap(body_);
 

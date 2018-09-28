@@ -49,9 +49,9 @@ namespace OrthancStone
       size_t answerSize_;
       Orthanc::IDynamicObject* payload_;
       HttpRequestSuccessMessage(const std::string& uri,
-                                   const void* answer,
-                                   size_t answerSize,
-                                   Orthanc::IDynamicObject* payload)
+                                const void* answer,
+                                size_t answerSize,
+                                Orthanc::IDynamicObject* payload)
         : BaseMessage(),
           uri_(uri),
           answer_(answer),
@@ -65,7 +65,7 @@ namespace OrthancStone
       const std::string& uri_;
       Orthanc::IDynamicObject* payload_;
       HttpRequestErrorMessage(const std::string& uri,
-                                 Orthanc::IDynamicObject* payload)
+                              Orthanc::IDynamicObject* payload)
         : BaseMessage(),
           uri_(uri),
           payload_(payload)
@@ -86,14 +86,16 @@ namespace OrthancStone
                           const Headers& headers,
                           Orthanc::IDynamicObject* payload,
                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback) = 0;
+                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                          unsigned int timeoutInSeconds = 60) = 0;
 
     virtual void PostAsync(const std::string& uri,
                            const Headers& headers,
                            const std::string& body,
                            Orthanc::IDynamicObject* payload,
                            MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback) = 0;
+                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                           unsigned int timeoutInSeconds = 60) = 0;
 
   };
 }

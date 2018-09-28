@@ -41,14 +41,16 @@ namespace OrthancStone
                           const Headers& headers,
                           Orthanc::IDynamicObject* payload,
                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
-                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable);
+                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable = NULL,
+                          unsigned int timeoutInSeconds = 60);
 
     virtual void PostAsync(const std::string& uri,
                            const Headers& headers,
                            const std::string& body,
                            Orthanc::IDynamicObject* payload,
                            MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
-                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable);
+                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable = NULL,
+                           unsigned int timeoutInSeconds = 60);
 
     virtual void Start()
     {

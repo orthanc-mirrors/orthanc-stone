@@ -31,6 +31,7 @@ namespace OrthancStone
                                                const Orthanc::WebServiceParameters& parameters,
                                                const std::string& uri,
                                                const IWebService::Headers& headers,
+                                               unsigned int timeoutInSeconds,
                                                Orthanc::IDynamicObject* payload /* takes ownership */,
                                                NativeStoneApplicationContext& context) :
     IObservable(broker),
@@ -40,7 +41,8 @@ namespace OrthancStone
     uri_(uri),
     headers_(headers),
     payload_(payload),
-    context_(context)
+    context_(context),
+    timeoutInSeconds_(timeoutInSeconds)
   {
   }
 
@@ -55,7 +57,7 @@ namespace OrthancStone
     }
     else if (!success_ && failureCallback_.get() != NULL)
     {
-      successCallback_->Apply(IWebService::HttpRequestErrorMessage(uri_, payload_.release()));
+      failureCallback_->Apply(IWebService::HttpRequestErrorMessage(uri_, payload_.release()));
     }
 
   }

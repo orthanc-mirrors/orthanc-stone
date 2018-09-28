@@ -262,7 +262,7 @@ extern "C" {
     static std::string output; // we don't want the string to be deallocated when we return to JS code so we always use the same string (this is fine since JS is single-thread)
 
     printf("SendMessageToStoneApplication\n");
-    printf(message);
+    printf("%s", message);
 
     if (applicationWasmAdapter.get() != NULL) {
       printf("sending message to C++\n");

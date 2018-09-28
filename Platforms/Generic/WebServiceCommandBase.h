@@ -46,6 +46,7 @@ namespace OrthancStone
     bool                                    success_;
     std::string                             answer_;
     NativeStoneApplicationContext&          context_;
+    unsigned int                            timeoutInSeconds_;
 
   public:
     WebServiceCommandBase(MessageBroker& broker,
@@ -54,8 +55,10 @@ namespace OrthancStone
                           const Orthanc::WebServiceParameters& parameters,
                           const std::string& uri,
                           const std::map<std::string, std::string>& headers,
+                          unsigned int timeoutInSeconds,
                           Orthanc::IDynamicObject* payload /* takes ownership */,
-                          NativeStoneApplicationContext& context);
+                          NativeStoneApplicationContext& context
+                          );
 
     virtual void Execute() = 0;
 

@@ -22,6 +22,7 @@
 
 #include "MessagingToolbox.h"
 #include <Core/OrthancException.h>
+#include "Framework/Toolbox/MessagingToolbox.h"
 
 namespace OrthancStone {
 
@@ -154,6 +155,17 @@ namespace OrthancStone {
                        new Callable<HttpResponseToJsonConverter, IWebService::HttpRequestSuccessMessage>(*converter, &HttpResponseToJsonConverter::ConvertResponseToJson),
                        new Callable<HttpResponseToJsonConverter, IWebService::HttpRequestErrorMessage>(*converter, &HttpResponseToJsonConverter::ConvertError));
 
+  }
+
+  void OrthancApiClient::PostJsonAsyncExpectJson(const std::string& uri,
+                                                 const Json::Value& data,
+                                                 MessageHandler<JsonResponseReadyMessage>* successCallback,
+                                                 MessageHandler<HttpErrorMessage>* failureCallback,
+                                                 Orthanc::IDynamicObject* payload)
+  {
+    std::string body;
+    MessagingToolbox::JsonToString(body, data);
+    return PostBinaryAsyncExpectJson(uri, body, successCallback, failureCallback, payload);
   }
 
 

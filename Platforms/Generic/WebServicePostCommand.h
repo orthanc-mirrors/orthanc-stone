@@ -37,6 +37,7 @@ namespace OrthancStone
                           const Orthanc::WebServiceParameters& parameters,
                           const std::string& uri,
                           const IWebService::Headers& headers,
+                          unsigned int timeoutInSeconds,
                           const std::string& body,
                           Orthanc::IDynamicObject* payload /* takes ownership */,
                           NativeStoneApplicationContext& context);

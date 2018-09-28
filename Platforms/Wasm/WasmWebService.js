@@ -1,5 +1,5 @@
 mergeInto(LibraryManager.library, {
-  WasmWebService_GetAsync: function(callableSuccess, callableFailure, url, headersInJsonString, payload) {
+  WasmWebService_GetAsync: function(callableSuccess, callableFailure, url, headersInJsonString, payload, timeoutInSeconds) {
     // Directly use XMLHttpRequest (no jQuery) to retrieve the raw binary data
     // http://www.henryalgus.com/reading-binary-files-using-jquery-ajax/
     var xhr = new XMLHttpRequest();
@@ -8,6 +8,7 @@ mergeInto(LibraryManager.library, {
 
     xhr.open('GET', url_, true);
     xhr.responseType = 'arraybuffer';
+    xhr.timeout = timeoutInSeconds * 1000;
     var headers = JSON.parse(headersInJsonString_);
     for (var key in headers) {
       xhr.setRequestHeader(key, headers[key]);
@@ -30,11 +31,12 @@ mergeInto(LibraryManager.library, {
     xhr.send();
   },
 
-  WasmWebService_PostAsync: function(callableSuccess, callableFailure, url, headersInJsonString, body, bodySize, payload) {
+  WasmWebService_PostAsync: function(callableSuccess, callableFailure, url, headersInJsonString, body, bodySize, payload, timeoutInSeconds) {
     var xhr = new XMLHttpRequest();
     var url_ = UTF8ToString(url);
     var headersInJsonString_ = UTF8ToString(headersInJsonString);
     xhr.open('POST', url_, true);
+    xhr.timeout = timeoutInSeconds * 1000;
     xhr.responseType = 'arraybuffer';
     xhr.setRequestHeader('Content-type', 'application/octet-stream');
 

@@ -135,6 +135,12 @@ namespace OrthancStone
                                    MessageHandler<HttpErrorMessage>* failureCallback = NULL,
                                    Orthanc::IDynamicObject* payload = NULL);
 
+    // schedule a POST request expecting a JSON response.
+    void PostJsonAsyncExpectJson(const std::string& uri,
+                                 const Json::Value& data,
+                                 MessageHandler<JsonResponseReadyMessage>* successCallback,
+                                 MessageHandler<HttpErrorMessage>* failureCallback = NULL,
+                                 Orthanc::IDynamicObject* payload = NULL);
 
   };
 }

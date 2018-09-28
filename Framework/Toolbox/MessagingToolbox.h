@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -37,6 +37,10 @@ namespace OrthancStone
     bool ParseJson(Json::Value& target,
                    const void* content,
                    size_t size);
+
+    void JsonToString(std::string& target,
+                      const Json::Value& source);
+
 
     void RestApiGet(Json::Value& target,
                     OrthancPlugins::IOrthancConnection& orthanc,

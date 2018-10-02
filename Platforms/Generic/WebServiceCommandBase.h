@@ -25,6 +25,7 @@
 
 #include "../../Framework/Toolbox/IWebService.h"
 #include "../../Framework/Messages/IObservable.h"
+#include "../../Framework/Messages/ICallable.h"
 #include "../../Applications/Generic/NativeStoneApplicationContext.h"
 
 #include <Core/WebServiceParameters.h>
@@ -36,7 +37,8 @@ namespace OrthancStone
   class WebServiceCommandBase : public IOracleCommand, IObservable
   {
   protected:
-    IWebService::ICallback&                 callback_;
+    std::auto_ptr<MessageHandler<IWebService::HttpRequestSuccessMessage>>                              successCallback_;
+    std::auto_ptr<MessageHandler<IWebService::HttpRequestErrorMessage>>                                failureCallback_;
     Orthanc::WebServiceParameters           parameters_;
     std::string                             uri_;
     std::map<std::string, std::string>      headers_;
@@ -44,18 +46,23 @@ namespace OrthancStone
     bool                                    success_;
     std::string                             answer_;
     NativeStoneApplicationContext&          context_;
+    unsigned int                            timeoutInSeconds_;
 
   public:
     WebServiceCommandBase(MessageBroker& broker,
-                          IWebService::ICallback& callback,
+                          MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                           const Orthanc::WebServiceParameters& parameters,
                           const std::string& uri,
                           const std::map<std::string, std::string>& headers,
+                          unsigned int timeoutInSeconds,
                           Orthanc::IDynamicObject* payload /* takes ownership */,
-                          NativeStoneApplicationContext& context);
+                          NativeStoneApplicationContext& context
+                          );
 
     virtual void Execute() = 0;
 
     virtual void Commit();
   };
+
 }

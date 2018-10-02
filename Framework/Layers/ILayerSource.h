@@ -31,62 +31,39 @@ namespace OrthancStone
   class ILayerSource : public IObservable
   {
   public:
-    struct SliceChangedMessage : public IMessage
+
+    typedef OriginMessage<MessageType_LayerSource_GeometryReady, ILayerSource> GeometryReadyMessage;
+    typedef OriginMessage<MessageType_LayerSource_GeometryError, ILayerSource> GeometryErrorMessage;
+    typedef OriginMessage<MessageType_LayerSource_ContentChanged, ILayerSource> ContentChangedMessage;
+
+    struct SliceChangedMessage : public OriginMessage<MessageType_LayerSource_SliceChanged, ILayerSource>
     {
       const Slice& slice_;
-      SliceChangedMessage(const Slice& slice)
-        : IMessage(MessageType_LayerSource_SliceChanged),
+      SliceChangedMessage(ILayerSource& origin, const Slice& slice)
+        : OriginMessage(origin),
           slice_(slice)
       {
       }
     };
 
-    struct LayerReadyMessage : public IMessage
+    struct LayerReadyMessage : public OriginMessage<MessageType_LayerSource_LayerReady,ILayerSource>
     {
-      std::auto_ptr<ILayerRenderer>& layer_;
+      std::auto_ptr<ILayerRenderer>& renderer_;
       const CoordinateSystem3D& slice_;
       bool isError_;
 
-      LayerReadyMessage(std::auto_ptr<ILayerRenderer>& layer,
+      LayerReadyMessage(ILayerSource& origin,
+                        std::auto_ptr<ILayerRenderer>& layer,
                         const CoordinateSystem3D& slice,
-                        bool isError)  // TODO Shouldn't this be separate as NotifyLayerError?
-        : IMessage(MessageType_LayerSource_LayerReady),
-          layer_(layer),
+                        bool isError  // TODO Shouldn't this be separate as NotifyLayerError?
+                        )
+        : OriginMessage(origin),
+          renderer_(layer),
           slice_(slice),
           isError_(isError)
       {
       }
     };
-
-    //    class IObserver : public boost::noncopyable
-    //    {
-    //    public:
-    //      virtual ~IObserver()
-    //      {
-    //      }
-
-    //      // Triggered as soon as the source has enough information to
-    //      // answer to "GetExtent()"
-    //      virtual void NotifyGeometryReady(const ILayerSource& source) = 0;
-
-    //      virtual void NotifyGeometryError(const ILayerSource& source) = 0;
-
-    //      // Triggered if the content of several slices in the source
-    //      // volume has changed
-    //      virtual void NotifyContentChange(const ILayerSource& source) = 0;
-
-    //      // Triggered if the content of some individual slice in the
-    //      // source volume has changed
-    //      virtual void NotifySliceChange(const ILayerSource& source,
-    //                                     const Slice& slice) = 0;
-
-    //      // The layer must be deleted by the observer that releases the
-    //      // std::auto_ptr
-    //      virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& layer,
-    //                                    const ILayerSource& source,
-    //                                    const CoordinateSystem3D& slice,
-    //                                    bool isError) = 0;  // TODO Shouldn't this be separate as NotifyLayerError?
-    //    };
     
     ILayerSource(MessageBroker& broker)
       : IObservable(broker)
@@ -95,8 +72,6 @@ namespace OrthancStone
     virtual ~ILayerSource()
     {
     }
-
-    //    virtual void Register(IObserver& observer) = 0;
 
     virtual bool GetExtent(std::vector<Vector>& points,
                            const CoordinateSystem3D& viewportSlice) = 0;

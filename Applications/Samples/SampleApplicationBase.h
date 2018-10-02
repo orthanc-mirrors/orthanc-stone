@@ -29,6 +29,8 @@ namespace OrthancStone
   {
     class SampleApplicationBase : public IStoneApplication
     {
+    protected:
+      BaseCommandBuilder commandBuilder_;
     public:
       virtual void Initialize(StoneApplicationContext* context,
                               IStatusBar& statusBar,
@@ -56,6 +58,8 @@ namespace OrthancStone
         tool1 = "tool1";
         tool2 = "tool2";
       }
+
+      virtual BaseCommandBuilder& GetCommandBuilder() {return commandBuilder_;}
 
     };
   }

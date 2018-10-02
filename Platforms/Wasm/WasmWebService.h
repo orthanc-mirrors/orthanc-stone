@@ -37,16 +37,20 @@ namespace OrthancStone
 
     void SetBaseUri(const std::string baseUri);
 
-    virtual void ScheduleGetRequest(ICallback& callback,
-                                    const std::string& uri,
-                                    const Headers& headers,
-                                    Orthanc::IDynamicObject* payload);
+    virtual void GetAsync(const std::string& uri,
+                          const Headers& headers,
+                          Orthanc::IDynamicObject* payload,
+                          MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
+                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable = NULL,
+                          unsigned int timeoutInSeconds = 60);
 
-    virtual void SchedulePostRequest(ICallback& callback,
-                                     const std::string& uri,
-                                     const Headers& headers,
-                                     const std::string& body,
-                                     Orthanc::IDynamicObject* payload);
+    virtual void PostAsync(const std::string& uri,
+                           const Headers& headers,
+                           const std::string& body,
+                           Orthanc::IDynamicObject* payload,
+                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
+                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable = NULL,
+                           unsigned int timeoutInSeconds = 60);
 
     virtual void Start()
     {

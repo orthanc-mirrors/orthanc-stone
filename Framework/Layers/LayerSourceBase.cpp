@@ -27,22 +27,22 @@ namespace OrthancStone
 {
   void LayerSourceBase::NotifyGeometryReady()
   {
-    EmitMessage(IMessage(MessageType_LayerSource_GeometryReady));
+    EmitMessage(ILayerSource::GeometryReadyMessage(*this));
   }
     
   void LayerSourceBase::NotifyGeometryError()
   {
-    EmitMessage(IMessage(MessageType_LayerSource_GeometryError));
+    EmitMessage(ILayerSource::GeometryErrorMessage(*this));
   }
     
   void LayerSourceBase::NotifyContentChange()
   {
-    EmitMessage(IMessage(MessageType_LayerSource_ContentChanged));
+    EmitMessage(ILayerSource::ContentChangedMessage(*this));
   }
 
   void LayerSourceBase::NotifySliceChange(const Slice& slice)
   {
-    EmitMessage(ILayerSource::SliceChangedMessage(slice));
+    EmitMessage(ILayerSource::SliceChangedMessage(*this, slice));
   }
 
   void LayerSourceBase::NotifyLayerReady(ILayerRenderer* layer,
@@ -50,7 +50,7 @@ namespace OrthancStone
                                          bool isError)
   {
     std::auto_ptr<ILayerRenderer> renderer(layer);
-    EmitMessage(ILayerSource::LayerReadyMessage(renderer, slice, isError));
+    EmitMessage(ILayerSource::LayerReadyMessage(*this, renderer, slice, isError));
   }
 
 }

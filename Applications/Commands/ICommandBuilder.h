@@ -18,33 +18,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+
 #pragma once
 
-#include <map>
-#include <memory>
+#include <boost/noncopyable.hpp>
+#include <json/json.h>
 
 #include "ICommand.h"
-#include "../../Applications/Commands/ICommandFactory.h"
-
-// TODO: must be reworked completely (check trello)
 
 namespace OrthancStone
 {
-  class BaseCommandFactory
+
+  class ICommandBuilder : public boost::noncopyable
   {
-    typedef ICommand* (*CommandCreationFn)(void);
-    typedef std::map<std::string, CommandCreationFn> CommandCreationFunctions;
-    CommandCreationFunctions commands_;
-
   public:
-    virtual ICommand* CreateFromJson(const Json::Value& commandJson);
-
-    template<typename TCommand> void RegisterCommandClass()
-    {
-      // create the command only to get its name
-      std::auto_ptr<ICommand> command(TCommand::Create());
-
-      commands_[command->GetName()] = &TCommand::Create;
-    }
+    virtual ICommand* CreateFromJson(const Json::Value& commandJson) = 0;
   };
 }

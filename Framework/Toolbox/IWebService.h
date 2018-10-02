@@ -23,7 +23,9 @@
 
 #include <Core/IDynamicObject.h>
 #include "../../Framework/Messages/IObserver.h"
+#include "../../Framework/Messages/ICallable.h"
 #include <string>
+#include <map>
 #include <Core/Logging.h>
 
 namespace OrthancStone
@@ -40,81 +42,37 @@ namespace OrthancStone
   public:
     typedef std::map<std::string, std::string> Headers;
 
-    class ICallback : public IObserver
+    struct HttpRequestSuccessMessage: public BaseMessage<MessageType_HttpRequestSuccess>
     {
-    public:
-      struct HttpRequestSuccessMessage: public IMessage
-      {
-        const std::string& Uri;
-        const void* Answer;
-        size_t AnswerSize;
-        Orthanc::IDynamicObject* Payload;
-        HttpRequestSuccessMessage(const std::string& uri,
-                                  const void* answer,
-                                  size_t answerSize,
-                                  Orthanc::IDynamicObject* payload)
-          : IMessage(MessageType_HttpRequestSuccess),
-            Uri(uri),
-            Answer(answer),
-            AnswerSize(answerSize),
-            Payload(payload)
-        {}
-      };
-
-      struct HttpRequestErrorMessage: public IMessage
-      {
-        const std::string& Uri;
-        Orthanc::IDynamicObject* Payload;
-        HttpRequestErrorMessage(const std::string& uri,
+      const std::string& uri_;
+      const void* answer_;
+      size_t answerSize_;
+      Orthanc::IDynamicObject* payload_;
+      HttpRequestSuccessMessage(const std::string& uri,
+                                const void* answer,
+                                size_t answerSize,
                                 Orthanc::IDynamicObject* payload)
-          : IMessage(MessageType_HttpRequestError),
-            Uri(uri),
-            Payload(payload)
-        {}
-      };
-
-      ICallback(MessageBroker& broker)
-        : IObserver(broker)
-      {
-        DeclareHandledMessage(MessageType_HttpRequestError);
-        DeclareHandledMessage(MessageType_HttpRequestSuccess);
-      }
-      virtual ~ICallback()
-      {
-      }
-
-      virtual void HandleMessage(IObservable& from, const IMessage& message)
-      {
-        switch(message.GetType())
-        {
-        case MessageType_HttpRequestError:
-        {
-          const HttpRequestErrorMessage& msg = dynamic_cast<const HttpRequestErrorMessage&>(message);
-          OnHttpRequestError(msg.Uri,
-                             msg.Payload);
-        }; break;
-
-        case MessageType_HttpRequestSuccess:
-        {
-          const HttpRequestSuccessMessage& msg = dynamic_cast<const HttpRequestSuccessMessage&>(message);
-          OnHttpRequestSuccess(msg.Uri,
-                               msg.Answer,
-                               msg.AnswerSize,
-                               msg.Payload);
-        }; break;
-        default:
-          VLOG("unhandled message type" << message.GetType());
-        }
-      }
-
-      virtual void OnHttpRequestError(const std::string& uri,
-                                      Orthanc::IDynamicObject* payload) = 0;
-
-      virtual void OnHttpRequestSuccess(const std::string& uri,
-                                        const void* answer,
-                                        size_t answerSize,
-                                        Orthanc::IDynamicObject* payload) = 0;
+        : BaseMessage(),
+          uri_(uri),
+          answer_(answer),
+          answerSize_(answerSize),
+          payload_(payload)
+      {}
     };
+
+    struct HttpRequestErrorMessage: public BaseMessage<MessageType_HttpRequestError>
+    {
+      const std::string& uri_;
+      Orthanc::IDynamicObject* payload_;
+      HttpRequestErrorMessage(const std::string& uri,
+                              Orthanc::IDynamicObject* payload)
+        : BaseMessage(),
+          uri_(uri),
+          payload_(payload)
+      {}
+    };
+
+
 
     IWebService(MessageBroker& broker)
       : broker_(broker)
@@ -124,15 +82,20 @@ namespace OrthancStone
     {
     }
 
-    virtual void ScheduleGetRequest(ICallback& callback,
-                                    const std::string& uri,
-                                    const Headers& headers,
-                                    Orthanc::IDynamicObject* payload) = 0;
+    virtual void GetAsync(const std::string& uri,
+                          const Headers& headers,
+                          Orthanc::IDynamicObject* payload,
+                          MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                          unsigned int timeoutInSeconds = 60) = 0;
 
-    virtual void SchedulePostRequest(ICallback& callback,
-                                     const std::string& uri,
-                                     const Headers& headers,
-                                     const std::string& body,
-                                     Orthanc::IDynamicObject* payload) = 0;
+    virtual void PostAsync(const std::string& uri,
+                           const Headers& headers,
+                           const std::string& body,
+                           Orthanc::IDynamicObject* payload,
+                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                           unsigned int timeoutInSeconds = 60) = 0;
+
   };
 }

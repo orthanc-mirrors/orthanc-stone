@@ -25,6 +25,8 @@
 #include <boost/program_options.hpp>
 #include "../Framework/Viewport/WidgetViewport.h"
 #include "json/json.h"
+#include "Commands/ICommand.h"
+#include "Commands/BaseCommandBuilder.h"
 
 namespace OrthancStone
 {
@@ -53,6 +55,12 @@ namespace OrthancStone
     virtual IWidget* GetCentralWidget() = 0;
 
     virtual void Finalize() = 0;
+
+    virtual BaseCommandBuilder& GetCommandBuilder() = 0;
+
+    virtual void ExecuteCommand(ICommand& command)
+    {
+    }
   };
 
 }

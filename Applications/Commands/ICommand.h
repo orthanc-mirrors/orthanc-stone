@@ -30,14 +30,14 @@ namespace OrthancStone
   class ICommand  // TODO noncopyable
   {
   protected:
-    const char* name_;
-    ICommand(const char* name)
+    std::string name_;
+    ICommand(const std::string& name)
       : name_(name)
     {}
   public:
     virtual void Execute() = 0;
-    virtual void Configure(const Json::Value& arguments) = 0;
-    const char* GetName()
+//    virtual void Configure(const Json::Value& arguments) = 0;
+    const std::string& GetName() const
     {
       return name_;
     }
@@ -45,10 +45,10 @@ namespace OrthancStone
 
 
   template <typename TCommand>
-  class BaseCommand : ICommand
+  class BaseCommand : public ICommand
   {
   protected:
-    BaseCommand(const char* name)
+    BaseCommand(const std::string& name)
       : ICommand(name)
     {}
 
@@ -70,5 +70,13 @@ namespace OrthancStone
     virtual void Execute() {}
   };
 
+  class SimpleCommand : public BaseCommand<SimpleCommand>
+  {
+  public:
+    SimpleCommand(const std::string& name)
+      : BaseCommand(name)
+    {}
+    virtual void Execute() {} // TODO currently not used but this is not nice at all !
+  };
 
 }

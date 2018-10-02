@@ -35,6 +35,10 @@ namespace OrthancStone
       public IObserver,
       public IObservable
   {
+  public:
+    typedef OriginMessage<MessageType_Widget_GeometryChanged, LayerWidget> GeometryChangedMessage;
+    typedef OriginMessage<MessageType_Widget_ContentChanged, LayerWidget> ContentChangedMessage;
+
   private:
     class Scene;
     
@@ -55,25 +59,20 @@ namespace OrthancStone
     void GetLayerExtent(Extent2D& extent,
                         ILayerSource& source) const;
 
-    void OnGeometryReady(const ILayerSource& source);
+    void OnGeometryReady(const ILayerSource::GeometryReadyMessage& message);
 
-    virtual void OnContentChanged(const ILayerSource& source);
+    virtual void OnContentChanged(const ILayerSource::ContentChangedMessage& message);
 
-    virtual void OnSliceChanged(const ILayerSource& source,
-                                const Slice& slice);
+    virtual void OnSliceChanged(const ILayerSource::SliceChangedMessage& message);
 
-    virtual void OnLayerReady(std::auto_ptr<ILayerRenderer>& renderer,
-                              const ILayerSource& source,
-                              const CoordinateSystem3D& slice,
-                              bool isError);
+    virtual void OnLayerReady(const ILayerSource::LayerReadyMessage& message);
 
+    void ObserveLayer(ILayerSource& source);
 
     void ResetChangedLayers();
 
   public:
     LayerWidget(MessageBroker& broker, const std::string& name);
-
-    virtual void HandleMessage(IObservable& from, const IMessage& message);
 
     virtual Extent2D GetSceneExtent();
 

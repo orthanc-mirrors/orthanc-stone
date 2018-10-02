@@ -21,23 +21,18 @@
 
 #pragma once
 
-#include "../StoneEnumerations.h"
-
 #include "boost/noncopyable.hpp"
-#include <map>
-#include <list>
 #include <set>
 
 namespace OrthancStone
 {
   class IObserver;
   class IObservable;
-  class IMessage;
 
   /*
    * This is a central message broker.  It keeps track of all observers and knows
    * when an observer is deleted.
-   * This way, it can prevent an observable to send a message to a dead observer.
+   * This way, it can prevent an observable to send a message to a deleted observer.
    */
   class MessageBroker : public boost::noncopyable
   {
@@ -56,7 +51,10 @@ namespace OrthancStone
       activeObservers_.erase(&observer);
     }
 
-    void EmitMessage(IObservable& from, std::set<IObserver*> observers, const IMessage& message);
+    bool IsActive(IObserver* observer)
+    {
+      return activeObservers_.find(observer) != activeObservers_.end();
+    }
   };
 
 }

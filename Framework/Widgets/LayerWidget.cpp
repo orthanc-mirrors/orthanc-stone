@@ -365,14 +365,14 @@ namespace OrthancStone
     IObservable(broker),
     started_(false)
   {
-    DeclareHandledMessage(MessageType_LayerSource_GeometryReady);
-    DeclareHandledMessage(MessageType_LayerSource_ContentChanged);
-    DeclareHandledMessage(MessageType_LayerSource_LayerReady);
-    DeclareHandledMessage(MessageType_LayerSource_SliceChanged);
-    DeclareHandledMessage(MessageType_LayerSource_GeometryError);
+//    DeclareHandledMessage(MessageType_LayerSource_GeometryReady);
+//    DeclareHandledMessage(MessageType_LayerSource_ContentChanged);
+//    DeclareHandledMessage(MessageType_LayerSource_LayerReady);
+//    DeclareHandledMessage(MessageType_LayerSource_SliceChanged);
+//    DeclareHandledMessage(MessageType_LayerSource_GeometryError);
 
-    DeclareEmittableMessage(MessageType_Widget_GeometryChanged);
-    DeclareEmittableMessage(MessageType_Widget_ContentChanged);
+//    DeclareEmittableMessage(MessageType_Widget_GeometryChanged);
+//    DeclareEmittableMessage(MessageType_Widget_ContentChanged);
 
     SetBackgroundCleared(true);
   }
@@ -386,6 +386,15 @@ namespace OrthancStone
     }
   }
   
+  void LayerWidget::ObserveLayer(ILayerSource& layer)
+  {
+    layer.RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::GeometryReadyMessage>(*this, &LayerWidget::OnGeometryReady));
+    // currently ignore errors layer->RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::GeometryErrorMessage>(*this, &LayerWidget::...));
+    layer.RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::SliceChangedMessage>(*this, &LayerWidget::OnSliceChanged));
+    layer.RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::ContentChangedMessage>(*this, &LayerWidget::OnContentChanged));
+    layer.RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::LayerReadyMessage>(*this, &LayerWidget::OnLayerReady));
+  }
+
 
   size_t LayerWidget::AddLayer(ILayerSource* layer)  // Takes ownership
   {
@@ -400,7 +409,8 @@ namespace OrthancStone
     layersIndex_[layer] = index;
 
     ResetPendingScene();
-    layer->RegisterObserver(*this);
+
+    ObserveLayer(*layer);
 
     ResetChangedLayers();
 
@@ -424,7 +434,8 @@ namespace OrthancStone
     layersIndex_[layer] = index;
 
     ResetPendingScene();
-    layer->RegisterObserver(*this);
+
+    ObserveLayer(*layer);
 
     InvalidateLayer(index);
   }
@@ -491,45 +502,17 @@ namespace OrthancStone
     }
   }
 
-  void LayerWidget::HandleMessage(IObservable& from, const IMessage& message)
-  {
-    switch (message.GetType()) {
-    case MessageType_LayerSource_GeometryReady:
-      OnGeometryReady(dynamic_cast<const ILayerSource&>(from));
-      break;
-    case MessageType_LayerSource_GeometryError:
-      LOG(ERROR) << "Cannot get geometry";
-      break;
-    case MessageType_LayerSource_ContentChanged:
-      OnContentChanged(dynamic_cast<const ILayerSource&>(from));
-      break;
-    case MessageType_LayerSource_SliceChanged:
-      OnSliceChanged(dynamic_cast<const ILayerSource&>(from), dynamic_cast<const ILayerSource::SliceChangedMessage&>(message).slice_);
-      break;
-    case MessageType_LayerSource_LayerReady:
-    {
-      const ILayerSource::LayerReadyMessage& layerReadyMessage = dynamic_cast<const ILayerSource::LayerReadyMessage&>(message);
-      OnLayerReady(layerReadyMessage.layer_,
-                   dynamic_cast<const ILayerSource&>(from),
-                   layerReadyMessage.slice_,
-                   layerReadyMessage.isError_);
-    }; break;
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-    }
-  }
-
-  void LayerWidget::OnGeometryReady(const ILayerSource& source)
+  void LayerWidget::OnGeometryReady(const ILayerSource::GeometryReadyMessage& message)
   {
     size_t i;
-    if (LookupLayer(i, source))
+    if (LookupLayer(i, message.origin_))
     {
       LOG(INFO) << ": Geometry ready for layer " << i << " in " << GetName();
 
       changedLayers_[i] = true;
       //layers_[i]->ScheduleLayerCreation(slice_);
     }
-    EmitMessage(IMessage(MessageType_Widget_GeometryChanged));
+    EmitMessage(GeometryChangedMessage(*this));
   }
   
   void LayerWidget::InvalidateAllLayers()
@@ -558,39 +541,37 @@ namespace OrthancStone
   }
 
 
-  void LayerWidget::OnContentChanged(const ILayerSource& source)
+  void LayerWidget::OnContentChanged(const ILayerSource::ContentChangedMessage& message)
   {
     size_t index;
-    if (LookupLayer(index, source))
+    if (LookupLayer(index, message.origin_))
     {
       InvalidateLayer(index);
     }
+    EmitMessage(LayerWidget::ContentChangedMessage(*this));
   }
   
 
-  void LayerWidget::OnSliceChanged(const ILayerSource& source,
-                                   const Slice& slice)
+  void LayerWidget::OnSliceChanged(const ILayerSource::SliceChangedMessage& message)
   {
-    if (slice.ContainsPlane(slice_))
+    if (message.slice_.ContainsPlane(slice_))
     {
       size_t index;
-      if (LookupLayer(index, source))
+      if (LookupLayer(index, message.origin_))
       {
         InvalidateLayer(index);
       }
     }
+    EmitMessage(LayerWidget::ContentChangedMessage(*this));
   }
   
   
-  void LayerWidget::OnLayerReady(std::auto_ptr<ILayerRenderer>& renderer,
-                                 const ILayerSource& source,
-                                 const CoordinateSystem3D& slice,
-                                 bool isError)
+  void LayerWidget::OnLayerReady(const ILayerSource::LayerReadyMessage& message)
   {
     size_t index;
-    if (LookupLayer(index, source))
+    if (LookupLayer(index, message.origin_))
     {
-      if (isError)
+      if (message.isError_)
       {
         LOG(ERROR) << "Using error renderer on layer " << index;
       }
@@ -599,16 +580,17 @@ namespace OrthancStone
         LOG(INFO) << "Renderer ready for layer " << index;
       }
       
-      if (renderer.get() != NULL)
+      if (message.renderer_.get() != NULL)
       {
-        UpdateLayer(index, renderer.release(), slice);
+        UpdateLayer(index, message.renderer_.release(), message.slice_);
       }
-      else if (isError)
+      else if (message.isError_)
       {
         // TODO
         //UpdateLayer(index, new SliceOutlineRenderer(slice), slice);
       }
     }
+    EmitMessage(LayerWidget::ContentChangedMessage(*this));
   }
 
 

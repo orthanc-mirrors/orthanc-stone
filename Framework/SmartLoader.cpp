@@ -21,6 +21,7 @@
 
 #include "SmartLoader.h"
 #include "Layers/OrthancFrameLayerSource.h"
+#include "Messages/MessageForwarder.h"
 
 namespace OrthancStone
 {
@@ -31,41 +32,6 @@ namespace OrthancStone
     webService_(webService),
     orthancApiClient_(broker, webService)
   {
-    DeclareHandledMessage(MessageType_LayerSource_GeometryReady);
-    DeclareHandledMessage(MessageType_LayerSource_LayerReady);
-    DeclareIgnoredMessage(MessageType_LayerSource_GeometryError);
-    DeclareIgnoredMessage(MessageType_LayerSource_ContentChanged);
-    DeclareIgnoredMessage(MessageType_LayerSource_SliceChanged);
-
-//    DeclareHandledMessage(MessageType_OrthancApi_InternalGetJsonResponseReady);
-//    DeclareIgnoredMessage(MessageType_OrthancApi_InternalGetJsonResponseError);
-  }
-
-  void SmartLoader::HandleMessage(IObservable& from, const IMessage& message)
-  {
-    switch (message.GetType()) {
-    case MessageType_LayerSource_GeometryReady:
-    {
-      //const OrthancFrameLayerSource* layerSource=dynamic_cast<const OrthancFrameLayerSource*>(&from);
-      // TODO keep track of objects that have been loaded already
-    }; break;
-    case MessageType_LayerSource_LayerReady:
-    {
-      //const OrthancFrameLayerSource* layerSource=dynamic_cast<const OrthancFrameLayerSource*>(&from);
-      // TODO keep track of objects that have been loaded already
-    }; break;
-//    case MessageType_OrthancApi_GetStudyIds_Ready:
-//    {
-
-//      const OrthancApiClient::GetJsonResponseReadyMessage& msg = dynamic_cast<OrthancApiClient::GetJsonResponseReadyMessage&>(message);
-
-//    }; break;
-    default:
-      VLOG("unhandled message type" << message.GetType());
-    }
-
-    // forward messages to its own observers
-    IObservable::broker_.EmitMessage(from, IObservable::observers_, message);
   }
 
   ILayerSource* SmartLoader::GetFrame(const std::string& instanceId, unsigned int frame)
@@ -76,9 +42,10 @@ namespace OrthancStone
     // - if currently loading, we need to return an object that will observe the existing LayerSource and forward
     //   the messages to its observables
     // in both cases, we must be carefull about objects lifecycle !!!
-    std::auto_ptr<OrthancFrameLayerSource> layerSource (new OrthancFrameLayerSource(IObserver::broker_, webService_));
+    std::auto_ptr<OrthancFrameLayerSource> layerSource (new OrthancFrameLayerSource(IObserver::broker_, orthancApiClient_));
     layerSource->SetImageQuality(imageQuality_);
-    layerSource->RegisterObserver(*this);
+    layerSource->RegisterObserverCallback(new MessageForwarder<ILayerSource::GeometryReadyMessage>(IObserver::broker_, *this));
+    layerSource->RegisterObserverCallback(new MessageForwarder<ILayerSource::LayerReadyMessage>(IObserver::broker_, *this));
     layerSource->LoadFrame(instanceId, frame);
 
     return layerSource.release();

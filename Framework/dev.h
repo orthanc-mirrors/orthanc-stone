@@ -232,14 +232,14 @@ namespace OrthancStone
 
   public:
     OrthancVolumeImage(MessageBroker& broker,
-                       IWebService& orthanc,
+                       OrthancApiClient& orthanc,
                        bool computeRange) : 
       OrthancStone::IObserver(broker),
       loader_(broker, orthanc),
       computeRange_(computeRange),
       pendingSlices_(0)
     {
-        loader_.RegisterObserver(*this);
+        // TODO: replace with new callables loader_.RegisterObserver(*this);
     }
 
     void ScheduleLoadSeries(const std::string& seriesId)

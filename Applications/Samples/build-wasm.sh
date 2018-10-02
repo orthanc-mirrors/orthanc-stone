@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 currentDir=$(pwd)
 samplesRootDir=$(pwd)
 

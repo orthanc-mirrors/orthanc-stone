@@ -44,11 +44,11 @@ namespace OrthancStone
     LayerSourceBase(MessageBroker& broker)
       : ILayerSource(broker)
     {
-      DeclareEmittableMessage(MessageType_LayerSource_GeometryReady);
-      DeclareEmittableMessage(MessageType_LayerSource_GeometryError);
-      DeclareEmittableMessage(MessageType_LayerSource_ContentChanged);
-      DeclareEmittableMessage(MessageType_LayerSource_SliceChanged);
-      DeclareEmittableMessage(MessageType_LayerSource_LayerReady);
+//      DeclareEmittableMessage(MessageType_LayerSource_GeometryReady);
+//      DeclareEmittableMessage(MessageType_LayerSource_GeometryError);
+//      DeclareEmittableMessage(MessageType_LayerSource_ContentChanged);
+//      DeclareEmittableMessage(MessageType_LayerSource_SliceChanged);
+//      DeclareEmittableMessage(MessageType_LayerSource_LayerReady);
     }
 
   };

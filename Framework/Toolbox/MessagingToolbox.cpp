@@ -31,6 +31,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <json/reader.h>
+#include <json/writer.h>
 
 namespace OrthancStone
 {
@@ -114,6 +115,12 @@ namespace OrthancStone
                           target);
     }
 
+    void JsonToString(std::string& target,
+                      const Json::Value& source)
+    {
+      Json::FastWriter writer;
+      target = writer.write(source);
+    }
 
     static void ParseJsonException(Json::Value& target,
                                    const std::string& source)

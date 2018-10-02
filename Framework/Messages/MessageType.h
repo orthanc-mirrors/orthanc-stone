@@ -44,12 +44,17 @@ namespace OrthancStone {
     MessageType_OrthancApi_InternalGetJsonResponseReady,
     MessageType_OrthancApi_InternalGetJsonResponseError,
 
+    MessageType_OrthancApi_GenericGetJson_Ready,
+    MessageType_OrthancApi_GenericGetBinary_Ready,
+    MessageType_OrthancApi_GenericHttpError_Ready,
     MessageType_OrthancApi_GetStudyIds_Ready,
     MessageType_OrthancApi_GetStudy_Ready,
     MessageType_OrthancApi_GetSeries_Ready,
 
     // used in unit tests only
     MessageType_Test1,
-    MessageType_Test2
+    MessageType_Test2,
+
+    MessageType_CustomMessage // Custom messages ids ust be greater than this (this one must remain in last position)
   };
 }

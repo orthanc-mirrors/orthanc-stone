@@ -26,23 +26,24 @@
 namespace OrthancStone
 {
   WebServiceCommandBase::WebServiceCommandBase(MessageBroker& broker,
-                                               IWebService::ICallback& callback,
+                                               MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                                               MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                                const Orthanc::WebServiceParameters& parameters,
                                                const std::string& uri,
                                                const IWebService::Headers& headers,
+                                               unsigned int timeoutInSeconds,
                                                Orthanc::IDynamicObject* payload /* takes ownership */,
                                                NativeStoneApplicationContext& context) :
     IObservable(broker),
-    callback_(callback),
+    successCallback_(successCallback),
+    failureCallback_(failureCallback),
     parameters_(parameters),
     uri_(uri),
     headers_(headers),
     payload_(payload),
-    context_(context)
+    context_(context),
+    timeoutInSeconds_(timeoutInSeconds)
   {
-    DeclareEmittableMessage(MessageType_HttpRequestError);
-    DeclareEmittableMessage(MessageType_HttpRequestSuccess);
-    RegisterObserver(callback);
   }
 
 
@@ -50,15 +51,15 @@ namespace OrthancStone
   {
     NativeStoneApplicationContext::GlobalMutexLocker lock(context_);  // we want to make sure that, i.e, the UpdateThread is not triggered while we are updating the "model" with the result of a WebServiceCommand
 
-    if (success_)
+    if (success_ && successCallback_.get() != NULL)
     {
-      IWebService::ICallback::HttpRequestSuccessMessage message(uri_, answer_.c_str(), answer_.size(), payload_.release());
-      EmitMessage(message);
+      successCallback_->Apply(IWebService::HttpRequestSuccessMessage(uri_, answer_.c_str(), answer_.size(), payload_.release()));
     }
-    else
+    else if (!success_ && failureCallback_.get() != NULL)
     {
-      IWebService::ICallback::HttpRequestErrorMessage message(uri_, payload_.release());
-      EmitMessage(message);
+      failureCallback_->Apply(IWebService::HttpRequestErrorMessage(uri_, payload_.release()));
     }
+
   }
+
 }

@@ -25,31 +25,28 @@
 #include <assert.h>
 #include <algorithm>
 #include <iostream>
+#include <map>
+
 
 #include "MessageBroker.h"
 #include "MessageType.h"
+#include "ICallable.h"
 #include "IObserver.h"
+#include "MessageForwarder.h"
 
 namespace OrthancStone {
 
-  class MessageNotDeclaredException : public std::logic_error
-  {
-    MessageType messageType_;
-  public:
-    MessageNotDeclaredException(MessageType messageType)
-      : std::logic_error("Message not declared by observer."),
-        messageType_(messageType)
-    {
-    }
-  };
 
   class IObservable : public boost::noncopyable
   {
   protected:
     MessageBroker&                     broker_;
 
-    std::set<IObserver*>              observers_;
-    std::set<MessageType>             emittableMessages_;
+    typedef std::map<int, std::set<ICallable*> >   Callables;
+    Callables                         callables_;
+
+    typedef std::set<IMessageForwarder*>      Forwarders;
+    Forwarders                        forwarders_;
 
   public:
 
@@ -59,53 +56,54 @@ namespace OrthancStone {
     }
     virtual ~IObservable()
     {
+      // delete all callables (this will also unregister them from the broker)
+      for (Callables::const_iterator it = callables_.begin();
+           it != callables_.end(); ++it)
+      {
+        for (std::set<ICallable*>::const_iterator
+               it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+        {
+          delete *it2;
+        }
+      }
+
+      // unregister the forwarders but don't delete them (they'll be deleted by the observable they are observing as any other callable)
+      for (Forwarders::iterator it = forwarders_.begin();
+           it != forwarders_.end(); ++it)
+      {
+        broker_.Unregister(dynamic_cast<IObserver&>(**it));
+      }
+    }
+
+    void RegisterObserverCallback(ICallable* callable)
+    {
+      MessageType messageType = callable->GetMessageType();
+
+      callables_[messageType].insert(callable);
     }
 
     void EmitMessage(const IMessage& message)
     {
-      if (emittableMessages_.find(message.GetType()) == emittableMessages_.end())
+      Callables::const_iterator found = callables_.find(message.GetType());
+
+      if (found != callables_.end())
       {
-        throw MessageNotDeclaredException(message.GetType());
-      }
-
-      broker_.EmitMessage(*this, observers_, message);
-    }
-
-    void RegisterObserver(IObserver& observer)
-    {
-      CheckObserverDeclaredAllObservableMessages(observer);
-      observers_.insert(&observer);
-    }
-
-    void UnregisterObserver(IObserver& observer)
-    {
-      observers_.erase(&observer);
-    }
-
-    const std::set<MessageType>& GetEmittableMessages() const
-    {
-      return emittableMessages_;
-    }
-
-  protected:
-
-    void DeclareEmittableMessage(MessageType messageType)
-    {
-      emittableMessages_.insert(messageType);
-    }
-
-    void CheckObserverDeclaredAllObservableMessages(IObserver& observer)
-    {
-      for (std::set<MessageType>::const_iterator it = emittableMessages_.begin(); it != emittableMessages_.end(); it++)
-      {
-        // the observer must have "declared" all observable messages
-        if (observer.GetHandledMessages().find(*it) == observer.GetHandledMessages().end()
-            && observer.GetIgnoredMessages().find(*it) == observer.GetIgnoredMessages().end())
+        for (std::set<ICallable*>::const_iterator
+               it = found->second.begin(); it != found->second.end(); ++it)
         {
-          throw MessageNotDeclaredException(*it);
+          if (broker_.IsActive((*it)->GetObserver()))
+          {
+            (*it)->Apply(message);
+          }
         }
       }
     }
+
+    void RegisterForwarder(IMessageForwarder* forwarder)
+    {
+      forwarders_.insert(forwarder);
+    }
+
   };
 
 }

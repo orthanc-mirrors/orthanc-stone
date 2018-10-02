@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # this script currently assumes that the wasm code has been built on its side and is availabie in Wasm/build/
 
 currentDir=$(pwd)

@@ -66,7 +66,15 @@ namespace OrthancStone
         if (item.get() != NULL)
         {
           IOracleCommand& command = dynamic_cast<IOracleCommand&>(*item);
-          command.Execute();
+          try
+          {
+            command.Execute();
+          }
+          catch (Orthanc::OrthancException& ex)
+          {
+            // this is probably a curl error that has been triggered.  We may just ignore it.
+            // The command.success_ will stay at false and this will be handled in the command.Commit
+          }
 
           // Random sleeping to test
           //boost::this_thread::sleep(boost::posix_time::milliseconds(50 * (1 + rand() % 10)));

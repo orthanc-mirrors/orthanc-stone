@@ -19,20 +19,20 @@
  **/
 
 
-#pragma once
+#include "MessageForwarder.h"
 
-#include <boost/noncopyable.hpp>
-#include <json/json.h>
-
-#include "ICommand.h"
+#include "IObservable.h"
 
 namespace OrthancStone
 {
 
-  class ICommandFactory : public boost::noncopyable
+  void IMessageForwarder::ForwardMessageInternal(const IMessage& message)
   {
-  public:
-    virtual ICommand* CreateFromJson(const Json::Value& commandJson) = 0;
-    template<typename TCommand> void RegisterCommandClass();
-  };
+    emitter_.EmitMessage(message);
+  }
+
+  void IMessageForwarder::RegisterForwarderInEmitter()
+  {
+    emitter_.RegisterForwarder(this);
+  }
 }

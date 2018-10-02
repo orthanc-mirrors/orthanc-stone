@@ -22,31 +22,22 @@
 #pragma once
 
 #include "../Toolbox/DicomStructureSet.h"
-#include "../Toolbox/IWebService.h"
+#include "../Toolbox/OrthancApiClient.h"
 #include "VolumeLoaderBase.h"
 
 namespace OrthancStone
 {
   class StructureSetLoader :
     public VolumeLoaderBase,
-    private IWebService::ICallback
+    public OrthancStone::IObserver
   {
   private:
-    class Operation;
-    
-    virtual void OnHttpRequestError(const std::string& uri,
-                             Orthanc::IDynamicObject* payload);
 
-    virtual void OnHttpRequestSuccess(const std::string& uri,
-                               const void* answer,
-                               size_t answerSize,
-                               Orthanc::IDynamicObject* payload);
-
-    IWebService&                      orthanc_;
+    OrthancApiClient&                      orthanc_;
     std::auto_ptr<DicomStructureSet>  structureSet_;
 
   public:
-    StructureSetLoader(MessageBroker& broker, IWebService& orthanc);
+    StructureSetLoader(MessageBroker& broker, OrthancApiClient& orthanc);
 
     void ScheduleLoadInstance(const std::string& instance);
 
@@ -56,5 +47,12 @@ namespace OrthancStone
     }
 
     DicomStructureSet& GetStructureSet();
+
+  protected:
+    void OnReferencedSliceLoaded(const OrthancApiClient::JsonResponseReadyMessage& message);
+
+    void OnStructureSetLoaded(const OrthancApiClient::JsonResponseReadyMessage& message);
+
+    void OnLookupCompleted(const OrthancApiClient::JsonResponseReadyMessage& message);
   };
 }

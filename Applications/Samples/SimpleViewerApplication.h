@@ -32,7 +32,7 @@
 #include "../../Framework/SmartLoader.h"
 
 #if ORTHANC_ENABLE_WASM==1
-#include "../../Platforms/Wasm/IStoneApplicationToWebApplicationAdapter.h"
+#include "../../Platforms/Wasm/WasmPlatformApplicationAdapter.h"
 #include "../../Platforms/Wasm/Defaults.h"
 #endif
 #include <Core/Logging.h>
@@ -43,9 +43,6 @@ namespace OrthancStone
   {
     class SimpleViewerApplication :
         public SampleApplicationBase,
-#if ORTHANC_ENABLE_WASM==1
-        public IStoneApplicationToWebApplicationAdapter,
-#endif
         public IObserver
     {
     private:
@@ -172,6 +169,38 @@ namespace OrthancStone
         }
       };
 
+
+#if ORTHANC_ENABLE_WASM==1
+      class SimpleViewerApplicationAdapter : public WasmPlatformApplicationAdapter
+      {
+      public:
+        SimpleViewerApplicationAdapter(MessageBroker& broker, SimpleViewerApplication& application)
+          : WasmPlatformApplicationAdapter(broker, application)
+        {
+
+        }
+
+        virtual void HandleMessageFromWeb(std::string& output, const std::string& input) {
+          if (input == "select-tool:line-measure")
+          {
+            application.currentTool_ = Tools_LineMeasure;
+            NotifyStatusUpdateFromCppToWeb("currentTool=line-measure");
+          }
+          else if (input == "select-tool:circle-measure")
+          {
+            application.currentTool_ = Tools_CircleMeasure;
+            NotifyStatusUpdateFromCppToWeb("currentTool=circle-measure");
+          }
+
+          output = "ok";
+        }
+
+        virtual void NotifyStatusUpdateFromCppToWeb(const std::string& statusUpdateMessage) {
+          UpdateStoneApplicationStatusFromCpp(statusUpdateMessage.c_str());
+        }
+
+      };
+#endif
       enum Tools {
         Tools_LineMeasure,
         Tools_CircleMeasure
@@ -204,12 +233,7 @@ namespace OrthancStone
         wasmViewport1_(NULL),
         wasmViewport2_(NULL)
       {
-        DeclareIgnoredMessage(MessageType_Widget_ContentChanged);
-        DeclareHandledMessage(MessageType_Widget_GeometryChanged);
-
-        DeclareHandledMessage(MessageType_OrthancApi_GetStudyIds_Ready);
-        DeclareHandledMessage(MessageType_OrthancApi_GetStudy_Ready);
-        DeclareHandledMessage(MessageType_OrthancApi_GetSeries_Ready);
+//        DeclareIgnoredMessage(MessageType_Widget_ContentChanged);
       }
 
       virtual void Finalize() {}
@@ -249,14 +273,14 @@ namespace OrthancStone
           thumbnailsLayout_->SetVertical();
 
           mainWidget_ = new LayerWidget(broker_, "main-viewport");
-          mainWidget_->RegisterObserver(*this);
+          //mainWidget_->RegisterObserver(*this);
 
           // hierarchy
           mainLayout_->AddWidget(thumbnailsLayout_);
           mainLayout_->AddWidget(mainWidget_);
 
           // sources
-          smartLoader_.reset(new SmartLoader(broker_, context_->GetWebService()));
+          smartLoader_.reset(new SmartLoader(IObserver::broker_, context_->GetWebService()));
           smartLoader_->SetImageQuality(SliceImageQuality_FullPam);
 
           mainLayout_->SetTransmitMouseOver(true);
@@ -268,12 +292,12 @@ namespace OrthancStone
         statusBar.SetMessage("Use the key \"s\" to reinitialize the layout");
         statusBar.SetMessage("Use the key \"n\" to go to next image in the main viewport");
 
-        orthancApiClient_.reset(new OrthancApiClient(broker_, context_->GetWebService()));
+        orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
 
         if (parameters.count("studyId") < 1)
         {
           LOG(WARNING) << "The study ID is missing, will take the first studyId found in Orthanc";
-          orthancApiClient_->ScheduleGetStudyIds(*this);
+          orthancApiClient_->GetJsonAsync("/studies", new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyListReceived));
         }
         else
         {
@@ -281,26 +305,32 @@ namespace OrthancStone
         }
       }
 
-      void OnStudyListReceived(const Json::Value& response)
+      void OnStudyListReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
       {
+        const Json::Value& response = message.Response;
+
         if (response.isArray() && response.size() > 1)
         {
           SelectStudy(response[0].asString());
         }
       }
-      void OnStudyReceived(const Json::Value& response)
+      void OnStudyReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
       {
+        const Json::Value& response = message.Response;
+
         if (response.isObject() && response["Series"].isArray())
         {
           for (size_t i=0; i < response["Series"].size(); i++)
           {
-            orthancApiClient_->ScheduleGetSeries(*this, response["Series"][(int)i].asString());
+            orthancApiClient_->GetJsonAsync("/series/" + response["Series"][(int)i].asString(), new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnSeriesReceived));
           }
         }
       }
 
-      void OnSeriesReceived(const Json::Value& response)
+      void OnSeriesReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
       {
+        const Json::Value& response = message.Response;
+
         if (response.isObject() && response["Instances"].isArray() && response["Instances"].size() > 0)
         {
           // keep track of all instances IDs
@@ -327,37 +357,22 @@ namespace OrthancStone
       void LoadThumbnailForSeries(const std::string& seriesId, const std::string& instanceId)
       {
         LOG(INFO) << "Loading thumbnail for series " << seriesId;
-        LayerWidget* thumbnailWidget = new LayerWidget(broker_, "thumbnail-series-" + seriesId);
+        LayerWidget* thumbnailWidget = new LayerWidget(IObserver::broker_, "thumbnail-series-" + seriesId);
         thumbnails_.push_back(thumbnailWidget);
         thumbnailsLayout_->AddWidget(thumbnailWidget);
-        thumbnailWidget->RegisterObserver(*this);
+        thumbnailWidget->RegisterObserverCallback(new Callable<SimpleViewerApplication, LayerWidget::GeometryChangedMessage>(*this, &SimpleViewerApplication::OnWidgetGeometryChanged));
         thumbnailWidget->AddLayer(smartLoader_->GetFrame(instanceId, 0));
         thumbnailWidget->SetInteractor(*thumbnailInteractor_);
       }
 
       void SelectStudy(const std::string& studyId)
       {
-        orthancApiClient_->ScheduleGetStudy(*this, studyId);
+        orthancApiClient_->GetJsonAsync("/studies/" + studyId, new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyReceived));
       }
 
-      virtual void HandleMessage(IObservable& from, const IMessage& message) {
-        switch (message.GetType()) {
-        case MessageType_Widget_GeometryChanged:
-          LOG(INFO) << "Widget geometry ready: " << dynamic_cast<LayerWidget&>(from).GetName();
-          dynamic_cast<LayerWidget&>(from).SetDefaultView();
-          break;
-        case MessageType_OrthancApi_GetStudyIds_Ready:
-          OnStudyListReceived(dynamic_cast<const OrthancApiClient::GetJsonResponseReadyMessage&>(message).response_);
-          break;
-        case MessageType_OrthancApi_GetSeries_Ready:
-          OnSeriesReceived(dynamic_cast<const OrthancApiClient::GetJsonResponseReadyMessage&>(message).response_);
-          break;
-        case MessageType_OrthancApi_GetStudy_Ready:
-          OnStudyReceived(dynamic_cast<const OrthancApiClient::GetJsonResponseReadyMessage&>(message).response_);
-          break;
-        default:
-          VLOG("unhandled message type" << message.GetType());
-        }
+      void OnWidgetGeometryChanged(const LayerWidget::GeometryChangedMessage& message)
+      {
+        message.origin_.SetDefaultView();
       }
 
       void SelectSeriesInMainViewport(const std::string& seriesId)
@@ -385,25 +400,6 @@ namespace OrthancStone
       }
 
 #if ORTHANC_ENABLE_WASM==1
-      virtual void HandleMessageFromWeb(std::string& output, const std::string& input) {
-        if (input == "select-tool:line-measure")
-        {
-          currentTool_ = Tools_LineMeasure;
-          NotifyStatusUpdateFromCppToWeb("currentTool=line-measure");
-        }
-        else if (input == "select-tool:circle-measure")
-        {
-          currentTool_ = Tools_CircleMeasure;
-          NotifyStatusUpdateFromCppToWeb("currentTool=circle-measure");
-        }
-
-        output = "ok";
-      }
-
-      virtual void NotifyStatusUpdateFromCppToWeb(const std::string& statusUpdateMessage) {
-        UpdateStoneApplicationStatusFromCpp(statusUpdateMessage.c_str());
-      }
-
       virtual void InitializeWasm() {
 
         AttachWidgetToWasmViewport("canvas", thumbnailsLayout_);

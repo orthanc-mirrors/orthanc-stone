@@ -24,6 +24,7 @@
 #include "LayerSourceBase.h"
 #include "../Toolbox/IWebService.h"
 #include "../Toolbox/OrthancSlicesLoader.h"
+#include "../Toolbox/OrthancApiClient.h"
 
 namespace OrthancStone
 {  
@@ -40,7 +41,7 @@ namespace OrthancStone
     SliceImageQuality    quality_;
 
   public:
-    OrthancFrameLayerSource(MessageBroker& broker, IWebService& orthanc);
+    OrthancFrameLayerSource(MessageBroker& broker, OrthancApiClient& orthanc);
 
     void LoadSeries(const std::string& seriesId);
 
@@ -69,6 +70,11 @@ namespace OrthancStone
 
     virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice);
 
-    virtual void HandleMessage(IObservable& from, const IMessage& message);
+protected:
+    void OnSliceGeometryReady(const OrthancSlicesLoader::SliceGeometryReadyMessage& message);
+    void OnSliceGeometryError(const OrthancSlicesLoader::SliceGeometryErrorMessage& message);
+    void OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message);
+    void OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message);
+//    virtual void HandleMessage(IObservable& from, const IMessage& message);
   };
 }

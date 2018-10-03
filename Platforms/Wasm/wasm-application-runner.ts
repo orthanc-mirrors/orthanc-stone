@@ -55,7 +55,7 @@ function GetUriParameters(): Map<string, string> {
 //   console.log(statusUpdateMessage);
 // }
 
-function _InitializeWasmApplication(canvasIds: string[], orthancBaseUrl: string): void {
+function _InitializeWasmApplication(orthancBaseUrl: string): void {
 
   CreateWasmApplication();
   WasmWebService_SetBaseUri(orthancBaseUrl);
@@ -73,14 +73,12 @@ function _InitializeWasmApplication(canvasIds: string[], orthancBaseUrl: string)
   StartWasmApplication();
 
   // trigger a first resize of the canvas that have just been initialized
-  for (let canvasId of canvasIds) {
-    Stone.WasmViewport.GetFromCanvasId(canvasId).Resize();
-  }
+  Stone.WasmViewport.ResizeAll();
 
   UpdateContentThread();
 }
 
-function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: string, canvasIds: string[]) {
+function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: string) {
   
   Stone.Framework.Configure(wasmModuleName);
 
@@ -110,6 +108,6 @@ function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: strin
       event.preventDefault();
     }, false);
 
-    _InitializeWasmApplication(canvasIds, orthancBaseUrl);
+    _InitializeWasmApplication(orthancBaseUrl);
   });
 }

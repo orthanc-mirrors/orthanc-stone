@@ -19,7 +19,7 @@ function CreateWasmViewport(htmlCanvasId: string) : any {
   var canvasId = UTF8ToString(htmlCanvasId);
   var webViewport = new Stone.WasmViewport(StoneFrameworkModule, canvasId, cppViewportHandle);  // viewports are stored in a static map in WasmViewport -> won't be deleted
   webViewport.Initialize();
-  
+
   return cppViewportHandle;
 }
 
@@ -101,6 +101,12 @@ module Stone {
       }
       console.log("WasmViewport not found !");
       return undefined;
+    }
+
+    public static ResizeAll() {
+      for (let canvasId in WasmViewport.viewportsMapByCanvasId_) {
+        WasmViewport.viewportsMapByCanvasId_[canvasId].Resize();
+      }
     }
 
     public Redraw() {

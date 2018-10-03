@@ -29,12 +29,12 @@ function UpdateContentThread() {
 }
 
 
-function GetUriParameters() {
+function GetUriParameters(): Map<string, string> {
   var parameters = window.location.search.substr(1);
 
   if (parameters != null &&
     parameters != '') {
-    var result = {};
+    var result = new Map<string, string>();
     var tokens = parameters.split('&');
 
     for (var i = 0; i < tokens.length; i++) {
@@ -47,7 +47,7 @@ function GetUriParameters() {
     return result;
   }
   else {
-    return {};
+    return new Map<string, string>();
   }
 }
 
@@ -55,29 +55,32 @@ function GetUriParameters() {
 //   console.log(statusUpdateMessage);
 // }
 
-function _InitializeWasmApplication(canvasId: string, orthancBaseUrl: string): void {
+function _InitializeWasmApplication(canvasIds: string[], orthancBaseUrl: string): void {
 
-  /************************************** */
   CreateWasmApplication();
   WasmWebService_SetBaseUri(orthancBaseUrl);
 
 
   // parse uri and transmit the parameters to the app before initializing it
-  var parameters = GetUriParameters();
+  let parameters = GetUriParameters();
 
-  for (var key in parameters) {
+  for (let key in parameters) {
     if (parameters.hasOwnProperty(key)) {
       SetStartupParameter(key, parameters[key]);
     }
   }
 
   StartWasmApplication();
-  /************************************** */
+
+  // trigger a first resize of the canvas that have just been initialized
+  for (let canvasId of canvasIds) {
+    Stone.WasmViewport.GetFromCanvasId(canvasId).Resize();
+  }
 
   UpdateContentThread();
 }
 
-function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: string) {
+function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: string, canvasIds: string[]) {
   
   Stone.Framework.Configure(wasmModuleName);
 
@@ -107,6 +110,6 @@ function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: strin
       event.preventDefault();
     }, false);
 
-    _InitializeWasmApplication("canvas", orthancBaseUrl);
+    _InitializeWasmApplication(canvasIds, orthancBaseUrl);
   });
 }

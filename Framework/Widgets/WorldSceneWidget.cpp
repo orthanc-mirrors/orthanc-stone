@@ -24,6 +24,7 @@
 #include <math.h>
 #include <memory>
 #include <cassert>
+#include "Core/Logging.h"
 
 namespace OrthancStone
 {
@@ -138,7 +139,8 @@ namespace OrthancStone
 
     if (that_.view_.GetDisplayHeight() <= 3)
     {
-      return;   // Cannot zoom on such a small image
+      LOG(WARNING) << "image is too small to zoom (current height = " << that_.view_.GetDisplayHeight() << ")";
+      return;
     }
 
     double dy = (static_cast<double>(y - downY_) /

@@ -19,7 +19,7 @@ function CreateWasmViewport(htmlCanvasId: string) : any {
   var canvasId = UTF8ToString(htmlCanvasId);
   var webViewport = new Stone.WasmViewport(StoneFrameworkModule, canvasId, cppViewportHandle);  // viewports are stored in a static map in WasmViewport -> won't be deleted
   webViewport.Initialize();
-
+  
   return cppViewportHandle;
 }
 
@@ -34,7 +34,8 @@ module Stone {
 
   export class WasmViewport {
 
-    private static cppWebViewportsMaps_ : Map<number, WasmViewport> = new Map<number, WasmViewport>();
+    private static viewportsMapByCppHandle_ : Map<number, WasmViewport> = new Map<number, WasmViewport>(); // key = the C++ handle
+    private static viewportsMapByCanvasId_ : Map<string, WasmViewport> = new Map<string, WasmViewport>(); // key = the canvasId
 
     private module_ : any;
     private canvasId_ : string;
@@ -60,7 +61,8 @@ module Stone {
     public constructor(module: any, canvasId: string, cppViewport: any) {
       
       this.pimpl_ = cppViewport;
-      WasmViewport.cppWebViewportsMaps_[this.pimpl_] = this;
+      WasmViewport.viewportsMapByCppHandle_[this.pimpl_] = this;
+      WasmViewport.viewportsMapByCanvasId_[canvasId] = this;
 
       this.module_ = module;
       this.canvasId_ = canvasId;
@@ -86,8 +88,16 @@ module Stone {
     }
 
     public static GetFromCppViewport(cppViewportHandle: number) : WasmViewport {
-      if (WasmViewport.cppWebViewportsMaps_[cppViewportHandle] !== undefined) {
-        return WasmViewport.cppWebViewportsMaps_[cppViewportHandle];
+      if (WasmViewport.viewportsMapByCppHandle_[cppViewportHandle] !== undefined) {
+        return WasmViewport.viewportsMapByCppHandle_[cppViewportHandle];
+      }
+      console.log("WasmViewport not found !");
+      return undefined;
+    }
+
+    public static GetFromCanvasId(canvasId: string) : WasmViewport {
+      if (WasmViewport.viewportsMapByCanvasId_[canvasId] !== undefined) {
+        return WasmViewport.viewportsMapByCanvasId_[canvasId];
       }
       console.log("WasmViewport not found !");
       return undefined;
@@ -139,6 +149,8 @@ module Stone {
         }
         
         this.renderingBuffer_ = this.module_._malloc(this.imageData_.width * this.imageData_.height * 4);
+      } else {
+        this.ViewportSetSize(this.pimpl_, this.htmlCanvas_.width, this.htmlCanvas_.height);
       }
       
       this.Redraw();

@@ -37,7 +37,7 @@ namespace OrthancStone
     double                        thickness_;
     size_t                        countMissing_;
     std::vector<ILayerRenderer*>  renderers_;
-
+public:
     void DeleteLayer(size_t index)
     {
       if (index >= renderers_.size())
@@ -56,7 +56,6 @@ namespace OrthancStone
       }
     }
 
-  public:
     Scene(const CoordinateSystem3D& slice,
           double thickness,
           size_t countLayers) :
@@ -365,15 +364,6 @@ namespace OrthancStone
     IObservable(broker),
     started_(false)
   {
-//    DeclareHandledMessage(MessageType_LayerSource_GeometryReady);
-//    DeclareHandledMessage(MessageType_LayerSource_ContentChanged);
-//    DeclareHandledMessage(MessageType_LayerSource_LayerReady);
-//    DeclareHandledMessage(MessageType_LayerSource_SliceChanged);
-//    DeclareHandledMessage(MessageType_LayerSource_GeometryError);
-
-//    DeclareEmittableMessage(MessageType_Widget_GeometryChanged);
-//    DeclareEmittableMessage(MessageType_Widget_ContentChanged);
-
     SetBackgroundCleared(true);
   }
   
@@ -440,6 +430,26 @@ namespace OrthancStone
     InvalidateLayer(index);
   }
 
+  void LayerWidget::RemoveLayer(size_t index)
+  {
+    if (index >= layers_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    ILayerSource* previousLayer = layers_[index];
+    layersIndex_.erase(layersIndex_.find(previousLayer));
+    layers_.erase(layers_.begin() + index);
+    changedLayers_.erase(changedLayers_.begin() + index);
+    styles_.erase(styles_.begin() + index);
+
+    delete layers_[index];
+
+    currentScene_->DeleteLayer(index);
+    ResetPendingScene();
+
+    NotifyContentChanged();
+  }
 
   const RenderStyle& LayerWidget::GetLayerStyle(size_t layer) const
   {

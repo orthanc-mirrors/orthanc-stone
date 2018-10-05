@@ -23,6 +23,12 @@ extern "C" {
                                        void* payload,
                                        unsigned int timeoutInSeconds);
 
+  extern void WasmWebService_DeleteAsync(void* callableSuccess,
+                                         void* callableFailure,
+                                         const char* uri,
+                                         const char* headersInJsonString,
+                                         void* payload,
+                                         unsigned int timeoutInSeconds);
 
   void EMSCRIPTEN_KEEPALIVE WasmWebService_NotifyError(void* failureCallable,
                                                        const char* uri,
@@ -116,7 +122,21 @@ namespace OrthancStone
                                        body.c_str(), body.size(), payload, timeoutInSeconds);
   }
 
-   void WasmWebService::GetAsync(const std::string& relativeUri,
+  void WasmWebService::DeleteAsync(const std::string& relativeUri,
+                                   const Headers& headers,
+                                   Orthanc::IDynamicObject* payload,
+                                   MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
+                                   MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable,
+                                   unsigned int timeoutInSeconds)
+  {
+    std::string uri = baseUri_ + relativeUri;
+    std::string headersInJsonString;
+    ToJsonString(headersInJsonString, headers);
+    WasmWebService_DeleteAsync(successCallable, failureCallable, uri.c_str(), headersInJsonString.c_str(),
+                               payload, timeoutInSeconds);
+  }
+
+  void WasmWebService::GetAsync(const std::string& relativeUri,
                                  const Headers& headers,
                                  Orthanc::IDynamicObject* payload,
                                  MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,

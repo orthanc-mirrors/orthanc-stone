@@ -52,6 +52,13 @@ namespace OrthancStone
                            MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable = NULL,
                            unsigned int timeoutInSeconds = 60);
 
+    virtual void DeleteAsync(const std::string& uri,
+                             const Headers& headers,
+                             Orthanc::IDynamicObject* payload,
+                             MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
+                             MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable = NULL,
+                             unsigned int timeoutInSeconds = 60);
+
     virtual void Start()
     {
     }

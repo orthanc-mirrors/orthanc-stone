@@ -52,6 +52,20 @@ namespace OrthancStone
       }
     };
 
+    struct EmptyResponseReadyMessage : public BaseMessage<MessageType_OrthancApi_GenericEmptyResponse_Ready>
+    {
+      std::string   Uri;
+      Orthanc::IDynamicObject*  Payload;
+
+      EmptyResponseReadyMessage(const std::string& uri,
+                                Orthanc::IDynamicObject*  payload = NULL)
+        : BaseMessage(),
+          Uri(uri),
+          Payload(payload)
+      {
+      }
+    };
+
     struct HttpErrorMessage : public BaseMessage<MessageType_OrthancApi_GenericHttpError_Ready>
     {
       std::string   Uri;
@@ -141,6 +155,13 @@ namespace OrthancStone
                                  MessageHandler<JsonResponseReadyMessage>* successCallback,
                                  MessageHandler<HttpErrorMessage>* failureCallback = NULL,
                                  Orthanc::IDynamicObject* payload = NULL);
+
+    // schedule a DELETE request expecting an empty response.
+    void DeleteAsync(const std::string& uri,
+                     MessageHandler<EmptyResponseReadyMessage>* successCallback,
+                     MessageHandler<HttpErrorMessage>* failureCallback = NULL,
+                     Orthanc::IDynamicObject* payload = NULL);
+
 
   };
 }

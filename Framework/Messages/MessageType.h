@@ -47,9 +47,7 @@ namespace OrthancStone {
     MessageType_OrthancApi_GenericGetJson_Ready,
     MessageType_OrthancApi_GenericGetBinary_Ready,
     MessageType_OrthancApi_GenericHttpError_Ready,
-    MessageType_OrthancApi_GetStudyIds_Ready,
-    MessageType_OrthancApi_GetStudy_Ready,
-    MessageType_OrthancApi_GetSeries_Ready,
+    MessageType_OrthancApi_GenericEmptyResponse_Ready,
 
     // used in unit tests only
     MessageType_Test1,

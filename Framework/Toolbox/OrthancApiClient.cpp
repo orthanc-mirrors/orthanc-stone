@@ -120,6 +120,49 @@ namespace OrthancStone {
     }
   };
 
+  // performs the translation between IWebService messages and OrthancApiClient messages
+  // TODO: handle destruction of this object (with shared_ptr ?::delete_later ???)
+  class HttpResponseToEmptyConverter : public IObserver, IObservable
+  {
+    std::auto_ptr<MessageHandler<OrthancApiClient::EmptyResponseReadyMessage>> orthancApiSuccessCallback_;
+    std::auto_ptr<MessageHandler<OrthancApiClient::HttpErrorMessage>> orthancApiFailureCallback_;
+  public:
+    HttpResponseToEmptyConverter(MessageBroker& broker,
+                                  MessageHandler<OrthancApiClient::EmptyResponseReadyMessage>* orthancApiSuccessCallback,
+                                  MessageHandler<OrthancApiClient::HttpErrorMessage>* orthancApiFailureCallback)
+      : IObserver(broker),
+        IObservable(broker),
+        orthancApiSuccessCallback_(orthancApiSuccessCallback),
+        orthancApiFailureCallback_(orthancApiFailureCallback)
+    {
+    }
+
+    void ConvertResponseToEmpty(const IWebService::HttpRequestSuccessMessage& message)
+    {
+      if (orthancApiSuccessCallback_.get() != NULL)
+      {
+        orthancApiSuccessCallback_->Apply(OrthancApiClient::EmptyResponseReadyMessage(message.uri_, message.payload_));
+      }
+      else if (orthancApiFailureCallback_.get() != NULL)
+      {
+        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.uri_, message.payload_));
+      }
+
+      delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
+    }
+
+    void ConvertError(const IWebService::HttpRequestErrorMessage& message)
+    {
+      if (orthancApiFailureCallback_.get() != NULL)
+      {
+        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.uri_));
+      }
+
+      delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
+    }
+  };
+
+
   void OrthancApiClient::GetJsonAsync(const std::string& uri,
                                       MessageHandler<JsonResponseReadyMessage>* successCallback,
                                       MessageHandler<HttpErrorMessage>* failureCallback,
@@ -166,6 +209,17 @@ namespace OrthancStone {
     std::string body;
     MessagingToolbox::JsonToString(body, data);
     return PostBinaryAsyncExpectJson(uri, body, successCallback, failureCallback, payload);
+  }
+
+  void OrthancApiClient::DeleteAsync(const std::string& uri,
+                                     MessageHandler<EmptyResponseReadyMessage>* successCallback,
+                                     MessageHandler<HttpErrorMessage>* failureCallback,
+                                     Orthanc::IDynamicObject* payload)
+  {
+    HttpResponseToEmptyConverter* converter = new HttpResponseToEmptyConverter(broker_, successCallback, failureCallback);  // it is currently deleting itself after being used
+    orthanc_.DeleteAsync(uri, IWebService::Headers(), payload,
+                       new Callable<HttpResponseToEmptyConverter, IWebService::HttpRequestSuccessMessage>(*converter, &HttpResponseToEmptyConverter::ConvertResponseToEmpty),
+                       new Callable<HttpResponseToEmptyConverter, IWebService::HttpRequestErrorMessage>(*converter, &HttpResponseToEmptyConverter::ConvertError));
   }
 
 

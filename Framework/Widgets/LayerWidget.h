@@ -97,6 +97,8 @@ namespace OrthancStone
 
     void ReplaceLayer(size_t layerIndex, ILayerSource* layer); // Takes ownership
 
+    void RemoveLayer(size_t layerIndex);
+
     size_t GetLayerCount() const
     {
       return layers_.size();

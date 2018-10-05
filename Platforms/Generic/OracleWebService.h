@@ -25,6 +25,7 @@
 #include "Oracle.h"
 #include "WebServiceGetCommand.h"
 #include "WebServicePostCommand.h"
+#include "WebServiceDeleteCommand.h"
 #include "../../Applications/Generic/NativeStoneApplicationContext.h"
 
 namespace OrthancStone
@@ -71,6 +72,17 @@ namespace OrthancStone
     {
       oracle_.Submit(new WebServicePostCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, body, payload, context_));
     }
+
+    virtual void DeleteAsync(const std::string& uri,
+                             const Headers& headers,
+                             Orthanc::IDynamicObject* payload,
+                             MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                             MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                             unsigned int timeoutInSeconds = 60)
+    {
+      oracle_.Submit(new WebServiceDeleteCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, payload, context_));
+    }
+
 
     void Start()
     {

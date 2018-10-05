@@ -57,5 +57,34 @@ mergeInto(LibraryManager.library, {
     }
 
     xhr.send(new Uint8ClampedArray(HEAPU8.buffer, body, bodySize));
+  },
+
+  WasmWebService_DeleteAsync: function(callableSuccess, callableFailure, url, headersInJsonString, payload, timeoutInSeconds) {
+    var xhr = new XMLHttpRequest();
+    var url_ = UTF8ToString(url);
+    var headersInJsonString_ = UTF8ToString(headersInJsonString);
+    xhr.open('DELETE', url_, true);
+    xhr.timeout = timeoutInSeconds * 1000;
+    xhr.responseType = 'arraybuffer';
+    xhr.setRequestHeader('Content-type', 'application/octet-stream');
+  
+    var headers = JSON.parse(headersInJsonString_);
+    for (var key in headers) {
+      xhr.setRequestHeader(key, headers[key]);
+    }
+    
+    xhr.onreadystatechange = function() {
+      if (this.readyState == XMLHttpRequest.DONE) {
+        if (xhr.status === 200) {
+          WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
+                                       this.response.byteLength, payload);
+        } else {
+          WasmWebService_NotifyError(callableFailure, url_, payload);
+        }
+      }
+    }
+  
+    xhr.send();
   }
+  
 });

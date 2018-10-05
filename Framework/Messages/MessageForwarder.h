@@ -31,12 +31,13 @@ namespace OrthancStone
 
   class IObservable;
 
-  class IMessageForwarder : public boost::noncopyable
+  class IMessageForwarder : public IObserver
   {
     IObservable& emitter_;
   public:
-    IMessageForwarder(IObservable& emitter)
-      : emitter_(emitter)
+    IMessageForwarder(MessageBroker& broker, IObservable& emitter)
+      : IObserver(broker),
+        emitter_(emitter)
     {}
     virtual ~IMessageForwarder() {}
 
@@ -64,14 +65,13 @@ namespace OrthancStone
    * B.RegisterObserverCallback(new Callable<C, A:MessageTyper>(*this, &B::MyCallback))   // where this is C
    */
   template<typename TMessage>
-  class MessageForwarder : public IMessageForwarder, public IObserver, public Callable<MessageForwarder<TMessage>, TMessage>
+  class MessageForwarder : public IMessageForwarder, public Callable<MessageForwarder<TMessage>, TMessage>
   {
   public:
     MessageForwarder(MessageBroker& broker,
                      IObservable& emitter // the object that will emit the messages to forward
                      )
-      : IMessageForwarder(emitter),
-        IObserver(broker),
+      : IMessageForwarder(broker, emitter),
         Callable<MessageForwarder<TMessage>, TMessage>(*this, &MessageForwarder::ForwardMessage)
     {
       RegisterForwarderInEmitter();

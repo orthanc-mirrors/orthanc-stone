@@ -279,8 +279,10 @@ namespace OrthancStone
           mainLayout_->AddWidget(thumbnailsLayout_);
           mainLayout_->AddWidget(mainWidget_);
 
+          orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
+
           // sources
-          smartLoader_.reset(new SmartLoader(IObserver::broker_, context_->GetWebService()));
+          smartLoader_.reset(new SmartLoader(IObserver::broker_, *orthancApiClient_));
           smartLoader_->SetImageQuality(SliceImageQuality_FullPam);
 
           mainLayout_->SetTransmitMouseOver(true);
@@ -292,7 +294,6 @@ namespace OrthancStone
         statusBar.SetMessage("Use the key \"s\" to reinitialize the layout");
         statusBar.SetMessage("Use the key \"n\" to go to next image in the main viewport");
 
-        orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
 
         if (parameters.count("studyId") < 1)
         {

@@ -71,7 +71,8 @@ namespace OrthancStone {
       for (Forwarders::iterator it = forwarders_.begin();
            it != forwarders_.end(); ++it)
       {
-        broker_.Unregister(dynamic_cast<IObserver&>(**it));
+        IMessageForwarder* fw = *it;
+        broker_.Unregister(dynamic_cast<IObserver&>(*fw));
       }
     }
 

@@ -24,7 +24,6 @@
 
 #include "Layers/ILayerSource.h"
 #include "Messages/IObservable.h"
-#include "../Platforms/Generic/OracleWebService.h"
 #include "Toolbox/OrthancApiClient.h"
 
 namespace OrthancStone
@@ -32,13 +31,12 @@ namespace OrthancStone
   class SmartLoader : public IObservable, IObserver
   {
     SliceImageQuality     imageQuality_;
-    IWebService&          webService_;
-    OrthancApiClient      orthancApiClient_;
+    OrthancApiClient&     orthancApiClient_;
 
     int studyListRequest_;
 
   public:
-    SmartLoader(MessageBroker& broker, IWebService& webService);  // TODO: add maxPreloadStorageSizeInBytes
+    SmartLoader(MessageBroker& broker, OrthancApiClient& orthancApiClient);  // TODO: add maxPreloadStorageSizeInBytes
 
     void PreloadStudy(const std::string studyId);
     void PreloadSeries(const std::string seriesId);

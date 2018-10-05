@@ -25,12 +25,11 @@
 
 namespace OrthancStone
 {
-  SmartLoader::SmartLoader(MessageBroker& broker, IWebService& webService) :
+  SmartLoader::SmartLoader(MessageBroker& broker, OrthancApiClient& orthancApiClient) :
     IObservable(broker),
     IObserver(broker),
     imageQuality_(SliceImageQuality_FullPam),
-    webService_(webService),
-    orthancApiClient_(broker, webService)
+    orthancApiClient_(orthancApiClient)
   {
   }
 

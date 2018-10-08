@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -27,6 +27,8 @@
 #include "../Messages/IObservable.h"
 #include <boost/shared_ptr.hpp>
 #include "OrthancApiClient.h"
+#include "Core/Images/Image.h"
+
 
 namespace OrthancStone
 {
@@ -41,13 +43,13 @@ namespace OrthancStone
     {
       unsigned int sliceIndex_;
       const Slice& slice_;
-      std::auto_ptr<Orthanc::ImageAccessor>& image_;
+      boost::shared_ptr<Orthanc::ImageAccessor> image_;
       SliceImageQuality effectiveQuality_;
 
       SliceImageReadyMessage(unsigned int sliceIndex,
-                        const Slice& slice,
-                        std::auto_ptr<Orthanc::ImageAccessor>& image,
-                        SliceImageQuality effectiveQuality)
+                             const Slice& slice,
+                             boost::shared_ptr<Orthanc::ImageAccessor> image,
+                             SliceImageQuality effectiveQuality)
         : BaseMessage(),
           sliceIndex_(sliceIndex),
           slice_(slice),
@@ -64,8 +66,8 @@ namespace OrthancStone
       SliceImageQuality effectiveQuality_;
 
       SliceImageErrorMessage(unsigned int sliceIndex,
-                        const Slice& slice,
-                        SliceImageQuality effectiveQuality)
+                             const Slice& slice,
+                             SliceImageQuality effectiveQuality)
         : BaseMessage(),
           slice_(slice),
           sliceIndex_(sliceIndex),
@@ -100,8 +102,8 @@ namespace OrthancStone
     SlicesSorter  slices_;
 
     void NotifySliceImageSuccess(const Operation& operation,
-                                 std::auto_ptr<Orthanc::ImageAccessor>& image);
-  
+                                 boost::shared_ptr<Orthanc::ImageAccessor> image);
+
     void NotifySliceImageError(const Operation& operation);
 
     void OnGeometryError(const OrthancApiClient::HttpErrorMessage& message);

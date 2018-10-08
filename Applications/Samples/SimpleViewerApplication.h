@@ -173,9 +173,12 @@ namespace OrthancStone
 #if ORTHANC_ENABLE_WASM==1
       class SimpleViewerApplicationAdapter : public WasmPlatformApplicationAdapter
       {
+        SimpleViewerApplication&  viewerApplication_;
+
       public:
         SimpleViewerApplicationAdapter(MessageBroker& broker, SimpleViewerApplication& application)
-          : WasmPlatformApplicationAdapter(broker, application)
+          : WasmPlatformApplicationAdapter(broker, application),
+          viewerApplication_(application)
         {
 
         }
@@ -183,12 +186,12 @@ namespace OrthancStone
         virtual void HandleMessageFromWeb(std::string& output, const std::string& input) {
           if (input == "select-tool:line-measure")
           {
-            application.currentTool_ = Tools_LineMeasure;
+            viewerApplication_.currentTool_ = Tools_LineMeasure;
             NotifyStatusUpdateFromCppToWeb("currentTool=line-measure");
           }
           else if (input == "select-tool:circle-measure")
           {
-            application.currentTool_ = Tools_CircleMeasure;
+            viewerApplication_.currentTool_ = Tools_CircleMeasure;
             NotifyStatusUpdateFromCppToWeb("currentTool=circle-measure");
           }
 
@@ -350,7 +353,7 @@ namespace OrthancStone
           // if this is the first thumbnail loaded, load the first instance in the mainWidget
           if (mainWidget_->GetLayerCount() == 0)
           {
-            mainWidget_->AddLayer(smartLoader_->GetFrame(instancesIdsPerSeriesId_[seriesId][0], 0));
+            smartLoader_->SetFrameInWidget(*mainWidget_, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
           }
         }
       }
@@ -362,7 +365,7 @@ namespace OrthancStone
         thumbnails_.push_back(thumbnailWidget);
         thumbnailsLayout_->AddWidget(thumbnailWidget);
         thumbnailWidget->RegisterObserverCallback(new Callable<SimpleViewerApplication, LayerWidget::GeometryChangedMessage>(*this, &SimpleViewerApplication::OnWidgetGeometryChanged));
-        thumbnailWidget->AddLayer(smartLoader_->GetFrame(instanceId, 0));
+        smartLoader_->SetFrameInWidget(*thumbnailWidget, 0, instanceId, 0);
         thumbnailWidget->SetInteractor(*thumbnailInteractor_);
       }
 
@@ -378,10 +381,7 @@ namespace OrthancStone
 
       void SelectSeriesInMainViewport(const std::string& seriesId)
       {
-        mainWidget_->ReplaceLayer(0, smartLoader_->GetFrame(instancesIdsPerSeriesId_[seriesId][0], 0));
-#if ORTHANC_ENABLE_WASM==1
-        NotifyStatusUpdateFromCppToWeb("series-description=" + seriesTags_[seriesId]["MainDicomTags"]["SeriesDescription"].asString());
-#endif
+        smartLoader_->SetFrameInWidget(*mainWidget_, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
       }
 
       virtual void OnPushButton1Clicked() {}

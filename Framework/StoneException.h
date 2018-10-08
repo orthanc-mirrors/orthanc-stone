@@ -36,6 +36,7 @@ namespace OrthancStone
     ErrorCode_PromiseSingleSuccessHandler, // a Promise can only have a single success handler
     ErrorCode_PromiseSingleFailureHandler, // a Promise can only have a single failure handler
 
+    ErrorCode_CanOnlyAddOneLayerAtATime,
     ErrorCode_CommandJsonInvalidFormat,
     ErrorCode_Last
   };

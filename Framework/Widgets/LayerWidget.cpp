@@ -23,6 +23,7 @@
 
 #include "../Layers/SliceOutlineRenderer.h"
 #include "../Toolbox/GeometryToolbox.h"
+#include "Framework/Layers/FrameRenderer.h"
 
 #include <Core/Logging.h>
 
@@ -589,7 +590,7 @@ public:
       {
         LOG(INFO) << "Renderer ready for layer " << index;
       }
-      
+
       if (message.renderer_.get() != NULL)
       {
         UpdateLayer(index, message.renderer_.release(), message.slice_);

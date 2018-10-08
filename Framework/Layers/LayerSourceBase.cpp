@@ -53,4 +53,11 @@ namespace OrthancStone
     EmitMessage(ILayerSource::LayerReadyMessage(*this, renderer, slice, isError));
   }
 
+  void LayerSourceBase::NotifyImageReady(boost::shared_ptr<Orthanc::ImageAccessor> image,
+                                         SliceImageQuality imageQuality,
+                                         const Slice& slice)
+  {
+    EmitMessage(ILayerSource::ImageReadyMessage(*this, image, imageQuality, slice));
+  }
+
 }

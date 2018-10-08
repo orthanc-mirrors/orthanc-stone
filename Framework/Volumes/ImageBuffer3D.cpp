@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -29,53 +29,47 @@
 
 namespace OrthancStone
 {
-  Orthanc::ImageAccessor ImageBuffer3D::GetAxialSliceAccessor(unsigned int slice,
-                                                              bool readOnly) const
+  void ImageBuffer3D::GetAxialSliceAccessor(Orthanc::ImageAccessor& target,
+                                            unsigned int slice,
+                                            bool readOnly) const
   {
     if (slice >= depth_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    Orthanc::ImageAccessor accessor;
-
     if (readOnly)
     {
-      accessor.AssignReadOnly(format_, width_, height_, image_.GetPitch(),
-                              image_.GetConstRow(height_ * (depth_ - 1 - slice)));
+      target.AssignReadOnly(format_, width_, height_, image_.GetPitch(),
+                            image_.GetConstRow(height_ * (depth_ - 1 - slice)));
     }
     else
     {
-      accessor.AssignWritable(format_, width_, height_, image_.GetPitch(),
-                              image_.GetRow(height_ * (depth_ - 1 - slice)));
+      target.AssignWritable(format_, width_, height_, image_.GetPitch(),
+                            image_.GetRow(height_ * (depth_ - 1 - slice)));
     }
-
-    return accessor;
   }
 
 
-  Orthanc::ImageAccessor ImageBuffer3D::GetCoronalSliceAccessor(unsigned int slice,
-                                                                bool readOnly) const
+  void ImageBuffer3D::GetCoronalSliceAccessor(Orthanc::ImageAccessor& target,
+                                              unsigned int slice,
+                                              bool readOnly) const
   {
     if (slice >= height_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    Orthanc::ImageAccessor accessor;
-
     if (readOnly)
     {
-      accessor.AssignReadOnly(format_, width_, depth_, image_.GetPitch() * height_,
-                              image_.GetConstRow(slice));
+      target.AssignReadOnly(format_, width_, depth_, image_.GetPitch() * height_,
+                            image_.GetConstRow(slice));
     }
     else
     {
-      accessor.AssignWritable(format_, width_, depth_, image_.GetPitch() * height_,
-                              image_.GetRow(slice));
+      target.AssignWritable(format_, width_, depth_, image_.GetPitch() * height_,
+                            image_.GetRow(slice));
     }
-
-    return accessor;
   }
 
 
@@ -97,7 +91,7 @@ namespace OrthancStone
 
       for (unsigned int y = 0; y < height_; y++)
       {
-        const void* source = (reinterpret_cast<const uint8_t*>(image_.GetConstRow(y + z * height_)) + 
+        const void* source = (reinterpret_cast<const uint8_t*>(image_.GetConstRow(y + z * height_)) +
                               bytesPerPixel * slice);
 
         memcpy(target, source, bytesPerPixel);
@@ -163,20 +157,20 @@ namespace OrthancStone
     Vector result;
     switch (projection)
     {
-      case VolumeProjection_Axial:
-        result = voxelDimensions_;
-        break;
+    case VolumeProjection_Axial:
+      result = voxelDimensions_;
+      break;
 
-      case VolumeProjection_Coronal:
-        LinearAlgebra::AssignVector(result, voxelDimensions_[0], voxelDimensions_[2], voxelDimensions_[1]);
-        break;
+    case VolumeProjection_Coronal:
+      LinearAlgebra::AssignVector(result, voxelDimensions_[0], voxelDimensions_[2], voxelDimensions_[1]);
+      break;
 
-      case VolumeProjection_Sagittal:
-        LinearAlgebra::AssignVector(result, voxelDimensions_[1], voxelDimensions_[2], voxelDimensions_[0]);
-        break;
+    case VolumeProjection_Sagittal:
+      LinearAlgebra::AssignVector(result, voxelDimensions_[1], voxelDimensions_[2], voxelDimensions_[0]);
+      break;
 
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
     return result;
@@ -189,23 +183,23 @@ namespace OrthancStone
   {
     switch (projection)
     {
-      case VolumeProjection_Axial:
-        width = width_;
-        height = height_;
-        break;
+    case VolumeProjection_Axial:
+      width = width_;
+      height = height_;
+      break;
 
-      case VolumeProjection_Coronal:
-        width = width_;
-        height = depth_;
-        break;
+    case VolumeProjection_Coronal:
+      width = width_;
+      height = depth_;
+      break;
 
-      case VolumeProjection_Sagittal:
-        width = height_;
-        height = depth_;
-        break;
+    case VolumeProjection_Sagittal:
+      width = height_;
+      height = depth_;
+      break;
 
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
   }
 
@@ -216,51 +210,51 @@ namespace OrthancStone
 
     switch (projection)
     {
-      case VolumeProjection_Axial:
-        for (unsigned int z = 0; z < depth_; z++)
-        {
-          Vector origin = axialGeometry_.GetOrigin();
-          origin += static_cast<double>(z) * voxelDimensions_[2] * axialGeometry_.GetNormal();
+    case VolumeProjection_Axial:
+      for (unsigned int z = 0; z < depth_; z++)
+      {
+        Vector origin = axialGeometry_.GetOrigin();
+        origin += static_cast<double>(z) * voxelDimensions_[2] * axialGeometry_.GetNormal();
 
-          result->AddSlice(origin, 
-                           axialGeometry_.GetAxisX(), 
-                           axialGeometry_.GetAxisY());
-        }
-        break;
+        result->AddSlice(origin,
+                         axialGeometry_.GetAxisX(),
+                         axialGeometry_.GetAxisY());
+      }
+      break;
 
-      case VolumeProjection_Coronal:
-        for (unsigned int y = 0; y < height_; y++)
-        {
-          Vector origin = axialGeometry_.GetOrigin();
-          origin += static_cast<double>(y) * voxelDimensions_[1] * axialGeometry_.GetAxisY();
-          origin += static_cast<double>(depth_ - 1) * voxelDimensions_[2] * axialGeometry_.GetNormal();
+    case VolumeProjection_Coronal:
+      for (unsigned int y = 0; y < height_; y++)
+      {
+        Vector origin = axialGeometry_.GetOrigin();
+        origin += static_cast<double>(y) * voxelDimensions_[1] * axialGeometry_.GetAxisY();
+        origin += static_cast<double>(depth_ - 1) * voxelDimensions_[2] * axialGeometry_.GetNormal();
 
-          result->AddSlice(origin, 
-                           axialGeometry_.GetAxisX(), 
-                           -axialGeometry_.GetNormal());
-        }
-        break;
+        result->AddSlice(origin,
+                         axialGeometry_.GetAxisX(),
+                         -axialGeometry_.GetNormal());
+      }
+      break;
 
-      case VolumeProjection_Sagittal:
-        for (unsigned int x = 0; x < width_; x++)
-        {
-          Vector origin = axialGeometry_.GetOrigin();
-          origin += static_cast<double>(x) * voxelDimensions_[0] * axialGeometry_.GetAxisX();
-          origin += static_cast<double>(depth_ - 1) * voxelDimensions_[2] * axialGeometry_.GetNormal();
+    case VolumeProjection_Sagittal:
+      for (unsigned int x = 0; x < width_; x++)
+      {
+        Vector origin = axialGeometry_.GetOrigin();
+        origin += static_cast<double>(x) * voxelDimensions_[0] * axialGeometry_.GetAxisX();
+        origin += static_cast<double>(depth_ - 1) * voxelDimensions_[2] * axialGeometry_.GetNormal();
 
-          result->AddSlice(origin, 
-                           axialGeometry_.GetAxisY(), 
-                           -axialGeometry_.GetNormal());
-        }
-        break;
+        result->AddSlice(origin,
+                         axialGeometry_.GetAxisY(),
+                         -axialGeometry_.GetNormal());
+      }
+      break;
 
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);          
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
     return result.release();
   }
-    
+
 
   uint64_t ImageBuffer3D::GetEstimatedMemorySize() const
   {
@@ -278,27 +272,27 @@ namespace OrthancStone
     }
 
     float sliceMin, sliceMax;
-      
+
     switch (slice.GetFormat())
     {
-      case Orthanc::PixelFormat_Grayscale8:
-      case Orthanc::PixelFormat_Grayscale16:
-      case Orthanc::PixelFormat_Grayscale32:
-      case Orthanc::PixelFormat_SignedGrayscale16:
-      {
-        int64_t a, b;
-        Orthanc::ImageProcessing::GetMinMaxIntegerValue(a, b, slice);
-        sliceMin = static_cast<float>(a);
-        sliceMax = static_cast<float>(b);
-        break;
-      }
+    case Orthanc::PixelFormat_Grayscale8:
+    case Orthanc::PixelFormat_Grayscale16:
+    case Orthanc::PixelFormat_Grayscale32:
+    case Orthanc::PixelFormat_SignedGrayscale16:
+    {
+      int64_t a, b;
+      Orthanc::ImageProcessing::GetMinMaxIntegerValue(a, b, slice);
+      sliceMin = static_cast<float>(a);
+      sliceMax = static_cast<float>(b);
+      break;
+    }
 
-      case Orthanc::PixelFormat_Float32:
-        Orthanc::ImageProcessing::GetMinMaxFloatValue(sliceMin, sliceMax, slice);
-        break;
+    case Orthanc::PixelFormat_Float32:
+      Orthanc::ImageProcessing::GetMinMaxFloatValue(sliceMin, sliceMax, slice);
+      break;
 
-      default:
-        return;
+    default:
+      return;
     }
 
     if (hasRange_)
@@ -359,21 +353,21 @@ namespace OrthancStone
   {
     switch (projection)
     {
-      case VolumeProjection_Axial:
-        accessor_ = that.GetAxialSliceAccessor(slice, true);
-        break;
+    case VolumeProjection_Axial:
+      that.GetAxialSliceAccessor(accessor_, slice, true);
+      break;
 
-      case VolumeProjection_Coronal:
-        accessor_ = that.GetCoronalSliceAccessor(slice, true);
-        break;
+    case VolumeProjection_Coronal:
+      that.GetCoronalSliceAccessor(accessor_, slice, true);
+      break;
 
-      case VolumeProjection_Sagittal:
-        sagittal_.reset(that.ExtractSagittalSlice(slice));
-        accessor_ = *sagittal_;
-        break;
+    case VolumeProjection_Sagittal:
+      sagittal_.reset(that.ExtractSagittalSlice(slice));
+      sagittal_->GetReadOnlyAccessor(accessor_);
+      break;
 
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);          
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
   }
 
@@ -385,7 +379,7 @@ namespace OrthancStone
       if (sagittal_.get() != NULL)
       {
         // TODO
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
 
       // Update the dynamic range of the underlying image, if
@@ -403,21 +397,21 @@ namespace OrthancStone
   {
     switch (projection)
     {
-      case VolumeProjection_Axial:
-        accessor_ = that.GetAxialSliceAccessor(slice, false);
-        break;
+    case VolumeProjection_Axial:
+      that.GetAxialSliceAccessor(accessor_, slice, false);
+      break;
 
-      case VolumeProjection_Coronal:
-        accessor_ = that.GetCoronalSliceAccessor(slice, false);
-        break;
+    case VolumeProjection_Coronal:
+      that.GetCoronalSliceAccessor(accessor_, slice, false);
+      break;
 
-      case VolumeProjection_Sagittal:
-        sagittal_.reset(that.ExtractSagittalSlice(slice));
-        accessor_ = *sagittal_;
-        break;
+    case VolumeProjection_Sagittal:
+      sagittal_.reset(that.ExtractSagittalSlice(slice));
+      sagittal_->GetWriteableAccessor(accessor_);
+      break;
 
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);          
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
   }
 
@@ -473,11 +467,11 @@ namespace OrthancStone
     const CoordinateSystem3D& axial = GetAxialGeometry();
     
     Vector origin = (axial.MapSliceToWorldCoordinates(-0.5 * ps[0], -0.5 * ps[1]) -
-                     0.5 * ps[2] * axial.GetNormal());
+        0.5 * ps[2] * axial.GetNormal());
 
     return (origin +
             axial.GetAxisX() * ps[0] * x * static_cast<double>(GetWidth()) +
-            axial.GetAxisY() * ps[1] * y * static_cast<double>(GetHeight()) +
-            axial.GetNormal() * ps[2] * z * static_cast<double>(GetDepth()));
+        axial.GetAxisY() * ps[1] * y * static_cast<double>(GetHeight()) +
+        axial.GetNormal() * ps[2] * z * static_cast<double>(GetDepth()));
   }
 }

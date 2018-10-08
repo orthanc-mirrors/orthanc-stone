@@ -26,6 +26,8 @@
 
 namespace OrthancStone
 {
+  class SmartLoader;
+
   class LayerSourceBase : public ILayerSource
   {
   protected:
@@ -41,15 +43,15 @@ namespace OrthancStone
                           const CoordinateSystem3D& slice,
                           bool isError);
 
+    void NotifyImageReady(boost::shared_ptr<Orthanc::ImageAccessor> image,
+                          SliceImageQuality imageQuality,
+                          const Slice& slice);
+
     LayerSourceBase(MessageBroker& broker)
       : ILayerSource(broker)
     {
-//      DeclareEmittableMessage(MessageType_LayerSource_GeometryReady);
-//      DeclareEmittableMessage(MessageType_LayerSource_GeometryError);
-//      DeclareEmittableMessage(MessageType_LayerSource_ContentChanged);
-//      DeclareEmittableMessage(MessageType_LayerSource_SliceChanged);
-//      DeclareEmittableMessage(MessageType_LayerSource_LayerReady);
     }
 
+    friend class SmartLoader;
   };
 }

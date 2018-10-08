@@ -27,11 +27,12 @@ namespace OrthancStone {
     MessageType_Widget_GeometryChanged,
     MessageType_Widget_ContentChanged,
 
-    MessageType_LayerSource_GeometryReady,
+    MessageType_LayerSource_GeometryReady,   // instance tags have been loaded
     MessageType_LayerSource_GeometryError,
     MessageType_LayerSource_ContentChanged,
     MessageType_LayerSource_SliceChanged,
-    MessageType_LayerSource_LayerReady,
+    MessageType_LayerSource_ImageReady,      // instance pixels data have been loaded
+    MessageType_LayerSource_LayerReady,      // layer is ready to be rendered
 
     MessageType_SliceLoader_GeometryReady,
     MessageType_SliceLoader_GeometryError,

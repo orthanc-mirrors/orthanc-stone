@@ -173,7 +173,7 @@ namespace OrthancStone
   };
 
   void OrthancSlicesLoader::NotifySliceImageSuccess(const Operation& operation,
-                                                    std::auto_ptr<Orthanc::ImageAccessor>& image)
+                                                    boost::shared_ptr<Orthanc::ImageAccessor> image)
   {
     if (image.get() == NULL)
     {
@@ -341,7 +341,7 @@ namespace OrthancStone
   void OrthancSlicesLoader::ParseSliceImagePng(const OrthancApiClient::BinaryResponseReadyMessage& message)
   {
     const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(*message.Payload);
-    std::auto_ptr<Orthanc::ImageAccessor>  image;
+    boost::shared_ptr<Orthanc::ImageAccessor>  image;
     
     try
     {
@@ -381,7 +381,7 @@ namespace OrthancStone
   void OrthancSlicesLoader::ParseSliceImagePam(const OrthancApiClient::BinaryResponseReadyMessage& message)
   {
     const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(*message.Payload);
-    std::auto_ptr<Orthanc::ImageAccessor>  image;
+    boost::shared_ptr<Orthanc::ImageAccessor>  image;
 
     try
     {
@@ -461,7 +461,7 @@ namespace OrthancStone
       }
     }
     
-    std::auto_ptr<Orthanc::ImageAccessor> reader;
+    boost::shared_ptr<Orthanc::ImageAccessor> reader;
     
     {
       std::string jpeg;
@@ -548,11 +548,11 @@ namespace OrthancStone
     }
     
     // Decode a grayscale JPEG 8bpp image coming from the Web viewer
-    std::auto_ptr<Orthanc::ImageAccessor> image
+    boost::shared_ptr<Orthanc::ImageAccessor> image
         (new Orthanc::Image(expectedFormat, reader->GetWidth(), reader->GetHeight(), false));
 
     Orthanc::ImageProcessing::Convert(*image, *reader);
-    reader.reset(NULL);
+    reader = NULL;
     
     float scaling = static_cast<float>(stretchHigh - stretchLow) / 255.0f;
     
@@ -567,8 +567,7 @@ namespace OrthancStone
   
   
   class StringImage :
-      public Orthanc::ImageAccessor,
-      public boost::noncopyable
+      public Orthanc::ImageAccessor
   {
   private:
     std::string  buffer_;
@@ -613,7 +612,7 @@ namespace OrthancStone
     {
       // This is the case of RT-DOSE (uint32_t values)
       
-      std::auto_ptr<Orthanc::ImageAccessor> image
+      boost::shared_ptr<Orthanc::ImageAccessor> image
           (new StringImage(Orthanc::PixelFormat_Grayscale32, info.GetWidth(),
                            info.GetHeight(), raw));
       
@@ -637,7 +636,7 @@ namespace OrthancStone
              info.GetPhotometricInterpretation() == Orthanc::PhotometricInterpretation_Monochrome2 &&
              raw.size() == info.GetWidth() * info.GetHeight() * 2)
     {
-      std::auto_ptr<Orthanc::ImageAccessor> image
+      boost::shared_ptr<Orthanc::ImageAccessor> image
           (new StringImage(Orthanc::PixelFormat_Grayscale16, info.GetWidth(),
                            info.GetHeight(), raw));
       

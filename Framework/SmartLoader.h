@@ -28,8 +28,16 @@
 
 namespace OrthancStone
 {
-  class SmartLoader : public IObservable, IObserver
+  class LayerWidget;
+
+  class SmartLoader : public IObservable, public IObserver
   {
+    struct CachedSlice;
+
+  protected:
+    typedef std::map<std::string, boost::shared_ptr<SmartLoader::CachedSlice>> CachedSlices;
+    CachedSlices cachedSlices_;
+
     SliceImageQuality     imageQuality_;
     OrthancApiClient&     orthancApiClient_;
 
@@ -44,9 +52,14 @@ namespace OrthancStone
 
     void SetImageQuality(SliceImageQuality imageQuality) { imageQuality_ = imageQuality; }
 
-    ILayerSource* GetFrame(const std::string& instanceId, unsigned int frame);
+    void SetFrameInWidget(LayerWidget& layerWidget, size_t layerIndex, const std::string& instanceId, unsigned int frame);
 
     void GetFirstInstanceIdForSeries(std::string& output, const std::string& seriesId);
+
+  private:
+    void OnLayerGeometryReady(const ILayerSource::GeometryReadyMessage& message);
+    void OnImageReady(const ILayerSource::ImageReadyMessage& message);
+    void OnLayerReady(const ILayerSource::LayerReadyMessage& message);
 
   };
 

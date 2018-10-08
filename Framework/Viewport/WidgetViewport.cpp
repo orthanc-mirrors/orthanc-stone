@@ -108,7 +108,8 @@ namespace OrthancStone
       return false;
     }
     
-    Orthanc::ImageAccessor background = background_.GetAccessor();
+    Orthanc::ImageAccessor background;
+    background_.GetAccessor(background);
 
     if (backgroundChanged_ &&
         !centralWidget_->Render(background))

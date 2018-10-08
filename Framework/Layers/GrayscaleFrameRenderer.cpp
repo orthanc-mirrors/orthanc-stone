@@ -52,7 +52,8 @@ namespace OrthancStone
       lut = reinterpret_cast<const uint8_t*>(Orthanc::EmbeddedResources::GetFileResourceBuffer(style.lut_));
     }
 
-    Orthanc::ImageAccessor target = result->GetAccessor();
+    Orthanc::ImageAccessor target;
+    result->GetAccessor(target);
     const unsigned int width = target.GetWidth();
     const unsigned int height = target.GetHeight();
     

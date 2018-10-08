@@ -55,6 +55,11 @@ namespace OrthancStone
       quality_ = quality;
     }
 
+    SliceImageQuality GetImageQuality() const
+    {
+      return quality_;
+    }
+
     size_t GetSliceCount() const
     {
       return loader_.GetSliceCount();
@@ -75,6 +80,5 @@ protected:
     void OnSliceGeometryError(const OrthancSlicesLoader::SliceGeometryErrorMessage& message);
     void OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message);
     void OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message);
-//    virtual void HandleMessage(IObservable& from, const IMessage& message);
   };
 }

@@ -50,7 +50,8 @@ void QCairoWidget::paintEvent(QPaintEvent* /*event*/)
   {
     OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
     OrthancStone::IViewport& viewport = context_->GetCentralViewport();
-    Orthanc::ImageAccessor a = surface_.GetAccessor();
+    Orthanc::ImageAccessor a;
+    surface_.GetAccessor(a);
     viewport.Render(a);
     painter.drawImage(0, 0, *image_);
   }

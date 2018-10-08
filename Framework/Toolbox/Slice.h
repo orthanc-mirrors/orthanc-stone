@@ -136,5 +136,7 @@ namespace OrthancStone
     void GetExtent(std::vector<Vector>& points) const;
 
     const Orthanc::DicomImageInformation& GetImageInformation() const;
+
+    Slice* Clone() const;
   };
 }

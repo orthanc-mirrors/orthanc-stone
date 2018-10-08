@@ -25,6 +25,8 @@
 #include "../Toolbox/Slice.h"
 #include "../../Framework/Messages/IObservable.h"
 #include "../../Framework/Messages/IMessage.h"
+#include "Core/Images/Image.h"
+#include <boost/shared_ptr.hpp>
 
 namespace OrthancStone
 {
@@ -46,7 +48,7 @@ namespace OrthancStone
       }
     };
 
-    struct LayerReadyMessage : public OriginMessage<MessageType_LayerSource_LayerReady,ILayerSource>
+    struct LayerReadyMessage : public OriginMessage<MessageType_LayerSource_LayerReady, ILayerSource>
     {
       std::auto_ptr<ILayerRenderer>& renderer_;
       const CoordinateSystem3D& slice_;
@@ -61,6 +63,25 @@ namespace OrthancStone
           renderer_(layer),
           slice_(slice),
           isError_(isError)
+      {
+      }
+    };
+
+    struct ImageReadyMessage : public OriginMessage<MessageType_LayerSource_ImageReady, ILayerSource>
+    {
+      boost::shared_ptr<Orthanc::ImageAccessor> image_;
+      SliceImageQuality                         imageQuality_;
+      const Slice&                              slice_;
+
+      ImageReadyMessage(ILayerSource& origin,
+                        boost::shared_ptr<Orthanc::ImageAccessor> image,
+                        SliceImageQuality imageQuality,
+                        const Slice& slice
+                        )
+        : OriginMessage(origin),
+          image_(image),
+          imageQuality_(imageQuality),
+          slice_(slice)
       {
       }
     };

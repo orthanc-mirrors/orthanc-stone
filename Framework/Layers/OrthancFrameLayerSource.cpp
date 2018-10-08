@@ -51,9 +51,17 @@ namespace OrthancStone
 
   void OrthancFrameLayerSource::OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message)
   {
+    // first notify that the image is ready (targeted to, i.e: an image cache)
+    LayerSourceBase::NotifyImageReady(message.image_, message.effectiveQuality_, message.slice_);
+
+    // then notify that the layer is ready for render
     bool isFull = (message.effectiveQuality_ == SliceImageQuality_FullPng || message.effectiveQuality_ == SliceImageQuality_FullPam);
-    LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(message.image_.release(), message.slice_, isFull),
+    std::auto_ptr<Orthanc::ImageAccessor> accessor(new Orthanc::ImageAccessor());
+    message.image_->GetReadOnlyAccessor(*accessor);
+
+    LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(accessor.release(), message.slice_, isFull),
                                       message.slice_.GetGeometry(), false);
+
   }
 
   void OrthancFrameLayerSource::OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message)

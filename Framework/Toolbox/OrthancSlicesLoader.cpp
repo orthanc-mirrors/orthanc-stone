@@ -626,9 +626,7 @@ namespace OrthancStone
   }
 
 
-  class StringImage :
-    public Orthanc::ImageAccessor,
-    public boost::noncopyable
+  class StringImage : public Orthanc::ImageAccessor
   {
   private:
     std::string  buffer_;

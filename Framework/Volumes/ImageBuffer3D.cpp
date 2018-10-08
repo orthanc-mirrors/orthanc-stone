@@ -29,53 +29,47 @@
 
 namespace OrthancStone
 {
-  Orthanc::ImageAccessor ImageBuffer3D::GetAxialSliceAccessor(unsigned int slice,
-                                                              bool readOnly) const
+  void ImageBuffer3D::GetAxialSliceAccessor(Orthanc::ImageAccessor& target,
+                                            unsigned int slice,
+                                            bool readOnly) const
   {
     if (slice >= depth_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    Orthanc::ImageAccessor accessor;
-
     if (readOnly)
     {
-      accessor.AssignReadOnly(format_, width_, height_, image_.GetPitch(),
-                              image_.GetConstRow(height_ * (depth_ - 1 - slice)));
+      target.AssignReadOnly(format_, width_, height_, image_.GetPitch(),
+                            image_.GetConstRow(height_ * (depth_ - 1 - slice)));
     }
     else
     {
-      accessor.AssignWritable(format_, width_, height_, image_.GetPitch(),
-                              image_.GetRow(height_ * (depth_ - 1 - slice)));
+      target.AssignWritable(format_, width_, height_, image_.GetPitch(),
+                            image_.GetRow(height_ * (depth_ - 1 - slice)));
     }
-
-    return accessor;
   }
 
 
-  Orthanc::ImageAccessor ImageBuffer3D::GetCoronalSliceAccessor(unsigned int slice,
-                                                                bool readOnly) const
+  void ImageBuffer3D::GetCoronalSliceAccessor(Orthanc::ImageAccessor& target,
+                                              unsigned int slice,
+                                              bool readOnly) const
   {
     if (slice >= height_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    Orthanc::ImageAccessor accessor;
-
     if (readOnly)
     {
-      accessor.AssignReadOnly(format_, width_, depth_, image_.GetPitch() * height_,
-                              image_.GetConstRow(slice));
+      target.AssignReadOnly(format_, width_, depth_, image_.GetPitch() * height_,
+                            image_.GetConstRow(slice));
     }
     else
     {
-      accessor.AssignWritable(format_, width_, depth_, image_.GetPitch() * height_,
-                              image_.GetRow(slice));
+      target.AssignWritable(format_, width_, depth_, image_.GetPitch() * height_,
+                            image_.GetRow(slice));
     }
-
-    return accessor;
   }
 
 
@@ -360,16 +354,16 @@ namespace OrthancStone
     switch (projection)
     {
       case VolumeProjection_Axial:
-        accessor_ = that.GetAxialSliceAccessor(slice, true);
+        that.GetAxialSliceAccessor(accessor_, slice, true);
         break;
 
       case VolumeProjection_Coronal:
-        accessor_ = that.GetCoronalSliceAccessor(slice, true);
+        that.GetCoronalSliceAccessor(accessor_, slice, true);
         break;
 
       case VolumeProjection_Sagittal:
         sagittal_.reset(that.ExtractSagittalSlice(slice));
-        accessor_ = *sagittal_;
+        sagittal_->GetReadOnlyAccessor(accessor_);
         break;
 
       default:
@@ -404,16 +398,16 @@ namespace OrthancStone
     switch (projection)
     {
       case VolumeProjection_Axial:
-        accessor_ = that.GetAxialSliceAccessor(slice, false);
+        that.GetAxialSliceAccessor(accessor_, slice, false);
         break;
 
       case VolumeProjection_Coronal:
-        accessor_ = that.GetCoronalSliceAccessor(slice, false);
+        that.GetCoronalSliceAccessor(accessor_, slice, false);
         break;
 
       case VolumeProjection_Sagittal:
         sagittal_.reset(that.ExtractSagittalSlice(slice));
-        accessor_ = *sagittal_;
+        sagittal_->GetWriteableAccessor(accessor_);
         break;
 
       default:

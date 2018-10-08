@@ -98,8 +98,8 @@ namespace OrthancStone
       return surface_;
     }
 
-    Orthanc::ImageAccessor GetConstAccessor() const;
+    void GetReadOnlyAccessor(Orthanc::ImageAccessor& target) const;
 
-    Orthanc::ImageAccessor GetAccessor();
+    void GetWriteableAccessor(Orthanc::ImageAccessor& target);
   };
 }

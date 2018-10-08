@@ -57,7 +57,8 @@ namespace OrthancStone
 
     virtual void Render(Orthanc::ImageAccessor& surface)
     {
-      Orthanc::ImageAccessor accessor = surface.GetRegion(left_, top_, width_, height_);
+      Orthanc::ImageAccessor accessor;
+      surface.GetRegion(accessor, left_, top_, width_, height_);
       tracker_->Render(accessor);
     }
 
@@ -142,7 +143,8 @@ namespace OrthancStone
       }
       else 
       {
-        Orthanc::ImageAccessor accessor = target.GetRegion(left_, top_, width_, height_);
+        Orthanc::ImageAccessor accessor;
+        target.GetRegion(accessor, left_, top_, width_, height_);
         return widget_->Render(accessor);
       }
     }
@@ -173,7 +175,8 @@ namespace OrthancStone
     {
       if (Contains(x, y))
       {
-        Orthanc::ImageAccessor accessor = target.GetRegion(left_, top_, width_, height_);
+        Orthanc::ImageAccessor accessor;
+        target.GetRegion(accessor, left_, top_, width_, height_);
 
         widget_->RenderMouseOver(accessor, x - left_, y - top_);
       }

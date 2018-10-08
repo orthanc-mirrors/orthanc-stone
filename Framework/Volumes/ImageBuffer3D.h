@@ -48,11 +48,13 @@ namespace OrthancStone
 
     void ExtendImageRange(const Orthanc::ImageAccessor& slice);
 
-    Orthanc::ImageAccessor GetAxialSliceAccessor(unsigned int slice,
-                                                 bool readOnly) const;
-
-    Orthanc::ImageAccessor GetCoronalSliceAccessor(unsigned int slice,
-                                                   bool readOnly) const;
+    void GetAxialSliceAccessor(Orthanc::ImageAccessor& target,
+                               unsigned int slice,
+                               bool readOnly) const;
+    
+    void GetCoronalSliceAccessor(Orthanc::ImageAccessor& target,
+                                 unsigned int slice,
+                                 bool readOnly) const;
 
     Orthanc::Image*  ExtractSagittalSlice(unsigned int slice) const;
 

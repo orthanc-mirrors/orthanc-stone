@@ -30,7 +30,9 @@ namespace OrthancStone
   {
     std::auto_ptr<CairoSurface> display(new CairoSurface(frame_->GetWidth(), frame_->GetHeight()));
 
-    Orthanc::ImageAccessor target = display->GetAccessor();
+    Orthanc::ImageAccessor target;
+    display->GetWriteableAccessor(target);
+    
     Orthanc::ImageProcessing::Convert(target, *frame_);
 
     return display.release();

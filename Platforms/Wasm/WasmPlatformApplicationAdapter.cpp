@@ -19,10 +19,14 @@ namespace OrthancStone
       try
       {
         Json::Value inputJson;
+        // if the message is a command, build it and execute it
         if (MessagingToolbox::ParseJson(inputJson, input.c_str(), input.size()))
         {
             std::unique_ptr<ICommand> command(application_.GetCommandBuilder().CreateFromJson(inputJson));
-            application_.ExecuteCommand(*command);
+            if (command.get() == NULL) 
+              printf("Could not parse command: '%s'\n", input.c_str());
+            else
+              application_.ExecuteCommand(*command);
         }
       }
       catch (StoneException& exc)

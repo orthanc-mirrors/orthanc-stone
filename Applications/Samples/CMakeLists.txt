@@ -85,13 +85,13 @@ add_library(OrthancStone STATIC
 include_directories(${ORTHANC_STONE_ROOT})
 
 # files common to all samples
-list(APPEND APPLICATIONS_SOURCES
+list(APPEND SAMPLE_APPLICATIONS_SOURCES
   ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleInteractor.h
   ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationBase.h
   )
 
 if (ENABLE_QT)
-  list(APPEND APPLICATIONS_SOURCES
+  list(APPEND SAMPLE_APPLICATIONS_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleQtApplicationRunner.h
     ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindow.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindow.ui
@@ -99,13 +99,13 @@ if (ENABLE_QT)
 endif()
 
 if (ENABLE_NATIVE)
-  list(APPEND APPLICATIONS_SOURCES
+  list(APPEND SAMPLE_APPLICATIONS_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleMainNative.cpp
     )
 
 elseif (ENABLE_WASM)
 
-  list(APPEND APPLICATIONS_SOURCES
+  list(APPEND SAMPLE_APPLICATIONS_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleMainWasm.cpp
     ${STONE_WASM_SOURCES}
     )
@@ -115,7 +115,7 @@ endif()
 macro(BuildSingleFileSample Target Header Sample)
   add_executable(${Target}
     ${ORTHANC_STONE_ROOT}/Applications/Samples/${Header}
-    ${APPLICATIONS_SOURCES}
+    ${SAMPLE_APPLICATIONS_SOURCES}
     )
   set_target_properties(${Target} PROPERTIES COMPILE_DEFINITIONS ORTHANC_STONE_SAMPLE=${Sample})
   target_link_libraries(${Target} OrthancStone)
@@ -128,7 +128,34 @@ endmacro()
 #BuildSingleFileSample(OrthancStoneBasicPetCtFusion 5)
 #BuildSingleFileSample(OrthancStoneSynchronizedSeries 6)
 #BuildSingleFileSample(OrthancStoneLayoutPetCtFusion 7)
-BuildSingleFileSample(OrthancStoneSimpleViewer SimpleViewerApplication.h 8)
+BuildSingleFileSample(OrthancStoneSimpleViewerSingleFile SimpleViewerApplicationSingleFile.h 8)  # we keep that one just as a sample before we convert another sample to this pattern
+
+##### SimpleViewer sample #######
+
+if (ENABLE_QT)
+  list(APPEND SIMPLE_VIEWER_APPLICATION_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/SimpleViewerMainWindow.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/SimpleViewerMainWindow.ui
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/mainQt.cpp
+    )
+elseif (ENABLE_WASM)
+    list(APPEND SIMPLE_VIEWER_APPLICATION_SOURCES
+        ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/mainWasm.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/SimpleViewerWasmApplicationAdapter.cpp
+        ${STONE_WASM_SOURCES}
+      )
+endif()
+
+add_executable(OrthancStoneSimpleViewer
+  ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.cpp
+  ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.cpp
+  ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.cpp
+  ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/AppStatus.h
+  ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Messages.h
+  ${SIMPLE_VIEWER_APPLICATION_SOURCES}
+  )
+target_link_libraries(OrthancStoneSimpleViewer OrthancStone)
+
 
 #####################################################################
 ## Build the unit tests

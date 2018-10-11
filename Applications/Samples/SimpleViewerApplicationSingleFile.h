@@ -35,6 +35,10 @@
 #include "../../Platforms/Wasm/WasmPlatformApplicationAdapter.h"
 #include "../../Platforms/Wasm/Defaults.h"
 #endif
+
+#if ORTHANC_ENABLE_QT==1
+#include "Qt/SampleMainWindow.h"
+#endif
 #include <Core/Logging.h>
 
 namespace OrthancStone
@@ -405,6 +409,12 @@ namespace OrthancStone
 
         AttachWidgetToWasmViewport("canvas", thumbnailsLayout_);
         AttachWidgetToWasmViewport("canvas2", mainWidget_);
+      }
+#endif
+
+#if ORTHANC_ENABLE_QT==1
+      virtual QStoneMainWindow* CreateQtMainWindow() {
+        return new SampleMainWindow(dynamic_cast<OrthancStone::NativeStoneApplicationContext&>(*context_), *this);
       }
 #endif
     };

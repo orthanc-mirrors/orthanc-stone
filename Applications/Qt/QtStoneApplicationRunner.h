@@ -35,7 +35,6 @@ namespace OrthancStone
   protected:
     std::auto_ptr<QStoneMainWindow> window_;
 
-    virtual void InitializeMainWindow(NativeStoneApplicationContext& context) = 0;
   public:
     QtStoneApplicationRunner(MessageBroker& broker,
                              IStoneApplication& application)

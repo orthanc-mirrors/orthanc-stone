@@ -32,32 +32,18 @@ namespace OrthancStone
       throw StoneException(ErrorCode_CommandJsonInvalidFormat);
     }
 
-    if (commandJson["commandType"].isString() && commandJson["commandType"].asString() == "simple")
+    if (commandJson["commandType"].isString() && commandJson["commandType"].asString() == "generic-no-arg-command")
     {
         printf("creating a simple command\n");
-        return new SimpleCommand(commandJson["command"].asString().c_str());
+        return new GenericNoArgCommand(commandJson["command"].asString().c_str());
+    }
+    else if (commandJson["commandType"].isString() && commandJson["commandType"].asString() == "generic-one-string-arg-command")
+    {
+        printf("creating a simple command\n");
+        return new GenericNoArgCommand(commandJson["command"].asString().c_str());
     }
 
     return NULL;
-    // std::string commandName = commandJson["command"].asString();
-
-
-
-
-    // CommandCreationFunctions::const_iterator it = commands_.find(commandName);
-    // if (it == commands_.end())
-    // {
-    //   throw Orthanc::OrthancException(Orthanc::ErrorCode_UnknownResource);  // TODO: use StoneException ?
-    // }
-
-    // // call the CreateCommandFn to build the command
-    // ICommand* command = it->second();
-    // if (commandJson["args"].isObject())
-    // {
-    //   command->Configure(commandJson["args"]);
-    // }
-
-    // return command;
   }
 
 }

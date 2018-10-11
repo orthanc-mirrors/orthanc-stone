@@ -4,3 +4,4 @@ Applications/Qt/archive/
 Applications/Samples/ThirdPartyDownloads/
 Applications/Samples/build-wasm/
 Applications/Samples/build-web/
+.vscode/

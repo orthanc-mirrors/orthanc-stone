@@ -70,12 +70,24 @@ namespace OrthancStone
     virtual void Execute() {}
   };
 
-  class SimpleCommand : public BaseCommand<SimpleCommand>
+  class GenericNoArgCommand : public BaseCommand<GenericNoArgCommand>
   {
   public:
-    SimpleCommand(const std::string& name)
+    GenericNoArgCommand(const std::string& name)
       : BaseCommand(name)
     {}
+    virtual void Execute() {} // TODO currently not used but this is not nice at all !
+  };
+
+  class GenericOneStringArgCommand : public BaseCommand<GenericOneStringArgCommand>
+  {
+    std::string argument_;
+  public:
+    GenericOneStringArgCommand(const std::string& name, const std::string& argument)
+      : BaseCommand(name)
+    {}
+
+    const std::string& GetArgument() const {return argument_;}
     virtual void Execute() {} // TODO currently not used but this is not nice at all !
   };
 

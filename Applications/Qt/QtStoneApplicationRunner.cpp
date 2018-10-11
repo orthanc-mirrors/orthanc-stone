@@ -50,11 +50,11 @@ namespace OrthancStone
   {
     context.Start();
 
-    QApplication app(argc, argv);
-    InitializeMainWindow(context);
+    QApplication qtApplication(argc, argv);
+    window_.reset(application_.CreateQtMainWindow());
 
     window_->show();
-    app.exec();
+    qtApplication.exec();
 
     context.Stop();
   }

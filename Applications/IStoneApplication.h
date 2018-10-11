@@ -28,8 +28,13 @@
 #include "Commands/ICommand.h"
 #include "Commands/BaseCommandBuilder.h"
 
+
 namespace OrthancStone
 {
+#if ORTHANC_ENABLE_QT==1
+  class QStoneMainWindow;
+#endif
+
   // a StoneApplication is an application that can actually be executed
   // in multiple environments.  i.e: it can run natively integrated in a QtApplication
   // or it can be executed as part of a WebPage when compiled into WebAssembly.
@@ -49,6 +54,9 @@ namespace OrthancStone
                             const boost::program_options::variables_map& parameters) = 0;
 #if ORTHANC_ENABLE_WASM==1
     virtual void InitializeWasm() {}  // specific initialization when the app is running in WebAssembly.  This is called after the other Initialize()
+#endif
+#if ORTHANC_ENABLE_QT==1
+      virtual QStoneMainWindow* CreateQtMainWindow() = 0;
 #endif
 
     virtual std::string GetTitle() const = 0;

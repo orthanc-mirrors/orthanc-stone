@@ -29,7 +29,7 @@ typedef OrthancStone::Samples::SynchronizedSeriesApplication SampleApplication;
 typedef OrthancStone::Samples::LayoutPetCtFusionApplication SampleApplication;
 
 #elif ORTHANC_STONE_SAMPLE == 8
-#include "SimpleViewerApplication.h"
+#include "SimpleViewerApplicationSingleFile.h"
 typedef OrthancStone::Samples::SimpleViewerApplication SampleApplication;
 
 #else

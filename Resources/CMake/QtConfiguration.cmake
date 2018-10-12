@@ -23,18 +23,28 @@ SET(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Find the QtWidgets library
-find_package(Qt5Widgets)
-find_package(Qt5Core)
+find_package(Qt5Widgets QUIET)
+
+if (Qt5Widgets_FOUND)
+  message("Qt5 has been detected")
+  find_package(Qt5Core REQUIRED)
+  link_libraries(
+    Qt5::Widgets
+    Qt5::Core
+    )
+else()
+  message("Qt5 has not been found, trying with Qt4")
+  find_package(Qt4 REQUIRED QtGui)
+  link_libraries(
+    Qt4::QtGui
+    )
+endif()
 
 list(APPEND QT_SOURCES
-    ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Qt/QtStoneApplicationRunner.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.cpp
-)
+  ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.cpp
+  ${ORTHANC_STONE_ROOT}/Applications/Qt/QtStoneApplicationRunner.cpp
+  ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.cpp
+  )
 
 include_directories(${ORTHANC_STONE_ROOT}/Applications/Qt/)
 
-link_libraries(
-    Qt5::Widgets
-    Qt5::Core
-)

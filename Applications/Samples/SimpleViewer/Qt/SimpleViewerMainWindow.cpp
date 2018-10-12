@@ -38,12 +38,21 @@ namespace SimpleViewer
     ui_->setupUi(this);
     SetCentralStoneWidget(ui_->cairoCentralWidget);
 
+#if QT_VERSION >= 0x050000
     connect(ui_->toolButtonCrop, &QToolButton::clicked, this, &SimpleViewerMainWindow::cropClicked);
     connect(ui_->toolButtonLine, &QToolButton::clicked, this, &SimpleViewerMainWindow::lineClicked);
     connect(ui_->toolButtonCircle, &QToolButton::clicked, this, &SimpleViewerMainWindow::circleClicked);
     connect(ui_->toolButtonWindowing, &QToolButton::clicked, this, &SimpleViewerMainWindow::windowingClicked);
     connect(ui_->pushButtonRotate, &QPushButton::clicked, this, &SimpleViewerMainWindow::rotateClicked);
     connect(ui_->pushButtonInvert, &QPushButton::clicked, this, &SimpleViewerMainWindow::invertClicked);
+#else
+    connect(ui_->toolButtonCrop, SIGNAL(clicked()), this, SLOT(cropClicked()));
+    connect(ui_->toolButtonLine, SIGNAL(clicked()), this, SLOT(lineClicked()));
+    connect(ui_->toolButtonCircle, SIGNAL(clicked()), this, SLOT(circleClicked()));
+    connect(ui_->toolButtonWindowing, SIGNAL(clicked()), this, SLOT(windowingClicked()));
+    connect(ui_->pushButtonRotate, SIGNAL(clicked()), this, SLOT(rotateClicked()));
+    connect(ui_->pushButtonInvert, SIGNAL(clicked()), this, SLOT(invertClicked()));
+#endif
   }
 
   SimpleViewerMainWindow::~SimpleViewerMainWindow()

@@ -40,10 +40,17 @@ namespace OrthancStone
       ui_->setupUi(this);
       SetCentralStoneWidget(ui_->cairoCentralWidget);
 
+#if QT_VERSION >= 0x050000
       connect(ui_->toolButton1, &QToolButton::clicked, this, &SampleMainWindow::tool1Clicked);
       connect(ui_->toolButton2, &QToolButton::clicked, this, &SampleMainWindow::tool2Clicked);
       connect(ui_->pushButton1, &QPushButton::clicked, this, &SampleMainWindow::pushButton1Clicked);
       connect(ui_->pushButton1, &QPushButton::clicked, this, &SampleMainWindow::pushButton2Clicked);
+#else
+      connect(ui_->toolButton1, SIGNAL(clicked()), this, SLOT(tool1Clicked()));
+      connect(ui_->toolButton2, SIGNAL(clicked()), this, SLOT(tool2Clicked()));
+      connect(ui_->pushButton1, SIGNAL(clicked()), this, SLOT(pushButton1Clicked()));
+      connect(ui_->pushButton1, SIGNAL(clicked()), this, SLOT(pushButton2Clicked()));
+#endif
 
       std::string pushButton1Name;
       std::string pushButton2Name;

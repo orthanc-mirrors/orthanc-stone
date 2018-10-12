@@ -82,6 +82,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="pushButtonUndoCrop">
+         <property name="text">
+          <string>undo crop</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QToolButton" name="toolButtonLine">
          <property name="text">
           <string>line</string>

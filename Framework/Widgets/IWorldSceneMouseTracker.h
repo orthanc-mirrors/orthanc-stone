@@ -32,8 +32,7 @@ namespace OrthancStone
   class IWorldSceneMouseTracker : public boost::noncopyable
   {
   public:
-    virtual ~IWorldSceneMouseTracker()
-    {
+    virtual ~IWorldSceneMouseTracker() {
     }
 
     virtual void Render(CairoContext& context,

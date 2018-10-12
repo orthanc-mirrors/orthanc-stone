@@ -199,6 +199,10 @@ namespace SimpleViewer {
     {
       ExecuteAction(Actions_Rotate);
     }
+    else if (command.GetName() == "action:undo-crop")
+    {
+      ExecuteAction(Actions_UndoCrop);
+    }
     else if (command.GetName() == "action:invert")
     {
       ExecuteAction(Actions_Invert);

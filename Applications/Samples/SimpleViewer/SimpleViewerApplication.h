@@ -82,7 +82,8 @@ namespace SimpleViewer
 
     enum Actions {
       Actions_Rotate,
-      Actions_Invert
+      Actions_Invert,
+      Actions_UndoCrop
     };
 
   private:

@@ -40,6 +40,7 @@ namespace SimpleViewer
 
 #if QT_VERSION >= 0x050000
     connect(ui_->toolButtonCrop, &QToolButton::clicked, this, &SimpleViewerMainWindow::cropClicked);
+    connect(ui_->pushButtonUndoCrop, &QToolButton::clicked, this, &SimpleViewerMainWindow::undoCropClicked);
     connect(ui_->toolButtonLine, &QToolButton::clicked, this, &SimpleViewerMainWindow::lineClicked);
     connect(ui_->toolButtonCircle, &QToolButton::clicked, this, &SimpleViewerMainWindow::circleClicked);
     connect(ui_->toolButtonWindowing, &QToolButton::clicked, this, &SimpleViewerMainWindow::windowingClicked);
@@ -50,6 +51,7 @@ namespace SimpleViewer
     connect(ui_->toolButtonLine, SIGNAL(clicked()), this, SLOT(lineClicked()));
     connect(ui_->toolButtonCircle, SIGNAL(clicked()), this, SLOT(circleClicked()));
     connect(ui_->toolButtonWindowing, SIGNAL(clicked()), this, SLOT(windowingClicked()));
+    connect(ui_->pushButtonUndoCrop, SIGNAL(clicked()), this, SLOT(undoCropClicked()));
     connect(ui_->pushButtonRotate, SIGNAL(clicked()), this, SLOT(rotateClicked()));
     connect(ui_->pushButtonInvert, SIGNAL(clicked()), this, SLOT(invertClicked()));
 #endif
@@ -63,6 +65,12 @@ namespace SimpleViewer
   void SimpleViewerMainWindow::cropClicked()
   {
     GenericNoArgCommand command("selectTool:crop");
+    stoneApplication_.ExecuteCommand(command);
+  }
+
+  void SimpleViewerMainWindow::undoCropClicked()
+  {
+    GenericNoArgCommand command("action:undo-crop");
     stoneApplication_.ExecuteCommand(command);
   }
 

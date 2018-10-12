@@ -47,6 +47,7 @@ namespace SimpleViewer
 
   private slots:
     void cropClicked();
+    void undoCropClicked();
     void rotateClicked();
     void windowingClicked();
     void lineClicked();

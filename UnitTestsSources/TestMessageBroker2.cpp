@@ -31,261 +31,6 @@
 int testCounter = 0;
 namespace {
 
-//  class IObserver;
-//  class IObservable;
-//  class Promise;
-
-//  enum MessageType
-//  {
-//    MessageType_Test1,
-//    MessageType_Test2,
-
-//    MessageType_CustomMessage,
-//    MessageType_LastGenericStoneMessage
-//  };
-
-//  struct IMessage  : public boost::noncopyable
-//  {
-//    MessageType messageType_;
-//  public:
-//    IMessage(const MessageType& messageType)
-//      : messageType_(messageType)
-//    {}
-//    virtual ~IMessage() {}
-
-//    virtual int GetType() const {return messageType_;}
-//  };
-
-
-//  struct ICustomMessage  : public IMessage
-//  {
-//    int customMessageType_;
-//  public:
-//    ICustomMessage(int customMessageType)
-//      : IMessage(MessageType_CustomMessage),
-//        customMessageType_(customMessageType)
-//    {}
-//    virtual ~ICustomMessage() {}
-
-//    virtual int GetType() const {return customMessageType_;}
-//  };
-
-
-//  // This is referencing an object and member function that can be notified
-//  // by an IObservable.  The object must derive from IO
-//  // The member functions must be of type "void Function(const IMessage& message)" or reference a derived class of IMessage
-//  class ICallable : public boost::noncopyable
-//  {
-//  public:
-//    virtual ~ICallable()
-//    {
-//    }
-
-//    virtual void Apply(const IMessage& message) = 0;
-
-//    virtual MessageType GetMessageType() const = 0;
-//    virtual IObserver* GetObserver() const = 0;
-//  };
-
-//  template <typename TObserver,
-//            typename TMessage>
-//  class Callable : public ICallable
-//  {
-//  private:
-//    typedef void (TObserver::* MemberFunction) (const TMessage&);
-
-//    TObserver&      observer_;
-//    MemberFunction  function_;
-
-//  public:
-//    Callable(TObserver& observer,
-//             MemberFunction function) :
-//      observer_(observer),
-//      function_(function)
-//    {
-//    }
-
-//    void ApplyInternal(const TMessage& message)
-//    {
-//      (observer_.*function_) (message);
-//    }
-
-//    virtual void Apply(const IMessage& message)
-//    {
-//      ApplyInternal(dynamic_cast<const TMessage&>(message));
-//    }
-
-//    virtual MessageType GetMessageType() const
-//    {
-//      return static_cast<MessageType>(TMessage::Type);
-//    }
-
-//    virtual IObserver* GetObserver() const
-//    {
-//      return &observer_;
-//    }
-//  };
-
-
-
-
-//  /*
-//   * This is a central message broker.  It keeps track of all observers and knows
-//   * when an observer is deleted.
-//   * This way, it can prevent an observable to send a message to a delete observer.
-//   */
-//  class MessageBroker : public boost::noncopyable
-//  {
-
-//    std::set<IObserver*> activeObservers_;  // the list of observers that are currently alive (that have not been deleted)
-
-//  public:
-
-//    void Register(IObserver& observer)
-//    {
-//      activeObservers_.insert(&observer);
-//    }
-
-//    void Unregister(IObserver& observer)
-//    {
-//      activeObservers_.erase(&observer);
-//    }
-
-//    bool IsActive(IObserver* observer)
-//    {
-//      return activeObservers_.find(observer) != activeObservers_.end();
-//    }
-//  };
-
-
-//  class Promise : public boost::noncopyable
-//  {
-//  protected:
-//    MessageBroker&                    broker_;
-
-//    ICallable* successCallable_;
-//    ICallable* failureCallable_;
-
-//  public:
-//    Promise(MessageBroker& broker)
-//      : broker_(broker),
-//        successCallable_(NULL),
-//        failureCallable_(NULL)
-//    {
-//    }
-
-//    void Success(const IMessage& message)
-//    {
-//      // check the target is still alive in the broker
-//      if (broker_.IsActive(successCallable_->GetObserver()))
-//      {
-//        successCallable_->Apply(message);
-//      }
-//    }
-
-//    void Failure(const IMessage& message)
-//    {
-//      // check the target is still alive in the broker
-//      if (broker_.IsActive(failureCallable_->GetObserver()))
-//      {
-//        failureCallable_->Apply(message);
-//      }
-//    }
-
-//    Promise& Then(ICallable* successCallable)
-//    {
-//      if (successCallable_ != NULL)
-//      {
-//        // TODO: throw throw new "Promise may only have a single success target"
-//      }
-//      successCallable_ = successCallable;
-//      return *this;
-//    }
-
-//    Promise& Else(ICallable* failureCallable)
-//    {
-//      if (failureCallable_ != NULL)
-//      {
-//        // TODO: throw throw new "Promise may only have a single failure target"
-//      }
-//      failureCallable_ = failureCallable;
-//      return *this;
-//    }
-
-//  };
-
-//  class IObserver : public boost::noncopyable
-//  {
-//  protected:
-//    MessageBroker&                    broker_;
-
-//  public:
-//    IObserver(MessageBroker& broker)
-//      : broker_(broker)
-//    {
-//      broker_.Register(*this);
-//    }
-
-//    virtual ~IObserver()
-//    {
-//      broker_.Unregister(*this);
-//    }
-
-//  };
-
-
-//  class IObservable : public boost::noncopyable
-//  {
-//  protected:
-//    MessageBroker&                     broker_;
-
-//    typedef std::map<int, std::set<ICallable*> >   Callables;
-//    Callables  callables_;
-//  public:
-
-//    IObservable(MessageBroker& broker)
-//      : broker_(broker)
-//    {
-//    }
-
-//    virtual ~IObservable()
-//    {
-//      for (Callables::const_iterator it = callables_.begin();
-//           it != callables_.end(); ++it)
-//      {
-//        for (std::set<ICallable*>::const_iterator
-//               it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-//        {
-//          delete *it2;
-//        }
-//      }
-//    }
-
-//    void Register(ICallable* callable)
-//    {
-//      MessageType messageType = callable->GetMessageType();
-
-//      callables_[messageType].insert(callable);
-//    }
-
-//    void EmitMessage(const IMessage& message)
-//    {
-//      Callables::const_iterator found = callables_.find(message.GetType());
-
-//      if (found != callables_.end())
-//      {
-//        for (std::set<ICallable*>::const_iterator
-//               it = found->second.begin(); it != found->second.end(); ++it)
-//        {
-//          if (broker_.IsActive((*it)->GetObserver()))
-//          {
-//            (*it)->Apply(message);
-//          }
-//        }
-//      }
-//    }
-
-//  };
   using namespace OrthancStone;
 
 
@@ -424,6 +169,26 @@ TEST(MessageBroker2, TestPermanentConnectionSimpleUseCase)
   ASSERT_EQ(20, testCounter);
 }
 
+TEST(MessageBroker2, TestMessageForwarderSimpleUseCase)
+{
+  MessageBroker broker;
+  MyObservable  observable(broker);
+  MyIntermediate intermediate(broker, observable);
+  MyObserver    observer(broker);
+
+  // let the observer observers the intermediate that is actually forwarding the messages from the observable
+  intermediate.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
+
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  ASSERT_EQ(12, testCounter);
+
+  // the connection is permanent; if we emit the same message again, the observer will be notified again
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  ASSERT_EQ(20, testCounter);
+}
+
 TEST(MessageBroker2, TestPermanentConnectionDeleteObserver)
 {
   MessageBroker broker;
@@ -445,27 +210,6 @@ TEST(MessageBroker2, TestPermanentConnectionDeleteObserver)
   observable.EmitMessage(MyObservable::MyCustomMessage(20));
   ASSERT_EQ(0, testCounter);
 }
-
-TEST(MessageBroker2, TestMessageForwarderSimpleUseCase)
-{
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyIntermediate intermediate(broker, observable);
-  MyObserver    observer(broker);
-
-  // let the observer observers the intermediate that is actually forwarding the messages from the observable
-  intermediate.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
-
-  testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(12));
-  ASSERT_EQ(12, testCounter);
-
-  // the connection is permanent; if we emit the same message again, the observer will be notified again
-  testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(20));
-  ASSERT_EQ(20, testCounter);
-}
-
 
 TEST(MessageBroker2, TestMessageForwarderDeleteIntermediate)
 {
@@ -562,3 +306,105 @@ TEST(MessageBroker2, TestPromiseDeleteTarget)
   ASSERT_EQ(0, testCounter);
 }
 
+#if __cplusplus >= 201103L
+
+#include <functional>
+
+namespace OrthancStone {
+
+  template <typename TMessage>
+  class LambdaCallable : public MessageHandler<TMessage>
+  {
+  private:
+
+    IObserver&      observer_;
+    std::function<void (const TMessage&)> lambda_;
+
+  public:
+    LambdaCallable(IObserver& observer,
+                    std::function<void (const TMessage&)> lambdaFunction) :
+             observer_(observer),
+             lambda_(lambdaFunction)
+    {
+    }
+
+    virtual void Apply(const IMessage& message)
+    {
+      lambda_(dynamic_cast<const TMessage&>(message));
+    }
+
+    virtual MessageType GetMessageType() const
+    {
+      return static_cast<MessageType>(TMessage::Type);
+    }
+
+    virtual IObserver* GetObserver() const
+    {
+      return &observer_;
+    }
+  };
+
+
+}
+
+TEST(MessageBroker2, TestLambdaSimpleUseCase)
+{
+  MessageBroker broker;
+  MyObservable  observable(broker);
+  MyObserver*   observer = new MyObserver(broker);
+
+  // create a permanent connection between an observable and an observer
+  observable.RegisterObserverCallback(new LambdaCallable<MyObservable::MyCustomMessage>(*observer, [&](const MyObservable::MyCustomMessage& message) {testCounter += 2 * message.payload_;}));
+
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  ASSERT_EQ(24, testCounter);
+
+  // delete the observer and check that the callback is not called anymore
+  delete observer;
+
+  // the connection is permanent; if we emit the same message again, the observer will be notified again
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  ASSERT_EQ(0, testCounter);
+}
+
+namespace {
+  class MyObserverWithLambda : public IObserver {
+  private:
+    int multiplier_;  // this is a private variable we want to access in a lambda
+
+  public:
+    MyObserverWithLambda(MessageBroker& broker, int multiplier, MyObservable& observable)
+      : IObserver(broker),
+        multiplier_(multiplier)
+    {
+      // register a callable to a lambda that access private members
+      observable.RegisterObserverCallback(new LambdaCallable<MyObservable::MyCustomMessage>(*this, [this](const MyObservable::MyCustomMessage& message) {
+        testCounter += multiplier_ * message.payload_;
+      }));
+
+    }
+  };
+}
+
+TEST(MessageBroker2, TestLambdaCaptureThisAndAccessPrivateMembers)
+{
+  MessageBroker broker;
+  MyObservable  observable(broker);
+  MyObserverWithLambda*   observer = new MyObserverWithLambda(broker, 3, observable);
+
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  ASSERT_EQ(36, testCounter);
+
+  // delete the observer and check that the callback is not called anymore
+  delete observer;
+
+  // the connection is permanent; if we emit the same message again, the observer will be notified again
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  ASSERT_EQ(0, testCounter);
+}
+
+#endif // C++ 11

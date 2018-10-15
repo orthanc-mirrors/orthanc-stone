@@ -38,9 +38,14 @@ namespace OrthancStone
 
     void WasmPlatformApplicationAdapter::NotifyStatusUpdateFromCppToWeb(const std::string& statusUpdateMessage)
     {
-      printf("NotifyStatusUpdateFromCppToWeb (TODO)\n");
-      UpdateStoneApplicationStatusFromCpp(statusUpdateMessage.c_str());
-      printf("NotifyStatusUpdateFromCppToWeb (DONE)\n");
+      try
+      {
+        UpdateStoneApplicationStatusFromCpp(statusUpdateMessage.c_str());
+      }
+      catch (...)
+      {
+        printf("Error while handling message to web\n");
+      }
     }
 
 }

@@ -61,6 +61,16 @@ namespace OrthancStone
   public:
     Slice() :
       type_(Type_Invalid)
+    {
+    }
+
+
+    // this constructor is used to reference, i.e, a slice that is being loaded
+    Slice(const std::string& orthancInstanceId,
+          unsigned int frame) :
+      type_(Type_Invalid),
+      orthancInstanceId_(orthancInstanceId),
+      frame_(frame)
     {        
     }
 

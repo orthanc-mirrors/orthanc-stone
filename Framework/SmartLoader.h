@@ -38,17 +38,18 @@ namespace OrthancStone
     typedef std::map<std::string, boost::shared_ptr<SmartLoader::CachedSlice>> CachedSlices;
     CachedSlices cachedSlices_;
 
+    typedef std::map<std::string, boost::shared_ptr<ILayerSource>> PreloadingInstances;
+    PreloadingInstances preloadingInstances_;
+
     SliceImageQuality     imageQuality_;
     OrthancApiClient&     orthancApiClient_;
-
-    int studyListRequest_;
 
   public:
     SmartLoader(MessageBroker& broker, OrthancApiClient& orthancApiClient);  // TODO: add maxPreloadStorageSizeInBytes
 
-    void PreloadStudy(const std::string studyId);
-    void PreloadSeries(const std::string seriesId);
-    void LoadStudyList();
+//    void PreloadStudy(const std::string studyId);
+//    void PreloadSeries(const std::string seriesId);
+    void PreloadSlice(const std::string instanceId, unsigned int frame);
 
     void SetImageQuality(SliceImageQuality imageQuality) { imageQuality_ = imageQuality; }
 

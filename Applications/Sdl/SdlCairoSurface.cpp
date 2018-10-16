@@ -81,7 +81,8 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
 
-    Orthanc::ImageAccessor target = cairoSurface_->GetAccessor();
+    Orthanc::ImageAccessor target;
+    cairoSurface_->GetAccessor(target);
 
     if (viewport.Render(target))
     {

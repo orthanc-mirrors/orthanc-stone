@@ -22,6 +22,17 @@
 #pragma once
 
 #include "../../Applications/IStoneApplication.h"
+#include "../../Framework/Widgets/LayerWidget.h"
+
+#if ORTHANC_ENABLE_WASM==1
+#include "../../Platforms/Wasm/WasmPlatformApplicationAdapter.h"
+#include "../../Platforms/Wasm/Defaults.h"
+#endif
+
+#if ORTHANC_ENABLE_QT==1
+#include "Qt/SampleMainWindow.h"
+#include "Qt/SampleMainWindowWithButtons.h"
+#endif
 
 namespace OrthancStone
 {
@@ -31,6 +42,8 @@ namespace OrthancStone
     {
     protected:
       BaseCommandBuilder commandBuilder_;
+      LayerWidget*       mainWidget_;   // ownership is transfered to the application context
+
     public:
       virtual void Initialize(StoneApplicationContext* context,
                               IStatusBar& statusBar,
@@ -43,6 +56,31 @@ namespace OrthancStone
         return "Stone of Orthanc - Sample";
       }
 
+      virtual BaseCommandBuilder& GetCommandBuilder() {return commandBuilder_;}
+
+      virtual void Finalize() {}
+      virtual IWidget* GetCentralWidget() {return mainWidget_;}
+
+#if ORTHANC_ENABLE_WASM==1
+      // default implementations for a single canvas named "canvas" in the HTML and an emtpy WasmApplicationAdapter
+
+      virtual void InitializeWasm()
+      {
+        AttachWidgetToWasmViewport("canvas", mainWidget_);
+      }
+
+      virtual WasmPlatformApplicationAdapter* CreateWasmApplicationAdapter(MessageBroker& broker)
+      {
+        return new WasmPlatformApplicationAdapter(broker, *this);
+      }
+#endif
+
+    };
+
+    // this application actually works in Qt and WASM
+    class SampleSingleCanvasWithButtonsApplicationBase : public SampleApplicationBase
+    {
+public:
       virtual void OnPushButton1Clicked() {}
       virtual void OnPushButton2Clicked() {}
       virtual void OnTool1Clicked() {}
@@ -59,8 +97,24 @@ namespace OrthancStone
         tool2 = "tool2";
       }
 
-      virtual BaseCommandBuilder& GetCommandBuilder() {return commandBuilder_;}
+#if ORTHANC_ENABLE_QT==1
+      virtual QStoneMainWindow* CreateQtMainWindow() {
+        return new SampleMainWindowWithButtons(dynamic_cast<OrthancStone::NativeStoneApplicationContext&>(*context_), *this);
+      }
+#endif
 
+    };
+
+    // this application actually works in SDL and WASM
+    class SampleSingleCanvasApplicationBase : public SampleApplicationBase
+    {
+public:
+
+#if ORTHANC_ENABLE_QT==1
+      virtual QStoneMainWindow* CreateQtMainWindow() {
+        return new SampleMainWindow(dynamic_cast<OrthancStone::NativeStoneApplicationContext&>(*context_), *this);
+      }
+#endif
     };
   }
 }

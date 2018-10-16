@@ -36,9 +36,6 @@
 #include "../../Platforms/Wasm/Defaults.h"
 #endif
 
-#if ORTHANC_ENABLE_QT==1
-#include "Qt/SampleMainWindow.h"
-#endif
 #include <Core/Logging.h>
 
 namespace OrthancStone
@@ -46,7 +43,7 @@ namespace OrthancStone
   namespace Samples
   {
     class SimpleViewerApplication :
-        public SampleApplicationBase,
+        public SampleSingleCanvasWithButtonsApplicationBase,
         public IObserver
     {
     private:
@@ -218,7 +215,6 @@ namespace OrthancStone
       std::unique_ptr<ThumbnailInteractor>  thumbnailInteractor_;
       LayoutWidget*                   mainLayout_;
       LayoutWidget*                   thumbnailsLayout_;
-      LayerWidget*                    mainWidget_;
       std::vector<LayerWidget*>       thumbnails_;
       std::map<std::string, std::vector<std::string>> instancesIdsPerSeriesId_;
       std::map<std::string, Json::Value> seriesTags_;
@@ -242,9 +238,6 @@ namespace OrthancStone
       {
 //        DeclareIgnoredMessage(MessageType_Widget_ContentChanged);
       }
-
-      virtual void Finalize() {}
-      virtual IWidget* GetCentralWidget() {return mainLayout_;}
 
       virtual void DeclareStartupOptions(boost::program_options::options_description& options)
       {
@@ -412,11 +405,6 @@ namespace OrthancStone
       }
 #endif
 
-#if ORTHANC_ENABLE_QT==1
-      virtual QStoneMainWindow* CreateQtMainWindow() {
-        return new SampleMainWindow(dynamic_cast<OrthancStone::NativeStoneApplicationContext&>(*context_), *this);
-      }
-#endif
     };
 
 

@@ -33,7 +33,7 @@ namespace OrthancStone
   namespace Samples
   {
     class SingleFrameEditorApplication :
-        public SampleApplicationBase,
+        public SampleSingleCanvasApplicationBase,
         public IObserver
     {
       enum Tools
@@ -153,7 +153,6 @@ namespace OrthancStone
         mainWidget_->SetDefaultView();
       }
       
-      LayerWidget*                          mainWidget_;   // ownership is transfered to the application context
       std::unique_ptr<Interactor>           mainWidgetInteractor_;
       std::unique_ptr<OrthancApiClient>     orthancApiClient_;
       Tools                                 currentTool_;
@@ -217,8 +216,6 @@ namespace OrthancStone
         mainWidget_->SetInteractor(*mainWidgetInteractor_);
       }
 
-      virtual void Finalize() {}
-      virtual IWidget* GetCentralWidget() {return mainWidget_;}
 
       void Invert()
       {

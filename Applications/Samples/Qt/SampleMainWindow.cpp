@@ -32,61 +32,18 @@ namespace OrthancStone
   namespace Samples
   {
 
-    SampleMainWindow::SampleMainWindow(OrthancStone::NativeStoneApplicationContext& context, OrthancStone::Samples::SampleApplicationBase& stoneSampleApplication, QWidget *parent) :
+    SampleMainWindow::SampleMainWindow(OrthancStone::NativeStoneApplicationContext& context, OrthancStone::Samples::SampleSingleCanvasApplicationBase& stoneSampleApplication, QWidget *parent) :
       QStoneMainWindow(context, parent),
       ui_(new Ui::SampleMainWindow),
       stoneSampleApplication_(stoneSampleApplication)
     {
       ui_->setupUi(this);
       SetCentralStoneWidget(ui_->cairoCentralWidget);
-
-#if QT_VERSION >= 0x050000
-      connect(ui_->toolButton1, &QToolButton::clicked, this, &SampleMainWindow::tool1Clicked);
-      connect(ui_->toolButton2, &QToolButton::clicked, this, &SampleMainWindow::tool2Clicked);
-      connect(ui_->pushButton1, &QPushButton::clicked, this, &SampleMainWindow::pushButton1Clicked);
-      connect(ui_->pushButton1, &QPushButton::clicked, this, &SampleMainWindow::pushButton2Clicked);
-#else
-      connect(ui_->toolButton1, SIGNAL(clicked()), this, SLOT(tool1Clicked()));
-      connect(ui_->toolButton2, SIGNAL(clicked()), this, SLOT(tool2Clicked()));
-      connect(ui_->pushButton1, SIGNAL(clicked()), this, SLOT(pushButton1Clicked()));
-      connect(ui_->pushButton1, SIGNAL(clicked()), this, SLOT(pushButton2Clicked()));
-#endif
-
-      std::string pushButton1Name;
-      std::string pushButton2Name;
-      std::string tool1Name;
-      std::string tool2Name;
-      stoneSampleApplication_.GetButtonNames(pushButton1Name, pushButton2Name, tool1Name, tool2Name);
-
-      ui_->toolButton1->setText(QString::fromStdString(tool1Name));
-      ui_->toolButton2->setText(QString::fromStdString(tool2Name));
-      ui_->pushButton1->setText(QString::fromStdString(pushButton1Name));
-      ui_->pushButton2->setText(QString::fromStdString(pushButton2Name));
     }
 
     SampleMainWindow::~SampleMainWindow()
     {
       delete ui_;
-    }
-
-    void SampleMainWindow::tool1Clicked()
-    {
-      stoneSampleApplication_.OnTool1Clicked();
-    }
-
-    void SampleMainWindow::tool2Clicked()
-    {
-      stoneSampleApplication_.OnTool2Clicked();
-    }
-
-    void SampleMainWindow::pushButton1Clicked()
-    {
-      stoneSampleApplication_.OnPushButton1Clicked();
-    }
-
-    void SampleMainWindow::pushButton2Clicked()
-    {
-      stoneSampleApplication_.OnPushButton2Clicked();
     }
 
   }

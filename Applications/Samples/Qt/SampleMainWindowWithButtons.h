@@ -17,34 +17,40 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
-
-
 #pragma once
 
-#include "../../Qt/QtStoneApplicationRunner.h"
+#include "../../Qt/QCairoWidget.h"
+#include "../../Qt/QStoneMainWindow.h"
 
-#if ORTHANC_ENABLE_QT != 1
-#error this file shall be included only with the ORTHANC_ENABLE_QT set to 1
-#endif
+namespace Ui 
+{
+  class SampleMainWindowWithButtons;
+}
 
 namespace OrthancStone
 {
   namespace Samples
   {
-    class SampleQtApplicationRunner : public OrthancStone::QtStoneApplicationRunner
-    {
-    protected:
-      virtual void InitializeMainWindow(OrthancStone::NativeStoneApplicationContext& context)
-      {
-        window_.reset(application_.CreateQtMainWindow());
-      }
-    public:
-      SampleQtApplicationRunner(MessageBroker& broker,
-                                SampleApplicationBase& application)
-        : OrthancStone::QtStoneApplicationRunner(broker, application)
-      {
-      }
 
+    class SampleSingleCanvasWithButtonsApplicationBase;
+
+    class SampleMainWindowWithButtons : public QStoneMainWindow
+    {
+      Q_OBJECT
+
+    private:
+      Ui::SampleMainWindowWithButtons*   ui_;
+      SampleSingleCanvasWithButtonsApplicationBase&  stoneSampleApplication_;
+
+    public:
+      explicit SampleMainWindowWithButtons(OrthancStone::NativeStoneApplicationContext& context, SampleSingleCanvasWithButtonsApplicationBase& stoneSampleApplication, QWidget *parent = 0);
+      ~SampleMainWindowWithButtons();
+
+    private slots:
+      void tool1Clicked();
+      void tool2Clicked();
+      void pushButton1Clicked();
+      void pushButton2Clicked();
     };
   }
 }

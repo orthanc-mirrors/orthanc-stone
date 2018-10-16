@@ -95,6 +95,8 @@ if (ENABLE_QT)
     ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleQtApplicationRunner.h
     ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindow.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindow.ui
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindowWithButtons.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindowWithButtons.ui
     )
 endif()
 

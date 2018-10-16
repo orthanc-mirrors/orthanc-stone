@@ -26,7 +26,12 @@
 #include "SampleList.h"
 
 
-OrthancStone::IStoneApplication* CreateUserApplication(OrthancStone::MessageBroker& broker) {
-  
+OrthancStone::IStoneApplication* CreateUserApplication(OrthancStone::MessageBroker& broker) 
+{
   return new SampleApplication(broker);
+}
+
+OrthancStone::WasmPlatformApplicationAdapter* CreateWasmApplicationAdapter(OrthancStone::MessageBroker& broker, OrthancStone::IStoneApplication* application)
+{
+  return dynamic_cast<SampleApplication*>(application)->CreateWasmApplicationAdapter(broker);
 }

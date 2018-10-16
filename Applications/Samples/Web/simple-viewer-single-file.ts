@@ -1,6 +1,6 @@
 ///<reference path='../../../Platforms/Wasm/wasm-application-runner.ts'/>
 
-InitializeWasmApplication("OrthancStoneSimpleViewer", "/orthanc");
+InitializeWasmApplication("OrthancStoneSimpleViewerSingleFile", "/orthanc");
 
 function SelectTool(toolName: string) {
     var command = {

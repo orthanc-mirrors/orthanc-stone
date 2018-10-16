@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>SampleMainWindow</class>
- <widget class="QMainWindow" name="SampleMainWindow">
+ <class>SampleMainWindowWithButtons</class>
+ <widget class="QMainWindow" name="SampleMainWindowWithButtons">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -38,7 +38,7 @@
    <property name="layoutDirection">
     <enum>Qt::LeftToRight</enum>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0">
+   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0">
     <property name="sizeConstraint">
      <enum>QLayout::SetDefaultConstraint</enum>
     </property>
@@ -50,6 +50,52 @@
         <height>500</height>
        </size>
       </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="horizontalGroupBox">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>100</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>100</height>
+       </size>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QToolButton" name="toolButton1">
+         <property name="text">
+          <string>tool1</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="toolButton2">
+         <property name="text">
+          <string>tool2</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton1">
+         <property name="text">
+          <string>action1</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton2">
+         <property name="text">
+          <string>action2</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </item>
    </layout>

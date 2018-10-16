@@ -33,7 +33,7 @@ namespace OrthancStone
   namespace Samples
   {
     class SingleFrameApplication :
-      public SampleApplicationBase,
+      public SampleSingleCanvasApplicationBase,
       public IObserver
     {
     private:
@@ -183,7 +183,6 @@ namespace OrthancStone
         mainWidget_->SetDefaultView();
       }
       
-      LayerWidget*                          mainWidget_;   // ownership is transfered to the application context
       std::unique_ptr<Interactor>           mainWidgetInteractor_;
       std::unique_ptr<OrthancApiClient>     orthancApiClient_;
 
@@ -254,9 +253,6 @@ namespace OrthancStone
         mainWidgetInteractor_.reset(new Interactor(*this));
         mainWidget_->SetInteractor(*mainWidgetInteractor_);
       }
-
-      virtual void Finalize() {}
-      virtual IWidget* GetCentralWidget() {return mainWidget_;}
     };
 
 

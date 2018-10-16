@@ -32,7 +32,7 @@ namespace OrthancStone
   namespace Samples
   {
 
-    class SampleApplicationBase;
+    class SampleSingleCanvasApplicationBase;
 
     class SampleMainWindow : public QStoneMainWindow
     {
@@ -40,17 +40,11 @@ namespace OrthancStone
 
     private:
       Ui::SampleMainWindow*   ui_;
-      SampleApplicationBase&  stoneSampleApplication_;
+      SampleSingleCanvasApplicationBase&  stoneSampleApplication_;
 
     public:
-      explicit SampleMainWindow(OrthancStone::NativeStoneApplicationContext& context, SampleApplicationBase& stoneSampleApplication, QWidget *parent = 0);
+      explicit SampleMainWindow(OrthancStone::NativeStoneApplicationContext& context, SampleSingleCanvasApplicationBase& stoneSampleApplication, QWidget *parent = 0);
       ~SampleMainWindow();
-
-    private slots:
-      void tool1Clicked();
-      void tool2Clicked();
-      void pushButton1Clicked();
-      void pushButton2Clicked();
     };
   }
 }

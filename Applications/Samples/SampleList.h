@@ -32,6 +32,10 @@ typedef OrthancStone::Samples::LayoutPetCtFusionApplication SampleApplication;
 #include "SimpleViewerApplicationSingleFile.h"
 typedef OrthancStone::Samples::SimpleViewerApplication SampleApplication;
 
+#elif ORTHANC_STONE_SAMPLE == 9
+#include "SingleFrameEditorApplication.h"
+typedef OrthancStone::Samples::SingleFrameEditorApplication SampleApplication;
+
 #else
 #error Please set the ORTHANC_STONE_SAMPLE macro
 #endif

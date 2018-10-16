@@ -123,12 +123,13 @@ endmacro()
 
 #BuildSingleFileSample(OrthancStoneEmpty EmptyApplication.h 1)
 #BuildSingleFileSample(OrthancStoneTestPattern TestPatternApplication.h 2)
-#BuildSingleFileSample(OrthancStoneSingleFrame SingleFrameApplication.h 3)
+BuildSingleFileSample(OrthancStoneSingleFrame SingleFrameApplication.h 3)
 #BuildSingleFileSample(OrthancStoneSingleVolume SingleVolumeApplication.h 4)
 #BuildSingleFileSample(OrthancStoneBasicPetCtFusion 5)
 #BuildSingleFileSample(OrthancStoneSynchronizedSeries 6)
 #BuildSingleFileSample(OrthancStoneLayoutPetCtFusion 7)
 BuildSingleFileSample(OrthancStoneSimpleViewerSingleFile SimpleViewerApplicationSingleFile.h 8)  # we keep that one just as a sample before we convert another sample to this pattern
+BuildSingleFileSample(OrthancStoneSingleFrameEditor SingleFrameEditorApplication.h 9)
 
 ##### SimpleViewer sample (Qt and WASM only) #######
 

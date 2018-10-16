@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -32,18 +32,33 @@ namespace OrthancStone
 {
   namespace Samples
   {
-    class SingleFrameApplication :
-      public SampleApplicationBase,
-      public IObserver
+    class SingleFrameEditorApplication :
+        public SampleApplicationBase,
+        public IObserver
     {
+      enum Tools
+      {
+        Tools_Crop,
+        Tools_Windowing,
+        Tools_Zoom,
+        Tools_Pan
+      };
+
+      enum Actions
+      {
+        Actions_Invert,
+        Actions_RotateLeft,
+        Actions_RotateRight
+      };
+
     private:
       class Interactor : public IWorldSceneInteractor
       {
       private:
-        SingleFrameApplication&  application_;
+        SingleFrameEditorApplication&  application_;
         
       public:
-        Interactor(SingleFrameApplication&  application) :
+        Interactor(SingleFrameEditorApplication&  application) :
           application_(application)
         {
         }
@@ -56,6 +71,15 @@ namespace OrthancStone
                                                             double y,
                                                             IStatusBar* statusBar)
         {
+          switch (application_.currentTool_) {
+          case Tools_Crop:
+          case Tools_Windowing:
+          case Tools_Zoom:
+          case Tools_Pan:
+            // TODO return the right mouse tracker
+            return NULL;
+          }
+
           return NULL;
         }
 
@@ -71,7 +95,7 @@ namespace OrthancStone
             Vector p = dynamic_cast<LayerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
             
             char buf[64];
-            sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)", 
+            sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)",
                     p[0] / 10.0, p[1] / 10.0, p[2] / 10.0);
             statusBar->SetMessage(buf);
           }
@@ -82,21 +106,6 @@ namespace OrthancStone
                                 KeyboardModifiers modifiers,
                                 IStatusBar* statusBar)
         {
-          int scale = (modifiers & KeyboardModifiers_Control ? 10 : 1);
-          
-          switch (direction)
-          {
-            case MouseWheelDirection_Up:
-              application_.OffsetSlice(-scale);
-              break;
-
-            case MouseWheelDirection_Down:
-              application_.OffsetSlice(scale);
-              break;
-
-            default:
-              break;
-          }
         }
 
         virtual void KeyPressed(WorldSceneWidget& widget,
@@ -106,93 +115,56 @@ namespace OrthancStone
         {
           switch (key)
           {
-            case 's':
-              widget.SetDefaultView();
-              break;
-
-            default:
-              break;
+          case 's':
+            widget.SetDefaultView();
+            break;
+          case 'p':
+            application_.currentTool_ = Tools_Pan;
+            break;
+          case 'z':
+            application_.currentTool_ = Tools_Zoom;
+            break;
+          case 'c':
+            application_.currentTool_ = Tools_Crop;
+            break;
+          case 'w':
+            application_.currentTool_ = Tools_Windowing;
+            break;
+          case 'i':
+            application_.Invert();
+            break;
+          case 'r':
+            if (modifiers == KeyboardModifiers_None)
+              application_.Rotate(90);
+            else
+              application_.Rotate(-90);
+            break;
+          case 'e':
+            application_.Export();
+            break;
+          default:
+            break;
           }
         }
       };
 
-
-      void OffsetSlice(int offset)
-      {
-        if (source_ != NULL)
-        {
-          int slice = static_cast<int>(slice_) + offset;
-
-          if (slice < 0)
-          {
-            slice = 0;
-          }
-
-          if (slice >= static_cast<int>(source_->GetSliceCount()))
-          {
-            slice = source_->GetSliceCount() - 1;
-          }
-
-          if (slice != static_cast<int>(slice_)) 
-          {
-            SetSlice(slice);
-          }   
-        }
-      }
-      
-
-      void SetSlice(size_t index)
-      {
-        if (source_ != NULL &&
-            index < source_->GetSliceCount())
-        {
-          slice_ = index;
-          
-#if 1
-          mainWidget_->SetSlice(source_->GetSlice(slice_).GetGeometry());
-#else
-          // TEST for scene extents - Rotate the axes
-          double a = 15.0 / 180.0 * M_PI;
-
-#if 1
-          Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
-          Vector y; GeometryToolbox::AssignVector(y, -sin(a), cos(a), 0);
-#else
-          // Flip the normal
-          Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);
-          Vector y; GeometryToolbox::AssignVector(y, sin(a), -cos(a), 0);
-#endif
-          
-          SliceGeometry s(source_->GetSlice(slice_).GetGeometry().GetOrigin(), x, y);
-          widget_->SetSlice(s);
-#endif
-        }
-      }
-        
-      
       void OnMainWidgetGeometryReady(const ILayerSource::GeometryReadyMessage& message)
       {
-        // Once the geometry of the series is downloaded from Orthanc,
-        // display its middle slice, and adapt the viewport to fit this
-        // slice
-        if (source_ == &message.origin_)
-        {
-          SetSlice(source_->GetSliceCount() / 2);
-        }
-
         mainWidget_->SetDefaultView();
       }
       
       LayerWidget*                          mainWidget_;   // ownership is transfered to the application context
       std::unique_ptr<Interactor>           mainWidgetInteractor_;
       std::unique_ptr<OrthancApiClient>     orthancApiClient_;
+      Tools                                 currentTool_;
 
       const OrthancFrameLayerSource*        source_;
       unsigned int                          slice_;
 
     public:
-      SingleFrameApplication(MessageBroker& broker) :
+      SingleFrameEditorApplication(MessageBroker& broker) :
         IObserver(broker),
+        currentTool_(Tools_Zoom),
         source_(NULL),
         slice_(0)
       {
@@ -202,15 +174,13 @@ namespace OrthancStone
       {
         boost::program_options::options_description generic("Sample options");
         generic.add_options()
-          ("instance", boost::program_options::value<std::string>(), 
-           "Orthanc ID of the instance")
-          ("frame", boost::program_options::value<unsigned int>()->default_value(0),
-           "Number of the frame, for multi-frame DICOM instances")
-          ("smooth", boost::program_options::value<bool>()->default_value(true), 
-           "Enable bilinear interpolation to smooth the image")
-          ;
+            ("instance", boost::program_options::value<std::string>(),
+             "Orthanc ID of the instance")
+            ("frame", boost::program_options::value<unsigned int>()->default_value(0),
+             "Number of the frame, for multi-frame DICOM instances")
+            ;
 
-        options.add(generic);    
+        options.add(generic);
       }
 
       virtual void Initialize(StoneApplicationContext* context,
@@ -221,7 +191,7 @@ namespace OrthancStone
 
         context_ = context;
 
-        statusBar.SetMessage("Use the key \"s\" to reinitialize the layout");
+        statusBar.SetMessage("Use the key \"s\" to reinitialize the layout, \"p\" to pan, \"z\" to zoom, \"c\" to crop, \"i\" to invert, \"w\" to change windowing, \"r\" to rotate cw,  \"shift+r\" to rotate ccw");
 
         if (parameters.count("instance") != 1)
         {
@@ -238,17 +208,9 @@ namespace OrthancStone
         std::auto_ptr<OrthancFrameLayerSource> layer(new OrthancFrameLayerSource(broker_, *orthancApiClient_));
         source_ = layer.get();
         layer->LoadFrame(instance, frame);
-        layer->RegisterObserverCallback(new Callable<SingleFrameApplication, ILayerSource::GeometryReadyMessage>(*this, &SingleFrameApplication::OnMainWidgetGeometryReady));
+        layer->RegisterObserverCallback(new Callable<SingleFrameEditorApplication, ILayerSource::GeometryReadyMessage>(*this, &SingleFrameEditorApplication::OnMainWidgetGeometryReady));
         mainWidget_->AddLayer(layer.release());
 
-        RenderStyle s;
-
-        if (parameters["smooth"].as<bool>())
-        {
-          s.interpolation_ = ImageInterpolation_Bilinear;
-        }
-
-        mainWidget_->SetLayerStyle(0, s);
         mainWidget_->SetTransmitMouseOver(true);
 
         mainWidgetInteractor_.reset(new Interactor(*this));
@@ -257,6 +219,21 @@ namespace OrthancStone
 
       virtual void Finalize() {}
       virtual IWidget* GetCentralWidget() {return mainWidget_;}
+
+      void Invert()
+      {
+        // TODO
+      }
+
+      void Rotate(int degrees)
+      {
+        // TODO
+      }
+
+      void Export()
+      {
+        // TODO: export dicom file to a temporary file
+      }
     };
 
 

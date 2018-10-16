@@ -235,13 +235,14 @@ namespace OrthancStone
   }
 
 
-  void WidgetViewport::KeyPressed(char key,
+  void WidgetViewport::KeyPressed(KeyboardKeys key,
+                                  char keyChar,
                                   KeyboardModifiers modifiers)
   {
     if (centralWidget_.get() != NULL &&
         mouseTracker_.get() == NULL)
     {
-      centralWidget_->KeyPressed(key, modifiers);
+      centralWidget_->KeyPressed(key, keyChar, modifiers);
     }
   }
 

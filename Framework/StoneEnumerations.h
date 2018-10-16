@@ -75,6 +75,17 @@ namespace OrthancStone
     KeyboardModifiers_Alt = (1 << 2)
   };
 
+  enum KeyboardKeys
+  {
+    KeyboardKeys_Generic = 0,
+
+    // let's use the same ids as in javascript to avoid some conversion in WASM: https://css-tricks.com/snippets/javascript/javascript-keycodes/
+    KeyboardKeys_Left = 37,
+    KeyboardKeys_Up = 38,
+    KeyboardKeys_Right = 39,
+    KeyboardKeys_Down = 40
+  };
+
   enum SliceImageQuality
   {
     SliceImageQuality_FullPng,  // smaller to transmit but longer to generate on Orthanc side (better choice when on low bandwidth)

@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -29,38 +29,39 @@
 
 namespace OrthancStone
 {
-  class WorldSceneWidget;
+    class WorldSceneWidget;
 
-  class IWorldSceneInteractor : public boost::noncopyable
-  {
-  public:
-    virtual ~IWorldSceneInteractor()
+    class IWorldSceneInteractor : public boost::noncopyable
     {
-    }
-    
-    virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
-                                                        const ViewportGeometry& view,
-                                                        MouseButton button,
-                                                        KeyboardModifiers modifiers,
-                                                        double x,
-                                                        double y,
-                                                        IStatusBar* statusBar) = 0;
+    public:
+        virtual ~IWorldSceneInteractor()
+        {
+        }
 
-    virtual void MouseOver(CairoContext& context,
-                           WorldSceneWidget& widget,
-                           const ViewportGeometry& view,
-                           double x,
-                           double y,
-                           IStatusBar* statusBar) = 0;
+        virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
+                                                            const ViewportGeometry& view,
+                                                            MouseButton button,
+                                                            KeyboardModifiers modifiers,
+                                                            double x,
+                                                            double y,
+                                                            IStatusBar* statusBar) = 0;
 
-    virtual void MouseWheel(WorldSceneWidget& widget,
-                            MouseWheelDirection direction,
-                            KeyboardModifiers modifiers,
-                            IStatusBar* statusBar) = 0;
+        virtual void MouseOver(CairoContext& context,
+                               WorldSceneWidget& widget,
+                               const ViewportGeometry& view,
+                               double x,
+                               double y,
+                               IStatusBar* statusBar) = 0;
 
-    virtual void KeyPressed(WorldSceneWidget& widget,
-                            char key,
-                            KeyboardModifiers modifiers,
-                            IStatusBar* statusBar) = 0;
-  };
+        virtual void MouseWheel(WorldSceneWidget& widget,
+                                MouseWheelDirection direction,
+                                KeyboardModifiers modifiers,
+                                IStatusBar* statusBar) = 0;
+
+        virtual void KeyPressed(WorldSceneWidget& widget,
+                                KeyboardKeys key,
+                                char keyChar,
+                                KeyboardModifiers modifiers,
+                                IStatusBar* statusBar) = 0;
+    };
 }

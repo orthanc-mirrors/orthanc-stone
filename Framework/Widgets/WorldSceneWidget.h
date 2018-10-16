@@ -160,7 +160,8 @@ namespace OrthancStone
                             int y,
                             KeyboardModifiers modifiers);
 
-    virtual void KeyPressed(char key,
+    virtual void KeyPressed(KeyboardKeys key,
+                            char keyChar,
                             KeyboardModifiers modifiers);
   };
 }

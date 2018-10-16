@@ -62,7 +62,8 @@ namespace SimpleViewer {
     {}
 
     virtual void KeyPressed(WorldSceneWidget& widget,
-                            char key,
+                            KeyboardKeys key,
+                            char keyChar,
                             KeyboardModifiers modifiers,
                             IStatusBar* statusBar)
     {}

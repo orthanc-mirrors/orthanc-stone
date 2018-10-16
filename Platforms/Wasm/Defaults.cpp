@@ -219,7 +219,8 @@ extern "C" {
   }
   
   void EMSCRIPTEN_KEEPALIVE ViewportKeyPressed(ViewportHandle viewport,
-                                               const char* key, 
+                                               int key,
+                                               const char* keyChar, 
                                                bool isShiftPressed, 
                                                bool isControlPressed,
                                                bool isAltPressed)
@@ -235,8 +236,12 @@ extern "C" {
     if (isAltPressed) {
       modifiers = static_cast<OrthancStone::KeyboardModifiers>(modifiers + OrthancStone::KeyboardModifiers_Alt);
     }
-    printf("key pressed : %c\n", key[0]);
-    viewport->KeyPressed(key[0], modifiers);
+
+    char c = 0;
+    if (keyChar != NULL && key == OrthancStone::KeyboardKeys_Generic) {
+      c = keyChar[0];
+    }
+    viewport->KeyPressed(static_cast<OrthancStone::KeyboardKeys>(key), c, modifiers);
   }
   
 

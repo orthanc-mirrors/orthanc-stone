@@ -80,7 +80,7 @@ module Stone {
       this.ViewportMouseEnter = this.module_.cwrap('ViewportMouseEnter', null, [ 'number' ]);
       this.ViewportMouseLeave = this.module_.cwrap('ViewportMouseLeave', null, [ 'number' ]);
       this.ViewportMouseWheel = this.module_.cwrap('ViewportMouseWheel', null, [ 'number', 'number', 'number', 'number', 'number' ]);
-      this.ViewportKeyPressed = this.module_.cwrap('ViewportKeyPressed', null, [ 'number', 'string', 'number', 'number' ]);
+      this.ViewportKeyPressed = this.module_.cwrap('ViewportKeyPressed', null, [ 'number', 'number', 'string', 'number', 'number' ]);
     }
 
     public GetCppViewport() : number {
@@ -204,7 +204,15 @@ module Stone {
       });
     
       window.addEventListener('keydown', function(event) {
-        that.ViewportKeyPressed(that.pimpl_, event.key, event.shiftKey, event.ctrlKey, event.altKey);
+        var keyChar = event.key;
+        var keyCode = event.keyCode
+        if (keyChar.length == 1) {
+          keyCode = 0; // maps to OrthancStone::KeyboardKeys_Generic
+        } else {
+          keyChar = null;
+        }
+//        console.log("key: ", keyCode, keyChar);
+        that.ViewportKeyPressed(that.pimpl_, keyCode, keyChar, event.shiftKey, event.ctrlKey, event.altKey);
       });
     
       this.htmlCanvas_.addEventListener('wheel', function(event) {

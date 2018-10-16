@@ -78,7 +78,8 @@ namespace OrthancStone
                             int y,
                             KeyboardModifiers modifiers) = 0;
 
-    virtual void KeyPressed(char key,
+    virtual void KeyPressed(KeyboardKeys key,
+                            char keyChar,
                             KeyboardModifiers modifiers) = 0;
 
     virtual bool HasUpdateContent() = 0;

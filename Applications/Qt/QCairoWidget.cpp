@@ -138,9 +138,27 @@ void QCairoWidget::wheelEvent(QWheelEvent * event)
 
 void QCairoWidget::keyPressEvent(QKeyEvent *event)
 {
+  using namespace OrthancStone;
+
   OrthancStone::KeyboardModifiers stoneModifiers = GetKeyboardModifiers(event);
 
-  context_->GetCentralViewport().KeyPressed(event->text()[0].toLatin1(), stoneModifiers);
+  OrthancStone::KeyboardKeys keyType = OrthancStone::KeyboardKeys_Generic;
+  char keyChar = event->text()[0].toLatin1();
+
+#define CASE_QT_KEY_TO_ORTHANC(qt, o) case qt: keyType = o; break;
+  if (keyChar == 0)
+  {
+    switch (event->key())
+    {
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_Up, KeyboardKeys_Up);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_Down, KeyboardKeys_Down);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_Left, KeyboardKeys_Left);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_Right, KeyboardKeys_Right);
+    default:
+      break;
+    }
+  }
+  context_->GetCentralViewport().KeyPressed(keyType, keyChar, stoneModifiers);
 }
 
 

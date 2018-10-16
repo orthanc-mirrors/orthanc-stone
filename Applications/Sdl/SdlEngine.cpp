@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -35,7 +35,7 @@ namespace OrthancStone
     context_.GetCentralViewport().SetSize(width, height);
     surface_.SetSize(width, height);
   }
-    
+
 
   void SdlEngine::RenderFrame()
   {
@@ -135,7 +135,7 @@ namespace OrthancStone
       {
         NativeStoneApplicationContext::GlobalMutexLocker locker(context_);
 
-        if (event.type == SDL_QUIT) 
+        if (event.type == SDL_QUIT)
         {
           stop = true;
           break;
@@ -146,20 +146,20 @@ namespace OrthancStone
 
           switch (event.button.button)
           {
-            case SDL_BUTTON_LEFT:
-              context_.GetCentralViewport().MouseDown(MouseButton_Left, event.button.x, event.button.y, modifiers);
-              break;
+          case SDL_BUTTON_LEFT:
+            context_.GetCentralViewport().MouseDown(MouseButton_Left, event.button.x, event.button.y, modifiers);
+            break;
             
-            case SDL_BUTTON_RIGHT:
-              context_.GetCentralViewport().MouseDown(MouseButton_Right, event.button.x, event.button.y, modifiers);
-              break;
+          case SDL_BUTTON_RIGHT:
+            context_.GetCentralViewport().MouseDown(MouseButton_Right, event.button.x, event.button.y, modifiers);
+            break;
             
-            case SDL_BUTTON_MIDDLE:
-              context_.GetCentralViewport().MouseDown(MouseButton_Middle, event.button.x, event.button.y, modifiers);
-              break;
+          case SDL_BUTTON_MIDDLE:
+            context_.GetCentralViewport().MouseDown(MouseButton_Middle, event.button.x, event.button.y, modifiers);
+            break;
 
-            default:
-              break;
+          default:
+            break;
           }
         }
         else if (event.type == SDL_MOUSEMOTION)
@@ -174,20 +174,20 @@ namespace OrthancStone
         {
           switch (event.window.event)
           {
-            case SDL_WINDOWEVENT_LEAVE:
-              context_.GetCentralViewport().MouseLeave();
-              break;
+          case SDL_WINDOWEVENT_LEAVE:
+            context_.GetCentralViewport().MouseLeave();
+            break;
 
-            case SDL_WINDOWEVENT_ENTER:
-              context_.GetCentralViewport().MouseEnter();
-              break;
+          case SDL_WINDOWEVENT_ENTER:
+            context_.GetCentralViewport().MouseEnter();
+            break;
 
-            case SDL_WINDOWEVENT_SIZE_CHANGED:
-              SetSize(event.window.data1, event.window.data2);
-              break;
+          case SDL_WINDOWEVENT_SIZE_CHANGED:
+            SetSize(event.window.data1, event.window.data2);
+            break;
 
-            default:
-              break;
+          default:
+            break;
           }
         }
         else if (event.type == SDL_MOUSEWHEEL)
@@ -213,53 +213,61 @@ namespace OrthancStone
 
           switch (event.key.keysym.sym)
           {
-            case SDLK_a:    context_.GetCentralViewport().KeyPressed('a', modifiers);  break;
-            case SDLK_b:    context_.GetCentralViewport().KeyPressed('b', modifiers);  break;
-            case SDLK_c:    context_.GetCentralViewport().KeyPressed('c', modifiers);  break;
-            case SDLK_d:    context_.GetCentralViewport().KeyPressed('d', modifiers);  break;
-            case SDLK_e:    context_.GetCentralViewport().KeyPressed('e', modifiers);  break;
-            case SDLK_f:    window_.ToggleMaximize();                         break;
-            case SDLK_g:    context_.GetCentralViewport().KeyPressed('g', modifiers);  break;
-            case SDLK_h:    context_.GetCentralViewport().KeyPressed('h', modifiers);  break;
-            case SDLK_i:    context_.GetCentralViewport().KeyPressed('i', modifiers);  break;
-            case SDLK_j:    context_.GetCentralViewport().KeyPressed('j', modifiers);  break;
-            case SDLK_k:    context_.GetCentralViewport().KeyPressed('k', modifiers);  break;
-            case SDLK_l:    context_.GetCentralViewport().KeyPressed('l', modifiers);  break;
-            case SDLK_m:    context_.GetCentralViewport().KeyPressed('m', modifiers);  break;
-            case SDLK_n:    context_.GetCentralViewport().KeyPressed('n', modifiers);  break;
-            case SDLK_o:    context_.GetCentralViewport().KeyPressed('o', modifiers);  break;
-            case SDLK_p:    context_.GetCentralViewport().KeyPressed('p', modifiers);  break;
-            case SDLK_q:    stop = true;                                      break;
-            case SDLK_r:    context_.GetCentralViewport().KeyPressed('r', modifiers);  break;
-            case SDLK_s:    context_.GetCentralViewport().KeyPressed('s', modifiers);  break;
-            case SDLK_t:    context_.GetCentralViewport().KeyPressed('t', modifiers);  break;
-            case SDLK_u:    context_.GetCentralViewport().KeyPressed('u', modifiers);  break;
-            case SDLK_v:    context_.GetCentralViewport().KeyPressed('v', modifiers);  break;
-            case SDLK_w:    context_.GetCentralViewport().KeyPressed('w', modifiers);  break;
-            case SDLK_x:    context_.GetCentralViewport().KeyPressed('x', modifiers);  break;
-            case SDLK_y:    context_.GetCentralViewport().KeyPressed('y', modifiers);  break;
-            case SDLK_z:    context_.GetCentralViewport().KeyPressed('z', modifiers);  break;
-            case SDLK_KP_0: context_.GetCentralViewport().KeyPressed('0', modifiers);  break;
-            case SDLK_KP_1: context_.GetCentralViewport().KeyPressed('1', modifiers);  break;
-            case SDLK_KP_2: context_.GetCentralViewport().KeyPressed('2', modifiers);  break;
-            case SDLK_KP_3: context_.GetCentralViewport().KeyPressed('3', modifiers);  break;
-            case SDLK_KP_4: context_.GetCentralViewport().KeyPressed('4', modifiers);  break;
-            case SDLK_KP_5: context_.GetCentralViewport().KeyPressed('5', modifiers);  break;
-            case SDLK_KP_6: context_.GetCentralViewport().KeyPressed('6', modifiers);  break;
-            case SDLK_KP_7: context_.GetCentralViewport().KeyPressed('7', modifiers);  break;
-            case SDLK_KP_8: context_.GetCentralViewport().KeyPressed('8', modifiers);  break;
-            case SDLK_KP_9: context_.GetCentralViewport().KeyPressed('9', modifiers);  break;
+          case SDLK_a:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'a', modifiers);  break;
+          case SDLK_b:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'b', modifiers);  break;
+          case SDLK_c:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'c', modifiers);  break;
+          case SDLK_d:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'd', modifiers);  break;
+          case SDLK_e:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'e', modifiers);  break;
+          case SDLK_f:    window_.ToggleMaximize();                         break;
+          case SDLK_g:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'g', modifiers);  break;
+          case SDLK_h:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'h', modifiers);  break;
+          case SDLK_i:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'i', modifiers);  break;
+          case SDLK_j:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'j', modifiers);  break;
+          case SDLK_k:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'k', modifiers);  break;
+          case SDLK_l:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'l', modifiers);  break;
+          case SDLK_m:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'm', modifiers);  break;
+          case SDLK_n:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'n', modifiers);  break;
+          case SDLK_o:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'o', modifiers);  break;
+          case SDLK_p:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'p', modifiers);  break;
+          case SDLK_q:    stop = true;                                      break;
+          case SDLK_r:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'r', modifiers);  break;
+          case SDLK_s:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 's', modifiers);  break;
+          case SDLK_t:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 't', modifiers);  break;
+          case SDLK_u:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'u', modifiers);  break;
+          case SDLK_v:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'v', modifiers);  break;
+          case SDLK_w:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'w', modifiers);  break;
+          case SDLK_x:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'x', modifiers);  break;
+          case SDLK_y:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'y', modifiers);  break;
+          case SDLK_z:    context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, 'z', modifiers);  break;
+          case SDLK_KP_0: context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, '0', modifiers);  break;
+          case SDLK_KP_1: context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, '1', modifiers);  break;
+          case SDLK_KP_2: context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, '2', modifiers);  break;
+          case SDLK_KP_3: context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, '3', modifiers);  break;
+          case SDLK_KP_4: context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, '4', modifiers);  break;
+          case SDLK_KP_5: context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, '5', modifiers);  break;
+          case SDLK_KP_6: context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, '6', modifiers);  break;
+          case SDLK_KP_7: context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, '7', modifiers);  break;
+          case SDLK_KP_8: context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, '8', modifiers);  break;
+          case SDLK_KP_9: context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, '9', modifiers);  break;
 
-            case SDLK_PLUS:
-            case SDLK_KP_PLUS:
-              context_.GetCentralViewport().KeyPressed('+', modifiers);  break;
+          case SDLK_PLUS:
+          case SDLK_KP_PLUS:
+            context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, '+', modifiers);  break;
 
-            case SDLK_MINUS:
-            case SDLK_KP_MINUS:
-              context_.GetCentralViewport().KeyPressed('-', modifiers);  break;
+          case SDLK_MINUS:
+          case SDLK_KP_MINUS:
+            context_.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, '-', modifiers);  break;
 
-            default:
-              break;
+          case SDLK_RIGHT:
+            context_.GetCentralViewport().KeyPressed(KeyboardKeys_Right, 0, modifiers);  break;
+          case SDLK_LEFT:
+            context_.GetCentralViewport().KeyPressed(KeyboardKeys_Left, 0, modifiers);  break;
+          case SDLK_UP:
+            context_.GetCentralViewport().KeyPressed(KeyboardKeys_Up, 0, modifiers);  break;
+          case SDLK_DOWN:
+            context_.GetCentralViewport().KeyPressed(KeyboardKeys_Down, 0, modifiers);  break;
+          default:
+            break;
           }
         }
       }

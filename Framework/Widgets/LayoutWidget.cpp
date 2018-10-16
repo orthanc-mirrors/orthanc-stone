@@ -451,12 +451,13 @@ namespace OrthancStone
   }
 
 
-  void LayoutWidget::KeyPressed(char key,
+  void LayoutWidget::KeyPressed(KeyboardKeys key,
+                                char keyChar,
                                 KeyboardModifiers modifiers)
   {
     for (size_t i = 0; i < children_.size(); i++)
     {
-      children_[i]->GetWidget().KeyPressed(key, modifiers);
+      children_[i]->GetWidget().KeyPressed(key, keyChar, modifiers);
     }
   }
 

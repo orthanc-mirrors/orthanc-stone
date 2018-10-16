@@ -100,11 +100,12 @@ namespace OrthancStone
         }
 
         virtual void KeyPressed(WorldSceneWidget& widget,
-                                char key,
+                                KeyboardKeys key,
+                                char keyChar,
                                 KeyboardModifiers modifiers,
                                 IStatusBar* statusBar)
         {
-          switch (key)
+          switch (keyChar)
           {
             case 's':
               widget.SetDefaultView();

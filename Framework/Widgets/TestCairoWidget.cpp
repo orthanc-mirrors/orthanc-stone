@@ -115,10 +115,11 @@ namespace OrthancStone
     }
 
     
-    void TestCairoWidget::KeyPressed(char key,
+    void TestCairoWidget::KeyPressed(KeyboardKeys key,
+                                     char keyChar,
                                      KeyboardModifiers modifiers)
     {
-      UpdateStatusBar("Key pressed: \"" + std::string(1, key) + "\"");
+      UpdateStatusBar("Key pressed: \"" + std::string(1, keyChar) + "\"");
     }
   }
 }

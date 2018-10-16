@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -81,20 +81,21 @@ namespace OrthancStone
       }
 
       virtual void KeyPressed(WorldSceneWidget& widget,
-                              char key,
+                              KeyboardKeys key,
+                              char keyChar,
                               KeyboardModifiers modifiers,
                               IStatusBar* statusBar)
       {
         if (statusBar)
         {
-          statusBar->SetMessage("Key pressed: \"" + std::string(1, key) + "\"");
+          statusBar->SetMessage("Key pressed: \"" + std::string(1, keyChar) + "\"");
         }
       }
     };
 
 
     bool TestWorldSceneWidget::RenderScene(CairoContext& context,
-                                           const ViewportGeometry& view) 
+                                           const ViewportGeometry& view)
     {
       cairo_t* cr = context.GetObject();
 

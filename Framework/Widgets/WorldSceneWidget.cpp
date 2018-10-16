@@ -330,12 +330,13 @@ namespace OrthancStone
   }
 
 
-  void WorldSceneWidget::KeyPressed(char key,
+  void WorldSceneWidget::KeyPressed(KeyboardKeys key,
+                                    char keyChar,
                                     KeyboardModifiers modifiers)
   {
     if (interactor_)
     {
-      interactor_->KeyPressed(*this, key, modifiers, GetStatusBar());
+      interactor_->KeyPressed(*this, key, keyChar, modifiers, GetStatusBar());
     }
   }
 }

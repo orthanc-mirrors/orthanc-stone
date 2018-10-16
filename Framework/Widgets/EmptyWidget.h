@@ -94,7 +94,8 @@ namespace OrthancStone
     {
     }
 
-    virtual void KeyPressed(char key,
+    virtual void KeyPressed(KeyboardKeys key,
+                            char keyChar,
                             KeyboardModifiers modifiers)
     {
     }

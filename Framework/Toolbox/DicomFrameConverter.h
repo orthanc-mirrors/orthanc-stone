@@ -45,8 +45,9 @@ namespace OrthancStone
     double  rescaleSlope_;
     double  defaultWindowCenter_;
     double  defaultWindowWidth_;
-
-    Orthanc::PixelFormat  expectedPixelFormat_;
+    
+    Orthanc::PhotometricInterpretation  photometric_;
+    Orthanc::PixelFormat                expectedPixelFormat_;
 
     void SetDefaultParameters();
 
@@ -59,6 +60,11 @@ namespace OrthancStone
     Orthanc::PixelFormat GetExpectedPixelFormat() const
     {
       return expectedPixelFormat_;
+    }
+
+    Orthanc::PhotometricInterpretation GetPhotometricInterpretation() const
+    {
+      return photometric_;
     }
 
     void ReadParameters(const Orthanc::DicomMap& dicom);

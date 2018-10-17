@@ -113,6 +113,8 @@ namespace OrthancStone
       // Type 1 tag, must be present
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
+
+    photometric_ = Orthanc::StringToPhotometricInterpretation(photometric.c_str());
     
     isColor_ = (photometric != "MONOCHROME1" &&
                 photometric != "MONOCHROME2");

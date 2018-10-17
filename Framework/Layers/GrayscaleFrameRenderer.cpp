@@ -81,7 +81,7 @@ namespace OrthancStone
             v = static_cast<uint8_t>(255.0f * (*p - x0) / (x1 - x0));
           }
 
-          if (style.reverse_)
+          if (style.reverse_ ^ (photometric_ == Orthanc::PhotometricInterpretation_Monochrome1))
           {
             v = 255 - v;
           }
@@ -118,7 +118,8 @@ namespace OrthancStone
     FrameRenderer(frameSlice, pixelSpacingX, pixelSpacingY, isFullQuality),
     frame_(frame),
     defaultWindowCenter_(converter.GetDefaultWindowCenter()),
-    defaultWindowWidth_(converter.GetDefaultWindowWidth())
+    defaultWindowWidth_(converter.GetDefaultWindowWidth()),
+    photometric_(converter.GetPhotometricInterpretation())
   {
     if (frame == NULL)
     {

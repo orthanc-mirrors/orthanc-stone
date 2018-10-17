@@ -72,9 +72,11 @@ namespace OrthancStone
                                                             IStatusBar* statusBar)
         {
           switch (application_.currentTool_) {
-          case Tools_Crop:
-          case Tools_Windowing:
           case Tools_Zoom:
+            printf("ZOOM\n");
+
+            case Tools_Crop:
+          case Tools_Windowing:
           case Tools_Pan:
             // TODO return the right mouse tracker
             return NULL;
@@ -97,7 +99,7 @@ namespace OrthancStone
             char buf[64];
             sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)",
                     p[0] / 10.0, p[1] / 10.0, p[2] / 10.0);
-            statusBar->SetMessage(buf);
+            //statusBar->SetMessage(buf);
           }
         }
 
@@ -149,8 +151,9 @@ namespace OrthancStone
         }
       };
 
-      void OnMainWidgetGeometryReady(const ILayerSource::GeometryReadyMessage& message)
+      void OnGeometryChanged(const LayerWidget::GeometryChangedMessage& message)
       {
+        mainWidget_->SetSlice(source_->GetSlice(slice_).GetGeometry());
         mainWidget_->SetDefaultView();
       }
       
@@ -208,7 +211,7 @@ namespace OrthancStone
         std::auto_ptr<OrthancFrameLayerSource> layer(new OrthancFrameLayerSource(broker_, *orthancApiClient_));
         source_ = layer.get();
         layer->LoadFrame(instance, frame);
-        layer->RegisterObserverCallback(new Callable<SingleFrameEditorApplication, ILayerSource::GeometryReadyMessage>(*this, &SingleFrameEditorApplication::OnMainWidgetGeometryReady));
+        mainWidget_->RegisterObserverCallback(new Callable<SingleFrameEditorApplication, LayerWidget::GeometryChangedMessage>(*this, &SingleFrameEditorApplication::OnGeometryChanged));
         mainWidget_->AddLayer(layer.release());
 
         mainWidget_->SetTransmitMouseOver(true);

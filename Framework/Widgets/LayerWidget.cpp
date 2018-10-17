@@ -255,7 +255,7 @@ public:
                                    ILayerSource& source) const
   {
     extent.Reset();
-    
+
     std::vector<Vector> points;
     if (source.GetExtent(points, slice_))
     {

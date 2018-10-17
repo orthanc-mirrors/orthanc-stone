@@ -32,20 +32,6 @@ namespace OrthancStone
   class WorldSceneWidget : public CairoWidget
   {
   public:
-    class IWorldObserver : public boost::noncopyable
-    {
-    public:
-      virtual ~IWorldObserver()
-      {
-      }
-
-      virtual void NotifySizeChange(const WorldSceneWidget& source,
-                                    ViewportGeometry& view) = 0;  // Can be tuned by the observer
-
-      virtual void NotifyViewChange(const WorldSceneWidget& source,
-                                    const ViewportGeometry& view) = 0;
-    };
-
     class PanMouseTracker : public IMouseTracker
     {
     private:
@@ -90,10 +76,7 @@ namespace OrthancStone
 
     class SceneMouseTracker;
 
-    typedef ObserversRegistry<WorldSceneWidget, IWorldObserver>  Observers;
-
     ViewportGeometry       view_;
-    Observers              observers_;
     IWorldSceneInteractor* interactor_;
 
   public:
@@ -116,16 +99,6 @@ namespace OrthancStone
       CairoWidget(name),
       interactor_(NULL)
     {
-    }
-
-    void Register(IWorldObserver& observer)
-    {
-      observers_.Register(observer);
-    }
-
-    void Unregister(IWorldObserver& observer)
-    {
-      observers_.Unregister(observer);
     }
 
     virtual void SetSize(unsigned int width,

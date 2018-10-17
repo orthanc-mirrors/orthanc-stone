@@ -105,6 +105,7 @@ namespace OrthancStone
                                           const CoordinateSystem3D& viewportSlice)
   {
     size_t index;
+
     if (loader_.IsGeometryReady() &&
         loader_.LookupSlice(index, viewportSlice))
     {
@@ -122,17 +123,10 @@ namespace OrthancStone
   {
     size_t index;
 
-    if (loader_.IsGeometryReady())
+    if (loader_.IsGeometryReady() &&
+        loader_.LookupSlice(index, viewportSlice))
     {
-      if (loader_.LookupSlice(index, viewportSlice))
-      {
-        loader_.ScheduleLoadSliceImage(index, quality_);
-      }
-      else
-      {
-        Slice slice;
-        LayerSourceBase::NotifyLayerReady(NULL, slice.GetGeometry(), true);
-      }
+      loader_.ScheduleLoadSliceImage(index, quality_);
     }
   }
 }

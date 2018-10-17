@@ -43,23 +43,6 @@ namespace OrthancStone
   }
 
 
-  struct WorldSceneWidget::SizeChangeFunctor
-  {
-    ViewportGeometry& view_;
-
-    SizeChangeFunctor(ViewportGeometry& view) :
-      view_(view)
-    {
-    }
-
-    void operator() (IWorldObserver& observer,
-                     const WorldSceneWidget& source)
-    {
-      observer.NotifySizeChange(source, view_);
-    }
-  };
-
-
   // this is an adapter between a IWorldSceneMouseTracker
   // that is tracking a mouse in scene coordinates/mm and
   // an IMouseTracker that is tracking a mouse
@@ -112,14 +95,14 @@ namespace OrthancStone
     that_.view_.GetPan(previousPanX_, previousPanY_);
   }
 
+  
   void WorldSceneWidget::PanMouseTracker::MouseMove(int x, int y)
   {
     that_.view_.SetPan(previousPanX_ + x - downX_,
                        previousPanY_ + y - downY_);
-
-    that_.observers_.Apply(that_, &IWorldObserver::NotifyViewChange, that_.view_);
   }
 
+  
   WorldSceneWidget::ZoomMouseTracker::ZoomMouseTracker(WorldSceneWidget&  that,
                                                        int x,
                                                        int y) :
@@ -174,8 +157,6 @@ namespace OrthancStone
     that_.view_.MapSceneToDisplay(tx, ty, centerX_, centerY_);
     that_.view_.SetPan(panX + static_cast<double>(downX_ - tx),
                        panY + static_cast<double>(downY_ - ty));
-
-    that_.observers_.Apply(that_, &IWorldObserver::NotifyViewChange, that_.view_);
   }
 
 
@@ -209,20 +190,7 @@ namespace OrthancStone
                                  unsigned int height)
   {
     CairoWidget::SetSize(width, height);
-
     view_.SetDisplaySize(width, height);
-
-    if (observers_.IsEmpty())
-    {
-      // Without a size observer, reset to the default view
-      // view_.SetDefaultView();
-    }
-    else
-    {
-      // With a size observer, let it decide which view to use
-      SizeChangeFunctor functor(view_);
-      observers_.Notify(*this, functor);
-    }
   }
 
 
@@ -238,8 +206,6 @@ namespace OrthancStone
     view_.SetDefaultView();
 
     NotifyContentChanged();
-
-    observers_.Apply(*this, &IWorldObserver::NotifyViewChange, view_);
   }
 
 
@@ -248,8 +214,6 @@ namespace OrthancStone
     view_ = view;
 
     NotifyContentChanged();
-
-    observers_.Apply(*this, &IWorldObserver::NotifyViewChange, view_);
   }
 
 

@@ -264,6 +264,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoFont.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Viewport/IViewport.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IStatusBar.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/WidgetViewport.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/ImageBuffer3D.cpp

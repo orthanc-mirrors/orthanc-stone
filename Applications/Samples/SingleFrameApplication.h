@@ -108,7 +108,7 @@ namespace OrthancStone
           switch (keyChar)
           {
             case 's':
-              widget.SetDefaultView();
+              widget.FitContent();
               break;
 
             default:
@@ -181,7 +181,7 @@ namespace OrthancStone
           SetSlice(source_->GetSliceCount() / 2);
         }
 
-        mainWidget_->SetDefaultView();
+        mainWidget_->FitContent();
       }
       
       std::unique_ptr<Interactor>           mainWidgetInteractor_;

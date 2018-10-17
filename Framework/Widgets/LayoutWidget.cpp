@@ -291,11 +291,11 @@ namespace OrthancStone
   }
 
 
-  void LayoutWidget::SetDefaultView()
+  void LayoutWidget::FitContent()
   {
     for (size_t i = 0; i < children_.size(); i++)
     {
-      children_[i]->GetWidget().SetDefaultView();
+      children_[i]->GetWidget().FitContent();
     }
   }
   

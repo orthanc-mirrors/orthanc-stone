@@ -106,7 +106,7 @@ namespace OrthancStone
 
     void SetInteractor(IWorldSceneInteractor& interactor);
 
-    virtual void SetDefaultView();
+    virtual void FitContent();
 
     void SetView(const ViewportGeometry& view);
 

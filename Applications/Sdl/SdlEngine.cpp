@@ -120,7 +120,7 @@ namespace OrthancStone
     {
       NativeStoneApplicationContext::GlobalMutexLocker locker(context_);
       SetSize(window_.GetWidth(), window_.GetHeight());
-      context_.GetCentralViewport().SetDefaultView();
+      context_.GetCentralViewport().FitContent();
     }
     
     bool stop = false;

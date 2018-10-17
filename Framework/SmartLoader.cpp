@@ -26,6 +26,7 @@
 #include "Framework/Widgets/LayerWidget.h"
 #include "Framework/StoneException.h"
 #include "Framework/Layers/FrameRenderer.h"
+#include "Core/Logging.h"
 
 namespace OrthancStone
 {
@@ -50,6 +51,7 @@ namespace OrthancStone
     CachedSlice(MessageBroker& broker)
       : LayerSourceBase(broker)
     {}
+    virtual ~CachedSlice() {}
 
     virtual bool GetExtent(std::vector<Vector>& points,
                            const CoordinateSystem3D& viewportSlice)
@@ -63,12 +65,21 @@ namespace OrthancStone
     {
       // TODO: viewportSlice is not used !!!!
 
-      // it has already been loaded -> trigger the "layer ready" message immediately
-      bool isFull = (effectiveQuality_ == SliceImageQuality_FullPng || effectiveQuality_ == SliceImageQuality_FullPam);
-      std::auto_ptr<Orthanc::ImageAccessor> accessor(new Orthanc::ImageAccessor());
-      image_->GetReadOnlyAccessor(*accessor);
-      LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(accessor.release(), *slice_, isFull),
-                                        slice_->GetGeometry(), false);
+      // it has already been loaded -> trigger the "layer ready" message immediately otherwise, do nothing now.  The LayerReady will be triggered
+      // once the LayerSource is ready
+      if (status_ == CachedSliceStatus_ImageLoaded)
+      {
+        LOG(WARNING) << "ScheduleLayerCreation for CachedSlice (image is loaded): " << slice_->GetOrthancInstanceId();
+        bool isFull = (effectiveQuality_ == SliceImageQuality_FullPng || effectiveQuality_ == SliceImageQuality_FullPam);
+        std::auto_ptr<Orthanc::ImageAccessor> accessor(new Orthanc::ImageAccessor());
+        image_->GetReadOnlyAccessor(*accessor);
+        LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(accessor.release(), *slice_, isFull),
+                                          slice_->GetGeometry(), false);
+      }
+      else
+      {
+        LOG(WARNING) << "ScheduleLayerCreation for CachedSlice (image is not loaded yet): " << slice_->GetOrthancInstanceId();
+      }
     }
 
     CachedSlice* Clone() const
@@ -105,10 +116,12 @@ namespace OrthancStone
 
     std::auto_ptr<ILayerSource> layerSource;
     std::string sliceKeyId = instanceId + ":" + std::to_string(frame);
+    SmartLoader::CachedSlice* cachedSlice = NULL;
 
     if (cachedSlices_.find(sliceKeyId) != cachedSlices_.end()) // && cachedSlices_[sliceKeyId]->status_ == CachedSliceStatus_Loaded)
     {
       layerSource.reset(cachedSlices_[sliceKeyId]->Clone());
+      cachedSlice = dynamic_cast<SmartLoader::CachedSlice*>(layerSource.get());
     }
     else
     {
@@ -134,7 +147,6 @@ namespace OrthancStone
       throw StoneException(ErrorCode_CanOnlyAddOneLayerAtATime);
     }
 
-    SmartLoader::CachedSlice* cachedSlice = dynamic_cast<SmartLoader::CachedSlice*>(layerSource.get());
     if (cachedSlice != NULL)
     {
       cachedSlice->NotifyGeometryReady();
@@ -144,13 +156,19 @@ namespace OrthancStone
 
   void SmartLoader::PreloadSlice(const std::string instanceId, unsigned int frame)
   {
+    // TODO: reactivate -> need to be able to ScheduleLayerLoading in ILayerSource without calling ScheduleLayerCreation
+    return;
     // TODO: check if it is already in the cache
+
+
 
     // create the slice in the cache with "empty" data
     boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::broker_));
     cachedSlice->slice_.reset(new Slice(instanceId, frame));
     cachedSlice->status_ = CachedSliceStatus_ScheduledToLoad;
     std::string sliceKeyId = instanceId + ":" + std::to_string(frame);
+
+    LOG(WARNING) << "Will preload: " << sliceKeyId;
 
     cachedSlices_[sliceKeyId] = boost::shared_ptr<CachedSlice>(cachedSlice);
 
@@ -186,6 +204,8 @@ namespace OrthancStone
     const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount()
     std::string sliceKeyId = slice.GetOrthancInstanceId() + ":" + std::to_string(slice.GetFrame());
 
+    LOG(WARNING) << "Geometry ready: " << sliceKeyId;
+
     boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::broker_));
     cachedSlice->slice_.reset(slice.Clone());
     cachedSlice->effectiveQuality_ = source.GetImageQuality();
@@ -205,6 +225,8 @@ namespace OrthancStone
     const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount() ?
     std::string sliceKeyId = slice.GetOrthancInstanceId() + ":" + std::to_string(slice.GetFrame());
 
+    LOG(WARNING) << "Image ready: " << sliceKeyId;
+
     boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::broker_));
     cachedSlice->image_ = message.image_;
     cachedSlice->effectiveQuality_ = message.imageQuality_;
@@ -222,6 +244,8 @@ namespace OrthancStone
     OrthancFrameLayerSource& source = dynamic_cast<OrthancFrameLayerSource&>(message.origin_);
     const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount() ?
     std::string sliceKeyId = slice.GetOrthancInstanceId() + ":" + std::to_string(slice.GetFrame());
+
+    LOG(WARNING) << "Layer ready: " << sliceKeyId;
 
     // remove the slice from the preloading slices now that it has been fully loaded and it is referenced in the cache
     if (preloadingInstances_.find(sliceKeyId) != preloadingInstances_.end())

@@ -36,11 +36,11 @@ namespace OrthancStone
   }
 
 
-  void WidgetViewport::SetDefaultView()
+  void WidgetViewport::FitContent()
   {
     if (centralWidget_.get() != NULL)
     {
-      centralWidget_->SetDefaultView();
+      centralWidget_->FitContent();
     }
   }
 

@@ -119,7 +119,7 @@ namespace OrthancStone
           switch (keyChar)
           {
           case 's':
-            widget.SetDefaultView();
+            widget.FitContent();
             break;
           case 'p':
             application_.currentTool_ = Tools_Pan;
@@ -154,7 +154,7 @@ namespace OrthancStone
       void OnGeometryChanged(const LayerWidget::GeometryChangedMessage& message)
       {
         mainWidget_->SetSlice(source_->GetSlice(slice_).GetGeometry());
-        mainWidget_->SetDefaultView();
+        mainWidget_->FitContent();
       }
       
       std::unique_ptr<Interactor>           mainWidgetInteractor_;

@@ -121,7 +121,7 @@ namespace OrthancStone
   }
 
 
-  void ViewportGeometry::SetDefaultView()
+  void ViewportGeometry::FitContent()
   {
     if (width_ > 0 &&
         height_ > 0 &&

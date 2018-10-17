@@ -46,7 +46,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void SetDefaultView()
+    virtual void FitContent()
     {
     }
 

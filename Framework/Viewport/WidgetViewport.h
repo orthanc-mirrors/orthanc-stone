@@ -45,7 +45,7 @@ namespace OrthancStone
   public:
     WidgetViewport();
 
-    virtual void SetDefaultView();
+    virtual void FitContent();
 
     virtual void SetStatusBar(IStatusBar& statusBar);
 

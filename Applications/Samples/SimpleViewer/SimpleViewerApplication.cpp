@@ -166,7 +166,7 @@ namespace SimpleViewer {
 
   void SimpleViewerApplication::OnWidgetGeometryChanged(const LayerWidget::GeometryChangedMessage& message)
   {
-    message.origin_.SetDefaultView();
+    message.origin_.FitContent();
   }
 
   void SimpleViewerApplication::SelectSeriesInMainViewport(const std::string& seriesId)

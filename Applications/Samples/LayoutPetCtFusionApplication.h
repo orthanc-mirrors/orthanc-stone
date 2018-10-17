@@ -89,7 +89,7 @@ namespace OrthancStone
         {
           if (key == 's')
           {
-            that_.SetDefaultView();
+            that_.FitContent();
           }
         }
       };
@@ -109,11 +109,11 @@ namespace OrthancStone
       LayeredSceneWidget*  fusionSagittal_;
 
 
-      void SetDefaultView()
+      void FitContent()
       {
-        petAxial_->SetDefaultView();
-        petCoronal_->SetDefaultView();
-        petSagittal_->SetDefaultView();
+        petAxial_->FitContent();
+        petCoronal_->FitContent();
+        petSagittal_->FitContent();
       }
 
 
@@ -361,7 +361,7 @@ namespace OrthancStone
       virtual void NotifySizeChange(const WorldSceneWidget& source,
                                     ViewportGeometry& view)
       {
-        view.SetDefaultView();
+        view.FitContent();
       }
 
       virtual void NotifyViewChange(const WorldSceneWidget& source,

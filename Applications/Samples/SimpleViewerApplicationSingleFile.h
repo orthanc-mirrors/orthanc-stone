@@ -163,7 +163,7 @@ namespace OrthancStone
           switch (keyChar)
           {
           case 's':
-            widget.SetDefaultView();
+            widget.FitContent();
             break;
 
           default:
@@ -375,7 +375,7 @@ namespace OrthancStone
 
       void OnWidgetGeometryChanged(const LayerWidget::GeometryChangedMessage& message)
       {
-        message.origin_.SetDefaultView();
+        message.origin_.FitContent();
       }
 
       void SelectSeriesInMainViewport(const std::string& seriesId)

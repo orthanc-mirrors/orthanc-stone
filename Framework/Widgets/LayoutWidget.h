@@ -53,7 +53,7 @@ namespace OrthancStone
 
     virtual ~LayoutWidget();
 
-    virtual void SetDefaultView();
+    virtual void FitContent();
 
     virtual void NotifyContentChanged(const IWidget& widget);
 

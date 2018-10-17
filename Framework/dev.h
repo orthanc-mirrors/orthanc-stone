@@ -684,7 +684,7 @@ namespace OrthancStone
         slices_.reset(new VolumeImageGeometry(image, projection_));
         SetSlice(slices_->GetSliceCount() / 2);
 
-        widget_.SetDefaultView();
+        widget_.FitContent();
       }
     }
 
@@ -756,7 +756,7 @@ namespace OrthancStone
       switch (keyChar)
       {
       case 's':
-        widget.SetDefaultView();
+        widget.FitContent();
         break;
 
       default:

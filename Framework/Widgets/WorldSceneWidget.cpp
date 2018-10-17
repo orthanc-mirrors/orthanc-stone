@@ -200,10 +200,10 @@ namespace OrthancStone
   }
 
 
-  void WorldSceneWidget::SetDefaultView()
+  void WorldSceneWidget::FitContent()
   {
     SetSceneExtent(view_);
-    view_.SetDefaultView();
+    view_.FitContent();
 
     NotifyContentChanged();
   }

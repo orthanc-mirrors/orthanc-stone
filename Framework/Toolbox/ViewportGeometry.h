@@ -83,7 +83,7 @@ namespace OrthancStone
       return zoom_;
     }
 
-    void SetDefaultView();
+    void FitContent();
 
     void ApplyTransform(CairoContext& context) const;
 

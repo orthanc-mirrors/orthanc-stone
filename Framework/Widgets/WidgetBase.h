@@ -55,7 +55,7 @@ namespace OrthancStone
   public:
     WidgetBase(const std::string& name);
 
-    virtual void SetDefaultView()
+    virtual void FitContent()
     {
     }
   

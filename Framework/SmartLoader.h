@@ -32,7 +32,7 @@ namespace OrthancStone
 
   class SmartLoader : public IObservable, public IObserver
   {
-    struct CachedSlice;
+    class CachedSlice;
 
   protected:
     typedef std::map<std::string, boost::shared_ptr<SmartLoader::CachedSlice>> CachedSlices;

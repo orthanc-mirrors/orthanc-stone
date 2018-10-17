@@ -97,7 +97,7 @@ namespace SimpleViewer {
     switch (keyChar)
     {
     case 's':
-      widget.SetDefaultView();
+      widget.FitContent();
       break;
 
     default:

@@ -36,6 +36,7 @@ namespace OrthancStone
 
     ViewportGeometry       view_;
     IWorldSceneInteractor* interactor_;
+    bool                   hasDefaultMouseEvents_;
 
   protected:
     virtual Extent2D GetSceneExtent() = 0;
@@ -56,8 +57,19 @@ namespace OrthancStone
   public:
     WorldSceneWidget(const std::string& name) :
       CairoWidget(name),
-      interactor_(NULL)
+      interactor_(NULL),
+      hasDefaultMouseEvents_(true)
     {
+    }
+
+    void SetDefaultMouseEvents(bool value)
+    {
+      hasDefaultMouseEvents_ = value;
+    }
+
+    bool HasDefaultMouseEvents() const
+    {
+      return hasDefaultMouseEvents_;
     }
 
     void SetInteractor(IWorldSceneInteractor& interactor);

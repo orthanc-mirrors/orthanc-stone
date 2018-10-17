@@ -161,18 +161,23 @@ namespace OrthancStone
     {
       return new SceneMouseTracker(view_, tracker.release());
     }
-
-    //TODO: allow Interactor to create Pan & Zoom
-    switch (button)
+    else if (hasDefaultMouseEvents_)
     {
-      case MouseButton_Middle:
-        return new SceneMouseTracker(view_, new PanMouseTracker(*this, x, y));
+      switch (button)
+      {
+        case MouseButton_Middle:
+          return new SceneMouseTracker(view_, new PanMouseTracker(*this, x, y));
 
-      case MouseButton_Right:
-        return new SceneMouseTracker(view_, new ZoomMouseTracker(*this, x, y));
+        case MouseButton_Right:
+          return new SceneMouseTracker(view_, new ZoomMouseTracker(*this, x, y));
 
-      default:
-        return NULL;
+        default:
+          return NULL;
+      }      
+    }
+    else
+    {
+      return NULL;
     }
   }
 

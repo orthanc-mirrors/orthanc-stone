@@ -50,6 +50,11 @@ namespace OrthancStone
                          uint8_t blue,
                          unsigned int fontSize);
     
+    virtual bool HasRender() const
+    {
+      return true;
+    }
+
     virtual void Render(CairoContext& context,
                         double zoom);
     
@@ -62,7 +67,9 @@ namespace OrthancStone
       // Possibly create a new landmark "volume" with the circle in subclasses
     }
 
-    virtual void MouseMove(double x,
+    virtual void MouseMove(int displayX,
+                           int displayY,
+                           double x,
                            double y);
   };
 }

@@ -31,46 +31,6 @@ namespace OrthancStone
 {
   class WorldSceneWidget : public CairoWidget
   {
-  public:
-    class PanMouseTracker : public IMouseTracker
-    {
-    private:
-      WorldSceneWidget&  that_;
-      double             previousPanX_;
-      double             previousPanY_;
-      double             downX_;
-      double             downY_;
-
-    public:
-      PanMouseTracker(WorldSceneWidget& that, int x, int y);
-
-      virtual void Render(Orthanc::ImageAccessor& surface) {}
-
-      virtual void MouseUp() {}
-
-      virtual void MouseMove(int x, int y);
-    };
-
-    class ZoomMouseTracker : public IMouseTracker
-    {
-    private:
-      WorldSceneWidget&  that_;
-      int                downX_;
-      int                downY_;
-      double             centerX_;
-      double             centerY_;
-      double             oldZoom_;
-
-    public:
-      ZoomMouseTracker(WorldSceneWidget&  that, int x, int y);
-
-      void Render(Orthanc::ImageAccessor& surface) {}
-
-      virtual void MouseUp() {}
-
-      virtual void MouseMove(int x, int y);
-    };
-
   private:
     class SceneMouseTracker;
 
@@ -104,7 +64,10 @@ namespace OrthancStone
 
     void SetView(const ViewportGeometry& view);
 
-    ViewportGeometry GetView();
+    const ViewportGeometry& GetView() const
+    {
+      return view_;
+    }
 
     virtual void SetSize(unsigned int width,
                          unsigned int height);

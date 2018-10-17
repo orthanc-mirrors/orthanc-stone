@@ -225,10 +225,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SeriesFrameRendererFactory.cpp
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SiblingSliceLocationFactory.cpp
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SingleFrameRendererFactory.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/dev.h
-  ${ORTHANC_STONE_ROOT}/Framework/StoneException.h
+
   ${ORTHANC_STONE_ROOT}/Framework/Layers/CircleMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/ColorFrameRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/DicomStructureSetRendererFactory.cpp
@@ -241,6 +238,9 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Layers/OrthancFrameLayerSource.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/RenderStyle.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/SliceOutlineRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/StoneException.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/CoordinateSystem3D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomFrameConverter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet.cpp
@@ -248,13 +248,13 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Extent2D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/FiniteProjectiveCamera.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/IWebService.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/MessagingToolbox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrientedBoundingBox.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrthancSlicesLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrthancApiClient.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrthancSlicesLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlices.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlicesCursor.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
@@ -264,8 +264,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoFont.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Viewport/IViewport.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IStatusBar.h
+  ${ORTHANC_STONE_ROOT}/Framework/Viewport/IViewport.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/WidgetViewport.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/ImageBuffer3D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/SlicedVolumeBase.cpp
@@ -275,14 +275,17 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/CairoWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/EmptyWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/IWidget.h
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/IWorldSceneMouseTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/IWorldSceneInteractor.h
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/IWorldSceneMouseTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/LayerWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/LayoutWidget.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/PanMouseTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/TestCairoWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/TestWorldSceneWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/WidgetBase.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/WorldSceneWidget.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/ZoomMouseTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/dev.h
 
   ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h
@@ -293,10 +296,10 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageType.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/Promise.h
 
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomPath.cpp
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/IOrthancConnection.cpp
   ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomDatasetReader.cpp
+  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomPath.cpp
   ${ORTHANC_ROOT}/Plugins/Samples/Common/FullOrthancDataset.cpp
+  ${ORTHANC_ROOT}/Plugins/Samples/Common/IOrthancConnection.cpp
   
   ${PLATFORM_SOURCES}
   ${APPLICATIONS_SOURCES}

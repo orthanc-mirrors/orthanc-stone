@@ -99,7 +99,9 @@ namespace OrthancStone
     return buf;
   }
 
-  void CircleMeasureTracker::MouseMove(double x,
+  void CircleMeasureTracker::MouseMove(int displayX,
+                                       int displayY,
+                                       double x,
                                        double y)
   {
     x2_ = x;

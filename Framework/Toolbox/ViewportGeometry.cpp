@@ -121,6 +121,18 @@ namespace OrthancStone
   }
 
 
+  void ViewportGeometry::MapPixelCenterToScene(double& sceneX,
+                                               double& sceneY,
+                                               int x,
+                                               int y) const
+  {
+    // Take the center of the pixel
+    MapDisplayToScene(sceneX, sceneY,
+                      static_cast<double>(x) + 0.5,
+                      static_cast<double>(y) + 0.5);
+  }
+
+
   void ViewportGeometry::FitContent()
   {
     if (width_ > 0 &&

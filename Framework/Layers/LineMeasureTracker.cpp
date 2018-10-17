@@ -86,7 +86,9 @@ namespace OrthancStone
     return buf;
   }
 
-  void LineMeasureTracker::MouseMove(double x,
+  void LineMeasureTracker::MouseMove(int displayX,
+                                     int displayY,
+                                     double x,
                                      double y)
   {
     x2_ = x;

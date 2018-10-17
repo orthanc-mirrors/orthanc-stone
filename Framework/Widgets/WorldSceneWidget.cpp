@@ -21,28 +21,17 @@
 
 #include "WorldSceneWidget.h"
 
+#include "PanMouseTracker.h"
+#include "ZoomMouseTracker.h"
+
+#include <Core/Logging.h>
+
 #include <math.h>
 #include <memory>
 #include <cassert>
-#include "Core/Logging.h"
 
 namespace OrthancStone
 {
-  static void MapMouseToScene(double& sceneX,
-                              double& sceneY,
-                              const ViewportGeometry& view,
-                              int mouseX,
-                              int mouseY)
-  {
-    // Take the center of the pixel
-    double x, y;
-    x = static_cast<double>(mouseX) + 0.5;
-    y = static_cast<double>(mouseY) + 0.5;
-
-    view.MapDisplayToScene(sceneX, sceneY, x, y);
-  }
-
-
   // this is an adapter between a IWorldSceneMouseTracker
   // that is tracking a mouse in scene coordinates/mm and
   // an IMouseTracker that is tracking a mouse
@@ -50,7 +39,7 @@ namespace OrthancStone
   class WorldSceneWidget::SceneMouseTracker : public IMouseTracker
   {
   private:
-    ViewportGeometry                       view_;
+    ViewportGeometry                        view_;
     std::auto_ptr<IWorldSceneMouseTracker>  tracker_;
 
   public:
@@ -59,15 +48,21 @@ namespace OrthancStone
       view_(view),
       tracker_(tracker)
     {
-      assert(tracker != NULL);
+      if (tracker == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
     }
 
     virtual void Render(Orthanc::ImageAccessor& target)
     {
-      CairoSurface surface(target);
-      CairoContext context(surface);
-      view_.ApplyTransform(context);
-      tracker_->Render(context, view_.GetZoom());
+      if (tracker_->HasRender())
+      {
+        CairoSurface surface(target);
+        CairoContext context(surface);
+        view_.ApplyTransform(context);
+        tracker_->Render(context, view_.GetZoom());
+      }
     }
 
     virtual void MouseUp()
@@ -79,85 +74,10 @@ namespace OrthancStone
                            int y)
     {
       double sceneX, sceneY;
-      MapMouseToScene(sceneX, sceneY, view_, x, y);
-      tracker_->MouseMove(sceneX, sceneY);
+      view_.MapPixelCenterToScene(sceneX, sceneY, x, y);
+      tracker_->MouseMove(x, y, sceneX, sceneY);
     }
   };
-
-
-  WorldSceneWidget::PanMouseTracker::PanMouseTracker(WorldSceneWidget& that,
-                                                     int x,
-                                                     int y) :
-    that_(that),
-    downX_(x),
-    downY_(y)
-  {
-    that_.view_.GetPan(previousPanX_, previousPanY_);
-  }
-
-  
-  void WorldSceneWidget::PanMouseTracker::MouseMove(int x, int y)
-  {
-    that_.view_.SetPan(previousPanX_ + x - downX_,
-                       previousPanY_ + y - downY_);
-  }
-
-  
-  WorldSceneWidget::ZoomMouseTracker::ZoomMouseTracker(WorldSceneWidget&  that,
-                                                       int x,
-                                                       int y) :
-    that_(that),
-    downX_(x),
-    downY_(y)
-  {
-    oldZoom_ = that_.view_.GetZoom();
-    MapMouseToScene(centerX_, centerY_, that_.view_, downX_, downY_);
-  }
-
-  void WorldSceneWidget::ZoomMouseTracker::MouseMove(int x,
-                                                     int y)
-  {
-    static const double MIN_ZOOM = -4;
-    static const double MAX_ZOOM = 4;
-
-    if (that_.view_.GetDisplayHeight() <= 3)
-    {
-      LOG(WARNING) << "image is too small to zoom (current height = " << that_.view_.GetDisplayHeight() << ")";
-      return;
-    }
-
-    double dy = (static_cast<double>(y - downY_) /
-                 static_cast<double>(that_.view_.GetDisplayHeight() - 1)); // In the range [-1,1]
-    double z;
-
-    // Linear interpolation from [-1, 1] to [MIN_ZOOM, MAX_ZOOM]
-    if (dy < -1.0)
-    {
-      z = MIN_ZOOM;
-    }
-    else if (dy > 1.0)
-    {
-      z = MAX_ZOOM;
-    }
-    else
-    {
-      z = MIN_ZOOM + (MAX_ZOOM - MIN_ZOOM) * (dy + 1.0) / 2.0;
-    }
-
-    z = pow(2.0, z);
-
-    that_.view_.SetZoom(oldZoom_ * z);
-
-    // Correct the pan so that the original click point is kept at
-    // the same location on the display
-    double panX, panY;
-    that_.view_.GetPan(panX, panY);
-
-    int tx, ty;
-    that_.view_.MapSceneToDisplay(tx, ty, centerX_, centerY_);
-    that_.view_.SetPan(panX + static_cast<double>(downX_ - tx),
-                       panY + static_cast<double>(downY_ - ty));
-  }
 
 
   bool WorldSceneWidget::RenderCairo(CairoContext& context)
@@ -175,7 +95,7 @@ namespace OrthancStone
     view.ApplyTransform(context);
 
     double sceneX, sceneY;
-    MapMouseToScene(sceneX, sceneY, view, x, y);
+    view.MapPixelCenterToScene(sceneX, sceneY, x, y);
 
     if (interactor_)
     {
@@ -221,19 +141,13 @@ namespace OrthancStone
   }
 
 
-  ViewportGeometry WorldSceneWidget::GetView()
-  {
-    return view_;
-  }
-
-
   IMouseTracker* WorldSceneWidget::CreateMouseTracker(MouseButton button,
                                                       int x,
                                                       int y,
                                                       KeyboardModifiers modifiers)
   {
     double sceneX, sceneY;
-    MapMouseToScene(sceneX, sceneY, view_, x, y);
+    view_.MapPixelCenterToScene(sceneX, sceneY, x, y);
 
     // asks the Widget Interactor to provide a mouse tracker
     std::auto_ptr<IWorldSceneMouseTracker> tracker;
@@ -251,14 +165,14 @@ namespace OrthancStone
     //TODO: allow Interactor to create Pan & Zoom
     switch (button)
     {
-    case MouseButton_Middle:
-      return new PanMouseTracker(*this, x, y);
+      case MouseButton_Middle:
+        return new SceneMouseTracker(view_, new PanMouseTracker(*this, x, y));
 
-    case MouseButton_Right:
-      return new ZoomMouseTracker(*this, x, y);
+      case MouseButton_Right:
+        return new SceneMouseTracker(view_, new ZoomMouseTracker(*this, x, y));
 
-    default:
-      return NULL;
+      default:
+        return NULL;
     }
   }
 

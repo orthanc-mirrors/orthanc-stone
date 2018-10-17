@@ -63,6 +63,11 @@ namespace OrthancStone
                            double x,
                            double y) const;
 
+    void MapPixelCenterToScene(double& sceneX /* out */,
+                               double& sceneY /* out */,
+                               int x,
+                               int y) const;
+
     void MapSceneToDisplay(int& displayX /* out */,
                            int& displayY /* out */,
                            double x,

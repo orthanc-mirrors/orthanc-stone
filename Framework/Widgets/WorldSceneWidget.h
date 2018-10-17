@@ -72,22 +72,21 @@ namespace OrthancStone
     };
 
   private:
-    struct SizeChangeFunctor;
-
     class SceneMouseTracker;
 
     ViewportGeometry       view_;
     IWorldSceneInteractor* interactor_;
 
-  public:
+  protected:
     virtual Extent2D GetSceneExtent() = 0;
 
-  protected:
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view) = 0;
 
+    // From CairoWidget
     virtual bool RenderCairo(CairoContext& context);
 
+    // From CairoWidget
     virtual void RenderMouseOverCairo(CairoContext& context,
                                       int x,
                                       int y);
@@ -101,32 +100,21 @@ namespace OrthancStone
     {
     }
 
-    virtual void SetSize(unsigned int width,
-                         unsigned int height);
-
     void SetInteractor(IWorldSceneInteractor& interactor);
-
-    virtual void FitContent();
 
     void SetView(const ViewportGeometry& view);
 
     ViewportGeometry GetView();
 
+    virtual void SetSize(unsigned int width,
+                         unsigned int height);
+
+    virtual void FitContent();
+
     virtual IMouseTracker* CreateMouseTracker(MouseButton button,
                                               int x,
                                               int y,
                                               KeyboardModifiers modifiers);
-
-    virtual void RenderSceneMouseOver(CairoContext& context,
-                                      const ViewportGeometry& view,
-                                      double x,
-                                      double y);
-
-    virtual IWorldSceneMouseTracker* CreateMouseSceneTracker(const ViewportGeometry& view,
-                                                             MouseButton button,
-                                                             double x,
-                                                             double y,
-                                                             KeyboardModifiers modifiers);
 
     virtual void MouseWheel(MouseWheelDirection direction,
                             int x,

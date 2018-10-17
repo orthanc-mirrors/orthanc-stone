@@ -176,7 +176,11 @@ namespace OrthancStone
 
     double sceneX, sceneY;
     MapMouseToScene(sceneX, sceneY, view, x, y);
-    RenderSceneMouseOver(context, view, sceneX, sceneY);
+
+    if (interactor_)
+    {
+      interactor_->MouseOver(context, *this, view, sceneX, sceneY, GetStatusBar());
+    }
   }
 
 
@@ -232,13 +236,18 @@ namespace OrthancStone
     MapMouseToScene(sceneX, sceneY, view_, x, y);
 
     // asks the Widget Interactor to provide a mouse tracker
-    std::auto_ptr<IWorldSceneMouseTracker> tracker
-        (CreateMouseSceneTracker(view_, button, sceneX, sceneY, modifiers));
+    std::auto_ptr<IWorldSceneMouseTracker> tracker;
 
+    if (interactor_)
+    {
+      tracker.reset(interactor_->CreateMouseTracker(*this, view_, button, modifiers, sceneX, sceneY, GetStatusBar()));
+    }
+    
     if (tracker.get() != NULL)
     {
       return new SceneMouseTracker(view_, tracker.release());
     }
+
     //TODO: allow Interactor to create Pan & Zoom
     switch (button)
     {
@@ -249,34 +258,6 @@ namespace OrthancStone
       return new ZoomMouseTracker(*this, x, y);
 
     default:
-      return NULL;
-    }
-  }
-
-
-  void WorldSceneWidget::RenderSceneMouseOver(CairoContext& context,
-                                              const ViewportGeometry& view,
-                                              double x,
-                                              double y)
-  {
-    if (interactor_)
-    {
-      interactor_->MouseOver(context, *this, view, x, y, GetStatusBar());
-    }
-  }
-
-  IWorldSceneMouseTracker* WorldSceneWidget::CreateMouseSceneTracker(const ViewportGeometry& view,
-                                                                     MouseButton button,
-                                                                     double x,
-                                                                     double y,
-                                                                     KeyboardModifiers modifiers)
-  {
-    if (interactor_)
-    {
-      return interactor_->CreateMouseTracker(*this, view, button, modifiers, x, y, GetStatusBar());
-    }
-    else
-    {
       return NULL;
     }
   }

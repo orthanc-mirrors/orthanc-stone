@@ -552,7 +552,7 @@ namespace OrthancStone
         (new Orthanc::Image(expectedFormat, reader->GetWidth(), reader->GetHeight(), false));
 
     Orthanc::ImageProcessing::Convert(*image, *reader);
-    reader = NULL;
+    reader.reset();
     
     float scaling = static_cast<float>(stretchHigh - stretchLow) / 255.0f;
     

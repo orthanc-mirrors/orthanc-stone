@@ -35,10 +35,10 @@ namespace OrthancStone
     class CachedSlice;
 
   protected:
-    typedef std::map<std::string, boost::shared_ptr<SmartLoader::CachedSlice>> CachedSlices;
+    typedef std::map<std::string, boost::shared_ptr<SmartLoader::CachedSlice> > CachedSlices;
     CachedSlices cachedSlices_;
 
-    typedef std::map<std::string, boost::shared_ptr<ILayerSource>> PreloadingInstances;
+    typedef std::map<std::string, boost::shared_ptr<ILayerSource> > PreloadingInstances;
     PreloadingInstances preloadingInstances_;
 
     SliceImageQuality     imageQuality_;

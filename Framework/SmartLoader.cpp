@@ -30,12 +30,12 @@
 
 namespace OrthancStone
 {
-    enum CachedSliceStatus
-    {
-      CachedSliceStatus_ScheduledToLoad,
-      CachedSliceStatus_GeometryLoaded,
-      CachedSliceStatus_ImageLoaded
-    };
+  enum CachedSliceStatus
+  {
+    CachedSliceStatus_ScheduledToLoad,
+    CachedSliceStatus_GeometryLoaded,
+    CachedSliceStatus_ImageLoaded
+  };
 
   class SmartLoader::CachedSlice : public LayerSourceBase
   {
@@ -47,11 +47,14 @@ namespace OrthancStone
     CachedSliceStatus               status_;
 
   public:
+    CachedSlice(MessageBroker& broker) :
+    LayerSourceBase(broker)
+    {
+    }
 
-    CachedSlice(MessageBroker& broker)
-      : LayerSourceBase(broker)
-    {}
-    virtual ~CachedSlice() {}
+    virtual ~CachedSlice()
+    {
+    }
 
     virtual bool GetExtent(std::vector<Vector>& points,
                            const CoordinateSystem3D& viewportSlice)
@@ -97,7 +100,8 @@ namespace OrthancStone
   };
 
 
-  SmartLoader::SmartLoader(MessageBroker& broker, OrthancApiClient& orthancApiClient) :
+  SmartLoader::SmartLoader(MessageBroker& broker,  
+                           OrthancApiClient& orthancApiClient) :
     IObservable(broker),
     IObserver(broker),
     imageQuality_(SliceImageQuality_FullPam),
@@ -105,7 +109,10 @@ namespace OrthancStone
   {
   }
 
-  void SmartLoader::SetFrameInWidget(LayerWidget& layerWidget, size_t layerIndex, const std::string& instanceId, unsigned int frame)
+  void SmartLoader::SetFrameInWidget(LayerWidget& layerWidget, 
+                                     size_t layerIndex, 
+                                     const std::string& instanceId, 
+                                     unsigned int frame)
   {
     // TODO: check if this frame has already been loaded or is already being loaded.
     // - if already loaded: create a "clone" that will emit the GeometryReady/ImageReady messages "immediately"
@@ -115,7 +122,7 @@ namespace OrthancStone
     // in both cases, we must be carefull about objects lifecycle !!!
 
     std::auto_ptr<ILayerSource> layerSource;
-    std::string sliceKeyId = instanceId + ":" + std::to_string(frame);
+    std::string sliceKeyId = instanceId + ":" + boost::lexical_cast<std::string>(frame);
     SmartLoader::CachedSlice* cachedSlice = NULL;
 
     if (cachedSlices_.find(sliceKeyId) != cachedSlices_.end()) // && cachedSlices_[sliceKeyId]->status_ == CachedSliceStatus_Loaded)
@@ -154,7 +161,8 @@ namespace OrthancStone
 
   }
 
-  void SmartLoader::PreloadSlice(const std::string instanceId, unsigned int frame)
+  void SmartLoader::PreloadSlice(const std::string instanceId, 
+                                 unsigned int frame)
   {
     // TODO: reactivate -> need to be able to ScheduleLayerLoading in ILayerSource without calling ScheduleLayerCreation
     return;
@@ -166,7 +174,7 @@ namespace OrthancStone
     boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::broker_));
     cachedSlice->slice_.reset(new Slice(instanceId, frame));
     cachedSlice->status_ = CachedSliceStatus_ScheduledToLoad;
-    std::string sliceKeyId = instanceId + ":" + std::to_string(frame);
+    std::string sliceKeyId = instanceId + ":" + boost::lexical_cast<std::string>(frame);
 
     LOG(WARNING) << "Will preload: " << sliceKeyId;
 
@@ -202,7 +210,8 @@ namespace OrthancStone
 
     // save/replace the slice in cache
     const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount()
-    std::string sliceKeyId = slice.GetOrthancInstanceId() + ":" + std::to_string(slice.GetFrame());
+    std::string sliceKeyId = (slice.GetOrthancInstanceId() + ":" + 
+                              boost::lexical_cast<std::string>(slice.GetFrame()));
 
     LOG(WARNING) << "Geometry ready: " << sliceKeyId;
 
@@ -217,13 +226,15 @@ namespace OrthancStone
     EmitMessage(message);
   }
 
+
   void SmartLoader::OnImageReady(const ILayerSource::ImageReadyMessage& message)
   {
     OrthancFrameLayerSource& source = dynamic_cast<OrthancFrameLayerSource&>(message.origin_);
 
     // save/replace the slice in cache
     const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount() ?
-    std::string sliceKeyId = slice.GetOrthancInstanceId() + ":" + std::to_string(slice.GetFrame());
+    std::string sliceKeyId = (slice.GetOrthancInstanceId() + ":" + 
+                              boost::lexical_cast<std::string>(slice.GetFrame()));
 
     LOG(WARNING) << "Image ready: " << sliceKeyId;
 
@@ -239,11 +250,13 @@ namespace OrthancStone
     EmitMessage(message);
   }
 
+
   void SmartLoader::OnLayerReady(const ILayerSource::LayerReadyMessage& message)
   {
     OrthancFrameLayerSource& source = dynamic_cast<OrthancFrameLayerSource&>(message.origin_);
     const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount() ?
-    std::string sliceKeyId = slice.GetOrthancInstanceId() + ":" + std::to_string(slice.GetFrame());
+    std::string sliceKeyId = (slice.GetOrthancInstanceId() + ":" + 
+                              boost::lexical_cast<std::string>(slice.GetFrame()));
 
     LOG(WARNING) << "Layer ready: " << sliceKeyId;
 
@@ -256,5 +269,4 @@ namespace OrthancStone
     // re-emit original Layer message to observers
     EmitMessage(message);
   }
-
 }

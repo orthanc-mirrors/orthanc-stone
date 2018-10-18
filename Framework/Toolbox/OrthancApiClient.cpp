@@ -36,8 +36,10 @@ namespace OrthancStone {
   // TODO: handle destruction of this object (with shared_ptr ?::delete_later ???)
   class HttpResponseToJsonConverter : public IObserver, IObservable
   {
-    std::auto_ptr<MessageHandler<OrthancApiClient::JsonResponseReadyMessage>> orthancApiSuccessCallback_;
-    std::auto_ptr<MessageHandler<OrthancApiClient::HttpErrorMessage>> orthancApiFailureCallback_;
+  private:
+    std::auto_ptr<MessageHandler<OrthancApiClient::JsonResponseReadyMessage> > orthancApiSuccessCallback_;
+    std::auto_ptr<MessageHandler<OrthancApiClient::HttpErrorMessage> > orthancApiFailureCallback_;
+
   public:
     HttpResponseToJsonConverter(MessageBroker& broker,
                                 MessageHandler<OrthancApiClient::JsonResponseReadyMessage>* orthancApiSuccessCallback,
@@ -82,8 +84,10 @@ namespace OrthancStone {
   // TODO: handle destruction of this object (with shared_ptr ?::delete_later ???)
   class HttpResponseToBinaryConverter : public IObserver, IObservable
   {
-    std::auto_ptr<MessageHandler<OrthancApiClient::BinaryResponseReadyMessage>> orthancApiSuccessCallback_;
-    std::auto_ptr<MessageHandler<OrthancApiClient::HttpErrorMessage>> orthancApiFailureCallback_;
+  private:
+    std::auto_ptr<MessageHandler<OrthancApiClient::BinaryResponseReadyMessage> > orthancApiSuccessCallback_;
+    std::auto_ptr<MessageHandler<OrthancApiClient::HttpErrorMessage> > orthancApiFailureCallback_;
+
   public:
     HttpResponseToBinaryConverter(MessageBroker& broker,
                                   MessageHandler<OrthancApiClient::BinaryResponseReadyMessage>* orthancApiSuccessCallback,
@@ -124,8 +128,10 @@ namespace OrthancStone {
   // TODO: handle destruction of this object (with shared_ptr ?::delete_later ???)
   class HttpResponseToEmptyConverter : public IObserver, IObservable
   {
-    std::auto_ptr<MessageHandler<OrthancApiClient::EmptyResponseReadyMessage>> orthancApiSuccessCallback_;
-    std::auto_ptr<MessageHandler<OrthancApiClient::HttpErrorMessage>> orthancApiFailureCallback_;
+  private:
+    std::auto_ptr<MessageHandler<OrthancApiClient::EmptyResponseReadyMessage> > orthancApiSuccessCallback_;
+    std::auto_ptr<MessageHandler<OrthancApiClient::HttpErrorMessage> > orthancApiFailureCallback_;
+
   public:
     HttpResponseToEmptyConverter(MessageBroker& broker,
                                   MessageHandler<OrthancApiClient::EmptyResponseReadyMessage>* orthancApiSuccessCallback,

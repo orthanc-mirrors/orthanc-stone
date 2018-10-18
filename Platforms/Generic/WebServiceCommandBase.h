@@ -37,8 +37,8 @@ namespace OrthancStone
   class WebServiceCommandBase : public IOracleCommand, IObservable
   {
   protected:
-    std::auto_ptr<MessageHandler<IWebService::HttpRequestSuccessMessage>>                              successCallback_;
-    std::auto_ptr<MessageHandler<IWebService::HttpRequestErrorMessage>>                                failureCallback_;
+    std::auto_ptr<MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
+    std::auto_ptr<MessageHandler<IWebService::HttpRequestErrorMessage> >    failureCallback_;
     Orthanc::WebServiceParameters           parameters_;
     std::string                             uri_;
     std::map<std::string, std::string>      headers_;

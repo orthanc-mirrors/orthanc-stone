@@ -37,11 +37,11 @@ namespace OrthancStone
 
     static void UpdateThread(NativeStoneApplicationContext* that);
 
-    boost::mutex        globalMutex_;
-    std::unique_ptr<WidgetViewport>      centralViewport_;
-    boost::thread       updateThread_;
-    bool                stopped_;
-    unsigned int        updateDelayInMs_;
+    boost::mutex                   globalMutex_;
+    std::auto_ptr<WidgetViewport>  centralViewport_;
+    boost::thread                  updateThread_;
+    bool                           stopped_;
+    unsigned int                   updateDelayInMs_;
 
   public:
     class GlobalMutexLocker: public boost::noncopyable
@@ -50,15 +50,22 @@ namespace OrthancStone
     public:
       GlobalMutexLocker(NativeStoneApplicationContext& that):
         lock_(that.globalMutex_)
-      {}
+      {
+      }
     };
 
     NativeStoneApplicationContext();
 
-    virtual ~NativeStoneApplicationContext() {}
+    virtual ~NativeStoneApplicationContext()
+    {
+    }
 
     virtual IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
-    IViewport& GetCentralViewport() {return *(centralViewport_.get());}
+
+    IViewport& GetCentralViewport() 
+    {
+      return *(centralViewport_.get());
+    }
 
     void Start();
 
@@ -68,6 +75,5 @@ namespace OrthancStone
     {
       updateDelayInMs_ = delayInMs;
     }
-
   };
 }

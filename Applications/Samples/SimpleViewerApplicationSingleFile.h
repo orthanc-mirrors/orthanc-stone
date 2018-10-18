@@ -212,22 +212,23 @@ namespace OrthancStone
         Tools_CircleMeasure
       };
 
-      Tools                           currentTool_;
-      std::unique_ptr<MainWidgetInteractor> mainWidgetInteractor_;
-      std::unique_ptr<ThumbnailInteractor>  thumbnailInteractor_;
-      LayoutWidget*                   mainLayout_;
-      LayoutWidget*                   thumbnailsLayout_;
-      std::vector<LayerWidget*>       thumbnails_;
-      std::map<std::string, std::vector<std::string>> instancesIdsPerSeriesId_;
+      Tools                                currentTool_;
+      std::auto_ptr<MainWidgetInteractor>  mainWidgetInteractor_;
+      std::auto_ptr<ThumbnailInteractor>   thumbnailInteractor_;
+      LayoutWidget*                        mainLayout_;
+      LayoutWidget*                        thumbnailsLayout_;
+      std::vector<LayerWidget*>            thumbnails_;
+
+      std::map<std::string, std::vector<std::string> > instancesIdsPerSeriesId_;
       std::map<std::string, Json::Value> seriesTags_;
 
-      unsigned int                    currentInstanceIndex_;
-      OrthancStone::WidgetViewport*   wasmViewport1_;
-      OrthancStone::WidgetViewport*   wasmViewport2_;
+      unsigned int                         currentInstanceIndex_;
+      OrthancStone::WidgetViewport*        wasmViewport1_;
+      OrthancStone::WidgetViewport*        wasmViewport2_;
 
-      IStatusBar*                     statusBar_;
-      std::unique_ptr<SmartLoader>    smartLoader_;
-      std::unique_ptr<OrthancApiClient>      orthancApiClient_;
+      IStatusBar*                          statusBar_;
+      std::auto_ptr<SmartLoader>           smartLoader_;
+      std::auto_ptr<OrthancApiClient>      orthancApiClient_;
 
     public:
       SimpleViewerApplication(MessageBroker& broker) :

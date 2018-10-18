@@ -184,11 +184,10 @@ namespace OrthancStone
         mainWidget_->FitContent();
       }
       
-      std::unique_ptr<Interactor>           mainWidgetInteractor_;
-      std::unique_ptr<OrthancApiClient>     orthancApiClient_;
-
-      const OrthancFrameLayerSource*        source_;
-      unsigned int                          slice_;
+      std::auto_ptr<Interactor>         mainWidgetInteractor_;
+      std::auto_ptr<OrthancApiClient>   orthancApiClient_;
+      const OrthancFrameLayerSource*    source_;
+      unsigned int                      slice_;
 
     public:
       SingleFrameApplication(MessageBroker& broker) :

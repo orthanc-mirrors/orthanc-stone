@@ -24,12 +24,41 @@
 #include "SampleApplicationBase.h"
 
 #include "../../Framework/Layers/OrthancFrameLayerSource.h"
-#include "../../Framework/Widgets/LayerWidget.h"
 
 #include <Core/Logging.h>
 
 namespace OrthancStone
 {
+
+  class GrayscaleBitmapStack :
+    public WorldSceneWidget,
+    public IObservable
+  {
+  public:
+    typedef OriginMessage<MessageType_Widget_GeometryChanged, GrayscaleBitmapStack> GeometryChangedMessage;
+    typedef OriginMessage<MessageType_Widget_ContentChanged, GrayscaleBitmapStack> ContentChangedMessage;
+
+  protected:
+    virtual Extent2D GetSceneExtent()
+    {
+    }
+
+    virtual bool RenderScene(CairoContext& context,
+                             const ViewportGeometry& view)
+    {
+    }
+
+  public:
+    GrayscaleBitmapStack(MessageBroker& broker,
+                         const std::string& name) :
+      WorldSceneWidget(name),
+      IObservable(broker)
+    {
+    }
+  
+  };
+
+  
   namespace Samples
   {
     class SingleFrameEditorApplication :
@@ -94,12 +123,9 @@ namespace OrthancStone
         {
           if (statusBar != NULL)
           {
-            Vector p = dynamic_cast<LayerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
-            
             char buf[64];
-            sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)",
-                    p[0] / 10.0, p[1] / 10.0, p[2] / 10.0);
-            //statusBar->SetMessage(buf);
+            sprintf(buf, "X = %.02f Y = %.02f (in cm)", x / 10.0, y / 10.0);
+            statusBar->SetMessage(buf);
           }
         }
 
@@ -151,9 +177,8 @@ namespace OrthancStone
         }
       };
 
-      void OnGeometryChanged(const LayerWidget::GeometryChangedMessage& message)
+      void OnGeometryChanged(const GrayscaleBitmapStack::GeometryChangedMessage& message)
       {
-        mainWidget_->SetSlice(source_->GetSlice(slice_).GetGeometry());
         mainWidget_->FitContent();
       }
       
@@ -205,13 +230,12 @@ namespace OrthancStone
         int frame = parameters["frame"].as<unsigned int>();
 
         orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
-        mainWidget_ = new LayerWidget(broker_, "main-widget");
+        mainWidget_ = new GrayscaleBitmapStack(broker_, "main-widget");
 
-        std::auto_ptr<OrthancFrameLayerSource> layer(new OrthancFrameLayerSource(broker_, *orthancApiClient_));
-        source_ = layer.get();
-        layer->LoadFrame(instance, frame);
-        mainWidget_->RegisterObserverCallback(new Callable<SingleFrameEditorApplication, LayerWidget::GeometryChangedMessage>(*this, &SingleFrameEditorApplication::OnGeometryChanged));
-        mainWidget_->AddLayer(layer.release());
+        dynamic_cast<GrayscaleBitmapStack*>(mainWidget_)->RegisterObserverCallback(
+          new Callable<SingleFrameEditorApplication,
+          GrayscaleBitmapStack::GeometryChangedMessage>
+          (*this, &SingleFrameEditorApplication::OnGeometryChanged));
 
         mainWidget_->SetTransmitMouseOver(true);
 

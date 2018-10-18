@@ -351,9 +351,10 @@ namespace OrthancStone
           LoadThumbnailForSeries(seriesId, instancesIdsPerSeriesId_[seriesId][0]);
 
           // if this is the first thumbnail loaded, load the first instance in the mainWidget
-          if (mainWidget_->GetLayerCount() == 0)
+          LayerWidget& widget = *dynamic_cast<LayerWidget*>(mainWidget_);
+          if (widget.GetLayerCount() == 0)
           {
-            smartLoader_->SetFrameInWidget(*mainWidget_, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
+            smartLoader_->SetFrameInWidget(widget, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
           }
         }
       }
@@ -381,7 +382,8 @@ namespace OrthancStone
 
       void SelectSeriesInMainViewport(const std::string& seriesId)
       {
-        smartLoader_->SetFrameInWidget(*mainWidget_, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
+        LayerWidget& widget = *dynamic_cast<LayerWidget*>(mainWidget_);
+        smartLoader_->SetFrameInWidget(widget, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
       }
 
       virtual void OnPushButton1Clicked() {}

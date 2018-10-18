@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../../Applications/IStoneApplication.h"
-#include "../../Framework/Widgets/LayerWidget.h"
+#include "../../Framework/Widgets/WorldSceneWidget.h"
 
 #if ORTHANC_ENABLE_WASM==1
 #include "../../Platforms/Wasm/WasmPlatformApplicationAdapter.h"
@@ -42,7 +42,7 @@ namespace OrthancStone
     {
     protected:
       BaseCommandBuilder commandBuilder_;
-      LayerWidget*       mainWidget_;   // ownership is transfered to the application context
+      WorldSceneWidget*  mainWidget_;   // ownership is transfered to the application context
 
     public:
       virtual void Initialize(StoneApplicationContext* context,

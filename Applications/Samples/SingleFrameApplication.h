@@ -140,6 +140,12 @@ namespace OrthancStone
           }   
         }
       }
+
+
+      LayerWidget& GetMainWidget()
+      {
+        return *dynamic_cast<LayerWidget*>(mainWidget_);
+      }
       
 
       void SetSlice(size_t index)
@@ -150,7 +156,7 @@ namespace OrthancStone
           slice_ = index;
           
 #if 1
-          mainWidget_->SetSlice(source_->GetSlice(slice_).GetGeometry());
+          GetMainWidget().SetSlice(source_->GetSlice(slice_).GetGeometry());
 #else
           // TEST for scene extents - Rotate the axes
           double a = 15.0 / 180.0 * M_PI;
@@ -181,7 +187,7 @@ namespace OrthancStone
           SetSlice(source_->GetSliceCount() / 2);
         }
 
-        mainWidget_->FitContent();
+        GetMainWidget().FitContent();
       }
       
       std::auto_ptr<Interactor>         mainWidgetInteractor_;
@@ -238,7 +244,7 @@ namespace OrthancStone
         source_ = layer.get();
         layer->LoadFrame(instance, frame);
         layer->RegisterObserverCallback(new Callable<SingleFrameApplication, ILayerSource::GeometryReadyMessage>(*this, &SingleFrameApplication::OnMainWidgetGeometryReady));
-        mainWidget_->AddLayer(layer.release());
+        GetMainWidget().AddLayer(layer.release());
 
         RenderStyle s;
 
@@ -247,11 +253,11 @@ namespace OrthancStone
           s.interpolation_ = ImageInterpolation_Bilinear;
         }
 
-        mainWidget_->SetLayerStyle(0, s);
-        mainWidget_->SetTransmitMouseOver(true);
+        GetMainWidget().SetLayerStyle(0, s);
+        GetMainWidget().SetTransmitMouseOver(true);
 
         mainWidgetInteractor_.reset(new Interactor(*this));
-        mainWidget_->SetInteractor(*mainWidgetInteractor_);
+        GetMainWidget().SetInteractor(*mainWidgetInteractor_);
       }
     };
 

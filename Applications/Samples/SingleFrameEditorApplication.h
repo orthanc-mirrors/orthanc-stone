@@ -32,30 +32,50 @@ namespace OrthancStone
 
   class GrayscaleBitmapStack :
     public WorldSceneWidget,
+    public IObserver,
     public IObservable
   {
   public:
     typedef OriginMessage<MessageType_Widget_GeometryChanged, GrayscaleBitmapStack> GeometryChangedMessage;
     typedef OriginMessage<MessageType_Widget_ContentChanged, GrayscaleBitmapStack> ContentChangedMessage;
 
+  private:
+    OrthancApiClient&    orthanc_;
+
   protected:
     virtual Extent2D GetSceneExtent()
     {
+      return Extent2D(-1, -1, 1, 1);
     }
 
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view)
     {
+      return true;
     }
 
   public:
     GrayscaleBitmapStack(MessageBroker& broker,
+                         OrthancApiClient& orthanc,
                          const std::string& name) :
       WorldSceneWidget(name),
-      IObservable(broker)
+      IObserver(broker),
+      IObservable(broker),
+      orthanc_(orthanc)
     {
     }
+
+    void LoadDicom(const std::string& dicom)
+    {
+      orthanc_.GetBinaryAsync("/instances/" + dicom + "/file", "application/dicom",
+                              new Callable<GrayscaleBitmapStack, OrthancApiClient::BinaryResponseReadyMessage>(*this, &GrayscaleBitmapStack::OnDicomReceived));
+    }
   
+    void OnDicomReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
+    {
+      printf("DICOM received: [%s] (%d bytes)\n", message.Uri.c_str(), message.AnswerSize);
+    }
+
   };
 
   
@@ -230,7 +250,10 @@ namespace OrthancStone
         int frame = parameters["frame"].as<unsigned int>();
 
         orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
-        mainWidget_ = new GrayscaleBitmapStack(broker_, "main-widget");
+
+        
+        mainWidget_ = new GrayscaleBitmapStack(broker_, *orthancApiClient_, "main-widget");
+        dynamic_cast<GrayscaleBitmapStack*>(mainWidget_)->LoadDicom(instance);
 
         dynamic_cast<GrayscaleBitmapStack*>(mainWidget_)->RegisterObserverCallback(
           new Callable<SingleFrameEditorApplication,

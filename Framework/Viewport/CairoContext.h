@@ -29,7 +29,9 @@ namespace OrthancStone
   class CairoContext : public boost::noncopyable
   {
   private:
-    cairo_t* context_;
+    cairo_t*      context_;
+    unsigned int  width_;
+    unsigned int  height_;
 
   public:
     CairoContext(CairoSurface& surface);
@@ -39,6 +41,16 @@ namespace OrthancStone
     cairo_t* GetObject()
     {
       return context_;
+    }
+
+    unsigned int GetWidth() const
+    {
+      return width_;
+    }
+
+    unsigned int GetHeight() const
+    {
+      return height_;
     }
 
     void SetSourceColor(uint8_t red,

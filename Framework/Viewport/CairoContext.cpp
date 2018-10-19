@@ -24,9 +24,12 @@
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 
+
 namespace OrthancStone
 {
-  CairoContext::CairoContext(CairoSurface& surface)
+  CairoContext::CairoContext(CairoSurface& surface) :
+    width_(surface.GetWidth()),
+    height_(surface.GetHeight())
   {
     context_ = cairo_create(surface.GetObject());
     if (!context_)

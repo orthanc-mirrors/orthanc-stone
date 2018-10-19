@@ -8,6 +8,7 @@ project(OrthancStone)
 
 include(../../Resources/CMake/OrthancStoneParameters.cmake)
 
+#set(ENABLE_DCMTK ON)
 
 set(ENABLE_SDL OFF CACHE BOOL "Target SDL Native application")
 set(ENABLE_QT OFF CACHE BOOL "Target Qt Native application")

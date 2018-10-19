@@ -22,6 +22,12 @@
 ## Configure the Orthanc Framework
 #####################################################################
 
+if (ENABLE_DCMTK)
+  set(ENABLE_LOCALE ON)
+else()
+  set(ENABLE_LOCALE OFF)  # Disable support for locales (notably in Boost)
+endif()
+
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
 include_directories(${ORTHANC_ROOT})
 

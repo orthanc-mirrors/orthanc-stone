@@ -30,6 +30,19 @@
 
 namespace OrthancStone
 {
+  static const Orthanc::DicomTag IMAGE_TAGS[] =
+  {
+    Orthanc::DICOM_TAG_BITS_STORED,
+    Orthanc::DICOM_TAG_DOSE_GRID_SCALING,
+    Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION,
+    Orthanc::DICOM_TAG_PIXEL_REPRESENTATION,
+    Orthanc::DICOM_TAG_RESCALE_INTERCEPT,
+    Orthanc::DICOM_TAG_RESCALE_SLOPE,
+    Orthanc::DICOM_TAG_WINDOW_CENTER,
+    Orthanc::DICOM_TAG_WINDOW_WIDTH
+  };
+
+  
   void DicomFrameConverter::SetDefaultParameters()
   {
     isSigned_ = true;
@@ -37,6 +50,7 @@ namespace OrthancStone
     hasRescale_ = false;
     rescaleIntercept_ = 0;
     rescaleSlope_ = 1;
+    hasDefaultWindow_ = false;
     defaultWindowCenter_ = 128;
     defaultWindowWidth_ = 256;
     expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
@@ -53,6 +67,7 @@ namespace OrthancStone
         c.size() > 0 && 
         w.size() > 0)
     {
+      hasDefaultWindow_ = true;
       defaultWindowCenter_ = static_cast<float>(c[0]);
       defaultWindowWidth_ = static_cast<float>(w[0]);
     }
@@ -139,8 +154,27 @@ namespace OrthancStone
     }
   }
 
+  
+  void DicomFrameConverter::ReadParameters(const OrthancPlugins::IDicomDataset& dicom)
+  {
+    Orthanc::DicomMap converted;
 
-  void DicomFrameConverter::ConvertFrame(std::auto_ptr<Orthanc::ImageAccessor>& source) const
+    for (size_t i = 0; i < sizeof(IMAGE_TAGS) / sizeof(Orthanc::DicomTag); i++)
+    {
+      OrthancPlugins::DicomTag tag(IMAGE_TAGS[i].GetGroup(), IMAGE_TAGS[i].GetElement());
+    
+      std::string value;
+      if (dicom.GetStringValue(value, tag))
+      {
+        converted.SetValue(IMAGE_TAGS[i], value, false);
+      }
+    }
+
+    ReadParameters(converted);
+  }
+    
+
+  void DicomFrameConverter::ConvertFrameInplace(std::auto_ptr<Orthanc::ImageAccessor>& source) const
   {
     assert(sizeof(float) == 4);
 
@@ -149,7 +183,24 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    Orthanc::PixelFormat sourceFormat = source->GetFormat();
+    if (source->GetFormat() == GetExpectedPixelFormat() &&
+        source->GetFormat() == Orthanc::PixelFormat_RGB24)
+    {
+      // No conversion has to be done, check out (*)
+      return;
+    }
+    else
+    {
+      source.reset(ConvertFrame(*source));
+    }
+  }
+
+
+  Orthanc::ImageAccessor* DicomFrameConverter::ConvertFrame(const Orthanc::ImageAccessor& source) const
+  {
+    assert(sizeof(float) == 4);
+
+    Orthanc::PixelFormat sourceFormat = source.GetFormat();
 
     if (sourceFormat != GetExpectedPixelFormat())
     {
@@ -158,27 +209,32 @@ namespace OrthancStone
 
     if (sourceFormat == Orthanc::PixelFormat_RGB24)
     {
-      // No conversion has to be done
-      return;
+      // This is the case of a color image. No conversion has to be done (*)
+      std::auto_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_RGB24, 
+                                                                 source.GetWidth(), 
+                                                                 source.GetHeight(),
+                                                                 false));
+      Orthanc::ImageProcessing::Copy(*converted, source);
+      return converted.release();
     }
+    else
+    {
+      assert(sourceFormat == Orthanc::PixelFormat_Grayscale16 ||
+             sourceFormat == Orthanc::PixelFormat_Grayscale32 ||
+             sourceFormat == Orthanc::PixelFormat_SignedGrayscale16);
 
-    assert(sourceFormat == Orthanc::PixelFormat_Grayscale16 ||
-           sourceFormat == Orthanc::PixelFormat_Grayscale32 ||
-           sourceFormat == Orthanc::PixelFormat_SignedGrayscale16);
+      // This is the case of a grayscale frame. Convert it to Float32.
+      std::auto_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_Float32, 
+                                                                 source.GetWidth(), 
+                                                                 source.GetHeight(),
+                                                                 false));
+      Orthanc::ImageProcessing::Convert(*converted, source);
 
-    // This is the case of a grayscale frame. Convert it to Float32.
-    std::auto_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_Float32, 
-                                                               source->GetWidth(), 
-                                                               source->GetHeight(),
-                                                               false));
-    Orthanc::ImageProcessing::Convert(*converted, *source);
-
-    source.reset(NULL);  // We don't need the source frame anymore
-
-    // Correct rescale slope/intercept if need be
-    ApplyRescale(*converted, sourceFormat != Orthanc::PixelFormat_Grayscale32);
+      // Correct rescale slope/intercept if need be
+      ApplyRescale(*converted, sourceFormat != Orthanc::PixelFormat_Grayscale32);
       
-    source = converted;
+      return converted.release();
+    }
   }
 
 

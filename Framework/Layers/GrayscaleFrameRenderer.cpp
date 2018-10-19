@@ -27,6 +27,8 @@ namespace OrthancStone
 {
   CairoSurface* GrayscaleFrameRenderer::GenerateDisplay(const RenderStyle& style)
   {
+    assert(frame_->GetFormat() == Orthanc::PixelFormat_Float32);
+
     std::auto_ptr<CairoSurface> result;
 
     float windowCenter, windowWidth;
@@ -126,7 +128,7 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    converter.ConvertFrame(frame_);
+    converter.ConvertFrameInplace(frame_);
     assert(frame_.get() != NULL);
 
     if (frame_->GetFormat() != Orthanc::PixelFormat_Float32)

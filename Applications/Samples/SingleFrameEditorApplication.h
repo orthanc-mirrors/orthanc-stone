@@ -25,22 +25,215 @@
 
 #include "../../Framework/Layers/OrthancFrameLayerSource.h"
 
+#include <Core/DicomFormat/DicomArray.h>
+#include <Core/Images/PamReader.h>
 #include <Core/Logging.h>
+#include <Core/Toolbox.h>
+#include <Plugins/Samples/Common/FullOrthancDataset.h>
 
 namespace OrthancStone
 {
-
-  class GrayscaleBitmapStack :
-    public WorldSceneWidget,
+  class BitmapStack :
     public IObserver,
     public IObservable
   {
   public:
-    typedef OriginMessage<MessageType_Widget_GeometryChanged, GrayscaleBitmapStack> GeometryChangedMessage;
-    typedef OriginMessage<MessageType_Widget_ContentChanged, GrayscaleBitmapStack> ContentChangedMessage;
+    typedef OriginMessage<MessageType_Widget_GeometryChanged, BitmapStack> GeometryChangedMessage;
+    typedef OriginMessage<MessageType_Widget_ContentChanged, BitmapStack> ContentChangedMessage;
 
   private:
+    class Bitmap : public boost::noncopyable
+    {
+    private:
+      std::string                            uuid_;   // TODO is this necessary?
+      std::auto_ptr<Orthanc::ImageAccessor>  source_;
+      std::auto_ptr<Orthanc::ImageAccessor>  converted_;  // Float32 or RGB24
+      std::auto_ptr<Orthanc::Image>          alpha_;  // Grayscale8 (if any)
+      std::auto_ptr<DicomFrameConverter>     converter_;
+
+      void ApplyConverter()
+      {
+        if (source_.get() != NULL &&
+            converter_.get() != NULL)
+        {
+          printf("CONVERTED!\n");
+          converted_.reset(converter_->ConvertFrame(*source_));
+        }
+      }
+      
+    public:
+      Bitmap(const std::string& uuid) :
+        uuid_(uuid)
+      {
+      }
+      
+      void SetDicomTags(const OrthancPlugins::FullOrthancDataset& dataset)
+      {
+        converter_.reset(new DicomFrameConverter);
+        converter_->ReadParameters(dataset);
+        ApplyConverter();
+      }
+
+      void SetSourceImage(Orthanc::ImageAccessor* image)   // Takes ownership
+      {
+        source_.reset(image);
+        ApplyConverter();
+      }
+
+      bool GetDefaultWindowing(float& center,
+                               float& width) const
+      {
+        if (converter_.get() != NULL &&
+            converter_->HasDefaultWindow())
+        {
+          center = static_cast<float>(converter_->GetDefaultWindowCenter());
+          width = static_cast<float>(converter_->GetDefaultWindowWidth());
+        }
+      }
+    }; 
+
+
+    typedef std::map<std::string, Bitmap*>  Bitmaps;
+        
     OrthancApiClient&    orthanc_;
+    bool                 hasWindowing_;
+    float                windowingCenter_;
+    float                windowingWidth_;
+    Bitmaps              bitmaps_;
+
+  public:
+    BitmapStack(MessageBroker& broker,
+                OrthancApiClient& orthanc) :
+      IObserver(broker),
+      IObservable(broker),
+      orthanc_(orthanc),
+      hasWindowing_(false),
+      windowingCenter_(0),  // Dummy initialization
+      windowingWidth_(0)    // Dummy initialization
+    {
+    }
+
+    
+    virtual ~BitmapStack()
+    {
+      for (Bitmaps::iterator it = bitmaps_.begin(); it != bitmaps_.end(); it++)
+      {
+        assert(it->second != NULL);
+        delete it->second;
+      }
+    }
+    
+
+    std::string LoadFrame(const std::string& instance,
+                          unsigned int frame,
+                          bool httpCompression)
+    {
+      std::string uuid;
+      
+      for (;;)
+      {
+        uuid = Orthanc::Toolbox::GenerateUuid();
+        if (bitmaps_.find(uuid) == bitmaps_.end())
+        {
+          break;
+        }
+      }
+
+      bitmaps_[uuid] = new Bitmap(uuid);
+      
+
+      {
+        IWebService::Headers headers;
+        std::string uri = "/instances/" + instance + "/tags";
+        orthanc_.GetBinaryAsync(uri, headers,
+                                new Callable<BitmapStack, OrthancApiClient::BinaryResponseReadyMessage>
+                                (*this, &BitmapStack::OnTagsReceived), NULL,
+                                new Orthanc::SingleValueObject<std::string>(uuid));
+      }
+
+      {
+        IWebService::Headers headers;
+        headers["Accept"] = "image/x-portable-arbitrarymap";
+
+        if (httpCompression)
+        {
+          headers["Accept-Encoding"] = "gzip";
+        }
+        
+        std::string uri = "/instances/" + instance + "/frames/" + boost::lexical_cast<std::string>(frame) + "/image-uint16";
+        orthanc_.GetBinaryAsync(uri, headers,
+                                new Callable<BitmapStack, OrthancApiClient::BinaryResponseReadyMessage>
+                                (*this, &BitmapStack::OnFrameReceived), NULL,
+                                new Orthanc::SingleValueObject<std::string>(uuid));
+      }
+
+      return uuid;
+    }
+
+    
+    void OnTagsReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
+    {
+      const std::string& uuid = dynamic_cast<Orthanc::SingleValueObject<std::string>*>(message.Payload)->GetValue();
+      
+      printf("JSON received: [%s] (%d bytes) for bitmap %s\n",
+             message.Uri.c_str(), message.AnswerSize, uuid.c_str());
+
+      Bitmaps::iterator bitmap = bitmaps_.find(uuid);
+      if (bitmap != bitmaps_.end())
+      {
+        assert(bitmap->second != NULL);
+        
+        OrthancPlugins::FullOrthancDataset dicom(message.Answer, message.AnswerSize);
+        bitmap->second->SetDicomTags(dicom);
+
+        float c, w;
+        if (!hasWindowing_ &&
+            bitmap->second->GetDefaultWindowing(c, w))
+        {
+          hasWindowing_ = true;
+          windowingCenter_ = c;
+          windowingWidth_ = w;
+        }
+
+        EmitMessage(GeometryChangedMessage(*this));
+      }
+    }
+    
+
+    void OnFrameReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
+    {
+      const std::string& uuid = dynamic_cast<Orthanc::SingleValueObject<std::string>*>(message.Payload)->GetValue();
+
+      printf("Frame received: [%s] (%d bytes) for bitmap %s\n", message.Uri.c_str(), message.AnswerSize, uuid.c_str());
+      
+      Bitmaps::iterator bitmap = bitmaps_.find(uuid);
+      if (bitmap != bitmaps_.end())
+      {
+        assert(bitmap->second != NULL);
+
+        std::string content;
+        if (message.AnswerSize > 0)
+        {
+          content.assign(reinterpret_cast<const char*>(message.Answer), message.AnswerSize);
+        }
+        
+        std::auto_ptr<Orthanc::PamReader> reader(new Orthanc::PamReader);
+        reader->ReadFromMemory(content);
+        bitmap->second->SetSourceImage(reader.release());
+
+        EmitMessage(ContentChangedMessage(*this));
+      }
+    }
+  };
+
+  
+  class BitmapStackWidget :
+    public WorldSceneWidget,
+    public IObservable,
+    public IObserver
+  {
+  private:
+    BitmapStack&   stack_;
 
   protected:
     virtual Extent2D GetSceneExtent()
@@ -55,27 +248,29 @@ namespace OrthancStone
     }
 
   public:
-    GrayscaleBitmapStack(MessageBroker& broker,
-                         OrthancApiClient& orthanc,
-                         const std::string& name) :
+    BitmapStackWidget(MessageBroker& broker,
+                      BitmapStack& stack,
+                      const std::string& name) :
       WorldSceneWidget(name),
-      IObserver(broker),
       IObservable(broker),
-      orthanc_(orthanc)
+      IObserver(broker),
+      stack_(stack)
     {
+      stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::GeometryChangedMessage>(*this, &BitmapStackWidget::OnGeometryChanged));
+      stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::ContentChangedMessage>(*this, &BitmapStackWidget::OnContentChanged));
     }
 
-    void LoadDicom(const std::string& dicom)
+    void OnGeometryChanged(const BitmapStack::GeometryChangedMessage& message)
     {
-      orthanc_.GetBinaryAsync("/instances/" + dicom + "/file", "application/dicom",
-                              new Callable<GrayscaleBitmapStack, OrthancApiClient::BinaryResponseReadyMessage>(*this, &GrayscaleBitmapStack::OnDicomReceived));
-    }
-  
-    void OnDicomReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
-    {
-      printf("DICOM received: [%s] (%d bytes)\n", message.Uri.c_str(), message.AnswerSize);
+      printf("Geometry has changed\n");
+      FitContent();
     }
 
+    void OnContentChanged(const BitmapStack::ContentChangedMessage& message)
+    {
+      printf("Content has changed\n");
+      NotifyContentChanged();
+    }
   };
 
   
@@ -197,13 +392,9 @@ namespace OrthancStone
         }
       };
 
-      void OnGeometryChanged(const GrayscaleBitmapStack::GeometryChangedMessage& message)
-      {
-        mainWidget_->FitContent();
-      }
-      
       std::auto_ptr<Interactor>        mainWidgetInteractor_;
       std::auto_ptr<OrthancApiClient>  orthancApiClient_;
+      std::auto_ptr<BitmapStack>       stack_;
       Tools                            currentTool_;
       const OrthancFrameLayerSource*   source_;
       unsigned int                     slice_;
@@ -251,15 +442,11 @@ namespace OrthancStone
 
         orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
 
+        stack_.reset(new BitmapStack(IObserver::broker_, *orthancApiClient_));
+        stack_->LoadFrame(instance, frame, false);
+        stack_->LoadFrame(instance, frame, false);
         
-        mainWidget_ = new GrayscaleBitmapStack(broker_, *orthancApiClient_, "main-widget");
-        dynamic_cast<GrayscaleBitmapStack*>(mainWidget_)->LoadDicom(instance);
-
-        dynamic_cast<GrayscaleBitmapStack*>(mainWidget_)->RegisterObserverCallback(
-          new Callable<SingleFrameEditorApplication,
-          GrayscaleBitmapStack::GeometryChangedMessage>
-          (*this, &SingleFrameEditorApplication::OnGeometryChanged));
-
+        mainWidget_ = new BitmapStackWidget(IObserver::broker_, *stack_, "main-widget");
         mainWidget_->SetTransmitMouseOver(true);
 
         mainWidgetInteractor_.reset(new Interactor(*this));

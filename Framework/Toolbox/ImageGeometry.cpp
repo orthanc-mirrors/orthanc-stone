@@ -341,6 +341,24 @@ namespace OrthancStone
         }
         break;
 
+      case Orthanc::PixelFormat_Float32:
+        switch (interpolation)
+        {
+          case ImageInterpolation_Nearest:
+            ApplyAffineInternal<Orthanc::PixelFormat_Float32, 
+                                ImageInterpolation_Nearest>(target, source, a);
+            break;
+
+          case ImageInterpolation_Bilinear:
+            ApplyAffineInternal<Orthanc::PixelFormat_Float32, 
+                                ImageInterpolation_Bilinear>(target, source, a);
+            break;
+
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+        }
+        break;
+
       case Orthanc::PixelFormat_RGB24:
         switch (interpolation)
         {
@@ -531,6 +549,24 @@ namespace OrthancStone
 
           case ImageInterpolation_Bilinear:
             ApplyProjectiveInternal<Orthanc::PixelFormat_SignedGrayscale16, 
+                                    ImageInterpolation_Bilinear>(target, source, a, inva);
+            break;
+
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+        }
+        break;
+
+      case Orthanc::PixelFormat_Float32:
+        switch (interpolation)
+        {
+          case ImageInterpolation_Nearest:
+            ApplyProjectiveInternal<Orthanc::PixelFormat_Float32, 
+                                    ImageInterpolation_Nearest>(target, source, a, inva);
+            break;
+
+          case ImageInterpolation_Bilinear:
+            ApplyProjectiveInternal<Orthanc::PixelFormat_Float32, 
                                     ImageInterpolation_Bilinear>(target, source, a, inva);
             break;
 

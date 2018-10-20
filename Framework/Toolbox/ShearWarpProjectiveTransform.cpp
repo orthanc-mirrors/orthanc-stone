@@ -476,7 +476,7 @@ namespace OrthancStone
         ApplyAffineTransform(*intermediate, reader.GetAccessor(),
                              a11, 0,   b1,
                              0,   a22, b2,
-                             shearInterpolation);
+                             shearInterpolation, true);
       }
       
 
@@ -582,7 +582,7 @@ namespace OrthancStone
     }
 
     // (5.b) Apply the projective transform to the image
-    ApplyProjectiveTransform(target, *intermediate, warp, warpInterpolation);
+    ApplyProjectiveTransform(target, *intermediate, warp, warpInterpolation, true);
   }
 
 

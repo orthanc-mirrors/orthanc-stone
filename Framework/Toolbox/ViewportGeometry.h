@@ -22,7 +22,8 @@
 #pragma once
 
 #include "../Viewport/CairoContext.h"
-#include "../Toolbox/Extent2D.h"
+#include "Extent2D.h"
+#include "LinearAlgebra.h"
 
 namespace OrthancStone
 {
@@ -99,5 +100,7 @@ namespace OrthancStone
                 double y);
 
     void SetZoom(double zoom);
+
+    Matrix GetMatrix() const;
   };
 }

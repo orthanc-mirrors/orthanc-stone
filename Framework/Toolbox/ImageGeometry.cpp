@@ -174,7 +174,8 @@ namespace OrthancStone
             ImageInterpolation Interpolation>
   static void ApplyAffineInternal(Orthanc::ImageAccessor& target,
                                   const Orthanc::ImageAccessor& source,
-                                  const Matrix& a)
+                                  const Matrix& a,
+                                  bool clear)
   {
     assert(target.GetFormat() == Format &&
            source.GetFormat() == Format);
@@ -182,13 +183,16 @@ namespace OrthancStone
     typedef SubpixelReader<Format, Interpolation>  Reader;
     typedef typename Reader::PixelType             PixelType;
 
-    if (Format == Orthanc::PixelFormat_RGB24)
+    if (clear)
     {
-      Orthanc::ImageProcessing::Set(target, 0, 0, 0, 255);
-    }
-    else
-    {
-      Orthanc::ImageProcessing::Set(target, 0);
+      if (Format == Orthanc::PixelFormat_RGB24)
+      {
+        Orthanc::ImageProcessing::Set(target, 0, 0, 0, 255);
+      }
+      else
+      {
+        Orthanc::ImageProcessing::Set(target, 0);
+      }
     }
 
     Matrix inva;
@@ -260,7 +264,8 @@ namespace OrthancStone
                             double a21,
                             double a22,
                             double b2,
-                            ImageInterpolation interpolation)
+                            ImageInterpolation interpolation,
+                            bool clear)
   {
     if (source.GetFormat() != target.GetFormat())
     {
@@ -292,12 +297,12 @@ namespace OrthancStone
         {
           case ImageInterpolation_Nearest:
             ApplyAffineInternal<Orthanc::PixelFormat_Grayscale8, 
-                                ImageInterpolation_Nearest>(target, source, a);
+                                ImageInterpolation_Nearest>(target, source, a, clear);
             break;
 
           case ImageInterpolation_Bilinear:
             ApplyAffineInternal<Orthanc::PixelFormat_Grayscale8, 
-                                ImageInterpolation_Bilinear>(target, source, a);
+                                ImageInterpolation_Bilinear>(target, source, a, clear);
             break;
 
           default:
@@ -310,12 +315,12 @@ namespace OrthancStone
         {
           case ImageInterpolation_Nearest:
             ApplyAffineInternal<Orthanc::PixelFormat_Grayscale16, 
-                                ImageInterpolation_Nearest>(target, source, a);
+                                ImageInterpolation_Nearest>(target, source, a, clear);
             break;
 
           case ImageInterpolation_Bilinear:
             ApplyAffineInternal<Orthanc::PixelFormat_Grayscale16, 
-                                ImageInterpolation_Bilinear>(target, source, a);
+                                ImageInterpolation_Bilinear>(target, source, a, clear);
             break;
 
           default:
@@ -328,12 +333,12 @@ namespace OrthancStone
         {
           case ImageInterpolation_Nearest:
             ApplyAffineInternal<Orthanc::PixelFormat_SignedGrayscale16, 
-                                ImageInterpolation_Nearest>(target, source, a);
+                                ImageInterpolation_Nearest>(target, source, a, clear);
             break;
 
           case ImageInterpolation_Bilinear:
             ApplyAffineInternal<Orthanc::PixelFormat_SignedGrayscale16, 
-                                ImageInterpolation_Bilinear>(target, source, a);
+                                ImageInterpolation_Bilinear>(target, source, a, clear);
             break;
 
           default:
@@ -346,12 +351,12 @@ namespace OrthancStone
         {
           case ImageInterpolation_Nearest:
             ApplyAffineInternal<Orthanc::PixelFormat_Float32, 
-                                ImageInterpolation_Nearest>(target, source, a);
+                                ImageInterpolation_Nearest>(target, source, a, clear);
             break;
 
           case ImageInterpolation_Bilinear:
             ApplyAffineInternal<Orthanc::PixelFormat_Float32, 
-                                ImageInterpolation_Bilinear>(target, source, a);
+                                ImageInterpolation_Bilinear>(target, source, a, clear);
             break;
 
           default:
@@ -364,7 +369,7 @@ namespace OrthancStone
         {
           case ImageInterpolation_Nearest:
             ApplyAffineInternal<Orthanc::PixelFormat_RGB24, 
-                                ImageInterpolation_Nearest>(target, source, a);
+                                ImageInterpolation_Nearest>(target, source, a, clear);
             break;
 
           default:
@@ -447,7 +452,8 @@ namespace OrthancStone
   void ApplyProjectiveTransform(Orthanc::ImageAccessor& target,
                                 const Orthanc::ImageAccessor& source,
                                 const Matrix& a,
-                                ImageInterpolation interpolation)
+                                ImageInterpolation interpolation,
+                                bool clear)
   {
     if (source.GetFormat() != target.GetFormat())
     {
@@ -481,18 +487,21 @@ namespace OrthancStone
         ApplyAffineTransform(target, source, 
                              a(0, 0) / w, a(0, 1) / w, a(0, 2) / w,
                              a(1, 0) / w, a(1, 1) / w, a(1, 2) / w,
-                             interpolation);
+                             interpolation, clear);
         return;
       }
     }
 
-    if (target.GetFormat() == Orthanc::PixelFormat_RGB24)
+    if (clear)
     {
-      Orthanc::ImageProcessing::Set(target, 0, 0, 0, 255);
-    }
-    else
-    {
-      Orthanc::ImageProcessing::Set(target, 0);
+      if (target.GetFormat() == Orthanc::PixelFormat_RGB24)
+      {
+        Orthanc::ImageProcessing::Set(target, 0, 0, 0, 255);
+      }
+      else
+      {
+        Orthanc::ImageProcessing::Set(target, 0);
+      }
     }
 
     Matrix inva;

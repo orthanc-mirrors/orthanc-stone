@@ -50,10 +50,12 @@ namespace OrthancStone
                             double a21,
                             double a22,
                             double b2,
-                            ImageInterpolation interpolation);
+                            ImageInterpolation interpolation,
+                            bool clear);
 
   void ApplyProjectiveTransform(Orthanc::ImageAccessor& target,
                                 const Orthanc::ImageAccessor& source,
                                 const Matrix& a,
-                                ImageInterpolation interpolation);
+                                ImageInterpolation interpolation,
+                                bool clear);
 }

@@ -35,6 +35,9 @@
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 
+
+#include <boost/math/constants/constants.hpp>
+
 namespace OrthancStone
 {
   class BitmapStack :
@@ -85,11 +88,11 @@ namespace OrthancStone
                        double y) const
       {
         Vector p;
-        LinearAlgebra::AssignVector(p, x, y, 0);
+        LinearAlgebra::AssignVector(p, x, y, 1);
 
         Vector q = LinearAlgebra::Product(transform_, p);
 
-        if (!LinearAlgebra::IsCloseToZero(q[2]))
+        if (!LinearAlgebra::IsNear(q[2], 1.0))
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
         }
@@ -184,6 +187,25 @@ namespace OrthancStone
           transform_(1, 1) = pixelSpacing[1];
         }
 
+
+#if 0
+        double a = 10.0 / 180.0 * boost::math::constants::pi<double>();
+        Matrix m;
+        const double v[] = { cos(a), -sin(a), 0,
+                             sin(a), cos(a), 0,
+                             0, 0, 1 };
+        LinearAlgebra::FillMatrix(m, 3, 3, v);
+        transform_ = LinearAlgebra::Product(m, transform_);
+
+#else
+        static unsigned int c = 0;
+        if (c == 0)
+        {
+          transform_(0, 2) = 400;
+          c ++;
+        }
+#endif
+        
         OrthancPlugins::DicomDatasetReader reader(dataset);
 
         if (!reader.GetUnsignedIntegerValue(width_, ConvertTag(Orthanc::DICOM_TAG_COLUMNS)) ||
@@ -244,7 +266,8 @@ namespace OrthancStone
       {
         if (converted_.get() != NULL)
         {
-          ApplyProjectiveTransform(buffer, *converted_, transform_, ImageInterpolation_Nearest);  // TODO
+          Matrix m = LinearAlgebra::Product(view.GetMatrix(), transform_);
+          ApplyProjectiveTransform(buffer, *converted_, m, ImageInterpolation_Bilinear, false);
         }
       }
     }; 
@@ -402,7 +425,7 @@ namespace OrthancStone
     Extent2D GetSceneExtent() const
     {
       Extent2D extent;
-      
+
       for (Bitmaps::const_iterator it = bitmaps_.begin();
            it != bitmaps_.end(); ++it)
       {
@@ -410,10 +433,6 @@ namespace OrthancStone
         extent.Union(it->second->GetExtent());
       }
 
-      printf("(%.02f,%.02f) (%.02f,%.02f) \n",
-             extent.GetX1(), extent.GetY1(),
-             extent.GetX2(), extent.GetY2());
-      
       return extent;
     }
     
@@ -451,10 +470,41 @@ namespace OrthancStone
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view)
     {
-      Orthanc::Image buffer(Orthanc::PixelFormat_Float32, context.GetWidth(), context.GetHeight(), false);
-      stack_.Render(buffer, view);
+      // "Render()" has been replaced
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
 
-      // As in GrayscaleFrameRenderer
+  public:
+    BitmapStackWidget(MessageBroker& broker,
+                      BitmapStack& stack,
+                      const std::string& name) :
+      WorldSceneWidget(name),
+      IObservable(broker),
+      IObserver(broker),
+      stack_(stack)
+    {
+      stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::GeometryChangedMessage>(*this, &BitmapStackWidget::OnGeometryChanged));
+      stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::ContentChangedMessage>(*this, &BitmapStackWidget::OnContentChanged));
+    }
+
+    void OnGeometryChanged(const BitmapStack::GeometryChangedMessage& message)
+    {
+      printf("Geometry has changed\n");
+      FitContent();
+    }
+
+    void OnContentChanged(const BitmapStack::ContentChangedMessage& message)
+    {
+      printf("Content has changed\n");
+      NotifyContentChanged();
+    }
+
+    virtual bool Render(Orthanc::ImageAccessor& target)
+    {
+      Orthanc::Image buffer(Orthanc::PixelFormat_Float32, target.GetWidth(), target.GetHeight(), false);
+      stack_.Render(buffer, GetView());
+
+      // As in GrayscaleFrameRenderer => TODO MERGE
 
       float windowCenter, windowWidth;
       stack_.GetWindowing(windowCenter, windowWidth);
@@ -462,13 +512,8 @@ namespace OrthancStone
       float x0 = windowCenter - windowWidth / 2.0f;
       float x1 = windowCenter + windowWidth / 2.0f;
 
-      CairoSurface cairo(context.GetWidth(), context.GetHeight());
-
-      Orthanc::ImageAccessor target;
-      cairo.GetAccessor(target);
-      
-      const unsigned int width = cairo.GetWidth();
-      const unsigned int height = cairo.GetHeight();
+      const unsigned int width = target.GetWidth();
+      const unsigned int height = target.GetHeight();
     
       for (unsigned int y = 0; y < height; y++)
       {
@@ -496,7 +541,7 @@ namespace OrthancStone
 
             // TODO MONOCHROME1
             /*if (invert_)
-            {
+              {
               v = 255 - v;
               }*/
           }
@@ -504,68 +549,21 @@ namespace OrthancStone
           q[3] = 255;
           q[2] = v;
           q[1] = v;
-          q[0] = 128;
+          q[0] = v;
         }
       }
-
-
-
-      cairo_t* cr = context.GetObject();
-
-      // Clear background
-      cairo_set_source_rgb(cr, 0, 0, 0);
-      cairo_paint(cr);
-
-#if 1
-      cairo_save(cr);
-      cairo_set_source_surface(cr, cairo.GetObject(), 0, 0);
-      cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_NEAREST);  //TODO
-      cairo_paint(cr);
-      cairo_restore(cr);
-#else      
-      Extent2D extent = stack_.GetSceneExtent();
-      
-      float color = 0.5;
-      cairo_set_source_rgb(cr, 0, 1.0f - color, color);
-      cairo_rectangle(cr, extent.GetX1(), extent.GetY1(), extent.GetX2(), extent.GetY2());
-      cairo_fill(cr);
-#endif
 
       return true;
     }
 
-  public:
-    BitmapStackWidget(MessageBroker& broker,
-                      BitmapStack& stack,
-                      const std::string& name) :
-      WorldSceneWidget(name),
-      IObservable(broker),
-      IObserver(broker),
-      stack_(stack)
-    {
-      stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::GeometryChangedMessage>(*this, &BitmapStackWidget::OnGeometryChanged));
-      stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::ContentChangedMessage>(*this, &BitmapStackWidget::OnContentChanged));
-    }
-
-    void OnGeometryChanged(const BitmapStack::GeometryChangedMessage& message)
-    {
-      printf("Geometry has changed\n");
-      FitContent();
-    }
-
-    void OnContentChanged(const BitmapStack::ContentChangedMessage& message)
-    {
-      printf("Content has changed\n");
-      NotifyContentChanged();
-    }
   };
 
   
   namespace Samples
   {
     class SingleFrameEditorApplication :
-        public SampleSingleCanvasApplicationBase,
-        public IObserver
+      public SampleSingleCanvasApplicationBase,
+      public IObserver
     {
       enum Tools
       {
@@ -603,14 +601,14 @@ namespace OrthancStone
                                                             IStatusBar* statusBar)
         {
           switch (application_.currentTool_) {
-          case Tools_Zoom:
-            printf("ZOOM\n");
+            case Tools_Zoom:
+              printf("ZOOM\n");
 
             case Tools_Crop:
-          case Tools_Windowing:
-          case Tools_Pan:
-            // TODO return the right mouse tracker
-            return NULL;
+            case Tools_Windowing:
+            case Tools_Pan:
+              // TODO return the right mouse tracker
+              return NULL;
           }
 
           return NULL;
@@ -646,35 +644,35 @@ namespace OrthancStone
         {
           switch (keyChar)
           {
-          case 's':
-            widget.FitContent();
-            break;
-          case 'p':
-            application_.currentTool_ = Tools_Pan;
-            break;
-          case 'z':
-            application_.currentTool_ = Tools_Zoom;
-            break;
-          case 'c':
-            application_.currentTool_ = Tools_Crop;
-            break;
-          case 'w':
-            application_.currentTool_ = Tools_Windowing;
-            break;
-          case 'i':
-            application_.Invert();
-            break;
-          case 'r':
-            if (modifiers == KeyboardModifiers_None)
-              application_.Rotate(90);
-            else
-              application_.Rotate(-90);
-            break;
-          case 'e':
-            application_.Export();
-            break;
-          default:
-            break;
+            case 's':
+              widget.FitContent();
+              break;
+            case 'p':
+              application_.currentTool_ = Tools_Pan;
+              break;
+            case 'z':
+              application_.currentTool_ = Tools_Zoom;
+              break;
+            case 'c':
+              application_.currentTool_ = Tools_Crop;
+              break;
+            case 'w':
+              application_.currentTool_ = Tools_Windowing;
+              break;
+            case 'i':
+              application_.Invert();
+              break;
+            case 'r':
+              if (modifiers == KeyboardModifiers_None)
+                application_.Rotate(90);
+              else
+                application_.Rotate(-90);
+              break;
+            case 'e':
+              application_.Export();
+              break;
+            default:
+              break;
           }
         }
       };
@@ -699,11 +697,11 @@ namespace OrthancStone
       {
         boost::program_options::options_description generic("Sample options");
         generic.add_options()
-            ("instance", boost::program_options::value<std::string>(),
-             "Orthanc ID of the instance")
-            ("frame", boost::program_options::value<unsigned int>()->default_value(0),
-             "Number of the frame, for multi-frame DICOM instances")
-            ;
+          ("instance", boost::program_options::value<std::string>(),
+           "Orthanc ID of the instance")
+          ("frame", boost::program_options::value<unsigned int>()->default_value(0),
+           "Number of the frame, for multi-frame DICOM instances")
+          ;
 
         options.add(generic);
       }
@@ -731,7 +729,7 @@ namespace OrthancStone
 
         stack_.reset(new BitmapStack(IObserver::broker_, *orthancApiClient_));
         stack_->LoadFrame(instance, frame, false);
-        //stack_->LoadFrame(instance, frame, false);
+        stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", frame, false);
         
         mainWidget_ = new BitmapStackWidget(IObserver::broker_, *stack_, "main-widget");
         mainWidget_->SetTransmitMouseOver(true);

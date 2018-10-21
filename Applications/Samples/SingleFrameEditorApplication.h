@@ -31,7 +31,6 @@
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Images/PamReader.h>
 #include <Core/Logging.h>
-#include <Core/Toolbox.h>
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 
@@ -52,7 +51,6 @@ namespace OrthancStone
     class Bitmap : public boost::noncopyable
     {
     private:
-      std::string                            uuid_;   // TODO is this necessary?
       bool                                   visible_;
       std::auto_ptr<Orthanc::ImageAccessor>  source_;
       std::auto_ptr<Orthanc::ImageAccessor>  converted_;  // Float32 or RGB24
@@ -104,8 +102,7 @@ namespace OrthancStone
       
 
     public:
-      Bitmap(const std::string& uuid) :
-        uuid_(uuid),
+      Bitmap() :
         visible_(true),
         width_(0),
         height_(0),
@@ -270,16 +267,42 @@ namespace OrthancStone
           ApplyProjectiveTransform(buffer, *converted_, m, ImageInterpolation_Bilinear, false);
         }
       }
+
+
+      bool Contains(double x,
+                    double y) const
+      {
+        Matrix inv;
+        LinearAlgebra::InvertMatrix(inv, transform_);
+
+        Vector p;
+        LinearAlgebra::AssignVector(p, x, y, 1);
+
+        Vector q = LinearAlgebra::Product(inv, p);
+
+        if (!LinearAlgebra::IsNear(q[2], 1.0))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+        }
+        else
+        {
+          return (q[0] >= 0 &&
+                  q[1] >= 0 &&
+                  q[0] <= static_cast<double>(width_) &&
+                  q[1] <= static_cast<double>(height_));
+        }
+      }
     }; 
 
 
-    typedef std::map<std::string, Bitmap*>  Bitmaps;
+    typedef std::map<size_t, Bitmap*>  Bitmaps;
         
-    OrthancApiClient&    orthanc_;
-    bool                 hasWindowing_;
-    float                windowingCenter_;
-    float                windowingWidth_;
-    Bitmaps              bitmaps_;
+    OrthancApiClient&  orthanc_;
+    size_t             countBitmaps_;
+    bool               hasWindowing_;
+    float              windowingCenter_;
+    float              windowingWidth_;
+    Bitmaps            bitmaps_;
 
   public:
     BitmapStack(MessageBroker& broker,
@@ -287,6 +310,7 @@ namespace OrthancStone
       IObserver(broker),
       IObservable(broker),
       orthanc_(orthanc),
+      countBitmaps_(0),
       hasWindowing_(false),
       windowingCenter_(0),  // Dummy initialization
       windowingWidth_(0)    // Dummy initialization
@@ -320,22 +344,13 @@ namespace OrthancStone
     }
     
 
-    std::string LoadFrame(const std::string& instance,
-                          unsigned int frame,
-                          bool httpCompression)
+    size_t LoadFrame(const std::string& instance,
+                     unsigned int frame,
+                     bool httpCompression)
     {
-      std::string uuid;
-      
-      for (;;)
-      {
-        uuid = Orthanc::Toolbox::GenerateUuid();
-        if (bitmaps_.find(uuid) == bitmaps_.end())
-        {
-          break;
-        }
-      }
+      size_t bitmap = countBitmaps_++;
 
-      bitmaps_[uuid] = new Bitmap(uuid);
+      bitmaps_[bitmap] = new Bitmap;
       
 
       {
@@ -344,7 +359,7 @@ namespace OrthancStone
         orthanc_.GetBinaryAsync(uri, headers,
                                 new Callable<BitmapStack, OrthancApiClient::BinaryResponseReadyMessage>
                                 (*this, &BitmapStack::OnTagsReceived), NULL,
-                                new Orthanc::SingleValueObject<std::string>(uuid));
+                                new Orthanc::SingleValueObject<size_t>(bitmap));
       }
 
       {
@@ -360,21 +375,21 @@ namespace OrthancStone
         orthanc_.GetBinaryAsync(uri, headers,
                                 new Callable<BitmapStack, OrthancApiClient::BinaryResponseReadyMessage>
                                 (*this, &BitmapStack::OnFrameReceived), NULL,
-                                new Orthanc::SingleValueObject<std::string>(uuid));
+                                new Orthanc::SingleValueObject<size_t>(bitmap));
       }
 
-      return uuid;
+      return bitmap;
     }
 
     
     void OnTagsReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
     {
-      const std::string& uuid = dynamic_cast<Orthanc::SingleValueObject<std::string>*>(message.Payload)->GetValue();
+      size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload)->GetValue();
       
-      printf("JSON received: [%s] (%d bytes) for bitmap %s\n",
-             message.Uri.c_str(), message.AnswerSize, uuid.c_str());
+      printf("JSON received: [%s] (%ld bytes) for bitmap %ld\n",
+             message.Uri.c_str(), message.AnswerSize, index);
 
-      Bitmaps::iterator bitmap = bitmaps_.find(uuid);
+      Bitmaps::iterator bitmap = bitmaps_.find(index);
       if (bitmap != bitmaps_.end())
       {
         assert(bitmap->second != NULL);
@@ -398,11 +413,12 @@ namespace OrthancStone
 
     void OnFrameReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
     {
-      const std::string& uuid = dynamic_cast<Orthanc::SingleValueObject<std::string>*>(message.Payload)->GetValue();
-
-      printf("Frame received: [%s] (%d bytes) for bitmap %s\n", message.Uri.c_str(), message.AnswerSize, uuid.c_str());
+      size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload)->GetValue();
       
-      Bitmaps::iterator bitmap = bitmaps_.find(uuid);
+      printf("Frame received: [%s] (%ld bytes) for bitmap %ld\n",
+             message.Uri.c_str(), message.AnswerSize, index);
+      
+      Bitmaps::iterator bitmap = bitmaps_.find(index);
       if (bitmap != bitmaps_.end())
       {
         assert(bitmap->second != NULL);
@@ -451,6 +467,48 @@ namespace OrthancStone
     }
   };
 
+
+  class BitmapStackInteractor : public IWorldSceneInteractor
+  {
+  public:
+    virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
+                                                        const ViewportGeometry& view,
+                                                        MouseButton button,
+                                                        KeyboardModifiers modifiers,
+                                                        double x,
+                                                        double y,
+                                                        IStatusBar* statusBar)
+    {
+      printf("CLICK\n");
+      return NULL;
+    }
+
+    virtual void MouseOver(CairoContext& context,
+                           WorldSceneWidget& widget,
+                           const ViewportGeometry& view,
+                           double x,
+                           double y,
+                           IStatusBar* statusBar)
+    {
+    }
+
+    virtual void MouseWheel(WorldSceneWidget& widget,
+                            MouseWheelDirection direction,
+                            KeyboardModifiers modifiers,
+                            IStatusBar* statusBar)
+    {
+    }
+
+    virtual void KeyPressed(WorldSceneWidget& widget,
+                            KeyboardKeys key,
+                            char keyChar,
+                            KeyboardModifiers modifiers,
+                            IStatusBar* statusBar)
+    {
+    }
+  };
+
+  
   
   class BitmapStackWidget :
     public WorldSceneWidget,
@@ -458,7 +516,8 @@ namespace OrthancStone
     public IObserver
   {
   private:
-    BitmapStack&   stack_;
+    BitmapStack&           stack_;
+    BitmapStackInteractor  myInteractor_;
 
   protected:
     virtual Extent2D GetSceneExtent()
@@ -485,6 +544,8 @@ namespace OrthancStone
     {
       stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::GeometryChangedMessage>(*this, &BitmapStackWidget::OnGeometryChanged));
       stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::ContentChangedMessage>(*this, &BitmapStackWidget::OnContentChanged));
+
+      SetInteractor(myInteractor_);
     }
 
     void OnGeometryChanged(const BitmapStack::GeometryChangedMessage& message)
@@ -735,7 +796,7 @@ namespace OrthancStone
         mainWidget_->SetTransmitMouseOver(true);
 
         mainWidgetInteractor_.reset(new Interactor(*this));
-        mainWidget_->SetInteractor(*mainWidgetInteractor_);
+        //mainWidget_->SetInteractor(*mainWidgetInteractor_);
       }
 
 

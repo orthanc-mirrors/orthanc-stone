@@ -131,6 +131,8 @@ EmbedResources(
   # "OrthancStoneParameters.cmake"
   ${DCMTK_DICTIONARIES}
 
+  FONT_UBUNTU_MONO_BOLD_16   ${ORTHANC_ROOT}/Resources/Fonts/UbuntuMonoBold-16.json
+
   # Resources specific to the Stone of Orthanc
   COLORMAP_HOT    ${ORTHANC_STONE_ROOT}/Resources/Colormaps/hot.lut
   COLORMAP_JET    ${ORTHANC_STONE_ROOT}/Resources/Colormaps/jet.lut

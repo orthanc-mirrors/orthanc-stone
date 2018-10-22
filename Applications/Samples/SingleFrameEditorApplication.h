@@ -28,8 +28,10 @@
 #include "../../Framework/Layers/OrthancFrameLayerSource.h"
 
 #include <Core/DicomFormat/DicomArray.h>
+#include <Core/Images/FontRegistry.h>
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Images/PamReader.h>
+#include <Core/Images/PngWriter.h>   //TODO 
 #include <Core/Logging.h>
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
@@ -51,23 +53,20 @@ namespace OrthancStone
     class Bitmap : public boost::noncopyable
     {
     private:
-      bool                                   visible_;
-      std::auto_ptr<Orthanc::ImageAccessor>  source_;
-      std::auto_ptr<Orthanc::ImageAccessor>  converted_;  // Float32 or RGB24
-      std::auto_ptr<Orthanc::Image>          alpha_;  // Grayscale8 (if any)
-      std::auto_ptr<DicomFrameConverter>     converter_;
-      unsigned int                           width_;
-      unsigned int                           height_;
-      bool                                   hasCrop_;
-      unsigned int                           cropX_;
-      unsigned int                           cropY_;
-      unsigned int                           cropWidth_;
-      unsigned int                           cropHeight_;
-      Matrix                                 transform_;
-      double                                 pixelSpacingX_;
-      double                                 pixelSpacingY_;
-      double                                 panX_;
-      double                                 panY_;
+      bool          visible_;
+      bool          hasSize_;
+      unsigned int  width_;
+      unsigned int  height_;
+      bool          hasCrop_;
+      unsigned int  cropX_;
+      unsigned int  cropY_;
+      unsigned int  cropWidth_;
+      unsigned int  cropHeight_;
+      Matrix        transform_;
+      double        pixelSpacingX_;
+      double        pixelSpacingY_;
+      double        panX_;
+      double        panY_;
 
 
       void UpdateTransform()
@@ -92,22 +91,6 @@ namespace OrthancStone
       }
       
       
-      void ApplyConverter()
-      {
-        if (source_.get() != NULL &&
-            converter_.get() != NULL)
-        {
-          if (width_ != source_->GetWidth() ||
-              height_ != source_->GetHeight())
-          {
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-          }
-                      
-          printf("CONVERTED! %dx%d\n", width_, height_);
-          converted_.reset(converter_->ConvertFrame(*source_));
-        }
-      }
-      
       void AddToExtent(Extent2D& extent,
                        double x,
                        double y) const
@@ -131,6 +114,7 @@ namespace OrthancStone
     public:
       Bitmap() :
         visible_(true),
+        hasSize_(false),
         width_(0),
         height_(0),
         hasCrop_(false),
@@ -140,6 +124,10 @@ namespace OrthancStone
         panY_(0)
       {
         UpdateTransform();
+      }
+
+      virtual ~Bitmap()
+      {
       }
 
       void ResetCrop()
@@ -191,72 +179,33 @@ namespace OrthancStone
       }
 
 
-      static OrthancPlugins::DicomTag  ConvertTag(const Orthanc::DicomTag& tag)
+      void SetSize(unsigned int width,
+                   unsigned int height)
       {
-        return OrthancPlugins::DicomTag(tag.GetGroup(), tag.GetElement());
-      }
-      
-      void SetDicomTags(const OrthancPlugins::FullOrthancDataset& dataset)
-      {
-        converter_.reset(new DicomFrameConverter);
-        converter_->ReadParameters(dataset);
-        ApplyConverter();
-
-        transform_ = LinearAlgebra::IdentityMatrix(3);
-
-        std::string tmp;
-        Vector pixelSpacing;
-        
-        if (dataset.GetStringValue(tmp, ConvertTag(Orthanc::DICOM_TAG_PIXEL_SPACING)) &&
-            LinearAlgebra::ParseVector(pixelSpacing, tmp) &&
-            pixelSpacing.size() == 2)
+        if (hasSize_ &&
+            (width != width_ ||
+             height != height_))
         {
-          pixelSpacingX_ = pixelSpacing[0];
-          pixelSpacingY_ = pixelSpacing[1];
-        }
-
-        static unsigned int c = 0;
-        if (c == 0)
-        {
-          panX_ = 400;
-          c ++;
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageSize);
         }
         
-        OrthancPlugins::DicomDatasetReader reader(dataset);
-
-        if (!reader.GetUnsignedIntegerValue(width_, ConvertTag(Orthanc::DICOM_TAG_COLUMNS)) ||
-            !reader.GetUnsignedIntegerValue(height_, ConvertTag(Orthanc::DICOM_TAG_ROWS)))
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-        }
-
-        UpdateTransform();
+        hasSize_ = true;
+        width_ = width;
+        height_ = height;
       }
 
-      
-      void SetSourceImage(Orthanc::ImageAccessor* image)   // Takes ownership
+
+      void CheckSize(unsigned int width,
+                     unsigned int height)
       {
-        source_.reset(image);
-        ApplyConverter();
+        if (hasSize_ &&
+            (width != width_ ||
+             height != height_))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageSize);
+        }
       }
-
       
-      bool GetDefaultWindowing(float& center,
-                               float& width) const
-      {
-        if (converter_.get() != NULL &&
-            converter_->HasDefaultWindow())
-        {
-          center = static_cast<float>(converter_->GetDefaultWindowCenter());
-          width = static_cast<float>(converter_->GetDefaultWindowWidth());
-          return true;
-        }
-        else
-        {
-          return false;
-        }
-      }
-
 
       Extent2D GetExtent() const
       {
@@ -270,8 +219,6 @@ namespace OrthancStone
         double dwidth = static_cast<double>(width);
         double dheight = static_cast<double>(height);
 
-        LinearAlgebra::Print(transform_);
-        
         AddToExtent(extent, dx, dy);
         AddToExtent(extent, dx + dwidth, dy);
         AddToExtent(extent, dx, dy + dheight);
@@ -281,16 +228,8 @@ namespace OrthancStone
       }
 
 
-      void Render(Orthanc::ImageAccessor& buffer,
-                  const ViewportGeometry& view) const
-      {
-        if (converted_.get() != NULL)
-        {
-          Matrix m = LinearAlgebra::Product(view.GetMatrix(), transform_);
-          //ApplyProjectiveTransform(buffer, *converted_, m, ImageInterpolation_Bilinear, false);
-          ApplyProjectiveTransform(buffer, *converted_, m, ImageInterpolation_Nearest, false);
-        }
-      }
+      virtual void Render(Orthanc::ImageAccessor& buffer,
+                          const ViewportGeometry& view) const = 0;
 
 
       bool Contains(double x,
@@ -328,6 +267,15 @@ namespace OrthancStone
       }
 
 
+      void SetPixelSpacing(double x,
+                           double y)
+      {
+        pixelSpacingX_ = x;
+        pixelSpacingY_ = y;
+        UpdateTransform();
+      }
+
+
       double GetPanX() const
       {
         return panX_;
@@ -338,8 +286,226 @@ namespace OrthancStone
       {
         return panY_;
       }
+
+
+      virtual bool GetDefaultWindowing(float& center,
+                                       float& width) const
+      {
+        return false;
+      }
+
+
+      const Matrix& GetTransform() const
+      {
+        return transform_;
+      }
     }; 
 
+
+
+    class DicomBitmap : public Bitmap
+    {
+    private:
+      std::auto_ptr<Orthanc::ImageAccessor>  source_;  // Content of PixelData
+      std::auto_ptr<DicomFrameConverter>     converter_;
+      std::auto_ptr<Orthanc::ImageAccessor>  converted_;  // Float32 or RGB24
+
+
+      void ApplyConverter()
+      {
+        if (source_.get() != NULL &&
+            converter_.get() != NULL)
+        {
+          converted_.reset(converter_->ConvertFrame(*source_));
+        }
+      }
+      
+    public:
+      static OrthancPlugins::DicomTag  ConvertTag(const Orthanc::DicomTag& tag)
+      {
+        return OrthancPlugins::DicomTag(tag.GetGroup(), tag.GetElement());
+      }
+      
+      void SetDicomTags(const OrthancPlugins::FullOrthancDataset& dataset)
+      {
+        converter_.reset(new DicomFrameConverter);
+        converter_->ReadParameters(dataset);
+        ApplyConverter();
+
+        std::string tmp;
+        Vector pixelSpacing;
+        
+        if (dataset.GetStringValue(tmp, ConvertTag(Orthanc::DICOM_TAG_PIXEL_SPACING)) &&
+            LinearAlgebra::ParseVector(pixelSpacing, tmp) &&
+            pixelSpacing.size() == 2)
+        {
+          SetPixelSpacing(pixelSpacing[0], pixelSpacing[1]);
+        }
+
+        static unsigned int c = 0;
+        if (c == 0)
+        {
+          SetPan(400, 0);
+          c ++;
+        }
+        
+        OrthancPlugins::DicomDatasetReader reader(dataset);
+
+        unsigned int width, height;
+        if (!reader.GetUnsignedIntegerValue(width, ConvertTag(Orthanc::DICOM_TAG_COLUMNS)) ||
+            !reader.GetUnsignedIntegerValue(height, ConvertTag(Orthanc::DICOM_TAG_ROWS)))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+        else
+        {
+          SetSize(width, height);
+        }
+      }
+
+      
+      void SetSourceImage(Orthanc::ImageAccessor* image)   // Takes ownership
+      {
+        std::auto_ptr<Orthanc::ImageAccessor> raii(image);
+        
+        if (image == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        }
+
+        SetSize(image->GetWidth(), image->GetHeight());
+        
+        source_ = raii;
+        ApplyConverter();
+      }
+
+      
+      virtual void Render(Orthanc::ImageAccessor& buffer,
+                          const ViewportGeometry& view) const
+      {
+        if (converted_.get() != NULL)
+        {
+          Matrix m = LinearAlgebra::Product(view.GetMatrix(), GetTransform());
+          //ApplyProjectiveTransform(buffer, *converted_, m, ImageInterpolation_Bilinear, false);
+          ApplyProjectiveTransform(buffer, *converted_, m, ImageInterpolation_Nearest, false);
+        }
+      }
+
+
+      virtual bool GetDefaultWindowing(float& center,
+                                       float& width) const
+      {
+        if (converter_.get() != NULL &&
+            converter_->HasDefaultWindow())
+        {
+          center = static_cast<float>(converter_->GetDefaultWindowCenter());
+          width = static_cast<float>(converter_->GetDefaultWindowWidth());
+          return true;
+        }
+        else
+        {
+          return false;
+        }
+      }
+    };
+
+
+
+
+    class AlphaBitmap : public Bitmap
+    {
+    private:
+      const BitmapStack&                     stack_;
+      std::auto_ptr<Orthanc::ImageAccessor>  alpha_;      // Grayscale8
+      bool                                   useWindowing_;
+      float                                  foreground_;
+
+    public:
+      AlphaBitmap(const BitmapStack& stack) :
+        stack_(stack),
+        useWindowing_(true),
+        foreground_(0)
+      {
+      }
+
+
+      void SetForegroundValue(float foreground)
+      {
+        useWindowing_ = false;
+        foreground_ = foreground;
+      }
+      
+      
+      void SetAlpha(Orthanc::ImageAccessor* image)
+      {
+        std::auto_ptr<Orthanc::ImageAccessor> raii(image);
+        
+        if (image == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        }
+
+        if (image->GetFormat() != Orthanc::PixelFormat_Grayscale8)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+        }
+
+        SetSize(image->GetWidth(), image->GetHeight());
+        alpha_ = raii;
+      }
+
+
+      void LoadText(const Orthanc::Font& font,
+                    const std::string& utf8)
+      {
+        SetAlpha(font.RenderAlpha(utf8));
+      }                   
+
+
+      virtual void Render(Orthanc::ImageAccessor& buffer,
+                          const ViewportGeometry& view) const
+      {
+        if (buffer.GetFormat() != Orthanc::PixelFormat_Float32)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+        }
+
+        Matrix m = LinearAlgebra::Product(view.GetMatrix(), GetTransform());
+        
+        Orthanc::Image tmp(Orthanc::PixelFormat_Grayscale8, buffer.GetWidth(), buffer.GetHeight(), false);
+        ApplyProjectiveTransform(tmp, *alpha_, m, ImageInterpolation_Nearest, true /* clear */);
+
+        // Blit
+        const unsigned int width = buffer.GetWidth();
+        const unsigned int height = buffer.GetHeight();
+
+        float value = foreground_;
+        
+        if (useWindowing_)
+        {
+          float center, width;
+          if (stack_.GetWindowing(center, width))
+          {
+            value = center + width / 2.0f;
+          }
+        }
+        
+        for (unsigned int y = 0; y < height; y++)
+        {
+          float *q = reinterpret_cast<float*>(buffer.GetRow(y));
+          const uint8_t *p = reinterpret_cast<uint8_t*>(tmp.GetRow(y));
+
+          for (unsigned int x = 0; x < width; x++, p++, q++)
+          {
+            float a = static_cast<float>(*p) / 255.0f;
+            
+            *q = (a * value + (1.0f - a) * (*q));
+          }
+        }        
+      }
+    };
+    
+    
 
     typedef std::map<size_t, Bitmap*>  Bitmaps;
         
@@ -374,29 +540,45 @@ namespace OrthancStone
     }
 
 
-    void GetWindowing(float& center,
-                      float& width)
+    bool GetWindowing(float& center,
+                      float& width) const
     {
       if (hasWindowing_)
       {
         center = windowingCenter_;
         width = windowingWidth_;
+        return true;
       }
       else
       {
-        center = 128;
-        width = 256;
+        return false;
       }
     }
     
 
+    size_t LoadText(const Orthanc::Font& font,
+                    const std::string& utf8,
+                    double x,
+                    double y)
+    {
+      std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(*this));
+      alpha->LoadText(font, utf8);
+
+      size_t bitmap = countBitmaps_++;
+
+      bitmaps_[bitmap] = alpha.release();
+      
+      return bitmap;
+    }
+
+    
     size_t LoadFrame(const std::string& instance,
                      unsigned int frame,
                      bool httpCompression)
     {
       size_t bitmap = countBitmaps_++;
 
-      bitmaps_[bitmap] = new Bitmap;
+      bitmaps_[bitmap] = new DicomBitmap;
       
 
       {
@@ -441,7 +623,7 @@ namespace OrthancStone
         assert(bitmap->second != NULL);
         
         OrthancPlugins::FullOrthancDataset dicom(message.Answer, message.AnswerSize);
-        bitmap->second->SetDicomTags(dicom);
+        dynamic_cast<DicomBitmap*>(bitmap->second)->SetDicomTags(dicom);
 
         float c, w;
         if (!hasWindowing_ &&
@@ -477,7 +659,7 @@ namespace OrthancStone
         
         std::auto_ptr<Orthanc::PamReader> reader(new Orthanc::PamReader);
         reader->ReadFromMemory(content);
-        bitmap->second->SetSourceImage(reader.release());
+        dynamic_cast<DicomBitmap*>(bitmap->second)->SetSourceImage(reader.release());
 
         EmitMessage(ContentChangedMessage(*this));
       }
@@ -574,28 +756,27 @@ namespace OrthancStone
     class MoveBitmapTracker : public IWorldSceneMouseTracker
     {
     private:
-      WorldSceneWidget&  widget_;
       BitmapStack&       stack_;
       size_t             bitmap_;
       double             clickX_;
       double             clickY_;
+      double             panX_;
+      double             panY_;
+      bool               oneAxis_;
 
     public:
-      MoveBitmapTracker(WorldSceneWidget&  widget,
-                        BitmapStack& stack,
+      MoveBitmapTracker(BitmapStack& stack,
                         size_t bitmap,
                         double x,
-                        double y) :
-        widget_(widget),
+                        double y,
+                        bool oneAxis) :
         stack_(stack),
         bitmap_(bitmap),
         clickX_(x),
-        clickY_(y)
+        clickY_(y),
+        oneAxis_(oneAxis)
       {
-        double panX, panY;
-        stack.GetPan(panX, panY, bitmap_);
-        clickX_ -= panX;
-        clickY_ -= panY;
+        stack.GetPan(panX_, panY_, bitmap_);
       }
 
       virtual bool HasRender() const
@@ -618,7 +799,24 @@ namespace OrthancStone
                              double sceneX,
                              double sceneY)
       {
-        stack_.SetPan(bitmap_, sceneX - clickX_, sceneY - clickY_);
+        double dx = sceneX - clickX_;
+        double dy = sceneY - clickY_;
+
+        if (oneAxis_)
+        {
+          if (fabs(dx) > fabs(dy))
+          {
+            stack_.SetPan(bitmap_, dx + panX_, panY_);
+          }
+          else
+          {
+          stack_.SetPan(bitmap_, panX_, dy + panY_);
+          }
+        }
+        else
+        {
+          stack_.SetPan(bitmap_, dx + panX_, dy + panY_);
+        }
       }
     };
     
@@ -643,7 +841,8 @@ namespace OrthancStone
         if (stack_.LookupBitmap(bitmap, x, y))
         {
           printf("CLICK on bitmap %d\n", bitmap);
-          return new MoveBitmapTracker(widget, stack_, bitmap, x, y);
+          return new MoveBitmapTracker(stack_, bitmap, x, y,
+                                       (modifiers & KeyboardModifiers_Shift));
         }
         else
         {
@@ -745,7 +944,11 @@ namespace OrthancStone
       // As in GrayscaleFrameRenderer => TODO MERGE
 
       float windowCenter, windowWidth;
-      stack_.GetWindowing(windowCenter, windowWidth);
+      if (!stack_.GetWindowing(windowCenter, windowWidth))
+      {
+        windowCenter = 128;
+        windowWidth = 256;
+      }
       
       float x0 = windowCenter - windowWidth / 2.0f;
       float x1 = windowCenter + windowWidth / 2.0f;
@@ -965,9 +1168,13 @@ namespace OrthancStone
 
         orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
 
+        Orthanc::FontRegistry fonts;
+        fonts.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
+        
         stack_.reset(new BitmapStack(IObserver::broker_, *orthancApiClient_));
         stack_->LoadFrame(instance, frame, false);
         stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", frame, false);
+        stack_->LoadText(fonts.GetFont(0), "Hello\nworld\nBonjour, Alain", 0, -50);
         
         mainWidget_ = new BitmapStackWidget(IObserver::broker_, *stack_, "main-widget");
         mainWidget_->SetTransmitMouseOver(true);

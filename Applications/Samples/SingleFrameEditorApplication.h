@@ -78,7 +78,6 @@ namespace OrthancStone
         transform_(0, 2) = panX_;
         transform_(1, 2) = panY_;
         
-
 #if 0
         double a = 10.0 / 180.0 * boost::math::constants::pi<double>();
         Matrix m;
@@ -89,11 +88,10 @@ namespace OrthancStone
         transform_ = LinearAlgebra::Product(m, transform_);
 #endif
       }
-      
-      
-      void AddToExtent(Extent2D& extent,
-                       double x,
-                       double y) const
+
+
+      void MapImageToScene(double& x,
+                           double& y) const
       {
         Vector p;
         LinearAlgebra::AssignVector(p, x, y, 1);
@@ -106,8 +104,18 @@ namespace OrthancStone
         }
         else
         {
-          extent.AddPoint(q[0], q[1]);
+          x = q[0];
+          y = q[1];
         }
+      }
+      
+      
+      void AddToExtent(Extent2D& extent,
+                       double x,
+                       double y) const
+      {
+        MapImageToScene(x, y);
+        extent.AddPoint(x, y);
       }
       
 
@@ -229,7 +237,8 @@ namespace OrthancStone
 
 
       virtual void Render(Orthanc::ImageAccessor& buffer,
-                          const ViewportGeometry& view) const = 0;
+                          const ViewportGeometry& view,
+                          ImageInterpolation interpolation) const = 0;
 
 
       bool Contains(double x,
@@ -275,18 +284,25 @@ namespace OrthancStone
         UpdateTransform();
       }
 
+      double GetPixelSpacingX() const
+      {
+        return pixelSpacingX_;
+      }   
+
+      double GetPixelSpacingY() const
+      {
+        return pixelSpacingY_;
+      }   
 
       double GetPanX() const
       {
         return panX_;
       }
 
-
       double GetPanY() const
       {
         return panY_;
       }
-
 
       virtual bool GetDefaultWindowing(float& center,
                                        float& width) const
@@ -294,10 +310,53 @@ namespace OrthancStone
         return false;
       }
 
-
       const Matrix& GetTransform() const
       {
         return transform_;
+      }
+
+
+      void DrawBorders(CairoContext& context,
+                       double zoom)
+      {
+        unsigned int cx, cy, width, height;
+        GetCrop(cx, cy, width, height);
+
+        double dx = static_cast<double>(cx);
+        double dy = static_cast<double>(cy);
+        double dwidth = static_cast<double>(width);
+        double dheight = static_cast<double>(height);
+
+        cairo_t* cr = context.GetObject();
+        cairo_set_line_width(cr, 2.0 / zoom);
+        
+        double x, y;
+        x = dx;
+        y = dy;
+        MapImageToScene(x, y);
+        cairo_move_to(cr, x, y);
+
+        x = dx + dwidth;
+        y = dy;
+        MapImageToScene(x, y);
+        cairo_line_to(cr, x, y);
+
+        x = dx + dwidth;
+        y = dy + dheight;
+        MapImageToScene(x, y);
+        cairo_line_to(cr, x, y);
+
+        x = dx;
+        y = dy + dheight;
+        MapImageToScene(x, y);
+        cairo_line_to(cr, x, y);
+
+        x = dx;
+        y = dy;
+        MapImageToScene(x, y);
+        cairo_line_to(cr, x, y);
+
+        cairo_stroke(cr);
       }
     }; 
 
@@ -342,6 +401,8 @@ namespace OrthancStone
           SetPixelSpacing(pixelSpacing[0], pixelSpacing[1]);
         }
 
+        SetPan(-0.5 * GetPixelSpacingX(), -0.5 * GetPixelSpacingY());
+      
         static unsigned int c = 0;
         if (c == 0)
         {
@@ -381,13 +442,13 @@ namespace OrthancStone
 
       
       virtual void Render(Orthanc::ImageAccessor& buffer,
-                          const ViewportGeometry& view) const
+                          const ViewportGeometry& view,
+                          ImageInterpolation interpolation) const
       {
         if (converted_.get() != NULL)
         {
           Matrix m = LinearAlgebra::Product(view.GetMatrix(), GetTransform());
-          //ApplyProjectiveTransform(buffer, *converted_, m, ImageInterpolation_Bilinear, false);
-          ApplyProjectiveTransform(buffer, *converted_, m, ImageInterpolation_Nearest, false);
+          ApplyProjectiveTransform(buffer, *converted_, m, interpolation, false);
         }
       }
 
@@ -463,7 +524,8 @@ namespace OrthancStone
 
 
       virtual void Render(Orthanc::ImageAccessor& buffer,
-                          const ViewportGeometry& view) const
+                          const ViewportGeometry& view,
+                          ImageInterpolation interpolation) const
       {
         if (buffer.GetFormat() != Orthanc::PixelFormat_Float32)
         {
@@ -473,7 +535,7 @@ namespace OrthancStone
         Matrix m = LinearAlgebra::Product(view.GetMatrix(), GetTransform());
         
         Orthanc::Image tmp(Orthanc::PixelFormat_Grayscale8, buffer.GetWidth(), buffer.GetHeight(), false);
-        ApplyProjectiveTransform(tmp, *alpha_, m, ImageInterpolation_Nearest, true /* clear */);
+        ApplyProjectiveTransform(tmp, *alpha_, m, interpolation, true /* clear */);
 
         // Blit
         const unsigned int width = buffer.GetWidth();
@@ -515,6 +577,8 @@ namespace OrthancStone
     float              windowingCenter_;
     float              windowingWidth_;
     Bitmaps            bitmaps_;
+    bool               hasSelection_;
+    size_t             selectedBitmap_;
 
   public:
     BitmapStack(MessageBroker& broker,
@@ -525,10 +589,25 @@ namespace OrthancStone
       countBitmaps_(0),
       hasWindowing_(false),
       windowingCenter_(0),  // Dummy initialization
-      windowingWidth_(0)    // Dummy initialization
+      windowingWidth_(0),   // Dummy initialization
+      hasSelection_(false),
+      selectedBitmap_(0)    // Dummy initialization
     {
     }
 
+
+    void Unselect()
+    {
+      hasSelection_ = false;
+    }
+
+
+    void Select(size_t bitmap)
+    {
+      hasSelection_ = true;
+      selectedBitmap_ = bitmap;
+    }
+    
     
     virtual ~BitmapStack()
     {
@@ -682,7 +761,8 @@ namespace OrthancStone
     
 
     void Render(Orthanc::ImageAccessor& buffer,
-                const ViewportGeometry& view) const
+                const ViewportGeometry& view,
+                ImageInterpolation interpolation) const
     {
       Orthanc::ImageProcessing::Set(buffer, 0);
 
@@ -693,7 +773,7 @@ namespace OrthancStone
         if (it != bitmaps_.end())
         {
           assert(it->second != NULL);
-          it->second->Render(buffer, view);
+          it->second->Render(buffer, view, interpolation);
         }
       }
     }
@@ -750,6 +830,25 @@ namespace OrthancStone
       {
         panX = 0;
         panY = 0;
+      }
+    }
+
+
+    void DrawControls(CairoSurface& surface,
+                      const ViewportGeometry& view)
+    {
+      if (hasSelection_)
+      {
+        Bitmaps::const_iterator bitmap = bitmaps_.find(selectedBitmap_);
+        
+        if (bitmap != bitmaps_.end())
+        {
+          CairoContext context(surface);
+      
+          context.SetSourceColor(255, 0, 0);
+          view.ApplyTransform(context);
+          bitmap->second->DrawBorders(context, view.GetZoom());
+        }
       }
     }
   };
@@ -818,7 +917,7 @@ namespace OrthancStone
           }
           else
           {
-          stack_.SetPan(bitmap_, panX_, dy + panY_);
+            stack_.SetPan(bitmap_, panX_, dy + panY_);
           }
         }
         else
@@ -849,12 +948,14 @@ namespace OrthancStone
         if (stack_.LookupBitmap(bitmap, x, y))
         {
           printf("CLICK on bitmap %ld\n", bitmap);
+          stack_.Select(bitmap);
           return new MoveBitmapTracker(stack_, bitmap, x, y,
                                        (modifiers & KeyboardModifiers_Shift));
         }
         else
         {
           printf("CLICK outside\n");
+          stack_.Unselect();
           return NULL;
         }
       }
@@ -947,7 +1048,10 @@ namespace OrthancStone
     {
       Orthanc::Image buffer(Orthanc::PixelFormat_Float32, target.GetWidth(),
                             target.GetHeight(), false);
-      stack_.Render(buffer, GetView());
+
+      // TODO => rendering quality
+      //stack_.Render(buffer, GetView(), ImageInterpolation_Nearest);
+      stack_.Render(buffer, GetView(), ImageInterpolation_Bilinear);
 
       // As in GrayscaleFrameRenderer => TODO MERGE?
 
@@ -1004,6 +1108,12 @@ namespace OrthancStone
       else
       {
         Orthanc::ImageProcessing::Set(target, 0, 0, 0, 255);
+      }
+
+      {
+        // TODO => REFACTOR
+        CairoSurface surface(target);
+        stack_.DrawControls(surface, GetView());
       }
 
       return true;

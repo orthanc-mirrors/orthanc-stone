@@ -39,7 +39,7 @@ namespace OrthancStone
     {
       Json::Value   Response;
       std::string   Uri;
-      Orthanc::IDynamicObject*  Payload;
+      std::auto_ptr<Orthanc::IDynamicObject>  Payload;
 
       JsonResponseReadyMessage(const std::string& uri,
                                const Json::Value& response,
@@ -55,7 +55,7 @@ namespace OrthancStone
     struct EmptyResponseReadyMessage : public BaseMessage<MessageType_OrthancApi_GenericEmptyResponse_Ready>
     {
       std::string   Uri;
-      Orthanc::IDynamicObject*  Payload;
+      std::auto_ptr<Orthanc::IDynamicObject>  Payload;
 
       EmptyResponseReadyMessage(const std::string& uri,
                                 Orthanc::IDynamicObject*  payload = NULL)
@@ -69,7 +69,7 @@ namespace OrthancStone
     struct HttpErrorMessage : public BaseMessage<MessageType_OrthancApi_GenericHttpError_Ready>
     {
       std::string   Uri;
-      Orthanc::IDynamicObject*  Payload;
+      std::auto_ptr<Orthanc::IDynamicObject>  Payload;
 
       HttpErrorMessage(const std::string& uri,
                        Orthanc::IDynamicObject*  payload = NULL)
@@ -85,7 +85,7 @@ namespace OrthancStone
       const void* Answer;
       size_t AnswerSize;
       std::string   Uri;
-      Orthanc::IDynamicObject*  Payload;
+      std::auto_ptr<Orthanc::IDynamicObject>  Payload;
 
       BinaryResponseReadyMessage(const std::string& uri,
                                  const void* answer,

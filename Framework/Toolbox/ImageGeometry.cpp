@@ -152,10 +152,6 @@ namespace OrthancStone
       {
         *p = value;
       }
-      else
-      {
-        Reader::Traits::SetZero(*p);
-      }
 
       if (HasOffsetX)
       {
@@ -434,10 +430,6 @@ namespace OrthancStone
               sourceY < floatHeight)
           { 
             reader.GetValue(*p, sourceX, sourceY);
-          }
-          else
-          {
-            Reader::Traits::SetZero(*p);
           }
 
           p++;

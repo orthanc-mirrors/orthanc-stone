@@ -276,7 +276,7 @@ namespace OrthancStone
   void OrthancSlicesLoader::ParseInstanceGeometry(const OrthancApiClient::JsonResponseReadyMessage& message)
   {
     Json::Value tags = message.Response;
-    const std::string& instanceId = dynamic_cast<OrthancSlicesLoader::Operation*>(message.Payload)->GetInstanceId();
+    const std::string& instanceId = dynamic_cast<OrthancSlicesLoader::Operation*>(message.Payload.get())->GetInstanceId();
 
     OrthancPlugins::FullOrthancDataset dataset(tags);
     
@@ -313,8 +313,8 @@ namespace OrthancStone
   void OrthancSlicesLoader::ParseFrameGeometry(const OrthancApiClient::JsonResponseReadyMessage& message)
   {
     Json::Value tags = message.Response;
-    const std::string& instanceId = dynamic_cast<OrthancSlicesLoader::Operation*>(message.Payload)->GetInstanceId();
-    unsigned int frame = dynamic_cast<OrthancSlicesLoader::Operation*>(message.Payload)->GetFrame();
+    const std::string& instanceId = dynamic_cast<OrthancSlicesLoader::Operation*>(message.Payload.get())->GetInstanceId();
+    unsigned int frame = dynamic_cast<OrthancSlicesLoader::Operation*>(message.Payload.get())->GetFrame();
 
     OrthancPlugins::FullOrthancDataset dataset(tags);
     
@@ -340,7 +340,7 @@ namespace OrthancStone
   
   void OrthancSlicesLoader::ParseSliceImagePng(const OrthancApiClient::BinaryResponseReadyMessage& message)
   {
-    const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(*message.Payload);
+    const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(*message.Payload.get());
     boost::shared_ptr<Orthanc::ImageAccessor>  image;
     
     try
@@ -380,7 +380,7 @@ namespace OrthancStone
   
   void OrthancSlicesLoader::ParseSliceImagePam(const OrthancApiClient::BinaryResponseReadyMessage& message)
   {
-    const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(*message.Payload);
+    const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(*message.Payload.get());
     boost::shared_ptr<Orthanc::ImageAccessor>  image;
 
     try
@@ -421,7 +421,7 @@ namespace OrthancStone
 
   void OrthancSlicesLoader::ParseSliceImageJpeg(const OrthancApiClient::JsonResponseReadyMessage& message)
   {
-    const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(*message.Payload);
+    const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(*message.Payload.get());
 
     Json::Value encoded = message.Response;
     if (encoded.type() != Json::objectValue ||
@@ -594,7 +594,7 @@ namespace OrthancStone
   
   void OrthancSlicesLoader::ParseSliceRawImage(const OrthancApiClient::BinaryResponseReadyMessage& message)
   {
-    const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(*message.Payload);
+    const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(*message.Payload.get());
     Orthanc::GzipCompressor compressor;
     
     std::string raw;

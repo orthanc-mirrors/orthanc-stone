@@ -67,36 +67,48 @@ namespace OrthancStone
       double        pixelSpacingY_;
       double        panX_;
       double        panY_;
+      double        angle_;
 
 
-      void UpdateTransform()
+      static Matrix CreateOffsetMatrix(double dx,
+                                       double dy)
       {
-        transform_ = LinearAlgebra::IdentityMatrix(3);
+        Matrix m = LinearAlgebra::IdentityMatrix(3);
+        m(0, 2) = dx;
+        m(1, 2) = dy;
+        return m;
+      }
+      
 
-        transform_(0, 0) = pixelSpacingX_;
-        transform_(1, 1) = pixelSpacingY_;
-        transform_(0, 2) = panX_;
-        transform_(1, 2) = panY_;
-        
-#if 0
-        double a = 10.0 / 180.0 * boost::math::constants::pi<double>();
+      static Matrix CreateScalingMatrix(double sx,
+                                        double sy)
+      {
+        Matrix m = LinearAlgebra::IdentityMatrix(3);
+        m(0, 0) = sx;
+        m(1, 1) = sy;
+        return m;
+      }
+      
+
+      static Matrix CreateRotationMatrix(double angle)
+      {
         Matrix m;
-        const double v[] = { cos(a), -sin(a), 0,
-                             sin(a), cos(a), 0,
+        const double v[] = { cos(angle), -sin(angle), 0,
+                             sin(angle), cos(angle), 0,
                              0, 0, 1 };
         LinearAlgebra::FillMatrix(m, 3, 3, v);
-        transform_ = LinearAlgebra::Product(m, transform_);
-#endif
+        return m;
       }
+      
 
-
-      void MapImageToScene(double& x,
-                           double& y) const
+      static void ApplyTransform(double& x /* inout */,
+                                 double& y /* inout */,
+                                 const Matrix& transform)
       {
         Vector p;
         LinearAlgebra::AssignVector(p, x, y, 1);
 
-        Vector q = LinearAlgebra::Product(transform_, p);
+        Vector q = LinearAlgebra::Product(transform, p);
 
         if (!LinearAlgebra::IsNear(q[2], 1.0))
         {
@@ -110,11 +122,26 @@ namespace OrthancStone
       }
       
       
+      void UpdateTransform()
+      {
+        transform_ = CreateScalingMatrix(pixelSpacingX_, pixelSpacingY_);
+
+        double centerX = static_cast<double>(width_) / 2.0;
+        double centerY = static_cast<double>(height_) / 2.0;
+        ApplyTransform(centerX, centerY, transform_);
+
+        transform_ = LinearAlgebra::Product(
+        CreateOffsetMatrix(panX_ + centerX, panY_ + centerY),
+          CreateRotationMatrix(angle_),
+          CreateOffsetMatrix(-centerX, -centerY), transform_);
+      }
+
+
       void AddToExtent(Extent2D& extent,
                        double x,
                        double y) const
       {
-        MapImageToScene(x, y);
+        ApplyTransform(x, y, transform_);
         extent.AddPoint(x, y);
       }
       
@@ -129,7 +156,8 @@ namespace OrthancStone
         pixelSpacingX_(1),
         pixelSpacingY_(1),
         panX_(0),
-        panY_(0)
+        panY_(0),
+        angle_(45.0 / 180.0 * boost::math::constants::pi<double>())
       {
         UpdateTransform();
       }
@@ -176,6 +204,17 @@ namespace OrthancStone
         }
       }
 
+      void SetAngle(double angle)
+      {
+        angle_ = angle;
+        UpdateTransform();
+      }
+
+      double GetAngle() const
+      {
+        return angle_;
+      }
+
       bool IsVisible() const
       {
         return visible_;
@@ -200,6 +239,8 @@ namespace OrthancStone
         hasSize_ = true;
         width_ = width;
         height_ = height;
+
+        UpdateTransform();
       }
 
 
@@ -333,27 +374,27 @@ namespace OrthancStone
         double x, y;
         x = dx;
         y = dy;
-        MapImageToScene(x, y);
+        ApplyTransform(x, y, transform_);
         cairo_move_to(cr, x, y);
 
         x = dx + dwidth;
         y = dy;
-        MapImageToScene(x, y);
+        ApplyTransform(x, y, transform_);
         cairo_line_to(cr, x, y);
 
         x = dx + dwidth;
         y = dy + dheight;
-        MapImageToScene(x, y);
+        ApplyTransform(x, y, transform_);
         cairo_line_to(cr, x, y);
 
         x = dx;
         y = dy + dheight;
-        MapImageToScene(x, y);
+        ApplyTransform(x, y, transform_);
         cairo_line_to(cr, x, y);
 
         x = dx;
         y = dy;
-        MapImageToScene(x, y);
+        ApplyTransform(x, y, transform_);
         cairo_line_to(cr, x, y);
 
         cairo_stroke(cr);
@@ -607,6 +648,20 @@ namespace OrthancStone
       hasSelection_ = true;
       selectedBitmap_ = bitmap;
     }
+
+
+    bool GetSelectedBitmap(size_t& bitmap) const
+    {
+      if (hasSelection_)
+      {
+        bitmap = selectedBitmap_;
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
     
     
     virtual ~BitmapStack()
@@ -691,7 +746,7 @@ namespace OrthancStone
     
     void OnTagsReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
     {
-      size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload)->GetValue();
+        size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload.get())->GetValue();
       
       printf("JSON received: [%s] (%ld bytes) for bitmap %ld\n",
              message.Uri.c_str(), message.AnswerSize, index);
@@ -720,7 +775,7 @@ namespace OrthancStone
 
     void OnFrameReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
     {
-      size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload)->GetValue();
+        size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload.get())->GetValue();
       
       printf("Frame received: [%s] (%ld bytes) for bitmap %ld\n",
              message.Uri.c_str(), message.AnswerSize, index);
@@ -945,12 +1000,23 @@ namespace OrthancStone
       if (button == MouseButton_Left)
       {
         size_t bitmap;
+
         if (stack_.LookupBitmap(bitmap, x, y))
         {
           printf("CLICK on bitmap %ld\n", bitmap);
-          stack_.Select(bitmap);
-          return new MoveBitmapTracker(stack_, bitmap, x, y,
-                                       (modifiers & KeyboardModifiers_Shift));
+
+          size_t selected;
+          if (stack_.GetSelectedBitmap(selected) &&
+              bitmap == selected)
+          {
+            return new MoveBitmapTracker(stack_, bitmap, x, y,
+                                         (modifiers & KeyboardModifiers_Shift));
+          }
+          else
+          {
+            stack_.Select(bitmap);
+            return NULL;
+          }
         }
         else
         {

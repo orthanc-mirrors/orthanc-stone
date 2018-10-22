@@ -64,7 +64,34 @@ namespace OrthancStone
       unsigned int                           cropWidth_;
       unsigned int                           cropHeight_;
       Matrix                                 transform_;
+      double                                 pixelSpacingX_;
+      double                                 pixelSpacingY_;
+      double                                 panX_;
+      double                                 panY_;
 
+
+      void UpdateTransform()
+      {
+        transform_ = LinearAlgebra::IdentityMatrix(3);
+
+        transform_(0, 0) = pixelSpacingX_;
+        transform_(1, 1) = pixelSpacingY_;
+        transform_(0, 2) = panX_;
+        transform_(1, 2) = panY_;
+        
+
+#if 0
+        double a = 10.0 / 180.0 * boost::math::constants::pi<double>();
+        Matrix m;
+        const double v[] = { cos(a), -sin(a), 0,
+                             sin(a), cos(a), 0,
+                             0, 0, 1 };
+        LinearAlgebra::FillMatrix(m, 3, 3, v);
+        transform_ = LinearAlgebra::Product(m, transform_);
+#endif
+      }
+      
+      
       void ApplyConverter()
       {
         if (source_.get() != NULL &&
@@ -107,8 +134,12 @@ namespace OrthancStone
         width_(0),
         height_(0),
         hasCrop_(false),
-        transform_(LinearAlgebra::IdentityMatrix(3))
+        pixelSpacingX_(1),
+        pixelSpacingY_(1),
+        panX_(0),
+        panY_(0)
       {
+        UpdateTransform();
       }
 
       void ResetCrop()
@@ -180,28 +211,16 @@ namespace OrthancStone
             LinearAlgebra::ParseVector(pixelSpacing, tmp) &&
             pixelSpacing.size() == 2)
         {
-          transform_(0, 0) = pixelSpacing[0];
-          transform_(1, 1) = pixelSpacing[1];
+          pixelSpacingX_ = pixelSpacing[0];
+          pixelSpacingY_ = pixelSpacing[1];
         }
 
-
-#if 0
-        double a = 10.0 / 180.0 * boost::math::constants::pi<double>();
-        Matrix m;
-        const double v[] = { cos(a), -sin(a), 0,
-                             sin(a), cos(a), 0,
-                             0, 0, 1 };
-        LinearAlgebra::FillMatrix(m, 3, 3, v);
-        transform_ = LinearAlgebra::Product(m, transform_);
-
-#else
         static unsigned int c = 0;
         if (c == 0)
         {
-          transform_(0, 2) = 400;
+          panX_ = 400;
           c ++;
         }
-#endif
         
         OrthancPlugins::DicomDatasetReader reader(dataset);
 
@@ -210,6 +229,8 @@ namespace OrthancStone
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
+
+        UpdateTransform();
       }
 
       
@@ -248,6 +269,8 @@ namespace OrthancStone
         double dy = static_cast<double>(y) - 0.5;
         double dwidth = static_cast<double>(width);
         double dheight = static_cast<double>(height);
+
+        LinearAlgebra::Print(transform_);
         
         AddToExtent(extent, dx, dy);
         AddToExtent(extent, dx + dwidth, dy);
@@ -264,7 +287,8 @@ namespace OrthancStone
         if (converted_.get() != NULL)
         {
           Matrix m = LinearAlgebra::Product(view.GetMatrix(), transform_);
-          ApplyProjectiveTransform(buffer, *converted_, m, ImageInterpolation_Bilinear, false);
+          //ApplyProjectiveTransform(buffer, *converted_, m, ImageInterpolation_Bilinear, false);
+          ApplyProjectiveTransform(buffer, *converted_, m, ImageInterpolation_Nearest, false);
         }
       }
 
@@ -286,11 +310,33 @@ namespace OrthancStone
         }
         else
         {
+          printf("at: (%.02f, %.02f)\n", q[0], q[1]);
           return (q[0] >= 0 &&
                   q[1] >= 0 &&
                   q[0] <= static_cast<double>(width_) &&
                   q[1] <= static_cast<double>(height_));
         }
+      }
+
+
+      void SetPan(double x,
+                  double y)
+      {
+        panX_ = x;
+        panY_ = y;
+        UpdateTransform();
+      }
+
+
+      double GetPanX() const
+      {
+        return panX_;
+      }
+
+
+      double GetPanY() const
+      {
+        return panY_;
       }
     }; 
 
@@ -454,7 +500,7 @@ namespace OrthancStone
     
 
     void Render(Orthanc::ImageAccessor& buffer,
-                const ViewportGeometry& view)
+                const ViewportGeometry& view) const
     {
       Orthanc::ImageProcessing::Set(buffer, 0);
 
@@ -465,12 +511,124 @@ namespace OrthancStone
         it->second->Render(buffer, view);
       }
     }
+
+
+    bool LookupBitmap(size_t& index /* out */,
+                      double x,
+                      double y) const
+    {
+      for (Bitmaps::const_iterator it = bitmaps_.begin();
+           it != bitmaps_.end(); ++it)
+      {
+        assert(it->second != NULL);
+        if (it->second->Contains(x, y))
+        {
+          index = it->first;
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+
+    void SetPan(size_t index,
+                double panX,
+                double panY)
+    {
+      Bitmaps::iterator bitmap = bitmaps_.find(index);
+      if (bitmap != bitmaps_.end())
+      {
+        assert(bitmap->second != NULL);
+        bitmap->second->SetPan(panX, panY);
+      }
+    }
+
+
+    void GetPan(double& panX,
+                double& panY,
+                size_t index) const
+    {
+      Bitmaps::const_iterator bitmap = bitmaps_.find(index);
+      if (bitmap != bitmaps_.end())
+      {
+        assert(bitmap->second != NULL);
+        panX = bitmap->second->GetPanX();
+        panY = bitmap->second->GetPanY();
+      }
+      else
+      {
+        panX = 0;
+        panY = 0;
+      }
+    }
   };
 
 
   class BitmapStackInteractor : public IWorldSceneInteractor
   {
+  private:
+    BitmapStack&  stack_;
+
+
+    class MoveBitmapTracker : public IWorldSceneMouseTracker
+    {
+    private:
+      WorldSceneWidget&  widget_;
+      BitmapStack&       stack_;
+      size_t             bitmap_;
+      double             clickX_;
+      double             clickY_;
+
+    public:
+      MoveBitmapTracker(WorldSceneWidget&  widget,
+                        BitmapStack& stack,
+                        size_t bitmap,
+                        double x,
+                        double y) :
+        widget_(widget),
+        stack_(stack),
+        bitmap_(bitmap),
+        clickX_(x),
+        clickY_(y)
+      {
+        double panX, panY;
+        stack.GetPan(panX, panY, bitmap_);
+        clickX_ -= panX;
+        clickY_ -= panY;
+      }
+
+      virtual bool HasRender() const
+      {
+        return false;
+      }
+
+      virtual void Render(CairoContext& context,
+                          double zoom)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      virtual void MouseUp()
+      {
+      }
+
+      virtual void MouseMove(int displayX,
+                             int displayY,
+                             double sceneX,
+                             double sceneY)
+      {
+        stack_.SetPan(bitmap_, sceneX - clickX_, sceneY - clickY_);
+      }
+    };
+    
+    
   public:
+    BitmapStackInteractor(BitmapStack& stack) :
+      stack_(stack)
+    {
+    }
+    
     virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
                                                         const ViewportGeometry& view,
                                                         MouseButton button,
@@ -479,8 +637,24 @@ namespace OrthancStone
                                                         double y,
                                                         IStatusBar* statusBar)
     {
-      printf("CLICK\n");
-      return NULL;
+      if (button == MouseButton_Left)
+      {
+        size_t bitmap;
+        if (stack_.LookupBitmap(bitmap, x, y))
+        {
+          printf("CLICK on bitmap %d\n", bitmap);
+          return new MoveBitmapTracker(widget, stack_, bitmap, x, y);
+        }
+        else
+        {
+          printf("CLICK outside\n");
+          return NULL;
+        }
+      }
+      else
+      {
+        return NULL;
+      }
     }
 
     virtual void MouseOver(CairoContext& context,
@@ -505,6 +679,8 @@ namespace OrthancStone
                             KeyboardModifiers modifiers,
                             IStatusBar* statusBar)
     {
+      if (keyChar == 's')
+        widget.FitContent();
     }
   };
 
@@ -540,7 +716,8 @@ namespace OrthancStone
       WorldSceneWidget(name),
       IObservable(broker),
       IObserver(broker),
-      stack_(stack)
+      stack_(stack),
+      myInteractor_(stack_)
     {
       stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::GeometryChangedMessage>(*this, &BitmapStackWidget::OnGeometryChanged));
       stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::ContentChangedMessage>(*this, &BitmapStackWidget::OnContentChanged));

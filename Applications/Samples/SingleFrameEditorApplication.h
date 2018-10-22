@@ -686,11 +686,15 @@ namespace OrthancStone
     {
       Orthanc::ImageProcessing::Set(buffer, 0);
 
-      for (Bitmaps::const_iterator it = bitmaps_.begin();
-           it != bitmaps_.end(); ++it)
+      // Render layers in the background-to-foreground order
+      for (size_t index = 0; index < countBitmaps_; index++)
       {
-        assert(it->second != NULL);
-        it->second->Render(buffer, view);
+        Bitmaps::const_iterator it = bitmaps_.find(index);
+        if (it != bitmaps_.end())
+        {
+          assert(it->second != NULL);
+          it->second->Render(buffer, view);
+        }
       }
     }
 
@@ -699,14 +703,18 @@ namespace OrthancStone
                       double x,
                       double y) const
     {
-      for (Bitmaps::const_iterator it = bitmaps_.begin();
-           it != bitmaps_.end(); ++it)
+      // Render layers in the foreground-to-background order
+      for (size_t i = countBitmaps_; i > 0; i--)
       {
-        assert(it->second != NULL);
-        if (it->second->Contains(x, y))
+        index = i - 1;
+        Bitmaps::const_iterator it = bitmaps_.find(index);
+        if (it != bitmaps_.end())
         {
-          index = it->first;
-          return true;
+          assert(it->second != NULL);
+          if (it->second->Contains(x, y))
+          {
+            return true;
+          }
         }
       }
 
@@ -840,7 +848,7 @@ namespace OrthancStone
         size_t bitmap;
         if (stack_.LookupBitmap(bitmap, x, y))
         {
-          printf("CLICK on bitmap %d\n", bitmap);
+          printf("CLICK on bitmap %ld\n", bitmap);
           return new MoveBitmapTracker(stack_, bitmap, x, y,
                                        (modifiers & KeyboardModifiers_Shift));
         }
@@ -897,7 +905,6 @@ namespace OrthancStone
   protected:
     virtual Extent2D GetSceneExtent()
     {
-      printf("Get extent\n");
       return stack_.GetSceneExtent();
     }
 
@@ -938,10 +945,11 @@ namespace OrthancStone
 
     virtual bool Render(Orthanc::ImageAccessor& target)
     {
-      Orthanc::Image buffer(Orthanc::PixelFormat_Float32, target.GetWidth(), target.GetHeight(), false);
+      Orthanc::Image buffer(Orthanc::PixelFormat_Float32, target.GetWidth(),
+                            target.GetHeight(), false);
       stack_.Render(buffer, GetView());
 
-      // As in GrayscaleFrameRenderer => TODO MERGE
+      // As in GrayscaleFrameRenderer => TODO MERGE?
 
       float windowCenter, windowWidth;
       if (!stack_.GetWindowing(windowCenter, windowWidth))
@@ -953,19 +961,19 @@ namespace OrthancStone
       float x0 = windowCenter - windowWidth / 2.0f;
       float x1 = windowCenter + windowWidth / 2.0f;
 
-      const unsigned int width = target.GetWidth();
-      const unsigned int height = target.GetHeight();
-    
-      for (unsigned int y = 0; y < height; y++)
+      if (windowWidth >= 0.001f)  // Avoid division by zero at (*)
       {
-        const float* p = reinterpret_cast<const float*>(buffer.GetConstRow(y));
-        uint8_t* q = reinterpret_cast<uint8_t*>(target.GetRow(y));
-
-        for (unsigned int x = 0; x < width; x++, p++, q += 4)
+        const unsigned int width = target.GetWidth();
+        const unsigned int height = target.GetHeight();
+    
+        for (unsigned int y = 0; y < height; y++)
         {
-          uint8_t v = 0;
-          if (windowWidth >= 0.001f)  // Avoid division by zero
+          const float* p = reinterpret_cast<const float*>(buffer.GetConstRow(y));
+          uint8_t* q = reinterpret_cast<uint8_t*>(target.GetRow(y));
+
+          for (unsigned int x = 0; x < width; x++, p++, q += 4)
           {
+            uint8_t v = 0;
             if (*p >= x1)
             {
               v = 255;
@@ -977,7 +985,7 @@ namespace OrthancStone
             else
             {
               // https://en.wikipedia.org/wiki/Linear_interpolation
-              v = static_cast<uint8_t>(255.0f * (*p - x0) / (x1 - x0));
+              v = static_cast<uint8_t>(255.0f * (*p - x0) / (x1 - x0));  // (*)
             }
 
             // TODO MONOCHROME1
@@ -985,13 +993,17 @@ namespace OrthancStone
               {
               v = 255 - v;
               }*/
-          }
 
-          q[3] = 255;
-          q[2] = v;
-          q[1] = v;
-          q[0] = v;
+            q[0] = v;
+            q[1] = v;
+            q[2] = v;
+            q[3] = 255;
+          }
         }
+      }
+      else
+      {
+        Orthanc::ImageProcessing::Set(target, 0, 0, 0, 255);
       }
 
       return true;

@@ -69,6 +69,7 @@ namespace OrthancStone
       double        angle_;
 
 
+    protected:
       static Matrix CreateOffsetMatrix(double dx,
                                        double dy)
       {
@@ -100,6 +101,7 @@ namespace OrthancStone
       }
       
 
+    private:
       static void ApplyTransform(double& x /* inout */,
                                  double& y /* inout */,
                                  const Matrix& transform)
@@ -170,16 +172,29 @@ namespace OrthancStone
         hasCrop_ = false;
       }
 
-      void Crop(unsigned int x,
-                unsigned int y,
-                unsigned int width,
-                unsigned int height)
+      void SetCrop(unsigned int x,
+                   unsigned int y,
+                   unsigned int width,
+                   unsigned int height)
       {
+        if (!hasSize_)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+        }
+        
+        if (x + width > width_ ||
+            y + height > height_)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        }
+        
         hasCrop_ = true;
         cropX_ = x;
         cropY_ = y;
         cropWidth_ = width;
         cropHeight_ = height;
+
+        UpdateTransform();
       }
 
       void GetCrop(unsigned int& x,
@@ -239,6 +254,10 @@ namespace OrthancStone
         width_ = width;
         height_ = height;
 
+
+        //SetCrop(0, 0, 2, 2);
+
+        
         UpdateTransform();
       }
 
@@ -262,8 +281,8 @@ namespace OrthancStone
         unsigned int x, y, width, height;
         GetCrop(x, y, width, height);
 
-        double dx = static_cast<double>(x) - 0.5;
-        double dy = static_cast<double>(y) - 0.5;
+        double dx = static_cast<double>(x) /* - 0.5 */;
+        double dy = static_cast<double>(y) /* - 0.5 */;
         double dwidth = static_cast<double>(width);
         double dheight = static_cast<double>(height);
 
@@ -359,8 +378,11 @@ namespace OrthancStone
       void GetCenter(double& centerX,
                      double& centerY) const
       {
-        centerX = static_cast<double>(width_) / 2.0;
-        centerY = static_cast<double>(height_) / 2.0;
+        unsigned int x, y, width, height;
+        GetCrop(x, y, width, height);
+        
+        centerX = static_cast<double>(width) / 2.0;
+        centerY = static_cast<double>(height) / 2.0;
         ApplyTransform(centerX, centerY, transform_);
       }
 
@@ -534,7 +556,7 @@ namespace OrthancStone
           SetPixelSpacing(pixelSpacing[0], pixelSpacing[1]);
         }
 
-        SetPan(-0.5 * GetPixelSpacingX(), -0.5 * GetPixelSpacingY());
+        //SetPan(-0.5 * GetPixelSpacingX(), -0.5 * GetPixelSpacingY());
       
         static unsigned int c = 0;
         if (c == 0)
@@ -665,10 +687,18 @@ namespace OrthancStone
           throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
         }
 
-        Matrix m = LinearAlgebra::Product(view.GetMatrix(), GetTransform());
+        unsigned int cropX, cropY, cropWidth, cropHeight;
+        GetCrop(cropX, cropY, cropWidth, cropHeight);
+
+        Matrix m = LinearAlgebra::Product(view.GetMatrix(),
+                                          GetTransform(),
+                                          CreateOffsetMatrix(cropX, cropY));
+
+        Orthanc::ImageAccessor cropped;
+        alpha_->GetRegion(cropped, cropX, cropY, cropWidth, cropHeight);
         
         Orthanc::Image tmp(Orthanc::PixelFormat_Grayscale8, buffer.GetWidth(), buffer.GetHeight(), false);
-        ApplyProjectiveTransform(tmp, *alpha_, m, interpolation, true /* clear */);
+        ApplyProjectiveTransform(tmp, cropped, m, interpolation, true /* clear */);
 
         // Blit
         const unsigned int width = buffer.GetWidth();
@@ -784,11 +814,49 @@ namespace OrthancStone
 
     size_t LoadText(const Orthanc::Font& font,
                     const std::string& utf8,
-                    double x,
-                    double y)
+                    float foreground)
     {
       std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(*this));
       alpha->LoadText(font, utf8);
+      alpha->SetForegroundValue(foreground);
+
+      size_t bitmap = countBitmaps_++;
+
+      bitmaps_[bitmap] = alpha.release();
+      
+      return bitmap;
+    }
+
+    
+    size_t LoadTestBlock(unsigned int width,
+                         unsigned int height,
+                         float foreground)
+    {
+      std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(*this));
+
+      std::auto_ptr<Orthanc::Image>  block(new Orthanc::Image(Orthanc::PixelFormat_Grayscale8, width, height, false));
+
+      for (unsigned int padding = 0;
+           (width > 2 * padding) && (height > 2 * padding);
+           padding++)
+      {
+        uint8_t color;
+        if (255 > 10 * padding)
+        {
+          color = 255 - 10 * padding;
+        }
+        else
+        {
+          color = 0;
+        }
+
+        Orthanc::ImageAccessor region;
+        block->GetRegion(region, padding, padding, width - 2 * padding, height - 2 * padding);
+        Orthanc::ImageProcessing::Set(region, color);
+      }
+
+      alpha->SetAlpha(block.release());
+      alpha->SetForegroundValue(foreground);
 
       size_t bitmap = countBitmaps_++;
 
@@ -994,7 +1062,7 @@ namespace OrthancStone
 
       bool ComputeAngle(double& angle /* out */,
                         double sceneX,
-                        double sceneY)
+                        double sceneY) const
       {
         Vector u;
         LinearAlgebra::AssignVector(u, sceneX - centerX_, sceneY - centerY_);
@@ -1312,8 +1380,8 @@ namespace OrthancStone
                             target.GetHeight(), false);
 
       // TODO => rendering quality
-      //stack_.Render(buffer, GetView(), ImageInterpolation_Nearest);
-      stack_.Render(buffer, GetView(), ImageInterpolation_Bilinear);
+      stack_.Render(buffer, GetView(), ImageInterpolation_Nearest);
+      //stack_.Render(buffer, GetView(), ImageInterpolation_Bilinear);
 
       // As in GrayscaleFrameRenderer => TODO MERGE?
 
@@ -1556,9 +1624,10 @@ namespace OrthancStone
         fonts.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
         
         stack_.reset(new BitmapStack(IObserver::broker_, *orthancApiClient_));
-        stack_->LoadFrame(instance, frame, false);
-        stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", frame, false);
-        stack_->LoadText(fonts.GetFont(0), "Hello\nworld\nBonjour, Alain", 0, -50);
+        //stack_->LoadFrame(instance, frame, false);
+        //stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", frame, false);
+        //stack_->LoadText(fonts.GetFont(0), "Hello\nworld\nBonjour, Alain", 256);
+        stack_->LoadTestBlock(20, 10, 256);
         
         mainWidget_ = new BitmapStackWidget(IObserver::broker_, *stack_, "main-widget");
         mainWidget_->SetTransmitMouseOver(true);

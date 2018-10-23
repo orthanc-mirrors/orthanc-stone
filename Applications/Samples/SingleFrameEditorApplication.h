@@ -49,7 +49,6 @@ namespace OrthancStone
     typedef OriginMessage<MessageType_Widget_GeometryChanged, BitmapStack> GeometryChangedMessage;
     typedef OriginMessage<MessageType_Widget_ContentChanged, BitmapStack> ContentChangedMessage;
 
-  private:
     class Bitmap : public boost::noncopyable
     {
     private:
@@ -126,14 +125,14 @@ namespace OrthancStone
       {
         transform_ = CreateScalingMatrix(pixelSpacingX_, pixelSpacingY_);
 
-        double centerX = static_cast<double>(width_) / 2.0;
-        double centerY = static_cast<double>(height_) / 2.0;
-        ApplyTransform(centerX, centerY, transform_);
+        double centerX, centerY;
+        GetCenter(centerX, centerY);
 
         transform_ = LinearAlgebra::Product(
-        CreateOffsetMatrix(panX_ + centerX, panY_ + centerY),
+          CreateOffsetMatrix(panX_ + centerX, panY_ + centerY),
           CreateRotationMatrix(angle_),
-          CreateOffsetMatrix(-centerX, -centerY), transform_);
+          CreateOffsetMatrix(-centerX, -centerY),
+          transform_);
       }
 
 
@@ -157,7 +156,7 @@ namespace OrthancStone
         pixelSpacingY_(1),
         panX_(0),
         panY_(0),
-        angle_(45.0 / 180.0 * boost::math::constants::pi<double>())
+        angle_(0)
       {
         UpdateTransform();
       }
@@ -357,6 +356,15 @@ namespace OrthancStone
       }
 
 
+      void GetCenter(double& centerX,
+                     double& centerY) const
+      {
+        centerX = static_cast<double>(width_) / 2.0;
+        centerY = static_cast<double>(height_) / 2.0;
+        ApplyTransform(centerX, centerY, transform_);
+      }
+
+
       void DrawBorders(CairoContext& context,
                        double zoom)
       {
@@ -402,7 +410,91 @@ namespace OrthancStone
     }; 
 
 
+    class BitmapAccessor : public boost::noncopyable
+    {
+    private:
+      size_t    index_;
+      Bitmap*   bitmap_;
 
+    public:
+      BitmapAccessor(BitmapStack& stack,
+                     size_t index) :
+        index_(index)
+      {
+        Bitmaps::iterator bitmap = stack.bitmaps_.find(index);
+        if (bitmap == stack.bitmaps_.end())
+        {
+          bitmap_ = NULL;
+        }
+        else
+        {
+          assert(bitmap->second != NULL);
+          bitmap_ = bitmap->second;
+        }
+      }
+
+      BitmapAccessor(BitmapStack& stack,
+                     double x,
+                     double y) :
+        index_(0)  // Dummy initialization
+      {
+        if (stack.LookupBitmap(index_, x, y))
+        {
+          Bitmaps::iterator bitmap = stack.bitmaps_.find(index_);
+          
+          if (bitmap == stack.bitmaps_.end())
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+          }
+          else
+          {
+            assert(bitmap->second != NULL);
+            bitmap_ = bitmap->second;
+          }
+        }
+        else
+        {
+          bitmap_ = NULL;
+        }
+      }
+
+      void Invalidate()
+      {
+        bitmap_ = NULL;
+      }
+
+      bool IsValid() const
+      {
+        return bitmap_ != NULL;
+      }
+
+      size_t GetIndex() const
+      {
+        if (IsValid())
+        {
+          return index_;
+        }
+        else
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+        }
+      }
+
+      Bitmap& GetBitmap() const
+      {
+        if (IsValid())
+        {
+          return *bitmap_;
+        }
+        else
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+        }
+      }    
+    };    
+
+
+  private:
     class DicomBitmap : public Bitmap
     {
     private:
@@ -746,7 +838,7 @@ namespace OrthancStone
     
     void OnTagsReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
     {
-        size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload.get())->GetValue();
+      size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload.get())->GetValue();
       
       printf("JSON received: [%s] (%ld bytes) for bitmap %ld\n",
              message.Uri.c_str(), message.AnswerSize, index);
@@ -775,7 +867,7 @@ namespace OrthancStone
 
     void OnFrameReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
     {
-        size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload.get())->GetValue();
+      size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload.get())->GetValue();
       
       printf("Frame received: [%s] (%ld bytes) for bitmap %ld\n",
              message.Uri.c_str(), message.AnswerSize, index);
@@ -856,39 +948,6 @@ namespace OrthancStone
       return false;
     }
 
-
-    void SetPan(size_t index,
-                double panX,
-                double panY)
-    {
-      Bitmaps::iterator bitmap = bitmaps_.find(index);
-      if (bitmap != bitmaps_.end())
-      {
-        assert(bitmap->second != NULL);
-        bitmap->second->SetPan(panX, panY);
-      }
-    }
-
-
-    void GetPan(double& panX,
-                double& panY,
-                size_t index) const
-    {
-      Bitmaps::const_iterator bitmap = bitmaps_.find(index);
-      if (bitmap != bitmaps_.end())
-      {
-        assert(bitmap->second != NULL);
-        panX = bitmap->second->GetPanX();
-        panY = bitmap->second->GetPanY();
-      }
-      else
-      {
-        panX = 0;
-        panY = 0;
-      }
-    }
-
-
     void DrawControls(CairoSurface& surface,
                       const ViewportGeometry& view)
     {
@@ -912,33 +971,72 @@ namespace OrthancStone
   class BitmapStackInteractor : public IWorldSceneInteractor
   {
   private:
+    enum Tool
+    {
+      Tool_Move,
+      Tool_Rotate
+    };
+        
+
     BitmapStack&  stack_;
+    Tool          tool_;
+    
 
-
-    class MoveBitmapTracker : public IWorldSceneMouseTracker
+    class RotateBitmapTracker : public IWorldSceneMouseTracker
     {
     private:
-      BitmapStack&       stack_;
-      size_t             bitmap_;
-      double             clickX_;
-      double             clickY_;
-      double             panX_;
-      double             panY_;
-      bool               oneAxis_;
+      BitmapStack::BitmapAccessor  accessor_;
+      double                       centerX_;
+      double                       centerY_;
+      double                       originalAngle_;
+      double                       clickAngle_;
+      bool                         roundAngles_;
 
-    public:
-      MoveBitmapTracker(BitmapStack& stack,
-                        size_t bitmap,
-                        double x,
-                        double y,
-                        bool oneAxis) :
-        stack_(stack),
-        bitmap_(bitmap),
-        clickX_(x),
-        clickY_(y),
-        oneAxis_(oneAxis)
+      bool ComputeAngle(double& angle /* out */,
+                        double sceneX,
+                        double sceneY)
       {
-        stack.GetPan(panX_, panY_, bitmap_);
+        Vector u;
+        LinearAlgebra::AssignVector(u, sceneX - centerX_, sceneY - centerY_);
+
+        double nu = boost::numeric::ublas::norm_2(u);
+
+        if (!LinearAlgebra::IsCloseToZero(nu))
+        {
+          u /= nu;
+          angle = atan2(u[1], u[0]);
+          return true;
+        }
+        else
+        {
+          return false;
+        }
+      }
+
+      
+    public:
+      RotateBitmapTracker(BitmapStack& stack,
+                          const ViewportGeometry& view,
+                          size_t bitmap,
+                          double x,
+                          double y,
+                          bool roundAngles) :
+        accessor_(stack, bitmap),
+        roundAngles_(roundAngles)
+      {
+        if (accessor_.IsValid())
+        {
+          accessor_.GetBitmap().GetCenter(centerX_, centerY_);
+          originalAngle_ = accessor_.GetBitmap().GetAngle();
+
+          double sceneX, sceneY;
+          view.MapDisplayToScene(sceneX, sceneY, x, y);
+
+          if (!ComputeAngle(clickAngle_, x, y))
+          {
+            accessor_.Invalidate();
+          }
+        }
       }
 
       virtual bool HasRender() const
@@ -961,23 +1059,94 @@ namespace OrthancStone
                              double sceneX,
                              double sceneY)
       {
-        double dx = sceneX - clickX_;
-        double dy = sceneY - clickY_;
-
-        if (oneAxis_)
+        static const double ROUND_ANGLE = 15.0 / 180.0 * boost::math::constants::pi<double>(); 
+        
+        double angle;
+        
+        if (accessor_.IsValid() &&
+            ComputeAngle(angle, sceneX, sceneY))
         {
-          if (fabs(dx) > fabs(dy))
+          angle = angle - clickAngle_ + originalAngle_;
+
+          if (roundAngles_)
           {
-            stack_.SetPan(bitmap_, dx + panX_, panY_);
+            angle = round(angle / ROUND_ANGLE) * ROUND_ANGLE;
+          }
+          
+          accessor_.GetBitmap().SetAngle(angle);
+        }
+      }
+    };
+    
+    
+    class MoveBitmapTracker : public IWorldSceneMouseTracker
+    {
+    private:
+      BitmapStack::BitmapAccessor  accessor_;
+      double                       clickX_;
+      double                       clickY_;
+      double                       panX_;
+      double                       panY_;
+      bool                         oneAxis_;
+
+    public:
+      MoveBitmapTracker(BitmapStack& stack,
+                        size_t bitmap,
+                        double x,
+                        double y,
+                        bool oneAxis) :
+        accessor_(stack, bitmap),
+        clickX_(x),
+        clickY_(y),
+        oneAxis_(oneAxis)
+      {
+        if (accessor_.IsValid())
+        {
+          panX_ = accessor_.GetBitmap().GetPanX();
+          panY_ = accessor_.GetBitmap().GetPanY();
+        }
+      }
+
+      virtual bool HasRender() const
+      {
+        return false;
+      }
+
+      virtual void Render(CairoContext& context,
+                          double zoom)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      virtual void MouseUp()
+      {
+      }
+
+      virtual void MouseMove(int displayX,
+                             int displayY,
+                             double sceneX,
+                             double sceneY)
+      {
+        if (accessor_.IsValid())
+        {
+          double dx = sceneX - clickX_;
+          double dy = sceneY - clickY_;
+
+          if (oneAxis_)
+          {
+            if (fabs(dx) > fabs(dy))
+            {
+              accessor_.GetBitmap().SetPan(dx + panX_, panY_);
+            }
+            else
+            {
+              accessor_.GetBitmap().SetPan(panX_, dy + panY_);
+            }
           }
           else
           {
-            stack_.SetPan(bitmap_, panX_, dy + panY_);
+            accessor_.GetBitmap().SetPan(dx + panX_, dy + panY_);
           }
-        }
-        else
-        {
-          stack_.SetPan(bitmap_, dx + panX_, dy + panY_);
         }
       }
     };
@@ -985,7 +1154,8 @@ namespace OrthancStone
     
   public:
     BitmapStackInteractor(BitmapStack& stack) :
-      stack_(stack)
+      stack_(stack),
+      tool_(Tool_Move)
     {
     }
     
@@ -1009,8 +1179,19 @@ namespace OrthancStone
           if (stack_.GetSelectedBitmap(selected) &&
               bitmap == selected)
           {
-            return new MoveBitmapTracker(stack_, bitmap, x, y,
-                                         (modifiers & KeyboardModifiers_Shift));
+            switch (tool_)
+            {
+              case Tool_Move:
+                return new MoveBitmapTracker(stack_, bitmap, x, y,
+                                             (modifiers & KeyboardModifiers_Shift));
+
+              case Tool_Rotate:
+                return new RotateBitmapTracker(stack_, view, bitmap, x, y,
+                                               (modifiers & KeyboardModifiers_Shift));
+
+              default:
+                return NULL;
+            }
           }
           else
           {
@@ -1053,8 +1234,23 @@ namespace OrthancStone
                             KeyboardModifiers modifiers,
                             IStatusBar* statusBar)
     {
-      if (keyChar == 's')
-        widget.FitContent();
+      switch (keyChar)
+      {
+        case 's':
+          widget.FitContent();
+          break;
+
+        case 'm':
+          tool_ = Tool_Move;
+          break;
+
+        case 'r':
+          tool_ = Tool_Rotate;
+          break;
+
+        default:
+          break;
+      }
     }
   };
 

@@ -49,6 +49,16 @@ namespace OrthancStone
     typedef OriginMessage<MessageType_Widget_GeometryChanged, BitmapStack> GeometryChangedMessage;
     typedef OriginMessage<MessageType_Widget_ContentChanged, BitmapStack> ContentChangedMessage;
 
+
+    enum Corner
+    {
+      Corner_TopLeft,
+      Corner_TopRight,
+      Corner_BottomLeft,
+      Corner_BottomRight
+    };
+    
+
     class Bitmap : public boost::noncopyable
     {
     private:
@@ -62,6 +72,7 @@ namespace OrthancStone
       unsigned int  cropWidth_;
       unsigned int  cropHeight_;
       Matrix        transform_;
+      Matrix        transformInverse_;
       double        pixelSpacingX_;
       double        pixelSpacingY_;
       double        panX_;
@@ -135,6 +146,8 @@ namespace OrthancStone
           CreateRotationMatrix(angle_),
           CreateOffsetMatrix(-centerX, -centerY),
           transform_);
+
+        LinearAlgebra::InvertMatrix(transformInverse_, transform_);
       }
 
 
@@ -145,7 +158,50 @@ namespace OrthancStone
         ApplyTransform(x, y, transform_);
         extent.AddPoint(x, y);
       }
-      
+
+
+      void GetCornerInternal(double& x,
+                             double& y,
+                             Corner corner,
+                             unsigned int cropX,
+                             unsigned int cropY,
+                             unsigned int cropWidth,
+                             unsigned int cropHeight) const
+      {
+        double dx = static_cast<double>(cropX);
+        double dy = static_cast<double>(cropY);
+        double dwidth = static_cast<double>(cropWidth);
+        double dheight = static_cast<double>(cropHeight);
+
+        switch (corner)
+        {
+          case Corner_TopLeft:
+            x = dx;
+            y = dy;
+            break;
+
+          case Corner_TopRight:
+            x = dx + dwidth;
+            y = dy;
+            break;
+
+          case Corner_BottomLeft:
+            x = dx;
+            y = dy + dheight;
+            break;
+
+          case Corner_BottomRight:
+            x = dx + dwidth;
+            y = dy + dheight;
+            break;
+
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        }
+
+        ApplyTransform(x, y, transform_);
+      }
+
 
     public:
       Bitmap() :
@@ -281,8 +337,8 @@ namespace OrthancStone
         unsigned int x, y, width, height;
         GetCrop(x, y, width, height);
 
-        double dx = static_cast<double>(x) /* - 0.5 */;
-        double dy = static_cast<double>(y) /* - 0.5 */;
+        double dx = static_cast<double>(x);
+        double dy = static_cast<double>(y);
         double dwidth = static_cast<double>(width);
         double dheight = static_cast<double>(height);
 
@@ -303,26 +359,13 @@ namespace OrthancStone
       bool Contains(double x,
                     double y) const
       {
-        Matrix inv;
-        LinearAlgebra::InvertMatrix(inv, transform_);
+        ApplyTransform(x, y, transformInverse_);
+        
+        unsigned int cropX, cropY, cropWidth, cropHeight;
+        GetCrop(cropX, cropY, cropWidth, cropHeight);
 
-        Vector p;
-        LinearAlgebra::AssignVector(p, x, y, 1);
-
-        Vector q = LinearAlgebra::Product(inv, p);
-
-        if (!LinearAlgebra::IsNear(q[2], 1.0))
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-        }
-        else
-        {
-          printf("at: (%.02f, %.02f)\n", q[0], q[1]);
-          return (q[0] >= 0 &&
-                  q[1] >= 0 &&
-                  q[0] <= static_cast<double>(width_) &&
-                  q[1] <= static_cast<double>(height_));
-        }
+        return (x >= cropX && x <= cropX + cropWidth &&
+                y >= cropY && y <= cropY + cropHeight);
       }
 
 
@@ -428,6 +471,58 @@ namespace OrthancStone
         cairo_line_to(cr, x, y);
 
         cairo_stroke(cr);
+      }
+
+
+      static double Square(double x)
+      {
+        return x * x;
+      }
+
+
+      void GetCorner(double& x /* out */,
+                     double& y /* out */,
+                     Corner corner) const
+      {
+        unsigned int cropX, cropY, cropWidth, cropHeight;
+        GetCrop(cropX, cropY, cropWidth, cropHeight);
+        GetCornerInternal(x, y, corner, cropX, cropY, cropWidth, cropHeight);
+      }
+      
+      
+      bool LookupCorner(Corner& corner /* out */,
+                        double x,
+                        double y,
+                        double zoom,
+                        double viewportDistance) const
+      {
+        static const Corner CORNERS[] = {
+          Corner_TopLeft,
+          Corner_TopRight,
+          Corner_BottomLeft,
+          Corner_BottomRight
+        };
+        
+        unsigned int cropX, cropY, cropWidth, cropHeight;
+        GetCrop(cropX, cropY, cropWidth, cropHeight);
+
+        double threshold = Square(viewportDistance / zoom);
+        
+        for (size_t i = 0; i < 4; i++)
+        {
+          double cx, cy;
+          GetCornerInternal(cx, cy, CORNERS[i], cropX, cropY, cropWidth, cropHeight);
+
+          double d = Square(cx - x) + Square(cy - y);
+        
+          if (d <= threshold)
+          {
+            corner = CORNERS[i];
+            return true;
+          }
+        }
+        
+        return false;
       }
     }; 
 
@@ -810,6 +905,18 @@ namespace OrthancStone
         return false;
       }
     }
+
+
+    void SetWindowing(float center,
+                      float width)
+
+    {
+      hasWindowing_ = true;
+      windowingCenter_ = center;
+      windowingWidth_ = width;
+
+      EmitMessage(ContentChangedMessage(*this));
+    }
     
 
     size_t LoadText(const Orthanc::Font& font,
@@ -818,7 +925,7 @@ namespace OrthancStone
     {
       std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(*this));
       alpha->LoadText(font, utf8);
-      alpha->SetForegroundValue(foreground);
+      //alpha->SetForegroundValue(foreground);
 
       size_t bitmap = countBitmaps_++;
 
@@ -856,7 +963,7 @@ namespace OrthancStone
       }
 
       alpha->SetAlpha(block.release());
-      alpha->SetForegroundValue(foreground);
+      //alpha->SetForegroundValue(foreground);
 
       size_t bitmap = countBitmaps_++;
 
@@ -1042,7 +1149,8 @@ namespace OrthancStone
     enum Tool
     {
       Tool_Move,
-      Tool_Rotate
+      Tool_Rotate,
+      Tool_Crop
     };
         
 
@@ -1287,6 +1395,32 @@ namespace OrthancStone
                            double y,
                            IStatusBar* statusBar)
     {
+      static const double HANDLE_SIZE = 10.0;
+      
+      size_t selected;
+      if (stack_.GetSelectedBitmap(selected) &&
+          tool_ == Tool_Crop)
+      {
+        BitmapStack::BitmapAccessor accessor(stack_, selected);
+        
+        BitmapStack::Corner corner;
+        if (accessor.GetBitmap().LookupCorner(corner, x, y, view.GetZoom(), HANDLE_SIZE))
+        {
+          accessor.GetBitmap().GetCorner(x, y, corner);
+          
+          double z = 1.0 / view.GetZoom();
+          
+          context.SetSourceColor(255, 0, 0);
+          cairo_t* cr = context.GetObject();
+          cairo_set_line_width(cr, 2.0 * z);
+          cairo_move_to(cr, x - HANDLE_SIZE * z, y - HANDLE_SIZE * z);
+          cairo_line_to(cr, x + HANDLE_SIZE * z, y - HANDLE_SIZE * z);
+          cairo_line_to(cr, x + HANDLE_SIZE * z, y + HANDLE_SIZE * z);
+          cairo_line_to(cr, x - HANDLE_SIZE * z, y + HANDLE_SIZE * z);
+          cairo_line_to(cr, x - HANDLE_SIZE * z, y - HANDLE_SIZE * z);
+          cairo_stroke(cr);
+        }
+      }
     }
 
     virtual void MouseWheel(WorldSceneWidget& widget,
@@ -1304,6 +1438,10 @@ namespace OrthancStone
     {
       switch (keyChar)
       {
+        case 'c':
+          tool_ = Tool_Crop;
+          break;
+        
         case 's':
           widget.FitContent();
           break;
@@ -1624,14 +1762,16 @@ namespace OrthancStone
         fonts.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
         
         stack_.reset(new BitmapStack(IObserver::broker_, *orthancApiClient_));
-        //stack_->LoadFrame(instance, frame, false);
-        //stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", frame, false);
-        //stack_->LoadText(fonts.GetFont(0), "Hello\nworld\nBonjour, Alain", 256);
-        stack_->LoadTestBlock(20, 10, 256);
+        stack_->LoadFrame(instance, frame, false);
+        stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", frame, false);
+        stack_->LoadText(fonts.GetFont(0), "Hello\nworld\nBonjour, Alain", 256);
+        stack_->LoadTestBlock(100, 50, 256);
         
         mainWidget_ = new BitmapStackWidget(IObserver::broker_, *stack_, "main-widget");
         mainWidget_->SetTransmitMouseOver(true);
 
+        //stack_->SetWindowing(128, 256);
+        
         mainWidgetInteractor_.reset(new Interactor(*this));
         //mainWidget_->SetInteractor(*mainWidgetInteractor_);
       }

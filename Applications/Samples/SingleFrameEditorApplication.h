@@ -310,12 +310,20 @@ namespace OrthancStone
         width_ = width;
         height_ = height;
 
-
-        //SetCrop(0, 0, 2, 2);
-
-        
         UpdateTransform();
       }
+
+
+      unsigned int GetWidth() const
+      {
+        return width_;
+      }
+        
+
+      unsigned int GetHeight() const
+      {
+        return height_;
+      }       
 
 
       void CheckSize(unsigned int width,
@@ -366,6 +374,54 @@ namespace OrthancStone
 
         return (x >= cropX && x <= cropX + cropWidth &&
                 y >= cropY && y <= cropY + cropHeight);
+      }
+
+
+      bool GetPixel(unsigned int& pixelX,
+                    unsigned int& pixelY,
+                    double sceneX,
+                    double sceneY) const
+      {
+        if (width_ == 0 ||
+            height_ == 0)
+        {
+          return false;
+        }
+        else
+        {
+          ApplyTransform(sceneX, sceneY, transformInverse_);
+        
+          int x = static_cast<int>(std::floor(sceneX));
+          int y = static_cast<int>(std::floor(sceneY));
+
+          if (x < 0)
+          {
+            pixelX = 0;
+          }
+          else if (x >= static_cast<int>(width_))
+          {
+            pixelX = width_;
+          }
+          else
+          {
+            pixelX = static_cast<unsigned int>(x);
+          }
+
+          if (y < 0)
+          {
+            pixelY = 0;
+          }
+          else if (y >= static_cast<int>(height_))
+          {
+            pixelY = height_;
+          }
+          else
+          {
+            pixelY = static_cast<unsigned int>(y);
+          }
+
+          return true;
+        }
       }
 
 
@@ -421,11 +477,17 @@ namespace OrthancStone
       void GetCenter(double& centerX,
                      double& centerY) const
       {
+#if 0
         unsigned int x, y, width, height;
         GetCrop(x, y, width, height);
         
         centerX = static_cast<double>(width) / 2.0;
         centerY = static_cast<double>(height) / 2.0;
+#else
+        centerX = static_cast<double>(width_) / 2.0;
+        centerY = static_cast<double>(height_) / 2.0;
+#endif
+        
         ApplyTransform(centerX, centerY, transform_);
       }
 
@@ -697,8 +759,22 @@ namespace OrthancStone
       {
         if (converted_.get() != NULL)
         {
-          Matrix m = LinearAlgebra::Product(view.GetMatrix(), GetTransform());
-          ApplyProjectiveTransform(buffer, *converted_, m, interpolation, false);
+          if (converted_->GetFormat() != Orthanc::PixelFormat_Float32)
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+          }
+
+          unsigned int cropX, cropY, cropWidth, cropHeight;
+          GetCrop(cropX, cropY, cropWidth, cropHeight);
+
+          Matrix m = LinearAlgebra::Product(view.GetMatrix(),
+                                            GetTransform(),
+                                            CreateOffsetMatrix(cropX, cropY));
+
+          Orthanc::ImageAccessor cropped;
+          converted_->GetRegion(cropped, cropX, cropY, cropWidth, cropHeight);
+        
+          ApplyProjectiveTransform(buffer, cropped, m, interpolation, false);
         }
       }
 
@@ -1153,6 +1229,11 @@ namespace OrthancStone
       Tool_Crop
     };
         
+    static double GetHandleSize()
+    {
+      return 10.0;
+    }
+      
 
     BitmapStack&  stack_;
     Tool          tool_;
@@ -1326,12 +1407,101 @@ namespace OrthancStone
         }
       }
     };
+
+
+    class CornerBitmapTracker : public IWorldSceneMouseTracker
+    {
+    private:
+      BitmapStack::BitmapAccessor  accessor_;
+      BitmapStack::Corner          corner_;
+      unsigned int                 cropX_;
+      unsigned int                 cropY_;
+      unsigned int                 cropWidth_;
+      unsigned int                 cropHeight_;
+
+    public:
+      CornerBitmapTracker(BitmapStack& stack,
+                          const ViewportGeometry& view,
+                          size_t bitmap,
+                          double x,
+                          double y,
+                          BitmapStack::Corner corner) :
+        accessor_(stack, bitmap),
+        corner_(corner)
+      {
+        if (accessor_.IsValid())
+        {
+          accessor_.GetBitmap().GetCrop(cropX_, cropY_, cropWidth_, cropHeight_);          
+        }
+      }
+
+      virtual bool HasRender() const
+      {
+        return false;
+      }
+
+      virtual void Render(CairoContext& context,
+                          double zoom)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      virtual void MouseUp()
+      {
+      }
+
+      virtual void MouseMove(int displayX,
+                             int displayY,
+                             double sceneX,
+                             double sceneY)
+      {
+        unsigned int x, y;
+        
+        if (accessor_.IsValid())
+        {
+          BitmapStack::Bitmap& bitmap = accessor_.GetBitmap();
+          if (bitmap.GetPixel(x, y, sceneX, sceneY))
+          {
+            unsigned int targetX, targetWidth;
+
+            if (corner_ == BitmapStack::Corner_TopLeft ||
+                corner_ == BitmapStack::Corner_BottomLeft)
+            {
+              targetX = std::min(x, cropX_ + cropWidth_);
+              targetWidth = cropX_ + cropWidth_ - targetX;
+            }
+            else
+            {
+              targetX = cropX_;
+              targetWidth = std::max(x, cropX_) - cropX_;
+            }
+
+            unsigned int targetY, targetHeight;
+
+            if (corner_ == BitmapStack::Corner_TopLeft ||
+                corner_ == BitmapStack::Corner_TopRight)
+            {
+              targetY = std::min(y, cropY_ + cropHeight_);
+              targetHeight = cropY_ + cropHeight_ - targetY;
+            }
+            else
+            {
+              targetY = cropY_;
+              targetHeight = std::max(y, cropY_) - cropY_;
+            }
+
+            bitmap.SetCrop(targetX, targetY, targetWidth, targetHeight);
+          }
+        }
+      }
+    };
     
     
   public:
     BitmapStackInteractor(BitmapStack& stack) :
       stack_(stack),
-      tool_(Tool_Move)
+      //tool_(Tool_Move)
+      tool_(Tool_Crop)
     {
     }
     
@@ -1345,14 +1515,45 @@ namespace OrthancStone
     {
       if (button == MouseButton_Left)
       {
-        size_t bitmap;
+        size_t selected;
 
-        if (stack_.LookupBitmap(bitmap, x, y))
+        if (!stack_.GetSelectedBitmap(selected))
         {
-          printf("CLICK on bitmap %ld\n", bitmap);
+          size_t bitmap;
+          if (stack_.LookupBitmap(bitmap, x, y))
+          {
+            printf("CLICK on bitmap %ld\n", bitmap);
+            stack_.Select(bitmap);
+          }
 
-          size_t selected;
-          if (stack_.GetSelectedBitmap(selected) &&
+          return NULL;
+        }
+        else if (tool_ == Tool_Crop)
+        {
+          BitmapStack::BitmapAccessor accessor(stack_, selected);
+          BitmapStack::Corner corner;
+          if (accessor.GetBitmap().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
+          {
+            return new CornerBitmapTracker(stack_, view, selected, x, y, corner);
+          }
+          else
+          {
+            size_t bitmap;
+            
+            if (!stack_.LookupBitmap(bitmap, x, y) ||
+                bitmap != selected)
+            {
+              stack_.Unselect();
+            }
+            
+            return NULL;
+          }
+        }
+        else
+        {
+          size_t bitmap;
+
+          if (stack_.LookupBitmap(bitmap, x, y) &&
               bitmap == selected)
           {
             switch (tool_)
@@ -1364,22 +1565,19 @@ namespace OrthancStone
               case Tool_Rotate:
                 return new RotateBitmapTracker(stack_, view, bitmap, x, y,
                                                (modifiers & KeyboardModifiers_Shift));
-
+                
               default:
-                return NULL;
+                break;
             }
+
+            return NULL;
           }
           else
           {
-            stack_.Select(bitmap);
+            printf("CLICK outside\n");
+            stack_.Unselect();
             return NULL;
           }
-        }
-        else
-        {
-          printf("CLICK outside\n");
-          stack_.Unselect();
-          return NULL;
         }
       }
       else
@@ -1395,8 +1593,6 @@ namespace OrthancStone
                            double y,
                            IStatusBar* statusBar)
     {
-      static const double HANDLE_SIZE = 10.0;
-      
       size_t selected;
       if (stack_.GetSelectedBitmap(selected) &&
           tool_ == Tool_Crop)
@@ -1404,7 +1600,7 @@ namespace OrthancStone
         BitmapStack::BitmapAccessor accessor(stack_, selected);
         
         BitmapStack::Corner corner;
-        if (accessor.GetBitmap().LookupCorner(corner, x, y, view.GetZoom(), HANDLE_SIZE))
+        if (accessor.GetBitmap().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
         {
           accessor.GetBitmap().GetCorner(x, y, corner);
           
@@ -1413,11 +1609,11 @@ namespace OrthancStone
           context.SetSourceColor(255, 0, 0);
           cairo_t* cr = context.GetObject();
           cairo_set_line_width(cr, 2.0 * z);
-          cairo_move_to(cr, x - HANDLE_SIZE * z, y - HANDLE_SIZE * z);
-          cairo_line_to(cr, x + HANDLE_SIZE * z, y - HANDLE_SIZE * z);
-          cairo_line_to(cr, x + HANDLE_SIZE * z, y + HANDLE_SIZE * z);
-          cairo_line_to(cr, x - HANDLE_SIZE * z, y + HANDLE_SIZE * z);
-          cairo_line_to(cr, x - HANDLE_SIZE * z, y - HANDLE_SIZE * z);
+          cairo_move_to(cr, x - GetHandleSize() * z, y - GetHandleSize() * z);
+          cairo_line_to(cr, x + GetHandleSize() * z, y - GetHandleSize() * z);
+          cairo_line_to(cr, x + GetHandleSize() * z, y + GetHandleSize() * z);
+          cairo_line_to(cr, x - GetHandleSize() * z, y + GetHandleSize() * z);
+          cairo_line_to(cr, x - GetHandleSize() * z, y - GetHandleSize() * z);
           cairo_stroke(cr);
         }
       }

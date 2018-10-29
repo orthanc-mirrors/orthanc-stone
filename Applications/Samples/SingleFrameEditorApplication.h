@@ -62,7 +62,7 @@ namespace OrthancStone
     class Bitmap : public boost::noncopyable
     {
     private:
-      bool          visible_;
+      size_t        index_;
       bool          hasSize_;
       unsigned int  width_;
       unsigned int  height_;
@@ -78,6 +78,7 @@ namespace OrthancStone
       double        panX_;
       double        panY_;
       double        angle_;
+      bool          resizeable_;
 
 
     protected:
@@ -111,6 +112,12 @@ namespace OrthancStone
         return m;
       }
       
+
+      const Matrix& GetTransform() const
+      {
+        return transform_;
+      }
+
 
     private:
       static void ApplyTransform(double& x /* inout */,
@@ -204,8 +211,8 @@ namespace OrthancStone
 
 
     public:
-      Bitmap() :
-        visible_(true),
+      Bitmap(size_t index) :
+        index_(index),
         hasSize_(false),
         width_(0),
         height_(0),
@@ -214,13 +221,19 @@ namespace OrthancStone
         pixelSpacingY_(1),
         panX_(0),
         panY_(0),
-        angle_(0)
+        angle_(0),
+        resizeable_(false)
       {
         UpdateTransform();
       }
 
       virtual ~Bitmap()
       {
+      }
+
+      size_t GetIndex() const
+      {
+        return index_;
       }
 
       void ResetCrop()
@@ -284,17 +297,6 @@ namespace OrthancStone
       {
         return angle_;
       }
-
-      bool IsVisible() const
-      {
-        return visible_;
-      }
-
-      void SetVisible(bool visible)
-      {
-        visible_ = visible;
-      }
-
 
       void SetSize(unsigned int width,
                    unsigned int height)
@@ -468,12 +470,6 @@ namespace OrthancStone
         return false;
       }
 
-      const Matrix& GetTransform() const
-      {
-        return transform_;
-      }
-
-
       void GetCenter(double& centerX,
                      double& centerY) const
       {
@@ -586,6 +582,16 @@ namespace OrthancStone
         
         return false;
       }
+
+      bool IsResizeable() const
+      {
+        return resizeable_;
+      }
+
+      void SetResizeable(bool resizeable)
+      {
+        resizeable_ = resizeable;
+      }
     }; 
 
 
@@ -681,6 +687,11 @@ namespace OrthancStone
       std::auto_ptr<DicomFrameConverter>     converter_;
       std::auto_ptr<Orthanc::ImageAccessor>  converted_;  // Float32 or RGB24
 
+      static OrthancPlugins::DicomTag  ConvertTag(const Orthanc::DicomTag& tag)
+      {
+        return OrthancPlugins::DicomTag(tag.GetGroup(), tag.GetElement());
+      }
+      
 
       void ApplyConverter()
       {
@@ -692,9 +703,9 @@ namespace OrthancStone
       }
       
     public:
-      static OrthancPlugins::DicomTag  ConvertTag(const Orthanc::DicomTag& tag)
+      DicomBitmap(size_t index) :
+        Bitmap(index)
       {
-        return OrthancPlugins::DicomTag(tag.GetGroup(), tag.GetElement());
       }
       
       void SetDicomTags(const OrthancPlugins::FullOrthancDataset& dataset)
@@ -808,7 +819,9 @@ namespace OrthancStone
       float                                  foreground_;
 
     public:
-      AlphaBitmap(const BitmapStack& stack) :
+      AlphaBitmap(size_t index,
+                  const BitmapStack& stack) :
+        Bitmap(index),
         stack_(stack),
         useWindowing_(true),
         foreground_(0)
@@ -995,27 +1008,27 @@ namespace OrthancStone
     }
     
 
-    size_t LoadText(const Orthanc::Font& font,
-                    const std::string& utf8,
-                    float foreground)
+    Bitmap& LoadText(const Orthanc::Font& font,
+                     const std::string& utf8)
     {
-      std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(*this));
-      alpha->LoadText(font, utf8);
-      //alpha->SetForegroundValue(foreground);
-
       size_t bitmap = countBitmaps_++;
 
+      std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(bitmap, *this));
+      alpha->LoadText(font, utf8);
+
+      AlphaBitmap* ptr = alpha.get();
       bitmaps_[bitmap] = alpha.release();
       
-      return bitmap;
+      return *ptr;
     }
 
     
-    size_t LoadTestBlock(unsigned int width,
-                         unsigned int height,
-                         float foreground)
+    Bitmap& LoadTestBlock(unsigned int width,
+                          unsigned int height)
     {
-      std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(*this));
+      size_t bitmap = countBitmaps_++;
+
+      std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(bitmap, *this));
 
       std::auto_ptr<Orthanc::Image>  block(new Orthanc::Image(Orthanc::PixelFormat_Grayscale8, width, height, false));
 
@@ -1039,13 +1052,11 @@ namespace OrthancStone
       }
 
       alpha->SetAlpha(block.release());
-      //alpha->SetForegroundValue(foreground);
 
-      size_t bitmap = countBitmaps_++;
-
+      AlphaBitmap* ptr = alpha.get();
       bitmaps_[bitmap] = alpha.release();
       
-      return bitmap;
+      return *ptr;
     }
 
     
@@ -1055,7 +1066,7 @@ namespace OrthancStone
     {
       size_t bitmap = countBitmaps_++;
 
-      bitmaps_[bitmap] = new DicomBitmap;
+      bitmaps_[bitmap] = new DicomBitmap(bitmap);
       
 
       {
@@ -1226,7 +1237,8 @@ namespace OrthancStone
     {
       Tool_Move,
       Tool_Rotate,
-      Tool_Crop
+      Tool_Crop,
+      Tool_Resize
     };
         
     static double GetHandleSize()
@@ -1409,7 +1421,7 @@ namespace OrthancStone
     };
 
 
-    class CornerBitmapTracker : public IWorldSceneMouseTracker
+    class CropBitmapTracker : public IWorldSceneMouseTracker
     {
     private:
       BitmapStack::BitmapAccessor  accessor_;
@@ -1420,7 +1432,7 @@ namespace OrthancStone
       unsigned int                 cropHeight_;
 
     public:
-      CornerBitmapTracker(BitmapStack& stack,
+      CropBitmapTracker(BitmapStack& stack,
                           const ViewportGeometry& view,
                           size_t bitmap,
                           double x,
@@ -1455,10 +1467,10 @@ namespace OrthancStone
                              double sceneX,
                              double sceneY)
       {
-        unsigned int x, y;
-        
         if (accessor_.IsValid())
         {
+          unsigned int x, y;
+        
           BitmapStack::Bitmap& bitmap = accessor_.GetBitmap();
           if (bitmap.GetPixel(x, y, sceneX, sceneY))
           {
@@ -1497,11 +1509,134 @@ namespace OrthancStone
     };
     
     
+    class ResizeBitmapTracker : public IWorldSceneMouseTracker
+    {
+    private:
+      BitmapStack::BitmapAccessor  accessor_;
+      bool                         roundScaling_;
+      double                       originalSpacingX_;
+      double                       originalSpacingY_;
+      double                       originalPanX_;
+      double                       originalPanY_;
+      BitmapStack::Corner          oppositeCorner_;
+      double                       oppositeX_;
+      double                       oppositeY_;
+      double                       baseScaling_;
+
+      static double ComputeDistance(double x1,
+                                    double y1,
+                                    double x2,
+                                    double y2)
+      {
+        double dx = x1 - x2;
+        double dy = y1 - y2;
+        return sqrt(dx * dx + dy * dy);
+      }
+      
+    public:
+      ResizeBitmapTracker(BitmapStack& stack,
+                          size_t bitmap,
+                          double x,
+                          double y,
+                          BitmapStack::Corner corner,
+                          bool roundScaling) :
+        accessor_(stack, bitmap),
+        roundScaling_(roundScaling)
+      {
+        if (accessor_.IsValid() &&
+            accessor_.GetBitmap().IsResizeable())
+        {
+          originalSpacingX_ = accessor_.GetBitmap().GetPixelSpacingX();
+          originalSpacingY_ = accessor_.GetBitmap().GetPixelSpacingY();
+          originalPanX_ = accessor_.GetBitmap().GetPanX();
+          originalPanY_ = accessor_.GetBitmap().GetPanY();
+
+          switch (corner)
+          {
+            case BitmapStack::Corner_TopLeft:
+              oppositeCorner_ = BitmapStack::Corner_BottomRight;
+              break;
+
+            case BitmapStack::Corner_TopRight:
+              oppositeCorner_ = BitmapStack::Corner_BottomLeft;
+              break;
+
+            case BitmapStack::Corner_BottomLeft:
+              oppositeCorner_ = BitmapStack::Corner_TopRight;
+              break;
+
+            case BitmapStack::Corner_BottomRight:
+              oppositeCorner_ = BitmapStack::Corner_TopLeft;
+              break;
+
+            default:
+              throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+          }
+
+          accessor_.GetBitmap().GetCorner(oppositeX_, oppositeY_, oppositeCorner_);
+
+          double d = ComputeDistance(x, y, oppositeX_, oppositeY_);
+          if (d >= std::numeric_limits<float>::epsilon())
+          {
+            baseScaling_ = 1.0 / d;
+          }
+          else
+          {
+            // Avoid division by zero in extreme cases
+            accessor_.Invalidate();
+          }
+        }
+      }
+
+      virtual bool HasRender() const
+      {
+        return false;
+      }
+
+      virtual void Render(CairoContext& context,
+                          double zoom)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      virtual void MouseUp()
+      {
+      }
+
+      virtual void MouseMove(int displayX,
+                             int displayY,
+                             double sceneX,
+                             double sceneY)
+      {
+        static const double ROUND_SCALING = 0.1;
+        
+        if (accessor_.IsValid() &&
+            accessor_.GetBitmap().IsResizeable())
+        {
+          double scaling = ComputeDistance(oppositeX_, oppositeY_, sceneX, sceneY) * baseScaling_;
+
+          if (roundScaling_)
+          {
+            scaling = round(scaling / ROUND_SCALING) * ROUND_SCALING;
+          }
+          
+          BitmapStack::Bitmap& bitmap = accessor_.GetBitmap();
+          bitmap.SetPixelSpacing(scaling * originalSpacingX_, scaling * originalSpacingY_);
+
+          // Keep the opposite corner at a fixed location
+          double ox, oy;
+          bitmap.GetCorner(ox, oy, oppositeCorner_);
+          bitmap.SetPan((-ox + oppositeX_) + bitmap.GetPanX(),
+                        (-oy + oppositeY_) + bitmap.GetPanY());
+        }
+      }
+    };
+    
+    
   public:
     BitmapStackInteractor(BitmapStack& stack) :
       stack_(stack),
-      //tool_(Tool_Move)
-      tool_(Tool_Crop)
+      tool_(Tool_Move)
     {
     }
     
@@ -1528,13 +1663,25 @@ namespace OrthancStone
 
           return NULL;
         }
-        else if (tool_ == Tool_Crop)
+        else if (tool_ == Tool_Crop ||
+                 tool_ == Tool_Resize)
         {
           BitmapStack::BitmapAccessor accessor(stack_, selected);
           BitmapStack::Corner corner;
           if (accessor.GetBitmap().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
           {
-            return new CornerBitmapTracker(stack_, view, selected, x, y, corner);
+            switch (tool_)
+            {
+              case Tool_Crop:
+                return new CropBitmapTracker(stack_, view, selected, x, y, corner);
+
+              case Tool_Resize:
+                return new ResizeBitmapTracker(stack_, selected, x, y, corner,
+                                               (modifiers & KeyboardModifiers_Shift));
+
+              default:
+                throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+            }
           }
           else
           {
@@ -1595,7 +1742,8 @@ namespace OrthancStone
     {
       size_t selected;
       if (stack_.GetSelectedBitmap(selected) &&
-          tool_ == Tool_Crop)
+          (tool_ == Tool_Crop ||
+           tool_ == Tool_Resize))
       {
         BitmapStack::BitmapAccessor accessor(stack_, selected);
         
@@ -1638,7 +1786,7 @@ namespace OrthancStone
           tool_ = Tool_Crop;
           break;
         
-        case 's':
+        case 'a':
           widget.FitContent();
           break;
 
@@ -1648,6 +1796,10 @@ namespace OrthancStone
 
         case 'r':
           tool_ = Tool_Rotate;
+          break;
+
+        case 's':
+          tool_ = Tool_Resize;
           break;
 
         default:
@@ -1960,8 +2112,8 @@ namespace OrthancStone
         stack_.reset(new BitmapStack(IObserver::broker_, *orthancApiClient_));
         stack_->LoadFrame(instance, frame, false);
         stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", frame, false);
-        stack_->LoadText(fonts.GetFont(0), "Hello\nworld\nBonjour, Alain", 256);
-        stack_->LoadTestBlock(100, 50, 256);
+        stack_->LoadText(fonts.GetFont(0), "Hello\nworld\nBonjour, Alain").SetResizeable(true);
+        stack_->LoadTestBlock(100, 50).SetResizeable(true);
         
         mainWidget_ = new BitmapStackWidget(IObserver::broker_, *stack_, "main-widget");
         mainWidget_->SetTransmitMouseOver(true);

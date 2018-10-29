@@ -59,6 +59,7 @@ namespace OrthancStone
     };
 
 
+
     class Bitmap : public boost::noncopyable
     {
     private:
@@ -473,17 +474,8 @@ namespace OrthancStone
       void GetCenter(double& centerX,
                      double& centerY) const
       {
-#if 0
-        unsigned int x, y, width, height;
-        GetCrop(x, y, width, height);
-        
-        centerX = static_cast<double>(width) / 2.0;
-        centerY = static_cast<double>(height) / 2.0;
-#else
         centerX = static_cast<double>(width_) / 2.0;
         centerY = static_cast<double>(height_) / 2.0;
-#endif
-        
         ApplyTransform(centerX, centerY, transform_);
       }
 
@@ -1343,7 +1335,7 @@ namespace OrthancStone
     {
     }
 
-    BitmapCommandBase(BitmapStack::BitmapAccessor& accessor) :
+    BitmapCommandBase(const BitmapStack::BitmapAccessor& accessor) :
       stack_(accessor.GetStack()),
       bitmap_(accessor.GetIndex())
     {
@@ -1429,12 +1421,10 @@ namespace OrthancStone
       }
 
     public:
-      UndoRedoCommand(BitmapStack::BitmapAccessor& accessor,
-                      double sourceAngle,
-                      double targetAngle) :
-        BitmapCommandBase(accessor),
-        sourceAngle_(sourceAngle),
-        targetAngle_(targetAngle)
+      UndoRedoCommand(const RotateBitmapTracker& tracker) :
+        BitmapCommandBase(tracker.accessor_),
+        sourceAngle_(tracker.originalAngle_),
+        targetAngle_(tracker.accessor_.GetBitmap().GetAngle())
       {
       }
     };
@@ -1482,8 +1472,7 @@ namespace OrthancStone
     {
       if (accessor_.IsValid())
       {
-        undoRedoStack_.Add(new UndoRedoCommand(accessor_, originalAngle_,
-                                               accessor_.GetBitmap().GetAngle()));
+        undoRedoStack_.Add(new UndoRedoCommand(*this));
       }
     }
 
@@ -1543,16 +1532,12 @@ namespace OrthancStone
       }
 
     public:
-      UndoRedoCommand(BitmapStack::BitmapAccessor& accessor,
-                      double sourceX,
-                      double sourceY,
-                      double targetX,
-                      double targetY) :
-        BitmapCommandBase(accessor),
-        sourceX_(sourceX),
-        sourceY_(sourceY),
-        targetX_(targetX),
-        targetY_(targetY)
+      UndoRedoCommand(const MoveBitmapTracker& tracker) :
+        BitmapCommandBase(tracker.accessor_),
+        sourceX_(tracker.panX_),
+        sourceY_(tracker.panY_),
+        targetX_(tracker.accessor_.GetBitmap().GetPanX()),
+        targetY_(tracker.accessor_.GetBitmap().GetPanY())
       {
       }
     };
@@ -1593,9 +1578,7 @@ namespace OrthancStone
     {
       if (accessor_.IsValid())
       {
-        undoRedoStack_.Add(new UndoRedoCommand(accessor_, panX_, panY_,
-                                               accessor_.GetBitmap().GetPanX(),
-                                               accessor_.GetBitmap().GetPanY()));
+        undoRedoStack_.Add(new UndoRedoCommand(*this));
       }
     }
 
@@ -1632,6 +1615,7 @@ namespace OrthancStone
   class CropBitmapTracker : public IWorldSceneMouseTracker
   {
   private:
+    UndoRedoStack&               undoRedoStack_;
     BitmapStack::BitmapAccessor  accessor_;
     BitmapStack::Corner          corner_;
     unsigned int                 cropX_;
@@ -1639,13 +1623,52 @@ namespace OrthancStone
     unsigned int                 cropWidth_;
     unsigned int                 cropHeight_;
 
+    class UndoRedoCommand : public BitmapCommandBase
+    {
+    private:
+      unsigned int  sourceCropX_;
+      unsigned int  sourceCropY_;
+      unsigned int  sourceCropWidth_;
+      unsigned int  sourceCropHeight_;
+      unsigned int  targetCropX_;
+      unsigned int  targetCropY_;
+      unsigned int  targetCropWidth_;
+      unsigned int  targetCropHeight_;
+
+    protected:
+      virtual void UndoInternal(BitmapStack::Bitmap& bitmap) const
+      {
+        bitmap.SetCrop(sourceCropX_, sourceCropY_, sourceCropWidth_, sourceCropHeight_);
+      }
+
+      virtual void RedoInternal(BitmapStack::Bitmap& bitmap) const
+      {
+        bitmap.SetCrop(targetCropX_, targetCropY_, targetCropWidth_, targetCropHeight_);
+      }
+
+    public:
+      UndoRedoCommand(const CropBitmapTracker& tracker) :
+        BitmapCommandBase(tracker.accessor_),
+        sourceCropX_(tracker.cropX_),
+        sourceCropY_(tracker.cropY_),
+        sourceCropWidth_(tracker.cropWidth_),
+        sourceCropHeight_(tracker.cropHeight_)
+      {
+        tracker.accessor_.GetBitmap().GetCrop(targetCropX_, targetCropY_,
+                                              targetCropWidth_, targetCropHeight_);
+      }
+    };
+
+
   public:
-    CropBitmapTracker(BitmapStack& stack,
+    CropBitmapTracker(UndoRedoStack& undoRedoStack,
+                      BitmapStack& stack,
                       const ViewportGeometry& view,
                       size_t bitmap,
                       double x,
                       double y,
                       BitmapStack::Corner corner) :
+      undoRedoStack_(undoRedoStack),
       accessor_(stack, bitmap),
       corner_(corner)
     {
@@ -1668,6 +1691,10 @@ namespace OrthancStone
 
     virtual void MouseUp()
     {
+      if (accessor_.IsValid())
+      {
+        undoRedoStack_.Add(new UndoRedoCommand(*this));
+      }
     }
 
     virtual void MouseMove(int displayX,
@@ -1720,10 +1747,13 @@ namespace OrthancStone
   class ResizeBitmapTracker : public IWorldSceneMouseTracker
   {
   private:
+    UndoRedoStack&               undoRedoStack_;
     BitmapStack::BitmapAccessor  accessor_;
     bool                         roundScaling_;
     double                       originalSpacingX_;
     double                       originalSpacingY_;
+    double                       originalPanX_;
+    double                       originalPanY_;
     BitmapStack::Corner          oppositeCorner_;
     double                       oppositeX_;
     double                       oppositeY_;
@@ -1739,13 +1769,56 @@ namespace OrthancStone
       return sqrt(dx * dx + dy * dy);
     }
       
+    class UndoRedoCommand : public BitmapCommandBase
+    {
+    private:
+      double   sourceSpacingX_;
+      double   sourceSpacingY_;
+      double   sourcePanX_;
+      double   sourcePanY_;
+      double   targetSpacingX_;
+      double   targetSpacingY_;
+      double   targetPanX_;
+      double   targetPanY_;
+
+    protected:
+      virtual void UndoInternal(BitmapStack::Bitmap& bitmap) const
+      {
+        bitmap.SetPixelSpacing(sourceSpacingX_, sourceSpacingY_);
+        bitmap.SetPan(sourcePanX_, sourcePanY_);
+      }
+
+      virtual void RedoInternal(BitmapStack::Bitmap& bitmap) const
+      {
+        bitmap.SetPixelSpacing(targetSpacingX_, targetSpacingY_);
+        bitmap.SetPan(targetPanX_, targetPanY_);
+      }
+
+    public:
+      UndoRedoCommand(const ResizeBitmapTracker& tracker) :
+        BitmapCommandBase(tracker.accessor_),
+        sourceSpacingX_(tracker.originalSpacingX_),
+        sourceSpacingY_(tracker.originalSpacingY_),
+        sourcePanX_(tracker.originalPanX_),
+        sourcePanY_(tracker.originalPanY_),
+        targetSpacingX_(tracker.accessor_.GetBitmap().GetPixelSpacingX()),
+        targetSpacingY_(tracker.accessor_.GetBitmap().GetPixelSpacingY()),
+        targetPanX_(tracker.accessor_.GetBitmap().GetPanX()),
+        targetPanY_(tracker.accessor_.GetBitmap().GetPanY())
+      {
+      }
+    };
+
+
   public:
-    ResizeBitmapTracker(BitmapStack& stack,
+    ResizeBitmapTracker(UndoRedoStack& undoRedoStack,
+                        BitmapStack& stack,
                         size_t bitmap,
                         double x,
                         double y,
                         BitmapStack::Corner corner,
                         bool roundScaling) :
+      undoRedoStack_(undoRedoStack),
       accessor_(stack, bitmap),
       roundScaling_(roundScaling)
     {
@@ -1754,6 +1827,8 @@ namespace OrthancStone
       {
         originalSpacingX_ = accessor_.GetBitmap().GetPixelSpacingX();
         originalSpacingY_ = accessor_.GetBitmap().GetPixelSpacingY();
+        originalPanX_ = accessor_.GetBitmap().GetPanX();
+        originalPanY_ = accessor_.GetBitmap().GetPanY();
 
         switch (corner)
         {
@@ -1805,6 +1880,10 @@ namespace OrthancStone
 
     virtual void MouseUp()
     {
+      if (accessor_.IsValid())
+      {
+        undoRedoStack_.Add(new UndoRedoCommand(*this));
+      }
     }
 
     virtual void MouseMove(int displayX,
@@ -1900,10 +1979,10 @@ namespace OrthancStone
             switch (tool_)
             {
               case Tool_Crop:
-                return new CropBitmapTracker(stack_, view, selected, x, y, corner);
+                return new CropBitmapTracker(undoRedoStack_, stack_, view, selected, x, y, corner);
 
               case Tool_Resize:
-                return new ResizeBitmapTracker(stack_, selected, x, y, corner,
+                return new ResizeBitmapTracker(undoRedoStack_, stack_, selected, x, y, corner,
                                                (modifiers & KeyboardModifiers_Shift));
 
               default:

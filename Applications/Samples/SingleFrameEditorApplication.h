@@ -362,11 +362,6 @@ namespace OrthancStone
       }
 
 
-      virtual void Render(Orthanc::ImageAccessor& buffer,
-                          const ViewportGeometry& view,
-                          ImageInterpolation interpolation) const = 0;
-
-
       bool Contains(double x,
                     double y) const
       {
@@ -380,8 +375,8 @@ namespace OrthancStone
       }
 
 
-      bool GetPixel(unsigned int& pixelX,
-                    unsigned int& pixelY,
+      bool GetPixel(unsigned int& imageX,
+                    unsigned int& imageY,
                     double sceneX,
                     double sceneY) const
       {
@@ -399,28 +394,28 @@ namespace OrthancStone
 
           if (x < 0)
           {
-            pixelX = 0;
+            imageX = 0;
           }
           else if (x >= static_cast<int>(width_))
           {
-            pixelX = width_;
+            imageX = width_;
           }
           else
           {
-            pixelX = static_cast<unsigned int>(x);
+            imageX = static_cast<unsigned int>(x);
           }
 
           if (y < 0)
           {
-            pixelY = 0;
+            imageY = 0;
           }
           else if (y >= static_cast<int>(height_))
           {
-            pixelY = height_;
+            imageY = height_;
           }
           else
           {
-            pixelY = static_cast<unsigned int>(y);
+            imageY = static_cast<unsigned int>(y);
           }
 
           return true;
@@ -463,12 +458,6 @@ namespace OrthancStone
       double GetPanY() const
       {
         return panY_;
-      }
-
-      virtual bool GetDefaultWindowing(float& center,
-                                       float& width) const
-      {
-        return false;
       }
 
       void GetCenter(double& centerX,
@@ -584,6 +573,19 @@ namespace OrthancStone
       {
         resizeable_ = resizeable;
       }
+
+      virtual bool GetDefaultWindowing(float& center,
+                                       float& width) const
+      {
+        return false;
+      }
+
+      virtual void Render(Orthanc::ImageAccessor& buffer,
+                          const ViewportGeometry& view,
+                          ImageInterpolation interpolation) const = 0;
+
+      virtual bool GetRange(float& minValue,
+                            float& maxValue) const = 0;
     }; 
 
 
@@ -788,6 +790,32 @@ namespace OrthancStone
           }
         }        
       }
+
+      virtual bool GetRange(float& minValue,
+                            float& maxValue) const
+      {
+        if (useWindowing_)
+        {
+          return false;
+        }
+        else
+        {
+          minValue = 0;
+          maxValue = 0;
+
+          if (foreground_ < 0)
+          {
+            minValue = foreground_;
+          }
+
+          if (foreground_ > 0)
+          {
+            maxValue = foreground_;
+          }
+
+          return true;
+        }
+      }
     };
     
     
@@ -798,7 +826,7 @@ namespace OrthancStone
     private:
       std::auto_ptr<Orthanc::ImageAccessor>  source_;  // Content of PixelData
       std::auto_ptr<DicomFrameConverter>     converter_;
-      std::auto_ptr<Orthanc::ImageAccessor>  converted_;  // Float32 or RGB24
+      std::auto_ptr<Orthanc::ImageAccessor>  converted_;  // Float32
 
       static OrthancPlugins::DicomTag  ConvertTag(const Orthanc::DicomTag& tag)
       {
@@ -918,6 +946,26 @@ namespace OrthancStone
           return false;
         }
       }
+
+
+      virtual bool GetRange(float& minValue,
+                            float& maxValue) const
+      {
+        if (converted_.get() != NULL)
+        {
+          if (converted_->GetFormat() != Orthanc::PixelFormat_Float32)
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+          }
+
+          Orthanc::ImageProcessing::GetMinMaxFloatValue(minValue, maxValue, *converted_);
+          return true;
+        }
+        else
+        {
+          return false;
+        }
+      }
     };
 
 
@@ -1003,6 +1051,17 @@ namespace OrthancStone
     }
 
 
+    void GetWindowingWithDefault(float& center,
+                                 float& width) const
+    {
+      if (!GetWindowing(center, width))
+      {
+        center = 128;
+        width = 256;
+      }
+    }
+
+
     void SetWindowing(float center,
                       float width)
 
@@ -1011,7 +1070,7 @@ namespace OrthancStone
       windowingCenter_ = center;
       windowingWidth_ = width;
 
-      EmitMessage(ContentChangedMessage(*this));
+      //EmitMessage(ContentChangedMessage(*this));
     }
     
 
@@ -1025,7 +1084,7 @@ namespace OrthancStone
 
       AlphaBitmap* ptr = alpha.get();
       bitmaps_[bitmap] = alpha.release();
-      
+
       return *ptr;
     }
 
@@ -1231,6 +1290,41 @@ namespace OrthancStone
           view.ApplyTransform(context);
           bitmap->second->DrawBorders(context, view.GetZoom());
         }
+      }
+    }
+
+
+    void GetRange(float& minValue,
+                  float& maxValue) const
+    {
+      bool first = true;
+      
+      for (Bitmaps::const_iterator it = bitmaps_.begin();
+           it != bitmaps_.end(); it++)
+      {
+        assert(it->second != NULL);
+
+        float a, b;
+        if (it->second->GetRange(a, b))
+        {
+          if (first)
+          {
+            minValue = a;
+            maxValue = b;
+            first = false;
+          }
+          else
+          {
+            minValue = std::min(a, minValue);
+            maxValue = std::max(b, maxValue);
+          }
+        }
+      }
+
+      if (first)
+      {
+        minValue = 0;
+        maxValue = 0;
       }
     }
   };
@@ -1917,6 +2011,200 @@ namespace OrthancStone
   };
 
 
+  class WindowingTracker : public IWorldSceneMouseTracker
+  {   
+  public:
+    enum Action
+    {
+      Action_IncreaseWidth,
+      Action_DecreaseWidth,
+      Action_IncreaseCenter,
+      Action_DecreaseCenter
+    };
+    
+  private:
+    UndoRedoStack&  undoRedoStack_;
+    BitmapStack&    stack_;
+    int             clickX_;
+    int             clickY_;
+    Action          leftAction_;
+    Action          rightAction_;
+    Action          upAction_;
+    Action          downAction_;
+    float           strength_;
+    float           sourceCenter_;
+    float           sourceWidth_;
+
+    static void ComputeAxisEffect(int& deltaCenter,
+                                  int& deltaWidth,
+                                  int delta,
+                                  Action actionNegative,
+                                  Action actionPositive)
+    {
+      if (delta < 0)
+      {
+        switch (actionNegative)
+        {
+          case Action_IncreaseWidth:
+            deltaWidth = -delta;
+            break;
+
+          case Action_DecreaseWidth:
+            deltaWidth = delta;
+            break;
+
+          case Action_IncreaseCenter:
+            deltaCenter = -delta;
+            break;
+
+          case Action_DecreaseCenter:
+            deltaCenter = delta;
+            break;
+
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+        }
+      }
+      else if (delta > 0)
+      {
+        switch (actionPositive)
+        {
+          case Action_IncreaseWidth:
+            deltaWidth = delta;
+            break;
+
+          case Action_DecreaseWidth:
+            deltaWidth = -delta;
+            break;
+
+          case Action_IncreaseCenter:
+            deltaCenter = delta;
+            break;
+
+          case Action_DecreaseCenter:
+            deltaCenter = -delta;
+            break;
+
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+        }
+      }
+    }
+    
+    
+    class UndoRedoCommand : public UndoRedoStack::ICommand
+    {
+    private:
+      BitmapStack&  stack_;
+      float         sourceCenter_;
+      float         sourceWidth_;
+      float         targetCenter_;
+      float         targetWidth_;
+
+    public:
+      UndoRedoCommand(const WindowingTracker& tracker) :
+        stack_(tracker.stack_),
+        sourceCenter_(tracker.sourceCenter_),
+        sourceWidth_(tracker.sourceWidth_)
+      {
+        stack_.GetWindowingWithDefault(targetCenter_, targetWidth_);
+      }
+
+      virtual void Undo() const
+      {
+        stack_.SetWindowing(sourceCenter_, sourceWidth_);
+      }
+      
+      virtual void Redo() const
+      {
+        stack_.SetWindowing(targetCenter_, targetWidth_);
+      }
+    };
+
+
+  public:
+    WindowingTracker(UndoRedoStack& undoRedoStack,
+                     BitmapStack& stack,
+                     int x,
+                     int y,
+                     Action leftAction,
+                     Action rightAction,
+                     Action upAction,
+                     Action downAction) :
+      undoRedoStack_(undoRedoStack),
+      stack_(stack),
+      clickX_(x),
+      clickY_(y),
+      leftAction_(leftAction),
+      rightAction_(rightAction),
+      upAction_(upAction),
+      downAction_(downAction)
+    {
+      stack_.GetWindowingWithDefault(sourceCenter_, sourceWidth_);
+
+      float minValue, maxValue;
+      stack.GetRange(minValue, maxValue);
+
+      assert(minValue <= maxValue);
+
+      float tmp;
+      
+      float delta = (maxValue - minValue);
+      if (delta <= 1)
+      {
+        tmp = 0;
+      }
+      else
+      {
+        tmp = log2(delta);
+      }
+
+      strength_ = tmp - 7;
+      if (strength_ < 1)
+      {
+        strength_ = 1;
+      }
+    }
+
+    virtual bool HasRender() const
+    {
+      return false;
+    }
+
+    virtual void Render(CairoContext& context,
+                        double zoom)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+
+    virtual void MouseUp()
+    {
+      undoRedoStack_.Add(new UndoRedoCommand(*this));
+    }
+
+
+    virtual void MouseMove(int displayX,
+                           int displayY,
+                           double sceneX,
+                           double sceneY)
+    {
+      // https://bitbucket.org/osimis/osimis-webviewer-plugin/src/master/frontend/src/app/viewport/image-plugins/windowing-viewport-tool.class.js
+
+      static const float SCALE = 1.0;
+      
+      int deltaCenter = 0;
+      int deltaWidth = 0;
+
+      ComputeAxisEffect(deltaCenter, deltaWidth, displayX - clickX_, leftAction_, rightAction_);
+      ComputeAxisEffect(deltaCenter, deltaWidth, displayY - clickY_, upAction_, downAction_);
+
+      float newCenter = sourceCenter_ + (deltaCenter / SCALE * strength_);
+      float newWidth = sourceWidth_ + (deltaWidth / SCALE * strength_);
+      stack_.SetWindowing(newCenter, newWidth);
+    }
+  };
+
+
   class BitmapStackInteractor : public IWorldSceneInteractor
   {
   private:
@@ -1925,7 +2213,8 @@ namespace OrthancStone
       Tool_Move,
       Tool_Rotate,
       Tool_Crop,
-      Tool_Resize
+      Tool_Resize,
+      Tool_Windowing
     };
         
     static double GetHandleSize()
@@ -1950,6 +2239,8 @@ namespace OrthancStone
                                                         const ViewportGeometry& view,
                                                         MouseButton button,
                                                         KeyboardModifiers modifiers,
+                                                        int viewportX,
+                                                        int viewportY,
                                                         double x,
                                                         double y,
                                                         IStatusBar* statusBar)
@@ -1958,7 +2249,16 @@ namespace OrthancStone
       {
         size_t selected;
 
-        if (!stack_.GetSelectedBitmap(selected))
+        if (tool_ == Tool_Windowing)
+        {
+          return new WindowingTracker(undoRedoStack_, stack_,
+                                      viewportX, viewportY,
+                                      WindowingTracker::Action_DecreaseWidth,
+                                      WindowingTracker::Action_IncreaseWidth,
+                                      WindowingTracker::Action_DecreaseCenter,
+                                      WindowingTracker::Action_IncreaseCenter);
+        }
+        else if (!stack_.GetSelectedBitmap(selected))
         {
           size_t bitmap;
           if (stack_.LookupBitmap(bitmap, x, y))
@@ -2108,6 +2408,10 @@ namespace OrthancStone
           tool_ = Tool_Resize;
           break;
 
+        case 'w':
+          tool_ = Tool_Windowing;
+          break;
+
         case 'z':
           if (modifiers & KeyboardModifiers_Control)
           {
@@ -2194,11 +2498,7 @@ namespace OrthancStone
       // As in GrayscaleFrameRenderer => TODO MERGE?
 
       float windowCenter, windowWidth;
-      if (!stack_.GetWindowing(windowCenter, windowWidth))
-      {
-        windowCenter = 128;
-        windowWidth = 256;
-      }
+      stack_.GetWindowingWithDefault(windowCenter, windowWidth);
       
       float x0 = windowCenter - windowWidth / 2.0f;
       float x1 = windowCenter + windowWidth / 2.0f;
@@ -2297,6 +2597,8 @@ namespace OrthancStone
                                                             const ViewportGeometry& view,
                                                             MouseButton button,
                                                             KeyboardModifiers modifiers,
+                                                            int viewportX,
+                                                            int viewportY,
                                                             double x,
                                                             double y,
                                                             IStatusBar* statusBar)

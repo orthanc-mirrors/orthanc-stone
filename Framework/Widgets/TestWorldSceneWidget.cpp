@@ -35,6 +35,8 @@ namespace OrthancStone
                                                           const ViewportGeometry& view,
                                                           MouseButton button,
                                                           KeyboardModifiers modifiers,
+                                                          int viewportX,
+                                                          int viewportY,
                                                           double x,
                                                           double y,
                                                           IStatusBar* statusBar)

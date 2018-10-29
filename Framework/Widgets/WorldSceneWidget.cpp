@@ -154,7 +154,7 @@ namespace OrthancStone
 
     if (interactor_)
     {
-      tracker.reset(interactor_->CreateMouseTracker(*this, view_, button, modifiers, sceneX, sceneY, GetStatusBar()));
+      tracker.reset(interactor_->CreateMouseTracker(*this, view_, button, modifiers, x, y, sceneX, sceneY, GetStatusBar()));
     }
     
     if (tracker.get() != NULL)

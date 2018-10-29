@@ -1516,8 +1516,6 @@ namespace OrthancStone
       bool                         roundScaling_;
       double                       originalSpacingX_;
       double                       originalSpacingY_;
-      double                       originalPanX_;
-      double                       originalPanY_;
       BitmapStack::Corner          oppositeCorner_;
       double                       oppositeX_;
       double                       oppositeY_;
@@ -1548,8 +1546,6 @@ namespace OrthancStone
         {
           originalSpacingX_ = accessor_.GetBitmap().GetPixelSpacingX();
           originalSpacingY_ = accessor_.GetBitmap().GetPixelSpacingY();
-          originalPanX_ = accessor_.GetBitmap().GetPanX();
-          originalPanY_ = accessor_.GetBitmap().GetPanY();
 
           switch (corner)
           {
@@ -1621,13 +1617,14 @@ namespace OrthancStone
           }
           
           BitmapStack::Bitmap& bitmap = accessor_.GetBitmap();
-          bitmap.SetPixelSpacing(scaling * originalSpacingX_, scaling * originalSpacingY_);
+          bitmap.SetPixelSpacing(scaling * originalSpacingX_,
+                                 scaling * originalSpacingY_);
 
           // Keep the opposite corner at a fixed location
           double ox, oy;
           bitmap.GetCorner(ox, oy, oppositeCorner_);
-          bitmap.SetPan((-ox + oppositeX_) + bitmap.GetPanX(),
-                        (-oy + oppositeY_) + bitmap.GetPanY());
+          bitmap.SetPan(bitmap.GetPanX() + oppositeX_ - ox,
+                        bitmap.GetPanY() + oppositeY_ - oy);
         }
       }
     };

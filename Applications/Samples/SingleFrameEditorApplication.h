@@ -1275,8 +1275,8 @@ namespace OrthancStone
       return false;
     }
 
-    void DrawControls(CairoSurface& surface,
-                      const ViewportGeometry& view)
+    void DrawControls(CairoContext& context,
+                      double zoom)
     {
       if (hasSelection_)
       {
@@ -1284,11 +1284,9 @@ namespace OrthancStone
         
         if (bitmap != bitmaps_.end())
         {
-          CairoContext context(surface);
-      
           context.SetSourceColor(255, 0, 0);
-          view.ApplyTransform(context);
-          bitmap->second->DrawBorders(context, view.GetZoom());
+          //view.ApplyTransform(context);
+          bitmap->second->DrawBorders(context, zoom);
         }
       }
     }
@@ -1974,7 +1972,8 @@ namespace OrthancStone
 
     virtual void MouseUp()
     {
-      if (accessor_.IsValid())
+      if (accessor_.IsValid() &&
+          accessor_.GetBitmap().IsResizeable())
       {
         undoRedoStack_.Add(new UndoRedoCommand(*this));
       }
@@ -2442,75 +2441,53 @@ namespace OrthancStone
     public IObserver
   {
   private:
-    BitmapStack&           stack_;
-    BitmapStackInteractor  myInteractor_;
+    BitmapStack&                   stack_;
+    BitmapStackInteractor          myInteractor_;
+    std::auto_ptr<Orthanc::Image>  floatBuffer_;
+    std::auto_ptr<CairoSurface>    cairoBuffer_;
 
-  protected:
-    virtual Extent2D GetSceneExtent()
+    virtual bool RenderInternal(unsigned int width,
+                                unsigned int height,
+                                ImageInterpolation interpolation)
     {
-      return stack_.GetSceneExtent();
-    }
-
-    virtual bool RenderScene(CairoContext& context,
-                             const ViewportGeometry& view)
-    {
-      // "Render()" has been replaced
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-    }
-
-  public:
-    BitmapStackWidget(MessageBroker& broker,
-                      BitmapStack& stack,
-                      const std::string& name) :
-      WorldSceneWidget(name),
-      IObservable(broker),
-      IObserver(broker),
-      stack_(stack),
-      myInteractor_(stack_)
-    {
-      stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::GeometryChangedMessage>(*this, &BitmapStackWidget::OnGeometryChanged));
-      stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::ContentChangedMessage>(*this, &BitmapStackWidget::OnContentChanged));
-
-      SetInteractor(myInteractor_);
-    }
-
-    void OnGeometryChanged(const BitmapStack::GeometryChangedMessage& message)
-    {
-      printf("Geometry has changed\n");
-      FitContent();
-    }
-
-    void OnContentChanged(const BitmapStack::ContentChangedMessage& message)
-    {
-      printf("Content has changed\n");
-      NotifyContentChanged();
-    }
-
-    virtual bool Render(Orthanc::ImageAccessor& target)
-    {
-      Orthanc::Image buffer(Orthanc::PixelFormat_Float32, target.GetWidth(),
-                            target.GetHeight(), false);
-
-      // TODO => rendering quality
-      stack_.Render(buffer, GetView(), ImageInterpolation_Nearest);
-      //stack_.Render(buffer, GetView(), ImageInterpolation_Bilinear);
-
-      // As in GrayscaleFrameRenderer => TODO MERGE?
-
       float windowCenter, windowWidth;
       stack_.GetWindowingWithDefault(windowCenter, windowWidth);
       
       float x0 = windowCenter - windowWidth / 2.0f;
       float x1 = windowCenter + windowWidth / 2.0f;
 
-      if (windowWidth >= 0.001f)  // Avoid division by zero at (*)
+      if (windowWidth <= 0.001f)  // Avoid division by zero at (*)
       {
-        const unsigned int width = target.GetWidth();
-        const unsigned int height = target.GetHeight();
-    
+        return false;
+      }
+      else
+      {
+        if (floatBuffer_.get() == NULL ||
+            floatBuffer_->GetWidth() != width ||
+            floatBuffer_->GetHeight() != height)
+        {
+          floatBuffer_.reset(new Orthanc::Image(Orthanc::PixelFormat_Float32, width, height, false));
+        }
+
+        if (cairoBuffer_.get() == NULL ||
+            cairoBuffer_->GetWidth() != width ||
+            cairoBuffer_->GetHeight() != height)
+        {
+          cairoBuffer_.reset(new CairoSurface(width, height));
+        }
+
+        stack_.Render(*floatBuffer_, GetView(), interpolation);
+        
+        // TODO => rendering quality
+
+        // As in GrayscaleFrameRenderer => TODO MERGE?
+
+        Orthanc::ImageAccessor target;
+        cairoBuffer_->GetAccessor(target);
+        
         for (unsigned int y = 0; y < height; y++)
         {
-          const float* p = reinterpret_cast<const float*>(buffer.GetConstRow(y));
+          const float* p = reinterpret_cast<const float*>(floatBuffer_->GetConstRow(y));
           uint8_t* q = reinterpret_cast<uint8_t*>(target.GetRow(y));
 
           for (unsigned int x = 0; x < width; x++, p++, q += 4)
@@ -2542,6 +2519,84 @@ namespace OrthancStone
             q[3] = 255;
           }
         }
+
+        return true;
+      }
+    }
+
+
+  protected:
+    virtual Extent2D GetSceneExtent()
+    {
+      return stack_.GetSceneExtent();
+    }
+
+    virtual bool RenderScene(CairoContext& context,
+                             const ViewportGeometry& view)
+    {
+      ImageInterpolation interpolation = ImageInterpolation_Nearest;  // TODO PARAMETER?
+      
+      cairo_t* cr = context.GetObject();
+
+      if (RenderInternal(context.GetWidth(), context.GetHeight(), interpolation))
+      {
+        // https://www.cairographics.org/FAQ/#paint_from_a_surface
+        cairo_save(cr);
+        cairo_identity_matrix(cr);
+        cairo_set_source_surface(cr, cairoBuffer_->GetObject(), 0, 0);
+        cairo_paint(cr);
+        cairo_restore(cr);
+      }
+      else
+      {
+        // https://www.cairographics.org/FAQ/#clear_a_surface
+        context.SetSourceColor(0, 0, 0);
+        cairo_paint(cr);
+      }
+
+      stack_.DrawControls(context, view.GetZoom());
+
+      return true;
+    }
+
+  public:
+    BitmapStackWidget(MessageBroker& broker,
+                      BitmapStack& stack,
+                      const std::string& name) :
+      WorldSceneWidget(name),
+      IObservable(broker),
+      IObserver(broker),
+      stack_(stack),
+      myInteractor_(stack_)
+    {
+      stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::GeometryChangedMessage>(*this, &BitmapStackWidget::OnGeometryChanged));
+      stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::ContentChangedMessage>(*this, &BitmapStackWidget::OnContentChanged));
+
+      SetInteractor(myInteractor_);
+    }
+
+    void OnGeometryChanged(const BitmapStack::GeometryChangedMessage& message)
+    {
+      printf("Geometry has changed\n");
+      FitContent();
+    }
+
+    void OnContentChanged(const BitmapStack::ContentChangedMessage& message)
+    {
+      printf("Content has changed\n");
+      NotifyContentChanged();
+    }
+
+#if 0
+    virtual bool Render(Orthanc::ImageAccessor& target)
+    {
+      if (RenderInternal(target.GetWidth(), target.GetHeight(), ImageInterpolation_Nearest))
+      {
+        assert(cairoBuffer_.get() != NULL);
+
+        Orthanc::ImageAccessor source;
+        cairoBuffer_->GetAccessor(source);
+        Orthanc::ImageProcessing::Copy(target, source);
       }
       else
       {
@@ -2551,12 +2606,14 @@ namespace OrthancStone
       {
         // TODO => REFACTOR
         CairoSurface surface(target);
-        stack_.DrawControls(surface, GetView());
+        CairoContext context(surface);
+        GetView().ApplyTransform(context);
+        stack_.DrawControls(context, GetView().GetZoom());
       }
 
       return true;
     }
-
+#endif
   };
 
   
@@ -2734,18 +2791,18 @@ namespace OrthancStone
         fonts.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
         
         stack_.reset(new BitmapStack(IObserver::broker_, *orthancApiClient_));
-        //stack_->LoadFrame(instance, frame, false);
-        //stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", frame, false);
+        stack_->LoadFrame(instance, frame, false);
+        stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", frame, false);
 
         {
           BitmapStack::Bitmap& bitmap = stack_->LoadText(fonts.GetFont(0), "Hello\nworld\nBonjour, Alain");
-          dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetForegroundValue(256);
+          //dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetForegroundValue(256);
           dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetResizeable(true);
         }
         
         {
           BitmapStack::Bitmap& bitmap = stack_->LoadTestBlock(100, 50);
-          dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetForegroundValue(256);
+          //dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetForegroundValue(256);
           dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetResizeable(true);
         }
         

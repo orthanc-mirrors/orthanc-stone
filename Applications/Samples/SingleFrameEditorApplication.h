@@ -57,7 +57,7 @@ namespace OrthancStone
       Corner_BottomLeft,
       Corner_BottomRight
     };
-    
+
 
     class Bitmap : public boost::noncopyable
     {
@@ -598,12 +598,14 @@ namespace OrthancStone
     class BitmapAccessor : public boost::noncopyable
     {
     private:
-      size_t    index_;
-      Bitmap*   bitmap_;
+      BitmapStack&  stack_;
+      size_t        index_;
+      Bitmap*       bitmap_;
 
     public:
       BitmapAccessor(BitmapStack& stack,
                      size_t index) :
+        stack_(stack),
         index_(index)
       {
         Bitmaps::iterator bitmap = stack.bitmaps_.find(index);
@@ -621,6 +623,7 @@ namespace OrthancStone
       BitmapAccessor(BitmapStack& stack,
                      double x,
                      double y) :
+        stack_(stack),
         index_(0)  // Dummy initialization
       {
         if (stack.LookupBitmap(index_, x, y))
@@ -653,6 +656,18 @@ namespace OrthancStone
         return bitmap_ != NULL;
       }
 
+      BitmapStack& GetStack() const
+      {
+        if (IsValid())
+        {
+          return stack_;
+        }
+        else
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+        }
+      }
+
       size_t GetIndex() const
       {
         if (IsValid())
@@ -678,6 +693,112 @@ namespace OrthancStone
       }    
     };    
 
+
+    class AlphaBitmap : public Bitmap
+    {
+    private:
+      const BitmapStack&                     stack_;
+      std::auto_ptr<Orthanc::ImageAccessor>  alpha_;      // Grayscale8
+      bool                                   useWindowing_;
+      float                                  foreground_;
+
+    public:
+      AlphaBitmap(size_t index,
+                  const BitmapStack& stack) :
+        Bitmap(index),
+        stack_(stack),
+        useWindowing_(true),
+        foreground_(0)
+      {
+      }
+
+
+      void SetForegroundValue(float foreground)
+      {
+        useWindowing_ = false;
+        foreground_ = foreground;
+      }
+      
+      
+      void SetAlpha(Orthanc::ImageAccessor* image)
+      {
+        std::auto_ptr<Orthanc::ImageAccessor> raii(image);
+        
+        if (image == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        }
+
+        if (image->GetFormat() != Orthanc::PixelFormat_Grayscale8)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+        }
+
+        SetSize(image->GetWidth(), image->GetHeight());
+        alpha_ = raii;
+      }
+
+
+      void LoadText(const Orthanc::Font& font,
+                    const std::string& utf8)
+      {
+        SetAlpha(font.RenderAlpha(utf8));
+      }                   
+
+
+      virtual void Render(Orthanc::ImageAccessor& buffer,
+                          const ViewportGeometry& view,
+                          ImageInterpolation interpolation) const
+      {
+        if (buffer.GetFormat() != Orthanc::PixelFormat_Float32)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+        }
+
+        unsigned int cropX, cropY, cropWidth, cropHeight;
+        GetCrop(cropX, cropY, cropWidth, cropHeight);
+
+        Matrix m = LinearAlgebra::Product(view.GetMatrix(),
+                                          GetTransform(),
+                                          CreateOffsetMatrix(cropX, cropY));
+
+        Orthanc::ImageAccessor cropped;
+        alpha_->GetRegion(cropped, cropX, cropY, cropWidth, cropHeight);
+        
+        Orthanc::Image tmp(Orthanc::PixelFormat_Grayscale8, buffer.GetWidth(), buffer.GetHeight(), false);
+        ApplyProjectiveTransform(tmp, cropped, m, interpolation, true /* clear */);
+
+        // Blit
+        const unsigned int width = buffer.GetWidth();
+        const unsigned int height = buffer.GetHeight();
+
+        float value = foreground_;
+        
+        if (useWindowing_)
+        {
+          float center, width;
+          if (stack_.GetWindowing(center, width))
+          {
+            value = center + width / 2.0f;
+          }
+        }
+        
+        for (unsigned int y = 0; y < height; y++)
+        {
+          float *q = reinterpret_cast<float*>(buffer.GetRow(y));
+          const uint8_t *p = reinterpret_cast<uint8_t*>(tmp.GetRow(y));
+
+          for (unsigned int x = 0; x < width; x++, p++, q++)
+          {
+            float a = static_cast<float>(*p) / 255.0f;
+            
+            *q = (a * value + (1.0f - a) * (*q));
+          }
+        }        
+      }
+    };
+    
+    
 
   private:
     class DicomBitmap : public Bitmap
@@ -809,112 +930,6 @@ namespace OrthancStone
 
 
 
-
-    class AlphaBitmap : public Bitmap
-    {
-    private:
-      const BitmapStack&                     stack_;
-      std::auto_ptr<Orthanc::ImageAccessor>  alpha_;      // Grayscale8
-      bool                                   useWindowing_;
-      float                                  foreground_;
-
-    public:
-      AlphaBitmap(size_t index,
-                  const BitmapStack& stack) :
-        Bitmap(index),
-        stack_(stack),
-        useWindowing_(true),
-        foreground_(0)
-      {
-      }
-
-
-      void SetForegroundValue(float foreground)
-      {
-        useWindowing_ = false;
-        foreground_ = foreground;
-      }
-      
-      
-      void SetAlpha(Orthanc::ImageAccessor* image)
-      {
-        std::auto_ptr<Orthanc::ImageAccessor> raii(image);
-        
-        if (image == NULL)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-        }
-
-        if (image->GetFormat() != Orthanc::PixelFormat_Grayscale8)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
-        }
-
-        SetSize(image->GetWidth(), image->GetHeight());
-        alpha_ = raii;
-      }
-
-
-      void LoadText(const Orthanc::Font& font,
-                    const std::string& utf8)
-      {
-        SetAlpha(font.RenderAlpha(utf8));
-      }                   
-
-
-      virtual void Render(Orthanc::ImageAccessor& buffer,
-                          const ViewportGeometry& view,
-                          ImageInterpolation interpolation) const
-      {
-        if (buffer.GetFormat() != Orthanc::PixelFormat_Float32)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
-        }
-
-        unsigned int cropX, cropY, cropWidth, cropHeight;
-        GetCrop(cropX, cropY, cropWidth, cropHeight);
-
-        Matrix m = LinearAlgebra::Product(view.GetMatrix(),
-                                          GetTransform(),
-                                          CreateOffsetMatrix(cropX, cropY));
-
-        Orthanc::ImageAccessor cropped;
-        alpha_->GetRegion(cropped, cropX, cropY, cropWidth, cropHeight);
-        
-        Orthanc::Image tmp(Orthanc::PixelFormat_Grayscale8, buffer.GetWidth(), buffer.GetHeight(), false);
-        ApplyProjectiveTransform(tmp, cropped, m, interpolation, true /* clear */);
-
-        // Blit
-        const unsigned int width = buffer.GetWidth();
-        const unsigned int height = buffer.GetHeight();
-
-        float value = foreground_;
-        
-        if (useWindowing_)
-        {
-          float center, width;
-          if (stack_.GetWindowing(center, width))
-          {
-            value = center + width / 2.0f;
-          }
-        }
-        
-        for (unsigned int y = 0; y < height; y++)
-        {
-          float *q = reinterpret_cast<float*>(buffer.GetRow(y));
-          const uint8_t *p = reinterpret_cast<uint8_t*>(tmp.GetRow(y));
-
-          for (unsigned int x = 0; x < width; x++, p++, q++)
-          {
-            float a = static_cast<float>(*p) / 255.0f;
-            
-            *q = (a * value + (1.0f - a) * (*q));
-          }
-        }        
-      }
-    };
-    
-    
 
     typedef std::map<size_t, Bitmap*>  Bitmaps;
         
@@ -1060,7 +1075,7 @@ namespace OrthancStone
     }
 
     
-    size_t LoadFrame(const std::string& instance,
+    Bitmap& LoadFrame(const std::string& instance,
                      unsigned int frame,
                      bool httpCompression)
     {
@@ -1068,7 +1083,6 @@ namespace OrthancStone
 
       bitmaps_[bitmap] = new DicomBitmap(bitmap);
       
-
       {
         IWebService::Headers headers;
         std::string uri = "/instances/" + instance + "/tags";
@@ -1094,7 +1108,7 @@ namespace OrthancStone
                                 new Orthanc::SingleValueObject<size_t>(bitmap));
       }
 
-      return bitmap;
+      return *bitmaps_[bitmap];
     }
 
     
@@ -1230,6 +1244,600 @@ namespace OrthancStone
   };
 
 
+  class UndoRedoStack : public boost::noncopyable
+  {
+  public:
+    class ICommand : public boost::noncopyable
+    {
+    public:
+      virtual ~ICommand()
+      {
+      }
+      
+      virtual void Undo() const = 0;
+      
+      virtual void Redo() const = 0;
+    };
+
+  private:
+    typedef std::list<ICommand*>  Stack;
+
+    Stack            stack_;
+    Stack::iterator  current_;
+
+    void Clear(Stack::iterator from)
+    {
+      for (Stack::iterator it = from; it != stack_.end(); ++it)
+      {
+        assert(*it != NULL);
+        delete *it;
+      }
+
+      stack_.erase(from, stack_.end());
+    }
+
+  public:
+    UndoRedoStack() :
+      current_(stack_.end())
+    {
+    }
+    
+    ~UndoRedoStack()
+    {
+      Clear(stack_.begin());
+    }
+
+    void Add(ICommand* command)
+    {
+      if (command == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+      
+      Clear(current_);
+
+      stack_.push_back(command);
+      current_ = stack_.end();
+    }
+
+    void Undo()
+    {
+      if (current_ != stack_.begin())
+      {
+        --current_;
+        
+        assert(*current_ != NULL);
+        (*current_)->Undo();
+      }
+    }
+
+    void Redo()
+    {
+      if (current_ != stack_.end())
+      {
+        assert(*current_ != NULL);
+        (*current_)->Redo();
+
+        ++current_;
+      }
+    }
+  };
+
+
+  class BitmapCommandBase : public UndoRedoStack::ICommand
+  {
+  private:
+    BitmapStack&  stack_;
+    size_t        bitmap_;
+
+  protected:
+    virtual void UndoInternal(BitmapStack::Bitmap& bitmap) const = 0;
+
+    virtual void RedoInternal(BitmapStack::Bitmap& bitmap) const = 0;
+
+  public:
+    BitmapCommandBase(BitmapStack& stack,
+                      size_t bitmap) :
+      stack_(stack),
+      bitmap_(bitmap)
+    {
+    }
+
+    BitmapCommandBase(BitmapStack::BitmapAccessor& accessor) :
+      stack_(accessor.GetStack()),
+      bitmap_(accessor.GetIndex())
+    {
+    }
+
+    virtual void Undo() const
+    {
+      BitmapStack::BitmapAccessor accessor(stack_, bitmap_);
+
+      if (accessor.IsValid())
+      {
+        UndoInternal(accessor.GetBitmap());
+      }
+    }
+
+    virtual void Redo() const
+    {
+      BitmapStack::BitmapAccessor accessor(stack_, bitmap_);
+
+      if (accessor.IsValid())
+      {
+        RedoInternal(accessor.GetBitmap());
+      }
+    }
+  };
+
+
+  class RotateBitmapTracker : public IWorldSceneMouseTracker
+  {
+  private:
+    UndoRedoStack&               undoRedoStack_;
+    BitmapStack::BitmapAccessor  accessor_;
+    double                       centerX_;
+    double                       centerY_;
+    double                       originalAngle_;
+    double                       clickAngle_;
+    bool                         roundAngles_;
+
+    bool ComputeAngle(double& angle /* out */,
+                      double sceneX,
+                      double sceneY) const
+    {
+      Vector u;
+      LinearAlgebra::AssignVector(u, sceneX - centerX_, sceneY - centerY_);
+
+      double nu = boost::numeric::ublas::norm_2(u);
+
+      if (!LinearAlgebra::IsCloseToZero(nu))
+      {
+        u /= nu;
+        angle = atan2(u[1], u[0]);
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+
+
+    class UndoRedoCommand : public BitmapCommandBase
+    {
+    private:
+      double  sourceAngle_;
+      double  targetAngle_;
+
+      static int ToDegrees(double angle)
+      {
+        return static_cast<int>(round(angle * 180.0 / boost::math::constants::pi<double>()));
+      }
+      
+    protected:
+      virtual void UndoInternal(BitmapStack::Bitmap& bitmap) const
+      {
+        LOG(INFO) << "Undo - Set angle to " << ToDegrees(sourceAngle_) << " degrees";
+        bitmap.SetAngle(sourceAngle_);
+      }
+
+      virtual void RedoInternal(BitmapStack::Bitmap& bitmap) const
+      {
+        LOG(INFO) << "Redo - Set angle to " << ToDegrees(sourceAngle_) << " degrees";
+        bitmap.SetAngle(targetAngle_);
+      }
+
+    public:
+      UndoRedoCommand(BitmapStack::BitmapAccessor& accessor,
+                      double sourceAngle,
+                      double targetAngle) :
+        BitmapCommandBase(accessor),
+        sourceAngle_(sourceAngle),
+        targetAngle_(targetAngle)
+      {
+      }
+    };
+
+      
+  public:
+    RotateBitmapTracker(UndoRedoStack& undoRedoStack,
+                        BitmapStack& stack,
+                        const ViewportGeometry& view,
+                        size_t bitmap,
+                        double x,
+                        double y,
+                        bool roundAngles) :
+      undoRedoStack_(undoRedoStack),
+      accessor_(stack, bitmap),
+      roundAngles_(roundAngles)
+    {
+      if (accessor_.IsValid())
+      {
+        accessor_.GetBitmap().GetCenter(centerX_, centerY_);
+        originalAngle_ = accessor_.GetBitmap().GetAngle();
+
+        double sceneX, sceneY;
+        view.MapDisplayToScene(sceneX, sceneY, x, y);
+
+        if (!ComputeAngle(clickAngle_, x, y))
+        {
+          accessor_.Invalidate();
+        }
+      }
+    }
+
+    virtual bool HasRender() const
+    {
+      return false;
+    }
+
+    virtual void Render(CairoContext& context,
+                        double zoom)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+
+    virtual void MouseUp()
+    {
+      if (accessor_.IsValid())
+      {
+        undoRedoStack_.Add(new UndoRedoCommand(accessor_, originalAngle_,
+                                               accessor_.GetBitmap().GetAngle()));
+      }
+    }
+
+    virtual void MouseMove(int displayX,
+                           int displayY,
+                           double sceneX,
+                           double sceneY)
+    {
+      static const double ROUND_ANGLE = 15.0 / 180.0 * boost::math::constants::pi<double>(); 
+        
+      double angle;
+        
+      if (accessor_.IsValid() &&
+          ComputeAngle(angle, sceneX, sceneY))
+      {
+        angle = angle - clickAngle_ + originalAngle_;
+
+        if (roundAngles_)
+        {
+          angle = round(angle / ROUND_ANGLE) * ROUND_ANGLE;
+        }
+          
+        accessor_.GetBitmap().SetAngle(angle);
+      }
+    }
+  };
+    
+    
+  class MoveBitmapTracker : public IWorldSceneMouseTracker
+  {
+  private:
+    UndoRedoStack&               undoRedoStack_;
+    BitmapStack::BitmapAccessor  accessor_;
+    double                       clickX_;
+    double                       clickY_;
+    double                       panX_;
+    double                       panY_;
+    bool                         oneAxis_;
+
+    class UndoRedoCommand : public BitmapCommandBase
+    {
+    private:
+      double  sourceX_;
+      double  sourceY_;
+      double  targetX_;
+      double  targetY_;
+
+    protected:
+      virtual void UndoInternal(BitmapStack::Bitmap& bitmap) const
+      {
+        bitmap.SetPan(sourceX_, sourceY_);
+      }
+
+      virtual void RedoInternal(BitmapStack::Bitmap& bitmap) const
+      {
+        bitmap.SetPan(targetX_, targetY_);
+      }
+
+    public:
+      UndoRedoCommand(BitmapStack::BitmapAccessor& accessor,
+                      double sourceX,
+                      double sourceY,
+                      double targetX,
+                      double targetY) :
+        BitmapCommandBase(accessor),
+        sourceX_(sourceX),
+        sourceY_(sourceY),
+        targetX_(targetX),
+        targetY_(targetY)
+      {
+      }
+    };
+
+
+  public:
+    MoveBitmapTracker(UndoRedoStack& undoRedoStack,
+                      BitmapStack& stack,
+                      size_t bitmap,
+                      double x,
+                      double y,
+                      bool oneAxis) :
+      undoRedoStack_(undoRedoStack),
+      accessor_(stack, bitmap),
+      clickX_(x),
+      clickY_(y),
+      oneAxis_(oneAxis)
+    {
+      if (accessor_.IsValid())
+      {
+        panX_ = accessor_.GetBitmap().GetPanX();
+        panY_ = accessor_.GetBitmap().GetPanY();
+      }
+    }
+
+    virtual bool HasRender() const
+    {
+      return false;
+    }
+
+    virtual void Render(CairoContext& context,
+                        double zoom)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+
+    virtual void MouseUp()
+    {
+      if (accessor_.IsValid())
+      {
+        undoRedoStack_.Add(new UndoRedoCommand(accessor_, panX_, panY_,
+                                               accessor_.GetBitmap().GetPanX(),
+                                               accessor_.GetBitmap().GetPanY()));
+      }
+    }
+
+    virtual void MouseMove(int displayX,
+                           int displayY,
+                           double sceneX,
+                           double sceneY)
+    {
+      if (accessor_.IsValid())
+      {
+        double dx = sceneX - clickX_;
+        double dy = sceneY - clickY_;
+
+        if (oneAxis_)
+        {
+          if (fabs(dx) > fabs(dy))
+          {
+            accessor_.GetBitmap().SetPan(dx + panX_, panY_);
+          }
+          else
+          {
+            accessor_.GetBitmap().SetPan(panX_, dy + panY_);
+          }
+        }
+        else
+        {
+          accessor_.GetBitmap().SetPan(dx + panX_, dy + panY_);
+        }
+      }
+    }
+  };
+
+
+  class CropBitmapTracker : public IWorldSceneMouseTracker
+  {
+  private:
+    BitmapStack::BitmapAccessor  accessor_;
+    BitmapStack::Corner          corner_;
+    unsigned int                 cropX_;
+    unsigned int                 cropY_;
+    unsigned int                 cropWidth_;
+    unsigned int                 cropHeight_;
+
+  public:
+    CropBitmapTracker(BitmapStack& stack,
+                      const ViewportGeometry& view,
+                      size_t bitmap,
+                      double x,
+                      double y,
+                      BitmapStack::Corner corner) :
+      accessor_(stack, bitmap),
+      corner_(corner)
+    {
+      if (accessor_.IsValid())
+      {
+        accessor_.GetBitmap().GetCrop(cropX_, cropY_, cropWidth_, cropHeight_);          
+      }
+    }
+
+    virtual bool HasRender() const
+    {
+      return false;
+    }
+
+    virtual void Render(CairoContext& context,
+                        double zoom)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+
+    virtual void MouseUp()
+    {
+    }
+
+    virtual void MouseMove(int displayX,
+                           int displayY,
+                           double sceneX,
+                           double sceneY)
+    {
+      if (accessor_.IsValid())
+      {
+        unsigned int x, y;
+        
+        BitmapStack::Bitmap& bitmap = accessor_.GetBitmap();
+        if (bitmap.GetPixel(x, y, sceneX, sceneY))
+        {
+          unsigned int targetX, targetWidth;
+
+          if (corner_ == BitmapStack::Corner_TopLeft ||
+              corner_ == BitmapStack::Corner_BottomLeft)
+          {
+            targetX = std::min(x, cropX_ + cropWidth_);
+            targetWidth = cropX_ + cropWidth_ - targetX;
+          }
+          else
+          {
+            targetX = cropX_;
+            targetWidth = std::max(x, cropX_) - cropX_;
+          }
+
+          unsigned int targetY, targetHeight;
+
+          if (corner_ == BitmapStack::Corner_TopLeft ||
+              corner_ == BitmapStack::Corner_TopRight)
+          {
+            targetY = std::min(y, cropY_ + cropHeight_);
+            targetHeight = cropY_ + cropHeight_ - targetY;
+          }
+          else
+          {
+            targetY = cropY_;
+            targetHeight = std::max(y, cropY_) - cropY_;
+          }
+
+          bitmap.SetCrop(targetX, targetY, targetWidth, targetHeight);
+        }
+      }
+    }
+  };
+    
+    
+  class ResizeBitmapTracker : public IWorldSceneMouseTracker
+  {
+  private:
+    BitmapStack::BitmapAccessor  accessor_;
+    bool                         roundScaling_;
+    double                       originalSpacingX_;
+    double                       originalSpacingY_;
+    BitmapStack::Corner          oppositeCorner_;
+    double                       oppositeX_;
+    double                       oppositeY_;
+    double                       baseScaling_;
+
+    static double ComputeDistance(double x1,
+                                  double y1,
+                                  double x2,
+                                  double y2)
+    {
+      double dx = x1 - x2;
+      double dy = y1 - y2;
+      return sqrt(dx * dx + dy * dy);
+    }
+      
+  public:
+    ResizeBitmapTracker(BitmapStack& stack,
+                        size_t bitmap,
+                        double x,
+                        double y,
+                        BitmapStack::Corner corner,
+                        bool roundScaling) :
+      accessor_(stack, bitmap),
+      roundScaling_(roundScaling)
+    {
+      if (accessor_.IsValid() &&
+          accessor_.GetBitmap().IsResizeable())
+      {
+        originalSpacingX_ = accessor_.GetBitmap().GetPixelSpacingX();
+        originalSpacingY_ = accessor_.GetBitmap().GetPixelSpacingY();
+
+        switch (corner)
+        {
+          case BitmapStack::Corner_TopLeft:
+            oppositeCorner_ = BitmapStack::Corner_BottomRight;
+            break;
+
+          case BitmapStack::Corner_TopRight:
+            oppositeCorner_ = BitmapStack::Corner_BottomLeft;
+            break;
+
+          case BitmapStack::Corner_BottomLeft:
+            oppositeCorner_ = BitmapStack::Corner_TopRight;
+            break;
+
+          case BitmapStack::Corner_BottomRight:
+            oppositeCorner_ = BitmapStack::Corner_TopLeft;
+            break;
+
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+        }
+
+        accessor_.GetBitmap().GetCorner(oppositeX_, oppositeY_, oppositeCorner_);
+
+        double d = ComputeDistance(x, y, oppositeX_, oppositeY_);
+        if (d >= std::numeric_limits<float>::epsilon())
+        {
+          baseScaling_ = 1.0 / d;
+        }
+        else
+        {
+          // Avoid division by zero in extreme cases
+          accessor_.Invalidate();
+        }
+      }
+    }
+
+    virtual bool HasRender() const
+    {
+      return false;
+    }
+
+    virtual void Render(CairoContext& context,
+                        double zoom)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+
+    virtual void MouseUp()
+    {
+    }
+
+    virtual void MouseMove(int displayX,
+                           int displayY,
+                           double sceneX,
+                           double sceneY)
+    {
+      static const double ROUND_SCALING = 0.1;
+        
+      if (accessor_.IsValid() &&
+          accessor_.GetBitmap().IsResizeable())
+      {
+        double scaling = ComputeDistance(oppositeX_, oppositeY_, sceneX, sceneY) * baseScaling_;
+
+        if (roundScaling_)
+        {
+          scaling = round(scaling / ROUND_SCALING) * ROUND_SCALING;
+        }
+          
+        BitmapStack::Bitmap& bitmap = accessor_.GetBitmap();
+        bitmap.SetPixelSpacing(scaling * originalSpacingX_,
+                               scaling * originalSpacingY_);
+
+        // Keep the opposite corner at a fixed location
+        double ox, oy;
+        bitmap.GetCorner(ox, oy, oppositeCorner_);
+        bitmap.SetPan(bitmap.GetPanX() + oppositeX_ - ox,
+                      bitmap.GetPanY() + oppositeY_ - oy);
+      }
+    }
+  };
+
+
   class BitmapStackInteractor : public IWorldSceneInteractor
   {
   private:
@@ -1247,388 +1855,10 @@ namespace OrthancStone
     }
       
 
-    BitmapStack&  stack_;
-    Tool          tool_;
-    
-
-    class RotateBitmapTracker : public IWorldSceneMouseTracker
-    {
-    private:
-      BitmapStack::BitmapAccessor  accessor_;
-      double                       centerX_;
-      double                       centerY_;
-      double                       originalAngle_;
-      double                       clickAngle_;
-      bool                         roundAngles_;
-
-      bool ComputeAngle(double& angle /* out */,
-                        double sceneX,
-                        double sceneY) const
-      {
-        Vector u;
-        LinearAlgebra::AssignVector(u, sceneX - centerX_, sceneY - centerY_);
-
-        double nu = boost::numeric::ublas::norm_2(u);
-
-        if (!LinearAlgebra::IsCloseToZero(nu))
-        {
-          u /= nu;
-          angle = atan2(u[1], u[0]);
-          return true;
-        }
-        else
-        {
-          return false;
-        }
-      }
-
-      
-    public:
-      RotateBitmapTracker(BitmapStack& stack,
-                          const ViewportGeometry& view,
-                          size_t bitmap,
-                          double x,
-                          double y,
-                          bool roundAngles) :
-        accessor_(stack, bitmap),
-        roundAngles_(roundAngles)
-      {
-        if (accessor_.IsValid())
-        {
-          accessor_.GetBitmap().GetCenter(centerX_, centerY_);
-          originalAngle_ = accessor_.GetBitmap().GetAngle();
-
-          double sceneX, sceneY;
-          view.MapDisplayToScene(sceneX, sceneY, x, y);
-
-          if (!ComputeAngle(clickAngle_, x, y))
-          {
-            accessor_.Invalidate();
-          }
-        }
-      }
-
-      virtual bool HasRender() const
-      {
-        return false;
-      }
-
-      virtual void Render(CairoContext& context,
-                          double zoom)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }
-
-      virtual void MouseUp()
-      {
-      }
-
-      virtual void MouseMove(int displayX,
-                             int displayY,
-                             double sceneX,
-                             double sceneY)
-      {
-        static const double ROUND_ANGLE = 15.0 / 180.0 * boost::math::constants::pi<double>(); 
+    BitmapStack&   stack_;
+    UndoRedoStack  undoRedoStack_;
+    Tool           tool_;
         
-        double angle;
-        
-        if (accessor_.IsValid() &&
-            ComputeAngle(angle, sceneX, sceneY))
-        {
-          angle = angle - clickAngle_ + originalAngle_;
-
-          if (roundAngles_)
-          {
-            angle = round(angle / ROUND_ANGLE) * ROUND_ANGLE;
-          }
-          
-          accessor_.GetBitmap().SetAngle(angle);
-        }
-      }
-    };
-    
-    
-    class MoveBitmapTracker : public IWorldSceneMouseTracker
-    {
-    private:
-      BitmapStack::BitmapAccessor  accessor_;
-      double                       clickX_;
-      double                       clickY_;
-      double                       panX_;
-      double                       panY_;
-      bool                         oneAxis_;
-
-    public:
-      MoveBitmapTracker(BitmapStack& stack,
-                        size_t bitmap,
-                        double x,
-                        double y,
-                        bool oneAxis) :
-        accessor_(stack, bitmap),
-        clickX_(x),
-        clickY_(y),
-        oneAxis_(oneAxis)
-      {
-        if (accessor_.IsValid())
-        {
-          panX_ = accessor_.GetBitmap().GetPanX();
-          panY_ = accessor_.GetBitmap().GetPanY();
-        }
-      }
-
-      virtual bool HasRender() const
-      {
-        return false;
-      }
-
-      virtual void Render(CairoContext& context,
-                          double zoom)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }
-
-      virtual void MouseUp()
-      {
-      }
-
-      virtual void MouseMove(int displayX,
-                             int displayY,
-                             double sceneX,
-                             double sceneY)
-      {
-        if (accessor_.IsValid())
-        {
-          double dx = sceneX - clickX_;
-          double dy = sceneY - clickY_;
-
-          if (oneAxis_)
-          {
-            if (fabs(dx) > fabs(dy))
-            {
-              accessor_.GetBitmap().SetPan(dx + panX_, panY_);
-            }
-            else
-            {
-              accessor_.GetBitmap().SetPan(panX_, dy + panY_);
-            }
-          }
-          else
-          {
-            accessor_.GetBitmap().SetPan(dx + panX_, dy + panY_);
-          }
-        }
-      }
-    };
-
-
-    class CropBitmapTracker : public IWorldSceneMouseTracker
-    {
-    private:
-      BitmapStack::BitmapAccessor  accessor_;
-      BitmapStack::Corner          corner_;
-      unsigned int                 cropX_;
-      unsigned int                 cropY_;
-      unsigned int                 cropWidth_;
-      unsigned int                 cropHeight_;
-
-    public:
-      CropBitmapTracker(BitmapStack& stack,
-                          const ViewportGeometry& view,
-                          size_t bitmap,
-                          double x,
-                          double y,
-                          BitmapStack::Corner corner) :
-        accessor_(stack, bitmap),
-        corner_(corner)
-      {
-        if (accessor_.IsValid())
-        {
-          accessor_.GetBitmap().GetCrop(cropX_, cropY_, cropWidth_, cropHeight_);          
-        }
-      }
-
-      virtual bool HasRender() const
-      {
-        return false;
-      }
-
-      virtual void Render(CairoContext& context,
-                          double zoom)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }
-
-      virtual void MouseUp()
-      {
-      }
-
-      virtual void MouseMove(int displayX,
-                             int displayY,
-                             double sceneX,
-                             double sceneY)
-      {
-        if (accessor_.IsValid())
-        {
-          unsigned int x, y;
-        
-          BitmapStack::Bitmap& bitmap = accessor_.GetBitmap();
-          if (bitmap.GetPixel(x, y, sceneX, sceneY))
-          {
-            unsigned int targetX, targetWidth;
-
-            if (corner_ == BitmapStack::Corner_TopLeft ||
-                corner_ == BitmapStack::Corner_BottomLeft)
-            {
-              targetX = std::min(x, cropX_ + cropWidth_);
-              targetWidth = cropX_ + cropWidth_ - targetX;
-            }
-            else
-            {
-              targetX = cropX_;
-              targetWidth = std::max(x, cropX_) - cropX_;
-            }
-
-            unsigned int targetY, targetHeight;
-
-            if (corner_ == BitmapStack::Corner_TopLeft ||
-                corner_ == BitmapStack::Corner_TopRight)
-            {
-              targetY = std::min(y, cropY_ + cropHeight_);
-              targetHeight = cropY_ + cropHeight_ - targetY;
-            }
-            else
-            {
-              targetY = cropY_;
-              targetHeight = std::max(y, cropY_) - cropY_;
-            }
-
-            bitmap.SetCrop(targetX, targetY, targetWidth, targetHeight);
-          }
-        }
-      }
-    };
-    
-    
-    class ResizeBitmapTracker : public IWorldSceneMouseTracker
-    {
-    private:
-      BitmapStack::BitmapAccessor  accessor_;
-      bool                         roundScaling_;
-      double                       originalSpacingX_;
-      double                       originalSpacingY_;
-      BitmapStack::Corner          oppositeCorner_;
-      double                       oppositeX_;
-      double                       oppositeY_;
-      double                       baseScaling_;
-
-      static double ComputeDistance(double x1,
-                                    double y1,
-                                    double x2,
-                                    double y2)
-      {
-        double dx = x1 - x2;
-        double dy = y1 - y2;
-        return sqrt(dx * dx + dy * dy);
-      }
-      
-    public:
-      ResizeBitmapTracker(BitmapStack& stack,
-                          size_t bitmap,
-                          double x,
-                          double y,
-                          BitmapStack::Corner corner,
-                          bool roundScaling) :
-        accessor_(stack, bitmap),
-        roundScaling_(roundScaling)
-      {
-        if (accessor_.IsValid() &&
-            accessor_.GetBitmap().IsResizeable())
-        {
-          originalSpacingX_ = accessor_.GetBitmap().GetPixelSpacingX();
-          originalSpacingY_ = accessor_.GetBitmap().GetPixelSpacingY();
-
-          switch (corner)
-          {
-            case BitmapStack::Corner_TopLeft:
-              oppositeCorner_ = BitmapStack::Corner_BottomRight;
-              break;
-
-            case BitmapStack::Corner_TopRight:
-              oppositeCorner_ = BitmapStack::Corner_BottomLeft;
-              break;
-
-            case BitmapStack::Corner_BottomLeft:
-              oppositeCorner_ = BitmapStack::Corner_TopRight;
-              break;
-
-            case BitmapStack::Corner_BottomRight:
-              oppositeCorner_ = BitmapStack::Corner_TopLeft;
-              break;
-
-            default:
-              throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-          }
-
-          accessor_.GetBitmap().GetCorner(oppositeX_, oppositeY_, oppositeCorner_);
-
-          double d = ComputeDistance(x, y, oppositeX_, oppositeY_);
-          if (d >= std::numeric_limits<float>::epsilon())
-          {
-            baseScaling_ = 1.0 / d;
-          }
-          else
-          {
-            // Avoid division by zero in extreme cases
-            accessor_.Invalidate();
-          }
-        }
-      }
-
-      virtual bool HasRender() const
-      {
-        return false;
-      }
-
-      virtual void Render(CairoContext& context,
-                          double zoom)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }
-
-      virtual void MouseUp()
-      {
-      }
-
-      virtual void MouseMove(int displayX,
-                             int displayY,
-                             double sceneX,
-                             double sceneY)
-      {
-        static const double ROUND_SCALING = 0.1;
-        
-        if (accessor_.IsValid() &&
-            accessor_.GetBitmap().IsResizeable())
-        {
-          double scaling = ComputeDistance(oppositeX_, oppositeY_, sceneX, sceneY) * baseScaling_;
-
-          if (roundScaling_)
-          {
-            scaling = round(scaling / ROUND_SCALING) * ROUND_SCALING;
-          }
-          
-          BitmapStack::Bitmap& bitmap = accessor_.GetBitmap();
-          bitmap.SetPixelSpacing(scaling * originalSpacingX_,
-                                 scaling * originalSpacingY_);
-
-          // Keep the opposite corner at a fixed location
-          double ox, oy;
-          bitmap.GetCorner(ox, oy, oppositeCorner_);
-          bitmap.SetPan(bitmap.GetPanX() + oppositeX_ - ox,
-                        bitmap.GetPanY() + oppositeY_ - oy);
-        }
-      }
-    };
-    
     
   public:
     BitmapStackInteractor(BitmapStack& stack) :
@@ -1703,11 +1933,11 @@ namespace OrthancStone
             switch (tool_)
             {
               case Tool_Move:
-                return new MoveBitmapTracker(stack_, bitmap, x, y,
+                return new MoveBitmapTracker(undoRedoStack_, stack_, bitmap, x, y,
                                              (modifiers & KeyboardModifiers_Shift));
 
               case Tool_Rotate:
-                return new RotateBitmapTracker(stack_, view, bitmap, x, y,
+                return new RotateBitmapTracker(undoRedoStack_, stack_, view, bitmap, x, y,
                                                (modifiers & KeyboardModifiers_Shift));
                 
               default:
@@ -1797,6 +2027,22 @@ namespace OrthancStone
 
         case 's':
           tool_ = Tool_Resize;
+          break;
+
+        case 'z':
+          if (modifiers & KeyboardModifiers_Control)
+          {
+            undoRedoStack_.Undo();
+            widget.NotifyContentChanged();
+          }
+          break;
+
+        case 'y':
+          if (modifiers & KeyboardModifiers_Control)
+          {
+            undoRedoStack_.Redo();
+            widget.NotifyContentChanged();
+          }
           break;
 
         default:
@@ -2107,10 +2353,21 @@ namespace OrthancStone
         fonts.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
         
         stack_.reset(new BitmapStack(IObserver::broker_, *orthancApiClient_));
-        stack_->LoadFrame(instance, frame, false);
-        stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", frame, false);
-        stack_->LoadText(fonts.GetFont(0), "Hello\nworld\nBonjour, Alain").SetResizeable(true);
-        stack_->LoadTestBlock(100, 50).SetResizeable(true);
+        //stack_->LoadFrame(instance, frame, false);
+        //stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", frame, false);
+
+        {
+          BitmapStack::Bitmap& bitmap = stack_->LoadText(fonts.GetFont(0), "Hello\nworld\nBonjour, Alain");
+          dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetForegroundValue(256);
+          dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetResizeable(true);
+        }
+        
+        {
+          BitmapStack::Bitmap& bitmap = stack_->LoadTestBlock(100, 50);
+          dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetForegroundValue(256);
+          dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetResizeable(true);
+        }
+        
         
         mainWidget_ = new BitmapStackWidget(IObserver::broker_, *stack_, "main-widget");
         mainWidget_->SetTransmitMouseOver(true);

@@ -867,13 +867,6 @@ namespace OrthancStone
 
         //SetPan(-0.5 * GetPixelSpacingX(), -0.5 * GetPixelSpacingY());
       
-        static unsigned int c = 0;
-        if (c == 0)
-        {
-          SetPan(400, 0);
-          c ++;
-        }
-        
         OrthancPlugins::DicomDatasetReader reader(dataset);
 
         unsigned int width, height;
@@ -1166,10 +1159,10 @@ namespace OrthancStone
     void OnTagsReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
     {
       size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload.get())->GetValue();
-      
-      printf("JSON received: [%s] (%ld bytes) for bitmap %ld\n",
-             message.Uri.c_str(), message.AnswerSize, index);
 
+      LOG(INFO) << "JSON received: " << message.Uri.c_str()
+                << " (" << message.AnswerSize << " bytes) for bitmap " << index;
+      
       Bitmaps::iterator bitmap = bitmaps_.find(index);
       if (bitmap != bitmaps_.end())
       {
@@ -1196,8 +1189,8 @@ namespace OrthancStone
     {
       size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload.get())->GetValue();
       
-      printf("Frame received: [%s] (%ld bytes) for bitmap %ld\n",
-             message.Uri.c_str(), message.AnswerSize, index);
+      LOG(INFO) << "DICOM frame received: " << message.Uri.c_str()
+                << " (" << message.AnswerSize << " bytes) for bitmap " << index;
       
       Bitmaps::iterator bitmap = bitmaps_.find(index);
       if (bitmap != bitmaps_.end())
@@ -2204,237 +2197,6 @@ namespace OrthancStone
   };
 
 
-  class BitmapStackInteractor : public IWorldSceneInteractor
-  {
-  private:
-    enum Tool
-    {
-      Tool_Move,
-      Tool_Rotate,
-      Tool_Crop,
-      Tool_Resize,
-      Tool_Windowing
-    };
-        
-    static double GetHandleSize()
-    {
-      return 10.0;
-    }
-      
-
-    BitmapStack&   stack_;
-    UndoRedoStack  undoRedoStack_;
-    Tool           tool_;
-        
-    
-  public:
-    BitmapStackInteractor(BitmapStack& stack) :
-      stack_(stack),
-      tool_(Tool_Move)
-    {
-    }
-    
-    virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
-                                                        const ViewportGeometry& view,
-                                                        MouseButton button,
-                                                        KeyboardModifiers modifiers,
-                                                        int viewportX,
-                                                        int viewportY,
-                                                        double x,
-                                                        double y,
-                                                        IStatusBar* statusBar)
-    {
-      if (button == MouseButton_Left)
-      {
-        size_t selected;
-
-        if (tool_ == Tool_Windowing)
-        {
-          return new WindowingTracker(undoRedoStack_, stack_,
-                                      viewportX, viewportY,
-                                      WindowingTracker::Action_DecreaseWidth,
-                                      WindowingTracker::Action_IncreaseWidth,
-                                      WindowingTracker::Action_DecreaseCenter,
-                                      WindowingTracker::Action_IncreaseCenter);
-        }
-        else if (!stack_.GetSelectedBitmap(selected))
-        {
-          size_t bitmap;
-          if (stack_.LookupBitmap(bitmap, x, y))
-          {
-            printf("CLICK on bitmap %ld\n", bitmap);
-            stack_.Select(bitmap);
-          }
-
-          return NULL;
-        }
-        else if (tool_ == Tool_Crop ||
-                 tool_ == Tool_Resize)
-        {
-          BitmapStack::BitmapAccessor accessor(stack_, selected);
-          BitmapStack::Corner corner;
-          if (accessor.GetBitmap().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
-          {
-            switch (tool_)
-            {
-              case Tool_Crop:
-                return new CropBitmapTracker(undoRedoStack_, stack_, view, selected, x, y, corner);
-
-              case Tool_Resize:
-                return new ResizeBitmapTracker(undoRedoStack_, stack_, selected, x, y, corner,
-                                               (modifiers & KeyboardModifiers_Shift));
-
-              default:
-                throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-            }
-          }
-          else
-          {
-            size_t bitmap;
-            
-            if (!stack_.LookupBitmap(bitmap, x, y) ||
-                bitmap != selected)
-            {
-              stack_.Unselect();
-            }
-            
-            return NULL;
-          }
-        }
-        else
-        {
-          size_t bitmap;
-
-          if (stack_.LookupBitmap(bitmap, x, y) &&
-              bitmap == selected)
-          {
-            switch (tool_)
-            {
-              case Tool_Move:
-                return new MoveBitmapTracker(undoRedoStack_, stack_, bitmap, x, y,
-                                             (modifiers & KeyboardModifiers_Shift));
-
-              case Tool_Rotate:
-                return new RotateBitmapTracker(undoRedoStack_, stack_, view, bitmap, x, y,
-                                               (modifiers & KeyboardModifiers_Shift));
-                
-              default:
-                break;
-            }
-
-            return NULL;
-          }
-          else
-          {
-            printf("CLICK outside\n");
-            stack_.Unselect();
-            return NULL;
-          }
-        }
-      }
-      else
-      {
-        return NULL;
-      }
-    }
-
-    virtual void MouseOver(CairoContext& context,
-                           WorldSceneWidget& widget,
-                           const ViewportGeometry& view,
-                           double x,
-                           double y,
-                           IStatusBar* statusBar)
-    {
-      size_t selected;
-      if (stack_.GetSelectedBitmap(selected) &&
-          (tool_ == Tool_Crop ||
-           tool_ == Tool_Resize))
-      {
-        BitmapStack::BitmapAccessor accessor(stack_, selected);
-        
-        BitmapStack::Corner corner;
-        if (accessor.GetBitmap().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
-        {
-          accessor.GetBitmap().GetCorner(x, y, corner);
-          
-          double z = 1.0 / view.GetZoom();
-          
-          context.SetSourceColor(255, 0, 0);
-          cairo_t* cr = context.GetObject();
-          cairo_set_line_width(cr, 2.0 * z);
-          cairo_move_to(cr, x - GetHandleSize() * z, y - GetHandleSize() * z);
-          cairo_line_to(cr, x + GetHandleSize() * z, y - GetHandleSize() * z);
-          cairo_line_to(cr, x + GetHandleSize() * z, y + GetHandleSize() * z);
-          cairo_line_to(cr, x - GetHandleSize() * z, y + GetHandleSize() * z);
-          cairo_line_to(cr, x - GetHandleSize() * z, y - GetHandleSize() * z);
-          cairo_stroke(cr);
-        }
-      }
-    }
-
-    virtual void MouseWheel(WorldSceneWidget& widget,
-                            MouseWheelDirection direction,
-                            KeyboardModifiers modifiers,
-                            IStatusBar* statusBar)
-    {
-    }
-
-    virtual void KeyPressed(WorldSceneWidget& widget,
-                            KeyboardKeys key,
-                            char keyChar,
-                            KeyboardModifiers modifiers,
-                            IStatusBar* statusBar)
-    {
-      switch (keyChar)
-      {
-        case 'c':
-          tool_ = Tool_Crop;
-          break;
-        
-        case 'a':
-          widget.FitContent();
-          break;
-
-        case 'm':
-          tool_ = Tool_Move;
-          break;
-
-        case 'r':
-          tool_ = Tool_Rotate;
-          break;
-
-        case 's':
-          tool_ = Tool_Resize;
-          break;
-
-        case 'w':
-          tool_ = Tool_Windowing;
-          break;
-
-        case 'z':
-          if (modifiers & KeyboardModifiers_Control)
-          {
-            undoRedoStack_.Undo();
-            widget.NotifyContentChanged();
-          }
-          break;
-
-        case 'y':
-          if (modifiers & KeyboardModifiers_Control)
-          {
-            undoRedoStack_.Redo();
-            widget.NotifyContentChanged();
-          }
-          break;
-
-        default:
-          break;
-      }
-    }
-  };
-
-  
-  
   class BitmapStackWidget :
     public WorldSceneWidget,
     public IObservable,
@@ -2442,9 +2204,9 @@ namespace OrthancStone
   {
   private:
     BitmapStack&                   stack_;
-    BitmapStackInteractor          myInteractor_;
     std::auto_ptr<Orthanc::Image>  floatBuffer_;
     std::auto_ptr<CairoSurface>    cairoBuffer_;
+    bool                           invert_;
 
     virtual bool RenderInternal(unsigned int width,
                                 unsigned int height,
@@ -2508,10 +2270,10 @@ namespace OrthancStone
             }
 
             // TODO MONOCHROME1
-            /*if (invert_)
-              {
+            if (invert_)
+            {
               v = 255 - v;
-              }*/
+            }
 
             q[0] = v;
             q[1] = v;
@@ -2567,55 +2329,302 @@ namespace OrthancStone
       IObservable(broker),
       IObserver(broker),
       stack_(stack),
-      myInteractor_(stack_)
+      invert_(false)
     {
       stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::GeometryChangedMessage>(*this, &BitmapStackWidget::OnGeometryChanged));
       stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::ContentChangedMessage>(*this, &BitmapStackWidget::OnContentChanged));
+    }
 
-      SetInteractor(myInteractor_);
+    BitmapStack& GetStack() const
+    {
+      return stack_;
     }
 
     void OnGeometryChanged(const BitmapStack::GeometryChangedMessage& message)
     {
-      printf("Geometry has changed\n");
+      LOG(INFO) << "Geometry has changed";
       FitContent();
     }
 
     void OnContentChanged(const BitmapStack::ContentChangedMessage& message)
     {
-      printf("Content has changed\n");
+      LOG(INFO) << "Content has changed";
       NotifyContentChanged();
     }
 
-#if 0
-    virtual bool Render(Orthanc::ImageAccessor& target)
+    void SetInvert(bool invert)
     {
-      if (RenderInternal(target.GetWidth(), target.GetHeight(), ImageInterpolation_Nearest))
-      {
-        assert(cairoBuffer_.get() != NULL);
+      invert_ = invert;
+      NotifyContentChanged();
+    }
 
-        Orthanc::ImageAccessor source;
-        cairoBuffer_->GetAccessor(source);
-        Orthanc::ImageProcessing::Copy(target, source);
+    void SwitchInvert()
+    {
+      invert_ = !invert_;
+      NotifyContentChanged();
+    }
+
+    bool IsInvert() const
+    {
+      return invert_;
+    }
+  };
+
+  
+  class BitmapStackInteractor : public IWorldSceneInteractor
+  {
+  private:
+    enum Tool
+    {
+      Tool_Move,
+      Tool_Rotate,
+      Tool_Crop,
+      Tool_Resize,
+      Tool_Windowing
+    };
+        
+
+    UndoRedoStack  undoRedoStack_;
+    Tool           tool_;
+
+
+    static double GetHandleSize()
+    {
+      return 10.0;
+    }
+    
+      
+    static BitmapStackWidget& GetWidget(WorldSceneWidget& widget)
+    {
+      return dynamic_cast<BitmapStackWidget&>(widget);
+    }
+
+
+    static BitmapStack& GetStack(WorldSceneWidget& widget)
+    {
+      return GetWidget(widget).GetStack();
+    }
+    
+    
+  public:
+    BitmapStackInteractor() :
+      tool_(Tool_Move)
+    {
+    }
+    
+    virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
+                                                        const ViewportGeometry& view,
+                                                        MouseButton button,
+                                                        KeyboardModifiers modifiers,
+                                                        int viewportX,
+                                                        int viewportY,
+                                                        double x,
+                                                        double y,
+                                                        IStatusBar* statusBar)
+    {
+      if (button == MouseButton_Left)
+      {
+        size_t selected;
+
+        if (tool_ == Tool_Windowing)
+        {
+          return new WindowingTracker(undoRedoStack_, GetStack(widget),
+                                      viewportX, viewportY,
+                                      WindowingTracker::Action_DecreaseWidth,
+                                      WindowingTracker::Action_IncreaseWidth,
+                                      WindowingTracker::Action_DecreaseCenter,
+                                      WindowingTracker::Action_IncreaseCenter);
+        }
+        else if (!GetStack(widget).GetSelectedBitmap(selected))
+        {
+          size_t bitmap;
+          if (GetStack(widget).LookupBitmap(bitmap, x, y))
+          {
+            LOG(INFO) << "Click on bitmap " << bitmap;
+            GetStack(widget).Select(bitmap);
+          }
+
+          return NULL;
+        }
+        else if (tool_ == Tool_Crop ||
+                 tool_ == Tool_Resize)
+        {
+          BitmapStack::BitmapAccessor accessor(GetStack(widget), selected);
+          BitmapStack::Corner corner;
+          if (accessor.GetBitmap().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
+          {
+            switch (tool_)
+            {
+              case Tool_Crop:
+                return new CropBitmapTracker(undoRedoStack_, GetStack(widget), view, selected, x, y, corner);
+
+              case Tool_Resize:
+                return new ResizeBitmapTracker(undoRedoStack_, GetStack(widget), selected, x, y, corner,
+                                               (modifiers & KeyboardModifiers_Shift));
+
+              default:
+                throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+            }
+          }
+          else
+          {
+            size_t bitmap;
+            
+            if (!GetStack(widget).LookupBitmap(bitmap, x, y) ||
+                bitmap != selected)
+            {
+              GetStack(widget).Unselect();
+            }
+            
+            return NULL;
+          }
+        }
+        else
+        {
+          size_t bitmap;
+
+          if (GetStack(widget).LookupBitmap(bitmap, x, y) &&
+              bitmap == selected)
+          {
+            switch (tool_)
+            {
+              case Tool_Move:
+                return new MoveBitmapTracker(undoRedoStack_, GetStack(widget), bitmap, x, y,
+                                             (modifiers & KeyboardModifiers_Shift));
+
+              case Tool_Rotate:
+                return new RotateBitmapTracker(undoRedoStack_, GetStack(widget), view, bitmap, x, y,
+                                               (modifiers & KeyboardModifiers_Shift));
+                
+              default:
+                break;
+            }
+
+            return NULL;
+          }
+          else
+          {
+            LOG(INFO) << "Click out of any bitmap";
+            GetStack(widget).Unselect();
+            return NULL;
+          }
+        }
       }
       else
       {
-        Orthanc::ImageProcessing::Set(target, 0, 0, 0, 255);
+        return NULL;
       }
-
-      {
-        // TODO => REFACTOR
-        CairoSurface surface(target);
-        CairoContext context(surface);
-        GetView().ApplyTransform(context);
-        stack_.DrawControls(context, GetView().GetZoom());
-      }
-
-      return true;
     }
+
+    virtual void MouseOver(CairoContext& context,
+                           WorldSceneWidget& widget,
+                           const ViewportGeometry& view,
+                           double x,
+                           double y,
+                           IStatusBar* statusBar)
+    {
+#if 0
+      if (statusBar != NULL)
+      {
+        char buf[64];
+        sprintf(buf, "X = %.02f Y = %.02f (in cm)", x / 10.0, y / 10.0);
+        statusBar->SetMessage(buf);
+      }
 #endif
+
+      size_t selected;
+      if (GetStack(widget).GetSelectedBitmap(selected) &&
+          (tool_ == Tool_Crop ||
+           tool_ == Tool_Resize))
+      {
+        BitmapStack::BitmapAccessor accessor(GetStack(widget), selected);
+        
+        BitmapStack::Corner corner;
+        if (accessor.GetBitmap().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
+        {
+          accessor.GetBitmap().GetCorner(x, y, corner);
+          
+          double z = 1.0 / view.GetZoom();
+          
+          context.SetSourceColor(255, 0, 0);
+          cairo_t* cr = context.GetObject();
+          cairo_set_line_width(cr, 2.0 * z);
+          cairo_move_to(cr, x - GetHandleSize() * z, y - GetHandleSize() * z);
+          cairo_line_to(cr, x + GetHandleSize() * z, y - GetHandleSize() * z);
+          cairo_line_to(cr, x + GetHandleSize() * z, y + GetHandleSize() * z);
+          cairo_line_to(cr, x - GetHandleSize() * z, y + GetHandleSize() * z);
+          cairo_line_to(cr, x - GetHandleSize() * z, y - GetHandleSize() * z);
+          cairo_stroke(cr);
+        }
+      }
+    }
+
+    virtual void MouseWheel(WorldSceneWidget& widget,
+                            MouseWheelDirection direction,
+                            KeyboardModifiers modifiers,
+                            IStatusBar* statusBar)
+    {
+    }
+
+    virtual void KeyPressed(WorldSceneWidget& widget,
+                            KeyboardKeys key,
+                            char keyChar,
+                            KeyboardModifiers modifiers,
+                            IStatusBar* statusBar)
+    {
+      switch (keyChar)
+      {
+        case 'a':
+          widget.FitContent();
+          break;
+
+        case 'c':
+          tool_ = Tool_Crop;
+          break;
+
+        case 'i':
+          dynamic_cast<BitmapStackWidget&>(widget).SwitchInvert();
+          break;
+        
+        case 'm':
+          tool_ = Tool_Move;
+          break;
+
+        case 'r':
+          tool_ = Tool_Rotate;
+          break;
+
+        case 's':
+          tool_ = Tool_Resize;
+          break;
+
+        case 'w':
+          tool_ = Tool_Windowing;
+          break;
+
+        case 'y':
+          if (modifiers & KeyboardModifiers_Control)
+          {
+            undoRedoStack_.Redo();
+            widget.NotifyContentChanged();
+          }
+          break;
+
+        case 'z':
+          if (modifiers & KeyboardModifiers_Control)
+          {
+            undoRedoStack_.Undo();
+            widget.NotifyContentChanged();
+          }
+          break;
+        
+        default:
+          break;
+      }
+    }
   };
 
+  
   
   namespace Samples
   {
@@ -2623,133 +2632,14 @@ namespace OrthancStone
       public SampleSingleCanvasApplicationBase,
       public IObserver
     {
-      enum Tools
-      {
-        Tools_Crop,
-        Tools_Windowing,
-        Tools_Zoom,
-        Tools_Pan
-      };
-
-      enum Actions
-      {
-        Actions_Invert,
-        Actions_RotateLeft,
-        Actions_RotateRight
-      };
-
     private:
-      class Interactor : public IWorldSceneInteractor
-      {
-      private:
-        SingleFrameEditorApplication&  application_;
-        
-      public:
-        Interactor(SingleFrameEditorApplication&  application) :
-          application_(application)
-        {
-        }
-        
-        virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
-                                                            const ViewportGeometry& view,
-                                                            MouseButton button,
-                                                            KeyboardModifiers modifiers,
-                                                            int viewportX,
-                                                            int viewportY,
-                                                            double x,
-                                                            double y,
-                                                            IStatusBar* statusBar)
-        {
-          switch (application_.currentTool_) {
-            case Tools_Zoom:
-              printf("ZOOM\n");
-
-            case Tools_Crop:
-            case Tools_Windowing:
-            case Tools_Pan:
-              // TODO return the right mouse tracker
-              return NULL;
-          }
-
-          return NULL;
-        }
-
-        virtual void MouseOver(CairoContext& context,
-                               WorldSceneWidget& widget,
-                               const ViewportGeometry& view,
-                               double x,
-                               double y,
-                               IStatusBar* statusBar)
-        {
-          if (statusBar != NULL)
-          {
-            char buf[64];
-            sprintf(buf, "X = %.02f Y = %.02f (in cm)", x / 10.0, y / 10.0);
-            statusBar->SetMessage(buf);
-          }
-        }
-
-        virtual void MouseWheel(WorldSceneWidget& widget,
-                                MouseWheelDirection direction,
-                                KeyboardModifiers modifiers,
-                                IStatusBar* statusBar)
-        {
-        }
-
-        virtual void KeyPressed(WorldSceneWidget& widget,
-                                KeyboardKeys key,
-                                char keyChar,
-                                KeyboardModifiers modifiers,
-                                IStatusBar* statusBar)
-        {
-          switch (keyChar)
-          {
-            case 's':
-              widget.FitContent();
-              break;
-            case 'p':
-              application_.currentTool_ = Tools_Pan;
-              break;
-            case 'z':
-              application_.currentTool_ = Tools_Zoom;
-              break;
-            case 'c':
-              application_.currentTool_ = Tools_Crop;
-              break;
-            case 'w':
-              application_.currentTool_ = Tools_Windowing;
-              break;
-            case 'i':
-              application_.Invert();
-              break;
-            case 'r':
-              if (modifiers == KeyboardModifiers_None)
-                application_.Rotate(90);
-              else
-                application_.Rotate(-90);
-              break;
-            case 'e':
-              application_.Export();
-              break;
-            default:
-              break;
-          }
-        }
-      };
-
-      std::auto_ptr<Interactor>        mainWidgetInteractor_;
       std::auto_ptr<OrthancApiClient>  orthancApiClient_;
       std::auto_ptr<BitmapStack>       stack_;
-      Tools                            currentTool_;
-      const OrthancFrameLayerSource*   source_;
-      unsigned int                     slice_;
+      BitmapStackInteractor            interactor_;
 
     public:
       SingleFrameEditorApplication(MessageBroker& broker) :
-        IObserver(broker),
-        currentTool_(Tools_Zoom),
-        source_(NULL),
-        slice_(0)
+        IObserver(broker)
       {
       }
       
@@ -2774,7 +2664,17 @@ namespace OrthancStone
 
         context_ = context;
 
-        statusBar.SetMessage("Use the key \"s\" to reinitialize the layout, \"p\" to pan, \"z\" to zoom, \"c\" to crop, \"i\" to invert, \"w\" to change windowing, \"r\" to rotate cw,  \"shift+r\" to rotate ccw");
+        statusBar.SetMessage("Use the key \"a\" to reinitialize the layout");
+        statusBar.SetMessage("Use the key \"c\" to crop");
+        statusBar.SetMessage("Use the key \"f\" to switch full screen");
+        statusBar.SetMessage("Use the key \"i\" to invert contrast");
+        statusBar.SetMessage("Use the key \"m\" to move objects");
+        statusBar.SetMessage("Use the key \"r\" to rotate objects");
+        statusBar.SetMessage("Use the key \"s\" to resize objects (not applicable to DICOM bitmaps)");
+        statusBar.SetMessage("Use the key \"w\" to change windowing");
+        
+        statusBar.SetMessage("Use the key \"ctrl-z\" to undo action");
+        statusBar.SetMessage("Use the key \"ctrl-y\" to redo action");
 
         if (parameters.count("instance") != 1)
         {
@@ -2791,8 +2691,8 @@ namespace OrthancStone
         fonts.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
         
         stack_.reset(new BitmapStack(IObserver::broker_, *orthancApiClient_));
-        stack_->LoadFrame(instance, frame, false);
-        stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", frame, false);
+        stack_->LoadFrame(instance, frame, false).SetPan(200, 0);
+        //stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false);
 
         {
           BitmapStack::Bitmap& bitmap = stack_->LoadText(fonts.GetFont(0), "Hello\nworld\nBonjour, Alain");
@@ -2804,16 +2704,15 @@ namespace OrthancStone
           BitmapStack::Bitmap& bitmap = stack_->LoadTestBlock(100, 50);
           //dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetForegroundValue(256);
           dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetResizeable(true);
+          dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetPan(0, 200);
         }
         
         
         mainWidget_ = new BitmapStackWidget(IObserver::broker_, *stack_, "main-widget");
         mainWidget_->SetTransmitMouseOver(true);
+        mainWidget_->SetInteractor(interactor_);
 
         //stack_->SetWindowing(128, 256);
-        
-        mainWidgetInteractor_.reset(new Interactor(*this));
-        //mainWidget_->SetInteractor(*mainWidgetInteractor_);
       }
 
 

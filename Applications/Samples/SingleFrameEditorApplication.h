@@ -2787,8 +2787,9 @@ namespace OrthancStone
         (widget.IsInvert() ? "MONOCHROME1" : "MONOCHROME2");
 
 
+      // WARNING: The order of PixelSpacing is Y/X
       char buf[32];
-      sprintf(buf, "%0.08f\\%0.08f", pixelSpacingX, pixelSpacingY);
+      sprintf(buf, "%0.08f\\%0.08f", pixelSpacingY, pixelSpacingX);
       
       json["Tags"][Orthanc::DICOM_TAG_PIXEL_SPACING.Format()] = buf;
 

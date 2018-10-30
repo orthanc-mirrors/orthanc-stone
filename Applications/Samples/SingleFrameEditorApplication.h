@@ -23,18 +23,17 @@
 
 #include "SampleApplicationBase.h"
 
-#include "../../Framework/Toolbox/GeometryToolbox.h"
 #include "../../Framework/Toolbox/ImageGeometry.h"
-#include "../../Framework/Layers/OrthancFrameLayerSource.h"
+#include "../../Framework/Toolbox/OrthancApiClient.h"
+#include "../../Framework/Toolbox/DicomFrameConverter.h"
 
-#include <Core/DicomFormat/DicomArray.h>
 #include <Core/Images/FontRegistry.h>
+#include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Images/PamReader.h>
-#include <Core/Images/PngWriter.h>   //TODO 
 #include <Core/Logging.h>
-#include <Plugins/Samples/Common/FullOrthancDataset.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
+#include <Plugins/Samples/Common/FullOrthancDataset.h>
 
 
 #include <boost/math/constants/constants.hpp>
@@ -2207,6 +2206,7 @@ namespace OrthancStone
     std::auto_ptr<Orthanc::Image>  floatBuffer_;
     std::auto_ptr<CairoSurface>    cairoBuffer_;
     bool                           invert_;
+    ImageInterpolation             interpolation_;
 
     virtual bool RenderInternal(unsigned int width,
                                 unsigned int height,
@@ -2240,9 +2240,7 @@ namespace OrthancStone
 
         stack_.Render(*floatBuffer_, GetView(), interpolation);
         
-        // TODO => rendering quality
-
-        // As in GrayscaleFrameRenderer => TODO MERGE?
+        // Very similar to GrayscaleFrameRenderer => TODO MERGE?
 
         Orthanc::ImageAccessor target;
         cairoBuffer_->GetAccessor(target);
@@ -2269,7 +2267,6 @@ namespace OrthancStone
               v = static_cast<uint8_t>(255.0f * (*p - x0) / (x1 - x0));  // (*)
             }
 
-            // TODO MONOCHROME1
             if (invert_)
             {
               v = 255 - v;
@@ -2296,11 +2293,9 @@ namespace OrthancStone
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view)
     {
-      ImageInterpolation interpolation = ImageInterpolation_Nearest;  // TODO PARAMETER?
-      
       cairo_t* cr = context.GetObject();
 
-      if (RenderInternal(context.GetWidth(), context.GetHeight(), interpolation))
+      if (RenderInternal(context.GetWidth(), context.GetHeight(), interpolation_))
       {
         // https://www.cairographics.org/FAQ/#paint_from_a_surface
         cairo_save(cr);
@@ -2329,7 +2324,8 @@ namespace OrthancStone
       IObservable(broker),
       IObserver(broker),
       stack_(stack),
-      invert_(false)
+      invert_(false),
+      interpolation_(ImageInterpolation_Nearest)
     {
       stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::GeometryChangedMessage>(*this, &BitmapStackWidget::OnGeometryChanged));
       stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::ContentChangedMessage>(*this, &BitmapStackWidget::OnContentChanged));
@@ -2354,8 +2350,11 @@ namespace OrthancStone
 
     void SetInvert(bool invert)
     {
-      invert_ = invert;
-      NotifyContentChanged();
+      if (invert_ != invert)
+      {
+        invert_ = invert;
+        NotifyContentChanged();
+      }
     }
 
     void SwitchInvert()
@@ -2367,6 +2366,20 @@ namespace OrthancStone
     bool IsInvert() const
     {
       return invert_;
+    }
+
+    void SetInterpolation(ImageInterpolation interpolation)
+    {
+      if (interpolation_ != interpolation)
+      {
+        interpolation_ = interpolation;
+        NotifyContentChanged();
+      }
+    }
+
+    ImageInterpolation GetInterpolation() const
+    {
+      return interpolation_;
     }
   };
 
@@ -2384,8 +2397,9 @@ namespace OrthancStone
     };
         
 
-    UndoRedoStack  undoRedoStack_;
-    Tool           tool_;
+    UndoRedoStack      undoRedoStack_;
+    Tool               tool_;
+    OrthancApiClient  *orthanc_;
 
 
     static double GetHandleSize()
@@ -2408,7 +2422,8 @@ namespace OrthancStone
     
   public:
     BitmapStackInteractor() :
-      tool_(Tool_Move)
+      tool_(Tool_Move),
+      orthanc_(NULL)
     {
     }
     
@@ -2582,6 +2597,10 @@ namespace OrthancStone
           tool_ = Tool_Crop;
           break;
 
+        case 'e':
+          Export();
+          break;
+
         case 'i':
           dynamic_cast<BitmapStackWidget&>(widget).SwitchInvert();
           break;
@@ -2590,6 +2609,29 @@ namespace OrthancStone
           tool_ = Tool_Move;
           break;
 
+        case 'n':
+        {
+          BitmapStackWidget& w = dynamic_cast<BitmapStackWidget&>(widget);
+
+          switch (w.GetInterpolation())
+          {
+            case ImageInterpolation_Nearest:
+              LOG(INFO) << "Switching to bilinear interpolation";
+              w.SetInterpolation(ImageInterpolation_Bilinear);
+              break;
+              
+            case ImageInterpolation_Bilinear:
+              LOG(INFO) << "Switching to nearest neighbor interpolation";
+              w.SetInterpolation(ImageInterpolation_Nearest);
+              break;
+
+            default:
+              throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+          }
+          
+          break;
+        }
+        
         case 'r':
           tool_ = Tool_Rotate;
           break;
@@ -2621,6 +2663,24 @@ namespace OrthancStone
         default:
           break;
       }
+    }
+
+
+    void SetOrthanc(OrthancApiClient& orthanc)
+    {
+      orthanc_ = &orthanc;
+    }
+
+
+    void Export()
+    {
+      if (orthanc_ == NULL)
+      {
+        return;
+      }
+      
+      // TODO
+      LOG(WARNING) << "Exporting DICOM";
     }
   };
 
@@ -2666,9 +2726,11 @@ namespace OrthancStone
 
         statusBar.SetMessage("Use the key \"a\" to reinitialize the layout");
         statusBar.SetMessage("Use the key \"c\" to crop");
+        statusBar.SetMessage("Use the key \"e\" to export DICOM to the Orthanc server");
         statusBar.SetMessage("Use the key \"f\" to switch full screen");
         statusBar.SetMessage("Use the key \"i\" to invert contrast");
         statusBar.SetMessage("Use the key \"m\" to move objects");
+        statusBar.SetMessage("Use the key \"n\" to switch between nearest neighbor and bilinear interpolation");
         statusBar.SetMessage("Use the key \"r\" to rotate objects");
         statusBar.SetMessage("Use the key \"s\" to resize objects (not applicable to DICOM bitmaps)");
         statusBar.SetMessage("Use the key \"w\" to change windowing");
@@ -2686,6 +2748,7 @@ namespace OrthancStone
         int frame = parameters["frame"].as<unsigned int>();
 
         orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
+        interactor_.SetOrthanc(*orthancApiClient_);
 
         Orthanc::FontRegistry fonts;
         fonts.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
@@ -2695,7 +2758,7 @@ namespace OrthancStone
         //stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false);
 
         {
-          BitmapStack::Bitmap& bitmap = stack_->LoadText(fonts.GetFont(0), "Hello\nworld\nBonjour, Alain");
+          BitmapStack::Bitmap& bitmap = stack_->LoadText(fonts.GetFont(0), "Hello\nworld");
           //dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetForegroundValue(256);
           dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetResizeable(true);
         }
@@ -2714,24 +2777,6 @@ namespace OrthancStone
 
         //stack_->SetWindowing(128, 256);
       }
-
-
-      void Invert()
-      {
-        // TODO
-      }
-
-      void Rotate(int degrees)
-      {
-        // TODO
-      }
-
-      void Export()
-      {
-        // TODO: export dicom file to a temporary file
-      }
     };
-
-
   }
 }

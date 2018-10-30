@@ -35,6 +35,8 @@
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 
+#include <Core/Images/PngWriter.h>
+
 
 #include <boost/math/constants/constants.hpp>
 
@@ -2240,10 +2242,13 @@ namespace OrthancStone
 
         stack_.Render(*floatBuffer_, GetView(), interpolation);
         
-        // Very similar to GrayscaleFrameRenderer => TODO MERGE?
+        // Conversion from Float32 to BGRA32 (cairo). Very similar to
+        // GrayscaleFrameRenderer => TODO MERGE?
 
         Orthanc::ImageAccessor target;
         cairoBuffer_->GetAccessor(target);
+
+        float scaling = 255.0f / (x1 - x0);
         
         for (unsigned int y = 0; y < height; y++)
         {
@@ -2264,7 +2269,7 @@ namespace OrthancStone
             else
             {
               // https://en.wikipedia.org/wiki/Linear_interpolation
-              v = static_cast<uint8_t>(255.0f * (*p - x0) / (x1 - x0));  // (*)
+              v = static_cast<uint8_t>(scaling * (*p - x0));  // (*)
             }
 
             if (invert_)
@@ -2598,11 +2603,11 @@ namespace OrthancStone
           break;
 
         case 'e':
-          Export();
+          Export(GetStack(widget), 0.1, 0.1, GetWidget(widget).GetInterpolation());
           break;
 
         case 'i':
-          dynamic_cast<BitmapStackWidget&>(widget).SwitchInvert();
+          GetWidget(widget).SwitchInvert();
           break;
         
         case 'm':
@@ -2611,18 +2616,16 @@ namespace OrthancStone
 
         case 'n':
         {
-          BitmapStackWidget& w = dynamic_cast<BitmapStackWidget&>(widget);
-
-          switch (w.GetInterpolation())
+          switch (GetWidget(widget).GetInterpolation())
           {
             case ImageInterpolation_Nearest:
               LOG(INFO) << "Switching to bilinear interpolation";
-              w.SetInterpolation(ImageInterpolation_Bilinear);
+              GetWidget(widget).SetInterpolation(ImageInterpolation_Bilinear);
               break;
               
             case ImageInterpolation_Bilinear:
               LOG(INFO) << "Switching to nearest neighbor interpolation";
-              w.SetInterpolation(ImageInterpolation_Nearest);
+              GetWidget(widget).SetInterpolation(ImageInterpolation_Nearest);
               break;
 
             default:
@@ -2672,15 +2675,51 @@ namespace OrthancStone
     }
 
 
-    void Export()
+    void Export(const BitmapStack& stack,
+                double pixelSpacingX,
+                double pixelSpacingY,
+                ImageInterpolation interpolation)
     {
+      if (pixelSpacingX <= 0 ||
+          pixelSpacingY <= 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+      
       if (orthanc_ == NULL)
       {
         return;
       }
       
-      // TODO
       LOG(WARNING) << "Exporting DICOM";
+
+      Extent2D extent = stack.GetSceneExtent();
+
+      int w = std::ceil(extent.GetWidth() / pixelSpacingX);
+      int h = std::ceil(extent.GetHeight() / pixelSpacingY);
+
+      if (w < 0 || h < 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      Orthanc::Image layers(Orthanc::PixelFormat_Float32,
+                            static_cast<unsigned int>(w),
+                            static_cast<unsigned int>(h), false);
+
+      ViewportGeometry view;
+      view.SetDisplaySize(layers.GetWidth(), layers.GetHeight());
+      view.SetSceneExtent(extent);
+      view.FitContent();
+
+      stack.Render(layers, view, interpolation);
+
+      Orthanc::Image rendered(Orthanc::PixelFormat_Grayscale16,
+                              layers.GetWidth(), layers.GetHeight(), false);
+      Orthanc::ImageProcessing::Convert(rendered, layers);
+
+      Orthanc::PngWriter png;
+      png.WriteToFile("/tmp/a.png", rendered);
     }
   };
 

@@ -31,11 +31,12 @@
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Images/PamReader.h>
+#include <Core/Images/PamWriter.h>
 #include <Core/Logging.h>
+#include <Core/Toolbox.h>
+#include <Core/SystemToolbox.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
-
-#include <Core/Images/PngWriter.h>
 
 
 #include <boost/math/constants/constants.hpp>
@@ -2603,8 +2604,13 @@ namespace OrthancStone
           break;
 
         case 'e':
-          Export(GetStack(widget), 0.1, 0.1, GetWidget(widget).GetInterpolation());
+        {
+          Orthanc::DicomMap tags;
+          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_ID, "hello", false);
+          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_NAME, "HELLO^WORLD", false);
+          Export(GetStack(widget), 0.1, 0.1, GetWidget(widget).GetInterpolation(), tags);
           break;
+        }
 
         case 'i':
           GetWidget(widget).SwitchInvert();
@@ -2678,7 +2684,8 @@ namespace OrthancStone
     void Export(const BitmapStack& stack,
                 double pixelSpacingX,
                 double pixelSpacingY,
-                ImageInterpolation interpolation)
+                ImageInterpolation interpolation,
+                const Orthanc::DicomMap& dicom)
     {
       if (pixelSpacingX <= 0 ||
           pixelSpacingY <= 0)
@@ -2718,8 +2725,35 @@ namespace OrthancStone
                               layers.GetWidth(), layers.GetHeight(), false);
       Orthanc::ImageProcessing::Convert(rendered, layers);
 
-      Orthanc::PngWriter png;
-      png.WriteToFile("/tmp/a.png", rendered);
+      std::string pam;
+      {
+        Orthanc::PamWriter writer;
+        writer.WriteToMemory(pam, rendered);
+      }
+
+      std::string content;
+      Orthanc::Toolbox::EncodeBase64(content, pam);
+
+      std::set<Orthanc::DicomTag> tags;
+      dicom.GetTags(tags);
+
+      Json::Value json = Json::objectValue;
+      json["Tags"] = Json::objectValue;
+           
+      for (std::set<Orthanc::DicomTag>::const_iterator
+             tag = tags.begin(); tag != tags.end(); ++tag)
+      {
+        const Orthanc::DicomValue& value = dicom.GetValue(*tag);
+        if (!value.IsNull() &&
+            !value.IsBinary())
+        {
+          json["Tags"][tag->Format()] = value.GetContent();
+        }
+      }
+      
+      json["Content"] = "data:" + std::string(Orthanc::MIME_PAM) + ";base64," + content;
+
+      orthanc_->PostJsonAsyncExpectJson("/tools/create-dicom", json, NULL, NULL, NULL);
     }
   };
 
@@ -2793,7 +2827,7 @@ namespace OrthancStone
         fonts.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
         
         stack_.reset(new BitmapStack(IObserver::broker_, *orthancApiClient_));
-        stack_->LoadFrame(instance, frame, false).SetPan(200, 0);
+        stack_->LoadFrame(instance, frame, false); //.SetPan(200, 0);
         //stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false);
 
         {

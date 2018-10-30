@@ -32,17 +32,51 @@
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Images/PamReader.h>
 #include <Core/Images/PamWriter.h>
+#include <Core/Images/PngWriter.h>
 #include <Core/Logging.h>
 #include <Core/Toolbox.h>
 #include <Core/SystemToolbox.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 
+#define EXPORT_USING_PAM  1
+
 
 #include <boost/math/constants/constants.hpp>
 
 namespace OrthancStone
 {
+  static Matrix CreateOffsetMatrix(double dx,
+                                   double dy)
+  {
+    Matrix m = LinearAlgebra::IdentityMatrix(3);
+    m(0, 2) = dx;
+    m(1, 2) = dy;
+    return m;
+  }
+      
+
+  static Matrix CreateScalingMatrix(double sx,
+                                    double sy)
+  {
+    Matrix m = LinearAlgebra::IdentityMatrix(3);
+    m(0, 0) = sx;
+    m(1, 1) = sy;
+    return m;
+  }
+      
+
+  static Matrix CreateRotationMatrix(double angle)
+  {
+    Matrix m;
+    const double v[] = { cos(angle), -sin(angle), 0,
+                         sin(angle), cos(angle), 0,
+                         0, 0, 1 };
+    LinearAlgebra::FillMatrix(m, 3, 3, v);
+    return m;
+  }
+      
+
   class BitmapStack :
     public IObserver,
     public IObservable
@@ -85,37 +119,6 @@ namespace OrthancStone
 
 
     protected:
-      static Matrix CreateOffsetMatrix(double dx,
-                                       double dy)
-      {
-        Matrix m = LinearAlgebra::IdentityMatrix(3);
-        m(0, 2) = dx;
-        m(1, 2) = dy;
-        return m;
-      }
-      
-
-      static Matrix CreateScalingMatrix(double sx,
-                                        double sy)
-      {
-        Matrix m = LinearAlgebra::IdentityMatrix(3);
-        m(0, 0) = sx;
-        m(1, 1) = sy;
-        return m;
-      }
-      
-
-      static Matrix CreateRotationMatrix(double angle)
-      {
-        Matrix m;
-        const double v[] = { cos(angle), -sin(angle), 0,
-                             sin(angle), cos(angle), 0,
-                             0, 0, 1 };
-        LinearAlgebra::FillMatrix(m, 3, 3, v);
-        return m;
-      }
-      
-
       const Matrix& GetTransform() const
       {
         return transform_;
@@ -583,7 +586,7 @@ namespace OrthancStone
       }
 
       virtual void Render(Orthanc::ImageAccessor& buffer,
-                          const ViewportGeometry& view,
+                          const Matrix& viewTransform,
                           ImageInterpolation interpolation) const = 0;
 
       virtual bool GetRange(float& minValue,
@@ -743,7 +746,7 @@ namespace OrthancStone
 
 
       virtual void Render(Orthanc::ImageAccessor& buffer,
-                          const ViewportGeometry& view,
+                          const Matrix& viewTransform,
                           ImageInterpolation interpolation) const
       {
         if (buffer.GetFormat() != Orthanc::PixelFormat_Float32)
@@ -754,7 +757,7 @@ namespace OrthancStone
         unsigned int cropX, cropY, cropWidth, cropHeight;
         GetCrop(cropX, cropY, cropWidth, cropHeight);
 
-        Matrix m = LinearAlgebra::Product(view.GetMatrix(),
+        Matrix m = LinearAlgebra::Product(viewTransform,
                                           GetTransform(),
                                           CreateOffsetMatrix(cropX, cropY));
 
@@ -901,7 +904,7 @@ namespace OrthancStone
 
       
       virtual void Render(Orthanc::ImageAccessor& buffer,
-                          const ViewportGeometry& view,
+                          const Matrix& viewTransform,
                           ImageInterpolation interpolation) const
       {
         if (converted_.get() != NULL)
@@ -914,7 +917,7 @@ namespace OrthancStone
           unsigned int cropX, cropY, cropWidth, cropHeight;
           GetCrop(cropX, cropY, cropWidth, cropHeight);
 
-          Matrix m = LinearAlgebra::Product(view.GetMatrix(),
+          Matrix m = LinearAlgebra::Product(viewTransform,
                                             GetTransform(),
                                             CreateOffsetMatrix(cropX, cropY));
 
@@ -1230,7 +1233,7 @@ namespace OrthancStone
     
 
     void Render(Orthanc::ImageAccessor& buffer,
-                const ViewportGeometry& view,
+                const Matrix& viewTransform,
                 ImageInterpolation interpolation) const
     {
       Orthanc::ImageProcessing::Set(buffer, 0);
@@ -1242,7 +1245,7 @@ namespace OrthancStone
         if (it != bitmaps_.end())
         {
           assert(it->second != NULL);
-          it->second->Render(buffer, view, interpolation);
+          it->second->Render(buffer, viewTransform, interpolation);
         }
       }
     }
@@ -2241,7 +2244,7 @@ namespace OrthancStone
           cairoBuffer_.reset(new CairoSurface(width, height));
         }
 
-        stack_.Render(*floatBuffer_, GetView(), interpolation);
+        stack_.Render(*floatBuffer_, GetView().GetMatrix(), interpolation);
         
         // Conversion from Float32 to BGRA32 (cairo). Very similar to
         // GrayscaleFrameRenderer => TODO MERGE?
@@ -2390,7 +2393,9 @@ namespace OrthancStone
   };
 
   
-  class BitmapStackInteractor : public IWorldSceneInteractor
+  class BitmapStackInteractor :
+    public IWorldSceneInteractor,
+    public IObserver
   {
   private:
     enum Tool
@@ -2427,7 +2432,8 @@ namespace OrthancStone
     
     
   public:
-    BitmapStackInteractor() :
+    BitmapStackInteractor(MessageBroker& broker) :
+      IObserver(broker),
       tool_(Tool_Move),
       orthanc_(NULL)
     {
@@ -2606,9 +2612,26 @@ namespace OrthancStone
         case 'e':
         {
           Orthanc::DicomMap tags;
+
+          // Minimal set of tags to generate a valid CR image
+          tags.SetValue(Orthanc::DICOM_TAG_ACCESSION_NUMBER, "NOPE", false);
+          tags.SetValue(Orthanc::DICOM_TAG_BODY_PART_EXAMINED, "PELVIS", false);
+          tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "1", false);
+          //tags.SetValue(Orthanc::DICOM_TAG_LATERALITY, "", false);
+          tags.SetValue(Orthanc::DICOM_TAG_MANUFACTURER, "OSIMIS", false);
+          tags.SetValue(Orthanc::DICOM_TAG_MODALITY, "CR", false);
+          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_BIRTH_DATE, "20000101", false);
           tags.SetValue(Orthanc::DICOM_TAG_PATIENT_ID, "hello", false);
           tags.SetValue(Orthanc::DICOM_TAG_PATIENT_NAME, "HELLO^WORLD", false);
-          Export(GetStack(widget), 0.1, 0.1, GetWidget(widget).GetInterpolation(), tags);
+          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_ORIENTATION, "", false);
+          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_SEX, "M", false);
+          tags.SetValue(Orthanc::DICOM_TAG_REFERRING_PHYSICIAN_NAME, "HOUSE^MD", false);
+          tags.SetValue(Orthanc::DICOM_TAG_SERIES_NUMBER, "1", false);
+          tags.SetValue(Orthanc::DICOM_TAG_SOP_CLASS_UID, "1.2.840.10008.5.1.4.1.1.1", false);
+          tags.SetValue(Orthanc::DICOM_TAG_STUDY_ID, "STUDY", false);
+          tags.SetValue(Orthanc::DICOM_TAG_VIEW_POSITION, "", false);
+
+          Export(GetWidget(widget), 0.1, 0.1, tags);
           break;
         }
 
@@ -2681,10 +2704,9 @@ namespace OrthancStone
     }
 
 
-    void Export(const BitmapStack& stack,
+    void Export(const BitmapStackWidget& widget,
                 double pixelSpacingX,
                 double pixelSpacingY,
-                ImageInterpolation interpolation,
                 const Orthanc::DicomMap& dicom)
     {
       if (pixelSpacingX <= 0 ||
@@ -2700,7 +2722,7 @@ namespace OrthancStone
       
       LOG(WARNING) << "Exporting DICOM";
 
-      Extent2D extent = stack.GetSceneExtent();
+      Extent2D extent = widget.GetStack().GetSceneExtent();
 
       int w = std::ceil(extent.GetWidth() / pixelSpacingX);
       int h = std::ceil(extent.GetHeight() / pixelSpacingY);
@@ -2714,25 +2736,35 @@ namespace OrthancStone
                             static_cast<unsigned int>(w),
                             static_cast<unsigned int>(h), false);
 
-      ViewportGeometry view;
-      view.SetDisplaySize(layers.GetWidth(), layers.GetHeight());
-      view.SetSceneExtent(extent);
-      view.FitContent();
-
-      stack.Render(layers, view, interpolation);
+      Matrix view = LinearAlgebra::Product(
+        CreateScalingMatrix(1.0 / pixelSpacingX, 1.0 / pixelSpacingY),
+        CreateOffsetMatrix(-extent.GetX1(), -extent.GetY1()));
+      
+      widget.GetStack().Render(layers, view, widget.GetInterpolation());
 
       Orthanc::Image rendered(Orthanc::PixelFormat_Grayscale16,
                               layers.GetWidth(), layers.GetHeight(), false);
       Orthanc::ImageProcessing::Convert(rendered, layers);
 
-      std::string pam;
-      {
-        Orthanc::PamWriter writer;
-        writer.WriteToMemory(pam, rendered);
-      }
+      std::string base64;
 
-      std::string content;
-      Orthanc::Toolbox::EncodeBase64(content, pam);
+      {
+        std::string content;
+
+#if EXPORT_USING_PAM == 1
+        {
+          Orthanc::PamWriter writer;
+          writer.WriteToMemory(content, rendered);
+        }
+#else
+        {
+          Orthanc::PngWriter writer;
+          writer.WriteToMemory(content, rendered);
+        }
+#endif      
+
+        Orthanc::Toolbox::EncodeBase64(base64, content);
+      }
 
       std::set<Orthanc::DicomTag> tags;
       dicom.GetTags(tags);
@@ -2750,10 +2782,44 @@ namespace OrthancStone
           json["Tags"][tag->Format()] = value.GetContent();
         }
       }
-      
-      json["Content"] = "data:" + std::string(Orthanc::MIME_PAM) + ";base64," + content;
 
-      orthanc_->PostJsonAsyncExpectJson("/tools/create-dicom", json, NULL, NULL, NULL);
+      json["Tags"][Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION.Format()] =
+        (widget.IsInvert() ? "MONOCHROME1" : "MONOCHROME2");
+
+
+      char buf[32];
+      sprintf(buf, "%0.08f\\%0.08f", pixelSpacingX, pixelSpacingY);
+      
+      json["Tags"][Orthanc::DICOM_TAG_PIXEL_SPACING.Format()] = buf;
+
+      float center, width;
+      if (widget.GetStack().GetWindowing(center, width))
+      {
+        json["Tags"][Orthanc::DICOM_TAG_WINDOW_CENTER.Format()] =
+          boost::lexical_cast<std::string>(lroundf(center));
+
+        json["Tags"][Orthanc::DICOM_TAG_WINDOW_WIDTH.Format()] =
+          boost::lexical_cast<std::string>(lroundf(width));
+      }
+
+#if EXPORT_USING_PAM == 1
+      json["Content"] = "data:" + std::string(Orthanc::MIME_PAM) + ";base64," + base64;
+#else
+      json["Content"] = "data:" + std::string(Orthanc::MIME_PNG) + ";base64," + base64;
+#endif
+
+      orthanc_->PostJsonAsyncExpectJson(
+        "/tools/create-dicom", json,
+        new Callable<BitmapStackInteractor, OrthancApiClient::JsonResponseReadyMessage>
+        (*this, &BitmapStackInteractor::OnDicomExported),
+        NULL, NULL);
+    }
+
+
+    void OnDicomExported(const OrthancApiClient::JsonResponseReadyMessage& message)
+    {
+      LOG(WARNING) << "DICOM export was successful:"
+                   << message.Response.toStyledString();
     }
   };
 
@@ -2772,7 +2838,8 @@ namespace OrthancStone
 
     public:
       SingleFrameEditorApplication(MessageBroker& broker) :
-        IObserver(broker)
+        IObserver(broker),
+        interactor_(broker)
       {
       }
       

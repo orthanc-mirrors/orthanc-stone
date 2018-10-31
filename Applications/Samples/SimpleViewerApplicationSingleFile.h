@@ -36,6 +36,7 @@
 #include "../../Platforms/Wasm/Defaults.h"
 #endif
 
+#include <Core/Images/Font.h>
 #include <Core/Logging.h>
 
 namespace OrthancStone
@@ -127,7 +128,8 @@ namespace OrthancStone
             }
             else if (application_.currentTool_ == Tools_CircleMeasure)
             {
-              return new CircleMeasureTracker(statusBar, dynamic_cast<LayerWidget&>(widget).GetSlice(), x, y, 255, 0, 0, 10);
+              return new CircleMeasureTracker(statusBar, dynamic_cast<LayerWidget&>(widget).GetSlice(),
+                                              x, y, 255, 0, 0, application_.GetFont());
             }
           }
           return NULL;
@@ -234,6 +236,8 @@ namespace OrthancStone
       std::auto_ptr<SmartLoader>           smartLoader_;
       std::auto_ptr<OrthancApiClient>      orthancApiClient_;
 
+      Orthanc::Font                        font_;
+
     public:
       SimpleViewerApplication(MessageBroker& broker) :
         IObserver(broker),
@@ -243,6 +247,7 @@ namespace OrthancStone
         wasmViewport1_(NULL),
         wasmViewport2_(NULL)
       {
+        font_.LoadFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
 //        DeclareIgnoredMessage(MessageType_Widget_ContentChanged);
       }
 
@@ -390,6 +395,11 @@ namespace OrthancStone
         smartLoader_->SetFrameInWidget(widget, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
       }
 
+      const Orthanc::Font& GetFont() const
+      {
+        return font_;
+      }
+      
       virtual void OnPushButton1Clicked() {}
       virtual void OnPushButton2Clicked() {}
       virtual void OnTool1Clicked() { currentTool_ = Tools_LineMeasure;}

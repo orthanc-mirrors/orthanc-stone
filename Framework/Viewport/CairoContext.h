@@ -23,12 +23,16 @@
 
 #include "CairoSurface.h"
 
+#include <Core/Images/Font.h>
+
 namespace OrthancStone
 {
   // This is a RAII wrapper around the Cairo drawing context
   class CairoContext : public boost::noncopyable
   {
   private:
+    class AlphaSurface;
+    
     cairo_t*      context_;
     unsigned int  width_;
     unsigned int  height_;
@@ -61,5 +65,10 @@ namespace OrthancStone
     {
       SetSourceColor(color[0], color[1], color[2]);
     }
+
+    void DrawText(const Orthanc::Font& font,
+                  const std::string& text,
+                  double x,
+                  double y);      
   };
 }

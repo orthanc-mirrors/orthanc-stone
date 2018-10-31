@@ -40,6 +40,7 @@
 #include "Qt/SimpleViewerMainWindow.h"
 #endif
 
+#include <Core/Images/Font.h>
 #include <Core/Logging.h>
 
 #include "ThumbnailInteractor.h"
@@ -94,7 +95,7 @@ namespace SimpleViewer
     LayoutWidget*                   thumbnailsLayout_;
     LayerWidget*                    mainWidget_;
     std::vector<LayerWidget*>       thumbnails_;
-    std::map<std::string, std::vector<std::string>> instancesIdsPerSeriesId_;
+    std::map<std::string, std::vector<std::string> > instancesIdsPerSeriesId_;
     std::map<std::string, Json::Value> seriesTags_;
     BaseCommandBuilder              commandBuilder_;
 
@@ -106,6 +107,8 @@ namespace SimpleViewer
     std::unique_ptr<SmartLoader>    smartLoader_;
     std::unique_ptr<OrthancApiClient>      orthancApiClient_;
 
+    Orthanc::Font                   font_;
+
   public:
     SimpleViewerApplication(MessageBroker& broker) :
       IObserver(broker),
@@ -116,6 +119,7 @@ namespace SimpleViewer
       wasmViewport1_(NULL),
       wasmViewport2_(NULL)
     {
+      font_.LoadFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
     }
 
     virtual void Finalize() {}
@@ -141,7 +145,16 @@ namespace SimpleViewer
     void SelectSeriesInMainViewport(const std::string& seriesId);
 
     void SelectTool(Tools tool);
-    Tools GetCurrentTool() const {return currentTool_;}
+    
+    Tools GetCurrentTool() const
+    {
+      return currentTool_;
+    }
+
+    const Orthanc::Font& GetFont() const
+    {
+      return font_;
+    }
 
     void ExecuteAction(Actions action);
 

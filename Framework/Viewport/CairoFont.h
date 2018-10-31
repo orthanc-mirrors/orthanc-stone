@@ -21,6 +21,14 @@
 
 #pragma once
 
+#if !defined(ORTHANC_SANDBOXED)
+#  error The macro ORTHANC_SANDBOXED must be defined
+#endif
+
+#if ORTHANC_SANDBOXED == 1
+#  error The class CairoFont cannot be used in sandboxed environments
+#endif
+
 #include "CairoContext.h"
 
 namespace OrthancStone

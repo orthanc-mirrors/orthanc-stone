@@ -32,8 +32,8 @@ namespace OrthancStone
     return true;
   }
 
-  CairoWidget::CairoWidget(const std::string& name)
-    : WidgetBase(name)
+  CairoWidget::CairoWidget(const std::string& name) :
+    WidgetBase(name)
   {
   }
 

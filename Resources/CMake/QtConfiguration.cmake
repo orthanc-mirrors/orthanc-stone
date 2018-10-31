@@ -17,10 +17,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-# Instruct CMake to run moc automatically when needed.
-set(CMAKE_AUTOMOC ON)
-SET(CMAKE_AUTOUIC ON)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOMOC OFF)
+set(CMAKE_AUTOUIC OFF)
 
 # Find the QtWidgets library
 find_package(Qt5Widgets QUIET)
@@ -32,12 +30,32 @@ if (Qt5Widgets_FOUND)
     Qt5::Widgets
     Qt5::Core
     )
+
+  # Create aliases for the CMake commands
+  macro(ORTHANC_QT_WRAP_UI)
+    QT5_WRAP_UI(${ARGN})
+  endmacro()
+  
+  macro(ORTHANC_QT_WRAP_CPP)
+    QT5_WRAP_CPP(${ARGN})
+  endmacro()
+    
 else()
   message("Qt5 has not been found, trying with Qt4")
   find_package(Qt4 REQUIRED QtGui)
   link_libraries(
     Qt4::QtGui
     )
+
+  # Create aliases for the CMake commands
+  macro(ORTHANC_QT_WRAP_UI)
+    QT4_WRAP_UI(${ARGN})
+  endmacro()
+  
+  macro(ORTHANC_QT_WRAP_CPP)
+    QT4_WRAP_CPP(${ARGN})
+  endmacro()
+  
 endif()
 
 list(APPEND QT_SOURCES
@@ -46,5 +64,14 @@ list(APPEND QT_SOURCES
   ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.cpp
   )
 
-include_directories(${ORTHANC_STONE_ROOT}/Applications/Qt/)
+
+# NB: Including CMAKE_CURRENT_BINARY_DIR is mandatory, as the CMake
+# macros for Qt will put their result in that directory, which cannot
+# be changed.
+# https://stackoverflow.com/a/4016784/881731
+
+include_directories(
+  ${ORTHANC_STONE_ROOT}/Applications/Qt/
+  ${CMAKE_CURRENT_BINARY_DIR}
+  )
 

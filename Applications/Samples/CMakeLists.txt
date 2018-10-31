@@ -95,9 +95,19 @@ if (ENABLE_QT)
   list(APPEND SAMPLE_APPLICATIONS_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleQtApplicationRunner.h
     ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindow.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindow.ui
     ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindowWithButtons.cpp
+    )
+
+  ORTHANC_QT_WRAP_UI(SAMPLE_APPLICATIONS_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindow.ui
     ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindowWithButtons.ui
+    )
+
+  ORTHANC_QT_WRAP_CPP(SAMPLE_APPLICATIONS_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.h
+    ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.h
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindow.h
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindowWithButtons.h
     )
 endif()
 
@@ -144,7 +154,18 @@ if (ENABLE_QT OR ENABLE_WASM)
         ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/SimpleViewerMainWindow.ui
         ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/mainQt.cpp
         )
-    elseif (ENABLE_WASM)
+
+      ORTHANC_QT_WRAP_UI(SIMPLE_VIEWER_APPLICATION_SOURCES
+        ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/SimpleViewerMainWindow.ui
+        )
+
+      ORTHANC_QT_WRAP_CPP(SIMPLE_VIEWER_APPLICATION_SOURCES
+        ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.h
+        ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.h
+        ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/SimpleViewerMainWindow.h
+        )
+
+elseif (ENABLE_WASM)
         list(APPEND SIMPLE_VIEWER_APPLICATION_SOURCES
             ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/mainWasm.cpp
             ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/SimpleViewerWasmApplicationAdapter.cpp

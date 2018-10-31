@@ -181,6 +181,7 @@ set(APPLICATIONS_SOURCES
 
 if (NOT ORTHANC_SANDBOXED)
   set(PLATFORM_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoFont.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceCommandBase.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceGetCommand.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServicePostCommand.cpp
@@ -271,7 +272,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ViewportGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoFont.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IStatusBar.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IViewport.h

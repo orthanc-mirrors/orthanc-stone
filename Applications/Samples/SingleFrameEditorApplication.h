@@ -35,7 +35,6 @@
 #include <Core/Images/PngWriter.h>
 #include <Core/Logging.h>
 #include <Core/Toolbox.h>
-#include <Core/SystemToolbox.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 

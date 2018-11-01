@@ -38,7 +38,8 @@ namespace SimpleViewer {
     {
       if (application_.GetCurrentTool() == SimpleViewerApplication::Tools_LineMeasure)
       {
-        return new LineMeasureTracker(statusBar, dynamic_cast<LayerWidget&>(widget).GetSlice(), x, y, 255, 0, 0, 10);
+        return new LineMeasureTracker(statusBar, dynamic_cast<LayerWidget&>(widget).GetSlice(),
+                                      x, y, 255, 0, 0, application_.GetFont());
       }
       else if (application_.GetCurrentTool() == SimpleViewerApplication::Tools_CircleMeasure)
       {

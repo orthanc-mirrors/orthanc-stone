@@ -22,6 +22,7 @@
 #pragma once
 
 #include "CairoSurface.h"
+#include "../StoneEnumerations.h"
 
 #include <Core/Images/Font.h>
 
@@ -69,6 +70,7 @@ namespace OrthancStone
     void DrawText(const Orthanc::Font& font,
                   const std::string& text,
                   double x,
-                  double y);      
+                  double y,
+                  BitmapAnchor anchor);      
   };
 }

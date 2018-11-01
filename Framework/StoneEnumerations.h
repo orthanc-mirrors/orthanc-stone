@@ -102,6 +102,19 @@ namespace OrthancStone
     SopClassUid_RTDose
   };
 
+  enum BitmapAnchor
+  {
+    BitmapAnchor_BottomLeft,
+    BitmapAnchor_BottomCenter,
+    BitmapAnchor_BottomRight,
+    BitmapAnchor_CenterLeft,
+    BitmapAnchor_Center,
+    BitmapAnchor_CenterRight,
+    BitmapAnchor_TopLeft,
+    BitmapAnchor_TopCenter,
+    BitmapAnchor_TopRight
+  };
+
   bool StringToSopClassUid(SopClassUid& result,
                            const std::string& source);
 
@@ -110,4 +123,10 @@ namespace OrthancStone
                         ImageWindowing windowing,
                         float defaultCenter,
                         float defaultWidth);
+
+  void ComputeAnchorTranslation(double& deltaX /* out */,
+                                double& deltaY /* out */,
+                                BitmapAnchor anchor,
+                                unsigned int bitmapWidth,
+                                unsigned int bitmapHeight);
 }

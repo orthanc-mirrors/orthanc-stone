@@ -172,6 +172,14 @@ namespace OrthancStone
             widget.FitContent();
             break;
 
+          case 'l':
+            application_.currentTool_ = Tools_LineMeasure;
+            break;
+
+          case 'c':
+            application_.currentTool_ = Tools_CircleMeasure;
+            break;
+
           default:
             break;
           }

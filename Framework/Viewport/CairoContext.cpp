@@ -100,7 +100,7 @@ namespace OrthancStone
                             cairo_image_surface_get_data(surface_));
     }
 
-    void Fill(cairo_t* cr,
+    void Blit(cairo_t* cr,
               double x,
               double y)
     {
@@ -114,8 +114,10 @@ namespace OrthancStone
   void CairoContext::DrawText(const Orthanc::Font& font,
                               const std::string& text,
                               double x,
-                              double y)
+                              double y,
+                              BitmapAnchor anchor)
   {
+    // Render a bitmap containing the text
     unsigned int width, height;
     font.ComputeTextExtent(width, height, text);
     
@@ -125,6 +127,11 @@ namespace OrthancStone
     surface.GetAccessor(accessor);
     font.Draw(accessor, text, 0, 0, 255);
 
+    // Correct the text location given the anchor location
+    double deltaX, deltaY;
+    ComputeAnchorTranslation(deltaX, deltaY, anchor, width, height);
+
+    // Cancel zoom/rotation before blitting the text onto the surface
     double pixelX = x;
     double pixelY = y;
     cairo_user_to_device(context_, &pixelX, &pixelY);
@@ -132,8 +139,8 @@ namespace OrthancStone
     cairo_save(context_);
     cairo_identity_matrix(context_);
 
-    surface.Fill(context_, pixelX, pixelY);
-
+    // Blit the text bitmap
+    surface.Blit(context_, pixelX + deltaX, pixelY + deltaY);
     cairo_restore(context_);
   }
 }

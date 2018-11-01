@@ -71,8 +71,7 @@ namespace OrthancStone
     cairo_stroke(cr);
     cairo_restore(cr);
 
-    //context.SetSourceColor(0, 255, 0);
-    context.DrawText(font_, FormatRadius(), x, y);
+    context.DrawText(font_, FormatRadius(), x, y, BitmapAnchor_Center);
   }
     
 

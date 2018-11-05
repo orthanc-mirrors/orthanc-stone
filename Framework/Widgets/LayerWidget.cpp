@@ -27,6 +27,9 @@
 
 #include <Core/Logging.h>
 
+#include <boost/math/constants/constants.hpp>
+
+
 static const double THIN_SLICE_THICKNESS = 100.0 * std::numeric_limits<double>::epsilon();
 
 namespace OrthancStone
@@ -179,8 +182,8 @@ public:
         double s = 5.0 / view.GetZoom();
         cairo_rectangle(cr, -s, -s, 2.0 * s, 2.0 * s);
 #else
-        // TODO Drawing circles makes WebAssembly crash!
-        cairo_arc(cr, 0, 0, 5.0 / view.GetZoom(), 0, 2 * M_PI);
+        // TODO Drawing filled circles makes WebAssembly crash!
+        cairo_arc(cr, 0, 0, 5.0 / view.GetZoom(), 0, 2.0 * boost::math::constants::pi<double>());
 #endif
         
         cairo_set_line_width(cr, 2.0 / view.GetZoom());

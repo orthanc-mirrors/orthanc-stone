@@ -19,12 +19,10 @@
  **/
 
 
-#define _USE_MATH_DEFINES  // To access M_PI in Visual Studio
-#include <cmath>
-
 #include "CircleMeasureTracker.h"
 
 #include <stdio.h>
+#include <boost/math/constants/constants.hpp>
 
 namespace OrthancStone
 {
@@ -66,7 +64,7 @@ namespace OrthancStone
     cairo_save(cr);
     cairo_set_line_width(cr, 2.0 / zoom);
     cairo_translate(cr, x, y);
-    cairo_arc(cr, 0, 0, r, 0, 2 * M_PI);
+    cairo_arc(cr, 0, 0, r, 0, 2.0 * boost::math::constants::pi<double>());
     cairo_stroke_preserve(cr);
     cairo_stroke(cr);
     cairo_restore(cr);

@@ -42,6 +42,8 @@
 
 
 #include <boost/math/constants/constants.hpp>
+#include <boost/math/special_functions/round.hpp>
+
 
 namespace OrthancStone
 {
@@ -1493,7 +1495,7 @@ namespace OrthancStone
 
       static int ToDegrees(double angle)
       {
-        return static_cast<int>(round(angle * 180.0 / boost::math::constants::pi<double>()));
+        return boost::math::iround(angle * 180.0 / boost::math::constants::pi<double>());
       }
       
     protected:
@@ -1581,7 +1583,7 @@ namespace OrthancStone
 
         if (roundAngles_)
         {
-          angle = round(angle / ROUND_ANGLE) * ROUND_ANGLE;
+          angle = boost::math::round<double>((angle / ROUND_ANGLE) * ROUND_ANGLE);
         }
           
         accessor_.GetBitmap().SetAngle(angle);
@@ -1990,7 +1992,7 @@ namespace OrthancStone
 
         if (roundScaling_)
         {
-          scaling = round(scaling / ROUND_SCALING) * ROUND_SCALING;
+          scaling = boost::math::round<double>((scaling / ROUND_SCALING) * ROUND_SCALING);
         }
           
         BitmapStack::Bitmap& bitmap = accessor_.GetBitmap();
@@ -2152,7 +2154,9 @@ namespace OrthancStone
       }
       else
       {
-        tmp = log2(delta);
+        // NB: Visual Studio 2008 does not provide "log2f()", so we
+        // implement it by ourselves
+        tmp = logf(delta) / logf(2.0f);
       }
 
       strength_ = tmp - 7;
@@ -2796,10 +2800,10 @@ namespace OrthancStone
       if (widget.GetStack().GetWindowing(center, width))
       {
         json["Tags"][Orthanc::DICOM_TAG_WINDOW_CENTER.Format()] =
-          boost::lexical_cast<std::string>(lroundf(center));
+          boost::lexical_cast<std::string>(boost::math::iround(center));
 
         json["Tags"][Orthanc::DICOM_TAG_WINDOW_WIDTH.Format()] =
-          boost::lexical_cast<std::string>(lroundf(width));
+          boost::lexical_cast<std::string>(boost::math::iround(width));
       }
 
 #if EXPORT_USING_PAM == 1

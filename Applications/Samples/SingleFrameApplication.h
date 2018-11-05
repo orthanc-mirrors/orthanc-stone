@@ -28,6 +28,9 @@
 
 #include <Core/Logging.h>
 
+#include <boost/math/constants/constants.hpp>
+
+
 namespace OrthancStone
 {
   namespace Samples
@@ -161,7 +164,7 @@ namespace OrthancStone
           GetMainWidget().SetSlice(source_->GetSlice(slice_).GetGeometry());
 #else
           // TEST for scene extents - Rotate the axes
-          double a = 15.0 / 180.0 * M_PI;
+          double a = 15.0 / 180.0 * boost::math::constants::pi<double>();
 
 #if 1
           Vector x; GeometryToolbox::AssignVector(x, cos(a), sin(a), 0);

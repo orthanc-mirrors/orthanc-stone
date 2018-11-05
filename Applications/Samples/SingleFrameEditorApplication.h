@@ -1164,17 +1164,17 @@ namespace OrthancStone
     
     void OnTagsReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
     {
-      size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload.get())->GetValue();
+      size_t index = dynamic_cast<const Orthanc::SingleValueObject<size_t>&>(message.GetPayload()).GetValue();
 
-      LOG(INFO) << "JSON received: " << message.Uri.c_str()
-                << " (" << message.AnswerSize << " bytes) for bitmap " << index;
+      LOG(INFO) << "JSON received: " << message.GetUri().c_str()
+                << " (" << message.GetAnswerSize() << " bytes) for bitmap " << index;
       
       Bitmaps::iterator bitmap = bitmaps_.find(index);
       if (bitmap != bitmaps_.end())
       {
         assert(bitmap->second != NULL);
         
-        OrthancPlugins::FullOrthancDataset dicom(message.Answer, message.AnswerSize);
+        OrthancPlugins::FullOrthancDataset dicom(message.GetAnswer(), message.GetAnswerSize());
         dynamic_cast<DicomBitmap*>(bitmap->second)->SetDicomTags(dicom);
 
         float c, w;
@@ -1193,10 +1193,10 @@ namespace OrthancStone
 
     void OnFrameReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
     {
-      size_t index = dynamic_cast<Orthanc::SingleValueObject<size_t>*>(message.Payload.get())->GetValue();
+      size_t index = dynamic_cast<const Orthanc::SingleValueObject<size_t>&>(message.GetPayload()).GetValue();
       
-      LOG(INFO) << "DICOM frame received: " << message.Uri.c_str()
-                << " (" << message.AnswerSize << " bytes) for bitmap " << index;
+      LOG(INFO) << "DICOM frame received: " << message.GetUri().c_str()
+                << " (" << message.GetAnswerSize() << " bytes) for bitmap " << index;
       
       Bitmaps::iterator bitmap = bitmaps_.find(index);
       if (bitmap != bitmaps_.end())
@@ -1204,9 +1204,9 @@ namespace OrthancStone
         assert(bitmap->second != NULL);
 
         std::string content;
-        if (message.AnswerSize > 0)
+        if (message.GetAnswerSize() > 0)
         {
-          content.assign(reinterpret_cast<const char*>(message.Answer), message.AnswerSize);
+          content.assign(reinterpret_cast<const char*>(message.GetAnswer()), message.GetAnswerSize());
         }
         
         std::auto_ptr<Orthanc::PamReader> reader(new Orthanc::PamReader);
@@ -2823,7 +2823,7 @@ namespace OrthancStone
     void OnDicomExported(const OrthancApiClient::JsonResponseReadyMessage& message)
     {
       LOG(WARNING) << "DICOM export was successful:"
-                   << message.Response.toStyledString();
+                   << message.GetJson().toStyledString();
     }
   };
 

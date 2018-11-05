@@ -21,14 +21,67 @@
 #include "OrthancApiClient.h"
 
 #include "MessagingToolbox.h"
-#include <Core/OrthancException.h>
 #include "Framework/Toolbox/MessagingToolbox.h"
 
-namespace OrthancStone {
+#include <Core/OrthancException.h>
 
-  OrthancApiClient::OrthancApiClient(MessageBroker &broker, IWebService &orthanc)
-    : IObservable(broker),
-      orthanc_(orthanc)
+namespace OrthancStone
+{
+  const Orthanc::IDynamicObject& OrthancApiClient::JsonResponseReadyMessage::GetPayload() const
+  {
+    if (HasPayload())
+    {
+      return *payload_;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+  
+  
+  const Orthanc::IDynamicObject& OrthancApiClient::BinaryResponseReadyMessage::GetPayload() const
+  {
+    if (HasPayload())
+    {
+      return *payload_;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+  
+  
+  const Orthanc::IDynamicObject& OrthancApiClient::EmptyResponseReadyMessage::GetPayload() const
+  {
+    if (HasPayload())
+    {
+      return *payload_;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+  
+  
+  const Orthanc::IDynamicObject& OrthancApiClient::HttpErrorMessage::GetPayload() const
+  {
+    if (HasPayload())
+    {
+      return *payload_;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+  
+  
+  OrthancApiClient::OrthancApiClient(MessageBroker &broker, IWebService &orthanc) :
+    IObservable(broker),
+    orthanc_(orthanc)
   {
   }
 
@@ -54,16 +107,18 @@ namespace OrthancStone {
     void ConvertResponseToJson(const IWebService::HttpRequestSuccessMessage& message)
     {
       Json::Value response;
-      if (MessagingToolbox::ParseJson(response, message.answer_, message.answerSize_))
+      if (MessagingToolbox::ParseJson(response, message.GetAnswer(), message.GetAnswerSize()))
       {
         if (orthancApiSuccessCallback_.get() != NULL)
         {
-          orthancApiSuccessCallback_->Apply(OrthancApiClient::JsonResponseReadyMessage(message.uri_, response, message.payload_));
+          orthancApiSuccessCallback_->Apply(OrthancApiClient::JsonResponseReadyMessage
+                                            (message.GetUri(), response, message.GetPayloadPointer()));
         }
       }
       else if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.uri_, message.payload_));
+        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage
+                                          (message.GetUri(), message.GetPayloadPointer()));
       }
 
       delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
@@ -73,7 +128,7 @@ namespace OrthancStone {
     {
       if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.uri_));
+        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.GetUri(), message.GetPayloadPointer()));
       }
 
       delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
@@ -103,11 +158,14 @@ namespace OrthancStone {
     {
       if (orthancApiSuccessCallback_.get() != NULL)
       {
-        orthancApiSuccessCallback_->Apply(OrthancApiClient::BinaryResponseReadyMessage(message.uri_, message.answer_, message.answerSize_, message.payload_));
+        orthancApiSuccessCallback_->Apply(OrthancApiClient::BinaryResponseReadyMessage
+                                          (message.GetUri(), message.GetAnswer(),
+                                           message.GetAnswerSize(), message.GetPayloadPointer()));
       }
       else if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.uri_, message.payload_));
+        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage
+                                          (message.GetUri(), message.GetPayloadPointer()));
       }
 
       delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
@@ -117,7 +175,7 @@ namespace OrthancStone {
     {
       if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.uri_));
+        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.GetUri(), message.GetPayloadPointer()));
       }
 
       delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
@@ -147,11 +205,13 @@ namespace OrthancStone {
     {
       if (orthancApiSuccessCallback_.get() != NULL)
       {
-        orthancApiSuccessCallback_->Apply(OrthancApiClient::EmptyResponseReadyMessage(message.uri_, message.payload_));
+        orthancApiSuccessCallback_->Apply(OrthancApiClient::EmptyResponseReadyMessage
+                                          (message.GetUri(), message.GetPayloadPointer()));
       }
       else if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.uri_, message.payload_));
+        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage
+                                          (message.GetUri(), message.GetPayloadPointer()));
       }
 
       delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
@@ -161,7 +221,7 @@ namespace OrthancStone {
     {
       if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.uri_));
+        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.GetUri(), message.GetPayloadPointer()));
       }
 
       delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)

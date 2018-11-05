@@ -56,8 +56,6 @@ namespace OrthancStone
 
   void NativeStoneApplicationContext::Start()
   {
-    dynamic_cast<OracleWebService*>(webService_)->Start();
-
     if (centralViewport_->HasUpdateContent())
     {
       stopped_ = false;
@@ -74,7 +72,5 @@ namespace OrthancStone
     {
       updateThread_.join();
     }
-    
-    dynamic_cast<OracleWebService*>(webService_)->Stop();
   }
 }

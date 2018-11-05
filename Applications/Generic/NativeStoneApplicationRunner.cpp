@@ -184,33 +184,42 @@ namespace OrthancStone
       LogStatusBar statusBar;
 
       NativeStoneApplicationContext context;
-      Oracle oracle(4); // use 4 threads to download content
-      OracleWebService webService(broker_, oracle, webServiceParameters, context);
-      context.SetWebService(webService);
-
-      application_.Initialize(&context, statusBar, parameters);
 
       {
-        NativeStoneApplicationContext::GlobalMutexLocker locker(context);
-        context.SetCentralWidget(application_.GetCentralWidget());
-        context.GetCentralViewport().SetStatusBar(statusBar);
+        Oracle oracle(4); // use 4 threads to download content
+        oracle.Start();
+
+        {
+          OracleWebService webService(broker_, oracle, webServiceParameters, context);
+          context.SetWebService(webService);
+
+          application_.Initialize(&context, statusBar, parameters);
+
+          {
+            NativeStoneApplicationContext::GlobalMutexLocker locker(context);
+            context.SetCentralWidget(application_.GetCentralWidget());
+            context.GetCentralViewport().SetStatusBar(statusBar);
+          }
+
+          std::string title = application_.GetTitle();
+          if (title.empty())
+          {
+            title = "Stone of Orthanc";
+          }
+
+          /****************************************************************
+           * Run the application
+           ****************************************************************/
+
+          Run(context, title, argc, argv);
+
+          /****************************************************************
+           * Finalize the application
+           ****************************************************************/
+
+          oracle.Stop();
+        }
       }
-
-      std::string title = application_.GetTitle();
-      if (title.empty())
-      {
-        title = "Stone of Orthanc";
-      }
-
-      /****************************************************************
-       * Run the application
-       ****************************************************************/
-
-      Run(context, title, argc, argv);
-
-      /****************************************************************
-       * Finalize the application
-       ****************************************************************/
 
       LOG(WARNING) << "The application is stopping";
       application_.Finalize();

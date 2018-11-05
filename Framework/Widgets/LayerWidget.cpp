@@ -519,7 +519,7 @@ public:
   void LayerWidget::OnGeometryReady(const ILayerSource::GeometryReadyMessage& message)
   {
     size_t i;
-    if (LookupLayer(i, message.origin_))
+    if (LookupLayer(i, message.GetOrigin()))
     {
       LOG(INFO) << ": Geometry ready for layer " << i << " in " << GetName();
 
@@ -558,7 +558,7 @@ public:
   void LayerWidget::OnContentChanged(const ILayerSource::ContentChangedMessage& message)
   {
     size_t index;
-    if (LookupLayer(index, message.origin_))
+    if (LookupLayer(index, message.GetOrigin()))
     {
       InvalidateLayer(index);
     }
@@ -571,7 +571,7 @@ public:
     if (message.slice_.ContainsPlane(slice_))
     {
       size_t index;
-      if (LookupLayer(index, message.origin_))
+      if (LookupLayer(index, message.GetOrigin()))
       {
         InvalidateLayer(index);
       }
@@ -583,7 +583,7 @@ public:
   void LayerWidget::OnLayerReady(const ILayerSource::LayerReadyMessage& message)
   {
     size_t index;
-    if (LookupLayer(index, message.origin_))
+    if (LookupLayer(index, message.GetOrigin()))
     {
       if (message.isError_)
       {

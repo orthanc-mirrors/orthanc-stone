@@ -34,7 +34,7 @@ namespace OrthancStone
 
   void OrthancFrameLayerSource::OnSliceGeometryReady(const OrthancSlicesLoader::SliceGeometryReadyMessage& message)
   {
-    if (message.origin_.GetSliceCount() > 0)
+    if (message.GetOrigin().GetSliceCount() > 0)
     {
       LayerSourceBase::NotifyGeometryReady();
     }

@@ -206,7 +206,7 @@ namespace OrthancStone
 
   void SmartLoader::OnLayerGeometryReady(const ILayerSource::GeometryReadyMessage& message)
   {
-    OrthancFrameLayerSource& source = dynamic_cast<OrthancFrameLayerSource&>(message.origin_);
+    OrthancFrameLayerSource& source = dynamic_cast<OrthancFrameLayerSource&>(message.GetOrigin());
 
     // save/replace the slice in cache
     const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount()
@@ -229,7 +229,7 @@ namespace OrthancStone
 
   void SmartLoader::OnImageReady(const ILayerSource::ImageReadyMessage& message)
   {
-    OrthancFrameLayerSource& source = dynamic_cast<OrthancFrameLayerSource&>(message.origin_);
+    OrthancFrameLayerSource& source = dynamic_cast<OrthancFrameLayerSource&>(message.GetOrigin());
 
     // save/replace the slice in cache
     const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount() ?
@@ -253,7 +253,7 @@ namespace OrthancStone
 
   void SmartLoader::OnLayerReady(const ILayerSource::LayerReadyMessage& message)
   {
-    OrthancFrameLayerSource& source = dynamic_cast<OrthancFrameLayerSource&>(message.origin_);
+    OrthancFrameLayerSource& source = dynamic_cast<OrthancFrameLayerSource&>(message.GetOrigin());
     const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount() ?
     std::string sliceKeyId = (slice.GetOrthancInstanceId() + ":" + 
                               boost::lexical_cast<std::string>(slice.GetFrame()));

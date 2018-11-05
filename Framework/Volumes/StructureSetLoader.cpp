@@ -37,7 +37,7 @@ namespace OrthancStone
 
   void StructureSetLoader::OnReferencedSliceLoaded(const OrthancApiClient::JsonResponseReadyMessage& message)
   {
-    OrthancPlugins::FullOrthancDataset dataset(message.Response);
+    OrthancPlugins::FullOrthancDataset dataset(message.GetJson());
 
     Orthanc::DicomMap slice;
     MessagingToolbox::ConvertDataset(slice, dataset);
@@ -48,7 +48,7 @@ namespace OrthancStone
 
   void StructureSetLoader::OnStructureSetLoaded(const OrthancApiClient::JsonResponseReadyMessage& message)
   {
-    OrthancPlugins::FullOrthancDataset dataset(message.Response);
+    OrthancPlugins::FullOrthancDataset dataset(message.GetJson());
     structureSet_.reset(new DicomStructureSet(dataset));
 
     std::set<std::string> instances;
@@ -66,7 +66,7 @@ namespace OrthancStone
 
   void StructureSetLoader::OnLookupCompleted(const OrthancApiClient::JsonResponseReadyMessage& message)
   {
-    Json::Value lookup = message.Response;
+    const Json::Value& lookup = message.GetJson();
 
     if (lookup.type() != Json::arrayValue ||
         lookup.size() != 1 ||

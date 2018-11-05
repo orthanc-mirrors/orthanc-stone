@@ -44,8 +44,8 @@ namespace OrthancStone
   namespace Samples
   {
     class SimpleViewerApplication :
-        public SampleSingleCanvasWithButtonsApplicationBase,
-        public IObserver
+      public SampleSingleCanvasWithButtonsApplicationBase,
+      public IObserver
     {
     private:
       class ThumbnailInteractor : public IWorldSceneInteractor
@@ -169,20 +169,20 @@ namespace OrthancStone
         {
           switch (keyChar)
           {
-          case 's':
-            widget.FitContent();
-            break;
+            case 's':
+              widget.FitContent();
+              break;
 
-          case 'l':
-            application_.currentTool_ = Tools_LineMeasure;
-            break;
+            case 'l':
+              application_.currentTool_ = Tools_LineMeasure;
+              break;
 
-          case 'c':
-            application_.currentTool_ = Tools_CircleMeasure;
-            break;
+            case 'c':
+              application_.currentTool_ = Tools_CircleMeasure;
+              break;
 
-          default:
-            break;
+            default:
+              break;
           }
         }
       };
@@ -196,7 +196,7 @@ namespace OrthancStone
       public:
         SimpleViewerApplicationAdapter(MessageBroker& broker, SimpleViewerApplication& application)
           : WasmPlatformApplicationAdapter(broker, application),
-          viewerApplication_(application)
+            viewerApplication_(application)
         {
 
         }
@@ -264,9 +264,9 @@ namespace OrthancStone
       {
         boost::program_options::options_description generic("Sample options");
         generic.add_options()
-            ("studyId", boost::program_options::value<std::string>(),
-             "Orthanc ID of the study")
-            ;
+          ("studyId", boost::program_options::value<std::string>(),
+           "Orthanc ID of the study")
+          ;
 
         options.add(generic);
       }
@@ -319,7 +319,9 @@ namespace OrthancStone
         if (parameters.count("studyId") < 1)
         {
           LOG(WARNING) << "The study ID is missing, will take the first studyId found in Orthanc";
-          orthancApiClient_->GetJsonAsync("/studies", new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyListReceived));
+          orthancApiClient_->GetJsonAsync("/studies",
+                                          new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>
+                                          (*this, &SimpleViewerApplication::OnStudyListReceived));
         }
         else
         {
@@ -329,7 +331,7 @@ namespace OrthancStone
 
       void OnStudyListReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
       {
-        const Json::Value& response = message.Response;
+        const Json::Value& response = message.GetJson();
 
         if (response.isArray() && response.size() > 1)
         {
@@ -338,22 +340,26 @@ namespace OrthancStone
       }
       void OnStudyReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
       {
-        const Json::Value& response = message.Response;
+        const Json::Value& response = message.GetJson();
 
         if (response.isObject() && response["Series"].isArray())
         {
           for (size_t i=0; i < response["Series"].size(); i++)
           {
-            orthancApiClient_->GetJsonAsync("/series/" + response["Series"][(int)i].asString(), new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnSeriesReceived));
+            orthancApiClient_->GetJsonAsync("/series/" + response["Series"][(int)i].asString(),
+                                            new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>
+                                            (*this, &SimpleViewerApplication::OnSeriesReceived));
           }
         }
       }
 
       void OnSeriesReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
       {
-        const Json::Value& response = message.Response;
+        const Json::Value& response = message.GetJson();
 
-        if (response.isObject() && response["Instances"].isArray() && response["Instances"].size() > 0)
+        if (response.isObject() &&
+            response["Instances"].isArray() &&
+            response["Instances"].size() > 0)
         {
           // keep track of all instances IDs
           const std::string& seriesId = response["ID"].asString();
@@ -395,7 +401,7 @@ namespace OrthancStone
 
       void OnWidgetGeometryChanged(const LayerWidget::GeometryChangedMessage& message)
       {
-        message.origin_.FitContent();
+        message.GetOrigin().FitContent();
       }
 
       void SelectSeriesInMainViewport(const std::string& seriesId)
@@ -417,8 +423,8 @@ namespace OrthancStone
       virtual void GetButtonNames(std::string& pushButton1,
                                   std::string& pushButton2,
                                   std::string& tool1,
-                                  std::string& tool2
-                                  ) {
+                                  std::string& tool2)
+      {
         tool1 = "line";
         tool2 = "circle";
         pushButton1 = "action1";
@@ -426,8 +432,8 @@ namespace OrthancStone
       }
 
 #if ORTHANC_ENABLE_WASM==1
-      virtual void InitializeWasm() {
-
+      virtual void InitializeWasm()
+      {
         AttachWidgetToWasmViewport("canvas", thumbnailsLayout_);
         AttachWidgetToWasmViewport("canvas2", mainWidget_);
       }

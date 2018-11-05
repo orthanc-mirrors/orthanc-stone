@@ -187,7 +187,7 @@ namespace OrthancStone
         // Once the geometry of the series is downloaded from Orthanc,
         // display its middle slice, and adapt the viewport to fit this
         // slice
-        if (source_ == &message.origin_)
+        if (source_ == &message.GetOrigin())
         {
           SetSlice(source_->GetSliceCount() / 2);
         }

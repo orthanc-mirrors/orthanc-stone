@@ -49,17 +49,20 @@ namespace OrthancStone
 
   void WebServiceCommandBase::Commit()
   {
-    NativeStoneApplicationContext::GlobalMutexLocker lock(context_);  // we want to make sure that, i.e, the UpdateThread is not triggered while we are updating the "model" with the result of a WebServiceCommand
+    // We want to make sure that, i.e, the UpdateThread is not
+    // triggered while we are updating the "model" with the result of
+    // a WebServiceCommand
+    NativeStoneApplicationContext::GlobalMutexLocker lock(context_); 
 
     if (success_ && successCallback_.get() != NULL)
     {
-      successCallback_->Apply(IWebService::HttpRequestSuccessMessage(uri_, answer_.c_str(), answer_.size(), payload_.release()));
+      IWebService::HttpRequestSuccessMessage message(uri_, answer_.c_str(), answer_.size(), payload_.get());
+      successCallback_->Apply(message);
     }
     else if (!success_ && failureCallback_.get() != NULL)
     {
-      failureCallback_->Apply(IWebService::HttpRequestErrorMessage(uri_, payload_.release()));
+      IWebService::HttpRequestErrorMessage message(uri_, payload_.get());
+      failureCallback_->Apply(message);
     }
-
   }
-
 }

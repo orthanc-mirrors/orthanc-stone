@@ -82,16 +82,5 @@ namespace OrthancStone
     {
       oracle_.Submit(new WebServiceDeleteCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, payload, context_));
     }
-
-
-    void Start()
-    {
-      oracle_.Start();
-    }
-
-    void Stop()
-    {
-      oracle_.Stop();
-    }
   };
 }

@@ -21,15 +21,16 @@
 
 #include "SimpleViewerApplication.h"
 
-#if ORTHANC_ENABLE_QT==1
-#include "Qt/SimpleViewerMainWindow.h"
+#if ORTHANC_ENABLE_QT == 1
+#  include "Qt/SimpleViewerMainWindow.h"
 #endif
 
-#if ORTHANC_ENABLE_WASM==1
-#include <Platforms/Wasm/WasmViewport.h>
+#if ORTHANC_ENABLE_WASM == 1
+#  include <Platforms/Wasm/WasmViewport.h>
 #endif
 
-namespace SimpleViewer {
+namespace SimpleViewer
+{
 
   void SimpleViewerApplication::Initialize(StoneApplicationContext* context,
                                            IStatusBar& statusBar,
@@ -101,7 +102,7 @@ namespace SimpleViewer {
 
   void SimpleViewerApplication::OnStudyListReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
   {
-    const Json::Value& response = message.Response;
+    const Json::Value& response = message.GetJson();
 
     if (response.isArray() && response.size() > 1)
     {
@@ -110,7 +111,7 @@ namespace SimpleViewer {
   }
   void SimpleViewerApplication::OnStudyReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
   {
-    const Json::Value& response = message.Response;
+    const Json::Value& response = message.GetJson();
 
     if (response.isObject() && response["Series"].isArray())
     {
@@ -123,7 +124,7 @@ namespace SimpleViewer {
 
   void SimpleViewerApplication::OnSeriesReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
   {
-    const Json::Value& response = message.Response;
+    const Json::Value& response = message.GetJson();
 
     if (response.isObject() && response["Instances"].isArray() && response["Instances"].size() > 0)
     {
@@ -166,7 +167,7 @@ namespace SimpleViewer {
 
   void SimpleViewerApplication::OnWidgetGeometryChanged(const LayerWidget::GeometryChangedMessage& message)
   {
-    message.origin_.FitContent();
+    message.GetOrigin().FitContent();
   }
 
   void SimpleViewerApplication::SelectSeriesInMainViewport(const std::string& seriesId)

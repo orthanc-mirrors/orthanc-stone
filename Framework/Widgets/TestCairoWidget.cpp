@@ -36,7 +36,7 @@ namespace OrthancStone
         value_ = 1;
       }
 
-      NotifyChange();
+      NotifyContentChanged();
     }
 
 
@@ -77,7 +77,8 @@ namespace OrthancStone
     }
 
 
-    TestCairoWidget::TestCairoWidget(bool animate) :
+    TestCairoWidget::TestCairoWidget(const std::string& name, bool animate) :
+      CairoWidget(name),
       width_(0),
       height_(0),
       value_(1),
@@ -114,10 +115,11 @@ namespace OrthancStone
     }
 
     
-    void TestCairoWidget::KeyPressed(char key,
+    void TestCairoWidget::KeyPressed(KeyboardKeys key,
+                                     char keyChar,
                                      KeyboardModifiers modifiers)
     {
-      UpdateStatusBar("Key pressed: \"" + std::string(1, key) + "\"");
+      UpdateStatusBar("Key pressed: \"" + std::string(1, keyChar) + "\"");
     }
   }
 }

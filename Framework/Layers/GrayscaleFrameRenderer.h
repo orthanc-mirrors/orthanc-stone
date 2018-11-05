@@ -32,6 +32,7 @@ namespace OrthancStone
     std::auto_ptr<Orthanc::ImageAccessor>   frame_;  // In Float32
     float                                   defaultWindowCenter_;
     float                                   defaultWindowWidth_;
+    Orthanc::PhotometricInterpretation      photometric_;
 
   protected:
     virtual CairoSurface* GenerateDisplay(const RenderStyle& style);

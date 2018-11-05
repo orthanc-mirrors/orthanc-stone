@@ -22,7 +22,8 @@
 #pragma once
 
 #include "../Viewport/CairoContext.h"
-#include "../Toolbox/Extent2D.h"
+#include "Extent2D.h"
+#include "LinearAlgebra.h"
 
 namespace OrthancStone
 {
@@ -63,6 +64,11 @@ namespace OrthancStone
                            double x,
                            double y) const;
 
+    void MapPixelCenterToScene(double& sceneX /* out */,
+                               double& sceneY /* out */,
+                               int x,
+                               int y) const;
+
     void MapSceneToDisplay(int& displayX /* out */,
                            int& displayY /* out */,
                            double x,
@@ -83,7 +89,7 @@ namespace OrthancStone
       return zoom_;
     }
 
-    void SetDefaultView();
+    void FitContent();
 
     void ApplyTransform(CairoContext& context) const;
 
@@ -94,5 +100,7 @@ namespace OrthancStone
                 double y);
 
     void SetZoom(double zoom);
+
+    Matrix GetMatrix() const;
   };
 }

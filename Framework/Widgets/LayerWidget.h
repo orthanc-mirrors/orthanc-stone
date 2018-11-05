@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -24,15 +24,21 @@
 #include "WorldSceneWidget.h"
 #include "../Layers/ILayerSource.h"
 #include "../Toolbox/Extent2D.h"
+#include "../../Framework/Messages/IObserver.h"
 
 #include <map>
 
 namespace OrthancStone
 {
   class LayerWidget :
-    public WorldSceneWidget,
-    private ILayerSource::IObserver
+      public WorldSceneWidget,
+      public IObserver,
+      public IObservable
   {
+  public:
+    typedef OriginMessage<MessageType_Widget_GeometryChanged, LayerWidget> GeometryChangedMessage;
+    typedef OriginMessage<MessageType_Widget_ContentChanged, LayerWidget> ContentChangedMessage;
+
   private:
     class Scene;
     
@@ -53,25 +59,23 @@ namespace OrthancStone
     void GetLayerExtent(Extent2D& extent,
                         ILayerSource& source) const;
 
-    virtual void NotifyGeometryReady(const ILayerSource& source);
+    void OnGeometryReady(const ILayerSource::GeometryReadyMessage& message);
 
-    virtual void NotifyGeometryError(const ILayerSource& source);
+    virtual void OnContentChanged(const ILayerSource::ContentChangedMessage& message);
 
-    virtual void NotifyContentChange(const ILayerSource& source);
+    virtual void OnSliceChanged(const ILayerSource::SliceChangedMessage& message);
 
-    virtual void NotifySliceChange(const ILayerSource& source,
-                                   const Slice& slice);
+    virtual void OnLayerReady(const ILayerSource::LayerReadyMessage& message);
 
-    virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& renderer,
-                                  const ILayerSource& source,
-                                  const CoordinateSystem3D& slice,
-                                  bool isError);
+    void ObserveLayer(ILayerSource& source);
 
     void ResetChangedLayers();
 
   public:
+    LayerWidget(MessageBroker& broker, const std::string& name);
+
     virtual Extent2D GetSceneExtent();
- 
+
   protected:
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view);
@@ -87,11 +91,13 @@ namespace OrthancStone
     void InvalidateLayer(size_t layer);
     
   public:
-    LayerWidget();
-
     virtual ~LayerWidget();
 
     size_t AddLayer(ILayerSource* layer);  // Takes ownership
+
+    void ReplaceLayer(size_t layerIndex, ILayerSource* layer); // Takes ownership
+
+    void RemoveLayer(size_t layerIndex);
 
     size_t GetLayerCount() const
     {

@@ -24,7 +24,7 @@
 #if ORTHANC_ENABLE_SDL == 1
 
 #include "SdlCairoSurface.h"
-#include "../BasicApplicationContext.h"
+#include "../Generic/NativeStoneApplicationContext.h"
 
 namespace OrthancStone
 {
@@ -32,12 +32,11 @@ namespace OrthancStone
   {
   private:
     SdlWindow&                window_;
-    BasicApplicationContext&  context_;
+    NativeStoneApplicationContext&  context_;
     SdlCairoSurface           surface_;
     bool                      viewportChanged_;
 
-    void SetSize(BasicApplicationContext::ViewportLocker& locker,
-                 unsigned int width,
+    void SetSize(unsigned int width,
                  unsigned int height);
     
     void RenderFrame();
@@ -47,11 +46,11 @@ namespace OrthancStone
 
   public:
     SdlEngine(SdlWindow& window,
-              BasicApplicationContext& context);
+              NativeStoneApplicationContext& context);
   
     virtual ~SdlEngine();
 
-    virtual void NotifyChange(const IViewport& viewport)
+    virtual void OnViewportContentChanged(const IViewport& viewport)
     {
       viewportChanged_ = true;
     }

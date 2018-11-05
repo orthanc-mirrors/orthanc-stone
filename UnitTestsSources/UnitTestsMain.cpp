@@ -26,6 +26,7 @@
 #include "../Framework/Layers/LayerSourceBase.h"
 #include "../Framework/Toolbox/DownloadStack.h"
 #include "../Framework/Toolbox/FiniteProjectiveCamera.h"
+#include "../Framework/Toolbox/MessagingToolbox.h"
 #include "../Framework/Toolbox/OrthancSlicesLoader.h"
 #include "../Framework/Volumes/ImageBuffer3D.h"
 #include "../Framework/Volumes/SlicedVolumeBase.h"
@@ -55,7 +56,7 @@ namespace OrthancStone
 
       for (size_t i = 0; i < loader.GetSliceCount(); i++)
       {
-        const_cast<OrthancSlicesLoader&>(loader).ScheduleLoadSliceImage(i, SliceImageQuality_Full);
+        const_cast<OrthancSlicesLoader&>(loader).ScheduleLoadSliceImage(i, SliceImageQuality_FullPng);
       }
     }
 
@@ -724,6 +725,12 @@ TEST(GeometryToolbox, AlignVectorsWithRotation)
   */
 }
 
+TEST(MessagingToolbox, ParseJson)
+{
+  Json::Value response;
+  std::string source = "{\"command\":\"panel:takeDarkImage\",\"commandType\":\"simple\",\"args\":{}}";
+  ASSERT_TRUE(OrthancStone::MessagingToolbox::ParseJson(response, source.c_str(), source.size()));
+}
 
 int main(int argc, char **argv)
 {

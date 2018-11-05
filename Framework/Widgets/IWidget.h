@@ -35,7 +35,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void SetDefaultView() = 0;
+    virtual void FitContent() = 0;
 
     virtual void SetParent(IWidget& parent) = 0;
     
@@ -64,7 +64,8 @@ namespace OrthancStone
                             int y,
                             KeyboardModifiers modifiers) = 0;
 
-    virtual void KeyPressed(char key,
+    virtual void KeyPressed(KeyboardKeys key,
+                            char keyChar,
                             KeyboardModifiers modifiers) = 0;
 
     virtual bool HasUpdateContent() const = 0;
@@ -73,6 +74,6 @@ namespace OrthancStone
 
     // Subclasses can call this method to signal the display of the
     // widget must be refreshed
-    virtual void NotifyChange() = 0;
+    virtual void NotifyContentChanged() = 0;
   };
 }

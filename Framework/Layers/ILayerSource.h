@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -23,47 +23,76 @@
 
 #include "ILayerRenderer.h"
 #include "../Toolbox/Slice.h"
+#include "../../Framework/Messages/IObservable.h"
+#include "../../Framework/Messages/IMessage.h"
+#include "Core/Images/Image.h"
+#include <boost/shared_ptr.hpp>
 
 namespace OrthancStone
 {
-  class ILayerSource : public boost::noncopyable
+  class ILayerSource : public IObservable
   {
   public:
-    class IObserver : public boost::noncopyable
+
+    typedef OriginMessage<MessageType_LayerSource_GeometryReady, ILayerSource> GeometryReadyMessage;
+    typedef OriginMessage<MessageType_LayerSource_GeometryError, ILayerSource> GeometryErrorMessage;
+    typedef OriginMessage<MessageType_LayerSource_ContentChanged, ILayerSource> ContentChangedMessage;
+
+    struct SliceChangedMessage : public OriginMessage<MessageType_LayerSource_SliceChanged, ILayerSource>
     {
-    public:
-      virtual ~IObserver()
+      const Slice& slice_;
+      SliceChangedMessage(ILayerSource& origin, const Slice& slice)
+        : OriginMessage(origin),
+          slice_(slice)
       {
       }
+    };
 
-      // Triggered as soon as the source has enough information to
-      // answer to "GetExtent()"
-      virtual void NotifyGeometryReady(const ILayerSource& source) = 0;
-      
-      virtual void NotifyGeometryError(const ILayerSource& source) = 0;
-      
-      // Triggered if the content of several slices in the source
-      // volume has changed
-      virtual void NotifyContentChange(const ILayerSource& source) = 0;
+    struct LayerReadyMessage : public OriginMessage<MessageType_LayerSource_LayerReady, ILayerSource>
+    {
+      std::auto_ptr<ILayerRenderer>& renderer_;
+      const CoordinateSystem3D& slice_;
+      bool isError_;
 
-      // Triggered if the content of some individual slice in the
-      // source volume has changed
-      virtual void NotifySliceChange(const ILayerSource& source,
-                                     const Slice& slice) = 0;
- 
-      // The layer must be deleted by the observer that releases the
-      // std::auto_ptr
-      virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& layer,
-                                    const ILayerSource& source,
-                                    const CoordinateSystem3D& slice,
-                                    bool isError) = 0;  // TODO Shouldn't this be separate as NotifyLayerError?
+      LayerReadyMessage(ILayerSource& origin,
+                        std::auto_ptr<ILayerRenderer>& layer,
+                        const CoordinateSystem3D& slice,
+                        bool isError  // TODO Shouldn't this be separate as NotifyLayerError?
+                        )
+        : OriginMessage(origin),
+          renderer_(layer),
+          slice_(slice),
+          isError_(isError)
+      {
+      }
+    };
+
+    struct ImageReadyMessage : public OriginMessage<MessageType_LayerSource_ImageReady, ILayerSource>
+    {
+      boost::shared_ptr<Orthanc::ImageAccessor> image_;
+      SliceImageQuality                         imageQuality_;
+      const Slice&                              slice_;
+
+      ImageReadyMessage(ILayerSource& origin,
+                        boost::shared_ptr<Orthanc::ImageAccessor> image,
+                        SliceImageQuality imageQuality,
+                        const Slice& slice
+                        )
+        : OriginMessage(origin),
+          image_(image),
+          imageQuality_(imageQuality),
+          slice_(slice)
+      {
+      }
     };
     
+    ILayerSource(MessageBroker& broker)
+      : IObservable(broker)
+    {}
+
     virtual ~ILayerSource()
     {
     }
-
-    virtual void Register(IObserver& observer) = 0;
 
     virtual bool GetExtent(std::vector<Vector>& points,
                            const CoordinateSystem3D& viewportSlice) = 0;

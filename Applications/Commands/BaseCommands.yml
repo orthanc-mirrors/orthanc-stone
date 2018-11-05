@@ -1,0 +1,10 @@
+SelectTool:
+  target: Application
+  toolName: string
+  comment: Selects the current application tool
+DownloadDicom:
+  target: LayerWidget
+  comment: Downloads the slice currently displayed in the LayerWidget
+Export:
+  target: IWidget
+  comment: Export the content of the widget

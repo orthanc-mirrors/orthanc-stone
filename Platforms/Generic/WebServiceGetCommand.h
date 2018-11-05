@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -21,34 +21,24 @@
 
 #pragma once
 
-#include "IOracleCommand.h"
-
-#include "../../Framework/Toolbox/IWebService.h"
-
-#include <Core/WebServiceParameters.h>
-
-#include <memory>
+#include "WebServiceCommandBase.h"
 
 namespace OrthancStone
 {
-  class WebServiceGetCommand : public IOracleCommand
+  class WebServiceGetCommand : public WebServiceCommandBase
   {
-  private:
-    IWebService::ICallback&                 callback_;
-    Orthanc::WebServiceParameters           parameters_;
-    std::string                             uri_;
-    std::auto_ptr<Orthanc::IDynamicObject>  payload_;
-    bool                                    success_;
-    std::string                             answer_;
-
   public:
-    WebServiceGetCommand(IWebService::ICallback& callback,
+    WebServiceGetCommand(MessageBroker& broker,
+                         MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                         MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                          const Orthanc::WebServiceParameters& parameters,
                          const std::string& uri,
-                         Orthanc::IDynamicObject* payload /* takes ownership */);
+                         const IWebService::Headers& headers,
+                         unsigned int timeoutInSeconds,
+                         Orthanc::IDynamicObject* payload /* takes ownership */,
+                         NativeStoneApplicationContext& context);
 
     virtual void Execute();
-
-    virtual void Commit();
   };
+
 }

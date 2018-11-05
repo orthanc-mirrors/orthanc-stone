@@ -24,8 +24,6 @@
 
 #include "CircleMeasureTracker.h"
 
-#include "../Viewport/CairoFont.h"
-
 #include <stdio.h>
 
 namespace OrthancStone
@@ -37,14 +35,14 @@ namespace OrthancStone
                                              uint8_t red,
                                              uint8_t green,
                                              uint8_t blue,
-                                             unsigned int fontSize) :
+                                             const Orthanc::Font& font) :
     statusBar_(statusBar),
     slice_(slice),
     x1_(x),
     y1_(y),
     x2_(x),
     y2_(y),
-    fontSize_(fontSize)
+    font_(font)
   {
     color_[0] = red;
     color_[1] = green;
@@ -73,12 +71,7 @@ namespace OrthancStone
     cairo_stroke(cr);
     cairo_restore(cr);
 
-    if (fontSize_ != 0)
-    {
-      cairo_move_to(cr, x, y);
-      CairoFont font("sans-serif", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-      font.Draw(context, FormatRadius(), static_cast<double>(fontSize_) / zoom);
-    }
+    context.DrawText(font_, FormatRadius(), x, y, BitmapAnchor_Center);
   }
     
 
@@ -97,7 +90,9 @@ namespace OrthancStone
     return buf;
   }
 
-  void CircleMeasureTracker::MouseMove(double x,
+  void CircleMeasureTracker::MouseMove(int displayX,
+                                       int displayY,
+                                       double x,
                                        double y)
   {
     x2_ = x;

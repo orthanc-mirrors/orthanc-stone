@@ -260,8 +260,9 @@ namespace OrthancStone
         }
         else
         {
-          spacingX = v[0];
-          spacingY = v[1];
+          // WARNING: X/Y are swapped (Y comes first)
+          spacingX = v[1];
+          spacingY = v[0];
         }
       }
       else

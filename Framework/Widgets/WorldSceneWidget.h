@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -31,43 +31,23 @@ namespace OrthancStone
 {
   class WorldSceneWidget : public CairoWidget
   {
-  public:
-    class IWorldObserver : public boost::noncopyable
-    {
-    public:
-      virtual ~IWorldObserver()
-      {
-      }
-
-      virtual void NotifySizeChange(const WorldSceneWidget& source,
-                                    ViewportGeometry& view) = 0;  // Can be tuned by the observer
-
-      virtual void NotifyViewChange(const WorldSceneWidget& source,
-                                    const ViewportGeometry& view) = 0;
-    };
-
   private:
-    struct SizeChangeFunctor;
-
     class SceneMouseTracker;
-    class PanMouseTracker;
-    class ZoomMouseTracker;
-
-    typedef ObserversRegistry<WorldSceneWidget, IWorldObserver>  Observers;
 
     ViewportGeometry       view_;
-    Observers              observers_;
     IWorldSceneInteractor* interactor_;
-
-  public:
-    virtual Extent2D GetSceneExtent() = 0;
+    bool                   hasDefaultMouseEvents_;
 
   protected:
+    virtual Extent2D GetSceneExtent() = 0;
+
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view) = 0;
 
+    // From CairoWidget
     virtual bool RenderCairo(CairoContext& context);
 
+    // From CairoWidget
     virtual void RenderMouseOverCairo(CairoContext& context,
                                       int x,
                                       int y);
@@ -75,54 +55,49 @@ namespace OrthancStone
     void SetSceneExtent(ViewportGeometry& geometry);
 
   public:
-    WorldSceneWidget() :
-      interactor_(NULL)
+    WorldSceneWidget(const std::string& name) :
+      CairoWidget(name),
+      interactor_(NULL),
+      hasDefaultMouseEvents_(true)
     {
     }
 
-    void Register(IWorldObserver& observer)
+    void SetDefaultMouseEvents(bool value)
     {
-      observers_.Register(observer);
+      hasDefaultMouseEvents_ = value;
     }
 
-    void Unregister(IWorldObserver& observer)
+    bool HasDefaultMouseEvents() const
     {
-      observers_.Unregister(observer);
+      return hasDefaultMouseEvents_;
+    }
+
+    void SetInteractor(IWorldSceneInteractor& interactor);
+
+    void SetView(const ViewportGeometry& view);
+
+    const ViewportGeometry& GetView() const
+    {
+      return view_;
     }
 
     virtual void SetSize(unsigned int width,
                          unsigned int height);
 
-    void SetInteractor(IWorldSceneInteractor& interactor);
-
-    virtual void SetDefaultView();
-
-    void SetView(const ViewportGeometry& view);
-
-    ViewportGeometry GetView();
+    virtual void FitContent();
 
     virtual IMouseTracker* CreateMouseTracker(MouseButton button,
                                               int x,
                                               int y,
                                               KeyboardModifiers modifiers);
 
-    virtual void RenderSceneMouseOver(CairoContext& context,
-                                      const ViewportGeometry& view,
-                                      double x,
-                                      double y);
-
-    virtual IWorldSceneMouseTracker* CreateMouseSceneTracker(const ViewportGeometry& view,
-                                                             MouseButton button,
-                                                             double x,
-                                                             double y,
-                                                             KeyboardModifiers modifiers);
-
     virtual void MouseWheel(MouseWheelDirection direction,
                             int x,
                             int y,
                             KeyboardModifiers modifiers);
 
-    virtual void KeyPressed(char key,
+    virtual void KeyPressed(KeyboardKeys key,
+                            char keyChar,
                             KeyboardModifiers modifiers);
   };
 }

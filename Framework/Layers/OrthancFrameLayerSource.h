@@ -24,34 +24,24 @@
 #include "LayerSourceBase.h"
 #include "../Toolbox/IWebService.h"
 #include "../Toolbox/OrthancSlicesLoader.h"
+#include "../Toolbox/OrthancApiClient.h"
 
 namespace OrthancStone
 {  
+  // this class is in charge of loading a Frame.
+  // once it's been loaded (first the geometry and then the image),
+  // messages are sent to observers so they can use it
   class OrthancFrameLayerSource :
     public LayerSourceBase,
-    private OrthancSlicesLoader::ICallback
+    public IObserver
+    //private OrthancSlicesLoader::ISliceLoaderObserver
   {
   private:
     OrthancSlicesLoader  loader_;
     SliceImageQuality    quality_;
 
-    virtual void NotifyGeometryReady(const OrthancSlicesLoader& loader);
-
-    virtual void NotifyGeometryError(const OrthancSlicesLoader& loader);
-
-    virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
-                                       unsigned int sliceIndex,
-                                       const Slice& slice,
-                                       std::auto_ptr<Orthanc::ImageAccessor>& image,
-                                       SliceImageQuality quality);
-
-    virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
-                                       unsigned int sliceIndex,
-                                       const Slice& slice,
-                                       SliceImageQuality quality);
-
   public:
-    OrthancFrameLayerSource(IWebService& orthanc);
+    OrthancFrameLayerSource(MessageBroker& broker, OrthancApiClient& orthanc);
 
     void LoadSeries(const std::string& seriesId);
 
@@ -63,6 +53,11 @@ namespace OrthancStone
     void SetImageQuality(SliceImageQuality quality)
     {
       quality_ = quality;
+    }
+
+    SliceImageQuality GetImageQuality() const
+    {
+      return quality_;
     }
 
     size_t GetSliceCount() const
@@ -79,5 +74,11 @@ namespace OrthancStone
                            const CoordinateSystem3D& viewportSlice);
 
     virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice);
+
+protected:
+    void OnSliceGeometryReady(const OrthancSlicesLoader::SliceGeometryReadyMessage& message);
+    void OnSliceGeometryError(const OrthancSlicesLoader::SliceGeometryErrorMessage& message);
+    void OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message);
+    void OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message);
   };
 }

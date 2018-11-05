@@ -24,7 +24,6 @@
 #include "IOracleCommand.h"
 
 #include <boost/shared_ptr.hpp>
-#include <boost/thread/mutex.hpp>
 
 namespace OrthancStone
 {
@@ -36,9 +35,6 @@ namespace OrthancStone
     boost::shared_ptr<PImpl>  pimpl_;
 
   public:
-    Oracle(boost::mutex& globalMutex,
-           unsigned int threadCount);
-
     Oracle(unsigned int threadCount);
 
     void Start();

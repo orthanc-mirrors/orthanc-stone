@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -24,35 +24,56 @@
 #include "IWebService.h"
 #include "SlicesSorter.h"
 #include "../StoneEnumerations.h"
-
+#include "../Messages/IObservable.h"
 #include <boost/shared_ptr.hpp>
+#include "OrthancApiClient.h"
+#include "Core/Images/Image.h"
+
 
 namespace OrthancStone
 {
-  class OrthancSlicesLoader : public boost::noncopyable
+  class OrthancSlicesLoader : public IObservable, public IObserver
   {
   public:
-    class ICallback : public boost::noncopyable
+
+    typedef OriginMessage<MessageType_SliceLoader_GeometryReady, OrthancSlicesLoader> SliceGeometryReadyMessage;
+    typedef OriginMessage<MessageType_SliceLoader_GeometryError, OrthancSlicesLoader> SliceGeometryErrorMessage;
+
+    struct SliceImageReadyMessage : public BaseMessage<MessageType_SliceLoader_ImageReady>
     {
-    public:
-      virtual ~ICallback()
+      unsigned int sliceIndex_;
+      const Slice& slice_;
+      boost::shared_ptr<Orthanc::ImageAccessor> image_;
+      SliceImageQuality effectiveQuality_;
+
+      SliceImageReadyMessage(unsigned int sliceIndex,
+                             const Slice& slice,
+                             boost::shared_ptr<Orthanc::ImageAccessor> image,
+                             SliceImageQuality effectiveQuality)
+        : BaseMessage(),
+          sliceIndex_(sliceIndex),
+          slice_(slice),
+          image_(image),
+          effectiveQuality_(effectiveQuality)
       {
       }
+    };
 
-      virtual void NotifyGeometryReady(const OrthancSlicesLoader& loader) = 0;
+    struct SliceImageErrorMessage : public BaseMessage<MessageType_SliceLoader_ImageError>
+    {
+      const Slice& slice_;
+      unsigned int sliceIndex_;
+      SliceImageQuality effectiveQuality_;
 
-      virtual void NotifyGeometryError(const OrthancSlicesLoader& loader) = 0;
-
-      virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
-                                         unsigned int sliceIndex,
-                                         const Slice& slice,
-                                         std::auto_ptr<Orthanc::ImageAccessor>& image,
-                                         SliceImageQuality effectiveQuality) = 0;
-
-      virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
-                                         unsigned int sliceIndex,
-                                         const Slice& slice,
-                                         SliceImageQuality quality) = 0;
+      SliceImageErrorMessage(unsigned int sliceIndex,
+                             const Slice& slice,
+                             SliceImageQuality effectiveQuality)
+        : BaseMessage(),
+          slice_(slice),
+          sliceIndex_(sliceIndex),
+          effectiveQuality_(effectiveQuality)
+      {
+      }
     };
     
   private:
@@ -70,51 +91,44 @@ namespace OrthancStone
       Mode_InstanceGeometry,
       Mode_FrameGeometry,
       Mode_LoadImage,
-      Mode_LoadRawImage
+      Mode_LoadRawImage,
+      Mode_LoadDicomFile
     };
 
     class Operation;
-    class WebCallback;
 
-    boost::shared_ptr<WebCallback>  webCallback_;  // This is a PImpl pattern
-
-    ICallback&    userCallback_;
-    IWebService&  orthanc_;
+    OrthancApiClient&  orthanc_;
     State         state_;
     SlicesSorter  slices_;
 
     void NotifySliceImageSuccess(const Operation& operation,
-                                 std::auto_ptr<Orthanc::ImageAccessor>& image) const;
-  
-    void NotifySliceImageError(const Operation& operation) const;
-    
-    void ParseSeriesGeometry(const void* answer,
-                             size_t size);
+                                 boost::shared_ptr<Orthanc::ImageAccessor> image);
 
-    void ParseInstanceGeometry(const std::string& instanceId,
-                               const void* answer,
-                               size_t size);
+    void NotifySliceImageError(const Operation& operation);
 
-    void ParseFrameGeometry(const std::string& instanceId,
-                            unsigned int frame,
-                            const void* answer,
-                            size_t size);
+    void OnGeometryError(const OrthancApiClient::HttpErrorMessage& message);
+    void OnSliceImageError(const OrthancApiClient::HttpErrorMessage& message);
 
-    void ParseSliceImagePng(const Operation& operation,
-                            const void* answer,
-                            size_t size);
+    void ParseSeriesGeometry(const OrthancApiClient::JsonResponseReadyMessage& message);
 
-    void ParseSliceImageJpeg(const Operation& operation,
-                             const void* answer,
-                             size_t size);
+    void ParseInstanceGeometry(const OrthancApiClient::JsonResponseReadyMessage& message);
 
-    void ParseSliceRawImage(const Operation& operation,
-                            const void* answer,
-                            size_t size);
+    void ParseFrameGeometry(const OrthancApiClient::JsonResponseReadyMessage& message);
+
+    void ParseSliceImagePng(const OrthancApiClient::BinaryResponseReadyMessage& message);
+
+    void ParseSliceImagePam(const OrthancApiClient::BinaryResponseReadyMessage& message);
+
+    void ParseSliceImageJpeg(const OrthancApiClient::JsonResponseReadyMessage& message);
+
+    void ParseSliceRawImage(const OrthancApiClient::BinaryResponseReadyMessage& message);
 
     void ScheduleSliceImagePng(const Slice& slice,
                                size_t index);
-    
+
+    void ScheduleSliceImagePam(const Slice& slice,
+                               size_t index);
+
     void ScheduleSliceImageJpeg(const Slice& slice,
                                 size_t index,
                                 SliceImageQuality quality);
@@ -122,8 +136,9 @@ namespace OrthancStone
     void SortAndFinalizeSlices();
     
   public:
-    OrthancSlicesLoader(ICallback& callback,
-                        IWebService& orthanc);
+    OrthancSlicesLoader(MessageBroker& broker,
+                        //ISliceLoaderObserver& callback,
+                        OrthancApiClient& orthancApi);
 
     void ScheduleLoadSeries(const std::string& seriesId);
 
@@ -143,5 +158,7 @@ namespace OrthancStone
 
     void ScheduleLoadSliceImage(size_t index,
                                 SliceImageQuality requestedQuality);
+
+
   };
 }

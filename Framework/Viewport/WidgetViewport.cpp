@@ -36,11 +36,11 @@ namespace OrthancStone
   }
 
 
-  void WidgetViewport::SetDefaultView()
+  void WidgetViewport::FitContent()
   {
     if (centralWidget_.get() != NULL)
     {
-      centralWidget_->SetDefaultView();
+      centralWidget_->FitContent();
     }
   }
 
@@ -64,7 +64,7 @@ namespace OrthancStone
     }
 
     mouseTracker_.reset(NULL);
-      
+
     centralWidget_.reset(widget);
     centralWidget_->SetViewport(*this);
 
@@ -74,16 +74,16 @@ namespace OrthancStone
     }
 
     backgroundChanged_ = true;
-    observers_.Apply(*this, &IObserver::NotifyChange);
+    observers_.Apply(*this, &IObserver::OnViewportContentChanged);
 
     return *widget;
   }
 
 
-  void WidgetViewport::NotifyChange(const IWidget& widget)
+  void WidgetViewport::NotifyContentChanged(const IWidget& widget)
   {
     backgroundChanged_ = true;
-    observers_.Apply(*this, &IObserver::NotifyChange);
+    observers_.Apply(*this, &IObserver::OnViewportContentChanged);
   }
 
 
@@ -97,7 +97,7 @@ namespace OrthancStone
       centralWidget_->SetSize(width, height);
     }
 
-    observers_.Apply(*this, &IObserver::NotifyChange);
+    observers_.Apply(*this, &IObserver::OnViewportContentChanged);
   }
 
 
@@ -155,7 +155,7 @@ namespace OrthancStone
       mouseTracker_.reset(NULL);
     }      
 
-    observers_.Apply(*this, &IObserver::NotifyChange);
+    observers_.Apply(*this, &IObserver::OnViewportContentChanged);
   }
 
 
@@ -165,7 +165,7 @@ namespace OrthancStone
     {
       mouseTracker_->MouseUp();
       mouseTracker_.reset(NULL);
-      observers_.Apply(*this, &IObserver::NotifyChange);
+      observers_.Apply(*this, &IObserver::OnViewportContentChanged);
     }
   }
 
@@ -196,7 +196,7 @@ namespace OrthancStone
     if (repaint)
     {
       // The scene must be repainted, notify the observers
-      observers_.Apply(*this, &IObserver::NotifyChange);
+      observers_.Apply(*this, &IObserver::OnViewportContentChanged);
     }
   }
 
@@ -204,7 +204,7 @@ namespace OrthancStone
   void WidgetViewport::MouseEnter()
   {
     isMouseOver_ = true;
-    observers_.Apply(*this, &IObserver::NotifyChange);
+    observers_.Apply(*this, &IObserver::OnViewportContentChanged);
   }
 
 
@@ -218,7 +218,7 @@ namespace OrthancStone
       mouseTracker_.reset(NULL);
     }
 
-    observers_.Apply(*this, &IObserver::NotifyChange);
+    observers_.Apply(*this, &IObserver::OnViewportContentChanged);
   }
 
 
@@ -235,13 +235,14 @@ namespace OrthancStone
   }
 
 
-  void WidgetViewport::KeyPressed(char key,
+  void WidgetViewport::KeyPressed(KeyboardKeys key,
+                                  char keyChar,
                                   KeyboardModifiers modifiers)
   {
     if (centralWidget_.get() != NULL &&
         mouseTracker_.get() == NULL)
     {
-      centralWidget_->KeyPressed(key, modifiers);
+      centralWidget_->KeyPressed(key, keyChar, modifiers);
     }
   }
 

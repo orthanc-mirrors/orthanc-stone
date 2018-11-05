@@ -49,13 +49,13 @@ namespace OrthancStone
     void ComputeChildrenExtents();
 
   public:
-    LayoutWidget();
+    LayoutWidget(const std::string& name);
 
     virtual ~LayoutWidget();
 
-    virtual void SetDefaultView();
+    virtual void FitContent();
 
-    virtual void NotifyChange(const IWidget& widget);
+    virtual void NotifyContentChanged(const IWidget& widget);
 
     void SetHorizontal();
 
@@ -117,7 +117,8 @@ namespace OrthancStone
                             int y,
                             KeyboardModifiers modifiers);
 
-    virtual void KeyPressed(char key,
+    virtual void KeyPressed(KeyboardKeys key,
+                            char keyChar,
                             KeyboardModifiers modifiers);
 
     virtual bool HasUpdateContent() const

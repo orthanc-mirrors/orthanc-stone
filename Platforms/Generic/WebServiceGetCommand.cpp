@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -25,14 +25,17 @@
 
 namespace OrthancStone
 {
-  WebServiceGetCommand::WebServiceGetCommand(IWebService::ICallback& callback,
+
+  WebServiceGetCommand::WebServiceGetCommand(MessageBroker& broker,
+                                             MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                                             MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                                              const Orthanc::WebServiceParameters& parameters,
                                              const std::string& uri,
-                                             Orthanc::IDynamicObject* payload /* takes ownership */) :
-    callback_(callback),
-    parameters_(parameters),
-    uri_(uri),
-    payload_(payload)
+                                             const IWebService::Headers& headers,
+                                             unsigned int timeoutInSeconds,
+                                             Orthanc::IDynamicObject* payload /* takes ownership */,
+                                             NativeStoneApplicationContext& context) :
+    WebServiceCommandBase(broker, successCallback, failureCallback, parameters, uri, headers, timeoutInSeconds, payload, context)
   {
   }
 
@@ -40,21 +43,15 @@ namespace OrthancStone
   void WebServiceGetCommand::Execute()
   {
     Orthanc::HttpClient client(parameters_, uri_);
-    client.SetTimeout(60);
+    client.SetTimeout(timeoutInSeconds_);
     client.SetMethod(Orthanc::HttpMethod_Get);
+
+    for (IWebService::Headers::const_iterator it = headers_.begin(); it != headers_.end(); it++ )
+    {
+      client.AddHeader(it->first, it->second);
+    }
+
     success_ = client.Apply(answer_);
   }
 
-
-  void WebServiceGetCommand::Commit()
-  {
-    if (success_)
-    {
-      callback_.NotifySuccess(uri_, answer_.c_str(), answer_.size(), payload_.release());
-    }
-    else
-    {
-      callback_.NotifyError(uri_, payload_.release());
-    }
-  }
 }

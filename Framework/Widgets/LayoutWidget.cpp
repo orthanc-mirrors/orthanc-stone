@@ -83,12 +83,10 @@ namespace OrthancStone
     int                     top_;
     unsigned int            width_;
     unsigned int            height_;
-    bool                    hasUpdate_;
 
   public:
     ChildWidget(IWidget* widget) :
-      widget_(widget),
-      hasUpdate_(widget->HasUpdateContent())
+      widget_(widget)
     {
       assert(widget != NULL);
       SetEmpty();
@@ -96,7 +94,7 @@ namespace OrthancStone
 
     void UpdateContent()
     {
-      if (hasUpdate_)
+      if (widget_->HasUpdateContent())
       {
         widget_->UpdateContent();
       }
@@ -266,11 +264,12 @@ namespace OrthancStone
       }
     }
 
-    NotifyChange(*this);
+    NotifyContentChanged(*this);
   }
 
 
-  LayoutWidget::LayoutWidget() :
+  LayoutWidget::LayoutWidget(const std::string& name) :
+    WidgetBase(name),
     isHorizontal_(true),
     width_(0),
     height_(0),
@@ -292,19 +291,19 @@ namespace OrthancStone
   }
 
 
-  void LayoutWidget::SetDefaultView()
+  void LayoutWidget::FitContent()
   {
     for (size_t i = 0; i < children_.size(); i++)
     {
-      children_[i]->GetWidget().SetDefaultView();
+      children_[i]->GetWidget().FitContent();
     }
   }
   
 
-  void LayoutWidget::NotifyChange(const IWidget& widget)
+  void LayoutWidget::NotifyContentChanged(const IWidget& widget)
   {
     // One of the children has changed
-    WidgetBase::NotifyChange();
+    WidgetBase::NotifyContentChanged();
   }
 
 
@@ -452,12 +451,13 @@ namespace OrthancStone
   }
 
 
-  void LayoutWidget::KeyPressed(char key,
+  void LayoutWidget::KeyPressed(KeyboardKeys key,
+                                char keyChar,
                                 KeyboardModifiers modifiers)
   {
     for (size_t i = 0; i < children_.size(); i++)
     {
-      children_[i]->GetWidget().KeyPressed(key, modifiers);
+      children_[i]->GetWidget().KeyPressed(key, keyChar, modifiers);
     }
   }
 

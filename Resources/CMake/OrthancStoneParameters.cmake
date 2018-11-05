@@ -25,7 +25,7 @@
 include(${CMAKE_CURRENT_LIST_DIR}/../../Resources/Orthanc/DownloadOrthancFramework.cmake)
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkParameters.cmake)
 
-set(ENABLE_LOCALE OFF)         # Disable support for locales (notably in Boost)
+set(ENABLE_DCMTK OFF)
 set(ENABLE_GOOGLE_TEST ON)
 set(ENABLE_SQLITE OFF)
 set(ENABLE_JPEG ON)
@@ -49,4 +49,3 @@ set(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 ## the Stone of Orthanc
 #####################################################################
 
-set(ENABLE_SDL ON CACHE INTERNAL "Include support for SDL")

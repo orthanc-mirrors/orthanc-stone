@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -25,93 +25,91 @@
 
 namespace OrthancStone
 {
-  namespace Samples
-  {
-    /**
+  /**
      * This is a test widget that simply fills its surface with an
      * uniform color.
      **/
-    class EmptyWidget : public IWidget
+  class EmptyWidget : public IWidget
+  {
+  private:
+    uint8_t  red_;
+    uint8_t  green_;
+    uint8_t  blue_;
+
+  public:
+    EmptyWidget(uint8_t red,
+                uint8_t green,
+                uint8_t blue) :
+      red_(red),
+      green_(green),
+      blue_(blue)
     {
-    private:
-      uint8_t  red_;
-      uint8_t  green_;
-      uint8_t  blue_;
+    }
 
-    public:
-      EmptyWidget(uint8_t red,
-                  uint8_t green,
-                  uint8_t blue) :
-        red_(red),
-        green_(green),
-        blue_(blue)
-      {
-      }
+    virtual void FitContent()
+    {
+    }
 
-      virtual void SetDefaultView()
-      {
-      }
-  
-      virtual void SetParent(OrthancStone::IWidget& widget)
-      {
-      }
-    
-      virtual void SetViewport(IViewport& viewport)
-      {
-      }
+    virtual void SetParent(IWidget& widget)
+    {
+    }
 
-      virtual void NotifyChange()
-      {
-      }
+    virtual void SetViewport(IViewport& viewport)
+    {
+    }
 
-      virtual void SetStatusBar(IStatusBar& statusBar)
-      {
-      }
+    virtual void NotifyContentChanged()
+    {
+    }
 
-      virtual void SetSize(unsigned int width, 
-                           unsigned int height)
-      {
-      }
- 
-      virtual bool Render(Orthanc::ImageAccessor& surface);
+    virtual void SetStatusBar(IStatusBar& statusBar)
+    {
+    }
 
-      virtual IMouseTracker* CreateMouseTracker(MouseButton button,
-                                                int x,
-                                                int y,
-                                                KeyboardModifiers modifiers)
-      {
-        return NULL;
-      }
+    virtual void SetSize(unsigned int width,
+                         unsigned int height)
+    {
+    }
 
-      virtual void RenderMouseOver(Orthanc::ImageAccessor& target,
-                                   int x,
-                                   int y)
-      {
-      }
+    virtual bool Render(Orthanc::ImageAccessor& surface);
 
-      virtual void MouseWheel(MouseWheelDirection direction,
-                              int x,
-                              int y,
-                              KeyboardModifiers modifiers)
-      {
-      }
+    virtual IMouseTracker* CreateMouseTracker(MouseButton button,
+                                              int x,
+                                              int y,
+                                              KeyboardModifiers modifiers)
+    {
+      return NULL;
+    }
 
-      virtual void KeyPressed(char key,
-                              KeyboardModifiers modifiers)
-      {
-      }
+    virtual void RenderMouseOver(Orthanc::ImageAccessor& target,
+                                 int x,
+                                 int y)
+    {
+    }
 
-      virtual bool HasUpdateContent() const
-      {
-        return false;
-      }
+    virtual void MouseWheel(MouseWheelDirection direction,
+                            int x,
+                            int y,
+                            KeyboardModifiers modifiers)
+    {
+    }
 
-      virtual void UpdateContent();
+    virtual void KeyPressed(KeyboardKeys key,
+                            char keyChar,
+                            KeyboardModifiers modifiers)
+    {
+    }
 
-      virtual bool HasRenderMouseOver()
-      {
-        return false;
-      }
-    };
-  }
+    virtual bool HasUpdateContent() const
+    {
+      return false;
+    }
+
+    virtual void UpdateContent();
+
+    virtual bool HasRenderMouseOver()
+    {
+      return false;
+    }
+  };
 }

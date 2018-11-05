@@ -75,17 +75,44 @@ namespace OrthancStone
     KeyboardModifiers_Alt = (1 << 2)
   };
 
+  enum KeyboardKeys
+  {
+    KeyboardKeys_Generic = 0,
+
+    // let's use the same ids as in javascript to avoid some conversion in WASM: https://css-tricks.com/snippets/javascript/javascript-keycodes/
+    KeyboardKeys_Left = 37,
+    KeyboardKeys_Up = 38,
+    KeyboardKeys_Right = 39,
+    KeyboardKeys_Down = 40
+  };
+
   enum SliceImageQuality
   {
-    SliceImageQuality_Full,
+    SliceImageQuality_FullPng,  // smaller to transmit but longer to generate on Orthanc side (better choice when on low bandwidth)
+    SliceImageQuality_FullPam,  // bigger to transmit but faster to generate on Orthanc side (better choice when on localhost or LAN)
     SliceImageQuality_Jpeg50,
     SliceImageQuality_Jpeg90,
-    SliceImageQuality_Jpeg95
+    SliceImageQuality_Jpeg95,
+
+    SliceImageQuality_InternalRaw   // downloads the raw pixels data as they are stored in the DICOM file (internal use only)
   };
 
   enum SopClassUid
   {
     SopClassUid_RTDose
+  };
+
+  enum BitmapAnchor
+  {
+    BitmapAnchor_BottomLeft,
+    BitmapAnchor_BottomCenter,
+    BitmapAnchor_BottomRight,
+    BitmapAnchor_CenterLeft,
+    BitmapAnchor_Center,
+    BitmapAnchor_CenterRight,
+    BitmapAnchor_TopLeft,
+    BitmapAnchor_TopCenter,
+    BitmapAnchor_TopRight
   };
 
   bool StringToSopClassUid(SopClassUid& result,
@@ -96,4 +123,10 @@ namespace OrthancStone
                         ImageWindowing windowing,
                         float defaultCenter,
                         float defaultWidth);
+
+  void ComputeAnchorTranslation(double& deltaX /* out */,
+                                double& deltaY /* out */,
+                                BitmapAnchor anchor,
+                                unsigned int bitmapWidth,
+                                unsigned int bitmapHeight);
 }

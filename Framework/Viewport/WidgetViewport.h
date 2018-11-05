@@ -45,13 +45,13 @@ namespace OrthancStone
   public:
     WidgetViewport();
 
-    virtual void SetDefaultView();
+    virtual void FitContent();
 
     virtual void SetStatusBar(IStatusBar& statusBar);
 
     IWidget& SetCentralWidget(IWidget* widget);  // Takes ownership
 
-    virtual void NotifyChange(const IWidget& widget);
+    virtual void NotifyContentChanged(const IWidget& widget);
 
     virtual void Register(IObserver& observer)
     {
@@ -82,7 +82,8 @@ namespace OrthancStone
                             int y,
                             KeyboardModifiers modifiers);
 
-    virtual void KeyPressed(char key,
+    virtual void KeyPressed(KeyboardKeys key,
+                            char keyChar,
                             KeyboardModifiers modifiers);
 
     virtual bool HasUpdateContent();

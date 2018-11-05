@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <Plugins/Samples/Common/IDicomDataset.h>
 #include <Core/DicomFormat/DicomMap.h>
 #include <Core/Images/ImageAccessor.h>
 
@@ -43,10 +44,12 @@ namespace OrthancStone
     bool    hasRescale_;
     double  rescaleIntercept_;
     double  rescaleSlope_;
+    bool    hasDefaultWindow_;
     double  defaultWindowCenter_;
     double  defaultWindowWidth_;
-
-    Orthanc::PixelFormat  expectedPixelFormat_;
+    
+    Orthanc::PhotometricInterpretation  photometric_;
+    Orthanc::PixelFormat                expectedPixelFormat_;
 
     void SetDefaultParameters();
 
@@ -61,8 +64,20 @@ namespace OrthancStone
       return expectedPixelFormat_;
     }
 
+    Orthanc::PhotometricInterpretation GetPhotometricInterpretation() const
+    {
+      return photometric_;
+    }
+
     void ReadParameters(const Orthanc::DicomMap& dicom);
 
+    void ReadParameters(const OrthancPlugins::IDicomDataset& dicom);
+
+    bool HasDefaultWindow() const
+    {
+      return hasDefaultWindow_;
+    }
+    
     double GetDefaultWindowCenter() const
     {
       return defaultWindowCenter_;
@@ -83,7 +98,9 @@ namespace OrthancStone
       return rescaleSlope_;
     }
 
-    void ConvertFrame(std::auto_ptr<Orthanc::ImageAccessor>& source) const;
+    void ConvertFrameInplace(std::auto_ptr<Orthanc::ImageAccessor>& source) const;
+
+    Orthanc::ImageAccessor* ConvertFrame(const Orthanc::ImageAccessor& source) const;
 
     void ApplyRescale(Orthanc::ImageAccessor& image,
                       bool useDouble) const;

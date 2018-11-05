@@ -33,8 +33,8 @@ namespace OrthancStone
   namespace Samples
   {
     class SingleFrameApplication :
-      public SampleApplicationBase,
-      private ILayerSource::IObserver
+      public SampleSingleCanvasApplicationBase,
+      public IObserver
     {
     private:
       class Interactor : public IWorldSceneInteractor
@@ -51,6 +51,9 @@ namespace OrthancStone
         virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
                                                             const ViewportGeometry& view,
                                                             MouseButton button,
+                                                            KeyboardModifiers modifiers,
+                                                            int viewportX,
+                                                            int viewportY,
                                                             double x,
                                                             double y,
                                                             IStatusBar* statusBar)
@@ -99,14 +102,15 @@ namespace OrthancStone
         }
 
         virtual void KeyPressed(WorldSceneWidget& widget,
-                                char key,
+                                KeyboardKeys key,
+                                char keyChar,
                                 KeyboardModifiers modifiers,
                                 IStatusBar* statusBar)
         {
-          switch (key)
+          switch (keyChar)
           {
             case 's':
-              widget.SetDefaultView();
+              widget.FitContent();
               break;
 
             default:
@@ -138,6 +142,12 @@ namespace OrthancStone
           }   
         }
       }
+
+
+      LayerWidget& GetMainWidget()
+      {
+        return *dynamic_cast<LayerWidget*>(mainWidget_);
+      }
       
 
       void SetSlice(size_t index)
@@ -148,7 +158,7 @@ namespace OrthancStone
           slice_ = index;
           
 #if 1
-          widget_->SetSlice(source_->GetSlice(slice_).GetGeometry());
+          GetMainWidget().SetSlice(source_->GetSlice(slice_).GetGeometry());
 #else
           // TEST for scene extents - Rotate the axes
           double a = 15.0 / 180.0 * M_PI;
@@ -169,52 +179,33 @@ namespace OrthancStone
       }
         
       
-      virtual void NotifyGeometryReady(const ILayerSource& source)
+      void OnMainWidgetGeometryReady(const ILayerSource::GeometryReadyMessage& message)
       {
         // Once the geometry of the series is downloaded from Orthanc,
-        // display its first slice, and adapt the viewport to fit this
+        // display its middle slice, and adapt the viewport to fit this
         // slice
-        if (source_ == &source)
+        if (source_ == &message.origin_)
         {
           SetSlice(source_->GetSliceCount() / 2);
         }
 
-        widget_->SetDefaultView();
+        GetMainWidget().FitContent();
       }
       
-      virtual void NotifyGeometryError(const ILayerSource& source)
-      {
-      }
-      
-      virtual void NotifyContentChange(const ILayerSource& source)
-      {
-      }
+      std::auto_ptr<Interactor>         mainWidgetInteractor_;
+      std::auto_ptr<OrthancApiClient>   orthancApiClient_;
+      const OrthancFrameLayerSource*    source_;
+      unsigned int                      slice_;
 
-      virtual void NotifySliceChange(const ILayerSource& source,
-                                     const Slice& slice)
-      {
-      }
- 
-      virtual void NotifyLayerReady(std::auto_ptr<ILayerRenderer>& layer,
-                                    const ILayerSource& source,
-                                    const CoordinateSystem3D& slice,
-                                    bool isError)
-      {
-      }
-
-      LayerWidget*                    widget_;
-      const OrthancFrameLayerSource*  source_;
-      unsigned int                    slice_;
-      
     public:
-      SingleFrameApplication() : 
-        widget_(NULL),
+      SingleFrameApplication(MessageBroker& broker) :
+        IObserver(broker),
         source_(NULL),
         slice_(0)
       {
       }
       
-      virtual void DeclareCommandLineOptions(boost::program_options::options_description& options)
+      virtual void DeclareStartupOptions(boost::program_options::options_description& options)
       {
         boost::program_options::options_description generic("Sample options");
         generic.add_options()
@@ -229,11 +220,13 @@ namespace OrthancStone
         options.add(generic);    
       }
 
-      virtual void Initialize(BasicApplicationContext& context,
+      virtual void Initialize(StoneApplicationContext* context,
                               IStatusBar& statusBar,
                               const boost::program_options::variables_map& parameters)
       {
         using namespace OrthancStone;
+
+        context_ = context;
 
         statusBar.SetMessage("Use the key \"s\" to reinitialize the layout");
 
@@ -246,17 +239,14 @@ namespace OrthancStone
         std::string instance = parameters["instance"].as<std::string>();
         int frame = parameters["frame"].as<unsigned int>();
 
-        std::auto_ptr<LayerWidget> widget(new LayerWidget);
+        orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
+        mainWidget_ = new LayerWidget(broker_, "main-widget");
 
-#if 1
-        std::auto_ptr<OrthancFrameLayerSource> layer
-          (new OrthancFrameLayerSource(context.GetWebService()));
-        //layer->SetImageQuality(SliceImageQuality_Jpeg50);
-        layer->LoadFrame(instance, frame);
-        //layer->LoadSeries("6f1b492a-e181e200-44e51840-ef8db55e-af529ab6");
-        layer->Register(*this);
+        std::auto_ptr<OrthancFrameLayerSource> layer(new OrthancFrameLayerSource(broker_, *orthancApiClient_));
         source_ = layer.get();
-        widget->AddLayer(layer.release());
+        layer->LoadFrame(instance, frame);
+        layer->RegisterObserverCallback(new Callable<SingleFrameApplication, ILayerSource::GeometryReadyMessage>(*this, &SingleFrameApplication::OnMainWidgetGeometryReady));
+        GetMainWidget().AddLayer(layer.release());
 
         RenderStyle s;
 
@@ -265,53 +255,14 @@ namespace OrthancStone
           s.interpolation_ = ImageInterpolation_Bilinear;
         }
 
-        //s.drawGrid_ = true;
-        widget->SetLayerStyle(0, s);
-#else
-        // 0178023P**
-        // Extent of the CT layer: (-35.068 -20.368) => (34.932 49.632)
-        std::auto_ptr<OrthancFrameLayerSource> ct;
-        ct.reset(new OrthancFrameLayerSource(context.GetWebService()));
-        //ct->LoadInstance("c804a1a2-142545c9-33b32fe2-3df4cec0-a2bea6d6", 0);
-        //ct->LoadInstance("4bd4304f-47478948-71b24af2-51f4f1bc-275b6c1b", 0);  // BAD SLICE
-        //ct->SetImageQuality(SliceImageQuality_Jpeg50);
-        ct->LoadSeries("dd069910-4f090474-7d2bba07-e5c10783-f9e4fb1d");
+        GetMainWidget().SetLayerStyle(0, s);
+        GetMainWidget().SetTransmitMouseOver(true);
 
-        ct->Register(*this);
-        widget->AddLayer(ct.release());
-
-        std::auto_ptr<OrthancFrameLayerSource> pet;
-        pet.reset(new OrthancFrameLayerSource(context.GetWebService()));
-        //pet->LoadInstance("a1c4dc6b-255d27f0-88069875-8daed730-2f5ee5c6", 0);
-        pet->LoadSeries("aabad2e7-80702b5d-e599d26c-4f13398e-38d58a9e");
-        pet->Register(*this);
-        source_ = pet.get();
-        widget->AddLayer(pet.release());
-
-        {
-          RenderStyle s;
-          //s.drawGrid_ = true;
-          s.alpha_ = 1;
-          widget->SetLayerStyle(0, s);
-        }
-
-        {
-          RenderStyle s;
-          //s.drawGrid_ = true;
-          s.SetColor(255, 0, 0);  // Draw missing PET layer in red
-          s.alpha_ = 0.5;
-          s.applyLut_ = true;
-          s.lut_ = Orthanc::EmbeddedResources::COLORMAP_JET;
-          s.interpolation_ = ImageInterpolation_Bilinear;
-          widget->SetLayerStyle(1, s);
-        }
-#endif
-
-        widget_ = widget.get();
-        widget_->SetTransmitMouseOver(true);
-        widget_->SetInteractor(context.AddInteractor(new Interactor(*this)));
-        context.SetCentralWidget(widget.release());
+        mainWidgetInteractor_.reset(new Interactor(*this));
+        GetMainWidget().SetInteractor(*mainWidgetInteractor_);
       }
     };
+
+
   }
 }

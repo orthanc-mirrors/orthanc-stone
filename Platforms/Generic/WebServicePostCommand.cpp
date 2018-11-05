@@ -25,37 +25,34 @@
 
 namespace OrthancStone
 {
-  WebServicePostCommand::WebServicePostCommand(IWebService::ICallback& callback,
+  WebServicePostCommand::WebServicePostCommand(MessageBroker& broker,
+                                               MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                                               MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                                                const Orthanc::WebServiceParameters& parameters,
                                                const std::string& uri,
+                                               const IWebService::Headers& headers,
+                                               unsigned int timeoutInSeconds,
                                                const std::string& body,
-                                               Orthanc::IDynamicObject* payload /* takes ownership */) :
-    callback_(callback),
-    parameters_(parameters),
-    uri_(uri),
-    body_(body),
-    payload_(payload)
+                                               Orthanc::IDynamicObject* payload /* takes ownership */,
+                                               NativeStoneApplicationContext& context) :
+    WebServiceCommandBase(broker, successCallback, failureCallback, parameters, uri, headers, timeoutInSeconds, payload, context),
+    body_(body)
   {
   }
 
   void WebServicePostCommand::Execute()
   {
     Orthanc::HttpClient client(parameters_, uri_);
-    client.SetTimeout(60);
+    client.SetTimeout(timeoutInSeconds_);
     client.SetMethod(Orthanc::HttpMethod_Post);
     client.GetBody().swap(body_);
+
+    for (IWebService::Headers::const_iterator it = headers_.begin(); it != headers_.end(); it++ )
+    {
+      client.AddHeader(it->first, it->second);
+    }
+
     success_ = client.Apply(answer_);
   }
 
-  void WebServicePostCommand::Commit()
-  {
-    if (success_)
-    {
-      callback_.NotifySuccess(uri_, answer_.c_str(), answer_.size(), payload_.release());
-    }
-    else
-    {
-      callback_.NotifyError(uri_, payload_.release());
-    }
-  }
 }

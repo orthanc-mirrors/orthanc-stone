@@ -31,9 +31,10 @@
 
 namespace OrthancStone
 {
-  void OrthancFrameLayerSource::NotifyGeometryReady(const OrthancSlicesLoader& loader)
+
+  void OrthancFrameLayerSource::OnSliceGeometryReady(const OrthancSlicesLoader::SliceGeometryReadyMessage& message)
   {
-    if (loader.GetSliceCount() > 0)
+    if (message.origin_.GetSliceCount() > 0)
     {
       LayerSourceBase::NotifyGeometryReady();
     }
@@ -43,35 +44,41 @@ namespace OrthancStone
     }
   }
 
-  void OrthancFrameLayerSource::NotifyGeometryError(const OrthancSlicesLoader& loader)
+  void OrthancFrameLayerSource::OnSliceGeometryError(const OrthancSlicesLoader::SliceGeometryErrorMessage& message)
   {
     LayerSourceBase::NotifyGeometryError();
   }
 
-  void OrthancFrameLayerSource::NotifySliceImageReady(const OrthancSlicesLoader& loader,
-                                                      unsigned int sliceIndex,
-                                                      const Slice& slice,
-                                                      std::auto_ptr<Orthanc::ImageAccessor>& image,
-                                                      SliceImageQuality quality)
+  void OrthancFrameLayerSource::OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message)
   {
-    bool isFull = (quality == SliceImageQuality_Full);
-    LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(image.release(), slice, isFull),
-                                      slice.GetGeometry(), false);
+    // first notify that the image is ready (targeted to, i.e: an image cache)
+    LayerSourceBase::NotifyImageReady(message.image_, message.effectiveQuality_, message.slice_);
+
+    // then notify that the layer is ready for render
+    bool isFull = (message.effectiveQuality_ == SliceImageQuality_FullPng || message.effectiveQuality_ == SliceImageQuality_FullPam);
+    std::auto_ptr<Orthanc::ImageAccessor> accessor(new Orthanc::ImageAccessor());
+    message.image_->GetReadOnlyAccessor(*accessor);
+
+    LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(accessor.release(), message.slice_, isFull),
+                                      message.slice_.GetGeometry(), false);
+
   }
 
-  void OrthancFrameLayerSource::NotifySliceImageError(const OrthancSlicesLoader& loader,
-                                                      unsigned int sliceIndex,
-                                                      const Slice& slice,
-                                                      SliceImageQuality quality)
+  void OrthancFrameLayerSource::OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message)
   {
-    LayerSourceBase::NotifyLayerReady(NULL, slice.GetGeometry(), true);
+    LayerSourceBase::NotifyLayerReady(NULL, message.slice_.GetGeometry(), true);
   }
 
-
-  OrthancFrameLayerSource::OrthancFrameLayerSource(IWebService& orthanc) :
-    loader_(*this, orthanc),
-    quality_(SliceImageQuality_Full)
+  OrthancFrameLayerSource::OrthancFrameLayerSource(MessageBroker& broker, OrthancApiClient& orthanc) :
+    LayerSourceBase(broker),
+    IObserver(broker),
+    loader_(broker, orthanc),
+    quality_(SliceImageQuality_FullPng)
   {
+    loader_.RegisterObserverCallback(new Callable<OrthancFrameLayerSource, OrthancSlicesLoader::SliceGeometryReadyMessage>(*this, &OrthancFrameLayerSource::OnSliceGeometryReady));
+    loader_.RegisterObserverCallback(new Callable<OrthancFrameLayerSource, OrthancSlicesLoader::SliceGeometryErrorMessage>(*this, &OrthancFrameLayerSource::OnSliceGeometryError));
+    loader_.RegisterObserverCallback(new Callable<OrthancFrameLayerSource, OrthancSlicesLoader::SliceImageReadyMessage>(*this, &OrthancFrameLayerSource::OnSliceImageReady));
+    loader_.RegisterObserverCallback(new Callable<OrthancFrameLayerSource, OrthancSlicesLoader::SliceImageErrorMessage>(*this, &OrthancFrameLayerSource::OnSliceImageError));
   }
 
   
@@ -98,6 +105,7 @@ namespace OrthancStone
                                           const CoordinateSystem3D& viewportSlice)
   {
     size_t index;
+
     if (loader_.IsGeometryReady() &&
         loader_.LookupSlice(index, viewportSlice))
     {
@@ -115,17 +123,10 @@ namespace OrthancStone
   {
     size_t index;
 
-    if (loader_.IsGeometryReady())
+    if (loader_.IsGeometryReady() &&
+        loader_.LookupSlice(index, viewportSlice))
     {
-      if (loader_.LookupSlice(index, viewportSlice))
-      {
-        loader_.ScheduleLoadSliceImage(index, quality_);
-      }
-      else
-      {
-        Slice slice;
-        LayerSourceBase::NotifyLayerReady(NULL, slice.GetGeometry(), true);
-      }
+      loader_.ScheduleLoadSliceImage(index, quality_);
     }
   }
 }

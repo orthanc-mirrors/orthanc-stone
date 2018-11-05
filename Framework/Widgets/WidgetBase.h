@@ -36,6 +36,7 @@ namespace OrthancStone
     bool         backgroundCleared_;
     uint8_t      backgroundColor_[3];
     bool         transmitMouseOver_;
+    std::string  name_;
 
   protected:
     void ClearBackgroundOrthanc(Orthanc::ImageAccessor& target) const;
@@ -52,9 +53,9 @@ namespace OrthancStone
     }
 
   public:
-    WidgetBase();
+    WidgetBase(const std::string& name);
 
-    virtual void SetDefaultView()
+    virtual void FitContent()
     {
     }
   
@@ -104,6 +105,12 @@ namespace OrthancStone
       return transmitMouseOver_;
     }
 
-    virtual void NotifyChange();
+    virtual void NotifyContentChanged();
+
+    const std::string& GetName() const
+    {
+      return name_;
+    }
+
   };
 }

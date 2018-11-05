@@ -24,9 +24,12 @@
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 
+
 namespace OrthancStone
 {
-  CairoContext::CairoContext(CairoSurface& surface)
+  CairoContext::CairoContext(CairoSurface& surface) :
+    width_(surface.GetWidth()),
+    height_(surface.GetHeight())
   {
     context_ = cairo_create(surface.GetObject());
     if (!context_)
@@ -55,5 +58,89 @@ namespace OrthancStone
                          static_cast<float>(red) / 255.0f,
                          static_cast<float>(green) / 255.0f,
                          static_cast<float>(blue) / 255.0f);
+  }
+
+
+  class CairoContext::AlphaSurface : public boost::noncopyable
+  {
+  private:
+    cairo_surface_t  *surface_;
+
+  public:
+    AlphaSurface(unsigned int width,
+                 unsigned int height)
+    {
+      surface_ = cairo_image_surface_create(CAIRO_FORMAT_A8, width, height);
+      
+      if (!surface_)
+      {
+        // Should never occur
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      if (cairo_surface_status(surface_) != CAIRO_STATUS_SUCCESS)
+      {
+        LOG(ERROR) << "Cannot create a Cairo surface";
+        cairo_surface_destroy(surface_);
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+    }
+    
+    ~AlphaSurface()
+    {
+      cairo_surface_destroy(surface_);
+    }
+
+    void GetAccessor(Orthanc::ImageAccessor& target)
+    {
+      target.AssignWritable(Orthanc::PixelFormat_Grayscale8,
+                            cairo_image_surface_get_width(surface_),
+                            cairo_image_surface_get_height(surface_),
+                            cairo_image_surface_get_stride(surface_),
+                            cairo_image_surface_get_data(surface_));
+    }
+
+    void Blit(cairo_t* cr,
+              double x,
+              double y)
+    {
+      cairo_surface_mark_dirty(surface_);
+      cairo_mask_surface(cr, surface_, x, y);
+      cairo_fill(cr);
+    }
+  };
+
+
+  void CairoContext::DrawText(const Orthanc::Font& font,
+                              const std::string& text,
+                              double x,
+                              double y,
+                              BitmapAnchor anchor)
+  {
+    // Render a bitmap containing the text
+    unsigned int width, height;
+    font.ComputeTextExtent(width, height, text);
+    
+    AlphaSurface surface(width, height);
+
+    Orthanc::ImageAccessor accessor;
+    surface.GetAccessor(accessor);
+    font.Draw(accessor, text, 0, 0, 255);
+
+    // Correct the text location given the anchor location
+    double deltaX, deltaY;
+    ComputeAnchorTranslation(deltaX, deltaY, anchor, width, height);
+
+    // Cancel zoom/rotation before blitting the text onto the surface
+    double pixelX = x;
+    double pixelY = y;
+    cairo_user_to_device(context_, &pixelX, &pixelY);
+
+    cairo_save(context_);
+    cairo_identity_matrix(context_);
+
+    // Blit the text bitmap
+    surface.Blit(context_, pixelX + deltaX, pixelY + deltaY);
+    cairo_restore(context_);
   }
 }

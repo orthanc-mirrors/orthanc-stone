@@ -121,7 +121,19 @@ namespace OrthancStone
   }
 
 
-  void ViewportGeometry::SetDefaultView()
+  void ViewportGeometry::MapPixelCenterToScene(double& sceneX,
+                                               double& sceneY,
+                                               int x,
+                                               int y) const
+  {
+    // Take the center of the pixel
+    MapDisplayToScene(sceneX, sceneY,
+                      static_cast<double>(x) + 0.5,
+                      static_cast<double>(y) + 0.5);
+  }
+
+
+  void ViewportGeometry::FitContent()
   {
     if (width_ > 0 &&
         height_ > 0 &&
@@ -166,5 +178,23 @@ namespace OrthancStone
   {
     zoom_ = zoom;
     ComputeTransform();
+  }
+
+
+  Matrix ViewportGeometry::GetMatrix() const
+  {
+    Matrix m(3, 3);
+
+    m(0, 0) = transform_.xx;
+    m(0, 1) = transform_.xy;
+    m(0, 2) = transform_.x0;
+    m(1, 0) = transform_.yx;
+    m(1, 1) = transform_.yy;
+    m(1, 2) = transform_.y0;
+    m(2, 0) = 0;
+    m(2, 1) = 0;
+    m(2, 2) = 1;
+    
+    return m;
   }
 }

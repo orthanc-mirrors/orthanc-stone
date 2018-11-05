@@ -72,6 +72,10 @@ Stone of Orthanc is based upon the following projects:
 * Optionally, SDL, a cross-platform multimedia library:
   https://www.libsdl.org/
 
+Prerequisites to compile on Ubuntu: 
+```
+sudo apt-get install -y libcairo-dev libpixman-1-dev libsdl2-dev
+```
 
 Installation and usage
 ----------------------
@@ -83,7 +87,43 @@ Usage details are available as part of the Orthanc Book:
 http://book.orthanc-server.com/developers/stone.html
 
 Stone of Orthanc comes with several sample applications in the
-"Samples" folder. These samples use SDL.
+"Samples" folder. These samples can be compiled into Web Assembly
+or into native SDL applications.
+
+to build the WASM samples:
+-------------------------
+```
+cd ~/orthanc-stone/Applications/Samples
+./build-wasm.sh
+```
+
+to serve the WASM samples:
+```
+# launch an Orthanc listening on 8042 port:
+Orthanc
+
+# launch an nginx that will serve the WASM static files and reverse proxy Orthanc
+sudo nginx -p $(pwd) -c nginx.local.conf
+```
+Now, you can open the samples in http://localhost:9977
+
+to build the SDL native samples (SimpleViewer only):
+-------------------------------
+```
+mkdir -p ~/builds/orthanc-stone-build
+cd ~/builds/orthanc-stone-build
+cmake -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ~/orthanc-stone/Applications/Samples/
+cmake --build . --target OrthancStoneSimpleViewer -- -j 5
+```
+
+to execute the native samples:
+```
+# launch an Orthanc listening on 8042 port:
+Orthanc
+
+# launch the sample
+./OrthancStoneSimpleViewer --studyId=XX
+``` 
 
 
 Licensing

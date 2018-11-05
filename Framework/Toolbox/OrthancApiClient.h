@@ -1,0 +1,167 @@
+/**
+ * Stone of Orthanc
+ * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
+ * Department, University Hospital of Liege, Belgium
+ * Copyright (C) 2017-2018 Osimis S.A., Belgium
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ **/
+
+
+#pragma once
+
+#include <boost/shared_ptr.hpp>
+#include <json/json.h>
+
+#include "IWebService.h"
+#include "../Messages/IObservable.h"
+#include "../Messages/Promise.h"
+
+namespace OrthancStone
+{
+  class OrthancApiClient:
+      public IObservable
+  {
+  public:
+
+    struct JsonResponseReadyMessage : public BaseMessage<MessageType_OrthancApi_GenericGetJson_Ready>
+    {
+      Json::Value   Response;
+      std::string   Uri;
+      std::auto_ptr<Orthanc::IDynamicObject>  Payload;
+
+      JsonResponseReadyMessage(const std::string& uri,
+                               const Json::Value& response,
+                               Orthanc::IDynamicObject*  payload = NULL)
+        : BaseMessage(),
+          Response(response),
+          Uri(uri),
+          Payload(payload)
+      {
+      }
+    };
+
+    struct EmptyResponseReadyMessage : public BaseMessage<MessageType_OrthancApi_GenericEmptyResponse_Ready>
+    {
+      std::string   Uri;
+      std::auto_ptr<Orthanc::IDynamicObject>  Payload;
+
+      EmptyResponseReadyMessage(const std::string& uri,
+                                Orthanc::IDynamicObject*  payload = NULL)
+        : BaseMessage(),
+          Uri(uri),
+          Payload(payload)
+      {
+      }
+    };
+
+    struct HttpErrorMessage : public BaseMessage<MessageType_OrthancApi_GenericHttpError_Ready>
+    {
+      std::string   Uri;
+      std::auto_ptr<Orthanc::IDynamicObject>  Payload;
+
+      HttpErrorMessage(const std::string& uri,
+                       Orthanc::IDynamicObject*  payload = NULL)
+        : BaseMessage(),
+          Uri(uri),
+          Payload(payload)
+      {
+      }
+    };
+
+    struct BinaryResponseReadyMessage : public BaseMessage<MessageType_OrthancApi_GenericGetBinary_Ready>
+    {
+      const void* Answer;
+      size_t AnswerSize;
+      std::string   Uri;
+      std::auto_ptr<Orthanc::IDynamicObject>  Payload;
+
+      BinaryResponseReadyMessage(const std::string& uri,
+                                 const void* answer,
+                                 size_t answerSize,
+                                 Orthanc::IDynamicObject*  payload = NULL)
+        : BaseMessage(),
+          Answer(answer),
+          AnswerSize(answerSize),
+          Uri(uri),
+          Payload(payload)
+      {
+      }
+    };
+
+
+
+  public:
+
+    enum Mode
+    {
+      Mode_GetJson
+    };
+
+  protected:
+    IWebService&                      orthanc_;
+
+  public:
+    OrthancApiClient(MessageBroker& broker,
+                     IWebService& orthanc);
+    virtual ~OrthancApiClient() {}
+
+    // schedule a GET request expecting a JSON response.
+    void GetJsonAsync(const std::string& uri,
+                      MessageHandler<JsonResponseReadyMessage>* successCallback,
+                      MessageHandler<HttpErrorMessage>* failureCallback = NULL,
+                      Orthanc::IDynamicObject* payload = NULL);
+
+    // schedule a GET request expecting a binary response.
+    void GetBinaryAsync(const std::string& uri,
+                        const std::string& contentType,
+                        MessageHandler<BinaryResponseReadyMessage>* successCallback,
+                        MessageHandler<HttpErrorMessage>* failureCallback = NULL,
+                        Orthanc::IDynamicObject* payload = NULL)
+    {
+      IWebService::Headers headers;
+      headers["Accept"] = contentType;
+      GetBinaryAsync(uri, headers, successCallback, failureCallback, payload);
+    }
+
+    // schedule a GET request expecting a binary response.
+    void GetBinaryAsync(const std::string& uri,
+                        const IWebService::Headers& headers,
+                        MessageHandler<BinaryResponseReadyMessage>* successCallback,
+                        MessageHandler<HttpErrorMessage>* failureCallback = NULL,
+                        Orthanc::IDynamicObject* payload = NULL);
+
+    // schedule a POST request expecting a JSON response.
+    void PostBinaryAsyncExpectJson(const std::string& uri,
+                                   const std::string& body,
+                                   MessageHandler<JsonResponseReadyMessage>* successCallback,
+                                   MessageHandler<HttpErrorMessage>* failureCallback = NULL,
+                                   Orthanc::IDynamicObject* payload = NULL);
+
+    // schedule a POST request expecting a JSON response.
+    void PostJsonAsyncExpectJson(const std::string& uri,
+                                 const Json::Value& data,
+                                 MessageHandler<JsonResponseReadyMessage>* successCallback,
+                                 MessageHandler<HttpErrorMessage>* failureCallback = NULL,
+                                 Orthanc::IDynamicObject* payload = NULL);
+
+    // schedule a DELETE request expecting an empty response.
+    void DeleteAsync(const std::string& uri,
+                     MessageHandler<EmptyResponseReadyMessage>* successCallback,
+                     MessageHandler<HttpErrorMessage>* failureCallback = NULL,
+                     Orthanc::IDynamicObject* payload = NULL);
+
+
+  };
+}

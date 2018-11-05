@@ -26,19 +26,21 @@
 #include "../Viewport/IStatusBar.h"
 #include "../Toolbox/CoordinateSystem3D.h"
 
+#include <Core/Images/Font.h>
+
 namespace OrthancStone
 {
   class CircleMeasureTracker : public IWorldSceneMouseTracker
   {
   private:
-    IStatusBar*         statusBar_;
-    CoordinateSystem3D  slice_;
-    double              x1_;
-    double              y1_;
-    double              x2_;
-    double              y2_;
-    uint8_t             color_[3];
-    unsigned int        fontSize_;
+    IStatusBar*           statusBar_;
+    CoordinateSystem3D    slice_;
+    double                x1_;
+    double                y1_;
+    double                x2_;
+    double                y2_;
+    uint8_t               color_[3];
+    const Orthanc::Font&  font_;
 
   public:
     CircleMeasureTracker(IStatusBar* statusBar,
@@ -48,8 +50,13 @@ namespace OrthancStone
                          uint8_t red,
                          uint8_t green,
                          uint8_t blue,
-                         unsigned int fontSize);
+                         const Orthanc::Font& font);
     
+    virtual bool HasRender() const
+    {
+      return true;
+    }
+
     virtual void Render(CairoContext& context,
                         double zoom);
     
@@ -62,7 +69,9 @@ namespace OrthancStone
       // Possibly create a new landmark "volume" with the circle in subclasses
     }
 
-    virtual void MouseMove(double x,
+    virtual void MouseMove(int displayX,
+                           int displayY,
+                           double x,
                            double y);
   };
 }

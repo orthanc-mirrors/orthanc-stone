@@ -106,6 +106,7 @@ namespace OrthancStone
   void CairoSurface::Copy(const CairoSurface& other)
   {
     Orthanc::ImageAccessor source, target;
+
     other.GetReadOnlyAccessor(source);
     GetWriteableAccessor(target);
 

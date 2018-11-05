@@ -72,4 +72,66 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
   }
+
+  
+  void ComputeAnchorTranslation(double& deltaX,
+                                double& deltaY,
+                                BitmapAnchor anchor,
+                                unsigned int bitmapWidth,
+                                unsigned int bitmapHeight)
+  {
+    double dw = static_cast<double>(bitmapWidth);
+    double dh = static_cast<double>(bitmapHeight);
+
+    switch (anchor)
+    {
+      case BitmapAnchor_TopLeft:
+        deltaX = 0;
+        deltaY = 0;
+        break;
+        
+      case BitmapAnchor_TopCenter:
+        deltaX = -dw / 2.0;
+        deltaY = 0;
+        break;
+        
+      case BitmapAnchor_TopRight:
+        deltaX = -dw;
+        deltaY = 0;
+        break;
+        
+      case BitmapAnchor_CenterLeft:
+        deltaX = 0;
+        deltaY = -dh / 2.0;
+        break;
+        
+      case BitmapAnchor_Center:
+        deltaX = -dw / 2.0;
+        deltaY = -dh / 2.0;
+        break;
+        
+      case BitmapAnchor_CenterRight:
+        deltaX = -dw;
+        deltaY = -dh / 2.0;
+        break;
+        
+      case BitmapAnchor_BottomLeft:
+        deltaX = 0;
+        deltaY = -dh;
+        break;
+        
+      case BitmapAnchor_BottomCenter:
+        deltaX = -dw / 2.0;
+        deltaY = -dh;
+        break;
+        
+      case BitmapAnchor_BottomRight:
+        deltaX = -dw;
+        deltaY = -dh;
+        break;
+        
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }    
+  }
 }

@@ -22,6 +22,9 @@
 #pragma once
 
 #include "CairoSurface.h"
+#include "../StoneEnumerations.h"
+
+#include <Core/Images/Font.h>
 
 namespace OrthancStone
 {
@@ -29,7 +32,11 @@ namespace OrthancStone
   class CairoContext : public boost::noncopyable
   {
   private:
-    cairo_t* context_;
+    class AlphaSurface;
+    
+    cairo_t*      context_;
+    unsigned int  width_;
+    unsigned int  height_;
 
   public:
     CairoContext(CairoSurface& surface);
@@ -41,6 +48,16 @@ namespace OrthancStone
       return context_;
     }
 
+    unsigned int GetWidth() const
+    {
+      return width_;
+    }
+
+    unsigned int GetHeight() const
+    {
+      return height_;
+    }
+
     void SetSourceColor(uint8_t red,
                         uint8_t green,
                         uint8_t blue);
@@ -49,5 +66,11 @@ namespace OrthancStone
     {
       SetSourceColor(color[0], color[1], color[2]);
     }
+
+    void DrawText(const Orthanc::Font& font,
+                  const std::string& text,
+                  double x,
+                  double y,
+                  BitmapAnchor anchor);      
   };
 }

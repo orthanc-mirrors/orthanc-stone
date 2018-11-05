@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -26,13 +26,10 @@
 
 namespace OrthancStone
 {
+  class SmartLoader;
+
   class LayerSourceBase : public ILayerSource
   {
-  private:
-    typedef ObserversRegistry<ILayerSource, IObserver>  Observers;
-
-    Observers  observers_;
-
   protected:
     void NotifyGeometryReady();
     
@@ -46,7 +43,15 @@ namespace OrthancStone
                           const CoordinateSystem3D& slice,
                           bool isError);
 
-  public:
-    virtual void Register(IObserver& observer);
+    void NotifyImageReady(boost::shared_ptr<Orthanc::ImageAccessor> image,
+                          SliceImageQuality imageQuality,
+                          const Slice& slice);
+
+    LayerSourceBase(MessageBroker& broker)
+      : ILayerSource(broker)
+    {
+    }
+
+    friend class SmartLoader;
   };
 }

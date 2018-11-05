@@ -40,14 +40,14 @@ namespace OrthancStone
       {
       }
 
-      virtual void NotifyChange(const IViewport& scene) = 0;
+      virtual void OnViewportContentChanged(const IViewport& scene) = 0;
     };
 
     virtual ~IViewport()
     {
     }
 
-    virtual void SetDefaultView() = 0;
+    virtual void FitContent() = 0;
 
     virtual void Register(IObserver& observer) = 0;
 
@@ -78,7 +78,8 @@ namespace OrthancStone
                             int y,
                             KeyboardModifiers modifiers) = 0;
 
-    virtual void KeyPressed(char key,
+    virtual void KeyPressed(KeyboardKeys key,
+                            char keyChar,
                             KeyboardModifiers modifiers) = 0;
 
     virtual bool HasUpdateContent() = 0;
@@ -86,6 +87,6 @@ namespace OrthancStone
     virtual void UpdateContent() = 0;
 
     // Should only be called from IWidget
-    virtual void NotifyChange(const IWidget& widget) = 0;
+    virtual void NotifyContentChanged(const IWidget& widget) = 0;
   };
 }

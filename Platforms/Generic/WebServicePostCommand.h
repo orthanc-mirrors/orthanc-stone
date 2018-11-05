@@ -21,36 +21,27 @@
 
 #pragma once
 
-#include "IOracleCommand.h"
-
-#include "../../Framework/Toolbox/IWebService.h"
-
-#include <Core/WebServiceParameters.h>
-
-#include <memory>
+#include "WebServiceCommandBase.h"
 
 namespace OrthancStone
 {
-  class WebServicePostCommand : public IOracleCommand
+  class WebServicePostCommand : public WebServiceCommandBase
   {
-  private:
-    IWebService::ICallback&                 callback_;
-    Orthanc::WebServiceParameters           parameters_;
-    std::string                             uri_;
+  protected:
     std::string                             body_;
-    std::auto_ptr<Orthanc::IDynamicObject>  payload_;
-    bool                                    success_;
-    std::string                             answer_;
 
   public:
-    WebServicePostCommand(IWebService::ICallback& callback,
+    WebServicePostCommand(MessageBroker& broker,
+                          MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                           const Orthanc::WebServiceParameters& parameters,
                           const std::string& uri,
+                          const IWebService::Headers& headers,
+                          unsigned int timeoutInSeconds,
                           const std::string& body,
-                          Orthanc::IDynamicObject* payload /* takes ownership */);
+                          Orthanc::IDynamicObject* payload /* takes ownership */,
+                          NativeStoneApplicationContext& context);
 
     virtual void Execute();
-
-    virtual void Commit();
   };
 }

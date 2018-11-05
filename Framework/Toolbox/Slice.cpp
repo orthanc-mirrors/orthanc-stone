@@ -45,6 +45,28 @@ namespace OrthancStone
       return false;
     }
   }
+
+  Slice* Slice::Clone() const
+  {
+    std::auto_ptr<Slice> target(new Slice());
+
+    target->type_ = type_;
+    target->orthancInstanceId_ = orthancInstanceId_;
+    target->sopClassUid_ = sopClassUid_;
+    target->frame_ = frame_;
+    target->frameCount_ = frameCount_;
+    target->geometry_ = geometry_;
+    target->pixelSpacingX_ = pixelSpacingX_;
+    target->pixelSpacingY_ = pixelSpacingY_;
+    target->thickness_ = thickness_;
+    target->width_ = width_;
+    target->height_ = height_;
+    target->converter_ = converter_;
+    if (imageInformation_.get() != NULL)
+      target->imageInformation_.reset(imageInformation_->Clone());
+
+    return target.release();
+  }
   
   bool Slice::ComputeRTDoseGeometry(const Orthanc::DicomMap& dataset,
                                     unsigned int frame)

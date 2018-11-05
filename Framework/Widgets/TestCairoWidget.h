@@ -43,7 +43,7 @@ namespace OrthancStone
                                         int y);
 
     public:
-      TestCairoWidget(bool animate);
+      TestCairoWidget(const std::string& name, bool animate);
 
       virtual void SetSize(unsigned int width, 
                            unsigned int height);
@@ -58,7 +58,8 @@ namespace OrthancStone
                               int y,
                               KeyboardModifiers modifiers);
     
-      virtual void KeyPressed(char key,
+      virtual void KeyPressed(KeyboardKeys key,
+                              char keyChar,
                               KeyboardModifiers modifiers);
 
       virtual bool HasUpdateContent() const

@@ -27,16 +27,16 @@
 
 namespace OrthancStone
 {
-  void WidgetBase::NotifyChange()
+  void WidgetBase::NotifyContentChanged()
   {
     if (parent_ != NULL)
     {
-      parent_->NotifyChange();
+      parent_->NotifyContentChanged();
     }
 
     if (viewport_ != NULL)
     {
-      viewport_->NotifyChange(*this);
+      viewport_->NotifyContentChanged(*this);
     }
   }
 
@@ -101,12 +101,13 @@ namespace OrthancStone
   }
 
 
-  WidgetBase::WidgetBase() :
+  WidgetBase::WidgetBase(const std::string& name) :
     parent_(NULL),
     viewport_(NULL),
     statusBar_(NULL),
     backgroundCleared_(false),
-    transmitMouseOver_(false)
+    transmitMouseOver_(false),
+    name_(name)
   {
     backgroundColor_[0] = 0;
     backgroundColor_[1] = 0;

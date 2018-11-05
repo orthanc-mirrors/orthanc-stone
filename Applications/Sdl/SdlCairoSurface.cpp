@@ -82,7 +82,7 @@ namespace OrthancStone
     }
 
     Orthanc::ImageAccessor target;
-    cairoSurface_->GetAccessor(target);
+    cairoSurface_->GetWriteableAccessor(target);
 
     if (viewport.Render(target))
     {

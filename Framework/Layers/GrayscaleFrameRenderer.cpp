@@ -55,7 +55,8 @@ namespace OrthancStone
     }
 
     Orthanc::ImageAccessor target;
-    result->GetAccessor(target);
+    result->GetWriteableAccessor(target);
+    
     const unsigned int width = target.GetWidth();
     const unsigned int height = target.GetHeight();
     

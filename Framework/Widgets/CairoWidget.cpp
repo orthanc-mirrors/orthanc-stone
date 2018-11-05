@@ -63,9 +63,9 @@ namespace OrthancStone
 
       if (RenderCairo(context))
       {
-        Orthanc::ImageAccessor source;
-        surface_.GetAccessor(source);
-        Orthanc::ImageProcessing::Copy(target, source);
+        Orthanc::ImageAccessor surface;
+        surface_.GetReadOnlyAccessor(surface);
+        Orthanc::ImageProcessing::Copy(target, surface);
         return true;
       }
       else
@@ -89,7 +89,7 @@ namespace OrthancStone
     else
     {
       Orthanc::ImageAccessor accessor;
-      surface_.GetAccessor(accessor);
+      surface_.GetWriteableAccessor(accessor);
       Orthanc::ImageProcessing::Copy(accessor, target);
 
       CairoContext context(surface_);

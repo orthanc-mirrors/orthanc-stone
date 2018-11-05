@@ -2249,7 +2249,7 @@ namespace OrthancStone
         // GrayscaleFrameRenderer => TODO MERGE?
 
         Orthanc::ImageAccessor target;
-        cairoBuffer_->GetAccessor(target);
+        cairoBuffer_->GetWriteableAccessor(target);
 
         float scaling = 255.0f / (x1 - x0);
         

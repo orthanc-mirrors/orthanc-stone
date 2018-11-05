@@ -564,10 +564,9 @@ namespace OrthancStone
     
     NotifySliceImageSuccess(operation, image);
   }
-  
-  
-  class StringImage :
-      public Orthanc::ImageAccessor
+
+
+  class StringImage : public Orthanc::ImageAccessor
   {
   private:
     std::string  buffer_;

@@ -353,18 +353,18 @@ namespace OrthancStone
   {
     switch (projection)
     {
-    case VolumeProjection_Axial:
-      that.GetAxialSliceAccessor(accessor_, slice, true);
-      break;
+      case VolumeProjection_Axial:
+        that.GetAxialSliceAccessor(accessor_, slice, true);
+        break;
 
-    case VolumeProjection_Coronal:
-      that.GetCoronalSliceAccessor(accessor_, slice, true);
-      break;
+      case VolumeProjection_Coronal:
+        that.GetCoronalSliceAccessor(accessor_, slice, true);
+        break;
 
-    case VolumeProjection_Sagittal:
-      sagittal_.reset(that.ExtractSagittalSlice(slice));
-      sagittal_->GetReadOnlyAccessor(accessor_);
-      break;
+      case VolumeProjection_Sagittal:
+        sagittal_.reset(that.ExtractSagittalSlice(slice));
+        sagittal_->GetReadOnlyAccessor(accessor_);
+        break;
 
     default:
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
@@ -397,18 +397,18 @@ namespace OrthancStone
   {
     switch (projection)
     {
-    case VolumeProjection_Axial:
-      that.GetAxialSliceAccessor(accessor_, slice, false);
-      break;
+      case VolumeProjection_Axial:
+        that.GetAxialSliceAccessor(accessor_, slice, false);
+        break;
 
-    case VolumeProjection_Coronal:
-      that.GetCoronalSliceAccessor(accessor_, slice, false);
-      break;
+      case VolumeProjection_Coronal:
+        that.GetCoronalSliceAccessor(accessor_, slice, false);
+        break;
 
-    case VolumeProjection_Sagittal:
-      sagittal_.reset(that.ExtractSagittalSlice(slice));
-      sagittal_->GetWriteableAccessor(accessor_);
-      break;
+      case VolumeProjection_Sagittal:
+        sagittal_.reset(that.ExtractSagittalSlice(slice));
+        sagittal_->GetWriteableAccessor(accessor_);
+        break;
 
     default:
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);

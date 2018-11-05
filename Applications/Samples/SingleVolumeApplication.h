@@ -173,8 +173,8 @@ namespace OrthancStone
 
         std::auto_ptr<LayerWidget> widget(new LayerWidget);
 
-#if 0
-        std::auto_ptr<OrthancVolumeImage> volume(new OrthancVolumeImage(context_->GetWebService(), true));
+#if 1
+        std::auto_ptr<OrthancVolumeImage> volume(new OrthancVolumeImage(context.GetWebService(), true));
         if (series.empty())
         {
           volume->ScheduleLoadInstance(instance);
@@ -189,6 +189,15 @@ namespace OrthancStone
         context_->AddInteractor(new Interactor(*volume, *widget, projection, 0));
         context_->AddSlicedVolume(volume.release());
 
+        if (1)
+        {
+          RenderStyle s;
+          //s.drawGrid_ = true;
+          s.alpha_ = 1;
+          s.windowing_ = ImageWindowing_Bone;
+          widget->SetLayerStyle(0, s);
+        }
+        else
         {
           RenderStyle s;
           s.alpha_ = 1;

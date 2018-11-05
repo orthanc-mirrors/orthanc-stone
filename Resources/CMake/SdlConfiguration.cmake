@@ -83,8 +83,6 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_SDL)
     file(GLOB TMP
       ${SDL_SOURCES_DIR}/src/core/linux/*.c
       ${SDL_SOURCES_DIR}/src/loadso/dlopen/*.c
-      ${SDL_SOURCES_DIR}/src/render/opengl/*.c
-      ${SDL_SOURCES_DIR}/src/render/opengles2/*.c
       ${SDL_SOURCES_DIR}/src/render/software/*.c
       ${SDL_SOURCES_DIR}/src/thread/pthread/*.c
       ${SDL_SOURCES_DIR}/src/timer/unix/*.c
@@ -100,13 +98,7 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_SDL)
       -DSDL_POWER_DISABLED=1
 
       -DSDL_VIDEO_DRIVER_X11=1
-      -DSDL_VIDEO_OPENGL=1
-      -DSDL_VIDEO_OPENGL_ES2=1
-      -DSDL_VIDEO_RENDER_OGL=1
-      -DSDL_VIDEO_RENDER_OGL_ES2=1
-      -DSDL_VIDEO_OPENGL_GLX=1
-      -DSDL_VIDEO_OPENGL_EGL=1
-      
+
       -DSDL_ASSEMBLY_ROUTINES=1
       -DSDL_THREAD_PTHREAD_RECURSIVE_MUTEX=1
       -DSDL_VIDEO_DRIVER_X11_SUPPORTS_GENERIC_EVENTS=1
@@ -114,6 +106,25 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_SDL)
       )
 
     link_libraries(X11 Xext)
+
+    if (NOT CMAKE_SYSTEM_VERSION STREQUAL "Raspberry")
+      # Raspberry Pi has no support for OpenGL
+      file(GLOB TMP
+        ${SDL_SOURCES_DIR}/src/render/opengl/*.c
+        ${SDL_SOURCES_DIR}/src/render/opengles2/*.c
+        )
+
+      list(APPEND SDL_SOURCES ${TMP})
+
+      add_definitions(
+        -DSDL_VIDEO_OPENGL=1
+        -DSDL_VIDEO_OPENGL_ES2=1
+        -DSDL_VIDEO_RENDER_OGL=1
+        -DSDL_VIDEO_RENDER_OGL_ES2=1
+        -DSDL_VIDEO_OPENGL_GLX=1
+        -DSDL_VIDEO_OPENGL_EGL=1
+        )
+    endif()
 
   elseif (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     file(GLOB TMP

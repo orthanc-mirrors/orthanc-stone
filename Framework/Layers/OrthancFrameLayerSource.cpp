@@ -49,18 +49,35 @@ namespace OrthancStone
     LayerSourceBase::NotifyGeometryError();
   }
 
+
+  class OrthancFrameLayerSource::RendererFactory : public LayerReadyMessage::IRendererFactory
+  {
+  private:
+    const OrthancSlicesLoader::SliceImageReadyMessage&  message_;
+
+  public:
+    RendererFactory(const OrthancSlicesLoader::SliceImageReadyMessage& message) :
+      message_(message)
+    {
+    }
+
+    virtual ILayerRenderer* CreateRenderer() const
+    {
+      bool isFull = (message_.GetEffectiveQuality() == SliceImageQuality_FullPng ||
+                     message_.GetEffectiveQuality() == SliceImageQuality_FullPam);
+
+      return FrameRenderer::CreateRenderer(message_.GetImage(), message_.GetSlice(), isFull);
+    }
+  };
+
   void OrthancFrameLayerSource::OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message)
   {
     // first notify that the image is ready (targeted to, i.e: an image cache)
     LayerSourceBase::NotifyImageReady(message.GetImage(), message.GetEffectiveQuality(), message.GetSlice());
 
     // then notify that the layer is ready for render
-    bool isFull = (message.GetEffectiveQuality() == SliceImageQuality_FullPng ||
-                   message.GetEffectiveQuality() == SliceImageQuality_FullPam);
-
-    LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(message.GetImage(), message.GetSlice(), isFull),
-                                      message.GetSlice().GetGeometry());
-
+    RendererFactory factory(message);
+    LayerSourceBase::NotifyLayerReady(factory, message.GetSlice().GetGeometry());
   }
 
   void OrthancFrameLayerSource::OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message)

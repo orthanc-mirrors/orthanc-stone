@@ -40,6 +40,26 @@ namespace OrthancStone
   class SmartLoader::CachedSlice : public LayerSourceBase
   {
   public:
+    class RendererFactory : public LayerReadyMessage::IRendererFactory
+    {
+    private:
+      const CachedSlice&  that_;
+
+    public:
+      RendererFactory(const CachedSlice& that) :
+        that_(that)
+      {
+      }
+
+      virtual ILayerRenderer* CreateRenderer() const
+      {
+        bool isFull = (that_.effectiveQuality_ == SliceImageQuality_FullPng ||
+                       that_.effectiveQuality_ == SliceImageQuality_FullPam);
+
+        return FrameRenderer::CreateRenderer(*that_.image_, *that_.slice_, isFull);
+      }
+    };
+    
     unsigned int                    sliceIndex_;
     std::auto_ptr<Slice>            slice_;
     boost::shared_ptr<Orthanc::ImageAccessor>   image_;
@@ -73,10 +93,9 @@ namespace OrthancStone
       if (status_ == CachedSliceStatus_ImageLoaded)
       {
         LOG(WARNING) << "ScheduleLayerCreation for CachedSlice (image is loaded): " << slice_->GetOrthancInstanceId();
-        bool isFull = (effectiveQuality_ == SliceImageQuality_FullPng ||
-                       effectiveQuality_ == SliceImageQuality_FullPam);
-        LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(*image_, *slice_, isFull),
-                                          slice_->GetGeometry());
+
+        RendererFactory factory(*this);
+        LayerSourceBase::NotifyLayerReady(factory, slice_->GetGeometry());
       }
       else
       {

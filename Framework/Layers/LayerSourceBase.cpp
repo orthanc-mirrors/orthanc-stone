@@ -45,10 +45,10 @@ namespace OrthancStone
     EmitMessage(ILayerSource::SliceChangedMessage(*this, slice));
   }
 
-  void LayerSourceBase::NotifyLayerReady(ILayerRenderer* layer,
+  void LayerSourceBase::NotifyLayerReady(const LayerReadyMessage::IRendererFactory& factory,
                                          const CoordinateSystem3D& slice)
   {
-    EmitMessage(ILayerSource::LayerReadyMessage(*this, layer, slice));
+    EmitMessage(ILayerSource::LayerReadyMessage(*this, factory, slice));
   }
 
   void LayerSourceBase::NotifyLayerError(const CoordinateSystem3D& slice)

@@ -589,16 +589,7 @@ public:
     if (LookupLayer(index, message.GetOrigin()))
     {
       LOG(INFO) << "Renderer ready for layer " << index;
-
-      // TODO -- REMOVE THIS UGLY STUFF
-      ILayerSource::LayerReadyMessage& ugly = const_cast<ILayerSource::LayerReadyMessage&>(message);
-      
-      if (ugly.GetRendererRaw().get() == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }
-      
-      UpdateLayer(index, ugly.GetRendererRaw().release(), message.GetSlice());
+      UpdateLayer(index, message.CreateRenderer(), message.GetSlice());
     }
     
     EmitMessage(LayerWidget::ContentChangedMessage(*this));

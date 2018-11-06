@@ -59,29 +59,34 @@ namespace OrthancStone
 
     class LayerReadyMessage : public OriginMessage<MessageType_LayerSource_LayerReady, ILayerSource>
     {
+    public:
+      class IRendererFactory : public boost::noncopyable
+      {
+      public:
+        virtual ~IRendererFactory()
+        {
+        }
+
+        virtual ILayerRenderer* CreateRenderer() const = 0;
+      };
+    
     private:
-      std::auto_ptr<ILayerRenderer>  renderer_;
-      const CoordinateSystem3D&      slice_;
+      const IRendererFactory&    factory_;
+      const CoordinateSystem3D&  slice_;
 
     public:
       LayerReadyMessage(ILayerSource& origin,
-                        ILayerRenderer* renderer,  // Takes ownership => TODO Remove this!
+                        const IRendererFactory& rendererFactory,
                         const CoordinateSystem3D& slice) :
         OriginMessage(origin),
-        renderer_(renderer),
+        factory_(rendererFactory),
         slice_(slice)
       {
       }
 
-      // TODO - Remove this function
-      std::auto_ptr<ILayerRenderer>& GetRendererRaw()
+      ILayerRenderer* CreateRenderer() const
       {
-        return renderer_;
-      }
-
-      const ILayerRenderer& GetRenderer() const
-      {
-        return *renderer_;
+        return factory_.CreateRenderer();
       }
 
       const CoordinateSystem3D& GetSlice() const

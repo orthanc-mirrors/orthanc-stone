@@ -499,6 +499,30 @@ namespace OrthancStone
       private ISlicedVolume::IObserver
   {
   private:
+    class RendererFactory : public LayerReadyMessage::IRendererFactory
+    {
+    private:
+      const Orthanc::ImageAccessor&  frame_;
+      const Slice&                   slice_;
+      bool                           isFullQuality_;
+
+    public:
+      RendererFactory(const Orthanc::ImageAccessor& frame,
+                      const Slice& slice,
+                      bool isFullQuality) :
+        frame_(frame),
+        slice_(slice),
+        isFullQuality_(isFullQuality)
+      {
+      }
+
+      virtual ILayerRenderer* CreateRenderer() const
+      {
+        return FrameRenderer::CreateRenderer(frame_, slice_, isFullQuality_);
+      }
+    };
+
+
     OrthancVolumeImage&                 volume_;
     std::auto_ptr<VolumeImageGeometry>  axialGeometry_;
     std::auto_ptr<VolumeImageGeometry>  coronalGeometry_;
@@ -657,8 +681,9 @@ namespace OrthancStone
           }
 
           std::auto_ptr<Slice> slice(geometry.GetSlice(closest));
-          LayerSourceBase::NotifyLayerReady(
-            FrameRenderer::CreateRenderer(*frame, *slice, isFullQuality),
+
+          RendererFactory factory(*frame, *slice, isFullQuality);
+          LayerSourceBase::NotifyLayerReady(factory,
             //new SliceOutlineRenderer(slice),
             slice->GetGeometry());
           return;
@@ -840,6 +865,35 @@ namespace OrthancStone
   class SliceLocationSource : public LayerSourceBase
   {
   private:
+    class RendererFactory : public LayerReadyMessage::IRendererFactory
+    {
+    private:
+      double                     x1_;
+      double                     y1_;
+      double                     x2_;
+      double                     y2_;
+      const CoordinateSystem3D&  slice_;
+
+    public:
+      RendererFactory(double x1,
+                      double y1,
+                      double x2,
+                      double y2,
+                      const CoordinateSystem3D& slice) :
+        x1_(x1),
+        y1_(y1),
+        x2_(x2),
+        y2_(y2),
+        slice_(slice)
+      {
+      }
+
+      virtual ILayerRenderer* CreateRenderer() const
+      {
+        return new LineLayerRenderer(x1_, y1_, x2_, y2_, slice_);
+      }
+    };
+
     LayerWidget&  otherPlane_;
 
   public:
@@ -885,7 +939,8 @@ namespace OrthancStone
                                                  extent.GetX1(), extent.GetY1(),
                                                  extent.GetX2(), extent.GetY2()))
         {
-          NotifyLayerReady(new LineLayerRenderer(x1, y1, x2, y2, slice), reference.GetGeometry());
+          RendererFactory factory(x1, y1, x2, y2, slice);
+          NotifyLayerReady(factory, reference.GetGeometry());
         }
         else
         {

@@ -126,11 +126,33 @@ namespace OrthancStone
   };
 
 
+  class DicomStructureSetRendererFactory::RendererFactory : public LayerReadyMessage::IRendererFactory
+  {
+  private:
+    DicomStructureSet&         structureSet_;
+    const CoordinateSystem3D&  slice_;
+
+  public:
+    RendererFactory(DicomStructureSet& structureSet,
+                    const CoordinateSystem3D&  slice) :
+      structureSet_(structureSet),
+      slice_(slice)
+    {
+    }
+
+    virtual ILayerRenderer* CreateRenderer() const
+    {
+      return new Renderer(structureSet_, slice_);
+    }
+  };
+  
+
   void DicomStructureSetRendererFactory::ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
   {
     if (loader_.HasStructureSet())
     {
-      NotifyLayerReady(new Renderer(loader_.GetStructureSet(), viewportSlice), viewportSlice);
+      RendererFactory factory(loader_.GetStructureSet(), viewportSlice);
+      NotifyLayerReady(factory, viewportSlice);
     }
   }
 }

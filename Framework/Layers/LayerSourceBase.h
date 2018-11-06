@@ -39,7 +39,7 @@ namespace OrthancStone
 
     void NotifySliceChange(const Slice& slice);
 
-    void NotifyLayerReady(ILayerRenderer* layer,
+    void NotifyLayerReady(const LayerReadyMessage::IRendererFactory& factory,
                           const CoordinateSystem3D& slice);
 
     void NotifyLayerError(const CoordinateSystem3D& slice);

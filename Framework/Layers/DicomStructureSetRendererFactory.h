@@ -32,6 +32,7 @@ namespace OrthancStone
   {
   private:
     class Renderer;
+    class RendererFactory;
 
     virtual void NotifyGeometryReady(const IVolumeLoader& loader)
     {

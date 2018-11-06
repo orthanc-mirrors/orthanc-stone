@@ -37,6 +37,8 @@ namespace OrthancStone
     //private OrthancSlicesLoader::ISliceLoaderObserver
   {
   private:
+    class RendererFactory;
+    
     OrthancSlicesLoader  loader_;
     SliceImageQuality    quality_;
 

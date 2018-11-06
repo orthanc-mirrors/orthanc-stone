@@ -38,7 +38,7 @@ namespace OrthancStone
     virtual CairoSurface* GenerateDisplay(const RenderStyle& style);
 
   public:
-    GrayscaleFrameRenderer(Orthanc::ImageAccessor* frame,    // Takes ownership
+    GrayscaleFrameRenderer(const Orthanc::ImageAccessor& frame,
                            const DicomFrameConverter& converter,
                            const CoordinateSystem3D& frameSlice,
                            double pixelSpacingX,

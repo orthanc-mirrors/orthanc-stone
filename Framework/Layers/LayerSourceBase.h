@@ -43,7 +43,7 @@ namespace OrthancStone
                           const CoordinateSystem3D& slice,
                           bool isError);
 
-    void NotifyImageReady(boost::shared_ptr<Orthanc::ImageAccessor> image,
+    void NotifyImageReady(const Orthanc::ImageAccessor& image,
                           SliceImageQuality imageQuality,
                           const Slice& slice);
 

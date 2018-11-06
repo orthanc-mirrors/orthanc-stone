@@ -74,9 +74,7 @@ namespace OrthancStone
       {
         LOG(WARNING) << "ScheduleLayerCreation for CachedSlice (image is loaded): " << slice_->GetOrthancInstanceId();
         bool isFull = (effectiveQuality_ == SliceImageQuality_FullPng || effectiveQuality_ == SliceImageQuality_FullPam);
-        std::auto_ptr<Orthanc::ImageAccessor> accessor(new Orthanc::ImageAccessor());
-        image_->GetReadOnlyAccessor(*accessor);
-        LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(accessor.release(), *slice_, isFull),
+        LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(*image_, *slice_, isFull),
                                           slice_->GetGeometry(), false);
       }
       else
@@ -239,9 +237,9 @@ namespace OrthancStone
     LOG(WARNING) << "Image ready: " << sliceKeyId;
 
     boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::broker_));
-    cachedSlice->image_ = message.image_;
-    cachedSlice->effectiveQuality_ = message.imageQuality_;
-    cachedSlice->slice_.reset(message.slice_.Clone());
+    cachedSlice->image_.reset(Orthanc::Image::Clone(message.GetImage()));
+    cachedSlice->effectiveQuality_ = message.GetImageQuality();
+    cachedSlice->slice_.reset(message.GetSlice().Clone());
     cachedSlice->status_ = CachedSliceStatus_ImageLoaded;
 
     cachedSlices_[sliceKeyId] = cachedSlice;

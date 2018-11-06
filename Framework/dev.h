@@ -176,12 +176,12 @@ namespace OrthancStone
     virtual void OnSliceImageReady(const OrthancSlicesLoader& loader,
                                    unsigned int sliceIndex,
                                    const Slice& slice,
-                                   const boost::shared_ptr<Orthanc::ImageAccessor>& image,
+                                   const Orthanc::ImageAccessor& image,
                                    SliceImageQuality quality)
     {
       {
         ImageBuffer3D::SliceWriter writer(*image_, VolumeProjection_Axial, sliceIndex);
-        Orthanc::ImageProcessing::Copy(writer.GetAccessor(), *image);
+        Orthanc::ImageProcessing::Copy(writer.GetAccessor(), image);
       }
 
       SlicedVolumeBase::NotifySliceChange(sliceIndex, slice);
@@ -203,30 +203,38 @@ namespace OrthancStone
     {
       switch (message.GetType())
       {
-      case MessageType_SliceLoader_GeometryReady:
-        OnSliceGeometryReady(dynamic_cast<const OrthancSlicesLoader&>(from));
-      case MessageType_SliceLoader_GeometryError:
-      {
-        LOG(ERROR) << "Unable to download a volume image";
-        SlicedVolumeBase::NotifyGeometryError();
-      }; break;
-      case MessageType_SliceLoader_ImageReady:
-      {
-        const OrthancSlicesLoader::SliceImageReadyMessage& msg = dynamic_cast<const OrthancSlicesLoader::SliceImageReadyMessage&>(message);
-        OnSliceImageReady(dynamic_cast<const OrthancSlicesLoader&>(from),
-                          msg.sliceIndex_,
-                          msg.slice_,
-                          msg.image_,
-                          msg.effectiveQuality_);
-      }; break;
-      case MessageType_SliceLoader_ImageError:
-      {
-        const OrthancSlicesLoader::SliceImageErrorMessage& msg = dynamic_cast<const OrthancSlicesLoader::SliceImageErrorMessage&>(message);
-        LOG(ERROR) << "Cannot download slice " << msg.sliceIndex_ << " in a volume image";
-        ScheduleSliceDownload();
-      }; break;
-      default:
-        VLOG("unhandled message type" << message.GetType());
+        case MessageType_SliceLoader_GeometryReady:
+          OnSliceGeometryReady(dynamic_cast<const OrthancSlicesLoader&>(from));
+          break;
+        
+        case MessageType_SliceLoader_GeometryError:
+          LOG(ERROR) << "Unable to download a volume image";
+          SlicedVolumeBase::NotifyGeometryError();
+          break;
+        
+        case MessageType_SliceLoader_ImageReady:
+        {
+          const OrthancSlicesLoader::SliceImageReadyMessage& msg =
+            dynamic_cast<const OrthancSlicesLoader::SliceImageReadyMessage&>(message);
+          OnSliceImageReady(dynamic_cast<const OrthancSlicesLoader&>(from),
+                            msg.GetSliceIndex(),
+                            msg.GetSlice(),
+                            msg.GetImage(),
+                            msg.GetEffectiveQuality());
+          break;
+        }
+      
+        case MessageType_SliceLoader_ImageError:
+        {
+          const OrthancSlicesLoader::SliceImageErrorMessage& msg =
+            dynamic_cast<const OrthancSlicesLoader::SliceImageErrorMessage&>(message);
+          LOG(ERROR) << "Cannot download slice " << msg.GetSliceIndex() << " in a volume image";
+          ScheduleSliceDownload();
+          break;
+        }
+      
+        default:
+          VLOG("unhandled message type" << message.GetType());
       }
     }
 
@@ -650,9 +658,9 @@ namespace OrthancStone
 
           std::auto_ptr<Slice> slice(geometry.GetSlice(closest));
           LayerSourceBase::NotifyLayerReady(
-                FrameRenderer::CreateRenderer(frame.release(), *slice, isFullQuality),
-                //new SliceOutlineRenderer(slice),
-                slice->GetGeometry(), false);
+            FrameRenderer::CreateRenderer(*frame, *slice, isFullQuality),
+            //new SliceOutlineRenderer(slice),
+            slice->GetGeometry(), false);
           return;
         }
       }

@@ -52,21 +52,20 @@ namespace OrthancStone
   void OrthancFrameLayerSource::OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message)
   {
     // first notify that the image is ready (targeted to, i.e: an image cache)
-    LayerSourceBase::NotifyImageReady(message.image_, message.effectiveQuality_, message.slice_);
+    LayerSourceBase::NotifyImageReady(message.GetImage(), message.GetEffectiveQuality(), message.GetSlice());
 
     // then notify that the layer is ready for render
-    bool isFull = (message.effectiveQuality_ == SliceImageQuality_FullPng || message.effectiveQuality_ == SliceImageQuality_FullPam);
-    std::auto_ptr<Orthanc::ImageAccessor> accessor(new Orthanc::ImageAccessor());
-    message.image_->GetReadOnlyAccessor(*accessor);
+    bool isFull = (message.GetEffectiveQuality() == SliceImageQuality_FullPng ||
+                   message.GetEffectiveQuality() == SliceImageQuality_FullPam);
 
-    LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(accessor.release(), message.slice_, isFull),
-                                      message.slice_.GetGeometry(), false);
+    LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(message.GetImage(), message.GetSlice(), isFull),
+                                      message.GetSlice().GetGeometry(), false);
 
   }
 
   void OrthancFrameLayerSource::OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message)
   {
-    LayerSourceBase::NotifyLayerReady(NULL, message.slice_.GetGeometry(), true);
+    LayerSourceBase::NotifyLayerReady(NULL, message.GetSlice().GetGeometry(), true);
   }
 
   OrthancFrameLayerSource::OrthancFrameLayerSource(MessageBroker& broker, OrthancApiClient& orthanc) :

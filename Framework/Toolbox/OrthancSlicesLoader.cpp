@@ -173,17 +173,10 @@ namespace OrthancStone
   };
 
   void OrthancSlicesLoader::NotifySliceImageSuccess(const Operation& operation,
-                                                    boost::shared_ptr<Orthanc::ImageAccessor> image)
+                                                    const Orthanc::ImageAccessor& image)
   {
-    if (image.get() == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-    else
-    {
-      OrthancSlicesLoader::SliceImageReadyMessage msg(operation.GetSliceIndex(), operation.GetSlice(), image, operation.GetQuality());
-      EmitMessage(msg);
-    }
+    OrthancSlicesLoader::SliceImageReadyMessage msg(operation.GetSliceIndex(), operation.GetSlice(), image, operation.GetQuality());
+    EmitMessage(msg);
   }
   
   
@@ -341,7 +334,7 @@ namespace OrthancStone
   void OrthancSlicesLoader::ParseSliceImagePng(const OrthancApiClient::BinaryResponseReadyMessage& message)
   {
     const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(message.GetPayload());
-    boost::shared_ptr<Orthanc::ImageAccessor>  image;
+    std::auto_ptr<Orthanc::ImageAccessor>  image;
     
     try
     {
@@ -375,18 +368,18 @@ namespace OrthancStone
       }
     }
     
-    NotifySliceImageSuccess(operation, image);
+    NotifySliceImageSuccess(operation, *image);
   }
   
   void OrthancSlicesLoader::ParseSliceImagePam(const OrthancApiClient::BinaryResponseReadyMessage& message)
   {
     const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(message.GetPayload());
-    boost::shared_ptr<Orthanc::ImageAccessor>  image;
+    std::auto_ptr<Orthanc::ImageAccessor>  image;
 
     try
     {
       image.reset(new Orthanc::PamReader);
-      dynamic_cast<Orthanc::PamReader&>(*image).ReadFromMemory(std::string(reinterpret_cast<const char*>(message.GetAnswer()), message.GetAnswerSize()));
+      dynamic_cast<Orthanc::PamReader&>(*image).ReadFromMemory(message.GetAnswer(), message.GetAnswerSize());
     }
     catch (Orthanc::OrthancException&)
     {
@@ -415,7 +408,7 @@ namespace OrthancStone
       }
     }
 
-    NotifySliceImageSuccess(operation, image);
+    NotifySliceImageSuccess(operation, *image);
   }
 
 
@@ -461,7 +454,7 @@ namespace OrthancStone
       }
     }
     
-    boost::shared_ptr<Orthanc::ImageAccessor> reader;
+    std::auto_ptr<Orthanc::ImageAccessor> reader;
     
     {
       std::string jpeg;
@@ -481,7 +474,7 @@ namespace OrthancStone
     }
     
     Orthanc::PixelFormat expectedFormat =
-        operation.GetSlice().GetConverter().GetExpectedPixelFormat();
+      operation.GetSlice().GetConverter().GetExpectedPixelFormat();
     
     if (reader->GetFormat() == Orthanc::PixelFormat_RGB24)  // This is a color image
     {
@@ -498,7 +491,7 @@ namespace OrthancStone
       }
       else
       {
-        NotifySliceImageSuccess(operation, reader);
+        NotifySliceImageSuccess(operation, *reader);
         return;
       }
     }
@@ -518,7 +511,7 @@ namespace OrthancStone
       }
       else
       {
-        NotifySliceImageSuccess(operation, reader);
+        NotifySliceImageSuccess(operation, *reader);
         return;
       }
     }
@@ -548,8 +541,8 @@ namespace OrthancStone
     }
     
     // Decode a grayscale JPEG 8bpp image coming from the Web viewer
-    boost::shared_ptr<Orthanc::ImageAccessor> image
-        (new Orthanc::Image(expectedFormat, reader->GetWidth(), reader->GetHeight(), false));
+    std::auto_ptr<Orthanc::ImageAccessor> image
+      (new Orthanc::Image(expectedFormat, reader->GetWidth(), reader->GetHeight(), false));
 
     Orthanc::ImageProcessing::Convert(*image, *reader);
     reader.reset();
@@ -562,7 +555,7 @@ namespace OrthancStone
       Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling, true);
     }
     
-    NotifySliceImageSuccess(operation, image);
+    NotifySliceImageSuccess(operation, *image);
   }
 
 
@@ -611,9 +604,9 @@ namespace OrthancStone
     {
       // This is the case of RT-DOSE (uint32_t values)
       
-      boost::shared_ptr<Orthanc::ImageAccessor> image
-          (new StringImage(Orthanc::PixelFormat_Grayscale32, info.GetWidth(),
-                           info.GetHeight(), raw));
+      std::auto_ptr<Orthanc::ImageAccessor> image
+        (new StringImage(Orthanc::PixelFormat_Grayscale32, info.GetWidth(),
+                         info.GetHeight(), raw));
       
       // TODO - Only for big endian
       for (unsigned int y = 0; y < image->GetHeight(); y++)
@@ -625,7 +618,7 @@ namespace OrthancStone
         }
       }
       
-      NotifySliceImageSuccess(operation, image);
+      NotifySliceImageSuccess(operation, *image);
     }
     else if (info.GetBitsAllocated() == 16 &&
              info.GetBitsStored() == 16 &&
@@ -635,13 +628,13 @@ namespace OrthancStone
              info.GetPhotometricInterpretation() == Orthanc::PhotometricInterpretation_Monochrome2 &&
              raw.size() == info.GetWidth() * info.GetHeight() * 2)
     {
-      boost::shared_ptr<Orthanc::ImageAccessor> image
-          (new StringImage(Orthanc::PixelFormat_Grayscale16, info.GetWidth(),
-                           info.GetHeight(), raw));
+      std::auto_ptr<Orthanc::ImageAccessor> image
+        (new StringImage(Orthanc::PixelFormat_Grayscale16, info.GetWidth(),
+                         info.GetHeight(), raw));
       
       // TODO - Big endian ?
       
-      NotifySliceImageSuccess(operation, image);
+      NotifySliceImageSuccess(operation, *image);
     }
     else
     {
@@ -764,20 +757,20 @@ namespace OrthancStone
     
     switch (slice.GetConverter().GetExpectedPixelFormat())
     {
-    case Orthanc::PixelFormat_RGB24:
-      uri += "/preview";
-      break;
+      case Orthanc::PixelFormat_RGB24:
+        uri += "/preview";
+        break;
       
-    case Orthanc::PixelFormat_Grayscale16:
-      uri += "/image-uint16";
-      break;
+      case Orthanc::PixelFormat_Grayscale16:
+        uri += "/image-uint16";
+        break;
       
-    case Orthanc::PixelFormat_SignedGrayscale16:
-      uri += "/image-int16";
-      break;
+      case Orthanc::PixelFormat_SignedGrayscale16:
+        uri += "/image-int16";
+        break;
       
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
     
     orthanc_.GetBinaryAsync(uri, "image/png",
@@ -794,20 +787,20 @@ namespace OrthancStone
 
     switch (slice.GetConverter().GetExpectedPixelFormat())
     {
-    case Orthanc::PixelFormat_RGB24:
-      uri += "/preview";
-      break;
+      case Orthanc::PixelFormat_RGB24:
+        uri += "/preview";
+        break;
 
-    case Orthanc::PixelFormat_Grayscale16:
-      uri += "/image-uint16";
-      break;
+      case Orthanc::PixelFormat_Grayscale16:
+        uri += "/image-uint16";
+        break;
 
-    case Orthanc::PixelFormat_SignedGrayscale16:
-      uri += "/image-int16";
-      break;
+      case Orthanc::PixelFormat_SignedGrayscale16:
+        uri += "/image-int16";
+        break;
 
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
     orthanc_.GetBinaryAsync(uri, "image/x-portable-arbitrarymap",
@@ -826,20 +819,20 @@ namespace OrthancStone
     
     switch (quality)
     {
-    case SliceImageQuality_Jpeg50:
-      value = 50;
-      break;
+      case SliceImageQuality_Jpeg50:
+        value = 50;
+        break;
 
-    case SliceImageQuality_Jpeg90:
-      value = 90;
-      break;
+      case SliceImageQuality_Jpeg90:
+        value = 90;
+        break;
 
-    case SliceImageQuality_Jpeg95:
-      value = 95;
-      break;
+      case SliceImageQuality_Jpeg95:
+        value = 95;
+        break;
       
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
     
     // This requires the official Web viewer plugin to be installed!
@@ -870,14 +863,14 @@ namespace OrthancStone
     {
       switch (quality)
       {
-      case SliceImageQuality_FullPng:
-        ScheduleSliceImagePng(slice, index);
-        break;
-      case SliceImageQuality_FullPam:
-        ScheduleSliceImagePam(slice, index);
-        break;
-      default:
-        ScheduleSliceImageJpeg(slice, index, quality);
+        case SliceImageQuality_FullPng:
+          ScheduleSliceImagePng(slice, index);
+          break;
+        case SliceImageQuality_FullPam:
+          ScheduleSliceImagePam(slice, index);
+          break;
+        default:
+          ScheduleSliceImageJpeg(slice, index, quality);
       }
     }
     else

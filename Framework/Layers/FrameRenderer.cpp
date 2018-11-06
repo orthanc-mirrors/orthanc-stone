@@ -117,22 +117,20 @@ namespace OrthancStone
   }
 
 
-  ILayerRenderer* FrameRenderer::CreateRenderer(Orthanc::ImageAccessor* frame,
+  ILayerRenderer* FrameRenderer::CreateRenderer(const Orthanc::ImageAccessor& frame,
                                                 const Slice& frameSlice,
                                                 bool isFullQuality)
   {
-    std::auto_ptr<Orthanc::ImageAccessor> protect(frame);
-
-    if (frame->GetFormat() == Orthanc::PixelFormat_RGB24)
+    if (frame.GetFormat() == Orthanc::PixelFormat_RGB24)
     {
-      return new ColorFrameRenderer(protect.release(),
+      return new ColorFrameRenderer(frame,
                                     frameSlice.GetGeometry(), 
                                     frameSlice.GetPixelSpacingX(),
                                     frameSlice.GetPixelSpacingY(), isFullQuality);
     }
     else
     {
-      return new GrayscaleFrameRenderer(protect.release(),
+      return new GrayscaleFrameRenderer(frame,
                                         frameSlice.GetConverter(),
                                         frameSlice.GetGeometry(), 
                                         frameSlice.GetPixelSpacingX(),

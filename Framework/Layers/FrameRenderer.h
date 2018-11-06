@@ -61,7 +61,8 @@ namespace OrthancStone
       return isFullQuality_;
     }
 
-    static ILayerRenderer* CreateRenderer(Orthanc::ImageAccessor* frame,
+    // TODO: Avoid cloning the "frame"
+    static ILayerRenderer* CreateRenderer(const Orthanc::ImageAccessor& frame,
                                           const Slice& frameSlice,
                                           bool isFullQuality);
   };

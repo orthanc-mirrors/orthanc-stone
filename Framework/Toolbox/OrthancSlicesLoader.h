@@ -21,13 +21,13 @@
 
 #pragma once
 
-#include "IWebService.h"
-#include "SlicesSorter.h"
-#include "../StoneEnumerations.h"
 #include "../Messages/IObservable.h"
-#include <boost/shared_ptr.hpp>
+#include "../StoneEnumerations.h"
+#include "IWebService.h"
 #include "OrthancApiClient.h"
-#include "Core/Images/Image.h"
+#include "SlicesSorter.h"
+
+#include <Core/Images/Image.h>
 
 
 namespace OrthancStone
@@ -39,41 +39,78 @@ namespace OrthancStone
     typedef OriginMessage<MessageType_SliceLoader_GeometryReady, OrthancSlicesLoader> SliceGeometryReadyMessage;
     typedef OriginMessage<MessageType_SliceLoader_GeometryError, OrthancSlicesLoader> SliceGeometryErrorMessage;
 
-    struct SliceImageReadyMessage : public BaseMessage<MessageType_SliceLoader_ImageReady>
+    class SliceImageReadyMessage : public BaseMessage<MessageType_SliceLoader_ImageReady>
     {
-      unsigned int sliceIndex_;
-      const Slice& slice_;
-      boost::shared_ptr<Orthanc::ImageAccessor> image_;
-      SliceImageQuality effectiveQuality_;
+    private:
+      unsigned int                   sliceIndex_;
+      const Slice&                   slice_;
+      const Orthanc::ImageAccessor&  image_;
+      SliceImageQuality              effectiveQuality_;
 
+    public:
       SliceImageReadyMessage(unsigned int sliceIndex,
                              const Slice& slice,
-                             boost::shared_ptr<Orthanc::ImageAccessor> image,
-                             SliceImageQuality effectiveQuality)
-        : BaseMessage(),
-          sliceIndex_(sliceIndex),
-          slice_(slice),
-          image_(image),
-          effectiveQuality_(effectiveQuality)
+                             const Orthanc::ImageAccessor& image,
+                             SliceImageQuality effectiveQuality) :
+        sliceIndex_(sliceIndex),
+        slice_(slice),
+        image_(image),
+        effectiveQuality_(effectiveQuality)
       {
       }
+
+      unsigned int GetSliceIndex() const
+      {
+        return sliceIndex_;
+      }
+
+      const Slice& GetSlice() const
+      {
+        return slice_;
+      }
+
+      const Orthanc::ImageAccessor& GetImage() const
+      {
+        return image_;
+      }
+
+      SliceImageQuality GetEffectiveQuality() const
+      {
+        return effectiveQuality_;
+      }        
     };
+    
 
-    struct SliceImageErrorMessage : public BaseMessage<MessageType_SliceLoader_ImageError>
+    class SliceImageErrorMessage : public BaseMessage<MessageType_SliceLoader_ImageError>
     {
-      const Slice& slice_;
-      unsigned int sliceIndex_;
-      SliceImageQuality effectiveQuality_;
+    private:
+      const Slice&       slice_;
+      unsigned int       sliceIndex_;
+      SliceImageQuality  effectiveQuality_;
 
+    public:
       SliceImageErrorMessage(unsigned int sliceIndex,
                              const Slice& slice,
-                             SliceImageQuality effectiveQuality)
-        : BaseMessage(),
-          slice_(slice),
-          sliceIndex_(sliceIndex),
-          effectiveQuality_(effectiveQuality)
+                             SliceImageQuality effectiveQuality) :
+        slice_(slice),
+        sliceIndex_(sliceIndex),
+        effectiveQuality_(effectiveQuality)
       {
       }
+      unsigned int GetSliceIndex() const
+      {
+        return sliceIndex_;
+      }
+
+      const Slice& GetSlice() const
+      {
+        return slice_;
+      }
+
+      SliceImageQuality GetEffectiveQuality() const
+      {
+        return effectiveQuality_;
+      }        
     };
     
   private:
@@ -102,8 +139,8 @@ namespace OrthancStone
     SlicesSorter  slices_;
 
     void NotifySliceImageSuccess(const Operation& operation,
-                                 boost::shared_ptr<Orthanc::ImageAccessor> image);
-
+                                 const Orthanc::ImageAccessor& image);
+    
     void NotifySliceImageError(const Operation& operation);
 
     void OnGeometryError(const OrthancApiClient::HttpErrorMessage& message);

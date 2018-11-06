@@ -22,6 +22,7 @@
 #include "ColorFrameRenderer.h"
 
 #include <Core/OrthancException.h>
+#include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
 
 namespace OrthancStone
@@ -39,15 +40,15 @@ namespace OrthancStone
   }
 
 
-  ColorFrameRenderer::ColorFrameRenderer(Orthanc::ImageAccessor* frame,
+  ColorFrameRenderer::ColorFrameRenderer(const Orthanc::ImageAccessor& frame,
                                          const CoordinateSystem3D& frameSlice,
                                          double pixelSpacingX,
                                          double pixelSpacingY,
                                          bool isFullQuality) :
     FrameRenderer(frameSlice, pixelSpacingX, pixelSpacingY, isFullQuality),
-    frame_(frame)
+    frame_(Orthanc::Image::Clone(frame))
   {
-    if (frame == NULL)
+    if (frame_.get() == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }

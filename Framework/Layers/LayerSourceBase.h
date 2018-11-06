@@ -40,8 +40,9 @@ namespace OrthancStone
     void NotifySliceChange(const Slice& slice);
 
     void NotifyLayerReady(ILayerRenderer* layer,
-                          const CoordinateSystem3D& slice,
-                          bool isError);
+                          const CoordinateSystem3D& slice);
+
+    void NotifyLayerError(const CoordinateSystem3D& slice);
 
     void NotifyImageReady(const Orthanc::ImageAccessor& image,
                           SliceImageQuality imageQuality,

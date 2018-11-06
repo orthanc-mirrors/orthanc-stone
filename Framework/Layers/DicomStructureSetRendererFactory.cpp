@@ -130,7 +130,7 @@ namespace OrthancStone
   {
     if (loader_.HasStructureSet())
     {
-      NotifyLayerReady(new Renderer(loader_.GetStructureSet(), viewportSlice), viewportSlice, false);
+      NotifyLayerReady(new Renderer(loader_.GetStructureSet(), viewportSlice), viewportSlice);
     }
   }
 }

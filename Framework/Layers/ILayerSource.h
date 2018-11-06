@@ -60,20 +60,16 @@ namespace OrthancStone
     class LayerReadyMessage : public OriginMessage<MessageType_LayerSource_LayerReady, ILayerSource>
     {
     private:
-      std::auto_ptr<ILayerRenderer> renderer_;
-      const CoordinateSystem3D& slice_;
-      bool isError_;
+      std::auto_ptr<ILayerRenderer>  renderer_;
+      const CoordinateSystem3D&      slice_;
 
     public:
       LayerReadyMessage(ILayerSource& origin,
                         ILayerRenderer* renderer,  // Takes ownership => TODO Remove this!
-                        const CoordinateSystem3D& slice,
-                        bool isError  // TODO => create NotifyLayerError
-                        ) :
+                        const CoordinateSystem3D& slice) :
         OriginMessage(origin),
         renderer_(renderer),
-        slice_(slice),
-        isError_(isError)
+        slice_(slice)
       {
       }
 
@@ -92,10 +88,25 @@ namespace OrthancStone
       {
         return slice_;
       }
+    };
 
-      bool IsError() const
+
+    class LayerErrorMessage : public OriginMessage<MessageType_LayerSource_LayerError, ILayerSource>
+    {
+    private:
+      const CoordinateSystem3D&  slice_;
+
+    public:
+      LayerErrorMessage(ILayerSource& origin,
+                        const CoordinateSystem3D& slice) :
+        OriginMessage(origin),
+        slice_(slice)
       {
-        return isError_;
+      }
+
+      const CoordinateSystem3D& GetSlice() const
+      {
+        return slice_;
       }
     };
 

@@ -33,6 +33,7 @@ namespace OrthancStone {
     MessageType_LayerSource_SliceChanged,
     MessageType_LayerSource_ImageReady,      // instance pixels data have been loaded
     MessageType_LayerSource_LayerReady,      // layer is ready to be rendered
+    MessageType_LayerSource_LayerError,
 
     MessageType_SliceLoader_GeometryReady,
     MessageType_SliceLoader_GeometryError,

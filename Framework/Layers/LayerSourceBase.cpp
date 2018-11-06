@@ -46,10 +46,14 @@ namespace OrthancStone
   }
 
   void LayerSourceBase::NotifyLayerReady(ILayerRenderer* layer,
-                                         const CoordinateSystem3D& slice,
-                                         bool isError)
+                                         const CoordinateSystem3D& slice)
   {
-    EmitMessage(ILayerSource::LayerReadyMessage(*this, layer, slice, isError));
+    EmitMessage(ILayerSource::LayerReadyMessage(*this, layer, slice));
+  }
+
+  void LayerSourceBase::NotifyLayerError(const CoordinateSystem3D& slice)
+  {
+    EmitMessage(ILayerSource::LayerErrorMessage(*this, slice));
   }
 
   void LayerSourceBase::NotifyImageReady(const Orthanc::ImageAccessor& image,

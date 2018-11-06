@@ -59,13 +59,13 @@ namespace OrthancStone
                    message.GetEffectiveQuality() == SliceImageQuality_FullPam);
 
     LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(message.GetImage(), message.GetSlice(), isFull),
-                                      message.GetSlice().GetGeometry(), false);
+                                      message.GetSlice().GetGeometry());
 
   }
 
   void OrthancFrameLayerSource::OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message)
   {
-    LayerSourceBase::NotifyLayerReady(NULL, message.GetSlice().GetGeometry(), true);
+    LayerSourceBase::NotifyLayerError(message.GetSlice().GetGeometry());
   }
 
   OrthancFrameLayerSource::OrthancFrameLayerSource(MessageBroker& broker, OrthancApiClient& orthanc) :

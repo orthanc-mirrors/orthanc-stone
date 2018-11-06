@@ -73,9 +73,10 @@ namespace OrthancStone
       if (status_ == CachedSliceStatus_ImageLoaded)
       {
         LOG(WARNING) << "ScheduleLayerCreation for CachedSlice (image is loaded): " << slice_->GetOrthancInstanceId();
-        bool isFull = (effectiveQuality_ == SliceImageQuality_FullPng || effectiveQuality_ == SliceImageQuality_FullPam);
+        bool isFull = (effectiveQuality_ == SliceImageQuality_FullPng ||
+                       effectiveQuality_ == SliceImageQuality_FullPam);
         LayerSourceBase::NotifyLayerReady(FrameRenderer::CreateRenderer(*image_, *slice_, isFull),
-                                          slice_->GetGeometry(), false);
+                                          slice_->GetGeometry());
       }
       else
       {

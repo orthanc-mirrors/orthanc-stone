@@ -387,6 +387,7 @@ public:
     layer.RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::SliceChangedMessage>(*this, &LayerWidget::OnSliceChanged));
     layer.RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::ContentChangedMessage>(*this, &LayerWidget::OnContentChanged));
     layer.RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::LayerReadyMessage>(*this, &LayerWidget::OnLayerReady));
+    layer.RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::LayerErrorMessage>(*this, &LayerWidget::OnLayerError));
   }
 
 
@@ -587,29 +588,35 @@ public:
     size_t index;
     if (LookupLayer(index, message.GetOrigin()))
     {
-      if (message.IsError())
-      {
-        LOG(ERROR) << "Using error renderer on layer " << index;
-      }
-      else
-      {
-        LOG(INFO) << "Renderer ready for layer " << index;
-      }
+      LOG(INFO) << "Renderer ready for layer " << index;
 
       // TODO -- REMOVE THIS UGLY STUFF
       ILayerSource::LayerReadyMessage& ugly = const_cast<ILayerSource::LayerReadyMessage&>(message);
       
-      if (ugly.GetRendererRaw().get() != NULL)
+      if (ugly.GetRendererRaw().get() == NULL)
       {
-        UpdateLayer(index, ugly.GetRendererRaw().release(), message.GetSlice());
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
-      else if (message.IsError())
-      {
-        // TODO
-        //UpdateLayer(index, new SliceOutlineRenderer(slice), slice);
-      }
+      
+      UpdateLayer(index, ugly.GetRendererRaw().release(), message.GetSlice());
     }
+    
     EmitMessage(LayerWidget::ContentChangedMessage(*this));
+  }
+
+
+  void LayerWidget::OnLayerError(const ILayerSource::LayerErrorMessage& message)
+  {
+    size_t index;
+    if (LookupLayer(index, message.GetOrigin()))
+    {
+      LOG(ERROR) << "Using error renderer on layer " << index;
+
+      // TODO
+      //UpdateLayer(index, new SliceOutlineRenderer(slice), slice);
+
+      EmitMessage(LayerWidget::ContentChangedMessage(*this));
+    }
   }
 
 

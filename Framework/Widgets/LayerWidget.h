@@ -67,6 +67,8 @@ namespace OrthancStone
 
     virtual void OnLayerReady(const ILayerSource::LayerReadyMessage& message);
 
+    virtual void OnLayerError(const ILayerSource::LayerErrorMessage& message);
+
     void ObserveLayer(ILayerSource& source);
 
     void ResetChangedLayers();

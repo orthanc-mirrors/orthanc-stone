@@ -66,20 +66,8 @@ namespace OrthancStone
   }
   
   
-  const Orthanc::IDynamicObject& OrthancApiClient::HttpErrorMessage::GetPayload() const
-  {
-    if (HasPayload())
-    {
-      return *payload_;
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-  }
-  
-  
-  OrthancApiClient::OrthancApiClient(MessageBroker &broker, IWebService &orthanc) :
+  OrthancApiClient::OrthancApiClient(MessageBroker& broker,
+                                     IWebService& orthanc) :
     IObservable(broker),
     orthanc_(orthanc)
   {
@@ -91,12 +79,12 @@ namespace OrthancStone
   {
   private:
     std::auto_ptr<MessageHandler<OrthancApiClient::JsonResponseReadyMessage> > orthancApiSuccessCallback_;
-    std::auto_ptr<MessageHandler<OrthancApiClient::HttpErrorMessage> > orthancApiFailureCallback_;
+    std::auto_ptr<MessageHandler<IWebService::HttpRequestErrorMessage> > orthancApiFailureCallback_;
 
   public:
     HttpResponseToJsonConverter(MessageBroker& broker,
                                 MessageHandler<OrthancApiClient::JsonResponseReadyMessage>* orthancApiSuccessCallback,
-                                MessageHandler<OrthancApiClient::HttpErrorMessage>* orthancApiFailureCallback)
+                                MessageHandler<IWebService::HttpRequestErrorMessage>* orthancApiFailureCallback)
       : IObserver(broker),
         IObservable(broker),
         orthancApiSuccessCallback_(orthancApiSuccessCallback),
@@ -117,7 +105,7 @@ namespace OrthancStone
       }
       else if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage
+        orthancApiFailureCallback_->Apply(IWebService::HttpRequestErrorMessage
                                           (message.GetUri(), message.GetPayloadPointer()));
       }
 
@@ -128,7 +116,7 @@ namespace OrthancStone
     {
       if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.GetUri(), message.GetPayloadPointer()));
+        orthancApiFailureCallback_->Apply(IWebService::HttpRequestErrorMessage(message.GetUri(), message.GetPayloadPointer()));
       }
 
       delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
@@ -141,12 +129,12 @@ namespace OrthancStone
   {
   private:
     std::auto_ptr<MessageHandler<OrthancApiClient::BinaryResponseReadyMessage> > orthancApiSuccessCallback_;
-    std::auto_ptr<MessageHandler<OrthancApiClient::HttpErrorMessage> > orthancApiFailureCallback_;
+    std::auto_ptr<MessageHandler<IWebService::HttpRequestErrorMessage> > orthancApiFailureCallback_;
 
   public:
     HttpResponseToBinaryConverter(MessageBroker& broker,
                                   MessageHandler<OrthancApiClient::BinaryResponseReadyMessage>* orthancApiSuccessCallback,
-                                  MessageHandler<OrthancApiClient::HttpErrorMessage>* orthancApiFailureCallback)
+                                  MessageHandler<IWebService::HttpRequestErrorMessage>* orthancApiFailureCallback)
       : IObserver(broker),
         IObservable(broker),
         orthancApiSuccessCallback_(orthancApiSuccessCallback),
@@ -164,7 +152,7 @@ namespace OrthancStone
       }
       else if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage
+        orthancApiFailureCallback_->Apply(IWebService::HttpRequestErrorMessage
                                           (message.GetUri(), message.GetPayloadPointer()));
       }
 
@@ -175,7 +163,7 @@ namespace OrthancStone
     {
       if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.GetUri(), message.GetPayloadPointer()));
+        orthancApiFailureCallback_->Apply(IWebService::HttpRequestErrorMessage(message.GetUri(), message.GetPayloadPointer()));
       }
 
       delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
@@ -188,12 +176,12 @@ namespace OrthancStone
   {
   private:
     std::auto_ptr<MessageHandler<OrthancApiClient::EmptyResponseReadyMessage> > orthancApiSuccessCallback_;
-    std::auto_ptr<MessageHandler<OrthancApiClient::HttpErrorMessage> > orthancApiFailureCallback_;
+    std::auto_ptr<MessageHandler<IWebService::HttpRequestErrorMessage> > orthancApiFailureCallback_;
 
   public:
     HttpResponseToEmptyConverter(MessageBroker& broker,
                                   MessageHandler<OrthancApiClient::EmptyResponseReadyMessage>* orthancApiSuccessCallback,
-                                  MessageHandler<OrthancApiClient::HttpErrorMessage>* orthancApiFailureCallback)
+                                  MessageHandler<IWebService::HttpRequestErrorMessage>* orthancApiFailureCallback)
       : IObserver(broker),
         IObservable(broker),
         orthancApiSuccessCallback_(orthancApiSuccessCallback),
@@ -210,7 +198,7 @@ namespace OrthancStone
       }
       else if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage
+        orthancApiFailureCallback_->Apply(IWebService::HttpRequestErrorMessage
                                           (message.GetUri(), message.GetPayloadPointer()));
       }
 
@@ -221,7 +209,7 @@ namespace OrthancStone
     {
       if (orthancApiFailureCallback_.get() != NULL)
       {
-        orthancApiFailureCallback_->Apply(OrthancApiClient::HttpErrorMessage(message.GetUri(), message.GetPayloadPointer()));
+        orthancApiFailureCallback_->Apply(IWebService::HttpRequestErrorMessage(message.GetUri(), message.GetPayloadPointer()));
       }
 
       delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
@@ -231,7 +219,7 @@ namespace OrthancStone
 
   void OrthancApiClient::GetJsonAsync(const std::string& uri,
                                       MessageHandler<JsonResponseReadyMessage>* successCallback,
-                                      MessageHandler<HttpErrorMessage>* failureCallback,
+                                      MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                       Orthanc::IDynamicObject* payload)
   {
     HttpResponseToJsonConverter* converter = new HttpResponseToJsonConverter(broker_, successCallback, failureCallback);  // it is currently deleting itself after being used
@@ -241,10 +229,23 @@ namespace OrthancStone
 
   }
 
+
+  void OrthancApiClient::GetBinaryAsync(const std::string& uri,
+                                        const std::string& contentType,
+                                        MessageHandler<BinaryResponseReadyMessage>* successCallback,
+                                        MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
+                                        Orthanc::IDynamicObject* payload)
+  {
+    IWebService::Headers headers;
+    headers["Accept"] = contentType;
+    GetBinaryAsync(uri, headers, successCallback, failureCallback, payload);
+  }
+  
+
   void OrthancApiClient::GetBinaryAsync(const std::string& uri,
                                         const IWebService::Headers& headers,
                                         MessageHandler<BinaryResponseReadyMessage>* successCallback,
-                                        MessageHandler<HttpErrorMessage>* failureCallback,
+                                        MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                         Orthanc::IDynamicObject* payload)
   {
     HttpResponseToBinaryConverter* converter = new HttpResponseToBinaryConverter(broker_, successCallback, failureCallback);  // it is currently deleting itself after being used
@@ -253,10 +254,11 @@ namespace OrthancStone
                       new Callable<HttpResponseToBinaryConverter, IWebService::HttpRequestErrorMessage>(*converter, &HttpResponseToBinaryConverter::ConvertError));
   }
 
+  
   void OrthancApiClient::PostBinaryAsyncExpectJson(const std::string& uri,
                                                    const std::string& body,
                                                    MessageHandler<JsonResponseReadyMessage>* successCallback,
-                                                   MessageHandler<HttpErrorMessage>* failureCallback,
+                                                   MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                                    Orthanc::IDynamicObject* payload)
   {
     HttpResponseToJsonConverter* converter = new HttpResponseToJsonConverter(broker_, successCallback, failureCallback);  // it is currently deleting itself after being used
@@ -266,10 +268,11 @@ namespace OrthancStone
 
   }
 
+  
   void OrthancApiClient::PostJsonAsyncExpectJson(const std::string& uri,
                                                  const Json::Value& data,
                                                  MessageHandler<JsonResponseReadyMessage>* successCallback,
-                                                 MessageHandler<HttpErrorMessage>* failureCallback,
+                                                 MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                                  Orthanc::IDynamicObject* payload)
   {
     std::string body;
@@ -277,9 +280,10 @@ namespace OrthancStone
     return PostBinaryAsyncExpectJson(uri, body, successCallback, failureCallback, payload);
   }
 
+  
   void OrthancApiClient::DeleteAsync(const std::string& uri,
                                      MessageHandler<EmptyResponseReadyMessage>* successCallback,
-                                     MessageHandler<HttpErrorMessage>* failureCallback,
+                                     MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                      Orthanc::IDynamicObject* payload)
   {
     HttpResponseToEmptyConverter* converter = new HttpResponseToEmptyConverter(broker_, successCallback, failureCallback);  // it is currently deleting itself after being used
@@ -289,4 +293,12 @@ namespace OrthancStone
   }
 
 
+  class OrthancApiClient::WebServicePayload : public boost::noncopyable
+  {
+  private:
+    std::auto_ptr< MessageHandler<EmptyResponseReadyMessage> >   emptyHandler_;
+    std::auto_ptr< MessageHandler<JsonResponseReadyMessage> >    jsonHandler_;
+    std::auto_ptr< MessageHandler<BinaryResponseReadyMessage> >  binaryHandler_;
+    std::auto_ptr< Orthanc::IDynamicObject >                     userPayload;
+  };
 }

@@ -217,13 +217,13 @@ namespace OrthancStone
     }
   }
   
-  void OrthancSlicesLoader::OnGeometryError(const OrthancApiClient::HttpErrorMessage& message)
+  void OrthancSlicesLoader::OnGeometryError(const IWebService::HttpRequestErrorMessage& message)
   {
     EmitMessage(SliceGeometryErrorMessage(*this));
     state_ = State_Error;
   }
 
-  void OrthancSlicesLoader::OnSliceImageError(const OrthancApiClient::HttpErrorMessage& message)
+  void OrthancSlicesLoader::OnSliceImageError(const IWebService::HttpRequestErrorMessage& message)
   {
     NotifySliceImageError(dynamic_cast<const Operation&>(message.GetPayload()));
     state_ = State_Error;
@@ -665,7 +665,7 @@ namespace OrthancStone
       state_ = State_LoadingGeometry;
       orthanc_.GetJsonAsync("/series/" + seriesId + "/instances-tags",
                             new Callable<OrthancSlicesLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &OrthancSlicesLoader::ParseSeriesGeometry),
-                            new Callable<OrthancSlicesLoader, OrthancApiClient::HttpErrorMessage>(*this, &OrthancSlicesLoader::OnGeometryError),
+                            new Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(*this, &OrthancSlicesLoader::OnGeometryError),
                             NULL);
     }
   }
@@ -684,7 +684,7 @@ namespace OrthancStone
       // mandatory to read RT DOSE, but is too long to be returned by default
       orthanc_.GetJsonAsync("/instances/" + instanceId + "/tags?ignore-length=3004-000c",
                             new Callable<OrthancSlicesLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &OrthancSlicesLoader::ParseInstanceGeometry),
-                            new Callable<OrthancSlicesLoader, OrthancApiClient::HttpErrorMessage>(*this, &OrthancSlicesLoader::OnGeometryError),
+                            new Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(*this, &OrthancSlicesLoader::OnGeometryError),
                             Operation::DownloadInstanceGeometry(instanceId));
     }
   }
@@ -703,7 +703,7 @@ namespace OrthancStone
 
       orthanc_.GetJsonAsync("/instances/" + instanceId + "/tags",
                             new Callable<OrthancSlicesLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &OrthancSlicesLoader::ParseFrameGeometry),
-                            new Callable<OrthancSlicesLoader, OrthancApiClient::HttpErrorMessage>(*this, &OrthancSlicesLoader::OnGeometryError),
+                            new Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(*this, &OrthancSlicesLoader::OnGeometryError),
                             Operation::DownloadFrameGeometry(instanceId, frame));
     }
   }
@@ -775,7 +775,7 @@ namespace OrthancStone
     
     orthanc_.GetBinaryAsync(uri, "image/png",
                             new Callable<OrthancSlicesLoader, OrthancApiClient::BinaryResponseReadyMessage>(*this, &OrthancSlicesLoader::ParseSliceImagePng),
-                            new Callable<OrthancSlicesLoader, OrthancApiClient::HttpErrorMessage>(*this, &OrthancSlicesLoader::OnSliceImageError),
+                            new Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(*this, &OrthancSlicesLoader::OnSliceImageError),
                             Operation::DownloadSliceImage(index, slice, SliceImageQuality_FullPng));
   }
   
@@ -805,7 +805,7 @@ namespace OrthancStone
 
     orthanc_.GetBinaryAsync(uri, "image/x-portable-arbitrarymap",
                             new Callable<OrthancSlicesLoader, OrthancApiClient::BinaryResponseReadyMessage>(*this, &OrthancSlicesLoader::ParseSliceImagePam),
-                            new Callable<OrthancSlicesLoader, OrthancApiClient::HttpErrorMessage>(*this, &OrthancSlicesLoader::OnSliceImageError),
+                            new Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(*this, &OrthancSlicesLoader::OnSliceImageError),
                             Operation::DownloadSliceImage(index, slice, SliceImageQuality_FullPam));
   }
 
@@ -843,7 +843,7 @@ namespace OrthancStone
 
     orthanc_.GetJsonAsync(uri,
                           new Callable<OrthancSlicesLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &OrthancSlicesLoader::ParseSliceImageJpeg),
-                          new Callable<OrthancSlicesLoader, OrthancApiClient::HttpErrorMessage>(*this, &OrthancSlicesLoader::OnSliceImageError),
+                          new Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(*this, &OrthancSlicesLoader::OnSliceImageError),
                           Operation::DownloadSliceImage(index, slice, quality));
   }
   
@@ -879,7 +879,7 @@ namespace OrthancStone
                          boost::lexical_cast<std::string>(slice.GetFrame()) + "/raw.gz");
       orthanc_.GetBinaryAsync(uri, IWebService::Headers(),
                               new Callable<OrthancSlicesLoader, OrthancApiClient::BinaryResponseReadyMessage>(*this, &OrthancSlicesLoader::ParseSliceRawImage),
-                              new Callable<OrthancSlicesLoader, OrthancApiClient::HttpErrorMessage>(*this, &OrthancSlicesLoader::OnSliceImageError),
+                              new Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(*this, &OrthancSlicesLoader::OnSliceImageError),
                               Operation::DownloadSliceRawImage(index, slice));
     }
   }

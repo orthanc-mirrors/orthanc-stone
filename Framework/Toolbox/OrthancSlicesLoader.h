@@ -143,8 +143,9 @@ namespace OrthancStone
     
     void NotifySliceImageError(const Operation& operation);
 
-    void OnGeometryError(const OrthancApiClient::HttpErrorMessage& message);
-    void OnSliceImageError(const OrthancApiClient::HttpErrorMessage& message);
+    void OnGeometryError(const IWebService::HttpRequestErrorMessage& message);
+
+    void OnSliceImageError(const IWebService::HttpRequestErrorMessage& message);
 
     void ParseSeriesGeometry(const OrthancApiClient::JsonResponseReadyMessage& message);
 
@@ -195,7 +196,5 @@ namespace OrthancStone
 
     void ScheduleLoadSliceImage(size_t index,
                                 SliceImageQuality requestedQuality);
-
-
   };
 }

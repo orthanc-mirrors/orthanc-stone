@@ -66,175 +66,137 @@ namespace OrthancStone
   }
   
   
+  class OrthancApiClient::WebServicePayload : public Orthanc::IDynamicObject
+  {
+  private:
+    std::auto_ptr< MessageHandler<EmptyResponseReadyMessage> >             emptyHandler_;
+    std::auto_ptr< MessageHandler<JsonResponseReadyMessage> >              jsonHandler_;
+    std::auto_ptr< MessageHandler<BinaryResponseReadyMessage> >            binaryHandler_;
+    std::auto_ptr< MessageHandler<IWebService::HttpRequestErrorMessage> >  failureHandler_;
+    std::auto_ptr< Orthanc::IDynamicObject >                               userPayload_;
+
+    void NotifyConversionError(const IWebService::HttpRequestSuccessMessage& message) const
+    {
+      if (failureHandler_.get() != NULL)
+      {
+        failureHandler_->Apply(IWebService::HttpRequestErrorMessage
+                               (message.GetUri(), userPayload_.get()));
+      }
+    }
+    
+  public:
+    WebServicePayload(MessageHandler<EmptyResponseReadyMessage>* handler,
+                      MessageHandler<IWebService::HttpRequestErrorMessage>* failureHandler,
+                      Orthanc::IDynamicObject* userPayload) :
+      emptyHandler_(handler),
+      failureHandler_(failureHandler),
+      userPayload_(userPayload)
+    {
+      if (handler == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+    }
+
+    WebServicePayload(MessageHandler<BinaryResponseReadyMessage>* handler,
+                      MessageHandler<IWebService::HttpRequestErrorMessage>* failureHandler,
+                      Orthanc::IDynamicObject* userPayload) :
+      binaryHandler_(handler),
+      failureHandler_(failureHandler),
+      userPayload_(userPayload)
+    {
+      if (handler == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+    }
+
+    WebServicePayload(MessageHandler<JsonResponseReadyMessage>* handler,
+                      MessageHandler<IWebService::HttpRequestErrorMessage>* failureHandler,
+                      Orthanc::IDynamicObject* userPayload) :
+      jsonHandler_(handler),
+      failureHandler_(failureHandler),
+      userPayload_(userPayload)
+    {
+      if (handler == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+    }
+
+    void HandleSuccess(const IWebService::HttpRequestSuccessMessage& message) const
+    {
+      if (emptyHandler_.get() != NULL)
+      {
+        emptyHandler_->Apply(OrthancApiClient::EmptyResponseReadyMessage
+                             (message.GetUri(), userPayload_.get()));
+      }
+      else if (binaryHandler_.get() != NULL)
+      {
+        binaryHandler_->Apply(OrthancApiClient::BinaryResponseReadyMessage
+                              (message.GetUri(), message.GetAnswer(),
+                               message.GetAnswerSize(), userPayload_.get()));
+      }
+      else if (jsonHandler_.get() != NULL)
+      {
+        Json::Value response;
+        if (MessagingToolbox::ParseJson(response, message.GetAnswer(), message.GetAnswerSize()))
+        {
+          jsonHandler_->Apply(OrthancApiClient::JsonResponseReadyMessage
+                              (message.GetUri(), response, userPayload_.get()));
+        }
+        else
+        {
+          NotifyConversionError(message);
+        }
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+    }      
+
+    void HandleFailure(const IWebService::HttpRequestErrorMessage& message) const
+    {
+      if (failureHandler_.get() != NULL)
+      {
+        failureHandler_->Apply(IWebService::HttpRequestErrorMessage
+                               (message.GetUri(), userPayload_.get()));
+      }
+    }      
+  };
+
+
   OrthancApiClient::OrthancApiClient(MessageBroker& broker,
                                      IWebService& orthanc) :
     IObservable(broker),
+    IObserver(broker),
     orthanc_(orthanc)
   {
   }
 
-  // performs the translation between IWebService messages and OrthancApiClient messages
-  // TODO: handle destruction of this object (with shared_ptr ?::delete_later ???)
-  class HttpResponseToJsonConverter : public IObserver, IObservable
+
+  void OrthancApiClient::GetJsonAsync(
+    const std::string& uri,
+    MessageHandler<JsonResponseReadyMessage>* successCallback,
+    MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
+    Orthanc::IDynamicObject* payload)
   {
-  private:
-    std::auto_ptr<MessageHandler<OrthancApiClient::JsonResponseReadyMessage> > orthancApiSuccessCallback_;
-    std::auto_ptr<MessageHandler<IWebService::HttpRequestErrorMessage> > orthancApiFailureCallback_;
-
-  public:
-    HttpResponseToJsonConverter(MessageBroker& broker,
-                                MessageHandler<OrthancApiClient::JsonResponseReadyMessage>* orthancApiSuccessCallback,
-                                MessageHandler<IWebService::HttpRequestErrorMessage>* orthancApiFailureCallback)
-      : IObserver(broker),
-        IObservable(broker),
-        orthancApiSuccessCallback_(orthancApiSuccessCallback),
-        orthancApiFailureCallback_(orthancApiFailureCallback)
-    {
-    }
-
-    void ConvertResponseToJson(const IWebService::HttpRequestSuccessMessage& message)
-    {
-      Json::Value response;
-      if (MessagingToolbox::ParseJson(response, message.GetAnswer(), message.GetAnswerSize()))
-      {
-        if (orthancApiSuccessCallback_.get() != NULL)
-        {
-          orthancApiSuccessCallback_->Apply(OrthancApiClient::JsonResponseReadyMessage
-                                            (message.GetUri(), response, message.GetPayloadPointer()));
-        }
-      }
-      else if (orthancApiFailureCallback_.get() != NULL)
-      {
-        orthancApiFailureCallback_->Apply(IWebService::HttpRequestErrorMessage
-                                          (message.GetUri(), message.GetPayloadPointer()));
-      }
-
-      delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
-    }
-
-    void ConvertError(const IWebService::HttpRequestErrorMessage& message)
-    {
-      if (orthancApiFailureCallback_.get() != NULL)
-      {
-        orthancApiFailureCallback_->Apply(IWebService::HttpRequestErrorMessage(message.GetUri(), message.GetPayloadPointer()));
-      }
-
-      delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
-    }
-  };
-
-  // performs the translation between IWebService messages and OrthancApiClient messages
-  // TODO: handle destruction of this object (with shared_ptr ?::delete_later ???)
-  class HttpResponseToBinaryConverter : public IObserver, IObservable
-  {
-  private:
-    std::auto_ptr<MessageHandler<OrthancApiClient::BinaryResponseReadyMessage> > orthancApiSuccessCallback_;
-    std::auto_ptr<MessageHandler<IWebService::HttpRequestErrorMessage> > orthancApiFailureCallback_;
-
-  public:
-    HttpResponseToBinaryConverter(MessageBroker& broker,
-                                  MessageHandler<OrthancApiClient::BinaryResponseReadyMessage>* orthancApiSuccessCallback,
-                                  MessageHandler<IWebService::HttpRequestErrorMessage>* orthancApiFailureCallback)
-      : IObserver(broker),
-        IObservable(broker),
-        orthancApiSuccessCallback_(orthancApiSuccessCallback),
-        orthancApiFailureCallback_(orthancApiFailureCallback)
-    {
-    }
-
-    void ConvertResponseToBinary(const IWebService::HttpRequestSuccessMessage& message)
-    {
-      if (orthancApiSuccessCallback_.get() != NULL)
-      {
-        orthancApiSuccessCallback_->Apply(OrthancApiClient::BinaryResponseReadyMessage
-                                          (message.GetUri(), message.GetAnswer(),
-                                           message.GetAnswerSize(), message.GetPayloadPointer()));
-      }
-      else if (orthancApiFailureCallback_.get() != NULL)
-      {
-        orthancApiFailureCallback_->Apply(IWebService::HttpRequestErrorMessage
-                                          (message.GetUri(), message.GetPayloadPointer()));
-      }
-
-      delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
-    }
-
-    void ConvertError(const IWebService::HttpRequestErrorMessage& message)
-    {
-      if (orthancApiFailureCallback_.get() != NULL)
-      {
-        orthancApiFailureCallback_->Apply(IWebService::HttpRequestErrorMessage(message.GetUri(), message.GetPayloadPointer()));
-      }
-
-      delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
-    }
-  };
-
-  // performs the translation between IWebService messages and OrthancApiClient messages
-  // TODO: handle destruction of this object (with shared_ptr ?::delete_later ???)
-  class HttpResponseToEmptyConverter : public IObserver, IObservable
-  {
-  private:
-    std::auto_ptr<MessageHandler<OrthancApiClient::EmptyResponseReadyMessage> > orthancApiSuccessCallback_;
-    std::auto_ptr<MessageHandler<IWebService::HttpRequestErrorMessage> > orthancApiFailureCallback_;
-
-  public:
-    HttpResponseToEmptyConverter(MessageBroker& broker,
-                                  MessageHandler<OrthancApiClient::EmptyResponseReadyMessage>* orthancApiSuccessCallback,
-                                  MessageHandler<IWebService::HttpRequestErrorMessage>* orthancApiFailureCallback)
-      : IObserver(broker),
-        IObservable(broker),
-        orthancApiSuccessCallback_(orthancApiSuccessCallback),
-        orthancApiFailureCallback_(orthancApiFailureCallback)
-    {
-    }
-
-    void ConvertResponseToEmpty(const IWebService::HttpRequestSuccessMessage& message)
-    {
-      if (orthancApiSuccessCallback_.get() != NULL)
-      {
-        orthancApiSuccessCallback_->Apply(OrthancApiClient::EmptyResponseReadyMessage
-                                          (message.GetUri(), message.GetPayloadPointer()));
-      }
-      else if (orthancApiFailureCallback_.get() != NULL)
-      {
-        orthancApiFailureCallback_->Apply(IWebService::HttpRequestErrorMessage
-                                          (message.GetUri(), message.GetPayloadPointer()));
-      }
-
-      delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
-    }
-
-    void ConvertError(const IWebService::HttpRequestErrorMessage& message)
-    {
-      if (orthancApiFailureCallback_.get() != NULL)
-      {
-        orthancApiFailureCallback_->Apply(IWebService::HttpRequestErrorMessage(message.GetUri(), message.GetPayloadPointer()));
-      }
-
-      delete this; // hack untill we find someone to take ownership of this object (https://isocpp.org/wiki/faq/freestore-mgmt#delete-this)
-    }
-  };
-
-
-  void OrthancApiClient::GetJsonAsync(const std::string& uri,
-                                      MessageHandler<JsonResponseReadyMessage>* successCallback,
-                                      MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
-                                      Orthanc::IDynamicObject* payload)
-  {
-    HttpResponseToJsonConverter* converter = new HttpResponseToJsonConverter(broker_, successCallback, failureCallback);  // it is currently deleting itself after being used
-    orthanc_.GetAsync(uri, IWebService::Headers(), payload,
-                      new Callable<HttpResponseToJsonConverter, IWebService::HttpRequestSuccessMessage>(*converter, &HttpResponseToJsonConverter::ConvertResponseToJson),
-                      new Callable<HttpResponseToJsonConverter, IWebService::HttpRequestErrorMessage>(*converter, &HttpResponseToJsonConverter::ConvertError));
-
+    orthanc_.GetAsync(uri, IWebService::Headers(),
+                      new WebServicePayload(successCallback, failureCallback, payload),
+                      new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
+                      (*this, &OrthancApiClient::NotifyHttpSuccess),
+                      new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
+                      (*this, &OrthancApiClient::NotifyHttpError));
   }
 
 
-  void OrthancApiClient::GetBinaryAsync(const std::string& uri,
-                                        const std::string& contentType,
-                                        MessageHandler<BinaryResponseReadyMessage>* successCallback,
-                                        MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
-                                        Orthanc::IDynamicObject* payload)
+  void OrthancApiClient::GetBinaryAsync(
+    const std::string& uri,
+    const std::string& contentType,
+    MessageHandler<BinaryResponseReadyMessage>* successCallback,
+    MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
+    Orthanc::IDynamicObject* payload)
   {
     IWebService::Headers headers;
     headers["Accept"] = contentType;
@@ -242,38 +204,45 @@ namespace OrthancStone
   }
   
 
-  void OrthancApiClient::GetBinaryAsync(const std::string& uri,
-                                        const IWebService::Headers& headers,
-                                        MessageHandler<BinaryResponseReadyMessage>* successCallback,
-                                        MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
-                                        Orthanc::IDynamicObject* payload)
+  void OrthancApiClient::GetBinaryAsync(
+    const std::string& uri,
+    const IWebService::Headers& headers,
+    MessageHandler<BinaryResponseReadyMessage>* successCallback,
+    MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
+    Orthanc::IDynamicObject* payload)
   {
-    HttpResponseToBinaryConverter* converter = new HttpResponseToBinaryConverter(broker_, successCallback, failureCallback);  // it is currently deleting itself after being used
-    orthanc_.GetAsync(uri, headers, payload,
-                      new Callable<HttpResponseToBinaryConverter, IWebService::HttpRequestSuccessMessage>(*converter, &HttpResponseToBinaryConverter::ConvertResponseToBinary),
-                      new Callable<HttpResponseToBinaryConverter, IWebService::HttpRequestErrorMessage>(*converter, &HttpResponseToBinaryConverter::ConvertError));
+    orthanc_.GetAsync(uri, headers,
+                      new WebServicePayload(successCallback, failureCallback, payload),
+                      new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
+                      (*this, &OrthancApiClient::NotifyHttpSuccess),
+                      new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
+                      (*this, &OrthancApiClient::NotifyHttpError));
   }
 
   
-  void OrthancApiClient::PostBinaryAsyncExpectJson(const std::string& uri,
-                                                   const std::string& body,
-                                                   MessageHandler<JsonResponseReadyMessage>* successCallback,
-                                                   MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
-                                                   Orthanc::IDynamicObject* payload)
+  void OrthancApiClient::PostBinaryAsyncExpectJson(
+    const std::string& uri,
+    const std::string& body,
+    MessageHandler<JsonResponseReadyMessage>* successCallback,
+    MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
+    Orthanc::IDynamicObject* payload)
   {
-    HttpResponseToJsonConverter* converter = new HttpResponseToJsonConverter(broker_, successCallback, failureCallback);  // it is currently deleting itself after being used
-    orthanc_.PostAsync(uri, IWebService::Headers(), body, payload,
-                       new Callable<HttpResponseToJsonConverter, IWebService::HttpRequestSuccessMessage>(*converter, &HttpResponseToJsonConverter::ConvertResponseToJson),
-                       new Callable<HttpResponseToJsonConverter, IWebService::HttpRequestErrorMessage>(*converter, &HttpResponseToJsonConverter::ConvertError));
+    orthanc_.PostAsync(uri, IWebService::Headers(), body,
+                       new WebServicePayload(successCallback, failureCallback, payload),
+                       new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
+                       (*this, &OrthancApiClient::NotifyHttpSuccess),
+                       new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
+                       (*this, &OrthancApiClient::NotifyHttpError));
 
   }
 
   
-  void OrthancApiClient::PostJsonAsyncExpectJson(const std::string& uri,
-                                                 const Json::Value& data,
-                                                 MessageHandler<JsonResponseReadyMessage>* successCallback,
-                                                 MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
-                                                 Orthanc::IDynamicObject* payload)
+  void OrthancApiClient::PostJsonAsyncExpectJson(
+    const std::string& uri,
+    const Json::Value& data,
+    MessageHandler<JsonResponseReadyMessage>* successCallback,
+    MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
+    Orthanc::IDynamicObject* payload)
   {
     std::string body;
     MessagingToolbox::JsonToString(body, data);
@@ -281,24 +250,43 @@ namespace OrthancStone
   }
 
   
-  void OrthancApiClient::DeleteAsync(const std::string& uri,
-                                     MessageHandler<EmptyResponseReadyMessage>* successCallback,
-                                     MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
-                                     Orthanc::IDynamicObject* payload)
+  void OrthancApiClient::DeleteAsync(
+    const std::string& uri,
+    MessageHandler<EmptyResponseReadyMessage>* successCallback,
+    MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
+    Orthanc::IDynamicObject* payload)
   {
-    HttpResponseToEmptyConverter* converter = new HttpResponseToEmptyConverter(broker_, successCallback, failureCallback);  // it is currently deleting itself after being used
-    orthanc_.DeleteAsync(uri, IWebService::Headers(), payload,
-                       new Callable<HttpResponseToEmptyConverter, IWebService::HttpRequestSuccessMessage>(*converter, &HttpResponseToEmptyConverter::ConvertResponseToEmpty),
-                       new Callable<HttpResponseToEmptyConverter, IWebService::HttpRequestErrorMessage>(*converter, &HttpResponseToEmptyConverter::ConvertError));
+    orthanc_.DeleteAsync(uri, IWebService::Headers(),
+                         new WebServicePayload(successCallback, failureCallback, payload),
+                         new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
+                         (*this, &OrthancApiClient::NotifyHttpSuccess),
+                         new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
+                         (*this, &OrthancApiClient::NotifyHttpError));
   }
 
 
-  class OrthancApiClient::WebServicePayload : public boost::noncopyable
+  void OrthancApiClient::NotifyHttpSuccess(const IWebService::HttpRequestSuccessMessage& message)
   {
-  private:
-    std::auto_ptr< MessageHandler<EmptyResponseReadyMessage> >   emptyHandler_;
-    std::auto_ptr< MessageHandler<JsonResponseReadyMessage> >    jsonHandler_;
-    std::auto_ptr< MessageHandler<BinaryResponseReadyMessage> >  binaryHandler_;
-    std::auto_ptr< Orthanc::IDynamicObject >                     userPayload;
-  };
+    if (message.HasPayload())
+    {
+      dynamic_cast<const WebServicePayload&>(message.GetPayload()).HandleSuccess(message);
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+  }
+
+  
+  void OrthancApiClient::NotifyHttpError(const IWebService::HttpRequestErrorMessage& message)
+  {
+    if (message.HasPayload())
+    {
+      dynamic_cast<const WebServicePayload&>(message.GetPayload()).HandleFailure(message);
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+  }    
 }

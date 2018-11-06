@@ -86,11 +86,6 @@ namespace OrthancStone
       }
 
       const Orthanc::IDynamicObject& GetPayload() const;
-
-      const Orthanc::IDynamicObject* GetPayloadPointer() const
-      {
-        return payload_;
-      }
     };
     
 
@@ -119,11 +114,6 @@ namespace OrthancStone
       }
 
       const Orthanc::IDynamicObject& GetPayload() const;
-
-      const Orthanc::IDynamicObject* GetPayloadPointer() const
-      {
-        return payload_;
-      }
     };
 
 

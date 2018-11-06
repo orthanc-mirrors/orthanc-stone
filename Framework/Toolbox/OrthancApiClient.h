@@ -30,10 +30,13 @@
 
 namespace OrthancStone
 {
-  class OrthancApiClient : public IObservable
+  class OrthancApiClient :
+    public IObservable,
+    public IObserver
   {
   public:
-    class JsonResponseReadyMessage : public BaseMessage<MessageType_OrthancApi_GenericGetJson_Ready>
+    class JsonResponseReadyMessage :
+      public BaseMessage<MessageType_OrthancApi_GenericGetJson_Ready>
     {
     private:
       const std::string&              uri_;
@@ -69,7 +72,8 @@ namespace OrthancStone
     };
     
 
-    class BinaryResponseReadyMessage : public BaseMessage<MessageType_OrthancApi_GenericGetBinary_Ready>
+    class BinaryResponseReadyMessage :
+      public BaseMessage<MessageType_OrthancApi_GenericGetBinary_Ready>
     {
     private:
       const std::string&              uri_;
@@ -113,7 +117,8 @@ namespace OrthancStone
     };
 
 
-    class EmptyResponseReadyMessage : public BaseMessage<MessageType_OrthancApi_GenericEmptyResponse_Ready>
+    class EmptyResponseReadyMessage :
+      public BaseMessage<MessageType_OrthancApi_GenericEmptyResponse_Ready>
     {
     private:
       const std::string&              uri_;
@@ -198,5 +203,7 @@ namespace OrthancStone
                      Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);
 
     void NotifyHttpSuccess(const IWebService::HttpRequestSuccessMessage& message);
+
+    void NotifyHttpError(const IWebService::HttpRequestErrorMessage& message);
   };
 }

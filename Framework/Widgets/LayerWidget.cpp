@@ -562,13 +562,14 @@ public:
     {
       InvalidateLayer(index);
     }
+    
     EmitMessage(LayerWidget::ContentChangedMessage(*this));
   }
   
 
   void LayerWidget::OnSliceChanged(const ILayerSource::SliceChangedMessage& message)
   {
-    if (message.slice_.ContainsPlane(slice_))
+    if (message.GetSlice().ContainsPlane(slice_))
     {
       size_t index;
       if (LookupLayer(index, message.GetOrigin()))
@@ -576,6 +577,7 @@ public:
         InvalidateLayer(index);
       }
     }
+    
     EmitMessage(LayerWidget::ContentChangedMessage(*this));
   }
   
@@ -585,7 +587,7 @@ public:
     size_t index;
     if (LookupLayer(index, message.GetOrigin()))
     {
-      if (message.isError_)
+      if (message.IsError())
       {
         LOG(ERROR) << "Using error renderer on layer " << index;
       }
@@ -594,11 +596,14 @@ public:
         LOG(INFO) << "Renderer ready for layer " << index;
       }
 
-      if (message.renderer_.get() != NULL)
+      // TODO -- REMOVE THIS UGLY STUFF
+      ILayerSource::LayerReadyMessage& ugly = const_cast<ILayerSource::LayerReadyMessage&>(message);
+      
+      if (ugly.GetRendererRaw().get() != NULL)
       {
-        UpdateLayer(index, message.renderer_.release(), message.slice_);
+        UpdateLayer(index, ugly.GetRendererRaw().release(), message.GetSlice());
       }
-      else if (message.isError_)
+      else if (message.IsError())
       {
         // TODO
         //UpdateLayer(index, new SliceOutlineRenderer(slice), slice);

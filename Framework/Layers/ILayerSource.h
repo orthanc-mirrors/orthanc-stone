@@ -33,37 +33,69 @@ namespace OrthancStone
   class ILayerSource : public IObservable
   {
   public:
-
-    typedef OriginMessage<MessageType_LayerSource_GeometryReady, ILayerSource> GeometryReadyMessage;
-    typedef OriginMessage<MessageType_LayerSource_GeometryError, ILayerSource> GeometryErrorMessage;
+    typedef OriginMessage<MessageType_LayerSource_GeometryReady, ILayerSource>  GeometryReadyMessage;
+    typedef OriginMessage<MessageType_LayerSource_GeometryError, ILayerSource>  GeometryErrorMessage;
     typedef OriginMessage<MessageType_LayerSource_ContentChanged, ILayerSource> ContentChangedMessage;
 
-    struct SliceChangedMessage : public OriginMessage<MessageType_LayerSource_SliceChanged, ILayerSource>
+    class SliceChangedMessage : public OriginMessage<MessageType_LayerSource_SliceChanged, ILayerSource>
     {
+    private:
       const Slice& slice_;
-      SliceChangedMessage(ILayerSource& origin, const Slice& slice)
-        : OriginMessage(origin),
-          slice_(slice)
+
+    public:
+      SliceChangedMessage(ILayerSource& origin,
+                          const Slice& slice) :
+        OriginMessage(origin),
+        slice_(slice)
       {
       }
-    };
 
-    struct LayerReadyMessage : public OriginMessage<MessageType_LayerSource_LayerReady, ILayerSource>
+      const Slice& GetSlice() const
+      {
+        return slice_;
+      }
+    };
+    
+
+    class LayerReadyMessage : public OriginMessage<MessageType_LayerSource_LayerReady, ILayerSource>
     {
-      std::auto_ptr<ILayerRenderer>& renderer_;
+    private:
+      std::auto_ptr<ILayerRenderer> renderer_;
       const CoordinateSystem3D& slice_;
       bool isError_;
 
+    public:
       LayerReadyMessage(ILayerSource& origin,
-                        std::auto_ptr<ILayerRenderer>& layer,
+                        ILayerRenderer* renderer,  // Takes ownership => TODO Remove this!
                         const CoordinateSystem3D& slice,
-                        bool isError  // TODO Shouldn't this be separate as NotifyLayerError?
-                        )
-        : OriginMessage(origin),
-          renderer_(layer),
-          slice_(slice),
-          isError_(isError)
+                        bool isError  // TODO => create NotifyLayerError
+                        ) :
+        OriginMessage(origin),
+        renderer_(renderer),
+        slice_(slice),
+        isError_(isError)
       {
+      }
+
+      // TODO - Remove this function
+      std::auto_ptr<ILayerRenderer>& GetRendererRaw()
+      {
+        return renderer_;
+      }
+
+      const ILayerRenderer& GetRenderer() const
+      {
+        return *renderer_;
+      }
+
+      const CoordinateSystem3D& GetSlice() const
+      {
+        return slice_;
+      }
+
+      bool IsError() const
+      {
+        return isError_;
       }
     };
 

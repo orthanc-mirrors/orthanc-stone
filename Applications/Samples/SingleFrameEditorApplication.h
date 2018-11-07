@@ -218,8 +218,8 @@ namespace OrthancStone
 
 
     public:
-      Bitmap(size_t index) :
-        index_(index),
+      Bitmap() :
+        index_(0),
         hasSize_(false),
         width_(0),
         height_(0),
@@ -236,6 +236,11 @@ namespace OrthancStone
 
       virtual ~Bitmap()
       {
+      }
+
+      void SetIndex(size_t index)
+      {
+        index_ = index;
       }
 
       size_t GetIndex() const
@@ -703,9 +708,7 @@ namespace OrthancStone
       float                                  foreground_;
 
     public:
-      AlphaBitmap(size_t index,
-                  const BitmapStack& stack) :
-        Bitmap(index),
+      AlphaBitmap(const BitmapStack& stack) :
         stack_(stack),
         useWindowing_(true),
         foreground_(0)
@@ -750,6 +753,11 @@ namespace OrthancStone
                           const Matrix& viewTransform,
                           ImageInterpolation interpolation) const
       {
+        if (alpha_.get() == NULL)
+        {
+          return;
+        }
+        
         if (buffer.GetFormat() != Orthanc::PixelFormat_Float32)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
@@ -850,11 +858,6 @@ namespace OrthancStone
       }
       
     public:
-      DicomBitmap(size_t index) :
-        Bitmap(index)
-      {
-      }
-      
       void SetDicomTags(const OrthancPlugins::FullOrthancDataset& dataset)
       {
         converter_.reset(new DicomFrameConverter);
@@ -978,8 +981,6 @@ namespace OrthancStone
     float              windowingCenter_;
     float              windowingWidth_;
     Bitmaps            bitmaps_;
-    bool               hasSelection_;
-    size_t             selectedBitmap_;
 
   public:
     BitmapStack(MessageBroker& broker,
@@ -990,40 +991,11 @@ namespace OrthancStone
       countBitmaps_(0),
       hasWindowing_(false),
       windowingCenter_(0),  // Dummy initialization
-      windowingWidth_(0),   // Dummy initialization
-      hasSelection_(false),
-      selectedBitmap_(0)    // Dummy initialization
+      windowingWidth_(0)    // Dummy initialization
     {
     }
 
 
-    void Unselect()
-    {
-      hasSelection_ = false;
-    }
-
-
-    void Select(size_t bitmap)
-    {
-      hasSelection_ = true;
-      selectedBitmap_ = bitmap;
-    }
-
-
-    bool GetSelectedBitmap(size_t& bitmap) const
-    {
-      if (hasSelection_)
-      {
-        bitmap = selectedBitmap_;
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-    }
-    
-    
     virtual ~BitmapStack()
     {
       for (Bitmaps::iterator it = bitmaps_.begin(); it != bitmaps_.end(); it++)
@@ -1068,33 +1040,42 @@ namespace OrthancStone
       hasWindowing_ = true;
       windowingCenter_ = center;
       windowingWidth_ = width;
+    }
 
-      //EmitMessage(ContentChangedMessage(*this));
+
+    Bitmap& RegisterBitmap(Bitmap* bitmap)
+    {
+      if (bitmap == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+
+      std::auto_ptr<Bitmap> raii(bitmap);
+      
+      size_t index = countBitmaps_++;
+      raii->SetIndex(index);
+      bitmaps_[index] = raii.release();
+
+      EmitMessage(GeometryChangedMessage(*this));
+      EmitMessage(ContentChangedMessage(*this));
+
+      return *bitmap;
     }
     
 
     Bitmap& LoadText(const Orthanc::Font& font,
                      const std::string& utf8)
     {
-      size_t bitmap = countBitmaps_++;
-
-      std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(bitmap, *this));
+      std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(*this));
       alpha->LoadText(font, utf8);
 
-      AlphaBitmap* ptr = alpha.get();
-      bitmaps_[bitmap] = alpha.release();
-
-      return *ptr;
+      return RegisterBitmap(alpha.release());
     }
 
     
     Bitmap& LoadTestBlock(unsigned int width,
                           unsigned int height)
     {
-      size_t bitmap = countBitmaps_++;
-
-      std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(bitmap, *this));
-
       std::auto_ptr<Orthanc::Image>  block(new Orthanc::Image(Orthanc::PixelFormat_Grayscale8, width, height, false));
 
       for (unsigned int padding = 0;
@@ -1116,12 +1097,10 @@ namespace OrthancStone
         Orthanc::ImageProcessing::Set(region, color);
       }
 
+      std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(*this));
       alpha->SetAlpha(block.release());
 
-      AlphaBitmap* ptr = alpha.get();
-      bitmaps_[bitmap] = alpha.release();
-      
-      return *ptr;
+      return RegisterBitmap(alpha.release());
     }
 
     
@@ -1129,17 +1108,15 @@ namespace OrthancStone
                      unsigned int frame,
                      bool httpCompression)
     {
-      size_t bitmap = countBitmaps_++;
+      Bitmap& bitmap = RegisterBitmap(new DicomBitmap);
 
-      bitmaps_[bitmap] = new DicomBitmap(bitmap);
-      
       {
         IWebService::Headers headers;
         std::string uri = "/instances/" + instance + "/tags";
         orthanc_.GetBinaryAsync(uri, headers,
                                 new Callable<BitmapStack, OrthancApiClient::BinaryResponseReadyMessage>
                                 (*this, &BitmapStack::OnTagsReceived), NULL,
-                                new Orthanc::SingleValueObject<size_t>(bitmap));
+                                new Orthanc::SingleValueObject<size_t>(bitmap.GetIndex()));
       }
 
       {
@@ -1155,10 +1132,10 @@ namespace OrthancStone
         orthanc_.GetBinaryAsync(uri, headers,
                                 new Callable<BitmapStack, OrthancApiClient::BinaryResponseReadyMessage>
                                 (*this, &BitmapStack::OnFrameReceived), NULL,
-                                new Orthanc::SingleValueObject<size_t>(bitmap));
+                                new Orthanc::SingleValueObject<size_t>(bitmap.GetIndex()));
       }
 
-      return *bitmaps_[bitmap];
+      return bitmap;
     }
 
     
@@ -1274,19 +1251,17 @@ namespace OrthancStone
       return false;
     }
 
-    void DrawControls(CairoContext& context,
-                      double zoom)
+    
+    void DrawBorder(CairoContext& context,
+                    unsigned int bitmap,
+                    double zoom)
     {
-      if (hasSelection_)
-      {
-        Bitmaps::const_iterator bitmap = bitmaps_.find(selectedBitmap_);
+      Bitmaps::const_iterator found = bitmaps_.find(bitmap);
         
-        if (bitmap != bitmaps_.end())
-        {
-          context.SetSourceColor(255, 0, 0);
-          //view.ApplyTransform(context);
-          bitmap->second->DrawBorders(context, zoom);
-        }
+      if (found != bitmaps_.end())
+      {
+        context.SetSourceColor(255, 0, 0);
+        found->second->DrawBorders(context, zoom);
       }
     }
 
@@ -1323,6 +1298,121 @@ namespace OrthancStone
         minValue = 0;
         maxValue = 0;
       }
+    }
+
+
+    void Export(const Orthanc::DicomMap& dicom,
+                double pixelSpacingX,
+                double pixelSpacingY,
+                bool invert,
+                ImageInterpolation interpolation)
+    {
+      if (pixelSpacingX <= 0 ||
+          pixelSpacingY <= 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+      
+      LOG(WARNING) << "Exporting DICOM";
+
+      Extent2D extent = GetSceneExtent();
+
+      int w = std::ceil(extent.GetWidth() / pixelSpacingX);
+      int h = std::ceil(extent.GetHeight() / pixelSpacingY);
+
+      if (w < 0 || h < 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      Orthanc::Image layers(Orthanc::PixelFormat_Float32,
+                            static_cast<unsigned int>(w),
+                            static_cast<unsigned int>(h), false);
+
+      Matrix view = LinearAlgebra::Product(
+        CreateScalingMatrix(1.0 / pixelSpacingX, 1.0 / pixelSpacingY),
+        CreateOffsetMatrix(-extent.GetX1(), -extent.GetY1()));
+      
+      Render(layers, view, interpolation);
+
+      Orthanc::Image rendered(Orthanc::PixelFormat_Grayscale16,
+                              layers.GetWidth(), layers.GetHeight(), false);
+      Orthanc::ImageProcessing::Convert(rendered, layers);
+
+      std::string base64;
+
+      {
+        std::string content;
+
+#if EXPORT_USING_PAM == 1
+        {
+          Orthanc::PamWriter writer;
+          writer.WriteToMemory(content, rendered);
+        }
+#else
+        {
+          Orthanc::PngWriter writer;
+          writer.WriteToMemory(content, rendered);
+        }
+#endif      
+
+        Orthanc::Toolbox::EncodeBase64(base64, content);
+      }
+
+      std::set<Orthanc::DicomTag> tags;
+      dicom.GetTags(tags);
+
+      Json::Value json = Json::objectValue;
+      json["Tags"] = Json::objectValue;
+           
+      for (std::set<Orthanc::DicomTag>::const_iterator
+             tag = tags.begin(); tag != tags.end(); ++tag)
+      {
+        const Orthanc::DicomValue& value = dicom.GetValue(*tag);
+        if (!value.IsNull() &&
+            !value.IsBinary())
+        {
+          json["Tags"][tag->Format()] = value.GetContent();
+        }
+      }
+
+      json["Tags"][Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION.Format()] =
+        (invert ? "MONOCHROME1" : "MONOCHROME2");
+
+      // WARNING: The order of PixelSpacing is Y/X
+      char buf[32];
+      sprintf(buf, "%0.8f\\%0.8f", pixelSpacingY, pixelSpacingX);
+      
+      json["Tags"][Orthanc::DICOM_TAG_PIXEL_SPACING.Format()] = buf;
+
+      float center, width;
+      if (GetWindowing(center, width))
+      {
+        json["Tags"][Orthanc::DICOM_TAG_WINDOW_CENTER.Format()] =
+          boost::lexical_cast<std::string>(boost::math::iround(center));
+
+        json["Tags"][Orthanc::DICOM_TAG_WINDOW_WIDTH.Format()] =
+          boost::lexical_cast<std::string>(boost::math::iround(width));
+      }
+
+#if EXPORT_USING_PAM == 1
+      json["Content"] = "data:" + std::string(Orthanc::MIME_PAM) + ";base64," + base64;
+#else
+      json["Content"] = "data:" + std::string(Orthanc::MIME_PNG) + ";base64," + base64;
+#endif
+
+      orthanc_.PostJsonAsyncExpectJson(
+        "/tools/create-dicom", json,
+        new Callable<BitmapStack, OrthancApiClient::JsonResponseReadyMessage>
+        (*this, &BitmapStack::OnDicomExported),
+        NULL, NULL);
+    }
+
+
+    void OnDicomExported(const OrthancApiClient::JsonResponseReadyMessage& message)
+    {
+      LOG(WARNING) << "DICOM export was successful:"
+                   << message.GetJson().toStyledString();
     }
   };
 
@@ -2207,7 +2297,6 @@ namespace OrthancStone
 
   class BitmapStackWidget :
     public WorldSceneWidget,
-    public IObservable,
     public IObserver
   {
   private:
@@ -2216,6 +2305,8 @@ namespace OrthancStone
     std::auto_ptr<CairoSurface>    cairoBuffer_;
     bool                           invert_;
     ImageInterpolation             interpolation_;
+    bool                           hasSelection_;
+    size_t                         selectedBitmap_;
 
     virtual bool RenderInternal(unsigned int width,
                                 unsigned int height,
@@ -2295,7 +2386,6 @@ namespace OrthancStone
       }
     }
 
-
   protected:
     virtual Extent2D GetSceneExtent()
     {
@@ -2323,7 +2413,10 @@ namespace OrthancStone
         cairo_paint(cr);
       }
 
-      stack_.DrawControls(context, view.GetZoom());
+      if (hasSelection_)
+      {
+        stack_.DrawBorder(context, selectedBitmap_, view.GetZoom());
+      }
 
       return true;
     }
@@ -2333,11 +2426,12 @@ namespace OrthancStone
                       BitmapStack& stack,
                       const std::string& name) :
       WorldSceneWidget(name),
-      IObservable(broker),
       IObserver(broker),
       stack_(stack),
       invert_(false),
-      interpolation_(ImageInterpolation_Nearest)
+      interpolation_(ImageInterpolation_Nearest),
+      hasSelection_(false),
+      selectedBitmap_(0)    // Dummy initialization
     {
       stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::GeometryChangedMessage>(*this, &BitmapStackWidget::OnGeometryChanged));
       stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::ContentChangedMessage>(*this, &BitmapStackWidget::OnContentChanged));
@@ -2346,6 +2440,30 @@ namespace OrthancStone
     BitmapStack& GetStack() const
     {
       return stack_;
+    }
+
+    void Unselect()
+    {
+      hasSelection_ = false;
+    }
+
+    void Select(size_t bitmap)
+    {
+      hasSelection_ = true;
+      selectedBitmap_ = bitmap;
+    }
+
+    bool LookupSelectedBitmap(size_t& bitmap)
+    {
+      if (hasSelection_)
+      {
+        bitmap = selectedBitmap_;
+        return true;
+      }
+      else
+      {
+        return false;
+      }
     }
 
     void OnGeometryChanged(const BitmapStack::GeometryChangedMessage& message)
@@ -2375,7 +2493,7 @@ namespace OrthancStone
       NotifyContentChanged();
     }
 
-    bool IsInvert() const
+    bool IsInverted() const
     {
       return invert_;
     }
@@ -2413,7 +2531,6 @@ namespace OrthancStone
 
     UndoRedoStack      undoRedoStack_;
     Tool               tool_;
-    OrthancApiClient  *orthanc_;
 
 
     static double GetHandleSize()
@@ -2421,28 +2538,15 @@ namespace OrthancStone
       return 10.0;
     }
     
-      
-    static BitmapStackWidget& GetWidget(WorldSceneWidget& widget)
-    {
-      return dynamic_cast<BitmapStackWidget&>(widget);
-    }
-
-
-    static BitmapStack& GetStack(WorldSceneWidget& widget)
-    {
-      return GetWidget(widget).GetStack();
-    }
-    
-    
+         
   public:
     BitmapStackInteractor(MessageBroker& broker) :
       IObserver(broker),
-      tool_(Tool_Move),
-      orthanc_(NULL)
+      tool_(Tool_Move)
     {
     }
     
-    virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
+    virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& worldWidget,
                                                         const ViewportGeometry& view,
                                                         MouseButton button,
                                                         KeyboardModifiers modifiers,
@@ -2452,26 +2556,28 @@ namespace OrthancStone
                                                         double y,
                                                         IStatusBar* statusBar)
     {
+      BitmapStackWidget& widget = dynamic_cast<BitmapStackWidget&>(worldWidget);
+
       if (button == MouseButton_Left)
       {
         size_t selected;
-
+        
         if (tool_ == Tool_Windowing)
         {
-          return new WindowingTracker(undoRedoStack_, GetStack(widget),
+          return new WindowingTracker(undoRedoStack_, widget.GetStack(),
                                       viewportX, viewportY,
                                       WindowingTracker::Action_DecreaseWidth,
                                       WindowingTracker::Action_IncreaseWidth,
                                       WindowingTracker::Action_DecreaseCenter,
                                       WindowingTracker::Action_IncreaseCenter);
         }
-        else if (!GetStack(widget).GetSelectedBitmap(selected))
+        else if (!widget.LookupSelectedBitmap(selected))
         {
+          // No bitmap is currently selected
           size_t bitmap;
-          if (GetStack(widget).LookupBitmap(bitmap, x, y))
+          if (widget.GetStack().LookupBitmap(bitmap, x, y))
           {
-            LOG(INFO) << "Click on bitmap " << bitmap;
-            GetStack(widget).Select(bitmap);
+            widget.Select(bitmap);
           }
 
           return NULL;
@@ -2479,17 +2585,17 @@ namespace OrthancStone
         else if (tool_ == Tool_Crop ||
                  tool_ == Tool_Resize)
         {
-          BitmapStack::BitmapAccessor accessor(GetStack(widget), selected);
+          BitmapStack::BitmapAccessor accessor(widget.GetStack(), selected);
           BitmapStack::Corner corner;
           if (accessor.GetBitmap().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
           {
             switch (tool_)
             {
               case Tool_Crop:
-                return new CropBitmapTracker(undoRedoStack_, GetStack(widget), view, selected, x, y, corner);
+                return new CropBitmapTracker(undoRedoStack_, widget.GetStack(), view, selected, x, y, corner);
 
               case Tool_Resize:
-                return new ResizeBitmapTracker(undoRedoStack_, GetStack(widget), selected, x, y, corner,
+                return new ResizeBitmapTracker(undoRedoStack_, widget.GetStack(), selected, x, y, corner,
                                                (modifiers & KeyboardModifiers_Shift));
 
               default:
@@ -2500,10 +2606,13 @@ namespace OrthancStone
           {
             size_t bitmap;
             
-            if (!GetStack(widget).LookupBitmap(bitmap, x, y) ||
-                bitmap != selected)
+            if (widget.GetStack().LookupBitmap(bitmap, x, y))
             {
-              GetStack(widget).Unselect();
+              widget.Select(bitmap);
+            }
+            else
+            {
+              widget.Unselect();
             }
             
             return NULL;
@@ -2513,29 +2622,35 @@ namespace OrthancStone
         {
           size_t bitmap;
 
-          if (GetStack(widget).LookupBitmap(bitmap, x, y) &&
-              bitmap == selected)
+          if (widget.GetStack().LookupBitmap(bitmap, x, y))
           {
-            switch (tool_)
+            if (bitmap == selected)
             {
-              case Tool_Move:
-                return new MoveBitmapTracker(undoRedoStack_, GetStack(widget), bitmap, x, y,
-                                             (modifiers & KeyboardModifiers_Shift));
-
-              case Tool_Rotate:
-                return new RotateBitmapTracker(undoRedoStack_, GetStack(widget), view, bitmap, x, y,
+              switch (tool_)
+              {
+                case Tool_Move:
+                  return new MoveBitmapTracker(undoRedoStack_, widget.GetStack(), bitmap, x, y,
                                                (modifiers & KeyboardModifiers_Shift));
-                
-              default:
-                break;
-            }
 
-            return NULL;
+                case Tool_Rotate:
+                  return new RotateBitmapTracker(undoRedoStack_, widget.GetStack(), view, bitmap, x, y,
+                                                 (modifiers & KeyboardModifiers_Shift));
+                
+                default:
+                  break;
+              }
+
+              return NULL;
+            }
+            else
+            {
+              widget.Select(bitmap);
+              return NULL;
+            }
           }
           else
           {
-            LOG(INFO) << "Click out of any bitmap";
-            GetStack(widget).Unselect();
+            widget.Unselect();
             return NULL;
           }
         }
@@ -2547,12 +2662,14 @@ namespace OrthancStone
     }
 
     virtual void MouseOver(CairoContext& context,
-                           WorldSceneWidget& widget,
+                           WorldSceneWidget& worldWidget,
                            const ViewportGeometry& view,
                            double x,
                            double y,
                            IStatusBar* statusBar)
     {
+      BitmapStackWidget& widget = dynamic_cast<BitmapStackWidget&>(worldWidget);
+
 #if 0
       if (statusBar != NULL)
       {
@@ -2563,11 +2680,12 @@ namespace OrthancStone
 #endif
 
       size_t selected;
-      if (GetStack(widget).GetSelectedBitmap(selected) &&
+
+      if (widget.LookupSelectedBitmap(selected) &&
           (tool_ == Tool_Crop ||
            tool_ == Tool_Resize))
       {
-        BitmapStack::BitmapAccessor accessor(GetStack(widget), selected);
+        BitmapStack::BitmapAccessor accessor(widget.GetStack(), selected);
         
         BitmapStack::Corner corner;
         if (accessor.GetBitmap().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
@@ -2596,12 +2714,14 @@ namespace OrthancStone
     {
     }
 
-    virtual void KeyPressed(WorldSceneWidget& widget,
+    virtual void KeyPressed(WorldSceneWidget& worldWidget,
                             KeyboardKeys key,
                             char keyChar,
                             KeyboardModifiers modifiers,
                             IStatusBar* statusBar)
     {
+      BitmapStackWidget& widget = dynamic_cast<BitmapStackWidget&>(worldWidget);
+
       switch (keyChar)
       {
         case 'a':
@@ -2634,12 +2754,12 @@ namespace OrthancStone
           tags.SetValue(Orthanc::DICOM_TAG_STUDY_ID, "STUDY", false);
           tags.SetValue(Orthanc::DICOM_TAG_VIEW_POSITION, "", false);
 
-          Export(GetWidget(widget), 0.1, 0.1, tags);
+          widget.GetStack().Export(tags, 0.1, 0.1, widget.IsInverted(), widget.GetInterpolation());
           break;
         }
 
         case 'i':
-          GetWidget(widget).SwitchInvert();
+          widget.SwitchInvert();
           break;
         
         case 'm':
@@ -2648,16 +2768,16 @@ namespace OrthancStone
 
         case 'n':
         {
-          switch (GetWidget(widget).GetInterpolation())
+          switch (widget.GetInterpolation())
           {
             case ImageInterpolation_Nearest:
               LOG(INFO) << "Switching to bilinear interpolation";
-              GetWidget(widget).SetInterpolation(ImageInterpolation_Bilinear);
+              widget.SetInterpolation(ImageInterpolation_Bilinear);
               break;
               
             case ImageInterpolation_Bilinear:
               LOG(INFO) << "Switching to nearest neighbor interpolation";
-              GetWidget(widget).SetInterpolation(ImageInterpolation_Nearest);
+              widget.SetInterpolation(ImageInterpolation_Nearest);
               break;
 
             default:
@@ -2699,132 +2819,6 @@ namespace OrthancStone
           break;
       }
     }
-
-
-    void SetOrthanc(OrthancApiClient& orthanc)
-    {
-      orthanc_ = &orthanc;
-    }
-
-
-    void Export(const BitmapStackWidget& widget,
-                double pixelSpacingX,
-                double pixelSpacingY,
-                const Orthanc::DicomMap& dicom)
-    {
-      if (pixelSpacingX <= 0 ||
-          pixelSpacingY <= 0)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-      
-      if (orthanc_ == NULL)
-      {
-        return;
-      }
-      
-      LOG(WARNING) << "Exporting DICOM";
-
-      Extent2D extent = widget.GetStack().GetSceneExtent();
-
-      int w = std::ceil(extent.GetWidth() / pixelSpacingX);
-      int h = std::ceil(extent.GetHeight() / pixelSpacingY);
-
-      if (w < 0 || h < 0)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }
-
-      Orthanc::Image layers(Orthanc::PixelFormat_Float32,
-                            static_cast<unsigned int>(w),
-                            static_cast<unsigned int>(h), false);
-
-      Matrix view = LinearAlgebra::Product(
-        CreateScalingMatrix(1.0 / pixelSpacingX, 1.0 / pixelSpacingY),
-        CreateOffsetMatrix(-extent.GetX1(), -extent.GetY1()));
-      
-      widget.GetStack().Render(layers, view, widget.GetInterpolation());
-
-      Orthanc::Image rendered(Orthanc::PixelFormat_Grayscale16,
-                              layers.GetWidth(), layers.GetHeight(), false);
-      Orthanc::ImageProcessing::Convert(rendered, layers);
-
-      std::string base64;
-
-      {
-        std::string content;
-
-#if EXPORT_USING_PAM == 1
-        {
-          Orthanc::PamWriter writer;
-          writer.WriteToMemory(content, rendered);
-        }
-#else
-        {
-          Orthanc::PngWriter writer;
-          writer.WriteToMemory(content, rendered);
-        }
-#endif      
-
-        Orthanc::Toolbox::EncodeBase64(base64, content);
-      }
-
-      std::set<Orthanc::DicomTag> tags;
-      dicom.GetTags(tags);
-
-      Json::Value json = Json::objectValue;
-      json["Tags"] = Json::objectValue;
-           
-      for (std::set<Orthanc::DicomTag>::const_iterator
-             tag = tags.begin(); tag != tags.end(); ++tag)
-      {
-        const Orthanc::DicomValue& value = dicom.GetValue(*tag);
-        if (!value.IsNull() &&
-            !value.IsBinary())
-        {
-          json["Tags"][tag->Format()] = value.GetContent();
-        }
-      }
-
-      json["Tags"][Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION.Format()] =
-        (widget.IsInvert() ? "MONOCHROME1" : "MONOCHROME2");
-
-
-      // WARNING: The order of PixelSpacing is Y/X
-      char buf[32];
-      sprintf(buf, "%0.8f\\%0.8f", pixelSpacingY, pixelSpacingX);
-      
-      json["Tags"][Orthanc::DICOM_TAG_PIXEL_SPACING.Format()] = buf;
-
-      float center, width;
-      if (widget.GetStack().GetWindowing(center, width))
-      {
-        json["Tags"][Orthanc::DICOM_TAG_WINDOW_CENTER.Format()] =
-          boost::lexical_cast<std::string>(boost::math::iround(center));
-
-        json["Tags"][Orthanc::DICOM_TAG_WINDOW_WIDTH.Format()] =
-          boost::lexical_cast<std::string>(boost::math::iround(width));
-      }
-
-#if EXPORT_USING_PAM == 1
-      json["Content"] = "data:" + std::string(Orthanc::MIME_PAM) + ";base64," + base64;
-#else
-      json["Content"] = "data:" + std::string(Orthanc::MIME_PNG) + ";base64," + base64;
-#endif
-
-      orthanc_->PostJsonAsyncExpectJson(
-        "/tools/create-dicom", json,
-        new Callable<BitmapStackInteractor, OrthancApiClient::JsonResponseReadyMessage>
-        (*this, &BitmapStackInteractor::OnDicomExported),
-        NULL, NULL);
-    }
-
-
-    void OnDicomExported(const OrthancApiClient::JsonResponseReadyMessage& message)
-    {
-      LOG(WARNING) << "DICOM export was successful:"
-                   << message.GetJson().toStyledString();
-    }
   };
 
   
@@ -2845,6 +2839,11 @@ namespace OrthancStone
         IObserver(broker),
         interactor_(broker)
       {
+      }
+
+      virtual ~SingleFrameEditorApplication()
+      {
+        LOG(WARNING) << "Destroying the application";
       }
       
       virtual void DeclareStartupOptions(boost::program_options::options_description& options)
@@ -2892,7 +2891,6 @@ namespace OrthancStone
         int frame = parameters["frame"].as<unsigned int>();
 
         orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
-        interactor_.SetOrthanc(*orthancApiClient_);
 
         Orthanc::FontRegistry fonts;
         fonts.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);

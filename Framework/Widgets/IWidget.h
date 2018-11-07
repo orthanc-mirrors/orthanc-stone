@@ -24,10 +24,11 @@
 #include "../StoneEnumerations.h"
 #include "../Viewport/IMouseTracker.h"
 #include "../Viewport/IStatusBar.h"
-#include "../Viewport/IViewport.h"
 
 namespace OrthancStone
 {
+  class WidgetViewport;  // Forward declaration
+  
   class IWidget : public boost::noncopyable
   {
   public:
@@ -39,7 +40,7 @@ namespace OrthancStone
 
     virtual void SetParent(IWidget& parent) = 0;
     
-    virtual void SetViewport(IViewport& viewport) = 0;
+    virtual void SetViewport(WidgetViewport& viewport) = 0;
 
     virtual void SetStatusBar(IStatusBar& statusBar) = 0;
 

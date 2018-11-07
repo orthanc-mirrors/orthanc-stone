@@ -24,16 +24,18 @@
 #endif
 
 #include "NativeStoneApplicationRunner.h"
-#include "NativeStoneApplicationContext.h"
-#include <boost/program_options.hpp>
 
 #include "../../Framework/Toolbox/MessagingToolbox.h"
+#include "../../Platforms/Generic/OracleWebService.h"
+#include "NativeStoneApplicationContext.h"
 
 #include <Core/Logging.h>
 #include <Core/HttpClient.h>
 #include <Core/Toolbox.h>
+#include <Core/OrthancException.h>
 #include <Plugins/Samples/Common/OrthancHttpConnection.h>
-#include "../../Platforms/Generic/OracleWebService.h"
+
+#include <boost/program_options.hpp>
 
 namespace OrthancStone
 {
@@ -183,7 +185,7 @@ namespace OrthancStone
 
       LogStatusBar statusBar;
 
-      NativeStoneApplicationContext context;
+      NativeStoneApplicationContext context(broker_);
 
       {
         Oracle oracle(4); // use 4 threads to download content
@@ -197,8 +199,8 @@ namespace OrthancStone
 
           {
             NativeStoneApplicationContext::GlobalMutexLocker locker(context);
-            context.SetCentralWidget(application_.GetCentralWidget());
-            context.GetCentralViewport().SetStatusBar(statusBar);
+            locker.SetCentralWidget(application_.GetCentralWidget());
+            locker.GetCentralViewport().SetStatusBar(statusBar);
           }
 
           std::string title = application_.GetTitle();

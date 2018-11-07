@@ -34,46 +34,51 @@ namespace OrthancStone
   class NativeStoneApplicationContext : public StoneApplicationContext
   {
   private:
-
     static void UpdateThread(NativeStoneApplicationContext* that);
 
-    boost::mutex                   globalMutex_;
-    std::auto_ptr<WidgetViewport>  centralViewport_;
-    boost::thread                  updateThread_;
-    bool                           stopped_;
-    unsigned int                   updateDelayInMs_;
+    boost::mutex    globalMutex_;
+    MessageBroker&  broker_;
+    WidgetViewport  centralViewport_;
+    boost::thread   updateThread_;
+    bool            stopped_;
+    unsigned int    updateDelayInMs_;
 
   public:
     class GlobalMutexLocker: public boost::noncopyable
     {
-      boost::mutex::scoped_lock  lock_;
+    private:
+      NativeStoneApplicationContext&  that_;
+      boost::mutex::scoped_lock       lock_;
+      
     public:
-      GlobalMutexLocker(NativeStoneApplicationContext& that):
+      GlobalMutexLocker(NativeStoneApplicationContext& that) :
+        that_(that),
         lock_(that.globalMutex_)
       {
       }
+
+      IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
+
+      MessageBroker& GetMessageBroker() const
+      {
+        return that_.broker_;
+      }
+    
+      IViewport& GetCentralViewport() 
+      {
+        return that_.centralViewport_;
+      }
+
+      void SetUpdateDelay(unsigned int delayInMs)
+      {
+        that_.updateDelayInMs_ = delayInMs;
+      }
     };
 
-    NativeStoneApplicationContext();
-
-    virtual ~NativeStoneApplicationContext()
-    {
-    }
-
-    virtual IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
-
-    IViewport& GetCentralViewport() 
-    {
-      return *(centralViewport_.get());
-    }
+    NativeStoneApplicationContext(MessageBroker& broker);
 
     void Start();
 
     void Stop();
-
-    void SetUpdateDelay(unsigned int delayInMs)
-    {
-      updateDelayInMs_ = delayInMs;
-    }
   };
 }

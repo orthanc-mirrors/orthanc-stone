@@ -51,6 +51,8 @@ namespace OrthancStone {
     MessageType_OrthancApi_GenericHttpError_Ready,
     MessageType_OrthancApi_GenericEmptyResponse_Ready,
 
+    MessageType_ViewportChanged,
+
     // used in unit tests only
     MessageType_Test1,
     MessageType_Test2,

@@ -25,6 +25,20 @@
 
 #include <stdexcept>
 
+
+QCairoWidget::StoneObserver::StoneObserver(QCairoWidget& that,
+                                           OrthancStone::IViewport& viewport,
+                                           OrthancStone::MessageBroker& broker) :
+  OrthancStone::IObserver(broker),
+  that_(that)
+{
+  // get notified each time the content of the central viewport changes
+  viewport.RegisterObserverCallback(
+    new OrthancStone::Callable<StoneObserver, OrthancStone::IViewport::ViewportChangedMessage>
+    (*this, &StoneObserver::OnViewportChanged));
+}
+
+
 QCairoWidget::QCairoWidget(QWidget *parent) :
   QWidget(parent),
   context_(NULL)
@@ -32,24 +46,29 @@ QCairoWidget::QCairoWidget(QWidget *parent) :
   setFocusPolicy(Qt::StrongFocus); // catch keyPressEvents
 }
 
-QCairoWidget::~QCairoWidget()
-{
-}
 
 void QCairoWidget::SetContext(OrthancStone::NativeStoneApplicationContext& context)
 {
   context_ = &context;
-  context_->GetCentralViewport().Register(*this); // get notified each time the content of the central viewport changes
+
+  {
+    OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
+    observer_.reset(new StoneObserver(*this,
+                                      locker.GetCentralViewport(),
+                                      locker.GetMessageBroker()));
+  }
 }
+
 
 void QCairoWidget::paintEvent(QPaintEvent* /*event*/)
 {
   QPainter painter(this);
 
-  if (image_.get() != NULL && context_ != NULL)
+  if (image_.get() != NULL &&
+      context_ != NULL)
   {
     OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
-    OrthancStone::IViewport& viewport = context_->GetCentralViewport();
+    OrthancStone::IViewport& viewport = locker.GetCentralViewport();
     Orthanc::ImageAccessor a;
     surface_.GetWriteableAccessor(a);
     viewport.Render(a);
@@ -103,35 +122,43 @@ void QCairoWidget::mousePressEvent(QMouseEvent* event)
     default:
       return;  // Unsupported button
   }
-  context_->GetCentralViewport().MouseDown(button, event->pos().x(), event->pos().y(), stoneModifiers);
+
+  {
+    OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
+    locker.GetCentralViewport().MouseDown(button, event->pos().x(), event->pos().y(), stoneModifiers);
+  }
 }
 
 
 void QCairoWidget::mouseReleaseEvent(QMouseEvent* /*eventNotUsed*/)
 {
-  context_->GetCentralViewport().MouseLeave();
+  OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
+  locker.GetCentralViewport().MouseLeave();
 }
 
 
 void QCairoWidget::mouseMoveEvent(QMouseEvent* event)
 {
-  context_->GetCentralViewport().MouseMove(event->pos().x(), event->pos().y());
+  OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
+  locker.GetCentralViewport().MouseMove(event->pos().x(), event->pos().y());
 }
 
 
 void QCairoWidget::wheelEvent(QWheelEvent * event)
 {
+  OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
+
   OrthancStone::KeyboardModifiers stoneModifiers = GetKeyboardModifiers(event);
 
   if (event->orientation() == Qt::Vertical)
   {
     if (event->delta() < 0)  // TODO: compare direction with SDL and make sure we send the same directions
     {
-       context_->GetCentralViewport().MouseWheel(OrthancStone::MouseWheelDirection_Up, event->pos().x(), event->pos().y(), stoneModifiers);
+       locker.GetCentralViewport().MouseWheel(OrthancStone::MouseWheelDirection_Up, event->pos().x(), event->pos().y(), stoneModifiers);
     }
     else
     {
-      context_->GetCentralViewport().MouseWheel(OrthancStone::MouseWheelDirection_Down, event->pos().x(), event->pos().y(), stoneModifiers);
+      locker.GetCentralViewport().MouseWheel(OrthancStone::MouseWheelDirection_Down, event->pos().x(), event->pos().y(), stoneModifiers);
     }
   }
 }
@@ -158,7 +185,11 @@ void QCairoWidget::keyPressEvent(QKeyEvent *event)
       break;
     }
   }
-  context_->GetCentralViewport().KeyPressed(keyType, keyChar, stoneModifiers);
+
+  {
+    OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);    
+    locker.GetCentralViewport().KeyPressed(keyType, keyChar, stoneModifiers);
+  }
 }
 
 
@@ -177,7 +208,9 @@ void QCairoWidget::resizeEvent(QResizeEvent* event)
                             surface_.GetPitch(),
                             QImage::Format_RGB32));
 
-    context_->GetCentralViewport().SetSize(event->size().width(), event->size().height());
-
+    {
+      OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
+      locker.GetCentralViewport().SetSize(event->size().width(), event->size().height());
+    }
   }
 }

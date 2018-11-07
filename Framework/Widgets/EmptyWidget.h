@@ -26,9 +26,9 @@
 namespace OrthancStone
 {
   /**
-     * This is a test widget that simply fills its surface with an
-     * uniform color.
-     **/
+   * This is a test widget that simply fills its surface with an
+   * uniform color.
+   **/
   class EmptyWidget : public IWidget
   {
   private:
@@ -54,7 +54,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void SetViewport(IViewport& viewport)
+    virtual void SetViewport(WidgetViewport& viewport)
     {
     }
 

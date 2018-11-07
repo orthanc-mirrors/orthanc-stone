@@ -23,6 +23,7 @@
 
 #include "IStatusBar.h"
 #include "../StoneEnumerations.h"
+#include "../Messages/IObservable.h"
 
 #include <Core/Images/ImageAccessor.h>
 
@@ -30,26 +31,21 @@ namespace OrthancStone
 {
   class IWidget;   // Forward declaration
   
-  class IViewport : public boost::noncopyable
+  class IViewport : public IObservable
   {
   public:
-    class IObserver : public boost::noncopyable
+    typedef OriginMessage<MessageType_ViewportChanged, IViewport> ViewportChangedMessage;
+
+    IViewport(MessageBroker& broker) :
+      IObservable(broker)
     {
-    public:
-      virtual ~IObserver()
-      {
-      }
-
-      virtual void OnViewportContentChanged(const IViewport& scene) = 0;
-    };
-
+    }
+    
     virtual ~IViewport()
     {
     }
 
     virtual void FitContent() = 0;
-
-    virtual void Register(IObserver& observer) = 0;
 
     virtual void SetStatusBar(IStatusBar& statusBar) = 0;
 
@@ -87,6 +83,10 @@ namespace OrthancStone
     virtual void UpdateContent() = 0;
 
     // Should only be called from IWidget
-    virtual void NotifyContentChanged(const IWidget& widget) = 0;
+    virtual void NotifyContentChanged()
+    {
+      ViewportChangedMessage message(*this);
+      EmitMessage(message);
+    }
   };
 }

@@ -24,16 +24,18 @@
 #endif
 
 #include "SdlStoneApplicationRunner.h"
-#include <boost/program_options.hpp>
 
 #include "../../Framework/Toolbox/MessagingToolbox.h"
+#include "../../Platforms/Generic/OracleWebService.h"
 #include "SdlEngine.h"
 
 #include <Core/Logging.h>
 #include <Core/HttpClient.h>
 #include <Core/Toolbox.h>
+#include <Core/OrthancException.h>
 #include <Plugins/Samples/Common/OrthancHttpConnection.h>
-#include "../../Platforms/Generic/OracleWebService.h"
+
+#include <boost/program_options.hpp>
 
 namespace OrthancStone
 {
@@ -42,6 +44,7 @@ namespace OrthancStone
     SdlWindow::GlobalInitialize();
   }
 
+  
   void SdlStoneApplicationRunner::DeclareCommandLineOptions(boost::program_options::options_description& options)
   {
     boost::program_options::options_description sdl("SDL options");
@@ -54,6 +57,7 @@ namespace OrthancStone
     options.add(sdl);
   }
 
+  
   void SdlStoneApplicationRunner::ParseCommandLineOptions(const boost::program_options::variables_map& parameters)
   {
     if (!parameters.count("width") ||
@@ -85,10 +89,13 @@ namespace OrthancStone
     {
       LOG(WARNING) << "OpenGL is disabled, enable it with option \"--opengl=on\" for best performance";
     }
-
   }
 
-  void SdlStoneApplicationRunner::Run(NativeStoneApplicationContext& context, const std::string& title, int argc, char* argv[])
+  
+  void SdlStoneApplicationRunner::Run(NativeStoneApplicationContext& context,
+                                      const std::string& title,
+                                      int argc,
+                                      char* argv[])
   {
     /**************************************************************
      * Run the application inside a SDL window
@@ -97,11 +104,16 @@ namespace OrthancStone
     LOG(WARNING) << "Starting the application";
 
     SdlWindow window(title.c_str(), width_, height_, enableOpenGl_);
-    SdlEngine sdl(window, context);
+    SdlEngine sdl(window, context, broker_);
 
     {
       NativeStoneApplicationContext::GlobalMutexLocker locker(context);
-      context.GetCentralViewport().Register(sdl);  // (*)
+
+      locker.GetCentralViewport().RegisterObserverCallback(
+        new Callable<SdlEngine, IViewport::ViewportChangedMessage>
+        (sdl, &SdlEngine::OnViewportChanged));
+
+      //context.GetCentralViewport().Register(sdl);  // (*)
     }
 
     context.Start();
@@ -115,13 +127,14 @@ namespace OrthancStone
     // update thread started by "context.Start()" would call a
     // destructed object (the "SdlEngine" is deleted with the
     // lexical scope).
+
+    // TODO Is this still true with message broker?
     context.Stop();
   }
 
+  
   void SdlStoneApplicationRunner::Finalize()
   {
     SdlWindow::GlobalFinalize();
   }
-
-
 }

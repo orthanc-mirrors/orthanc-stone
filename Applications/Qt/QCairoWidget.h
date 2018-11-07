@@ -1,7 +1,7 @@
 /**
  * Stone of Orthanc
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
- * Department, University Hospital of Liege, Belgium
+4 * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2018 Osimis S.A., Belgium
  *
  * This program is free software: you can redistribute it and/or
@@ -20,23 +20,39 @@
 
 #pragma once
 
-#include "../../Framework/Widgets/CairoWidget.h"
 #include "../../Applications/Generic/NativeStoneApplicationContext.h"
 #include "../../Framework/Viewport/CairoSurface.h"
+#include "../../Framework/Widgets/IWidget.h"
 
 #include <QWidget>
-#include <QGestureEvent>
 #include <memory>
 #include <cassert>
 
-class QCairoWidget : public QWidget, public OrthancStone::IViewport::IObserver
+class QCairoWidget : public QWidget
 {
   Q_OBJECT
 
 private:
+  class StoneObserver : public OrthancStone::IObserver
+  {
+  private:
+    QCairoWidget& that_;
+    
+  public:
+    StoneObserver(QCairoWidget& that,
+                  OrthancStone::IViewport& viewport,
+                  OrthancStone::MessageBroker& broker);
+
+    void OnViewportChanged(const OrthancStone::IViewport::ViewportChangedMessage& message)
+    {
+      that_.OnViewportChanged();
+    }
+  };
+  
   std::auto_ptr<QImage>         image_;
   OrthancStone::CairoSurface    surface_;
   OrthancStone::NativeStoneApplicationContext* context_;
+  std::auto_ptr<StoneObserver>  observer_;
 
 protected:
   virtual void paintEvent(QPaintEvent *event);
@@ -56,18 +72,15 @@ protected:
 public:
   explicit QCairoWidget(QWidget *parent);
  
-  virtual ~QCairoWidget();
-
   void SetContext(OrthancStone::NativeStoneApplicationContext& context);
 
-  virtual void OnViewportContentChanged(const OrthancStone::IViewport& /*sceneNotUsed*/)
+  void OnViewportChanged()
   {
     update();  // schedule a repaint (handled by Qt)
     emit ContentChanged();
   }
 
 signals:
-
   void ContentChanged();
                                                
 public slots:

@@ -30,13 +30,16 @@
 namespace SimpleViewer
 {
 
-  SimpleViewerMainWindow::SimpleViewerMainWindow(OrthancStone::NativeStoneApplicationContext& context, SimpleViewerApplication& stoneApplication, QWidget *parent) :
+  SimpleViewerMainWindow::SimpleViewerMainWindow(
+    OrthancStone::NativeStoneApplicationContext& context,
+    SimpleViewerApplication& stoneApplication,
+    QWidget *parent) :
     QStoneMainWindow(context, parent),
     ui_(new Ui::SimpleViewerMainWindow),
     stoneApplication_(stoneApplication)
   {
     ui_->setupUi(this);
-    SetCentralStoneWidget(ui_->cairoCentralWidget);
+    SetCentralStoneWidget(*ui_->cairoCentralWidget);
 
 #if QT_VERSION >= 0x050000
     connect(ui_->toolButtonCrop, &QToolButton::clicked, this, &SimpleViewerMainWindow::cropClicked);

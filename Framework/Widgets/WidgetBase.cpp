@@ -36,7 +36,7 @@ namespace OrthancStone
 
     if (viewport_ != NULL)
     {
-      viewport_->NotifyContentChanged(*this);
+      viewport_->NotifyBackgroundChanged();
     }
   }
 
@@ -115,7 +115,7 @@ namespace OrthancStone
   }
 
 
-  void WidgetBase::SetViewport(IViewport& viewport)
+  void WidgetBase::SetViewport(WidgetViewport& viewport)
   {
     if (viewport_ != NULL)
     {

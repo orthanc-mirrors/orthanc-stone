@@ -23,15 +23,17 @@
 namespace OrthancStone
 {
 
-  QStoneMainWindow::QStoneMainWindow(NativeStoneApplicationContext& context, QWidget *parent) :
+  QStoneMainWindow::QStoneMainWindow(NativeStoneApplicationContext& context,
+                                     QWidget *parent) :
     QMainWindow(parent),
-    context_(context)
+    context_(context),
+    cairoCentralWidget_(NULL)
   {
   }
 
-  void QStoneMainWindow::SetCentralStoneWidget(QCairoWidget *centralWidget)
+  void QStoneMainWindow::SetCentralStoneWidget(QCairoWidget& centralWidget)
   {
-    cairoCentralWidget_ = centralWidget;
+    cairoCentralWidget_ = &centralWidget;
     cairoCentralWidget_->SetContext(context_);
   }
 

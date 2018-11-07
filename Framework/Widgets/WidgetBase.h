@@ -24,19 +24,20 @@
 #include "IWidget.h"
 
 #include "../Viewport/CairoContext.h"
+#include "../Viewport/WidgetViewport.h"
 
 namespace OrthancStone
 {
   class WidgetBase : public IWidget
   {
   private:
-    IWidget*     parent_;
-    IViewport*   viewport_;
-    IStatusBar*  statusBar_;
-    bool         backgroundCleared_;
-    uint8_t      backgroundColor_[3];
-    bool         transmitMouseOver_;
-    std::string  name_;
+    IWidget*         parent_;
+    WidgetViewport*  viewport_;
+    IStatusBar*      statusBar_;
+    bool             backgroundCleared_;
+    uint8_t          backgroundColor_[3];
+    bool             transmitMouseOver_;
+    std::string      name_;
 
   protected:
     void ClearBackgroundOrthanc(Orthanc::ImageAccessor& target) const;
@@ -61,7 +62,7 @@ namespace OrthancStone
   
     virtual void SetParent(IWidget& parent);
     
-    virtual void SetViewport(IViewport& viewport);
+    virtual void SetViewport(WidgetViewport& viewport);
 
     void SetBackgroundCleared(bool clear)
     {

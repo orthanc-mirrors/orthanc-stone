@@ -35,15 +35,15 @@ extern OrthancStone::WasmPlatformApplicationAdapter* CreateWasmApplicationAdapte
 namespace OrthancStone {
 
   // default Observer to trigger Viewport redraw when something changes in the Viewport
-  class ViewportContentChangedObserver :
-    public OrthancStone::IViewport::IObserver
+  class ViewportContentChangedObserver : public IObserver
   {
   private:
     // Flag to avoid flooding JavaScript with redundant Redraw requests
     bool isScheduled_; 
 
   public:
-    ViewportContentChangedObserver() :
+    ViewportContentChangedObserver(MessageBroker& broker) :
+      IObserver(broker),
       isScheduled_(false)
     {
     }
@@ -53,11 +53,11 @@ namespace OrthancStone {
       isScheduled_ = false;
     }
 
-    virtual void OnViewportContentChanged(const OrthancStone::IViewport &viewport)
+    void OnViewportChanged(const IViewport::ViewportChangedMessage& message)
     {
       if (!isScheduled_)
       {
-        ScheduleWebViewportRedrawFromCpp((ViewportHandle)&viewport);  // loosing constness when transmitted to Web
+        ScheduleWebViewportRedrawFromCpp((ViewportHandle)&message.GetOrigin());  // loosing constness when transmitted to Web
         isScheduled_ = true;
       }
     }

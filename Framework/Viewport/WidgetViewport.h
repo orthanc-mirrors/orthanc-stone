@@ -22,7 +22,6 @@
 #pragma once
 
 #include "IViewport.h"
-#include "../Toolbox/ObserversRegistry.h"
 #include "../Widgets/IWidget.h"
 
 #include <memory>
@@ -34,7 +33,6 @@ namespace OrthancStone
   private:
     std::auto_ptr<IWidget>        centralWidget_;
     IStatusBar*                   statusBar_;
-    ObserversRegistry<IViewport>  observers_;
     std::auto_ptr<IMouseTracker>  mouseTracker_;
     bool                          isMouseOver_;
     int                           lastMouseX_;
@@ -43,7 +41,7 @@ namespace OrthancStone
     bool                          backgroundChanged_;
 
   public:
-    WidgetViewport();
+    WidgetViewport(MessageBroker& broker);
 
     virtual void FitContent();
 
@@ -51,12 +49,7 @@ namespace OrthancStone
 
     IWidget& SetCentralWidget(IWidget* widget);  // Takes ownership
 
-    virtual void NotifyContentChanged(const IWidget& widget);
-
-    virtual void Register(IObserver& observer)
-    {
-      observers_.Register(observer);
-    }
+    virtual void NotifyBackgroundChanged();
 
     virtual void SetSize(unsigned int width,
                          unsigned int height);

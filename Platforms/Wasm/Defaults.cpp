@@ -20,7 +20,7 @@ static std::unique_ptr<OrthancStone::StoneApplicationContext> context;
 static OrthancStone::StartupParametersBuilder startupParametersBuilder;
 static OrthancStone::MessageBroker broker;
 
-static OrthancStone::ViewportContentChangedObserver viewportContentChangedObserver_;
+static OrthancStone::ViewportContentChangedObserver viewportContentChangedObserver_(broker);
 static OrthancStone::StatusBar statusBar_;
 
 static std::list<std::shared_ptr<OrthancStone::WidgetViewport>> viewports_;
@@ -44,7 +44,7 @@ extern "C" {
   // when WASM needs a C++ viewport
   ViewportHandle EMSCRIPTEN_KEEPALIVE CreateCppViewport() {
     
-    std::shared_ptr<OrthancStone::WidgetViewport> viewport(new OrthancStone::WidgetViewport);
+    std::shared_ptr<OrthancStone::WidgetViewport> viewport(new OrthancStone::WidgetViewport(broker));
     printf("viewport %x\n", (int)viewport.get());
 
     viewports_.push_back(viewport);
@@ -52,7 +52,10 @@ extern "C" {
     printf("There are now %d viewports in C++\n", viewports_.size());
 
     viewport->SetStatusBar(statusBar_);
-    viewport->Register(viewportContentChangedObserver_);
+
+    viewport->RegisterObserverCallback(
+      new Callable<ViewportContentChangedObserver, IViewport::ViewportChangedMessage>
+      (viewportContentChangedObserver_, &ViewportContentChangedObserver::OnViewportChanged));
 
     return viewport.get();
   }

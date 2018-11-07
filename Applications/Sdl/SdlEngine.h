@@ -28,7 +28,7 @@
 
 namespace OrthancStone
 {
-  class SdlEngine : public IViewport::IObserver
+  class SdlEngine : public IObserver
   {
   private:
     SdlWindow&                window_;
@@ -46,11 +46,10 @@ namespace OrthancStone
 
   public:
     SdlEngine(SdlWindow& window,
-              NativeStoneApplicationContext& context);
+              NativeStoneApplicationContext& context,
+              MessageBroker& broker);
   
-    virtual ~SdlEngine();
-
-    virtual void OnViewportContentChanged(const IViewport& viewport)
+    void OnViewportChanged(const IViewport::ViewportChangedMessage& message)
     {
       viewportChanged_ = true;
     }

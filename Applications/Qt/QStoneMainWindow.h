@@ -36,10 +36,10 @@ namespace OrthancStone
 
   protected:  // you must inherit this class
     QStoneMainWindow(NativeStoneApplicationContext& context, QWidget *parent = 0);
-    void SetCentralStoneWidget(QCairoWidget* centralWidget);
+    void SetCentralStoneWidget(QCairoWidget& centralWidget);
+
   public:
     virtual ~QStoneMainWindow();
-
   };
 
 }

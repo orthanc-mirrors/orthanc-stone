@@ -33,21 +33,29 @@ namespace OrthancStone
 {
   class SdlStoneApplicationRunner : public NativeStoneApplicationRunner
   {
-    unsigned int width_;
-    unsigned int height_;
-    bool enableOpenGl_;
+  private:
+    unsigned int  width_;
+    unsigned int  height_;
+    bool          enableOpenGl_;
+    
   public:
     SdlStoneApplicationRunner(MessageBroker& broker,
-                                 IStoneApplication& application)
-      : NativeStoneApplicationRunner(broker, application)
+                              IStoneApplication& application) :
+      NativeStoneApplicationRunner(broker, application)
     {
     }
 
     virtual void Initialize();
+    
     virtual void DeclareCommandLineOptions(boost::program_options::options_description& options);
-    virtual void Run(NativeStoneApplicationContext& context, const std::string& title, int argc, char* argv[]);
+    
+    virtual void Run(NativeStoneApplicationContext& context,
+                     const std::string& title,
+                     int argc,
+                     char* argv[]);
+    
     virtual void ParseCommandLineOptions(const boost::program_options::variables_map& parameters);
+    
     virtual void Finalize();
   };
-
 }

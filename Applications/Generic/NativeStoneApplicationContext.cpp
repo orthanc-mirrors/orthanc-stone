@@ -24,9 +24,9 @@
 
 namespace OrthancStone
 {
-  IWidget& NativeStoneApplicationContext::SetCentralWidget(IWidget* widget)   // Takes ownership
+  IWidget& NativeStoneApplicationContext::GlobalMutexLocker::SetCentralWidget(IWidget* widget)
   {
-    centralViewport_->SetCentralWidget(widget);
+    that_.centralViewport_.SetCentralWidget(widget);
     return *widget;
   }
 
@@ -37,7 +37,7 @@ namespace OrthancStone
     {
       {
         GlobalMutexLocker locker(*that);
-        that->GetCentralViewport().UpdateContent();
+        locker.GetCentralViewport().UpdateContent();
       }
       
       boost::this_thread::sleep(boost::posix_time::milliseconds(that->updateDelayInMs_));
@@ -45,8 +45,9 @@ namespace OrthancStone
   }
   
 
-  NativeStoneApplicationContext::NativeStoneApplicationContext() :
-    centralViewport_(new OrthancStone::WidgetViewport()),
+  NativeStoneApplicationContext::NativeStoneApplicationContext(MessageBroker& broker) :
+    broker_(broker),
+    centralViewport_(broker),
     stopped_(true),
     updateDelayInMs_(100)   // By default, 100ms between each refresh of the content
   {
@@ -56,7 +57,10 @@ namespace OrthancStone
 
   void NativeStoneApplicationContext::Start()
   {
-    if (centralViewport_->HasUpdateContent())
+    boost::mutex::scoped_lock lock(globalMutex_);
+    
+    if (stopped_ &&
+        centralViewport_.HasUpdateContent())
     {
       stopped_ = false;
       updateThread_ = boost::thread(UpdateThread, this);

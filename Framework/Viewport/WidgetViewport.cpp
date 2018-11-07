@@ -26,7 +26,8 @@
 
 namespace OrthancStone
 {
-  WidgetViewport::WidgetViewport() :
+  WidgetViewport::WidgetViewport(MessageBroker& broker) :
+    IViewport(broker),
     statusBar_(NULL),
     isMouseOver_(false),
     lastMouseX_(0),
@@ -73,17 +74,16 @@ namespace OrthancStone
       centralWidget_->SetStatusBar(*statusBar_);
     }
 
-    backgroundChanged_ = true;
-    observers_.Apply(*this, &IObserver::OnViewportContentChanged);
+    NotifyBackgroundChanged();
 
     return *widget;
   }
 
 
-  void WidgetViewport::NotifyContentChanged(const IWidget& widget)
+  void WidgetViewport::NotifyBackgroundChanged()
   {
     backgroundChanged_ = true;
-    observers_.Apply(*this, &IObserver::OnViewportContentChanged);
+    NotifyContentChanged();
   }
 
 
@@ -97,7 +97,7 @@ namespace OrthancStone
       centralWidget_->SetSize(width, height);
     }
 
-    observers_.Apply(*this, &IObserver::OnViewportContentChanged);
+    NotifyBackgroundChanged();
   }
 
 
@@ -155,7 +155,7 @@ namespace OrthancStone
       mouseTracker_.reset(NULL);
     }      
 
-    observers_.Apply(*this, &IObserver::OnViewportContentChanged);
+    NotifyContentChanged();
   }
 
 
@@ -165,7 +165,7 @@ namespace OrthancStone
     {
       mouseTracker_->MouseUp();
       mouseTracker_.reset(NULL);
-      observers_.Apply(*this, &IObserver::OnViewportContentChanged);
+      NotifyContentChanged();
     }
   }
 
@@ -196,7 +196,7 @@ namespace OrthancStone
     if (repaint)
     {
       // The scene must be repainted, notify the observers
-      observers_.Apply(*this, &IObserver::OnViewportContentChanged);
+      NotifyContentChanged();
     }
   }
 
@@ -204,7 +204,7 @@ namespace OrthancStone
   void WidgetViewport::MouseEnter()
   {
     isMouseOver_ = true;
-    observers_.Apply(*this, &IObserver::OnViewportContentChanged);
+    NotifyContentChanged();
   }
 
 
@@ -218,7 +218,7 @@ namespace OrthancStone
       mouseTracker_.reset(NULL);
     }
 
-    observers_.Apply(*this, &IObserver::OnViewportContentChanged);
+    NotifyContentChanged();
   }
 
 

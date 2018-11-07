@@ -32,13 +32,16 @@ namespace OrthancStone
   namespace Samples
   {
 
-    SampleMainWindowWithButtons::SampleMainWindowWithButtons(OrthancStone::NativeStoneApplicationContext& context, OrthancStone::Samples::SampleSingleCanvasWithButtonsApplicationBase& stoneSampleApplication, QWidget *parent) :
+    SampleMainWindowWithButtons::SampleMainWindowWithButtons(
+      OrthancStone::NativeStoneApplicationContext& context,
+      OrthancStone::Samples::SampleSingleCanvasWithButtonsApplicationBase& stoneSampleApplication,
+      QWidget *parent) :
       QStoneMainWindow(context, parent),
       ui_(new Ui::SampleMainWindowWithButtons),
       stoneSampleApplication_(stoneSampleApplication)
     {
       ui_->setupUi(this);
-      SetCentralStoneWidget(ui_->cairoCentralWidget);
+      SetCentralStoneWidget(*ui_->cairoCentralWidget);
 
 #if QT_VERSION >= 0x050000
       connect(ui_->toolButton1, &QToolButton::clicked, this, &SampleMainWindowWithButtons::tool1Clicked);

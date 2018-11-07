@@ -32,13 +32,16 @@ namespace OrthancStone
   namespace Samples
   {
 
-    SampleMainWindow::SampleMainWindow(OrthancStone::NativeStoneApplicationContext& context, OrthancStone::Samples::SampleSingleCanvasApplicationBase& stoneSampleApplication, QWidget *parent) :
+    SampleMainWindow::SampleMainWindow(
+      OrthancStone::NativeStoneApplicationContext& context,
+      OrthancStone::Samples::SampleSingleCanvasApplicationBase& stoneSampleApplication,
+      QWidget *parent) :
       QStoneMainWindow(context, parent),
       ui_(new Ui::SampleMainWindow),
       stoneSampleApplication_(stoneSampleApplication)
     {
       ui_->setupUi(this);
-      SetCentralStoneWidget(ui_->cairoCentralWidget);
+      SetCentralStoneWidget(*ui_->cairoCentralWidget);
     }
 
     SampleMainWindow::~SampleMainWindow()

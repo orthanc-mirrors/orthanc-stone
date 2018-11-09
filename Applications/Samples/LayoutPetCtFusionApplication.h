@@ -23,7 +23,7 @@
 
 #include "SampleInteractor.h"
 
-#include "../../Framework/Layers/SiblingSliceLocationFactory.h"
+#include "../../Framework/Layers/ReferenceLineFactory.h"
 #include "../../Framework/Layers/DicomStructureSetRendererFactory.h"
 #include "../../Framework/Widgets/LayoutWidget.h"
 
@@ -144,9 +144,9 @@ namespace OrthancStone
                                    LayeredSceneWidget& coronal,
                                    LayeredSceneWidget& sagittal)
       {
-        SiblingSliceLocationFactory::Configure(axial, coronal);
-        SiblingSliceLocationFactory::Configure(axial, sagittal);
-        SiblingSliceLocationFactory::Configure(coronal, sagittal);
+        ReferenceLineFactory::Configure(axial, coronal);
+        ReferenceLineFactory::Configure(axial, sagittal);
+        ReferenceLineFactory::Configure(coronal, sagittal);
       }
 
 

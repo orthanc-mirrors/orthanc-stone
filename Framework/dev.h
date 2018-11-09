@@ -862,7 +862,7 @@ namespace OrthancStone
 
 
 
-  class SliceLocationSource : public LayerSourceBase
+  class ReferenceLineSource : public LayerSourceBase
   {
   private:
     class RendererFactory : public LayerReadyMessage::IRendererFactory
@@ -897,7 +897,8 @@ namespace OrthancStone
     SliceViewerWidget&  otherPlane_;
 
   public:
-    SliceLocationSource(MessageBroker& broker, SliceViewerWidget&  otherPlane) :
+    ReferenceLineSource(MessageBroker& broker, 
+                        SliceViewerWidget&  otherPlane) :
       LayerSourceBase(broker),
       otherPlane_(otherPlane)
     {

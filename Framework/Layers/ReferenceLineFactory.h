@@ -25,7 +25,7 @@
 
 namespace OrthancStone
 {
-  class SiblingSliceLocationFactory : 
+  class ReferenceLineFactory : 
     public ILayerRendererFactory,
     public LayeredSceneWidget::ISliceObserver
   {
@@ -39,8 +39,8 @@ namespace OrthancStone
 
       
   public:
-    SiblingSliceLocationFactory(LayeredSceneWidget& owner,
-                                LayeredSceneWidget& sibling);
+    ReferenceLineFactory(LayeredSceneWidget& owner,
+                         LayeredSceneWidget& sibling);
 
     virtual void NotifySliceChange(const LayeredSceneWidget& source,
                                    const SliceGeometry& slice);

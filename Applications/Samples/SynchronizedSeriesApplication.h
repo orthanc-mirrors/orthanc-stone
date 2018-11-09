@@ -25,7 +25,7 @@
 
 #include "../../Framework/Toolbox/OrthancSeriesLoader.h"
 #include "../../Framework/Layers/SeriesFrameRendererFactory.h"
-#include "../../Framework/Layers/SiblingSliceLocationFactory.h"
+#include "../../Framework/Layers/ReferenceLineFactory.h"
 #include "../../Framework/Widgets/LayoutWidget.h"
 
 #include <Core/Logging.h>
@@ -87,9 +87,9 @@ namespace OrthancStone
         std::auto_ptr<LayeredSceneWidget> b(CreateSeriesWidget(context, parameters["b"].as<std::string>()));
         std::auto_ptr<LayeredSceneWidget> c(CreateSeriesWidget(context, parameters["c"].as<std::string>()));
 
-        SiblingSliceLocationFactory::Configure(*a, *b);
-        SiblingSliceLocationFactory::Configure(*a, *c);
-        SiblingSliceLocationFactory::Configure(*b, *c);
+        ReferenceLineFactory::Configure(*a, *b);
+        ReferenceLineFactory::Configure(*a, *c);
+        ReferenceLineFactory::Configure(*b, *c);
 
         std::auto_ptr<LayoutWidget> layout(new LayoutWidget);
         layout->SetPadding(5);

@@ -19,14 +19,14 @@
  **/
 
 
-#include "SiblingSliceLocationFactory.h"
+#include "ReferenceLineFactory.h"
 
 #include "LineLayerRenderer.h"
 
 namespace OrthancStone
 {
-  SiblingSliceLocationFactory::SiblingSliceLocationFactory(LayeredSceneWidget& owner,
-                                                           LayeredSceneWidget& sibling) :
+  ReferenceLineFactory::ReferenceLineFactory(LayeredSceneWidget& owner,
+                                             LayeredSceneWidget& sibling) :
     owner_(owner),
     sibling_(sibling),
     hasLayerIndex_(false)
@@ -37,8 +37,8 @@ namespace OrthancStone
   }
 
 
-  void SiblingSliceLocationFactory::NotifySliceChange(const LayeredSceneWidget& source,
-                                                      const SliceGeometry& slice)
+  void ReferenceLineFactory::NotifySliceChange(const LayeredSceneWidget& source,
+                                               const SliceGeometry& slice)
   {
     if (&source == &sibling_)
     {
@@ -47,26 +47,26 @@ namespace OrthancStone
   }
 
 
-  void SiblingSliceLocationFactory::SetLayerIndex(size_t layerIndex)
+  void ReferenceLineFactory::SetLayerIndex(size_t layerIndex)
   {
     hasLayerIndex_ = true;
     layerIndex_ = layerIndex;
   }
 
 
-  void SiblingSliceLocationFactory::SetStyle(const RenderStyle& style)
+  void ReferenceLineFactory::SetStyle(const RenderStyle& style)
   {
     style_ = style;
   }
 
 
-  RenderStyle SiblingSliceLocationFactory::GetRenderStyle()
+  RenderStyle ReferenceLineFactory::GetRenderStyle()
   {
     return style_;
   }
 
 
-  void SiblingSliceLocationFactory::SetSlice(const SliceGeometry& slice)
+  void ReferenceLineFactory::SetSlice(const SliceGeometry& slice)
   {
     slice_ = slice;
 
@@ -77,7 +77,7 @@ namespace OrthancStone
   }
 
 
-  ILayerRenderer* SiblingSliceLocationFactory::CreateLayerRenderer(const SliceGeometry& viewportSlice)
+  ILayerRenderer* ReferenceLineFactory::CreateLayerRenderer(const SliceGeometry& viewportSlice)
   {
     Vector p, d;
 
@@ -113,25 +113,25 @@ namespace OrthancStone
   }
 
 
-  ISliceableVolume& SiblingSliceLocationFactory::GetSourceVolume() const
+  ISliceableVolume& ReferenceLineFactory::GetSourceVolume() const
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
   }
 
 
-  void SiblingSliceLocationFactory::Configure(LayeredSceneWidget& a,
-                                              LayeredSceneWidget& b)
+  void ReferenceLineFactory::Configure(LayeredSceneWidget& a,
+                                       LayeredSceneWidget& b)
   {
     {
       size_t layerIndex;
-      ILayerRendererFactory& factory = a.AddLayer(layerIndex, new SiblingSliceLocationFactory(a, b));
-      dynamic_cast<SiblingSliceLocationFactory&>(factory).SetLayerIndex(layerIndex);
+      ILayerRendererFactory& factory = a.AddLayer(layerIndex, new ReferenceLineFactory(a, b));
+      dynamic_cast<ReferenceLineFactory&>(factory).SetLayerIndex(layerIndex);
     }
 
     {
       size_t layerIndex;
-      ILayerRendererFactory& factory = b.AddLayer(layerIndex, new SiblingSliceLocationFactory(b, a));
-      dynamic_cast<SiblingSliceLocationFactory&>(factory).SetLayerIndex(layerIndex);
+      ILayerRendererFactory& factory = b.AddLayer(layerIndex, new ReferenceLineFactory(b, a));
+      dynamic_cast<ReferenceLineFactory&>(factory).SetLayerIndex(layerIndex);
     }
   }
 }

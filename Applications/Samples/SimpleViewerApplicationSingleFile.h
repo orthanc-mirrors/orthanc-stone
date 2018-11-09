@@ -26,7 +26,7 @@
 #include "../../Framework/Layers/OrthancFrameLayerSource.h"
 #include "../../Framework/Layers/CircleMeasureTracker.h"
 #include "../../Framework/Layers/LineMeasureTracker.h"
-#include "../../Framework/Widgets/LayerWidget.h"
+#include "../../Framework/Widgets/SliceViewerWidget.h"
 #include "../../Framework/Widgets/LayoutWidget.h"
 #include "../../Framework/Messages/IObserver.h"
 #include "../../Framework/SmartLoader.h"
@@ -52,6 +52,7 @@ namespace OrthancStone
       {
       private:
         SimpleViewerApplication&  application_;
+
       public:
         ThumbnailInteractor(SimpleViewerApplication&  application) :
           application_(application)
@@ -76,27 +77,30 @@ namespace OrthancStone
           }
           return NULL;
         }
+
         virtual void MouseOver(CairoContext& context,
                                WorldSceneWidget& widget,
                                const ViewportGeometry& view,
                                double x,
                                double y,
                                IStatusBar* statusBar)
-        {}
+        {
+        }
 
         virtual void MouseWheel(WorldSceneWidget& widget,
                                 MouseWheelDirection direction,
                                 KeyboardModifiers modifiers,
                                 IStatusBar* statusBar)
-        {}
+        {
+        }
 
         virtual void KeyPressed(WorldSceneWidget& widget,
                                 KeyboardKeys key,
                                 char keyChar,
                                 KeyboardModifiers modifiers,
                                 IStatusBar* statusBar)
-        {}
-
+        {
+        }
       };
 
       class MainWidgetInteractor : public IWorldSceneInteractor
@@ -124,12 +128,12 @@ namespace OrthancStone
           {
             if (application_.currentTool_ == Tools_LineMeasure)
             {
-              return new LineMeasureTracker(statusBar, dynamic_cast<LayerWidget&>(widget).GetSlice(),
+              return new LineMeasureTracker(statusBar, dynamic_cast<SliceViewerWidget&>(widget).GetSlice(),
                                             x, y, 255, 0, 0, application_.GetFont());
             }
             else if (application_.currentTool_ == Tools_CircleMeasure)
             {
-              return new CircleMeasureTracker(statusBar, dynamic_cast<LayerWidget&>(widget).GetSlice(),
+              return new CircleMeasureTracker(statusBar, dynamic_cast<SliceViewerWidget&>(widget).GetSlice(),
                                               x, y, 255, 0, 0, application_.GetFont());
             }
           }
@@ -145,7 +149,7 @@ namespace OrthancStone
         {
           if (statusBar != NULL)
           {
-            Vector p = dynamic_cast<LayerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
+            Vector p = dynamic_cast<SliceViewerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
             
             char buf[64];
             sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)",
@@ -198,10 +202,10 @@ namespace OrthancStone
           : WasmPlatformApplicationAdapter(broker, application),
             viewerApplication_(application)
         {
-
         }
 
-        virtual void HandleMessageFromWeb(std::string& output, const std::string& input) {
+        virtual void HandleMessageFromWeb(std::string& output, const std::string& input) 
+        {
           if (input == "select-tool:line-measure")
           {
             viewerApplication_.currentTool_ = Tools_LineMeasure;
@@ -216,7 +220,8 @@ namespace OrthancStone
           output = "ok";
         }
 
-        virtual void NotifyStatusUpdateFromCppToWeb(const std::string& statusUpdateMessage) {
+        virtual void NotifyStatusUpdateFromCppToWeb(const std::string& statusUpdateMessage) 
+        {
           UpdateStoneApplicationStatusFromCpp(statusUpdateMessage.c_str());
         }
 
@@ -232,7 +237,7 @@ namespace OrthancStone
       std::auto_ptr<ThumbnailInteractor>   thumbnailInteractor_;
       LayoutWidget*                        mainLayout_;
       LayoutWidget*                        thumbnailsLayout_;
-      std::vector<LayerWidget*>            thumbnails_;
+      std::vector<SliceViewerWidget*>      thumbnails_;
 
       std::map<std::string, std::vector<std::string> > instancesIdsPerSeriesId_;
       std::map<std::string, Json::Value> seriesTags_;
@@ -293,7 +298,7 @@ namespace OrthancStone
           thumbnailsLayout_->SetBackgroundColor(50, 50, 50);
           thumbnailsLayout_->SetVertical();
 
-          mainWidget_ = new LayerWidget(broker_, "main-viewport");
+          mainWidget_ = new SliceViewerWidget(broker_, "main-viewport");
           //mainWidget_->RegisterObserver(*this);
 
           // hierarchy
@@ -319,9 +324,10 @@ namespace OrthancStone
         if (parameters.count("studyId") < 1)
         {
           LOG(WARNING) << "The study ID is missing, will take the first studyId found in Orthanc";
-          orthancApiClient_->GetJsonAsync("/studies",
-                                          new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>
-                                          (*this, &SimpleViewerApplication::OnStudyListReceived));
+          orthancApiClient_->GetJsonAsync(
+            "/studies",
+            new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>
+            (*this, &SimpleViewerApplication::OnStudyListReceived));
         }
         else
         {
@@ -346,9 +352,10 @@ namespace OrthancStone
         {
           for (size_t i=0; i < response["Series"].size(); i++)
           {
-            orthancApiClient_->GetJsonAsync("/series/" + response["Series"][(int)i].asString(),
-                                            new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>
-                                            (*this, &SimpleViewerApplication::OnSeriesReceived));
+            orthancApiClient_->GetJsonAsync(
+              "/series/" + response["Series"][(int)i].asString(),
+              new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>
+              (*this, &SimpleViewerApplication::OnSeriesReceived));
           }
         }
       }
@@ -375,7 +382,7 @@ namespace OrthancStone
           LoadThumbnailForSeries(seriesId, instancesIdsPerSeriesId_[seriesId][0]);
 
           // if this is the first thumbnail loaded, load the first instance in the mainWidget
-          LayerWidget& widget = *dynamic_cast<LayerWidget*>(mainWidget_);
+          SliceViewerWidget& widget = *dynamic_cast<SliceViewerWidget*>(mainWidget_);
           if (widget.GetLayerCount() == 0)
           {
             smartLoader_->SetFrameInWidget(widget, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
@@ -386,10 +393,10 @@ namespace OrthancStone
       void LoadThumbnailForSeries(const std::string& seriesId, const std::string& instanceId)
       {
         LOG(INFO) << "Loading thumbnail for series " << seriesId;
-        LayerWidget* thumbnailWidget = new LayerWidget(IObserver::broker_, "thumbnail-series-" + seriesId);
+        SliceViewerWidget* thumbnailWidget = new SliceViewerWidget(IObserver::broker_, "thumbnail-series-" + seriesId);
         thumbnails_.push_back(thumbnailWidget);
         thumbnailsLayout_->AddWidget(thumbnailWidget);
-        thumbnailWidget->RegisterObserverCallback(new Callable<SimpleViewerApplication, LayerWidget::GeometryChangedMessage>(*this, &SimpleViewerApplication::OnWidgetGeometryChanged));
+        thumbnailWidget->RegisterObserverCallback(new Callable<SimpleViewerApplication, SliceViewerWidget::GeometryChangedMessage>(*this, &SimpleViewerApplication::OnWidgetGeometryChanged));
         smartLoader_->SetFrameInWidget(*thumbnailWidget, 0, instanceId, 0);
         thumbnailWidget->SetInteractor(*thumbnailInteractor_);
       }
@@ -399,14 +406,14 @@ namespace OrthancStone
         orthancApiClient_->GetJsonAsync("/studies/" + studyId, new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyReceived));
       }
 
-      void OnWidgetGeometryChanged(const LayerWidget::GeometryChangedMessage& message)
+      void OnWidgetGeometryChanged(const SliceViewerWidget::GeometryChangedMessage& message)
       {
         message.GetOrigin().FitContent();
       }
 
       void SelectSeriesInMainViewport(const std::string& seriesId)
       {
-        LayerWidget& widget = *dynamic_cast<LayerWidget*>(mainWidget_);
+        SliceViewerWidget& widget = *dynamic_cast<SliceViewerWidget*>(mainWidget_);
         smartLoader_->SetFrameInWidget(widget, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
       }
 
@@ -440,7 +447,5 @@ namespace OrthancStone
 #endif
 
     };
-
-
   }
 }

@@ -19,7 +19,7 @@
  **/
 
 
-#include "LayerWidget.h"
+#include "SliceViewerWidget.h"
 
 #include "../Layers/SliceOutlineRenderer.h"
 #include "../Toolbox/GeometryToolbox.h"
@@ -34,14 +34,15 @@ static const double THIN_SLICE_THICKNESS = 100.0 * std::numeric_limits<double>::
 
 namespace OrthancStone
 {
-  class LayerWidget::Scene : public boost::noncopyable
+  class SliceViewerWidget::Scene : public boost::noncopyable
   {
   private:
     CoordinateSystem3D            slice_;
     double                        thickness_;
     size_t                        countMissing_;
     std::vector<ILayerRenderer*>  renderers_;
-public:
+
+  public:
     void DeleteLayer(size_t index)
     {
       if (index >= renderers_.size())
@@ -235,8 +236,8 @@ public:
   };
 
   
-  bool LayerWidget::LookupLayer(size_t& index /* out */,
-                                const ILayerSource& layer) const
+  bool SliceViewerWidget::LookupLayer(size_t& index /* out */,
+                                      const ILayerSource& layer) const
   {
     LayersIndex::const_iterator found = layersIndex_.find(&layer);
 
@@ -254,8 +255,8 @@ public:
   }
 
 
-  void LayerWidget::GetLayerExtent(Extent2D& extent,
-                                   ILayerSource& source) const
+  void SliceViewerWidget::GetLayerExtent(Extent2D& extent,
+                                         ILayerSource& source) const
   {
     extent.Reset();
 
@@ -272,7 +273,7 @@ public:
   }
 
 
-  Extent2D LayerWidget::GetSceneExtent()
+  Extent2D SliceViewerWidget::GetSceneExtent()
   {
     Extent2D sceneExtent;
 
@@ -289,8 +290,8 @@ public:
   }
 
   
-  bool LayerWidget::RenderScene(CairoContext& context,
-                                const ViewportGeometry& view)
+  bool SliceViewerWidget::RenderScene(CairoContext& context,
+                                      const ViewportGeometry& view)
   {
     if (currentScene_.get() != NULL)
     {
@@ -303,7 +304,7 @@ public:
   }
 
   
-  void LayerWidget::ResetPendingScene()
+  void SliceViewerWidget::ResetPendingScene()
   {
     double thickness;
     if (pendingScene_.get() == NULL)
@@ -319,9 +320,9 @@ public:
   }
   
 
-  void LayerWidget::UpdateLayer(size_t index,
-                                ILayerRenderer* renderer,
-                                const CoordinateSystem3D& slice)
+  void SliceViewerWidget::UpdateLayer(size_t index,
+                                      ILayerRenderer* renderer,
+                                      const CoordinateSystem3D& slice)
   {
     LOG(INFO) << "Updating layer " << index;
     
@@ -362,7 +363,8 @@ public:
   }
 
   
-  LayerWidget::LayerWidget(MessageBroker& broker, const std::string& name) :
+  SliceViewerWidget::SliceViewerWidget(MessageBroker& broker, 
+                                       const std::string& name) :
     WorldSceneWidget(name),
     IObserver(broker),
     IObservable(broker),
@@ -372,7 +374,7 @@ public:
   }
   
   
-  LayerWidget::~LayerWidget()
+  SliceViewerWidget::~SliceViewerWidget()
   {
     for (size_t i = 0; i < layers_.size(); i++)
     {
@@ -380,18 +382,23 @@ public:
     }
   }
   
-  void LayerWidget::ObserveLayer(ILayerSource& layer)
+  void SliceViewerWidget::ObserveLayer(ILayerSource& layer)
   {
-    layer.RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::GeometryReadyMessage>(*this, &LayerWidget::OnGeometryReady));
-    // currently ignore errors layer->RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::GeometryErrorMessage>(*this, &LayerWidget::...));
-    layer.RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::SliceChangedMessage>(*this, &LayerWidget::OnSliceChanged));
-    layer.RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::ContentChangedMessage>(*this, &LayerWidget::OnContentChanged));
-    layer.RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::LayerReadyMessage>(*this, &LayerWidget::OnLayerReady));
-    layer.RegisterObserverCallback(new Callable<LayerWidget, ILayerSource::LayerErrorMessage>(*this, &LayerWidget::OnLayerError));
+    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, ILayerSource::GeometryReadyMessage>
+                                   (*this, &SliceViewerWidget::OnGeometryReady));
+    // currently ignore errors layer->RegisterObserverCallback(new Callable<SliceViewerWidget, ILayerSource::GeometryErrorMessage>(*this, &SliceViewerWidget::...));
+    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, ILayerSource::SliceChangedMessage>
+                                   (*this, &SliceViewerWidget::OnSliceChanged));
+    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, ILayerSource::ContentChangedMessage>
+                                   (*this, &SliceViewerWidget::OnContentChanged));
+    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, ILayerSource::LayerReadyMessage>
+                                   (*this, &SliceViewerWidget::OnLayerReady));
+    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, ILayerSource::LayerErrorMessage>
+                                   (*this, &SliceViewerWidget::OnLayerError));
   }
 
 
-  size_t LayerWidget::AddLayer(ILayerSource* layer)  // Takes ownership
+  size_t SliceViewerWidget::AddLayer(ILayerSource* layer)  // Takes ownership
   {
     if (layer == NULL)
     {
@@ -412,7 +419,8 @@ public:
     return index;
   }
 
-  void LayerWidget::ReplaceLayer(size_t index, ILayerSource* layer)  // Takes ownership
+
+  void SliceViewerWidget::ReplaceLayer(size_t index, ILayerSource* layer)  // Takes ownership
   {
     if (layer == NULL)
     {
@@ -435,7 +443,8 @@ public:
     InvalidateLayer(index);
   }
 
-  void LayerWidget::RemoveLayer(size_t index)
+
+  void SliceViewerWidget::RemoveLayer(size_t index)
   {
     if (index >= layers_.size())
     {
@@ -456,7 +465,8 @@ public:
     NotifyContentChanged();
   }
 
-  const RenderStyle& LayerWidget::GetLayerStyle(size_t layer) const
+
+  const RenderStyle& SliceViewerWidget::GetLayerStyle(size_t layer) const
   {
     if (layer >= layers_.size())
     {
@@ -468,8 +478,8 @@ public:
   }
   
 
-  void LayerWidget::SetLayerStyle(size_t layer,
-                                  const RenderStyle& style)
+  void SliceViewerWidget::SetLayerStyle(size_t layer,
+                                        const RenderStyle& style)
   {
     if (layer >= layers_.size())
     {
@@ -493,7 +503,7 @@ public:
   }
   
 
-  void LayerWidget::SetSlice(const CoordinateSystem3D& slice)
+  void SliceViewerWidget::SetSlice(const CoordinateSystem3D& slice)
   {
     LOG(INFO) << "Setting slice origin: (" << slice.GetOrigin()[0]
               << "," << slice.GetOrigin()[1]
@@ -517,7 +527,8 @@ public:
     }
   }
 
-  void LayerWidget::OnGeometryReady(const ILayerSource::GeometryReadyMessage& message)
+
+  void SliceViewerWidget::OnGeometryReady(const ILayerSource::GeometryReadyMessage& message)
   {
     size_t i;
     if (LookupLayer(i, message.GetOrigin()))
@@ -530,7 +541,8 @@ public:
     EmitMessage(GeometryChangedMessage(*this));
   }
   
-  void LayerWidget::InvalidateAllLayers()
+
+  void SliceViewerWidget::InvalidateAllLayers()
   {
     for (size_t i = 0; i < layers_.size(); i++)
     {
@@ -542,7 +554,7 @@ public:
   }
 
 
-  void LayerWidget::InvalidateLayer(size_t layer)
+  void SliceViewerWidget::InvalidateLayer(size_t layer)
   {
     if (layer >= layers_.size())
     {
@@ -556,7 +568,7 @@ public:
   }
 
 
-  void LayerWidget::OnContentChanged(const ILayerSource::ContentChangedMessage& message)
+  void SliceViewerWidget::OnContentChanged(const ILayerSource::ContentChangedMessage& message)
   {
     size_t index;
     if (LookupLayer(index, message.GetOrigin()))
@@ -564,11 +576,11 @@ public:
       InvalidateLayer(index);
     }
     
-    EmitMessage(LayerWidget::ContentChangedMessage(*this));
+    EmitMessage(SliceViewerWidget::ContentChangedMessage(*this));
   }
   
 
-  void LayerWidget::OnSliceChanged(const ILayerSource::SliceChangedMessage& message)
+  void SliceViewerWidget::OnSliceChanged(const ILayerSource::SliceChangedMessage& message)
   {
     if (message.GetSlice().ContainsPlane(slice_))
     {
@@ -579,11 +591,11 @@ public:
       }
     }
     
-    EmitMessage(LayerWidget::ContentChangedMessage(*this));
+    EmitMessage(SliceViewerWidget::ContentChangedMessage(*this));
   }
   
   
-  void LayerWidget::OnLayerReady(const ILayerSource::LayerReadyMessage& message)
+  void SliceViewerWidget::OnLayerReady(const ILayerSource::LayerReadyMessage& message)
   {
     size_t index;
     if (LookupLayer(index, message.GetOrigin()))
@@ -592,11 +604,11 @@ public:
       UpdateLayer(index, message.CreateRenderer(), message.GetSlice());
     }
     
-    EmitMessage(LayerWidget::ContentChangedMessage(*this));
+    EmitMessage(SliceViewerWidget::ContentChangedMessage(*this));
   }
 
 
-  void LayerWidget::OnLayerError(const ILayerSource::LayerErrorMessage& message)
+  void SliceViewerWidget::OnLayerError(const ILayerSource::LayerErrorMessage& message)
   {
     size_t index;
     if (LookupLayer(index, message.GetOrigin()))
@@ -606,12 +618,12 @@ public:
       // TODO
       //UpdateLayer(index, new SliceOutlineRenderer(slice), slice);
 
-      EmitMessage(LayerWidget::ContentChangedMessage(*this));
+      EmitMessage(SliceViewerWidget::ContentChangedMessage(*this));
     }
   }
 
 
-  void LayerWidget::ResetChangedLayers()
+  void SliceViewerWidget::ResetChangedLayers()
   {
     changedLayers_.resize(layers_.size());
 
@@ -622,7 +634,7 @@ public:
   }
 
 
-  void LayerWidget::DoAnimation()
+  void SliceViewerWidget::DoAnimation()
   {
     assert(changedLayers_.size() <= layers_.size());
     

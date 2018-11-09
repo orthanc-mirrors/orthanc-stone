@@ -24,7 +24,7 @@
 #include "SampleApplicationBase.h"
 
 #include "../../Framework/Layers/OrthancFrameLayerSource.h"
-#include "../../Framework/Widgets/LayerWidget.h"
+#include "../../Framework/Widgets/SliceViewerWidget.h"
 
 #include <Core/Logging.h>
 
@@ -73,7 +73,7 @@ namespace OrthancStone
         {
           if (statusBar != NULL)
           {
-            Vector p = dynamic_cast<LayerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
+            Vector p = dynamic_cast<SliceViewerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
             
             char buf[64];
             sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)", 
@@ -147,9 +147,9 @@ namespace OrthancStone
       }
 
 
-      LayerWidget& GetMainWidget()
+      SliceViewerWidget& GetMainWidget()
       {
-        return *dynamic_cast<LayerWidget*>(mainWidget_);
+        return *dynamic_cast<SliceViewerWidget*>(mainWidget_);
       }
       
 
@@ -243,7 +243,7 @@ namespace OrthancStone
         int frame = parameters["frame"].as<unsigned int>();
 
         orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
-        mainWidget_ = new LayerWidget(broker_, "main-widget");
+        mainWidget_ = new SliceViewerWidget(broker_, "main-widget");
 
         std::auto_ptr<OrthancFrameLayerSource> layer(new OrthancFrameLayerSource(broker_, *orthancApiClient_));
         source_ = layer.get();

@@ -287,9 +287,9 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/IWidget.h
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/IWorldSceneInteractor.h
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/IWorldSceneMouseTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/LayerWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/LayoutWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/PanMouseTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/SliceViewerWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/TestCairoWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/TestWorldSceneWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/WidgetBase.cpp

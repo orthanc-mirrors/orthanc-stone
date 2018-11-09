@@ -54,7 +54,7 @@ namespace SimpleViewer
       thumbnailsLayout_->SetBackgroundColor(50, 50, 50);
       thumbnailsLayout_->SetVertical();
 
-      mainWidget_ = new LayerWidget(IObserver::broker_, "main-viewport");
+      mainWidget_ = new SliceViewerWidget(IObserver::broker_, "main-viewport");
       //mainWidget_->RegisterObserver(*this);
 
       // hierarchy
@@ -152,10 +152,13 @@ namespace SimpleViewer
   void SimpleViewerApplication::LoadThumbnailForSeries(const std::string& seriesId, const std::string& instanceId)
   {
     LOG(INFO) << "Loading thumbnail for series " << seriesId;
-    LayerWidget* thumbnailWidget = new LayerWidget(IObserver::broker_, "thumbnail-series-" + seriesId);
+    SliceViewerWidget* thumbnailWidget = 
+      new SliceViewerWidget(IObserver::broker_, "thumbnail-series-" + seriesId);
     thumbnails_.push_back(thumbnailWidget);
     thumbnailsLayout_->AddWidget(thumbnailWidget);
-    thumbnailWidget->RegisterObserverCallback(new Callable<SimpleViewerApplication, LayerWidget::GeometryChangedMessage>(*this, &SimpleViewerApplication::OnWidgetGeometryChanged));
+    thumbnailWidget->RegisterObserverCallback(
+      new Callable<SimpleViewerApplication, SliceViewerWidget::GeometryChangedMessage>
+      (*this, &SimpleViewerApplication::OnWidgetGeometryChanged));
     smartLoader_->SetFrameInWidget(*thumbnailWidget, 0, instanceId, 0);
     thumbnailWidget->SetInteractor(*thumbnailInteractor_);
   }
@@ -165,7 +168,7 @@ namespace SimpleViewer
     orthancApiClient_->GetJsonAsync("/studies/" + studyId, new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyReceived));
   }
 
-  void SimpleViewerApplication::OnWidgetGeometryChanged(const LayerWidget::GeometryChangedMessage& message)
+  void SimpleViewerApplication::OnWidgetGeometryChanged(const SliceViewerWidget::GeometryChangedMessage& message)
   {
     message.GetOrigin().FitContent();
   }

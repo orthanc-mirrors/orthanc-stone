@@ -26,7 +26,7 @@
 #include "Framework/Layers/OrthancFrameLayerSource.h"
 #include "Framework/Layers/CircleMeasureTracker.h"
 #include "Framework/Layers/LineMeasureTracker.h"
-#include "Framework/Widgets/LayerWidget.h"
+#include "Framework/Widgets/SliceViewerWidget.h"
 #include "Framework/Widgets/LayoutWidget.h"
 #include "Framework/Messages/IObserver.h"
 #include "Framework/SmartLoader.h"
@@ -88,26 +88,26 @@ namespace SimpleViewer
     };
 
   private:
-    Tools                           currentTool_;
+    Tools                               currentTool_;
     std::auto_ptr<MainWidgetInteractor> mainWidgetInteractor_;
     std::auto_ptr<ThumbnailInteractor>  thumbnailInteractor_;
-    LayoutWidget*                   mainLayout_;
-    LayoutWidget*                   thumbnailsLayout_;
-    LayerWidget*                    mainWidget_;
-    std::vector<LayerWidget*>       thumbnails_;
+    LayoutWidget*                       mainLayout_;
+    LayoutWidget*                       thumbnailsLayout_;
+    SliceViewerWidget*                  mainWidget_;
+    std::vector<SliceViewerWidget*>     thumbnails_;
     std::map<std::string, std::vector<std::string> > instancesIdsPerSeriesId_;
-    std::map<std::string, Json::Value> seriesTags_;
-    BaseCommandBuilder              commandBuilder_;
+    std::map<std::string, Json::Value>  seriesTags_;
+    BaseCommandBuilder                  commandBuilder_;
 
-    unsigned int                    currentInstanceIndex_;
-    OrthancStone::WidgetViewport*   wasmViewport1_;
-    OrthancStone::WidgetViewport*   wasmViewport2_;
+    unsigned int                        currentInstanceIndex_;
+    OrthancStone::WidgetViewport*       wasmViewport1_;
+    OrthancStone::WidgetViewport*       wasmViewport2_;
 
-    IStatusBar*                     statusBar_;
-    std::auto_ptr<SmartLoader>    smartLoader_;
-    std::auto_ptr<OrthancApiClient>      orthancApiClient_;
+    IStatusBar*                         statusBar_;
+    std::auto_ptr<SmartLoader>          smartLoader_;
+    std::auto_ptr<OrthancApiClient>     orthancApiClient_;
 
-    Orthanc::Font                   font_;
+    Orthanc::Font                       font_;
 
   public:
     SimpleViewerApplication(MessageBroker& broker) :
@@ -140,7 +140,7 @@ namespace SimpleViewer
 
     void SelectStudy(const std::string& studyId);
 
-    void OnWidgetGeometryChanged(const LayerWidget::GeometryChangedMessage& message);
+    void OnWidgetGeometryChanged(const SliceViewerWidget::GeometryChangedMessage& message);
 
     void SelectSeriesInMainViewport(const std::string& seriesId);
 

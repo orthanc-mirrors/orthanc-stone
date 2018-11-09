@@ -38,12 +38,12 @@ namespace SimpleViewer {
     {
       if (application_.GetCurrentTool() == SimpleViewerApplication::Tools_LineMeasure)
       {
-        return new LineMeasureTracker(statusBar, dynamic_cast<LayerWidget&>(widget).GetSlice(),
+        return new LineMeasureTracker(statusBar, dynamic_cast<SliceViewerWidget&>(widget).GetSlice(),
                                       x, y, 255, 0, 0, application_.GetFont());
       }
       else if (application_.GetCurrentTool() == SimpleViewerApplication::Tools_CircleMeasure)
       {
-        return new CircleMeasureTracker(statusBar, dynamic_cast<LayerWidget&>(widget).GetSlice(),
+        return new CircleMeasureTracker(statusBar, dynamic_cast<SliceViewerWidget&>(widget).GetSlice(),
                                         x, y, 255, 0, 0, application_.GetFont());
       }
       else if (application_.GetCurrentTool() == SimpleViewerApplication::Tools_Crop)
@@ -76,7 +76,7 @@ namespace SimpleViewer {
   {
     if (statusBar != NULL)
     {
-      Vector p = dynamic_cast<LayerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
+      Vector p = dynamic_cast<SliceViewerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
 
       char buf[64];
       sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)",

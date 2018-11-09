@@ -25,7 +25,7 @@
 #include "Layers/LayerSourceBase.h"
 #include "Layers/SliceOutlineRenderer.h"
 #include "Layers/LineLayerRenderer.h"
-#include "Widgets/LayerWidget.h"
+#include "Widgets/SliceViewerWidget.h"
 #include "Toolbox/DownloadStack.h"
 #include "Toolbox/GeometryToolbox.h"
 #include "Toolbox/OrthancSlicesLoader.h"
@@ -702,7 +702,7 @@ namespace OrthancStone
       protected ISlicedVolume::IObserver
   {
   private:
-    LayerWidget&                        widget_;
+    SliceViewerWidget&                        widget_;
     VolumeProjection                    projection_;
     std::auto_ptr<VolumeImageGeometry>  slices_;
     size_t                              slice_;
@@ -799,7 +799,7 @@ namespace OrthancStone
 
   public:
     VolumeImageInteractor(OrthancVolumeImage& volume,
-                          LayerWidget& widget,
+                          SliceViewerWidget& widget,
                           VolumeProjection projection) :
       widget_(widget),
       projection_(projection)
@@ -894,10 +894,10 @@ namespace OrthancStone
       }
     };
 
-    LayerWidget&  otherPlane_;
+    SliceViewerWidget&  otherPlane_;
 
   public:
-    SliceLocationSource(MessageBroker& broker, LayerWidget&  otherPlane) :
+    SliceLocationSource(MessageBroker& broker, SliceViewerWidget&  otherPlane) :
       LayerSourceBase(broker),
       otherPlane_(otherPlane)
     {

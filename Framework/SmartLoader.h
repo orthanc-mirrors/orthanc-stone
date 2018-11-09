@@ -28,7 +28,7 @@
 
 namespace OrthancStone
 {
-  class LayerWidget;
+  class SliceViewerWidget;
 
   class SmartLoader : public IObservable, public IObserver
   {
@@ -53,7 +53,7 @@ namespace OrthancStone
 
     void SetImageQuality(SliceImageQuality imageQuality) { imageQuality_ = imageQuality; }
 
-    void SetFrameInWidget(LayerWidget& layerWidget, size_t layerIndex, const std::string& instanceId, unsigned int frame);
+    void SetFrameInWidget(SliceViewerWidget& sliceViewer, size_t layerIndex, const std::string& instanceId, unsigned int frame);
 
     void GetFirstInstanceIdForSeries(std::string& output, const std::string& seriesId);
 

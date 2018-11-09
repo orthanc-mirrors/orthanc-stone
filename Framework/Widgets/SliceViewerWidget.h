@@ -30,14 +30,14 @@
 
 namespace OrthancStone
 {
-  class LayerWidget :
-      public WorldSceneWidget,
-      public IObserver,
-      public IObservable
+  class SliceViewerWidget :
+    public WorldSceneWidget,
+    public IObserver,
+    public IObservable
   {
   public:
-    typedef OriginMessage<MessageType_Widget_GeometryChanged, LayerWidget> GeometryChangedMessage;
-    typedef OriginMessage<MessageType_Widget_ContentChanged, LayerWidget> ContentChangedMessage;
+    typedef OriginMessage<MessageType_Widget_GeometryChanged, SliceViewerWidget> GeometryChangedMessage;
+    typedef OriginMessage<MessageType_Widget_ContentChanged, SliceViewerWidget> ContentChangedMessage;
 
   private:
     class Scene;
@@ -74,7 +74,8 @@ namespace OrthancStone
     void ResetChangedLayers();
 
   public:
-    LayerWidget(MessageBroker& broker, const std::string& name);
+    SliceViewerWidget(MessageBroker& broker, 
+                      const std::string& name);
 
     virtual Extent2D GetSceneExtent();
 
@@ -93,7 +94,7 @@ namespace OrthancStone
     void InvalidateLayer(size_t layer);
     
   public:
-    virtual ~LayerWidget();
+    virtual ~SliceViewerWidget();
 
     size_t AddLayer(ILayerSource* layer);  // Takes ownership
 

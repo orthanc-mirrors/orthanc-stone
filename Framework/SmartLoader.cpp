@@ -23,7 +23,7 @@
 #include "Layers/OrthancFrameLayerSource.h"
 #include "Messages/MessageForwarder.h"
 #include "Core/Images/Image.h"
-#include "Framework/Widgets/LayerWidget.h"
+#include "Framework/Widgets/SliceViewerWidget.h"
 #include "Framework/StoneException.h"
 #include "Framework/Layers/FrameRenderer.h"
 #include "Core/Logging.h"
@@ -127,7 +127,7 @@ namespace OrthancStone
   {
   }
 
-  void SmartLoader::SetFrameInWidget(LayerWidget& layerWidget, 
+  void SmartLoader::SetFrameInWidget(SliceViewerWidget& sliceViewer, 
                                      size_t layerIndex, 
                                      const std::string& instanceId, 
                                      unsigned int frame)
@@ -159,13 +159,13 @@ namespace OrthancStone
     }
 
     // make sure that the widget registers the events before we trigger them
-    if (layerWidget.GetLayerCount() == layerIndex)
+    if (sliceViewer.GetLayerCount() == layerIndex)
     {
-      layerWidget.AddLayer(layerSource.release());
+      sliceViewer.AddLayer(layerSource.release());
     }
-    else if (layerWidget.GetLayerCount() > layerIndex)
+    else if (sliceViewer.GetLayerCount() > layerIndex)
     {
-      layerWidget.ReplaceLayer(layerIndex, layerSource.release());
+      sliceViewer.ReplaceLayer(layerIndex, layerSource.release());
     }
     else
     {

@@ -206,9 +206,15 @@ namespace OrthancStone
     {
       // https://en.wikipedia.org/wiki/Orthogonal_matrix
 
+      if (q.size1() != q.size2())
+      {
+        LOG(ERROR) << "An orthogonal matrix must be squared";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+
       using namespace boost::numeric::ublas;
 
-      const Matrix check = prod(trans(q), q) - identity_matrix<double>(3);
+      const Matrix check = prod(trans(q), q) - identity_matrix<double>(q.size1());
 
       type_traits<double>::real_type norm = norm_inf(check);
 
@@ -522,7 +528,10 @@ namespace OrthancStone
     void CreateSkewSymmetric(Matrix& s,
                              const Vector& v)
     {
-      assert(v.size() == 3);
+      if (v.size() != 3)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
 
       s.resize(3, 3);
       s(0,0) = 0;

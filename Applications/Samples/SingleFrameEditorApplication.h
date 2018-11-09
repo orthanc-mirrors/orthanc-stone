@@ -47,37 +47,6 @@
 
 namespace OrthancStone
 {
-  static Matrix CreateOffsetMatrix(double dx,
-                                   double dy)
-  {
-    Matrix m = LinearAlgebra::IdentityMatrix(3);
-    m(0, 2) = dx;
-    m(1, 2) = dy;
-    return m;
-  }
-      
-
-  static Matrix CreateScalingMatrix(double sx,
-                                    double sy)
-  {
-    Matrix m = LinearAlgebra::IdentityMatrix(3);
-    m(0, 0) = sx;
-    m(1, 1) = sy;
-    return m;
-  }
-      
-
-  static Matrix CreateRotationMatrix(double angle)
-  {
-    Matrix m;
-    const double v[] = { cos(angle), -sin(angle), 0,
-                         sin(angle), cos(angle), 0,
-                         0, 0, 1 };
-    LinearAlgebra::FillMatrix(m, 3, 3, v);
-    return m;
-  }
-      
-
   class BitmapStack :
     public IObserver,
     public IObservable
@@ -835,6 +804,37 @@ namespace OrthancStone
     
 
   private:
+    static Matrix CreateOffsetMatrix(double dx,
+                                     double dy)
+    {
+      Matrix m = LinearAlgebra::IdentityMatrix(3);
+      m(0, 2) = dx;
+      m(1, 2) = dy;
+      return m;
+    }
+      
+
+    static Matrix CreateScalingMatrix(double sx,
+                                      double sy)
+    {
+      Matrix m = LinearAlgebra::IdentityMatrix(3);
+      m(0, 0) = sx;
+      m(1, 1) = sy;
+      return m;
+    }
+      
+
+    static Matrix CreateRotationMatrix(double angle)
+    {
+      Matrix m;
+      const double v[] = { cos(angle), -sin(angle), 0,
+                           sin(angle), cos(angle), 0,
+                           0, 0, 1 };
+      LinearAlgebra::FillMatrix(m, 3, 3, v);
+      return m;
+    }
+      
+
     class DicomBitmap : public Bitmap
     {
     private:

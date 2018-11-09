@@ -28,7 +28,7 @@ namespace OrthancStone
 {
   namespace Samples
   {
-    void TestCairoWidget::UpdateContent() 
+    void TestCairoWidget::DoAnimation() 
     {
       value_ -= 0.01f;
       if (value_ < 0)

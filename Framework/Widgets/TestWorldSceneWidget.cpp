@@ -130,7 +130,7 @@ namespace OrthancStone
     }
 
 
-    void TestWorldSceneWidget::UpdateContent()
+    void TestWorldSceneWidget::DoAnimation()
     {
       if (animate_)
       {

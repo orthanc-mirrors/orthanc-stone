@@ -622,7 +622,7 @@ public:
   }
 
 
-  void LayerWidget::UpdateContent()
+  void LayerWidget::DoAnimation()
   {
     assert(changedLayers_.size() <= layers_.size());
     

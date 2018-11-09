@@ -11,7 +11,7 @@ declare var StoneFrameworkModule : Stone.Framework;
 var WasmWebService_NotifyError: Function = null;
 var WasmWebService_NotifySuccess: Function = null;
 var WasmWebService_SetBaseUri: Function = null;
-var NotifyUpdateContent: Function = null;
+var WasmDoAnimation: Function = null;
 var SetStartupParameter: Function = null;
 var CreateWasmApplication: Function = null;
 var CreateCppViewport: Function = null;
@@ -20,12 +20,12 @@ var StartWasmApplication: Function = null;
 var SendMessageToStoneApplication: Function = null;
 
 
-function UpdateContentThread() {
-  if (NotifyUpdateContent != null) {
-    NotifyUpdateContent();
+function DoAnimationThread() {
+  if (WasmDoAnimation != null) {
+    WasmDoAnimation();
   }
 
-  setTimeout(UpdateContentThread, 100);  // Update the viewport content every 100ms if need be
+  setTimeout(DoAnimationThread, 100);  // Update the viewport content every 100ms if need be
 }
 
 
@@ -75,7 +75,7 @@ function _InitializeWasmApplication(orthancBaseUrl: string): void {
   // trigger a first resize of the canvas that have just been initialized
   Stone.WasmViewport.ResizeAll();
 
-  UpdateContentThread();
+  DoAnimationThread();
 }
 
 function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: string) {
@@ -97,7 +97,7 @@ function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: strin
     WasmWebService_NotifySuccess = StoneFrameworkModule.cwrap('WasmWebService_NotifySuccess', null, ['number', 'string', 'array', 'number', 'number']);
     WasmWebService_NotifyError = StoneFrameworkModule.cwrap('WasmWebService_NotifyError', null, ['number', 'string', 'number']);
     WasmWebService_SetBaseUri = StoneFrameworkModule.cwrap('WasmWebService_SetBaseUri', null, ['string']);
-    NotifyUpdateContent = StoneFrameworkModule.cwrap('NotifyUpdateContent', null, []);
+    WasmDoAnimation = StoneFrameworkModule.cwrap('WasmDoAnimation', null, []);
 
     SendMessageToStoneApplication = StoneFrameworkModule.cwrap('SendMessageToStoneApplication', 'string', ['string']);
 

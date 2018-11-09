@@ -34,7 +34,7 @@ namespace OrthancStone
   }
 
 
-  void EmptyWidget::UpdateContent()
+  void EmptyWidget::DoAnimation()
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
   }

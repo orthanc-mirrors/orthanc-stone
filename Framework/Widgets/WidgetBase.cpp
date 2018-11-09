@@ -159,7 +159,7 @@ namespace OrthancStone
   }
 
   
-  void WidgetBase::UpdateContent()
+  void WidgetBase::DoAnimation()
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
   }

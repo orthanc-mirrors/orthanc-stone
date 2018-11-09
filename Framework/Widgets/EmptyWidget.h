@@ -100,12 +100,12 @@ namespace OrthancStone
     {
     }
 
-    virtual bool HasUpdateContent() const
+    virtual bool HasAnimation() const
     {
       return false;
     }
 
-    virtual void UpdateContent();
+    virtual void DoAnimation();
 
     virtual bool HasRenderMouseOver()
     {

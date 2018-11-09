@@ -78,9 +78,9 @@ namespace OrthancStone
                             char keyChar,
                             KeyboardModifiers modifiers) = 0;
 
-    virtual bool HasUpdateContent() = 0;
+    virtual bool HasAnimation() = 0;
 
-    virtual void UpdateContent() = 0;
+    virtual void DoAnimation() = 0;
 
     // Should only be called from IWidget
     virtual void NotifyContentChanged()

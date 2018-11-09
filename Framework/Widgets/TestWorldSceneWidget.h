@@ -47,12 +47,12 @@ namespace OrthancStone
 
       virtual Extent2D GetSceneExtent();
 
-      virtual bool HasUpdateContent() const
+      virtual bool HasAnimation() const
       {
         return animate_;
       }
 
-      virtual void UpdateContent();
+      virtual void DoAnimation();
 
       virtual bool HasRenderMouseOver()
       {

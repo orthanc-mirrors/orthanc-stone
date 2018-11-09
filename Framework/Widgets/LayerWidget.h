@@ -118,11 +118,11 @@ namespace OrthancStone
       return slice_;
     }
 
-    virtual bool HasUpdateContent() const
+    virtual bool HasAnimation() const
     {
       return true;
     }
 
-    virtual void UpdateContent();
+    virtual void DoAnimation();
   };
 }

@@ -92,11 +92,11 @@ namespace OrthancStone
       SetEmpty();
     }
 
-    void UpdateContent()
+    void DoAnimation()
     {
-      if (widget_->HasUpdateContent())
+      if (widget_->HasAnimation())
       {
-        widget_->UpdateContent();
+        widget_->DoAnimation();
       }
     }
 
@@ -362,9 +362,9 @@ namespace OrthancStone
 
     ComputeChildrenExtents();
 
-    if (widget->HasUpdateContent())
+    if (widget->HasAnimation())
     {
-      hasUpdateContent_ = true;
+      hasAnimation_ = true;
     }
 
     return *widget;
@@ -462,13 +462,13 @@ namespace OrthancStone
   }
 
   
-  void LayoutWidget::UpdateContent()
+  void LayoutWidget::DoAnimation()
   {
-    if (hasUpdateContent_)
+    if (hasAnimation_)
     {
       for (size_t i = 0; i < children_.size(); i++)
       {
-        children_[i]->UpdateContent();
+        children_[i]->DoAnimation();
       }
     }
     else

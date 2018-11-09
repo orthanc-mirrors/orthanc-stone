@@ -247,11 +247,11 @@ namespace OrthancStone
   }
 
 
-  bool WidgetViewport::HasUpdateContent()
+  bool WidgetViewport::HasAnimation()
   {
     if (centralWidget_.get() != NULL)
     {
-      return centralWidget_->HasUpdateContent();
+      return centralWidget_->HasAnimation();
     }
     else
     {
@@ -260,11 +260,11 @@ namespace OrthancStone
   }
    
 
-  void WidgetViewport::UpdateContent()
+  void WidgetViewport::DoAnimation()
   {
     if (centralWidget_.get() != NULL)
     {
-      centralWidget_->UpdateContent();
+      centralWidget_->DoAnimation();
     }
   }
 }

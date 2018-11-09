@@ -37,7 +37,7 @@ namespace OrthancStone
     {
       {
         GlobalMutexLocker locker(*that);
-        locker.GetCentralViewport().UpdateContent();
+        locker.GetCentralViewport().DoAnimation();
       }
       
       boost::this_thread::sleep(boost::posix_time::milliseconds(that->updateDelayInMs_));
@@ -60,7 +60,7 @@ namespace OrthancStone
     boost::mutex::scoped_lock lock(globalMutex_);
     
     if (stopped_ &&
-        centralViewport_.HasUpdateContent())
+        centralViewport_.HasAnimation())
     {
       stopped_ = false;
       updateThread_ = boost::thread(UpdateThread, this);

@@ -102,13 +102,13 @@ extern "C" {
     printf("StartWasmApplication - completed\n");
   }
   
-  void EMSCRIPTEN_KEEPALIVE NotifyUpdateContent()
+  void EMSCRIPTEN_KEEPALIVE WasmDoAnimation()
   {
     for (auto viewport : viewports_) {
-      // TODO Only launch the JavaScript timer if "HasUpdateContent()"
-      if (viewport->HasUpdateContent())
+      // TODO Only launch the JavaScript timer if "HasAnimation()"
+      if (viewport->HasAnimation())
       {
-        viewport->UpdateContent();
+        viewport->DoAnimation();
       }
 
     }

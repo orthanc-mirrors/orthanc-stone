@@ -79,8 +79,8 @@ namespace OrthancStone
                             char keyChar,
                             KeyboardModifiers modifiers);
 
-    virtual bool HasUpdateContent();
+    virtual bool HasAnimation();
 
-    virtual void UpdateContent();
+    virtual void DoAnimation();
   };
 }

@@ -44,7 +44,7 @@ namespace OrthancStone
     unsigned int                  paddingRight_;
     unsigned int                  paddingBottom_;
     unsigned int                  paddingInternal_;
-    bool                          hasUpdateContent_;
+    bool                          hasAnimation_;
 
     void ComputeChildrenExtents();
 
@@ -121,12 +121,12 @@ namespace OrthancStone
                             char keyChar,
                             KeyboardModifiers modifiers);
 
-    virtual bool HasUpdateContent() const
+    virtual bool HasAnimation() const
     {
-      return hasUpdateContent_;
+      return hasAnimation_;
     }
 
-    virtual void UpdateContent();
+    virtual void DoAnimation();
 
     virtual bool HasRenderMouseOver();
   };

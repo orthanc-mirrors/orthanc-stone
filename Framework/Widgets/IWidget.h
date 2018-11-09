@@ -69,9 +69,9 @@ namespace OrthancStone
                             char keyChar,
                             KeyboardModifiers modifiers) = 0;
 
-    virtual bool HasUpdateContent() const = 0;
+    virtual bool HasAnimation() const = 0;
 
-    virtual void UpdateContent() = 0;
+    virtual void DoAnimation() = 0;
 
     // Subclasses can call this method to signal the display of the
     // widget must be refreshed

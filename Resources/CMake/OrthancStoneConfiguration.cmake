@@ -302,7 +302,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IObserver.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageBroker.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageForwarder.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageType.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/Promise.h
 
   ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomDatasetReader.cpp

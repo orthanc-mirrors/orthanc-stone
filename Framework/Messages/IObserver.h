@@ -23,21 +23,17 @@
 
 #include "MessageBroker.h"
 #include "IMessage.h"
-#include <set>
-#include <assert.h>
 
-namespace OrthancStone {
-
-  class IObservable;
-
+namespace OrthancStone 
+{
   class IObserver : public boost::noncopyable
   {
-  protected:
-    MessageBroker&                    broker_;
+  private:
+    MessageBroker&  broker_;
 
   public:
-    IObserver(MessageBroker& broker)
-      : broker_(broker)
+    IObserver(MessageBroker& broker) :
+      broker_(broker)
     {
       broker_.Register(*this);
     }
@@ -46,6 +42,10 @@ namespace OrthancStone {
     {
       broker_.Unregister(*this);
     }
-  };
 
+    MessageBroker& GetBroker() const
+    {
+      return broker_;
+    }
+  };
 }

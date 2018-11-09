@@ -21,13 +21,12 @@
 
 #pragma once
 
-#include "MessageType.h"
+#include "../StoneEnumerations.h"
 
 #include <boost/noncopyable.hpp>
 
-namespace OrthancStone {
-
-
+namespace OrthancStone 
+{
   // base message that are exchanged between IObservable and IObserver
   class IMessage : public boost::noncopyable
   {

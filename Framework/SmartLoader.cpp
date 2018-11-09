@@ -105,7 +105,7 @@ namespace OrthancStone
 
     CachedSlice* Clone() const
     {
-      CachedSlice* output = new CachedSlice(broker_);
+      CachedSlice* output = new CachedSlice(GetBroker());
       output->sliceIndex_ = sliceIndex_;
       output->slice_.reset(slice_->Clone());
       output->image_ = image_;
@@ -150,7 +150,7 @@ namespace OrthancStone
     }
     else
     {
-      layerSource.reset(new OrthancFrameLayerSource(IObserver::broker_, orthancApiClient_));
+      layerSource.reset(new OrthancFrameLayerSource(IObserver::GetBroker(), orthancApiClient_));
       dynamic_cast<OrthancFrameLayerSource*>(layerSource.get())->SetImageQuality(imageQuality_);
       layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::GeometryReadyMessage>(*this, &SmartLoader::OnLayerGeometryReady));
       layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::ImageReadyMessage>(*this, &SmartLoader::OnImageReady));
@@ -189,7 +189,7 @@ namespace OrthancStone
 
 
     // create the slice in the cache with "empty" data
-    boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::broker_));
+    boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::GetBroker()));
     cachedSlice->slice_.reset(new Slice(instanceId, frame));
     cachedSlice->status_ = CachedSliceStatus_ScheduledToLoad;
     std::string sliceKeyId = instanceId + ":" + boost::lexical_cast<std::string>(frame);
@@ -198,7 +198,7 @@ namespace OrthancStone
 
     cachedSlices_[sliceKeyId] = boost::shared_ptr<CachedSlice>(cachedSlice);
 
-    std::auto_ptr<ILayerSource> layerSource(new OrthancFrameLayerSource(IObserver::broker_, orthancApiClient_));
+    std::auto_ptr<ILayerSource> layerSource(new OrthancFrameLayerSource(IObserver::GetBroker(), orthancApiClient_));
 
     dynamic_cast<OrthancFrameLayerSource*>(layerSource.get())->SetImageQuality(imageQuality_);
     layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::GeometryReadyMessage>(*this, &SmartLoader::OnLayerGeometryReady));
@@ -233,7 +233,7 @@ namespace OrthancStone
 
     LOG(WARNING) << "Geometry ready: " << sliceKeyId;
 
-    boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::broker_));
+    boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::GetBroker()));
     cachedSlice->slice_.reset(slice.Clone());
     cachedSlice->effectiveQuality_ = source.GetImageQuality();
     cachedSlice->status_ = CachedSliceStatus_GeometryLoaded;
@@ -256,7 +256,7 @@ namespace OrthancStone
 
     LOG(WARNING) << "Image ready: " << sliceKeyId;
 
-    boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::broker_));
+    boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::GetBroker()));
     cachedSlice->image_.reset(Orthanc::Image::Clone(message.GetImage()));
     cachedSlice->effectiveQuality_ = message.GetImageQuality();
     cachedSlice->slice_.reset(message.GetSlice().Clone());

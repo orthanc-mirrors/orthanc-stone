@@ -112,7 +112,7 @@ namespace {
 
     Promise& StartSomethingAsync()
     {
-      currentPromise_ = new Promise(broker_);
+      currentPromise_ = new Promise(GetBroker());
       return *currentPromise_;
     }
 

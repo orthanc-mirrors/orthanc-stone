@@ -54,17 +54,17 @@ namespace SimpleViewer
       thumbnailsLayout_->SetBackgroundColor(50, 50, 50);
       thumbnailsLayout_->SetVertical();
 
-      mainWidget_ = new SliceViewerWidget(IObserver::broker_, "main-viewport");
+      mainWidget_ = new SliceViewerWidget(IObserver::GetBroker(), "main-viewport");
       //mainWidget_->RegisterObserver(*this);
 
       // hierarchy
       mainLayout_->AddWidget(thumbnailsLayout_);
       mainLayout_->AddWidget(mainWidget_);
 
-      orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
+      orthancApiClient_.reset(new OrthancApiClient(IObserver::GetBroker(), context_->GetWebService()));
 
       // sources
-      smartLoader_.reset(new SmartLoader(IObserver::broker_, *orthancApiClient_));
+      smartLoader_.reset(new SmartLoader(IObserver::GetBroker(), *orthancApiClient_));
       smartLoader_->SetImageQuality(SliceImageQuality_FullPam);
 
       mainLayout_->SetTransmitMouseOver(true);
@@ -153,7 +153,7 @@ namespace SimpleViewer
   {
     LOG(INFO) << "Loading thumbnail for series " << seriesId;
     SliceViewerWidget* thumbnailWidget = 
-      new SliceViewerWidget(IObserver::broker_, "thumbnail-series-" + seriesId);
+      new SliceViewerWidget(IObserver::GetBroker(), "thumbnail-series-" + seriesId);
     thumbnails_.push_back(thumbnailWidget);
     thumbnailsLayout_->AddWidget(thumbnailWidget);
     thumbnailWidget->RegisterObserverCallback(

@@ -21,39 +21,33 @@
 
 #pragma once
 
-#include <set>
-#include <assert.h>
-#include <algorithm>
-#include <iostream>
-#include <map>
-
-
-#include "MessageBroker.h"
-#include "MessageType.h"
+#include "../StoneEnumerations.h"
 #include "ICallable.h"
 #include "IObserver.h"
+#include "MessageBroker.h"
 #include "MessageForwarder.h"
 
-namespace OrthancStone {
+#include <set>
+#include <map>
 
-
+namespace OrthancStone 
+{
   class IObservable : public boost::noncopyable
   {
-  protected:
-    MessageBroker&                     broker_;
+  private:
+    typedef std::map<int, std::set<ICallable*> >  Callables;
+    typedef std::set<IMessageForwarder*>          Forwarders;
 
-    typedef std::map<int, std::set<ICallable*> >   Callables;
-    Callables                         callables_;
-
-    typedef std::set<IMessageForwarder*>      Forwarders;
-    Forwarders                        forwarders_;
+    MessageBroker&  broker_;
+    Callables       callables_;
+    Forwarders      forwarders_;
 
   public:
-
-    IObservable(MessageBroker& broker)
-      : broker_(broker)
+    IObservable(MessageBroker& broker) :
+      broker_(broker)
     {
     }
+
     virtual ~IObservable()
     {
       // delete all callables (this will also unregister them from the broker)
@@ -105,6 +99,9 @@ namespace OrthancStone {
       forwarders_.insert(forwarder);
     }
 
+    MessageBroker& GetBroker() const
+    {
+      return broker_;
+    }
   };
-
 }

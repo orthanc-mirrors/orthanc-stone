@@ -115,6 +115,45 @@ namespace OrthancStone
     BitmapAnchor_TopRight
   };
 
+  enum MessageType
+  {
+    MessageType_Widget_GeometryChanged,
+    MessageType_Widget_ContentChanged,
+
+    MessageType_LayerSource_GeometryReady,   // instance tags have been loaded
+    MessageType_LayerSource_GeometryError,
+    MessageType_LayerSource_ContentChanged,
+    MessageType_LayerSource_SliceChanged,
+    MessageType_LayerSource_ImageReady,      // instance pixels data have been loaded
+    MessageType_LayerSource_LayerReady,      // layer is ready to be rendered
+    MessageType_LayerSource_LayerError,
+
+    MessageType_SliceLoader_GeometryReady,
+    MessageType_SliceLoader_GeometryError,
+    MessageType_SliceLoader_ImageReady,
+    MessageType_SliceLoader_ImageError,
+
+    MessageType_HttpRequestSuccess,
+    MessageType_HttpRequestError,
+
+    MessageType_OrthancApi_InternalGetJsonResponseReady,
+    MessageType_OrthancApi_InternalGetJsonResponseError,
+
+    MessageType_OrthancApi_GenericGetJson_Ready,
+    MessageType_OrthancApi_GenericGetBinary_Ready,
+    MessageType_OrthancApi_GenericHttpError_Ready,
+    MessageType_OrthancApi_GenericEmptyResponse_Ready,
+
+    MessageType_ViewportChanged,
+
+    // used in unit tests only
+    MessageType_Test1,
+    MessageType_Test2,
+
+    MessageType_CustomMessage // Custom messages ids ust be greater than this (this one must remain in last position)
+  };
+
+
   bool StringToSopClassUid(SopClassUid& result,
                            const std::string& source);
 

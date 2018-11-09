@@ -242,10 +242,10 @@ namespace OrthancStone
         std::string instance = parameters["instance"].as<std::string>();
         int frame = parameters["frame"].as<unsigned int>();
 
-        orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
-        mainWidget_ = new SliceViewerWidget(broker_, "main-widget");
+        orthancApiClient_.reset(new OrthancApiClient(GetBroker(), context_->GetWebService()));
+        mainWidget_ = new SliceViewerWidget(GetBroker(), "main-widget");
 
-        std::auto_ptr<OrthancFrameLayerSource> layer(new OrthancFrameLayerSource(broker_, *orthancApiClient_));
+        std::auto_ptr<OrthancFrameLayerSource> layer(new OrthancFrameLayerSource(GetBroker(), *orthancApiClient_));
         source_ = layer.get();
         layer->LoadFrame(instance, frame);
         layer->RegisterObserverCallback(new Callable<SingleFrameApplication, ILayerSource::GeometryReadyMessage>(*this, &SingleFrameApplication::OnMainWidgetGeometryReady));

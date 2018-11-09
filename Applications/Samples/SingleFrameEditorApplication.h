@@ -2890,12 +2890,12 @@ namespace OrthancStone
         std::string instance = parameters["instance"].as<std::string>();
         int frame = parameters["frame"].as<unsigned int>();
 
-        orthancApiClient_.reset(new OrthancApiClient(IObserver::broker_, context_->GetWebService()));
+        orthancApiClient_.reset(new OrthancApiClient(GetBroker(), context_->GetWebService()));
 
         Orthanc::FontRegistry fonts;
         fonts.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
         
-        stack_.reset(new BitmapStack(IObserver::broker_, *orthancApiClient_));
+        stack_.reset(new BitmapStack(GetBroker(), *orthancApiClient_));
         stack_->LoadFrame(instance, frame, false); //.SetPan(200, 0);
         //stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false);
 
@@ -2913,7 +2913,7 @@ namespace OrthancStone
         }
         
         
-        mainWidget_ = new BitmapStackWidget(IObserver::broker_, *stack_, "main-widget");
+        mainWidget_ = new BitmapStackWidget(GetBroker(), *stack_, "main-widget");
         mainWidget_->SetTransmitMouseOver(true);
         mainWidget_->SetInteractor(interactor_);
 

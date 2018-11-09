@@ -3,8 +3,8 @@ SelectTool:
   toolName: string
   comment: Selects the current application tool
 DownloadDicom:
-  target: LayerWidget
-  comment: Downloads the slice currently displayed in the LayerWidget
+  target: SliceViewerWidget
+  comment: Downloads the slice currently displayed in the SliceViewerWidget
 Export:
   target: IWidget
   comment: Export the content of the widget

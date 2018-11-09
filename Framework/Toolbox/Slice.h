@@ -75,7 +75,7 @@ namespace OrthancStone
     }
 
     // TODO Is this constructor the best way to go to tackle missing
-    // layers within LayerWidget?
+    // layers within SliceViewerWidget?
     Slice(const CoordinateSystem3D& plane,
           double thickness) :
       type_(Type_Standalone),

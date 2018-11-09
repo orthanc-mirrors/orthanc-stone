@@ -4,7 +4,6 @@
 
 #include <Framework/dev.h>
 #include <Framework/Viewport/WidgetViewport.h>
-#include <Framework/Widgets/LayerWidget.h>
 #include <Framework/Widgets/LayoutWidget.h>
 #include <Applications/IStoneApplication.h>
 #include <Platforms/Wasm/WasmPlatformApplicationAdapter.h>

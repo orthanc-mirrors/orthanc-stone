@@ -44,7 +44,7 @@ namespace OrthancStone
       class Interactor : public VolumeImageInteractor
       {
       private:
-        LayerWidget&  widget_;
+        SliceViewerWidget&  widget_;
         size_t        layer_;
         
       protected:
@@ -70,14 +70,14 @@ namespace OrthancStone
                                double y,
                                IStatusBar* statusBar)
         {
-          const LayerWidget& w = dynamic_cast<const LayerWidget&>(widget);
+          const SliceViewerWidget& w = dynamic_cast<const SliceViewerWidget&>(widget);
           Vector p = w.GetSlice().MapSliceToWorldCoordinates(x, y);
           printf("%f %f %f\n", p[0], p[1], p[2]);
         }
       
       public:
         Interactor(OrthancVolumeImage& volume,
-                   LayerWidget& widget,
+                   SliceViewerWidget& widget,
                    VolumeProjection projection,
                    size_t layer) :
           VolumeImageInteractor(volume, widget, projection),
@@ -171,7 +171,7 @@ namespace OrthancStone
           throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
         }
 
-        std::auto_ptr<LayerWidget> widget(new LayerWidget);
+        std::auto_ptr<SliceViewerWidget> widget(new SliceViewerWidget);
 
 #if 1
         std::auto_ptr<OrthancVolumeImage> volume(new OrthancVolumeImage(context.GetWebService(), true));

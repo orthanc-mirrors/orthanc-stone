@@ -4,7 +4,6 @@
 #include <Framework/dev.h>
 #include "Framework/Widgets/TestCairoWidget.h"
 #include <Framework/Viewport/WidgetViewport.h>
-#include <Framework/Widgets/LayerWidget.h>
 #include <algorithm>
 #include "Applications/Wasm/StartupParametersBuilder.h"
 #include "Platforms/Wasm/WasmPlatformApplicationAdapter.h"

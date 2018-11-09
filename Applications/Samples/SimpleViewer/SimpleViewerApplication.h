@@ -89,8 +89,8 @@ namespace SimpleViewer
 
   private:
     Tools                           currentTool_;
-    std::unique_ptr<MainWidgetInteractor> mainWidgetInteractor_;
-    std::unique_ptr<ThumbnailInteractor>  thumbnailInteractor_;
+    std::auto_ptr<MainWidgetInteractor> mainWidgetInteractor_;
+    std::auto_ptr<ThumbnailInteractor>  thumbnailInteractor_;
     LayoutWidget*                   mainLayout_;
     LayoutWidget*                   thumbnailsLayout_;
     LayerWidget*                    mainWidget_;
@@ -104,8 +104,8 @@ namespace SimpleViewer
     OrthancStone::WidgetViewport*   wasmViewport2_;
 
     IStatusBar*                     statusBar_;
-    std::unique_ptr<SmartLoader>    smartLoader_;
-    std::unique_ptr<OrthancApiClient>      orthancApiClient_;
+    std::auto_ptr<SmartLoader>    smartLoader_;
+    std::auto_ptr<OrthancApiClient>      orthancApiClient_;
 
     Orthanc::Font                   font_;
 

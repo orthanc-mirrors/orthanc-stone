@@ -25,8 +25,8 @@
 
 namespace OrthancStone
 {
-  ReferenceLineFactory::ReferenceLineFactory(LayeredSceneWidget& owner,
-                                             LayeredSceneWidget& sibling) :
+  ReferenceLineFactory::ReferenceLineFactory(SliceViewerWidget& owner,
+                                             SliceViewerWidget& sibling) :
     owner_(owner),
     sibling_(sibling),
     hasLayerIndex_(false)
@@ -37,7 +37,7 @@ namespace OrthancStone
   }
 
 
-  void ReferenceLineFactory::NotifySliceChange(const LayeredSceneWidget& source,
+  void ReferenceLineFactory::NotifySliceChange(const SliceViewerWidget& source,
                                                const SliceGeometry& slice)
   {
     if (&source == &sibling_)
@@ -119,8 +119,8 @@ namespace OrthancStone
   }
 
 
-  void ReferenceLineFactory::Configure(LayeredSceneWidget& a,
-                                       LayeredSceneWidget& b)
+  void ReferenceLineFactory::Configure(SliceViewerWidget& a,
+                                       SliceViewerWidget& b)
   {
     {
       size_t layerIndex;

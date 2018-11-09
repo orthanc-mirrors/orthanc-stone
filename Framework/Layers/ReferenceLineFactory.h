@@ -21,28 +21,28 @@
 
 #pragma once
 
-#include "../Widgets/LayeredSceneWidget.h"
+#include "../Widgets/SliceViewerWidget.h"
 
 namespace OrthancStone
 {
   class ReferenceLineFactory : 
     public ILayerRendererFactory,
-    public LayeredSceneWidget::ISliceObserver
+    public SliceViewerWidget::ISliceObserver
   {
   private:
-    LayeredSceneWidget&   owner_;
-    LayeredSceneWidget&   sibling_;
-    SliceGeometry         slice_;
-    RenderStyle           style_;
-    bool                  hasLayerIndex_;
-    size_t                layerIndex_;
+    SliceViewerWidget&   owner_;
+    SliceViewerWidget&   sibling_;
+    SliceGeometry        slice_;
+    RenderStyle          style_;
+    bool                 hasLayerIndex_;
+    size_t               layerIndex_;
 
       
   public:
-    ReferenceLineFactory(LayeredSceneWidget& owner,
-                         LayeredSceneWidget& sibling);
+    ReferenceLineFactory(SliceViewerWidget& owner,
+                         SliceViewerWidget& sibling);
 
-    virtual void NotifySliceChange(const LayeredSceneWidget& source,
+    virtual void NotifySliceChange(const SliceViewerWidget& source,
                                    const SliceGeometry& slice);
 
     void SetLayerIndex(size_t layerIndex);
@@ -71,7 +71,7 @@ namespace OrthancStone
 
     virtual ISliceableVolume& GetSourceVolume() const;
 
-    static void Configure(LayeredSceneWidget& a,
-                          LayeredSceneWidget& b);
+    static void Configure(SliceViewerWidget& a,
+                          SliceViewerWidget& b);
   };
 }

@@ -37,13 +37,13 @@ namespace OrthancStone
     typedef OriginMessage<MessageType_VolumeSlicer_GeometryError, IVolumeSlicer>  GeometryErrorMessage;
     typedef OriginMessage<MessageType_VolumeSlicer_ContentChanged, IVolumeSlicer> ContentChangedMessage;
 
-    class SliceChangedMessage : public OriginMessage<MessageType_VolumeSlicer_SliceChanged, IVolumeSlicer>
+    class SliceContentChangedMessage : public OriginMessage<MessageType_VolumeSlicer_SliceChanged, IVolumeSlicer>
     {
     private:
       const Slice& slice_;
 
     public:
-      SliceChangedMessage(IVolumeSlicer& origin,
+      SliceContentChangedMessage(IVolumeSlicer& origin,
                           const Slice& slice) :
         OriginMessage(origin),
         slice_(slice)

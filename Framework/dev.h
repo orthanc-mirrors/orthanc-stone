@@ -184,7 +184,7 @@ namespace OrthancStone
         Orthanc::ImageProcessing::Copy(writer.GetAccessor(), image);
       }
 
-      SlicedVolumeBase::NotifySliceChange(sliceIndex, slice);
+      SlicedVolumeBase::NotifySliceContentChange(sliceIndex, slice);
 
       if (pendingSlices_ == 1)
       {
@@ -555,11 +555,11 @@ namespace OrthancStone
       VolumeSlicerBase::NotifyContentChange();
     }
 
-    virtual void NotifySliceChange(const ISlicedVolume& volume,
+    virtual void NotifySliceContentChange(const ISlicedVolume& volume,
                                    const size_t& sliceIndex,
                                    const Slice& slice)
     {
-      //VolumeSlicerBase::NotifySliceChange(slice);
+      //VolumeSlicerBase::NotifySliceContentChange(slice);
 
       // TODO Improve this?
       VolumeSlicerBase::NotifyContentChange();
@@ -730,7 +730,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void NotifySliceChange(const ISlicedVolume& volume,
+    virtual void NotifySliceContentChange(const ISlicedVolume& volume,
                                    const size_t& sliceIndex,
                                    const Slice& slice)
     {

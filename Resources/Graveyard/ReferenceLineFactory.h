@@ -42,7 +42,7 @@ namespace OrthancStone
     ReferenceLineFactory(SliceViewerWidget& owner,
                          SliceViewerWidget& sibling);
 
-    virtual void NotifySliceChange(const SliceViewerWidget& source,
+    virtual void NotifySliceContentChange(const SliceViewerWidget& source,
                                    const SliceGeometry& slice);
 
     void SetLayerIndex(size_t layerIndex);

@@ -387,7 +387,7 @@ namespace OrthancStone
     layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::GeometryReadyMessage>
                                    (*this, &SliceViewerWidget::OnGeometryReady));
     // currently ignore errors layer->RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::GeometryErrorMessage>(*this, &SliceViewerWidget::...));
-    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::SliceChangedMessage>
+    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::SliceContentChangedMessage>
                                    (*this, &SliceViewerWidget::OnSliceChanged));
     layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::ContentChangedMessage>
                                    (*this, &SliceViewerWidget::OnContentChanged));
@@ -580,7 +580,7 @@ namespace OrthancStone
   }
   
 
-  void SliceViewerWidget::OnSliceChanged(const IVolumeSlicer::SliceChangedMessage& message)
+  void SliceViewerWidget::OnSliceChanged(const IVolumeSlicer::SliceContentChangedMessage& message)
   {
     if (message.GetSlice().ContainsPlane(plane_))
     {

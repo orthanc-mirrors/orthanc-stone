@@ -45,7 +45,7 @@ namespace OrthancStone
 
       // Triggered if the content of some individual slice in the
       // source volume has changed
-      virtual void NotifySliceChange(const ISlicedVolume& volume,
+      virtual void NotifySliceContentChange(const ISlicedVolume& volume,
                                      const size_t& sliceIndex,
                                      const Slice& slice) = 0;
 

@@ -37,7 +37,7 @@ namespace OrthancStone
   }
 
 
-  void ReferenceLineFactory::NotifySliceChange(const SliceViewerWidget& source,
+  void ReferenceLineFactory::NotifySliceContentChange(const SliceViewerWidget& source,
                                                const SliceGeometry& slice)
   {
     if (&source == &sibling_)

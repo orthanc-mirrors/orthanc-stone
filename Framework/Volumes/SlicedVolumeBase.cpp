@@ -38,10 +38,10 @@ namespace OrthancStone
     observers_.Apply(*this, &IObserver::NotifyContentChange);
   }
 
-  void SlicedVolumeBase::NotifySliceChange(const size_t& sliceIndex,
+  void SlicedVolumeBase::NotifySliceContentChange(const size_t& sliceIndex,
                                            const Slice& slice)
   {
-    observers_.Apply(*this, &IObserver::NotifySliceChange, sliceIndex, slice);
+    observers_.Apply(*this, &IObserver::NotifySliceContentChange, sliceIndex, slice);
   }
 
   void SlicedVolumeBase::NotifyVolumeReady()

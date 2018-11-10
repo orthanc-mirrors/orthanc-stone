@@ -47,7 +47,7 @@ namespace OrthancStone
         size_t        layer_;
         
       protected:
-        virtual void NotifySliceChange(const ISlicedVolume& volume,
+        virtual void NotifySliceContentChange(const ISlicedVolume& volume,
                                        const size_t& sliceIndex,
                                        const Slice& slice)
         {

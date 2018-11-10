@@ -40,7 +40,7 @@ namespace OrthancStone
     
     virtual void NotifyContentChange();
 
-    virtual void NotifySliceChange(const size_t& sliceIndex,
+    virtual void NotifySliceContentChange(const size_t& sliceIndex,
                                    const Slice& slice);
 
     virtual void NotifyVolumeReady();

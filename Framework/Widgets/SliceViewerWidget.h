@@ -63,7 +63,7 @@ namespace OrthancStone
 
     virtual void OnContentChanged(const IVolumeSlicer::ContentChangedMessage& message);
 
-    virtual void OnSliceChanged(const IVolumeSlicer::SliceChangedMessage& message);
+    virtual void OnSliceChanged(const IVolumeSlicer::SliceContentChangedMessage& message);
 
     virtual void OnLayerReady(const IVolumeSlicer::LayerReadyMessage& message);
 

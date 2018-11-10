@@ -40,9 +40,9 @@ namespace OrthancStone
     EmitMessage(IVolumeSlicer::ContentChangedMessage(*this));
   }
 
-  void VolumeSlicerBase::NotifySliceChange(const Slice& slice)
+  void VolumeSlicerBase::NotifySliceContentChange(const Slice& slice)
   {
-    EmitMessage(IVolumeSlicer::SliceChangedMessage(*this, slice));
+    EmitMessage(IVolumeSlicer::SliceContentChangedMessage(*this, slice));
   }
 
   void VolumeSlicerBase::NotifyLayerReady(const LayerReadyMessage::IRendererFactory& factory,

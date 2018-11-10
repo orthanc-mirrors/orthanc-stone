@@ -379,7 +379,7 @@ namespace OrthancStone
         }
       }
 
-      virtual void NotifySliceChange(const LayeredSceneWidget& source,
+      virtual void NotifySliceContentChange(const LayeredSceneWidget& source,
                                      const SliceGeometry& slice)
       {
         if (!processingEvent_)  // Avoid reentrant calls

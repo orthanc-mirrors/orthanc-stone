@@ -23,7 +23,6 @@
 
 #include "SampleApplicationBase.h"
 
-#include "../../Framework/Layers/OrthancFrameLayerSource.h"
 #include "../../Framework/Layers/CircleMeasureTracker.h"
 #include "../../Framework/Layers/LineMeasureTracker.h"
 #include "../../Framework/Widgets/SliceViewerWidget.h"

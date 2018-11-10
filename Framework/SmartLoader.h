@@ -22,7 +22,7 @@
 #pragma once
 #include <map>
 
-#include "Layers/OrthancFrameLayerSource.h"
+#include "Layers/DicomSeriesVolumeSlicer.h"
 #include "Messages/IObservable.h"
 #include "Toolbox/OrthancApiClient.h"
 
@@ -38,7 +38,7 @@ namespace OrthancStone
     typedef std::map<std::string, boost::shared_ptr<SmartLoader::CachedSlice> > CachedSlices;
     CachedSlices cachedSlices_;
 
-    typedef std::map<std::string, boost::shared_ptr<ILayerSource> > PreloadingInstances;
+    typedef std::map<std::string, boost::shared_ptr<IVolumeSlicer> > PreloadingInstances;
     PreloadingInstances preloadingInstances_;
 
     SliceImageQuality     imageQuality_;
@@ -58,9 +58,9 @@ namespace OrthancStone
     void GetFirstInstanceIdForSeries(std::string& output, const std::string& seriesId);
 
   private:
-    void OnLayerGeometryReady(const ILayerSource::GeometryReadyMessage& message);
-    void OnFrameReady(const OrthancFrameLayerSource::FrameReadyMessage& message);
-    void OnLayerReady(const ILayerSource::LayerReadyMessage& message);
+    void OnLayerGeometryReady(const IVolumeSlicer::GeometryReadyMessage& message);
+    void OnFrameReady(const DicomSeriesVolumeSlicer::FrameReadyMessage& message);
+    void OnLayerReady(const IVolumeSlicer::LayerReadyMessage& message);
 
   };
 

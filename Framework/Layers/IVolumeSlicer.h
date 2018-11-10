@@ -30,20 +30,20 @@
 
 namespace OrthancStone
 {
-  class ILayerSource : public IObservable
+  class IVolumeSlicer : public IObservable
   {
   public:
-    typedef OriginMessage<MessageType_LayerSource_GeometryReady, ILayerSource>  GeometryReadyMessage;
-    typedef OriginMessage<MessageType_LayerSource_GeometryError, ILayerSource>  GeometryErrorMessage;
-    typedef OriginMessage<MessageType_LayerSource_ContentChanged, ILayerSource> ContentChangedMessage;
+    typedef OriginMessage<MessageType_LayerSource_GeometryReady, IVolumeSlicer>  GeometryReadyMessage;
+    typedef OriginMessage<MessageType_LayerSource_GeometryError, IVolumeSlicer>  GeometryErrorMessage;
+    typedef OriginMessage<MessageType_LayerSource_ContentChanged, IVolumeSlicer> ContentChangedMessage;
 
-    class SliceChangedMessage : public OriginMessage<MessageType_LayerSource_SliceChanged, ILayerSource>
+    class SliceChangedMessage : public OriginMessage<MessageType_LayerSource_SliceChanged, IVolumeSlicer>
     {
     private:
       const Slice& slice_;
 
     public:
-      SliceChangedMessage(ILayerSource& origin,
+      SliceChangedMessage(IVolumeSlicer& origin,
                           const Slice& slice) :
         OriginMessage(origin),
         slice_(slice)
@@ -57,7 +57,7 @@ namespace OrthancStone
     };
     
 
-    class LayerReadyMessage : public OriginMessage<MessageType_LayerSource_LayerReady, ILayerSource>
+    class LayerReadyMessage : public OriginMessage<MessageType_LayerSource_LayerReady, IVolumeSlicer>
     {
     public:
       class IRendererFactory : public boost::noncopyable
@@ -75,7 +75,7 @@ namespace OrthancStone
       const CoordinateSystem3D&  slice_;
 
     public:
-      LayerReadyMessage(ILayerSource& origin,
+      LayerReadyMessage(IVolumeSlicer& origin,
                         const IRendererFactory& rendererFactory,
                         const CoordinateSystem3D& slice) :
         OriginMessage(origin),
@@ -96,13 +96,13 @@ namespace OrthancStone
     };
 
 
-    class LayerErrorMessage : public OriginMessage<MessageType_LayerSource_LayerError, ILayerSource>
+    class LayerErrorMessage : public OriginMessage<MessageType_LayerSource_LayerError, IVolumeSlicer>
     {
     private:
       const CoordinateSystem3D&  slice_;
 
     public:
-      LayerErrorMessage(ILayerSource& origin,
+      LayerErrorMessage(IVolumeSlicer& origin,
                         const CoordinateSystem3D& slice) :
         OriginMessage(origin),
         slice_(slice)
@@ -116,12 +116,12 @@ namespace OrthancStone
     };
 
 
-    ILayerSource(MessageBroker& broker) :
+    IVolumeSlicer(MessageBroker& broker) :
       IObservable(broker)
     {
     }
     
-    virtual ~ILayerSource()
+    virtual ~IVolumeSlicer()
     {
     }
 

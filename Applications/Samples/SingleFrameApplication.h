@@ -23,7 +23,7 @@
 
 #include "SampleApplicationBase.h"
 
-#include "../../Framework/Layers/OrthancFrameLayerSource.h"
+#include "../../Framework/Layers/DicomSeriesVolumeSlicer.h"
 #include "../../Framework/Widgets/SliceViewerWidget.h"
 
 #include <Core/Logging.h>
@@ -182,7 +182,7 @@ namespace OrthancStone
       }
         
       
-      void OnMainWidgetGeometryReady(const ILayerSource::GeometryReadyMessage& message)
+      void OnMainWidgetGeometryReady(const IVolumeSlicer::GeometryReadyMessage& message)
       {
         // Once the geometry of the series is downloaded from Orthanc,
         // display its middle slice, and adapt the viewport to fit this
@@ -197,7 +197,7 @@ namespace OrthancStone
       
       std::auto_ptr<Interactor>         mainWidgetInteractor_;
       std::auto_ptr<OrthancApiClient>   orthancApiClient_;
-      const OrthancFrameLayerSource*    source_;
+      const DicomSeriesVolumeSlicer*    source_;
       unsigned int                      slice_;
 
     public:
@@ -245,10 +245,10 @@ namespace OrthancStone
         orthancApiClient_.reset(new OrthancApiClient(GetBroker(), context_->GetWebService()));
         mainWidget_ = new SliceViewerWidget(GetBroker(), "main-widget");
 
-        std::auto_ptr<OrthancFrameLayerSource> layer(new OrthancFrameLayerSource(GetBroker(), *orthancApiClient_));
+        std::auto_ptr<DicomSeriesVolumeSlicer> layer(new DicomSeriesVolumeSlicer(GetBroker(), *orthancApiClient_));
         source_ = layer.get();
         layer->LoadFrame(instance, frame);
-        layer->RegisterObserverCallback(new Callable<SingleFrameApplication, ILayerSource::GeometryReadyMessage>(*this, &SingleFrameApplication::OnMainWidgetGeometryReady));
+        layer->RegisterObserverCallback(new Callable<SingleFrameApplication, IVolumeSlicer::GeometryReadyMessage>(*this, &SingleFrameApplication::OnMainWidgetGeometryReady));
         GetMainWidget().AddLayer(layer.release());
 
         RenderStyle s;

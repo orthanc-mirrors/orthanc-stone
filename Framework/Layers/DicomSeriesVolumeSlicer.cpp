@@ -19,7 +19,7 @@
  **/
 
 
-#include "OrthancFrameLayerSource.h"
+#include "DicomSeriesVolumeSlicer.h"
 
 #include "FrameRenderer.h"
 #include "../Toolbox/DicomFrameConverter.h"
@@ -32,25 +32,25 @@
 namespace OrthancStone
 {
 
-  void OrthancFrameLayerSource::OnSliceGeometryReady(const OrthancSlicesLoader::SliceGeometryReadyMessage& message)
+  void DicomSeriesVolumeSlicer::OnSliceGeometryReady(const OrthancSlicesLoader::SliceGeometryReadyMessage& message)
   {
     if (message.GetOrigin().GetSliceCount() > 0)
     {
-      LayerSourceBase::NotifyGeometryReady();
+      VolumeSlicerBase::NotifyGeometryReady();
     }
     else
     {
-      LayerSourceBase::NotifyGeometryError();
+      VolumeSlicerBase::NotifyGeometryError();
     }
   }
 
-  void OrthancFrameLayerSource::OnSliceGeometryError(const OrthancSlicesLoader::SliceGeometryErrorMessage& message)
+  void DicomSeriesVolumeSlicer::OnSliceGeometryError(const OrthancSlicesLoader::SliceGeometryErrorMessage& message)
   {
-    LayerSourceBase::NotifyGeometryError();
+    VolumeSlicerBase::NotifyGeometryError();
   }
 
 
-  class OrthancFrameLayerSource::RendererFactory : public LayerReadyMessage::IRendererFactory
+  class DicomSeriesVolumeSlicer::RendererFactory : public LayerReadyMessage::IRendererFactory
   {
   private:
     const OrthancSlicesLoader::SliceImageReadyMessage&  message_;
@@ -70,7 +70,7 @@ namespace OrthancStone
     }
   };
 
-  void OrthancFrameLayerSource::OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message)
+  void DicomSeriesVolumeSlicer::OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message)
   {
     // first notify that the pixel data of the frame is ready (targeted to, i.e: an image cache)
     EmitMessage(FrameReadyMessage(*this, message.GetImage(), 
@@ -78,48 +78,48 @@ namespace OrthancStone
 
     // then notify that the layer is ready for render
     RendererFactory factory(message);
-    LayerSourceBase::NotifyLayerReady(factory, message.GetSlice().GetGeometry());
+    VolumeSlicerBase::NotifyLayerReady(factory, message.GetSlice().GetGeometry());
   }
 
-  void OrthancFrameLayerSource::OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message)
+  void DicomSeriesVolumeSlicer::OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message)
   {
-    LayerSourceBase::NotifyLayerError(message.GetSlice().GetGeometry());
+    VolumeSlicerBase::NotifyLayerError(message.GetSlice().GetGeometry());
   }
 
 
-  OrthancFrameLayerSource::OrthancFrameLayerSource(MessageBroker& broker, OrthancApiClient& orthanc) :
-    LayerSourceBase(broker),
+  DicomSeriesVolumeSlicer::DicomSeriesVolumeSlicer(MessageBroker& broker, OrthancApiClient& orthanc) :
+    VolumeSlicerBase(broker),
     IObserver(broker),
     loader_(broker, orthanc),
     quality_(SliceImageQuality_FullPng)
   {
-    loader_.RegisterObserverCallback(new Callable<OrthancFrameLayerSource, OrthancSlicesLoader::SliceGeometryReadyMessage>(*this, &OrthancFrameLayerSource::OnSliceGeometryReady));
-    loader_.RegisterObserverCallback(new Callable<OrthancFrameLayerSource, OrthancSlicesLoader::SliceGeometryErrorMessage>(*this, &OrthancFrameLayerSource::OnSliceGeometryError));
-    loader_.RegisterObserverCallback(new Callable<OrthancFrameLayerSource, OrthancSlicesLoader::SliceImageReadyMessage>(*this, &OrthancFrameLayerSource::OnSliceImageReady));
-    loader_.RegisterObserverCallback(new Callable<OrthancFrameLayerSource, OrthancSlicesLoader::SliceImageErrorMessage>(*this, &OrthancFrameLayerSource::OnSliceImageError));
+    loader_.RegisterObserverCallback(new Callable<DicomSeriesVolumeSlicer, OrthancSlicesLoader::SliceGeometryReadyMessage>(*this, &DicomSeriesVolumeSlicer::OnSliceGeometryReady));
+    loader_.RegisterObserverCallback(new Callable<DicomSeriesVolumeSlicer, OrthancSlicesLoader::SliceGeometryErrorMessage>(*this, &DicomSeriesVolumeSlicer::OnSliceGeometryError));
+    loader_.RegisterObserverCallback(new Callable<DicomSeriesVolumeSlicer, OrthancSlicesLoader::SliceImageReadyMessage>(*this, &DicomSeriesVolumeSlicer::OnSliceImageReady));
+    loader_.RegisterObserverCallback(new Callable<DicomSeriesVolumeSlicer, OrthancSlicesLoader::SliceImageErrorMessage>(*this, &DicomSeriesVolumeSlicer::OnSliceImageError));
   }
 
   
-  void OrthancFrameLayerSource::LoadSeries(const std::string& seriesId)
+  void DicomSeriesVolumeSlicer::LoadSeries(const std::string& seriesId)
   {
     loader_.ScheduleLoadSeries(seriesId);
   }
 
 
-  void OrthancFrameLayerSource::LoadInstance(const std::string& instanceId)
+  void DicomSeriesVolumeSlicer::LoadInstance(const std::string& instanceId)
   {
     loader_.ScheduleLoadInstance(instanceId);
   }
 
 
-  void OrthancFrameLayerSource::LoadFrame(const std::string& instanceId,
+  void DicomSeriesVolumeSlicer::LoadFrame(const std::string& instanceId,
                                           unsigned int frame)
   {
     loader_.ScheduleLoadFrame(instanceId, frame);
   }
 
 
-  bool OrthancFrameLayerSource::GetExtent(std::vector<Vector>& points,
+  bool DicomSeriesVolumeSlicer::GetExtent(std::vector<Vector>& points,
                                           const CoordinateSystem3D& viewportSlice)
   {
     size_t index;
@@ -137,7 +137,7 @@ namespace OrthancStone
   }
 
   
-  void OrthancFrameLayerSource::ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
+  void DicomSeriesVolumeSlicer::ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
   {
     size_t index;
 

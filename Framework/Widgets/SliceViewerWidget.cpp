@@ -237,7 +237,7 @@ namespace OrthancStone
 
   
   bool SliceViewerWidget::LookupLayer(size_t& index /* out */,
-                                      const ILayerSource& layer) const
+                                      const IVolumeSlicer& layer) const
   {
     LayersIndex::const_iterator found = layersIndex_.find(&layer);
 
@@ -256,7 +256,7 @@ namespace OrthancStone
 
 
   void SliceViewerWidget::GetLayerExtent(Extent2D& extent,
-                                         ILayerSource& source) const
+                                         IVolumeSlicer& source) const
   {
     extent.Reset();
 
@@ -382,23 +382,23 @@ namespace OrthancStone
     }
   }
   
-  void SliceViewerWidget::ObserveLayer(ILayerSource& layer)
+  void SliceViewerWidget::ObserveLayer(IVolumeSlicer& layer)
   {
-    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, ILayerSource::GeometryReadyMessage>
+    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::GeometryReadyMessage>
                                    (*this, &SliceViewerWidget::OnGeometryReady));
-    // currently ignore errors layer->RegisterObserverCallback(new Callable<SliceViewerWidget, ILayerSource::GeometryErrorMessage>(*this, &SliceViewerWidget::...));
-    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, ILayerSource::SliceChangedMessage>
+    // currently ignore errors layer->RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::GeometryErrorMessage>(*this, &SliceViewerWidget::...));
+    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::SliceChangedMessage>
                                    (*this, &SliceViewerWidget::OnSliceChanged));
-    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, ILayerSource::ContentChangedMessage>
+    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::ContentChangedMessage>
                                    (*this, &SliceViewerWidget::OnContentChanged));
-    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, ILayerSource::LayerReadyMessage>
+    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::LayerReadyMessage>
                                    (*this, &SliceViewerWidget::OnLayerReady));
-    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, ILayerSource::LayerErrorMessage>
+    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::LayerErrorMessage>
                                    (*this, &SliceViewerWidget::OnLayerError));
   }
 
 
-  size_t SliceViewerWidget::AddLayer(ILayerSource* layer)  // Takes ownership
+  size_t SliceViewerWidget::AddLayer(IVolumeSlicer* layer)  // Takes ownership
   {
     if (layer == NULL)
     {
@@ -420,7 +420,7 @@ namespace OrthancStone
   }
 
 
-  void SliceViewerWidget::ReplaceLayer(size_t index, ILayerSource* layer)  // Takes ownership
+  void SliceViewerWidget::ReplaceLayer(size_t index, IVolumeSlicer* layer)  // Takes ownership
   {
     if (layer == NULL)
     {
@@ -451,7 +451,7 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    ILayerSource* previousLayer = layers_[index];
+    IVolumeSlicer* previousLayer = layers_[index];
     layersIndex_.erase(layersIndex_.find(previousLayer));
     layers_.erase(layers_.begin() + index);
     changedLayers_.erase(changedLayers_.begin() + index);
@@ -528,7 +528,7 @@ namespace OrthancStone
   }
 
 
-  void SliceViewerWidget::OnGeometryReady(const ILayerSource::GeometryReadyMessage& message)
+  void SliceViewerWidget::OnGeometryReady(const IVolumeSlicer::GeometryReadyMessage& message)
   {
     size_t i;
     if (LookupLayer(i, message.GetOrigin()))
@@ -568,7 +568,7 @@ namespace OrthancStone
   }
 
 
-  void SliceViewerWidget::OnContentChanged(const ILayerSource::ContentChangedMessage& message)
+  void SliceViewerWidget::OnContentChanged(const IVolumeSlicer::ContentChangedMessage& message)
   {
     size_t index;
     if (LookupLayer(index, message.GetOrigin()))
@@ -580,7 +580,7 @@ namespace OrthancStone
   }
   
 
-  void SliceViewerWidget::OnSliceChanged(const ILayerSource::SliceChangedMessage& message)
+  void SliceViewerWidget::OnSliceChanged(const IVolumeSlicer::SliceChangedMessage& message)
   {
     if (message.GetSlice().ContainsPlane(plane_))
     {
@@ -595,7 +595,7 @@ namespace OrthancStone
   }
   
   
-  void SliceViewerWidget::OnLayerReady(const ILayerSource::LayerReadyMessage& message)
+  void SliceViewerWidget::OnLayerReady(const IVolumeSlicer::LayerReadyMessage& message)
   {
     size_t index;
     if (LookupLayer(index, message.GetOrigin()))
@@ -608,7 +608,7 @@ namespace OrthancStone
   }
 
 
-  void SliceViewerWidget::OnLayerError(const ILayerSource::LayerErrorMessage& message)
+  void SliceViewerWidget::OnLayerError(const IVolumeSlicer::LayerErrorMessage& message)
   {
     size_t index;
     if (LookupLayer(index, message.GetOrigin()))

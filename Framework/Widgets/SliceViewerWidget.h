@@ -22,7 +22,7 @@
 #pragma once
 
 #include "WorldSceneWidget.h"
-#include "../Layers/ILayerSource.h"
+#include "../Layers/IVolumeSlicer.h"
 #include "../Toolbox/Extent2D.h"
 #include "../../Framework/Messages/IObserver.h"
 
@@ -42,34 +42,34 @@ namespace OrthancStone
   private:
     class Scene;
     
-    typedef std::map<const ILayerSource*, size_t>  LayersIndex;
+    typedef std::map<const IVolumeSlicer*, size_t>  LayersIndex;
 
-    bool                        started_;
-    LayersIndex                 layersIndex_;
-    std::vector<ILayerSource*>  layers_;
-    std::vector<RenderStyle>    styles_;
-    CoordinateSystem3D          plane_;
-    std::auto_ptr<Scene>        currentScene_;
-    std::auto_ptr<Scene>        pendingScene_;
-    std::vector<bool>           changedLayers_;
+    bool                         started_;
+    LayersIndex                  layersIndex_;
+    std::vector<IVolumeSlicer*>  layers_;
+    std::vector<RenderStyle>     styles_;
+    CoordinateSystem3D           plane_;
+    std::auto_ptr<Scene>         currentScene_;
+    std::auto_ptr<Scene>         pendingScene_;
+    std::vector<bool>            changedLayers_;
 
     bool LookupLayer(size_t& index /* out */,
-                     const ILayerSource& layer) const;
+                     const IVolumeSlicer& layer) const;
 
     void GetLayerExtent(Extent2D& extent,
-                        ILayerSource& source) const;
+                        IVolumeSlicer& source) const;
 
-    void OnGeometryReady(const ILayerSource::GeometryReadyMessage& message);
+    void OnGeometryReady(const IVolumeSlicer::GeometryReadyMessage& message);
 
-    virtual void OnContentChanged(const ILayerSource::ContentChangedMessage& message);
+    virtual void OnContentChanged(const IVolumeSlicer::ContentChangedMessage& message);
 
-    virtual void OnSliceChanged(const ILayerSource::SliceChangedMessage& message);
+    virtual void OnSliceChanged(const IVolumeSlicer::SliceChangedMessage& message);
 
-    virtual void OnLayerReady(const ILayerSource::LayerReadyMessage& message);
+    virtual void OnLayerReady(const IVolumeSlicer::LayerReadyMessage& message);
 
-    virtual void OnLayerError(const ILayerSource::LayerErrorMessage& message);
+    virtual void OnLayerError(const IVolumeSlicer::LayerErrorMessage& message);
 
-    void ObserveLayer(ILayerSource& source);
+    void ObserveLayer(IVolumeSlicer& source);
 
     void ResetChangedLayers();
 
@@ -96,9 +96,9 @@ namespace OrthancStone
   public:
     virtual ~SliceViewerWidget();
 
-    size_t AddLayer(ILayerSource* layer);  // Takes ownership
+    size_t AddLayer(IVolumeSlicer* layer);  // Takes ownership
 
-    void ReplaceLayer(size_t layerIndex, ILayerSource* layer); // Takes ownership
+    void ReplaceLayer(size_t layerIndex, IVolumeSlicer* layer); // Takes ownership
 
     void RemoveLayer(size_t layerIndex);
 

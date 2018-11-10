@@ -19,40 +19,40 @@
  **/
 
 
-#include "LayerSourceBase.h"
+#include "VolumeSlicerBase.h"
 
 #include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
-  void LayerSourceBase::NotifyGeometryReady()
+  void VolumeSlicerBase::NotifyGeometryReady()
   {
-    EmitMessage(ILayerSource::GeometryReadyMessage(*this));
+    EmitMessage(IVolumeSlicer::GeometryReadyMessage(*this));
   }
     
-  void LayerSourceBase::NotifyGeometryError()
+  void VolumeSlicerBase::NotifyGeometryError()
   {
-    EmitMessage(ILayerSource::GeometryErrorMessage(*this));
+    EmitMessage(IVolumeSlicer::GeometryErrorMessage(*this));
   }
     
-  void LayerSourceBase::NotifyContentChange()
+  void VolumeSlicerBase::NotifyContentChange()
   {
-    EmitMessage(ILayerSource::ContentChangedMessage(*this));
+    EmitMessage(IVolumeSlicer::ContentChangedMessage(*this));
   }
 
-  void LayerSourceBase::NotifySliceChange(const Slice& slice)
+  void VolumeSlicerBase::NotifySliceChange(const Slice& slice)
   {
-    EmitMessage(ILayerSource::SliceChangedMessage(*this, slice));
+    EmitMessage(IVolumeSlicer::SliceChangedMessage(*this, slice));
   }
 
-  void LayerSourceBase::NotifyLayerReady(const LayerReadyMessage::IRendererFactory& factory,
-                                         const CoordinateSystem3D& slice)
+  void VolumeSlicerBase::NotifyLayerReady(const LayerReadyMessage::IRendererFactory& factory,
+                                          const CoordinateSystem3D& slice)
   {
-    EmitMessage(ILayerSource::LayerReadyMessage(*this, factory, slice));
+    EmitMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, slice));
   }
 
-  void LayerSourceBase::NotifyLayerError(const CoordinateSystem3D& slice)
+  void VolumeSlicerBase::NotifyLayerError(const CoordinateSystem3D& slice)
   {
-    EmitMessage(ILayerSource::LayerErrorMessage(*this, slice));
+    EmitMessage(IVolumeSlicer::LayerErrorMessage(*this, slice));
   }
 }

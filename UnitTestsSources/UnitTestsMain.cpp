@@ -23,7 +23,6 @@
 #include "gtest/gtest.h"
 
 #include "../Framework/Layers/FrameRenderer.h"
-#include "../Framework/Layers/LayerSourceBase.h"
 #include "../Framework/Toolbox/DownloadStack.h"
 #include "../Framework/Toolbox/FiniteProjectiveCamera.h"
 #include "../Framework/Toolbox/MessagingToolbox.h"

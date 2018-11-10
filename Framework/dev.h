@@ -22,7 +22,7 @@
 #pragma once
 
 #include "Layers/FrameRenderer.h"
-#include "Layers/LayerSourceBase.h"
+#include "Layers/VolumeSlicerBase.h"
 #include "Layers/SliceOutlineRenderer.h"
 #include "Layers/LineLayerRenderer.h"
 #include "Widgets/SliceViewerWidget.h"
@@ -495,7 +495,7 @@ namespace OrthancStone
 
 
   class VolumeImageSource :
-      public LayerSourceBase,
+      public VolumeSlicerBase,
       private ISlicedVolume::IObserver
   {
   private:
@@ -537,32 +537,32 @@ namespace OrthancStone
     
     virtual void NotifyGeometryReady(const ISlicedVolume& volume)
     {
-      // These 3 values are only used to speed up the ILayerSource
+      // These 3 values are only used to speed up the IVolumeSlicer
       axialGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Axial));
       coronalGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Coronal));
       sagittalGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Sagittal));
       
-      LayerSourceBase::NotifyGeometryReady();
+      VolumeSlicerBase::NotifyGeometryReady();
     }
 
     virtual void NotifyGeometryError(const ISlicedVolume& volume)
     {
-      LayerSourceBase::NotifyGeometryError();
+      VolumeSlicerBase::NotifyGeometryError();
     }
 
     virtual void NotifyContentChange(const ISlicedVolume& volume)
     {
-      LayerSourceBase::NotifyContentChange();
+      VolumeSlicerBase::NotifyContentChange();
     }
 
     virtual void NotifySliceChange(const ISlicedVolume& volume,
                                    const size_t& sliceIndex,
                                    const Slice& slice)
     {
-      //LayerSourceBase::NotifySliceChange(slice);
+      //VolumeSlicerBase::NotifySliceChange(slice);
 
       // TODO Improve this?
-      LayerSourceBase::NotifyContentChange();
+      VolumeSlicerBase::NotifyContentChange();
     }
 
     virtual void NotifyVolumeReady(const ISlicedVolume& volume)
@@ -628,7 +628,7 @@ namespace OrthancStone
 
   public:
     VolumeImageSource(MessageBroker& broker, OrthancVolumeImage&  volume) :
-      LayerSourceBase(broker),
+      VolumeSlicerBase(broker),
       volume_(volume)
     {
       volume_.Register(*this);
@@ -683,7 +683,7 @@ namespace OrthancStone
           std::auto_ptr<Slice> slice(geometry.GetSlice(closest));
 
           RendererFactory factory(*frame, *slice, isFullQuality);
-          LayerSourceBase::NotifyLayerReady(factory,
+          VolumeSlicerBase::NotifyLayerReady(factory,
             //new SliceOutlineRenderer(slice),
             slice->GetGeometry());
           return;
@@ -692,7 +692,7 @@ namespace OrthancStone
 
       // Error
       CoordinateSystem3D slice;
-      LayerSourceBase::NotifyLayerError(slice);
+      VolumeSlicerBase::NotifyLayerError(slice);
     }
   };
 
@@ -862,7 +862,7 @@ namespace OrthancStone
 
 
 
-  class ReferenceLineSource : public LayerSourceBase
+  class ReferenceLineSource : public VolumeSlicerBase
   {
   private:
     class RendererFactory : public LayerReadyMessage::IRendererFactory
@@ -899,7 +899,7 @@ namespace OrthancStone
   public:
     ReferenceLineSource(MessageBroker& broker, 
                         SliceViewerWidget&  otherPlane) :
-      LayerSourceBase(broker),
+      VolumeSlicerBase(broker),
       otherPlane_(otherPlane)
     {
       NotifyGeometryReady();

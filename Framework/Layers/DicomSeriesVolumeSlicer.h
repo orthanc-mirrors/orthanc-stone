@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "LayerSourceBase.h"
+#include "VolumeSlicerBase.h"
 #include "../Toolbox/IWebService.h"
 #include "../Toolbox/OrthancSlicesLoader.h"
 #include "../Toolbox/OrthancApiClient.h"
@@ -31,14 +31,14 @@ namespace OrthancStone
   // this class is in charge of loading a Frame.
   // once it's been loaded (first the geometry and then the image),
   // messages are sent to observers so they can use it
-  class OrthancFrameLayerSource :
-    public LayerSourceBase,
+  class DicomSeriesVolumeSlicer :
+    public VolumeSlicerBase,
     public IObserver
     //private OrthancSlicesLoader::ISliceLoaderObserver
   {
   public:
     // TODO: Add "frame" and "instanceId"
-    class FrameReadyMessage : public OriginMessage<MessageType_OrthancFrameLayerSource_FrameReady, OrthancFrameLayerSource>
+    class FrameReadyMessage : public OriginMessage<MessageType_DicomSeriesVolumeSlicer_FrameReady, DicomSeriesVolumeSlicer>
     {
     private:
       const Orthanc::ImageAccessor&  frame_;
@@ -46,7 +46,7 @@ namespace OrthancStone
       const Slice&                   slice_;
 
     public:
-      FrameReadyMessage(OrthancFrameLayerSource& origin,
+      FrameReadyMessage(DicomSeriesVolumeSlicer& origin,
                         const Orthanc::ImageAccessor& frame,
                         SliceImageQuality imageQuality,
                         const Slice& slice) :
@@ -81,7 +81,7 @@ namespace OrthancStone
     SliceImageQuality    quality_;
 
   public:
-    OrthancFrameLayerSource(MessageBroker& broker, OrthancApiClient& orthanc);
+    DicomSeriesVolumeSlicer(MessageBroker& broker, OrthancApiClient& orthanc);
 
     void LoadSeries(const std::string& seriesId);
 

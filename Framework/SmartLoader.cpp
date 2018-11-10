@@ -20,7 +20,7 @@
 
 
 #include "SmartLoader.h"
-#include "Layers/OrthancFrameLayerSource.h"
+#include "Layers/DicomSeriesVolumeSlicer.h"
 #include "Messages/MessageForwarder.h"
 #include "Core/Images/Image.h"
 #include "Framework/Widgets/SliceViewerWidget.h"
@@ -37,7 +37,7 @@ namespace OrthancStone
     CachedSliceStatus_ImageLoaded
   };
 
-  class SmartLoader::CachedSlice : public LayerSourceBase
+  class SmartLoader::CachedSlice : public VolumeSlicerBase
   {
   public:
     class RendererFactory : public LayerReadyMessage::IRendererFactory
@@ -68,7 +68,7 @@ namespace OrthancStone
 
   public:
     CachedSlice(MessageBroker& broker) :
-    LayerSourceBase(broker)
+    VolumeSlicerBase(broker)
     {
     }
 
@@ -89,13 +89,13 @@ namespace OrthancStone
       // TODO: viewportSlice is not used !!!!
 
       // it has already been loaded -> trigger the "layer ready" message immediately otherwise, do nothing now.  The LayerReady will be triggered
-      // once the LayerSource is ready
+      // once the VolumeSlicer is ready
       if (status_ == CachedSliceStatus_ImageLoaded)
       {
         LOG(WARNING) << "ScheduleLayerCreation for CachedSlice (image is loaded): " << slice_->GetOrthancInstanceId();
 
         RendererFactory factory(*this);
-        LayerSourceBase::NotifyLayerReady(factory, slice_->GetGeometry());
+        VolumeSlicerBase::NotifyLayerReady(factory, slice_->GetGeometry());
       }
       else
       {
@@ -135,11 +135,11 @@ namespace OrthancStone
     // TODO: check if this frame has already been loaded or is already being loaded.
     // - if already loaded: create a "clone" that will emit the GeometryReady/ImageReady messages "immediately"
     //   (it can not be immediate because Observers needs to register first and this is done after this method returns)
-    // - if currently loading, we need to return an object that will observe the existing LayerSource and forward
+    // - if currently loading, we need to return an object that will observe the existing VolumeSlicer and forward
     //   the messages to its observables
     // in both cases, we must be carefull about objects lifecycle !!!
 
-    std::auto_ptr<ILayerSource> layerSource;
+    std::auto_ptr<IVolumeSlicer> layerSource;
     std::string sliceKeyId = instanceId + ":" + boost::lexical_cast<std::string>(frame);
     SmartLoader::CachedSlice* cachedSlice = NULL;
 
@@ -150,12 +150,12 @@ namespace OrthancStone
     }
     else
     {
-      layerSource.reset(new OrthancFrameLayerSource(IObserver::GetBroker(), orthancApiClient_));
-      dynamic_cast<OrthancFrameLayerSource*>(layerSource.get())->SetImageQuality(imageQuality_);
-      layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::GeometryReadyMessage>(*this, &SmartLoader::OnLayerGeometryReady));
-      layerSource->RegisterObserverCallback(new Callable<SmartLoader, OrthancFrameLayerSource::FrameReadyMessage>(*this, &SmartLoader::OnFrameReady));
-      layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::LayerReadyMessage>(*this, &SmartLoader::OnLayerReady));
-      dynamic_cast<OrthancFrameLayerSource*>(layerSource.get())->LoadFrame(instanceId, frame);
+      layerSource.reset(new DicomSeriesVolumeSlicer(IObserver::GetBroker(), orthancApiClient_));
+      dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->SetImageQuality(imageQuality_);
+      layerSource->RegisterObserverCallback(new Callable<SmartLoader, IVolumeSlicer::GeometryReadyMessage>(*this, &SmartLoader::OnLayerGeometryReady));
+      layerSource->RegisterObserverCallback(new Callable<SmartLoader, DicomSeriesVolumeSlicer::FrameReadyMessage>(*this, &SmartLoader::OnFrameReady));
+      layerSource->RegisterObserverCallback(new Callable<SmartLoader, IVolumeSlicer::LayerReadyMessage>(*this, &SmartLoader::OnLayerReady));
+      dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->LoadFrame(instanceId, frame);
     }
 
     // make sure that the widget registers the events before we trigger them
@@ -182,7 +182,7 @@ namespace OrthancStone
   void SmartLoader::PreloadSlice(const std::string instanceId, 
                                  unsigned int frame)
   {
-    // TODO: reactivate -> need to be able to ScheduleLayerLoading in ILayerSource without calling ScheduleLayerCreation
+    // TODO: reactivate -> need to be able to ScheduleLayerLoading in IVolumeSlicer without calling ScheduleLayerCreation
     return;
     // TODO: check if it is already in the cache
 
@@ -198,16 +198,16 @@ namespace OrthancStone
 
     cachedSlices_[sliceKeyId] = boost::shared_ptr<CachedSlice>(cachedSlice);
 
-    std::auto_ptr<ILayerSource> layerSource(new OrthancFrameLayerSource(IObserver::GetBroker(), orthancApiClient_));
+    std::auto_ptr<IVolumeSlicer> layerSource(new DicomSeriesVolumeSlicer(IObserver::GetBroker(), orthancApiClient_));
 
-    dynamic_cast<OrthancFrameLayerSource*>(layerSource.get())->SetImageQuality(imageQuality_);
-    layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::GeometryReadyMessage>(*this, &SmartLoader::OnLayerGeometryReady));
-    layerSource->RegisterObserverCallback(new Callable<SmartLoader, OrthancFrameLayerSource::FrameReadyMessage>(*this, &SmartLoader::OnFrameReady));
-    layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::LayerReadyMessage>(*this, &SmartLoader::OnLayerReady));
-    dynamic_cast<OrthancFrameLayerSource*>(layerSource.get())->LoadFrame(instanceId, frame);
+    dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->SetImageQuality(imageQuality_);
+    layerSource->RegisterObserverCallback(new Callable<SmartLoader, IVolumeSlicer::GeometryReadyMessage>(*this, &SmartLoader::OnLayerGeometryReady));
+    layerSource->RegisterObserverCallback(new Callable<SmartLoader, DicomSeriesVolumeSlicer::FrameReadyMessage>(*this, &SmartLoader::OnFrameReady));
+    layerSource->RegisterObserverCallback(new Callable<SmartLoader, IVolumeSlicer::LayerReadyMessage>(*this, &SmartLoader::OnLayerReady));
+    dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->LoadFrame(instanceId, frame);
 
-    // keep a ref to the LayerSource until the slice is fully loaded and saved to cache
-    preloadingInstances_[sliceKeyId] = boost::shared_ptr<ILayerSource>(layerSource.release());
+    // keep a ref to the VolumeSlicer until the slice is fully loaded and saved to cache
+    preloadingInstances_[sliceKeyId] = boost::shared_ptr<IVolumeSlicer>(layerSource.release());
   }
 
 
@@ -222,9 +222,9 @@ namespace OrthancStone
 //  }
 
 
-  void SmartLoader::OnLayerGeometryReady(const ILayerSource::GeometryReadyMessage& message)
+  void SmartLoader::OnLayerGeometryReady(const IVolumeSlicer::GeometryReadyMessage& message)
   {
-    OrthancFrameLayerSource& source = dynamic_cast<OrthancFrameLayerSource&>(message.GetOrigin());
+    DicomSeriesVolumeSlicer& source = dynamic_cast<DicomSeriesVolumeSlicer&>(message.GetOrigin());
 
     // save/replace the slice in cache
     const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount()
@@ -245,7 +245,7 @@ namespace OrthancStone
   }
 
 
-  void SmartLoader::OnFrameReady(const OrthancFrameLayerSource::FrameReadyMessage& message)
+  void SmartLoader::OnFrameReady(const DicomSeriesVolumeSlicer::FrameReadyMessage& message)
   {
     // save/replace the slice in cache
     const Slice& slice = message.GetSlice();
@@ -267,9 +267,9 @@ namespace OrthancStone
   }
 
 
-  void SmartLoader::OnLayerReady(const ILayerSource::LayerReadyMessage& message)
+  void SmartLoader::OnLayerReady(const IVolumeSlicer::LayerReadyMessage& message)
   {
-    OrthancFrameLayerSource& source = dynamic_cast<OrthancFrameLayerSource&>(message.GetOrigin());
+    DicomSeriesVolumeSlicer& source = dynamic_cast<DicomSeriesVolumeSlicer&>(message.GetOrigin());
     const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount() ?
     std::string sliceKeyId = (slice.GetOrthancInstanceId() + ":" + 
                               boost::lexical_cast<std::string>(slice.GetFrame()));

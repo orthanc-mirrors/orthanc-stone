@@ -127,7 +127,7 @@ namespace OrthancStone
     MessageType_LayerSource_LayerReady,      // layer is ready to be rendered
     MessageType_LayerSource_LayerError,
 
-    MessageType_OrthancFrameLayerSource_FrameReady,      // pixels data of the frame have been loaded
+    MessageType_DicomSeriesVolumeSlicer_FrameReady,      // pixels data of the frame have been loaded
 
     MessageType_SliceLoader_GeometryReady,
     MessageType_SliceLoader_GeometryError,

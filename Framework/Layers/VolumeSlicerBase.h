@@ -21,14 +21,14 @@
 
 #pragma once
 
-#include "ILayerSource.h"
+#include "IVolumeSlicer.h"
 #include "../Toolbox/ObserversRegistry.h"
 
 namespace OrthancStone
 {
   class SmartLoader;
 
-  class LayerSourceBase : public ILayerSource
+  class VolumeSlicerBase : public IVolumeSlicer
   {
   protected:
     void NotifyGeometryReady();
@@ -44,8 +44,8 @@ namespace OrthancStone
 
     void NotifyLayerError(const CoordinateSystem3D& slice);
 
-    LayerSourceBase(MessageBroker& broker) :
-      ILayerSource(broker)
+    VolumeSlicerBase(MessageBroker& broker) :
+      IVolumeSlicer(broker)
     {
     }
 

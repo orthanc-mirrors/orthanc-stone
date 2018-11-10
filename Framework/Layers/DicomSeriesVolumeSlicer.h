@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "VolumeSlicerBase.h"
+#include "IVolumeSlicer.h"
 #include "../Toolbox/IWebService.h"
 #include "../Toolbox/OrthancSlicesLoader.h"
 #include "../Toolbox/OrthancApiClient.h"
@@ -32,7 +32,7 @@ namespace OrthancStone
   // once it's been loaded (first the geometry and then the image),
   // messages are sent to observers so they can use it
   class DicomSeriesVolumeSlicer :
-    public VolumeSlicerBase,
+    public IVolumeSlicer,
     public IObserver
     //private OrthancSlicesLoader::ISliceLoaderObserver
   {

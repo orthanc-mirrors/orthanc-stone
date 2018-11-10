@@ -21,34 +21,24 @@
 
 #pragma once
 
-#include "VolumeSlicerBase.h"
+#include "IVolumeSlicer.h"
 #include "../Volumes/StructureSetLoader.h"
 
 namespace OrthancStone
 {
   class DicomStructureSetSlicer :
-    public VolumeSlicerBase,
+    public IVolumeSlicer,
     private IVolumeLoader::IObserver
   {
   private:
     class Renderer;
     class RendererFactory;
 
-    virtual void NotifyGeometryError(const IVolumeLoader& loader)
-    {
-      VolumeSlicerBase::NotifyGeometryError();
-    }
-
-    virtual void NotifyContentChange(const IVolumeLoader& loader)
-    {
-      VolumeSlicerBase::NotifyContentChange();
-    }
-
     StructureSetLoader& loader_;
 
   public:
     DicomStructureSetSlicer(MessageBroker& broker, StructureSetLoader& loader) :
-      VolumeSlicerBase(broker),
+      IVolumeSlicer(broker),
       loader_(loader)
     {
       loader_.Register(*this);

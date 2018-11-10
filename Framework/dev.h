@@ -22,15 +22,14 @@
 #pragma once
 
 #include "Layers/FrameRenderer.h"
-#include "Layers/VolumeSlicerBase.h"
-#include "Layers/SliceOutlineRenderer.h"
 #include "Layers/LineLayerRenderer.h"
-#include "Widgets/SliceViewerWidget.h"
+#include "Layers/SliceOutlineRenderer.h"
 #include "Toolbox/DownloadStack.h"
 #include "Toolbox/GeometryToolbox.h"
 #include "Toolbox/OrthancSlicesLoader.h"
 #include "Volumes/ImageBuffer3D.h"
 #include "Volumes/SlicedVolumeBase.h"
+#include "Widgets/SliceViewerWidget.h"
 
 #include <Core/Logging.h>
 #include <Core/Images/ImageProcessing.h>
@@ -42,8 +41,8 @@ namespace OrthancStone
 {
   // TODO: Handle errors while loading
   class OrthancVolumeImage :
-      public SlicedVolumeBase,
-      public OrthancStone::IObserver
+    public SlicedVolumeBase,
+    public OrthancStone::IObserver
   {
   private:
     OrthancSlicesLoader           loader_;
@@ -418,20 +417,20 @@ namespace OrthancStone
 
       switch (projection)
       {
-      case VolumeProjection_Axial:
-        SetupAxial(volume);
-        break;
+        case VolumeProjection_Axial:
+          SetupAxial(volume);
+          break;
 
-      case VolumeProjection_Coronal:
-        SetupCoronal(volume);
-        break;
+        case VolumeProjection_Coronal:
+          SetupCoronal(volume);
+          break;
 
-      case VolumeProjection_Sagittal:
-        SetupSagittal(volume);
-        break;
+        case VolumeProjection_Sagittal:
+          SetupSagittal(volume);
+          break;
 
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
     }
 
@@ -495,8 +494,8 @@ namespace OrthancStone
 
 
   class VolumeImageMPRSlicer :
-      public VolumeSlicerBase,
-      private ISlicedVolume::IObserver
+    public IVolumeSlicer,
+    private ISlicedVolume::IObserver
   {
   private:
     class RendererFactory : public LayerReadyMessage::IRendererFactory
@@ -535,7 +534,7 @@ namespace OrthancStone
     }
 
     
-    virtual void NotifyGeometryReady(const ISlicedVolume& volume)
+    virtual void NotifyGeometryReady(const ISlicedVolume& volume) ORTHANC_OVERRIDE
     {
       // These 3 values are only used to speed up the IVolumeSlicer
       axialGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Axial));
@@ -545,27 +544,27 @@ namespace OrthancStone
       EmitMessage(IVolumeSlicer::GeometryReadyMessage(*this));
     }
 
-    virtual void NotifyGeometryError(const ISlicedVolume& volume)
+    virtual void NotifyGeometryError(const ISlicedVolume& volume) ORTHANC_OVERRIDE
     {
-      VolumeSlicerBase::NotifyGeometryError();
+      EmitMessage(IVolumeSlicer::GeometryErrorMessage(*this));
     }
 
-    virtual void NotifyContentChange(const ISlicedVolume& volume)
+    virtual void NotifyContentChange(const ISlicedVolume& volume) ORTHANC_OVERRIDE
     {
-      VolumeSlicerBase::NotifyContentChange();
+      EmitMessage(IVolumeSlicer::ContentChangedMessage(*this));
     }
 
     virtual void NotifySliceContentChange(const ISlicedVolume& volume,
-                                   const size_t& sliceIndex,
-                                   const Slice& slice)
+                                          const size_t& sliceIndex,
+                                          const Slice& slice) ORTHANC_OVERRIDE
     {
-      //VolumeSlicerBase::NotifySliceContentChange(slice);
+      //IVolumeSlicer::NotifySliceContentChange(slice);
 
       // TODO Improve this?
-      VolumeSlicerBase::NotifyContentChange();
+      EmitMessage(IVolumeSlicer::ContentChangedMessage(*this));
     }
 
-    virtual void NotifyVolumeReady(const ISlicedVolume& volume)
+    virtual void NotifyVolumeReady(const ISlicedVolume& volume) ORTHANC_OVERRIDE
     {
     }
 
@@ -578,17 +577,17 @@ namespace OrthancStone
 
       switch (projection)
       {
-      case VolumeProjection_Axial:
-        return *axialGeometry_;
+        case VolumeProjection_Axial:
+          return *axialGeometry_;
 
-      case VolumeProjection_Sagittal:
-        return *sagittalGeometry_;
+        case VolumeProjection_Sagittal:
+          return *sagittalGeometry_;
 
-      case VolumeProjection_Coronal:
-        return *coronalGeometry_;
+        case VolumeProjection_Coronal:
+          return *coronalGeometry_;
 
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
     }
 
@@ -629,14 +628,18 @@ namespace OrthancStone
   public:
     VolumeImageMPRSlicer(MessageBroker& broker, 
                          OrthancVolumeImage&  volume) :
-      VolumeSlicerBase(broker),
+      IVolumeSlicer(broker),
       volume_(volume)
     {
       volume_.Register(*this);
     }
 
+    virtual ~VolumeImageMPRSlicer()
+    {
+    }
+
     virtual bool GetExtent(std::vector<Vector>& points,
-                           const CoordinateSystem3D& viewportSlice)
+                           const CoordinateSystem3D& viewportSlice) ORTHANC_OVERRIDE
     {
       VolumeProjection projection;
       
@@ -657,7 +660,7 @@ namespace OrthancStone
     }
     
 
-    virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
+    virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice) ORTHANC_OVERRIDE
     {
       VolumeProjection projection;
       
@@ -692,14 +695,14 @@ namespace OrthancStone
 
       // Error
       CoordinateSystem3D slice;
-      VolumeSlicerBase::NotifyLayerError(slice);
+      EmitMessage(IVolumeSlicer::LayerErrorMessage(*this, slice));
     }
   };
 
 
   class VolumeImageInteractor :
-      public IWorldSceneInteractor,
-      protected ISlicedVolume::IObserver
+    public IWorldSceneInteractor,
+    protected ISlicedVolume::IObserver
   {
   private:
     SliceViewerWidget&                        widget_;
@@ -730,8 +733,8 @@ namespace OrthancStone
     }
 
     virtual void NotifySliceContentChange(const ISlicedVolume& volume,
-                                   const size_t& sliceIndex,
-                                   const Slice& slice)
+                                          const size_t& sliceIndex,
+                                          const Slice& slice)
     {
     }
 
@@ -767,16 +770,16 @@ namespace OrthancStone
 
       switch (direction)
       {
-      case MouseWheelDirection_Up:
-        OffsetSlice(-scale);
-        break;
+        case MouseWheelDirection_Up:
+          OffsetSlice(-scale);
+          break;
 
-      case MouseWheelDirection_Down:
-        OffsetSlice(scale);
-        break;
+        case MouseWheelDirection_Down:
+          OffsetSlice(scale);
+          break;
 
-      default:
-        break;
+        default:
+          break;
       }
     }
 
@@ -788,12 +791,12 @@ namespace OrthancStone
     {
       switch (keyChar)
       {
-      case 's':
-        widget.FitContent();
-        break;
+        case 's':
+          widget.FitContent();
+          break;
 
-      default:
-        break;
+        default:
+          break;
       }
     }
 
@@ -862,7 +865,7 @@ namespace OrthancStone
 
 
 
-  class ReferenceLineSource : public VolumeSlicerBase
+  class ReferenceLineSource : public IVolumeSlicer
   {
   private:
     class RendererFactory : public LayerReadyMessage::IRendererFactory
@@ -899,7 +902,7 @@ namespace OrthancStone
   public:
     ReferenceLineSource(MessageBroker& broker, 
                         SliceViewerWidget&  otherPlane) :
-      VolumeSlicerBase(broker),
+      IVolumeSlicer(broker),
       otherPlane_(otherPlane)
     {
       EmitMessage(IVolumeSlicer::GeometryReadyMessage(*this));
@@ -925,7 +928,7 @@ namespace OrthancStone
                                                viewportSlice.GetOrigin(), viewportSlice.GetNormal()))
       {
         // The two slice are parallel, don't try and display the intersection
-        NotifyLayerError(reference.GetGeometry());
+        EmitMessage(IVolumeSlicer::LayerErrorMessage(*this, reference.GetGeometry()));
       }
       else
       {
@@ -946,7 +949,7 @@ namespace OrthancStone
         else
         {
           // Error: Parallel slices
-          NotifyLayerError(reference.GetGeometry());
+          EmitMessage(IVolumeSlicer::LayerErrorMessage(*this, reference.GetGeometry()));
         }
       }
     }

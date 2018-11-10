@@ -40,13 +40,13 @@ namespace OrthancStone
     }
     else
     {
-      VolumeSlicerBase::NotifyGeometryError();
+      EmitMessage(IVolumeSlicer::GeometryErrorMessage(*this));
     }
   }
 
   void DicomSeriesVolumeSlicer::OnSliceGeometryError(const OrthancSlicesLoader::SliceGeometryErrorMessage& message)
   {
-    VolumeSlicerBase::NotifyGeometryError();
+    EmitMessage(IVolumeSlicer::GeometryErrorMessage(*this));
   }
 
 
@@ -76,20 +76,19 @@ namespace OrthancStone
     EmitMessage(FrameReadyMessage(*this, message.GetImage(), 
                                   message.GetEffectiveQuality(), message.GetSlice()));
 
-    // then notify that the layer is ready for render
+    // then notify that the layer is ready for rendering
     RendererFactory factory(message);
-
     EmitMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, message.GetSlice().GetGeometry()));
   }
 
   void DicomSeriesVolumeSlicer::OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message)
   {
-    VolumeSlicerBase::NotifyLayerError(message.GetSlice().GetGeometry());
+    EmitMessage(IVolumeSlicer::LayerErrorMessage(*this, message.GetSlice().GetGeometry()));
   }
 
 
   DicomSeriesVolumeSlicer::DicomSeriesVolumeSlicer(MessageBroker& broker, OrthancApiClient& orthanc) :
-    VolumeSlicerBase(broker),
+    IVolumeSlicer(broker),
     IObserver(broker),
     loader_(broker, orthanc),
     quality_(SliceImageQuality_FullPng)

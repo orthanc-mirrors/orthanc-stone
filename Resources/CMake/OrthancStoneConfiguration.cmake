@@ -237,14 +237,13 @@ list(APPEND ORTHANC_STONE_SOURCES
 
   ${ORTHANC_STONE_ROOT}/Framework/Layers/CircleMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/ColorFrameRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/DicomSeriesVolumeSlicer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/DicomStructureSetSlicer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/FrameRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/GrayscaleFrameRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/IVolumeSlicer.h
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/VolumeSlicerBase.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/LineLayerRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/LineMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/DicomSeriesVolumeSlicer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/RenderStyle.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/SliceOutlineRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp

@@ -51,6 +51,8 @@ namespace OrthancStone
       webService_ = &webService;
     }
 
-    virtual ~StoneApplicationContext() {}
+    virtual ~StoneApplicationContext()
+    {
+    }
   };
 }

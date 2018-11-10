@@ -71,7 +71,7 @@ namespace OrthancStone
 
   // simple message implementation when no payload is needed
   // sample usage:
-  // typedef NoPayloadMessage<MessageType_LayerSource_GeometryReady> GeometryReadyMessage;
+  // typedef NoPayloadMessage<MessageType_VolumeSlicer_GeometryReady> GeometryReadyMessage;
   template <int type>
   class NoPayloadMessage : public BaseMessage<type>
   {

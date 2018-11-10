@@ -126,7 +126,7 @@
 //  ASSERT_THROW(observable.RegisterObserver(partialObserver), OrthancStone::MessageNotDeclaredException);
 
 //  // check an exception is thrown when the observable emits an undeclared message
-//  ASSERT_THROW(observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_LayerSource_GeometryReady)), OrthancStone::MessageNotDeclaredException);
+//  ASSERT_THROW(observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_VolumeSlicer_GeometryReady)), OrthancStone::MessageNotDeclaredException);
 
 //  // unregister the observer, make sure nothing happens afterwards
 //  observable.UnregisterObserver(fullObserver);

@@ -120,12 +120,12 @@ namespace OrthancStone
     MessageType_Widget_GeometryChanged,
     MessageType_Widget_ContentChanged,
 
-    MessageType_LayerSource_GeometryReady,   // instance tags have been loaded
-    MessageType_LayerSource_GeometryError,
-    MessageType_LayerSource_ContentChanged,
-    MessageType_LayerSource_SliceChanged,
-    MessageType_LayerSource_LayerReady,      // layer is ready to be rendered
-    MessageType_LayerSource_LayerError,
+    MessageType_VolumeSlicer_GeometryReady,   // instance tags have been loaded
+    MessageType_VolumeSlicer_GeometryError,
+    MessageType_VolumeSlicer_ContentChanged,
+    MessageType_VolumeSlicer_SliceChanged,
+    MessageType_VolumeSlicer_LayerReady,      // layer is ready to be rendered
+    MessageType_VolumeSlicer_LayerError,
 
     MessageType_DicomSeriesVolumeSlicer_FrameReady,      // pixels data of the frame have been loaded
 

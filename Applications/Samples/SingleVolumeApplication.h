@@ -23,7 +23,6 @@
 
 #include "SampleApplicationBase.h"
 #include "../../Framework/dev.h"
-#include "../../Framework/Layers/ILayerSource.h"
 #include "../../Framework/Layers/LineMeasureTracker.h"
 #include "../../Framework/Layers/CircleMeasureTracker.h"
 

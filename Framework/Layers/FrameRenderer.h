@@ -30,7 +30,7 @@ namespace OrthancStone
   class FrameRenderer : public ILayerRenderer
   {
   private:
-    CoordinateSystem3D            frameSlice_;
+    CoordinateSystem3D            framePlane_;
     double                        pixelSpacingX_;
     double                        pixelSpacingY_;
     RenderStyle                   style_;
@@ -41,7 +41,7 @@ namespace OrthancStone
     virtual CairoSurface* GenerateDisplay(const RenderStyle& style) = 0;
 
   public:
-    FrameRenderer(const CoordinateSystem3D& frameSlice,
+    FrameRenderer(const CoordinateSystem3D& framePlane,
                   double pixelSpacingX,
                   double pixelSpacingY,
                   bool isFullQuality);
@@ -49,9 +49,9 @@ namespace OrthancStone
     virtual bool RenderLayer(CairoContext& context,
                              const ViewportGeometry& view);
 
-    virtual const CoordinateSystem3D& GetLayerSlice()
+    virtual const CoordinateSystem3D& GetLayerPlane()
     {
-      return frameSlice_;
+      return framePlane_;
     }
 
     virtual void SetLayerStyle(const RenderStyle& style);
@@ -63,7 +63,7 @@ namespace OrthancStone
 
     // TODO: Avoid cloning the "frame"
     static ILayerRenderer* CreateRenderer(const Orthanc::ImageAccessor& frame,
-                                          const Slice& frameSlice,
+                                          const Slice& framePlane,
                                           bool isFullQuality);
   };
 }

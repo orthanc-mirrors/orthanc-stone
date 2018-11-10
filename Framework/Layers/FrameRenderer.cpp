@@ -28,11 +28,11 @@
 
 namespace OrthancStone
 {
-  FrameRenderer::FrameRenderer(const CoordinateSystem3D& frameSlice,
+  FrameRenderer::FrameRenderer(const CoordinateSystem3D& framePlane,
                                double pixelSpacingX,
                                double pixelSpacingY,
                                bool isFullQuality) :
-    frameSlice_(frameSlice),
+    framePlane_(framePlane),
     pixelSpacingX_(pixelSpacingX),
     pixelSpacingY_(pixelSpacingY),
     isFullQuality_(isFullQuality)
@@ -118,23 +118,23 @@ namespace OrthancStone
 
 
   ILayerRenderer* FrameRenderer::CreateRenderer(const Orthanc::ImageAccessor& frame,
-                                                const Slice& frameSlice,
+                                                const Slice& framePlane,
                                                 bool isFullQuality)
   {
     if (frame.GetFormat() == Orthanc::PixelFormat_RGB24)
     {
       return new ColorFrameRenderer(frame,
-                                    frameSlice.GetGeometry(), 
-                                    frameSlice.GetPixelSpacingX(),
-                                    frameSlice.GetPixelSpacingY(), isFullQuality);
+                                    framePlane.GetGeometry(), 
+                                    framePlane.GetPixelSpacingX(),
+                                    framePlane.GetPixelSpacingY(), isFullQuality);
     }
     else
     {
       return new GrayscaleFrameRenderer(frame,
-                                        frameSlice.GetConverter(),
-                                        frameSlice.GetGeometry(), 
-                                        frameSlice.GetPixelSpacingX(),
-                                        frameSlice.GetPixelSpacingY(), isFullQuality);
+                                        framePlane.GetConverter(),
+                                        framePlane.GetGeometry(), 
+                                        framePlane.GetPixelSpacingX(),
+                                        framePlane.GetPixelSpacingY(), isFullQuality);
     }
   }
 }

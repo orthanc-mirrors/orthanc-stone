@@ -41,11 +41,11 @@ namespace OrthancStone
 
 
   ColorFrameRenderer::ColorFrameRenderer(const Orthanc::ImageAccessor& frame,
-                                         const CoordinateSystem3D& frameSlice,
+                                         const CoordinateSystem3D& framePlane,
                                          double pixelSpacingX,
                                          double pixelSpacingY,
                                          bool isFullQuality) :
-    FrameRenderer(frameSlice, pixelSpacingX, pixelSpacingY, isFullQuality),
+    FrameRenderer(framePlane, pixelSpacingX, pixelSpacingY, isFullQuality),
     frame_(Orthanc::Image::Clone(frame))
   {
     if (frame_.get() == NULL)

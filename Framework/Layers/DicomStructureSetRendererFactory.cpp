@@ -38,12 +38,12 @@ namespace OrthancStone
 
     public:
       Structure(DicomStructureSet& structureSet,
-                const CoordinateSystem3D& slice,
+                const CoordinateSystem3D& plane,
                 size_t index) :
         name_(structureSet.GetStructureName(index))
       {
         structureSet.GetStructureColor(red_, green_, blue_, index);
-        visible_ = structureSet.ProjectStructure(polygons_, index, slice);
+        visible_ = structureSet.ProjectStructure(polygons_, index, plane);
       }
 
       void Render(CairoContext& context)
@@ -72,17 +72,17 @@ namespace OrthancStone
 
     typedef std::list<Structure*>  Structures;
     
-    CoordinateSystem3D  slice_;
+    CoordinateSystem3D  plane_;
     Structures          structures_;
     
   public:
     Renderer(DicomStructureSet& structureSet,
-             const CoordinateSystem3D& slice) :
-      slice_(slice)
+             const CoordinateSystem3D& plane) :
+      plane_(plane)
     {
       for (size_t k = 0; k < structureSet.GetStructureCount(); k++)
       {
-        structures_.push_back(new Structure(structureSet, slice, k));
+        structures_.push_back(new Structure(structureSet, plane, k));
       }
     }
 
@@ -110,9 +110,9 @@ namespace OrthancStone
       return true;
     }
 
-    virtual const CoordinateSystem3D& GetLayerSlice()
+    virtual const CoordinateSystem3D& GetLayerPlane()
     {
-      return slice_;
+      return plane_;
     }
 
     virtual void SetLayerStyle(const RenderStyle& style)
@@ -130,29 +130,29 @@ namespace OrthancStone
   {
   private:
     DicomStructureSet&         structureSet_;
-    const CoordinateSystem3D&  slice_;
+    const CoordinateSystem3D&  plane_;
 
   public:
     RendererFactory(DicomStructureSet& structureSet,
-                    const CoordinateSystem3D&  slice) :
+                    const CoordinateSystem3D&  plane) :
       structureSet_(structureSet),
-      slice_(slice)
+      plane_(plane)
     {
     }
 
     virtual ILayerRenderer* CreateRenderer() const
     {
-      return new Renderer(structureSet_, slice_);
+      return new Renderer(structureSet_, plane_);
     }
   };
   
 
-  void DicomStructureSetRendererFactory::ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
+  void DicomStructureSetRendererFactory::ScheduleLayerCreation(const CoordinateSystem3D& viewportPlane)
   {
     if (loader_.HasStructureSet())
     {
-      RendererFactory factory(loader_.GetStructureSet(), viewportSlice);
-      NotifyLayerReady(factory, viewportSlice);
+      RendererFactory factory(loader_.GetStructureSet(), viewportPlane);
+      NotifyLayerReady(factory, viewportPlane);
     }
   }
 }

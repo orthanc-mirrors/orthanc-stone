@@ -32,7 +32,7 @@ namespace OrthancStone
     double              y1_;
     double              x2_;
     double              y2_;
-    CoordinateSystem3D  slice_;
+    CoordinateSystem3D  plane_;
     bool                visible_;
     uint8_t             color_[3];
 
@@ -41,16 +41,16 @@ namespace OrthancStone
                       double y1,
                       double x2,
                       double y2,
-                      const CoordinateSystem3D& slice);
+                      const CoordinateSystem3D& plane);
 
     virtual bool RenderLayer(CairoContext& context,
                              const ViewportGeometry& view);
 
     virtual void SetLayerStyle(const RenderStyle& style);
 
-    virtual const CoordinateSystem3D& GetLayerSlice()
+    virtual const CoordinateSystem3D& GetLayerPlane()
     {
-      return slice_;
+      return plane_;
     }
     
     virtual bool IsFullQuality()

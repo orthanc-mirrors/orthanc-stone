@@ -37,7 +37,7 @@ namespace OrthancStone
   class SliceViewerWidget::Scene : public boost::noncopyable
   {
   private:
-    CoordinateSystem3D            slice_;
+    CoordinateSystem3D            plane_;
     double                        thickness_;
     size_t                        countMissing_;
     std::vector<ILayerRenderer*>  renderers_;
@@ -61,10 +61,10 @@ namespace OrthancStone
       }
     }
 
-    Scene(const CoordinateSystem3D& slice,
+    Scene(const CoordinateSystem3D& plane,
           double thickness,
           size_t countLayers) :
-      slice_(slice),
+      plane_(plane),
       thickness_(thickness),
       countMissing_(countLayers),
       renderers_(countLayers, NULL)
@@ -97,9 +97,9 @@ namespace OrthancStone
       countMissing_--;
     }
 
-    const CoordinateSystem3D& GetSlice() const
+    const CoordinateSystem3D& GetPlane() const
     {
-      return slice_;
+      return plane_;
     }
 
     bool HasRenderer(size_t index)
@@ -119,7 +119,7 @@ namespace OrthancStone
 
     bool RenderScene(CairoContext& context,
                      const ViewportGeometry& view,
-                     const CoordinateSystem3D& viewportSlice)
+                     const CoordinateSystem3D& viewportPlane)
     {
       bool fullQuality = true;
       cairo_t *cr = context.GetObject();
@@ -128,12 +128,12 @@ namespace OrthancStone
       {
         if (renderers_[i] != NULL)
         {
-          const CoordinateSystem3D& frameSlice = renderers_[i]->GetLayerSlice();
+          const CoordinateSystem3D& framePlane = renderers_[i]->GetLayerPlane();
           
           double x0, y0, x1, y1, x2, y2;
-          viewportSlice.ProjectPoint(x0, y0, frameSlice.GetOrigin());
-          viewportSlice.ProjectPoint(x1, y1, frameSlice.GetOrigin() + frameSlice.GetAxisX());
-          viewportSlice.ProjectPoint(x2, y2, frameSlice.GetOrigin() + frameSlice.GetAxisY());
+          viewportPlane.ProjectPoint(x0, y0, framePlane.GetOrigin());
+          viewportPlane.ProjectPoint(x1, y1, framePlane.GetOrigin() + framePlane.GetAxisX());
+          viewportPlane.ProjectPoint(x2, y2, framePlane.GetOrigin() + framePlane.GetAxisY());
 
           /**
            * Now we solve the system of linear equations Ax + b = x', given:
@@ -206,19 +206,19 @@ namespace OrthancStone
       }
     }
 
-    bool ContainsPlane(const CoordinateSystem3D& slice) const
+    bool ContainsPlane(const CoordinateSystem3D& plane) const
     {
       bool isOpposite;
       if (!GeometryToolbox::IsParallelOrOpposite(isOpposite,
-                                                 slice.GetNormal(),
-                                                 slice_.GetNormal()))
+                                                 plane.GetNormal(),
+                                                 plane_.GetNormal()))
       {
         return false;
       }
       else
       {
-        double z = (slice_.ProjectAlongNormal(slice.GetOrigin()) -
-                    slice_.ProjectAlongNormal(slice_.GetOrigin()));
+        double z = (plane_.ProjectAlongNormal(plane.GetOrigin()) -
+                    plane_.ProjectAlongNormal(plane_.GetOrigin()));
 
         if (z < 0)
         {
@@ -261,12 +261,12 @@ namespace OrthancStone
     extent.Reset();
 
     std::vector<Vector> points;
-    if (source.GetExtent(points, slice_))
+    if (source.GetExtent(points, plane_))
     {
       for (size_t i = 0; i < points.size(); i++)
       {
         double x, y;
-        slice_.ProjectPoint(x, y, points[i]);
+        plane_.ProjectPoint(x, y, points[i]);
         extent.AddPoint(x, y);
       }
     }
@@ -295,7 +295,7 @@ namespace OrthancStone
   {
     if (currentScene_.get() != NULL)
     {
-      return currentScene_->RenderScene(context, view, slice_);
+      return currentScene_->RenderScene(context, view, plane_);
     }
     else
     {
@@ -316,13 +316,13 @@ namespace OrthancStone
       thickness = pendingScene_->GetThickness();
     }
     
-    pendingScene_.reset(new Scene(slice_, thickness, layers_.size()));
+    pendingScene_.reset(new Scene(plane_, thickness, layers_.size()));
   }
   
 
   void SliceViewerWidget::UpdateLayer(size_t index,
                                       ILayerRenderer* renderer,
-                                      const CoordinateSystem3D& slice)
+                                      const CoordinateSystem3D& plane)
   {
     LOG(INFO) << "Updating layer " << index;
     
@@ -342,13 +342,13 @@ namespace OrthancStone
     renderer->SetLayerStyle(styles_[index]);
 
     if (currentScene_.get() != NULL &&
-        currentScene_->ContainsPlane(slice))
+        currentScene_->ContainsPlane(plane))
     {
       currentScene_->SetLayer(index, tmp.release());
       NotifyContentChanged();
     }
     else if (pendingScene_.get() != NULL &&
-             pendingScene_->ContainsPlane(slice))
+             pendingScene_->ContainsPlane(plane))
     {
       pendingScene_->SetLayer(index, tmp.release());
 
@@ -503,13 +503,13 @@ namespace OrthancStone
   }
   
 
-  void SliceViewerWidget::SetSlice(const CoordinateSystem3D& slice)
+  void SliceViewerWidget::SetSlice(const CoordinateSystem3D& plane)
   {
-    LOG(INFO) << "Setting slice origin: (" << slice.GetOrigin()[0]
-              << "," << slice.GetOrigin()[1]
-              << "," << slice.GetOrigin()[2] << ")";
+    LOG(INFO) << "Setting slice origin: (" << plane.GetOrigin()[0]
+              << "," << plane.GetOrigin()[1]
+              << "," << plane.GetOrigin()[2] << ")";
     
-    Slice displayedSlice(slice_, THIN_SLICE_THICKNESS);
+    Slice displayedSlice(plane_, THIN_SLICE_THICKNESS);
 
     //if (!displayedSlice.ContainsPlane(slice))
     {
@@ -520,7 +520,7 @@ namespace OrthancStone
         currentScene_ = pendingScene_;
       }
 
-      slice_ = slice;
+      plane_ = plane;
       ResetPendingScene();
 
       InvalidateAllLayers();   // TODO Removing this line avoid loading twice the image in WASM
@@ -536,7 +536,7 @@ namespace OrthancStone
       LOG(INFO) << ": Geometry ready for layer " << i << " in " << GetName();
 
       changedLayers_[i] = true;
-      //layers_[i]->ScheduleLayerCreation(slice_);
+      //layers_[i]->ScheduleLayerCreation(plane_);
     }
     EmitMessage(GeometryChangedMessage(*this));
   }
@@ -549,7 +549,7 @@ namespace OrthancStone
       assert(layers_[i] != NULL);
       changedLayers_[i] = true;
       
-      //layers_[i]->ScheduleLayerCreation(slice_);
+      //layers_[i]->ScheduleLayerCreation(plane_);
     }
   }
 
@@ -564,7 +564,7 @@ namespace OrthancStone
     assert(layers_[layer] != NULL);
     changedLayers_[layer] = true;
 
-    //layers_[layer]->ScheduleLayerCreation(slice_);
+    //layers_[layer]->ScheduleLayerCreation(plane_);
   }
 
 
@@ -582,7 +582,7 @@ namespace OrthancStone
 
   void SliceViewerWidget::OnSliceChanged(const ILayerSource::SliceChangedMessage& message)
   {
-    if (message.GetSlice().ContainsPlane(slice_))
+    if (message.GetSlice().ContainsPlane(plane_))
     {
       size_t index;
       if (LookupLayer(index, message.GetOrigin()))
@@ -642,7 +642,7 @@ namespace OrthancStone
     {
       if (changedLayers_[i])
       {
-        layers_[i]->ScheduleLayerCreation(slice_);
+        layers_[i]->ScheduleLayerCreation(plane_);
       }
     }
     

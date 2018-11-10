@@ -27,12 +27,12 @@ namespace OrthancStone
                                        double y1,
                                        double x2,
                                        double y2,
-                                       const CoordinateSystem3D& slice) : 
+                                       const CoordinateSystem3D& plane) : 
     x1_(x1),
     y1_(y1),
     x2_(x2),
     y2_(y2),
-    slice_(slice)
+    plane_(plane)
   {
     RenderStyle style;
     SetLayerStyle(style);

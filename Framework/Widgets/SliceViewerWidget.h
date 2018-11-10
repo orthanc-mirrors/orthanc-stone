@@ -48,7 +48,7 @@ namespace OrthancStone
     LayersIndex                 layersIndex_;
     std::vector<ILayerSource*>  layers_;
     std::vector<RenderStyle>    styles_;
-    CoordinateSystem3D          slice_;
+    CoordinateSystem3D          plane_;
     std::auto_ptr<Scene>        currentScene_;
     std::auto_ptr<Scene>        pendingScene_;
     std::vector<bool>           changedLayers_;
@@ -87,7 +87,7 @@ namespace OrthancStone
 
     void UpdateLayer(size_t index,
                      ILayerRenderer* renderer,
-                     const CoordinateSystem3D& slice);
+                     const CoordinateSystem3D& plane);
 
     void InvalidateAllLayers();
 
@@ -112,11 +112,11 @@ namespace OrthancStone
     void SetLayerStyle(size_t layer,
                        const RenderStyle& style);
 
-    void SetSlice(const CoordinateSystem3D& slice);
+    void SetSlice(const CoordinateSystem3D& plane);
 
     const CoordinateSystem3D& GetSlice() const
     {
-      return slice_;
+      return plane_;
     }
 
     virtual bool HasAnimation() const

@@ -40,7 +40,7 @@ namespace OrthancStone
 
     virtual void SetLayerStyle(const RenderStyle& style) = 0;
 
-    virtual const CoordinateSystem3D& GetLayerSlice() = 0;
+    virtual const CoordinateSystem3D& GetLayerPlane() = 0;
     
     virtual bool IsFullQuality() = 0;
   };

@@ -26,7 +26,7 @@
 
 namespace OrthancStone
 {
-  class DicomStructureSetRendererFactory :
+  class DicomStructureSetSlicer :
     public VolumeSlicerBase,
     private IVolumeLoader::IObserver
   {
@@ -52,7 +52,7 @@ namespace OrthancStone
     StructureSetLoader& loader_;
 
   public:
-    DicomStructureSetRendererFactory(MessageBroker& broker, StructureSetLoader& loader) :
+    DicomStructureSetSlicer(MessageBroker& broker, StructureSetLoader& loader) :
       VolumeSlicerBase(broker),
       loader_(loader)
     {

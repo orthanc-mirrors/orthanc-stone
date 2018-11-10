@@ -237,7 +237,7 @@ list(APPEND ORTHANC_STONE_SOURCES
 
   ${ORTHANC_STONE_ROOT}/Framework/Layers/CircleMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/ColorFrameRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/DicomStructureSetRendererFactory.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Layers/DicomStructureSetSlicer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/FrameRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/GrayscaleFrameRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/IVolumeSlicer.h

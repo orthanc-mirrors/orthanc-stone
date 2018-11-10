@@ -24,7 +24,7 @@
 #include "SampleInteractor.h"
 
 #include "../../Framework/Layers/ReferenceLineFactory.h"
-#include "../../Framework/Layers/DicomStructureSetRendererFactory.h"
+#include "../../Framework/Layers/DicomStructureSetSlicer.h"
 #include "../../Framework/Widgets/LayoutWidget.h"
 
 #include <Core/Logging.h>
@@ -331,9 +331,9 @@ namespace OrthancStone
           Vector p = rtStruct.GetStructureCenter(0);
           interactorAxial_->GetCursor().LookupSliceContainingPoint(p);
 
-          ctAxial_->AddLayer(new DicomStructureSetRendererFactory(rtStruct));
-          petAxial_->AddLayer(new DicomStructureSetRendererFactory(rtStruct));
-          fusionAxial_->AddLayer(new DicomStructureSetRendererFactory(rtStruct));
+          ctAxial_->AddLayer(new DicomStructureSetSlicer(rtStruct));
+          petAxial_->AddLayer(new DicomStructureSetSlicer(rtStruct));
+          fusionAxial_->AddLayer(new DicomStructureSetSlicer(rtStruct));
         }        
 
         ConnectSiblingLocations(*ctAxial_, *ctCoronal_, *ctSagittal_); 

@@ -19,11 +19,11 @@
  **/
 
 
-#include "DicomStructureSetRendererFactory.h"
+#include "DicomStructureSetSlicer.h"
 
 namespace OrthancStone
 {
-  class DicomStructureSetRendererFactory::Renderer : public ILayerRenderer
+  class DicomStructureSetSlicer::Renderer : public ILayerRenderer
   {
   private:
     class Structure
@@ -126,7 +126,7 @@ namespace OrthancStone
   };
 
 
-  class DicomStructureSetRendererFactory::RendererFactory : public LayerReadyMessage::IRendererFactory
+  class DicomStructureSetSlicer::RendererFactory : public LayerReadyMessage::IRendererFactory
   {
   private:
     DicomStructureSet&         structureSet_;
@@ -147,7 +147,7 @@ namespace OrthancStone
   };
   
 
-  void DicomStructureSetRendererFactory::ScheduleLayerCreation(const CoordinateSystem3D& viewportPlane)
+  void DicomStructureSetSlicer::ScheduleLayerCreation(const CoordinateSystem3D& viewportPlane)
   {
     if (loader_.HasStructureSet())
     {

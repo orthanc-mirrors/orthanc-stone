@@ -494,7 +494,7 @@ namespace OrthancStone
 
 
 
-  class VolumeImageSource :
+  class VolumeImageMPRSlicer :
       public VolumeSlicerBase,
       private ISlicedVolume::IObserver
   {
@@ -627,7 +627,8 @@ namespace OrthancStone
 
 
   public:
-    VolumeImageSource(MessageBroker& broker, OrthancVolumeImage&  volume) :
+    VolumeImageMPRSlicer(MessageBroker& broker, 
+                         OrthancVolumeImage&  volume) :
       VolumeSlicerBase(broker),
       volume_(volume)
     {

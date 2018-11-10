@@ -30,7 +30,7 @@
 #include <Core/Logging.h>
 
 #include <Plugins/Samples/Common/OrthancHttpConnection.h>   // TODO REMOVE
-#include "../../Framework/Layers/DicomStructureSetRendererFactory.h"   // TODO REMOVE
+#include "../../Framework/Layers/DicomStructureSetSlicer.h"   // TODO REMOVE
 #include "../../Framework/Toolbox/MessagingToolbox.h"   // TODO REMOVE
 
 namespace OrthancStone
@@ -183,7 +183,7 @@ namespace OrthancStone
           volume->ScheduleLoadSeries(series);
         }
 
-        widget->AddLayer(new VolumeImageSource(*volume));
+        widget->AddLayer(new VolumeImageMPRSlicer(*volume));
 
         context_->AddInteractor(new Interactor(*volume, *widget, projection, 0));
         context_->AddSlicedVolume(volume.release());
@@ -229,9 +229,9 @@ namespace OrthancStone
         //rtStruct->ScheduleLoadInstance("17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20");  // 0522c0001 TCIA
         rtStruct->ScheduleLoadInstance("96c889ab-29fe5c54-dda6e66c-3949e4da-58f90d75");  // Captain
         
-        widget->AddLayer(new VolumeImageSource(*ct));
-        widget->AddLayer(new VolumeImageSource(*pet));
-        widget->AddLayer(new DicomStructureSetRendererFactory(*rtStruct));
+        widget->AddLayer(new VolumeImageMPRSlicer(*ct));
+        widget->AddLayer(new VolumeImageMPRSlicer(*pet));
+        widget->AddLayer(new DicomStructureSetSlicer(*rtStruct));
         
         context_->AddInteractor(new Interactor(*pet, *widget, projection, 1));
         //context_->AddInteractor(new VolumeImageInteractor(*ct, *widget, projection));

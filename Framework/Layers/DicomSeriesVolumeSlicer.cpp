@@ -36,7 +36,7 @@ namespace OrthancStone
   {
     if (message.GetOrigin().GetSliceCount() > 0)
     {
-      VolumeSlicerBase::NotifyGeometryReady();
+      EmitMessage(IVolumeSlicer::GeometryReadyMessage(*this));
     }
     else
     {
@@ -78,7 +78,8 @@ namespace OrthancStone
 
     // then notify that the layer is ready for render
     RendererFactory factory(message);
-    VolumeSlicerBase::NotifyLayerReady(factory, message.GetSlice().GetGeometry());
+
+    EmitMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, message.GetSlice().GetGeometry()));
   }
 
   void DicomSeriesVolumeSlicer::OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message)

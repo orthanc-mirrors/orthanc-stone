@@ -25,11 +25,6 @@
 
 namespace OrthancStone
 {
-  void VolumeSlicerBase::NotifyGeometryReady()
-  {
-    EmitMessage(IVolumeSlicer::GeometryReadyMessage(*this));
-  }
-    
   void VolumeSlicerBase::NotifyGeometryError()
   {
     EmitMessage(IVolumeSlicer::GeometryErrorMessage(*this));
@@ -43,12 +38,6 @@ namespace OrthancStone
   void VolumeSlicerBase::NotifySliceContentChange(const Slice& slice)
   {
     EmitMessage(IVolumeSlicer::SliceContentChangedMessage(*this, slice));
-  }
-
-  void VolumeSlicerBase::NotifyLayerReady(const LayerReadyMessage::IRendererFactory& factory,
-                                          const CoordinateSystem3D& slice)
-  {
-    EmitMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, slice));
   }
 
   void VolumeSlicerBase::NotifyLayerError(const CoordinateSystem3D& slice)

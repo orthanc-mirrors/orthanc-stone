@@ -37,7 +37,7 @@ namespace OrthancStone
     CachedSliceStatus_ImageLoaded
   };
 
-  class SmartLoader::CachedSlice : public VolumeSlicerBase
+  class SmartLoader::CachedSlice : public IVolumeSlicer
   {
   public:
     class RendererFactory : public LayerReadyMessage::IRendererFactory
@@ -68,7 +68,7 @@ namespace OrthancStone
 
   public:
     CachedSlice(MessageBroker& broker) :
-    VolumeSlicerBase(broker)
+    IVolumeSlicer(broker)
     {
     }
 
@@ -94,8 +94,8 @@ namespace OrthancStone
       {
         LOG(WARNING) << "ScheduleLayerCreation for CachedSlice (image is loaded): " << slice_->GetOrthancInstanceId();
 
-        RendererFactory factory(*this);
-        VolumeSlicerBase::NotifyLayerReady(factory, slice_->GetGeometry());
+        RendererFactory factory(*this);   
+        EmitMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, slice_->GetGeometry()));
       }
       else
       {
@@ -174,7 +174,7 @@ namespace OrthancStone
 
     if (cachedSlice != NULL)
     {
-      cachedSlice->NotifyGeometryReady();
+      EmitMessage(IVolumeSlicer::GeometryReadyMessage(*cachedSlice));
     }
 
   }

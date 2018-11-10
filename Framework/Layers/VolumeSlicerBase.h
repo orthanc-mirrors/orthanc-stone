@@ -26,29 +26,20 @@
 
 namespace OrthancStone
 {
-  class SmartLoader;
-
   class VolumeSlicerBase : public IVolumeSlicer
   {
   protected:
-    void NotifyGeometryReady();
-    
+    VolumeSlicerBase(MessageBroker& broker) :
+      IVolumeSlicer(broker)
+    {
+    }
+
     void NotifyGeometryError();
 
     void NotifyContentChange();
 
     void NotifySliceContentChange(const Slice& slice);
 
-    void NotifyLayerReady(const LayerReadyMessage::IRendererFactory& factory,
-                          const CoordinateSystem3D& slice);
-
     void NotifyLayerError(const CoordinateSystem3D& slice);
-
-    VolumeSlicerBase(MessageBroker& broker) :
-      IVolumeSlicer(broker)
-    {
-    }
-
-    friend class SmartLoader;
   };
 }

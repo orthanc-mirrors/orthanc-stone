@@ -542,7 +542,7 @@ namespace OrthancStone
       coronalGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Coronal));
       sagittalGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Sagittal));
       
-      VolumeSlicerBase::NotifyGeometryReady();
+      EmitMessage(IVolumeSlicer::GeometryReadyMessage(*this));
     }
 
     virtual void NotifyGeometryError(const ISlicedVolume& volume)
@@ -684,9 +684,8 @@ namespace OrthancStone
           std::auto_ptr<Slice> slice(geometry.GetSlice(closest));
 
           RendererFactory factory(*frame, *slice, isFullQuality);
-          VolumeSlicerBase::NotifyLayerReady(factory,
-            //new SliceOutlineRenderer(slice),
-            slice->GetGeometry());
+
+          EmitMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, slice->GetGeometry()));
           return;
         }
       }
@@ -903,7 +902,7 @@ namespace OrthancStone
       VolumeSlicerBase(broker),
       otherPlane_(otherPlane)
     {
-      NotifyGeometryReady();
+      EmitMessage(IVolumeSlicer::GeometryReadyMessage(*this));
     }
 
     virtual bool GetExtent(std::vector<Vector>& points,
@@ -942,7 +941,7 @@ namespace OrthancStone
                                                  extent.GetX2(), extent.GetY2()))
         {
           RendererFactory factory(x1, y1, x2, y2, slice);
-          NotifyLayerReady(factory, reference.GetGeometry());
+          EmitMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, reference.GetGeometry()));
         }
         else
         {

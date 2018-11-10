@@ -34,11 +34,6 @@ namespace OrthancStone
     class Renderer;
     class RendererFactory;
 
-    virtual void NotifyGeometryReady(const IVolumeLoader& loader)
-    {
-      VolumeSlicerBase::NotifyGeometryReady();
-    }
-
     virtual void NotifyGeometryError(const IVolumeLoader& loader)
     {
       VolumeSlicerBase::NotifyGeometryError();

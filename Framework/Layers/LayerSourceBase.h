@@ -44,12 +44,8 @@ namespace OrthancStone
 
     void NotifyLayerError(const CoordinateSystem3D& slice);
 
-    void NotifyImageReady(const Orthanc::ImageAccessor& image,
-                          SliceImageQuality imageQuality,
-                          const Slice& slice);
-
-    LayerSourceBase(MessageBroker& broker)
-      : ILayerSource(broker)
+    LayerSourceBase(MessageBroker& broker) :
+      ILayerSource(broker)
     {
     }
 

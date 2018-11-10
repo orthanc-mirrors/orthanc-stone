@@ -22,7 +22,7 @@
 #pragma once
 #include <map>
 
-#include "Layers/ILayerSource.h"
+#include "Layers/OrthancFrameLayerSource.h"
 #include "Messages/IObservable.h"
 #include "Toolbox/OrthancApiClient.h"
 
@@ -59,7 +59,7 @@ namespace OrthancStone
 
   private:
     void OnLayerGeometryReady(const ILayerSource::GeometryReadyMessage& message);
-    void OnImageReady(const ILayerSource::ImageReadyMessage& message);
+    void OnFrameReady(const OrthancFrameLayerSource::FrameReadyMessage& message);
     void OnLayerReady(const ILayerSource::LayerReadyMessage& message);
 
   };

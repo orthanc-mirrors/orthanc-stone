@@ -36,6 +36,44 @@ namespace OrthancStone
     public IObserver
     //private OrthancSlicesLoader::ISliceLoaderObserver
   {
+  public:
+    // TODO: Add "frame" and "instanceId"
+    class FrameReadyMessage : public OriginMessage<MessageType_OrthancFrameLayerSource_FrameReady, OrthancFrameLayerSource>
+    {
+    private:
+      const Orthanc::ImageAccessor&  frame_;
+      SliceImageQuality              imageQuality_;
+      const Slice&                   slice_;
+
+    public:
+      FrameReadyMessage(OrthancFrameLayerSource& origin,
+                        const Orthanc::ImageAccessor& frame,
+                        SliceImageQuality imageQuality,
+                        const Slice& slice) :
+        OriginMessage(origin),
+        frame_(frame),
+        imageQuality_(imageQuality),
+        slice_(slice)
+      {
+      }
+
+      const Orthanc::ImageAccessor& GetFrame() const
+      {
+        return frame_;
+      }
+
+      SliceImageQuality GetImageQuality() const
+      {
+        return imageQuality_;
+      }
+
+      const Slice& GetSlice() const
+      {
+        return slice_;
+      }
+    };
+
+    
   private:
     class RendererFactory;
     

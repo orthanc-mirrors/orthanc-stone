@@ -72,8 +72,9 @@ namespace OrthancStone
 
   void OrthancFrameLayerSource::OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message)
   {
-    // first notify that the image is ready (targeted to, i.e: an image cache)
-    LayerSourceBase::NotifyImageReady(message.GetImage(), message.GetEffectiveQuality(), message.GetSlice());
+    // first notify that the pixel data of the frame is ready (targeted to, i.e: an image cache)
+    EmitMessage(FrameReadyMessage(*this, message.GetImage(), 
+                                  message.GetEffectiveQuality(), message.GetSlice()));
 
     // then notify that the layer is ready for render
     RendererFactory factory(message);
@@ -84,6 +85,7 @@ namespace OrthancStone
   {
     LayerSourceBase::NotifyLayerError(message.GetSlice().GetGeometry());
   }
+
 
   OrthancFrameLayerSource::OrthancFrameLayerSource(MessageBroker& broker, OrthancApiClient& orthanc) :
     LayerSourceBase(broker),

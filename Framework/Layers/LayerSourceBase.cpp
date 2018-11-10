@@ -55,11 +55,4 @@ namespace OrthancStone
   {
     EmitMessage(ILayerSource::LayerErrorMessage(*this, slice));
   }
-
-  void LayerSourceBase::NotifyImageReady(const Orthanc::ImageAccessor& image,
-                                         SliceImageQuality imageQuality,
-                                         const Slice& slice)
-  {
-    EmitMessage(ILayerSource::ImageReadyMessage(*this, image, imageQuality, slice));
-  }
 }

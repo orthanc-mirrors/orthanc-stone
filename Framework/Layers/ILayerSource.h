@@ -116,43 +116,6 @@ namespace OrthancStone
     };
 
 
-    // TODO: Rename "ImageReadyMessage" as "SliceReadyMessage"
-    class ImageReadyMessage : public OriginMessage<MessageType_LayerSource_ImageReady, ILayerSource>
-    {
-    private:
-      const Orthanc::ImageAccessor&  image_;
-      SliceImageQuality              imageQuality_;
-      const Slice&                   slice_;
-
-    public:
-      ImageReadyMessage(ILayerSource& origin,
-                        const Orthanc::ImageAccessor& image,
-                        SliceImageQuality imageQuality,
-                        const Slice& slice) :
-        OriginMessage(origin),
-        image_(image),
-        imageQuality_(imageQuality),
-        slice_(slice)
-      {
-      }
-
-      const Orthanc::ImageAccessor& GetImage() const
-      {
-        return image_;
-      }
-
-      SliceImageQuality GetImageQuality() const
-      {
-        return imageQuality_;
-      }
-
-      const Slice& GetSlice() const
-      {
-        return slice_;
-      }
-    };
-
-    
     ILayerSource(MessageBroker& broker) :
       IObservable(broker)
     {

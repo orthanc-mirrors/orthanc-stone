@@ -153,7 +153,7 @@ namespace OrthancStone
       layerSource.reset(new OrthancFrameLayerSource(IObserver::GetBroker(), orthancApiClient_));
       dynamic_cast<OrthancFrameLayerSource*>(layerSource.get())->SetImageQuality(imageQuality_);
       layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::GeometryReadyMessage>(*this, &SmartLoader::OnLayerGeometryReady));
-      layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::ImageReadyMessage>(*this, &SmartLoader::OnImageReady));
+      layerSource->RegisterObserverCallback(new Callable<SmartLoader, OrthancFrameLayerSource::FrameReadyMessage>(*this, &SmartLoader::OnFrameReady));
       layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::LayerReadyMessage>(*this, &SmartLoader::OnLayerReady));
       dynamic_cast<OrthancFrameLayerSource*>(layerSource.get())->LoadFrame(instanceId, frame);
     }
@@ -202,7 +202,7 @@ namespace OrthancStone
 
     dynamic_cast<OrthancFrameLayerSource*>(layerSource.get())->SetImageQuality(imageQuality_);
     layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::GeometryReadyMessage>(*this, &SmartLoader::OnLayerGeometryReady));
-    layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::ImageReadyMessage>(*this, &SmartLoader::OnImageReady));
+    layerSource->RegisterObserverCallback(new Callable<SmartLoader, OrthancFrameLayerSource::FrameReadyMessage>(*this, &SmartLoader::OnFrameReady));
     layerSource->RegisterObserverCallback(new Callable<SmartLoader, ILayerSource::LayerReadyMessage>(*this, &SmartLoader::OnLayerReady));
     dynamic_cast<OrthancFrameLayerSource*>(layerSource.get())->LoadFrame(instanceId, frame);
 
@@ -245,19 +245,17 @@ namespace OrthancStone
   }
 
 
-  void SmartLoader::OnImageReady(const ILayerSource::ImageReadyMessage& message)
+  void SmartLoader::OnFrameReady(const OrthancFrameLayerSource::FrameReadyMessage& message)
   {
-    OrthancFrameLayerSource& source = dynamic_cast<OrthancFrameLayerSource&>(message.GetOrigin());
-
     // save/replace the slice in cache
-    const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount() ?
+    const Slice& slice = message.GetSlice();
     std::string sliceKeyId = (slice.GetOrthancInstanceId() + ":" + 
                               boost::lexical_cast<std::string>(slice.GetFrame()));
 
     LOG(WARNING) << "Image ready: " << sliceKeyId;
 
     boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::GetBroker()));
-    cachedSlice->image_.reset(Orthanc::Image::Clone(message.GetImage()));
+    cachedSlice->image_.reset(Orthanc::Image::Clone(message.GetFrame()));
     cachedSlice->effectiveQuality_ = message.GetImageQuality();
     cachedSlice->slice_.reset(message.GetSlice().Clone());
     cachedSlice->status_ = CachedSliceStatus_ImageLoaded;

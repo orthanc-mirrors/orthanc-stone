@@ -129,6 +129,8 @@ namespace OrthancStone
 
     MessageType_DicomSeriesVolumeSlicer_FrameReady,      // pixels data of the frame have been loaded
 
+    MessageType_SliceViewerWidget_DisplayedSlice,  // The displayed slice has changed
+
     MessageType_SliceLoader_GeometryReady,
     MessageType_SliceLoader_GeometryError,
     MessageType_SliceLoader_ImageReady,

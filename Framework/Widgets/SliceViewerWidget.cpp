@@ -525,6 +525,8 @@ namespace OrthancStone
 
       InvalidateAllLayers();   // TODO Removing this line avoid loading twice the image in WASM
     }
+
+    EmitMessage(DisplayedSliceMessage(*this, displayedSlice));
   }
 
 

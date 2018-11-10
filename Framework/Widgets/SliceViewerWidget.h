@@ -39,6 +39,26 @@ namespace OrthancStone
     typedef OriginMessage<MessageType_Widget_GeometryChanged, SliceViewerWidget> GeometryChangedMessage;
     typedef OriginMessage<MessageType_Widget_ContentChanged, SliceViewerWidget> ContentChangedMessage;
 
+    // TODO - Use this message in ReferenceLineSource
+    class DisplayedSliceMessage : public OriginMessage<MessageType_SliceViewerWidget_DisplayedSlice, SliceViewerWidget>
+    {
+    private:
+      const Slice& slice_;
+
+    public:
+      DisplayedSliceMessage(SliceViewerWidget& origin,
+                            const Slice& slice) :
+        OriginMessage(origin),
+        slice_(slice)
+      {
+      }
+
+      const Slice& GetSlice() const
+      {
+        return slice_;
+      }
+    };
+
   private:
     class Scene;
     

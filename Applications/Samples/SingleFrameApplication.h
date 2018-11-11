@@ -27,6 +27,7 @@
 #include "../../Framework/Widgets/SliceViewerWidget.h"
 
 #include <Core/Logging.h>
+#include <Core/OrthancException.h>
 
 #include <boost/math/constants/constants.hpp>
 

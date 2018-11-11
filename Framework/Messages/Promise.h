@@ -47,7 +47,8 @@ namespace OrthancStone {
     void Success(const IMessage& message)
     {
       // check the target is still alive in the broker
-      if (broker_.IsActive(successCallable_->GetObserver()))
+      if (successCallable_.get() != NULL &&
+          broker_.IsActive(*successCallable_->GetObserver()))
       {
         successCallable_->Apply(message);
       }
@@ -56,13 +57,14 @@ namespace OrthancStone {
     void Failure(const IMessage& message)
     {
       // check the target is still alive in the broker
-      if (broker_.IsActive(failureCallable_->GetObserver()))
+      if (failureCallable_.get() != NULL &&
+          broker_.IsActive(*failureCallable_->GetObserver()))
       {
         failureCallable_->Apply(message);
       }
     }
 
-    Promise& Then(ICallable* successCallable)
+    Promise& Then(ICallable* successCallable)   // Takes ownership
     {
       if (successCallable_.get() != NULL)
       {
@@ -72,7 +74,7 @@ namespace OrthancStone {
       return *this;
     }
 
-    Promise& Else(ICallable* failureCallable)
+    Promise& Else(ICallable* failureCallable)   // Takes ownership
     {
       if (failureCallable_.get() != NULL)
       {
@@ -81,8 +83,5 @@ namespace OrthancStone {
       failureCallable_.reset(failureCallable);
       return *this;
     }
-
   };
-
-
 }

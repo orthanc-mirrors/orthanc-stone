@@ -22,12 +22,12 @@
 #pragma once
 
 #include "boost/noncopyable.hpp"
+
 #include <set>
 
 namespace OrthancStone
 {
   class IObserver;
-  class IObservable;
 
   /*
    * This is a central message broker.  It keeps track of all observers and knows
@@ -36,25 +36,23 @@ namespace OrthancStone
    */
   class MessageBroker : public boost::noncopyable
   {
-
-    std::set<IObserver*> activeObservers_;  // the list of observers that are currently alive (that have not been deleted)
+  private:
+    std::set<const IObserver*> activeObservers_;  // the list of observers that are currently alive (that have not been deleted)
 
   public:
-
-    void Register(IObserver& observer)
+    void Register(const IObserver& observer)
     {
       activeObservers_.insert(&observer);
     }
 
-    void Unregister(IObserver& observer)
+    void Unregister(const IObserver& observer)
     {
       activeObservers_.erase(&observer);
     }
 
-    bool IsActive(IObserver* observer)
+    bool IsActive(const IObserver& observer)
     {
-      return activeObservers_.find(observer) != activeObservers_.end();
+      return activeObservers_.find(&observer) != activeObservers_.end();
     }
   };
-
 }

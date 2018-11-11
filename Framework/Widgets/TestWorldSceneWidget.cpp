@@ -21,6 +21,8 @@
 
 #include "TestWorldSceneWidget.h"
 
+#include <Core/OrthancException.h>
+
 #include <math.h>
 #include <stdio.h>
 

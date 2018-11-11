@@ -34,6 +34,7 @@
 #include <Core/Images/PamWriter.h>
 #include <Core/Images/PngWriter.h>
 #include <Core/Logging.h>
+#include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 #include <Plugins/Samples/Common/FullOrthancDataset.h>

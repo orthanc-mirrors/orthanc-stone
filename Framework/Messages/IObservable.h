@@ -48,60 +48,19 @@ namespace OrthancStone
     {
     }
 
-    virtual ~IObservable()
-    {
-      // delete all callables (this will also unregister them from the broker)
-      for (Callables::const_iterator it = callables_.begin();
-           it != callables_.end(); ++it)
-      {
-        for (std::set<ICallable*>::const_iterator
-               it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-        {
-          delete *it2;
-        }
-      }
-
-      // unregister the forwarders but don't delete them (they'll be deleted by the observable they are observing as any other callable)
-      for (Forwarders::iterator it = forwarders_.begin();
-           it != forwarders_.end(); ++it)
-      {
-        IMessageForwarder* fw = *it;
-        broker_.Unregister(dynamic_cast<IObserver&>(*fw));
-      }
-    }
-
-    void RegisterObserverCallback(ICallable* callable)
-    {
-      MessageType messageType = callable->GetMessageType();
-
-      callables_[messageType].insert(callable);
-    }
-
-    void EmitMessage(const IMessage& message)
-    {
-      Callables::const_iterator found = callables_.find(message.GetType());
-
-      if (found != callables_.end())
-      {
-        for (std::set<ICallable*>::const_iterator
-               it = found->second.begin(); it != found->second.end(); ++it)
-        {
-          if (broker_.IsActive((*it)->GetObserver()))
-          {
-            (*it)->Apply(message);
-          }
-        }
-      }
-    }
-
-    void RegisterForwarder(IMessageForwarder* forwarder)
-    {
-      forwarders_.insert(forwarder);
-    }
+    virtual ~IObservable();
 
     MessageBroker& GetBroker() const
     {
       return broker_;
     }
+
+    // Takes ownsership
+    void RegisterObserverCallback(ICallable* callable);
+
+    void EmitMessage(const IMessage& message);
+
+    // Takes ownsership
+    void RegisterForwarder(IMessageForwarder* forwarder);
   };
 }

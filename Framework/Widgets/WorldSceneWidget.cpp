@@ -25,6 +25,7 @@
 #include "ZoomMouseTracker.h"
 
 #include <Core/Logging.h>
+#include <Core/OrthancException.h>
 
 #include <math.h>
 #include <memory>

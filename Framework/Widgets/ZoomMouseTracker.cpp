@@ -22,6 +22,7 @@
 #include "ZoomMouseTracker.h"
 
 #include <Core/Logging.h>
+#include <Core/OrthancException.h>
 
 namespace OrthancStone
 {

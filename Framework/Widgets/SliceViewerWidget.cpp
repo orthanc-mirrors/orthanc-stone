@@ -26,6 +26,7 @@
 #include "Framework/Layers/FrameRenderer.h"
 
 #include <Core/Logging.h>
+#include <Core/OrthancException.h>
 
 #include <boost/math/constants/constants.hpp>
 

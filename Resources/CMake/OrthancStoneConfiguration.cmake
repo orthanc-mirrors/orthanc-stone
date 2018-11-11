@@ -297,6 +297,7 @@ list(APPEND ORTHANC_STONE_SOURCES
 
   ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObservable.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IObservable.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IObserver.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageBroker.h

@@ -24,7 +24,6 @@
 #include "CairoWidget.h"
 #include "IWorldSceneInteractor.h"
 
-#include "../Toolbox/ObserversRegistry.h"
 #include "../Toolbox/ViewportGeometry.h"
 
 namespace OrthancStone

@@ -23,21 +23,27 @@
 
 #include "../Toolbox/DicomStructureSet.h"
 #include "../Toolbox/OrthancApiClient.h"
-#include "VolumeLoaderBase.h"
+#include "IVolumeLoader.h"
 
 namespace OrthancStone
 {
   class StructureSetLoader :
-    public VolumeLoaderBase,
-    public OrthancStone::IObserver
+    public IVolumeLoader,
+    public IObserver
   {
   private:
-
-    OrthancApiClient&                      orthanc_;
+    OrthancApiClient&                 orthanc_;
     std::auto_ptr<DicomStructureSet>  structureSet_;
 
+    void OnReferencedSliceLoaded(const OrthancApiClient::JsonResponseReadyMessage& message);
+
+    void OnStructureSetLoaded(const OrthancApiClient::JsonResponseReadyMessage& message);
+
+    void OnLookupCompleted(const OrthancApiClient::JsonResponseReadyMessage& message);
+
   public:
-    StructureSetLoader(MessageBroker& broker, OrthancApiClient& orthanc);
+    StructureSetLoader(MessageBroker& broker,
+                       OrthancApiClient& orthanc);
 
     void ScheduleLoadInstance(const std::string& instance);
 
@@ -47,12 +53,5 @@ namespace OrthancStone
     }
 
     DicomStructureSet& GetStructureSet();
-
-  protected:
-    void OnReferencedSliceLoaded(const OrthancApiClient::JsonResponseReadyMessage& message);
-
-    void OnStructureSetLoaded(const OrthancApiClient::JsonResponseReadyMessage& message);
-
-    void OnLookupCompleted(const OrthancApiClient::JsonResponseReadyMessage& message);
   };
 }

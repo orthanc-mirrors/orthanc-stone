@@ -83,10 +83,10 @@ namespace OrthancStone
     virtual void DoAnimation() = 0;
 
     // Should only be called from IWidget
+    // TODO Why should this be virtual?
     virtual void NotifyContentChanged()
     {
-      ViewportChangedMessage message(*this);
-      EmitMessage(message);
+      EmitMessage(ViewportChangedMessage(*this));
     }
   };
 }

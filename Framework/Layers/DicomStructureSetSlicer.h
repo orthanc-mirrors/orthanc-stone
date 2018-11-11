@@ -28,7 +28,7 @@ namespace OrthancStone
 {
   class DicomStructureSetSlicer :
     public IVolumeSlicer,
-    private IVolumeLoader::IObserver
+    public IObserver
   {
   private:
     class Renderer;
@@ -36,13 +36,14 @@ namespace OrthancStone
 
     StructureSetLoader& loader_;
 
-  public:
-    DicomStructureSetSlicer(MessageBroker& broker, StructureSetLoader& loader) :
-      IVolumeSlicer(broker),
-      loader_(loader)
+    void OnStructureSetLoaded(const IVolumeLoader::ContentChangedMessage& message)
     {
-      loader_.Register(*this);
+      EmitMessage(IVolumeSlicer::ContentChangedMessage(*this));
     }
+
+  public:
+    DicomStructureSetSlicer(MessageBroker& broker,
+                            StructureSetLoader& loader);
 
     virtual bool GetExtent(std::vector<Vector>& points,
                            const CoordinateSystem3D& viewportPlane)

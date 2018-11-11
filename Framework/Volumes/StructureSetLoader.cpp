@@ -27,9 +27,10 @@
 
 namespace OrthancStone
 {
-  
-  StructureSetLoader::StructureSetLoader(MessageBroker& broker, OrthancApiClient& orthanc) :
-    OrthancStone::IObserver(broker),
+  StructureSetLoader::StructureSetLoader(MessageBroker& broker,
+                                         OrthancApiClient& orthanc) :
+    IVolumeLoader(broker),
+    IObserver(broker),
     orthanc_(orthanc)
   {
   }
@@ -43,8 +44,9 @@ namespace OrthancStone
     MessagingToolbox::ConvertDataset(slice, dataset);
     structureSet_->AddReferencedSlice(slice);
 
-    VolumeLoaderBase::NotifyContentChange();
+    EmitMessage(ContentChangedMessage(*this));
   }
+  
 
   void StructureSetLoader::OnStructureSetLoaded(const OrthancApiClient::JsonResponseReadyMessage& message)
   {
@@ -61,9 +63,10 @@ namespace OrthancStone
                             new Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &StructureSetLoader::OnLookupCompleted));
     }
 
-    VolumeLoaderBase::NotifyGeometryReady();
+    EmitMessage(GeometryReadyMessage(*this));
   }
 
+  
   void StructureSetLoader::OnLookupCompleted(const OrthancApiClient::JsonResponseReadyMessage& message)
   {
     const Json::Value& lookup = message.GetJson();
@@ -84,6 +87,7 @@ namespace OrthancStone
                           new Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &StructureSetLoader::OnReferencedSliceLoaded));
   }
 
+  
   void StructureSetLoader::ScheduleLoadInstance(const std::string& instance)
   {
     if (structureSet_.get() != NULL)

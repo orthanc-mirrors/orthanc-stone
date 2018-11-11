@@ -136,6 +136,10 @@ namespace OrthancStone
     MessageType_SliceLoader_ImageReady,
     MessageType_SliceLoader_ImageError,
 
+    MessageType_VolumeLoader_GeometryReady,
+    MessageType_VolumeLoader_GeometryError,
+    MessageType_VolumeLoader_ContentChanged,  // Content of several slices in the loader has changed
+
     MessageType_HttpRequestSuccess,
     MessageType_HttpRequestError,
 

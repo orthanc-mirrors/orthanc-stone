@@ -147,6 +147,18 @@ namespace OrthancStone
   };
   
 
+  DicomStructureSetSlicer::DicomStructureSetSlicer(MessageBroker& broker,
+                                                   StructureSetLoader& loader) :
+    IVolumeSlicer(broker),
+    IObserver(broker),
+    loader_(loader)
+  {
+    loader_.RegisterObserverCallback(
+      new Callable<DicomStructureSetSlicer, StructureSetLoader::ContentChangedMessage>
+      (*this, &DicomStructureSetSlicer::OnStructureSetLoaded));
+  }
+
+
   void DicomStructureSetSlicer::ScheduleLayerCreation(const CoordinateSystem3D& viewportPlane)
   {
     if (loader_.HasStructureSet())

@@ -21,33 +21,20 @@
 
 #pragma once
 
-#include <boost/noncopyable.hpp>
+#include "../Messages/IObservable.h"
 
 namespace OrthancStone
 {
-  class IVolumeLoader : public boost::noncopyable
+  class IVolumeLoader : public IObservable
   {
   public:
-    class IObserver : public boost::noncopyable
-    {
-    public:
-      virtual ~IObserver()
-      {
-      }
-      
-      virtual void NotifyGeometryReady(const IVolumeLoader& loader) = 0;
-      
-      virtual void NotifyGeometryError(const IVolumeLoader& loader) = 0;
-      
-      // Triggered if the content of several slices in the loader has
-      // changed
-      virtual void NotifyContentChange(const IVolumeLoader& loader) = 0;
-    };
-    
-    virtual ~IVolumeLoader()
+    typedef OriginMessage<MessageType_VolumeLoader_GeometryReady, IVolumeLoader> GeometryReadyMessage;
+    typedef OriginMessage<MessageType_VolumeLoader_GeometryError, IVolumeLoader> GeometryErrorMessage;
+    typedef OriginMessage<MessageType_VolumeLoader_ContentChanged, IVolumeLoader> ContentChangedMessage;
+
+    IVolumeLoader(MessageBroker& broker) :
+      IObservable(broker)
     {
     }
-
-    virtual void Register(IObserver& observer) = 0;
   };
 }

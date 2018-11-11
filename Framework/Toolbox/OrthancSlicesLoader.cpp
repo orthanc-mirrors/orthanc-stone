@@ -175,14 +175,16 @@ namespace OrthancStone
   void OrthancSlicesLoader::NotifySliceImageSuccess(const Operation& operation,
                                                     const Orthanc::ImageAccessor& image)
   {
-    OrthancSlicesLoader::SliceImageReadyMessage msg(operation.GetSliceIndex(), operation.GetSlice(), image, operation.GetQuality());
+    OrthancSlicesLoader::SliceImageReadyMessage msg
+      (*this, operation.GetSliceIndex(), operation.GetSlice(), image, operation.GetQuality());
     EmitMessage(msg);
   }
   
   
   void OrthancSlicesLoader::NotifySliceImageError(const Operation& operation)
   {
-    OrthancSlicesLoader::SliceImageErrorMessage msg(operation.GetSliceIndex(), operation.GetSlice(), operation.GetQuality());
+    OrthancSlicesLoader::SliceImageErrorMessage msg
+      (*this, operation.GetSliceIndex(), operation.GetSlice(), operation.GetQuality());
     EmitMessage(msg);
   }
   

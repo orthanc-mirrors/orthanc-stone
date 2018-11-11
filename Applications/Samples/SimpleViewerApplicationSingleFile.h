@@ -407,7 +407,8 @@ namespace OrthancStone
 
       void OnWidgetGeometryChanged(const SliceViewerWidget::GeometryChangedMessage& message)
       {
-        message.GetOrigin().FitContent();
+        // TODO: The "const_cast" could probably be replaced by "mainWidget"
+        const_cast<SliceViewerWidget&>(message.GetOrigin()).FitContent();
       }
 
       void SelectSeriesInMainViewport(const std::string& seriesId)

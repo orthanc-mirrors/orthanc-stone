@@ -45,7 +45,6 @@ Platform-specific
 Source code cosmetics
 ---------------------
 
-* Remove #include "OrthancException.h" in "ObserversRegistry.h"
 * Use "SampleInteractor::AddWidget()" in all samples
 
 

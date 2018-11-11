@@ -106,18 +106,20 @@ namespace OrthancStone
     }
 
 
-    void OnSliceGeometryReady(const OrthancSlicesLoader& loader)
+    void OnSliceGeometryReady(const OrthancSlicesLoader::SliceGeometryReadyMessage& message)
     {
-      if (loader.GetSliceCount() == 0)
+      assert(&message.GetOrigin() == &loader_);
+      
+      if (loader_.GetSliceCount() == 0)
       {
         LOG(ERROR) << "Empty volume image";
         EmitMessage(ISlicedVolume::GeometryErrorMessage(*this));
         return;
       }
 
-      for (size_t i = 1; i < loader.GetSliceCount(); i++)
+      for (size_t i = 1; i < loader_.GetSliceCount(); i++)
       {
-        if (!IsCompatible(loader.GetSlice(0), loader.GetSlice(i)))
+        if (!IsCompatible(loader_.GetSlice(0), loader_.GetSlice(i)))
         {
           EmitMessage(ISlicedVolume::GeometryErrorMessage(*this));
           return;
@@ -126,9 +128,9 @@ namespace OrthancStone
 
       double spacingZ;
 
-      if (loader.GetSliceCount() > 1)
+      if (loader_.GetSliceCount() > 1)
       {
-        spacingZ = GetDistance(loader.GetSlice(0), loader.GetSlice(1));
+        spacingZ = GetDistance(loader_.GetSlice(0), loader_.GetSlice(1));
       }
       else
       {
@@ -137,9 +139,9 @@ namespace OrthancStone
         spacingZ = 1;
       }
 
-      for (size_t i = 1; i < loader.GetSliceCount(); i++)
+      for (size_t i = 1; i < loader_.GetSliceCount(); i++)
       {
-        if (!LinearAlgebra::IsNear(spacingZ, GetDistance(loader.GetSlice(i - 1), loader.GetSlice(i)),
+        if (!LinearAlgebra::IsNear(spacingZ, GetDistance(loader_.GetSlice(i - 1), loader_.GetSlice(i)),
                                    0.001 /* this is expressed in mm */))
         {
           LOG(ERROR) << "The distance between successive slices is not constant in a volume image";
@@ -148,20 +150,20 @@ namespace OrthancStone
         }
       }
 
-      unsigned int width = loader.GetSlice(0).GetWidth();
-      unsigned int height = loader.GetSlice(0).GetHeight();
-      Orthanc::PixelFormat format = loader.GetSlice(0).GetConverter().GetExpectedPixelFormat();
+      unsigned int width = loader_.GetSlice(0).GetWidth();
+      unsigned int height = loader_.GetSlice(0).GetHeight();
+      Orthanc::PixelFormat format = loader_.GetSlice(0).GetConverter().GetExpectedPixelFormat();
       LOG(INFO) << "Creating a volume image of size " << width << "x" << height
-                << "x" << loader.GetSliceCount() << " in " << Orthanc::EnumerationToString(format);
+                << "x" << loader_.GetSliceCount() << " in " << Orthanc::EnumerationToString(format);
 
-      image_.reset(new ImageBuffer3D(format, width, height, loader.GetSliceCount(), computeRange_));
-      image_->SetAxialGeometry(loader.GetSlice(0).GetGeometry());
-      image_->SetVoxelDimensions(loader.GetSlice(0).GetPixelSpacingX(),
-                                 loader.GetSlice(0).GetPixelSpacingY(), spacingZ);
+      image_.reset(new ImageBuffer3D(format, width, height, loader_.GetSliceCount(), computeRange_));
+      image_->SetAxialGeometry(loader_.GetSlice(0).GetGeometry());
+      image_->SetVoxelDimensions(loader_.GetSlice(0).GetPixelSpacingX(),
+                                 loader_.GetSlice(0).GetPixelSpacingY(), spacingZ);
       image_->Clear();
 
-      downloadStack_.reset(new DownloadStack(loader.GetSliceCount()));
-      pendingSlices_ = loader.GetSliceCount();
+      downloadStack_.reset(new DownloadStack(loader_.GetSliceCount()));
+      pendingSlices_ = loader_.GetSliceCount();
 
       for (unsigned int i = 0; i < 4; i++)  // Limit to 4 simultaneous downloads
       {
@@ -173,18 +175,27 @@ namespace OrthancStone
       EmitMessage(ISlicedVolume::GeometryReadyMessage(*this));
     }
 
-    void OnSliceImageReady(const OrthancSlicesLoader& loader,
-                           unsigned int sliceIndex,
-                           const Slice& slice,
-                           const Orthanc::ImageAccessor& image,
-                           SliceImageQuality quality)
+    
+    void OnSliceGeometryError(const OrthancSlicesLoader::SliceGeometryErrorMessage& message)
     {
+      assert(&message.GetOrigin() == &loader_);
+
+      LOG(ERROR) << "Unable to download a volume image";
+      EmitMessage(ISlicedVolume::GeometryErrorMessage(*this));
+    }
+
+    
+    void OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message)
+    {
+      assert(&message.GetOrigin() == &loader_);
+
       {
-        ImageBuffer3D::SliceWriter writer(*image_, VolumeProjection_Axial, sliceIndex);
-        Orthanc::ImageProcessing::Copy(writer.GetAccessor(), image);
+        ImageBuffer3D::SliceWriter writer(*image_, VolumeProjection_Axial, message.GetSliceIndex());
+        Orthanc::ImageProcessing::Copy(writer.GetAccessor(), message.GetImage());
       }
 
-      EmitMessage(ISlicedVolume::SliceContentChangedMessage(*this, sliceIndex, slice));
+      EmitMessage(ISlicedVolume::SliceContentChangedMessage
+                  (*this, message.GetSliceIndex(), message.GetSlice()));
 
       if (pendingSlices_ == 1)
       {
@@ -199,44 +210,15 @@ namespace OrthancStone
       ScheduleSliceDownload();
     }
 
-    virtual void HandleMessage(const IObservable& from, const IMessage& message)
+    
+    void OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message)
     {
-      switch (message.GetType())
-      {
-        case MessageType_SliceLoader_GeometryReady:
-          OnSliceGeometryReady(dynamic_cast<const OrthancSlicesLoader&>(from));
-          break;
-        
-        case MessageType_SliceLoader_GeometryError:
-          LOG(ERROR) << "Unable to download a volume image";
-          EmitMessage(ISlicedVolume::GeometryErrorMessage(*this));
-          break;
-        
-        case MessageType_SliceLoader_ImageReady:
-        {
-          const OrthancSlicesLoader::SliceImageReadyMessage& msg =
-            dynamic_cast<const OrthancSlicesLoader::SliceImageReadyMessage&>(message);
-          OnSliceImageReady(dynamic_cast<const OrthancSlicesLoader&>(from),
-                            msg.GetSliceIndex(),
-                            msg.GetSlice(),
-                            msg.GetImage(),
-                            msg.GetEffectiveQuality());
-          break;
-        }
-      
-        case MessageType_SliceLoader_ImageError:
-        {
-          const OrthancSlicesLoader::SliceImageErrorMessage& msg =
-            dynamic_cast<const OrthancSlicesLoader::SliceImageErrorMessage&>(message);
-          LOG(ERROR) << "Cannot download slice " << msg.GetSliceIndex() << " in a volume image";
-          ScheduleSliceDownload();
-          break;
-        }
-      
-        default:
-          VLOG("unhandled message type" << message.GetType());
-      }
+      assert(&message.GetOrigin() == &loader_);
+
+      LOG(ERROR) << "Cannot download slice " << message.GetSliceIndex() << " in a volume image";
+      ScheduleSliceDownload();
     }
+
 
   public:
     OrthancVolumeImage(MessageBroker& broker,
@@ -248,7 +230,21 @@ namespace OrthancStone
       computeRange_(computeRange),
       pendingSlices_(0)
     {
-      // TODO: replace with new callables loader_.RegisterObserver(*this);
+      loader_.RegisterObserverCallback(
+        new Callable<OrthancVolumeImage, OrthancSlicesLoader::SliceGeometryReadyMessage>
+        (*this, &OrthancVolumeImage::OnSliceGeometryReady));
+
+      loader_.RegisterObserverCallback(
+        new Callable<OrthancVolumeImage, OrthancSlicesLoader::SliceGeometryErrorMessage>
+        (*this, &OrthancVolumeImage::OnSliceGeometryError));
+
+      loader_.RegisterObserverCallback(
+        new Callable<OrthancVolumeImage, OrthancSlicesLoader::SliceImageReadyMessage>
+        (*this, &OrthancVolumeImage::OnSliceImageReady));
+
+      loader_.RegisterObserverCallback(
+        new Callable<OrthancVolumeImage, OrthancSlicesLoader::SliceImageErrorMessage>
+        (*this, &OrthancVolumeImage::OnSliceImageError));
     }
 
     void ScheduleLoadSeries(const std::string& seriesId)

@@ -39,7 +39,8 @@ namespace OrthancStone
     typedef OriginMessage<MessageType_SliceLoader_GeometryReady, OrthancSlicesLoader> SliceGeometryReadyMessage;
     typedef OriginMessage<MessageType_SliceLoader_GeometryError, OrthancSlicesLoader> SliceGeometryErrorMessage;
 
-    class SliceImageReadyMessage : public BaseMessage<MessageType_SliceLoader_ImageReady>
+    class SliceImageReadyMessage :
+      public OriginMessage<MessageType_SliceLoader_ImageReady, OrthancSlicesLoader>
     {
     private:
       unsigned int                   sliceIndex_;
@@ -48,10 +49,12 @@ namespace OrthancStone
       SliceImageQuality              effectiveQuality_;
 
     public:
-      SliceImageReadyMessage(unsigned int sliceIndex,
+      SliceImageReadyMessage(const OrthancSlicesLoader& origin,
+                             unsigned int sliceIndex,
                              const Slice& slice,
                              const Orthanc::ImageAccessor& image,
                              SliceImageQuality effectiveQuality) :
+        OriginMessage(origin),
         sliceIndex_(sliceIndex),
         slice_(slice),
         image_(image),
@@ -81,7 +84,8 @@ namespace OrthancStone
     };
     
 
-    class SliceImageErrorMessage : public BaseMessage<MessageType_SliceLoader_ImageError>
+    class SliceImageErrorMessage : 
+      public OriginMessage<MessageType_SliceLoader_ImageError, OrthancSlicesLoader>
     {
     private:
       const Slice&       slice_;
@@ -89,9 +93,11 @@ namespace OrthancStone
       SliceImageQuality  effectiveQuality_;
 
     public:
-      SliceImageErrorMessage(unsigned int sliceIndex,
+      SliceImageErrorMessage(const OrthancSlicesLoader& origin,
+                             unsigned int sliceIndex,
                              const Slice& slice,
                              SliceImageQuality effectiveQuality) :
+        OriginMessage(origin),
         slice_(slice),
         sliceIndex_(sliceIndex),
         effectiveQuality_(effectiveQuality)

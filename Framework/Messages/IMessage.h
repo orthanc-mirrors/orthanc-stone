@@ -89,16 +89,16 @@ namespace OrthancStone
   class OriginMessage : public BaseMessage<type>
   {
   private:
-    TOrigin& origin_;
+    const TOrigin& origin_;
 
   public:
-    OriginMessage(TOrigin& origin) :
+    OriginMessage(const TOrigin& origin) :
       BaseMessage<type>(),
       origin_(origin)
     {
     }
 
-    TOrigin& GetOrigin() const
+    const TOrigin& GetOrigin() const
     {
       return origin_;
     }

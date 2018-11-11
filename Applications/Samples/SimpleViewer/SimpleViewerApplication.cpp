@@ -170,7 +170,8 @@ namespace SimpleViewer
 
   void SimpleViewerApplication::OnWidgetGeometryChanged(const SliceViewerWidget::GeometryChangedMessage& message)
   {
-    message.GetOrigin().FitContent();
+    // TODO: The "const_cast" could probably be replaced by "mainWidget_"
+    const_cast<SliceViewerWidget&>(message.GetOrigin()).FitContent();
   }
 
   void SimpleViewerApplication::SelectSeriesInMainViewport(const std::string& seriesId)

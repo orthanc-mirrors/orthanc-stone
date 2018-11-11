@@ -224,7 +224,8 @@ namespace OrthancStone
 
   void SmartLoader::OnLayerGeometryReady(const IVolumeSlicer::GeometryReadyMessage& message)
   {
-    DicomSeriesVolumeSlicer& source = dynamic_cast<DicomSeriesVolumeSlicer&>(message.GetOrigin());
+    const DicomSeriesVolumeSlicer& source =
+      dynamic_cast<const DicomSeriesVolumeSlicer&>(message.GetOrigin());
 
     // save/replace the slice in cache
     const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount()
@@ -269,7 +270,9 @@ namespace OrthancStone
 
   void SmartLoader::OnLayerReady(const IVolumeSlicer::LayerReadyMessage& message)
   {
-    DicomSeriesVolumeSlicer& source = dynamic_cast<DicomSeriesVolumeSlicer&>(message.GetOrigin());
+    const DicomSeriesVolumeSlicer& source =
+      dynamic_cast<const DicomSeriesVolumeSlicer&>(message.GetOrigin());
+    
     const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount() ?
     std::string sliceKeyId = (slice.GetOrthancInstanceId() + ":" + 
                               boost::lexical_cast<std::string>(slice.GetFrame()));

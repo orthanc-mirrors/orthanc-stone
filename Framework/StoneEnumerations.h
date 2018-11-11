@@ -140,6 +140,12 @@ namespace OrthancStone
     MessageType_VolumeLoader_GeometryError,
     MessageType_VolumeLoader_ContentChanged,  // Content of several slices in the loader has changed
 
+    MessageType_SlicedVolume_GeometryReady,
+    MessageType_SlicedVolume_GeometryError,
+    MessageType_SlicedVolume_VolumeReady,
+    MessageType_SlicedVolume_ContentChanged,
+    MessageType_SlicedVolume_SliceContentChanged,
+
     MessageType_HttpRequestSuccess,
     MessageType_HttpRequestError,
 

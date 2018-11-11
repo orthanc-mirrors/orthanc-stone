@@ -28,11 +28,12 @@
 #include "Toolbox/GeometryToolbox.h"
 #include "Toolbox/OrthancSlicesLoader.h"
 #include "Volumes/ImageBuffer3D.h"
-#include "Volumes/SlicedVolumeBase.h"
+#include "Volumes/ISlicedVolume.h"
 #include "Widgets/SliceViewerWidget.h"
 
 #include <Core/Logging.h>
 #include <Core/Images/ImageProcessing.h>
+#include <Core/OrthancException.h>
 
 #include <boost/math/special_functions/round.hpp>
 
@@ -41,8 +42,8 @@ namespace OrthancStone
 {
   // TODO: Handle errors while loading
   class OrthancVolumeImage :
-    public SlicedVolumeBase,
-    public OrthancStone::IObserver
+    public ISlicedVolume,
+    public IObserver
   {
   private:
     OrthancSlicesLoader           loader_;
@@ -110,7 +111,7 @@ namespace OrthancStone
       if (loader.GetSliceCount() == 0)
       {
         LOG(ERROR) << "Empty volume image";
-        SlicedVolumeBase::NotifyGeometryError();
+        EmitMessage(ISlicedVolume::GeometryErrorMessage(*this));
         return;
       }
 
@@ -118,7 +119,7 @@ namespace OrthancStone
       {
         if (!IsCompatible(loader.GetSlice(0), loader.GetSlice(i)))
         {
-          SlicedVolumeBase::NotifyGeometryError();
+          EmitMessage(ISlicedVolume::GeometryErrorMessage(*this));
           return;
         }
       }
@@ -142,7 +143,7 @@ namespace OrthancStone
                                    0.001 /* this is expressed in mm */))
         {
           LOG(ERROR) << "The distance between successive slices is not constant in a volume image";
-          SlicedVolumeBase::NotifyGeometryError();
+          EmitMessage(ISlicedVolume::GeometryErrorMessage(*this));
           return;
         }
       }
@@ -169,25 +170,25 @@ namespace OrthancStone
 
       // TODO Check the DicomFrameConverter are constant
 
-      SlicedVolumeBase::NotifyGeometryReady();
+      EmitMessage(ISlicedVolume::GeometryReadyMessage(*this));
     }
 
-    virtual void OnSliceImageReady(const OrthancSlicesLoader& loader,
-                                   unsigned int sliceIndex,
-                                   const Slice& slice,
-                                   const Orthanc::ImageAccessor& image,
-                                   SliceImageQuality quality)
+    void OnSliceImageReady(const OrthancSlicesLoader& loader,
+                           unsigned int sliceIndex,
+                           const Slice& slice,
+                           const Orthanc::ImageAccessor& image,
+                           SliceImageQuality quality)
     {
       {
         ImageBuffer3D::SliceWriter writer(*image_, VolumeProjection_Axial, sliceIndex);
         Orthanc::ImageProcessing::Copy(writer.GetAccessor(), image);
       }
 
-      SlicedVolumeBase::NotifySliceContentChange(sliceIndex, slice);
+      EmitMessage(ISlicedVolume::SliceContentChangedMessage(*this, sliceIndex, slice));
 
       if (pendingSlices_ == 1)
       {
-        SlicedVolumeBase::NotifyVolumeReady();
+        EmitMessage(ISlicedVolume::VolumeReadyMessage(*this));
         pendingSlices_ = 0;
       }
       else if (pendingSlices_ > 1)
@@ -208,7 +209,7 @@ namespace OrthancStone
         
         case MessageType_SliceLoader_GeometryError:
           LOG(ERROR) << "Unable to download a volume image";
-          SlicedVolumeBase::NotifyGeometryError();
+          EmitMessage(ISlicedVolume::GeometryErrorMessage(*this));
           break;
         
         case MessageType_SliceLoader_ImageReady:
@@ -241,7 +242,8 @@ namespace OrthancStone
     OrthancVolumeImage(MessageBroker& broker,
                        OrthancApiClient& orthanc,
                        bool computeRange) :
-      OrthancStone::IObserver(broker),
+      ISlicedVolume(broker),
+      IObserver(broker),
       loader_(broker, orthanc),
       computeRange_(computeRange),
       pendingSlices_(0)
@@ -495,7 +497,7 @@ namespace OrthancStone
 
   class VolumeImageMPRSlicer :
     public IVolumeSlicer,
-    private ISlicedVolume::IObserver
+    public IObserver
   {
   private:
     class RendererFactory : public LayerReadyMessage::IRendererFactory
@@ -532,10 +534,11 @@ namespace OrthancStone
     {
       return axialGeometry_.get() != NULL;
     }
-
     
-    virtual void NotifyGeometryReady(const ISlicedVolume& volume) ORTHANC_OVERRIDE
+    void OnGeometryReady(const ISlicedVolume::GeometryReadyMessage& message)
     {
+      assert(&message.GetOrigin() == &volume_);
+      
       // These 3 values are only used to speed up the IVolumeSlicer
       axialGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Axial));
       coronalGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Coronal));
@@ -544,28 +547,28 @@ namespace OrthancStone
       EmitMessage(IVolumeSlicer::GeometryReadyMessage(*this));
     }
 
-    virtual void NotifyGeometryError(const ISlicedVolume& volume) ORTHANC_OVERRIDE
+    void OnGeometryError(const ISlicedVolume::GeometryErrorMessage& message)
     {
+      assert(&message.GetOrigin() == &volume_);
+      
       EmitMessage(IVolumeSlicer::GeometryErrorMessage(*this));
     }
 
-    virtual void NotifyContentChange(const ISlicedVolume& volume) ORTHANC_OVERRIDE
+    void OnContentChanged(const ISlicedVolume::ContentChangedMessage& message)
     {
+      assert(&message.GetOrigin() == &volume_);
+      
       EmitMessage(IVolumeSlicer::ContentChangedMessage(*this));
     }
 
-    virtual void NotifySliceContentChange(const ISlicedVolume& volume,
-                                          const size_t& sliceIndex,
-                                          const Slice& slice) ORTHANC_OVERRIDE
+    void OnSliceContentChanged(const ISlicedVolume::SliceContentChangedMessage& message)
     {
-      //IVolumeSlicer::NotifySliceContentChange(slice);
+      assert(&message.GetOrigin() == &volume_);
+
+      //IVolumeSlicer::OnSliceContentChange(slice);
 
       // TODO Improve this?
       EmitMessage(IVolumeSlicer::ContentChangedMessage(*this));
-    }
-
-    virtual void NotifyVolumeReady(const ISlicedVolume& volume) ORTHANC_OVERRIDE
-    {
     }
 
     const VolumeImageGeometry& GetProjectionGeometry(VolumeProjection projection)
@@ -629,13 +632,24 @@ namespace OrthancStone
     VolumeImageMPRSlicer(MessageBroker& broker, 
                          OrthancVolumeImage&  volume) :
       IVolumeSlicer(broker),
+      IObserver(broker),
       volume_(volume)
     {
-      volume_.Register(*this);
-    }
+      volume_.RegisterObserverCallback(
+        new Callable<VolumeImageMPRSlicer, ISlicedVolume::GeometryReadyMessage>
+        (*this, &VolumeImageMPRSlicer::OnGeometryReady));
 
-    virtual ~VolumeImageMPRSlicer()
-    {
+      volume_.RegisterObserverCallback(
+        new Callable<VolumeImageMPRSlicer, ISlicedVolume::GeometryErrorMessage>
+        (*this, &VolumeImageMPRSlicer::OnGeometryError));
+
+      volume_.RegisterObserverCallback(
+        new Callable<VolumeImageMPRSlicer, ISlicedVolume::ContentChangedMessage>
+        (*this, &VolumeImageMPRSlicer::OnContentChanged));
+
+      volume_.RegisterObserverCallback(
+        new Callable<VolumeImageMPRSlicer, ISlicedVolume::SliceContentChangedMessage>
+        (*this, &VolumeImageMPRSlicer::OnSliceContentChanged));
     }
 
     virtual bool GetExtent(std::vector<Vector>& points,
@@ -702,44 +716,27 @@ namespace OrthancStone
 
   class VolumeImageInteractor :
     public IWorldSceneInteractor,
-    protected ISlicedVolume::IObserver
+    public IObserver
   {
   private:
-    SliceViewerWidget&                        widget_;
+    SliceViewerWidget&                  widget_;
     VolumeProjection                    projection_;
     std::auto_ptr<VolumeImageGeometry>  slices_;
     size_t                              slice_;
 
   protected:
-    virtual void NotifyGeometryReady(const ISlicedVolume& volume)
+    void OnGeometryReady(const ISlicedVolume::GeometryReadyMessage& message)
     {
       if (slices_.get() == NULL)
       {
-        const OrthancVolumeImage& image = dynamic_cast<const OrthancVolumeImage&>(volume);
+        const OrthancVolumeImage& image =
+          dynamic_cast<const OrthancVolumeImage&>(message.GetOrigin());
 
         slices_.reset(new VolumeImageGeometry(image, projection_));
         SetSlice(slices_->GetSliceCount() / 2);
 
         widget_.FitContent();
       }
-    }
-
-    virtual void NotifyGeometryError(const ISlicedVolume& volume)
-    {
-    }
-
-    virtual void NotifyContentChange(const ISlicedVolume& volume)
-    {
-    }
-
-    virtual void NotifySliceContentChange(const ISlicedVolume& volume,
-                                          const size_t& sliceIndex,
-                                          const Slice& slice)
-    {
-    }
-
-    virtual void NotifyVolumeReady(const ISlicedVolume& volume)
-    {
     }
 
     virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
@@ -801,14 +798,19 @@ namespace OrthancStone
     }
 
   public:
-    VolumeImageInteractor(OrthancVolumeImage& volume,
+    VolumeImageInteractor(MessageBroker& broker,
+                          OrthancVolumeImage& volume,
                           SliceViewerWidget& widget,
                           VolumeProjection projection) :
+      IObserver(broker),
       widget_(widget),
       projection_(projection)
     {
-      volume.Register(*this);
       widget.SetInteractor(*this);
+
+      volume.RegisterObserverCallback(
+        new Callable<VolumeImageInteractor, ISlicedVolume::GeometryReadyMessage>
+        (*this, &VolumeImageInteractor::OnGeometryReady));
     }
 
     bool IsGeometryReady() const

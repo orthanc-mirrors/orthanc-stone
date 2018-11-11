@@ -21,44 +21,53 @@
 
 #pragma once
 
+#include "../Messages/IObservable.h"
 #include "../Toolbox/Slice.h"
 
 namespace OrthancStone
 {
-  class ISlicedVolume : public boost::noncopyable
+  class ISlicedVolume : public IObservable
   {
   public:
-    class IObserver : public boost::noncopyable
+    typedef OriginMessage<MessageType_SlicedVolume_ContentChanged, ISlicedVolume> ContentChangedMessage;
+    typedef OriginMessage<MessageType_SlicedVolume_GeometryError, ISlicedVolume> GeometryErrorMessage;
+    typedef OriginMessage<MessageType_SlicedVolume_GeometryReady, ISlicedVolume> GeometryReadyMessage;
+    typedef OriginMessage<MessageType_SlicedVolume_VolumeReady, ISlicedVolume> VolumeReadyMessage;
+
+    class SliceContentChangedMessage :
+      public OriginMessage<MessageType_SlicedVolume_SliceContentChanged, ISlicedVolume>
     {
+    private:
+      size_t        sliceIndex_;
+      const Slice&  slice_;
+      
     public:
-      virtual ~IObserver()
+      SliceContentChangedMessage(ISlicedVolume& origin,
+                                 size_t sliceIndex,
+                                 const Slice& slice) :
+        OriginMessage(origin),
+        sliceIndex_(sliceIndex),
+        slice_(slice)
       {
       }
 
-      virtual void NotifyGeometryReady(const ISlicedVolume& volume) = 0;
-      
-      virtual void NotifyGeometryError(const ISlicedVolume& volume) = 0;
-      
-      // Triggered if the content of several slices in the volume has
-      // changed
-      virtual void NotifyContentChange(const ISlicedVolume& volume) = 0;
+      size_t GetSliceIndex() const
+      {
+        return sliceIndex_;
+      }
 
-      // Triggered if the content of some individual slice in the
-      // source volume has changed
-      virtual void NotifySliceContentChange(const ISlicedVolume& volume,
-                                     const size_t& sliceIndex,
-                                     const Slice& slice) = 0;
-
-      // Triggered when the geometry *and* the content of the volume are available
-      virtual void NotifyVolumeReady(const ISlicedVolume& volume) = 0;
+      const Slice& GetSlice() const
+      {
+        return slice_;
+      }
     };
-    
-    virtual ~ISlicedVolume()
+
+
+    ISlicedVolume(MessageBroker& broker) :
+      IObservable(broker)
     {
     }
-
-    virtual void Register(IObserver& observer) = 0;
-
+    
     virtual size_t GetSliceCount() const = 0;
 
     virtual const Slice& GetSlice(size_t slice) const = 0;

@@ -28,7 +28,6 @@
 #include "../Framework/Toolbox/MessagingToolbox.h"
 #include "../Framework/Toolbox/OrthancSlicesLoader.h"
 #include "../Framework/Volumes/ImageBuffer3D.h"
-#include "../Framework/Volumes/SlicedVolumeBase.h"
 #include "../Platforms/Generic/OracleWebService.h"
 
 #include <Core/HttpClient.h>

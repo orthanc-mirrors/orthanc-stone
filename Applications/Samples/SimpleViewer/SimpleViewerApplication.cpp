@@ -104,7 +104,8 @@ namespace SimpleViewer
   {
     const Json::Value& response = message.GetJson();
 
-    if (response.isArray() && response.size() > 1)
+    if (response.isArray() &&
+        response.size() >= 1)
     {
       SelectStudy(response[0].asString());
     }
@@ -126,7 +127,9 @@ namespace SimpleViewer
   {
     const Json::Value& response = message.GetJson();
 
-    if (response.isObject() && response["Instances"].isArray() && response["Instances"].size() > 0)
+    if (response.isObject() &&
+        response["Instances"].isArray() &&
+        response["Instances"].size() > 0)
     {
       // keep track of all instances IDs
       const std::string& seriesId = response["ID"].asString();

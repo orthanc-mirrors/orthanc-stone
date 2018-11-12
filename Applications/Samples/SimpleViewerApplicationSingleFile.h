@@ -338,11 +338,13 @@ namespace OrthancStone
       {
         const Json::Value& response = message.GetJson();
 
-        if (response.isArray() && response.size() > 1)
+        if (response.isArray() &&
+            response.size() >= 1)
         {
           SelectStudy(response[0].asString());
         }
       }
+      
       void OnStudyReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
       {
         const Json::Value& response = message.GetJson();
@@ -402,6 +404,7 @@ namespace OrthancStone
 
       void SelectStudy(const std::string& studyId)
       {
+        LOG(INFO) << "Selecting study: " << studyId;
         orthancApiClient_->GetJsonAsync("/studies/" + studyId, new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyReceived));
       }
 

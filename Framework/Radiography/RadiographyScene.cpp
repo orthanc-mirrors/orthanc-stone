@@ -33,6 +33,8 @@
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 
+#include <boost/math/special_functions/round.hpp>
+
 
 namespace OrthancStone
 {

@@ -39,6 +39,9 @@
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 
+
+// Export using PAM is faster than using PNG, but requires Orthanc
+// core >= 1.4.3
 #define EXPORT_USING_PAM  1
 
 
@@ -48,13 +51,13 @@
 
 namespace OrthancStone
 {
-  class BitmapStack :
+  class RadiologyScene :
     public IObserver,
     public IObservable
   {
   public:
-    typedef OriginMessage<MessageType_Widget_GeometryChanged, BitmapStack> GeometryChangedMessage;
-    typedef OriginMessage<MessageType_Widget_ContentChanged, BitmapStack> ContentChangedMessage;
+    typedef OriginMessage<MessageType_Widget_GeometryChanged, RadiologyScene> GeometryChangedMessage;
+    typedef OriginMessage<MessageType_Widget_ContentChanged, RadiologyScene> ContentChangedMessage;
 
 
     enum Corner
@@ -67,8 +70,10 @@ namespace OrthancStone
 
 
 
-    class Bitmap : public boost::noncopyable
+    class Layer : public boost::noncopyable
     {
+      friend class RadiologyScene;
+      
     private:
       size_t        index_;
       bool          hasSize_;
@@ -187,8 +192,77 @@ namespace OrthancStone
       }
 
 
+      void SetIndex(size_t index)
+      {
+        index_ = index;
+      }
+
+      
+      bool Contains(double x,
+                    double y) const
+      {
+        ApplyTransform(x, y, transformInverse_);
+        
+        unsigned int cropX, cropY, cropWidth, cropHeight;
+        GetCrop(cropX, cropY, cropWidth, cropHeight);
+
+        return (x >= cropX && x <= cropX + cropWidth &&
+                y >= cropY && y <= cropY + cropHeight);
+      }
+
+
+      void DrawBorders(CairoContext& context,
+                       double zoom)
+      {
+        unsigned int cx, cy, width, height;
+        GetCrop(cx, cy, width, height);
+
+        double dx = static_cast<double>(cx);
+        double dy = static_cast<double>(cy);
+        double dwidth = static_cast<double>(width);
+        double dheight = static_cast<double>(height);
+
+        cairo_t* cr = context.GetObject();
+        cairo_set_line_width(cr, 2.0 / zoom);
+        
+        double x, y;
+        x = dx;
+        y = dy;
+        ApplyTransform(x, y, transform_);
+        cairo_move_to(cr, x, y);
+
+        x = dx + dwidth;
+        y = dy;
+        ApplyTransform(x, y, transform_);
+        cairo_line_to(cr, x, y);
+
+        x = dx + dwidth;
+        y = dy + dheight;
+        ApplyTransform(x, y, transform_);
+        cairo_line_to(cr, x, y);
+
+        x = dx;
+        y = dy + dheight;
+        ApplyTransform(x, y, transform_);
+        cairo_line_to(cr, x, y);
+
+        x = dx;
+        y = dy;
+        ApplyTransform(x, y, transform_);
+        cairo_line_to(cr, x, y);
+
+        cairo_stroke(cr);
+      }
+
+
+      static double Square(double x)
+      {
+        return x * x;
+      }
+
+
     public:
-      Bitmap() :
+      Layer() :
         index_(0),
         hasSize_(false),
         width_(0),
@@ -204,13 +278,8 @@ namespace OrthancStone
         UpdateTransform();
       }
 
-      virtual ~Bitmap()
+      virtual ~Layer()
       {
-      }
-
-      void SetIndex(size_t index)
-      {
-        index_ = index;
       }
 
       size_t GetIndex() const
@@ -310,18 +379,6 @@ namespace OrthancStone
       }       
 
 
-      void CheckSize(unsigned int width,
-                     unsigned int height)
-      {
-        if (hasSize_ &&
-            (width != width_ ||
-             height != height_))
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageSize);
-        }
-      }
-      
-
       Extent2D GetExtent() const
       {
         Extent2D extent;
@@ -340,19 +397,6 @@ namespace OrthancStone
         AddToExtent(extent, dx + dwidth, dy + dheight);
         
         return extent;
-      }
-
-
-      bool Contains(double x,
-                    double y) const
-      {
-        ApplyTransform(x, y, transformInverse_);
-        
-        unsigned int cropX, cropY, cropWidth, cropHeight;
-        GetCrop(cropX, cropY, cropWidth, cropHeight);
-
-        return (x >= cropX && x <= cropX + cropWidth &&
-                y >= cropY && y <= cropY + cropHeight);
       }
 
 
@@ -450,56 +494,6 @@ namespace OrthancStone
       }
 
 
-      void DrawBorders(CairoContext& context,
-                       double zoom)
-      {
-        unsigned int cx, cy, width, height;
-        GetCrop(cx, cy, width, height);
-
-        double dx = static_cast<double>(cx);
-        double dy = static_cast<double>(cy);
-        double dwidth = static_cast<double>(width);
-        double dheight = static_cast<double>(height);
-
-        cairo_t* cr = context.GetObject();
-        cairo_set_line_width(cr, 2.0 / zoom);
-        
-        double x, y;
-        x = dx;
-        y = dy;
-        ApplyTransform(x, y, transform_);
-        cairo_move_to(cr, x, y);
-
-        x = dx + dwidth;
-        y = dy;
-        ApplyTransform(x, y, transform_);
-        cairo_line_to(cr, x, y);
-
-        x = dx + dwidth;
-        y = dy + dheight;
-        ApplyTransform(x, y, transform_);
-        cairo_line_to(cr, x, y);
-
-        x = dx;
-        y = dy + dheight;
-        ApplyTransform(x, y, transform_);
-        cairo_line_to(cr, x, y);
-
-        x = dx;
-        y = dy;
-        ApplyTransform(x, y, transform_);
-        cairo_line_to(cr, x, y);
-
-        cairo_stroke(cr);
-      }
-
-
-      static double Square(double x)
-      {
-        return x * x;
-      }
-
-
       void GetCorner(double& x /* out */,
                      double& y /* out */,
                      Corner corner) const
@@ -556,10 +550,7 @@ namespace OrthancStone
       }
 
       virtual bool GetDefaultWindowing(float& center,
-                                       float& width) const
-      {
-        return false;
-      }
+                                       float& width) const = 0;
 
       virtual void Render(Orthanc::ImageAccessor& buffer,
                           const Matrix& viewTransform,
@@ -570,72 +561,72 @@ namespace OrthancStone
     }; 
 
 
-    class BitmapAccessor : public boost::noncopyable
+    class LayerAccessor : public boost::noncopyable
     {
     private:
-      BitmapStack&  stack_;
-      size_t        index_;
-      Bitmap*       bitmap_;
+      RadiologyScene&  scene_;
+      size_t           index_;
+      Layer*           layer_;
 
     public:
-      BitmapAccessor(BitmapStack& stack,
-                     size_t index) :
-        stack_(stack),
+      LayerAccessor(RadiologyScene& scene,
+                    size_t index) :
+        scene_(scene),
         index_(index)
       {
-        Bitmaps::iterator bitmap = stack.bitmaps_.find(index);
-        if (bitmap == stack.bitmaps_.end())
+        Layers::iterator layer = scene.layers_.find(index);
+        if (layer == scene.layers_.end())
         {
-          bitmap_ = NULL;
+          layer_ = NULL;
         }
         else
         {
-          assert(bitmap->second != NULL);
-          bitmap_ = bitmap->second;
+          assert(layer->second != NULL);
+          layer_ = layer->second;
         }
       }
 
-      BitmapAccessor(BitmapStack& stack,
-                     double x,
-                     double y) :
-        stack_(stack),
+      LayerAccessor(RadiologyScene& scene,
+                    double x,
+                    double y) :
+        scene_(scene),
         index_(0)  // Dummy initialization
       {
-        if (stack.LookupBitmap(index_, x, y))
+        if (scene.LookupLayer(index_, x, y))
         {
-          Bitmaps::iterator bitmap = stack.bitmaps_.find(index_);
+          Layers::iterator layer = scene.layers_.find(index_);
           
-          if (bitmap == stack.bitmaps_.end())
+          if (layer == scene.layers_.end())
           {
             throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
           }
           else
           {
-            assert(bitmap->second != NULL);
-            bitmap_ = bitmap->second;
+            assert(layer->second != NULL);
+            layer_ = layer->second;
           }
         }
         else
         {
-          bitmap_ = NULL;
+          layer_ = NULL;
         }
       }
 
       void Invalidate()
       {
-        bitmap_ = NULL;
+        layer_ = NULL;
       }
 
       bool IsValid() const
       {
-        return bitmap_ != NULL;
+        return layer_ != NULL;
       }
 
-      BitmapStack& GetStack() const
+      RadiologyScene& GetScene() const
       {
         if (IsValid())
         {
-          return stack_;
+          return scene_;
         }
         else
         {
@@ -655,11 +646,11 @@ namespace OrthancStone
         }
       }
 
-      Bitmap& GetBitmap() const
+      Layer& GetLayer() const
       {
         if (IsValid())
         {
-          return *bitmap_;
+          return *layer_;
         }
         else
         {
@@ -669,17 +660,18 @@ namespace OrthancStone
     };    
 
 
-    class AlphaBitmap : public Bitmap
+  private:
+    class AlphaLayer : public Layer
     {
     private:
-      const BitmapStack&                     stack_;
+      const RadiologyScene&                  scene_;
       std::auto_ptr<Orthanc::ImageAccessor>  alpha_;      // Grayscale8
       bool                                   useWindowing_;
       float                                  foreground_;
 
     public:
-      AlphaBitmap(const BitmapStack& stack) :
-        stack_(stack),
+      AlphaLayer(const RadiologyScene& scene) :
+        scene_(scene),
         useWindowing_(true),
         foreground_(0)
       {
@@ -719,6 +711,13 @@ namespace OrthancStone
       }                   
 
 
+      virtual bool GetDefaultWindowing(float& center,
+                                       float& width) const
+      {
+        return false;
+      }
+      
+
       virtual void Render(Orthanc::ImageAccessor& buffer,
                           const Matrix& viewTransform,
                           ImageInterpolation interpolation) const
@@ -755,7 +754,7 @@ namespace OrthancStone
         if (useWindowing_)
         {
           float center, width;
-          if (stack_.GetWindowing(center, width))
+          if (scene_.GetWindowing(center, width))
           {
             value = center + width / 2.0f;
           }
@@ -775,6 +774,7 @@ namespace OrthancStone
         }        
       }
 
+      
       virtual bool GetRange(float& minValue,
                             float& maxValue) const
       {
@@ -836,7 +836,7 @@ namespace OrthancStone
     }
       
 
-    class DicomBitmap : public Bitmap
+    class DicomLayer : public Layer
     {
     private:
       std::auto_ptr<Orthanc::ImageAccessor>  source_;  // Content of PixelData
@@ -974,22 +974,43 @@ namespace OrthancStone
 
 
 
-    typedef std::map<size_t, Bitmap*>  Bitmaps;
+    typedef std::map<size_t, Layer*>  Layers;
         
     OrthancApiClient&  orthanc_;
-    size_t             countBitmaps_;
+    size_t             countLayers_;
     bool               hasWindowing_;
     float              windowingCenter_;
     float              windowingWidth_;
-    Bitmaps            bitmaps_;
+    Layers             layers_;
+
+
+    Layer& RegisterLayer(Layer* layer)
+    {
+      if (layer == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+
+      std::auto_ptr<Layer> raii(layer);
+      
+      size_t index = countLayers_++;
+      raii->SetIndex(index);
+      layers_[index] = raii.release();
+
+      EmitMessage(GeometryChangedMessage(*this));
+      EmitMessage(ContentChangedMessage(*this));
+
+      return *layer;
+    }
+    
 
   public:
-    BitmapStack(MessageBroker& broker,
-                OrthancApiClient& orthanc) :
+    RadiologyScene(MessageBroker& broker,
+                   OrthancApiClient& orthanc) :
       IObserver(broker),
       IObservable(broker),
       orthanc_(orthanc),
-      countBitmaps_(0),
+      countLayers_(0),
       hasWindowing_(false),
       windowingCenter_(0),  // Dummy initialization
       windowingWidth_(0)    // Dummy initialization
@@ -997,9 +1018,9 @@ namespace OrthancStone
     }
 
 
-    virtual ~BitmapStack()
+    virtual ~RadiologyScene()
     {
-      for (Bitmaps::iterator it = bitmaps_.begin(); it != bitmaps_.end(); it++)
+      for (Layers::iterator it = layers_.begin(); it != layers_.end(); it++)
       {
         assert(it->second != NULL);
         delete it->second;
@@ -1044,38 +1065,18 @@ namespace OrthancStone
     }
 
 
-    Bitmap& RegisterBitmap(Bitmap* bitmap)
+    Layer& LoadText(const Orthanc::Font& font,
+                    const std::string& utf8)
     {
-      if (bitmap == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
-
-      std::auto_ptr<Bitmap> raii(bitmap);
-      
-      size_t index = countBitmaps_++;
-      raii->SetIndex(index);
-      bitmaps_[index] = raii.release();
-
-      EmitMessage(GeometryChangedMessage(*this));
-      EmitMessage(ContentChangedMessage(*this));
-
-      return *bitmap;
-    }
-    
-
-    Bitmap& LoadText(const Orthanc::Font& font,
-                     const std::string& utf8)
-    {
-      std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(*this));
+      std::auto_ptr<AlphaLayer>  alpha(new AlphaLayer(*this));
       alpha->LoadText(font, utf8);
 
-      return RegisterBitmap(alpha.release());
+      return RegisterLayer(alpha.release());
     }
 
     
-    Bitmap& LoadTestBlock(unsigned int width,
-                          unsigned int height)
+    Layer& LoadTestBlock(unsigned int width,
+                         unsigned int height)
     {
       std::auto_ptr<Orthanc::Image>  block(new Orthanc::Image(Orthanc::PixelFormat_Grayscale8, width, height, false));
 
@@ -1098,26 +1099,26 @@ namespace OrthancStone
         Orthanc::ImageProcessing::Set(region, color);
       }
 
-      std::auto_ptr<AlphaBitmap>  alpha(new AlphaBitmap(*this));
+      std::auto_ptr<AlphaLayer>  alpha(new AlphaLayer(*this));
       alpha->SetAlpha(block.release());
 
-      return RegisterBitmap(alpha.release());
+      return RegisterLayer(alpha.release());
     }
 
     
-    Bitmap& LoadFrame(const std::string& instance,
-                     unsigned int frame,
-                     bool httpCompression)
+    Layer& LoadDicomFrame(const std::string& instance,
+                          unsigned int frame,
+                          bool httpCompression)
     {
-      Bitmap& bitmap = RegisterBitmap(new DicomBitmap);
+      Layer& layer = RegisterLayer(new DicomLayer);
 
       {
         IWebService::Headers headers;
         std::string uri = "/instances/" + instance + "/tags";
         orthanc_.GetBinaryAsync(uri, headers,
-                                new Callable<BitmapStack, OrthancApiClient::BinaryResponseReadyMessage>
-                                (*this, &BitmapStack::OnTagsReceived), NULL,
-                                new Orthanc::SingleValueObject<size_t>(bitmap.GetIndex()));
+                                new Callable<RadiologyScene, OrthancApiClient::BinaryResponseReadyMessage>
+                                (*this, &RadiologyScene::OnTagsReceived), NULL,
+                                new Orthanc::SingleValueObject<size_t>(layer.GetIndex()));
       }
 
       {
@@ -1131,12 +1132,12 @@ namespace OrthancStone
         
         std::string uri = "/instances/" + instance + "/frames/" + boost::lexical_cast<std::string>(frame) + "/image-uint16";
         orthanc_.GetBinaryAsync(uri, headers,
-                                new Callable<BitmapStack, OrthancApiClient::BinaryResponseReadyMessage>
-                                (*this, &BitmapStack::OnFrameReceived), NULL,
-                                new Orthanc::SingleValueObject<size_t>(bitmap.GetIndex()));
+                                new Callable<RadiologyScene, OrthancApiClient::BinaryResponseReadyMessage>
+                                (*this, &RadiologyScene::OnFrameReceived), NULL,
+                                new Orthanc::SingleValueObject<size_t>(layer.GetIndex()));
       }
 
-      return bitmap;
+      return layer;
     }
 
     
@@ -1145,19 +1146,19 @@ namespace OrthancStone
       size_t index = dynamic_cast<const Orthanc::SingleValueObject<size_t>&>(message.GetPayload()).GetValue();
 
       LOG(INFO) << "JSON received: " << message.GetUri().c_str()
-                << " (" << message.GetAnswerSize() << " bytes) for bitmap " << index;
+                << " (" << message.GetAnswerSize() << " bytes) for layer " << index;
       
-      Bitmaps::iterator bitmap = bitmaps_.find(index);
-      if (bitmap != bitmaps_.end())
+      Layers::iterator layer = layers_.find(index);
+      if (layer != layers_.end())
       {
-        assert(bitmap->second != NULL);
+        assert(layer->second != NULL);
         
         OrthancPlugins::FullOrthancDataset dicom(message.GetAnswer(), message.GetAnswerSize());
-        dynamic_cast<DicomBitmap*>(bitmap->second)->SetDicomTags(dicom);
+        dynamic_cast<DicomLayer*>(layer->second)->SetDicomTags(dicom);
 
         float c, w;
         if (!hasWindowing_ &&
-            bitmap->second->GetDefaultWindowing(c, w))
+            layer->second->GetDefaultWindowing(c, w))
         {
           hasWindowing_ = true;
           windowingCenter_ = c;
@@ -1174,12 +1175,12 @@ namespace OrthancStone
       size_t index = dynamic_cast<const Orthanc::SingleValueObject<size_t>&>(message.GetPayload()).GetValue();
       
       LOG(INFO) << "DICOM frame received: " << message.GetUri().c_str()
-                << " (" << message.GetAnswerSize() << " bytes) for bitmap " << index;
+                << " (" << message.GetAnswerSize() << " bytes) for layer " << index;
       
-      Bitmaps::iterator bitmap = bitmaps_.find(index);
-      if (bitmap != bitmaps_.end())
+      Layers::iterator layer = layers_.find(index);
+      if (layer != layers_.end())
       {
-        assert(bitmap->second != NULL);
+        assert(layer->second != NULL);
 
         std::string content;
         if (message.GetAnswerSize() > 0)
@@ -1189,7 +1190,7 @@ namespace OrthancStone
         
         std::auto_ptr<Orthanc::PamReader> reader(new Orthanc::PamReader);
         reader->ReadFromMemory(content);
-        dynamic_cast<DicomBitmap*>(bitmap->second)->SetSourceImage(reader.release());
+        dynamic_cast<DicomLayer*>(layer->second)->SetSourceImage(reader.release());
 
         EmitMessage(ContentChangedMessage(*this));
       }
@@ -1200,8 +1201,8 @@ namespace OrthancStone
     {
       Extent2D extent;
 
-      for (Bitmaps::const_iterator it = bitmaps_.begin();
-           it != bitmaps_.end(); ++it)
+      for (Layers::const_iterator it = layers_.begin();
+           it != layers_.end(); ++it)
       {
         assert(it->second != NULL);
         extent.Union(it->second->GetExtent());
@@ -1218,10 +1219,10 @@ namespace OrthancStone
       Orthanc::ImageProcessing::Set(buffer, 0);
 
       // Render layers in the background-to-foreground order
-      for (size_t index = 0; index < countBitmaps_; index++)
+      for (size_t index = 0; index < countLayers_; index++)
       {
-        Bitmaps::const_iterator it = bitmaps_.find(index);
-        if (it != bitmaps_.end())
+        Layers::const_iterator it = layers_.find(index);
+        if (it != layers_.end())
         {
           assert(it->second != NULL);
           it->second->Render(buffer, viewTransform, interpolation);
@@ -1230,16 +1231,16 @@ namespace OrthancStone
     }
 
 
-    bool LookupBitmap(size_t& index /* out */,
-                      double x,
-                      double y) const
+    bool LookupLayer(size_t& index /* out */,
+                     double x,
+                     double y) const
     {
       // Render layers in the foreground-to-background order
-      for (size_t i = countBitmaps_; i > 0; i--)
+      for (size_t i = countLayers_; i > 0; i--)
       {
         index = i - 1;
-        Bitmaps::const_iterator it = bitmaps_.find(index);
-        if (it != bitmaps_.end())
+        Layers::const_iterator it = layers_.find(index);
+        if (it != layers_.end())
         {
           assert(it->second != NULL);
           if (it->second->Contains(x, y))
@@ -1254,12 +1255,12 @@ namespace OrthancStone
 
     
     void DrawBorder(CairoContext& context,
-                    unsigned int bitmap,
+                    unsigned int layer,
                     double zoom)
     {
-      Bitmaps::const_iterator found = bitmaps_.find(bitmap);
+      Layers::const_iterator found = layers_.find(layer);
         
-      if (found != bitmaps_.end())
+      if (found != layers_.end())
       {
         context.SetSourceColor(255, 0, 0);
         found->second->DrawBorders(context, zoom);
@@ -1272,8 +1273,8 @@ namespace OrthancStone
     {
       bool first = true;
       
-      for (Bitmaps::const_iterator it = bitmaps_.begin();
-           it != bitmaps_.end(); it++)
+      for (Layers::const_iterator it = layers_.begin();
+           it != layers_.end(); it++)
       {
         assert(it->second != NULL);
 
@@ -1302,11 +1303,14 @@ namespace OrthancStone
     }
 
 
+    // Export using PAM is faster than using PNG, but requires Orthanc
+    // core >= 1.4.3
     void Export(const Orthanc::DicomMap& dicom,
                 double pixelSpacingX,
                 double pixelSpacingY,
                 bool invert,
-                ImageInterpolation interpolation)
+                ImageInterpolation interpolation,
+                bool usePam)
     {
       if (pixelSpacingX <= 0 ||
           pixelSpacingY <= 0)
@@ -1314,7 +1318,7 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
       
-      LOG(WARNING) << "Exporting DICOM";
+      LOG(INFO) << "Exporting DICOM";
 
       Extent2D extent = GetSceneExtent();
 
@@ -1345,17 +1349,16 @@ namespace OrthancStone
       {
         std::string content;
 
-#if EXPORT_USING_PAM == 1
+        if (usePam)
         {
           Orthanc::PamWriter writer;
           writer.WriteToMemory(content, rendered);
         }
-#else
+        else
         {
           Orthanc::PngWriter writer;
           writer.WriteToMemory(content, rendered);
         }
-#endif      
 
         Orthanc::Toolbox::EncodeBase64(base64, content);
       }
@@ -1380,7 +1383,10 @@ namespace OrthancStone
       json["Tags"][Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION.Format()] =
         (invert ? "MONOCHROME1" : "MONOCHROME2");
 
-      // WARNING: The order of PixelSpacing is Y/X
+      // WARNING: The order of PixelSpacing is Y/X. We use "%0.8f" to
+      // avoid floating-point numbers to grow over 16 characters,
+      // which would be invalid according to DICOM standard
+      // ("dciodvfy" would complain).
       char buf[32];
       sprintf(buf, "%0.8f\\%0.8f", pixelSpacingY, pixelSpacingX);
       
@@ -1396,24 +1402,23 @@ namespace OrthancStone
           boost::lexical_cast<std::string>(boost::math::iround(width));
       }
 
-#if EXPORT_USING_PAM == 1
-      json["Content"] = "data:" + std::string(Orthanc::MIME_PAM) + ";base64," + base64;
-#else
-      json["Content"] = "data:" + std::string(Orthanc::MIME_PNG) + ";base64," + base64;
-#endif
+      // This is Data URI scheme: https://en.wikipedia.org/wiki/Data_URI_scheme
+      json["Content"] = ("data:" +
+                         std::string(usePam ? Orthanc::MIME_PAM : Orthanc::MIME_PNG) +
+                         ";base64," + base64);
 
       orthanc_.PostJsonAsyncExpectJson(
         "/tools/create-dicom", json,
-        new Callable<BitmapStack, OrthancApiClient::JsonResponseReadyMessage>
-        (*this, &BitmapStack::OnDicomExported),
+        new Callable<RadiologyScene, OrthancApiClient::JsonResponseReadyMessage>
+        (*this, &RadiologyScene::OnDicomExported),
         NULL, NULL);
     }
 
 
     void OnDicomExported(const OrthancApiClient::JsonResponseReadyMessage& message)
     {
-      LOG(WARNING) << "DICOM export was successful:"
-                   << message.GetJson().toStyledString();
+      LOG(INFO) << "DICOM export was successful:"
+                << message.GetJson().toStyledString();
     }
   };
 
@@ -1498,63 +1503,63 @@ namespace OrthancStone
   };
 
 
-  class BitmapCommandBase : public UndoRedoStack::ICommand
+  class RadiologyLayerCommand : public UndoRedoStack::ICommand
   {
   private:
-    BitmapStack&  stack_;
-    size_t        bitmap_;
+    RadiologyScene&  scene_;
+    size_t           layer_;
 
   protected:
-    virtual void UndoInternal(BitmapStack::Bitmap& bitmap) const = 0;
+    virtual void UndoInternal(RadiologyScene::Layer& layer) const = 0;
 
-    virtual void RedoInternal(BitmapStack::Bitmap& bitmap) const = 0;
+    virtual void RedoInternal(RadiologyScene::Layer& layer) const = 0;
 
   public:
-    BitmapCommandBase(BitmapStack& stack,
-                      size_t bitmap) :
-      stack_(stack),
-      bitmap_(bitmap)
+    RadiologyLayerCommand(RadiologyScene& scene,
+                          size_t layer) :
+      scene_(scene),
+      layer_(layer)
     {
     }
 
-    BitmapCommandBase(const BitmapStack::BitmapAccessor& accessor) :
-      stack_(accessor.GetStack()),
-      bitmap_(accessor.GetIndex())
+    RadiologyLayerCommand(const RadiologyScene::LayerAccessor& accessor) :
+      scene_(accessor.GetScene()),
+      layer_(accessor.GetIndex())
     {
     }
 
     virtual void Undo() const
     {
-      BitmapStack::BitmapAccessor accessor(stack_, bitmap_);
+      RadiologyScene::LayerAccessor accessor(scene_, layer_);
 
       if (accessor.IsValid())
       {
-        UndoInternal(accessor.GetBitmap());
+        UndoInternal(accessor.GetLayer());
       }
     }
 
     virtual void Redo() const
     {
-      BitmapStack::BitmapAccessor accessor(stack_, bitmap_);
+      RadiologyScene::LayerAccessor accessor(scene_, layer_);
 
       if (accessor.IsValid())
       {
-        RedoInternal(accessor.GetBitmap());
+        RedoInternal(accessor.GetLayer());
       }
     }
   };
 
 
-  class RotateBitmapTracker : public IWorldSceneMouseTracker
+  class RadiologyLayerRotateTracker : public IWorldSceneMouseTracker
   {
   private:
-    UndoRedoStack&               undoRedoStack_;
-    BitmapStack::BitmapAccessor  accessor_;
-    double                       centerX_;
-    double                       centerY_;
-    double                       originalAngle_;
-    double                       clickAngle_;
-    bool                         roundAngles_;
+    UndoRedoStack&                 undoRedoStack_;
+    RadiologyScene::LayerAccessor  accessor_;
+    double                         centerX_;
+    double                         centerY_;
+    double                         originalAngle_;
+    double                         clickAngle_;
+    bool                           roundAngles_;
 
     bool ComputeAngle(double& angle /* out */,
                       double sceneX,
@@ -1578,7 +1583,7 @@ namespace OrthancStone
     }
 
 
-    class UndoRedoCommand : public BitmapCommandBase
+    class UndoRedoCommand : public RadiologyLayerCommand
     {
     private:
       double  sourceAngle_;
@@ -1590,44 +1595,44 @@ namespace OrthancStone
       }
       
     protected:
-      virtual void UndoInternal(BitmapStack::Bitmap& bitmap) const
+      virtual void UndoInternal(RadiologyScene::Layer& layer) const
       {
         LOG(INFO) << "Undo - Set angle to " << ToDegrees(sourceAngle_) << " degrees";
-        bitmap.SetAngle(sourceAngle_);
+        layer.SetAngle(sourceAngle_);
       }
 
-      virtual void RedoInternal(BitmapStack::Bitmap& bitmap) const
+      virtual void RedoInternal(RadiologyScene::Layer& layer) const
       {
         LOG(INFO) << "Redo - Set angle to " << ToDegrees(sourceAngle_) << " degrees";
-        bitmap.SetAngle(targetAngle_);
+        layer.SetAngle(targetAngle_);
       }
 
     public:
-      UndoRedoCommand(const RotateBitmapTracker& tracker) :
-        BitmapCommandBase(tracker.accessor_),
+      UndoRedoCommand(const RadiologyLayerRotateTracker& tracker) :
+        RadiologyLayerCommand(tracker.accessor_),
         sourceAngle_(tracker.originalAngle_),
-        targetAngle_(tracker.accessor_.GetBitmap().GetAngle())
+        targetAngle_(tracker.accessor_.GetLayer().GetAngle())
       {
       }
     };
 
       
   public:
-    RotateBitmapTracker(UndoRedoStack& undoRedoStack,
-                        BitmapStack& stack,
-                        const ViewportGeometry& view,
-                        size_t bitmap,
-                        double x,
-                        double y,
-                        bool roundAngles) :
+    RadiologyLayerRotateTracker(UndoRedoStack& undoRedoStack,
+                                RadiologyScene& scene,
+                                const ViewportGeometry& view,
+                                size_t layer,
+                                double x,
+                                double y,
+                                bool roundAngles) :
       undoRedoStack_(undoRedoStack),
-      accessor_(stack, bitmap),
+      accessor_(scene, layer),
       roundAngles_(roundAngles)
     {
       if (accessor_.IsValid())
       {
-        accessor_.GetBitmap().GetCenter(centerX_, centerY_);
-        originalAngle_ = accessor_.GetBitmap().GetAngle();
+        accessor_.GetLayer().GetCenter(centerX_, centerY_);
+        originalAngle_ = accessor_.GetLayer().GetAngle();
 
         double sceneX, sceneY;
         view.MapDisplayToScene(sceneX, sceneY, x, y);
@@ -1677,24 +1682,24 @@ namespace OrthancStone
           angle = boost::math::round<double>((angle / ROUND_ANGLE) * ROUND_ANGLE);
         }
           
-        accessor_.GetBitmap().SetAngle(angle);
+        accessor_.GetLayer().SetAngle(angle);
       }
     }
   };
     
     
-  class MoveBitmapTracker : public IWorldSceneMouseTracker
+  class RadiologyLayerMoveTracker : public IWorldSceneMouseTracker
   {
   private:
-    UndoRedoStack&               undoRedoStack_;
-    BitmapStack::BitmapAccessor  accessor_;
-    double                       clickX_;
-    double                       clickY_;
-    double                       panX_;
-    double                       panY_;
-    bool                         oneAxis_;
+    UndoRedoStack&                 undoRedoStack_;
+    RadiologyScene::LayerAccessor  accessor_;
+    double                         clickX_;
+    double                         clickY_;
+    double                         panX_;
+    double                         panY_;
+    bool                           oneAxis_;
 
-    class UndoRedoCommand : public BitmapCommandBase
+    class UndoRedoCommand : public RadiologyLayerCommand
     {
     private:
       double  sourceX_;
@@ -1703,45 +1708,45 @@ namespace OrthancStone
       double  targetY_;
 
     protected:
-      virtual void UndoInternal(BitmapStack::Bitmap& bitmap) const
+      virtual void UndoInternal(RadiologyScene::Layer& layer) const
       {
-        bitmap.SetPan(sourceX_, sourceY_);
+        layer.SetPan(sourceX_, sourceY_);
       }
 
-      virtual void RedoInternal(BitmapStack::Bitmap& bitmap) const
+      virtual void RedoInternal(RadiologyScene::Layer& layer) const
       {
-        bitmap.SetPan(targetX_, targetY_);
+        layer.SetPan(targetX_, targetY_);
       }
 
     public:
-      UndoRedoCommand(const MoveBitmapTracker& tracker) :
-        BitmapCommandBase(tracker.accessor_),
+      UndoRedoCommand(const RadiologyLayerMoveTracker& tracker) :
+        RadiologyLayerCommand(tracker.accessor_),
         sourceX_(tracker.panX_),
         sourceY_(tracker.panY_),
-        targetX_(tracker.accessor_.GetBitmap().GetPanX()),
-        targetY_(tracker.accessor_.GetBitmap().GetPanY())
+        targetX_(tracker.accessor_.GetLayer().GetPanX()),
+        targetY_(tracker.accessor_.GetLayer().GetPanY())
       {
       }
     };
 
 
   public:
-    MoveBitmapTracker(UndoRedoStack& undoRedoStack,
-                      BitmapStack& stack,
-                      size_t bitmap,
-                      double x,
-                      double y,
-                      bool oneAxis) :
+    RadiologyLayerMoveTracker(UndoRedoStack& undoRedoStack,
+                              RadiologyScene& scene,
+                              size_t layer,
+                              double x,
+                              double y,
+                              bool oneAxis) :
       undoRedoStack_(undoRedoStack),
-      accessor_(stack, bitmap),
+      accessor_(scene, layer),
       clickX_(x),
       clickY_(y),
       oneAxis_(oneAxis)
     {
       if (accessor_.IsValid())
       {
-        panX_ = accessor_.GetBitmap().GetPanX();
-        panY_ = accessor_.GetBitmap().GetPanY();
+        panX_ = accessor_.GetLayer().GetPanX();
+        panY_ = accessor_.GetLayer().GetPanY();
       }
     }
 
@@ -1778,34 +1783,34 @@ namespace OrthancStone
         {
           if (fabs(dx) > fabs(dy))
           {
-            accessor_.GetBitmap().SetPan(dx + panX_, panY_);
+            accessor_.GetLayer().SetPan(dx + panX_, panY_);
           }
           else
           {
-            accessor_.GetBitmap().SetPan(panX_, dy + panY_);
+            accessor_.GetLayer().SetPan(panX_, dy + panY_);
           }
         }
         else
         {
-          accessor_.GetBitmap().SetPan(dx + panX_, dy + panY_);
+          accessor_.GetLayer().SetPan(dx + panX_, dy + panY_);
         }
       }
     }
   };
 
 
-  class CropBitmapTracker : public IWorldSceneMouseTracker
+  class RadiologyLayerCropTracker : public IWorldSceneMouseTracker
   {
   private:
-    UndoRedoStack&               undoRedoStack_;
-    BitmapStack::BitmapAccessor  accessor_;
-    BitmapStack::Corner          corner_;
-    unsigned int                 cropX_;
-    unsigned int                 cropY_;
-    unsigned int                 cropWidth_;
-    unsigned int                 cropHeight_;
+    UndoRedoStack&                 undoRedoStack_;
+    RadiologyScene::LayerAccessor  accessor_;
+    RadiologyScene::Corner         corner_;
+    unsigned int                   cropX_;
+    unsigned int                   cropY_;
+    unsigned int                   cropWidth_;
+    unsigned int                   cropHeight_;
 
-    class UndoRedoCommand : public BitmapCommandBase
+    class UndoRedoCommand : public RadiologyLayerCommand
     {
     private:
       unsigned int  sourceCropX_;
@@ -1818,45 +1823,45 @@ namespace OrthancStone
       unsigned int  targetCropHeight_;
 
     protected:
-      virtual void UndoInternal(BitmapStack::Bitmap& bitmap) const
+      virtual void UndoInternal(RadiologyScene::Layer& layer) const
       {
-        bitmap.SetCrop(sourceCropX_, sourceCropY_, sourceCropWidth_, sourceCropHeight_);
+        layer.SetCrop(sourceCropX_, sourceCropY_, sourceCropWidth_, sourceCropHeight_);
       }
 
-      virtual void RedoInternal(BitmapStack::Bitmap& bitmap) const
+      virtual void RedoInternal(RadiologyScene::Layer& layer) const
       {
-        bitmap.SetCrop(targetCropX_, targetCropY_, targetCropWidth_, targetCropHeight_);
+        layer.SetCrop(targetCropX_, targetCropY_, targetCropWidth_, targetCropHeight_);
       }
 
     public:
-      UndoRedoCommand(const CropBitmapTracker& tracker) :
-        BitmapCommandBase(tracker.accessor_),
+      UndoRedoCommand(const RadiologyLayerCropTracker& tracker) :
+        RadiologyLayerCommand(tracker.accessor_),
         sourceCropX_(tracker.cropX_),
         sourceCropY_(tracker.cropY_),
         sourceCropWidth_(tracker.cropWidth_),
         sourceCropHeight_(tracker.cropHeight_)
       {
-        tracker.accessor_.GetBitmap().GetCrop(targetCropX_, targetCropY_,
-                                              targetCropWidth_, targetCropHeight_);
+        tracker.accessor_.GetLayer().GetCrop(targetCropX_, targetCropY_,
+                                             targetCropWidth_, targetCropHeight_);
       }
     };
 
 
   public:
-    CropBitmapTracker(UndoRedoStack& undoRedoStack,
-                      BitmapStack& stack,
-                      const ViewportGeometry& view,
-                      size_t bitmap,
-                      double x,
-                      double y,
-                      BitmapStack::Corner corner) :
+    RadiologyLayerCropTracker(UndoRedoStack& undoRedoStack,
+                              RadiologyScene& scene,
+                              const ViewportGeometry& view,
+                              size_t layer,
+                              double x,
+                              double y,
+                              RadiologyScene::Corner corner) :
       undoRedoStack_(undoRedoStack),
-      accessor_(stack, bitmap),
+      accessor_(scene, layer),
       corner_(corner)
     {
       if (accessor_.IsValid())
       {
-        accessor_.GetBitmap().GetCrop(cropX_, cropY_, cropWidth_, cropHeight_);          
+        accessor_.GetLayer().GetCrop(cropX_, cropY_, cropWidth_, cropHeight_);          
       }
     }
 
@@ -1888,13 +1893,13 @@ namespace OrthancStone
       {
         unsigned int x, y;
         
-        BitmapStack::Bitmap& bitmap = accessor_.GetBitmap();
-        if (bitmap.GetPixel(x, y, sceneX, sceneY))
+        RadiologyScene::Layer& layer = accessor_.GetLayer();
+        if (layer.GetPixel(x, y, sceneX, sceneY))
         {
           unsigned int targetX, targetWidth;
 
-          if (corner_ == BitmapStack::Corner_TopLeft ||
-              corner_ == BitmapStack::Corner_BottomLeft)
+          if (corner_ == RadiologyScene::Corner_TopLeft ||
+              corner_ == RadiologyScene::Corner_BottomLeft)
           {
             targetX = std::min(x, cropX_ + cropWidth_);
             targetWidth = cropX_ + cropWidth_ - targetX;
@@ -1907,8 +1912,8 @@ namespace OrthancStone
 
           unsigned int targetY, targetHeight;
 
-          if (corner_ == BitmapStack::Corner_TopLeft ||
-              corner_ == BitmapStack::Corner_TopRight)
+          if (corner_ == RadiologyScene::Corner_TopLeft ||
+              corner_ == RadiologyScene::Corner_TopRight)
           {
             targetY = std::min(y, cropY_ + cropHeight_);
             targetHeight = cropY_ + cropHeight_ - targetY;
@@ -1919,27 +1924,27 @@ namespace OrthancStone
             targetHeight = std::max(y, cropY_) - cropY_;
           }
 
-          bitmap.SetCrop(targetX, targetY, targetWidth, targetHeight);
+          layer.SetCrop(targetX, targetY, targetWidth, targetHeight);
         }
       }
     }
   };
     
     
-  class ResizeBitmapTracker : public IWorldSceneMouseTracker
+  class RadiologyLayerResizeTracker : public IWorldSceneMouseTracker
   {
   private:
-    UndoRedoStack&               undoRedoStack_;
-    BitmapStack::BitmapAccessor  accessor_;
-    bool                         roundScaling_;
-    double                       originalSpacingX_;
-    double                       originalSpacingY_;
-    double                       originalPanX_;
-    double                       originalPanY_;
-    BitmapStack::Corner          oppositeCorner_;
-    double                       oppositeX_;
-    double                       oppositeY_;
-    double                       baseScaling_;
+    UndoRedoStack&                 undoRedoStack_;
+    RadiologyScene::LayerAccessor  accessor_;
+    bool                           roundScaling_;
+    double                         originalSpacingX_;
+    double                         originalSpacingY_;
+    double                         originalPanX_;
+    double                         originalPanY_;
+    RadiologyScene::Corner         oppositeCorner_;
+    double                         oppositeX_;
+    double                         oppositeY_;
+    double                         baseScaling_;
 
     static double ComputeDistance(double x1,
                                   double y1,
@@ -1951,7 +1956,7 @@ namespace OrthancStone
       return sqrt(dx * dx + dy * dy);
     }
       
-    class UndoRedoCommand : public BitmapCommandBase
+    class UndoRedoCommand : public RadiologyLayerCommand
     {
     private:
       double   sourceSpacingX_;
@@ -1964,77 +1969,77 @@ namespace OrthancStone
       double   targetPanY_;
 
     protected:
-      virtual void UndoInternal(BitmapStack::Bitmap& bitmap) const
+      virtual void UndoInternal(RadiologyScene::Layer& layer) const
       {
-        bitmap.SetPixelSpacing(sourceSpacingX_, sourceSpacingY_);
-        bitmap.SetPan(sourcePanX_, sourcePanY_);
+        layer.SetPixelSpacing(sourceSpacingX_, sourceSpacingY_);
+        layer.SetPan(sourcePanX_, sourcePanY_);
       }
 
-      virtual void RedoInternal(BitmapStack::Bitmap& bitmap) const
+      virtual void RedoInternal(RadiologyScene::Layer& layer) const
       {
-        bitmap.SetPixelSpacing(targetSpacingX_, targetSpacingY_);
-        bitmap.SetPan(targetPanX_, targetPanY_);
+        layer.SetPixelSpacing(targetSpacingX_, targetSpacingY_);
+        layer.SetPan(targetPanX_, targetPanY_);
       }
 
     public:
-      UndoRedoCommand(const ResizeBitmapTracker& tracker) :
-        BitmapCommandBase(tracker.accessor_),
+      UndoRedoCommand(const RadiologyLayerResizeTracker& tracker) :
+        RadiologyLayerCommand(tracker.accessor_),
         sourceSpacingX_(tracker.originalSpacingX_),
         sourceSpacingY_(tracker.originalSpacingY_),
         sourcePanX_(tracker.originalPanX_),
         sourcePanY_(tracker.originalPanY_),
-        targetSpacingX_(tracker.accessor_.GetBitmap().GetPixelSpacingX()),
-        targetSpacingY_(tracker.accessor_.GetBitmap().GetPixelSpacingY()),
-        targetPanX_(tracker.accessor_.GetBitmap().GetPanX()),
-        targetPanY_(tracker.accessor_.GetBitmap().GetPanY())
+        targetSpacingX_(tracker.accessor_.GetLayer().GetPixelSpacingX()),
+        targetSpacingY_(tracker.accessor_.GetLayer().GetPixelSpacingY()),
+        targetPanX_(tracker.accessor_.GetLayer().GetPanX()),
+        targetPanY_(tracker.accessor_.GetLayer().GetPanY())
       {
       }
     };
 
 
   public:
-    ResizeBitmapTracker(UndoRedoStack& undoRedoStack,
-                        BitmapStack& stack,
-                        size_t bitmap,
-                        double x,
-                        double y,
-                        BitmapStack::Corner corner,
-                        bool roundScaling) :
+    RadiologyLayerResizeTracker(UndoRedoStack& undoRedoStack,
+                                RadiologyScene& scene,
+                                size_t layer,
+                                double x,
+                                double y,
+                                RadiologyScene::Corner corner,
+                                bool roundScaling) :
       undoRedoStack_(undoRedoStack),
-      accessor_(stack, bitmap),
+      accessor_(scene, layer),
       roundScaling_(roundScaling)
     {
       if (accessor_.IsValid() &&
-          accessor_.GetBitmap().IsResizeable())
+          accessor_.GetLayer().IsResizeable())
       {
-        originalSpacingX_ = accessor_.GetBitmap().GetPixelSpacingX();
-        originalSpacingY_ = accessor_.GetBitmap().GetPixelSpacingY();
-        originalPanX_ = accessor_.GetBitmap().GetPanX();
-        originalPanY_ = accessor_.GetBitmap().GetPanY();
+        originalSpacingX_ = accessor_.GetLayer().GetPixelSpacingX();
+        originalSpacingY_ = accessor_.GetLayer().GetPixelSpacingY();
+        originalPanX_ = accessor_.GetLayer().GetPanX();
+        originalPanY_ = accessor_.GetLayer().GetPanY();
 
         switch (corner)
         {
-          case BitmapStack::Corner_TopLeft:
-            oppositeCorner_ = BitmapStack::Corner_BottomRight;
+          case RadiologyScene::Corner_TopLeft:
+            oppositeCorner_ = RadiologyScene::Corner_BottomRight;
             break;
 
-          case BitmapStack::Corner_TopRight:
-            oppositeCorner_ = BitmapStack::Corner_BottomLeft;
+          case RadiologyScene::Corner_TopRight:
+            oppositeCorner_ = RadiologyScene::Corner_BottomLeft;
             break;
 
-          case BitmapStack::Corner_BottomLeft:
-            oppositeCorner_ = BitmapStack::Corner_TopRight;
+          case RadiologyScene::Corner_BottomLeft:
+            oppositeCorner_ = RadiologyScene::Corner_TopRight;
             break;
 
-          case BitmapStack::Corner_BottomRight:
-            oppositeCorner_ = BitmapStack::Corner_TopLeft;
+          case RadiologyScene::Corner_BottomRight:
+            oppositeCorner_ = RadiologyScene::Corner_TopLeft;
             break;
 
           default:
             throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
         }
 
-        accessor_.GetBitmap().GetCorner(oppositeX_, oppositeY_, oppositeCorner_);
+        accessor_.GetLayer().GetCorner(oppositeX_, oppositeY_, oppositeCorner_);
 
         double d = ComputeDistance(x, y, oppositeX_, oppositeY_);
         if (d >= std::numeric_limits<float>::epsilon())
@@ -2063,7 +2068,7 @@ namespace OrthancStone
     virtual void MouseUp()
     {
       if (accessor_.IsValid() &&
-          accessor_.GetBitmap().IsResizeable())
+          accessor_.GetLayer().IsResizeable())
       {
         undoRedoStack_.Add(new UndoRedoCommand(*this));
       }
@@ -2077,7 +2082,7 @@ namespace OrthancStone
       static const double ROUND_SCALING = 0.1;
         
       if (accessor_.IsValid() &&
-          accessor_.GetBitmap().IsResizeable())
+          accessor_.GetLayer().IsResizeable())
       {
         double scaling = ComputeDistance(oppositeX_, oppositeY_, sceneX, sceneY) * baseScaling_;
 
@@ -2086,21 +2091,21 @@ namespace OrthancStone
           scaling = boost::math::round<double>((scaling / ROUND_SCALING) * ROUND_SCALING);
         }
           
-        BitmapStack::Bitmap& bitmap = accessor_.GetBitmap();
-        bitmap.SetPixelSpacing(scaling * originalSpacingX_,
-                               scaling * originalSpacingY_);
+        RadiologyScene::Layer& layer = accessor_.GetLayer();
+        layer.SetPixelSpacing(scaling * originalSpacingX_,
+                              scaling * originalSpacingY_);
 
         // Keep the opposite corner at a fixed location
         double ox, oy;
-        bitmap.GetCorner(ox, oy, oppositeCorner_);
-        bitmap.SetPan(bitmap.GetPanX() + oppositeX_ - ox,
-                      bitmap.GetPanY() + oppositeY_ - oy);
+        layer.GetCorner(ox, oy, oppositeCorner_);
+        layer.SetPan(layer.GetPanX() + oppositeX_ - ox,
+                     layer.GetPanY() + oppositeY_ - oy);
       }
     }
   };
 
 
-  class WindowingTracker : public IWorldSceneMouseTracker
+  class RadiologyWindowingTracker : public IWorldSceneMouseTracker
   {   
   public:
     enum Action
@@ -2112,17 +2117,17 @@ namespace OrthancStone
     };
     
   private:
-    UndoRedoStack&  undoRedoStack_;
-    BitmapStack&    stack_;
-    int             clickX_;
-    int             clickY_;
-    Action          leftAction_;
-    Action          rightAction_;
-    Action          upAction_;
-    Action          downAction_;
-    float           strength_;
-    float           sourceCenter_;
-    float           sourceWidth_;
+    UndoRedoStack&    undoRedoStack_;
+    RadiologyScene&   scene_;
+    int               clickX_;
+    int               clickY_;
+    Action            leftAction_;
+    Action            rightAction_;
+    Action            upAction_;
+    Action            downAction_;
+    float             strength_;
+    float             sourceCenter_;
+    float             sourceWidth_;
 
     static void ComputeAxisEffect(int& deltaCenter,
                                   int& deltaWidth,
@@ -2184,44 +2189,44 @@ namespace OrthancStone
     class UndoRedoCommand : public UndoRedoStack::ICommand
     {
     private:
-      BitmapStack&  stack_;
-      float         sourceCenter_;
-      float         sourceWidth_;
-      float         targetCenter_;
-      float         targetWidth_;
+      RadiologyScene&  scene_;
+      float            sourceCenter_;
+      float            sourceWidth_;
+      float            targetCenter_;
+      float            targetWidth_;
 
     public:
-      UndoRedoCommand(const WindowingTracker& tracker) :
-        stack_(tracker.stack_),
+      UndoRedoCommand(const RadiologyWindowingTracker& tracker) :
+        scene_(tracker.scene_),
         sourceCenter_(tracker.sourceCenter_),
         sourceWidth_(tracker.sourceWidth_)
       {
-        stack_.GetWindowingWithDefault(targetCenter_, targetWidth_);
+        scene_.GetWindowingWithDefault(targetCenter_, targetWidth_);
       }
 
       virtual void Undo() const
       {
-        stack_.SetWindowing(sourceCenter_, sourceWidth_);
+        scene_.SetWindowing(sourceCenter_, sourceWidth_);
       }
       
       virtual void Redo() const
       {
-        stack_.SetWindowing(targetCenter_, targetWidth_);
+        scene_.SetWindowing(targetCenter_, targetWidth_);
       }
     };
 
 
   public:
-    WindowingTracker(UndoRedoStack& undoRedoStack,
-                     BitmapStack& stack,
-                     int x,
-                     int y,
-                     Action leftAction,
-                     Action rightAction,
-                     Action upAction,
-                     Action downAction) :
+    RadiologyWindowingTracker(UndoRedoStack& undoRedoStack,
+                              RadiologyScene& scene,
+                              int x,
+                              int y,
+                              Action leftAction,
+                              Action rightAction,
+                              Action upAction,
+                              Action downAction) :
       undoRedoStack_(undoRedoStack),
-      stack_(stack),
+      scene_(scene),
       clickX_(x),
       clickY_(y),
       leftAction_(leftAction),
@@ -2229,10 +2234,10 @@ namespace OrthancStone
       upAction_(upAction),
       downAction_(downAction)
     {
-      stack_.GetWindowingWithDefault(sourceCenter_, sourceWidth_);
+      scene_.GetWindowingWithDefault(sourceCenter_, sourceWidth_);
 
       float minValue, maxValue;
-      stack.GetRange(minValue, maxValue);
+      scene.GetRange(minValue, maxValue);
 
       assert(minValue <= maxValue);
 
@@ -2291,30 +2296,30 @@ namespace OrthancStone
 
       float newCenter = sourceCenter_ + (deltaCenter / SCALE * strength_);
       float newWidth = sourceWidth_ + (deltaWidth / SCALE * strength_);
-      stack_.SetWindowing(newCenter, newWidth);
+      scene_.SetWindowing(newCenter, newWidth);
     }
   };
 
 
-  class BitmapStackWidget :
+  class RadiologyWidget :
     public WorldSceneWidget,
     public IObserver
   {
   private:
-    BitmapStack&                   stack_;
+    RadiologyScene&                scene_;
     std::auto_ptr<Orthanc::Image>  floatBuffer_;
     std::auto_ptr<CairoSurface>    cairoBuffer_;
     bool                           invert_;
     ImageInterpolation             interpolation_;
     bool                           hasSelection_;
-    size_t                         selectedBitmap_;
+    size_t                         selectedLayer_;
 
     virtual bool RenderInternal(unsigned int width,
                                 unsigned int height,
                                 ImageInterpolation interpolation)
     {
       float windowCenter, windowWidth;
-      stack_.GetWindowingWithDefault(windowCenter, windowWidth);
+      scene_.GetWindowingWithDefault(windowCenter, windowWidth);
       
       float x0 = windowCenter - windowWidth / 2.0f;
       float x1 = windowCenter + windowWidth / 2.0f;
@@ -2339,7 +2344,7 @@ namespace OrthancStone
           cairoBuffer_.reset(new CairoSurface(width, height));
         }
 
-        stack_.Render(*floatBuffer_, GetView().GetMatrix(), interpolation);
+        scene_.Render(*floatBuffer_, GetView().GetMatrix(), interpolation);
         
         // Conversion from Float32 to BGRA32 (cairo). Very similar to
         // GrayscaleFrameRenderer => TODO MERGE?
@@ -2390,7 +2395,7 @@ namespace OrthancStone
   protected:
     virtual Extent2D GetSceneExtent()
     {
-      return stack_.GetSceneExtent();
+      return scene_.GetSceneExtent();
     }
 
     virtual bool RenderScene(CairoContext& context,
@@ -2416,31 +2421,36 @@ namespace OrthancStone
 
       if (hasSelection_)
       {
-        stack_.DrawBorder(context, selectedBitmap_, view.GetZoom());
+        scene_.DrawBorder(context, selectedLayer_, view.GetZoom());
       }
 
       return true;
     }
 
   public:
-    BitmapStackWidget(MessageBroker& broker,
-                      BitmapStack& stack,
-                      const std::string& name) :
+    RadiologyWidget(MessageBroker& broker,
+                    RadiologyScene& scene,
+                    const std::string& name) :
       WorldSceneWidget(name),
       IObserver(broker),
-      stack_(stack),
+      scene_(scene),
       invert_(false),
       interpolation_(ImageInterpolation_Nearest),
       hasSelection_(false),
-      selectedBitmap_(0)    // Dummy initialization
+      selectedLayer_(0)    // Dummy initialization
     {
-      stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::GeometryChangedMessage>(*this, &BitmapStackWidget::OnGeometryChanged));
-      stack.RegisterObserverCallback(new Callable<BitmapStackWidget, BitmapStack::ContentChangedMessage>(*this, &BitmapStackWidget::OnContentChanged));
+      scene.RegisterObserverCallback(
+        new Callable<RadiologyWidget, RadiologyScene::GeometryChangedMessage>
+        (*this, &RadiologyWidget::OnGeometryChanged));
+
+      scene.RegisterObserverCallback(
+        new Callable<RadiologyWidget, RadiologyScene::ContentChangedMessage>
+        (*this, &RadiologyWidget::OnContentChanged));
     }
 
-    BitmapStack& GetStack() const
+    RadiologyScene& GetScene() const
     {
-      return stack_;
+      return scene_;
     }
 
     void Unselect()
@@ -2448,17 +2458,17 @@ namespace OrthancStone
       hasSelection_ = false;
     }
 
-    void Select(size_t bitmap)
+    void Select(size_t layer)
     {
       hasSelection_ = true;
-      selectedBitmap_ = bitmap;
+      selectedLayer_ = layer;
     }
 
-    bool LookupSelectedBitmap(size_t& bitmap)
+    bool LookupSelectedLayer(size_t& layer)
     {
       if (hasSelection_)
       {
-        bitmap = selectedBitmap_;
+        layer = selectedLayer_;
         return true;
       }
       else
@@ -2467,13 +2477,13 @@ namespace OrthancStone
       }
     }
 
-    void OnGeometryChanged(const BitmapStack::GeometryChangedMessage& message)
+    void OnGeometryChanged(const RadiologyScene::GeometryChangedMessage& message)
     {
       LOG(INFO) << "Geometry has changed";
       FitContent();
     }
 
-    void OnContentChanged(const BitmapStack::ContentChangedMessage& message)
+    void OnContentChanged(const RadiologyScene::ContentChangedMessage& message)
     {
       LOG(INFO) << "Content has changed";
       NotifyContentChanged();
@@ -2515,325 +2525,326 @@ namespace OrthancStone
   };
 
   
-  class BitmapStackInteractor :
-    public IWorldSceneInteractor,
-    public IObserver
+  namespace Samples
   {
-  private:
-    enum Tool
+    class RadiologyEditorInteractor :
+      public IWorldSceneInteractor,
+      public IObserver
     {
-      Tool_Move,
-      Tool_Rotate,
-      Tool_Crop,
-      Tool_Resize,
-      Tool_Windowing
-    };
+    private:
+      enum Tool
+      {
+        Tool_Move,
+        Tool_Rotate,
+        Tool_Crop,
+        Tool_Resize,
+        Tool_Windowing
+      };
         
 
-    UndoRedoStack      undoRedoStack_;
-    Tool               tool_;
+      UndoRedoStack      undoRedoStack_;
+      Tool               tool_;
 
 
-    static double GetHandleSize()
-    {
-      return 10.0;
-    }
+      static double GetHandleSize()
+      {
+        return 10.0;
+      }
     
          
-  public:
-    BitmapStackInteractor(MessageBroker& broker) :
-      IObserver(broker),
-      tool_(Tool_Move)
-    {
-    }
-    
-    virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& worldWidget,
-                                                        const ViewportGeometry& view,
-                                                        MouseButton button,
-                                                        KeyboardModifiers modifiers,
-                                                        int viewportX,
-                                                        int viewportY,
-                                                        double x,
-                                                        double y,
-                                                        IStatusBar* statusBar)
-    {
-      BitmapStackWidget& widget = dynamic_cast<BitmapStackWidget&>(worldWidget);
-
-      if (button == MouseButton_Left)
+    public:
+      RadiologyEditorInteractor(MessageBroker& broker) :
+        IObserver(broker),
+        tool_(Tool_Move)
       {
-        size_t selected;
+      }
+    
+      virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& worldWidget,
+                                                          const ViewportGeometry& view,
+                                                          MouseButton button,
+                                                          KeyboardModifiers modifiers,
+                                                          int viewportX,
+                                                          int viewportY,
+                                                          double x,
+                                                          double y,
+                                                          IStatusBar* statusBar)
+      {
+        RadiologyWidget& widget = dynamic_cast<RadiologyWidget&>(worldWidget);
+
+        if (button == MouseButton_Left)
+        {
+          size_t selected;
         
-        if (tool_ == Tool_Windowing)
-        {
-          return new WindowingTracker(undoRedoStack_, widget.GetStack(),
-                                      viewportX, viewportY,
-                                      WindowingTracker::Action_DecreaseWidth,
-                                      WindowingTracker::Action_IncreaseWidth,
-                                      WindowingTracker::Action_DecreaseCenter,
-                                      WindowingTracker::Action_IncreaseCenter);
-        }
-        else if (!widget.LookupSelectedBitmap(selected))
-        {
-          // No bitmap is currently selected
-          size_t bitmap;
-          if (widget.GetStack().LookupBitmap(bitmap, x, y))
+          if (tool_ == Tool_Windowing)
           {
-            widget.Select(bitmap);
+            return new RadiologyWindowingTracker(undoRedoStack_, widget.GetScene(),
+                                                 viewportX, viewportY,
+                                                 RadiologyWindowingTracker::Action_DecreaseWidth,
+                                                 RadiologyWindowingTracker::Action_IncreaseWidth,
+                                                 RadiologyWindowingTracker::Action_DecreaseCenter,
+                                                 RadiologyWindowingTracker::Action_IncreaseCenter);
           }
-
-          return NULL;
-        }
-        else if (tool_ == Tool_Crop ||
-                 tool_ == Tool_Resize)
-        {
-          BitmapStack::BitmapAccessor accessor(widget.GetStack(), selected);
-          BitmapStack::Corner corner;
-          if (accessor.GetBitmap().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
+          else if (!widget.LookupSelectedLayer(selected))
           {
-            switch (tool_)
+            // No layer is currently selected
+            size_t layer;
+            if (widget.GetScene().LookupLayer(layer, x, y))
             {
-              case Tool_Crop:
-                return new CropBitmapTracker(undoRedoStack_, widget.GetStack(), view, selected, x, y, corner);
+              widget.Select(layer);
+            }
 
-              case Tool_Resize:
-                return new ResizeBitmapTracker(undoRedoStack_, widget.GetStack(), selected, x, y, corner,
-                                               (modifiers & KeyboardModifiers_Shift));
+            return NULL;
+          }
+          else if (tool_ == Tool_Crop ||
+                   tool_ == Tool_Resize)
+          {
+            RadiologyScene::LayerAccessor accessor(widget.GetScene(), selected);
+            RadiologyScene::Corner corner;
+            if (accessor.GetLayer().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
+            {
+              switch (tool_)
+              {
+                case Tool_Crop:
+                  return new RadiologyLayerCropTracker(undoRedoStack_, widget.GetScene(), view, selected, x, y, corner);
 
-              default:
-                throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+                case Tool_Resize:
+                  return new RadiologyLayerResizeTracker(undoRedoStack_, widget.GetScene(), selected, x, y, corner,
+                                                         (modifiers & KeyboardModifiers_Shift));
+
+                default:
+                  throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+              }
+            }
+            else
+            {
+              size_t layer;
+            
+              if (widget.GetScene().LookupLayer(layer, x, y))
+              {
+                widget.Select(layer);
+              }
+              else
+              {
+                widget.Unselect();
+              }
+            
+              return NULL;
             }
           }
           else
           {
-            size_t bitmap;
-            
-            if (widget.GetStack().LookupBitmap(bitmap, x, y))
+            size_t layer;
+
+            if (widget.GetScene().LookupLayer(layer, x, y))
             {
-              widget.Select(bitmap);
+              if (layer == selected)
+              {
+                switch (tool_)
+                {
+                  case Tool_Move:
+                    return new RadiologyLayerMoveTracker(undoRedoStack_, widget.GetScene(), layer, x, y,
+                                                         (modifiers & KeyboardModifiers_Shift));
+
+                  case Tool_Rotate:
+                    return new RadiologyLayerRotateTracker(undoRedoStack_, widget.GetScene(), view, layer, x, y,
+                                                           (modifiers & KeyboardModifiers_Shift));
+                
+                  default:
+                    break;
+                }
+
+                return NULL;
+              }
+              else
+              {
+                widget.Select(layer);
+                return NULL;
+              }
             }
             else
             {
               widget.Unselect();
+              return NULL;
             }
-            
-            return NULL;
           }
         }
         else
         {
-          size_t bitmap;
-
-          if (widget.GetStack().LookupBitmap(bitmap, x, y))
-          {
-            if (bitmap == selected)
-            {
-              switch (tool_)
-              {
-                case Tool_Move:
-                  return new MoveBitmapTracker(undoRedoStack_, widget.GetStack(), bitmap, x, y,
-                                               (modifiers & KeyboardModifiers_Shift));
-
-                case Tool_Rotate:
-                  return new RotateBitmapTracker(undoRedoStack_, widget.GetStack(), view, bitmap, x, y,
-                                                 (modifiers & KeyboardModifiers_Shift));
-                
-                default:
-                  break;
-              }
-
-              return NULL;
-            }
-            else
-            {
-              widget.Select(bitmap);
-              return NULL;
-            }
-          }
-          else
-          {
-            widget.Unselect();
-            return NULL;
-          }
+          return NULL;
         }
       }
-      else
-      {
-        return NULL;
-      }
-    }
 
-    virtual void MouseOver(CairoContext& context,
-                           WorldSceneWidget& worldWidget,
-                           const ViewportGeometry& view,
-                           double x,
-                           double y,
-                           IStatusBar* statusBar)
-    {
-      BitmapStackWidget& widget = dynamic_cast<BitmapStackWidget&>(worldWidget);
+      virtual void MouseOver(CairoContext& context,
+                             WorldSceneWidget& worldWidget,
+                             const ViewportGeometry& view,
+                             double x,
+                             double y,
+                             IStatusBar* statusBar)
+      {
+        RadiologyWidget& widget = dynamic_cast<RadiologyWidget&>(worldWidget);
 
 #if 0
-      if (statusBar != NULL)
-      {
-        char buf[64];
-        sprintf(buf, "X = %.02f Y = %.02f (in cm)", x / 10.0, y / 10.0);
-        statusBar->SetMessage(buf);
-      }
+        if (statusBar != NULL)
+        {
+          char buf[64];
+          sprintf(buf, "X = %.02f Y = %.02f (in cm)", x / 10.0, y / 10.0);
+          statusBar->SetMessage(buf);
+        }
 #endif
 
-      size_t selected;
+        size_t selected;
 
-      if (widget.LookupSelectedBitmap(selected) &&
-          (tool_ == Tool_Crop ||
-           tool_ == Tool_Resize))
-      {
-        BitmapStack::BitmapAccessor accessor(widget.GetStack(), selected);
-        
-        BitmapStack::Corner corner;
-        if (accessor.GetBitmap().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
+        if (widget.LookupSelectedLayer(selected) &&
+            (tool_ == Tool_Crop ||
+             tool_ == Tool_Resize))
         {
-          accessor.GetBitmap().GetCorner(x, y, corner);
+          RadiologyScene::LayerAccessor accessor(widget.GetScene(), selected);
+        
+          RadiologyScene::Corner corner;
+          if (accessor.GetLayer().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
+          {
+            accessor.GetLayer().GetCorner(x, y, corner);
           
-          double z = 1.0 / view.GetZoom();
+            double z = 1.0 / view.GetZoom();
           
-          context.SetSourceColor(255, 0, 0);
-          cairo_t* cr = context.GetObject();
-          cairo_set_line_width(cr, 2.0 * z);
-          cairo_move_to(cr, x - GetHandleSize() * z, y - GetHandleSize() * z);
-          cairo_line_to(cr, x + GetHandleSize() * z, y - GetHandleSize() * z);
-          cairo_line_to(cr, x + GetHandleSize() * z, y + GetHandleSize() * z);
-          cairo_line_to(cr, x - GetHandleSize() * z, y + GetHandleSize() * z);
-          cairo_line_to(cr, x - GetHandleSize() * z, y - GetHandleSize() * z);
-          cairo_stroke(cr);
+            context.SetSourceColor(255, 0, 0);
+            cairo_t* cr = context.GetObject();
+            cairo_set_line_width(cr, 2.0 * z);
+            cairo_move_to(cr, x - GetHandleSize() * z, y - GetHandleSize() * z);
+            cairo_line_to(cr, x + GetHandleSize() * z, y - GetHandleSize() * z);
+            cairo_line_to(cr, x + GetHandleSize() * z, y + GetHandleSize() * z);
+            cairo_line_to(cr, x - GetHandleSize() * z, y + GetHandleSize() * z);
+            cairo_line_to(cr, x - GetHandleSize() * z, y - GetHandleSize() * z);
+            cairo_stroke(cr);
+          }
         }
       }
-    }
 
-    virtual void MouseWheel(WorldSceneWidget& widget,
-                            MouseWheelDirection direction,
-                            KeyboardModifiers modifiers,
-                            IStatusBar* statusBar)
-    {
-    }
-
-    virtual void KeyPressed(WorldSceneWidget& worldWidget,
-                            KeyboardKeys key,
-                            char keyChar,
-                            KeyboardModifiers modifiers,
-                            IStatusBar* statusBar)
-    {
-      BitmapStackWidget& widget = dynamic_cast<BitmapStackWidget&>(worldWidget);
-
-      switch (keyChar)
+      virtual void MouseWheel(WorldSceneWidget& widget,
+                              MouseWheelDirection direction,
+                              KeyboardModifiers modifiers,
+                              IStatusBar* statusBar)
       {
-        case 'a':
-          widget.FitContent();
-          break;
+      }
 
-        case 'c':
-          tool_ = Tool_Crop;
-          break;
+      virtual void KeyPressed(WorldSceneWidget& worldWidget,
+                              KeyboardKeys key,
+                              char keyChar,
+                              KeyboardModifiers modifiers,
+                              IStatusBar* statusBar)
+      {
+        RadiologyWidget& widget = dynamic_cast<RadiologyWidget&>(worldWidget);
 
-        case 'e':
+        switch (keyChar)
         {
-          Orthanc::DicomMap tags;
+          case 'a':
+            widget.FitContent();
+            break;
 
-          // Minimal set of tags to generate a valid CR image
-          tags.SetValue(Orthanc::DICOM_TAG_ACCESSION_NUMBER, "NOPE", false);
-          tags.SetValue(Orthanc::DICOM_TAG_BODY_PART_EXAMINED, "PELVIS", false);
-          tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "1", false);
-          //tags.SetValue(Orthanc::DICOM_TAG_LATERALITY, "", false);
-          tags.SetValue(Orthanc::DICOM_TAG_MANUFACTURER, "OSIMIS", false);
-          tags.SetValue(Orthanc::DICOM_TAG_MODALITY, "CR", false);
-          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_BIRTH_DATE, "20000101", false);
-          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_ID, "hello", false);
-          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_NAME, "HELLO^WORLD", false);
-          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_ORIENTATION, "", false);
-          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_SEX, "M", false);
-          tags.SetValue(Orthanc::DICOM_TAG_REFERRING_PHYSICIAN_NAME, "HOUSE^MD", false);
-          tags.SetValue(Orthanc::DICOM_TAG_SERIES_NUMBER, "1", false);
-          tags.SetValue(Orthanc::DICOM_TAG_SOP_CLASS_UID, "1.2.840.10008.5.1.4.1.1.1", false);
-          tags.SetValue(Orthanc::DICOM_TAG_STUDY_ID, "STUDY", false);
-          tags.SetValue(Orthanc::DICOM_TAG_VIEW_POSITION, "", false);
+          case 'c':
+            tool_ = Tool_Crop;
+            break;
 
-          widget.GetStack().Export(tags, 0.1, 0.1, widget.IsInverted(), widget.GetInterpolation());
-          break;
-        }
-
-        case 'i':
-          widget.SwitchInvert();
-          break;
-        
-        case 'm':
-          tool_ = Tool_Move;
-          break;
-
-        case 'n':
-        {
-          switch (widget.GetInterpolation())
+          case 'e':
           {
-            case ImageInterpolation_Nearest:
-              LOG(INFO) << "Switching to bilinear interpolation";
-              widget.SetInterpolation(ImageInterpolation_Bilinear);
-              break;
+            Orthanc::DicomMap tags;
+
+            // Minimal set of tags to generate a valid CR image
+            tags.SetValue(Orthanc::DICOM_TAG_ACCESSION_NUMBER, "NOPE", false);
+            tags.SetValue(Orthanc::DICOM_TAG_BODY_PART_EXAMINED, "PELVIS", false);
+            tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "1", false);
+            //tags.SetValue(Orthanc::DICOM_TAG_LATERALITY, "", false);
+            tags.SetValue(Orthanc::DICOM_TAG_MANUFACTURER, "OSIMIS", false);
+            tags.SetValue(Orthanc::DICOM_TAG_MODALITY, "CR", false);
+            tags.SetValue(Orthanc::DICOM_TAG_PATIENT_BIRTH_DATE, "20000101", false);
+            tags.SetValue(Orthanc::DICOM_TAG_PATIENT_ID, "hello", false);
+            tags.SetValue(Orthanc::DICOM_TAG_PATIENT_NAME, "HELLO^WORLD", false);
+            tags.SetValue(Orthanc::DICOM_TAG_PATIENT_ORIENTATION, "", false);
+            tags.SetValue(Orthanc::DICOM_TAG_PATIENT_SEX, "M", false);
+            tags.SetValue(Orthanc::DICOM_TAG_REFERRING_PHYSICIAN_NAME, "HOUSE^MD", false);
+            tags.SetValue(Orthanc::DICOM_TAG_SERIES_NUMBER, "1", false);
+            tags.SetValue(Orthanc::DICOM_TAG_SOP_CLASS_UID, "1.2.840.10008.5.1.4.1.1.1", false);
+            tags.SetValue(Orthanc::DICOM_TAG_STUDY_ID, "STUDY", false);
+            tags.SetValue(Orthanc::DICOM_TAG_VIEW_POSITION, "", false);
+
+            widget.GetScene().Export(tags, 0.1, 0.1, widget.IsInverted(),
+                                     widget.GetInterpolation(), EXPORT_USING_PAM);
+            break;
+          }
+
+          case 'i':
+            widget.SwitchInvert();
+            break;
+        
+          case 'm':
+            tool_ = Tool_Move;
+            break;
+
+          case 'n':
+          {
+            switch (widget.GetInterpolation())
+            {
+              case ImageInterpolation_Nearest:
+                LOG(INFO) << "Switching to bilinear interpolation";
+                widget.SetInterpolation(ImageInterpolation_Bilinear);
+                break;
               
-            case ImageInterpolation_Bilinear:
-              LOG(INFO) << "Switching to nearest neighbor interpolation";
-              widget.SetInterpolation(ImageInterpolation_Nearest);
-              break;
+              case ImageInterpolation_Bilinear:
+                LOG(INFO) << "Switching to nearest neighbor interpolation";
+                widget.SetInterpolation(ImageInterpolation_Nearest);
+                break;
 
-            default:
-              throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-          }
+              default:
+                throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+            }
           
-          break;
+            break;
+          }
+        
+          case 'r':
+            tool_ = Tool_Rotate;
+            break;
+
+          case 's':
+            tool_ = Tool_Resize;
+            break;
+
+          case 'w':
+            tool_ = Tool_Windowing;
+            break;
+
+          case 'y':
+            if (modifiers & KeyboardModifiers_Control)
+            {
+              undoRedoStack_.Redo();
+              widget.NotifyContentChanged();
+            }
+            break;
+
+          case 'z':
+            if (modifiers & KeyboardModifiers_Control)
+            {
+              undoRedoStack_.Undo();
+              widget.NotifyContentChanged();
+            }
+            break;
+        
+          default:
+            break;
         }
-        
-        case 'r':
-          tool_ = Tool_Rotate;
-          break;
-
-        case 's':
-          tool_ = Tool_Resize;
-          break;
-
-        case 'w':
-          tool_ = Tool_Windowing;
-          break;
-
-        case 'y':
-          if (modifiers & KeyboardModifiers_Control)
-          {
-            undoRedoStack_.Redo();
-            widget.NotifyContentChanged();
-          }
-          break;
-
-        case 'z':
-          if (modifiers & KeyboardModifiers_Control)
-          {
-            undoRedoStack_.Undo();
-            widget.NotifyContentChanged();
-          }
-          break;
-        
-        default:
-          break;
       }
-    }
-  };
+    };
 
   
   
-  namespace Samples
-  {
     class SingleFrameEditorApplication :
       public SampleSingleCanvasApplicationBase,
       public IObserver
     {
     private:
       std::auto_ptr<OrthancApiClient>  orthancApiClient_;
-      std::auto_ptr<BitmapStack>       stack_;
-      BitmapStackInteractor            interactor_;
+      std::auto_ptr<RadiologyScene>    scene_;
+      RadiologyEditorInteractor        interactor_;
 
     public:
       SingleFrameEditorApplication(MessageBroker& broker) :
@@ -2876,7 +2887,7 @@ namespace OrthancStone
         statusBar.SetMessage("Use the key \"m\" to move objects");
         statusBar.SetMessage("Use the key \"n\" to switch between nearest neighbor and bilinear interpolation");
         statusBar.SetMessage("Use the key \"r\" to rotate objects");
-        statusBar.SetMessage("Use the key \"s\" to resize objects (not applicable to DICOM bitmaps)");
+        statusBar.SetMessage("Use the key \"s\" to resize objects (not applicable to DICOM layers)");
         statusBar.SetMessage("Use the key \"w\" to change windowing");
         
         statusBar.SetMessage("Use the key \"ctrl-z\" to undo action");
@@ -2896,29 +2907,29 @@ namespace OrthancStone
         Orthanc::FontRegistry fonts;
         fonts.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
         
-        stack_.reset(new BitmapStack(GetBroker(), *orthancApiClient_));
-        stack_->LoadFrame(instance, frame, false); //.SetPan(200, 0);
-        //stack_->LoadFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false);
+        scene_.reset(new RadiologyScene(GetBroker(), *orthancApiClient_));
+        scene_->LoadDicomFrame(instance, frame, false); //.SetPan(200, 0);
+        //scene_->LoadDicomFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false);
 
         {
-          BitmapStack::Bitmap& bitmap = stack_->LoadText(fonts.GetFont(0), "Hello\nworld");
-          //dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetForegroundValue(256);
-          dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetResizeable(true);
+          RadiologyScene::Layer& layer = scene_->LoadText(fonts.GetFont(0), "Hello\nworld");
+          //dynamic_cast<RadiologyScene::Layer&>(layer).SetForegroundValue(256);
+          dynamic_cast<RadiologyScene::Layer&>(layer).SetResizeable(true);
         }
         
         {
-          BitmapStack::Bitmap& bitmap = stack_->LoadTestBlock(100, 50);
-          //dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetForegroundValue(256);
-          dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetResizeable(true);
-          dynamic_cast<BitmapStack::AlphaBitmap&>(bitmap).SetPan(0, 200);
+          RadiologyScene::Layer& layer = scene_->LoadTestBlock(100, 50);
+          //dynamic_cast<RadiologyScene::Layer&>(layer).SetForegroundValue(256);
+          dynamic_cast<RadiologyScene::Layer&>(layer).SetResizeable(true);
+          dynamic_cast<RadiologyScene::Layer&>(layer).SetPan(0, 200);
         }
         
         
-        mainWidget_ = new BitmapStackWidget(GetBroker(), *stack_, "main-widget");
+        mainWidget_ = new RadiologyWidget(GetBroker(), *scene_, "main-widget");
         mainWidget_->SetTransmitMouseOver(true);
         mainWidget_->SetInteractor(interactor_);
 
-        //stack_->SetWindowing(128, 256);
+        //scene_->SetWindowing(128, 256);
       }
     };
   }

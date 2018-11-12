@@ -24,6 +24,7 @@
 #include "SampleApplicationBase.h"
 
 #include "../../Framework/Radiography/RadiographyScene.h"
+#include "../../Framework/Radiography/RadiographyWidget.h"
 
 #include "../../Framework/Toolbox/UndoRedoStack.h"
 
@@ -51,7 +52,7 @@
 
 namespace OrthancStone
 {
-  class RadiographyLayerCommand : public UndoRedoStack::ICommand
+  class RadiographySceneCommand : public UndoRedoStack::ICommand
   {
   private:
     RadiographyScene&  scene_;
@@ -63,14 +64,14 @@ namespace OrthancStone
     virtual void RedoInternal(RadiographyLayer& layer) const = 0;
 
   public:
-    RadiographyLayerCommand(RadiographyScene& scene,
+    RadiographySceneCommand(RadiographyScene& scene,
                             size_t layer) :
       scene_(scene),
       layer_(layer)
     {
     }
 
-    RadiographyLayerCommand(const RadiographyScene::LayerAccessor& accessor) :
+    RadiographySceneCommand(const RadiographyScene::LayerAccessor& accessor) :
       scene_(accessor.GetScene()),
       layer_(accessor.GetIndex())
     {
@@ -131,7 +132,7 @@ namespace OrthancStone
     }
 
 
-    class UndoRedoCommand : public RadiographyLayerCommand
+    class UndoRedoCommand : public RadiographySceneCommand
     {
     private:
       double  sourceAngle_;
@@ -157,7 +158,7 @@ namespace OrthancStone
 
     public:
       UndoRedoCommand(const RadiographyLayerRotateTracker& tracker) :
-        RadiographyLayerCommand(tracker.accessor_),
+        RadiographySceneCommand(tracker.accessor_),
         sourceAngle_(tracker.originalAngle_),
         targetAngle_(tracker.accessor_.GetLayer().GetAngle())
       {
@@ -247,7 +248,7 @@ namespace OrthancStone
     double                           panY_;
     bool                             oneAxis_;
 
-    class UndoRedoCommand : public RadiographyLayerCommand
+    class UndoRedoCommand : public RadiographySceneCommand
     {
     private:
       double  sourceX_;
@@ -268,7 +269,7 @@ namespace OrthancStone
 
     public:
       UndoRedoCommand(const RadiographyLayerMoveTracker& tracker) :
-        RadiographyLayerCommand(tracker.accessor_),
+        RadiographySceneCommand(tracker.accessor_),
         sourceX_(tracker.panX_),
         sourceY_(tracker.panY_),
         targetX_(tracker.accessor_.GetLayer().GetPanX()),
@@ -358,7 +359,7 @@ namespace OrthancStone
     unsigned int                     cropWidth_;
     unsigned int                     cropHeight_;
 
-    class UndoRedoCommand : public RadiographyLayerCommand
+    class UndoRedoCommand : public RadiographySceneCommand
     {
     private:
       unsigned int  sourceCropX_;
@@ -383,7 +384,7 @@ namespace OrthancStone
 
     public:
       UndoRedoCommand(const RadiographyLayerCropTracker& tracker) :
-        RadiographyLayerCommand(tracker.accessor_),
+        RadiographySceneCommand(tracker.accessor_),
         sourceCropX_(tracker.cropX_),
         sourceCropY_(tracker.cropY_),
         sourceCropWidth_(tracker.cropWidth_),
@@ -504,7 +505,7 @@ namespace OrthancStone
       return sqrt(dx * dx + dy * dy);
     }
       
-    class UndoRedoCommand : public RadiographyLayerCommand
+    class UndoRedoCommand : public RadiographySceneCommand
     {
     private:
       double   sourceSpacingX_;
@@ -531,7 +532,7 @@ namespace OrthancStone
 
     public:
       UndoRedoCommand(const RadiographyLayerResizeTracker& tracker) :
-        RadiographyLayerCommand(tracker.accessor_),
+        RadiographySceneCommand(tracker.accessor_),
         sourceSpacingX_(tracker.originalSpacingX_),
         sourceSpacingY_(tracker.originalSpacingY_),
         sourcePanX_(tracker.originalPanX_),
@@ -849,228 +850,6 @@ namespace OrthancStone
   };
 
 
-  class RadiographyWidget :
-    public WorldSceneWidget,
-    public IObserver
-  {
-  private:
-    RadiographyScene&              scene_;
-    std::auto_ptr<Orthanc::Image>  floatBuffer_;
-    std::auto_ptr<CairoSurface>    cairoBuffer_;
-    bool                           invert_;
-    ImageInterpolation             interpolation_;
-    bool                           hasSelection_;
-    size_t                         selectedLayer_;
-
-    virtual bool RenderInternal(unsigned int width,
-                                unsigned int height,
-                                ImageInterpolation interpolation)
-    {
-      float windowCenter, windowWidth;
-      scene_.GetWindowingWithDefault(windowCenter, windowWidth);
-      
-      float x0 = windowCenter - windowWidth / 2.0f;
-      float x1 = windowCenter + windowWidth / 2.0f;
-
-      if (windowWidth <= 0.001f)  // Avoid division by zero at (*)
-      {
-        return false;
-      }
-      else
-      {
-        if (floatBuffer_.get() == NULL ||
-            floatBuffer_->GetWidth() != width ||
-            floatBuffer_->GetHeight() != height)
-        {
-          floatBuffer_.reset(new Orthanc::Image(Orthanc::PixelFormat_Float32, width, height, false));
-        }
-
-        if (cairoBuffer_.get() == NULL ||
-            cairoBuffer_->GetWidth() != width ||
-            cairoBuffer_->GetHeight() != height)
-        {
-          cairoBuffer_.reset(new CairoSurface(width, height));
-        }
-
-        scene_.Render(*floatBuffer_, GetView().GetMatrix(), interpolation);
-        
-        // Conversion from Float32 to BGRA32 (cairo). Very similar to
-        // GrayscaleFrameRenderer => TODO MERGE?
-
-        Orthanc::ImageAccessor target;
-        cairoBuffer_->GetWriteableAccessor(target);
-
-        float scaling = 255.0f / (x1 - x0);
-        
-        for (unsigned int y = 0; y < height; y++)
-        {
-          const float* p = reinterpret_cast<const float*>(floatBuffer_->GetConstRow(y));
-          uint8_t* q = reinterpret_cast<uint8_t*>(target.GetRow(y));
-
-          for (unsigned int x = 0; x < width; x++, p++, q += 4)
-          {
-            uint8_t v = 0;
-            if (*p >= x1)
-            {
-              v = 255;
-            }
-            else if (*p <= x0)
-            {
-              v = 0;
-            }
-            else
-            {
-              // https://en.wikipedia.org/wiki/Linear_interpolation
-              v = static_cast<uint8_t>(scaling * (*p - x0));  // (*)
-            }
-
-            if (invert_)
-            {
-              v = 255 - v;
-            }
-
-            q[0] = v;
-            q[1] = v;
-            q[2] = v;
-            q[3] = 255;
-          }
-        }
-
-        return true;
-      }
-    }
-
-  protected:
-    virtual Extent2D GetSceneExtent()
-    {
-      return scene_.GetSceneExtent();
-    }
-
-    virtual bool RenderScene(CairoContext& context,
-                             const ViewportGeometry& view)
-    {
-      cairo_t* cr = context.GetObject();
-
-      if (RenderInternal(context.GetWidth(), context.GetHeight(), interpolation_))
-      {
-        // https://www.cairographics.org/FAQ/#paint_from_a_surface
-        cairo_save(cr);
-        cairo_identity_matrix(cr);
-        cairo_set_source_surface(cr, cairoBuffer_->GetObject(), 0, 0);
-        cairo_paint(cr);
-        cairo_restore(cr);
-      }
-      else
-      {
-        // https://www.cairographics.org/FAQ/#clear_a_surface
-        context.SetSourceColor(0, 0, 0);
-        cairo_paint(cr);
-      }
-
-      if (hasSelection_)
-      {
-        scene_.DrawBorder(context, selectedLayer_, view.GetZoom());
-      }
-
-      return true;
-    }
-
-  public:
-    RadiographyWidget(MessageBroker& broker,
-                      RadiographyScene& scene,
-                      const std::string& name) :
-      WorldSceneWidget(name),
-      IObserver(broker),
-      scene_(scene),
-      invert_(false),
-      interpolation_(ImageInterpolation_Nearest),
-      hasSelection_(false),
-      selectedLayer_(0)    // Dummy initialization
-    {
-      scene.RegisterObserverCallback(
-        new Callable<RadiographyWidget, RadiographyScene::GeometryChangedMessage>
-        (*this, &RadiographyWidget::OnGeometryChanged));
-
-      scene.RegisterObserverCallback(
-        new Callable<RadiographyWidget, RadiographyScene::ContentChangedMessage>
-        (*this, &RadiographyWidget::OnContentChanged));
-    }
-
-    RadiographyScene& GetScene() const
-    {
-      return scene_;
-    }
-
-    void Unselect()
-    {
-      hasSelection_ = false;
-    }
-
-    void Select(size_t layer)
-    {
-      hasSelection_ = true;
-      selectedLayer_ = layer;
-    }
-
-    bool LookupSelectedLayer(size_t& layer)
-    {
-      if (hasSelection_)
-      {
-        layer = selectedLayer_;
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-    }
-
-    void OnGeometryChanged(const RadiographyScene::GeometryChangedMessage& message)
-    {
-      LOG(INFO) << "Geometry has changed";
-      FitContent();
-    }
-
-    void OnContentChanged(const RadiographyScene::ContentChangedMessage& message)
-    {
-      LOG(INFO) << "Content has changed";
-      NotifyContentChanged();
-    }
-
-    void SetInvert(bool invert)
-    {
-      if (invert_ != invert)
-      {
-        invert_ = invert;
-        NotifyContentChanged();
-      }
-    }
-
-    void SwitchInvert()
-    {
-      invert_ = !invert_;
-      NotifyContentChanged();
-    }
-
-    bool IsInverted() const
-    {
-      return invert_;
-    }
-
-    void SetInterpolation(ImageInterpolation interpolation)
-    {
-      if (interpolation_ != interpolation)
-      {
-        interpolation_ = interpolation;
-        NotifyContentChanged();
-      }
-    }
-
-    ImageInterpolation GetInterpolation() const
-    {
-      return interpolation_;
-    }
-  };
 
   
   namespace Samples

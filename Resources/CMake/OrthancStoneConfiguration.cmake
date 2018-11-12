@@ -247,14 +247,13 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Layers/RenderStyle.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/SliceOutlineRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.h
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyScene.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyScene.h
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneException.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/AffineTransform2D.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/AffineTransform2D.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/CoordinateSystem3D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomFrameConverter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet.cpp
@@ -263,7 +262,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/FiniteProjectiveCamera.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/IWebService.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/IWebService.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/MessagingToolbox.cpp
@@ -276,7 +274,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Slice.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ViewportGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp
@@ -304,7 +301,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IObservable.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObservable.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IObserver.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageBroker.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageForwarder.cpp
@@ -331,3 +327,38 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${BOOST_EXTENDED_SOURCES}
   )
 
+
+
+
+##
+## TEST - Automatically add all ".h" headers to the list of sources
+##
+
+macro(AutodetectHeaderFiles SOURCES_VAR)
+  set(TMP)
+  
+  foreach(f IN LISTS ${SOURCES_VAR})
+    get_filename_component(_base ${f} NAME_WE)
+    get_filename_component(_dir ${f} DIRECTORY)
+    get_filename_component(_extension ${f} EXT)
+    set(_header ${_dir}/${_base}.h)
+    
+    if ((_extension STREQUAL ".cpp" OR
+          _extension STREQUAL ".cc" OR
+          _extension STREQUAL ".h") AND
+        EXISTS ${_header} AND
+        NOT IS_DIRECTORY ${_header} AND
+        NOT IS_SYMLINK ${_header})
+
+      list (FIND SOURCES_VAR ${_header} _index)
+      if (${_index} EQUAL -1)
+        list(APPEND TMP ${_header})
+      endif()
+    endif()
+  endforeach()
+
+  list(APPEND ${SOURCES_VAR} ${TMP})
+endmacro()
+
+
+AutodetectHeaderFiles(ORTHANC_STONE_SOURCES)

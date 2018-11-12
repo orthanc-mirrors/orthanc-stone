@@ -21,8 +21,8 @@
 
 #pragma once
 
+#include "../Toolbox/AffineTransform2D.h"
 #include "../Toolbox/Extent2D.h"
-#include "../Toolbox/LinearAlgebra.h"
 #include "../Toolbox/OrthancApiClient.h"
 #include "../Viewport/CairoContext.h"
 
@@ -45,32 +45,33 @@ namespace OrthancStone
       Corner_BottomRight
     };
 
+
     class Layer : public boost::noncopyable
     {
       friend class RadiographyScene;
       
     private:
-      size_t        index_;
-      bool          hasSize_;
-      unsigned int  width_;
-      unsigned int  height_;
-      bool          hasCrop_;
-      unsigned int  cropX_;
-      unsigned int  cropY_;
-      unsigned int  cropWidth_;
-      unsigned int  cropHeight_;
-      Matrix        transform_;
-      Matrix        transformInverse_;
-      double        pixelSpacingX_;
-      double        pixelSpacingY_;
-      double        panX_;
-      double        panY_;
-      double        angle_;
-      bool          resizeable_;
+      size_t             index_;
+      bool               hasSize_;
+      unsigned int       width_;
+      unsigned int       height_;
+      bool               hasCrop_;
+      unsigned int       cropX_;
+      unsigned int       cropY_;
+      unsigned int       cropWidth_;
+      unsigned int       cropHeight_;
+      AffineTransform2D  transform_;
+      AffineTransform2D  transformInverse_;
+      double             pixelSpacingX_;
+      double             pixelSpacingY_;
+      double             panX_;
+      double             panY_;
+      double             angle_;
+      bool               resizeable_;
 
 
     protected:
-      const Matrix& GetTransform() const
+      const AffineTransform2D& GetTransform() const
       {
         return transform_;
       }
@@ -209,7 +210,7 @@ namespace OrthancStone
                                        float& width) const = 0;
 
       virtual void Render(Orthanc::ImageAccessor& buffer,
-                          const Matrix& viewTransform,
+                          const AffineTransform2D& viewTransform,
                           ImageInterpolation interpolation) const = 0;
 
       virtual bool GetRange(float& minValue,
@@ -299,7 +300,7 @@ namespace OrthancStone
     Extent2D GetSceneExtent() const;
 
     void Render(Orthanc::ImageAccessor& buffer,
-                const Matrix& viewTransform,
+                const AffineTransform2D& viewTransform,
                 ImageInterpolation interpolation) const;
 
     bool LookupLayer(size_t& index /* out */,

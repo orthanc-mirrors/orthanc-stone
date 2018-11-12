@@ -43,73 +43,20 @@ namespace OrthancStone
   }
 
 
-  static Matrix CreateOffsetMatrix(double dx,
-                                   double dy)
-  {
-    Matrix m = LinearAlgebra::IdentityMatrix(3);
-    m(0, 2) = dx;
-    m(1, 2) = dy;
-    return m;
-  }
-      
-
-  static Matrix CreateScalingMatrix(double sx,
-                                    double sy)
-  {
-    Matrix m = LinearAlgebra::IdentityMatrix(3);
-    m(0, 0) = sx;
-    m(1, 1) = sy;
-    return m;
-  }
-      
-
-  static Matrix CreateRotationMatrix(double angle)
-  {
-    Matrix m;
-    const double v[] = { cos(angle), -sin(angle), 0,
-                         sin(angle), cos(angle), 0,
-                         0, 0, 1 };
-    LinearAlgebra::FillMatrix(m, 3, 3, v);
-    return m;
-  }
-
-
-  static void ApplyTransform(double& x /* inout */,
-                             double& y /* inout */,
-                             const Matrix& transform)
-  {
-    Vector p;
-    LinearAlgebra::AssignVector(p, x, y, 1);
-
-    Vector q = LinearAlgebra::Product(transform, p);
-
-    if (!LinearAlgebra::IsNear(q[2], 1.0))
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-    }
-    else
-    {
-      x = q[0];
-      y = q[1];
-    }
-  }
-      
-      
-
   void RadiographyScene::Layer::UpdateTransform()
   {
-    transform_ = CreateScalingMatrix(pixelSpacingX_, pixelSpacingY_);
+    transform_ = AffineTransform2D::CreateScaling(pixelSpacingX_, pixelSpacingY_);
 
     double centerX, centerY;
     GetCenter(centerX, centerY);
 
-    transform_ = LinearAlgebra::Product(
-      CreateOffsetMatrix(panX_ + centerX, panY_ + centerY),
-      CreateRotationMatrix(angle_),
-      CreateOffsetMatrix(-centerX, -centerY),
+    transform_ = AffineTransform2D::Combine(
+      AffineTransform2D::CreateOffset(panX_ + centerX, panY_ + centerY),
+      AffineTransform2D::CreateRotation(angle_),
+      AffineTransform2D::CreateOffset(-centerX, -centerY),
       transform_);
 
-    LinearAlgebra::InvertMatrix(transformInverse_, transform_);
+    transformInverse_ = AffineTransform2D::Invert(transform_);
   }
 
 
@@ -117,7 +64,7 @@ namespace OrthancStone
                                             double x,
                                             double y) const
   {
-    ApplyTransform(x, y, transform_);
+    transform_.Apply(x, y);
     extent.AddPoint(x, y);
   }
 
@@ -161,14 +108,14 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    ApplyTransform(x, y, transform_);
+    transform_.Apply(x, y);
   }
 
 
   bool RadiographyScene::Layer::Contains(double x,
                                          double y) const
   {
-    ApplyTransform(x, y, transformInverse_);
+    transformInverse_.Apply(x, y);
         
     unsigned int cropX, cropY, cropWidth, cropHeight;
     GetCrop(cropX, cropY, cropWidth, cropHeight);
@@ -195,27 +142,27 @@ namespace OrthancStone
     double x, y;
     x = dx;
     y = dy;
-    ApplyTransform(x, y, transform_);
+    transform_.Apply(x, y);
     cairo_move_to(cr, x, y);
 
     x = dx + dwidth;
     y = dy;
-    ApplyTransform(x, y, transform_);
+    transform_.Apply(x, y);
     cairo_line_to(cr, x, y);
 
     x = dx + dwidth;
     y = dy + dheight;
-    ApplyTransform(x, y, transform_);
+    transform_.Apply(x, y);
     cairo_line_to(cr, x, y);
 
     x = dx;
     y = dy + dheight;
-    ApplyTransform(x, y, transform_);
+    transform_.Apply(x, y);
     cairo_line_to(cr, x, y);
 
     x = dx;
     y = dy;
-    ApplyTransform(x, y, transform_);
+    transform_.Apply(x, y);
     cairo_line_to(cr, x, y);
 
     cairo_stroke(cr);
@@ -345,7 +292,7 @@ namespace OrthancStone
     }
     else
     {
-      ApplyTransform(sceneX, sceneY, transformInverse_);
+      transformInverse_.Apply(sceneX, sceneY);
         
       int x = static_cast<int>(std::floor(sceneX));
       int y = static_cast<int>(std::floor(sceneY));
@@ -404,7 +351,7 @@ namespace OrthancStone
   {
     centerX = static_cast<double>(width_) / 2.0;
     centerY = static_cast<double>(height_) / 2.0;
-    ApplyTransform(centerX, centerY, transform_);
+    transform_.Apply(centerX, centerY);
   }
 
 
@@ -598,7 +545,7 @@ namespace OrthancStone
       
 
     virtual void Render(Orthanc::ImageAccessor& buffer,
-                        const Matrix& viewTransform,
+                        const AffineTransform2D& viewTransform,
                         ImageInterpolation interpolation) const
     {
       if (alpha_.get() == NULL)
@@ -614,15 +561,16 @@ namespace OrthancStone
       unsigned int cropX, cropY, cropWidth, cropHeight;
       GetCrop(cropX, cropY, cropWidth, cropHeight);
 
-      Matrix m = LinearAlgebra::Product(viewTransform,
-                                        GetTransform(),
-                                        CreateOffsetMatrix(cropX, cropY));
+      const AffineTransform2D t = AffineTransform2D::Combine(
+        viewTransform, GetTransform(),
+        AffineTransform2D::CreateOffset(cropX, cropY));
 
       Orthanc::ImageAccessor cropped;
       alpha_->GetRegion(cropped, cropX, cropY, cropWidth, cropHeight);
         
       Orthanc::Image tmp(Orthanc::PixelFormat_Grayscale8, buffer.GetWidth(), buffer.GetHeight(), false);
-      ApplyProjectiveTransform(tmp, cropped, m, interpolation, true /* clear */);
+      
+      t.Apply(tmp, cropped, interpolation, true /* clear */);
 
       // Blit
       const unsigned int width = buffer.GetWidth();
@@ -756,7 +704,7 @@ namespace OrthancStone
 
       
     virtual void Render(Orthanc::ImageAccessor& buffer,
-                        const Matrix& viewTransform,
+                        const AffineTransform2D& viewTransform,
                         ImageInterpolation interpolation) const
     {
       if (converted_.get() != NULL)
@@ -769,14 +717,14 @@ namespace OrthancStone
         unsigned int cropX, cropY, cropWidth, cropHeight;
         GetCrop(cropX, cropY, cropWidth, cropHeight);
 
-        Matrix m = LinearAlgebra::Product(viewTransform,
-                                          GetTransform(),
-                                          CreateOffsetMatrix(cropX, cropY));
+        AffineTransform2D t = AffineTransform2D::Combine(
+          viewTransform, GetTransform(),
+          AffineTransform2D::CreateOffset(cropX, cropY));
 
         Orthanc::ImageAccessor cropped;
         converted_->GetRegion(cropped, cropX, cropY, cropWidth, cropHeight);
         
-        ApplyProjectiveTransform(buffer, cropped, m, interpolation, false);
+        t.Apply(buffer, cropped, interpolation, false);
       }
     }
 
@@ -1052,7 +1000,7 @@ namespace OrthancStone
     
 
   void RadiographyScene::Render(Orthanc::ImageAccessor& buffer,
-                                const Matrix& viewTransform,
+                                const AffineTransform2D& viewTransform,
                                 ImageInterpolation interpolation) const
   {
     Orthanc::ImageProcessing::Set(buffer, 0);
@@ -1173,9 +1121,9 @@ namespace OrthancStone
                           static_cast<unsigned int>(w),
                           static_cast<unsigned int>(h), false);
 
-    Matrix view = LinearAlgebra::Product(
-      CreateScalingMatrix(1.0 / pixelSpacingX, 1.0 / pixelSpacingY),
-      CreateOffsetMatrix(-extent.GetX1(), -extent.GetY1()));
+    AffineTransform2D view = AffineTransform2D::Combine(
+      AffineTransform2D::CreateScaling(1.0 / pixelSpacingX, 1.0 / pixelSpacingY),
+      AffineTransform2D::CreateOffset(-extent.GetX1(), -extent.GetY1()));
       
     Render(layers, view, interpolation);
 

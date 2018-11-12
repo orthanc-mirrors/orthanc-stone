@@ -251,8 +251,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneException.h
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/AffineTransform2D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/AffineTransform2D.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/CoordinateSystem3D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomFrameConverter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet.cpp
@@ -273,6 +273,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Slice.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ViewportGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp

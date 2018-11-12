@@ -246,6 +246,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Layers/LineMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/RenderStyle.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/SliceOutlineRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMoveTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerRotateTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyScene.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneCommand.cpp
@@ -350,6 +352,8 @@ macro(AutodetectHeaderFiles SOURCES_VAR)
         NOT IS_DIRECTORY ${_header} AND
         NOT IS_SYMLINK ${_header})
 
+      # Prevent adding the header twice if it is already manually
+      # specified in the sources
       list (FIND SOURCES_VAR ${_header} _index)
       if (${_index} EQUAL -1)
         list(APPEND TMP ${_header})

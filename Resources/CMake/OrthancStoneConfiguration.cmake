@@ -246,6 +246,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Layers/LineMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/RenderStyle.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/SliceOutlineRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.h
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyScene.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyScene.h
   ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp

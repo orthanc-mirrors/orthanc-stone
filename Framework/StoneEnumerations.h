@@ -166,7 +166,16 @@ namespace OrthancStone
     MessageType_CustomMessage // Custom messages ids ust be greater than this (this one must remain in last position)
   };
 
+  
+  enum Corner
+  {
+    Corner_TopLeft,
+    Corner_TopRight,
+    Corner_BottomLeft,
+    Corner_BottomRight
+  };
 
+  
   bool StringToSopClassUid(SopClassUid& result,
                            const std::string& source);
 

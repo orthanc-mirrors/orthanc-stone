@@ -58,9 +58,9 @@ namespace OrthancStone
     size_t             layer_;
 
   protected:
-    virtual void UndoInternal(RadiographyScene::Layer& layer) const = 0;
+    virtual void UndoInternal(RadiographyLayer& layer) const = 0;
 
-    virtual void RedoInternal(RadiographyScene::Layer& layer) const = 0;
+    virtual void RedoInternal(RadiographyLayer& layer) const = 0;
 
   public:
     RadiographyLayerCommand(RadiographyScene& scene,
@@ -143,13 +143,13 @@ namespace OrthancStone
       }
       
     protected:
-      virtual void UndoInternal(RadiographyScene::Layer& layer) const
+      virtual void UndoInternal(RadiographyLayer& layer) const
       {
         LOG(INFO) << "Undo - Set angle to " << ToDegrees(sourceAngle_) << " degrees";
         layer.SetAngle(sourceAngle_);
       }
 
-      virtual void RedoInternal(RadiographyScene::Layer& layer) const
+      virtual void RedoInternal(RadiographyLayer& layer) const
       {
         LOG(INFO) << "Redo - Set angle to " << ToDegrees(sourceAngle_) << " degrees";
         layer.SetAngle(targetAngle_);
@@ -256,12 +256,12 @@ namespace OrthancStone
       double  targetY_;
 
     protected:
-      virtual void UndoInternal(RadiographyScene::Layer& layer) const
+      virtual void UndoInternal(RadiographyLayer& layer) const
       {
         layer.SetPan(sourceX_, sourceY_);
       }
 
-      virtual void RedoInternal(RadiographyScene::Layer& layer) const
+      virtual void RedoInternal(RadiographyLayer& layer) const
       {
         layer.SetPan(targetX_, targetY_);
       }
@@ -352,7 +352,7 @@ namespace OrthancStone
   private:
     UndoRedoStack&                   undoRedoStack_;
     RadiographyScene::LayerAccessor  accessor_;
-    RadiographyScene::Corner         corner_;
+    Corner                           corner_;
     unsigned int                     cropX_;
     unsigned int                     cropY_;
     unsigned int                     cropWidth_;
@@ -371,12 +371,12 @@ namespace OrthancStone
       unsigned int  targetCropHeight_;
 
     protected:
-      virtual void UndoInternal(RadiographyScene::Layer& layer) const
+      virtual void UndoInternal(RadiographyLayer& layer) const
       {
         layer.SetCrop(sourceCropX_, sourceCropY_, sourceCropWidth_, sourceCropHeight_);
       }
 
-      virtual void RedoInternal(RadiographyScene::Layer& layer) const
+      virtual void RedoInternal(RadiographyLayer& layer) const
       {
         layer.SetCrop(targetCropX_, targetCropY_, targetCropWidth_, targetCropHeight_);
       }
@@ -402,7 +402,7 @@ namespace OrthancStone
                                 size_t layer,
                                 double x,
                                 double y,
-                                RadiographyScene::Corner corner) :
+                                Corner corner) :
       undoRedoStack_(undoRedoStack),
       accessor_(scene, layer),
       corner_(corner)
@@ -441,13 +441,13 @@ namespace OrthancStone
       {
         unsigned int x, y;
         
-        RadiographyScene::Layer& layer = accessor_.GetLayer();
+        RadiographyLayer& layer = accessor_.GetLayer();
         if (layer.GetPixel(x, y, sceneX, sceneY))
         {
           unsigned int targetX, targetWidth;
 
-          if (corner_ == RadiographyScene::Corner_TopLeft ||
-              corner_ == RadiographyScene::Corner_BottomLeft)
+          if (corner_ == Corner_TopLeft ||
+              corner_ == Corner_BottomLeft)
           {
             targetX = std::min(x, cropX_ + cropWidth_);
             targetWidth = cropX_ + cropWidth_ - targetX;
@@ -460,8 +460,8 @@ namespace OrthancStone
 
           unsigned int targetY, targetHeight;
 
-          if (corner_ == RadiographyScene::Corner_TopLeft ||
-              corner_ == RadiographyScene::Corner_TopRight)
+          if (corner_ == Corner_TopLeft ||
+              corner_ == Corner_TopRight)
           {
             targetY = std::min(y, cropY_ + cropHeight_);
             targetHeight = cropY_ + cropHeight_ - targetY;
@@ -489,7 +489,7 @@ namespace OrthancStone
     double                           originalSpacingY_;
     double                           originalPanX_;
     double                           originalPanY_;
-    RadiographyScene::Corner         oppositeCorner_;
+    Corner                           oppositeCorner_;
     double                           oppositeX_;
     double                           oppositeY_;
     double                           baseScaling_;
@@ -517,13 +517,13 @@ namespace OrthancStone
       double   targetPanY_;
 
     protected:
-      virtual void UndoInternal(RadiographyScene::Layer& layer) const
+      virtual void UndoInternal(RadiographyLayer& layer) const
       {
         layer.SetPixelSpacing(sourceSpacingX_, sourceSpacingY_);
         layer.SetPan(sourcePanX_, sourcePanY_);
       }
 
-      virtual void RedoInternal(RadiographyScene::Layer& layer) const
+      virtual void RedoInternal(RadiographyLayer& layer) const
       {
         layer.SetPixelSpacing(targetSpacingX_, targetSpacingY_);
         layer.SetPan(targetPanX_, targetPanY_);
@@ -551,7 +551,7 @@ namespace OrthancStone
                                   size_t layer,
                                   double x,
                                   double y,
-                                  RadiographyScene::Corner corner,
+                                  Corner corner,
                                   bool roundScaling) :
       undoRedoStack_(undoRedoStack),
       accessor_(scene, layer),
@@ -567,20 +567,20 @@ namespace OrthancStone
 
         switch (corner)
         {
-          case RadiographyScene::Corner_TopLeft:
-            oppositeCorner_ = RadiographyScene::Corner_BottomRight;
+          case Corner_TopLeft:
+            oppositeCorner_ = Corner_BottomRight;
             break;
 
-          case RadiographyScene::Corner_TopRight:
-            oppositeCorner_ = RadiographyScene::Corner_BottomLeft;
+          case Corner_TopRight:
+            oppositeCorner_ = Corner_BottomLeft;
             break;
 
-          case RadiographyScene::Corner_BottomLeft:
-            oppositeCorner_ = RadiographyScene::Corner_TopRight;
+          case Corner_BottomLeft:
+            oppositeCorner_ = Corner_TopRight;
             break;
 
-          case RadiographyScene::Corner_BottomRight:
-            oppositeCorner_ = RadiographyScene::Corner_TopLeft;
+          case Corner_BottomRight:
+            oppositeCorner_ = Corner_TopLeft;
             break;
 
           default:
@@ -639,7 +639,7 @@ namespace OrthancStone
           scaling = boost::math::round<double>((scaling / ROUND_SCALING) * ROUND_SCALING);
         }
           
-        RadiographyScene::Layer& layer = accessor_.GetLayer();
+        RadiographyLayer& layer = accessor_.GetLayer();
         layer.SetPixelSpacing(scaling * originalSpacingX_,
                               scaling * originalSpacingY_);
 
@@ -1148,7 +1148,8 @@ namespace OrthancStone
                    tool_ == Tool_Resize)
           {
             RadiographyScene::LayerAccessor accessor(widget.GetScene(), selected);
-            RadiographyScene::Corner corner;
+            
+            Corner corner;
             if (accessor.GetLayer().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
             {
               switch (tool_)
@@ -1253,7 +1254,7 @@ namespace OrthancStone
         {
           RadiographyScene::LayerAccessor accessor(widget.GetScene(), selected);
         
-          RadiographyScene::Corner corner;
+          Corner corner;
           if (accessor.GetLayer().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
           {
             accessor.GetLayer().GetCorner(x, y, corner);
@@ -1465,16 +1466,14 @@ namespace OrthancStone
         //scene_->LoadDicomFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false);
 
         {
-          RadiographyScene::Layer& layer = scene_->LoadText(fonts.GetFont(0), "Hello\nworld");
-          //dynamic_cast<RadiographyScene::Layer&>(layer).SetForegroundValue(256);
-          dynamic_cast<RadiographyScene::Layer&>(layer).SetResizeable(true);
+          RadiographyLayer& layer = scene_->LoadText(fonts.GetFont(0), "Hello\nworld");
+          layer.SetResizeable(true);
         }
         
         {
-          RadiographyScene::Layer& layer = scene_->LoadTestBlock(100, 50);
-          //dynamic_cast<RadiographyScene::Layer&>(layer).SetForegroundValue(256);
-          dynamic_cast<RadiographyScene::Layer&>(layer).SetResizeable(true);
-          dynamic_cast<RadiographyScene::Layer&>(layer).SetPan(0, 200);
+          RadiographyLayer& layer = scene_->LoadTestBlock(100, 50);
+          layer.SetResizeable(true);
+          layer.SetPan(0, 200);
         }
         
         

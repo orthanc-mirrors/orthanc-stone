@@ -246,12 +246,15 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Layers/LineMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/RenderStyle.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/SliceOutlineRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMoveTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerRotateTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerCropTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMoveTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerResizeTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerRotateTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyScene.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWidget.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWindowingTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneException.h

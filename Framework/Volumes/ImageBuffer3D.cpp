@@ -363,7 +363,11 @@ namespace OrthancStone
 
       case VolumeProjection_Sagittal:
         sagittal_.reset(that.ExtractSagittalSlice(slice));
-        sagittal_->GetReadOnlyAccessor(accessor_);
+        accessor_.AssignReadOnly(sagittal_->GetFormat(),
+                                 sagittal_->GetWidth(),
+                                 sagittal_->GetHeight(),
+                                 sagittal_->GetPitch(),
+                                 sagittal_->GetBuffer());        
         break;
 
       default:
@@ -407,7 +411,11 @@ namespace OrthancStone
 
       case VolumeProjection_Sagittal:
         sagittal_.reset(that.ExtractSagittalSlice(slice));
-        sagittal_->GetWriteableAccessor(accessor_);
+        accessor_.AssignWritable(sagittal_->GetFormat(),
+                                 sagittal_->GetWidth(),
+                                 sagittal_->GetHeight(),
+                                 sagittal_->GetPitch(),
+                                 sagittal_->GetBuffer());
         break;
 
       default:

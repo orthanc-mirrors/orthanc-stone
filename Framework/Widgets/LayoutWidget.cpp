@@ -28,6 +28,46 @@
 
 namespace OrthancStone
 {
+  // This is a compatibility reimplementation of
+  // "ImageAcessor::GetRegion()" to use Orthanc <= 1.4.2 together with
+  // Stone.
+  static void GetRegionCompatibility(Orthanc::ImageAccessor& target,
+                                     const Orthanc::ImageAccessor& source,
+                                     unsigned int x,
+                                     unsigned int y,
+                                     unsigned int width,
+                                     unsigned int height)
+  {
+    if (x + width > source.GetWidth() ||
+        y + height > source.GetHeight())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    
+    if (width == 0 ||
+        height == 0)
+    {
+      target.AssignWritable(source.GetFormat(), 0, 0, 0, NULL);
+    }
+    else if (source.IsReadOnly())
+    {
+      const uint8_t* p = (reinterpret_cast<const uint8_t*>(source.GetBuffer()) + 
+                          y * source.GetPitch() + 
+                          x * source.GetBytesPerPixel());
+
+      target.AssignReadOnly(source.GetFormat(), width, height, source.GetPitch(), p);
+    }
+    else
+    {
+      uint8_t* p = (reinterpret_cast<uint8_t*>(source.GetBuffer()) + 
+                    y * source.GetPitch() + 
+                    x * source.GetBytesPerPixel());
+        
+      target.AssignWritable(source.GetFormat(), width, height, source.GetPitch(), p);
+    }
+  }
+
+
   class LayoutWidget::LayoutMouseTracker : public IMouseTracker
   {
   private:
@@ -36,7 +76,7 @@ namespace OrthancStone
     int                            top_;
     unsigned int                   width_;
     unsigned int                   height_;
-
+    
   public:
     LayoutMouseTracker(IMouseTracker* tracker,
                        int left,
@@ -58,7 +98,7 @@ namespace OrthancStone
     virtual void Render(Orthanc::ImageAccessor& surface)
     {
       Orthanc::ImageAccessor accessor;
-      surface.GetRegion(accessor, left_, top_, width_, height_);
+      GetRegionCompatibility(accessor, surface, left_, top_, width_, height_);
       tracker_->Render(accessor);
     }
 
@@ -144,7 +184,7 @@ namespace OrthancStone
       else 
       {
         Orthanc::ImageAccessor accessor;
-        target.GetRegion(accessor, left_, top_, width_, height_);
+        GetRegionCompatibility(accessor, target, left_, top_, width_, height_);
         return widget_->Render(accessor);
       }
     }
@@ -176,7 +216,7 @@ namespace OrthancStone
       if (Contains(x, y))
       {
         Orthanc::ImageAccessor accessor;
-        target.GetRegion(accessor, left_, top_, width_, height_);
+        GetRegionCompatibility(accessor, target, left_, top_, width_, height_);
 
         widget_->RenderMouseOver(accessor, x - left_, y - top_);
       }

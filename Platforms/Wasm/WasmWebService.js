@@ -19,7 +19,7 @@ mergeInto(LibraryManager.library, {
         if (xhr.status === 200) {
           var s = xhr.getAllResponseHeaders();
           var headers = _malloc(s.length + 1);
-          writeStringToMemory(s, headers);
+          stringToUTF8(s, headers, s.length + 1);
           
           // TODO - Is "new Uint8Array()" necessary? This copies the
           // answer to the WebAssembly stack, hence necessitating
@@ -54,7 +54,7 @@ mergeInto(LibraryManager.library, {
         if (xhr.status === 200) {
           var s = xhr.getAllResponseHeaders();
           var headers = _malloc(s.length + 1);
-          writeStringToMemory(s, headers);
+          stringToUTF8(s, headers, s.length + 1);
 
           WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
                                        this.response.byteLength, headers, payload);
@@ -86,7 +86,7 @@ mergeInto(LibraryManager.library, {
         if (xhr.status === 200) {
           var s = xhr.getAllResponseHeaders();
           var headers = _malloc(s.length + 1);
-          writeStringToMemory(s, headers);
+          stringToUTF8(s, headers, s.length + 1);
 
           WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
                                        this.response.byteLength, headers, payload);

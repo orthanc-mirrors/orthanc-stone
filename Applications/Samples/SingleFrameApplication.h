@@ -197,7 +197,6 @@ namespace OrthancStone
       }
       
       std::auto_ptr<Interactor>         mainWidgetInteractor_;
-      std::auto_ptr<OrthancApiClient>   orthancApiClient_;
       const DicomSeriesVolumeSlicer*    source_;
       unsigned int                      slice_;
 
@@ -243,10 +242,9 @@ namespace OrthancStone
         std::string instance = parameters["instance"].as<std::string>();
         int frame = parameters["frame"].as<unsigned int>();
 
-        orthancApiClient_.reset(new OrthancApiClient(GetBroker(), context_->GetWebService()));
         mainWidget_ = new SliceViewerWidget(GetBroker(), "main-widget");
 
-        std::auto_ptr<DicomSeriesVolumeSlicer> layer(new DicomSeriesVolumeSlicer(GetBroker(), *orthancApiClient_));
+        std::auto_ptr<DicomSeriesVolumeSlicer> layer(new DicomSeriesVolumeSlicer(GetBroker(), context->GetOrthancApiClient()));
         source_ = layer.get();
         layer->LoadFrame(instance, frame);
         layer->RegisterObserverCallback(new Callable<SingleFrameApplication, IVolumeSlicer::GeometryReadyMessage>(*this, &SingleFrameApplication::OnMainWidgetGeometryReady));

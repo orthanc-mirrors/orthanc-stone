@@ -53,7 +53,7 @@ namespace OrthancStone
     }
 
     virtual void GetAsync(const std::string& uri,
-                          const Headers& headers,
+                          const HttpHeaders& headers,
                           Orthanc::IDynamicObject* payload, // takes ownership
                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,   // takes ownership
                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,// takes ownership
@@ -63,7 +63,7 @@ namespace OrthancStone
     }
 
     virtual void PostAsync(const std::string& uri,
-                           const Headers& headers,
+                           const HttpHeaders& headers,
                            const std::string& body,
                            Orthanc::IDynamicObject* payload, // takes ownership
                            MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback, // takes ownership
@@ -74,7 +74,7 @@ namespace OrthancStone
     }
 
     virtual void DeleteAsync(const std::string& uri,
-                             const Headers& headers,
+                             const HttpHeaders& headers,
                              Orthanc::IDynamicObject* payload,
                              MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
                              MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,

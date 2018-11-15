@@ -93,7 +93,7 @@ extern "C" {
     startupParametersBuilder.GetStartupParameters(parameters, options);
 
     context.reset(new OrthancStone::StoneApplicationContext());
-    context->SetWebService(OrthancStone::WasmWebService::GetInstance());
+    context->Initialize(broker, OrthancStone::WasmWebService::GetInstance(), "");
     application->Initialize(context.get(), statusBar_, parameters);
     application->InitializeWasm();
 

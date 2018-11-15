@@ -168,10 +168,12 @@ namespace OrthancStone
 
 
   OrthancApiClient::OrthancApiClient(MessageBroker& broker,
-                                     IWebService& orthanc) :
+                                     IWebService& web,
+                                     const std::string& baseUrl) :
     IObservable(broker),
     IObserver(broker),
-    orthanc_(orthanc)
+    web_(web),
+    baseUrl_(baseUrl)
   {
   }
 
@@ -182,12 +184,13 @@ namespace OrthancStone
     MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
     Orthanc::IDynamicObject* payload)
   {
-    orthanc_.GetAsync(uri, IWebService::Headers(),
-                      new WebServicePayload(successCallback, failureCallback, payload),
-                      new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
-                      (*this, &OrthancApiClient::NotifyHttpSuccess),
-                      new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
-                      (*this, &OrthancApiClient::NotifyHttpError));
+    web_.GetAsync(baseUrl_ + uri,
+                  IWebService::HttpHeaders(),
+                  new WebServicePayload(successCallback, failureCallback, payload),
+                  new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
+                  (*this, &OrthancApiClient::NotifyHttpSuccess),
+                  new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
+                  (*this, &OrthancApiClient::NotifyHttpError));
   }
 
 
@@ -198,7 +201,7 @@ namespace OrthancStone
     MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
     Orthanc::IDynamicObject* payload)
   {
-    IWebService::Headers headers;
+    IWebService::HttpHeaders headers;
     headers["Accept"] = contentType;
     GetBinaryAsync(uri, headers, successCallback, failureCallback, payload);
   }
@@ -206,17 +209,17 @@ namespace OrthancStone
 
   void OrthancApiClient::GetBinaryAsync(
     const std::string& uri,
-    const IWebService::Headers& headers,
+    const IWebService::HttpHeaders& headers,
     MessageHandler<BinaryResponseReadyMessage>* successCallback,
     MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
     Orthanc::IDynamicObject* payload)
   {
-    orthanc_.GetAsync(uri, headers,
-                      new WebServicePayload(successCallback, failureCallback, payload),
-                      new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
-                      (*this, &OrthancApiClient::NotifyHttpSuccess),
-                      new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
-                      (*this, &OrthancApiClient::NotifyHttpError));
+    web_.GetAsync(baseUrl_ + uri, headers,
+                  new WebServicePayload(successCallback, failureCallback, payload),
+                  new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
+                  (*this, &OrthancApiClient::NotifyHttpSuccess),
+                  new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
+                  (*this, &OrthancApiClient::NotifyHttpError));
   }
 
   
@@ -227,12 +230,12 @@ namespace OrthancStone
     MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
     Orthanc::IDynamicObject* payload)
   {
-    orthanc_.PostAsync(uri, IWebService::Headers(), body,
-                       new WebServicePayload(successCallback, failureCallback, payload),
-                       new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
-                       (*this, &OrthancApiClient::NotifyHttpSuccess),
-                       new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
-                       (*this, &OrthancApiClient::NotifyHttpError));
+    web_.PostAsync(baseUrl_ + uri, IWebService::HttpHeaders(), body,
+                   new WebServicePayload(successCallback, failureCallback, payload),
+                   new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
+                   (*this, &OrthancApiClient::NotifyHttpSuccess),
+                   new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
+                   (*this, &OrthancApiClient::NotifyHttpError));
 
   }
 
@@ -256,12 +259,12 @@ namespace OrthancStone
     MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
     Orthanc::IDynamicObject* payload)
   {
-    orthanc_.DeleteAsync(uri, IWebService::Headers(),
-                         new WebServicePayload(successCallback, failureCallback, payload),
-                         new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
-                         (*this, &OrthancApiClient::NotifyHttpSuccess),
-                         new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
-                         (*this, &OrthancApiClient::NotifyHttpError));
+    web_.DeleteAsync(baseUrl_ + uri, IWebService::HttpHeaders(),
+                     new WebServicePayload(successCallback, failureCallback, payload),
+                     new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
+                     (*this, &OrthancApiClient::NotifyHttpSuccess),
+                     new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
+                     (*this, &OrthancApiClient::NotifyHttpError));
   }
 
 

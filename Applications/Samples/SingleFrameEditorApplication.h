@@ -61,8 +61,9 @@ namespace OrthancStone
       };
         
 
-      UndoRedoStack      undoRedoStack_;
-      Tool               tool_;
+      StoneApplicationContext*  context_;
+      UndoRedoStack             undoRedoStack_;
+      Tool                      tool_;
 
 
       static double GetHandleSize()
@@ -74,8 +75,14 @@ namespace OrthancStone
     public:
       RadiographyEditorInteractor(MessageBroker& broker) :
         IObserver(broker),
+        context_(NULL),
         tool_(Tool_Move)
       {
+      }
+
+      void SetContext(StoneApplicationContext& context)
+      {
+        context_ = &context;
       }
     
       virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& worldWidget,
@@ -292,8 +299,13 @@ namespace OrthancStone
             tags.SetValue(Orthanc::DICOM_TAG_STUDY_ID, "STUDY", false);
             tags.SetValue(Orthanc::DICOM_TAG_VIEW_POSITION, "", false);
 
-            widget.GetScene().ExportDicom(tags, 0.1, 0.1, widget.IsInverted(),
-                                          widget.GetInterpolation(), EXPORT_USING_PAM);
+            if (context_ != NULL)
+            {
+              widget.GetScene().ExportDicom(context_->GetOrthancApiClient(),
+                                            tags, 0.1, 0.1, widget.IsInverted(),
+                                            widget.GetInterpolation(), EXPORT_USING_PAM);
+            }
+            
             break;
           }
 
@@ -367,7 +379,6 @@ namespace OrthancStone
       public IObserver
     {
     private:
-      std::auto_ptr<OrthancApiClient>  orthancApiClient_;
       std::auto_ptr<RadiographyScene>  scene_;
       RadiographyEditorInteractor      interactor_;
 
@@ -403,6 +414,7 @@ namespace OrthancStone
         using namespace OrthancStone;
 
         context_ = context;
+        interactor_.SetContext(*context);
 
         statusBar.SetMessage("Use the key \"a\" to reinitialize the layout");
         statusBar.SetMessage("Use the key \"c\" to crop");
@@ -427,15 +439,14 @@ namespace OrthancStone
         std::string instance = parameters["instance"].as<std::string>();
         int frame = parameters["frame"].as<unsigned int>();
 
-        orthancApiClient_.reset(new OrthancApiClient(GetBroker(), context_->GetWebService()));
-
         Orthanc::FontRegistry fonts;
         fonts.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
         
-        scene_.reset(new RadiographyScene(GetBroker(), *orthancApiClient_));
-        scene_->LoadDicomFrame(instance, frame, false); //.SetPan(200, 0);
-        //scene_->LoadDicomFrame("61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false);
-
+        scene_.reset(new RadiographyScene(GetBroker()));
+        //scene_->LoadDicomFrame(instance, frame, false); //.SetPan(200, 0);
+        scene_->LoadDicomFrame(context->GetOrthancApiClient(), "61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false);
+        //scene_->LoadDicomWebFrame(context->GetWebService());
+        
         {
           RadiographyLayer& layer = scene_->LoadText(fonts.GetFont(0), "Hello\nworld");
           layer.SetResizeable(true);

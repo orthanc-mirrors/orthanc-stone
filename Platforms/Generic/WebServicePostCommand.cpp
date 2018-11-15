@@ -29,30 +29,30 @@ namespace OrthancStone
                                                MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
                                                MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                                                const Orthanc::WebServiceParameters& parameters,
-                                               const std::string& uri,
-                                               const IWebService::Headers& headers,
+                                               const std::string& url,
+                                               const IWebService::HttpHeaders& headers,
                                                unsigned int timeoutInSeconds,
                                                const std::string& body,
                                                Orthanc::IDynamicObject* payload /* takes ownership */,
                                                NativeStoneApplicationContext& context) :
-    WebServiceCommandBase(broker, successCallback, failureCallback, parameters, uri, headers, timeoutInSeconds, payload, context),
+    WebServiceCommandBase(broker, successCallback, failureCallback, parameters, url, headers, timeoutInSeconds, payload, context),
     body_(body)
   {
   }
 
   void WebServicePostCommand::Execute()
   {
-    Orthanc::HttpClient client(parameters_, uri_);
+    Orthanc::HttpClient client(parameters_, "/");
+    client.SetUrl(url_);
     client.SetTimeout(timeoutInSeconds_);
     client.SetMethod(Orthanc::HttpMethod_Post);
     client.GetBody().swap(body_);
 
-    for (IWebService::Headers::const_iterator it = headers_.begin(); it != headers_.end(); it++ )
+    for (IWebService::HttpHeaders::const_iterator it = headers_.begin(); it != headers_.end(); it++ )
     {
       client.AddHeader(it->first, it->second);
     }
 
-    success_ = client.Apply(answer_);
+    success_ = client.Apply(answer_, answerHeaders_);
   }
-
 }

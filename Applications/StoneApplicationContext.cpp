@@ -21,6 +21,35 @@
 
 #include "StoneApplicationContext.h"
 
+#include <Core/OrthancException.h>
+
 namespace OrthancStone
 {
+  IWebService& StoneApplicationContext::GetWebService()
+  {
+    if (webService_ == NULL)
+    {
+      throw Orthanc::ErrorCode_BadSequenceOfCalls;
+    }
+    
+    return *webService_;
+  }
+
+  OrthancApiClient& StoneApplicationContext::GetOrthancApiClient()
+  {
+    if (orthanc_.get() == NULL)
+    {
+      throw Orthanc::ErrorCode_BadSequenceOfCalls;
+    }
+    
+    return *orthanc_;
+  }
+
+  void StoneApplicationContext::Initialize(MessageBroker& broker,
+                                           IWebService& webService,
+                                           const std::string& orthancBaseUrl)
+  {
+    webService_ = &webService;
+    orthanc_.reset(new OrthancApiClient(broker, webService, orthancBaseUrl));
+  }
 }

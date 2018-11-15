@@ -423,11 +423,9 @@ namespace OrthancStone
   }
     
 
-  RadiographyScene::RadiographyScene(MessageBroker& broker,
-                                     OrthancApiClient& orthanc) :
+  RadiographyScene::RadiographyScene(MessageBroker& broker) :
     IObserver(broker),
     IObservable(broker),
-    orthanc_(orthanc),
     countLayers_(0),
     hasWindowing_(false),
     windowingCenter_(0),  // Dummy initialization
@@ -523,17 +521,18 @@ namespace OrthancStone
   }
 
     
-  RadiographyLayer& RadiographyScene::LoadDicomFrame(const std::string& instance,
+  RadiographyLayer& RadiographyScene::LoadDicomFrame(OrthancApiClient& orthanc,
+                                                     const std::string& instance,
                                                      unsigned int frame,
                                                      bool httpCompression)
   {
     RadiographyLayer& layer = RegisterLayer(new DicomLayer);
 
     {
-      IWebService::Headers headers;
+      IWebService::HttpHeaders headers;
       std::string uri = "/instances/" + instance + "/tags";
         
-      orthanc_.GetBinaryAsync(
+      orthanc.GetBinaryAsync(
         uri, headers,
         new Callable<RadiographyScene, OrthancApiClient::BinaryResponseReadyMessage>
         (*this, &RadiographyScene::OnTagsReceived), NULL,
@@ -541,7 +540,7 @@ namespace OrthancStone
     }
 
     {
-      IWebService::Headers headers;
+      IWebService::HttpHeaders headers;
       headers["Accept"] = "image/x-portable-arbitrarymap";
 
       if (httpCompression)
@@ -552,7 +551,7 @@ namespace OrthancStone
       std::string uri = ("/instances/" + instance + "/frames/" +
                          boost::lexical_cast<std::string>(frame) + "/image-uint16");
         
-      orthanc_.GetBinaryAsync(
+      orthanc.GetBinaryAsync(
         uri, headers,
         new Callable<RadiographyScene, OrthancApiClient::BinaryResponseReadyMessage>
         (*this, &RadiographyScene::OnFrameReceived), NULL,
@@ -561,6 +560,16 @@ namespace OrthancStone
 
     return layer;
   }
+
+
+  RadiographyLayer& RadiographyScene::LoadDicomWebFrame(IWebService& web)
+  {
+    RadiographyLayer& layer = RegisterLayer(new DicomLayer);
+
+      
+    return layer;
+  }
+
 
     
   void RadiographyScene::OnTagsReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
@@ -728,7 +737,8 @@ namespace OrthancStone
 
   // Export using PAM is faster than using PNG, but requires Orthanc
   // core >= 1.4.3
-  void RadiographyScene::ExportDicom(const Orthanc::DicomMap& dicom,
+  void RadiographyScene::ExportDicom(OrthancApiClient& orthanc,
+                                     const Orthanc::DicomMap& dicom,
                                      double pixelSpacingX,
                                      double pixelSpacingY,
                                      bool invert,
@@ -830,7 +840,7 @@ namespace OrthancStone
                        std::string(usePam ? Orthanc::MIME_PAM : Orthanc::MIME_PNG) +
                        ";base64," + base64);
 
-    orthanc_.PostJsonAsyncExpectJson(
+    orthanc.PostJsonAsyncExpectJson(
       "/tools/create-dicom", json,
       new Callable<RadiographyScene, OrthancApiClient::JsonResponseReadyMessage>
       (*this, &RadiographyScene::OnDicomExported),
@@ -840,7 +850,14 @@ namespace OrthancStone
 
   void RadiographyScene::OnDicomExported(const OrthancApiClient::JsonResponseReadyMessage& message)
   {
-    LOG(INFO) << "DICOM export was successful:"
+    LOG(INFO) << "DICOM export was successful: "
               << message.GetJson().toStyledString();
   }
+
+
+  void RadiographyScene::OnDicomWebReceived(const IWebService::HttpRequestSuccessMessage& message)
+  {
+    LOG(INFO) << "DICOMweb WADO-RS received: " << message.GetAnswerSize() << " bytes";
+  }
+
 }

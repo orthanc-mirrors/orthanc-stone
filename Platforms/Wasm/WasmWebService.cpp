@@ -49,6 +49,7 @@ extern "C" {
                                                          const char* uri,
                                                          const void* body,
                                                          size_t bodySize,
+                                                         const char* answerHeaders,
                                                          void* payload)
   {
     if (successCallable == NULL)
@@ -57,9 +58,15 @@ extern "C" {
     }
     else
     {
+      OrthancStone::IWebService::HttpHeaders headers;
+
+      // TODO - Parse "answerHeaders"
+      printf("[%s]\n", answerHeaders);
+      
       reinterpret_cast<OrthancStone::MessageHandler<OrthancStone::IWebService::HttpRequestSuccessMessage>*>(successCallable)->
-        Apply(OrthancStone::IWebService::HttpRequestSuccessMessage(uri, body, bodySize, reinterpret_cast<Orthanc::IDynamicObject*>(payload)));
-   }
+        Apply(OrthancStone::IWebService::HttpRequestSuccessMessage(uri, body, bodySize, headers,
+                                                                   reinterpret_cast<Orthanc::IDynamicObject*>(payload)));
+    }
   }
 
   void EMSCRIPTEN_KEEPALIVE WasmWebService_SetBaseUri(const char* baseUri)
@@ -91,10 +98,10 @@ namespace OrthancStone
     }
   }
 
-  void ToJsonString(std::string& output, const IWebService::Headers& headers)
+  void ToJsonString(std::string& output, const IWebService::HttpHeaders& headers)
   {
     Json::Value jsonHeaders;
-    for (IWebService::Headers::const_iterator it = headers.begin(); it != headers.end(); it++ )
+    for (IWebService::HttpHeaders::const_iterator it = headers.begin(); it != headers.end(); it++ )
     {
       jsonHeaders[it->first] = it->second;
     }
@@ -108,7 +115,7 @@ namespace OrthancStone
   }
 
   void WasmWebService::PostAsync(const std::string& relativeUri,
-                                 const Headers& headers,
+                                 const HttpHeaders& headers,
                                  const std::string& body,
                                  Orthanc::IDynamicObject* payload,
                                  MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
@@ -119,11 +126,11 @@ namespace OrthancStone
     std::string headersInJsonString;
     ToJsonString(headersInJsonString, headers);
     WasmWebService_PostAsync(successCallable, failureCallable, uri.c_str(), headersInJsonString.c_str(),
-                                       body.c_str(), body.size(), payload, timeoutInSeconds);
+                             body.c_str(), body.size(), payload, timeoutInSeconds);
   }
 
   void WasmWebService::DeleteAsync(const std::string& relativeUri,
-                                   const Headers& headers,
+                                   const HttpHeaders& headers,
                                    Orthanc::IDynamicObject* payload,
                                    MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
                                    MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable,
@@ -137,16 +144,15 @@ namespace OrthancStone
   }
 
   void WasmWebService::GetAsync(const std::string& relativeUri,
-                                 const Headers& headers,
-                                 Orthanc::IDynamicObject* payload,
-                                 MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
-                                 MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable,
-                                 unsigned int timeoutInSeconds)
+                                const HttpHeaders& headers,
+                                Orthanc::IDynamicObject* payload,
+                                MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
+                                MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable,
+                                unsigned int timeoutInSeconds)
   {
     std::string uri = baseUri_ + relativeUri;
     std::string headersInJsonString;
     ToJsonString(headersInJsonString, headers);
     WasmWebService_GetAsync(successCallable, failureCallable, uri.c_str(), headersInJsonString.c_str(), payload, timeoutInSeconds);
   }
-
 }

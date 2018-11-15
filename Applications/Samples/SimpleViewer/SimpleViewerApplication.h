@@ -104,7 +104,6 @@ namespace SimpleViewer
 
     IStatusBar*                         statusBar_;
     std::auto_ptr<SmartLoader>          smartLoader_;
-    std::auto_ptr<OrthancApiClient>     orthancApiClient_;
 
     Orthanc::Font                       font_;
 

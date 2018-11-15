@@ -17,11 +17,15 @@ mergeInto(LibraryManager.library, {
     xhr.onreadystatechange = function() {
       if (this.readyState == XMLHttpRequest.DONE) {
         if (xhr.status === 200) {
+          var s = xhr.getAllResponseHeaders();
+          var headers = _malloc(s.length + 1);
+          writeStringToMemory(s, headers);
+          
           // TODO - Is "new Uint8Array()" necessary? This copies the
           // answer to the WebAssembly stack, hence necessitating
           // increasing the TOTAL_STACK parameter of Emscripten
           WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
-                                       this.response.byteLength, payload);
+                                       this.response.byteLength, headers, payload);
         } else {
           WasmWebService_NotifyError(callableFailure, url_, payload);
         }
@@ -48,8 +52,12 @@ mergeInto(LibraryManager.library, {
     xhr.onreadystatechange = function() {
       if (this.readyState == XMLHttpRequest.DONE) {
         if (xhr.status === 200) {
+          var s = xhr.getAllResponseHeaders();
+          var headers = _malloc(s.length + 1);
+          writeStringToMemory(s, headers);
+
           WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
-                                       this.response.byteLength, payload);
+                                       this.response.byteLength, headers, payload);
         } else {
           WasmWebService_NotifyError(callableFailure, url_, payload);
         }
@@ -76,8 +84,12 @@ mergeInto(LibraryManager.library, {
     xhr.onreadystatechange = function() {
       if (this.readyState == XMLHttpRequest.DONE) {
         if (xhr.status === 200) {
+          var s = xhr.getAllResponseHeaders();
+          var headers = _malloc(s.length + 1);
+          writeStringToMemory(s, headers);
+
           WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
-                                       this.response.byteLength, payload);
+                                       this.response.byteLength, headers, payload);
         } else {
           WasmWebService_NotifyError(callableFailure, url_, payload);
         }

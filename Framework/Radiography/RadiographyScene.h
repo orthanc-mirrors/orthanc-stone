@@ -74,12 +74,11 @@ namespace OrthancStone
 
     typedef std::map<size_t, RadiographyLayer*>  Layers;
         
-    OrthancApiClient&  orthanc_;
-    size_t             countLayers_;
-    bool               hasWindowing_;
-    float              windowingCenter_;
-    float              windowingWidth_;
-    Layers             layers_;
+    size_t  countLayers_;
+    bool    hasWindowing_;
+    float   windowingCenter_;
+    float   windowingWidth_;
+    Layers  layers_;
 
     RadiographyLayer& RegisterLayer(RadiographyLayer* layer);
 
@@ -89,9 +88,10 @@ namespace OrthancStone
     
     void OnDicomExported(const OrthancApiClient::JsonResponseReadyMessage& message);
 
+    void OnDicomWebReceived(const IWebService::HttpRequestSuccessMessage& message);
+
   public:
-    RadiographyScene(MessageBroker& broker,
-                     OrthancApiClient& orthanc);
+    RadiographyScene(MessageBroker& broker);
     
     virtual ~RadiographyScene();
 
@@ -110,9 +110,12 @@ namespace OrthancStone
     RadiographyLayer& LoadTestBlock(unsigned int width,
                                     unsigned int height);
     
-    RadiographyLayer& LoadDicomFrame(const std::string& instance,
+    RadiographyLayer& LoadDicomFrame(OrthancApiClient& orthanc,
+                                     const std::string& instance,
                                      unsigned int frame,
                                      bool httpCompression);
+
+    RadiographyLayer& LoadDicomWebFrame(IWebService& web);
 
     Extent2D GetSceneExtent() const;
 
@@ -133,7 +136,8 @@ namespace OrthancStone
 
     // Export using PAM is faster than using PNG, but requires Orthanc
     // core >= 1.4.3
-    void ExportDicom(const Orthanc::DicomMap& dicom,
+    void ExportDicom(OrthancApiClient& orthanc,
+                     const Orthanc::DicomMap& dicom,
                      double pixelSpacingX,
                      double pixelSpacingY,
                      bool invert,

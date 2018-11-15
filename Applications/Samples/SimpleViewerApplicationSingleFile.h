@@ -247,7 +247,6 @@ namespace OrthancStone
 
       IStatusBar*                          statusBar_;
       std::auto_ptr<SmartLoader>           smartLoader_;
-      std::auto_ptr<OrthancApiClient>      orthancApiClient_;
 
       Orthanc::Font                        font_;
 
@@ -304,10 +303,8 @@ namespace OrthancStone
           mainLayout_->AddWidget(thumbnailsLayout_);
           mainLayout_->AddWidget(mainWidget_);
 
-          orthancApiClient_.reset(new OrthancApiClient(GetBroker(), context_->GetWebService()));
-
           // sources
-          smartLoader_.reset(new SmartLoader(GetBroker(), *orthancApiClient_));
+          smartLoader_.reset(new SmartLoader(GetBroker(), context->GetOrthancApiClient()));
           smartLoader_->SetImageQuality(SliceImageQuality_FullPam);
 
           mainLayout_->SetTransmitMouseOver(true);
@@ -323,7 +320,7 @@ namespace OrthancStone
         if (parameters.count("studyId") < 1)
         {
           LOG(WARNING) << "The study ID is missing, will take the first studyId found in Orthanc";
-          orthancApiClient_->GetJsonAsync(
+          context->GetOrthancApiClient().GetJsonAsync(
             "/studies",
             new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>
             (*this, &SimpleViewerApplication::OnStudyListReceived));
@@ -353,7 +350,7 @@ namespace OrthancStone
         {
           for (size_t i=0; i < response["Series"].size(); i++)
           {
-            orthancApiClient_->GetJsonAsync(
+            context_->GetOrthancApiClient().GetJsonAsync(
               "/series/" + response["Series"][(int)i].asString(),
               new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>
               (*this, &SimpleViewerApplication::OnSeriesReceived));
@@ -405,7 +402,9 @@ namespace OrthancStone
       void SelectStudy(const std::string& studyId)
       {
         LOG(INFO) << "Selecting study: " << studyId;
-        orthancApiClient_->GetJsonAsync("/studies/" + studyId, new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyReceived));
+        context_->GetOrthancApiClient().GetJsonAsync(
+          "/studies/" + studyId, new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>
+          (*this, &SimpleViewerApplication::OnStudyReceived));
       }
 
       void OnWidgetGeometryChanged(const SliceViewerWidget::GeometryChangedMessage& message)

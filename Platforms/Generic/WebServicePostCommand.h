@@ -28,15 +28,15 @@ namespace OrthancStone
   class WebServicePostCommand : public WebServiceCommandBase
   {
   protected:
-    std::string                             body_;
+    std::string  body_;
 
   public:
     WebServicePostCommand(MessageBroker& broker,
                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                           const Orthanc::WebServiceParameters& parameters,
-                          const std::string& uri,
-                          const IWebService::Headers& headers,
+                          const std::string& url,
+                          const IWebService::HttpHeaders& headers,
                           unsigned int timeoutInSeconds,
                           const std::string& body,
                           Orthanc::IDynamicObject* payload /* takes ownership */,

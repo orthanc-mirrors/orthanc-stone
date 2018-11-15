@@ -43,7 +43,7 @@ namespace OrthancStone
     MessageBroker& broker_;
     
   public:
-    typedef std::map<std::string, std::string> Headers;
+    typedef std::map<std::string, std::string> HttpHeaders;
 
     class HttpRequestSuccessMessage : public BaseMessage<MessageType_HttpRequestSuccess>
     {
@@ -51,16 +51,19 @@ namespace OrthancStone
       const std::string&             uri_;
       const void*                    answer_;
       size_t                         answerSize_;
+      const HttpHeaders&             answerHeaders_;
       const Orthanc::IDynamicObject* payload_;
 
     public:
       HttpRequestSuccessMessage(const std::string& uri,
                                 const void* answer,
                                 size_t answerSize,
+                                const HttpHeaders& answerHeaders,
                                 const Orthanc::IDynamicObject* payload) :
         uri_(uri),
         answer_(answer),
         answerSize_(answerSize),
+        answerHeaders_(answerHeaders),
         payload_(payload)
       {
       }
@@ -78,6 +81,11 @@ namespace OrthancStone
       size_t GetAnswerSize() const
       {
         return answerSize_;
+      }
+
+      const HttpHeaders&  GetAnswerHttpHeaders() const
+      {
+        return answerHeaders_;
       }
 
       bool HasPayload() const
@@ -129,14 +137,14 @@ namespace OrthancStone
 
     
     virtual void GetAsync(const std::string& uri,
-                          const Headers& headers,
+                          const HttpHeaders& headers,
                           Orthanc::IDynamicObject* payload  /* takes ownership */,
                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                           unsigned int timeoutInSeconds = 60) = 0;
 
     virtual void PostAsync(const std::string& uri,
-                           const Headers& headers,
+                           const HttpHeaders& headers,
                            const std::string& body,
                            Orthanc::IDynamicObject* payload  /* takes ownership */,
                            MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
@@ -144,7 +152,7 @@ namespace OrthancStone
                            unsigned int timeoutInSeconds = 60) = 0;
 
     virtual void DeleteAsync(const std::string& uri,
-                             const Headers& headers,
+                             const HttpHeaders& headers,
                              Orthanc::IDynamicObject* payload  /* takes ownership */,
                              MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
                              MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,

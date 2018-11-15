@@ -40,11 +40,12 @@ namespace OrthancStone
     std::auto_ptr<MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
     std::auto_ptr<MessageHandler<IWebService::HttpRequestErrorMessage> >    failureCallback_;
     Orthanc::WebServiceParameters           parameters_;
-    std::string                             uri_;
-    std::map<std::string, std::string>      headers_;
+    std::string                             url_;
+    IWebService::HttpHeaders                headers_;
     std::auto_ptr<Orthanc::IDynamicObject>  payload_;
     bool                                    success_;
     std::string                             answer_;
+    IWebService::HttpHeaders                answerHeaders_;
     NativeStoneApplicationContext&          context_;
     unsigned int                            timeoutInSeconds_;
 
@@ -53,8 +54,8 @@ namespace OrthancStone
                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                           const Orthanc::WebServiceParameters& parameters,
-                          const std::string& uri,
-                          const std::map<std::string, std::string>& headers,
+                          const std::string& url,
+                          const IWebService::HttpHeaders& headers,
                           unsigned int timeoutInSeconds,
                           Orthanc::IDynamicObject* payload /* takes ownership */,
                           NativeStoneApplicationContext& context

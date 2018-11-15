@@ -22,6 +22,7 @@
 #pragma once
 
 #include "../Framework/Toolbox/IWebService.h"
+#include "../Framework/Toolbox/OrthancApiClient.h"
 #include "../Framework/Viewport/WidgetViewport.h"
 
 #include <list>
@@ -34,25 +35,31 @@ namespace OrthancStone
   // the StoneApplication can perform HTTP requests.  In a WASM environment,
   // the WebService is provided by the browser while, in a native environment,
   // the WebService is provided by the OracleWebService (a C++ Http client)
+
   class StoneApplicationContext : public boost::noncopyable
   {
-
   protected:
-    IWebService* webService_;
-  public:
-    StoneApplicationContext()
-      : webService_(NULL)
-    {
-    }
+    // TODO ADD THE MessageBroker HERE
+    
+    IWebService*                     webService_;
+    std::auto_ptr<OrthancApiClient>  orthanc_;
 
-    IWebService& GetWebService() {return *webService_;}
-    void SetWebService(IWebService& webService)
+  public:
+    StoneApplicationContext() :
+      webService_(NULL)
     {
-      webService_ = &webService;
     }
 
     virtual ~StoneApplicationContext()
     {
     }
+
+    IWebService& GetWebService();
+
+    OrthancApiClient& GetOrthancApiClient();
+
+    void Initialize(MessageBroker& broker,
+                    IWebService& webService,
+                    const std::string& orthancBaseUrl);
   };
 }

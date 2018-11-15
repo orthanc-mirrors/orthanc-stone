@@ -150,13 +150,14 @@ namespace OrthancStone
   private:
     class WebServicePayload;
     
-
   protected:
-    IWebService&                      orthanc_;
+    IWebService&  web_;
+    std::string   baseUrl_;
 
   public:
     OrthancApiClient(MessageBroker& broker,
-                     IWebService& orthanc);
+                     IWebService& web,
+                     const std::string& baseUrl);
     
     virtual ~OrthancApiClient()
     {
@@ -177,7 +178,7 @@ namespace OrthancStone
 
     // schedule a GET request expecting a binary response.
     void GetBinaryAsync(const std::string& uri,
-                        const IWebService::Headers& headers,
+                        const IWebService::HttpHeaders& headers,
                         MessageHandler<BinaryResponseReadyMessage>* successCallback,
                         MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                         Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);

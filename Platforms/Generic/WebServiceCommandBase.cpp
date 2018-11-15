@@ -29,8 +29,8 @@ namespace OrthancStone
                                                MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
                                                MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                                const Orthanc::WebServiceParameters& parameters,
-                                               const std::string& uri,
-                                               const IWebService::Headers& headers,
+                                               const std::string& url,
+                                               const IWebService::HttpHeaders& headers,
                                                unsigned int timeoutInSeconds,
                                                Orthanc::IDynamicObject* payload /* takes ownership */,
                                                NativeStoneApplicationContext& context) :
@@ -38,7 +38,7 @@ namespace OrthancStone
     successCallback_(successCallback),
     failureCallback_(failureCallback),
     parameters_(parameters),
-    uri_(uri),
+    url_(url),
     headers_(headers),
     payload_(payload),
     context_(context),
@@ -56,12 +56,13 @@ namespace OrthancStone
 
     if (success_ && successCallback_.get() != NULL)
     {
-      IWebService::HttpRequestSuccessMessage message(uri_, answer_.c_str(), answer_.size(), payload_.get());
+      IWebService::HttpRequestSuccessMessage message
+        (url_, answer_.c_str(), answer_.size(), answerHeaders_, payload_.get());
       successCallback_->Apply(message);
     }
     else if (!success_ && failureCallback_.get() != NULL)
     {
-      IWebService::HttpRequestErrorMessage message(uri_, payload_.get());
+      IWebService::HttpRequestErrorMessage message(url_, payload_.get());
       failureCallback_->Apply(message);
     }
   }

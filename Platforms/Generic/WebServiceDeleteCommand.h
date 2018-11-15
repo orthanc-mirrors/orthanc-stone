@@ -32,8 +32,8 @@ namespace OrthancStone
                             MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
                             MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                             const Orthanc::WebServiceParameters& parameters,
-                            const std::string& uri,
-                            const IWebService::Headers& headers,
+                            const std::string& url,
+                            const IWebService::HttpHeaders& headers,
                             unsigned int timeoutInSeconds,
                             Orthanc::IDynamicObject* payload /* takes ownership */,
                             NativeStoneApplicationContext& context);

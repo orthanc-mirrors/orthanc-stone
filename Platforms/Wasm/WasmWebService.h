@@ -38,14 +38,14 @@ namespace OrthancStone
     void SetBaseUri(const std::string baseUri);
 
     virtual void GetAsync(const std::string& uri,
-                          const Headers& headers,
+                          const HttpHeaders& headers,
                           Orthanc::IDynamicObject* payload,
                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable = NULL,
                           unsigned int timeoutInSeconds = 60);
 
     virtual void PostAsync(const std::string& uri,
-                           const Headers& headers,
+                           const HttpHeaders& headers,
                            const std::string& body,
                            Orthanc::IDynamicObject* payload,
                            MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
@@ -53,7 +53,7 @@ namespace OrthancStone
                            unsigned int timeoutInSeconds = 60);
 
     virtual void DeleteAsync(const std::string& uri,
-                             const Headers& headers,
+                             const HttpHeaders& headers,
                              Orthanc::IDynamicObject* payload,
                              MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
                              MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable = NULL,

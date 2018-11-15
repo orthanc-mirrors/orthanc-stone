@@ -879,7 +879,7 @@ namespace OrthancStone
     {
       std::string uri = ("/instances/" + slice.GetOrthancInstanceId() + "/frames/" +
                          boost::lexical_cast<std::string>(slice.GetFrame()) + "/raw.gz");
-      orthanc_.GetBinaryAsync(uri, IWebService::Headers(),
+      orthanc_.GetBinaryAsync(uri, IWebService::HttpHeaders(),
                               new Callable<OrthancSlicesLoader, OrthancApiClient::BinaryResponseReadyMessage>(*this, &OrthancSlicesLoader::ParseSliceRawImage),
                               new Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(*this, &OrthancSlicesLoader::OnSliceImageError),
                               Operation::DownloadSliceRawImage(index, slice));

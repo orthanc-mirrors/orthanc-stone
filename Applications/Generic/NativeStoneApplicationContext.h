@@ -37,7 +37,6 @@ namespace OrthancStone
     static void UpdateThread(NativeStoneApplicationContext* that);
 
     boost::mutex    globalMutex_;
-    MessageBroker&  broker_;
     WidgetViewport  centralViewport_;
     boost::thread   updateThread_;
     bool            stopped_;
@@ -59,11 +58,6 @@ namespace OrthancStone
 
       IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
 
-      MessageBroker& GetMessageBroker() const
-      {
-        return that_.broker_;
-      }
-    
       IViewport& GetCentralViewport() 
       {
         return that_.centralViewport_;
@@ -72,6 +66,11 @@ namespace OrthancStone
       void SetUpdateDelay(unsigned int delayInMs)
       {
         that_.updateDelayInMs_ = delayInMs;
+      }
+
+      MessageBroker& GetMessageBroker()
+      {
+        return that_.GetMessageBroker();
       }
     };
 

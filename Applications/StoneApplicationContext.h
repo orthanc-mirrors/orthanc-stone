@@ -38,14 +38,17 @@ namespace OrthancStone
 
   class StoneApplicationContext : public boost::noncopyable
   {
-  protected:
-    // TODO ADD THE MessageBroker HERE
-    
+  private:
+    MessageBroker&                   broker_;
     IWebService*                     webService_;
     std::auto_ptr<OrthancApiClient>  orthanc_;
+    std::string                      orthancBaseUrl_;
+
+    void InitializeOrthanc();
 
   public:
-    StoneApplicationContext() :
+    StoneApplicationContext(MessageBroker& broker) :
+      broker_(broker),
       webService_(NULL)
     {
     }
@@ -54,12 +57,22 @@ namespace OrthancStone
     {
     }
 
+    MessageBroker& GetMessageBroker()
+    {
+      return broker_;
+    }
+
+    bool HasWebService() const
+    {
+      return webService_ != NULL;
+    }
+
     IWebService& GetWebService();
 
     OrthancApiClient& GetOrthancApiClient();
 
-    void Initialize(MessageBroker& broker,
-                    IWebService& webService,
-                    const std::string& orthancBaseUrl);
+    void SetWebService(IWebService& webService);
+
+    void SetOrthancBaseUrl(const std::string& baseUrl);
   };
 }

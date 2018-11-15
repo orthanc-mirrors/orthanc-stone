@@ -10,7 +10,6 @@ declare var StoneFrameworkModule : Stone.Framework;
 // global functions
 var WasmWebService_NotifyError: Function = null;
 var WasmWebService_NotifySuccess: Function = null;
-var WasmWebService_SetBaseUri: Function = null;
 var WasmDoAnimation: Function = null;
 var SetStartupParameter: Function = null;
 var CreateWasmApplication: Function = null;
@@ -58,8 +57,6 @@ function GetUriParameters(): Map<string, string> {
 function _InitializeWasmApplication(orthancBaseUrl: string): void {
 
   CreateWasmApplication();
-  WasmWebService_SetBaseUri(orthancBaseUrl);
-
 
   // parse uri and transmit the parameters to the app before initializing it
   let parameters = GetUriParameters();
@@ -70,9 +67,9 @@ function _InitializeWasmApplication(orthancBaseUrl: string): void {
     }
   }
 
-  StartWasmApplication();
+  StartWasmApplication(orthancBaseUrl);
 
-  // trigger a first resize of the canvas that have just been initialized
+  // trigger a first resize of the canvas that has just been initialized
   Stone.WasmViewport.ResizeAll();
 
   DoAnimationThread();
@@ -92,11 +89,10 @@ function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: strin
     CreateWasmApplication = StoneFrameworkModule.cwrap('CreateWasmApplication', null, ['number']);
     CreateCppViewport = StoneFrameworkModule.cwrap('CreateCppViewport', 'number', []);
     ReleaseCppViewport = StoneFrameworkModule.cwrap('ReleaseCppViewport', null, ['number']);
-    StartWasmApplication = StoneFrameworkModule.cwrap('StartWasmApplication', null, ['number']);
+    StartWasmApplication = StoneFrameworkModule.cwrap('StartWasmApplication', null, ['string']);
 
     WasmWebService_NotifySuccess = StoneFrameworkModule.cwrap('WasmWebService_NotifySuccess', null, ['number', 'string', 'array', 'number', 'number']);
     WasmWebService_NotifyError = StoneFrameworkModule.cwrap('WasmWebService_NotifyError', null, ['number', 'string', 'number']);
-    WasmWebService_SetBaseUri = StoneFrameworkModule.cwrap('WasmWebService_SetBaseUri', null, ['string']);
     WasmDoAnimation = StoneFrameworkModule.cwrap('WasmDoAnimation', null, []);
 
     SendMessageToStoneApplication = StoneFrameworkModule.cwrap('SendMessageToStoneApplication', 'string', ['string']);

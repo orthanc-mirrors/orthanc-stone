@@ -858,6 +858,13 @@ namespace OrthancStone
   void RadiographyScene::OnDicomWebReceived(const IWebService::HttpRequestSuccessMessage& message)
   {
     LOG(INFO) << "DICOMweb WADO-RS received: " << message.GetAnswerSize() << " bytes";
+
+    const IWebService::HttpHeaders& h = message.GetAnswerHttpHeaders();
+    for (IWebService::HttpHeaders::const_iterator
+           it = h.begin(); it != h.end(); ++it)
+    {
+      printf("[%s] = [%s]\n", it->first.c_str(), it->second.c_str());
+    }
   }
 
 }

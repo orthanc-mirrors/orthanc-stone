@@ -214,6 +214,8 @@ namespace OrthancStone
     MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
     Orthanc::IDynamicObject* payload)
   {
+    printf("GET [%s] [%s]\n", baseUrl_.c_str(), uri.c_str());
+    
     web_.GetAsync(baseUrl_ + uri, headers,
                   new WebServicePayload(successCallback, failureCallback, payload),
                   new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>

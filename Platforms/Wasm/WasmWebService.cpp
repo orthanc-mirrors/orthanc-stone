@@ -69,11 +69,6 @@ extern "C" {
     }
   }
 
-  void EMSCRIPTEN_KEEPALIVE WasmWebService_SetBaseUri(const char* baseUri)
-  {
-    OrthancStone::WasmWebService::GetInstance().SetBaseUri(baseUri);
-  }
-
 #ifdef __cplusplus
 }
 #endif
@@ -83,20 +78,6 @@ extern "C" {
 namespace OrthancStone
 {
   MessageBroker* WasmWebService::broker_ = NULL;
-
-  void WasmWebService::SetBaseUri(const std::string baseUri)
-  {
-    // Make sure the base url ends with "/"
-    if (baseUri.empty() ||
-        baseUri[baseUri.size() - 1] != '/')
-    {
-      baseUri_ = baseUri + "/";
-    }
-    else
-    {
-      baseUri_ = baseUri;
-    }
-  }
 
   void ToJsonString(std::string& output, const IWebService::HttpHeaders& headers)
   {
@@ -122,10 +103,9 @@ namespace OrthancStone
                                  MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable,
                                  unsigned int timeoutInSeconds)
   {
-    std::string uri = baseUri_ + relativeUri;
     std::string headersInJsonString;
     ToJsonString(headersInJsonString, headers);
-    WasmWebService_PostAsync(successCallable, failureCallable, uri.c_str(), headersInJsonString.c_str(),
+    WasmWebService_PostAsync(successCallable, failureCallable, relativeUri.c_str(), headersInJsonString.c_str(),
                              body.c_str(), body.size(), payload, timeoutInSeconds);
   }
 
@@ -136,10 +116,9 @@ namespace OrthancStone
                                    MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable,
                                    unsigned int timeoutInSeconds)
   {
-    std::string uri = baseUri_ + relativeUri;
     std::string headersInJsonString;
     ToJsonString(headersInJsonString, headers);
-    WasmWebService_DeleteAsync(successCallable, failureCallable, uri.c_str(), headersInJsonString.c_str(),
+    WasmWebService_DeleteAsync(successCallable, failureCallable, relativeUri.c_str(), headersInJsonString.c_str(),
                                payload, timeoutInSeconds);
   }
 
@@ -150,9 +129,9 @@ namespace OrthancStone
                                 MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable,
                                 unsigned int timeoutInSeconds)
   {
-    std::string uri = baseUri_ + relativeUri;
     std::string headersInJsonString;
     ToJsonString(headersInJsonString, headers);
-    WasmWebService_GetAsync(successCallable, failureCallable, uri.c_str(), headersInJsonString.c_str(), payload, timeoutInSeconds);
+    WasmWebService_GetAsync(successCallable, failureCallable, relativeUri.c_str(),
+                            headersInJsonString.c_str(), payload, timeoutInSeconds);
   }
 }

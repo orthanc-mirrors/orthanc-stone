@@ -82,7 +82,7 @@ extern "C" {
     startupParametersBuilder.SetStartupParameter(keyc, value);
   }
 
-  void EMSCRIPTEN_KEEPALIVE StartWasmApplication() {
+  void EMSCRIPTEN_KEEPALIVE StartWasmApplication(const char* baseUri) {
 
     printf("StartWasmApplication\n");
 
@@ -92,8 +92,10 @@ extern "C" {
     application->DeclareStartupOptions(options);
     startupParametersBuilder.GetStartupParameters(parameters, options);
 
-    context.reset(new OrthancStone::StoneApplicationContext());
-    context->Initialize(broker, OrthancStone::WasmWebService::GetInstance(), "");
+    context.reset(new OrthancStone::StoneApplicationContext(broker));
+    context->SetOrthancBaseUrl(baseUri);
+    printf("Base URL to Orthanc API: [%s]\n", baseUri);
+    context->SetWebService(OrthancStone::WasmWebService::GetInstance());
     application->Initialize(context.get(), statusBar_, parameters);
     application->InitializeWasm();
 

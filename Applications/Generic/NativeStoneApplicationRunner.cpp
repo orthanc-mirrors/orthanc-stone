@@ -193,7 +193,8 @@ namespace OrthancStone
 
         {
           OracleWebService webService(broker_, oracle, webServiceParameters, context);
-          context.Initialize(broker_, webService, webServiceParameters.GetUrl());
+          context.SetWebService(webService);
+          context.SetOrthancBaseUrl(webServiceParameters.GetUrl());
 
           application_.Initialize(&context, statusBar, parameters);
 

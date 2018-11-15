@@ -8,13 +8,11 @@ namespace OrthancStone
   class WasmWebService : public IWebService
   {
   private:
-    std::string  baseUri_;
     static MessageBroker* broker_;
 
     // Private constructor => Singleton design pattern
     WasmWebService(MessageBroker& broker) :
-      IWebService(broker),
-      baseUri_("../../")   // note: this is configurable from the JS code by calling WasmWebService_SetBaseUri
+      IWebService(broker)
     {
     }
 
@@ -34,8 +32,6 @@ namespace OrthancStone
     {
       broker_ = &broker;
     }
-
-    void SetBaseUri(const std::string baseUri);
 
     virtual void GetAsync(const std::string& uri,
                           const HttpHeaders& headers,

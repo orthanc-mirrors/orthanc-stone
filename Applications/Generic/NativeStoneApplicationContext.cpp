@@ -46,7 +46,7 @@ namespace OrthancStone
   
 
   NativeStoneApplicationContext::NativeStoneApplicationContext(MessageBroker& broker) :
-    broker_(broker),
+    StoneApplicationContext(broker),
     centralViewport_(broker),
     stopped_(true),
     updateDelayInMs_(100)   // By default, 100ms between each refresh of the content

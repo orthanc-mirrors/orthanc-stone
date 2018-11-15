@@ -25,31 +25,62 @@
 
 namespace OrthancStone
 {
+  void StoneApplicationContext::InitializeOrthanc()
+  {
+    if (webService_ == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
+    orthanc_.reset(new OrthancApiClient(broker_, *webService_, orthancBaseUrl_));
+  }
+
+
   IWebService& StoneApplicationContext::GetWebService()
   {
     if (webService_ == NULL)
     {
-      throw Orthanc::ErrorCode_BadSequenceOfCalls;
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     
     return *webService_;
   }
 
+  
   OrthancApiClient& StoneApplicationContext::GetOrthancApiClient()
   {
     if (orthanc_.get() == NULL)
     {
-      throw Orthanc::ErrorCode_BadSequenceOfCalls;
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     
     return *orthanc_;
   }
 
-  void StoneApplicationContext::Initialize(MessageBroker& broker,
-                                           IWebService& webService,
-                                           const std::string& orthancBaseUrl)
+  
+  void StoneApplicationContext::SetWebService(IWebService& webService)
   {
     webService_ = &webService;
-    orthanc_.reset(new OrthancApiClient(broker, webService, orthancBaseUrl));
+    InitializeOrthanc();
+  }
+
+
+  void StoneApplicationContext::SetOrthancBaseUrl(const std::string& baseUrl)
+  {
+    // Make sure the base url ends with "/"
+    if (baseUrl.empty() ||
+        baseUrl[baseUrl.size() - 1] != '/')
+    {
+      orthancBaseUrl_ = baseUrl + "/";
+    }
+    else
+    {
+      orthancBaseUrl_ = baseUrl;
+    }
+
+    if (webService_ != NULL)
+    {
+      InitializeOrthanc();
+    }
   }
 }

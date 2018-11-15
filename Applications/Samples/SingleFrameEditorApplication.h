@@ -32,6 +32,7 @@
 #include "../../Framework/Radiography/RadiographyWidget.h"
 #include "../../Framework/Radiography/RadiographyWindowingTracker.h"
 
+#include <Core/HttpClient.h>
 #include <Core/Images/FontRegistry.h>
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
@@ -445,6 +446,11 @@ namespace OrthancStone
         scene_.reset(new RadiographyScene(GetBroker()));
         //scene_->LoadDicomFrame(instance, frame, false); //.SetPan(200, 0);
         scene_->LoadDicomFrame(context->GetOrthancApiClient(), "61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false);
+
+#if !defined(ORTHANC_ENABLE_WASM) || ORTHANC_ENABLE_WASM != 1
+        Orthanc::HttpClient::ConfigureSsl(true, "/etc/ssl/certs/ca-certificates.crt");
+#endif
+        
         //scene_->LoadDicomWebFrame(context->GetWebService());
         
         {

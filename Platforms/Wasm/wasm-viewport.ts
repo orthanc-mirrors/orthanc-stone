@@ -137,12 +137,9 @@ module Stone {
         this.imageData_ = null;
       }
       
-      // width/height can be defined in percent of window width/height through html attributes like data-width-ratio="50" and data-height-ratio="20"
-      var widthRatio = Number(this.htmlCanvas_.dataset["widthRatio"]) || 100;
-      var heightRatio = Number(this.htmlCanvas_.dataset["heightRatio"]) || 100;
-
-      this.htmlCanvas_.width = window.innerWidth * (widthRatio / 100);  
-      this.htmlCanvas_.height = window.innerHeight * (heightRatio / 100);
+      // width/height is defined by the parent width/height
+      this.htmlCanvas_.width = this.htmlCanvas_.parentElement.offsetWidth;  
+      this.htmlCanvas_.height = this.htmlCanvas_.parentElement.offsetHeight;  
 
       console.log("resizing WasmViewport: ", this.htmlCanvas_.width, "x", this.htmlCanvas_.height);
 

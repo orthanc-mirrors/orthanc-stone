@@ -31,12 +31,12 @@
 namespace OrthancStone
 {
   class OrthancApiClient :
-    public IObservable,
-    public IObserver
+      public IObservable,
+      public IObserver
   {
   public:
     class JsonResponseReadyMessage :
-      public BaseMessage<MessageType_OrthancApi_GenericGetJson_Ready>
+        public BaseMessage<MessageType_OrthancApi_GenericGetJson_Ready>
     {
     private:
       const std::string&              uri_;
@@ -73,7 +73,7 @@ namespace OrthancStone
     
 
     class BinaryResponseReadyMessage :
-      public BaseMessage<MessageType_OrthancApi_GenericGetBinary_Ready>
+        public BaseMessage<MessageType_OrthancApi_GenericGetBinary_Ready>
     {
     private:
       const std::string&              uri_;
@@ -118,7 +118,7 @@ namespace OrthancStone
 
 
     class EmptyResponseReadyMessage :
-      public BaseMessage<MessageType_OrthancApi_GenericEmptyResponse_Ready>
+        public BaseMessage<MessageType_OrthancApi_GenericEmptyResponse_Ready>
     {
     private:
       const std::string&              uri_;
@@ -149,11 +149,14 @@ namespace OrthancStone
 
   private:
     class WebServicePayload;
-    
+    class CachedHttpRequestSuccessMessage;
+
   protected:
     IWebService&  web_;
     std::string   baseUrl_;
 
+    std::map<std::string, boost::shared_ptr<CachedHttpRequestSuccessMessage>> cache_;  // TODO: this is currently an infinite cache !
+    bool          cacheEnabled_;
   public:
     OrthancApiClient(MessageBroker& broker,
                      IWebService& web,
@@ -161,6 +164,11 @@ namespace OrthancStone
     
     virtual ~OrthancApiClient()
     {
+    }
+
+    void EnableCache(bool enable)
+    {
+      cacheEnabled_ = enable;
     }
 
     // schedule a GET request expecting a JSON response.
@@ -206,5 +214,12 @@ namespace OrthancStone
     void NotifyHttpSuccess(const IWebService::HttpRequestSuccessMessage& message);
 
     void NotifyHttpError(const IWebService::HttpRequestErrorMessage& message);
+
+    void CacheAndNotifyHttpSuccess(const IWebService::HttpRequestSuccessMessage& message);
+
+  private:
+    void HandleFromCache(const std::string& uri,
+                         const IWebService::HttpHeaders& headers,
+                         Orthanc::IDynamicObject* payload /* takes ownership */);
   };
 }

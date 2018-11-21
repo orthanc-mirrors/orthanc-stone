@@ -64,6 +64,11 @@ list(APPEND QT_SOURCES
   ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.cpp
   )
 
+ORTHANC_QT_WRAP_CPP(QT_SOURCES
+  ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.h
+  ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.h
+  )
+
 
 # NB: Including CMAKE_CURRENT_BINARY_DIR is mandatory, as the CMake
 # macros for Qt will put their result in that directory, which cannot

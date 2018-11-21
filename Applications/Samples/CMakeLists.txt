@@ -160,8 +160,6 @@ if (ENABLE_QT OR ENABLE_WASM)
         )
 
       ORTHANC_QT_WRAP_CPP(SIMPLE_VIEWER_APPLICATION_SOURCES
-        ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.h
-        ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.h
         ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/SimpleViewerMainWindow.h
         )
 

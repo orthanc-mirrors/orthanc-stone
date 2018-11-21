@@ -337,7 +337,13 @@ namespace OrthancStone
 
   }
 
-  
+  void OrthancApiClient::PostBinaryAsync(
+      const std::string& uri,
+      const std::string& body)
+  {
+    web_.PostAsync(baseUrl_ + uri, IWebService::HttpHeaders(), body, NULL, NULL, NULL);
+  }
+
   void OrthancApiClient::PostJsonAsyncExpectJson(
       const std::string& uri,
       const Json::Value& data,
@@ -350,7 +356,15 @@ namespace OrthancStone
     return PostBinaryAsyncExpectJson(uri, body, successCallback, failureCallback, payload);
   }
 
-  
+  void OrthancApiClient::PostJsonAsync(
+      const std::string& uri,
+      const Json::Value& data)
+  {
+    std::string body;
+    MessagingToolbox::JsonToString(body, data);
+    return PostBinaryAsync(uri, body);
+  }
+
   void OrthancApiClient::DeleteAsync(
       const std::string& uri,
       MessageHandler<EmptyResponseReadyMessage>* successCallback,

@@ -205,6 +205,14 @@ namespace OrthancStone
                                  MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                                  Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);
 
+    // schedule a POST request and don't mind the response.
+    void PostJsonAsync(const std::string& uri,
+                       const Json::Value& data);
+
+    // schedule a POST request and don't mind the response.
+    void PostBinaryAsync(const std::string& uri,
+                         const std::string& body);
+
     // schedule a DELETE request expecting an empty response.
     void DeleteAsync(const std::string& uri,
                      MessageHandler<EmptyResponseReadyMessage>* successCallback,

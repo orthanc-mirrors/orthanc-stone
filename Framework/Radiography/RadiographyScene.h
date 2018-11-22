@@ -28,8 +28,8 @@
 namespace OrthancStone
 {
   class RadiographyScene :
-    public IObserver,
-    public IObservable
+      public IObserver,
+      public IObservable
   {
   public:
     typedef OriginMessage<MessageType_Widget_GeometryChanged, RadiographyScene> GeometryChangedMessage;
@@ -69,11 +69,11 @@ namespace OrthancStone
 
 
   private:
-    class AlphaLayer;    
+    class AlphaLayer;
     class DicomLayer;
 
     typedef std::map<size_t, RadiographyLayer*>  Layers;
-        
+
     size_t  countLayers_;
     bool    hasWindowing_;
     float   windowingCenter_;
@@ -147,10 +147,20 @@ namespace OrthancStone
     // core >= 1.4.3
     void ExportDicom(OrthancApiClient& orthanc,
                      const Orthanc::DicomMap& dicom,
+                     const std::string& parentOrthancId,
                      double pixelSpacingX,
                      double pixelSpacingY,
                      bool invert,
                      ImageInterpolation interpolation,
                      bool usePam);
+
+    // temporary version used by VSOL because we need to send the same request at another url
+    void Export(Json::Value& createDicomRequestContent,
+                const Orthanc::DicomMap& dicom,
+                double pixelSpacingX,
+                double pixelSpacingY,
+                bool invert,
+                ImageInterpolation interpolation,
+                bool usePam);
   };
 }

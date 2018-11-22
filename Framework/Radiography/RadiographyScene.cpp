@@ -55,7 +55,7 @@ namespace OrthancStone
     }
   }
 
-      
+
   RadiographyScene::LayerAccessor::LayerAccessor(RadiographyScene& scene,
                                                  double x,
                                                  double y) :
@@ -65,7 +65,7 @@ namespace OrthancStone
     if (scene.LookupLayer(index_, x, y))
     {
       Layers::iterator layer = scene.layers_.find(index_);
-          
+
       if (layer == scene.layers_.end())
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
@@ -119,7 +119,7 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-  }    
+  }
 
 
 
@@ -145,12 +145,12 @@ namespace OrthancStone
       useWindowing_ = false;
       foreground_ = foreground;
     }
-      
-      
+
+
     void SetAlpha(Orthanc::ImageAccessor* image)
     {
       std::auto_ptr<Orthanc::ImageAccessor> raii(image);
-        
+
       if (image == NULL)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
@@ -170,7 +170,7 @@ namespace OrthancStone
                   const std::string& utf8)
     {
       SetAlpha(font.RenderAlpha(utf8));
-    }                   
+    }
 
 
     virtual bool GetDefaultWindowing(float& center,
@@ -178,7 +178,7 @@ namespace OrthancStone
     {
       return false;
     }
-      
+
 
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,
@@ -188,7 +188,7 @@ namespace OrthancStone
       {
         return;
       }
-        
+
       if (buffer.GetFormat() != Orthanc::PixelFormat_Float32)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
@@ -198,12 +198,12 @@ namespace OrthancStone
       GetCrop(cropX, cropY, cropWidth, cropHeight);
 
       const AffineTransform2D t = AffineTransform2D::Combine(
-        viewTransform, GetTransform(),
-        AffineTransform2D::CreateOffset(cropX, cropY));
+            viewTransform, GetTransform(),
+            AffineTransform2D::CreateOffset(cropX, cropY));
 
       Orthanc::ImageAccessor cropped;
       alpha_->GetRegion(cropped, cropX, cropY, cropWidth, cropHeight);
-        
+
       Orthanc::Image tmp(Orthanc::PixelFormat_Grayscale8, buffer.GetWidth(), buffer.GetHeight(), false);
       
       t.Apply(tmp, cropped, interpolation, true /* clear */);
@@ -213,7 +213,7 @@ namespace OrthancStone
       const unsigned int height = buffer.GetHeight();
 
       float value = foreground_;
-        
+
       if (useWindowing_)
       {
         float center, width;
@@ -222,7 +222,7 @@ namespace OrthancStone
           value = center + width / 2.0f;
         }
       }
-        
+
       for (unsigned int y = 0; y < height; y++)
       {
         float *q = reinterpret_cast<float*>(buffer.GetRow(y));
@@ -231,13 +231,13 @@ namespace OrthancStone
         for (unsigned int x = 0; x < width; x++, p++, q++)
         {
           float a = static_cast<float>(*p) / 255.0f;
-            
+
           *q = (a * value + (1.0f - a) * (*q));
         }
-      }        
+      }
     }
 
-      
+
     virtual bool GetRange(float& minValue,
                           float& maxValue) const
     {
@@ -264,8 +264,8 @@ namespace OrthancStone
       }
     }
   };
-    
-    
+
+
 
   class RadiographyScene::DicomLayer : public RadiographyLayer
   {
@@ -278,7 +278,7 @@ namespace OrthancStone
     {
       return OrthancPlugins::DicomTag(tag.GetGroup(), tag.GetElement());
     }
-      
+
 
     void ApplyConverter()
     {
@@ -288,7 +288,7 @@ namespace OrthancStone
         converted_.reset(converter_->ConvertFrame(*source_));
       }
     }
-      
+
   public:
     void SetDicomTags(const OrthancPlugins::FullOrthancDataset& dataset)
     {
@@ -298,7 +298,7 @@ namespace OrthancStone
 
       std::string tmp;
       Vector pixelSpacing;
-        
+
       if (dataset.GetStringValue(tmp, ConvertTag(Orthanc::DICOM_TAG_PIXEL_SPACING)) &&
           LinearAlgebra::ParseVector(pixelSpacing, tmp) &&
           pixelSpacing.size() == 2)
@@ -322,23 +322,23 @@ namespace OrthancStone
       }
     }
 
-      
+
     void SetSourceImage(Orthanc::ImageAccessor* image)   // Takes ownership
     {
       std::auto_ptr<Orthanc::ImageAccessor> raii(image);
-        
+
       if (image == NULL)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
 
       SetSize(image->GetWidth(), image->GetHeight());
-        
+
       source_ = raii;
       ApplyConverter();
     }
 
-      
+
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,
                         ImageInterpolation interpolation) const
@@ -354,8 +354,8 @@ namespace OrthancStone
         GetCrop(cropX, cropY, cropWidth, cropHeight);
 
         AffineTransform2D t = AffineTransform2D::Combine(
-          viewTransform, GetTransform(),
-          AffineTransform2D::CreateOffset(cropX, cropY));
+              viewTransform, GetTransform(),
+              AffineTransform2D::CreateOffset(cropX, cropY));
 
         Orthanc::ImageAccessor cropped;
         converted_->GetRegion(cropped, cropX, cropY, cropWidth, cropHeight);
@@ -411,7 +411,7 @@ namespace OrthancStone
     }
 
     std::auto_ptr<RadiographyLayer> raii(layer);
-      
+
     size_t index = countLayers_++;
     raii->SetIndex(index);
     layers_[index] = raii.release();
@@ -421,7 +421,7 @@ namespace OrthancStone
 
     return *layer;
   }
-    
+
 
   RadiographyScene::RadiographyScene(MessageBroker& broker) :
     IObserver(broker),
@@ -508,7 +508,7 @@ namespace OrthancStone
     return RegisterLayer(alpha.release());
   }
 
-    
+
   RadiographyLayer& RadiographyScene::LoadTestBlock(unsigned int width,
                                                     unsigned int height)
   {
@@ -539,7 +539,7 @@ namespace OrthancStone
     return RegisterLayer(alpha.release());
   }
 
-    
+
   RadiographyLayer& RadiographyScene::LoadDicomFrame(OrthancApiClient& orthanc,
                                                      const std::string& instance,
                                                      unsigned int frame,
@@ -550,12 +550,12 @@ namespace OrthancStone
     {
       IWebService::HttpHeaders headers;
       std::string uri = "/instances/" + instance + "/tags";
-        
+
       orthanc.GetBinaryAsync(
-        uri, headers,
-        new Callable<RadiographyScene, OrthancApiClient::BinaryResponseReadyMessage>
-        (*this, &RadiographyScene::OnTagsReceived), NULL,
-        new Orthanc::SingleValueObject<size_t>(layer.GetIndex()));
+            uri, headers,
+            new Callable<RadiographyScene, OrthancApiClient::BinaryResponseReadyMessage>
+            (*this, &RadiographyScene::OnTagsReceived), NULL,
+            new Orthanc::SingleValueObject<size_t>(layer.GetIndex()));
     }
 
     {
@@ -566,15 +566,15 @@ namespace OrthancStone
       {
         headers["Accept-Encoding"] = "gzip";
       }
-        
+
       std::string uri = ("/instances/" + instance + "/frames/" +
                          boost::lexical_cast<std::string>(frame) + "/image-uint16");
-        
+
       orthanc.GetBinaryAsync(
-        uri, headers,
-        new Callable<RadiographyScene, OrthancApiClient::BinaryResponseReadyMessage>
-        (*this, &RadiographyScene::OnFrameReceived), NULL,
-        new Orthanc::SingleValueObject<size_t>(layer.GetIndex()));
+            uri, headers,
+            new Callable<RadiographyScene, OrthancApiClient::BinaryResponseReadyMessage>
+            (*this, &RadiographyScene::OnFrameReceived), NULL,
+            new Orthanc::SingleValueObject<size_t>(layer.GetIndex()));
     }
 
     return layer;
@@ -585,25 +585,25 @@ namespace OrthancStone
   {
     RadiographyLayer& layer = RegisterLayer(new DicomLayer);
 
-      
+
     return layer;
   }
 
 
-    
+
   void RadiographyScene::OnTagsReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
   {
     size_t index = dynamic_cast<const Orthanc::SingleValueObject<size_t>&>
-      (message.GetPayload()).GetValue();
+        (message.GetPayload()).GetValue();
 
     LOG(INFO) << "JSON received: " << message.GetUri().c_str()
               << " (" << message.GetAnswerSize() << " bytes) for layer " << index;
-      
+
     Layers::iterator layer = layers_.find(index);
     if (layer != layers_.end())
     {
       assert(layer->second != NULL);
-        
+
       OrthancPlugins::FullOrthancDataset dicom(message.GetAnswer(), message.GetAnswerSize());
       dynamic_cast<DicomLayer*>(layer->second)->SetDicomTags(dicom);
 
@@ -619,15 +619,15 @@ namespace OrthancStone
       EmitMessage(GeometryChangedMessage(*this));
     }
   }
-    
+
 
   void RadiographyScene::OnFrameReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
   {
     size_t index = dynamic_cast<const Orthanc::SingleValueObject<size_t>&>(message.GetPayload()).GetValue();
-      
+
     LOG(INFO) << "DICOM frame received: " << message.GetUri().c_str()
               << " (" << message.GetAnswerSize() << " bytes) for layer " << index;
-      
+
     Layers::iterator layer = layers_.find(index);
     if (layer != layers_.end())
     {
@@ -638,7 +638,7 @@ namespace OrthancStone
       {
         content.assign(reinterpret_cast<const char*>(message.GetAnswer()), message.GetAnswerSize());
       }
-        
+
       std::auto_ptr<Orthanc::PamReader> reader(new Orthanc::PamReader);
       reader->ReadFromMemory(content);
       dynamic_cast<DicomLayer*>(layer->second)->SetSourceImage(reader.release());
@@ -661,7 +661,7 @@ namespace OrthancStone
 
     return extent;
   }
-    
+
 
   void RadiographyScene::Render(Orthanc::ImageAccessor& buffer,
                                 const AffineTransform2D& viewTransform,
@@ -704,13 +704,13 @@ namespace OrthancStone
     return false;
   }
 
-    
+
   void RadiographyScene::DrawBorder(CairoContext& context,
                                     unsigned int layer,
                                     double zoom)
   {
     Layers::const_iterator found = layers_.find(layer);
-        
+
     if (found != layers_.end())
     {
       context.SetSourceColor(255, 0, 0);
@@ -723,7 +723,7 @@ namespace OrthancStone
                                   float& maxValue) const
   {
     bool first = true;
-      
+
     for (Layers::const_iterator it = layers_.begin();
          it != layers_.end(); it++)
     {
@@ -754,22 +754,47 @@ namespace OrthancStone
   }
 
 
-  // Export using PAM is faster than using PNG, but requires Orthanc
-  // core >= 1.4.3
   void RadiographyScene::ExportDicom(OrthancApiClient& orthanc,
                                      const Orthanc::DicomMap& dicom,
+                                     const std::string& parentOrthancId,
                                      double pixelSpacingX,
                                      double pixelSpacingY,
                                      bool invert,
                                      ImageInterpolation interpolation,
                                      bool usePam)
   {
+    Json::Value createDicomRequestContent;
+
+    Export(createDicomRequestContent, dicom, pixelSpacingX, pixelSpacingY, invert, interpolation, usePam);
+
+    if (!parentOrthancId.empty())
+    {
+      createDicomRequestContent["Parent"] = parentOrthancId;
+    }
+
+    orthanc.PostJsonAsyncExpectJson(
+          "/tools/create-dicom", createDicomRequestContent,
+          new Callable<RadiographyScene, OrthancApiClient::JsonResponseReadyMessage>
+          (*this, &RadiographyScene::OnDicomExported),
+          NULL, NULL);
+  }
+
+  // Export using PAM is faster than using PNG, but requires Orthanc
+  // core >= 1.4.3
+  void RadiographyScene::Export(Json::Value& createDicomRequestContent,
+                                const Orthanc::DicomMap& dicom,
+                                double pixelSpacingX,
+                                double pixelSpacingY,
+                                bool invert,
+                                ImageInterpolation interpolation,
+                                bool usePam)
+  {
     if (pixelSpacingX <= 0 ||
         pixelSpacingY <= 0)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-      
+
     LOG(INFO) << "Exporting DICOM";
 
     Extent2D extent = GetSceneExtent();
@@ -787,9 +812,9 @@ namespace OrthancStone
                           static_cast<unsigned int>(h), false);
 
     AffineTransform2D view = AffineTransform2D::Combine(
-      AffineTransform2D::CreateScaling(1.0 / pixelSpacingX, 1.0 / pixelSpacingY),
-      AffineTransform2D::CreateOffset(-extent.GetX1(), -extent.GetY1()));
-      
+          AffineTransform2D::CreateScaling(1.0 / pixelSpacingX, 1.0 / pixelSpacingY),
+          AffineTransform2D::CreateOffset(-extent.GetX1(), -extent.GetY1()));
+
     Render(layers, view, interpolation);
 
     Orthanc::Image rendered(Orthanc::PixelFormat_Grayscale16,
@@ -818,22 +843,21 @@ namespace OrthancStone
     std::set<Orthanc::DicomTag> tags;
     dicom.GetTags(tags);
 
-    Json::Value json = Json::objectValue;
-    json["Tags"] = Json::objectValue;
-           
+    createDicomRequestContent["Tags"] = Json::objectValue;
+
     for (std::set<Orthanc::DicomTag>::const_iterator
-           tag = tags.begin(); tag != tags.end(); ++tag)
+         tag = tags.begin(); tag != tags.end(); ++tag)
     {
       const Orthanc::DicomValue& value = dicom.GetValue(*tag);
       if (!value.IsNull() &&
           !value.IsBinary())
       {
-        json["Tags"][tag->Format()] = value.GetContent();
+        createDicomRequestContent["Tags"][tag->Format()] = value.GetContent();
       }
     }
 
-    json["Tags"][Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION.Format()] =
-      (invert ? "MONOCHROME1" : "MONOCHROME2");
+    createDicomRequestContent["Tags"][Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION.Format()] =
+        (invert ? "MONOCHROME1" : "MONOCHROME2");
 
     // WARNING: The order of PixelSpacing is Y/X. We use "%0.8f" to
     // avoid floating-point numbers to grow over 16 characters,
@@ -841,29 +865,24 @@ namespace OrthancStone
     // ("dciodvfy" would complain).
     char buf[32];
     sprintf(buf, "%0.8f\\%0.8f", pixelSpacingY, pixelSpacingX);
-      
-    json["Tags"][Orthanc::DICOM_TAG_PIXEL_SPACING.Format()] = buf;
+
+    createDicomRequestContent["Tags"][Orthanc::DICOM_TAG_PIXEL_SPACING.Format()] = buf;
 
     float center, width;
     if (GetWindowing(center, width))
     {
-      json["Tags"][Orthanc::DICOM_TAG_WINDOW_CENTER.Format()] =
-        boost::lexical_cast<std::string>(boost::math::iround(center));
+      createDicomRequestContent["Tags"][Orthanc::DICOM_TAG_WINDOW_CENTER.Format()] =
+          boost::lexical_cast<std::string>(boost::math::iround(center));
 
-      json["Tags"][Orthanc::DICOM_TAG_WINDOW_WIDTH.Format()] =
-        boost::lexical_cast<std::string>(boost::math::iround(width));
+      createDicomRequestContent["Tags"][Orthanc::DICOM_TAG_WINDOW_WIDTH.Format()] =
+          boost::lexical_cast<std::string>(boost::math::iround(width));
     }
 
-    // This is Data URI scheme: https://en.wikipedia.org/wiki/Data_URI_scheme
-    json["Content"] = ("data:" +
-                       std::string(usePam ? Orthanc::MIME_PAM : Orthanc::MIME_PNG) +
-                       ";base64," + base64);
 
-    orthanc.PostJsonAsyncExpectJson(
-      "/tools/create-dicom", json,
-      new Callable<RadiographyScene, OrthancApiClient::JsonResponseReadyMessage>
-      (*this, &RadiographyScene::OnDicomExported),
-      NULL, NULL);
+    // This is Data URI scheme: https://en.wikipedia.org/wiki/Data_URI_scheme
+    createDicomRequestContent["Content"] = ("data:" +
+                                            std::string(usePam ? Orthanc::MIME_PAM : Orthanc::MIME_PNG) +
+                                            ";base64," + base64);
   }
 
 
@@ -880,7 +899,7 @@ namespace OrthancStone
 
     const IWebService::HttpHeaders& h = message.GetAnswerHttpHeaders();
     for (IWebService::HttpHeaders::const_iterator
-           it = h.begin(); it != h.end(); ++it)
+         it = h.begin(); it != h.end(); ++it)
     {
       printf("[%s] = [%s]\n", it->first.c_str(), it->second.c_str());
     }

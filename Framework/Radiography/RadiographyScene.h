@@ -117,6 +117,15 @@ namespace OrthancStone
 
     RadiographyLayer& LoadDicomWebFrame(IWebService& web);
 
+    void RemoveLayer(size_t layerIndex);
+
+    size_t GetLayerCount()
+    {
+      return countLayers_;
+    }
+
+    RadiographyLayer& GetLayer(size_t layerIndex);
+
     Extent2D GetSceneExtent() const;
 
     void Render(Orthanc::ImageAccessor& buffer,

@@ -443,6 +443,25 @@ namespace OrthancStone
     }
   }
 
+  void RadiographyScene::RemoveLayer(size_t layerIndex)
+  {
+    if (layerIndex > countLayers_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    delete layers_[layerIndex];
+    layers_.erase(layerIndex);
+    countLayers_--;
+  }
+
+  RadiographyLayer& RadiographyScene::GetLayer(size_t layerIndex)
+  {
+    if (layerIndex > countLayers_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    return *(layers_[layerIndex]);
+  }
 
   bool RadiographyScene::GetWindowing(float& center,
                                       float& width) const

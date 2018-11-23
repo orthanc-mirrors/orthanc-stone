@@ -155,12 +155,15 @@ namespace OrthancStone
                      bool usePam);
 
     // temporary version used by VSOL because we need to send the same request at another url
-    void Export(Json::Value& createDicomRequestContent,
+    void ExportToCreateDicomRequest(Json::Value& createDicomRequestContent,
                 const Orthanc::DicomMap& dicom,
                 double pixelSpacingX,
                 double pixelSpacingY,
                 bool invert,
                 ImageInterpolation interpolation,
                 bool usePam);
+
+    // temporary version used by VSOL
+    void ExportToJson(Json::Value& output);
   };
 }

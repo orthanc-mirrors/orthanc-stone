@@ -165,14 +165,6 @@ namespace OrthancStone
       alpha_ = raii;
     }
 
-
-    void LoadText(const Orthanc::Font& font,
-                  const std::string& utf8)
-    {
-      SetAlpha(font.RenderAlpha(utf8));
-    }
-
-
     virtual bool GetDefaultWindowing(float& center,
                                      float& width) const
     {
@@ -265,6 +257,25 @@ namespace OrthancStone
     }
   };
 
+
+  class RadiographyScene::TextLayer : public AlphaLayer
+  {
+  private:
+    std::string                text_;
+
+  public:
+    TextLayer(const RadiographyScene& scene) :
+      AlphaLayer(scene)
+    {
+    }
+
+    void LoadText(const Orthanc::Font& font,
+                  const std::string& utf8)
+    {
+      SetAlpha(font.RenderAlpha(utf8));
+    }
+
+  };
 
 
   class RadiographyScene::DicomLayer : public RadiographyLayer
@@ -754,6 +765,16 @@ namespace OrthancStone
   }
 
 
+  void RadiographyScene::ExportToJson(Json::Value &output)
+  {
+    for (Layers::iterator it = layers_.begin(); it != layers_.end(); it++)
+    {
+      Json::Value jsonLayer;
+      it->
+
+    }
+  }
+
   void RadiographyScene::ExportDicom(OrthancApiClient& orthanc,
                                      const Orthanc::DicomMap& dicom,
                                      const std::string& parentOrthancId,
@@ -765,7 +786,7 @@ namespace OrthancStone
   {
     Json::Value createDicomRequestContent;
 
-    Export(createDicomRequestContent, dicom, pixelSpacingX, pixelSpacingY, invert, interpolation, usePam);
+    ExportToCreateDicomRequest(createDicomRequestContent, dicom, pixelSpacingX, pixelSpacingY, invert, interpolation, usePam);
 
     if (!parentOrthancId.empty())
     {
@@ -781,7 +802,7 @@ namespace OrthancStone
 
   // Export using PAM is faster than using PNG, but requires Orthanc
   // core >= 1.4.3
-  void RadiographyScene::Export(Json::Value& createDicomRequestContent,
+  void RadiographyScene::ExportToCreateDicomRequest(Json::Value& createDicomRequestContent,
                                 const Orthanc::DicomMap& dicom,
                                 double pixelSpacingX,
                                 double pixelSpacingY,

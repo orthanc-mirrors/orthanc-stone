@@ -58,6 +58,8 @@ namespace OrthancStone
     // Takes ownsership
     void RegisterObserverCallback(ICallable* callable);
 
+    void Unregister(IObserver* observer);
+
     void EmitMessage(const IMessage& message);
 
     // Takes ownsership

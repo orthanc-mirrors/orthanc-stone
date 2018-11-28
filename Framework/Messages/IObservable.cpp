@@ -64,6 +64,25 @@ namespace OrthancStone
     callables_[messageType].insert(callable);
   }
 
+  void IObservable::Unregister(IObserver *observer)
+  {
+    // delete all callables from this observer
+    for (Callables::iterator itCallableSet = callables_.begin();
+         itCallableSet != callables_.end(); ++itCallableSet)
+    {
+      for (std::set<ICallable*>::const_iterator
+             itCallable = itCallableSet->second.begin(); itCallable != itCallableSet->second.end(); )
+      {
+        if ((*itCallable)->GetObserver() == observer)
+        {
+          delete *itCallable;
+          itCallableSet->second.erase(itCallable++);
+        }
+        else
+          ++itCallable;
+      }
+    }
+  }
   
   void IObservable::EmitMessage(const IMessage& message)
   {

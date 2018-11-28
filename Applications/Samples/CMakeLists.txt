@@ -193,7 +193,6 @@ if (ENABLE_NATIVE)
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestCommands.cpp
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestExceptions.cpp
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestMessageBroker.cpp
-    ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestMessageBroker2.cpp
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/UnitTestsMain.cpp
     )
 

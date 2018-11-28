@@ -31,7 +31,7 @@ namespace OrthancStone
                                          ImageInterpolation interpolation)
   {
     float windowCenter, windowWidth;
-    scene_.GetWindowingWithDefault(windowCenter, windowWidth);
+    scene_->GetWindowingWithDefault(windowCenter, windowWidth);
       
     float x0 = windowCenter - windowWidth / 2.0f;
     float x1 = windowCenter + windowWidth / 2.0f;
@@ -56,7 +56,7 @@ namespace OrthancStone
         cairoBuffer_.reset(new CairoSurface(width, height));
       }
 
-      scene_.Render(*floatBuffer_, GetView().GetMatrix(), interpolation);
+      scene_->Render(*floatBuffer_, GetView().GetMatrix(), interpolation);
         
       // Conversion from Float32 to BGRA32 (cairo). Very similar to
       // GrayscaleFrameRenderer => TODO MERGE?
@@ -128,7 +128,7 @@ namespace OrthancStone
 
     if (hasSelection_)
     {
-      scene_.DrawBorder(context, selectedLayer_, view.GetZoom());
+      scene_->DrawBorder(context, selectedLayer_, view.GetZoom());
     }
 
     return true;
@@ -136,23 +136,16 @@ namespace OrthancStone
 
 
   RadiographyWidget::RadiographyWidget(MessageBroker& broker,
-                                       RadiographyScene& scene,
+                                       boost::shared_ptr<RadiographyScene> scene,
                                        const std::string& name) :
     WorldSceneWidget(name),
     IObserver(broker),
-    scene_(scene),
     invert_(false),
     interpolation_(ImageInterpolation_Nearest),
     hasSelection_(false),
     selectedLayer_(0)    // Dummy initialization
   {
-    scene.RegisterObserverCallback(
-      new Callable<RadiographyWidget, RadiographyScene::GeometryChangedMessage>
-      (*this, &RadiographyWidget::OnGeometryChanged));
-
-    scene.RegisterObserverCallback(
-      new Callable<RadiographyWidget, RadiographyScene::ContentChangedMessage>
-      (*this, &RadiographyWidget::OnContentChanged));
+    SetScene(scene);
   }
 
 
@@ -215,5 +208,26 @@ namespace OrthancStone
       interpolation_ = interpolation;
       NotifyContentChanged();
     }
+  }
+
+  void RadiographyWidget::SetScene(boost::shared_ptr<RadiographyScene> scene)
+  {
+    if (scene_ != NULL)
+    {
+      scene_->Unregister(this);
+    }
+
+    scene_ = scene;
+
+    scene_->RegisterObserverCallback(
+      new Callable<RadiographyWidget, RadiographyScene::GeometryChangedMessage>
+      (*this, &RadiographyWidget::OnGeometryChanged));
+
+    scene_->RegisterObserverCallback(
+      new Callable<RadiographyWidget, RadiographyScene::ContentChangedMessage>
+      (*this, &RadiographyWidget::OnContentChanged));
+
+    // force redraw
+    FitContent();
   }
 }

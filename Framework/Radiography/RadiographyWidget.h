@@ -32,7 +32,7 @@ namespace OrthancStone
     public IObserver
   {
   private:
-    RadiographyScene&                      scene_;
+    boost::shared_ptr<RadiographyScene>    scene_;
     std::auto_ptr<Orthanc::ImageAccessor>  floatBuffer_;
     std::auto_ptr<CairoSurface>            cairoBuffer_;
     bool                                   invert_;
@@ -47,7 +47,7 @@ namespace OrthancStone
   protected:
     virtual Extent2D GetSceneExtent()
     {
-      return scene_.GetSceneExtent();
+      return scene_->GetSceneExtent();
     }
 
     virtual bool RenderScene(CairoContext& context,
@@ -55,13 +55,15 @@ namespace OrthancStone
 
   public:
     RadiographyWidget(MessageBroker& broker,
-                      RadiographyScene& scene,
+                      boost::shared_ptr<RadiographyScene> scene,  // TODO: check how we can avoid boost::shared_ptr here since we don't want them in the public API (app is keeping a boost::shared_ptr to this right now)
                       const std::string& name);
 
     RadiographyScene& GetScene() const
     {
-      return scene_;
+      return *scene_;
     }
+
+    void SetScene(boost::shared_ptr<RadiographyScene> scene);
 
     void Unselect()
     {

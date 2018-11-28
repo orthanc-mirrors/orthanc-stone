@@ -303,7 +303,7 @@ namespace OrthancStone
             if (context_ != NULL)
             {
               widget.GetScene().ExportDicom(context_->GetOrthancApiClient(),
-                                            tags, 0.1, 0.1, widget.IsInverted(),
+                                            tags, std::string(), 0.1, 0.1, widget.IsInverted(),
                                             widget.GetInterpolation(), EXPORT_USING_PAM);
             }
             
@@ -380,7 +380,7 @@ namespace OrthancStone
       public IObserver
     {
     private:
-      std::auto_ptr<RadiographyScene>  scene_;
+      boost::shared_ptr<RadiographyScene>  scene_;
       RadiographyEditorInteractor      interactor_;
 
     public:
@@ -465,7 +465,7 @@ namespace OrthancStone
         }
         
         
-        mainWidget_ = new RadiographyWidget(GetBroker(), *scene_, "main-widget");
+        mainWidget_ = new RadiographyWidget(GetBroker(), scene_, "main-widget");
         mainWidget_->SetTransmitMouseOver(true);
         mainWidget_->SetInteractor(interactor_);
 

@@ -412,6 +412,8 @@ namespace OrthancStone
 
     std::auto_ptr<RadiographyLayer> raii(layer);
 
+    LOG(INFO) << "Registering layer: " << countLayers_;
+
     size_t index = countLayers_++;
     raii->SetIndex(index);
     layers_[index] = raii.release();
@@ -445,6 +447,8 @@ namespace OrthancStone
 
   void RadiographyScene::RemoveLayer(size_t layerIndex)
   {
+    LOG(INFO) << "Removing layer: " << layerIndex;
+
     if (layerIndex > countLayers_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
@@ -452,6 +456,7 @@ namespace OrthancStone
     delete layers_[layerIndex];
     layers_.erase(layerIndex);
     countLayers_--;
+    LOG(INFO) << "Removing layer, there are now : " << countLayers_ << " layers";
   }
 
   RadiographyLayer& RadiographyScene::GetLayer(size_t layerIndex)

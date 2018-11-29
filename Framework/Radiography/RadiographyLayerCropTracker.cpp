@@ -58,7 +58,7 @@ namespace OrthancStone
       sourceCropWidth_(tracker.cropWidth_),
       sourceCropHeight_(tracker.cropHeight_)
     {
-      tracker.accessor_.GetLayer().GetCrop(targetCropX_, targetCropY_,
+      tracker.accessor_.GetLayer().GetGeometry().GetCrop(targetCropX_, targetCropY_,
                                            targetCropWidth_, targetCropHeight_);
     }
   };
@@ -77,7 +77,7 @@ namespace OrthancStone
   {
     if (accessor_.IsValid())
     {
-      accessor_.GetLayer().GetCrop(cropX_, cropY_, cropWidth_, cropHeight_);          
+      accessor_.GetLayer().GetGeometry().GetCrop(cropX_, cropY_, cropWidth_, cropHeight_);
     }
   }
 

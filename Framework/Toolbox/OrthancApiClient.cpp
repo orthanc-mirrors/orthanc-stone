@@ -170,7 +170,7 @@ namespace OrthancStone
   class OrthancApiClient::CachedHttpRequestSuccessMessage
   {
   protected:
-    const std::string&             uri_;
+    std::string                    uri_;
     void*                          answer_;
     size_t                         answerSize_;
     IWebService::HttpHeaders       answerHeaders_;

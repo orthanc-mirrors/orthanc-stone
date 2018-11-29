@@ -21,6 +21,9 @@
 
 #include "RadiographyScene.h"
 
+#include "RadiographyAlphaLayer.h"
+#include "RadiographyDicomLayer.h"
+#include "RadiographyTextLayer.h"
 #include "../Toolbox/DicomFrameConverter.h"
 
 #include <Core/Images/Image.h>
@@ -121,288 +124,6 @@ namespace OrthancStone
     }
   }
 
-
-
-  class RadiographyScene::AlphaLayer : public RadiographyLayer
-  {
-  private:
-    const RadiographyScene&                scene_;
-    std::auto_ptr<Orthanc::ImageAccessor>  alpha_;      // Grayscale8
-    bool                                   useWindowing_;
-    float                                  foreground_;
-
-  public:
-    AlphaLayer(const RadiographyScene& scene) :
-      scene_(scene),
-      useWindowing_(true),
-      foreground_(0)
-    {
-    }
-
-
-    void SetForegroundValue(float foreground)
-    {
-      useWindowing_ = false;
-      foreground_ = foreground;
-    }
-
-
-    void SetAlpha(Orthanc::ImageAccessor* image)
-    {
-      std::auto_ptr<Orthanc::ImageAccessor> raii(image);
-
-      if (image == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
-
-      if (image->GetFormat() != Orthanc::PixelFormat_Grayscale8)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
-      }
-
-      SetSize(image->GetWidth(), image->GetHeight());
-      alpha_ = raii;
-    }
-
-
-    void LoadText(const Orthanc::Font& font,
-                  const std::string& utf8)
-    {
-      SetAlpha(font.RenderAlpha(utf8));
-    }
-
-
-    virtual bool GetDefaultWindowing(float& center,
-                                     float& width) const
-    {
-      return false;
-    }
-
-
-    virtual void Render(Orthanc::ImageAccessor& buffer,
-                        const AffineTransform2D& viewTransform,
-                        ImageInterpolation interpolation) const
-    {
-      if (alpha_.get() == NULL)
-      {
-        return;
-      }
-
-      if (buffer.GetFormat() != Orthanc::PixelFormat_Float32)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
-      }
-
-      unsigned int cropX, cropY, cropWidth, cropHeight;
-      GetCrop(cropX, cropY, cropWidth, cropHeight);
-
-      const AffineTransform2D t = AffineTransform2D::Combine(
-            viewTransform, GetTransform(),
-            AffineTransform2D::CreateOffset(cropX, cropY));
-
-      Orthanc::ImageAccessor cropped;
-      alpha_->GetRegion(cropped, cropX, cropY, cropWidth, cropHeight);
-
-      Orthanc::Image tmp(Orthanc::PixelFormat_Grayscale8, buffer.GetWidth(), buffer.GetHeight(), false);
-      
-      t.Apply(tmp, cropped, interpolation, true /* clear */);
-
-      // Blit
-      const unsigned int width = buffer.GetWidth();
-      const unsigned int height = buffer.GetHeight();
-
-      float value = foreground_;
-
-      if (useWindowing_)
-      {
-        float center, width;
-        if (scene_.GetWindowing(center, width))
-        {
-          value = center + width / 2.0f;
-        }
-      }
-
-      for (unsigned int y = 0; y < height; y++)
-      {
-        float *q = reinterpret_cast<float*>(buffer.GetRow(y));
-        const uint8_t *p = reinterpret_cast<uint8_t*>(tmp.GetRow(y));
-
-        for (unsigned int x = 0; x < width; x++, p++, q++)
-        {
-          float a = static_cast<float>(*p) / 255.0f;
-
-          *q = (a * value + (1.0f - a) * (*q));
-        }
-      }
-    }
-
-
-    virtual bool GetRange(float& minValue,
-                          float& maxValue) const
-    {
-      if (useWindowing_)
-      {
-        return false;
-      }
-      else
-      {
-        minValue = 0;
-        maxValue = 0;
-
-        if (foreground_ < 0)
-        {
-          minValue = foreground_;
-        }
-
-        if (foreground_ > 0)
-        {
-          maxValue = foreground_;
-        }
-
-        return true;
-      }
-    }
-  };
-
-
-
-  class RadiographyScene::DicomLayer : public RadiographyLayer
-  {
-  private:
-    std::auto_ptr<Orthanc::ImageAccessor>  source_;  // Content of PixelData
-    std::auto_ptr<DicomFrameConverter>     converter_;
-    std::auto_ptr<Orthanc::ImageAccessor>  converted_;  // Float32
-
-    static OrthancPlugins::DicomTag  ConvertTag(const Orthanc::DicomTag& tag)
-    {
-      return OrthancPlugins::DicomTag(tag.GetGroup(), tag.GetElement());
-    }
-
-
-    void ApplyConverter()
-    {
-      if (source_.get() != NULL &&
-          converter_.get() != NULL)
-      {
-        converted_.reset(converter_->ConvertFrame(*source_));
-      }
-    }
-
-  public:
-    void SetDicomTags(const OrthancPlugins::FullOrthancDataset& dataset)
-    {
-      converter_.reset(new DicomFrameConverter);
-      converter_->ReadParameters(dataset);
-      ApplyConverter();
-
-      std::string tmp;
-      Vector pixelSpacing;
-
-      if (dataset.GetStringValue(tmp, ConvertTag(Orthanc::DICOM_TAG_PIXEL_SPACING)) &&
-          LinearAlgebra::ParseVector(pixelSpacing, tmp) &&
-          pixelSpacing.size() == 2)
-      {
-        SetPixelSpacing(pixelSpacing[0], pixelSpacing[1]);
-      }
-
-      //SetPan(-0.5 * GetPixelSpacingX(), -0.5 * GetPixelSpacingY());
-      
-      OrthancPlugins::DicomDatasetReader reader(dataset);
-
-      unsigned int width, height;
-      if (!reader.GetUnsignedIntegerValue(width, ConvertTag(Orthanc::DICOM_TAG_COLUMNS)) ||
-          !reader.GetUnsignedIntegerValue(height, ConvertTag(Orthanc::DICOM_TAG_ROWS)))
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-      }
-      else
-      {
-        SetSize(width, height);
-      }
-    }
-
-
-    void SetSourceImage(Orthanc::ImageAccessor* image)   // Takes ownership
-    {
-      std::auto_ptr<Orthanc::ImageAccessor> raii(image);
-
-      if (image == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
-
-      SetSize(image->GetWidth(), image->GetHeight());
-
-      source_ = raii;
-      ApplyConverter();
-    }
-
-
-    virtual void Render(Orthanc::ImageAccessor& buffer,
-                        const AffineTransform2D& viewTransform,
-                        ImageInterpolation interpolation) const
-    {
-      if (converted_.get() != NULL)
-      {
-        if (converted_->GetFormat() != Orthanc::PixelFormat_Float32)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-        }
-
-        unsigned int cropX, cropY, cropWidth, cropHeight;
-        GetCrop(cropX, cropY, cropWidth, cropHeight);
-
-        AffineTransform2D t = AffineTransform2D::Combine(
-              viewTransform, GetTransform(),
-              AffineTransform2D::CreateOffset(cropX, cropY));
-
-        Orthanc::ImageAccessor cropped;
-        converted_->GetRegion(cropped, cropX, cropY, cropWidth, cropHeight);
-        
-        t.Apply(buffer, cropped, interpolation, false);
-      }
-    }
-
-
-    virtual bool GetDefaultWindowing(float& center,
-                                     float& width) const
-    {
-      if (converter_.get() != NULL &&
-          converter_->HasDefaultWindow())
-      {
-        center = static_cast<float>(converter_->GetDefaultWindowCenter());
-        width = static_cast<float>(converter_->GetDefaultWindowWidth());
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-    }
-
-
-    virtual bool GetRange(float& minValue,
-                          float& maxValue) const
-    {
-      if (converted_.get() != NULL)
-      {
-        if (converted_->GetFormat() != Orthanc::PixelFormat_Float32)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-        }
-
-        Orthanc::ImageProcessing::GetMinMaxFloatValue(minValue, maxValue, *converted_);
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-    }
-  };
-
-
   RadiographyLayer& RadiographyScene::RegisterLayer(RadiographyLayer* layer)
   {
     if (layer == NULL)
@@ -418,8 +139,8 @@ namespace OrthancStone
     raii->SetIndex(index);
     layers_[index] = raii.release();
 
-    EmitMessage(GeometryChangedMessage(*this));
-    EmitMessage(ContentChangedMessage(*this));
+    EmitMessage(GeometryChangedMessage(*this, *layer));
+    EmitMessage(ContentChangedMessage(*this, *layer));
 
     return *layer;
   }
@@ -445,6 +166,14 @@ namespace OrthancStone
     }
   }
 
+  void RadiographyScene::GetLayersIndexes(std::vector<size_t>& output) const
+  {
+    for (Layers::const_iterator it = layers_.begin(); it != layers_.end(); it++)
+    {
+      output.push_back(it->first);
+    }
+  }
+
   void RadiographyScene::RemoveLayer(size_t layerIndex)
   {
     LOG(INFO) << "Removing layer: " << layerIndex;
@@ -459,13 +188,14 @@ namespace OrthancStone
     LOG(INFO) << "Removing layer, there are now : " << countLayers_ << " layers";
   }
 
-  RadiographyLayer& RadiographyScene::GetLayer(size_t layerIndex)
+  const RadiographyLayer& RadiographyScene::GetLayer(size_t layerIndex) const
   {
     if (layerIndex > countLayers_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-    return *(layers_[layerIndex]);
+
+    return *(layers_.at(layerIndex));
   }
 
   bool RadiographyScene::GetWindowing(float& center,
@@ -505,17 +235,23 @@ namespace OrthancStone
 
 
   RadiographyLayer& RadiographyScene::LoadText(const Orthanc::Font& font,
-                                               const std::string& utf8)
+                                               const std::string& utf8,
+                                               RadiographyLayer::Geometry* geometry)
   {
-    std::auto_ptr<AlphaLayer>  alpha(new AlphaLayer(*this));
+    std::auto_ptr<RadiographyTextLayer>  alpha(new RadiographyTextLayer(*this));
     alpha->LoadText(font, utf8);
+    if (geometry != NULL)
+    {
+      alpha->SetGeometry(*geometry);
+    }
 
     return RegisterLayer(alpha.release());
   }
 
 
   RadiographyLayer& RadiographyScene::LoadTestBlock(unsigned int width,
-                                                    unsigned int height)
+                                                    unsigned int height,
+                                                    RadiographyLayer::Geometry* geometry)
   {
     std::auto_ptr<Orthanc::Image>  block(new Orthanc::Image(Orthanc::PixelFormat_Grayscale8, width, height, false));
 
@@ -538,19 +274,34 @@ namespace OrthancStone
       Orthanc::ImageProcessing::Set(region, color);
     }
 
-    std::auto_ptr<AlphaLayer>  alpha(new AlphaLayer(*this));
-    alpha->SetAlpha(block.release());
+    return LoadAlphaBitmap(block.release(), geometry);
+  }
+
+  RadiographyLayer& RadiographyScene::LoadAlphaBitmap(Orthanc::ImageAccessor* bitmap, RadiographyLayer::Geometry *geometry)
+  {
+    std::auto_ptr<RadiographyAlphaLayer>  alpha(new RadiographyAlphaLayer(*this));
+    alpha->SetAlpha(bitmap);
+    if (geometry != NULL)
+    {
+      alpha->SetGeometry(*geometry);
+    }
 
     return RegisterLayer(alpha.release());
   }
 
-
   RadiographyLayer& RadiographyScene::LoadDicomFrame(OrthancApiClient& orthanc,
                                                      const std::string& instance,
                                                      unsigned int frame,
-                                                     bool httpCompression)
+                                                     bool httpCompression,
+                                                     RadiographyLayer::Geometry* geometry)
   {
-    RadiographyLayer& layer = RegisterLayer(new DicomLayer);
+    RadiographyDicomLayer& layer = dynamic_cast<RadiographyDicomLayer&>(RegisterLayer(new RadiographyDicomLayer));
+    layer.SetInstance(instance, frame);
+
+    if (geometry != NULL)
+    {
+      layer.SetGeometry(*geometry);
+    }
 
     {
       IWebService::HttpHeaders headers;
@@ -588,7 +339,7 @@ namespace OrthancStone
 
   RadiographyLayer& RadiographyScene::LoadDicomWebFrame(IWebService& web)
   {
-    RadiographyLayer& layer = RegisterLayer(new DicomLayer);
+    RadiographyLayer& layer = RegisterLayer(new RadiographyDicomLayer);
 
 
     return layer;
@@ -610,7 +361,7 @@ namespace OrthancStone
       assert(layer->second != NULL);
 
       OrthancPlugins::FullOrthancDataset dicom(message.GetAnswer(), message.GetAnswerSize());
-      dynamic_cast<DicomLayer*>(layer->second)->SetDicomTags(dicom);
+      dynamic_cast<RadiographyDicomLayer*>(layer->second)->SetDicomTags(dicom);
 
       float c, w;
       if (!hasWindowing_ &&
@@ -621,7 +372,7 @@ namespace OrthancStone
         windowingWidth_ = w;
       }
 
-      EmitMessage(GeometryChangedMessage(*this));
+      EmitMessage(GeometryChangedMessage(*this, *(layer->second)));
     }
   }
 
@@ -646,9 +397,9 @@ namespace OrthancStone
 
       std::auto_ptr<Orthanc::PamReader> reader(new Orthanc::PamReader);
       reader->ReadFromMemory(content);
-      dynamic_cast<DicomLayer*>(layer->second)->SetSourceImage(reader.release());
+      dynamic_cast<RadiographyDicomLayer*>(layer->second)->SetSourceImage(reader.release());
 
-      EmitMessage(ContentChangedMessage(*this));
+      EmitMessage(ContentChangedMessage(*this, *(layer->second)));
     }
   }
 
@@ -672,7 +423,7 @@ namespace OrthancStone
                                 const AffineTransform2D& viewTransform,
                                 ImageInterpolation interpolation) const
   {
-    Orthanc::ImageProcessing::Set(buffer, 0);
+    Orthanc::ImageProcessing::Set(buffer, 0); // TODO: get background color (depending on inverted state)
 
     // Render layers in the background-to-foreground order
     for (size_t index = 0; index < countLayers_; index++)
@@ -770,7 +521,7 @@ namespace OrthancStone
   {
     Json::Value createDicomRequestContent;
 
-    Export(createDicomRequestContent, dicom, pixelSpacingX, pixelSpacingY, invert, interpolation, usePam);
+    ExportToCreateDicomRequest(createDicomRequestContent, dicom, pixelSpacingX, pixelSpacingY, invert, interpolation, usePam);
 
     if (!parentOrthancId.empty())
     {
@@ -786,7 +537,7 @@ namespace OrthancStone
 
   // Export using PAM is faster than using PNG, but requires Orthanc
   // core >= 1.4.3
-  void RadiographyScene::Export(Json::Value& createDicomRequestContent,
+  void RadiographyScene::ExportToCreateDicomRequest(Json::Value& createDicomRequestContent,
                                 const Orthanc::DicomMap& dicom,
                                 double pixelSpacingX,
                                 double pixelSpacingY,

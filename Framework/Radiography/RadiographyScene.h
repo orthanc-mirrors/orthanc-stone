@@ -32,8 +32,46 @@ namespace OrthancStone
       public IObservable
   {
   public:
-    typedef OriginMessage<MessageType_Widget_GeometryChanged, RadiographyScene> GeometryChangedMessage;
-    typedef OriginMessage<MessageType_Widget_ContentChanged, RadiographyScene> ContentChangedMessage;
+    class GeometryChangedMessage :
+      public OriginMessage<MessageType_Scene_GeometryChanged, RadiographyScene>
+    {
+    private:
+      RadiographyLayer&        layer_;
+
+    public:
+      GeometryChangedMessage(const RadiographyScene& origin,
+                             RadiographyLayer& layer) :
+        OriginMessage(origin),
+        layer_(layer)
+      {
+      }
+
+      RadiographyLayer& GetLayer() const
+      {
+        return layer_;
+      }
+    };
+
+    class ContentChangedMessage :
+      public OriginMessage<MessageType_Scene_ContentChanged, RadiographyScene>
+    {
+    private:
+      RadiographyLayer&        layer_;
+
+    public:
+      ContentChangedMessage(const RadiographyScene& origin,
+                             RadiographyLayer& layer) :
+        OriginMessage(origin),
+        layer_(layer)
+      {
+      }
+
+      RadiographyLayer& GetLayer() const
+      {
+        return layer_;
+      }
+    };
+
 
     class LayerAccessor : public boost::noncopyable
     {
@@ -69,9 +107,6 @@ namespace OrthancStone
 
 
   private:
-    class AlphaLayer;
-    class DicomLayer;
-
     typedef std::map<size_t, RadiographyLayer*>  Layers;
 
     size_t  countLayers_;
@@ -105,26 +140,29 @@ namespace OrthancStone
                       float width);
 
     RadiographyLayer& LoadText(const Orthanc::Font& font,
-                               const std::string& utf8);
+                               const std::string& utf8,
+                               RadiographyLayer::Geometry* geometry);
     
     RadiographyLayer& LoadTestBlock(unsigned int width,
-                                    unsigned int height);
-    
+                                    unsigned int height,
+                                    RadiographyLayer::Geometry* geometry);
+
+    RadiographyLayer& LoadAlphaBitmap(Orthanc::ImageAccessor* bitmap,  // takes ownership
+                                      RadiographyLayer::Geometry* geometry);
+
     RadiographyLayer& LoadDicomFrame(OrthancApiClient& orthanc,
                                      const std::string& instance,
                                      unsigned int frame,
-                                     bool httpCompression);
+                                     bool httpCompression,
+                                     RadiographyLayer::Geometry* geometry); // pass NULL if you want default geometry
 
     RadiographyLayer& LoadDicomWebFrame(IWebService& web);
 
     void RemoveLayer(size_t layerIndex);
 
-    size_t GetLayerCount()
-    {
-      return countLayers_;
-    }
+    const RadiographyLayer& GetLayer(size_t layerIndex) const;
 
-    RadiographyLayer& GetLayer(size_t layerIndex);
+    void GetLayersIndexes(std::vector<size_t>& output) const;
 
     Extent2D GetSceneExtent() const;
 
@@ -155,7 +193,7 @@ namespace OrthancStone
                      bool usePam);
 
     // temporary version used by VSOL because we need to send the same request at another url
-    void Export(Json::Value& createDicomRequestContent,
+    void ExportToCreateDicomRequest(Json::Value& createDicomRequestContent,
                 const Orthanc::DicomMap& dicom,
                 double pixelSpacingX,
                 double pixelSpacingY,

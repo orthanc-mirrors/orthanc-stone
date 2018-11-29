@@ -31,6 +31,8 @@
 #include "../../Framework/Radiography/RadiographySceneCommand.h"
 #include "../../Framework/Radiography/RadiographyWidget.h"
 #include "../../Framework/Radiography/RadiographyWindowingTracker.h"
+#include "../../Framework/Radiography/RadiographySceneWriter.h"
+#include "../../Framework/Radiography/RadiographySceneReader.h"
 
 #include <Core/HttpClient.h>
 #include <Core/Images/FontRegistry.h>
@@ -48,8 +50,8 @@ namespace OrthancStone
   namespace Samples
   {
     class RadiographyEditorInteractor :
-      public IWorldSceneInteractor,
-      public IObserver
+        public IWorldSceneInteractor,
+        public IObserver
     {
     private:
       enum Tool
@@ -60,7 +62,7 @@ namespace OrthancStone
         Tool_Resize,
         Tool_Windowing
       };
-        
+
 
       StoneApplicationContext*  context_;
       UndoRedoStack             undoRedoStack_;
@@ -71,8 +73,8 @@ namespace OrthancStone
       {
         return 10.0;
       }
-    
-         
+
+
     public:
       RadiographyEditorInteractor(MessageBroker& broker) :
         IObserver(broker),
@@ -85,7 +87,7 @@ namespace OrthancStone
       {
         context_ = &context;
       }
-    
+
       virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& worldWidget,
                                                           const ViewportGeometry& view,
                                                           MouseButton button,
@@ -101,16 +103,16 @@ namespace OrthancStone
         if (button == MouseButton_Left)
         {
           size_t selected;
-        
+
           if (tool_ == Tool_Windowing)
           {
             return new RadiographyWindowingTracker(
-              undoRedoStack_, widget.GetScene(),
-              viewportX, viewportY,
-              RadiographyWindowingTracker::Action_DecreaseWidth,
-              RadiographyWindowingTracker::Action_IncreaseWidth,
-              RadiographyWindowingTracker::Action_DecreaseCenter,
-              RadiographyWindowingTracker::Action_IncreaseCenter);
+                  undoRedoStack_, widget.GetScene(),
+                  viewportX, viewportY,
+                  RadiographyWindowingTracker::Action_DecreaseWidth,
+                  RadiographyWindowingTracker::Action_IncreaseWidth,
+                  RadiographyWindowingTracker::Action_DecreaseCenter,
+                  RadiographyWindowingTracker::Action_IncreaseCenter);
           }
           else if (!widget.LookupSelectedLayer(selected))
           {
@@ -133,23 +135,23 @@ namespace OrthancStone
             {
               switch (tool_)
               {
-                case Tool_Crop:
-                  return new RadiographyLayerCropTracker
+              case Tool_Crop:
+                return new RadiographyLayerCropTracker
                     (undoRedoStack_, widget.GetScene(), view, selected, x, y, corner);
 
-                case Tool_Resize:
-                  return new RadiographyLayerResizeTracker
+              case Tool_Resize:
+                return new RadiographyLayerResizeTracker
                     (undoRedoStack_, widget.GetScene(), selected, x, y, corner,
                      (modifiers & KeyboardModifiers_Shift));
 
-                default:
-                  throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+              default:
+                throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
               }
             }
             else
             {
               size_t layer;
-            
+
               if (widget.GetScene().LookupLayer(layer, x, y))
               {
                 widget.Select(layer);
@@ -158,7 +160,7 @@ namespace OrthancStone
               {
                 widget.Unselect();
               }
-            
+
               return NULL;
             }
           }
@@ -172,18 +174,18 @@ namespace OrthancStone
               {
                 switch (tool_)
                 {
-                  case Tool_Move:
-                    return new RadiographyLayerMoveTracker
+                case Tool_Move:
+                  return new RadiographyLayerMoveTracker
                       (undoRedoStack_, widget.GetScene(), layer, x, y,
                        (modifiers & KeyboardModifiers_Shift));
 
-                  case Tool_Rotate:
-                    return new RadiographyLayerRotateTracker
+                case Tool_Rotate:
+                  return new RadiographyLayerRotateTracker
                       (undoRedoStack_, widget.GetScene(), view, layer, x, y,
                        (modifiers & KeyboardModifiers_Shift));
-                
-                  default:
-                    break;
+
+                default:
+                  break;
                 }
 
                 return NULL;
@@ -232,14 +234,14 @@ namespace OrthancStone
              tool_ == Tool_Resize))
         {
           RadiographyScene::LayerAccessor accessor(widget.GetScene(), selected);
-        
+
           Corner corner;
           if (accessor.GetLayer().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
           {
             accessor.GetLayer().GetCorner(x, y, corner);
-          
+
             double z = 1.0 / view.GetZoom();
-          
+
             context.SetSourceColor(255, 0, 0);
             cairo_t* cr = context.GetObject();
             cairo_set_line_width(cr, 2.0 * z);
@@ -270,118 +272,141 @@ namespace OrthancStone
 
         switch (keyChar)
         {
-          case 'a':
-            widget.FitContent();
-            break;
+        case 'a':
+          widget.FitContent();
+          break;
 
-          case 'c':
-            tool_ = Tool_Crop;
-            break;
+        case 'c':
+          tool_ = Tool_Crop;
+          break;
 
-          case 'e':
+        case 'd':
+        {
+          // dump to json and reload
+          Json::Value snapshot;
+          RadiographySceneWriter writer;
+          writer.Write(snapshot, widget.GetScene());
+
+          LOG(INFO) << "JSON export was successful: "
+                    << snapshot.toStyledString();
+
+          boost::shared_ptr<RadiographyScene> scene(new RadiographyScene(GetBroker()));
+          RadiographySceneReader reader(*scene, context_->GetOrthancApiClient());
+
+          Orthanc::FontRegistry fontRegistry;
+          fontRegistry.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
+
+          reader.SetFontRegistry(fontRegistry);
+          reader.Read(snapshot);
+
+          widget.SetScene(scene);
+        };break;
+
+        case 'e':
+        {
+          Orthanc::DicomMap tags;
+
+          // Minimal set of tags to generate a valid CR image
+          tags.SetValue(Orthanc::DICOM_TAG_ACCESSION_NUMBER, "NOPE", false);
+          tags.SetValue(Orthanc::DICOM_TAG_BODY_PART_EXAMINED, "PELVIS", false);
+          tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "1", false);
+          //tags.SetValue(Orthanc::DICOM_TAG_LATERALITY, "", false);
+          tags.SetValue(Orthanc::DICOM_TAG_MANUFACTURER, "OSIMIS", false);
+          tags.SetValue(Orthanc::DICOM_TAG_MODALITY, "CR", false);
+          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_BIRTH_DATE, "20000101", false);
+          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_ID, "hello", false);
+          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_NAME, "HELLO^WORLD", false);
+          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_ORIENTATION, "", false);
+          tags.SetValue(Orthanc::DICOM_TAG_PATIENT_SEX, "M", false);
+          tags.SetValue(Orthanc::DICOM_TAG_REFERRING_PHYSICIAN_NAME, "HOUSE^MD", false);
+          tags.SetValue(Orthanc::DICOM_TAG_SERIES_NUMBER, "1", false);
+          tags.SetValue(Orthanc::DICOM_TAG_SOP_CLASS_UID, "1.2.840.10008.5.1.4.1.1.1", false);
+          tags.SetValue(Orthanc::DICOM_TAG_STUDY_ID, "STUDY", false);
+          tags.SetValue(Orthanc::DICOM_TAG_VIEW_POSITION, "", false);
+
+          if (context_ != NULL)
           {
-            Orthanc::DicomMap tags;
-
-            // Minimal set of tags to generate a valid CR image
-            tags.SetValue(Orthanc::DICOM_TAG_ACCESSION_NUMBER, "NOPE", false);
-            tags.SetValue(Orthanc::DICOM_TAG_BODY_PART_EXAMINED, "PELVIS", false);
-            tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "1", false);
-            //tags.SetValue(Orthanc::DICOM_TAG_LATERALITY, "", false);
-            tags.SetValue(Orthanc::DICOM_TAG_MANUFACTURER, "OSIMIS", false);
-            tags.SetValue(Orthanc::DICOM_TAG_MODALITY, "CR", false);
-            tags.SetValue(Orthanc::DICOM_TAG_PATIENT_BIRTH_DATE, "20000101", false);
-            tags.SetValue(Orthanc::DICOM_TAG_PATIENT_ID, "hello", false);
-            tags.SetValue(Orthanc::DICOM_TAG_PATIENT_NAME, "HELLO^WORLD", false);
-            tags.SetValue(Orthanc::DICOM_TAG_PATIENT_ORIENTATION, "", false);
-            tags.SetValue(Orthanc::DICOM_TAG_PATIENT_SEX, "M", false);
-            tags.SetValue(Orthanc::DICOM_TAG_REFERRING_PHYSICIAN_NAME, "HOUSE^MD", false);
-            tags.SetValue(Orthanc::DICOM_TAG_SERIES_NUMBER, "1", false);
-            tags.SetValue(Orthanc::DICOM_TAG_SOP_CLASS_UID, "1.2.840.10008.5.1.4.1.1.1", false);
-            tags.SetValue(Orthanc::DICOM_TAG_STUDY_ID, "STUDY", false);
-            tags.SetValue(Orthanc::DICOM_TAG_VIEW_POSITION, "", false);
-
-            if (context_ != NULL)
-            {
-              widget.GetScene().ExportDicom(context_->GetOrthancApiClient(),
-                                            tags, std::string(), 0.1, 0.1, widget.IsInverted(),
-                                            widget.GetInterpolation(), EXPORT_USING_PAM);
-            }
-            
-            break;
+            widget.GetScene().ExportDicom(context_->GetOrthancApiClient(),
+                                          tags, std::string(), 0.1, 0.1, widget.IsInverted(),
+                                          widget.GetInterpolation(), EXPORT_USING_PAM);
           }
 
-          case 'i':
-            widget.SwitchInvert();
-            break;
-        
-          case 'm':
-            tool_ = Tool_Move;
-            break;
+          break;
+        }
 
-          case 'n':
+        case 'i':
+          widget.SwitchInvert();
+          break;
+
+        case 'm':
+          tool_ = Tool_Move;
+          break;
+
+        case 'n':
+        {
+          switch (widget.GetInterpolation())
           {
-            switch (widget.GetInterpolation())
-            {
-              case ImageInterpolation_Nearest:
-                LOG(INFO) << "Switching to bilinear interpolation";
-                widget.SetInterpolation(ImageInterpolation_Bilinear);
-                break;
-              
-              case ImageInterpolation_Bilinear:
-                LOG(INFO) << "Switching to nearest neighbor interpolation";
-                widget.SetInterpolation(ImageInterpolation_Nearest);
-                break;
-
-              default:
-                throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-            }
-          
-            break;
-          }
-        
-          case 'r':
-            tool_ = Tool_Rotate;
+          case ImageInterpolation_Nearest:
+            LOG(INFO) << "Switching to bilinear interpolation";
+            widget.SetInterpolation(ImageInterpolation_Bilinear);
             break;
 
-          case 's':
-            tool_ = Tool_Resize;
+          case ImageInterpolation_Bilinear:
+            LOG(INFO) << "Switching to nearest neighbor interpolation";
+            widget.SetInterpolation(ImageInterpolation_Nearest);
             break;
 
-          case 'w':
-            tool_ = Tool_Windowing;
-            break;
-
-          case 'y':
-            if (modifiers & KeyboardModifiers_Control)
-            {
-              undoRedoStack_.Redo();
-              widget.NotifyContentChanged();
-            }
-            break;
-
-          case 'z':
-            if (modifiers & KeyboardModifiers_Control)
-            {
-              undoRedoStack_.Undo();
-              widget.NotifyContentChanged();
-            }
-            break;
-        
           default:
-            break;
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+          }
+          
+          break;
+        }
+
+        case 'r':
+          tool_ = Tool_Rotate;
+          break;
+
+        case 's':
+          tool_ = Tool_Resize;
+          break;
+
+        case 'w':
+          tool_ = Tool_Windowing;
+          break;
+
+        case 'y':
+          if (modifiers & KeyboardModifiers_Control)
+          {
+            undoRedoStack_.Redo();
+            widget.NotifyContentChanged();
+          }
+          break;
+
+        case 'z':
+          if (modifiers & KeyboardModifiers_Control)
+          {
+            undoRedoStack_.Undo();
+            widget.NotifyContentChanged();
+          }
+          break;
+
+        default:
+          break;
         }
       }
     };
 
-  
-  
+
+
     class SingleFrameEditorApplication :
-      public SampleSingleCanvasApplicationBase,
-      public IObserver
+        public SampleSingleCanvasApplicationBase,
+        public IObserver
     {
     private:
-      boost::shared_ptr<RadiographyScene>  scene_;
-      RadiographyEditorInteractor      interactor_;
+      boost::shared_ptr<RadiographyScene>   scene_;
+      RadiographyEditorInteractor           interactor_;
+      Orthanc::FontRegistry                 fontRegistry_;
 
     public:
       SingleFrameEditorApplication(MessageBroker& broker) :
@@ -399,11 +424,11 @@ namespace OrthancStone
       {
         boost::program_options::options_description generic("Sample options");
         generic.add_options()
-          ("instance", boost::program_options::value<std::string>(),
-           "Orthanc ID of the instance")
-          ("frame", boost::program_options::value<unsigned int>()->default_value(0),
-           "Number of the frame, for multi-frame DICOM instances")
-          ;
+            ("instance", boost::program_options::value<std::string>(),
+             "Orthanc ID of the instance")
+            ("frame", boost::program_options::value<unsigned int>()->default_value(0),
+             "Number of the frame, for multi-frame DICOM instances")
+            ;
 
         options.add(generic);
       }
@@ -440,12 +465,11 @@ namespace OrthancStone
         std::string instance = parameters["instance"].as<std::string>();
         int frame = parameters["frame"].as<unsigned int>();
 
-        Orthanc::FontRegistry fonts;
-        fonts.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
+        fontRegistry_.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
         
         scene_.reset(new RadiographyScene(GetBroker()));
         //scene_->LoadDicomFrame(instance, frame, false); //.SetPan(200, 0);
-        scene_->LoadDicomFrame(context->GetOrthancApiClient(), "61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false);
+        scene_->LoadDicomFrame(context->GetOrthancApiClient(), "61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false, NULL);
 
 #if !defined(ORTHANC_ENABLE_WASM) || ORTHANC_ENABLE_WASM != 1
         Orthanc::HttpClient::ConfigureSsl(true, "/etc/ssl/certs/ca-certificates.crt");
@@ -454,12 +478,12 @@ namespace OrthancStone
         //scene_->LoadDicomWebFrame(context->GetWebService());
         
         {
-          RadiographyLayer& layer = scene_->LoadText(fonts.GetFont(0), "Hello\nworld");
+          RadiographyLayer& layer = scene_->LoadText(fontRegistry_.GetFont(0), "Hello\nworld", NULL);
           layer.SetResizeable(true);
         }
         
         {
-          RadiographyLayer& layer = scene_->LoadTestBlock(100, 50);
+          RadiographyLayer& layer = scene_->LoadTestBlock(100, 50, NULL);
           layer.SetResizeable(true);
           layer.SetPan(0, 200);
         }

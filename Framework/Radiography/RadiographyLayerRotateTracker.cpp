@@ -58,7 +58,7 @@ namespace OrthancStone
     UndoRedoCommand(const RadiographyLayerRotateTracker& tracker) :
       RadiographySceneCommand(tracker.accessor_),
       sourceAngle_(tracker.originalAngle_),
-      targetAngle_(tracker.accessor_.GetLayer().GetAngle())
+      targetAngle_(tracker.accessor_.GetLayer().GetGeometry().GetAngle())
     {
     }
   };
@@ -100,7 +100,7 @@ namespace OrthancStone
     if (accessor_.IsValid())
     {
       accessor_.GetLayer().GetCenter(centerX_, centerY_);
-      originalAngle_ = accessor_.GetLayer().GetAngle();
+      originalAngle_ = accessor_.GetLayer().GetGeometry().GetAngle();
 
       double sceneX, sceneY;
       view.MapDisplayToScene(sceneX, sceneY, x, y);

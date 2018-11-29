@@ -246,6 +246,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Layers/LineMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/RenderStyle.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/SliceOutlineRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyAlphaLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyDicomLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerCropTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMoveTracker.cpp
@@ -253,6 +255,9 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerRotateTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyScene.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneReader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneWriter.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyTextLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWindowingTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp

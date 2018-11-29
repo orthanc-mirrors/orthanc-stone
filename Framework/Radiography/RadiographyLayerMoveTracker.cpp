@@ -51,8 +51,8 @@ namespace OrthancStone
       RadiographySceneCommand(tracker.accessor_),
       sourceX_(tracker.panX_),
       sourceY_(tracker.panY_),
-      targetX_(tracker.accessor_.GetLayer().GetPanX()),
-      targetY_(tracker.accessor_.GetLayer().GetPanY())
+      targetX_(tracker.accessor_.GetLayer().GetGeometry().GetPanX()),
+      targetY_(tracker.accessor_.GetLayer().GetGeometry().GetPanY())
     {
     }
   };
@@ -72,8 +72,8 @@ namespace OrthancStone
   {
     if (accessor_.IsValid())
     {
-      panX_ = accessor_.GetLayer().GetPanX();
-      panY_ = accessor_.GetLayer().GetPanY();
+      panX_ = accessor_.GetLayer().GetGeometry().GetPanX();
+      panY_ = accessor_.GetLayer().GetGeometry().GetPanY();
     }
   }
 

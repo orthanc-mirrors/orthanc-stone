@@ -73,10 +73,10 @@ namespace OrthancStone
       sourceSpacingY_(tracker.originalSpacingY_),
       sourcePanX_(tracker.originalPanX_),
       sourcePanY_(tracker.originalPanY_),
-      targetSpacingX_(tracker.accessor_.GetLayer().GetPixelSpacingX()),
-      targetSpacingY_(tracker.accessor_.GetLayer().GetPixelSpacingY()),
-      targetPanX_(tracker.accessor_.GetLayer().GetPanX()),
-      targetPanY_(tracker.accessor_.GetLayer().GetPanY())
+      targetSpacingX_(tracker.accessor_.GetLayer().GetGeometry().GetPixelSpacingX()),
+      targetSpacingY_(tracker.accessor_.GetLayer().GetGeometry().GetPixelSpacingY()),
+      targetPanX_(tracker.accessor_.GetLayer().GetGeometry().GetPanX()),
+      targetPanY_(tracker.accessor_.GetLayer().GetGeometry().GetPanY())
     {
     }
   };
@@ -94,12 +94,12 @@ namespace OrthancStone
     roundScaling_(roundScaling)
   {
     if (accessor_.IsValid() &&
-        accessor_.GetLayer().IsResizeable())
+        accessor_.GetLayer().GetGeometry().IsResizeable())
     {
-      originalSpacingX_ = accessor_.GetLayer().GetPixelSpacingX();
-      originalSpacingY_ = accessor_.GetLayer().GetPixelSpacingY();
-      originalPanX_ = accessor_.GetLayer().GetPanX();
-      originalPanY_ = accessor_.GetLayer().GetPanY();
+      originalSpacingX_ = accessor_.GetLayer().GetGeometry().GetPixelSpacingX();
+      originalSpacingY_ = accessor_.GetLayer().GetGeometry().GetPixelSpacingY();
+      originalPanX_ = accessor_.GetLayer().GetGeometry().GetPanX();
+      originalPanY_ = accessor_.GetLayer().GetGeometry().GetPanY();
 
       switch (corner)
       {
@@ -149,7 +149,7 @@ namespace OrthancStone
   void RadiographyLayerResizeTracker::MouseUp()
   {
     if (accessor_.IsValid() &&
-        accessor_.GetLayer().IsResizeable())
+        accessor_.GetLayer().GetGeometry().IsResizeable())
     {
       undoRedoStack_.Add(new UndoRedoCommand(*this));
     }
@@ -164,7 +164,7 @@ namespace OrthancStone
     static const double ROUND_SCALING = 0.1;
         
     if (accessor_.IsValid() &&
-        accessor_.GetLayer().IsResizeable())
+        accessor_.GetLayer().GetGeometry().IsResizeable())
     {
       double scaling = ComputeDistance(oppositeX_, oppositeY_, sceneX, sceneY) * baseScaling_;
 
@@ -180,8 +180,8 @@ namespace OrthancStone
       // Keep the opposite corner at a fixed location
       double ox, oy;
       layer.GetCorner(ox, oy, oppositeCorner_);
-      layer.SetPan(layer.GetPanX() + oppositeX_ - ox,
-                   layer.GetPanY() + oppositeY_ - oy);
+      layer.SetPan(layer.GetGeometry().GetPanX() + oppositeX_ - ox,
+                   layer.GetGeometry().GetPanY() + oppositeY_ - oy);
     }
   }
 }

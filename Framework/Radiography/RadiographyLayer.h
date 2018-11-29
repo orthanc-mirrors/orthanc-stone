@@ -31,24 +31,114 @@ namespace OrthancStone
   {
     friend class RadiographyScene;
       
+  public:
+    class Geometry
+    {
+      bool               hasCrop_;
+      unsigned int       cropX_;
+      unsigned int       cropY_;
+      unsigned int       cropWidth_;
+      unsigned int       cropHeight_;
+      double             panX_;
+      double             panY_;
+      double             angle_;
+      bool               resizeable_;
+      double             pixelSpacingX_;
+      double             pixelSpacingY_;
+
+    public:
+      Geometry();
+
+      void ResetCrop()
+      {
+        hasCrop_ = false;
+      }
+
+      void SetCrop(unsigned int x,
+                   unsigned int y,
+                   unsigned int width,
+                   unsigned int height)
+      {
+        cropX_ = x;
+        cropY_ = y;
+        cropWidth_ = width;
+        cropHeight_ = height;
+      }
+
+      bool HasCrop() const
+      {
+        return hasCrop_;
+      }
+
+      void GetCrop(unsigned int& x,
+                   unsigned int& y,
+                   unsigned int& width,
+                   unsigned int& height) const;
+
+      void SetAngle(double angle)
+      {
+        angle_ = angle;
+      }
+
+      double GetAngle() const
+      {
+        return angle_;
+      }
+
+      void SetPan(double x,
+                  double y)
+      {
+        panX_ = x;
+        panY_ = y;
+      }
+
+      double GetPanX() const
+      {
+        return panX_;
+      }
+
+      double GetPanY() const
+      {
+        return panY_;
+      }
+
+      bool IsResizeable() const
+      {
+        return resizeable_;
+      }
+
+      void SetResizeable(bool resizeable)
+      {
+        resizeable_ = resizeable;
+      }
+
+      void SetPixelSpacing(double x,
+                           double y)
+      {
+        pixelSpacingX_ = x;
+        pixelSpacingY_ = y;
+      }
+
+      double GetPixelSpacingX() const
+      {
+        return pixelSpacingX_;
+      }
+
+      double GetPixelSpacingY() const
+      {
+        return pixelSpacingY_;
+      }
+
+    };
+
   private:
     size_t             index_;
     bool               hasSize_;
     unsigned int       width_;
     unsigned int       height_;
-    bool               hasCrop_;
-    unsigned int       cropX_;
-    unsigned int       cropY_;
-    unsigned int       cropWidth_;
-    unsigned int       cropHeight_;
     AffineTransform2D  transform_;
     AffineTransform2D  transformInverse_;
-    double             pixelSpacingX_;
-    double             pixelSpacingY_;
-    double             panX_;
-    double             panY_;
-    double             angle_;
-    bool               resizeable_;
+    Geometry           geometry_;
 
   protected:
     const AffineTransform2D& GetTransform() const
@@ -94,10 +184,14 @@ namespace OrthancStone
       return index_;
     }
 
-    void ResetCrop()
+    const Geometry& GetGeometry() const
     {
-      hasCrop_ = false;
+      return geometry_;
     }
+
+    void SetGeometry(const Geometry& geometry);
+
+    void ResetCrop();
 
     void SetCrop(unsigned int x,
                  unsigned int y,
@@ -111,13 +205,21 @@ namespace OrthancStone
 
     void SetAngle(double angle);
 
-    double GetAngle() const
+    void SetPan(double x,
+                double y);
+
+    void SetResizeable(bool resizeable)
     {
-      return angle_;
+      geometry_.SetResizeable(resizeable);
     }
 
     void SetSize(unsigned int width,
                  unsigned int height);
+
+    bool HasSize() const
+    {
+      return hasSize_;
+    }
 
     unsigned int GetWidth() const
     {
@@ -136,31 +238,8 @@ namespace OrthancStone
                   double sceneX,
                   double sceneY) const;
 
-    void SetPan(double x,
-                double y);
-
     void SetPixelSpacing(double x,
                          double y);
-
-    double GetPixelSpacingX() const
-    {
-      return pixelSpacingX_;
-    }   
-
-    double GetPixelSpacingY() const
-    {
-      return pixelSpacingY_;
-    }   
-
-    double GetPanX() const
-    {
-      return panX_;
-    }
-
-    double GetPanY() const
-    {
-      return panY_;
-    }
 
     void GetCenter(double& centerX,
                    double& centerY) const;
@@ -174,16 +253,6 @@ namespace OrthancStone
                       double y,
                       double zoom,
                       double viewportDistance) const;
-
-    bool IsResizeable() const
-    {
-      return resizeable_;
-    }
-
-    void SetResizeable(bool resizeable)
-    {
-      resizeable_ = resizeable;
-    }
 
     virtual bool GetDefaultWindowing(float& center,
                                      float& width) const = 0;

@@ -423,7 +423,7 @@ namespace OrthancStone
                                 const AffineTransform2D& viewTransform,
                                 ImageInterpolation interpolation) const
   {
-    Orthanc::ImageProcessing::Set(buffer, 0); // TODO: get background color (depending on inverted state)
+    Orthanc::ImageProcessing::Set(buffer, 0);
 
     // Render layers in the background-to-foreground order
     for (size_t index = 0; index < countLayers_; index++)

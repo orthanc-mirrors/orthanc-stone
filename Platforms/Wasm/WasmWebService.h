@@ -55,12 +55,12 @@ namespace OrthancStone
                              MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable = NULL,
                              unsigned int timeoutInSeconds = 60);
 
-    virtual void Start()
-    {
-    }
+    // virtual void Start()
+    // {
+    // }
     
-    virtual void Stop()
-    {
-    }
+    // virtual void Stop()
+    // {
+    // }
   };
 }

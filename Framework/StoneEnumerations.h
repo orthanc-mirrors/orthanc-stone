@@ -162,6 +162,8 @@ namespace OrthancStone
 
     MessageType_ViewportChanged,
 
+    MessageType_Timeout,
+
     // used in unit tests only
     MessageType_Test1,
     MessageType_Test2,

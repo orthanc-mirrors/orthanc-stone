@@ -27,6 +27,7 @@
 
 #include "../../Framework/Toolbox/MessagingToolbox.h"
 #include "../../Platforms/Generic/OracleWebService.h"
+#include "../../Platforms/Generic/OracleDelayedCallExecutor.h"
 #include "NativeStoneApplicationContext.h"
 
 #include <Core/Logging.h>
@@ -188,13 +189,16 @@ namespace OrthancStone
       NativeStoneApplicationContext context(broker_);
 
       {
-        Oracle oracle(4); // use 4 threads to download content
+        Oracle oracle(6); // use multiple threads to execute asynchronous tasks like download content
         oracle.Start();
 
         {
           OracleWebService webService(broker_, oracle, webServiceParameters, context);
           context.SetWebService(webService);
           context.SetOrthancBaseUrl(webServiceParameters.GetUrl());
+
+          OracleDelayedCallExecutor delayedExecutor(broker_, oracle, context);
+          context.SetDelayedCallExecutor(delayedExecutor);
 
           application_.Initialize(&context, statusBar, parameters);
 

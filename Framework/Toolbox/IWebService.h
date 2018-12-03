@@ -135,6 +135,7 @@ namespace OrthancStone
     {
     }
 
+    virtual void EnableCache(bool enable) = 0;
     
     virtual void GetAsync(const std::string& uri,
                           const HttpHeaders& headers,

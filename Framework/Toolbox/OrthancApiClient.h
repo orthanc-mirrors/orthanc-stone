@@ -149,14 +149,11 @@ namespace OrthancStone
 
   private:
     class WebServicePayload;
-    class CachedHttpRequestSuccessMessage;
 
   protected:
     IWebService&  web_;
     std::string   baseUrl_;
 
-    std::map<std::string, boost::shared_ptr<CachedHttpRequestSuccessMessage>> cache_;  // TODO: this is currently an infinite cache !
-    bool          cacheEnabled_;
   public:
     OrthancApiClient(MessageBroker& broker,
                      IWebService& web,
@@ -164,11 +161,6 @@ namespace OrthancStone
     
     virtual ~OrthancApiClient()
     {
-    }
-
-    void EnableCache(bool enable)
-    {
-      cacheEnabled_ = enable;
     }
 
     // schedule a GET request expecting a JSON response.
@@ -222,8 +214,6 @@ namespace OrthancStone
     void NotifyHttpSuccess(const IWebService::HttpRequestSuccessMessage& message);
 
     void NotifyHttpError(const IWebService::HttpRequestErrorMessage& message);
-
-    void CacheAndNotifyHttpSuccess(const IWebService::HttpRequestSuccessMessage& message);
 
   private:
     void HandleFromCache(const std::string& uri,

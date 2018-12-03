@@ -167,60 +167,13 @@ namespace OrthancStone
   };
 
 
-  class OrthancApiClient::CachedHttpRequestSuccessMessage
-  {
-  protected:
-    std::string                    uri_;
-    void*                          answer_;
-    size_t                         answerSize_;
-    IWebService::HttpHeaders       answerHeaders_;
-
-  public:
-    CachedHttpRequestSuccessMessage(const IWebService::HttpRequestSuccessMessage& message) :
-      uri_(message.GetUri()),
-      answerSize_(message.GetAnswerSize()),
-      answerHeaders_(message.GetAnswerHttpHeaders())
-    {
-      answer_ =  malloc(answerSize_);
-      memcpy(answer_, message.GetAnswer(), answerSize_);
-    }
-
-    ~CachedHttpRequestSuccessMessage()
-    {
-      free(answer_);
-    }
-
-    const std::string& GetUri() const
-    {
-      return uri_;
-    }
-
-    const void* GetAnswer() const
-    {
-      return answer_;
-    }
-
-    size_t GetAnswerSize() const
-    {
-      return answerSize_;
-    }
-
-    const IWebService::HttpHeaders&  GetAnswerHttpHeaders() const
-    {
-      return answerHeaders_;
-    }
-
-  };
-
-
   OrthancApiClient::OrthancApiClient(MessageBroker& broker,
                                      IWebService& web,
                                      const std::string& baseUrl) :
     IObservable(broker),
     IObserver(broker),
     web_(web),
-    baseUrl_(baseUrl),
-    cacheEnabled_(true)
+    baseUrl_(baseUrl)
   {
   }
 
@@ -232,22 +185,13 @@ namespace OrthancStone
       Orthanc::IDynamicObject* payload)
   {
     IWebService::HttpHeaders emptyHeaders;
-    if (cacheEnabled_)
-    {
-      HandleFromCache(baseUrl_ + uri,
-                      emptyHeaders,
-                      new WebServicePayload(successCallback, failureCallback, payload));
-    }
-    else
-    {
-      web_.GetAsync(baseUrl_ + uri,
-                    emptyHeaders,
-                    new WebServicePayload(successCallback, failureCallback, payload),
-                    new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
-                    (*this, &OrthancApiClient::NotifyHttpSuccess),
-                    new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
-                    (*this, &OrthancApiClient::NotifyHttpError));
-    }
+    web_.GetAsync(baseUrl_ + uri,
+                  emptyHeaders,
+                  new WebServicePayload(successCallback, failureCallback, payload),
+                  new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
+                  (*this, &OrthancApiClient::NotifyHttpSuccess),
+                  new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
+                  (*this, &OrthancApiClient::NotifyHttpError));
   }
 
 
@@ -262,37 +206,6 @@ namespace OrthancStone
     headers["Accept"] = contentType;
     GetBinaryAsync(uri, headers, successCallback, failureCallback, payload);
   }
-  
-
-  void OrthancApiClient::HandleFromCache(const std::string& uri,
-                                         const IWebService::HttpHeaders& headers,
-                                         Orthanc::IDynamicObject* payload // takes ownership
-                                         )
-  {
-    if (cache_.find(uri) == cache_.end())
-    {
-      web_.GetAsync(uri, headers,
-                    payload, // ownership is transfered
-                    new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
-                    (*this, &OrthancApiClient::CacheAndNotifyHttpSuccess),
-                    new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
-                    (*this, &OrthancApiClient::NotifyHttpError));
-    }
-    else
-    {
-      std::auto_ptr<Orthanc::IDynamicObject> payloadRaii(payload); // make sure payload is deleted whatever happens
-
-      const OrthancApiClient::CachedHttpRequestSuccessMessage& cachedMessage = *(cache_[uri]);
-      IWebService::HttpRequestSuccessMessage successMessage(cachedMessage.GetUri(),
-                                                            cachedMessage.GetAnswer(),
-                                                            cachedMessage.GetAnswerSize(),
-                                                            cachedMessage.GetAnswerHttpHeaders(),
-                                                            payloadRaii.get());
-      NotifyHttpSuccess(successMessage);
-    }
-
-  }
-
 
   void OrthancApiClient::GetBinaryAsync(
       const std::string& uri,
@@ -303,21 +216,12 @@ namespace OrthancStone
   {
     // printf("GET [%s] [%s]\n", baseUrl_.c_str(), uri.c_str());
 
-    if (cacheEnabled_)
-    {
-      HandleFromCache(baseUrl_ + uri,
-                      headers,
-                      new WebServicePayload(successCallback, failureCallback, payload));
-    }
-    else
-    {
-      web_.GetAsync(baseUrl_ + uri, headers,
-                    new WebServicePayload(successCallback, failureCallback, payload),
-                    new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
-                    (*this, &OrthancApiClient::NotifyHttpSuccess),
-                    new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
-                    (*this, &OrthancApiClient::NotifyHttpError));
-    }
+    web_.GetAsync(baseUrl_ + uri, headers,
+                  new WebServicePayload(successCallback, failureCallback, payload),
+                  new Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
+                  (*this, &OrthancApiClient::NotifyHttpSuccess),
+                  new Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
+                  (*this, &OrthancApiClient::NotifyHttpError));
   }
 
   
@@ -390,12 +294,6 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
-  }
-
-  void OrthancApiClient::CacheAndNotifyHttpSuccess(const IWebService::HttpRequestSuccessMessage& message)
-  {
-    cache_[message.GetUri()] = boost::shared_ptr<CachedHttpRequestSuccessMessage>(new CachedHttpRequestSuccessMessage(message));
-    NotifyHttpSuccess(message);
   }
 
   void OrthancApiClient::NotifyHttpError(const IWebService::HttpRequestErrorMessage& message)

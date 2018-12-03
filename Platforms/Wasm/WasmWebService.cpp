@@ -122,12 +122,12 @@ namespace OrthancStone
                                payload, timeoutInSeconds);
   }
 
-  void WasmWebService::GetAsync(const std::string& relativeUri,
-                                const HttpHeaders& headers,
-                                Orthanc::IDynamicObject* payload,
-                                MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
-                                MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable,
-                                unsigned int timeoutInSeconds)
+  void WasmWebService::GetAsyncInternal(const std::string &relativeUri,
+                                        const HttpHeaders &headers,
+                                        Orthanc::IDynamicObject *payload,
+                                        MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallable,
+                                        MessageHandler<IWebService::HttpRequestErrorMessage> *failureCallable,
+                                        unsigned int timeoutInSeconds)
   {
     std::string headersInJsonString;
     ToJsonString(headersInJsonString, headers);

@@ -188,7 +188,7 @@ if (NOT ORTHANC_SANDBOXED)
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceDeleteCommand.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/DelayedCallCommand.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/Oracle.cpp
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleWebService.h
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleWebService.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleDelayedCallExecutor.h
     )
 
@@ -271,6 +271,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneException.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/AffineTransform2D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/BaseWebService.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/CoordinateSystem3D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomFrameConverter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet.cpp

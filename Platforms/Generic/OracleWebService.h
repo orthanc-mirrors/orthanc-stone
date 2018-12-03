@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../../Framework/Toolbox/IWebService.h"
+#include "../../Framework/Toolbox/BaseWebService.h"
 #include "Oracle.h"
 #include "WebServiceGetCommand.h"
 #include "WebServicePostCommand.h"
@@ -33,33 +33,25 @@ namespace OrthancStone
   // The OracleWebService performs HTTP requests in a native environment.
   // It uses a thread pool to handle multiple HTTP requests in a same time.
   // It works asynchronously to mimick the behaviour of the WebService running in a WASM environment.
-  class OracleWebService : public IWebService
+  class OracleWebService : public BaseWebService
   {
   private:
     Oracle&                        oracle_;
     NativeStoneApplicationContext& context_;
     Orthanc::WebServiceParameters  parameters_;
 
+    class WebServiceCachedGetCommand;
+
   public:
     OracleWebService(MessageBroker& broker,
                      Oracle& oracle,
                      const Orthanc::WebServiceParameters& parameters,
                      NativeStoneApplicationContext& context) :
-      IWebService(broker),
+      BaseWebService(broker),
       oracle_(oracle),
       context_(context),
       parameters_(parameters)
     {
-    }
-
-    virtual void GetAsync(const std::string& uri,
-                          const HttpHeaders& headers,
-                          Orthanc::IDynamicObject* payload, // takes ownership
-                          MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,   // takes ownership
-                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,// takes ownership
-                          unsigned int timeoutInSeconds = 60)
-    {
-      oracle_.Submit(new WebServiceGetCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, payload, context_));
     }
 
     virtual void PostAsync(const std::string& uri,
@@ -70,7 +62,7 @@ namespace OrthancStone
                            MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL, // takes ownership
                            unsigned int timeoutInSeconds = 60)
     {
-      oracle_.Submit(new WebServicePostCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, body, payload, context_));
+      oracle_.Submit(new WebServicePostCommand(GetBroker(), successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, body, payload, context_));
     }
 
     virtual void DeleteAsync(const std::string& uri,
@@ -80,7 +72,23 @@ namespace OrthancStone
                              MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                              unsigned int timeoutInSeconds = 60)
     {
-      oracle_.Submit(new WebServiceDeleteCommand(broker_, successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, payload, context_));
+      oracle_.Submit(new WebServiceDeleteCommand(GetBroker(), successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, payload, context_));
     }
+
+  protected:
+    virtual void GetAsyncInternal(const std::string& uri,
+                                  const HttpHeaders& headers,
+                                  Orthanc::IDynamicObject* payload, // takes ownership
+                                  MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,   // takes ownership
+                                  MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,// takes ownership
+                                  unsigned int timeoutInSeconds = 60)
+    {
+      oracle_.Submit(new WebServiceGetCommand(GetBroker(), successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, payload, context_));
+    }
+
+    virtual void NotifyHttpSuccessLater(boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedHttpMessage,
+                                        Orthanc::IDynamicObject* payload, // takes ownership
+                                        MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback);
+
   };
 }

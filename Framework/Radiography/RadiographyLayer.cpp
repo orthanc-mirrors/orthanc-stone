@@ -185,7 +185,8 @@ namespace OrthancStone
     index_(0),
     hasSize_(false),
     width_(0),
-    height_(0)
+    height_(0),
+    prefferedPhotometricDisplayMode_(PhotometricDisplayMode_Default)
   {
     UpdateTransform();
   }

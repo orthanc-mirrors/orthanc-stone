@@ -180,6 +180,14 @@ namespace OrthancStone
     Corner_BottomRight
   };
 
+  enum PhotometricDisplayMode
+  {
+    PhotometricDisplayMode_Default,
+
+    PhotometricDisplayMode_Monochrome1,
+    PhotometricDisplayMode_Monochrome2
+  };
+
   
   bool StringToSopClassUid(SopClassUid& result,
                            const std::string& source);

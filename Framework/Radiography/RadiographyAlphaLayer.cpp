@@ -86,7 +86,7 @@ namespace OrthancStone
       float center, width;
       if (scene_.GetWindowing(center, width))
       {
-        value = center + width / 2.0f;  // TODO: shouldn't it be center alone ?
+        value = center + width / 2.0f;  // set it to the maximum pixel value of the image
       }
     }
 

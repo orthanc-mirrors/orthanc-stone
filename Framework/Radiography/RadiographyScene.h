@@ -23,7 +23,7 @@
 
 #include "RadiographyLayer.h"
 #include "../Toolbox/OrthancApiClient.h"
-
+#include "Framework/StoneEnumerations.h"
 
 namespace OrthancStone
 {
@@ -138,6 +138,8 @@ namespace OrthancStone
 
     void SetWindowing(float center,
                       float width);
+
+    PhotometricDisplayMode GetPreferredPhotomotricDisplayMode() const;
 
     RadiographyLayer& LoadText(const Orthanc::Font& font,
                                const std::string& utf8,

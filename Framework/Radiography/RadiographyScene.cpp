@@ -166,6 +166,21 @@ namespace OrthancStone
     }
   }
 
+  PhotometricDisplayMode RadiographyScene::GetPreferredPhotomotricDisplayMode() const
+  {
+    // return the mode of the first layer who "cares" about its display mode (normaly, the one and only layer that is a DicomLayer)
+    for (Layers::const_iterator it = layers_.begin(); it != layers_.end(); it++)
+    {
+      if (it->second->GetPreferredPhotomotricDisplayMode() != PhotometricDisplayMode_Default)
+      {
+        return it->second->GetPreferredPhotomotricDisplayMode();
+      }
+    }
+
+    return PhotometricDisplayMode_Default;
+  }
+
+
   void RadiographyScene::GetLayersIndexes(std::vector<size_t>& output) const
   {
     for (Layers::const_iterator it = layers_.begin(); it != layers_.end(); it++)
@@ -423,8 +438,6 @@ namespace OrthancStone
                                 const AffineTransform2D& viewTransform,
                                 ImageInterpolation interpolation) const
   {
-    Orthanc::ImageProcessing::Set(buffer, 0);
-
     // Render layers in the background-to-foreground order
     for (size_t index = 0; index < countLayers_; index++)
     {
@@ -570,6 +583,9 @@ namespace OrthancStone
     AffineTransform2D view = AffineTransform2D::Combine(
           AffineTransform2D::CreateScaling(1.0 / pixelSpacingX, 1.0 / pixelSpacingY),
           AffineTransform2D::CreateOffset(-extent.GetX1(), -extent.GetY1()));
+
+    // wipe background before rendering
+    Orthanc::ImageProcessing::Set(layers, 0);
 
     Render(layers, view, interpolation);
 

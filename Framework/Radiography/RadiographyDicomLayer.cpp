@@ -63,8 +63,6 @@ namespace OrthancStone
       SetPixelSpacing(pixelSpacing[0], pixelSpacing[1]);
     }
 
-    //SetPan(-0.5 * GetPixelSpacingX(), -0.5 * GetPixelSpacingY());
-
     OrthancPlugins::DicomDatasetReader reader(dataset);
 
     unsigned int width, height;
@@ -76,6 +74,18 @@ namespace OrthancStone
     else
     {
       SetSize(width, height);
+    }
+
+    if (dataset.GetStringValue(tmp, ConvertTag(Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION)))
+    {
+      if (tmp == "MONOCHROME1")
+      {
+        SetPreferredPhotomotricDisplayMode(PhotometricDisplayMode_Monochrome1);
+      }
+      else if (tmp == "MONOCHROME2")
+      {
+        SetPreferredPhotomotricDisplayMode(PhotometricDisplayMode_Monochrome2);
+      }
     }
   }
 

@@ -30,7 +30,7 @@ namespace OrthancStone
   class RadiographyLayer : public boost::noncopyable
   {
     friend class RadiographyScene;
-      
+
   public:
     class Geometry
     {
@@ -139,11 +139,18 @@ namespace OrthancStone
     AffineTransform2D  transform_;
     AffineTransform2D  transformInverse_;
     Geometry           geometry_;
+    PhotometricDisplayMode  prefferedPhotometricDisplayMode_;
+
 
   protected:
     const AffineTransform2D& GetTransform() const
     {
       return transform_;
+    }
+
+    void SetPreferredPhotomotricDisplayMode(PhotometricDisplayMode  prefferedPhotometricDisplayMode)
+    {
+      prefferedPhotometricDisplayMode_ = prefferedPhotometricDisplayMode;
     }
 
   private:
@@ -256,6 +263,11 @@ namespace OrthancStone
 
     virtual bool GetDefaultWindowing(float& center,
                                      float& width) const = 0;
+
+    PhotometricDisplayMode GetPreferredPhotomotricDisplayMode() const
+    {
+      return prefferedPhotometricDisplayMode_;
+    }
 
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,

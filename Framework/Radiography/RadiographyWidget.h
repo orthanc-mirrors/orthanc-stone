@@ -53,6 +53,10 @@ namespace OrthancStone
     virtual bool RenderScene(CairoContext& context,
                              const ViewportGeometry& view);
 
+    virtual void RenderBackground(Orthanc::ImageAccessor& image, float minValue, float maxValue);
+
+    bool IsInvertedInternal() const;
+
   public:
     RadiographyWidget(MessageBroker& broker,
                       boost::shared_ptr<RadiographyScene> scene,  // TODO: check how we can avoid boost::shared_ptr here since we don't want them in the public API (app is keeping a boost::shared_ptr to this right now)

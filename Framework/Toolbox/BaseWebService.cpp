@@ -24,7 +24,7 @@
 #include <Core/OrthancException.h>
 #include "Framework/Messages/IObservable.h"
 #include "Platforms/Generic/IOracleCommand.h"
-
+#include <boost/shared_ptr.hpp>
 
 namespace OrthancStone
 {

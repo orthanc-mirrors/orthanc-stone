@@ -35,6 +35,12 @@ mergeInto(LibraryManager.library, {
     xhr.send();
   },
 
+  WasmWebService_ScheduleLaterCachedSuccessNotification: function (brol) {
+    setTimeout(function() {
+      WasmWebService_NotifyCachedSuccess(brol);
+    }, 0);
+  },
+
   WasmWebService_PostAsync: function(callableSuccess, callableFailure, url, headersInJsonString, body, bodySize, payload, timeoutInSeconds) {
     var xhr = new XMLHttpRequest();
     var url_ = UTF8ToString(url);

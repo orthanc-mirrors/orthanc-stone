@@ -32,7 +32,7 @@ namespace OrthancStone
   // the HTTP GET requests
   class BaseWebService : public IWebService, public IObserver
   {
-  protected:
+  public:
     class CachedHttpRequestSuccessMessage
     {
     protected:
@@ -77,7 +77,7 @@ namespace OrthancStone
       }
 
     };
-
+  protected:
     class BaseWebServicePayload;
 
     bool          cacheEnabled_;

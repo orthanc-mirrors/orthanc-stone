@@ -1,17 +1,17 @@
 #pragma once
 
-#include <Framework/Toolbox/IWebService.h>
+#include <Framework/Toolbox/BaseWebService.h>
 #include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
-class WasmWebService : public IWebService
+class WasmWebService : public BaseWebService
 {
 private:
   static MessageBroker *broker_;
 
   // Private constructor => Singleton design pattern
-  WasmWebService(MessageBroker &broker) : IWebService(broker)
+  WasmWebService(MessageBroker &broker) : BaseWebService(broker)
   {
   }
 
@@ -32,13 +32,6 @@ public:
     broker_ = &broker;
   }
 
-  virtual void GetAsyncInternal(const std::string &uri,
-                                const HttpHeaders &headers,
-                                Orthanc::IDynamicObject *payload,
-                                MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallable,
-                                MessageHandler<IWebService::HttpRequestErrorMessage> *failureCallable = NULL,
-                                unsigned int timeoutInSeconds = 60);
-
   virtual void PostAsync(const std::string &uri,
                          const HttpHeaders &headers,
                          const std::string &body,
@@ -54,12 +47,16 @@ public:
                            MessageHandler<IWebService::HttpRequestErrorMessage> *failureCallable = NULL,
                            unsigned int timeoutInSeconds = 60);
 
-  // virtual void Start()
-  // {
-  // }
+protected:
+  virtual void GetAsyncInternal(const std::string &uri,
+                                const HttpHeaders &headers,
+                                Orthanc::IDynamicObject *payload,
+                                MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallable,
+                                MessageHandler<IWebService::HttpRequestErrorMessage> *failureCallable = NULL,
+                                unsigned int timeoutInSeconds = 60);
 
-  // virtual void Stop()
-  // {
-  // }
+  virtual void NotifyHttpSuccessLater(boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedHttpMessage,
+                                      Orthanc::IDynamicObject *payload, // takes ownership
+                                      MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallback);
 };
 } // namespace OrthancStone

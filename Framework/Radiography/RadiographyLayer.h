@@ -59,6 +59,7 @@ namespace OrthancStone
                    unsigned int width,
                    unsigned int height)
       {
+        hasCrop_ = true;
         cropX_ = x;
         cropY_ = y;
         cropWidth_ = width;

@@ -47,7 +47,7 @@ namespace OrthancStone
   void RadiographyLayer::Geometry::GetCrop(unsigned int &x, unsigned int &y, unsigned int &width, unsigned int &height) const
   {
     if (!hasCrop_)
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);  // you should probably use Radiography::GetCrop() or at least call HasCrop() before
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);  // you should probably use RadiographyLayer::GetCrop() or at least call HasCrop() before
 
     x = cropX_;
     y = cropY_;

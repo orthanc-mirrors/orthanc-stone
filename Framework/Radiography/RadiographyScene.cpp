@@ -628,8 +628,16 @@ namespace OrthancStone
       }
     }
 
-    createDicomRequestContent["Tags"][Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION.Format()] =
-        (invert ? "MONOCHROME1" : "MONOCHROME2");
+    PhotometricDisplayMode photometricMode = GetPreferredPhotomotricDisplayMode();
+    if ((invert && photometricMode != PhotometricDisplayMode_Monochrome2) ||
+        (!invert && photometricMode == PhotometricDisplayMode_Monochrome1))
+    {
+      createDicomRequestContent["Tags"][Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION.Format()] = "MONOCHROME1";
+    }
+    else
+    {
+      createDicomRequestContent["Tags"][Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION.Format()] = "MONOCHROME2";
+    }
 
     // WARNING: The order of PixelSpacing is Y/X. We use "%0.8f" to
     // avoid floating-point numbers to grow over 16 characters,

@@ -43,7 +43,7 @@ namespace OrthancStone
       if (jsonLayer["type"].asString() == "dicom")
       {
         ReadLayerGeometry(geometry, jsonLayer);
-        scene_.LoadDicomFrame(orthancApiClient_, jsonLayer["instanceId"].asString(), jsonLayer["frame"].asUInt(), true, &geometry);
+        scene_.LoadDicomFrame(orthancApiClient_, jsonLayer["instanceId"].asString(), jsonLayer["frame"].asUInt(), false, &geometry);
       }
       else if (jsonLayer["type"].asString() == "text")
       {

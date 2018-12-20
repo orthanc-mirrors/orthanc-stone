@@ -33,7 +33,7 @@ namespace OrthancStone
   {
   public:
     class GeometryChangedMessage :
-      public OriginMessage<MessageType_Scene_GeometryChanged, RadiographyScene>
+        public OriginMessage<MessageType_Scene_GeometryChanged, RadiographyScene>
     {
     private:
       RadiographyLayer&        layer_;
@@ -53,14 +53,14 @@ namespace OrthancStone
     };
 
     class ContentChangedMessage :
-      public OriginMessage<MessageType_Scene_ContentChanged, RadiographyScene>
+        public OriginMessage<MessageType_Scene_ContentChanged, RadiographyScene>
     {
     private:
       RadiographyLayer&        layer_;
 
     public:
       ContentChangedMessage(const RadiographyScene& origin,
-                             RadiographyLayer& layer) :
+                            RadiographyLayer& layer) :
         OriginMessage(origin),
         layer_(layer)
       {
@@ -115,6 +115,7 @@ namespace OrthancStone
     float   windowingWidth_;
     Layers  layers_;
 
+  protected:
     RadiographyLayer& RegisterLayer(RadiographyLayer* layer);
 
     void OnTagsReceived(const OrthancApiClient::BinaryResponseReadyMessage& message);
@@ -152,11 +153,11 @@ namespace OrthancStone
     RadiographyLayer& LoadAlphaBitmap(Orthanc::ImageAccessor* bitmap,  // takes ownership
                                       RadiographyLayer::Geometry* geometry);
 
-    RadiographyLayer& LoadDicomFrame(OrthancApiClient& orthanc,
-                                     const std::string& instance,
-                                     unsigned int frame,
-                                     bool httpCompression,
-                                     RadiographyLayer::Geometry* geometry); // pass NULL if you want default geometry
+    virtual RadiographyLayer& LoadDicomFrame(OrthancApiClient& orthanc,
+                                             const std::string& instance,
+                                             unsigned int frame,
+                                             bool httpCompression,
+                                             RadiographyLayer::Geometry* geometry); // pass NULL if you want default geometry
 
     RadiographyLayer& LoadDicomWebFrame(IWebService& web);
 
@@ -196,11 +197,11 @@ namespace OrthancStone
 
     // temporary version used by VSOL because we need to send the same request at another url
     void ExportToCreateDicomRequest(Json::Value& createDicomRequestContent,
-                const Orthanc::DicomMap& dicom,
-                double pixelSpacingX,
-                double pixelSpacingY,
-                bool invert,
-                ImageInterpolation interpolation,
-                bool usePam);
+                                    const Orthanc::DicomMap& dicom,
+                                    double pixelSpacingX,
+                                    double pixelSpacingY,
+                                    bool invert,
+                                    ImageInterpolation interpolation,
+                                    bool usePam);
   };
 }

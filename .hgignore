@@ -4,4 +4,10 @@ Applications/Qt/archive/
 Applications/Samples/ThirdPartyDownloads/
 Applications/Samples/build-wasm/
 Applications/Samples/build-web/
+Applications/Samples/node_modules/
+Resources/CommandTool/protoc-tests/node_modules/
+Resources/CommandTool/protoc-tests/generated_js/
+Resources/CommandTool/protoc-tests/generated_ts/
+Resources/CommandTool/flatc-tests/basic/build/
 .vscode/
+proutttttttttttttttttttttt/

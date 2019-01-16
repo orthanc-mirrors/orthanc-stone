@@ -77,7 +77,7 @@ namespace OrthancStone
   {
     if (accessor_.IsValid())
     {
-      accessor_.GetLayer().GetCrop(cropX_, cropY_, cropWidth_, cropHeight_);          
+      accessor_.GetLayer().GetCrop(cropX_, cropY_, cropWidth_, cropHeight_);
     }
   }
 

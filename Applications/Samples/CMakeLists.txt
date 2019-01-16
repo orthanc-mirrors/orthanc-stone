@@ -23,7 +23,7 @@ if (ENABLE_WASM)
   set(WASM_MODULE_NAME "StoneFrameworkModule" CACHE STRING "Name of the WebAssembly module")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WASM_FLAGS}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WASM_FLAGS}")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Applications/Samples/samples-library.js --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/WasmWebService.js --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/default-library.js  -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Applications/Samples/samples-library.js --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/WasmWebService.js --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/WasmDelayedCallExecutor.js --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/default-library.js  -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'")
 
   # Handling of memory
   #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1")  # Resize
@@ -160,8 +160,6 @@ if (ENABLE_QT OR ENABLE_WASM)
         )
 
       ORTHANC_QT_WRAP_CPP(SIMPLE_VIEWER_APPLICATION_SOURCES
-        ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.h
-        ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.h
         ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/SimpleViewerMainWindow.h
         )
 
@@ -195,7 +193,6 @@ if (ENABLE_NATIVE)
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestCommands.cpp
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestExceptions.cpp
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestMessageBroker.cpp
-    ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestMessageBroker2.cpp
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/UnitTestsMain.cpp
     )
 

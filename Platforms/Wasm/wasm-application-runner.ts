@@ -10,6 +10,8 @@ declare var StoneFrameworkModule : Stone.Framework;
 // global functions
 var WasmWebService_NotifyError: Function = null;
 var WasmWebService_NotifySuccess: Function = null;
+var WasmWebService_NotifyCachedSuccess: Function = null;
+var WasmDelayedCallExecutor_ExecuteCallback: Function = null;
 var WasmDoAnimation: Function = null;
 var SetStartupParameter: Function = null;
 var CreateWasmApplication: Function = null;
@@ -91,8 +93,10 @@ function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: strin
     ReleaseCppViewport = StoneFrameworkModule.cwrap('ReleaseCppViewport', null, ['number']);
     StartWasmApplication = StoneFrameworkModule.cwrap('StartWasmApplication', null, ['string']);
 
+    WasmWebService_NotifyCachedSuccess = StoneFrameworkModule.cwrap('WasmWebService_NotifyCachedSuccess', null, ['number']);
     WasmWebService_NotifySuccess = StoneFrameworkModule.cwrap('WasmWebService_NotifySuccess', null, ['number', 'string', 'array', 'number', 'number']);
     WasmWebService_NotifyError = StoneFrameworkModule.cwrap('WasmWebService_NotifyError', null, ['number', 'string', 'number']);
+    WasmDelayedCallExecutor_ExecuteCallback = StoneFrameworkModule.cwrap('WasmDelayedCallExecutor_ExecuteCallback', null, ['number']);
     WasmDoAnimation = StoneFrameworkModule.cwrap('WasmDoAnimation', null, []);
 
     SendMessageToStoneApplication = StoneFrameworkModule.cwrap('SendMessageToStoneApplication', 'string', ['string']);

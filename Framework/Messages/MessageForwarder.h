@@ -59,10 +59,10 @@ namespace OrthancStone
    * C is an observer of B and knows that B is re-emitting many messages from A
    *
    * instead of implementing a callback, B will create a MessageForwarder that will emit the messages in his name:
-   * A.RegisterObserverCallback(new MessageForwarder<A::MessageType>(broker, *this)  // where this is B
+   * A.RegisterObserverCallback(new MessageForwarder<A::MessageType>(broker, *this)  // where "this" is B
    *
    * in C:
-   * B.RegisterObserverCallback(new Callable<C, A:MessageTyper>(*this, &B::MyCallback))   // where this is C
+   * B.RegisterObserverCallback(new Callable<C, A:MessageTyper>(*this, &B::MyCallback))   // where "this" is C
    */
   template<typename TMessage>
   class MessageForwarder : public IMessageForwarder, public Callable<MessageForwarder<TMessage>, TMessage>

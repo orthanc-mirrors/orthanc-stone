@@ -21,18 +21,53 @@
 
 #include "RadiographyWidget.h"
 
+#include <Core/OrthancException.h>
 #include <Core/Images/Image.h>
+#include <Core/Images/ImageProcessing.h>
 
 
 namespace OrthancStone
 {
+
+  bool RadiographyWidget::IsInvertedInternal() const
+  {
+    return (scene_->GetPreferredPhotomotricDisplayMode() == PhotometricDisplayMode_Monochrome1) ^ invert_; // MONOCHROME1 images must be inverted and the user can invert the image too -> XOR the two
+  }
+
+  void RadiographyWidget::RenderBackground(Orthanc::ImageAccessor& image, float minValue, float maxValue)
+  {
+    // wipe background before rendering
+    float backgroundValue = minValue;
+
+    switch (scene_->GetPreferredPhotomotricDisplayMode())
+    {
+    case PhotometricDisplayMode_Monochrome1:
+    case PhotometricDisplayMode_Default:
+      if (IsInvertedInternal())
+        backgroundValue = maxValue;
+      else
+        backgroundValue = minValue;
+      break;
+    case PhotometricDisplayMode_Monochrome2:
+      if (IsInvertedInternal())
+        backgroundValue = minValue;
+      else
+        backgroundValue = maxValue;
+      break;
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
+
+    Orthanc::ImageProcessing::Set(image, backgroundValue);
+  }
+
   bool RadiographyWidget::RenderInternal(unsigned int width,
                                          unsigned int height,
                                          ImageInterpolation interpolation)
   {
     float windowCenter, windowWidth;
-    scene_.GetWindowingWithDefault(windowCenter, windowWidth);
-      
+    scene_->GetWindowingWithDefault(windowCenter, windowWidth);
+
     float x0 = windowCenter - windowWidth / 2.0f;
     float x1 = windowCenter + windowWidth / 2.0f;
 
@@ -56,8 +91,10 @@ namespace OrthancStone
         cairoBuffer_.reset(new CairoSurface(width, height));
       }
 
-      scene_.Render(*floatBuffer_, GetView().GetMatrix(), interpolation);
-        
+      RenderBackground(*floatBuffer_, x0, x1);
+
+      scene_->Render(*floatBuffer_, GetView().GetMatrix(), interpolation);
+
       // Conversion from Float32 to BGRA32 (cairo). Very similar to
       // GrayscaleFrameRenderer => TODO MERGE?
 
@@ -65,7 +102,9 @@ namespace OrthancStone
       cairoBuffer_->GetWriteableAccessor(target);
 
       float scaling = 255.0f / (x1 - x0);
-        
+
+      bool invert = IsInvertedInternal();
+
       for (unsigned int y = 0; y < height; y++)
       {
         const float* p = reinterpret_cast<const float*>(floatBuffer_->GetConstRow(y));
@@ -88,7 +127,7 @@ namespace OrthancStone
             v = static_cast<uint8_t>(scaling * (*p - x0));  // (*)
           }
 
-          if (invert_)
+          if (invert)
           {
             v = 255 - v;
           }
@@ -128,7 +167,7 @@ namespace OrthancStone
 
     if (hasSelection_)
     {
-      scene_.DrawBorder(context, selectedLayer_, view.GetZoom());
+      scene_->DrawBorder(context, selectedLayer_, view.GetZoom());
     }
 
     return true;
@@ -136,23 +175,16 @@ namespace OrthancStone
 
 
   RadiographyWidget::RadiographyWidget(MessageBroker& broker,
-                                       RadiographyScene& scene,
+                                       boost::shared_ptr<RadiographyScene> scene,
                                        const std::string& name) :
     WorldSceneWidget(name),
     IObserver(broker),
-    scene_(scene),
     invert_(false),
     interpolation_(ImageInterpolation_Nearest),
     hasSelection_(false),
     selectedLayer_(0)    // Dummy initialization
   {
-    scene.RegisterObserverCallback(
-      new Callable<RadiographyWidget, RadiographyScene::GeometryChangedMessage>
-      (*this, &RadiographyWidget::OnGeometryChanged));
-
-    scene.RegisterObserverCallback(
-      new Callable<RadiographyWidget, RadiographyScene::ContentChangedMessage>
-      (*this, &RadiographyWidget::OnContentChanged));
+    SetScene(scene);
   }
 
 
@@ -179,14 +211,15 @@ namespace OrthancStone
   
   void RadiographyWidget::OnGeometryChanged(const RadiographyScene::GeometryChangedMessage& message)
   {
-    LOG(INFO) << "Geometry has changed";
+    LOG(INFO) << "Scene geometry has changed";
+
     FitContent();
   }
 
   
   void RadiographyWidget::OnContentChanged(const RadiographyScene::ContentChangedMessage& message)
   {
-    LOG(INFO) << "Content has changed";
+    LOG(INFO) << "Scene content has changed";
     NotifyContentChanged();
   }
 
@@ -215,5 +248,28 @@ namespace OrthancStone
       interpolation_ = interpolation;
       NotifyContentChanged();
     }
+  }
+
+  void RadiographyWidget::SetScene(boost::shared_ptr<RadiographyScene> scene)
+  {
+    if (scene_ != NULL)
+    {
+      scene_->Unregister(this);
+    }
+
+    scene_ = scene;
+
+    scene_->RegisterObserverCallback(
+          new Callable<RadiographyWidget, RadiographyScene::GeometryChangedMessage>
+          (*this, &RadiographyWidget::OnGeometryChanged));
+
+    scene_->RegisterObserverCallback(
+          new Callable<RadiographyWidget, RadiographyScene::ContentChangedMessage>
+          (*this, &RadiographyWidget::OnContentChanged));
+
+    NotifyContentChanged();
+
+    // force redraw
+    FitContent();
   }
 }

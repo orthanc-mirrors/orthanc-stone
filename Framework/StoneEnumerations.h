@@ -157,7 +157,12 @@ namespace OrthancStone
     MessageType_OrthancApi_GenericHttpError_Ready,
     MessageType_OrthancApi_GenericEmptyResponse_Ready,
 
+    MessageType_Scene_GeometryChanged,
+    MessageType_Scene_ContentChanged,
+
     MessageType_ViewportChanged,
+
+    MessageType_Timeout,
 
     // used in unit tests only
     MessageType_Test1,
@@ -173,6 +178,14 @@ namespace OrthancStone
     Corner_TopRight,
     Corner_BottomLeft,
     Corner_BottomRight
+  };
+
+  enum PhotometricDisplayMode
+  {
+    PhotometricDisplayMode_Default,
+
+    PhotometricDisplayMode_Monochrome1,
+    PhotometricDisplayMode_Monochrome2
   };
 
   

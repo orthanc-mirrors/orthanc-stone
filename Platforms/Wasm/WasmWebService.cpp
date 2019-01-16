@@ -2,6 +2,15 @@
 #include "json/value.h"
 #include "json/writer.h"
 #include <emscripten/emscripten.h>
+#include <boost/shared_ptr.hpp>
+
+struct CachedSuccessNotification
+{
+  boost::shared_ptr<OrthancStone::BaseWebService::CachedHttpRequestSuccessMessage>    cachedMessage;
+  std::auto_ptr<Orthanc::IDynamicObject>                                              payload;
+  OrthancStone::MessageHandler<OrthancStone::IWebService::HttpRequestSuccessMessage>* successCallback;
+};
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,6 +22,8 @@ extern "C" {
                                       const char* headersInJsonString,
                                       void* payload,
                                       unsigned int timeoutInSeconds);
+
+  extern void WasmWebService_ScheduleLaterCachedSuccessNotification(void* brol);
 
   extern void WasmWebService_PostAsync(void* callableSuccess,
                                        void* callableFailure,
@@ -34,15 +45,25 @@ extern "C" {
                                                        const char* uri,
                                                        void* payload)
   {
-    if (failureCallable == NULL)
-    {
-      throw;
-    }
-    else
+    if (failureCallable != NULL)
     {
       reinterpret_cast<OrthancStone::MessageHandler<OrthancStone::IWebService::HttpRequestErrorMessage>*>(failureCallable)->
         Apply(OrthancStone::IWebService::HttpRequestErrorMessage(uri, reinterpret_cast<Orthanc::IDynamicObject*>(payload)));
     }
+  }
+
+  void EMSCRIPTEN_KEEPALIVE WasmWebService_NotifyCachedSuccess(void* notification_)
+  {
+    // notification has been allocated in C++ and passed to JS.  It must be deleted by this method
+    std::auto_ptr<CachedSuccessNotification> notification(reinterpret_cast<CachedSuccessNotification*>(notification_));
+
+    notification->successCallback->Apply(OrthancStone::IWebService::HttpRequestSuccessMessage(
+      notification->cachedMessage->GetUri(), 
+      notification->cachedMessage->GetAnswer(),
+      notification->cachedMessage->GetAnswerSize(),
+      notification->cachedMessage->GetAnswerHttpHeaders(),
+      notification->payload.get()
+      ));
   }
 
   void EMSCRIPTEN_KEEPALIVE WasmWebService_NotifySuccess(void* successCallable,
@@ -52,16 +73,12 @@ extern "C" {
                                                          const char* answerHeaders,
                                                          void* payload)
   {
-    if (successCallable == NULL)
-    {
-      throw;
-    }
-    else
+    if (successCallable != NULL)
     {
       OrthancStone::IWebService::HttpHeaders headers;
 
       // TODO - Parse "answerHeaders"
-      printf("[%s]\n", answerHeaders);
+      printf("TODO: parse headers [%s]\n", answerHeaders);
       
       reinterpret_cast<OrthancStone::MessageHandler<OrthancStone::IWebService::HttpRequestSuccessMessage>*>(successCallable)->
         Apply(OrthancStone::IWebService::HttpRequestSuccessMessage(uri, body, bodySize, headers,
@@ -122,16 +139,29 @@ namespace OrthancStone
                                payload, timeoutInSeconds);
   }
 
-  void WasmWebService::GetAsync(const std::string& relativeUri,
-                                const HttpHeaders& headers,
-                                Orthanc::IDynamicObject* payload,
-                                MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
-                                MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable,
-                                unsigned int timeoutInSeconds)
+  void WasmWebService::GetAsyncInternal(const std::string &relativeUri,
+                                        const HttpHeaders &headers,
+                                        Orthanc::IDynamicObject *payload,
+                                        MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallable,
+                                        MessageHandler<IWebService::HttpRequestErrorMessage> *failureCallable,
+                                        unsigned int timeoutInSeconds)
   {
     std::string headersInJsonString;
     ToJsonString(headersInJsonString, headers);
     WasmWebService_GetAsync(successCallable, failureCallable, relativeUri.c_str(),
                             headersInJsonString.c_str(), payload, timeoutInSeconds);
   }
+
+  void WasmWebService::NotifyHttpSuccessLater(boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedMessage,
+                                                Orthanc::IDynamicObject* payload, // takes ownership
+                                                MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback)
+  {
+    CachedSuccessNotification* notification = new CachedSuccessNotification();  // allocated on the heap, it will be passed to JS and deleted when coming back to C++
+    notification->cachedMessage = cachedMessage;
+    notification->payload.reset(payload);
+    notification->successCallback = successCallback;
+
+    WasmWebService_ScheduleLaterCachedSuccessNotification(notification);
+  }
+
 }

@@ -57,7 +57,7 @@ namespace OrthancStone
 
   void NativeStoneApplicationContext::Start()
   {
-    boost::mutex::scoped_lock lock(globalMutex_);
+    boost::recursive_mutex::scoped_lock lock(globalMutex_);
     
     if (stopped_ &&
         centralViewport_.HasAnimation())

@@ -2,7 +2,7 @@
  * Stone of Orthanc
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
- * Copyright (C) 2017-2019 Osimis S.A., Belgium
+ * Copyright (C) 2017-2018 Osimis S.A., Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License
@@ -21,48 +21,39 @@
 
 #pragma once
 
-#include "../StoneEnumerations.h"
-#include "ICallable.h"
-#include "IObserver.h"
-#include "MessageBroker.h"
-#include "MessageForwarder.h"
+#include "../../Framework/Messages/IObserver.h"
+#include "../../Framework/Messages/ICallable.h"
 
-#include <set>
+#include <Core/IDynamicObject.h>
+#include <Core/Logging.h>
+
+#include <string>
 #include <map>
 
-namespace OrthancStone 
+namespace OrthancStone
 {
-  class IObservable : public boost::noncopyable
+  // The IDelayedCall executes a callback after a delay (equivalent to timeout() function in javascript).
+  class IDelayedCallExecutor : public boost::noncopyable
   {
-  private:
-    typedef std::map<int, std::set<ICallable*> >  Callables;
-    typedef std::set<IMessageForwarder*>          Forwarders;
-
-    MessageBroker&  broker_;
-    Callables       callables_;
-    Forwarders      forwarders_;
-
+  protected:
+    MessageBroker& broker_;
+    
   public:
-    IObservable(MessageBroker& broker) :
+
+    typedef NoPayloadMessage<MessageType_Timeout> TimeoutMessage;
+
+    IDelayedCallExecutor(MessageBroker& broker) :
       broker_(broker)
     {
     }
 
-    virtual ~IObservable();
-
-    MessageBroker& GetBroker() const
+    
+    virtual ~IDelayedCallExecutor()
     {
-      return broker_;
     }
 
-    // Takes ownsership
-    void RegisterObserverCallback(ICallable* callable);
-
-    void Unregister(IObserver* observer);
-
-    void EmitMessage(const IMessage& message);
-
-    // Takes ownsership
-    void RegisterForwarder(IMessageForwarder* forwarder);
+    
+    virtual void Schedule(MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
+                         unsigned int timeoutInMs = 1000) = 0;
   };
 }

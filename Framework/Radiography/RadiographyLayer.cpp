@@ -32,18 +32,41 @@ namespace OrthancStone
   }
 
 
+  RadiographyLayer::Geometry::Geometry() :
+    hasCrop_(false),
+    panX_(0),
+    panY_(0),
+    angle_(0),
+    resizeable_(false),
+    pixelSpacingX_(1),
+    pixelSpacingY_(1)
+  {
+
+  }
+
+  void RadiographyLayer::Geometry::GetCrop(unsigned int &x, unsigned int &y, unsigned int &width, unsigned int &height) const
+  {
+    if (!hasCrop_)
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);  // you should probably use RadiographyLayer::GetCrop() or at least call HasCrop() before
+
+    x = cropX_;
+    y = cropY_;
+    width = cropWidth_;
+    height = cropHeight_;
+  }
+
   void RadiographyLayer::UpdateTransform()
   {
-    transform_ = AffineTransform2D::CreateScaling(pixelSpacingX_, pixelSpacingY_);
+    transform_ = AffineTransform2D::CreateScaling(geometry_.GetPixelSpacingX(), geometry_.GetPixelSpacingY());
 
     double centerX, centerY;
     GetCenter(centerX, centerY);
 
     transform_ = AffineTransform2D::Combine(
-      AffineTransform2D::CreateOffset(panX_ + centerX, panY_ + centerY),
-      AffineTransform2D::CreateRotation(angle_),
-      AffineTransform2D::CreateOffset(-centerX, -centerY),
-      transform_);
+          AffineTransform2D::CreateOffset(geometry_.GetPanX() + centerX, geometry_.GetPanY() + centerY),
+          AffineTransform2D::CreateRotation(geometry_.GetAngle()),
+          AffineTransform2D::CreateOffset(-centerX, -centerY),
+          transform_);
 
     transformInverse_ = AffineTransform2D::Invert(transform_);
   }
@@ -73,28 +96,28 @@ namespace OrthancStone
 
     switch (corner)
     {
-      case Corner_TopLeft:
-        x = dx;
-        y = dy;
-        break;
+    case Corner_TopLeft:
+      x = dx;
+      y = dy;
+      break;
 
-      case Corner_TopRight:
-        x = dx + dwidth;
-        y = dy;
-        break;
+    case Corner_TopRight:
+      x = dx + dwidth;
+      y = dy;
+      break;
 
-      case Corner_BottomLeft:
-        x = dx;
-        y = dy + dheight;
-        break;
+    case Corner_BottomLeft:
+      x = dx;
+      y = dy + dheight;
+      break;
 
-      case Corner_BottomRight:
-        x = dx + dwidth;
-        y = dy + dheight;
-        break;
+    case Corner_BottomRight:
+      x = dx + dwidth;
+      y = dy + dheight;
+      break;
 
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
     transform_.Apply(x, y);
@@ -105,7 +128,7 @@ namespace OrthancStone
                                   double y) const
   {
     transformInverse_.Apply(x, y);
-        
+
     unsigned int cropX, cropY, cropWidth, cropHeight;
     GetCrop(cropX, cropY, cropWidth, cropHeight);
 
@@ -127,7 +150,7 @@ namespace OrthancStone
 
     cairo_t* cr = context.GetObject();
     cairo_set_line_width(cr, 2.0 / zoom);
-        
+
     double x, y;
     x = dx;
     y = dy;
@@ -163,17 +186,16 @@ namespace OrthancStone
     hasSize_(false),
     width_(0),
     height_(0),
-    hasCrop_(false),
-    pixelSpacingX_(1),
-    pixelSpacingY_(1),
-    panX_(0),
-    panY_(0),
-    angle_(0),
-    resizeable_(false)
+    prefferedPhotometricDisplayMode_(PhotometricDisplayMode_Default)
   {
     UpdateTransform();
   }
 
+  void RadiographyLayer::ResetCrop()
+  {
+    geometry_.ResetCrop();
+    UpdateTransform();
+  }
 
   void RadiographyLayer::SetCrop(unsigned int x,
                                  unsigned int y,
@@ -184,34 +206,36 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-        
+
     if (x + width > width_ ||
         y + height > height_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-        
-    hasCrop_ = true;
-    cropX_ = x;
-    cropY_ = y;
-    cropWidth_ = width;
-    cropHeight_ = height;
 
+    geometry_.SetCrop(x, y, width, height);
     UpdateTransform();
   }
 
-      
+  void RadiographyLayer::SetGeometry(const Geometry& geometry)
+  {
+    geometry_ = geometry;
+
+    if (hasSize_)
+    {
+      UpdateTransform();
+    }
+  }
+
+
   void RadiographyLayer::GetCrop(unsigned int& x,
                                  unsigned int& y,
                                  unsigned int& width,
                                  unsigned int& height) const
   {
-    if (hasCrop_)
+    if (GetGeometry().HasCrop())
     {
-      x = cropX_;
-      y = cropY_;
-      width = cropWidth_;
-      height = cropHeight_;
+      GetGeometry().GetCrop(x, y, width, height);
     }
     else 
     {
@@ -222,10 +246,10 @@ namespace OrthancStone
     }
   }
 
-      
+  
   void RadiographyLayer::SetAngle(double angle)
   {
-    angle_ = angle;
+    geometry_.SetAngle(angle);
     UpdateTransform();
   }
 
@@ -239,7 +263,7 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageSize);
     }
-        
+
     hasSize_ = true;
     width_ = width;
     height_ = height;
@@ -251,7 +275,7 @@ namespace OrthancStone
   Extent2D RadiographyLayer::GetExtent() const
   {
     Extent2D extent;
-       
+
     unsigned int x, y, width, height;
     GetCrop(x, y, width, height);
 
@@ -264,7 +288,7 @@ namespace OrthancStone
     AddToExtent(extent, dx + dwidth, dy);
     AddToExtent(extent, dx, dy + dheight);
     AddToExtent(extent, dx + dwidth, dy + dheight);
-        
+
     return extent;
   }
 
@@ -282,7 +306,7 @@ namespace OrthancStone
     else
     {
       transformInverse_.Apply(sceneX, sceneY);
-        
+
       int x = static_cast<int>(std::floor(sceneX));
       int y = static_cast<int>(std::floor(sceneY));
 
@@ -320,8 +344,7 @@ namespace OrthancStone
   void RadiographyLayer::SetPan(double x,
                                 double y)
   {
-    panX_ = x;
-    panY_ = y;
+    geometry_.SetPan(x, y);
     UpdateTransform();
   }
 
@@ -329,8 +352,7 @@ namespace OrthancStone
   void RadiographyLayer::SetPixelSpacing(double x,
                                          double y)
   {
-    pixelSpacingX_ = x;
-    pixelSpacingY_ = y;
+    geometry_.SetPixelSpacing(x, y);
     UpdateTransform();
   }
 
@@ -352,8 +374,8 @@ namespace OrthancStone
     GetCrop(cropX, cropY, cropWidth, cropHeight);
     GetCornerInternal(x, y, corner, cropX, cropY, cropWidth, cropHeight);
   }
-      
-      
+
+
   bool RadiographyLayer::LookupCorner(Corner& corner /* out */,
                                       double x,
                                       double y,
@@ -366,26 +388,26 @@ namespace OrthancStone
       Corner_BottomLeft,
       Corner_BottomRight
     };
-        
+
     unsigned int cropX, cropY, cropWidth, cropHeight;
     GetCrop(cropX, cropY, cropWidth, cropHeight);
 
     double threshold = Square(viewportDistance / zoom);
-        
+
     for (size_t i = 0; i < 4; i++)
     {
       double cx, cy;
       GetCornerInternal(cx, cy, CORNERS[i], cropX, cropY, cropWidth, cropHeight);
 
       double d = Square(cx - x) + Square(cy - y);
-        
+
       if (d <= threshold)
       {
         corner = CORNERS[i];
         return true;
       }
     }
-        
+
     return false;
   }
 }

@@ -22,6 +22,7 @@
 #pragma once
 
 #include "../Framework/Toolbox/IWebService.h"
+#include "../Framework/Toolbox/IDelayedCallExecutor.h"
 #include "../Framework/Toolbox/OrthancApiClient.h"
 #include "../Framework/Viewport/WidgetViewport.h"
 
@@ -41,6 +42,7 @@ namespace OrthancStone
   private:
     MessageBroker&                   broker_;
     IWebService*                     webService_;
+    IDelayedCallExecutor*            delayedCallExecutor_;
     std::auto_ptr<OrthancApiClient>  orthanc_;
     std::string                      orthancBaseUrl_;
 
@@ -49,7 +51,8 @@ namespace OrthancStone
   public:
     StoneApplicationContext(MessageBroker& broker) :
       broker_(broker),
-      webService_(NULL)
+      webService_(NULL),
+      delayedCallExecutor_(NULL)
     {
     }
 
@@ -74,5 +77,15 @@ namespace OrthancStone
     void SetWebService(IWebService& webService);
 
     void SetOrthancBaseUrl(const std::string& baseUrl);
+
+    void SetDelayedCallExecutor(IDelayedCallExecutor& delayedCallExecutor)
+    {
+      delayedCallExecutor_ = &delayedCallExecutor;
+    }
+
+    IDelayedCallExecutor& GetDelayedCallExecutor()
+    {
+      return *delayedCallExecutor_;
+    }
   };
 }

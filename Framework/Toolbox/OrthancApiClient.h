@@ -31,12 +31,12 @@
 namespace OrthancStone
 {
   class OrthancApiClient :
-    public IObservable,
-    public IObserver
+      public IObservable,
+      public IObserver
   {
   public:
     class JsonResponseReadyMessage :
-      public BaseMessage<MessageType_OrthancApi_GenericGetJson_Ready>
+        public BaseMessage<MessageType_OrthancApi_GenericGetJson_Ready>
     {
     private:
       const std::string&              uri_;
@@ -73,7 +73,7 @@ namespace OrthancStone
     
 
     class BinaryResponseReadyMessage :
-      public BaseMessage<MessageType_OrthancApi_GenericGetBinary_Ready>
+        public BaseMessage<MessageType_OrthancApi_GenericGetBinary_Ready>
     {
     private:
       const std::string&              uri_;
@@ -118,7 +118,7 @@ namespace OrthancStone
 
 
     class EmptyResponseReadyMessage :
-      public BaseMessage<MessageType_OrthancApi_GenericEmptyResponse_Ready>
+        public BaseMessage<MessageType_OrthancApi_GenericEmptyResponse_Ready>
     {
     private:
       const std::string&              uri_;
@@ -149,7 +149,7 @@ namespace OrthancStone
 
   private:
     class WebServicePayload;
-    
+
   protected:
     IWebService&  web_;
     std::string   baseUrl_;
@@ -197,6 +197,14 @@ namespace OrthancStone
                                  MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                                  Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);
 
+    // schedule a POST request and don't mind the response.
+    void PostJsonAsync(const std::string& uri,
+                       const Json::Value& data);
+
+    // schedule a POST request and don't mind the response.
+    void PostBinaryAsync(const std::string& uri,
+                         const std::string& body);
+
     // schedule a DELETE request expecting an empty response.
     void DeleteAsync(const std::string& uri,
                      MessageHandler<EmptyResponseReadyMessage>* successCallback,
@@ -206,5 +214,10 @@ namespace OrthancStone
     void NotifyHttpSuccess(const IWebService::HttpRequestSuccessMessage& message);
 
     void NotifyHttpError(const IWebService::HttpRequestErrorMessage& message);
+
+  private:
+    void HandleFromCache(const std::string& uri,
+                         const IWebService::HttpHeaders& headers,
+                         Orthanc::IDynamicObject* payload /* takes ownership */);
   };
 }

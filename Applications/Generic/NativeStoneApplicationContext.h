@@ -36,7 +36,7 @@ namespace OrthancStone
   private:
     static void UpdateThread(NativeStoneApplicationContext* that);
 
-    boost::mutex    globalMutex_;
+    boost::recursive_mutex    globalMutex_;
     WidgetViewport  centralViewport_;
     boost::thread   updateThread_;
     bool            stopped_;
@@ -46,8 +46,8 @@ namespace OrthancStone
     class GlobalMutexLocker: public boost::noncopyable
     {
     private:
-      NativeStoneApplicationContext&  that_;
-      boost::mutex::scoped_lock       lock_;
+      NativeStoneApplicationContext&        that_;
+      boost::recursive_mutex::scoped_lock   lock_;
       
     public:
       GlobalMutexLocker(NativeStoneApplicationContext& that) :

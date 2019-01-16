@@ -1,6 +1,7 @@
 #include "Defaults.h"
 
 #include "WasmWebService.h"
+#include "WasmDelayedCallExecutor.h"
 #include <Framework/dev.h>
 #include "Framework/Widgets/TestCairoWidget.h"
 #include <Framework/Viewport/WidgetViewport.h>
@@ -73,6 +74,7 @@ extern "C" {
     application.reset(CreateUserApplication(broker));
     applicationWasmAdapter.reset(CreateWasmApplicationAdapter(broker, application.get())); 
     WasmWebService::SetBroker(broker);
+    WasmDelayedCallExecutor::SetBroker(broker);
 
     startupParametersBuilder.Clear();
   }
@@ -96,6 +98,7 @@ extern "C" {
     context->SetOrthancBaseUrl(baseUri);
     printf("Base URL to Orthanc API: [%s]\n", baseUri);
     context->SetWebService(OrthancStone::WasmWebService::GetInstance());
+    context->SetDelayedCallExecutor(OrthancStone::WasmDelayedCallExecutor::GetInstance());
     application->Initialize(context.get(), statusBar_, parameters);
     application->InitializeWasm();
 

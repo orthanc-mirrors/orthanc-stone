@@ -1,6 +1,15 @@
 #!/bin/bash
+#
+# usage:
+# to build all targets:
+# ./build-wasm.sh
+#
+# to build a single target:
+# ./build-wasm.sh OrthancStoneSingleFrameEditor
 
 set -e
+
+target=${1:-all}
 
 currentDir=$(pwd)
 samplesRootDir=$(pwd)
@@ -10,7 +19,7 @@ cd $samplesRootDir/build-wasm
 
 source ~/Downloads/emsdk/emsdk_env.sh
 cmake -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DSTONE_SOURCES_DIR=$currentDir/../../../orthanc-stone -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT=$currentDir/../../../orthanc -DALLOW_DOWNLOADS=ON .. -DENABLE_WASM=ON
-make -j 5
+make -j 5 $target
 
 echo "-- building the web application -- "
 cd $currentDir

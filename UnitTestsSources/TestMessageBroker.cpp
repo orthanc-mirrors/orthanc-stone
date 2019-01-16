@@ -1,158 +1,416 @@
-///**
-// * Stone of Orthanc
-// * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
-// * Department, University Hospital of Liege, Belgium
-// * Copyright (C) 2017-2019 Osimis S.A., Belgium
-// *
-// * This program is free software: you can redistribute it and/or
-// * modify it under the terms of the GNU Affero General Public License
-// * as published by the Free Software Foundation, either version 3 of
-// * the License, or (at your option) any later version.
-// *
-// * This program is distributed in the hope that it will be useful, but
-// * WITHOUT ANY WARRANTY; without even the implied warranty of
-// * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// * Affero General Public License for more details.
-// *
-// * You should have received a copy of the GNU Affero General Public License
-// * along with this program. If not, see <http://www.gnu.org/licenses/>.
-// **/
+/**
+ * Stone of Orthanc
+ * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
+ * Department, University Hospital of Liege, Belgium
+ * Copyright (C) 2017-2019 Osimis S.A., Belgium
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ **/
 
 
-//#include "gtest/gtest.h"
+#include "gtest/gtest.h"
 
-//#include "../Framework/Messages/MessageBroker.h"
-//#include "../Framework/Messages/IMessage.h"
-//#include "../Framework/Messages/IObservable.h"
-//#include "../Framework/Messages/IObserver.h"
-//#include "../Framework/StoneEnumerations.h"
-
-
-//static int test1Counter = 0;
-//static int test2Counter = 0;
-//class MyFullObserver : public OrthancStone::IObserver
-//{
-
-//public:
-//  MyFullObserver(OrthancStone::MessageBroker& broker)
-//    : OrthancStone::IObserver(broker)
-//  {
-////    DeclareHandledMessage(OrthancStone::MessageType_Test1);
-////    DeclareIgnoredMessage(OrthancStone::MessageType_Test2);
-//  }
+#include "Framework/Messages/MessageBroker.h"
+#include "Framework/Messages/Promise.h"
+#include "Framework/Messages/IObservable.h"
+#include "Framework/Messages/IObserver.h"
+#include "Framework/Messages/MessageForwarder.h"
 
 
-//  void HandleMessage(OrthancStone::IObservable& from, const OrthancStone::IMessage& message) {
-//    switch (message.GetType())
-//    {
-//    case OrthancStone::MessageType_Test1:
-//      test1Counter++;
-//      break;
-//    case OrthancStone::MessageType_Test2:
-//      test2Counter++;
-//      break;
-//    default:
-//      throw OrthancStone::MessageNotDeclaredException(message.GetType());
-//    }
-//  }
+int testCounter = 0;
+namespace {
 
-//};
-
-//class MyPartialObserver : public OrthancStone::IObserver
-//{
-
-//public:
-//  MyPartialObserver(OrthancStone::MessageBroker& broker)
-//    : OrthancStone::IObserver(broker)
-//  {
-////    DeclareHandledMessage(OrthancStone::MessageType_Test1);
-//    // don't declare Test2 on purpose
-//  }
+  using namespace OrthancStone;
 
 
-//  void HandleMessage(OrthancStone::IObservable& from, const OrthancStone::IMessage& message) {
-//    switch (message.GetType())
-//    {
-//    case OrthancStone::MessageType_Test1:
-//      test1Counter++;
-//      break;
-//    case OrthancStone::MessageType_Test2:
-//      test2Counter++;
-//      break;
-//    default:
-//      throw OrthancStone::MessageNotDeclaredException(message.GetType());
-//    }
-//  }
+  enum CustomMessageType
+  {
+    CustomMessageType_First = MessageType_CustomMessage + 1,
 
-//};
+    CustomMessageType_Completed,
+    CustomMessageType_Increment
+  };
 
 
-//class MyObservable : public OrthancStone::IObservable
-//{
+  class MyObservable : public IObservable
+  {
+  public:
+    struct MyCustomMessage: public BaseMessage<CustomMessageType_Completed>
+    {
+      int payload_;
 
-//public:
-//  MyObservable(OrthancStone::MessageBroker& broker)
-//    : OrthancStone::IObservable(broker)
-//  {
-//    DeclareEmittableMessage(OrthancStone::MessageType_Test1);
-//    DeclareEmittableMessage(OrthancStone::MessageType_Test2);
-//  }
+      MyCustomMessage(int payload)
+        : BaseMessage(),
+          payload_(payload)
+      {}
+    };
 
-//};
+    MyObservable(MessageBroker& broker)
+      : IObservable(broker)
+    {}
+
+  };
+
+  class MyObserver : public IObserver
+  {
+  public:
+    MyObserver(MessageBroker& broker)
+      : IObserver(broker)
+    {}
+
+    void HandleCompletedMessage(const MyObservable::MyCustomMessage& message)
+    {
+      testCounter += message.payload_;
+    }
+
+  };
 
 
-//TEST(MessageBroker, NormalUsage)
-//{
-//  OrthancStone::MessageBroker broker;
-//  MyObservable observable(broker);
+  class MyIntermediate : public IObserver, public IObservable
+  {
+    IObservable& observedObject_;
+  public:
+    MyIntermediate(MessageBroker& broker, IObservable& observedObject)
+      : IObserver(broker),
+        IObservable(broker),
+        observedObject_(observedObject)
+    {
+      observedObject_.RegisterObserverCallback(new MessageForwarder<MyObservable::MyCustomMessage>(broker, *this));
+    }
+  };
 
-//  test1Counter = 0;
 
-//  // no observers have been registered -> nothing shall happen
-//  observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_Test1));
+  class MyPromiseSource : public IObservable
+  {
+    Promise* currentPromise_;
+  public:
+    struct MyPromiseMessage: public BaseMessage<MessageType_Test1>
+    {
+      int increment;
 
-//  ASSERT_EQ(0, test1Counter);
+      MyPromiseMessage(int increment)
+        : BaseMessage(),
+          increment(increment)
+      {}
+    };
 
-//  // register an observer, check it is called
-//  MyFullObserver fullObserver(broker);
-//  ASSERT_NO_THROW(observable.RegisterObserver(fullObserver));
+    MyPromiseSource(MessageBroker& broker)
+      : IObservable(broker),
+        currentPromise_(NULL)
+    {}
 
-//  observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_Test1));
+    Promise& StartSomethingAsync()
+    {
+      currentPromise_ = new Promise(GetBroker());
+      return *currentPromise_;
+    }
 
-//  ASSERT_EQ(1, test1Counter);
+    void CompleteSomethingAsyncWithSuccess(int payload)
+    {
+      currentPromise_->Success(MyPromiseMessage(payload));
+      delete currentPromise_;
+    }
 
-//  // register an invalid observer, check it raises an exception
-//  MyPartialObserver partialObserver(broker);
-//  ASSERT_THROW(observable.RegisterObserver(partialObserver), OrthancStone::MessageNotDeclaredException);
+    void CompleteSomethingAsyncWithFailure(int payload)
+    {
+      currentPromise_->Failure(MyPromiseMessage(payload));
+      delete currentPromise_;
+    }
+  };
 
-//  // check an exception is thrown when the observable emits an undeclared message
-//  ASSERT_THROW(observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_VolumeSlicer_GeometryReady)), OrthancStone::MessageNotDeclaredException);
 
-//  // unregister the observer, make sure nothing happens afterwards
-//  observable.UnregisterObserver(fullObserver);
-//  observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_Test1));
-//  ASSERT_EQ(1, test1Counter);
-//}
+  class MyPromiseTarget : public IObserver
+  {
+  public:
+    MyPromiseTarget(MessageBroker& broker)
+      : IObserver(broker)
+    {}
 
-//TEST(MessageBroker, DeleteObserverWhileRegistered)
-//{
-//  OrthancStone::MessageBroker broker;
-//  MyObservable observable(broker);
+    void IncrementCounter(const MyPromiseSource::MyPromiseMessage& args)
+    {
+      testCounter += args.increment;
+    }
 
-//  test1Counter = 0;
+    void DecrementCounter(const MyPromiseSource::MyPromiseMessage& args)
+    {
+      testCounter -= args.increment;
+    }
+  };
+}
 
-//  {
-//    // register an observer, check it is called
-//    MyFullObserver observer(broker);
-//    observable.RegisterObserver(observer);
 
-//    observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_Test1));
+TEST(MessageBroker, TestPermanentConnectionSimpleUseCase)
+{
+  MessageBroker broker;
+  MyObservable  observable(broker);
+  MyObserver    observer(broker);
 
-//    ASSERT_EQ(1, test1Counter);
-//  }
+  // create a permanent connection between an observable and an observer
+  observable.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
 
-//  // at this point, the observer has been deleted, the handle shall not be called again (and it shall not crash !)
-//  observable.EmitMessage(OrthancStone::IMessage(OrthancStone::MessageType_Test1));
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  ASSERT_EQ(12, testCounter);
 
-//  ASSERT_EQ(1, test1Counter);
-//}
+  // the connection is permanent; if we emit the same message again, the observer will be notified again
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  ASSERT_EQ(20, testCounter);
+
+  // Unregister the observer; make sure it's not called anymore
+  observable.Unregister(&observer);
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  ASSERT_EQ(0, testCounter);
+}
+
+TEST(MessageBroker, TestMessageForwarderSimpleUseCase)
+{
+  MessageBroker broker;
+  MyObservable  observable(broker);
+  MyIntermediate intermediate(broker, observable);
+  MyObserver    observer(broker);
+
+  // let the observer observers the intermediate that is actually forwarding the messages from the observable
+  intermediate.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
+
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  ASSERT_EQ(12, testCounter);
+
+  // the connection is permanent; if we emit the same message again, the observer will be notified again
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  ASSERT_EQ(20, testCounter);
+}
+
+TEST(MessageBroker, TestPermanentConnectionDeleteObserver)
+{
+  MessageBroker broker;
+  MyObservable  observable(broker);
+  MyObserver*   observer = new MyObserver(broker);
+
+  // create a permanent connection between an observable and an observer
+  observable.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(*observer, &MyObserver::HandleCompletedMessage));
+
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  ASSERT_EQ(12, testCounter);
+
+  // delete the observer and check that the callback is not called anymore
+  delete observer;
+
+  // the connection is permanent; if we emit the same message again, the observer will be notified again
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  ASSERT_EQ(0, testCounter);
+}
+
+TEST(MessageBroker, TestMessageForwarderDeleteIntermediate)
+{
+  MessageBroker broker;
+  MyObservable  observable(broker);
+  MyIntermediate* intermediate = new MyIntermediate(broker, observable);
+  MyObserver    observer(broker);
+
+  // let the observer observers the intermediate that is actually forwarding the messages from the observable
+  intermediate->RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
+
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  ASSERT_EQ(12, testCounter);
+
+  delete intermediate;
+
+  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  ASSERT_EQ(12, testCounter);
+}
+
+TEST(MessageBroker, TestCustomMessage)
+{
+  MessageBroker broker;
+  MyObservable  observable(broker);
+  MyIntermediate intermediate(broker, observable);
+  MyObserver    observer(broker);
+
+  // let the observer observers the intermediate that is actually forwarding the messages from the observable
+  intermediate.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
+
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  ASSERT_EQ(12, testCounter);
+
+  // the connection is permanent; if we emit the same message again, the observer will be notified again
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  ASSERT_EQ(20, testCounter);
+}
+
+
+TEST(MessageBroker, TestPromiseSuccessFailure)
+{
+  MessageBroker broker;
+  MyPromiseSource  source(broker);
+  MyPromiseTarget target(broker);
+
+  // test a successful promise
+  source.StartSomethingAsync()
+      .Then(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(target, &MyPromiseTarget::IncrementCounter))
+      .Else(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(target, &MyPromiseTarget::DecrementCounter));
+
+  testCounter = 0;
+  source.CompleteSomethingAsyncWithSuccess(10);
+  ASSERT_EQ(10, testCounter);
+
+  // test a failing promise
+  source.StartSomethingAsync()
+      .Then(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(target, &MyPromiseTarget::IncrementCounter))
+      .Else(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(target, &MyPromiseTarget::DecrementCounter));
+
+  testCounter = 0;
+  source.CompleteSomethingAsyncWithFailure(15);
+  ASSERT_EQ(-15, testCounter);
+}
+
+TEST(MessageBroker, TestPromiseDeleteTarget)
+{
+  MessageBroker broker;
+  MyPromiseSource source(broker);
+  MyPromiseTarget* target = new MyPromiseTarget(broker);
+
+  // create the promise
+  source.StartSomethingAsync()
+      .Then(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(*target, &MyPromiseTarget::IncrementCounter))
+      .Else(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(*target, &MyPromiseTarget::DecrementCounter));
+
+  // delete the promise target
+  delete target;
+
+  // trigger the promise, make sure it does not throw and does not call the callback
+  testCounter = 0;
+  source.CompleteSomethingAsyncWithSuccess(10);
+  ASSERT_EQ(0, testCounter);
+
+  // test a failing promise
+  source.StartSomethingAsync()
+      .Then(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(*target, &MyPromiseTarget::IncrementCounter))
+      .Else(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(*target, &MyPromiseTarget::DecrementCounter));
+
+  testCounter = 0;
+  source.CompleteSomethingAsyncWithFailure(15);
+  ASSERT_EQ(0, testCounter);
+}
+
+#if __cplusplus >= 201103L
+
+#include <functional>
+
+namespace OrthancStone {
+
+  template <typename TMessage>
+  class LambdaCallable : public MessageHandler<TMessage>
+  {
+  private:
+
+    IObserver&      observer_;
+    std::function<void (const TMessage&)> lambda_;
+
+  public:
+    LambdaCallable(IObserver& observer,
+                    std::function<void (const TMessage&)> lambdaFunction) :
+             observer_(observer),
+             lambda_(lambdaFunction)
+    {
+    }
+
+    virtual void Apply(const IMessage& message)
+    {
+      lambda_(dynamic_cast<const TMessage&>(message));
+    }
+
+    virtual MessageType GetMessageType() const
+    {
+      return static_cast<MessageType>(TMessage::Type);
+    }
+
+    virtual IObserver* GetObserver() const
+    {
+      return &observer_;
+    }
+  };
+
+
+}
+
+TEST(MessageBroker, TestLambdaSimpleUseCase)
+{
+  MessageBroker broker;
+  MyObservable  observable(broker);
+  MyObserver*   observer = new MyObserver(broker);
+
+  // create a permanent connection between an observable and an observer
+  observable.RegisterObserverCallback(new LambdaCallable<MyObservable::MyCustomMessage>(*observer, [&](const MyObservable::MyCustomMessage& message) {testCounter += 2 * message.payload_;}));
+
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  ASSERT_EQ(24, testCounter);
+
+  // delete the observer and check that the callback is not called anymore
+  delete observer;
+
+  // the connection is permanent; if we emit the same message again, the observer will be notified again
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  ASSERT_EQ(0, testCounter);
+}
+
+namespace {
+  class MyObserverWithLambda : public IObserver {
+  private:
+    int multiplier_;  // this is a private variable we want to access in a lambda
+
+  public:
+    MyObserverWithLambda(MessageBroker& broker, int multiplier, MyObservable& observable)
+      : IObserver(broker),
+        multiplier_(multiplier)
+    {
+      // register a callable to a lambda that access private members
+      observable.RegisterObserverCallback(new LambdaCallable<MyObservable::MyCustomMessage>(*this, [this](const MyObservable::MyCustomMessage& message) {
+        testCounter += multiplier_ * message.payload_;
+      }));
+
+    }
+  };
+}
+
+TEST(MessageBroker, TestLambdaCaptureThisAndAccessPrivateMembers)
+{
+  MessageBroker broker;
+  MyObservable  observable(broker);
+  MyObserverWithLambda*   observer = new MyObserverWithLambda(broker, 3, observable);
+
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  ASSERT_EQ(36, testCounter);
+
+  // delete the observer and check that the callback is not called anymore
+  delete observer;
+
+  // the connection is permanent; if we emit the same message again, the observer will be notified again
+  testCounter = 0;
+  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  ASSERT_EQ(0, testCounter);
+}
+
+#endif // C++ 11

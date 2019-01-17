@@ -78,7 +78,7 @@ extern "C" {
       OrthancStone::IWebService::HttpHeaders headers;
 
       // TODO - Parse "answerHeaders"
-      printf("TODO: parse headers [%s]\n", answerHeaders);
+      //printf("TODO: parse headers [%s]\n", answerHeaders);
       
       reinterpret_cast<OrthancStone::MessageHandler<OrthancStone::IWebService::HttpRequestSuccessMessage>*>(successCallable)->
         Apply(OrthancStone::IWebService::HttpRequestSuccessMessage(uri, body, bodySize, headers,

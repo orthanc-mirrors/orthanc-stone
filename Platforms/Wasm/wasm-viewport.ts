@@ -43,6 +43,11 @@ module Stone {
     private context_ : CanvasRenderingContext2D;
     private imageData_ : any = null;
     private renderingBuffer_ : any = null;
+    
+    private touchGestureInProgress_: boolean = false;
+    private touchCount_: number = 0;
+    private touchGestureLastCoordinates_: [number, number][] = []; // last x,y coordinates of each touch
+    
     private touchZoom_ : any = false;
     private touchTranslation_ : any = false;
 
@@ -187,7 +192,7 @@ module Stone {
       this.htmlCanvas_.addEventListener('mousedown', function(event) {
         var x = event.pageX - this.offsetLeft;
         var y = event.pageY - this.offsetTop;
-        that.ViewportMouseDown(that.pimpl_, event.button, x, y, 0 /* TODO */);    
+        that.ViewportMouseDown(that.pimpl_, event.button, x, y, 0 /* TODO detect modifier keys*/);    
       });
     
       this.htmlCanvas_.addEventListener('mousemove', function(event) {
@@ -235,13 +240,31 @@ module Stone {
         that.ResetTouch();
       });
     
-      this.htmlCanvas_.addEventListener('touchmove', function(event) {
+      this.htmlCanvas_.addEventListener('touchmove', function(event: TouchEvent) {
 
         // don't propagate events to the whole body (this could zoom the entire page instead of zooming the viewport)
         event.preventDefault();
         event.stopPropagation();
 
-        if (that.touchTranslation_.length == 2) {
+        // if (!that.touchGestureInProgress_) {
+        //   // starting a new gesture
+        //   that.touchCount_ = event.targetTouches.length;
+        //   for (var t = 0; t < event.targetTouches.length; t++) {
+        //     that.touchGestureLastCoordinates_.push([event.targetTouches[t].pageX, event.targetTouches[t].pageY]);
+        //   }
+        //   that.touchGestureInProgress_ = true;
+        // } else {
+        //   // continuing a gesture
+        //   // TODO: we shall probably forward all touches to the C++ code and let the "interactors/trackers" handle them
+
+        //   if (that.touchCount_ == 1) { // consider it's a left mouse drag
+
+        //   }
+        // }
+
+        // TODO: we shall probably forward all touches to the C++ code and let the "interactors/trackers" handle them
+
+        if (that.touchTranslation_.length == 2) { // 
           var t = that.GetTouchTranslation(event);
           that.ViewportMouseMove(that.pimpl_, t[0], t[1]);
         }
@@ -256,7 +279,7 @@ module Stone {
             // Exactly one finger inside the canvas => Setup a translation
             that.touchTranslation_ = that.GetTouchTranslation(event);
             that.ViewportMouseDown(that.pimpl_, 
-                                  1 /* middle button */,
+                                  0 /* left button */,
                                   that.touchTranslation_[0],
                                   that.touchTranslation_[1], 0);
           } else if (event.targetTouches.length == 2) {
@@ -280,6 +303,10 @@ module Stone {
 
     this.touchTranslation_ = false;
     this.touchZoom_ = false;
+
+    // this.touchGestureInProgress_ = false;
+    // this.touchCount_ = 0;
+    // this.touchGestureLastCoordinates_ = [];
   }
   
   public GetTouchTranslation(event) {

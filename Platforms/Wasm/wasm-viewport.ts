@@ -220,14 +220,27 @@ module Stone {
       });
 
       this.htmlCanvas_.addEventListener('touchstart', function(event) {
+        // don't propagate events to the whole body (this could zoom the entire page instead of zooming the viewport)
+        event.preventDefault();
+        event.stopPropagation();
+
         that.ResetTouch();
       });
     
       this.htmlCanvas_.addEventListener('touchend', function(event) {
+        // don't propagate events to the whole body (this could zoom the entire page instead of zooming the viewport)
+        event.preventDefault();
+        event.stopPropagation();
+
         that.ResetTouch();
       });
     
       this.htmlCanvas_.addEventListener('touchmove', function(event) {
+
+        // don't propagate events to the whole body (this could zoom the entire page instead of zooming the viewport)
+        event.preventDefault();
+        event.stopPropagation();
+
         if (that.touchTranslation_.length == 2) {
           var t = that.GetTouchTranslation(event);
           that.ViewportMouseMove(that.pimpl_, t[0], t[1]);

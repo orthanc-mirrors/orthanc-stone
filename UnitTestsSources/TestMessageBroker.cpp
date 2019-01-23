@@ -314,45 +314,6 @@ TEST(MessageBroker, TestPromiseDeleteTarget)
 
 #if __cplusplus >= 201103L
 
-#include <functional>
-
-namespace OrthancStone {
-
-  template <typename TMessage>
-  class LambdaCallable : public MessageHandler<TMessage>
-  {
-  private:
-
-    IObserver&      observer_;
-    std::function<void (const TMessage&)> lambda_;
-
-  public:
-    LambdaCallable(IObserver& observer,
-                    std::function<void (const TMessage&)> lambdaFunction) :
-             observer_(observer),
-             lambda_(lambdaFunction)
-    {
-    }
-
-    virtual void Apply(const IMessage& message)
-    {
-      lambda_(dynamic_cast<const TMessage&>(message));
-    }
-
-    virtual MessageType GetMessageType() const
-    {
-      return static_cast<MessageType>(TMessage::Type);
-    }
-
-    virtual IObserver* GetObserver() const
-    {
-      return &observer_;
-    }
-  };
-
-
-}
-
 TEST(MessageBroker, TestLambdaSimpleUseCase)
 {
   MessageBroker broker;

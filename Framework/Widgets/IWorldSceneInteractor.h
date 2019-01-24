@@ -46,7 +46,8 @@ namespace OrthancStone
                                                             int viewportY,
                                                             double x,
                                                             double y,
-                                                            IStatusBar* statusBar) = 0;
+                                                            IStatusBar* statusBar,
+                                                            const std::vector<Touch>& touches) = 0;
 
         virtual void MouseOver(CairoContext& context,
                                WorldSceneWidget& widget,

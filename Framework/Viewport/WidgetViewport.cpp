@@ -137,18 +137,36 @@ namespace OrthancStone
     return true;
   }
 
+  void WidgetViewport::TouchStart(const std::vector<Touch>& displayTouches)
+  {
+    MouseDown(MouseButton_Left, (int)displayTouches[0].x, (int)displayTouches[0].y, KeyboardModifiers_None, displayTouches); // one touch is equivalent to a mouse tracker without left button -> set the mouse coordinates to the first touch coordinates
+  }
+      
+  void WidgetViewport::TouchMove(const std::vector<Touch>& displayTouches)
+  {
+    MouseMove((int)displayTouches[0].x, (int)displayTouches[0].y, displayTouches); // one touch is equivalent to a mouse tracker without left button -> set the mouse coordinates to the first touch coordinates
+  }
+      
+  void WidgetViewport::TouchEnd(const std::vector<Touch>& displayTouches)
+  {
+    // note: TouchEnd is not triggered when a single touch gesture ends (it is only triggered when
+    // going from 2 touches to 1 touch, ...)
+    MouseUp();
+  }
 
   void WidgetViewport::MouseDown(MouseButton button,
                                  int x,
                                  int y,
-                                 KeyboardModifiers modifiers)
+                                 KeyboardModifiers modifiers,
+                                 const std::vector<Touch>& displayTouches
+                                 )
   {
     lastMouseX_ = x;
     lastMouseY_ = y;
 
     if (centralWidget_.get() != NULL)
     {
-      mouseTracker_.reset(centralWidget_->CreateMouseTracker(button, x, y, modifiers));
+      mouseTracker_.reset(centralWidget_->CreateMouseTracker(button, x, y, modifiers, displayTouches));
     }
     else
     {
@@ -171,7 +189,8 @@ namespace OrthancStone
 
 
   void WidgetViewport::MouseMove(int x, 
-                                 int y) 
+                                 int y,
+                                 const std::vector<Touch>& displayTouches)
   {
     if (centralWidget_.get() == NULL)
     {
@@ -185,7 +204,7 @@ namespace OrthancStone
     
     if (mouseTracker_.get() != NULL)
     {
-      mouseTracker_->MouseMove(x, y);
+      mouseTracker_->MouseMove(x, y, displayTouches);
       repaint = true;
     }
     else

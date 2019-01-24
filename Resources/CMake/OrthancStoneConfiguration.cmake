@@ -296,6 +296,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ViewportGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Viewport/IMouseTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IStatusBar.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IViewport.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/WidgetViewport.cpp
@@ -309,6 +310,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/IWorldSceneMouseTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/LayoutWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/PanMouseTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/PanZoomMouseTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/SliceViewerWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/TestCairoWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/TestWorldSceneWidget.cpp

@@ -163,7 +163,9 @@ namespace OrthancStone
   void RadiographyWindowingTracker::MouseMove(int displayX,
                                               int displayY,
                                               double sceneX,
-                                              double sceneY)
+                                              double sceneY,
+                                              const std::vector<Touch>& displayTouches,
+                                              const std::vector<Touch>& sceneTouches)
   {
     // This follows the behavior of the Osimis Web viewer:
     // https://bitbucket.org/osimis/osimis-webviewer-plugin/src/master/frontend/src/app/viewport/image-plugins/windowing-viewport-tool.class.js

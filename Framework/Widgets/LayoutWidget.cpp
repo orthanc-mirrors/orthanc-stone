@@ -68,9 +68,16 @@ namespace OrthancStone
     }
 
     virtual void MouseMove(int x, 
-                           int y)
+                           int y,
+                           const std::vector<Touch>& displayTouches)
     {
-      tracker_->MouseMove(x - left_, y - top_);
+      std::vector<Touch> relativeTouches;
+      for (size_t t = 0; t < displayTouches.size(); t++)
+      {
+        relativeTouches.push_back(Touch((int)displayTouches[t].x - left_, (int)displayTouches[t].y - top_));
+      }
+
+      tracker_->MouseMove(x - left_, y - top_, relativeTouches);
     }
   };
 
@@ -150,14 +157,16 @@ namespace OrthancStone
     IMouseTracker* CreateMouseTracker(MouseButton button,
                                       int x,
                                       int y,
-                                      KeyboardModifiers modifiers)
+                                      KeyboardModifiers modifiers,
+                                      const std::vector<Touch>& touches)
     {
       if (Contains(x, y))
       {
         IMouseTracker* tracker = widget_->CreateMouseTracker(button, 
                                                              x - left_, 
                                                              y - top_, 
-                                                             modifiers);
+                                                             modifiers,
+                                                             touches);
         if (tracker)
         {
           return new LayoutMouseTracker(tracker, left_, top_, width_, height_);
@@ -413,11 +422,12 @@ namespace OrthancStone
   IMouseTracker* LayoutWidget::CreateMouseTracker(MouseButton button,
                                                   int x,
                                                   int y,
-                                                  KeyboardModifiers modifiers)
+                                                  KeyboardModifiers modifiers,
+                                                  const std::vector<Touch>& touches)
   {
     for (size_t i = 0; i < children_.size(); i++)
     {
-      IMouseTracker* tracker = children_[i]->CreateMouseTracker(button, x, y, modifiers);
+      IMouseTracker* tracker = children_[i]->CreateMouseTracker(button, x, y, modifiers, touches);
       if (tracker != NULL)
       {
         return tracker;

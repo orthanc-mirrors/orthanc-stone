@@ -22,6 +22,7 @@
 #pragma once
 
 #include "../Viewport/CairoContext.h"
+#include "../Viewport/IMouseTracker.h" // only to get the "Touch" definition
 
 namespace OrthancStone
 {
@@ -46,6 +47,8 @@ namespace OrthancStone
     virtual void MouseMove(int displayX,
                            int displayY,
                            double sceneX,
-                           double sceneY) = 0;
+                           double sceneY,
+                           const std::vector<Touch>& displayTouches,
+                           const std::vector<Touch>& sceneTouches) = 0;
   };
 }

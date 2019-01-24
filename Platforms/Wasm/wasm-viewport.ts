@@ -60,6 +60,9 @@ module Stone {
     private ViewportMouseLeave : Function;
     private ViewportMouseWheel : Function;
     private ViewportKeyPressed : Function;
+    private ViewportTouchStart : Function;
+    private ViewportTouchMove : Function;
+    private ViewportTouchEnd : Function;
 
     private pimpl_ : any; // Private pointer to the underlying WebAssembly C++ object
 
@@ -86,6 +89,9 @@ module Stone {
       this.ViewportMouseLeave = this.module_.cwrap('ViewportMouseLeave', null, [ 'number' ]);
       this.ViewportMouseWheel = this.module_.cwrap('ViewportMouseWheel', null, [ 'number', 'number', 'number', 'number', 'number' ]);
       this.ViewportKeyPressed = this.module_.cwrap('ViewportKeyPressed', null, [ 'number', 'number', 'string', 'number', 'number' ]);
+      this.ViewportTouchStart = this.module_.cwrap('ViewportTouchStart', null, [ 'number', 'number', 'number', 'number', 'number', 'number', 'number' ]);
+      this.ViewportTouchMove = this.module_.cwrap('ViewportTouchMove', null, [ 'number', 'number', 'number', 'number', 'number', 'number', 'number' ]);
+      this.ViewportTouchEnd = this.module_.cwrap('ViewportTouchEnd', null, [ 'number', 'number', 'number', 'number', 'number', 'number', 'number' ]);
     }
 
     public GetCppViewport() : number {
@@ -192,7 +198,8 @@ module Stone {
       this.htmlCanvas_.addEventListener('mousedown', function(event) {
         var x = event.pageX - this.offsetLeft;
         var y = event.pageY - this.offsetTop;
-        that.ViewportMouseDown(that.pimpl_, event.button, x, y, 0 /* TODO detect modifier keys*/);    
+
+       that.ViewportMouseDown(that.pimpl_, event.button, x, y, 0 /* TODO detect modifier keys*/);    
       });
     
       this.htmlCanvas_.addEventListener('mousemove', function(event) {
@@ -224,12 +231,32 @@ module Stone {
         event.preventDefault();
       });
 
-      this.htmlCanvas_.addEventListener('touchstart', function(event) {
+      this.htmlCanvas_.addEventListener('touchstart', function(event: TouchEvent) {
         // don't propagate events to the whole body (this could zoom the entire page instead of zooming the viewport)
         event.preventDefault();
         event.stopPropagation();
 
-        that.ResetTouch();
+        // TODO: find a way to pass the coordinates as an array between JS and C++
+        var x0 = 0;
+        var y0 = 0;
+        var x1 = 0;
+        var y1 = 0;
+        var x2 = 0;
+        var y2 = 0;
+        if (event.targetTouches.length > 0) {
+          x0 = event.targetTouches[0].pageX;
+          y0 = event.targetTouches[0].pageY;
+        }
+        if (event.targetTouches.length > 1) {
+          x1 = event.targetTouches[1].pageX;
+          y1 = event.targetTouches[1].pageY;
+        }
+        if (event.targetTouches.length > 2) {
+          x2 = event.targetTouches[2].pageX;
+          y2 = event.targetTouches[2].pageY;
+        }
+
+        that.ViewportTouchStart(that.pimpl_, event.targetTouches.length, x0, y0, x1, y1, x2, y2);
       });
     
       this.htmlCanvas_.addEventListener('touchend', function(event) {
@@ -237,7 +264,27 @@ module Stone {
         event.preventDefault();
         event.stopPropagation();
 
-        that.ResetTouch();
+        // TODO: find a way to pass the coordinates as an array between JS and C++
+        var x0 = 0;
+        var y0 = 0;
+        var x1 = 0;
+        var y1 = 0;
+        var x2 = 0;
+        var y2 = 0;
+        if (event.targetTouches.length > 0) {
+          x0 = event.targetTouches[0].pageX;
+          y0 = event.targetTouches[0].pageY;
+        }
+        if (event.targetTouches.length > 1) {
+          x1 = event.targetTouches[1].pageX;
+          y1 = event.targetTouches[1].pageY;
+        }
+        if (event.targetTouches.length > 2) {
+          x2 = event.targetTouches[2].pageX;
+          y2 = event.targetTouches[2].pageY;
+        }
+
+        that.ViewportTouchEnd(that.pimpl_, event.targetTouches.length, x0, y0, x1, y1, x2, y2);
       });
     
       this.htmlCanvas_.addEventListener('touchmove', function(event: TouchEvent) {
@@ -245,6 +292,30 @@ module Stone {
         // don't propagate events to the whole body (this could zoom the entire page instead of zooming the viewport)
         event.preventDefault();
         event.stopPropagation();
+
+
+        // TODO: find a way to pass the coordinates as an array between JS and C++
+        var x0 = 0;
+        var y0 = 0;
+        var x1 = 0;
+        var y1 = 0;
+        var x2 = 0;
+        var y2 = 0;
+        if (event.targetTouches.length > 0) {
+          x0 = event.targetTouches[0].pageX;
+          y0 = event.targetTouches[0].pageY;
+        }
+        if (event.targetTouches.length > 1) {
+          x1 = event.targetTouches[1].pageX;
+          y1 = event.targetTouches[1].pageY;
+        }
+        if (event.targetTouches.length > 2) {
+          x2 = event.targetTouches[2].pageX;
+          y2 = event.targetTouches[2].pageY;
+        }
+
+        that.ViewportTouchMove(that.pimpl_, event.targetTouches.length, x0, y0, x1, y1, x2, y2);
+        return;
 
         // if (!that.touchGestureInProgress_) {
         //   // starting a new gesture

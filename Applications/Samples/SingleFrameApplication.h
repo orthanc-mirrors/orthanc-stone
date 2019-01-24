@@ -60,7 +60,8 @@ namespace OrthancStone
                                                             int viewportY,
                                                             double x,
                                                             double y,
-                                                            IStatusBar* statusBar)
+                                                            IStatusBar* statusBar,
+                                                            const std::vector<Touch>& displayTouches)
         {
           return NULL;
         }

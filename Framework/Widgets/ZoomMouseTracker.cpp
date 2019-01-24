@@ -61,7 +61,9 @@ namespace OrthancStone
   void ZoomMouseTracker::MouseMove(int displayX,
                                    int displayY,
                                    double x,
-                                   double y)
+                                   double y,
+                                   const std::vector<Touch>& displayTouches,
+                                   const std::vector<Touch>& sceneTouches)
   {
     static const double MIN_ZOOM = -4;
     static const double MAX_ZOOM = 4;

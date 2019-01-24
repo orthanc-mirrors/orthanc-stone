@@ -23,6 +23,7 @@
 
 #include "PanMouseTracker.h"
 #include "ZoomMouseTracker.h"
+#include "PanZoomMouseTracker.h"
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
@@ -72,11 +73,20 @@ namespace OrthancStone
     }
 
     virtual void MouseMove(int x,
-                           int y)
+                           int y,
+                           const std::vector<Touch>& displayTouches)
     {
       double sceneX, sceneY;
       view_.MapPixelCenterToScene(sceneX, sceneY, x, y);
-      tracker_->MouseMove(x, y, sceneX, sceneY);
+
+      std::vector<Touch> sceneTouches;
+      for (size_t t = 0; t < displayTouches.size(); t++)
+      {
+        double sx, sy;
+        view_.MapPixelCenterToScene(sx, sy, (int)displayTouches[t].x, (int)displayTouches[t].y);
+        sceneTouches.push_back(Touch(sx, sy));
+      }
+      tracker_->MouseMove(x, y, sceneX, sceneY, displayTouches, sceneTouches);
     }
   };
 
@@ -145,7 +155,8 @@ namespace OrthancStone
   IMouseTracker* WorldSceneWidget::CreateMouseTracker(MouseButton button,
                                                       int x,
                                                       int y,
-                                                      KeyboardModifiers modifiers)
+                                                      KeyboardModifiers modifiers,
+                                                      const std::vector<Touch>& touches)
   {
     double sceneX, sceneY;
     view_.MapPixelCenterToScene(sceneX, sceneY, x, y);
@@ -155,7 +166,7 @@ namespace OrthancStone
 
     if (interactor_)
     {
-      tracker.reset(interactor_->CreateMouseTracker(*this, view_, button, modifiers, x, y, sceneX, sceneY, GetStatusBar()));
+      tracker.reset(interactor_->CreateMouseTracker(*this, view_, button, modifiers, x, y, sceneX, sceneY, GetStatusBar(), touches));
     }
     
     if (tracker.get() != NULL)
@@ -164,17 +175,26 @@ namespace OrthancStone
     }
     else if (hasDefaultMouseEvents_)
     {
-      switch (button)
+      printf("has default mouse events\n");
+      if (touches.size() == 2)
       {
-        case MouseButton_Middle:
-          return new SceneMouseTracker(view_, new PanMouseTracker(*this, x, y));
+        printf("2 touches !\n");
+        return new SceneMouseTracker(view_, new PanZoomMouseTracker(*this, touches));
+      }
+      else
+      {
+        switch (button)
+        {
+          case MouseButton_Middle:
+            return new SceneMouseTracker(view_, new PanMouseTracker(*this, x, y));
 
-        case MouseButton_Right:
-          return new SceneMouseTracker(view_, new ZoomMouseTracker(*this, x, y));
+          case MouseButton_Right:
+            return new SceneMouseTracker(view_, new ZoomMouseTracker(*this, x, y));
 
-        default:
-          return NULL;
-      }      
+          default:
+            return NULL;
+        }
+      }
     }
     else
     {

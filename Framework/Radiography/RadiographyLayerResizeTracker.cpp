@@ -159,7 +159,9 @@ namespace OrthancStone
   void RadiographyLayerResizeTracker::MouseMove(int displayX,
                                                 int displayY,
                                                 double sceneX,
-                                                double sceneY)
+                                                double sceneY,
+                                                const std::vector<Touch>& displayTouches,
+                                                const std::vector<Touch>& sceneTouches)
   {
     static const double ROUND_SCALING = 0.1;
         

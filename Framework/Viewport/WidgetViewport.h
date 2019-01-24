@@ -59,16 +59,24 @@ namespace OrthancStone
     virtual void MouseDown(MouseButton button,
                            int x,
                            int y,
-                           KeyboardModifiers modifiers);
+                           KeyboardModifiers modifiers,
+                           const std::vector<Touch>& displayTouches);
 
     virtual void MouseUp();
 
     virtual void MouseMove(int x, 
-                           int y);
+                           int y,
+                           const std::vector<Touch>& displayTouches);
 
     virtual void MouseEnter();
 
     virtual void MouseLeave();
+
+    virtual void TouchStart(const std::vector<Touch>& touches);
+    
+    virtual void TouchMove(const std::vector<Touch>& touches);
+    
+    virtual void TouchEnd(const std::vector<Touch>& touches);
 
     virtual void MouseWheel(MouseWheelDirection direction,
                             int x,

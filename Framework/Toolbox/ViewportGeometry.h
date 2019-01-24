@@ -24,6 +24,7 @@
 #include "../Viewport/CairoContext.h"
 #include "Extent2D.h"
 #include "LinearAlgebra.h"
+#include "../Viewport/IMouseTracker.h"  // to include "Touch" definition
 
 namespace OrthancStone
 {
@@ -68,6 +69,9 @@ namespace OrthancStone
                                double& sceneY /* out */,
                                int x,
                                int y) const;
+
+    void MapPixelCenterToScene(std::vector<Touch>& sceneTouches /* out */,
+                               const std::vector<Touch>& displayTouches) const;
 
     void MapSceneToDisplay(int& displayX /* out */,
                            int& displayY /* out */,

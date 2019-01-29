@@ -20,19 +20,33 @@ if (ENABLE_WASM)
   #####################################################################
 
   set(WASM_FLAGS "-s WASM=1")
+  set(WASM_FLAGS "${WASM_FLAGS} -s STRICT=1") # drops support for all deprecated build options
+  set(WASM_FLAGS "${WASM_FLAGS} -s FILESYSTEM=0") # remove File system emulation
+  set(WASM_FLAGS "${WASM_FLAGS} -s DISABLE_EXCEPTION_CATCHING=0") # actually enable exception catching 
+  set(WASM_FLAGS "${WASM_FLAGS} -s ERROR_ON_MISSING_LIBRARIES=1")
+
+  if (CMAKE_BUILD_TYPE MATCHES DEBUG)
+    set(WASM_FLAGS "${WASM_FLAGS} -g4") # generate debug information
+    set(WASM_FLAGS "${WASM_FLAGS} -s ASSERTIONS=2") # more runtime checks
+  else()
+    set(WASM_FLAGS "${WASM_FLAGS} -Os") # optimize for web (speed and size)
+  endif()
+
   set(WASM_MODULE_NAME "StoneFrameworkModule" CACHE STRING "Name of the WebAssembly module")
+
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WASM_FLAGS}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WASM_FLAGS}")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Applications/Samples/samples-library.js --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/WasmWebService.js --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/WasmDelayedCallExecutor.js --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/default-library.js  -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'")
 
-  # Handling of memory
-  #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1")  # Resize
-  #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s TOTAL_MEMORY=536870912")  # 512MB
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s EXPORT_NAME='\"${WASM_MODULE_NAME}\"' -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_MEMORY=536870912 -s TOTAL_STACK=128000000")  # 512MB + resize
-  #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_MEMORY=1073741824")  # 1GB + resize
-
-  # To debug exceptions
-  #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s DEMANGLE_SUPPORT=1 -s ASSERTIONS=2")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${WASM_FLAGS}")  # not always clear which flags are for the compiler and which one are for the linker -> pass them all to the linker too
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Applications/Samples/samples-library.js")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/WasmWebService.js")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/WasmDelayedCallExecutor.js")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/default-library.js")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s EXPORT_NAME='\"${WASM_MODULE_NAME}\"'")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s TOTAL_MEMORY=536870912")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s TOTAL_STACK=128000000")
 
   add_definitions(-DORTHANC_ENABLE_WASM=1)
   set(ORTHANC_SANDBOXED ON)

@@ -346,15 +346,13 @@ extern "C" {
   {
     static std::string output; // we don't want the string to be deallocated when we return to JS code so we always use the same string (this is fine since JS is single-thread)
 
-    printf("SendMessageToStoneApplication\n");
-    printf("%s", message);
+    printf("SendMessageToStoneApplication (JS -> C++): %s\n", message);
 
     if (applicationWasmAdapter.get() != NULL) {
-      printf("sending message to C++\n");
       applicationWasmAdapter->HandleMessageFromWeb(output, std::string(message));
       return output.c_str();
     }
-    printf("This stone application does not have a Web Adapter");
+    printf("This stone application does not have a Web Adapter\n");
     return NULL;
   }
 

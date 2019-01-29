@@ -34,13 +34,12 @@ namespace OrthancStone
 
     if (commandJson["commandType"].isString() && commandJson["commandType"].asString() == "generic-no-arg-command")
     {
-        printf("creating a simple command\n");
-        return new GenericNoArgCommand(commandJson["command"].asString().c_str());
+      return new GenericNoArgCommand(commandJson["command"].asString().c_str());
     }
     else if (commandJson["commandType"].isString() && commandJson["commandType"].asString() == "generic-one-string-arg-command")
     {
-        printf("creating a simple command\n");
-        return new GenericNoArgCommand(commandJson["command"].asString().c_str());
+      // TODO: we should create a command with a string arg !
+      return new GenericNoArgCommand(commandJson["command"].asString().c_str());
     }
 
     return NULL;

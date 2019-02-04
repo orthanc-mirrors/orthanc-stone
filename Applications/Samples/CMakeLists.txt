@@ -21,7 +21,7 @@ if (ENABLE_WASM)
 
   set(WASM_FLAGS "-s WASM=1")
   set(WASM_FLAGS "${WASM_FLAGS} -s STRICT=1") # drops support for all deprecated build options
-  set(WASM_FLAGS "${WASM_FLAGS} -s FILESYSTEM=0") # remove File system emulation
+  set(WASM_FLAGS "${WASM_FLAGS} -s FILESYSTEM=1") # if we don't include it, gen_uuid.c fails to build because srand, getpid(), ... are not defined
   set(WASM_FLAGS "${WASM_FLAGS} -s DISABLE_EXCEPTION_CATCHING=0") # actually enable exception catching 
   set(WASM_FLAGS "${WASM_FLAGS} -s ERROR_ON_MISSING_LIBRARIES=1")
 

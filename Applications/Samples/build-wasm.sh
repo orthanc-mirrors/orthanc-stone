@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 # usage:
-# to build all targets:
+# to build all targets in Debug:
 # ./build-wasm.sh
 #
-# to build a single target:
-# ./build-wasm.sh OrthancStoneSingleFrameEditor
+# to build a single target in release:
+# ./build-wasm.sh OrthancStoneSingleFrameEditor Release
 
 set -e
 

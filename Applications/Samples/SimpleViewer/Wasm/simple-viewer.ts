@@ -1,6 +1,6 @@
-///<reference path='../../../../Platforms/Wasm/wasm-application-runner.ts'/>
+import wasmApplicationRunner = require('../../../../Platforms/Wasm/wasm-application-runner');
 
-InitializeWasmApplication("OrthancStoneSimpleViewer", "/orthanc");
+wasmApplicationRunner.InitializeWasmApplication("OrthancStoneSimpleViewer", "/orthanc");
 
 function SelectTool(toolName: string) {
   var command = {
@@ -9,8 +9,7 @@ function SelectTool(toolName: string) {
     args: {
     }                                                                                                                       
   };
-  SendMessageToStoneApplication(JSON.stringify(command));
-
+  wasmApplicationRunner.SendMessageToStoneApplication(JSON.stringify(command));
 }
 
 function PerformAction(actionName: string) {
@@ -20,7 +19,7 @@ function PerformAction(actionName: string) {
     args: {
     }
   };
-  SendMessageToStoneApplication(JSON.stringify(command));
+  wasmApplicationRunner.SendMessageToStoneApplication(JSON.stringify(command));
 }
 
 class SimpleViewerUI {
@@ -31,9 +30,7 @@ class SimpleViewerUI {
   public constructor() {
     // install "SelectTool" handlers
     document.querySelectorAll("[tool-selector]").forEach((e) => {
-      console.log(e);
       (e as HTMLButtonElement).addEventListener("click", () => {
-        console.log(e);
         SelectTool(e.attributes["tool-selector"].value);
       });
     });

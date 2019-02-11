@@ -1,3 +1,4 @@
-///<reference path='../../../Platforms/Wasm/wasm-application-runner.ts'/>
+import wasmApplicationRunner = require('../../../Platforms/Wasm/wasm-application-runner');
 
-InitializeWasmApplication("OrthancStoneSingleFrame", "/orthanc");
+wasmApplicationRunner.InitializeWasmApplication("OrthancStoneSingleFrame", "/orthanc");
+

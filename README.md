@@ -80,6 +80,8 @@ The emscripten SDK is required for the WASM build. Please install it
 in `~/apps/emsdk`. If you wish to use it in another way, please edit
 the `build-wasm.sh` file.
 
+ninja (`sudo apt-get install -y ninja-build`) is used instead of make, for performance reasons.
+
 Installation and usage ----------------------
 
 Build instructions are similar to that of Orthanc:

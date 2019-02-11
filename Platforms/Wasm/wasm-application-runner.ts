@@ -1,11 +1,12 @@
-///<reference path='stone-framework-loader.ts'/>
-///<reference path='wasm-viewport.ts'/>
+import Stone = require('./stone-framework-loader');
+import StoneViewport = require('./wasm-viewport');
 
 if (!('WebAssembly' in window)) {
   alert('Sorry, your browser does not support WebAssembly :(');
 }
 
-declare var StoneFrameworkModule : Stone.Framework;
+//var StoneFrameworkModule : Stone.Framework = (<any>window).StoneFrameworkModule;
+//export declare var StoneFrameworkModule : Stone.Framework;
 
 // global functions
 var WasmWebService_NotifyError: Function = null;
@@ -15,11 +16,10 @@ var WasmDelayedCallExecutor_ExecuteCallback: Function = null;
 var WasmDoAnimation: Function = null;
 var SetStartupParameter: Function = null;
 var CreateWasmApplication: Function = null;
-var CreateCppViewport: Function = null;
+export var CreateCppViewport: Function = null;
 var ReleaseCppViewport: Function = null;
 var StartWasmApplication: Function = null;
-var SendMessageToStoneApplication: Function = null;
-
+export var SendMessageToStoneApplication: Function = null;
 
 function DoAnimationThread() {
   if (WasmDoAnimation != null) {
@@ -28,7 +28,6 @@ function DoAnimationThread() {
 
   setTimeout(DoAnimationThread, 100);  // Update the viewport content every 100ms if need be
 }
-
 
 function GetUriParameters(): Map<string, string> {
   var parameters = window.location.search.substr(1);
@@ -72,12 +71,12 @@ function _InitializeWasmApplication(orthancBaseUrl: string): void {
   StartWasmApplication(orthancBaseUrl);
 
   // trigger a first resize of the canvas that has just been initialized
-  Stone.WasmViewport.ResizeAll();
+  StoneViewport.WasmViewport.ResizeAll();
 
   DoAnimationThread();
 }
 
-function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: string) {
+export function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: string) {
   
   Stone.Framework.Configure(wasmModuleName);
 
@@ -87,19 +86,20 @@ function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: strin
 
     console.log("Connecting C++ methods to JS methods");
     
-    SetStartupParameter = StoneFrameworkModule.cwrap('SetStartupParameter', null, ['string', 'string']);
-    CreateWasmApplication = StoneFrameworkModule.cwrap('CreateWasmApplication', null, ['number']);
-    CreateCppViewport = StoneFrameworkModule.cwrap('CreateCppViewport', 'number', []);
-    ReleaseCppViewport = StoneFrameworkModule.cwrap('ReleaseCppViewport', null, ['number']);
-    StartWasmApplication = StoneFrameworkModule.cwrap('StartWasmApplication', null, ['string']);
+    SetStartupParameter = (<any> window).StoneFrameworkModule.cwrap('SetStartupParameter', null, ['string', 'string']);
+    CreateWasmApplication = (<any> window).StoneFrameworkModule.cwrap('CreateWasmApplication', null, ['number']);
+    CreateCppViewport = (<any> window).StoneFrameworkModule.cwrap('CreateCppViewport', 'number', []);
+    ReleaseCppViewport = (<any> window).StoneFrameworkModule.cwrap('ReleaseCppViewport', null, ['number']);
+    StartWasmApplication = (<any> window).StoneFrameworkModule.cwrap('StartWasmApplication', null, ['string']);
 
-    WasmWebService_NotifyCachedSuccess = StoneFrameworkModule.cwrap('WasmWebService_NotifyCachedSuccess', null, ['number']);
-    WasmWebService_NotifySuccess = StoneFrameworkModule.cwrap('WasmWebService_NotifySuccess', null, ['number', 'string', 'array', 'number', 'number']);
-    WasmWebService_NotifyError = StoneFrameworkModule.cwrap('WasmWebService_NotifyError', null, ['number', 'string', 'number']);
-    WasmDelayedCallExecutor_ExecuteCallback = StoneFrameworkModule.cwrap('WasmDelayedCallExecutor_ExecuteCallback', null, ['number']);
-    WasmDoAnimation = StoneFrameworkModule.cwrap('WasmDoAnimation', null, []);
+    (<any> window).WasmWebService_NotifyCachedSuccess = (<any> window).StoneFrameworkModule.cwrap('WasmWebService_NotifyCachedSuccess', null, ['number']);
+    (<any> window).WasmWebService_NotifySuccess = (<any> window).StoneFrameworkModule.cwrap('WasmWebService_NotifySuccess', null, ['number', 'string', 'array', 'number', 'number']);
+    (<any> window).WasmWebService_NotifyError = (<any> window).StoneFrameworkModule.cwrap('WasmWebService_NotifyError', null, ['number', 'string', 'number']);
+    (<any> window).WasmDelayedCallExecutor_ExecuteCallback = (<any> window).StoneFrameworkModule.cwrap('WasmDelayedCallExecutor_ExecuteCallback', null, ['number']);
+    // no need to put this into the globals for it's only used in this very module
+    WasmDoAnimation = (<any> window).StoneFrameworkModule.cwrap('WasmDoAnimation', null, []);
 
-    SendMessageToStoneApplication = StoneFrameworkModule.cwrap('SendMessageToStoneApplication', 'string', ['string']);
+    SendMessageToStoneApplication = (<any> window).StoneFrameworkModule.cwrap('SendMessageToStoneApplication', 'string', ['string']);
 
     console.log("Connecting C++ methods to JS methods - done");
 
@@ -111,3 +111,9 @@ function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl: strin
     _InitializeWasmApplication(orthancBaseUrl);
   });
 }
+
+
+// exports.InitializeWasmApplication = InitializeWasmApplication;
+
+
+

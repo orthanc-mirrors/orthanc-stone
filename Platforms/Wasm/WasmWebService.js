@@ -24,10 +24,10 @@ mergeInto(LibraryManager.library, {
           // TODO - Is "new Uint8Array()" necessary? This copies the
           // answer to the WebAssembly stack, hence necessitating
           // increasing the TOTAL_STACK parameter of Emscripten
-          WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
+          window.WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
                                        this.response.byteLength, headers, payload);
         } else {
-          WasmWebService_NotifyError(callableFailure, url_, payload);
+          window.WasmWebService_NotifyError(callableFailure, url_, payload);
         }
       }
     }

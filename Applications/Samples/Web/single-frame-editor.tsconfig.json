@@ -1,7 +1,6 @@
 {
     "extends" : "./tsconfig-samples",
     "compilerOptions": {
-        "outFile": "../build-web/app-single-frame-editor.js"
     },
     "include" : [
         "single-frame-editor.ts"

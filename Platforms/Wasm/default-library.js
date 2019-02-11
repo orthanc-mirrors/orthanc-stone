@@ -2,10 +2,10 @@
 
 mergeInto(LibraryManager.library, {
   ScheduleWebViewportRedrawFromCpp: function(cppViewportHandle) {
-    ScheduleWebViewportRedraw(cppViewportHandle);
+    window.ScheduleWebViewportRedraw(cppViewportHandle);
   },
   CreateWasmViewportFromCpp: function(htmlCanvasId) {
-    return CreateWasmViewport(htmlCanvasId);
+    return window.CreateWasmViewport(htmlCanvasId);
   },
   // each time the StoneApplication updates its status, it may signal it through this method. i.e, to change the status of a button in the web interface
   UpdateStoneApplicationStatusFromCpp: function(statusUpdateMessage) {
@@ -13,4 +13,3 @@ mergeInto(LibraryManager.library, {
     UpdateWebApplication(statusUpdateMessage_);
   }
 });
-  

@@ -24,6 +24,7 @@
 #include "RadiographyAlphaLayer.h"
 #include "RadiographyDicomLayer.h"
 #include "RadiographyTextLayer.h"
+#include "RadiographyMaskLayer.h"
 #include "../Toolbox/DicomFrameConverter.h"
 
 #include <Core/Images/Image.h>
@@ -291,6 +292,22 @@ namespace OrthancStone
 
     return LoadAlphaBitmap(block.release(), geometry);
   }
+
+  RadiographyLayer& RadiographyScene::LoadMask(const std::vector<MaskPoint>& corners,
+                                               const RadiographyDicomLayer& dicomLayer,
+                                               float foreground,
+                                               RadiographyLayer::Geometry* geometry)
+  {
+    std::auto_ptr<RadiographyMaskLayer>  mask(new RadiographyMaskLayer(*this, dicomLayer, foreground));
+    mask->SetCorners(corners);
+    if (geometry != NULL)
+    {
+      mask->SetGeometry(*geometry);
+    }
+
+    return RegisterLayer(mask.release());
+  }
+
 
   RadiographyLayer& RadiographyScene::LoadAlphaBitmap(Orthanc::ImageAccessor* bitmap, RadiographyLayer::Geometry *geometry)
   {

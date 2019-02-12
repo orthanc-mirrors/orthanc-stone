@@ -276,5 +276,7 @@ namespace OrthancStone
 
     virtual bool GetRange(float& minValue,
                           float& maxValue) const = 0;
-  }; 
+
+    friend class RadiographyMaskLayer; // because it needs to GetTransform on the dicomLayer it relates to
+  };
 }

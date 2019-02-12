@@ -27,6 +27,9 @@
 
 namespace OrthancStone
 {
+  struct MaskPoint;
+  class RadiographyDicomLayer;
+
   class RadiographyScene :
       public IObserver,
       public IObservable
@@ -149,6 +152,11 @@ namespace OrthancStone
     RadiographyLayer& LoadTestBlock(unsigned int width,
                                     unsigned int height,
                                     RadiographyLayer::Geometry* geometry);
+
+    RadiographyLayer& LoadMask(const std::vector<MaskPoint>& corners,
+                               const RadiographyDicomLayer& dicomLayer,
+                               float foreground,
+                               RadiographyLayer::Geometry* geometry);
 
     RadiographyLayer& LoadAlphaBitmap(Orthanc::ImageAccessor* bitmap,  // takes ownership
                                       RadiographyLayer::Geometry* geometry);

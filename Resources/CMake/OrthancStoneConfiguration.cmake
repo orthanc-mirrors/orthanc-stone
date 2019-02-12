@@ -261,6 +261,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMoveTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerResizeTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerRotateTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyMaskLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyScene.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneReader.cpp

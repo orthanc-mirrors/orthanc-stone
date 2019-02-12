@@ -33,6 +33,7 @@
 #include "../../Framework/Radiography/RadiographyWindowingTracker.h"
 #include "../../Framework/Radiography/RadiographySceneWriter.h"
 #include "../../Framework/Radiography/RadiographySceneReader.h"
+#include "../../Framework/Radiography/RadiographyMaskLayer.h"
 
 #include <Core/HttpClient.h>
 #include <Core/Images/FontRegistry.h>
@@ -470,7 +471,7 @@ namespace OrthancStone
         
         scene_.reset(new RadiographyScene(GetBroker()));
         //scene_->LoadDicomFrame(instance, frame, false); //.SetPan(200, 0);
-        scene_->LoadDicomFrame(context->GetOrthancApiClient(), "61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false, NULL);
+        RadiographyLayer& dicomLayer = scene_->LoadDicomFrame(context->GetOrthancApiClient(), "61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false, NULL);
 
 #if !defined(ORTHANC_ENABLE_WASM) || ORTHANC_ENABLE_WASM != 1
         Orthanc::HttpClient::ConfigureSsl(true, "/etc/ssl/certs/ca-certificates.crt");
@@ -478,6 +479,12 @@ namespace OrthancStone
         
         //scene_->LoadDicomWebFrame(context->GetWebService());
         
+        std::vector<MaskPoint> mask;
+        mask.push_back(MaskPoint(100, 100));
+        mask.push_back(MaskPoint(100, 1000));
+        mask.push_back(MaskPoint(1000, 1000));
+        scene_->LoadMask(mask, dynamic_cast<RadiographyDicomLayer&>(dicomLayer), 128.0f, NULL);
+
         {
           RadiographyLayer& layer = scene_->LoadText(fontRegistry_.GetFont(0), "Hello\nworld", NULL);
           layer.SetResizeable(true);

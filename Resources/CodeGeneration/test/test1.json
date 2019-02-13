@@ -1,0 +1,34 @@
+{
+  "root_name":"test1",
+  "types": [
+    {
+      "name":"B",
+      "kind":"struct",
+      "fields": [
+        {
+          "name":"someAs",
+          "type":"vector<A>"
+        },
+        {
+          "name":"someInts",
+          "type":"vector<int32>"
+        }
+      ]
+    },
+    {
+      "name":"A",
+      "kind":"struct",
+      "fields": [
+        {
+          "name":"someStrings",
+          "type":"vector<string>"
+        },
+        {
+          "name":"someInts2",
+          "type":"vector<int32>"
+        }
+      ]
+    }
+  ]
+}
+

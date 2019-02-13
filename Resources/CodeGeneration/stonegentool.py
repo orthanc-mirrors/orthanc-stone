@@ -1,5 +1,7 @@
 from typing import List,Dict
-import sys, json
+import sys
+import json
+import re
 
 def LoadSchema(file_path : str):
     with open(file_path, 'r') as fp:
@@ -93,71 +95,145 @@ def CreateAndCacheTypeObject(allTypes : Dict[str,Type], typeDict : Dict) -> None
   """This does not set the dependentTypes field"""
   typeName : str = typeDict['name']
   if allTypes.has_key(typeName):
-    raise Exception(f'Type {name} is defined more than once!')
+    raise Exception(f'Type {typeName} is defined more than once!')
   else:
     typeObject = Type(typeName, typeDict['kind'])
     allTypes[typeName] = typeObject
 
 
-def ParseTemplateType(typeName) -> (bool,str,str):
+
+def EatToken(sentence : str) -> (str,str):
+  """splits "A,B,C" into "A" and "B,C" where A, B and C are type names
+  (including templates) like "int32", "TotoTutu", or 
+  "map<map<int32,vector<string>>,map<string,int32>>" """
+  token = []
+  if sentence.count('<') != sentence.count('>'):
+    raise Exception(f"Error in the partial template type list {sentence}. The number of < and > do not match!")
+
+  # the template level we're currently in
+  templateLevel = 0
+  for i in len(sentence):
+    if (sentence[i] == ",") and (templateLevel == 0):
+      return (sentence[0:i],sentence[i+1:])
+    elif (sentence[i] == "<"):
+      templateLevel += 1
+    elif (sentence[i] == ">"):
+      templateLevel -= 1
+  return (sentence,"")
+
+def SplitListOfTypes(typeName : str) -> List[str]:
+  """Splits something like
+  vector<string>,int32,map<string,map<string,int32>> 
+  in:
+  - vector<string>
+  - int32
+    map<string,map<string,int32>>
+  
+  This is not possible with a regex so 
+  """
+  stillStuffToEat : bool = True
+  tokenList = []
+  restOfString = typeName
+  while stillStuffToEat:
+    firstToken,restOfString = EatToken(restOfString)
+    tokenList.append(firstToken)
+  return tokenList
+
+templateRegex = re.compile(r"([a-zA-Z0-9_]*[a-zA-Z0-9_]*)<([a-zA-Z0-9_,:<>]+)>")
+def ParseTemplateType(typeName) -> (bool,str,List[str]):
   """ If the type is a template like "SOMETHING<SOME<THING,EL<SE>>>", then 
   it returns (true,"SOMETHING","SOME<THING,EL<SE>>")
   otherwise it returns (false,"","")"""
   
-
-
-
-def GetCachedTypeObject(allTypes : Dict[str,Type], typeName : str) -> Type:
-  if allTypes.has_key('typeName')
-    return allTypes['typeName']
-  # if we reach this point, it means the type is NOT a struct or an enum.
-  # it is another (non directly user-defined) type that we must parse and create
-  # let's do it
-
-
-def ComputeTopTypeTree(allTypes : Dict[str,Type], typeDict : Dict) -> None:
-  """Now that all the types we might be referring to are known (either structs
-  and enums already created OR primitive types OR collections), we can create
-  the whole dependency tree"""
-  
-  if typeDict['kind'] == 'struct':
-    typeName : str = typeDict['name']
-    typeObject : Type = allTypes[typeName]
-    typeFields : List[Dict] = typeDict['fields']
-    dependentTypes = []
-    for typeField : Dict in typeFields:
-      typeFieldObject = CreateTypeObject(allTypes, typeField['name'])
-      dependentTypes.append(typeFieldObject)
-  elif typeDict['kind'] == 'enum':
-    # the enum objects are already created and have no dependencies
+  # let's remove all whitespace from the type
+  # split without argument uses any whitespace string as separator
+  # (space, tab, newline, return or formfeed)
+  typeName = "".join(typeName.split())
+  matches = templateRegex.match(typeName)
+  if matches == None:
+    return (False,"","")
   else:
-    raise Exception("Internal error: ComputeTopTypeTree() can only be called on the defined types (enums and structs)")
+    # we need to split with the commas that are outside of the defined types
+    # simply splitting at commas won't work
+    listOfDependentTypes = SplitListOfTypes(matches.group(2))
+    return (True,matches.group(1),listOfDependentTypes)
 
+def GetPrimitiveType(typeName : str) -> Type:
+  if allTypes.has_key(typeName):
+    return allTypes[typeName]
+  else:
+    primitiveTypes = ['int32', 'float32', 'float64', 'string']
+    if not (typeName in primitiveTypes):
+      raise Exception(f"Type {typeName} is unknown.")
+    typeObject = Type(typeName,'primitive')
+    # there are no dependent types in a primitive type --> Type object
+    # constrution is finished at this point
+    allTypes[typeName] = typeObject
+    return typeObject
+
+def ProcessTypeTree(
+     ancestors : List[str]
+   , generationQueue : List[str]
+   , structTypes : Dict[str,Dict], typeName : str) -> None:
+  if typeName in ancestors:
+    raise Exception(f"Cyclic dependency chain found: the last of {ancestors} depends on {typeName} that is already in the list.")
   
+  if not (typeName in generationQueue):
+    # if we reach this point, it means the type is NOT a struct or an enum.
+    # it is another (non directly user-defined) type that we must parse and create
+    # let's do it
+    dependentTypes = []
+    (isTemplate,templateType,parameters) = ParseTemplateType(typeName)
+    if isTemplate:
+      dependentTypeNames : List[str] = SplitListOfTypes(parameters)
+      for dependentTypeName in dependentTypeNames:
+        # childAncestors = ancestors.copy()  NO TEMPLATE ANCESTOR!!!
+        # childAncestors.append(typeName)
+        ProcessTypeTree(ancestors, processedTypes, structTypes, dependentTypeName)
+    else:
+      if structTypes.has_key(typeName):
+        ProcesStructType_DepthFirstRecursive(generationQueue, structTypes,
+        structTypes[typeName])
 
+def ProcesStructType_DepthFirstRecursive(
+    generationQueue : List[str], structTypes : Dict[str,Dict]
+  , typeDict : Dict) -> None:
+    # let's generate the code according to the 
+    typeName : str = typeDict['name']
+    if typeDict['kind'] != 'struct':
+      raise Exception(f"Unexpected kind '{typeDict['kind']}' for " +
+      "type '{typeName}'")
+    typeFields : List[Dict] = typeDict['fields']
+    for typeField in typeFields:
+      ancestors = [typeName]
+      ProcessTypeTree(ancestors, generationQueue
+        , structTypes, typeField['name'])
+    # now we're pretty sure our dependencies have been processed,
+    # we can start marking our code for generation
+    generationQueue.append(typeName)
 
 def ProcessSchema(schema : dict) -> None:
   CheckSchemaSchema(schema)
   rootName : str = schema['root_name']
   definedTypes : list = schema['types']
 
-  # gather defined types
-  allTypes : Dict[str,Type] = {}
+  # mark already processed types
+  processedTypes : set[str] = set()
 
-  # gather all defined types (first pass) : structs and enums
-  # we do not parse the subtypes now as to not mandate
-  # a particular declaration order
+  # the struct names are mapped to their JSON dictionary
+  structTypes : Dict[str,Dict] = {}
+
+  # the order here is the generation order
   for definedType in definedTypes:
-    CreateAndCacheTypeObject(allTypes,definedType)
+    if definedType['kind'] == 'enum':
+      ProcessEnumerationType(processedTypes, definedType);
 
-  # now we have objects for all the defined types
-  # let's build the whole type dependency tree
+  # the order here is NOT the generation order: the types
+  # will be processed according to their dependency graph
   for definedType in definedTypes:
-    ComputeTypeTree(allTypes,definedType)
-
-
-
-
+    if definedType['kind'] == 'struct':
+      structTypes[definedType['name']] = definedType
+      ProcesStructType_DepthFirstRecursive(processedTypes,structTypes,definedType)
 
 if __name__ == '__main__':
   import argparse

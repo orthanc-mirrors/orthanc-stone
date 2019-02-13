@@ -252,15 +252,10 @@ namespace OrthancStone
     unsigned int top;
     unsigned int bottom;
 
-//    ComputeMaskExtent(left, right, top, bottom, corners_);
+    ComputeMaskExtent(left, right, top, bottom, corners_);
 
-    left = 0;
-    right = 2500;
-    top = 0;
-    bottom = 2500;
     // first fill the complete image
     Orthanc::ImageProcessing::Set(*mask_, OUT_MASK_VALUE);
-
 
     {
       // from http://alienryderflex.com/polygon_fill/
@@ -279,8 +274,8 @@ namespace OrthancStone
 
         for (i = 0; i < (int)corners_.size(); i++)
         {
-          if ((int)corners_[i].y < pixelY && (int)corners_[j].y >=  pixelY
-          ||  (int)corners_[j].y < pixelY && (int)corners_[i].y >= pixelY)
+          if ((int)corners_[i].y <= pixelY && (int)corners_[j].y >=  pixelY
+          ||  (int)corners_[j].y <= pixelY && (int)corners_[i].y >= pixelY)
           {
             nodeX[nodes++]= (int)((double)corners_[i].x + ((double)pixelY - (double)corners_[i].y)/((double)corners_[j].y - (double)corners_[i].y) *((double)corners_[j].x - (double)corners_[i].x));
           }
@@ -289,11 +284,15 @@ namespace OrthancStone
 
         //  Sort the nodes, via a simple “Bubble” sort.
         i=0;
-        while (i<nodes-1)
+        while (i < nodes-1)
         {
-          if (nodeX[i]>nodeX[i+1])
+          if (nodeX[i] > nodeX[i+1])
           {
-            swap=nodeX[i]; nodeX[i]=nodeX[i+1]; nodeX[i+1]=swap; if (i) i--;
+            swap = nodeX[i];
+            nodeX[i] = nodeX[i+1];
+            nodeX[i+1] = swap;
+            if (i)
+              i--;
           }
           else
           {
@@ -307,13 +306,13 @@ namespace OrthancStone
         {
           if   (nodeX[i  ]>=(int)right)
             break;
-          if   (nodeX[i+1]> (int)left)
+          if   (nodeX[i+1]>= (int)left)
           {
             if (nodeX[i  ]< (int)left )
               nodeX[i  ]=(int)left ;
             if (nodeX[i+1]> (int)right)
               nodeX[i+1]=(int)right;
-            for (pixelX=nodeX[i]; pixelX<nodeX[i+1]; pixelX++)
+            for (pixelX = nodeX[i]; pixelX <= nodeX[i+1]; pixelX++)
             {
               *(row + pixelX) = IN_MASK_VALUE;
             }

@@ -29,6 +29,18 @@
 
 namespace OrthancStone
 {
+  const unsigned char IN_MASK_VALUE = 0x00;
+  const unsigned char OUT_MASK_VALUE = 0xFF;
+
+  const AffineTransform2D& RadiographyMaskLayer::GetTransform() const
+  {
+    return dicomLayer_.GetTransform();
+  }
+
+  const AffineTransform2D& RadiographyMaskLayer::GetTransformInverse() const
+  {
+    return dicomLayer_.GetTransformInverse();
+  }
 
   void ComputeMaskExtent(unsigned int& left, unsigned int& right, unsigned int& top, unsigned int& bottom, const std::vector<MaskPoint>& corners)
   {
@@ -66,18 +78,6 @@ namespace OrthancStone
 
       DrawMask();
 
-//      for (unsigned int i = 0; i < 100; i++)
-//      {
-//        for (unsigned int j = 0; j < 50; j++)
-//        {
-//          if ((i + j) % 2 == 1)
-//          {
-//            Orthanc::ImageAccessor region;
-//            mask_->GetRegion(region, i* 20, j * 20, 20, 20);
-//            Orthanc::ImageProcessing::Set(region, 255);
-//          }
-//        }
-//      }
       invalidated_ = false;
     }
 
@@ -112,7 +112,7 @@ namespace OrthancStone
 
         for (unsigned int x = 0; x < width; x++, p++, q++)
         {
-          if (*p == 0)
+          if (*p == OUT_MASK_VALUE)
             *q = foreground_;
           // else keep the underlying pixel value
         }
@@ -214,6 +214,36 @@ namespace OrthancStone
       return count&1;  // Same as (count%2 == 1)
   }
 
+  void RadiographyMaskLayer::DrawLine(const MaskPoint& start, const MaskPoint& end) const
+  {
+    int dx = (int)(end.x) - (int)(start.x);
+    int dy = (int)(end.y) - (int)(start.y);
+
+    if (std::abs(dx) > std::abs(dy))
+    { // the line is closer to horizontal
+
+      int incx = dx / std::abs(dx);
+      double incy = (double)(dy)/(double)(dx);
+      double y = (double)(start.y);
+      for (int x = (int)(start.x); x != (int)(end.x); x += incx, y += incy)
+      {
+        unsigned char* p = reinterpret_cast<unsigned char*>(mask_->GetRow((int)(y + 0.5))) + x;
+        *p = IN_MASK_VALUE;
+      }
+    }
+    else
+    { // the line is closer to vertical
+      int incy = dy / std::abs(dy);
+      double incx = (double)(dx)/(double)(dy);
+      double x = (double)(start.x);
+      for (int y = (int)(start.y); y != (int)(end.y); y += incy, x += incx)
+      {
+        unsigned char* p = reinterpret_cast<unsigned char*>(mask_->GetRow(y)) + (int)(x + 0.5);
+        *p = IN_MASK_VALUE;
+      }
+    }
+  }
+
 
   void RadiographyMaskLayer::DrawMask() const
   {
@@ -222,26 +252,114 @@ namespace OrthancStone
     unsigned int top;
     unsigned int bottom;
 
-    ComputeMaskExtent(left, right, top, bottom, corners_);
+//    ComputeMaskExtent(left, right, top, bottom, corners_);
 
-    Orthanc::ImageProcessing::Set(*mask_, 0);
+    left = 0;
+    right = 2500;
+    top = 0;
+    bottom = 2500;
+    // first fill the complete image
+    Orthanc::ImageProcessing::Set(*mask_, OUT_MASK_VALUE);
 
-    MaskPoint p(left, top);
-    for (p.y = top; p.y <= bottom; p.y++)
+
     {
-      unsigned char* q = reinterpret_cast<unsigned char*>(mask_->GetRow(p.y));
-      for (p.x = left; p.x <= right; p.x++, q++)
+      // from http://alienryderflex.com/polygon_fill/
+      std::auto_ptr<int> raiiNodeX(new int(corners_.size()));
+
+      std::vector<int> nodeX;
+      nodeX.resize(corners_.size());
+      int  nodes, pixelX, pixelY, i, j, swap ;
+
+      //  Loop through the rows of the image.
+      for (pixelY = (int)top; pixelY < (int)bottom; pixelY++)
       {
-        if (isInside(corners_, p))
+        //  Build a list of nodes.
+        nodes = 0;
+        j = (int)corners_.size() - 1;
+
+        for (i = 0; i < (int)corners_.size(); i++)
         {
-          *q = 255;
+          if ((int)corners_[i].y < pixelY && (int)corners_[j].y >=  pixelY
+          ||  (int)corners_[j].y < pixelY && (int)corners_[i].y >= pixelY)
+          {
+            nodeX[nodes++]= (int)((double)corners_[i].x + ((double)pixelY - (double)corners_[i].y)/((double)corners_[j].y - (double)corners_[i].y) *((double)corners_[j].x - (double)corners_[i].x));
+          }
+          j=i;
+        }
+
+        //  Sort the nodes, via a simple “Bubble” sort.
+        i=0;
+        while (i<nodes-1)
+        {
+          if (nodeX[i]>nodeX[i+1])
+          {
+            swap=nodeX[i]; nodeX[i]=nodeX[i+1]; nodeX[i+1]=swap; if (i) i--;
+          }
+          else
+          {
+            i++;
+          }
+        }
+
+        unsigned char* row = reinterpret_cast<unsigned char*>(mask_->GetRow(pixelY));
+        //  Fill the pixels between node pairs.
+        for (i=0; i<nodes; i+=2)
+        {
+          if   (nodeX[i  ]>=(int)right)
+            break;
+          if   (nodeX[i+1]> (int)left)
+          {
+            if (nodeX[i  ]< (int)left )
+              nodeX[i  ]=(int)left ;
+            if (nodeX[i+1]> (int)right)
+              nodeX[i+1]=(int)right;
+            for (pixelX=nodeX[i]; pixelX<nodeX[i+1]; pixelX++)
+            {
+              *(row + pixelX) = IN_MASK_VALUE;
+            }
+          }
         }
       }
     }
 
-//    Orthanc::ImageAccessor region;
-//    mask_->GetRegion(region, 100, 100, 1000, 1000);
-//    Orthanc::ImageProcessing::Set(region, 255);
+//    // draw lines
+//    for (size_t i = 1; i < corners_.size(); i++)
+//    {
+//      DrawLine(corners_[i-1], corners_[i]);
+//    }
+//    DrawLine(corners_[corners_.size()-1], corners_[0]);
+
+//    // fill between lines
+//    MaskPoint p(left, top);
+//    for (p.y = top; p.y <= bottom; p.y++)
+//    {
+//      unsigned char* q = reinterpret_cast<unsigned char*>(mask_->GetRow(p.y)) + left;
+//      unsigned char previousPixelValue1 = OUT_MASK_VALUE;
+//      unsigned char previousPixelValue2 = OUT_MASK_VALUE;
+//      for (p.x = left; p.x <= right; p.x++, q++)
+//      {
+//        if (*p == OUT_MASK_VALUE && previousPixelValue1 == IN_MASK_VALUE && previousPixelValue2 == OUT_MASK_VALUE) // we just passed over a single one pixel line => start filling
+//        {
+
+//          *q = IN_MASK_VALUE;
+//        }
+//      }
+//    }
+
+
+//    MaskPoint p(left, top);
+//    for (p.y = top; p.y <= bottom; p.y++)
+//    {
+//      unsigned char* q = reinterpret_cast<unsigned char*>(mask_->GetRow(p.y)) + left;
+//      for (p.x = left; p.x <= right; p.x++, q++)
+//      {
+//        if (isInside(corners_, p))
+//        {
+//          *q = IN_MASK_VALUE;
+//        }
+//      }
+//    }
+
   }
 
 }

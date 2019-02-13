@@ -76,58 +76,14 @@ namespace OrthancStone
                                      double x,
                                      double y) const
   {
-    transform_.Apply(x, y);
+    GetTransform().Apply(x, y);
     extent.AddPoint(x, y);
   }
-
-
-  void RadiographyLayer::GetCornerInternal(double& x,
-                                           double& y,
-                                           Corner corner,
-                                           unsigned int cropX,
-                                           unsigned int cropY,
-                                           unsigned int cropWidth,
-                                           unsigned int cropHeight) const
-  {
-    double dx = static_cast<double>(cropX);
-    double dy = static_cast<double>(cropY);
-    double dwidth = static_cast<double>(cropWidth);
-    double dheight = static_cast<double>(cropHeight);
-
-    switch (corner)
-    {
-    case Corner_TopLeft:
-      x = dx;
-      y = dy;
-      break;
-
-    case Corner_TopRight:
-      x = dx + dwidth;
-      y = dy;
-      break;
-
-    case Corner_BottomLeft:
-      x = dx;
-      y = dy + dheight;
-      break;
-
-    case Corner_BottomRight:
-      x = dx + dwidth;
-      y = dy + dheight;
-      break;
-
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-
-    transform_.Apply(x, y);
-  }
-
 
   bool RadiographyLayer::Contains(double x,
                                   double y) const
   {
-    transformInverse_.Apply(x, y);
+    GetTransformInverse().Apply(x, y);
 
     unsigned int cropX, cropY, cropWidth, cropHeight;
     GetCrop(cropX, cropY, cropWidth, cropHeight);
@@ -140,43 +96,23 @@ namespace OrthancStone
   void RadiographyLayer::DrawBorders(CairoContext& context,
                                      double zoom)
   {
-    unsigned int cx, cy, width, height;
-    GetCrop(cx, cy, width, height);
-
-    double dx = static_cast<double>(cx);
-    double dy = static_cast<double>(cy);
-    double dwidth = static_cast<double>(width);
-    double dheight = static_cast<double>(height);
+    if (GetControlPointCount() < 3 )
+      return;
 
     cairo_t* cr = context.GetObject();
     cairo_set_line_width(cr, 2.0 / zoom);
 
-    double x, y;
-    x = dx;
-    y = dy;
-    transform_.Apply(x, y);
-    cairo_move_to(cr, x, y);
+    ControlPoint cp;
+    GetControlPoint(cp, 0);
+    cairo_move_to(cr, cp.x, cp.y);
 
-    x = dx + dwidth;
-    y = dy;
-    transform_.Apply(x, y);
-    cairo_line_to(cr, x, y);
+    for (size_t i = 0; i < GetControlPointCount(); i++)
+    {
+      GetControlPoint(cp, i);
+      cairo_line_to(cr, cp.x, cp.y);
+    }
 
-    x = dx + dwidth;
-    y = dy + dheight;
-    transform_.Apply(x, y);
-    cairo_line_to(cr, x, y);
-
-    x = dx;
-    y = dy + dheight;
-    transform_.Apply(x, y);
-    cairo_line_to(cr, x, y);
-
-    x = dx;
-    y = dy;
-    transform_.Apply(x, y);
-    cairo_line_to(cr, x, y);
-
+    cairo_close_path(cr);
     cairo_stroke(cr);
   }
 
@@ -237,7 +173,7 @@ namespace OrthancStone
     {
       GetGeometry().GetCrop(x, y, width, height);
     }
-    else 
+    else
     {
       x = 0;
       y = 0;
@@ -305,7 +241,7 @@ namespace OrthancStone
     }
     else
     {
-      transformInverse_.Apply(sceneX, sceneY);
+      GetTransformInverse().Apply(sceneX, sceneY);
 
       int x = static_cast<int>(std::floor(sceneX));
       int y = static_cast<int>(std::floor(sceneY));
@@ -362,48 +298,71 @@ namespace OrthancStone
   {
     centerX = static_cast<double>(width_) / 2.0;
     centerY = static_cast<double>(height_) / 2.0;
-    transform_.Apply(centerX, centerY);
+    GetTransform().Apply(centerX, centerY);
   }
 
 
-  void RadiographyLayer::GetCorner(double& x /* out */,
-                                   double& y /* out */,
-                                   Corner corner) const
+
+  size_t RadiographyLayer::GetControlPointCount() const {return 4;}
+
+  void RadiographyLayer::GetControlPointInternal(ControlPoint& controlPoint,
+                                                 size_t index) const
   {
     unsigned int cropX, cropY, cropWidth, cropHeight;
     GetCrop(cropX, cropY, cropWidth, cropHeight);
-    GetCornerInternal(x, y, corner, cropX, cropY, cropWidth, cropHeight);
+
+    switch (index)
+    {
+    case ControlPoint_TopLeftCorner:
+      controlPoint = ControlPoint(cropX, cropY, ControlPoint_TopLeftCorner);
+      break;
+
+    case ControlPoint_TopRightCorner:
+      controlPoint = ControlPoint(cropX + cropWidth, cropY, ControlPoint_TopRightCorner);
+      break;
+
+    case ControlPoint_BottomLeftCorner:
+      controlPoint = ControlPoint(cropX, cropY + cropHeight, ControlPoint_BottomLeftCorner);
+      break;
+
+    case ControlPoint_BottomRightCorner:
+      controlPoint = ControlPoint(cropX + cropWidth, cropY + cropHeight, ControlPoint_BottomRightCorner);
+      break;
+
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
   }
 
 
-  bool RadiographyLayer::LookupCorner(Corner& corner /* out */,
-                                      double x,
-                                      double y,
-                                      double zoom,
-                                      double viewportDistance) const
+
+  void RadiographyLayer::GetControlPoint(ControlPoint& controlPoint /* out */,
+                                         size_t index) const
   {
-    static const Corner CORNERS[] = {
-      Corner_TopLeft,
-      Corner_TopRight,
-      Corner_BottomLeft,
-      Corner_BottomRight
-    };
+    GetControlPointInternal(controlPoint, index);
+    GetTransform().Apply(controlPoint.x, controlPoint.y);
+  }
 
-    unsigned int cropX, cropY, cropWidth, cropHeight;
-    GetCrop(cropX, cropY, cropWidth, cropHeight);
 
+  bool RadiographyLayer::LookupControlPoint(ControlPoint& controlPoint /* out */,
+                                            double x,
+                                            double y,
+                                            double zoom,
+                                            double viewportDistance) const
+  {
     double threshold = Square(viewportDistance / zoom);
 
-    for (size_t i = 0; i < 4; i++)
+    for (size_t i = 0; i < GetControlPointCount(); i++)
     {
-      double cx, cy;
-      GetCornerInternal(cx, cy, CORNERS[i], cropX, cropY, cropWidth, cropHeight);
+      ControlPoint cp;
+      GetControlPoint(cp, i);
 
-      double d = Square(cx - x) + Square(cy - y);
+      double d = Square(cp.x - x) + Square(cp.y - y);
 
       if (d <= threshold)
       {
-        corner = CORNERS[i];
+        controlPoint = cp;
         return true;
       }
     }

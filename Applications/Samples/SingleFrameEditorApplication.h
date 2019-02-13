@@ -61,6 +61,7 @@ namespace OrthancStone
         Tool_Rotate,
         Tool_Crop,
         Tool_Resize,
+        Tool_Mask,
         Tool_Windowing
       };
 
@@ -68,6 +69,7 @@ namespace OrthancStone
       StoneApplicationContext*  context_;
       UndoRedoStack             undoRedoStack_;
       Tool                      tool_;
+      RadiographyMaskLayer*     maskLayer_;
 
 
       static double GetHandleSize()
@@ -80,7 +82,8 @@ namespace OrthancStone
       RadiographyEditorInteractor(MessageBroker& broker) :
         IObserver(broker),
         context_(NULL),
-        tool_(Tool_Move)
+        tool_(Tool_Move),
+        maskLayer_(NULL)
       {
       }
 
@@ -89,6 +92,10 @@ namespace OrthancStone
         context_ = &context;
       }
 
+      void SetMaskLayer(RadiographyMaskLayer* maskLayer)
+      {
+        maskLayer_ = maskLayer;
+      }
       virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& worldWidget,
                                                           const ViewportGeometry& view,
                                                           MouseButton button,
@@ -127,23 +134,32 @@ namespace OrthancStone
 
             return NULL;
           }
+          else if (tool_ == Tool_Mask)
+          {
+//            maskLayer_
+//                case Tool_Mask:
+//                  return new RadiographyLayerMaskTracker
+//                      (undoRedoStack_, widget.GetScene(), view, selected, x, y, corner);
+            return NULL;
+          }
           else if (tool_ == Tool_Crop ||
                    tool_ == Tool_Resize)
           {
             RadiographyScene::LayerAccessor accessor(widget.GetScene(), selected);
             
-            Corner corner;
-            if (accessor.GetLayer().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
+            ControlPoint controlPoint;
+            if (accessor.GetLayer().LookupControlPoint(controlPoint, x, y, view.GetZoom(), GetHandleSize()))
             {
               switch (tool_)
               {
               case Tool_Crop:
                 return new RadiographyLayerCropTracker
-                    (undoRedoStack_, widget.GetScene(), view, selected, x, y, corner);
+                    (undoRedoStack_, widget.GetScene(), view, selected, controlPoint);
+
 
               case Tool_Resize:
                 return new RadiographyLayerResizeTracker
-                    (undoRedoStack_, widget.GetScene(), selected, x, y, corner,
+                    (undoRedoStack_, widget.GetScene(), selected, controlPoint,
                      (modifiers & KeyboardModifiers_Shift));
 
               default:
@@ -209,6 +225,7 @@ namespace OrthancStone
         {
           return NULL;
         }
+        return NULL;
       }
 
       virtual void MouseOver(CairoContext& context,
@@ -233,25 +250,24 @@ namespace OrthancStone
 
         if (widget.LookupSelectedLayer(selected) &&
             (tool_ == Tool_Crop ||
-             tool_ == Tool_Resize))
+             tool_ == Tool_Resize) ||
+             tool_ == Tool_Mask)
         {
           RadiographyScene::LayerAccessor accessor(widget.GetScene(), selected);
 
-          Corner corner;
-          if (accessor.GetLayer().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
+          ControlPoint controlPoint;
+          if (accessor.GetLayer().LookupControlPoint(controlPoint, x, y, view.GetZoom(), GetHandleSize()))
           {
-            accessor.GetLayer().GetCorner(x, y, corner);
-
             double z = 1.0 / view.GetZoom();
 
             context.SetSourceColor(255, 0, 0);
             cairo_t* cr = context.GetObject();
             cairo_set_line_width(cr, 2.0 * z);
-            cairo_move_to(cr, x - GetHandleSize() * z, y - GetHandleSize() * z);
-            cairo_line_to(cr, x + GetHandleSize() * z, y - GetHandleSize() * z);
-            cairo_line_to(cr, x + GetHandleSize() * z, y + GetHandleSize() * z);
-            cairo_line_to(cr, x - GetHandleSize() * z, y + GetHandleSize() * z);
-            cairo_line_to(cr, x - GetHandleSize() * z, y - GetHandleSize() * z);
+            cairo_move_to(cr, controlPoint.x - GetHandleSize() * z, controlPoint.y - GetHandleSize() * z);
+            cairo_line_to(cr, controlPoint.x + GetHandleSize() * z, controlPoint.y - GetHandleSize() * z);
+            cairo_line_to(cr, controlPoint.x + GetHandleSize() * z, controlPoint.y + GetHandleSize() * z);
+            cairo_line_to(cr, controlPoint.x - GetHandleSize() * z, controlPoint.y + GetHandleSize() * z);
+            cairo_line_to(cr, controlPoint.x - GetHandleSize() * z, controlPoint.y - GetHandleSize() * z);
             cairo_stroke(cr);
           }
         }
@@ -280,6 +296,11 @@ namespace OrthancStone
 
         case 'c':
           tool_ = Tool_Crop;
+          break;
+
+        case 'm':
+          tool_ = Tool_Mask;
+          widget.Select(1);
           break;
 
         case 'd':
@@ -340,7 +361,7 @@ namespace OrthancStone
           widget.SwitchInvert();
           break;
 
-        case 'm':
+        case 't':
           tool_ = Tool_Move;
           break;
 
@@ -409,6 +430,7 @@ namespace OrthancStone
       boost::shared_ptr<RadiographyScene>   scene_;
       RadiographyEditorInteractor           interactor_;
       Orthanc::FontRegistry                 fontRegistry_;
+      RadiographyMaskLayer*                 maskLayer_;
 
     public:
       SingleFrameEditorApplication(MessageBroker& broker) :
@@ -449,10 +471,11 @@ namespace OrthancStone
         statusBar.SetMessage("Use the key \"e\" to export DICOM to the Orthanc server");
         statusBar.SetMessage("Use the key \"f\" to switch full screen");
         statusBar.SetMessage("Use the key \"i\" to invert contrast");
-        statusBar.SetMessage("Use the key \"m\" to move objects");
+        statusBar.SetMessage("Use the key \"m\" to modify the mask");
         statusBar.SetMessage("Use the key \"n\" to switch between nearest neighbor and bilinear interpolation");
         statusBar.SetMessage("Use the key \"r\" to rotate objects");
         statusBar.SetMessage("Use the key \"s\" to resize objects (not applicable to DICOM layers)");
+        statusBar.SetMessage("Use the key \"t\" to move (translate) objects");
         statusBar.SetMessage("Use the key \"w\" to change windowing");
         
         statusBar.SetMessage("Use the key \"ctrl-z\" to undo action");
@@ -480,10 +503,13 @@ namespace OrthancStone
         //scene_->LoadDicomWebFrame(context->GetWebService());
         
         std::vector<MaskPoint> mask;
-        mask.push_back(MaskPoint(100, 100));
-        mask.push_back(MaskPoint(100, 1000));
-        mask.push_back(MaskPoint(1000, 1000));
-        scene_->LoadMask(mask, dynamic_cast<RadiographyDicomLayer&>(dicomLayer), 128.0f, NULL);
+        mask.push_back(MaskPoint(1100, 100));
+        mask.push_back(MaskPoint(1100, 1000));
+        mask.push_back(MaskPoint(2000, 1000));
+        mask.push_back(MaskPoint(2200, 150));
+        mask.push_back(MaskPoint(1500, 550));
+        maskLayer_ = dynamic_cast<RadiographyMaskLayer*>(&(scene_->LoadMask(mask, dynamic_cast<RadiographyDicomLayer&>(dicomLayer), 128.0f, NULL)));
+        interactor_.SetMaskLayer(maskLayer_);
 
         {
           RadiographyLayer& layer = scene_->LoadText(fontRegistry_.GetFont(0), "Hello\nworld", NULL);

@@ -172,12 +172,12 @@ namespace OrthancStone
   };
 
   
-  enum Corner
+  enum ControlPointType
   {
-    Corner_TopLeft,
-    Corner_TopRight,
-    Corner_BottomLeft,
-    Corner_BottomRight
+    ControlPoint_TopLeftCorner = 0,
+    ControlPoint_TopRightCorner = 1,
+    ControlPoint_BottomRightCorner = 2,
+    ControlPoint_BottomLeftCorner = 3
   };
 
   enum PhotometricDisplayMode

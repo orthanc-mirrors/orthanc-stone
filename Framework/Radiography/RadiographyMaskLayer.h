@@ -65,6 +65,17 @@ namespace OrthancStone
                         const AffineTransform2D& viewTransform,
                         ImageInterpolation interpolation) const;
 
+    virtual size_t GetControlPointCount() const
+    {
+      return corners_.size();
+    }
+
+    virtual void GetControlPointInternal(ControlPoint& controlPoint,
+                                         size_t index) const
+    {
+      controlPoint = ControlPoint(corners_[index].x, corners_[index].y, index);
+    }
+
     virtual bool GetDefaultWindowing(float& center,
                                      float& width) const
     {
@@ -91,7 +102,15 @@ namespace OrthancStone
 
     }
 
+  protected:
+    virtual const AffineTransform2D& GetTransform() const;
+
+    virtual const AffineTransform2D& GetTransformInverse() const;
+
+
   private:
     void DrawMask() const;
+    void DrawLine(const MaskPoint& start, const MaskPoint& end) const;
+
   };
 }

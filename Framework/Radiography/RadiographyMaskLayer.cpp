@@ -66,8 +66,8 @@ namespace OrthancStone
   }
 
   void RadiographyMaskLayer::Render(Orthanc::ImageAccessor& buffer,
-                      const AffineTransform2D& viewTransform,
-                      ImageInterpolation interpolation) const
+                                    const AffineTransform2D& viewTransform,
+                                    ImageInterpolation interpolation) const
   {
     if (dicomLayer_.GetWidth() == 0) // nothing to do if the DICOM layer is not displayed (or not loaded)
       return;
@@ -121,130 +121,6 @@ namespace OrthancStone
     }
   }
 
-  // from https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
-  // Given three colinear points p, q, r, the function checks if
-  // point q lies on line segment 'pr'
-  bool onSegment(const MaskPoint& p, const MaskPoint& q, const MaskPoint& r)
-  {
-      if (q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) &&
-              q.y <= std::max(p.y, r.y) && q.y >= std::min(p.y, r.y))
-          return true;
-      return false;
-  }
-
-  // To find orientation of ordered triplet (p, q, r).
-  // The function returns following values
-  // 0 --> p, q and r are colinear
-  // 1 --> Clockwise
-  // 2 --> Counterclockwise
-  int orientation(const MaskPoint& p, const MaskPoint& q, const MaskPoint& r)
-  {
-      int val = (q.y - p.y) * (r.x - q.x) -
-                (q.x - p.x) * (r.y - q.y);
-
-      if (val == 0) return 0;  // colinear
-      return (val > 0)? 1: 2; // clock or counterclock wise
-  }
-
-  // The function that returns true if line segment 'p1q1'
-  // and 'p2q2' intersect.
-  bool doIntersect(const MaskPoint& p1, const MaskPoint& q1, const MaskPoint& p2, const MaskPoint& q2)
-  {
-      // Find the four orientations needed for general and
-      // special cases
-      int o1 = orientation(p1, q1, p2);
-      int o2 = orientation(p1, q1, q2);
-      int o3 = orientation(p2, q2, p1);
-      int o4 = orientation(p2, q2, q1);
-
-      // General case
-      if (o1 != o2 && o3 != o4)
-          return true;
-
-      // Special Cases
-      // p1, q1 and p2 are colinear and p2 lies on segment p1q1
-      if (o1 == 0 && onSegment(p1, p2, q1)) return true;
-
-      // p1, q1 and p2 are colinear and q2 lies on segment p1q1
-      if (o2 == 0 && onSegment(p1, q2, q1)) return true;
-
-      // p2, q2 and p1 are colinear and p1 lies on segment p2q2
-      if (o3 == 0 && onSegment(p2, p1, q2)) return true;
-
-       // p2, q2 and q1 are colinear and q1 lies on segment p2q2
-      if (o4 == 0 && onSegment(p2, q1, q2)) return true;
-
-      return false; // Doesn't fall in any of the above cases
-  }
-
-  // Define Infinite (Using INT_MAX caused overflow problems)
-  #define MASK_INF 1000000
-
-  // Returns true if the point p lies inside the polygon[] with n vertices
-  bool isInside(const std::vector<MaskPoint>& polygon, const MaskPoint& p)
-  {
-      // There must be at least 3 vertices in polygon[]
-      if (polygon.size() < 3)  return false;
-
-      // Create a point for line segment from p to infinite
-      MaskPoint extreme = {MASK_INF, p.y};
-
-      // Count intersections of the above line with sides of polygon
-      int count = 0, i = 0;
-      do
-      {
-          int next = (i+1) % polygon.size();
-
-          // Check if the line segment from 'p' to 'extreme' intersects
-          // with the line segment from 'polygon[i]' to 'polygon[next]'
-          if (doIntersect(polygon[i], polygon[next], p, extreme))
-          {
-              // If the point 'p' is colinear with line segment 'i-next',
-              // then check if it lies on segment. If it lies, return true,
-              // otherwise false
-              if (orientation(polygon[i], p, polygon[next]) == 0)
-                 return onSegment(polygon[i], p, polygon[next]);
-
-              count++;
-          }
-          i = next;
-      } while (i != 0);
-
-      // Return true if count is odd, false otherwise
-      return count&1;  // Same as (count%2 == 1)
-  }
-
-  void RadiographyMaskLayer::DrawLine(const MaskPoint& start, const MaskPoint& end) const
-  {
-    int dx = (int)(end.x) - (int)(start.x);
-    int dy = (int)(end.y) - (int)(start.y);
-
-    if (std::abs(dx) > std::abs(dy))
-    { // the line is closer to horizontal
-
-      int incx = dx / std::abs(dx);
-      double incy = (double)(dy)/(double)(dx);
-      double y = (double)(start.y);
-      for (int x = (int)(start.x); x != (int)(end.x); x += incx, y += incy)
-      {
-        unsigned char* p = reinterpret_cast<unsigned char*>(mask_->GetRow((int)(y + 0.5))) + x;
-        *p = IN_MASK_VALUE;
-      }
-    }
-    else
-    { // the line is closer to vertical
-      int incy = dy / std::abs(dy);
-      double incx = (double)(dx)/(double)(dy);
-      double x = (double)(start.x);
-      for (int y = (int)(start.y); y != (int)(end.y); y += incy, x += incx)
-      {
-        unsigned char* p = reinterpret_cast<unsigned char*>(mask_->GetRow(y)) + (int)(x + 0.5);
-        *p = IN_MASK_VALUE;
-      }
-    }
-  }
-
-
   void RadiographyMaskLayer::DrawMask() const
   {
     unsigned int left;
@@ -286,7 +162,7 @@ namespace OrthancStone
         for (i = 0; i < cpSize; i++)
         {
           if ((cpy[i] <= y && cpy[j] >=  y)
-          ||  (cpy[j] <= y && cpy[i] >= y))
+              ||  (cpy[j] <= y && cpy[i] >= y))
           {
             nodeX[nodes++]= (int)(cpx[i] + (y - cpy[i])/(cpy[j] - cpy[i]) *(cpx[j] - cpx[i]));
           }
@@ -331,45 +207,6 @@ namespace OrthancStone
         }
       }
     }
-
-//    // draw lines
-//    for (size_t i = 1; i < corners_.size(); i++)
-//    {
-//      DrawLine(corners_[i-1], corners_[i]);
-//    }
-//    DrawLine(corners_[corners_.size()-1], corners_[0]);
-
-//    // fill between lines
-//    MaskPoint p(left, top);
-//    for (p.y = top; p.y <= bottom; p.y++)
-//    {
-//      unsigned char* q = reinterpret_cast<unsigned char*>(mask_->GetRow(p.y)) + left;
-//      unsigned char previousPixelValue1 = OUT_MASK_VALUE;
-//      unsigned char previousPixelValue2 = OUT_MASK_VALUE;
-//      for (p.x = left; p.x <= right; p.x++, q++)
-//      {
-//        if (*p == OUT_MASK_VALUE && previousPixelValue1 == IN_MASK_VALUE && previousPixelValue2 == OUT_MASK_VALUE) // we just passed over a single one pixel line => start filling
-//        {
-
-//          *q = IN_MASK_VALUE;
-//        }
-//      }
-//    }
-
-
-//    MaskPoint p(left, top);
-//    for (p.y = top; p.y <= bottom; p.y++)
-//    {
-//      unsigned char* q = reinterpret_cast<unsigned char*>(mask_->GetRow(p.y)) + left;
-//      for (p.x = left; p.x <= right; p.x++, q++)
-//      {
-//        if (isInside(corners_, p))
-//        {
-//          *q = IN_MASK_VALUE;
-//        }
-//      }
-//    }
-
   }
 
 }

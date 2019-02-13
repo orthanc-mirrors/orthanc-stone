@@ -110,7 +110,6 @@ namespace OrthancStone
 
   private:
     void DrawMask() const;
-    void DrawLine(const MaskPoint& start, const MaskPoint& end) const;
 
   };
 }

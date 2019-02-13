@@ -20,6 +20,20 @@
       ]
     },
     {
+      "name":"C",
+      "kind":"struct",
+      "fields": [
+        {
+          "name":"someBs",
+          "type":"vector<B>"
+        },
+        {
+          "name":"ddd",
+          "type":"vector<D>"
+        }
+      ]
+    },
+    {
       "name":"A",
       "kind":"struct",
       "fields": [

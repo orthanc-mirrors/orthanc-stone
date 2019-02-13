@@ -1,4 +1,5 @@
-from stonegentool import EatToken,SplitListOfTypes,ParseTemplateType,LoadSchema,CheckSchemaSchema
+from stonegentool import \
+EatToken,SplitListOfTypes,ParseTemplateType,LoadSchema,CheckSchemaSchema,ProcessSchema
 import unittest
 import os
 
@@ -85,8 +86,36 @@ class TestStonegentool(unittest.TestCase):
     obj = LoadSchema(fn)
     self.assertRaises(Exception,CheckSchemaSchema,obj) 
 
+  def test_GenOrderQueue(self):
+    fn = os.path.join(os.path.dirname(__file__), 'test', 'test1.jsonc')
+    obj = LoadSchema(fn)
+    genOrderQueue,structTypes = ProcessSchema(obj)
+    print(f"genOrderQueue = {genOrderQueue}")
+    print("")
 
+  def test_GenerateTypeScriptEnumeration(self):
+    pass
 
+  def test_GenerateCppEnumeration(self):
+    pass
+
+  def test_GenerateTypeScriptClasses(self):
+    pass
+
+  def test_GenerateCppClasses(self):
+    pass
+
+  def test_GenerateTypeScriptHandlerInterface(self):
+    pass
+
+  def test_GenerateCppHandlerInterface(self):
+    pass
+
+  def test_GenerateTypeScriptDispatcher(self):
+    pass
+
+  def test_GenerateCppDispatcher(self):
+    pass
 
 # def test(self):
 #   s = 'hello world'
@@ -96,4 +125,5 @@ class TestStonegentool(unittest.TestCase):
 #   s.split(2)
 
 if __name__ == '__main__':
-    unittest.main()
+  print("")
+  unittest.main()

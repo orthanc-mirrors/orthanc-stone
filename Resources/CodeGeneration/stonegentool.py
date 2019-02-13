@@ -223,9 +223,8 @@ def ProcessTypeTree(
     # if we reach this point, it means the type is NOT a struct or an enum.
     # it is another (non directly user-defined) type that we must parse and 
     # create. Let's do it!
-    (isTemplate,_,parameters) = ParseTemplateType(typeName)
+    (isTemplate,_,dependentTypeNames) = ParseTemplateType(typeName)
     if isTemplate:
-      dependentTypeNames : List[str] = SplitListOfTypes(parameters)
       for dependentTypeName in dependentTypeNames:
         # childAncestors = ancestors.copy()  NO TEMPLATE ANCESTOR!!!
         # childAncestors.append(typeName)
@@ -248,13 +247,53 @@ def ProcessStructType_DepthFirstRecursive(
     for typeField in typeFields:
       ancestors = [typeName]
       ProcessTypeTree(ancestors, genOrderQueue
-        , structTypes, typeField['name'])
+        , structTypes, typeField['type'])
     # now we're pretty sure our dependencies have been processed,
     # we can start marking our code for generation
-    genOrderQueue.append(typeName)
+    genOrderQueue.add(typeName)
 
-def ProcessEnumerationType(processedTypes, definedType) -> None:
+def ProcessEnumerationType(definedType) -> (str,str):
   print(f"About to process enumeration: {definedType['name']}")
+  tsText : str = """import blah
+
+  enum PROUT
+  {
+    value1
+    value2
+  }"""
+
+  cppText : str = """import blah
+
+  enum PROUT
+  {
+    value1
+    value2
+  }"""
+
+  return (tsText,cppText)
+
+def ProcessStructType(typeDict) -> (str,str):
+  print(f"About to process enumeration: {definedType['name']}")
+  tsText : str = """import blah
+
+  class PROUT
+  {
+    public value1 : Type1
+    public value2 : Type2
+  }"""
+
+  cppText : str = """import blah
+
+  class PROUT
+  {
+    public:
+    Type1: value1
+    Type2: value2
+  }"""
+
+  return (tsText,cppText)
+
+    
 
 def ProcessSchema(schema : dict) -> None:
   CheckSchemaSchema(schema)
@@ -272,17 +311,23 @@ def ProcessSchema(schema : dict) -> None:
   # the order here is the generation order
   for definedType in definedTypes:
     if definedType['kind'] == 'enum':
-      ProcessEnumerationType(genOrderQueue, definedType)
+      ProcessEnumerationType(definedType)
+
+  for definedType in definedTypes:
+    if definedType['kind'] == 'struct':
+      structTypes[definedType['name']] = definedType
 
   # the order here is NOT the generation order: the types
   # will be processed according to their dependency graph
   for definedType in definedTypes:
     if definedType['kind'] == 'struct':
-      structTypes[definedType['name']] = definedType
       ProcessStructType_DepthFirstRecursive(genOrderQueue,structTypes,
         definedType)
 
-  print(f"genOrderQueue = {genOrderQueue}")
+  for i in range(len(genOrderQueue))
+    typeName = genOrderQueue[i]
+    typeDict = structTypes[typeName]
+    ProcessStructType(typeDict)
 
 if __name__ == '__main__':
   import argparse

@@ -261,23 +261,34 @@ namespace OrthancStone
       // from http://alienryderflex.com/polygon_fill/
       std::auto_ptr<int> raiiNodeX(new int(corners_.size()));
 
+      // convert all control points to double only once
+      std::vector<double> cpx;
+      std::vector<double> cpy;
+      int cpSize = corners_.size();
+      for (size_t i = 0; i < corners_.size(); i++)
+      {
+        cpx.push_back((double)corners_[i].x);
+        cpy.push_back((double)corners_[i].y);
+      }
+
       std::vector<int> nodeX;
-      nodeX.resize(corners_.size());
+      nodeX.resize(cpSize);
       int  nodes, pixelX, pixelY, i, j, swap ;
 
       //  Loop through the rows of the image.
       for (pixelY = (int)top; pixelY < (int)bottom; pixelY++)
       {
+        double y = (double)pixelY;
         //  Build a list of nodes.
         nodes = 0;
-        j = (int)corners_.size() - 1;
+        j = cpSize - 1;
 
-        for (i = 0; i < (int)corners_.size(); i++)
+        for (i = 0; i < cpSize; i++)
         {
-          if ((int)corners_[i].y <= pixelY && (int)corners_[j].y >=  pixelY
-          ||  (int)corners_[j].y <= pixelY && (int)corners_[i].y >= pixelY)
+          if ((cpy[i] <= y && cpy[j] >=  y)
+          ||  (cpy[j] <= y && cpy[i] >= y))
           {
-            nodeX[nodes++]= (int)((double)corners_[i].x + ((double)pixelY - (double)corners_[i].y)/((double)corners_[j].y - (double)corners_[i].y) *((double)corners_[j].x - (double)corners_[i].x));
+            nodeX[nodes++]= (int)(cpx[i] + (y - cpy[i])/(cpy[j] - cpy[i]) *(cpx[j] - cpx[i]));
           }
           j=i;
         }

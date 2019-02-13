@@ -1,17 +1,46 @@
-from typing import List,Dict,Set
-import sys
 import json
 import re
+import sys
+from typing import Dict, List, Set
+
 
 """
          1         2         3         4         5         6         7
 12345678901234567890123456789012345678901234567890123456789012345678901234567890
 """
 
-def LoadSchema(file_path : str):
-    with open(file_path, 'r') as fp:
-      obj = json.load(fp)
-    return obj
+import json
+import re
+
+"""A set of utilities to perform JSON operation"""
+
+class JsonHelpers:
+    @staticmethod
+    def removeCommentsFromJsonContent(string):
+        """
+        remove comments from a JSON file
+
+        Comments are not allowed in JSON but, i.e., Orthanc configuration files contains C++ like comments that we need to remove before python can parse the file
+        """
+        string = re.sub(re.compile("/\*.*?\*/", re.DOTALL), "",
+                        string)  # remove all occurance streamed comments (/*COMMENT */) from string
+        string = re.sub(re.compile("//.*?\n"), "",
+                        string)  # remove all occurance singleline comments (//COMMENT\n ) from string
+        return string
+
+    @staticmethod
+    def loadJsonWithComments(path):
+        """
+        reads a JSON file that may contain C++ like comments
+        """
+        with open(path, 'r') as fp:
+            fileContent = fp.read()
+        fileContent = JsonHelpers.removeCommentsFromJsonContent(fileContent)
+        return json.loads(fileContent)
+
+
+def LoadSchema(filePath : str):
+    return JsonHelpers.loadJsonWithComments(filePath)
 
 # class Type:
 #   def __init__(self, canonicalTypeName:str, kind:str):
@@ -63,38 +92,38 @@ def GetTypeScriptTypeNameFromCanonical(canonicalTypeName : str) -> str:
 
 def CheckTypeSchema(definedType : Dict) -> None:
   allowedDefinedTypeKinds = ["enum","struct"]
-  if not definedType.has_key('name'):
+  if not 'name' in definedType:
     raise Exception("type lacks the 'name' key")
   name = definedType['name']
-  if not definedType.has_key('kind'):
+  if not 'kind' in definedType:
     raise Exception(f"type {name} lacks the 'kind' key")
   kind = definedType['kind']
   if not (kind in allowedDefinedTypeKinds):
     raise Exception(f"type {name} : kind {kind} is not allowed. " + 
       f"It must be one of {allowedDefinedTypeKinds}")
   
-  if not definedType.has_key('fields'):
+  if not 'fields' in definedType:
     raise Exception("type {name} lacks the 'fields' key")
 
   # generic check on all kinds of types
   fields = definedType['fields']
   for field in fields:
     fieldName = field['name']
-    if not field.has_key('name'):
+    if not 'name' in field:
       raise Exception("field in type {name} lacks the 'name' key")
 
   # fields in struct must have types
   if kind == 'struct':  
     for field in fields:
       fieldName = field['name']
-      if not field.has_key('type'):
+      if not 'type' in field:
         raise Exception(f"field {fieldName} in type {name} "
         + "lacks the 'type' key")
 
 def CheckSchemaSchema(schema : Dict) -> None:
-  if not schema.has_key('root_name'):
+  if not 'root_name' in schema:
     raise Exception("schema lacks the 'root_name' key")
-  if not schema.has_key('types'):
+  if not 'types' in schema:
     raise Exception("schema lacks the 'types' key")
   for definedType in schema['types']:
     CheckTypeSchema(definedType)
@@ -102,7 +131,7 @@ def CheckSchemaSchema(schema : Dict) -> None:
 # def CreateAndCacheTypeObject(allTypes : Dict[str,Type], typeDict : Dict)  -> None:
 #   """This does not set the dependentTypes field"""
 #   typeName : str = typeDict['name']
-#   if allTypes.has_key(typeName):
+#   if typeName in allTypes:
 #     raise Exception(f'Type {typeName} is defined more than once!')
 #   else:
 #     typeObject = Type(typeName, typeDict['kind'])
@@ -119,7 +148,7 @@ def EatToken(sentence : str) -> (str,str):
 
   # the template level we're currently in
   templateLevel = 0
-  for i in len(sentence):
+  for i in range(len(sentence)):
     if (sentence[i] == ",") and (templateLevel == 0):
       return (sentence[0:i],sentence[i+1:])
     elif (sentence[i] == "<"):
@@ -144,6 +173,8 @@ def SplitListOfTypes(typeName : str) -> List[str]:
   while stillStuffToEat:
     firstToken,restOfString = EatToken(restOfString)
     tokenList.append(firstToken)
+    if restOfString == "":
+      stillStuffToEat = False
   return tokenList
 
 templateRegex = \
@@ -167,9 +198,8 @@ def ParseTemplateType(typeName) -> (bool,str,List[str]):
     listOfDependentTypes = SplitListOfTypes(matches.group(2))
     return (True,matches.group(1),listOfDependentTypes)
 
-
 # def GetPrimitiveType(typeName : str) -> Type:
-#   if allTypes.has_key(typeName):
+#   if typeName in allTypes:
 #     return allTypes[typeName]
 #   else:
 #     primitiveTypes = ['int32', 'float32', 'float64', 'string']
@@ -202,7 +232,7 @@ def ProcessTypeTree(
         ProcessTypeTree(ancestors, genOrderQueue,
           structTypes, dependentTypeName)
     else:
-      if structTypes.has_key(typeName):
+      if typeName in structTypes:
         ProcessStructType_DepthFirstRecursive(genOrderQueue, structTypes,
         structTypes[typeName])
 

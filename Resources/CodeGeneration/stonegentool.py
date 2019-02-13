@@ -1,59 +1,65 @@
-from typing import List,Dict
+from typing import List,Dict,Set
 import sys
 import json
 import re
+
+"""
+         1         2         3         4         5         6         7
+12345678901234567890123456789012345678901234567890123456789012345678901234567890
+"""
 
 def LoadSchema(file_path : str):
     with open(file_path, 'r') as fp:
       obj = json.load(fp)
     return obj
 
-class Type:
-  def __init__(self, canonicalTypeName:str, kind:str):
-    allowedTypeKinds = ["primitive","enum","struct","collection"]
-    """dependent type is the list of canonical types this type depends on.
-       For instance, vector<map<string,int32>> depends on map<string,int32>
-       that, in turn, depends on string and int32 that, in turn, depend on
-       nothing"""
-    self.canonicalTypeName = canonicalTypeName
-    assert(kind in allowedTypeKinds)
+# class Type:
+#   def __init__(self, canonicalTypeName:str, kind:str):
+#     allowedTypeKinds = ["primitive","enum","struct","collection"]
+#     """dependent type is the list of canonical types this type depends on.
+#        For instance, vector<map<string,int32>> depends on map<string,int32>
+#        that, in turn, depends on string and int32 that, in turn, depend on
+#        nothing"""
+#     self.canonicalTypeName = canonicalTypeName
+#     assert(kind in allowedTypeKinds)
 
-  def setDependentTypes(self, dependentTypes:List[Type]) -> None:
-    self.dependentTypes = dependentTypes
+#   def setDependentTypes(self, dependentTypes:List[Type]) -> None:
+#     self.dependentTypes = dependentTypes
 
-  def getDependentTypes(self) -> List[Type]:
-    return self.dependentTypes
+#   def getDependentTypes(self) -> List[Type]:
+#     return self.dependentTypes
 
-  def getCppTypeName(self) -> str:
-    # C++: prefix map vector and string with std::map, std::vector and std::string
+def GetCppTypeNameFromCanonical(canonicalTypeName : str) -> str:
+    # C++: prefix map vector and string with std::map, std::vector and 
+    # std::string
     # replace int32 by int32_t
     # replace float32 by float
     # replace float64 by double
-    retVal : str = self.canonicalTypeName.replace("map","std::map")
-    retVal : str = self.canonicalTypeName.replace("vector","std::vector")
-    retVal : str = self.canonicalTypeName.replace("int32","int32_t")
-    retVal : str = self.canonicalTypeName.replace("float32","float")
-    retVal : str = self.canonicalTypeName.replace("float64","double")
+    retVal : str = canonicalTypeName.replace("map","std::map")
+    retVal : str = canonicalTypeName.replace("vector","std::vector")
+    retVal : str = canonicalTypeName.replace("int32","int32_t")
+    retVal : str = canonicalTypeName.replace("float32","float")
+    retVal : str = canonicalTypeName.replace("float64","double")
     return retVal
 
-  def getTypeScriptTypeName(self) -> str:
+def GetTypeScriptTypeNameFromCanonical(canonicalTypeName : str) -> str:
     # TS: replace vector with Array and map with Map
     # string remains string
     # replace int32 by number
     # replace float32 by number
     # replace float64 by number
-    retVal : str = self.canonicalTypeName.replace("map","Map")
-    retVal : str = self.canonicalTypeName.replace("vector","Array")
-    retVal : str = self.canonicalTypeName.replace("int32","number")
-    retVal : str = self.canonicalTypeName.replace("float32","number")
-    retVal : str = self.canonicalTypeName.replace("float64","number")
-    retVal : str = self.canonicalTypeName.replace("bool","boolean")
+    retVal : str = canonicalTypeName.replace("map","Map")
+    retVal : str = canonicalTypeName.replace("vector","Array")
+    retVal : str = canonicalTypeName.replace("int32","number")
+    retVal : str = canonicalTypeName.replace("float32","number")
+    retVal : str = canonicalTypeName.replace("float64","number")
+    retVal : str = canonicalTypeName.replace("bool","boolean")
     return retVal
 
-class Schema:
-  def __init__(self, root_prefix : str, defined_types : List[Type]):
-    self.rootName : str = root_prefix
-    self.definedTypes : str = defined_types
+# class Schema:
+#   def __init__(self, root_prefix : str, defined_types : List[Type]):
+#     self.rootName : str = root_prefix
+#     self.definedTypes : str = defined_types
 
 def CheckTypeSchema(definedType : Dict) -> None:
   allowedDefinedTypeKinds = ["enum","struct"]
@@ -64,7 +70,8 @@ def CheckTypeSchema(definedType : Dict) -> None:
     raise Exception(f"type {name} lacks the 'kind' key")
   kind = definedType['kind']
   if not (kind in allowedDefinedTypeKinds):
-    raise Exception(f"type {name} : kind {kind} is not allowed. It must be one of {allowedDefinedTypeKinds}")
+    raise Exception(f"type {name} : kind {kind} is not allowed. " + 
+      f"It must be one of {allowedDefinedTypeKinds}")
   
   if not definedType.has_key('fields'):
     raise Exception("type {name} lacks the 'fields' key")
@@ -81,7 +88,8 @@ def CheckTypeSchema(definedType : Dict) -> None:
     for field in fields:
       fieldName = field['name']
       if not field.has_key('type'):
-        raise Exception(f"field {fieldName} in type {name} lacks the 'type' key")
+        raise Exception(f"field {fieldName} in type {name} "
+        + "lacks the 'type' key")
 
 def CheckSchemaSchema(schema : Dict) -> None:
   if not schema.has_key('root_name'):
@@ -91,24 +99,23 @@ def CheckSchemaSchema(schema : Dict) -> None:
   for definedType in schema['types']:
     CheckTypeSchema(definedType)
 
-def CreateAndCacheTypeObject(allTypes : Dict[str,Type], typeDict : Dict) -> None:
-  """This does not set the dependentTypes field"""
-  typeName : str = typeDict['name']
-  if allTypes.has_key(typeName):
-    raise Exception(f'Type {typeName} is defined more than once!')
-  else:
-    typeObject = Type(typeName, typeDict['kind'])
-    allTypes[typeName] = typeObject
-
-
+# def CreateAndCacheTypeObject(allTypes : Dict[str,Type], typeDict : Dict)  -> None:
+#   """This does not set the dependentTypes field"""
+#   typeName : str = typeDict['name']
+#   if allTypes.has_key(typeName):
+#     raise Exception(f'Type {typeName} is defined more than once!')
+#   else:
+#     typeObject = Type(typeName, typeDict['kind'])
+#     allTypes[typeName] = typeObject
 
 def EatToken(sentence : str) -> (str,str):
   """splits "A,B,C" into "A" and "B,C" where A, B and C are type names
   (including templates) like "int32", "TotoTutu", or 
   "map<map<int32,vector<string>>,map<string,int32>>" """
-  token = []
+
   if sentence.count('<') != sentence.count('>'):
-    raise Exception(f"Error in the partial template type list {sentence}. The number of < and > do not match!")
+    raise Exception(f"Error in the partial template type list {sentence}."
+      + " The number of < and > do not match!")
 
   # the template level we're currently in
   templateLevel = 0
@@ -139,7 +146,9 @@ def SplitListOfTypes(typeName : str) -> List[str]:
     tokenList.append(firstToken)
   return tokenList
 
-templateRegex = re.compile(r"([a-zA-Z0-9_]*[a-zA-Z0-9_]*)<([a-zA-Z0-9_,:<>]+)>")
+templateRegex = \
+  re.compile(r"([a-zA-Z0-9_]*[a-zA-Z0-9_]*)<([a-zA-Z0-9_,:<>]+)>")
+
 def ParseTemplateType(typeName) -> (bool,str,List[str]):
   """ If the type is a template like "SOMETHING<SOME<THING,EL<SE>>>", then 
   it returns (true,"SOMETHING","SOME<THING,EL<SE>>")
@@ -158,45 +167,47 @@ def ParseTemplateType(typeName) -> (bool,str,List[str]):
     listOfDependentTypes = SplitListOfTypes(matches.group(2))
     return (True,matches.group(1),listOfDependentTypes)
 
-def GetPrimitiveType(typeName : str) -> Type:
-  if allTypes.has_key(typeName):
-    return allTypes[typeName]
-  else:
-    primitiveTypes = ['int32', 'float32', 'float64', 'string']
-    if not (typeName in primitiveTypes):
-      raise Exception(f"Type {typeName} is unknown.")
-    typeObject = Type(typeName,'primitive')
-    # there are no dependent types in a primitive type --> Type object
-    # constrution is finished at this point
-    allTypes[typeName] = typeObject
-    return typeObject
+
+# def GetPrimitiveType(typeName : str) -> Type:
+#   if allTypes.has_key(typeName):
+#     return allTypes[typeName]
+#   else:
+#     primitiveTypes = ['int32', 'float32', 'float64', 'string']
+#     if not (typeName in primitiveTypes):
+#       raise Exception(f"Type {typeName} is unknown.")
+#     typeObject = Type(typeName,'primitive')
+#     # there are no dependent types in a primitive type --> Type object
+#     # constrution is finished at this point
+#     allTypes[typeName] = typeObject
+#     return typeObject
 
 def ProcessTypeTree(
      ancestors : List[str]
-   , generationQueue : List[str]
+   , genOrderQueue : List[str]
    , structTypes : Dict[str,Dict], typeName : str) -> None:
   if typeName in ancestors:
-    raise Exception(f"Cyclic dependency chain found: the last of {ancestors} depends on {typeName} that is already in the list.")
+    raise Exception(f"Cyclic dependency chain found: the last of {ancestors} "
+      + f"depends on {typeName} that is already in the list.")
   
-  if not (typeName in generationQueue):
+  if not (typeName in genOrderQueue):
     # if we reach this point, it means the type is NOT a struct or an enum.
-    # it is another (non directly user-defined) type that we must parse and create
-    # let's do it
-    dependentTypes = []
-    (isTemplate,templateType,parameters) = ParseTemplateType(typeName)
+    # it is another (non directly user-defined) type that we must parse and 
+    # create. Let's do it!
+    (isTemplate,_,parameters) = ParseTemplateType(typeName)
     if isTemplate:
       dependentTypeNames : List[str] = SplitListOfTypes(parameters)
       for dependentTypeName in dependentTypeNames:
         # childAncestors = ancestors.copy()  NO TEMPLATE ANCESTOR!!!
         # childAncestors.append(typeName)
-        ProcessTypeTree(ancestors, processedTypes, structTypes, dependentTypeName)
+        ProcessTypeTree(ancestors, genOrderQueue,
+          structTypes, dependentTypeName)
     else:
       if structTypes.has_key(typeName):
-        ProcesStructType_DepthFirstRecursive(generationQueue, structTypes,
+        ProcessStructType_DepthFirstRecursive(genOrderQueue, structTypes,
         structTypes[typeName])
 
-def ProcesStructType_DepthFirstRecursive(
-    generationQueue : List[str], structTypes : Dict[str,Dict]
+def ProcessStructType_DepthFirstRecursive(
+    genOrderQueue : List[str], structTypes : Dict[str,Dict]
   , typeDict : Dict) -> None:
     # let's generate the code according to the 
     typeName : str = typeDict['name']
@@ -206,19 +217,24 @@ def ProcesStructType_DepthFirstRecursive(
     typeFields : List[Dict] = typeDict['fields']
     for typeField in typeFields:
       ancestors = [typeName]
-      ProcessTypeTree(ancestors, generationQueue
+      ProcessTypeTree(ancestors, genOrderQueue
         , structTypes, typeField['name'])
     # now we're pretty sure our dependencies have been processed,
     # we can start marking our code for generation
-    generationQueue.append(typeName)
+    genOrderQueue.append(typeName)
+
+def ProcessEnumerationType(processedTypes, definedType) -> None:
+  print(f"About to process enumeration: {definedType['name']}")
 
 def ProcessSchema(schema : dict) -> None:
   CheckSchemaSchema(schema)
   rootName : str = schema['root_name']
   definedTypes : list = schema['types']
 
-  # mark already processed types
-  processedTypes : set[str] = set()
+  print(f"Processing schema. rootName = f{rootName}")
+  # this will be filled with the generation queue. That is, the type
+  # names in the order where they must be defined.
+  genOrderQueue : Set = set()
 
   # the struct names are mapped to their JSON dictionary
   structTypes : Dict[str,Dict] = {}
@@ -226,19 +242,24 @@ def ProcessSchema(schema : dict) -> None:
   # the order here is the generation order
   for definedType in definedTypes:
     if definedType['kind'] == 'enum':
-      ProcessEnumerationType(processedTypes, definedType);
+      ProcessEnumerationType(genOrderQueue, definedType)
 
   # the order here is NOT the generation order: the types
   # will be processed according to their dependency graph
   for definedType in definedTypes:
     if definedType['kind'] == 'struct':
       structTypes[definedType['name']] = definedType
-      ProcesStructType_DepthFirstRecursive(processedTypes,structTypes,definedType)
+      ProcessStructType_DepthFirstRecursive(genOrderQueue,structTypes,
+        definedType)
+
+  print(f"genOrderQueue = {genOrderQueue}")
 
 if __name__ == '__main__':
   import argparse
-  parser = argparse.ArgumentParser(usage = """stonegentool.py [-h] [-o OUT_DIR] [-v] input_schemas
-       EXAMPLE: python command_gen.py -o "generated_files/" "mainSchema.json,App Specific Commands.json" """)
+  parser = argparse.ArgumentParser(
+    usage = """stonegentool.py [-h] [-o OUT_DIR] [-v] input_schemas
+       EXAMPLE: python command_gen.py -o "generated_files/" """
+       + """ "mainSchema.json,App Specific Commands.json" """)
   parser.add_argument("input_schema", type=str,
                       help = "path to the schema file")
   parser.add_argument("-o", "--out_dir", type=str, default=".", 

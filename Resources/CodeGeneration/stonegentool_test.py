@@ -1,4 +1,4 @@
-from stonegentool import *
+from stonegentool import EatToken
 import unittest
 
 class TestStonegentool(unittest.TestCase):
@@ -26,7 +26,7 @@ class TestStonegentool(unittest.TestCase):
     self.assertEqual(a,r"vector<map<int64,string>>")
     self.assertEqual(b,r"vector<map<int32,string>>")
 
-  def test_EatToken_complexTemplate(self):
+  def test_EatToken_complexTemplates(self):
     c = r"vector<map<vector<string>,map<int32,string>>>,map<int32,string>,map<map<int32,string>,string>"
     a,b = EatToken(c)
     self.assertEqual(a,r"vector<map<vector<string>,map<int32,string>>>")
@@ -35,7 +35,7 @@ class TestStonegentool(unittest.TestCase):
     self.assertEqual(a,r"map<int32,string>")
     self.assertEqual(b,r"map<map<int32,string>,string>")
 
-# def prout(self):
+# def test(self):
 #   s = 'hello world'
 #   self.assertEqual(s.split(), ['hello', 'world'])
 #   # check that s.split fails when the separator is not a string

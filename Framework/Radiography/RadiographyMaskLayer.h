@@ -60,6 +60,7 @@ namespace OrthancStone
     }
 
     void SetCorners(const std::vector<MaskPoint>& corners);
+    void SetCorner(const MaskPoint& corner, size_t index);
 
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,
@@ -70,10 +71,14 @@ namespace OrthancStone
       return corners_.size();
     }
 
-    virtual void GetControlPointInternal(ControlPoint& controlPoint,
+    virtual void GetControlPoint(ControlPoint& cpScene,
                                          size_t index) const
     {
-      controlPoint = ControlPoint(corners_[index].x, corners_[index].y, index);
+      ControlPoint cp(corners_[index].x, corners_[index].y, index);
+
+      // transforms image coordinates into scene coordinates
+      GetTransform().Apply(cp.x, cp.y);
+      cpScene = cp;
     }
 
     virtual bool GetDefaultWindowing(float& center,
@@ -101,6 +106,11 @@ namespace OrthancStone
       return true;
 
     }
+
+    virtual bool GetPixel(unsigned int& imageX,
+                          unsigned int& imageY,
+                          double sceneX,
+                          double sceneY) const;
 
   protected:
     virtual const AffineTransform2D& GetTransform() const;

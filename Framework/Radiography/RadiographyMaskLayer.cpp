@@ -42,6 +42,15 @@ namespace OrthancStone
     return dicomLayer_.GetTransformInverse();
   }
 
+  bool RadiographyMaskLayer::GetPixel(unsigned int& imageX,
+                        unsigned int& imageY,
+                        double sceneX,
+                        double sceneY) const
+  {
+    return dicomLayer_.GetPixel(imageX, imageY, sceneX, sceneY);
+  }
+
+
   void ComputeMaskExtent(unsigned int& left, unsigned int& right, unsigned int& top, unsigned int& bottom, const std::vector<MaskPoint>& corners)
   {
     left = std::numeric_limits<unsigned int>::max();
@@ -57,6 +66,15 @@ namespace OrthancStone
       bottom = std::max(p.y, bottom);
       top = std::min(p.y, top);
     }
+  }
+
+  void RadiographyMaskLayer::SetCorner(const MaskPoint& corner, size_t index)
+  {
+    if (index < corners_.size())
+      corners_[index] = corner;
+    else
+      corners_.push_back(corner);
+    invalidated_ = true;
   }
 
   void RadiographyMaskLayer::SetCorners(const std::vector<MaskPoint>& corners)
@@ -161,8 +179,8 @@ namespace OrthancStone
 
         for (i = 0; i < cpSize; i++)
         {
-          if ((cpy[i] <= y && cpy[j] >=  y)
-              ||  (cpy[j] <= y && cpy[i] >= y))
+          if ((cpy[i] < y && cpy[j] >=  y)
+              ||  (cpy[j] < y && cpy[i] >= y))
           {
             nodeX[nodes++]= (int)(cpx[i] + (y - cpy[i])/(cpy[j] - cpy[i]) *(cpx[j] - cpx[i]));
           }

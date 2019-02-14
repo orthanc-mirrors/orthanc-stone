@@ -305,47 +305,41 @@ namespace OrthancStone
 
   size_t RadiographyLayer::GetControlPointCount() const {return 4;}
 
-  void RadiographyLayer::GetControlPointInternal(ControlPoint& controlPoint,
-                                                 size_t index) const
+  void RadiographyLayer::GetControlPoint(ControlPoint& cpScene /* out in scene coordinates */,
+                                         size_t index) const
   {
     unsigned int cropX, cropY, cropWidth, cropHeight;
     GetCrop(cropX, cropY, cropWidth, cropHeight);
 
+    ControlPoint cp;
     switch (index)
     {
     case ControlPoint_TopLeftCorner:
-      controlPoint = ControlPoint(cropX, cropY, ControlPoint_TopLeftCorner);
+      cp = ControlPoint(cropX, cropY, ControlPoint_TopLeftCorner);
       break;
 
     case ControlPoint_TopRightCorner:
-      controlPoint = ControlPoint(cropX + cropWidth, cropY, ControlPoint_TopRightCorner);
+      cp = ControlPoint(cropX + cropWidth, cropY, ControlPoint_TopRightCorner);
       break;
 
     case ControlPoint_BottomLeftCorner:
-      controlPoint = ControlPoint(cropX, cropY + cropHeight, ControlPoint_BottomLeftCorner);
+      cp = ControlPoint(cropX, cropY + cropHeight, ControlPoint_BottomLeftCorner);
       break;
 
     case ControlPoint_BottomRightCorner:
-      controlPoint = ControlPoint(cropX + cropWidth, cropY + cropHeight, ControlPoint_BottomRightCorner);
+      cp = ControlPoint(cropX + cropWidth, cropY + cropHeight, ControlPoint_BottomRightCorner);
       break;
 
     default:
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
+    // transforms image coordinates into scene coordinates
+    GetTransform().Apply(cp.x, cp.y);
+    cpScene = cp;
   }
 
-
-
-  void RadiographyLayer::GetControlPoint(ControlPoint& controlPoint /* out */,
-                                         size_t index) const
-  {
-    GetControlPointInternal(controlPoint, index);
-    GetTransform().Apply(controlPoint.x, controlPoint.y);
-  }
-
-
-  bool RadiographyLayer::LookupControlPoint(ControlPoint& controlPoint /* out */,
+  bool RadiographyLayer::LookupControlPoint(ControlPoint& cpScene /* out */,
                                             double x,
                                             double y,
                                             double zoom,
@@ -362,7 +356,7 @@ namespace OrthancStone
 
       if (d <= threshold)
       {
-        controlPoint = cp;
+        cpScene = cp;
         return true;
       }
     }

@@ -178,9 +178,6 @@ namespace OrthancStone
       prefferedPhotometricDisplayMode_ = prefferedPhotometricDisplayMode;
     }
 
-    virtual void GetControlPointInternal(ControlPoint& controlPoint,
-                                         size_t index) const;
-
   private:
     void UpdateTransform();
 
@@ -260,10 +257,10 @@ namespace OrthancStone
 
     Extent2D GetExtent() const;
 
-    bool GetPixel(unsigned int& imageX,
-                  unsigned int& imageY,
-                  double sceneX,
-                  double sceneY) const;
+    virtual bool GetPixel(unsigned int& imageX,
+                          unsigned int& imageY,
+                          double sceneX,
+                          double sceneY) const;
 
     void SetPixelSpacing(double x,
                          double y);
@@ -271,12 +268,12 @@ namespace OrthancStone
     void GetCenter(double& centerX,
                    double& centerY) const;
 
-    void GetControlPoint(ControlPoint& controlPoint,
-                         size_t index) const;
+    virtual void GetControlPoint(ControlPoint& cpScene /* out in scene coordinates */,
+                                 size_t index) const;
 
     virtual size_t GetControlPointCount() const;
 
-    bool LookupControlPoint(ControlPoint& controlPoint /* out */,
+    bool LookupControlPoint(ControlPoint& cpScene /* out */,
                             double x,
                             double y,
                             double zoom,

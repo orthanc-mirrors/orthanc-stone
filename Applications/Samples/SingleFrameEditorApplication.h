@@ -24,6 +24,7 @@
 #include "SampleApplicationBase.h"
 
 #include "../../Framework/Radiography/RadiographyLayerCropTracker.h"
+#include "../../Framework/Radiography/RadiographyLayerMaskTracker.h"
 #include "../../Framework/Radiography/RadiographyLayerMoveTracker.h"
 #include "../../Framework/Radiography/RadiographyLayerResizeTracker.h"
 #include "../../Framework/Radiography/RadiographyLayerRotateTracker.h"
@@ -134,16 +135,9 @@ namespace OrthancStone
 
             return NULL;
           }
-          else if (tool_ == Tool_Mask)
-          {
-//            maskLayer_
-//                case Tool_Mask:
-//                  return new RadiographyLayerMaskTracker
-//                      (undoRedoStack_, widget.GetScene(), view, selected, x, y, corner);
-            return NULL;
-          }
           else if (tool_ == Tool_Crop ||
-                   tool_ == Tool_Resize)
+                   tool_ == Tool_Resize ||
+                   tool_ == Tool_Mask)
           {
             RadiographyScene::LayerAccessor accessor(widget.GetScene(), selected);
             
@@ -156,6 +150,9 @@ namespace OrthancStone
                 return new RadiographyLayerCropTracker
                     (undoRedoStack_, widget.GetScene(), view, selected, controlPoint);
 
+              case Tool_Mask:
+                return new RadiographyLayerMaskTracker
+                    (undoRedoStack_, widget.GetScene(), view, selected, controlPoint);
 
               case Tool_Resize:
                 return new RadiographyLayerResizeTracker

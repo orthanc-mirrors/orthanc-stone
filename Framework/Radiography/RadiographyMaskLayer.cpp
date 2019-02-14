@@ -68,6 +68,11 @@ namespace OrthancStone
     }
   }
 
+  std::string RadiographyMaskLayer::GetInstanceId() const
+  {
+    return dicomLayer_.GetInstanceId();
+  }
+
   void RadiographyMaskLayer::SetCorner(const MaskPoint& corner, size_t index)
   {
     if (index < corners_.size())

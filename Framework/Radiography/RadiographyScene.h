@@ -24,6 +24,7 @@
 #include "RadiographyLayer.h"
 #include "../Toolbox/OrthancApiClient.h"
 #include "Framework/StoneEnumerations.h"
+#include "Core/Images/Image.h"
 
 namespace OrthancStone
 {
@@ -203,13 +204,17 @@ namespace OrthancStone
                      ImageInterpolation interpolation,
                      bool usePam);
 
-    // temporary version used by VSOL because we need to send the same request at another url
-    void ExportToCreateDicomRequest(Json::Value& createDicomRequestContent,
-                                    const Orthanc::DicomMap& dicom,
-                                    double pixelSpacingX,
-                                    double pixelSpacingY,
-                                    bool invert,
-                                    ImageInterpolation interpolation,
-                                    bool usePam);
+    Orthanc::Image* ExportToImage(double pixelSpacingX,
+                                  double pixelSpacingY,
+                                  ImageInterpolation interpolation)
+    {
+      ExportToImage(pixelSpacingX, pixelSpacingY, interpolation, false, 0);
+    }
+
+    Orthanc::Image* ExportToImage(double pixelSpacingX,
+                                  double pixelSpacingY,
+                                  ImageInterpolation interpolation,
+                                  bool invert,
+                                  int64_t maxValue /* for inversion */);
   };
 }

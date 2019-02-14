@@ -24,6 +24,7 @@
 #include "RadiographyScene.h"
 #include "RadiographyAlphaLayer.h"
 #include "RadiographyDicomLayer.h"
+#include "RadiographyMaskLayer.h"
 #include "RadiographyTextLayer.h"
 #include <json/value.h>
 #include <Core/Images/FontRegistry.h>

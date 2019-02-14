@@ -62,9 +62,21 @@ namespace OrthancStone
     void SetCorners(const std::vector<MaskPoint>& corners);
     void SetCorner(const MaskPoint& corner, size_t index);
 
+    const std::vector<MaskPoint>& GetCorners() const
+    {
+      return corners_;
+    }
+
+    float GetForeground() const
+    {
+      return foreground_;
+    }
+
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,
                         ImageInterpolation interpolation) const;
+
+    std::string GetInstanceId() const;
 
     virtual size_t GetControlPointCount() const
     {

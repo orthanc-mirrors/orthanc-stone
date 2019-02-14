@@ -539,41 +539,11 @@ namespace OrthancStone
     }
   }
 
-
-  void RadiographyScene::ExportDicom(OrthancApiClient& orthanc,
-                                     const Orthanc::DicomMap& dicom,
-                                     const std::string& parentOrthancId,
-                                     double pixelSpacingX,
-                                     double pixelSpacingY,
-                                     bool invert,
-                                     ImageInterpolation interpolation,
-                                     bool usePam)
-  {
-    Json::Value createDicomRequestContent;
-
-    ExportToCreateDicomRequest(createDicomRequestContent, dicom, pixelSpacingX, pixelSpacingY, invert, interpolation, usePam);
-
-    if (!parentOrthancId.empty())
-    {
-      createDicomRequestContent["Parent"] = parentOrthancId;
-    }
-
-    orthanc.PostJsonAsyncExpectJson(
-          "/tools/create-dicom", createDicomRequestContent,
-          new Callable<RadiographyScene, OrthancApiClient::JsonResponseReadyMessage>
-          (*this, &RadiographyScene::OnDicomExported),
-          NULL, NULL);
-  }
-
-  // Export using PAM is faster than using PNG, but requires Orthanc
-  // core >= 1.4.3
-  void RadiographyScene::ExportToCreateDicomRequest(Json::Value& createDicomRequestContent,
-                                const Orthanc::DicomMap& dicom,
-                                double pixelSpacingX,
-                                double pixelSpacingY,
-                                bool invert,
-                                ImageInterpolation interpolation,
-                                bool usePam)
+  Orthanc::Image* RadiographyScene::ExportToImage(double pixelSpacingX,
+                                                  double pixelSpacingY,
+                                                  ImageInterpolation interpolation,
+                                                  bool invert,
+                                                  int64_t maxValue /* for inversion */)
   {
     if (pixelSpacingX <= 0 ||
         pixelSpacingY <= 0)
@@ -606,9 +576,31 @@ namespace OrthancStone
 
     Render(layers, view, interpolation);
 
-    Orthanc::Image rendered(Orthanc::PixelFormat_Grayscale16,
-                            layers.GetWidth(), layers.GetHeight(), false);
-    Orthanc::ImageProcessing::Convert(rendered, layers);
+    std::auto_ptr<Orthanc::Image> rendered(new Orthanc::Image(Orthanc::PixelFormat_Grayscale16,
+                                                               layers.GetWidth(), layers.GetHeight(), false));
+
+    Orthanc::ImageProcessing::Convert(*rendered, layers);
+    if (invert)
+      Orthanc::ImageProcessing::Invert(*rendered, maxValue);
+
+    return rendered.release();
+  }
+
+
+  // Export using PAM is faster than using PNG, but requires Orthanc
+  // core >= 1.4.3
+  void RadiographyScene::ExportDicom(OrthancApiClient& orthanc,
+                                     const Orthanc::DicomMap& dicom,
+                                     const std::string& parentOrthancId,
+                                     double pixelSpacingX,
+                                     double pixelSpacingY,
+                                     bool invert,
+                                     ImageInterpolation interpolation,
+                                     bool usePam)
+  {
+    Json::Value createDicomRequestContent;
+
+    std::auto_ptr<Orthanc::Image> rendered(ExportToImage(pixelSpacingX, pixelSpacingY, interpolation)); // note: we don't invert the image in the pixels data because we'll set the PhotometricDisplayMode correctly in the DICOM tags
 
     std::string base64;
 
@@ -618,12 +610,12 @@ namespace OrthancStone
       if (usePam)
       {
         Orthanc::PamWriter writer;
-        writer.WriteToMemory(content, rendered);
+        writer.WriteToMemory(content, *rendered);
       }
       else
       {
         Orthanc::PngWriter writer;
-        writer.WriteToMemory(content, rendered);
+        writer.WriteToMemory(content, *rendered);
       }
 
       Orthanc::Toolbox::EncodeBase64(base64, content);
@@ -680,8 +672,18 @@ namespace OrthancStone
     createDicomRequestContent["Content"] = ("data:" +
                                             std::string(usePam ? Orthanc::MIME_PAM : Orthanc::MIME_PNG) +
                                             ";base64," + base64);
-  }
 
+    if (!parentOrthancId.empty())
+    {
+      createDicomRequestContent["Parent"] = parentOrthancId;
+    }
+
+    orthanc.PostJsonAsyncExpectJson(
+          "/tools/create-dicom", createDicomRequestContent,
+          new Callable<RadiographyScene, OrthancApiClient::JsonResponseReadyMessage>
+          (*this, &RadiographyScene::OnDicomExported),
+          NULL, NULL);
+  }
 
   void RadiographyScene::OnDicomExported(const OrthancApiClient::JsonResponseReadyMessage& message)
   {

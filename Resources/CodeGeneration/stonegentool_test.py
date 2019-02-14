@@ -89,11 +89,18 @@ class TestStonegentool(unittest.TestCase):
   def test_GenOrderQueue(self):
     fn = os.path.join(os.path.dirname(__file__), 'test', 'test1.jsonc')
     obj = LoadSchema(fn)
-    genOrderQueue,structTypes = ProcessSchema(obj)
-    print(f"genOrderQueue = {genOrderQueue}")
-    print("")
+    genOrderQueue, outputStreams = ProcessSchema(obj)
+    self.assertEqual(3,len(genOrderQueue))
+    self.assertEqual("A",genOrderQueue[0])
+    self.assertEqual("B",genOrderQueue[0])
+    self.assertEqual("C",genOrderQueue[0])
+    #print(f"genOrderQueue = {genOrderQueue}")
+    #print("")
 
   def test_GenerateTypeScriptEnumeration(self):
+    fn = os.path.join(os.path.dirname(__file__), 'test', 'test1.jsonc')
+    obj = LoadSchema(fn)
+    (rootName,outputStreams) = ProcessSchema(obj)
     pass
 
   def test_GenerateCppEnumeration(self):

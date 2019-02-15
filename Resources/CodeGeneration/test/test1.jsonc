@@ -64,6 +64,24 @@
           "name":"Vegetables"
         }
       ]
+    },
+    {
+      "name":"CrispType",
+      "kind":"enum",
+      "fields": [
+        {
+          "name":"SaltAndPepper"
+        },
+        {
+          "name":"CreamAndChives"
+        },
+        {
+          "name":"Paprika"
+        },
+        {
+          "name":"Barbecue"
+        }
+      ]
     }
   ]
 }

@@ -247,8 +247,8 @@ namespace OrthancStone
 
         if (widget.LookupSelectedLayer(selected) &&
             (tool_ == Tool_Crop ||
-             tool_ == Tool_Resize) ||
-             tool_ == Tool_Mask)
+             tool_ == Tool_Resize ||
+             tool_ == Tool_Mask))
         {
           RadiographyScene::LayerAccessor accessor(widget.GetScene(), selected);
 

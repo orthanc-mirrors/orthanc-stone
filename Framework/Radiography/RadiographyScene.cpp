@@ -587,17 +587,15 @@ namespace OrthancStone
   }
 
 
-  void RadiographyScene::ExportDicom(OrthancApiClient& orthanc,
-                                     const Json::Value& dicomTags,
-                                     const std::string& parentOrthancId,
-                                     double pixelSpacingX,
-                                     double pixelSpacingY,
-                                     bool invert,
-                                     ImageInterpolation interpolation,
-                                     bool usePam)
+  void RadiographyScene::ExportToCreateDicomRequest(Json::Value& createDicomRequestContent,
+                                                    const Json::Value& dicomTags,
+                                                    const std::string& parentOrthancId,
+                                                    double pixelSpacingX,
+                                                    double pixelSpacingY,
+                                                    bool invert,
+                                                    ImageInterpolation interpolation,
+                                                    bool usePam)
   {
-    Json::Value createDicomRequestContent;
-
     std::auto_ptr<Orthanc::Image> rendered(ExportToImage(pixelSpacingX, pixelSpacingY, interpolation)); // note: we don't invert the image in the pixels data because we'll set the PhotometricDisplayMode correctly in the DICOM tags
 
     std::string base64;
@@ -661,6 +659,22 @@ namespace OrthancStone
     {
       createDicomRequestContent["Parent"] = parentOrthancId;
     }
+
+  }
+
+
+  void RadiographyScene::ExportDicom(OrthancApiClient& orthanc,
+                                     const Json::Value& dicomTags,
+                                     const std::string& parentOrthancId,
+                                     double pixelSpacingX,
+                                     double pixelSpacingY,
+                                     bool invert,
+                                     ImageInterpolation interpolation,
+                                     bool usePam)
+  {
+    Json::Value createDicomRequestContent;
+
+    ExportToCreateDicomRequest(createDicomRequestContent, dicomTags, parentOrthancId, pixelSpacingX, pixelSpacingY, invert, interpolation, usePam);
 
     orthanc.PostJsonAsyncExpectJson(
           "/tools/create-dicom", createDicomRequestContent,

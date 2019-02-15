@@ -1,7 +1,19 @@
 import json
 import re
 import sys
-from typing import Dict, List, Set
+from typing import (
+        Any,
+        Dict,
+        Generator,
+        Iterable,
+        Iterator,
+        List,
+        Match,
+        Optional,
+        Tuple,
+        Union,
+        cast,
+    )
 from io import StringIO
 import time
 
@@ -26,10 +38,10 @@ class JsonHelpers:
       contains C++ like comments that we need to remove before python can
       parse the file
       """
-        # remove all occurence streamed comments (/*COMMENT */) from string
+        # remove all occurrence streamed comments (/*COMMENT */) from string
         string = re.sub(re.compile("/\*.*?\*/", re.DOTALL), "", string)
 
-        # remove all occurence singleline comments (//COMMENT\n ) from string
+        # remove all occurrence singleline comments (//COMMENT\n ) from string
         string = re.sub(re.compile("//.*?\n"), "", string)
 
         return string
@@ -72,12 +84,12 @@ def GetCppTypeNameFromCanonical(canonicalTypeName: str) -> str:
     # replace int32 by int32_t
     # replace float32 by float
     # replace float64 by double
-    retVal = canonicalTypeName
-    retVal: str = retVal.replace("map", "std::map")
-    retVal: str = retVal.replace("vector", "std::vector")
-    retVal: str = retVal.replace("int32", "int32_t")
-    retVal: str = retVal.replace("float32", "float")
-    retVal: str = retVal.replace("float64", "double")
+    retVal: str = canonicalTypeName
+    retVal = retVal.replace("map", "std::map")
+    retVal = retVal.replace("vector", "std::vector")
+    retVal = retVal.replace("int32", "int32_t")
+    retVal = retVal.replace("float32", "float")
+    retVal = retVal.replace("float64", "double")
     return retVal
 
 def GetTypeScriptTypeNameFromCanonical(canonicalTypeName: str) -> str:
@@ -86,13 +98,13 @@ def GetTypeScriptTypeNameFromCanonical(canonicalTypeName: str) -> str:
     # replace int32 by number
     # replace float32 by number
     # replace float64 by number
-    retVal = canonicalTypeName
-    retVal: str = retVal.replace("map", "Map")
-    retVal: str = retVal.replace("vector", "Array")
-    retVal: str = retVal.replace("int32", "number")
-    retVal: str = retVal.replace("float32", "number")
-    retVal: str = retVal.replace("float64", "number")
-    retVal: str = retVal.replace("bool", "boolean")
+    retVal: str = canonicalTypeName
+    retVal = retVal.replace("map", "Map")
+    retVal = retVal.replace("vector", "Array")
+    retVal = retVal.replace("int32", "number")
+    retVal = retVal.replace("float32", "number")
+    retVal = retVal.replace("float64", "number")
+    retVal = retVal.replace("bool", "boolean")
     return retVal
 
 
@@ -155,7 +167,7 @@ def CheckSchemaSchema(schema: Dict) -> None:
 #     allTypes[typeName] = typeObject
 
 
-def EatToken(sentence: str) -> (str, str):
+def EatToken(sentence: str) -> Tuple[str, str]:
     """splits "A,B,C" into "A" and "B,C" where A, B and C are type names
   (including templates) like "int32", "TotoTutu", or 
   "map<map<int32,vector<string>>,map<string,int32>>" """
@@ -202,7 +214,7 @@ def SplitListOfTypes(typeName: str) -> List[str]:
 templateRegex = re.compile(r"([a-zA-Z0-9_]*[a-zA-Z0-9_]*)<([a-zA-Z0-9_,:<>]+)>")
 
 
-def ParseTemplateType(typeName) -> (bool, str, List[str]):
+def ParseTemplateType(typeName) -> Tuple[bool, str, List[str]]:
     """ If the type is a template like "SOMETHING<SOME<THING,EL<SE>>>", then 
   it returns (true,"SOMETHING","SOME<THING,EL<SE>>")
   otherwise it returns (false,"","")"""
@@ -213,12 +225,14 @@ def ParseTemplateType(typeName) -> (bool, str, List[str]):
     typeName = "".join(typeName.split())
     matches = templateRegex.match(typeName)
     if matches == None:
-        return (False, "", "")
+        return (False, "", [])
     else:
+        m = cast(Match[str], matches)
+        assert(len(m.groups()) == 2)
         # we need to split with the commas that are outside of the defined types
         # simply splitting at commas won't work
-        listOfDependentTypes = SplitListOfTypes(matches.group(2))
-        return (True, matches.group(1), listOfDependentTypes)
+        listOfDependentTypes = SplitListOfTypes(m.group(2))
+        return (True, m.group(1), listOfDependentTypes)
 
 
 # def GetPrimitiveType(typeName : str) -> Type:
@@ -286,10 +300,9 @@ def ProcessStructType_DepthFirstRecursive(
       genOrderQueue.append(typeName)
 
 def ProcessEnumerationType(
-  outputStreams: Dict[str, StringIO], typeDict) -> None:
-  print(f"About to process struct: {typeDict['name']}")
-  tsText : io.StringIO = StringIO()
-  cppText : io.StringIO = StringIO()
+  outputStreams: GeneratedCode, typeDict: Dict) -> None:
+  tsText : StringIO = StringIO()
+  cppText : StringIO = StringIO()
   
   tsText.write("enum %s\n" % typeDict['name'])
   tsText.write("{\n")
@@ -319,10 +332,9 @@ def ProcessEnumerationType(
 
 
 def ProcessStructType(
-  outputStreams: Dict[str, StringIO], typeDict) -> None:
-  print(f"About to process struct: {typeDict['name']}")
-  tsText : io.StringIO = StringIO()
-  cppText : io.StringIO = StringIO()
+  outputStreams: GeneratedCode, typeDict) -> None:
+  tsText : StringIO = StringIO()
+  cppText : StringIO = StringIO()
   
   tsText.write("class %s\n" % typeDict['name'])
   tsText.write("{\n")
@@ -344,23 +356,40 @@ def ProcessStructType(
   outputStreams['ts'].write(tsText.getvalue())
   outputStreams['cpp'].write(cppText.getvalue())
 
-def WritePreambles(outputStreams: Dict[str, StringIO]) -> None:
-    outputStreams["cpp"].write("""// autogenerated by stonegentool on %s
+
+def WritePreambles(rootName: str, outputStreams: GeneratedCode) -> None:
+    outputStreams.cppPreamble.write("""// autogenerated by stonegentool on %s for module %s
 #include <cstdint>
 #include <string>
 #include <vector>
 #include <map>
-""" % time.ctime())
+""" % (time.ctime(),rootName))
 
-    outputStreams["ts"].write("""// autogenerated by stonegentool on %s
-""" % time.ctime())
+    outputStreams.tsPreamble.write("""// autogenerated by stonegentool on %s for module %s
+""" % (time.ctime(),rootName))
 
-def ProcessSchema(schema: dict) -> (str, Dict[str, StringIO]):
+class GeneratedCode:
+  def __init__(self):
+    self.cppPreamble = StringIO() # file-wide preamble (#include directives, comment...)
+    self.cppEnums = StringIO()
+    self.cppStructs = StringIO()
+    self.cppDispatcher = StringIO()
+    self.cppHandler = StringIO()
+
+    self.tsPreamble = StringIO() # file-wide preamble (module directives, comment...)
+    self.tsEnums = StringIO()
+    self.tsStructs = StringIO()
+    self.tsDispatcher = StringIO()
+    self.tsHandler = StringIO()
+
+  def FlattenToFiles(self,outputDir: str):
+    raise NotImplementedError()
+
+def ProcessSchema(schema: dict) -> Tuple[str, GeneratedCode, List[str]]:
     CheckSchemaSchema(schema)
     rootName: str = schema["root_name"]
     definedTypes: list = schema["types"]
 
-    print(f"Processing schema. rootName = f{rootName}")
     # this will be filled with the generation queue. That is, the type
     # names in the order where they must be defined.
     genOrderQueue: List = []
@@ -368,11 +397,9 @@ def ProcessSchema(schema: dict) -> (str, Dict[str, StringIO]):
     # the struct names are mapped to their JSON dictionary
     structTypes: Dict[str, Dict] = {}
 
-    outputStreams = {}
-    outputStreams["cpp"] = StringIO()
-    outputStreams["ts"] = StringIO()
+    outputStreams : GeneratedCode = GeneratedCode()
 
-    WritePreambles(outputStreams)
+    WritePreambles(rootName, outputStreams)
 
     # the order here is the generation order
     for definedType in definedTypes:
@@ -396,60 +423,45 @@ def ProcessSchema(schema: dict) -> (str, Dict[str, StringIO]):
         typeDict = structTypes[typeName]
         ProcessStructType(outputStreams, typeDict)
 
-    return (rootName, outputStreams)
+    return (rootName, outputStreams, genOrderQueue)
 
+
+
+def WriteStreamsToFiles(rootName: str, outputStreams: Dict[str, StringIO]) -> None:
+  pass
 
 if __name__ == "__main__":
-    import argparse
+  import argparse
 
-    parser = argparse.ArgumentParser(
-        usage="""stonegentool.py [-h] [-o OUT_DIR] [-v] input_schemas
-       EXAMPLE: python command_gen.py -o "generated_files/" """
-        + """ "mainSchema.json,App Specific Commands.json" """
-    )
-    parser.add_argument("input_schema", type=str, help="path to the schema file")
-    parser.add_argument(
-        "-o",
-        "--out_dir",
-        type=str,
-        default=".",
-        help="""path of the directory where the files 
-                                will be generated. Default is current
-                                working folder""",
-    )
-    parser.add_argument(
-        "-v",
-        "--verbosity",
-        action="count",
-        default=0,
-        help="""increase output verbosity (0 == errors 
-                                only, 1 == some verbosity, 2 == nerd
-                                mode""",
-    )
+  parser = argparse.ArgumentParser(
+      usage="""stonegentool.py [-h] [-o OUT_DIR] [-v] input_schemas
+      EXAMPLE: python command_gen.py -o "generated_files/" """
+      + """ "mainSchema.json,App Specific Commands.json" """
+  )
+  parser.add_argument("input_schema", type=str, help="path to the schema file")
+  parser.add_argument(
+      "-o",
+      "--out_dir",
+      type=str,
+      default=".",
+      help="""path of the directory where the files 
+                              will be generated. Default is current
+                              working folder""",
+  )
+  parser.add_argument(
+      "-v",
+      "--verbosity",
+      action="count",
+      default=0,
+      help="""increase output verbosity (0 == errors 
+                              only, 1 == some verbosity, 2 == nerd
+                              mode""",
+  )
 
-    args = parser.parse_args()
-    inputSchemaFilename = args.input_schema
-    outDir = args.out_dir
+  args = parser.parse_args()
+  inputSchemaFilename = args.input_schema
+  outDir = args.out_dir
 
-    print("input schema = " + str(inputSchemaFilename))
-    print("out dir = " + str(outDir))
-
-    (rootName, outputStreams) = ProcessSchema(LoadSchema(inputSchemaFilename))
-    WriteStreamsToFiles(rootName, outputStreams)
-
-###################
-##     ATTIC     ##
-###################
-
-# this works
-
-if False:
-    obj = json.loads(
-        """{
-    "firstName": "Alice",
-    "lastName": "Hall",
-    "age": 35
-  }"""
-    )
-    print(obj)
+  (rootName, outputStreams, _) = ProcessSchema(LoadSchema(inputSchemaFilename))
+  WriteStreamsToFiles(rootName, outputStreams)
 

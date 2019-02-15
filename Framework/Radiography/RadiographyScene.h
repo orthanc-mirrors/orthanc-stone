@@ -204,6 +204,15 @@ namespace OrthancStone
                      ImageInterpolation interpolation,
                      bool usePam);
 
+    void ExportDicom(OrthancApiClient& orthanc,
+                     const Json::Value& dicomTags,
+                     const std::string& parentOrthancId,
+                     double pixelSpacingX,
+                     double pixelSpacingY,
+                     bool invert,
+                     ImageInterpolation interpolation,
+                     bool usePam);
+
     Orthanc::Image* ExportToImage(double pixelSpacingX,
                                   double pixelSpacingY,
                                   ImageInterpolation interpolation)

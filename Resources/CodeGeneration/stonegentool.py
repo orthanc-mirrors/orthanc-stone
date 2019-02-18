@@ -22,7 +22,6 @@ import time
 12345678901234567890123456789012345678901234567890123456789012345678901234567890
 """
 
-
 class GeneratedCode:
     def __init__(self):
 
@@ -81,26 +80,8 @@ class JsonHelpers:
         return json.loads(fileContent)
 
 
-def LoadSchema(filePath: str):
+def LoadSchemaFromJson(filePath: str):
     return JsonHelpers.loadJsonWithComments(filePath)
-
-
-# class Type:
-#   def __init__(self, canonicalTypeName:str, kind:str):
-#     allowedTypeKinds = ["primitive","enum","struct","collection"]
-#     """dependent type is the list of canonical types this type depends on.
-#        For instance, vector<map<string,int32>> depends on map<string,int32>
-#        that, in turn, depends on string and int32 that, in turn, depend on
-#        nothing"""
-#     self.canonicalTypeName = canonicalTypeName
-#     assert(kind in allowedTypeKinds)
-
-#   def setDependentTypes(self, dependentTypes:List[Type]) -> None:
-#     self.dependentTypes = dependentTypes
-
-#   def getDependentTypes(self) -> List[Type]:
-#     return self.dependentTypes
-
 
 def GetCppTypeNameFromCanonical(canonicalTypeName: str) -> str:
     # C++: prefix map vector and string with std::map, std::vector and
@@ -115,7 +96,6 @@ def GetCppTypeNameFromCanonical(canonicalTypeName: str) -> str:
     retVal = retVal.replace("float32", "float")
     retVal = retVal.replace("float64", "double")
     return retVal
-
 
 def GetTypeScriptTypeNameFromCanonical(canonicalTypeName: str) -> str:
     # TS: replace vector with Array and map with Map
@@ -132,12 +112,10 @@ def GetTypeScriptTypeNameFromCanonical(canonicalTypeName: str) -> str:
     retVal = retVal.replace("bool", "boolean")
     return retVal
 
-
 # class Schema:
 #   def __init__(self, root_prefix : str, defined_types : List[Type]):
 #     self.rootName : str = root_prefix
 #     self.definedTypes : str = defined_types
-
 
 def CheckTypeSchema(definedType: Dict) -> None:
     allowedDefinedTypeKinds = ["enum", "struct"]
@@ -169,7 +147,7 @@ def CheckTypeSchema(definedType: Dict) -> None:
             fieldName = field["name"]
             if not "type" in field:
                 raise Exception(
-                    f"field {fieldName} in type {name} " + "lacks the 'type' key"
+                    f"field {fieldName} in type {name} " + "has no 'type' key"
                 )
 
 
@@ -226,7 +204,8 @@ def SplitListOfTypes(typeName: str) -> List[str]:
     return tokenList
 
 
-templateRegex = re.compile(r"([a-zA-Z0-9_]*[a-zA-Z0-9_]*)<([a-zA-Z0-9_,:<>]+)>")
+templateRegex = \
+  re.compile(r"([a-zA-Z0-9_]*[a-zA-Z0-9_]*)<([a-zA-Z0-9_,:<>]+)>")
 
 
 def ParseTemplateType(typeName) -> Tuple[bool, str, List[str]]:
@@ -249,27 +228,11 @@ def ParseTemplateType(typeName) -> Tuple[bool, str, List[str]]:
         listOfDependentTypes = SplitListOfTypes(m.group(2))
         return (True, m.group(1), listOfDependentTypes)
 
-
-# def GetPrimitiveType(typeName : str) -> Type:
-#   if typeName in allTypes:
-#     return allTypes[typeName]
-#   else:
-#     primitiveTypes = ['int32', 'float32', 'float64', 'string']
-#     if not (typeName in primitiveTypes):
-#       raise Exception(f"Type {typeName} is unknown.")
-#     typeObject = Type(typeName,'primitive')
-#     # there are no dependent types in a primitive type --> Type object
-#     # constrution is finished at this point
-#     allTypes[typeName] = typeObject
-#     return typeObject
-
-
 def ProcessTypeTree(
     ancestors: List[str],
     genOrderQueue: List[str],
     structTypes: Dict[str, Dict],
-    typeName: str,
-) -> None:
+    typeName: str) -> None:
   if typeName in ancestors:
     raise Exception(
       f"Cyclic dependency chain found: the last of {ancestors} "
@@ -313,14 +276,23 @@ def ProcessStructType_DepthFirstRecursive(genOrderQueue: List[str], \
     genOrderQueue.append(typeName)
 
 def ProcessEnumerationType(outputStreams: GeneratedCode, typeDict: Dict) -> None:
-  tsText: StringIO = StringIO()
-  cppText: StringIO = StringIO()
 
-  tsText.write("enum %s\n" % typeDict["name"])
-  tsText.write("{\n")
+  # enumeration declarations
+  tsDeclText: StringIO = StringIO()
+  tsDeclText.write("enum %s\n" % typeDict["name"])
+  tsDeclText.write("{\n")
 
-  cppText.write("enum %s\n" % typeDict["name"])
-  cppText.write("{\n")
+  cppDeclText: StringIO = StringIO()
+  cppDeclText.write("enum %s\n" % typeDict["name"])
+  cppDeclText.write("{\n")
+
+  cppToStringText: StringIO = StringIO()
+  cppToStringText.write("enum %s\n" % typeDict["name"])
+  cppToStringText.write("{\n")
+
+  cppFromStringText: StringIO = StringIO()
+  cppFromStringText.write("enum %s\n" % typeDict["name"])
+  cppFromStringText.write("{\n")
 
   for i in range(len(typeDict["fields"])):
     field = typeDict["fields"][i]
@@ -336,8 +308,8 @@ def ProcessEnumerationType(outputStreams: GeneratedCode, typeDict: Dict) -> None
         cppText.write(",")
     cppText.write("\n")
 
-    tsText.write("};\n\n")
-    cppText.write("};\n\n")
+  tsText.write("};\n\n")
+  cppText.write("};\n\n")
 
   outputStreams.tsEnums.write(tsText.getvalue())
   outputStreams.cppEnums.write(cppText.getvalue())
@@ -362,7 +334,6 @@ def GetSerializationCode(typeName: str,valueName: str, tempName: str)
         $collectValue  
       }
     """
-
 
 
 

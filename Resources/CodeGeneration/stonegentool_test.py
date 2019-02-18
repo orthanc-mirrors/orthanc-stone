@@ -102,7 +102,7 @@ class TestStonegentool(unittest.TestCase):
     self.assertEqual("B",genOrderQueue[1])
     self.assertEqual("C",genOrderQueue[2])
 
-  def test_GenerateTypeScriptEnumeration(self):
+  def test_GeneratePreambleEnumerationAndStructs(self):
     fn = os.path.join(os.path.dirname(__file__), 'test', 'test1.jsonc')
     obj = LoadSchema(fn)
     (_,outputStreams,_) = ProcessSchema(obj)
@@ -201,15 +201,6 @@ struct C
     self.assertEqual(cppPreambleRefCastrated,cppPreambleCastrated)
     self.assertEqual(cppEnumsRef,outputStreams.cppEnums.getvalue())
     self.assertEqual(cppStructsRef,outputStreams.cppStructs.getvalue())
-
-  def test_GenerateCppEnumeration(self):
-    pass
-
-  def test_GenerateTypeScriptClasses(self):
-    pass
-
-  def test_GenerateCppClasses(self):
-    pass
 
   def test_GenerateTypeScriptHandlerInterface(self):
     pass

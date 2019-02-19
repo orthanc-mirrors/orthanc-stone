@@ -55,11 +55,11 @@ namespace OrthancStone
         ReadLayerGeometry(geometry, jsonLayer);
 
         float foreground = jsonLayer["foreground"].asFloat();
-        std::vector<MaskPoint> corners;
+        std::vector<Orthanc::ImageProcessing::ImagePoint> corners;
         for (size_t i = 0; i < jsonLayer["corners"].size(); i++)
         {
-          MaskPoint corner(jsonLayer["corners"][(int)i]["x"].asUInt(),
-              jsonLayer["corners"][(int)i]["y"].asUInt());
+          Orthanc::ImageProcessing::ImagePoint corner(jsonLayer["corners"][(int)i]["x"].asInt(),
+              jsonLayer["corners"][(int)i]["y"].asInt());
           corners.push_back(corner);
         }
 

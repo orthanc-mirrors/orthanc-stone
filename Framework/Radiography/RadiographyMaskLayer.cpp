@@ -50,30 +50,12 @@ namespace OrthancStone
     return dicomLayer_.GetPixel(imageX, imageY, sceneX, sceneY);
   }
 
-
-  void ComputeMaskExtent(unsigned int& left, unsigned int& right, unsigned int& top, unsigned int& bottom, const std::vector<MaskPoint>& corners)
-  {
-    left = std::numeric_limits<unsigned int>::max();
-    right = std::numeric_limits<unsigned int>::min();
-    top = std::numeric_limits<unsigned int>::max();
-    bottom = std::numeric_limits<unsigned int>::min();
-
-    for (size_t i = 0; i < corners.size(); i++)
-    {
-      const MaskPoint& p = corners[i];
-      left = std::min(p.x, left);
-      right = std::max(p.x, right);
-      bottom = std::max(p.y, bottom);
-      top = std::min(p.y, top);
-    }
-  }
-
   std::string RadiographyMaskLayer::GetInstanceId() const
   {
     return dicomLayer_.GetInstanceId();
   }
 
-  void RadiographyMaskLayer::SetCorner(const MaskPoint& corner, size_t index)
+  void RadiographyMaskLayer::SetCorner(const Orthanc::ImageProcessing::ImagePoint& corner, size_t index)
   {
     if (index < corners_.size())
       corners_[index] = corner;
@@ -82,7 +64,7 @@ namespace OrthancStone
     invalidated_ = true;
   }
 
-  void RadiographyMaskLayer::SetCorners(const std::vector<MaskPoint>& corners)
+  void RadiographyMaskLayer::SetCorners(const std::vector<Orthanc::ImageProcessing::ImagePoint>& corners)
   {
     corners_ = corners;
     invalidated_ = true;
@@ -146,90 +128,12 @@ namespace OrthancStone
 
   void RadiographyMaskLayer::DrawMask() const
   {
-    unsigned int left;
-    unsigned int right;
-    unsigned int top;
-    unsigned int bottom;
-
-    ComputeMaskExtent(left, right, top, bottom, corners_);
-
     // first fill the complete image
     Orthanc::ImageProcessing::Set(*mask_, OUT_MASK_VALUE);
 
-    {
-      // from http://alienryderflex.com/polygon_fill/
-      std::auto_ptr<int> raiiNodeX(new int(corners_.size()));
+    // fill mask
+    Orthanc::ImageProcessing::FillPolygon(*mask_, corners_, IN_MASK_VALUE);
 
-      // convert all control points to double only once
-      std::vector<double> cpx;
-      std::vector<double> cpy;
-      int cpSize = corners_.size();
-      for (size_t i = 0; i < corners_.size(); i++)
-      {
-        cpx.push_back((double)corners_[i].x);
-        cpy.push_back((double)corners_[i].y);
-      }
-
-      std::vector<int> nodeX;
-      nodeX.resize(cpSize);
-      int  nodes, pixelX, pixelY, i, j, swap ;
-
-      //  Loop through the rows of the image.
-      for (pixelY = (int)top; pixelY < (int)bottom; pixelY++)
-      {
-        double y = (double)pixelY;
-        //  Build a list of nodes.
-        nodes = 0;
-        j = cpSize - 1;
-
-        for (i = 0; i < cpSize; i++)
-        {
-          if ((cpy[i] < y && cpy[j] >=  y)
-              ||  (cpy[j] < y && cpy[i] >= y))
-          {
-            nodeX[nodes++]= (int)(cpx[i] + (y - cpy[i])/(cpy[j] - cpy[i]) *(cpx[j] - cpx[i]));
-          }
-          j=i;
-        }
-
-        //  Sort the nodes, via a simple “Bubble” sort.
-        i=0;
-        while (i < nodes-1)
-        {
-          if (nodeX[i] > nodeX[i+1])
-          {
-            swap = nodeX[i];
-            nodeX[i] = nodeX[i+1];
-            nodeX[i+1] = swap;
-            if (i)
-              i--;
-          }
-          else
-          {
-            i++;
-          }
-        }
-
-        unsigned char* row = reinterpret_cast<unsigned char*>(mask_->GetRow(pixelY));
-        //  Fill the pixels between node pairs.
-        for (i=0; i<nodes; i+=2)
-        {
-          if   (nodeX[i  ]>=(int)right)
-            break;
-          if   (nodeX[i+1]>= (int)left)
-          {
-            if (nodeX[i  ]< (int)left )
-              nodeX[i  ]=(int)left ;
-            if (nodeX[i+1]> (int)right)
-              nodeX[i+1]=(int)right;
-            for (pixelX = nodeX[i]; pixelX <= nodeX[i+1]; pixelX++)
-            {
-              *(row + pixelX) = IN_MASK_VALUE;
-            }
-          }
-        }
-      }
-    }
   }
 
 }

@@ -63,12 +63,12 @@ namespace OrthancStone
     output["instanceId"] = layer.GetInstanceId(); // the dicom layer it's being linked to
     output["foreground"] = layer.GetForeground();
     output["corners"] = Json::arrayValue;
-    const std::vector<MaskPoint>& corners = layer.GetCorners();
+    const std::vector<Orthanc::ImageProcessing::ImagePoint>& corners = layer.GetCorners();
     for (size_t i = 0; i < corners.size(); i++)
     {
       Json::Value corner;
-      corner["x"] = corners[i].x;
-      corner["y"] = corners[i].y;
+      corner["x"] = corners[i].GetX();
+      corner["y"] = corners[i].GetY();
       output["corners"].append(corner);
     }
   }

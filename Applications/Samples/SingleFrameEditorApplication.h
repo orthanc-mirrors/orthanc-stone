@@ -499,12 +499,12 @@ namespace OrthancStone
         
         //scene_->LoadDicomWebFrame(context->GetWebService());
         
-        std::vector<MaskPoint> mask;
-        mask.push_back(MaskPoint(1100, 100));
-        mask.push_back(MaskPoint(1100, 1000));
-        mask.push_back(MaskPoint(2000, 1000));
-        mask.push_back(MaskPoint(2200, 150));
-        mask.push_back(MaskPoint(1500, 550));
+        std::vector<Orthanc::ImageProcessing::ImagePoint> mask;
+        mask.push_back(Orthanc::ImageProcessing::ImagePoint(1100, 100));
+        mask.push_back(Orthanc::ImageProcessing::ImagePoint(1100, 1000));
+        mask.push_back(Orthanc::ImageProcessing::ImagePoint(2000, 1000));
+        mask.push_back(Orthanc::ImageProcessing::ImagePoint(2200, 150));
+        mask.push_back(Orthanc::ImageProcessing::ImagePoint(1500, 550));
         maskLayer_ = dynamic_cast<RadiographyMaskLayer*>(&(scene_->LoadMask(mask, dynamic_cast<RadiographyDicomLayer&>(dicomLayer), 128.0f, NULL)));
         interactor_.SetMaskLayer(maskLayer_);
 

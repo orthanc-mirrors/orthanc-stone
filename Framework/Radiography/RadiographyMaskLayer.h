@@ -23,27 +23,17 @@
 
 #include "RadiographyLayer.h"
 #include "Core/Images/Image.h"
+#include "Core/Images/ImageProcessing.h"
 
 namespace OrthancStone
 {
   class RadiographyScene;
   class RadiographyDicomLayer;
 
-  struct MaskPoint
-  {
-    unsigned int x;
-    unsigned int y;
-
-    MaskPoint(unsigned int x, unsigned int y)
-      : x(x),
-        y(y)
-    {}
-  };
-
   class RadiographyMaskLayer : public RadiographyLayer
   {
   private:
-    std::vector<MaskPoint>            corners_;
+    std::vector<Orthanc::ImageProcessing::ImagePoint>            corners_;
     const RadiographyDicomLayer&      dicomLayer_;
     mutable bool                      invalidated_;
     float                             foreground_;
@@ -59,10 +49,10 @@ namespace OrthancStone
     {
     }
 
-    void SetCorners(const std::vector<MaskPoint>& corners);
-    void SetCorner(const MaskPoint& corner, size_t index);
+    void SetCorners(const std::vector<Orthanc::ImageProcessing::ImagePoint>& corners);
+    void SetCorner(const Orthanc::ImageProcessing::ImagePoint& corner, size_t index);
 
-    const std::vector<MaskPoint>& GetCorners() const
+    const std::vector<Orthanc::ImageProcessing::ImagePoint>& GetCorners() const
     {
       return corners_;
     }
@@ -86,7 +76,7 @@ namespace OrthancStone
     virtual void GetControlPoint(ControlPoint& cpScene,
                                          size_t index) const
     {
-      ControlPoint cp(corners_[index].x, corners_[index].y, index);
+      ControlPoint cp(corners_[index].GetX(), corners_[index].GetY(), index);
 
       // transforms image coordinates into scene coordinates
       GetTransform().Apply(cp.x, cp.y);

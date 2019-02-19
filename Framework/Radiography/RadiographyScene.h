@@ -25,10 +25,10 @@
 #include "../Toolbox/OrthancApiClient.h"
 #include "Framework/StoneEnumerations.h"
 #include "Core/Images/Image.h"
+#include "Core/Images/ImageProcessing.h"
 
 namespace OrthancStone
 {
-  struct MaskPoint;
   class RadiographyDicomLayer;
 
   class RadiographyScene :
@@ -154,7 +154,7 @@ namespace OrthancStone
                                     unsigned int height,
                                     RadiographyLayer::Geometry* geometry);
 
-    RadiographyLayer& LoadMask(const std::vector<MaskPoint>& corners,
+    RadiographyLayer& LoadMask(const std::vector<Orthanc::ImageProcessing::ImagePoint>& corners,
                                const RadiographyDicomLayer& dicomLayer,
                                float foreground,
                                RadiographyLayer::Geometry* geometry);

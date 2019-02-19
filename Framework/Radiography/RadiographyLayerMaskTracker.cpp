@@ -45,7 +45,7 @@ namespace OrthancStone
       unsigned int ix, iy; // image coordinates
       if (maskLayer->GetPixel(ix, iy, sourceSceneCp_.x, sourceSceneCp_.y))
       {
-        maskLayer->SetCorner(MaskPoint(ix, iy), sourceSceneCp_.index);
+        maskLayer->SetCorner(Orthanc::ImageProcessing::ImagePoint((int32_t)ix, (int32_t)iy), sourceSceneCp_.index);
       }
     }
 
@@ -59,7 +59,7 @@ namespace OrthancStone
       unsigned int ix, iy; // image coordinates
       if (maskLayer->GetPixel(ix, iy, targetSceneCp_.x, targetSceneCp_.y))
       {
-        maskLayer->SetCorner(MaskPoint(ix, iy), targetSceneCp_.index);
+        maskLayer->SetCorner(Orthanc::ImageProcessing::ImagePoint((int32_t)ix, (int32_t)iy), targetSceneCp_.index);
       }
     }
 
@@ -77,7 +77,7 @@ namespace OrthancStone
       unsigned int ix, iy; // image coordinates
       if (maskLayer->GetPixel(ix, iy, targetSceneCp_.x, targetSceneCp_.y))
       {
-        maskLayer->SetCorner(MaskPoint(ix, iy), targetSceneCp_.index);
+        maskLayer->SetCorner(Orthanc::ImageProcessing::ImagePoint((int32_t)ix, (int32_t)iy), targetSceneCp_.index);
       }
     }
   };
@@ -133,7 +133,7 @@ namespace OrthancStone
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
         }
-        maskLayer->SetCorner(MaskPoint(ix, iy), startSceneCp_.index);
+        maskLayer->SetCorner(Orthanc::ImageProcessing::ImagePoint((int32_t)ix, (int32_t)iy), startSceneCp_.index);
       }
     }
   }

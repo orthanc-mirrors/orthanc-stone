@@ -293,7 +293,7 @@ namespace OrthancStone
     return LoadAlphaBitmap(block.release(), geometry);
   }
 
-  RadiographyLayer& RadiographyScene::LoadMask(const std::vector<MaskPoint>& corners,
+  RadiographyLayer& RadiographyScene::LoadMask(const std::vector<Orthanc::ImageProcessing::ImagePoint>& corners,
                                                const RadiographyDicomLayer& dicomLayer,
                                                float foreground,
                                                RadiographyLayer::Geometry* geometry)

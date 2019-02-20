@@ -34,7 +34,6 @@ namespace VsolStuff
     printf(`About to serialize value. Type is ${valueType}`)
     printf(`About to serialize value. Type is ${typeof value}`)
     return "Choucroute";
-
   }
 
   function main():number

@@ -10,7 +10,7 @@ struct B:
 
 struct C:
   someBs: vector<B>
-  ddd:    vector<D>
+  ddd:    vector<string>
 
 struct A:
   someStrings: vector<string>

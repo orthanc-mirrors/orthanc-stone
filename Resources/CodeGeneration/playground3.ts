@@ -3,7 +3,7 @@
 12345678901234567890123456789012345678901234567890123456789012345678901234567890
 */
 
-namespace VsolStuff {
+namespace VsolStuff222 {
   export enum EnumMonth0 {
     January,
     February,
@@ -17,7 +17,7 @@ namespace VsolStuff {
     d: boolean;
     public StoneSerialize(): string {
       let container: object = {};
-      container['type'] = 'Message1';
+      container['type'] = 'VsolStuff.Message1';
       container['value'] = this;
       return JSON.stringify(container);
     }
@@ -32,7 +32,7 @@ namespace VsolStuff {
 
     public StoneSerialize(): string {
       let container: object = {};
-      container['type'] = 'Message1';
+      container['type'] = 'VsolStuff.Message2';
       container['value'] = this;
       return JSON.stringify(container);
     }
@@ -69,7 +69,7 @@ function main(): number {
   msg2_0.tata.push(msg1_0);
   msg2_0.tata.push(msg1_1);
   msg2_0.tutu.push("Mercadet");
-  msg2_0.tutu.push("Poisson");
+  msg2_0.tutu.push("Poisson");ing
   msg2_0.titi["44"] = "key 44";
   msg2_0.titi["45"] = "key 45";
   msg2_0.lulu["54"] = msg1_1;

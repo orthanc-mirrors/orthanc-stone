@@ -125,6 +125,20 @@ Orthanc
 ./OrthancStoneSimpleViewer --studyId=XX
 ``` 
 
+to build the Qt native samples on Windows:
+-----------------------------------------
+
+In a VS2015 x64 Native Tools Command Prompt:
+
+```
+mkdir -p C:\Users\alain\osimis\builds\orthanc-stone-build
+cd C:\Users\alain\osimis\builds\orthanc-stone-build
+cmake -G Ninja -DSTATIC_BUILD=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT=C:\Users\alain\osimis\orthanc -DCMAKE_PREFIX_PATH=C:\Qt\5.9.3\msvc2015_64 ..\..\orthanc-stone\Applications\Samples
+
+cmake -G Ninja -DALLOW_DOWNLOADS=ON -DENABLE_QT=ON ~/orthanc-stone/Applications/Samples/
+cmake --build . --target OrthancStoneSimpleViewer -- -j 5
+```
+
 
 Licensing
 ---------

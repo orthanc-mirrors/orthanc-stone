@@ -174,6 +174,30 @@ namespace OrthancStone
 
     const RadiographyLayer& GetLayer(size_t layerIndex) const;
 
+    template <typename TypeLayer>
+    TypeLayer* GetLayer(size_t index = 0)
+    {
+      std::vector<size_t> layerIndexes;
+      GetLayersIndexes(layerIndexes);
+
+      size_t count = 0;
+
+      for (size_t i = 0; i < layerIndexes.size(); ++i)
+      {
+        TypeLayer* typedLayer = dynamic_cast<TypeLayer*>(layers_[layerIndexes[i]]);
+        if (typedLayer != NULL)
+        {
+          if (count == index)
+          {
+            return typedLayer;
+          }
+          count++;
+        }
+      }
+
+      return NULL;
+    }
+
     void GetLayersIndexes(std::vector<size_t>& output) const;
 
     Extent2D GetSceneExtent() const;

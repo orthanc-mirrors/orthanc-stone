@@ -108,34 +108,55 @@ class JsonHelpers:
 def LoadSchemaFromJson(filePath: str):
     return JsonHelpers.loadJsonWithComments(filePath)
 
-def GetCppTypenameFromCanonical(canonicalTypename: str) -> str:
-    # C++: prefix map vector and string with std::map, std::vector and
-    # std::string
-    # replace int32 by int32_t
-    # replace float32 by float
-    # replace float64 by double
-    retVal: str = canonicalTypename
-    retVal = retVal.replace("map", "std::map")
-    retVal = retVal.replace("vector", "std::vector")
-    retVal = retVal.replace("int32", "int32_t")
-    retVal = retVal.replace("float32", "float")
-    retVal = retVal.replace("float64", "double")
-    return retVal
+def CanonToCpp(canonicalTypename: str) -> str:
+  # C++: prefix map vector and string with std::map, std::vector and
+  # std::string
+  # replace int32 by int32_t
+  # replace float32 by float
+  # replace float64 by double
+  retVal: str = canonicalTypename
+  retVal = retVal.replace("map", "std::map")
+  retVal = retVal.replace("vector", "std::vector")
+  retVal = retVal.replace("int32", "int32_t")
+  retVal = retVal.replace("float32", "float")
+  retVal = retVal.replace("float64", "double")
+  return retVal
 
-def GetTypeScriptTypenameFromCanonical(canonicalTypename: str) -> str:
-    # TS: replace vector with Array and map with Map
-    # string remains string
-    # replace int32 by number
-    # replace float32 by number
-    # replace float64 by number
-    retVal: str = canonicalTypename
-    retVal = retVal.replace("map", "Map")
-    retVal = retVal.replace("vector", "Array")
-    retVal = retVal.replace("int32", "number")
-    retVal = retVal.replace("float32", "number")
-    retVal = retVal.replace("float64", "number")
-    retVal = retVal.replace("bool", "boolean")
-    return retVal
+def CanonToTs(canonicalTypename: str) -> str:
+  # TS: replace vector with Array and map with Map
+  # string remains string
+  # replace int32 by number
+  # replace float32 by number
+  # replace float64 by number
+  retVal: str = canonicalTypename
+  retVal = retVal.replace("map", "Map")
+  retVal = retVal.replace("vector", "Array")
+  retVal = retVal.replace("int32", "number")
+  retVal = retVal.replace("float32", "number")
+  retVal = retVal.replace("float64", "number")
+  retVal = retVal.replace("bool", "boolean")
+  return retVal
+
+def NeedsConstruction(canonTypename):
+  return True
+
+def RegisterTemplateFunction(template,func):
+  """Makes a function callable by a jinja2 template"""
+  template.globals[func.__name__] = func
+  return func
+
+def MakeTemplate(templateStr):
+  template = Template(templateStr)
+  RegisterTemplateFunction(template,CanonToCpp)
+  RegisterTemplateFunction(template,CanonToTs)
+  RegisterTemplateFunction(template,NeedsConstruction)
+  return template
+
+def MakeTemplateFromFile(templateFileName):
+  templateFile = open(templateFileName, "r")
+  templateFileContents = templateFile.read()
+  return MakeTemplate(templateFileContents)
+  templateFile.close()
 
 def EatToken(sentence: str) -> Tuple[str, str]:
     """splits "A,B,C" into "A" and "B,C" where A, B and C are type names
@@ -307,6 +328,7 @@ def CheckSchemaSchema(schema: Dict) -> None:
 
   # TODO: check enum fields are unique (in whole namespace)
   # TODO: check struct fields are unique (in each struct)
+  # TODO: check that in the source schema, there are spaces after each colon
 
 # +-----------------------+
 # | Main processing logic |
@@ -395,8 +417,23 @@ def ProcessSchema(schema: dict, genOrder: List[str]) -> Dict:
 #   pass
 
 def LoadSchema(fn):
-  with open(fn, 'rb') as f:
-    schema = yaml.load(f)
+  # latin-1 is a trick, when we do NOT care about NON-ascii chars but
+  # we wish to avoid using a decoding error handler
+  # (see http://python-notes.curiousefficiency.org/en/latest/python3/text_file_processing.html#files-in-an-ascii-compatible-encoding-best-effort-is-acceptable)
+  # TL;DR: all 256 values are mapped to characters in latin-1 so the file 
+  # contents never cause an error.
+  with open(fn, 'r', encoding='latin-1') as f:
+    schemaText = f.read()
+    assert(type(schemaText) == str)
+    # ensure there is a space after each colon. Otherwise, dicts could be
+    # erroneously recognized as an array of strings containing ':'
+    for i in range(len(schemaText)-1):
+      ch = schemaText[i]
+      nextCh = schemaText[i+1]
+      if ch == ':':
+        if not (nextCh == ' ' or nextCh == '\n'):
+          assert(False)
+    schema = yaml.load(schemaText)
   return schema
 
 def GetTemplatingDictFromSchemaFilename(fn):
@@ -658,3 +695,5 @@ if __name__ == "__main__":
 
 #   if not IsStructType(name):
 #     raise Exception(f'{typename} should start with "struct "')
+
+

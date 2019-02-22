@@ -6,41 +6,12 @@
 from stonegentool import \
 EatToken,SplitListOfTypes,ParseTemplateType,ProcessSchema, \
 CheckSchemaSchema,LoadSchema,trim,ComputeRequiredDeclarationOrder, \
-GetTemplatingDictFromSchemaFilename
+GetTemplatingDictFromSchemaFilename,MakeTemplate
 import unittest
 import os
 import re
 import pprint
 from jinja2 import Template
-
-ymlSchema = trim("""rootName: VsolMessages
-
-struct B:
-  someAs: vector<A>
-  someInts: vector<int32>
-
-struct C:
-  someBs: vector<B>
-  ddd:    vector<string>
-
-struct A:
-  someStrings: vector<string>
-  someInts2: vector<int32>
-  movies: vector<MovieType>
-
-enum MovieType:
-  - RomCom
-  - Horror
-  - ScienceFiction
-  - Vegetables
-
-enum CrispType:
- - SaltAndPepper
- - CreamAndChives
- - Paprika
- - Barbecue
-)
-""")
 
 def RemoveDateTimeLine(s : str):
   # regex are non-multiline by default, and $ does NOT match the end of the line
@@ -121,23 +92,16 @@ class TestStonegentool(unittest.TestCase):
     # we're happy if it does not crash :)
     CheckSchemaSchema(obj)
 
-  # def test_ParseSchema_bogus_json(self):
-  #   fn = os.path.join(os.path.dirname(__file__), 'test', 'test1_bogus_json.jsonc')
-  #   self.assertRaises(Exception,LoadSchema,fn)
-
-  # def test_ParseSchema_bogus_schema(self):
-  #   fn = os.path.join(os.path.dirname(__file__), 'test', 'test1_bogus_schema.jsonc')
-  #   obj = LoadSchema(fn)
-  #   self.assertRaises(Exception,CheckSchemaSchema,obj) 
-
   def test_ComputeRequiredDeclarationOrder(self):
     fn = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
     obj = LoadSchema(fn)
     genOrder: str = ComputeRequiredDeclarationOrder(obj)
-    self.assertEqual(3,len(genOrder))
+    self.assertEqual(5,len(genOrder))
     self.assertEqual("A",genOrder[0])
     self.assertEqual("B",genOrder[1])
     self.assertEqual("C",genOrder[2])
+    self.assertEqual("Message1",genOrder[3])
+    self.assertEqual("Message2",genOrder[4])
 
   # def test_GeneratePreambleEnumerationAndStructs(self):
   #   fn = os.path.join(os.path.dirname(__file__), 'test', 'test1.jsonc')
@@ -145,29 +109,35 @@ class TestStonegentool(unittest.TestCase):
   #   (_,genc,_) = ProcessSchema(obj)
 
   def test_genEnums(self):
+    self.maxDiff = None
     fn = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
     obj = LoadSchema(fn)
     genOrder: str = ComputeRequiredDeclarationOrder(obj)
     processedSchema = ProcessSchema(obj, genOrder)
-    processedSchemaStr = pprint.pformat(processedSchema,indent=2)
-    processedSchemaStrRef = """{ 'enums': [ { 'fields': ['RomCom', 'Horror', 'ScienceFiction', 'Vegetables'],
-               'name': 'MovieType'},
-             { 'fields': [ 'SaltAndPepper',
-                           'CreamAndChives',
-                           'Paprika',
-                           'Barbecue'],
-               'name': 'CrispType'}],
-  'rootName': 'VsolMessages',
-  'structs': [ { 'fields': { 'movies': 'vector<MovieType>',
-                             'someInts2': 'vector<int32>',
-                             'someStrings': 'vector<string>'},
-                 'name': 'A'},
-               { 'fields': {'someAs': 'vector<A>', 'someInts': 'vector<int32>'},
-                 'name': 'B'},
-               { 'fields': {'ddd': 'vector<string>', 'someBs': 'vector<B>'},
-                 'name': 'C'}]}"""
+    self.assertTrue('rootName' in processedSchema)
 
-    self.assertEqual(processedSchemaStrRef,processedSchemaStr)
+    structs = {}
+    for v in processedSchema['structs']:
+      structs[v['name']] = v
+    enums = {}
+    for v in processedSchema['enums']:
+      enums[v['name']] = v
+
+    self.assertTrue('C' in structs)
+    self.assertTrue('someBs' in structs['C']['fields'])
+    self.assertTrue('CrispType' in enums)
+    self.assertTrue('Message1' in structs)
+    message1Struct = structs['Message1']
+    self.assertDictEqual(message1Struct,
+    {
+      'name':'Message1',
+      'fields': {
+        'a': 'int32',
+        'b': 'string',
+        'c': 'EnumMonth0',
+        'd': 'bool'
+      }
+    })
 
   def test_GenerateTypeScriptEnums(self):
     fn = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
@@ -197,6 +167,221 @@ class TestStonegentool(unittest.TestCase):
 """
     self.assertEqual(renderedCodeRef,renderedCode)
 
+  def test_GenerateCplusplusEnums(self):
+    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
+    tdico = GetTemplatingDictFromSchemaFilename(fn)
+    template = Template("""  // end of generic methods
+{% for enum in enums%}  enum {{enum['name']}} {
+{% for key in enum['fields']%}    {{key}},
+{%endfor%}  };
+
+{%endfor%}""")
+    renderedCode = template.render(**tdico)
+    renderedCodeRef = """  // end of generic methods
+  enum MovieType {
+    RomCom,
+    Horror,
+    ScienceFiction,
+    Vegetables,
+  };
+
+  enum CrispType {
+    SaltAndPepper,
+    CreamAndChives,
+    Paprika,
+    Barbecue,
+  };
+
+"""
+    self.assertEqual(renderedCodeRef,renderedCode)
+
+  def test_generateTsStructType(self):
+    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
+    tdico = GetTemplatingDictFromSchemaFilename(fn)
+    ref = """  export class Message1 {
+    a: number;
+    b: string;
+    c: EnumMonth0;
+    d: boolean;
+    public StoneSerialize(): string {
+      let container: object = {};
+      container['type'] = 'VsolStuff.Message1';
+      container['value'] = this;
+      return JSON.stringify(container);
+    }
+  };
+
+  export class Message2 {
+    toto: string;
+    tata: Message1[];
+    tutu: string[];
+    titi: Map<string, string>;
+    lulu: Map<string, Message1>;
+
+    constructor()
+    {
+      this.tata = new Array<Message1>();
+      this.tutu = new Array<string>();
+      this.titi = new Map<string, string>();
+      this.lulu = new Map<string, Message1>();  
+    }
+
+    public StoneSerialize(): string {
+      let container: object = {};
+      container['type'] = 'VsolStuff.Message2';
+      container['value'] = this;
+      return JSON.stringify(container);
+    }
+  };
+
+"""
+#     template = MakeTemplate("""  // end of generic methods
+# {% for struct in struct%}  export class {{struct['name']}} {
+#   {% for key in struct['fields']%}    {{key}}:{{struct['fields'][key]}},
+#   {% endfor %}  
+#     constructor() {
+#   {% for key in struct['fields']%}
+#     {% if NeedsConstruction(struct['fields']['key'])}
+#       {{key}} = new {{CanonToTs(struct['fields']['key'])}};
+#     {% end if %}
+#   {% endfor %}
+#     }
+# {% endfor %}
+#     public StoneSerialize(): string {
+#       let container: object = {};
+#       container['type'] = '{{rootName}}.{{struct['name']}}';
+#       container['value'] = this;
+#       return JSON.stringify(container);
+#     }  };""")
+    template = MakeTemplate("""  // end of generic methods
+{% for struct in structs%}  export class {{struct['name']}} {
+{% for key in struct['fields']%}    {{key}}:{{CanonToTs(struct['fields'][key])}};
+{% endfor %}
+    constructor() {
+{% for key in struct['fields']%}      {{key}} = new {{CanonToTs(struct['fields'][key])}}();
+{% endfor %}    }
+
+    public StoneSerialize(): string {
+      let container: object = {};
+      container['type'] = '{{rootName}}.{{struct['name']}}';
+      container['value'] = this;
+      return JSON.stringify(container);
+    }
+  };
+
+{% endfor %}""")
+    renderedCode = template.render(**tdico)
+    renderedCodeRef = """  // end of generic methods
+  export class A {
+    someStrings:Array<string>;
+    someInts2:Array<number>;
+    movies:Array<MovieType>;
+
+    constructor() {
+      someStrings = new Array<string>();
+      someInts2 = new Array<number>();
+      movies = new Array<MovieType>();
+    }
+
+    public StoneSerialize(): string {
+      let container: object = {};
+      container['type'] = 'VsolMessages.A';
+      container['value'] = this;
+      return JSON.stringify(container);
+    }
+  };
+
+  export class B {
+    someAs:Array<A>;
+    someInts:Array<number>;
+
+    constructor() {
+      someAs = new Array<A>();
+      someInts = new Array<number>();
+    }
+
+    public StoneSerialize(): string {
+      let container: object = {};
+      container['type'] = 'VsolMessages.B';
+      container['value'] = this;
+      return JSON.stringify(container);
+    }
+  };
+
+  export class C {
+    someBs:Array<B>;
+    ddd:Array<string>;
+
+    constructor() {
+      someBs = new Array<B>();
+      ddd = new Array<string>();
+    }
+
+    public StoneSerialize(): string {
+      let container: object = {};
+      container['type'] = 'VsolMessages.C';
+      container['value'] = this;
+      return JSON.stringify(container);
+    }
+  };
+
+  export class Message1 {
+    a:number;
+    b:string;
+    c:EnumMonth0;
+    d:boolean;
+
+    constructor() {
+      a = new number();
+      b = new string();
+      c = new EnumMonth0();
+      d = new boolean();
+    }
+
+    public StoneSerialize(): string {
+      let container: object = {};
+      container['type'] = 'VsolMessages.Message1';
+      container['value'] = this;
+      return JSON.stringify(container);
+    }
+  };
+
+  export class Message2 {
+    toto:string;
+    tata:Array<Message1>;
+    tutu:Array<string>;
+    titi:Map<string, string>;
+    lulu:Map<string, Message1>;
+
+    constructor() {
+      toto = new string();
+      tata = new Array<Message1>();
+      tutu = new Array<string>();
+      titi = new Map<string, string>();
+      lulu = new Map<string, Message1>();
+    }
+
+    public StoneSerialize(): string {
+      let container: object = {};
+      container['type'] = 'VsolMessages.Message2';
+      container['value'] = this;
+      return JSON.stringify(container);
+    }
+  };
+
+"""
+    # print(renderedCode)
+    self.maxDiff = None
+    self.assertEqual(renderedCodeRef, renderedCode)
+
+  def test_generateWholeTsFile(self):
+    schemaFile = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
+    tdico = GetTemplatingDictFromSchemaFilename(schemaFile)
+    tsTemplateFile = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
+    template = MakeTemplateFromFile(tsTemplateFile)
+    renderedCode = template.render(**tdico)
+
+    print(renderedCode)
 
   def test_GenerateTypeScriptHandlerInterface(self):
     pass

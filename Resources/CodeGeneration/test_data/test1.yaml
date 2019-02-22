@@ -17,6 +17,19 @@ struct A:
   someInts2: vector<int32>
   movies: vector<MovieType>
 
+struct Message1:
+  a: int32
+  b: string
+  c: EnumMonth0
+  d: bool
+
+struct Message2:
+  toto: string
+  tata: vector<Message1>
+  tutu: vector<string>
+  titi: map<string, string>
+  lulu: map<string, Message1>
+
 enum MovieType:
   - RomCom
   - Horror

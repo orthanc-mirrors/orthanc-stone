@@ -39,52 +39,40 @@ namespace {{rootName}}
   };
 {%endfor%}
 
-  export class Message1 {
-    a: number;
-    b: string;
-    c: EnumMonth0;
-    d: boolean;
-    public StoneSerialize(): string {
-      let container: object = {};
-      container['type'] = 'VsolStuff.Message1';
-      container['value'] = this;
-      return JSON.stringify(container);
-    }
-  };
 
-  export class Message2 {
-    constructor()
-    {
-      this.tata = new Array<Message1>();
-      this.tutu = new Array<string>();
-      this.titi = new Map<string, string>();
-      this.lulu = new Map<string, Message1>();  
-    }
-    toto: string;
-    tata: Message1[];
-    tutu: string[];
-    titi: Map<string, string>;
-    lulu: Map<string, Message1>;
+"""  // end of generic methods
+{% for struct in structs%}  export class {{struct['name']}} {
+{% for key in struct['fields']%}    {{key}}:{{CanonToTs(struct['fields'][key])}};
+{% endfor %}
+    constructor() {
+{% for key in struct['fields']%}      {{key}} = new {{CanonToTs(struct['fields'][key])}}();
+{% endfor %}    }
 
     public StoneSerialize(): string {
       let container: object = {};
-      container['type'] = 'VsolStuff.Message2';
+      container['type'] = '{{rWholootName}}.{{struct['name']}}';
       container['value'] = this;
       return JSON.stringify(container);
     }
-    public static StoneDeserialize(valueStr: string) : Message2
+
+    public static StoneDeserialize(valueStr: string) : {{struct['name']}}
     {
       let value: any = JSON.parse(valueStr);
-      StoneCheckSerializedValueType(value, "VsolStuff.Message2");
-      let result: Message2 = value['value'] as Message2;
+      StoneCheckSerializedValueType(value, '{{rootName}}.{{struct['name']}}');
+      let result: {{struct['name']}} = value['value'] as {{struct['name']}};
       return result;
     }
+
+  }
+
+{% endfor %}
+
     };
 
   export interface IDispatcher
   {
-    HandleMessage1(value: Message1): boolean;
-    HandleMessage2(value: Message2): boolean;
+    {% for struct in structs%}    HandleMessage1(value:  {{struct['name']}}): boolean;
+    {% endfor %}
   };
 
   /** Service function for StoneDispatchToHandler */
@@ -99,16 +87,12 @@ namespace {{rootName}}
       // this should never ever happen
       throw new Error("Caught empty type while dispatching");
     }
-    else if (type == "VsolStuff.Message1")
+{% for struct in structs%}    else if (type == "VsolStuff.{{struct['name']}}")
     {
       let value = jsonValue["value"] as Message1;
       return dispatcher.HandleMessage1(value);
     }
-    else if (type == "VsolStuff.Message2")
-    {
-      let value = jsonValue["value"] as Message2;
-      return dispatcher.HandleMessage2(value);
-    }
+{% enfor %}
     else
     {
       return false;

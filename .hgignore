@@ -17,3 +17,5 @@ Resources/CodeGeneration/testCppHandler/build/
 Resources/CodeGeneration/testCppHandler/build_msbuild/
 syntax: glob
 Resources/CodeGeneration/testWasmIntegrated/build-wasm/
+Resources/CodeGeneration/testWasmIntegrated/build-tsc/
+Resources/CodeGeneration/testWasmIntegrated/build-final/

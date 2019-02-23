@@ -4,19 +4,6 @@ import re
 import os
 import sys
 from jinja2 import Template
-from typing import (
-    Any,
-    Dict,
-    Generator,
-    Iterable,
-    Iterator,
-    List,
-    Match,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
 from io import StringIO
 import time
 
@@ -71,7 +58,7 @@ class GenCode:
         self.tsDispatcher = StringIO()
         self.tsHandler = StringIO()
 
-    def FlattenToFiles(self, outputDir: str):
+    def FlattenToFiles(self, outputDir):
         raise NotImplementedError()
 
 
@@ -106,16 +93,16 @@ class JsonHelpers:
         return json.loads(fileContent)
 
 
-def LoadSchemaFromJson(filePath: str):
+def LoadSchemaFromJson(filePath):
     return JsonHelpers.loadJsonWithComments(filePath)
 
-def CanonToCpp(canonicalTypename: str) -> str:
+def CanonToCpp(canonicalTypename):
   # C++: prefix map vector and string with std::map, std::vector and
   # std::string
   # replace int32 by int32_t
   # replace float32 by float
   # replace float64 by double
-  retVal: str = canonicalTypename
+  retVal = canonicalTypename
   retVal = retVal.replace("map", "std::map")
   retVal = retVal.replace("vector", "std::vector")
   retVal = retVal.replace("string", "std::string")
@@ -124,13 +111,13 @@ def CanonToCpp(canonicalTypename: str) -> str:
   retVal = retVal.replace("float64", "double")
   return retVal
 
-def CanonToTs(canonicalTypename: str) -> str:
+def CanonToTs(canonicalTypename):
   # TS: replace vector with Array and map with Map
   # string remains string
   # replace int32 by number
   # replace float32 by number
   # replace float64 by number
-  retVal: str = canonicalTypename
+  retVal = canonicalTypename
   retVal = retVal.replace("map", "Map")
   retVal = retVal.replace("vector", "Array")
   retVal = retVal.replace("int32", "number")
@@ -139,7 +126,7 @@ def CanonToTs(canonicalTypename: str) -> str:
   retVal = retVal.replace("bool", "boolean")
   return retVal
 
-def NeedsTsConstruction(enums: Dict, tsType: str):
+def NeedsTsConstruction(enums, tsType):
   if tsType == 'boolean':
     return False
   elif tsType == 'number':
@@ -176,14 +163,14 @@ def MakeTemplateFromFile(templateFileName):
   return MakeTemplate(templateFileContents)
   templateFile.close()
 
-def EatToken(sentence: str) -> Tuple[str, str]:
+def EatToken(sentence):
     """splits "A,B,C" into "A" and "B,C" where A, B and C are type names
   (including templates) like "int32", "TotoTutu", or 
   "map<map<int32,vector<string>>,map<string,int32>>" """
 
     if sentence.count("<") != sentence.count(">"):
         raise Exception(
-            f"Error in the partial template type list {sentence}."
+            "Error in the partial template type list " + str(sentence) + "."
             + " The number of < and > do not match!"
         )
 
@@ -199,7 +186,7 @@ def EatToken(sentence: str) -> Tuple[str, str]:
     return (sentence, "")
 
 
-def SplitListOfTypes(typename: str) -> List[str]:
+def SplitListOfTypes(typename):
     """Splits something like
   vector<string>,int32,map<string,map<string,int32>> 
   in:
@@ -209,7 +196,7 @@ def SplitListOfTypes(typename: str) -> List[str]:
   
   This is not possible with a regex so 
   """
-    stillStuffToEat: bool = True
+    stillStuffToEat = True
     tokenList = []
     restOfString = typename
     while stillStuffToEat:
@@ -224,7 +211,7 @@ templateRegex = \
   re.compile(r"([a-zA-Z0-9_]*[a-zA-Z0-9_]*)<([a-zA-Z0-9_,:<>]+)>")
 
 
-def ParseTemplateType(typename) -> Tuple[bool, str, List[str]]:
+def ParseTemplateType(typename):
     """ If the type is a template like "SOMETHING<SOME<THING,EL<SE>>>", 
     then it returns (true,"SOMETHING","SOME<THING,EL<SE>>")
   otherwise it returns (false,"","")"""
@@ -237,7 +224,7 @@ def ParseTemplateType(typename) -> Tuple[bool, str, List[str]]:
     if matches == None:
         return (False, "", [])
     else:
-        m = cast(Match[str], matches)
+        m = matches
         assert len(m.groups()) == 2
         # we need to split with the commas that are outside of the
         # defined types. Simply splitting at commas won't work
@@ -246,14 +233,14 @@ def ParseTemplateType(typename) -> Tuple[bool, str, List[str]]:
 
 
 def ComputeOrderFromTypeTree(
-  ancestors: List[str], 
-  genOrder: List[str], 
-  shortTypename: str, schema: Dict[str, Dict]) -> None:
+  ancestors, 
+  genOrder, 
+  shortTypename, schema):
 
   if shortTypename in ancestors:
     raise Exception(
-      f"Cyclic dependency chain found: the last of {ancestors} "
-      + f"depends on {shortTypename} that is already in the list."
+      "Cyclic dependency chain found: the last of " + str(ancestors) +
+      + " depends on " + str(shortTypename) + " that is already in the list."
     )
 
   if not (shortTypename in genOrder):
@@ -273,7 +260,7 @@ def ComputeOrderFromTypeTree(
       # dependency that we must take into account in the dep graph,
       # i.e., a struct.
       if IsShortStructType(shortTypename, schema):
-        struct:Dict = schema[GetLongTypename(shortTypename, schema)]
+        struct = schema[GetLongTypename(shortTypename, schema)]
         # The keys in the struct dict are the member names
         # The values in the struct dict are the member types
         for field in struct.keys():
@@ -294,19 +281,19 @@ def ComputeOrderFromTypeTree(
 # |   Utility functions   |
 # +-----------------------+
 
-def IsShortStructType(typename: str, schema: Dict[str, Dict]) -> bool:
+def IsShortStructType(typename, schema):
   fullStructName = "struct " + typename
   return (fullStructName in schema)
 
-def GetLongTypename(shortTypename: str, schema: Dict):
+def GetLongTypename(shortTypename, schema):
   if shortTypename.startswith("enum "):
     raise RuntimeError('shortTypename.startswith("enum "):')
-  enumName: str = "enum " + shortTypename
+  enumName = "enum " + shortTypename
   isEnum = enumName in schema
 
   if shortTypename.startswith("struct "):
     raise RuntimeError('shortTypename.startswith("struct "):')
-  structName: str = "struct " + shortTypename
+  structName = "struct " + shortTypename
   isStruct = ("struct " + shortTypename) in schema
 
   if isEnum and isStruct:
@@ -317,16 +304,16 @@ def GetLongTypename(shortTypename: str, schema: Dict):
   if isStruct:
     return structName
 
-def IsTypename(fullName: str) -> bool:
+def IsTypename(fullName):
   return (fullName.startswith("enum ") or fullName.startswith("struct "))
 
-def IsEnumType(fullName: str) -> bool:
+def IsEnumType(fullName):
   return fullName.startswith("enum ")
 
-def IsStructType(fullName: str) -> bool:
+def IsStructType(fullName):
   return fullName.startswith("struct ")
 
-def GetShortTypename(fullTypename: str) -> str:
+def GetShortTypename(fullTypename):
   if fullTypename.startswith("struct "):
     return fullTypename[7:] 
   elif fullTypename.startswith("enum"):
@@ -335,14 +322,14 @@ def GetShortTypename(fullTypename: str) -> str:
     raise RuntimeError \
       ('fullTypename should start with either "struct " or "enum "')
 
-def CheckSchemaSchema(schema: Dict) -> None:
+def CheckSchemaSchema(schema):
   if not "rootName" in schema:
       raise Exception("schema lacks the 'rootName' key")
   for name in schema.keys():
     if (not IsEnumType(name)) and (not IsStructType(name)) and \
       (name != 'rootName'):
       raise RuntimeError \
-        (f'Type "{name}" should start with "enum " or "struct "')
+        ('Type "' + str(name) + '" should start with "enum " or "struct "')
 
   # TODO: check enum fields are unique (in whole namespace)
   # TODO: check struct fields are unique (in each struct)
@@ -352,7 +339,7 @@ def CheckSchemaSchema(schema: Dict) -> None:
 # | Main processing logic |
 # +-----------------------+
 
-def ComputeRequiredDeclarationOrder(schema: dict) -> List[str]:
+def ComputeRequiredDeclarationOrder(schema):
   # sanity check
   CheckSchemaSchema(schema)
 
@@ -364,25 +351,25 @@ def ComputeRequiredDeclarationOrder(schema: dict) -> List[str]:
   # We do not care about the enums here... They do not depend upon
   # anything and we'll handle them, in their original declaration 
   # order, at the start
-  genOrder: List = []
+  genOrder = []
   for fullName in schema.keys():
     if IsStructType(fullName):
-      realName: str = GetShortTypename(fullName)
-      ancestors: List[str] = []
+      realName = GetShortTypename(fullName)
+      ancestors = []
       ComputeOrderFromTypeTree(ancestors, genOrder, realName, schema)
   return genOrder
 
-def ProcessSchema(schema: dict, genOrder: List[str]) -> Dict:
+def ProcessSchema(schema, genOrder):
   # sanity check
   CheckSchemaSchema(schema)
 
   # let's doctor the schema to clean it up a bit
   # order DOES NOT matter for enums, even though it's a list
-  enums: List[Dict] = []
+  enums = []
   for fullName in schema.keys():
     if IsEnumType(fullName):
       # convert "enum Toto" to "Toto"
-      typename:str = GetShortTypename(fullName)
+      typename = GetShortTypename(fullName)
       enum = {}
       enum['name'] = typename
       assert(type(schema[fullName]) == list)
@@ -409,7 +396,7 @@ def ProcessSchema(schema: dict, genOrder: List[str]) -> Dict:
   #   }
   # ]
 
-  structs: List[Dict] = []
+  structs = []
   for i in range(len(genOrder)):
     # this is already the short name
     typename = genOrder[i]
@@ -456,7 +443,7 @@ def LoadSchema(fn):
 
 def GetTemplatingDictFromSchemaFilename(fn):
   obj = LoadSchema(fn)
-  genOrder: str = ComputeRequiredDeclarationOrder(obj)
+  genOrder = ComputeRequiredDeclarationOrder(obj)
   templatingDict = ProcessSchema(obj, genOrder)
   return templatingDict
 
@@ -497,26 +484,25 @@ if __name__ == "__main__":
   schemaFile = args.input_schema
   outDir = args.out_dir
 
-  tdico: Dict = GetTemplatingDictFromSchemaFilename(schemaFile)
+  tdico = GetTemplatingDictFromSchemaFilename(schemaFile)
 
   tsTemplateFile = \
     os.path.join(os.path.dirname(__file__), 'template.in.ts')
   template = MakeTemplateFromFile(tsTemplateFile)
-  renderedTsCode: str = template.render(**tdico)
+  renderedTsCode = template.render(**tdico)
   outputTsFile = os.path.join( \
-    outDir,f"{tdico['rootName']}_generated.ts")
+    outDir,str(tdico['rootName']) + "_generated.ts")
   with open(outputTsFile,"wt",encoding='utf8') as outFile:
     outFile.write(renderedTsCode)
 
   cppTemplateFile = \
     os.path.join(os.path.dirname(__file__), 'template.in.h')
   template = MakeTemplateFromFile(cppTemplateFile)
-  renderedCppCode: str = template.render(**tdico)
+  renderedCppCode = template.render(**tdico)
   outputCppFile = os.path.join( \
-    outDir,f"{tdico['rootName']}_generated.hpp")
+    outDir, str(tdico['rootName']) + "_generated.hpp")
   with open(outputCppFile,"wt",encoding='utf8') as outFile:
     outFile.write(renderedCppCode)
-
 
 # def GenEnumDecl(genc: GenCode, fullName: str, schema: Dict) -> None:
 #   """Writes the enumerations in genc"""

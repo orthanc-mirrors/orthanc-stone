@@ -29,6 +29,7 @@ struct Message2:
   tutu: vector<string>
   titi: map<string, string>
   lulu: map<string, Message1>
+  movieType: MovieType
 
 enum MovieType:
   - RomCom
@@ -37,7 +38,12 @@ enum MovieType:
   - Vegetables
 
 enum CrispType:
- - SaltAndPepper
- - CreamAndChives
- - Paprika
- - Barbecue
+  - SaltAndPepper
+  - CreamAndChives
+  - Paprika
+  - Barbecue
+
+enum EnumMonth0:
+  - January
+  - February
+  - March

@@ -1,6 +1,7 @@
 import json
 import yaml
 import re
+import os
 import sys
 from jinja2 import Template
 from typing import (
@@ -117,6 +118,7 @@ def CanonToCpp(canonicalTypename: str) -> str:
   retVal: str = canonicalTypename
   retVal = retVal.replace("map", "std::map")
   retVal = retVal.replace("vector", "std::vector")
+  retVal = retVal.replace("string", "std::string")
   retVal = retVal.replace("int32", "int32_t")
   retVal = retVal.replace("float32", "float")
   retVal = retVal.replace("float64", "double")
@@ -137,8 +139,23 @@ def CanonToTs(canonicalTypename: str) -> str:
   retVal = retVal.replace("bool", "boolean")
   return retVal
 
-def NeedsConstruction(canonTypename):
+def NeedsTsConstruction(enums: Dict, tsType: str):
+  if tsType == 'boolean':
+    return False
+  elif tsType == 'number':
+    return False
+  elif tsType == 'string':
+    return False
+  else:
+    enumNames = []
+    for enum in enums:
+      enumNames.append(enum['name'])
+    if tsType in enumNames:
+      return False
   return True
+
+def NeedsCppConstruction(canonTypename):
+  return False
 
 def RegisterTemplateFunction(template,func):
   """Makes a function callable by a jinja2 template"""
@@ -149,7 +166,8 @@ def MakeTemplate(templateStr):
   template = Template(templateStr)
   RegisterTemplateFunction(template,CanonToCpp)
   RegisterTemplateFunction(template,CanonToTs)
-  RegisterTemplateFunction(template,NeedsConstruction)
+  RegisterTemplateFunction(template,NeedsTsConstruction)
+  RegisterTemplateFunction(template,NeedsCppConstruction)
   return template
 
 def MakeTemplateFromFile(templateFileName):
@@ -476,12 +494,28 @@ if __name__ == "__main__":
   )
 
   args = parser.parse_args()
-  inputSchemaFilename = args.input_schema
+  schemaFile = args.input_schema
   outDir = args.out_dir
 
-  schema: Dict = LoadSchema(inputSchemaFilename)
-  genOrder: List[str] = ComputeRequiredDeclarationOrder(schema)
-  processedSchema: Dict = ProcessSchema(schema,genOrder)
+  tdico: Dict = GetTemplatingDictFromSchemaFilename(schemaFile)
+
+  tsTemplateFile = \
+    os.path.join(os.path.dirname(__file__), 'template.in.ts')
+  template = MakeTemplateFromFile(tsTemplateFile)
+  renderedTsCode: str = template.render(**tdico)
+  outputTsFile = os.path.join( \
+    outDir,f"{tdico['rootName']}_generated.ts")
+  with open(outputTsFile,"wt",encoding='utf8') as outFile:
+    outFile.write(renderedTsCode)
+
+  cppTemplateFile = \
+    os.path.join(os.path.dirname(__file__), 'template.in.h')
+  template = MakeTemplateFromFile(cppTemplateFile)
+  renderedCppCode: str = template.render(**tdico)
+  outputCppFile = os.path.join( \
+    outDir,f"{tdico['rootName']}_generated.hpp")
+  with open(outputCppFile,"wt",encoding='utf8') as outFile:
+    outFile.write(renderedCppCode)
 
 
 # def GenEnumDecl(genc: GenCode, fullName: str, schema: Dict) -> None:

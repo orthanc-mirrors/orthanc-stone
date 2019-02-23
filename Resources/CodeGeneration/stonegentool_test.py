@@ -6,7 +6,7 @@
 from stonegentool import \
 EatToken,SplitListOfTypes,ParseTemplateType,ProcessSchema, \
 CheckSchemaSchema,LoadSchema,trim,ComputeRequiredDeclarationOrder, \
-GetTemplatingDictFromSchemaFilename,MakeTemplate
+GetTemplatingDictFromSchemaFilename,MakeTemplate,MakeTemplateFromFile
 import unittest
 import os
 import re
@@ -258,7 +258,7 @@ class TestStonegentool(unittest.TestCase):
 {% for key in struct['fields']%}    {{key}}:{{CanonToTs(struct['fields'][key])}};
 {% endfor %}
     constructor() {
-{% for key in struct['fields']%}      {{key}} = new {{CanonToTs(struct['fields'][key])}}();
+{% for key in struct['fields']%}      this.{{key}} = new {{CanonToTs(struct['fields'][key])}}();
 {% endfor %}    }
 
     public StoneSerialize(): string {
@@ -375,12 +375,13 @@ class TestStonegentool(unittest.TestCase):
     self.assertEqual(renderedCodeRef, renderedCode)
 
   def test_generateWholeTsFile(self):
-    schemaFile = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
+    schemaFile = \
+      os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
     tdico = GetTemplatingDictFromSchemaFilename(schemaFile)
-    tsTemplateFile = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
+    tsTemplateFile = \
+      os.path.join(os.path.dirname(__file__), 'template.in.ts')
     template = MakeTemplateFromFile(tsTemplateFile)
     renderedCode = template.render(**tdico)
-
     print(renderedCode)
 
   def test_GenerateTypeScriptHandlerInterface(self):

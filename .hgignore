@@ -11,3 +11,7 @@ Resources/CommandTool/protoc-tests/generated_ts/
 Resources/CommandTool/flatc-tests/basic/build/
 .vscode/
 Resources/CodeGeneration/__pycache__
+Resources/CodeGeneration/build/
+Resources/CodeGeneration/build_browser/
+Resources/CodeGeneration/testCppHandler/build/
+Resources/CodeGeneration/testCppHandler/build_msbuild/

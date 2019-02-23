@@ -1,6 +1,7 @@
 /*
          1         2         3         4         5         6         7
 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+
 */
 
 #include <iostream>
@@ -72,7 +73,33 @@ namespace {{rootName}}
     Json::Value result(value.data(),value.data()+value.size());
     return result;
   }
-    
+
+  std::string MakeIndent(int indent)
+  {
+    char* txt = reinterpret_cast<char*>(malloc(indent+1)); // NO EXCEPTION BELOW!!!!!!!!!!!!
+    for(size_t i = 0; i < indent; ++i)
+      txt[i] = ' ';
+    txt[indent] = 0;
+    std::string retVal(txt);
+    free(txt); // NO EXCEPTION ABOVE !!!!!!!!!!
+    return retVal;
+  }
+
+  // generic dumper
+  template<typename T>
+  std::ostream& StoneDumpValue(std::ostream& out, const T& value, int indent)
+  {
+    out << MakeIndent(indent) << value;
+    return out;
+  }
+
+  // string dumper
+  std::ostream& StoneDumpValue(std::ostream& out, const std::string& value, int indent)
+  {
+    out << MakeIndent(indent) << "\"" << value  << "\"";
+    return out;
+  }
+
   /** Throws in case of problem */
   template<typename T>
   void _StoneDeserializeValue(
@@ -108,6 +135,20 @@ namespace {{rootName}}
     return result;
   }
 
+  template<typename T>
+  std::ostream& StoneDumpValue(std::ostream& out, const std::map<std::string,T>& value, int indent)
+  {
+    out << MakeIndent(indent) << "{\n";
+    for (std::map<std::string, T>::const_iterator it = value.cbegin();
+      it != value.cend(); ++it)
+    {
+      out << MakeIndent(indent+2) << "\"" << it->first << "\" : ";
+      StoneDumpValue(out, it->second, indent+2);
+    }
+    out << MakeIndent(indent) << "}\n";
+    return out;
+  }
+
   /** Throws in case of problem */
   template<typename T>
   void _StoneDeserializeValue(
@@ -132,6 +173,18 @@ namespace {{rootName}}
       result.append(_StoneSerializeValue(value[i]));
     }
     return result;
+  }
+
+  template<typename T>
+  std::ostream& StoneDumpValue(std::ostream& out, const std::vector<T>& value, int indent)
+  {
+    out << MakeIndent(indent) << "[\n";
+    for (size_t i = 0; i < value.size(); ++i)
+    {
+      StoneDumpValue(out, value[i], indent+2);
+    }
+    out << MakeIndent(indent) << "]\n";
+    return out;
   }
 
   void StoneCheckSerializedValueTypeGeneric(const Json::Value& value)
@@ -177,6 +230,16 @@ namespace {{rootName}}
   {
     return Json::Value(static_cast<int64_t>(value));
   }
+
+  std::ostream& StoneDumpValue(std::ostream& out, const {{enum['name']}}& value, int indent = 0)
+  {
+{% for key in enum['fields']%}    if( value == {{key}})
+    {
+      out << MakeIndent(indent) << "{{key}}" << std::endl;
+    }
+{%endfor%}    return out;
+  }
+
 {%endfor%}
 {% for struct in structs%}
 #ifdef _MSC_VER
@@ -208,6 +271,17 @@ namespace {{rootName}}
     return result;
   }
 
+  std::ostream& StoneDumpValue(std::ostream& out, const {{struct['name']}}& value, int indent = 0)
+  {
+    out << MakeIndent(indent) << "{\n";
+{% for key in struct['fields']%}    out << MakeIndent(indent) << "{{key}}:\n";
+    StoneDumpValue(out, value.{{key}},indent+2);
+    out << "\n";
+{% endfor %}
+    out << MakeIndent(indent) << "}\n";
+    return out;
+  }
+
   void StoneDeserialize({{struct['name']}}& destValue, const Json::Value& value)
   {
     StoneCheckSerializedValueType(value, "{{rootName}}.{{struct['name']}}");
@@ -230,7 +304,7 @@ namespace {{rootName}}
 #pragma region Dispatching code
 #endif //_MSC_VER
 
-  class IDispatcher
+  class IHandler
   {
   public:
 {% for struct in structs%}    virtual bool Handle(const {{struct['name']}}& value) = 0;
@@ -238,7 +312,7 @@ namespace {{rootName}}
 
   /** Service function for StoneDispatchToHandler */
   bool StoneDispatchJsonToHandler(
-    const Json::Value& jsonValue, IDispatcher* dispatcher)
+    const Json::Value& jsonValue, IHandler* handler)
   {
     StoneCheckSerializedValueTypeGeneric(jsonValue);
     std::string type = jsonValue["type"].asString();
@@ -251,7 +325,7 @@ namespace {{rootName}}
     {
       {{struct['name']}} value;
       _StoneDeserializeValue(value, jsonValue["value"]);
-      return dispatcher->Handle(value);
+      return handler->Handle(value);
     }
 {% endfor %}    else
     {
@@ -259,8 +333,8 @@ namespace {{rootName}}
     }
   }
 
-  /** Takes a serialized type and passes this to the dispatcher */
-  bool StoneDispatchToHandler(std::string strValue, IDispatcher* dispatcher)
+  /** Takes a serialized type and passes this to the handler */
+  bool StoneDispatchToHandler(std::string strValue, IHandler* handler)
   {
     Json::Value readValue;
 
@@ -283,7 +357,7 @@ namespace {{rootName}}
       ss << "Jsoncpp parsing error: " << errors;
       throw std::runtime_error(ss.str());
     }
-    return StoneDispatchJsonToHandler(readValue, dispatcher);
+    return StoneDispatchJsonToHandler(readValue, handler);
   }
 
 #ifdef _MSC_VER

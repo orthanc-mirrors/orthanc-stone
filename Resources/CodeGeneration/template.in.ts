@@ -50,7 +50,7 @@ export enum {{enum['name']}} {
 
   public StoneSerialize(): string {
     let container: object = {};
-    container['type'] = '{{rWholootName}}.{{struct['name']}}';
+    container['type'] = '{{rootName}}.{{struct['name']}}';
     container['value'] = this;
     return JSON.stringify(container);
   }
@@ -66,14 +66,14 @@ export enum {{enum['name']}} {
 
 {% endfor %}
 
-export interface IDispatcher {
+export interface IHandler {
   {% for struct in structs%}    Handle{{struct['name']}}(value:  {{struct['name']}}): boolean;
   {% endfor %}
 };
 
 /** Service function for StoneDispatchToHandler */
 export function StoneDispatchJsonToHandler(
-  jsonValue: any, dispatcher: IDispatcher): boolean
+  jsonValue: any, handler: IHandler): boolean
 {
   StoneCheckSerializedValueTypeGeneric(jsonValue);
   let type: string = jsonValue["type"];
@@ -85,7 +85,7 @@ export function StoneDispatchJsonToHandler(
 {% for struct in structs%}    else if (type == "{{rootName}}.{{struct['name']}}")
   {
     let value = jsonValue["value"] as {{struct['name']}};
-    return dispatcher.Handle{{struct['name']}}(value);
+    return handler.Handle{{struct['name']}}(value);
   }
 {% endfor %}
   else
@@ -94,9 +94,9 @@ export function StoneDispatchJsonToHandler(
   }
 }
 
-/** Takes a serialized type and passes this to the dispatcher */
+/** Takes a serialized type and passes this to the handler */
 export function StoneDispatchToHandler(
-  strValue: string, dispatcher: IDispatcher): boolean
+  strValue: string, handler: IHandler): boolean
 {
   // console.//log("+------------------------------------------------+");
   // console.//log("|            StoneDispatchToHandler              |");
@@ -104,5 +104,5 @@ export function StoneDispatchToHandler(
   // console.//log("strValue = ");
   // console.//log(strValue);
   let jsonValue: any = JSON.parse(strValue)
-  return StoneDispatchJsonToHandler(jsonValue, dispatcher);
+  return StoneDispatchJsonToHandler(jsonValue, handler);
 }

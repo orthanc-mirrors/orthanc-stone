@@ -15,3 +15,5 @@ Resources/CodeGeneration/build/
 Resources/CodeGeneration/build_browser/
 Resources/CodeGeneration/testCppHandler/build/
 Resources/CodeGeneration/testCppHandler/build_msbuild/
+syntax: glob
+Resources/CodeGeneration/testWasmIntegrated/build-wasm/

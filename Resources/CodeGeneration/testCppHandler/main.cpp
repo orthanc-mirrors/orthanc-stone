@@ -1,4 +1,5 @@
 #include <string>
+#include <fstream>
 #include <filesystem>
 #include <regex>
 using namespace std;
@@ -25,11 +26,64 @@ static inline void ReplaceInString(
   }
 }
 
+string SlurpFile(const string& fileName)
+{
+  ifstream ifs(fileName.c_str(), ios::in | ios::binary | ios::ate);
+
+  ifstream::pos_type fileSize = ifs.tellg();
+  ifs.seekg(0, ios::beg);
+
+  vector<char> bytes(fileSize);
+  ifs.read(bytes.data(), fileSize);
+
+  return string(bytes.data(), fileSize);
+}
+
+class MyHandler : public VsolMessages::IHandler
+{
+public:
+  virtual bool Handle(const VsolMessages::A& value) override
+  {
+    VsolMessages::StoneDumpValue(cout, value);
+    return true;
+  }
+  virtual bool Handle(const VsolMessages::B& value) override
+  {
+    VsolMessages::StoneDumpValue(cout, value);
+    return true;
+  }
+  virtual bool Handle(const VsolMessages::C& value) override
+  {
+    VsolMessages::StoneDumpValue(cout, value);
+    return true;
+  }
+  virtual bool Handle(const VsolMessages::Message1& value) override
+  {
+    VsolMessages::StoneDumpValue(cout, value);
+    return true;
+  }
+  virtual bool Handle(const VsolMessages::Message2& value) override
+  {
+    VsolMessages::StoneDumpValue(cout, value);
+    return true;
+  }
+};
+
+template<typename T>
+void ProcessPath(T filePath)
+{
+  cout << "+--------------------------------------------+\n";
+  cout << "| Processing: " << filePath.path().string() << "\n";
+  cout << "+--------------------------------------------+\n";
+  MyHandler handler;
+  auto contents = SlurpFile(filePath.path().string());
+  VsolMessages::StoneDispatchToHandler(contents, &handler);
+}
+
 int main(int argc, char** argv)
 {
   try
   {
-    string pattern;
 
     options_description desc("Allowed options");
     desc.add_options()
@@ -37,7 +91,7 @@ int main(int argc, char** argv)
       // The second is parameter to option
       // The third is description
       ("help,h", "print usage message")
-      ("pattern,p", value(&pattern), "pattern for input")
+      ("pattern,p", value<string>(), "pattern for input")
       ;
 
     variables_map vm;
@@ -49,17 +103,30 @@ int main(int argc, char** argv)
       return 0;
     }
 
+    notify(vm);
+
+    string pattern = vm["pattern"].as<string>();
+
     // tranform globbing pattern into regex
     // we should deal with -, ., *...
     string regexPatternStr = pattern;
+    cout << "Pattern is: " << regexPatternStr << endl;
+    ReplaceInString(regexPatternStr, "\\", "\\\\");
+    ReplaceInString(regexPatternStr, "-", "\\-");
+    ReplaceInString(regexPatternStr, ".", "\\.");
+    ReplaceInString(regexPatternStr, "*", ".*");
+    ReplaceInString(regexPatternStr, "?", ".");
+    cout << "Corresponding regex is: " << regexPatternStr << endl;
+
     regex regexPattern(regexPatternStr);
 
     for (auto& p : fs::directory_iterator("."))
     {
-      if (regex_match(p.path().string(), regexPattern))
-        std::cout << "\"" << p << "\" is a match\n";
-      else
-        std::cout << "\"" << p << "\" is *not* a match\n";
+      auto fileName = p.path().filename().string();
+      if (regex_match(fileName, regexPattern))
+      {
+        ProcessPath(p);
+      }
     }
     return 0;
 

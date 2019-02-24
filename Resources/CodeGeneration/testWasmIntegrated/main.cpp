@@ -3,12 +3,15 @@
 
 int main()
 {
-    std::cout << "Hello world from testWasmIntegrated!" << std::endl;
+    std::cout << "Hello world from testWasmIntegrated! (this is sent from C++)" << std::endl;
 }
+
+extern "C" void SendMessageFromCppJS(std::string message);
+extern "C" void SendFreeTextFromCppJS(std::string message);
 
 void EMSCRIPTEN_KEEPALIVE StartWasmApplication(const char* baseUri)
 {
-    printf("StartWasmApplication\n");
+    printf("Hello! (this is sent from C++)\n");
 
 //     // recreate a command line from uri arguments and parse it
 //     boost::program_options::variables_map parameters;
@@ -26,5 +29,5 @@ void EMSCRIPTEN_KEEPALIVE StartWasmApplication(const char* baseUri)
 
 // //    viewport->SetSize(width_, height_);
 //     printf("StartWasmApplication - completed\n");
-  }
-  
+    SendFreeTextFromCppJS("Hello world from C++!");
+}

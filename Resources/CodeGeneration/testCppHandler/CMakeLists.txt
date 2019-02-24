@@ -16,7 +16,7 @@ add_custom_command(
 include(${CMAKE_BINARY_DIR}/conanbuildinfo_multi.cmake)
 conan_basic_setup()
 
-add_executable(testCppHandler main.cpp OsDumpers.hpp ${CMAKE_CURRENT_BINARY_DIR}/VsolMessages_generated.hpp ${testCppHandler_Codegen_Deps})
+add_executable(testCppHandler main.cpp ${CMAKE_CURRENT_BINARY_DIR}/VsolMessages_generated.hpp ${testCppHandler_Codegen_Deps})
 
 target_include_directories(testCppHandler PUBLIC ${CMAKE_BINARY_DIR})
 

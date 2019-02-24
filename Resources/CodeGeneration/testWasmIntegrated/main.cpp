@@ -1,13 +1,71 @@
 #include <iostream>
+#include <sstream>
 #include <emscripten/emscripten.h>
+#include "testWasmIntegratedCpp_generated.hpp"
+
+using std::stringstream;
 
 int main()
 {
     std::cout << "Hello world from testWasmIntegrated! (this is sent from C++)" << std::endl;
 }
 
-extern "C" void SendMessageFromCppJS(std::string message);
-extern "C" void SendFreeTextFromCppJS(std::string message);
+extern "C" void SendMessageFromCppJS(const char* message);
+extern "C" void SendFreeTextFromCppJS(const char* message);
+
+#define HANDLE_MESSAGE(Type,value) \
+  stringstream ss; \
+  ss << "Received an instance of" #Type ". Here's the dump:\n"; \
+  testWasmIntegratedCpp::StoneDumpValue(ss, value, 0); \
+  SendFreeTextFromCppJS(ss.str().c_str()); \
+  return true;
+
+class MyHandler : public testWasmIntegratedCpp::IHandler
+{
+  public:
+    virtual bool Handle(const testWasmIntegratedCpp::A& value) override
+    {
+      HANDLE_MESSAGE(testWasmIntegratedCpp::A,value)
+    }
+    virtual bool Handle(const testWasmIntegratedCpp::B& value) override
+    {
+      HANDLE_MESSAGE(testWasmIntegratedCpp::B,value)
+    }
+
+    virtual bool Handle(const testWasmIntegratedCpp::Message1& value) override
+    {
+      HANDLE_MESSAGE(testWasmIntegratedCpp::Message1,value)
+    }
+
+    virtual bool Handle(const testWasmIntegratedCpp::Message2& value) override
+    {
+      HANDLE_MESSAGE(testWasmIntegratedCpp::Message2,value)
+    }
+
+    virtual bool Handle(const testWasmIntegratedCpp::C& value) override
+    {
+      HANDLE_MESSAGE(testWasmIntegratedCpp::C,value)
+    }
+};
+
+extern "C" void EMSCRIPTEN_KEEPALIVE SendMessageToCpp(const char* message)
+{
+    MyHandler handler;
+    try
+    {
+      bool handled = testWasmIntegratedCpp::StoneDispatchToHandler(message,&handler);
+      if(!handled)
+      {
+        SendFreeTextFromCppJS("This message is valid JSON, but was not recognized!");  
+      }
+    }
+    catch(std::exception& e)
+    {
+      stringstream ss;
+      ss << "Error while parsing message: " << e.what() << "\n";
+      SendFreeTextFromCppJS(ss.str().c_str());  
+    }
+}
 
 void EMSCRIPTEN_KEEPALIVE StartWasmApplication(const char* baseUri)
 {

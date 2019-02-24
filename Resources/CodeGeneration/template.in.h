@@ -11,7 +11,6 @@
 #include <memory>
 #include <optional>
 #include <json/json.h>
-#include <gtest/gtest.h>
 
 //#define STONEGEN_NO_CPP11 1
 
@@ -126,7 +125,7 @@ namespace {{rootName}}
   {
     Json::Value result(Json::objectValue);
 
-    for (std::map<std::string, T>::const_iterator it = value.cbegin();
+    for (typename std::map<std::string, T>::const_iterator it = value.cbegin();
       it != value.cend(); ++it)
     {
       // it->first it->second
@@ -139,7 +138,7 @@ namespace {{rootName}}
   std::ostream& StoneDumpValue(std::ostream& out, const std::map<std::string,T>& value, int indent)
   {
     out << MakeIndent(indent) << "{\n";
-    for (std::map<std::string, T>::const_iterator it = value.cbegin();
+    for (typename std::map<std::string, T>::const_iterator it = value.cbegin();
       it != value.cend(); ++it)
     {
       out << MakeIndent(indent+2) << "\"" << it->first << "\" : ";

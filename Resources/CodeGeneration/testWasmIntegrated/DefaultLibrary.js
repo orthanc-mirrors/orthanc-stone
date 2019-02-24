@@ -5,10 +5,11 @@ mergeInto(LibraryManager.library, {
   // It needs to be put in this file so that the emscripten SDK linker knows where to find it.
   SendFreeTextFromCppJS: function(statusUpdateMessage) {
     var statusUpdateMessage_ = UTF8ToString(statusUpdateMessage);
-    SendFreeTextFromCpp(statusUpdateMessage_);
+    window.SendFreeTextFromCpp(statusUpdateMessage_);
   },
   SendMessageFromCppJS: function(statusUpdateMessage) {
     var statusUpdateMessage_ = UTF8ToString(statusUpdateMessage);
     SendMessageFromCpp(statusUpdateMessage_);
   }
 });
+

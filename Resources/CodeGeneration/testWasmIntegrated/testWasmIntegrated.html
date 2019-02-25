@@ -13,15 +13,23 @@
     -->
     <body>
     <div class="TestWasm-grid-container">
-        <textarea id="TestWasm-SerializedInput" class="TestWasm-SerializedInput">
-            Serialized data should be put here.
-        </textarea>
-        <textarea id="TestWasm-CppOutput" class="TestWasm-CppOutput">
-            Free text and messages from C++ will appear here.
-        </textarea>
-        <div class="TestWasm-Trigger">
-            <button class="TestWasm-button TestWasm-hvcenter" tool-selector="Trigger">Send message</button>
+        <textarea id="TestWasm-SerializedInput" class="TestWasm-SerializedInput">Serialized data should be put here.</textarea>
+        <textarea id="TestWasm-CppOutput" class="TestWasm-CppOutput">Free text and messages from C++ will appear here.</textarea>
+        <div class="TestWasm-ButtonContainer">
+          <div class="TestWasm-TriggerButton">
+            <button class="TestWasm-button" tool-selector="Trigger">Send message</button>
+          </div>
+          <div class="TestWasm-ClearButton">
+            <button class="TestWasm-button" tool-selector="Clear">Clear</button>
+          </div>
+          <div class="TestWasm-ShowSchemaButton">
+            <button class="TestWasm-button" tool-selector="ShowSchema">Show schema</button>
+          </div>
+           <!-- <button class="TestWasm-button TestWasm-hvcenter" tool-selector="Trigger">Send message</button>
+            <button class="TestWasm-button TestWasm-hvcenter" tool-selector="Clear">Clear</button>
+            <button class="TestWasm-button TestWasm-hvcenter" tool-selector="Show schema">Show schema</button> -->
         </div>
+        
         <div class="TestWasm-Test1">
           <button class="TestWasm-button" tool-selector="Test 1">Test 1</button>
         </div>

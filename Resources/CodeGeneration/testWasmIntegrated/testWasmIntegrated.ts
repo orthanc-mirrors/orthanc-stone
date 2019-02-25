@@ -48,6 +48,53 @@ document.querySelectorAll(".TestWasm-button").forEach((e) => {
 |  define stock messages                           |
 +--------------------------------------------------+
 */
+let schemaText: string = `rootName: testWasmIntegratedCpp
+
+struct B:
+  someAs: vector<A>
+  someInts: vector<int32>
+
+struct C:
+  someBs: vector<B>
+  ddd:    vector<string>
+
+struct A:
+  someStrings: vector<string>
+  someInts2: vector<int32>
+  movies: vector<MovieType>
+
+struct Message1:
+  a: int32
+  b: string
+  c: EnumMonth0
+  d: bool
+
+struct Message2:
+  toto: string
+  tata: vector<Message1>
+  tutu: vector<string>
+  titi: map<string, string>
+  lulu: map<string, Message1>
+  movieType: MovieType
+
+enum MovieType:
+  - RomCom
+  - Horror
+  - ScienceFiction
+  - Vegetables
+
+enum CrispType:
+  - SaltAndPepper
+  - CreamAndChives
+  - Paprika
+  - Barbecue
+
+enum EnumMonth0:
+  - January
+  - February
+  - March
+`;
+
 let stockSerializedMessages = new Map<string,string>();
 stockSerializedMessages["Test 1"] = `{
   "type" : "testWasmIntegratedCpp.Message2",
@@ -98,7 +145,15 @@ stockSerializedMessages["Test 1"] = `{
     ]
   }
 }`;
-stockSerializedMessages["Test 2"] = "Test 2 stock message bccbbbbbb";
+stockSerializedMessages["Test 2"] = ` {
+  "type" : "testWasmIntegratedCpp.Message1",
+  "value" : {
+    "a" : -987,
+    "b" : "Salomé",
+    "c" : 2,
+    "d" : true
+  }
+}`;
 stockSerializedMessages["Test 3"] = "Test 3 stock message sdfsfsdfsdf";
 stockSerializedMessages["Test 4"] = "Test 4 stock message 355345345";
 stockSerializedMessages["Test 5"] = "Test 5 stock message 34535";
@@ -134,7 +189,7 @@ function getCppOutputValue(): string {
 
 function SendFreeTextFromCpp(txt: string):string
 {
-  setCppOutputValue(getCppOutputValue() + txt);
+  setCppOutputValue(getCppOutputValue() + "\n" + txt);
   return "";
 }
 (<any> window).SendFreeTextFromCpp = SendFreeTextFromCpp;
@@ -150,6 +205,18 @@ function ButtonClick(buttonName: string) {
 
     let SendMessageToCppLocal = (<any> window).Module.cwrap('SendMessageToCpp', 'string', ['string']);
     SendMessageToCppLocal(serializedInputValue);
+  }
+  else if(buttonName == 'Clear')
+  {
+    setCppOutputValue("");
+  }
+  else if(buttonName == 'ShowSchema')
+  {
+    setCppOutputValue(schemaText);
+  }
+  else
+  {
+    throw new Error("Internal error!");
   }
 }
 

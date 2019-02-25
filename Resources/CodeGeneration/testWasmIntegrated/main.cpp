@@ -15,7 +15,7 @@ extern "C" void SendFreeTextFromCppJS(const char* message);
 
 #define HANDLE_MESSAGE(Type,value) \
   stringstream ss; \
-  ss << "Received an instance of" #Type ". Here's the dump:\n"; \
+  ss << "Received an instance of:\n" #Type "\n. Here's the dump:\n"; \
   testWasmIntegratedCpp::StoneDumpValue(ss, value, 0); \
   SendFreeTextFromCppJS(ss.str().c_str()); \
   return true;

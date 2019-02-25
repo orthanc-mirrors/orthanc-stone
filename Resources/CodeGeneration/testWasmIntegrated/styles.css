@@ -3,8 +3,8 @@
     grid-template-columns: 0.55fr 0.55fr 0.55fr 0.55fr 0.6fr 1.1fr 1.1fr;
     grid-template-rows: 1.1fr 0.9fr 0.2fr 0.3fr 0.1fr 0.3fr 0.1fr;
     grid-template-areas: 
-        "SerializedInput SerializedInput SerializedInput SerializedInput Trigger CppOutput CppOutput" 
-        "SerializedInput SerializedInput SerializedInput SerializedInput Trigger CppOutput CppOutput" 
+        "SerializedInput SerializedInput SerializedInput SerializedInput ButtonContainer CppOutput CppOutput" 
+        "SerializedInput SerializedInput SerializedInput SerializedInput ButtonContainer CppOutput CppOutput" 
         ". . . . . . ." 
         "Test1 Test2 Test3 Test4 . . ." 
         ". . . . . . ." 
@@ -15,15 +15,33 @@
     height: 480px;
   }
 
+  .TestWasm-ButtonContainer {
+    display: grid;
+    grid-template-columns: 0.2fr 0.8fr 0.2fr;
+    grid-template-rows: 0.2fr 0.5fr 0.2fr 0.5fr 0.2fr 0.5fr 0.2fr;
+    grid-template-areas: 
+        ". . ."
+        ". TriggerButton ." 
+        ". . ."
+        ". ClearButton ." 
+        ". . ."
+        ". ShowSchemaButton ." 
+        ". . ."
+        ;
+  }
+
+  .TestWasm-TriggerButton { grid-area: TriggerButton; }
+  
+  .TestWasm-ClearButton { grid-area: ClearButton; }
+  
+  .TestWasm-ShowSchemaButton { grid-area: ShowSchemaButton; }
+
+
 .TestWasm-SerializedInput { grid-area: SerializedInput; }
 
 .TestWasm-CppOutput { grid-area: CppOutput; }
 
-.TestWasm-Trigger { 
-    grid-area: Trigger; 
-    align-items: center;
-    text-align: center;
-}
+.TestWasm-ButtonContainer { grid-area: ButtonContainer; }
 
 .TestWasm-Test1 { grid-area: Test1; }
 

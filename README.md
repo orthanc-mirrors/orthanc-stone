@@ -153,6 +153,7 @@ For instance, if Qt is installed in `C:\Qt\5.12.0\msvc2017_64`
 Note: replace `$($pwd)` with the current directory when not using Powershell
 
 
+
 Building the SDL native samples (SimpleViewer only) under Windows:
 ------------------------------------------------------------------
 `cmake -DSTATIC_BUILD=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON -G "Visual Studio 15 2017 Win64" ../orthanc-stone/Applications/Samples/`
@@ -194,3 +195,4 @@ using the following BibTeX entry:
   doi="10.1007/s10278-018-0082-y",
   url="https://doi.org/10.1007/s10278-018-0082-y"
 }
+

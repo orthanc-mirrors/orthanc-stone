@@ -201,9 +201,24 @@ namespace OrthancStone
     void PostJsonAsync(const std::string& uri,
                        const Json::Value& data);
 
+    // schedule a POST request and don't expect any response.
+    void PostJsonAsync(const std::string& uri,
+                       const Json::Value& data,
+                       MessageHandler<EmptyResponseReadyMessage>* successCallback,
+                       MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                       Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);
+
+
     // schedule a POST request and don't mind the response.
     void PostBinaryAsync(const std::string& uri,
                          const std::string& body);
+
+    // schedule a POST request and don't expect any response.
+    void PostBinaryAsync(const std::string& uri,
+                         const std::string& body,
+                         MessageHandler<EmptyResponseReadyMessage>* successCallback,
+                         MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                         Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);
 
     // schedule a DELETE request expecting an empty response.
     void DeleteAsync(const std::string& uri,

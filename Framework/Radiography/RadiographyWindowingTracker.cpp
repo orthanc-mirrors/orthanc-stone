@@ -137,21 +137,9 @@ namespace OrthancStone
 
     assert(minValue <= maxValue);
 
-    float tmp;
-      
     float delta = (maxValue - minValue);
-    if (delta <= 1)
-    {
-      tmp = 0;
-    }
-    else
-    {
-      // NB: Visual Studio 2008 does not provide "log2f()", so we
-      // implement it by ourselves
-      tmp = logf(delta) / logf(2.0f);
-    }
+    strength_ = delta / 1000.0f; // 1px move will change the ww/wc by 0.1%
 
-    strength_ = tmp - 7;
     if (strength_ < 1)
     {
       strength_ = 1;

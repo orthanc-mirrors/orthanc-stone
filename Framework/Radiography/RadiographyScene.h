@@ -106,7 +106,7 @@ namespace OrthancStone
     };
 
 
-  private:
+  protected:
     typedef std::map<size_t, RadiographyLayer*>  Layers;
 
     size_t  countLayers_;

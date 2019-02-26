@@ -85,7 +85,7 @@ ninja (`sudo apt-get install -y ninja-build`) is used instead of make, for perfo
 Installation and usage ----------------------
 
 Build instructions are similar to that of Orthanc:
-https://orthanc.chu.ulg.ac.be/book/faq/compiling.html
+http://book.orthanc-server.com/faq/compiling.html
 
 Usage details are available as part of the Orthanc Book:
 http://book.orthanc-server.com/developers/stone.html

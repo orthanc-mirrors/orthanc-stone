@@ -45,11 +45,7 @@ extern "C" {
                                                        const char* uri,
                                                        void* payload)
   {
-    if (failureCallable == NULL)
-    {
-      throw;
-    }
-    else
+    if (failureCallable != NULL)
     {
       reinterpret_cast<OrthancStone::MessageHandler<OrthancStone::IWebService::HttpRequestErrorMessage>*>(failureCallable)->
         Apply(OrthancStone::IWebService::HttpRequestErrorMessage(uri, reinterpret_cast<Orthanc::IDynamicObject*>(payload)));
@@ -77,16 +73,12 @@ extern "C" {
                                                          const char* answerHeaders,
                                                          void* payload)
   {
-    if (successCallable == NULL)
-    {
-      throw;
-    }
-    else
+    if (successCallable != NULL)
     {
       OrthancStone::IWebService::HttpHeaders headers;
 
       // TODO - Parse "answerHeaders"
-      printf("TODO: parse headers [%s]\n", answerHeaders);
+      //printf("TODO: parse headers [%s]\n", answerHeaders);
       
       reinterpret_cast<OrthancStone::MessageHandler<OrthancStone::IWebService::HttpRequestSuccessMessage>*>(successCallable)->
         Apply(OrthancStone::IWebService::HttpRequestSuccessMessage(uri, body, bodySize, headers,

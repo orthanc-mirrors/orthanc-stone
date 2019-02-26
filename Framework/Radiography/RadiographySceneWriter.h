@@ -25,6 +25,7 @@
 #include "RadiographyAlphaLayer.h"
 #include "RadiographyDicomLayer.h"
 #include "RadiographyTextLayer.h"
+#include "RadiographyMaskLayer.h"
 #include <json/value.h>
 
 namespace OrthancStone
@@ -46,5 +47,6 @@ namespace OrthancStone
     void WriteLayer(Json::Value& output, const RadiographyDicomLayer& layer);
     void WriteLayer(Json::Value& output, const RadiographyTextLayer& layer);
     void WriteLayer(Json::Value& output, const RadiographyAlphaLayer& layer);
+    void WriteLayer(Json::Value& output, const RadiographyMaskLayer& layer);
   };
 }

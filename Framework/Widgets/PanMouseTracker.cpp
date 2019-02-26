@@ -46,7 +46,9 @@ namespace OrthancStone
   void PanMouseTracker::MouseMove(int displayX,
                                   int displayY,
                                   double x,
-                                  double y)
+                                  double y,
+                                  const std::vector<Touch>& displayTouches,
+                                  const std::vector<Touch>& sceneTouches)
   {
     ViewportGeometry view = that_.GetView();
     view.SetPan(originalPanX_ + (x - downX_) * view.GetZoom(),

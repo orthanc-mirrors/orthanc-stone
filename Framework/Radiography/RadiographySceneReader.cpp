@@ -35,6 +35,7 @@ namespace OrthancStone
     if (version != 1)
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
 
+    RadiographyDicomLayer* dicomLayer = NULL;
     for(size_t layerIndex = 0; layerIndex < input["layers"].size(); layerIndex++)
     {
       const Json::Value& jsonLayer = input["layers"][(int)layerIndex];
@@ -43,7 +44,26 @@ namespace OrthancStone
       if (jsonLayer["type"].asString() == "dicom")
       {
         ReadLayerGeometry(geometry, jsonLayer);
-        scene_.LoadDicomFrame(orthancApiClient_, jsonLayer["instanceId"].asString(), jsonLayer["frame"].asUInt(), false, &geometry);
+        dicomLayer = dynamic_cast<RadiographyDicomLayer*>(&(scene_.LoadDicomFrame(orthancApiClient_, jsonLayer["instanceId"].asString(), jsonLayer["frame"].asUInt(), false, &geometry)));
+      }
+      else if (jsonLayer["type"].asString() == "mask")
+      {
+        if (dicomLayer == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError); // we always assumed the dicom layer was read before the mask
+        }
+        ReadLayerGeometry(geometry, jsonLayer);
+
+        float foreground = jsonLayer["foreground"].asFloat();
+        std::vector<Orthanc::ImageProcessing::ImagePoint> corners;
+        for (size_t i = 0; i < jsonLayer["corners"].size(); i++)
+        {
+          Orthanc::ImageProcessing::ImagePoint corner(jsonLayer["corners"][(int)i]["x"].asInt(),
+              jsonLayer["corners"][(int)i]["y"].asInt());
+          corners.push_back(corner);
+        }
+
+        scene_.LoadMask(corners, *dicomLayer, foreground, &geometry);
       }
       else if (jsonLayer["type"].asString() == "text")
       {

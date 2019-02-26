@@ -125,7 +125,7 @@ void QCairoWidget::mousePressEvent(QMouseEvent* event)
 
   {
     OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
-    locker.GetCentralViewport().MouseDown(button, event->pos().x(), event->pos().y(), stoneModifiers);
+    locker.GetCentralViewport().MouseDown(button, event->pos().x(), event->pos().y(), stoneModifiers, std::vector<OrthancStone::Touch>());
   }
 }
 
@@ -140,7 +140,7 @@ void QCairoWidget::mouseReleaseEvent(QMouseEvent* /*eventNotUsed*/)
 void QCairoWidget::mouseMoveEvent(QMouseEvent* event)
 {
   OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
-  locker.GetCentralViewport().MouseMove(event->pos().x(), event->pos().y());
+  locker.GetCentralViewport().MouseMove(event->pos().x(), event->pos().y(), std::vector<OrthancStone::Touch>());
 }
 
 

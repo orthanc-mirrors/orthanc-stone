@@ -22,9 +22,28 @@
 #pragma once
 
 #include "CairoSurface.h"
+#include <vector>
 
 namespace OrthancStone
 {
+  struct Touch
+  {
+    float x;
+    float y;
+
+    Touch(float x, float y)
+    : x(x),
+      y(y)
+    {
+    }
+    Touch()
+      : x(0.0f),
+        y(0.0f)
+    {
+    }
+  };
+
+
   // this is tracking a mouse in screen coordinates/pixels unlike
   // the IWorldSceneMouseTracker that is tracking a mouse
   // in scene coordinates/mm.
@@ -41,6 +60,9 @@ namespace OrthancStone
 
     // Returns "true" iff. the background scene must be repainted
     virtual void MouseMove(int x, 
-                           int y) = 0;
+                           int y,
+                           const std::vector<Touch>& displayTouches) = 0;
+
+    virtual bool IsTouchTracker() const {return false;}
   };
 }

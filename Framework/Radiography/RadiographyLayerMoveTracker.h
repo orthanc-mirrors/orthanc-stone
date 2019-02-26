@@ -61,6 +61,8 @@ namespace OrthancStone
     virtual void MouseMove(int displayX,
                            int displayY,
                            double sceneX,
-                           double sceneY);
+                           double sceneY,
+                           const std::vector<Touch>& displayTouches,
+                           const std::vector<Touch>& sceneTouches);
   };
 }

@@ -27,6 +27,8 @@
 
 namespace OrthancStone
 {
+  class RadiographyMaskLayer;
+
   class RadiographyWidget :
     public WorldSceneWidget,
     public IObserver
@@ -75,6 +77,8 @@ namespace OrthancStone
     }
 
     void Select(size_t layer);
+
+    bool SelectMaskLayer(size_t index = 0);
 
     bool LookupSelectedLayer(size_t& layer);
 

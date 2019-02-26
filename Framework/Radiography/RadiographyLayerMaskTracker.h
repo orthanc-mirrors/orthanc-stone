@@ -28,25 +28,22 @@
 
 namespace OrthancStone
 {
-  class RadiographyLayerCropTracker : public IWorldSceneMouseTracker
+  class RadiographyLayerMaskTracker : public IWorldSceneMouseTracker
   {
   private:
     class UndoRedoCommand;
 
     UndoRedoStack&                   undoRedoStack_;
     RadiographyScene::LayerAccessor  accessor_;
-    ControlPoint                     startControlPoint_;
-    unsigned int                     cropX_;
-    unsigned int                     cropY_;
-    unsigned int                     cropWidth_;
-    unsigned int                     cropHeight_;
+    ControlPoint                     startSceneCp_;
+    ControlPoint                     endSceneCp_;
 
   public:
-    RadiographyLayerCropTracker(UndoRedoStack& undoRedoStack,
+    RadiographyLayerMaskTracker(UndoRedoStack& undoRedoStack,
                                 RadiographyScene& scene,
                                 const ViewportGeometry& view,
                                 size_t layer,
-                                const ControlPoint& startControlPoint);
+                                const ControlPoint& startSceneControlPoint);
 
     virtual bool HasRender() const
     {

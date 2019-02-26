@@ -106,7 +106,8 @@ namespace OrthancStone
     virtual IMouseTracker* CreateMouseTracker(MouseButton button,
                                               int x,
                                               int y,
-                                              KeyboardModifiers modifiers);
+                                              KeyboardModifiers modifiers,
+                                              const std::vector<Touch>& touches);
 
     virtual void RenderMouseOver(Orthanc::ImageAccessor& target,
                                  int x,

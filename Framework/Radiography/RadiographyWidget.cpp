@@ -25,6 +25,7 @@
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
 
+#include "RadiographyMaskLayer.h"
 
 namespace OrthancStone
 {
@@ -194,6 +195,28 @@ namespace OrthancStone
     selectedLayer_ = layer;
   }
 
+  bool RadiographyWidget::SelectMaskLayer(size_t index)
+  {
+    std::vector<size_t> layerIndexes;
+    size_t count = 0;
+    scene_->GetLayersIndexes(layerIndexes);
+
+    for (size_t i = 0; i < layerIndexes.size(); ++i)
+    {
+      const RadiographyMaskLayer* maskLayer = dynamic_cast<const RadiographyMaskLayer*>(&(scene_->GetLayer(layerIndexes[i])));
+      if (maskLayer != NULL)
+      {
+        if (count == index)
+        {
+          Select(layerIndexes[i]);
+          return true;
+        }
+        count++;
+      }
+    }
+
+    return false;
+  }
 
   bool RadiographyWidget::LookupSelectedLayer(size_t& layer)
   {

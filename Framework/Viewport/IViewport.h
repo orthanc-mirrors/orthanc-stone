@@ -26,6 +26,7 @@
 #include "../Messages/IObservable.h"
 
 #include <Core/Images/ImageAccessor.h>
+#include "../Viewport/IMouseTracker.h" // only to get the "Touch" definition
 
 namespace OrthancStone
 {
@@ -58,12 +59,14 @@ namespace OrthancStone
     virtual void MouseDown(MouseButton button,
                            int x,
                            int y,
-                           KeyboardModifiers modifiers) = 0;
+                           KeyboardModifiers modifiers,
+                           const std::vector<Touch>& touches) = 0;
 
     virtual void MouseUp() = 0;
 
     virtual void MouseMove(int x, 
-                           int y) = 0;
+                           int y,
+                           const std::vector<Touch>& displayTouches) = 0;
 
     virtual void MouseEnter() = 0;
 

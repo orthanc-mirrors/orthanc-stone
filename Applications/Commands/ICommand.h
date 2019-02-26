@@ -38,6 +38,7 @@ namespace OrthancStone
     virtual ~ICommand() 
     {}
     virtual void Execute() = 0;
+    virtual ~ICommand() {}
 //    virtual void Configure(const Json::Value& arguments) = 0;
     const std::string& GetName() const
     {

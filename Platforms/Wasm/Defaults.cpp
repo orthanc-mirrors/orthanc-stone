@@ -49,7 +49,7 @@ extern "C" {
 
     viewports_.push_back(viewport);
 
-    printf("There are now %d viewports in C++\n", viewports_.size());
+    printf("There are now %lu viewports in C++\n", viewports_.size());
 
     viewport->SetStatusBar(statusBar_);
 
@@ -64,7 +64,7 @@ extern "C" {
   void EMSCRIPTEN_KEEPALIVE ReleaseCppViewport(ViewportHandle viewport) {
     viewports_.remove_if([viewport](const std::shared_ptr<OrthancStone::WidgetViewport>& v) { return v.get() == viewport;});
 
-    printf("There are now %d viewports in C++\n", viewports_.size());
+    printf("There are now %lu viewports in C++\n", viewports_.size());
   }
 
   void EMSCRIPTEN_KEEPALIVE CreateWasmApplication(ViewportHandle viewport) {
@@ -191,7 +191,7 @@ extern "C" {
         return;  // Unknown button
     }
 
-    viewport->MouseDown(button, x, y, OrthancStone::KeyboardModifiers_None /* TODO */);
+    viewport->MouseDown(button, x, y, OrthancStone::KeyboardModifiers_None, std::vector<OrthancStone::Touch>());
   }
   
 
@@ -222,9 +222,82 @@ extern "C" {
                                               int x,
                                               int y)
   {
-    viewport->MouseMove(x, y);
+    viewport->MouseMove(x, y, std::vector<OrthancStone::Touch>());
   }
-  
+
+  void GetTouchVector(std::vector<OrthancStone::Touch>& output,
+                      int touchCount,
+                      float x0,
+                      float y0,
+                      float x1,
+                      float y1,
+                      float x2,
+                      float y2)
+  {
+    // TODO: it might be nice to try to pass all the x0,y0 coordinates as arrays but that's not so easy to pass array between JS and C++
+    if (touchCount > 0)
+    {
+      output.push_back(OrthancStone::Touch(x0, y0));
+    }
+    if (touchCount > 1)
+    {
+      output.push_back(OrthancStone::Touch(x1, y1));
+    }
+    if (touchCount > 2)
+    {
+      output.push_back(OrthancStone::Touch(x2, y2));
+    }
+
+  }
+
+  void EMSCRIPTEN_KEEPALIVE ViewportTouchStart(ViewportHandle viewport,
+                                              int touchCount,
+                                              float x0,
+                                              float y0,
+                                              float x1,
+                                              float y1,
+                                              float x2,
+                                              float y2)
+  {
+    printf("touch start with %d touches\n", touchCount);
+
+    std::vector<OrthancStone::Touch> touches;
+    GetTouchVector(touches, touchCount, x0, y0, x1, y1, x2, y2);
+    viewport->TouchStart(touches);
+  }
+
+  void EMSCRIPTEN_KEEPALIVE ViewportTouchMove(ViewportHandle viewport,
+                                              int touchCount,
+                                              float x0,
+                                              float y0,
+                                              float x1,
+                                              float y1,
+                                              float x2,
+                                              float y2)
+  {
+    printf("touch move with %d touches\n", touchCount);
+
+    std::vector<OrthancStone::Touch> touches;
+    GetTouchVector(touches, touchCount, x0, y0, x1, y1, x2, y2);
+    viewport->TouchMove(touches);
+  }
+
+  void EMSCRIPTEN_KEEPALIVE ViewportTouchEnd(ViewportHandle viewport,
+                                              int touchCount,
+                                              float x0,
+                                              float y0,
+                                              float x1,
+                                              float y1,
+                                              float x2,
+                                              float y2)
+  {
+    printf("touch end with %d touches remaining\n", touchCount);
+
+    std::vector<OrthancStone::Touch> touches;
+    GetTouchVector(touches, touchCount, x0, y0, x1, y1, x2, y2);
+    viewport->TouchEnd(touches);
+  }
+
   void EMSCRIPTEN_KEEPALIVE ViewportKeyPressed(ViewportHandle viewport,
                                                int key,
                                                const char* keyChar, 
@@ -273,15 +346,13 @@ extern "C" {
   {
     static std::string output; // we don't want the string to be deallocated when we return to JS code so we always use the same string (this is fine since JS is single-thread)
 
-    printf("SendMessageToStoneApplication\n");
-    printf("%s", message);
+    printf("SendMessageToStoneApplication (JS -> C++): %s\n", message);
 
     if (applicationWasmAdapter.get() != NULL) {
-      printf("sending message to C++\n");
       applicationWasmAdapter->HandleMessageFromWeb(output, std::string(message));
       return output.c_str();
     }
-    printf("This stone application does not have a Web Adapter");
+    printf("This stone application does not have a Web Adapter\n");
     return NULL;
   }
 

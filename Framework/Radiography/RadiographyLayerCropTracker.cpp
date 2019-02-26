@@ -68,12 +68,10 @@ namespace OrthancStone
                                                            RadiographyScene& scene,
                                                            const ViewportGeometry& view,
                                                            size_t layer,
-                                                           double x,
-                                                           double y,
-                                                           Corner corner) :
+                                                           const ControlPoint& startControlPoint) :
     undoRedoStack_(undoRedoStack),
     accessor_(scene, layer),
-    corner_(corner)
+    startControlPoint_(startControlPoint)
   {
     if (accessor_.IsValid())
     {
@@ -101,7 +99,9 @@ namespace OrthancStone
   void RadiographyLayerCropTracker::MouseMove(int displayX,
                                               int displayY,
                                               double sceneX,
-                                              double sceneY)
+                                              double sceneY,
+                                              const std::vector<Touch>& displayTouches,
+                                              const std::vector<Touch>& sceneTouches)
   {
     if (accessor_.IsValid())
     {
@@ -112,8 +112,8 @@ namespace OrthancStone
       {
         unsigned int targetX, targetWidth;
 
-        if (corner_ == Corner_TopLeft ||
-            corner_ == Corner_BottomLeft)
+        if (startControlPoint_.index == ControlPoint_TopLeftCorner ||
+            startControlPoint_.index == ControlPoint_BottomLeftCorner)
         {
           targetX = std::min(x, cropX_ + cropWidth_);
           targetWidth = cropX_ + cropWidth_ - targetX;
@@ -126,8 +126,8 @@ namespace OrthancStone
 
         unsigned int targetY, targetHeight;
 
-        if (corner_ == Corner_TopLeft ||
-            corner_ == Corner_TopRight)
+        if (startControlPoint_.index == ControlPoint_TopLeftCorner ||
+            startControlPoint_.index == ControlPoint_TopRightCorner)
         {
           targetY = std::min(y, cropY_ + cropHeight_);
           targetHeight = cropY_ + cropHeight_ - targetY;

@@ -21,47 +21,44 @@
 
 #pragma once
 
-#include "../Toolbox/UndoRedoStack.h"
-#include "../Toolbox/ViewportGeometry.h"
-#include "../Widgets/IWorldSceneMouseTracker.h"
-#include "RadiographyScene.h"
+#include "WorldSceneWidget.h"
 
 namespace OrthancStone
 {
-  class RadiographyLayerCropTracker : public IWorldSceneMouseTracker
+  class PanZoomMouseTracker : public IWorldSceneMouseTracker
   {
   private:
-    class UndoRedoCommand;
-
-    UndoRedoStack&                   undoRedoStack_;
-    RadiographyScene::LayerAccessor  accessor_;
-    ControlPoint                     startControlPoint_;
-    unsigned int                     cropX_;
-    unsigned int                     cropY_;
-    unsigned int                     cropWidth_;
-    unsigned int                     cropHeight_;
+    WorldSceneWidget&  that_;
+    std::vector<Touch> originalSceneTouches_;
+    Touch              originalSceneCenter_;
+    Touch              originalDisplayCenter_;
+    double             originalPanX_;
+    double             originalPanY_;
+    double             originalZoom_;
+    double             originalDisplayDistanceBetweenTouches_;
+    bool               idle_;
+    double             normalization_;
 
   public:
-    RadiographyLayerCropTracker(UndoRedoStack& undoRedoStack,
-                                RadiographyScene& scene,
-                                const ViewportGeometry& view,
-                                size_t layer,
-                                const ControlPoint& startControlPoint);
-
+    PanZoomMouseTracker(WorldSceneWidget& that,
+                        const std::vector<Touch>& startTouches);
+    
     virtual bool HasRender() const
     {
       return false;
     }
 
+    virtual void MouseUp()
+    {
+    }
+
     virtual void Render(CairoContext& context,
                         double zoom);
 
-    virtual void MouseUp();
-
     virtual void MouseMove(int displayX,
                            int displayY,
-                           double sceneX,
-                           double sceneY,
+                           double x,
+                           double y,
                            const std::vector<Touch>& displayTouches,
                            const std::vector<Touch>& sceneTouches);
   };

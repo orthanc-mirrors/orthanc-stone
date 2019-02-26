@@ -50,7 +50,8 @@ namespace SimpleViewer {
                                                         int viewportY,
                                                         double x,
                                                         double y,
-                                                        IStatusBar* statusBar);
+                                                        IStatusBar* statusBar,
+                                                        const std::vector<Touch>& displayTouches);
 
     virtual void MouseOver(CairoContext& context,
                            WorldSceneWidget& widget,

@@ -142,10 +142,15 @@ namespace OrthancStone
 
     EmitMessage(GeometryChangedMessage(*this, *layer));
     EmitMessage(ContentChangedMessage(*this, *layer));
+    layer->RegisterObserverCallback(new Callable<RadiographyScene, RadiographyLayer::LayerEditedMessage>(*this, &RadiographyScene::OnLayerEdited));
 
     return *layer;
   }
 
+  void RadiographyScene::OnLayerEdited(const RadiographyLayer::LayerEditedMessage& message)
+  {
+    EmitMessage(RadiographyScene::LayerEditedMessage(*this, message.GetOrigin()));
+  }
 
   RadiographyScene::RadiographyScene(MessageBroker& broker) :
     IObserver(broker),
@@ -247,6 +252,8 @@ namespace OrthancStone
     hasWindowing_ = true;
     windowingCenter_ = center;
     windowingWidth_ = width;
+
+    EmitMessage(RadiographyScene::WindowingChangedMessage(*this));
   }
 
 
@@ -254,7 +261,7 @@ namespace OrthancStone
                                                const std::string& utf8,
                                                RadiographyLayer::Geometry* geometry)
   {
-    std::auto_ptr<RadiographyTextLayer>  alpha(new RadiographyTextLayer(*this));
+    std::auto_ptr<RadiographyTextLayer>  alpha(new RadiographyTextLayer(IObservable::GetBroker(), *this));
     alpha->LoadText(font, utf8);
     if (geometry != NULL)
     {
@@ -298,7 +305,7 @@ namespace OrthancStone
                                                float foreground,
                                                RadiographyLayer::Geometry* geometry)
   {
-    std::auto_ptr<RadiographyMaskLayer>  mask(new RadiographyMaskLayer(*this, dicomLayer, foreground));
+    std::auto_ptr<RadiographyMaskLayer>  mask(new RadiographyMaskLayer(IObservable::GetBroker(), *this, dicomLayer, foreground));
     mask->SetCorners(corners);
     if (geometry != NULL)
     {
@@ -311,7 +318,7 @@ namespace OrthancStone
 
   RadiographyLayer& RadiographyScene::LoadAlphaBitmap(Orthanc::ImageAccessor* bitmap, RadiographyLayer::Geometry *geometry)
   {
-    std::auto_ptr<RadiographyAlphaLayer>  alpha(new RadiographyAlphaLayer(*this));
+    std::auto_ptr<RadiographyAlphaLayer>  alpha(new RadiographyAlphaLayer(IObservable::GetBroker(), *this));
     alpha->SetAlpha(bitmap);
     if (geometry != NULL)
     {
@@ -327,7 +334,7 @@ namespace OrthancStone
                                                      bool httpCompression,
                                                      RadiographyLayer::Geometry* geometry)
   {
-    RadiographyDicomLayer& layer = dynamic_cast<RadiographyDicomLayer&>(RegisterLayer(new RadiographyDicomLayer));
+    RadiographyDicomLayer& layer = dynamic_cast<RadiographyDicomLayer&>(RegisterLayer(new RadiographyDicomLayer(IObservable::GetBroker(), *this)));
     layer.SetInstance(instance, frame);
 
     if (geometry != NULL)
@@ -371,7 +378,7 @@ namespace OrthancStone
 
   RadiographyLayer& RadiographyScene::LoadDicomWebFrame(IWebService& web)
   {
-    RadiographyLayer& layer = RegisterLayer(new RadiographyDicomLayer);
+    RadiographyLayer& layer = RegisterLayer(new RadiographyDicomLayer(IObservable::GetBroker(), *this));
 
 
     return layer;

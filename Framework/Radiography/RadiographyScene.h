@@ -37,7 +37,7 @@ namespace OrthancStone
   {
   public:
     class GeometryChangedMessage :
-        public OriginMessage<MessageType_Scene_GeometryChanged, RadiographyScene>
+        public OriginMessage<MessageType_RadiographyScene_GeometryChanged, RadiographyScene>
     {
     private:
       RadiographyLayer&        layer_;
@@ -57,7 +57,7 @@ namespace OrthancStone
     };
 
     class ContentChangedMessage :
-        public OriginMessage<MessageType_Scene_ContentChanged, RadiographyScene>
+        public OriginMessage<MessageType_RadiographyScene_ContentChanged, RadiographyScene>
     {
     private:
       RadiographyLayer&        layer_;
@@ -76,6 +76,37 @@ namespace OrthancStone
       }
     };
 
+    class LayerEditedMessage :
+        public OriginMessage<MessageType_RadiographyScene_LayerEdited, RadiographyScene>
+    {
+    private:
+      const RadiographyLayer&        layer_;
+
+    public:
+      LayerEditedMessage(const RadiographyScene& origin,
+                         const RadiographyLayer& layer) :
+        OriginMessage(origin),
+        layer_(layer)
+      {
+      }
+
+      const RadiographyLayer& GetLayer() const
+      {
+        return layer_;
+      }
+
+    };
+
+    class WindowingChangedMessage :
+        public OriginMessage<MessageType_RadiographyScene_WindowingChanged, RadiographyScene>
+    {
+
+    public:
+      WindowingChangedMessage(const RadiographyScene& origin) :
+        OriginMessage(origin)
+      {
+      }
+    };
 
     class LayerAccessor : public boost::noncopyable
     {
@@ -130,6 +161,7 @@ namespace OrthancStone
 
     void OnDicomWebReceived(const IWebService::HttpRequestSuccessMessage& message);
 
+    void OnLayerEdited(const RadiographyLayer::LayerEditedMessage& message);
   public:
     RadiographyScene(MessageBroker& broker);
     
@@ -185,6 +217,30 @@ namespace OrthancStone
       for (size_t i = 0; i < layerIndexes.size(); ++i)
       {
         TypeLayer* typedLayer = dynamic_cast<TypeLayer*>(layers_[layerIndexes[i]]);
+        if (typedLayer != NULL)
+        {
+          if (count == index)
+          {
+            return typedLayer;
+          }
+          count++;
+        }
+      }
+
+      return NULL;
+    }
+
+    template <typename TypeLayer>
+    const TypeLayer* GetLayer(size_t index = 0) const
+    {
+      std::vector<size_t> layerIndexes;
+      GetLayersIndexes(layerIndexes);
+
+      size_t count = 0;
+
+      for (size_t i = 0; i < layerIndexes.size(); ++i)
+      {
+        const TypeLayer* typedLayer = dynamic_cast<const TypeLayer*>(layers_.at(layerIndexes[i]));
         if (typedLayer != NULL)
         {
           if (count == index)

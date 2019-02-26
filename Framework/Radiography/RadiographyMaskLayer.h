@@ -40,9 +40,9 @@ namespace OrthancStone
 
     mutable std::auto_ptr<Orthanc::ImageAccessor>  mask_;
   public:
-    RadiographyMaskLayer(const RadiographyScene& scene, const RadiographyDicomLayer& dicomLayer,
+    RadiographyMaskLayer(MessageBroker& broker, const RadiographyScene& scene, const RadiographyDicomLayer& dicomLayer,
                          float foreground) :
-      RadiographyLayer(),
+      RadiographyLayer(broker, scene),
       dicomLayer_(dicomLayer),
       invalidated_(true),
       foreground_(foreground)

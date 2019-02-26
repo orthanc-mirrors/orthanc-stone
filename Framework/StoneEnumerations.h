@@ -157,8 +157,12 @@ namespace OrthancStone
     MessageType_OrthancApi_GenericHttpError_Ready,
     MessageType_OrthancApi_GenericEmptyResponse_Ready,
 
-    MessageType_Scene_GeometryChanged,
-    MessageType_Scene_ContentChanged,
+    MessageType_RadiographyScene_GeometryChanged,
+    MessageType_RadiographyScene_ContentChanged,
+    MessageType_RadiographyScene_LayerEdited,
+    MessageType_RadiographyScene_WindowingChanged,
+
+    MessageType_RadiographyLayer_Edited,
 
     MessageType_ViewportChanged,
 

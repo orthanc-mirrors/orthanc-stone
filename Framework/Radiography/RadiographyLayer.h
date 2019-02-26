@@ -24,9 +24,13 @@
 #include "../Toolbox/AffineTransform2D.h"
 #include "../Toolbox/Extent2D.h"
 #include "../Viewport/CairoContext.h"
+#include "../Messages/IMessage.h"
+#include "../Messages/IObservable.h"
 
 namespace OrthancStone
 {
+  class RadiographyScene;
+
   struct ControlPoint
   {
     double x;
@@ -46,11 +50,24 @@ namespace OrthancStone
     {}
   };
 
-  class RadiographyLayer : public boost::noncopyable
+  class RadiographyLayer : public IObservable
   {
     friend class RadiographyScene;
 
   public:
+    class LayerEditedMessage :
+        public OriginMessage<MessageType_RadiographyLayer_Edited, RadiographyLayer>
+    {
+    private:
+
+    public:
+      LayerEditedMessage(const RadiographyLayer& origin) :
+        OriginMessage(origin)
+      {
+      }
+    };
+
+
     class Geometry
     {
       bool               hasCrop_;
@@ -160,7 +177,7 @@ namespace OrthancStone
     AffineTransform2D  transformInverse_;
     Geometry           geometry_;
     PhotometricDisplayMode  prefferedPhotometricDisplayMode_;
-
+    const RadiographyScene&   scene_;
 
   protected:
     virtual const AffineTransform2D& GetTransform() const
@@ -173,10 +190,7 @@ namespace OrthancStone
       return transformInverse_;
     }
 
-    void SetPreferredPhotomotricDisplayMode(PhotometricDisplayMode  prefferedPhotometricDisplayMode)
-    {
-      prefferedPhotometricDisplayMode_ = prefferedPhotometricDisplayMode;
-    }
+    void SetPreferredPhotomotricDisplayMode(PhotometricDisplayMode  prefferedPhotometricDisplayMode);
 
   private:
     void UpdateTransform();
@@ -197,7 +211,7 @@ namespace OrthancStone
                      double zoom);
 
   public:
-    RadiographyLayer();
+    RadiographyLayer(MessageBroker& broker, const RadiographyScene& scene);
 
     virtual ~RadiographyLayer()
     {
@@ -206,6 +220,11 @@ namespace OrthancStone
     size_t GetIndex() const
     {
       return index_;
+    }
+
+    const RadiographyScene& GetScene() const
+    {
+      return scene_;
     }
 
     const Geometry& GetGeometry() const

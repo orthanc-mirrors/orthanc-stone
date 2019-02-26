@@ -4,4 +4,18 @@ Applications/Qt/archive/
 Applications/Samples/ThirdPartyDownloads/
 Applications/Samples/build-wasm/
 Applications/Samples/build-web/
+Applications/Samples/node_modules/
+Resources/CommandTool/protoc-tests/node_modules/
+Resources/CommandTool/protoc-tests/generated_js/
+Resources/CommandTool/protoc-tests/generated_ts/
+Resources/CommandTool/flatc-tests/basic/build/
 .vscode/
+Resources/CodeGeneration/__pycache__
+Resources/CodeGeneration/build/
+Resources/CodeGeneration/build_browser/
+Resources/CodeGeneration/testCppHandler/build/
+Resources/CodeGeneration/testCppHandler/build_msbuild/
+syntax: glob
+Resources/CodeGeneration/testWasmIntegrated/build-wasm/
+Resources/CodeGeneration/testWasmIntegrated/build-tsc/
+Resources/CodeGeneration/testWasmIntegrated/build-final/

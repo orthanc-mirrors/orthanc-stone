@@ -1,0 +1,79 @@
+<!doctype html>
+
+<html lang="us">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    <title>Javascript to WASM message passing</title>
+    <link href="styles.css" rel="stylesheet" />
+    <!-- <link href="styles2.css" rel="stylesheet" /> -->
+    <!-- 
+    <link href="testwasm_bootstrap.css" rel="stylesheet" /> 
+    -->
+    <body>
+    <div class="TestWasm-grid-container">
+        <textarea id="TestWasm-SerializedInput" class="TestWasm-SerializedInput">Serialized data should be put here.</textarea>
+        <textarea id="TestWasm-CppOutput" class="TestWasm-CppOutput">Free text and messages from C++ will appear here.</textarea>
+        <div class="TestWasm-ButtonContainer">
+          <div class="TestWasm-TriggerButton">
+            <button class="TestWasm-button" tool-selector="Trigger">Send message</button>
+          </div>
+          <div class="TestWasm-ClearButton">
+            <button class="TestWasm-button" tool-selector="Clear">Clear</button>
+          </div>
+          <div class="TestWasm-ShowSchemaButton">
+            <button class="TestWasm-button" tool-selector="ShowSchema">Show schema</button>
+          </div>
+           <!-- <button class="TestWasm-button TestWasm-hvcenter" tool-selector="Trigger">Send message</button>
+            <button class="TestWasm-button TestWasm-hvcenter" tool-selector="Clear">Clear</button>
+            <button class="TestWasm-button TestWasm-hvcenter" tool-selector="Show schema">Show schema</button> -->
+        </div>
+        
+        <div class="TestWasm-Test1">
+          <button class="TestWasm-button" tool-selector="Test 1">Test 1</button>
+        </div>
+        <div class="TestWasm-Test2">
+          <button class="TestWasm-button" tool-selector="Test 2">Test 2</button>
+        </div>
+        <div class="TestWasm-Test3">
+          <button class="TestWasm-button" tool-selector="Test 3">Test 3</button>
+        </div>
+        <div class="TestWasm-Test4">
+          <button class="TestWasm-button" tool-selector="Test 4">Test 4</button>
+        </div>
+        <div class="TestWasm-Test5">
+          <button class="TestWasm-button" tool-selector="Test 5">Test 5</button>
+        </div>
+        <div class="TestWasm-Test6">
+          <button class="TestWasm-button" tool-selector="Test 6">Test 6</button>
+        </div>
+        <div class="TestWasm-Test7">
+          <button class="TestWasm-button" tool-selector="Test 7">Test 7</button>
+        </div>
+        <div class="TestWasm-Test8">
+          <button class="TestWasm-button" tool-selector="Test 8">Test 8</button>
+        </div>
+  
+        <!-- <button class="TestWasm-button" class="TestWasm-Test1" tool-selector="Test 1">Test 1</button>
+        <button class="TestWasm-button" class="TestWasm-Test2" tool-selector="Test 2">Test 2</button>
+        <button class="TestWasm-button" class="TestWasm-Test3" tool-selector="Test 3">Test 3</button>
+        <button class="TestWasm-button" class="TestWasm-Test4" tool-selector="Test 4">Test 4</button> -->
+
+
+
+        <!-- <div class="Trigger"></div>
+        <div class="Test1"></div>
+        <div class="Test2"></div>
+        <div class="Test3"></div>
+        <div class="Test4"></div> -->
+      </div>
+
+  <!-- <div id="toolbox" style="height: 50px">
+    <button tool-selector="line-measure" class="tool-selector">line</button>
+  </div> -->
+  <script type="text/javascript" src="testWasmIntegratedCpp.js"></script>
+  <script type="text/javascript" src="testWasmIntegratedApp.js"></script>
+</body>
+
+</html>

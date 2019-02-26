@@ -468,8 +468,7 @@ namespace OrthancStone
         fontRegistry_.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
         
         scene_.reset(new RadiographyScene(GetBroker()));
-        //scene_->LoadDicomFrame(instance, frame, false); //.SetPan(200, 0);
-        scene_->LoadDicomFrame(context->GetOrthancApiClient(), "61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false, NULL);
+        scene_->LoadDicomFrame(context->GetOrthancApiClient(), instance, 0, false, NULL);
 
 #if !defined(ORTHANC_ENABLE_WASM) || ORTHANC_ENABLE_WASM != 1
         Orthanc::HttpClient::ConfigureSsl(true, "/etc/ssl/certs/ca-certificates.crt");

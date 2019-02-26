@@ -1,0 +1,55 @@
+{
+  "root_name":"test1",
+  "types": [
+    {
+      "name":"B",
+      "kind":"struct",
+      "fields": [
+        {
+          "name":"someAs",
+          "type":"vector<A>"
+        }},
+        {
+          "name":"someInts",
+          "type":"vector<int32>"
+        }
+      ]
+    },
+    {
+      "name":"A",
+      "kind":"struct",
+      "fields": [
+        {
+          "name":"someStrings",
+          "type":"vector<string>"
+        },
+        {
+          "name":"someInts2",
+          "type":"vector<int32>"
+        }
+      ]
+    },
+    {
+      "name":"MovieType",
+      "kind":"enum",
+      "fields": [
+        {
+          "name":"Romcom",
+        },
+        {
+          "name":"Horror",
+        },
+        {
+          "name":"ScienceFiction",
+        },
+        {
+          "name":"Vegetables",
+        }
+    }
+  ]
+}
+
+/*
+         1         2         3         4         5         6         7
+12345678901234567890123456789012345678901234567890123456789012345678901234567890
+*/

@@ -1,7 +1,6 @@
 Stone of Orthanc
 ================
 
-
 General Information
 -------------------
 
@@ -40,7 +39,7 @@ Comparison
 Pay attention to the fact that Stone of Orthanc is a toolkit, and not
 a fully-featured application for the visualization of medical images
 (such as Horos/OsiriX or Ginkgo CADx). However, such applications
-could be built on the top of Stone of Orthanc.
+can be built on the top of Stone of Orthanc.
 
 Stone of Orthanc is quite similar to two other well-known toolkits:
 
@@ -72,13 +71,18 @@ Stone of Orthanc is based upon the following projects:
 * Optionally, SDL, a cross-platform multimedia library:
   https://www.libsdl.org/
 
-Prerequisites to compile on Ubuntu: 
+Prerequisites to compile natively on Ubuntu: 
 ```
 sudo apt-get install -y libcairo-dev libpixman-1-dev libsdl2-dev
 ```
 
-Installation and usage
-----------------------
+The emscripten SDK is required for the WASM build. Please install it
+in `~/apps/emsdk`. If you wish to use it in another way, please edit
+the `build-wasm.sh` file.
+
+ninja (`sudo apt-get install -y ninja-build`) is used instead of make, for performance reasons.
+
+Installation and usage ----------------------
 
 Build instructions are similar to that of Orthanc:
 http://book.orthanc-server.com/faq/compiling.html
@@ -87,36 +91,77 @@ Usage details are available as part of the Orthanc Book:
 http://book.orthanc-server.com/developers/stone.html
 
 Stone of Orthanc comes with several sample applications in the
-"Samples" folder. These samples can be compiled into Web Assembly
-or into native SDL applications.
+`Samples` folder. These samples can be compiled into Web Assembly or
+into native SDL applications.
 
-to build the WASM samples:
--------------------------
+The following assumes that the source code to be downloaded in
+`~/orthanc-stone` and Orthanc source code to be checked out in
+`~/orthanc`. 
+
+Building the WASM samples
+-------------------------------------
 ```
 cd ~/orthanc-stone/Applications/Samples
 ./build-wasm.sh
 ```
 
-to serve the WASM samples:
+Serving the WASM samples
+------------------------------------
 ```
 # launch an Orthanc listening on 8042 port:
 Orthanc
 
-# launch an nginx that will serve the WASM static files and reverse proxy Orthanc
+# launch an nginx that will serve the WASM static files and reverse
+# proxy
 sudo nginx -p $(pwd) -c nginx.local.conf
 ```
-Now, you can open the samples in http://localhost:9977
 
-to build the SDL native samples (SimpleViewer only):
--------------------------------
+You can now open the samples in http://localhost:9977
+
+Building the SDL native samples (SimpleViewer only)
+---------------------------------------------------
+
+The following also assumes that you have checked out the Orthanc
+source code in an `orthanc` folder next to the Stone of Orthanc
+repository, please enter the following:
+
 ```
 mkdir -p ~/builds/orthanc-stone-build
 cd ~/builds/orthanc-stone-build
-cmake -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ~/orthanc-stone/Applications/Samples/
+cmake -DORTHANC_FRAMEWORK_SOURCE=path \
+    -DORTHANC_FRAMEWORK_ROOT=$currentDir/../../../orthanc \
+    -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON \
+    ~/orthanc-stone/Applications/Samples/
+```
+
+If you are working on Windows, add the correct generator option to
+cmake to, for instance, generate msbuild files for Visual Studio.
+
+Then, under Linux:
+```
 cmake --build . --target OrthancStoneSimpleViewer -- -j 5
 ```
 
-to execute the native samples:
+Note: replace `$($pwd)` with the current directory when not using Powershell
+
+Building the Qt native samples (SimpleViewer only) under Windows:
+------------------------------------------------------------------
+For instance, if Qt is installed in `C:\Qt\5.12.0\msvc2017_64`
+
+`cmake -DSTATIC_BUILD=ON -DCMAKE_PREFIX_PATH=C:\Qt\5.12.0\msvc2017_64 -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_QT=ON -G "Visual Studio 15 2017 Win64" ../orthanc-stone/Applications/Samples/`
+
+Note: replace `$($pwd)` with the current directory when not using Powershell
+
+
+
+Building the SDL native samples (SimpleViewer only) under Windows:
+------------------------------------------------------------------
+`cmake -DSTATIC_BUILD=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON -G "Visual Studio 15 2017 Win64" ../orthanc-stone/Applications/Samples/`
+
+Note: replace `$($pwd)` with the current directory when not using Powershell
+
+Executing the native samples:
+--------------------------------
 ```
 # launch an Orthanc listening on 8042 port:
 Orthanc
@@ -124,7 +169,6 @@ Orthanc
 # launch the sample
 ./OrthancStoneSimpleViewer --studyId=XX
 ``` 
-
 
 Licensing
 ---------
@@ -151,3 +195,4 @@ using the following BibTeX entry:
   doi="10.1007/s10278-018-0082-y",
   url="https://doi.org/10.1007/s10278-018-0082-y"
 }
+

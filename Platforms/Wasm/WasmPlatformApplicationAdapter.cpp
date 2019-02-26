@@ -27,7 +27,7 @@ namespace OrthancStone
               printf("Could not parse command: '%s'\n", input.c_str());
             else
               application_.ExecuteCommand(*command);
-        }
+        } 
       }
       catch (StoneException& exc)
       {

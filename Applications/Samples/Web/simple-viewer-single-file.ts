@@ -1,6 +1,6 @@
-///<reference path='../../../Platforms/Wasm/wasm-application-runner.ts'/>
+import wasmApplicationRunner = require('../../../Platforms/Wasm/wasm-application-runner');
 
-InitializeWasmApplication("OrthancStoneSimpleViewerSingleFile", "/orthanc");
+wasmApplicationRunner.InitializeWasmApplication("OrthancStoneSimpleViewerSingleFile", "/orthanc");
 
 function SelectTool(toolName: string) {
     var command = {
@@ -9,7 +9,7 @@ function SelectTool(toolName: string) {
             toolName: toolName
         }
     };
-    SendMessageToStoneApplication(JSON.stringify(command));
+    wasmApplicationRunner.SendMessageToStoneApplication(JSON.stringify(command));
 
 }
 
@@ -19,7 +19,7 @@ function PerformAction(commandName: string) {
         commandType: "simple",
         args: {}
     };
-    SendMessageToStoneApplication(JSON.stringify(command));
+    wasmApplicationRunner.SendMessageToStoneApplication(JSON.stringify(command));
 }
 
 //initializes the buttons

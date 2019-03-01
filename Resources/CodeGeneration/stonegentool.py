@@ -6,6 +6,7 @@ import sys
 from jinja2 import Template
 from io import StringIO
 import time
+import datetime
 
 """
          1         2         3         4         5         6         7
@@ -263,13 +264,15 @@ def ComputeOrderFromTypeTree(
         struct = schema[GetLongTypename(shortTypename, schema)]
         # The keys in the struct dict are the member names
         # The values in the struct dict are the member types
-        for field in struct.keys():
-          # we fill the chain of dependent types (starting here)
-          ancestors.append(shortTypename)
-          ComputeOrderFromTypeTree(
-            ancestors, genOrder, struct[field], schema)
-          # don't forget to restore it!
-          ancestors.pop()
+        if struct:
+          # we reach this if struct is not None AND not empty
+          for field in struct.keys():
+            # we fill the chain of dependent types (starting here)
+            ancestors.append(shortTypename)
+            ComputeOrderFromTypeTree(
+              ancestors, genOrder, struct[field], schema)
+            # don't forget to restore it!
+            ancestors.pop()
         
         # now we're pretty sure our dependencies have been processed,
         # we can start marking our code for generation (it might 
@@ -445,6 +448,8 @@ def GetTemplatingDictFromSchemaFilename(fn):
   obj = LoadSchema(fn)
   genOrder = ComputeRequiredDeclarationOrder(obj)
   templatingDict = ProcessSchema(obj, genOrder)
+  currentDT = datetime.datetime.now()
+  templatingDict['currentDatetime'] = str(currentDT)
   return templatingDict
 
 # +-----------------------+

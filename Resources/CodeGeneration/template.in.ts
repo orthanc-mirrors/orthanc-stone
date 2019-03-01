@@ -1,6 +1,9 @@
 /*
          1         2         3         4         5         6         7
 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+
+Generated on {{currentDatetime}} by stonegentool
+
 */
 
 function StoneCheckSerializedValueType(value: any, typeStr: string)
@@ -42,11 +45,24 @@ export enum {{enum['name']}} {
 {%endfor%}
 
 {% for struct in structs%}  export class {{struct['name']}} {
-{% for key in struct['fields']%}    {{key}}:{{CanonToTs(struct['fields'][key])}};
-{% endfor %}
+  {% if struct %}
+    {% if struct['fields'] %}
+      {% for key in struct['fields']%}
+    {{key}}:{{CanonToTs(struct['fields'][key])}};
+      {% endfor %}
+    {% endif %}
+  {% endif %}
   constructor() {
-{% for key in struct['fields']%}{% if NeedsTsConstruction(enums,CanonToTs(struct['fields'][key])) %}      this.{{key}} = new {{CanonToTs(struct['fields'][key])}}();
-{% endif %}{% endfor %}    }
+  {% if struct %}
+    {% if struct['fields'] %}
+      {% for key in struct['fields']%}
+        {% if NeedsTsConstruction(enums,CanonToTs(struct['fields'][key])) %}
+    this.{{key}} = new {{CanonToTs(struct['fields'][key])}}();
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+}
 
   public StoneSerialize(): string {
     let container: object = {};

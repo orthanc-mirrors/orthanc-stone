@@ -2,8 +2,12 @@
          1         2         3         4         5         6         7
 12345678901234567890123456789012345678901234567890123456789012345678901234567890
 
-*/
+Generated on {{currentDatetime}} by stonegentool
 
+*/
+#pragma once
+
+#include <exception>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -23,57 +27,57 @@
 namespace {{rootName}}
 {
   /** Throws in case of problem */
-  void _StoneDeserializeValue(int32_t& destValue, const Json::Value& jsonValue)
+  inline void _StoneDeserializeValue(int32_t& destValue, const Json::Value& jsonValue)
   {
     destValue = jsonValue.asInt();
   }
 
-  Json::Value _StoneSerializeValue(int32_t value)
+  inline Json::Value _StoneSerializeValue(int32_t value)
   {
     Json::Value result(value);
     return result;
   }
 
   /** Throws in case of problem */
-  void _StoneDeserializeValue(double& destValue, const Json::Value& jsonValue)
+  inline void _StoneDeserializeValue(double& destValue, const Json::Value& jsonValue)
   {
     destValue = jsonValue.asDouble();
   }
 
-  Json::Value _StoneSerializeValue(double value)
+  inline Json::Value _StoneSerializeValue(double value)
   {
     Json::Value result(value);
     return result;
   }
 
   /** Throws in case of problem */
-  void _StoneDeserializeValue(bool& destValue, const Json::Value& jsonValue)
+  inline void _StoneDeserializeValue(bool& destValue, const Json::Value& jsonValue)
   {
     destValue = jsonValue.asBool();
   }
 
-  Json::Value _StoneSerializeValue(bool value)
+  inline Json::Value _StoneSerializeValue(bool value)
   {
     Json::Value result(value);
     return result;
   }
 
   /** Throws in case of problem */
-  void _StoneDeserializeValue(
+  inline void _StoneDeserializeValue(
        std::string& destValue
      , const Json::Value& jsonValue)
   {
     destValue = jsonValue.asString();
   }
 
-  Json::Value _StoneSerializeValue(const std::string& value)
+  inline Json::Value _StoneSerializeValue(const std::string& value)
   {
     // the following is better than 
     Json::Value result(value.data(),value.data()+value.size());
     return result;
   }
 
-  std::string MakeIndent(int indent)
+  inline std::string MakeIndent(int indent)
   {
     char* txt = reinterpret_cast<char*>(malloc(indent+1)); // NO EXCEPTION BELOW!!!!!!!!!!!!
     for(size_t i = 0; i < indent; ++i)
@@ -93,7 +97,7 @@ namespace {{rootName}}
   }
 
   // string dumper
-  std::ostream& StoneDumpValue(std::ostream& out, const std::string& value, int indent)
+  inline std::ostream& StoneDumpValue(std::ostream& out, const std::string& value, int indent)
   {
     out << MakeIndent(indent) << "\"" << value  << "\"";
     return out;
@@ -186,7 +190,7 @@ namespace {{rootName}}
     return out;
   }
 
-  void StoneCheckSerializedValueTypeGeneric(const Json::Value& value)
+  inline void StoneCheckSerializedValueTypeGeneric(const Json::Value& value)
   {
     if ((!value.isMember("type")) || (!value["type"].isString()))
     {
@@ -196,7 +200,7 @@ namespace {{rootName}}
     }
   }
 
-  void StoneCheckSerializedValueType(
+  inline void StoneCheckSerializedValueType(
     const Json::Value& value, std::string typeStr)
   {
     StoneCheckSerializedValueTypeGeneric(value);
@@ -216,23 +220,45 @@ namespace {{rootName}}
 // end of generic methods
 {% for enum in enums%}
   enum {{enum['name']}} {
-{% for key in enum['fields']%}    {{key}},
+{% for key in enum['fields']%}    {{enum['name']}}_{{key}},
 {%endfor%}  };
 
-  void _StoneDeserializeValue(
+  inline void _StoneDeserializeValue(
     {{enum['name']}}& destValue, const Json::Value& jsonValue)
   {
     destValue = static_cast<{{enum['name']}}>(jsonValue.asInt64());
   }
 
-  Json::Value _StoneSerializeValue(const {{enum['name']}}& value)
+  inline Json::Value _StoneSerializeValue(const {{enum['name']}}& value)
   {
     return Json::Value(static_cast<int64_t>(value));
   }
 
-  std::ostream& StoneDumpValue(std::ostream& out, const {{enum['name']}}& value, int indent = 0)
+  inline std::string ToString(const {{enum['name']}}& value)
   {
-{% for key in enum['fields']%}    if( value == {{key}})
+{% for key in enum['fields']%}    if( value == {{enum['name']}}_{{key}})
+    {
+      return std::string("{{key}}");
+    }
+{%endfor%};
+  }
+
+  inline void FromString({{enum['name']}}& value, std::string strValue)
+  {
+{% for key in enum['fields']%}    if( strValue == std::string("{{key}}") )
+    {
+      value = {{enum['name']}}_{{key}};
+    }
+{%endfor%}
+    std::stringstream ss;
+    ss << "String \"" << strValue << "\" cannot be converted to {{enum['name']}}. Possible values are: {% for key in enum['fields']%}{{key}}{% endfor %}";
+    std::string msg = ss.str();
+    throw std::runtime_error(msg);
+  }
+
+  inline std::ostream& StoneDumpValue(std::ostream& out, const {{enum['name']}}& value, int indent = 0)
+  {
+{% for key in enum['fields']%}    if( value == {{enum['name']}}_{{key}})
     {
       out << MakeIndent(indent) << "{{key}}" << std::endl;
     }
@@ -247,52 +273,57 @@ namespace {{rootName}}
 
   struct {{struct['name']}}
   {
-{% for key in struct['fields']%}    {{CanonToCpp(struct['fields'][key])}} {{key}};
-{% endfor %}
-    {{struct['name']}}()
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}    {{CanonToCpp(struct['fields'][key])}} {{key}};
+{% endfor %}{% endif %}{% endif %}
+    {{struct['name']}}({% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}{{CanonToCpp(struct['fields'][key])}} {{key}} = {{CanonToCpp(struct['fields'][key])}}(){{ ", " if not loop.last }}{% endfor %}{% endif %}{% endif %})
     {
-{% for key in struct['fields']%}      {{key}} = {{CanonToCpp(struct['fields'][key])}}();
-{% endfor %}
-    }
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}      this->{{key}} = {{key}};
+{% endfor %}{% endif %}{% endif %}    }
   };
 
-  void _StoneDeserializeValue({{struct['name']}}& destValue, const Json::Value& value)
+  inline void _StoneDeserializeValue({{struct['name']}}& destValue, const Json::Value& value)
   {
-{% for key in struct['fields']%}    _StoneDeserializeValue(destValue.{{key}}, value["{{key}}"]);
-{% endfor %}
-  }
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}    _StoneDeserializeValue(destValue.{{key}}, value["{{key}}"]);
+{% endfor %}{% endif %}{% endif %}    }
 
-  Json::Value _StoneSerializeValue(const {{struct['name']}}& value)
+  inline Json::Value _StoneSerializeValue(const {{struct['name']}}& value)
   {
     Json::Value result(Json::objectValue);
-{% for key in struct['fields']%}    result["{{key}}"] = _StoneSerializeValue(value.{{key}});
-{% endfor %}
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}    result["{{key}}"] = _StoneSerializeValue(value.{{key}});
+{% endfor %}{% endif %}{% endif %}
     return result;
   }
 
-  std::ostream& StoneDumpValue(std::ostream& out, const {{struct['name']}}& value, int indent = 0)
+  inline std::ostream& StoneDumpValue(std::ostream& out, const {{struct['name']}}& value, int indent = 0)
   {
     out << MakeIndent(indent) << "{\n";
-{% for key in struct['fields']%}    out << MakeIndent(indent) << "{{key}}:\n";
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}    out << MakeIndent(indent) << "{{key}}:\n";
     StoneDumpValue(out, value.{{key}},indent+2);
     out << "\n";
-{% endfor %}
+{% endfor %}{% endif %}{% endif %}
     out << MakeIndent(indent) << "}\n";
     return out;
   }
 
-  void StoneDeserialize({{struct['name']}}& destValue, const Json::Value& value)
+  inline void StoneDeserialize({{struct['name']}}& destValue, const Json::Value& value)
   {
     StoneCheckSerializedValueType(value, "{{rootName}}.{{struct['name']}}");
     _StoneDeserializeValue(destValue, value["value"]);
   }
 
-  Json::Value StoneSerialize(const {{struct['name']}}& value)
+  inline Json::Value StoneSerializeToJson(const {{struct['name']}}& value)
   {
     Json::Value result(Json::objectValue);
     result["type"] = "{{rootName}}.{{struct['name']}}";
     result["value"] = _StoneSerializeValue(value);
     return result;
+  }
+
+  inline std::string StoneSerialize(const {{struct['name']}}& value)
+  {
+    Json::Value resultJson = StoneSerializeToJson(value);
+    std::string resultStr = resultJson.toStyledString();
+    return resultStr;
   }
 
 #ifdef _MSC_VER
@@ -310,7 +341,7 @@ namespace {{rootName}}
 {% endfor %}  };
 
   /** Service function for StoneDispatchToHandler */
-  bool StoneDispatchJsonToHandler(
+  inline bool StoneDispatchJsonToHandler(
     const Json::Value& jsonValue, IHandler* handler)
   {
     StoneCheckSerializedValueTypeGeneric(jsonValue);
@@ -333,7 +364,7 @@ namespace {{rootName}}
   }
 
   /** Takes a serialized type and passes this to the handler */
-  bool StoneDispatchToHandler(std::string strValue, IHandler* handler)
+  inline bool StoneDispatchToHandler(std::string strValue, IHandler* handler)
   {
     Json::Value readValue;
 

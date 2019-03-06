@@ -350,7 +350,6 @@ extern "C" {
     printf("%s", message);
 
     if (applicationWasmAdapter.get() != NULL) {
-      printf("sending serialized message to C++\n");
       applicationWasmAdapter->HandleSerializedMessageFromWeb(output, std::string(message));
       return output.c_str();
     }
@@ -366,7 +365,6 @@ extern "C" {
     printf("%s", message);
 
     if (applicationWasmAdapter.get() != NULL) {
-      printf("sending command to C++\n");
       applicationWasmAdapter->HandleCommandFromWeb(output, std::string(message));
       return output.c_str();
     }

@@ -11,6 +11,7 @@ struct B:
 struct C:
   someBs: vector<B>
   ddd:    vector<string>
+  definition: vector<json>
 
 struct A:
   someStrings: vector<string>
@@ -30,6 +31,7 @@ struct Message2:
   titi: map<string, string>
   lulu: map<string, Message1>
   movieType: MovieType
+  definition: json
 
 enum MovieType:
   - RomCom

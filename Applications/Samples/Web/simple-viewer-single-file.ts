@@ -42,10 +42,20 @@ document.querySelectorAll("[action-trigger]").forEach((e) => {
 
 // this method is called "from the C++ code" when the StoneApplication is updated.
 // it can be used to update the UI of the application
-function UpdateWebApplication(statusUpdateMessage: string) {
+function UpdateWebApplicationWithString(statusUpdateMessage: string) {
   console.log(statusUpdateMessage);
   
   if (statusUpdateMessage.startsWith("series-description=")) {
       document.getElementById("series-description").innerText = statusUpdateMessage.split("=")[1];
   }
 }
+
+function UpdateWebApplicationWithSerializedMessage(statusUpdateMessageString: string) {
+  console.log("updating web application with serialized message: ", statusUpdateMessageString);
+  console.log("<not supported in the simple viewer (single file)!>");
+}
+
+// make it available to other js scripts in the application
+(<any> window).UpdateWebApplicationWithString = UpdateWebApplicationWithString;
+
+(<any> window).UpdateWebApplicationWithSerializedMessage = UpdateWebApplicationWithSerializedMessage;

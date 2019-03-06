@@ -8,6 +8,45 @@ using std::stringstream;
 int main()
 {
     std::cout << "Hello world from testWasmIntegrated! (this is sent from C++)" << std::endl;
+    try
+    {
+    const char* jsonData = R"bgo({"definition":
+    {
+      "val" : [ "berk", 42 ],
+      "zozo" : { "23": "zloutch", "lalala": 42}
+    }
+    })bgo";
+    std::string strValue(jsonData);
+    
+    Json::Value readValue;
+
+    Json::CharReaderBuilder builder;
+    Json::CharReader* reader = builder.newCharReader();
+
+    StoneSmartPtr<Json::CharReader> ptr(reader);
+
+    std::string errors;
+
+    bool ok = reader->parse(
+      strValue.c_str(),
+      strValue.c_str() + strValue.size(),
+      &readValue,
+      &errors
+    );
+    if (!ok)
+    {
+      std::stringstream ss;
+      ss << "Jsoncpp parsing error: " << errors;
+      throw std::runtime_error(ss.str());
+    }
+    std::cout << "Json parsing OK" << std::endl;
+    std::cout << readValue  << std::endl;
+    }
+    catch(std::exception& e)
+    {
+      std::cout << "Json parsing THROW" << std::endl;
+      std::cout << "e.what() = " << e.what() << std::endl;
+    }
 }
 
 extern "C" void SendMessageFromCppJS(const char* message);

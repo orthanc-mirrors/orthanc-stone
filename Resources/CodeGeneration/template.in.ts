@@ -44,25 +44,12 @@ export enum {{enum['name']}} {
 };
 {%endfor%}
 
-{% for struct in structs%}  export class {{struct['name']}} {
-  {% if struct %}
-    {% if struct['fields'] %}
-      {% for key in struct['fields']%}
-    {{key}}:{{CanonToTs(struct['fields'][key])}};
-      {% endfor %}
-    {% endif %}
-  {% endif %}
+{% for struct in structs%}export class {{struct['name']}} {
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}  {{key}}:{{CanonToTs(struct['fields'][key])}};
+{% endfor %}{% endif %}{% endif %}
   constructor() {
-  {% if struct %}
-    {% if struct['fields'] %}
-      {% for key in struct['fields']%}
-        {% if NeedsTsConstruction(enums,CanonToTs(struct['fields'][key])) %}
-    this.{{key}} = new {{CanonToTs(struct['fields'][key])}}();
-        {% endif %}
-      {% endfor %}
-    {% endif %}
-  {% endif %}
-}
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}{% if NeedsTsConstruction(enums,CanonToTs(struct['fields'][key])) %}    this.{{key}} = new {{CanonToTs(struct['fields'][key])}}();
+{% endif %}{% endfor %}{% endif %}{% endif %}  }
 
   public StoneSerialize(): string {
     let container: object = {};

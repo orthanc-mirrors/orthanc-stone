@@ -205,7 +205,12 @@ namespace OrthancStone
         {
         }
 
-        virtual void HandleMessageFromWeb(std::string& output, const std::string& input) 
+        virtual void HandleSerializedMessageFromWeb(std::string& output, const std::string& input) 
+        {
+          // the simple viewer does not use the serialized messages facilities
+        }
+
+        virtual void HandleCommandFromWeb(std::string& output, const std::string& input) 
         {
           if (input == "select-tool:line-measure")
           {
@@ -221,9 +226,14 @@ namespace OrthancStone
           output = "ok";
         }
 
+        virtual void NotifySerializedMessageFromCppToWeb(const std::string& statusUpdateMessage) 
+        {
+          UpdateStoneApplicationStatusFromCppWithSerializedMessage(statusUpdateMessage.c_str());
+        }
+
         virtual void NotifyStatusUpdateFromCppToWeb(const std::string& statusUpdateMessage) 
         {
-          UpdateStoneApplicationStatusFromCpp(statusUpdateMessage.c_str());
+          UpdateStoneApplicationStatusFromCppWithString(statusUpdateMessage.c_str());
         }
 
       };

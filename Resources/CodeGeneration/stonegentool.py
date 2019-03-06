@@ -110,6 +110,7 @@ def CanonToCpp(canonicalTypename):
   retVal = retVal.replace("int32", "int32_t")
   retVal = retVal.replace("float32", "float")
   retVal = retVal.replace("float64", "double")
+  retVal = retVal.replace("json", "Json::Value")
   return retVal
 
 def CanonToTs(canonicalTypename):
@@ -125,6 +126,7 @@ def CanonToTs(canonicalTypename):
   retVal = retVal.replace("float32", "number")
   retVal = retVal.replace("float64", "number")
   retVal = retVal.replace("bool", "boolean")
+  retVal = retVal.replace("json", "Object")
   return retVal
 
 def NeedsTsConstruction(enums, tsType):

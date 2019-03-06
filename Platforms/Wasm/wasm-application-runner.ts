@@ -19,7 +19,8 @@ var CreateWasmApplication: Function = null;
 export var CreateCppViewport: Function = null;
 var ReleaseCppViewport: Function = null;
 var StartWasmApplication: Function = null;
-export var SendMessageToStoneApplication: Function = null;
+export var SendSerializedMessageToStoneApplication: Function = null;
+export var SendCommandToStoneApplication: Function = null;
 
 function DoAnimationThread() {
   if (WasmDoAnimation != null) {
@@ -99,7 +100,8 @@ export function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl
     // no need to put this into the globals for it's only used in this very module
     WasmDoAnimation = (<any> window).StoneFrameworkModule.cwrap('WasmDoAnimation', null, []);
 
-    SendMessageToStoneApplication = (<any> window).StoneFrameworkModule.cwrap('SendMessageToStoneApplication', 'string', ['string']);
+    SendSerializedMessageToStoneApplication = (<any> window).StoneFrameworkModule.cwrap('SendSerializedMessageToStoneApplication', 'string', ['string']);
+    SendCommandToStoneApplication = (<any> window).StoneFrameworkModule.cwrap('SendCommandToStoneApplication', 'string', ['string']);
 
     console.log("Connecting C++ methods to JS methods - done");
 

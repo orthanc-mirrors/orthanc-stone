@@ -57,6 +57,7 @@ struct B:
 struct C:
   someBs: vector<B>
   ddd:    vector<string>
+  definition: vector<json>
 
 struct A:
   someStrings: vector<string>
@@ -76,6 +77,7 @@ struct Message2:
   titi: map<string, string>
   lulu: map<string, Message1>
   movieType: MovieType
+  definition: json
 
 enum MovieType:
   - RomCom
@@ -142,7 +144,16 @@ stockSerializedMessages["Test 1"] = `{
     [
       "Mercadet",
       "Poisson"
-    ]
+    ],
+    "definition":
+    {
+      "val" : [ "berk", 42 ],
+      "zozo" :
+      {
+        "23": "zloutch",
+        "lalala": 42
+      }
+    }
   }
 }`;
 stockSerializedMessages["Test 2"] = ` {
@@ -224,8 +235,8 @@ function ButtonClick(buttonName: string) {
 
 // this method is called "from the C++ code" when the StoneApplication is updated.
 // it can be used to update the UI of the application
-function UpdateWebApplication(statusUpdateMessageString: string) {
-  console.log("updating web application: ", statusUpdateMessageString);
+function UpdateWebApplicationWithString(statusUpdateMessageString: string) {
+  console.log("updating web application (string): ", statusUpdateMessageString);
   let statusUpdateMessage = JSON.parse(statusUpdateMessageString);
 
   if ("event" in statusUpdateMessage)
@@ -237,3 +248,10 @@ function UpdateWebApplication(statusUpdateMessageString: string) {
     }
   }
 }
+
+
+function UpdateWebApplicationWithSerializedMessage(statusUpdateMessageString: string) {
+  console.log("updating web application (serialized message): ", statusUpdateMessageString);
+  console.log("<not supported!>");
+}
+ 

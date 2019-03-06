@@ -37,7 +37,7 @@ mergeInto(LibraryManager.library, {
 
   WasmWebService_ScheduleLaterCachedSuccessNotification: function (brol) {
     setTimeout(function() {
-      WasmWebService_NotifyCachedSuccess(brol);
+      window.WasmWebService_NotifyCachedSuccess(brol);
     }, 0);
   },
 
@@ -62,10 +62,10 @@ mergeInto(LibraryManager.library, {
           var headers = _malloc(s.length + 1);
           stringToUTF8(s, headers, s.length + 1);
 
-          WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
+          window.WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
                                        this.response.byteLength, headers, payload);
         } else {
-          WasmWebService_NotifyError(callableFailure, url_, payload);
+          window.WasmWebService_NotifyError(callableFailure, url_, payload);
         }
       }
     }
@@ -94,10 +94,10 @@ mergeInto(LibraryManager.library, {
           var headers = _malloc(s.length + 1);
           stringToUTF8(s, headers, s.length + 1);
 
-          WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
+          window.WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
                                        this.response.byteLength, headers, payload);
         } else {
-          WasmWebService_NotifyError(callableFailure, url_, payload);
+          window.WasmWebService_NotifyError(callableFailure, url_, payload);
         }
       }
     }

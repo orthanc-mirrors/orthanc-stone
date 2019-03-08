@@ -13,7 +13,6 @@ Generated on {{currentDatetime}} by stonegentool
 #include <sstream>
 #include <assert.h>
 #include <memory>
-#include <optional>
 #include <json/json.h>
 
 //#define STONEGEN_NO_CPP11 1

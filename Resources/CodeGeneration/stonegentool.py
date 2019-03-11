@@ -484,7 +484,7 @@ def Process(schemaFile, outDir):
   tdico = GetTemplatingDictFromSchemaFilename(schemaFile)
 
   tsTemplateFile = \
-    os.path.join(os.path.dirname(__file__), 'template.in.ts')
+    os.path.join(os.path.dirname(__file__), 'template.in.ts.j2')
   template = MakeTemplateFromFile(tsTemplateFile)
   renderedTsCode = template.render(**tdico)
   outputTsFile = os.path.join( \
@@ -493,7 +493,7 @@ def Process(schemaFile, outDir):
     outFile.write(renderedTsCode)
 
   cppTemplateFile = \
-    os.path.join(os.path.dirname(__file__), 'template.in.h')
+    os.path.join(os.path.dirname(__file__), 'template.in.h.j2')
   template = MakeTemplateFromFile(cppTemplateFile)
   renderedCppCode = template.render(**tdico)
   outputCppFile = os.path.join( \

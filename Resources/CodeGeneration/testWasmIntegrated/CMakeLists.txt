@@ -14,8 +14,8 @@ add_definitions(-DORTHANC_ENABLE_WASM=1)
 
 set(testWasmIntegratedCpp_Codegen_Deps
   ${CMAKE_CURRENT_LIST_DIR}/testWasmIntegratedCpp_api.yaml 
-  ${CMAKE_CURRENT_LIST_DIR}/../template.in.h
-  ${CMAKE_CURRENT_LIST_DIR}/../template.in.ts
+  ${CMAKE_CURRENT_LIST_DIR}/../template.in.h.j2
+  ${CMAKE_CURRENT_LIST_DIR}/../template.in.ts.j2
 ) 
 
 set(jsoncppRootDir ${CMAKE_CURRENT_LIST_DIR}/jsoncpp-1.8.4)

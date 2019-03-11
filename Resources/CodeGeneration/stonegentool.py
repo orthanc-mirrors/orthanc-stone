@@ -39,30 +39,6 @@ def trim(docstring):
     # Return a single string:
     return '\n'.join(trimmed)
 
-
-class GenCode:
-    def __init__(self):
-
-        # file-wide preamble (#include directives, comment...)
-        self.cppPreamble = StringIO()
-
-        self.cppEnums = StringIO()
-        self.cppStructs = StringIO()
-        self.cppDispatcher = StringIO()
-        self.cppHandler = StringIO()
-
-        # file-wide preamble (module directives, comment...)
-        self.tsPreamble = StringIO()
-
-        self.tsEnums = StringIO()
-        self.tsStructs = StringIO()
-        self.tsDispatcher = StringIO()
-        self.tsHandler = StringIO()
-
-    def FlattenToFiles(self, outputDir):
-        raise NotImplementedError()
-
-
 class JsonHelpers:
     """A set of utilities to perform JSON operations"""
 
@@ -234,6 +210,9 @@ def ParseTemplateType(typename):
         listOfDependentTypes = SplitListOfTypes(m.group(2))
         return (True, m.group(1), listOfDependentTypes)
 
+def GetStructFields(struct):
+  """This filters out the __meta__ key from the struct fields"""
+  return [k for k in struct.keys() if k != '__meta__']
 
 def ComputeOrderFromTypeTree(
   ancestors, 
@@ -268,7 +247,7 @@ def ComputeOrderFromTypeTree(
         # The values in the struct dict are the member types
         if struct:
           # we reach this if struct is not None AND not empty
-          for field in struct.keys():
+          for field in GetStructFields(struct):
             # we fill the chain of dependent types (starting here)
             ancestors.append(shortTypename)
             ComputeOrderFromTypeTree(
@@ -340,6 +319,12 @@ def CheckSchemaSchema(schema):
   # TODO: check struct fields are unique (in each struct)
   # TODO: check that in the source schema, there are spaces after each colon
 
+nonTypeKeys = ['rootName']
+def GetTypesInSchema(schema):
+  """Returns the top schema keys that are actual type names"""
+  typeList = [k for k in schema if k not in nonTypeKeys]
+  return typeList
+
 # +-----------------------+
 # | Main processing logic |
 # +-----------------------+
@@ -357,12 +342,48 @@ def ComputeRequiredDeclarationOrder(schema):
   # anything and we'll handle them, in their original declaration 
   # order, at the start
   genOrder = []
-  for fullName in schema.keys():
+  for fullName in GetTypesInSchema(schema):
     if IsStructType(fullName):
       realName = GetShortTypename(fullName)
       ancestors = []
       ComputeOrderFromTypeTree(ancestors, genOrder, realName, schema)
   return genOrder
+
+def GetStructFields(fieldDict):
+  """Returns the regular (non __meta__) struct fields"""
+  # the following happens for empty structs
+  if fieldDict == None:
+    return fieldDict
+  ret = {}
+  for k,v in fieldDict.items():
+    if k != "__meta__":
+      ret[k] = v
+  return ret
+
+def GetStructMetadata(fieldDict):
+  """Returns the __meta__ struct fields (there are default values that
+     can be overridden by entries in the schema
+     Not tested because it's a fail-safe: if something is broken in meta, 
+     dependent projects will not build."""
+  metadataDict = {}
+  metadataDict['handleInCpp'] = True
+  metadataDict['handleInTypescript'] = True
+  
+  # Empty types are allowed
+  if fieldDict != None:
+    for k,v in fieldDict.items():
+      if k == "__meta__":
+        # let's examine the various metadata entries
+        for metaKey,metaValue in v.items():
+          # we only accept overriding EXISTING entries
+          if metaKey in metadataDict:
+            # simple check, valid for now
+            if type(metaValue) != bool:
+              raise RuntimeError("Wrong value for metadata key")
+            metadataDict[metaKey] = metaValue
+          else:
+            raise RuntimeError("Wrong key \"{metaKey}\" in metadata. Allowed keys are \"{metadataDict.keys()}\"")
+  return metadataDict
 
 def ProcessSchema(schema, genOrder):
   # sanity check
@@ -408,7 +429,8 @@ def ProcessSchema(schema, genOrder):
     fieldDict = schema["struct " + typename]
     struct = {}
     struct['name'] = typename
-    struct['fields'] = fieldDict
+    struct['fields'] = GetStructFields(fieldDict)
+    struct['__meta__'] = GetStructMetadata(fieldDict)
     structs.append(struct)
   
   templatingDict = {}
@@ -442,7 +464,8 @@ def LoadSchema(fn):
       nextCh = schemaText[i+1]
       if ch == ':':
         if not (nextCh == ' ' or nextCh == '\n'):
-          assert(False)
+          lineNumber = schemaText.count("\n",0,i) + 1
+          raise RuntimeError(f"Error at line {lineNumber} in the schema: colons must be followed by a space or a newline!")
     schema = yaml.load(schemaText)
   return schema
 
@@ -457,6 +480,26 @@ def GetTemplatingDictFromSchemaFilename(fn):
 # +-----------------------+
 # |      ENTRY POINT      |
 # +-----------------------+
+def Process(schemaFile, outDir):
+  tdico = GetTemplatingDictFromSchemaFilename(schemaFile)
+
+  tsTemplateFile = \
+    os.path.join(os.path.dirname(__file__), 'template.in.ts')
+  template = MakeTemplateFromFile(tsTemplateFile)
+  renderedTsCode = template.render(**tdico)
+  outputTsFile = os.path.join( \
+    outDir,str(tdico['rootName']) + "_generated.ts")
+  with open(outputTsFile,"wt",encoding='utf8') as outFile:
+    outFile.write(renderedTsCode)
+
+  cppTemplateFile = \
+    os.path.join(os.path.dirname(__file__), 'template.in.h')
+  template = MakeTemplateFromFile(cppTemplateFile)
+  renderedCppCode = template.render(**tdico)
+  outputCppFile = os.path.join( \
+    outDir, str(tdico['rootName']) + "_generated.hpp")
+  with open(outputCppFile,"wt",encoding='utf8') as outFile:
+    outFile.write(renderedCppCode)
 
 if __name__ == "__main__":
   import argparse
@@ -490,237 +533,4 @@ if __name__ == "__main__":
   args = parser.parse_args()
   schemaFile = args.input_schema
   outDir = args.out_dir
-
-  tdico = GetTemplatingDictFromSchemaFilename(schemaFile)
-
-  tsTemplateFile = \
-    os.path.join(os.path.dirname(__file__), 'template.in.ts')
-  template = MakeTemplateFromFile(tsTemplateFile)
-  renderedTsCode = template.render(**tdico)
-  outputTsFile = os.path.join( \
-    outDir,str(tdico['rootName']) + "_generated.ts")
-  with open(outputTsFile,"wt",encoding='utf8') as outFile:
-    outFile.write(renderedTsCode)
-
-  cppTemplateFile = \
-    os.path.join(os.path.dirname(__file__), 'template.in.h')
-  template = MakeTemplateFromFile(cppTemplateFile)
-  renderedCppCode = template.render(**tdico)
-  outputCppFile = os.path.join( \
-    outDir, str(tdico['rootName']) + "_generated.hpp")
-  with open(outputCppFile,"wt",encoding='utf8') as outFile:
-    outFile.write(renderedCppCode)
-
-# def GenEnumDecl(genc: GenCode, fullName: str, schema: Dict) -> None:
-#   """Writes the enumerations in genc"""
-#   enumDict:Dict=schema[fullName]
-#   # jinja2 template
-#   j2cppEnum = Template(trim(
-#   """ {{fullName}}
-#       {
-#           {% for key in enumDict.keys()%}
-#           {{key}},
-#           {%endfor%}
-#       };
-#   """))
-#   j2cppEnumR = j2cppEnum.render(locals())
-#   genc.cppEnums.write(j2cppEnumR)
-
-#   j2tsEnum = Template(trim(
-#   """ export {{fullName}}
-#       {
-#           {% for key in enumDict.keys()%}
-#           {{key}},
-#           {%endfor%}
-#       };
-#   """))
-#   j2cppEnumR = j2cppEnum.render(locals())
-#   genc.tsEnums.write(j2cppEnumR)
-
-  
-
-# def GetSerializationCode(typename: str,valueName: str, tempName: str)
-#   if IsPrimitiveType(typename) or IsTemplateCollection(typename):
-#     # no need to write code for the primitive types or collections.
-#     # It is handled in C++ by the template functions and in TS by 
-#     # the JSON.stringify code.
-#   elif IsStructType(typename):
-#     pass
-
-# def GenStructTypeDeclAndSerialize(genc: GenCode, type, schema) -> None:
-#   ######
-#   # CPP
-#   ######
-#   sampleCpp = """  struct Message1
-#     {
-#       int32_t a;
-#       std::string b;
-#       EnumMonth0 c;
-#       bool d;
-#     };
-
-#     Json::Value StoneSerialize(const Message1& value)
-#     {
-#       Json::Value result(Json::objectValue);
-#       result["a"] = StoneSerialize(value.a);
-#       result["b"] = StoneSerialize(value.b);
-#       result["c"] = StoneSerialize(value.c);
-#       result["d"] = StoneSerialize(value.d);
-#       return result;
-#     }
-#     """
-    
-
-#   ######
-#   # TS
-#   ######
-#   sampleTs = """
-#       {
-#         export class Message1 {
-#           a: number;
-#           b: string;
-#           c: EnumMonth0;
-#           d: boolean;
-#           public StoneSerialize(): string {
-#             let container: object = {};
-#             container['type'] = 'Message1';
-#             container['value'] = this;
-#             return JSON.stringify(container);
-#           }
-#         };
-#       }
-#     """
-
-
-
-
-#   tsText: StringIO = StringIO()
-#   cppText: StringIO = StringIO()
-
-#   tsText.write("class %s\n" % typeDict["name"])
-#   tsText.write("{\n")
-
-#   cppText.write("struct %s\n" % typeDict["name"])
-#   cppText.write("{\n")
-
-#   """
-  
-#   GenerateSerializationCode(typename,valueName)
-
-#   primitives:
-#   -----------
-#   int
-#     jsonValue val(objectInt);
-#     val.setValue("$name")
-#     parent.add(("$name",$name)
-#   double
-#     ...
-#   string
-#     ...
-
-#   collections:
-#   -----------
-#   dict { }
-
-#   serializeValue()
-#   """
-
-#   for i in range(len(typeDict["fields"])):
-#     field = typeDict["fields"][i]
-#     name = field["name"]
-#     tsType = GetTypeScriptTypenameFromCanonical(field["type"])
-#     tsText.write("    public %s %s;\n" % (tsType, name))
-#     cppType = GetCppTypenameFromCanonical(field["type"])
-#     cppText.write("    %s %s;\n" % (cppType, name))
-
-#   tsText.write("};\n\n")
-#   cppText.write("};\n\n")
-
-#   genc.tsStructs.write(tsText.getvalue())
-#   genc.cppStructs.write(cppText.getvalue())
-
-
-# def GenerateCodeFromTsTemplate(genc)
-
-
-# +-----------------------+
-# |    CODE GENERATION    |
-# +-----------------------+
-
-# def GenPreambles(rootName: str, genc: GenCode) -> None:
-#   cppPreambleT = Template(trim(
-#     """// autogenerated by stonegentool on {{time.ctime()}} 
-#     // for module {{rootName}}
-#     #include <cstdint>
-#     #include <string>
-#     #include <vector>
-#     #include <map>
-#     namespace {{rootName}}
-#     {
-#       Json::Value StoneSerialize(int32_t value)
-#       {
-#         Json::Value result(value);
-#         return result;
-#       }
-#       Json::Value StoneSerialize(double value)
-#       {
-#         Json::Value result(value);
-#         return result;
-#       }
-#       Json::Value StoneSerialize(bool value)
-#       {
-#         Json::Value result(value);
-#         return result;
-#       }
-#       Json::Value StoneSerialize(const std::string& value)
-#       {
-#         // the following is better than 
-#         Json::Value result(value.data(),value.data()+value.size());
-#         return result;
-#       }
-#       template<typename T>
-#       Json::Value StoneSerialize(const std::map<std::string,T>& value)
-#       {
-#         Json::Value result(Json::objectValue);
-
-#         for (std::map<std::string, T>::const_iterator it = value.cbegin();
-#           it != value.cend(); ++it)
-#         {
-#           // it->first it->second
-#           result[it->first] = StoneSerialize(it->second);
-#         }
-#         return result;
-#       }
-#       template<typename T>
-#       Json::Value StoneSerialize(const std::vector<T>& value)
-#       {
-#         Json::Value result(Json::arrayValue);
-#         for (size_t i = 0; i < value.size(); ++i)
-#         {
-#           result.append(StoneSerialize(value[i]));
-#         }
-#         return result;
-#       }
-#     """
-#   cppPreambleR = cppPreambleT.render(locals())
-#   genc.cppPreamble.write(cppPreambleR)
-  
-#   tsPreambleT = Template(trim(
-#     """// autogenerated by stonegentool on {{time.ctime()}} 
-#     // for module {{rootName}}
-    
-#     namespace {{rootName}}
-#     {
-#     """
-#   tsPreambleR = tsPreambleT.render(locals())
-#   genc.tsPreamble.write(tsPreambleR)
-
-# def ComputeOrder_ProcessStruct( \
-#   genOrder: List[str], name:str, schema: Dict[str, str]) -> None:
-#   # let's generate the code according to the
-#   struct = schema[name]
-
-#   if not IsStructType(name):
-#     raise Exception(f'{typename} should start with "struct "')
-
-
+  Process(schemaFile, outDir)

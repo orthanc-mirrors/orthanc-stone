@@ -66,13 +66,10 @@ export enum {{enum['name']}} {
     return result;
   }
 }
-
 {% endfor %}
-
 export interface IHandler {
-  {% for struct in structs%}    Handle{{struct['name']}}(value:  {{struct['name']}}): boolean;
-  {% endfor %}
-};
+{% for struct in structs%}{% if struct['__meta__'].handleInTypescript %}  Handle{{struct['name']}}(value:  {{struct['name']}}): boolean;
+{% endif %}{% endfor %}};
 
 /** Service function for StoneDispatchToHandler */
 export function StoneDispatchJsonToHandler(
@@ -85,13 +82,12 @@ export function StoneDispatchJsonToHandler(
     // this should never ever happen
     throw new Error("Caught empty type while dispatching");
   }
-{% for struct in structs%}    else if (type == "{{rootName}}.{{struct['name']}}")
+{% for struct in structs%}{% if struct['__meta__'].handleInTypescript %}  else if (type == "{{rootName}}.{{struct['name']}}")
   {
     let value = jsonValue["value"] as {{struct['name']}};
     return handler.Handle{{struct['name']}}(value);
   }
-{% endfor %}
-  else
+{% endif %}{% endfor %}  else
   {
     return false;
   }

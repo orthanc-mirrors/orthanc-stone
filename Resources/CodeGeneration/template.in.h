@@ -352,8 +352,8 @@ namespace {{rootName}}
   class IHandler
   {
   public:
-{% for struct in structs%}    virtual bool Handle(const {{struct['name']}}& value) = 0;
-{% endfor %}  };
+{% for struct in structs%}{% if struct['__meta__'].handleInCpp %}    virtual bool Handle(const {{struct['name']}}& value) = 0;
+{% endif %}{% endfor %}  };
 
   /** Service function for StoneDispatchToHandler */
   inline bool StoneDispatchJsonToHandler(
@@ -366,13 +366,13 @@ namespace {{rootName}}
       // this should never ever happen
       throw std::runtime_error("Caught empty type while dispatching");
     }
-{% for struct in structs%}    else if (type == "{{rootName}}.{{struct['name']}}")
+{% for struct in structs%}{% if struct['__meta__'].handleInCpp %}    else if (type == "{{rootName}}.{{struct['name']}}")
     {
       {{struct['name']}} value;
       _StoneDeserializeValue(value, jsonValue["value"]);
       return handler->Handle(value);
     }
-{% endfor %}    else
+{% endif %}{% endfor %}    else
     {
       return false;
     }

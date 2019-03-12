@@ -215,12 +215,12 @@ namespace OrthancStone
           if (input == "select-tool:line-measure")
           {
             viewerApplication_.currentTool_ = Tools_LineMeasure;
-            NotifyStatusUpdateFromCppToWeb("currentTool=line-measure");
+            NotifyStatusUpdateFromCppToWebWithString("currentTool=line-measure");
           }
           else if (input == "select-tool:circle-measure")
           {
             viewerApplication_.currentTool_ = Tools_CircleMeasure;
-            NotifyStatusUpdateFromCppToWeb("currentTool=circle-measure");
+            NotifyStatusUpdateFromCppToWebWithString("currentTool=circle-measure");
           }
 
           output = "ok";
@@ -231,7 +231,7 @@ namespace OrthancStone
           UpdateStoneApplicationStatusFromCppWithSerializedMessage(statusUpdateMessage.c_str());
         }
 
-        virtual void NotifyStatusUpdateFromCppToWeb(const std::string& statusUpdateMessage) 
+        virtual void NotifyStatusUpdateFromCppToWebWithString(const std::string& statusUpdateMessage) 
         {
           UpdateStoneApplicationStatusFromCppWithString(statusUpdateMessage.c_str());
         }

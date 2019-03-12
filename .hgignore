@@ -1,5 +1,6 @@
 CMakeLists.txt.user
 Platforms/Generic/ThirdPartyDownloads/
+Applications/build-*
 Applications/Qt/archive/
 Applications/Samples/ThirdPartyDownloads/
 Applications/Samples/build-wasm/

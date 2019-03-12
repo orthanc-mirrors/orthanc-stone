@@ -562,8 +562,8 @@ namespace OrthancStone
 
     Extent2D extent = GetSceneExtent();
 
-    int w = std::ceil(extent.GetWidth() / pixelSpacingX);
-    int h = std::ceil(extent.GetHeight() / pixelSpacingY);
+    int w = static_cast<int>(std::ceil(extent.GetWidth() / pixelSpacingX));
+    int h = static_cast<int>(std::ceil(extent.GetHeight() / pixelSpacingY));
 
     if (w < 0 || h < 0)
     {

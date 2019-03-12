@@ -1,6 +1,6 @@
-///<reference path='../../../../Platforms/Wasm/wasm-application-runner.ts'/>
+import wasmApplicationRunner = require('../../../../Platforms/Wasm/wasm-application-runner');
 
-InitializeWasmApplication("OrthancStoneSimpleViewer", "/orthanc");
+wasmApplicationRunner.InitializeWasmApplication("OrthancStoneSimpleViewer", "/orthanc");
 
 function SelectTool(toolName: string) {
   var command = {
@@ -9,8 +9,7 @@ function SelectTool(toolName: string) {
     args: {
     }                                                                                                                       
   };
-  SendMessageToStoneApplication(JSON.stringify(command));
-
+  wasmApplicationRunner.SendCommandToStoneApplication(JSON.stringify(command));
 }
 
 function PerformAction(actionName: string) {
@@ -20,7 +19,7 @@ function PerformAction(actionName: string) {
     args: {
     }
   };
-  SendMessageToStoneApplication(JSON.stringify(command));
+  wasmApplicationRunner.SendCommandToStoneApplication(JSON.stringify(command));
 }
 
 class SimpleViewerUI {
@@ -31,9 +30,7 @@ class SimpleViewerUI {
   public constructor() {
     // install "SelectTool" handlers
     document.querySelectorAll("[tool-selector]").forEach((e) => {
-      console.log(e);
       (e as HTMLButtonElement).addEventListener("click", () => {
-        console.log(e);
         SelectTool(e.attributes["tool-selector"].value);
       });
     });
@@ -62,8 +59,8 @@ var ui = new SimpleViewerUI();
 
 // this method is called "from the C++ code" when the StoneApplication is updated.
 // it can be used to update the UI of the application
-function UpdateWebApplication(statusUpdateMessageString: string) {
-  console.log("updating web application: ", statusUpdateMessageString);
+function UpdateWebApplicationWithString(statusUpdateMessageString: string) {
+  console.log("updating web application with string: ", statusUpdateMessageString);
   let statusUpdateMessage = JSON.parse(statusUpdateMessageString);
 
   if ("event" in statusUpdateMessage) {
@@ -73,3 +70,12 @@ function UpdateWebApplication(statusUpdateMessageString: string) {
     }
   }
 }
+
+function UpdateWebApplicationWithSerializedMessage(statusUpdateMessageString: string) {
+  console.log("updating web application with serialized message: ", statusUpdateMessageString);
+  console.log("<not supported in the simple viewer!>");
+}
+
+// make it available to other js scripts in the application
+(<any> window).UpdateWebApplicationWithString = UpdateWebApplicationWithString;
+(<any> window).UpdateWebApplicationWithSerializedMessage = UpdateWebApplicationWithSerializedMessage;

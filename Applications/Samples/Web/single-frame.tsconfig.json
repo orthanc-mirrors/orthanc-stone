@@ -1,7 +1,6 @@
 {
     "extends" : "./tsconfig-samples",
     "compilerOptions": {
-        "outFile": "../build-web/app-single-frame.js"
     },
     "include" : [
         "single-frame.ts"

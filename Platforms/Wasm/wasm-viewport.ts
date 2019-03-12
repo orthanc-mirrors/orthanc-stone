@@ -1,3 +1,6 @@
+import wasmApplicationRunner = require('./wasm-application-runner');
+//import stoneFrameworkLoader = require('./stone-framework-loader');
+
 var isPendingRedraw = false;
 
 function ScheduleWebViewportRedraw(cppViewportHandle: any) : void
@@ -7,24 +10,26 @@ function ScheduleWebViewportRedraw(cppViewportHandle: any) : void
     console.log('Scheduling a refresh of the viewport, as its content changed');
     window.requestAnimationFrame(function() {
       isPendingRedraw = false;
-      Stone.WasmViewport.GetFromCppViewport(cppViewportHandle).Redraw();
+      WasmViewport.GetFromCppViewport(cppViewportHandle).Redraw();
     });
   }
 }
 
+(<any>window).ScheduleWebViewportRedraw = ScheduleWebViewportRedraw;
+
 declare function UTF8ToString(any): string;
 
 function CreateWasmViewport(htmlCanvasId: string) : any {
-  var cppViewportHandle = CreateCppViewport();
+  var cppViewportHandle = wasmApplicationRunner.CreateCppViewport();
   var canvasId = UTF8ToString(htmlCanvasId);
-  var webViewport = new Stone.WasmViewport(StoneFrameworkModule, canvasId, cppViewportHandle);  // viewports are stored in a static map in WasmViewport -> won't be deleted
+  var webViewport = new WasmViewport((<any> window).StoneFrameworkModule, canvasId, cppViewportHandle);  // viewports are stored in a static map in WasmViewport -> won't be deleted
   webViewport.Initialize();
 
   return cppViewportHandle;
 }
+ 
+(<any>window).CreateWasmViewport = CreateWasmViewport;
 
-module Stone {
-  
 //  export declare type InitializationCallback = () => void;
   
 //  export declare var StoneFrameworkModule : any;
@@ -32,7 +37,7 @@ module Stone {
   //const ASSETS_FOLDER : string = "assets/lib";
   //const WASM_FILENAME : string = "orthanc-framework";
 
-  export class WasmViewport {
+export class WasmViewport {
 
     private static viewportsMapByCppHandle_ : Map<number, WasmViewport> = new Map<number, WasmViewport>(); // key = the C++ handle
     private static viewportsMapByCanvasId_ : Map<string, WasmViewport> = new Map<string, WasmViewport>(); // key = the canvasId
@@ -402,5 +407,5 @@ module Stone {
   }
     
 }
-}
+
   

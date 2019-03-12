@@ -16,7 +16,8 @@ extern "C" {
   
   // JS methods accessible from C++
   extern void ScheduleWebViewportRedrawFromCpp(ViewportHandle cppViewportHandle);
-  extern void UpdateStoneApplicationStatusFromCpp(const char* statusUpdateMessage);
+  extern void UpdateStoneApplicationStatusFromCppWithString(const char* statusUpdateMessage);
+  extern void UpdateStoneApplicationStatusFromCppWithSerializedMessage(const char* statusUpdateMessage);
   
   // C++ methods accessible from JS
   extern void EMSCRIPTEN_KEEPALIVE CreateWasmApplication(ViewportHandle cppViewportHandle);

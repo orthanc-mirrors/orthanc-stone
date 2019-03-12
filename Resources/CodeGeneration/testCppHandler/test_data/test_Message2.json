@@ -1,0 +1,40 @@
+{
+  "type": "VsolMessages.Message2",
+  "value": {
+    "tata": [
+      {
+        "a": 42,
+        "b": "Benjamin",
+        "c": 0,
+        "d": false
+      },
+      {
+        "a": 43,
+        "b": "Sandrine",
+        "c": 2
+      }
+    ],
+    "tutu": [
+      "Mercadet",
+      "Poisson"
+    ],
+    "titi": {
+      "44": "key 44",
+      "45": "key 45"
+    },
+    "lulu": {
+      "54": {
+        "a": 43,
+        "b": "Sandrine",
+        "c": 2
+      },
+      "55": {
+        "a": 42,
+        "b": "Benjamin",
+        "c": 0,
+        "d": false
+      }
+    },
+    "toto": "Prout zizi"
+  }
+}

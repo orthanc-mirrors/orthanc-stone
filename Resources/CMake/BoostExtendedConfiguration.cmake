@@ -29,6 +29,9 @@ if (BOOST_STATIC)
     ${BOOST_SOURCES_DIR}/libs/program_options/src/utf8_codecvt_facet.cpp
     ${BOOST_SOURCES_DIR}/libs/program_options/src/value_semantic.cpp
     ${BOOST_SOURCES_DIR}/libs/program_options/src/variables_map.cpp
+    ${BOOST_SOURCES_DIR}/libs/chrono/src/thread_clock.cpp
+    ${BOOST_SOURCES_DIR}/libs/chrono/src/chrono.cpp
+    ${BOOST_SOURCES_DIR}/libs/chrono/src/process_cpu_clocks.cpp
     #${BOOST_SOURCES_DIR}/libs/program_options/src/winmain.cpp
     )
   add_definitions(-DBOOST_PROGRAM_OPTIONS_NO_LIB)

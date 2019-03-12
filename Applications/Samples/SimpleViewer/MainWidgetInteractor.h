@@ -18,7 +18,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
 #pragma once
 
 #include "Framework/Widgets/IWorldSceneInteractor.h"
@@ -40,6 +39,9 @@ namespace SimpleViewer {
     {
     }
 
+    /**
+        WorldSceneWidget: 
+    */
     virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
                                                         const ViewportGeometry& view,
                                                         MouseButton button,

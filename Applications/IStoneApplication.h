@@ -66,6 +66,8 @@ namespace OrthancStone
 
     virtual BaseCommandBuilder& GetCommandBuilder() = 0;
 
+    virtual void HandleSerializedMessage(const char* data) {};
+    
     virtual void ExecuteCommand(ICommand& command)
     {
     }

@@ -32,10 +32,14 @@ namespace OrthancStone
 
   bool RadiographyWidget::IsInvertedInternal() const
   {
-    return (scene_->GetPreferredPhotomotricDisplayMode() == PhotometricDisplayMode_Monochrome1) ^ invert_; // MONOCHROME1 images must be inverted and the user can invert the image too -> XOR the two
+    // MONOCHROME1 images must be inverted and the user can invert the 
+    // image, too -> XOR the two
+    return (scene_->GetPreferredPhotomotricDisplayMode() == 
+      PhotometricDisplayMode_Monochrome1) ^ invert_; 
   }
 
-  void RadiographyWidget::RenderBackground(Orthanc::ImageAccessor& image, float minValue, float maxValue)
+  void RadiographyWidget::RenderBackground(
+    Orthanc::ImageAccessor& image, float minValue, float maxValue)
   {
     // wipe background before rendering
     float backgroundValue = minValue;
@@ -59,7 +63,7 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
     }
 
-    Orthanc::ImageProcessing::Set(image, backgroundValue);
+    Orthanc::ImageProcessing::Set(image, static_cast<int64_t>(backgroundValue));
   }
 
   bool RadiographyWidget::RenderInternal(unsigned int width,
@@ -82,7 +86,8 @@ namespace OrthancStone
           floatBuffer_->GetWidth() != width ||
           floatBuffer_->GetHeight() != height)
       {
-        floatBuffer_.reset(new Orthanc::Image(Orthanc::PixelFormat_Float32, width, height, false));
+        floatBuffer_.reset(new Orthanc::Image(
+          Orthanc::PixelFormat_Float32, width, height, false));
       }
 
       if (cairoBuffer_.get() == NULL ||
@@ -168,7 +173,8 @@ namespace OrthancStone
 
     if (hasSelection_)
     {
-      scene_->DrawBorder(context, selectedLayer_, view.GetZoom());
+      scene_->DrawBorder(
+        context, static_cast<unsigned int>(selectedLayer_), view.GetZoom());
     }
 
     return true;

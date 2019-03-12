@@ -130,8 +130,8 @@ namespace OrthancStone
           {
             RadiographyScene::LayerAccessor accessor(widget.GetScene(), selected);
             
-            Corner corner;
-            if (accessor.GetLayer().LookupCorner(corner, x, y, view.GetZoom(), GetHandleSize()))
+            ControlPoint corner;
+            if (accessor.GetLayer().LookupControlPoint(corner, x, y, view.GetZoom(), GetHandleSize()))
             {
               switch (tool_)
               {

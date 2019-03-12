@@ -38,7 +38,7 @@
 /* Test for GCC > 3.2.0 */
   #if GCC_VERSION > 40900
     #define orthanc_override override
-  else
+  #else
     #define orthanc_override
   #endif
 #else

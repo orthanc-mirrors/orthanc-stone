@@ -108,14 +108,14 @@ stockSerializedMessages["Test 1"] = `{
       {
         "a" : 43,
         "b" : "Sandrine",
-        "c" : 2,
+        "c" : "March",
         "d" : true
       },
       "55" : 
       {
         "a" : 42,
         "b" : "Benjamin",
-        "c" : 0,
+        "c" : "January",
         "d" : false
       }
     },
@@ -124,13 +124,13 @@ stockSerializedMessages["Test 1"] = `{
       {
         "a" : 42,
         "b" : "Benjamin",
-        "c" : 0,
+        "c" : "March",
         "d" : false
       },
       {
         "a" : 43,
         "b" : "Sandrine",
-        "c" : 2,
+        "c" : "January",
         "d" : false
       }
     ],

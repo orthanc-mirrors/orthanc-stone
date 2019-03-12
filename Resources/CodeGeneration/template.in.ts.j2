@@ -39,10 +39,37 @@ function StoneCheckSerializedValueTypeGeneric(value: any)
 // end of generic methods
 {% for enum in enums%}
 export enum {{enum['name']}} {
-  {% for key in enum['fields']%}{{key}},
-  {%endfor%}
-};
+{% for key in enum['fields']%}  {{key}} = "{{key}}"{% if not loop.last %},{%endif%}
+{%endfor%}};
+
+export function {{enum['name']}}_FromString(strValue:string) : {{enum['name']}}
+{
+{% for key in enum['fields'] %}  if( strValue == "{{key}}" )
+  {
+    return {{enum['name']}}.{{key}};
+  }
 {%endfor%}
+  let msg : string =  `String ${strValue} cannot be converted to {{enum['name']}}. Possible values are: {% for key in enum['fields']%}{{key}}{% if not loop.last %}, {%endif%}{% endfor %}`;
+  throw new Error(msg);
+}
+
+export function {{enum['name']}}_ToString(value:{{enum['name']}}) : string
+{
+{% for key in enum['fields'] %}  if( value == {{enum['name']}}.{{key}} )
+  {
+    return "{{key}}";
+  }
+{%endfor%}
+  let msg : string = `Value ${value} cannot be converted to {{enum['name']}}. Possible values are: `;
+{% for key in enum['fields']%}  {
+    let _{{key}}_enumValue : string = {{enum['name']}}.{{key}}; // enums are strings in stonecodegen, so this will work.
+    let msg_{{key}} : string = `{{key}} (${_{{key}}_enumValue}){% if not loop.last %}, {%endif%}`;
+    msg = msg + msg_{{key}};
+  }
+{%endfor%}  throw new Error(msg);
+}
+{%endfor%}
+
 
 {% for struct in structs%}export class {{struct['name']}} {
 {% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}  {{key}}:{{CanonToTs(struct['fields'][key])}};

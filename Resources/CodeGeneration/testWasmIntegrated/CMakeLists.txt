@@ -23,7 +23,7 @@ set(jsoncppRootDir ${CMAKE_CURRENT_LIST_DIR}/jsoncpp-1.8.4)
 add_custom_command(
     OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/testWasmIntegratedCpp_generated.hpp ${CMAKE_CURRENT_BINARY_DIR}/testWasmIntegratedCpp_generated.ts
     COMMAND python3 ${CMAKE_CURRENT_LIST_DIR}/../stonegentool.py -o ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_LIST_DIR}/testWasmIntegratedCpp_api.yaml
-    DEPENDS ${testCppHandler_Codegen_Deps}
+    DEPENDS ${testCppHandler_Codegen_Deps} ${CMAKE_CURRENT_LIST_DIR}/testWasmIntegratedCpp_api.yaml 
 )
 
 add_executable(testWasmIntegratedCpp

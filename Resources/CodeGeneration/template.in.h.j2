@@ -232,17 +232,6 @@ namespace {{rootName}}
 {% for key in enum['fields']%}    {{enum['name']}}_{{key}},
 {%endfor%}  };
 
-  inline void _StoneDeserializeValue(
-    {{enum['name']}}& destValue, const Json::Value& jsonValue)
-  {
-    destValue = static_cast<{{enum['name']}}>(jsonValue.asInt64());
-  }
-
-  inline Json::Value _StoneSerializeValue(const {{enum['name']}}& value)
-  {
-    return Json::Value(static_cast<int64_t>(value));
-  }
-
   inline std::string ToString(const {{enum['name']}}& value)
   {
 {% for key in enum['fields']%}    if( value == {{enum['name']}}_{{key}})
@@ -262,12 +251,26 @@ namespace {{rootName}}
 {% for key in enum['fields']%}    if( strValue == std::string("{{key}}") )
     {
       value = {{enum['name']}}_{{key}};
+      return;
     }
 {%endfor%}
     std::stringstream ss;
-    ss << "String \"" << strValue << "\" cannot be converted to {{enum['name']}}. Possible values are: {% for key in enum['fields']%}{{key}}{% endfor %}";
+    ss << "String \"" << strValue << "\" cannot be converted to {{enum['name']}}. Possible values are: {% for key in enum['fields']%}{{key}} {% endfor %}";
     std::string msg = ss.str();
     throw std::runtime_error(msg);
+  }
+
+
+  inline void _StoneDeserializeValue(
+    {{enum['name']}}& destValue, const Json::Value& jsonValue)
+  {
+    FromString(destValue, jsonValue.asString());
+  }
+
+  inline Json::Value _StoneSerializeValue(const {{enum['name']}}& value)
+  {
+    std::string strValue = ToString(value);
+    return Json::Value(strValue);
   }
 
   inline std::ostream& StoneDumpValue(std::ostream& out, const {{enum['name']}}& value, int indent = 0)

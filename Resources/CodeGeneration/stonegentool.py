@@ -211,8 +211,8 @@ def ParseTemplateType(typename):
         return (True, m.group(1), listOfDependentTypes)
 
 def GetStructFields(struct):
-  """This filters out the __meta__ key from the struct fields"""
-  return [k for k in struct.keys() if k != '__meta__']
+  """This filters out the special metadata key from the struct fields"""
+  return [k for k in struct.keys() if k != '__handler']
 
 def ComputeOrderFromTypeTree(
   ancestors, 
@@ -350,39 +350,49 @@ def ComputeRequiredDeclarationOrder(schema):
   return genOrder
 
 def GetStructFields(fieldDict):
-  """Returns the regular (non __meta__) struct fields"""
+  """Returns the regular (non __handler) struct fields"""
   # the following happens for empty structs
   if fieldDict == None:
     return fieldDict
   ret = {}
   for k,v in fieldDict.items():
-    if k != "__meta__":
+    if k != "__handler":
       ret[k] = v
+    if k.startswith("__") and k != "__handler":
+      raise RuntimeError("Fields starting with __ (double underscore) are reserved names!")
   return ret
 
 def GetStructMetadata(fieldDict):
-  """Returns the __meta__ struct fields (there are default values that
+  """Returns the __handler struct fields (there are default values that
      can be overridden by entries in the schema
-     Not tested because it's a fail-safe: if something is broken in meta, 
+     Not tested because it's a fail-safe: if something is broken in this, 
      dependent projects will not build."""
   metadataDict = {}
-  metadataDict['handleInCpp'] = True
-  metadataDict['handleInTypescript'] = True
+  metadataDict['handleInCpp'] = False
+  metadataDict['handleInTypescript'] = False
   
-  # Empty types are allowed
   if fieldDict != None:
     for k,v in fieldDict.items():
-      if k == "__meta__":
-        # let's examine the various metadata entries
-        for metaKey,metaValue in v.items():
-          # we only accept overriding EXISTING entries
-          if metaKey in metadataDict:
-            # simple check, valid for now
-            if type(metaValue) != bool:
-              raise RuntimeError("Wrong value for metadata key")
-            metadataDict[metaKey] = metaValue
+      if k.startswith("__") and k != "__handler":
+        raise RuntimeError("Fields starting with __ (double underscore) are reserved names")
+      if k == "__handler":
+        if type(v) == list:
+          for i in v:
+            if i == "cpp":
+              metadataDict['handleInCpp'] = True
+            elif i == "ts":
+              metadataDict['handleInTypescript'] = True
+            else:
+              raise RuntimeError("Error in schema. Allowed values for __handler are \"cpp\" or \"ts\"")
+        elif type(v) == str:
+          if v == "cpp":
+            metadataDict['handleInCpp'] = True
+          elif v == "ts":
+            metadataDict['handleInTypescript'] = True
           else:
-            raise RuntimeError("Wrong key \"{metaKey}\" in metadata. Allowed keys are \"{metadataDict.keys()}\"")
+            raise RuntimeError("Error in schema. Allowed values for __handler are \"cpp\" or \"ts\" (or a list of both)")
+        else:
+            raise RuntimeError("Error in schema. Allowed values for __handler are \"cpp\" or \"ts\" (or a list of both)")
   return metadataDict
 
 def ProcessSchema(schema, genOrder):
@@ -465,7 +475,7 @@ def LoadSchema(fn):
       if ch == ':':
         if not (nextCh == ' ' or nextCh == '\n'):
           lineNumber = schemaText.count("\n",0,i) + 1
-          raise RuntimeError(f"Error at line {lineNumber} in the schema: colons must be followed by a space or a newline!")
+          raise RuntimeError("Error at line " + str(lineNumber) + " in the schema: colons must be followed by a space or a newline!")
     schema = yaml.load(schemaText)
   return schema
 

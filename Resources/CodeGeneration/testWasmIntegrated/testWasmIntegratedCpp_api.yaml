@@ -42,10 +42,17 @@ enum MovieType:
 enum CrispType:
   - SaltAndPepper
   - CreamAndChives
-  - Paprika
   - Barbecue
+  - Paprika
 
 enum EnumMonth0:
   - January
   - February
   - March
+
+enum Tata:
+  - Lolo
+  - Rrrrrrrrrrrr
+
+
+

@@ -59,6 +59,17 @@ namespace OrthancStone
       SetDefaultParameters();
     }
 
+    ~DicomFrameConverter()
+    {
+      // TODO: check whether this dtor is called or not
+      // An MSVC warning explains that declaring an
+      // std::auto_ptr with a forward-declared type 
+      // prevents its dtor from being called. Does not 
+      // seem an issue here (only POD types inside), but
+      // definitely something to keep an eye on. 
+      (void)0;
+    }
+
     Orthanc::PixelFormat GetExpectedPixelFormat() const
     {
       return expectedPixelFormat_;

@@ -1,5 +1,6 @@
 import wasmApplicationRunner = require('./wasm-application-runner');
 //import stoneFrameworkLoader = require('./stone-framework-loader');
+import * as Logger from './logger'
 
 var isPendingRedraw = false;
 
@@ -7,7 +8,7 @@ function ScheduleWebViewportRedraw(cppViewportHandle: any) : void
 {
   if (!isPendingRedraw) {
     isPendingRedraw = true;
-    console.log('Scheduling a refresh of the viewport, as its content changed');
+    Logger.defaultLogger.debug('Scheduling a refresh of the viewport, as its content changed');
     window.requestAnimationFrame(function() {
       isPendingRedraw = false;
       WasmViewport.GetFromCppViewport(cppViewportHandle).Redraw();
@@ -81,7 +82,7 @@ export class WasmViewport {
       this.canvasId_ = canvasId;
       this.htmlCanvas_ = document.getElementById(this.canvasId_) as HTMLCanvasElement;
       if (this.htmlCanvas_ == null) {
-        console.log("Can not create WasmViewport, did not find the canvas whose id is '", this.canvasId_, "'");
+        Logger.defaultLogger.error("Can not create WasmViewport, did not find the canvas whose id is '", this.canvasId_, "'");
       }
       this.context_ = this.htmlCanvas_.getContext('2d');
 
@@ -107,7 +108,7 @@ export class WasmViewport {
       if (WasmViewport.viewportsMapByCppHandle_[cppViewportHandle] !== undefined) {
         return WasmViewport.viewportsMapByCppHandle_[cppViewportHandle];
       }
-      console.log("WasmViewport not found !");
+      Logger.defaultLogger.error("WasmViewport not found !");
       return undefined;
     }
 
@@ -115,7 +116,7 @@ export class WasmViewport {
       if (WasmViewport.viewportsMapByCanvasId_[canvasId] !== undefined) {
         return WasmViewport.viewportsMapByCanvasId_[canvasId];
       }
-      console.log("WasmViewport not found !");
+      Logger.defaultLogger.error("WasmViewport not found !");
       return undefined;
     }
 
@@ -132,7 +133,7 @@ export class WasmViewport {
                          this.imageData_.width,
                          this.imageData_.height,
                          this.renderingBuffer_) == 0) {
-        console.log('The rendering has failed');
+        Logger.defaultLogger.error('The rendering has failed');
       } else {
         // Create an accessor to the rendering buffer (i.e. create a
         // "window" above the heap of the WASM module), then copy it to
@@ -157,7 +158,7 @@ export class WasmViewport {
       this.htmlCanvas_.width = this.htmlCanvas_.parentElement.offsetWidth;  
       this.htmlCanvas_.height = this.htmlCanvas_.parentElement.offsetHeight;  
 
-      console.log("resizing WasmViewport: ", this.htmlCanvas_.width, "x", this.htmlCanvas_.height);
+      Logger.defaultLogger.debug("resizing WasmViewport: ", this.htmlCanvas_.width, "x", this.htmlCanvas_.height);
 
       if (this.imageData_ === null) {
         this.imageData_ = this.context_.getImageData(0, 0, this.htmlCanvas_.width, this.htmlCanvas_.height);

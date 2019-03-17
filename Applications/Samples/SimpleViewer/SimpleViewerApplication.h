@@ -21,6 +21,12 @@
 
 #pragma once
 
+ /*
+ This header contains the command definitions for the sample applications
+ */
+#include "Applications/Samples/StoneSampleCommands_generated.hpp"
+using namespace StoneSampleCommands;
+
 #include "Applications/IStoneApplication.h"
 
 #include "Framework/Layers/CircleMeasureTracker.h"
@@ -53,10 +59,11 @@ using namespace OrthancStone;
 namespace SimpleViewer
 {
 
-  class SimpleViewerApplication :
-      public IStoneApplication,
-      public IObserver,
-      public IObservable
+  class SimpleViewerApplication
+    : public IStoneApplication
+    , public IObserver
+    , public IObservable
+    , public StoneSampleCommands::IHandler
   {
   public:
 
@@ -71,23 +78,9 @@ namespace SimpleViewer
       }
     };
 
-    enum Tools {
-      Tools_LineMeasure,
-      Tools_CircleMeasure,
-      Tools_Crop,
-      Tools_Windowing,
-      Tools_Zoom,
-      Tools_Pan
-    };
-
-    enum Actions {
-      Actions_Rotate,
-      Actions_Invert,
-      Actions_UndoCrop
-    };
-
   private:
-    Tools                               currentTool_;
+    Tool                                currentTool_;
+
     std::auto_ptr<MainWidgetInteractor> mainWidgetInteractor_;
     std::auto_ptr<ThumbnailInteractor>  thumbnailInteractor_;
     LayoutWidget*                       mainLayout_;
@@ -96,8 +89,6 @@ namespace SimpleViewer
     std::vector<SliceViewerWidget*>     thumbnails_;
     std::map<std::string, std::vector<std::string> > instancesIdsPerSeriesId_;
     std::map<std::string, Json::Value>  seriesTags_;
-    BaseCommandBuilder                  commandBuilder_;
-
     unsigned int                        currentInstanceIndex_;
     OrthancStone::WidgetViewport*       wasmViewport1_;
     OrthancStone::WidgetViewport*       wasmViewport2_;
@@ -111,7 +102,7 @@ namespace SimpleViewer
     SimpleViewerApplication(MessageBroker& broker) :
       IObserver(broker),
       IObservable(broker),
-      currentTool_(Tools_LineMeasure),
+      currentTool_(StoneSampleCommands::Tool_LineMeasure),
       mainLayout_(NULL),
       currentInstanceIndex_(0),
       wasmViewport1_(NULL),
@@ -142,9 +133,8 @@ namespace SimpleViewer
 
     void SelectSeriesInMainViewport(const std::string& seriesId);
 
-    void SelectTool(Tools tool);
-    
-    Tools GetCurrentTool() const
+
+    Tool GetCurrentTool() const
     {
       return currentTool_;
     }
@@ -154,12 +144,18 @@ namespace SimpleViewer
       return font_;
     }
 
-    void ExecuteAction(Actions action);
+    // ExecuteAction method was empty (its body was a single "TODO" comment)
+    virtual bool Handle(const SelectTool& value) ORTHANC_OVERRIDE;
+    virtual bool Handle(const Action& value) ORTHANC_OVERRIDE;
+
+    template<typename T>
+    bool ExecuteCommand(const T& cmd)
+    {
+      std::string cmdStr = StoneSampleCommands::StoneSerialize(cmd);
+      return StoneSampleCommands::StoneDispatchToHandler(cmdStr, this);
+    }
 
     virtual std::string GetTitle() const {return "SimpleViewer";}
-    virtual void ExecuteCommand(ICommand& command);
-    virtual BaseCommandBuilder& GetCommandBuilder() {return commandBuilder_;}
-
 
 #if ORTHANC_ENABLE_WASM==1
     virtual void InitializeWasm();

@@ -153,13 +153,16 @@ namespace SimpleViewer
   void SimpleViewerApplication::LoadThumbnailForSeries(const std::string& seriesId, const std::string& instanceId)
   {
     LOG(INFO) << "Loading thumbnail for series " << seriesId;
+    
     SliceViewerWidget* thumbnailWidget = 
       new SliceViewerWidget(IObserver::GetBroker(), "thumbnail-series-" + seriesId);
     thumbnails_.push_back(thumbnailWidget);
     thumbnailsLayout_->AddWidget(thumbnailWidget);
+    
     thumbnailWidget->RegisterObserverCallback(
       new Callable<SimpleViewerApplication, SliceViewerWidget::GeometryChangedMessage>
       (*this, &SimpleViewerApplication::OnWidgetGeometryChanged));
+    
     smartLoader_->SetFrameInWidget(*thumbnailWidget, 0, instanceId, 0);
     thumbnailWidget->SetInteractor(*thumbnailInteractor_);
   }
@@ -180,53 +183,29 @@ namespace SimpleViewer
     smartLoader_->SetFrameInWidget(*mainWidget_, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
   }
 
-
-
-  void SimpleViewerApplication::ExecuteCommand(ICommand& command)
+  bool SimpleViewerApplication::Handle(const StoneSampleCommands::SelectTool& value) ORTHANC_OVERRIDE
   {
-    statusBar_->SetMessage("received command: " + std::string(command.GetName()));
-    if (command.GetName() == "selectTool:circle-measure")
-    {
-      SelectTool(Tools_CircleMeasure);
-    }
-    else if (command.GetName() == "selectTool:line-measure")
-    {
-      SelectTool(Tools_LineMeasure);
-    }
-    else if (command.GetName() == "selectTool:crop")
-    {
-      SelectTool(Tools_Crop);
-    }
-    else if (command.GetName() == "selectTool:windowing")
-    {
-      SelectTool(Tools_Windowing);
-    }
-    else if (command.GetName() == "action:rotate")
-    {
-      ExecuteAction(Actions_Rotate);
-    }
-    else if (command.GetName() == "action:undo-crop")
-    {
-      ExecuteAction(Actions_UndoCrop);
-    }
-    else if (command.GetName() == "action:invert")
-    {
-      ExecuteAction(Actions_Invert);
-    }
-    else
-    {
-      command.Execute();
-    }
+    currentTool_ = value.tool;
+    return true;
   }
 
-  void SimpleViewerApplication::ExecuteAction(SimpleViewerApplication::Actions action)
+  bool SimpleViewerApplication::Handle(const StoneSampleCommands::Action& value) ORTHANC_OVERRIDE
   {
-    // TODO
-  }
-
-  void SimpleViewerApplication::SelectTool(SimpleViewerApplication::Tools tool)
-  {
-    currentTool_ = tool;
+    switch (value.type)
+    {
+    case ActionType_Invert:
+      // TODO
+      break;
+    case ActionType_UndoCrop:
+      // TODO
+      break;
+    case ActionType_Rotate:
+      // TODO
+      break;
+    default:
+      throw std::runtime_error("Action type not supported");
+    }
+    return true;
   }
 
 #if ORTHANC_ENABLE_QT==1

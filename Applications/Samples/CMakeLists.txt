@@ -8,6 +8,14 @@ project(OrthancStone)
 
 include(../../Resources/CMake/OrthancStoneParameters.cmake)
 
+if (OPENSSL_NO_CAPIENG)
+add_definitions(-DOPENSSL_NO_CAPIENG=1)
+endif()
+
+if (BGO_USE_NEW_COMMANDS)
+add_definitions(-DBGO_USE_NEW_COMMANDS=1)
+endif()
+
 #set(ENABLE_DCMTK ON)
 
 set(ENABLE_SDL OFF CACHE BOOL "Target SDL Native application")
@@ -181,16 +189,20 @@ elseif (ENABLE_WASM)
         list(APPEND SIMPLE_VIEWER_APPLICATION_SOURCES
             ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/mainWasm.cpp
             ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/SimpleViewerWasmApplicationAdapter.cpp
+            ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/SimpleViewerWasmApplicationAdapter.h
             ${STONE_WASM_SOURCES}
           )
     endif()
 
     add_executable(OrthancStoneSimpleViewer
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.cpp
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.cpp
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.cpp
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/AppStatus.h
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.h
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Messages.h
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.h
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.h
       ${SIMPLE_VIEWER_APPLICATION_SOURCES}
       )
     target_link_libraries(OrthancStoneSimpleViewer OrthancStone)

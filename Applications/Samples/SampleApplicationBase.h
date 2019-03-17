@@ -41,7 +41,6 @@ namespace OrthancStone
     class SampleApplicationBase : public IStoneApplication
     {
     protected:
-      BaseCommandBuilder commandBuilder_;
       WorldSceneWidget*  mainWidget_;   // ownership is transfered to the application context
 
     public:
@@ -55,8 +54,6 @@ namespace OrthancStone
       {
         return "Stone of Orthanc - Sample";
       }
-
-      virtual BaseCommandBuilder& GetCommandBuilder() {return commandBuilder_;}
 
       virtual void Finalize() {}
       virtual IWidget* GetCentralWidget() {return mainWidget_;}

@@ -127,12 +127,12 @@ namespace OrthancStone
         {
           if (button == MouseButton_Left)
           {
-            if (application_.currentTool_ == Tools_LineMeasure)
+            if (application_.currentTool_ == Tool_LineMeasure)
             {
               return new LineMeasureTracker(statusBar, dynamic_cast<SliceViewerWidget&>(widget).GetSlice(),
                                             x, y, 255, 0, 0, application_.GetFont());
             }
-            else if (application_.currentTool_ == Tools_CircleMeasure)
+            else if (application_.currentTool_ == Tool_CircleMeasure)
             {
               return new CircleMeasureTracker(statusBar, dynamic_cast<SliceViewerWidget&>(widget).GetSlice(),
                                               x, y, 255, 0, 0, application_.GetFont());
@@ -179,11 +179,11 @@ namespace OrthancStone
               break;
 
             case 'l':
-              application_.currentTool_ = Tools_LineMeasure;
+              application_.currentTool_ = Tool_LineMeasure;
               break;
 
             case 'c':
-              application_.currentTool_ = Tools_CircleMeasure;
+              application_.currentTool_ = Tool_CircleMeasure;
               break;
 
             default:
@@ -214,12 +214,12 @@ namespace OrthancStone
         {
           if (input == "select-tool:line-measure")
           {
-            viewerApplication_.currentTool_ = Tools_LineMeasure;
+            viewerApplication_.currentTool_ = Tool_LineMeasure;
             NotifyStatusUpdateFromCppToWebWithString("currentTool=line-measure");
           }
           else if (input == "select-tool:circle-measure")
           {
-            viewerApplication_.currentTool_ = Tools_CircleMeasure;
+            viewerApplication_.currentTool_ = Tool_CircleMeasure;
             NotifyStatusUpdateFromCppToWebWithString("currentTool=circle-measure");
           }
 
@@ -238,12 +238,12 @@ namespace OrthancStone
 
       };
 #endif
-      enum Tools {
-        Tools_LineMeasure,
-        Tools_CircleMeasure
+      enum Tool {
+        Tool_LineMeasure,
+        Tool_CircleMeasure
       };
 
-      Tools                                currentTool_;
+      Tool                                 currentTool_;
       std::auto_ptr<MainWidgetInteractor>  mainWidgetInteractor_;
       std::auto_ptr<ThumbnailInteractor>   thumbnailInteractor_;
       LayoutWidget*                        mainLayout_;
@@ -265,7 +265,7 @@ namespace OrthancStone
     public:
       SimpleViewerApplication(MessageBroker& broker) :
         IObserver(broker),
-        currentTool_(Tools_LineMeasure),
+        currentTool_(Tool_LineMeasure),
         mainLayout_(NULL),
         currentInstanceIndex_(0),
         wasmViewport1_(NULL),
@@ -438,8 +438,8 @@ namespace OrthancStone
       
       virtual void OnPushButton1Clicked() {}
       virtual void OnPushButton2Clicked() {}
-      virtual void OnTool1Clicked() { currentTool_ = Tools_LineMeasure;}
-      virtual void OnTool2Clicked() { currentTool_ = Tools_CircleMeasure;}
+      virtual void OnTool1Clicked() { currentTool_ = Tool_LineMeasure;}
+      virtual void OnTool2Clicked() { currentTool_ = Tool_CircleMeasure;}
 
       virtual void GetButtonNames(std::string& pushButton1,
                                   std::string& pushButton2,

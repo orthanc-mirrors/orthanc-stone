@@ -138,7 +138,7 @@ namespace OrthancStone
 
           if (slice >= static_cast<int>(source_->GetSliceCount()))
           {
-            slice = source_->GetSliceCount() - 1;
+            slice = static_cast<int>(source_->GetSliceCount()) - 1;
           }
 
           if (slice != static_cast<int>(slice_)) 
@@ -160,7 +160,7 @@ namespace OrthancStone
         if (source_ != NULL &&
             index < source_->GetSliceCount())
         {
-          slice_ = index;
+          slice_ = static_cast<unsigned int>(index);
           
 #if 1
           GetMainWidget().SetSlice(source_->GetSlice(slice_).GetGeometry());

@@ -86,7 +86,7 @@ namespace {{rootName}}
     return result;
   }
 
-  inline std::string MakeIndent(int indent)
+  inline std::string MakeIndent(size_t indent)
   {
     char* txt = reinterpret_cast<char*>(malloc(indent+1)); // NO EXCEPTION BELOW!!!!!!!!!!!!
     for(size_t i = 0; i < indent; ++i)
@@ -99,14 +99,14 @@ namespace {{rootName}}
 
   // generic dumper
   template<typename T>
-  std::ostream& StoneDumpValue(std::ostream& out, const T& value, int indent)
+  std::ostream& StoneDumpValue(std::ostream& out, const T& value, size_t indent)
   {
     out << MakeIndent(indent) << value;
     return out;
   }
 
   // string dumper
-  inline std::ostream& StoneDumpValue(std::ostream& out, const std::string& value, int indent)
+  inline std::ostream& StoneDumpValue(std::ostream& out, const std::string& value, size_t indent)
   {
     out << MakeIndent(indent) << "\"" << value  << "\"";
     return out;
@@ -148,7 +148,7 @@ namespace {{rootName}}
   }
 
   template<typename T>
-  std::ostream& StoneDumpValue(std::ostream& out, const std::map<std::string,T>& value, int indent)
+  std::ostream& StoneDumpValue(std::ostream& out, const std::map<std::string,T>& value, size_t indent)
   {
     out << MakeIndent(indent) << "{\n";
     for (typename std::map<std::string, T>::const_iterator it = value.cbegin();
@@ -188,7 +188,7 @@ namespace {{rootName}}
   }
 
   template<typename T>
-  std::ostream& StoneDumpValue(std::ostream& out, const std::vector<T>& value, int indent)
+  std::ostream& StoneDumpValue(std::ostream& out, const std::vector<T>& value, size_t indent)
   {
     out << MakeIndent(indent) << "[\n";
     for (size_t i = 0; i < value.size(); ++i)
@@ -273,7 +273,7 @@ namespace {{rootName}}
     return Json::Value(strValue);
   }
 
-  inline std::ostream& StoneDumpValue(std::ostream& out, const {{enum['name']}}& value, int indent = 0)
+  inline std::ostream& StoneDumpValue(std::ostream& out, const {{enum['name']}}& value, size_t indent = 0)
   {
 {% for key in enum['fields']%}    if( value == {{enum['name']}}_{{key}})
     {
@@ -311,7 +311,7 @@ namespace {{rootName}}
     return result;
   }
 
-  inline std::ostream& StoneDumpValue(std::ostream& out, const {{struct['name']}}& value, int indent = 0)
+  inline std::ostream& StoneDumpValue(std::ostream& out, const {{struct['name']}}& value, size_t indent = 0)
   {
     out << MakeIndent(indent) << "{\n";
 {% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}    out << MakeIndent(indent) << "{{key}}:\n";

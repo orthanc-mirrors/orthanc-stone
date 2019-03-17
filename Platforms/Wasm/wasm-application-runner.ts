@@ -1,5 +1,6 @@
 import Stone = require('./stone-framework-loader');
 import StoneViewport = require('./wasm-viewport');
+import * as Logger from './logger'
 
 if (!('WebAssembly' in window)) {
   alert('Sorry, your browser does not support WebAssembly :(');
@@ -85,7 +86,7 @@ export function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl
   // the WebAssembly environment) and then, create and initialize the Wasm application
   Stone.Framework.Initialize(true, function () {
 
-    console.log("Connecting C++ methods to JS methods");
+    Logger.defaultLogger.debug("Connecting C++ methods to JS methods");
     
     SetStartupParameter = (<any> window).StoneFrameworkModule.cwrap('SetStartupParameter', null, ['string', 'string']);
     CreateWasmApplication = (<any> window).StoneFrameworkModule.cwrap('CreateWasmApplication', null, ['number']);
@@ -103,7 +104,7 @@ export function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl
     SendSerializedMessageToStoneApplication = (<any> window).StoneFrameworkModule.cwrap('SendSerializedMessageToStoneApplication', 'string', ['string']);
     SendCommandToStoneApplication = (<any> window).StoneFrameworkModule.cwrap('SendCommandToStoneApplication', 'string', ['string']);
 
-    console.log("Connecting C++ methods to JS methods - done");
+    Logger.defaultLogger.debug("Connecting C++ methods to JS methods - done");
 
     // Prevent scrolling
     document.body.addEventListener('touchmove', function (event) {

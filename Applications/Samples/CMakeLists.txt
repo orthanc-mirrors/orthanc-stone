@@ -12,10 +12,6 @@ if (OPENSSL_NO_CAPIENG)
 add_definitions(-DOPENSSL_NO_CAPIENG=1)
 endif()
 
-if (BGO_USE_NEW_COMMANDS)
-add_definitions(-DBGO_USE_NEW_COMMANDS=1)
-endif()
-
 #set(ENABLE_DCMTK ON)
 
 set(ENABLE_SDL OFF CACHE BOOL "Target SDL Native application")

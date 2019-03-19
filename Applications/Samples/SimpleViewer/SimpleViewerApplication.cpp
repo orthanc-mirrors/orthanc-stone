@@ -183,13 +183,13 @@ namespace SimpleViewer
     smartLoader_->SetFrameInWidget(*mainWidget_, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
   }
 
-  bool SimpleViewerApplication::Handle(const StoneSampleCommands::SelectTool& value) ORTHANC_OVERRIDE
+  bool SimpleViewerApplication::Handle(const StoneSampleCommands::SelectTool& value)
   {
     currentTool_ = value.tool;
     return true;
   }
 
-  bool SimpleViewerApplication::Handle(const StoneSampleCommands::Action& value) ORTHANC_OVERRIDE
+  bool SimpleViewerApplication::Handle(const StoneSampleCommands::Action& value)
   {
     switch (value.type)
     {

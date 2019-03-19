@@ -111,13 +111,13 @@ namespace SimpleViewer
       font_.LoadFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
     }
 
-    virtual void Finalize() {}
-    virtual IWidget* GetCentralWidget() {return mainLayout_;}
+    virtual void Finalize() ORTHANC_OVERRIDE {}
+    virtual IWidget* GetCentralWidget() ORTHANC_OVERRIDE {return mainLayout_;}
 
-    virtual void DeclareStartupOptions(boost::program_options::options_description& options);
+    virtual void DeclareStartupOptions(boost::program_options::options_description& options) ORTHANC_OVERRIDE;
     virtual void Initialize(StoneApplicationContext* context,
                             IStatusBar& statusBar,
-                            const boost::program_options::variables_map& parameters);
+                            const boost::program_options::variables_map& parameters) ORTHANC_OVERRIDE;
 
     void OnStudyListReceived(const OrthancApiClient::JsonResponseReadyMessage& message);
 
@@ -155,10 +155,15 @@ namespace SimpleViewer
       return StoneSampleCommands::StoneDispatchToHandler(cmdStr, this);
     }
 
-    virtual std::string GetTitle() const {return "SimpleViewer";}
+    virtual void HandleSerializedMessage(const char* data) ORTHANC_OVERRIDE
+    {
+      StoneSampleCommands::StoneDispatchToHandler(data, this);
+    }
+
+    virtual std::string GetTitle() const ORTHANC_OVERRIDE {return "SimpleViewer";}
 
 #if ORTHANC_ENABLE_WASM==1
-    virtual void InitializeWasm();
+    virtual void InitializeWasm() ORTHANC_OVERRIDE;
 #endif
 
 #if ORTHANC_ENABLE_QT==1

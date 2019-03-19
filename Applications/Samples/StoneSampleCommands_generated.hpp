@@ -2,7 +2,7 @@
          1         2         3         4         5         6         7
 12345678901234567890123456789012345678901234567890123456789012345678901234567890
 
-Generated on 2019-03-15 10:00:48.763392 by stonegentool
+Generated on 2019-03-18 12:07:42.696093 by stonegentool
 
 */
 #pragma once
@@ -86,7 +86,7 @@ namespace StoneSampleCommands
     return result;
   }
 
-  inline std::string MakeIndent(int indent)
+  inline std::string MakeIndent(size_t indent)
   {
     char* txt = reinterpret_cast<char*>(malloc(indent+1)); // NO EXCEPTION BELOW!!!!!!!!!!!!
     for(size_t i = 0; i < indent; ++i)
@@ -99,14 +99,14 @@ namespace StoneSampleCommands
 
   // generic dumper
   template<typename T>
-  std::ostream& StoneDumpValue(std::ostream& out, const T& value, int indent)
+  std::ostream& StoneDumpValue(std::ostream& out, const T& value, size_t indent)
   {
     out << MakeIndent(indent) << value;
     return out;
   }
 
   // string dumper
-  inline std::ostream& StoneDumpValue(std::ostream& out, const std::string& value, int indent)
+  inline std::ostream& StoneDumpValue(std::ostream& out, const std::string& value, size_t indent)
   {
     out << MakeIndent(indent) << "\"" << value  << "\"";
     return out;
@@ -148,7 +148,7 @@ namespace StoneSampleCommands
   }
 
   template<typename T>
-  std::ostream& StoneDumpValue(std::ostream& out, const std::map<std::string,T>& value, int indent)
+  std::ostream& StoneDumpValue(std::ostream& out, const std::map<std::string,T>& value, size_t indent)
   {
     out << MakeIndent(indent) << "{\n";
     for (typename std::map<std::string, T>::const_iterator it = value.cbegin();
@@ -188,7 +188,7 @@ namespace StoneSampleCommands
   }
 
   template<typename T>
-  std::ostream& StoneDumpValue(std::ostream& out, const std::vector<T>& value, int indent)
+  std::ostream& StoneDumpValue(std::ostream& out, const std::vector<T>& value, size_t indent)
   {
     out << MakeIndent(indent) << "[\n";
     for (size_t i = 0; i < value.size(); ++i)
@@ -372,7 +372,7 @@ namespace StoneSampleCommands
     return Json::Value(strValue);
   }
 
-  inline std::ostream& StoneDumpValue(std::ostream& out, const Tool& value, int indent = 0)
+  inline std::ostream& StoneDumpValue(std::ostream& out, const Tool& value, size_t indent = 0)
   {
     if( value == Tool_LineMeasure)
     {
@@ -485,7 +485,7 @@ namespace StoneSampleCommands
     return Json::Value(strValue);
   }
 
-  inline std::ostream& StoneDumpValue(std::ostream& out, const ActionType& value, int indent = 0)
+  inline std::ostream& StoneDumpValue(std::ostream& out, const ActionType& value, size_t indent = 0)
   {
     if( value == ActionType_UndoCrop)
     {
@@ -531,7 +531,7 @@ namespace StoneSampleCommands
     return result;
   }
 
-  inline std::ostream& StoneDumpValue(std::ostream& out, const SelectTool& value, int indent = 0)
+  inline std::ostream& StoneDumpValue(std::ostream& out, const SelectTool& value, size_t indent = 0)
   {
     out << MakeIndent(indent) << "{\n";
     out << MakeIndent(indent) << "tool:\n";
@@ -594,7 +594,7 @@ namespace StoneSampleCommands
     return result;
   }
 
-  inline std::ostream& StoneDumpValue(std::ostream& out, const Action& value, int indent = 0)
+  inline std::ostream& StoneDumpValue(std::ostream& out, const Action& value, size_t indent = 0)
   {
     out << MakeIndent(indent) << "{\n";
     out << MakeIndent(indent) << "type:\n";
@@ -638,6 +638,7 @@ namespace StoneSampleCommands
   {
   public:
     virtual bool Handle(const SelectTool& value) = 0;
+    virtual bool Handle(const Action& value) = 0;
   };
 
   /** Service function for StoneDispatchToHandler */
@@ -654,6 +655,12 @@ namespace StoneSampleCommands
     else if (type == "StoneSampleCommands.SelectTool")
     {
       SelectTool value;
+      _StoneDeserializeValue(value, jsonValue["value"]);
+      return handler->Handle(value);
+    }
+    else if (type == "StoneSampleCommands.Action")
+    {
+      Action value;
       _StoneDeserializeValue(value, jsonValue["value"]);
       return handler->Handle(value);
     }

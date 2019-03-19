@@ -207,11 +207,6 @@ namespace OrthancStone
 
         virtual void HandleSerializedMessageFromWeb(std::string& output, const std::string& input) 
         {
-          // the simple viewer does not use the serialized messages facilities
-        }
-
-        virtual void HandleCommandFromWeb(std::string& output, const std::string& input) 
-        {
           if (input == "select-tool:line-measure")
           {
             viewerApplication_.currentTool_ = Tool_LineMeasure;

@@ -357,21 +357,6 @@ extern "C" {
     return NULL;
   }
 
-  const char* EMSCRIPTEN_KEEPALIVE SendCommandToStoneApplication(const char* message) 
-  {
-    static std::string output; // we don't want the string to be deallocated when we return to JS code so we always use the same string (this is fine since JS is single-thread)
-
-    printf("SendCommandToStoneApplication\n");
-    printf("%s", message);
-
-    if (applicationWasmAdapter.get() != NULL) {
-      applicationWasmAdapter->HandleCommandFromWeb(output, std::string(message));
-      return output.c_str();
-    }
-    printf("This Stone application does not have a Web Adapter");
-    return NULL;
-  }
-
 #ifdef __cplusplus
 }
 #endif

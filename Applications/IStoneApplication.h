@@ -49,6 +49,12 @@ namespace OrthancStone
     virtual void Initialize(StoneApplicationContext* context,
                             IStatusBar& statusBar,
                             const boost::program_options::variables_map& parameters) = 0;
+
+    /**
+      This method is meant to process messages received from the outside world (i.e. GUI)
+    */
+    virtual void HandleSerializedMessage(const char* data) = 0;
+
 #if ORTHANC_ENABLE_WASM==1
     virtual void InitializeWasm() {}  // specific initialization when the app is running in WebAssembly.  This is called after the other Initialize()
 #endif

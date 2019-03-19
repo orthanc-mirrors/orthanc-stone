@@ -107,7 +107,7 @@ export function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl
     // Prevent scrolling
     document.body.addEventListener('touchmove', function (event) {
       event.preventDefault();
-    }, false);
+    }, { passive: false});
 
     _InitializeWasmApplication(orthancBaseUrl);
   });

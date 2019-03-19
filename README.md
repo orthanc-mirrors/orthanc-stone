@@ -125,7 +125,10 @@ The following also assumes that you have checked out the Orthanc
 source code in an `orthanc` folder next to the Stone of Orthanc
 repository, please enter the following:
 
+**Simple make generator with dynamic build**
+
 ```
+# Please set $currentDir to the current folder
 mkdir -p ~/builds/orthanc-stone-build
 cd ~/builds/orthanc-stone-build
 cmake -DORTHANC_FRAMEWORK_SOURCE=path \
@@ -133,6 +136,16 @@ cmake -DORTHANC_FRAMEWORK_SOURCE=path \
     -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON \
     ~/orthanc-stone/Applications/Samples/
 ```
+
+**Ninja generator with static build (typical under Windows)**
+
+```
+# Please yourself one level above the orthanc-stone and orthanc folders
+mkdir -p stone_build_sdl
+cd stone_build_sdl
+cmake -G Ninja -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Applications/Samples/
+```
+
 
 If you are working on Windows, add the correct generator option to
 cmake to, for instance, generate msbuild files for Visual Studio.
@@ -146,9 +159,14 @@ Note: replace `$($pwd)` with the current directory when not using Powershell
 
 Building the Qt native samples (SimpleViewer only) under Windows:
 ------------------------------------------------------------------
+
+**MSVC 2017 generator with static build (typical under Windows)**
+
 For instance, if Qt is installed in `C:\Qt\5.12.0\msvc2017_64`
 
-`cmake -DSTATIC_BUILD=ON -DCMAKE_PREFIX_PATH=C:\Qt\5.12.0\msvc2017_64 -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_QT=ON -G "Visual Studio 15 2017 Win64" ../orthanc-stone/Applications/Samples/`
+```
+cmake -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DCMAKE_PREFIX_PATH=C:\Qt\5.12.0\msvc2017_64 -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_QT=ON -G "Visual Studio 15 2017 Win64" ../orthanc-stone/Applications/Samples/
+```
 
 Note: replace `$($pwd)` with the current directory when not using Powershell
 
@@ -196,3 +214,9 @@ using the following BibTeX entry:
   url="https://doi.org/10.1007/s10278-018-0082-y"
 }
 
+Various notes to be deleted
+---------------------------
+class BaseCommand : public ICommand
+
+RadiographySceneCommand
+GenericNoArgCommand

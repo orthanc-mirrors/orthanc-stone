@@ -174,10 +174,6 @@ endif()
 set(APPLICATIONS_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/IStoneApplication.h
     ${ORTHANC_STONE_ROOT}/Applications/StoneApplicationContext.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Commands/BaseCommandBuilder.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Commands/ICommand.h
-    ${ORTHANC_STONE_ROOT}/Applications/Commands/ICommandExecutor.h
-    ${ORTHANC_STONE_ROOT}/Applications/Commands/ICommandBuilder.h
     )
 
 if (NOT ORTHANC_SANDBOXED)

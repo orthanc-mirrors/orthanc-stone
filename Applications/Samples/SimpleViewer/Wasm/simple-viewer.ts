@@ -9,7 +9,7 @@ function SelectTool(toolName: string) {
     args: {
     }                                                                                                                       
   };
-  wasmApplicationRunner.SendCommandToStoneApplication(JSON.stringify(command));
+  wasmApplicationRunner.SendSerializedMessageToStoneApplication(JSON.stringify(command));
 }
 
 function PerformAction(actionName: string) {
@@ -19,7 +19,7 @@ function PerformAction(actionName: string) {
     args: {
     }
   };
-  wasmApplicationRunner.SendCommandToStoneApplication(JSON.stringify(command));
+  wasmApplicationRunner.SendSerializedMessageToStoneApplication(JSON.stringify(command));
 }
 
 class SimpleViewerUI {

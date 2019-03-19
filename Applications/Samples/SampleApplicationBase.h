@@ -41,30 +41,35 @@ namespace OrthancStone
     class SampleApplicationBase : public IStoneApplication
     {
     protected:
-      BaseCommandBuilder commandBuilder_;
-      WorldSceneWidget*  mainWidget_;   // ownership is transfered to the application context
+      // ownership is transferred to the application context
+      WorldSceneWidget*  mainWidget_;
 
     public:
       virtual void Initialize(StoneApplicationContext* context,
                               IStatusBar& statusBar,
-                              const boost::program_options::variables_map& parameters)
+                              const boost::program_options::variables_map& parameters) ORTHANC_OVERRIDE
       {
       }
 
-      virtual std::string GetTitle() const
+      virtual std::string GetTitle() const ORTHANC_OVERRIDE
       {
         return "Stone of Orthanc - Sample";
       }
 
-      virtual BaseCommandBuilder& GetCommandBuilder() {return commandBuilder_;}
+      /**
+       * In the basic samples, the commands are handled by the platform adapter and NOT
+       * by the application handler
+      */
+      virtual void HandleSerializedMessage(const char* data) ORTHANC_OVERRIDE {};
 
-      virtual void Finalize() {}
-      virtual IWidget* GetCentralWidget() {return mainWidget_;}
+
+      virtual void Finalize() ORTHANC_OVERRIDE {}
+      virtual IWidget* GetCentralWidget() ORTHANC_OVERRIDE {return mainWidget_;}
 
 #if ORTHANC_ENABLE_WASM==1
       // default implementations for a single canvas named "canvas" in the HTML and an emtpy WasmApplicationAdapter
 
-      virtual void InitializeWasm()
+      virtual void InitializeWasm() ORTHANC_OVERRIDE
       {
         AttachWidgetToWasmViewport("canvas", mainWidget_);
       }

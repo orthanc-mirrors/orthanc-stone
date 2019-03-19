@@ -8,6 +8,10 @@ project(OrthancStone)
 
 include(../../Resources/CMake/OrthancStoneParameters.cmake)
 
+if (OPENSSL_NO_CAPIENG)
+add_definitions(-DOPENSSL_NO_CAPIENG=1)
+endif()
+
 #set(ENABLE_DCMTK ON)
 
 set(ENABLE_SDL OFF CACHE BOOL "Target SDL Native application")
@@ -38,7 +42,7 @@ if (ENABLE_WASM)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WASM_FLAGS}")
 
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${WASM_FLAGS}")  # not always clear which flags are for the compiler and which one are for the linker -> pass them all to the linker too
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Applications/Samples/samples-library.js")
+  # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Applications/Samples/samples-library.js")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/WasmWebService.js")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/WasmDelayedCallExecutor.js")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/default-library.js")
@@ -181,16 +185,20 @@ elseif (ENABLE_WASM)
         list(APPEND SIMPLE_VIEWER_APPLICATION_SOURCES
             ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/mainWasm.cpp
             ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/SimpleViewerWasmApplicationAdapter.cpp
+            ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/SimpleViewerWasmApplicationAdapter.h
             ${STONE_WASM_SOURCES}
           )
     endif()
 
     add_executable(OrthancStoneSimpleViewer
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.cpp
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.cpp
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.cpp
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/AppStatus.h
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.h
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Messages.h
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.h
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.h
       ${SIMPLE_VIEWER_APPLICATION_SOURCES}
       )
     target_link_libraries(OrthancStoneSimpleViewer OrthancStone)

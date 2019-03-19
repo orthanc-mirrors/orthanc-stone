@@ -37,33 +37,32 @@ namespace SimpleViewer {
   {
     if (button == MouseButton_Left)
     {
-      if (application_.GetCurrentTool() == SimpleViewerApplication::Tools_LineMeasure)
+      if (application_.GetCurrentTool() == Tool_LineMeasure)
       {
         return new LineMeasureTracker(statusBar, dynamic_cast<SliceViewerWidget&>(widget).GetSlice(),
                                       x, y, 255, 0, 0, application_.GetFont());
       }
-      else if (application_.GetCurrentTool() == SimpleViewerApplication::Tools_CircleMeasure)
+      else if (application_.GetCurrentTool() == Tool_CircleMeasure)
       {
         return new CircleMeasureTracker(statusBar, dynamic_cast<SliceViewerWidget&>(widget).GetSlice(),
                                         x, y, 255, 0, 0, application_.GetFont());
       }
-      else if (application_.GetCurrentTool() == SimpleViewerApplication::Tools_Crop)
+      else if (application_.GetCurrentTool() == Tool_Crop)
       {
         // TODO
       }
-      else if (application_.GetCurrentTool() == SimpleViewerApplication::Tools_Windowing)
+      else if (application_.GetCurrentTool() == Tool_Windowing)
       {
         // TODO
       }
-      else if (application_.GetCurrentTool() == SimpleViewerApplication::Tools_Zoom)
+      else if (application_.GetCurrentTool() == Tool_Zoom)
       {
         // TODO
       }
-      else if (application_.GetCurrentTool() == SimpleViewerApplication::Tools_Pan)
+      else if (application_.GetCurrentTool() == Tool_Pan)
       {
         // TODO
       }
-
     }
     return NULL;
   }

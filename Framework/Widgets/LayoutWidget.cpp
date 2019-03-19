@@ -74,7 +74,7 @@ namespace OrthancStone
       std::vector<Touch> relativeTouches;
       for (size_t t = 0; t < displayTouches.size(); t++)
       {
-        relativeTouches.push_back(Touch((int)displayTouches[t].x - left_, (int)displayTouches[t].y - top_));
+        relativeTouches.push_back(Touch(displayTouches[t].x - left_, displayTouches[t].y - top_));
       }
 
       tracker_->MouseMove(x - left_, y - top_, relativeTouches);
@@ -226,7 +226,7 @@ namespace OrthancStone
     }
     else if (isHorizontal_)
     {
-      unsigned int padding = paddingLeft_ + paddingRight_ + (children_.size() - 1) * paddingInternal_;
+      unsigned int padding = paddingLeft_ + paddingRight_ + (static_cast<unsigned int>(children_.size()) - 1) * paddingInternal_;
       float childWidth = ((static_cast<float>(width_) - static_cast<float>(padding)) / 
                           static_cast<float>(children_.size()));
         
@@ -250,7 +250,7 @@ namespace OrthancStone
     }
     else
     {
-      unsigned int padding = paddingTop_ + paddingBottom_ + (children_.size() - 1) * paddingInternal_;
+      unsigned int padding = paddingTop_ + paddingBottom_ + (static_cast<unsigned int>(children_.size()) - 1) * paddingInternal_;
       float childHeight = ((static_cast<float>(height_) - static_cast<float>(padding)) / 
                            static_cast<float>(children_.size()));
         

@@ -9,7 +9,7 @@ function SelectTool(toolName: string) {
             toolName: toolName
         }
     };
-    wasmApplicationRunner.SendCommandToStoneApplication(JSON.stringify(command));
+    wasmApplicationRunner.SendSerializedMessageToStoneApplication(JSON.stringify(command));
 
 }
 
@@ -19,7 +19,7 @@ function PerformAction(commandName: string) {
         commandType: "simple",
         args: {}
     };
-    wasmApplicationRunner.SendCommandToStoneApplication(JSON.stringify(command));
+    wasmApplicationRunner.SendSerializedMessageToStoneApplication(JSON.stringify(command));
 }
 
 //initializes the buttons

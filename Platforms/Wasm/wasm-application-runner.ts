@@ -21,7 +21,6 @@ export var CreateCppViewport: Function = null;
 var ReleaseCppViewport: Function = null;
 var StartWasmApplication: Function = null;
 export var SendSerializedMessageToStoneApplication: Function = null;
-export var SendCommandToStoneApplication: Function = null;
 
 function DoAnimationThread() {
   if (WasmDoAnimation != null) {
@@ -102,7 +101,6 @@ export function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl
     WasmDoAnimation = (<any> window).StoneFrameworkModule.cwrap('WasmDoAnimation', null, []);
 
     SendSerializedMessageToStoneApplication = (<any> window).StoneFrameworkModule.cwrap('SendSerializedMessageToStoneApplication', 'string', ['string']);
-    SendCommandToStoneApplication = (<any> window).StoneFrameworkModule.cwrap('SendCommandToStoneApplication', 'string', ['string']);
 
     Logger.defaultLogger.debug("Connecting C++ methods to JS methods - done");
 

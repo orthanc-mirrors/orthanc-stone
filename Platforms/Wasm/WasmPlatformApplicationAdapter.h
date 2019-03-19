@@ -13,7 +13,6 @@ namespace OrthancStone
       WasmPlatformApplicationAdapter(MessageBroker& broker, IStoneApplication& application);
 
       virtual void HandleSerializedMessageFromWeb(std::string& output, const std::string& input);
-      virtual void HandleCommandFromWeb(std::string& output, const std::string& input);
       virtual void NotifyStatusUpdateFromCppToWebWithString(const std::string& statusUpdateMessage);
       virtual void NotifyStatusUpdateFromCppToWebWithSerializedMessage(const std::string& statusUpdateMessage);
   };

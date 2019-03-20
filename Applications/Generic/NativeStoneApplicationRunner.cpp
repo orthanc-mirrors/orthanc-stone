@@ -141,6 +141,13 @@ namespace OrthancStone
     if (parameters.count("verbose"))
     {
       Orthanc::Logging::EnableInfoLevel(true);
+      LOG(INFO) << "Verbose logs are enabled";
+    }
+
+    if (parameters.count("trace"))
+    {
+      Orthanc::Logging::EnableTraceLevel(true);
+      VLOG(1) << "Trace logs are enabled";
     }
 
     ParseCommandLineOptions(parameters);

@@ -25,7 +25,9 @@
 if (ENABLE_DCMTK)
   set(ENABLE_LOCALE ON)
 else()
-  set(ENABLE_LOCALE OFF)  # Disable support for locales (notably in Boost)
+  if (NOT DEFINED ENABLE_LOCALE)
+    set(ENABLE_LOCALE OFF)  # Disable support for locales (notably in Boost)
+  endif()
 endif()
 
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)

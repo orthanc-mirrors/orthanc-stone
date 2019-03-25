@@ -235,7 +235,7 @@ export class WasmViewport {
         var y = event.pageY - this.offsetTop;
         that.ViewportMouseWheel(that.pimpl_, event.deltaY, x, y, event.ctrlKey);
         event.preventDefault();
-      });
+      }, {passive: true});
 
       this.htmlCanvas_.addEventListener('touchstart', function(event: TouchEvent) {
         // don't propagate events to the whole body (this could zoom the entire page instead of zooming the viewport)
@@ -263,7 +263,7 @@ export class WasmViewport {
         }
 
         that.ViewportTouchStart(that.pimpl_, event.targetTouches.length, x0, y0, x1, y1, x2, y2);
-      });
+      }, {passive: true});
     
       this.htmlCanvas_.addEventListener('touchend', function(event) {
         // don't propagate events to the whole body (this could zoom the entire page instead of zooming the viewport)
@@ -369,7 +369,7 @@ export class WasmViewport {
                                   z0[1], 0);
           }        
         }
-      });
+      }, {passive: true});
     }  
 
   public ResetTouch() {

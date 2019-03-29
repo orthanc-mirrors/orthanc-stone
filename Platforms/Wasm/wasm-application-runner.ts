@@ -107,7 +107,7 @@ export function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl
     // Prevent scrolling
     document.body.addEventListener('touchmove', function (event) {
       event.preventDefault();
-    }, { passive: false});
+    }, { passive: false}); // must not be passive if calling event.preventDefault, ie to cancel scroll or zoom of the whole interface
 
     _InitializeWasmApplication(orthancBaseUrl);
   });

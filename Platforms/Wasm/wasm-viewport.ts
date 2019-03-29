@@ -1,5 +1,4 @@
 import wasmApplicationRunner = require('./wasm-application-runner');
-//import stoneFrameworkLoader = require('./stone-framework-loader');
 import * as Logger from './logger'
 
 var isPendingRedraw = false;
@@ -30,13 +29,6 @@ function CreateWasmViewport(htmlCanvasId: string) : any {
 }
  
 (<any>window).CreateWasmViewport = CreateWasmViewport;
-
-//  export declare type InitializationCallback = () => void;
-  
-//  export declare var StoneFrameworkModule : any;
-  
-  //const ASSETS_FOLDER : string = "assets/lib";
-  //const WASM_FILENAME : string = "orthanc-framework";
 
 export class WasmViewport {
 
@@ -235,7 +227,7 @@ export class WasmViewport {
         var y = event.pageY - this.offsetTop;
         that.ViewportMouseWheel(that.pimpl_, event.deltaY, x, y, event.ctrlKey);
         event.preventDefault();
-      }, {passive: true});
+      }, {passive: false}); // must not be passive if calling event.preventDefault, ie to cancel scroll or zoom of the whole interface
 
       this.htmlCanvas_.addEventListener('touchstart', function(event: TouchEvent) {
         // don't propagate events to the whole body (this could zoom the entire page instead of zooming the viewport)
@@ -263,7 +255,7 @@ export class WasmViewport {
         }
 
         that.ViewportTouchStart(that.pimpl_, event.targetTouches.length, x0, y0, x1, y1, x2, y2);
-      }, {passive: true});
+      }, {passive: false}); // must not be passive if calling event.preventDefault, ie to cancel scroll or zoom of the whole interface
     
       this.htmlCanvas_.addEventListener('touchend', function(event) {
         // don't propagate events to the whole body (this could zoom the entire page instead of zooming the viewport)
@@ -323,53 +315,7 @@ export class WasmViewport {
         that.ViewportTouchMove(that.pimpl_, event.targetTouches.length, x0, y0, x1, y1, x2, y2);
         return;
 
-        // if (!that.touchGestureInProgress_) {
-        //   // starting a new gesture
-        //   that.touchCount_ = event.targetTouches.length;
-        //   for (var t = 0; t < event.targetTouches.length; t++) {
-        //     that.touchGestureLastCoordinates_.push([event.targetTouches[t].pageX, event.targetTouches[t].pageY]);
-        //   }
-        //   that.touchGestureInProgress_ = true;
-        // } else {
-        //   // continuing a gesture
-        //   // TODO: we shall probably forward all touches to the C++ code and let the "interactors/trackers" handle them
-
-        //   if (that.touchCount_ == 1) { // consider it's a left mouse drag
-
-        //   }
-        // }
-
-        // TODO: we shall probably forward all touches to the C++ code and let the "interactors/trackers" handle them
-
-        if (that.touchTranslation_.length == 2) { // 
-          var t = that.GetTouchTranslation(event);
-          that.ViewportMouseMove(that.pimpl_, t[0], t[1]);
-        }
-        else if (that.touchZoom_.length == 3) {
-          var z0 = that.touchZoom_;
-          var z1 = that.GetTouchZoom(event);
-          that.ViewportMouseMove(that.pimpl_, z0[0], z0[1] - z0[2] + z1[2]);
-        }
-        else {
-          // Realize the gesture event
-          if (event.targetTouches.length == 1) {
-            // Exactly one finger inside the canvas => Setup a translation
-            that.touchTranslation_ = that.GetTouchTranslation(event);
-            that.ViewportMouseDown(that.pimpl_, 
-                                  0 /* left button */,
-                                  that.touchTranslation_[0],
-                                  that.touchTranslation_[1], 0);
-          } else if (event.targetTouches.length == 2) {
-            // Exactly 2 fingers inside the canvas => Setup a pinch/zoom
-            that.touchZoom_ = that.GetTouchZoom(event);
-            var z0 = that.touchZoom_;
-            that.ViewportMouseDown(that.pimpl_, 
-                                  2 /* right button */,
-                                  z0[0],
-                                  z0[1], 0);
-          }        
-        }
-      }, {passive: true});
+      }, {passive: false}); // must not be passive if calling event.preventDefault, ie to cancel scroll or zoom of the whole interface
     }  
 
   public ResetTouch() {
@@ -380,10 +326,6 @@ export class WasmViewport {
 
     this.touchTranslation_ = false;
     this.touchZoom_ = false;
-
-    // this.touchGestureInProgress_ = false;
-    // this.touchCount_ = 0;
-    // this.touchGestureLastCoordinates_ = [];
   }
   
   public GetTouchTranslation(event) {
@@ -406,7 +348,5 @@ export class WasmViewport {
       d
     ];
   }
-    
+   
 }
-
-  

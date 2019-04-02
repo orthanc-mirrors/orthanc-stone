@@ -137,15 +137,27 @@ cmake -DORTHANC_FRAMEWORK_SOURCE=path \
     ~/orthanc-stone/Applications/Samples/
 ```
 
-**Ninja generator with static build (typical under Windows)**
+**Ninja generator with static SDL build (pwsh script)**
 
 ```
 # Please yourself one level above the orthanc-stone and orthanc folders
-mkdir -p stone_build_sdl
+if( -not (test-path stone_build_sdl)) { mkdir stone_build_sdl }
 cd stone_build_sdl
 cmake -G Ninja -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Applications/Samples/
 ```
 
+**Visual Studio 2017 generator with static SDL build  (pwsh script)**
+
+```
+# The following will use Visual Studio 2017 to build the SDL samples
+# in debug mode (with multiple compilers in parallel). NOTE: place 
+# yourself one level above the `orthanc-stone` and `orthanc` folders
+
+if( -not (test-path stone_build_sdl)) { mkdir stone_build_sdl }
+cd stone_build_sdl
+cmake -G "Visual Studio 15 2017 Win64" -DMSVC_MULTIPLE_PROCESSES=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Applications/Samples/
+cmake --build . --config Debug
+```
 
 If you are working on Windows, add the correct generator option to
 cmake to, for instance, generate msbuild files for Visual Studio.
@@ -160,15 +172,25 @@ Note: replace `$($pwd)` with the current directory when not using Powershell
 Building the Qt native samples (SimpleViewer only) under Windows:
 ------------------------------------------------------------------
 
-**MSVC 2017 generator with static build (typical under Windows)**
+**Visual Studio 2017 generator with static Qt build  (pwsh script)**
 
 For instance, if Qt is installed in `C:\Qt\5.12.0\msvc2017_64`
 
 ```
-cmake -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DCMAKE_PREFIX_PATH=C:\Qt\5.12.0\msvc2017_64 -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_QT=ON -G "Visual Studio 15 2017 Win64" ../orthanc-stone/Applications/Samples/
+# The following will use Visual Studio 2017 to build the SDL samples
+# in debug mode (with multiple compilers in parallel). NOTE: place 
+# yourself one level above the `orthanc-stone` and `orthanc` folders
+
+if( -not (test-path stone_build_qt)) { mkdir stone_build_qt }
+cd stone_build_qt
+cmake -G "Visual Studio 15 2017 Win64" -DMSVC_MULTIPLE_PROCESSES=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DCMAKE_PREFIX_PATH=C:\Qt\5.12.0\msvc2017_64 -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_QT=ON  ../orthanc-stone/Applications/Samples/
+cmake --build . --config Debug
 ```
 
 Note: replace `$($pwd)` with the current directory when not using Powershell
+
+
+
 
 
 

@@ -737,9 +737,13 @@ namespace OrthancStone
     virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
                                                         const ViewportGeometry& view,
                                                         MouseButton button,
+                                                        KeyboardModifiers modifiers,
+                                                        int viewportX,
+                                                        int viewportY,
                                                         double x,
                                                         double y,
-                                                        IStatusBar* statusBar) ORTHANC_OVERRIDE
+                                                        IStatusBar* statusBar,
+                                                        const std::vector<Touch>& touches) ORTHANC_OVERRIDE
     {
       return  NULL;
     }

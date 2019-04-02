@@ -82,6 +82,7 @@ def CanonToCpp(canonicalTypename):
   retVal = canonicalTypename
   retVal = retVal.replace("map", "std::map")
   retVal = retVal.replace("vector", "std::vector")
+  retVal = retVal.replace("set", "std::set")
   retVal = retVal.replace("string", "std::string")
   retVal = retVal.replace("int32", "int32_t")
   retVal = retVal.replace("float32", "float")
@@ -98,6 +99,7 @@ def CanonToTs(canonicalTypename):
   retVal = canonicalTypename
   retVal = retVal.replace("map", "Map")
   retVal = retVal.replace("vector", "Array")
+  retVal = retVal.replace("set", "Set")
   retVal = retVal.replace("int32", "number")
   retVal = retVal.replace("float32", "number")
   retVal = retVal.replace("float64", "number")

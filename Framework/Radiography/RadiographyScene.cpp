@@ -558,8 +558,6 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    LOG(INFO) << "Exporting DICOM";
-
     Extent2D extent = GetSceneExtent();
 
     int w = static_cast<int>(std::ceil(extent.GetWidth() / pixelSpacingX));
@@ -603,6 +601,9 @@ namespace OrthancStone
                                                     ImageInterpolation interpolation,
                                                     bool usePam)
   {
+    LOG(INFO) << "Exporting RadiographyScene to DICOM";
+    VLOG(1) << "Exporting RadiographyScene to: export to image";
+
     std::auto_ptr<Orthanc::Image> rendered(ExportToImage(pixelSpacingX, pixelSpacingY, interpolation)); // note: we don't invert the image in the pixels data because we'll set the PhotometricDisplayMode correctly in the DICOM tags
 
     std::string base64;
@@ -612,6 +613,7 @@ namespace OrthancStone
 
       if (usePam)
       {
+        VLOG(1) << "Exporting RadiographyScene: convert to PAM";
         Orthanc::PamWriter writer;
         writer.WriteToMemory(content, *rendered);
       }
@@ -621,6 +623,7 @@ namespace OrthancStone
         writer.WriteToMemory(content, *rendered);
       }
 
+      VLOG(1) << "Exporting RadiographyScene: encoding to base64";
       Orthanc::Toolbox::EncodeBase64(base64, content);
     }
 
@@ -667,6 +670,7 @@ namespace OrthancStone
       createDicomRequestContent["Parent"] = parentOrthancId;
     }
 
+    VLOG(1) << "Exporting RadiographyScene: create-dicom request is ready";
   }
 
 

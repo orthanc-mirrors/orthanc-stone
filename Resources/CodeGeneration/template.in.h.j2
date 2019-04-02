@@ -13,6 +13,7 @@ Generated on {{currentDatetime}} by stonegentool
 #include <sstream>
 #include <assert.h>
 #include <memory>
+#include <set>
 #include <json/json.h>
 
 //#define STONEGEN_NO_CPP11 1
@@ -194,6 +195,43 @@ namespace {{rootName}}
     for (size_t i = 0; i < value.size(); ++i)
     {
       StoneDumpValue(out, value[i], indent+2);
+    }
+    out << MakeIndent(indent) << "]\n";
+    return out;
+  }
+
+  /** Throws in case of problem */
+  template<typename T>
+  void _StoneDeserializeValue(
+    std::set<T>& destValue, const Json::Value& jsonValue)
+  {
+    destValue.clear();
+    for (Json::Value::ArrayIndex i = 0; i != jsonValue.size(); i++)
+    {
+      T innerDestValue;
+      _StoneDeserializeValue(innerDestValue, jsonValue[i]);
+      destValue.insert(innerDestValue);
+    }
+  }
+
+  template<typename T>
+  Json::Value _StoneSerializeValue(const std::set<T>& value)
+  {
+    Json::Value result(Json::arrayValue);
+    for (typename std::set<T>::const_iterator it = value.begin(); it != value.end(); ++it)
+    {
+      result.append(_StoneSerializeValue(*it));
+    }
+    return result;
+  }
+
+  template<typename T>
+  std::ostream& StoneDumpValue(std::ostream& out, const std::set<T>& value, size_t indent)
+  {
+    out << MakeIndent(indent) << "[\n";
+    for (typename std::set<T>::const_iterator it = value.begin(); it != value.end(); ++it)
+    {
+      StoneDumpValue(out, *it, indent+2);
     }
     out << MakeIndent(indent) << "]\n";
     return out;

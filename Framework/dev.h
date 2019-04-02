@@ -51,7 +51,7 @@ namespace OrthancStone
     std::auto_ptr<DownloadStack>  downloadStack_;
     bool                          computeRange_;
     size_t                        pendingSlices_;
-    
+
     void ScheduleSliceDownload()
     {
       assert(downloadStack_.get() != NULL);
@@ -70,20 +70,20 @@ namespace OrthancStone
       if (!GeometryToolbox::IsParallel(a.GetGeometry().GetNormal(),
                                        b.GetGeometry().GetNormal()))
       {
-        LOG(ERROR) << "Some slice in the volume image is not parallel to the others";
+        LOG(ERROR) << "A slice in the volume image is not parallel to the others.";
         return false;
       }
 
       if (a.GetConverter().GetExpectedPixelFormat() != b.GetConverter().GetExpectedPixelFormat())
       {
-        LOG(ERROR) << "The pixel format changes across the slices of the volume image";
+        LOG(ERROR) << "The pixel format changes across the slices of the volume image.";
         return false;
       }
 
       if (a.GetWidth() != b.GetWidth() ||
           a.GetHeight() != b.GetHeight())
       {
-        LOG(ERROR) << "The width/height of the slices change across the volume image";
+        LOG(ERROR) << "The slices dimensions (width/height) are varying throughout the volume image";
         return false;
       }
 
@@ -109,7 +109,7 @@ namespace OrthancStone
     void OnSliceGeometryReady(const OrthancSlicesLoader::SliceGeometryReadyMessage& message)
     {
       assert(&message.GetOrigin() == &loader_);
-      
+
       if (loader_.GetSliceCount() == 0)
       {
         LOG(ERROR) << "Empty volume image";
@@ -156,13 +156,13 @@ namespace OrthancStone
       LOG(INFO) << "Creating a volume image of size " << width << "x" << height
                 << "x" << loader_.GetSliceCount() << " in " << Orthanc::EnumerationToString(format);
 
-      image_.reset(new ImageBuffer3D(format, width, height, loader_.GetSliceCount(), computeRange_));
+      image_.reset(new ImageBuffer3D(format, width, height, static_cast<unsigned int>(loader_.GetSliceCount()), computeRange_));
       image_->SetAxialGeometry(loader_.GetSlice(0).GetGeometry());
       image_->SetVoxelDimensions(loader_.GetSlice(0).GetPixelSpacingX(),
                                  loader_.GetSlice(0).GetPixelSpacingY(), spacingZ);
       image_->Clear();
 
-      downloadStack_.reset(new DownloadStack(loader_.GetSliceCount()));
+      downloadStack_.reset(new DownloadStack(static_cast<unsigned int>(loader_.GetSliceCount())));
       pendingSlices_ = loader_.GetSliceCount();
 
       for (unsigned int i = 0; i < 4; i++)  // Limit to 4 simultaneous downloads
@@ -175,7 +175,7 @@ namespace OrthancStone
       EmitMessage(ISlicedVolume::GeometryReadyMessage(*this));
     }
 
-    
+
     void OnSliceGeometryError(const OrthancSlicesLoader::SliceGeometryErrorMessage& message)
     {
       assert(&message.GetOrigin() == &loader_);
@@ -184,7 +184,7 @@ namespace OrthancStone
       EmitMessage(ISlicedVolume::GeometryErrorMessage(*this));
     }
 
-    
+
     void OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message)
     {
       assert(&message.GetOrigin() == &loader_);
@@ -210,7 +210,7 @@ namespace OrthancStone
       ScheduleSliceDownload();
     }
 
-    
+
     void OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message)
     {
       assert(&message.GetOrigin() == &loader_);
@@ -312,11 +312,11 @@ namespace OrthancStone
     double               sliceThickness_;
     CoordinateSystem3D   reference_;
     DicomFrameConverter  converter_;
-    
+
     double ComputeAxialThickness(const OrthancVolumeImage& volume) const
     {
       double thickness;
-      
+
       size_t n = volume.GetSliceCount();
       if (n > 1)
       {
@@ -342,11 +342,11 @@ namespace OrthancStone
         return thickness;
       }
     }
-    
+
     void SetupAxial(const OrthancVolumeImage& volume)
     {
       const Slice& axial = volume.GetSlice(0);
-      
+
       width_ = axial.GetWidth();
       height_ = axial.GetHeight();
       depth_ = volume.GetSliceCount();
@@ -364,7 +364,7 @@ namespace OrthancStone
       double axialThickness = ComputeAxialThickness(volume);
 
       width_ = axial.GetWidth();
-      height_ = volume.GetSliceCount();
+      height_ = static_cast<unsigned int>(volume.GetSliceCount());
       depth_ = axial.GetHeight();
 
       pixelSpacingX_ = axial.GetPixelSpacingX();
@@ -373,11 +373,11 @@ namespace OrthancStone
 
       Vector origin = axial.GetGeometry().GetOrigin();
       origin += (static_cast<double>(volume.GetSliceCount() - 1) *
-                 axialThickness * axial.GetGeometry().GetNormal());
-      
+                axialThickness * axial.GetGeometry().GetNormal());
+
       reference_ = CoordinateSystem3D(origin,
                                       axial.GetGeometry().GetAxisX(),
-                                      -axial.GetGeometry().GetNormal());
+                                      - axial.GetGeometry().GetNormal());
     }
 
     void SetupSagittal(const OrthancVolumeImage& volume)
@@ -386,7 +386,7 @@ namespace OrthancStone
       double axialThickness = ComputeAxialThickness(volume);
 
       width_ = axial.GetHeight();
-      height_ = volume.GetSliceCount();
+      height_ = static_cast<unsigned int>(volume.GetSliceCount());
       depth_ = axial.GetWidth();
 
       pixelSpacingX_ = axial.GetPixelSpacingY();
@@ -395,8 +395,8 @@ namespace OrthancStone
 
       Vector origin = axial.GetGeometry().GetOrigin();
       origin += (static_cast<double>(volume.GetSliceCount() - 1) *
-                 axialThickness * axial.GetGeometry().GetNormal());
-      
+                axialThickness * axial.GetGeometry().GetNormal());
+
       reference_ = CoordinateSystem3D(origin,
                                       axial.GetGeometry().GetAxisY(),
                                       axial.GetGeometry().GetNormal());
@@ -415,20 +415,20 @@ namespace OrthancStone
 
       switch (projection)
       {
-        case VolumeProjection_Axial:
-          SetupAxial(volume);
-          break;
+      case VolumeProjection_Axial:
+        SetupAxial(volume);
+        break;
 
-        case VolumeProjection_Coronal:
-          SetupCoronal(volume);
-          break;
+      case VolumeProjection_Coronal:
+        SetupCoronal(volume);
+        break;
 
-        case VolumeProjection_Sagittal:
-          SetupSagittal(volume);
-          break;
+      case VolumeProjection_Sagittal:
+        SetupSagittal(volume);
+        break;
 
-        default:
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
     }
 
@@ -441,7 +441,7 @@ namespace OrthancStone
     {
       return reference_.GetNormal();
     }
-    
+
     bool LookupSlice(size_t& index,
                      const CoordinateSystem3D& slice) const
     {
@@ -452,14 +452,14 @@ namespace OrthancStone
       {
         return false;
       }
-      
+
       double z = (reference_.ProjectAlongNormal(slice.GetOrigin()) -
                   reference_.ProjectAlongNormal(reference_.GetOrigin())) / sliceThickness_;
 
       int s = static_cast<int>(boost::math::iround(z));
 
       if (s < 0 ||
-          s >= static_cast<int>(depth_))
+        s >= static_cast<int>(depth_))
       {
         return false;
       }
@@ -507,9 +507,9 @@ namespace OrthancStone
       RendererFactory(const Orthanc::ImageAccessor& frame,
                       const Slice& slice,
                       bool isFullQuality) :
-        frame_(frame),
-        slice_(slice),
-        isFullQuality_(isFullQuality)
+                      frame_(frame),
+                      slice_(slice),
+                      isFullQuality_(isFullQuality)
       {
       }
 
@@ -525,35 +525,35 @@ namespace OrthancStone
     std::auto_ptr<VolumeImageGeometry>  coronalGeometry_;
     std::auto_ptr<VolumeImageGeometry>  sagittalGeometry_;
 
-    
+
     bool IsGeometryReady() const
     {
       return axialGeometry_.get() != NULL;
     }
-    
+
     void OnGeometryReady(const ISlicedVolume::GeometryReadyMessage& message)
     {
       assert(&message.GetOrigin() == &volume_);
-      
+
       // These 3 values are only used to speed up the IVolumeSlicer
       axialGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Axial));
       coronalGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Coronal));
       sagittalGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Sagittal));
-      
+
       EmitMessage(IVolumeSlicer::GeometryReadyMessage(*this));
     }
 
     void OnGeometryError(const ISlicedVolume::GeometryErrorMessage& message)
     {
       assert(&message.GetOrigin() == &volume_);
-      
+
       EmitMessage(IVolumeSlicer::GeometryErrorMessage(*this));
     }
 
     void OnContentChanged(const ISlicedVolume::ContentChangedMessage& message)
     {
       assert(&message.GetOrigin() == &volume_);
-      
+
       EmitMessage(IVolumeSlicer::ContentChangedMessage(*this));
     }
 
@@ -576,17 +576,17 @@ namespace OrthancStone
 
       switch (projection)
       {
-        case VolumeProjection_Axial:
-          return *axialGeometry_;
+      case VolumeProjection_Axial:
+        return *axialGeometry_;
 
-        case VolumeProjection_Sagittal:
-          return *sagittalGeometry_;
+      case VolumeProjection_Sagittal:
+        return *sagittalGeometry_;
 
-        case VolumeProjection_Coronal:
-          return *coronalGeometry_;
+      case VolumeProjection_Coronal:
+        return *coronalGeometry_;
 
-        default:
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
     }
 
@@ -625,11 +625,11 @@ namespace OrthancStone
 
 
   public:
-    VolumeImageMPRSlicer(MessageBroker& broker, 
+    VolumeImageMPRSlicer(MessageBroker& broker,
                          OrthancVolumeImage&  volume) :
-      IVolumeSlicer(broker),
-      IObserver(broker),
-      volume_(volume)
+                         IVolumeSlicer(broker),
+                         IObserver(broker),
+                         volume_(volume)
     {
       volume_.RegisterObserverCallback(
         new Callable<VolumeImageMPRSlicer, ISlicedVolume::GeometryReadyMessage>
@@ -652,7 +652,7 @@ namespace OrthancStone
                            const CoordinateSystem3D& viewportSlice) ORTHANC_OVERRIDE
     {
       VolumeProjection projection;
-      
+
       if (!IsGeometryReady() ||
           !DetectProjection(projection, viewportSlice))
       {
@@ -664,16 +664,15 @@ namespace OrthancStone
         // we only consider one single reference slice (the one with index 0).
         std::auto_ptr<Slice> slice(GetProjectionGeometry(projection).GetSlice(0));
         slice->GetExtent(points);
-        
+
         return true;
       }
     }
-    
 
     virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice) ORTHANC_OVERRIDE
     {
       VolumeProjection projection;
-      
+
       if (IsGeometryReady() &&
           DetectProjection(projection, viewportSlice))
       {
@@ -688,7 +687,7 @@ namespace OrthancStone
           std::auto_ptr<Orthanc::Image> frame;
 
           {
-            ImageBuffer3D::SliceReader reader(volume_.GetImage(), projection, closest);
+            ImageBuffer3D::SliceReader reader(volume_.GetImage(), projection, static_cast<unsigned int>(closest));
 
             // TODO Transfer ownership if non-axial, to avoid memcpy
             frame.reset(Orthanc::Image::Clone(reader.GetAccessor()));
@@ -740,9 +739,9 @@ namespace OrthancStone
                                                         MouseButton button,
                                                         double x,
                                                         double y,
-                                                        IStatusBar* statusBar)
+                                                        IStatusBar* statusBar) ORTHANC_OVERRIDE
     {
-      return NULL;
+      return  NULL;
     }
 
     virtual void MouseOver(CairoContext& context,
@@ -750,29 +749,29 @@ namespace OrthancStone
                            const ViewportGeometry& view,
                            double x,
                            double y,
-                           IStatusBar* statusBar)
+                           IStatusBar* statusBar) ORTHANC_OVERRIDE
     {
     }
 
     virtual void MouseWheel(WorldSceneWidget& widget,
                             MouseWheelDirection direction,
                             KeyboardModifiers modifiers,
-                            IStatusBar* statusBar)
+                            IStatusBar* statusBar) ORTHANC_OVERRIDE
     {
       int scale = (modifiers & KeyboardModifiers_Control ? 10 : 1);
 
       switch (direction)
       {
-        case MouseWheelDirection_Up:
-          OffsetSlice(-scale);
-          break;
+      case MouseWheelDirection_Up:
+        OffsetSlice(-scale);
+        break;
 
-        case MouseWheelDirection_Down:
-          OffsetSlice(scale);
-          break;
+      case MouseWheelDirection_Down:
+        OffsetSlice(scale);
+        break;
 
-        default:
-          break;
+      default:
+        break;
       }
     }
 
@@ -780,16 +779,16 @@ namespace OrthancStone
                             KeyboardKeys key,
                             char keyChar,
                             KeyboardModifiers modifiers,
-                            IStatusBar* statusBar)
+                            IStatusBar* statusBar) ORTHANC_OVERRIDE
     {
       switch (keyChar)
       {
-        case 's':
-          widget.FitContent();
-          break;
+      case 's':
+        widget.FitContent();
+        break;
 
-        default:
-          break;
+      default:
+        break;
       }
     }
 
@@ -798,9 +797,9 @@ namespace OrthancStone
                           OrthancVolumeImage& volume,
                           SliceViewerWidget& widget,
                           VolumeProjection projection) :
-      IObserver(broker),
-      widget_(widget),
-      projection_(projection)
+                          IObserver(broker),
+                          widget_(widget),
+                          projection_(projection)
     {
       widget.SetInteractor(*this);
 
@@ -839,7 +838,7 @@ namespace OrthancStone
 
         if (slice >= static_cast<int>(slices_->GetSliceCount()))
         {
-          slice = slices_->GetSliceCount() - 1;
+          slice = static_cast<unsigned int>(slices_->GetSliceCount()) - 1;
         }
 
         if (slice != static_cast<int>(slice_))
@@ -898,7 +897,7 @@ namespace OrthancStone
     SliceViewerWidget&  otherPlane_;
 
   public:
-    ReferenceLineSource(MessageBroker& broker, 
+    ReferenceLineSource(MessageBroker& broker,
                         SliceViewerWidget&  otherPlane) :
       IVolumeSlicer(broker),
       otherPlane_(otherPlane)
@@ -915,7 +914,7 @@ namespace OrthancStone
     virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
     {
       Slice reference(viewportSlice, 0.001);
-      
+
       Vector p, d;
 
       const CoordinateSystem3D& slice = otherPlane_.GetSlice();
@@ -935,7 +934,7 @@ namespace OrthancStone
         viewportSlice.ProjectPoint(x2, y2, p + 1000.0 * d);
 
         const Extent2D extent = otherPlane_.GetSceneExtent();
-        
+
         if (GeometryToolbox::ClipLineToRectangle(x1, y1, x2, y2,
                                                  x1, y1, x2, y2,
                                                  extent.GetX1(), extent.GetY1(),

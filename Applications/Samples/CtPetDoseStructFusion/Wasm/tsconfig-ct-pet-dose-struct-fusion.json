@@ -1,9 +1,0 @@
-{
-    "extends" : "../../Web/tsconfig-samples",
-    "compilerOptions": {
-    },
-    "include" : [
-        "ct-dose-struct-fusion.ts",
-        "../../build-wasm/ApplicationCommands_generated.ts"
-    ]
-}

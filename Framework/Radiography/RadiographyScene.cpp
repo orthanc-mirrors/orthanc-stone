@@ -328,6 +328,29 @@ namespace OrthancStone
     return RegisterLayer(alpha.release());
   }
 
+  RadiographyLayer& RadiographyScene::LoadDicomImage(Orthanc::ImageAccessor* dicomImage, // takes ownership
+                                                     const std::string& instance,
+                                                     unsigned int frame,
+                                                     DicomFrameConverter* converter,  // takes ownership
+                                                     PhotometricDisplayMode preferredPhotometricDisplayMode,
+                                                     RadiographyLayer::Geometry* geometry)
+  {
+    RadiographyDicomLayer& layer = dynamic_cast<RadiographyDicomLayer&>(RegisterLayer(new RadiographyDicomLayer(IObservable::GetBroker(), *this)));
+
+    layer.SetInstance(instance, frame);
+
+    if (geometry != NULL)
+    {
+      layer.SetGeometry(*geometry);
+    }
+
+    layer.SetDicomFrameConverter(converter);
+    layer.SetSourceImage(dicomImage);
+    layer.SetPreferredPhotomotricDisplayMode(preferredPhotometricDisplayMode);
+
+    return layer;
+ }
+
   RadiographyLayer& RadiographyScene::LoadDicomFrame(OrthancApiClient& orthanc,
                                                      const std::string& instance,
                                                      unsigned int frame,
@@ -582,7 +605,7 @@ namespace OrthancStone
     Render(layers, view, interpolation);
 
     std::auto_ptr<Orthanc::Image> rendered(new Orthanc::Image(Orthanc::PixelFormat_Grayscale16,
-                                                               layers.GetWidth(), layers.GetHeight(), false));
+                                                              layers.GetWidth(), layers.GetHeight(), false));
 
     Orthanc::ImageProcessing::Convert(*rendered, layers);
     if (invert)

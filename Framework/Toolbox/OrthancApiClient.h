@@ -163,6 +163,8 @@ namespace OrthancStone
     {
     }
 
+    const std::string& GetBaseUrl() const {return baseUrl_;}
+
     // schedule a GET request expecting a JSON response.
     void GetJsonAsync(const std::string& uri,
                       MessageHandler<JsonResponseReadyMessage>* successCallback,

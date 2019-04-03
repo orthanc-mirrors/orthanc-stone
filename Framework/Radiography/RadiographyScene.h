@@ -30,6 +30,7 @@
 namespace OrthancStone
 {
   class RadiographyDicomLayer;
+  class DicomFrameConverter;
 
   class RadiographyScene :
       public IObserver,
@@ -193,6 +194,13 @@ namespace OrthancStone
 
     RadiographyLayer& LoadAlphaBitmap(Orthanc::ImageAccessor* bitmap,  // takes ownership
                                       RadiographyLayer::Geometry* geometry);
+
+    virtual RadiographyLayer& LoadDicomImage(Orthanc::ImageAccessor* dicomImage, // takes ownership
+                                             const std::string& instance,
+                                             unsigned int frame,
+                                             DicomFrameConverter* converter,  // takes ownership
+                                             PhotometricDisplayMode preferredPhotometricDisplayMode,
+                                             RadiographyLayer::Geometry* geometry);
 
     virtual RadiographyLayer& LoadDicomFrame(OrthancApiClient& orthanc,
                                              const std::string& instance,

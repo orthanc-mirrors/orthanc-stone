@@ -33,28 +33,57 @@ namespace OrthancStone
 {
   class OrthancApiClient;
 
-  class RadiographySceneReader : public boost::noncopyable
+  // HACK: I had to introduce this builder class in order to be able to recreate a RadiographyScene
+  // from a serialized scene that is passed to web-workers.
+  // It needs some architecturing...
+  class RadiographySceneBuilder : public boost::noncopyable
   {
-    RadiographyScene&             scene_;
-    OrthancApiClient&             orthancApiClient_;
-    const Orthanc::FontRegistry*  fontRegistry_;
+  protected:
+    RadiographyScene&                               scene_;
+    const Orthanc::FontRegistry*                    fontRegistry_;
+    std::auto_ptr<Orthanc::ImageAccessor>           dicomImage_;
+    std::auto_ptr<DicomFrameConverter>              dicomFrameConverter_;
+    PhotometricDisplayMode                          preferredPhotometricDisplayMode_;
 
   public:
-    RadiographySceneReader(RadiographyScene& scene, OrthancApiClient& orthancApiClient) :
+    RadiographySceneBuilder(RadiographyScene& scene) :
       scene_(scene),
-      orthancApiClient_(orthancApiClient),
       fontRegistry_(NULL)
     {
     }
 
-    void Read(const Json::Value& output);
+    void Read(const Json::Value& input);
+    void Read(const Json::Value& input,
+              Orthanc::ImageAccessor* dicomImage, // takes ownership
+              DicomFrameConverter* dicomFrameConverter, // takes ownership
+              PhotometricDisplayMode preferredPhotometricDisplayMode
+              );
 
     void SetFontRegistry(const Orthanc::FontRegistry& fontRegistry)
     {
       fontRegistry_ = &fontRegistry;
     }
 
-  private:
-    void ReadLayerGeometry(RadiographyLayer::Geometry& geometry, const Json::Value& output);
+  protected:
+    void ReadLayerGeometry(RadiographyLayer::Geometry& geometry, const Json::Value& input);
+    virtual RadiographyDicomLayer* LoadDicom(const std::string& instanceId, unsigned int frame, RadiographyLayer::Geometry* geometry);
+  };
+
+
+  class RadiographySceneReader : public RadiographySceneBuilder
+  {
+    OrthancApiClient&             orthancApiClient_;
+
+  public:
+    RadiographySceneReader(RadiographyScene& scene, OrthancApiClient& orthancApiClient) :
+      RadiographySceneBuilder(scene),
+      orthancApiClient_(orthancApiClient)
+    {
+    }
+
+    void Read(const Json::Value& input);
+
+  protected:
+    virtual RadiographyDicomLayer*  LoadDicom(const std::string& instanceId, unsigned int frame, RadiographyLayer::Geometry* geometry);
   };
 }

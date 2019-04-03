@@ -66,6 +66,11 @@ namespace OrthancStone
 
     void SetSourceImage(Orthanc::ImageAccessor* image);   // Takes ownership
 
+    const Orthanc::ImageAccessor* GetSourceImage() const {return source_.get();}  // currently need this access to serialize scene in plain old data to send to a WASM worker
+
+    const DicomFrameConverter& GetDicomFrameConverter() const {return *converter_;} // currently need this access to serialize scene in plain old data to send to a WASM worker
+    void SetDicomFrameConverter(DicomFrameConverter* converter) {converter_.reset(converter);} // Takes ownership
+
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,
                         ImageInterpolation interpolation) const;

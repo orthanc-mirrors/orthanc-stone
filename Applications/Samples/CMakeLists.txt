@@ -12,6 +12,20 @@ if (OPENSSL_NO_CAPIENG)
 add_definitions(-DOPENSSL_NO_CAPIENG=1)
 endif()
 
+
+# the following block has been borrowed from orthanc/**/Compiler.cmake
+if (MSVC_MULTIPLE_PROCESSES)
+# "If you omit the processMax argument in the /MP option, the
+# compiler obtains the number of effective processors from the
+# operating system, and then creates one process per effective
+# processor"
+# https://blog.kitware.com/cmake-building-with-all-your-cores/
+# https://docs.microsoft.com/en-us/cpp/build/reference/mp-build-with-multiple-processes
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+endif()
+
+
 #set(ENABLE_DCMTK ON)
 
 set(ENABLE_SDL OFF CACHE BOOL "Target SDL Native application")

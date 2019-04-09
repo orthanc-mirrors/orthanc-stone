@@ -44,6 +44,11 @@ namespace OrthancStone
 
     ~SdlWindow();
 
+    SDL_Window *GetObject() const
+    {
+      return window_;
+    }
+
     unsigned int GetWidth() const;
 
     unsigned int GetHeight() const;

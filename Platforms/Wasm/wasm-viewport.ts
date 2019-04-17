@@ -131,7 +131,7 @@ export class WasmViewport {
         // "window" above the heap of the WASM module), then copy it to
         // the ImageData object
         this.imageData_.data.set(new Uint8ClampedArray(
-          this.module_.buffer,
+          this.module_.HEAPU8.buffer,
           this.renderingBuffer_,
           this.imageData_.width * this.imageData_.height * 4));
         

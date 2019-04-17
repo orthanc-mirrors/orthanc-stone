@@ -114,6 +114,17 @@ namespace OrthancStone
   }
 
 
+  void CairoSurface::Copy(const Orthanc::ImageAccessor& source)
+  {
+    SetSize(source.GetWidth(), source.GetHeight());
+
+    Orthanc::ImageAccessor target;
+    GetWriteableAccessor(target);
+
+    Orthanc::ImageProcessing::Convert(target, source);
+  }
+
+
   void CairoSurface::GetReadOnlyAccessor(Orthanc::ImageAccessor& target) const
   {
     target.AssignReadOnly(Orthanc::PixelFormat_BGRA32, width_, height_, pitch_, buffer_);

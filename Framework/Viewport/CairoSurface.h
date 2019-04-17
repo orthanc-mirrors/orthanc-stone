@@ -56,8 +56,10 @@ namespace OrthancStone
       Allocate(width, height);
     }
 
+  private:
     CairoSurface(Orthanc::ImageAccessor& accessor);
 
+  public:
     ~CairoSurface()
     {
       Release();
@@ -67,6 +69,8 @@ namespace OrthancStone
                  unsigned int height);
 
     void Copy(const CairoSurface& other);
+
+    void Copy(const Orthanc::ImageAccessor& source);
 
     unsigned int GetWidth() const
     {

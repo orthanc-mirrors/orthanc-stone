@@ -172,7 +172,7 @@ namespace OrthancStone
           break;
         
         default:
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+          break;
       }
     }
   }

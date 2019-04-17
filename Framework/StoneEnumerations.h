@@ -202,5 +202,6 @@ namespace OrthancStone
                                 double& deltaY /* out */,
                                 BitmapAnchor anchor,
                                 unsigned int bitmapWidth,
-                                unsigned int bitmapHeight);
+                                unsigned int bitmapHeight,
+                                unsigned int border = 0);
 }

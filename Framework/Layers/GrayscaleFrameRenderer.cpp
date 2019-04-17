@@ -41,7 +41,7 @@ namespace OrthancStone
 
     //LOG(INFO) << "Window: " << x0 << " => " << x1;
 
-    result.reset(new CairoSurface(frame_->GetWidth(), frame_->GetHeight()));
+    result.reset(new CairoSurface(frame_->GetWidth(), frame_->GetHeight(), false /* no alpha */));
 
     const uint8_t* lut = NULL;
     if (style.applyLut_)

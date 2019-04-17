@@ -38,11 +38,15 @@ namespace OrthancStone
 
 
   void CairoSurface::Allocate(unsigned int width,
-                              unsigned int height)
+                              unsigned int height,
+                              bool hasAlpha)
   {
     Release();
 
-    surface_ = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
+    hasAlpha_ = hasAlpha;
+
+    surface_ = cairo_image_surface_create
+      (hasAlpha ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24, width, height);
     if (!surface_)
     {
       // Should never occur
@@ -63,7 +67,9 @@ namespace OrthancStone
   }
 
 
-  CairoSurface::CairoSurface(Orthanc::ImageAccessor& accessor)
+  CairoSurface::CairoSurface(Orthanc::ImageAccessor& accessor,
+                             bool hasAlpha) :
+    hasAlpha_(hasAlpha)
   {
     if (accessor.GetFormat() != Orthanc::PixelFormat_BGRA32)
     {
@@ -76,7 +82,9 @@ namespace OrthancStone
     buffer_ = accessor.GetBuffer();
 
     surface_ = cairo_image_surface_create_for_data
-      (reinterpret_cast<unsigned char*>(buffer_), CAIRO_FORMAT_RGB24, width_, height_, pitch_);
+      (reinterpret_cast<unsigned char*>(buffer_),
+       hasAlpha_ ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24,
+       width_, height_, pitch_);
     if (!surface_)
     {
       // Should never occur
@@ -93,35 +101,44 @@ namespace OrthancStone
 
 
   void CairoSurface::SetSize(unsigned int width,
-                             unsigned int height)
+                             unsigned int height,
+                             bool hasAlpha)
   {
-    if (width_ != width ||
+    if (hasAlpha_ != hasAlpha ||
+        width_ != width ||
         height_ != height)
     {
-      Allocate(width, height);
+      Allocate(width, height, hasAlpha);
     }
   }
 
 
   void CairoSurface::Copy(const CairoSurface& other)
   {
+    SetSize(other.GetWidth(), other.GetHeight(), other.HasAlpha());
+    
     Orthanc::ImageAccessor source, target;
 
     other.GetReadOnlyAccessor(source);
     GetWriteableAccessor(target);
 
     Orthanc::ImageProcessing::Copy(target, source);
+
+    cairo_surface_mark_dirty(surface_);
   }
 
 
-  void CairoSurface::Copy(const Orthanc::ImageAccessor& source)
+  void CairoSurface::Copy(const Orthanc::ImageAccessor& source,
+                          bool hasAlpha)
   {
-    SetSize(source.GetWidth(), source.GetHeight());
+    SetSize(source.GetWidth(), source.GetHeight(), hasAlpha);
 
     Orthanc::ImageAccessor target;
     GetWriteableAccessor(target);
 
     Orthanc::ImageProcessing::Convert(target, source);
+
+    cairo_surface_mark_dirty(surface_);
   }
 
 

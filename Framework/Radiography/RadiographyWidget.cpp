@@ -88,7 +88,7 @@ namespace OrthancStone
           cairoBuffer_->GetWidth() != width ||
           cairoBuffer_->GetHeight() != height)
       {
-        cairoBuffer_.reset(new CairoSurface(width, height));
+        cairoBuffer_.reset(new CairoSurface(width, height, false /* no alpha */));
       }
 
       RenderBackground(*floatBuffer_, x0, x1);

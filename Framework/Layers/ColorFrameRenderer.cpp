@@ -29,7 +29,7 @@ namespace OrthancStone
 {
   CairoSurface* ColorFrameRenderer::GenerateDisplay(const RenderStyle& style)
   {
-    std::auto_ptr<CairoSurface> display(new CairoSurface(frame_->GetWidth(), frame_->GetHeight()));
+    std::auto_ptr<CairoSurface> display(new CairoSurface(frame_->GetWidth(), frame_->GetHeight(), false /* no alpha */));
 
     Orthanc::ImageAccessor target;
     display->GetWriteableAccessor(target);

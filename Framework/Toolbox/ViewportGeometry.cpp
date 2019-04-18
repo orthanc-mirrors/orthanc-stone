@@ -121,6 +121,18 @@ namespace OrthancStone
   }
 
 
+  void ViewportGeometry::MapPixelCenterToScene(std::vector<Touch>& sceneTouches /* out */,
+                                               const std::vector<Touch>& displayTouches) const
+  {
+    double sceneX, sceneY;
+    sceneTouches.clear();
+    for (size_t t = 0; t < displayTouches.size(); t++)
+    {
+      MapPixelCenterToScene(sceneX, sceneY, displayTouches[t].x, displayTouches[t].y);
+      sceneTouches.push_back(Touch((float)sceneX, (float)sceneY));
+    }
+  }
+
   void ViewportGeometry::MapPixelCenterToScene(double& sceneX,
                                                double& sceneY,
                                                int x,

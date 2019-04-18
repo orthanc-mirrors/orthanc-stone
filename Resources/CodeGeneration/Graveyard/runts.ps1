@@ -1,10 +1,4 @@
 # echo "+----------------------+"
-# echo "|    template.in.ts    |"
-# echo "+----------------------+"
-
-# tsc -t ES2015 .\template.in.ts; node .\template.in.js
-
-# echo "+----------------------+"
 # echo "|    playground.ts     |"
 # echo "+----------------------+"
 

@@ -28,13 +28,37 @@
 
 namespace OrthancStone
 {
-  void RadiographySceneReader::Read(const Json::Value& input)
+
+  void RadiographySceneBuilder::Read(const Json::Value& input, Orthanc::ImageAccessor* dicomImage /* takes ownership */,
+                                     DicomFrameConverter* dicomFrameConverter  /* takes ownership */,
+                                     PhotometricDisplayMode preferredPhotometricDisplayMode
+                                     )
+  {
+    dicomImage_.reset(dicomImage);
+    dicomFrameConverter_.reset(dicomFrameConverter);
+    preferredPhotometricDisplayMode_ = preferredPhotometricDisplayMode;
+    Read(input);
+  }
+
+  RadiographyDicomLayer* RadiographySceneBuilder::LoadDicom(const std::string& instanceId, unsigned int frame, RadiographyLayer::Geometry* geometry)
+  {
+    return dynamic_cast<RadiographyDicomLayer*>(&(scene_.LoadDicomImage(dicomImage_.release(), instanceId, frame, dicomFrameConverter_.release(), preferredPhotometricDisplayMode_, geometry)));
+  }
+
+
+  RadiographyDicomLayer* RadiographySceneReader::LoadDicom(const std::string& instanceId, unsigned int frame, RadiographyLayer::Geometry* geometry)
+  {
+    return dynamic_cast<RadiographyDicomLayer*>(&(scene_.LoadDicomFrame(orthancApiClient_, instanceId, frame, false, geometry)));
+  }
+
+  void RadiographySceneBuilder::Read(const Json::Value& input)
   {
     unsigned int version = input["version"].asUInt();
 
     if (version != 1)
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
 
+    RadiographyDicomLayer* dicomLayer = NULL;
     for(size_t layerIndex = 0; layerIndex < input["layers"].size(); layerIndex++)
     {
       const Json::Value& jsonLayer = input["layers"][(int)layerIndex];
@@ -43,7 +67,26 @@ namespace OrthancStone
       if (jsonLayer["type"].asString() == "dicom")
       {
         ReadLayerGeometry(geometry, jsonLayer);
-        scene_.LoadDicomFrame(orthancApiClient_, jsonLayer["instanceId"].asString(), jsonLayer["frame"].asUInt(), false, &geometry);
+        dicomLayer = LoadDicom(jsonLayer["instanceId"].asString(), jsonLayer["frame"].asUInt(), &geometry);
+      }
+      else if (jsonLayer["type"].asString() == "mask")
+      {
+        if (dicomLayer == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError); // we always assumed the dicom layer was read before the mask
+        }
+        ReadLayerGeometry(geometry, jsonLayer);
+
+        float foreground = jsonLayer["foreground"].asFloat();
+        std::vector<Orthanc::ImageProcessing::ImagePoint> corners;
+        for (size_t i = 0; i < jsonLayer["corners"].size(); i++)
+        {
+          Orthanc::ImageProcessing::ImagePoint corner(jsonLayer["corners"][(int)i]["x"].asInt(),
+              jsonLayer["corners"][(int)i]["y"].asInt());
+          corners.push_back(corner);
+        }
+
+        scene_.LoadMask(corners, *dicomLayer, foreground, &geometry);
       }
       else if (jsonLayer["type"].asString() == "text")
       {
@@ -90,7 +133,90 @@ namespace OrthancStone
     }
   }
 
-  void RadiographySceneReader::ReadLayerGeometry(RadiographyLayer::Geometry& geometry, const Json::Value& jsonLayer)
+
+  void RadiographySceneReader::Read(const Json::Value& input)
+  {
+    unsigned int version = input["version"].asUInt();
+
+    if (version != 1)
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+
+    RadiographyDicomLayer* dicomLayer = NULL;
+    for(size_t layerIndex = 0; layerIndex < input["layers"].size(); layerIndex++)
+    {
+      const Json::Value& jsonLayer = input["layers"][(int)layerIndex];
+      RadiographyLayer::Geometry geometry;
+
+      if (jsonLayer["type"].asString() == "dicom")
+      {
+        ReadLayerGeometry(geometry, jsonLayer);
+        dicomLayer = dynamic_cast<RadiographyDicomLayer*>(&(scene_.LoadDicomFrame(orthancApiClient_, jsonLayer["instanceId"].asString(), jsonLayer["frame"].asUInt(), false, &geometry)));
+      }
+      else if (jsonLayer["type"].asString() == "mask")
+      {
+        if (dicomLayer == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError); // we always assumed the dicom layer was read before the mask
+        }
+        ReadLayerGeometry(geometry, jsonLayer);
+
+        float foreground = jsonLayer["foreground"].asFloat();
+        std::vector<Orthanc::ImageProcessing::ImagePoint> corners;
+        for (size_t i = 0; i < jsonLayer["corners"].size(); i++)
+        {
+          Orthanc::ImageProcessing::ImagePoint corner(jsonLayer["corners"][(int)i]["x"].asInt(),
+              jsonLayer["corners"][(int)i]["y"].asInt());
+          corners.push_back(corner);
+        }
+
+        scene_.LoadMask(corners, *dicomLayer, foreground, &geometry);
+      }
+      else if (jsonLayer["type"].asString() == "text")
+      {
+        if (fontRegistry_ == NULL || fontRegistry_->GetSize() == 0)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls); // you must provide a FontRegistry if you need to re-create text layers.
+        }
+
+        ReadLayerGeometry(geometry, jsonLayer);
+        const Orthanc::Font* font = fontRegistry_->FindFont(jsonLayer["fontName"].asString());
+        if (font == NULL) // if not found, take the first font in the registry
+        {
+          font = &(fontRegistry_->GetFont(0));
+        }
+        scene_.LoadText(*font, jsonLayer["text"].asString(), &geometry);
+      }
+      else if (jsonLayer["type"].asString() == "alpha")
+      {
+        ReadLayerGeometry(geometry, jsonLayer);
+
+        const std::string& pngContentBase64 = jsonLayer["content"].asString();
+        std::string pngContent;
+        std::string mimeType;
+        Orthanc::Toolbox::DecodeDataUriScheme(mimeType, pngContent, pngContentBase64);
+
+        std::auto_ptr<Orthanc::ImageAccessor>  image;
+        if (mimeType == "image/png")
+        {
+          image.reset(new Orthanc::PngReader());
+          dynamic_cast<Orthanc::PngReader*>(image.get())->ReadFromMemory(pngContent);
+        }
+        else
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+
+        RadiographyAlphaLayer& layer = dynamic_cast<RadiographyAlphaLayer&>(scene_.LoadAlphaBitmap(image.release(), &geometry));
+
+        if (!jsonLayer["isUsingWindowing"].asBool())
+        {
+          layer.SetForegroundValue((float)(jsonLayer["foreground"].asDouble()));
+        }
+      }
+      else
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
+  }
+
+  void RadiographySceneBuilder::ReadLayerGeometry(RadiographyLayer::Geometry& geometry, const Json::Value& jsonLayer)
   {
     {// crop
       unsigned int x, y, width, height;

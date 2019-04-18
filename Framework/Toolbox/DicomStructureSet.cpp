@@ -754,7 +754,11 @@ namespace OrthancStone
         double x1, y1, x2, y2;
         if (polygon->Project(x1, y1, x2, y2, slice))
         {
-          projected.push_back(CreateRectangle(x1, y1, x2, y2));
+          projected.push_back(CreateRectangle(
+            static_cast<float>(x1), 
+            static_cast<float>(y1), 
+            static_cast<float>(x2), 
+            static_cast<float>(y2)));
         }
       }
 

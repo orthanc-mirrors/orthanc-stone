@@ -32,6 +32,7 @@ endif()
 
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
 include_directories(${ORTHANC_ROOT})
+include_directories(${ORTHANC_ROOT}/Core/Images) # hack for the numerous #include "../Enumerations.h" in Orthanc to work
 
 
 #####################################################################
@@ -102,6 +103,8 @@ else()
   add_definitions(-DORTHANC_ENABLE_QT=0)
   add_definitions(-DORTHANC_ENABLE_NATIVE=0)
 endif()
+
+
 
 #####################################################################
 ## Configuration of the C/C++ macros
@@ -175,10 +178,6 @@ endif()
 set(APPLICATIONS_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/IStoneApplication.h
     ${ORTHANC_STONE_ROOT}/Applications/StoneApplicationContext.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Commands/BaseCommandBuilder.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Commands/ICommand.h
-    ${ORTHANC_STONE_ROOT}/Applications/Commands/ICommandExecutor.h
-    ${ORTHANC_STONE_ROOT}/Applications/Commands/ICommandBuilder.h
     )
 
 if (NOT ORTHANC_SANDBOXED)
@@ -259,9 +258,11 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyDicomLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerCropTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMaskTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMoveTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerResizeTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerRotateTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyMaskLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyScene.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneReader.cpp
@@ -298,6 +299,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ViewportGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Viewport/IMouseTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IStatusBar.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IViewport.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/WidgetViewport.cpp
@@ -311,6 +313,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/IWorldSceneMouseTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/LayoutWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/PanMouseTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Widgets/PanZoomMouseTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/SliceViewerWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/TestCairoWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/TestWorldSceneWidget.cpp

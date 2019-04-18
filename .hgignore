@@ -1,7 +1,13 @@
 CMakeLists.txt.user
 Platforms/Generic/ThirdPartyDownloads/
+Applications/build-*
 Applications/Qt/archive/
 Applications/Samples/ThirdPartyDownloads/
+Applications/Samples/rt-viewer-demo/build-sdl-msvc15/
+Applications/Samples/rt-viewer-demo/build-tsc-output/
+Applications/Samples/rt-viewer-demo/build-wasm/
+Applications/Samples/rt-viewer-demo/build-web/
+Applications/Samples/rt-viewer-demo/ThirdPartyDownloads/
 Applications/Samples/build-wasm/
 Applications/Samples/build-web/
 Applications/Samples/node_modules/
@@ -19,3 +25,4 @@ syntax: glob
 Resources/CodeGeneration/testWasmIntegrated/build-wasm/
 Resources/CodeGeneration/testWasmIntegrated/build-tsc/
 Resources/CodeGeneration/testWasmIntegrated/build-final/
+

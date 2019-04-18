@@ -27,6 +27,7 @@
 #include "../Framework/Viewport/WidgetViewport.h"
 
 
+  #else
 #include <list>
 
 namespace OrthancStone

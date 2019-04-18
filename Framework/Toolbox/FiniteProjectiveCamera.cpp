@@ -332,7 +332,7 @@ namespace OrthancStone
       LOG(INFO) << "Applying raytracer on slice: " << z << "/" << slices->GetSliceCount();
       
       const OrthancStone::CoordinateSystem3D& slice = slices->GetSlice(z);
-      OrthancStone::ImageBuffer3D::SliceReader sliceReader(source, projection, z);
+      OrthancStone::ImageBuffer3D::SliceReader sliceReader(source, projection, static_cast<unsigned int>(z));
 
       SourceReader pixelReader(sliceReader.GetAccessor());
       

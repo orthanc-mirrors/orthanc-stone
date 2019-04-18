@@ -1,6 +1,9 @@
 /*
          1         2         3         4         5         6         7
 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+
+Generated on {{currentDatetime}} by stonegentool
+
 */
 
 function StoneCheckSerializedValueType(value: any, typeStr: string)
@@ -36,17 +39,44 @@ function StoneCheckSerializedValueTypeGeneric(value: any)
 // end of generic methods
 {% for enum in enums%}
 export enum {{enum['name']}} {
-  {% for key in enum['fields']%}{{key}},
-  {%endfor%}
-};
+{% for key in enum['fields']%}  {{key}} = "{{key}}"{% if not loop.last %},{%endif%}
+{%endfor%}};
+
+export function {{enum['name']}}_FromString(strValue:string) : {{enum['name']}}
+{
+{% for key in enum['fields'] %}  if( strValue == "{{key}}" )
+  {
+    return {{enum['name']}}.{{key}};
+  }
+{%endfor%}
+  let msg : string =  `String ${strValue} cannot be converted to {{enum['name']}}. Possible values are: {% for key in enum['fields']%}{{key}}{% if not loop.last %}, {%endif%}{% endfor %}`;
+  throw new Error(msg);
+}
+
+export function {{enum['name']}}_ToString(value:{{enum['name']}}) : string
+{
+{% for key in enum['fields'] %}  if( value == {{enum['name']}}.{{key}} )
+  {
+    return "{{key}}";
+  }
+{%endfor%}
+  let msg : string = `Value ${value} cannot be converted to {{enum['name']}}. Possible values are: `;
+{% for key in enum['fields']%}  {
+    let _{{key}}_enumValue : string = {{enum['name']}}.{{key}}; // enums are strings in stonecodegen, so this will work.
+    let msg_{{key}} : string = `{{key}} (${_{{key}}_enumValue}){% if not loop.last %}, {%endif%}`;
+    msg = msg + msg_{{key}};
+  }
+{%endfor%}  throw new Error(msg);
+}
 {%endfor%}
 
-{% for struct in structs%}  export class {{struct['name']}} {
-{% for key in struct['fields']%}    {{key}}:{{CanonToTs(struct['fields'][key])}};
-{% endfor %}
+
+{% for struct in structs%}export class {{struct['name']}} {
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}  {{key}}:{{CanonToTs(struct['fields'][key])}};
+{% endfor %}{% endif %}{% endif %}
   constructor() {
-{% for key in struct['fields']%}{% if NeedsTsConstruction(enums,CanonToTs(struct['fields'][key])) %}      this.{{key}} = new {{CanonToTs(struct['fields'][key])}}();
-{% endif %}{% endfor %}    }
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}{% if NeedsTsConstruction(enums,CanonToTs(struct['fields'][key])) %}    this.{{key}} = new {{CanonToTs(struct['fields'][key])}}();
+{% endif %}{% endfor %}{% endif %}{% endif %}  }
 
   public StoneSerialize(): string {
     let container: object = {};
@@ -63,13 +93,10 @@ export enum {{enum['name']}} {
     return result;
   }
 }
-
 {% endfor %}
-
 export interface IHandler {
-  {% for struct in structs%}    Handle{{struct['name']}}(value:  {{struct['name']}}): boolean;
-  {% endfor %}
-};
+{% for struct in structs%}{% if struct['__meta__'].handleInTypescript %}  Handle{{struct['name']}}(value:  {{struct['name']}}): boolean;
+{% endif %}{% endfor %}};
 
 /** Service function for StoneDispatchToHandler */
 export function StoneDispatchJsonToHandler(
@@ -82,13 +109,12 @@ export function StoneDispatchJsonToHandler(
     // this should never ever happen
     throw new Error("Caught empty type while dispatching");
   }
-{% for struct in structs%}    else if (type == "{{rootName}}.{{struct['name']}}")
+{% for struct in structs%}{% if struct['__meta__'].handleInTypescript %}  else if (type == "{{rootName}}.{{struct['name']}}")
   {
     let value = jsonValue["value"] as {{struct['name']}};
     return handler.Handle{{struct['name']}}(value);
   }
-{% endfor %}
-  else
+{% endif %}{% endfor %}  else
   {
     return false;
   }

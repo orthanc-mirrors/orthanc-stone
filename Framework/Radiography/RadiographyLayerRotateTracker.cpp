@@ -132,7 +132,9 @@ namespace OrthancStone
   void RadiographyLayerRotateTracker::MouseMove(int displayX,
                                                 int displayY,
                                                 double sceneX,
-                                                double sceneY)
+                                                double sceneY,
+                                                const std::vector<Touch>& displayTouches,
+                                                const std::vector<Touch>& sceneTouches)
   {
     static const double ROUND_ANGLE = 15.0 / 180.0 * boost::math::constants::pi<double>(); 
         

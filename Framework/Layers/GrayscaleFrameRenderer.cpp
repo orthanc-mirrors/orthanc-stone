@@ -121,8 +121,8 @@ namespace OrthancStone
                                                  bool isFullQuality) :
     FrameRenderer(framePlane, pixelSpacingX, pixelSpacingY, isFullQuality),
     frame_(Orthanc::Image::Clone(frame)),
-    defaultWindowCenter_(converter.GetDefaultWindowCenter()),
-    defaultWindowWidth_(converter.GetDefaultWindowWidth()),
+    defaultWindowCenter_(static_cast<float>(converter.GetDefaultWindowCenter())),
+    defaultWindowWidth_(static_cast<float>(converter.GetDefaultWindowWidth())),
     photometric_(converter.GetPhotometricInterpretation())
   {
     if (frame_.get() == NULL)

@@ -35,7 +35,7 @@ namespace OrthancStone
 
     UndoRedoStack&                   undoRedoStack_;
     RadiographyScene::LayerAccessor  accessor_;
-    Corner                           corner_;
+    ControlPoint                     startControlPoint_;
     unsigned int                     cropX_;
     unsigned int                     cropY_;
     unsigned int                     cropWidth_;
@@ -46,9 +46,7 @@ namespace OrthancStone
                                 RadiographyScene& scene,
                                 const ViewportGeometry& view,
                                 size_t layer,
-                                double x,
-                                double y,
-                                Corner corner);
+                                const ControlPoint& startControlPoint);
 
     virtual bool HasRender() const
     {
@@ -63,6 +61,8 @@ namespace OrthancStone
     virtual void MouseMove(int displayX,
                            int displayY,
                            double sceneX,
-                           double sceneY);
+                           double sceneY,
+                           const std::vector<Touch>& displayTouches,
+                           const std::vector<Touch>& sceneTouches);
   };
 }

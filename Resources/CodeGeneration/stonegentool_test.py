@@ -379,7 +379,7 @@ class TestStonegentool(unittest.TestCase):
       os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
     tdico = GetTemplatingDictFromSchemaFilename(schemaFile)
     tsTemplateFile = \
-      os.path.join(os.path.dirname(__file__), 'template.in.ts')
+      os.path.join(os.path.dirname(__file__), 'template.in.ts.j2')
     template = MakeTemplateFromFile(tsTemplateFile)
     renderedCode = template.render(**tdico)
     print(renderedCode)

@@ -216,7 +216,6 @@ elseif (ENABLE_WASM)
       ${SIMPLE_VIEWER_APPLICATION_SOURCES}
       )
     target_link_libraries(OrthancStoneSimpleViewer OrthancStone)
-
 endif()
 
 #####################################################################

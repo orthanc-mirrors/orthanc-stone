@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -63,11 +63,59 @@ namespace OrthancStone
     {
       // TODO: check whether this dtor is called or not
       // An MSVC warning explains that declaring an
-      // std::auto_ptr with a forward-declared type 
-      // prevents its dtor from being called. Does not 
+      // std::auto_ptr with a forward-declared type
+      // prevents its dtor from being called. Does not
       // seem an issue here (only POD types inside), but
-      // definitely something to keep an eye on. 
+      // definitely something to keep an eye on.
       (void)0;
+    }
+
+    // AM: this is required to serialize/deserialize it
+    DicomFrameConverter(
+        bool isSigned,
+        bool isColor,
+        bool hasRescale,
+        double rescaleIntercept,
+        double rescaleSlope,
+        bool hasDefaultWindow,
+        double defaultWindowCenter,
+        double defaultWindowWidth,
+        Orthanc::PhotometricInterpretation photometric,
+        Orthanc::PixelFormat expectedPixelFormat
+        ):
+      isSigned_(isSigned),
+      isColor_(isColor),
+      hasRescale_(hasRescale),
+      rescaleIntercept_(rescaleIntercept),
+      rescaleSlope_(rescaleSlope),
+      hasDefaultWindow_(hasDefaultWindow),
+      defaultWindowCenter_(defaultWindowCenter),
+      defaultWindowWidth_(defaultWindowWidth),
+      photometric_(photometric),
+      expectedPixelFormat_(expectedPixelFormat)
+    {}
+
+    void GetParameters(bool& isSigned,
+                       bool& isColor,
+                       bool& hasRescale,
+                       double& rescaleIntercept,
+                       double& rescaleSlope,
+                       bool& hasDefaultWindow,
+                       double& defaultWindowCenter,
+                       double& defaultWindowWidth,
+                       Orthanc::PhotometricInterpretation& photometric,
+                       Orthanc::PixelFormat& expectedPixelFormat) const
+    {
+      isSigned = isSigned_;
+      isColor = isColor_;
+      hasRescale = hasRescale_;
+      rescaleIntercept = rescaleIntercept_;
+      rescaleSlope = rescaleSlope_;
+      hasDefaultWindow = hasDefaultWindow_;
+      defaultWindowCenter = defaultWindowCenter_;
+      defaultWindowWidth = defaultWindowWidth_;
+      photometric = photometric_;
+      expectedPixelFormat = expectedPixelFormat_;
     }
 
     Orthanc::PixelFormat GetExpectedPixelFormat() const
@@ -103,7 +151,7 @@ namespace OrthancStone
     {
       return rescaleIntercept_;
     }
-      
+
     double GetRescaleSlope() const
     {
       return rescaleSlope_;

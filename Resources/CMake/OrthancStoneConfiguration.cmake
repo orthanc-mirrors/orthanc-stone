@@ -348,7 +348,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${BOOST_EXTENDED_SOURCES}
   )
 
-
+include_directories(${ORTHANC_STONE_ROOT})
 
 
 ##

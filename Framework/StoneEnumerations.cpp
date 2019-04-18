@@ -78,7 +78,8 @@ namespace OrthancStone
                                 double& deltaY,
                                 BitmapAnchor anchor,
                                 unsigned int bitmapWidth,
-                                unsigned int bitmapHeight)
+                                unsigned int bitmapHeight,
+                                unsigned int border)
   {
     double dw = static_cast<double>(bitmapWidth);
     double dh = static_cast<double>(bitmapHeight);
@@ -133,5 +134,46 @@ namespace OrthancStone
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }    
+
+    if (border != 0)
+    {
+      double b = static_cast<double>(border);
+
+      switch (anchor)
+      {
+        case BitmapAnchor_TopLeft:
+        case BitmapAnchor_TopCenter:
+        case BitmapAnchor_TopRight:
+          deltaY += b;
+          break;
+        
+        case BitmapAnchor_BottomLeft:
+        case BitmapAnchor_BottomCenter:
+        case BitmapAnchor_BottomRight:
+          deltaY -= b;
+          break;
+        
+        default:
+          break;
+      }    
+
+      switch (anchor)
+      {
+        case BitmapAnchor_TopLeft:
+        case BitmapAnchor_CenterLeft:
+        case BitmapAnchor_BottomLeft:
+          deltaX += b;
+          break;
+
+        case BitmapAnchor_CenterRight:
+        case BitmapAnchor_TopRight:
+        case BitmapAnchor_BottomRight:
+          deltaX -= b;
+          break;
+        
+        default:
+          break;
+      }
+    }
   }
 }

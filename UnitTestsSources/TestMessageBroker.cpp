@@ -312,7 +312,7 @@ TEST(MessageBroker, TestPromiseDeleteTarget)
   ASSERT_EQ(0, testCounter);
 }
 
-#if 0 //__cplusplus >= 201103L
+#if 0 /* __cplusplus >= 201103L*/
 
 TEST(MessageBroker, TestLambdaSimpleUseCase)
 {

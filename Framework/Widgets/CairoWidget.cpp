@@ -40,7 +40,7 @@ namespace OrthancStone
   void CairoWidget::SetSize(unsigned int width,
                             unsigned int height)
   {
-    surface_.SetSize(width, height);
+    surface_.SetSize(width, height, false /* no alpha */);
   }
   
 
@@ -51,7 +51,7 @@ namespace OrthancStone
 
     if (IsAligned(target))
     {
-      CairoSurface surface(target);
+      CairoSurface surface(target, false /* no alpha */);
       CairoContext context(surface);
       ClearBackgroundCairo(context);
       return RenderCairo(context);
@@ -82,7 +82,7 @@ namespace OrthancStone
   {
     if (IsAligned(target))
     {
-      CairoSurface surface(target);
+      CairoSurface surface(target, false /* no alpha */);
       CairoContext context(surface);
       RenderMouseOverCairo(context, x, y);
     }

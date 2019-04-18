@@ -86,7 +86,7 @@ namespace OrthancStone
 
   void WidgetBase::ClearBackgroundCairo(Orthanc::ImageAccessor& target) const
   {
-    CairoSurface surface(target);
+    CairoSurface surface(target, false /* no alpha */);
     CairoContext context(surface);
     ClearBackgroundCairo(context);
   }

@@ -25,7 +25,9 @@
 if (ENABLE_DCMTK)
   set(ENABLE_LOCALE ON)
 else()
-  set(ENABLE_LOCALE OFF)  # Disable support for locales (notably in Boost)
+  if (NOT DEFINED ENABLE_LOCALE)
+    set(ENABLE_LOCALE OFF)  # Disable support for locales (notably in Boost)
+  endif()
 endif()
 
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
@@ -141,8 +143,10 @@ EmbedResources(
   COLORMAP_RED    ${ORTHANC_STONE_ROOT}/Resources/Colormaps/red.lut
   COLORMAP_GREEN  ${ORTHANC_STONE_ROOT}/Resources/Colormaps/green.lut
   COLORMAP_BLUE   ${ORTHANC_STONE_ROOT}/Resources/Colormaps/blue.lut
-  )
 
+  # Additional resources specific to the application being built
+  ${ORTHANC_STONE_APPLICATION_RESOURCES}
+  )
 
 
 #####################################################################

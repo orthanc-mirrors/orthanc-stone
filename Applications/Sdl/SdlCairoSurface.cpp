@@ -51,7 +51,7 @@ namespace OrthancStone
         cairoSurface_->GetWidth() != width ||
         cairoSurface_->GetHeight() != height)
     {
-      cairoSurface_.reset(new CairoSurface(width, height));
+      cairoSurface_.reset(new CairoSurface(width, height, false /* no alpha */));
 
       // TODO Big endian?
       static const uint32_t rmask = 0x00ff0000;

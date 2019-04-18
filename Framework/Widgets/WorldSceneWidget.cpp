@@ -60,7 +60,7 @@ namespace OrthancStone
     {
       if (tracker_->HasRender())
       {
-        CairoSurface surface(target);
+        CairoSurface surface(target, false /* no alpha */);
         CairoContext context(surface);
         view_.ApplyTransform(context);
         tracker_->Render(context, view_.GetZoom());

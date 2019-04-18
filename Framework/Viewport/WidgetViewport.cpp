@@ -90,7 +90,7 @@ namespace OrthancStone
   void WidgetViewport::SetSize(unsigned int width,
                                unsigned int height)
   {
-    background_.SetSize(width, height);
+    background_.SetSize(width, height, false /* no alpha */);
 
     if (centralWidget_.get() != NULL)
     {

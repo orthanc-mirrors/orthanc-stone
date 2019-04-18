@@ -36,27 +36,31 @@ namespace OrthancStone
     unsigned int     height_;
     unsigned int     pitch_;
     void*            buffer_;
+    bool             hasAlpha_;
 
     void Release();
 
     void Allocate(unsigned int width,
-                  unsigned int height);
+                  unsigned int height,
+                  bool hasAlpha);
 
   public:
     CairoSurface() :
       surface_(NULL)
     {
-      Allocate(0, 0);
+      Allocate(0, 0, false);
     }
 
     CairoSurface(unsigned int width,
-                 unsigned int height) :
+                 unsigned int height,
+                 bool hasAlpha) :
       surface_(NULL)
     {
-      Allocate(width, height);
+      Allocate(width, height, hasAlpha);
     }
 
-    CairoSurface(Orthanc::ImageAccessor& accessor);
+    CairoSurface(Orthanc::ImageAccessor& accessor,
+                 bool hasAlpha);
 
     ~CairoSurface()
     {
@@ -64,9 +68,13 @@ namespace OrthancStone
     }
 
     void SetSize(unsigned int width,
-                 unsigned int height);
+                 unsigned int height,
+                 bool hasAlpha);
 
     void Copy(const CairoSurface& other);
+
+    void Copy(const Orthanc::ImageAccessor& source,
+              bool hasAlpha);
 
     unsigned int GetWidth() const
     {
@@ -96,6 +104,11 @@ namespace OrthancStone
     cairo_surface_t* GetObject()
     {
       return surface_;
+    }
+
+    bool HasAlpha() const
+    {
+      return hasAlpha_;
     }
 
     void GetReadOnlyAccessor(Orthanc::ImageAccessor& target) const;

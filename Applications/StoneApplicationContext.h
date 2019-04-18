@@ -27,24 +27,7 @@
 #include "../Framework/Viewport/WidgetViewport.h"
 
 
-#ifdef _MSC_VER
-  #if _MSC_VER > 1910
-    #define orthanc_override override
   #else
-    #define orthanc_override
-  #endif
-#elif defined __GNUC__
-  #define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-/* Test for GCC > 3.2.0 */
-  #if GCC_VERSION > 40900
-    #define orthanc_override override
-  #else
-    #define orthanc_override
-  #endif
-#else
-    #define orthanc_override
-#endif
-
 #include <list>
 
 namespace OrthancStone

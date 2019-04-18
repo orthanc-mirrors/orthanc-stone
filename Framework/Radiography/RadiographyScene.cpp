@@ -199,24 +199,37 @@ namespace OrthancStone
   {
     LOG(INFO) << "Removing layer: " << layerIndex;
 
-    if (layerIndex > countLayers_)
+    Layers::iterator found = layers_.find(layerIndex);
+
+    if (found == layers_.end())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-    delete layers_[layerIndex];
-    layers_.erase(layerIndex);
-    countLayers_--;
-    LOG(INFO) << "Removing layer, there are now : " << countLayers_ << " layers";
+    else
+    {
+      assert(found->second != NULL);
+      delete found->second;
+      
+      layers_.erase(found);
+      countLayers_--;
+      
+      LOG(INFO) << "Removing layer, there are now : " << countLayers_ << " layers";
+    }
   }
 
   const RadiographyLayer& RadiographyScene::GetLayer(size_t layerIndex) const
   {
-    if (layerIndex > countLayers_)
+    Layers::const_iterator found = layers_.find(layerIndex);
+    
+    if (found == layers_.end())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-
-    return *(layers_.at(layerIndex));
+    else
+    {
+      assert(found->second != NULL);
+      return *found->second;
+    }
   }
 
   bool RadiographyScene::GetWindowing(float& center,

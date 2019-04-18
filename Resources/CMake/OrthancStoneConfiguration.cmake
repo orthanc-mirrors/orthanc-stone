@@ -30,6 +30,10 @@ else()
   endif()
 endif()
 
+if (ENABLE_SSL AND ENABLE_CURL)
+  set(ENABLE_OPENSSL_ENGINES ON)
+endif()
+
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
 include_directories(${ORTHANC_ROOT})
 include_directories(${ORTHANC_ROOT}/Core/Images) # hack for the numerous #include "../Enumerations.h" in Orthanc to work

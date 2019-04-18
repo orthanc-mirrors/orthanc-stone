@@ -2,6 +2,7 @@
  * This file contains primitives to interface with WebAssembly and
  * with the Stone framework.
  **/
+import * as Logger from './logger'
 
 export declare type InitializationCallback = () => void;
 
@@ -56,13 +57,13 @@ export class Framework
   public static Initialize( verbose: boolean,
                             callback: InitializationCallback)
   {
-    console.log('Initializing WebAssembly Module');
+    Logger.defaultLogger.debug('Initializing WebAssembly Module');
 
     // (<any> window).
     (<any> window).StoneFrameworkModule = {
       preRun: [ 
         function() {
-          console.log('Loading the Stone Framework using WebAssembly');
+          Logger.defaultLogger.debug('Loading the Stone Framework using WebAssembly');
         }
       ],
       postRun: [ 
@@ -70,16 +71,16 @@ export class Framework
           // This function is called by ".js" wrapper once the ".wasm"
           // WebAssembly module has been loaded and compiled by the
           // browser
-          console.log('WebAssembly is ready');
+          Logger.defaultLogger.debug('WebAssembly is ready');
           Framework.singleton_ = new Framework(verbose);
           callback();
         }
       ],
       print: function(text : string) {
-        console.log(text);
+        Logger.defaultLogger.infoFromCpp(text);
       },
       printErr: function(text : string) {
-        console.error(text);
+        Logger.defaultLogger.errorFromCpp(text);
       },
       totalDependencies: 0
     };

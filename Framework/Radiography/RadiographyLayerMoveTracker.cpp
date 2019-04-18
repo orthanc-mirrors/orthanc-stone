@@ -97,7 +97,9 @@ namespace OrthancStone
   void RadiographyLayerMoveTracker::MouseMove(int displayX,
                                               int displayY,
                                               double sceneX,
-                                              double sceneY)
+                                              double sceneY,
+                                              const std::vector<Touch>& displayTouches,
+                                              const std::vector<Touch>& sceneTouches)
   {
     if (accessor_.IsValid())
     {

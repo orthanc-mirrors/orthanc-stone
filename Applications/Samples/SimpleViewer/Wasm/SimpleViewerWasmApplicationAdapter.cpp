@@ -45,7 +45,7 @@ namespace SimpleViewer
 
     writer->write(event, &outputStr);
 
-    NotifyStatusUpdateFromCppToWeb(outputStr.str());
+    NotifyStatusUpdateFromCppToWebWithString(outputStr.str());
   }
 
 } // namespace SimpleViewer

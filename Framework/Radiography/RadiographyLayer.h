@@ -24,14 +24,50 @@
 #include "../Toolbox/AffineTransform2D.h"
 #include "../Toolbox/Extent2D.h"
 #include "../Viewport/CairoContext.h"
+#include "../Messages/IMessage.h"
+#include "../Messages/IObservable.h"
 
 namespace OrthancStone
 {
-  class RadiographyLayer : public boost::noncopyable
+  class RadiographyScene;
+
+  struct ControlPoint
+  {
+    double x;
+    double y;
+    size_t index;
+
+    ControlPoint(double x, double y, size_t index)
+      : x(x),
+        y(y),
+        index(index)
+    {}
+
+    ControlPoint()
+      : x(0),
+        y(0),
+        index(std::numeric_limits<size_t>::max())
+    {}
+  };
+
+  class RadiographyLayer : public IObservable
   {
     friend class RadiographyScene;
 
   public:
+    class LayerEditedMessage :
+        public OriginMessage<MessageType_RadiographyLayer_Edited, RadiographyLayer>
+    {
+    private:
+
+    public:
+      LayerEditedMessage(const RadiographyLayer& origin) :
+        OriginMessage(origin)
+      {
+      }
+    };
+
+
     class Geometry
     {
       bool               hasCrop_;
@@ -141,47 +177,41 @@ namespace OrthancStone
     AffineTransform2D  transformInverse_;
     Geometry           geometry_;
     PhotometricDisplayMode  prefferedPhotometricDisplayMode_;
-
+    const RadiographyScene&   scene_;
 
   protected:
-    const AffineTransform2D& GetTransform() const
+    virtual const AffineTransform2D& GetTransform() const
     {
       return transform_;
     }
 
-    void SetPreferredPhotomotricDisplayMode(PhotometricDisplayMode  prefferedPhotometricDisplayMode)
+    virtual const AffineTransform2D& GetTransformInverse() const
     {
-      prefferedPhotometricDisplayMode_ = prefferedPhotometricDisplayMode;
+      return transformInverse_;
     }
+
+    void SetPreferredPhotomotricDisplayMode(PhotometricDisplayMode  prefferedPhotometricDisplayMode);
 
   private:
     void UpdateTransform();
-      
+
     void AddToExtent(Extent2D& extent,
                      double x,
                      double y) const;
-
-    void GetCornerInternal(double& x,
-                           double& y,
-                           Corner corner,
-                           unsigned int cropX,
-                           unsigned int cropY,
-                           unsigned int cropWidth,
-                           unsigned int cropHeight) const;
 
     void SetIndex(size_t index)
     {
       index_ = index;
     }
-      
+
     bool Contains(double x,
                   double y) const;
-      
+
     void DrawBorders(CairoContext& context,
                      double zoom);
 
   public:
-    RadiographyLayer();
+    RadiographyLayer(MessageBroker& broker, const RadiographyScene& scene);
 
     virtual ~RadiographyLayer()
     {
@@ -190,6 +220,11 @@ namespace OrthancStone
     size_t GetIndex() const
     {
       return index_;
+    }
+
+    const RadiographyScene& GetScene() const
+    {
+      return scene_;
     }
 
     const Geometry& GetGeometry() const
@@ -232,19 +267,19 @@ namespace OrthancStone
     unsigned int GetWidth() const
     {
       return width_;
-    }        
+    }
 
     unsigned int GetHeight() const
     {
       return height_;
-    }       
+    }
 
     Extent2D GetExtent() const;
 
-    bool GetPixel(unsigned int& imageX,
-                  unsigned int& imageY,
-                  double sceneX,
-                  double sceneY) const;
+    virtual bool GetPixel(unsigned int& imageX,
+                          unsigned int& imageY,
+                          double sceneX,
+                          double sceneY) const;
 
     void SetPixelSpacing(double x,
                          double y);
@@ -252,15 +287,16 @@ namespace OrthancStone
     void GetCenter(double& centerX,
                    double& centerY) const;
 
-    void GetCorner(double& x /* out */,
-                   double& y /* out */,
-                   Corner corner) const;
-      
-    bool LookupCorner(Corner& corner /* out */,
-                      double x,
-                      double y,
-                      double zoom,
-                      double viewportDistance) const;
+    virtual void GetControlPoint(ControlPoint& cpScene /* out in scene coordinates */,
+                                 size_t index) const;
+
+    virtual size_t GetControlPointCount() const;
+
+    bool LookupControlPoint(ControlPoint& cpScene /* out */,
+                            double x,
+                            double y,
+                            double zoom,
+                            double viewportDistance) const;
 
     virtual bool GetDefaultWindowing(float& center,
                                      float& width) const = 0;
@@ -276,5 +312,7 @@ namespace OrthancStone
 
     virtual bool GetRange(float& minValue,
                           float& maxValue) const = 0;
-  }; 
+
+    friend class RadiographyMaskLayer; // because it needs to GetTransform on the dicomLayer it relates to
+  };
 }

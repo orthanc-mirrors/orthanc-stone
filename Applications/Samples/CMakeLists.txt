@@ -1,22 +1,30 @@
-# Usage: see README file
+# Usage (Linux):
+# to build the WASM samples
+# source ~/Downloads/emsdk/emsdk_env.sh && cmake -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DSTONE_SOURCES_DIR=$currentDir/../../../orthanc-stone -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT=$currentDir/../../../orthanc -DALLOW_DOWNLOADS=ON .. -DENABLE_WASM=ON
+# to build the Qt samples
 
 cmake_minimum_required(VERSION 2.8.3)
-
-# Automatically link Qt executables to qtmain target on Windows
-# ("OLD" == do not link)
-if(POLICY CMP0020)
-  cmake_policy(SET CMP0020 OLD)
-endif()
-
-# Only interpret if() arguments as variables or keywords when unquoted.
-# NEW = do NOT dereference *quoted* variables
-if(POLICY CMP0054)
-  cmake_policy(SET CMP0054 NEW)
-endif()
-
 project(OrthancStone)
 
 include(../../Resources/CMake/OrthancStoneParameters.cmake)
+
+if (OPENSSL_NO_CAPIENG)
+add_definitions(-DOPENSSL_NO_CAPIENG=1)
+endif()
+
+
+# the following block has been borrowed from orthanc/**/Compiler.cmake
+if (MSVC_MULTIPLE_PROCESSES)
+# "If you omit the processMax argument in the /MP option, the
+# compiler obtains the number of effective processors from the
+# operating system, and then creates one process per effective
+# processor"
+# https://blog.kitware.com/cmake-building-with-all-your-cores/
+# https://docs.microsoft.com/en-us/cpp/build/reference/mp-build-with-multiple-processes
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+endif()
+
 
 #set(ENABLE_DCMTK ON)
 
@@ -24,30 +32,39 @@ set(ENABLE_SDL OFF CACHE BOOL "Target SDL Native application")
 set(ENABLE_QT OFF CACHE BOOL "Target Qt Native application")
 set(ENABLE_WASM OFF CACHE BOOL "Target WASM application")
 
-# TODO: replace or compute STONE_SOURCES_DIR from CMAKE_CURRENT_LIST_FILE
-
 if (ENABLE_WASM)
   #####################################################################
   ## Configuration of the Emscripten compiler for WebAssembly target
   #####################################################################
 
-  set(WASM_FLAGS "-s WASM=1 -O0 -g0")
-  message("*****************************************************************************")
-  message("WARNING: optimizations are disabled in emcc!!! Enable them for production use")
-  message("*****************************************************************************")
+  set(WASM_FLAGS "-s WASM=1")
+  set(WASM_FLAGS "${WASM_FLAGS} -s STRICT=1") # drops support for all deprecated build options
+  set(WASM_FLAGS "${WASM_FLAGS} -s FILESYSTEM=1") # if we don't include it, gen_uuid.c fails to build because srand, getpid(), ... are not defined
+  set(WASM_FLAGS "${WASM_FLAGS} -s DISABLE_EXCEPTION_CATCHING=0") # actually enable exception catching 
+  set(WASM_FLAGS "${WASM_FLAGS} -s ERROR_ON_MISSING_LIBRARIES=1")
+
+  if (CMAKE_BUILD_TYPE MATCHES DEBUG)
+    set(WASM_FLAGS "${WASM_FLAGS} -g4") # generate debug information
+    set(WASM_FLAGS "${WASM_FLAGS} -s ASSERTIONS=2") # more runtime checks
+  else()
+    set(WASM_FLAGS "${WASM_FLAGS} -Os") # optimize for web (speed and size)
+  endif()
+
   set(WASM_MODULE_NAME "StoneFrameworkModule" CACHE STRING "Name of the WebAssembly module")
+
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WASM_FLAGS}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WASM_FLAGS}")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/WasmWebService.js --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/WasmDelayedCallExecutor.js --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/default-library.js  -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'")
 
-  # Handling of memory
-  #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1")  # Resize
-  #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s TOTAL_MEMORY=536870912")  # 512MB
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s EXPORT_NAME='\"${WASM_MODULE_NAME}\"' -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_MEMORY=536870912 -s TOTAL_STACK=128000000")  # 512MB + resize
-  #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_MEMORY=1073741824")  # 1GB + resize
-
-  # To debug exceptions
-  #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s DEMANGLE_SUPPORT=1 -s ASSERTIONS=2")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${WASM_FLAGS}")  # not always clear which flags are for the compiler and which one are for the linker -> pass them all to the linker too
+  # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Applications/Samples/samples-library.js")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/WasmWebService.js")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/WasmDelayedCallExecutor.js")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --js-library ${STONE_SOURCES_DIR}/Platforms/Wasm/default-library.js")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s EXPORT_NAME='\"${WASM_MODULE_NAME}\"'")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s TOTAL_MEMORY=536870912")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s TOTAL_STACK=128000000")
 
   add_definitions(-DORTHANC_ENABLE_WASM=1)
   set(ORTHANC_SANDBOXED ON)
@@ -80,9 +97,11 @@ set(ORTHANC_FRAMEWORK_SOURCE "${ORTHANC_FRAMEWORK_DEFAULT_SOURCE}" CACHE STRING 
 set(ORTHANC_FRAMEWORK_ARCHIVE "" CACHE STRING "Path to the Orthanc archive, if ORTHANC_FRAMEWORK_SOURCE is \"archive\"")
 set(ORTHANC_FRAMEWORK_ROOT "" CACHE STRING "Path to the Orthanc source directory, if ORTHANC_FRAMEWORK_SOURCE is \"path\"")
 
+
 #####################################################################
 ## Build a static library containing the Orthanc Stone framework
 #####################################################################
+
 
 LIST(APPEND ORTHANC_BOOST_COMPONENTS program_options)
 
@@ -145,16 +164,6 @@ macro(BuildSingleFileSample Target Header Sample)
     )
   set_target_properties(${Target} PROPERTIES COMPILE_DEFINITIONS ORTHANC_STONE_SAMPLE=${Sample})
   target_link_libraries(${Target} OrthancStone)
-  
-  if (ENABLE_QT AND (CMAKE_SYSTEM_NAME STREQUAL "Windows"))
-    message("(ENABLE_QT and (CMAKE_SYSTEM_NAME matches \"Windows\")) is true")
-    add_custom_command(
-      TARGET ${Target} POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt5::Core> $<TARGET_FILE_DIR:${Target}>
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt5::Widgets> $<TARGET_FILE_DIR:${Target}>
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt5::Gui> $<TARGET_FILE_DIR:${Target}>
-    )
-  endif()
 endmacro()
 
 #BuildSingleFileSample(OrthancStoneEmpty EmptyApplication.h 1)
@@ -170,12 +179,6 @@ BuildSingleFileSample(OrthancStoneSingleFrameEditor SingleFrameEditorApplication
 ##### SimpleViewer sample (Qt and WASM only) #######
 
 if (ENABLE_QT OR ENABLE_WASM)
-
-      # GenerateCodeFromFlatBufferSchema("${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ApplicationCommands.fbs")
-
-      list(APPEND SIMPLE_VIEWER_APPLICATION_SOURCES ${FLATC_AUTOGENERATED_SOURCES})
-      message(STATUS "SIMPLE_VIEWER_APPLICATION_SOURCES = ${SIMPLE_VIEWER_APPLICATION_SOURCES}")
-      message(STATUS "FLATC_AUTOGENERATED_SOURCES = ${FLATC_AUTOGENERATED_SOURCES}")
 
     if (ENABLE_QT)
       list(APPEND SIMPLE_VIEWER_APPLICATION_SOURCES
@@ -196,16 +199,20 @@ elseif (ENABLE_WASM)
         list(APPEND SIMPLE_VIEWER_APPLICATION_SOURCES
             ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/mainWasm.cpp
             ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/SimpleViewerWasmApplicationAdapter.cpp
+            ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/SimpleViewerWasmApplicationAdapter.h
             ${STONE_WASM_SOURCES}
           )
     endif()
 
     add_executable(OrthancStoneSimpleViewer
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.cpp
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.cpp
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.cpp
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/AppStatus.h
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.h
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Messages.h
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.h
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.h
       ${SIMPLE_VIEWER_APPLICATION_SOURCES}
       )
     target_link_libraries(OrthancStoneSimpleViewer OrthancStone)

@@ -33,14 +33,13 @@ namespace OrthancStone
   class RadiographyAlphaLayer : public RadiographyLayer
   {
   private:
-    const RadiographyScene&                scene_;
     std::auto_ptr<Orthanc::ImageAccessor>  alpha_;      // Grayscale8
     bool                                   useWindowing_;
     float                                  foreground_;
 
   public:
-    RadiographyAlphaLayer(const RadiographyScene& scene) :
-      scene_(scene),
+    RadiographyAlphaLayer(MessageBroker& broker, const RadiographyScene& scene) :
+      RadiographyLayer(broker, scene),
       useWindowing_(true),
       foreground_(0)
     {

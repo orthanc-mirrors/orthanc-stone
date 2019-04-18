@@ -24,16 +24,21 @@
 #include "RadiographyLayer.h"
 #include "../Toolbox/OrthancApiClient.h"
 #include "Framework/StoneEnumerations.h"
+#include "Core/Images/Image.h"
+#include "Core/Images/ImageProcessing.h"
 
 namespace OrthancStone
 {
+  class RadiographyDicomLayer;
+  class DicomFrameConverter;
+
   class RadiographyScene :
       public IObserver,
       public IObservable
   {
   public:
     class GeometryChangedMessage :
-        public OriginMessage<MessageType_Scene_GeometryChanged, RadiographyScene>
+        public OriginMessage<MessageType_RadiographyScene_GeometryChanged, RadiographyScene>
     {
     private:
       RadiographyLayer&        layer_;
@@ -53,7 +58,7 @@ namespace OrthancStone
     };
 
     class ContentChangedMessage :
-        public OriginMessage<MessageType_Scene_ContentChanged, RadiographyScene>
+        public OriginMessage<MessageType_RadiographyScene_ContentChanged, RadiographyScene>
     {
     private:
       RadiographyLayer&        layer_;
@@ -72,6 +77,37 @@ namespace OrthancStone
       }
     };
 
+    class LayerEditedMessage :
+        public OriginMessage<MessageType_RadiographyScene_LayerEdited, RadiographyScene>
+    {
+    private:
+      const RadiographyLayer&        layer_;
+
+    public:
+      LayerEditedMessage(const RadiographyScene& origin,
+                         const RadiographyLayer& layer) :
+        OriginMessage(origin),
+        layer_(layer)
+      {
+      }
+
+      const RadiographyLayer& GetLayer() const
+      {
+        return layer_;
+      }
+
+    };
+
+    class WindowingChangedMessage :
+        public OriginMessage<MessageType_RadiographyScene_WindowingChanged, RadiographyScene>
+    {
+
+    public:
+      WindowingChangedMessage(const RadiographyScene& origin) :
+        OriginMessage(origin)
+      {
+      }
+    };
 
     class LayerAccessor : public boost::noncopyable
     {
@@ -126,6 +162,7 @@ namespace OrthancStone
 
     void OnDicomWebReceived(const IWebService::HttpRequestSuccessMessage& message);
 
+    void OnLayerEdited(const RadiographyLayer::LayerEditedMessage& message);
   public:
     RadiographyScene(MessageBroker& broker);
     
@@ -150,8 +187,20 @@ namespace OrthancStone
                                     unsigned int height,
                                     RadiographyLayer::Geometry* geometry);
 
+    RadiographyLayer& LoadMask(const std::vector<Orthanc::ImageProcessing::ImagePoint>& corners,
+                               const RadiographyDicomLayer& dicomLayer,
+                               float foreground,
+                               RadiographyLayer::Geometry* geometry);
+
     RadiographyLayer& LoadAlphaBitmap(Orthanc::ImageAccessor* bitmap,  // takes ownership
                                       RadiographyLayer::Geometry* geometry);
+
+    virtual RadiographyLayer& LoadDicomImage(Orthanc::ImageAccessor* dicomImage, // takes ownership
+                                             const std::string& instance,
+                                             unsigned int frame,
+                                             DicomFrameConverter* converter,  // takes ownership
+                                             PhotometricDisplayMode preferredPhotometricDisplayMode,
+                                             RadiographyLayer::Geometry* geometry);
 
     virtual RadiographyLayer& LoadDicomFrame(OrthancApiClient& orthanc,
                                              const std::string& instance,
@@ -164,6 +213,54 @@ namespace OrthancStone
     void RemoveLayer(size_t layerIndex);
 
     const RadiographyLayer& GetLayer(size_t layerIndex) const;
+
+    template <typename TypeLayer>
+    TypeLayer* GetLayer(size_t index = 0)
+    {
+      std::vector<size_t> layerIndexes;
+      GetLayersIndexes(layerIndexes);
+
+      size_t count = 0;
+
+      for (size_t i = 0; i < layerIndexes.size(); ++i)
+      {
+        TypeLayer* typedLayer = dynamic_cast<TypeLayer*>(layers_[layerIndexes[i]]);
+        if (typedLayer != NULL)
+        {
+          if (count == index)
+          {
+            return typedLayer;
+          }
+          count++;
+        }
+      }
+
+      return NULL;
+    }
+
+    template <typename TypeLayer>
+    const TypeLayer* GetLayer(size_t index = 0) const
+    {
+      std::vector<size_t> layerIndexes;
+      GetLayersIndexes(layerIndexes);
+
+      size_t count = 0;
+
+      for (size_t i = 0; i < layerIndexes.size(); ++i)
+      {
+        const TypeLayer* typedLayer = dynamic_cast<const TypeLayer*>(layers_.at(layerIndexes[i]));
+        if (typedLayer != NULL)
+        {
+          if (count == index)
+          {
+            return typedLayer;
+          }
+          count++;
+        }
+      }
+
+      return NULL;
+    }
 
     void GetLayersIndexes(std::vector<size_t>& output) const;
 
@@ -195,13 +292,35 @@ namespace OrthancStone
                      ImageInterpolation interpolation,
                      bool usePam);
 
-    // temporary version used by VSOL because we need to send the same request at another url
+    void ExportDicom(OrthancApiClient& orthanc,
+                     const Json::Value& dicomTags,
+                     const std::string& parentOrthancId,
+                     double pixelSpacingX,
+                     double pixelSpacingY,
+                     bool invert,
+                     ImageInterpolation interpolation,
+                     bool usePam);
+
     void ExportToCreateDicomRequest(Json::Value& createDicomRequestContent,
-                                    const Orthanc::DicomMap& dicom,
+                                    const Json::Value& dicomTags,
+                                    const std::string& parentOrthancId,
                                     double pixelSpacingX,
                                     double pixelSpacingY,
                                     bool invert,
                                     ImageInterpolation interpolation,
                                     bool usePam);
+
+    Orthanc::Image* ExportToImage(double pixelSpacingX,
+                                  double pixelSpacingY,
+                                  ImageInterpolation interpolation)
+    {
+      return ExportToImage(pixelSpacingX, pixelSpacingY, interpolation, false, 0);
+    }
+
+    Orthanc::Image* ExportToImage(double pixelSpacingX,
+                                  double pixelSpacingY,
+                                  ImageInterpolation interpolation,
+                                  bool invert,
+                                  int64_t maxValue /* for inversion */);
   };
 }

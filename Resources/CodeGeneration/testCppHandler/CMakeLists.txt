@@ -4,7 +4,7 @@ project(testCppHandler)
 
 set(testCppHandler_Codegen_Deps
   ${CMAKE_CURRENT_LIST_DIR}/../test_data/test1.yaml 
-  ${CMAKE_CURRENT_LIST_DIR}/../template.in.h
+  ${CMAKE_CURRENT_LIST_DIR}/../template.in.h.j2
 ) 
 
 add_custom_command(

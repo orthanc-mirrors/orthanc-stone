@@ -45,6 +45,8 @@ namespace OrthancStone
 
     SetSize(image->GetWidth(), image->GetHeight());
     alpha_ = raii;
+
+    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
   void RadiographyAlphaLayer::Render(Orthanc::ImageAccessor& buffer,
@@ -84,7 +86,7 @@ namespace OrthancStone
     if (useWindowing_)
     {
       float center, width;
-      if (scene_.GetWindowing(center, width))
+      if (GetScene().GetWindowing(center, width))
       {
         value = center + width / 2.0f;  // set it to the maximum pixel value of the image
       }

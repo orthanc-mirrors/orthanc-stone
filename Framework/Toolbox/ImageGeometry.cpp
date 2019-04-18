@@ -76,9 +76,7 @@ namespace OrthancStone
     }
     else
     {
-      int tmp;
-
-      tmp = std::floor(extent.GetX1());
+      int tmp = static_cast<int>(std::floor(extent.GetX1()));
       if (tmp < 0)
       {
         x1 = 0;
@@ -88,7 +86,7 @@ namespace OrthancStone
         x1 = static_cast<unsigned int>(tmp);
       }
 
-      tmp = std::floor(extent.GetY1());
+      tmp = static_cast<int>(std::floor(extent.GetY1()));
       if (tmp < 0)
       {
         y1 = 0;
@@ -98,7 +96,7 @@ namespace OrthancStone
         y1 = static_cast<unsigned int>(tmp);
       }
 
-      tmp = std::ceil(extent.GetX2());
+      tmp = static_cast<int>(std::ceil(extent.GetX2()));
       if (tmp < 0)
       {
         return false;
@@ -112,7 +110,7 @@ namespace OrthancStone
         x2 = static_cast<unsigned int>(tmp);
       }
 
-      tmp = std::ceil(extent.GetY2());
+      tmp = static_cast<int>(std::ceil(extent.GetY2()));
       if (tmp < 0)
       {
         return false;
@@ -395,8 +393,8 @@ namespace OrthancStone
     Reader reader(source);
     unsigned int x1, y1, x2, y2;
 
-    const float floatWidth = source.GetWidth();
-    const float floatHeight = source.GetHeight();
+    const float floatWidth = static_cast<float>(source.GetWidth());
+    const float floatHeight = static_cast<float>(source.GetHeight());
 
     if (GetProjectiveTransformExtent(x1, y1, x2, y2, a,
                                      source.GetWidth(), source.GetHeight(),

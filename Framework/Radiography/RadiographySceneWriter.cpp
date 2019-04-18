@@ -57,6 +57,22 @@ namespace OrthancStone
     output["fontName"] = layer.GetFontName();
   }
 
+  void RadiographySceneWriter::WriteLayer(Json::Value& output, const RadiographyMaskLayer& layer)
+  {
+    output["type"] = "mask";
+    output["instanceId"] = layer.GetInstanceId(); // the dicom layer it's being linked to
+    output["foreground"] = layer.GetForeground();
+    output["corners"] = Json::arrayValue;
+    const std::vector<Orthanc::ImageProcessing::ImagePoint>& corners = layer.GetCorners();
+    for (size_t i = 0; i < corners.size(); i++)
+    {
+      Json::Value corner;
+      corner["x"] = corners[i].GetX();
+      corner["y"] = corners[i].GetY();
+      output["corners"].append(corner);
+    }
+  }
+
   void RadiographySceneWriter::WriteLayer(Json::Value& output, const RadiographyAlphaLayer& layer)
   {
     output["type"] = "alpha";
@@ -127,6 +143,10 @@ namespace OrthancStone
     else if (dynamic_cast<const RadiographyAlphaLayer*>(&layer) != NULL)
     {
       WriteLayer(output, dynamic_cast<const RadiographyAlphaLayer&>(layer));
+    }
+    else if (dynamic_cast<const RadiographyMaskLayer*>(&layer) != NULL)
+    {
+      WriteLayer(output, dynamic_cast<const RadiographyMaskLayer&>(layer));
     }
     else
     {

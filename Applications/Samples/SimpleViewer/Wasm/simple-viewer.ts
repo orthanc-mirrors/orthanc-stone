@@ -9,7 +9,7 @@ function SelectTool(toolName: string) {
     args: {
     }                                                                                                                       
   };
-  wasmApplicationRunner.SendMessageToStoneApplication(JSON.stringify(command));
+  wasmApplicationRunner.SendSerializedMessageToStoneApplication(JSON.stringify(command));
 }
 
 function PerformAction(actionName: string) {
@@ -19,7 +19,7 @@ function PerformAction(actionName: string) {
     args: {
     }
   };
-  wasmApplicationRunner.SendMessageToStoneApplication(JSON.stringify(command));
+  wasmApplicationRunner.SendSerializedMessageToStoneApplication(JSON.stringify(command));
 }
 
 class SimpleViewerUI {
@@ -59,8 +59,8 @@ var ui = new SimpleViewerUI();
 
 // this method is called "from the C++ code" when the StoneApplication is updated.
 // it can be used to update the UI of the application
-function UpdateWebApplication(statusUpdateMessageString: string) {
-  console.log("updating web application: ", statusUpdateMessageString);
+function UpdateWebApplicationWithString(statusUpdateMessageString: string) {
+  console.log("updating web application with string: ", statusUpdateMessageString);
   let statusUpdateMessage = JSON.parse(statusUpdateMessageString);
 
   if ("event" in statusUpdateMessage) {
@@ -70,3 +70,12 @@ function UpdateWebApplication(statusUpdateMessageString: string) {
     }
   }
 }
+
+function UpdateWebApplicationWithSerializedMessage(statusUpdateMessageString: string) {
+  console.log("updating web application with serialized message: ", statusUpdateMessageString);
+  console.log("<not supported in the simple viewer!>");
+}
+
+// make it available to other js scripts in the application
+(<any> window).UpdateWebApplicationWithString = UpdateWebApplicationWithString;
+(<any> window).UpdateWebApplicationWithSerializedMessage = UpdateWebApplicationWithSerializedMessage;

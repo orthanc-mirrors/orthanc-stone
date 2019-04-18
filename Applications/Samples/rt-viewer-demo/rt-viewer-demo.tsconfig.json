@@ -1,0 +1,8 @@
+{
+    "extends" : "./tsconfig-samples",
+    "compilerOptions": {
+    },
+    "include" : [
+        "rt-viewer-demo.ts"
+    ]
+}

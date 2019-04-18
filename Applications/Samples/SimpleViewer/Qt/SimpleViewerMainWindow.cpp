@@ -27,8 +27,15 @@
 #include <ui_SimpleViewerMainWindow.h>
 #include "../SimpleViewerApplication.h"
 
+
 namespace SimpleViewer
 {
+  template<typename T, typename U>
+  bool ExecuteCommand(U* handler, const T& command)
+  {
+    std::string serializedCommand = StoneSerialize(command);
+    StoneDispatchToHandler(serializedCommand, handler);
+  }
 
   SimpleViewerMainWindow::SimpleViewerMainWindow(
     OrthancStone::NativeStoneApplicationContext& context,
@@ -67,43 +74,36 @@ namespace SimpleViewer
 
   void SimpleViewerMainWindow::cropClicked()
   {
-    GenericNoArgCommand command("selectTool:crop");
-    stoneApplication_.ExecuteCommand(command);
+    stoneApplication_.ExecuteCommand(SelectTool(Tool_Crop));
   }
 
   void SimpleViewerMainWindow::undoCropClicked()
   {
-    GenericNoArgCommand command("action:undo-crop");
-    stoneApplication_.ExecuteCommand(command);
+    stoneApplication_.ExecuteCommand(Action(ActionType_UndoCrop));
   }
 
   void SimpleViewerMainWindow::lineClicked()
   {
-    GenericNoArgCommand command("selectTool:line-measure");
-    stoneApplication_.ExecuteCommand(command);
+    stoneApplication_.ExecuteCommand(SelectTool(Tool_LineMeasure));
   }
 
   void SimpleViewerMainWindow::circleClicked()
   {
-    GenericNoArgCommand command("selectTool:circle-measure");
-    stoneApplication_.ExecuteCommand(command);
+    stoneApplication_.ExecuteCommand(SelectTool(Tool_CircleMeasure));
   }
 
   void SimpleViewerMainWindow::windowingClicked()
   {
-    GenericNoArgCommand command("selectTool:windowing");
-    stoneApplication_.ExecuteCommand(command);
+    stoneApplication_.ExecuteCommand(SelectTool(Tool_Windowing));
   }
 
   void SimpleViewerMainWindow::rotateClicked()
   {
-    GenericNoArgCommand command("action:rotate");
-    stoneApplication_.ExecuteCommand(command);
+    stoneApplication_.ExecuteCommand(Action(ActionType_Rotate));
   }
 
   void SimpleViewerMainWindow::invertClicked()
   {
-    GenericNoArgCommand command("action:invert");
-    stoneApplication_.ExecuteCommand(command);
+    stoneApplication_.ExecuteCommand(Action(ActionType_Invert));
   }
 }

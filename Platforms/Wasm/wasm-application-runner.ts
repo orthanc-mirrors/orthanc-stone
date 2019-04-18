@@ -1,5 +1,6 @@
 import Stone = require('./stone-framework-loader');
 import StoneViewport = require('./wasm-viewport');
+import * as Logger from './logger'
 
 if (!('WebAssembly' in window)) {
   alert('Sorry, your browser does not support WebAssembly :(');
@@ -19,7 +20,7 @@ var CreateWasmApplication: Function = null;
 export var CreateCppViewport: Function = null;
 var ReleaseCppViewport: Function = null;
 var StartWasmApplication: Function = null;
-export var SendMessageToStoneApplication: Function = null;
+export var SendSerializedMessageToStoneApplication: Function = null;
 
 function DoAnimationThread() {
   if (WasmDoAnimation != null) {
@@ -84,7 +85,7 @@ export function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl
   // the WebAssembly environment) and then, create and initialize the Wasm application
   Stone.Framework.Initialize(true, function () {
 
-    console.log("Connecting C++ methods to JS methods");
+    Logger.defaultLogger.debug("Connecting C++ methods to JS methods");
     
     SetStartupParameter = (<any> window).StoneFrameworkModule.cwrap('SetStartupParameter', null, ['string', 'string']);
     CreateWasmApplication = (<any> window).StoneFrameworkModule.cwrap('CreateWasmApplication', null, ['number']);
@@ -99,14 +100,14 @@ export function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl
     // no need to put this into the globals for it's only used in this very module
     WasmDoAnimation = (<any> window).StoneFrameworkModule.cwrap('WasmDoAnimation', null, []);
 
-    SendMessageToStoneApplication = (<any> window).StoneFrameworkModule.cwrap('SendMessageToStoneApplication', 'string', ['string']);
+    SendSerializedMessageToStoneApplication = (<any> window).StoneFrameworkModule.cwrap('SendSerializedMessageToStoneApplication', 'string', ['string']);
 
-    console.log("Connecting C++ methods to JS methods - done");
+    Logger.defaultLogger.debug("Connecting C++ methods to JS methods - done");
 
     // Prevent scrolling
     document.body.addEventListener('touchmove', function (event) {
       event.preventDefault();
-    }, false);
+    }, { passive: false}); // must not be passive if calling event.preventDefault, ie to cancel scroll or zoom of the whole interface
 
     _InitializeWasmApplication(orthancBaseUrl);
   });

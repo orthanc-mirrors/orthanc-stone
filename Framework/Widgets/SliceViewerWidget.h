@@ -60,6 +60,9 @@ namespace OrthancStone
     };
 
   private:
+    SliceViewerWidget(const SliceViewerWidget&);
+    SliceViewerWidget& operator=(const SliceViewerWidget&);
+
     class Scene;
     
     typedef std::map<const IVolumeSlicer*, size_t>  LayersIndex;

@@ -39,18 +39,14 @@ namespace OrthancStone
     double                           originalSpacingY_;
     double                           originalPanX_;
     double                           originalPanY_;
-    Corner                           oppositeCorner_;
-    double                           oppositeX_;
-    double                           oppositeY_;
+    ControlPoint                     startOppositeControlPoint_;
     double                           baseScaling_;
 
   public:
     RadiographyLayerResizeTracker(UndoRedoStack& undoRedoStack,
                                   RadiographyScene& scene,
                                   size_t layer,
-                                  double x,
-                                  double y,
-                                  Corner corner,
+                                  const ControlPoint& startControlPoint,
                                   bool roundScaling);
 
     virtual bool HasRender() const
@@ -66,6 +62,8 @@ namespace OrthancStone
     virtual void MouseMove(int displayX,
                            int displayY,
                            double sceneX,
-                           double sceneY);
+                           double sceneY,
+                           const std::vector<Touch>& displayTouches,
+                           const std::vector<Touch>& sceneTouches);
   };
 }

@@ -91,7 +91,9 @@ namespace OrthancStone
   void CircleMeasureTracker::MouseMove(int displayX,
                                        int displayY,
                                        double x,
-                                       double y)
+                                       double y,
+                                       const std::vector<Touch>& displayTouches,
+                                       const std::vector<Touch>& sceneTouches)
   {
     x2_ = x;
     y2_ = y;

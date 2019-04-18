@@ -85,9 +85,7 @@ namespace OrthancStone
   RadiographyLayerResizeTracker::RadiographyLayerResizeTracker(UndoRedoStack& undoRedoStack,
                                                                RadiographyScene& scene,
                                                                size_t layer,
-                                                               double x,
-                                                               double y,
-                                                               Corner corner,
+                                                               const ControlPoint& startControlPoint,
                                                                bool roundScaling) :
     undoRedoStack_(undoRedoStack),
     accessor_(scene, layer),
@@ -101,31 +99,32 @@ namespace OrthancStone
       originalPanX_ = accessor_.GetLayer().GetGeometry().GetPanX();
       originalPanY_ = accessor_.GetLayer().GetGeometry().GetPanY();
 
-      switch (corner)
+      size_t oppositeControlPointType;
+      switch (startControlPoint.index)
       {
-        case Corner_TopLeft:
-          oppositeCorner_ = Corner_BottomRight;
+        case ControlPoint_TopLeftCorner:
+          oppositeControlPointType = ControlPoint_BottomRightCorner;
           break;
 
-        case Corner_TopRight:
-          oppositeCorner_ = Corner_BottomLeft;
+        case ControlPoint_TopRightCorner:
+          oppositeControlPointType = ControlPoint_BottomLeftCorner;
           break;
 
-        case Corner_BottomLeft:
-          oppositeCorner_ = Corner_TopRight;
+        case ControlPoint_BottomLeftCorner:
+          oppositeControlPointType = ControlPoint_TopRightCorner;
           break;
 
-        case Corner_BottomRight:
-          oppositeCorner_ = Corner_TopLeft;
+        case ControlPoint_BottomRightCorner:
+          oppositeControlPointType = ControlPoint_TopLeftCorner;
           break;
 
         default:
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
 
-      accessor_.GetLayer().GetCorner(oppositeX_, oppositeY_, oppositeCorner_);
+      accessor_.GetLayer().GetControlPoint(startOppositeControlPoint_, oppositeControlPointType);
 
-      double d = ComputeDistance(x, y, oppositeX_, oppositeY_);
+      double d = ComputeDistance(startControlPoint.x, startControlPoint.y, startOppositeControlPoint_.x, startOppositeControlPoint_.y);
       if (d >= std::numeric_limits<float>::epsilon())
       {
         baseScaling_ = 1.0 / d;
@@ -159,14 +158,16 @@ namespace OrthancStone
   void RadiographyLayerResizeTracker::MouseMove(int displayX,
                                                 int displayY,
                                                 double sceneX,
-                                                double sceneY)
+                                                double sceneY,
+                                                const std::vector<Touch>& displayTouches,
+                                                const std::vector<Touch>& sceneTouches)
   {
     static const double ROUND_SCALING = 0.1;
         
     if (accessor_.IsValid() &&
         accessor_.GetLayer().GetGeometry().IsResizeable())
     {
-      double scaling = ComputeDistance(oppositeX_, oppositeY_, sceneX, sceneY) * baseScaling_;
+      double scaling = ComputeDistance(startOppositeControlPoint_.x, startOppositeControlPoint_.y, sceneX, sceneY) * baseScaling_;
 
       if (roundScaling_)
       {
@@ -178,10 +179,10 @@ namespace OrthancStone
                             scaling * originalSpacingY_);
 
       // Keep the opposite corner at a fixed location
-      double ox, oy;
-      layer.GetCorner(ox, oy, oppositeCorner_);
-      layer.SetPan(layer.GetGeometry().GetPanX() + oppositeX_ - ox,
-                   layer.GetGeometry().GetPanY() + oppositeY_ - oy);
+      ControlPoint currentOppositeCorner;
+      layer.GetControlPoint(currentOppositeCorner, startOppositeControlPoint_.index);
+      layer.SetPan(layer.GetGeometry().GetPanX() + startOppositeControlPoint_.x - currentOppositeCorner.x,
+                   layer.GetGeometry().GetPanY() + startOppositeControlPoint_.y - currentOppositeCorner.y);
     }
   }
 }

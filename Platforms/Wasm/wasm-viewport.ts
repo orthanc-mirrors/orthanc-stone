@@ -1,5 +1,5 @@
 import wasmApplicationRunner = require('./wasm-application-runner');
-//import stoneFrameworkLoader = require('./stone-framework-loader');
+import * as Logger from './logger'
 
 var isPendingRedraw = false;
 
@@ -7,7 +7,7 @@ function ScheduleWebViewportRedraw(cppViewportHandle: any) : void
 {
   if (!isPendingRedraw) {
     isPendingRedraw = true;
-    console.log('Scheduling a refresh of the viewport, as its content changed');
+    Logger.defaultLogger.debug('Scheduling a refresh of the viewport, as its content changed');
     window.requestAnimationFrame(function() {
       isPendingRedraw = false;
       WasmViewport.GetFromCppViewport(cppViewportHandle).Redraw();
@@ -29,13 +29,6 @@ function CreateWasmViewport(htmlCanvasId: string) : any {
 }
  
 (<any>window).CreateWasmViewport = CreateWasmViewport;
-
-//  export declare type InitializationCallback = () => void;
-  
-//  export declare var StoneFrameworkModule : any;
-  
-  //const ASSETS_FOLDER : string = "assets/lib";
-  //const WASM_FILENAME : string = "orthanc-framework";
 
 export class WasmViewport {
 
@@ -65,6 +58,9 @@ export class WasmViewport {
     private ViewportMouseLeave : Function;
     private ViewportMouseWheel : Function;
     private ViewportKeyPressed : Function;
+    private ViewportTouchStart : Function;
+    private ViewportTouchMove : Function;
+    private ViewportTouchEnd : Function;
 
     private pimpl_ : any; // Private pointer to the underlying WebAssembly C++ object
 
@@ -78,7 +74,7 @@ export class WasmViewport {
       this.canvasId_ = canvasId;
       this.htmlCanvas_ = document.getElementById(this.canvasId_) as HTMLCanvasElement;
       if (this.htmlCanvas_ == null) {
-        console.log("Can not create WasmViewport, did not find the canvas whose id is '", this.canvasId_, "'");
+        Logger.defaultLogger.error("Can not create WasmViewport, did not find the canvas whose id is '", this.canvasId_, "'");
       }
       this.context_ = this.htmlCanvas_.getContext('2d');
 
@@ -91,6 +87,9 @@ export class WasmViewport {
       this.ViewportMouseLeave = this.module_.cwrap('ViewportMouseLeave', null, [ 'number' ]);
       this.ViewportMouseWheel = this.module_.cwrap('ViewportMouseWheel', null, [ 'number', 'number', 'number', 'number', 'number' ]);
       this.ViewportKeyPressed = this.module_.cwrap('ViewportKeyPressed', null, [ 'number', 'number', 'string', 'number', 'number' ]);
+      this.ViewportTouchStart = this.module_.cwrap('ViewportTouchStart', null, [ 'number', 'number', 'number', 'number', 'number', 'number', 'number' ]);
+      this.ViewportTouchMove = this.module_.cwrap('ViewportTouchMove', null, [ 'number', 'number', 'number', 'number', 'number', 'number', 'number' ]);
+      this.ViewportTouchEnd = this.module_.cwrap('ViewportTouchEnd', null, [ 'number', 'number', 'number', 'number', 'number', 'number', 'number' ]);
     }
 
     public GetCppViewport() : number {
@@ -101,7 +100,7 @@ export class WasmViewport {
       if (WasmViewport.viewportsMapByCppHandle_[cppViewportHandle] !== undefined) {
         return WasmViewport.viewportsMapByCppHandle_[cppViewportHandle];
       }
-      console.log("WasmViewport not found !");
+      Logger.defaultLogger.error("WasmViewport not found !");
       return undefined;
     }
 
@@ -109,7 +108,7 @@ export class WasmViewport {
       if (WasmViewport.viewportsMapByCanvasId_[canvasId] !== undefined) {
         return WasmViewport.viewportsMapByCanvasId_[canvasId];
       }
-      console.log("WasmViewport not found !");
+      Logger.defaultLogger.error("WasmViewport not found !");
       return undefined;
     }
 
@@ -126,13 +125,13 @@ export class WasmViewport {
                          this.imageData_.width,
                          this.imageData_.height,
                          this.renderingBuffer_) == 0) {
-        console.log('The rendering has failed');
+        Logger.defaultLogger.error('The rendering has failed');
       } else {
         // Create an accessor to the rendering buffer (i.e. create a
         // "window" above the heap of the WASM module), then copy it to
         // the ImageData object
         this.imageData_.data.set(new Uint8ClampedArray(
-          this.module_.buffer,
+          this.module_.HEAPU8.buffer,
           this.renderingBuffer_,
           this.imageData_.width * this.imageData_.height * 4));
         
@@ -151,7 +150,7 @@ export class WasmViewport {
       this.htmlCanvas_.width = this.htmlCanvas_.parentElement.offsetWidth;  
       this.htmlCanvas_.height = this.htmlCanvas_.parentElement.offsetHeight;  
 
-      console.log("resizing WasmViewport: ", this.htmlCanvas_.width, "x", this.htmlCanvas_.height);
+      Logger.defaultLogger.debug("resizing WasmViewport: ", this.htmlCanvas_.width, "x", this.htmlCanvas_.height);
 
       if (this.imageData_ === null) {
         this.imageData_ = this.context_.getImageData(0, 0, this.htmlCanvas_.width, this.htmlCanvas_.height);
@@ -197,7 +196,8 @@ export class WasmViewport {
       this.htmlCanvas_.addEventListener('mousedown', function(event) {
         var x = event.pageX - this.offsetLeft;
         var y = event.pageY - this.offsetTop;
-        that.ViewportMouseDown(that.pimpl_, event.button, x, y, 0 /* TODO detect modifier keys*/);    
+
+       that.ViewportMouseDown(that.pimpl_, event.button, x, y, 0 /* TODO detect modifier keys*/);    
       });
     
       this.htmlCanvas_.addEventListener('mousemove', function(event) {
@@ -227,22 +227,62 @@ export class WasmViewport {
         var y = event.pageY - this.offsetTop;
         that.ViewportMouseWheel(that.pimpl_, event.deltaY, x, y, event.ctrlKey);
         event.preventDefault();
-      });
+      }, {passive: false}); // must not be passive if calling event.preventDefault, ie to cancel scroll or zoom of the whole interface
 
-      this.htmlCanvas_.addEventListener('touchstart', function(event) {
+      this.htmlCanvas_.addEventListener('touchstart', function(event: TouchEvent) {
         // don't propagate events to the whole body (this could zoom the entire page instead of zooming the viewport)
         event.preventDefault();
         event.stopPropagation();
 
-        that.ResetTouch();
-      });
+        // TODO: find a way to pass the coordinates as an array between JS and C++
+        var x0 = 0;
+        var y0 = 0;
+        var x1 = 0;
+        var y1 = 0;
+        var x2 = 0;
+        var y2 = 0;
+        if (event.targetTouches.length > 0) {
+          x0 = event.targetTouches[0].pageX;
+          y0 = event.targetTouches[0].pageY;
+        }
+        if (event.targetTouches.length > 1) {
+          x1 = event.targetTouches[1].pageX;
+          y1 = event.targetTouches[1].pageY;
+        }
+        if (event.targetTouches.length > 2) {
+          x2 = event.targetTouches[2].pageX;
+          y2 = event.targetTouches[2].pageY;
+        }
+
+        that.ViewportTouchStart(that.pimpl_, event.targetTouches.length, x0, y0, x1, y1, x2, y2);
+      }, {passive: false}); // must not be passive if calling event.preventDefault, ie to cancel scroll or zoom of the whole interface
     
       this.htmlCanvas_.addEventListener('touchend', function(event) {
         // don't propagate events to the whole body (this could zoom the entire page instead of zooming the viewport)
         event.preventDefault();
         event.stopPropagation();
 
-        that.ResetTouch();
+        // TODO: find a way to pass the coordinates as an array between JS and C++
+        var x0 = 0;
+        var y0 = 0;
+        var x1 = 0;
+        var y1 = 0;
+        var x2 = 0;
+        var y2 = 0;
+        if (event.targetTouches.length > 0) {
+          x0 = event.targetTouches[0].pageX;
+          y0 = event.targetTouches[0].pageY;
+        }
+        if (event.targetTouches.length > 1) {
+          x1 = event.targetTouches[1].pageX;
+          y1 = event.targetTouches[1].pageY;
+        }
+        if (event.targetTouches.length > 2) {
+          x2 = event.targetTouches[2].pageX;
+          y2 = event.targetTouches[2].pageY;
+        }
+
+        that.ViewportTouchEnd(that.pimpl_, event.targetTouches.length, x0, y0, x1, y1, x2, y2);
       });
     
       this.htmlCanvas_.addEventListener('touchmove', function(event: TouchEvent) {
@@ -251,53 +291,31 @@ export class WasmViewport {
         event.preventDefault();
         event.stopPropagation();
 
-        // if (!that.touchGestureInProgress_) {
-        //   // starting a new gesture
-        //   that.touchCount_ = event.targetTouches.length;
-        //   for (var t = 0; t < event.targetTouches.length; t++) {
-        //     that.touchGestureLastCoordinates_.push([event.targetTouches[t].pageX, event.targetTouches[t].pageY]);
-        //   }
-        //   that.touchGestureInProgress_ = true;
-        // } else {
-        //   // continuing a gesture
-        //   // TODO: we shall probably forward all touches to the C++ code and let the "interactors/trackers" handle them
 
-        //   if (that.touchCount_ == 1) { // consider it's a left mouse drag
-
-        //   }
-        // }
-
-        // TODO: we shall probably forward all touches to the C++ code and let the "interactors/trackers" handle them
-
-        if (that.touchTranslation_.length == 2) { // 
-          var t = that.GetTouchTranslation(event);
-          that.ViewportMouseMove(that.pimpl_, t[0], t[1]);
+        // TODO: find a way to pass the coordinates as an array between JS and C++
+        var x0 = 0;
+        var y0 = 0;
+        var x1 = 0;
+        var y1 = 0;
+        var x2 = 0;
+        var y2 = 0;
+        if (event.targetTouches.length > 0) {
+          x0 = event.targetTouches[0].pageX;
+          y0 = event.targetTouches[0].pageY;
         }
-        else if (that.touchZoom_.length == 3) {
-          var z0 = that.touchZoom_;
-          var z1 = that.GetTouchZoom(event);
-          that.ViewportMouseMove(that.pimpl_, z0[0], z0[1] - z0[2] + z1[2]);
+        if (event.targetTouches.length > 1) {
+          x1 = event.targetTouches[1].pageX;
+          y1 = event.targetTouches[1].pageY;
         }
-        else {
-          // Realize the gesture event
-          if (event.targetTouches.length == 1) {
-            // Exactly one finger inside the canvas => Setup a translation
-            that.touchTranslation_ = that.GetTouchTranslation(event);
-            that.ViewportMouseDown(that.pimpl_, 
-                                  0 /* left button */,
-                                  that.touchTranslation_[0],
-                                  that.touchTranslation_[1], 0);
-          } else if (event.targetTouches.length == 2) {
-            // Exactly 2 fingers inside the canvas => Setup a pinch/zoom
-            that.touchZoom_ = that.GetTouchZoom(event);
-            var z0 = that.touchZoom_;
-            that.ViewportMouseDown(that.pimpl_, 
-                                  2 /* right button */,
-                                  z0[0],
-                                  z0[1], 0);
-          }        
+        if (event.targetTouches.length > 2) {
+          x2 = event.targetTouches[2].pageX;
+          y2 = event.targetTouches[2].pageY;
         }
-      });
+
+        that.ViewportTouchMove(that.pimpl_, event.targetTouches.length, x0, y0, x1, y1, x2, y2);
+        return;
+
+      }, {passive: false}); // must not be passive if calling event.preventDefault, ie to cancel scroll or zoom of the whole interface
     }  
 
   public ResetTouch() {
@@ -308,10 +326,6 @@ export class WasmViewport {
 
     this.touchTranslation_ = false;
     this.touchZoom_ = false;
-
-    // this.touchGestureInProgress_ = false;
-    // this.touchCount_ = 0;
-    // this.touchGestureLastCoordinates_ = [];
   }
   
   public GetTouchTranslation(event) {
@@ -334,7 +348,5 @@ export class WasmViewport {
       d
     ];
   }
-    
+   
 }
-
-  

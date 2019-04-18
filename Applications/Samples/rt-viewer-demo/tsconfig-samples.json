@@ -1,0 +1,11 @@
+{
+    "extends" : "../../../Platforms/Wasm/tsconfig-stone.json",
+    "compilerOptions": {
+        "sourceMap": false,
+        "lib" : [
+            "es2017",
+            "dom",
+            "dom.iterable"
+        ]
+    }
+}

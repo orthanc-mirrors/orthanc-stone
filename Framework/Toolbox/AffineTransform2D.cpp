@@ -90,6 +90,46 @@ namespace OrthancStone
   }
 
 
+  void AffineTransform2D::ConvertToOpenGLMatrix(float target[16],
+                                                unsigned int canvasWidth,
+                                                unsigned int canvasHeight) const
+  {
+    const AffineTransform2D t = AffineTransform2D::Combine(
+      CreateOpenGLClipspace(canvasWidth, canvasHeight), *this);
+    
+    const Matrix source = t.GetHomogeneousMatrix();
+  
+    if (source.size1() != 3 ||
+        source.size2() != 3)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+
+    // "z" must be in the [-1,1] range, otherwise the texture does not show up
+    float z = 0;
+
+    // Embed the 3x3 affine transform of the 2D plane into a 4x4
+    // matrix (3D) for OpenGL. The matrix must be transposed.
+
+    target[0] = static_cast<float>(source(0, 0)); 
+    target[1] = static_cast<float>(source(1, 0)); 
+    target[2] = 0; 
+    target[3] = static_cast<float>(source(2, 0));
+    target[4] = static_cast<float>(source(0, 1)); 
+    target[5] = static_cast<float>(source(1, 1));
+    target[6] = 0;
+    target[7] = static_cast<float>(source(2, 1));
+    target[8] = 0; 
+    target[9] = 0; 
+    target[10] = -1; 
+    target[11] = 0;
+    target[12] = static_cast<float>(source(0, 2)); 
+    target[13] = static_cast<float>(source(1, 2));
+    target[14] = -z;
+    target[15] = static_cast<float>(source(2, 2));
+  }
+
+
   AffineTransform2D AffineTransform2D::Invert(const AffineTransform2D& a)
   {
     AffineTransform2D t;
@@ -161,6 +201,19 @@ namespace OrthancStone
     t.matrix_(1, 0) = sine;
     t.matrix_(1, 1) = cosine;
 
+    return t;
+  }
+
+
+  AffineTransform2D AffineTransform2D::CreateOpenGLClipspace(unsigned int canvasWidth,
+                                                             unsigned int canvasHeight)
+  {
+    AffineTransform2D t;
+    t.matrix_(0, 0) = 2.0 / static_cast<double>(canvasWidth);
+    t.matrix_(0, 2) = -1.0;
+    t.matrix_(1, 1) = -2.0 / static_cast<double>(canvasHeight);
+    t.matrix_(1, 2) = 1.0;
+    
     return t;
   }
 }

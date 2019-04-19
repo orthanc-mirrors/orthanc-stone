@@ -78,17 +78,6 @@ namespace OrthancStone
     }
 
     
-    OpenGLShader::OpenGLShader(GLenum type,
-                               Orthanc::EmbeddedResources::FileResourceId resource)
-    {
-      std::string content;
-      Orthanc::EmbeddedResources::GetFileResource(content, resource);
-
-      shader_ = CompileShader(type, content);
-      isValid_ = true;
-    }
-
-    
     OpenGLShader::~OpenGLShader()
     {
       if (isValid_)

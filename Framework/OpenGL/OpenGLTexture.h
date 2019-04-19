@@ -29,32 +29,42 @@
 #  error Support for OpenGL is disabled
 #endif
 
-#include <string>
+#include <Core/Images/ImageAccessor.h>
+
 #include <GL/gl.h>
 #include <boost/noncopyable.hpp>
+
 
 namespace OrthancStone
 {
   namespace OpenGL
   {
-    class OpenGLShader : public boost::noncopyable
+    class OpenGLTexture : public boost::noncopyable
     {
     private:
-      bool     isValid_;
-      GLuint   shader_;
+      GLuint        texture_;
+      unsigned int  width_;
+      unsigned int  height_;
 
     public:
-      OpenGLShader(GLenum type,
-                   const std::string& source);
+      OpenGLTexture();
 
-      ~OpenGLShader();
+      ~OpenGLTexture();
 
-      bool IsValid() const
+      unsigned int GetWidth() const
       {
-        return isValid_;
+        return width_;
       }
 
-      GLuint Release();
+      unsigned int GetHeight() const
+      {
+        return height_;
+      }
+
+      void Load(const Orthanc::ImageAccessor& image,
+                bool isLinearInterpolation);
+
+      void Bind(GLint location);
     };
   }
 }

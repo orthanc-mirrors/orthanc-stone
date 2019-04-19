@@ -37,24 +37,26 @@ namespace OrthancStone
 {
   namespace OpenGL
   {
-    class OpenGLShader : public boost::noncopyable
+    class OpenGLProgram : public boost::noncopyable
     {
     private:
-      bool     isValid_;
-      GLuint   shader_;
+      GLuint  program_;
 
     public:
-      OpenGLShader(GLenum type,
-                   const std::string& source);
+      // WARNING: A global OpenGL context must be active to create this object!
+      OpenGLProgram();
 
-      ~OpenGLShader();
+      ~OpenGLProgram();
 
-      bool IsValid() const
-      {
-        return isValid_;
-      }
+      void Use();
 
-      GLuint Release();
+      // WARNING: A global OpenGL context must be active to run this method!
+      void CompileShaders(const std::string& vertexCode,
+                          const std::string& fragmentCode);
+
+      GLint GetUniformLocation(const std::string& name);
+
+      GLint GetAttributeLocation(const std::string& name);
     };
   }
 }

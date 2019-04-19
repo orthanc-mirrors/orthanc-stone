@@ -21,21 +21,7 @@
 
 #pragma once
 
-#if !defined(ORTHANC_ENABLE_OPENGL)
-#  error The macro ORTHANC_ENABLE_OPENGL must be defined
-#endif
-
-#if ORTHANC_ENABLE_OPENGL != 1
-#  error Support for OpenGL is disabled
-#endif
-
-#if defined(__APPLE__)
-#  include <OpenGL/gl.h>
-#  include <OpenGL/glext.h>
-#else
-#  include <GL/gl.h>
-#  include <GL/glext.h>
-#endif
+#include "OpenGLIncludes.h"
 
 #include <Core/Images/ImageAccessor.h>
 

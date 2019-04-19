@@ -21,35 +21,21 @@
 
 #pragma once
 
-#include "OpenGLIncludes.h"
+#if !defined(ORTHANC_ENABLE_OPENGL)
+#  error The macro ORTHANC_ENABLE_OPENGL must be defined
+#endif
 
-#include <string>
-#include <boost/noncopyable.hpp>
+#if ORTHANC_ENABLE_OPENGL != 1
+#  error Support for OpenGL is disabled
+#endif
 
-namespace OrthancStone
-{
-  namespace OpenGL
-  {
-    class OpenGLProgram : public boost::noncopyable
-    {
-    private:
-      GLuint  program_;
-
-    public:
-      // WARNING: A global OpenGL context must be active to create this object!
-      OpenGLProgram();
-
-      ~OpenGLProgram();
-
-      void Use();
-
-      // WARNING: A global OpenGL context must be active to run this method!
-      void CompileShaders(const std::string& vertexCode,
-                          const std::string& fragmentCode);
-
-      GLint GetUniformLocation(const std::string& name);
-
-      GLint GetAttributeLocation(const std::string& name);
-    };
-  }
-}
+#if defined(__APPLE__)
+#  include <OpenGL/gl.h>
+#  include <OpenGL/glext.h>
+#else
+#  if defined(_WIN32)
+#    include <windows.h>
+#  endif
+#  include <GL/gl.h>
+#  include <GL/glext.h>
+#endif

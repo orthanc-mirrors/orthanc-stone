@@ -21,35 +21,34 @@
 
 #pragma once
 
-#include "OpenGLIncludes.h"
+#include "../Toolbox/Extent2D.h"
 
-#include <string>
 #include <boost/noncopyable.hpp>
+#include <stdint.h>
 
 namespace OrthancStone
 {
-  namespace OpenGL
+  class ISceneLayer : public boost::noncopyable
   {
-    class OpenGLProgram : public boost::noncopyable
+  public:
+    enum Type
     {
-    private:
-      GLuint  program_;
-
-    public:
-      // WARNING: A global OpenGL context must be active to create this object!
-      OpenGLProgram();
-
-      ~OpenGLProgram();
-
-      void Use();
-
-      // WARNING: A global OpenGL context must be active to run this method!
-      void CompileShaders(const std::string& vertexCode,
-                          const std::string& fragmentCode);
-
-      GLint GetUniformLocation(const std::string& name);
-
-      GLint GetAttributeLocation(const std::string& name);
+      Type_InfoPanel,
+      Type_Texture,
+      Type_Polyline,
+      Type_Text
     };
-  }
+
+    virtual ~ISceneLayer()
+    {
+    }
+
+    virtual ISceneLayer* Clone() const = 0;
+
+    virtual Type GetType() const = 0;
+
+    virtual bool GetBoundingBox(Extent2D& target) const = 0;
+
+    virtual uint64_t GetRevision() const = 0;
+  };
 }

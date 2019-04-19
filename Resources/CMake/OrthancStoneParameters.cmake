@@ -51,3 +51,4 @@ set(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 ## the Stone of Orthanc
 #####################################################################
 
+set(ENABLE_OPENGL ON CACHE INTERNAL "Enable support of OpenGL")

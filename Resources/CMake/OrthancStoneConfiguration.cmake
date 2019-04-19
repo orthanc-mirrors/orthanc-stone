@@ -106,6 +106,16 @@ else()
 endif()
 
 
+if (ENABLE_OPENGL)
+  add_definitions(
+    -DGL_GLEXT_PROTOTYPES=1
+    -DORTHANC_ENABLE_OPENGL=1
+    )
+else()
+  add_definitions(-DORTHANC_ENABLE_OPENGL=0)  
+endif()
+
+
 
 #####################################################################
 ## Configuration of the C/C++ macros
@@ -124,6 +134,8 @@ add_definitions(
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions(-DCHECK_OBSERVERS_MESSAGES)
 endif()
+
+
 
 #####################################################################
 ## Embed the colormaps into the binaries
@@ -249,7 +261,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphAlphabet.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphBitmapAlphabet.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphTextureAlphabet.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Fonts/OpenGLTextCoordinates.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/TextBoundingBox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/CircleMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/ColorFrameRenderer.cpp
@@ -361,6 +372,15 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${QT_SOURCES}
   ${BOOST_EXTENDED_SOURCES}
   )
+
+
+if (ENABLE_OPENGL)
+  list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Fonts/OpenGLTextCoordinates.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLShader.cpp
+    )
+endif()
+
 
 include_directories(${ORTHANC_STONE_ROOT})
 

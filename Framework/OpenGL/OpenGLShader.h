@@ -21,31 +21,45 @@
 
 #pragma once
 
-#include "Glyph.h"
+
+#if !defined(ORTHANC_ENABLE_OPENGL)
+#  error The macro ORTHANC_ENABLE_OPENGL must be defined
+#endif
+
+#if ORTHANC_ENABLE_OPENGL != 1
+#  error Support for OpenGL is disabled
+#endif
 
 #include <EmbeddedResources.h>
 
-#include <stdint.h>
-#include <boost/shared_ptr.hpp>
-
+#include <GL/gl.h>
+#include <boost/noncopyable.hpp>
 
 namespace OrthancStone
 {
-  class FontRenderer : public boost::noncopyable
+  namespace OpenGL
   {
-  private:
-    class PImpl;
-    boost::shared_ptr<PImpl>  pimpl_;
-    
-  public:
-    FontRenderer();
+    class OpenGLShader : public boost::noncopyable
+    {
+    private:
+      bool     isValid_;
+      GLuint   shader_;
 
-    void LoadFont(const std::string& fontContent,
-                  unsigned int fontSize);
-    
-    void LoadFont(Orthanc::EmbeddedResources::FileResourceId resource,
-                  unsigned int fontSize);
+    public:
+      OpenGLShader(GLenum type,
+                   const std::string& source);
 
-    Glyph* Render(uint32_t unicode);
-  };
+      OpenGLShader(GLenum type,
+                   Orthanc::EmbeddedResources::FileResourceId resource);
+
+      ~OpenGLShader();
+
+      bool IsValid() const
+      {
+        return isValid_;
+      }
+
+      GLuint Release();
+    };
+  }
 }

@@ -53,14 +53,15 @@ namespace OrthancStone
         int infoLen = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
 
-        if (infoLen > 1) 
+        if (infoLen > 0)
         {
-          char infoLog[infoLen + 1];
-          glGetShaderInfoLog(shader, infoLen, NULL, infoLog);
+          std::string infoLog;
+          infoLog.resize(infoLen + 1);
+          glGetShaderInfoLog(shader, infoLen, NULL, &infoLog[0]);
           glDeleteShader(shader);
 
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-                                          "Error while creating an OpenGL shader: " + std::string(infoLog));
+                                          "Error while creating an OpenGL shader: " + infoLog);
         }
         else
         {

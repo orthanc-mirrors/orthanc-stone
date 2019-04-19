@@ -289,9 +289,11 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyTextLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWindowingTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CompositorHelper.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PolylineSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Scene2D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
@@ -381,9 +383,11 @@ list(APPEND ORTHANC_STONE_SOURCES
 if (ENABLE_OPENGL)
   list(APPEND ORTHANC_STONE_SOURCES
     ${ORTHANC_STONE_ROOT}/Framework/Fonts/OpenGLTextCoordinates.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/OpenGL/ColorTextureOpenGLProgram.cpp
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLProgram.cpp
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLShader.cpp
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLTexture.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/OpenGL/TextOpenGLProgram.cpp
     )
 endif()
 

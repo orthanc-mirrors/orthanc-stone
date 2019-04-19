@@ -24,6 +24,8 @@
 #include "GlyphTextureAlphabet.h"
 #include "TextBoundingBox.h"
 
+#include <vector>
+
 namespace OrthancStone
 {
   namespace OpenGL

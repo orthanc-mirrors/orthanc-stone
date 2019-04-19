@@ -130,6 +130,36 @@ namespace OrthancStone
   }
 
 
+  double AffineTransform2D::ComputeZoom() const
+  {
+    // Compute the length of the (0,0)-(1,1) diagonal (whose
+    // length is sqrt(2)) instead of the (0,0)-(1,0) unit segment,
+    // in order to cope with possible anisotropic zooming
+        
+    double x1 = 0;
+    double y1 = 0;
+    Apply(x1, y1);
+
+    double x2 = 1;
+    double y2 = 1;
+    Apply(x2, y2);
+
+    double dx = x2 - x1;
+    double dy = y2 - y1;
+
+    double zoom = sqrt(dx * dx + dy * dy) / sqrt(2.0);
+
+    if (LinearAlgebra::IsCloseToZero(zoom))
+    {
+      return 1;  // Default value if transform is ill-conditioned 
+    }
+    else
+    {
+      return zoom;
+    }
+  }    
+
+
   AffineTransform2D AffineTransform2D::Invert(const AffineTransform2D& a)
   {
     AffineTransform2D t;

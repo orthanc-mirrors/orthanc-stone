@@ -60,6 +60,8 @@ namespace OrthancStone
     void ConvertToOpenGLMatrix(float target[16],
                                unsigned int canvasWidth,
                                unsigned int canvasHeight) const;
+
+    double ComputeZoom() const;
     
     static AffineTransform2D Invert(const AffineTransform2D& a);
 

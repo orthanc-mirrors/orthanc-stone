@@ -67,6 +67,7 @@ SET(ORTHANC_STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
 include(FindPkgConfig)
 include(${CMAKE_CURRENT_LIST_DIR}/BoostExtendedConfiguration.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/CairoConfiguration.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/FreetypeConfiguration.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/PixmanConfiguration.cmake)
 
 
@@ -243,6 +244,9 @@ list(APPEND ORTHANC_STONE_SOURCES
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SeriesFrameRendererFactory.cpp
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SingleFrameRendererFactory.cpp
 
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/FontRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/Glyph.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphAlphabet.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/CircleMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/ColorFrameRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/DicomSeriesVolumeSlicer.cpp
@@ -279,6 +283,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomFrameConverter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DownloadStack.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DynamicBitmap.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Extent2D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/FiniteProjectiveCamera.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.cpp
@@ -320,6 +325,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/WidgetBase.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/WorldSceneWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/ZoomMouseTracker.cpp
+
   ${ORTHANC_STONE_ROOT}/Framework/dev.h
 
   ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
@@ -343,6 +349,7 @@ list(APPEND ORTHANC_STONE_SOURCES
 
   # Mandatory components
   ${CAIRO_SOURCES}
+  ${FREETYPE_SOURCES}
   ${PIXMAN_SOURCES}
 
   # Optional components

@@ -41,6 +41,7 @@ set(HAS_EMBEDDED_RESOURCES ON)
 
 # Advanced parameters to fine-tune linking against system libraries
 set(USE_SYSTEM_CAIRO ON CACHE BOOL "Use the system version of Cairo")
+set(USE_SYSTEM_FREETYPE ON CACHE BOOL "Use the system version of Freetype")
 set(USE_SYSTEM_PIXMAN ON CACHE BOOL "Use the system version of Pixman")
 set(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 

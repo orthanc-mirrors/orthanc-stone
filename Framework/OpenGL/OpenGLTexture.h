@@ -29,9 +29,16 @@
 #  error Support for OpenGL is disabled
 #endif
 
+#if defined(__APPLE__)
+#  include <OpenGL/gl.h>
+#  include <OpenGL/glext.h>
+#else
+#  include <GL/gl.h>
+#  include <GL/glext.h>
+#endif
+
 #include <Core/Images/ImageAccessor.h>
 
-#include <GL/gl.h>
 #include <boost/noncopyable.hpp>
 
 

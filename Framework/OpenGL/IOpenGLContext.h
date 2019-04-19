@@ -21,17 +21,7 @@
 
 #pragma once
 
-#if !defined(ORTHANC_ENABLE_OPENGL)
-#  error The macro ORTHANC_ENABLE_OPENGL must be defined
-#endif
-
-#if ORTHANC_ENABLE_OPENGL != 1
-#  error Support for OpenGL is disabled
-#endif
-
-
 #include <boost/noncopyable.hpp>
-
 
 namespace OrthancStone
 {

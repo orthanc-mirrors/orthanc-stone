@@ -29,8 +29,15 @@
 #  error Support for OpenGL is disabled
 #endif
 
+#if defined(__APPLE__)
+#  include <OpenGL/gl.h>
+#  include <OpenGL/glext.h>
+#else
+#  include <GL/gl.h>
+#  include <GL/glext.h>
+#endif
+
 #include <string>
-#include <GL/gl.h>
 #include <boost/noncopyable.hpp>
 
 namespace OrthancStone

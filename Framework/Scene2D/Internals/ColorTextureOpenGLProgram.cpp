@@ -23,9 +23,9 @@
 
 namespace OrthancStone
 {
-  namespace OpenGL
+  namespace Internals
   {
-    ColorTextureOpenGLProgram::ColorTextureOpenGLProgram(IOpenGLContext&  context) :
+    ColorTextureOpenGLProgram::ColorTextureOpenGLProgram(OpenGL::IOpenGLContext&  context) :
       context_(context)
     {
       static const char* VERTEX_SHADER = 
@@ -58,7 +58,7 @@ namespace OrthancStone
         
       context_.MakeCurrent();
 
-      program_.reset(new OpenGLProgram);
+      program_.reset(new OpenGL::OpenGLProgram);
       program_->CompileShaders(VERTEX_SHADER, FRAGMENT_SHADER);
 
       positionLocation_ = program_->GetAttributeLocation("a_position");
@@ -81,7 +81,7 @@ namespace OrthancStone
     }
 
     
-    void ColorTextureOpenGLProgram::Apply(OpenGLTexture& texture,
+    void ColorTextureOpenGLProgram::Apply(OpenGL::OpenGLTexture& texture,
                                           const AffineTransform2D& transform,
                                           bool useAlpha)
     {

@@ -21,14 +21,14 @@
 
 #pragma once
 
-#include "IOpenGLContext.h"
-#include "OpenGLProgram.h"
-#include "OpenGLTexture.h"
-#include "../Toolbox/AffineTransform2D.h"
+#include "../../OpenGL/IOpenGLContext.h"
+#include "../../OpenGL/OpenGLProgram.h"
+#include "../../OpenGL/OpenGLTexture.h"
+#include "../../Toolbox/AffineTransform2D.h"
 
 namespace OrthancStone
 {
-  namespace OpenGL
+  namespace Internals
   {
     class ColorTextureOpenGLProgram : public boost::noncopyable
     {
@@ -36,18 +36,18 @@ namespace OrthancStone
       static const unsigned int COMPONENTS = 2;
       static const unsigned int COUNT = 6;  // 2 triangles in 2D
 
-      IOpenGLContext&               context_;
-      std::auto_ptr<OpenGLProgram>  program_;
-      GLint                         positionLocation_;
-      GLint                         textureLocation_;
-      GLuint                        buffers_[2];
+      OpenGL::IOpenGLContext&               context_;
+      std::auto_ptr<OpenGL::OpenGLProgram>  program_;
+      GLint                                 positionLocation_;
+      GLint                                 textureLocation_;
+      GLuint                                buffers_[2];
 
     public:
-      ColorTextureOpenGLProgram(IOpenGLContext&  context);
+      ColorTextureOpenGLProgram(OpenGL::IOpenGLContext&  context);
 
       ~ColorTextureOpenGLProgram();
 
-      void Apply(OpenGLTexture& texture,
+      void Apply(OpenGL::OpenGLTexture& texture,
                  const AffineTransform2D& transform,
                  bool useAlpha);
     };

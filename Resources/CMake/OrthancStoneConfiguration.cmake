@@ -383,11 +383,11 @@ list(APPEND ORTHANC_STONE_SOURCES
 if (ENABLE_OPENGL)
   list(APPEND ORTHANC_STONE_SOURCES
     ${ORTHANC_STONE_ROOT}/Framework/Fonts/OpenGLTextCoordinates.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/OpenGL/ColorTextureOpenGLProgram.cpp
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLProgram.cpp
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLShader.cpp
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLTexture.cpp
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/TextOpenGLProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/ColorTextureOpenGLProgram.cpp
     )
 endif()
 

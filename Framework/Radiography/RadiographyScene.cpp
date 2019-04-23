@@ -349,7 +349,7 @@ namespace OrthancStone
     layer.SetPreferredPhotomotricDisplayMode(preferredPhotometricDisplayMode);
 
     return layer;
- }
+  }
 
   RadiographyLayer& RadiographyScene::LoadDicomFrame(OrthancApiClient& orthanc,
                                                      const std::string& instance,
@@ -615,40 +615,17 @@ namespace OrthancStone
   }
 
 
-  void RadiographyScene::ExportToCreateDicomRequest(Json::Value& createDicomRequestContent,
-                                                    const Json::Value& dicomTags,
-                                                    const std::string& parentOrthancId,
-                                                    double pixelSpacingX,
-                                                    double pixelSpacingY,
-                                                    bool invert,
-                                                    ImageInterpolation interpolation,
-                                                    bool usePam)
+  Orthanc::Image* RadiographyScene::ExportToCreateDicomRequestAndImage(Json::Value& createDicomRequestContent,
+                                                                       const Json::Value& dicomTags,
+                                                                       const std::string& parentOrthancId,
+                                                                       double pixelSpacingX,
+                                                                       double pixelSpacingY,
+                                                                       bool invert,
+                                                                       ImageInterpolation interpolation)
   {
     LOG(INFO) << "Exporting RadiographyScene to DICOM";
-    VLOG(1) << "Exporting RadiographyScene to: export to image";
 
     std::auto_ptr<Orthanc::Image> rendered(ExportToImage(pixelSpacingX, pixelSpacingY, interpolation)); // note: we don't invert the image in the pixels data because we'll set the PhotometricDisplayMode correctly in the DICOM tags
-
-    std::string base64;
-
-    {
-      std::string content;
-
-      if (usePam)
-      {
-        VLOG(1) << "Exporting RadiographyScene: convert to PAM";
-        Orthanc::PamWriter writer;
-        writer.WriteToMemory(content, *rendered);
-      }
-      else
-      {
-        Orthanc::PngWriter writer;
-        writer.WriteToMemory(content, *rendered);
-      }
-
-      VLOG(1) << "Exporting RadiographyScene: encoding to base64";
-      Orthanc::Toolbox::EncodeBase64(base64, content);
-    }
 
     createDicomRequestContent["Tags"] = dicomTags;
 
@@ -682,16 +659,55 @@ namespace OrthancStone
           boost::lexical_cast<std::string>(boost::math::iround(width));
     }
 
+    if (!parentOrthancId.empty())
+    {
+      createDicomRequestContent["Parent"] = parentOrthancId;
+    }
+
+    return rendered.release();
+  }
+
+
+  void RadiographyScene::ExportToCreateDicomRequest(Json::Value& createDicomRequestContent,
+                                                    const Json::Value& dicomTags,
+                                                    const std::string& parentOrthancId,
+                                                    double pixelSpacingX,
+                                                    double pixelSpacingY,
+                                                    bool invert,
+                                                    ImageInterpolation interpolation,
+                                                    bool usePam)
+  {
+    LOG(INFO) << "Exporting RadiographyScene to DICOM";
+    VLOG(1) << "Exporting RadiographyScene to: export to image";
+
+    std::auto_ptr<Orthanc::Image> rendered(ExportToCreateDicomRequestAndImage(createDicomRequestContent, dicomTags, parentOrthancId, pixelSpacingX, pixelSpacingY, invert, interpolation));
+
+    // convert the image into base64 for inclusing in the createDicomRequest
+    std::string base64;
+
+    {
+      std::string content;
+
+      if (usePam)
+      {
+        VLOG(1) << "Exporting RadiographyScene: convert to PAM";
+        Orthanc::PamWriter writer;
+        writer.WriteToMemory(content, *rendered);
+      }
+      else
+      {
+        Orthanc::PngWriter writer;
+        writer.WriteToMemory(content, *rendered);
+      }
+
+      VLOG(1) << "Exporting RadiographyScene: encoding to base64";
+      Orthanc::Toolbox::EncodeBase64(base64, content);
+    }
 
     // This is Data URI scheme: https://en.wikipedia.org/wiki/Data_URI_scheme
     createDicomRequestContent["Content"] = ("data:" +
                                             std::string(usePam ? Orthanc::MIME_PAM : Orthanc::MIME_PNG) +
                                             ";base64," + base64);
-
-    if (!parentOrthancId.empty())
-    {
-      createDicomRequestContent["Parent"] = parentOrthancId;
-    }
 
     VLOG(1) << "Exporting RadiographyScene: create-dicom request is ready";
   }

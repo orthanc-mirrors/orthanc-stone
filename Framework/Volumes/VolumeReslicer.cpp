@@ -655,8 +655,7 @@ namespace OrthancStone
                                     float rescaleSlope,
                                     float rescaleIntercept)
   {
-    if (windowing == ImageWindowing_Custom ||
-        windowing == ImageWindowing_Default)
+    if (windowing == ImageWindowing_Custom)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }

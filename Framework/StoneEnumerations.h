@@ -34,7 +34,6 @@ namespace OrthancStone
 
   enum ImageWindowing
   {
-    ImageWindowing_Default,
     ImageWindowing_Bone,
     ImageWindowing_Lung,
     ImageWindowing_Custom
@@ -199,8 +198,8 @@ namespace OrthancStone
   void ComputeWindowing(float& targetCenter,
                         float& targetWidth,
                         ImageWindowing windowing,
-                        float defaultCenter,
-                        float defaultWidth);
+                        float customCenter,
+                        float customWidth);
 
   void ComputeAnchorTranslation(double& deltaX /* out */,
                                 double& deltaY /* out */,

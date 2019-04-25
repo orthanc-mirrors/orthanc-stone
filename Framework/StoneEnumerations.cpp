@@ -48,14 +48,14 @@ namespace OrthancStone
   void ComputeWindowing(float& targetCenter,
                         float& targetWidth,
                         ImageWindowing windowing,
-                        float defaultCenter,
-                        float defaultWidth)
+                        float customCenter,
+                        float customWidth)
   {
     switch (windowing)
     {
-      case ImageWindowing_Default:
-        targetCenter = defaultCenter;
-        targetWidth = defaultWidth;
+      case ImageWindowing_Custom:
+        targetCenter = customCenter;
+        targetWidth = customWidth;
         break;
 
       case ImageWindowing_Bone:

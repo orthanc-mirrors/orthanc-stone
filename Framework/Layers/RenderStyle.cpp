@@ -29,7 +29,7 @@ namespace OrthancStone
   {
     visible_ = true;
     reverse_ = false;
-    windowing_ = ImageWindowing_Default;
+    windowing_ = ImageWindowing_Custom;
     alpha_ = 1;
     applyLut_ = false;
     lut_ = Orthanc::EmbeddedResources::COLORMAP_HOT;

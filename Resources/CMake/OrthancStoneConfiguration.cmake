@@ -294,7 +294,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PolylineSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Scene2D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextSceneLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextureSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneException.h

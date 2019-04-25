@@ -19,20 +19,20 @@
  **/
 
 
-#include "TextureSceneLayer.h"
+#include "ColorTextureSceneLayer.h"
 
 #include <Core/Images/Image.h>
 #include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
-  TextureSceneLayer::TextureSceneLayer(const Orthanc::ImageAccessor& texture,
-                                       double originX,  // Center of the top-left pixel
-                                       double originY,
-                                       double pixelSpacingX,
-                                       double pixelSpacingY,
-                                       double angle,
-                                       bool isLinearInterpolation) :
+  ColorTextureSceneLayer::ColorTextureSceneLayer(const Orthanc::ImageAccessor& texture,
+                                                 double originX,  // Center of the top-left pixel
+                                                 double originY,
+                                                 double pixelSpacingX,
+                                                 double pixelSpacingY,
+                                                 double angle,
+                                                 bool isLinearInterpolation) :
     texture_(Orthanc::Image::Clone(texture)),
     originX_(originX),
     originY_(originY),
@@ -56,15 +56,15 @@ namespace OrthancStone
   }
 
 
-  ISceneLayer* TextureSceneLayer::Clone() const
+  ISceneLayer* ColorTextureSceneLayer::Clone() const
   {
-    return new TextureSceneLayer(*texture_, originX_, originY_, 
-                                 pixelSpacingX_, pixelSpacingY_, angle_, 
-                                 isLinearInterpolation_);
+    return new ColorTextureSceneLayer(*texture_, originX_, originY_, 
+                                      pixelSpacingX_, pixelSpacingY_, angle_, 
+                                      isLinearInterpolation_);
   }
 
 
-  AffineTransform2D TextureSceneLayer::GetTransform() const
+  AffineTransform2D ColorTextureSceneLayer::GetTransform() const
   {
     return AffineTransform2D::Combine(
       AffineTransform2D::CreateOffset(originX_, originY_),
@@ -74,7 +74,7 @@ namespace OrthancStone
   }
 
 
-  bool TextureSceneLayer::GetBoundingBox(Extent2D& target) const
+  bool ColorTextureSceneLayer::GetBoundingBox(Extent2D& target) const
   {
     const AffineTransform2D t = GetTransform();
 

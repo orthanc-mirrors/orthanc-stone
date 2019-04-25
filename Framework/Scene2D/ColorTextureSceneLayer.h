@@ -29,7 +29,7 @@
 
 namespace OrthancStone
 {
-  class TextureSceneLayer : public ISceneLayer
+  class ColorTextureSceneLayer : public ISceneLayer
   {
   private:
     std::auto_ptr<Orthanc::ImageAccessor>  texture_;
@@ -41,13 +41,13 @@ namespace OrthancStone
     bool                                   isLinearInterpolation_;
 
   public:
-    TextureSceneLayer(const Orthanc::ImageAccessor& texture,
-                      double originX,  // Center of the top-left pixel
-                      double originY,
-                      double pixelSpacingX,
-                      double pixelSpacingY,
-                      double angle,
-                      bool isLinearInterpolation);
+    ColorTextureSceneLayer(const Orthanc::ImageAccessor& texture,
+                           double originX,  // Center of the top-left pixel
+                           double originY,
+                           double pixelSpacingX,
+                           double pixelSpacingY,
+                           double angle,
+                           bool isLinearInterpolation);
 
     virtual ISceneLayer* Clone() const;
 
@@ -65,7 +65,7 @@ namespace OrthancStone
 
     virtual Type GetType() const
     {
-      return Type_Texture;
+      return Type_ColorTexture;
     }
 
     virtual bool GetBoundingBox(Extent2D& target) const;

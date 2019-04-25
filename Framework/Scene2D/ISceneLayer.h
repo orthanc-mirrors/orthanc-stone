@@ -34,7 +34,7 @@ namespace OrthancStone
     enum Type
     {
       Type_InfoPanel,
-      Type_Texture,
+      Type_ColorTexture,
       Type_Polyline,
       Type_Text
     };

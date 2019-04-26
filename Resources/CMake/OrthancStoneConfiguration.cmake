@@ -213,10 +213,11 @@ if (NOT ORTHANC_SANDBOXED)
       )
     if (ENABLE_SDL)
       list(APPEND APPLICATIONS_SOURCES
-        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlStoneApplicationRunner.cpp
-        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlCairoSurface.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOpenGLWindow.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOrthancSurface.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlStoneApplicationRunner.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlWindow.cpp
         )
     endif()
@@ -259,6 +260,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/FloatTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoPolylineRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CompositorHelper.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PolylineSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Scene2D.cpp

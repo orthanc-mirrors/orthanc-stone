@@ -389,8 +389,10 @@ if (ENABLE_OPENGL)
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLProgram.cpp
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLShader.cpp
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLTexture.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureProgram.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLinesProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextProgram.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextureProgram.cpp
     )
 endif()

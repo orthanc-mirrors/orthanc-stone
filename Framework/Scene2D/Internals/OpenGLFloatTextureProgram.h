@@ -29,12 +29,7 @@ namespace OrthancStone
   {
     class OpenGLFloatTextureProgram : public boost::noncopyable
     {
-    private:
-      OpenGLTextureProgram  program_;
-
     public:
-      OpenGLFloatTextureProgram(OpenGL::IOpenGLContext&  context);
-
       class Data : public boost::noncopyable
       {
       private:
@@ -61,6 +56,12 @@ namespace OrthancStone
           return texture_;
         }
       };
+
+    private:
+      OpenGLTextureProgram  program_;
+
+    public:
+      OpenGLFloatTextureProgram(OpenGL::IOpenGLContext&  context);
 
       void Apply(Data& data,
                  const AffineTransform2D& transform,

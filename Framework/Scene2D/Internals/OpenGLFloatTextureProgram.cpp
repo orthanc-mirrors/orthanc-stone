@@ -56,12 +56,6 @@ namespace OrthancStone
 {
   namespace Internals
   {
-    OpenGLFloatTextureProgram::OpenGLFloatTextureProgram(OpenGL::IOpenGLContext&  context) :
-      program_(context, FRAGMENT_SHADER)
-    {
-    }
-
-
     OpenGLFloatTextureProgram::Data::Data(const Orthanc::ImageAccessor& texture,
                                           bool isLinearInterpolation)
     {
@@ -128,6 +122,12 @@ namespace OrthancStone
     }
 
     
+    OpenGLFloatTextureProgram::OpenGLFloatTextureProgram(OpenGL::IOpenGLContext&  context) :
+      program_(context, FRAGMENT_SHADER)
+    {
+    }
+
+
     void OpenGLFloatTextureProgram::Apply(Data& data,
                                           const AffineTransform2D& transform,
                                           float windowCenter,

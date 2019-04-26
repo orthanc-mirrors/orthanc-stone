@@ -257,9 +257,9 @@ list(APPEND ORTHANC_STONE_SOURCES
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SingleFrameRendererFactory.cpp
 
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CompositorHelper.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/FloatTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CompositorHelper.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PolylineSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Scene2D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextSceneLayer.cpp
@@ -389,6 +389,7 @@ if (ENABLE_OPENGL)
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLProgram.cpp
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLShader.cpp
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLTexture.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLBasicPolylineRenderer.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureProgram.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureProgram.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLinesProgram.cpp

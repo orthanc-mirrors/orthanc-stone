@@ -21,46 +21,19 @@
 
 #pragma once
 
-#include "CairoSurface.h"
-#include <vector>
+#include "PointerEvent.h"
 
 namespace OrthancStone
 {
-  struct Touch
-  {
-    float x;
-    float y;
-
-    Touch(float x, float y)
-    : x(x),
-      y(y)
-    {
-    }
-    Touch()
-      : x(0.0f),
-        y(0.0f)
-    {
-    }
-  };
-
-
-  // this is tracking a mouse in screen coordinates/pixels unlike
-  // the IWorldSceneMouseTracker that is tracking a mouse
-  // in scene coordinates/mm.
-  class IMouseTracker : public boost::noncopyable
+  class IPointerTracker : public boost::noncopyable
   {
   public:
-    virtual ~IMouseTracker()
+    virtual ~IPointerTracker()
     {
     }
-    
-    virtual void Render(Orthanc::ImageAccessor& surface) = 0;
 
-    virtual void MouseUp() = 0;
+    virtual void Update(const PointerEvent& event) = 0;
 
-    // Returns "true" iff. the background scene must be repainted
-    virtual void MouseMove(int x, 
-                           int y,
-                           const std::vector<Touch>& displayTouches) = 0;
+    virtual void Release() = 0;
   };
 }

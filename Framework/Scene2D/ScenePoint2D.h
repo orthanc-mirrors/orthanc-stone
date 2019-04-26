@@ -33,6 +33,12 @@ namespace OrthancStone
     double  y_;
 
   public:
+    ScenePoint2D() :
+      x_(0),
+      y_(0)
+    {
+    }
+
     ScenePoint2D(double x,
                  double y) :
       x_(x),

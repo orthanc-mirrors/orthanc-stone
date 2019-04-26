@@ -262,10 +262,15 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoPolylineRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CompositorHelper.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/FixedPointAligner.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PanSceneTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PointerEvent.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PolylineSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/RotateSceneTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Scene2D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextureBaseSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ZoomSceneTracker.cpp
 
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/FontRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/Glyph.cpp

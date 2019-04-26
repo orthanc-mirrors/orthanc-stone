@@ -21,46 +21,31 @@
 
 #pragma once
 
-#include "CairoSurface.h"
-#include <vector>
+#include "IPointerTracker.h"
+#include "Internals/FixedPointAligner.h"
 
 namespace OrthancStone
 {
-  struct Touch
+  class ZoomSceneTracker : public IPointerTracker
   {
-    float x;
-    float y;
+  private:
+    Scene2D&                      scene_;
+    double                        clickY_;
+    bool                          active_;
+    double                        normalization_;
+    Internals::FixedPointAligner  aligner_;
+    AffineTransform2D             originalSceneToCanvas_;
 
-    Touch(float x, float y)
-    : x(x),
-      y(y)
-    {
-    }
-    Touch()
-      : x(0.0f),
-        y(0.0f)
-    {
-    }
-  };
-
-
-  // this is tracking a mouse in screen coordinates/pixels unlike
-  // the IWorldSceneMouseTracker that is tracking a mouse
-  // in scene coordinates/mm.
-  class IMouseTracker : public boost::noncopyable
-  {
   public:
-    virtual ~IMouseTracker()
+    ZoomSceneTracker(Scene2D& scene,
+                     const PointerEvent& event,
+                     unsigned int canvasWidth,
+                     unsigned int canvasHeight);
+
+    virtual void Update(const PointerEvent& event);
+
+    virtual void Release()
     {
     }
-    
-    virtual void Render(Orthanc::ImageAccessor& surface) = 0;
-
-    virtual void MouseUp() = 0;
-
-    // Returns "true" iff. the background scene must be repainted
-    virtual void MouseMove(int x, 
-                           int y,
-                           const std::vector<Touch>& displayTouches) = 0;
   };
 }

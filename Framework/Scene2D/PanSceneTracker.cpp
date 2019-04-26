@@ -19,48 +19,28 @@
  **/
 
 
-#pragma once
-
-#include "CairoSurface.h"
-#include <vector>
+#include "PanSceneTracker.h"
 
 namespace OrthancStone
 {
-  struct Touch
+  PanSceneTracker::PanSceneTracker(Scene2D& scene,
+                                   const PointerEvent& event) :
+    scene_(scene),
+    originalSceneToCanvas_(scene_.GetSceneToCanvasTransform()),
+    originalCanvasToScene_(scene_.GetCanvasToSceneTransform())
   {
-    float x;
-    float y;
-
-    Touch(float x, float y)
-    : x(x),
-      y(y)
-    {
-    }
-    Touch()
-      : x(0.0f),
-        y(0.0f)
-    {
-    }
-  };
+    pivot_ = event.GetMainPosition().Apply(originalCanvasToScene_);
+  }
 
 
-  // this is tracking a mouse in screen coordinates/pixels unlike
-  // the IWorldSceneMouseTracker that is tracking a mouse
-  // in scene coordinates/mm.
-  class IMouseTracker : public boost::noncopyable
+  void PanSceneTracker::Update(const PointerEvent& event)
   {
-  public:
-    virtual ~IMouseTracker()
-    {
-    }
-    
-    virtual void Render(Orthanc::ImageAccessor& surface) = 0;
-
-    virtual void MouseUp() = 0;
-
-    // Returns "true" iff. the background scene must be repainted
-    virtual void MouseMove(int x, 
-                           int y,
-                           const std::vector<Touch>& displayTouches) = 0;
-  };
+    ScenePoint2D p = event.GetMainPosition().Apply(originalCanvasToScene_);
+      
+    scene_.SetSceneToCanvasTransform(
+      AffineTransform2D::Combine(
+        originalSceneToCanvas_,
+        AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
+                                        p.GetY() - pivot_.GetY())));
+  }
 }

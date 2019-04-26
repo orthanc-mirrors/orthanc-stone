@@ -21,46 +21,29 @@
 
 #pragma once
 
-#include "CairoSurface.h"
-#include <vector>
+#include "../Scene2D.h"
+#include "../ScenePoint2D.h"
 
 namespace OrthancStone
 {
-  struct Touch
+  namespace Internals
   {
-    float x;
-    float y;
-
-    Touch(float x, float y)
-    : x(x),
-      y(y)
+    // During a mouse event that modifies the view of a scene, keeps
+    // one point (the pivot) at the same position on the canvas
+    class FixedPointAligner : public boost::noncopyable
     {
-    }
-    Touch()
-      : x(0.0f),
-        y(0.0f)
-    {
-    }
-  };
+    private:
+      Scene2D&      scene_;
+      ScenePoint2D  pivot_;
+      ScenePoint2D  canvas_;
 
+    public:
+      FixedPointAligner(Scene2D& scene,
+                        const ScenePoint2D& p,
+                        unsigned int canvasWidth,
+                        unsigned int canvasHeight);
 
-  // this is tracking a mouse in screen coordinates/pixels unlike
-  // the IWorldSceneMouseTracker that is tracking a mouse
-  // in scene coordinates/mm.
-  class IMouseTracker : public boost::noncopyable
-  {
-  public:
-    virtual ~IMouseTracker()
-    {
-    }
-    
-    virtual void Render(Orthanc::ImageAccessor& surface) = 0;
-
-    virtual void MouseUp() = 0;
-
-    // Returns "true" iff. the background scene must be repainted
-    virtual void MouseMove(int x, 
-                           int y,
-                           const std::vector<Touch>& displayTouches) = 0;
-  };
+      void Apply();
+    };
+  }
 }

@@ -19,48 +19,51 @@
  **/
 
 
-#pragma once
+#include "PointerEvent.h"
 
-#include "CairoSurface.h"
-#include <vector>
+#include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
-  struct Touch
+  PointerEvent::PointerEvent() :
+    hasAltModifier_(false),
+    hasControlModifier_(false),
+    hasShiftModifier_(false)
   {
-    float x;
-    float y;
+  }
 
-    Touch(float x, float y)
-    : x(x),
-      y(y)
-    {
-    }
-    Touch()
-      : x(0.0f),
-        y(0.0f)
-    {
-    }
-  };
-
-
-  // this is tracking a mouse in screen coordinates/pixels unlike
-  // the IWorldSceneMouseTracker that is tracking a mouse
-  // in scene coordinates/mm.
-  class IMouseTracker : public boost::noncopyable
+  
+  ScenePoint2D PointerEvent::GetMainPosition() const
   {
-  public:
-    virtual ~IMouseTracker()
+    if (positions_.empty())
     {
+      return ScenePoint2D(0, 0);
     }
+    else
+    {
+      return positions_[0];
+    }
+  }
     
-    virtual void Render(Orthanc::ImageAccessor& surface) = 0;
 
-    virtual void MouseUp() = 0;
-
-    // Returns "true" iff. the background scene must be repainted
-    virtual void MouseMove(int x, 
-                           int y,
-                           const std::vector<Touch>& displayTouches) = 0;
-  };
+  // Add the center of the pixel
+  void PointerEvent::AddIntegerPosition(int x,
+                                        int y)
+  {
+    AddPosition(static_cast<double>(x) + 0.5,
+                static_cast<double>(y) + 0.5);
+  }
+    
+    
+  ScenePoint2D PointerEvent::GetPosition(size_t index) const
+  {
+    if (index < positions_.size())
+    {
+      return positions_[index];
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+  }
 }

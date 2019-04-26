@@ -21,35 +21,51 @@
 
 #pragma once
 
-#include "../../OpenGL/IOpenGLContext.h"
-#include "../../OpenGL/OpenGLProgram.h"
-#include "../../OpenGL/OpenGLTexture.h"
-#include "../../Toolbox/AffineTransform2D.h"
+#include "OpenGLTextureProgram.h"
 
 namespace OrthancStone
 {
   namespace Internals
   {
-    class ColorTextureOpenGLProgram : public boost::noncopyable
+    class OpenGLFloatTextureProgram : public boost::noncopyable
     {
     private:
-      static const unsigned int COMPONENTS = 2;
-      static const unsigned int COUNT = 6;  // 2 triangles in 2D
-
-      OpenGL::IOpenGLContext&               context_;
-      std::auto_ptr<OpenGL::OpenGLProgram>  program_;
-      GLint                                 positionLocation_;
-      GLint                                 textureLocation_;
-      GLuint                                buffers_[2];
+      OpenGLTextureProgram  program_;
 
     public:
-      ColorTextureOpenGLProgram(OpenGL::IOpenGLContext&  context);
+      OpenGLFloatTextureProgram(OpenGL::IOpenGLContext&  context);
 
-      ~ColorTextureOpenGLProgram();
+      class Data : public boost::noncopyable
+      {
+      private:
+        OpenGL::OpenGLTexture  texture_;
+        float                  offset_;
+        float                  slope_;
 
-      void Apply(OpenGL::OpenGLTexture& texture,
+      public:
+        Data(const Orthanc::ImageAccessor& texture,
+             bool isLinearInterpolation);
+
+        float GetOffset() const
+        {
+          return offset_;
+        }
+
+        float GetSlope() const
+        {
+          return slope_;
+        }
+
+        OpenGL::OpenGLTexture& GetTexture()
+        {
+          return texture_;
+        }
+      };
+
+      void Apply(Data& data,
                  const AffineTransform2D& transform,
-                 bool useAlpha);
+                 float windowCenter,
+                 float windowWidth);
     };
   }
 }

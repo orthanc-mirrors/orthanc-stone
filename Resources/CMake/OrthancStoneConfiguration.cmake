@@ -256,6 +256,15 @@ list(APPEND ORTHANC_STONE_SOURCES
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SeriesFrameRendererFactory.cpp
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SingleFrameRendererFactory.cpp
 
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CompositorHelper.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/FloatTextureSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PolylineSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Scene2D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextureBaseSceneLayer.cpp
+
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/FontRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/Glyph.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphAlphabet.cpp
@@ -289,12 +298,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyTextLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWindowingTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CompositorHelper.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PolylineSceneLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Scene2D.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextSceneLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneException.h

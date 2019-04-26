@@ -19,31 +19,42 @@
  **/
 
 
-#include "ColorTextureSceneLayer.h"
+#pragma once
 
-#include <Core/OrthancException.h>
-#include <Core/Images/Image.h>
-
+#include "TextureBaseSceneLayer.h"
 
 namespace OrthancStone
 {
-  ColorTextureSceneLayer::ColorTextureSceneLayer(const Orthanc::ImageAccessor& texture)
+  class FloatTextureSceneLayer : public TextureBaseSceneLayer
   {
-    if (texture.GetFormat() != Orthanc::PixelFormat_Grayscale8 &&
-        texture.GetFormat() != Orthanc::PixelFormat_RGBA32 &&
-        texture.GetFormat() != Orthanc::PixelFormat_RGB24)
+  private:
+    ImageWindowing   windowing_;
+    float            customCenter_;
+    float            customWidth_;
+
+  public:
+    FloatTextureSceneLayer(const Orthanc::ImageAccessor& texture);
+
+    void SetWindowing(ImageWindowing windowing);
+
+    void SetCustomWindowing(float customCenter,
+                            float customWidth);
+
+    void GetWindowing(float& targetCenter,
+                      float& targetWidth) const;
+
+    ImageWindowing GetWindowingType() const
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+      return windowing_;
     }
-      
-    SetTexture(Orthanc::Image::Clone(texture));
-  }
 
+    void FitRange();
 
-  ISceneLayer* ColorTextureSceneLayer::Clone() const
-  {
-    std::auto_ptr<ColorTextureSceneLayer> cloned(new ColorTextureSceneLayer(GetTexture()));
-    cloned->CopyParameters(*this);
-    return cloned.release();
-  }
+    virtual ISceneLayer* Clone() const;
+
+    virtual Type GetType() const
+    {
+      return Type_FloatTexture;
+    }
+  };
 }

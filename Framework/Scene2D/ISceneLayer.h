@@ -36,7 +36,8 @@ namespace OrthancStone
       Type_InfoPanel,
       Type_ColorTexture,
       Type_Polyline,
-      Type_Text
+      Type_Text,
+      Type_FloatTexture
     };
 
     virtual ~ISceneLayer()

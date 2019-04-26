@@ -21,58 +21,20 @@
 
 #pragma once
 
-#include "ISceneLayer.h"
-#include "../Toolbox/AffineTransform2D.h"
-
-#include <Core/Images/ImageAccessor.h>
-#include <memory>
+#include "TextureBaseSceneLayer.h"
 
 namespace OrthancStone
 {
-  class ColorTextureSceneLayer : public ISceneLayer
+  class ColorTextureSceneLayer : public TextureBaseSceneLayer
   {
-  private:
-    std::auto_ptr<Orthanc::ImageAccessor>  texture_;
-    double                                 originX_;
-    double                                 originY_;
-    double                                 pixelSpacingX_;
-    double                                 pixelSpacingY_;
-    double                                 angle_;
-    bool                                   isLinearInterpolation_;
-
   public:
-    ColorTextureSceneLayer(const Orthanc::ImageAccessor& texture,
-                           double originX,  // Center of the top-left pixel
-                           double originY,
-                           double pixelSpacingX,
-                           double pixelSpacingY,
-                           double angle,
-                           bool isLinearInterpolation);
+    ColorTextureSceneLayer(const Orthanc::ImageAccessor& texture);
 
     virtual ISceneLayer* Clone() const;
-
-    const Orthanc::ImageAccessor& GetTexture() const
-    {
-      return *texture_;
-    }
-
-    AffineTransform2D GetTransform() const;
-
-    bool IsLinearInterpolation() const
-    {
-      return isLinearInterpolation_;
-    }
 
     virtual Type GetType() const
     {
       return Type_ColorTexture;
-    }
-
-    virtual bool GetBoundingBox(Extent2D& target) const;
-    
-    virtual uint64_t GetRevision() const
-    {
-      return 0;
     }
   };
 }

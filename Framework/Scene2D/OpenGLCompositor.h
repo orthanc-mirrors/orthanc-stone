@@ -29,7 +29,7 @@
 
 namespace OrthancStone
 {
-  class OpenGLCompositor : protected Internals::CompositorHelper::IRendererFactory
+  class OpenGLCompositor : private Internals::CompositorHelper::IRendererFactory
   {
   private:
     class Font;
@@ -48,7 +48,6 @@ namespace OrthancStone
     
     const Font* GetFont(size_t fontIndex) const;
 
-  protected:
     virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer);
 
   public:

@@ -257,10 +257,15 @@ list(APPEND ORTHANC_STONE_SOURCES
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SeriesFrameRendererFactory.cpp
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SingleFrameRendererFactory.cpp
 
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CairoCompositor.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/FloatTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoColorTextureRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoFloatTextureRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoInfoPanelRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoPolylineRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoTextRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CompositorHelper.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/FixedPointAligner.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PanSceneTracker.cpp

@@ -136,7 +136,7 @@ namespace OrthancStone
                                 Orthanc::Encoding codepage)
   {
     FontRenderer renderer;
-    renderer.LoadFont(font, fontSize);
+    renderer.LoadFont(resource, fontSize);
 
     std::auto_ptr<GlyphBitmapAlphabet> alphabet(new GlyphBitmapAlphabet);
     alphabet->LoadCodepage(renderer, codepage);

@@ -194,7 +194,7 @@ namespace OrthancStone
                                  Orthanc::Encoding codepage)
   {
     FontRenderer renderer;
-    renderer.LoadFont(font, fontSize);
+    renderer.LoadFont(resource, fontSize);
 
     GlyphBitmapAlphabet dict;
     dict.LoadCodepage(renderer, codepage);

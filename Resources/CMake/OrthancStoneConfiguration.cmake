@@ -107,6 +107,13 @@ endif()
 
 
 if (ENABLE_OPENGL)
+  include(FindOpenGL)
+  if (NOT OPENGL_FOUND)
+    message(FATAL_ERROR "Cannot find OpenGL on your system")
+  endif()
+
+  link_libraries(${OPENGL_LIBRARIES})
+
   add_definitions(
     -DGL_GLEXT_PROTOTYPES=1
     -DORTHANC_ENABLE_OPENGL=1

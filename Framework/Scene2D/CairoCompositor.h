@@ -57,7 +57,7 @@ namespace OrthancStone
     virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer);
 
   public:
-    CairoCompositor(Scene2D& scene,
+    CairoCompositor(const Scene2D& scene,
                     unsigned int canvasWidth,
                     unsigned int canvasHeight);
     

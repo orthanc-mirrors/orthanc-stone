@@ -119,7 +119,7 @@ namespace OrthancStone
 
 
   OpenGLCompositor::OpenGLCompositor(OpenGL::IOpenGLContext& context,
-                                     Scene2D& scene) :
+                                     const Scene2D& scene) :
     context_(context),
     helper_(scene, *this),
     colorTextureProgram_(context),

@@ -87,7 +87,7 @@ namespace OrthancStone
   }
 
   
-  void Scene2D::Apply(IVisitor& visitor)
+  void Scene2D::Apply(IVisitor& visitor) const
   {
     for (Content::const_iterator it = content_.begin(); 
          it != content_.end(); ++it)

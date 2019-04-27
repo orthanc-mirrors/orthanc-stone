@@ -52,7 +52,7 @@ namespace OrthancStone
 
   public:
     OpenGLCompositor(OpenGL::IOpenGLContext& context,
-                     Scene2D& scene);
+                     const Scene2D& scene);
 
     ~OpenGLCompositor();
 

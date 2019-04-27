@@ -69,7 +69,7 @@ namespace OrthancStone
 
     void DeleteLayer(int depth);
 
-    void Apply(IVisitor& visitor);
+    void Apply(IVisitor& visitor) const;
 
     const AffineTransform2D& GetSceneToCanvasTransform() const
     {

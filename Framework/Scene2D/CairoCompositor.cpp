@@ -82,7 +82,7 @@ namespace OrthancStone
   }
 
 
-  CairoCompositor::CairoCompositor(Scene2D& scene,
+  CairoCompositor::CairoCompositor(const Scene2D& scene,
                                    unsigned int canvasWidth,
                                    unsigned int canvasHeight) :
     helper_(scene, *this)

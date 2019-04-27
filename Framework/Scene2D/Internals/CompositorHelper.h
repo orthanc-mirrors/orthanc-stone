@@ -58,7 +58,7 @@ namespace OrthancStone
 
       typedef std::map<int, Item*>  Content;
 
-      Scene2D&           scene_;
+      const Scene2D&     scene_;
       IRendererFactory&  factory_;
       Content            content_;
       AffineTransform2D  sceneTransform_;
@@ -68,7 +68,7 @@ namespace OrthancStone
                          int depth);
 
     public:
-      CompositorHelper(Scene2D& scene,
+      CompositorHelper(const Scene2D& scene,
                        IRendererFactory& factory) :
         scene_(scene),
         factory_(factory)

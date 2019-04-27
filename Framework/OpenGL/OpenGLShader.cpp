@@ -53,7 +53,7 @@ namespace OrthancStone
         int infoLen = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
 
-        if (infoLen > 0)
+        if (infoLen > 1)  // Might be equal to 1, which amounts to no error
         {
           std::string infoLog;
           infoLog.resize(infoLen + 1);

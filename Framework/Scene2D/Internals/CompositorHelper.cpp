@@ -32,13 +32,16 @@ namespace OrthancStone
     private:
       std::auto_ptr<ILayerRenderer>  renderer_;
       const ISceneLayer&             layer_;
+      uint64_t                       layerIdentifier_;
       uint64_t                       lastRevision_;
 
     public:
       Item(ILayerRenderer* renderer,     // Takes ownership
-           const ISceneLayer& layer) :
+           const ISceneLayer& layer,
+           uint64_t layerIdentifier) :
         renderer_(renderer),
         layer_(layer),
+        layerIdentifier_(layerIdentifier),
         lastRevision_(layer.GetRevision())
       {
         if (renderer == NULL)
@@ -58,6 +61,11 @@ namespace OrthancStone
         return layer_;
       }
 
+      uint64_t GetLayerIdentifier() const
+      {
+        return layerIdentifier_;
+      }
+
       uint64_t GetLastRevision() const
       {
         return lastRevision_;
@@ -73,15 +81,19 @@ namespace OrthancStone
 
 
     void CompositorHelper::Visit(const ISceneLayer& layer,
+                                 uint64_t layerIdentifier,
                                  int depth)
     {
+      // "Visit()" is only applied to layers existing in the scene
+      assert(scene_.HasLayer(depth)); 
+
       Content::iterator found = content_.find(depth);
 
       assert(found == content_.end() ||
              found->second != NULL);
 
       if (found == content_.end() ||
-          &found->second->GetLayer() != &layer)
+          found->second->GetLayerIdentifier() != layerIdentifier)
       {
         // This is the first time this layer is rendered, or the layer
         // is not the same as before
@@ -96,12 +108,14 @@ namespace OrthancStone
         if (renderer.get() != NULL)
         {
           renderer->Render(sceneTransform_);
-          content_[depth] = new Item(renderer.release(), layer);
+          content_[depth] = new Item(renderer.release(), layer, layerIdentifier);
         }
       }
       else
       {
         // This layer has already been rendered
+        assert(found->second->GetLastRevision() <= layer.GetRevision());
+        
         if (found->second->GetLastRevision() < layer.GetRevision())
         {
           found->second->UpdateRenderer();
@@ -112,7 +126,7 @@ namespace OrthancStone
 
       // Check invariants
       assert(content_.find(depth) == content_.end() ||
-             (&content_[depth]->GetLayer() == &layer &&
+             (content_[depth]->GetLayerIdentifier() == layerIdentifier &&
               content_[depth]->GetLastRevision() == layer.GetRevision()));
     }
 

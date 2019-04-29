@@ -26,14 +26,46 @@
 
 namespace OrthancStone
 {
+  class Scene2D::Item
+  {
+  private:
+    std::auto_ptr<ISceneLayer>  layer_;
+    uint64_t                    identifier_;
+
+  public:
+    Item(ISceneLayer* layer,
+         uint64_t identifier) :
+      layer_(layer),
+      identifier_(identifier)
+    {
+      if (layer == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+    }
+
+    ISceneLayer& GetLayer() const
+    {
+      assert(layer_.get() != NULL);
+      return *layer_;
+    }
+
+    uint64_t GetIdentifier() const
+    {
+      return identifier_;
+    }
+  };
+  
+  
   Scene2D::Scene2D(const Scene2D& other) :
     sceneToCanvas_(other.sceneToCanvas_),
-    canvasToScene_(other.canvasToScene_)
+    canvasToScene_(other.canvasToScene_),
+    layerCounter_(0)
   {
     for (Content::const_iterator it = other.content_.begin();
          it != other.content_.end(); ++it)
     {
-      content_[it->first] = it->second->Clone();
+      content_[it->first] = new Item(it->second->GetLayer().Clone(), layerCounter_++);
     }
   }
 
@@ -52,7 +84,7 @@ namespace OrthancStone
   void Scene2D::SetLayer(int depth,
                          ISceneLayer* layer)  // Takes ownership
   {
-    std::auto_ptr<ISceneLayer> protection(layer);
+    std::auto_ptr<Item> item(new Item(layer, layerCounter_++));
 
     if (layer == NULL)
     {
@@ -63,13 +95,13 @@ namespace OrthancStone
 
     if (found == content_.end())
     {
-      content_[depth] = protection.release();
+      content_[depth] = item.release();
     }
     else
     {
       assert(found->second != NULL);
       delete found->second;
-      found->second = protection.release();
+      found->second = item.release();
     }
   }
 
@@ -87,13 +119,35 @@ namespace OrthancStone
   }
 
   
+  bool Scene2D::HasLayer(int depth) const
+  {
+    return (content_.find(depth) != content_.end());
+  }
+
+
+  ISceneLayer& Scene2D::GetLayer(int depth) const
+  {
+    Content::const_iterator found = content_.find(depth);
+
+    if (found == content_.end())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      assert(found->second != NULL);
+      return found->second->GetLayer();
+    }
+  }
+
+  
   void Scene2D::Apply(IVisitor& visitor) const
   {
     for (Content::const_iterator it = content_.begin(); 
          it != content_.end(); ++it)
     {
       assert(it->second != NULL);
-      visitor.Visit(*it->second, it->first);
+      visitor.Visit(it->second->GetLayer(), it->second->GetIdentifier(), it->first);
     }
   }
 
@@ -119,7 +173,7 @@ namespace OrthancStone
       assert(it->second != NULL);
       
       Extent2D tmp;
-      if (it->second->GetBoundingBox(tmp))
+      if (it->second->GetLayer().GetBoundingBox(tmp))
       {
         extent.Union(tmp);
       }

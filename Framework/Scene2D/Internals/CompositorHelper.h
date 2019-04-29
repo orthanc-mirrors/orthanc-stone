@@ -65,6 +65,7 @@ namespace OrthancStone
 
     protected:
       virtual void Visit(const ISceneLayer& layer,
+                         uint64_t layerIdentifier,
                          int depth);
 
     public:

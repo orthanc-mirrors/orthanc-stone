@@ -39,21 +39,25 @@ namespace OrthancStone
       }
 
       virtual void Visit(const ISceneLayer& layer,
+                         uint64_t layerIdentifier,
                          int depth) = 0;
     };
 
   private:
-    typedef std::map<int, ISceneLayer*>  Content;
+    class Item;
+    
+    typedef std::map<int, Item*>  Content;
 
-    Content    content_;
-
+    Content            content_;
     AffineTransform2D  sceneToCanvas_;
     AffineTransform2D  canvasToScene_;
+    uint64_t           layerCounter_;
 
     Scene2D(const Scene2D& other);
     
   public:
-    Scene2D()
+    Scene2D() :
+      layerCounter_(0)
     {
     }
     
@@ -68,6 +72,10 @@ namespace OrthancStone
                   ISceneLayer* layer);  // Takes ownership
 
     void DeleteLayer(int depth);
+
+    bool HasLayer(int depth) const;
+
+    ISceneLayer& GetLayer(int depth) const;
 
     void Apply(IVisitor& visitor) const;
 

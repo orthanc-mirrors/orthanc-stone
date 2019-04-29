@@ -23,26 +23,59 @@
 
 namespace OrthancStone
 {
-  TextSceneLayer::TextSceneLayer(double x,
-                                 double y,
-                                 const std::string& utf8,
-                                 size_t fontIndex,
-                                 BitmapAnchor anchor,
-                                 unsigned int border) :
-    x_(x),
-    y_(y),
-    utf8_(utf8),
-    fontIndex_(fontIndex),
-    anchor_(anchor),
-    border_(border)
+  TextSceneLayer::TextSceneLayer() :
+    x_(0),
+    y_(0),
+    fontIndex_(0),
+    anchor_(BitmapAnchor_Center),
+    border_(0),
+    revision_(0)
   {
   }
 
 
   ISceneLayer* TextSceneLayer::Clone() const
   {
-    std::auto_ptr<TextSceneLayer> cloned(new TextSceneLayer(x_, y_, utf8_, fontIndex_, anchor_, border_));
+    std::auto_ptr<TextSceneLayer> cloned(new TextSceneLayer);
     cloned->SetColor(GetRed(), GetGreen(), GetBlue());
+    cloned->x_ = x_;
+    cloned->y_ = y_;
+    cloned->utf8_ = utf8_;
+    cloned->fontIndex_ = fontIndex_;
+    cloned->anchor_ = anchor_;
+    cloned->border_ = border_;
     return cloned.release();
+  }
+
+  void TextSceneLayer::SetPosition(double x,
+                                   double y)
+  {
+    x_ = x;
+    y_ = y;
+    revision_ ++;
+  }
+
+  void TextSceneLayer::SetText(const std::string& utf8)
+  {
+    utf8_ = utf8;
+    revision_ ++;
+  }
+
+  void TextSceneLayer::SetFontIndex(size_t fontIndex)
+  {
+    fontIndex_ = fontIndex;
+    revision_ ++;
+  }
+
+  void TextSceneLayer::SetAnchor(BitmapAnchor anchor)
+  {
+    anchor_ = anchor;
+    revision_ ++;
+  }
+
+  void TextSceneLayer::SetBorder(unsigned int border)
+  {
+    border_ = border;
+    revision_ ++;
   }
 }

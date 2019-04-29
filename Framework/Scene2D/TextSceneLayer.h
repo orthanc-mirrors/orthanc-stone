@@ -38,16 +38,23 @@ namespace OrthancStone
     size_t         fontIndex_;
     BitmapAnchor   anchor_;
     unsigned int   border_;
+    uint64_t       revision_;
   
   public:
-    TextSceneLayer(double x,
-                   double y,
-                   const std::string& utf8,
-                   size_t fontIndex,
-                   BitmapAnchor anchor,
-                   unsigned int border);
+    TextSceneLayer();
 
     virtual ISceneLayer* Clone() const;
+
+    void SetPosition(double x,
+                     double y);
+
+    void SetText(const std::string& utf8);
+
+    void SetFontIndex(size_t fontIndex);
+
+    void SetAnchor(BitmapAnchor anchor);
+
+    void SetBorder(unsigned int border);
 
     double GetX() const
     {
@@ -91,7 +98,7 @@ namespace OrthancStone
 
     virtual uint64_t GetRevision() const
     {
-      return 0;
+      return revision_;
     }
   };
 }

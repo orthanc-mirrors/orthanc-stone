@@ -39,7 +39,8 @@
 #include <SDL.h>
 #include <stdio.h>
 
-static const unsigned int FONT_SIZE = 64;
+static const unsigned int FONT_SIZE = 32;
+static const int LAYER_POSITION = 150;
 
 
 void PrepareScene(OrthancStone::Scene2D& scene)
@@ -125,7 +126,11 @@ void PrepareScene(OrthancStone::Scene2D& scene)
   }
 
   // Some text
-  scene.SetLayer(170, new TextSceneLayer(0, 0, "Hello", 0, BitmapAnchor_Center, 20));
+  {
+    std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer);
+    layer->SetText("Hello");
+    scene.SetLayer(100, layer.release());
+  }
 }
 
 
@@ -156,7 +161,49 @@ void HandleApplicationEvent(OrthancStone::Scene2D& scene,
                             unsigned int windowWidth,
                             unsigned int windowHeight)
 {
-  if (event.type == SDL_MOUSEBUTTONDOWN)
+  bool hasPositionLayer = false;
+  
+  if (event.type == SDL_MOUSEMOTION)
+  {
+    int scancodeCount = 0;
+    const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
+
+    if (activeTracker.get() == NULL &&
+        SDL_SCANCODE_LCTRL < scancodeCount &&
+        keyboardState[SDL_SCANCODE_LCTRL])
+    {
+      // The "left-ctrl" key is down, while no tracker is present
+
+      OrthancStone::PointerEvent e;
+      e.AddIntegerPosition(event.button.x - static_cast<int>(windowWidth) / 2,
+                           event.button.y - static_cast<int>(windowHeight) / 2);
+      OrthancStone::ScenePoint2D p = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
+
+      char buf[64];
+      sprintf(buf, "(%0.02f,%0.02f)", p.GetX(), p.GetY());
+
+      if (scene.HasLayer(LAYER_POSITION))
+      {
+        OrthancStone::TextSceneLayer& layer =
+          dynamic_cast<OrthancStone::TextSceneLayer&>(scene.GetLayer(LAYER_POSITION));
+        layer.SetText(buf);
+        layer.SetPosition(p.GetX(), p.GetY());
+      }
+      else
+      {
+        std::auto_ptr<OrthancStone::TextSceneLayer> layer(new OrthancStone::TextSceneLayer);
+        layer->SetColor(0, 255, 0);
+        layer->SetText(buf);
+        layer->SetBorder(20);
+        layer->SetAnchor(OrthancStone::BitmapAnchor_BottomCenter);
+        layer->SetPosition(p.GetX(), p.GetY());
+        scene.SetLayer(LAYER_POSITION, layer.release());
+      }
+
+      hasPositionLayer = true;
+    }
+  }
+  else if (event.type == SDL_MOUSEBUTTONDOWN)
   {
     OrthancStone::PointerEvent e;
     e.AddIntegerPosition(event.button.x, event.button.y);
@@ -197,6 +244,11 @@ void HandleApplicationEvent(OrthancStone::Scene2D& scene,
       default:
         break;
     }
+  }
+
+  if (!hasPositionLayer)
+  {
+    scene.DeleteLayer(LAYER_POSITION);
   }
 }
 
@@ -284,14 +336,11 @@ void Run(OrthancStone::Scene2D& scene)
             break;
 
           default:
-            HandleApplicationEvent(scene, event, tracker, window.GetCanvasWidth(), window.GetCanvasHeight());
             break;
         }
       }
-      else
-      {
-        HandleApplicationEvent(scene, event, tracker, window.GetCanvasWidth(), window.GetCanvasHeight());
-      }
+      
+      HandleApplicationEvent(scene, event, tracker, window.GetCanvasWidth(), window.GetCanvasHeight());
     }
 
     SDL_Delay(1);

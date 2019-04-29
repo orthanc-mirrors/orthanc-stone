@@ -348,7 +348,14 @@ void Run(OrthancStone::Scene2D& scene)
 }
 
 
-int main()
+
+
+/**
+ * IMPORTANT: The full arguments to "main()" are needed for SDL on
+ * Windows. Otherwise, one gets the linking error "undefined reference
+ * to `SDL_main'". https://wiki.libsdl.org/FAQWindows
+ **/
+int main(int argc, char* argv[])
 {
   Orthanc::Logging::Initialize();
   OrthancStone::SdlWindow::GlobalInitialize();

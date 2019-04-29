@@ -33,12 +33,8 @@
 #  include <OpenGL/gl.h>
 #  include <OpenGL/glext.h>
 #elif defined(_WIN32)
-// On Windows, use the compatibility headers provided by SDL
-#  if ORTHANC_ENABLE_SDL == 1
-#    include <SDL_opengl.h>
-#  else
-#    error Stone cannot be compiled on Windows without SDL
-#  endif
+// On Windows, use the compatibility headers provided by glew
+#  include <GL/glew.h>
 #else
 #  include <GL/gl.h>
 #  include <GL/glext.h>

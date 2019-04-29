@@ -46,8 +46,26 @@ namespace OrthancStone
 
     ISceneLayer& GetLayer() const
     {
-      assert(layer_.get() != NULL);
-      return *layer_;
+      if (layer_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        return *layer_;
+      }
+    }
+
+    ISceneLayer* ReleaseLayer()
+    {
+      if (layer_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        return layer_.release();
+      }
     }
 
     uint64_t GetIdentifier() const
@@ -131,7 +149,7 @@ namespace OrthancStone
 
     if (found == content_.end())
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
     else
     {
@@ -140,6 +158,28 @@ namespace OrthancStone
     }
   }
 
+  
+  ISceneLayer* Scene2D::ReleaseLayer(int depth)
+  {
+    Content::iterator found = content_.find(depth);
+
+    if (found == content_.end())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      assert(found->second != NULL);
+
+      std::auto_ptr<ISceneLayer> layer(found->second->ReleaseLayer());
+      assert(layer.get() != NULL);
+
+      content_.erase(found);
+
+      return layer.release();
+    }    
+  }
+  
   
   void Scene2D::Apply(IVisitor& visitor) const
   {

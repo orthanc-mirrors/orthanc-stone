@@ -77,6 +77,8 @@ namespace OrthancStone
 
     ISceneLayer& GetLayer(int depth) const;
 
+    ISceneLayer* ReleaseLayer(int depth);
+
     void Apply(IVisitor& visitor) const;
 
     const AffineTransform2D& GetSceneToCanvasTransform() const

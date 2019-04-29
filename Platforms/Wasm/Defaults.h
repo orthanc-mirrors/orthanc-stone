@@ -18,7 +18,11 @@ extern "C" {
   extern void ScheduleWebViewportRedrawFromCpp(ViewportHandle cppViewportHandle);
   extern void UpdateStoneApplicationStatusFromCppWithString(const char* statusUpdateMessage);
   extern void UpdateStoneApplicationStatusFromCppWithSerializedMessage(const char* statusUpdateMessage);
-  
+  extern void stone_console_error(const char*);
+  extern void stone_console_warning(const char*);
+  extern void stone_console_info(const char*);
+  extern void stone_console_trace(const char*);
+
   // C++ methods accessible from JS
   extern void EMSCRIPTEN_KEEPALIVE CreateWasmApplication(ViewportHandle cppViewportHandle);
   extern void EMSCRIPTEN_KEEPALIVE SetStartupParameter(const char* keyc, const char* value);

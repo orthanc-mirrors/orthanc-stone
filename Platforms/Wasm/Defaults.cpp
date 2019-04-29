@@ -5,9 +5,12 @@
 #include <Framework/dev.h>
 #include "Framework/Widgets/TestCairoWidget.h"
 #include <Framework/Viewport/WidgetViewport.h>
+#include <Applications/Wasm/StartupParametersBuilder.h>
+#include <Platforms/Wasm/WasmPlatformApplicationAdapter.h>
+#include <Core/Logging.h>
+
 #include <algorithm>
-#include "Applications/Wasm/StartupParametersBuilder.h"
-#include "Platforms/Wasm/WasmPlatformApplicationAdapter.h"
+
 
 static unsigned int width_ = 0;
 static unsigned int height_ = 0;
@@ -88,6 +91,10 @@ extern "C" {
 
     printf("StartWasmApplication\n");
 
+    Orthanc::Logging::SetErrorWarnInfoTraceLoggingFunctions(
+      stone_console_error, stone_console_warning,
+      stone_console_info, stone_console_trace);
+
     // recreate a command line from uri arguments and parse it
     boost::program_options::variables_map parameters;
     boost::program_options::options_description options;
@@ -104,6 +111,16 @@ extern "C" {
 
 //    viewport->SetSize(width_, height_);
     printf("StartWasmApplication - completed\n");
+  }
+  
+  bool EMSCRIPTEN_KEEPALIVE WasmIsTraceLevelEnabled()
+  {
+    return Orthanc::Logging::IsTraceLevelEnabled();
+  }
+
+  bool EMSCRIPTEN_KEEPALIVE WasmIsInfoLevelEnabled()
+  {
+    return Orthanc::Logging::IsInfoLevelEnabled();
   }
   
   void EMSCRIPTEN_KEEPALIVE WasmDoAnimation()

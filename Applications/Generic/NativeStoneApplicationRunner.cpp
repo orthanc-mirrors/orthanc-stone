@@ -81,11 +81,13 @@ namespace OrthancStone
       generic.add_options()
           ("help", "Display this help and exit")
           ("verbose", "Be verbose in logs")
-          ("orthanc", boost::program_options::value<std::string>()->default_value("http://localhost:8042/"),
+          ("orthanc", boost::program_options::value<std::string>()->
+            default_value("http://localhost:8042/"),
            "URL to the Orthanc server")
           ("username", "Username for the Orthanc server")
           ("password", "Password for the Orthanc server")
-          ("https-verify", boost::program_options::value<bool>()->default_value(true), "Check HTTPS certificates")
+          ("https-verify", boost::program_options::value<bool>()->
+            default_value(true), "Check HTTPS certificates")
           ;
 
       options.add(generic);
@@ -102,13 +104,15 @@ namespace OrthancStone
 
     try
     {
-      boost::program_options::store(boost::program_options::command_line_parser(argc, argv).
-                                    options(options).run(), parameters);
+      boost::program_options::store(
+        boost::program_options::command_line_parser(argc, argv).
+          options(options).run(), parameters);
       boost::program_options::notify(parameters);
     }
     catch (boost::program_options::error& e)
     {
-      LOG(ERROR) << "Error while parsing the command-line arguments: " << e.what();
+      LOG(ERROR) << 
+        "Error while parsing the command-line arguments: " << e.what();
       error = true;
     }
 
@@ -120,12 +124,11 @@ namespace OrthancStone
     if (error || parameters.count("help"))
     {
       std::cout << std::endl
-                << "Usage: " << argv[0] << " [OPTION]..."
-                << std::endl
-                << "Orthanc, lightweight, RESTful DICOM server for healthcare and medical research."
-                << std::endl << std::endl
-                << "Demonstration application of Orthanc Stone in native environment."
-                << std::endl;
+                << "Usage: " << argv[0] << " [OPTION]..." << std::endl
+                << "Orthanc, lightweight, RESTful DICOM server for healthcare "
+                << "and medical research." << std::endl << std::endl
+                << "Demonstration application of Orthanc Stone in native "
+                << "environment." << std::endl;
 
       std::cout << options << "\n";
       return error ? -1 : 0;
@@ -138,20 +141,23 @@ namespace OrthancStone
       Orthanc::HttpClient::ConfigureSsl(false, "");
     }
 
+    LOG(ERROR) << "???????? if (parameters.count(\"verbose\"))";
     if (parameters.count("verbose"))
     {
+      LOG(ERROR) << "parameters.count(\"verbose\") != 0";
       Orthanc::Logging::EnableInfoLevel(true);
       LOG(INFO) << "Verbose logs are enabled";
     }
 
+`    LOG(ERROR) << "???????? if (parameters.count(\"trace\"))";
     if (parameters.count("trace"))
     {
+      LOG(ERROR) << "parameters.count(\"trace\") != 0";
       Orthanc::Logging::EnableTraceLevel(true);
       VLOG(1) << "Trace logs are enabled";
     }
 
     ParseCommandLineOptions(parameters);
-
 
     bool success = true;
     try
@@ -169,17 +175,20 @@ namespace OrthancStone
 
       if (parameters.count("username") && parameters.count("password"))
       {
-        webServiceParameters.SetCredentials(parameters["username"].as<std::string>(),
-            parameters["password"].as<std::string>());
+        webServiceParameters.SetCredentials(parameters["username"].
+          as<std::string>(),
+          parameters["password"].as<std::string>());
       }
 
-      LOG(WARNING) << "URL to the Orthanc REST API: " << webServiceParameters.GetUrl();
+      LOG(WARNING) << "URL to the Orthanc REST API: " << 
+        webServiceParameters.GetUrl();
 
       {
         OrthancPlugins::OrthancHttpConnection orthanc(webServiceParameters);
         if (!MessagingToolbox::CheckOrthancVersion(orthanc))
         {
-          LOG(ERROR) << "Your version of Orthanc is incompatible with Stone of Orthanc, please upgrade";
+          LOG(ERROR) << "Your version of Orthanc is incompatible with Stone of "
+            << "Orthanc, please upgrade";
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
         }
       }
@@ -196,11 +205,15 @@ namespace OrthancStone
       NativeStoneApplicationContext context(broker_);
 
       {
-        Oracle oracle(6); // use multiple threads to execute asynchronous tasks like download content
+        // use multiple threads to execute asynchronous tasks like 
+        // download content
+        Oracle oracle(6); 
         oracle.Start();
 
         {
-          OracleWebService webService(broker_, oracle, webServiceParameters, context);
+          OracleWebService webService(
+            broker_, oracle, webServiceParameters, context);
+          
           context.SetWebService(webService);
           context.SetOrthancBaseUrl(webServiceParameters.GetUrl());
 
@@ -255,5 +268,4 @@ namespace OrthancStone
 
     return (success ? 0 : -1);
   }
-
 }

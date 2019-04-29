@@ -59,6 +59,11 @@ export class Framework
   {
     Logger.defaultLogger.debug('Initializing WebAssembly Module');
 
+    (<any> window).errorFromCpp = function(text:any) { Logger.defaultLogger.errorFromCpp(text); };
+    (<any> window).warningFromCpp = function(text:any) { Logger.defaultLogger.warningFromCpp(text); };
+    (<any> window).infoFromCpp = function(text:any) { Logger.defaultLogger.infoFromCpp(text); };
+    (<any> window).debugFromCpp = function(text:any) { Logger.defaultLogger.debugFromCpp(text); };
+
     // (<any> window).
     (<any> window).StoneFrameworkModule = {
       preRun: [ 

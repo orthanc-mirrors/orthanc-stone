@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 
+if(MSVC)
+  add_definitions(/MP)
+  if (CMAKE_BUILD_TYPE MATCHES DEBUG)
+    add_definitions(/JMC)
+  endif()
+endif()
 
 #####################################################################
 ## Configuration of the Orthanc framework

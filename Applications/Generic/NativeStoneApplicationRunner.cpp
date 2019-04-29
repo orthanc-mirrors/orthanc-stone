@@ -149,7 +149,7 @@ namespace OrthancStone
       LOG(INFO) << "Verbose logs are enabled";
     }
 
-`    LOG(ERROR) << "???????? if (parameters.count(\"trace\"))";
+    LOG(ERROR) << "???????? if (parameters.count(\"trace\"))";
     if (parameters.count("trace"))
     {
       LOG(ERROR) << "parameters.count(\"trace\") != 0";

@@ -200,7 +200,7 @@ void QCairoWidget::resizeEvent(QResizeEvent* event)
 
   if (event)
   {
-    surface_.SetSize(event->size().width(), event->size().height());
+    surface_.SetSize(event->size().width(), event->size().height(), true);
 
     image_.reset(new QImage(reinterpret_cast<uchar*>(surface_.GetBuffer()),
                             event->size().width(), 

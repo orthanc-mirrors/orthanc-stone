@@ -38,6 +38,39 @@ namespace {{rootName}}
     return result;
   }
 
+  inline void _StoneDeserializeValue(int64_t& destValue, const Json::Value& jsonValue)
+  {
+    destValue = jsonValue.asInt64();
+  }
+
+  inline Json::Value _StoneSerializeValue(int64_t value)
+  {
+    Json::Value result(value);
+    return result;
+  }
+
+  inline void _StoneDeserializeValue(uint32_t& destValue, const Json::Value& jsonValue)
+  {
+    destValue = jsonValue.asUInt();
+  }
+
+  inline Json::Value _StoneSerializeValue(uint32_t value)
+  {
+    Json::Value result(value);
+    return result;
+  }
+
+  inline void _StoneDeserializeValue(uint64_t& destValue, const Json::Value& jsonValue)
+  {
+    destValue = jsonValue.asUInt64();
+  }
+
+  inline Json::Value _StoneSerializeValue(uint64_t value)
+  {
+    Json::Value result(value);
+    return result;
+  }
+
   inline void _StoneDeserializeValue(Json::Value& destValue, const Json::Value& jsonValue)
   {
     destValue = jsonValue;

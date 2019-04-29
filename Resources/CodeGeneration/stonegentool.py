@@ -76,7 +76,7 @@ def LoadSchemaFromJson(filePath):
 def CanonToCpp(canonicalTypename):
   # C++: prefix map vector and string with std::map, std::vector and
   # std::string
-  # replace int32 by int32_t
+  # replace int32... by int32_t...
   # replace float32 by float
   # replace float64 by double
   retVal = canonicalTypename
@@ -84,7 +84,9 @@ def CanonToCpp(canonicalTypename):
   retVal = retVal.replace("vector", "std::vector")
   retVal = retVal.replace("set", "std::set")
   retVal = retVal.replace("string", "std::string")
+  #uint32 and uint64 are handled by int32 and uint32 (because search and replace are done as partial words)
   retVal = retVal.replace("int32", "int32_t")
+  retVal = retVal.replace("int64", "int64_t")
   retVal = retVal.replace("float32", "float")
   retVal = retVal.replace("float64", "double")
   retVal = retVal.replace("json", "Json::Value")
@@ -93,14 +95,16 @@ def CanonToCpp(canonicalTypename):
 def CanonToTs(canonicalTypename):
   # TS: replace vector with Array and map with Map
   # string remains string
-  # replace int32 by number
-  # replace float32 by number
-  # replace float64 by number
+  # replace int32... by number
+  # replace float32... by number
   retVal = canonicalTypename
   retVal = retVal.replace("map", "Map")
   retVal = retVal.replace("vector", "Array")
   retVal = retVal.replace("set", "Set")
+  retVal = retVal.replace("uint32", "number")
+  retVal = retVal.replace("uint64", "number")
   retVal = retVal.replace("int32", "number")
+  retVal = retVal.replace("int64", "number")
   retVal = retVal.replace("float32", "number")
   retVal = retVal.replace("float64", "number")
   retVal = retVal.replace("bool", "boolean")

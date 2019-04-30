@@ -35,9 +35,6 @@
 
 namespace OrthancStone
 {
-  static boost::mutex  globalMutex_;
-  static bool          globalIsGlewInitialized_ = false;
-  
   SdlOpenGLWindow::SdlOpenGLWindow(const char* title,
                                    unsigned int width,
                                    unsigned int height) :
@@ -56,9 +53,12 @@ namespace OrthancStone
     // only be called once an OpenGL is setup.
     // https://stackoverflow.com/a/45033669/881731
     {
-      boost::mutex::scoped_lock lock(globalMutex_);
+      static boost::mutex  mutex_;
+      static bool          isGlewInitialized_ = false;
+  
+      boost::mutex::scoped_lock lock(mutex_);
 
-      if (!globalIsGlewInitialized_)
+      if (!isGlewInitialized_)
       {
         LOG(INFO) << "Initializing glew";
         
@@ -69,7 +69,7 @@ namespace OrthancStone
                                           "Cannot initialize glew");
         }
 
-        globalIsGlewInitialized_ = true;
+        isGlewInitialized_ = true;
       }
     }    
 #endif

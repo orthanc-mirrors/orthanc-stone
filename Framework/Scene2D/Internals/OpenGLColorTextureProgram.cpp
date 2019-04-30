@@ -20,9 +20,10 @@
 
 
 #include "OpenGLColorTextureProgram.h"
-
+#include "OpenGLShaderVersionDirective.h"
 
 static const char* FRAGMENT_SHADER = 
+  ORTHANC_STONE_OPENGL_SHADER_VERSION_DIRECTIVE
   "uniform sampler2D u_texture;                       \n"
   "varying vec2 v_texcoord;                           \n"
   "void main()                                        \n"

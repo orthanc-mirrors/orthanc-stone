@@ -20,6 +20,7 @@
 
 
 #include "OpenGLTextProgram.h"
+#include "OpenGLShaderVersionDirective.h"
 
 #include "../../Fonts/OpenGLTextCoordinates.h"
 
@@ -29,6 +30,7 @@
 static const unsigned int COMPONENTS = 2;
 
 static const char* VERTEX_SHADER = 
+  ORTHANC_STONE_OPENGL_SHADER_VERSION_DIRECTIVE
   "attribute vec2 a_texcoord;             \n"
   "attribute vec4 a_position;             \n"
   "uniform mat4 u_matrix;                 \n"
@@ -40,6 +42,7 @@ static const char* VERTEX_SHADER =
   "}";
 
 static const char* FRAGMENT_SHADER = 
+  ORTHANC_STONE_OPENGL_SHADER_VERSION_DIRECTIVE
   "uniform sampler2D u_texture;                  \n"
   "uniform vec3 u_color;                         \n"
   "varying vec2 v_texcoord;                      \n"

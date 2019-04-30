@@ -20,11 +20,13 @@
 
 
 #include "OpenGLTextureProgram.h"
+#include "OpenGLShaderVersionDirective.h"
 
 static const unsigned int COMPONENTS = 2;
 static const unsigned int COUNT = 6;  // 2 triangles in 2D
 
 static const char* VERTEX_SHADER = 
+  ORTHANC_STONE_OPENGL_SHADER_VERSION_DIRECTIVE
   "attribute vec2 a_texcoord;             \n"
   "attribute vec4 a_position;             \n"
   "uniform mat4 u_matrix;                 \n"

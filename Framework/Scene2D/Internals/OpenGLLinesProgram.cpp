@@ -20,6 +20,7 @@
 
 
 #include "OpenGLLinesProgram.h"
+#include "OpenGLShaderVersionDirective.h"
 
 #include <Core/OrthancException.h>
 
@@ -29,6 +30,7 @@ static const unsigned int COMPONENTS_MITER = 2;
 
 
 static const char* VERTEX_SHADER = 
+  ORTHANC_STONE_OPENGL_SHADER_VERSION_DIRECTIVE
   "attribute vec2 a_miter_direction; \n"
   "attribute vec4 a_position;        \n"
   "uniform float u_thickness;        \n"
@@ -42,6 +44,7 @@ static const char* VERTEX_SHADER =
 
 
 static const char* FRAGMENT_SHADER = 
+  ORTHANC_STONE_OPENGL_SHADER_VERSION_DIRECTIVE
   "uniform bool u_antialiasing;           \n"
   "uniform float u_antialiasing_start;    \n"
   "uniform vec3 u_color;                  \n"

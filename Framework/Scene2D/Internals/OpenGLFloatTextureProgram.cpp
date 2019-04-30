@@ -20,6 +20,7 @@
 
 
 #include "OpenGLFloatTextureProgram.h"
+#include "OpenGLShaderVersionDirective.h"
 
 #include <Core/OrthancException.h>
 #include <Core/Images/Image.h>
@@ -27,6 +28,7 @@
 
 
 static const char* FRAGMENT_SHADER = 
+  ORTHANC_STONE_OPENGL_SHADER_VERSION_DIRECTIVE
   "uniform float u_offset;                       \n"
   "uniform float u_slope;                        \n"
   "uniform float u_windowCenter;                 \n"

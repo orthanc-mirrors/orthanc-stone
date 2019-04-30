@@ -21,6 +21,7 @@
 
 #include "StoneInitialization.h"
 
+#include <Core/OrthancException.h>
 #include <Core/Logging.h>
 
 #if !defined(ORTHANC_ENABLE_SDL)
@@ -32,12 +33,40 @@
 #  include "../Applications/Sdl/SdlWindow.h"
 #endif
 
+#if ORTHANC_ENABLE_OPENGL == 1
+#  include "GL/glew.h"
+#endif
 
 namespace OrthancStone
 {
   void StoneInitialize()
   {
     Orthanc::Logging::Initialize();
+
+#if 0
+#if ORTHANC_ENABLE_OPENGL == 1
+    glEnable(GL_DEBUG_OUTPUT);
+    GLenum err = glewInit();
+    if (GLEW_OK != err)
+    {
+      const char* error =
+        reinterpret_cast<const char*>(glewGetErrorString(err));
+      if (strcmp(error, "Missing GL version") != 0)
+      {
+        std::stringstream msg;
+        msg << "Error while initializing OpenGL through GLEW: " << error;
+        throw Orthanc::OrthancException(
+          Orthanc::ErrorCode_InternalError,msg.str());
+      }
+    }
+    {
+      std::stringstream message;
+      message << "Using GLEW version " << reinterpret_cast<const char*>(
+        glewGetString(GLEW_VERSION));
+      LOG(INFO) << "Using GLEW version " << message.str();
+    }
+#endif
+#endif
 
 #if ORTHANC_ENABLE_SDL == 1
     OrthancStone::SdlWindow::GlobalInitialize();

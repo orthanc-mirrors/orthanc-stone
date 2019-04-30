@@ -274,9 +274,18 @@ OpenGLMessageCallback(GLenum source,
 
 void Run(OrthancStone::Scene2D& scene)
 {
+
   OrthancStone::SdlOpenGLWindow window("Hello", 1024, 768);
+
+  GLenum err = glewInit();
+  if (GLEW_OK != err)
+  {
+    throw std::runtime_error("GLEW_OK != err");
+  }
+
   scene.FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
 
+  
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(OpenGLMessageCallback, 0 );
 

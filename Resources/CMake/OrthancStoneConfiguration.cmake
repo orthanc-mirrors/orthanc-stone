@@ -320,6 +320,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneException.h
+  ${ORTHANC_STONE_ROOT}/Framework/StoneInitialization.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/AffineTransform2D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/BaseWebService.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/CoordinateSystem3D.cpp

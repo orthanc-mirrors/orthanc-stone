@@ -22,12 +22,13 @@
 // From Stone
 #include "../../Applications/Sdl/SdlOpenGLWindow.h"
 #include "../../Framework/Scene2D/CairoCompositor.h"
+#include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
 #include "../../Framework/Scene2D/OpenGLCompositor.h"
-#include "../../Framework/Scene2D/Scene2D.h"
 #include "../../Framework/Scene2D/PanSceneTracker.h"
 #include "../../Framework/Scene2D/RotateSceneTracker.h"
+#include "../../Framework/Scene2D/Scene2D.h"
 #include "../../Framework/Scene2D/ZoomSceneTracker.h"
-#include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
+#include "../../Framework/StoneInitialization.h"
 
 // From Orthanc framework
 #include <Core/Logging.h>
@@ -357,8 +358,7 @@ void Run(OrthancStone::Scene2D& scene)
  **/
 int main(int argc, char* argv[])
 {
-  Orthanc::Logging::Initialize();
-  OrthancStone::SdlWindow::GlobalInitialize();
+  OrthancStone::StoneInitialize();
 
   try
   {
@@ -371,8 +371,7 @@ int main(int argc, char* argv[])
     LOG(ERROR) << "EXCEPTION: " << e.What();
   }
 
-  OrthancStone::SdlWindow::GlobalFinalize();
-  Orthanc::Logging::Finalize();
+  OrthancStone::StoneFinalize();
 
   return 0;
 }

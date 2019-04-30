@@ -274,20 +274,12 @@ OpenGLMessageCallback(GLenum source,
 
 void Run(OrthancStone::Scene2D& scene)
 {
-
   OrthancStone::SdlOpenGLWindow window("Hello", 1024, 768);
 
-  GLenum err = glewInit();
-  if (GLEW_OK != err)
-  {
-    throw std::runtime_error("GLEW_OK != err");
-  }
-
   scene.FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
-
   
   glEnable(GL_DEBUG_OUTPUT);
-  glDebugMessageCallback(OpenGLMessageCallback, 0 );
+  glDebugMessageCallback(OpenGLMessageCallback, 0);
 
   OrthancStone::OpenGLCompositor compositor(window, scene);
   compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
@@ -368,6 +360,7 @@ void Run(OrthancStone::Scene2D& scene)
 int main(int argc, char* argv[])
 {
   OrthancStone::StoneInitialize();
+  Orthanc::Logging::EnableInfoLevel(true);
 
   try
   {

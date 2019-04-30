@@ -88,21 +88,39 @@ if (ENABLE_SDL AND ENABLE_QT)
 elseif(ENABLE_SDL)
   message("SDL is enabled")
   include(${CMAKE_CURRENT_LIST_DIR}/SdlConfiguration.cmake)
-  add_definitions(-DORTHANC_ENABLE_NATIVE=1)
-  add_definitions(-DORTHANC_ENABLE_QT=0)
-  add_definitions(-DORTHANC_ENABLE_SDL=1)
+  add_definitions(
+    -DORTHANC_ENABLE_NATIVE=1
+    -DORTHANC_ENABLE_QT=0
+    -DORTHANC_ENABLE_SDL=1
+    )
 elseif(ENABLE_QT)
   message("QT is enabled")
   include(${CMAKE_CURRENT_LIST_DIR}/QtConfiguration.cmake)
-  add_definitions(-DORTHANC_ENABLE_NATIVE=1)
-  add_definitions(-DORTHANC_ENABLE_QT=1)
-  add_definitions(-DORTHANC_ENABLE_SDL=0)
+  add_definitions(
+    -DORTHANC_ENABLE_NATIVE=1
+    -DORTHANC_ENABLE_QT=1
+    -DORTHANC_ENABLE_SDL=0
+    )
 else()
   message("SDL and QT are both disabled")
   unset(USE_SYSTEM_SDL CACHE)
-  add_definitions(-DORTHANC_ENABLE_SDL=0)
-  add_definitions(-DORTHANC_ENABLE_QT=0)
-  add_definitions(-DORTHANC_ENABLE_NATIVE=0)
+  add_definitions(
+    -DORTHANC_ENABLE_SDL=0
+    -DORTHANC_ENABLE_QT=0
+    -DORTHANC_ENABLE_NATIVE=0
+    )
+endif()
+
+
+if (ENABLE_OPENGL AND CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  include(${CMAKE_CURRENT_LIST_DIR}/GlewConfiguration.cmake)
+  add_definitions(
+    -DORTHANC_ENABLE_GLEW=1
+    )
+else()
+  add_definitions(
+    -DORTHANC_ENABLE_GLEW=0
+    )
 endif()
 
 
@@ -400,6 +418,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${SDL_SOURCES}
   ${QT_SOURCES}
   ${BOOST_EXTENDED_SOURCES}
+  ${GLEW_SOURCES}
   )
 
 

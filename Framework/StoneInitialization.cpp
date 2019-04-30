@@ -28,13 +28,8 @@
 #  error Macro ORTHANC_ENABLE_SDL must be defined
 #endif
 
-
 #if ORTHANC_ENABLE_SDL == 1
 #  include "../Applications/Sdl/SdlWindow.h"
-#endif
-
-#if ORTHANC_ENABLE_OPENGL == 1
-#  include "GL/glew.h"
 #endif
 
 namespace OrthancStone
@@ -42,22 +37,6 @@ namespace OrthancStone
   void StoneInitialize()
   {
     Orthanc::Logging::Initialize();
-
-#if 0
-#if ORTHANC_ENABLE_OPENGL == 1
-    glEnable(GL_DEBUG_OUTPUT);
-    GLenum err = glewInit();
-    if (GLEW_OK != err)
-    {
-      const char* error =
-        reinterpret_cast<const char*>(glewGetErrorString(err));
-      std::stringstream message;
-      message << "Using GLEW version " << reinterpret_cast<const char*>(
-        glewGetString(GLEW_VERSION));
-      LOG(INFO) << "Using GLEW version " << message.str();
-    }
-#endif
-#endif
 
 #if ORTHANC_ENABLE_SDL == 1
     OrthancStone::SdlWindow::GlobalInitialize();

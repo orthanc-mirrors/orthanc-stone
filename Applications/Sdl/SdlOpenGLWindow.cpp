@@ -23,10 +23,21 @@
 
 #if ORTHANC_ENABLE_SDL == 1
 
+#if !defined(ORTHANC_ENABLE_GLEW)
+#  error Macro ORTHANC_ENABLE_GLEW must be defined
+#endif
+
+#if ORTHANC_ENABLE_GLEW == 1
+#  include <GL/glew.h>
+#endif
+
 #include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
+  static boost::mutex  globalMutex_;
+  static bool          globalIsGlewInitialized_ = false;
+  
   SdlOpenGLWindow::SdlOpenGLWindow(const char* title,
                                    unsigned int width,
                                    unsigned int height) :
@@ -39,6 +50,29 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
                                       "Cannot initialize OpenGL");
     }
+
+#if ORTHANC_ENABLE_GLEW == 1
+    // The initialization function of glew (i.e. "glewInit()") can
+    // only be called once an OpenGL is setup.
+    // https://stackoverflow.com/a/45033669/881731
+    {
+      boost::mutex::scoped_lock lock(globalMutex_);
+
+      if (!globalIsGlewInitialized_)
+      {
+        LOG(INFO) << "Initializing glew";
+        
+        GLenum err = glewInit();
+        if (GLEW_OK != err)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                          "Cannot initialize glew");
+        }
+
+        globalIsGlewInitialized_ = true;
+      }
+    }    
+#endif
   }
 
   

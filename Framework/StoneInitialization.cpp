@@ -51,15 +51,6 @@ namespace OrthancStone
     {
       const char* error =
         reinterpret_cast<const char*>(glewGetErrorString(err));
-      if (strcmp(error, "Missing GL version") != 0)
-      {
-        std::stringstream msg;
-        msg << "Error while initializing OpenGL through GLEW: " << error;
-        throw Orthanc::OrthancException(
-          Orthanc::ErrorCode_InternalError,msg.str());
-      }
-    }
-    {
       std::stringstream message;
       message << "Using GLEW version " << reinterpret_cast<const char*>(
         glewGetString(GLEW_VERSION));

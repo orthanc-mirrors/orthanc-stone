@@ -29,3 +29,4 @@ Resources/CommandTool/flatc-tests/basic/build/
 Resources/CommandTool/protoc-tests/generated_js/
 Resources/CommandTool/protoc-tests/generated_ts/
 Resources/CommandTool/protoc-tests/node_modules/
+Samples/Sdl/ThirdPartyDownloads/

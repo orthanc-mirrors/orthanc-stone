@@ -25,11 +25,10 @@ namespace OrthancStone
 {
   ZoomSceneTracker::ZoomSceneTracker(Scene2D& scene,
                                      const PointerEvent& event,
-                                     unsigned int canvasWidth,
                                      unsigned int canvasHeight) :
     scene_(scene),
     clickY_(event.GetMainPosition().GetY()),
-    aligner_(scene, event.GetMainPosition(), canvasWidth, canvasHeight),
+    aligner_(scene, event.GetMainPosition()),
     originalSceneToCanvas_(scene.GetSceneToCanvasTransform())
   {
     if (canvasHeight <= 3)

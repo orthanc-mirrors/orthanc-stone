@@ -39,9 +39,7 @@ namespace OrthancStone
 
     public:
       FixedPointAligner(Scene2D& scene,
-                        const ScenePoint2D& p,
-                        unsigned int canvasWidth,
-                        unsigned int canvasHeight);
+                        const ScenePoint2D& p);
 
       void Apply();
     };

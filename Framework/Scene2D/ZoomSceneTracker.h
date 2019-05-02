@@ -39,7 +39,6 @@ namespace OrthancStone
   public:
     ZoomSceneTracker(Scene2D& scene,
                      const PointerEvent& event,
-                     unsigned int canvasWidth,
                      unsigned int canvasHeight);
 
     virtual void Update(const PointerEvent& event);

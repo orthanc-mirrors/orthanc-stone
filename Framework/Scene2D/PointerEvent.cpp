@@ -46,15 +46,6 @@ namespace OrthancStone
   }
     
 
-  // Add the center of the pixel
-  void PointerEvent::AddIntegerPosition(int x,
-                                        int y)
-  {
-    AddPosition(static_cast<double>(x) + 0.5,
-                static_cast<double>(y) + 0.5);
-  }
-    
-    
   ScenePoint2D PointerEvent::GetPosition(size_t index) const
   {
     if (index < positions_.size())

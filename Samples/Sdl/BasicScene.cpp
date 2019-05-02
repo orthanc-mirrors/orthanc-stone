@@ -157,13 +157,10 @@ void TakeScreenshot(const std::string& target,
 
 
 void HandleApplicationEvent(OrthancStone::Scene2D& scene,
+                            const OrthancStone::OpenGLCompositor& compositor,
                             const SDL_Event& event,
-                            std::auto_ptr<OrthancStone::IPointerTracker>& activeTracker,
-                            unsigned int windowWidth,
-                            unsigned int windowHeight)
+                            std::auto_ptr<OrthancStone::IPointerTracker>& activeTracker)
 {
-  bool hasPositionLayer = false;
-  
   if (event.type == SDL_MOUSEMOTION)
   {
     int scancodeCount = 0;
@@ -176,8 +173,8 @@ void HandleApplicationEvent(OrthancStone::Scene2D& scene,
       // The "left-ctrl" key is down, while no tracker is present
 
       OrthancStone::PointerEvent e;
-      e.AddIntegerPosition(event.button.x - static_cast<int>(windowWidth) / 2,
-                           event.button.y - static_cast<int>(windowHeight) / 2);
+      e.AddPosition(compositor.GetPixelCenterCoordinates(event.button.x, event.button.y));
+
       OrthancStone::ScenePoint2D p = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
       char buf[64];
@@ -200,14 +197,16 @@ void HandleApplicationEvent(OrthancStone::Scene2D& scene,
         layer->SetPosition(p.GetX(), p.GetY());
         scene.SetLayer(LAYER_POSITION, layer.release());
       }
-
-      hasPositionLayer = true;
+    }
+    else
+    {
+      scene.DeleteLayer(LAYER_POSITION);
     }
   }
   else if (event.type == SDL_MOUSEBUTTONDOWN)
   {
     OrthancStone::PointerEvent e;
-    e.AddIntegerPosition(event.button.x, event.button.y);
+    e.AddPosition(compositor.GetPixelCenterCoordinates(event.button.x, event.button.y));
 
     switch (event.button.button)
     {
@@ -216,13 +215,12 @@ void HandleApplicationEvent(OrthancStone::Scene2D& scene,
         break;
 
       case SDL_BUTTON_RIGHT:
-        activeTracker.reset(new OrthancStone::ZoomSceneTracker
-                            (scene, e, windowWidth, windowHeight));
+        activeTracker.reset(new OrthancStone::ZoomSceneTracker(scene, e, 
+                                                               compositor.GetCanvasHeight()));
         break;
 
       case SDL_BUTTON_LEFT:
-        activeTracker.reset(new OrthancStone::RotateSceneTracker
-                            (scene, e, windowWidth, windowHeight));
+        activeTracker.reset(new OrthancStone::RotateSceneTracker(scene, e));
         break;
 
       default:
@@ -235,21 +233,19 @@ void HandleApplicationEvent(OrthancStone::Scene2D& scene,
     switch (event.key.keysym.sym)
     {
       case SDLK_s:
-        scene.FitContent(windowWidth, windowHeight);
+        scene.FitContent(compositor.GetCanvasWidth(), 
+                         compositor.GetCanvasHeight());
         break;
               
       case SDLK_c:
-        TakeScreenshot("screenshot.png", scene, windowWidth, windowHeight);
+        TakeScreenshot("screenshot.png", scene, 
+                       compositor.GetCanvasWidth(), 
+                       compositor.GetCanvasHeight());
         break;
               
       default:
         break;
     }
-  }
-
-  if (!hasPositionLayer)
-  {
-    scene.DeleteLayer(LAYER_POSITION);
   }
 }
 
@@ -306,7 +302,7 @@ void Run(OrthancStone::Scene2D& scene)
         if (tracker.get() != NULL)
         {
           OrthancStone::PointerEvent e;
-          e.AddIntegerPosition(event.button.x, event.button.y);
+          e.AddPosition(compositor.GetPixelCenterCoordinates(event.button.x, event.button.y));
           tracker->Update(e);
         }
       }
@@ -342,7 +338,7 @@ void Run(OrthancStone::Scene2D& scene)
         }
       }
       
-      HandleApplicationEvent(scene, event, tracker, window.GetCanvasWidth(), window.GetCanvasHeight());
+      HandleApplicationEvent(scene, compositor, event, tracker);
     }
 
     SDL_Delay(1);

@@ -38,9 +38,7 @@ namespace OrthancStone
 
   public:
     RotateSceneTracker(Scene2D& scene,
-                       const PointerEvent& event,
-                       unsigned int canvasWidth,
-                       unsigned int canvasHeight);
+                       const PointerEvent& event);
 
     virtual void Update(const PointerEvent& event);
 

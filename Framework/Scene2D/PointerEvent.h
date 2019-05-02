@@ -41,16 +41,17 @@ namespace OrthancStone
 
     ScenePoint2D GetMainPosition() const;
     
+    void AddPosition(const ScenePoint2D& p)
+    {
+      positions_.push_back(p);
+    }
+
     void AddPosition(double x,
                      double y)
     {
       positions_.push_back(ScenePoint2D(x, y));
     }
 
-    // Add the center of the pixel
-    void AddIntegerPosition(int x,
-                            int y);
-    
     size_t GetPositionsCount() const
     {
       return positions_.size();

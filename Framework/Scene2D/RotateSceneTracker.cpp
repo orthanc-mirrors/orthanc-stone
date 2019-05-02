@@ -24,12 +24,10 @@
 namespace OrthancStone
 {
   RotateSceneTracker::RotateSceneTracker(Scene2D& scene,
-                                         const PointerEvent& event,
-                                         unsigned int canvasWidth,
-                                         unsigned int canvasHeight) :
+                                         const PointerEvent& event) :
     scene_(scene),
     click_(event.GetMainPosition()),
-    aligner_(scene, click_, canvasWidth, canvasHeight),
+    aligner_(scene, click_),
     isFirst_(true),
     originalSceneToCanvas_(scene.GetSceneToCanvasTransform())
   {

@@ -26,13 +26,10 @@ namespace OrthancStone
   namespace Internals
   {
     FixedPointAligner::FixedPointAligner(Scene2D& scene,
-                                         const ScenePoint2D& p,
-                                         unsigned int canvasWidth,
-                                         unsigned int canvasHeight) :
-      scene_(scene)
+                                         const ScenePoint2D& p) :
+      scene_(scene),
+      canvas_(p)
     {
-      canvas_ = ScenePoint2D(p.GetX() - static_cast<double>(canvasWidth) / 2.0,
-                             p.GetY() - static_cast<double>(canvasHeight) / 2.0);
       pivot_ = canvas_.Apply(scene_.GetCanvasToSceneTransform());
     }
 

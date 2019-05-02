@@ -63,6 +63,11 @@ namespace OrthancStone
         emscripten_webgl_destroy_context(context_);
       }
 
+      const std::string& GetCanvasIdentifier() const
+      {
+        return canvas_;
+      }
+
       void MakeCurrent()
       {
         if (emscripten_webgl_make_context_current(context_) != EMSCRIPTEN_RESULT_SUCCESS)
@@ -161,6 +166,12 @@ namespace OrthancStone
     {
       assert(pimpl_.get() != NULL);
       pimpl_->UpdateSize();
+    }
+
+    const std::string& WebAssemblyOpenGLContext::GetCanvasIdentifier() const
+    {
+      assert(pimpl_.get() != NULL);
+      return pimpl_->GetCanvasIdentifier();
     }
   }
 }

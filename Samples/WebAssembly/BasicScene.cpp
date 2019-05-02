@@ -37,6 +37,7 @@
 
 // From Orthanc framework
 #include <Core/Images/Image.h>
+#include <Core/Logging.h>
 
 #include <stdio.h>
 
@@ -139,46 +140,140 @@ void PrepareScene(OrthancStone::Scene2D& scene)
 
 
 
-
-class WebAssemblyCanvas : public boost::noncopyable
+namespace OrthancStone
 {
-private:
-  OrthancStone::OpenGL::WebAssemblyOpenGLContext  context_;
-  OrthancStone::Scene2D                           scene_;
-  OrthancStone::OpenGLCompositor                  compositor_;
-
-public:
-  WebAssemblyCanvas(const std::string& canvas) :
-    context_(canvas),
-    compositor_(context_, scene_)
+  class WebAssemblyCanvas : public boost::noncopyable
   {
-    compositor_.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
-                        FONT_SIZE, Orthanc::Encoding_Latin1);
+  private:
+    OpenGL::WebAssemblyOpenGLContext  context_;
+    Scene2D                           scene_;
+    OpenGLCompositor                  compositor_;
+
+    void SetupEvents(const std::string& canvas);
+
+  public:
+    WebAssemblyCanvas(const std::string& canvas) :
+      context_(canvas),
+      compositor_(context_, scene_)
+    {
+      compositor_.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
+                          FONT_SIZE, Orthanc::Encoding_Latin1);
+      SetupEvents(canvas);
+    }
+
+    Scene2D& GetScene()
+    {
+      return scene_;
+    }
+
+    void UpdateSize()
+    {
+      context_.UpdateSize();
+      compositor_.UpdateSize();
+      Refresh();
+    }
+
+    void Refresh()
+    {
+      compositor_.Refresh();
+    }
+
+    const std::string& GetCanvasIdentifier() const
+    {
+      return context_.GetCanvasIdentifier();
+    }
+
+    ScenePoint2D GetPixelCenterCoordinates(int x, int y) const
+    {
+      return compositor_.GetPixelCenterCoordinates(x, y);
+    }
+  };
+
+
+
+  class ActiveTracker : public boost::noncopyable
+  {
+  private:
+    std::auto_ptr<IPointerTracker>  tracker_;
+    std::string                     canvasIdentifier_;
+    bool                            insideCanvas_;
+    
+  public:
+    ActiveTracker(IPointerTracker* tracker,
+                  const WebAssemblyCanvas& canvas) :
+      tracker_(tracker),
+      canvasIdentifier_(canvas.GetCanvasIdentifier()),
+      insideCanvas_(true)
+    {
+    }
+  };
+}
+
+
+
+static OrthancStone::PointerEvent* ConvertMouseEvent(const EmscriptenMouseEvent& source,
+                                                     OrthancStone::WebAssemblyCanvas& canvas)
+{
+  std::auto_ptr<OrthancStone::PointerEvent> target(new OrthancStone::PointerEvent);
+
+  target->AddPosition(canvas.GetPixelCenterCoordinates(source.clientX, source.clientY));
+  target->SetAltModifier(source.altKey);
+  target->SetControlModifier(source.ctrlKey);
+  target->SetShiftModifier(source.shiftKey);
+
+  return target.release();
+}
+
+
+EM_BOOL OnMouseEvent(int eventType, 
+                     const EmscriptenMouseEvent *mouseEvent, 
+                     void *userData)
+{
+  if (userData != NULL)
+  {
+    OrthancStone::WebAssemblyCanvas& canvas = *reinterpret_cast<OrthancStone::WebAssemblyCanvas*>(userData);
+
+    switch (eventType)
+    {
+      case EMSCRIPTEN_EVENT_CLICK:
+      {
+        static unsigned int count = 0;
+        char buf[64];
+        sprintf(buf, "click %d", count++);
+
+        std::auto_ptr<OrthancStone::TextSceneLayer> layer(new OrthancStone::TextSceneLayer);
+        layer->SetText(buf);
+        canvas.GetScene().SetLayer(100, layer.release());
+        canvas.Refresh();
+        break;
+      }
+
+      case EMSCRIPTEN_EVENT_MOUSEDOWN:
+        LOG(ERROR) << "Mouse down";
+        break;
+
+      default:
+        break;
+    }
   }
 
-  OrthancStone::Scene2D& GetScene()
-  {
-    return scene_;
-  }
+  return true;
+}
 
-  void UpdateSize()
-  {
-    context_.UpdateSize();
-    compositor_.UpdateSize();
-    Refresh();
-  }
 
-  void Refresh()
-  {
-    compositor_.Refresh();
-  }
-};
+void OrthancStone::WebAssemblyCanvas::SetupEvents(const std::string& canvas)
+{
+  emscripten_set_click_callback(canvas.c_str(), this, false, OnMouseEvent);
+  //emscripten_set_mousedown_callback(canvas.c_str(), this, false, OnMouseEvent);
+}
 
 
 
-std::auto_ptr<WebAssemblyCanvas>  canvas1_;
-std::auto_ptr<WebAssemblyCanvas>  canvas2_;
-std::auto_ptr<WebAssemblyCanvas>  canvas3_;
+
+std::auto_ptr<OrthancStone::WebAssemblyCanvas>  canvas1_;
+std::auto_ptr<OrthancStone::WebAssemblyCanvas>  canvas2_;
+std::auto_ptr<OrthancStone::WebAssemblyCanvas>  canvas3_;
+std::auto_ptr<OrthancStone::ActiveTracker>      tracker_;
 
 
 EM_BOOL OnWindowResize(int eventType, const EmscriptenUiEvent *uiEvent, void *userData)
@@ -202,25 +297,6 @@ EM_BOOL OnWindowResize(int eventType, const EmscriptenUiEvent *uiEvent, void *us
 }
 
 
-EM_BOOL OnMouseClick(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
-{
-  if (userData != NULL)
-  {
-    WebAssemblyCanvas& canvas = *reinterpret_cast<WebAssemblyCanvas*>(userData);
-
-    static unsigned int count = 0;
-    char buf[64];
-    sprintf(buf, "click %d", count++);
-
-    std::auto_ptr<OrthancStone::TextSceneLayer> layer(new OrthancStone::TextSceneLayer);
-    layer->SetText(buf);
-    canvas.GetScene().SetLayer(100, layer.release());
-    canvas.Refresh();
-  }
-
-  return true;
-}
-
 
 extern "C"
 {
@@ -233,21 +309,18 @@ extern "C"
   EMSCRIPTEN_KEEPALIVE
   void Initialize()
   {
-    canvas1_.reset(new WebAssemblyCanvas("mycanvas1"));
+    canvas1_.reset(new OrthancStone::WebAssemblyCanvas("mycanvas1"));
     PrepareScene(canvas1_->GetScene());
     canvas1_->UpdateSize();
 
-    canvas2_.reset(new WebAssemblyCanvas("mycanvas2"));
+    canvas2_.reset(new OrthancStone::WebAssemblyCanvas("mycanvas2"));
     PrepareScene(canvas2_->GetScene());
     canvas2_->UpdateSize();
 
-    canvas3_.reset(new WebAssemblyCanvas("mycanvas3"));
+    canvas3_.reset(new OrthancStone::WebAssemblyCanvas("mycanvas3"));
     PrepareScene(canvas3_->GetScene());
     canvas3_->UpdateSize();
 
     emscripten_set_resize_callback("#window", NULL, false, OnWindowResize);
-    emscripten_set_click_callback("mycanvas1", canvas1_.get(), false, OnMouseClick);
-    emscripten_set_click_callback("mycanvas2", canvas2_.get(), false, OnMouseClick);
-    emscripten_set_click_callback("mycanvas3", canvas3_.get(), false, OnMouseClick);
   }
 }

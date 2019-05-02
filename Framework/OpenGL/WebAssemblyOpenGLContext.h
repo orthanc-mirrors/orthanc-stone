@@ -53,6 +53,8 @@ namespace OrthancStone
       virtual unsigned int GetCanvasHeight() const;
 
       void UpdateSize();
+
+      const std::string& GetCanvasIdentifier() const;
     };
   }
 }

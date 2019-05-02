@@ -69,5 +69,17 @@ namespace OrthancStone
                  unsigned int fontSize,
                  Orthanc::Encoding codepage);
 #endif
+
+    unsigned int GetCanvasWidth() const
+    {
+      return canvasWidth_;
+    }
+
+    unsigned int GetCanvasHeight() const
+    {
+      return canvasHeight_;
+    }
+
+    ScenePoint2D GetPixelCenterCoordinates(int x, int y) const;
   };
 }

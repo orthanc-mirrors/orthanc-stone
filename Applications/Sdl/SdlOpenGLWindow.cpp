@@ -102,7 +102,7 @@ namespace OrthancStone
   }
 
   
-  unsigned int SdlOpenGLWindow::GetCanvasWidth()
+  unsigned int SdlOpenGLWindow::GetCanvasWidth() const
   {
     int w = 0;
     SDL_GL_GetDrawableSize(window_.GetObject(), &w, NULL);
@@ -110,7 +110,7 @@ namespace OrthancStone
   }
 
   
-  unsigned int SdlOpenGLWindow::GetCanvasHeight()
+  unsigned int SdlOpenGLWindow::GetCanvasHeight() const
   {
     int h = 0;
     SDL_GL_GetDrawableSize(window_.GetObject(), NULL, &h);

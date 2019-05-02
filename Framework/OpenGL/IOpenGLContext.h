@@ -38,9 +38,9 @@ namespace OrthancStone
 
       virtual void SwapBuffer() = 0;
 
-      virtual unsigned int GetCanvasWidth() = 0;
+      virtual unsigned int GetCanvasWidth() const = 0;
 
-      virtual unsigned int GetCanvasHeight() = 0;
+      virtual unsigned int GetCanvasHeight() const = 0;
     };
   }
 }

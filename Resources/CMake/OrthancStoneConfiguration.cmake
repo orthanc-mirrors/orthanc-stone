@@ -56,6 +56,27 @@ if (ORTHANC_SANDBOXED)
     message(FATAL_ERROR "Cannot enable SSL in sandboxed environments")
   endif()
 endif()
+
+if (ENABLE_WASM)
+  if (NOT ORTHANC_SANDBOXED)
+    message(FATAL_ERROR "WebAssembly target must me configured as sandboxed")
+  endif()
+
+  if (NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    message(FATAL_ERROR "WebAssembly target requires the emscripten compiler")    
+  endif()
+
+  add_definitions(-DORTHANC_ENABLE_WASM=1)
+else()
+  if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten" OR
+      CMAKE_SYSTEM_NAME STREQUAL "PNaCl" OR
+      CMAKE_SYSTEM_NAME STREQUAL "NaCl32" OR
+      CMAKE_SYSTEM_NAME STREQUAL "NaCl64")
+    message(FATAL_ERROR "Trying to use a Web compiler for a native build")
+  endif()
+
+  add_definitions(-DORTHANC_ENABLE_WASM=0)
+endif()
   
 
 #####################################################################
@@ -441,6 +462,12 @@ if (ENABLE_OPENGL)
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextRenderer.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextureProgram.cpp
     )
+
+  if (ENABLE_WASM)
+    list(APPEND ORTHANC_STONE_SOURCES
+      ${ORTHANC_STONE_ROOT}/Framework/OpenGL/WebAssemblyOpenGLContext.cpp
+      )
+  endif()
 endif()
 
 

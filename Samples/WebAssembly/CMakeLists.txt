@@ -1,4 +1,26 @@
+
+# source ~/Downloads/emsdk/emsdk_env.sh
+# cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON .. -DCMAKE_INSTALL_PREFIX=/tmp/stone
+# ninja install
+# sudo docker run -p 4242:4242 -p 8042:8042 --rm -v /tmp/stone:/root/stone:ro jodogne/orthanc-plugins:1.5.6 /root/stone/Configuration.json --verbose
+
+
 cmake_minimum_required(VERSION 2.8.3)
+
+
+#####################################################################
+## Configuration of the Emscripten compiler for WebAssembly target
+#####################################################################
+
+set(WASM_FLAGS "-s WASM=1 -s FETCH=1")
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WASM_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WASM_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ERROR_ON_UNDEFINED_SYMBOLS=1")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ASSERTIONS=1 -s DISABLE_EXCEPTION_CATCHING=0")
+
 
 #####################################################################
 ## Configuration of the Orthanc framework
@@ -39,10 +61,8 @@ set(ORTHANC_STONE_APPLICATION_RESOURCES
 
 SET(ENABLE_GOOGLE_TEST OFF)
 SET(ENABLE_LOCALE ON)
-SET(ENABLE_SDL ON)
-SET(ENABLE_WEB_CLIENT ON)
-SET(ORTHANC_SANDBOXED OFF)
-LIST(APPEND ORTHANC_BOOST_COMPONENTS program_options)
+SET(ORTHANC_SANDBOXED ON)
+SET(ENABLE_WASM ON)
 
 include(${CMAKE_SOURCE_DIR}/../../Resources/CMake/OrthancStoneConfiguration.cmake)
 
@@ -60,3 +80,17 @@ add_executable(BasicScene
   )
 
 target_link_libraries(BasicScene OrthancStone)
+
+install(
+  TARGETS BasicScene
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}
+  )
+
+install(
+  FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/BasicScene.wasm
+  ${CMAKE_SOURCE_DIR}/BasicScene.html
+  ${CMAKE_SOURCE_DIR}/Configuration.json
+  ${CMAKE_SOURCE_DIR}/index.html
+  DESTINATION ${CMAKE_INSTALL_PREFIX}
+  )

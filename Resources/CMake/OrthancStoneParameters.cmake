@@ -53,3 +53,4 @@ set(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 #####################################################################
 
 set(ENABLE_OPENGL ON CACHE INTERNAL "Enable support of OpenGL")
+set(ENABLE_WASM OFF CACHE INTERNAL "Enable support of WebAssembly")

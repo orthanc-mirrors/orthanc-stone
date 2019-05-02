@@ -74,7 +74,7 @@ namespace OrthancStone
 
         case Orthanc::PixelFormat_RGB24:
           sourceFormat = GL_RGB;
-          internalFormat = GL_RGBA;
+          internalFormat = GL_RGB;
           break;
 
         case Orthanc::PixelFormat_RGBA32:

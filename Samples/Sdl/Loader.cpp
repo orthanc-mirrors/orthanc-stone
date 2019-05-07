@@ -612,7 +612,7 @@ namespace Refactoring
   class DicomInstanceParameters : public boost::noncopyable
   {
   private:
-    Orthanc::DicomImageInformation    information_;
+    Orthanc::DicomImageInformation    imageInformation_;
     OrthancStone::SopClassUid         sopClassUid_;
     double                            thickness_;
     double                            pixelSpacingX_;
@@ -626,6 +626,7 @@ namespace Refactoring
     bool                              hasDefaultWindowing_;
     float                             defaultWindowingCenter_;
     float                             defaultWindowingWidth_;
+    Orthanc::PixelFormat              expectedPixelFormat_;
 
     void ComputeDoseOffsets(const Orthanc::DicomMap& dicom)
     {
@@ -646,7 +647,7 @@ namespace Refactoring
       }
 
       if (!OrthancStone::LinearAlgebra::ParseVector(frameOffsets_, dicom, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR) ||
-          frameOffsets_.size() < information_.GetNumberOfFrames())
+          frameOffsets_.size() < imageInformation_.GetNumberOfFrames())
       {
         LOG(ERROR) << "RT-DOSE: No information about the 3D location of some slice(s)";
         frameOffsets_.clear();
@@ -667,9 +668,9 @@ namespace Refactoring
 
   public:
     DicomInstanceParameters(const Orthanc::DicomMap& dicom) :
-      information_(dicom)
+      imageInformation_(dicom)
     {
-      if (information_.GetNumberOfFrames() <= 0)
+      if (imageInformation_.GetNumberOfFrames() <= 0)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
       }
@@ -703,8 +704,8 @@ namespace Refactoring
         ComputeDoseOffsets(dicom);
       }
 
-      isColor_ = (information_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome1 &&
-                  information_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome2);
+      isColor_ = (imageInformation_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome1 &&
+                  imageInformation_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome2);
 
       double doseGridScaling;
 
@@ -738,11 +739,40 @@ namespace Refactoring
       {
         hasDefaultWindowing_ = false;
       }
+
+      if (sopClassUid_ == OrthancStone::SopClassUid_RTDose)
+      {
+        switch (imageInformation_.GetBitsStored())
+        {
+          case 16:
+            expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
+            break;
+
+          case 32:
+            expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale32;
+            break;
+
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+        } 
+      }
+      else if (isColor_)
+      {
+        expectedPixelFormat_ = Orthanc::PixelFormat_RGB24;
+      }
+      else if (imageInformation_.IsSigned())
+      {
+        expectedPixelFormat_ = Orthanc::PixelFormat_SignedGrayscale16;
+      }
+      else
+      {
+        expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
+      }
     }
 
     const Orthanc::DicomImageInformation& GetImageInformation() const
     {
-      return information_;
+      return imageInformation_;
     }
 
     OrthancStone::SopClassUid GetSopClassUid() const
@@ -772,7 +802,7 @@ namespace Refactoring
 
     OrthancStone::CoordinateSystem3D  GetFrameGeometry(unsigned int frame) const
     {
-      if (frame >= information_.GetNumberOfFrames())
+      if (frame >= imageInformation_.GetNumberOfFrames())
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
@@ -794,7 +824,7 @@ namespace Refactoring
     bool FrameContainsPlane(unsigned int frame,
                             const OrthancStone::CoordinateSystem3D& plane) const
     {
-      if (frame >= information_.GetNumberOfFrames())
+      if (frame >= imageInformation_.GetNumberOfFrames())
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
@@ -876,6 +906,11 @@ namespace Refactoring
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
+    }
+
+    Orthanc::PixelFormat GetExpectedPixelFormat() const
+    {
+      return expectedPixelFormat_;
     }
   };
 

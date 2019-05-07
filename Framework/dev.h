@@ -113,7 +113,7 @@ namespace OrthancStone
       if (loader_.GetSliceCount() == 0)
       {
         LOG(ERROR) << "Empty volume image";
-        EmitMessage(ISlicedVolume::GeometryErrorMessage(*this));
+        BroadcastMessage(ISlicedVolume::GeometryErrorMessage(*this));
         return;
       }
 
@@ -121,7 +121,7 @@ namespace OrthancStone
       {
         if (!IsCompatible(loader_.GetSlice(0), loader_.GetSlice(i)))
         {
-          EmitMessage(ISlicedVolume::GeometryErrorMessage(*this));
+          BroadcastMessage(ISlicedVolume::GeometryErrorMessage(*this));
           return;
         }
       }
@@ -145,7 +145,7 @@ namespace OrthancStone
                                    0.001 /* this is expressed in mm */))
         {
           LOG(ERROR) << "The distance between successive slices is not constant in a volume image";
-          EmitMessage(ISlicedVolume::GeometryErrorMessage(*this));
+          BroadcastMessage(ISlicedVolume::GeometryErrorMessage(*this));
           return;
         }
       }
@@ -172,7 +172,7 @@ namespace OrthancStone
 
       // TODO Check the DicomFrameConverter are constant
 
-      EmitMessage(ISlicedVolume::GeometryReadyMessage(*this));
+      BroadcastMessage(ISlicedVolume::GeometryReadyMessage(*this));
     }
 
 
@@ -181,7 +181,7 @@ namespace OrthancStone
       assert(&message.GetOrigin() == &loader_);
 
       LOG(ERROR) << "Unable to download a volume image";
-      EmitMessage(ISlicedVolume::GeometryErrorMessage(*this));
+      BroadcastMessage(ISlicedVolume::GeometryErrorMessage(*this));
     }
 
 
@@ -194,12 +194,12 @@ namespace OrthancStone
         Orthanc::ImageProcessing::Copy(writer.GetAccessor(), message.GetImage());
       }
 
-      EmitMessage(ISlicedVolume::SliceContentChangedMessage
+      BroadcastMessage(ISlicedVolume::SliceContentChangedMessage
                   (*this, message.GetSliceIndex(), message.GetSlice()));
 
       if (pendingSlices_ == 1)
       {
-        EmitMessage(ISlicedVolume::VolumeReadyMessage(*this));
+        BroadcastMessage(ISlicedVolume::VolumeReadyMessage(*this));
         pendingSlices_ = 0;
       }
       else if (pendingSlices_ > 1)
@@ -540,21 +540,21 @@ namespace OrthancStone
       coronalGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Coronal));
       sagittalGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Sagittal));
 
-      EmitMessage(IVolumeSlicer::GeometryReadyMessage(*this));
+      BroadcastMessage(IVolumeSlicer::GeometryReadyMessage(*this));
     }
 
     void OnGeometryError(const ISlicedVolume::GeometryErrorMessage& message)
     {
       assert(&message.GetOrigin() == &volume_);
 
-      EmitMessage(IVolumeSlicer::GeometryErrorMessage(*this));
+      BroadcastMessage(IVolumeSlicer::GeometryErrorMessage(*this));
     }
 
     void OnContentChanged(const ISlicedVolume::ContentChangedMessage& message)
     {
       assert(&message.GetOrigin() == &volume_);
 
-      EmitMessage(IVolumeSlicer::ContentChangedMessage(*this));
+      BroadcastMessage(IVolumeSlicer::ContentChangedMessage(*this));
     }
 
     void OnSliceContentChanged(const ISlicedVolume::SliceContentChangedMessage& message)
@@ -564,7 +564,7 @@ namespace OrthancStone
       //IVolumeSlicer::OnSliceContentChange(slice);
 
       // TODO Improve this?
-      EmitMessage(IVolumeSlicer::ContentChangedMessage(*this));
+      BroadcastMessage(IVolumeSlicer::ContentChangedMessage(*this));
     }
 
     const VolumeImageGeometry& GetProjectionGeometry(VolumeProjection projection)
@@ -697,14 +697,14 @@ namespace OrthancStone
 
           RendererFactory factory(*frame, *slice, isFullQuality);
 
-          EmitMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, slice->GetGeometry()));
+          BroadcastMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, slice->GetGeometry()));
           return;
         }
       }
 
       // Error
       CoordinateSystem3D slice;
-      EmitMessage(IVolumeSlicer::LayerErrorMessage(*this, slice));
+      BroadcastMessage(IVolumeSlicer::LayerErrorMessage(*this, slice));
     }
   };
 
@@ -906,7 +906,7 @@ namespace OrthancStone
       IVolumeSlicer(broker),
       otherPlane_(otherPlane)
     {
-      EmitMessage(IVolumeSlicer::GeometryReadyMessage(*this));
+      BroadcastMessage(IVolumeSlicer::GeometryReadyMessage(*this));
     }
 
     virtual bool GetExtent(std::vector<Vector>& points,
@@ -929,7 +929,7 @@ namespace OrthancStone
                                                viewportSlice.GetOrigin(), viewportSlice.GetNormal()))
       {
         // The two slice are parallel, don't try and display the intersection
-        EmitMessage(IVolumeSlicer::LayerErrorMessage(*this, reference.GetGeometry()));
+        BroadcastMessage(IVolumeSlicer::LayerErrorMessage(*this, reference.GetGeometry()));
       }
       else
       {
@@ -945,12 +945,12 @@ namespace OrthancStone
                                                  extent.GetX2(), extent.GetY2()))
         {
           RendererFactory factory(x1, y1, x2, y2, slice);
-          EmitMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, reference.GetGeometry()));
+          BroadcastMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, reference.GetGeometry()));
         }
         else
         {
           // Error: Parallel slices
-          EmitMessage(IVolumeSlicer::LayerErrorMessage(*this, reference.GetGeometry()));
+          BroadcastMessage(IVolumeSlicer::LayerErrorMessage(*this, reference.GetGeometry()));
         }
       }
     }

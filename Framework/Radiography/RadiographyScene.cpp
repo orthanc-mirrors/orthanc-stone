@@ -140,8 +140,8 @@ namespace OrthancStone
     raii->SetIndex(index);
     layers_[index] = raii.release();
 
-    EmitMessage(GeometryChangedMessage(*this, *layer));
-    EmitMessage(ContentChangedMessage(*this, *layer));
+    BroadcastMessage(GeometryChangedMessage(*this, *layer));
+    BroadcastMessage(ContentChangedMessage(*this, *layer));
     layer->RegisterObserverCallback(new Callable<RadiographyScene, RadiographyLayer::LayerEditedMessage>(*this, &RadiographyScene::OnLayerEdited));
 
     return *layer;
@@ -149,7 +149,7 @@ namespace OrthancStone
 
   void RadiographyScene::OnLayerEdited(const RadiographyLayer::LayerEditedMessage& message)
   {
-    EmitMessage(RadiographyScene::LayerEditedMessage(*this, message.GetOrigin()));
+    BroadcastMessage(RadiographyScene::LayerEditedMessage(*this, message.GetOrigin()));
   }
 
   RadiographyScene::RadiographyScene(MessageBroker& broker) :
@@ -266,7 +266,7 @@ namespace OrthancStone
     windowingCenter_ = center;
     windowingWidth_ = width;
 
-    EmitMessage(RadiographyScene::WindowingChangedMessage(*this));
+    BroadcastMessage(RadiographyScene::WindowingChangedMessage(*this));
   }
 
 
@@ -447,7 +447,7 @@ namespace OrthancStone
         windowingWidth_ = w;
       }
 
-      EmitMessage(GeometryChangedMessage(*this, *(layer->second)));
+      BroadcastMessage(GeometryChangedMessage(*this, *(layer->second)));
     }
   }
 
@@ -474,7 +474,7 @@ namespace OrthancStone
       reader->ReadFromMemory(content);
       dynamic_cast<RadiographyDicomLayer*>(layer->second)->SetSourceImage(reader.release());
 
-      EmitMessage(ContentChangedMessage(*this, *(layer->second)));
+      BroadcastMessage(ContentChangedMessage(*this, *(layer->second)));
     }
   }
 

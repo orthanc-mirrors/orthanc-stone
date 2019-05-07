@@ -164,7 +164,7 @@ namespace OrthancStone
     if (loader_.HasStructureSet())
     {
       RendererFactory factory(loader_.GetStructureSet(), viewportPlane);
-      EmitMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, viewportPlane));
+      BroadcastMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, viewportPlane));
     }
   }
 }

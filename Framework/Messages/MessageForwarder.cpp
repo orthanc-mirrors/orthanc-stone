@@ -28,7 +28,7 @@ namespace OrthancStone
 
   void IMessageForwarder::ForwardMessageInternal(const IMessage& message)
   {
-    emitter_.EmitMessage(message);
+    emitter_.BroadcastMessage(message);
   }
 
   void IMessageForwarder::RegisterForwarderInEmitter()

@@ -24,6 +24,7 @@
 #include "../../Framework/Messages/MessageBroker.h"
 #include "../../Framework/Messages/ICallable.h"
 #include "../../Framework/Messages/IObservable.h"
+#include "../../Framework/Volumes/ImageBuffer3D.h"
 
 // From Orthanc framework
 #include <Core/IDynamicObject.h>
@@ -69,7 +70,8 @@ namespace Refactoring
     {
     }
 
-    virtual void EmitMessage(const OrthancStone::IMessage& message) = 0;
+    virtual void EmitMessage(const OrthancStone::IObserver& observer,
+                             const OrthancStone::IMessage& message) = 0;
   };
 
 
@@ -80,7 +82,8 @@ namespace Refactoring
     {
     }
 
-    virtual void Schedule(IOracleCommand* command) = 0;  // Takes ownership
+    virtual void Schedule(const OrthancStone::IObserver& receiver,
+                          IOracleCommand* command) = 0;  // Takes ownership
   };
 
 
@@ -285,11 +288,14 @@ namespace Refactoring
     class Item : public Orthanc::IDynamicObject
     {
     private:
-      std::auto_ptr<IOracleCommand>  command_;
+      const OrthancStone::IObserver&  receiver_;
+      std::auto_ptr<IOracleCommand>   command_;
 
     public:
-      Item(IOracleCommand* command) :
-      command_(command)
+      Item(const OrthancStone::IObserver& receiver,
+           IOracleCommand* command) :
+        receiver_(receiver),
+        command_(command)
       {
         if (command == NULL)
         {
@@ -297,7 +303,12 @@ namespace Refactoring
         }
       }
 
-      const IOracleCommand& GetCommand()
+      const OrthancStone::IObserver& GetReceiver() const
+      {
+        return receiver_;
+      }
+
+      const IOracleCommand& GetCommand() const
       {
         assert(command_.get() != NULL);
         return *command_;
@@ -321,7 +332,8 @@ namespace Refactoring
     std::vector<boost::thread*>    workers_;
 
 
-    void Execute(const OrthancApiOracleCommand& command)
+    void Execute(const OrthancStone::IObserver& receiver,
+                 const OrthancApiOracleCommand& command)
     {
       Orthanc::HttpClient  client(orthanc_, command.GetUri());
       client.SetMethod(command.GetMethod());
@@ -352,12 +364,12 @@ namespace Refactoring
       if (success)
       {
         OrthancApiOracleCommand::SuccessMessage message(command, answerHeaders, answer);
-        emitter_.EmitMessage(message);
+        emitter_.EmitMessage(receiver, message);
       }
       else
       {
         OrthancApiOracleCommand::FailureMessage message(command, client.GetLastStatus());
-        emitter_.EmitMessage(message);
+        emitter_.EmitMessage(receiver, message);
       }
     }
 
@@ -365,16 +377,17 @@ namespace Refactoring
 
     void Step()
     {
-      std::auto_ptr<Orthanc::IDynamicObject>  item(queue_.Dequeue(100));
+      std::auto_ptr<Orthanc::IDynamicObject>  object(queue_.Dequeue(100));
 
-      if (item.get() != NULL)
+      if (object.get() != NULL)
       {
-        const IOracleCommand& command = dynamic_cast<Item*>(item.get())->GetCommand();
+        const Item& item = dynamic_cast<Item&>(*object);
 
-        switch (command.GetType())
+        switch (item.GetCommand().GetType())
         {
           case IOracleCommand::Type_OrthancApi:
-            Execute(dynamic_cast<const OrthancApiOracleCommand&>(command));
+            Execute(item.GetReceiver(), 
+                    dynamic_cast<const OrthancApiOracleCommand&>(item.GetCommand()));
             break;
 
           default:
@@ -503,9 +516,10 @@ namespace Refactoring
       StopInternal();
     }
 
-    virtual void Schedule(IOracleCommand* command)
+    virtual void Schedule(const OrthancStone::IObserver& receiver,
+                          IOracleCommand* command)
     {
-      queue_.Enqueue(new Item(command));
+      queue_.Enqueue(new Item(receiver, command));
     }
   };
 
@@ -525,10 +539,11 @@ namespace Refactoring
     }
 
 
-    virtual void EmitMessage(const OrthancStone::IMessage& message)
+    virtual void EmitMessage(const OrthancStone::IObserver& observer,
+                             const OrthancStone::IMessage& message)
     {
       boost::unique_lock<boost::shared_mutex>  lock(mutex_);
-      oracleObservable_.EmitMessage(message);
+      oracleObservable_.EmitMessage(observer, message);
     }
 
 
@@ -571,6 +586,34 @@ namespace Refactoring
       }
     };
   };
+
+
+
+  class AxialVolumeOrthancLoader : public OrthancStone::IObserver
+  {
+  private:
+    void Handle(const Refactoring::OrthancApiOracleCommand::SuccessMessage& message)
+    {
+      Json::Value v;
+      message.GetJsonBody(v);
+
+      printf("ICI [%s]\n", v.toStyledString().c_str());
+    }
+
+
+    std::auto_ptr<OrthancStone::ImageBuffer3D>  image_;
+
+
+  public:
+    AxialVolumeOrthancLoader(OrthancStone::IObservable& oracle) :
+      IObserver(oracle.GetBroker())
+    {
+      oracle.RegisterObserverCallback(
+        new OrthancStone::Callable<AxialVolumeOrthancLoader, OrthancApiOracleCommand::SuccessMessage>
+        (*this, &AxialVolumeOrthancLoader::Handle));
+    }
+  };
+
 }
 
 
@@ -595,8 +638,9 @@ public:
   Toto(OrthancStone::IObservable& oracle) :
     IObserver(oracle.GetBroker())
   {
-    oracle.RegisterObserverCallback(new OrthancStone::Callable<Toto, Refactoring::OrthancApiOracleCommand::SuccessMessage>(*this, &Toto::Handle));
-    oracle.RegisterObserverCallback(new OrthancStone::Callable<Toto, Refactoring::OrthancApiOracleCommand::FailureMessage>(*this, &Toto::Handle));
+    oracle.RegisterObserverCallback
+      (new OrthancStone::Callable
+       <Toto, Refactoring::OrthancApiOracleCommand::SuccessMessage>(*this, &Toto::Handle));
   }
 };
 
@@ -608,6 +652,13 @@ void Run(Refactoring::NativeApplicationContext& context)
   {
     Refactoring::NativeApplicationContext::WriterLock lock(context);
     toto.reset(new Toto(lock.GetOracleObservable()));
+  }
+
+  std::auto_ptr<Refactoring::AxialVolumeOrthancLoader> loader;
+
+  {
+    Refactoring::NativeApplicationContext::WriterLock lock(context);
+    loader.reset(new Refactoring::AxialVolumeOrthancLoader(lock.GetOracleObservable()));
   }
 
   Refactoring::NativeOracle oracle(context);
@@ -631,7 +682,7 @@ void Run(Refactoring::NativeApplicationContext& context)
     command->SetUri("/tools/find");
     command->SetBody(v);
 
-    oracle.Schedule(command.release());
+    oracle.Schedule(*toto, command.release());
   }
 
   boost::this_thread::sleep(boost::posix_time::seconds(1));

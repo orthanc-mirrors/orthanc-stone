@@ -89,7 +89,7 @@ namespace OrthancStone
     // TODO Why should this be virtual?
     virtual void NotifyContentChanged()
     {
-      EmitMessage(ViewportChangedMessage(*this));
+      BroadcastMessage(ViewportChangedMessage(*this));
     }
   };
 }

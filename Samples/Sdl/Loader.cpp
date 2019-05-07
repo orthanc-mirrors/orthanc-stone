@@ -62,6 +62,17 @@ namespace Refactoring
   };
 
 
+  class IMessageEmitter : public boost::noncopyable
+  {
+  public:
+    virtual ~IMessageEmitter()
+    {
+    }
+
+    virtual void EmitMessage(const OrthancStone::IMessage& message) = 0;
+  };
+
+
   class IOracle : public boost::noncopyable
   {
   public:
@@ -268,74 +279,6 @@ namespace Refactoring
 
 
 
-  class NativeApplicationContext : public boost::noncopyable
-  {
-  private:
-    boost::shared_mutex            mutex_;
-    Orthanc::WebServiceParameters  orthanc_;
-    OrthancStone::MessageBroker    broker_;
-    OrthancStone::IObservable      oracleObservable_;
-
-  public:
-    NativeApplicationContext() :
-      oracleObservable_(broker_)
-    {
-      orthanc_.SetUrl("http://localhost:8042/");
-    }
-
-
-    class ReaderLock : public boost::noncopyable
-    {
-    private:
-      NativeApplicationContext&                that_;
-      boost::shared_lock<boost::shared_mutex>  lock_;
-
-    public:
-      ReaderLock(NativeApplicationContext& that) : 
-      that_(that),
-      lock_(that.mutex_)
-      {
-      }
-
-      const Orthanc::WebServiceParameters& GetOrthancParameters() const
-      {
-        return that_.orthanc_;
-      }
-    };
-
-
-    class WriterLock : public boost::noncopyable
-    {
-    private:
-      NativeApplicationContext&                that_;
-      boost::unique_lock<boost::shared_mutex>  lock_;
-
-    public:
-      WriterLock(NativeApplicationContext& that) : 
-      that_(that),
-      lock_(that.mutex_)
-      {
-      }
-
-      OrthancStone::MessageBroker& GetBroker() 
-      {
-        return that_.broker_;
-      }
-
-      void SetOrthancParameters(Orthanc::WebServiceParameters& orthanc)
-      {
-        that_.orthanc_ = orthanc;
-      }
-
-      OrthancStone::IObservable&  GetOracleObservable()
-      {
-        return that_.oracleObservable_;
-      }
-    };
-  };
-
-
-
   class NativeOracle : public IOracle
   {
   private:
@@ -370,31 +313,26 @@ namespace Refactoring
     };
 
 
-    NativeApplicationContext&     context_;
-    Orthanc::SharedMessageQueue   queue_;
-    State                         state_;
-    boost::mutex                  mutex_;
-    std::vector<boost::thread*>   workers_;
+    IMessageEmitter&               emitter_;
+    Orthanc::WebServiceParameters  orthanc_;
+    Orthanc::SharedMessageQueue    queue_;
+    State                          state_;
+    boost::mutex                   mutex_;
+    std::vector<boost::thread*>    workers_;
 
 
     void Execute(const OrthancApiOracleCommand& command)
     {
-      std::auto_ptr<Orthanc::HttpClient> client;
-
-      {
-        NativeApplicationContext::ReaderLock lock(context_);
-        client.reset(new Orthanc::HttpClient(lock.GetOrthancParameters(), command.GetUri()));
-      }
-
-      client->SetMethod(command.GetMethod());
-      client->SetBody(command.GetBody());
-      client->SetTimeout(command.GetTimeout());
+      Orthanc::HttpClient  client(orthanc_, command.GetUri());
+      client.SetMethod(command.GetMethod());
+      client.SetBody(command.GetBody());
+      client.SetTimeout(command.GetTimeout());
       
       {
         const HttpHeaders& headers = command.GetHttpHeaders();
         for (HttpHeaders::const_iterator it = headers.begin(); it != headers.end(); it++ )
         {
-          client->AddHeader(it->first, it->second);
+          client.AddHeader(it->first, it->second);
         }
       }
 
@@ -404,26 +342,22 @@ namespace Refactoring
       bool success;
       try
       {
-        success = client->Apply(answer, answerHeaders);
+        success = client.Apply(answer, answerHeaders);
       }
       catch (Orthanc::OrthancException& e)
       {
         success = false;
       }
 
+      if (success)
       {
-        NativeApplicationContext::WriterLock lock(context_);
-
-        if (success)
-        {
-          OrthancApiOracleCommand::SuccessMessage message(command, answerHeaders, answer);
-          lock.GetOracleObservable().EmitMessage(message);
-        }
-        else
-        {
-          OrthancApiOracleCommand::FailureMessage message(command, client->GetLastStatus());
-          lock.GetOracleObservable().EmitMessage(message);
-        }
+        OrthancApiOracleCommand::SuccessMessage message(command, answerHeaders, answer);
+        emitter_.EmitMessage(message);
+      }
+      else
+      {
+        OrthancApiOracleCommand::FailureMessage message(command, client.GetLastStatus());
+        emitter_.EmitMessage(message);
       }
     }
 
@@ -501,8 +435,8 @@ namespace Refactoring
 
 
   public:
-    NativeOracle(NativeApplicationContext& context) :
-    context_(context),
+    NativeOracle(IMessageEmitter& emitter) :
+    emitter_(emitter),
       state_(State_Setup),
       workers_(4)
     {
@@ -511,6 +445,20 @@ namespace Refactoring
     virtual ~NativeOracle()
     {
       StopInternal();
+    }
+
+    void SetOrthancParameters(const Orthanc::WebServiceParameters& orthanc)
+    {
+      boost::mutex::scoped_lock lock(mutex_);
+
+      if (state_ != State_Setup)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        orthanc_ = orthanc;
+      }
     }
 
     void SetWorkersCount(unsigned int count)
@@ -560,6 +508,69 @@ namespace Refactoring
       queue_.Enqueue(new Item(command));
     }
   };
+
+
+
+  class NativeApplicationContext : public IMessageEmitter
+  {
+  private:
+    boost::shared_mutex            mutex_;
+    OrthancStone::MessageBroker    broker_;
+    OrthancStone::IObservable      oracleObservable_;
+
+  public:
+    NativeApplicationContext() :
+      oracleObservable_(broker_)
+    {
+    }
+
+
+    virtual void EmitMessage(const OrthancStone::IMessage& message)
+    {
+      boost::unique_lock<boost::shared_mutex>  lock(mutex_);
+      oracleObservable_.EmitMessage(message);
+    }
+
+
+    class ReaderLock : public boost::noncopyable
+    {
+    private:
+      NativeApplicationContext&                that_;
+      boost::shared_lock<boost::shared_mutex>  lock_;
+
+    public:
+      ReaderLock(NativeApplicationContext& that) : 
+      that_(that),
+      lock_(that.mutex_)
+      {
+      }
+    };
+
+
+    class WriterLock : public boost::noncopyable
+    {
+    private:
+      NativeApplicationContext&                that_;
+      boost::unique_lock<boost::shared_mutex>  lock_;
+
+    public:
+      WriterLock(NativeApplicationContext& that) : 
+      that_(that),
+      lock_(that.mutex_)
+      {
+      }
+
+      OrthancStone::MessageBroker& GetBroker() 
+      {
+        return that_.broker_;
+      }
+
+      OrthancStone::IObservable& GetOracleObservable()
+      {
+        return that_.oracleObservable_;
+      }
+    };
+  };
 }
 
 
@@ -600,6 +611,14 @@ void Run(Refactoring::NativeApplicationContext& context)
   }
 
   Refactoring::NativeOracle oracle(context);
+
+  {
+    Orthanc::WebServiceParameters p;
+    //p.SetUrl("http://localhost:8043/");
+    p.SetCredentials("orthanc", "orthanc");
+    oracle.SetOrthancParameters(p);
+  }
+
   oracle.Start();
 
   {

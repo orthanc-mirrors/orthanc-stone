@@ -60,3 +60,9 @@ add_executable(BasicScene
   )
 
 target_link_libraries(BasicScene OrthancStone)
+
+add_executable(Loader
+  Loader.cpp
+  )
+
+target_link_libraries(Loader OrthancStone)

@@ -132,6 +132,9 @@ namespace OrthancStone
       output["pixelSpacing"] = pan;
     }
 
+    output["verticalFlip"] = geometry.GetVerticalFlip();
+    output["horizontalFlip"] = geometry.GetHorizontalFlip();
+
     if (dynamic_cast<const RadiographyTextLayer*>(&layer) != NULL)
     {
       WriteLayer(output, dynamic_cast<const RadiographyTextLayer&>(layer));

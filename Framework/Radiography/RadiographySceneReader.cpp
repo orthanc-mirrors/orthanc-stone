@@ -234,5 +234,16 @@ namespace OrthancStone
     geometry.SetResizeable(jsonLayer["isResizable"].asBool());
     geometry.SetPan(jsonLayer["pan"]["x"].asDouble(), jsonLayer["pan"]["y"].asDouble());
     geometry.SetPixelSpacing(jsonLayer["pixelSpacing"]["x"].asDouble(), jsonLayer["pixelSpacing"]["y"].asDouble());
+
+    // these fields were introduced later -> they might not exist
+    if (jsonLayer.isMember("verticalFlip"))
+    {
+      geometry.SetVerticalFlip(jsonLayer["verticalFlip"].asBool());
+    }
+    if (jsonLayer.isMember("horizontalFlip"))
+    {
+      geometry.SetHorizontalFlip(jsonLayer["horizontalFlip"].asBool());
+    }
+
   }
 }

@@ -156,7 +156,7 @@ namespace OrthancStone
 
     void OnTagsReceived(const OrthancApiClient::BinaryResponseReadyMessage& message);
 
-    void OnFrameReceived(const OrthancApiClient::BinaryResponseReadyMessage& message);
+    virtual void OnFrameReceived(const OrthancApiClient::BinaryResponseReadyMessage& message);
     
     void OnDicomExported(const OrthancApiClient::JsonResponseReadyMessage& message);
 

@@ -75,6 +75,8 @@ namespace OrthancStone
       unsigned int       cropY_;
       unsigned int       cropWidth_;
       unsigned int       cropHeight_;
+      bool               verticalFlip_;
+      bool               horizontalFlip_;
       double             panX_;
       double             panY_;
       double             angle_;
@@ -166,6 +168,35 @@ namespace OrthancStone
         return pixelSpacingY_;
       }
 
+      void SetVerticalFlip(bool flip) //  mirrors image around an horizontal axis (note: flip is applied before the rotation !)
+      {
+        verticalFlip_ = flip;
+      }
+
+      void SetHorizontalFlip(bool flip) //  mirrors image around a vertical axis (note: flip is applied before the rotation !)
+      {
+        horizontalFlip_ = flip;
+      }
+
+      bool GetVerticalFlip() const
+      {
+        return verticalFlip_;
+      }
+
+      bool GetHorizontalFlip() const
+      {
+        return horizontalFlip_;
+      }
+
+      double GetScalingX() const
+      {
+        return (horizontalFlip_ ? - pixelSpacingX_: pixelSpacingX_);
+      }
+
+      double GetScalingY() const
+      {
+        return (verticalFlip_ ? - pixelSpacingY_: pixelSpacingY_);
+      }
     };
 
   private:
@@ -250,6 +281,10 @@ namespace OrthancStone
 
     void SetPan(double x,
                 double y);
+
+    void SetVerticalFlip(bool flip); //  mirrors image around an horizontal axis (note: flip is applied before the rotation !)
+
+    void SetHorizontalFlip(bool flip); //  mirrors image around a vertical axis (note: flip is applied before the rotation !)
 
     void SetResizeable(bool resizeable)
     {

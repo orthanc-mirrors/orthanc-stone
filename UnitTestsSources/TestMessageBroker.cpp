@@ -46,7 +46,7 @@ namespace {
   class MyObservable : public IObservable
   {
   public:
-    struct MyCustomMessage: public BaseMessage<CustomMessageType_Completed>
+    struct MyCustomMessage: public BaseMessage<(MessageType) CustomMessageType_Completed>
     {
       int payload_;
 

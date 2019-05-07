@@ -98,6 +98,7 @@ namespace OrthancStone
 
   enum SopClassUid
   {
+    SopClassUid_Other,
     SopClassUid_RTDose
   };
 
@@ -192,8 +193,7 @@ namespace OrthancStone
   };
 
   
-  bool StringToSopClassUid(SopClassUid& result,
-                           const std::string& source);
+  SopClassUid StringToSopClassUid(const std::string& source);
 
   void ComputeWindowing(float& targetCenter,
                         float& targetWidth,

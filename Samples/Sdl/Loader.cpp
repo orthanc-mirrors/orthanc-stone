@@ -19,22 +19,26 @@
  **/
 
 // From Stone
-#include "../../Framework/StoneInitialization.h"
-#include "../../Framework/Messages/IMessage.h"
-#include "../../Framework/Messages/MessageBroker.h"
 #include "../../Framework/Messages/ICallable.h"
+#include "../../Framework/Messages/IMessage.h"
 #include "../../Framework/Messages/IObservable.h"
+#include "../../Framework/Messages/MessageBroker.h"
+#include "../../Framework/StoneInitialization.h"
+#include "../../Framework/Toolbox/GeometryToolbox.h"
 #include "../../Framework/Volumes/ImageBuffer3D.h"
 
 // From Orthanc framework
+#include <Core/DicomFormat/DicomArray.h>
+#include <Core/DicomFormat/DicomImageInformation.h>
+#include <Core/HttpClient.h>
 #include <Core/IDynamicObject.h>
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Images/PngWriter.h>
 #include <Core/Logging.h>
-#include <Core/HttpClient.h>
 #include <Core/MultiThreading/SharedMessageQueue.h>
 #include <Core/OrthancException.h>
+#include <Core/Toolbox.h>
 
 #include <json/reader.h>
 #include <json/value.h>
@@ -154,7 +158,7 @@ namespace Refactoring
         return answer_;
       }
 
-      void GetJsonBody(Json::Value& target) const
+      void ParseJsonBody(Json::Value& target) const
       {
         Json::Reader reader;
         if (!reader.parse(answer_, target))
@@ -337,8 +341,13 @@ namespace Refactoring
     {
       Orthanc::HttpClient  client(orthanc_, command.GetUri());
       client.SetMethod(command.GetMethod());
-      client.SetBody(command.GetBody());
       client.SetTimeout(command.GetTimeout());
+
+      if (command.GetMethod() == Orthanc::HttpMethod_Post ||
+          command.GetMethod() == Orthanc::HttpMethod_Put)
+      {
+        client.SetBody(command.GetBody());
+      }
       
       {
         const HttpHeaders& headers = command.GetHttpHeaders();
@@ -383,15 +392,26 @@ namespace Refactoring
       {
         const Item& item = dynamic_cast<Item&>(*object);
 
-        switch (item.GetCommand().GetType())
+        try
         {
-          case IOracleCommand::Type_OrthancApi:
-            Execute(item.GetReceiver(), 
-                    dynamic_cast<const OrthancApiOracleCommand&>(item.GetCommand()));
-            break;
+          switch (item.GetCommand().GetType())
+          {
+            case IOracleCommand::Type_OrthancApi:
+              Execute(item.GetReceiver(), 
+                      dynamic_cast<const OrthancApiOracleCommand&>(item.GetCommand()));
+              break;
 
-          default:
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+            default:
+              throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+          }
+        }
+        catch (Orthanc::OrthancException& e)
+        {
+          LOG(ERROR) << "Exception within the oracle: " << e.What();
+        }
+        catch (...)
+        {
+          LOG(ERROR) << "Native exception within the oracle";
         }
       }
     }
@@ -589,28 +609,404 @@ namespace Refactoring
 
 
 
+  class DicomInstanceParameters : public boost::noncopyable
+  {
+  private:
+    Orthanc::DicomImageInformation    information_;
+    OrthancStone::SopClassUid         sopClassUid_;
+    double                            thickness_;
+    double                            pixelSpacingX_;
+    double                            pixelSpacingY_;
+    OrthancStone::CoordinateSystem3D  geometry_;
+    OrthancStone::Vector              frameOffsets_;
+    bool                              isColor_;
+    bool                              hasRescale_;
+    double                            rescaleOffset_;
+    double                            rescaleSlope_;
+    bool                              hasDefaultWindowing_;
+    float                             defaultWindowingCenter_;
+    float                             defaultWindowingWidth_;
+
+    void ComputeDoseOffsets(const Orthanc::DicomMap& dicom)
+    {
+      // http://dicom.nema.org/medical/Dicom/2016a/output/chtml/part03/sect_C.8.8.3.2.html
+
+      {
+        std::string increment;
+
+        if (dicom.CopyToString(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
+        {
+          Orthanc::Toolbox::ToUpperCase(increment);
+          if (increment != "3004,000C")  // This is the "Grid Frame Offset Vector" tag
+          {
+            LOG(ERROR) << "RT-DOSE: Bad value for the \"FrameIncrementPointer\" tag";
+            return;
+          }
+        }
+      }
+
+      if (!OrthancStone::LinearAlgebra::ParseVector(frameOffsets_, dicom, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR) ||
+          frameOffsets_.size() < information_.GetNumberOfFrames())
+      {
+        LOG(ERROR) << "RT-DOSE: No information about the 3D location of some slice(s)";
+        frameOffsets_.clear();
+      }
+      else
+      {
+        if (frameOffsets_.size() >= 2)
+        {
+          thickness_ = frameOffsets_[1] - frameOffsets_[0];
+
+          if (thickness_ < 0)
+          {
+            thickness_ = -thickness_;
+          }
+        }
+      }
+    }
+
+  public:
+    DicomInstanceParameters(const Orthanc::DicomMap& dicom) :
+      information_(dicom)
+    {
+      if (information_.GetNumberOfFrames() <= 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
+            
+      std::string s;
+      if (!dicom.CopyToString(s, Orthanc::DICOM_TAG_SOP_CLASS_UID, false))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
+      else
+      {
+        sopClassUid_ = OrthancStone::StringToSopClassUid(s);
+      }
+
+      if (!dicom.ParseDouble(thickness_, Orthanc::DICOM_TAG_SLICE_THICKNESS))
+      {
+        thickness_ = 100.0 * std::numeric_limits<double>::epsilon();
+      }
+
+      OrthancStone::GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, dicom);
+
+      std::string position, orientation;
+      if (dicom.CopyToString(position, Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT, false) &&
+          dicom.CopyToString(orientation, Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT, false))
+      {
+        geometry_ = OrthancStone::CoordinateSystem3D(position, orientation);
+      }
+
+      if (sopClassUid_ == OrthancStone::SopClassUid_RTDose)
+      {
+        ComputeDoseOffsets(dicom);
+      }
+
+      isColor_ = (information_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome1 &&
+                  information_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome2);
+
+      double doseGridScaling;
+
+      if (dicom.ParseDouble(rescaleOffset_, Orthanc::DICOM_TAG_RESCALE_INTERCEPT) &&
+          dicom.ParseDouble(rescaleSlope_, Orthanc::DICOM_TAG_RESCALE_SLOPE))
+      {
+        hasRescale_ = true;
+      }
+      else if (dicom.ParseDouble(doseGridScaling, Orthanc::DICOM_TAG_DOSE_GRID_SCALING))
+      {
+        hasRescale_ = true;
+        rescaleOffset_ = 0;
+        rescaleSlope_ = doseGridScaling;
+      }
+      else
+      {
+        hasRescale_ = false;
+      }
+
+      OrthancStone::Vector c, w;
+      if (OrthancStone::LinearAlgebra::ParseVector(c, dicom, Orthanc::DICOM_TAG_WINDOW_CENTER) &&
+          OrthancStone::LinearAlgebra::ParseVector(w, dicom, Orthanc::DICOM_TAG_WINDOW_WIDTH) &&
+          c.size() > 0 && 
+          w.size() > 0)
+      {
+        hasDefaultWindowing_ = true;
+        defaultWindowingCenter_ = static_cast<float>(c[0]);
+        defaultWindowingWidth_ = static_cast<float>(w[0]);
+      }
+      else
+      {
+        hasDefaultWindowing_ = false;
+      }
+    }
+
+    const Orthanc::DicomImageInformation& GetImageInformation() const
+    {
+      return information_;
+    }
+
+    OrthancStone::SopClassUid GetSopClassUid() const
+    {
+      return sopClassUid_;
+    }
+
+    double GetThickness() const
+    {
+      return thickness_;
+    }
+
+    double GetPixelSpacingX() const
+    {
+      return pixelSpacingX_;
+    }
+
+    double GetPixelSpacingY() const
+    {
+      return pixelSpacingY_;
+    }
+
+    const OrthancStone::CoordinateSystem3D&  GetGeometry() const
+    {
+      return geometry_;
+    }
+
+    OrthancStone::CoordinateSystem3D  GetFrameGeometry(unsigned int frame) const
+    {
+      if (frame >= information_.GetNumberOfFrames())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+
+      if (sopClassUid_ == OrthancStone::SopClassUid_RTDose)
+      {
+        if (frame >= frameOffsets_.size())
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+        }
+
+        return OrthancStone::CoordinateSystem3D(
+          geometry_.GetOrigin() + frameOffsets_[frame] * geometry_.GetNormal(),
+          geometry_.GetAxisX(),
+          geometry_.GetAxisY());
+      }
+    }
+
+    bool FrameContainsPlane(unsigned int frame,
+                            const OrthancStone::CoordinateSystem3D& plane) const
+    {
+      if (frame >= information_.GetNumberOfFrames())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+
+      OrthancStone::CoordinateSystem3D tmp = geometry_;
+
+      if (frame != 0)
+      {
+        tmp = GetFrameGeometry(frame);
+      }
+
+      bool opposite;   // Ignored
+      return (OrthancStone::GeometryToolbox::IsParallelOrOpposite(
+                opposite, tmp.GetNormal(), plane.GetNormal()) &&
+              OrthancStone::LinearAlgebra::IsNear(
+                tmp.ProjectAlongNormal(tmp.GetOrigin()),
+                tmp.ProjectAlongNormal(plane.GetOrigin()),
+                thickness_ / 2.0));
+    }
+
+    bool IsColor() const
+    {
+      return isColor_;
+    }
+
+    bool HasRescale() const
+    {
+      return hasRescale_;
+    }
+
+    double GetRescaleOffset() const
+    {
+      if (hasRescale_)
+      {
+        return rescaleOffset_;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+    }
+
+    double GetRescaleSlope() const
+    {
+      if (hasRescale_)
+      {
+        return rescaleSlope_;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+    }
+
+    bool HasDefaultWindowing() const
+    {
+      return hasDefaultWindowing_;
+    }
+
+    float GetDefaultWindowingCenter() const
+    {
+      if (hasDefaultWindowing_)
+      {
+        return defaultWindowingCenter_;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+    }
+
+    float GetDefaultWindowingWidth() const
+    {
+      if (hasDefaultWindowing_)
+      {
+        return defaultWindowingWidth_;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+    }
+  };
+
+
   class AxialVolumeOrthancLoader : public OrthancStone::IObserver
   {
   private:
-    void Handle(const Refactoring::OrthancApiOracleCommand::SuccessMessage& message)
+    class MessageHandler : public Orthanc::IDynamicObject
     {
-      Json::Value v;
-      message.GetJsonBody(v);
+    public:
+      virtual void Handle(const OrthancApiOracleCommand::SuccessMessage& message) const = 0;
+    };
 
-      printf("ICI [%s]\n", v.toStyledString().c_str());
+    void Handle(const OrthancApiOracleCommand::SuccessMessage& message)
+    {
+      dynamic_cast<const MessageHandler&>(message.GetOrigin().GetPayload()).Handle(message);
     }
 
 
+    class LoadSeriesGeometryHandler : public MessageHandler
+    {
+    private:
+      AxialVolumeOrthancLoader&  that_;
+
+    public:
+      LoadSeriesGeometryHandler(AxialVolumeOrthancLoader& that) :
+      that_(that)
+      {
+      }
+
+      virtual void Handle(const OrthancApiOracleCommand::SuccessMessage& message) const
+      {
+        Json::Value value;
+        message.ParseJsonBody(value);
+
+        if (value.type() != Json::objectValue)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
+        }
+
+        Json::Value::Members instances = value.getMemberNames();
+
+        for (size_t i = 0; i < instances.size(); i++)
+        {
+          Orthanc::DicomMap dicom;
+          dicom.FromDicomAsJson(value[instances[i]]);
+
+          DicomInstanceParameters instance(dicom);
+        }
+      }
+    };
+
+
+    class LoadInstanceGeometryHandler : public MessageHandler
+    {
+    private:
+      AxialVolumeOrthancLoader&  that_;
+
+    public:
+      LoadInstanceGeometryHandler(AxialVolumeOrthancLoader& that) :
+      that_(that)
+      {
+      }
+
+      virtual void Handle(const OrthancApiOracleCommand::SuccessMessage& message) const
+      {
+        Json::Value value;
+        message.ParseJsonBody(value);
+
+        if (value.type() != Json::objectValue)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
+        }
+
+        Orthanc::DicomMap dicom;
+        dicom.FromDicomAsJson(value);
+
+        DicomInstanceParameters instance(dicom);
+      }
+    };
+
+
+    bool                                        active_;
     std::auto_ptr<OrthancStone::ImageBuffer3D>  image_;
 
 
   public:
     AxialVolumeOrthancLoader(OrthancStone::IObservable& oracle) :
-      IObserver(oracle.GetBroker())
+      IObserver(oracle.GetBroker()),
+      active_(false)
     {
       oracle.RegisterObserverCallback(
         new OrthancStone::Callable<AxialVolumeOrthancLoader, OrthancApiOracleCommand::SuccessMessage>
         (*this, &AxialVolumeOrthancLoader::Handle));
+    }
+
+    void LoadSeries(IOracle& oracle,
+                    const std::string& seriesId)
+    {
+      if (active_)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+
+      active_ = true;
+
+      std::auto_ptr<Refactoring::OrthancApiOracleCommand> command(new Refactoring::OrthancApiOracleCommand);
+      command->SetUri("/series/" + seriesId + "/instances-tags");
+      command->SetPayload(new LoadSeriesGeometryHandler(*this));
+
+      oracle.Schedule(*this, command.release());
+    }
+
+    void LoadInstance(IOracle& oracle,
+                      const std::string& instanceId)
+    {
+      if (active_)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+
+      active_ = true;
+
+      // Tag "3004-000c" is "Grid Frame Offset Vector", which is
+      // mandatory to read RT DOSE, but is too long to be returned by default
+
+      std::auto_ptr<Refactoring::OrthancApiOracleCommand> command(new Refactoring::OrthancApiOracleCommand);
+      command->SetUri("/instances/" + instanceId + "/tags?ignore-length=3004-000c");
+      command->SetPayload(new LoadInstanceGeometryHandler(*this));
+
+      oracle.Schedule(*this, command.release());
     }
   };
 
@@ -624,7 +1020,7 @@ private:
   void Handle(const Refactoring::OrthancApiOracleCommand::SuccessMessage& message)
   {
     Json::Value v;
-    message.GetJsonBody(v);
+    message.ParseJsonBody(v);
 
     printf("ICI [%s]\n", v.toStyledString().c_str());
   }
@@ -648,17 +1044,13 @@ public:
 void Run(Refactoring::NativeApplicationContext& context)
 {
   std::auto_ptr<Toto> toto;
+  std::auto_ptr<Refactoring::AxialVolumeOrthancLoader> loader1, loader2;
 
   {
     Refactoring::NativeApplicationContext::WriterLock lock(context);
     toto.reset(new Toto(lock.GetOracleObservable()));
-  }
-
-  std::auto_ptr<Refactoring::AxialVolumeOrthancLoader> loader;
-
-  {
-    Refactoring::NativeApplicationContext::WriterLock lock(context);
-    loader.reset(new Refactoring::AxialVolumeOrthancLoader(lock.GetOracleObservable()));
+    loader1.reset(new Refactoring::AxialVolumeOrthancLoader(lock.GetOracleObservable()));
+    loader2.reset(new Refactoring::AxialVolumeOrthancLoader(lock.GetOracleObservable()));
   }
 
   Refactoring::NativeOracle oracle(context);
@@ -684,6 +1076,10 @@ void Run(Refactoring::NativeApplicationContext& context)
 
     oracle.Schedule(*toto, command.release());
   }
+  
+  // 2017-11-17-Anonymized
+  loader1->LoadSeries(oracle, "cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
+  loader2->LoadInstance(oracle, "41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
 
   boost::this_thread::sleep(boost::posix_time::seconds(1));
 

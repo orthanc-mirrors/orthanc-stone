@@ -27,20 +27,18 @@
 
 namespace OrthancStone
 {  
-  bool StringToSopClassUid(SopClassUid& result,
-                           const std::string& source)
+  SopClassUid StringToSopClassUid(const std::string& source)
   {
     std::string s = Orthanc::Toolbox::StripSpaces(source);
 
     if (s == "1.2.840.10008.5.1.4.1.1.481.2")
     {
-      result = SopClassUid_RTDose;
-      return true;
+      return SopClassUid_RTDose;
     }
     else
     {
-      //LOG(INFO) << "Unknown SOP class UID: " << source;
-      return false;
+      //LOG(INFO) << "Other SOP class UID: " << source;
+      return SopClassUid_Other;
     }
   }  
 

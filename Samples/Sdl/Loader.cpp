@@ -1037,6 +1037,8 @@ namespace Refactoring
       // Tag "3004-000c" is "Grid Frame Offset Vector", which is
       // mandatory to read RT DOSE, but is too long to be returned by default
 
+      // TODO => Should be part of a second call if needed
+
       std::auto_ptr<Refactoring::OrthancApiOracleCommand> command(new Refactoring::OrthancApiOracleCommand);
       command->SetUri("/instances/" + instanceId + "/tags?ignore-length=3004-000c");
       command->SetPayload(new LoadInstanceGeometryHandler(*this));

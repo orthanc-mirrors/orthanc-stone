@@ -343,10 +343,16 @@ EM_BOOL OnMouseEvent(int eventType,
 
 void OrthancStone::WebAssemblyViewport::SetupEvents(const std::string& canvas)
 {
-  //emscripten_set_click_callback(canvas.c_str(), this, false, OnMouseEvent);
-  emscripten_set_mousedown_callback(canvas.c_str(), this, false, OnMouseEvent);
-  emscripten_set_mousemove_callback(canvas.c_str(), this, false, OnMouseEvent);
-  emscripten_set_mouseup_callback(canvas.c_str(), this, false, OnMouseEvent);
+  if (0)
+  {
+    emscripten_set_click_callback(canvas.c_str(), this, false, OnMouseEvent);
+  }
+  else
+  {
+    emscripten_set_mousedown_callback(canvas.c_str(), this, false, OnMouseEvent);
+    emscripten_set_mousemove_callback(canvas.c_str(), this, false, OnMouseEvent);
+    emscripten_set_mouseup_callback(canvas.c_str(), this, false, OnMouseEvent);
+  }
 }
 
 

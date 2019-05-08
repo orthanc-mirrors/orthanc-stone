@@ -131,6 +131,7 @@ class TestStonegentool(unittest.TestCase):
     self.assertDictEqual(message1Struct,
     {
       'name':'Message1',
+      '__meta__': {'handleInCpp': False, 'handleInTypescript': False},
       'fields': {
         'a': 'int32',
         'b': 'string',
@@ -164,6 +165,12 @@ class TestStonegentool(unittest.TestCase):
     Barbecue,
   };
 
+  export enum EnumMonth0 {
+    January,
+    February,
+    March,
+  };
+
 """
     self.assertEqual(renderedCodeRef,renderedCode)
 
@@ -190,6 +197,12 @@ class TestStonegentool(unittest.TestCase):
     CreamAndChives,
     Paprika,
     Barbecue,
+  };
+
+  enum EnumMonth0 {
+    January,
+    February,
+    March,
   };
 
 """
@@ -278,9 +291,9 @@ class TestStonegentool(unittest.TestCase):
     movies:Array<MovieType>;
 
     constructor() {
-      someStrings = new Array<string>();
-      someInts2 = new Array<number>();
-      movies = new Array<MovieType>();
+      this.someStrings = new Array<string>();
+      this.someInts2 = new Array<number>();
+      this.movies = new Array<MovieType>();
     }
 
     public StoneSerialize(): string {
@@ -296,8 +309,8 @@ class TestStonegentool(unittest.TestCase):
     someInts:Array<number>;
 
     constructor() {
-      someAs = new Array<A>();
-      someInts = new Array<number>();
+      this.someAs = new Array<A>();
+      this.someInts = new Array<number>();
     }
 
     public StoneSerialize(): string {
@@ -313,8 +326,8 @@ class TestStonegentool(unittest.TestCase):
     ddd:Array<string>;
 
     constructor() {
-      someBs = new Array<B>();
-      ddd = new Array<string>();
+      this.someBs = new Array<B>();
+      this.ddd = new Array<string>();
     }
 
     public StoneSerialize(): string {
@@ -332,10 +345,10 @@ class TestStonegentool(unittest.TestCase):
     d:boolean;
 
     constructor() {
-      a = new number();
-      b = new string();
-      c = new EnumMonth0();
-      d = new boolean();
+      this.a = new number();
+      this.b = new string();
+      this.c = new EnumMonth0();
+      this.d = new boolean();
     }
 
     public StoneSerialize(): string {
@@ -352,13 +365,15 @@ class TestStonegentool(unittest.TestCase):
     tutu:Array<string>;
     titi:Map<string, string>;
     lulu:Map<string, Message1>;
+    movieType:MovieType;
 
     constructor() {
-      toto = new string();
-      tata = new Array<Message1>();
-      tutu = new Array<string>();
-      titi = new Map<string, string>();
-      lulu = new Map<string, Message1>();
+      this.toto = new string();
+      this.tata = new Array<Message1>();
+      this.tutu = new Array<string>();
+      this.titi = new Map<string, string>();
+      this.lulu = new Map<string, Message1>();
+      this.movieType = new MovieType();
     }
 
     public StoneSerialize(): string {

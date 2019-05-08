@@ -16,6 +16,8 @@ Resources/CommandTool/protoc-tests/generated_js/
 Resources/CommandTool/protoc-tests/generated_ts/
 Resources/CommandTool/flatc-tests/basic/build/
 .vscode/
+Resources/CodeGeneration/.env
+Resources/CodeGeneration/.idea
 Resources/CodeGeneration/__pycache__
 Resources/CodeGeneration/build/
 Resources/CodeGeneration/build_browser/

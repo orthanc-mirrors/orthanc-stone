@@ -133,7 +133,7 @@ namespace OrthancStone
     }
 
     output["flipVertical"] = geometry.GetFlipVertical();
-    output["flipHorizontal"] = geometry.GetHorizontalVertical();
+    output["flipHorizontal"] = geometry.GetFlipHorizontal();
 
     if (dynamic_cast<const RadiographyTextLayer*>(&layer) != NULL)
     {

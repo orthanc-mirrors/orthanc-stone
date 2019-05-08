@@ -183,7 +183,7 @@ namespace OrthancStone
         return flipVertical_;
       }
 
-      bool GetHorizontalVertical() const
+      bool GetFlipHorizontal() const
       {
         return flipHorizontal_;
       }

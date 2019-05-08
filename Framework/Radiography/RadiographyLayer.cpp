@@ -34,8 +34,8 @@ namespace OrthancStone
 
   RadiographyLayer::Geometry::Geometry() :
     hasCrop_(false),
-    verticalFlip_(false),
-    horizontalFlip_(false),
+    flipVertical_(false),
+    flipHorizontal_(false),
     panX_(0),
     panY_(0),
     angle_(0),
@@ -206,17 +206,17 @@ namespace OrthancStone
     EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
-  void RadiographyLayer::SetVerticalFlip(bool flip)
+  void RadiographyLayer::SetFlipVertical(bool flip)
   {
-    geometry_.SetVerticalFlip(flip);
+    geometry_.SetFlipVertical(flip);
     UpdateTransform();
 
     EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
-  void RadiographyLayer::SetHorizontalFlip(bool flip)
+  void RadiographyLayer::SetFlipHorizontal(bool flip)
   {
-    geometry_.SetHorizontalFlip(flip);
+    geometry_.SetFlipHorizontal(flip);
     UpdateTransform();
 
     EmitMessage(RadiographyLayer::LayerEditedMessage(*this));

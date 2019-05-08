@@ -236,13 +236,13 @@ namespace OrthancStone
     geometry.SetPixelSpacing(jsonLayer["pixelSpacing"]["x"].asDouble(), jsonLayer["pixelSpacing"]["y"].asDouble());
 
     // these fields were introduced later -> they might not exist
-    if (jsonLayer.isMember("verticalFlip"))
+    if (jsonLayer.isMember("flipVertical"))
     {
-      geometry.SetVerticalFlip(jsonLayer["verticalFlip"].asBool());
+      geometry.SetFlipVertical(jsonLayer["flipVertical"].asBool());
     }
-    if (jsonLayer.isMember("horizontalFlip"))
+    if (jsonLayer.isMember("flipHorizontal"))
     {
-      geometry.SetHorizontalFlip(jsonLayer["horizontalFlip"].asBool());
+      geometry.SetFlipHorizontal(jsonLayer["flipHorizontal"].asBool());
     }
 
   }

@@ -75,8 +75,8 @@ namespace OrthancStone
       unsigned int       cropY_;
       unsigned int       cropWidth_;
       unsigned int       cropHeight_;
-      bool               verticalFlip_;
-      bool               horizontalFlip_;
+      bool               flipVertical_;
+      bool               flipHorizontal_;
       double             panX_;
       double             panY_;
       double             angle_;
@@ -168,34 +168,34 @@ namespace OrthancStone
         return pixelSpacingY_;
       }
 
-      void SetVerticalFlip(bool flip) //  mirrors image around an horizontal axis (note: flip is applied before the rotation !)
+      void SetFlipVertical(bool flip) //  mirrors image around an horizontal axis (note: flip is applied before the rotation !)
       {
-        verticalFlip_ = flip;
+        flipVertical_ = flip;
       }
 
-      void SetHorizontalFlip(bool flip) //  mirrors image around a vertical axis (note: flip is applied before the rotation !)
+      void SetFlipHorizontal(bool flip) //  mirrors image around a vertical axis (note: flip is applied before the rotation !)
       {
-        horizontalFlip_ = flip;
+        flipHorizontal_ = flip;
       }
 
-      bool GetVerticalFlip() const
+      bool GetFlipVertical() const
       {
-        return verticalFlip_;
+        return flipVertical_;
       }
 
-      bool GetHorizontalFlip() const
+      bool GetHorizontalVertical() const
       {
-        return horizontalFlip_;
+        return flipHorizontal_;
       }
 
       double GetScalingX() const
       {
-        return (horizontalFlip_ ? - pixelSpacingX_: pixelSpacingX_);
+        return (flipHorizontal_ ? - pixelSpacingX_: pixelSpacingX_);
       }
 
       double GetScalingY() const
       {
-        return (verticalFlip_ ? - pixelSpacingY_: pixelSpacingY_);
+        return (flipVertical_ ? - pixelSpacingY_: pixelSpacingY_);
       }
     };
 
@@ -282,9 +282,9 @@ namespace OrthancStone
     void SetPan(double x,
                 double y);
 
-    void SetVerticalFlip(bool flip); //  mirrors image around an horizontal axis (note: flip is applied before the rotation !)
+    void SetFlipVertical(bool flip); //  mirrors image around an horizontal axis (note: flip is applied before the rotation !)
 
-    void SetHorizontalFlip(bool flip); //  mirrors image around a vertical axis (note: flip is applied before the rotation !)
+    void SetFlipHorizontal(bool flip); //  mirrors image around a vertical axis (note: flip is applied before the rotation !)
 
     void SetResizeable(bool resizeable)
     {

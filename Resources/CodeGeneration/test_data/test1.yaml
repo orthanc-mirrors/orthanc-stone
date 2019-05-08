@@ -24,7 +24,7 @@ struct Message1:
   d: bool
 
 struct Message2:
-  toto: string
+  toto: string = "my-default-value"
   tata: vector<Message1>
   tutu: vector<string>
   titi: map<string, string>

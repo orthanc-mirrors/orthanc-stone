@@ -6,7 +6,7 @@
 from stonegentool import \
 EatToken,SplitListOfTypes,ParseTemplateType,ProcessSchema, \
 CheckSchemaSchema,LoadSchema,trim,ComputeRequiredDeclarationOrder, \
-GetTemplatingDictFromSchemaFilename,MakeTemplate,MakeTemplateFromFile
+GetTemplatingDictFromSchemaFilename,MakeTemplate,MakeTemplateFromFile,LoadSchemaFromString,GetTemplatingDictFromSchema
 import unittest
 import os
 import re
@@ -127,18 +127,10 @@ class TestStonegentool(unittest.TestCase):
     self.assertTrue('someBs' in structs['C']['fields'])
     self.assertTrue('CrispType' in enums)
     self.assertTrue('Message1' in structs)
-    message1Struct = structs['Message1']
-    self.assertDictEqual(message1Struct,
-    {
-      'name':'Message1',
-      '__meta__': {'handleInCpp': False, 'handleInTypescript': False},
-      'fields': {
-        'a': 'int32',
-        'b': 'string',
-        'c': 'EnumMonth0',
-        'd': 'bool'
-      }
-    })
+    self.assertEqual('int32', structs['Message1']['fields']['a'].type)
+    self.assertEqual('string', structs['Message1']['fields']['b'].type)
+    self.assertEqual('EnumMonth0', structs['Message1']['fields']['c'].type)
+    self.assertEqual('bool', structs['Message1']['fields']['d'].type)
 
   def test_GenerateTypeScriptEnums(self):
     fn = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
@@ -268,10 +260,10 @@ class TestStonegentool(unittest.TestCase):
 #     }  };""")
     template = MakeTemplate("""  // end of generic methods
 {% for struct in structs%}  export class {{struct['name']}} {
-{% for key in struct['fields']%}    {{key}}:{{CanonToTs(struct['fields'][key])}};
+{% for key in struct['fields']%}    {{key}}:{{CanonToTs(struct['fields'][key]['type'])}};
 {% endfor %}
     constructor() {
-{% for key in struct['fields']%}      this.{{key}} = new {{CanonToTs(struct['fields'][key])}}();
+{% for key in struct['fields']%}      this.{{key}} = new {{CanonToTs(struct['fields'][key]['type'])}}();
 {% endfor %}    }
 
     public StoneSerialize(): string {
@@ -410,6 +402,53 @@ class TestStonegentool(unittest.TestCase):
 
   def test_GenerateCppDispatcher(self):
     pass
+
+  def test_StringDefaultValueInTs(self):
+    schema = LoadSchemaFromString("""
+                                  rootName: MyTest
+                                  struct Toto:
+                                    withoutDefault: string
+                                    withDefault: string = \"tutu\"
+                                  """)
+    tdico = GetTemplatingDictFromSchema(schema)
+
+    tsTemplateFile = os.path.join(os.path.dirname(__file__), 'template.in.ts.j2')
+    template = MakeTemplateFromFile(tsTemplateFile)
+    renderedCode = template.render(**tdico)
+    self.assertIn("withDefault = \"tutu\"", renderedCode)
+    # print(renderedCode)
+
+    cppTemplateFile = os.path.join(os.path.dirname(__file__), 'template.in.h.j2')
+    template = MakeTemplateFromFile(cppTemplateFile)
+    renderedCode = template.render(**tdico)
+    print(renderedCode)
+    self.assertIn("withDefault = \"tutu\"", renderedCode)
+
+
+  def test_EnumDefaultValue(self):
+    schema = LoadSchemaFromString("""
+                                  rootName: MyTest
+                                  enum MyEnum:
+                                    - Toto
+                                    - Tutu
+                                  struct Toto:
+                                    withoutDefault: MyEnum
+                                    withDefault: MyEnum = Toto
+                                  """)
+    tdico = GetTemplatingDictFromSchema(schema)
+
+    tsTemplateFile = os.path.join(os.path.dirname(__file__), 'template.in.ts.j2')
+    template = MakeTemplateFromFile(tsTemplateFile)
+    renderedCode = template.render(**tdico)
+    # print(renderedCode)
+    self.assertIn("withDefault = MyEnum.Toto", renderedCode)
+
+    tsTemplateFile = os.path.join(os.path.dirname(__file__), 'template.in.h.j2')
+    template = MakeTemplateFromFile(tsTemplateFile)
+    renderedCode = template.render(**tdico)
+    self.assertIn("withDefault = MyTest::MyEnum_Toto", renderedCode)
+    # print(renderedCode)
+
 
 # def test(self):
 #   s = 'hello world'

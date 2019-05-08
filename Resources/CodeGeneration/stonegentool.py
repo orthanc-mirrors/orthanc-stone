@@ -69,6 +69,26 @@ class JsonHelpers:
         fileContent = JsonHelpers.removeCommentsFromJsonContent(fileContent)
         return json.loads(fileContent)
 
+class FieldDefinition:
+
+    def __init__(self, name: str, type: str, defaultValue: str):
+        self.name = name
+        self.type = type
+        self.defaultValue = defaultValue
+
+    @staticmethod
+    def fromKeyValue(key: str, value: str):
+
+        if "=" in value:
+            splitValue = value.split(sep="=")
+            type = splitValue[0].strip(" ")
+            defaultValue = splitValue[1].strip(" ")
+        else:
+            type = value
+            defaultValue = None
+
+        return FieldDefinition(name = key, type = type, defaultValue = defaultValue)
+
 
 def LoadSchemaFromJson(filePath):
     return JsonHelpers.loadJsonWithComments(filePath)
@@ -129,6 +149,30 @@ def NeedsTsConstruction(enums, tsType):
 def NeedsCppConstruction(canonTypename):
   return False
 
+def DefaultValueToTs(enums, field:FieldDefinition):
+    tsType = CanonToTs(field.type)
+
+    enumNames = []
+    for enum in enums:
+        enumNames.append(enum['name'])
+
+    if tsType in enumNames:
+        return tsType + "." + field.defaultValue
+    else:
+        return field.defaultValue
+
+def DefaultValueToCpp(root, enums, field:FieldDefinition):
+    cppType = CanonToCpp(field.type)
+
+    enumNames = []
+    for enum in enums:
+        enumNames.append(enum['name'])
+
+    if cppType in enumNames:
+        return root + "::" + cppType + "_" + field.defaultValue
+    else:
+        return field.defaultValue
+
 def RegisterTemplateFunction(template,func):
   """Makes a function callable by a jinja2 template"""
   template.globals[func.__name__] = func
@@ -140,13 +184,16 @@ def MakeTemplate(templateStr):
   RegisterTemplateFunction(template,CanonToTs)
   RegisterTemplateFunction(template,NeedsTsConstruction)
   RegisterTemplateFunction(template,NeedsCppConstruction)
+  RegisterTemplateFunction(template, DefaultValueToTs)
+  RegisterTemplateFunction(template, DefaultValueToCpp)
   return template
 
 def MakeTemplateFromFile(templateFileName):
-  templateFile = open(templateFileName, "r")
-  templateFileContents = templateFile.read()
-  return MakeTemplate(templateFileContents)
-  templateFile.close()
+
+  with open(templateFileName, "r") as templateFile:
+    templateFileContents = templateFile.read()
+    return MakeTemplate(templateFileContents)
+
 
 def EatToken(sentence):
     """splits "A,B,C" into "A" and "B,C" where A, B and C are type names
@@ -363,7 +410,7 @@ def GetStructFields(fieldDict):
   ret = {}
   for k,v in fieldDict.items():
     if k != "__handler":
-      ret[k] = v
+      ret[k] = FieldDefinition.fromKeyValue(k, v)
     if k.startswith("__") and k != "__handler":
       raise RuntimeError("Fields starting with __ (double underscore) are reserved names!")
   return ret
@@ -473,6 +520,9 @@ def LoadSchema(fn):
   with open(fn, 'r', encoding='latin-1') as f:
     schemaText = f.read()
     assert(type(schemaText) == str)
+  return LoadSchemaFromString(schemaText = schemaText)
+
+def LoadSchemaFromString(schemaText:str):
     # ensure there is a space after each colon. Otherwise, dicts could be
     # erroneously recognized as an array of strings containing ':'
     for i in range(len(schemaText)-1):
@@ -483,12 +533,14 @@ def LoadSchema(fn):
           lineNumber = schemaText.count("\n",0,i) + 1
           raise RuntimeError("Error at line " + str(lineNumber) + " in the schema: colons must be followed by a space or a newline!")
     schema = yaml.load(schemaText)
-  return schema
+    return schema
 
 def GetTemplatingDictFromSchemaFilename(fn):
-  obj = LoadSchema(fn)
-  genOrder = ComputeRequiredDeclarationOrder(obj)
-  templatingDict = ProcessSchema(obj, genOrder)
+  return GetTemplatingDictFromSchema(LoadSchema(fn))
+
+def GetTemplatingDictFromSchema(schema):
+  genOrder = ComputeRequiredDeclarationOrder(schema)
+  templatingDict = ProcessSchema(schema, genOrder)
   currentDT = datetime.datetime.now()
   templatingDict['currentDatetime'] = str(currentDT)
   return templatingDict

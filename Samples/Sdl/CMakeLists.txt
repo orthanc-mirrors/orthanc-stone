@@ -37,6 +37,7 @@ set(ORTHANC_STONE_APPLICATION_RESOURCES
   UBUNTU_FONT  ${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83/Ubuntu-R.ttf
   )
 
+SET(ENABLE_SDL_CONSOLE OFF CACHE BOOL "Enable the use of the MIT-licensed SDL_Console")
 SET(ENABLE_GOOGLE_TEST OFF)
 SET(ENABLE_LOCALE ON)
 SET(ENABLE_SDL ON)
@@ -45,7 +46,6 @@ SET(ORTHANC_SANDBOXED OFF)
 LIST(APPEND ORTHANC_BOOST_COMPONENTS program_options)
 
 include(${CMAKE_SOURCE_DIR}/../../Resources/CMake/OrthancStoneConfiguration.cmake)
-
 
 #####################################################################
 ## Build the samples
@@ -60,3 +60,26 @@ add_executable(BasicScene
   )
 
 target_link_libraries(BasicScene OrthancStone)
+
+if(ENABLE_SDL_CONSOLE)
+  add_definitions(
+    -DENABLE_SDL_CONSOLE=1
+    )
+  LIST(APPEND TRACKERSAMPLE_SOURCE "../../../SDL-Console/SDL_Console.c")
+  LIST(APPEND TRACKERSAMPLE_SOURCE "../../../SDL-Console/SDL_Console.h")
+endif()
+
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureCommands.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureCommands.h")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureTools.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureTools.h")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureTrackers.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureTrackers.h")
+LIST(APPEND TRACKERSAMPLE_SOURCE "TrackerSample.cpp")
+
+add_executable(TrackerSample
+  ${TRACKERSAMPLE_SOURCE}
+  )
+
+target_link_libraries(TrackerSample OrthancStone)
+

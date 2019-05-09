@@ -42,6 +42,7 @@ namespace OrthancStone
     else
     {
       thickness_ = thickness;
+      BumpRevision();
     }
   }
 
@@ -52,6 +53,7 @@ namespace OrthancStone
     chains_ = from.chains_;
     closed_ = from.closed_;
     thickness_ = from.thickness_;
+    BumpRevision();
   }
 
   
@@ -69,9 +71,17 @@ namespace OrthancStone
     {
       chains_.push_back(chain);
       closed_.push_back(isClosed);
+      BumpRevision();
     }
   }
 
+
+  void PolylineSceneLayer::ClearAllChains()
+  {
+    chains_.clear();
+    closed_.clear();
+    BumpRevision();
+  }
 
   const PolylineSceneLayer::Chain& PolylineSceneLayer::GetChain(size_t i) const
   {

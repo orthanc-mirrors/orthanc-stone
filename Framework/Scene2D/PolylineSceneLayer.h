@@ -60,6 +60,8 @@ namespace OrthancStone
     void AddChain(const Chain& chain,
                   bool isClosed);
 
+    void ClearAllChains();
+
     size_t GetChainsCount() const
     {
       return chains_.size();
@@ -75,10 +77,6 @@ namespace OrthancStone
     }
 
     virtual bool GetBoundingBox(Extent2D& target) const;
-    
-    virtual uint64_t GetRevision() const
-    {
-      return 0;
-    }
+   
   };
 }

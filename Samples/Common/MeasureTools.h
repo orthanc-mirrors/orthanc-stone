@@ -1,0 +1,126 @@
+/**
+ * Stone of Orthanc
+ * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
+ * Department, University Hospital of Liege, Belgium
+ * Copyright (C) 2017-2019 Osimis S.A., Belgium
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ **/
+#pragma once
+
+#include <Framework/Scene2D/Scene2D.h>
+#include <Framework/Scene2D/ScenePoint2D.h>
+#include <Framework/Scene2D/PolylineSceneLayer.h>
+#include <Framework/Scene2D/TextSceneLayer.h>
+
+#include <boost/shared_ptr.hpp>
+
+#include <vector>
+#include <cmath>
+
+namespace OrthancStone
+{
+  class MeasureTool
+  {
+  public:
+    virtual ~MeasureTool() {}
+
+    /**
+    Enabled tools are rendered in the scene.
+    */
+    void Enable();
+
+    /**
+    Disabled tools are not rendered in the scene. This is useful to be able
+    to use them as their own memento in command stacks (when a measure tool
+    creation command has been undone, the measure remains alive in the
+    command object but is disabled so that it can be redone later on easily)
+    */
+    void Disable();
+
+  protected:
+    MeasureTool(Scene2D& scene) 
+      : scene_(scene)
+      , enabled_(true)
+    {
+    }
+  
+
+
+    /**
+    This is the meat of the tool: this method must [create (if needed) and]
+    update the layers and their data according to the measure tool kind and
+    current state. This is repeatedly called during user interaction
+    */
+    virtual void RefreshScene() = 0;
+
+
+    Scene2D& GetScene()
+    {
+      return scene_;
+    }
+
+    /**
+    enabled_ is not accessible by subclasses because there is a state machine
+    that we do not wanna mess with
+    */
+    bool IsEnabled() const
+    {
+      return enabled_;
+    }
+
+  private:
+    Scene2D& scene_;
+    bool     enabled_;
+  };
+
+  typedef boost::shared_ptr<MeasureTool> MeasureToolPtr;
+
+  class LineMeasureTool : public MeasureTool
+  {
+  public:
+    LineMeasureTool(Scene2D& scene)
+      : MeasureTool(scene)
+      , layersCreated(false)
+      , polylineZIndex_(-1)
+      , textZIndex_(-1)
+    {
+
+    }
+
+    ~LineMeasureTool();
+
+    void SetStart(ScenePoint2D start);
+    void SetEnd(ScenePoint2D end);
+    void Set(ScenePoint2D start, ScenePoint2D end);
+
+  private:
+    PolylineSceneLayer* GetPolylineLayer();
+    TextSceneLayer*     GetTextLayer();
+    virtual void        RefreshScene() ORTHANC_OVERRIDE;
+    void                RemoveFromScene();
+
+  private:
+    ScenePoint2D start_;
+    ScenePoint2D end_;
+    bool         layersCreated;
+    int          polylineZIndex_;
+    int          textZIndex_;
+  };
+
+  typedef boost::shared_ptr<LineMeasureTool> LineMeasureToolPtr;
+  typedef std::vector<MeasureToolPtr> MeasureToolList;
+}
+
+

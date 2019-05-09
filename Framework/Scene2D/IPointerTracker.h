@@ -32,8 +32,15 @@ namespace OrthancStone
     {
     }
 
+    /**
+    This method will be repeatedly called during user interaction
+    */
     virtual void Update(const PointerEvent& event) = 0;
 
+    /**
+    This method will be called if the tracker is to be abandoned without
+    committing its result
+    */
     virtual void Release() = 0;
   };
 }

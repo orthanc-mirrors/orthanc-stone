@@ -23,7 +23,6 @@
 
 #include "ISceneLayer.h"
 #include "../Toolbox/AffineTransform2D.h"
-
 #include <map>
 
 namespace OrthancStone
@@ -71,12 +70,29 @@ namespace OrthancStone
     void SetLayer(int depth,
                   ISceneLayer* layer);  // Takes ownership
 
+    /**
+    Removes the layer at specified depth and deletes the underlying object
+    */
     void DeleteLayer(int depth);
 
     bool HasLayer(int depth) const;
 
     ISceneLayer& GetLayer(int depth) const;
 
+    /**
+    Returns the minimum depth among all layers or 0 if there are no layers
+    */
+    int GetMinDepth() const;
+
+    /**
+    Returns the minimum depth among all layers or 0 if there are no layers
+    */
+    int GetMaxDepth() const;
+
+    /**
+    Removes the layer at specified depth and transfers the object 
+    ownership to the caller
+    */
     ISceneLayer* ReleaseLayer(int depth);
 
     void Apply(IVisitor& visitor) const;

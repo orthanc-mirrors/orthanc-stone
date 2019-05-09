@@ -102,6 +102,8 @@ namespace OrthancStone
   void Scene2D::SetLayer(int depth,
                          ISceneLayer* layer)  // Takes ownership
   {
+    LOG(INFO) << "SetLayer(" << depth << ", " <<
+      reinterpret_cast<intptr_t>(layer) << ")";
     std::auto_ptr<Item> item(new Item(layer, layerCounter_++));
 
     if (layer == NULL)
@@ -126,10 +128,12 @@ namespace OrthancStone
 
   void Scene2D::DeleteLayer(int depth)
   {
+
     Content::iterator found = content_.find(depth);
 
     if (found != content_.end())
     {
+      LOG(INFO) << "DeleteLayer --found-- (" << depth << ")";
       assert(found->second != NULL);
       delete found->second;
       content_.erase(found);
@@ -159,6 +163,23 @@ namespace OrthancStone
   }
 
   
+  int Scene2D::GetMinDepth() const
+  {
+    if (content_.size() == 0)
+      return 0;
+    else
+      return content_.begin()->first;
+  }
+
+
+  int Scene2D::GetMaxDepth() const
+  {
+    if (content_.size() == 0)
+      return 0;
+    else
+      return content_.rbegin()->first;
+  }
+
   ISceneLayer* Scene2D::ReleaseLayer(int depth)
   {
     Content::iterator found = content_.find(depth);

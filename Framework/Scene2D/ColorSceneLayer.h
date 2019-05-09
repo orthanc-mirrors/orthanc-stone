@@ -22,6 +22,7 @@
 #pragma once
 
 #include "ISceneLayer.h"
+#include <Core/Enumerations.h>
 
 #include <stdint.h>
 
@@ -33,13 +34,24 @@ namespace OrthancStone
     uint8_t  red_;
     uint8_t  green_;
     uint8_t  blue_;
-
+    uint64_t revision_;
+  protected:
+    void BumpRevision()
+    {
+      // this is *not* thread-safe!!!
+      revision_++;
+    }
   public:
     ColorSceneLayer() :
       red_(255),
       green_(255),
       blue_(255)
     {
+    }
+
+    virtual uint64_t GetRevision() const ORTHANC_OVERRIDE
+    {
+      return revision_;
     }
 
     void SetColor(uint8_t red,
@@ -49,6 +61,7 @@ namespace OrthancStone
       red_ = red;
       green_ = green;
       blue_ = blue;
+      BumpRevision();
     }
 
     uint8_t GetRed() const

@@ -31,10 +31,10 @@ namespace OrthancStone
   class IMessage : public boost::noncopyable
   {
   private:
-    int messageType_;
+    MessageType messageType_;
     
   protected:
-    IMessage(const int& messageType) :
+    IMessage(MessageType messageType) :
       messageType_(messageType)
     {
     }
@@ -44,7 +44,7 @@ namespace OrthancStone
     {
     }
 
-    virtual int GetType() const
+    virtual MessageType GetType() const
     {
       return messageType_;
     }
@@ -53,7 +53,7 @@ namespace OrthancStone
 
   // base class to derive from to implement your own messages
   // it handles the message type for you
-  template <int type>
+  template <MessageType type>
   class BaseMessage : public IMessage
   {
   public:
@@ -63,7 +63,7 @@ namespace OrthancStone
     };
 
     BaseMessage() :
-      IMessage(static_cast<int>(Type))
+      IMessage(static_cast<MessageType>(Type))
     {
     }
   };
@@ -72,7 +72,7 @@ namespace OrthancStone
   // simple message implementation when no payload is needed
   // sample usage:
   // typedef NoPayloadMessage<MessageType_VolumeSlicer_GeometryReady> GeometryReadyMessage;
-  template <int type>
+  template <MessageType type>
   class NoPayloadMessage : public BaseMessage<type>
   {
   public:
@@ -85,7 +85,7 @@ namespace OrthancStone
   // simple message implementation when no payload is needed but the origin is required
   // sample usage:
   // typedef OriginMessage<MessageType_SliceLoader_GeometryError, OrthancSlicesLoader> SliceGeometryErrorMessage;
-  template <int type, typename TOrigin>
+  template <MessageType type, typename TOrigin>
   class OriginMessage : public BaseMessage<type>
   {
   private:

@@ -103,7 +103,7 @@ namespace OrthancStone
     source_ = raii;
     ApplyConverter();
 
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
   void RadiographyDicomLayer::Render(Orthanc::ImageAccessor& buffer,

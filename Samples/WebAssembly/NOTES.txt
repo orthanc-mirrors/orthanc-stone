@@ -1,0 +1,4 @@
+$ source ~/Downloads/emsdk/emsdk_env.sh
+$ cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON .. -DCMAKE_INSTALL_PREFIX=/tmp/stone
+$ ninja install
+$ sudo docker run -p 4242:4242 -p 8042:8042 --rm -v /tmp/stone:/root/stone:ro jodogne/orthanc-plugins:1.5.6 /root/stone/Configuration.json --verbose

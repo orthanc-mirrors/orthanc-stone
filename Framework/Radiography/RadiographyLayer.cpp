@@ -139,7 +139,7 @@ namespace OrthancStone
   {
     prefferedPhotometricDisplayMode_ = prefferedPhotometricDisplayMode;
 
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
   void RadiographyLayer::SetCrop(unsigned int x,
@@ -161,7 +161,7 @@ namespace OrthancStone
     geometry_.SetCrop(x, y, width, height);
     UpdateTransform();
 
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
   void RadiographyLayer::SetGeometry(const Geometry& geometry)
@@ -173,7 +173,7 @@ namespace OrthancStone
       UpdateTransform();
     }
 
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
 
@@ -201,7 +201,7 @@ namespace OrthancStone
     geometry_.SetAngle(angle);
     UpdateTransform();
 
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
 
@@ -220,7 +220,7 @@ namespace OrthancStone
     height_ = height;
 
     UpdateTransform();
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
 
@@ -298,7 +298,7 @@ namespace OrthancStone
   {
     geometry_.SetPan(x, y);
     UpdateTransform();
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
 
@@ -307,7 +307,7 @@ namespace OrthancStone
   {
     geometry_.SetPixelSpacing(x, y);
     UpdateTransform();
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
 

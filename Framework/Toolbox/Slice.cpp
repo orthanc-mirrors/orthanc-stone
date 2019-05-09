@@ -194,20 +194,16 @@ namespace OrthancStone
       geometry_ = CoordinateSystem3D(position, orientation);
 
       bool ok = true;
-      SopClassUid tmp;
 
-      if (StringToSopClassUid(tmp, sopClassUid_))
+      switch (StringToSopClassUid(sopClassUid_))
       {
-        switch (tmp)
-        {
-          case SopClassUid_RTDose:
-            type_ = Type_OrthancRawFrame;
-            ok = ComputeRTDoseGeometry(dataset, frame);
-            break;
+        case SopClassUid_RTDose:
+          type_ = Type_OrthancRawFrame;
+          ok = ComputeRTDoseGeometry(dataset, frame);
+          break;
             
-          default:
-            break;
-        }
+        default:
+          break;
       }
 
       if (!ok)

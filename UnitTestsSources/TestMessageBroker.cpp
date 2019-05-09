@@ -46,7 +46,7 @@ namespace {
   class MyObservable : public IObservable
   {
   public:
-    struct MyCustomMessage: public BaseMessage<CustomMessageType_Completed>
+    struct MyCustomMessage: public BaseMessage<(MessageType) CustomMessageType_Completed>
     {
       int payload_;
 
@@ -160,18 +160,18 @@ TEST(MessageBroker, TestPermanentConnectionSimpleUseCase)
   observable.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
 
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
   ASSERT_EQ(12, testCounter);
 
   // the connection is permanent; if we emit the same message again, the observer will be notified again
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
   ASSERT_EQ(20, testCounter);
 
   // Unregister the observer; make sure it's not called anymore
   observable.Unregister(&observer);
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
   ASSERT_EQ(0, testCounter);
 }
 
@@ -186,12 +186,12 @@ TEST(MessageBroker, TestMessageForwarderSimpleUseCase)
   intermediate.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
 
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
   ASSERT_EQ(12, testCounter);
 
   // the connection is permanent; if we emit the same message again, the observer will be notified again
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
   ASSERT_EQ(20, testCounter);
 }
 
@@ -205,7 +205,7 @@ TEST(MessageBroker, TestPermanentConnectionDeleteObserver)
   observable.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(*observer, &MyObserver::HandleCompletedMessage));
 
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
   ASSERT_EQ(12, testCounter);
 
   // delete the observer and check that the callback is not called anymore
@@ -213,7 +213,7 @@ TEST(MessageBroker, TestPermanentConnectionDeleteObserver)
 
   // the connection is permanent; if we emit the same message again, the observer will be notified again
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
   ASSERT_EQ(0, testCounter);
 }
 
@@ -228,12 +228,12 @@ TEST(MessageBroker, TestMessageForwarderDeleteIntermediate)
   intermediate->RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
 
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
   ASSERT_EQ(12, testCounter);
 
   delete intermediate;
 
-  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
   ASSERT_EQ(12, testCounter);
 }
 
@@ -248,12 +248,12 @@ TEST(MessageBroker, TestCustomMessage)
   intermediate.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
 
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
   ASSERT_EQ(12, testCounter);
 
   // the connection is permanent; if we emit the same message again, the observer will be notified again
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
   ASSERT_EQ(20, testCounter);
 }
 
@@ -324,7 +324,7 @@ TEST(MessageBroker, TestLambdaSimpleUseCase)
   observable.RegisterObserverCallback(new LambdaCallable<MyObservable::MyCustomMessage>(*observer, [&](const MyObservable::MyCustomMessage& message) {testCounter += 2 * message.payload_;}));
 
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
   ASSERT_EQ(24, testCounter);
 
   // delete the observer and check that the callback is not called anymore
@@ -332,7 +332,7 @@ TEST(MessageBroker, TestLambdaSimpleUseCase)
 
   // the connection is permanent; if we emit the same message again, the observer will be notified again
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
   ASSERT_EQ(0, testCounter);
 }
 
@@ -362,7 +362,7 @@ TEST(MessageBroker, TestLambdaCaptureThisAndAccessPrivateMembers)
   MyObserverWithLambda*   observer = new MyObserverWithLambda(broker, 3, observable);
 
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(12));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
   ASSERT_EQ(36, testCounter);
 
   // delete the observer and check that the callback is not called anymore
@@ -370,7 +370,7 @@ TEST(MessageBroker, TestLambdaCaptureThisAndAccessPrivateMembers)
 
   // the connection is permanent; if we emit the same message again, the observer will be notified again
   testCounter = 0;
-  observable.EmitMessage(MyObservable::MyCustomMessage(20));
+  observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
   ASSERT_EQ(0, testCounter);
 }
 

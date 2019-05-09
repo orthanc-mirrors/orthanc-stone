@@ -63,7 +63,7 @@ namespace OrthancStone
       corners_.push_back(corner);
     invalidated_ = true;
 
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
   void RadiographyMaskLayer::SetCorners(const std::vector<Orthanc::ImageProcessing::ImagePoint>& corners)
@@ -71,7 +71,7 @@ namespace OrthancStone
     corners_ = corners;
     invalidated_ = true;
 
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
   void RadiographyMaskLayer::Render(Orthanc::ImageAccessor& buffer,

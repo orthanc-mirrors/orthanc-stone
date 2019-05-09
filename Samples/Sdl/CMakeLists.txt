@@ -83,3 +83,8 @@ add_executable(TrackerSample
 
 target_link_libraries(TrackerSample OrthancStone)
 
+add_executable(Loader
+  Loader.cpp
+  )
+
+target_link_libraries(Loader OrthancStone)

@@ -42,6 +42,9 @@ namespace OrthancStone
     Callables       callables_;
     Forwarders      forwarders_;
 
+    void EmitMessageInternal(const IObserver* receiver,
+                             const IMessage& message);
+
   public:
     IObservable(MessageBroker& broker) :
       broker_(broker)
@@ -60,7 +63,10 @@ namespace OrthancStone
 
     void Unregister(IObserver* observer);
 
-    void EmitMessage(const IMessage& message);
+    void BroadcastMessage(const IMessage& message);
+
+    void EmitMessage(const IObserver& observer,
+                     const IMessage& message);
 
     // Takes ownsership
     void RegisterForwarder(IMessageForwarder* forwarder);

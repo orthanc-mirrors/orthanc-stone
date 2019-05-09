@@ -177,7 +177,7 @@ namespace OrthancStone
   {
     OrthancSlicesLoader::SliceImageReadyMessage msg
       (*this, operation.GetSliceIndex(), operation.GetSlice(), image, operation.GetQuality());
-    EmitMessage(msg);
+    BroadcastMessage(msg);
   }
   
   
@@ -185,7 +185,7 @@ namespace OrthancStone
   {
     OrthancSlicesLoader::SliceImageErrorMessage msg
       (*this, operation.GetSliceIndex(), operation.GetSlice(), operation.GetQuality());
-    EmitMessage(msg);
+    BroadcastMessage(msg);
   }
   
   
@@ -210,18 +210,18 @@ namespace OrthancStone
     if (ok)
     {
       LOG(INFO) << "Loaded a series with " << slices_.GetSliceCount() << " slice(s)";
-      EmitMessage(SliceGeometryReadyMessage(*this));
+      BroadcastMessage(SliceGeometryReadyMessage(*this));
     }
     else
     {
       LOG(ERROR) << "This series is empty";
-      EmitMessage(SliceGeometryErrorMessage(*this));
+      BroadcastMessage(SliceGeometryErrorMessage(*this));
     }
   }
   
   void OrthancSlicesLoader::OnGeometryError(const IWebService::HttpRequestErrorMessage& message)
   {
-    EmitMessage(SliceGeometryErrorMessage(*this));
+    BroadcastMessage(SliceGeometryErrorMessage(*this));
     state_ = State_Error;
   }
 
@@ -296,7 +296,7 @@ namespace OrthancStone
       else
       {
         LOG(WARNING) << "Skipping invalid multi-frame instance " << instanceId;
-        EmitMessage(SliceGeometryErrorMessage(*this));
+        BroadcastMessage(SliceGeometryErrorMessage(*this));
         return;
       }
     }
@@ -323,12 +323,12 @@ namespace OrthancStone
     {
       LOG(INFO) << "Loaded instance geometry " << instanceId;
       slices_.AddSlice(slice.release());
-      EmitMessage(SliceGeometryReadyMessage(*this));
+      BroadcastMessage(SliceGeometryReadyMessage(*this));
     }
     else
     {
       LOG(WARNING) << "Skipping invalid instance " << instanceId;
-      EmitMessage(SliceGeometryErrorMessage(*this));
+      BroadcastMessage(SliceGeometryErrorMessage(*this));
     }
   }
   

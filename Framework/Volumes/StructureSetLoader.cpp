@@ -44,7 +44,7 @@ namespace OrthancStone
     MessagingToolbox::ConvertDataset(slice, dataset);
     structureSet_->AddReferencedSlice(slice);
 
-    EmitMessage(ContentChangedMessage(*this));
+    BroadcastMessage(ContentChangedMessage(*this));
   }
   
 
@@ -63,7 +63,7 @@ namespace OrthancStone
                             new Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &StructureSetLoader::OnLookupCompleted));
     }
 
-    EmitMessage(GeometryReadyMessage(*this));
+    BroadcastMessage(GeometryReadyMessage(*this));
   }
 
   

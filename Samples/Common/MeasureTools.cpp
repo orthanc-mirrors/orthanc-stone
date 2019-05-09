@@ -136,21 +136,21 @@ namespace OrthancStone
 
         // handles
         {
-          auto startC = start_.Apply(GetScene().GetSceneToCanvasTransform());
-          auto squareSize = 10; //TODO: take DPI into account
-          auto startHandleLX = startC.GetX() - squareSize/2;
-          auto startHandleTY = startC.GetY() - squareSize / 2;
-          auto startHandleRX = startC.GetX() + squareSize / 2;
-          auto startHandleBY = startC.GetY() + squareSize / 2;
-          auto startLTC = ScenePoint2D(startHandleLX, startHandleTY);
-          auto startRTC = ScenePoint2D(startHandleRX, startHandleTY);
-          auto startRBC = ScenePoint2D(startHandleRX, startHandleBY);
-          auto startLBC = ScenePoint2D(startHandleLX, startHandleBY);
+          ScenePoint2D startC = start_.Apply(GetScene().GetSceneToCanvasTransform());
+          double squareSize = 10.0; //TODO: take DPI into account
+          double startHandleLX = startC.GetX() - squareSize/2;
+          double startHandleTY = startC.GetY() - squareSize / 2;
+          double startHandleRX = startC.GetX() + squareSize / 2;
+          double startHandleBY = startC.GetY() + squareSize / 2;
+          ScenePoint2D startLTC(startHandleLX, startHandleTY);
+          ScenePoint2D startRTC(startHandleRX, startHandleTY);
+          ScenePoint2D startRBC(startHandleRX, startHandleBY);
+          ScenePoint2D startLBC(startHandleLX, startHandleBY);
 
-          auto startLT = startLTC.Apply(GetScene().GetCanvasToSceneTransform());
-          auto startRT = startRTC.Apply(GetScene().GetCanvasToSceneTransform());
-          auto startRB = startRBC.Apply(GetScene().GetCanvasToSceneTransform());
-          auto startLB = startLBC.Apply(GetScene().GetCanvasToSceneTransform());
+          ScenePoint2D startLT = startLTC.Apply(GetScene().GetCanvasToSceneTransform());
+          ScenePoint2D startRT = startRTC.Apply(GetScene().GetCanvasToSceneTransform());
+          ScenePoint2D startRB = startRBC.Apply(GetScene().GetCanvasToSceneTransform());
+          ScenePoint2D startLB = startLBC.Apply(GetScene().GetCanvasToSceneTransform());
 
           PolylineSceneLayer::Chain chain;
           chain.push_back(startLT);

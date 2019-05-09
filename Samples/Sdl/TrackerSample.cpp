@@ -132,7 +132,7 @@ private:
     const SDL_Event& event,
     std::auto_ptr<IPointerTracker>& activeTracker);
 
-  IPointerTracker* TrackerSampleApp::TrackerHitTest(const PointerEvent& e);
+  IPointerTracker* TrackerHitTest(const PointerEvent& e);
 
   IPointerTracker* CreateSuitableTracker(
     const SDL_Event& event,
@@ -292,7 +292,7 @@ void TrackerSampleApp::TakeScreenshot(const std::string& target,
 IPointerTracker* TrackerSampleApp::TrackerHitTest(const PointerEvent& e)
 {
   // std::vector<MeasureToolPtr> measureTools_;
-  return nullptr;
+  return NULL;
 }
 
 IPointerTracker* TrackerSampleApp::CreateSuitableTracker(

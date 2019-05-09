@@ -71,8 +71,9 @@ namespace OrthancStone
   class CreateLineMeasureCommand : public CreateMeasureCommand
   {
   public:
-    CreateLineMeasureCommand::CreateLineMeasureCommand(
-      Scene2D& scene, MeasureToolList& measureTools, ScenePoint2D point);
+    CreateLineMeasureCommand(Scene2D& scene, 
+                             MeasureToolList& measureTools, 
+                             ScenePoint2D point);
     
     void Update(ScenePoint2D scenePos) ORTHANC_OVERRIDE;
 

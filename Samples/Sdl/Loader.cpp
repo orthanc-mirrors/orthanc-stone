@@ -62,7 +62,8 @@ namespace Refactoring
     enum Type
     {
       Type_OrthancRestApi,
-      Type_DecodeOrthancImage
+      Type_DecodeOrthancImage,
+      Type_DecodeOrthancWebViewerJpeg
     };
 
     virtual ~IOracleCommand()
@@ -409,6 +410,146 @@ namespace Refactoring
 
 
 
+  class DecodeOrthancWebViewerJpegCommand : public OracleCommandWithPayload
+  {
+  public:
+    class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_ImageReady,   // TODO
+                                                              DecodeOrthancWebViewerJpegCommand>
+    {
+    private:
+      std::auto_ptr<Orthanc::ImageAccessor>  image_;
+
+    public:
+      SuccessMessage(const DecodeOrthancWebViewerJpegCommand& command,
+                     Orthanc::ImageAccessor* image) :   // Takes ownership
+        OriginMessage(command),
+        image_(image)
+      {
+        if (image == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        }
+      }
+
+      const Orthanc::ImageAccessor& GetImage() const
+      {
+        return *image_;
+      }
+    };
+
+
+    class FailureMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_HttpRequestError,   // TODO
+                                                              DecodeOrthancWebViewerJpegCommand>
+    {
+    private:
+      Orthanc::HttpStatus  status_;
+
+    public:
+      FailureMessage(const DecodeOrthancWebViewerJpegCommand& command,
+                     Orthanc::HttpStatus status) :
+        OriginMessage(command),
+        status_(status)
+      {
+      }
+
+      Orthanc::HttpStatus GetHttpStatus() const
+      {
+        return status_;
+      }
+    };
+
+
+  private:
+    std::string    instanceId_;
+    unsigned int   frame_;
+    unsigned int   quality_;
+    HttpHeaders    headers_;
+    unsigned int   timeout_;
+
+    std::auto_ptr< OrthancStone::MessageHandler<SuccessMessage> >  successCallback_;
+    std::auto_ptr< OrthancStone::MessageHandler<FailureMessage> >  failureCallback_;
+
+  public:
+    DecodeOrthancWebViewerJpegCommand() :
+      frame_(0),
+      quality_(95),
+      timeout_(10)
+    {
+    }
+
+    virtual Type GetType() const
+    {
+      return Type_DecodeOrthancWebViewerJpeg;
+    }
+
+    void SetInstance(const std::string& instanceId)
+    {
+      instanceId_ = instanceId;
+    }
+
+    void SetFrame(unsigned int frame)
+    {
+      frame_ = frame;
+    }
+
+    void SetQuality(unsigned int quality)
+    {
+      if (quality <= 0 ||
+          quality > 100)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+      else
+      {
+        quality_ = quality;
+      }
+    }
+
+    void SetHttpHeader(const std::string& key,
+                       const std::string& value)
+    {
+      headers_[key] = value;
+    }
+
+    const std::string& GetInstanceId() const
+    {
+      return instanceId_;
+    }
+
+    unsigned int GetFrame() const
+    {
+      return frame_;
+    }
+
+    unsigned int GetQuality() const
+    {
+      return quality_;
+    }
+
+    const HttpHeaders& GetHttpHeaders() const
+    {
+      return headers_;
+    }
+
+    void SetTimeout(unsigned int seconds)
+    {
+      timeout_ = seconds;
+    }
+
+    unsigned int GetTimeout() const
+    {
+      return timeout_;
+    }
+
+    std::string GetUri() const
+    {
+      return ("/web-viewer/instances/jpeg" + boost::lexical_cast<std::string>(quality_) +
+              "-" + instanceId_ + "_" + boost::lexical_cast<std::string>(frame_));
+    }
+  };
+
+
+
 
 
   class NativeOracle : public IOracle
@@ -471,6 +612,45 @@ namespace Refactoring
     }
 
 
+    void DecodeAnswer(std::string& answer,
+                      const HttpHeaders& headers)
+    {
+      Orthanc::HttpCompression contentEncoding = Orthanc::HttpCompression_None;
+
+      for (HttpHeaders::const_iterator it = headers.begin(); 
+           it != headers.end(); ++it)
+      {
+        std::string s;
+        Orthanc::Toolbox::ToLowerCase(s, it->first);
+
+        if (s == "content-encoding")
+        {
+          if (it->second == "gzip")
+          {
+            contentEncoding = Orthanc::HttpCompression_Gzip;
+          }
+          else 
+          {
+            // TODO - Emit error message?
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
+                                            "Unsupported HTTP Content-Encoding: " + it->second);
+          }
+
+          break;
+        }
+      }
+
+      if (contentEncoding == Orthanc::HttpCompression_Gzip)
+      {
+        std::string compressed;
+        answer.swap(compressed);
+          
+        Orthanc::GzipCompressor compressor;
+        compressor.Uncompress(answer, compressed.c_str(), compressed.size());
+      }
+    }
+
+
     void Execute(const OrthancStone::IObserver& receiver,
                  const OrthancRestApiCommand& command)
     {
@@ -493,6 +673,7 @@ namespace Refactoring
       try
       {
         success = client.Apply(answer, answerHeaders);
+        DecodeAnswer(answer, answerHeaders);
       }
       catch (Orthanc::OrthancException& e)
       {
@@ -535,8 +716,9 @@ namespace Refactoring
 
       if (success)
       {
+        DecodeAnswer(answer, answerHeaders);
+
         Orthanc::MimeType contentType = Orthanc::MimeType_Binary;
-        Orthanc::HttpCompression contentEncoding = Orthanc::HttpCompression_None;
 
         for (HttpHeaders::const_iterator it = answerHeaders.begin(); 
              it != answerHeaders.end(); ++it)
@@ -544,33 +726,11 @@ namespace Refactoring
           std::string s;
           Orthanc::Toolbox::ToLowerCase(s, it->first);
 
-          if (s == "content-encoding")
-          {
-            if (it->second == "gzip")
-            {
-              contentEncoding = Orthanc::HttpCompression_Gzip;
-            }
-            else 
-            {
-              // TODO - Emit error message?
-              throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
-                                              "Unsupported HTTP Content-Encoding: " + it->second);
-            }
-          }
-
           if (s == "content-type")
           {
             contentType = Orthanc::StringToMimeType(it->second);
+            break;
           }
-        }
-
-        if (contentEncoding == Orthanc::HttpCompression_Gzip)
-        {
-          std::string compressed;
-          answer.swap(compressed);
-          
-          Orthanc::GzipCompressor compressor;
-          compressor.Uncompress(answer, compressed.c_str(), compressed.size());
         }
 
         std::auto_ptr<Orthanc::ImageAccessor> image;
@@ -616,6 +776,49 @@ namespace Refactoring
     }
 
 
+    void Execute(const OrthancStone::IObserver& receiver,
+                 const DecodeOrthancWebViewerJpegCommand& command)
+    {
+      Orthanc::HttpClient client(orthanc_, command.GetUri());
+      client.SetTimeout(command.GetTimeout());
+
+      CopyHttpHeaders(client, command.GetHttpHeaders());
+
+      std::string answer;
+      HttpHeaders answerHeaders;
+
+      bool success;
+      try
+      {
+        success = client.Apply(answer, answerHeaders);
+      }
+      catch (Orthanc::OrthancException& e)
+      {
+        success = false;
+      }
+
+      if (success)
+      {
+        DecodeAnswer(answer, answerHeaders);
+
+        Json::Value value;
+        Json::Reader reader;
+        if (reader.parse(answer, value))
+        {
+          std::cout << value.toStyledString() << std::endl;
+        }
+
+        //DecodeOrthancWebViewerJpegCommand::SuccessMessage message(command, image.release(), contentType);
+        //emitter_.EmitMessage(receiver, message);
+      }
+      else
+      {
+        DecodeOrthancWebViewerJpegCommand::FailureMessage message(command, client.GetLastStatus());
+        emitter_.EmitMessage(receiver, message);
+      }
+    }
+
+
 
     void Step()
     {
@@ -637,6 +840,11 @@ namespace Refactoring
             case IOracleCommand::Type_DecodeOrthancImage:
               Execute(item.GetReceiver(), 
                       dynamic_cast<const DecodeOrthancImageCommand&>(item.GetCommand()));
+              break;
+
+            case IOracleCommand::Type_DecodeOrthancWebViewerJpeg:
+              Execute(item.GetReceiver(), 
+                      dynamic_cast<const DecodeOrthancWebViewerJpegCommand&>(item.GetCommand()));
               break;
 
             default:
@@ -1409,7 +1617,17 @@ void Run(Refactoring::NativeApplicationContext& context)
     command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
     oracle.Schedule(*toto, command.release());
   }
-  
+
+  if (1)
+  {
+    std::auto_ptr<Refactoring::DecodeOrthancWebViewerJpegCommand>  command(new Refactoring::DecodeOrthancWebViewerJpegCommand);
+    command->SetHttpHeader("Accept-Encoding", "gzip");
+    command->SetInstance("e6c7c20b-c9f65d7e-0d76f2e2-830186f2-3e3c600e");
+    command->SetQuality(90);
+    oracle.Schedule(*toto, command.release());
+  }
+
+
   // 2017-11-17-Anonymized
   loader1->LoadSeries(oracle, "cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
   loader2->LoadInstance(oracle, "41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE

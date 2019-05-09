@@ -28,14 +28,17 @@
 #include "../../Framework/Volumes/ImageBuffer3D.h"
 
 // From Orthanc framework
+#include <Core/Compression/GzipCompressor.h>
+#include <Core/Compression/ZlibCompressor.h>
 #include <Core/DicomFormat/DicomArray.h>
 #include <Core/DicomFormat/DicomImageInformation.h>
-#include <Core/Compression/ZlibCompressor.h>
-#include <Core/Compression/GzipCompressor.h>
 #include <Core/HttpClient.h>
 #include <Core/IDynamicObject.h>
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
+#include <Core/Images/JpegReader.h>
+#include <Core/Images/PamReader.h>
+#include <Core/Images/PngReader.h>
 #include <Core/Images/PngWriter.h>
 #include <Core/Logging.h>
 #include <Core/MultiThreading/SharedMessageQueue.h>
@@ -304,17 +307,14 @@ namespace Refactoring
     private:
       std::auto_ptr<Orthanc::ImageAccessor>  image_;
       Orthanc::MimeType                      mime_;
-      unsigned int                           quality_;
 
     public:
       SuccessMessage(const DecodeOrthancImageCommand& command,
                      Orthanc::ImageAccessor* image,   // Takes ownership
-                     Orthanc::MimeType mime,
-                     unsigned int quality) :
+                     Orthanc::MimeType mime) :
         OriginMessage(command),
         image_(image),
-        mime_(mime),
-        quality_(quality)
+        mime_(mime)
       {
         if (image == NULL)
         {
@@ -330,11 +330,6 @@ namespace Refactoring
       Orthanc::MimeType GetMimeType() const
       {
         return mime_;
-      }
-
-      unsigned int GetQuality() const
-      {
-        return quality_;
       }
     };
 
@@ -540,8 +535,6 @@ namespace Refactoring
 
       if (success)
       {
-        printf("OK %d\n", answer.size());
-
         Orthanc::MimeType contentType = Orthanc::MimeType_Binary;
         Orthanc::HttpCompression contentEncoding = Orthanc::HttpCompression_None;
 
@@ -559,6 +552,7 @@ namespace Refactoring
             }
             else 
             {
+              // TODO - Emit error message?
               throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
                                               "Unsupported HTTP Content-Encoding: " + it->second);
             }
@@ -568,8 +562,6 @@ namespace Refactoring
           {
             contentType = Orthanc::StringToMimeType(it->second);
           }
-
-          printf("  [%s] == [%s]\n", it->first.c_str(), it->second.c_str());
         }
 
         if (contentEncoding == Orthanc::HttpCompression_Gzip)
@@ -581,12 +573,40 @@ namespace Refactoring
           compressor.Uncompress(answer, compressed.c_str(), compressed.size());
         }
 
-        printf("[%s] %d => %d\n", Orthanc::EnumerationToString(contentType), contentEncoding, answer.size());
+        std::auto_ptr<Orthanc::ImageAccessor> image;
 
-        
+        switch (contentType)
+        {
+          case Orthanc::MimeType_Png:
+          {
+            image.reset(new Orthanc::PngReader);
+            dynamic_cast<Orthanc::PngReader&>(*image).ReadFromMemory(answer);
+            break;
+          }
 
-        //DecodeOrthancImageCommand::SuccessMessage message(command, answerHeaders, answer);
-        //emitter_.EmitMessage(receiver, message);
+          case Orthanc::MimeType_Pam:
+          {
+            image.reset(new Orthanc::PamReader);
+            dynamic_cast<Orthanc::PamReader&>(*image).ReadFromMemory(answer);
+            break;
+          }
+
+          case Orthanc::MimeType_Jpeg:
+          {
+            image.reset(new Orthanc::JpegReader);
+            dynamic_cast<Orthanc::JpegReader&>(*image).ReadFromMemory(answer);
+            break;
+          }
+
+          default:
+            // TODO - Emit error message?
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
+                                            "Unsupported HTTP Content-Type for an image: " + 
+                                            std::string(Orthanc::EnumerationToString(contentType)));
+        }
+
+        DecodeOrthancImageCommand::SuccessMessage message(command, image.release(), contentType);
+        emitter_.EmitMessage(receiver, message);
       }
       else
       {
@@ -1287,6 +1307,11 @@ private:
     printf("ICI [%s]\n", v.toStyledString().c_str());
   }
 
+  void Handle(const Refactoring::DecodeOrthancImageCommand::SuccessMessage& message)
+  {
+    printf("IMAGE %dx%d\n", message.GetImage().GetWidth(), message.GetImage().GetHeight());
+  }
+
   void Handle(const Refactoring::OrthancRestApiCommand::FailureMessage& message)
   {
     printf("ERROR %d\n", message.GetHttpStatus());
@@ -1299,6 +1324,10 @@ public:
     oracle.RegisterObserverCallback
       (new OrthancStone::Callable
        <Toto, Refactoring::OrthancRestApiCommand::SuccessMessage>(*this, &Toto::Handle));
+
+    oracle.RegisterObserverCallback
+      (new OrthancStone::Callable
+       <Toto, Refactoring::DecodeOrthancImageCommand::SuccessMessage>(*this, &Toto::Handle));
   }
 };
 

@@ -30,6 +30,8 @@
 // From Orthanc framework
 #include <Core/DicomFormat/DicomArray.h>
 #include <Core/DicomFormat/DicomImageInformation.h>
+#include <Core/Compression/ZlibCompressor.h>
+#include <Core/Compression/GzipCompressor.h>
 #include <Core/HttpClient.h>
 #include <Core/IDynamicObject.h>
 #include <Core/Images/Image.h>
@@ -56,7 +58,8 @@ namespace Refactoring
   public:
     enum Type
     {
-      Type_OrthancApi
+      Type_OrthancRestApi,
+      Type_DecodeOrthancImage
     };
 
     virtual ~IOracleCommand()
@@ -133,18 +136,18 @@ namespace Refactoring
 
   typedef std::map<std::string, std::string>  HttpHeaders;
 
-  class OrthancApiOracleCommand : public OracleCommandWithPayload
+  class OrthancRestApiCommand : public OracleCommandWithPayload
   {
   public:
     class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_HttpRequestSuccess,   // TODO
-                                                              OrthancApiOracleCommand>
+                                                              OrthancRestApiCommand>
     {
     private:
       HttpHeaders   headers_;
       std::string   answer_;
 
     public:
-      SuccessMessage(const OrthancApiOracleCommand& command,
+      SuccessMessage(const OrthancRestApiCommand& command,
                      const HttpHeaders& answerHeaders,
                      std::string& answer  /* will be swapped to avoid a memcpy() */) :
         OriginMessage(command),
@@ -175,13 +178,13 @@ namespace Refactoring
 
 
     class FailureMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_HttpRequestError,   // TODO
-                                                              OrthancApiOracleCommand>
+                                                              OrthancRestApiCommand>
     {
     private:
       Orthanc::HttpStatus  status_;
 
     public:
-      FailureMessage(const OrthancApiOracleCommand& command,
+      FailureMessage(const OrthancRestApiCommand& command,
                      Orthanc::HttpStatus status) :
         OriginMessage(command),
         status_(status)
@@ -206,7 +209,7 @@ namespace Refactoring
     std::auto_ptr< OrthancStone::MessageHandler<FailureMessage> >  failureCallback_;
 
   public:
-    OrthancApiOracleCommand() :
+    OrthancRestApiCommand() :
       method_(Orthanc::HttpMethod_Get),
       uri_("/"),
       timeout_(10)
@@ -215,7 +218,7 @@ namespace Refactoring
 
     virtual Type GetType() const
     {
-      return Type_OrthancApi;
+      return Type_OrthancRestApi;
     }
 
     void SetMethod(Orthanc::HttpMethod method)
@@ -237,6 +240,11 @@ namespace Refactoring
     {
       Json::FastWriter writer;
       body_ = writer.write(json);
+    }
+
+    void SetHttpHeaders(const HttpHeaders& headers)
+    {
+      headers_ = headers;
     }
 
     void SetHttpHeader(const std::string& key,
@@ -283,6 +291,128 @@ namespace Refactoring
       return timeout_;
     }
   };
+
+
+
+
+  class DecodeOrthancImageCommand : public OracleCommandWithPayload
+  {
+  public:
+    class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_ImageReady,   // TODO
+                                                              DecodeOrthancImageCommand>
+    {
+    private:
+      std::auto_ptr<Orthanc::ImageAccessor>  image_;
+      Orthanc::MimeType                      mime_;
+      unsigned int                           quality_;
+
+    public:
+      SuccessMessage(const DecodeOrthancImageCommand& command,
+                     Orthanc::ImageAccessor* image,   // Takes ownership
+                     Orthanc::MimeType mime,
+                     unsigned int quality) :
+        OriginMessage(command),
+        image_(image),
+        mime_(mime),
+        quality_(quality)
+      {
+        if (image == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        }
+      }
+
+      const Orthanc::ImageAccessor& GetImage() const
+      {
+        return *image_;
+      }
+
+      Orthanc::MimeType GetMimeType() const
+      {
+        return mime_;
+      }
+
+      unsigned int GetQuality() const
+      {
+        return quality_;
+      }
+    };
+
+
+    class FailureMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_HttpRequestError,   // TODO
+                                                              DecodeOrthancImageCommand>
+    {
+    private:
+      Orthanc::HttpStatus  status_;
+
+    public:
+      FailureMessage(const DecodeOrthancImageCommand& command,
+                     Orthanc::HttpStatus status) :
+        OriginMessage(command),
+        status_(status)
+      {
+      }
+
+      Orthanc::HttpStatus GetHttpStatus() const
+      {
+        return status_;
+      }
+    };
+
+
+  private:
+    std::string    uri_;
+    HttpHeaders    headers_;
+    unsigned int   timeout_;
+
+    std::auto_ptr< OrthancStone::MessageHandler<SuccessMessage> >  successCallback_;
+    std::auto_ptr< OrthancStone::MessageHandler<FailureMessage> >  failureCallback_;
+
+  public:
+    DecodeOrthancImageCommand() :
+      uri_("/"),
+      timeout_(10)
+    {
+    }
+
+    virtual Type GetType() const
+    {
+      return Type_DecodeOrthancImage;
+    }
+
+    void SetUri(const std::string& uri)
+    {
+      uri_ = uri;
+    }
+
+    void SetHttpHeader(const std::string& key,
+                       const std::string& value)
+    {
+      headers_[key] = value;
+    }
+
+    const std::string& GetUri() const
+    {
+      return uri_;
+    }
+
+    const HttpHeaders& GetHttpHeaders() const
+    {
+      return headers_;
+    }
+
+    void SetTimeout(unsigned int seconds)
+    {
+      timeout_ = seconds;
+    }
+
+    unsigned int GetTimeout() const
+    {
+      return timeout_;
+    }
+  };
+
+
 
 
 
@@ -336,25 +466,29 @@ namespace Refactoring
     std::vector<boost::thread*>    workers_;
 
 
-    void Execute(const OrthancStone::IObserver& receiver,
-                 const OrthancApiOracleCommand& command)
+    void CopyHttpHeaders(Orthanc::HttpClient& client,
+                         const HttpHeaders& headers)
     {
-      Orthanc::HttpClient  client(orthanc_, command.GetUri());
+      for (HttpHeaders::const_iterator it = headers.begin(); it != headers.end(); it++ )
+      {
+        client.AddHeader(it->first, it->second);
+      }
+    }
+
+
+    void Execute(const OrthancStone::IObserver& receiver,
+                 const OrthancRestApiCommand& command)
+    {
+      Orthanc::HttpClient client(orthanc_, command.GetUri());
       client.SetMethod(command.GetMethod());
       client.SetTimeout(command.GetTimeout());
+
+      CopyHttpHeaders(client, command.GetHttpHeaders());
 
       if (command.GetMethod() == Orthanc::HttpMethod_Post ||
           command.GetMethod() == Orthanc::HttpMethod_Put)
       {
         client.SetBody(command.GetBody());
-      }
-      
-      {
-        const HttpHeaders& headers = command.GetHttpHeaders();
-        for (HttpHeaders::const_iterator it = headers.begin(); it != headers.end(); it++ )
-        {
-          client.AddHeader(it->first, it->second);
-        }
       }
 
       std::string answer;
@@ -372,12 +506,91 @@ namespace Refactoring
 
       if (success)
       {
-        OrthancApiOracleCommand::SuccessMessage message(command, answerHeaders, answer);
+        OrthancRestApiCommand::SuccessMessage message(command, answerHeaders, answer);
         emitter_.EmitMessage(receiver, message);
       }
       else
       {
-        OrthancApiOracleCommand::FailureMessage message(command, client.GetLastStatus());
+        OrthancRestApiCommand::FailureMessage message(command, client.GetLastStatus());
+        emitter_.EmitMessage(receiver, message);
+      }
+    }
+
+
+    void Execute(const OrthancStone::IObserver& receiver,
+                 const DecodeOrthancImageCommand& command)
+    {
+      Orthanc::HttpClient client(orthanc_, command.GetUri());
+      client.SetTimeout(command.GetTimeout());
+
+      CopyHttpHeaders(client, command.GetHttpHeaders());
+
+      std::string answer;
+      HttpHeaders answerHeaders;
+
+      bool success;
+      try
+      {
+        success = client.Apply(answer, answerHeaders);
+      }
+      catch (Orthanc::OrthancException& e)
+      {
+        success = false;
+      }
+
+      if (success)
+      {
+        printf("OK %d\n", answer.size());
+
+        Orthanc::MimeType contentType = Orthanc::MimeType_Binary;
+        Orthanc::HttpCompression contentEncoding = Orthanc::HttpCompression_None;
+
+        for (HttpHeaders::const_iterator it = answerHeaders.begin(); 
+             it != answerHeaders.end(); ++it)
+        {
+          std::string s;
+          Orthanc::Toolbox::ToLowerCase(s, it->first);
+
+          if (s == "content-encoding")
+          {
+            if (it->second == "gzip")
+            {
+              contentEncoding = Orthanc::HttpCompression_Gzip;
+            }
+            else 
+            {
+              throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
+                                              "Unsupported HTTP Content-Encoding: " + it->second);
+            }
+          }
+
+          if (s == "content-type")
+          {
+            contentType = Orthanc::StringToMimeType(it->second);
+          }
+
+          printf("  [%s] == [%s]\n", it->first.c_str(), it->second.c_str());
+        }
+
+        if (contentEncoding == Orthanc::HttpCompression_Gzip)
+        {
+          std::string compressed;
+          answer.swap(compressed);
+          
+          Orthanc::GzipCompressor compressor;
+          compressor.Uncompress(answer, compressed.c_str(), compressed.size());
+        }
+
+        printf("[%s] %d => %d\n", Orthanc::EnumerationToString(contentType), contentEncoding, answer.size());
+
+        
+
+        //DecodeOrthancImageCommand::SuccessMessage message(command, answerHeaders, answer);
+        //emitter_.EmitMessage(receiver, message);
+      }
+      else
+      {
+        DecodeOrthancImageCommand::FailureMessage message(command, client.GetLastStatus());
         emitter_.EmitMessage(receiver, message);
       }
     }
@@ -396,9 +609,14 @@ namespace Refactoring
         {
           switch (item.GetCommand().GetType())
           {
-            case IOracleCommand::Type_OrthancApi:
+            case IOracleCommand::Type_OrthancRestApi:
               Execute(item.GetReceiver(), 
-                      dynamic_cast<const OrthancApiOracleCommand&>(item.GetCommand()));
+                      dynamic_cast<const OrthancRestApiCommand&>(item.GetCommand()));
+              break;
+
+            case IOracleCommand::Type_DecodeOrthancImage:
+              Execute(item.GetReceiver(), 
+                      dynamic_cast<const DecodeOrthancImageCommand&>(item.GetCommand()));
               break;
 
             default:
@@ -802,12 +1020,15 @@ namespace Refactoring
 
     OrthancStone::CoordinateSystem3D  GetFrameGeometry(unsigned int frame) const
     {
-      if (frame >= imageInformation_.GetNumberOfFrames())
+      if (frame == 0)
+      {
+        return geometry_;
+      }
+      else if (frame >= imageInformation_.GetNumberOfFrames())
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
-
-      if (sopClassUid_ == OrthancStone::SopClassUid_RTDose)
+      else if (sopClassUid_ == OrthancStone::SopClassUid_RTDose)
       {
         if (frame >= frameOffsets_.size())
         {
@@ -818,6 +1039,10 @@ namespace Refactoring
           geometry_.GetOrigin() + frameOffsets_[frame] * geometry_.GetNormal(),
           geometry_.GetAxisX(),
           geometry_.GetAxisY());
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
     }
 
@@ -921,10 +1146,10 @@ namespace Refactoring
     class MessageHandler : public Orthanc::IDynamicObject
     {
     public:
-      virtual void Handle(const OrthancApiOracleCommand::SuccessMessage& message) const = 0;
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const = 0;
     };
 
-    void Handle(const OrthancApiOracleCommand::SuccessMessage& message)
+    void Handle(const OrthancRestApiCommand::SuccessMessage& message)
     {
       dynamic_cast<const MessageHandler&>(message.GetOrigin().GetPayload()).Handle(message);
     }
@@ -941,7 +1166,7 @@ namespace Refactoring
       {
       }
 
-      virtual void Handle(const OrthancApiOracleCommand::SuccessMessage& message) const
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
       {
         Json::Value value;
         message.ParseJsonBody(value);
@@ -975,7 +1200,7 @@ namespace Refactoring
       {
       }
 
-      virtual void Handle(const OrthancApiOracleCommand::SuccessMessage& message) const
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
       {
         Json::Value value;
         message.ParseJsonBody(value);
@@ -1003,7 +1228,7 @@ namespace Refactoring
       active_(false)
     {
       oracle.RegisterObserverCallback(
-        new OrthancStone::Callable<AxialVolumeOrthancLoader, OrthancApiOracleCommand::SuccessMessage>
+        new OrthancStone::Callable<AxialVolumeOrthancLoader, OrthancRestApiCommand::SuccessMessage>
         (*this, &AxialVolumeOrthancLoader::Handle));
     }
 
@@ -1017,7 +1242,7 @@ namespace Refactoring
 
       active_ = true;
 
-      std::auto_ptr<Refactoring::OrthancApiOracleCommand> command(new Refactoring::OrthancApiOracleCommand);
+      std::auto_ptr<Refactoring::OrthancRestApiCommand> command(new Refactoring::OrthancRestApiCommand);
       command->SetUri("/series/" + seriesId + "/instances-tags");
       command->SetPayload(new LoadSeriesGeometryHandler(*this));
 
@@ -1039,7 +1264,7 @@ namespace Refactoring
 
       // TODO => Should be part of a second call if needed
 
-      std::auto_ptr<Refactoring::OrthancApiOracleCommand> command(new Refactoring::OrthancApiOracleCommand);
+      std::auto_ptr<Refactoring::OrthancRestApiCommand> command(new Refactoring::OrthancRestApiCommand);
       command->SetUri("/instances/" + instanceId + "/tags?ignore-length=3004-000c");
       command->SetPayload(new LoadInstanceGeometryHandler(*this));
 
@@ -1054,7 +1279,7 @@ namespace Refactoring
 class Toto : public OrthancStone::IObserver
 {
 private:
-  void Handle(const Refactoring::OrthancApiOracleCommand::SuccessMessage& message)
+  void Handle(const Refactoring::OrthancRestApiCommand::SuccessMessage& message)
   {
     Json::Value v;
     message.ParseJsonBody(v);
@@ -1062,7 +1287,7 @@ private:
     printf("ICI [%s]\n", v.toStyledString().c_str());
   }
 
-  void Handle(const Refactoring::OrthancApiOracleCommand::FailureMessage& message)
+  void Handle(const Refactoring::OrthancRestApiCommand::FailureMessage& message)
   {
     printf("ERROR %d\n", message.GetHttpStatus());
   }
@@ -1073,7 +1298,7 @@ public:
   {
     oracle.RegisterObserverCallback
       (new OrthancStone::Callable
-       <Toto, Refactoring::OrthancApiOracleCommand::SuccessMessage>(*this, &Toto::Handle));
+       <Toto, Refactoring::OrthancRestApiCommand::SuccessMessage>(*this, &Toto::Handle));
   }
 };
 
@@ -1101,16 +1326,58 @@ void Run(Refactoring::NativeApplicationContext& context)
 
   oracle.Start();
 
+  if (0)
   {
     Json::Value v = Json::objectValue;
     v["Level"] = "Series";
     v["Query"] = Json::objectValue;
 
-    std::auto_ptr<Refactoring::OrthancApiOracleCommand>  command(new Refactoring::OrthancApiOracleCommand);
+    std::auto_ptr<Refactoring::OrthancRestApiCommand>  command(new Refactoring::OrthancRestApiCommand);
     command->SetMethod(Orthanc::HttpMethod_Post);
     command->SetUri("/tools/find");
     command->SetBody(v);
 
+    oracle.Schedule(*toto, command.release());
+  }
+  
+  if (0)
+  {
+    std::auto_ptr<Refactoring::DecodeOrthancImageCommand>  command(new Refactoring::DecodeOrthancImageCommand);
+    command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Jpeg)));
+    command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/preview");
+    oracle.Schedule(*toto, command.release());
+  }
+  
+  if (0)
+  {
+    std::auto_ptr<Refactoring::DecodeOrthancImageCommand>  command(new Refactoring::DecodeOrthancImageCommand);
+    command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Png)));
+    command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/preview");
+    oracle.Schedule(*toto, command.release());
+  }
+  
+  if (1)
+  {
+    std::auto_ptr<Refactoring::DecodeOrthancImageCommand>  command(new Refactoring::DecodeOrthancImageCommand);
+    command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Png)));
+    command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
+    oracle.Schedule(*toto, command.release());
+  }
+  
+  if (1)
+  {
+    std::auto_ptr<Refactoring::DecodeOrthancImageCommand>  command(new Refactoring::DecodeOrthancImageCommand);
+    command->SetHttpHeader("Accept-Encoding", "gzip");
+    command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
+    command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
+    oracle.Schedule(*toto, command.release());
+  }
+  
+  if (1)
+  {
+    std::auto_ptr<Refactoring::DecodeOrthancImageCommand>  command(new Refactoring::DecodeOrthancImageCommand);
+    command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
+    command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
     oracle.Schedule(*toto, command.release());
   }
   

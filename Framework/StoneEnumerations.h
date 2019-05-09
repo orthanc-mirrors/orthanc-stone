@@ -172,6 +172,10 @@ namespace OrthancStone
     MessageType_Test1,
     MessageType_Test2,
 
+
+    MessageType_ImageReady,
+
+
     MessageType_CustomMessage // Custom messages ids ust be greater than this (this one must remain in last position)
   };
 

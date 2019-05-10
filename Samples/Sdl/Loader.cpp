@@ -62,8 +62,8 @@ namespace Refactoring
     enum Type
     {
       Type_OrthancRestApi,
-      Type_DecodeOrthancImage,
-      Type_DecodeOrthancWebViewerJpeg
+      Type_GetOrthancImage,
+      Type_GetOrthancWebViewerJpeg
     };
 
     virtual ~IOracleCommand()
@@ -312,18 +312,18 @@ namespace Refactoring
 
 
 
-  class DecodeOrthancImageCommand : public OracleCommandWithPayload
+  class GetOrthancImageCommand : public OracleCommandWithPayload
   {
   public:
     class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_ImageReady,   // TODO
-                                                              DecodeOrthancImageCommand>
+                                                              GetOrthancImageCommand>
     {
     private:
       std::auto_ptr<Orthanc::ImageAccessor>  image_;
       Orthanc::MimeType                      mime_;
 
     public:
-      SuccessMessage(const DecodeOrthancImageCommand& command,
+      SuccessMessage(const GetOrthancImageCommand& command,
                      Orthanc::ImageAccessor* image,   // Takes ownership
                      Orthanc::MimeType mime) :
         OriginMessage(command),
@@ -357,7 +357,7 @@ namespace Refactoring
     std::auto_ptr< OrthancStone::MessageHandler<OracleCommandExceptionMessage> >  failureCallback_;
 
   public:
-    DecodeOrthancImageCommand() :
+    GetOrthancImageCommand() :
       uri_("/"),
       timeout_(10)
     {
@@ -365,7 +365,7 @@ namespace Refactoring
 
     virtual Type GetType() const
     {
-      return Type_DecodeOrthancImage;
+      return Type_GetOrthancImage;
     }
 
     void SetUri(const std::string& uri)
@@ -450,24 +450,24 @@ namespace Refactoring
                                           std::string(Orthanc::EnumerationToString(contentType)));
       }
 
-      DecodeOrthancImageCommand::SuccessMessage message(*this, image.release(), contentType);
+      GetOrthancImageCommand::SuccessMessage message(*this, image.release(), contentType);
       emitter.EmitMessage(receiver, message);
     }
   };
 
 
 
-  class DecodeOrthancWebViewerJpegCommand : public OracleCommandWithPayload
+  class GetOrthancWebViewerJpegCommand : public OracleCommandWithPayload
   {
   public:
     class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_ImageReady,   // TODO
-                                                              DecodeOrthancWebViewerJpegCommand>
+                                                              GetOrthancWebViewerJpegCommand>
     {
     private:
       std::auto_ptr<Orthanc::ImageAccessor>  image_;
 
     public:
-      SuccessMessage(const DecodeOrthancWebViewerJpegCommand& command,
+      SuccessMessage(const GetOrthancWebViewerJpegCommand& command,
                      Orthanc::ImageAccessor* image) :   // Takes ownership
         OriginMessage(command),
         image_(image)
@@ -495,7 +495,7 @@ namespace Refactoring
     std::auto_ptr< OrthancStone::MessageHandler<OracleCommandExceptionMessage> >  failureCallback_;
 
   public:
-    DecodeOrthancWebViewerJpegCommand() :
+    GetOrthancWebViewerJpegCommand() :
       frame_(0),
       quality_(95),
       timeout_(10)
@@ -504,7 +504,7 @@ namespace Refactoring
 
     virtual Type GetType() const
     {
-      return Type_DecodeOrthancWebViewerJpeg;
+      return Type_GetOrthancWebViewerJpeg;
     }
 
     void SetInstance(const std::string& instanceId)
@@ -583,7 +583,7 @@ namespace Refactoring
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
       }
 
-      //DecodeOrthancWebViewerJpegCommand::SuccessMessage message(command, image.release(), contentType);
+      //GetOrthancWebViewerJpegCommand::SuccessMessage message(command, image.release(), contentType);
       //emitter.EmitMessage(receiver, message);
     }
   };
@@ -718,7 +718,7 @@ namespace Refactoring
 
 
     void Execute(const OrthancStone::IObserver& receiver,
-                 const DecodeOrthancImageCommand& command)
+                 const GetOrthancImageCommand& command)
     {
       Orthanc::HttpClient client(orthanc_, command.GetUri());
       client.SetTimeout(command.GetTimeout());
@@ -736,7 +736,7 @@ namespace Refactoring
 
 
     void Execute(const OrthancStone::IObserver& receiver,
-                 const DecodeOrthancWebViewerJpegCommand& command)
+                 const GetOrthancWebViewerJpegCommand& command)
     {
       Orthanc::HttpClient client(orthanc_, command.GetUri());
       client.SetTimeout(command.GetTimeout());
@@ -751,7 +751,6 @@ namespace Refactoring
 
       command.ProcessHttpAnswer(emitter_, receiver, answer);
     }
-
 
 
     void Step()
@@ -771,14 +770,14 @@ namespace Refactoring
                       dynamic_cast<const OrthancRestApiCommand&>(item.GetCommand()));
               break;
 
-            case IOracleCommand::Type_DecodeOrthancImage:
+            case IOracleCommand::Type_GetOrthancImage:
               Execute(item.GetReceiver(), 
-                      dynamic_cast<const DecodeOrthancImageCommand&>(item.GetCommand()));
+                      dynamic_cast<const GetOrthancImageCommand&>(item.GetCommand()));
               break;
 
-            case IOracleCommand::Type_DecodeOrthancWebViewerJpeg:
+            case IOracleCommand::Type_GetOrthancWebViewerJpeg:
               Execute(item.GetReceiver(), 
-                      dynamic_cast<const DecodeOrthancWebViewerJpegCommand&>(item.GetCommand()));
+                      dynamic_cast<const GetOrthancWebViewerJpegCommand&>(item.GetCommand()));
               break;
 
             default:
@@ -1459,7 +1458,7 @@ private:
     printf("ICI [%s]\n", v.toStyledString().c_str());
   }
 
-  void Handle(const Refactoring::DecodeOrthancImageCommand::SuccessMessage& message)
+  void Handle(const Refactoring::GetOrthancImageCommand::SuccessMessage& message)
   {
     printf("IMAGE %dx%d\n", message.GetImage().GetWidth(), message.GetImage().GetHeight());
   }
@@ -1470,8 +1469,8 @@ private:
 
     switch (message.GetCommand().GetType())
     {
-      case Refactoring::IOracleCommand::Type_DecodeOrthancWebViewerJpeg:
-        printf("URI: [%s]\n", dynamic_cast<const Refactoring::DecodeOrthancWebViewerJpegCommand&>
+      case Refactoring::IOracleCommand::Type_GetOrthancWebViewerJpeg:
+        printf("URI: [%s]\n", dynamic_cast<const Refactoring::GetOrthancWebViewerJpegCommand&>
                (message.GetCommand()).GetUri().c_str());
         break;
       
@@ -1490,7 +1489,7 @@ public:
 
     oracle.RegisterObserverCallback
       (new OrthancStone::Callable
-       <Toto, Refactoring::DecodeOrthancImageCommand::SuccessMessage>(*this, &Toto::Handle));
+       <Toto, Refactoring::GetOrthancImageCommand::SuccessMessage>(*this, &Toto::Handle));
 
     oracle.RegisterObserverCallback
       (new OrthancStone::Callable
@@ -1538,7 +1537,7 @@ void Run(Refactoring::NativeApplicationContext& context)
   
   if (0)
   {
-    std::auto_ptr<Refactoring::DecodeOrthancImageCommand>  command(new Refactoring::DecodeOrthancImageCommand);
+    std::auto_ptr<Refactoring::GetOrthancImageCommand>  command(new Refactoring::GetOrthancImageCommand);
     command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Jpeg)));
     command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/preview");
     oracle.Schedule(*toto, command.release());
@@ -1546,7 +1545,7 @@ void Run(Refactoring::NativeApplicationContext& context)
   
   if (0)
   {
-    std::auto_ptr<Refactoring::DecodeOrthancImageCommand>  command(new Refactoring::DecodeOrthancImageCommand);
+    std::auto_ptr<Refactoring::GetOrthancImageCommand>  command(new Refactoring::GetOrthancImageCommand);
     command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Png)));
     command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/preview");
     oracle.Schedule(*toto, command.release());
@@ -1554,7 +1553,7 @@ void Run(Refactoring::NativeApplicationContext& context)
   
   if (1)
   {
-    std::auto_ptr<Refactoring::DecodeOrthancImageCommand>  command(new Refactoring::DecodeOrthancImageCommand);
+    std::auto_ptr<Refactoring::GetOrthancImageCommand>  command(new Refactoring::GetOrthancImageCommand);
     command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Png)));
     command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
     oracle.Schedule(*toto, command.release());
@@ -1562,7 +1561,7 @@ void Run(Refactoring::NativeApplicationContext& context)
   
   if (1)
   {
-    std::auto_ptr<Refactoring::DecodeOrthancImageCommand>  command(new Refactoring::DecodeOrthancImageCommand);
+    std::auto_ptr<Refactoring::GetOrthancImageCommand>  command(new Refactoring::GetOrthancImageCommand);
     command->SetHttpHeader("Accept-Encoding", "gzip");
     command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
     command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
@@ -1571,7 +1570,7 @@ void Run(Refactoring::NativeApplicationContext& context)
   
   if (1)
   {
-    std::auto_ptr<Refactoring::DecodeOrthancImageCommand>  command(new Refactoring::DecodeOrthancImageCommand);
+    std::auto_ptr<Refactoring::GetOrthancImageCommand>  command(new Refactoring::GetOrthancImageCommand);
     command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
     command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
     oracle.Schedule(*toto, command.release());
@@ -1579,7 +1578,7 @@ void Run(Refactoring::NativeApplicationContext& context)
 
   if (1)
   {
-    std::auto_ptr<Refactoring::DecodeOrthancWebViewerJpegCommand>  command(new Refactoring::DecodeOrthancWebViewerJpegCommand);
+    std::auto_ptr<Refactoring::GetOrthancWebViewerJpegCommand>  command(new Refactoring::GetOrthancWebViewerJpegCommand);
     command->SetHttpHeader("Accept-Encoding", "gzip");
     command->SetInstance("e6c7c20b-c9f65d7e-0d76f2e2-830186f2-3e3c600e");
     command->SetQuality(90);

@@ -31,10 +31,22 @@ namespace OrthancStone
     std::vector<TrackerCommandPtr>& undoStack,
     std::vector<MeasureToolPtr>&    measureTools)
     : scene_(scene)
+    , active_(true)
     , undoStack_(undoStack)
     , measureTools_(measureTools)
     , commitResult_(true)
   {
+  }
+
+  void CreateMeasureTracker::Cancel()
+  {
+    commitResult_ = false;
+    active_ = false;
+  }
+
+  bool CreateMeasureTracker::IsActive() const
+  {
+    return active_;
   }
 
   CreateMeasureTracker::~CreateMeasureTracker()
@@ -49,43 +61,6 @@ namespace OrthancStone
       command_->Undo();
   }
   
-  CreateLineMeasureTracker::CreateLineMeasureTracker(
-    Scene2D&                        scene,
-    std::vector<TrackerCommandPtr>& undoStack,
-    std::vector<MeasureToolPtr>&    measureTools,
-    const PointerEvent&             e) 
-    : CreateMeasureTracker(scene, undoStack, measureTools)
-  {
-    command_.reset(
-      new CreateLineMeasureCommand(
-        scene,
-        measureTools,
-        e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform())));
-  }
-
-  CreateLineMeasureTracker::~CreateLineMeasureTracker()
-  {
-
-  }
-
-  void CreateMeasureTracker::Update(const PointerEvent& event)
-  {
-    ScenePoint2D scenePos = event.GetMainPosition().Apply(
-      scene_.GetCanvasToSceneTransform());
-    
-    LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
-      "scenePos.GetY() = " << scenePos.GetY();
-
-    CreateLineMeasureTracker* concreteThis =
-      dynamic_cast<CreateLineMeasureTracker*>(this);
-    assert(concreteThis != NULL);
-    command_->Update(scenePos);
-  }
-
-  void CreateMeasureTracker::Release()
-  {
-    commitResult_ = false;
-  }
 
 }
 

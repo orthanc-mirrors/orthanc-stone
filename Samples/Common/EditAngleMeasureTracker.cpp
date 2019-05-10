@@ -13,34 +13,11 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
-#pragma once
-
-#include "PointerEvent.h"
-
 namespace OrthancStone
 {
-  class IPointerTracker : public boost::noncopyable
-  {
-  public:
-    virtual ~IPointerTracker()
-    {
-    }
-
-    /**
-    This method will be repeatedly called during user interaction
-    */
-    virtual void Update(const PointerEvent& event) = 0;
-
-    /**
-    This method will be called when the tracker should commit its result
-    before being destroyed.
-    */
-    virtual void Release() = 0;
-  };
 }

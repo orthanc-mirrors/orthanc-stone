@@ -20,6 +20,7 @@
 
 #include <Core/Logging.h>
 #include "MeasureTools.h"
+#include <boost/math/constants/constants.hpp>
 
 namespace OrthancStone
 {
@@ -92,6 +93,107 @@ namespace OrthancStone
     return concreteLayer;
   }
 
+  namespace
+  {
+    /**
+    This function will create a square around the center point supplied in
+    scene coordinates, with a side length given in canvas coordinates. The
+    square sides are parallel to the canvas boundaries.
+    */
+    void AddSquare(PolylineSceneLayer::Chain& chain,
+      const Scene2D&      scene,
+      const ScenePoint2D& centerS, 
+      const double&       sideLength)
+    {
+      chain.clear();
+      chain.reserve(4);
+      ScenePoint2D centerC = centerS.Apply(scene.GetSceneToCanvasTransform());
+      //TODO: take DPI into account
+      double handleLX = centerC.GetX() - sideLength / 2;
+      double handleTY = centerC.GetY() - sideLength / 2;
+      double handleRX = centerC.GetX() + sideLength / 2;
+      double handleBY = centerC.GetY() + sideLength / 2;
+      ScenePoint2D LTC(handleLX, handleTY);
+      ScenePoint2D RTC(handleRX, handleTY);
+      ScenePoint2D RBC(handleRX, handleBY);
+      ScenePoint2D LBC(handleLX, handleBY);
+
+      ScenePoint2D startLT = LTC.Apply(scene.GetCanvasToSceneTransform());
+      ScenePoint2D startRT = RTC.Apply(scene.GetCanvasToSceneTransform());
+      ScenePoint2D startRB = RBC.Apply(scene.GetCanvasToSceneTransform());
+      ScenePoint2D startLB = LBC.Apply(scene.GetCanvasToSceneTransform());
+
+      chain.push_back(startLT);
+      chain.push_back(startRT);
+      chain.push_back(startRB);
+      chain.push_back(startLB);
+    }
+
+    void AddCircle(PolylineSceneLayer::Chain& chain,
+      const Scene2D&      scene,
+      const ScenePoint2D& centerS,
+      const double&       radiusS)
+    {
+      chain.clear();
+      chain.reserve(4);
+      //ScenePoint2D centerC = centerS.Apply(scene.GetSceneToCanvasTransform());
+      //TODO: take DPI into account
+      
+      // TODO: automatically compute the number for segments for smooth 
+      // display based on the radius in pixels.
+      int lineCount = 50;
+      
+      double angleIncr = (2.0 * boost::math::constants::pi<double>())
+        / static_cast<double>(lineCount);
+
+      double theta = 0;
+      for (int i = 0; i < lineCount; ++i)
+      {
+        double offsetX = radiusS * cos(theta);
+        double offsetY = radiusS * sin(theta);
+        double pointX = centerS.GetX() + offsetX;
+        double pointY = centerS.GetY() + offsetY;
+        chain.push_back(ScenePoint2D(pointX, pointY));
+        theta += angleIncr;
+      }
+    }
+
+#if 0
+    void AddEllipse(PolylineSceneLayer::Chain& chain,
+      const Scene2D&      scene,
+      const ScenePoint2D& centerS,
+      const double&       halfHAxis,
+      const double&       halfVAxis)
+    {
+      chain.clear();
+      chain.reserve(4);
+      ScenePoint2D centerC = centerS.Apply(scene.GetSceneToCanvasTransform());
+      //TODO: take DPI into account
+      double handleLX = centerC.GetX() - sideLength / 2;
+      double handleTY = centerC.GetY() - sideLength / 2;
+      double handleRX = centerC.GetX() + sideLength / 2;
+      double handleBY = centerC.GetY() + sideLength / 2;
+      ScenePoint2D LTC(handleLX, handleTY);
+      ScenePoint2D RTC(handleRX, handleTY);
+      ScenePoint2D RBC(handleRX, handleBY);
+      ScenePoint2D LBC(handleLX, handleBY);
+
+      ScenePoint2D startLT = LTC.Apply(scene.GetCanvasToSceneTransform());
+      ScenePoint2D startRT = RTC.Apply(scene.GetCanvasToSceneTransform());
+      ScenePoint2D startRB = RBC.Apply(scene.GetCanvasToSceneTransform());
+      ScenePoint2D startLB = LBC.Apply(scene.GetCanvasToSceneTransform());
+
+      chain.push_back(startLT);
+      chain.push_back(startRT);
+      chain.push_back(startRB);
+      chain.push_back(startLB);
+    }
+#endif
+
+
+  }
+
+
   void LineMeasureTool::RefreshScene()
   {
     if (IsEnabled())
@@ -103,13 +205,13 @@ namespace OrthancStone
         assert(textZIndex_ == -1);
         {
           polylineZIndex_ = GetScene().GetMaxDepth() + 100;
-          LOG(INFO) << "set polylineZIndex_ to: " << polylineZIndex_;
+          //LOG(INFO) << "set polylineZIndex_ to: " << polylineZIndex_;
           std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
           GetScene().SetLayer(polylineZIndex_, layer.release());
         }
         {
           textZIndex_ = GetScene().GetMaxDepth() + 100;
-          LOG(INFO) << "set textZIndex_ to: " << textZIndex_;
+          //LOG(INFO) << "set textZIndex_ to: " << textZIndex_;
           std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
           GetScene().SetLayer(textZIndex_, layer.release());
         }
@@ -136,32 +238,44 @@ namespace OrthancStone
 
         // handles
         {
-          ScenePoint2D startC = start_.Apply(GetScene().GetSceneToCanvasTransform());
-          double squareSize = 10.0; //TODO: take DPI into account
-          double startHandleLX = startC.GetX() - squareSize/2;
-          double startHandleTY = startC.GetY() - squareSize / 2;
-          double startHandleRX = startC.GetX() + squareSize / 2;
-          double startHandleBY = startC.GetY() + squareSize / 2;
-          ScenePoint2D startLTC(startHandleLX, startHandleTY);
-          ScenePoint2D startRTC(startHandleRX, startHandleTY);
-          ScenePoint2D startRBC(startHandleRX, startHandleBY);
-          ScenePoint2D startLBC(startHandleLX, startHandleBY);
+          //void AddSquare(PolylineSceneLayer::Chain& chain,const Scene2D& scene,const ScenePoint2D& centerS,const double& sideLength)
 
-          ScenePoint2D startLT = startLTC.Apply(GetScene().GetCanvasToSceneTransform());
-          ScenePoint2D startRT = startRTC.Apply(GetScene().GetCanvasToSceneTransform());
-          ScenePoint2D startRB = startRBC.Apply(GetScene().GetCanvasToSceneTransform());
-          ScenePoint2D startLB = startLBC.Apply(GetScene().GetCanvasToSceneTransform());
+          {
+            PolylineSceneLayer::Chain chain;
+            AddSquare(chain, GetScene(), start_, 10.0); //TODO: take DPI into account
+            polylineLayer->AddChain(chain, true);
+          }
 
-          PolylineSceneLayer::Chain chain;
-          chain.push_back(startLT);
-          chain.push_back(startRT);
-          chain.push_back(startRB);
-          chain.push_back(startLB);
-          polylineLayer->AddChain(chain, true);
+          {
+            PolylineSceneLayer::Chain chain;
+            AddSquare(chain, GetScene(), end_, 10.0); //TODO: take DPI into account
+            polylineLayer->AddChain(chain, true);
+          }
+
+          //ScenePoint2D startC = start_.Apply(GetScene().GetSceneToCanvasTransform());
+          //double squareSize = 10.0; 
+          //double startHandleLX = startC.GetX() - squareSize/2;
+          //double startHandleTY = startC.GetY() - squareSize / 2;
+          //double startHandleRX = startC.GetX() + squareSize / 2;
+          //double startHandleBY = startC.GetY() + squareSize / 2;
+          //ScenePoint2D startLTC(startHandleLX, startHandleTY);
+          //ScenePoint2D startRTC(startHandleRX, startHandleTY);
+          //ScenePoint2D startRBC(startHandleRX, startHandleBY);
+          //ScenePoint2D startLBC(startHandleLX, startHandleBY);
+
+          //ScenePoint2D startLT = startLTC.Apply(GetScene().GetCanvasToSceneTransform());
+          //ScenePoint2D startRT = startRTC.Apply(GetScene().GetCanvasToSceneTransform());
+          //ScenePoint2D startRB = startRBC.Apply(GetScene().GetCanvasToSceneTransform());
+          //ScenePoint2D startLB = startLBC.Apply(GetScene().GetCanvasToSceneTransform());
+
+          //PolylineSceneLayer::Chain chain;
+          //chain.push_back(startLT);
+          //chain.push_back(startRT);
+          //chain.push_back(startRB);
+          //chain.push_back(startLB);
+          //polylineLayer->AddChain(chain, true);
         }
-
-
-        
+       
       }
       {
         // Set the text layer proporeties

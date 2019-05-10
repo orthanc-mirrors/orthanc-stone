@@ -69,13 +69,42 @@ if(ENABLE_SDL_CONSOLE)
   LIST(APPEND TRACKERSAMPLE_SOURCE "../../../SDL-Console/SDL_Console.h")
 endif()
 
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/CreateAngleMeasureTracker.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/CreateAngleMeasureTracker.h")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/CreateCircleMeasureTracker.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/CreateCircleMeasureTracker.h")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/CreateLineMeasureTracker.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/CreateLineMeasureTracker.h")
+
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/CreateMeasureTracker.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/CreateMeasureTracker.h")
+
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/CreateSimpleTrackerAdapter.cpp")
+
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/EditAngleMeasureTracker.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/EditAngleMeasureTracker.h")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/EditCircleMeasureTracker.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/EditCircleMeasureTracker.h")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/EditLineMeasureTracker.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/EditLineMeasureTracker.h")
+
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/IFlexiblePointerTracker.h")
+
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureCommands.cpp")
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureCommands.h")
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureTools.cpp")
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureTools.h")
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureTrackers.cpp")
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureTrackers.h")
+
+
 LIST(APPEND TRACKERSAMPLE_SOURCE "TrackerSample.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "TrackerSampleApp.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "TrackerSampleApp.h")
+
+if (MSVC AND MSVC_VERSION GREATER 1700)
+  LIST(APPEND TRACKERSAMPLE_SOURCE "cpp.hint")
+endif()
 
 add_executable(TrackerSample
   ${TRACKERSAMPLE_SOURCE}

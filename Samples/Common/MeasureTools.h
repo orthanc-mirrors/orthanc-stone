@@ -25,6 +25,7 @@
 #include <Framework/Scene2D/TextSceneLayer.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include <vector>
 #include <cmath>
@@ -50,7 +51,7 @@ namespace OrthancStone
     void Disable();
 
   protected:
-    MeasureTool(Scene2D& scene) 
+    MeasureTool(Scene2D& scene)
       : scene_(scene)
       , enabled_(true)
     {
@@ -64,7 +65,6 @@ namespace OrthancStone
     current state. This is repeatedly called during user interaction
     */
     virtual void RefreshScene() = 0;
-
 
     Scene2D& GetScene()
     {

@@ -62,4 +62,5 @@ namespace OrthancStone
     measureTool_->SetEnd(scenePos);
   }
 
+
 }

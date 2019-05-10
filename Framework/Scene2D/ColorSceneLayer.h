@@ -35,17 +35,20 @@ namespace OrthancStone
     uint8_t  green_;
     uint8_t  blue_;
     uint64_t revision_;
+
   protected:
     void BumpRevision()
     {
-      // this is *not* thread-safe!!!
+      // this is *not* thread-safe!!!  => (SJO) no problem, Stone assumes mono-threading
       revision_++;
     }
+
   public:
     ColorSceneLayer() :
       red_(255),
       green_(255),
-      blue_(255)
+      blue_(255),
+      revision_(0)
     {
     }
 

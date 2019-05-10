@@ -139,9 +139,10 @@ namespace Refactoring
 
 
 
-  class OracleCommandExceptionMessage :
-    public OrthancStone::BaseMessage<OrthancStone::MessageType_OracleCommandExceptionMessage>
+  class OracleCommandExceptionMessage : public OrthancStone::IMessage
   {
+    ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
   private:
     const IOracleCommand&       command_;
     Orthanc::OrthancException   exception_;
@@ -178,9 +179,10 @@ namespace Refactoring
   class OrthancRestApiCommand : public OracleCommandWithPayload
   {
   public:
-    class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_OrthancRestApiCommand,
-                                                              OrthancRestApiCommand>
+    class SuccessMessage : public OrthancStone::OriginMessage<OrthancRestApiCommand>
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+      
     private:
       HttpHeaders   headers_;
       std::string   answer_;
@@ -316,9 +318,10 @@ namespace Refactoring
   class GetOrthancImageCommand : public OracleCommandWithPayload
   {
   public:
-    class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_GetOrthancImageCommand,
-                                                              GetOrthancImageCommand>
+    class SuccessMessage : public OrthancStone::OriginMessage<GetOrthancImageCommand>
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+      
     private:
       std::auto_ptr<Orthanc::ImageAccessor>  image_;
       Orthanc::MimeType                      mime_;
@@ -461,9 +464,10 @@ namespace Refactoring
   class GetOrthancWebViewerJpegCommand : public OracleCommandWithPayload
   {
   public:
-    class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_GetOrthancWebViewerJpegCommand,
-                                                              GetOrthancWebViewerJpegCommand>
+    class SuccessMessage : public OrthancStone::OriginMessage<GetOrthancWebViewerJpegCommand>
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+      
     private:
       std::auto_ptr<Orthanc::ImageAccessor>  image_;
 

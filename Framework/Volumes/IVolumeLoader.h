@@ -28,9 +28,9 @@ namespace OrthancStone
   class IVolumeLoader : public IObservable
   {
   public:
-    typedef OriginMessage<MessageType_VolumeLoader_GeometryReady, IVolumeLoader> GeometryReadyMessage;
-    typedef OriginMessage<MessageType_VolumeLoader_GeometryError, IVolumeLoader> GeometryErrorMessage;
-    typedef OriginMessage<MessageType_VolumeLoader_ContentChanged, IVolumeLoader> ContentChangedMessage;
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryReadyMessage, IVolumeLoader);
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryErrorMessage, IVolumeLoader);
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ContentChangedMessage, IVolumeLoader);
 
     IVolumeLoader(MessageBroker& broker) :
       IObservable(broker)

@@ -35,8 +35,9 @@ namespace OrthancStone
   class IObservable : public boost::noncopyable
   {
   private:
-    typedef std::map<int, std::set<ICallable*> >  Callables;
-    typedef std::set<IMessageForwarder*>          Forwarders;
+    typedef std::map<MessageIdentifier, std::set<ICallable*> >  Callables;
+
+    typedef std::set<IMessageForwarder*>     Forwarders;
 
     MessageBroker&  broker_;
     Callables       callables_;

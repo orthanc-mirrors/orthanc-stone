@@ -35,9 +35,10 @@ namespace OrthancStone
       public IObserver
   {
   public:
-    class JsonResponseReadyMessage :
-        public BaseMessage<MessageType_OrthancApi_GenericGetJson_Ready>
+    class JsonResponseReadyMessage : public IMessage
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
     private:
       const std::string&              uri_;
       const Json::Value&              json_;
@@ -72,9 +73,10 @@ namespace OrthancStone
     };
     
 
-    class BinaryResponseReadyMessage :
-        public BaseMessage<MessageType_OrthancApi_GenericGetBinary_Ready>
+    class BinaryResponseReadyMessage : public IMessage
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
     private:
       const std::string&              uri_;
       const void*                     answer_;
@@ -117,9 +119,10 @@ namespace OrthancStone
     };
 
 
-    class EmptyResponseReadyMessage :
-        public BaseMessage<MessageType_OrthancApi_GenericEmptyResponse_Ready>
+    class EmptyResponseReadyMessage : public IMessage
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
     private:
       const std::string&              uri_;
       const Orthanc::IDynamicObject*  payload_;

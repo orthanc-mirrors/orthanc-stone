@@ -45,8 +45,10 @@ namespace OrthancStone
   public:
     typedef std::map<std::string, std::string> HttpHeaders;
 
-    class HttpRequestSuccessMessage : public BaseMessage<MessageType_HttpRequestSuccess>
+    class HttpRequestSuccessMessage : public IMessage
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
     private:
       const std::string&             uri_;
       const void*                    answer_;
@@ -97,8 +99,10 @@ namespace OrthancStone
     };
     
 
-    class HttpRequestErrorMessage : public BaseMessage<MessageType_HttpRequestError>
+    class HttpRequestErrorMessage : public IMessage
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
     private:
       const std::string&              uri_;
       const Orthanc::IDynamicObject*  payload_;

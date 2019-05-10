@@ -55,18 +55,7 @@ namespace OrthancStone
     friend class RadiographyScene;
 
   public:
-    class LayerEditedMessage :
-        public OriginMessage<MessageType_RadiographyLayer_Edited, RadiographyLayer>
-    {
-    private:
-
-    public:
-      LayerEditedMessage(const RadiographyLayer& origin) :
-        OriginMessage(origin)
-      {
-      }
-    };
-
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, LayerEditedMessage, RadiographyLayer);
 
     class Geometry
     {

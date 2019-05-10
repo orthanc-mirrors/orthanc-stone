@@ -38,8 +38,10 @@ namespace OrthancStone
   {
   public:
     // TODO: Add "frame" and "instanceId"
-    class FrameReadyMessage : public OriginMessage<MessageType_DicomSeriesVolumeSlicer_FrameReady, DicomSeriesVolumeSlicer>
+    class FrameReadyMessage : public OriginMessage<DicomSeriesVolumeSlicer>
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+      
     private:
       const Orthanc::ImageAccessor&  frame_;
       SliceImageQuality              imageQuality_;

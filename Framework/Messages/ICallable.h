@@ -41,7 +41,8 @@ namespace OrthancStone {
 
     virtual void Apply(const IMessage& message) = 0;
 
-    virtual MessageType GetMessageType() const = 0;
+    virtual const MessageIdentifier& GetMessageIdentifier() = 0;
+
     virtual IObserver* GetObserver() const = 0;
   };
 
@@ -58,8 +59,8 @@ namespace OrthancStone {
   private:
     typedef void (TObserver::* MemberFunction) (const TMessage&);
 
-    TObserver&      observer_;
-    MemberFunction  function_;
+    TObserver&         observer_;
+    MemberFunction     function_;
 
   public:
     Callable(TObserver& observer,
@@ -79,9 +80,9 @@ namespace OrthancStone {
       ApplyInternal(dynamic_cast<const TMessage&>(message));
     }
 
-    virtual MessageType GetMessageType() const
+    virtual const MessageIdentifier& GetMessageIdentifier()
     {
-      return static_cast<MessageType>(TMessage::Type);
+      return TMessage::GetStaticIdentifier();
     }
 
     virtual IObserver* GetObserver() const
@@ -113,11 +114,6 @@ namespace OrthancStone {
     virtual void Apply(const IMessage& message)
     {
       lambda_(dynamic_cast<const TMessage&>(message));
-    }
-
-    virtual MessageType GetMessageType() const
-    {
-      return static_cast<MessageType>(TMessage::Type);
     }
 
     virtual IObserver* GetObserver() const

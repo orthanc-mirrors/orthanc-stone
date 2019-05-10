@@ -34,32 +34,25 @@ namespace {
   using namespace OrthancStone;
 
 
-  enum CustomMessageType
-  {
-    CustomMessageType_First = MessageType_CustomMessage + 1,
-
-    CustomMessageType_Completed,
-    CustomMessageType_Increment
-  };
-
-
   class MyObservable : public IObservable
   {
   public:
-    struct MyCustomMessage: public BaseMessage<(MessageType) CustomMessageType_Completed>
+    struct MyCustomMessage : public IMessage
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
       int payload_;
 
-      MyCustomMessage(int payload)
-        : BaseMessage(),
-          payload_(payload)
-      {}
+      MyCustomMessage(int payload) :
+        payload_(payload)
+      {
+      }
     };
 
-    MyObservable(MessageBroker& broker)
-      : IObservable(broker)
-    {}
-
+    MyObservable(MessageBroker& broker) :
+      IObservable(broker)
+    {
+    }
   };
 
   class MyObserver : public IObserver
@@ -94,15 +87,18 @@ namespace {
   class MyPromiseSource : public IObservable
   {
     Promise* currentPromise_;
+
   public:
-    struct MyPromiseMessage: public BaseMessage<MessageType_Test1>
+    struct MyPromiseMessage: public IMessage
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
       int increment;
 
-      MyPromiseMessage(int increment)
-        : BaseMessage(),
-          increment(increment)
-      {}
+      MyPromiseMessage(int increment) :
+        increment(increment)
+      {
+      }
     };
 
     MyPromiseSource(MessageBroker& broker)

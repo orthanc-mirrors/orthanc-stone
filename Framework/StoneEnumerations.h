@@ -174,6 +174,7 @@ namespace OrthancStone
 
 
     MessageType_ImageReady,
+    MessageType_OrthancException,
 
 
     MessageType_CustomMessage // Custom messages ids ust be greater than this (this one must remain in last position)

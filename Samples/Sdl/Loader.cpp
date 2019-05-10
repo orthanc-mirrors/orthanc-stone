@@ -398,6 +398,61 @@ namespace Refactoring
     {
       return timeout_;
     }
+
+    void ProcessHttpAnswer(IMessageEmitter& emitter,
+                           const OrthancStone::IObserver& receiver,
+                           const std::string& answer,
+                           const HttpHeaders& answerHeaders) const
+    {
+      Orthanc::MimeType contentType = Orthanc::MimeType_Binary;
+
+      for (HttpHeaders::const_iterator it = answerHeaders.begin(); 
+           it != answerHeaders.end(); ++it)
+      {
+        std::string s;
+        Orthanc::Toolbox::ToLowerCase(s, it->first);
+
+        if (s == "content-type")
+        {
+          contentType = Orthanc::StringToMimeType(it->second);
+          break;
+        }
+      }
+
+      std::auto_ptr<Orthanc::ImageAccessor> image;
+
+      switch (contentType)
+      {
+        case Orthanc::MimeType_Png:
+        {
+          image.reset(new Orthanc::PngReader);
+          dynamic_cast<Orthanc::PngReader&>(*image).ReadFromMemory(answer);
+          break;
+        }
+
+        case Orthanc::MimeType_Pam:
+        {
+          image.reset(new Orthanc::PamReader);
+          dynamic_cast<Orthanc::PamReader&>(*image).ReadFromMemory(answer);
+          break;
+        }
+
+        case Orthanc::MimeType_Jpeg:
+        {
+          image.reset(new Orthanc::JpegReader);
+          dynamic_cast<Orthanc::JpegReader&>(*image).ReadFromMemory(answer);
+          break;
+        }
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
+                                          "Unsupported HTTP Content-Type for an image: " + 
+                                          std::string(Orthanc::EnumerationToString(contentType)));
+      }
+
+      DecodeOrthancImageCommand::SuccessMessage message(*this, image.release(), contentType);
+      emitter.EmitMessage(receiver, message);
+    }
   };
 
 
@@ -515,6 +570,21 @@ namespace Refactoring
     {
       return ("/web-viewer/instances/jpeg" + boost::lexical_cast<std::string>(quality_) +
               "-" + instanceId_ + "_" + boost::lexical_cast<std::string>(frame_));
+    }
+
+    void ProcessHttpAnswer(IMessageEmitter& emitter,
+                           const OrthancStone::IObserver& receiver,
+                           const std::string& answer) const
+    {
+      Json::Value value;
+      Json::Reader reader;
+      if (!reader.parse(answer, value))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
+
+      //DecodeOrthancWebViewerJpegCommand::SuccessMessage message(command, image.release(), contentType);
+      //emitter.EmitMessage(receiver, message);
     }
   };
 
@@ -661,54 +731,7 @@ namespace Refactoring
 
       DecodeAnswer(answer, answerHeaders);
 
-      Orthanc::MimeType contentType = Orthanc::MimeType_Binary;
-
-      for (HttpHeaders::const_iterator it = answerHeaders.begin(); 
-           it != answerHeaders.end(); ++it)
-      {
-        std::string s;
-        Orthanc::Toolbox::ToLowerCase(s, it->first);
-
-        if (s == "content-type")
-        {
-          contentType = Orthanc::StringToMimeType(it->second);
-          break;
-        }
-      }
-
-      std::auto_ptr<Orthanc::ImageAccessor> image;
-
-      switch (contentType)
-      {
-        case Orthanc::MimeType_Png:
-        {
-          image.reset(new Orthanc::PngReader);
-          dynamic_cast<Orthanc::PngReader&>(*image).ReadFromMemory(answer);
-          break;
-        }
-
-        case Orthanc::MimeType_Pam:
-        {
-          image.reset(new Orthanc::PamReader);
-          dynamic_cast<Orthanc::PamReader&>(*image).ReadFromMemory(answer);
-          break;
-        }
-
-        case Orthanc::MimeType_Jpeg:
-        {
-          image.reset(new Orthanc::JpegReader);
-          dynamic_cast<Orthanc::JpegReader&>(*image).ReadFromMemory(answer);
-          break;
-        }
-
-        default:
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
-                                          "Unsupported HTTP Content-Type for an image: " + 
-                                          std::string(Orthanc::EnumerationToString(contentType)));
-      }
-
-      DecodeOrthancImageCommand::SuccessMessage message(command, image.release(), contentType);
-      emitter_.EmitMessage(receiver, message);
+      command.ProcessHttpAnswer(emitter_, receiver, answer, answerHeaders);
     }
 
 
@@ -726,15 +749,7 @@ namespace Refactoring
 
       DecodeAnswer(answer, answerHeaders);
 
-      Json::Value value;
-      Json::Reader reader;
-      if (reader.parse(answer, value))
-      {
-        std::cout << value.toStyledString() << std::endl;
-      }
-
-      //DecodeOrthancWebViewerJpegCommand::SuccessMessage message(command, image.release(), contentType);
-      //emitter_.EmitMessage(receiver, message);
+      command.ProcessHttpAnswer(emitter_, receiver, answer);
     }
 
 

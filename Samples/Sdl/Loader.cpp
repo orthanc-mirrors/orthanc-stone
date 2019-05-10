@@ -44,6 +44,7 @@
 #include <Core/MultiThreading/SharedMessageQueue.h>
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
+#include <Core/SystemToolbox.h>
 
 #include <json/reader.h>
 #include <json/value.h>
@@ -139,7 +140,7 @@ namespace Refactoring
 
 
   class OracleCommandExceptionMessage :
-    public OrthancStone::BaseMessage<OrthancStone::MessageType_OrthancException>
+    public OrthancStone::BaseMessage<OrthancStone::MessageType_OracleCommandExceptionMessage>
   {
   private:
     const IOracleCommand&       command_;
@@ -177,7 +178,7 @@ namespace Refactoring
   class OrthancRestApiCommand : public OracleCommandWithPayload
   {
   public:
-    class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_HttpRequestSuccess,   // TODO
+    class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_OrthancRestApiCommand,
                                                               OrthancRestApiCommand>
     {
     private:
@@ -315,7 +316,7 @@ namespace Refactoring
   class GetOrthancImageCommand : public OracleCommandWithPayload
   {
   public:
-    class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_ImageReady,   // TODO
+    class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_GetOrthancImageCommand,
                                                               GetOrthancImageCommand>
     {
     private:
@@ -450,7 +451,7 @@ namespace Refactoring
                                           std::string(Orthanc::EnumerationToString(contentType)));
       }
 
-      GetOrthancImageCommand::SuccessMessage message(*this, image.release(), contentType);
+      SuccessMessage message(*this, image.release(), contentType);
       emitter.EmitMessage(receiver, message);
     }
   };
@@ -460,7 +461,7 @@ namespace Refactoring
   class GetOrthancWebViewerJpegCommand : public OracleCommandWithPayload
   {
   public:
-    class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_ImageReady,   // TODO
+    class SuccessMessage : public OrthancStone::OriginMessage<OrthancStone::MessageType_GetOrthancWebViewerJpegCommand,
                                                               GetOrthancWebViewerJpegCommand>
     {
     private:
@@ -485,11 +486,12 @@ namespace Refactoring
     };
 
   private:
-    std::string    instanceId_;
-    unsigned int   frame_;
-    unsigned int   quality_;
-    HttpHeaders    headers_;
-    unsigned int   timeout_;
+    std::string           instanceId_;
+    unsigned int          frame_;
+    unsigned int          quality_;
+    HttpHeaders           headers_;
+    unsigned int          timeout_;
+    Orthanc::PixelFormat  expectedFormat_;
 
     std::auto_ptr< OrthancStone::MessageHandler<SuccessMessage> >  successCallback_;
     std::auto_ptr< OrthancStone::MessageHandler<OracleCommandExceptionMessage> >  failureCallback_;
@@ -498,13 +500,19 @@ namespace Refactoring
     GetOrthancWebViewerJpegCommand() :
       frame_(0),
       quality_(95),
-      timeout_(10)
+      timeout_(10),
+      expectedFormat_(Orthanc::PixelFormat_Grayscale8)
     {
     }
 
     virtual Type GetType() const
     {
       return Type_GetOrthancWebViewerJpeg;
+    }
+
+    void SetExpectedFormat(Orthanc::PixelFormat format)
+    {
+      expectedFormat_ = format;
     }
 
     void SetInstance(const std::string& instanceId)
@@ -534,6 +542,11 @@ namespace Refactoring
                        const std::string& value)
     {
       headers_[key] = value;
+    }
+
+    Orthanc::PixelFormat GetExpectedFormat() const
+    {
+      return expectedFormat_;
     }
 
     const std::string& GetInstanceId() const
@@ -576,15 +589,139 @@ namespace Refactoring
                            const OrthancStone::IObserver& receiver,
                            const std::string& answer) const
     {
-      Json::Value value;
-      Json::Reader reader;
-      if (!reader.parse(answer, value))
+      // This code comes from older "OrthancSlicesLoader::ParseSliceImageJpeg()"
+      
+      Json::Value encoded;
+
+      {
+        Json::Reader reader;
+        if (!reader.parse(answer, encoded))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+      }
+
+      if (encoded.type() != Json::objectValue ||
+          !encoded.isMember("Orthanc") ||
+          encoded["Orthanc"].type() != Json::objectValue)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
       }
+    
+      const Json::Value& info = encoded["Orthanc"];
+      if (!info.isMember("PixelData") ||
+          !info.isMember("Stretched") ||
+          !info.isMember("Compression") ||
+          info["Compression"].type() != Json::stringValue ||
+          info["PixelData"].type() != Json::stringValue ||
+          info["Stretched"].type() != Json::booleanValue ||
+          info["Compression"].asString() != "Jpeg")
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
+    
+      bool isSigned = false;
+      bool isStretched = info["Stretched"].asBool();
+    
+      if (info.isMember("IsSigned"))
+      {
+        if (info["IsSigned"].type() != Json::booleanValue)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+        else
+        {
+          isSigned = info["IsSigned"].asBool();
+        }
+      }
+    
+      std::auto_ptr<Orthanc::ImageAccessor> reader;
+    
+      {
+        std::string jpeg;
+        Orthanc::Toolbox::DecodeBase64(jpeg, info["PixelData"].asString());
+      
+        reader.reset(new Orthanc::JpegReader);
+        dynamic_cast<Orthanc::JpegReader&>(*reader).ReadFromMemory(jpeg);
+      }
+    
+      if (reader->GetFormat() == Orthanc::PixelFormat_RGB24)  // This is a color image
+      {
+        if (expectedFormat_ != Orthanc::PixelFormat_RGB24)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+      
+        if (isSigned || isStretched)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+        else
+        {
+          SuccessMessage message(*this, reader.release());
+          emitter.EmitMessage(receiver, message);
+          return;
+        }
+      }
+    
+      if (reader->GetFormat() != Orthanc::PixelFormat_Grayscale8)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
+    
+      if (!isStretched)
+      {
+        if (expectedFormat_ != reader->GetFormat())
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+        else
+        {
+          SuccessMessage message(*this, reader.release());
+          emitter.EmitMessage(receiver, message);
+          return;
+        }
+      }
+    
+      int32_t stretchLow = 0;
+      int32_t stretchHigh = 0;
+    
+      if (!info.isMember("StretchLow") ||
+          !info.isMember("StretchHigh") ||
+          info["StretchLow"].type() != Json::intValue ||
+          info["StretchHigh"].type() != Json::intValue)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
+    
+      stretchLow = info["StretchLow"].asInt();
+      stretchHigh = info["StretchHigh"].asInt();
+    
+      if (stretchLow < -32768 ||
+          stretchHigh > 65535 ||
+          (stretchLow < 0 && stretchHigh > 32767))
+      {
+        // This range cannot be represented with a uint16_t or an int16_t
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
+    
+      // Decode a grayscale JPEG 8bpp image coming from the Web viewer
+      std::auto_ptr<Orthanc::ImageAccessor> image
+        (new Orthanc::Image(expectedFormat_, reader->GetWidth(), reader->GetHeight(), false));
 
-      //GetOrthancWebViewerJpegCommand::SuccessMessage message(command, image.release(), contentType);
-      //emitter.EmitMessage(receiver, message);
+      Orthanc::ImageProcessing::Convert(*image, *reader);
+      reader.reset();
+    
+      float scaling = static_cast<float>(stretchHigh - stretchLow) / 255.0f;
+    
+      if (!OrthancStone::LinearAlgebra::IsCloseToZero(scaling))
+      {
+        float offset = static_cast<float>(stretchLow) / scaling;
+        Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling, true);
+      }
+    
+      SuccessMessage message(*this, image.release());
+      emitter.EmitMessage(receiver, message);
     }
   };
 
@@ -671,7 +808,6 @@ namespace Refactoring
           }
           else 
           {
-            // TODO - Emit error message?
             throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
                                             "Unsupported HTTP Content-Encoding: " + it->second);
           }
@@ -759,6 +895,8 @@ namespace Refactoring
 
       if (object.get() != NULL)
       {
+        printf("===========================> REQUEST\n");
+        
         const Item& item = dynamic_cast<Item&>(*object);
 
         try
@@ -1463,6 +1601,11 @@ private:
     printf("IMAGE %dx%d\n", message.GetImage().GetWidth(), message.GetImage().GetHeight());
   }
 
+  void Handle(const Refactoring::GetOrthancWebViewerJpegCommand::SuccessMessage& message)
+  {
+    printf("WebViewer %dx%d\n", message.GetImage().GetWidth(), message.GetImage().GetHeight());
+  }
+
   void Handle(const Refactoring::OracleCommandExceptionMessage& message)
   {
     printf("EXCEPTION: [%s] on command type %d\n", message.GetException().What(), message.GetCommand().GetType());
@@ -1490,6 +1633,10 @@ public:
     oracle.RegisterObserverCallback
       (new OrthancStone::Callable
        <Toto, Refactoring::GetOrthancImageCommand::SuccessMessage>(*this, &Toto::Handle));
+
+    oracle.RegisterObserverCallback
+      (new OrthancStone::Callable
+      <Toto, Refactoring::GetOrthancWebViewerJpegCommand::SuccessMessage>(*this, &Toto::Handle));
 
     oracle.RegisterObserverCallback
       (new OrthancStone::Callable
@@ -1521,7 +1668,7 @@ void Run(Refactoring::NativeApplicationContext& context)
 
   oracle.Start();
 
-  if (0)
+  if (1)
   {
     Json::Value v = Json::objectValue;
     v["Level"] = "Series";
@@ -1535,7 +1682,7 @@ void Run(Refactoring::NativeApplicationContext& context)
     oracle.Schedule(*toto, command.release());
   }
   
-  if (0)
+  if (1)
   {
     std::auto_ptr<Refactoring::GetOrthancImageCommand>  command(new Refactoring::GetOrthancImageCommand);
     command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Jpeg)));
@@ -1543,7 +1690,7 @@ void Run(Refactoring::NativeApplicationContext& context)
     oracle.Schedule(*toto, command.release());
   }
   
-  if (0)
+  if (1)
   {
     std::auto_ptr<Refactoring::GetOrthancImageCommand>  command(new Refactoring::GetOrthancImageCommand);
     command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Png)));
@@ -1590,7 +1737,9 @@ void Run(Refactoring::NativeApplicationContext& context)
   loader1->LoadSeries(oracle, "cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
   loader2->LoadInstance(oracle, "41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
 
-  boost::this_thread::sleep(boost::posix_time::seconds(1));
+  LOG(WARNING) << "...Waiting for Ctrl-C...";
+  Orthanc::SystemToolbox::ServerBarrier();
+  //boost::this_thread::sleep(boost::posix_time::seconds(1));
 
   oracle.Stop();
 }

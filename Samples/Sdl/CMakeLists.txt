@@ -69,6 +69,9 @@ if(ENABLE_SDL_CONSOLE)
   LIST(APPEND TRACKERSAMPLE_SOURCE "../../../SDL-Console/SDL_Console.h")
 endif()
 
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/AngleMeasureTool.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/AngleMeasureTool.h")
+
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/CreateAngleMeasureTracker.cpp")
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/CreateAngleMeasureTracker.h")
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/CreateCircleMeasureTracker.cpp")
@@ -90,13 +93,19 @@ LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/EditLineMeasureTracker.h")
 
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/IFlexiblePointerTracker.h")
 
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/LineMeasureTool.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/LineMeasureTool.h")
+
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureCommands.cpp")
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureCommands.h")
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureTools.cpp")
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureTools.h")
+
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureToolsToolbox.cpp")
+LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureToolsToolbox.h")
+
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureTrackers.cpp")
 LIST(APPEND TRACKERSAMPLE_SOURCE "../Common/MeasureTrackers.h")
-
 
 LIST(APPEND TRACKERSAMPLE_SOURCE "TrackerSample.cpp")
 LIST(APPEND TRACKERSAMPLE_SOURCE "TrackerSampleApp.cpp")

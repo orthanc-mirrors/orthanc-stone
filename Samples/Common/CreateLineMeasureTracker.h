@@ -45,5 +45,8 @@ namespace OrthancStone
     virtual void PointerMove(const PointerEvent& e) ORTHANC_OVERRIDE;
     virtual void PointerUp(const PointerEvent& e) ORTHANC_OVERRIDE;
     virtual void PointerDown(const PointerEvent& e) ORTHANC_OVERRIDE;
+
+  private:
+    CreateLineMeasureCommandPtr GetCommand();
   };
 }

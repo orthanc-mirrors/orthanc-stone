@@ -24,9 +24,16 @@
 
 // to be moved into Stone
 #include "MeasureTools.h"
+#include "LineMeasureTool.h"
+#include "AngleMeasureTool.h"
 
 namespace OrthancStone
 {
+  //class LineMeasureTool;
+  //typedef boost::shared_ptr<LineMeasureTool> LineMeasureToolPtr;
+  //class AngleMeasureTool;
+  //typedef boost::shared_ptr<AngleMeasureTool> AngleMeasureToolPtr;
+   
   class TrackerCommand
   {
   public:
@@ -36,8 +43,6 @@ namespace OrthancStone
     }
     virtual void Undo() = 0;
     virtual void Redo() = 0;
-    virtual void Update(ScenePoint2D scenePos) = 0;
-
     Scene2D& GetScene()
     {
       return scene_;
@@ -74,7 +79,8 @@ namespace OrthancStone
     CreateLineMeasureCommand(
       Scene2D& scene, MeasureToolList& measureTools, ScenePoint2D point);
     
-    void Update(ScenePoint2D scenePos) ORTHANC_OVERRIDE;
+    // the starting position is set in the ctor
+    void SetEnd(ScenePoint2D scenePos);
 
   private:
     virtual MeasureToolPtr GetMeasureTool() ORTHANC_OVERRIDE
@@ -82,10 +88,31 @@ namespace OrthancStone
       return measureTool_;
     }
     LineMeasureToolPtr measureTool_;
-    ScenePoint2D       start_;
-    ScenePoint2D       end_;
   };
 
   typedef boost::shared_ptr<CreateLineMeasureCommand> CreateLineMeasureCommandPtr;
+
+  class CreateAngleMeasureCommand : public CreateMeasureCommand
+  {
+  public:
+    /** Ctor sets end of side 1*/
+    CreateAngleMeasureCommand(
+      Scene2D& scene, MeasureToolList& measureTools, ScenePoint2D point);
+
+    /** This method sets center*/
+    void SetCenter(ScenePoint2D scenePos);
+
+    /** This method sets end of side 2*/
+    void SetSide2End(ScenePoint2D scenePos);
+
+  private:
+    virtual MeasureToolPtr GetMeasureTool() ORTHANC_OVERRIDE
+    {
+      return measureTool_;
+    }
+    AngleMeasureToolPtr measureTool_;
+  };
+
+  typedef boost::shared_ptr<CreateAngleMeasureCommand> CreateAngleMeasureCommandPtr;
 }
 

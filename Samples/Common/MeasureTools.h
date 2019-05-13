@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
+
 #pragma once
 
 #include <Framework/Scene2D/Scene2D.h>
@@ -86,40 +87,6 @@ namespace OrthancStone
   };
 
   typedef boost::shared_ptr<MeasureTool> MeasureToolPtr;
-
-  class LineMeasureTool : public MeasureTool
-  {
-  public:
-    LineMeasureTool(Scene2D& scene)
-      : MeasureTool(scene)
-      , layersCreated(false)
-      , polylineZIndex_(-1)
-      , textZIndex_(-1)
-    {
-
-    }
-
-    ~LineMeasureTool();
-
-    void SetStart(ScenePoint2D start);
-    void SetEnd(ScenePoint2D end);
-    void Set(ScenePoint2D start, ScenePoint2D end);
-
-  private:
-    PolylineSceneLayer* GetPolylineLayer();
-    TextSceneLayer*     GetTextLayer();
-    virtual void        RefreshScene() ORTHANC_OVERRIDE;
-    void                RemoveFromScene();
-
-  private:
-    ScenePoint2D start_;
-    ScenePoint2D end_;
-    bool         layersCreated;
-    int          polylineZIndex_;
-    int          textZIndex_;
-  };
-
-  typedef boost::shared_ptr<LineMeasureTool> LineMeasureToolPtr;
   typedef std::vector<MeasureToolPtr> MeasureToolList;
 }
 

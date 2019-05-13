@@ -172,6 +172,13 @@ namespace OrthancStone
     MessageType_Test1,
     MessageType_Test2,
 
+
+
+    MessageType_OrthancRestApiCommand,
+    MessageType_GetOrthancImageCommand,
+    MessageType_GetOrthancWebViewerJpegCommand,
+    MessageType_OracleCommandExceptionMessage,
+    
     MessageType_CustomMessage // Custom messages ids ust be greater than this (this one must remain in last position)
   };
 

@@ -45,13 +45,13 @@ namespace OrthancStone
     ~CreateMeasureTracker();
   
   protected:
-    Scene2D&                        scene_;
     CreateMeasureCommandPtr         command_;
+    Scene2D&                        scene_;
     bool                            active_;
   private:
     std::vector<TrackerCommandPtr>& undoStack_;
     std::vector<MeasureToolPtr>&    measureTools_;
     bool                            commitResult_;
   };
-
 }
+

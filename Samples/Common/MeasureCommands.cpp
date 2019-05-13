@@ -52,15 +52,36 @@ namespace OrthancStone
     : CreateMeasureCommand(scene, measureTools)
     , measureTool_(new LineMeasureTool(scene))
   {
-    measureTool_ = LineMeasureToolPtr(new LineMeasureTool(scene));
     measureTools_.push_back(measureTool_);
     measureTool_->Set(point, point);
   }
 
-  void CreateLineMeasureCommand::Update(ScenePoint2D scenePos)
+  void CreateLineMeasureCommand::SetEnd(ScenePoint2D scenePos)
   {
     measureTool_->SetEnd(scenePos);
   }
 
+  CreateAngleMeasureCommand::CreateAngleMeasureCommand(
+    Scene2D& scene, MeasureToolList& measureTools, ScenePoint2D point)
+    : CreateMeasureCommand(scene, measureTools)
+    , measureTool_(new AngleMeasureTool(scene))
+  {
+    measureTools_.push_back(measureTool_);
+    measureTool_->SetSide1End(point);
+    measureTool_->SetCenter(point);
+    measureTool_->SetSide2End(point);
+  }
+
+  /** This method sets center*/
+  void CreateAngleMeasureCommand::SetCenter(ScenePoint2D scenePos)
+  {
+    measureTool_->SetCenter(scenePos);
+  }
+
+  /** This method sets end of side 2*/
+  void CreateAngleMeasureCommand::SetSide2End(ScenePoint2D scenePos)
+  {
+    measureTool_->SetSide2End(scenePos);
+  }
 
 }

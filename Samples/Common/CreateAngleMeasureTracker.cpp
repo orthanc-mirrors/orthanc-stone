@@ -18,6 +18,109 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#include "CreateAngleMeasureTracker.h"
+#include <Core/OrthancException.h>
+
+using namespace Orthanc;
+
 namespace OrthancStone
 {
+  CreateAngleMeasureTracker::CreateAngleMeasureTracker(
+    Scene2D&                        scene,
+    std::vector<TrackerCommandPtr>& undoStack,
+    std::vector<MeasureToolPtr>&    measureTools,
+    const PointerEvent&             e)
+    : CreateMeasureTracker(scene, undoStack, measureTools)
+    , state_(CreatingSide1)
+  {
+    command_.reset(
+      new CreateAngleMeasureCommand(
+        scene,
+        measureTools,
+        e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform())));
+  }
+
+  CreateAngleMeasureTracker::~CreateAngleMeasureTracker()
+  {
+  }
+
+  void CreateAngleMeasureTracker::PointerMove(const PointerEvent& event)
+  {
+    if (!active_)
+    {
+      throw OrthancException(ErrorCode_InternalError,
+        "Internal error: wrong state in CreateAngleMeasureTracker::"
+        "PointerMove: active_ == false");
+    }
+
+    ScenePoint2D scenePos = event.GetMainPosition().Apply(
+      scene_.GetCanvasToSceneTransform());
+
+    switch (state_)
+    {
+    case CreatingSide1:
+      GetCommand()->SetCenter(scenePos);
+      break;
+    case CreatingSide2:
+      GetCommand()->SetSide2End(scenePos);
+      break;
+    default:
+      throw OrthancException(ErrorCode_InternalError,
+        "Wrong state in CreateAngleMeasureTracker::"
+        "PointerMove: state_ invalid");
+    }
+    //LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
+    //  "scenePos.GetY() = " << scenePos.GetY();
+  }
+
+  void CreateAngleMeasureTracker::PointerUp(const PointerEvent& e)
+  {
+    // TODO: the current app does not prevent multiple PointerDown AND
+    // PointerUp to be sent to the tracker.
+    // Unless we augment the PointerEvent structure with the button index, 
+    // we cannot really tell if this pointer up event matches the initial
+    // pointer down event. Let's make it simple for now.
+
+    switch (state_)
+    {
+    case CreatingSide1:
+      state_ = CreatingSide2;
+      break;
+    case CreatingSide2:
+      throw OrthancException(ErrorCode_InternalError,
+        "Wrong state in CreateAngleMeasureTracker::"
+        "PointerUp: state_ == CreatingSide2 ; this should not happen");
+      break;
+    default:
+      throw OrthancException(ErrorCode_InternalError,
+        "Wrong state in CreateAngleMeasureTracker::"
+        "PointerMove: state_ invalid");
+    }
+  }
+
+  void CreateAngleMeasureTracker::PointerDown(const PointerEvent& e)
+  {
+    switch (state_)
+    {
+    case CreatingSide1:
+      throw OrthancException(ErrorCode_InternalError,
+        "Wrong state in CreateAngleMeasureTracker::"
+        "PointerDown: state_ == CreatingSide1 ; this should not happen");
+      break;
+    case CreatingSide2:
+      // we are done
+      active_ = false;
+      break;
+    default:
+      throw OrthancException(ErrorCode_InternalError,
+        "Wrong state in CreateAngleMeasureTracker::"
+        "PointerMove: state_ invalid");
+    }
+  }
+
+  CreateAngleMeasureCommandPtr CreateAngleMeasureTracker::GetCommand()
+  {
+    return boost::dynamic_pointer_cast<CreateAngleMeasureCommand>(command_);
+  }
+
 }

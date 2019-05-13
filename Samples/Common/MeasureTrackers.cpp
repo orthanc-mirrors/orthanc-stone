@@ -60,8 +60,6 @@ namespace OrthancStone
     else
       command_->Undo();
   }
-  
-
 }
 
 

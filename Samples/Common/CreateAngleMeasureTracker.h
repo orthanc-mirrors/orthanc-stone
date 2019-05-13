@@ -20,6 +20,45 @@
 
 #pragma once
 
+#include "MeasureTrackers.h"
+#include "MeasureCommands.h"
+
+#include <vector>
+
 namespace OrthancStone
 {
+  class CreateAngleMeasureTracker : public CreateMeasureTracker
+  {
+  public:
+    /**
+    When you create this tracker, you need to supply it with the undo stack
+    where it will store the commands that perform the actual measure tool
+    creation and modification.
+    In turn, a container for these commands to store the actual measuring
+    must be supplied, too
+    */
+    CreateAngleMeasureTracker(
+      Scene2D&                        scene,
+      std::vector<TrackerCommandPtr>& undoStack,
+      std::vector<MeasureToolPtr>&    measureTools,
+      const PointerEvent&             e);
+
+    ~CreateAngleMeasureTracker();
+
+    virtual void PointerMove(const PointerEvent& e) ORTHANC_OVERRIDE;
+    virtual void PointerUp(const PointerEvent& e) ORTHANC_OVERRIDE;
+    virtual void PointerDown(const PointerEvent& e) ORTHANC_OVERRIDE;
+
+  private:
+    CreateAngleMeasureCommandPtr GetCommand();
+
+    enum State
+    {
+      CreatingSide1,
+      CreatingSide2,
+      Finished // just for debug
+    };
+    State state_;
+
+  };
 }

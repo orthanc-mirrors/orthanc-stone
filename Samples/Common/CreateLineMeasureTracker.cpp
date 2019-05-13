@@ -62,7 +62,7 @@ namespace OrthancStone
     CreateLineMeasureTracker* concreteThis =
       dynamic_cast<CreateLineMeasureTracker*>(this);
     assert(concreteThis != NULL);
-    command_->Update(scenePos);
+    GetCommand()->SetEnd(scenePos);
   }
 
   void CreateLineMeasureTracker::PointerUp(const PointerEvent& e)
@@ -80,4 +80,10 @@ namespace OrthancStone
     LOG(WARNING) << "Additional touches (fingers, pen, mouse buttons...) "
       "are ignored when the line measure creation tracker is active";
   }
+
+  CreateLineMeasureCommandPtr CreateLineMeasureTracker::GetCommand()
+  {
+    return boost::dynamic_pointer_cast<CreateLineMeasureCommand>(command_);
+  }
+
 }

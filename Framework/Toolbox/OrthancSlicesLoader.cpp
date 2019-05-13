@@ -191,19 +191,7 @@ namespace OrthancStone
   
   void OrthancSlicesLoader::SortAndFinalizeSlices()
   {
-    bool ok = false;
-    
-    if (slices_.GetSlicesCount() > 0)
-    {
-      Vector normal;
-      if (slices_.SelectNormal(normal))
-      {
-        slices_.FilterNormal(normal);
-        slices_.SetNormal(normal);
-        slices_.Sort();
-        ok = true;
-      }
-    }
+    bool ok = slices_.Sort();
     
     state_ = State_GeometryReady;
     

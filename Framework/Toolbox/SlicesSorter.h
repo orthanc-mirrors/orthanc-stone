@@ -41,6 +41,14 @@ namespace OrthancStone
     
     const SliceWithDepth& GetSlice(size_t i) const;
     
+    void SetNormal(const Vector& normal);
+    
+    void SortInternal();
+
+    void FilterNormal(const Vector& normal);
+    
+    bool SelectNormal(Vector& normal) const;
+
   public:
     SlicesSorter() : hasNormal_(false)
     {
@@ -71,15 +79,9 @@ namespace OrthancStone
     bool HasSlicePayload(size_t i) const;
     
     const Orthanc::IDynamicObject& GetSlicePayload(size_t i) const;
-    
-    void SetNormal(const Vector& normal);
-    
-    void Sort();
 
-    void FilterNormal(const Vector& normal);
+    bool Sort();
     
-    bool SelectNormal(Vector& normal) const;
-
     bool LookupClosestSlice(size_t& index,
                             double& distance,
                             const CoordinateSystem3D& slice) const;

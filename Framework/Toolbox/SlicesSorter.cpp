@@ -148,7 +148,7 @@ namespace OrthancStone
   }
   
     
-  void SlicesSorter::Sort()
+  void SlicesSorter::SortInternal()
   {
     if (!hasNormal_)
     {
@@ -234,6 +234,24 @@ namespace OrthancStone
     }
 
     return found;
+  }
+
+
+  bool SlicesSorter::Sort()
+  {
+    if (GetSlicesCount() > 0)
+    {
+      Vector normal;
+      if (SelectNormal(normal))
+      {
+        FilterNormal(normal);
+        SetNormal(normal);
+        SortInternal();
+        return true;
+      }
+    }
+
+    return false;
   }
 
 

@@ -899,8 +899,6 @@ namespace Refactoring
 
       if (object.get() != NULL)
       {
-        printf("===========================> REQUEST\n");
-        
         const Item& item = dynamic_cast<Item&>(*object);
 
         try
@@ -1374,13 +1372,10 @@ namespace Refactoring
         tmp = GetFrameGeometry(frame);
       }
 
-      bool opposite;   // Ignored
-      return (OrthancStone::GeometryToolbox::IsParallelOrOpposite(
-                opposite, tmp.GetNormal(), plane.GetNormal()) &&
-              OrthancStone::LinearAlgebra::IsNear(
-                tmp.ProjectAlongNormal(tmp.GetOrigin()),
-                tmp.ProjectAlongNormal(plane.GetOrigin()),
-                thickness_ / 2.0));
+      double distance;
+
+      return (OrthancStone::CoordinateSystem3D::GetDistance(distance, tmp, plan) &&
+              OrthancStone::LinearAlgebra::IsNear(distance, thickness_ / 2.0));
     }
 
     bool IsColor() const
@@ -1497,6 +1492,7 @@ namespace Refactoring
           dicom.FromDicomAsJson(value[instances[i]]);
 
           DicomInstanceParameters instance(dicom);
+
         }
       }
     };

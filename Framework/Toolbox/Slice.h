@@ -25,10 +25,11 @@
 #include "DicomFrameConverter.h"
 
 #include <Core/DicomFormat/DicomImageInformation.h>
+#include <Core/IDynamicObject.h>
 
 namespace OrthancStone
 {
-  class Slice : public boost::noncopyable
+  class Slice : public Orthanc::IDynamicObject
   {
   private:
     enum Type

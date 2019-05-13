@@ -34,7 +34,7 @@ namespace OrthancStone
 
   void DicomSeriesVolumeSlicer::OnSliceGeometryReady(const OrthancSlicesLoader::SliceGeometryReadyMessage& message)
   {
-    if (message.GetOrigin().GetSliceCount() > 0)
+    if (message.GetOrigin().GetSlicesCount() > 0)
     {
       BroadcastMessage(IVolumeSlicer::GeometryReadyMessage(*this));
     }

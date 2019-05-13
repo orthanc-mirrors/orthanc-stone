@@ -187,4 +187,24 @@ namespace OrthancStone
   {
     return GeometryToolbox::IntersectPlaneAndLine(p, normal_, d_, origin, direction);
   }
+
+
+  bool CoordinateSystem3D::GetDistance(double& distance,
+                                       const CoordinateSystem3D& a,
+                                       const CoordinateSystem3D& b)
+  {
+    bool opposite;   // Ignored
+
+    if (OrthancStone::GeometryToolbox::IsParallelOrOpposite(
+          opposite, a.GetNormal(), b.GetNormal()))
+    {
+      distance = std::abs(a.ProjectAlongNormal(a.GetOrigin()) -
+                          a.ProjectAlongNormal(b.GetOrigin()));
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
 }

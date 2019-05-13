@@ -59,9 +59,8 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
     
-    MessageType messageType = callable->GetMessageType();
-
-    callables_[messageType].insert(callable);
+    const MessageIdentifier& id = callable->GetMessageIdentifier();
+    callables_[id].insert(callable);
   }
 
   void IObservable::Unregister(IObserver *observer)
@@ -87,7 +86,7 @@ namespace OrthancStone
   void IObservable::EmitMessageInternal(const IObserver* receiver,
                                         const IMessage& message)
   {
-    Callables::const_iterator found = callables_.find(message.GetType());
+    Callables::const_iterator found = callables_.find(message.GetIdentifier());
 
     if (found != callables_.end())
     {

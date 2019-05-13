@@ -35,7 +35,7 @@ namespace OrthancStone
   class IViewport : public IObservable
   {
   public:
-    typedef OriginMessage<MessageType_ViewportChanged, IViewport> ViewportChangedMessage;
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ViewportChangedMessage, IViewport);
 
     IViewport(MessageBroker& broker) :
       IObservable(broker)

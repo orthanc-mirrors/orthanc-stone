@@ -39,8 +39,7 @@ namespace OrthancStone
     MessageBroker& broker_;
     
   public:
-
-    typedef NoPayloadMessage<MessageType_Timeout> TimeoutMessage;
+    ORTHANC_STONE_DEFINE_EMPTY_MESSAGE(__FILE__, __LINE__, TimeoutMessage);
 
     IDelayedCallExecutor(MessageBroker& broker) :
       broker_(broker)

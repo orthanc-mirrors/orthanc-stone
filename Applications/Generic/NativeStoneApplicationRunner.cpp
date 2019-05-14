@@ -103,7 +103,7 @@ namespace OrthancStone
     try
     {
       boost::program_options::store(boost::program_options::command_line_parser(argc, argv).
-                                    options(options).run(), parameters);
+                                    options(options).allow_unregistered().run(), parameters);
       boost::program_options::notify(parameters);
     }
     catch (boost::program_options::error& e)

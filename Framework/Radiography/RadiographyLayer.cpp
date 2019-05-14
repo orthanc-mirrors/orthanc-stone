@@ -211,7 +211,7 @@ namespace OrthancStone
     geometry_.SetFlipVertical(flip);
     UpdateTransform();
 
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
   void RadiographyLayer::SetFlipHorizontal(bool flip)
@@ -219,7 +219,7 @@ namespace OrthancStone
     geometry_.SetFlipHorizontal(flip);
     UpdateTransform();
 
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
   void RadiographyLayer::SetSize(unsigned int width,

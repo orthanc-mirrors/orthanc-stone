@@ -123,7 +123,7 @@ namespace OrthancStone
 
     if (error || parameters.count("help"))
     {
-      std::cout << std::endl
+      std::cout << std::endl;
 
       std::cout << options << "\n";
       return error ? -1 : 0;

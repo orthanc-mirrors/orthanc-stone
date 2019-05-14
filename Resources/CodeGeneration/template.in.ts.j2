@@ -72,10 +72,12 @@ export function {{enum['name']}}_ToString(value:{{enum['name']}}) : string
 
 
 {% for struct in structs%}export class {{struct['name']}} {
-{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}  {{key}}:{{CanonToTs(struct['fields'][key])}};
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}  {{key}}:{{CanonToTs(struct['fields'][key]['type'])}};
 {% endfor %}{% endif %}{% endif %}
   constructor() {
-{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}{% if NeedsTsConstruction(enums,CanonToTs(struct['fields'][key])) %}    this.{{key}} = new {{CanonToTs(struct['fields'][key])}}();
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}{% if NeedsTsConstruction(enums,CanonToTs(struct['fields'][key]['type'])) %}    this.{{key}} = new {{CanonToTs(struct['fields'][key]['type'])}}();
+{% endif %}
+{% if struct['fields'][key]['defaultValue'] %}    this.{{key}} = {{DefaultValueToTs(enums,struct['fields'][key])}};
 {% endif %}{% endfor %}{% endif %}{% endif %}  }
 
   public StoneSerialize(): string {

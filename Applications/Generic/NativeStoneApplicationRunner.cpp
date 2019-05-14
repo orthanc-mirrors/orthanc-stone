@@ -106,7 +106,7 @@ namespace OrthancStone
     {
       boost::program_options::store(
         boost::program_options::command_line_parser(argc, argv).
-          options(options).run(), parameters);
+          options(options).allow_unregistered().run(), parameters);
       boost::program_options::notify(parameters);
     }
     catch (boost::program_options::error& e)
@@ -124,11 +124,6 @@ namespace OrthancStone
     if (error || parameters.count("help"))
     {
       std::cout << std::endl
-                << "Usage: " << argv[0] << " [OPTION]..." << std::endl
-                << "Orthanc, lightweight, RESTful DICOM server for healthcare "
-                << "and medical research." << std::endl << std::endl
-                << "Demonstration application of Orthanc Stone in native "
-                << "environment." << std::endl;
 
       std::cout << options << "\n";
       return error ? -1 : 0;

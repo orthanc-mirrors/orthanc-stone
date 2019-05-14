@@ -17,6 +17,8 @@ Applications/Samples/rt-viewer-demo/build-web/
 Applications/build-*
 CMakeLists.txt.user
 Platforms/Generic/ThirdPartyDownloads/
+Resources/CodeGeneration/.env
+Resources/CodeGeneration/.idea
 Resources/CodeGeneration/__pycache__
 Resources/CodeGeneration/build/
 Resources/CodeGeneration/build_browser/

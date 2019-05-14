@@ -3,7 +3,7 @@
 
 namespace OrthancStone
 {
-  void StartupParametersBuilder::Clear()
+      void StartupParametersBuilder::Clear()
   {
     startupParameters_.clear();
   }
@@ -43,11 +43,6 @@ namespace OrthancStone
         if(std::get<1>(*it).length() > 0)
           argSs << "=" << std::get<1>(*it);
 
-        argvStrings[argCounter] = argSs.str();
-        cmdLine = cmdLine + " " + argvStrings[argCounter];
-        argv[argCounter] = argvStrings[argCounter].c_str();
-        argCounter++;
-    }
 
     std::cout << "simulated cmdLine = \"" << cmdLine.c_str() << "\"\n";
 
@@ -55,7 +50,7 @@ namespace OrthancStone
     {
       boost::program_options::store(
         boost::program_options::command_line_parser(argCounter, argv.data()).
-          options(options).run(), parameters);
+          options(options).allow_unregistered().run(), parameters);
       boost::program_options::notify(parameters);
     }
     catch (boost::program_options::error& e)

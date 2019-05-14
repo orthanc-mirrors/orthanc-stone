@@ -34,6 +34,8 @@ namespace OrthancStone
 
   RadiographyLayer::Geometry::Geometry() :
     hasCrop_(false),
+    flipVertical_(false),
+    flipHorizontal_(false),
     panX_(0),
     panY_(0),
     angle_(0),
@@ -57,7 +59,7 @@ namespace OrthancStone
 
   void RadiographyLayer::UpdateTransform()
   {
-    transform_ = AffineTransform2D::CreateScaling(geometry_.GetPixelSpacingX(), geometry_.GetPixelSpacingY());
+    transform_ = AffineTransform2D::CreateScaling(geometry_.GetScalingX(), geometry_.GetScalingY());
 
     double centerX, centerY;
     GetCenter(centerX, centerY);
@@ -204,6 +206,21 @@ namespace OrthancStone
     BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
+  void RadiographyLayer::SetFlipVertical(bool flip)
+  {
+    geometry_.SetFlipVertical(flip);
+    UpdateTransform();
+
+    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+  }
+
+  void RadiographyLayer::SetFlipHorizontal(bool flip)
+  {
+    geometry_.SetFlipHorizontal(flip);
+    UpdateTransform();
+
+    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+  }
 
   void RadiographyLayer::SetSize(unsigned int width,
                                  unsigned int height)

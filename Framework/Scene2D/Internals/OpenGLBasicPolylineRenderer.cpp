@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -28,13 +28,13 @@ namespace OrthancStone
   namespace Internals
   {
     OpenGLBasicPolylineRenderer::OpenGLBasicPolylineRenderer(OpenGL::IOpenGLContext& context,
-                                                             const PolylineSceneLayer& layer) :
+      const PolylineSceneLayer& layer) :
       context_(context)
     {
       layer_.Copy(layer);
     }
 
-    
+
     void OpenGLBasicPolylineRenderer::Render(const AffineTransform2D& transform)
     {
       AffineTransform2D t = AffineTransform2D::Combine(
@@ -58,8 +58,10 @@ namespace OrthancStone
           {
             ScenePoint2D p = chain[j].Apply(t);
 
-            glVertex2f(previous.GetX(), previous.GetY());
-            glVertex2f(p.GetX(), p.GetY());
+            glVertex2f(static_cast<GLfloat>(previous.GetX()),
+                       static_cast<GLfloat>(previous.GetY()));
+            glVertex2f(static_cast<GLfloat>(p.GetX()), 
+                       static_cast<GLfloat>(p.GetY()));
 
             previous = p;
           }
@@ -68,8 +70,10 @@ namespace OrthancStone
           {
             ScenePoint2D p = chain[0].Apply(t);
 
-            glVertex2f(previous.GetX(), previous.GetY());
-            glVertex2f(p.GetX(), p.GetY());
+            glVertex2f(static_cast<GLfloat>(previous.GetX()),
+                       static_cast<GLfloat>(previous.GetY()));
+            glVertex2f(static_cast<GLfloat>(p.GetX()),
+                       static_cast<GLfloat>(p.GetY()));
           }
         }
       }
@@ -77,7 +81,7 @@ namespace OrthancStone
       glEnd();
     }
 
-    
+
     void OpenGLBasicPolylineRenderer::Update(const ISceneLayer& layer)
     {
       layer_.Copy(dynamic_cast<const PolylineSceneLayer&>(layer));

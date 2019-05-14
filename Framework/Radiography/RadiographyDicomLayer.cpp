@@ -47,6 +47,11 @@ namespace OrthancStone
   }
 
 
+  RadiographyDicomLayer::RadiographyDicomLayer(MessageBroker& broker, const RadiographyScene& scene) : RadiographyLayer(broker, scene)
+  {
+
+  }
+
   void RadiographyDicomLayer::SetDicomTags(const OrthancPlugins::FullOrthancDataset& dataset)
   {
     converter_.reset(new DicomFrameConverter);

@@ -77,7 +77,7 @@ namespace OrthancStone
   {
   public:
     CreateLineMeasureCommand(
-      Scene2D& scene, MeasureToolList& measureTools, ScenePoint2D point);
+      MessageBroker& broker, Scene2D& scene, MeasureToolList& measureTools, ScenePoint2D point);
     
     // the starting position is set in the ctor
     void SetEnd(ScenePoint2D scenePos);
@@ -97,7 +97,7 @@ namespace OrthancStone
   public:
     /** Ctor sets end of side 1*/
     CreateAngleMeasureCommand(
-      Scene2D& scene, MeasureToolList& measureTools, ScenePoint2D point);
+      MessageBroker& broker, Scene2D& scene, MeasureToolList& measureTools, ScenePoint2D point);
 
     /** This method sets center*/
     void SetCenter(ScenePoint2D scenePos);

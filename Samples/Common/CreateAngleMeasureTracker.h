@@ -38,6 +38,7 @@ namespace OrthancStone
     must be supplied, too
     */
     CreateAngleMeasureTracker(
+      MessageBroker&                  broker,
       Scene2D&                        scene,
       std::vector<TrackerCommandPtr>& undoStack,
       std::vector<MeasureToolPtr>&    measureTools,

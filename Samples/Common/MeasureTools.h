@@ -33,10 +33,10 @@
 
 namespace OrthancStone
 {
-  class MeasureTool
+  class MeasureTool : public IObserver
   {
   public:
-    virtual ~MeasureTool() {}
+    virtual ~MeasureTool();
 
     /**
     Enabled tools are rendered in the scene.
@@ -51,15 +51,15 @@ namespace OrthancStone
     */
     void Disable();
 
+    /**
+    This method is called when the scene transform changes. It allows to 
+    recompute the visual elements whose content depend upon the scene transform
+    */
+    void OnSceneTransformChanged(const Scene2D::SceneTransformChanged& message);
+
   protected:
-    MeasureTool(Scene2D& scene)
-      : scene_(scene)
-      , enabled_(true)
-    {
-    }
-  
-
-
+    MeasureTool(MessageBroker& broker, Scene2D& scene);
+    
     /**
     This is the meat of the tool: this method must [create (if needed) and]
     update the layers and their data according to the measure tool kind and
@@ -67,19 +67,13 @@ namespace OrthancStone
     */
     virtual void RefreshScene() = 0;
 
-    Scene2D& GetScene()
-    {
-      return scene_;
-    }
+    Scene2D& GetScene();
 
     /**
     enabled_ is not accessible by subclasses because there is a state machine
     that we do not wanna mess with
     */
-    bool IsEnabled() const
-    {
-      return enabled_;
-    }
+    bool IsEnabled() const;
 
   private:
     Scene2D& scene_;

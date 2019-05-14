@@ -48,9 +48,12 @@ namespace OrthancStone
   }
 
   CreateLineMeasureCommand::CreateLineMeasureCommand(
-    Scene2D& scene, MeasureToolList& measureTools, ScenePoint2D point)
+    MessageBroker&    broker, 
+    Scene2D&          scene, 
+    MeasureToolList&  measureTools, 
+    ScenePoint2D      point)
     : CreateMeasureCommand(scene, measureTools)
-    , measureTool_(new LineMeasureTool(scene))
+    , measureTool_(new LineMeasureTool(broker,scene))
   {
     measureTools_.push_back(measureTool_);
     measureTool_->Set(point, point);
@@ -62,9 +65,12 @@ namespace OrthancStone
   }
 
   CreateAngleMeasureCommand::CreateAngleMeasureCommand(
-    Scene2D& scene, MeasureToolList& measureTools, ScenePoint2D point)
+    MessageBroker&    broker, 
+    Scene2D&          scene, 
+    MeasureToolList&  measureTools, 
+    ScenePoint2D      point)
     : CreateMeasureCommand(scene, measureTools)
-    , measureTool_(new AngleMeasureTool(scene))
+    , measureTool_(new AngleMeasureTool(broker,scene))
   {
     measureTools_.push_back(measureTool_);
     measureTool_->SetSide1End(point);

@@ -29,6 +29,7 @@
 #include "../../Framework/Scene2D/Scene2D.h"
 #include "../../Framework/Scene2D/ZoomSceneTracker.h"
 #include "../../Framework/StoneInitialization.h"
+#include "../../Framework/Messages/MessageBroker.h"
 
 // From Orthanc framework
 #include <Core/Logging.h>
@@ -360,7 +361,8 @@ int main(int argc, char* argv[])
 
   try
   {
-    OrthancStone::Scene2D scene;
+    OrthancStone::MessageBroker broker;
+    OrthancStone::Scene2D scene(broker);
     PrepareScene(scene);
     Run(scene);
   }

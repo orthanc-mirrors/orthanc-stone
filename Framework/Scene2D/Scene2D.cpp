@@ -75,10 +75,11 @@ namespace OrthancStone
   };
   
   
-  Scene2D::Scene2D(const Scene2D& other) :
-    sceneToCanvas_(other.sceneToCanvas_),
-    canvasToScene_(other.canvasToScene_),
-    layerCounter_(0)
+  Scene2D::Scene2D(const Scene2D& other) 
+    : IObservable(other.GetBroker())
+    , sceneToCanvas_(other.sceneToCanvas_)
+    , canvasToScene_(other.canvasToScene_)
+    , layerCounter_(0)
   {
     for (Content::const_iterator it = other.content_.begin();
          it != other.content_.end(); ++it)
@@ -220,8 +221,8 @@ namespace OrthancStone
 
     sceneToCanvas_ = transform;
     canvasToScene_ = inverse;
+    BroadcastMessage(SceneTransformChanged(*this));
   }
-
 
   void Scene2D::FitContent(unsigned int canvasWidth,
                            unsigned int canvasHeight)

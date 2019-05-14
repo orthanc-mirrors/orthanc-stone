@@ -26,6 +26,7 @@ using namespace Orthanc;
 namespace OrthancStone
 {
   CreateLineMeasureTracker::CreateLineMeasureTracker(
+    MessageBroker&                  broker,
     Scene2D&                        scene,
     std::vector<TrackerCommandPtr>& undoStack,
     std::vector<MeasureToolPtr>&    measureTools,
@@ -34,6 +35,7 @@ namespace OrthancStone
   {
     command_.reset(
       new CreateLineMeasureCommand(
+        broker,
         scene,
         measureTools,
         e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform())));

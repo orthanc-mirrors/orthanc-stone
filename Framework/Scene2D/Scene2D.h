@@ -23,13 +23,18 @@
 
 #include "ISceneLayer.h"
 #include "../Toolbox/AffineTransform2D.h"
+#include <Framework/Messages/IObservable.h>
+#include <Framework/Messages/IMessage.h>
+
 #include <map>
 
 namespace OrthancStone
 {
-  class Scene2D : public boost::noncopyable
+  class Scene2D : public IObservable
   {
   public:
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, SceneTransformChanged, Scene2D);
+    
     class IVisitor : public boost::noncopyable
     {
     public:
@@ -55,8 +60,9 @@ namespace OrthancStone
     Scene2D(const Scene2D& other);
     
   public:
-    Scene2D() :
-      layerCounter_(0)
+    Scene2D(MessageBroker& broker) 
+      : IObservable(broker)
+      , layerCounter_(0)
     {
     }
     

@@ -145,13 +145,13 @@ namespace OrthancStone
 
           {
             PolylineSceneLayer::Chain chain;
-            AddSquare(chain, GetScene(), side1End_, 10.0); //TODO: take DPI into account
+            AddSquare(chain, GetScene(), side1End_, 10.0* pixelToScene); //TODO: take DPI into account
             polylineLayer->AddChain(chain, true);
           }
 
           {
             PolylineSceneLayer::Chain chain;
-            AddSquare(chain, GetScene(), side2End_, 10.0); //TODO: take DPI into account
+            AddSquare(chain, GetScene(), side2End_, 10.0* pixelToScene); //TODO: take DPI into account
             polylineLayer->AddChain(chain, true);
           }
         }

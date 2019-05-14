@@ -43,7 +43,7 @@ namespace OrthancStone
     chain.clear();
     chain.reserve(4);
     ScenePoint2D centerC = centerS.Apply(scene.GetSceneToCanvasTransform());
-    //TODO: take DPI into account
+    //TODO: take DPI into account 
     double handleLX = centerC.GetX() - sideLength / 2;
     double handleTY = centerC.GetY() - sideLength / 2;
     double handleRX = centerC.GetX() + sideLength / 2;

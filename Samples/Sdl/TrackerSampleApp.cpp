@@ -273,10 +273,10 @@ namespace OrthancStone
         //  return new EllipseMeasureTracker(scene_, measureTools_, undoStack_, e);
         case GuiTool_LineMeasure:
           return FlexiblePointerTrackerPtr(new CreateLineMeasureTracker(
-            scene_, undoStack_, measureTools_, e));
+            IObserver::GetBroker(), scene_, undoStack_, measureTools_, e));
         case GuiTool_AngleMeasure:
           return FlexiblePointerTrackerPtr(new CreateAngleMeasureTracker(
-            scene_, undoStack_, measureTools_, e));
+            IObserver::GetBroker(), scene_, undoStack_, measureTools_, e));
           return NULL;
         case GuiTool_CircleMeasure:
           LOG(ERROR) << "Not implemented yet!";

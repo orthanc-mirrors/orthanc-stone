@@ -35,6 +35,7 @@ namespace OrthancStone
     must be supplied, too
     */
     CreateLineMeasureTracker(
+      MessageBroker&                  broker,
       Scene2D&                        scene,
       std::vector<TrackerCommandPtr>& undoStack,
       std::vector<MeasureToolPtr>&    measureTools,

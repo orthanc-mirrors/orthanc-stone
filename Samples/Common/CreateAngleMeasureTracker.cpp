@@ -26,6 +26,7 @@ using namespace Orthanc;
 namespace OrthancStone
 {
   CreateAngleMeasureTracker::CreateAngleMeasureTracker(
+    MessageBroker&                  broker,
     Scene2D&                        scene,
     std::vector<TrackerCommandPtr>& undoStack,
     std::vector<MeasureToolPtr>&    measureTools,
@@ -35,6 +36,7 @@ namespace OrthancStone
   {
     command_.reset(
       new CreateAngleMeasureCommand(
+        broker,
         scene,
         measureTools,
         e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform())));

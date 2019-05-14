@@ -26,6 +26,12 @@
 
 namespace OrthancStone
 {
+
+  MeasureTool::~MeasureTool()
+  {
+
+  }
+
   void MeasureTool::Enable()
   {
     enabled_ = true;
@@ -37,5 +43,33 @@ namespace OrthancStone
     enabled_ = false;
     RefreshScene();
   }
+
+  bool MeasureTool::IsEnabled() const
+  {
+    return enabled_;
+  }
+
+  OrthancStone::Scene2D& MeasureTool::GetScene()
+  {
+    return scene_;
+  }
+
+  MeasureTool::MeasureTool(MessageBroker& broker, Scene2D& scene)
+    : IObserver(broker)
+    , scene_(scene)
+    , enabled_(true)
+  {
+    scene_.RegisterObserverCallback(
+      new Callable<MeasureTool, Scene2D::SceneTransformChanged>
+      (*this, &MeasureTool::OnSceneTransformChanged));
+  }
+
+  void MeasureTool::OnSceneTransformChanged(
+    const Scene2D::SceneTransformChanged& message)
+  {
+    RefreshScene();
+  }
+
+
 }
 

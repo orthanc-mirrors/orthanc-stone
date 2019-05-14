@@ -140,7 +140,8 @@ int main(int argc, char* argv[])
 
   try
   {
-    TrackerSampleApp app;
+    MessageBroker broker;
+    TrackerSampleApp app(broker);
     app.PrepareScene();
     Run(&app);
   }

@@ -19,6 +19,7 @@
  **/
 
 #include <Framework/Scene2D/OpenGLCompositor.h>
+#include <Framework/Messages/IObserver.h>
 
 #include "../Common/IFlexiblePointerTracker.h"
 #include "../Common/MeasureTools.h"
@@ -51,11 +52,14 @@ namespace OrthancStone
 
   class Scene2D;
 
-  class TrackerSampleApp
+  class TrackerSampleApp : public IObserver
   {
   public:
     // 12 because.
-    TrackerSampleApp() : currentTool_(GuiTool_Rotate)
+    TrackerSampleApp(MessageBroker& broker)
+      : IObserver(broker)
+      , currentTool_(GuiTool_Rotate)
+      , scene_(broker)
     {
       TEXTURE_2x2_1_ZINDEX = 1;
       TEXTURE_1x1_ZINDEX = 2;

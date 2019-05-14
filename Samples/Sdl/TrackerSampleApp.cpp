@@ -21,6 +21,7 @@
 #include "TrackerSampleApp.h"
 
 #include "../Common/CreateLineMeasureTracker.h"
+#include "../Common/CreateAngleMeasureTracker.h"
 
 #include "../../Applications/Sdl/SdlOpenGLWindow.h"
 
@@ -162,7 +163,8 @@ namespace OrthancStone
     else if (event.type == SDL_MOUSEBUTTONDOWN)
     {
       PointerEvent e;
-      e.AddPosition(compositor.GetPixelCenterCoordinates(event.button.x, event.button.y));
+      e.AddPosition(compositor.GetPixelCenterCoordinates(
+        event.button.x, event.button.y));
       if (activeTracker_)
       {
         activeTracker_->PointerDown(e);
@@ -257,9 +259,6 @@ namespace OrthancStone
           //LOG(TRACE) << "Creating RotateSceneTracker";
           return CreateSimpleTrackerAdapter(PointerTrackerPtr(
             new RotateSceneTracker(scene_, e)));
-        case GuiTool_LineMeasure:
-          return FlexiblePointerTrackerPtr(new CreateLineMeasureTracker(
-            scene_, undoStack_, measureTools_, e));
         case GuiTool_Pan:
           return CreateSimpleTrackerAdapter(PointerTrackerPtr(
             new PanSceneTracker(scene_, e)));
@@ -272,8 +271,12 @@ namespace OrthancStone
         //  return new CircleMeasureTracker(scene_, measureTools_, undoStack_, e);
         //case GuiTool_EllipseMeasure:
         //  return new EllipseMeasureTracker(scene_, measureTools_, undoStack_, e);
+        case GuiTool_LineMeasure:
+          return FlexiblePointerTrackerPtr(new CreateLineMeasureTracker(
+            scene_, undoStack_, measureTools_, e));
         case GuiTool_AngleMeasure:
-          LOG(ERROR) << "Not implemented yet!";
+          return FlexiblePointerTrackerPtr(new CreateAngleMeasureTracker(
+            scene_, undoStack_, measureTools_, e));
           return NULL;
         case GuiTool_CircleMeasure:
           LOG(ERROR) << "Not implemented yet!";

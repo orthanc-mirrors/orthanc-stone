@@ -29,6 +29,11 @@ namespace
 
 namespace OrthancStone
 {
+  double RadiansToDegrees(double angleRad)
+  {
+    static const double factor = 180.0 / g_pi;
+    return angleRad * factor;
+  }
 
   void AddSquare(PolylineSceneLayer::Chain& chain,
     const Scene2D&      scene,
@@ -58,7 +63,7 @@ namespace OrthancStone
     chain.push_back(startRB);
     chain.push_back(startLB);
   }
-
+#if 0
   void AddArc(
       PolylineSceneLayer::Chain& chain
     , const Scene2D&      scene
@@ -75,11 +80,21 @@ namespace OrthancStone
       chain, scene, c, radiusS, p1cAngle, p2cAngle, 
       clockwise, subdivisionsCount);
   }
+#endif
 
-  double RadiansToDegrees(double angleRad)
+  void AddShortestArc(
+      PolylineSceneLayer::Chain& chain
+    , const Scene2D&             scene
+    , const ScenePoint2D&        p1
+    , const ScenePoint2D&        c
+    , const ScenePoint2D&        p2
+    , const double&              radiusS
+    , const int                  subdivisionsCount)
   {
-    static const double factor = 180.0 / g_pi;
-    return angleRad * factor;
+    double p1cAngle = atan2(p1.GetY() - c.GetY(), p1.GetX() - c.GetX());
+    double p2cAngle = atan2(p2.GetY() - c.GetY(), p2.GetX() - c.GetX());
+    AddShortestArc(
+      chain, scene, c, radiusS, p1cAngle, p2cAngle, subdivisionsCount);
   }
 
   void GetPositionOnBisectingLine(
@@ -100,6 +115,39 @@ namespace OrthancStone
     result = ScenePoint2D(posX, posY);
   }
    
+
+  void AddShortestArc(
+      PolylineSceneLayer::Chain&  chain
+    , const Scene2D&              scene
+    , const ScenePoint2D&         centerS
+    , const double&               radiusS
+    , const double                startAngleRad
+    , const double                endAngleRad
+    , const int                   subdivisionsCount)
+  {
+    // this gives a signed difference between angle which
+    // is the smallest difference (in magnitude) between 
+    // the angles
+    double delta = NormalizeAngle(endAngleRad-startAngleRad);
+
+    chain.clear();
+    chain.reserve(subdivisionsCount + 1);
+
+    double angleIncr = delta/static_cast<double>(subdivisionsCount);
+
+    double theta = startAngleRad;
+    for (int i = 0; i < subdivisionsCount + 1; ++i)
+    {
+      double offsetX = radiusS * cos(theta);
+      double offsetY = radiusS * sin(theta);
+      double pointX = centerS.GetX() + offsetX;
+      double pointY = centerS.GetY() + offsetY;
+      chain.push_back(ScenePoint2D(pointX, pointY));
+      theta += angleIncr;
+    }
+  }
+
+#if 0
   void AddArc(
       PolylineSceneLayer::Chain& chain
     , const Scene2D&      scene
@@ -145,6 +193,7 @@ namespace OrthancStone
       theta += angleIncr;
     }
   }
+#endif
 
   void AddCircle(PolylineSceneLayer::Chain& chain,
     const Scene2D&      scene,
@@ -179,9 +228,9 @@ namespace OrthancStone
   double NormalizeAngle(double angle)
   {
     double retAngle = angle;
-    while (retAngle < 0)
+    while (retAngle < -1.0*g_pi)
       retAngle += 2 * g_pi;
-    while (retAngle >= 2 * g_pi)
+    while (retAngle >= g_pi)
       retAngle -= 2 * g_pi;
     return retAngle;
   }

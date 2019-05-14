@@ -34,8 +34,46 @@ namespace OrthancStone
     const ScenePoint2D& centerS,
     const double&       sideLength);
 
+
   /**
-    Creates an arc centered pm c that goes
+    Creates an arc centered on c that goes
+    - from a point r1:
+      - so that r1 belongs to the p1,c line
+      - so that the distance from c to r1 equals radius
+    - to a point r2:
+      - so that r2 belongs to the p2,c line
+      - so that the distance from c to r2 equals radius
+    - that follows the shortest among the two possible paths
+
+    Warning: the existing chain content will be wiped out.
+  */
+  void AddShortestArc(
+      PolylineSceneLayer::Chain&  chain
+    , const Scene2D&              scene
+    , const ScenePoint2D&         p1
+    , const ScenePoint2D&         c
+    , const ScenePoint2D&         p2
+    , const double&               radiusS
+    , const int                   subdivisionsCount = 63);
+
+  /**
+    Creates an arc (open curve) with "numSubdivisions" (N + 1 points) from 
+    start angle to end angle, by following the shortest arc.
+
+    Warning: the existing chain content will be wiped out.
+  */
+  void AddShortestArc(
+      PolylineSceneLayer::Chain&  chain
+    , const Scene2D&              scene
+    , const ScenePoint2D&         centerS
+    , const double&               radiusS
+    , const double                startAngleRad
+    , const double                endAngleRad
+    , const int                   subdivisionsCount = 63);
+
+#if 0
+  /**
+    Creates an arc centered on c that goes
     - from a point r1:
       - so that r1 belongs to the p1,c line
       - so that the distance from c to r1 equals radius
@@ -51,22 +89,22 @@ namespace OrthancStone
 
   void AddArc(
       PolylineSceneLayer::Chain& chain
-    , const Scene2D&      scene
-    , const ScenePoint2D& p1
-    , const ScenePoint2D& c
-    , const ScenePoint2D& p2
-    , const double&       radiusS
-    , const bool          clockwise
-    , const int           subdivisionsCount = 63);
-    
+    , const Scene2D&             scene
+    , const ScenePoint2D&        p1
+    , const ScenePoint2D&        c
+    , const ScenePoint2D&        p2
+    , const double&              radiusS
+    , const bool                 clockwise
+    , const int                  subdivisionsCount = 63);
+ 
   /**
-    Creates an arc (open curve) with "numSubdivisions"
-    (N + 1 points) from start angle to end angle.
+    Creates an arc (open curve) with "numSubdivisions" (N + 1 points) from 
+    start angle to end angle with the supplied radius.
 
-    if clockwise is true, the arc is drawn from start to end 
-    by increasing the angle values.
+    if clockwise is true, the arc is drawn from start to end by increasing the
+    angle values.
 
-    otherwise, the angle value decreases from start to end.
+    Otherwise, the angle value decreases from start to end.
 
     Warning: the existing chain content will be wiped out.
   */
@@ -79,7 +117,7 @@ namespace OrthancStone
     , const double        endAngleRad
     , const bool          clockwise
     , const int           subdivisionsCount = 63);
-
+#endif
   /**
     Creates a circle (closed curve) with "numSubdivisions"
     (N points)
@@ -94,7 +132,7 @@ namespace OrthancStone
 
   /**
     Adds or subtracts 2*pi as many times as need to shift the specified
-    angle to a value such as:   0 <= value < 2*pi
+    angle to a value such as: -pi <= value < pi
    */
   double NormalizeAngle(double angle);
 

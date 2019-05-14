@@ -160,9 +160,9 @@ namespace OrthancStone
         {
           PolylineSceneLayer::Chain chain;
 
-          AddArc(chain, GetScene(), side1End_, center_, side2End_, 
-            20.0*pixelToScene, true); //TODO: true means always clockwise
-          polylineLayer->AddChain(chain, true);
+          AddShortestArc(chain, GetScene(), side1End_, center_, side2End_, 
+            20.0*pixelToScene);
+          polylineLayer->AddChain(chain, false);
         }
       }
       {

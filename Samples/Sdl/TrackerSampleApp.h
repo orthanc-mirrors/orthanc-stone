@@ -28,6 +28,7 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 namespace OrthancStone
 {
@@ -54,29 +55,14 @@ namespace OrthancStone
   class Scene2D;
 
   class TrackerSampleApp : public IObserver
+    , public boost::enable_shared_from_this<TrackerSampleApp>
   {
   public:
     // 12 because.
-    TrackerSampleApp(MessageBroker& broker)
-      : IObserver(broker)
-      , currentTool_(GuiTool_Rotate)
-      , scene_(broker)
-    {
-      scene_.RegisterObserverCallback(
-        new Callable<TrackerSampleApp, Scene2D::SceneTransformChanged>
-        (*this, &TrackerSampleApp::OnSceneTransformChanged));
-
-      TEXTURE_2x2_1_ZINDEX = 1;
-      TEXTURE_1x1_ZINDEX = 2;
-      TEXTURE_2x2_2_ZINDEX = 3;
-      LINESET_1_ZINDEX = 4;
-      LINESET_2_ZINDEX = 5;
-      FLOATING_INFOTEXT_LAYER_ZINDEX = 6;
-      FIXED_INFOTEXT_LAYER_ZINDEX = 7;
-    }
+    TrackerSampleApp(MessageBroker& broker);
     void PrepareScene();
     void Run();
-
+    void SetInfoDisplayMessage(std::string key, std::string value);
     void DisableTracker();
 
     Scene2D& GetScene();
@@ -124,6 +110,7 @@ namespace OrthancStone
     */
     Scene2D scene_;
 
+    std::map<std::string, std::string> infoTextMap_;
     FlexiblePointerTrackerPtr activeTracker_;
     std::vector<TrackerCommandPtr> undoStack_;
 

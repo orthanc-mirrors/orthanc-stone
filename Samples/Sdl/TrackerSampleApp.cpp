@@ -82,8 +82,16 @@ namespace OrthancStone
 
   void TrackerSampleApp::DisplayInfoText()
   {
-    char buf[256];
-    sprintf(buf, "INFO TEXT\n*** INFO TEXT ***\ntoto tata tutu titi\nprrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrout");
+    // do not try to use stuff too early!
+    if (compositor_.get() == NULL)
+      return;
+
+    std::stringstream msg;
+    for (auto kv : infoTextMap_)
+    {
+      msg << kv.first << " : " << kv.second << std::endl;
+    }
+    auto msgS = msg.str();
 
     TextSceneLayer* layerP = NULL;
     if (scene_.HasLayer(FIXED_INFOTEXT_LAYER_ZINDEX))
@@ -98,14 +106,13 @@ namespace OrthancStone
       layerP = layer.get();
       layer->SetColor(0, 255, 0);
       layer->SetFontIndex(1);
-      layer->SetText(buf);
       layer->SetBorder(20);
       layer->SetAnchor(BitmapAnchor_TopLeft);
       //layer->SetPosition(0,0);
       scene_.SetLayer(FIXED_INFOTEXT_LAYER_ZINDEX, layer.release());
     }
     // position the fixed info text in the upper right corner
-    layerP->SetText(buf);
+    layerP->SetText(msgS.c_str());
     double cX = compositor_->GetCanvasWidth() * (-0.5);
     double cY = compositor_->GetCanvasHeight() * (-0.5);
     scene_.GetCanvasToSceneTransform().Apply(cX,cY);
@@ -262,9 +269,7 @@ namespace OrthancStone
 
   void TrackerSampleApp::OnSceneTransformChanged(const Scene2D::SceneTransformChanged& message)
   {
-    // do not try to call this too early!
-    if(compositor_.get() != NULL)
-      DisplayInfoText();
+    DisplayInfoText();
   }
 
   FlexiblePointerTrackerPtr TrackerSampleApp::CreateSuitableTracker(
@@ -341,6 +346,25 @@ namespace OrthancStone
     }
   }
 
+
+  TrackerSampleApp::TrackerSampleApp(MessageBroker& broker) : IObserver(broker)
+    , currentTool_(GuiTool_Rotate)
+    , scene_(broker)
+  {
+    scene_.RegisterObserverCallback(
+      new Callable<TrackerSampleApp, Scene2D::SceneTransformChanged>
+      (*this, &TrackerSampleApp::OnSceneTransformChanged));
+
+    TEXTURE_2x2_1_ZINDEX = 1;
+    TEXTURE_1x1_ZINDEX = 2;
+    TEXTURE_2x2_2_ZINDEX = 3;
+    LINESET_1_ZINDEX = 4;
+    LINESET_2_ZINDEX = 5;
+    FLOATING_INFOTEXT_LAYER_ZINDEX = 6;
+    FIXED_INFOTEXT_LAYER_ZINDEX = 7;
+
+
+  }
 
   void TrackerSampleApp::PrepareScene()
   {
@@ -543,6 +567,14 @@ namespace OrthancStone
     compositor_.reset(NULL);
   }
 
-
+  void TrackerSampleApp::SetInfoDisplayMessage(
+    std::string key, std::string value)
+  {
+    if (value == "")
+      infoTextMap_.erase(key);
+    else
+      infoTextMap_[key] = value;
+    DisplayInfoText();
+  }
 
 }

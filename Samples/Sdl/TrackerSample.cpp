@@ -55,7 +55,16 @@ using namespace OrthancStone;
 
 
 
+boost::weak_ptr<TrackerSampleApp> g_app;
 
+void TrackerSample_SetInfoDisplayMessage(std::string key, std::string value)
+{
+  boost::shared_ptr<TrackerSampleApp> app = g_app.lock();
+  if (app)
+  {
+    app->SetInfoDisplayMessage(key, value);
+  }
+}
 
 /**
  * IMPORTANT: The full arguments to "main()" are needed for SDL on
@@ -68,13 +77,13 @@ int main(int argc, char* argv[])
   Orthanc::Logging::EnableInfoLevel(true);
   Orthanc::Logging::EnableTraceLevel(true);
 
-
   try
   {
     MessageBroker broker;
-    TrackerSampleApp app(broker);
-    app.PrepareScene();
-    app.Run();
+    boost::shared_ptr<TrackerSampleApp> app(new TrackerSampleApp(broker));
+    g_app = app;
+    app->PrepareScene();
+    app->Run();
   }
   catch (Orthanc::OrthancException& e)
   {
@@ -85,3 +94,5 @@ int main(int argc, char* argv[])
 
   return 0;
 }
+
+

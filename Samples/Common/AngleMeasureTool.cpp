@@ -25,6 +25,8 @@
 
 #include <boost/math/constants/constants.hpp>
 
+extern void TrackerSample_SetInfoDisplayMessage(std::string key, std::string value);
+
 namespace OrthancStone
 {
   AngleMeasureTool::~AngleMeasureTool()
@@ -159,7 +161,7 @@ namespace OrthancStone
         {
           PolylineSceneLayer::Chain chain;
 
-          const double ARC_RADIUS_CANVAS_COORD = 20.0;
+          const double ARC_RADIUS_CANVAS_COORD = 30.0;
           AddShortestArc(chain, GetScene(), side1End_, center_, side2End_, 
             ARC_RADIUS_CANVAS_COORD*pixelToScene);
           polylineLayer->AddChain(chain, false);
@@ -171,23 +173,70 @@ namespace OrthancStone
         double p1cAngle = atan2(
           side1End_.GetY() - center_.GetY(),
           side1End_.GetX() - center_.GetX());
+
+        TrackerSample_SetInfoDisplayMessage("center_.GetX()",
+          boost::lexical_cast<std::string>(center_.GetX()));
+
+        TrackerSample_SetInfoDisplayMessage("center_.GetY()",
+          boost::lexical_cast<std::string>(center_.GetY()));
+
+        TrackerSample_SetInfoDisplayMessage("side1End_.GetX()",
+          boost::lexical_cast<std::string>(side1End_.GetX()));
+
+        TrackerSample_SetInfoDisplayMessage("side1End_.GetY()",
+          boost::lexical_cast<std::string>(side1End_.GetY()));
+
+        TrackerSample_SetInfoDisplayMessage("side2End_.GetX()",
+          boost::lexical_cast<std::string>(side2End_.GetX()));
+
+        TrackerSample_SetInfoDisplayMessage("side2End_.GetY()",
+          boost::lexical_cast<std::string>(side2End_.GetY()));
+
+        TrackerSample_SetInfoDisplayMessage("p1cAngle (deg)",
+          boost::lexical_cast<std::string>(RadiansToDegrees(p1cAngle)));
+
         double p2cAngle = atan2(
           side2End_.GetY() - center_.GetY(),
           side2End_.GetX() - center_.GetX());
-        double delta = NormalizeAngle(p2cAngle - p1cAngle);
-        double theta = delta/2;
 
-        const double TEXT_CENTER_DISTANCE_CANVAS_COORD = 40.0;
+        double delta = NormalizeAngle(p2cAngle - p1cAngle);
+        TrackerSample_SetInfoDisplayMessage("delta (deg)",
+          boost::lexical_cast<std::string>(RadiansToDegrees(delta)));
+
+        double theta = p1cAngle + delta/2;
+
+        TrackerSample_SetInfoDisplayMessage("theta (deg)",
+          boost::lexical_cast<std::string>(RadiansToDegrees(theta)));
+
+        TrackerSample_SetInfoDisplayMessage("p2cAngle (deg)",
+          boost::lexical_cast<std::string>(RadiansToDegrees(p2cAngle)));
+
+        const double TEXT_CENTER_DISTANCE_CANVAS_COORD = 90;
 
         double offsetX = TEXT_CENTER_DISTANCE_CANVAS_COORD * cos(theta);
+        TrackerSample_SetInfoDisplayMessage("offsetX (pix)",
+          boost::lexical_cast<std::string>(offsetX));
+
         double offsetY = TEXT_CENTER_DISTANCE_CANVAS_COORD * sin(theta);
-        double pointX = center_.GetX() + offsetX;
-        double pointY = center_.GetY() + offsetY;
+        TrackerSample_SetInfoDisplayMessage("offsetY (pix)",
+          boost::lexical_cast<std::string>(offsetY));
+
+        double pointX = center_.GetX() + offsetX * pixelToScene;
+        double pointY = center_.GetY() + offsetY * pixelToScene;
+        TrackerSample_SetInfoDisplayMessage("pointX",
+          boost::lexical_cast<std::string>(pointX));
+
+        TrackerSample_SetInfoDisplayMessage("pointY",
+          boost::lexical_cast<std::string>(pointY));
 
         TextSceneLayer* textLayer = GetTextLayer();
 
         char buf[64];
         double angleDeg = RadiansToDegrees(delta);
+
+        TrackerSample_SetInfoDisplayMessage("angleDeg",
+          boost::lexical_cast<std::string>(angleDeg));
+
         sprintf(buf, "%0.02f deg", angleDeg);
         textLayer->SetText(buf);
         textLayer->SetColor(0, 223, 21);

@@ -85,3 +85,5 @@ namespace OrthancStone
 }
 
 
+extern void TrackerSample_SetInfoDisplayMessage(
+  std::string key, std::string value);

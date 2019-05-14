@@ -106,6 +106,12 @@ namespace OrthancStone
     BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
+
+  void RadiographyDicomLayer::SetDicomFrameConverter(DicomFrameConverter* converter)
+  {
+    converter_.reset(converter);
+  }
+
   void RadiographyDicomLayer::Render(Orthanc::ImageAccessor& buffer,
                                      const AffineTransform2D& viewTransform,
                                      ImageInterpolation interpolation) const

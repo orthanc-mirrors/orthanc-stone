@@ -26,6 +26,7 @@
 #include "IWebService.h"
 #include "OrthancApiClient.h"
 #include "SlicesSorter.h"
+#include "Slice.h"
 
 #include <Core/Images/Image.h>
 
@@ -195,7 +196,7 @@ namespace OrthancStone
 
     bool IsGeometryReady() const;
 
-    size_t GetSliceCount() const;
+    size_t GetSlicesCount() const;
 
     const Slice& GetSlice(size_t index) const;
 

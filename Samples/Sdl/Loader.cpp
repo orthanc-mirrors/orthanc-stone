@@ -26,6 +26,7 @@
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Toolbox/GeometryToolbox.h"
 #include "../../Framework/Volumes/ImageBuffer3D.h"
+#include "../../Framework/Toolbox/SlicesSorter.h"
 
 // From Orthanc framework
 #include <Core/Compression/GzipCompressor.h>
@@ -899,8 +900,6 @@ namespace Refactoring
 
       if (object.get() != NULL)
       {
-        printf("===========================> REQUEST\n");
-        
         const Item& item = dynamic_cast<Item&>(*object);
 
         try
@@ -1140,7 +1139,8 @@ namespace Refactoring
 
 
 
-  class DicomInstanceParameters : public boost::noncopyable
+  class DicomInstanceParameters :
+    public Orthanc::IDynamicObject  /* to be used as a payload of SlicesSorter */
   {
   private:
     Orthanc::DicomImageInformation    imageInformation_;
@@ -1374,13 +1374,10 @@ namespace Refactoring
         tmp = GetFrameGeometry(frame);
       }
 
-      bool opposite;   // Ignored
-      return (OrthancStone::GeometryToolbox::IsParallelOrOpposite(
-                opposite, tmp.GetNormal(), plane.GetNormal()) &&
-              OrthancStone::LinearAlgebra::IsNear(
-                tmp.ProjectAlongNormal(tmp.GetOrigin()),
-                tmp.ProjectAlongNormal(plane.GetOrigin()),
-                thickness_ / 2.0));
+      double distance;
+
+      return (OrthancStone::CoordinateSystem3D::GetDistance(distance, tmp, plane) &&
+              distance <= thickness_ / 2.0);
     }
 
     bool IsColor() const
@@ -1496,8 +1493,19 @@ namespace Refactoring
           Orthanc::DicomMap dicom;
           dicom.FromDicomAsJson(value[instances[i]]);
 
-          DicomInstanceParameters instance(dicom);
+          std::auto_ptr<DicomInstanceParameters> instance(new DicomInstanceParameters(dicom));
+
+          OrthancStone::CoordinateSystem3D geometry = instance->GetGeometry();
+          that_.slices_.AddSlice(geometry, instance.release());
         }
+
+        if (!that_.slices_.Sort())
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
+                                          "Cannot sort the 3D slices of a DICOM series");          
+        }
+
+        printf("series sorted\n");
       }
     };
 
@@ -1533,7 +1541,7 @@ namespace Refactoring
 
     bool                                        active_;
     std::auto_ptr<OrthancStone::ImageBuffer3D>  image_;
-
+    OrthancStone::SlicesSorter                  slices_;
 
   public:
     AxialVolumeOrthancLoader(OrthancStone::IObservable& oracle) :

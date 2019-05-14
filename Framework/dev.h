@@ -110,14 +110,14 @@ namespace OrthancStone
     {
       assert(&message.GetOrigin() == &loader_);
 
-      if (loader_.GetSliceCount() == 0)
+      if (loader_.GetSlicesCount() == 0)
       {
         LOG(ERROR) << "Empty volume image";
         BroadcastMessage(ISlicedVolume::GeometryErrorMessage(*this));
         return;
       }
 
-      for (size_t i = 1; i < loader_.GetSliceCount(); i++)
+      for (size_t i = 1; i < loader_.GetSlicesCount(); i++)
       {
         if (!IsCompatible(loader_.GetSlice(0), loader_.GetSlice(i)))
         {
@@ -128,7 +128,7 @@ namespace OrthancStone
 
       double spacingZ;
 
-      if (loader_.GetSliceCount() > 1)
+      if (loader_.GetSlicesCount() > 1)
       {
         spacingZ = GetDistance(loader_.GetSlice(0), loader_.GetSlice(1));
       }
@@ -139,7 +139,7 @@ namespace OrthancStone
         spacingZ = 1;
       }
 
-      for (size_t i = 1; i < loader_.GetSliceCount(); i++)
+      for (size_t i = 1; i < loader_.GetSlicesCount(); i++)
       {
         if (!LinearAlgebra::IsNear(spacingZ, GetDistance(loader_.GetSlice(i - 1), loader_.GetSlice(i)),
                                    0.001 /* this is expressed in mm */))
@@ -154,16 +154,16 @@ namespace OrthancStone
       unsigned int height = loader_.GetSlice(0).GetHeight();
       Orthanc::PixelFormat format = loader_.GetSlice(0).GetConverter().GetExpectedPixelFormat();
       LOG(INFO) << "Creating a volume image of size " << width << "x" << height
-                << "x" << loader_.GetSliceCount() << " in " << Orthanc::EnumerationToString(format);
+                << "x" << loader_.GetSlicesCount() << " in " << Orthanc::EnumerationToString(format);
 
-      image_.reset(new ImageBuffer3D(format, width, height, static_cast<unsigned int>(loader_.GetSliceCount()), computeRange_));
+      image_.reset(new ImageBuffer3D(format, width, height, static_cast<unsigned int>(loader_.GetSlicesCount()), computeRange_));
       image_->SetAxialGeometry(loader_.GetSlice(0).GetGeometry());
       image_->SetVoxelDimensions(loader_.GetSlice(0).GetPixelSpacingX(),
                                  loader_.GetSlice(0).GetPixelSpacingY(), spacingZ);
       image_->Clear();
 
-      downloadStack_.reset(new DownloadStack(static_cast<unsigned int>(loader_.GetSliceCount())));
-      pendingSlices_ = loader_.GetSliceCount();
+      downloadStack_.reset(new DownloadStack(static_cast<unsigned int>(loader_.GetSlicesCount())));
+      pendingSlices_ = loader_.GetSlicesCount();
 
       for (unsigned int i = 0; i < 4; i++)  // Limit to 4 simultaneous downloads
       {
@@ -263,9 +263,9 @@ namespace OrthancStone
       loader_.ScheduleLoadFrame(instanceId, frame);
     }
 
-    virtual size_t GetSliceCount() const
+    virtual size_t GetSlicesCount() const
     {
-      return loader_.GetSliceCount();
+      return loader_.GetSlicesCount();
     }
 
     virtual const Slice& GetSlice(size_t index) const
@@ -317,7 +317,7 @@ namespace OrthancStone
     {
       double thickness;
 
-      size_t n = volume.GetSliceCount();
+      size_t n = volume.GetSlicesCount();
       if (n > 1)
       {
         const Slice& a = volume.GetSlice(0);
@@ -349,7 +349,7 @@ namespace OrthancStone
 
       width_ = axial.GetWidth();
       height_ = axial.GetHeight();
-      depth_ = volume.GetSliceCount();
+      depth_ = volume.GetSlicesCount();
 
       pixelSpacingX_ = axial.GetPixelSpacingX();
       pixelSpacingY_ = axial.GetPixelSpacingY();
@@ -364,7 +364,7 @@ namespace OrthancStone
       double axialThickness = ComputeAxialThickness(volume);
 
       width_ = axial.GetWidth();
-      height_ = static_cast<unsigned int>(volume.GetSliceCount());
+      height_ = static_cast<unsigned int>(volume.GetSlicesCount());
       depth_ = axial.GetHeight();
 
       pixelSpacingX_ = axial.GetPixelSpacingX();
@@ -372,7 +372,7 @@ namespace OrthancStone
       sliceThickness_ = axial.GetPixelSpacingY();
 
       Vector origin = axial.GetGeometry().GetOrigin();
-      origin += (static_cast<double>(volume.GetSliceCount() - 1) *
+      origin += (static_cast<double>(volume.GetSlicesCount() - 1) *
                 axialThickness * axial.GetGeometry().GetNormal());
 
       reference_ = CoordinateSystem3D(origin,
@@ -386,7 +386,7 @@ namespace OrthancStone
       double axialThickness = ComputeAxialThickness(volume);
 
       width_ = axial.GetHeight();
-      height_ = static_cast<unsigned int>(volume.GetSliceCount());
+      height_ = static_cast<unsigned int>(volume.GetSlicesCount());
       depth_ = axial.GetWidth();
 
       pixelSpacingX_ = axial.GetPixelSpacingY();
@@ -394,7 +394,7 @@ namespace OrthancStone
       sliceThickness_ = axial.GetPixelSpacingX();
 
       Vector origin = axial.GetGeometry().GetOrigin();
-      origin += (static_cast<double>(volume.GetSliceCount() - 1) *
+      origin += (static_cast<double>(volume.GetSlicesCount() - 1) *
                 axialThickness * axial.GetGeometry().GetNormal());
 
       reference_ = CoordinateSystem3D(origin,
@@ -406,7 +406,7 @@ namespace OrthancStone
     VolumeImageGeometry(const OrthancVolumeImage& volume,
                         VolumeProjection projection)
     {
-      if (volume.GetSliceCount() == 0)
+      if (volume.GetSlicesCount() == 0)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
@@ -432,7 +432,7 @@ namespace OrthancStone
       }
     }
 
-    size_t GetSliceCount() const
+    size_t GetSlicesCount() const
     {
       return depth_;
     }
@@ -728,7 +728,7 @@ namespace OrthancStone
           dynamic_cast<const OrthancVolumeImage&>(message.GetOrigin());
 
         slices_.reset(new VolumeImageGeometry(image, projection_));
-        SetSlice(slices_->GetSliceCount() / 2);
+        SetSlice(slices_->GetSlicesCount() / 2);
 
         widget_.FitContent();
       }
@@ -817,7 +817,7 @@ namespace OrthancStone
       return slices_.get() != NULL;
     }
 
-    size_t GetSliceCount() const
+    size_t GetSlicesCount() const
     {
       if (slices_.get() == NULL)
       {
@@ -825,7 +825,7 @@ namespace OrthancStone
       }
       else
       {
-        return slices_->GetSliceCount();
+        return slices_->GetSlicesCount();
       }
     }
 
@@ -840,9 +840,9 @@ namespace OrthancStone
           slice = 0;
         }
 
-        if (slice >= static_cast<int>(slices_->GetSliceCount()))
+        if (slice >= static_cast<int>(slices_->GetSlicesCount()))
         {
-          slice = static_cast<unsigned int>(slices_->GetSliceCount()) - 1;
+          slice = static_cast<unsigned int>(slices_->GetSlicesCount()) - 1;
         }
 
         if (slice != static_cast<int>(slice_))

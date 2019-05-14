@@ -102,9 +102,9 @@ namespace OrthancStone
       return quality_;
     }
 
-    size_t GetSliceCount() const
+    size_t GetSlicesCount() const
     {
-      return loader_.GetSliceCount();
+      return loader_.GetSlicesCount();
     }
 
     const Slice& GetSlice(size_t slice) const 

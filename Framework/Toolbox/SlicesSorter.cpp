@@ -30,25 +30,23 @@ namespace OrthancStone
   class SlicesSorter::SliceWithDepth : public boost::noncopyable
   {
   private:
-    std::auto_ptr<Slice>   slice_;
-    double                 depth_;
+    CoordinateSystem3D  geometry_;
+    double              depth_;
+
+    std::auto_ptr<Orthanc::IDynamicObject>   payload_;
 
   public:
-    SliceWithDepth(Slice* slice) :
-      slice_(slice),
-      depth_(0)
+    SliceWithDepth(const CoordinateSystem3D& geometry,
+                   Orthanc::IDynamicObject* payload) :
+      geometry_(geometry),
+      depth_(0),
+      payload_(payload)
     {
-      if (slice == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
     }
 
     void SetNormal(const Vector& normal)
     {
-      assert(slice_.get() != NULL);
-      depth_ = boost::numeric::ublas::inner_prod
-        (slice_->GetGeometry().GetOrigin(), normal);
+      depth_ = boost::numeric::ublas::inner_prod(geometry_.GetOrigin(), normal);
     }
 
     double GetDepth() const
@@ -56,10 +54,26 @@ namespace OrthancStone
       return depth_;
     }
 
-    const Slice& GetSlice() const
+    const CoordinateSystem3D& GetGeometry() const
     {
-      assert(slice_.get() != NULL);
-      return *slice_;
+      return geometry_;
+    }
+
+    bool HasPayload() const
+    {
+      return (payload_.get() != NULL);
+    }
+
+    const Orthanc::IDynamicObject& GetPayload() const
+    {
+      if (HasPayload())
+      {
+        return *payload_;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
     }
   };
 
@@ -84,21 +98,42 @@ namespace OrthancStone
   }
 
 
-  void SlicesSorter::AddSlice(Slice* slice)
+  void SlicesSorter::AddSlice(const CoordinateSystem3D& slice,
+                              Orthanc::IDynamicObject* payload)
   {
-    slices_.push_back(new SliceWithDepth(slice));
+    slices_.push_back(new SliceWithDepth(slice, payload));
   }
 
   
-  const Slice& SlicesSorter::GetSlice(size_t i) const
+  const SlicesSorter::SliceWithDepth& SlicesSorter::GetSlice(size_t i) const
   {
     if (i >= slices_.size())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
+    else
+    {
+      assert(slices_[i] != NULL);
+      return *slices_[i];
+    }
+  }
 
-    assert(slices_[i] != NULL);
-    return slices_[i]->GetSlice();
+
+  const CoordinateSystem3D& SlicesSorter::GetSliceGeometry(size_t i) const
+  {
+    return GetSlice(i).GetGeometry();
+  }
+  
+  
+  bool SlicesSorter::HasSlicePayload(size_t i) const
+  {
+    return GetSlice(i).HasPayload();
+  }
+  
+    
+  const Orthanc::IDynamicObject& SlicesSorter::GetSlicePayload(size_t i) const
+  {
+    return GetSlice(i).GetPayload();
   }
 
   
@@ -113,7 +148,7 @@ namespace OrthancStone
   }
   
     
-  void SlicesSorter::Sort()
+  void SlicesSorter::SortInternal()
   {
     if (!hasNormal_)
     {
@@ -131,7 +166,7 @@ namespace OrthancStone
 
     for (size_t i = 0; i < slices_.size(); i++)
     {
-      if (GeometryToolbox::IsParallel(normal, slices_[i]->GetSlice().GetGeometry().GetNormal()))
+      if (GeometryToolbox::IsParallel(normal, slices_[i]->GetGeometry().GetNormal()))
       {
         // This slice is compatible with the selected normal
         slices_[pos] = slices_[i];
@@ -155,7 +190,7 @@ namespace OrthancStone
 
     bool found = false;
 
-    for (size_t i = 0; !found && i < GetSliceCount(); i++)
+    for (size_t i = 0; !found && i < GetSlicesCount(); i++)
     {
       const Vector& normal = GetSlice(i).GetGeometry().GetNormal();
 
@@ -190,8 +225,8 @@ namespace OrthancStone
     for (size_t i = 0; !found && i < normalCandidates.size(); i++)
     {
       unsigned int count = normalCount[i];
-      if (count == GetSliceCount() ||
-          count + 1 == GetSliceCount())
+      if (count == GetSlicesCount() ||
+          count + 1 == GetSlicesCount())
       {
         normal = normalCandidates[i];
         found = true;
@@ -202,21 +237,52 @@ namespace OrthancStone
   }
 
 
-  bool SlicesSorter::LookupSlice(size_t& index,
-                                 const CoordinateSystem3D& slice) const
+  bool SlicesSorter::Sort()
   {
-    // TODO Turn this linear-time lookup into a log-time lookup,
-    // keeping track of whether the slices are sorted along the normal
-
-    for (size_t i = 0; i < slices_.size(); i++)
+    if (GetSlicesCount() > 0)
     {
-      if (slices_[i]->GetSlice().ContainsPlane(slice))
+      Vector normal;
+      if (SelectNormal(normal))
       {
-        index = i;
+        FilterNormal(normal);
+        SetNormal(normal);
+        SortInternal();
         return true;
       }
     }
 
     return false;
+  }
+
+
+  bool SlicesSorter::LookupClosestSlice(size_t& index,
+                                        double& distance,
+                                        const CoordinateSystem3D& slice) const
+  {
+    // TODO Turn this linear-time lookup into a log-time lookup,
+    // keeping track of whether the slices are sorted along the normal
+
+    bool found = false;
+    
+    distance = std::numeric_limits<double>::infinity();
+    
+    for (size_t i = 0; i < slices_.size(); i++)
+    {
+      assert(slices_[i] != NULL);
+
+      double tmp;
+      if (CoordinateSystem3D::GetDistance(tmp, slices_[i]->GetGeometry(), slice))
+      {
+        if (!found ||
+            tmp < distance)
+        {
+          index = i;
+          distance = tmp;
+          found = true;
+        }
+      }
+    }
+
+    return found;
   }
 }

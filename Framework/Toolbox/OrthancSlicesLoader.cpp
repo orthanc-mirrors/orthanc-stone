@@ -191,25 +191,13 @@ namespace OrthancStone
   
   void OrthancSlicesLoader::SortAndFinalizeSlices()
   {
-    bool ok = false;
-    
-    if (slices_.GetSliceCount() > 0)
-    {
-      Vector normal;
-      if (slices_.SelectNormal(normal))
-      {
-        slices_.FilterNormal(normal);
-        slices_.SetNormal(normal);
-        slices_.Sort();
-        ok = true;
-      }
-    }
+    bool ok = slices_.Sort();
     
     state_ = State_GeometryReady;
     
     if (ok)
     {
-      LOG(INFO) << "Loaded a series with " << slices_.GetSliceCount() << " slice(s)";
+      LOG(INFO) << "Loaded a series with " << slices_.GetSlicesCount() << " slice(s)";
       BroadcastMessage(SliceGeometryReadyMessage(*this));
     }
     else
@@ -256,7 +244,8 @@ namespace OrthancStone
         std::auto_ptr<Slice> slice(new Slice);
         if (slice->ParseOrthancFrame(dicom, instances[i], frame))
         {
-          slices_.AddSlice(slice.release());
+          CoordinateSystem3D geometry = slice->GetGeometry();
+          slices_.AddSlice(geometry, slice.release());
         }
         else
         {
@@ -291,7 +280,8 @@ namespace OrthancStone
       std::auto_ptr<Slice> slice(new Slice);
       if (slice->ParseOrthancFrame(dicom, instanceId, frame))
       {
-        slices_.AddSlice(slice.release());
+        CoordinateSystem3D geometry = slice->GetGeometry();
+        slices_.AddSlice(geometry, slice.release());
       }
       else
       {
@@ -322,7 +312,10 @@ namespace OrthancStone
     if (slice->ParseOrthancFrame(dicom, instanceId, frame))
     {
       LOG(INFO) << "Loaded instance geometry " << instanceId;
-      slices_.AddSlice(slice.release());
+
+      CoordinateSystem3D geometry = slice->GetGeometry();
+      slices_.AddSlice(geometry, slice.release());
+      
       BroadcastMessage(SliceGeometryReadyMessage(*this));
     }
     else
@@ -717,14 +710,14 @@ namespace OrthancStone
   }
   
   
-  size_t OrthancSlicesLoader::GetSliceCount() const
+  size_t OrthancSlicesLoader::GetSlicesCount() const
   {
     if (state_ != State_GeometryReady)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     
-    return slices_.GetSliceCount();
+    return slices_.GetSlicesCount();
   }
   
   
@@ -734,8 +727,8 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-    
-    return slices_.GetSlice(index);
+
+    return dynamic_cast<const Slice&>(slices_.GetSlicePayload(index));
   }
   
   
@@ -746,8 +739,10 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-    
-    return slices_.LookupSlice(index, plane);
+
+    double distance;
+    return (slices_.LookupClosestSlice(index, distance, plane) &&
+            distance <= GetSlice(index).GetThickness() / 2.0);
   }
   
   

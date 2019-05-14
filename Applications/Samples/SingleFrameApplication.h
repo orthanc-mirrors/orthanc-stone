@@ -136,9 +136,9 @@ namespace OrthancStone
             slice = 0;
           }
 
-          if (slice >= static_cast<int>(source_->GetSliceCount()))
+          if (slice >= static_cast<int>(source_->GetSlicesCount()))
           {
-            slice = static_cast<int>(source_->GetSliceCount()) - 1;
+            slice = static_cast<int>(source_->GetSlicesCount()) - 1;
           }
 
           if (slice != static_cast<int>(slice_)) 
@@ -158,7 +158,7 @@ namespace OrthancStone
       void SetSlice(size_t index)
       {
         if (source_ != NULL &&
-            index < source_->GetSliceCount())
+            index < source_->GetSlicesCount())
         {
           slice_ = static_cast<unsigned int>(index);
           
@@ -191,7 +191,7 @@ namespace OrthancStone
         // slice
         if (source_ == &message.GetOrigin())
         {
-          SetSlice(source_->GetSliceCount() / 2);
+          SetSlice(source_->GetSlicesCount() / 2);
         }
 
         GetMainWidget().FitContent();

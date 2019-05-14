@@ -37,7 +37,8 @@ namespace OrthancStone
   public:
     SdlOpenGLWindow(const char* title,
                     unsigned int width,
-                    unsigned int height);
+                    unsigned int height,
+                    bool allowDpiScaling = true);
 
     ~SdlOpenGLWindow();
 

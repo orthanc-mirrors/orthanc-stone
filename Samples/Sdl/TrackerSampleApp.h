@@ -48,7 +48,8 @@ namespace OrthancStone
 
   const char* MeasureToolToString(size_t i);
 
-  static const unsigned int FONT_SIZE = 32;
+  static const unsigned int FONT_SIZE_0 = 32;
+  static const unsigned int FONT_SIZE_1 = 24;
 
   class Scene2D;
 
@@ -61,22 +62,32 @@ namespace OrthancStone
       , currentTool_(GuiTool_Rotate)
       , scene_(broker)
     {
+      scene_.RegisterObserverCallback(
+        new Callable<TrackerSampleApp, Scene2D::SceneTransformChanged>
+        (*this, &TrackerSampleApp::OnSceneTransformChanged));
+
       TEXTURE_2x2_1_ZINDEX = 1;
       TEXTURE_1x1_ZINDEX = 2;
       TEXTURE_2x2_2_ZINDEX = 3;
       LINESET_1_ZINDEX = 4;
       LINESET_2_ZINDEX = 5;
-      INFOTEXT_LAYER_ZINDEX = 6;
+      FLOATING_INFOTEXT_LAYER_ZINDEX = 6;
+      FIXED_INFOTEXT_LAYER_ZINDEX = 7;
     }
     void PrepareScene();
+    void Run();
 
     void DisableTracker();
 
     Scene2D& GetScene();
 
-    void HandleApplicationEvent(
-      const OpenGLCompositor& compositor,
-      const SDL_Event& event);
+    void HandleApplicationEvent(const SDL_Event& event);
+
+    /**
+    This method is called when the scene transform changes. It allows to
+    recompute the visual elements whose content depend upon the scene transform
+    */
+    void OnSceneTransformChanged(const Scene2D::SceneTransformChanged& message);
 
   private:
     void SelectNextTool();
@@ -86,8 +97,7 @@ namespace OrthancStone
 
     FlexiblePointerTrackerPtr CreateSuitableTracker(
       const SDL_Event& event,
-      const PointerEvent& e,
-      const OpenGLCompositor& compositor);
+      const PointerEvent& e);
 
     void TakeScreenshot(
       const std::string& target,
@@ -102,10 +112,12 @@ namespace OrthancStone
     void Redo();
 
   private:
-    void DisplayInfoText(const PointerEvent& e);
+    void DisplayFloatingCtrlInfoText(const PointerEvent& e);
+    void DisplayInfoText();
     void HideInfoText();
 
   private:
+    std::auto_ptr<OpenGLCompositor> compositor_;
     /**
     WARNING: the measuring tools do store a reference to the scene, and it 
     paramount that the scene gets destroyed AFTER the measurement tools.
@@ -119,21 +131,16 @@ namespace OrthancStone
     std::vector<MeasureToolPtr> measureTools_;
 
     //static const int LAYER_POSITION = 150;
-#if 0
-    int TEXTURE_2x2_1_ZINDEX = 12;
-    int TEXTURE_1x1_ZINDEX = 13;
-    int TEXTURE_2x2_2_ZINDEX = 14;
-    int LINESET_1_ZINDEX = 50;
-    int LINESET_2_ZINDEX = 100;
-    int INFOTEXT_LAYER_ZINDEX = 150;
-#else
+
+
     int TEXTURE_2x2_1_ZINDEX;
     int TEXTURE_1x1_ZINDEX;
     int TEXTURE_2x2_2_ZINDEX;
     int LINESET_1_ZINDEX;
     int LINESET_2_ZINDEX;
-    int INFOTEXT_LAYER_ZINDEX;
-#endif
+    int FLOATING_INFOTEXT_LAYER_ZINDEX;
+    int FIXED_INFOTEXT_LAYER_ZINDEX;
+
     GuiTool currentTool_;
   };
 

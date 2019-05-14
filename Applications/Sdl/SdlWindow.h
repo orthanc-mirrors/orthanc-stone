@@ -40,7 +40,8 @@ namespace OrthancStone
     SdlWindow(const char* title,
               unsigned int width,
               unsigned int height,
-              bool enableOpenGl);
+              bool enableOpenGl,
+              bool allowDpiScaling = true);
 
     ~SdlWindow();
 

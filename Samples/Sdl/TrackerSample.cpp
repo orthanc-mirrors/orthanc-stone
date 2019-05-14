@@ -53,77 +53,8 @@ using namespace Orthanc;
 using namespace OrthancStone;
 
 
-static void GLAPIENTRY
-OpenGLMessageCallback(GLenum source,
-  GLenum type,
-  GLuint id,
-  GLenum severity,
-  GLsizei length,
-  const GLchar* message,
-  const void* userParam)
-{
-  if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
-  {
-    fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-      (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
-      type, severity, message);
-  }
-}
 
-bool g_stopApplication = false;
 
-void Run(TrackerSampleApp* app)
-{
-  SdlOpenGLWindow window("Hello", 1024, 768);
-
-  app->GetScene().FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
-
-  glEnable(GL_DEBUG_OUTPUT);
-  glDebugMessageCallback(OpenGLMessageCallback, 0);
-
-  OpenGLCompositor compositor(window, app->GetScene());
-  compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,
-    FONT_SIZE, Orthanc::Encoding_Latin1);
-
-  while (!g_stopApplication)
-  {
-    compositor.Refresh();
-
-    SDL_Event event;
-    while (!g_stopApplication && SDL_PollEvent(&event))
-    {
-      if (event.type == SDL_QUIT)
-      {
-        g_stopApplication = true;
-        break;
-      }
-      else if (event.type == SDL_WINDOWEVENT &&
-        event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-      {
-        app->DisableTracker(); // was: tracker.reset(NULL);
-        compositor.UpdateSize();
-      }
-      else if (event.type == SDL_KEYDOWN &&
-        event.key.repeat == 0 /* Ignore key bounce */)
-      {
-        switch (event.key.keysym.sym)
-        {
-        case SDLK_f:
-          window.GetWindow().ToggleMaximize();
-          break;
-
-        case SDLK_q:
-          g_stopApplication = true;
-          break;
-        default:
-          break;
-        }
-      }
-      app->HandleApplicationEvent(compositor, event);
-    }
-    SDL_Delay(1);
-  }
-}
 
 
 /**
@@ -143,7 +74,7 @@ int main(int argc, char* argv[])
     MessageBroker broker;
     TrackerSampleApp app(broker);
     app.PrepareScene();
-    Run(&app);
+    app.Run();
   }
   catch (Orthanc::OrthancException& e)
   {

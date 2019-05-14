@@ -37,8 +37,9 @@ namespace OrthancStone
 {
   SdlOpenGLWindow::SdlOpenGLWindow(const char* title,
                                    unsigned int width,
-                                   unsigned int height) :
-    window_(title, width, height, true /* enable OpenGL */)
+                                   unsigned int height,
+                                   bool allowDpiScaling) :
+    window_(title, width, height, true /* enable OpenGL */, allowDpiScaling)
   {
     context_ = SDL_GL_CreateContext(window_.GetObject());
     

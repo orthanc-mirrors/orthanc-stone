@@ -87,7 +87,6 @@ namespace OrthancStone
   {
     if (IsEnabled())
     {
-
       // get the scaling factor 
       const double pixelToScene =
         GetScene().GetCanvasToSceneTransform().ComputeZoom();
@@ -160,29 +159,43 @@ namespace OrthancStone
         {
           PolylineSceneLayer::Chain chain;
 
+          const double ARC_RADIUS_CANVAS_COORD = 20.0;
           AddShortestArc(chain, GetScene(), side1End_, center_, side2End_, 
-            20.0*pixelToScene);
+            ARC_RADIUS_CANVAS_COORD*pixelToScene);
           polylineLayer->AddChain(chain, false);
         }
       }
       {
-        // Set the text layer proporeties
+        // Set the text layer
 
-        // the angle is measured in a clockwise way between the points
-        double angleRad = MeasureAngle(side1End_, center_, side2End_);
-        double angleDeg = RadiansToDegrees(angleRad);
-               
+        double p1cAngle = atan2(
+          side1End_.GetY() - center_.GetY(),
+          side1End_.GetX() - center_.GetX());
+        double p2cAngle = atan2(
+          side2End_.GetY() - center_.GetY(),
+          side2End_.GetX() - center_.GetX());
+        double delta = NormalizeAngle(p2cAngle - p1cAngle);
+        double theta = delta/2;
+
+        const double TEXT_CENTER_DISTANCE_CANVAS_COORD = 40.0;
+
+        double offsetX = TEXT_CENTER_DISTANCE_CANVAS_COORD * cos(theta);
+        double offsetY = TEXT_CENTER_DISTANCE_CANVAS_COORD * sin(theta);
+        double pointX = center_.GetX() + offsetX;
+        double pointY = center_.GetY() + offsetY;
+
         TextSceneLayer* textLayer = GetTextLayer();
 
         char buf[64];
+        double angleDeg = RadiansToDegrees(delta);
         sprintf(buf, "%0.02f deg", angleDeg);
         textLayer->SetText(buf);
         textLayer->SetColor(0, 223, 21);
 
         ScenePoint2D textAnchor;
-        GetPositionOnBisectingLine(
-          textAnchor, side1End_, center_, side2End_, 40.0*pixelToScene);
-        textLayer->SetPosition(textAnchor.GetX(), textAnchor.GetY());
+        //GetPositionOnBisectingLine(
+        //  textAnchor, side1End_, center_, side2End_, 40.0*pixelToScene);
+        textLayer->SetPosition(pointX, pointY);
       }
     }
     else

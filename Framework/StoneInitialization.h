@@ -21,9 +21,15 @@
 
 #pragma once
 
+#include <Core/Logging.h>
+
 namespace OrthancStone
 {
+#if ORTHANC_ENABLE_LOGGING_PLUGIN == 1
+  void StoneInitialize(OrthancPluginContext* context);
+#else
   void StoneInitialize();
+#endif
 
   void StoneFinalize();
 }

@@ -59,7 +59,7 @@ namespace OrthancStone
     }
 
 // TODO: probably required on MacOS X, too
-#ifdef WIN32
+#if defined(WIN32) && (_WIN32_WINNT >= 0x0600)
     if (!allowDpiScaling)
     {
       // if we do NOT allow DPI scaling, it means an SDL pixel will be a real

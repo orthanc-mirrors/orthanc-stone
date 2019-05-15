@@ -147,7 +147,7 @@ endif()
 
 if (ENABLE_OPENGL)
   if (NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-    # If including "FindOpenGL.cmake" using Emscripten (targetting
+    # If including "FindOpenGL.cmake" using Emscripten (targeting
     # WebAssembly), the "OPENGL_LIBRARIES" value incorrectly includes
     # the "nul" library, which leads to warning message in Emscripten:
     # 'shared:WARNING: emcc: cannot find library "nul"'.

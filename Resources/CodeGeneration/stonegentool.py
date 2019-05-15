@@ -186,6 +186,7 @@ def MakeTemplate(templateStr):
   RegisterTemplateFunction(template,NeedsCppConstruction)
   RegisterTemplateFunction(template, DefaultValueToTs)
   RegisterTemplateFunction(template, DefaultValueToCpp)
+  RegisterTemplateFunction(template, sorted)
   return template
 
 def MakeTemplateFromFile(templateFileName):
@@ -533,6 +534,11 @@ def LoadSchemaFromString(schemaText:str):
           lineNumber = schemaText.count("\n",0,i) + 1
           raise RuntimeError("Error at line " + str(lineNumber) + " in the schema: colons must be followed by a space or a newline!")
     schema = yaml.load(schemaText)
+    print("*******************************************")
+    print("*******************************************")
+    print(schema["struct EventBase"])
+    print("*******************************************")
+    print("*******************************************")
     return schema
 
 def GetTemplatingDictFromSchemaFilename(fn):

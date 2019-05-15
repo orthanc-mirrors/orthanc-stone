@@ -42,6 +42,11 @@ namespace OrthancStone
         argSs << "--" << std::get<0>(*it);
         if(std::get<1>(*it).length() > 0)
           argSs << "=" << std::get<1>(*it);
+
+        argvStrings[argCounter] = argSs.str();
+        cmdLine = cmdLine + " " + argvStrings[argCounter];
+        argv[argCounter] = argvStrings[argCounter].c_str();
+        argCounter++;
     }
 
 

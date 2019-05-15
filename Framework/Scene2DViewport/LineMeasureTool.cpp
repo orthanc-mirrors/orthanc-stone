@@ -38,10 +38,10 @@ namespace OrthancStone
   {
     if (layersCreated)
     {
-      assert(GetScene().HasLayer(polylineZIndex_));
-      assert(GetScene().HasLayer(textZIndex_));
-      GetScene().DeleteLayer(polylineZIndex_);
-      GetScene().DeleteLayer(textZIndex_);
+      assert(GetScene()->HasLayer(polylineZIndex_));
+      assert(GetScene()->HasLayer(textZIndex_));
+      GetScene()->DeleteLayer(polylineZIndex_);
+      GetScene()->DeleteLayer(textZIndex_);
     }
   }
 
@@ -67,8 +67,8 @@ namespace OrthancStone
 
   PolylineSceneLayer* LineMeasureTool::GetPolylineLayer()
   {
-    assert(GetScene().HasLayer(polylineZIndex_));
-    ISceneLayer* layer = &(GetScene().GetLayer(polylineZIndex_));
+    assert(GetScene()->HasLayer(polylineZIndex_));
+    ISceneLayer* layer = &(GetScene()->GetLayer(polylineZIndex_));
     PolylineSceneLayer* concreteLayer = dynamic_cast<PolylineSceneLayer*>(layer);
     assert(concreteLayer != NULL);
     return concreteLayer;
@@ -76,8 +76,8 @@ namespace OrthancStone
 
   TextSceneLayer* LineMeasureTool::GetTextLayer()
   {
-    assert(GetScene().HasLayer(textZIndex_));
-    ISceneLayer* layer = &(GetScene().GetLayer(textZIndex_));
+    assert(GetScene()->HasLayer(textZIndex_));
+    ISceneLayer* layer = &(GetScene()->GetLayer(textZIndex_));
     TextSceneLayer* concreteLayer = dynamic_cast<TextSceneLayer*>(layer);
     assert(concreteLayer != NULL);
     return concreteLayer;
@@ -93,23 +93,23 @@ namespace OrthancStone
 
         assert(textZIndex_ == -1);
         {
-          polylineZIndex_ = GetScene().GetMaxDepth() + 100;
+          polylineZIndex_ = GetScene()->GetMaxDepth() + 100;
           //LOG(INFO) << "set polylineZIndex_ to: " << polylineZIndex_;
           std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
-          GetScene().SetLayer(polylineZIndex_, layer.release());
+          GetScene()->SetLayer(polylineZIndex_, layer.release());
         }
         {
-          textZIndex_ = GetScene().GetMaxDepth() + 100;
+          textZIndex_ = GetScene()->GetMaxDepth() + 100;
           //LOG(INFO) << "set textZIndex_ to: " << textZIndex_;
           std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-          GetScene().SetLayer(textZIndex_, layer.release());
+          GetScene()->SetLayer(textZIndex_, layer.release());
         }
         layersCreated = true;
       }
       else
       {
-        assert(GetScene().HasLayer(polylineZIndex_));
-        assert(GetScene().HasLayer(textZIndex_));
+        assert(GetScene()->HasLayer(polylineZIndex_));
+        assert(GetScene()->HasLayer(textZIndex_));
       }
       {
         // Fill the polyline layer with the measurement line
@@ -131,17 +131,17 @@ namespace OrthancStone
 
           {
             PolylineSceneLayer::Chain chain;
-            AddSquare(chain, GetScene(), start_, 10.0); //TODO: take DPI into account
+            AddSquare(chain, *GetScene(), start_, 10.0); //TODO: take DPI into account
             polylineLayer->AddChain(chain, true);
           }
 
           {
             PolylineSceneLayer::Chain chain;
-            AddSquare(chain, GetScene(), end_, 10.0); //TODO: take DPI into account
+            AddSquare(chain, *GetScene(), end_, 10.0); //TODO: take DPI into account
             polylineLayer->AddChain(chain, true);
           }
 
-          //ScenePoint2D startC = start_.Apply(GetScene().GetSceneToCanvasTransform());
+          //ScenePoint2D startC = start_.Apply(GetScene()->GetSceneToCanvasTransform());
           //double squareSize = 10.0; 
           //double startHandleLX = startC.GetX() - squareSize/2;
           //double startHandleTY = startC.GetY() - squareSize / 2;
@@ -152,10 +152,10 @@ namespace OrthancStone
           //ScenePoint2D startRBC(startHandleRX, startHandleBY);
           //ScenePoint2D startLBC(startHandleLX, startHandleBY);
 
-          //ScenePoint2D startLT = startLTC.Apply(GetScene().GetCanvasToSceneTransform());
-          //ScenePoint2D startRT = startRTC.Apply(GetScene().GetCanvasToSceneTransform());
-          //ScenePoint2D startRB = startRBC.Apply(GetScene().GetCanvasToSceneTransform());
-          //ScenePoint2D startLB = startLBC.Apply(GetScene().GetCanvasToSceneTransform());
+          //ScenePoint2D startLT = startLTC.Apply(GetScene()->GetCanvasToSceneTransform());
+          //ScenePoint2D startRT = startRTC.Apply(GetScene()->GetCanvasToSceneTransform());
+          //ScenePoint2D startRB = startRBC.Apply(GetScene()->GetCanvasToSceneTransform());
+          //ScenePoint2D startLB = startLBC.Apply(GetScene()->GetCanvasToSceneTransform());
 
           //PolylineSceneLayer::Chain chain;
           //chain.push_back(startLT);

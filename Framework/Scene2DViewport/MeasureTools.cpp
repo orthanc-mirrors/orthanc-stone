@@ -21,8 +21,12 @@
 #include "MeasureTools.h"
 
 #include <Core/Logging.h>
+#include <Core/Enumerations.h>
+#include <Core>
 
 #include <boost/math/constants/constants.hpp>
+
+using namespace Orthanc;
 
 namespace OrthancStone
 {
@@ -49,17 +53,20 @@ namespace OrthancStone
     return enabled_;
   }
 
-  OrthancStone::Scene2D& MeasureTool::GetScene()
+  OrthancStone::Scene2DPtr MeasureTool::GetScene()
   {
-    return scene_;
+    Scene2DPtr scene = scene_.lock();
+    if (!scene)
+      throw OrthancException(ErrorCode_InternalError, "Using dead object!");
+    return scene;
   }
 
-  MeasureTool::MeasureTool(MessageBroker& broker, Scene2D& scene)
+  MeasureTool::MeasureTool(MessageBroker& broker, Scene2DWPtr sceneW)
     : IObserver(broker)
-    , scene_(scene)
+    , scene_(sceneW)
     , enabled_(true)
   {
-    scene_.RegisterObserverCallback(
+    GetScene()->RegisterObserverCallback(
       new Callable<MeasureTool, Scene2D::SceneTransformChanged>
       (*this, &MeasureTool::OnSceneTransformChanged));
   }

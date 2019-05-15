@@ -20,6 +20,8 @@
 
 #include "MeasureToolsToolbox.h"
 
+#include <Framework/Scene2D/TextSceneLayer.h>
+
 #include <boost/math/constants/constants.hpp>
 
 namespace
@@ -115,7 +117,6 @@ namespace OrthancStone
     result = ScenePoint2D(posX, posY);
   }
    
-
   void AddShortestArc(
       PolylineSceneLayer::Chain&  chain
     , const Scene2D&              scene
@@ -275,4 +276,61 @@ namespace OrthancStone
     chain.push_back(startLB);
 }
 #endif
+
+
+  namespace
+  {
+    /**
+    Helper function for outlined text rendering
+    */
+    TextSceneLayer* GetOutlineTextLayer(
+      Scene2D& scene, int baseLayerIndex, int index)
+    {
+      assert(scene.HasLayer(baseLayerIndex));
+      assert(index >= 0);
+      assert(index < 5);
+
+      ISceneLayer * layer = &(scene.GetLayer(baseLayerIndex + index));
+      TextSceneLayer * concreteLayer = dynamic_cast<TextSceneLayer*>(layer);
+      assert(concreteLayer != NULL);
+      return concreteLayer;
+    }
+  }
+   
+  void SetTextLayerOutlineProperties(
+    Scene2D& scene, int baseLayerIndex, const char* text, ScenePoint2D p)
+  {
+    double xoffsets[5] = { 2, 0, -2, 0, 0 };
+    double yoffsets[5] = { 0, -2, 0, 2, 0 };
+
+    // get the scaling factor 
+    const double pixelToScene =
+      scene.GetCanvasToSceneTransform().ComputeZoom();
+
+    for (int i = 0; i < 5; ++i)
+    {
+      TextSceneLayer* textLayer = GetOutlineTextLayer(scene, baseLayerIndex, i);
+      textLayer->SetText(text);
+
+      if (i == 4)
+        textLayer->SetColor(0, 223, 81);
+      else
+        textLayer->SetColor(0, 56, 21);
+
+      ScenePoint2D textAnchor;
+      //GetPositionOnBisectingLine(
+      //  textAnchor, side1End_, center_, side2End_, 40.0*pixelToScene);
+      textLayer->SetPosition(
+        p.GetX() + xoffsets[i] * pixelToScene,
+        p.GetY() + yoffsets[i] * pixelToScene);
+    }
+  }
+
+
+
+
+
+
+
+
 }

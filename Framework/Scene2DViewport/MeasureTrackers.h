@@ -20,46 +20,38 @@
 
 #pragma once
 
-#include "MeasureTrackers.h"
+#include "IFlexiblePointerTracker.h"
+#include "../../Framework/Scene2D/Scene2D.h"
+#include "../../Framework/Scene2D/PointerEvent.h"
+
+#include "MeasureTools.h"
 #include "MeasureCommands.h"
 
 #include <vector>
 
 namespace OrthancStone
 {
-  class CreateAngleMeasureTracker : public CreateMeasureTracker
+  class CreateMeasureTracker : public IFlexiblePointerTracker
   {
   public:
-    /**
-    When you create this tracker, you need to supply it with the undo stack
-    where it will store the commands that perform the actual measure tool
-    creation and modification.
-    In turn, a container for these commands to store the actual measuring
-    must be supplied, too
-    */
-    CreateAngleMeasureTracker(
-      MessageBroker&                  broker,
-      Scene2D&                        scene,
+    virtual void Cancel() ORTHANC_OVERRIDE;
+    virtual bool IsActive() const ORTHANC_OVERRIDE;
+  protected:
+    CreateMeasureTracker(
+      Scene2DWPtr                     scene,
       std::vector<TrackerCommandPtr>& undoStack,
-      std::vector<MeasureToolPtr>&    measureTools,
-      const PointerEvent&             e);
+      std::vector<MeasureToolPtr>&    measureTools);
 
-    ~CreateAngleMeasureTracker();
-
-    virtual void PointerMove(const PointerEvent& e) ORTHANC_OVERRIDE;
-    virtual void PointerUp(const PointerEvent& e) ORTHANC_OVERRIDE;
-    virtual void PointerDown(const PointerEvent& e) ORTHANC_OVERRIDE;
-
+    ~CreateMeasureTracker();
+  
+  protected:
+    CreateMeasureCommandPtr         command_;
+    Scene2DWPtr                     scene_;
+    bool                            active_;
   private:
-    CreateAngleMeasureCommandPtr GetCommand();
-
-    enum State
-    {
-      CreatingSide1,
-      CreatingSide2,
-      Finished // just for debug
-    };
-    State state_;
-
+    std::vector<TrackerCommandPtr>& undoStack_;
+    std::vector<MeasureToolPtr>&    measureTools_;
+    bool                            commitResult_;
   };
 }
+

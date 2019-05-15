@@ -27,18 +27,19 @@ namespace OrthancStone
 {
   CreateLineMeasureTracker::CreateLineMeasureTracker(
     MessageBroker&                  broker,
-    Scene2D&                        scene,
+    Scene2DWPtr                     sceneW,
     std::vector<TrackerCommandPtr>& undoStack,
-    std::vector<MeasureToolPtr>&    measureTools,
+    MeasureToolList&                measureTools,
     const PointerEvent&             e)
-    : CreateMeasureTracker(scene, undoStack, measureTools)
+    : CreateMeasureTracker(sceneW, undoStack, measureTools)
   {
+    Scene2DPtr scene = sceneW.lock();
     command_.reset(
       new CreateLineMeasureCommand(
         broker,
-        scene,
+        sceneW,
         measureTools,
-        e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform())));
+        e.GetMainPosition().Apply(scene->GetCanvasToSceneTransform())));
   }
 
   CreateLineMeasureTracker::~CreateLineMeasureTracker()
@@ -48,6 +49,9 @@ namespace OrthancStone
 
   void CreateLineMeasureTracker::PointerMove(const PointerEvent& event)
   {
+    Scene2DPtr scene = scene_.lock();
+    assert(scene);
+    
     if (!active_)
     {
       throw OrthancException(ErrorCode_InternalError,
@@ -56,7 +60,7 @@ namespace OrthancStone
     }
 
     ScenePoint2D scenePos = event.GetMainPosition().Apply(
-      scene_.GetCanvasToSceneTransform());
+      scene->GetCanvasToSceneTransform());
 
     //LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
     //  "scenePos.GetY() = " << scenePos.GetY();

@@ -27,10 +27,10 @@ namespace OrthancStone
 {
 
   CreateMeasureTracker::CreateMeasureTracker(
-    Scene2D&                        scene,
+    Scene2DWPtr                     sceneW,
     std::vector<TrackerCommandPtr>& undoStack,
     std::vector<MeasureToolPtr>&    measureTools)
-    : scene_(scene)
+    : scene_(sceneW)
     , active_(true)
     , undoStack_(undoStack)
     , measureTools_(measureTools)

@@ -155,8 +155,8 @@ namespace OrthancStone
         program_->Use();
 
         double dx, dy;  // In pixels
-        ComputeAnchorTranslation(dx, dy, data.GetAnchor(), 
-                                 data.GetTextWidth(), data.GetTextHeight(), data.GetBorder());
+        ComputeAnchorTranslation(dx, dy, data.GetAnchor(), data.GetTextWidth(), 
+          data.GetTextHeight(), static_cast<unsigned int>(data.GetBorder()));
       
         double x = data.GetX();
         double y = data.GetY();
@@ -182,7 +182,8 @@ namespace OrthancStone
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        glDrawArrays(GL_TRIANGLES, 0, data.GetCoordinatesCount() / COMPONENTS);
+        glDrawArrays(GL_TRIANGLES, 0, 
+          static_cast<GLsizei>(data.GetCoordinatesCount() / COMPONENTS));
         glDisable(GL_BLEND);
 
         glDisableVertexAttribArray(positionLocation_);

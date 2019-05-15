@@ -119,3 +119,4 @@ namespace OrthancStone
                     unsigned int canvasHeight);
   };
 }
+

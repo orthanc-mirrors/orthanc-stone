@@ -21,11 +21,14 @@
 
 #pragma once
 
+
 #include "IPointerTracker.h"
 #include "Internals/FixedPointAligner.h"
 
 namespace OrthancStone
 {
+  class Scene2D;
+
   class ZoomSceneTracker : public IPointerTracker
   {
   private:

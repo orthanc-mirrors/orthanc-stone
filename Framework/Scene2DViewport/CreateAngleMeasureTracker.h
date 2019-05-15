@@ -21,10 +21,13 @@
 #pragma once
 
 #include "MeasureTrackers.h"
+#include "MeasureCommands.h"
+
+#include <vector>
 
 namespace OrthancStone
 {
-  class CreateLineMeasureTracker : public CreateMeasureTracker
+  class CreateAngleMeasureTracker : public CreateMeasureTracker
   {
   public:
     /**
@@ -34,20 +37,29 @@ namespace OrthancStone
     In turn, a container for these commands to store the actual measuring
     must be supplied, too
     */
-    CreateLineMeasureTracker(
+    CreateAngleMeasureTracker(
       MessageBroker&                  broker,
-      Scene2D&                        scene,
+      Scene2DWPtr                     scene,
       std::vector<TrackerCommandPtr>& undoStack,
-      std::vector<MeasureToolPtr>&    measureTools,
+      MeasureToolList&                measureTools,
       const PointerEvent&             e);
 
-    ~CreateLineMeasureTracker();
+    ~CreateAngleMeasureTracker();
 
     virtual void PointerMove(const PointerEvent& e) ORTHANC_OVERRIDE;
     virtual void PointerUp(const PointerEvent& e) ORTHANC_OVERRIDE;
     virtual void PointerDown(const PointerEvent& e) ORTHANC_OVERRIDE;
 
   private:
-    CreateLineMeasureCommandPtr GetCommand();
+    CreateAngleMeasureCommandPtr GetCommand();
+
+    enum State
+    {
+      CreatingSide1,
+      CreatingSide2,
+      Finished // just for debug
+    };
+    State state_;
+
   };
 }

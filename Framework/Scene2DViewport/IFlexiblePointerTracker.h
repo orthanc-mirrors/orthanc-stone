@@ -21,14 +21,12 @@
 
 #pragma once
 
+#include "PointerTypes.h"
+
 #include <Framework/Scene2D/PointerEvent.h>
-#include <boost/shared_ptr.hpp>
 
 namespace OrthancStone
 {
-  class IPointerTracker;
-  typedef boost::shared_ptr<IPointerTracker> PointerTrackerPtr;
-
   /**
   This interface represents a flexible mouse tracker that can respond to 
   several events and is not automatically deleted upon mouse up or when touch
@@ -73,7 +71,6 @@ namespace OrthancStone
     virtual void Cancel() = 0;
   };
 
-  typedef boost::shared_ptr<IFlexiblePointerTracker> FlexiblePointerTrackerPtr;
 
   /**
   This factory adopts the supplied simple tracker and creates a flexible 

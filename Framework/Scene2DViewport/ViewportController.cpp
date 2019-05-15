@@ -18,49 +18,32 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#include "ViewportController.h"
 
-#pragma once
+#include <Framework/StoneException.h>
 
-#include "../Toolbox/AffineTransform2D.h"
+using namespace Orthanc;
 
 namespace OrthancStone
 {
-  class ScenePoint2D
+
+  ViewportController::ViewportController(MessageBroker& broker)
+    : broker_(broker)
   {
-  private:
-    double  x_;
-    double  y_;
 
-  public:
-    ScenePoint2D() :
-      x_(0),
-      y_(0)
-    {
-    }
+  }
 
-    ScenePoint2D(double x,
-                 double y) :
-      x_(x),
-      y_(y)
-    {
-    }
+  Scene2DPtr ViewportController::GetScene()
+  {
+    Scene2DPtr scene = scene_.lock();
+    if (!scene)
+      throw OrthancException(ErrorCode_InternalError, "Using dead object!");
+    return scene;
+  }
 
-    double GetX() const
-    {
-      return x_;
-    }
-
-    double GetY() const
-    {
-      return y_;
-    }
-
-    ScenePoint2D Apply(const AffineTransform2D& t) const
-    {
-      double x = x_;
-      double y = y_;
-      t.Apply(x, y);
-      return ScenePoint2D(x, y);
-    }
-  };
+  bool ViewportController::HandlePointerEvent(PointerEvent e)
+  {
+    throw StoneException(ErrorCode_NotImplemented);
+  }
 }
+

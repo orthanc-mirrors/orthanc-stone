@@ -251,7 +251,8 @@ cmake -G "Ninja" -DENABLE_OPENGL=ON -DSTATIC_BUILD=OFF -DOPENSSL_NO_CAPIENG=ON -
 ```
 
 TODO trackers:
-- text overlay 50% --> ColorTextureLayer 50%
-- angle tracker: draw arcs
-
+- CANCELLED (using outlined text now) text overlay 50% --> ColorTextureLayer 50%
+- DONE angle tracker: draw arcs
+- Handles on arc
+- Select measure tool with hit test --> Delete command
 

@@ -20,21 +20,22 @@
 
 #include "TrackerSampleApp.h"
 
-#include "../Common/CreateLineMeasureTracker.h"
-#include "../Common/CreateAngleMeasureTracker.h"
+#include <Framework/Scene2DViewport/CreateLineMeasureTracker.h>
+#include <Framework/Scene2DViewport/CreateAngleMeasureTracker.h>
 
-#include "../../Applications/Sdl/SdlOpenGLWindow.h"
+#include <Framework/Scene2D/PanSceneTracker.h>
+#include <Framework/Scene2D/RotateSceneTracker.h>
+#include <Framework/Scene2D/Scene2D.h>
+#include <Framework/Scene2D/ZoomSceneTracker.h>
+#include <Framework/Scene2D/CairoCompositor.h>
+#include <Framework/Scene2D/ColorTextureSceneLayer.h>
+#include <Framework/Scene2D/OpenGLCompositor.h>
 
-#include "../../Framework/Scene2D/PanSceneTracker.h"
-#include "../../Framework/Scene2D/RotateSceneTracker.h"
-#include "../../Framework/Scene2D/Scene2D.h"
-#include "../../Framework/Scene2D/ZoomSceneTracker.h"
-#include "../../Framework/Scene2D/CairoCompositor.h"
-#include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
-#include "../../Framework/Scene2D/OpenGLCompositor.h"
-#include "../../Framework/StoneInitialization.h"
+#include <Framework/StoneInitialization.h>
 
- // From Orthanc framework
+#include <Applications/Sdl/SdlOpenGLWindow.h>
+
+// From Orthanc framework
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 #include <Core/Images/Image.h>
@@ -67,9 +68,9 @@ namespace OrthancStone
     return descs[i];
   }
 
-  Scene2D& TrackerSampleApp::GetScene()
+  Scene2DPtr TrackerSampleApp::GetScene()
   {
-    return scene_;
+    return controller_.GetScene();
   }
 
   void TrackerSampleApp::SelectNextTool()
@@ -94,10 +95,10 @@ namespace OrthancStone
     auto msgS = msg.str();
 
     TextSceneLayer* layerP = NULL;
-    if (scene_.HasLayer(FIXED_INFOTEXT_LAYER_ZINDEX))
+    if (GetScene()->HasLayer(FIXED_INFOTEXT_LAYER_ZINDEX))
     {
       TextSceneLayer& layer = dynamic_cast<TextSceneLayer&>(
-        scene_.GetLayer(FIXED_INFOTEXT_LAYER_ZINDEX));
+        GetScene()->GetLayer(FIXED_INFOTEXT_LAYER_ZINDEX));
       layerP = &layer;
     }
     else
@@ -109,29 +110,29 @@ namespace OrthancStone
       layer->SetBorder(20);
       layer->SetAnchor(BitmapAnchor_TopLeft);
       //layer->SetPosition(0,0);
-      scene_.SetLayer(FIXED_INFOTEXT_LAYER_ZINDEX, layer.release());
+      GetScene()->SetLayer(FIXED_INFOTEXT_LAYER_ZINDEX, layer.release());
     }
     // position the fixed info text in the upper right corner
     layerP->SetText(msgS.c_str());
     double cX = compositor_->GetCanvasWidth() * (-0.5);
     double cY = compositor_->GetCanvasHeight() * (-0.5);
-    scene_.GetCanvasToSceneTransform().Apply(cX,cY);
+    GetScene()->GetCanvasToSceneTransform().Apply(cX,cY);
     layerP->SetPosition(cX, cY);
   }
 
   void TrackerSampleApp::DisplayFloatingCtrlInfoText(const PointerEvent& e)
   {
-    ScenePoint2D p = e.GetMainPosition().Apply(scene_.GetCanvasToSceneTransform());
+    ScenePoint2D p = e.GetMainPosition().Apply(GetScene()->GetCanvasToSceneTransform());
 
     char buf[128];
     sprintf(buf, "S:(%0.02f,%0.02f) C:(%0.02f,%0.02f)", 
       p.GetX(), p.GetY(), 
       e.GetMainPosition().GetX(), e.GetMainPosition().GetY());
 
-    if (scene_.HasLayer(FLOATING_INFOTEXT_LAYER_ZINDEX))
+    if (GetScene()->HasLayer(FLOATING_INFOTEXT_LAYER_ZINDEX))
     {
       TextSceneLayer& layer =
-        dynamic_cast<TextSceneLayer&>(scene_.GetLayer(FLOATING_INFOTEXT_LAYER_ZINDEX));
+        dynamic_cast<TextSceneLayer&>(GetScene()->GetLayer(FLOATING_INFOTEXT_LAYER_ZINDEX));
       layer.SetText(buf);
       layer.SetPosition(p.GetX(), p.GetY());
     }
@@ -143,13 +144,13 @@ namespace OrthancStone
       layer->SetBorder(20);
       layer->SetAnchor(BitmapAnchor_BottomCenter);
       layer->SetPosition(p.GetX(), p.GetY());
-      scene_.SetLayer(FLOATING_INFOTEXT_LAYER_ZINDEX, layer.release());
+      GetScene()->SetLayer(FLOATING_INFOTEXT_LAYER_ZINDEX, layer.release());
     }
   }
 
   void TrackerSampleApp::HideInfoText()
   {
-    scene_.DeleteLayer(FLOATING_INFOTEXT_LAYER_ZINDEX);
+    GetScene()->DeleteLayer(FLOATING_INFOTEXT_LAYER_ZINDEX);
   }
 
   void TrackerSampleApp::HandleApplicationEvent(
@@ -249,7 +250,7 @@ namespace OrthancStone
         break;
 
       case SDLK_s:
-        scene_.FitContent(compositor_->GetCanvasWidth(),
+        GetScene()->FitContent(compositor_->GetCanvasWidth(),
           compositor_->GetCanvasHeight());
         break;
 
@@ -280,11 +281,11 @@ namespace OrthancStone
     {
     case SDL_BUTTON_MIDDLE:
       return CreateSimpleTrackerAdapter(PointerTrackerPtr(
-        new PanSceneTracker(scene_, e)));
+        new PanSceneTracker(*GetScene(), e)));
 
     case SDL_BUTTON_RIGHT:
       return CreateSimpleTrackerAdapter(PointerTrackerPtr(
-        new ZoomSceneTracker(scene_, e, compositor_->GetCanvasHeight())));
+        new ZoomSceneTracker(*GetScene(), e, compositor_->GetCanvasHeight())));
 
     case SDL_BUTTON_LEFT:
     {
@@ -310,25 +311,25 @@ namespace OrthancStone
         case GuiTool_Rotate:
           //LOG(TRACE) << "Creating RotateSceneTracker";
           return CreateSimpleTrackerAdapter(PointerTrackerPtr(
-            new RotateSceneTracker(scene_, e)));
+            new RotateSceneTracker(*GetScene(), e)));
         case GuiTool_Pan:
           return CreateSimpleTrackerAdapter(PointerTrackerPtr(
-            new PanSceneTracker(scene_, e)));
+            new PanSceneTracker(*GetScene(), e)));
         case GuiTool_Zoom:
           return CreateSimpleTrackerAdapter(PointerTrackerPtr(
-            new ZoomSceneTracker(scene_, e, compositor_->GetCanvasHeight())));
+            new ZoomSceneTracker(*GetScene(), e, compositor_->GetCanvasHeight())));
         //case GuiTool_AngleMeasure:
-        //  return new AngleMeasureTracker(scene_, measureTools_, undoStack_, e);
+        //  return new AngleMeasureTracker(GetScene(), measureTools_, undoStack_, e);
         //case GuiTool_CircleMeasure:
-        //  return new CircleMeasureTracker(scene_, measureTools_, undoStack_, e);
+        //  return new CircleMeasureTracker(GetScene(), measureTools_, undoStack_, e);
         //case GuiTool_EllipseMeasure:
-        //  return new EllipseMeasureTracker(scene_, measureTools_, undoStack_, e);
+        //  return new EllipseMeasureTracker(GetScene(), measureTools_, undoStack_, e);
         case GuiTool_LineMeasure:
           return FlexiblePointerTrackerPtr(new CreateLineMeasureTracker(
-            IObserver::GetBroker(), scene_, undoStack_, measureTools_, e));
+            IObserver::GetBroker(), GetScene(), undoStack_, measureTools_, e));
         case GuiTool_AngleMeasure:
           return FlexiblePointerTrackerPtr(new CreateAngleMeasureTracker(
-            IObserver::GetBroker(), scene_, undoStack_, measureTools_, e));
+            IObserver::GetBroker(), GetScene(), undoStack_, measureTools_, e));
           return NULL;
         case GuiTool_CircleMeasure:
           LOG(ERROR) << "Not implemented yet!";
@@ -349,10 +350,11 @@ namespace OrthancStone
 
   TrackerSampleApp::TrackerSampleApp(MessageBroker& broker) : IObserver(broker)
     , currentTool_(GuiTool_Rotate)
-    , scene_(broker)
   {
-    scene_.RegisterObserverCallback(
-      new Callable<TrackerSampleApp, Scene2D::SceneTransformChanged>
+    controller_ = ViewportControllerPtr(new ViewportController(broker));
+
+    controller_->RegisterObserverCallback(
+      new Callable<TrackerSampleApp, ViewportController::SceneTransformChanged>
       (*this, &TrackerSampleApp::OnSceneTransformChanged));
 
     TEXTURE_2x2_1_ZINDEX = 1;
@@ -362,8 +364,6 @@ namespace OrthancStone
     LINESET_2_ZINDEX = 5;
     FLOATING_INFOTEXT_LAYER_ZINDEX = 6;
     FIXED_INFOTEXT_LAYER_ZINDEX = 7;
-
-
   }
 
   void TrackerSampleApp::PrepareScene()
@@ -390,13 +390,13 @@ namespace OrthancStone
       p[4] = 0;
       p[5] = 0;
 
-      scene_.SetLayer(TEXTURE_2x2_1_ZINDEX, new ColorTextureSceneLayer(i));
+      GetScene()->SetLayer(TEXTURE_2x2_1_ZINDEX, new ColorTextureSceneLayer(i));
 
       std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
       l->SetOrigin(-3, 2);
       l->SetPixelSpacing(1.5, 1);
       l->SetAngle(20.0 / 180.0 * M_PI);
-      scene_.SetLayer(TEXTURE_2x2_2_ZINDEX, l.release());
+      GetScene()->SetLayer(TEXTURE_2x2_2_ZINDEX, l.release());
     }
 
     // Texture of 1x1 size
@@ -411,7 +411,7 @@ namespace OrthancStone
       std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
       l->SetOrigin(-2, 1);
       l->SetAngle(20.0 / 180.0 * M_PI);
-      scene_.SetLayer(TEXTURE_1x1_ZINDEX, l.release());
+      GetScene()->SetLayer(TEXTURE_1x1_ZINDEX, l.release());
     }
 
     // Some lines
@@ -443,14 +443,14 @@ namespace OrthancStone
       layer->AddChain(chain, false);
 
       layer->SetColor(0, 255, 255);
-      scene_.SetLayer(LINESET_1_ZINDEX, layer.release());
+      GetScene()->SetLayer(LINESET_1_ZINDEX, layer.release());
     }
 
     // Some text
     {
       std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer);
       layer->SetText("Hello");
-      scene_.SetLayer(LINESET_2_ZINDEX, layer.release());
+      GetScene()->SetLayer(LINESET_2_ZINDEX, layer.release());
     }
   }
 
@@ -468,7 +468,7 @@ namespace OrthancStone
     unsigned int canvasWidth,
     unsigned int canvasHeight)
   {
-    CairoCompositor compositor(scene_, canvasWidth, canvasHeight);
+    CairoCompositor compositor(GetScene(), canvasWidth, canvasHeight);
     compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, FONT_SIZE_0, Orthanc::Encoding_Latin1);
     compositor.Refresh();
 
@@ -514,7 +514,7 @@ namespace OrthancStone
     // that needs to be scaled
     SdlOpenGLWindow window("Hello", 1024, 1024, false);
 
-    GetScene().FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
+    GetScene()->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
 
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(OpenGLMessageCallback, 0);

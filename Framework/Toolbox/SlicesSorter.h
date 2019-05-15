@@ -80,6 +80,9 @@ namespace OrthancStone
     
     const Orthanc::IDynamicObject& GetSlicePayload(size_t i) const;
 
+    // WARNING - Apply the sorting algorithm can reduce the number of
+    // slices. This is notably the case if all the slices are not
+    // parallel to the reference normal that will be selected.
     bool Sort();
     
     bool LookupClosestSlice(size_t& index,

@@ -348,8 +348,8 @@ namespace OrthancStone
 
 
   TrackerSampleApp::TrackerSampleApp(MessageBroker& broker) : IObserver(broker)
-    , currentTool_(GuiTool_Rotate)
     , scene_(broker)
+    , currentTool_(GuiTool_Rotate)
   {
     scene_.RegisterObserverCallback(
       new Callable<TrackerSampleApp, Scene2D::SceneTransformChanged>

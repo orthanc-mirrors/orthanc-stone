@@ -1505,7 +1505,7 @@ namespace Refactoring
                                           "Cannot sort the 3D slices of a DICOM series");          
         }
 
-        printf("series sorted\n");
+        printf("series sorted %d => %d\n", instances.size(), that_.slices_.GetSlicesCount());
       }
     };
 
@@ -1746,8 +1746,11 @@ void Run(Refactoring::NativeApplicationContext& context)
 
 
   // 2017-11-17-Anonymized
-  loader1->LoadSeries(oracle, "cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
+  //loader1->LoadSeries(oracle, "cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
   loader2->LoadInstance(oracle, "41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
+
+  // Delphine
+  loader1->LoadSeries(oracle, "5990e39c-51e5f201-fe87a54c-31a55943-e59ef80e");  // CT
 
   LOG(WARNING) << "...Waiting for Ctrl-C...";
   Orthanc::SystemToolbox::ServerBarrier();

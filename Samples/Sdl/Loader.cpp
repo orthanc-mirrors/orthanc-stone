@@ -1143,259 +1143,288 @@ namespace Refactoring
     public Orthanc::IDynamicObject  /* to be used as a payload of SlicesSorter */
   {
   private:
-    Orthanc::DicomImageInformation    imageInformation_;
-    OrthancStone::SopClassUid         sopClassUid_;
-    double                            thickness_;
-    double                            pixelSpacingX_;
-    double                            pixelSpacingY_;
-    OrthancStone::CoordinateSystem3D  geometry_;
-    OrthancStone::Vector              frameOffsets_;
-    bool                              isColor_;
-    bool                              hasRescale_;
-    double                            rescaleOffset_;
-    double                            rescaleSlope_;
-    bool                              hasDefaultWindowing_;
-    float                             defaultWindowingCenter_;
-    float                             defaultWindowingWidth_;
-    Orthanc::PixelFormat              expectedPixelFormat_;
-
-    void ComputeDoseOffsets(const Orthanc::DicomMap& dicom)
+    struct Data   // Struct to ease the copy constructor
     {
-      // http://dicom.nema.org/medical/Dicom/2016a/output/chtml/part03/sect_C.8.8.3.2.html
+      Orthanc::DicomImageInformation    imageInformation_;
+      OrthancStone::SopClassUid         sopClassUid_;
+      double                            thickness_;
+      double                            pixelSpacingX_;
+      double                            pixelSpacingY_;
+      OrthancStone::CoordinateSystem3D  geometry_;
+      OrthancStone::Vector              frameOffsets_;
+      bool                              isColor_;
+      bool                              hasRescale_;
+      double                            rescaleOffset_;
+      double                            rescaleSlope_;
+      bool                              hasDefaultWindowing_;
+      float                             defaultWindowingCenter_;
+      float                             defaultWindowingWidth_;
+      Orthanc::PixelFormat              expectedPixelFormat_;
 
+      void ComputeDoseOffsets(const Orthanc::DicomMap& dicom)
       {
-        std::string increment;
+        // http://dicom.nema.org/medical/Dicom/2016a/output/chtml/part03/sect_C.8.8.3.2.html
 
-        if (dicom.CopyToString(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
         {
-          Orthanc::Toolbox::ToUpperCase(increment);
-          if (increment != "3004,000C")  // This is the "Grid Frame Offset Vector" tag
+          std::string increment;
+
+          if (dicom.CopyToString(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
           {
-            LOG(ERROR) << "RT-DOSE: Bad value for the \"FrameIncrementPointer\" tag";
-            return;
+            Orthanc::Toolbox::ToUpperCase(increment);
+            if (increment != "3004,000C")  // This is the "Grid Frame Offset Vector" tag
+            {
+              LOG(ERROR) << "RT-DOSE: Bad value for the \"FrameIncrementPointer\" tag";
+              return;
+            }
+          }
+        }
+
+        if (!OrthancStone::LinearAlgebra::ParseVector(frameOffsets_, dicom, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR) ||
+            frameOffsets_.size() < imageInformation_.GetNumberOfFrames())
+        {
+          LOG(ERROR) << "RT-DOSE: No information about the 3D location of some slice(s)";
+          frameOffsets_.clear();
+        }
+        else
+        {
+          if (frameOffsets_.size() >= 2)
+          {
+            thickness_ = frameOffsets_[1] - frameOffsets_[0];
+
+            if (thickness_ < 0)
+            {
+              thickness_ = -thickness_;
+            }
           }
         }
       }
 
-      if (!OrthancStone::LinearAlgebra::ParseVector(frameOffsets_, dicom, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR) ||
-          frameOffsets_.size() < imageInformation_.GetNumberOfFrames())
+      Data(const Orthanc::DicomMap& dicom) :
+        imageInformation_(dicom)
       {
-        LOG(ERROR) << "RT-DOSE: No information about the 3D location of some slice(s)";
-        frameOffsets_.clear();
-      }
-      else
-      {
-        if (frameOffsets_.size() >= 2)
+        if (imageInformation_.GetNumberOfFrames() <= 0)
         {
-          thickness_ = frameOffsets_[1] - frameOffsets_[0];
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+            
+        std::string s;
+        if (!dicom.CopyToString(s, Orthanc::DICOM_TAG_SOP_CLASS_UID, false))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+        else
+        {
+          sopClassUid_ = OrthancStone::StringToSopClassUid(s);
+        }
 
-          if (thickness_ < 0)
+        if (!dicom.ParseDouble(thickness_, Orthanc::DICOM_TAG_SLICE_THICKNESS))
+        {
+          thickness_ = 100.0 * std::numeric_limits<double>::epsilon();
+        }
+
+        OrthancStone::GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, dicom);
+
+        std::string position, orientation;
+        if (dicom.CopyToString(position, Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT, false) &&
+            dicom.CopyToString(orientation, Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT, false))
+        {
+          geometry_ = OrthancStone::CoordinateSystem3D(position, orientation);
+        }
+
+        if (sopClassUid_ == OrthancStone::SopClassUid_RTDose)
+        {
+          ComputeDoseOffsets(dicom);
+        }
+
+        isColor_ = (imageInformation_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome1 &&
+                    imageInformation_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome2);
+
+        double doseGridScaling;
+
+        if (dicom.ParseDouble(rescaleOffset_, Orthanc::DICOM_TAG_RESCALE_INTERCEPT) &&
+            dicom.ParseDouble(rescaleSlope_, Orthanc::DICOM_TAG_RESCALE_SLOPE))
+        {
+          hasRescale_ = true;
+        }
+        else if (dicom.ParseDouble(doseGridScaling, Orthanc::DICOM_TAG_DOSE_GRID_SCALING))
+        {
+          hasRescale_ = true;
+          rescaleOffset_ = 0;
+          rescaleSlope_ = doseGridScaling;
+        }
+        else
+        {
+          hasRescale_ = false;
+        }
+
+        OrthancStone::Vector c, w;
+        if (OrthancStone::LinearAlgebra::ParseVector(c, dicom, Orthanc::DICOM_TAG_WINDOW_CENTER) &&
+            OrthancStone::LinearAlgebra::ParseVector(w, dicom, Orthanc::DICOM_TAG_WINDOW_WIDTH) &&
+            c.size() > 0 && 
+            w.size() > 0)
+        {
+          hasDefaultWindowing_ = true;
+          defaultWindowingCenter_ = static_cast<float>(c[0]);
+          defaultWindowingWidth_ = static_cast<float>(w[0]);
+        }
+        else
+        {
+          hasDefaultWindowing_ = false;
+        }
+
+        if (sopClassUid_ == OrthancStone::SopClassUid_RTDose)
+        {
+          switch (imageInformation_.GetBitsStored())
           {
-            thickness_ = -thickness_;
-          }
+            case 16:
+              expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
+              break;
+
+            case 32:
+              expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale32;
+              break;
+
+            default:
+              throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+          } 
+        }
+        else if (isColor_)
+        {
+          expectedPixelFormat_ = Orthanc::PixelFormat_RGB24;
+        }
+        else if (imageInformation_.IsSigned())
+        {
+          expectedPixelFormat_ = Orthanc::PixelFormat_SignedGrayscale16;
+        }
+        else
+        {
+          expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
         }
       }
-    }
+
+      OrthancStone::CoordinateSystem3D  GetFrameGeometry(unsigned int frame) const
+      {
+        if (frame == 0)
+        {
+          return geometry_;
+        }
+        else if (frame >= imageInformation_.GetNumberOfFrames())
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        }
+        else if (sopClassUid_ == OrthancStone::SopClassUid_RTDose)
+        {
+          if (frame >= frameOffsets_.size())
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+          }
+
+          return OrthancStone::CoordinateSystem3D(
+            geometry_.GetOrigin() + frameOffsets_[frame] * geometry_.GetNormal(),
+            geometry_.GetAxisX(),
+            geometry_.GetAxisY());
+        }
+        else
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+        }
+      }
+
+      // TODO - Is this necessary?
+      bool FrameContainsPlane(unsigned int frame,
+                              const OrthancStone::CoordinateSystem3D& plane) const
+      {
+        if (frame >= imageInformation_.GetNumberOfFrames())
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        }
+
+        OrthancStone::CoordinateSystem3D tmp = geometry_;
+
+        if (frame != 0)
+        {
+          tmp = GetFrameGeometry(frame);
+        }
+
+        double distance;
+
+        return (OrthancStone::CoordinateSystem3D::GetDistance(distance, tmp, plane) &&
+                distance <= thickness_ / 2.0);
+      }
+    };
+    
+    Data  data_;
+
 
   public:
-    DicomInstanceParameters(const Orthanc::DicomMap& dicom) :
-      imageInformation_(dicom)
+    DicomInstanceParameters(const DicomInstanceParameters& other) :
+      data_(other.data_)
     {
-      if (imageInformation_.GetNumberOfFrames() <= 0)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-      }
-            
-      std::string s;
-      if (!dicom.CopyToString(s, Orthanc::DICOM_TAG_SOP_CLASS_UID, false))
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-      }
-      else
-      {
-        sopClassUid_ = OrthancStone::StringToSopClassUid(s);
-      }
+    }
 
-      if (!dicom.ParseDouble(thickness_, Orthanc::DICOM_TAG_SLICE_THICKNESS))
-      {
-        thickness_ = 100.0 * std::numeric_limits<double>::epsilon();
-      }
-
-      OrthancStone::GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, dicom);
-
-      std::string position, orientation;
-      if (dicom.CopyToString(position, Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT, false) &&
-          dicom.CopyToString(orientation, Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT, false))
-      {
-        geometry_ = OrthancStone::CoordinateSystem3D(position, orientation);
-      }
-
-      if (sopClassUid_ == OrthancStone::SopClassUid_RTDose)
-      {
-        ComputeDoseOffsets(dicom);
-      }
-
-      isColor_ = (imageInformation_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome1 &&
-                  imageInformation_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome2);
-
-      double doseGridScaling;
-
-      if (dicom.ParseDouble(rescaleOffset_, Orthanc::DICOM_TAG_RESCALE_INTERCEPT) &&
-          dicom.ParseDouble(rescaleSlope_, Orthanc::DICOM_TAG_RESCALE_SLOPE))
-      {
-        hasRescale_ = true;
-      }
-      else if (dicom.ParseDouble(doseGridScaling, Orthanc::DICOM_TAG_DOSE_GRID_SCALING))
-      {
-        hasRescale_ = true;
-        rescaleOffset_ = 0;
-        rescaleSlope_ = doseGridScaling;
-      }
-      else
-      {
-        hasRescale_ = false;
-      }
-
-      OrthancStone::Vector c, w;
-      if (OrthancStone::LinearAlgebra::ParseVector(c, dicom, Orthanc::DICOM_TAG_WINDOW_CENTER) &&
-          OrthancStone::LinearAlgebra::ParseVector(w, dicom, Orthanc::DICOM_TAG_WINDOW_WIDTH) &&
-          c.size() > 0 && 
-          w.size() > 0)
-      {
-        hasDefaultWindowing_ = true;
-        defaultWindowingCenter_ = static_cast<float>(c[0]);
-        defaultWindowingWidth_ = static_cast<float>(w[0]);
-      }
-      else
-      {
-        hasDefaultWindowing_ = false;
-      }
-
-      if (sopClassUid_ == OrthancStone::SopClassUid_RTDose)
-      {
-        switch (imageInformation_.GetBitsStored())
-        {
-          case 16:
-            expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
-            break;
-
-          case 32:
-            expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale32;
-            break;
-
-          default:
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-        } 
-      }
-      else if (isColor_)
-      {
-        expectedPixelFormat_ = Orthanc::PixelFormat_RGB24;
-      }
-      else if (imageInformation_.IsSigned())
-      {
-        expectedPixelFormat_ = Orthanc::PixelFormat_SignedGrayscale16;
-      }
-      else
-      {
-        expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
-      }
+    
+    DicomInstanceParameters(const Orthanc::DicomMap& dicom) :
+      data_(dicom)
+    {
     }
 
     const Orthanc::DicomImageInformation& GetImageInformation() const
     {
-      return imageInformation_;
+      return data_.imageInformation_;
     }
 
     OrthancStone::SopClassUid GetSopClassUid() const
     {
-      return sopClassUid_;
+      return data_.sopClassUid_;
     }
 
     double GetThickness() const
     {
-      return thickness_;
+      return data_.thickness_;
     }
 
     double GetPixelSpacingX() const
     {
-      return pixelSpacingX_;
+      return data_.pixelSpacingX_;
     }
 
     double GetPixelSpacingY() const
     {
-      return pixelSpacingY_;
+      return data_.pixelSpacingY_;
     }
 
     const OrthancStone::CoordinateSystem3D&  GetGeometry() const
     {
-      return geometry_;
+      return data_.geometry_;
     }
 
     OrthancStone::CoordinateSystem3D  GetFrameGeometry(unsigned int frame) const
     {
-      if (frame == 0)
-      {
-        return geometry_;
-      }
-      else if (frame >= imageInformation_.GetNumberOfFrames())
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-      else if (sopClassUid_ == OrthancStone::SopClassUid_RTDose)
-      {
-        if (frame >= frameOffsets_.size())
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-        }
-
-        return OrthancStone::CoordinateSystem3D(
-          geometry_.GetOrigin() + frameOffsets_[frame] * geometry_.GetNormal(),
-          geometry_.GetAxisX(),
-          geometry_.GetAxisY());
-      }
-      else
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-      }
+      return data_.GetFrameGeometry(frame);
     }
 
     // TODO - Is this necessary?
     bool FrameContainsPlane(unsigned int frame,
                             const OrthancStone::CoordinateSystem3D& plane) const
     {
-      if (frame >= imageInformation_.GetNumberOfFrames())
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-
-      OrthancStone::CoordinateSystem3D tmp = geometry_;
-
-      if (frame != 0)
-      {
-        tmp = GetFrameGeometry(frame);
-      }
-
-      double distance;
-
-      return (OrthancStone::CoordinateSystem3D::GetDistance(distance, tmp, plane) &&
-              distance <= thickness_ / 2.0);
+      return data_.FrameContainsPlane(frame, plane);
     }
 
     bool IsColor() const
     {
-      return isColor_;
+      return data_.isColor_;
     }
 
     bool HasRescale() const
     {
-      return hasRescale_;
+      return data_.hasRescale_;
     }
 
     double GetRescaleOffset() const
     {
-      if (hasRescale_)
+      if (data_.hasRescale_)
       {
-        return rescaleOffset_;
+        return data_.rescaleOffset_;
       }
       else
       {
@@ -1405,9 +1434,9 @@ namespace Refactoring
 
     double GetRescaleSlope() const
     {
-      if (hasRescale_)
+      if (data_.hasRescale_)
       {
-        return rescaleSlope_;
+        return data_.rescaleSlope_;
       }
       else
       {
@@ -1417,14 +1446,14 @@ namespace Refactoring
 
     bool HasDefaultWindowing() const
     {
-      return hasDefaultWindowing_;
+      return data_.hasDefaultWindowing_;
     }
 
     float GetDefaultWindowingCenter() const
     {
-      if (hasDefaultWindowing_)
+      if (data_.hasDefaultWindowing_)
       {
-        return defaultWindowingCenter_;
+        return data_.defaultWindowingCenter_;
       }
       else
       {
@@ -1434,9 +1463,9 @@ namespace Refactoring
 
     float GetDefaultWindowingWidth() const
     {
-      if (hasDefaultWindowing_)
+      if (data_.hasDefaultWindowing_)
       {
-        return defaultWindowingWidth_;
+        return data_.defaultWindowingWidth_;
       }
       else
       {
@@ -1446,28 +1475,31 @@ namespace Refactoring
 
     Orthanc::PixelFormat GetExpectedPixelFormat() const
     {
-      return expectedPixelFormat_;
+      return data_.expectedPixelFormat_;
     }
   };
 
 
-  class VolumeImage : public boost::noncopyable
+  class DicomVolumeImage : public boost::noncopyable
   {
   private:
-    std::auto_ptr<OrthancStone::SlicesSorter>   slices_;
     std::auto_ptr<OrthancStone::ImageBuffer3D>  image_;
+    std::vector<DicomInstanceParameters*>       slices_;
 
-    const DicomInstanceParameters& GetSliceParameters(size_t index) const
+    static const DicomInstanceParameters&
+    GetSliceParameters(const OrthancStone::SlicesSorter& slices,
+                       size_t index)
     {
-      return dynamic_cast<const DicomInstanceParameters&>(slices_->GetSlicePayload(index));
+      return dynamic_cast<const DicomInstanceParameters&>(slices.GetSlicePayload(index));
     }
 
-    void CheckSlice(size_t index,
-                    const OrthancStone::CoordinateSystem3D& reference,
-                    const DicomInstanceParameters& a) const
+    static void CheckSlice(const OrthancStone::SlicesSorter& slices,
+                           size_t index,
+                           const OrthancStone::CoordinateSystem3D& reference,
+                           const DicomInstanceParameters& a)
     {
-      const OrthancStone::CoordinateSystem3D& slice = slices_->GetSliceGeometry(index);
-      const DicomInstanceParameters& b = GetSliceParameters(index);
+      const OrthancStone::CoordinateSystem3D& slice = slices.GetSliceGeometry(index);
+      const DicomInstanceParameters& b = GetSliceParameters(slices, index);
       
       if (!OrthancStone::GeometryToolbox::IsParallel(reference.GetNormal(), slice.GetNormal()))
       {
@@ -1497,71 +1529,90 @@ namespace Refactoring
     }
 
     
-    void CheckVolume()
+    static void CheckVolume(const OrthancStone::SlicesSorter& slices)
     {
-      if (slices_->GetSlicesCount() != 0)
+      for (size_t i = 0; i < slices.GetSlicesCount(); i++)
       {
-        const OrthancStone::CoordinateSystem3D& reference = slices_->GetSliceGeometry(0);
-        const DicomInstanceParameters& dicom = GetSliceParameters(0);
-
-        for (size_t i = 1; i < slices_->GetSlicesCount(); i++)
+        if (GetSliceParameters(slices, i).GetImageInformation().GetNumberOfFrames() != 1)
         {
-          CheckSlice(i, reference, dicom);
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadGeometry,
+                                          "This class does not support multi-frame images");
         }
+      }
+
+      if (slices.GetSlicesCount() != 0)
+      {
+        const OrthancStone::CoordinateSystem3D& reference = slices.GetSliceGeometry(0);
+        const DicomInstanceParameters& dicom = GetSliceParameters(slices, 0);
+
+        for (size_t i = 1; i < slices.GetSlicesCount(); i++)
+        {
+          CheckSlice(slices, i, reference, dicom);
+        }
+      }
+    }
+
+
+    void Clear()
+    {
+      image_.reset();
+      
+      for (size_t i = 0; i < slices_.size(); i++)
+      {
+        assert(slices_[i] != NULL);
+        delete slices_[i];
       }
     }
 
     
   public:
-    VolumeImage()
+    DicomVolumeImage()
     {
     }
 
-    // WARNING: The payload of "slices" must be of class "DicomInstanceParameters"
-    void SetGeometry(OrthancStone::SlicesSorter* slices)  // Takes ownership
+    ~DicomVolumeImage()
     {
-      image_.reset();
-      slices_.reset(slices);
+      Clear();
+    }
+
+    // WARNING: The payload of "slices" must be of class "DicomInstanceParameters"
+    void SetGeometry(OrthancStone::SlicesSorter& slices)
+    {
+      Clear();
       
-      if (!slices_->Sort())
+      if (!slices.Sort())
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
                                         "Cannot sort the 3D slices of a DICOM series");          
       }
 
-      CheckVolume();
+      slices_.reserve(slices.GetSlicesCount());
 
-      const double spacingZ = slices_->ComputeSpacingBetweenSlices();
+      for (size_t i = 0; i < slices.GetSlicesCount(); i++)
+      {
+        slices_.push_back(new DicomInstanceParameters(GetSliceParameters(slices, i)));
+      }
+
+      CheckVolume(slices);
+
+      const double spacingZ = slices.ComputeSpacingBetweenSlices();
       LOG(INFO) << "Computed spacing between slices: " << spacingZ << "mm";
       
-      const DicomInstanceParameters& parameters = GetSliceParameters(0);
+      const DicomInstanceParameters& parameters = GetSliceParameters(slices, 0);
 
       image_.reset(new OrthancStone::ImageBuffer3D(parameters.GetExpectedPixelFormat(),
                                                    parameters.GetImageInformation().GetWidth(),
                                                    parameters.GetImageInformation().GetHeight(),
-                                                   slices_->GetSlicesCount(), false /* don't compute range */));      
+                                                   slices.GetSlicesCount(), false /* don't compute range */));      
 
-      image_->SetAxialGeometry(slices_->GetSliceGeometry(0));
+      image_->SetAxialGeometry(slices.GetSliceGeometry(0));
       image_->SetVoxelDimensions(parameters.GetPixelSpacingX(), parameters.GetPixelSpacingY(), spacingZ);
       image_->Clear();
     }
 
     bool IsGeometryReady() const
     {
-      return (image_.get() != NULL &&
-              slices_.get() != NULL);
-    }
-
-    const OrthancStone::SlicesSorter& GetSlices() const
-    {
-      if (!IsGeometryReady())
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      else
-      {
-        return *slices_;
-      }
+      return (image_.get() != NULL);
     }
 
     const OrthancStone::ImageBuffer3D& GetImage() const
@@ -1617,7 +1668,7 @@ namespace Refactoring
 
         Json::Value::Members instances = value.getMemberNames();
 
-        std::auto_ptr<OrthancStone::SlicesSorter> slices(new OrthancStone::SlicesSorter);
+        OrthancStone::SlicesSorter slices;
         
         for (size_t i = 0; i < instances.size(); i++)
         {
@@ -1627,10 +1678,10 @@ namespace Refactoring
           std::auto_ptr<DicomInstanceParameters> instance(new DicomInstanceParameters(dicom));
 
           OrthancStone::CoordinateSystem3D geometry = instance->GetGeometry();
-          slices->AddSlice(geometry, instance.release());
+          slices.AddSlice(geometry, instance.release());
         }
 
-        that_.image_.SetGeometry(slices.release());
+        that_.image_.SetGeometry(slices);
       }
     };
 
@@ -1664,8 +1715,8 @@ namespace Refactoring
     };
 
 
-    bool         active_;
-    VolumeImage  image_;
+    bool              active_;
+    DicomVolumeImage  image_;
 
   public:
     AxialVolumeOrthancLoader(OrthancStone::IObservable& oracle) :

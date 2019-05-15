@@ -42,6 +42,7 @@ namespace OrthancStone
         argSs << "--" << std::get<0>(*it);
         if(std::get<1>(*it).length() > 0)
           argSs << "=" << std::get<1>(*it);
+    }
 
 
     std::cout << "simulated cmdLine = \"" << cmdLine.c_str() << "\"\n";
@@ -56,6 +57,7 @@ namespace OrthancStone
     catch (boost::program_options::error& e)
     {
       std::cerr << "Error while parsing the command-line arguments: " <<
-        e.what() << std::endl;    }
+        e.what() << std::endl;    
+    }
   }
 }

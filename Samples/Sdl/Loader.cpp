@@ -1359,6 +1359,7 @@ namespace Refactoring
       }
     }
 
+    // TODO - Is this necessary?
     bool FrameContainsPlane(unsigned int frame,
                             const OrthancStone::CoordinateSystem3D& plane) const
     {
@@ -1450,6 +1451,134 @@ namespace Refactoring
   };
 
 
+  class VolumeImage : public boost::noncopyable
+  {
+  private:
+    std::auto_ptr<OrthancStone::SlicesSorter>   slices_;
+    std::auto_ptr<OrthancStone::ImageBuffer3D>  image_;
+
+    const DicomInstanceParameters& GetSliceParameters(size_t index) const
+    {
+      return dynamic_cast<const DicomInstanceParameters&>(slices_->GetSlicePayload(index));
+    }
+
+    void CheckSlice(size_t index,
+                    const OrthancStone::CoordinateSystem3D& reference,
+                    const DicomInstanceParameters& a) const
+    {
+      const OrthancStone::CoordinateSystem3D& slice = slices_->GetSliceGeometry(index);
+      const DicomInstanceParameters& b = GetSliceParameters(index);
+      
+      if (!OrthancStone::GeometryToolbox::IsParallel(reference.GetNormal(), slice.GetNormal()))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadGeometry,
+                                        "A slice in the volume image is not parallel to the others");
+      }
+
+      if (a.GetExpectedPixelFormat() != b.GetExpectedPixelFormat())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat,
+                                        "The pixel format changes across the slices of the volume image");
+      }
+
+      if (a.GetImageInformation().GetWidth() != b.GetImageInformation().GetWidth() ||
+          a.GetImageInformation().GetHeight() != b.GetImageInformation().GetHeight())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageSize,
+                                        "The width/height of slices are not constant in the volume image");
+      }
+
+      if (!OrthancStone::LinearAlgebra::IsNear(a.GetPixelSpacingX(), b.GetPixelSpacingX()) ||
+          !OrthancStone::LinearAlgebra::IsNear(a.GetPixelSpacingY(), b.GetPixelSpacingY()))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadGeometry,
+                                        "The pixel spacing of the slices change across the volume image");
+      }
+    }
+
+    
+    void CheckVolume()
+    {
+      if (slices_->GetSlicesCount() != 0)
+      {
+        const OrthancStone::CoordinateSystem3D& reference = slices_->GetSliceGeometry(0);
+        const DicomInstanceParameters& dicom = GetSliceParameters(0);
+
+        for (size_t i = 1; i < slices_->GetSlicesCount(); i++)
+        {
+          CheckSlice(i, reference, dicom);
+        }
+      }
+    }
+
+    
+  public:
+    VolumeImage()
+    {
+    }
+
+    // WARNING: The payload of "slices" must be of class "DicomInstanceParameters"
+    void SetGeometry(OrthancStone::SlicesSorter* slices)  // Takes ownership
+    {
+      image_.reset();
+      slices_.reset(slices);
+      
+      if (!slices_->Sort())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
+                                        "Cannot sort the 3D slices of a DICOM series");          
+      }
+
+      CheckVolume();
+
+      const double spacingZ = slices_->ComputeSpacingBetweenSlices();
+      LOG(INFO) << "Computed spacing between slices: " << spacingZ << "mm";
+      
+      const DicomInstanceParameters& parameters = GetSliceParameters(0);
+
+      image_.reset(new OrthancStone::ImageBuffer3D(parameters.GetExpectedPixelFormat(),
+                                                   parameters.GetImageInformation().GetWidth(),
+                                                   parameters.GetImageInformation().GetHeight(),
+                                                   slices_->GetSlicesCount(), false /* don't compute range */));      
+
+      image_->SetAxialGeometry(slices_->GetSliceGeometry(0));
+      image_->SetVoxelDimensions(parameters.GetPixelSpacingX(), parameters.GetPixelSpacingY(), spacingZ);
+      image_->Clear();
+    }
+
+    bool IsGeometryReady() const
+    {
+      return (image_.get() != NULL &&
+              slices_.get() != NULL);
+    }
+
+    const OrthancStone::SlicesSorter& GetSlices() const
+    {
+      if (!IsGeometryReady())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        return *slices_;
+      }
+    }
+
+    const OrthancStone::ImageBuffer3D& GetImage() const
+    {
+      if (!IsGeometryReady())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        return *image_;
+      }
+    }      
+  };
+  
+  
+
   class AxialVolumeOrthancLoader : public OrthancStone::IObserver
   {
   private:
@@ -1488,6 +1617,8 @@ namespace Refactoring
 
         Json::Value::Members instances = value.getMemberNames();
 
+        std::auto_ptr<OrthancStone::SlicesSorter> slices(new OrthancStone::SlicesSorter);
+        
         for (size_t i = 0; i < instances.size(); i++)
         {
           Orthanc::DicomMap dicom;
@@ -1496,16 +1627,10 @@ namespace Refactoring
           std::auto_ptr<DicomInstanceParameters> instance(new DicomInstanceParameters(dicom));
 
           OrthancStone::CoordinateSystem3D geometry = instance->GetGeometry();
-          that_.slices_.AddSlice(geometry, instance.release());
+          slices->AddSlice(geometry, instance.release());
         }
 
-        if (!that_.slices_.Sort())
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
-                                          "Cannot sort the 3D slices of a DICOM series");          
-        }
-
-        printf("series sorted %d => %d\n", instances.size(), that_.slices_.GetSlicesCount());
+        that_.image_.SetGeometry(slices.release());
       }
     };
 
@@ -1539,9 +1664,8 @@ namespace Refactoring
     };
 
 
-    bool                                        active_;
-    std::auto_ptr<OrthancStone::ImageBuffer3D>  image_;
-    OrthancStone::SlicesSorter                  slices_;
+    bool         active_;
+    VolumeImage  image_;
 
   public:
     AxialVolumeOrthancLoader(OrthancStone::IObservable& oracle) :

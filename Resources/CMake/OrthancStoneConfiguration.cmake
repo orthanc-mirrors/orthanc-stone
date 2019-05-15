@@ -146,12 +146,18 @@ endif()
 
 
 if (ENABLE_OPENGL)
-  include(FindOpenGL)
-  if (NOT OPENGL_FOUND)
-    message(FATAL_ERROR "Cannot find OpenGL on your system")
-  endif()
+  if (NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    # If including "FindOpenGL.cmake" using Emscripten (targetting
+    # WebAssembly), the "OPENGL_LIBRARIES" value incorrectly includes
+    # the "nul" library, which leads to warning message in Emscripten:
+    # 'shared:WARNING: emcc: cannot find library "nul"'.
+    include(FindOpenGL)
+    if (NOT OPENGL_FOUND)
+      message(FATAL_ERROR "Cannot find OpenGL on your system")
+    endif()
 
-  link_libraries(${OPENGL_LIBRARIES})
+    link_libraries(${OPENGL_LIBRARIES})
+  endif()
 
   add_definitions(
     -DGL_GLEXT_PROTOTYPES=1

@@ -87,13 +87,13 @@ class TestStonegentool(unittest.TestCase):
     self.assertEqual(b4,["int","vector<string>"])
     
   def test_ParseSchema(self):
-    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
+    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'testTestStoneCodeGen.yaml')
     obj = LoadSchema(fn)
     # we're happy if it does not crash :)
     CheckSchemaSchema(obj)
 
   def test_ComputeRequiredDeclarationOrder(self):
-    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
+    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'testTestStoneCodeGen.yaml')
     obj = LoadSchema(fn)
     genOrder: str = ComputeRequiredDeclarationOrder(obj)
     self.assertEqual(5,len(genOrder))
@@ -110,7 +110,7 @@ class TestStonegentool(unittest.TestCase):
 
   def test_genEnums(self):
     self.maxDiff = None
-    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
+    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'testTestStoneCodeGen.yaml')
     obj = LoadSchema(fn)
     genOrder: str = ComputeRequiredDeclarationOrder(obj)
     processedSchema = ProcessSchema(obj, genOrder)
@@ -127,13 +127,15 @@ class TestStonegentool(unittest.TestCase):
     self.assertTrue('someBs' in structs['C']['fields'])
     self.assertTrue('CrispType' in enums)
     self.assertTrue('Message1' in structs)
-    self.assertEqual('int32', structs['Message1']['fields']['a'].type)
-    self.assertEqual('string', structs['Message1']['fields']['b'].type)
-    self.assertEqual('EnumMonth0', structs['Message1']['fields']['c'].type)
-    self.assertEqual('bool', structs['Message1']['fields']['d'].type)
+    self.assertEqual('int32', structs['Message1']['fields']['memberInt32'].type)
+    self.assertEqual('string', structs['Message1']['fields']['memberString'].type)
+    self.assertEqual('EnumMonth0', structs['Message1']['fields']['memberEnumMonth'].type)
+    self.assertEqual('bool', structs['Message1']['fields']['memberBool'].type)
+    self.assertEqual('float32', structs['Message1']['fields']['memberFloat32'].type)
+    self.assertEqual('float64', structs['Message1']['fields']['memberFloat64'].type)
 
   def test_GenerateTypeScriptEnums(self):
-    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
+    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'testTestStoneCodeGen.yaml')
     tdico = GetTemplatingDictFromSchemaFilename(fn)
     template = Template("""  // end of generic methods
 {% for enum in enums%}  export enum {{enum['name']}} {
@@ -167,7 +169,7 @@ class TestStonegentool(unittest.TestCase):
     self.assertEqual(renderedCodeRef,renderedCode)
 
   def test_GenerateCplusplusEnums(self):
-    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
+    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'testTestStoneCodeGen.yaml')
     tdico = GetTemplatingDictFromSchemaFilename(fn)
     template = Template("""  // end of generic methods
 {% for enum in enums%}  enum {{enum['name']}} {
@@ -201,48 +203,9 @@ class TestStonegentool(unittest.TestCase):
     self.assertEqual(renderedCodeRef,renderedCode)
 
   def test_generateTsStructType(self):
-    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
+    fn = os.path.join(os.path.dirname(__file__), 'test_data', 'testTestStoneCodeGen.yaml')
     tdico = GetTemplatingDictFromSchemaFilename(fn)
-    ref = """  export class Message1 {
-    a: number;
-    b: string;
-    c: EnumMonth0;
-    d: boolean;
-    e: number;
-    f: number;
 
-    public StoneSerialize(): string {
-      let container: object = {};
-      container['type'] = 'VsolStuff.Message1';
-      container['value'] = this;
-      return JSON.stringify(container);
-    }
-  };
-
-  export class Message2 {
-    toto: string;
-    tata: Message1[];
-    tutu: string[];
-    titi: Map<string, string>;
-    lulu: Map<string, Message1>;
-
-    constructor()
-    {
-      this.tata = new Array<Message1>();
-      this.tutu = new Array<string>();
-      this.titi = new Map<string, string>();
-      this.lulu = new Map<string, Message1>();  
-    }
-
-    public StoneSerialize(): string {
-      let container: object = {};
-      container['type'] = 'VsolStuff.Message2';
-      container['value'] = this;
-      return JSON.stringify(container);
-    }
-  };
-
-"""
 #     template = MakeTemplate("""  // end of generic methods
 # {% for struct in struct%}  export class {{struct['name']}} {
 #   {% for key in struct['fields']%}    {{key}}:{{struct['fields'][key]}},
@@ -293,7 +256,7 @@ class TestStonegentool(unittest.TestCase):
 
     public StoneSerialize(): string {
       let container: object = {};
-      container['type'] = 'VsolMessages.A';
+      container['type'] = 'TestStoneCodeGen.A';
       container['value'] = this;
       return JSON.stringify(container);
     }
@@ -310,7 +273,7 @@ class TestStonegentool(unittest.TestCase):
 
     public StoneSerialize(): string {
       let container: object = {};
-      container['type'] = 'VsolMessages.B';
+      container['type'] = 'TestStoneCodeGen.B';
       container['value'] = this;
       return JSON.stringify(container);
     }
@@ -327,57 +290,63 @@ class TestStonegentool(unittest.TestCase):
 
     public StoneSerialize(): string {
       let container: object = {};
-      container['type'] = 'VsolMessages.C';
+      container['type'] = 'TestStoneCodeGen.C';
       container['value'] = this;
       return JSON.stringify(container);
     }
   };
 
   export class Message1 {
-    a:number;
-    b:string;
-    c:EnumMonth0;
-    d:boolean;
-    e:number;
-    f:number;
+    memberInt32:number;
+    memberString:string;
+    memberEnumMonth:EnumMonth0;
+    memberBool:boolean;
+    memberFloat32:number;
+    memberFloat64:number;
 
     constructor() {
-      this.a = new number();
-      this.b = new string();
-      this.c = new EnumMonth0();
-      this.d = new boolean();
-      this.e = new number();
-      this.f = new number();
+      this.memberInt32 = new number();
+      this.memberString = new string();
+      this.memberEnumMonth = new EnumMonth0();
+      this.memberBool = new boolean();
+      this.memberFloat32 = new number();
+      this.memberFloat64 = new number();
     }
 
     public StoneSerialize(): string {
       let container: object = {};
-      container['type'] = 'VsolMessages.Message1';
+      container['type'] = 'TestStoneCodeGen.Message1';
       container['value'] = this;
       return JSON.stringify(container);
     }
   };
 
   export class Message2 {
-    toto:string;
-    tata:Array<Message1>;
-    tutu:Array<string>;
-    titi:Map<string, string>;
-    lulu:Map<string, Message1>;
-    movieType:MovieType;
+    memberString:string;
+    memberStringWithDefault:string;
+    memberVectorOfMessage1:Array<Message1>;
+    memberVectorOfString:Array<string>;
+    memberMapStringString:Map<string, string>;
+    memberMapStringStruct:Map<string, Message1>;
+    memberMapEnumFloat:Map<CrispType, number>;
+    memberEnumMovieType:MovieType;
+    memberJson:Object;
 
     constructor() {
-      this.toto = new string();
-      this.tata = new Array<Message1>();
-      this.tutu = new Array<string>();
-      this.titi = new Map<string, string>();
-      this.lulu = new Map<string, Message1>();
-      this.movieType = new MovieType();
+      this.memberString = new string();
+      this.memberStringWithDefault = new string();
+      this.memberVectorOfMessage1 = new Array<Message1>();
+      this.memberVectorOfString = new Array<string>();
+      this.memberMapStringString = new Map<string, string>();
+      this.memberMapStringStruct = new Map<string, Message1>();
+      this.memberMapEnumFloat = new Map<CrispType, number>();
+      this.memberEnumMovieType = new MovieType();
+      this.memberJson = new Object();
     }
 
     public StoneSerialize(): string {
       let container: object = {};
-      container['type'] = 'VsolMessages.Message2';
+      container['type'] = 'TestStoneCodeGen.Message2';
       container['value'] = this;
       return JSON.stringify(container);
     }
@@ -390,7 +359,7 @@ class TestStonegentool(unittest.TestCase):
 
   def test_generateWholeTsFile(self):
     schemaFile = \
-      os.path.join(os.path.dirname(__file__), 'test_data', 'test1.yaml')
+      os.path.join(os.path.dirname(__file__), 'test_data', 'testTestStoneCodeGen.yaml')
     tdico = GetTemplatingDictFromSchemaFilename(schemaFile)
     tsTemplateFile = \
       os.path.join(os.path.dirname(__file__), 'template.in.ts.j2')

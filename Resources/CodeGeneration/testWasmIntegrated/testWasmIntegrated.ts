@@ -48,121 +48,23 @@ document.querySelectorAll(".TestWasm-button").forEach((e) => {
 |  define stock messages                           |
 +--------------------------------------------------+
 */
-let schemaText: string = `rootName: testWasmIntegratedCpp
-
-struct B:
-  someAs: vector<A>
-  someInts: vector<int32>
-
-struct C:
-  someBs: vector<B>
-  ddd:    vector<string>
-  definition: vector<json>
-
-struct A:
-  someStrings: vector<string>
-  someInts2: vector<int32>
-  movies: vector<MovieType>
-
-struct Message1:
-  a: int32
-  b: string
-  c: EnumMonth0
-  d: bool
-
-struct Message2:
-  toto: string
-  tata: vector<Message1>
-  tutu: vector<string>
-  titi: map<string, string>
-  lulu: map<string, Message1>
-  movieType: MovieType
-  definition: json
-
-enum MovieType:
-  - RomCom
-  - Horror
-  - ScienceFiction
-  - Vegetables
-
-enum CrispType:
-  - SaltAndPepper
-  - CreamAndChives
-  - Paprika
-  - Barbecue
-
-enum EnumMonth0:
-  - January
-  - February
-  - March
-`;
+let schemaText: string = null;
+fetch("testTestStoneCodeGen.yaml").then(function(res) {return res.text();}).then(function(text) {schemaText = text;});
 
 let stockSerializedMessages = new Map<string,string>();
-stockSerializedMessages["Test 1"] = `{
-  "type" : "testWasmIntegratedCpp.Message2",
-  "value" : 
-  {
-    "lulu" : 
-    {
-      "54" : 
-      {
-        "a" : 43,
-        "b" : "Sandrine",
-        "c" : "March",
-        "d" : true
-      },
-      "55" : 
-      {
-        "a" : 42,
-        "b" : "Benjamin",
-        "c" : "January",
-        "d" : false
-      }
-    },
-    "tata" : 
-    [
-      {
-        "a" : 42,
-        "b" : "Benjamin",
-        "c" : "March",
-        "d" : false
-      },
-      {
-        "a" : 43,
-        "b" : "Sandrine",
-        "c" : "January",
-        "d" : false
-      }
-    ],
-    "titi" : 
-    {
-      "44" : "key 44",
-      "45" : "key 45"
-    },
-    "toto" : "Prout zizi",
-    "tutu" : 
-    [
-      "Mercadet",
-      "Poisson"
-    ],
-    "definition":
-    {
-      "val" : [ "berk", 42 ],
-      "zozo" :
-      {
-        "23": "zloutch",
-        "lalala": 42
-      }
-    }
-  }
-}`;
+stockSerializedMessages["Test CppHandler message2"] = null;
+fetch("cppHandler_test_Message2.json").then(function(res) {return res.text();}).then(function(text) {stockSerializedMessages["Test CppHandler message2"] = text;});
+
 stockSerializedMessages["Test 2"] = ` {
-  "type" : "testWasmIntegratedCpp.Message1",
+  "type" : "TestStoneCodeGen.Message1",
   "value" : {
-    "a" : -987,
-    "b" : "Salomé",
-    "c" : 2,
-    "d" : true
+    "memberInt32" : -987,
+    "memberString" : "Salomé",
+    "memberEnumMonth" : "March",
+    "memberBool" : true,
+    "memberFloat32" : 0.1,
+    "memberFloat64" : -0.2,
+    "extraMember" : "don't care"
   }
 }`;
 stockSerializedMessages["Test 3"] = "Test 3 stock message sdfsfsdfsdf";

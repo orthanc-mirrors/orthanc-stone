@@ -22,8 +22,10 @@ cp styles.css build-final/
 # copy WASM binary to output dir
 cp build-wasm/testWasmIntegratedCpp.wasm  build-final/
 
-echo "...Serving files at http://127.0.0.1:8080/"
-echo "Please open build_final/testWasmIntegrated.html"
+cp ../test_data/testTestStoneCodeGen.yaml build-final/
+cp ../testCppHandler/test_data/test_Message2.json build-final/cppHandler_test_Message2.json
+
+echo "...Serving files at http://127.0.0.1:8080/build-final/testWasmIntegrated.html"
 
 sudo python3 serve.py
 

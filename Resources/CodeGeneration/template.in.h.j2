@@ -228,6 +228,7 @@ namespace {{rootName}}
     {
       out << MakeIndent(indent+2) << "\"" << it->first << "\" : ";
       StoneDumpValue(out, it->second, indent+2);
+      out << ", \n";
     }
     out << MakeIndent(indent) << "}\n";
     return out;
@@ -269,6 +270,7 @@ namespace {{rootName}}
     for (size_t i = 0; i < value.size(); ++i)
     {
       StoneDumpValue(out, value[i], indent+2);
+      out << ", \n";
     }
     out << MakeIndent(indent) << "]\n";
     return out;
@@ -309,6 +311,7 @@ namespace {{rootName}}
     for (typename std::set<T>::const_iterator it = value.begin(); it != value.end(); ++it)
     {
       StoneDumpValue(out, *it, indent+2);
+      out << ", \n";
     }
     out << MakeIndent(indent) << "]\n";
     return out;
@@ -395,7 +398,7 @@ namespace {{rootName}}
   {
 {% for key in enum['fields']%}    if( value == {{enum['name']}}_{{key}})
     {
-      out << MakeIndent(indent) << "{{key}}" << std::endl;
+      out << MakeIndent(indent) << "{{key}}";
     }
 {%endfor%}    return out;
   }
@@ -435,11 +438,11 @@ namespace {{rootName}}
   inline std::ostream& StoneDumpValue(std::ostream& out, const {{struct['name']}}& value, size_t indent = 0)
   {
     out << MakeIndent(indent) << "{\n";
-{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}    out << MakeIndent(indent) << "{{key}}:\n";
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}    out << MakeIndent(indent+2) << "{{key}}: ";
     StoneDumpValue(out, value.{{key}},indent+2);
-    out << "\n";
+    out << ", \n";
 {% endfor %}{% endif %}{% endif %}
-    out << MakeIndent(indent) << "}\n";
+    out << MakeIndent(indent) << "}";
     return out;
   }
 

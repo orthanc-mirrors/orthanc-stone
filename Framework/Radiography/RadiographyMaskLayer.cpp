@@ -135,8 +135,16 @@ namespace OrthancStone
     // first fill the complete image
     Orthanc::ImageProcessing::Set(*mask_, OUT_MASK_VALUE);
 
+    // clip corners
+    std::vector<Orthanc::ImageProcessing::ImagePoint> clippedCorners;
+    for (size_t i = 0; i < corners_.size(); i++)
+    {
+      clippedCorners.push_back(corners_[i]);
+      clippedCorners[i].ClipTo(0, mask_->GetWidth() - 1, 0, mask_->GetHeight() - 1);
+    }
+
     // fill mask
-    Orthanc::ImageProcessing::FillPolygon(*mask_, corners_, IN_MASK_VALUE);
+    Orthanc::ImageProcessing::FillPolygon(*mask_, clippedCorners, IN_MASK_VALUE);
 
   }
 

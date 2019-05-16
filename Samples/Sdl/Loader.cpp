@@ -1603,7 +1603,7 @@ namespace Refactoring
 
 
 
-  class VolumeSlicerBase : public IVolumeSlicer
+  /*  class VolumeSlicerBase : public IVolumeSlicer
   {
   private:
     OrthancStone::Scene2D&            scene_;
@@ -1653,24 +1653,29 @@ namespace Refactoring
       first_(true)
     {
     }
-  };
+    };*/
   
 
 
-  class DicomVolumeSlicer : public VolumeSlicerBase
+  class DicomVolumeSlicer : public IVolumeSlicer
   {
   private:
-    const DicomVolumeImage&  volume_;
-    bool                     hasLastSlice_;
-    uint64_t                 lastSliceRevision_;
+    OrthancStone::Scene2D&          scene_;
+    int                             layerDepth_;
+    const DicomVolumeImage&         volume_;
+    bool                            first_;
+    OrthancStone::VolumeProjection  lastProjection_;
+    unsigned int                    lastSliceIndex_;
+    uint64_t                        lastSliceRevision_;
 
   public:
     DicomVolumeSlicer(OrthancStone::Scene2D& scene,
                       int layerDepth,
                       const DicomVolumeImage& volume) :
-      VolumeSlicerBase(scene, layerDepth),
+      scene_(scene),
+      layerDepth_(layerDepth),
       volume_(volume),
-      hasLastSlice_(false)
+      first_(true)
     {
     }
     
@@ -1678,7 +1683,7 @@ namespace Refactoring
     {
       if (!volume_.HasGeometry())
       {
-        DeleteLayer();
+        scene_.DeleteLayer(layerDepth_);
         return;
       }
 
@@ -1688,7 +1693,7 @@ namespace Refactoring
       {
         // The cutting plane is neither axial, nor coronal, nor
         // sagittal. Could use "VolumeReslicer" here.
-        DeleteLayer();
+        scene_.DeleteLayer(layerDepth_);
         return;
       }
 
@@ -1703,22 +1708,20 @@ namespace Refactoring
         // revision of the volume
         sliceRevision = volume_.GetRevision();
       }
-      
-      if (!HasViewportPlaneChanged(plane) &&
-          hasLastSlice_ &&
+
+      if (first_ ||
+          lastProjection_ == projection ||
+          lastSliceIndex_ == sliceIndex ||
           lastSliceRevision_ == sliceRevision)
       {
-        // The viewport plane and the content of the slice have not
-        // changed since the last time the layer was set: No update needed
-        return;
-      }
-      else
-      {
-        // The layer must be updated
-        SetLastViewportPlane(plane);
-        hasLastSlice_ = true;
-        lastSliceRevision_ = sliceRevision;
+        // Eiter the viewport plane, or the content of the slice have not
+        // changed since the last time the layer was set: Update is needed
 
+        first_ = false;
+        lastProjection_ = projection;
+        lastSliceIndex_ = sliceIndex;
+        lastSliceRevision_ = sliceRevision;
+        
         {
           OrthancStone::ImageBuffer3D::SliceReader reader(volume_.GetImage(), projection, sliceIndex);
 

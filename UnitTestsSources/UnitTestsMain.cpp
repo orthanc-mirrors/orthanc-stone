@@ -748,12 +748,62 @@ TEST(VolumeImageGeometry, Basic)
   ASSERT_FLOAT_EQ(-3.0 / 2.0 + 30.0 * 3.0, p[2]);
 
   OrthancStone::VolumeProjection proj;
-  ASSERT_TRUE(g.DetectProjection(proj, g.GetAxialGeometry()));
+  ASSERT_TRUE(g.DetectProjection(proj, g.GetAxialGeometry().GetNormal()));
   ASSERT_EQ(OrthancStone::VolumeProjection_Axial, proj);
-  ASSERT_TRUE(g.DetectProjection(proj, g.GetCoronalGeometry()));
+  ASSERT_TRUE(g.DetectProjection(proj, g.GetCoronalGeometry().GetNormal()));
   ASSERT_EQ(OrthancStone::VolumeProjection_Coronal, proj);
-  ASSERT_TRUE(g.DetectProjection(proj, g.GetSagittalGeometry()));
+  ASSERT_TRUE(g.DetectProjection(proj, g.GetSagittalGeometry().GetNormal()));
   ASSERT_EQ(OrthancStone::VolumeProjection_Sagittal, proj);
+
+  ASSERT_EQ(10u, g.GetProjectionWidth(OrthancStone::VolumeProjection_Axial));
+  ASSERT_EQ(20u, g.GetProjectionHeight(OrthancStone::VolumeProjection_Axial));
+  ASSERT_EQ(30u, g.GetProjectionDepth(OrthancStone::VolumeProjection_Axial));
+  ASSERT_EQ(10u, g.GetProjectionWidth(OrthancStone::VolumeProjection_Coronal));
+  ASSERT_EQ(30u, g.GetProjectionHeight(OrthancStone::VolumeProjection_Coronal));
+  ASSERT_EQ(20u, g.GetProjectionDepth(OrthancStone::VolumeProjection_Coronal));
+  ASSERT_EQ(20u, g.GetProjectionWidth(OrthancStone::VolumeProjection_Sagittal));
+  ASSERT_EQ(30u, g.GetProjectionHeight(OrthancStone::VolumeProjection_Sagittal));
+  ASSERT_EQ(10u, g.GetProjectionDepth(OrthancStone::VolumeProjection_Sagittal));
+
+  p = g.GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
+  ASSERT_EQ(3u, p.size());
+  ASSERT_FLOAT_EQ(1, p[0]);
+  ASSERT_FLOAT_EQ(2, p[1]);
+  ASSERT_FLOAT_EQ(3, p[2]);
+  p = g.GetVoxelDimensions(OrthancStone::VolumeProjection_Coronal);
+  ASSERT_EQ(3u, p.size());
+  ASSERT_FLOAT_EQ(1, p[0]);
+  ASSERT_FLOAT_EQ(3, p[1]);
+  ASSERT_FLOAT_EQ(2, p[2]);
+  p = g.GetVoxelDimensions(OrthancStone::VolumeProjection_Sagittal);
+  ASSERT_EQ(3u, p.size());
+  ASSERT_FLOAT_EQ(2, p[0]);
+  ASSERT_FLOAT_EQ(3, p[1]);
+  ASSERT_FLOAT_EQ(1, p[2]);
+
+  ASSERT_EQ(0, (int) OrthancStone::VolumeProjection_Axial);
+  ASSERT_EQ(1, (int) OrthancStone::VolumeProjection_Coronal);
+  ASSERT_EQ(2, (int) OrthancStone::VolumeProjection_Sagittal);
+  
+  for (int p = 0; p < 3; p++)
+  {
+    OrthancStone::VolumeProjection projection = (OrthancStone::VolumeProjection) p;
+    const OrthancStone::CoordinateSystem3D& s = g.GetProjectionGeometry(projection);
+    
+    for (unsigned int i = 0; i < g.GetProjectionDepth(projection); i++)
+    {
+      OrthancStone::CoordinateSystem3D plane(
+        s.GetOrigin() + static_cast<double>(i) * s.GetNormal() * g.GetVoxelDimensions(projection)[2],
+        s.GetAxisX(),
+        s.GetAxisY());
+
+      unsigned int slice;
+      OrthancStone::VolumeProjection q;
+      ASSERT_TRUE(g.DetectSlice(q, slice, plane));
+      ASSERT_EQ(projection, q);
+      ASSERT_EQ(i, slice);
+    }
+  }
 }
 
 int main(int argc, char **argv)

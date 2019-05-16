@@ -74,6 +74,18 @@ namespace OrthancStone
       return sagittalGeometry_;
     }
 
+    const CoordinateSystem3D& GetProjectionGeometry(VolumeProjection projection) const;
+    
+    const Matrix& GetTransform() const
+    {
+      return transform_;
+    }
+
+    const Matrix& GetTransformInverse() const
+    {
+      return transformInverse_;
+    }
+
     void SetSize(unsigned int width,
                  unsigned int height,
                  unsigned int depth);
@@ -88,10 +100,12 @@ namespace OrthancStone
 
     Vector GetVoxelDimensions(VolumeProjection projection) const;
 
-    void GetSliceSize(unsigned int& width,
-                      unsigned int& height,
-                      VolumeProjection projection);
-    
+    unsigned int GetProjectionWidth(VolumeProjection projection) const;
+
+    unsigned int GetProjectionHeight(VolumeProjection projection) const;
+
+    unsigned int GetProjectionDepth(VolumeProjection projection) const;
+
     // Get the 3D position of a point in the volume, where x, y and z
     // lie in the [0;1] range
     Vector GetCoordinates(float x,
@@ -99,6 +113,10 @@ namespace OrthancStone
                           float z) const;
 
     bool DetectProjection(VolumeProjection& projection,
-                          const CoordinateSystem3D& plane) const;
+                          const Vector& planeNormal) const;
+
+    bool DetectSlice(VolumeProjection& projection,
+                     unsigned int& slice,
+                     const CoordinateSystem3D& plane) const;
   };
 }

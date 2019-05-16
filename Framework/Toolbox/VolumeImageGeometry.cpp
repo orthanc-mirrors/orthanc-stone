@@ -39,7 +39,7 @@ namespace OrthancStone
     
     sagittalGeometry_ = CoordinateSystem3D(p,
                                            axialGeometry_.GetAxisY(),
-                                           -axialGeometry_.GetNormal());
+                                           axialGeometry_.GetNormal());
 
     Vector origin = (
       axialGeometry_.MapSliceToWorldCoordinates(-0.5 * voxelDimensions_[0],
@@ -116,6 +116,25 @@ namespace OrthancStone
   }
 
 
+  const CoordinateSystem3D& VolumeImageGeometry::GetProjectionGeometry(VolumeProjection projection) const
+  {
+    switch (projection)
+    {
+      case VolumeProjection_Axial:
+        return axialGeometry_;
+
+      case VolumeProjection_Coronal:
+        return coronalGeometry_;
+
+      case VolumeProjection_Sagittal:
+        return sagittalGeometry_;
+
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+  }
+
+  
   Vector VolumeImageGeometry::GetVoxelDimensions(VolumeProjection projection) const
   {
     switch (projection)
@@ -135,32 +154,61 @@ namespace OrthancStone
   }
 
 
-  void VolumeImageGeometry::GetSliceSize(unsigned int& width,
-                                         unsigned int& height,
-                                         VolumeProjection projection)
+  unsigned int VolumeImageGeometry::GetProjectionWidth(VolumeProjection projection) const
   {
     switch (projection)
     {
       case VolumeProjection_Axial:
-        width = width_;
-        height = height_;
-        break;
+        return width_;
 
       case VolumeProjection_Coronal:
-        width = width_;
-        height = depth_;
-        break;
+        return width_;
 
       case VolumeProjection_Sagittal:
-        width = height_;
-        height = depth_;
-        break;
+        return height_;
 
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
   }
 
+
+  unsigned int VolumeImageGeometry::GetProjectionHeight(VolumeProjection projection) const
+  {
+    switch (projection)
+    {
+      case VolumeProjection_Axial:
+        return height_;
+
+      case VolumeProjection_Coronal:
+        return depth_;
+
+      case VolumeProjection_Sagittal:
+        return depth_;
+
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+  }
+
+
+  unsigned int VolumeImageGeometry::GetProjectionDepth(VolumeProjection projection) const
+  {
+    switch (projection)
+    {
+      case VolumeProjection_Axial:
+        return depth_;
+
+      case VolumeProjection_Coronal:
+        return height_;
+
+      case VolumeProjection_Sagittal:
+        return width_;
+
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }    
+  }
 
 
   Vector VolumeImageGeometry::GetCoordinates(float x,
@@ -177,22 +225,19 @@ namespace OrthancStone
 
 
   bool VolumeImageGeometry::DetectProjection(VolumeProjection& projection,
-                                             const CoordinateSystem3D& plane) const
+                                             const Vector& planeNormal) const
   {
-    if (GeometryToolbox::IsParallel(plane.GetNormal(),
-                                    axialGeometry_.GetNormal()))
+    if (GeometryToolbox::IsParallel(planeNormal, axialGeometry_.GetNormal()))
     {
       projection = VolumeProjection_Axial;
       return true;
     }
-    else if (GeometryToolbox::IsParallel(plane.GetNormal(),
-                                         coronalGeometry_.GetNormal()))
+    else if (GeometryToolbox::IsParallel(planeNormal, coronalGeometry_.GetNormal()))
     {
       projection = VolumeProjection_Coronal;
       return true;
     }
-    else if (GeometryToolbox::IsParallel(plane.GetNormal(),
-                                         sagittalGeometry_.GetNormal()))
+    else if (GeometryToolbox::IsParallel(planeNormal, sagittalGeometry_.GetNormal()))
     {
       projection = VolumeProjection_Sagittal;
       return true;
@@ -200,6 +245,65 @@ namespace OrthancStone
     else
     {
       return false;
+    }
+  }
+
+  
+  bool VolumeImageGeometry::DetectSlice(VolumeProjection& projection,
+                                        unsigned int& slice,
+                                        const CoordinateSystem3D& plane) const
+  {
+    if (!DetectProjection(projection, plane.GetNormal()))
+    {
+      return false;
+    }
+
+    // Transforms the coordinates of the origin of the plane, into the
+    // coordinates of the axial geometry
+    const Vector& origin = plane.GetOrigin();
+    Vector p = LinearAlgebra::Product(
+      transformInverse_,
+      LinearAlgebra::CreateVector(origin[0], origin[1], origin[2], 1));
+
+    assert(LinearAlgebra::IsNear(p[3], 1));
+
+    double z;
+
+    switch (projection)
+    {
+      case VolumeProjection_Axial:
+        z = p[2];
+        break;
+
+      case VolumeProjection_Coronal:
+        z = p[1];
+        break;
+
+      case VolumeProjection_Sagittal:
+        z = p[0];
+        break;
+
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    const unsigned int projectionDepth = GetProjectionDepth(projection);
+    
+    z *= static_cast<double>(projectionDepth);
+    if (z < 0)
+    {
+      return false;
+    }
+        
+    unsigned int d = static_cast<unsigned int>(std::floor(z));
+    if (d >= projectionDepth)
+    {
+      return false;
+    }
+    else
+    {
+      slice = d;
+      return true;
     }
   }
 }

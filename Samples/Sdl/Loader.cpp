@@ -27,7 +27,7 @@
 #include "../../Framework/Toolbox/GeometryToolbox.h"
 #include "../../Framework/Toolbox/SlicesSorter.h"
 #include "../../Framework/Volumes/ImageBuffer3D.h"
-#include "../../Framework/Scene2D/ScenePoint2D.h"
+#include "../../Framework/Scene2D/Scene2D.h"
 
 // From Orthanc framework
 #include <Core/Compression/GzipCompressor.h>
@@ -1229,7 +1229,7 @@ namespace Refactoring
       assert(slices_.size() == image_->GetDepth() &&
              slices_.size() == slicesRevision_.size());
 
-      if (!IsGeometryReady())
+      if (!HasGeometry())
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
@@ -1307,14 +1307,14 @@ namespace Refactoring
       return revision_;
     }
 
-    bool IsGeometryReady() const
+    bool HasGeometry() const
     {
       return (image_.get() != NULL);
     }
 
     const OrthancStone::ImageBuffer3D& GetImage() const
     {
-      if (!IsGeometryReady())
+      if (!HasGeometry())
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
@@ -1326,7 +1326,7 @@ namespace Refactoring
 
     size_t GetSlicesCount() const
     {
-      if (!IsGeometryReady())
+      if (!HasGeometry())
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
@@ -1603,7 +1603,134 @@ namespace Refactoring
 
 
 
+  class VolumeSlicerBase : public IVolumeSlicer
+  {
+  private:
+    OrthancStone::Scene2D&            scene_;
+    int                               layerDepth_;
+    bool                              first_;
+    OrthancStone::CoordinateSystem3D  lastPlane_;
 
+  protected:
+    bool HasViewportPlaneChanged(const OrthancStone::CoordinateSystem3D& plane) const
+    {
+      if (first_ ||
+          !OrthancStone::LinearAlgebra::IsCloseToZero(
+            boost::numeric::ublas::norm_2(lastPlane_.GetNormal() - plane.GetNormal())))
+      {
+        // This is the first rendering, or the plane has not the same orientation
+        return false;
+      }
+      else
+      {
+        double offset1 = lastPlane_.ProjectAlongNormal(plane.GetOrigin());
+        double offset2 = lastPlane_.ProjectAlongNormal(lastPlane_.GetOrigin());
+        return OrthancStone::LinearAlgebra::IsCloseToZero(offset2 - offset1);
+      }
+    }
+
+    void SetLastViewportPlane(const OrthancStone::CoordinateSystem3D& plane)
+    {
+      first_ = false;
+      lastPlane_ = plane;
+    }
+
+    void SetLayer(OrthancStone::ISceneLayer* layer)
+    {
+      scene_.SetLayer(layerDepth_, layer);
+    }
+
+    void DeleteLayer()
+    {
+      scene_.DeleteLayer(layerDepth_);
+    }
+    
+  public:
+    VolumeSlicerBase(OrthancStone::Scene2D& scene,
+                     int layerDepth) :
+      scene_(scene),
+      layerDepth_(layerDepth),
+      first_(true)
+    {
+    }
+  };
+  
+
+
+  class DicomVolumeSlicer : public VolumeSlicerBase
+  {
+  private:
+    const DicomVolumeImage&  volume_;
+    bool                     hasLastSlice_;
+    uint64_t                 lastSliceRevision_;
+
+  public:
+    DicomVolumeSlicer(OrthancStone::Scene2D& scene,
+                      int layerDepth,
+                      const DicomVolumeImage& volume) :
+      VolumeSlicerBase(scene, layerDepth),
+      volume_(volume),
+      hasLastSlice_(false)
+    {
+    }
+    
+    virtual void SetViewportPlane(const OrthancStone::CoordinateSystem3D& plane)
+    {
+      if (!volume_.HasGeometry())
+      {
+        DeleteLayer();
+        return;
+      }
+
+      OrthancStone::VolumeProjection projection;
+      unsigned int sliceIndex;
+      if (!volume_.GetImage().GetGeometry().DetectSlice(projection, sliceIndex, plane))
+      {
+        // The cutting plane is neither axial, nor coronal, nor
+        // sagittal. Could use "VolumeReslicer" here.
+        DeleteLayer();
+        return;
+      }
+
+      uint64_t sliceRevision;
+      if (projection == OrthancStone::VolumeProjection_Axial)
+      {
+        sliceRevision = volume_.GetSliceRevision(sliceIndex);
+      }
+      else
+      {
+        // For coronal and sagittal projections, we take the global
+        // revision of the volume
+        sliceRevision = volume_.GetRevision();
+      }
+      
+      if (!HasViewportPlaneChanged(plane) &&
+          hasLastSlice_ &&
+          lastSliceRevision_ == sliceRevision)
+      {
+        // The viewport plane and the content of the slice have not
+        // changed since the last time the layer was set: No update needed
+        return;
+      }
+      else
+      {
+        // The layer must be updated
+        SetLastViewportPlane(plane);
+        hasLastSlice_ = true;
+        lastSliceRevision_ = sliceRevision;
+
+        {
+          OrthancStone::ImageBuffer3D::SliceReader reader(volume_.GetImage(), projection, sliceIndex);
+
+          // TODO: Convert the image to Float32 or RGB24
+          
+          // TODO: Set the layer
+        }
+      }
+    }
+  };
+  
+  
 
 
 

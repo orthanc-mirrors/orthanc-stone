@@ -1486,42 +1486,34 @@ namespace Refactoring
     std::auto_ptr<OrthancStone::ImageBuffer3D>  image_;
     std::vector<DicomInstanceParameters*>       slices_;
 
-    static const DicomInstanceParameters&
-    GetSliceParameters(const OrthancStone::SlicesSorter& slices,
-                       size_t index)
+    void CheckSlice(size_t index,
+                    const DicomInstanceParameters& reference) const
     {
-      return dynamic_cast<const DicomInstanceParameters&>(slices.GetSlicePayload(index));
-    }
-
-    static void CheckSlice(const OrthancStone::SlicesSorter& slices,
-                           size_t index,
-                           const OrthancStone::CoordinateSystem3D& reference,
-                           const DicomInstanceParameters& a)
-    {
-      const OrthancStone::CoordinateSystem3D& slice = slices.GetSliceGeometry(index);
-      const DicomInstanceParameters& b = GetSliceParameters(slices, index);
+      const DicomInstanceParameters& slice = *slices_[index];
       
-      if (!OrthancStone::GeometryToolbox::IsParallel(reference.GetNormal(), slice.GetNormal()))
+      if (!OrthancStone::GeometryToolbox::IsParallel(
+            reference.GetGeometry().GetNormal(),
+            slice.GetGeometry().GetNormal()))
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadGeometry,
                                         "A slice in the volume image is not parallel to the others");
       }
 
-      if (a.GetExpectedPixelFormat() != b.GetExpectedPixelFormat())
+      if (reference.GetExpectedPixelFormat() != slice.GetExpectedPixelFormat())
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat,
                                         "The pixel format changes across the slices of the volume image");
       }
 
-      if (a.GetImageInformation().GetWidth() != b.GetImageInformation().GetWidth() ||
-          a.GetImageInformation().GetHeight() != b.GetImageInformation().GetHeight())
+      if (reference.GetImageInformation().GetWidth() != slice.GetImageInformation().GetWidth() ||
+          reference.GetImageInformation().GetHeight() != slice.GetImageInformation().GetHeight())
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageSize,
                                         "The width/height of slices are not constant in the volume image");
       }
 
-      if (!OrthancStone::LinearAlgebra::IsNear(a.GetPixelSpacingX(), b.GetPixelSpacingX()) ||
-          !OrthancStone::LinearAlgebra::IsNear(a.GetPixelSpacingY(), b.GetPixelSpacingY()))
+      if (!OrthancStone::LinearAlgebra::IsNear(reference.GetPixelSpacingX(), slice.GetPixelSpacingX()) ||
+          !OrthancStone::LinearAlgebra::IsNear(reference.GetPixelSpacingY(), slice.GetPixelSpacingY()))
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadGeometry,
                                         "The pixel spacing of the slices change across the volume image");
@@ -1529,25 +1521,25 @@ namespace Refactoring
     }
 
     
-    static void CheckVolume(const OrthancStone::SlicesSorter& slices)
+    void CheckVolume() const
     {
-      for (size_t i = 0; i < slices.GetSlicesCount(); i++)
+      for (size_t i = 0; i < slices_.size(); i++)
       {
-        if (GetSliceParameters(slices, i).GetImageInformation().GetNumberOfFrames() != 1)
+        assert(slices_[i] != NULL);
+        if (slices_[i]->GetImageInformation().GetNumberOfFrames() != 1)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadGeometry,
                                           "This class does not support multi-frame images");
         }
       }
 
-      if (slices.GetSlicesCount() != 0)
+      if (slices_.size() != 0)
       {
-        const OrthancStone::CoordinateSystem3D& reference = slices.GetSliceGeometry(0);
-        const DicomInstanceParameters& dicom = GetSliceParameters(slices, 0);
+        const DicomInstanceParameters& reference = *slices_[0];
 
-        for (size_t i = 1; i < slices.GetSlicesCount(); i++)
+        for (size_t i = 1; i < slices_.size(); i++)
         {
-          CheckSlice(slices, i, reference, dicom);
+          CheckSlice(i, reference);
         }
       }
     }
@@ -1586,27 +1578,39 @@ namespace Refactoring
                                         "Cannot sort the 3D slices of a DICOM series");          
       }
 
-      slices_.reserve(slices.GetSlicesCount());
-
-      for (size_t i = 0; i < slices.GetSlicesCount(); i++)
+      if (slices.GetSlicesCount() == 0)
       {
-        slices_.push_back(new DicomInstanceParameters(GetSliceParameters(slices, i)));
+        // Empty volume
+        image_.reset(new OrthancStone::ImageBuffer3D(Orthanc::PixelFormat_Grayscale8, 0, 0, 0,
+                                                     false /* don't compute range */));
       }
+      else
+      {
+        slices_.reserve(slices.GetSlicesCount());
 
-      CheckVolume(slices);
+        for (size_t i = 0; i < slices.GetSlicesCount(); i++)
+        {
+          const DicomInstanceParameters& slice =
+            dynamic_cast<const DicomInstanceParameters&>(slices.GetSlicePayload(i));
+          slices_.push_back(new DicomInstanceParameters(slice));
+        }
 
-      const double spacingZ = slices.ComputeSpacingBetweenSlices();
-      LOG(INFO) << "Computed spacing between slices: " << spacingZ << "mm";
+        CheckVolume();
+
+        const double spacingZ = slices.ComputeSpacingBetweenSlices();
+        LOG(INFO) << "Computed spacing between slices: " << spacingZ << "mm";
       
-      const DicomInstanceParameters& parameters = GetSliceParameters(slices, 0);
+        const DicomInstanceParameters& parameters = *slices_[0];
 
-      image_.reset(new OrthancStone::ImageBuffer3D(parameters.GetExpectedPixelFormat(),
-                                                   parameters.GetImageInformation().GetWidth(),
-                                                   parameters.GetImageInformation().GetHeight(),
-                                                   slices.GetSlicesCount(), false /* don't compute range */));      
+        image_.reset(new OrthancStone::ImageBuffer3D(parameters.GetExpectedPixelFormat(),
+                                                     parameters.GetImageInformation().GetWidth(),
+                                                     parameters.GetImageInformation().GetHeight(),
+                                                     slices.GetSlicesCount(), false /* don't compute range */));      
 
-      image_->SetAxialGeometry(slices.GetSliceGeometry(0));
-      image_->SetVoxelDimensions(parameters.GetPixelSpacingX(), parameters.GetPixelSpacingY(), spacingZ);
+        image_->SetAxialGeometry(slices.GetSliceGeometry(0));
+        image_->SetVoxelDimensions(parameters.GetPixelSpacingX(), parameters.GetPixelSpacingY(), spacingZ);
+      }
+      
       image_->Clear();
     }
 
@@ -1625,7 +1629,37 @@ namespace Refactoring
       {
         return *image_;
       }
-    }      
+    }
+
+    size_t GetSlicesCount() const
+    {
+      if (!IsGeometryReady())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        assert(slices_.size() == image_->GetDepth());
+        return slices_.size();
+      }
+    }
+
+    const DicomInstanceParameters& GetSlice(size_t index) const
+    {
+      if (!IsGeometryReady())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else if (index >= slices_.size())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+      else
+      {
+        assert(slices_.size() == image_->GetDepth());
+        return *slices_[index];
+      }
+    }
   };
   
   

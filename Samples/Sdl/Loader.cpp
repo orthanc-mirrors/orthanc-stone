@@ -757,411 +757,6 @@ namespace Refactoring
 
 
 
-  class NativeOracle : public IOracle
-  {
-  private:
-    class Item : public Orthanc::IDynamicObject
-    {
-    private:
-      const OrthancStone::IObserver&  receiver_;
-      std::auto_ptr<IOracleCommand>   command_;
-
-    public:
-      Item(const OrthancStone::IObserver& receiver,
-           IOracleCommand* command) :
-        receiver_(receiver),
-        command_(command)
-      {
-        if (command == NULL)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-        }
-      }
-
-      const OrthancStone::IObserver& GetReceiver() const
-      {
-        return receiver_;
-      }
-
-      const IOracleCommand& GetCommand() const
-      {
-        assert(command_.get() != NULL);
-        return *command_;
-      }
-    };
-
-
-    enum State
-    {
-      State_Setup,
-      State_Running,
-      State_Stopped
-    };
-
-
-    IMessageEmitter&               emitter_;
-    Orthanc::WebServiceParameters  orthanc_;
-    Orthanc::SharedMessageQueue    queue_;
-    State                          state_;
-    boost::mutex                   mutex_;
-    std::vector<boost::thread*>    workers_;
-
-
-    void CopyHttpHeaders(Orthanc::HttpClient& client,
-                         const HttpHeaders& headers)
-    {
-      for (HttpHeaders::const_iterator it = headers.begin(); it != headers.end(); it++ )
-      {
-        client.AddHeader(it->first, it->second);
-      }
-    }
-
-
-    void DecodeAnswer(std::string& answer,
-                      const HttpHeaders& headers)
-    {
-      Orthanc::HttpCompression contentEncoding = Orthanc::HttpCompression_None;
-
-      for (HttpHeaders::const_iterator it = headers.begin(); 
-           it != headers.end(); ++it)
-      {
-        std::string s;
-        Orthanc::Toolbox::ToLowerCase(s, it->first);
-
-        if (s == "content-encoding")
-        {
-          if (it->second == "gzip")
-          {
-            contentEncoding = Orthanc::HttpCompression_Gzip;
-          }
-          else 
-          {
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
-                                            "Unsupported HTTP Content-Encoding: " + it->second);
-          }
-
-          break;
-        }
-      }
-
-      if (contentEncoding == Orthanc::HttpCompression_Gzip)
-      {
-        std::string compressed;
-        answer.swap(compressed);
-          
-        Orthanc::GzipCompressor compressor;
-        compressor.Uncompress(answer, compressed.c_str(), compressed.size());
-      }
-    }
-
-
-    void Execute(const OrthancStone::IObserver& receiver,
-                 const OrthancRestApiCommand& command)
-    {
-      Orthanc::HttpClient client(orthanc_, command.GetUri());
-      client.SetMethod(command.GetMethod());
-      client.SetTimeout(command.GetTimeout());
-
-      CopyHttpHeaders(client, command.GetHttpHeaders());
-
-      if (command.GetMethod() == Orthanc::HttpMethod_Post ||
-          command.GetMethod() == Orthanc::HttpMethod_Put)
-      {
-        client.SetBody(command.GetBody());
-      }
-
-      std::string answer;
-      HttpHeaders answerHeaders;
-      client.ApplyAndThrowException(answer, answerHeaders);
-
-      DecodeAnswer(answer, answerHeaders);
-
-      OrthancRestApiCommand::SuccessMessage message(command, answerHeaders, answer);
-      emitter_.EmitMessage(receiver, message);
-    }
-
-
-    void Execute(const OrthancStone::IObserver& receiver,
-                 const GetOrthancImageCommand& command)
-    {
-      Orthanc::HttpClient client(orthanc_, command.GetUri());
-      client.SetTimeout(command.GetTimeout());
-
-      CopyHttpHeaders(client, command.GetHttpHeaders());
-
-      std::string answer;
-      HttpHeaders answerHeaders;
-      client.ApplyAndThrowException(answer, answerHeaders);
-
-      DecodeAnswer(answer, answerHeaders);
-
-      command.ProcessHttpAnswer(emitter_, receiver, answer, answerHeaders);
-    }
-
-
-    void Execute(const OrthancStone::IObserver& receiver,
-                 const GetOrthancWebViewerJpegCommand& command)
-    {
-      Orthanc::HttpClient client(orthanc_, command.GetUri());
-      client.SetTimeout(command.GetTimeout());
-
-      CopyHttpHeaders(client, command.GetHttpHeaders());
-
-      std::string answer;
-      HttpHeaders answerHeaders;
-      client.ApplyAndThrowException(answer, answerHeaders);
-
-      DecodeAnswer(answer, answerHeaders);
-
-      command.ProcessHttpAnswer(emitter_, receiver, answer);
-    }
-
-
-    void Step()
-    {
-      std::auto_ptr<Orthanc::IDynamicObject>  object(queue_.Dequeue(100));
-
-      if (object.get() != NULL)
-      {
-        const Item& item = dynamic_cast<Item&>(*object);
-
-        try
-        {
-          switch (item.GetCommand().GetType())
-          {
-            case IOracleCommand::Type_OrthancRestApi:
-              Execute(item.GetReceiver(), 
-                      dynamic_cast<const OrthancRestApiCommand&>(item.GetCommand()));
-              break;
-
-            case IOracleCommand::Type_GetOrthancImage:
-              Execute(item.GetReceiver(), 
-                      dynamic_cast<const GetOrthancImageCommand&>(item.GetCommand()));
-              break;
-
-            case IOracleCommand::Type_GetOrthancWebViewerJpeg:
-              Execute(item.GetReceiver(), 
-                      dynamic_cast<const GetOrthancWebViewerJpegCommand&>(item.GetCommand()));
-              break;
-
-            default:
-              throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-          }
-        }
-        catch (Orthanc::OrthancException& e)
-        {
-          LOG(ERROR) << "Exception within the oracle: " << e.What();
-          emitter_.EmitMessage(item.GetReceiver(), OracleCommandExceptionMessage(item.GetCommand(), e));
-        }
-        catch (...)
-        {
-          LOG(ERROR) << "Native exception within the oracle";
-          emitter_.EmitMessage(item.GetReceiver(), OracleCommandExceptionMessage
-                               (item.GetCommand(), Orthanc::ErrorCode_InternalError));
-        }
-      }
-    }
-
-
-    static void Worker(NativeOracle* that)
-    {
-      assert(that != NULL);
-      
-      for (;;)
-      {
-        {
-          boost::mutex::scoped_lock lock(that->mutex_);
-          if (that->state_ != State_Running)
-          {
-            return;
-          }
-        }
-
-        that->Step();
-      }
-    }
-
-
-    void StopInternal()
-    {
-      {
-        boost::mutex::scoped_lock lock(mutex_);
-
-        if (state_ == State_Setup ||
-            state_ == State_Stopped)
-        {
-          return;
-        }
-        else
-        {
-          state_ = State_Stopped;
-        }
-      }
-
-      for (size_t i = 0; i < workers_.size(); i++)
-      {
-        if (workers_[i] != NULL)
-        {
-          if (workers_[i]->joinable())
-          {
-            workers_[i]->join();
-          }
-
-          delete workers_[i];
-        }
-      } 
-    }
-
-
-  public:
-    NativeOracle(IMessageEmitter& emitter) :
-    emitter_(emitter),
-      state_(State_Setup),
-      workers_(4)
-    {
-    }
-
-    virtual ~NativeOracle()
-    {
-      StopInternal();
-    }
-
-    void SetOrthancParameters(const Orthanc::WebServiceParameters& orthanc)
-    {
-      boost::mutex::scoped_lock lock(mutex_);
-
-      if (state_ != State_Setup)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      else
-      {
-        orthanc_ = orthanc;
-      }
-    }
-
-    void SetWorkersCount(unsigned int count)
-    {
-      boost::mutex::scoped_lock lock(mutex_);
-
-      if (count <= 0)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-      else if (state_ != State_Setup)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      else
-      {
-        workers_.resize(count);
-      }
-    }
-
-    void Start()
-    {
-      boost::mutex::scoped_lock lock(mutex_);
-
-      if (state_ != State_Setup)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      else
-      {
-        state_ = State_Running;
-
-        for (unsigned int i = 0; i < workers_.size(); i++)
-        {
-          workers_[i] = new boost::thread(Worker, this);
-        }
-      }      
-    }
-
-    void Stop()
-    {
-      StopInternal();
-    }
-
-    virtual void Schedule(const OrthancStone::IObserver& receiver,
-                          IOracleCommand* command)
-    {
-      queue_.Enqueue(new Item(receiver, command));
-    }
-  };
-
-
-
-  class NativeApplicationContext : public IMessageEmitter
-  {
-  private:
-    boost::shared_mutex            mutex_;
-    OrthancStone::MessageBroker    broker_;
-    OrthancStone::IObservable      oracleObservable_;
-
-  public:
-    NativeApplicationContext() :
-      oracleObservable_(broker_)
-    {
-    }
-
-
-    virtual void EmitMessage(const OrthancStone::IObserver& observer,
-                             const OrthancStone::IMessage& message)
-    {
-      try
-      {
-        boost::unique_lock<boost::shared_mutex>  lock(mutex_);
-        oracleObservable_.EmitMessage(observer, message);
-      }
-      catch (Orthanc::OrthancException& e)
-      {
-        LOG(ERROR) << "Exception while emitting a message: " << e.What();
-      }
-    }
-
-
-    class ReaderLock : public boost::noncopyable
-    {
-    private:
-      NativeApplicationContext&                that_;
-      boost::shared_lock<boost::shared_mutex>  lock_;
-
-    public:
-      ReaderLock(NativeApplicationContext& that) : 
-      that_(that),
-      lock_(that.mutex_)
-      {
-      }
-    };
-
-
-    class WriterLock : public boost::noncopyable
-    {
-    private:
-      NativeApplicationContext&                that_;
-      boost::unique_lock<boost::shared_mutex>  lock_;
-
-    public:
-      WriterLock(NativeApplicationContext& that) : 
-      that_(that),
-      lock_(that.mutex_)
-      {
-      }
-
-      OrthancStone::MessageBroker& GetBroker() 
-      {
-        return that_.broker_;
-      }
-
-      OrthancStone::IObservable& GetOracleObservable()
-      {
-        return that_.oracleObservable_;
-      }
-    };
-  };
-
-
-
   class DicomInstanceParameters :
     public Orthanc::IDynamicObject  /* to be used as a payload of SlicesSorter */
   {
@@ -1543,6 +1138,8 @@ namespace Refactoring
   private:
     std::auto_ptr<OrthancStone::ImageBuffer3D>  image_;
     std::vector<DicomInstanceParameters*>       slices_;
+    uint64_t                                    revision_;
+    std::vector<uint64_t>                       slicesRevision_;
 
     void CheckSlice(size_t index,
                     const DicomInstanceParameters& reference) const
@@ -1614,6 +1211,22 @@ namespace Refactoring
       }
     }
 
+
+    void CheckSliceIndex(size_t index) const
+    {
+      assert(slices_.size() == image_->GetDepth() &&
+             slices_.size() == slicesRevision_.size());
+
+      if (!IsGeometryReady())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else if (index >= slices_.size())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+    }
+
     
   public:
     DicomVolumeImage()
@@ -1645,12 +1258,14 @@ namespace Refactoring
       else
       {
         slices_.reserve(slices.GetSlicesCount());
+        slicesRevision_.resize(slices.GetSlicesCount());
 
         for (size_t i = 0; i < slices.GetSlicesCount(); i++)
         {
           const DicomInstanceParameters& slice =
             dynamic_cast<const DicomInstanceParameters&>(slices.GetSlicePayload(i));
           slices_.push_back(new DicomInstanceParameters(slice));
+          slicesRevision_[i] = 0;
         }
 
         CheckVolume();
@@ -1670,6 +1285,13 @@ namespace Refactoring
       }
       
       image_->Clear();
+
+      revision_++;
+    }
+
+    uint64_t GetRevision() const
+    {
+      return revision_;
     }
 
     bool IsGeometryReady() const
@@ -1697,51 +1319,41 @@ namespace Refactoring
       }
       else
       {
-        assert(slices_.size() == image_->GetDepth());
         return slices_.size();
       }
     }
 
-    const DicomInstanceParameters& GetSlice(size_t index) const
+    const DicomInstanceParameters& GetSliceParameters(size_t index) const
     {
-      if (!IsGeometryReady())
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      else if (index >= slices_.size())
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-      else
-      {
-        assert(slices_.size() == image_->GetDepth());
-        return *slices_[index];
-      }
+      CheckSliceIndex(index);
+      return *slices_[index];
+    }
+
+    uint64_t GetSliceRevision(size_t index) const
+    {
+      CheckSliceIndex(index);
+      return slicesRevision_[index];
     }
 
     void SetSliceContent(size_t index,
                          const Orthanc::ImageAccessor& image)
     {
-      if (!IsGeometryReady())
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      else if (index >= slices_.size())
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-      else
+      CheckSliceIndex(index);
+      
       {
         OrthancStone::ImageBuffer3D::SliceWriter writer
           (*image_, OrthancStone::VolumeProjection_Axial, index);
         Orthanc::ImageProcessing::Copy(writer.GetAccessor(), image);
       }
+
+      revision_ ++;
+      slicesRevision_[index] += 1;
     }
   };
   
   
 
-  class AxialVolumeOrthancLoader : public OrthancStone::IObserver
+  class VolumeSeriesOrthancLoader : public OrthancStone::IObserver
   {
   private:
     class MessageHandler : public Orthanc::IDynamicObject
@@ -1806,10 +1418,10 @@ namespace Refactoring
     class LoadSeriesGeometryHandler : public MessageHandler
     {
     private:
-      AxialVolumeOrthancLoader&  that_;
+      VolumeSeriesOrthancLoader&  that_;
 
     public:
-      LoadSeriesGeometryHandler(AxialVolumeOrthancLoader& that) :
+      LoadSeriesGeometryHandler(VolumeSeriesOrthancLoader& that) :
       that_(that)
       {
       }
@@ -1836,7 +1448,7 @@ namespace Refactoring
 
         for (size_t i = 0; i < that_.image_.GetSlicesCount(); i++)
         {
-          const DicomInstanceParameters& slice = that_.image_.GetSlice(i);
+          const DicomInstanceParameters& slice = that_.image_.GetSliceParameters(i);
           
           const std::string& instance = slice.GetOrthancInstanceIdentifier();
           if (instance.empty())
@@ -1889,10 +1501,10 @@ namespace Refactoring
     class LoadInstanceGeometryHandler : public MessageHandler
     {
     private:
-      AxialVolumeOrthancLoader&  that_;
+      VolumeSeriesOrthancLoader&  that_;
 
     public:
-      LoadInstanceGeometryHandler(AxialVolumeOrthancLoader& that) :
+      LoadInstanceGeometryHandler(VolumeSeriesOrthancLoader& that) :
       that_(that)
       {
       }
@@ -1912,23 +1524,23 @@ namespace Refactoring
     DicomVolumeImage  image_;
 
   public:
-    AxialVolumeOrthancLoader(IOracle& oracle,
-                             OrthancStone::IObservable& oracleObservable) :
+    VolumeSeriesOrthancLoader(IOracle& oracle,
+                              OrthancStone::IObservable& oracleObservable) :
       IObserver(oracleObservable.GetBroker()),
       oracle_(oracle),
       active_(false)
     {
       oracleObservable.RegisterObserverCallback(
-        new OrthancStone::Callable<AxialVolumeOrthancLoader, OrthancRestApiCommand::SuccessMessage>
-        (*this, &AxialVolumeOrthancLoader::Handle));
+        new OrthancStone::Callable<VolumeSeriesOrthancLoader, OrthancRestApiCommand::SuccessMessage>
+        (*this, &VolumeSeriesOrthancLoader::Handle));
 
       oracleObservable.RegisterObserverCallback(
-        new OrthancStone::Callable<AxialVolumeOrthancLoader, GetOrthancImageCommand::SuccessMessage>
-        (*this, &AxialVolumeOrthancLoader::Handle));
+        new OrthancStone::Callable<VolumeSeriesOrthancLoader, GetOrthancImageCommand::SuccessMessage>
+        (*this, &VolumeSeriesOrthancLoader::Handle));
 
       oracleObservable.RegisterObserverCallback(
-        new OrthancStone::Callable<AxialVolumeOrthancLoader, GetOrthancWebViewerJpegCommand::SuccessMessage>
-        (*this, &AxialVolumeOrthancLoader::Handle));
+        new OrthancStone::Callable<VolumeSeriesOrthancLoader, GetOrthancWebViewerJpegCommand::SuccessMessage>
+        (*this, &VolumeSeriesOrthancLoader::Handle));
     }
 
     void LoadSeries(const std::string& seriesId)
@@ -1969,6 +1581,414 @@ namespace Refactoring
     }
   };
 
+
+
+
+
+
+
+
+  class NativeOracle : public IOracle
+  {
+  private:
+    class Item : public Orthanc::IDynamicObject
+    {
+    private:
+      const OrthancStone::IObserver&  receiver_;
+      std::auto_ptr<IOracleCommand>   command_;
+
+    public:
+      Item(const OrthancStone::IObserver& receiver,
+           IOracleCommand* command) :
+        receiver_(receiver),
+        command_(command)
+      {
+        if (command == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        }
+      }
+
+      const OrthancStone::IObserver& GetReceiver() const
+      {
+        return receiver_;
+      }
+
+      const IOracleCommand& GetCommand() const
+      {
+        assert(command_.get() != NULL);
+        return *command_;
+      }
+    };
+
+
+    enum State
+    {
+      State_Setup,
+      State_Running,
+      State_Stopped
+    };
+
+
+    IMessageEmitter&               emitter_;
+    Orthanc::WebServiceParameters  orthanc_;
+    Orthanc::SharedMessageQueue    queue_;
+    State                          state_;
+    boost::mutex                   mutex_;
+    std::vector<boost::thread*>    workers_;
+
+
+    void CopyHttpHeaders(Orthanc::HttpClient& client,
+                         const HttpHeaders& headers)
+    {
+      for (HttpHeaders::const_iterator it = headers.begin(); it != headers.end(); it++ )
+      {
+        client.AddHeader(it->first, it->second);
+      }
+    }
+
+
+    void DecodeAnswer(std::string& answer,
+                      const HttpHeaders& headers)
+    {
+      Orthanc::HttpCompression contentEncoding = Orthanc::HttpCompression_None;
+
+      for (HttpHeaders::const_iterator it = headers.begin(); 
+           it != headers.end(); ++it)
+      {
+        std::string s;
+        Orthanc::Toolbox::ToLowerCase(s, it->first);
+
+        if (s == "content-encoding")
+        {
+          if (it->second == "gzip")
+          {
+            contentEncoding = Orthanc::HttpCompression_Gzip;
+          }
+          else 
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
+                                            "Unsupported HTTP Content-Encoding: " + it->second);
+          }
+
+          break;
+        }
+      }
+
+      if (contentEncoding == Orthanc::HttpCompression_Gzip)
+      {
+        std::string compressed;
+        answer.swap(compressed);
+          
+        Orthanc::GzipCompressor compressor;
+        compressor.Uncompress(answer, compressed.c_str(), compressed.size());
+      }
+    }
+
+
+    void Execute(const OrthancStone::IObserver& receiver,
+                 const OrthancRestApiCommand& command)
+    {
+      Orthanc::HttpClient client(orthanc_, command.GetUri());
+      client.SetMethod(command.GetMethod());
+      client.SetTimeout(command.GetTimeout());
+
+      CopyHttpHeaders(client, command.GetHttpHeaders());
+
+      if (command.GetMethod() == Orthanc::HttpMethod_Post ||
+          command.GetMethod() == Orthanc::HttpMethod_Put)
+      {
+        client.SetBody(command.GetBody());
+      }
+
+      std::string answer;
+      HttpHeaders answerHeaders;
+      client.ApplyAndThrowException(answer, answerHeaders);
+
+      DecodeAnswer(answer, answerHeaders);
+
+      OrthancRestApiCommand::SuccessMessage message(command, answerHeaders, answer);
+      emitter_.EmitMessage(receiver, message);
+    }
+
+
+    void Execute(const OrthancStone::IObserver& receiver,
+                 const GetOrthancImageCommand& command)
+    {
+      Orthanc::HttpClient client(orthanc_, command.GetUri());
+      client.SetTimeout(command.GetTimeout());
+
+      CopyHttpHeaders(client, command.GetHttpHeaders());
+
+      std::string answer;
+      HttpHeaders answerHeaders;
+      client.ApplyAndThrowException(answer, answerHeaders);
+
+      DecodeAnswer(answer, answerHeaders);
+
+      command.ProcessHttpAnswer(emitter_, receiver, answer, answerHeaders);
+    }
+
+
+    void Execute(const OrthancStone::IObserver& receiver,
+                 const GetOrthancWebViewerJpegCommand& command)
+    {
+      Orthanc::HttpClient client(orthanc_, command.GetUri());
+      client.SetTimeout(command.GetTimeout());
+
+      CopyHttpHeaders(client, command.GetHttpHeaders());
+
+      std::string answer;
+      HttpHeaders answerHeaders;
+      client.ApplyAndThrowException(answer, answerHeaders);
+
+      DecodeAnswer(answer, answerHeaders);
+
+      command.ProcessHttpAnswer(emitter_, receiver, answer);
+    }
+
+
+    void Step()
+    {
+      std::auto_ptr<Orthanc::IDynamicObject>  object(queue_.Dequeue(100));
+
+      if (object.get() != NULL)
+      {
+        const Item& item = dynamic_cast<Item&>(*object);
+
+        try
+        {
+          switch (item.GetCommand().GetType())
+          {
+            case IOracleCommand::Type_OrthancRestApi:
+              Execute(item.GetReceiver(), 
+                      dynamic_cast<const OrthancRestApiCommand&>(item.GetCommand()));
+              break;
+
+            case IOracleCommand::Type_GetOrthancImage:
+              Execute(item.GetReceiver(), 
+                      dynamic_cast<const GetOrthancImageCommand&>(item.GetCommand()));
+              break;
+
+            case IOracleCommand::Type_GetOrthancWebViewerJpeg:
+              Execute(item.GetReceiver(), 
+                      dynamic_cast<const GetOrthancWebViewerJpegCommand&>(item.GetCommand()));
+              break;
+
+            default:
+              throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+          }
+        }
+        catch (Orthanc::OrthancException& e)
+        {
+          LOG(ERROR) << "Exception within the oracle: " << e.What();
+          emitter_.EmitMessage(item.GetReceiver(), OracleCommandExceptionMessage(item.GetCommand(), e));
+        }
+        catch (...)
+        {
+          LOG(ERROR) << "Native exception within the oracle";
+          emitter_.EmitMessage(item.GetReceiver(), OracleCommandExceptionMessage
+                               (item.GetCommand(), Orthanc::ErrorCode_InternalError));
+        }
+      }
+    }
+
+
+    static void Worker(NativeOracle* that)
+    {
+      assert(that != NULL);
+      
+      for (;;)
+      {
+        {
+          boost::mutex::scoped_lock lock(that->mutex_);
+          if (that->state_ != State_Running)
+          {
+            return;
+          }
+        }
+
+        that->Step();
+      }
+    }
+
+
+    void StopInternal()
+    {
+      {
+        boost::mutex::scoped_lock lock(mutex_);
+
+        if (state_ == State_Setup ||
+            state_ == State_Stopped)
+        {
+          return;
+        }
+        else
+        {
+          state_ = State_Stopped;
+        }
+      }
+
+      for (size_t i = 0; i < workers_.size(); i++)
+      {
+        if (workers_[i] != NULL)
+        {
+          if (workers_[i]->joinable())
+          {
+            workers_[i]->join();
+          }
+
+          delete workers_[i];
+        }
+      } 
+    }
+
+
+  public:
+    NativeOracle(IMessageEmitter& emitter) :
+    emitter_(emitter),
+      state_(State_Setup),
+      workers_(4)
+    {
+    }
+
+    virtual ~NativeOracle()
+    {
+      StopInternal();
+    }
+
+    void SetOrthancParameters(const Orthanc::WebServiceParameters& orthanc)
+    {
+      boost::mutex::scoped_lock lock(mutex_);
+
+      if (state_ != State_Setup)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        orthanc_ = orthanc;
+      }
+    }
+
+    void SetWorkersCount(unsigned int count)
+    {
+      boost::mutex::scoped_lock lock(mutex_);
+
+      if (count <= 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+      else if (state_ != State_Setup)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        workers_.resize(count);
+      }
+    }
+
+    void Start()
+    {
+      boost::mutex::scoped_lock lock(mutex_);
+
+      if (state_ != State_Setup)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        state_ = State_Running;
+
+        for (unsigned int i = 0; i < workers_.size(); i++)
+        {
+          workers_[i] = new boost::thread(Worker, this);
+        }
+      }      
+    }
+
+    void Stop()
+    {
+      StopInternal();
+    }
+
+    virtual void Schedule(const OrthancStone::IObserver& receiver,
+                          IOracleCommand* command)
+    {
+      queue_.Enqueue(new Item(receiver, command));
+    }
+  };
+
+
+  class NativeApplicationContext : public IMessageEmitter
+  {
+  private:
+    boost::shared_mutex            mutex_;
+    OrthancStone::MessageBroker    broker_;
+    OrthancStone::IObservable      oracleObservable_;
+
+  public:
+    NativeApplicationContext() :
+      oracleObservable_(broker_)
+    {
+    }
+
+
+    virtual void EmitMessage(const OrthancStone::IObserver& observer,
+                             const OrthancStone::IMessage& message)
+    {
+      try
+      {
+        boost::unique_lock<boost::shared_mutex>  lock(mutex_);
+        oracleObservable_.EmitMessage(observer, message);
+      }
+      catch (Orthanc::OrthancException& e)
+      {
+        LOG(ERROR) << "Exception while emitting a message: " << e.What();
+      }
+    }
+
+
+    class ReaderLock : public boost::noncopyable
+    {
+    private:
+      NativeApplicationContext&                that_;
+      boost::shared_lock<boost::shared_mutex>  lock_;
+
+    public:
+      ReaderLock(NativeApplicationContext& that) : 
+      that_(that),
+      lock_(that.mutex_)
+      {
+      }
+    };
+
+
+    class WriterLock : public boost::noncopyable
+    {
+    private:
+      NativeApplicationContext&                that_;
+      boost::unique_lock<boost::shared_mutex>  lock_;
+
+    public:
+      WriterLock(NativeApplicationContext& that) : 
+      that_(that),
+      lock_(that.mutex_)
+      {
+      }
+
+      OrthancStone::MessageBroker& GetBroker() 
+      {
+        return that_.broker_;
+      }
+
+      OrthancStone::IObservable& GetOracleObservable()
+      {
+        return that_.oracleObservable_;
+      }
+    };
+  };
 }
 
 
@@ -2037,13 +2057,13 @@ void Run(Refactoring::NativeApplicationContext& context,
          Refactoring::IOracle& oracle)
 {
   std::auto_ptr<Toto> toto;
-  std::auto_ptr<Refactoring::AxialVolumeOrthancLoader> loader1, loader2;
+  std::auto_ptr<Refactoring::VolumeSeriesOrthancLoader> loader1, loader2;
 
   {
     Refactoring::NativeApplicationContext::WriterLock lock(context);
     toto.reset(new Toto(lock.GetOracleObservable()));
-    loader1.reset(new Refactoring::AxialVolumeOrthancLoader(oracle, lock.GetOracleObservable()));
-    loader2.reset(new Refactoring::AxialVolumeOrthancLoader(oracle, lock.GetOracleObservable()));
+    loader1.reset(new Refactoring::VolumeSeriesOrthancLoader(oracle, lock.GetOracleObservable()));
+    loader2.reset(new Refactoring::VolumeSeriesOrthancLoader(oracle, lock.GetOracleObservable()));
   }
 
   if (1)

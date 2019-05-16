@@ -1,6 +1,8 @@
 var SendMessageToCpp: Function = null;
 export var TestWasmIntegratedModule : any;
 
+import * as TestStoneCodeGen from './build-wasm/TestStoneCodeGen_generated'
+
 /*
 +--------------------------------------------------+
 |  install emscripten handlers                     |
@@ -107,10 +109,59 @@ function SendFreeTextFromCpp(txt: string):string
 }
 (<any> window).SendFreeTextFromCpp = SendFreeTextFromCpp;
 
+var referenceMessages = Array<any>();
+
+function testTsCppTs() {
+  var r = new TestStoneCodeGen.Message2();
+  r.memberEnumMovieType = TestStoneCodeGen.MovieType.RomCom;
+  r.memberStringWithDefault = "overriden";
+  r.memberMapEnumFloat[TestStoneCodeGen.CrispType.CreamAndChives] = 0.5;
+  r.memberString = "reference-messsage2-test1";
+
+  referenceMessages[r.memberString] = r;
+  var strMsg2 = r.StoneSerialize();
+  let SendMessageToCppForEchoLocal = (<any> window).Module.cwrap('SendMessageToCppForEcho', 'string', ['string']);
+  SendMessageToCppForEchoLocal(strMsg2);
+}
+
+class MyEchoHandler implements TestStoneCodeGen.IHandler
+{
+  public HandleMessage2(value:  TestStoneCodeGen.Message2): boolean
+  {
+    if (value.memberString in referenceMessages) {
+      let r = referenceMessages[value.memberString];
+      let equals = (value.memberStringWithDefault == r.memberStringWithDefault);
+      if (TestStoneCodeGen.CrispType.CreamAndChives in r.memberMapEnumFloat) {
+        equals == equals && r.memberMapEnumFloat[TestStoneCodeGen.CrispType.CreamAndChives] == value.memberMapEnumFloat[TestStoneCodeGen.CrispType.CreamAndChives];
+      }
+      // TODO continue comparison
+
+      if (equals) {
+        console.log("objects are equals after round trip");
+        return true;
+      }
+    }
+    console.log("problem after round trip");
+    return true;
+  }
+}
+
+function SendMessageFromCpp(txt: string):string
+{
+  setCppOutputValue(getCppOutputValue() + "\n" + txt);
+  TestStoneCodeGen.StoneDispatchToHandler(txt, new MyEchoHandler());
+  return "";
+}
+(<any> window).SendMessageFromCpp = SendMessageFromCpp;
+
+
 
 function ButtonClick(buttonName: string) {
   if (buttonName.startsWith('Test ')) {
     setSerializedInputValue(stockSerializedMessages[buttonName]);
+  }
+  else if (buttonName == "Test-ts-cpp-ts") {
+    testTsCppTs();
   }
   else if(buttonName == 'Trigger')
   {

@@ -9,7 +9,7 @@ mergeInto(LibraryManager.library, {
   },
   SendMessageFromCppJS: function(statusUpdateMessage) {
     var statusUpdateMessage_ = UTF8ToString(statusUpdateMessage);
-    SendMessageFromCpp(statusUpdateMessage_);
+    window.SendMessageFromCpp(statusUpdateMessage_);
   }
 });
 

@@ -59,6 +59,15 @@ extern "C" void SendFreeTextFromCppJS(const char* message);
   SendFreeTextFromCppJS(ss.str().c_str()); \
   return true;
 
+#define ECHO_MESSAGE(Type,value) \
+  stringstream ss; \
+  ss << "Received an instance of:\n" #Type "\n. Here's the dump:\n"; \
+  TestStoneCodeGen::StoneDumpValue(ss, value, 0); \
+  SendFreeTextFromCppJS(ss.str().c_str()); \
+  std::string serializedInCpp = StoneSerialize(value); \
+  SendMessageFromCppJS(serializedInCpp.c_str()); \
+  return true;
+
 class MyHandler : public TestStoneCodeGen::IHandler
 {
   public:
@@ -87,6 +96,34 @@ class MyHandler : public TestStoneCodeGen::IHandler
     }
 };
 
+class MyEchoHandler : public TestStoneCodeGen::IHandler
+{
+  public:
+    virtual bool Handle(const TestStoneCodeGen::A& value) override
+    {
+      ECHO_MESSAGE(TestStoneCodeGen::A,value)
+    }
+    virtual bool Handle(const TestStoneCodeGen::B& value) override
+    {
+      ECHO_MESSAGE(TestStoneCodeGen::B,value)
+    }
+
+    virtual bool Handle(const TestStoneCodeGen::Message1& value) override
+    {
+      ECHO_MESSAGE(TestStoneCodeGen::Message1,value)
+    }
+
+    virtual bool Handle(const TestStoneCodeGen::Message2& value) override
+    {
+      ECHO_MESSAGE(TestStoneCodeGen::Message2,value)
+    }
+
+    virtual bool Handle(const TestStoneCodeGen::C& value) override
+    {
+      ECHO_MESSAGE(TestStoneCodeGen::C,value)
+    }
+};
+
 extern "C" void EMSCRIPTEN_KEEPALIVE SendMessageToCpp(const char* message)
 {
     MyHandler handler;
@@ -96,6 +133,25 @@ extern "C" void EMSCRIPTEN_KEEPALIVE SendMessageToCpp(const char* message)
       if(!handled)
       {
         SendFreeTextFromCppJS("This message is valid JSON, but was not handled!");  
+      }
+    }
+    catch(std::exception& e)
+    {
+      stringstream ss;
+      ss << "Error while parsing message: " << e.what() << "\n";
+      SendFreeTextFromCppJS(ss.str().c_str());  
+    }
+}
+
+extern "C" void EMSCRIPTEN_KEEPALIVE SendMessageToCppForEcho(const char* message)
+{
+    MyEchoHandler echoHandler;
+    try
+    {
+      bool handled = TestStoneCodeGen::StoneDispatchToHandler(message,&echoHandler);
+      if(!handled)
+      {
+        SendFreeTextFromCppJS("This message is valid JSON, but was not handled by the echo handler!");  
       }
     }
     catch(std::exception& e)

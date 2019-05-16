@@ -4,7 +4,7 @@ set -e
 mkdir -p build-final
 
 # compile TS to JS
-tsc --module commonjs --sourceMap -t ES2015 --outDir "build-tsc/" build-wasm/testWasmIntegratedCpp_generated.ts testWasmIntegrated.ts 
+tsc --module commonjs --sourceMap -t ES2015 --outDir "build-tsc/" build-wasm/TestStoneCodeGen_generated.ts testWasmIntegrated.ts 
 
 # bundle JS files to final build dir 
 browserify "build-tsc/build-wasm/testWasmIntegratedCpp_generated.js" "build-tsc/testWasmIntegrated.js" -o "build-final/testWasmIntegratedApp.js"

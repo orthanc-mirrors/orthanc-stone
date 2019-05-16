@@ -34,7 +34,7 @@ struct Message1:
   memberFloat64: float64
 
 struct Message2:
-  __handler: cpp
+  __handler: [cpp, ts]
 
   memberString: string
   memberStringWithDefault: string = "my-default-value"

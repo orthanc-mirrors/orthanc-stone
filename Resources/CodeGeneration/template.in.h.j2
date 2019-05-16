@@ -182,6 +182,17 @@ namespace {{rootName}}
     return out;
   }
 
+  inline std::string ToString(const std::string& str)
+  {
+    return str;
+  }
+
+  inline void FromString(std::string& value, std::string strValue)
+  {
+    value = strValue;
+  }
+
+
   /** Throws in case of problem */
   template<typename TK, typename TV>
   void _StoneDeserializeValue(
@@ -195,8 +206,10 @@ namespace {{rootName}}
         itr != jsonValue.end();
         itr++)
       {
+        std::string strKey;
+        _StoneDeserializeValue(strKey, itr.key());
         TK key;
-        _StoneDeserializeValue(key, itr.key());
+        FromString(key, strKey);  // if you have a compile error here, it means that your type is not suitable to be the key of a map (or you should overwrite the FromString/ToString in template.in.h.j2)
 
         TV innerDestValue;
         _StoneDeserializeValue(innerDestValue, *itr);
@@ -205,6 +218,7 @@ namespace {{rootName}}
       }
     }
   }
+
   template<typename TK, typename TV>
   Json::Value _StoneSerializeValue(const std::map<TK, TV>& value)
   {
@@ -214,7 +228,7 @@ namespace {{rootName}}
       it != value.cend(); ++it)
     {
       // it->first it->second
-      result[it->first] = _StoneSerializeValue(it->second);
+      result[ToString(it->first)] = _StoneSerializeValue(it->second);
     }
     return result;
   }
@@ -239,7 +253,7 @@ namespace {{rootName}}
   void _StoneDeserializeValue(
     std::vector<T>& destValue, const Json::Value& jsonValue)
   {
-    if (!jsonValue.isNull())
+    if (!jsonValue.isNull() && jsonValue.isArray())
     {
       destValue.clear();
       destValue.reserve(jsonValue.size());
@@ -281,7 +295,7 @@ namespace {{rootName}}
   void _StoneDeserializeValue(
     std::set<T>& destValue, const Json::Value& jsonValue)
   {
-    if (!jsonValue.isNull())
+    if (!jsonValue.isNull() && jsonValue.isArray())
     {
       destValue.clear();
       for (Json::Value::ArrayIndex i = 0; i != jsonValue.size(); i++)

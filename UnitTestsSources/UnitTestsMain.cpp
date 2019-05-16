@@ -730,6 +730,32 @@ TEST(MessagingToolbox, ParseJson)
   ASSERT_TRUE(OrthancStone::MessagingToolbox::ParseJson(response, source.c_str(), source.size()));
 }
 
+TEST(VolumeImageGeometry, Basic)
+{
+  OrthancStone::VolumeImageGeometry g;
+  g.SetSize(10, 20, 30);
+  g.SetVoxelDimensions(1, 2, 3);
+
+  OrthancStone::Vector p = g.GetCoordinates(0, 0, 0);
+  ASSERT_EQ(3u, p.size());
+  ASSERT_FLOAT_EQ(-1.0 / 2.0, p[0]);
+  ASSERT_FLOAT_EQ(-2.0 / 2.0, p[1]);
+  ASSERT_FLOAT_EQ(-3.0 / 2.0, p[2]);
+  
+  p = g.GetCoordinates(1, 1, 1);
+  ASSERT_FLOAT_EQ(-1.0 / 2.0 + 10.0 * 1.0, p[0]);
+  ASSERT_FLOAT_EQ(-2.0 / 2.0 + 20.0 * 2.0, p[1]);
+  ASSERT_FLOAT_EQ(-3.0 / 2.0 + 30.0 * 3.0, p[2]);
+
+  OrthancStone::VolumeProjection proj;
+  ASSERT_TRUE(g.DetectProjection(proj, g.GetAxialGeometry()));
+  ASSERT_EQ(OrthancStone::VolumeProjection_Axial, proj);
+  ASSERT_TRUE(g.DetectProjection(proj, g.GetCoronalGeometry()));
+  ASSERT_EQ(OrthancStone::VolumeProjection_Coronal, proj);
+  ASSERT_TRUE(g.DetectProjection(proj, g.GetSagittalGeometry()));
+  ASSERT_EQ(OrthancStone::VolumeProjection_Sagittal, proj);
+}
+
 int main(int argc, char **argv)
 {
   Orthanc::Logging::Initialize();

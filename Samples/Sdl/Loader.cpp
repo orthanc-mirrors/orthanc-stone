@@ -354,9 +354,11 @@ namespace Refactoring
 
 
   private:
-    std::string    uri_;
-    HttpHeaders    headers_;
-    unsigned int   timeout_;
+    std::string           uri_;
+    HttpHeaders           headers_;
+    unsigned int          timeout_;
+    bool                  hasExpectedFormat_;
+    Orthanc::PixelFormat  expectedFormat_;
 
     std::auto_ptr< OrthancStone::MessageHandler<SuccessMessage> >  successCallback_;
     std::auto_ptr< OrthancStone::MessageHandler<OracleCommandExceptionMessage> >  failureCallback_;
@@ -364,13 +366,20 @@ namespace Refactoring
   public:
     GetOrthancImageCommand() :
       uri_("/"),
-      timeout_(10)
+      timeout_(10),
+      hasExpectedFormat_(false)
     {
     }
 
     virtual Type GetType() const
     {
       return Type_GetOrthancImage;
+    }
+
+    void SetExpectedPixelFormat(Orthanc::PixelFormat format)
+    {
+      hasExpectedFormat_ = true;
+      expectedFormat_ = format;
     }
 
     void SetUri(const std::string& uri)
@@ -455,6 +464,20 @@ namespace Refactoring
                                           std::string(Orthanc::EnumerationToString(contentType)));
       }
 
+      if (hasExpectedFormat_)
+      {
+        if (expectedFormat_ == Orthanc::PixelFormat_SignedGrayscale16 &&
+            image->GetFormat() == Orthanc::PixelFormat_Grayscale16)
+        {
+          image->SetFormat(Orthanc::PixelFormat_SignedGrayscale16);
+        }
+
+        if (expectedFormat_ != image->GetFormat())
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+        }
+      }
+
       SuccessMessage message(*this, image.release(), contentType);
       emitter.EmitMessage(receiver, message);
     }
@@ -515,7 +538,7 @@ namespace Refactoring
       return Type_GetOrthancWebViewerJpeg;
     }
 
-    void SetExpectedFormat(Orthanc::PixelFormat format)
+    void SetExpectedPixelFormat(Orthanc::PixelFormat format)
     {
       expectedFormat_ = format;
     }
@@ -549,7 +572,7 @@ namespace Refactoring
       headers_[key] = value;
     }
 
-    Orthanc::PixelFormat GetExpectedFormat() const
+    Orthanc::PixelFormat GetExpectedPixelFormat() const
     {
       return expectedFormat_;
     }
@@ -1145,6 +1168,10 @@ namespace Refactoring
   private:
     struct Data   // Struct to ease the copy constructor
     {
+      std::string                       orthancInstanceId_;
+      std::string                       studyInstanceUid_;
+      std::string                       seriesInstanceUid_;
+      std::string                       sopInstanceUid_;
       Orthanc::DicomImageInformation    imageInformation_;
       OrthancStone::SopClassUid         sopClassUid_;
       double                            thickness_;
@@ -1206,7 +1233,14 @@ namespace Refactoring
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
-            
+
+        if (!dicom.CopyToString(studyInstanceUid_, Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, false) ||
+            !dicom.CopyToString(seriesInstanceUid_, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false) ||
+            !dicom.CopyToString(sopInstanceUid_, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+        
         std::string s;
         if (!dicom.CopyToString(s, Orthanc::DICOM_TAG_SOP_CLASS_UID, false))
         {
@@ -1362,15 +1396,39 @@ namespace Refactoring
     {
     }
 
-    
     DicomInstanceParameters(const Orthanc::DicomMap& dicom) :
       data_(dicom)
     {
     }
 
+    void SetOrthancInstanceIdentifier(const std::string& id)
+    {
+      data_.orthancInstanceId_ = id;
+    }
+
+    const std::string& GetOrthancInstanceIdentifier() const
+    {
+      return data_.orthancInstanceId_;
+    }
+
     const Orthanc::DicomImageInformation& GetImageInformation() const
     {
       return data_.imageInformation_;
+    }
+
+    const std::string& GetStudyInstanceUid() const
+    {
+      return data_.studyInstanceUid_;
+    }
+
+    const std::string& GetSeriesInstanceUid() const
+    {
+      return data_.seriesInstanceUid_;
+    }
+
+    const std::string& GetSopInstanceUid() const
+    {
+      return data_.sopInstanceUid_;
     }
 
     OrthancStone::SopClassUid GetSopClassUid() const
@@ -1660,6 +1718,25 @@ namespace Refactoring
         return *slices_[index];
       }
     }
+
+    void SetSliceContent(size_t index,
+                         const Orthanc::ImageAccessor& image)
+    {
+      if (!IsGeometryReady())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else if (index >= slices_.size())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+      else
+      {
+        OrthancStone::ImageBuffer3D::SliceWriter writer
+          (*image_, OrthancStone::VolumeProjection_Axial, index);
+        Orthanc::ImageProcessing::Copy(writer.GetAccessor(), image);
+      }
+    }
   };
   
   
@@ -1670,13 +1747,60 @@ namespace Refactoring
     class MessageHandler : public Orthanc::IDynamicObject
     {
     public:
-      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const = 0;
+      virtual void Handle(const Json::Value& body) const
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+
+      virtual void Handle(const Orthanc::ImageAccessor& image) const
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
     };
 
     void Handle(const OrthancRestApiCommand::SuccessMessage& message)
     {
-      dynamic_cast<const MessageHandler&>(message.GetOrigin().GetPayload()).Handle(message);
+      Json::Value body;
+      message.ParseJsonBody(body);
+
+      if (body.type() != Json::objectValue)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
+      }
+
+      dynamic_cast<const MessageHandler&>(message.GetOrigin().GetPayload()).Handle(body);
     }
+
+    void Handle(const Refactoring::GetOrthancImageCommand::SuccessMessage& message)
+    {
+      dynamic_cast<const MessageHandler&>(message.GetOrigin().GetPayload()).Handle(message.GetImage());
+    }
+
+    void Handle(const Refactoring::GetOrthancWebViewerJpegCommand::SuccessMessage& message)
+    {
+      dynamic_cast<const MessageHandler&>(message.GetOrigin().GetPayload()).Handle(message.GetImage());
+    }
+
+
+    class LoadSliceImage : public MessageHandler
+    {
+    private:
+      DicomVolumeImage&   target_;
+      size_t              slice_;
+
+    public:
+      LoadSliceImage(DicomVolumeImage& target,
+                     size_t slice) :
+        target_(target),
+        slice_(slice)
+      {
+      }
+
+      virtual void Handle(const Orthanc::ImageAccessor& image) const
+      {
+        target_.SetSliceContent(slice_, image);
+      }
+    };
 
 
     class LoadSeriesGeometryHandler : public MessageHandler
@@ -1690,32 +1814,74 @@ namespace Refactoring
       {
       }
 
-      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
+      virtual void Handle(const Json::Value& body) const
       {
-        Json::Value value;
-        message.ParseJsonBody(value);
-
-        if (value.type() != Json::objectValue)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
-        }
-
-        Json::Value::Members instances = value.getMemberNames();
+        Json::Value::Members instances = body.getMemberNames();
 
         OrthancStone::SlicesSorter slices;
         
         for (size_t i = 0; i < instances.size(); i++)
         {
           Orthanc::DicomMap dicom;
-          dicom.FromDicomAsJson(value[instances[i]]);
+          dicom.FromDicomAsJson(body[instances[i]]);
 
           std::auto_ptr<DicomInstanceParameters> instance(new DicomInstanceParameters(dicom));
+          instance->SetOrthancInstanceIdentifier(instances[i]);
 
           OrthancStone::CoordinateSystem3D geometry = instance->GetGeometry();
           slices.AddSlice(geometry, instance.release());
         }
 
         that_.image_.SetGeometry(slices);
+
+        for (size_t i = 0; i < that_.image_.GetSlicesCount(); i++)
+        {
+          const DicomInstanceParameters& slice = that_.image_.GetSlice(i);
+          
+          const std::string& instance = slice.GetOrthancInstanceIdentifier();
+          if (instance.empty())
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+          }
+
+#if 0
+          std::auto_ptr<Refactoring::GetOrthancWebViewerJpegCommand> command(
+            new Refactoring::GetOrthancWebViewerJpegCommand);
+          command->SetInstance(instance);
+          command->SetQuality(95);
+#else
+          std::string uri = "/instances/" + instance;
+          
+          switch (slice.GetExpectedPixelFormat())
+          {
+            case Orthanc::PixelFormat_RGB24:
+              uri += "/preview";
+              break;
+      
+            case Orthanc::PixelFormat_Grayscale16:
+              uri += "/image-uint16";
+              break;
+      
+            case Orthanc::PixelFormat_SignedGrayscale16:
+              uri += "/image-int16";
+              break;
+      
+            default:
+              throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+          }
+          
+          std::auto_ptr<Refactoring::GetOrthancImageCommand> command(
+            new Refactoring::GetOrthancImageCommand);
+          command->SetHttpHeader("Accept-Encoding", "gzip");
+          command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
+          command->SetUri(uri);
+#endif
+
+          command->SetExpectedPixelFormat(slice.GetExpectedPixelFormat());
+          command->SetPayload(new LoadSliceImage(that_.image_, i));
+
+          that_.oracle_.Schedule(that_, command.release());
+        }
       }
     };
 
@@ -1731,39 +1897,41 @@ namespace Refactoring
       {
       }
 
-      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
+      virtual void Handle(const Json::Value& body) const
       {
-        Json::Value value;
-        message.ParseJsonBody(value);
-
-        if (value.type() != Json::objectValue)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
-        }
-
         Orthanc::DicomMap dicom;
-        dicom.FromDicomAsJson(value);
+        dicom.FromDicomAsJson(body);
 
         DicomInstanceParameters instance(dicom);
       }
     };
 
 
+    IOracle&          oracle_;
     bool              active_;
     DicomVolumeImage  image_;
 
   public:
-    AxialVolumeOrthancLoader(OrthancStone::IObservable& oracle) :
-      IObserver(oracle.GetBroker()),
+    AxialVolumeOrthancLoader(IOracle& oracle,
+                             OrthancStone::IObservable& oracleObservable) :
+      IObserver(oracleObservable.GetBroker()),
+      oracle_(oracle),
       active_(false)
     {
-      oracle.RegisterObserverCallback(
+      oracleObservable.RegisterObserverCallback(
         new OrthancStone::Callable<AxialVolumeOrthancLoader, OrthancRestApiCommand::SuccessMessage>
+        (*this, &AxialVolumeOrthancLoader::Handle));
+
+      oracleObservable.RegisterObserverCallback(
+        new OrthancStone::Callable<AxialVolumeOrthancLoader, GetOrthancImageCommand::SuccessMessage>
+        (*this, &AxialVolumeOrthancLoader::Handle));
+
+      oracleObservable.RegisterObserverCallback(
+        new OrthancStone::Callable<AxialVolumeOrthancLoader, GetOrthancWebViewerJpegCommand::SuccessMessage>
         (*this, &AxialVolumeOrthancLoader::Handle));
     }
 
-    void LoadSeries(IOracle& oracle,
-                    const std::string& seriesId)
+    void LoadSeries(const std::string& seriesId)
     {
       if (active_)
       {
@@ -1776,11 +1944,10 @@ namespace Refactoring
       command->SetUri("/series/" + seriesId + "/instances-tags");
       command->SetPayload(new LoadSeriesGeometryHandler(*this));
 
-      oracle.Schedule(*this, command.release());
+      oracle_.Schedule(*this, command.release());
     }
 
-    void LoadInstance(IOracle& oracle,
-                      const std::string& instanceId)
+    void LoadInstance(const std::string& instanceId)
     {
       if (active_)
       {
@@ -1798,7 +1965,7 @@ namespace Refactoring
       command->SetUri("/instances/" + instanceId + "/tags?ignore-length=3004-000c");
       command->SetPayload(new LoadInstanceGeometryHandler(*this));
 
-      oracle.Schedule(*this, command.release());
+      oracle_.Schedule(*this, command.release());
     }
   };
 
@@ -1866,7 +2033,8 @@ public:
 };
 
 
-void Run(Refactoring::NativeApplicationContext& context)
+void Run(Refactoring::NativeApplicationContext& context,
+         Refactoring::IOracle& oracle)
 {
   std::auto_ptr<Toto> toto;
   std::auto_ptr<Refactoring::AxialVolumeOrthancLoader> loader1, loader2;
@@ -1874,20 +2042,9 @@ void Run(Refactoring::NativeApplicationContext& context)
   {
     Refactoring::NativeApplicationContext::WriterLock lock(context);
     toto.reset(new Toto(lock.GetOracleObservable()));
-    loader1.reset(new Refactoring::AxialVolumeOrthancLoader(lock.GetOracleObservable()));
-    loader2.reset(new Refactoring::AxialVolumeOrthancLoader(lock.GetOracleObservable()));
+    loader1.reset(new Refactoring::AxialVolumeOrthancLoader(oracle, lock.GetOracleObservable()));
+    loader2.reset(new Refactoring::AxialVolumeOrthancLoader(oracle, lock.GetOracleObservable()));
   }
-
-  Refactoring::NativeOracle oracle(context);
-
-  {
-    Orthanc::WebServiceParameters p;
-    //p.SetUrl("http://localhost:8043/");
-    p.SetCredentials("orthanc", "orthanc");
-    oracle.SetOrthancParameters(p);
-  }
-
-  oracle.Start();
 
   if (1)
   {
@@ -1955,17 +2112,15 @@ void Run(Refactoring::NativeApplicationContext& context)
 
 
   // 2017-11-17-Anonymized
-  //loader1->LoadSeries(oracle, "cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
-  loader2->LoadInstance(oracle, "41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
+  //loader1->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
+  loader2->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
 
   // Delphine
-  loader1->LoadSeries(oracle, "5990e39c-51e5f201-fe87a54c-31a55943-e59ef80e");  // CT
+  loader1->LoadSeries("5990e39c-51e5f201-fe87a54c-31a55943-e59ef80e");  // CT
 
   LOG(WARNING) << "...Waiting for Ctrl-C...";
   Orthanc::SystemToolbox::ServerBarrier();
   //boost::this_thread::sleep(boost::posix_time::seconds(1));
-
-  oracle.Stop();
 }
 
 
@@ -1983,7 +2138,21 @@ int main(int argc, char* argv[])
   try
   {
     Refactoring::NativeApplicationContext context;
-    Run(context);
+
+    Refactoring::NativeOracle oracle(context);
+
+    {
+      Orthanc::WebServiceParameters p;
+      //p.SetUrl("http://localhost:8043/");
+      p.SetCredentials("orthanc", "orthanc");
+      oracle.SetOrthancParameters(p);
+    }
+
+    oracle.Start();
+
+    Run(context, oracle);
+
+    oracle.Stop();
   }
   catch (Orthanc::OrthancException& e)
   {

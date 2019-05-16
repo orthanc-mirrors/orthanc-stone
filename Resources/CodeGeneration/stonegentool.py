@@ -533,12 +533,7 @@ def LoadSchemaFromString(schemaText:str):
         if not (nextCh == ' ' or nextCh == '\n'):
           lineNumber = schemaText.count("\n",0,i) + 1
           raise RuntimeError("Error at line " + str(lineNumber) + " in the schema: colons must be followed by a space or a newline!")
-    schema = yaml.load(schemaText)
-    print("*******************************************")
-    print("*******************************************")
-    print(schema["struct EventBase"])
-    print("*******************************************")
-    print("*******************************************")
+    schema = yaml.load(schemaText, Loader = yaml.SafeLoader)
     return schema
 
 def GetTemplatingDictFromSchemaFilename(fn):

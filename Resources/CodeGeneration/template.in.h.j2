@@ -109,6 +109,21 @@ namespace {{rootName}}
   }
 
   /** Throws in case of problem */
+  inline void _StoneDeserializeValue(float& destValue, const Json::Value& jsonValue)
+  {
+    if (!jsonValue.isNull())
+    {
+      destValue = jsonValue.asFloat();
+    }
+  }
+
+  inline Json::Value _StoneSerializeValue(float value)
+  {
+    Json::Value result(value);
+    return result;
+  }
+
+  /** Throws in case of problem */
   inline void _StoneDeserializeValue(bool& destValue, const Json::Value& jsonValue)
   {
     if (!jsonValue.isNull())
@@ -168,9 +183,9 @@ namespace {{rootName}}
   }
 
   /** Throws in case of problem */
-  template<typename T>
+  template<typename TK, typename TV>
   void _StoneDeserializeValue(
-    std::map<std::string, T>& destValue, const Json::Value& jsonValue)
+    std::map<TK, TV>& destValue, const Json::Value& jsonValue)
   {
     if (!jsonValue.isNull())
     {
@@ -180,23 +195,22 @@ namespace {{rootName}}
         itr != jsonValue.end();
         itr++)
       {
-        std::string key;
+        TK key;
         _StoneDeserializeValue(key, itr.key());
 
-        T innerDestValue;
+        TV innerDestValue;
         _StoneDeserializeValue(innerDestValue, *itr);
 
         destValue[key] = innerDestValue;
       }
     }
   }
-
-  template<typename T>
-  Json::Value _StoneSerializeValue(const std::map<std::string,T>& value)
+  template<typename TK, typename TV>
+  Json::Value _StoneSerializeValue(const std::map<TK, TV>& value)
   {
     Json::Value result(Json::objectValue);
 
-    for (typename std::map<std::string, T>::const_iterator it = value.cbegin();
+    for (typename std::map<TK, TV>::const_iterator it = value.cbegin();
       it != value.cend(); ++it)
     {
       // it->first it->second
@@ -205,11 +219,11 @@ namespace {{rootName}}
     return result;
   }
 
-  template<typename T>
-  std::ostream& StoneDumpValue(std::ostream& out, const std::map<std::string,T>& value, size_t indent)
+  template<typename TK, typename TV>
+  std::ostream& StoneDumpValue(std::ostream& out, const std::map<TK, TV>& value, size_t indent)
   {
     out << MakeIndent(indent) << "{\n";
-    for (typename std::map<std::string, T>::const_iterator it = value.cbegin();
+    for (typename std::map<TK, TV>::const_iterator it = value.cbegin();
       it != value.cend(); ++it)
     {
       out << MakeIndent(indent+2) << "\"" << it->first << "\" : ";

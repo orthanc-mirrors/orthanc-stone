@@ -5,13 +5,15 @@
       {
         "a": 42,
         "b": "Benjamin",
-        "c": 0,
-        "d": false
+        "c": "January",
+        "d": false,
+        "e": 0.1,
+        "f": -0.2
       },
       {
         "a": 43,
         "b": "Sandrine",
-        "c": 2
+        "c": "March"
       }
     ],
     "tutu": [
@@ -26,12 +28,12 @@
       "54": {
         "a": 43,
         "b": "Sandrine",
-        "c": 2
+        "c": "March"
       },
       "55": {
         "a": 42,
         "b": "Benjamin",
-        "c": 0,
+        "c": "January",
         "d": false
       }
     },

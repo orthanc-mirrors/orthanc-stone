@@ -208,6 +208,9 @@ class TestStonegentool(unittest.TestCase):
     b: string;
     c: EnumMonth0;
     d: boolean;
+    e: number;
+    f: number;
+
     public StoneSerialize(): string {
       let container: object = {};
       container['type'] = 'VsolStuff.Message1';
@@ -335,12 +338,16 @@ class TestStonegentool(unittest.TestCase):
     b:string;
     c:EnumMonth0;
     d:boolean;
+    e:number;
+    f:number;
 
     constructor() {
       this.a = new number();
       this.b = new string();
       this.c = new EnumMonth0();
       this.d = new boolean();
+      this.e = new number();
+      this.f = new number();
     }
 
     public StoneSerialize(): string {

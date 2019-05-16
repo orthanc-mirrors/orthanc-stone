@@ -5,25 +5,37 @@
 rootName: VsolMessages
 
 struct B:
+  __handler: cpp
+
   someAs: vector<A>
   someInts: vector<int32>
 
 struct C:
+  __handler: cpp
+
   someBs: vector<B>
   ddd:    vector<string>
 
 struct A:
+  __handler: cpp
+
   someStrings: vector<string>
   someInts2: vector<int32>
   movies: vector<MovieType>
 
 struct Message1:
+  __handler: cpp
+
   a: int32
   b: string
   c: EnumMonth0
   d: bool
+  e: float32
+  f: float64
 
 struct Message2:
+  __handler: cpp
+
   toto: string = "my-default-value"
   tata: vector<Message1>
   tutu: vector<string>

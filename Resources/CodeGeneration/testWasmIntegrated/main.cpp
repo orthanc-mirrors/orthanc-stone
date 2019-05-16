@@ -1,7 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <emscripten/emscripten.h>
-#include "testWasmIntegratedCpp_generated.hpp"
+#include "TestStoneCodeGen_generated.hpp"
 
 using std::stringstream;
 
@@ -55,35 +55,35 @@ extern "C" void SendFreeTextFromCppJS(const char* message);
 #define HANDLE_MESSAGE(Type,value) \
   stringstream ss; \
   ss << "Received an instance of:\n" #Type "\n. Here's the dump:\n"; \
-  testWasmIntegratedCpp::StoneDumpValue(ss, value, 0); \
+  TestStoneCodeGen::StoneDumpValue(ss, value, 0); \
   SendFreeTextFromCppJS(ss.str().c_str()); \
   return true;
 
-class MyHandler : public testWasmIntegratedCpp::IHandler
+class MyHandler : public TestStoneCodeGen::IHandler
 {
   public:
-    virtual bool Handle(const testWasmIntegratedCpp::A& value) override
+    virtual bool Handle(const TestStoneCodeGen::A& value) override
     {
-      HANDLE_MESSAGE(testWasmIntegratedCpp::A,value)
+      HANDLE_MESSAGE(TestStoneCodeGen::A,value)
     }
-    virtual bool Handle(const testWasmIntegratedCpp::B& value) override
+    virtual bool Handle(const TestStoneCodeGen::B& value) override
     {
-      HANDLE_MESSAGE(testWasmIntegratedCpp::B,value)
-    }
-
-    virtual bool Handle(const testWasmIntegratedCpp::Message1& value) override
-    {
-      HANDLE_MESSAGE(testWasmIntegratedCpp::Message1,value)
+      HANDLE_MESSAGE(TestStoneCodeGen::B,value)
     }
 
-    virtual bool Handle(const testWasmIntegratedCpp::Message2& value) override
+    virtual bool Handle(const TestStoneCodeGen::Message1& value) override
     {
-      HANDLE_MESSAGE(testWasmIntegratedCpp::Message2,value)
+      HANDLE_MESSAGE(TestStoneCodeGen::Message1,value)
     }
 
-    virtual bool Handle(const testWasmIntegratedCpp::C& value) override
+    virtual bool Handle(const TestStoneCodeGen::Message2& value) override
     {
-      HANDLE_MESSAGE(testWasmIntegratedCpp::C,value)
+      HANDLE_MESSAGE(TestStoneCodeGen::Message2,value)
+    }
+
+    virtual bool Handle(const TestStoneCodeGen::C& value) override
+    {
+      HANDLE_MESSAGE(TestStoneCodeGen::C,value)
     }
 };
 
@@ -92,10 +92,10 @@ extern "C" void EMSCRIPTEN_KEEPALIVE SendMessageToCpp(const char* message)
     MyHandler handler;
     try
     {
-      bool handled = testWasmIntegratedCpp::StoneDispatchToHandler(message,&handler);
+      bool handled = TestStoneCodeGen::StoneDispatchToHandler(message,&handler);
       if(!handled)
       {
-        SendFreeTextFromCppJS("This message is valid JSON, but was not recognized!");  
+        SendFreeTextFromCppJS("This message is valid JSON, but was not handled!");  
       }
     }
     catch(std::exception& e)

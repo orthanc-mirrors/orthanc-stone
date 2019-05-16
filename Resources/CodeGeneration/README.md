@@ -17,4 +17,4 @@ interaction between TypeScript and C++ in WASM.
 source ~/apps/emsdk/emsdk_env.sh
 
 
-Install Python and the following packages `pip install pyyaml jinja2`
+Install Python and the following packages `pip install pyyaml yamlloader jinja2`

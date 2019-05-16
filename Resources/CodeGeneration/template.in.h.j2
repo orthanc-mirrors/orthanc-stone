@@ -394,9 +394,9 @@ namespace {{rootName}}
 
   struct {{struct['name']}}
   {
-{% if struct %}{% if struct['fields'] %}{% for key in sorted(struct['fields']) %}    {{CanonToCpp(struct['fields'][key]['type'])}} {{key}};
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields'] %}    {{CanonToCpp(struct['fields'][key]['type'])}} {{key}};
 {% endfor %}{% endif %}{% endif %}
-    {{struct['name']}}({% if struct %}{% if struct['fields'] %}{% for key in sorted(struct['fields']) %}{{CanonToCpp(struct['fields'][key]['type'])}} {{key}} = {% if struct['fields'][key]['defaultValue'] %}{{DefaultValueToCpp(rootName,enums,struct['fields'][key])}} {%else%} {{CanonToCpp(struct['fields'][key]['type'])}}() {%endif%} {{ ", " if not loop.last }}{% endfor %}{% endif %}{% endif %})
+    {{struct['name']}}({% if struct %}{% if struct['fields'] %}{% for key in struct['fields'] %}{{CanonToCpp(struct['fields'][key]['type'])}} {{key}} = {% if struct['fields'][key]['defaultValue'] %}{{DefaultValueToCpp(rootName,enums,struct['fields'][key])}} {%else%} {{CanonToCpp(struct['fields'][key]['type'])}}() {%endif%} {{ ", " if not loop.last }}{% endfor %}{% endif %}{% endif %})
     {
 {% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}      this->{{key}} = {{key}};
 {% endfor %}{% endif %}{% endif %}    }

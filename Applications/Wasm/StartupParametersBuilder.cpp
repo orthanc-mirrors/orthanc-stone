@@ -1,9 +1,11 @@
 #include "StartupParametersBuilder.h"
 #include <iostream>
+#include <cstdio>
+#include "emscripten/html5.h"
 
 namespace OrthancStone
 {
-      void StartupParametersBuilder::Clear()
+  void StartupParametersBuilder::Clear()
   {
     startupParameters_.clear();
   }
@@ -27,21 +29,27 @@ namespace OrthancStone
     std::vector<const char*> argv(startupParameters_.size() + 1);
     
     int argCounter = 0;
-    argvStrings[argCounter] = "Toto.exe";
+    argvStrings[argCounter] = "dummy.exe";
     argv[argCounter] = argvStrings[argCounter].c_str();
     
     argCounter++;
-
+    
     std::string cmdLine = "";
     for ( StartupParameters::const_iterator it = startupParameters_.begin(); 
           it != startupParameters_.end(); 
           it++)
     {
-        std::stringstream argSs;
+      std::stringstream argSs;
 
-        argSs << "--" << std::get<0>(*it);
-        if(std::get<1>(*it).length() > 0)
-          argSs << "=" << std::get<1>(*it);
+      argSs << "--" << std::get<0>(*it);
+      if(std::get<1>(*it).length() > 0)
+        argSs << "=" << std::get<1>(*it);
+      
+      argvStrings[argCounter] = argSs.str();
+      cmdLine = cmdLine + " " + argvStrings[argCounter];
+      std::cout << cmdLine << std::endl;
+      argv[argCounter] = argvStrings[argCounter].c_str();
+      argCounter++;
     }
 
 

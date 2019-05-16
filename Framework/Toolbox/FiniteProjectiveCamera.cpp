@@ -316,7 +316,7 @@ namespace OrthancStone
     LOG(WARNING) << "Output pixel format: " << Orthanc::EnumerationToString(target.GetFormat());
 
     std::auto_ptr<OrthancStone::ParallelSlices> slices(source.GetGeometry(projection));
-    const OrthancStone::Vector pixelSpacing = source.GetVoxelDimensions(projection);
+    const OrthancStone::Vector pixelSpacing = source.GetGeometry().GetVoxelDimensions(projection);
     const unsigned int targetWidth = target.GetWidth();
     const unsigned int targetHeight = target.GetHeight();
 

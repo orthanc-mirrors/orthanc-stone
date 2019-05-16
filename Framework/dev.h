@@ -157,9 +157,9 @@ namespace OrthancStone
                 << "x" << loader_.GetSlicesCount() << " in " << Orthanc::EnumerationToString(format);
 
       image_.reset(new ImageBuffer3D(format, width, height, static_cast<unsigned int>(loader_.GetSlicesCount()), computeRange_));
-      image_->SetAxialGeometry(loader_.GetSlice(0).GetGeometry());
-      image_->SetVoxelDimensions(loader_.GetSlice(0).GetPixelSpacingX(),
-                                 loader_.GetSlice(0).GetPixelSpacingY(), spacingZ);
+      image_->GetGeometry().SetAxialGeometry(loader_.GetSlice(0).GetGeometry());
+      image_->GetGeometry().SetVoxelDimensions(loader_.GetSlice(0).GetPixelSpacingX(),
+                                               loader_.GetSlice(0).GetPixelSpacingY(), spacingZ);
       image_->Clear();
 
       downloadStack_.reset(new DownloadStack(static_cast<unsigned int>(loader_.GetSlicesCount())));
@@ -301,7 +301,7 @@ namespace OrthancStone
   };
 
 
-  class VolumeImageGeometry
+  class OLD_VolumeImageGeometry
   {
   private:
     unsigned int         width_;
@@ -403,8 +403,8 @@ namespace OrthancStone
     }
 
   public:
-    VolumeImageGeometry(const OrthancVolumeImage& volume,
-                        VolumeProjection projection)
+    OLD_VolumeImageGeometry(const OrthancVolumeImage& volume,
+                            VolumeProjection projection)
     {
       if (volume.GetSlicesCount() == 0)
       {
@@ -521,9 +521,9 @@ namespace OrthancStone
 
 
     OrthancVolumeImage&                 volume_;
-    std::auto_ptr<VolumeImageGeometry>  axialGeometry_;
-    std::auto_ptr<VolumeImageGeometry>  coronalGeometry_;
-    std::auto_ptr<VolumeImageGeometry>  sagittalGeometry_;
+    std::auto_ptr<OLD_VolumeImageGeometry>  axialGeometry_;
+    std::auto_ptr<OLD_VolumeImageGeometry>  coronalGeometry_;
+    std::auto_ptr<OLD_VolumeImageGeometry>  sagittalGeometry_;
 
 
     bool IsGeometryReady() const
@@ -536,9 +536,9 @@ namespace OrthancStone
       assert(&message.GetOrigin() == &volume_);
 
       // These 3 values are only used to speed up the IVolumeSlicer
-      axialGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Axial));
-      coronalGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Coronal));
-      sagittalGeometry_.reset(new VolumeImageGeometry(volume_, VolumeProjection_Sagittal));
+      axialGeometry_.reset(new OLD_VolumeImageGeometry(volume_, VolumeProjection_Axial));
+      coronalGeometry_.reset(new OLD_VolumeImageGeometry(volume_, VolumeProjection_Coronal));
+      sagittalGeometry_.reset(new OLD_VolumeImageGeometry(volume_, VolumeProjection_Sagittal));
 
       BroadcastMessage(IVolumeSlicer::GeometryReadyMessage(*this));
     }
@@ -567,7 +567,7 @@ namespace OrthancStone
       BroadcastMessage(IVolumeSlicer::ContentChangedMessage(*this));
     }
 
-    const VolumeImageGeometry& GetProjectionGeometry(VolumeProjection projection)
+    const OLD_VolumeImageGeometry& GetProjectionGeometry(VolumeProjection projection)
     {
       if (!IsGeometryReady())
       {
@@ -676,7 +676,7 @@ namespace OrthancStone
       if (IsGeometryReady() &&
           DetectProjection(projection, viewportSlice))
       {
-        const VolumeImageGeometry& geometry = GetProjectionGeometry(projection);
+        const OLD_VolumeImageGeometry& geometry = GetProjectionGeometry(projection);
 
         size_t closest;
 
@@ -716,7 +716,7 @@ namespace OrthancStone
   private:
     SliceViewerWidget&                  widget_;
     VolumeProjection                    projection_;
-    std::auto_ptr<VolumeImageGeometry>  slices_;
+    std::auto_ptr<OLD_VolumeImageGeometry>  slices_;
     size_t                              slice_;
 
   protected:
@@ -727,7 +727,7 @@ namespace OrthancStone
         const OrthancVolumeImage& image =
           dynamic_cast<const OrthancVolumeImage&>(message.GetOrigin());
 
-        slices_.reset(new VolumeImageGeometry(image, projection_));
+        slices_.reset(new OLD_VolumeImageGeometry(image, projection_));
         SetSlice(slices_->GetSlicesCount() / 2);
 
         widget_.FitContent();

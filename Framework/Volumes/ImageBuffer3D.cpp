@@ -118,13 +118,11 @@ namespace OrthancStone
     computeRange_(computeRange),
     hasRange_(false)
   {
-    LinearAlgebra::AssignVector(voxelDimensions_, 1, 1, 1);
+    geometry_.SetSize(width, height, depth);
 
     LOG(INFO) << "Created a 3D image of size " << width << "x" << height
               << "x" << depth << " in " << Orthanc::EnumerationToString(format)
               << " (" << (GetEstimatedMemorySize() / (1024ll * 1024ll)) << "MB)";
-
-    UpdateGeometry();
   }
 
 
@@ -134,123 +132,57 @@ namespace OrthancStone
   }
 
 
-  void ImageBuffer3D::SetAxialGeometry(const CoordinateSystem3D& geometry)
-  {
-    axialGeometry_ = geometry;
-    UpdateGeometry();
-  }
-
-
-  void ImageBuffer3D::SetVoxelDimensions(double x,
-                                         double y,
-                                         double z)
-  {
-    if (x <= 0 ||
-        y <= 0 ||
-        z <= 0)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-    else
-    {
-      LinearAlgebra::AssignVector(voxelDimensions_, x, y, z);
-      UpdateGeometry();
-    }
-  }
-
-
-  Vector ImageBuffer3D::GetVoxelDimensions(VolumeProjection projection) const
-  {
-    switch (projection)
-    {
-    case VolumeProjection_Axial:
-      return voxelDimensions_;
-
-    case VolumeProjection_Coronal:
-      return LinearAlgebra::CreateVector(voxelDimensions_[0], voxelDimensions_[2], voxelDimensions_[1]);
-
-    case VolumeProjection_Sagittal:
-      return LinearAlgebra::CreateVector(voxelDimensions_[1], voxelDimensions_[2], voxelDimensions_[0]);
-
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-  }
-
-
-  void ImageBuffer3D::GetSliceSize(unsigned int& width,
-                                   unsigned int& height,
-                                   VolumeProjection projection)
-  {
-    switch (projection)
-    {
-    case VolumeProjection_Axial:
-      width = width_;
-      height = height_;
-      break;
-
-    case VolumeProjection_Coronal:
-      width = width_;
-      height = depth_;
-      break;
-
-    case VolumeProjection_Sagittal:
-      width = height_;
-      height = depth_;
-      break;
-
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-  }
 
 
   ParallelSlices* ImageBuffer3D::GetGeometry(VolumeProjection projection) const
   {
+    const Vector dimensions = geometry_.GetVoxelDimensions(VolumeProjection_Axial);
+    const CoordinateSystem3D& axial = geometry_.GetAxialGeometry();
+    
     std::auto_ptr<ParallelSlices> result(new ParallelSlices);
 
     switch (projection)
     {
-    case VolumeProjection_Axial:
-      for (unsigned int z = 0; z < depth_; z++)
-      {
-        Vector origin = axialGeometry_.GetOrigin();
-        origin += static_cast<double>(z) * voxelDimensions_[2] * axialGeometry_.GetNormal();
+      case VolumeProjection_Axial:
+        for (unsigned int z = 0; z < depth_; z++)
+        {
+          Vector origin = axial.GetOrigin();
+          origin += static_cast<double>(z) * dimensions[2] * axial.GetNormal();
 
-        result->AddSlice(origin,
-                         axialGeometry_.GetAxisX(),
-                         axialGeometry_.GetAxisY());
-      }
-      break;
+          result->AddSlice(origin,
+                           axial.GetAxisX(),
+                           axial.GetAxisY());
+        }
+        break;
 
-    case VolumeProjection_Coronal:
-      for (unsigned int y = 0; y < height_; y++)
-      {
-        Vector origin = axialGeometry_.GetOrigin();
-        origin += static_cast<double>(y) * voxelDimensions_[1] * axialGeometry_.GetAxisY();
-        origin += static_cast<double>(depth_ - 1) * voxelDimensions_[2] * axialGeometry_.GetNormal();
+      case VolumeProjection_Coronal:
+        for (unsigned int y = 0; y < height_; y++)
+        {
+          Vector origin = axial.GetOrigin();
+          origin += static_cast<double>(y) * dimensions[1] * axial.GetAxisY();
+          origin += static_cast<double>(depth_ - 1) * dimensions[2] * axial.GetNormal();
 
-        result->AddSlice(origin,
-                         axialGeometry_.GetAxisX(),
-                         -axialGeometry_.GetNormal());
-      }
-      break;
+          result->AddSlice(origin,
+                           axial.GetAxisX(),
+                           -axial.GetNormal());
+        }
+        break;
 
-    case VolumeProjection_Sagittal:
-      for (unsigned int x = 0; x < width_; x++)
-      {
-        Vector origin = axialGeometry_.GetOrigin();
-        origin += static_cast<double>(x) * voxelDimensions_[0] * axialGeometry_.GetAxisX();
-        origin += static_cast<double>(depth_ - 1) * voxelDimensions_[2] * axialGeometry_.GetNormal();
+      case VolumeProjection_Sagittal:
+        for (unsigned int x = 0; x < width_; x++)
+        {
+          Vector origin = axial.GetOrigin();
+          origin += static_cast<double>(x) * dimensions[0] * axial.GetAxisX();
+          origin += static_cast<double>(depth_ - 1) * dimensions[2] * axial.GetNormal();
 
-        result->AddSlice(origin,
-                         axialGeometry_.GetAxisY(),
-                         -axialGeometry_.GetNormal());
-      }
-      break;
+          result->AddSlice(origin,
+                           axial.GetAxisY(),
+                           -axial.GetNormal());
+        }
+        break;
 
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
     return result.release();
@@ -276,24 +208,24 @@ namespace OrthancStone
 
     switch (slice.GetFormat())
     {
-    case Orthanc::PixelFormat_Grayscale8:
-    case Orthanc::PixelFormat_Grayscale16:
-    case Orthanc::PixelFormat_Grayscale32:
-    case Orthanc::PixelFormat_SignedGrayscale16:
-    {
-      int64_t a, b;
-      Orthanc::ImageProcessing::GetMinMaxIntegerValue(a, b, slice);
-      sliceMin = static_cast<float>(a);
-      sliceMax = static_cast<float>(b);
-      break;
-    }
+      case Orthanc::PixelFormat_Grayscale8:
+      case Orthanc::PixelFormat_Grayscale16:
+      case Orthanc::PixelFormat_Grayscale32:
+      case Orthanc::PixelFormat_SignedGrayscale16:
+      {
+        int64_t a, b;
+        Orthanc::ImageProcessing::GetMinMaxIntegerValue(a, b, slice);
+        sliceMin = static_cast<float>(a);
+        sliceMax = static_cast<float>(b);
+        break;
+      }
 
-    case Orthanc::PixelFormat_Float32:
-      Orthanc::ImageProcessing::GetMinMaxFloatValue(sliceMin, sliceMax, slice);
-      break;
+      case Orthanc::PixelFormat_Float32:
+        Orthanc::ImageProcessing::GetMinMaxFloatValue(sliceMin, sliceMax, slice);
+        break;
 
-    default:
-      return;
+      default:
+        return;
     }
 
     if (hasRange_)
@@ -367,8 +299,8 @@ namespace OrthancStone
         sagittal_->GetReadOnlyAccessor(accessor_);
         break;
 
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
   }
 
@@ -411,8 +343,8 @@ namespace OrthancStone
         sagittal_->GetWriteableAccessor(accessor_);
         break;
 
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
   }
 
@@ -456,81 +388,5 @@ namespace OrthancStone
 
     const void* p = image_.GetConstRow(y + height_ * (depth_ - 1 - z));
     return reinterpret_cast<const uint16_t*>(p) [x];
-  }
-
-
-  void ImageBuffer3D::UpdateGeometry()
-  {
-    Vector p = (axialGeometry_.GetOrigin() +
-                static_cast<double>(depth_ - 1) * voxelDimensions_[2] * axialGeometry_.GetNormal());
-        
-    coronalGeometry_ = CoordinateSystem3D(p,
-                                          axialGeometry_.GetAxisX(),
-                                          -axialGeometry_.GetNormal());
-    
-    sagittalGeometry_ = CoordinateSystem3D(p,
-                                           axialGeometry_.GetAxisY(),
-                                           -axialGeometry_.GetNormal());
-
-    Vector origin = (
-      axialGeometry_.MapSliceToWorldCoordinates(-0.5 * voxelDimensions_[0],
-                                                -0.5 * voxelDimensions_[1]) -
-      0.5 * voxelDimensions_[2] * axialGeometry_.GetNormal());
-
-    Vector scaling = (
-      axialGeometry_.GetAxisX() * voxelDimensions_[0] * static_cast<double>(width_) +
-      axialGeometry_.GetAxisY() * voxelDimensions_[1] * static_cast<double>(height_) +
-      axialGeometry_.GetNormal() * voxelDimensions_[2] * static_cast<double>(depth_));
-
-    transform_ = LinearAlgebra::Product(
-      GeometryToolbox::CreateTranslationMatrix(origin[0], origin[1], origin[2]),
-      GeometryToolbox::CreateScalingMatrix(scaling[0], scaling[1], scaling[2]));
-
-    LinearAlgebra::InvertMatrix(transformInverse_, transform_);
-  }
-
-  
-  Vector ImageBuffer3D::GetCoordinates(float x,
-                                       float y,
-                                       float z) const
-  {
-    Vector p = LinearAlgebra::Product(transform_, LinearAlgebra::CreateVector(x, y, z, 1));
-
-    assert(LinearAlgebra::IsNear(p[3], 1));  // Affine transform, no perspective effect
-
-    // Back to non-homogeneous coordinates
-    return LinearAlgebra::CreateVector(p[0], p[1], p[2]);
-  }
-
-
-  bool ImageBuffer3D::DetectProjection(VolumeProjection& projection,
-                                       const CoordinateSystem3D& plane) const
-  {
-    if (GeometryToolbox::IsParallel(plane.GetNormal(),
-                                    axialGeometry_.GetNormal()))
-    {
-      projection = VolumeProjection_Axial;
-      return true;
-    }
-
-    {
-      if (GeometryToolbox::IsParallel(plane.GetNormal(),
-                                      coronalGeometry_.GetNormal()))
-      {
-        projection = VolumeProjection_Coronal;
-        return true;
-      }
-    }
-
-    {
-      if (GeometryToolbox::IsParallel(plane.GetNormal(),
-                                      sagittalGeometry_.GetNormal()))
-      {
-        projection = VolumeProjection_Sagittal;
-        return true;
-      }
-    }
-
-    return false;
   }
 }

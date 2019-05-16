@@ -380,8 +380,8 @@ namespace OrthancStone
     
     // Compute the "world" matrix that maps the source volume to the
     // (0,0,0)->(1,1,1) unit cube
-    Vector origin = source.GetCoordinates(0, 0, 0);
-    Vector ps = source.GetVoxelDimensions(VolumeProjection_Axial);
+    Vector origin = source.GetGeometry().GetCoordinates(0, 0, 0);
+    Vector ps = source.GetGeometry().GetVoxelDimensions(VolumeProjection_Axial);
     Matrix world = LinearAlgebra::Product(
       GeometryToolbox::CreateScalingMatrix(1.0 / ps[0], 1.0 / ps[1], 1.0 / ps[2]),
       GeometryToolbox::CreateTranslationMatrix(-origin[0], -origin[1], -origin[2]));

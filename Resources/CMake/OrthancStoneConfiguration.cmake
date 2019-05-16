@@ -391,6 +391,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ViewportGeometry.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/VolumeImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IMouseTracker.h

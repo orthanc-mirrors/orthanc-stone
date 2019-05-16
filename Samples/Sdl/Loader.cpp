@@ -1292,8 +1292,9 @@ namespace Refactoring
                                                      parameters.GetImageInformation().GetHeight(),
                                                      slices.GetSlicesCount(), false /* don't compute range */));      
 
-        image_->SetAxialGeometry(slices.GetSliceGeometry(0));
-        image_->SetVoxelDimensions(parameters.GetPixelSpacingX(), parameters.GetPixelSpacingY(), spacingZ);
+        image_->GetGeometry().SetAxialGeometry(slices.GetSliceGeometry(0));
+        image_->GetGeometry().SetVoxelDimensions(parameters.GetPixelSpacingX(),
+                                                 parameters.GetPixelSpacingY(), spacingZ);
       }
       
       image_->Clear();
@@ -1457,6 +1458,12 @@ namespace Refactoring
         }
 
         that_.volume_.SetGeometry(slices);
+
+        {
+          OrthancStone::LinearAlgebra::Print(that_.volume_.GetImage().GetGeometry().GetCoordinates(0, 0, 0));
+          OrthancStone::LinearAlgebra::Print(that_.volume_.GetImage().GetGeometry().GetCoordinates(1, 1, 1));
+          return;
+        }
 
         for (size_t i = 0; i < that_.volume_.GetSlicesCount(); i++)
         {

@@ -21,6 +21,8 @@
 
 #include "ImageBuffer3D.h"
 
+#include "../Toolbox/GeometryToolbox.h"
+
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
@@ -121,6 +123,8 @@ namespace OrthancStone
     LOG(INFO) << "Created a 3D image of size " << width << "x" << height
               << "x" << depth << " in " << Orthanc::EnumerationToString(format)
               << " (" << (GetEstimatedMemorySize() / (1024ll * 1024ll)) << "MB)";
+
+    UpdateGeometry();
   }
 
 
@@ -133,6 +137,7 @@ namespace OrthancStone
   void ImageBuffer3D::SetAxialGeometry(const CoordinateSystem3D& geometry)
   {
     axialGeometry_ = geometry;
+    UpdateGeometry();
   }
 
 
@@ -146,35 +151,30 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-
+    else
     {
       LinearAlgebra::AssignVector(voxelDimensions_, x, y, z);
+      UpdateGeometry();
     }
   }
 
 
   Vector ImageBuffer3D::GetVoxelDimensions(VolumeProjection projection) const
   {
-    Vector result;
     switch (projection)
     {
     case VolumeProjection_Axial:
-      result = voxelDimensions_;
-      break;
+      return voxelDimensions_;
 
     case VolumeProjection_Coronal:
-      LinearAlgebra::AssignVector(result, voxelDimensions_[0], voxelDimensions_[2], voxelDimensions_[1]);
-      break;
+      return LinearAlgebra::CreateVector(voxelDimensions_[0], voxelDimensions_[2], voxelDimensions_[1]);
 
     case VolumeProjection_Sagittal:
-      LinearAlgebra::AssignVector(result, voxelDimensions_[1], voxelDimensions_[2], voxelDimensions_[0]);
-      break;
+      return LinearAlgebra::CreateVector(voxelDimensions_[1], voxelDimensions_[2], voxelDimensions_[0]);
 
     default:
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-
-    return result;
   }
 
 
@@ -459,20 +459,78 @@ namespace OrthancStone
   }
 
 
+  void ImageBuffer3D::UpdateGeometry()
+  {
+    Vector p = (axialGeometry_.GetOrigin() +
+                static_cast<double>(depth_ - 1) * voxelDimensions_[2] * axialGeometry_.GetNormal());
+        
+    coronalGeometry_ = CoordinateSystem3D(p,
+                                          axialGeometry_.GetAxisX(),
+                                          -axialGeometry_.GetNormal());
+    
+    sagittalGeometry_ = CoordinateSystem3D(p,
+                                           axialGeometry_.GetAxisY(),
+                                           -axialGeometry_.GetNormal());
+
+    Vector origin = (
+      axialGeometry_.MapSliceToWorldCoordinates(-0.5 * voxelDimensions_[0],
+                                                -0.5 * voxelDimensions_[1]) -
+      0.5 * voxelDimensions_[2] * axialGeometry_.GetNormal());
+
+    Vector scaling = (
+      axialGeometry_.GetAxisX() * voxelDimensions_[0] * static_cast<double>(width_) +
+      axialGeometry_.GetAxisY() * voxelDimensions_[1] * static_cast<double>(height_) +
+      axialGeometry_.GetNormal() * voxelDimensions_[2] * static_cast<double>(depth_));
+
+    transform_ = LinearAlgebra::Product(
+      GeometryToolbox::CreateTranslationMatrix(origin[0], origin[1], origin[2]),
+      GeometryToolbox::CreateScalingMatrix(scaling[0], scaling[1], scaling[2]));
+
+    LinearAlgebra::InvertMatrix(transformInverse_, transform_);
+  }
+
+  
   Vector ImageBuffer3D::GetCoordinates(float x,
                                        float y,
                                        float z) const
   {
-    Vector ps = GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
+    Vector p = LinearAlgebra::Product(transform_, LinearAlgebra::CreateVector(x, y, z, 1));
 
-    const CoordinateSystem3D& axial = GetAxialGeometry();
-    
-    Vector origin = (axial.MapSliceToWorldCoordinates(-0.5 * ps[0], -0.5 * ps[1]) -
-        0.5 * ps[2] * axial.GetNormal());
+    assert(LinearAlgebra::IsNear(p[3], 1));  // Affine transform, no perspective effect
 
-    return (origin +
-            axial.GetAxisX() * ps[0] * x * static_cast<double>(GetWidth()) +
-        axial.GetAxisY() * ps[1] * y * static_cast<double>(GetHeight()) +
-        axial.GetNormal() * ps[2] * z * static_cast<double>(GetDepth()));
+    // Back to non-homogeneous coordinates
+    return LinearAlgebra::CreateVector(p[0], p[1], p[2]);
+  }
+
+
+  bool ImageBuffer3D::DetectProjection(VolumeProjection& projection,
+                                       const CoordinateSystem3D& plane) const
+  {
+    if (GeometryToolbox::IsParallel(plane.GetNormal(),
+                                    axialGeometry_.GetNormal()))
+    {
+      projection = VolumeProjection_Axial;
+      return true;
+    }
+
+    {
+      if (GeometryToolbox::IsParallel(plane.GetNormal(),
+                                      coronalGeometry_.GetNormal()))
+      {
+        projection = VolumeProjection_Coronal;
+        return true;
+      }
+    }
+
+    {
+      if (GeometryToolbox::IsParallel(plane.GetNormal(),
+                                      sagittalGeometry_.GetNormal()))
+      {
+        projection = VolumeProjection_Sagittal;
+        return true;
+      }
+    }
+
+    return false;
   }
 }

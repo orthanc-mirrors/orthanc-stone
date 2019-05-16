@@ -25,8 +25,9 @@
 #include "../../Framework/Messages/MessageBroker.h"
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Toolbox/GeometryToolbox.h"
-#include "../../Framework/Volumes/ImageBuffer3D.h"
 #include "../../Framework/Toolbox/SlicesSorter.h"
+#include "../../Framework/Volumes/ImageBuffer3D.h"
+#include "../../Framework/Scene2D/ScenePoint2D.h"
 
 // From Orthanc framework
 #include <Core/Compression/GzipCompressor.h>
@@ -44,8 +45,8 @@
 #include <Core/Logging.h>
 #include <Core/MultiThreading/SharedMessageQueue.h>
 #include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
 #include <Core/SystemToolbox.h>
+#include <Core/Toolbox.h>
 
 #include <json/reader.h>
 #include <json/value.h>
@@ -99,6 +100,17 @@ namespace Refactoring
                           IOracleCommand* command) = 0;  // Takes ownership
   };
 
+
+
+  class IVolumeSlicer : public boost::noncopyable
+  {
+  public:
+    virtual ~IVolumeSlicer()
+    {
+    }
+
+    virtual void SetViewportPlane(const OrthancStone::CoordinateSystem3D& plane) = 0;
+  };
 
 
 
@@ -1444,11 +1456,11 @@ namespace Refactoring
           slices.AddSlice(geometry, instance.release());
         }
 
-        that_.image_.SetGeometry(slices);
+        that_.volume_.SetGeometry(slices);
 
-        for (size_t i = 0; i < that_.image_.GetSlicesCount(); i++)
+        for (size_t i = 0; i < that_.volume_.GetSlicesCount(); i++)
         {
-          const DicomInstanceParameters& slice = that_.image_.GetSliceParameters(i);
+          const DicomInstanceParameters& slice = that_.volume_.GetSliceParameters(i);
           
           const std::string& instance = slice.GetOrthancInstanceIdentifier();
           if (instance.empty())
@@ -1490,7 +1502,7 @@ namespace Refactoring
 #endif
 
           command->SetExpectedPixelFormat(slice.GetExpectedPixelFormat());
-          command->SetPayload(new LoadSliceImage(that_.image_, i));
+          command->SetPayload(new LoadSliceImage(that_.volume_, i));
 
           that_.oracle_.Schedule(that_, command.release());
         }
@@ -1521,7 +1533,7 @@ namespace Refactoring
 
     IOracle&          oracle_;
     bool              active_;
-    DicomVolumeImage  image_;
+    DicomVolumeImage  volume_;
 
   public:
     VolumeSeriesOrthancLoader(IOracle& oracle,

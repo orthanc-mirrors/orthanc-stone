@@ -35,6 +35,8 @@ namespace OrthancStone
   {
   private:
     CoordinateSystem3D     axialGeometry_;
+    CoordinateSystem3D     coronalGeometry_;
+    CoordinateSystem3D     sagittalGeometry_;
     Vector                 voxelDimensions_;
     Orthanc::Image         image_;
     Orthanc::PixelFormat   format_;
@@ -45,6 +47,10 @@ namespace OrthancStone
     bool                   hasRange_;
     float                  minValue_;
     float                  maxValue_;
+    Matrix                 transform_;
+    Matrix                 transformInverse_;
+
+    void UpdateGeometry();
 
     void ExtendImageRange(const Orthanc::ImageAccessor& slice);
 
@@ -86,6 +92,16 @@ namespace OrthancStone
       return axialGeometry_;
     }
 
+    const CoordinateSystem3D& GetCoronalGeometry() const
+    {
+      return coronalGeometry_;
+    }
+
+    const CoordinateSystem3D& GetSagittalGeometry() const
+    {
+      return sagittalGeometry_;
+    }
+
     void SetVoxelDimensions(double x,
                             double y,
                             double z);
@@ -121,6 +137,7 @@ namespace OrthancStone
       return format_;
     }
 
+    // TODO - Remove
     ParallelSlices* GetGeometry(VolumeProjection projection) const;
     
     uint64_t GetEstimatedMemorySize() const;
@@ -165,6 +182,9 @@ namespace OrthancStone
     Vector GetCoordinates(float x,
                           float y,
                           float z) const;
+
+    bool DetectProjection(VolumeProjection& projection,
+                          const CoordinateSystem3D& plane) const;
 
 
     class SliceReader : public boost::noncopyable

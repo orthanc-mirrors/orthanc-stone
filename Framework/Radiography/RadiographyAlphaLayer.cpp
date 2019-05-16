@@ -46,7 +46,7 @@ namespace OrthancStone
     SetSize(image->GetWidth(), image->GetHeight());
     alpha_ = raii;
 
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
   void RadiographyAlphaLayer::Render(Orthanc::ImageAccessor& buffer,

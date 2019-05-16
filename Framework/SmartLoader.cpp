@@ -95,7 +95,7 @@ namespace OrthancStone
         LOG(WARNING) << "ScheduleLayerCreation for CachedSlice (image is loaded): " << slice_->GetOrthancInstanceId();
 
         RendererFactory factory(*this);   
-        EmitMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, slice_->GetGeometry()));
+        BroadcastMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, slice_->GetGeometry()));
       }
       else
       {
@@ -174,7 +174,7 @@ namespace OrthancStone
 
     if (cachedSlice != NULL)
     {
-      EmitMessage(IVolumeSlicer::GeometryReadyMessage(*cachedSlice));
+      BroadcastMessage(IVolumeSlicer::GeometryReadyMessage(*cachedSlice));
     }
 
   }
@@ -242,7 +242,7 @@ namespace OrthancStone
     cachedSlices_[sliceKeyId] = boost::shared_ptr<CachedSlice>(cachedSlice);
 
     // re-emit original Layer message to observers
-    EmitMessage(message);
+    BroadcastMessage(message);
   }
 
 
@@ -264,7 +264,7 @@ namespace OrthancStone
     cachedSlices_[sliceKeyId] = cachedSlice;
 
     // re-emit original Layer message to observers
-    EmitMessage(message);
+    BroadcastMessage(message);
   }
 
 
@@ -286,6 +286,6 @@ namespace OrthancStone
     }
 
     // re-emit original Layer message to observers
-    EmitMessage(message);
+    BroadcastMessage(message);
   }
 }

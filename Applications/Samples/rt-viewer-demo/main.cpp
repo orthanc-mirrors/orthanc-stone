@@ -546,6 +546,24 @@ namespace OrthancStone
 
       void ParseParameters(const boost::program_options::variables_map&  parameters)
       {
+        // Generic
+        {
+          if (parameters.count("verbose"))
+          {
+            Orthanc::Logging::EnableInfoLevel(true);
+            LOG(INFO) << "Verbose logs (info) are enabled";
+          }
+        }
+
+        {
+          if (parameters.count("trace"))
+          {
+            LOG(INFO) << "parameters.count(\"trace\") != 0";
+            Orthanc::Logging::EnableTraceLevel(true);
+            VLOG(1) << "Trace logs (debug) are enabled";
+          }
+        }
+
         // CT series
         {
 
@@ -570,12 +588,14 @@ namespace OrthancStone
             if (parameters.count("dose-series") != 1)
             {
               LOG(ERROR) << "the RTDOSE series is missing";
-              throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+              throw Orthanc::OrthancException(
+                Orthanc::ErrorCode_ParameterOutOfRange);
             }
             doseSeries_ = parameters["ct"].as<std::string>();
 #endif
             LOG(ERROR) << "the RTSTRUCT instance is missing";
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+            throw Orthanc::OrthancException(
+              Orthanc::ErrorCode_ParameterOutOfRange);
           }
         }
         
@@ -592,26 +612,40 @@ namespace OrthancStone
             if (parameters.count("struct-series") != 1)
             {
               LOG(ERROR) << "the RTSTRUCT series is missing";
-              throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+              throw Orthanc::OrthancException(
+                Orthanc::ErrorCode_ParameterOutOfRange);
             }
-            structSeries_ = parametersstruct - series"].as<std::string>();
+            structSeries_ = parameters["struct-series"].as<std::string>();
 #endif
             LOG(ERROR) << "the RTSTRUCT instance is missing";
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+            throw Orthanc::OrthancException(
+              Orthanc::ErrorCode_ParameterOutOfRange);
           }
         }
       }
 
-      virtual void DeclareStartupOptions(boost::program_options::options_description& options)
+      virtual void DeclareStartupOptions(
+        boost::program_options::options_description& options)
       {
-        boost::program_options::options_description generic("RtViewerDemo options. Please note that some of these options are mutually exclusive");
+        boost::program_options::options_description generic(
+          "RtViewerDemo options. Please note that some of these options "
+          "are mutually exclusive");
         generic.add_options()
-          ("ct-series", boost::program_options::value<std::string>(),"Orthanc ID of the CT series")
-          ("dose-instance", boost::program_options::value<std::string>(), "Orthanc ID of the RTDOSE instance (incompatible with dose-series)")
-          ("dose-series", boost::program_options::value<std::string>(), "NOT IMPLEMENTED YET. Orthanc ID of the RTDOSE series (incompatible with dose-instance)")
-          ("struct-instance", boost::program_options::value<std::string>(), "Orthanc ID of the RTSTRUCT instance (incompatible with struct-series)")
-          ("struct-series", boost::program_options::value<std::string>(), "NOT IMPLEMENTED YET. Orthanc ID of the RTSTRUCT (incompatible with struct-instance)")
-          ("smooth", boost::program_options::value<bool>()->default_value(true),"Enable bilinear image smoothing")
+          ("ct-series", boost::program_options::value<std::string>(),
+            "Orthanc ID of the CT series")
+          ("dose-instance", boost::program_options::value<std::string>(), 
+            "Orthanc ID of the RTDOSE instance (incompatible with dose-series)")
+          ("dose-series", boost::program_options::value<std::string>(), 
+            "NOT IMPLEMENTED YET. Orthanc ID of the RTDOSE series (incompatible"
+            " with dose-instance)")
+          ("struct-instance", boost::program_options::value<std::string>(), 
+            "Orthanc ID of the RTSTRUCT instance (incompatible with struct-"
+            "series)")
+          ("struct-series", boost::program_options::value<std::string>(), 
+            "NOT IMPLEMENTED YET. Orthanc ID of the RTSTRUCT (incompatible with"
+            " struct-instance)")
+          ("smooth", boost::program_options::value<bool>()->default_value(true),
+            "Enable bilinear image smoothing")
           ;
 
         options.add(generic);
@@ -637,8 +671,10 @@ namespace OrthancStone
           ct_.reset(new OrthancStone::OrthancVolumeImage(
             IObserver::GetBroker(), context->GetOrthancApiClient(), false));
           ct_->ScheduleLoadSeries(ctSeries_);
-          //ct_->ScheduleLoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // IBA
-          //ct_->ScheduleLoadSeries("03677739-1d8bca40-db1daf59-d74ff548-7f6fc9c0");  // 0522c0001 TCIA
+          //ct_->ScheduleLoadSeries(
+          //  "a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa"); // IBA
+          //ct_->ScheduleLoadSeries(
+          //  "03677739-1d8bca40-db1daf59-d74ff548-7f6fc9c0"); // 0522c0001 TCIA
         }
 
         if (!doseSeries_.empty() ||
@@ -665,8 +701,10 @@ namespace OrthancStone
             dose_->ScheduleLoadInstance(doseInstance_);
           }
 
-          //dose_->ScheduleLoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // IBA 1
-          //dose_->ScheduleLoadInstance("269f26f4-0c83eeeb-2e67abbd-5467a40f-f1bec90c");  // 0522c0001 TCIA
+          //dose_->ScheduleLoadInstance(
+            //"830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // IBA 1
+          //dose_->ScheduleLoadInstance(
+            //"269f26f4-0c83eeeb-2e67abbd-5467a40f-f1bec90c"); //0522c0001 TCIA
         }
 
         if (!structInstance_.empty())
@@ -676,8 +714,10 @@ namespace OrthancStone
 
           struct_->ScheduleLoadInstance(structInstance_);
 
-          //struct_->ScheduleLoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // IBA
-          //struct_->ScheduleLoadInstance("17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20");  // 0522c0001 TCIA
+          //struct_->ScheduleLoadInstance(
+            //"54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9"); // IBA
+          //struct_->ScheduleLoadInstance(
+            //"17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20"); // 0522c0001 TCIA
         }
 
         mainWidget_ = new LayoutWidget("main-layout");

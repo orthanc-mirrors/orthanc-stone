@@ -36,7 +36,7 @@ namespace OrthancStone
     callback_(callback),
     payload_(payload),
     context_(context),
-    expirationTimePoint_(boost::chrono::system_clock::now() + boost::chrono::milliseconds(timeoutInMs)),
+    expirationTimePoint_(boost::posix_time::microsec_clock::local_time() + boost::posix_time::milliseconds(timeoutInMs)),
     timeoutInMs_(timeoutInMs)
   {
   }
@@ -44,9 +44,9 @@ namespace OrthancStone
 
   void DelayedCallCommand::Execute()
   {
-    while (boost::chrono::system_clock::now() < expirationTimePoint_)
+    while (boost::posix_time::microsec_clock::local_time() < expirationTimePoint_)
     {
-      boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
+      boost::this_thread::sleep(boost::posix_time::milliseconds(1));
     }
   }
 

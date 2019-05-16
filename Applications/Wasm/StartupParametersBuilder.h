@@ -43,8 +43,12 @@ namespace OrthancStone
   public:
 
     void Clear();
+    // Please note that if a parameter is a flag-style one, the value that 
+    // is passed should be an empty string
     void SetStartupParameter(const char* name, const char* value);
-    void GetStartupParameters(boost::program_options::variables_map& parameters_, const boost::program_options::options_description& options);
+    void GetStartupParameters(
+      boost::program_options::variables_map& parameters_, 
+      const boost::program_options::options_description& options);
   };
 
 }

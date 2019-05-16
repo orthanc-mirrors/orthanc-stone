@@ -37,9 +37,10 @@ namespace OrthancStone
       public IObservable
   {
   public:
-    class GeometryChangedMessage :
-        public OriginMessage<MessageType_RadiographyScene_GeometryChanged, RadiographyScene>
+    class GeometryChangedMessage : public OriginMessage<RadiographyScene>
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
     private:
       RadiographyLayer&        layer_;
 
@@ -57,9 +58,10 @@ namespace OrthancStone
       }
     };
 
-    class ContentChangedMessage :
-        public OriginMessage<MessageType_RadiographyScene_ContentChanged, RadiographyScene>
+    class ContentChangedMessage : public OriginMessage<RadiographyScene>
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
     private:
       RadiographyLayer&        layer_;
 
@@ -77,9 +79,10 @@ namespace OrthancStone
       }
     };
 
-    class LayerEditedMessage :
-        public OriginMessage<MessageType_RadiographyScene_LayerEdited, RadiographyScene>
+    class LayerEditedMessage : public OriginMessage<RadiographyScene>
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
     private:
       const RadiographyLayer&        layer_;
 
@@ -95,20 +98,12 @@ namespace OrthancStone
       {
         return layer_;
       }
-
     };
 
-    class WindowingChangedMessage :
-        public OriginMessage<MessageType_RadiographyScene_WindowingChanged, RadiographyScene>
-    {
 
-    public:
-      WindowingChangedMessage(const RadiographyScene& origin) :
-        OriginMessage(origin)
-      {
-      }
-    };
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, WindowingChangedMessage, RadiographyScene);
 
+    
     class LayerAccessor : public boost::noncopyable
     {
     private:

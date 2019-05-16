@@ -21,7 +21,6 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_SDL)
   SET(SDL_SOURCES_DIR ${CMAKE_BINARY_DIR}/SDL2-2.0.4)
   SET(SDL_URL "http://orthanc.osimis.io/ThirdPartyDownloads/SDL2-2.0.4.tar.gz")
   SET(SDL_MD5 "44fc4a023349933e7f5d7a582f7b886e")
-
   DownloadPackage(${SDL_MD5} ${SDL_URL} "${SDL_SOURCES_DIR}")
 
   include_directories(${SDL_SOURCES_DIR}/include)

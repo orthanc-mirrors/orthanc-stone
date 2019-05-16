@@ -21,10 +21,13 @@
 
 #pragma once
 
-#include "Slice.h"
+#include "CoordinateSystem3D.h"
+
+#include <Core/IDynamicObject.h>
 
 namespace OrthancStone
 {
+  // TODO - Rename this as "PlanesSorter"
   class SlicesSorter : public boost::noncopyable
   {
   private:
@@ -36,6 +39,16 @@ namespace OrthancStone
     Slices  slices_;
     bool    hasNormal_;
     
+    const SliceWithDepth& GetSlice(size_t i) const;
+    
+    void SetNormal(const Vector& normal);
+    
+    void SortInternal();
+
+    void FilterNormal(const Vector& normal);
+    
+    bool SelectNormal(Vector& normal) const;
+
   public:
     SlicesSorter() : hasNormal_(false)
     {
@@ -48,24 +61,35 @@ namespace OrthancStone
       slices_.reserve(count);
     }
 
-    void AddSlice(Slice* slice);  // Takes ownership
+    void AddSlice(const CoordinateSystem3D& plane)
+    {
+      AddSlice(plane, NULL);
+    }
 
-    size_t GetSliceCount() const
+    void AddSlice(const CoordinateSystem3D& plane,
+                  Orthanc::IDynamicObject* payload);  // Takes ownership
+
+    size_t GetSlicesCount() const
     {
       return slices_.size();
     }
 
-    const Slice& GetSlice(size_t i) const;
+    const CoordinateSystem3D& GetSliceGeometry(size_t i) const;
 
-    void SetNormal(const Vector& normal);
+    bool HasSlicePayload(size_t i) const;
     
-    void Sort();
+    const Orthanc::IDynamicObject& GetSlicePayload(size_t i) const;
 
-    void FilterNormal(const Vector& normal);
+    // WARNING - Apply the sorting algorithm can reduce the number of
+    // slices. This is notably the case if all the slices are not
+    // parallel to the reference normal that will be selected.
+    bool Sort();
     
-    bool SelectNormal(Vector& normal) const;
+    bool LookupClosestSlice(size_t& index,
+                            double& distance,
+                            const CoordinateSystem3D& slice) const;
 
-    bool LookupSlice(size_t& index,
-                     const CoordinateSystem3D& slice) const;
+    // WARNING - The slices must have been sorted before calling this method
+    double ComputeSpacingBetweenSlices() const;
   };
 }

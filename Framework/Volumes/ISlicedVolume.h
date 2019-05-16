@@ -29,14 +29,16 @@ namespace OrthancStone
   class ISlicedVolume : public IObservable
   {
   public:
-    typedef OriginMessage<MessageType_SlicedVolume_ContentChanged, ISlicedVolume> ContentChangedMessage;
-    typedef OriginMessage<MessageType_SlicedVolume_GeometryError, ISlicedVolume> GeometryErrorMessage;
-    typedef OriginMessage<MessageType_SlicedVolume_GeometryReady, ISlicedVolume> GeometryReadyMessage;
-    typedef OriginMessage<MessageType_SlicedVolume_VolumeReady, ISlicedVolume> VolumeReadyMessage;
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ContentChangedMessage, ISlicedVolume);
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryErrorMessage, ISlicedVolume);
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryReadyMessage, ISlicedVolume);
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, VolumeReadyMessage, ISlicedVolume);
 
-    class SliceContentChangedMessage :
-      public OriginMessage<MessageType_SlicedVolume_SliceContentChanged, ISlicedVolume>
+
+    class SliceContentChangedMessage : public OriginMessage<ISlicedVolume>
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+      
     private:
       size_t        sliceIndex_;
       const Slice&  slice_;

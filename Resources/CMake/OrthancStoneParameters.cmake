@@ -27,9 +27,10 @@ include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkParameters.cmake)
 
 set(ENABLE_DCMTK OFF)
 set(ENABLE_GOOGLE_TEST ON)
-set(ENABLE_SQLITE OFF)
 set(ENABLE_JPEG ON)
+set(ENABLE_OPENSSL_ENGINES ON)
 set(ENABLE_PNG ON)
+set(ENABLE_SQLITE OFF)
 set(ENABLE_ZLIB ON)
 set(HAS_EMBEDDED_RESOURCES ON)
 
@@ -40,6 +41,8 @@ set(HAS_EMBEDDED_RESOURCES ON)
 
 # Advanced parameters to fine-tune linking against system libraries
 set(USE_SYSTEM_CAIRO ON CACHE BOOL "Use the system version of Cairo")
+set(USE_SYSTEM_FREETYPE ON CACHE BOOL "Use the system version of Freetype")
+set(USE_SYSTEM_GLEW ON CACHE BOOL "Use the system version of glew (for Windows only)")
 set(USE_SYSTEM_PIXMAN ON CACHE BOOL "Use the system version of Pixman")
 set(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 
@@ -49,3 +52,5 @@ set(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 ## the Stone of Orthanc
 #####################################################################
 
+set(ENABLE_OPENGL ON CACHE INTERNAL "Enable support of OpenGL")
+set(ENABLE_WASM OFF CACHE INTERNAL "Enable support of WebAssembly")

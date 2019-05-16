@@ -34,19 +34,19 @@ namespace OrthancStone
 
   void DicomSeriesVolumeSlicer::OnSliceGeometryReady(const OrthancSlicesLoader::SliceGeometryReadyMessage& message)
   {
-    if (message.GetOrigin().GetSliceCount() > 0)
+    if (message.GetOrigin().GetSlicesCount() > 0)
     {
-      EmitMessage(IVolumeSlicer::GeometryReadyMessage(*this));
+      BroadcastMessage(IVolumeSlicer::GeometryReadyMessage(*this));
     }
     else
     {
-      EmitMessage(IVolumeSlicer::GeometryErrorMessage(*this));
+      BroadcastMessage(IVolumeSlicer::GeometryErrorMessage(*this));
     }
   }
 
   void DicomSeriesVolumeSlicer::OnSliceGeometryError(const OrthancSlicesLoader::SliceGeometryErrorMessage& message)
   {
-    EmitMessage(IVolumeSlicer::GeometryErrorMessage(*this));
+    BroadcastMessage(IVolumeSlicer::GeometryErrorMessage(*this));
   }
 
 
@@ -73,17 +73,17 @@ namespace OrthancStone
   void DicomSeriesVolumeSlicer::OnSliceImageReady(const OrthancSlicesLoader::SliceImageReadyMessage& message)
   {
     // first notify that the pixel data of the frame is ready (targeted to, i.e: an image cache)
-    EmitMessage(FrameReadyMessage(*this, message.GetImage(), 
+    BroadcastMessage(FrameReadyMessage(*this, message.GetImage(), 
                                   message.GetEffectiveQuality(), message.GetSlice()));
 
     // then notify that the layer is ready for rendering
     RendererFactory factory(message);
-    EmitMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, message.GetSlice().GetGeometry()));
+    BroadcastMessage(IVolumeSlicer::LayerReadyMessage(*this, factory, message.GetSlice().GetGeometry()));
   }
 
   void DicomSeriesVolumeSlicer::OnSliceImageError(const OrthancSlicesLoader::SliceImageErrorMessage& message)
   {
-    EmitMessage(IVolumeSlicer::LayerErrorMessage(*this, message.GetSlice().GetGeometry()));
+    BroadcastMessage(IVolumeSlicer::LayerErrorMessage(*this, message.GetSlice().GetGeometry()));
   }
 
 

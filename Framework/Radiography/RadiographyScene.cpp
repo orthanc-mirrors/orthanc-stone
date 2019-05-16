@@ -140,8 +140,8 @@ namespace OrthancStone
     raii->SetIndex(index);
     layers_[index] = raii.release();
 
-    EmitMessage(GeometryChangedMessage(*this, *layer));
-    EmitMessage(ContentChangedMessage(*this, *layer));
+    BroadcastMessage(GeometryChangedMessage(*this, *layer));
+    BroadcastMessage(ContentChangedMessage(*this, *layer));
     layer->RegisterObserverCallback(new Callable<RadiographyScene, RadiographyLayer::LayerEditedMessage>(*this, &RadiographyScene::OnLayerEdited));
 
     return *layer;
@@ -149,7 +149,7 @@ namespace OrthancStone
 
   void RadiographyScene::OnLayerEdited(const RadiographyLayer::LayerEditedMessage& message)
   {
-    EmitMessage(RadiographyScene::LayerEditedMessage(*this, message.GetOrigin()));
+    BroadcastMessage(RadiographyScene::LayerEditedMessage(*this, message.GetOrigin()));
   }
 
   RadiographyScene::RadiographyScene(MessageBroker& broker) :
@@ -199,24 +199,37 @@ namespace OrthancStone
   {
     LOG(INFO) << "Removing layer: " << layerIndex;
 
-    if (layerIndex > countLayers_)
+    Layers::iterator found = layers_.find(layerIndex);
+
+    if (found == layers_.end())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-    delete layers_[layerIndex];
-    layers_.erase(layerIndex);
-    countLayers_--;
-    LOG(INFO) << "Removing layer, there are now : " << countLayers_ << " layers";
+    else
+    {
+      assert(found->second != NULL);
+      delete found->second;
+      
+      layers_.erase(found);
+      countLayers_--;
+      
+      LOG(INFO) << "Removing layer, there are now : " << countLayers_ << " layers";
+    }
   }
 
   const RadiographyLayer& RadiographyScene::GetLayer(size_t layerIndex) const
   {
-    if (layerIndex > countLayers_)
+    Layers::const_iterator found = layers_.find(layerIndex);
+    
+    if (found == layers_.end())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-
-    return *(layers_.at(layerIndex));
+    else
+    {
+      assert(found->second != NULL);
+      return *found->second;
+    }
   }
 
   bool RadiographyScene::GetWindowing(float& center,
@@ -253,7 +266,7 @@ namespace OrthancStone
     windowingCenter_ = center;
     windowingWidth_ = width;
 
-    EmitMessage(RadiographyScene::WindowingChangedMessage(*this));
+    BroadcastMessage(RadiographyScene::WindowingChangedMessage(*this));
   }
 
 
@@ -434,7 +447,7 @@ namespace OrthancStone
         windowingWidth_ = w;
       }
 
-      EmitMessage(GeometryChangedMessage(*this, *(layer->second)));
+      BroadcastMessage(GeometryChangedMessage(*this, *(layer->second)));
     }
   }
 
@@ -461,7 +474,7 @@ namespace OrthancStone
       reader->ReadFromMemory(content);
       dynamic_cast<RadiographyDicomLayer*>(layer->second)->SetSourceImage(reader.release());
 
-      EmitMessage(ContentChangedMessage(*this, *(layer->second)));
+      BroadcastMessage(ContentChangedMessage(*this, *(layer->second)));
     }
   }
 

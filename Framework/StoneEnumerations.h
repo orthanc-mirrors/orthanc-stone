@@ -34,7 +34,6 @@ namespace OrthancStone
 
   enum ImageWindowing
   {
-    ImageWindowing_Default,
     ImageWindowing_Bone,
     ImageWindowing_Lung,
     ImageWindowing_Custom
@@ -99,6 +98,7 @@ namespace OrthancStone
 
   enum SopClassUid
   {
+    SopClassUid_Other,
     SopClassUid_RTDose
   };
 
@@ -115,67 +115,6 @@ namespace OrthancStone
     BitmapAnchor_TopRight
   };
 
-  enum MessageType
-  {
-    MessageType_Widget_GeometryChanged,
-    MessageType_Widget_ContentChanged,
-
-    MessageType_VolumeSlicer_GeometryReady,   // instance tags have been loaded
-    MessageType_VolumeSlicer_GeometryError,
-    MessageType_VolumeSlicer_ContentChanged,
-    MessageType_VolumeSlicer_SliceChanged,
-    MessageType_VolumeSlicer_LayerReady,      // layer is ready to be rendered
-    MessageType_VolumeSlicer_LayerError,
-
-    MessageType_DicomSeriesVolumeSlicer_FrameReady,      // pixels data of the frame have been loaded
-
-    MessageType_SliceViewerWidget_DisplayedSlice,  // The displayed slice has changed
-
-    MessageType_SliceLoader_GeometryReady,
-    MessageType_SliceLoader_GeometryError,
-    MessageType_SliceLoader_ImageReady,
-    MessageType_SliceLoader_ImageError,
-
-    MessageType_VolumeLoader_GeometryReady,
-    MessageType_VolumeLoader_GeometryError,
-    MessageType_VolumeLoader_ContentChanged,  // Content of several slices in the loader has changed
-
-    MessageType_SlicedVolume_GeometryReady,
-    MessageType_SlicedVolume_GeometryError,
-    MessageType_SlicedVolume_VolumeReady,
-    MessageType_SlicedVolume_ContentChanged,
-    MessageType_SlicedVolume_SliceContentChanged,
-
-    MessageType_HttpRequestSuccess,
-    MessageType_HttpRequestError,
-
-    MessageType_OrthancApi_InternalGetJsonResponseReady,
-    MessageType_OrthancApi_InternalGetJsonResponseError,
-
-    MessageType_OrthancApi_GenericGetJson_Ready,
-    MessageType_OrthancApi_GenericGetBinary_Ready,
-    MessageType_OrthancApi_GenericHttpError_Ready,
-    MessageType_OrthancApi_GenericEmptyResponse_Ready,
-
-    MessageType_RadiographyScene_GeometryChanged,
-    MessageType_RadiographyScene_ContentChanged,
-    MessageType_RadiographyScene_LayerEdited,
-    MessageType_RadiographyScene_WindowingChanged,
-
-    MessageType_RadiographyLayer_Edited,
-
-    MessageType_ViewportChanged,
-
-    MessageType_Timeout,
-
-    // used in unit tests only
-    MessageType_Test1,
-    MessageType_Test2,
-
-    MessageType_CustomMessage // Custom messages ids ust be greater than this (this one must remain in last position)
-  };
-
-  
   enum ControlPointType
   {
     ControlPoint_TopLeftCorner = 0,
@@ -193,14 +132,13 @@ namespace OrthancStone
   };
 
   
-  bool StringToSopClassUid(SopClassUid& result,
-                           const std::string& source);
+  SopClassUid StringToSopClassUid(const std::string& source);
 
   void ComputeWindowing(float& targetCenter,
                         float& targetWidth,
                         ImageWindowing windowing,
-                        float defaultCenter,
-                        float defaultWidth);
+                        float customCenter,
+                        float customWidth);
 
   void ComputeAnchorTranslation(double& deltaX /* out */,
                                 double& deltaY /* out */,

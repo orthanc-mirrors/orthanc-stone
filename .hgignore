@@ -1,21 +1,22 @@
-CMakeLists.txt.user
-Platforms/Generic/ThirdPartyDownloads/
-Applications/build-*
+syntax: glob
+*~
+*.cpp.orig
+*.h.orig
+.vs/
+.vscode/
 Applications/Qt/archive/
 Applications/Samples/ThirdPartyDownloads/
+Applications/Samples/build-wasm/
+Applications/Samples/build-web/
+Applications/Samples/node_modules/
+Applications/Samples/rt-viewer-demo/ThirdPartyDownloads/
 Applications/Samples/rt-viewer-demo/build-sdl-msvc15/
 Applications/Samples/rt-viewer-demo/build-tsc-output/
 Applications/Samples/rt-viewer-demo/build-wasm/
 Applications/Samples/rt-viewer-demo/build-web/
-Applications/Samples/rt-viewer-demo/ThirdPartyDownloads/
-Applications/Samples/build-wasm/
-Applications/Samples/build-web/
-Applications/Samples/node_modules/
-Resources/CommandTool/protoc-tests/node_modules/
-Resources/CommandTool/protoc-tests/generated_js/
-Resources/CommandTool/protoc-tests/generated_ts/
-Resources/CommandTool/flatc-tests/basic/build/
-.vscode/
+Applications/build-*
+CMakeLists.txt.user
+Platforms/Generic/ThirdPartyDownloads/
 Resources/CodeGeneration/.env
 Resources/CodeGeneration/.idea
 Resources/CodeGeneration/__pycache__
@@ -23,8 +24,13 @@ Resources/CodeGeneration/build/
 Resources/CodeGeneration/build_browser/
 Resources/CodeGeneration/testCppHandler/build/
 Resources/CodeGeneration/testCppHandler/build_msbuild/
-syntax: glob
-Resources/CodeGeneration/testWasmIntegrated/build-wasm/
-Resources/CodeGeneration/testWasmIntegrated/build-tsc/
 Resources/CodeGeneration/testWasmIntegrated/build-final/
+Resources/CodeGeneration/testWasmIntegrated/build-tsc/
+Resources/CodeGeneration/testWasmIntegrated/build-wasm/
+Resources/CommandTool/flatc-tests/basic/build/
+Resources/CommandTool/protoc-tests/generated_js/
+Resources/CommandTool/protoc-tests/generated_ts/
+Resources/CommandTool/protoc-tests/node_modules/
+Samples/Sdl/ThirdPartyDownloads/
+Samples/Sdl/CMakeLists.txt.orig
 

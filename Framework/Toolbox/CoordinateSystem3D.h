@@ -102,5 +102,10 @@ namespace OrthancStone
     bool IntersectLine(Vector& p,
                        const Vector& origin,
                        const Vector& direction) const;
+
+    // Returns "false" is the two planes are not parallel
+    static bool GetDistance(double& distance,
+                            const CoordinateSystem3D& a,
+                            const CoordinateSystem3D& b);
   };
 }

@@ -236,9 +236,22 @@ using the following BibTeX entry:
   url="https://doi.org/10.1007/s10278-018-0082-y"
 }
 
-Various notes to be deleted
+Various notes to be sorted
 ---------------------------
-class BaseCommand : public ICommand
+How to build the newest (2019-04-29) SDL samples under Windows, *inside* a
+folder that is sibling to the orthanc-stone folder: 
 
-RadiographySceneCommand
-GenericNoArgCommand
+```
+cmake -G "Visual Studio 15 2017 Win64" -DMSVC_MULTIPLE_PROCESSES=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Samples/Sdl
+```
+
+And under Ubuntu (note the /mnt/c/osi/dev/orthanc folder):
+```
+cmake -G "Ninja" -DENABLE_OPENGL=ON -DSTATIC_BUILD=OFF -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="/mnt/c/osi/dev/orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Samples/Sdl
+```
+
+TODO trackers:
+- text overlay 50% --> ColorTextureLayer 50%
+- angle tracker: draw arcs
+
+

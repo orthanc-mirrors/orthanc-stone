@@ -38,7 +38,7 @@ namespace OrthancStone
 
     void OnStructureSetLoaded(const IVolumeLoader::ContentChangedMessage& message)
     {
-      EmitMessage(IVolumeSlicer::ContentChangedMessage(*this));
+      BroadcastMessage(IVolumeSlicer::ContentChangedMessage(*this));
     }
 
   public:

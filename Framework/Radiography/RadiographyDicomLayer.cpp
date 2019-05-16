@@ -47,6 +47,11 @@ namespace OrthancStone
   }
 
 
+  RadiographyDicomLayer::RadiographyDicomLayer(MessageBroker& broker, const RadiographyScene& scene) : RadiographyLayer(broker, scene)
+  {
+
+  }
+
   void RadiographyDicomLayer::SetDicomTags(const OrthancPlugins::FullOrthancDataset& dataset)
   {
     converter_.reset(new DicomFrameConverter);
@@ -103,7 +108,13 @@ namespace OrthancStone
     source_ = raii;
     ApplyConverter();
 
-    EmitMessage(RadiographyLayer::LayerEditedMessage(*this));
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
+  }
+
+
+  void RadiographyDicomLayer::SetDicomFrameConverter(DicomFrameConverter* converter)
+  {
+    converter_.reset(converter);
   }
 
   void RadiographyDicomLayer::Render(Orthanc::ImageAccessor& buffer,

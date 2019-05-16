@@ -21,79 +21,79 @@
 
 #pragma once
 
-#include "../StoneEnumerations.h"
-
 #include <boost/noncopyable.hpp>
+
+#include <string.h>
 
 namespace OrthancStone 
 {
-  // base message that are exchanged between IObservable and IObserver
-  class IMessage : public boost::noncopyable
+  class MessageIdentifier
   {
   private:
-    int messageType_;
-    
-  protected:
-    IMessage(const int& messageType) :
-      messageType_(messageType)
+    const char*  file_;
+    int          line_;
+
+  public:
+    MessageIdentifier(const char* file,
+                      int line) :
+      file_(file),
+      line_(line)
     {
     }
+
+    MessageIdentifier() :
+      file_(NULL),
+      line_(0)
+    {
+    }
+
+    bool operator< (const MessageIdentifier& other) const
+    {
+      if (file_ == NULL)
+      {
+        return false;
+      }
+      else if (line_ != other.line_)
+      {
+        return line_ < other.line_;
+      }
+      else
+      {
+        return strcmp(file_, other.file_) < 0;
+      }
+    }
+  };
+
     
+  /**
+   * Base messages that are exchanged between IObservable and
+   * IObserver. Messages are distinguished by the "__FILE__" and
+   * "__LINE__" macro, as in "Orthanc::SQLite::StatementId".
+   **/
+  class IMessage : public boost::noncopyable
+  {
   public:
     virtual ~IMessage()
     {
     }
 
-    virtual int GetType() const
-    {
-      return messageType_;
-    }
+    virtual const MessageIdentifier& GetIdentifier() const = 0;
   };
 
 
-  // base class to derive from to implement your own messages
-  // it handles the message type for you
-  template <int type>
-  class BaseMessage : public IMessage
-  {
-  public:
-    enum
-    {
-      Type = type
-    };
-
-    BaseMessage() :
-      IMessage(static_cast<int>(Type))
-    {
-    }
-  };
-  
-
-  // simple message implementation when no payload is needed
-  // sample usage:
-  // typedef NoPayloadMessage<MessageType_VolumeSlicer_GeometryReady> GeometryReadyMessage;
-  template <int type>
-  class NoPayloadMessage : public BaseMessage<type>
-  {
-  public:
-    NoPayloadMessage() :
-      BaseMessage<type>()
-    {
-    }
-  };
-
-  // simple message implementation when no payload is needed but the origin is required
-  // sample usage:
-  // typedef OriginMessage<MessageType_SliceLoader_GeometryError, OrthancSlicesLoader> SliceGeometryErrorMessage;
-  template <int type, typename TOrigin>
-  class OriginMessage : public BaseMessage<type>
+  /**
+   * Simple message implementation when no payload is needed but the
+   * origin is required. Sample usage:
+   * typedef OriginMessage<OrthancSlicesLoader> SliceGeometryErrorMessage;
+   **/
+  template <typename TOrigin>
+  class OriginMessage : public IMessage
   {
   private:
-    const TOrigin& origin_;
+    const TOrigin&  origin_;
 
   public:
     OriginMessage(const TOrigin& origin) :
-      BaseMessage<type>(),
       origin_(origin)
     {
     }
@@ -104,3 +104,36 @@ namespace OrthancStone
     }
   };
 }
+
+
+#define ORTHANC_STONE_MESSAGE(FILE, LINE)                               \
+  public:                                                               \
+  static const ::OrthancStone::MessageIdentifier& GetStaticIdentifier() \
+  {                                                                     \
+    static const ::OrthancStone::MessageIdentifier id(FILE, LINE);      \
+    return id;                                                          \
+  }                                                                     \
+                                                                        \
+  virtual const ::OrthancStone::MessageIdentifier& GetIdentifier() const \
+  {                                                                     \
+    return GetStaticIdentifier();                                       \
+  }
+
+
+#define ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(FILE, LINE, NAME, ORIGIN)   \
+  class NAME : public ::OrthancStone::OriginMessage<ORIGIN>             \
+  {                                                                     \
+    ORTHANC_STONE_MESSAGE(FILE, LINE);                                  \
+                                                                        \
+    NAME(const ORIGIN& origin) :                                        \
+      OriginMessage(origin)                                             \
+    {                                                                   \
+    }                                                                   \
+  };
+
+
+#define ORTHANC_STONE_DEFINE_EMPTY_MESSAGE(FILE, LINE, NAME)            \
+  class NAME : public ::OrthancStone::IMessage                          \
+  {                                                                     \
+    ORTHANC_STONE_MESSAGE(FILE, LINE);                                  \
+  };

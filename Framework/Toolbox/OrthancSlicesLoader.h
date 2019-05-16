@@ -26,6 +26,7 @@
 #include "IWebService.h"
 #include "OrthancApiClient.h"
 #include "SlicesSorter.h"
+#include "Slice.h"
 
 #include <Core/Images/Image.h>
 
@@ -35,13 +36,14 @@ namespace OrthancStone
   class OrthancSlicesLoader : public IObservable, public IObserver
   {
   public:
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, SliceGeometryReadyMessage, OrthancSlicesLoader);
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, SliceGeometryErrorMessage, OrthancSlicesLoader);
 
-    typedef OriginMessage<MessageType_SliceLoader_GeometryReady, OrthancSlicesLoader> SliceGeometryReadyMessage;
-    typedef OriginMessage<MessageType_SliceLoader_GeometryError, OrthancSlicesLoader> SliceGeometryErrorMessage;
-
-    class SliceImageReadyMessage :
-      public OriginMessage<MessageType_SliceLoader_ImageReady, OrthancSlicesLoader>
+    
+    class SliceImageReadyMessage : public OriginMessage<OrthancSlicesLoader>
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+      
     private:
       unsigned int                   sliceIndex_;
       const Slice&                   slice_;
@@ -84,9 +86,10 @@ namespace OrthancStone
     };
     
 
-    class SliceImageErrorMessage : 
-      public OriginMessage<MessageType_SliceLoader_ImageError, OrthancSlicesLoader>
+    class SliceImageErrorMessage : public OriginMessage<OrthancSlicesLoader>
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+      
     private:
       const Slice&       slice_;
       unsigned int       sliceIndex_;
@@ -193,7 +196,7 @@ namespace OrthancStone
 
     bool IsGeometryReady() const;
 
-    size_t GetSliceCount() const;
+    size_t GetSlicesCount() const;
 
     const Slice& GetSlice(size_t index) const;
 

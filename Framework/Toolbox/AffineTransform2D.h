@@ -56,6 +56,12 @@ namespace OrthancStone
                const Orthanc::ImageAccessor& source,
                ImageInterpolation interpolation,
                bool clear) const;
+
+    void ConvertToOpenGLMatrix(float target[16],
+                               unsigned int canvasWidth,
+                               unsigned int canvasHeight) const;
+
+    double ComputeZoom() const;
     
     static AffineTransform2D Invert(const AffineTransform2D& a);
 
@@ -78,5 +84,8 @@ namespace OrthancStone
                                            double sy);
     
     static AffineTransform2D CreateRotation(double angle);
+
+    static AffineTransform2D CreateOpenGLClipspace(unsigned int canvasWidth,
+                                                   unsigned int canvasHeight);
   };
 }

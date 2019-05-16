@@ -137,7 +137,7 @@ namespace OrthancStone
                        double y,
                        double threshold)
     {
-      return fabs(x - y) < threshold;
+      return fabs(x - y) <= threshold;
     }
 
     inline bool IsNear(double x,

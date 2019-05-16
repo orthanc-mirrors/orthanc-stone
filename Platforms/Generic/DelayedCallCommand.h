@@ -27,7 +27,8 @@
 #include "../../Framework/Messages/IObservable.h"
 #include "../../Framework/Messages/ICallable.h"
 #include "../../Applications/Generic/NativeStoneApplicationContext.h"
-#include <boost/chrono.hpp>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace OrthancStone
 {
@@ -37,7 +38,7 @@ namespace OrthancStone
     std::auto_ptr<MessageHandler<IDelayedCallExecutor::TimeoutMessage> >  callback_;
     std::auto_ptr<Orthanc::IDynamicObject>  payload_;
     NativeStoneApplicationContext&          context_;
-    boost::chrono::system_clock::time_point expirationTimePoint_;
+    boost::posix_time::ptime                expirationTimePoint_;
     unsigned int                            timeoutInMs_;
 
   public:

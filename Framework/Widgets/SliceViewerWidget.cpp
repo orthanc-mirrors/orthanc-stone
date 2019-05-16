@@ -527,7 +527,7 @@ namespace OrthancStone
       InvalidateAllLayers();   // TODO Removing this line avoid loading twice the image in WASM
     }
 
-    EmitMessage(DisplayedSliceMessage(*this, displayedSlice));
+    BroadcastMessage(DisplayedSliceMessage(*this, displayedSlice));
   }
 
 
@@ -541,7 +541,7 @@ namespace OrthancStone
       changedLayers_[i] = true;
       //layers_[i]->ScheduleLayerCreation(plane_);
     }
-    EmitMessage(GeometryChangedMessage(*this));
+    BroadcastMessage(GeometryChangedMessage(*this));
   }
   
 
@@ -579,7 +579,7 @@ namespace OrthancStone
       InvalidateLayer(index);
     }
     
-    EmitMessage(SliceViewerWidget::ContentChangedMessage(*this));
+    BroadcastMessage(SliceViewerWidget::ContentChangedMessage(*this));
   }
   
 
@@ -594,7 +594,7 @@ namespace OrthancStone
       }
     }
     
-    EmitMessage(SliceViewerWidget::ContentChangedMessage(*this));
+    BroadcastMessage(SliceViewerWidget::ContentChangedMessage(*this));
   }
   
   
@@ -607,7 +607,7 @@ namespace OrthancStone
       UpdateLayer(index, message.CreateRenderer(), message.GetSlice());
     }
     
-    EmitMessage(SliceViewerWidget::ContentChangedMessage(*this));
+    BroadcastMessage(SliceViewerWidget::ContentChangedMessage(*this));
   }
 
 
@@ -621,7 +621,7 @@ namespace OrthancStone
       // TODO
       //UpdateLayer(index, new SliceOutlineRenderer(slice), slice);
 
-      EmitMessage(SliceViewerWidget::ContentChangedMessage(*this));
+      BroadcastMessage(SliceViewerWidget::ContentChangedMessage(*this));
     }
   }
 

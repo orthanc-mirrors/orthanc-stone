@@ -56,6 +56,27 @@ if (ORTHANC_SANDBOXED)
     message(FATAL_ERROR "Cannot enable SSL in sandboxed environments")
   endif()
 endif()
+
+if (ENABLE_WASM)
+  if (NOT ORTHANC_SANDBOXED)
+    message(FATAL_ERROR "WebAssembly target must me configured as sandboxed")
+  endif()
+
+  if (NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    message(FATAL_ERROR "WebAssembly target requires the emscripten compiler")    
+  endif()
+
+  add_definitions(-DORTHANC_ENABLE_WASM=1)
+else()
+  if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten" OR
+      CMAKE_SYSTEM_NAME STREQUAL "PNaCl" OR
+      CMAKE_SYSTEM_NAME STREQUAL "NaCl32" OR
+      CMAKE_SYSTEM_NAME STREQUAL "NaCl64")
+    message(FATAL_ERROR "Trying to use a Web compiler for a native build")
+  endif()
+
+  add_definitions(-DORTHANC_ENABLE_WASM=0)
+endif()
   
 
 #####################################################################
@@ -67,6 +88,7 @@ SET(ORTHANC_STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
 include(FindPkgConfig)
 include(${CMAKE_CURRENT_LIST_DIR}/BoostExtendedConfiguration.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/CairoConfiguration.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/FreetypeConfiguration.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/PixmanConfiguration.cmake)
 
 
@@ -87,21 +109,62 @@ if (ENABLE_SDL AND ENABLE_QT)
 elseif(ENABLE_SDL)
   message("SDL is enabled")
   include(${CMAKE_CURRENT_LIST_DIR}/SdlConfiguration.cmake)
-  add_definitions(-DORTHANC_ENABLE_NATIVE=1)
-  add_definitions(-DORTHANC_ENABLE_QT=0)
-  add_definitions(-DORTHANC_ENABLE_SDL=1)
+  add_definitions(
+    -DORTHANC_ENABLE_NATIVE=1
+    -DORTHANC_ENABLE_QT=0
+    -DORTHANC_ENABLE_SDL=1
+    )
 elseif(ENABLE_QT)
   message("QT is enabled")
   include(${CMAKE_CURRENT_LIST_DIR}/QtConfiguration.cmake)
-  add_definitions(-DORTHANC_ENABLE_NATIVE=1)
-  add_definitions(-DORTHANC_ENABLE_QT=1)
-  add_definitions(-DORTHANC_ENABLE_SDL=0)
+  add_definitions(
+    -DORTHANC_ENABLE_NATIVE=1
+    -DORTHANC_ENABLE_QT=1
+    -DORTHANC_ENABLE_SDL=0
+    )
 else()
   message("SDL and QT are both disabled")
   unset(USE_SYSTEM_SDL CACHE)
-  add_definitions(-DORTHANC_ENABLE_SDL=0)
-  add_definitions(-DORTHANC_ENABLE_QT=0)
-  add_definitions(-DORTHANC_ENABLE_NATIVE=0)
+  add_definitions(
+    -DORTHANC_ENABLE_SDL=0
+    -DORTHANC_ENABLE_QT=0
+    -DORTHANC_ENABLE_NATIVE=0
+    )
+endif()
+
+
+if (ENABLE_OPENGL AND CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  include(${CMAKE_CURRENT_LIST_DIR}/GlewConfiguration.cmake)
+  add_definitions(
+    -DORTHANC_ENABLE_GLEW=1
+    )
+else()
+  add_definitions(
+    -DORTHANC_ENABLE_GLEW=0
+    )
+endif()
+
+
+if (ENABLE_OPENGL)
+  if (NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    # If including "FindOpenGL.cmake" using Emscripten (targeting
+    # WebAssembly), the "OPENGL_LIBRARIES" value incorrectly includes
+    # the "nul" library, which leads to warning message in Emscripten:
+    # 'shared:WARNING: emcc: cannot find library "nul"'.
+    include(FindOpenGL)
+    if (NOT OPENGL_FOUND)
+      message(FATAL_ERROR "Cannot find OpenGL on your system")
+    endif()
+
+    link_libraries(${OPENGL_LIBRARIES})
+  endif()
+
+  add_definitions(
+    -DGL_GLEXT_PROTOTYPES=1
+    -DORTHANC_ENABLE_OPENGL=1
+    )
+else()
+  add_definitions(-DORTHANC_ENABLE_OPENGL=0)  
 endif()
 
 
@@ -123,6 +186,8 @@ add_definitions(
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions(-DCHECK_OBSERVERS_MESSAGES)
 endif()
+
+
 
 #####################################################################
 ## Embed the colormaps into the binaries
@@ -200,10 +265,11 @@ if (NOT ORTHANC_SANDBOXED)
       )
     if (ENABLE_SDL)
       list(APPEND APPLICATIONS_SOURCES
-        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlStoneApplicationRunner.cpp
-        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlCairoSurface.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOpenGLWindow.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOrthancSurface.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlStoneApplicationRunner.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlWindow.cpp
         )
     endif()
@@ -243,6 +309,32 @@ list(APPEND ORTHANC_STONE_SOURCES
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SeriesFrameRendererFactory.cpp
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SingleFrameRendererFactory.cpp
 
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CairoCompositor.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/FloatTextureSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoColorTextureRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoFloatTextureRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoInfoPanelRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoPolylineRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoTextRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CompositorHelper.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/FixedPointAligner.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PanSceneTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PointerEvent.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PolylineSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/RotateSceneTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Scene2D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextureBaseSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ZoomSceneTracker.cpp
+
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/FontRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/Glyph.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphAlphabet.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphBitmapAlphabet.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphTextureAlphabet.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/TextBoundingBox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/CircleMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/ColorFrameRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/DicomSeriesVolumeSlicer.cpp
@@ -273,12 +365,14 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneException.h
+  ${ORTHANC_STONE_ROOT}/Framework/StoneInitialization.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/AffineTransform2D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/BaseWebService.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/CoordinateSystem3D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomFrameConverter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DownloadStack.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DynamicBitmap.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Extent2D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/FiniteProjectiveCamera.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.cpp
@@ -320,6 +414,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/WidgetBase.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/WorldSceneWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Widgets/ZoomMouseTracker.cpp
+
   ${ORTHANC_STONE_ROOT}/Framework/dev.h
 
   ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
@@ -343,13 +438,44 @@ list(APPEND ORTHANC_STONE_SOURCES
 
   # Mandatory components
   ${CAIRO_SOURCES}
+  ${FREETYPE_SOURCES}
   ${PIXMAN_SOURCES}
 
   # Optional components
   ${SDL_SOURCES}
   ${QT_SOURCES}
   ${BOOST_EXTENDED_SOURCES}
+  ${GLEW_SOURCES}
   )
+
+
+if (ENABLE_OPENGL)
+  list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Fonts/OpenGLTextCoordinates.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLShader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLTexture.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/OpenGLCompositor.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLAdvancedPolylineRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLBasicPolylineRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLInfoPanelRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLinesProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextureProgram.cpp
+    )
+
+  if (ENABLE_WASM)
+    list(APPEND ORTHANC_STONE_SOURCES
+      ${ORTHANC_STONE_ROOT}/Framework/OpenGL/WebAssemblyOpenGLContext.cpp
+      )
+  endif()
+endif()
+
 
 include_directories(${ORTHANC_STONE_ROOT})
 

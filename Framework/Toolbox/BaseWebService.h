@@ -81,7 +81,7 @@ namespace OrthancStone
     class BaseWebServicePayload;
 
     bool          cacheEnabled_;
-    std::map<std::string, boost::shared_ptr<CachedHttpRequestSuccessMessage>> cache_;  // TODO: this is currently an infinite cache !
+    std::map<std::string, boost::shared_ptr<CachedHttpRequestSuccessMessage> > cache_;  // TODO: this is currently an infinite cache !
 
   public:
 

@@ -41,10 +41,7 @@ namespace OrthancStone
     void ApplyConverter();
 
   public:
-    RadiographyDicomLayer(MessageBroker& broker, const RadiographyScene& scene)
-      : RadiographyLayer(broker, scene)
-    {
-    }
+    RadiographyDicomLayer(MessageBroker& broker, const RadiographyScene& scene);
 
     void SetInstance(const std::string& instanceId, unsigned int frame)
     {
@@ -69,7 +66,9 @@ namespace OrthancStone
     const Orthanc::ImageAccessor* GetSourceImage() const {return source_.get();}  // currently need this access to serialize scene in plain old data to send to a WASM worker
 
     const DicomFrameConverter& GetDicomFrameConverter() const {return *converter_;} // currently need this access to serialize scene in plain old data to send to a WASM worker
-    void SetDicomFrameConverter(DicomFrameConverter* converter) {converter_.reset(converter);} // Takes ownership
+    
+     // Takes ownership
+    void SetDicomFrameConverter(DicomFrameConverter* converter);
 
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,

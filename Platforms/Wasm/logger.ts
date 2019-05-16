@@ -10,6 +10,10 @@ export class StandardConsoleLogger {
     this._debug(LogSource.Typescript, ...args);
   }
 
+  public debugFromCpp(...args: any[]): void {
+    this._debug(LogSource.Cpp, ...args);
+  }
+
   public info(...args: any[]): void {
     this._info(LogSource.Typescript, ...args);
   }
@@ -22,6 +26,10 @@ export class StandardConsoleLogger {
     this._warning(LogSource.Typescript, ...args);
   }
 
+  public warningFromCpp(message: string): void {
+    this._warning(LogSource.Cpp, message);
+  }
+
   public error(...args: any[]): void {
     this._error(LogSource.Typescript, ...args);
   }
@@ -31,13 +39,25 @@ export class StandardConsoleLogger {
   }
 
   public _debug(source: LogSource, ...args: any[]): void {
-    var output = this.getOutput(source, args);
-    console.debug(...output);
+    if ((<any> window).IsTraceLevelEnabled)
+    {
+      if ((<any> window).IsTraceLevelEnabled())
+      {
+        var output = this.getOutput(source, args);
+        console.debug(...output);
+      }
+    }
   }
 
   private _info(source: LogSource, ...args: any[]): void {
-    var output = this.getOutput(source, args);
-    console.info(...output);
+    if ((<any> window).IsInfoLevelEnabled)
+    {
+      if ((<any> window).IsInfoLevelEnabled())
+      {
+        var output = this.getOutput(source, args);
+        console.info(...output);
+      }
+    }
   }
 
   public _warning(source: LogSource, ...args: any[]): void {
@@ -88,3 +108,4 @@ export class TimeConsoleLogger extends StandardConsoleLogger {
 }
 
 export var defaultLogger: StandardConsoleLogger = new TimeConsoleLogger();
+

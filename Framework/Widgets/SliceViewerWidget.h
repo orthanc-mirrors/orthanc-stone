@@ -36,12 +36,15 @@ namespace OrthancStone
     public IObservable
   {
   public:
-    typedef OriginMessage<MessageType_Widget_GeometryChanged, SliceViewerWidget> GeometryChangedMessage;
-    typedef OriginMessage<MessageType_Widget_ContentChanged, SliceViewerWidget> ContentChangedMessage;
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryChangedMessage, SliceViewerWidget);
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ContentChangedMessage, SliceViewerWidget);
+
 
     // TODO - Use this message in ReferenceLineSource
-    class DisplayedSliceMessage : public OriginMessage<MessageType_SliceViewerWidget_DisplayedSlice, SliceViewerWidget>
+    class DisplayedSliceMessage : public OriginMessage<SliceViewerWidget>
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+      
     private:
       const Slice& slice_;
 

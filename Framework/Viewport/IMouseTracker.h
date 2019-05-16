@@ -62,7 +62,5 @@ namespace OrthancStone
     virtual void MouseMove(int x, 
                            int y,
                            const std::vector<Touch>& displayTouches) = 0;
-
-    virtual bool IsTouchTracker() const {return false;}
   };
 }

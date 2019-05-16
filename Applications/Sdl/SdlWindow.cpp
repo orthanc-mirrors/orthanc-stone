@@ -26,6 +26,11 @@
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 
+#ifdef WIN32 
+#include <windows.h> // for SetProcessDpiAware
+#endif 
+// WIN32
+
 #include <SDL.h>
 
 namespace OrthancStone
@@ -33,7 +38,8 @@ namespace OrthancStone
   SdlWindow::SdlWindow(const char* title,
                        unsigned int width,
                        unsigned int height,
-                       bool enableOpenGl) :
+                       bool enableOpenGl,
+                       bool allowDpiScaling) :
     maximized_(false)
   {
     // TODO Understand why, with SDL_WINDOW_OPENGL + MinGW32 + Release
@@ -51,6 +57,33 @@ namespace OrthancStone
       windowFlags = SDL_WINDOW_RESIZABLE;
       rendererFlags = SDL_RENDERER_SOFTWARE;
     }
+
+// TODO: probably required on MacOS X, too
+#if defined(WIN32) && (_WIN32_WINNT >= 0x0600)
+    if (!allowDpiScaling)
+    {
+      // if we do NOT allow DPI scaling, it means an SDL pixel will be a real
+      // monitor pixel. This is needed for high-DPI applications
+
+      // Enable high-DPI support on Windows
+
+      // THE FOLLOWING HAS BEEN COMMENTED OUT BECAUSE IT WILL CRASH UNDER 
+      // OLD WINDOWS VERSIONS
+      // ADD THIS AT THE TOP TO ENABLE IT:
+      // 
+      //#pragma comment(lib, "Shcore.lib") THIS IS ONLY REQUIRED FOR SetProcessDpiAwareness
+      //#include <windows.h>
+      //#include <ShellScalingAPI.h> THIS IS ONLY REQUIRED FOR SetProcessDpiAwareness
+      //#include <comdef.h> THIS IS ONLY REQUIRED FOR SetProcessDpiAwareness
+      // SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+      
+      // This is supported on Vista+
+      SetProcessDPIAware();
+
+      windowFlags |= SDL_WINDOW_ALLOW_HIGHDPI;
+    }
+#endif 
+// WIN32
     
     window_ = SDL_CreateWindow(title,
                                SDL_WINDOWPOS_UNDEFINED,

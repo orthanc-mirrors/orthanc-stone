@@ -771,16 +771,22 @@ namespace OrthancStone
     }
     
     orthanc_.GetBinaryAsync(uri, "image/png",
-                            new Callable<OrthancSlicesLoader, OrthancApiClient::BinaryResponseReadyMessage>(*this, &OrthancSlicesLoader::ParseSliceImagePng),
-                            new Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(*this, &OrthancSlicesLoader::OnSliceImageError),
-                            Operation::DownloadSliceImage(index, slice, SliceImageQuality_FullPng));
-  }
+      new Callable<OrthancSlicesLoader, 
+        OrthancApiClient::BinaryResponseReadyMessage>
+          (*this, &OrthancSlicesLoader::ParseSliceImagePng),
+      new Callable<OrthancSlicesLoader, 
+        IWebService::HttpRequestErrorMessage>
+          (*this, &OrthancSlicesLoader::OnSliceImageError),
+      Operation::DownloadSliceImage(
+        static_cast<unsigned int>(index), slice, SliceImageQuality_FullPng));
+}
   
   void OrthancSlicesLoader::ScheduleSliceImagePam(const Slice& slice,
                                                   size_t index)
   {
-    std::string uri = ("/instances/" + slice.GetOrthancInstanceId() + "/frames/" +
-                       boost::lexical_cast<std::string>(slice.GetFrame()));
+    std::string uri = 
+      ("/instances/" + slice.GetOrthancInstanceId() + "/frames/" +
+      boost::lexical_cast<std::string>(slice.GetFrame()));
 
     switch (slice.GetConverter().GetExpectedPixelFormat())
     {
@@ -801,9 +807,14 @@ namespace OrthancStone
     }
 
     orthanc_.GetBinaryAsync(uri, "image/x-portable-arbitrarymap",
-                            new Callable<OrthancSlicesLoader, OrthancApiClient::BinaryResponseReadyMessage>(*this, &OrthancSlicesLoader::ParseSliceImagePam),
-                            new Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(*this, &OrthancSlicesLoader::OnSliceImageError),
-                            Operation::DownloadSliceImage(index, slice, SliceImageQuality_FullPam));
+      new Callable<OrthancSlicesLoader, 
+        OrthancApiClient::BinaryResponseReadyMessage>
+          (*this, &OrthancSlicesLoader::ParseSliceImagePam),
+      new Callable<OrthancSlicesLoader, 
+        IWebService::HttpRequestErrorMessage>
+          (*this, &OrthancSlicesLoader::OnSliceImageError),
+      Operation::DownloadSliceImage(static_cast<unsigned int>(index), 
+                                    slice, SliceImageQuality_FullPam));
   }
 
 
@@ -839,9 +850,14 @@ namespace OrthancStone
                        boost::lexical_cast<std::string>(slice.GetFrame()));
 
     orthanc_.GetJsonAsync(uri,
-                          new Callable<OrthancSlicesLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &OrthancSlicesLoader::ParseSliceImageJpeg),
-                          new Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(*this, &OrthancSlicesLoader::OnSliceImageError),
-                          Operation::DownloadSliceImage(index, slice, quality));
+      new Callable<OrthancSlicesLoader, 
+        OrthancApiClient::JsonResponseReadyMessage>
+          (*this, &OrthancSlicesLoader::ParseSliceImageJpeg),
+      new Callable<OrthancSlicesLoader, 
+        IWebService::HttpRequestErrorMessage>
+          (*this, &OrthancSlicesLoader::OnSliceImageError),
+        Operation::DownloadSliceImage(
+          static_cast<unsigned int>(index), slice, quality));
   }
   
   
@@ -875,9 +891,14 @@ namespace OrthancStone
       std::string uri = ("/instances/" + slice.GetOrthancInstanceId() + "/frames/" +
                          boost::lexical_cast<std::string>(slice.GetFrame()) + "/raw.gz");
       orthanc_.GetBinaryAsync(uri, IWebService::HttpHeaders(),
-                              new Callable<OrthancSlicesLoader, OrthancApiClient::BinaryResponseReadyMessage>(*this, &OrthancSlicesLoader::ParseSliceRawImage),
-                              new Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(*this, &OrthancSlicesLoader::OnSliceImageError),
-                              Operation::DownloadSliceRawImage(index, slice));
+        new Callable<OrthancSlicesLoader, 
+          OrthancApiClient::BinaryResponseReadyMessage>
+            (*this, &OrthancSlicesLoader::ParseSliceRawImage),
+        new Callable<OrthancSlicesLoader,
+          IWebService::HttpRequestErrorMessage>
+            (*this, &OrthancSlicesLoader::OnSliceImageError),
+        Operation::DownloadSliceRawImage(
+          static_cast<unsigned int>(index), slice));
     }
   }
 }

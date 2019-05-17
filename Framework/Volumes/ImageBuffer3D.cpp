@@ -264,8 +264,15 @@ namespace OrthancStone
     if (hasRange_)
     {
       style.windowing_ = ImageWindowing_Custom;
-      style.customWindowCenter_ = converter.Apply((minValue_ + maxValue_) / 2.0);
-      style.customWindowWidth_ = converter.Apply(maxValue_ - minValue_);
+      
+      // casting the narrower type to wider before calling the + operator
+      // will prevent overflowing (this is why the cast to double is only 
+      // done on the first operand)
+      style.customWindowCenter_ = static_cast<float>(
+        converter.Apply((static_cast<double>(minValue_) + maxValue_) / 2.0));
+      
+      style.customWindowWidth_ = static_cast<float>(
+        converter.Apply(static_cast<double>(maxValue_) - minValue_));
       
       if (style.customWindowWidth_ > 1)
       {

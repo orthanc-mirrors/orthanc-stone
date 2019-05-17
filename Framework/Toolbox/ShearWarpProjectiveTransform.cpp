@@ -195,15 +195,20 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
 
-    intermediateWidth_ = std::ceil(extent.GetWidth() / maxScaling);
-    intermediateHeight_ = std::ceil(extent.GetHeight() / maxScaling);
+    intermediateWidth_ = 
+      static_cast<unsigned int>(std::ceil(extent.GetWidth() / maxScaling));
+    intermediateHeight_ = 
+      static_cast<unsigned int>(std::ceil(extent.GetHeight() / maxScaling));
 
     // This is the product "T * S" in Equation (A.16) on page 209
     Matrix TS = LinearAlgebra::Product(
-      GeometryToolbox::CreateTranslationMatrix(static_cast<double>(intermediateWidth_) / 2.0,
-                                               static_cast<double>(intermediateHeight_) / 2.0, 0),
-      GeometryToolbox::CreateScalingMatrix(1.0 / maxScaling, 1.0 / maxScaling, 1),
-      GeometryToolbox::CreateTranslationMatrix(-extent.GetCenterX(), -extent.GetCenterY(), 0));
+      GeometryToolbox::CreateTranslationMatrix(
+        static_cast<double>(intermediateWidth_) / 2.0,
+        static_cast<double>(intermediateHeight_) / 2.0, 0),
+      GeometryToolbox::CreateScalingMatrix(
+        1.0 / maxScaling, 1.0 / maxScaling, 1),
+      GeometryToolbox::CreateTranslationMatrix(
+        -extent.GetCenterX(), -extent.GetCenterY(), 0));
     
     // This is Equation (A.16) on page 209. WARNING: There is an
     // error in Lacroute's thesis: "inv(MM_shear)" is used instead

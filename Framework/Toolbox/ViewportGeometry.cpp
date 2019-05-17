@@ -128,7 +128,12 @@ namespace OrthancStone
     sceneTouches.clear();
     for (size_t t = 0; t < displayTouches.size(); t++)
     {
-      MapPixelCenterToScene(sceneX, sceneY, displayTouches[t].x, displayTouches[t].y);
+      MapPixelCenterToScene(
+        sceneX,
+        sceneY, 
+        static_cast<int>(displayTouches[t].x), 
+        static_cast<int>(displayTouches[t].y));
+      
       sceneTouches.push_back(Touch((float)sceneX, (float)sceneY));
     }
   }

@@ -77,8 +77,8 @@ namespace OrthancStone
     {
       for (size_t i = 0; i < size; i++)
       {
-        nodes_[i].prev_ = i - 1;
-        nodes_[i].next_ = i + 1;
+        nodes_[i].prev_ = static_cast<int>(i - 1);
+        nodes_[i].next_ = static_cast<int>(i + 1);
         nodes_[i].dequeued_ = false;
       }
 

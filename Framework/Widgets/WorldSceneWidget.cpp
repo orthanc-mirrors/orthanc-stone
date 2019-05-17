@@ -83,8 +83,12 @@ namespace OrthancStone
       for (size_t t = 0; t < displayTouches.size(); t++)
       {
         double sx, sy;
-        view_.MapPixelCenterToScene(sx, sy, (int)displayTouches[t].x, (int)displayTouches[t].y);
-        sceneTouches.push_back(Touch(sx, sy));
+        
+        view_.MapPixelCenterToScene(
+          sx, sy, (int)displayTouches[t].x, (int)displayTouches[t].y);
+        
+        sceneTouches.push_back(
+          Touch(static_cast<float>(sx), static_cast<float>(sy)));
       }
       tracker_->MouseMove(x, y, sceneX, sceneY, displayTouches, sceneTouches);
     }

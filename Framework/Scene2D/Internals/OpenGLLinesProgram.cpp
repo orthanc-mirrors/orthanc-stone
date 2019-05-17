@@ -205,40 +205,40 @@ namespace OrthancStone
         }
 
         // First triangle
-        coords.push_back(x1_);
-        coords.push_back(y1_);
-        coords.push_back(1);
-        coords.push_back(x2_);
-        coords.push_back(y2_);
-        coords.push_back(-1);
-        coords.push_back(x2_);
-        coords.push_back(y2_);
-        coords.push_back(1);
+        coords.push_back(static_cast<float>(x1_));
+        coords.push_back(static_cast<float>(y1_));
+        coords.push_back(static_cast<float>(1));
+        coords.push_back(static_cast<float>(x2_));
+        coords.push_back(static_cast<float>(y2_));
+        coords.push_back(static_cast<float>(-1));
+        coords.push_back(static_cast<float>(x2_));
+        coords.push_back(static_cast<float>(y2_));
+        coords.push_back(static_cast<float>(1));
 
-        miterDirections.push_back(miterX1_);
-        miterDirections.push_back(miterY1_);
-        miterDirections.push_back(miterX2_);
-        miterDirections.push_back(miterY2_);
-        miterDirections.push_back(miterX2_);
-        miterDirections.push_back(miterY2_);
+        miterDirections.push_back(static_cast<float>(miterX1_));
+        miterDirections.push_back(static_cast<float>(miterY1_));
+        miterDirections.push_back(static_cast<float>(miterX2_));
+        miterDirections.push_back(static_cast<float>(miterY2_));
+        miterDirections.push_back(static_cast<float>(miterX2_));
+        miterDirections.push_back(static_cast<float>(miterY2_));
         
         // Second triangle
-        coords.push_back(x1_);
-        coords.push_back(y1_);
-        coords.push_back(1);
-        coords.push_back(x1_);
-        coords.push_back(y1_);
-        coords.push_back(-1);
-        coords.push_back(x2_);
-        coords.push_back(y2_);
-        coords.push_back(-1);
+        coords.push_back(static_cast<float>(x1_));
+        coords.push_back(static_cast<float>(y1_));
+        coords.push_back(static_cast<float>(1));
+        coords.push_back(static_cast<float>(x1_));
+        coords.push_back(static_cast<float>(y1_));
+        coords.push_back(static_cast<float>(-1));
+        coords.push_back(static_cast<float>(x2_));
+        coords.push_back(static_cast<float>(y2_));
+        coords.push_back(static_cast<float>(-1));
 
-        miterDirections.push_back(miterX1_);
-        miterDirections.push_back(miterY1_);
-        miterDirections.push_back(miterX1_);
-        miterDirections.push_back(miterY1_);
-        miterDirections.push_back(miterX2_);
-        miterDirections.push_back(miterY2_);
+        miterDirections.push_back(static_cast<float>(miterX1_));
+        miterDirections.push_back(static_cast<float>(miterY1_));
+        miterDirections.push_back(static_cast<float>(miterX1_));
+        miterDirections.push_back(static_cast<float>(miterY1_));
+        miterDirections.push_back(static_cast<float>(miterX2_));
+        miterDirections.push_back(static_cast<float>(miterY2_));
       }        
     };
 
@@ -247,7 +247,7 @@ namespace OrthancStone
                                    const PolylineSceneLayer& layer) :
       context_(context),
       verticesCount_(0),
-      thickness_(layer.GetThickness()),
+      thickness_(static_cast<float>(layer.GetThickness())),
       red_(layer.GetRedAsFloat()),
       green_(layer.GetGreenAsFloat()),
       blue_(layer.GetBlueAsFloat())
@@ -418,12 +418,15 @@ namespace OrthancStone
             double t1 = std::max(thickness, aliasingBorder);
             double t0 = std::max(0.0, thickness - aliasingBorder);
             
-            glUniform1f(program_->GetUniformLocation("u_thickness"), t1 / zoom);
-            glUniform1f(program_->GetUniformLocation("u_antialiasing_start"), t0 / t1);
+            glUniform1f(program_->GetUniformLocation("u_thickness"), 
+              static_cast<GLfloat>(t1 / zoom));
+            glUniform1f(program_->GetUniformLocation("u_antialiasing_start"),
+              static_cast<GLfloat>(t0 / t1));
           }
           else
           {
-            glUniform1f(program_->GetUniformLocation("u_thickness"), thickness / zoom);
+            glUniform1f(program_->GetUniformLocation("u_thickness"),
+              static_cast<GLfloat>(thickness / zoom));
           }
         }
         else
@@ -433,12 +436,15 @@ namespace OrthancStone
             double t1 = std::max(thickness, aliasingBorder / zoom);
             double t0 = std::max(0.0, thickness - aliasingBorder / zoom);
 
-            glUniform1f(program_->GetUniformLocation("u_thickness"), t1);
-            glUniform1f(program_->GetUniformLocation("u_antialiasing_start"), t0 / t1);
+            glUniform1f(program_->GetUniformLocation("u_thickness"),
+              static_cast<GLfloat>(t1));
+            glUniform1f(program_->GetUniformLocation("u_antialiasing_start"),
+              static_cast<GLfloat>(t0 / t1));
           }
           else
           {
-            glUniform1f(program_->GetUniformLocation("u_thickness"), thickness);
+            glUniform1f(program_->GetUniformLocation("u_thickness"),
+              static_cast<GLfloat>(thickness));
           }
         }
 

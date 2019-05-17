@@ -360,7 +360,8 @@ namespace OrthancStone
 
             // Read and accumulate the value of the pixel
             float pixel;
-            if (pixelReader.GetFloatValue(pixel, ix, iy))
+            if (pixelReader.GetFloatValue(
+              pixel, static_cast<float>(ix), static_cast<float>(iy)))
             {
               if (MIP)
               {

@@ -349,6 +349,7 @@ namespace OrthancStone
 
 
   TrackerSampleApp::TrackerSampleApp(MessageBroker& broker) : IObserver(broker)
+    , scene_(broker)
     , currentTool_(GuiTool_Rotate)
   {
     controller_ = ViewportControllerPtr(new ViewportController(broker));

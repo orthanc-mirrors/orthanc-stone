@@ -155,8 +155,9 @@ namespace OrthancStone
         program_->Use();
 
         double dx, dy;  // In pixels
-        ComputeAnchorTranslation(dx, dy, data.GetAnchor(), data.GetTextWidth(), 
-          data.GetTextHeight(), static_cast<unsigned int>(data.GetBorder()));
+        ComputeAnchorTranslation(dx, dy, data.GetAnchor(), 
+                                 data.GetTextWidth(), data.GetTextHeight(),
+                                 static_cast<unsigned int>(data.GetBorder()));
       
         double x = data.GetX();
         double y = data.GetY();

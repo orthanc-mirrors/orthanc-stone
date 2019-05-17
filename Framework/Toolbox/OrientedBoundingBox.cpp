@@ -37,8 +37,8 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageSize);      
     }
 
-    const CoordinateSystem3D& geometry = image.GetAxialGeometry();
-    Vector dim = image.GetVoxelDimensions(VolumeProjection_Axial);
+    const CoordinateSystem3D& geometry = image.GetGeometry().GetAxialGeometry();
+    Vector dim = image.GetGeometry().GetVoxelDimensions(VolumeProjection_Axial);
 
     u_ = geometry.GetAxisX();
     v_ = geometry.GetAxisY();

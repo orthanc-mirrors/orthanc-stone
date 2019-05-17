@@ -115,7 +115,7 @@ namespace OrthancStone
 
     unsigned int GetCountMissing() const
     {
-      return countMissing_;
+      return static_cast<unsigned int>(countMissing_);
     }
 
     bool RenderScene(CairoContext& context,

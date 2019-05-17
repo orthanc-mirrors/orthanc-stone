@@ -89,7 +89,7 @@ namespace OrthancStone
       column_(0),
       row_(0)
     {
-      int c = boost::math::iround<int>(sqrt(static_cast<float>(countGlyphs)));
+      int c = boost::math::iround<float>(sqrt(static_cast<float>(countGlyphs)));
 
       if (c <= 0)
       {
@@ -239,9 +239,9 @@ namespace OrthancStone
     sourceAlphabet.GetAlphabet().Apply(size);
 
     TextureGenerator generator(alphabet_,
-                               sourceAlphabet.GetAlphabet().GetSize(),
-                               size.GetMaxWidth(),
-                               size.GetMaxHeight());
+      static_cast<unsigned int>(sourceAlphabet.GetAlphabet().GetSize()),
+      size.GetMaxWidth(),
+      size.GetMaxHeight());
     sourceAlphabet.GetAlphabet().Apply(generator);
 
     texture_.reset(generator.ReleaseTexture());

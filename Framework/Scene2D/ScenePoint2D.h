@@ -23,6 +23,7 @@
 
 #include "../Toolbox/AffineTransform2D.h"
 
+
 namespace OrthancStone
 {
   class ScenePoint2D

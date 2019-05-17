@@ -146,12 +146,18 @@ endif()
 
 
 if (ENABLE_OPENGL)
-  include(FindOpenGL)
-  if (NOT OPENGL_FOUND)
-    message(FATAL_ERROR "Cannot find OpenGL on your system")
-  endif()
+  if (NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    # If including "FindOpenGL.cmake" using Emscripten (targeting
+    # WebAssembly), the "OPENGL_LIBRARIES" value incorrectly includes
+    # the "nul" library, which leads to warning message in Emscripten:
+    # 'shared:WARNING: emcc: cannot find library "nul"'.
+    include(FindOpenGL)
+    if (NOT OPENGL_FOUND)
+      message(FATAL_ERROR "Cannot find OpenGL on your system")
+    endif()
 
-  link_libraries(${OPENGL_LIBRARIES})
+    link_libraries(${OPENGL_LIBRARIES})
+  endif()
 
   add_definitions(
     -DGL_GLEXT_PROTOTYPES=1
@@ -417,6 +423,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ViewportGeometry.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/VolumeImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IMouseTracker.h

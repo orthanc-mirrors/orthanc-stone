@@ -195,15 +195,20 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
 
-    intermediateWidth_ = std::ceil(extent.GetWidth() / maxScaling);
-    intermediateHeight_ = std::ceil(extent.GetHeight() / maxScaling);
+    intermediateWidth_ = 
+      static_cast<unsigned int>(std::ceil(extent.GetWidth() / maxScaling));
+    intermediateHeight_ = 
+      static_cast<unsigned int>(std::ceil(extent.GetHeight() / maxScaling));
 
     // This is the product "T * S" in Equation (A.16) on page 209
     Matrix TS = LinearAlgebra::Product(
-      GeometryToolbox::CreateTranslationMatrix(static_cast<double>(intermediateWidth_) / 2.0,
-                                               static_cast<double>(intermediateHeight_) / 2.0, 0),
-      GeometryToolbox::CreateScalingMatrix(1.0 / maxScaling, 1.0 / maxScaling, 1),
-      GeometryToolbox::CreateTranslationMatrix(-extent.GetCenterX(), -extent.GetCenterY(), 0));
+      GeometryToolbox::CreateTranslationMatrix(
+        static_cast<double>(intermediateWidth_) / 2.0,
+        static_cast<double>(intermediateHeight_) / 2.0, 0),
+      GeometryToolbox::CreateScalingMatrix(
+        1.0 / maxScaling, 1.0 / maxScaling, 1),
+      GeometryToolbox::CreateTranslationMatrix(
+        -extent.GetCenterX(), -extent.GetCenterY(), 0));
     
     // This is Equation (A.16) on page 209. WARNING: There is an
     // error in Lacroute's thesis: "inv(MM_shear)" is used instead
@@ -380,8 +385,8 @@ namespace OrthancStone
     
     // Compute the "world" matrix that maps the source volume to the
     // (0,0,0)->(1,1,1) unit cube
-    Vector origin = source.GetCoordinates(0, 0, 0);
-    Vector ps = source.GetVoxelDimensions(VolumeProjection_Axial);
+    Vector origin = source.GetGeometry().GetCoordinates(0, 0, 0);
+    Vector ps = source.GetGeometry().GetVoxelDimensions(VolumeProjection_Axial);
     Matrix world = LinearAlgebra::Product(
       GeometryToolbox::CreateScalingMatrix(1.0 / ps[0], 1.0 / ps[1], 1.0 / ps[2]),
       GeometryToolbox::CreateTranslationMatrix(-origin[0], -origin[1], -origin[2]));

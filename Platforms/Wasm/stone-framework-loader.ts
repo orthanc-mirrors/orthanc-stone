@@ -81,12 +81,6 @@ export class Framework
           callback();
         }
       ],
-      print: function(text : string) {
-        Logger.defaultLogger.infoFromCpp(text);
-      },
-      printErr: function(text : string) {
-        Logger.defaultLogger.errorFromCpp(text);
-      },
       totalDependencies: 0
     };
 

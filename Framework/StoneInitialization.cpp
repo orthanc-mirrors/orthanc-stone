@@ -22,7 +22,6 @@
 #include "StoneInitialization.h"
 
 #include <Core/OrthancException.h>
-#include <Core/Logging.h>
 
 #if !defined(ORTHANC_ENABLE_SDL)
 #  error Macro ORTHANC_ENABLE_SDL must be defined
@@ -34,9 +33,17 @@
 
 namespace OrthancStone
 {
+#if ORTHANC_ENABLE_LOGGING_PLUGIN == 1
+  void StoneInitialize(OrthancPluginContext* context)
+#else
   void StoneInitialize()
+#endif
   {
+#if ORTHANC_ENABLE_LOGGING_PLUGIN == 1
+    Orthanc::Logging::Initialize(context);
+#else
     Orthanc::Logging::Initialize();
+#endif
 
 #if ORTHANC_ENABLE_SDL == 1
     OrthancStone::SdlWindow::GlobalInitialize();

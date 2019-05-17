@@ -316,7 +316,7 @@ namespace OrthancStone
     LOG(WARNING) << "Output pixel format: " << Orthanc::EnumerationToString(target.GetFormat());
 
     std::auto_ptr<OrthancStone::ParallelSlices> slices(source.GetGeometry(projection));
-    const OrthancStone::Vector pixelSpacing = source.GetVoxelDimensions(projection);
+    const OrthancStone::Vector pixelSpacing = source.GetGeometry().GetVoxelDimensions(projection);
     const unsigned int targetWidth = target.GetWidth();
     const unsigned int targetHeight = target.GetHeight();
 
@@ -360,7 +360,8 @@ namespace OrthancStone
 
             // Read and accumulate the value of the pixel
             float pixel;
-            if (pixelReader.GetFloatValue(pixel, ix, iy))
+            if (pixelReader.GetFloatValue(
+              pixel, static_cast<float>(ix), static_cast<float>(iy)))
             {
               if (MIP)
               {

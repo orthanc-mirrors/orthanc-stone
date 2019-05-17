@@ -420,12 +420,12 @@ namespace OrthancStone
             
             glUniform1f(program_->GetUniformLocation("u_thickness"), 
               static_cast<GLfloat>(t1 / zoom));
-            glUniform1f(program_->GetUniformLocation("u_antialiasing_start"),
+            glUniform1f(program_->GetUniformLocation("u_antialiasing_start"), 
               static_cast<GLfloat>(t0 / t1));
           }
           else
           {
-            glUniform1f(program_->GetUniformLocation("u_thickness"),
+            glUniform1f(program_->GetUniformLocation("u_thickness"), 
               static_cast<GLfloat>(thickness / zoom));
           }
         }
@@ -436,14 +436,14 @@ namespace OrthancStone
             double t1 = std::max(thickness, aliasingBorder / zoom);
             double t0 = std::max(0.0, thickness - aliasingBorder / zoom);
 
-            glUniform1f(program_->GetUniformLocation("u_thickness"),
+            glUniform1f(program_->GetUniformLocation("u_thickness"), 
               static_cast<GLfloat>(t1));
-            glUniform1f(program_->GetUniformLocation("u_antialiasing_start"),
+            glUniform1f(program_->GetUniformLocation("u_antialiasing_start"), 
               static_cast<GLfloat>(t0 / t1));
           }
           else
           {
-            glUniform1f(program_->GetUniformLocation("u_thickness"),
+            glUniform1f(program_->GetUniformLocation("u_thickness"), 
               static_cast<GLfloat>(thickness));
           }
         }
@@ -452,12 +452,14 @@ namespace OrthancStone
         {
           glEnable(GL_BLEND);
           glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-          glDrawArrays(GL_TRIANGLES, 0, data.GetVerticesCount());
+          glDrawArrays(GL_TRIANGLES, 0, 
+            static_cast<GLsizei>(data.GetVerticesCount()));
           glDisable(GL_BLEND);
         }
         else
         {
-          glDrawArrays(GL_TRIANGLES, 0, data.GetVerticesCount());
+          glDrawArrays(GL_TRIANGLES, 0, 
+            static_cast<GLsizei>(data.GetVerticesCount()));
         }
 
         glDisableVertexAttribArray(locationPosition);

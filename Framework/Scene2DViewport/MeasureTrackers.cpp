@@ -27,11 +27,11 @@ namespace OrthancStone
 {
 
   CreateMeasureTracker::CreateMeasureTracker(
-    Scene2D&                        scene,
+    ViewportControllerWPtr          controllerW,
     std::vector<TrackerCommandPtr>& undoStack,
     std::vector<MeasureToolPtr>&    measureTools)
-    : scene_(scene)
-    , active_(true)
+    : controllerW_(controllerW)
+    , alive_(true)
     , undoStack_(undoStack)
     , measureTools_(measureTools)
     , commitResult_(true)
@@ -41,12 +41,12 @@ namespace OrthancStone
   void CreateMeasureTracker::Cancel()
   {
     commitResult_ = false;
-    active_ = false;
+    alive_ = false;
   }
 
-  bool CreateMeasureTracker::IsActive() const
+  bool CreateMeasureTracker::IsAlive() const
   {
-    return active_;
+    return alive_;
   }
 
   CreateMeasureTracker::~CreateMeasureTracker()
@@ -60,6 +60,13 @@ namespace OrthancStone
     else
       command_->Undo();
   }
+
+
+  OrthancStone::Scene2DPtr CreateMeasureTracker::GetScene()
+  {
+    return controllerW_.lock()->GetScene();
+  }
+
 }
 
 

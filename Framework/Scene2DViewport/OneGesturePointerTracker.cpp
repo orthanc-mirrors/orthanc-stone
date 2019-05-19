@@ -13,34 +13,44 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
 #pragma once
 
-#include <Framework/Scene2DViewport/PointerTypes.h>
-#include <Framework/Scene2D/ScenePoint2D.h>
+#include "OneGesturePointerTracker.h"
+#include <Core/OrthancException.h>
+
+using namespace Orthanc;
 
 namespace OrthancStone
 {
-  namespace Internals
+  OneGesturePointerTracker::OneGesturePointerTracker(
+    ViewportControllerWPtr controllerW)
+    : controllerW_(controllerW)
+    , alive_(true)
   {
-    // During a mouse event that modifies the view of a scene, keeps
-    // one point (the pivot) at the same position on the canvas
-    class FixedPointAligner : public boost::noncopyable
-    {
-    private:
-      ViewportControllerWPtr controllerW_;
-      ScenePoint2D           pivot_;
-      ScenePoint2D           canvas_;
+  }
 
-    public:
-      FixedPointAligner(ViewportControllerWPtr controllerW,
-                        const ScenePoint2D& p);
+  void OneGesturePointerTracker::PointerUp(const PointerEvent& event)
+  {
+    alive_ = false;
+  }
 
-      void Apply();
-    };
+  void OneGesturePointerTracker::PointerDown(const PointerEvent& event)
+  {
+    throw OrthancException(ErrorCode_InternalError, "Wrong state in tracker");
+  }
+
+  bool OneGesturePointerTracker::IsAlive() const
+  {
+    return alive_;
+  }
+
+  ViewportControllerPtr OneGesturePointerTracker::GetController()
+  {
+    return controllerW_.lock();
   }
 }

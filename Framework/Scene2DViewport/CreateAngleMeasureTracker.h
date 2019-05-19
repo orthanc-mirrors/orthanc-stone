@@ -39,9 +39,9 @@ namespace OrthancStone
     */
     CreateAngleMeasureTracker(
       MessageBroker&                  broker,
-      Scene2D&                        scene,
+      ViewportControllerWPtr          controllerW,
       std::vector<TrackerCommandPtr>& undoStack,
-      std::vector<MeasureToolPtr>&    measureTools,
+      MeasureToolList&                measureTools,
       const PointerEvent&             e);
 
     ~CreateAngleMeasureTracker();

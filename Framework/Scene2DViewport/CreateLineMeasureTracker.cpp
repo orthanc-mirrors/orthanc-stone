@@ -27,18 +27,18 @@ namespace OrthancStone
 {
   CreateLineMeasureTracker::CreateLineMeasureTracker(
     MessageBroker&                  broker,
-    Scene2D&                        scene,
+    ViewportControllerWPtr          controllerW,
     std::vector<TrackerCommandPtr>& undoStack,
-    std::vector<MeasureToolPtr>&    measureTools,
+    MeasureToolList&                measureTools,
     const PointerEvent&             e)
-    : CreateMeasureTracker(scene, undoStack, measureTools)
+    : CreateMeasureTracker(controllerW, undoStack, measureTools)
   {
     command_.reset(
       new CreateLineMeasureCommand(
         broker,
-        scene,
+        controllerW,
         measureTools,
-        e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform())));
+        e.GetMainPosition().Apply(GetScene()->GetCanvasToSceneTransform())));
   }
 
   CreateLineMeasureTracker::~CreateLineMeasureTracker()
@@ -48,7 +48,9 @@ namespace OrthancStone
 
   void CreateLineMeasureTracker::PointerMove(const PointerEvent& event)
   {
-    if (!active_)
+    assert(GetScene());
+    
+    if (!alive_)
     {
       throw OrthancException(ErrorCode_InternalError,
         "Internal error: wrong state in CreateLineMeasureTracker::"
@@ -56,7 +58,7 @@ namespace OrthancStone
     }
 
     ScenePoint2D scenePos = event.GetMainPosition().Apply(
-      scene_.GetCanvasToSceneTransform());
+      GetScene()->GetCanvasToSceneTransform());
 
     //LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
     //  "scenePos.GetY() = " << scenePos.GetY();
@@ -74,7 +76,7 @@ namespace OrthancStone
     // Unless we augment the PointerEvent structure with the button index, 
     // we cannot really tell if this pointer up event matches the initial
     // pointer down event. Let's make it simple for now.
-    active_ = false;
+    alive_ = false;
   }
 
   void CreateLineMeasureTracker::PointerDown(const PointerEvent& e)

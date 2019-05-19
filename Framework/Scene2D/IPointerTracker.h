@@ -21,6 +21,8 @@
 
 #pragma once
 
+#if 0
+
 #include "PointerEvent.h"
 
 namespace OrthancStone
@@ -44,3 +46,5 @@ namespace OrthancStone
     virtual void Release() = 0;
   };
 }
+
+#endif

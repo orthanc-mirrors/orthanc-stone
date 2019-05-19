@@ -35,11 +35,11 @@
 
 namespace OrthancStone
 {
-  class AngleMeasureTool : public MeasureTool
+  class LineMeasureTool : public MeasureTool
   {
   public:
-    AngleMeasureTool(MessageBroker& broker, Scene2D& scene)
-      : MeasureTool(broker, scene)
+    LineMeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW)
+      : MeasureTool(broker, controllerW)
       , layersCreated(false)
       , polylineZIndex_(-1)
       , textZIndex_(-1)
@@ -47,11 +47,11 @@ namespace OrthancStone
 
     }
 
-    ~AngleMeasureTool();
+    ~LineMeasureTool();
 
-    void SetSide1End(ScenePoint2D start);
-    void SetCenter(ScenePoint2D start);
-    void SetSide2End(ScenePoint2D start);
+    void SetStart(ScenePoint2D start);
+    void SetEnd(ScenePoint2D end);
+    void Set(ScenePoint2D start, ScenePoint2D end);
 
   private:
     PolylineSceneLayer* GetPolylineLayer();
@@ -60,15 +60,12 @@ namespace OrthancStone
     void                RemoveFromScene();
 
   private:
-    ScenePoint2D side1End_;
-    ScenePoint2D side2End_;
-    ScenePoint2D center_;
+    ScenePoint2D start_;
+    ScenePoint2D end_;
     bool         layersCreated;
     int          polylineZIndex_;
     int          textZIndex_;
   };
 
-  typedef boost::shared_ptr<AngleMeasureTool> AngleMeasureToolPtr;
 }
-
 

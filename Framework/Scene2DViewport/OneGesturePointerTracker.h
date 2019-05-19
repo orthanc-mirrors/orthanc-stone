@@ -13,33 +13,42 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
 #pragma once
 
-#include "../Scene2DViewport/OneGesturePointerTracker.h"
+#include "IFlexiblePointerTracker.h"
 
 namespace OrthancStone
 {
-  class ViewportController;
+  /**
+  This base is class allows to write simple trackers that deal with single 
+  drag gestures. It is *not* suitables for multi-state trackers where various
+  mouse operations need to be handled.
 
-  class PanSceneTracker : public OneGesturePointerTracker
+  In order to write such a tracker:
+  - subclass this class
+  - you may store the initial click/touch position in the constructor
+  - implement PointerMove to react to pointer/touch events
+  - implement Cancel to restore the state at initial tracker creation time
+  */
+  class OneGesturePointerTracker : public IFlexiblePointerTracker
   {
   public:
-    PanSceneTracker(ViewportControllerWPtr controllerW,
-                    const PointerEvent& event);
-
-    virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;
-    virtual void Cancel() ORTHANC_OVERRIDE;
+    OneGesturePointerTracker(ViewportControllerWPtr controllerW);
+    virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE;
+    virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE;
+    virtual bool IsAlive() const ORTHANC_OVERRIDE;
+  
+  protected:
+    ViewportControllerPtr  GetController();
 
   private:
     ViewportControllerWPtr controllerW_;
-    ScenePoint2D           pivot_;
-    AffineTransform2D      originalSceneToCanvas_;
-    AffineTransform2D      originalCanvasToScene_;
+    bool                   alive_;
   };
 }
+

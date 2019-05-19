@@ -329,6 +329,40 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextureBaseSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ZoomSceneTracker.cpp
 
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/AngleMeasureTool.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/AngleMeasureTool.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateAngleMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateAngleMeasureTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateCircleMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateCircleMeasureTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateLineMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateLineMeasureTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateMeasureTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateSimpleTrackerAdapter.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditAngleMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditAngleMeasureTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditCircleMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditCircleMeasureTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditLineMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditLineMeasureTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/IFlexiblePointerTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LineMeasureTool.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LineMeasureTool.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureCommands.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureCommands.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureTools.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureTools.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureToolsToolbox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureToolsToolbox.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureTrackers.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureTrackers.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/OneGesturePointerTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/OneGesturePointerTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/PointerTypes.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.h
+  
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/FontRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/Glyph.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphAlphabet.cpp

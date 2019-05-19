@@ -18,29 +18,31 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
+#include <Framework/Scene2DViewport/ViewportController.h>
 #include "FixedPointAligner.h"
 
 namespace OrthancStone
 {
   namespace Internals
   {
-    FixedPointAligner::FixedPointAligner(Scene2D& scene,
-                                         const ScenePoint2D& p) :
-      scene_(scene),
-      canvas_(p)
+    FixedPointAligner::FixedPointAligner(ViewportControllerWPtr controllerW,
+                                         const ScenePoint2D& p) 
+      : controllerW_(controllerW)
+      , canvas_(p)
     {
-      pivot_ = canvas_.Apply(scene_.GetCanvasToSceneTransform());
+      ViewportControllerPtr controller = controllerW_.lock();
+      pivot_ = canvas_.Apply(controller->GetCanvasToSceneTransform());
     }
 
     
     void FixedPointAligner::Apply()
     {
-      ScenePoint2D p = canvas_.Apply(scene_.GetCanvasToSceneTransform());
+      ViewportControllerPtr controller = controllerW_.lock();
+      ScenePoint2D p = canvas_.Apply(controller->GetCanvasToSceneTransform());
 
-      scene_.SetSceneToCanvasTransform(
+      controller->SetSceneToCanvasTransform(
         AffineTransform2D::Combine(
-          scene_.GetSceneToCanvasTransform(),
+          controller->GetSceneToCanvasTransform(),
           AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
                                           p.GetY() - pivot_.GetY())));
     }

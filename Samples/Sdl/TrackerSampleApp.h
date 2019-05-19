@@ -18,11 +18,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include <Framework/Scene2D/OpenGLCompositor.h>
+#include <Framework/Scene2DViewport/PointerTypes.h>
+
 #include <Framework/Messages/IObserver.h>
 
-#include "../Common/IFlexiblePointerTracker.h"
-#include "../Common/MeasureTools.h"
+#include <Framework/Scene2D/OpenGLCompositor.h>
+
+#include <Framework/Scene2DViewport/ViewportController.h>
+#include <Framework/Scene2DViewport/IFlexiblePointerTracker.h>
+#include <Framework/Scene2DViewport/MeasureTools.h>
 
 #include <SDL.h>
 
@@ -32,9 +36,6 @@
 
 namespace OrthancStone
 {
-  class TrackerCommand;
-  typedef boost::shared_ptr<TrackerCommand> TrackerCommandPtr;
-
   enum GuiTool
   {
     GuiTool_Rotate = 0,
@@ -65,7 +66,7 @@ namespace OrthancStone
     void SetInfoDisplayMessage(std::string key, std::string value);
     void DisableTracker();
 
-    Scene2D& GetScene();
+    Scene2DPtr GetScene();
 
     void HandleApplicationEvent(const SDL_Event& event);
 
@@ -73,7 +74,8 @@ namespace OrthancStone
     This method is called when the scene transform changes. It allows to
     recompute the visual elements whose content depend upon the scene transform
     */
-    void OnSceneTransformChanged(const Scene2D::SceneTransformChanged& message);
+    void OnSceneTransformChanged(
+      const ViewportController::SceneTransformChanged& message);
 
   private:
     void SelectNextTool();
@@ -108,7 +110,7 @@ namespace OrthancStone
     WARNING: the measuring tools do store a reference to the scene, and it 
     paramount that the scene gets destroyed AFTER the measurement tools.
     */
-    Scene2D scene_;
+    ViewportControllerPtr controller_;
 
     std::map<std::string, std::string> infoTextMap_;
     FlexiblePointerTrackerPtr activeTracker_;

@@ -34,8 +34,8 @@ namespace OrthancStone
   }
 
   CreateMeasureCommand::CreateMeasureCommand(
-    Scene2D& scene, MeasureToolList& measureTools)
-    : TrackerCommand(scene)
+    ViewportControllerWPtr controllerW, MeasureToolList& measureTools)
+    : TrackerCommand(controllerW)
     , measureTools_(measureTools)
   {
 
@@ -48,12 +48,12 @@ namespace OrthancStone
   }
 
   CreateLineMeasureCommand::CreateLineMeasureCommand(
-    MessageBroker&    broker, 
-    Scene2D&          scene, 
-    MeasureToolList&  measureTools, 
-    ScenePoint2D      point)
-    : CreateMeasureCommand(scene, measureTools)
-    , measureTool_(new LineMeasureTool(broker,scene))
+    MessageBroker&         broker, 
+    ViewportControllerWPtr controllerW,
+    MeasureToolList&       measureTools, 
+    ScenePoint2D           point)
+    : CreateMeasureCommand(controllerW, measureTools)
+    , measureTool_(new LineMeasureTool(broker, controllerW))
   {
     measureTools_.push_back(measureTool_);
     measureTool_->Set(point, point);
@@ -65,12 +65,12 @@ namespace OrthancStone
   }
 
   CreateAngleMeasureCommand::CreateAngleMeasureCommand(
-    MessageBroker&    broker, 
-    Scene2D&          scene, 
-    MeasureToolList&  measureTools, 
-    ScenePoint2D      point)
-    : CreateMeasureCommand(scene, measureTools)
-    , measureTool_(new AngleMeasureTool(broker,scene))
+    MessageBroker&         broker, 
+    ViewportControllerWPtr controllerW,
+    MeasureToolList&       measureTools, 
+    ScenePoint2D           point)
+    : CreateMeasureCommand(controllerW, measureTools)
+    , measureTool_(new AngleMeasureTool(broker, controllerW))
   {
     measureTools_.push_back(measureTool_);
     measureTool_->SetSide1End(point);

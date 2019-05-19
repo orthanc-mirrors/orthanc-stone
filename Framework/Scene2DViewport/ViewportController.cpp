@@ -13,63 +13,53 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "MeasureTools.h"
+#include "ViewportController.h"
 
-#include <Core/Logging.h>
+#include <Framework/StoneException.h>
 
-#include <boost/math/constants/constants.hpp>
+#include <boost/make_shared.hpp>
+
+using namespace Orthanc;
 
 namespace OrthancStone
 {
-
-  MeasureTool::~MeasureTool()
+  ViewportController::ViewportController(MessageBroker& broker)
+    : IObservable(broker)
   {
-
+    scene_ = boost::make_shared<Scene2D>();
   }
 
-  void MeasureTool::Enable()
-  {
-    enabled_ = true;
-    RefreshScene();
-  }
-
-  void MeasureTool::Disable()
-  {
-    enabled_ = false;
-    RefreshScene();
-  }
-
-  bool MeasureTool::IsEnabled() const
-  {
-    return enabled_;
-  }
-
-  OrthancStone::Scene2D& MeasureTool::GetScene()
+  Scene2DPtr ViewportController::GetScene()
   {
     return scene_;
   }
 
-  MeasureTool::MeasureTool(MessageBroker& broker, Scene2D& scene)
-    : IObserver(broker)
-    , scene_(scene)
-    , enabled_(true)
+  bool ViewportController::HandlePointerEvent(PointerEvent e)
   {
-    scene_.RegisterObserverCallback(
-      new Callable<MeasureTool, Scene2D::SceneTransformChanged>
-      (*this, &MeasureTool::OnSceneTransformChanged));
+    throw StoneException(ErrorCode_NotImplemented);
   }
 
-  void MeasureTool::OnSceneTransformChanged(
-    const Scene2D::SceneTransformChanged& message)
+  const OrthancStone::AffineTransform2D& ViewportController::GetCanvasToSceneTransform() const
   {
-    RefreshScene();
+    return scene_->GetCanvasToSceneTransform();
   }
 
+  const OrthancStone::AffineTransform2D& ViewportController::GetSceneToCanvasTransform() const
+  {
+    return scene_->GetSceneToCanvasTransform();
+  }
+
+  void ViewportController::SetSceneToCanvasTransform(
+    const AffineTransform2D& transform)
+  {
+    scene_->SetSceneToCanvasTransform(transform);
+    BroadcastMessage(SceneTransformChanged(*this));
+  }
 
 }
 

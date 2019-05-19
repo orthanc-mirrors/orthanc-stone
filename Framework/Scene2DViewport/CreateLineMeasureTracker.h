@@ -20,38 +20,34 @@
 
 #pragma once
 
-#include "IFlexiblePointerTracker.h"
-#include "../../Framework/Scene2D/Scene2D.h"
-#include "../../Framework/Scene2D/PointerEvent.h"
-
-#include "MeasureTools.h"
-#include "MeasureCommands.h"
-
-#include <vector>
+#include "MeasureTrackers.h"
 
 namespace OrthancStone
 {
-  class CreateMeasureTracker : public IFlexiblePointerTracker
+  class CreateLineMeasureTracker : public CreateMeasureTracker
   {
   public:
-    virtual void Cancel() ORTHANC_OVERRIDE;
-    virtual bool IsActive() const ORTHANC_OVERRIDE;
-  protected:
-    CreateMeasureTracker(
-      Scene2D&                        scene,
+    /**
+    When you create this tracker, you need to supply it with the undo stack
+    where it will store the commands that perform the actual measure tool
+    creation and modification.
+    In turn, a container for these commands to store the actual measuring
+    must be supplied, too
+    */
+    CreateLineMeasureTracker(
+      MessageBroker&                  broker,
+      ViewportControllerWPtr          controllerW,
       std::vector<TrackerCommandPtr>& undoStack,
-      std::vector<MeasureToolPtr>&    measureTools);
+      MeasureToolList&                measureTools,
+      const PointerEvent&             e);
 
-    ~CreateMeasureTracker();
-  
-  protected:
-    CreateMeasureCommandPtr         command_;
-    Scene2D&                        scene_;
-    bool                            active_;
+    ~CreateLineMeasureTracker();
+
+    virtual void PointerMove(const PointerEvent& e) ORTHANC_OVERRIDE;
+    virtual void PointerUp(const PointerEvent& e) ORTHANC_OVERRIDE;
+    virtual void PointerDown(const PointerEvent& e) ORTHANC_OVERRIDE;
+
   private:
-    std::vector<TrackerCommandPtr>& undoStack_;
-    std::vector<MeasureToolPtr>&    measureTools_;
-    bool                            commitResult_;
+    CreateLineMeasureCommandPtr GetCommand();
   };
 }
-

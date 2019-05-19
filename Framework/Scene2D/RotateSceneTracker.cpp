@@ -18,23 +18,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
 #include "RotateSceneTracker.h"
+#include <Framework/Scene2DViewport/ViewportController.h>
 
 namespace OrthancStone
 {
-  RotateSceneTracker::RotateSceneTracker(Scene2D& scene,
-                                         const PointerEvent& event) :
-    scene_(scene),
-    click_(event.GetMainPosition()),
-    aligner_(scene, click_),
-    isFirst_(true),
-    originalSceneToCanvas_(scene.GetSceneToCanvasTransform())
+  RotateSceneTracker::RotateSceneTracker(ViewportControllerWPtr controllerW,
+                                         const PointerEvent& event)
+    : OneGesturePointerTracker(controllerW)
+    , click_(event.GetMainPosition())
+    , aligner_(controllerW, click_)
+    , isFirst_(true)
+    , originalSceneToCanvas_(GetController()->GetSceneToCanvasTransform())
   {
   }
-
-
-  void RotateSceneTracker::Update(const PointerEvent& event)
+  
+  void RotateSceneTracker::PointerMove(const PointerEvent& event)
   {
     ScenePoint2D p = event.GetMainPosition();
     double dx = p.GetX() - click_.GetX();
@@ -51,7 +50,7 @@ namespace OrthancStone
         isFirst_ = false;
       }
 
-      scene_.SetSceneToCanvasTransform(
+      GetController()->SetSceneToCanvasTransform(
         AffineTransform2D::Combine(
           AffineTransform2D::CreateRotation(a - referenceAngle_),
           originalSceneToCanvas_));
@@ -59,4 +58,10 @@ namespace OrthancStone
       aligner_.Apply();
     }
   }
+
+  void RotateSceneTracker::Cancel()
+  {
+    GetController()->SetSceneToCanvasTransform(originalSceneToCanvas_);
+  }
+
 }

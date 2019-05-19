@@ -35,38 +35,42 @@
 
 namespace OrthancStone
 {
-  class LineMeasureTool : public MeasureTool
+  class AngleMeasureTool : public MeasureTool
   {
   public:
-    LineMeasureTool(MessageBroker& broker, Scene2D& scene)
-      : MeasureTool(broker, scene)
+    AngleMeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW)
+      : MeasureTool(broker, controllerW)
       , layersCreated(false)
       , polylineZIndex_(-1)
-      , textZIndex_(-1)
+      , textBaseZIndex_(-1)
     {
 
     }
 
-    ~LineMeasureTool();
+    ~AngleMeasureTool();
 
-    void SetStart(ScenePoint2D start);
-    void SetEnd(ScenePoint2D end);
-    void Set(ScenePoint2D start, ScenePoint2D end);
+    void SetSide1End(ScenePoint2D start);
+    void SetCenter(ScenePoint2D start);
+    void SetSide2End(ScenePoint2D start);
 
   private:
     PolylineSceneLayer* GetPolylineLayer();
-    TextSceneLayer*     GetTextLayer();
+    
+    // 0 --> 3 are for the text background (outline)
+    // 4 is for the actual text
+    TextSceneLayer*     GetTextLayer(int index);
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();
 
   private:
-    ScenePoint2D start_;
-    ScenePoint2D end_;
+    ScenePoint2D side1End_;
+    ScenePoint2D side2End_;
+    ScenePoint2D center_;
     bool         layersCreated;
     int          polylineZIndex_;
-    int          textZIndex_;
+    int          textBaseZIndex_;
   };
 
-  typedef boost::shared_ptr<LineMeasureTool> LineMeasureToolPtr;
 }
+
 

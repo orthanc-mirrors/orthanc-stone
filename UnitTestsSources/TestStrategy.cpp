@@ -129,30 +129,64 @@ namespace OrthancStone
   class BasicFetchingStrategy : public IFetchingStrategy
   {
   private:
-    struct Item
+    class ContentItem
     {
+    private:
       unsigned int  item_;
       unsigned int  quality_;
+
+    public:
+      ContentItem(unsigned int item,
+           unsigned int quality) :
+        item_(item),
+        quality_(quality)
+      {
+      }
+
+      unsigned int GetItem() const
+      {
+        return item_;
+      }
+
+      unsigned int GetQuality() const
+      {
+        return quality_;
+      }
     };
 
     std::auto_ptr<IFetchingItemsSorter>  sorter_;
     std::vector<unsigned int>            nextQuality_;
     unsigned int                         maxQuality_;
-    std::vector<Item>                    content_;
-    size_t                               currentItem_;
+    std::vector<ContentItem>             content_;
+    size_t                               position_;
+    unsigned int                         blockSize_;
+
+    void Schedule(unsigned int item,
+                unsigned int quality)
+    {
+      assert(item < GetItemsCount() &&
+             quality <= maxQuality_);
+      
+      if (nextQuality_[item] <= quality)
+      {
+        content_.push_back(ContentItem(item, quality));
+      }
+    }
     
   public:
     BasicFetchingStrategy(IFetchingItemsSorter* sorter,   // Takes ownership
                           unsigned int maxQuality) :
       sorter_(sorter),
-      nextQuality_(sorter_->GetItemsCount(), 0),
       maxQuality_(maxQuality),
-      currentItem_(0)
+      position_(0),
+      blockSize_(2)
     {
       if (sorter == NULL)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
+
+      nextQuality_.resize(sorter_->GetItemsCount(), 0),   // Does not change along calls to "SetCurrent()"
       
       SetCurrent(0);
     }
@@ -167,40 +201,81 @@ namespace OrthancStone
       return maxQuality_;
     }
 
+    void SetBlockSize(unsigned int size)
+    {
+      if (size <= 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+
+      blockSize_ = size;
+    }
+
     virtual bool GetNext(unsigned int& item,
                          unsigned int& quality)
     {
-      if (currentItem_ >= content_.size())
+      if (position_ >= content_.size())
       {
         return false;
       }
       else
       {
-        item = content_[currentItem_].item_;       
-        quality = content_[currentItem_].quality_;
+        item = content_[position_].GetItem();       
+        quality = content_[position_].GetQuality();
 
         assert(nextQuality_[item] <= quality);
         nextQuality_[item] = quality + 1;
-               
+
+        position_ ++;
         return true;
       }
     }
     
     virtual void SetCurrent(unsigned int item)
     {
+      // TODO - This function is O(N) complexity where "N" is the
+      // number of items times the max quality. Could use a LRU index.
+
+      position_ = 0;
+      
       std::vector<unsigned int> v;
       sorter_->Sort(v, item);
 
       assert(v.size() == GetItemsCount());
+
+      if (v.size() == 0)
+      {
+        return;
+      }
       
       content_.clear();
       content_.reserve(v.size() * maxQuality_);
 
-      for (unsigned int q = 0; q < maxQuality_; q++)
+      Schedule(v.front(), maxQuality_);
+
+      for (unsigned int q = 0; q <= maxQuality_; q++)
       {
-        for (size_t i = 0; i < v.size(); i++)
+        unsigned int start = 1 + q * blockSize_;
+        unsigned int end = start + blockSize_;
+
+        if (q == maxQuality_ ||
+            end > v.size())
         {
-          
+          end = v.size();
+        }
+
+        unsigned int a = 0;
+        if (maxQuality_ >= q + 1)
+        {
+          a = maxQuality_ - q - 1;
+        }
+        
+        for (unsigned int j = a; j <= maxQuality_; j++)
+        {
+          for (unsigned int i = start; i < end; i++)
+          {
+            Schedule(v[i], j);
+          }
         }
       }
     }
@@ -217,9 +292,145 @@ namespace OrthancStone
 
 
 
-TEST(BasicFetchingStrategy, Test)
+namespace
 {
-  OrthancStone::BasicFetchingStrategy s(new OrthancStone::BasicFetchingItemsSorter(10), 3);
+  class StrategyTester : public boost::noncopyable
+  {
+  private:
+    std::map<unsigned int, unsigned int>  qualities_;
+
+  public:
+    bool IsValidCommand(unsigned int item,
+                        unsigned int quality)
+    {
+      if (qualities_.find(item) != qualities_.end() &&
+          qualities_[item] >= quality)
+      {
+        return false;
+      }
+      else
+      {
+        qualities_[item] = quality;
+        return true;
+      }
+    }
+
+    bool HasFinished(OrthancStone::BasicFetchingStrategy& strategy)
+    {
+      for (unsigned int i = 0; i < strategy.GetItemsCount(); i++)
+      {
+        if (qualities_.find(i) == qualities_.end() ||
+            qualities_[i] != strategy.GetMaxQuality())
+        {
+          return false;
+        }
+      }
+
+      return true;
+    }
+  };
+}
+
+
+TEST(BasicFetchingStrategy, Test1)
+{
+  ASSERT_THROW(OrthancStone::BasicFetchingStrategy(NULL, 0), Orthanc::OrthancException);
+  ASSERT_THROW(OrthancStone::BasicFetchingStrategy(new OrthancStone::BasicFetchingItemsSorter(0), 0), Orthanc::OrthancException);
+
+  {
+    OrthancStone::BasicFetchingStrategy s(new OrthancStone::BasicFetchingItemsSorter(1), 0);
+    unsigned int i, q;
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(0u, i);  ASSERT_EQ(0u, q);
+    ASSERT_FALSE(s.GetNext(i, q));
+  }
+
+  {
+    OrthancStone::BasicFetchingStrategy s(new OrthancStone::BasicFetchingItemsSorter(1), 5);
+    unsigned int i, q;
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(0u, i);  ASSERT_EQ(5u, q);
+    ASSERT_FALSE(s.GetNext(i, q));
+  }
+
+  {
+    OrthancStone::BasicFetchingStrategy s(new OrthancStone::BasicFetchingItemsSorter(2), 2);
+    unsigned int i, q;
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(0u, i);  ASSERT_EQ(2u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(1u, i);  ASSERT_EQ(1u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(1u, i);  ASSERT_EQ(2u, q);
+    ASSERT_FALSE(s.GetNext(i, q));
+  }
+
+  {
+    OrthancStone::BasicFetchingStrategy s(new OrthancStone::BasicFetchingItemsSorter(3), 2);
+    unsigned int i, q;
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(0u, i);  ASSERT_EQ(2u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(1u, i);  ASSERT_EQ(1u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(2u, i);  ASSERT_EQ(1u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(1u, i);  ASSERT_EQ(2u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(2u, i);  ASSERT_EQ(2u, q);
+    ASSERT_FALSE(s.GetNext(i, q));
+  }
+
+  {
+    OrthancStone::BasicFetchingStrategy s(new OrthancStone::BasicFetchingItemsSorter(3), 2);
+    s.SetBlockSize(1);
+    s.SetCurrent(0);
+    unsigned int i, q;
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(0u, i);  ASSERT_EQ(2u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(1u, i);  ASSERT_EQ(1u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(1u, i);  ASSERT_EQ(2u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(2u, i);  ASSERT_EQ(0u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(2u, i);  ASSERT_EQ(1u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(2u, i);  ASSERT_EQ(2u, q);
+    ASSERT_FALSE(s.GetNext(i, q));
+  }
+
+  {
+    OrthancStone::BasicFetchingStrategy s(new OrthancStone::BasicFetchingItemsSorter(5), 0);
+    ASSERT_THROW(s.SetCurrent(5), Orthanc::OrthancException);
+    s.SetCurrent(2);
+
+    unsigned int i, q;
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(2u, i);  ASSERT_EQ(0u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(3u, i);  ASSERT_EQ(0u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(1u, i);  ASSERT_EQ(0u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(4u, i);  ASSERT_EQ(0u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(0u, i);  ASSERT_EQ(0u, q);
+    ASSERT_FALSE(s.GetNext(i, q));
+  }
+
+  {
+    OrthancStone::BasicFetchingStrategy s(new OrthancStone::BasicFetchingItemsSorter(5), 0);
+    s.SetCurrent(4);
+
+    unsigned int i, q;
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(4u, i);  ASSERT_EQ(0u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(3u, i);  ASSERT_EQ(0u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(2u, i);  ASSERT_EQ(0u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(1u, i);  ASSERT_EQ(0u, q);
+    ASSERT_TRUE(s.GetNext(i, q));   ASSERT_EQ(0u, i);  ASSERT_EQ(0u, q);
+    ASSERT_FALSE(s.GetNext(i, q));
+  }
+}
+
+
+TEST(BasicFetchingStrategy, Test2)
+{
+  OrthancStone::BasicFetchingStrategy s(new OrthancStone::BasicFetchingItemsSorter(20), 2);
+  ASSERT_EQ(20u, s.GetItemsCount());
+  ASSERT_EQ(2u, s.GetMaxQuality());
+
+  StrategyTester t;
+
+  s.SetCurrent(10);
+
+  unsigned int i, q;
+  while (s.GetNext(i, q))
+  {
+    ASSERT_TRUE(t.IsValidCommand(i, q));
+  }
+
+  ASSERT_TRUE(t.HasFinished(s));
 }
 
 

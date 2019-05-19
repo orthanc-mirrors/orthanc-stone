@@ -74,7 +74,8 @@ namespace OrthancStone
     This method is called when the scene transform changes. It allows to
     recompute the visual elements whose content depend upon the scene transform
     */
-    void OnSceneTransformChanged(const Scene2D::SceneTransformChanged& message);
+    void OnSceneTransformChanged(
+      const ViewportController::SceneTransformChanged& message);
 
   private:
     void SelectNextTool();

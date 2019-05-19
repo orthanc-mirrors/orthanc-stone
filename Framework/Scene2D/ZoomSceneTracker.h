@@ -22,32 +22,29 @@
 #pragma once
 
 
-#include "IPointerTracker.h"
+#include "../Scene2DViewport/OneGesturePointerTracker.h"
 #include "Internals/FixedPointAligner.h"
 
 namespace OrthancStone
 {
   class Scene2D;
 
-  class ZoomSceneTracker : public IPointerTracker
+  class ZoomSceneTracker : public OneGesturePointerTracker
   {
+  public:
+    ZoomSceneTracker(ViewportControllerWPtr controllerW,
+                     const PointerEvent& event,
+                     unsigned int canvasHeight);
+
+    virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;
+    virtual void Cancel() ORTHANC_OVERRIDE;
+  
   private:
-    Scene2D&                      scene_;
     double                        clickY_;
     bool                          active_;
     double                        normalization_;
     Internals::FixedPointAligner  aligner_;
     AffineTransform2D             originalSceneToCanvas_;
 
-  public:
-    ZoomSceneTracker(Scene2D& scene,
-                     const PointerEvent& event,
-                     unsigned int canvasHeight);
-
-    virtual void Update(const PointerEvent& event);
-
-    virtual void Release()
-    {
-    }
   };
 }

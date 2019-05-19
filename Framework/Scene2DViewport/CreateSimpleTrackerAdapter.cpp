@@ -24,7 +24,8 @@
 
 namespace OrthancStone
 {
-  namespace 
+#if 0
+  namespace
   {
     class SimpleTrackerAdapter : public IFlexiblePointerTracker
     {
@@ -74,4 +75,5 @@ namespace OrthancStone
   {
     return FlexiblePointerTrackerPtr(new SimpleTrackerAdapter(t));
   }
+#endif
 }

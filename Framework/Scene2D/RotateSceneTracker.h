@@ -21,29 +21,27 @@
 
 #pragma once
 
-#include "IPointerTracker.h"
+#include "../Scene2DViewport/OneGesturePointerTracker.h"
 #include "Internals/FixedPointAligner.h"
 
 namespace OrthancStone
 {
-  class RotateSceneTracker : public IPointerTracker
-  {
-  private:
-    Scene2D&                      scene_;
-    ScenePoint2D                  click_;
-    Internals::FixedPointAligner  aligner_;
-    double                        referenceAngle_;
-    bool                          isFirst_;
-    AffineTransform2D             originalSceneToCanvas_;
+  class ViewportController;
 
+  class RotateSceneTracker : public OneGesturePointerTracker
+  {
   public:
-    RotateSceneTracker(Scene2D& scene,
+    RotateSceneTracker(ViewportControllerWPtr controllerW,
                        const PointerEvent& event);
 
-    virtual void Update(const PointerEvent& event);
+    virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;
+    virtual void Cancel() ORTHANC_OVERRIDE;
 
-    virtual void Release()
-    {
-    }
+  private:
+    ScenePoint2D                 click_;
+    Internals::FixedPointAligner aligner_;
+    double                       referenceAngle_;
+    bool                         isFirst_;
+    AffineTransform2D            originalSceneToCanvas_;
   };
 }

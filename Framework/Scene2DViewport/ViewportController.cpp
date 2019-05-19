@@ -22,28 +22,44 @@
 
 #include <Framework/StoneException.h>
 
+#include <boost/make_shared.hpp>
+
 using namespace Orthanc;
 
 namespace OrthancStone
 {
-
   ViewportController::ViewportController(MessageBroker& broker)
-    : broker_(broker)
+    : IObservable(broker)
   {
-
+    scene_ = boost::make_shared<Scene2D>();
   }
 
   Scene2DPtr ViewportController::GetScene()
   {
-    Scene2DPtr scene = scene_.lock();
-    if (!scene)
-      throw OrthancException(ErrorCode_InternalError, "Using dead object!");
-    return scene;
+    return scene_;
   }
 
   bool ViewportController::HandlePointerEvent(PointerEvent e)
   {
     throw StoneException(ErrorCode_NotImplemented);
   }
+
+  const OrthancStone::AffineTransform2D& ViewportController::GetCanvasToSceneTransform() const
+  {
+    return scene_->GetCanvasToSceneTransform();
+  }
+
+  const OrthancStone::AffineTransform2D& ViewportController::GetSceneToCanvasTransform() const
+  {
+    return scene_->GetSceneToCanvasTransform();
+  }
+
+  void ViewportController::SetSceneToCanvasTransform(
+    const AffineTransform2D& transform)
+  {
+    scene_->SetSceneToCanvasTransform(transform);
+    BroadcastMessage(SceneTransformChanged(*this));
+  }
+
 }
 

@@ -21,39 +21,34 @@
 #pragma once
 
 #include "IFlexiblePointerTracker.h"
-#include "../../Framework/Scene2D/Scene2D.h"
-#include "../../Framework/Scene2D/PointerEvent.h"
-
-#include "MeasureTools.h"
-#include "MeasureCommands.h"
-
-#include <vector>
 
 namespace OrthancStone
 {
-  class CreateMeasureTracker : public IFlexiblePointerTracker
+  /**
+  This base is class allows to write simple trackers that deal with single 
+  drag gestures. It is *not* suitables for multi-state trackers where various
+  mouse operations need to be handled.
+
+  In order to write such a tracker:
+  - subclass this class
+  - you may store the initial click/touch position in the constructor
+  - implement PointerMove to react to pointer/touch events
+  - implement Cancel to restore the state at initial tracker creation time
+  */
+  class OneGesturePointerTracker : public IFlexiblePointerTracker
   {
   public:
-    virtual void Cancel() ORTHANC_OVERRIDE;
+    OneGesturePointerTracker(ViewportControllerWPtr controllerW);
+    virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE;
+    virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE;
     virtual bool IsAlive() const ORTHANC_OVERRIDE;
-  protected:
-    CreateMeasureTracker(
-      ViewportControllerWPtr          controllerW,
-      std::vector<TrackerCommandPtr>& undoStack,
-      std::vector<MeasureToolPtr>&    measureTools);
-
-    ~CreateMeasureTracker();
   
   protected:
-    CreateMeasureCommandPtr         command_;
-    ViewportControllerWPtr          controllerW_;
-    bool                            alive_;
-    Scene2DPtr                      GetScene();
+    ViewportControllerPtr  GetController();
 
   private:
-    std::vector<TrackerCommandPtr>& undoStack_;
-    std::vector<MeasureToolPtr>&    measureTools_;
-    bool                            commitResult_;
+    ViewportControllerWPtr controllerW_;
+    bool                   alive_;
   };
 }
 

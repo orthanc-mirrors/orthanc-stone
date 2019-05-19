@@ -38,8 +38,8 @@ namespace OrthancStone
   class LineMeasureTool : public MeasureTool
   {
   public:
-    LineMeasureTool(MessageBroker& broker, Scene2DWPtr sceneW)
-      : MeasureTool(broker, sceneW)
+    LineMeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW)
+      : MeasureTool(broker, controllerW)
       , layersCreated(false)
       , polylineZIndex_(-1)
       , textZIndex_(-1)

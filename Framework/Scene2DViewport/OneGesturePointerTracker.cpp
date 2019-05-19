@@ -18,55 +18,39 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "MeasureTrackers.h"
+#pragma once
+
+#include "OneGesturePointerTracker.h"
 #include <Core/OrthancException.h>
 
 using namespace Orthanc;
 
 namespace OrthancStone
 {
-
-  CreateMeasureTracker::CreateMeasureTracker(
-    ViewportControllerWPtr          controllerW,
-    std::vector<TrackerCommandPtr>& undoStack,
-    std::vector<MeasureToolPtr>&    measureTools)
+  OneGesturePointerTracker::OneGesturePointerTracker(
+    ViewportControllerWPtr controllerW)
     : controllerW_(controllerW)
     , alive_(true)
-    , undoStack_(undoStack)
-    , measureTools_(measureTools)
-    , commitResult_(true)
   {
   }
 
-  void CreateMeasureTracker::Cancel()
+  void OneGesturePointerTracker::PointerUp(const PointerEvent& event)
   {
-    commitResult_ = false;
     alive_ = false;
   }
 
-  bool CreateMeasureTracker::IsAlive() const
+  void OneGesturePointerTracker::PointerDown(const PointerEvent& event)
+  {
+    throw OrthancException(ErrorCode_InternalError, "Wrong state in tracker");
+  }
+
+  bool OneGesturePointerTracker::IsAlive() const
   {
     return alive_;
   }
 
-  CreateMeasureTracker::~CreateMeasureTracker()
+  ViewportControllerPtr OneGesturePointerTracker::GetController()
   {
-    // if the tracker completes successfully, we add the command
-    // to the undo stack
-
-    // otherwise, we simply undo it
-    if (commitResult_)
-      undoStack_.push_back(command_);
-    else
-      command_->Undo();
+    return controllerW_.lock();
   }
-
-
-  OrthancStone::Scene2DPtr CreateMeasureTracker::GetScene()
-  {
-    return controllerW_.lock()->GetScene();
-  }
-
 }
-
-

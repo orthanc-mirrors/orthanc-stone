@@ -20,16 +20,17 @@
 
 
 #include "ZoomSceneTracker.h"
+#include <Framework/Scene2DViewport/ViewportController.h>
 
 namespace OrthancStone
 {
-  ZoomSceneTracker::ZoomSceneTracker(Scene2D& scene,
+  ZoomSceneTracker::ZoomSceneTracker(ViewportControllerWPtr controllerW,
                                      const PointerEvent& event,
-                                     unsigned int canvasHeight) :
-    scene_(scene),
-    clickY_(event.GetMainPosition().GetY()),
-    aligner_(scene, event.GetMainPosition()),
-    originalSceneToCanvas_(scene.GetSceneToCanvasTransform())
+                                     unsigned int canvasHeight)
+    : OneGesturePointerTracker(controllerW)
+    , clickY_(event.GetMainPosition().GetY())
+    , aligner_(controllerW, event.GetMainPosition())
+    , originalSceneToCanvas_(GetController()->GetSceneToCanvasTransform())
   {
     if (canvasHeight <= 3)
     {
@@ -42,8 +43,7 @@ namespace OrthancStone
     }
   }
   
-
-  void ZoomSceneTracker::Update(const PointerEvent& event)
+  void ZoomSceneTracker::PointerMove(const PointerEvent& event)
   {
     static const double MIN_ZOOM = -4;
     static const double MAX_ZOOM = 4;
@@ -51,7 +51,10 @@ namespace OrthancStone
     if (active_)
     {
       double y = event.GetMainPosition().GetY();
-      double dy = static_cast<double>(y - clickY_) * normalization_;  // In the range [-1,1]
+      
+      // In the range [-1,1]
+      double dy = static_cast<double>(y - clickY_) * normalization_;  
+      
       double z;
 
       // Linear interpolation from [-1, 1] to [MIN_ZOOM, MAX_ZOOM]
@@ -70,12 +73,17 @@ namespace OrthancStone
 
       double zoom = pow(2.0, z);
 
-      scene_.SetSceneToCanvasTransform(
+      GetController()->SetSceneToCanvasTransform(
         AffineTransform2D::Combine(
           AffineTransform2D::CreateScaling(zoom, zoom),
           originalSceneToCanvas_));
 
       aligner_.Apply();
     }
+  }
+
+  void ZoomSceneTracker::Cancel()
+  {
+    GetController()->SetSceneToCanvasTransform(originalSceneToCanvas_);
   }
 }

@@ -34,25 +34,23 @@ namespace OrthancStone
   class TrackerCommand : public boost::noncopyable
   {
   public:
-    TrackerCommand(Scene2DWPtr sceneW) : scene_(sceneW)
+    TrackerCommand(ViewportControllerWPtr controllerW) 
+      : controllerW_(controllerW)
     {
 
     }
     virtual void Undo() = 0;
     virtual void Redo() = 0;
-    Scene2DPtr GetScene()
-    {
-      return scene_.lock();
-    }
 
   protected:
-    Scene2DWPtr scene_;
+    ViewportControllerWPtr controllerW_;
   };
 
   class CreateMeasureCommand : public TrackerCommand
   {
   public:
-    CreateMeasureCommand(Scene2DWPtr sceneW, MeasureToolList& measureTools);
+    CreateMeasureCommand(
+      ViewportControllerWPtr controllerW, MeasureToolList& measureTools);
     ~CreateMeasureCommand();
     virtual void Undo() ORTHANC_OVERRIDE;
     virtual void Redo() ORTHANC_OVERRIDE;
@@ -62,16 +60,15 @@ namespace OrthancStone
     /** Must be implemented by the subclasses that create the actual tool */
     virtual MeasureToolPtr GetMeasureTool() = 0;
   };
-
-
+  
   class CreateLineMeasureCommand : public CreateMeasureCommand
   {
   public:
     CreateLineMeasureCommand(
-      MessageBroker&   broker, 
-      Scene2DWPtr      scene, 
-      MeasureToolList& measureTools, 
-      ScenePoint2D     point);
+      MessageBroker&         broker, 
+      ViewportControllerWPtr controllerW,
+      MeasureToolList&       measureTools, 
+      ScenePoint2D           point);
     
     // the starting position is set in the ctor
     void SetEnd(ScenePoint2D scenePos);
@@ -90,10 +87,10 @@ namespace OrthancStone
   public:
     /** Ctor sets end of side 1*/
     CreateAngleMeasureCommand(
-      MessageBroker&   broker, 
-      Scene2DWPtr      scene, 
-      MeasureToolList& measureTools, 
-      ScenePoint2D     point);
+      MessageBroker&         broker, 
+      ViewportControllerWPtr controllerW,
+      MeasureToolList&       measureTools, 
+      ScenePoint2D           point);
 
     /** This method sets center*/
     void SetCenter(ScenePoint2D scenePos);

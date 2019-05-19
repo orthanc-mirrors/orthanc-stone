@@ -61,7 +61,7 @@ namespace OrthancStone
     the application) to check whether the tracker must keep on receiving 
     interaction or if its job is done and it should be deleted.
     */
-    virtual bool IsActive() const = 0;
+    virtual bool IsAlive() const = 0;
 
     /**
     This will be called if the tracker needs to be dismissed without committing

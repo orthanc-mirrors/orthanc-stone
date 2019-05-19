@@ -22,7 +22,7 @@
 
 #include <Core/Logging.h>
 #include <Core/Enumerations.h>
-#include <Core>
+#include <Core/OrthancException.h>
 
 #include <boost/math/constants/constants.hpp>
 
@@ -53,26 +53,34 @@ namespace OrthancStone
     return enabled_;
   }
 
-  OrthancStone::Scene2DPtr MeasureTool::GetScene()
+
+  ViewportControllerPtr MeasureTool::GetController()
   {
-    Scene2DPtr scene = scene_.lock();
-    if (!scene)
-      throw OrthancException(ErrorCode_InternalError, "Using dead object!");
-    return scene;
+    ViewportControllerPtr controller = controllerW_.lock();
+    if (!controller)
+      throw OrthancException(ErrorCode_InternalError, 
+        "Using dead ViewportController object!");
+    return controller;
   }
 
-  MeasureTool::MeasureTool(MessageBroker& broker, Scene2DWPtr sceneW)
+  OrthancStone::Scene2DPtr MeasureTool::GetScene()
+  {
+    return GetController()->GetScene();
+  }
+
+  MeasureTool::MeasureTool(MessageBroker& broker,
+    ViewportControllerWPtr controllerW)
     : IObserver(broker)
-    , scene_(sceneW)
+    , controllerW_(controllerW)
     , enabled_(true)
   {
-    GetScene()->RegisterObserverCallback(
-      new Callable<MeasureTool, Scene2D::SceneTransformChanged>
+    GetController()->RegisterObserverCallback(
+      new Callable<MeasureTool, ViewportController::SceneTransformChanged>
       (*this, &MeasureTool::OnSceneTransformChanged));
   }
 
   void MeasureTool::OnSceneTransformChanged(
-    const Scene2D::SceneTransformChanged& message)
+    const ViewportController::SceneTransformChanged& message)
   {
     RefreshScene();
   }

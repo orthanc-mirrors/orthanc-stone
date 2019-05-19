@@ -70,7 +70,7 @@ namespace OrthancStone
 
   Scene2DPtr TrackerSampleApp::GetScene()
   {
-    return controller_.GetScene();
+    return controller_->GetScene();
   }
 
   void TrackerSampleApp::SelectNextTool()
@@ -192,7 +192,7 @@ namespace OrthancStone
           //  e.GetMainPosition().GetX() << " " << e.GetMainPosition().GetY();
           
           activeTracker_->PointerMove(e);
-          if (!activeTracker_->IsActive())
+          if (!activeTracker_->IsAlive())
             activeTracker_ = NULL;
         }
       }
@@ -204,7 +204,7 @@ namespace OrthancStone
         PointerEvent e;
         e.AddPosition(compositor_->GetPixelCenterCoordinates(event.button.x, event.button.y));
         activeTracker_->PointerUp(e);
-        if (!activeTracker_->IsActive())
+        if (!activeTracker_->IsAlive())
           activeTracker_ = NULL;
       }
     }
@@ -216,7 +216,7 @@ namespace OrthancStone
       if (activeTracker_)
       {
         activeTracker_->PointerDown(e);
-        if (!activeTracker_->IsActive())
+        if (!activeTracker_->IsAlive())
           activeTracker_ = NULL;
       }
       else
@@ -234,7 +234,7 @@ namespace OrthancStone
         if (activeTracker_)
         {
           activeTracker_->Cancel();
-          if (!activeTracker_->IsActive())
+          if (!activeTracker_->IsAlive())
             activeTracker_ = NULL;
         }
         break;
@@ -268,7 +268,8 @@ namespace OrthancStone
   }
 
 
-  void TrackerSampleApp::OnSceneTransformChanged(const Scene2D::SceneTransformChanged& message)
+  void TrackerSampleApp::OnSceneTransformChanged(
+    const ViewportController::SceneTransformChanged& message)
   {
     DisplayInfoText();
   }
@@ -280,12 +281,12 @@ namespace OrthancStone
     switch (event.button.button)
     {
     case SDL_BUTTON_MIDDLE:
-      return CreateSimpleTrackerAdapter(PointerTrackerPtr(
-        new PanSceneTracker(*GetScene(), e)));
+      return FlexiblePointerTrackerPtr(new PanSceneTracker
+        (controller_, e));
 
     case SDL_BUTTON_RIGHT:
-      return CreateSimpleTrackerAdapter(PointerTrackerPtr(
-        new ZoomSceneTracker(*GetScene(), e, compositor_->GetCanvasHeight())));
+      return FlexiblePointerTrackerPtr(new ZoomSceneTracker
+        (controller_, e, compositor_->GetCanvasHeight()));
 
     case SDL_BUTTON_LEFT:
     {
@@ -310,14 +311,14 @@ namespace OrthancStone
         {
         case GuiTool_Rotate:
           //LOG(TRACE) << "Creating RotateSceneTracker";
-          return CreateSimpleTrackerAdapter(PointerTrackerPtr(
-            new RotateSceneTracker(*GetScene(), e)));
+          return FlexiblePointerTrackerPtr(new RotateSceneTracker(
+            controller_, e));
         case GuiTool_Pan:
-          return CreateSimpleTrackerAdapter(PointerTrackerPtr(
-            new PanSceneTracker(*GetScene(), e)));
+          return FlexiblePointerTrackerPtr(new PanSceneTracker(
+            controller_, e));
         case GuiTool_Zoom:
-          return CreateSimpleTrackerAdapter(PointerTrackerPtr(
-            new ZoomSceneTracker(*GetScene(), e, compositor_->GetCanvasHeight())));
+          return FlexiblePointerTrackerPtr(new ZoomSceneTracker(
+            controller_, e, compositor_->GetCanvasHeight()));
         //case GuiTool_AngleMeasure:
         //  return new AngleMeasureTracker(GetScene(), measureTools_, undoStack_, e);
         //case GuiTool_CircleMeasure:
@@ -326,10 +327,10 @@ namespace OrthancStone
         //  return new EllipseMeasureTracker(GetScene(), measureTools_, undoStack_, e);
         case GuiTool_LineMeasure:
           return FlexiblePointerTrackerPtr(new CreateLineMeasureTracker(
-            IObserver::GetBroker(), GetScene(), undoStack_, measureTools_, e));
+            IObserver::GetBroker(), controller_, undoStack_, measureTools_, e));
         case GuiTool_AngleMeasure:
           return FlexiblePointerTrackerPtr(new CreateAngleMeasureTracker(
-            IObserver::GetBroker(), GetScene(), undoStack_, measureTools_, e));
+            IObserver::GetBroker(), controller_, undoStack_, measureTools_, e));
           return NULL;
         case GuiTool_CircleMeasure:
           LOG(ERROR) << "Not implemented yet!";
@@ -349,7 +350,6 @@ namespace OrthancStone
 
 
   TrackerSampleApp::TrackerSampleApp(MessageBroker& broker) : IObserver(broker)
-    , scene_(broker)
     , currentTool_(GuiTool_Rotate)
   {
     controller_ = ViewportControllerPtr(new ViewportController(broker));
@@ -469,7 +469,7 @@ namespace OrthancStone
     unsigned int canvasWidth,
     unsigned int canvasHeight)
   {
-    CairoCompositor compositor(GetScene(), canvasWidth, canvasHeight);
+    CairoCompositor compositor(*GetScene(), canvasWidth, canvasHeight);
     compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, FONT_SIZE_0, Orthanc::Encoding_Latin1);
     compositor.Refresh();
 
@@ -520,7 +520,7 @@ namespace OrthancStone
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(OpenGLMessageCallback, 0);
 
-    compositor_.reset(new OpenGLCompositor(window, GetScene()));
+    compositor_.reset(new OpenGLCompositor(window, *GetScene()));
 
     compositor_->SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,
       FONT_SIZE_0, Orthanc::Encoding_Latin1);
@@ -565,6 +565,9 @@ namespace OrthancStone
       }
       SDL_Delay(1);
     }
+
+    // the following is paramount because the compositor holds a reference
+    // to the scene and we do not want this reference to become dangling
     compositor_.reset(NULL);
   }
 

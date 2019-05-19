@@ -38,8 +38,8 @@ namespace OrthancStone
   class AngleMeasureTool : public MeasureTool
   {
   public:
-    AngleMeasureTool(MessageBroker& broker, Scene2DWPtr sceneW)
-      : MeasureTool(broker, sceneW)
+    AngleMeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW)
+      : MeasureTool(broker, controllerW)
       , layersCreated(false)
       , polylineZIndex_(-1)
       , textBaseZIndex_(-1)

@@ -79,5 +79,5 @@ namespace OrthancStone
 
   class ViewportController;
   typedef boost::shared_ptr<ViewportController> ViewportControllerPtr;
-
+  typedef boost::weak_ptr<ViewportController> ViewportControllerWPtr;
 }

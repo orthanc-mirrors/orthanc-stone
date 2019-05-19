@@ -20,27 +20,34 @@
 
 
 #include "PanSceneTracker.h"
+#include <Framework/Scene2DViewport/ViewportController.h>
 
 namespace OrthancStone
 {
-  PanSceneTracker::PanSceneTracker(Scene2D& scene,
-                                   const PointerEvent& event) :
-    scene_(scene),
-    originalSceneToCanvas_(scene_.GetSceneToCanvasTransform()),
-    originalCanvasToScene_(scene_.GetCanvasToSceneTransform())
+  PanSceneTracker::PanSceneTracker(ViewportControllerWPtr controllerW,
+                                   const PointerEvent& event)
+    : OneGesturePointerTracker(controllerW)
+    , originalSceneToCanvas_(GetController()->GetSceneToCanvasTransform())
+    , originalCanvasToScene_(GetController()->GetCanvasToSceneTransform())
   {
     pivot_ = event.GetMainPosition().Apply(originalCanvasToScene_);
   }
 
 
-  void PanSceneTracker::Update(const PointerEvent& event)
+  void PanSceneTracker::PointerMove(const PointerEvent& event)
   {
     ScenePoint2D p = event.GetMainPosition().Apply(originalCanvasToScene_);
       
-    scene_.SetSceneToCanvasTransform(
+    GetController()->SetSceneToCanvasTransform(
       AffineTransform2D::Combine(
         originalSceneToCanvas_,
         AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
                                         p.GetY() - pivot_.GetY())));
   }
+
+  void PanSceneTracker::Cancel()
+  {
+    GetController()->SetSceneToCanvasTransform(originalSceneToCanvas_);
+  }
+
 }

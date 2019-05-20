@@ -1562,7 +1562,7 @@ namespace Refactoring
             new Refactoring::GetOrthancWebViewerJpegCommand);
           tmp->SetHttpHeader("Accept-Encoding", "gzip");
           tmp->SetInstance(instance);
-          tmp->SetQuality((quality == 0 ? 50 : 95));
+          tmp->SetQuality((quality == 0 ? 50 : 90));
           tmp->SetExpectedPixelFormat(slice.GetExpectedPixelFormat());
           command.reset(tmp.release());
         }
@@ -1794,6 +1794,7 @@ namespace Refactoring
   class DicomVolumeMPRSlicer : public IVolumeSlicer
   {
   private:
+    bool                            linearInterpolation_;
     OrthancStone::Scene2D&          scene_;
     int                             layerDepth_;
     IDicomVolumeSource&             source_;
@@ -1806,11 +1807,22 @@ namespace Refactoring
     DicomVolumeMPRSlicer(OrthancStone::Scene2D& scene,
                          int layerDepth,
                          IDicomVolumeSource& source) :
+      linearInterpolation_(false),
       scene_(scene),
       layerDepth_(layerDepth),
       source_(source),
       first_(true)
     {
+    }
+
+    void SetLinearInterpolation(bool enabled)
+    {
+      linearInterpolation_ = enabled;
+    }
+
+    bool IsLinearInterpolation() const
+    {
+      return linearInterpolation_;
     }
     
     virtual void SetViewportPlane(const OrthancStone::CoordinateSystem3D& plane)
@@ -1822,9 +1834,11 @@ namespace Refactoring
         return;
       }
 
+      const OrthancStone::VolumeImageGeometry& geometry = source_.GetVolume().GetImage().GetGeometry();
+
       OrthancStone::VolumeProjection projection;
       unsigned int sliceIndex;
-      if (!source_.GetVolume().GetImage().GetGeometry().DetectSlice(projection, sliceIndex, plane))
+      if (!geometry.DetectSlice(projection, sliceIndex, plane))
       {
         // The cutting plane is neither axial, nor coronal, nor
         // sagittal. Could use "VolumeReslicer" here.
@@ -1874,12 +1888,26 @@ namespace Refactoring
           texture.reset(parameters.CreateTexture(reader.GetAccessor()));
         }
 
-        // TODO - 
-        // void SetOrigin(double x, double y);
-        // void SetPixelSpacing(double sx, double sy);
-        // void SetAngle(double angle);
-        // void SetLinearInterpolation(bool isLinearInterpolation);
+        const OrthancStone::CoordinateSystem3D& system = geometry.GetProjectionGeometry(projection);
 
+        double x0, y0, x1, y1;
+        system.ProjectPoint(x0, y0, system.GetOrigin());
+        system.ProjectPoint(x0, y0, system.GetOrigin() + system.GetAxisX());
+        texture->SetOrigin(x0, y0);
+
+        double dx = x1 - x0;
+        double dy = y1 - y0;
+        if (!OrthancStone::LinearAlgebra::IsCloseToZero(dx) ||
+            !OrthancStone::LinearAlgebra::IsCloseToZero(dy))
+        {
+          texture->SetAngle(atan2(dy, dx));
+        }
+        
+        OrthancStone::Vector tmp;
+        geometry.GetVoxelDimensions(projection);
+        texture->SetPixelSpacing(tmp[0], tmp[1]);
+
+        texture->SetLinearInterpolation(linearInterpolation_);
     
         scene_.SetLayer(layerDepth_, texture.release());    
       }

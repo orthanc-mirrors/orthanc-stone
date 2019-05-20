@@ -324,13 +324,13 @@ void Run(ViewportControllerPtr controller)
             event.button.x, event.button.y));
           tracker->PointerUp(e);
           if(!tracker->IsAlive())
-            tracker = NULL;
+            tracker.reset();
         }
       }
       else if (event.type == SDL_WINDOWEVENT &&
                event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
       {
-        tracker = NULL;
+        tracker.reset();
         compositor.UpdateSize();
       }
       else if (event.type == SDL_KEYDOWN &&

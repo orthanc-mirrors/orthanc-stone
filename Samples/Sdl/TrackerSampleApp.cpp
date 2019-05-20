@@ -88,11 +88,13 @@ namespace OrthancStone
       return;
 
     std::stringstream msg;
-    for (auto kv : infoTextMap_)
+	
+	for (std::map<std::string, std::string>::const_iterator kv = infoTextMap_.begin();
+		kv != infoTextMap_.end(); ++kv)
     {
-      msg << kv.first << " : " << kv.second << std::endl;
+      msg << kv->first << " : " << kv->second << std::endl;
     }
-    auto msgS = msg.str();
+	std::string msgS = msg.str();
 
     TextSceneLayer* layerP = NULL;
     if (GetScene()->HasLayer(FIXED_INFOTEXT_LAYER_ZINDEX))
@@ -193,7 +195,7 @@ namespace OrthancStone
           
           activeTracker_->PointerMove(e);
           if (!activeTracker_->IsAlive())
-            activeTracker_ = NULL;
+            activeTracker_.reset();
         }
       }
     }
@@ -205,7 +207,7 @@ namespace OrthancStone
         e.AddPosition(compositor_->GetPixelCenterCoordinates(event.button.x, event.button.y));
         activeTracker_->PointerUp(e);
         if (!activeTracker_->IsAlive())
-          activeTracker_ = NULL;
+          activeTracker_.reset();
       }
     }
     else if (event.type == SDL_MOUSEBUTTONDOWN)
@@ -217,7 +219,7 @@ namespace OrthancStone
       {
         activeTracker_->PointerDown(e);
         if (!activeTracker_->IsAlive())
-          activeTracker_ = NULL;
+          activeTracker_.reset();
       }
       else
       {
@@ -235,7 +237,7 @@ namespace OrthancStone
         {
           activeTracker_->Cancel();
           if (!activeTracker_->IsAlive())
-            activeTracker_ = NULL;
+            activeTracker_.reset();
         }
         break;
 
@@ -331,20 +333,19 @@ namespace OrthancStone
         case GuiTool_AngleMeasure:
           return FlexiblePointerTrackerPtr(new CreateAngleMeasureTracker(
             IObserver::GetBroker(), controller_, undoStack_, measureTools_, e));
-          return NULL;
         case GuiTool_CircleMeasure:
           LOG(ERROR) << "Not implemented yet!";
-          return NULL;
+          return FlexiblePointerTrackerPtr();
         case GuiTool_EllipseMeasure:
           LOG(ERROR) << "Not implemented yet!";
-          return NULL;
+          return FlexiblePointerTrackerPtr();
         default:
           throw OrthancException(ErrorCode_InternalError, "Wrong tool!");
         }
       }
     }
     default:
-      return NULL;
+      return FlexiblePointerTrackerPtr();
     }
   }
 
@@ -461,7 +462,7 @@ namespace OrthancStone
     if (activeTracker_)
     {
       activeTracker_->Cancel();
-      activeTracker_ = NULL;
+      activeTracker_.reset();
     }
   }
 
@@ -487,7 +488,7 @@ namespace OrthancStone
   FlexiblePointerTrackerPtr TrackerSampleApp::TrackerHitTest(const PointerEvent & e)
   {
     // std::vector<MeasureToolPtr> measureTools_;
-    return nullptr;
+    return FlexiblePointerTrackerPtr();
   }
 
   static void GLAPIENTRY

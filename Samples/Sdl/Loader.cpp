@@ -1477,9 +1477,7 @@ namespace Refactoring
       virtual void Handle(const Orthanc::ImageAccessor& image,
                           unsigned int quality) const
       {
-        assert(quality <= 2);
-        that_.volume_.SetSliceContent(slice_, image, quality);
-        that_.ScheduleNextSliceDownload();
+        that_.SetSliceContent(slice_, image, quality);
       }
     };
 
@@ -1497,59 +1495,44 @@ namespace Refactoring
 
       virtual void Handle(const Json::Value& body) const
       {
-        {
-          Json::Value::Members instances = body.getMemberNames();
-
-          OrthancStone::SlicesSorter slices;
-        
-          for (size_t i = 0; i < instances.size(); i++)
-          {
-            Orthanc::DicomMap dicom;
-            dicom.FromDicomAsJson(body[instances[i]]);
-
-            std::auto_ptr<DicomInstanceParameters> instance(new DicomInstanceParameters(dicom));
-            instance->SetOrthancInstanceIdentifier(instances[i]);
-
-            OrthancStone::CoordinateSystem3D geometry = instance->GetGeometry();
-            slices.AddSlice(geometry, instance.release());
-          }
-
-          that_.volume_.SetGeometry(slices);
-        }
-
-        if (that_.volume_.GetSlicesCount() != 0)
-        {
-          that_.strategy_.reset(new OrthancStone::BasicFetchingStrategy(
-                                  new OrthancStone::BasicFetchingItemsSorter(that_.volume_.GetSlicesCount()), 2));
-
-          for (unsigned int i = 0; i < 4; i++)   // Schedule up to 4 simultaneous downloads (TODO - parameter)
-          {
-            that_.ScheduleNextSliceDownload();
-          }
-        }
+        that_.SetGeometry(body);
       }
     };
 
 
-    class LoadInstanceGeometryHandler : public MessageHandler
+    void SetGeometry(const Json::Value& body)
     {
-    private:
-      VolumeSeriesOrthancLoader&  that_;
-
-    public:
-      LoadInstanceGeometryHandler(VolumeSeriesOrthancLoader& that) :
-      that_(that)
       {
+        Json::Value::Members instances = body.getMemberNames();
+
+        OrthancStone::SlicesSorter slices;
+        
+        for (size_t i = 0; i < instances.size(); i++)
+        {
+          Orthanc::DicomMap dicom;
+          dicom.FromDicomAsJson(body[instances[i]]);
+
+          std::auto_ptr<DicomInstanceParameters> instance(new DicomInstanceParameters(dicom));
+          instance->SetOrthancInstanceIdentifier(instances[i]);
+
+          OrthancStone::CoordinateSystem3D geometry = instance->GetGeometry();
+          slices.AddSlice(geometry, instance.release());
+        }
+
+        volume_.SetGeometry(slices);
       }
 
-      virtual void Handle(const Json::Value& body) const
+      if (volume_.GetSlicesCount() != 0)
       {
-        Orthanc::DicomMap dicom;
-        dicom.FromDicomAsJson(body);
+        strategy_.reset(new OrthancStone::BasicFetchingStrategy(
+                                new OrthancStone::BasicFetchingItemsSorter(volume_.GetSlicesCount()), 2));
 
-        DicomInstanceParameters instance(dicom);
+        for (unsigned int i = 0; i < 4; i++)   // Schedule up to 4 simultaneous downloads (TODO - parameter)
+        {
+          ScheduleNextSliceDownload();
+        }
       }
-    };
+    }
 
 
     void ScheduleNextSliceDownload()
@@ -1600,6 +1583,17 @@ namespace Refactoring
     }
 
 
+    void SetSliceContent(unsigned int sliceIndex,
+                         const Orthanc::ImageAccessor& image,
+                         unsigned int quality)
+    {
+      assert(quality <= 2);
+      
+      volume_.SetSliceContent(sliceIndex, image, quality);
+      ScheduleNextSliceDownload();
+    }
+    
+
     IOracle&          oracle_;
     bool              active_;
     DicomVolumeImage  volume_;
@@ -1641,30 +1635,32 @@ namespace Refactoring
 
       oracle_.Schedule(*this, command.release());
     }
-
-    void LoadInstance(const std::string& instanceId)
-    {
-      if (active_)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-
-      active_ = true;
-
-      // Tag "3004-000c" is "Grid Frame Offset Vector", which is
-      // mandatory to read RT DOSE, but is too long to be returned by default
-
-      // TODO => Should be part of a second call if needed
-
-      std::auto_ptr<Refactoring::OrthancRestApiCommand> command(new Refactoring::OrthancRestApiCommand);
-      command->SetUri("/instances/" + instanceId + "/tags?ignore-length=3004-000c");
-      command->SetPayload(new LoadInstanceGeometryHandler(*this));
-
-      oracle_.Schedule(*this, command.release());
-    }
   };
 
 
+
+#if 0
+  void LoadInstance(const std::string& instanceId)
+  {
+    if (active_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
+    active_ = true;
+
+    // Tag "3004-000c" is "Grid Frame Offset Vector", which is
+    // mandatory to read RT DOSE, but is too long to be returned by default
+
+    // TODO => Should be part of a second call if needed
+
+    std::auto_ptr<Refactoring::OrthancRestApiCommand> command(new Refactoring::OrthancRestApiCommand);
+    command->SetUri("/instances/" + instanceId + "/tags?ignore-length=3004-000c");
+    command->SetPayload(new LoadInstanceGeometryHandler(*this));
+
+    oracle_.Schedule(*this, command.release());
+  }
+#endif
 
 
   /*  class VolumeSlicerBase : public IVolumeSlicer
@@ -2346,7 +2342,7 @@ void Run(Refactoring::NativeApplicationContext& context,
 
   // 2017-11-17-Anonymized
   //loader1->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
-  loader2->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
+  //loader2->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
 
   // Delphine
   loader1->LoadSeries("5990e39c-51e5f201-fe87a54c-31a55943-e59ef80e");  // CT

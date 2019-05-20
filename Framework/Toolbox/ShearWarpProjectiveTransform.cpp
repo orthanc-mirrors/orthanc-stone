@@ -543,7 +543,7 @@ namespace OrthancStone
         }
         else
         {
-          *p = static_cast<TargetTraits::PixelType>
+          *p = static_cast<typename TargetTraits::PixelType>
             (*qacc / static_cast<float>(*qcount));
 
           if (*p > maxValue)

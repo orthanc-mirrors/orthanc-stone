@@ -50,13 +50,12 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
 
-    nextQuality_.resize(sorter_->GetItemsCount(), 0),   // Does not change along calls to "SetCurrent()"
+    nextQuality_.resize(sorter_->GetItemsCount(), 0);   // Does not change along calls to "SetCurrent()"
       
-                  SetCurrent(0);
+    SetCurrent(0);
   }
 
 
-  // WARNING - This parameters is only considered during the next call to SetCurrent().
   void BasicFetchingStrategy::SetBlockSize(unsigned int size)
   {
     if (size <= 0)

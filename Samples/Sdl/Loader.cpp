@@ -28,6 +28,8 @@
 #include "../../Framework/Toolbox/SlicesSorter.h"
 #include "../../Framework/Volumes/ImageBuffer3D.h"
 #include "../../Framework/Scene2D/Scene2D.h"
+#include "../../Framework/Loaders/BasicFetchingStrategy.h"
+#include "../../Framework/Loaders/BasicFetchingItemsSorter.h"
 
 // From Orthanc framework
 #include <Core/Compression/GzipCompressor.h>
@@ -397,6 +399,30 @@ namespace Refactoring
     void SetUri(const std::string& uri)
     {
       uri_ = uri;
+    }
+
+    void SetInstanceUri(const std::string& instance,
+                        Orthanc::PixelFormat pixelFormat)
+    {
+      uri_ = "/instances/" + instance;
+          
+      switch (pixelFormat)
+      {
+        case Orthanc::PixelFormat_RGB24:
+          uri_ += "/preview";
+          break;
+      
+        case Orthanc::PixelFormat_Grayscale16:
+          uri_ += "/image-uint16";
+          break;
+      
+        case Orthanc::PixelFormat_SignedGrayscale16:
+          uri_ += "/image-int16";
+          break;
+      
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
     }
 
     void SetHttpHeader(const std::string& key,
@@ -1152,6 +1178,7 @@ namespace Refactoring
     std::vector<DicomInstanceParameters*>       slices_;
     uint64_t                                    revision_;
     std::vector<uint64_t>                       slicesRevision_;
+    std::vector<unsigned int>                   slicesQuality_;
 
     void CheckSlice(size_t index,
                     const DicomInstanceParameters& reference) const
@@ -1221,6 +1248,10 @@ namespace Refactoring
         assert(slices_[i] != NULL);
         delete slices_[i];
       }
+
+      slices_.clear();
+      slicesRevision_.clear();
+      slicesQuality_.clear();
     }
 
 
@@ -1270,14 +1301,14 @@ namespace Refactoring
       else
       {
         slices_.reserve(slices.GetSlicesCount());
-        slicesRevision_.resize(slices.GetSlicesCount());
+        slicesRevision_.resize(slices.GetSlicesCount(), 0);
+        slicesQuality_.resize(slices.GetSlicesCount(), 0);
 
         for (size_t i = 0; i < slices.GetSlicesCount(); i++)
         {
           const DicomInstanceParameters& slice =
             dynamic_cast<const DicomInstanceParameters&>(slices.GetSlicePayload(i));
           slices_.push_back(new DicomInstanceParameters(slice));
-          slicesRevision_[i] = 0;
         }
 
         CheckVolume();
@@ -1349,18 +1380,23 @@ namespace Refactoring
     }
 
     void SetSliceContent(size_t index,
-                         const Orthanc::ImageAccessor& image)
+                         const Orthanc::ImageAccessor& image,
+                         unsigned int quality)
     {
       CheckSliceIndex(index);
-      
-      {
-        OrthancStone::ImageBuffer3D::SliceWriter writer
-          (*image_, OrthancStone::VolumeProjection_Axial, index);
-        Orthanc::ImageProcessing::Copy(writer.GetAccessor(), image);
-      }
 
-      revision_ ++;
-      slicesRevision_[index] += 1;
+      // If a better image quality is already available, don't update the content
+      if (quality >= slicesQuality_[index])
+      {
+        {
+          OrthancStone::ImageBuffer3D::SliceWriter writer
+            (*image_, OrthancStone::VolumeProjection_Axial, index);
+          Orthanc::ImageProcessing::Copy(writer.GetAccessor(), image);
+        }
+        
+        revision_ ++;
+        slicesRevision_[index] += 1;
+      }
     }
   };
   
@@ -1377,7 +1413,8 @@ namespace Refactoring
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
 
-      virtual void Handle(const Orthanc::ImageAccessor& image) const
+      virtual void Handle(const Orthanc::ImageAccessor& image,
+                          unsigned int quality) const
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
@@ -1398,32 +1435,51 @@ namespace Refactoring
 
     void Handle(const Refactoring::GetOrthancImageCommand::SuccessMessage& message)
     {
-      dynamic_cast<const MessageHandler&>(message.GetOrigin().GetPayload()).Handle(message.GetImage());
+      dynamic_cast<const MessageHandler&>(message.GetOrigin().GetPayload()).Handle(message.GetImage(), 2 /* best quality */);
     }
 
     void Handle(const Refactoring::GetOrthancWebViewerJpegCommand::SuccessMessage& message)
     {
-      dynamic_cast<const MessageHandler&>(message.GetOrigin().GetPayload()).Handle(message.GetImage());
+      unsigned int quality;
+      
+      switch (message.GetOrigin().GetQuality())
+      {
+        case 50:
+          quality = 0;
+          break;
+
+        case 95:
+          quality = 1;
+          break;
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+      
+      dynamic_cast<const MessageHandler&>(message.GetOrigin().GetPayload()).Handle(message.GetImage(), quality);
     }
 
 
     class LoadSliceImage : public MessageHandler
     {
     private:
-      DicomVolumeImage&   target_;
-      size_t              slice_;
+      VolumeSeriesOrthancLoader&  that_;
+      size_t                      slice_;
 
     public:
-      LoadSliceImage(DicomVolumeImage& target,
+      LoadSliceImage(VolumeSeriesOrthancLoader& that,
                      size_t slice) :
-        target_(target),
+        that_(that),
         slice_(slice)
       {
       }
 
-      virtual void Handle(const Orthanc::ImageAccessor& image) const
+      virtual void Handle(const Orthanc::ImageAccessor& image,
+                          unsigned int quality) const
       {
-        target_.SetSliceContent(slice_, image);
+        assert(quality <= 2);
+        that_.volume_.SetSliceContent(slice_, image, quality);
+        that_.ScheduleNextSliceDownload();
       }
     };
 
@@ -1435,83 +1491,41 @@ namespace Refactoring
 
     public:
       LoadSeriesGeometryHandler(VolumeSeriesOrthancLoader& that) :
-      that_(that)
+        that_(that)
       {
       }
 
       virtual void Handle(const Json::Value& body) const
       {
-        Json::Value::Members instances = body.getMemberNames();
+        {
+          Json::Value::Members instances = body.getMemberNames();
 
-        OrthancStone::SlicesSorter slices;
+          OrthancStone::SlicesSorter slices;
         
-        for (size_t i = 0; i < instances.size(); i++)
-        {
-          Orthanc::DicomMap dicom;
-          dicom.FromDicomAsJson(body[instances[i]]);
-
-          std::auto_ptr<DicomInstanceParameters> instance(new DicomInstanceParameters(dicom));
-          instance->SetOrthancInstanceIdentifier(instances[i]);
-
-          OrthancStone::CoordinateSystem3D geometry = instance->GetGeometry();
-          slices.AddSlice(geometry, instance.release());
-        }
-
-        that_.volume_.SetGeometry(slices);
-
-        {
-          OrthancStone::LinearAlgebra::Print(that_.volume_.GetImage().GetGeometry().GetCoordinates(0, 0, 0));
-          OrthancStone::LinearAlgebra::Print(that_.volume_.GetImage().GetGeometry().GetCoordinates(1, 1, 1));
-          return;
-        }
-
-        for (size_t i = 0; i < that_.volume_.GetSlicesCount(); i++)
-        {
-          const DicomInstanceParameters& slice = that_.volume_.GetSliceParameters(i);
-          
-          const std::string& instance = slice.GetOrthancInstanceIdentifier();
-          if (instance.empty())
+          for (size_t i = 0; i < instances.size(); i++)
           {
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+            Orthanc::DicomMap dicom;
+            dicom.FromDicomAsJson(body[instances[i]]);
+
+            std::auto_ptr<DicomInstanceParameters> instance(new DicomInstanceParameters(dicom));
+            instance->SetOrthancInstanceIdentifier(instances[i]);
+
+            OrthancStone::CoordinateSystem3D geometry = instance->GetGeometry();
+            slices.AddSlice(geometry, instance.release());
           }
 
-#if 0
-          std::auto_ptr<Refactoring::GetOrthancWebViewerJpegCommand> command(
-            new Refactoring::GetOrthancWebViewerJpegCommand);
-          command->SetInstance(instance);
-          command->SetQuality(95);
-#else
-          std::string uri = "/instances/" + instance;
-          
-          switch (slice.GetExpectedPixelFormat())
+          that_.volume_.SetGeometry(slices);
+        }
+
+        if (that_.volume_.GetSlicesCount() != 0)
+        {
+          that_.strategy_.reset(new OrthancStone::BasicFetchingStrategy(
+                                  new OrthancStone::BasicFetchingItemsSorter(that_.volume_.GetSlicesCount()), 2));
+
+          for (unsigned int i = 0; i < 4; i++)   // Schedule up to 4 simultaneous downloads (TODO - parameter)
           {
-            case Orthanc::PixelFormat_RGB24:
-              uri += "/preview";
-              break;
-      
-            case Orthanc::PixelFormat_Grayscale16:
-              uri += "/image-uint16";
-              break;
-      
-            case Orthanc::PixelFormat_SignedGrayscale16:
-              uri += "/image-int16";
-              break;
-      
-            default:
-              throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+            that_.ScheduleNextSliceDownload();
           }
-          
-          std::auto_ptr<Refactoring::GetOrthancImageCommand> command(
-            new Refactoring::GetOrthancImageCommand);
-          command->SetHttpHeader("Accept-Encoding", "gzip");
-          command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
-          command->SetUri(uri);
-#endif
-
-          command->SetExpectedPixelFormat(slice.GetExpectedPixelFormat());
-          command->SetPayload(new LoadSliceImage(that_.volume_, i));
-
-          that_.oracle_.Schedule(that_, command.release());
         }
       }
     };
@@ -1538,9 +1552,59 @@ namespace Refactoring
     };
 
 
+    void ScheduleNextSliceDownload()
+    {
+      assert(strategy_.get() != NULL);
+      
+      unsigned int sliceIndex, quality;
+      
+      if (strategy_->GetNext(sliceIndex, quality))
+      {
+        assert(quality <= 2);
+
+        const DicomInstanceParameters& slice = volume_.GetSliceParameters(sliceIndex);
+          
+        const std::string& instance = slice.GetOrthancInstanceIdentifier();
+        if (instance.empty())
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+        }
+
+        std::auto_ptr<Refactoring::IOracleCommand> command;
+        
+        if (quality == 2)   // Best quality
+        {
+          std::auto_ptr<Refactoring::GetOrthancImageCommand> tmp(
+            new Refactoring::GetOrthancImageCommand);
+          tmp->SetHttpHeader("Accept-Encoding", "gzip");
+          tmp->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
+          tmp->SetInstanceUri(instance, slice.GetExpectedPixelFormat());          
+          tmp->SetExpectedPixelFormat(slice.GetExpectedPixelFormat());
+          tmp->SetPayload(new LoadSliceImage(*this, sliceIndex));
+          command.reset(tmp.release());
+        }
+        else
+        {
+          std::auto_ptr<Refactoring::GetOrthancWebViewerJpegCommand> tmp(
+            new Refactoring::GetOrthancWebViewerJpegCommand);
+          tmp->SetHttpHeader("Accept-Encoding", "gzip");
+          tmp->SetInstance(instance);
+          tmp->SetQuality((quality == 0 ? 50 : 95));
+          tmp->SetExpectedPixelFormat(slice.GetExpectedPixelFormat());
+          tmp->SetPayload(new LoadSliceImage(*this, sliceIndex));
+          command.reset(tmp.release());
+        }
+
+        oracle_.Schedule(*this, command.release());
+      }
+    }
+
+
     IOracle&          oracle_;
     bool              active_;
     DicomVolumeImage  volume_;
+    
+    std::auto_ptr<OrthancStone::IFetchingStrategy>   strategy_;
 
   public:
     VolumeSeriesOrthancLoader(IOracle& oracle,

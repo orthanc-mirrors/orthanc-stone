@@ -362,7 +362,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/PointerTypes.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.h
-  
+
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/FontRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/Glyph.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphAlphabet.cpp
@@ -380,6 +380,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Layers/LineMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/RenderStyle.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Layers/SliceOutlineRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingItemsSorter.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingStrategy.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyAlphaLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyDicomLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp

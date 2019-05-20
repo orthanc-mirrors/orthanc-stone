@@ -78,6 +78,8 @@ namespace OrthancStone
     /** Forwarded to the underlying scene, and broadcasted to the observers */
     void SetSceneToCanvasTransform(const AffineTransform2D& transform);
 
+    /** Forwarded to the underlying scene, and broadcasted to the observers */
+    void FitContent(unsigned int canvasWidth, unsigned int canvasHeight);
 
   private:
     Scene2DPtr                scene_;

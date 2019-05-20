@@ -44,6 +44,19 @@ namespace OrthancStone
     throw StoneException(ErrorCode_NotImplemented);
   }
 
+  std::vector<MeasureToolPtr> ViewportController::HitTestMeasureTools(
+    ScenePoint2D p)
+  {
+    std::vector<MeasureToolPtr> ret;
+    
+
+    //for (size_t i = 0; i < measureTools_.size(); ++i)
+    //{
+
+    //}
+    return ret;
+  }
+
   const OrthancStone::AffineTransform2D& ViewportController::GetCanvasToSceneTransform() const
   {
     return scene_->GetCanvasToSceneTransform();
@@ -58,6 +71,13 @@ namespace OrthancStone
     const AffineTransform2D& transform)
   {
     scene_->SetSceneToCanvasTransform(transform);
+    BroadcastMessage(SceneTransformChanged(*this));
+  }
+
+  void ViewportController::FitContent(
+    unsigned int canvasWidth, unsigned int canvasHeight)
+  {
+    scene_->FitContent(canvasWidth, canvasHeight);
     BroadcastMessage(SceneTransformChanged(*this));
   }
 

@@ -241,7 +241,7 @@ void HandleApplicationEvent(ViewportControllerPtr controller,
     switch (event.key.keysym.sym)
     {
       case SDLK_s:
-        scene.FitContent(compositor.GetCanvasWidth(), 
+        controller->FitContent(compositor.GetCanvasWidth(), 
                          compositor.GetCanvasHeight());
         break;
               
@@ -280,8 +280,7 @@ void Run(ViewportControllerPtr controller)
 {
   SdlOpenGLWindow window("Hello", 1024, 768);
 
-  controller->GetScene()->FitContent(
-    window.GetCanvasWidth(), window.GetCanvasHeight());
+  controller->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
   
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(OpenGLMessageCallback, 0);

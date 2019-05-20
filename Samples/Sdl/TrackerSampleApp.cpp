@@ -252,7 +252,7 @@ namespace OrthancStone
         break;
 
       case SDLK_s:
-        GetScene()->FitContent(compositor_->GetCanvasWidth(),
+        controller_->FitContent(compositor_->GetCanvasWidth(),
           compositor_->GetCanvasHeight());
         break;
 
@@ -516,7 +516,7 @@ namespace OrthancStone
     // that needs to be scaled
     SdlOpenGLWindow window("Hello", 1024, 1024, false);
 
-    GetScene()->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
+    controller_->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
 
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(OpenGLMessageCallback, 0);

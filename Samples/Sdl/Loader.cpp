@@ -19,17 +19,19 @@
  **/
 
 // From Stone
+#include "../../Framework/Loaders/BasicFetchingItemsSorter.h"
+#include "../../Framework/Loaders/BasicFetchingStrategy.h"
 #include "../../Framework/Messages/ICallable.h"
 #include "../../Framework/Messages/IMessage.h"
 #include "../../Framework/Messages/IObservable.h"
 #include "../../Framework/Messages/MessageBroker.h"
+#include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
+#include "../../Framework/Scene2D/FloatTextureSceneLayer.h"
+#include "../../Framework/Scene2D/Scene2D.h"
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Toolbox/GeometryToolbox.h"
 #include "../../Framework/Toolbox/SlicesSorter.h"
 #include "../../Framework/Volumes/ImageBuffer3D.h"
-#include "../../Framework/Scene2D/Scene2D.h"
-#include "../../Framework/Loaders/BasicFetchingStrategy.h"
-#include "../../Framework/Loaders/BasicFetchingItemsSorter.h"
 
 // From Orthanc framework
 #include <Core/Compression/GzipCompressor.h>
@@ -814,7 +816,7 @@ namespace Refactoring
       OrthancStone::Vector              frameOffsets_;
       bool                              isColor_;
       bool                              hasRescale_;
-      double                            rescaleOffset_;
+      double                            rescaleIntercept_;
       double                            rescaleSlope_;
       bool                              hasDefaultWindowing_;
       float                             defaultWindowingCenter_;
@@ -908,7 +910,7 @@ namespace Refactoring
 
         double doseGridScaling;
 
-        if (dicom.ParseDouble(rescaleOffset_, Orthanc::DICOM_TAG_RESCALE_INTERCEPT) &&
+        if (dicom.ParseDouble(rescaleIntercept_, Orthanc::DICOM_TAG_RESCALE_INTERCEPT) &&
             dicom.ParseDouble(rescaleSlope_, Orthanc::DICOM_TAG_RESCALE_SLOPE))
         {
           hasRescale_ = true;
@@ -916,7 +918,7 @@ namespace Refactoring
         else if (dicom.ParseDouble(doseGridScaling, Orthanc::DICOM_TAG_DOSE_GRID_SCALING))
         {
           hasRescale_ = true;
-          rescaleOffset_ = 0;
+          rescaleIntercept_ = 0;
           rescaleSlope_ = doseGridScaling;
         }
         else
@@ -1018,7 +1020,47 @@ namespace Refactoring
         return (OrthancStone::CoordinateSystem3D::GetDistance(distance, tmp, plane) &&
                 distance <= thickness_ / 2.0);
       }
+
+      
+      void ApplyRescale(Orthanc::ImageAccessor& image,
+                        bool useDouble) const
+      {
+        if (image.GetFormat() != Orthanc::PixelFormat_Float32)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+        }
+    
+        if (hasRescale_)
+        {
+          const unsigned int width = image.GetWidth();
+          const unsigned int height = image.GetHeight();
+        
+          for (unsigned int y = 0; y < height; y++)
+          {
+            float* p = reinterpret_cast<float*>(image.GetRow(y));
+
+            if (useDouble)
+            {
+              // Slower, accurate implementation using double
+              for (unsigned int x = 0; x < width; x++, p++)
+              {
+                double value = static_cast<double>(*p);
+                *p = static_cast<float>(value * rescaleSlope_ + rescaleIntercept_);
+              }
+            }
+            else
+            {
+              // Fast, approximate implementation using float
+              for (unsigned int x = 0; x < width; x++, p++)
+              {
+                *p = (*p) * static_cast<float>(rescaleSlope_) + static_cast<float>(rescaleIntercept_);
+              }
+            }
+          }
+        }
+      }
     };
+
     
     Data  data_;
 
@@ -1111,11 +1153,11 @@ namespace Refactoring
       return data_.hasRescale_;
     }
 
-    double GetRescaleOffset() const
+    double GetRescaleIntercept() const
     {
       if (data_.hasRescale_)
       {
-        return data_.rescaleOffset_;
+        return data_.rescaleIntercept_;
       }
       else
       {
@@ -1167,6 +1209,58 @@ namespace Refactoring
     Orthanc::PixelFormat GetExpectedPixelFormat() const
     {
       return data_.expectedPixelFormat_;
+    }
+
+
+    OrthancStone::TextureBaseSceneLayer* CreateTexture(const Orthanc::ImageAccessor& source) const
+    {
+      assert(sizeof(float) == 4);
+
+      Orthanc::PixelFormat sourceFormat = source.GetFormat();
+
+      if (sourceFormat != GetExpectedPixelFormat())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+      }
+
+      if (sourceFormat == Orthanc::PixelFormat_RGB24)
+      {
+        // This is the case of a color image. No conversion has to be done.
+        return new OrthancStone::ColorTextureSceneLayer(source);
+      }
+      else
+      {
+        if (sourceFormat != Orthanc::PixelFormat_Grayscale16 &&
+            sourceFormat != Orthanc::PixelFormat_Grayscale32 &&
+            sourceFormat != Orthanc::PixelFormat_SignedGrayscale16)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+        }
+
+        std::auto_ptr<OrthancStone::FloatTextureSceneLayer> texture;
+        
+        {
+          // This is the case of a grayscale frame. Convert it to Float32.
+          std::auto_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_Float32, 
+                                                                     source.GetWidth(), 
+                                                                     source.GetHeight(),
+                                                                     false));
+          Orthanc::ImageProcessing::Convert(*converted, source);
+
+          // Correct rescale slope/intercept if need be
+          data_.ApplyRescale(*converted, (sourceFormat == Orthanc::PixelFormat_Grayscale32));
+
+          texture.reset(new OrthancStone::FloatTextureSceneLayer(*converted));
+        }
+
+        if (data_.hasDefaultWindowing_)
+        {
+          texture->SetCustomWindowing(data_.defaultWindowingCenter_,
+                                      data_.defaultWindowingWidth_);
+        }
+        
+        return texture.release();
+      }
     }
   };
 
@@ -1399,10 +1493,26 @@ namespace Refactoring
       }
     }
   };
+
+
+
+  class IDicomVolumeSource : public boost::noncopyable
+  {
+  public:
+    virtual ~IDicomVolumeSource()
+    {
+    }
+
+    virtual const DicomVolumeImage& GetVolume() const = 0;
+
+    virtual void NotifyAxialSliceAccessed(unsigned int sliceIndex) = 0;
+  };
   
   
 
-  class VolumeSeriesOrthancLoader : public OrthancStone::IObserver
+  class VolumeSeriesOrthancLoader :
+    public OrthancStone::IObserver,
+    public IDicomVolumeSource
   {
   private:
     static const unsigned int LOW_QUALITY = 0;
@@ -1579,6 +1689,26 @@ namespace Refactoring
 
       oracle_.Schedule(*this, command.release());
     }
+    
+
+    virtual const DicomVolumeImage& GetVolume() const
+    {
+      return volume_;
+    }
+
+    
+    virtual void NotifyAxialSliceAccessed(unsigned int sliceIndex)
+    {
+      if (strategy_.get() == NULL)
+      {
+        // Should have called GetVolume().HasGeometry() before
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        strategy_->SetCurrent(sliceIndex);
+      }
+    }
   };
 
 
@@ -1661,31 +1791,32 @@ namespace Refactoring
   
 
 
-  class DicomVolumeSlicer : public IVolumeSlicer
+  class DicomVolumeMPRSlicer : public IVolumeSlicer
   {
   private:
     OrthancStone::Scene2D&          scene_;
     int                             layerDepth_;
-    const DicomVolumeImage&         volume_;
+    IDicomVolumeSource&             source_;
     bool                            first_;
     OrthancStone::VolumeProjection  lastProjection_;
     unsigned int                    lastSliceIndex_;
     uint64_t                        lastSliceRevision_;
 
   public:
-    DicomVolumeSlicer(OrthancStone::Scene2D& scene,
-                      int layerDepth,
-                      const DicomVolumeImage& volume) :
+    DicomVolumeMPRSlicer(OrthancStone::Scene2D& scene,
+                         int layerDepth,
+                         IDicomVolumeSource& source) :
       scene_(scene),
       layerDepth_(layerDepth),
-      volume_(volume),
+      source_(source),
       first_(true)
     {
     }
     
     virtual void SetViewportPlane(const OrthancStone::CoordinateSystem3D& plane)
     {
-      if (!volume_.HasGeometry())
+      if (!source_.GetVolume().HasGeometry() ||
+          source_.GetVolume().GetSlicesCount() == 0)
       {
         scene_.DeleteLayer(layerDepth_);
         return;
@@ -1693,7 +1824,7 @@ namespace Refactoring
 
       OrthancStone::VolumeProjection projection;
       unsigned int sliceIndex;
-      if (!volume_.GetImage().GetGeometry().DetectSlice(projection, sliceIndex, plane))
+      if (!source_.GetVolume().GetImage().GetGeometry().DetectSlice(projection, sliceIndex, plane))
       {
         // The cutting plane is neither axial, nor coronal, nor
         // sagittal. Could use "VolumeReslicer" here.
@@ -1704,35 +1835,53 @@ namespace Refactoring
       uint64_t sliceRevision;
       if (projection == OrthancStone::VolumeProjection_Axial)
       {
-        sliceRevision = volume_.GetSliceRevision(sliceIndex);
+        sliceRevision = source_.GetVolume().GetSliceRevision(sliceIndex);
+
+        if (first_ ||
+            lastSliceIndex_ != sliceIndex)
+        {
+          // Reorder the prefetching queue
+          source_.NotifyAxialSliceAccessed(sliceIndex);
+        }
       }
       else
       {
         // For coronal and sagittal projections, we take the global
         // revision of the volume
-        sliceRevision = volume_.GetRevision();
+        sliceRevision = source_.GetVolume().GetRevision();
       }
 
       if (first_ ||
-          lastProjection_ == projection ||
-          lastSliceIndex_ == sliceIndex ||
-          lastSliceRevision_ == sliceRevision)
+          lastProjection_ != projection ||
+          lastSliceIndex_ != sliceIndex ||
+          lastSliceRevision_ != sliceRevision)
       {
-        // Eiter the viewport plane, or the content of the slice have not
+        // Either the viewport plane, or the content of the slice have not
         // changed since the last time the layer was set: Update is needed
 
         first_ = false;
         lastProjection_ = projection;
         lastSliceIndex_ = sliceIndex;
         lastSliceRevision_ = sliceRevision;
+
+        std::auto_ptr<OrthancStone::TextureBaseSceneLayer> texture;
         
         {
-          OrthancStone::ImageBuffer3D::SliceReader reader(volume_.GetImage(), projection, sliceIndex);
+          const DicomInstanceParameters& parameters = source_.GetVolume().GetSliceParameters
+            (projection == OrthancStone::VolumeProjection_Axial ? sliceIndex : 0);
 
-          // TODO: Convert the image to Float32 or RGB24
-          
-          // TODO: Set the layer
+          OrthancStone::ImageBuffer3D::SliceReader reader(source_.GetVolume().GetImage(), projection, sliceIndex);
+          texture.reset(parameters.CreateTexture(reader.GetAccessor()));
         }
+
+        // TODO - 
+        // void SetOrigin(double x, double y);
+        // void SetPixelSpacing(double sx, double sy);
+        // void SetAngle(double angle);
+        // void SetLinearInterpolation(bool isLinearInterpolation);
+
+    
+        scene_.SetLayer(layerDepth_, texture.release());    
       }
     }
   };

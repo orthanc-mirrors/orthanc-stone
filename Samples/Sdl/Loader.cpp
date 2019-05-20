@@ -1405,103 +1405,74 @@ namespace Refactoring
   class VolumeSeriesOrthancLoader : public OrthancStone::IObserver
   {
   private:
-    class MessageHandler : public Orthanc::IDynamicObject
+    static const unsigned int LOW_QUALITY = 0;
+    static const unsigned int MIDDLE_QUALITY = 1;
+    static const unsigned int BEST_QUALITY = 2;
+    
+    
+    static unsigned int GetSliceIndexPayload(const OracleCommandWithPayload& command)
     {
-    public:
-      virtual void Handle(const Json::Value& body) const
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-      }
+      return dynamic_cast< const Orthanc::SingleValueObject<unsigned int>& >(command.GetPayload()).GetValue();
+    }
 
-      virtual void Handle(const Orthanc::ImageAccessor& image,
-                          unsigned int quality) const
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-      }
-    };
 
-    void Handle(const OrthancRestApiCommand::SuccessMessage& message)
+    void ScheduleNextSliceDownload()
+    {
+      assert(strategy_.get() != NULL);
+      
+      unsigned int sliceIndex, quality;
+      
+      if (strategy_->GetNext(sliceIndex, quality))
+      {
+        assert(quality <= BEST_QUALITY);
+
+        const DicomInstanceParameters& slice = volume_.GetSliceParameters(sliceIndex);
+          
+        const std::string& instance = slice.GetOrthancInstanceIdentifier();
+        if (instance.empty())
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+        }
+
+        std::auto_ptr<Refactoring::OracleCommandWithPayload> command;
+        
+        if (quality == BEST_QUALITY)
+        {
+          std::auto_ptr<Refactoring::GetOrthancImageCommand> tmp(
+            new Refactoring::GetOrthancImageCommand);
+          tmp->SetHttpHeader("Accept-Encoding", "gzip");
+          tmp->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
+          tmp->SetInstanceUri(instance, slice.GetExpectedPixelFormat());          
+          tmp->SetExpectedPixelFormat(slice.GetExpectedPixelFormat());
+          command.reset(tmp.release());
+        }
+        else
+        {
+          std::auto_ptr<Refactoring::GetOrthancWebViewerJpegCommand> tmp(
+            new Refactoring::GetOrthancWebViewerJpegCommand);
+          tmp->SetHttpHeader("Accept-Encoding", "gzip");
+          tmp->SetInstance(instance);
+          tmp->SetQuality((quality == 0 ? 50 : 95));
+          tmp->SetExpectedPixelFormat(slice.GetExpectedPixelFormat());
+          command.reset(tmp.release());
+        }
+
+        command->SetPayload(new Orthanc::SingleValueObject<unsigned int>(sliceIndex));
+        oracle_.Schedule(*this, command.release());
+      }
+    }
+
+
+    void LoadGeometry(const OrthancRestApiCommand::SuccessMessage& message)
     {
       Json::Value body;
       message.ParseJsonBody(body);
-
+      
       if (body.type() != Json::objectValue)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
       }
 
-      dynamic_cast<const MessageHandler&>(message.GetOrigin().GetPayload()).Handle(body);
-    }
-
-    void Handle(const Refactoring::GetOrthancImageCommand::SuccessMessage& message)
-    {
-      dynamic_cast<const MessageHandler&>(message.GetOrigin().GetPayload()).Handle(message.GetImage(), 2 /* best quality */);
-    }
-
-    void Handle(const Refactoring::GetOrthancWebViewerJpegCommand::SuccessMessage& message)
-    {
-      unsigned int quality;
-      
-      switch (message.GetOrigin().GetQuality())
-      {
-        case 50:
-          quality = 0;
-          break;
-
-        case 95:
-          quality = 1;
-          break;
-
-        default:
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }
-      
-      dynamic_cast<const MessageHandler&>(message.GetOrigin().GetPayload()).Handle(message.GetImage(), quality);
-    }
-
-
-    class LoadSliceImage : public MessageHandler
-    {
-    private:
-      VolumeSeriesOrthancLoader&  that_;
-      size_t                      slice_;
-
-    public:
-      LoadSliceImage(VolumeSeriesOrthancLoader& that,
-                     size_t slice) :
-        that_(that),
-        slice_(slice)
-      {
-      }
-
-      virtual void Handle(const Orthanc::ImageAccessor& image,
-                          unsigned int quality) const
-      {
-        that_.SetSliceContent(slice_, image, quality);
-      }
-    };
-
-
-    class LoadSeriesGeometryHandler : public MessageHandler
-    {
-    private:
-      VolumeSeriesOrthancLoader&  that_;
-
-    public:
-      LoadSeriesGeometryHandler(VolumeSeriesOrthancLoader& that) :
-        that_(that)
-      {
-      }
-
-      virtual void Handle(const Json::Value& body) const
-      {
-        that_.SetGeometry(body);
-      }
-    };
-
-
-    void SetGeometry(const Json::Value& body)
-    {
       {
         Json::Value::Members instances = body.getMemberNames();
 
@@ -1525,7 +1496,7 @@ namespace Refactoring
       if (volume_.GetSlicesCount() != 0)
       {
         strategy_.reset(new OrthancStone::BasicFetchingStrategy(
-                                new OrthancStone::BasicFetchingItemsSorter(volume_.GetSlicesCount()), 2));
+                          new OrthancStone::BasicFetchingItemsSorter(volume_.GetSlicesCount()), BEST_QUALITY));
 
         for (unsigned int i = 0; i < 4; i++)   // Schedule up to 4 simultaneous downloads (TODO - parameter)
         {
@@ -1535,64 +1506,38 @@ namespace Refactoring
     }
 
 
-    void ScheduleNextSliceDownload()
-    {
-      assert(strategy_.get() != NULL);
-      
-      unsigned int sliceIndex, quality;
-      
-      if (strategy_->GetNext(sliceIndex, quality))
-      {
-        assert(quality <= 2);
+    void LoadBestQualitySliceContent(const Refactoring::GetOrthancImageCommand::SuccessMessage& message)
+    {      
+      volume_.SetSliceContent(GetSliceIndexPayload(message.GetOrigin()),
+                              message.GetImage(), BEST_QUALITY);
 
-        const DicomInstanceParameters& slice = volume_.GetSliceParameters(sliceIndex);
-          
-        const std::string& instance = slice.GetOrthancInstanceIdentifier();
-        if (instance.empty())
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-        }
-
-        std::auto_ptr<Refactoring::IOracleCommand> command;
-        
-        if (quality == 2)   // Best quality
-        {
-          std::auto_ptr<Refactoring::GetOrthancImageCommand> tmp(
-            new Refactoring::GetOrthancImageCommand);
-          tmp->SetHttpHeader("Accept-Encoding", "gzip");
-          tmp->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
-          tmp->SetInstanceUri(instance, slice.GetExpectedPixelFormat());          
-          tmp->SetExpectedPixelFormat(slice.GetExpectedPixelFormat());
-          tmp->SetPayload(new LoadSliceImage(*this, sliceIndex));
-          command.reset(tmp.release());
-        }
-        else
-        {
-          std::auto_ptr<Refactoring::GetOrthancWebViewerJpegCommand> tmp(
-            new Refactoring::GetOrthancWebViewerJpegCommand);
-          tmp->SetHttpHeader("Accept-Encoding", "gzip");
-          tmp->SetInstance(instance);
-          tmp->SetQuality((quality == 0 ? 50 : 95));
-          tmp->SetExpectedPixelFormat(slice.GetExpectedPixelFormat());
-          tmp->SetPayload(new LoadSliceImage(*this, sliceIndex));
-          command.reset(tmp.release());
-        }
-
-        oracle_.Schedule(*this, command.release());
-      }
-    }
-
-
-    void SetSliceContent(unsigned int sliceIndex,
-                         const Orthanc::ImageAccessor& image,
-                         unsigned int quality)
-    {
-      assert(quality <= 2);
-      
-      volume_.SetSliceContent(sliceIndex, image, quality);
       ScheduleNextSliceDownload();
     }
-    
+
+
+    void LoadJpegSliceContent(const Refactoring::GetOrthancWebViewerJpegCommand::SuccessMessage& message)
+    {
+      unsigned int quality;
+      
+      switch (message.GetOrigin().GetQuality())
+      {
+        case 50:
+          quality = LOW_QUALITY;
+          break;
+
+        case 90:
+          quality = MIDDLE_QUALITY;
+          break;
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+      
+      volume_.SetSliceContent(GetSliceIndexPayload(message.GetOrigin()), message.GetImage(), quality);
+
+      ScheduleNextSliceDownload();
+    }
+
 
     IOracle&          oracle_;
     bool              active_;
@@ -1609,15 +1554,15 @@ namespace Refactoring
     {
       oracleObservable.RegisterObserverCallback(
         new OrthancStone::Callable<VolumeSeriesOrthancLoader, OrthancRestApiCommand::SuccessMessage>
-        (*this, &VolumeSeriesOrthancLoader::Handle));
+        (*this, &VolumeSeriesOrthancLoader::LoadGeometry));
 
       oracleObservable.RegisterObserverCallback(
         new OrthancStone::Callable<VolumeSeriesOrthancLoader, GetOrthancImageCommand::SuccessMessage>
-        (*this, &VolumeSeriesOrthancLoader::Handle));
+        (*this, &VolumeSeriesOrthancLoader::LoadBestQualitySliceContent));
 
       oracleObservable.RegisterObserverCallback(
         new OrthancStone::Callable<VolumeSeriesOrthancLoader, GetOrthancWebViewerJpegCommand::SuccessMessage>
-        (*this, &VolumeSeriesOrthancLoader::Handle));
+        (*this, &VolumeSeriesOrthancLoader::LoadJpegSliceContent));
     }
 
     void LoadSeries(const std::string& seriesId)
@@ -1631,7 +1576,6 @@ namespace Refactoring
 
       std::auto_ptr<Refactoring::OrthancRestApiCommand> command(new Refactoring::OrthancRestApiCommand);
       command->SetUri("/series/" + seriesId + "/instances-tags");
-      command->SetPayload(new LoadSeriesGeometryHandler(*this));
 
       oracle_.Schedule(*this, command.release());
     }
@@ -1664,56 +1608,56 @@ namespace Refactoring
 
 
   /*  class VolumeSlicerBase : public IVolumeSlicer
-  {
-  private:
-    OrthancStone::Scene2D&            scene_;
-    int                               layerDepth_;
-    bool                              first_;
-    OrthancStone::CoordinateSystem3D  lastPlane_;
-
-  protected:
-    bool HasViewportPlaneChanged(const OrthancStone::CoordinateSystem3D& plane) const
-    {
-      if (first_ ||
-          !OrthancStone::LinearAlgebra::IsCloseToZero(
-            boost::numeric::ublas::norm_2(lastPlane_.GetNormal() - plane.GetNormal())))
       {
-        // This is the first rendering, or the plane has not the same orientation
-        return false;
+      private:
+      OrthancStone::Scene2D&            scene_;
+      int                               layerDepth_;
+      bool                              first_;
+      OrthancStone::CoordinateSystem3D  lastPlane_;
+
+      protected:
+      bool HasViewportPlaneChanged(const OrthancStone::CoordinateSystem3D& plane) const
+      {
+      if (first_ ||
+      !OrthancStone::LinearAlgebra::IsCloseToZero(
+      boost::numeric::ublas::norm_2(lastPlane_.GetNormal() - plane.GetNormal())))
+      {
+      // This is the first rendering, or the plane has not the same orientation
+      return false;
       }
       else
       {
-        double offset1 = lastPlane_.ProjectAlongNormal(plane.GetOrigin());
-        double offset2 = lastPlane_.ProjectAlongNormal(lastPlane_.GetOrigin());
-        return OrthancStone::LinearAlgebra::IsCloseToZero(offset2 - offset1);
+      double offset1 = lastPlane_.ProjectAlongNormal(plane.GetOrigin());
+      double offset2 = lastPlane_.ProjectAlongNormal(lastPlane_.GetOrigin());
+      return OrthancStone::LinearAlgebra::IsCloseToZero(offset2 - offset1);
       }
-    }
+      }
 
-    void SetLastViewportPlane(const OrthancStone::CoordinateSystem3D& plane)
-    {
+      void SetLastViewportPlane(const OrthancStone::CoordinateSystem3D& plane)
+      {
       first_ = false;
       lastPlane_ = plane;
-    }
+      }
 
-    void SetLayer(OrthancStone::ISceneLayer* layer)
-    {
+      void SetLayer(OrthancStone::ISceneLayer* layer)
+      {
       scene_.SetLayer(layerDepth_, layer);
-    }
+      }
 
-    void DeleteLayer()
-    {
+      void DeleteLayer()
+      {
       scene_.DeleteLayer(layerDepth_);
-    }
+      }
     
-  public:
-    VolumeSlicerBase(OrthancStone::Scene2D& scene,
-                     int layerDepth) :
+      public:
+      VolumeSlicerBase(OrthancStone::Scene2D& scene,
+      int layerDepth) :
       scene_(scene),
       layerDepth_(layerDepth),
       first_(true)
-    {
-    }
-    };*/
+      {
+      }
+      };*/
   
 
 
@@ -2055,7 +1999,7 @@ namespace Refactoring
 
   public:
     NativeOracle(IMessageEmitter& emitter) :
-    emitter_(emitter),
+      emitter_(emitter),
       state_(State_Setup),
       workers_(4)
     {
@@ -2167,8 +2111,8 @@ namespace Refactoring
 
     public:
       ReaderLock(NativeApplicationContext& that) : 
-      that_(that),
-      lock_(that.mutex_)
+        that_(that),
+        lock_(that.mutex_)
       {
       }
     };
@@ -2182,8 +2126,8 @@ namespace Refactoring
 
     public:
       WriterLock(NativeApplicationContext& that) : 
-      that_(that),
-      lock_(that.mutex_)
+        that_(that),
+        lock_(that.mutex_)
       {
       }
 
@@ -2253,7 +2197,7 @@ public:
 
     oracle.RegisterObserverCallback
       (new OrthancStone::Callable
-      <Toto, Refactoring::GetOrthancWebViewerJpegCommand::SuccessMessage>(*this, &Toto::Handle));
+       <Toto, Refactoring::GetOrthancWebViewerJpegCommand::SuccessMessage>(*this, &Toto::Handle));
 
     oracle.RegisterObserverCallback
       (new OrthancStone::Callable

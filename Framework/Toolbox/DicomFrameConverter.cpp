@@ -28,7 +28,7 @@
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   static const Orthanc::DicomTag IMAGE_TAGS[] =
   {
@@ -61,9 +61,9 @@ namespace OrthancStone
   {
     SetDefaultParameters();
 
-    Vector c, w;
-    if (LinearAlgebra::ParseVector(c, dicom, Orthanc::DICOM_TAG_WINDOW_CENTER) &&
-        LinearAlgebra::ParseVector(w, dicom, Orthanc::DICOM_TAG_WINDOW_WIDTH) &&
+    OrthancStone::Vector c, w;
+    if (OrthancStone::LinearAlgebra::ParseVector(c, dicom, Orthanc::DICOM_TAG_WINDOW_CENTER) &&
+        OrthancStone::LinearAlgebra::ParseVector(w, dicom, Orthanc::DICOM_TAG_WINDOW_WIDTH) &&
         c.size() > 0 && 
         w.size() > 0)
     {

@@ -344,7 +344,7 @@ namespace OrthancStone
   RadiographyLayer& RadiographyScene::LoadDicomImage(Orthanc::ImageAccessor* dicomImage, // takes ownership
                                                      const std::string& instance,
                                                      unsigned int frame,
-                                                     DicomFrameConverter* converter,  // takes ownership
+                                                     Deprecated::DicomFrameConverter* converter,  // takes ownership
                                                      PhotometricDisplayMode preferredPhotometricDisplayMode,
                                                      RadiographyLayer::Geometry* geometry)
   {

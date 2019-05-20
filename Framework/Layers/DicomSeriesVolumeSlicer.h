@@ -45,13 +45,13 @@ namespace OrthancStone
     private:
       const Orthanc::ImageAccessor&  frame_;
       SliceImageQuality              imageQuality_;
-      const Slice&                   slice_;
+      const Deprecated::Slice&                   slice_;
 
     public:
       FrameReadyMessage(DicomSeriesVolumeSlicer& origin,
                         const Orthanc::ImageAccessor& frame,
                         SliceImageQuality imageQuality,
-                        const Slice& slice) :
+                        const Deprecated::Slice& slice) :
         OriginMessage(origin),
         frame_(frame),
         imageQuality_(imageQuality),
@@ -69,7 +69,7 @@ namespace OrthancStone
         return imageQuality_;
       }
 
-      const Slice& GetSlice() const
+      const Deprecated::Slice& GetSlice() const
       {
         return slice_;
       }
@@ -107,7 +107,7 @@ namespace OrthancStone
       return loader_.GetSlicesCount();
     }
 
-    const Slice& GetSlice(size_t slice) const 
+    const Deprecated::Slice& GetSlice(size_t slice) const 
     {
       return loader_.GetSlice(slice);
     }

@@ -63,7 +63,7 @@ namespace OrthancStone
 
     // TODO: Avoid cloning the "frame"
     static ILayerRenderer* CreateRenderer(const Orthanc::ImageAccessor& frame,
-                                          const Slice& framePlane,
+                                          const Deprecated::Slice& framePlane,
                                           bool isFullQuality);
   };
 }

@@ -61,7 +61,7 @@ namespace OrthancStone
     };
     
     unsigned int                    sliceIndex_;
-    std::auto_ptr<Slice>            slice_;
+    std::auto_ptr<Deprecated::Slice>            slice_;
     boost::shared_ptr<Orthanc::ImageAccessor>   image_;
     SliceImageQuality               effectiveQuality_;
     CachedSliceStatus               status_;
@@ -190,7 +190,7 @@ namespace OrthancStone
 
     // create the slice in the cache with "empty" data
     boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::GetBroker()));
-    cachedSlice->slice_.reset(new Slice(instanceId, frame));
+    cachedSlice->slice_.reset(new Deprecated::Slice(instanceId, frame));
     cachedSlice->status_ = CachedSliceStatus_ScheduledToLoad;
     std::string sliceKeyId = instanceId + ":" + boost::lexical_cast<std::string>(frame);
 
@@ -228,7 +228,7 @@ namespace OrthancStone
       dynamic_cast<const DicomSeriesVolumeSlicer&>(message.GetOrigin());
 
     // save/replace the slice in cache
-    const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount()
+    const Deprecated::Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount()
     std::string sliceKeyId = (slice.GetOrthancInstanceId() + ":" + 
                               boost::lexical_cast<std::string>(slice.GetFrame()));
 
@@ -249,7 +249,7 @@ namespace OrthancStone
   void SmartLoader::OnFrameReady(const DicomSeriesVolumeSlicer::FrameReadyMessage& message)
   {
     // save/replace the slice in cache
-    const Slice& slice = message.GetSlice();
+    const Deprecated::Slice& slice = message.GetSlice();
     std::string sliceKeyId = (slice.GetOrthancInstanceId() + ":" + 
                               boost::lexical_cast<std::string>(slice.GetFrame()));
 
@@ -273,7 +273,7 @@ namespace OrthancStone
     const DicomSeriesVolumeSlicer& source =
       dynamic_cast<const DicomSeriesVolumeSlicer&>(message.GetOrigin());
     
-    const Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount() ?
+    const Deprecated::Slice& slice = source.GetSlice(0); // TODO handle GetSliceCount() ?
     std::string sliceKeyId = (slice.GetOrthancInstanceId() + ":" + 
                               boost::lexical_cast<std::string>(slice.GetFrame()));
 

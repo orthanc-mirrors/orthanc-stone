@@ -41,12 +41,12 @@ namespace OrthancStone
       
     private:
       size_t        sliceIndex_;
-      const Slice&  slice_;
+      const Deprecated::Slice&  slice_;
       
     public:
       SliceContentChangedMessage(ISlicedVolume& origin,
                                  size_t sliceIndex,
-                                 const Slice& slice) :
+                                 const Deprecated::Slice& slice) :
         OriginMessage(origin),
         sliceIndex_(sliceIndex),
         slice_(slice)
@@ -58,7 +58,7 @@ namespace OrthancStone
         return sliceIndex_;
       }
 
-      const Slice& GetSlice() const
+      const Deprecated::Slice& GetSlice() const
       {
         return slice_;
       }
@@ -72,6 +72,6 @@ namespace OrthancStone
     
     virtual size_t GetSliceCount() const = 0;
 
-    virtual const Slice& GetSlice(size_t slice) const = 0;
+    virtual const Deprecated::Slice& GetSlice(size_t slice) const = 0;
   };
 }

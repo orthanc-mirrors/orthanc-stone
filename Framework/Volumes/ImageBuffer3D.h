@@ -122,7 +122,7 @@ namespace OrthancStone
                   float& maxValue) const;
 
     bool FitWindowingToRange(RenderStyle& style,
-                             const DicomFrameConverter& converter) const;
+                             const Deprecated::DicomFrameConverter& converter) const;
 
     uint8_t GetVoxelGrayscale8Unchecked(unsigned int x,
                                         unsigned int y,

@@ -54,7 +54,7 @@ namespace OrthancStone
 
   void RadiographyDicomLayer::SetDicomTags(const OrthancPlugins::FullOrthancDataset& dataset)
   {
-    converter_.reset(new DicomFrameConverter);
+    converter_.reset(new Deprecated::DicomFrameConverter);
     converter_->ReadParameters(dataset);
     ApplyConverter();
 
@@ -112,7 +112,7 @@ namespace OrthancStone
   }
 
 
-  void RadiographyDicomLayer::SetDicomFrameConverter(DicomFrameConverter* converter)
+  void RadiographyDicomLayer::SetDicomFrameConverter(Deprecated::DicomFrameConverter* converter)
   {
     converter_.reset(converter);
   }

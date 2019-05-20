@@ -46,14 +46,14 @@ namespace OrthancStone
       
     private:
       unsigned int                   sliceIndex_;
-      const Slice&                   slice_;
+      const Deprecated::Slice&                   slice_;
       const Orthanc::ImageAccessor&  image_;
       SliceImageQuality              effectiveQuality_;
 
     public:
       SliceImageReadyMessage(const OrthancSlicesLoader& origin,
                              unsigned int sliceIndex,
-                             const Slice& slice,
+                             const Deprecated::Slice& slice,
                              const Orthanc::ImageAccessor& image,
                              SliceImageQuality effectiveQuality) :
         OriginMessage(origin),
@@ -69,7 +69,7 @@ namespace OrthancStone
         return sliceIndex_;
       }
 
-      const Slice& GetSlice() const
+      const Deprecated::Slice& GetSlice() const
       {
         return slice_;
       }
@@ -91,14 +91,14 @@ namespace OrthancStone
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      const Slice&       slice_;
+      const Deprecated::Slice&       slice_;
       unsigned int       sliceIndex_;
       SliceImageQuality  effectiveQuality_;
 
     public:
       SliceImageErrorMessage(const OrthancSlicesLoader& origin,
                              unsigned int sliceIndex,
-                             const Slice& slice,
+                             const Deprecated::Slice& slice,
                              SliceImageQuality effectiveQuality) :
         OriginMessage(origin),
         slice_(slice),
@@ -111,7 +111,7 @@ namespace OrthancStone
         return sliceIndex_;
       }
 
-      const Slice& GetSlice() const
+      const Deprecated::Slice& GetSlice() const
       {
         return slice_;
       }
@@ -170,13 +170,13 @@ namespace OrthancStone
 
     void ParseSliceRawImage(const OrthancApiClient::BinaryResponseReadyMessage& message);
 
-    void ScheduleSliceImagePng(const Slice& slice,
+    void ScheduleSliceImagePng(const Deprecated::Slice& slice,
                                size_t index);
 
-    void ScheduleSliceImagePam(const Slice& slice,
+    void ScheduleSliceImagePam(const Deprecated::Slice& slice,
                                size_t index);
 
-    void ScheduleSliceImageJpeg(const Slice& slice,
+    void ScheduleSliceImageJpeg(const Deprecated::Slice& slice,
                                 size_t index,
                                 SliceImageQuality quality);
 
@@ -198,7 +198,7 @@ namespace OrthancStone
 
     size_t GetSlicesCount() const;
 
-    const Slice& GetSlice(size_t index) const;
+    const Deprecated::Slice& GetSlice(size_t index) const;
 
     bool LookupSlice(size_t& index,
                      const CoordinateSystem3D& plane) const;

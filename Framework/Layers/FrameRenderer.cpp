@@ -118,7 +118,7 @@ namespace OrthancStone
 
 
   ILayerRenderer* FrameRenderer::CreateRenderer(const Orthanc::ImageAccessor& frame,
-                                                const Slice& framePlane,
+                                                const Deprecated::Slice& framePlane,
                                                 bool isFullQuality)
   {
     if (frame.GetFormat() == Orthanc::PixelFormat_RGB24)

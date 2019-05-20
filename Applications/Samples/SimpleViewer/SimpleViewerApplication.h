@@ -51,7 +51,6 @@ using namespace StoneSampleCommands;
 #include "ThumbnailInteractor.h"
 #include "MainWidgetInteractor.h"
 #include "AppStatus.h"
-#include "Messages.h"
 
 using namespace OrthancStone;
 
@@ -67,13 +66,14 @@ namespace SimpleViewer
   {
   public:
 
-    struct StatusUpdatedMessage : public BaseMessage<SimpleViewerMessageType_AppStatusUpdated>
+    struct StatusUpdatedMessage : public IMessage
     {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
       const AppStatus& status_;
 
       StatusUpdatedMessage(const AppStatus& status)
-        : BaseMessage(),
-          status_(status)
+        : status_(status)
       {
       }
     };

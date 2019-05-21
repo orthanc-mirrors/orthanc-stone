@@ -22,6 +22,7 @@
 #pragma once
 
 #include "RadiographyLayer.h"
+#include "../Toolbox/DicomFrameConverter.h"
 #include "../Toolbox/OrthancApiClient.h"
 #include "Framework/StoneEnumerations.h"
 #include "Core/Images/Image.h"
@@ -30,7 +31,6 @@
 namespace OrthancStone
 {
   class RadiographyDicomLayer;
-  class DicomFrameConverter;
 
   class RadiographyScene :
       public IObserver,
@@ -193,7 +193,7 @@ namespace OrthancStone
     virtual RadiographyLayer& LoadDicomImage(Orthanc::ImageAccessor* dicomImage, // takes ownership
                                              const std::string& instance,
                                              unsigned int frame,
-                                             DicomFrameConverter* converter,  // takes ownership
+                                             Deprecated::DicomFrameConverter* converter,  // takes ownership
                                              PhotometricDisplayMode preferredPhotometricDisplayMode,
                                              RadiographyLayer::Geometry* geometry);
 

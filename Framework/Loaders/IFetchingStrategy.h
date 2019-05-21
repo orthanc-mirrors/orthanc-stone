@@ -21,28 +21,29 @@
 
 #pragma once
 
-#include "FrameRenderer.h"
-#include "../Toolbox/DicomFrameConverter.h"
+#include <boost/noncopyable.hpp>
 
 namespace OrthancStone
 {
-  class GrayscaleFrameRenderer : public FrameRenderer
+  class IFetchingStrategy : public boost::noncopyable
   {
-  private:
-    std::auto_ptr<Orthanc::ImageAccessor>   frame_;  // In Float32
-    float                                   defaultWindowCenter_;
-    float                                   defaultWindowWidth_;
-    Orthanc::PhotometricInterpretation      photometric_;
-
-  protected:
-    virtual CairoSurface* GenerateDisplay(const RenderStyle& style);
-
   public:
-    GrayscaleFrameRenderer(const Orthanc::ImageAccessor& frame,
-                           const Deprecated::DicomFrameConverter& converter,
-                           const CoordinateSystem3D& framePlane,
-                           double pixelSpacingX,
-                           double pixelSpacingY,
-                           bool isFullQuality);
+    virtual ~IFetchingStrategy()
+    {
+    }
+
+    virtual unsigned int GetItemsCount() const = 0;
+
+    virtual unsigned int GetMaxQuality() const = 0;
+
+    virtual bool GetNext(unsigned int& item,
+                         unsigned int& quality) = 0;
+
+    virtual void SetCurrent(unsigned int item) = 0;
+
+    // Ask the strategy to re-schedule the item with the lowest
+    // priority in the fetching order. This allows to know which item
+    // should be dropped from a cache.
+    virtual void RecycleFurthest(unsigned int& item) = 0;
   };
-}
+};

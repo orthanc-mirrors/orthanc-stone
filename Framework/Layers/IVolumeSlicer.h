@@ -42,17 +42,17 @@ namespace OrthancStone
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      const Slice& slice_;
+      const Deprecated::Slice& slice_;
 
     public:
       SliceContentChangedMessage(IVolumeSlicer& origin,
-                                 const Slice& slice) :
+                                 const Deprecated::Slice& slice) :
         OriginMessage(origin),
         slice_(slice)
       {
       }
 
-      const Slice& GetSlice() const
+      const Deprecated::Slice& GetSlice() const
       {
         return slice_;
       }

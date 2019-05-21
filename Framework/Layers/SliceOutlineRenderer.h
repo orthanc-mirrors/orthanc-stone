@@ -37,7 +37,7 @@ namespace OrthancStone
     RenderStyle         style_;
 
   public:
-    SliceOutlineRenderer(const Slice& slice) :
+    SliceOutlineRenderer(const Deprecated::Slice& slice) :
       geometry_(slice.GetGeometry()),
       pixelSpacingX_(slice.GetPixelSpacingX()),
       pixelSpacingY_(slice.GetPixelSpacingY()),

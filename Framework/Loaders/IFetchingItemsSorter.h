@@ -21,28 +21,22 @@
 
 #pragma once
 
-#include "FrameRenderer.h"
-#include "../Toolbox/DicomFrameConverter.h"
+#include <boost/noncopyable.hpp>
+#include <vector>
 
 namespace OrthancStone
 {
-  class GrayscaleFrameRenderer : public FrameRenderer
+  class IFetchingItemsSorter : public boost::noncopyable
   {
-  private:
-    std::auto_ptr<Orthanc::ImageAccessor>   frame_;  // In Float32
-    float                                   defaultWindowCenter_;
-    float                                   defaultWindowWidth_;
-    Orthanc::PhotometricInterpretation      photometric_;
-
-  protected:
-    virtual CairoSurface* GenerateDisplay(const RenderStyle& style);
-
   public:
-    GrayscaleFrameRenderer(const Orthanc::ImageAccessor& frame,
-                           const Deprecated::DicomFrameConverter& converter,
-                           const CoordinateSystem3D& framePlane,
-                           double pixelSpacingX,
-                           double pixelSpacingY,
-                           bool isFullQuality);
+    virtual ~IFetchingItemsSorter()
+    {
+    }
+
+    virtual unsigned int GetItemsCount() const = 0;
+
+    // Sort a set of items given the current item
+    virtual void Sort(std::vector<unsigned int>& target,
+                      unsigned int current) = 0;
   };
-}
+};

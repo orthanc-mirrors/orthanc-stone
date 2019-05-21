@@ -21,19 +21,20 @@
 
 #pragma once
 
+#include "../Toolbox/DicomFrameConverter.h"
 #include "RadiographyLayer.h"
+
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 
 namespace OrthancStone
 {
   class RadiographyScene;
-  class DicomFrameConverter;
 
   class RadiographyDicomLayer : public RadiographyLayer
   {
   private:
     std::auto_ptr<Orthanc::ImageAccessor>  source_;  // Content of PixelData
-    std::auto_ptr<DicomFrameConverter>     converter_;
+    std::auto_ptr<Deprecated::DicomFrameConverter>     converter_;
     std::auto_ptr<Orthanc::ImageAccessor>  converted_;  // Float32
     std::string                            instanceId_;
     unsigned int                           frame_;
@@ -65,10 +66,10 @@ namespace OrthancStone
 
     const Orthanc::ImageAccessor* GetSourceImage() const {return source_.get();}  // currently need this access to serialize scene in plain old data to send to a WASM worker
 
-    const DicomFrameConverter& GetDicomFrameConverter() const {return *converter_;} // currently need this access to serialize scene in plain old data to send to a WASM worker
+    const Deprecated::DicomFrameConverter& GetDicomFrameConverter() const {return *converter_;} // currently need this access to serialize scene in plain old data to send to a WASM worker
     
      // Takes ownership
-    void SetDicomFrameConverter(DicomFrameConverter* converter);
+    void SetDicomFrameConverter(Deprecated::DicomFrameConverter* converter);
 
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,

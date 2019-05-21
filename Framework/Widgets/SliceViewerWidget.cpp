@@ -510,7 +510,7 @@ namespace OrthancStone
               << "," << plane.GetOrigin()[1]
               << "," << plane.GetOrigin()[2] << ")";
     
-    Slice displayedSlice(plane_, THIN_SLICE_THICKNESS);
+    Deprecated::Slice displayedSlice(plane_, THIN_SLICE_THICKNESS);
 
     //if (!displayedSlice.ContainsPlane(slice))
     {

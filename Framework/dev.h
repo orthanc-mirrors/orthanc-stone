@@ -64,8 +64,8 @@ namespace OrthancStone
     }
 
 
-    static bool IsCompatible(const Slice& a,
-                             const Slice& b)
+    static bool IsCompatible(const Deprecated::Slice& a,
+                             const Deprecated::Slice& b)
     {
       if (!GeometryToolbox::IsParallel(a.GetGeometry().GetNormal(),
                                        b.GetGeometry().GetNormal()))
@@ -98,8 +98,8 @@ namespace OrthancStone
     }
 
 
-    static double GetDistance(const Slice& a,
-                              const Slice& b)
+    static double GetDistance(const Deprecated::Slice& a,
+                              const Deprecated::Slice& b)
     {
       return fabs(a.GetGeometry().ProjectAlongNormal(a.GetGeometry().GetOrigin()) -
                   a.GetGeometry().ProjectAlongNormal(b.GetGeometry().GetOrigin()));
@@ -268,7 +268,7 @@ namespace OrthancStone
       return loader_.GetSlicesCount();
     }
 
-    virtual const Slice& GetSlice(size_t index) const
+    virtual const Deprecated::Slice& GetSlice(size_t index) const
     {
       return loader_.GetSlice(index);
     }
@@ -287,7 +287,7 @@ namespace OrthancStone
     }
 
     bool FitWindowingToRange(RenderStyle& style,
-                             const DicomFrameConverter& converter) const
+                             const Deprecated::DicomFrameConverter& converter) const
     {
       if (image_.get() == NULL)
       {
@@ -311,7 +311,7 @@ namespace OrthancStone
     double               pixelSpacingY_;
     double               sliceThickness_;
     CoordinateSystem3D   reference_;
-    DicomFrameConverter  converter_;
+    Deprecated::DicomFrameConverter  converter_;
 
     double ComputeAxialThickness(const OrthancVolumeImage& volume) const
     {
@@ -320,8 +320,8 @@ namespace OrthancStone
       size_t n = volume.GetSlicesCount();
       if (n > 1)
       {
-        const Slice& a = volume.GetSlice(0);
-        const Slice& b = volume.GetSlice(n - 1);
+        const Deprecated::Slice& a = volume.GetSlice(0);
+        const Deprecated::Slice& b = volume.GetSlice(n - 1);
         thickness = ((reference_.ProjectAlongNormal(b.GetGeometry().GetOrigin()) -
                       reference_.ProjectAlongNormal(a.GetGeometry().GetOrigin())) /
                      (static_cast<double>(n) - 1.0));
@@ -345,7 +345,7 @@ namespace OrthancStone
 
     void SetupAxial(const OrthancVolumeImage& volume)
     {
-      const Slice& axial = volume.GetSlice(0);
+      const Deprecated::Slice& axial = volume.GetSlice(0);
 
       width_ = axial.GetWidth();
       height_ = axial.GetHeight();
@@ -360,7 +360,7 @@ namespace OrthancStone
 
     void SetupCoronal(const OrthancVolumeImage& volume)
     {
-      const Slice& axial = volume.GetSlice(0);
+      const Deprecated::Slice& axial = volume.GetSlice(0);
       double axialThickness = ComputeAxialThickness(volume);
 
       width_ = axial.GetWidth();
@@ -382,7 +382,7 @@ namespace OrthancStone
 
     void SetupSagittal(const OrthancVolumeImage& volume)
     {
-      const Slice& axial = volume.GetSlice(0);
+      const Deprecated::Slice& axial = volume.GetSlice(0);
       double axialThickness = ComputeAxialThickness(volume);
 
       width_ = axial.GetHeight();
@@ -470,7 +470,7 @@ namespace OrthancStone
       }
     }
 
-    Slice* GetSlice(size_t slice) const
+    Deprecated::Slice* GetSlice(size_t slice) const
     {
       if (slice >= depth_)
       {
@@ -483,8 +483,8 @@ namespace OrthancStone
                                   reference_.GetAxisX(),
                                   reference_.GetAxisY());
 
-        return new Slice(origin, pixelSpacingX_, pixelSpacingY_, sliceThickness_,
-                         width_, height_, converter_);
+        return new Deprecated::Slice(origin, pixelSpacingX_, pixelSpacingY_, sliceThickness_,
+                                     width_, height_, converter_);
       }
     }
   };
@@ -500,12 +500,12 @@ namespace OrthancStone
     {
     private:
       const Orthanc::ImageAccessor&  frame_;
-      const Slice&                   slice_;
+      const Deprecated::Slice&                   slice_;
       bool                           isFullQuality_;
 
     public:
       RendererFactory(const Orthanc::ImageAccessor& frame,
-                      const Slice& slice,
+                      const Deprecated::Slice& slice,
                       bool isFullQuality) :
                       frame_(frame),
                       slice_(slice),
@@ -662,7 +662,7 @@ namespace OrthancStone
       {
         // As the slices of the volumic image are arranged in a box,
         // we only consider one single reference slice (the one with index 0).
-        std::auto_ptr<Slice> slice(GetProjectionGeometry(projection).GetSlice(0));
+        std::auto_ptr<Deprecated::Slice> slice(GetProjectionGeometry(projection).GetSlice(0));
         slice->GetExtent(points);
 
         return true;
@@ -693,7 +693,7 @@ namespace OrthancStone
             frame.reset(Orthanc::Image::Clone(reader.GetAccessor()));
           }
 
-          std::auto_ptr<Slice> slice(geometry.GetSlice(closest));
+          std::auto_ptr<Deprecated::Slice> slice(geometry.GetSlice(closest));
 
           RendererFactory factory(*frame, *slice, isFullQuality);
 
@@ -858,7 +858,7 @@ namespace OrthancStone
       {
         slice_ = slice;
 
-        std::auto_ptr<Slice> tmp(slices_->GetSlice(slice_));
+        std::auto_ptr<Deprecated::Slice> tmp(slices_->GetSlice(slice_));
         widget_.SetSlice(tmp->GetGeometry());
       }
     }
@@ -917,7 +917,7 @@ namespace OrthancStone
 
     virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice)
     {
-      Slice reference(viewportSlice, 0.001);
+      Deprecated::Slice reference(viewportSlice, 0.001);
 
       Vector p, d;
 

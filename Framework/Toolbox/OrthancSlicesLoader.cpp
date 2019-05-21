@@ -76,7 +76,7 @@ namespace OrthancStone
     Mode               mode_;
     unsigned int       frame_;
     unsigned int       sliceIndex_;
-    const Slice*       slice_;
+    const Deprecated::Slice*       slice_;
     std::string        instanceId_;
     SliceImageQuality  quality_;
 
@@ -105,7 +105,7 @@ namespace OrthancStone
       return sliceIndex_;
     }
 
-    const Slice& GetSlice() const
+    const Deprecated::Slice& GetSlice() const
     {
       assert(mode_ == Mode_LoadImage ||
              mode_ == Mode_LoadRawImage);
@@ -143,7 +143,7 @@ namespace OrthancStone
     }
 
     static Operation* DownloadSliceImage(unsigned int  sliceIndex,
-                                         const Slice&  slice,
+                                         const Deprecated::Slice&  slice,
                                          SliceImageQuality quality)
     {
       std::auto_ptr<Operation> tmp(new Operation(Mode_LoadImage));
@@ -154,7 +154,7 @@ namespace OrthancStone
     }
 
     static Operation* DownloadSliceRawImage(unsigned int  sliceIndex,
-                                            const Slice&  slice)
+                                            const Deprecated::Slice&  slice)
     {
       std::auto_ptr<Operation> tmp(new Operation(Mode_LoadRawImage));
       tmp->sliceIndex_ = sliceIndex;
@@ -163,7 +163,7 @@ namespace OrthancStone
       return tmp.release();
     }
 
-    static Operation* DownloadDicomFile(const Slice&  slice)
+    static Operation* DownloadDicomFile(const Deprecated::Slice&  slice)
     {
       std::auto_ptr<Operation> tmp(new Operation(Mode_LoadDicomFile));
       tmp->slice_ = &slice;
@@ -241,7 +241,7 @@ namespace OrthancStone
       
       for (unsigned int frame = 0; frame < frames; frame++)
       {
-        std::auto_ptr<Slice> slice(new Slice);
+        std::auto_ptr<Deprecated::Slice> slice(new Deprecated::Slice);
         if (slice->ParseOrthancFrame(dicom, instances[i], frame))
         {
           CoordinateSystem3D geometry = slice->GetGeometry();
@@ -277,7 +277,7 @@ namespace OrthancStone
     
     for (unsigned int frame = 0; frame < frames; frame++)
     {
-      std::auto_ptr<Slice> slice(new Slice);
+      std::auto_ptr<Deprecated::Slice> slice(new Deprecated::Slice);
       if (slice->ParseOrthancFrame(dicom, instanceId, frame))
       {
         CoordinateSystem3D geometry = slice->GetGeometry();
@@ -308,7 +308,7 @@ namespace OrthancStone
     Orthanc::DicomMap dicom;
     MessagingToolbox::ConvertDataset(dicom, dataset);
     
-    std::auto_ptr<Slice> slice(new Slice);
+    std::auto_ptr<Deprecated::Slice> slice(new Deprecated::Slice);
     if (slice->ParseOrthancFrame(dicom, instanceId, frame))
     {
       LOG(INFO) << "Loaded instance geometry " << instanceId;
@@ -721,14 +721,14 @@ namespace OrthancStone
   }
   
   
-  const Slice& OrthancSlicesLoader::GetSlice(size_t index) const
+  const Deprecated::Slice& OrthancSlicesLoader::GetSlice(size_t index) const
   {
     if (state_ != State_GeometryReady)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
 
-    return dynamic_cast<const Slice&>(slices_.GetSlicePayload(index));
+    return dynamic_cast<const Deprecated::Slice&>(slices_.GetSlicePayload(index));
   }
   
   
@@ -746,7 +746,7 @@ namespace OrthancStone
   }
   
   
-  void OrthancSlicesLoader::ScheduleSliceImagePng(const Slice& slice,
+  void OrthancSlicesLoader::ScheduleSliceImagePng(const Deprecated::Slice& slice,
                                                   size_t index)
   {
     std::string uri = ("/instances/" + slice.GetOrthancInstanceId() + "/frames/" +
@@ -781,7 +781,7 @@ namespace OrthancStone
         static_cast<unsigned int>(index), slice, SliceImageQuality_FullPng));
 }
   
-  void OrthancSlicesLoader::ScheduleSliceImagePam(const Slice& slice,
+  void OrthancSlicesLoader::ScheduleSliceImagePam(const Deprecated::Slice& slice,
                                                   size_t index)
   {
     std::string uri = 
@@ -819,7 +819,7 @@ namespace OrthancStone
 
 
   
-  void OrthancSlicesLoader::ScheduleSliceImageJpeg(const Slice& slice,
+  void OrthancSlicesLoader::ScheduleSliceImageJpeg(const Deprecated::Slice& slice,
                                                    size_t index,
                                                    SliceImageQuality quality)
   {
@@ -870,7 +870,7 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     
-    const Slice& slice = GetSlice(index);
+    const Deprecated::Slice& slice = GetSlice(index);
     
     if (slice.HasOrthancDecoding())
     {

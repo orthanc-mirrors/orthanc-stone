@@ -27,7 +27,7 @@
 #include <Core/DicomFormat/DicomImageInformation.h>
 #include <Core/IDynamicObject.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   // TODO - Remove this class
   class Slice :
@@ -51,7 +51,7 @@ namespace OrthancStone
     std::string          sopClassUid_;
     unsigned int         frame_;
     unsigned int         frameCount_;   // TODO : Redundant with "imageInformation_"
-    CoordinateSystem3D   geometry_;
+    OrthancStone::CoordinateSystem3D   geometry_;
     double               pixelSpacingX_;
     double               pixelSpacingY_;
     double               thickness_;
@@ -79,7 +79,7 @@ namespace OrthancStone
 
     // TODO Is this constructor the best way to go to tackle missing
     // layers within SliceViewerWidget?
-    Slice(const CoordinateSystem3D& plane,
+    Slice(const OrthancStone::CoordinateSystem3D& plane,
           double thickness) :
       type_(Type_Standalone),
       frame_(0),
@@ -93,7 +93,7 @@ namespace OrthancStone
     {      
     }
 
-    Slice(const CoordinateSystem3D& plane,
+    Slice(const OrthancStone::CoordinateSystem3D& plane,
           double pixelSpacingX,
           double pixelSpacingY,
           double thickness,
@@ -130,7 +130,7 @@ namespace OrthancStone
 
     unsigned int GetFrame() const;
 
-    const CoordinateSystem3D& GetGeometry() const;
+    const OrthancStone::CoordinateSystem3D& GetGeometry() const;
 
     double GetThickness() const;
 
@@ -144,9 +144,9 @@ namespace OrthancStone
 
     const DicomFrameConverter& GetConverter() const;
 
-    bool ContainsPlane(const CoordinateSystem3D& plane) const;
+    bool ContainsPlane(const OrthancStone::CoordinateSystem3D& plane) const;
 
-    void GetExtent(std::vector<Vector>& points) const;
+    void GetExtent(std::vector<OrthancStone::Vector>& points) const;
 
     const Orthanc::DicomImageInformation& GetImageInformation() const;
 

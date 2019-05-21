@@ -21,28 +21,24 @@
 
 #pragma once
 
-#include "FrameRenderer.h"
-#include "../Toolbox/DicomFrameConverter.h"
+#include "IFetchingItemsSorter.h"
 
 namespace OrthancStone
 {
-  class GrayscaleFrameRenderer : public FrameRenderer
+  class BasicFetchingItemsSorter : public IFetchingItemsSorter
   {
   private:
-    std::auto_ptr<Orthanc::ImageAccessor>   frame_;  // In Float32
-    float                                   defaultWindowCenter_;
-    float                                   defaultWindowWidth_;
-    Orthanc::PhotometricInterpretation      photometric_;
-
-  protected:
-    virtual CairoSurface* GenerateDisplay(const RenderStyle& style);
+    unsigned int  itemsCount_;
 
   public:
-    GrayscaleFrameRenderer(const Orthanc::ImageAccessor& frame,
-                           const Deprecated::DicomFrameConverter& converter,
-                           const CoordinateSystem3D& framePlane,
-                           double pixelSpacingX,
-                           double pixelSpacingY,
-                           bool isFullQuality);
+    BasicFetchingItemsSorter(unsigned int itemsCount);
+
+    virtual unsigned int GetItemsCount() const
+    {
+      return itemsCount_;
+    }
+
+    virtual void Sort(std::vector<unsigned int>& target,
+                      unsigned int current);
   };
 }

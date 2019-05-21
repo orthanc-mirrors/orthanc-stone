@@ -30,7 +30,7 @@
 
 #include <boost/lexical_cast.hpp>
 
-namespace OrthancStone
+namespace Deprecated
 {
   static bool ParseDouble(double& target,
                           const std::string& source)
@@ -118,16 +118,16 @@ namespace OrthancStone
       return false;
     }
 
-    if (!LinearAlgebra::IsCloseToZero(offset0))
+    if (!OrthancStone::LinearAlgebra::IsCloseToZero(offset0))
     {
       LOG(ERROR) << "Invalid syntax";
       return false;
     }
 
-    geometry_ = CoordinateSystem3D(geometry_.GetOrigin() + z * geometry_.GetNormal(),
-                                   //+ 650 * geometry_.GetAxisX(),
-                                   geometry_.GetAxisX(),
-                                   geometry_.GetAxisY());
+    geometry_ = OrthancStone::CoordinateSystem3D(geometry_.GetOrigin() + z * geometry_.GetNormal(),
+                                                 //+ 650 * geometry_.GetAxisX(),
+                                                 geometry_.GetAxisX(),
+                                                 geometry_.GetAxisY());
 
     thickness_ = offset1 - offset0;
     if (thickness_ < 0)
@@ -185,19 +185,19 @@ namespace OrthancStone
     
     converter_.ReadParameters(dataset);
 
-    GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, dataset);
+    OrthancStone::GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, dataset);
 
     std::string position, orientation;
     if (dataset.CopyToString(position, Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT, false) &&
         dataset.CopyToString(orientation, Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT, false))
     {
-      geometry_ = CoordinateSystem3D(position, orientation);
+      geometry_ = OrthancStone::CoordinateSystem3D(position, orientation);
 
       bool ok = true;
 
-      switch (StringToSopClassUid(sopClassUid_))
+      switch (OrthancStone::StringToSopClassUid(sopClassUid_))
       {
-        case SopClassUid_RTDose:
+        case OrthancStone::SopClassUid_RTDose:
           type_ = Type_OrthancRawFrame;
           ok = ComputeRTDoseGeometry(dataset, frame);
           break;
@@ -243,7 +243,7 @@ namespace OrthancStone
   }
 
   
-  const CoordinateSystem3D& Slice::GetGeometry() const
+  const OrthancStone::CoordinateSystem3D& Slice::GetGeometry() const
   {
     if (type_ == Type_Invalid)
     {
@@ -320,7 +320,7 @@ namespace OrthancStone
   }
 
 
-  bool Slice::ContainsPlane(const CoordinateSystem3D& plane) const
+  bool Slice::ContainsPlane(const OrthancStone::CoordinateSystem3D& plane) const
   {
     if (type_ == Type_Invalid)
     {
@@ -328,16 +328,16 @@ namespace OrthancStone
     }
 
     bool opposite;
-    return (GeometryToolbox::IsParallelOrOpposite(opposite,
-                                                  GetGeometry().GetNormal(),
-                                                  plane.GetNormal()) &&
-            LinearAlgebra::IsNear(GetGeometry().ProjectAlongNormal(GetGeometry().GetOrigin()),
-                                  GetGeometry().ProjectAlongNormal(plane.GetOrigin()),
-                                  thickness_ / 2.0));
+    return (OrthancStone::GeometryToolbox::IsParallelOrOpposite(opposite,
+                                                                GetGeometry().GetNormal(),
+                                                                plane.GetNormal()) &&
+            OrthancStone::LinearAlgebra::IsNear(GetGeometry().ProjectAlongNormal(GetGeometry().GetOrigin()),
+                                                GetGeometry().ProjectAlongNormal(plane.GetOrigin()),
+                                                thickness_ / 2.0));
   }
 
   
-  void Slice::GetExtent(std::vector<Vector>& points) const
+  void Slice::GetExtent(std::vector<OrthancStone::Vector>& points) const
   {
     double sx = GetPixelSpacingX();
     double sy = GetPixelSpacingY();

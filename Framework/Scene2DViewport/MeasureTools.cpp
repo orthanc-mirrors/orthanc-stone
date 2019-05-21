@@ -79,6 +79,13 @@ namespace OrthancStone
       (*this, &MeasureTool::OnSceneTransformChanged));
   }
 
+
+  bool MeasureTool::IsSceneAlive() const
+  {
+    ViewportControllerPtr controller = controllerW_.lock();
+    return (controller.get() != NULL);
+  }
+
   void MeasureTool::OnSceneTransformChanged(
     const ViewportController::SceneTransformChanged& message)
   {

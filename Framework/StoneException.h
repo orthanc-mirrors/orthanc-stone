@@ -113,3 +113,13 @@ namespace OrthancStone
 
 }
 
+// See https://isocpp.org/wiki/faq/misc-technical-issues#macros-with-multi-stmts
+// (or google "Multiple lines macro C++ faq lite" if link is dead)
+#define ORTHANC_ASSERT(cond,streamChainMessage) \
+    if (!(cond)) { \
+      std::stringstream sst; \
+      sst << "Assertion failed. Condition = \"" #cond "\" Message = \"" << streamChainMessage << "\""; \
+      std::string sstr = sst.str(); \
+      throw OrthancException(ErrorCode_InternalError,sstr.c_str()); \
+    } else (void)0
+

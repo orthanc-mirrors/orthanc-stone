@@ -37,8 +37,6 @@ namespace OrthancStone
     MeasureToolPtr;
   typedef boost::weak_ptr<MeasureTool>
     MeasureToolWPtr;
-  typedef std::vector<MeasureToolPtr>
-    MeasureToolList;
 
   class LineMeasureTool;
   typedef boost::shared_ptr<LineMeasureTool>

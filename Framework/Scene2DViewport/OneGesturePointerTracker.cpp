@@ -23,6 +23,8 @@
 
 #include <Core/OrthancException.h>
 
+#include <Framework/StoneException.h>
+
 using namespace Orthanc;
 
 namespace OrthancStone
@@ -31,17 +33,30 @@ namespace OrthancStone
     ViewportControllerWPtr controllerW)
     : controllerW_(controllerW)
     , alive_(true)
+    , currentTouchCount_(1)
   {
   }
 
   void OneGesturePointerTracker::PointerUp(const PointerEvent& event)
   {
-    alive_ = false;
+    // pointer up is only called for the LAST up event in case of a multi-touch
+    // gesture
+    ORTHANC_ASSERT(currentTouchCount_ > 0, "Wrong state in tracker");
+    currentTouchCount_--;
+    LOG(INFO) << "currentTouchCount_ becomes: " << currentTouchCount_;
+    if (currentTouchCount_ == 0)
+    {
+      LOG(INFO) << "currentTouchCount_ == 0 --> alive_ = false";
+      alive_ = false;
+    }
   }
 
   void OneGesturePointerTracker::PointerDown(const PointerEvent& event)
   {
-    throw OrthancException(ErrorCode_InternalError, "Wrong state in tracker");
+    // additional touches are not taken into account but we need to count 
+    // the number of active touches
+    currentTouchCount_++;
+    LOG(INFO) << "currentTouchCount_ becomes: " << currentTouchCount_;
   }
 
   bool OneGesturePointerTracker::IsAlive() const

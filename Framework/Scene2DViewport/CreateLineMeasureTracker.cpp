@@ -28,16 +28,13 @@ namespace OrthancStone
   CreateLineMeasureTracker::CreateLineMeasureTracker(
     MessageBroker&                  broker,
     ViewportControllerWPtr          controllerW,
-    std::vector<TrackerCommandPtr>& undoStack,
-    MeasureToolList&                measureTools,
     const PointerEvent&             e)
-    : CreateMeasureTracker(controllerW, undoStack, measureTools)
+    : CreateMeasureTracker(controllerW)
   {
     command_.reset(
       new CreateLineMeasureCommand(
         broker,
         controllerW,
-        measureTools,
         e.GetMainPosition().Apply(GetScene()->GetCanvasToSceneTransform())));
   }
 

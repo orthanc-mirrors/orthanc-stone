@@ -26,14 +26,9 @@ using namespace Orthanc;
 namespace OrthancStone
 {
 
-  CreateMeasureTracker::CreateMeasureTracker(
-    ViewportControllerWPtr          controllerW,
-    std::vector<TrackerCommandPtr>& undoStack,
-    std::vector<MeasureToolPtr>&    measureTools)
+  CreateMeasureTracker::CreateMeasureTracker(ViewportControllerWPtr controllerW)
     : controllerW_(controllerW)
     , alive_(true)
-    , undoStack_(undoStack)
-    , measureTools_(measureTools)
     , commitResult_(true)
   {
   }
@@ -56,11 +51,10 @@ namespace OrthancStone
 
     // otherwise, we simply undo it
     if (commitResult_)
-      undoStack_.push_back(command_);
+      controllerW_.lock()->PushCommand(command_);
     else
       command_->Undo();
   }
-
 
   OrthancStone::Scene2DPtr CreateMeasureTracker::GetScene()
   {

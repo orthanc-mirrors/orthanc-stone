@@ -63,6 +63,13 @@ namespace OrthancStone
 
   protected:
     MeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW);
+
+    /**
+    The measuring tool may exist in a standalone fashion, without any available
+    scene (because the controller is dead or dying). This call allows to check 
+    before accessing the scene.
+    */
+    bool IsSceneAlive() const;
     
     /**
     This is the meat of the tool: this method must [create (if needed) and]

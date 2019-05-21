@@ -22,6 +22,15 @@ var ReleaseCppViewport: Function = null;
 var StartWasmApplication: Function = null;
 export var SendSerializedMessageToStoneApplication: Function = null;
 
+var auxiliaryParameters : Map<string,string>  = null;
+
+export function SetApplicationParameters(params : Map<string,string>) {
+  if (auxiliaryParameters != null) {
+    console.warn("wasm-application-runner.SetApplicationParameters: about to overwrite the existing application parameters!")
+  }
+  auxiliaryParameters = params;
+}
+
 function DoAnimationThread() {
   if (WasmDoAnimation != null) {
     WasmDoAnimation();
@@ -30,6 +39,7 @@ function DoAnimationThread() {
   // Update the viewport content every 100ms if need be
   setTimeout(DoAnimationThread, 100);  
 }
+
 
 function GetUriParameters(): Map<string, string> {
   var parameters = window.location.search.substr(1);
@@ -63,7 +73,16 @@ function _InitializeWasmApplication(orthancBaseUrl: string): void {
 
   CreateWasmApplication();
 
-  // parse uri and transmit the parameters to the app before initializing it
+  // transmit the API-specified parameters to the app before initializing it
+  for (let key in auxiliaryParameters) {
+    if (auxiliaryParameters.hasOwnProperty(key)) {
+      Logger.defaultLogger.debug(
+        `About to call SetStartupParameter("${key}","${auxiliaryParameters[key]}")`);
+      SetStartupParameter(key, auxiliaryParameters[key]);
+    }
+  }
+
+  // parse uri and transmit the URI parameters to the app before initializing it
   let parameters = GetUriParameters();
 
   for (let key in parameters) {

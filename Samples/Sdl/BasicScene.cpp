@@ -40,6 +40,9 @@
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Images/PngWriter.h>
 
+#include <boost/make_shared.hpp>
+#include <boost/ref.hpp>
+
 #include <SDL.h>
 #include <stdio.h>
 
@@ -216,18 +219,16 @@ void HandleApplicationEvent(ViewportControllerPtr controller,
     switch (event.button.button)
     {
       case SDL_BUTTON_MIDDLE:
-        activeTracker.reset(new PanSceneTracker(
-          controller, e));
+        activeTracker = boost::make_shared<PanSceneTracker>(controller, e);
         break;
 
       case SDL_BUTTON_RIGHT:
-        activeTracker.reset(new ZoomSceneTracker(
-          controller, e, compositor.GetCanvasHeight()));
+        activeTracker = boost::make_shared<ZoomSceneTracker>(controller, 
+          e, compositor.GetCanvasHeight());
         break;
 
       case SDL_BUTTON_LEFT:
-        activeTracker.reset(new RotateSceneTracker(
-          controller, e));
+        activeTracker = boost::make_shared<RotateSceneTracker>(controller, e);
         break;
 
       default:
@@ -240,7 +241,7 @@ void HandleApplicationEvent(ViewportControllerPtr controller,
     switch (event.key.keysym.sym)
     {
       case SDLK_s:
-        scene.FitContent(compositor.GetCanvasWidth(), 
+        controller->FitContent(compositor.GetCanvasWidth(), 
                          compositor.GetCanvasHeight());
         break;
               
@@ -279,8 +280,7 @@ void Run(ViewportControllerPtr controller)
 {
   SdlOpenGLWindow window("Hello", 1024, 768);
 
-  controller->GetScene()->FitContent(
-    window.GetCanvasWidth(), window.GetCanvasHeight());
+  controller->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
   
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(OpenGLMessageCallback, 0);
@@ -374,8 +374,8 @@ int main(int argc, char* argv[])
   try
   {
     MessageBroker broker;
-    ViewportControllerPtr controller(
-      new ViewportController(broker));
+    ViewportControllerPtr controller = boost::make_shared<ViewportController>(
+		boost::ref(broker));
     PrepareScene(controller);
     Run(controller);
   }

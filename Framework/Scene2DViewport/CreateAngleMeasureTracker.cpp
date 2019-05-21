@@ -28,17 +28,14 @@ namespace OrthancStone
   CreateAngleMeasureTracker::CreateAngleMeasureTracker(
     MessageBroker&                  broker,
     ViewportControllerWPtr          controllerW,
-    std::vector<TrackerCommandPtr>& undoStack,
-    MeasureToolList&                measureTools,
     const PointerEvent&             e)
-    : CreateMeasureTracker(controllerW, undoStack, measureTools)
+    : CreateMeasureTracker(controllerW)
     , state_(CreatingSide1)
   {
     command_.reset(
       new CreateAngleMeasureCommand(
         broker,
         controllerW,
-        measureTools,
         e.GetMainPosition().Apply(GetScene()->GetCanvasToSceneTransform())));
   }
 

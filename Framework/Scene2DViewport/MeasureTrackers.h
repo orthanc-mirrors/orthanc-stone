@@ -37,10 +37,7 @@ namespace OrthancStone
     virtual void Cancel() ORTHANC_OVERRIDE;
     virtual bool IsAlive() const ORTHANC_OVERRIDE;
   protected:
-    CreateMeasureTracker(
-      ViewportControllerWPtr          controllerW,
-      std::vector<TrackerCommandPtr>& undoStack,
-      std::vector<MeasureToolPtr>&    measureTools);
+    CreateMeasureTracker(ViewportControllerWPtr controllerW);
 
     ~CreateMeasureTracker();
   
@@ -51,8 +48,6 @@ namespace OrthancStone
     Scene2DPtr                      GetScene();
 
   private:
-    std::vector<TrackerCommandPtr>& undoStack_;
-    std::vector<MeasureToolPtr>&    measureTools_;
     bool                            commitResult_;
   };
 }

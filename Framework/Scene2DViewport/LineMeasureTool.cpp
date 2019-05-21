@@ -85,116 +85,117 @@ namespace OrthancStone
 
   void LineMeasureTool::RefreshScene()
   {
-    if (IsEnabled())
+    if (IsSceneAlive())
     {
-      if (!layersCreated)
+      if (IsEnabled())
       {
-        // Create the layers if need be
+        if (!layersCreated)
+        {
+          // Create the layers if need be
 
-        assert(textZIndex_ == -1);
+          assert(textZIndex_ == -1);
+          {
+            polylineZIndex_ = GetScene()->GetMaxDepth() + 100;
+            //LOG(INFO) << "set polylineZIndex_ to: " << polylineZIndex_;
+            std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
+            GetScene()->SetLayer(polylineZIndex_, layer.release());
+          }
+          {
+            textZIndex_ = GetScene()->GetMaxDepth() + 100;
+            //LOG(INFO) << "set textZIndex_ to: " << textZIndex_;
+            std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
+            GetScene()->SetLayer(textZIndex_, layer.release());
+          }
+          layersCreated = true;
+        }
+        else
         {
-          polylineZIndex_ = GetScene()->GetMaxDepth() + 100;
-          //LOG(INFO) << "set polylineZIndex_ to: " << polylineZIndex_;
-          std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
-          GetScene()->SetLayer(polylineZIndex_, layer.release());
+          assert(GetScene()->HasLayer(polylineZIndex_));
+          assert(GetScene()->HasLayer(textZIndex_));
         }
         {
-          textZIndex_ = GetScene()->GetMaxDepth() + 100;
-          //LOG(INFO) << "set textZIndex_ to: " << textZIndex_;
-          std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-          GetScene()->SetLayer(textZIndex_, layer.release());
+          // Fill the polyline layer with the measurement line
+
+          PolylineSceneLayer* polylineLayer = GetPolylineLayer();
+          polylineLayer->ClearAllChains();
+          polylineLayer->SetColor(0, 223, 21);
+
+          {
+            PolylineSceneLayer::Chain chain;
+            chain.push_back(start_);
+            chain.push_back(end_);
+            polylineLayer->AddChain(chain, false);
+          }
+
+          // handles
+          {
+            //void AddSquare(PolylineSceneLayer::Chain& chain,const Scene2D& scene,const ScenePoint2D& centerS,const double& sideLength)
+
+            {
+              PolylineSceneLayer::Chain chain;
+              AddSquare(chain, *GetScene(), start_, 10.0); //TODO: take DPI into account
+              polylineLayer->AddChain(chain, true);
+            }
+
+            {
+              PolylineSceneLayer::Chain chain;
+              AddSquare(chain, *GetScene(), end_, 10.0); //TODO: take DPI into account
+              polylineLayer->AddChain(chain, true);
+            }
+
+            //ScenePoint2D startC = start_.Apply(GetScene()->GetSceneToCanvasTransform());
+            //double squareSize = 10.0; 
+            //double startHandleLX = startC.GetX() - squareSize/2;
+            //double startHandleTY = startC.GetY() - squareSize / 2;
+            //double startHandleRX = startC.GetX() + squareSize / 2;
+            //double startHandleBY = startC.GetY() + squareSize / 2;
+            //ScenePoint2D startLTC(startHandleLX, startHandleTY);
+            //ScenePoint2D startRTC(startHandleRX, startHandleTY);
+            //ScenePoint2D startRBC(startHandleRX, startHandleBY);
+            //ScenePoint2D startLBC(startHandleLX, startHandleBY);
+
+            //ScenePoint2D startLT = startLTC.Apply(GetScene()->GetCanvasToSceneTransform());
+            //ScenePoint2D startRT = startRTC.Apply(GetScene()->GetCanvasToSceneTransform());
+            //ScenePoint2D startRB = startRBC.Apply(GetScene()->GetCanvasToSceneTransform());
+            //ScenePoint2D startLB = startLBC.Apply(GetScene()->GetCanvasToSceneTransform());
+
+            //PolylineSceneLayer::Chain chain;
+            //chain.push_back(startLT);
+            //chain.push_back(startRT);
+            //chain.push_back(startRB);
+            //chain.push_back(startLB);
+            //polylineLayer->AddChain(chain, true);
+          }
+
         }
-        layersCreated = true;
+        {
+          // Set the text layer proporeties
+
+          TextSceneLayer* textLayer = GetTextLayer();
+          double deltaX = end_.GetX() - start_.GetX();
+          double deltaY = end_.GetY() - start_.GetY();
+          double squareDist = deltaX * deltaX + deltaY * deltaY;
+          double dist = sqrt(squareDist);
+          char buf[64];
+          sprintf(buf, "%0.02f units", dist);
+          textLayer->SetText(buf);
+          textLayer->SetColor(0, 223, 21);
+
+          // TODO: for now we simply position the text overlay at the middle
+          // of the measuring segment
+          double midX = 0.5 * (end_.GetX() + start_.GetX());
+          double midY = 0.5 * (end_.GetY() + start_.GetY());
+          textLayer->SetPosition(midX, midY);
+        }
       }
       else
       {
-        assert(GetScene()->HasLayer(polylineZIndex_));
-        assert(GetScene()->HasLayer(textZIndex_));
-      }
-      {
-        // Fill the polyline layer with the measurement line
-
-        PolylineSceneLayer* polylineLayer = GetPolylineLayer();
-        polylineLayer->ClearAllChains();
-        polylineLayer->SetColor(0, 223, 21);
-
+        if (layersCreated)
         {
-          PolylineSceneLayer::Chain chain;
-          chain.push_back(start_);
-          chain.push_back(end_);
-          polylineLayer->AddChain(chain, false);
+          RemoveFromScene();
+          layersCreated = false;
         }
-
-        // handles
-        {
-          //void AddSquare(PolylineSceneLayer::Chain& chain,const Scene2D& scene,const ScenePoint2D& centerS,const double& sideLength)
-
-          {
-            PolylineSceneLayer::Chain chain;
-            AddSquare(chain, *GetScene(), start_, 10.0); //TODO: take DPI into account
-            polylineLayer->AddChain(chain, true);
-          }
-
-          {
-            PolylineSceneLayer::Chain chain;
-            AddSquare(chain, *GetScene(), end_, 10.0); //TODO: take DPI into account
-            polylineLayer->AddChain(chain, true);
-          }
-
-          //ScenePoint2D startC = start_.Apply(GetScene()->GetSceneToCanvasTransform());
-          //double squareSize = 10.0; 
-          //double startHandleLX = startC.GetX() - squareSize/2;
-          //double startHandleTY = startC.GetY() - squareSize / 2;
-          //double startHandleRX = startC.GetX() + squareSize / 2;
-          //double startHandleBY = startC.GetY() + squareSize / 2;
-          //ScenePoint2D startLTC(startHandleLX, startHandleTY);
-          //ScenePoint2D startRTC(startHandleRX, startHandleTY);
-          //ScenePoint2D startRBC(startHandleRX, startHandleBY);
-          //ScenePoint2D startLBC(startHandleLX, startHandleBY);
-
-          //ScenePoint2D startLT = startLTC.Apply(GetScene()->GetCanvasToSceneTransform());
-          //ScenePoint2D startRT = startRTC.Apply(GetScene()->GetCanvasToSceneTransform());
-          //ScenePoint2D startRB = startRBC.Apply(GetScene()->GetCanvasToSceneTransform());
-          //ScenePoint2D startLB = startLBC.Apply(GetScene()->GetCanvasToSceneTransform());
-
-          //PolylineSceneLayer::Chain chain;
-          //chain.push_back(startLT);
-          //chain.push_back(startRT);
-          //chain.push_back(startRB);
-          //chain.push_back(startLB);
-          //polylineLayer->AddChain(chain, true);
-        }
-
-      }
-      {
-        // Set the text layer proporeties
-
-        TextSceneLayer* textLayer = GetTextLayer();
-        double deltaX = end_.GetX() - start_.GetX();
-        double deltaY = end_.GetY() - start_.GetY();
-        double squareDist = deltaX * deltaX + deltaY * deltaY;
-        double dist = sqrt(squareDist);
-        char buf[64];
-        sprintf(buf, "%0.02f units", dist);
-        textLayer->SetText(buf);
-        textLayer->SetColor(0, 223, 21);
-
-        // TODO: for now we simply position the text overlay at the middle
-        // of the measuring segment
-        double midX = 0.5*(end_.GetX() + start_.GetX());
-        double midY = 0.5*(end_.GetY() + start_.GetY());
-        textLayer->SetPosition(midX, midY);
-      }
-    }
-    else
-    {
-      if (layersCreated)
-      {
-        RemoveFromScene();
-        layersCreated = false;
       }
     }
   }
-
-
 }

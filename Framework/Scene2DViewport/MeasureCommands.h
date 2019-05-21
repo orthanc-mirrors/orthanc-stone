@@ -43,19 +43,17 @@ namespace OrthancStone
     virtual void Redo() = 0;
 
   protected:
+    ViewportControllerPtr  GetController();
     ViewportControllerWPtr controllerW_;
   };
 
   class CreateMeasureCommand : public TrackerCommand
   {
   public:
-    CreateMeasureCommand(
-      ViewportControllerWPtr controllerW, MeasureToolList& measureTools);
+    CreateMeasureCommand(ViewportControllerWPtr controllerW);
     ~CreateMeasureCommand();
     virtual void Undo() ORTHANC_OVERRIDE;
     virtual void Redo() ORTHANC_OVERRIDE;
-  protected:
-    MeasureToolList& measureTools_;
   private:
     /** Must be implemented by the subclasses that create the actual tool */
     virtual MeasureToolPtr GetMeasureTool() = 0;
@@ -67,7 +65,6 @@ namespace OrthancStone
     CreateLineMeasureCommand(
       MessageBroker&         broker, 
       ViewportControllerWPtr controllerW,
-      MeasureToolList&       measureTools, 
       ScenePoint2D           point);
     
     // the starting position is set in the ctor
@@ -89,7 +86,6 @@ namespace OrthancStone
     CreateAngleMeasureCommand(
       MessageBroker&         broker, 
       ViewportControllerWPtr controllerW,
-      MeasureToolList&       measureTools, 
       ScenePoint2D           point);
 
     /** This method sets center*/

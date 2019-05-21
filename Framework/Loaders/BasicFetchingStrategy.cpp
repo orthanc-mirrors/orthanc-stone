@@ -118,7 +118,7 @@ namespace OrthancStone
       if (q == maxQuality_ ||
           end > v.size())
       {
-        end = v.size();
+        end = static_cast<int>(v.size());
       }
 
       unsigned int a = 0;

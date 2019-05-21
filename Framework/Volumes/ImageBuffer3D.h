@@ -121,7 +121,7 @@ namespace OrthancStone
     bool GetRange(float& minValue,
                   float& maxValue) const;
 
-    bool FitWindowingToRange(RenderStyle& style,
+    bool FitWindowingToRange(Deprecated::RenderStyle& style,
                              const Deprecated::DicomFrameConverter& converter) const;
 
     uint8_t GetVoxelGrayscale8Unchecked(unsigned int x,

@@ -26,7 +26,7 @@
 #include <math.h>
 #include <stdio.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   namespace Samples
   {
@@ -35,8 +35,8 @@ namespace OrthancStone
     public:
       virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
                                                           const ViewportGeometry& view,
-                                                          MouseButton button,
-                                                          KeyboardModifiers modifiers,
+                                                          OrthancStone::MouseButton button,
+                                                          OrthancStone::KeyboardModifiers modifiers,
                                                           int viewportX,
                                                           int viewportY,
                                                           double x,
@@ -54,7 +54,7 @@ namespace OrthancStone
         return NULL;
       }
 
-      virtual void MouseOver(CairoContext& context,
+      virtual void MouseOver(OrthancStone::CairoContext& context,
                              WorldSceneWidget& widget,
                              const ViewportGeometry& view,
                              double x,
@@ -75,20 +75,20 @@ namespace OrthancStone
       }
 
       virtual void MouseWheel(WorldSceneWidget& widget,
-                              MouseWheelDirection direction,
-                              KeyboardModifiers modifiers,
+                              OrthancStone::MouseWheelDirection direction,
+                              OrthancStone::KeyboardModifiers modifiers,
                               IStatusBar* statusBar)
       {
         if (statusBar)
         {
-          statusBar->SetMessage(direction == MouseWheelDirection_Down ? "Wheel down" : "Wheel up");
+          statusBar->SetMessage(direction == OrthancStone::MouseWheelDirection_Down ? "Wheel down" : "Wheel up");
         }
       }
 
       virtual void KeyPressed(WorldSceneWidget& widget,
-                              KeyboardKeys key,
+                              OrthancStone::KeyboardKeys key,
                               char keyChar,
-                              KeyboardModifiers modifiers,
+                              OrthancStone::KeyboardModifiers modifiers,
                               IStatusBar* statusBar)
       {
         if (statusBar)
@@ -99,7 +99,7 @@ namespace OrthancStone
     };
 
 
-    bool TestWorldSceneWidget::RenderScene(CairoContext& context,
+    bool TestWorldSceneWidget::RenderScene(OrthancStone::CairoContext& context,
                                            const ViewportGeometry& view)
     {
       cairo_t* cr = context.GetObject();
@@ -127,9 +127,9 @@ namespace OrthancStone
     }
 
 
-    Extent2D TestWorldSceneWidget::GetSceneExtent()
+    OrthancStone::Extent2D TestWorldSceneWidget::GetSceneExtent()
     {
-      return Extent2D(-10, -.5, 10, .5);
+      return OrthancStone::Extent2D(-10, -.5, 10, .5);
     }
 
 

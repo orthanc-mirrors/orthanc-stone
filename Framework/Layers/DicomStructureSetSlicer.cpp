@@ -21,7 +21,7 @@
 
 #include "DicomStructureSetSlicer.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class DicomStructureSetSlicer::Renderer : public ILayerRenderer
   {
@@ -34,11 +34,11 @@ namespace OrthancStone
       uint8_t                                                      green_;
       uint8_t                                                      blue_;
       std::string                                                  name_;
-      std::vector< std::vector<DicomStructureSet::PolygonPoint> >  polygons_;
+      std::vector< std::vector<OrthancStone::DicomStructureSet::PolygonPoint> >  polygons_;
 
     public:
-      Structure(DicomStructureSet& structureSet,
-                const CoordinateSystem3D& plane,
+      Structure(OrthancStone::DicomStructureSet& structureSet,
+                const OrthancStone::CoordinateSystem3D& plane,
                 size_t index) :
         name_(structureSet.GetStructureName(index))
       {
@@ -46,7 +46,7 @@ namespace OrthancStone
         visible_ = structureSet.ProjectStructure(polygons_, index, plane);
       }
 
-      void Render(CairoContext& context)
+      void Render(OrthancStone::CairoContext& context)
       {
         if (visible_)
         {
@@ -72,12 +72,12 @@ namespace OrthancStone
 
     typedef std::list<Structure*>  Structures;
     
-    CoordinateSystem3D  plane_;
+    OrthancStone::CoordinateSystem3D  plane_;
     Structures          structures_;
     
   public:
-    Renderer(DicomStructureSet& structureSet,
-             const CoordinateSystem3D& plane) :
+    Renderer(OrthancStone::DicomStructureSet& structureSet,
+             const OrthancStone::CoordinateSystem3D& plane) :
       plane_(plane)
     {
       for (size_t k = 0; k < structureSet.GetStructureCount(); k++)
@@ -95,7 +95,7 @@ namespace OrthancStone
       }
     }
 
-    virtual bool RenderLayer(CairoContext& context,
+    virtual bool RenderLayer(OrthancStone::CairoContext& context,
                              const ViewportGeometry& view)
     {
       cairo_set_line_width(context.GetObject(), 2.0f / view.GetZoom());
@@ -110,7 +110,7 @@ namespace OrthancStone
       return true;
     }
 
-    virtual const CoordinateSystem3D& GetLayerPlane()
+    virtual const OrthancStone::CoordinateSystem3D& GetLayerPlane()
     {
       return plane_;
     }
@@ -129,12 +129,12 @@ namespace OrthancStone
   class DicomStructureSetSlicer::RendererFactory : public LayerReadyMessage::IRendererFactory
   {
   private:
-    DicomStructureSet&         structureSet_;
-    const CoordinateSystem3D&  plane_;
+    OrthancStone::DicomStructureSet&         structureSet_;
+    const OrthancStone::CoordinateSystem3D&  plane_;
 
   public:
-    RendererFactory(DicomStructureSet& structureSet,
-                    const CoordinateSystem3D&  plane) :
+    RendererFactory(OrthancStone::DicomStructureSet& structureSet,
+                    const OrthancStone::CoordinateSystem3D&  plane) :
       structureSet_(structureSet),
       plane_(plane)
     {
@@ -147,19 +147,19 @@ namespace OrthancStone
   };
   
 
-  DicomStructureSetSlicer::DicomStructureSetSlicer(MessageBroker& broker,
+  DicomStructureSetSlicer::DicomStructureSetSlicer(OrthancStone::MessageBroker& broker,
                                                    StructureSetLoader& loader) :
     IVolumeSlicer(broker),
     IObserver(broker),
     loader_(loader)
   {
     loader_.RegisterObserverCallback(
-      new Callable<DicomStructureSetSlicer, StructureSetLoader::ContentChangedMessage>
+      new OrthancStone::Callable<DicomStructureSetSlicer, StructureSetLoader::ContentChangedMessage>
       (*this, &DicomStructureSetSlicer::OnStructureSetLoaded));
   }
 
 
-  void DicomStructureSetSlicer::ScheduleLayerCreation(const CoordinateSystem3D& viewportPlane)
+  void DicomStructureSetSlicer::ScheduleLayerCreation(const OrthancStone::CoordinateSystem3D& viewportPlane)
   {
     if (loader_.HasStructureSet())
     {

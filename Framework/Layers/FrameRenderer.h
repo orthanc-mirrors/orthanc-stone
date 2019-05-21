@@ -25,31 +25,31 @@
 
 #include "../Toolbox/Slice.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class FrameRenderer : public ILayerRenderer
   {
   private:
-    CoordinateSystem3D            framePlane_;
+    OrthancStone::CoordinateSystem3D            framePlane_;
     double                        pixelSpacingX_;
     double                        pixelSpacingY_;
     RenderStyle                   style_;
     bool                          isFullQuality_;
-    std::auto_ptr<CairoSurface>   display_;
+    std::auto_ptr<OrthancStone::CairoSurface>   display_;
 
   protected:
-    virtual CairoSurface* GenerateDisplay(const RenderStyle& style) = 0;
+    virtual OrthancStone::CairoSurface* GenerateDisplay(const RenderStyle& style) = 0;
 
   public:
-    FrameRenderer(const CoordinateSystem3D& framePlane,
+    FrameRenderer(const OrthancStone::CoordinateSystem3D& framePlane,
                   double pixelSpacingX,
                   double pixelSpacingY,
                   bool isFullQuality);
 
-    virtual bool RenderLayer(CairoContext& context,
+    virtual bool RenderLayer(OrthancStone::CairoContext& context,
                              const ViewportGeometry& view);
 
-    virtual const CoordinateSystem3D& GetLayerPlane()
+    virtual const OrthancStone::CoordinateSystem3D& GetLayerPlane()
     {
       return framePlane_;
     }

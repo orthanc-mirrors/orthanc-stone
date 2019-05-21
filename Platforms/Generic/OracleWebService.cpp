@@ -22,24 +22,24 @@
 #include "OracleWebService.h"
 #include "../../Framework/Toolbox/IWebService.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
 
 
-  class OracleWebService::WebServiceCachedGetCommand : public IOracleCommand, IObservable
+  class OracleWebService::WebServiceCachedGetCommand : public IOracleCommand, OrthancStone::IObservable
   {
   protected:
-    std::auto_ptr<MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
+    std::auto_ptr<OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
     std::auto_ptr<Orthanc::IDynamicObject>                                  payload_;
     boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage>      cachedMessage_;
-    NativeStoneApplicationContext&                                          context_;
+    OrthancStone::NativeStoneApplicationContext&                                          context_;
 
   public:
-    WebServiceCachedGetCommand(MessageBroker& broker,
-                               MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+    WebServiceCachedGetCommand(OrthancStone::MessageBroker& broker,
+                               OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
                                boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedMessage,
                                Orthanc::IDynamicObject* payload /* takes ownership */,
-                               NativeStoneApplicationContext& context
+                               OrthancStone::NativeStoneApplicationContext& context
                                ) :
       IObservable(broker),
       successCallback_(successCallback),
@@ -59,7 +59,7 @@ namespace OrthancStone
       // We want to make sure that, i.e, the UpdateThread is not
       // triggered while we are updating the "model" with the result of
       // a WebServiceCommand
-      NativeStoneApplicationContext::GlobalMutexLocker lock(context_);
+      OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker lock(context_);
 
       IWebService::HttpRequestSuccessMessage successMessage(cachedMessage_->GetUri(),
                                                             cachedMessage_->GetAnswer(),
@@ -73,7 +73,7 @@ namespace OrthancStone
 
   void OracleWebService::NotifyHttpSuccessLater(boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedMessage,
                                                 Orthanc::IDynamicObject* payload, // takes ownership
-                                                MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback)
+                                                OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback)
   {
     oracle_.Submit(new WebServiceCachedGetCommand(GetBroker(), successCallback, cachedMessage, payload, context_));
   }

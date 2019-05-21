@@ -24,16 +24,16 @@
 
 namespace SimpleViewer {
 
-  IWorldSceneMouseTracker* ThumbnailInteractor::CreateMouseTracker(WorldSceneWidget& widget,
-                                                                   const ViewportGeometry& view,
+  Deprecated::IWorldSceneMouseTracker* ThumbnailInteractor::CreateMouseTracker(Deprecated::WorldSceneWidget& widget,
+                                                                   const Deprecated::ViewportGeometry& view,
                                                                    MouseButton button,
                                                                    KeyboardModifiers modifiers,
                                                                    int viewportX,
                                                                    int viewportY,
                                                                    double x,
                                                                    double y,
-                                                                   IStatusBar* statusBar,
-                                                                   const std::vector<Touch>& displayTouches)
+                                                                   Deprecated::IStatusBar* statusBar,
+                                                                   const std::vector<Deprecated::Touch>& displayTouches)
   {
     if (button == MouseButton_Left)
     {

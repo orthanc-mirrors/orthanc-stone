@@ -24,7 +24,7 @@
 #include "FrameRenderer.h"
 #include "../Toolbox/DicomFrameConverter.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class GrayscaleFrameRenderer : public FrameRenderer
   {
@@ -35,12 +35,12 @@ namespace OrthancStone
     Orthanc::PhotometricInterpretation      photometric_;
 
   protected:
-    virtual CairoSurface* GenerateDisplay(const RenderStyle& style);
+    virtual OrthancStone::CairoSurface* GenerateDisplay(const RenderStyle& style);
 
   public:
     GrayscaleFrameRenderer(const Orthanc::ImageAccessor& frame,
                            const Deprecated::DicomFrameConverter& converter,
-                           const CoordinateSystem3D& framePlane,
+                           const OrthancStone::CoordinateSystem3D& framePlane,
                            double pixelSpacingX,
                            double pixelSpacingY,
                            bool isFullQuality);

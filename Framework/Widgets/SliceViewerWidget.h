@@ -28,12 +28,12 @@
 
 #include <map>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class SliceViewerWidget :
     public WorldSceneWidget,
-    public IObserver,
-    public IObservable
+    public OrthancStone::IObserver,
+    public OrthancStone::IObservable
   {
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryChangedMessage, SliceViewerWidget);
@@ -41,7 +41,7 @@ namespace OrthancStone
 
 
     // TODO - Use this message in ReferenceLineSource
-    class DisplayedSliceMessage : public OriginMessage<SliceViewerWidget>
+    class DisplayedSliceMessage : public OrthancStone::OriginMessage<SliceViewerWidget>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
@@ -74,7 +74,7 @@ namespace OrthancStone
     LayersIndex                  layersIndex_;
     std::vector<IVolumeSlicer*>  layers_;
     std::vector<RenderStyle>     styles_;
-    CoordinateSystem3D           plane_;
+    OrthancStone::CoordinateSystem3D           plane_;
     std::auto_ptr<Scene>         currentScene_;
     std::auto_ptr<Scene>         pendingScene_;
     std::vector<bool>            changedLayers_;
@@ -82,7 +82,7 @@ namespace OrthancStone
     bool LookupLayer(size_t& index /* out */,
                      const IVolumeSlicer& layer) const;
 
-    void GetLayerExtent(Extent2D& extent,
+    void GetLayerExtent(OrthancStone::Extent2D& extent,
                         IVolumeSlicer& source) const;
 
     void OnGeometryReady(const IVolumeSlicer::GeometryReadyMessage& message);
@@ -100,20 +100,20 @@ namespace OrthancStone
     void ResetChangedLayers();
 
   public:
-    SliceViewerWidget(MessageBroker& broker, 
+    SliceViewerWidget(OrthancStone::MessageBroker& broker, 
                       const std::string& name);
 
-    virtual Extent2D GetSceneExtent();
+    virtual OrthancStone::Extent2D GetSceneExtent();
 
   protected:
-    virtual bool RenderScene(CairoContext& context,
+    virtual bool RenderScene(OrthancStone::CairoContext& context,
                              const ViewportGeometry& view);
 
     void ResetPendingScene();
 
     void UpdateLayer(size_t index,
                      ILayerRenderer* renderer,
-                     const CoordinateSystem3D& plane);
+                     const OrthancStone::CoordinateSystem3D& plane);
 
     void InvalidateAllLayers();
 
@@ -138,9 +138,9 @@ namespace OrthancStone
     void SetLayerStyle(size_t layer,
                        const RenderStyle& style);
 
-    void SetSlice(const CoordinateSystem3D& plane);
+    void SetSlice(const OrthancStone::CoordinateSystem3D& plane);
 
-    const CoordinateSystem3D& GetSlice() const
+    const OrthancStone::CoordinateSystem3D& GetSlice() const
     {
       return plane_;
     }

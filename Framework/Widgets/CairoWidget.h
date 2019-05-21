@@ -23,17 +23,17 @@
 
 #include "WidgetBase.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class CairoWidget : public WidgetBase
   {
   private:
-    CairoSurface   surface_;
+    OrthancStone::CairoSurface   surface_;
 
   protected:
-    virtual bool RenderCairo(CairoContext& context) = 0;
+    virtual bool RenderCairo(OrthancStone::CairoContext& context) = 0;
     
-    virtual void RenderMouseOverCairo(CairoContext& context,
+    virtual void RenderMouseOverCairo(OrthancStone::CairoContext& context,
                                       int x,
                                       int y) = 0;
     

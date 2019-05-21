@@ -25,7 +25,7 @@
 
 #include <cassert>
 
-namespace OrthancStone
+namespace Deprecated
 {
   bool DownloadStack::CheckInvariants() const
   {

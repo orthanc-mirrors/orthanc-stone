@@ -85,7 +85,7 @@ namespace OrthancStone
 
   RadiographyLayerMaskTracker::RadiographyLayerMaskTracker(UndoRedoStack& undoRedoStack,
                                                            RadiographyScene& scene,
-                                                           const ViewportGeometry& view,
+                                                           const Deprecated::ViewportGeometry& view,
                                                            size_t layer,
                                                            const ControlPoint& startSceneControlPoint) :
     undoRedoStack_(undoRedoStack),
@@ -116,8 +116,8 @@ namespace OrthancStone
                                               int displayY,
                                               double sceneX,
                                               double sceneY,
-                                              const std::vector<Touch>& displayTouches,
-                                              const std::vector<Touch>& sceneTouches)
+                                              const std::vector<Deprecated::Touch>& displayTouches,
+                                              const std::vector<Deprecated::Touch>& sceneTouches)
   {
     if (accessor_.IsValid())
     {

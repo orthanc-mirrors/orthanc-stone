@@ -23,7 +23,7 @@
 
 #include "ILayerRenderer.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class LineLayerRenderer : public ILayerRenderer
   {
@@ -32,7 +32,7 @@ namespace OrthancStone
     double              y1_;
     double              x2_;
     double              y2_;
-    CoordinateSystem3D  plane_;
+    OrthancStone::CoordinateSystem3D  plane_;
     bool                visible_;
     uint8_t             color_[3];
 
@@ -41,14 +41,14 @@ namespace OrthancStone
                       double y1,
                       double x2,
                       double y2,
-                      const CoordinateSystem3D& plane);
+                      const OrthancStone::CoordinateSystem3D& plane);
 
-    virtual bool RenderLayer(CairoContext& context,
+    virtual bool RenderLayer(OrthancStone::CairoContext& context,
                              const ViewportGeometry& view);
 
     virtual void SetLayerStyle(const RenderStyle& style);
 
-    virtual const CoordinateSystem3D& GetLayerPlane()
+    virtual const OrthancStone::CoordinateSystem3D& GetLayerPlane()
     {
       return plane_;
     }

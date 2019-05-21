@@ -25,15 +25,15 @@
 #include "../Toolbox/OrthancApiClient.h"
 #include "IVolumeLoader.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class StructureSetLoader :
     public IVolumeLoader,
-    public IObserver
+    public OrthancStone::IObserver
   {
   private:
     OrthancApiClient&                 orthanc_;
-    std::auto_ptr<DicomStructureSet>  structureSet_;
+    std::auto_ptr<OrthancStone::DicomStructureSet>  structureSet_;
 
     void OnReferencedSliceLoaded(const OrthancApiClient::JsonResponseReadyMessage& message);
 
@@ -42,7 +42,7 @@ namespace OrthancStone
     void OnLookupCompleted(const OrthancApiClient::JsonResponseReadyMessage& message);
 
   public:
-    StructureSetLoader(MessageBroker& broker,
+    StructureSetLoader(OrthancStone::MessageBroker& broker,
                        OrthancApiClient& orthanc);
 
     void ScheduleLoadInstance(const std::string& instance);
@@ -52,6 +52,6 @@ namespace OrthancStone
       return structureSet_.get() != NULL;
     }
 
-    DicomStructureSet& GetStructureSet();
+    OrthancStone::DicomStructureSet& GetStructureSet();
   };
 }

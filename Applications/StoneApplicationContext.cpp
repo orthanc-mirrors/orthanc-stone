@@ -32,11 +32,11 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
 
-    orthanc_.reset(new OrthancApiClient(broker_, *webService_, orthancBaseUrl_));
+    orthanc_.reset(new Deprecated::OrthancApiClient(broker_, *webService_, orthancBaseUrl_));
   }
 
 
-  IWebService& StoneApplicationContext::GetWebService()
+  Deprecated::IWebService& StoneApplicationContext::GetWebService()
   {
     if (webService_ == NULL)
     {
@@ -47,7 +47,7 @@ namespace OrthancStone
   }
 
   
-  OrthancApiClient& StoneApplicationContext::GetOrthancApiClient()
+  Deprecated::OrthancApiClient& StoneApplicationContext::GetOrthancApiClient()
   {
     if (orthanc_.get() == NULL)
     {
@@ -58,7 +58,7 @@ namespace OrthancStone
   }
 
   
-  void StoneApplicationContext::SetWebService(IWebService& webService)
+  void StoneApplicationContext::SetWebService(Deprecated::IWebService& webService)
   {
     webService_ = &webService;
     InitializeOrthanc();

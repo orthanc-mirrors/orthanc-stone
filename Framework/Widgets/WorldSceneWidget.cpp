@@ -32,7 +32,7 @@
 #include <memory>
 #include <cassert>
 
-namespace OrthancStone
+namespace Deprecated
 {
   // this is an adapter between a IWorldSceneMouseTracker
   // that is tracking a mouse in scene coordinates/mm and
@@ -60,8 +60,8 @@ namespace OrthancStone
     {
       if (tracker_->HasRender())
       {
-        CairoSurface surface(target, false /* no alpha */);
-        CairoContext context(surface);
+        OrthancStone::CairoSurface surface(target, false /* no alpha */);
+        OrthancStone::CairoContext context(surface);
         view_.ApplyTransform(context);
         tracker_->Render(context, view_.GetZoom());
       }
@@ -95,14 +95,14 @@ namespace OrthancStone
   };
 
 
-  bool WorldSceneWidget::RenderCairo(CairoContext& context)
+  bool WorldSceneWidget::RenderCairo(OrthancStone::CairoContext& context)
   {
     view_.ApplyTransform(context);
     return RenderScene(context, view_);
   }
 
 
-  void WorldSceneWidget::RenderMouseOverCairo(CairoContext& context,
+  void WorldSceneWidget::RenderMouseOverCairo(OrthancStone::CairoContext& context,
                                               int x,
                                               int y)
   {
@@ -156,10 +156,10 @@ namespace OrthancStone
   }
 
 
-  IMouseTracker* WorldSceneWidget::CreateMouseTracker(MouseButton button,
+  IMouseTracker* WorldSceneWidget::CreateMouseTracker(OrthancStone::MouseButton button,
                                                       int x,
                                                       int y,
-                                                      KeyboardModifiers modifiers,
+                                                      OrthancStone::KeyboardModifiers modifiers,
                                                       const std::vector<Touch>& touches)
   {
     double sceneX, sceneY;
@@ -189,10 +189,10 @@ namespace OrthancStone
       {
         switch (button)
         {
-          case MouseButton_Middle:
+          case OrthancStone::MouseButton_Middle:
             return new SceneMouseTracker(view_, new PanMouseTracker(*this, x, y));
 
-          case MouseButton_Right:
+          case OrthancStone::MouseButton_Right:
             return new SceneMouseTracker(view_, new ZoomMouseTracker(*this, x, y));
 
           default:
@@ -207,10 +207,10 @@ namespace OrthancStone
   }
 
 
-  void WorldSceneWidget::MouseWheel(MouseWheelDirection direction,
+  void WorldSceneWidget::MouseWheel(OrthancStone::MouseWheelDirection direction,
                                     int x,
                                     int y,
-                                    KeyboardModifiers modifiers)
+                                    OrthancStone::KeyboardModifiers modifiers)
   {
     if (interactor_)
     {
@@ -219,9 +219,9 @@ namespace OrthancStone
   }
 
 
-  void WorldSceneWidget::KeyPressed(KeyboardKeys key,
+  void WorldSceneWidget::KeyPressed(OrthancStone::KeyboardKeys key,
                                     char keyChar,
-                                    KeyboardModifiers modifiers)
+                                    OrthancStone::KeyboardModifiers modifiers)
   {
     if (interactor_)
     {

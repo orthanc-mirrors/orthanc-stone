@@ -30,7 +30,7 @@
 #include <string>
 #include <map>
 
-namespace OrthancStone
+namespace Deprecated
 {
   // The IWebService performs HTTP requests.
   // Since applications can run in native or WASM environment and, since
@@ -40,12 +40,12 @@ namespace OrthancStone
   class IWebService : public boost::noncopyable
   {
   protected:
-    MessageBroker& broker_;
+    OrthancStone::MessageBroker& broker_;
     
   public:
     typedef std::map<std::string, std::string> HttpHeaders;
 
-    class HttpRequestSuccessMessage : public IMessage
+    class HttpRequestSuccessMessage : public OrthancStone::IMessage
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
 
@@ -99,7 +99,7 @@ namespace OrthancStone
     };
     
 
-    class HttpRequestErrorMessage : public IMessage
+    class HttpRequestErrorMessage : public OrthancStone::IMessage
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
 
@@ -129,7 +129,7 @@ namespace OrthancStone
     };
 
 
-    IWebService(MessageBroker& broker) :
+    IWebService(OrthancStone::MessageBroker& broker) :
       broker_(broker)
     {
     }
@@ -144,23 +144,23 @@ namespace OrthancStone
     virtual void GetAsync(const std::string& uri,
                           const HttpHeaders& headers,
                           Orthanc::IDynamicObject* payload  /* takes ownership */,
-                          MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                          OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                          OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                           unsigned int timeoutInSeconds = 60) = 0;
 
     virtual void PostAsync(const std::string& uri,
                            const HttpHeaders& headers,
                            const std::string& body,
                            Orthanc::IDynamicObject* payload  /* takes ownership */,
-                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                           OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                           OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                            unsigned int timeoutInSeconds = 60) = 0;
 
     virtual void DeleteAsync(const std::string& uri,
                              const HttpHeaders& headers,
                              Orthanc::IDynamicObject* payload  /* takes ownership */,
-                             MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                             MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                             OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                             OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                              unsigned int timeoutInSeconds = 60) = 0;
   };
 }

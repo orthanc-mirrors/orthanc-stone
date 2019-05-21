@@ -24,7 +24,7 @@
 #include <vector>
 #include <boost/noncopyable.hpp>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class DownloadStack : public boost::noncopyable
   {

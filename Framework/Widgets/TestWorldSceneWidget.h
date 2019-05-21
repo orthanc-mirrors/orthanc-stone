@@ -25,7 +25,7 @@
 
 #include <memory>
 
-namespace OrthancStone
+namespace Deprecated
 {
   namespace Samples
   {
@@ -39,13 +39,13 @@ namespace OrthancStone
       unsigned int                count_;
 
     protected:
-      virtual bool RenderScene(CairoContext& context,
+      virtual bool RenderScene(OrthancStone::CairoContext& context,
                                const ViewportGeometry& view);
 
     public:
       TestWorldSceneWidget(const std::string& name, bool animate);
 
-      virtual Extent2D GetSceneExtent();
+      virtual OrthancStone::Extent2D GetSceneExtent();
 
       virtual bool HasAnimation() const
       {

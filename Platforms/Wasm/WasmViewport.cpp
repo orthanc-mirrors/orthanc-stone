@@ -3,10 +3,10 @@
 #include <vector>
 #include <memory>
 
-std::vector<std::shared_ptr<OrthancStone::WidgetViewport>> wasmViewports;
+std::vector<std::shared_ptr<Deprecated::WidgetViewport>> wasmViewports;
 
-void AttachWidgetToWasmViewport(const char* htmlCanvasId, OrthancStone::IWidget* centralWidget) {
-    std::shared_ptr<OrthancStone::WidgetViewport> viewport(CreateWasmViewportFromCpp(htmlCanvasId));
+void AttachWidgetToWasmViewport(const char* htmlCanvasId, Deprecated::IWidget* centralWidget) {
+    std::shared_ptr<Deprecated::WidgetViewport> viewport(CreateWasmViewportFromCpp(htmlCanvasId));
     viewport->SetCentralWidget(centralWidget);
 
     wasmViewports.push_back(viewport);

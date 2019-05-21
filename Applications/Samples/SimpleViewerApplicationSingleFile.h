@@ -47,7 +47,7 @@ namespace OrthancStone
       public IObserver
     {
     private:
-      class ThumbnailInteractor : public IWorldSceneInteractor
+      class ThumbnailInteractor : public Deprecated::IWorldSceneInteractor
       {
       private:
         SimpleViewerApplication&  application_;
@@ -58,16 +58,16 @@ namespace OrthancStone
         {
         }
 
-        virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
-                                                            const ViewportGeometry& view,
+        virtual Deprecated::IWorldSceneMouseTracker* CreateMouseTracker(Deprecated::WorldSceneWidget& widget,
+                                                            const Deprecated::ViewportGeometry& view,
                                                             MouseButton button,
                                                             KeyboardModifiers modifiers,
                                                             int viewportX,
                                                             int viewportY,
                                                             double x,
                                                             double y,
-                                                            IStatusBar* statusBar,
-                                                            const std::vector<Touch>& displayTouches)
+                                                            Deprecated::IStatusBar* statusBar,
+                                                            const std::vector<Deprecated::Touch>& displayTouches)
         {
           if (button == MouseButton_Left)
           {
@@ -79,31 +79,31 @@ namespace OrthancStone
         }
 
         virtual void MouseOver(CairoContext& context,
-                               WorldSceneWidget& widget,
-                               const ViewportGeometry& view,
+                               Deprecated::WorldSceneWidget& widget,
+                               const Deprecated::ViewportGeometry& view,
                                double x,
                                double y,
-                               IStatusBar* statusBar)
+                               Deprecated::IStatusBar* statusBar)
         {
         }
 
-        virtual void MouseWheel(WorldSceneWidget& widget,
+        virtual void MouseWheel(Deprecated::WorldSceneWidget& widget,
                                 MouseWheelDirection direction,
                                 KeyboardModifiers modifiers,
-                                IStatusBar* statusBar)
+                                Deprecated::IStatusBar* statusBar)
         {
         }
 
-        virtual void KeyPressed(WorldSceneWidget& widget,
+        virtual void KeyPressed(Deprecated::WorldSceneWidget& widget,
                                 KeyboardKeys key,
                                 char keyChar,
                                 KeyboardModifiers modifiers,
-                                IStatusBar* statusBar)
+                                Deprecated::IStatusBar* statusBar)
         {
         }
       };
 
-      class MainWidgetInteractor : public IWorldSceneInteractor
+      class MainWidgetInteractor : public Deprecated::IWorldSceneInteractor
       {
       private:
         SimpleViewerApplication&  application_;
@@ -114,27 +114,27 @@ namespace OrthancStone
         {
         }
         
-        virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
-                                                            const ViewportGeometry& view,
+        virtual Deprecated::IWorldSceneMouseTracker* CreateMouseTracker(Deprecated::WorldSceneWidget& widget,
+                                                            const Deprecated::ViewportGeometry& view,
                                                             MouseButton button,
                                                             KeyboardModifiers modifiers,
                                                             int viewportX,
                                                             int viewportY,
                                                             double x,
                                                             double y,
-                                                            IStatusBar* statusBar,
-                                                            const std::vector<Touch>& displayTouches)
+                                                            Deprecated::IStatusBar* statusBar,
+                                                            const std::vector<Deprecated::Touch>& displayTouches)
         {
           if (button == MouseButton_Left)
           {
             if (application_.currentTool_ == Tool_LineMeasure)
             {
-              return new LineMeasureTracker(statusBar, dynamic_cast<SliceViewerWidget&>(widget).GetSlice(),
+              return new Deprecated::LineMeasureTracker(statusBar, dynamic_cast<Deprecated::SliceViewerWidget&>(widget).GetSlice(),
                                             x, y, 255, 0, 0, application_.GetFont());
             }
             else if (application_.currentTool_ == Tool_CircleMeasure)
             {
-              return new CircleMeasureTracker(statusBar, dynamic_cast<SliceViewerWidget&>(widget).GetSlice(),
+              return new Deprecated::CircleMeasureTracker(statusBar, dynamic_cast<Deprecated::SliceViewerWidget&>(widget).GetSlice(),
                                               x, y, 255, 0, 0, application_.GetFont());
             }
           }
@@ -142,15 +142,15 @@ namespace OrthancStone
         }
 
         virtual void MouseOver(CairoContext& context,
-                               WorldSceneWidget& widget,
-                               const ViewportGeometry& view,
+                               Deprecated::WorldSceneWidget& widget,
+                               const Deprecated::ViewportGeometry& view,
                                double x,
                                double y,
-                               IStatusBar* statusBar)
+                               Deprecated::IStatusBar* statusBar)
         {
           if (statusBar != NULL)
           {
-            Vector p = dynamic_cast<SliceViewerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
+            Vector p = dynamic_cast<Deprecated::SliceViewerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
             
             char buf[64];
             sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)",
@@ -159,18 +159,18 @@ namespace OrthancStone
           }
         }
 
-        virtual void MouseWheel(WorldSceneWidget& widget,
+        virtual void MouseWheel(Deprecated::WorldSceneWidget& widget,
                                 MouseWheelDirection direction,
                                 KeyboardModifiers modifiers,
-                                IStatusBar* statusBar)
+                                Deprecated::IStatusBar* statusBar)
         {
         }
 
-        virtual void KeyPressed(WorldSceneWidget& widget,
+        virtual void KeyPressed(Deprecated::WorldSceneWidget& widget,
                                 KeyboardKeys key,
                                 char keyChar,
                                 KeyboardModifiers modifiers,
-                                IStatusBar* statusBar)
+                                Deprecated::IStatusBar* statusBar)
         {
           switch (keyChar)
           {
@@ -241,19 +241,19 @@ namespace OrthancStone
       Tool                                 currentTool_;
       std::auto_ptr<MainWidgetInteractor>  mainWidgetInteractor_;
       std::auto_ptr<ThumbnailInteractor>   thumbnailInteractor_;
-      LayoutWidget*                        mainLayout_;
-      LayoutWidget*                        thumbnailsLayout_;
-      std::vector<SliceViewerWidget*>      thumbnails_;
+      Deprecated::LayoutWidget*                        mainLayout_;
+      Deprecated::LayoutWidget*                        thumbnailsLayout_;
+      std::vector<Deprecated::SliceViewerWidget*>      thumbnails_;
 
       std::map<std::string, std::vector<std::string> > instancesIdsPerSeriesId_;
       std::map<std::string, Json::Value> seriesTags_;
 
       unsigned int                         currentInstanceIndex_;
-      OrthancStone::WidgetViewport*        wasmViewport1_;
-      OrthancStone::WidgetViewport*        wasmViewport2_;
+      Deprecated::WidgetViewport*        wasmViewport1_;
+      Deprecated::WidgetViewport*        wasmViewport2_;
 
-      IStatusBar*                          statusBar_;
-      std::auto_ptr<SmartLoader>           smartLoader_;
+      Deprecated::IStatusBar*                          statusBar_;
+      std::auto_ptr<Deprecated::SmartLoader>           smartLoader_;
 
       Orthanc::Font                        font_;
 
@@ -282,7 +282,7 @@ namespace OrthancStone
       }
 
       virtual void Initialize(StoneApplicationContext* context,
-                              IStatusBar& statusBar,
+                              Deprecated::IStatusBar& statusBar,
                               const boost::program_options::variables_map& parameters)
       {
         using namespace OrthancStone;
@@ -291,19 +291,19 @@ namespace OrthancStone
         statusBar_ = &statusBar;
 
         {// initialize viewports and layout
-          mainLayout_ = new LayoutWidget("main-layout");
+          mainLayout_ = new Deprecated::LayoutWidget("main-layout");
           mainLayout_->SetPadding(10);
           mainLayout_->SetBackgroundCleared(true);
           mainLayout_->SetBackgroundColor(0, 0, 0);
           mainLayout_->SetHorizontal();
 
-          thumbnailsLayout_ = new LayoutWidget("thumbnail-layout");
+          thumbnailsLayout_ = new Deprecated::LayoutWidget("thumbnail-layout");
           thumbnailsLayout_->SetPadding(10);
           thumbnailsLayout_->SetBackgroundCleared(true);
           thumbnailsLayout_->SetBackgroundColor(50, 50, 50);
           thumbnailsLayout_->SetVertical();
 
-          mainWidget_ = new SliceViewerWidget(GetBroker(), "main-viewport");
+          mainWidget_ = new Deprecated::SliceViewerWidget(GetBroker(), "main-viewport");
           //mainWidget_->RegisterObserver(*this);
 
           // hierarchy
@@ -311,7 +311,7 @@ namespace OrthancStone
           mainLayout_->AddWidget(mainWidget_);
 
           // sources
-          smartLoader_.reset(new SmartLoader(GetBroker(), context->GetOrthancApiClient()));
+          smartLoader_.reset(new Deprecated::SmartLoader(GetBroker(), context->GetOrthancApiClient()));
           smartLoader_->SetImageQuality(SliceImageQuality_FullPam);
 
           mainLayout_->SetTransmitMouseOver(true);
@@ -329,7 +329,7 @@ namespace OrthancStone
           LOG(WARNING) << "The study ID is missing, will take the first studyId found in Orthanc";
           context->GetOrthancApiClient().GetJsonAsync(
             "/studies",
-            new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>
+            new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
             (*this, &SimpleViewerApplication::OnStudyListReceived));
         }
         else
@@ -338,7 +338,7 @@ namespace OrthancStone
         }
       }
 
-      void OnStudyListReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
+      void OnStudyListReceived(const Deprecated::OrthancApiClient::JsonResponseReadyMessage& message)
       {
         const Json::Value& response = message.GetJson();
 
@@ -349,7 +349,7 @@ namespace OrthancStone
         }
       }
       
-      void OnStudyReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
+      void OnStudyReceived(const Deprecated::OrthancApiClient::JsonResponseReadyMessage& message)
       {
         const Json::Value& response = message.GetJson();
 
@@ -359,13 +359,13 @@ namespace OrthancStone
           {
             context_->GetOrthancApiClient().GetJsonAsync(
               "/series/" + response["Series"][(int)i].asString(),
-              new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>
+              new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
               (*this, &SimpleViewerApplication::OnSeriesReceived));
           }
         }
       }
 
-      void OnSeriesReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
+      void OnSeriesReceived(const Deprecated::OrthancApiClient::JsonResponseReadyMessage& message)
       {
         const Json::Value& response = message.GetJson();
 
@@ -387,7 +387,7 @@ namespace OrthancStone
           LoadThumbnailForSeries(seriesId, instancesIdsPerSeriesId_[seriesId][0]);
 
           // if this is the first thumbnail loaded, load the first instance in the mainWidget
-          SliceViewerWidget& widget = *dynamic_cast<SliceViewerWidget*>(mainWidget_);
+          Deprecated::SliceViewerWidget& widget = *dynamic_cast<Deprecated::SliceViewerWidget*>(mainWidget_);
           if (widget.GetLayerCount() == 0)
           {
             smartLoader_->SetFrameInWidget(widget, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
@@ -398,10 +398,10 @@ namespace OrthancStone
       void LoadThumbnailForSeries(const std::string& seriesId, const std::string& instanceId)
       {
         LOG(INFO) << "Loading thumbnail for series " << seriesId;
-        SliceViewerWidget* thumbnailWidget = new SliceViewerWidget(GetBroker(), "thumbnail-series-" + seriesId);
+        Deprecated::SliceViewerWidget* thumbnailWidget = new Deprecated::SliceViewerWidget(GetBroker(), "thumbnail-series-" + seriesId);
         thumbnails_.push_back(thumbnailWidget);
         thumbnailsLayout_->AddWidget(thumbnailWidget);
-        thumbnailWidget->RegisterObserverCallback(new Callable<SimpleViewerApplication, SliceViewerWidget::GeometryChangedMessage>(*this, &SimpleViewerApplication::OnWidgetGeometryChanged));
+        thumbnailWidget->RegisterObserverCallback(new Callable<SimpleViewerApplication, Deprecated::SliceViewerWidget::GeometryChangedMessage>(*this, &SimpleViewerApplication::OnWidgetGeometryChanged));
         smartLoader_->SetFrameInWidget(*thumbnailWidget, 0, instanceId, 0);
         thumbnailWidget->SetInteractor(*thumbnailInteractor_);
       }
@@ -410,19 +410,19 @@ namespace OrthancStone
       {
         LOG(INFO) << "Selecting study: " << studyId;
         context_->GetOrthancApiClient().GetJsonAsync(
-          "/studies/" + studyId, new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>
+          "/studies/" + studyId, new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
           (*this, &SimpleViewerApplication::OnStudyReceived));
       }
 
-      void OnWidgetGeometryChanged(const SliceViewerWidget::GeometryChangedMessage& message)
+      void OnWidgetGeometryChanged(const Deprecated::SliceViewerWidget::GeometryChangedMessage& message)
       {
         // TODO: The "const_cast" could probably be replaced by "mainWidget"
-        const_cast<SliceViewerWidget&>(message.GetOrigin()).FitContent();
+        const_cast<Deprecated::SliceViewerWidget&>(message.GetOrigin()).FitContent();
       }
 
       void SelectSeriesInMainViewport(const std::string& seriesId)
       {
-        SliceViewerWidget& widget = *dynamic_cast<SliceViewerWidget*>(mainWidget_);
+        Deprecated::SliceViewerWidget& widget = *dynamic_cast<Deprecated::SliceViewerWidget*>(mainWidget_);
         smartLoader_->SetFrameInWidget(widget, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
       }
 

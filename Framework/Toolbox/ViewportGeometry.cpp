@@ -26,7 +26,7 @@
 
 #include <boost/math/special_functions/round.hpp>
 
-namespace OrthancStone
+namespace Deprecated
 {
   void ViewportGeometry::ComputeTransform()
   {
@@ -79,7 +79,7 @@ namespace OrthancStone
   }
 
 
-  void ViewportGeometry::SetSceneExtent(const Extent2D& extent)
+  void ViewportGeometry::SetSceneExtent(const OrthancStone::Extent2D& extent)
   {
     LOG(INFO) << "New scene extent: ("
               << extent.GetX1() << "," << extent.GetY1() << ") => ("
@@ -168,7 +168,7 @@ namespace OrthancStone
   }
 
 
-  void ViewportGeometry::ApplyTransform(CairoContext& context) const
+  void ViewportGeometry::ApplyTransform(OrthancStone::CairoContext& context) const
   {
     cairo_set_matrix(context.GetObject(), &transform_);
   }
@@ -198,9 +198,9 @@ namespace OrthancStone
   }
 
 
-  Matrix ViewportGeometry::GetMatrix() const
+  OrthancStone::Matrix ViewportGeometry::GetMatrix() const
   {
-    Matrix m(3, 3);
+    OrthancStone::Matrix m(3, 3);
 
     m(0, 0) = transform_.xx;
     m(0, 1) = transform_.xy;

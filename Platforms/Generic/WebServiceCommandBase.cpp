@@ -23,17 +23,17 @@
 
 #include <Core/HttpClient.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
-  WebServiceCommandBase::WebServiceCommandBase(MessageBroker& broker,
-                                               MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                                               MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
+  WebServiceCommandBase::WebServiceCommandBase(OrthancStone::MessageBroker& broker,
+                                               OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                                               OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                                const Orthanc::WebServiceParameters& parameters,
                                                const std::string& url,
                                                const IWebService::HttpHeaders& headers,
                                                unsigned int timeoutInSeconds,
                                                Orthanc::IDynamicObject* payload /* takes ownership */,
-                                               NativeStoneApplicationContext& context) :
+                                               OrthancStone::NativeStoneApplicationContext& context) :
     IObservable(broker),
     successCallback_(successCallback),
     failureCallback_(failureCallback),
@@ -52,7 +52,7 @@ namespace OrthancStone
     // We want to make sure that, i.e, the UpdateThread is not
     // triggered while we are updating the "model" with the result of
     // a WebServiceCommand
-    NativeStoneApplicationContext::GlobalMutexLocker lock(context_); 
+    OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker lock(context_); 
 
     if (success_ && successCallback_.get() != NULL)
     {

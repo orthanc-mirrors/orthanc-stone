@@ -28,13 +28,13 @@
 
 #include <Core/Images/Font.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class CircleMeasureTracker : public IWorldSceneMouseTracker
   {
   private:
     IStatusBar*           statusBar_;
-    CoordinateSystem3D    slice_;
+    OrthancStone::CoordinateSystem3D    slice_;
     double                x1_;
     double                y1_;
     double                x2_;
@@ -44,7 +44,7 @@ namespace OrthancStone
 
   public:
     CircleMeasureTracker(IStatusBar* statusBar,
-                         const CoordinateSystem3D& slice,
+                         const OrthancStone::CoordinateSystem3D& slice,
                          double x, 
                          double y,
                          uint8_t red,
@@ -57,7 +57,7 @@ namespace OrthancStone
       return true;
     }
 
-    virtual void Render(CairoContext& context,
+    virtual void Render(OrthancStone::CairoContext& context,
                         double zoom);
     
     double GetRadius() const;  // In millimeters

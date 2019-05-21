@@ -83,18 +83,18 @@ namespace SimpleViewer
 
     std::auto_ptr<MainWidgetInteractor> mainWidgetInteractor_;
     std::auto_ptr<ThumbnailInteractor>  thumbnailInteractor_;
-    LayoutWidget*                       mainLayout_;
-    LayoutWidget*                       thumbnailsLayout_;
-    SliceViewerWidget*                  mainWidget_;
-    std::vector<SliceViewerWidget*>     thumbnails_;
+    Deprecated::LayoutWidget*                       mainLayout_;
+    Deprecated::LayoutWidget*                       thumbnailsLayout_;
+    Deprecated::SliceViewerWidget*                  mainWidget_;
+    std::vector<Deprecated::SliceViewerWidget*>     thumbnails_;
     std::map<std::string, std::vector<std::string> > instancesIdsPerSeriesId_;
     std::map<std::string, Json::Value>  seriesTags_;
     unsigned int                        currentInstanceIndex_;
-    OrthancStone::WidgetViewport*       wasmViewport1_;
-    OrthancStone::WidgetViewport*       wasmViewport2_;
+    Deprecated::WidgetViewport*       wasmViewport1_;
+    Deprecated::WidgetViewport*       wasmViewport2_;
 
-    IStatusBar*                         statusBar_;
-    std::auto_ptr<SmartLoader>          smartLoader_;
+    Deprecated::IStatusBar*                         statusBar_;
+    std::auto_ptr<Deprecated::SmartLoader>          smartLoader_;
 
     Orthanc::Font                       font_;
 
@@ -112,24 +112,24 @@ namespace SimpleViewer
     }
 
     virtual void Finalize() ORTHANC_OVERRIDE {}
-    virtual IWidget* GetCentralWidget() ORTHANC_OVERRIDE {return mainLayout_;}
+    virtual Deprecated::IWidget* GetCentralWidget() ORTHANC_OVERRIDE {return mainLayout_;}
 
     virtual void DeclareStartupOptions(boost::program_options::options_description& options) ORTHANC_OVERRIDE;
     virtual void Initialize(StoneApplicationContext* context,
-                            IStatusBar& statusBar,
+                            Deprecated::IStatusBar& statusBar,
                             const boost::program_options::variables_map& parameters) ORTHANC_OVERRIDE;
 
-    void OnStudyListReceived(const OrthancApiClient::JsonResponseReadyMessage& message);
+    void OnStudyListReceived(const Deprecated::OrthancApiClient::JsonResponseReadyMessage& message);
 
-    void OnStudyReceived(const OrthancApiClient::JsonResponseReadyMessage& message);
+    void OnStudyReceived(const Deprecated::OrthancApiClient::JsonResponseReadyMessage& message);
 
-    void OnSeriesReceived(const OrthancApiClient::JsonResponseReadyMessage& message);
+    void OnSeriesReceived(const Deprecated::OrthancApiClient::JsonResponseReadyMessage& message);
 
     void LoadThumbnailForSeries(const std::string& seriesId, const std::string& instanceId);
 
     void SelectStudy(const std::string& studyId);
 
-    void OnWidgetGeometryChanged(const SliceViewerWidget::GeometryChangedMessage& message);
+    void OnWidgetGeometryChanged(const Deprecated::SliceViewerWidget::GeometryChangedMessage& message);
 
     void SelectSeriesInMainViewport(const std::string& seriesId);
 

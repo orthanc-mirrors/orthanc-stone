@@ -23,7 +23,7 @@
 
 #include "WorldSceneWidget.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class ZoomMouseTracker : public IWorldSceneMouseTracker
   {
@@ -51,7 +51,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void Render(CairoContext& context,
+    virtual void Render(OrthancStone::CairoContext& context,
                         double zoom);
 
     virtual void MouseMove(int displayX,

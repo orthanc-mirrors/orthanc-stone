@@ -43,7 +43,7 @@ namespace OrthancStone
   // Anonymous namespace to avoid clashes against other compilation modules
   namespace
   {
-    class LogStatusBar : public IStatusBar
+    class LogStatusBar : public Deprecated::IStatusBar
     {
     public:
       virtual void ClearMessage()
@@ -202,17 +202,17 @@ namespace OrthancStone
       {
         // use multiple threads to execute asynchronous tasks like 
         // download content
-        Oracle oracle(6); 
+        Deprecated::Oracle oracle(6); 
         oracle.Start();
 
         {
-          OracleWebService webService(
+          Deprecated::OracleWebService webService(
             broker_, oracle, webServiceParameters, context);
           
           context.SetWebService(webService);
           context.SetOrthancBaseUrl(webServiceParameters.GetUrl());
 
-          OracleDelayedCallExecutor delayedExecutor(broker_, oracle, context);
+          Deprecated::OracleDelayedCallExecutor delayedExecutor(broker_, oracle, context);
           context.SetDelayedCallExecutor(delayedExecutor);
 
           application_.Initialize(&context, statusBar, parameters);

@@ -6,9 +6,9 @@
 
 struct CachedSuccessNotification
 {
-  boost::shared_ptr<OrthancStone::BaseWebService::CachedHttpRequestSuccessMessage>    cachedMessage;
+  boost::shared_ptr<Deprecated::BaseWebService::CachedHttpRequestSuccessMessage>    cachedMessage;
   std::auto_ptr<Orthanc::IDynamicObject>                                              payload;
-  OrthancStone::MessageHandler<OrthancStone::IWebService::HttpRequestSuccessMessage>* successCallback;
+  OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestSuccessMessage>* successCallback;
 };
 
 
@@ -47,8 +47,8 @@ extern "C" {
   {
     if (failureCallable != NULL)
     {
-      reinterpret_cast<OrthancStone::MessageHandler<OrthancStone::IWebService::HttpRequestErrorMessage>*>(failureCallable)->
-        Apply(OrthancStone::IWebService::HttpRequestErrorMessage(uri, reinterpret_cast<Orthanc::IDynamicObject*>(payload)));
+      reinterpret_cast<OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestErrorMessage>*>(failureCallable)->
+        Apply(Deprecated::IWebService::HttpRequestErrorMessage(uri, reinterpret_cast<Orthanc::IDynamicObject*>(payload)));
     }
   }
 
@@ -57,7 +57,7 @@ extern "C" {
     // notification has been allocated in C++ and passed to JS.  It must be deleted by this method
     std::auto_ptr<CachedSuccessNotification> notification(reinterpret_cast<CachedSuccessNotification*>(notification_));
 
-    notification->successCallback->Apply(OrthancStone::IWebService::HttpRequestSuccessMessage(
+    notification->successCallback->Apply(Deprecated::IWebService::HttpRequestSuccessMessage(
       notification->cachedMessage->GetUri(), 
       notification->cachedMessage->GetAnswer(),
       notification->cachedMessage->GetAnswerSize(),
@@ -75,13 +75,13 @@ extern "C" {
   {
     if (successCallable != NULL)
     {
-      OrthancStone::IWebService::HttpHeaders headers;
+      Deprecated::IWebService::HttpHeaders headers;
 
       // TODO - Parse "answerHeaders"
       //printf("TODO: parse headers [%s]\n", answerHeaders);
       
-      reinterpret_cast<OrthancStone::MessageHandler<OrthancStone::IWebService::HttpRequestSuccessMessage>*>(successCallable)->
-        Apply(OrthancStone::IWebService::HttpRequestSuccessMessage(uri, body, bodySize, headers,
+      reinterpret_cast<OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestSuccessMessage>*>(successCallable)->
+        Apply(Deprecated::IWebService::HttpRequestSuccessMessage(uri, body, bodySize, headers,
                                                                    reinterpret_cast<Orthanc::IDynamicObject*>(payload)));
     }
   }
@@ -92,9 +92,9 @@ extern "C" {
 
 
 
-namespace OrthancStone
+namespace Deprecated
 {
-  MessageBroker* WasmWebService::broker_ = NULL;
+  OrthancStone::MessageBroker* WasmWebService::broker_ = NULL;
 
   void ToJsonString(std::string& output, const IWebService::HttpHeaders& headers)
   {
@@ -116,8 +116,8 @@ namespace OrthancStone
                                  const HttpHeaders& headers,
                                  const std::string& body,
                                  Orthanc::IDynamicObject* payload,
-                                 MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
-                                 MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable,
+                                 OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
+                                 OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable,
                                  unsigned int timeoutInSeconds)
   {
     std::string headersInJsonString;
@@ -129,8 +129,8 @@ namespace OrthancStone
   void WasmWebService::DeleteAsync(const std::string& relativeUri,
                                    const HttpHeaders& headers,
                                    Orthanc::IDynamicObject* payload,
-                                   MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
-                                   MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable,
+                                   OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallable,
+                                   OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallable,
                                    unsigned int timeoutInSeconds)
   {
     std::string headersInJsonString;
@@ -142,8 +142,8 @@ namespace OrthancStone
   void WasmWebService::GetAsyncInternal(const std::string &relativeUri,
                                         const HttpHeaders &headers,
                                         Orthanc::IDynamicObject *payload,
-                                        MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallable,
-                                        MessageHandler<IWebService::HttpRequestErrorMessage> *failureCallable,
+                                        OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallable,
+                                        OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage> *failureCallable,
                                         unsigned int timeoutInSeconds)
   {
     std::string headersInJsonString;
@@ -153,8 +153,8 @@ namespace OrthancStone
   }
 
   void WasmWebService::NotifyHttpSuccessLater(boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedMessage,
-                                                Orthanc::IDynamicObject* payload, // takes ownership
-                                                MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback)
+                                              Orthanc::IDynamicObject* payload, // takes ownership
+                                              OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback)
   {
     CachedSuccessNotification* notification = new CachedSuccessNotification();  // allocated on the heap, it will be passed to JS and deleted when coming back to C++
     notification->cachedMessage = cachedMessage;

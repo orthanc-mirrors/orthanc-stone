@@ -24,13 +24,13 @@
 
 #include <iostream>
 
-namespace OrthancStone
+namespace Deprecated
 {
-  DelayedCallCommand::DelayedCallCommand(MessageBroker& broker,
-                                         MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,  // takes ownership
+  DelayedCallCommand::DelayedCallCommand(OrthancStone::MessageBroker& broker,
+                                         OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,  // takes ownership
                                          unsigned int timeoutInMs,
                                          Orthanc::IDynamicObject* payload /* takes ownership */,
-                                         NativeStoneApplicationContext& context
+                                         OrthancStone::NativeStoneApplicationContext& context
                                          ) :
     IObservable(broker),
     callback_(callback),
@@ -55,7 +55,7 @@ namespace OrthancStone
     // We want to make sure that, i.e, the UpdateThread is not
     // triggered while we are updating the "model" with the result of
     // an OracleCommand
-    NativeStoneApplicationContext::GlobalMutexLocker lock(context_);
+    OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker lock(context_);
 
     if (callback_.get() != NULL)
     {

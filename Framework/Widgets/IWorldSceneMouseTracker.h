@@ -24,7 +24,7 @@
 #include "../Viewport/CairoContext.h"
 #include "../Viewport/IMouseTracker.h" // only to get the "Touch" definition
 
-namespace OrthancStone
+namespace Deprecated
 {
 
   // this is tracking a mouse in scene coordinates/mm unlike
@@ -39,7 +39,7 @@ namespace OrthancStone
 
     virtual bool HasRender() const = 0;
 
-    virtual void Render(CairoContext& context,
+    virtual void Render(OrthancStone::CairoContext& context,
                         double zoom) = 0;
 
     virtual void MouseUp() = 0;

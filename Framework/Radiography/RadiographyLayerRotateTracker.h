@@ -29,7 +29,7 @@
 
 namespace OrthancStone
 {
-  class RadiographyLayerRotateTracker : public IWorldSceneMouseTracker
+  class RadiographyLayerRotateTracker : public Deprecated::IWorldSceneMouseTracker
   {
   private:
     class UndoRedoCommand;
@@ -49,7 +49,7 @@ namespace OrthancStone
   public:
     RadiographyLayerRotateTracker(UndoRedoStack& undoRedoStack,
                                   RadiographyScene& scene,
-                                  const ViewportGeometry& view,
+                                  const Deprecated::ViewportGeometry& view,
                                   size_t layer,
                                   double x,
                                   double y,
@@ -69,7 +69,7 @@ namespace OrthancStone
                            int displayY,
                            double sceneX,
                            double sceneY,
-                           const std::vector<Touch>& displayTouches,
-                           const std::vector<Touch>& sceneTouches);
+                           const std::vector<Deprecated::Touch>& displayTouches,
+                           const std::vector<Deprecated::Touch>& sceneTouches);
   };
 }

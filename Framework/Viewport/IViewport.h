@@ -28,16 +28,16 @@
 #include <Core/Images/ImageAccessor.h>
 #include "../Viewport/IMouseTracker.h" // only to get the "Touch" definition
 
-namespace OrthancStone
+namespace Deprecated
 {
   class IWidget;   // Forward declaration
   
-  class IViewport : public IObservable
+  class IViewport : public OrthancStone::IObservable
   {
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ViewportChangedMessage, IViewport);
 
-    IViewport(MessageBroker& broker) :
+    IViewport(OrthancStone::MessageBroker& broker) :
       IObservable(broker)
     {
     }
@@ -56,10 +56,10 @@ namespace OrthancStone
     // The function returns "true" iff. a new frame was rendered
     virtual bool Render(Orthanc::ImageAccessor& surface) = 0;
 
-    virtual void MouseDown(MouseButton button,
+    virtual void MouseDown(OrthancStone::MouseButton button,
                            int x,
                            int y,
-                           KeyboardModifiers modifiers,
+                           OrthancStone::KeyboardModifiers modifiers,
                            const std::vector<Touch>& touches) = 0;
 
     virtual void MouseUp() = 0;
@@ -72,14 +72,14 @@ namespace OrthancStone
 
     virtual void MouseLeave() = 0;
 
-    virtual void MouseWheel(MouseWheelDirection direction,
+    virtual void MouseWheel(OrthancStone::MouseWheelDirection direction,
                             int x,
                             int y,
-                            KeyboardModifiers modifiers) = 0;
+                            OrthancStone::KeyboardModifiers modifiers) = 0;
 
-    virtual void KeyPressed(KeyboardKeys key,
+    virtual void KeyPressed(OrthancStone::KeyboardKeys key,
                             char keyChar,
-                            KeyboardModifiers modifiers) = 0;
+                            OrthancStone::KeyboardModifiers modifiers) = 0;
 
     virtual bool HasAnimation() = 0;
 

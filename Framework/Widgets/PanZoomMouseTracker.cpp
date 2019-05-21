@@ -25,7 +25,7 @@
 #include <Core/OrthancException.h>
 #include <math.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   Touch GetCenter(const std::vector<Touch>& touches)
   {
@@ -75,7 +75,7 @@ namespace OrthancStone
   }
 
 
-  void PanZoomMouseTracker::Render(CairoContext& context,
+  void PanZoomMouseTracker::Render(OrthancStone::CairoContext& context,
                                    double zoom)
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);

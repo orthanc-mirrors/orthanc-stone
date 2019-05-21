@@ -25,7 +25,7 @@
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Logging.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   void WidgetBase::NotifyContentChanged()
   {
@@ -69,7 +69,7 @@ namespace OrthancStone
   }
 
 
-  void WidgetBase::ClearBackgroundCairo(CairoContext& context) const
+  void WidgetBase::ClearBackgroundCairo(OrthancStone::CairoContext& context) const
   {
     // Clear the background using Cairo
 
@@ -86,8 +86,8 @@ namespace OrthancStone
 
   void WidgetBase::ClearBackgroundCairo(Orthanc::ImageAccessor& target) const
   {
-    CairoSurface surface(target, false /* no alpha */);
-    CairoContext context(surface);
+    OrthancStone::CairoSurface surface(target, false /* no alpha */);
+    OrthancStone::CairoContext context(surface);
     ClearBackgroundCairo(context);
   }
 

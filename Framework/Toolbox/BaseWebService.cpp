@@ -26,20 +26,20 @@
 #include "Platforms/Generic/IOracleCommand.h"
 #include <boost/shared_ptr.hpp>
 
-namespace OrthancStone
+namespace Deprecated
 {
 
 
   class BaseWebService::BaseWebServicePayload : public Orthanc::IDynamicObject
   {
   private:
-    std::auto_ptr< MessageHandler<IWebService::HttpRequestSuccessMessage> >   userSuccessHandler_;
-    std::auto_ptr< MessageHandler<IWebService::HttpRequestErrorMessage> >     userFailureHandler_;
+    std::auto_ptr< OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage> >   userSuccessHandler_;
+    std::auto_ptr< OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage> >     userFailureHandler_;
     std::auto_ptr< Orthanc::IDynamicObject>                                   userPayload_;
 
   public:
-    BaseWebServicePayload(MessageHandler<IWebService::HttpRequestSuccessMessage>* userSuccessHandler,
-                          MessageHandler<IWebService::HttpRequestErrorMessage>* userFailureHandler,
+    BaseWebServicePayload(OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* userSuccessHandler,
+                          OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* userFailureHandler,
                           Orthanc::IDynamicObject* userPayload) :
       userSuccessHandler_(userSuccessHandler),
       userFailureHandler_(userFailureHandler),
@@ -83,17 +83,17 @@ namespace OrthancStone
   void BaseWebService::GetAsync(const std::string& uri,
                                 const HttpHeaders& headers,
                                 Orthanc::IDynamicObject* payload  /* takes ownership */,
-                                MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                                MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
+                                OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                                OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                 unsigned int timeoutInSeconds)
   {
     if (cache_.find(uri) == cache_.end())
     {
       GetAsyncInternal(uri, headers,
                        new BaseWebService::BaseWebServicePayload(successCallback, failureCallback, payload), // ownership is transfered
-                       new Callable<BaseWebService, IWebService::HttpRequestSuccessMessage>
+                       new OrthancStone::Callable<BaseWebService, IWebService::HttpRequestSuccessMessage>
                        (*this, &BaseWebService::CacheAndNotifyHttpSuccess),
-                       new Callable<BaseWebService, IWebService::HttpRequestErrorMessage>
+                       new OrthancStone::Callable<BaseWebService, IWebService::HttpRequestErrorMessage>
                        (*this, &BaseWebService::NotifyHttpError),
                        timeoutInSeconds);
     }

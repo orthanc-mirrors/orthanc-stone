@@ -52,7 +52,7 @@ namespace OrthancStone
   namespace Samples
   {
     class RadiographyEditorInteractor :
-        public IWorldSceneInteractor,
+        public Deprecated::IWorldSceneInteractor,
         public IObserver
     {
     private:
@@ -97,16 +97,16 @@ namespace OrthancStone
       {
         maskLayer_ = maskLayer;
       }
-      virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& worldWidget,
-                                                          const ViewportGeometry& view,
-                                                          MouseButton button,
-                                                          KeyboardModifiers modifiers,
-                                                          int viewportX,
-                                                          int viewportY,
-                                                          double x,
-                                                          double y,
-                                                          IStatusBar* statusBar,
-                                                          const std::vector<Touch>& displayTouches)
+      virtual Deprecated::IWorldSceneMouseTracker* CreateMouseTracker(Deprecated::WorldSceneWidget& worldWidget,
+                                                                      const Deprecated::ViewportGeometry& view,
+                                                                      MouseButton button,
+                                                                      KeyboardModifiers modifiers,
+                                                                      int viewportX,
+                                                                      int viewportY,
+                                                                      double x,
+                                                                      double y,
+                                                                      Deprecated::IStatusBar* statusBar,
+                                                                      const std::vector<Deprecated::Touch>& displayTouches)
       {
         RadiographyWidget& widget = dynamic_cast<RadiographyWidget&>(worldWidget);
 
@@ -226,11 +226,11 @@ namespace OrthancStone
       }
 
       virtual void MouseOver(CairoContext& context,
-                             WorldSceneWidget& worldWidget,
-                             const ViewportGeometry& view,
+                             Deprecated::WorldSceneWidget& worldWidget,
+                             const Deprecated::ViewportGeometry& view,
                              double x,
                              double y,
-                             IStatusBar* statusBar)
+                             Deprecated::IStatusBar* statusBar)
       {
         RadiographyWidget& widget = dynamic_cast<RadiographyWidget&>(worldWidget);
 
@@ -270,18 +270,18 @@ namespace OrthancStone
         }
       }
 
-      virtual void MouseWheel(WorldSceneWidget& widget,
+      virtual void MouseWheel(Deprecated::WorldSceneWidget& widget,
                               MouseWheelDirection direction,
                               KeyboardModifiers modifiers,
-                              IStatusBar* statusBar)
+                              Deprecated::IStatusBar* statusBar)
       {
       }
 
-      virtual void KeyPressed(WorldSceneWidget& worldWidget,
+      virtual void KeyPressed(Deprecated::WorldSceneWidget& worldWidget,
                               KeyboardKeys key,
                               char keyChar,
                               KeyboardModifiers modifiers,
-                              IStatusBar* statusBar)
+                              Deprecated::IStatusBar* statusBar)
       {
         RadiographyWidget& widget = dynamic_cast<RadiographyWidget&>(worldWidget);
 
@@ -455,7 +455,7 @@ namespace OrthancStone
       }
 
       virtual void Initialize(StoneApplicationContext* context,
-                              IStatusBar& statusBar,
+                              Deprecated::IStatusBar& statusBar,
                               const boost::program_options::variables_map& parameters)
       {
         using namespace OrthancStone;
@@ -485,7 +485,7 @@ namespace OrthancStone
         }
 
         std::string instance = parameters["instance"].as<std::string>();
-        int frame = parameters["frame"].as<unsigned int>();
+        //int frame = parameters["frame"].as<unsigned int>();
 
         fontRegistry_.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
         

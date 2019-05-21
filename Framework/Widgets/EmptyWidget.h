@@ -23,7 +23,7 @@
 
 #include "IWidget.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   /**
    * This is a test widget that simply fills its surface with an
@@ -73,10 +73,10 @@ namespace OrthancStone
 
     virtual bool Render(Orthanc::ImageAccessor& surface);
 
-    virtual IMouseTracker* CreateMouseTracker(MouseButton button,
+    virtual IMouseTracker* CreateMouseTracker(OrthancStone::MouseButton button,
                                               int x,
                                               int y,
-                                              KeyboardModifiers modifiers,
+                                              OrthancStone::KeyboardModifiers modifiers,
                                               const std::vector<Touch>& touches)
     {
       return NULL;
@@ -88,16 +88,16 @@ namespace OrthancStone
     {
     }
 
-    virtual void MouseWheel(MouseWheelDirection direction,
+    virtual void MouseWheel(OrthancStone::MouseWheelDirection direction,
                             int x,
                             int y,
-                            KeyboardModifiers modifiers)
+                            OrthancStone::KeyboardModifiers modifiers)
     {
     }
 
-    virtual void KeyPressed(KeyboardKeys key,
+    virtual void KeyPressed(OrthancStone::KeyboardKeys key,
                             char keyChar,
-                            KeyboardModifiers modifiers)
+                            OrthancStone::KeyboardModifiers modifiers)
     {
     }
 

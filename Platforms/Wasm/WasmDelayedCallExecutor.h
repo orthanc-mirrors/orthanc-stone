@@ -3,15 +3,15 @@
 #include <Framework/Toolbox/IDelayedCallExecutor.h>
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class WasmDelayedCallExecutor : public IDelayedCallExecutor
   {
   private:
-    static MessageBroker* broker_;
+    static OrthancStone::MessageBroker* broker_;
 
     // Private constructor => Singleton design pattern
-    WasmDelayedCallExecutor(MessageBroker& broker) :
+    WasmDelayedCallExecutor(OrthancStone::MessageBroker& broker) :
       IDelayedCallExecutor(broker)
     {
     }
@@ -28,12 +28,12 @@ namespace OrthancStone
       return instance;
     }
 
-    static void SetBroker(MessageBroker& broker)
+    static void SetBroker(OrthancStone::MessageBroker& broker)
     {
       broker_ = &broker;
     }
 
-    virtual void Schedule(MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
+    virtual void Schedule(OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
                          unsigned int timeoutInMs = 1000);
 
   };

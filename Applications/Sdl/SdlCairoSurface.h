@@ -46,7 +46,7 @@ namespace OrthancStone
     void SetSize(unsigned int width,
                  unsigned int height);
 
-    void Render(IViewport& viewport);
+    void Render(Deprecated::IViewport& viewport);
   };
 }
 

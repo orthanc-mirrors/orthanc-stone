@@ -258,7 +258,7 @@ namespace OrthancStone
   }
 
 
-  bool ImageBuffer3D::FitWindowingToRange(RenderStyle& style,
+  bool ImageBuffer3D::FitWindowingToRange(Deprecated::RenderStyle& style,
                                           const Deprecated::DicomFrameConverter& converter) const
   {
     if (hasRange_)

@@ -26,7 +26,7 @@
 #include "../Toolbox/ViewportGeometry.h"
 #include "RenderStyle.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class ILayerRenderer : public boost::noncopyable
   {
@@ -35,12 +35,12 @@ namespace OrthancStone
     {
     }
     
-    virtual bool RenderLayer(CairoContext& context,
+    virtual bool RenderLayer(OrthancStone::CairoContext& context,
                              const ViewportGeometry& view) = 0;
 
     virtual void SetLayerStyle(const RenderStyle& style) = 0;
 
-    virtual const CoordinateSystem3D& GetLayerPlane() = 0;
+    virtual const OrthancStone::CoordinateSystem3D& GetLayerPlane() = 0;
     
     virtual bool IsFullQuality() = 0;
   };

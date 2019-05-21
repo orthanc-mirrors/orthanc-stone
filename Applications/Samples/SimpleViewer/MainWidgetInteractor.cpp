@@ -24,27 +24,27 @@
 
 namespace SimpleViewer {
 
-  IWorldSceneMouseTracker* MainWidgetInteractor::CreateMouseTracker(WorldSceneWidget& widget,
-                                                                    const ViewportGeometry& view,
+  Deprecated::IWorldSceneMouseTracker* MainWidgetInteractor::CreateMouseTracker(Deprecated::WorldSceneWidget& widget,
+                                                                    const Deprecated::ViewportGeometry& view,
                                                                     MouseButton button,
                                                                     KeyboardModifiers modifiers,
                                                                     int viewportX,
                                                                     int viewportY,
                                                                     double x,
                                                                     double y,
-                                                                    IStatusBar* statusBar,
-                                                                    const std::vector<Touch>& displayTouches)
+                                                                    Deprecated::IStatusBar* statusBar,
+                                                                    const std::vector<Deprecated::Touch>& displayTouches)
   {
     if (button == MouseButton_Left)
     {
       if (application_.GetCurrentTool() == Tool_LineMeasure)
       {
-        return new LineMeasureTracker(statusBar, dynamic_cast<SliceViewerWidget&>(widget).GetSlice(),
+        return new Deprecated::LineMeasureTracker(statusBar, dynamic_cast<Deprecated::SliceViewerWidget&>(widget).GetSlice(),
                                       x, y, 255, 0, 0, application_.GetFont());
       }
       else if (application_.GetCurrentTool() == Tool_CircleMeasure)
       {
-        return new CircleMeasureTracker(statusBar, dynamic_cast<SliceViewerWidget&>(widget).GetSlice(),
+        return new Deprecated::CircleMeasureTracker(statusBar, dynamic_cast<Deprecated::SliceViewerWidget&>(widget).GetSlice(),
                                         x, y, 255, 0, 0, application_.GetFont());
       }
       else if (application_.GetCurrentTool() == Tool_Crop)
@@ -68,15 +68,15 @@ namespace SimpleViewer {
   }
 
   void MainWidgetInteractor::MouseOver(CairoContext& context,
-                                       WorldSceneWidget& widget,
-                                       const ViewportGeometry& view,
+                                       Deprecated::WorldSceneWidget& widget,
+                                       const Deprecated::ViewportGeometry& view,
                                        double x,
                                        double y,
-                                       IStatusBar* statusBar)
+                                       Deprecated::IStatusBar* statusBar)
   {
     if (statusBar != NULL)
     {
-      Vector p = dynamic_cast<SliceViewerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
+      Vector p = dynamic_cast<Deprecated::SliceViewerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
 
       char buf[64];
       sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)",
@@ -85,18 +85,18 @@ namespace SimpleViewer {
     }
   }
 
-  void MainWidgetInteractor::MouseWheel(WorldSceneWidget& widget,
+  void MainWidgetInteractor::MouseWheel(Deprecated::WorldSceneWidget& widget,
                                         MouseWheelDirection direction,
                                         KeyboardModifiers modifiers,
-                                        IStatusBar* statusBar)
+                                        Deprecated::IStatusBar* statusBar)
   {
   }
 
-  void MainWidgetInteractor::KeyPressed(WorldSceneWidget& widget,
+  void MainWidgetInteractor::KeyPressed(Deprecated::WorldSceneWidget& widget,
                                         KeyboardKeys key,
                                         char keyChar,
                                         KeyboardModifiers modifiers,
-                                        IStatusBar* statusBar)
+                                        Deprecated::IStatusBar* statusBar)
   {
     switch (keyChar)
     {

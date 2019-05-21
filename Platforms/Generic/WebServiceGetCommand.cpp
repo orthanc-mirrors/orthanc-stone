@@ -23,18 +23,18 @@
 
 #include <Core/HttpClient.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
 
-  WebServiceGetCommand::WebServiceGetCommand(MessageBroker& broker,
-                                             MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
-                                             MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
+  WebServiceGetCommand::WebServiceGetCommand(OrthancStone::MessageBroker& broker,
+                                             OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                                             OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                                              const Orthanc::WebServiceParameters& parameters,
                                              const std::string& url,
                                              const IWebService::HttpHeaders& headers,
                                              unsigned int timeoutInSeconds,
                                              Orthanc::IDynamicObject* payload /* takes ownership */,
-                                             NativeStoneApplicationContext& context) :
+                                             OrthancStone::NativeStoneApplicationContext& context) :
     WebServiceCommandBase(broker, successCallback, failureCallback, parameters, url, headers, timeoutInSeconds, payload, context)
   {
   }

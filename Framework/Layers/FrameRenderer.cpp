@@ -26,9 +26,9 @@
 
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
-  FrameRenderer::FrameRenderer(const CoordinateSystem3D& framePlane,
+  FrameRenderer::FrameRenderer(const OrthancStone::CoordinateSystem3D& framePlane,
                                double pixelSpacingX,
                                double pixelSpacingY,
                                bool isFullQuality) :
@@ -40,7 +40,7 @@ namespace OrthancStone
   }
 
 
-  bool FrameRenderer::RenderLayer(CairoContext& context,
+  bool FrameRenderer::RenderLayer(OrthancStone::CairoContext& context,
                                   const ViewportGeometry& view)
   {    
     if (!style_.visible_)
@@ -70,11 +70,11 @@ namespace OrthancStone
 
     switch (style_.interpolation_)
     {
-      case ImageInterpolation_Nearest:
+      case OrthancStone::ImageInterpolation_Nearest:
         cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_NEAREST);
         break;
 
-      case ImageInterpolation_Bilinear:
+      case OrthancStone::ImageInterpolation_Bilinear:
         cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_BILINEAR);
         break;
 

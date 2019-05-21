@@ -26,7 +26,7 @@
 #include <vector>
 #include <memory>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class LayoutWidget : public WidgetBase
   {
@@ -103,24 +103,24 @@ namespace OrthancStone
 
     virtual bool Render(Orthanc::ImageAccessor& surface);
     
-    virtual IMouseTracker* CreateMouseTracker(MouseButton button,
+    virtual IMouseTracker* CreateMouseTracker(OrthancStone::MouseButton button,
                                               int x,
                                               int y,
-                                              KeyboardModifiers modifiers,
+                                              OrthancStone::KeyboardModifiers modifiers,
                                               const std::vector<Touch>& touches);
 
     virtual void RenderMouseOver(Orthanc::ImageAccessor& target,
                                  int x,
                                  int y);
 
-    virtual void MouseWheel(MouseWheelDirection direction,
+    virtual void MouseWheel(OrthancStone::MouseWheelDirection direction,
                             int x,
                             int y,
-                            KeyboardModifiers modifiers);
+                            OrthancStone::KeyboardModifiers modifiers);
 
-    virtual void KeyPressed(KeyboardKeys key,
+    virtual void KeyPressed(OrthancStone::KeyboardKeys key,
                             char keyChar,
-                            KeyboardModifiers modifiers);
+                            OrthancStone::KeyboardModifiers modifiers);
 
     virtual bool HasAnimation() const
     {

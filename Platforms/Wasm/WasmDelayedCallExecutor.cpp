@@ -21,8 +21,8 @@ extern "C" {
     }
     else
     {
-      reinterpret_cast<OrthancStone::MessageHandler<OrthancStone::IDelayedCallExecutor::TimeoutMessage>*>(callable)->
-        Apply(OrthancStone::IDelayedCallExecutor::TimeoutMessage()); // uri, reinterpret_cast<Orthanc::IDynamicObject*>(payload)));
+      reinterpret_cast<OrthancStone::MessageHandler<Deprecated::IDelayedCallExecutor::TimeoutMessage>*>(callable)->
+        Apply(Deprecated::IDelayedCallExecutor::TimeoutMessage()); // uri, reinterpret_cast<Orthanc::IDynamicObject*>(payload)));
     }
   }
 
@@ -33,12 +33,12 @@ extern "C" {
 
 
 
-namespace OrthancStone
+namespace Deprecated
 {
-  MessageBroker* WasmDelayedCallExecutor::broker_ = NULL;
+  OrthancStone::MessageBroker* WasmDelayedCallExecutor::broker_ = NULL;
 
 
-  void WasmDelayedCallExecutor::Schedule(MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
+  void WasmDelayedCallExecutor::Schedule(OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
                          unsigned int timeoutInMs)
   {
     WasmDelayedCallExecutor_Schedule(callback, timeoutInMs);

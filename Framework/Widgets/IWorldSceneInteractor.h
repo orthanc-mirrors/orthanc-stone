@@ -27,7 +27,7 @@
 #include "../StoneEnumerations.h"
 #include "../Viewport/IStatusBar.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
     class WorldSceneWidget;
 
@@ -40,8 +40,8 @@ namespace OrthancStone
 
         virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
                                                             const ViewportGeometry& view,
-                                                            MouseButton button,
-                                                            KeyboardModifiers modifiers,
+                                                            OrthancStone::MouseButton button,
+                                                            OrthancStone::KeyboardModifiers modifiers,
                                                             int viewportX,
                                                             int viewportY,
                                                             double x,
@@ -49,7 +49,7 @@ namespace OrthancStone
                                                             IStatusBar* statusBar,
                                                             const std::vector<Touch>& touches) = 0;
 
-        virtual void MouseOver(CairoContext& context,
+        virtual void MouseOver(OrthancStone::CairoContext& context,
                                WorldSceneWidget& widget,
                                const ViewportGeometry& view,
                                double x,
@@ -57,14 +57,14 @@ namespace OrthancStone
                                IStatusBar* statusBar) = 0;
 
         virtual void MouseWheel(WorldSceneWidget& widget,
-                                MouseWheelDirection direction,
-                                KeyboardModifiers modifiers,
+                                OrthancStone::MouseWheelDirection direction,
+                                OrthancStone::KeyboardModifiers modifiers,
                                 IStatusBar* statusBar) = 0;
 
         virtual void KeyPressed(WorldSceneWidget& widget,
-                                KeyboardKeys key,
+                                OrthancStone::KeyboardKeys key,
                                 char keyChar,
-                                KeyboardModifiers modifiers,
+                                OrthancStone::KeyboardModifiers modifiers,
                                 IStatusBar* statusBar) = 0;
     };
 }

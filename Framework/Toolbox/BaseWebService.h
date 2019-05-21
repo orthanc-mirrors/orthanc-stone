@@ -26,11 +26,11 @@
 #include <string>
 #include <map>
 
-namespace OrthancStone
+namespace Deprecated
 {
   // This is an intermediate of IWebService that implements some caching on
   // the HTTP GET requests
-  class BaseWebService : public IWebService, public IObserver
+  class BaseWebService : public IWebService, public OrthancStone::IObserver
   {
   public:
     class CachedHttpRequestSuccessMessage
@@ -85,7 +85,7 @@ namespace OrthancStone
 
   public:
 
-    BaseWebService(MessageBroker& broker) :
+    BaseWebService(OrthancStone::MessageBroker& broker) :
       IWebService(broker),
       IObserver(broker),
       cacheEnabled_(true)
@@ -104,21 +104,21 @@ namespace OrthancStone
     virtual void GetAsync(const std::string& uri,
                           const HttpHeaders& headers,
                           Orthanc::IDynamicObject* payload  /* takes ownership */,
-                          MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                          OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                          OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                           unsigned int timeoutInSeconds = 60);
 
   protected:
     virtual void GetAsyncInternal(const std::string& uri,
                           const HttpHeaders& headers,
                           Orthanc::IDynamicObject* payload  /* takes ownership */,
-                          MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                          OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                          OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                           unsigned int timeoutInSeconds = 60) = 0;
 
     virtual void NotifyHttpSuccessLater(boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedHttpMessage,
                                         Orthanc::IDynamicObject* payload, // takes ownership
-                                        MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback) = 0;
+                                        OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback) = 0;
 
   private:
     void NotifyHttpSuccess(const IWebService::HttpRequestSuccessMessage& message);

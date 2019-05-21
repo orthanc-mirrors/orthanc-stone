@@ -24,7 +24,7 @@
 #include <stdio.h>
 
 
-namespace OrthancStone
+namespace Deprecated
 {
   namespace Samples
   {
@@ -40,7 +40,7 @@ namespace OrthancStone
     }
 
 
-    bool TestCairoWidget::RenderCairo(CairoContext& context)
+    bool TestCairoWidget::RenderCairo(OrthancStone::CairoContext& context)
     {
       cairo_t* cr = context.GetObject();
 
@@ -60,7 +60,7 @@ namespace OrthancStone
     }
 
 
-    void TestCairoWidget::RenderMouseOverCairo(CairoContext& context,
+    void TestCairoWidget::RenderMouseOverCairo(OrthancStone::CairoContext& context,
                                                int x,
                                                int y)
     {
@@ -96,10 +96,10 @@ namespace OrthancStone
     }
  
 
-    IMouseTracker* TestCairoWidget::CreateMouseTracker(MouseButton button,
+    IMouseTracker* TestCairoWidget::CreateMouseTracker(OrthancStone::MouseButton button,
                                                        int x,
                                                        int y,
-                                                       KeyboardModifiers modifiers,
+                                                       OrthancStone::KeyboardModifiers modifiers,
                                                        const std::vector<Touch>& touches)
     {
       UpdateStatusBar("Click");
@@ -107,18 +107,18 @@ namespace OrthancStone
     }
 
 
-    void TestCairoWidget::MouseWheel(MouseWheelDirection direction,
+    void TestCairoWidget::MouseWheel(OrthancStone::MouseWheelDirection direction,
                                      int x,
                                      int y,
-                                     KeyboardModifiers modifiers) 
+                                     OrthancStone::KeyboardModifiers modifiers) 
     {
-      UpdateStatusBar(direction == MouseWheelDirection_Down ? "Wheel down" : "Wheel up");
+      UpdateStatusBar(direction == OrthancStone::MouseWheelDirection_Down ? "Wheel down" : "Wheel up");
     }
 
     
-    void TestCairoWidget::KeyPressed(KeyboardKeys key,
+    void TestCairoWidget::KeyPressed(OrthancStone::KeyboardKeys key,
                                      char keyChar,
-                                     KeyboardModifiers modifiers)
+                                     OrthancStone::KeyboardModifiers modifiers)
     {
       UpdateStatusBar("Key pressed: \"" + std::string(1, keyChar) + "\"");
     }

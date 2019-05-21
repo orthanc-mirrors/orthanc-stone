@@ -24,9 +24,9 @@
 #include "../Messages/IObservable.h"
 #include "../Toolbox/Slice.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
-  class ISlicedVolume : public IObservable
+  class ISlicedVolume : public OrthancStone::IObservable
   {
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ContentChangedMessage, ISlicedVolume);
@@ -35,18 +35,18 @@ namespace OrthancStone
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, VolumeReadyMessage, ISlicedVolume);
 
 
-    class SliceContentChangedMessage : public OriginMessage<ISlicedVolume>
+    class SliceContentChangedMessage : public OrthancStone::OriginMessage<ISlicedVolume>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
       size_t        sliceIndex_;
-      const Deprecated::Slice&  slice_;
+      const Slice&  slice_;
       
     public:
       SliceContentChangedMessage(ISlicedVolume& origin,
                                  size_t sliceIndex,
-                                 const Deprecated::Slice& slice) :
+                                 const Slice& slice) :
         OriginMessage(origin),
         sliceIndex_(sliceIndex),
         slice_(slice)
@@ -58,20 +58,20 @@ namespace OrthancStone
         return sliceIndex_;
       }
 
-      const Deprecated::Slice& GetSlice() const
+      const Slice& GetSlice() const
       {
         return slice_;
       }
     };
 
 
-    ISlicedVolume(MessageBroker& broker) :
+    ISlicedVolume(OrthancStone::MessageBroker& broker) :
       IObservable(broker)
     {
     }
     
     virtual size_t GetSliceCount() const = 0;
 
-    virtual const Deprecated::Slice& GetSlice(size_t slice) const = 0;
+    virtual const Slice& GetSlice(size_t slice) const = 0;
   };
 }

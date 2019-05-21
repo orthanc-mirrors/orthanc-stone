@@ -164,8 +164,8 @@ namespace OrthancStone
                                               int displayY,
                                               double sceneX,
                                               double sceneY,
-                                              const std::vector<Touch>& displayTouches,
-                                              const std::vector<Touch>& sceneTouches)
+                                              const std::vector<Deprecated::Touch>& displayTouches,
+                                              const std::vector<Deprecated::Touch>& sceneTouches)
   {
     // This follows the behavior of the Osimis Web viewer:
     // https://bitbucket.org/osimis/osimis-webviewer-plugin/src/master/frontend/src/app/viewport/image-plugins/windowing-viewport-tool.class.js

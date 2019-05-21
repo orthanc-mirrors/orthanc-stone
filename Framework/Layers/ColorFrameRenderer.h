@@ -23,7 +23,7 @@
 
 #include "FrameRenderer.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class ColorFrameRenderer : public FrameRenderer
   {
@@ -31,11 +31,11 @@ namespace OrthancStone
     std::auto_ptr<Orthanc::ImageAccessor>   frame_;  // In RGB24
 
   protected:
-    virtual CairoSurface* GenerateDisplay(const RenderStyle& style);
+    virtual OrthancStone::CairoSurface* GenerateDisplay(const RenderStyle& style);
 
   public:
     ColorFrameRenderer(const Orthanc::ImageAccessor& frame,
-                       const CoordinateSystem3D& framePlane,
+                       const OrthancStone::CoordinateSystem3D& framePlane,
                        double pixelSpacingX,
                        double pixelSpacingY,
                        bool isFullQuality);

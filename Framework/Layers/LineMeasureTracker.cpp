@@ -23,10 +23,10 @@
 
 #include <stdio.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   LineMeasureTracker::LineMeasureTracker(IStatusBar* statusBar,
-                                         const CoordinateSystem3D& slice,
+                                         const OrthancStone::CoordinateSystem3D& slice,
                                          double x, 
                                          double y,
                                          uint8_t red,
@@ -47,7 +47,7 @@ namespace OrthancStone
   }
     
 
-  void LineMeasureTracker::Render(CairoContext& context,
+  void LineMeasureTracker::Render(OrthancStone::CairoContext& context,
                                   double zoom)
   {
     context.SetSourceColor(color_[0], color_[1], color_[2]);
@@ -60,19 +60,19 @@ namespace OrthancStone
 
     if (y2_ - y1_ < 0)
     {
-      context.DrawText(font_, FormatLength(), x2_, y2_ - 5, BitmapAnchor_BottomCenter);
+      context.DrawText(font_, FormatLength(), x2_, y2_ - 5, OrthancStone::BitmapAnchor_BottomCenter);
     }
     else
     {
-      context.DrawText(font_, FormatLength(), x2_, y2_ + 5, BitmapAnchor_TopCenter);
+      context.DrawText(font_, FormatLength(), x2_, y2_ + 5, OrthancStone::BitmapAnchor_TopCenter);
     }
   }
     
 
   double LineMeasureTracker::GetLength() const  // In millimeters
   {
-    Vector a = slice_.MapSliceToWorldCoordinates(x1_, y1_);
-    Vector b = slice_.MapSliceToWorldCoordinates(x2_, y2_);
+    OrthancStone::Vector a = slice_.MapSliceToWorldCoordinates(x1_, y1_);
+    OrthancStone::Vector b = slice_.MapSliceToWorldCoordinates(x2_, y2_);
     return boost::numeric::ublas::norm_2(b - a);
   }
 

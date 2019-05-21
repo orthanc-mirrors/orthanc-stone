@@ -157,7 +157,7 @@ namespace OrthancStone
 
     void OnDicomWebReceived(const Deprecated::IWebService::HttpRequestSuccessMessage& message);
 
-    void OnLayerEdited(const RadiographyLayer::LayerEditedMessage& message);
+    virtual void OnLayerEdited(const RadiographyLayer::LayerEditedMessage& message);
   public:
     RadiographyScene(MessageBroker& broker);
     
@@ -169,8 +169,8 @@ namespace OrthancStone
     void GetWindowingWithDefault(float& center,
                                  float& width) const;
 
-    void SetWindowing(float center,
-                      float width);
+    virtual void SetWindowing(float center,
+                              float width);
 
     PhotometricDisplayMode GetPreferredPhotomotricDisplayMode() const;
 

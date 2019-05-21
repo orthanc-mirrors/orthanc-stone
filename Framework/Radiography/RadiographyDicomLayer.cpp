@@ -22,7 +22,7 @@
 #include "RadiographyDicomLayer.h"
 
 #include "RadiographyScene.h"
-#include "../Toolbox/DicomFrameConverter.h"
+#include "../Deprecated/Toolbox/DicomFrameConverter.h"
 
 #include <Core/OrthancException.h>
 #include <Core/Images/Image.h>

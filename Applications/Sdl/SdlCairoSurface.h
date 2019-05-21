@@ -25,7 +25,7 @@
 
 #include "SdlWindow.h"
 #include "../../Framework/Viewport/CairoSurface.h"
-#include "../../Framework/Viewport/IViewport.h"
+#include "../../Framework/Deprecated/Viewport/IViewport.h"
 
 #include <boost/thread/mutex.hpp>
 

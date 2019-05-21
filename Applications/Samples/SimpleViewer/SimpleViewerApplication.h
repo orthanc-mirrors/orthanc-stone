@@ -29,12 +29,12 @@ using namespace StoneSampleCommands;
 
 #include "Applications/IStoneApplication.h"
 
-#include "Framework/Layers/CircleMeasureTracker.h"
-#include "Framework/Layers/LineMeasureTracker.h"
-#include "Framework/Widgets/SliceViewerWidget.h"
-#include "Framework/Widgets/LayoutWidget.h"
-#include "Framework/Messages/IObserver.h"
-#include "Framework/SmartLoader.h"
+#include "../../../Framework/Deprecated/Layers/CircleMeasureTracker.h"
+#include "../../../Framework/Deprecated/Layers/LineMeasureTracker.h"
+#include "../../../Framework/Deprecated/SmartLoader.h"
+#include "../../../Framework/Deprecated/Widgets/LayoutWidget.h"
+#include "../../../Framework/Deprecated/Widgets/SliceViewerWidget.h"
+#include "../../../Framework/Messages/IObserver.h"
 
 #if ORTHANC_ENABLE_WASM==1
 #include "Platforms/Wasm/WasmPlatformApplicationAdapter.h"

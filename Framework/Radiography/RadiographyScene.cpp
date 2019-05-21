@@ -25,7 +25,7 @@
 #include "RadiographyDicomLayer.h"
 #include "RadiographyTextLayer.h"
 #include "RadiographyMaskLayer.h"
-#include "../Toolbox/DicomFrameConverter.h"
+#include "../Deprecated/Toolbox/DicomFrameConverter.h"
 
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>

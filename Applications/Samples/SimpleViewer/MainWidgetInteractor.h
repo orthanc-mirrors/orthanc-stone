@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "Framework/Widgets/IWorldSceneInteractor.h"
+#include "../../../Framework/Deprecated/Widgets/IWorldSceneInteractor.h"
 
 using namespace OrthancStone;
 

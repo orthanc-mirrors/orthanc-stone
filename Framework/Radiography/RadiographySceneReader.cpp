@@ -21,7 +21,7 @@
 
 #include "RadiographySceneReader.h"
 
-#include <Framework/Toolbox/DicomFrameConverter.h>
+#include "../Deprecated/Toolbox/DicomFrameConverter.h"
 
 #include <Core/Images/FontRegistry.h>
 #include <Core/Images/PngReader.h>

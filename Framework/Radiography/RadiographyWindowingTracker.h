@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Toolbox/UndoRedoStack.h"
-#include "../Widgets/IWorldSceneMouseTracker.h"
+#include "../Deprecated/Widgets/IWorldSceneMouseTracker.h"
 #include "RadiographyScene.h"
 
 namespace OrthancStone

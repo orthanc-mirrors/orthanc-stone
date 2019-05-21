@@ -22,8 +22,8 @@
 #pragma once
 
 #include "../Toolbox/UndoRedoStack.h"
-#include "../Toolbox/ViewportGeometry.h"
-#include "../Widgets/IWorldSceneMouseTracker.h"
+#include "../Deprecated/Toolbox/ViewportGeometry.h"
+#include "../Deprecated/Widgets/IWorldSceneMouseTracker.h"
 #include "RadiographyScene.h"
 
 namespace OrthancStone

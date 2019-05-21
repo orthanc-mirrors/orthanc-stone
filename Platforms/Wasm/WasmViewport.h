@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Framework/Viewport/WidgetViewport.h>
+#include "../../Framework/Deprecated/Viewport/WidgetViewport.h"
 
 #include <emscripten/emscripten.h>
 

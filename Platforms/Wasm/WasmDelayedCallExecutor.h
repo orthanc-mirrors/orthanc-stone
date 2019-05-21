@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Framework/Toolbox/IDelayedCallExecutor.h>
+#include "../../Framework/Deprecated/Toolbox/IDelayedCallExecutor.h"
 #include <Core/OrthancException.h>
 
 namespace Deprecated

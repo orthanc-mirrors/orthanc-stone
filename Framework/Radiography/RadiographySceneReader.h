@@ -26,7 +26,7 @@
 #include "RadiographyDicomLayer.h"
 #include "RadiographyMaskLayer.h"
 #include "RadiographyTextLayer.h"
-#include "../Toolbox/OrthancApiClient.h"
+#include "../Deprecated/Toolbox/OrthancApiClient.h"
 
 #include <json/value.h>
 #include <Core/Images/FontRegistry.h>

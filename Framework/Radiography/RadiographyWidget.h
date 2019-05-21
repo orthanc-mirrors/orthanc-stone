@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../Widgets/WorldSceneWidget.h"
+#include "../Deprecated/Widgets/WorldSceneWidget.h"
 #include "RadiographyScene.h"
 
 

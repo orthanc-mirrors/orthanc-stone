@@ -22,9 +22,9 @@
 #pragma once
 
 #include "RadiographyLayer.h"
-#include "../Toolbox/DicomFrameConverter.h"
-#include "../Toolbox/OrthancApiClient.h"
-#include "Framework/StoneEnumerations.h"
+#include "../Deprecated/Toolbox/DicomFrameConverter.h"
+#include "../Deprecated/Toolbox/OrthancApiClient.h"
+#include "../StoneEnumerations.h"
 #include "Core/Images/Image.h"
 #include "Core/Images/ImageProcessing.h"
 

@@ -153,10 +153,8 @@ namespace OrthancStone
     void SetupEvents(const std::string& canvas);
 
   public:
-    WebAssemblyViewport(MessageBroker& broker,
-                        const std::string& canvas) :
+    WebAssemblyViewport(const std::string& canvas) :
       context_(canvas),
-      scene_(broker),
       compositor_(context_, scene_)
     {
       compositor_.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
@@ -363,7 +361,6 @@ void OrthancStone::WebAssemblyViewport::SetupEvents(const std::string& canvas)
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport1_;
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport2_;
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport3_;
-OrthancStone::MessageBroker  broker_;
 
 
 EM_BOOL OnWindowResize(int eventType, const EmscriptenUiEvent *uiEvent, void *userData)
@@ -399,15 +396,15 @@ extern "C"
   EMSCRIPTEN_KEEPALIVE
   void Initialize()
   {
-    viewport1_.reset(new OrthancStone::WebAssemblyViewport(broker_, "mycanvas1"));
+    viewport1_.reset(new OrthancStone::WebAssemblyViewport("mycanvas1"));
     PrepareScene(viewport1_->GetScene());
     viewport1_->UpdateSize();
 
-    viewport2_.reset(new OrthancStone::WebAssemblyViewport(broker_, "mycanvas2"));
+    viewport2_.reset(new OrthancStone::WebAssemblyViewport("mycanvas2"));
     PrepareScene(viewport2_->GetScene());
     viewport2_->UpdateSize();
 
-    viewport3_.reset(new OrthancStone::WebAssemblyViewport(broker_, "mycanvas3"));
+    viewport3_.reset(new OrthancStone::WebAssemblyViewport("mycanvas3"));
     PrepareScene(viewport3_->GetScene());
     viewport3_->UpdateSize();
 

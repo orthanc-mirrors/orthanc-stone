@@ -22,9 +22,10 @@
 #pragma once
 
 #include "StoneApplicationContext.h"
+#include "../Framework/Deprecated/Viewport/WidgetViewport.h"
+
 #include <boost/program_options.hpp>
-#include "../Framework/Viewport/WidgetViewport.h"
-#include "json/json.h"
+#include <json/json.h>
 
 namespace OrthancStone
 {

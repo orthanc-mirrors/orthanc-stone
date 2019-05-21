@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Framework/Toolbox/BaseWebService.h>
+#include "../../Framework/Deprecated/Toolbox/BaseWebService.h"
 #include <Core/OrthancException.h>
 
 namespace Deprecated

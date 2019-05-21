@@ -21,11 +21,11 @@
 
 #pragma once
 
+#include "../Deprecated/Layers/RenderStyle.h"
+#include "../Deprecated/Toolbox/DicomFrameConverter.h"
 #include "../StoneEnumerations.h"
-#include "../Layers/RenderStyle.h"
-#include "../Toolbox/VolumeImageGeometry.h"
-#include "../Toolbox/DicomFrameConverter.h"
 #include "../Toolbox/ParallelSlices.h"
+#include "../Toolbox/VolumeImageGeometry.h"
 
 #include <Core/Images/Image.h>
 

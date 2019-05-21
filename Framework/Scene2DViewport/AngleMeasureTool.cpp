@@ -77,207 +77,209 @@ namespace OrthancStone
 
   void AngleMeasureTool::RefreshScene()
   {
-    if (IsEnabled())
+    if (IsSceneAlive())
     {
-      // get the scaling factor 
-      const double pixelToScene =
-        GetScene()->GetCanvasToSceneTransform().ComputeZoom();
 
-      if (!layersCreated)
+      if (IsEnabled())
       {
-        // Create the layers if need be
+        // get the scaling factor 
+        const double pixelToScene =
+          GetScene()->GetCanvasToSceneTransform().ComputeZoom();
 
-        assert(textBaseZIndex_ == -1);
+        if (!layersCreated)
         {
-          polylineZIndex_ = GetScene()->GetMaxDepth() + 100;
-          //LOG(INFO) << "set polylineZIndex_ to: " << polylineZIndex_;
-          std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
-          GetScene()->SetLayer(polylineZIndex_, layer.release());
+          // Create the layers if need be
 
+          assert(textBaseZIndex_ == -1);
+          {
+            polylineZIndex_ = GetScene()->GetMaxDepth() + 100;
+            //LOG(INFO) << "set polylineZIndex_ to: " << polylineZIndex_;
+            std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
+            GetScene()->SetLayer(polylineZIndex_, layer.release());
+
+          }
+          {
+            textBaseZIndex_ = GetScene()->GetMaxDepth() + 100;
+            // create the four text background layers
+            {
+              std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
+              GetScene()->SetLayer(textBaseZIndex_, layer.release());
+            }
+            {
+              std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
+              GetScene()->SetLayer(textBaseZIndex_ + 1, layer.release());
+            }
+            {
+              std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
+              GetScene()->SetLayer(textBaseZIndex_ + 2, layer.release());
+            }
+            {
+              std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
+              GetScene()->SetLayer(textBaseZIndex_ + 3, layer.release());
+            }
+
+            // and the text layer itself
+            {
+              std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
+              GetScene()->SetLayer(textBaseZIndex_ + 4, layer.release());
+            }
+
+          }
+          layersCreated = true;
+        }
+        else
+        {
+          assert(GetScene()->HasLayer(polylineZIndex_));
+          assert(GetScene()->HasLayer(textBaseZIndex_));
         }
         {
-          textBaseZIndex_ = GetScene()->GetMaxDepth() + 100;
-          // create the four text background layers
+          // Fill the polyline layer with the measurement line
+
+          PolylineSceneLayer* polylineLayer = GetPolylineLayer();
+          polylineLayer->ClearAllChains();
+          polylineLayer->SetColor(0, 183, 17);
+
+          // sides
           {
-            std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-            GetScene()->SetLayer(textBaseZIndex_, layer.release());
+            {
+              PolylineSceneLayer::Chain chain;
+              chain.push_back(side1End_);
+              chain.push_back(center_);
+              polylineLayer->AddChain(chain, false);
+            }
+            {
+              PolylineSceneLayer::Chain chain;
+              chain.push_back(side2End_);
+              chain.push_back(center_);
+              polylineLayer->AddChain(chain, false);
+            }
           }
+
+          // handles
           {
-            std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-            GetScene()->SetLayer(textBaseZIndex_+1, layer.release());
+            //void AddSquare(PolylineSceneLayer::Chain& chain,const Scene2D& scene,const ScenePoint2D& centerS,const double& sideLength)
+
+            {
+              PolylineSceneLayer::Chain chain;
+              AddSquare(chain, *GetScene(), side1End_, 10.0 * pixelToScene); //TODO: take DPI into account
+              polylineLayer->AddChain(chain, true);
+            }
+
+            {
+              PolylineSceneLayer::Chain chain;
+              AddSquare(chain, *GetScene(), side2End_, 10.0 * pixelToScene); //TODO: take DPI into account
+              polylineLayer->AddChain(chain, true);
+            }
           }
+
+          // arc
           {
-            std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-            GetScene()->SetLayer(textBaseZIndex_+2, layer.release());
+            PolylineSceneLayer::Chain chain;
+
+            const double ARC_RADIUS_CANVAS_COORD = 30.0;
+            AddShortestArc(chain, *GetScene(), side1End_, center_, side2End_,
+              ARC_RADIUS_CANVAS_COORD * pixelToScene);
+            polylineLayer->AddChain(chain, false);
           }
-          {
-            std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-            GetScene()->SetLayer(textBaseZIndex_+3, layer.release());
-          }
-          
-          // and the text layer itself
-          {
-            std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-            GetScene()->SetLayer(textBaseZIndex_+4, layer.release());
-          }
-          
         }
-        layersCreated = true;
+        {
+          // Set the text layer
+
+          double p1cAngle = atan2(
+            side1End_.GetY() - center_.GetY(),
+            side1End_.GetX() - center_.GetX());
+
+
+          double p2cAngle = atan2(
+            side2End_.GetY() - center_.GetY(),
+            side2End_.GetX() - center_.GetX());
+
+          double delta = NormalizeAngle(p2cAngle - p1cAngle);
+
+
+          double theta = p1cAngle + delta / 2;
+
+
+          const double TEXT_CENTER_DISTANCE_CANVAS_COORD = 90;
+
+          double offsetX = TEXT_CENTER_DISTANCE_CANVAS_COORD * cos(theta);
+
+          double offsetY = TEXT_CENTER_DISTANCE_CANVAS_COORD * sin(theta);
+
+          double pointX = center_.GetX() + offsetX * pixelToScene;
+          double pointY = center_.GetY() + offsetY * pixelToScene;
+
+          char buf[64];
+          double angleDeg = RadiansToDegrees(delta);
+
+          // http://www.ltg.ed.ac.uk/~richard/utf-8.cgi?input=00B0&mode=hex
+          sprintf(buf, "%0.02f\xc2\xb0", angleDeg);
+
+          SetTextLayerOutlineProperties(
+            *GetScene(), textBaseZIndex_, buf, ScenePoint2D(pointX, pointY));
+
+          // TODO:make it togglable
+          bool enableInfoDisplay = false;
+          if (enableInfoDisplay)
+          {
+            TrackerSample_SetInfoDisplayMessage("center_.GetX()",
+              boost::lexical_cast<std::string>(center_.GetX()));
+
+            TrackerSample_SetInfoDisplayMessage("center_.GetY()",
+              boost::lexical_cast<std::string>(center_.GetY()));
+
+            TrackerSample_SetInfoDisplayMessage("side1End_.GetX()",
+              boost::lexical_cast<std::string>(side1End_.GetX()));
+
+            TrackerSample_SetInfoDisplayMessage("side1End_.GetY()",
+              boost::lexical_cast<std::string>(side1End_.GetY()));
+
+            TrackerSample_SetInfoDisplayMessage("side2End_.GetX()",
+              boost::lexical_cast<std::string>(side2End_.GetX()));
+
+            TrackerSample_SetInfoDisplayMessage("side2End_.GetY()",
+              boost::lexical_cast<std::string>(side2End_.GetY()));
+
+            TrackerSample_SetInfoDisplayMessage("p1cAngle (deg)",
+              boost::lexical_cast<std::string>(RadiansToDegrees(p1cAngle)));
+
+            TrackerSample_SetInfoDisplayMessage("delta (deg)",
+              boost::lexical_cast<std::string>(RadiansToDegrees(delta)));
+
+            TrackerSample_SetInfoDisplayMessage("theta (deg)",
+              boost::lexical_cast<std::string>(RadiansToDegrees(theta)));
+
+            TrackerSample_SetInfoDisplayMessage("p2cAngle (deg)",
+              boost::lexical_cast<std::string>(RadiansToDegrees(p2cAngle)));
+
+            TrackerSample_SetInfoDisplayMessage("offsetX (pix)",
+              boost::lexical_cast<std::string>(offsetX));
+
+            TrackerSample_SetInfoDisplayMessage("offsetY (pix)",
+              boost::lexical_cast<std::string>(offsetY));
+
+            TrackerSample_SetInfoDisplayMessage("pointX",
+              boost::lexical_cast<std::string>(pointX));
+
+            TrackerSample_SetInfoDisplayMessage("pointY",
+              boost::lexical_cast<std::string>(pointY));
+
+            TrackerSample_SetInfoDisplayMessage("angleDeg",
+              boost::lexical_cast<std::string>(angleDeg));
+          }
+
+
+
+        }
       }
       else
       {
-        assert(GetScene()->HasLayer(polylineZIndex_));
-        assert(GetScene()->HasLayer(textBaseZIndex_));
-      }
-      {
-        // Fill the polyline layer with the measurement line
-
-        PolylineSceneLayer* polylineLayer = GetPolylineLayer();
-        polylineLayer->ClearAllChains();
-        polylineLayer->SetColor(0, 183, 17);
-
-        // sides
+        if (layersCreated)
         {
-          {
-            PolylineSceneLayer::Chain chain;
-            chain.push_back(side1End_);
-            chain.push_back(center_);
-            polylineLayer->AddChain(chain, false);
-          }
-          {
-            PolylineSceneLayer::Chain chain;
-            chain.push_back(side2End_);
-            chain.push_back(center_);
-            polylineLayer->AddChain(chain, false);
-          }
+          RemoveFromScene();
+          layersCreated = false;
         }
-
-        // handles
-        {
-          //void AddSquare(PolylineSceneLayer::Chain& chain,const Scene2D& scene,const ScenePoint2D& centerS,const double& sideLength)
-
-          {
-            PolylineSceneLayer::Chain chain;
-            AddSquare(chain, *GetScene(), side1End_, 10.0* pixelToScene); //TODO: take DPI into account
-            polylineLayer->AddChain(chain, true);
-          }
-
-          {
-            PolylineSceneLayer::Chain chain;
-            AddSquare(chain, *GetScene(), side2End_, 10.0* pixelToScene); //TODO: take DPI into account
-            polylineLayer->AddChain(chain, true);
-          }
-        }
-
-        // arc
-        {
-          PolylineSceneLayer::Chain chain;
-
-          const double ARC_RADIUS_CANVAS_COORD = 30.0;
-          AddShortestArc(chain, *GetScene(), side1End_, center_, side2End_, 
-            ARC_RADIUS_CANVAS_COORD*pixelToScene);
-          polylineLayer->AddChain(chain, false);
-        }
-      }
-      {
-        // Set the text layer
-
-        double p1cAngle = atan2(
-          side1End_.GetY() - center_.GetY(),
-          side1End_.GetX() - center_.GetX());
-
-
-        double p2cAngle = atan2(
-          side2End_.GetY() - center_.GetY(),
-          side2End_.GetX() - center_.GetX());
-
-        double delta = NormalizeAngle(p2cAngle - p1cAngle);
-
-
-        double theta = p1cAngle + delta/2;
-
-
-        const double TEXT_CENTER_DISTANCE_CANVAS_COORD = 90;
-
-        double offsetX = TEXT_CENTER_DISTANCE_CANVAS_COORD * cos(theta);
-
-        double offsetY = TEXT_CENTER_DISTANCE_CANVAS_COORD * sin(theta);
-
-        double pointX = center_.GetX() + offsetX * pixelToScene;
-        double pointY = center_.GetY() + offsetY * pixelToScene;
-
-        char buf[64];
-        double angleDeg = RadiansToDegrees(delta);
-
-        // http://www.ltg.ed.ac.uk/~richard/utf-8.cgi?input=00B0&mode=hex
-        sprintf(buf, "%0.02f\xc2\xb0", angleDeg);
-
-        SetTextLayerOutlineProperties(
-          *GetScene(), textBaseZIndex_, buf, ScenePoint2D(pointX, pointY));
-
-        // TODO:make it togglable
-        bool enableInfoDisplay = false;
-        if (enableInfoDisplay)
-        {
-          TrackerSample_SetInfoDisplayMessage("center_.GetX()",
-            boost::lexical_cast<std::string>(center_.GetX()));
-
-          TrackerSample_SetInfoDisplayMessage("center_.GetY()",
-            boost::lexical_cast<std::string>(center_.GetY()));
-
-          TrackerSample_SetInfoDisplayMessage("side1End_.GetX()",
-            boost::lexical_cast<std::string>(side1End_.GetX()));
-
-          TrackerSample_SetInfoDisplayMessage("side1End_.GetY()",
-            boost::lexical_cast<std::string>(side1End_.GetY()));
-
-          TrackerSample_SetInfoDisplayMessage("side2End_.GetX()",
-            boost::lexical_cast<std::string>(side2End_.GetX()));
-
-          TrackerSample_SetInfoDisplayMessage("side2End_.GetY()",
-            boost::lexical_cast<std::string>(side2End_.GetY()));
-
-          TrackerSample_SetInfoDisplayMessage("p1cAngle (deg)",
-            boost::lexical_cast<std::string>(RadiansToDegrees(p1cAngle)));
-
-          TrackerSample_SetInfoDisplayMessage("delta (deg)",
-            boost::lexical_cast<std::string>(RadiansToDegrees(delta)));
-
-          TrackerSample_SetInfoDisplayMessage("theta (deg)",
-            boost::lexical_cast<std::string>(RadiansToDegrees(theta)));
-
-          TrackerSample_SetInfoDisplayMessage("p2cAngle (deg)",
-            boost::lexical_cast<std::string>(RadiansToDegrees(p2cAngle)));
-
-          TrackerSample_SetInfoDisplayMessage("offsetX (pix)",
-            boost::lexical_cast<std::string>(offsetX));
-
-          TrackerSample_SetInfoDisplayMessage("offsetY (pix)",
-            boost::lexical_cast<std::string>(offsetY));
-
-          TrackerSample_SetInfoDisplayMessage("pointX",
-            boost::lexical_cast<std::string>(pointX));
-
-          TrackerSample_SetInfoDisplayMessage("pointY",
-            boost::lexical_cast<std::string>(pointY));
-
-          TrackerSample_SetInfoDisplayMessage("angleDeg",
-            boost::lexical_cast<std::string>(angleDeg));
-        }
-
-
-
-      }
-    }
-    else
-    {
-      if (layersCreated)
-      {
-        RemoveFromScene();
-        layersCreated = false;
       }
     }
   }
-
-
 }

@@ -53,6 +53,12 @@ namespace OrthancStone
     /**
     This method will be called when a touch/pointer is added (mouse down, 
     pen or finger press)
+
+    Important note: the initial pointer down that leads to creating the 
+    tracker is NOT sent to the tracker.
+
+    Thus, if you count the PointerDown vs PointerUp, there will be an extra
+    PointerUp.
     */
     virtual void PointerDown(const PointerEvent& event) = 0;
 

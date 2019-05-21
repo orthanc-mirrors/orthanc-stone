@@ -40,8 +40,6 @@ namespace OrthancStone
     CreateAngleMeasureTracker(
       MessageBroker&                  broker,
       ViewportControllerWPtr          controllerW,
-      std::vector<TrackerCommandPtr>& undoStack,
-      MeasureToolList&                measureTools,
       const PointerEvent&             e);
 
     ~CreateAngleMeasureTracker();

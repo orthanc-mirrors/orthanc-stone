@@ -19,6 +19,7 @@
  **/
 
 #include "ViewportController.h"
+#include "MeasureCommands.h"
 
 #include <Framework/StoneException.h>
 
@@ -30,6 +31,7 @@ namespace OrthancStone
 {
   ViewportController::ViewportController(MessageBroker& broker)
     : IObservable(broker)
+    , numAppliedCommands_(0)
   {
     scene_ = boost::make_shared<Scene2D>();
   }
@@ -79,6 +81,56 @@ namespace OrthancStone
   {
     scene_->FitContent(canvasWidth, canvasHeight);
     BroadcastMessage(SceneTransformChanged(*this));
+  }
+
+  void ViewportController::PushCommand(TrackerCommandPtr command)
+  {
+    commandStack_.erase(
+      commandStack_.begin() + numAppliedCommands_,
+      commandStack_.end());
+    
+    ORTHANC_ASSERT(std::find(commandStack_.begin(), commandStack_.end(), command) 
+      == commandStack_.end(), "Duplicate command");
+    commandStack_.push_back(command);
+    numAppliedCommands_++;
+  }
+
+  void ViewportController::Undo()
+  {
+    ORTHANC_ASSERT(CanUndo(), "");
+    commandStack_[numAppliedCommands_-1]->Undo();
+    numAppliedCommands_--;
+  }
+
+  void ViewportController::Redo()
+  {
+    ORTHANC_ASSERT(CanRedo(), "");
+    commandStack_[numAppliedCommands_]->Redo();
+    numAppliedCommands_++;
+  }
+
+  bool ViewportController::CanUndo() const
+  {
+    return numAppliedCommands_ > 0;
+  }
+
+  bool ViewportController::CanRedo() const
+  {
+    return numAppliedCommands_ < commandStack_.size();
+  }
+
+  void ViewportController::AddMeasureTool(MeasureToolPtr measureTool)
+  {
+    ORTHANC_ASSERT(std::find(measureTools_.begin(), measureTools_.end(), measureTool)
+      == measureTools_.end(), "Duplicate measure tool");
+    measureTools_.push_back(measureTool);
+  }
+
+  void ViewportController::RemoveMeasureTool(MeasureToolPtr measureTool)
+  {
+    ORTHANC_ASSERT(std::find(measureTools_.begin(), measureTools_.end(), measureTool)
+      != measureTools_.end(), "Measure tool not found");
+    measureTools_.push_back(measureTool);
   }
 
 }

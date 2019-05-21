@@ -26,6 +26,8 @@
 #include <Framework/Scene2D/PointerEvent.h>
 #include <Framework/Scene2DViewport/IFlexiblePointerTracker.h>
 
+#include <stack>
+
 namespace OrthancStone
 {
   /**
@@ -81,8 +83,54 @@ namespace OrthancStone
     /** Forwarded to the underlying scene, and broadcasted to the observers */
     void FitContent(unsigned int canvasWidth, unsigned int canvasHeight);
 
+    /** 
+    Stores a command : 
+    - this first trims the undo stack to keep the first numAppliedCommands_ 
+    - then it adds the supplied command at the top of the undo stack
+
+    In other words, when a new command is pushed, all the undone (and not 
+    redone) commands are removed.
+    */
+    void PushCommand(TrackerCommandPtr command);
+
+    /**
+    Undoes the command at the top of the undo stack, or throws if there is no
+    command to undo.
+    You can check "CanUndo" first to protect against extraneous redo.
+    */
+    void Undo();
+
+    /**
+    Redoes the command that is just above the last applied command in the undo
+    stack or throws if there is no command to redo. 
+    You can check "CanRedo" first to protect against extraneous redo.
+    */
+    void Redo();
+
+    /** selfexpl */
+    bool CanUndo() const;
+
+    /** selfexpl */
+    bool CanRedo() const;
+
+    /** Adds a new measure tool */
+    void AddMeasureTool(MeasureToolPtr measureTool);
+
+    /** Removes a measure tool or throws if it cannot be found */
+    void RemoveMeasureTool(MeasureToolPtr measureTool);
+
   private:
-    Scene2DPtr                scene_;
-    FlexiblePointerTrackerPtr tracker_;
+    std::vector<TrackerCommandPtr> commandStack_;
+    
+    /**
+    This is always between >= 0 and <= undoStack_.size() and gives the 
+    position where the controller is in the undo stack. 
+    - If numAppliedCommands_ > 0, one can undo
+    - If numAppliedCommands_ < numAppliedCommands_.size(), one can redo
+    */
+    size_t                         numAppliedCommands_;
+    std::vector<MeasureToolPtr>    measureTools_;
+    Scene2DPtr                     scene_;
+    FlexiblePointerTrackerPtr      tracker_;
   };
 }

@@ -26,14 +26,15 @@ namespace OrthancStone
 {
   /**
   This base is class allows to write simple trackers that deal with single 
-  drag gestures. It is *not* suitables for multi-state trackers where various
-  mouse operations need to be handled.
+  drag gestures with only one touch. It is *not* suitable for multi-touch and
+  multi-state trackers where various mouse operations need to be handled.
 
   In order to write such a tracker:
   - subclass this class
   - you may store the initial click/touch position in the constructor
   - implement PointerMove to react to pointer/touch events
   - implement Cancel to restore the state at initial tracker creation time
+
   */
   class OneGesturePointerTracker : public IFlexiblePointerTracker
   {
@@ -49,6 +50,7 @@ namespace OrthancStone
   private:
     ViewportControllerWPtr controllerW_;
     bool                   alive_;
+    int                    currentTouchCount_;
   };
 }
 

@@ -114,13 +114,8 @@ namespace OrthancStone
 
     std::map<std::string, std::string> infoTextMap_;
     FlexiblePointerTrackerPtr activeTracker_;
-    std::vector<TrackerCommandPtr> undoStack_;
-
-    // we store the measure tools here so that they don't get deleted
-    std::vector<MeasureToolPtr> measureTools_;
 
     //static const int LAYER_POSITION = 150;
-
 
     int TEXTURE_2x2_1_ZINDEX;
     int TEXTURE_1x1_ZINDEX;

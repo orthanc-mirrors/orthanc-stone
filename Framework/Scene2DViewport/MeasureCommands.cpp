@@ -20,23 +20,24 @@
 
 #include "MeasureCommands.h"
 
+#include <boost/make_shared.hpp>
+#include <boost/ref.hpp>
+
 namespace OrthancStone
 {
   void CreateMeasureCommand::Undo()
   {
     // simply disable the measure tool upon undo
-    GetMeasureTool()->Disable();
+    GetController()->RemoveMeasureTool(GetMeasureTool());
   }
 
   void CreateMeasureCommand::Redo()
   {
-    GetMeasureTool()->Enable();
+    GetController()->AddMeasureTool(GetMeasureTool());
   }
 
-  CreateMeasureCommand::CreateMeasureCommand(
-    ViewportControllerWPtr controllerW, MeasureToolList& measureTools)
+  CreateMeasureCommand::CreateMeasureCommand(ViewportControllerWPtr controllerW)
     : TrackerCommand(controllerW)
-    , measureTools_(measureTools)
   {
 
   }
@@ -50,12 +51,12 @@ namespace OrthancStone
   CreateLineMeasureCommand::CreateLineMeasureCommand(
     MessageBroker&         broker, 
     ViewportControllerWPtr controllerW,
-    MeasureToolList&       measureTools, 
     ScenePoint2D           point)
-    : CreateMeasureCommand(controllerW, measureTools)
-    , measureTool_(new LineMeasureTool(broker, controllerW))
+    : CreateMeasureCommand(controllerW)
+    , measureTool_(
+        boost::make_shared<LineMeasureTool>(boost::ref(broker), controllerW))
   {
-    measureTools_.push_back(measureTool_);
+    GetController()->AddMeasureTool(measureTool_);
     measureTool_->Set(point, point);
   }
 
@@ -67,12 +68,12 @@ namespace OrthancStone
   CreateAngleMeasureCommand::CreateAngleMeasureCommand(
     MessageBroker&         broker, 
     ViewportControllerWPtr controllerW,
-    MeasureToolList&       measureTools, 
     ScenePoint2D           point)
-    : CreateMeasureCommand(controllerW, measureTools)
-    , measureTool_(new AngleMeasureTool(broker, controllerW))
+    : CreateMeasureCommand(controllerW)
+    , measureTool_(
+      boost::make_shared<AngleMeasureTool>(boost::ref(broker), controllerW))
   {
-    measureTools_.push_back(measureTool_);
+    GetController()->AddMeasureTool(measureTool_);
     measureTool_->SetSide1End(point);
     measureTool_->SetCenter(point);
     measureTool_->SetSide2End(point);
@@ -90,4 +91,10 @@ namespace OrthancStone
     measureTool_->SetSide2End(scenePos);
   }
 
+  ViewportControllerPtr TrackerCommand::GetController()
+  {
+    ViewportControllerPtr controller = controllerW_.lock();
+    assert(controller); // accessing dead object?
+    return controller;
+  }
 }

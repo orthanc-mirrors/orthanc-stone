@@ -322,17 +322,17 @@ namespace OrthancStone
           return FlexiblePointerTrackerPtr(new ZoomSceneTracker(
             controller_, e, compositor_->GetCanvasHeight()));
         //case GuiTool_AngleMeasure:
-        //  return new AngleMeasureTracker(GetScene(), measureTools_, undoStack_, e);
+        //  return new AngleMeasureTracker(GetScene(), e);
         //case GuiTool_CircleMeasure:
-        //  return new CircleMeasureTracker(GetScene(), measureTools_, undoStack_, e);
+        //  return new CircleMeasureTracker(GetScene(), e);
         //case GuiTool_EllipseMeasure:
-        //  return new EllipseMeasureTracker(GetScene(), measureTools_, undoStack_, e);
+        //  return new EllipseMeasureTracker(GetScene(), e);
         case GuiTool_LineMeasure:
           return FlexiblePointerTrackerPtr(new CreateLineMeasureTracker(
-            IObserver::GetBroker(), controller_, undoStack_, measureTools_, e));
+            IObserver::GetBroker(), controller_, e));
         case GuiTool_AngleMeasure:
           return FlexiblePointerTrackerPtr(new CreateAngleMeasureTracker(
-            IObserver::GetBroker(), controller_, undoStack_, measureTools_, e));
+            IObserver::GetBroker(), controller_, e));
         case GuiTool_CircleMeasure:
           LOG(ERROR) << "Not implemented yet!";
           return FlexiblePointerTrackerPtr();

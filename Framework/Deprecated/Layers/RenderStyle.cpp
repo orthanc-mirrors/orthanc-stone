@@ -21,6 +21,9 @@
 
 #include "RenderStyle.h"
 
+#include "../../Volumes/ImageBuffer3D.h"
+#include "../Toolbox/DicomFrameConverter.h"
+
 #include <Core/OrthancException.h>
 
 namespace Deprecated
@@ -69,5 +72,35 @@ namespace Deprecated
     drawColor_[0] = red;
     drawColor_[1] = green;
     drawColor_[2] = blue;
+  }
+
+
+  bool RenderStyle::FitRange(const OrthancStone::ImageBuffer3D& image,
+                             const DicomFrameConverter& converter)
+  {
+    float minValue, maxValue;
+
+    windowing_ = OrthancStone::ImageWindowing_Custom;
+
+    if (image.GetRange(minValue, maxValue))
+    {  
+      // casting the narrower type to wider before calling the + operator
+      // will prevent overflowing (this is why the cast to double is only 
+      // done on the first operand)
+      customWindowCenter_ = static_cast<float>(
+        converter.Apply((static_cast<double>(minValue) + maxValue) / 2.0));
+      
+      customWindowWidth_ = static_cast<float>(
+        converter.Apply(static_cast<double>(maxValue) - minValue));
+      
+      if (customWindowWidth_ > 1)
+      {
+        return true;
+      }
+    }
+
+    customWindowCenter_ = 128.0;
+    customWindowWidth_ = 256.0;
+    return false;
   }
 }

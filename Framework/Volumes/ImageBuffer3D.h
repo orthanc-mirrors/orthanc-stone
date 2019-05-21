@@ -21,8 +21,6 @@
 
 #pragma once
 
-#include "../Deprecated/Layers/RenderStyle.h"
-#include "../Deprecated/Toolbox/DicomFrameConverter.h"
 #include "../StoneEnumerations.h"
 #include "../Toolbox/ParallelSlices.h"
 #include "../Toolbox/VolumeImageGeometry.h"
@@ -120,9 +118,6 @@ namespace OrthancStone
 
     bool GetRange(float& minValue,
                   float& maxValue) const;
-
-    bool FitWindowingToRange(Deprecated::RenderStyle& style,
-                             const Deprecated::DicomFrameConverter& converter) const;
 
     uint8_t GetVoxelGrayscale8Unchecked(unsigned int x,
                                         unsigned int y,

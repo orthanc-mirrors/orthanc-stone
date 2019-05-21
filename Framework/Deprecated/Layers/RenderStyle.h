@@ -22,6 +22,8 @@
 #pragma once
 
 #include "../../StoneEnumerations.h"
+#include "../../Volumes/ImageBuffer3D.h"
+#include "../Toolbox/DicomFrameConverter.h"
 
 #include <EmbeddedResources.h>
 
@@ -54,5 +56,8 @@ namespace Deprecated
     void SetColor(uint8_t red,
                   uint8_t green,
                   uint8_t blue);
+
+    bool FitRange(const OrthancStone::ImageBuffer3D& image,
+                  const DicomFrameConverter& converter);
   };
 }

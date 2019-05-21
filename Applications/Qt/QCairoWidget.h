@@ -40,10 +40,10 @@ private:
     
   public:
     StoneObserver(QCairoWidget& that,
-                  OrthancStone::IViewport& viewport,
+                  Deprecated::IViewport& viewport,
                   OrthancStone::MessageBroker& broker);
 
-    void OnViewportChanged(const OrthancStone::IViewport::ViewportChangedMessage& message)
+    void OnViewportChanged(const Deprecated::IViewport::ViewportChangedMessage& message)
     {
       that_.OnViewportChanged();
     }

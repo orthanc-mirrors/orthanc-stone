@@ -27,14 +27,14 @@
 
 
 QCairoWidget::StoneObserver::StoneObserver(QCairoWidget& that,
-                                           OrthancStone::IViewport& viewport,
+                                           Deprecated::IViewport& viewport,
                                            OrthancStone::MessageBroker& broker) :
   OrthancStone::IObserver(broker),
   that_(that)
 {
   // get notified each time the content of the central viewport changes
   viewport.RegisterObserverCallback(
-    new OrthancStone::Callable<StoneObserver, OrthancStone::IViewport::ViewportChangedMessage>
+    new OrthancStone::Callable<StoneObserver, Deprecated::IViewport::ViewportChangedMessage>
     (*this, &StoneObserver::OnViewportChanged));
 }
 
@@ -68,7 +68,7 @@ void QCairoWidget::paintEvent(QPaintEvent* /*event*/)
       context_ != NULL)
   {
     OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
-    OrthancStone::IViewport& viewport = locker.GetCentralViewport();
+    Deprecated::IViewport& viewport = locker.GetCentralViewport();
     Orthanc::ImageAccessor a;
     surface_.GetWriteableAccessor(a);
     viewport.Render(a);
@@ -125,7 +125,7 @@ void QCairoWidget::mousePressEvent(QMouseEvent* event)
 
   {
     OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
-    locker.GetCentralViewport().MouseDown(button, event->pos().x(), event->pos().y(), stoneModifiers, std::vector<OrthancStone::Touch>());
+    locker.GetCentralViewport().MouseDown(button, event->pos().x(), event->pos().y(), stoneModifiers, std::vector<Deprecated::Touch>());
   }
 }
 
@@ -140,7 +140,7 @@ void QCairoWidget::mouseReleaseEvent(QMouseEvent* /*eventNotUsed*/)
 void QCairoWidget::mouseMoveEvent(QMouseEvent* event)
 {
   OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);
-  locker.GetCentralViewport().MouseMove(event->pos().x(), event->pos().y(), std::vector<OrthancStone::Touch>());
+  locker.GetCentralViewport().MouseMove(event->pos().x(), event->pos().y(), std::vector<Deprecated::Touch>());
 }
 
 

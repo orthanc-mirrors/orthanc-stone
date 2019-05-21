@@ -166,8 +166,8 @@ namespace OrthancStone
       const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
 
       if (activeTracker_.get() == NULL &&
-        SDL_SCANCODE_LCTRL < scancodeCount &&
-        keyboardState[SDL_SCANCODE_LCTRL])
+        SDL_SCANCODE_LALT < scancodeCount &&
+        keyboardState[SDL_SCANCODE_LALT])
       {
         // The "left-ctrl" key is down, while no tracker is present
         // Let's display the info text
@@ -254,6 +254,38 @@ namespace OrthancStone
       case SDLK_s:
         controller_->FitContent(compositor_->GetCanvasWidth(),
           compositor_->GetCanvasHeight());
+        break;
+
+      case SDLK_z:
+        LOG(INFO) << "SDLK_z has been pressed. event.key.keysym.mod == " << event.key.keysym.mod;
+        if (event.key.keysym.mod & KMOD_CTRL)
+        {
+          if (controller_->CanUndo())
+          {
+            LOG(INFO) << "Undoing...";
+            controller_->Undo();
+          }
+          else
+          {
+            LOG(WARNING) << "Nothing to undo!!!";
+          }
+        }
+        break;
+
+      case SDLK_y:
+        LOG(INFO) << "SDLK_y has been pressed. event.key.keysym.mod == " << event.key.keysym.mod;
+        if (event.key.keysym.mod & KMOD_CTRL)
+        {
+          if (controller_->CanRedo())
+          {
+            LOG(INFO) << "Redoing...";
+            controller_->Redo();
+          }
+          else
+          {
+            LOG(WARNING) << "Nothing to redo!!!";
+          }
+        }
         break;
 
       case SDLK_c:

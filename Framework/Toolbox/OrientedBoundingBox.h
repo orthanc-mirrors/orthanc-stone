@@ -21,9 +21,10 @@
 
 #pragma once
 
+#include "CoordinateSystem3D.h"
 #include "Extent2D.h"
 #include "LinearAlgebra.h"
-#include "../Volumes/ImageBuffer3D.h"
+#include "VolumeImageGeometry.h"
 
 namespace OrthancStone
 {
@@ -39,7 +40,7 @@ namespace OrthancStone
     double  hw_;  // half depth
 
   public:
-    OrientedBoundingBox(const ImageBuffer3D& image);
+    OrientedBoundingBox(const VolumeImageGeometry& geometry);
 
     const Vector& GetCenter() const
     {

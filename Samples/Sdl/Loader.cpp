@@ -31,6 +31,7 @@
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Toolbox/GeometryToolbox.h"
 #include "../../Framework/Toolbox/SlicesSorter.h"
+#include "../../Framework/Toolbox/VolumeImageGeometry.h"
 #include "../../Framework/Volumes/ImageBuffer3D.h"
 
 // From Orthanc framework
@@ -1269,6 +1270,7 @@ namespace Refactoring
   {
   private:
     std::auto_ptr<OrthancStone::ImageBuffer3D>  image_;
+    std::auto_ptr<OrthancStone::VolumeImageGeometry>  geometry_;
     std::vector<DicomInstanceParameters*>       slices_;
     uint64_t                                    revision_;
     std::vector<uint64_t>                       slicesRevision_;
@@ -1336,6 +1338,7 @@ namespace Refactoring
     void Clear()
     {
       image_.reset();
+      geometry_.reset();
       
       for (size_t i = 0; i < slices_.size(); i++)
       {
@@ -1386,6 +1389,8 @@ namespace Refactoring
                                         "Cannot sort the 3D slices of a DICOM series");          
       }
 
+      geometry_.reset(new OrthancStone::VolumeImageGeometry);
+
       if (slices.GetSlicesCount() == 0)
       {
         // Empty volume
@@ -1417,9 +1422,10 @@ namespace Refactoring
                                                      parameters.GetImageInformation().GetHeight(),
                                                      slices.GetSlicesCount(), false /* don't compute range */));      
 
-        image_->GetGeometry().SetAxialGeometry(slices.GetSliceGeometry(0));
-        image_->GetGeometry().SetVoxelDimensions(parameters.GetPixelSpacingX(),
-                                                 parameters.GetPixelSpacingY(), spacingZ);
+        geometry_->SetSize(image_->GetWidth(), image_->GetHeight(), image_->GetDepth());
+        geometry_->SetAxialGeometry(slices.GetSliceGeometry(0));
+        geometry_->SetVoxelDimensions(parameters.GetPixelSpacingX(),
+                                      parameters.GetPixelSpacingY(), spacingZ);
       }
       
       image_->Clear();
@@ -1434,7 +1440,8 @@ namespace Refactoring
 
     bool HasGeometry() const
     {
-      return (image_.get() != NULL);
+      return (image_.get() != NULL &&
+              geometry_.get() != NULL);
     }
 
     const OrthancStone::ImageBuffer3D& GetImage() const
@@ -1446,6 +1453,18 @@ namespace Refactoring
       else
       {
         return *image_;
+      }
+    }
+
+    const OrthancStone::VolumeImageGeometry& GetGeometry() const
+    {
+      if (!HasGeometry())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        return *geometry_;
       }
     }
 
@@ -1834,7 +1853,7 @@ namespace Refactoring
         return;
       }
 
-      const OrthancStone::VolumeImageGeometry& geometry = source_.GetVolume().GetImage().GetGeometry();
+      const OrthancStone::VolumeImageGeometry& geometry = source_.GetVolume().GetGeometry();
 
       OrthancStone::VolumeProjection projection;
       unsigned int sliceIndex;

@@ -22,6 +22,7 @@
 #include "ParallelSlices.h"
 
 #include "GeometryToolbox.h"
+#include "../Volumes/ImageBuffer3D.h"
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
@@ -30,7 +31,7 @@ namespace OrthancStone
 {
   ParallelSlices::ParallelSlices()
   {
-    LinearAlgebra::AssignVector(normal_, 0, 0, 1);
+    Clear();
   }
 
 
@@ -48,7 +49,7 @@ namespace OrthancStone
   }
 
 
-  ParallelSlices::~ParallelSlices()
+  void ParallelSlices::Clear()
   {
     for (size_t i = 0; i < slices_.size(); i++)
     {
@@ -58,6 +59,15 @@ namespace OrthancStone
         slices_[i] = NULL;
       }
     }
+
+    slices_.clear();
+    LinearAlgebra::AssignVector(normal_, 0, 0, 1);
+  }
+  
+
+  ParallelSlices::~ParallelSlices()
+  {
+    Clear();
   }
 
 
@@ -145,5 +155,61 @@ namespace OrthancStone
     }
 
     return reversed.release();
+  }
+
+
+  ParallelSlices* ParallelSlices::FromVolumeImage(const VolumeImageGeometry& geometry,
+                                                  VolumeProjection projection)
+  {
+    const Vector dimensions = geometry.GetVoxelDimensions(VolumeProjection_Axial);
+    const CoordinateSystem3D& axial = geometry.GetAxialGeometry();
+    
+    std::auto_ptr<ParallelSlices> result(new ParallelSlices);
+
+    switch (projection)
+    {
+      case VolumeProjection_Axial:
+        for (unsigned int z = 0; z < geometry.GetDepth(); z++)
+        {
+          Vector origin = axial.GetOrigin();
+          origin += static_cast<double>(z) * dimensions[2] * axial.GetNormal();
+
+          result->AddSlice(origin,
+                           axial.GetAxisX(),
+                           axial.GetAxisY());
+        }
+        break;
+
+      case VolumeProjection_Coronal:
+        for (unsigned int y = 0; y < geometry.GetHeight(); y++)
+        {
+          Vector origin = axial.GetOrigin();
+          origin += static_cast<double>(y) * dimensions[1] * axial.GetAxisY();
+          origin += static_cast<double>(geometry.GetDepth() - 1) * dimensions[2] * axial.GetNormal();
+
+          result->AddSlice(origin,
+                           axial.GetAxisX(),
+                           -axial.GetNormal());
+        }
+        break;
+
+      case VolumeProjection_Sagittal:
+        for (unsigned int x = 0; x < geometry.GetWidth(); x++)
+        {
+          Vector origin = axial.GetOrigin();
+          origin += static_cast<double>(x) * dimensions[0] * axial.GetAxisX();
+          origin += static_cast<double>(geometry.GetDepth() - 1) * dimensions[2] * axial.GetNormal();
+
+          result->AddSlice(origin,
+                           axial.GetAxisY(),
+                           -axial.GetNormal());
+        }
+        break;
+
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    return result.release();
   }
 }

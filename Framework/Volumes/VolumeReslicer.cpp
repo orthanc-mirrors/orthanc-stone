@@ -745,12 +745,13 @@ namespace OrthancStone
 
   
   void VolumeReslicer::Apply(const ImageBuffer3D& source,
+                             const VolumeImageGeometry& geometry,
                              const CoordinateSystem3D& plane)
   {
     // Choose the default voxel size as the finest voxel dimension
     // of the source volumetric image
     const OrthancStone::Vector dim =
-      source.GetGeometry().GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
+      geometry.GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
     double voxelSize = dim[0];
     
     if (dim[1] < voxelSize)
@@ -768,11 +769,12 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
 
-    Apply(source, plane, voxelSize);
+    Apply(source, geometry, plane, voxelSize);
   }
 
   
   void VolumeReslicer::Apply(const ImageBuffer3D& source,
+                             const VolumeImageGeometry& geometry,
                              const CoordinateSystem3D& plane,
                              double voxelSize)
   {
@@ -783,7 +785,7 @@ namespace OrthancStone
     // to 6 vertices. We compute the extent of the intersection
     // polygon, with respect to the coordinate system of the reslicing
     // plane.
-    OrientedBoundingBox box(source);
+    OrientedBoundingBox box(geometry);
 
     if (!box.ComputeExtent(extent_, plane))
     {

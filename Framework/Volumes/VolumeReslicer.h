@@ -111,9 +111,11 @@ namespace OrthancStone
     Orthanc::ImageAccessor* ReleaseOutputSlice();
 
     void Apply(const ImageBuffer3D& source,
+               const VolumeImageGeometry& geometry,
                const CoordinateSystem3D& plane);
 
     void Apply(const ImageBuffer3D& source,
+               const VolumeImageGeometry& geometry,
                const CoordinateSystem3D& plane,
                double voxelSize);
   };

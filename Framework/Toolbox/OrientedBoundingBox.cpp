@@ -22,6 +22,7 @@
 #include "OrientedBoundingBox.h"
 
 #include "GeometryToolbox.h"
+#include "../Volumes/ImageBuffer3D.h"
 
 #include <Core/OrthancException.h>
 
@@ -29,26 +30,25 @@
 
 namespace OrthancStone
 {
-  OrientedBoundingBox::OrientedBoundingBox(const ImageBuffer3D& image)
+  OrientedBoundingBox::OrientedBoundingBox(const VolumeImageGeometry& geometry)
   {
-    unsigned int n = image.GetDepth();
+    unsigned int n = geometry.GetDepth();
     if (n < 1)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageSize);      
     }
 
-    const CoordinateSystem3D& geometry = image.GetGeometry().GetAxialGeometry();
-    Vector dim = image.GetGeometry().GetVoxelDimensions(VolumeProjection_Axial);
+    Vector dim = geometry.GetVoxelDimensions(VolumeProjection_Axial);
 
-    u_ = geometry.GetAxisX();
-    v_ = geometry.GetAxisY();
-    w_ = geometry.GetNormal();
+    u_ = geometry.GetAxialGeometry().GetAxisX();
+    v_ = geometry.GetAxialGeometry().GetAxisY();
+    w_ = geometry.GetAxialGeometry().GetNormal();
 
-    hu_ = static_cast<double>(image.GetWidth() * dim[0] / 2.0);
-    hv_ = static_cast<double>(image.GetHeight() * dim[1] / 2.0);
-    hw_ = static_cast<double>(image.GetDepth() * dim[2] / 2.0);
+    hu_ = static_cast<double>(geometry.GetWidth() * dim[0] / 2.0);
+    hv_ = static_cast<double>(geometry.GetHeight() * dim[1] / 2.0);
+    hw_ = static_cast<double>(geometry.GetDepth() * dim[2] / 2.0);
       
-    c_ = (geometry.GetOrigin() + 
+    c_ = (geometry.GetAxialGeometry().GetOrigin() + 
           (hu_ - dim[0] / 2.0) * u_ +
           (hv_ - dim[1] / 2.0) * v_ +
           (hw_ - dim[2] / 2.0) * w_);

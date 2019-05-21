@@ -23,6 +23,7 @@
 
 #include "GeometryToolbox.h"
 #include "SubpixelReader.h"
+#include "ParallelSlices.h"
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
@@ -299,6 +300,7 @@ namespace OrthancStone
   static void ApplyRaytracerInternal(Orthanc::ImageAccessor& target,
                                      const FiniteProjectiveCamera& camera,
                                      const ImageBuffer3D& source,
+                                     const VolumeImageGeometry& geometry,
                                      VolumeProjection projection)
   {
     if (source.GetFormat() != SourceFormat ||
@@ -315,8 +317,8 @@ namespace OrthancStone
     LOG(WARNING) << "Output image size: " << target.GetWidth() << "x" << target.GetHeight();
     LOG(WARNING) << "Output pixel format: " << Orthanc::EnumerationToString(target.GetFormat());
 
-    std::auto_ptr<OrthancStone::ParallelSlices> slices(source.GetGeometry(projection));
-    const OrthancStone::Vector pixelSpacing = source.GetGeometry().GetVoxelDimensions(projection);
+    std::auto_ptr<OrthancStone::ParallelSlices> slices(OrthancStone::ParallelSlices::FromVolumeImage(geometry, projection));
+    const OrthancStone::Vector pixelSpacing = geometry.GetVoxelDimensions(projection);
     const unsigned int targetWidth = target.GetWidth();
     const unsigned int targetHeight = target.GetHeight();
 
@@ -422,6 +424,7 @@ namespace OrthancStone
 
   Orthanc::ImageAccessor*
   FiniteProjectiveCamera::ApplyRaytracer(const ImageBuffer3D& source,
+                                         const VolumeImageGeometry& geometry,
                                          Orthanc::PixelFormat targetFormat,
                                          unsigned int targetWidth,
                                          unsigned int targetHeight,
@@ -440,14 +443,14 @@ namespace OrthancStone
     {
       ApplyRaytracerInternal<Orthanc::PixelFormat_Grayscale16,
                              Orthanc::PixelFormat_Grayscale16, true>
-        (*target, *this, source, projection);
+        (*target, *this, source, geometry, projection);
     }
     else if (targetFormat == Orthanc::PixelFormat_Grayscale16 &&
              source.GetFormat() == Orthanc::PixelFormat_Grayscale16 && !mip)
     {
       ApplyRaytracerInternal<Orthanc::PixelFormat_Grayscale16,
                              Orthanc::PixelFormat_Grayscale16, false>
-        (*target, *this, source, projection);
+        (*target, *this, source, geometry, projection);
     }
     else
     {

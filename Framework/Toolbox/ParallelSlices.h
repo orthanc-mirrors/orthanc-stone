@@ -22,6 +22,7 @@
 #pragma once
 
 #include "CoordinateSystem3D.h"
+#include "VolumeImageGeometry.h"
 
 namespace OrthancStone
 {
@@ -32,6 +33,8 @@ namespace OrthancStone
     std::vector<CoordinateSystem3D*>  slices_;
     
     ParallelSlices& operator= (const ParallelSlices& other);  // Forbidden
+
+    void Clear();
 
   public:
     ParallelSlices();
@@ -63,5 +66,8 @@ namespace OrthancStone
                              const Vector& origin) const;
 
     ParallelSlices* Reverse() const;
+
+    static ParallelSlices* FromVolumeImage(const VolumeImageGeometry& geometry,
+                                           VolumeProjection projection);
   };
 }

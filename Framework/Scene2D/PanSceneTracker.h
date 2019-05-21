@@ -21,27 +21,25 @@
 
 #pragma once
 
-#include "IPointerTracker.h"
-#include "Scene2D.h"
+#include "../Scene2DViewport/OneGesturePointerTracker.h"
 
 namespace OrthancStone
 {
-  class PanSceneTracker : public IPointerTracker
-  {
-  private:
-    Scene2D&           scene_;
-    ScenePoint2D       pivot_;
-    AffineTransform2D  originalSceneToCanvas_;
-    AffineTransform2D  originalCanvasToScene_;
+  class ViewportController;
 
+  class PanSceneTracker : public OneGesturePointerTracker
+  {
   public:
-    PanSceneTracker(Scene2D& scene,
+    PanSceneTracker(ViewportControllerWPtr controllerW,
                     const PointerEvent& event);
 
-    virtual void Update(const PointerEvent& event);
+    virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;
+    virtual void Cancel() ORTHANC_OVERRIDE;
 
-    virtual void Release()
-    {
-    }
+  private:
+    ViewportControllerWPtr controllerW_;
+    ScenePoint2D           pivot_;
+    AffineTransform2D      originalSceneToCanvas_;
+    AffineTransform2D      originalCanvasToScene_;
   };
 }

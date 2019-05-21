@@ -29,7 +29,7 @@
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   SingleFrameRendererFactory::SingleFrameRendererFactory(OrthancPlugins::IOrthancConnection& orthanc,
                                                          const std::string& instanceId,

@@ -26,7 +26,7 @@
 
 #include <memory>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class WidgetViewport : public IViewport
   {
@@ -37,11 +37,11 @@ namespace OrthancStone
     bool                          isMouseOver_;
     int                           lastMouseX_;
     int                           lastMouseY_;
-    CairoSurface                  background_;
+    OrthancStone::CairoSurface    background_;
     bool                          backgroundChanged_;
 
   public:
-    WidgetViewport(MessageBroker& broker);
+    WidgetViewport(OrthancStone::MessageBroker& broker);
 
     virtual void FitContent();
 
@@ -56,10 +56,10 @@ namespace OrthancStone
 
     virtual bool Render(Orthanc::ImageAccessor& surface);
 
-    virtual void MouseDown(MouseButton button,
+    virtual void MouseDown(OrthancStone::MouseButton button,
                            int x,
                            int y,
-                           KeyboardModifiers modifiers,
+                           OrthancStone::KeyboardModifiers modifiers,
                            const std::vector<Touch>& displayTouches);
 
     virtual void MouseUp();
@@ -78,14 +78,14 @@ namespace OrthancStone
     
     virtual void TouchEnd(const std::vector<Touch>& touches);
 
-    virtual void MouseWheel(MouseWheelDirection direction,
+    virtual void MouseWheel(OrthancStone::MouseWheelDirection direction,
                             int x,
                             int y,
-                            KeyboardModifiers modifiers);
+                            OrthancStone::KeyboardModifiers modifiers);
 
-    virtual void KeyPressed(KeyboardKeys key,
+    virtual void KeyPressed(OrthancStone::KeyboardKeys key,
                             char keyChar,
-                            KeyboardModifiers modifiers);
+                            OrthancStone::KeyboardModifiers modifiers);
 
     virtual bool HasAnimation();
 

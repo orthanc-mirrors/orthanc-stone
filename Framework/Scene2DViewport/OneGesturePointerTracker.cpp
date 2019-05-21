@@ -1,0 +1,71 @@
+/**
+ * Stone of Orthanc
+ * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
+ * Department, University Hospital of Liege, Belgium
+ * Copyright (C) 2017-2019 Osimis S.A., Belgium
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ **/
+
+
+#include "OneGesturePointerTracker.h"
+
+#include <Core/OrthancException.h>
+
+#include <Framework/StoneException.h>
+
+using namespace Orthanc;
+
+namespace OrthancStone
+{
+  OneGesturePointerTracker::OneGesturePointerTracker(
+    ViewportControllerWPtr controllerW)
+    : controllerW_(controllerW)
+    , alive_(true)
+    , currentTouchCount_(1)
+  {
+  }
+
+  void OneGesturePointerTracker::PointerUp(const PointerEvent& event)
+  {
+    // pointer up is only called for the LAST up event in case of a multi-touch
+    // gesture
+    ORTHANC_ASSERT(currentTouchCount_ > 0, "Wrong state in tracker");
+    currentTouchCount_--;
+    LOG(INFO) << "currentTouchCount_ becomes: " << currentTouchCount_;
+    if (currentTouchCount_ == 0)
+    {
+      LOG(INFO) << "currentTouchCount_ == 0 --> alive_ = false";
+      alive_ = false;
+    }
+  }
+
+  void OneGesturePointerTracker::PointerDown(const PointerEvent& event)
+  {
+    // additional touches are not taken into account but we need to count 
+    // the number of active touches
+    currentTouchCount_++;
+    LOG(INFO) << "currentTouchCount_ becomes: " << currentTouchCount_;
+  }
+
+  bool OneGesturePointerTracker::IsAlive() const
+  {
+    return alive_;
+  }
+
+  ViewportControllerPtr OneGesturePointerTracker::GetController()
+  {
+    return controllerW_.lock();
+  }
+}

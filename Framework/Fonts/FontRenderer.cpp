@@ -101,7 +101,9 @@ namespace OrthancStone
       
       const FT_Byte* data = reinterpret_cast<const FT_Byte*>(fontContent_.c_str());
 
-      CheckError(FT_New_Memory_Face(library_, data, fontContent_.size(), 0, &face_));
+      CheckError(FT_New_Memory_Face(
+        library_, data, static_cast<FT_Long>(fontContent_.size()), 0, &face_));
+
       CheckError(FT_Set_Char_Size(face_,         // handle to face object  
                                   0,             // char_width in 1/64th of points  
                                   fontSize * 64, // char_height in 1/64th of points 

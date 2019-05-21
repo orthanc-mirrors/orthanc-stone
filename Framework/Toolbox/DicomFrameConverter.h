@@ -27,7 +27,7 @@
 
 #include <memory>
 
-namespace OrthancStone
+namespace Deprecated
 {
   /**
    * This class is responsible for converting the pixel format of a

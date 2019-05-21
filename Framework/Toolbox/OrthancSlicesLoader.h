@@ -31,16 +31,16 @@
 #include <Core/Images/Image.h>
 
 
-namespace OrthancStone
+namespace Deprecated
 {
-  class OrthancSlicesLoader : public IObservable, public IObserver
+  class OrthancSlicesLoader : public OrthancStone::IObservable, public OrthancStone::IObserver
   {
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, SliceGeometryReadyMessage, OrthancSlicesLoader);
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, SliceGeometryErrorMessage, OrthancSlicesLoader);
 
     
-    class SliceImageReadyMessage : public OriginMessage<OrthancSlicesLoader>
+    class SliceImageReadyMessage : public OrthancStone::OriginMessage<OrthancSlicesLoader>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
@@ -48,14 +48,14 @@ namespace OrthancStone
       unsigned int                   sliceIndex_;
       const Slice&                   slice_;
       const Orthanc::ImageAccessor&  image_;
-      SliceImageQuality              effectiveQuality_;
+      OrthancStone::SliceImageQuality  effectiveQuality_;
 
     public:
       SliceImageReadyMessage(const OrthancSlicesLoader& origin,
                              unsigned int sliceIndex,
                              const Slice& slice,
                              const Orthanc::ImageAccessor& image,
-                             SliceImageQuality effectiveQuality) :
+                             OrthancStone::SliceImageQuality effectiveQuality) :
         OriginMessage(origin),
         sliceIndex_(sliceIndex),
         slice_(slice),
@@ -79,27 +79,27 @@ namespace OrthancStone
         return image_;
       }
 
-      SliceImageQuality GetEffectiveQuality() const
+      OrthancStone::SliceImageQuality GetEffectiveQuality() const
       {
         return effectiveQuality_;
       }        
     };
     
 
-    class SliceImageErrorMessage : public OriginMessage<OrthancSlicesLoader>
+    class SliceImageErrorMessage : public OrthancStone::OriginMessage<OrthancSlicesLoader>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
       const Slice&       slice_;
       unsigned int       sliceIndex_;
-      SliceImageQuality  effectiveQuality_;
+      OrthancStone::SliceImageQuality  effectiveQuality_;
 
     public:
       SliceImageErrorMessage(const OrthancSlicesLoader& origin,
                              unsigned int sliceIndex,
                              const Slice& slice,
-                             SliceImageQuality effectiveQuality) :
+                             OrthancStone::SliceImageQuality effectiveQuality) :
         OriginMessage(origin),
         slice_(slice),
         sliceIndex_(sliceIndex),
@@ -116,7 +116,7 @@ namespace OrthancStone
         return slice_;
       }
 
-      SliceImageQuality GetEffectiveQuality() const
+      OrthancStone::SliceImageQuality GetEffectiveQuality() const
       {
         return effectiveQuality_;
       }        
@@ -145,7 +145,7 @@ namespace OrthancStone
 
     OrthancApiClient&  orthanc_;
     State         state_;
-    SlicesSorter  slices_;
+    OrthancStone::SlicesSorter  slices_;
 
     void NotifySliceImageSuccess(const Operation& operation,
                                  const Orthanc::ImageAccessor& image);
@@ -178,12 +178,12 @@ namespace OrthancStone
 
     void ScheduleSliceImageJpeg(const Slice& slice,
                                 size_t index,
-                                SliceImageQuality quality);
+                                OrthancStone::SliceImageQuality quality);
 
     void SortAndFinalizeSlices();
     
   public:
-    OrthancSlicesLoader(MessageBroker& broker,
+    OrthancSlicesLoader(OrthancStone::MessageBroker& broker,
                         //ISliceLoaderObserver& callback,
                         OrthancApiClient& orthancApi);
 
@@ -201,9 +201,9 @@ namespace OrthancStone
     const Slice& GetSlice(size_t index) const;
 
     bool LookupSlice(size_t& index,
-                     const CoordinateSystem3D& plane) const;
+                     const OrthancStone::CoordinateSystem3D& plane) const;
 
     void ScheduleLoadSliceImage(size_t index,
-                                SliceImageQuality requestedQuality);
+                                OrthancStone::SliceImageQuality requestedQuality);
   };
 }

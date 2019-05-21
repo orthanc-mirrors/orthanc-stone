@@ -23,17 +23,17 @@
 
 #include <Core/HttpClient.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
-  WebServiceDeleteCommand::WebServiceDeleteCommand(MessageBroker& broker,
-                                                   MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
-                                                   MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
+  WebServiceDeleteCommand::WebServiceDeleteCommand(OrthancStone::MessageBroker& broker,
+                                                   OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                                                   OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                                                    const Orthanc::WebServiceParameters& parameters,
                                                    const std::string& url,
-                                                   const IWebService::HttpHeaders& headers,
+                                                   const Deprecated::IWebService::HttpHeaders& headers,
                                                    unsigned int timeoutInSeconds,
                                                    Orthanc::IDynamicObject* payload /* takes ownership */,
-                                                   NativeStoneApplicationContext& context) :
+                                                   OrthancStone::NativeStoneApplicationContext& context) :
     WebServiceCommandBase(broker, successCallback, failureCallback, parameters, url, headers, timeoutInSeconds, payload, context)
   {
   }
@@ -45,7 +45,7 @@ namespace OrthancStone
     client.SetTimeout(timeoutInSeconds_);
     client.SetMethod(Orthanc::HttpMethod_Delete);
 
-    for (IWebService::HttpHeaders::const_iterator it = headers_.begin(); it != headers_.end(); it++ )
+    for (Deprecated::IWebService::HttpHeaders::const_iterator it = headers_.begin(); it != headers_.end(); it++ )
     {
       client.AddHeader(it->first, it->second);
     }

@@ -24,7 +24,7 @@
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   ZoomMouseTracker::ZoomMouseTracker(WorldSceneWidget& that,
                                      int x,
@@ -51,7 +51,7 @@ namespace OrthancStone
   }
     
 
-  void ZoomMouseTracker::Render(CairoContext& context,
+  void ZoomMouseTracker::Render(OrthancStone::CairoContext& context,
                                 double zoom)
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);

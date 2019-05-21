@@ -18,11 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
 #pragma once
 
-#include "../Scene2D.h"
-#include "../ScenePoint2D.h"
+#include <Framework/Scene2DViewport/PointerTypes.h>
+#include <Framework/Scene2D/ScenePoint2D.h>
 
 namespace OrthancStone
 {
@@ -33,12 +32,12 @@ namespace OrthancStone
     class FixedPointAligner : public boost::noncopyable
     {
     private:
-      Scene2D&      scene_;
-      ScenePoint2D  pivot_;
-      ScenePoint2D  canvas_;
+      ViewportControllerWPtr controllerW_;
+      ScenePoint2D           pivot_;
+      ScenePoint2D           canvas_;
 
     public:
-      FixedPointAligner(Scene2D& scene,
+      FixedPointAligner(ViewportControllerWPtr controllerW,
                         const ScenePoint2D& p);
 
       void Apply();

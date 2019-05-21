@@ -24,7 +24,7 @@
 #include <string>
 #include <boost/noncopyable.hpp>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class IStatusBar : public boost::noncopyable
   {

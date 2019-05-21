@@ -23,20 +23,20 @@
 
 #include "WebServiceCommandBase.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class WebServiceDeleteCommand : public WebServiceCommandBase
   {
   public:
-    WebServiceDeleteCommand(MessageBroker& broker,
-                            MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
-                            MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
+    WebServiceDeleteCommand(OrthancStone::MessageBroker& broker,
+                            OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                            OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                             const Orthanc::WebServiceParameters& parameters,
                             const std::string& url,
                             const IWebService::HttpHeaders& headers,
                             unsigned int timeoutInSeconds,
                             Orthanc::IDynamicObject* payload /* takes ownership */,
-                            NativeStoneApplicationContext& context);
+                            OrthancStone::NativeStoneApplicationContext& context);
 
     virtual void Execute();
   };

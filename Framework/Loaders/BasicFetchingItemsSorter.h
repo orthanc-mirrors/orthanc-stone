@@ -13,53 +13,32 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "MeasureTrackers.h"
-#include <Core/OrthancException.h>
 
-using namespace Orthanc;
+#pragma once
+
+#include "IFetchingItemsSorter.h"
 
 namespace OrthancStone
 {
-
-  CreateMeasureTracker::CreateMeasureTracker(
-    Scene2D&                        scene,
-    std::vector<TrackerCommandPtr>& undoStack,
-    std::vector<MeasureToolPtr>&    measureTools)
-    : scene_(scene)
-    , active_(true)
-    , undoStack_(undoStack)
-    , measureTools_(measureTools)
-    , commitResult_(true)
+  class BasicFetchingItemsSorter : public IFetchingItemsSorter
   {
-  }
+  private:
+    unsigned int  itemsCount_;
 
-  void CreateMeasureTracker::Cancel()
-  {
-    commitResult_ = false;
-    active_ = false;
-  }
+  public:
+    BasicFetchingItemsSorter(unsigned int itemsCount);
 
-  bool CreateMeasureTracker::IsActive() const
-  {
-    return active_;
-  }
+    virtual unsigned int GetItemsCount() const
+    {
+      return itemsCount_;
+    }
 
-  CreateMeasureTracker::~CreateMeasureTracker()
-  {
-    // if the tracker completes successfully, we add the command
-    // to the undo stack
-
-    // otherwise, we simply undo it
-    if (commitResult_)
-      undoStack_.push_back(command_);
-    else
-      command_->Undo();
-  }
+    virtual void Sort(std::vector<unsigned int>& target,
+                      unsigned int current);
+  };
 }
-
-

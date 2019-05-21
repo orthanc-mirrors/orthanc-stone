@@ -21,13 +21,13 @@
 
 #include "LineLayerRenderer.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   LineLayerRenderer::LineLayerRenderer(double x1,
                                        double y1,
                                        double x2,
                                        double y2,
-                                       const CoordinateSystem3D& plane) : 
+                                       const OrthancStone::CoordinateSystem3D& plane) : 
     x1_(x1),
     y1_(y1),
     x2_(x2),
@@ -39,7 +39,7 @@ namespace OrthancStone
   }
 
 
-  bool LineLayerRenderer::RenderLayer(CairoContext& context,
+  bool LineLayerRenderer::RenderLayer(OrthancStone::CairoContext& context,
                                       const ViewportGeometry& view)
   {
     if (visible_)

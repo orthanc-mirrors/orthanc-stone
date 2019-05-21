@@ -26,11 +26,11 @@
 #include "Messages/IObservable.h"
 #include "Toolbox/OrthancApiClient.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class SliceViewerWidget;
 
-  class SmartLoader : public IObservable, public IObserver
+  class SmartLoader : public OrthancStone::IObservable, public OrthancStone::IObserver
   {
     class CachedSlice;
 
@@ -41,17 +41,17 @@ namespace OrthancStone
     typedef std::map<std::string, boost::shared_ptr<IVolumeSlicer> > PreloadingInstances;
     PreloadingInstances preloadingInstances_;
 
-    SliceImageQuality     imageQuality_;
+    OrthancStone::SliceImageQuality     imageQuality_;
     OrthancApiClient&     orthancApiClient_;
 
   public:
-    SmartLoader(MessageBroker& broker, OrthancApiClient& orthancApiClient);  // TODO: add maxPreloadStorageSizeInBytes
+    SmartLoader(OrthancStone::MessageBroker& broker, OrthancApiClient& orthancApiClient);  // TODO: add maxPreloadStorageSizeInBytes
 
 //    void PreloadStudy(const std::string studyId);
 //    void PreloadSeries(const std::string seriesId);
     void PreloadSlice(const std::string instanceId, unsigned int frame);
 
-    void SetImageQuality(SliceImageQuality imageQuality) { imageQuality_ = imageQuality; }
+    void SetImageQuality(OrthancStone::SliceImageQuality imageQuality) { imageQuality_ = imageQuality; }
 
     void SetFrameInWidget(SliceViewerWidget& sliceViewer, size_t layerIndex, const std::string& instanceId, unsigned int frame);
 

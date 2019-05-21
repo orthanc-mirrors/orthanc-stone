@@ -23,7 +23,7 @@
 
 #include "../StoneEnumerations.h"
 #include "../Layers/RenderStyle.h"
-#include "../Toolbox/CoordinateSystem3D.h"
+#include "../Toolbox/VolumeImageGeometry.h"
 #include "../Toolbox/DicomFrameConverter.h"
 #include "../Toolbox/ParallelSlices.h"
 
@@ -34,8 +34,7 @@ namespace OrthancStone
   class ImageBuffer3D : public boost::noncopyable
   {
   private:
-    CoordinateSystem3D     axialGeometry_;
-    Vector                 voxelDimensions_;
+    VolumeImageGeometry    geometry_;  // TODO => Move this out of this class
     Orthanc::Image         image_;
     Orthanc::PixelFormat   format_;
     unsigned int           width_;
@@ -45,6 +44,8 @@ namespace OrthancStone
     bool                   hasRange_;
     float                  minValue_;
     float                  maxValue_;
+    Matrix                 transform_;
+    Matrix                 transformInverse_;
 
     void ExtendImageRange(const Orthanc::ImageAccessor& slice);
 
@@ -77,24 +78,15 @@ namespace OrthancStone
 
     void Clear();
 
-    // Set the geometry of the first axial slice (i.e. the one whose
-    // depth == 0)
-    void SetAxialGeometry(const CoordinateSystem3D& geometry);
-
-    const CoordinateSystem3D& GetAxialGeometry() const
+    VolumeImageGeometry& GetGeometry()
     {
-      return axialGeometry_;
+      return geometry_;
     }
 
-    void SetVoxelDimensions(double x,
-                            double y,
-                            double z);
-
-    Vector GetVoxelDimensions(VolumeProjection projection) const;
-
-    void GetSliceSize(unsigned int& width,
-                      unsigned int& height,
-                      VolumeProjection projection);
+    const VolumeImageGeometry& GetGeometry() const
+    {
+      return geometry_;
+    }
 
     const Orthanc::ImageAccessor& GetInternalImage() const
     {
@@ -121,6 +113,7 @@ namespace OrthancStone
       return format_;
     }
 
+    // TODO - Remove
     ParallelSlices* GetGeometry(VolumeProjection projection) const;
     
     uint64_t GetEstimatedMemorySize() const;
@@ -128,8 +121,8 @@ namespace OrthancStone
     bool GetRange(float& minValue,
                   float& maxValue) const;
 
-    bool FitWindowingToRange(RenderStyle& style,
-                             const DicomFrameConverter& converter) const;
+    bool FitWindowingToRange(Deprecated::RenderStyle& style,
+                             const Deprecated::DicomFrameConverter& converter) const;
 
     uint8_t GetVoxelGrayscale8Unchecked(unsigned int x,
                                         unsigned int y,
@@ -160,13 +153,7 @@ namespace OrthancStone
                                  unsigned int y,
                                  unsigned int z) const;
 
-    // Get the 3D position of a point in the volume, where x, y and z
-    // lie in the [0;1] range
-    Vector GetCoordinates(float x,
-                          float y,
-                          float z) const;
-
-
+    
     class SliceReader : public boost::noncopyable
     {
     private:

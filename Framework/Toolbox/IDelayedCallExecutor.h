@@ -30,18 +30,18 @@
 #include <string>
 #include <map>
 
-namespace OrthancStone
+namespace Deprecated
 {
   // The IDelayedCall executes a callback after a delay (equivalent to timeout() function in javascript).
   class IDelayedCallExecutor : public boost::noncopyable
   {
   protected:
-    MessageBroker& broker_;
+    OrthancStone::MessageBroker& broker_;
     
   public:
     ORTHANC_STONE_DEFINE_EMPTY_MESSAGE(__FILE__, __LINE__, TimeoutMessage);
 
-    IDelayedCallExecutor(MessageBroker& broker) :
+    IDelayedCallExecutor(OrthancStone::MessageBroker& broker) :
       broker_(broker)
     {
     }
@@ -52,7 +52,7 @@ namespace OrthancStone
     }
 
     
-    virtual void Schedule(MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
-                         unsigned int timeoutInMs = 1000) = 0;
+    virtual void Schedule(OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
+                          unsigned int timeoutInMs = 1000) = 0;
   };
 }

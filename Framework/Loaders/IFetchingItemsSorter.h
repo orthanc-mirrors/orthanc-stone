@@ -13,63 +13,30 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "MeasureTools.h"
 
-#include <Core/Logging.h>
+#pragma once
 
-#include <boost/math/constants/constants.hpp>
+#include <boost/noncopyable.hpp>
+#include <vector>
 
 namespace OrthancStone
 {
-
-  MeasureTool::~MeasureTool()
+  class IFetchingItemsSorter : public boost::noncopyable
   {
+  public:
+    virtual ~IFetchingItemsSorter()
+    {
+    }
 
-  }
+    virtual unsigned int GetItemsCount() const = 0;
 
-  void MeasureTool::Enable()
-  {
-    enabled_ = true;
-    RefreshScene();
-  }
-
-  void MeasureTool::Disable()
-  {
-    enabled_ = false;
-    RefreshScene();
-  }
-
-  bool MeasureTool::IsEnabled() const
-  {
-    return enabled_;
-  }
-
-  OrthancStone::Scene2D& MeasureTool::GetScene()
-  {
-    return scene_;
-  }
-
-  MeasureTool::MeasureTool(MessageBroker& broker, Scene2D& scene)
-    : IObserver(broker)
-    , scene_(scene)
-    , enabled_(true)
-  {
-    scene_.RegisterObserverCallback(
-      new Callable<MeasureTool, Scene2D::SceneTransformChanged>
-      (*this, &MeasureTool::OnSceneTransformChanged));
-  }
-
-  void MeasureTool::OnSceneTransformChanged(
-    const Scene2D::SceneTransformChanged& message)
-  {
-    RefreshScene();
-  }
-
-
-}
-
+    // Sort a set of items given the current item
+    virtual void Sort(std::vector<unsigned int>& target,
+                      unsigned int current) = 0;
+  };
+};

@@ -28,38 +28,38 @@
 #include "Core/Images/Image.h"
 #include <boost/shared_ptr.hpp>
 
-namespace OrthancStone
+namespace Deprecated
 {
-  class IVolumeSlicer : public IObservable
+  class IVolumeSlicer : public OrthancStone::IObservable
   {
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryReadyMessage, IVolumeSlicer);
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryErrorMessage, IVolumeSlicer);
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ContentChangedMessage, IVolumeSlicer);
 
-    class SliceContentChangedMessage : public OriginMessage<IVolumeSlicer>
+    class SliceContentChangedMessage : public OrthancStone::OriginMessage<IVolumeSlicer>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      const Slice& slice_;
+      const Deprecated::Slice& slice_;
 
     public:
       SliceContentChangedMessage(IVolumeSlicer& origin,
-                                 const Slice& slice) :
+                                 const Deprecated::Slice& slice) :
         OriginMessage(origin),
         slice_(slice)
       {
       }
 
-      const Slice& GetSlice() const
+      const Deprecated::Slice& GetSlice() const
       {
         return slice_;
       }
     };
     
 
-    class LayerReadyMessage : public OriginMessage<IVolumeSlicer>
+    class LayerReadyMessage : public OrthancStone::OriginMessage<IVolumeSlicer>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
@@ -76,12 +76,12 @@ namespace OrthancStone
     
     private:
       const IRendererFactory&    factory_;
-      const CoordinateSystem3D&  slice_;
+      const OrthancStone::CoordinateSystem3D&  slice_;
 
     public:
       LayerReadyMessage(IVolumeSlicer& origin,
                         const IRendererFactory& rendererFactory,
-                        const CoordinateSystem3D& slice) :
+                        const OrthancStone::CoordinateSystem3D& slice) :
         OriginMessage(origin),
         factory_(rendererFactory),
         slice_(slice)
@@ -93,36 +93,36 @@ namespace OrthancStone
         return factory_.CreateRenderer();
       }
 
-      const CoordinateSystem3D& GetSlice() const
+      const OrthancStone::CoordinateSystem3D& GetSlice() const
       {
         return slice_;
       }
     };
 
 
-    class LayerErrorMessage : public OriginMessage<IVolumeSlicer>
+    class LayerErrorMessage : public OrthancStone::OriginMessage<IVolumeSlicer>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      const CoordinateSystem3D&  slice_;
+      const OrthancStone::CoordinateSystem3D&  slice_;
 
     public:
       LayerErrorMessage(IVolumeSlicer& origin,
-                        const CoordinateSystem3D& slice) :
+                        const OrthancStone::CoordinateSystem3D& slice) :
         OriginMessage(origin),
         slice_(slice)
       {
       }
 
-      const CoordinateSystem3D& GetSlice() const
+      const OrthancStone::CoordinateSystem3D& GetSlice() const
       {
         return slice_;
       }
     };
 
 
-    IVolumeSlicer(MessageBroker& broker) :
+    IVolumeSlicer(OrthancStone::MessageBroker& broker) :
       IObservable(broker)
     {
     }
@@ -131,9 +131,9 @@ namespace OrthancStone
     {
     }
 
-    virtual bool GetExtent(std::vector<Vector>& points,
-                           const CoordinateSystem3D& viewportSlice) = 0;
+    virtual bool GetExtent(std::vector<OrthancStone::Vector>& points,
+                           const OrthancStone::CoordinateSystem3D& viewportSlice) = 0;
 
-    virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice) = 0;
+    virtual void ScheduleLayerCreation(const OrthancStone::CoordinateSystem3D& viewportSlice) = 0;
   };
 }

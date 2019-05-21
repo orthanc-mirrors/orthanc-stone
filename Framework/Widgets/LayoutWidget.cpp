@@ -26,7 +26,7 @@
 
 #include <boost/math/special_functions/round.hpp>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class LayoutWidget::LayoutMouseTracker : public IMouseTracker
   {
@@ -154,10 +154,10 @@ namespace OrthancStone
       }
     }
 
-    IMouseTracker* CreateMouseTracker(MouseButton button,
+    IMouseTracker* CreateMouseTracker(OrthancStone::MouseButton button,
                                       int x,
                                       int y,
-                                      KeyboardModifiers modifiers,
+                                      OrthancStone::KeyboardModifiers modifiers,
                                       const std::vector<Touch>& touches)
     {
       if (Contains(x, y))
@@ -189,10 +189,10 @@ namespace OrthancStone
       }
     }
 
-    void MouseWheel(MouseWheelDirection direction,
+    void MouseWheel(OrthancStone::MouseWheelDirection direction,
                     int x,
                     int y,
-                    KeyboardModifiers modifiers)
+                    OrthancStone::KeyboardModifiers modifiers)
     {
       if (Contains(x, y))
       {
@@ -419,10 +419,10 @@ namespace OrthancStone
   }
 
     
-  IMouseTracker* LayoutWidget::CreateMouseTracker(MouseButton button,
+  IMouseTracker* LayoutWidget::CreateMouseTracker(OrthancStone::MouseButton button,
                                                   int x,
                                                   int y,
-                                                  KeyboardModifiers modifiers,
+                                                  OrthancStone::KeyboardModifiers modifiers,
                                                   const std::vector<Touch>& touches)
   {
     for (size_t i = 0; i < children_.size(); i++)
@@ -449,10 +449,10 @@ namespace OrthancStone
   }
 
 
-  void LayoutWidget::MouseWheel(MouseWheelDirection direction,
+  void LayoutWidget::MouseWheel(OrthancStone::MouseWheelDirection direction,
                                 int x,
                                 int y,
-                                KeyboardModifiers modifiers)
+                                OrthancStone::KeyboardModifiers modifiers)
   {
     for (size_t i = 0; i < children_.size(); i++)
     {
@@ -461,9 +461,9 @@ namespace OrthancStone
   }
 
 
-  void LayoutWidget::KeyPressed(KeyboardKeys key,
+  void LayoutWidget::KeyPressed(OrthancStone::KeyboardKeys key,
                                 char keyChar,
-                                KeyboardModifiers modifiers)
+                                OrthancStone::KeyboardModifiers modifiers)
   {
     for (size_t i = 0; i < children_.size(); i++)
     {

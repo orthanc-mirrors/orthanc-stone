@@ -41,7 +41,7 @@ namespace OrthancStone
       public IObserver
     {
     private:
-      class Interactor : public IWorldSceneInteractor
+      class Interactor : public Deprecated::IWorldSceneInteractor
       {
       private:
         SingleFrameApplication&  application_;
@@ -52,30 +52,30 @@ namespace OrthancStone
         {
         }
         
-        virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
-                                                            const ViewportGeometry& view,
-                                                            MouseButton button,
-                                                            KeyboardModifiers modifiers,
-                                                            int viewportX,
-                                                            int viewportY,
-                                                            double x,
-                                                            double y,
-                                                            IStatusBar* statusBar,
-                                                            const std::vector<Touch>& displayTouches)
+        virtual Deprecated::IWorldSceneMouseTracker* CreateMouseTracker(Deprecated::WorldSceneWidget& widget,
+                                                                        const Deprecated::ViewportGeometry& view,
+                                                                        MouseButton button,
+                                                                        KeyboardModifiers modifiers,
+                                                                        int viewportX,
+                                                                        int viewportY,
+                                                                        double x,
+                                                                        double y,
+                                                                        Deprecated::IStatusBar* statusBar,
+                                                                        const std::vector<Deprecated::Touch>& displayTouches)
         {
           return NULL;
         }
 
         virtual void MouseOver(CairoContext& context,
-                               WorldSceneWidget& widget,
-                               const ViewportGeometry& view,
+                               Deprecated::WorldSceneWidget& widget,
+                               const Deprecated::ViewportGeometry& view,
                                double x,
                                double y,
-                               IStatusBar* statusBar)
+                               Deprecated::IStatusBar* statusBar)
         {
           if (statusBar != NULL)
           {
-            Vector p = dynamic_cast<SliceViewerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
+            Vector p = dynamic_cast<Deprecated::SliceViewerWidget&>(widget).GetSlice().MapSliceToWorldCoordinates(x, y);
             
             char buf[64];
             sprintf(buf, "X = %.02f Y = %.02f Z = %.02f (in cm)", 
@@ -84,10 +84,10 @@ namespace OrthancStone
           }
         }
 
-        virtual void MouseWheel(WorldSceneWidget& widget,
+        virtual void MouseWheel(Deprecated::WorldSceneWidget& widget,
                                 MouseWheelDirection direction,
                                 KeyboardModifiers modifiers,
-                                IStatusBar* statusBar)
+                                Deprecated::IStatusBar* statusBar)
         {
           int scale = (modifiers & KeyboardModifiers_Control ? 10 : 1);
           
@@ -106,11 +106,11 @@ namespace OrthancStone
           }
         }
 
-        virtual void KeyPressed(WorldSceneWidget& widget,
+        virtual void KeyPressed(Deprecated::WorldSceneWidget& widget,
                                 KeyboardKeys key,
                                 char keyChar,
                                 KeyboardModifiers modifiers,
-                                IStatusBar* statusBar)
+                                Deprecated::IStatusBar* statusBar)
         {
           switch (keyChar)
           {
@@ -149,9 +149,9 @@ namespace OrthancStone
       }
 
 
-      SliceViewerWidget& GetMainWidget()
+      Deprecated::SliceViewerWidget& GetMainWidget()
       {
-        return *dynamic_cast<SliceViewerWidget*>(mainWidget_);
+        return *dynamic_cast<Deprecated::SliceViewerWidget*>(mainWidget_);
       }
       
 
@@ -184,7 +184,7 @@ namespace OrthancStone
       }
         
       
-      void OnMainWidgetGeometryReady(const IVolumeSlicer::GeometryReadyMessage& message)
+      void OnMainWidgetGeometryReady(const Deprecated::IVolumeSlicer::GeometryReadyMessage& message)
       {
         // Once the geometry of the series is downloaded from Orthanc,
         // display its middle slice, and adapt the viewport to fit this
@@ -198,7 +198,7 @@ namespace OrthancStone
       }
       
       std::auto_ptr<Interactor>         mainWidgetInteractor_;
-      const DicomSeriesVolumeSlicer*    source_;
+      const Deprecated::DicomSeriesVolumeSlicer*    source_;
       unsigned int                      slice_;
 
     public:
@@ -225,7 +225,7 @@ namespace OrthancStone
       }
 
       virtual void Initialize(StoneApplicationContext* context,
-                              IStatusBar& statusBar,
+                              Deprecated::IStatusBar& statusBar,
                               const boost::program_options::variables_map& parameters)
       {
         using namespace OrthancStone;
@@ -243,15 +243,15 @@ namespace OrthancStone
         std::string instance = parameters["instance"].as<std::string>();
         int frame = parameters["frame"].as<unsigned int>();
 
-        mainWidget_ = new SliceViewerWidget(GetBroker(), "main-widget");
+        mainWidget_ = new Deprecated::SliceViewerWidget(GetBroker(), "main-widget");
 
-        std::auto_ptr<DicomSeriesVolumeSlicer> layer(new DicomSeriesVolumeSlicer(GetBroker(), context->GetOrthancApiClient()));
+        std::auto_ptr<Deprecated::DicomSeriesVolumeSlicer> layer(new Deprecated::DicomSeriesVolumeSlicer(GetBroker(), context->GetOrthancApiClient()));
         source_ = layer.get();
         layer->LoadFrame(instance, frame);
-        layer->RegisterObserverCallback(new Callable<SingleFrameApplication, IVolumeSlicer::GeometryReadyMessage>(*this, &SingleFrameApplication::OnMainWidgetGeometryReady));
+        layer->RegisterObserverCallback(new Callable<SingleFrameApplication, Deprecated::IVolumeSlicer::GeometryReadyMessage>(*this, &SingleFrameApplication::OnMainWidgetGeometryReady));
         GetMainWidget().AddLayer(layer.release());
 
-        RenderStyle s;
+        Deprecated::RenderStyle s;
 
         if (parameters["smooth"].as<bool>())
         {

@@ -24,7 +24,7 @@
 #include <Core/OrthancException.h>
 
 
-namespace OrthancStone
+namespace Deprecated
 {
   const Orthanc::IDynamicObject&
   IWebService::HttpRequestSuccessMessage::GetPayload() const

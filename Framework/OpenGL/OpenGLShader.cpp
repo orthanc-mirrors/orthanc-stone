@@ -35,7 +35,7 @@ namespace OrthancStone
       GLint sourceStringLengths[1];
 
       sourceString[0] = source.c_str();
-      sourceStringLengths[0] = source.length();
+      sourceStringLengths[0] = static_cast<GLint>(source.length());
       GLuint shader = glCreateShader(type);
 
       if (shader == 0)

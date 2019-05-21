@@ -24,7 +24,7 @@
 #include "ILayerRendererFactory.h"
 #include <Plugins/Samples/Common/IOrthancConnection.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class SingleFrameRendererFactory : public ILayerRendererFactory
   {

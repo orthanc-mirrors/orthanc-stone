@@ -25,7 +25,7 @@
 #include "../Viewport/IMouseTracker.h"
 #include "../Viewport/IStatusBar.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class WidgetViewport;  // Forward declaration
   
@@ -49,10 +49,10 @@ namespace OrthancStone
  
     virtual bool Render(Orthanc::ImageAccessor& surface) = 0;
 
-    virtual IMouseTracker* CreateMouseTracker(MouseButton button,
+    virtual IMouseTracker* CreateMouseTracker(OrthancStone::MouseButton button,
                                               int x,
                                               int y,
-                                              KeyboardModifiers modifiers,
+                                              OrthancStone::KeyboardModifiers modifiers,
                                               const std::vector<Touch>& touches) = 0;
 
     virtual void RenderMouseOver(Orthanc::ImageAccessor& target,
@@ -61,14 +61,14 @@ namespace OrthancStone
 
     virtual bool HasRenderMouseOver() = 0;
 
-    virtual void MouseWheel(MouseWheelDirection direction,
+    virtual void MouseWheel(OrthancStone::MouseWheelDirection direction,
                             int x,
                             int y,
-                            KeyboardModifiers modifiers) = 0;
+                            OrthancStone::KeyboardModifiers modifiers) = 0;
 
-    virtual void KeyPressed(KeyboardKeys key,
+    virtual void KeyPressed(OrthancStone::KeyboardKeys key,
                             char keyChar,
-                            KeyboardModifiers modifiers) = 0;
+                            OrthancStone::KeyboardModifiers modifiers) = 0;
 
     virtual bool HasAnimation() const = 0;
 

@@ -36,9 +36,7 @@ namespace OrthancStone
     */
     CreateLineMeasureTracker(
       MessageBroker&                  broker,
-      Scene2D&                        scene,
-      std::vector<TrackerCommandPtr>& undoStack,
-      std::vector<MeasureToolPtr>&    measureTools,
+      ViewportControllerWPtr          controllerW,
       const PointerEvent&             e);
 
     ~CreateLineMeasureTracker();

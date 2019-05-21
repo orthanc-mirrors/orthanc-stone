@@ -24,13 +24,13 @@
 #include <Core/Images/Image.h>
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
-  CairoSurface* GrayscaleFrameRenderer::GenerateDisplay(const RenderStyle& style)
+  OrthancStone::CairoSurface* GrayscaleFrameRenderer::GenerateDisplay(const RenderStyle& style)
   {
     assert(frame_->GetFormat() == Orthanc::PixelFormat_Float32);
 
-    std::auto_ptr<CairoSurface> result;
+    std::auto_ptr<OrthancStone::CairoSurface> result;
 
     float windowCenter, windowWidth;
     style.ComputeWindowing(windowCenter, windowWidth,
@@ -41,7 +41,7 @@ namespace OrthancStone
 
     //LOG(INFO) << "Window: " << x0 << " => " << x1;
 
-    result.reset(new CairoSurface(frame_->GetWidth(), frame_->GetHeight(), false /* no alpha */));
+    result.reset(new OrthancStone::CairoSurface(frame_->GetWidth(), frame_->GetHeight(), false /* no alpha */));
 
     const uint8_t* lut = NULL;
     if (style.applyLut_)
@@ -114,8 +114,8 @@ namespace OrthancStone
 
 
   GrayscaleFrameRenderer::GrayscaleFrameRenderer(const Orthanc::ImageAccessor& frame,
-                                                 const DicomFrameConverter& converter,
-                                                 const CoordinateSystem3D& framePlane,
+                                                 const Deprecated::DicomFrameConverter& converter,
+                                                 const OrthancStone::CoordinateSystem3D& framePlane,
                                                  double pixelSpacingX,
                                                  double pixelSpacingY,
                                                  bool isFullQuality) :

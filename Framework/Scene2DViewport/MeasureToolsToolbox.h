@@ -170,4 +170,18 @@ namespace OrthancStone
     , const ScenePoint2D& c
     , const ScenePoint2D& p2
     , const double d);
+
+
+  /**
+  This helper is used when drawing text with an outline.
+  It set the properties for several text layers at once : first the 
+  four outline layers, with a position shift and then the actual main text 
+  layer.
+
+  The five text layers are supposed to already exist in the scene, starting
+  from layerIndex, up to (and not including) layerIndex+5. 
+  */
+  void SetTextLayerOutlineProperties(
+    Scene2D& scene, int baseLayerIndex, const char* text, ScenePoint2D p);
+
 }

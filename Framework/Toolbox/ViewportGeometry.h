@@ -26,13 +26,13 @@
 #include "LinearAlgebra.h"
 #include "../Viewport/IMouseTracker.h"  // to include "Touch" definition
 
-namespace OrthancStone
+namespace Deprecated
 {
   class ViewportGeometry
   {
   private:
     // Extent of the scene (in world units)
-    Extent2D   sceneExtent_;
+    OrthancStone::Extent2D   sceneExtent_;
 
     // Size of the display (in pixels)
     unsigned int  width_;
@@ -53,9 +53,9 @@ namespace OrthancStone
     void SetDisplaySize(unsigned int width,
                         unsigned int height);
 
-    void SetSceneExtent(const Extent2D& extent);
+    void SetSceneExtent(const OrthancStone::Extent2D& extent);
 
-    const Extent2D& GetSceneExtent() const
+    const OrthancStone::Extent2D& GetSceneExtent() const
     {
       return sceneExtent_;
     }
@@ -95,7 +95,7 @@ namespace OrthancStone
 
     void FitContent();
 
-    void ApplyTransform(CairoContext& context) const;
+    void ApplyTransform(OrthancStone::CairoContext& context) const;
 
     void GetPan(double& x,
                 double& y) const;
@@ -105,6 +105,6 @@ namespace OrthancStone
 
     void SetZoom(double zoom);
 
-    Matrix GetMatrix() const;
+    OrthancStone::Matrix GetMatrix() const;
   };
 }

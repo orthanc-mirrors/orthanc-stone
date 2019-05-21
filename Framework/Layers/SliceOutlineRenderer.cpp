@@ -21,9 +21,9 @@
 
 #include "SliceOutlineRenderer.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
-  bool SliceOutlineRenderer::RenderLayer(CairoContext& context,
+  bool SliceOutlineRenderer::RenderLayer(OrthancStone::CairoContext& context,
                                          const ViewportGeometry& view)
   {
     if (style_.visible_)

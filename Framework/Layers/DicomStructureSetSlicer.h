@@ -24,11 +24,11 @@
 #include "IVolumeSlicer.h"
 #include "../Volumes/StructureSetLoader.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class DicomStructureSetSlicer :
     public IVolumeSlicer,
-    public IObserver
+    public OrthancStone::IObserver
   {
   private:
     class Renderer;
@@ -42,15 +42,15 @@ namespace OrthancStone
     }
 
   public:
-    DicomStructureSetSlicer(MessageBroker& broker,
+    DicomStructureSetSlicer(OrthancStone::MessageBroker& broker,
                             StructureSetLoader& loader);
 
-    virtual bool GetExtent(std::vector<Vector>& points,
-                           const CoordinateSystem3D& viewportPlane)
+    virtual bool GetExtent(std::vector<OrthancStone::Vector>& points,
+                           const OrthancStone::CoordinateSystem3D& viewportPlane)
     {
       return false;
     }
 
-    virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportPlane);
+    virtual void ScheduleLayerCreation(const OrthancStone::CoordinateSystem3D& viewportPlane);
   };
 }

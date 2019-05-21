@@ -33,12 +33,12 @@
 
 static const double THIN_SLICE_THICKNESS = 100.0 * std::numeric_limits<double>::epsilon();
 
-namespace OrthancStone
+namespace Deprecated
 {
   class SliceViewerWidget::Scene : public boost::noncopyable
   {
   private:
-    CoordinateSystem3D            plane_;
+    OrthancStone::CoordinateSystem3D            plane_;
     double                        thickness_;
     size_t                        countMissing_;
     std::vector<ILayerRenderer*>  renderers_;
@@ -62,7 +62,7 @@ namespace OrthancStone
       }
     }
 
-    Scene(const CoordinateSystem3D& plane,
+    Scene(const OrthancStone::CoordinateSystem3D& plane,
           double thickness,
           size_t countLayers) :
       plane_(plane),
@@ -98,7 +98,7 @@ namespace OrthancStone
       countMissing_--;
     }
 
-    const CoordinateSystem3D& GetPlane() const
+    const OrthancStone::CoordinateSystem3D& GetPlane() const
     {
       return plane_;
     }
@@ -115,12 +115,12 @@ namespace OrthancStone
 
     unsigned int GetCountMissing() const
     {
-      return countMissing_;
+      return static_cast<unsigned int>(countMissing_);
     }
 
-    bool RenderScene(CairoContext& context,
+    bool RenderScene(OrthancStone::CairoContext& context,
                      const ViewportGeometry& view,
-                     const CoordinateSystem3D& viewportPlane)
+                     const OrthancStone::CoordinateSystem3D& viewportPlane)
     {
       bool fullQuality = true;
       cairo_t *cr = context.GetObject();
@@ -129,7 +129,7 @@ namespace OrthancStone
       {
         if (renderers_[i] != NULL)
         {
-          const CoordinateSystem3D& framePlane = renderers_[i]->GetLayerPlane();
+          const OrthancStone::CoordinateSystem3D& framePlane = renderers_[i]->GetLayerPlane();
           
           double x0, y0, x1, y1, x2, y2;
           viewportPlane.ProjectPoint(x0, y0, framePlane.GetOrigin());
@@ -207,12 +207,12 @@ namespace OrthancStone
       }
     }
 
-    bool ContainsPlane(const CoordinateSystem3D& plane) const
+    bool ContainsPlane(const OrthancStone::CoordinateSystem3D& plane) const
     {
       bool isOpposite;
-      if (!GeometryToolbox::IsParallelOrOpposite(isOpposite,
-                                                 plane.GetNormal(),
-                                                 plane_.GetNormal()))
+      if (!OrthancStone::GeometryToolbox::IsParallelOrOpposite(isOpposite,
+                                                               plane.GetNormal(),
+                                                               plane_.GetNormal()))
       {
         return false;
       }
@@ -256,12 +256,12 @@ namespace OrthancStone
   }
 
 
-  void SliceViewerWidget::GetLayerExtent(Extent2D& extent,
+  void SliceViewerWidget::GetLayerExtent(OrthancStone::Extent2D& extent,
                                          IVolumeSlicer& source) const
   {
     extent.Reset();
 
-    std::vector<Vector> points;
+    std::vector<OrthancStone::Vector> points;
     if (source.GetExtent(points, plane_))
     {
       for (size_t i = 0; i < points.size(); i++)
@@ -274,14 +274,14 @@ namespace OrthancStone
   }
 
 
-  Extent2D SliceViewerWidget::GetSceneExtent()
+  OrthancStone::Extent2D SliceViewerWidget::GetSceneExtent()
   {
-    Extent2D sceneExtent;
+    OrthancStone::Extent2D sceneExtent;
 
     for (size_t i = 0; i < layers_.size(); i++)
     {
       assert(layers_[i] != NULL);
-      Extent2D layerExtent;
+      OrthancStone::Extent2D layerExtent;
       GetLayerExtent(layerExtent, *layers_[i]);
 
       sceneExtent.Union(layerExtent);
@@ -291,7 +291,7 @@ namespace OrthancStone
   }
 
   
-  bool SliceViewerWidget::RenderScene(CairoContext& context,
+  bool SliceViewerWidget::RenderScene(OrthancStone::CairoContext& context,
                                       const ViewportGeometry& view)
   {
     if (currentScene_.get() != NULL)
@@ -323,7 +323,7 @@ namespace OrthancStone
 
   void SliceViewerWidget::UpdateLayer(size_t index,
                                       ILayerRenderer* renderer,
-                                      const CoordinateSystem3D& plane)
+                                      const OrthancStone::CoordinateSystem3D& plane)
   {
     LOG(INFO) << "Updating layer " << index;
     
@@ -364,7 +364,7 @@ namespace OrthancStone
   }
 
   
-  SliceViewerWidget::SliceViewerWidget(MessageBroker& broker, 
+  SliceViewerWidget::SliceViewerWidget(OrthancStone::MessageBroker& broker, 
                                        const std::string& name) :
     WorldSceneWidget(name),
     IObserver(broker),
@@ -385,16 +385,16 @@ namespace OrthancStone
   
   void SliceViewerWidget::ObserveLayer(IVolumeSlicer& layer)
   {
-    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::GeometryReadyMessage>
+    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::GeometryReadyMessage>
                                    (*this, &SliceViewerWidget::OnGeometryReady));
     // currently ignore errors layer->RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::GeometryErrorMessage>(*this, &SliceViewerWidget::...));
-    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::SliceContentChangedMessage>
+    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::SliceContentChangedMessage>
                                    (*this, &SliceViewerWidget::OnSliceChanged));
-    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::ContentChangedMessage>
+    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::ContentChangedMessage>
                                    (*this, &SliceViewerWidget::OnContentChanged));
-    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::LayerReadyMessage>
+    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::LayerReadyMessage>
                                    (*this, &SliceViewerWidget::OnLayerReady));
-    layer.RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::LayerErrorMessage>
+    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::LayerErrorMessage>
                                    (*this, &SliceViewerWidget::OnLayerError));
   }
 
@@ -504,13 +504,13 @@ namespace OrthancStone
   }
   
 
-  void SliceViewerWidget::SetSlice(const CoordinateSystem3D& plane)
+  void SliceViewerWidget::SetSlice(const OrthancStone::CoordinateSystem3D& plane)
   {
     LOG(INFO) << "Setting slice origin: (" << plane.GetOrigin()[0]
               << "," << plane.GetOrigin()[1]
               << "," << plane.GetOrigin()[2] << ")";
     
-    Slice displayedSlice(plane_, THIN_SLICE_THICKNESS);
+    Deprecated::Slice displayedSlice(plane_, THIN_SLICE_THICKNESS);
 
     //if (!displayedSlice.ContainsPlane(slice))
     {

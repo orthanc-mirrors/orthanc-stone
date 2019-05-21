@@ -30,7 +30,7 @@
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 
 
-namespace OrthancStone
+namespace Deprecated
 {
   void SeriesFrameRendererFactory::ReadCurrentFrameDataset(size_t frame)
   {

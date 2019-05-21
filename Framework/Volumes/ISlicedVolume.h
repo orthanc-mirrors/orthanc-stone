@@ -24,9 +24,9 @@
 #include "../Messages/IObservable.h"
 #include "../Toolbox/Slice.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
-  class ISlicedVolume : public IObservable
+  class ISlicedVolume : public OrthancStone::IObservable
   {
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ContentChangedMessage, ISlicedVolume);
@@ -35,7 +35,7 @@ namespace OrthancStone
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, VolumeReadyMessage, ISlicedVolume);
 
 
-    class SliceContentChangedMessage : public OriginMessage<ISlicedVolume>
+    class SliceContentChangedMessage : public OrthancStone::OriginMessage<ISlicedVolume>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
@@ -65,7 +65,7 @@ namespace OrthancStone
     };
 
 
-    ISlicedVolume(MessageBroker& broker) :
+    ISlicedVolume(OrthancStone::MessageBroker& broker) :
       IObservable(broker)
     {
     }

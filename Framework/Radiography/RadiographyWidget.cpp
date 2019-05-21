@@ -151,7 +151,7 @@ namespace OrthancStone
 
 
   bool RadiographyWidget::RenderScene(CairoContext& context,
-                                      const ViewportGeometry& view)
+                                      const Deprecated::ViewportGeometry& view)
   {
     cairo_t* cr = context.GetObject();
 

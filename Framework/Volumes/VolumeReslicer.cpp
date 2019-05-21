@@ -749,7 +749,8 @@ namespace OrthancStone
   {
     // Choose the default voxel size as the finest voxel dimension
     // of the source volumetric image
-    const OrthancStone::Vector dim = source.GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
+    const OrthancStone::Vector dim =
+      source.GetGeometry().GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
     double voxelSize = dim[0];
     
     if (dim[1] < voxelSize)

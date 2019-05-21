@@ -32,7 +32,7 @@ namespace OrthancStone
 {
 
   void RadiographySceneBuilder::Read(const Json::Value& input, Orthanc::ImageAccessor* dicomImage /* takes ownership */,
-                                     DicomFrameConverter* dicomFrameConverter  /* takes ownership */,
+                                     Deprecated::DicomFrameConverter* dicomFrameConverter  /* takes ownership */,
                                      PhotometricDisplayMode preferredPhotometricDisplayMode
                                      )
   {

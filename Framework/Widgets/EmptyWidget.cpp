@@ -24,7 +24,7 @@
 #include <Core/Images/ImageProcessing.h>
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   bool EmptyWidget::Render(Orthanc::ImageAccessor& surface)
   {

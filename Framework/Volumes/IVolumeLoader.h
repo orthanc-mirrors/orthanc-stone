@@ -23,16 +23,16 @@
 
 #include "../Messages/IObservable.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
-  class IVolumeLoader : public IObservable
+  class IVolumeLoader : public OrthancStone::IObservable
   {
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryReadyMessage, IVolumeLoader);
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryErrorMessage, IVolumeLoader);
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ContentChangedMessage, IVolumeLoader);
 
-    IVolumeLoader(MessageBroker& broker) :
+    IVolumeLoader(OrthancStone::MessageBroker& broker) :
       IObservable(broker)
     {
     }

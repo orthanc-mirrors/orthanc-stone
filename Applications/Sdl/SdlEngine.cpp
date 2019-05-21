@@ -146,15 +146,15 @@ namespace OrthancStone
           switch (event.button.button)
           {
           case SDL_BUTTON_LEFT:
-            locker.GetCentralViewport().MouseDown(MouseButton_Left, event.button.x, event.button.y, modifiers, std::vector<Touch>());
+            locker.GetCentralViewport().MouseDown(MouseButton_Left, event.button.x, event.button.y, modifiers, std::vector<Deprecated::Touch>());
             break;
             
           case SDL_BUTTON_RIGHT:
-            locker.GetCentralViewport().MouseDown(MouseButton_Right, event.button.x, event.button.y, modifiers, std::vector<Touch>());
+            locker.GetCentralViewport().MouseDown(MouseButton_Right, event.button.x, event.button.y, modifiers, std::vector<Deprecated::Touch>());
             break;
             
           case SDL_BUTTON_MIDDLE:
-            locker.GetCentralViewport().MouseDown(MouseButton_Middle, event.button.x, event.button.y, modifiers, std::vector<Touch>());
+            locker.GetCentralViewport().MouseDown(MouseButton_Middle, event.button.x, event.button.y, modifiers, std::vector<Deprecated::Touch>());
             break;
 
           default:
@@ -163,7 +163,7 @@ namespace OrthancStone
         }
         else if (event.type == SDL_MOUSEMOTION)
         {
-          locker.GetCentralViewport().MouseMove(event.button.x, event.button.y, std::vector<Touch>());
+          locker.GetCentralViewport().MouseMove(event.button.x, event.button.y, std::vector<Deprecated::Touch>());
         }
         else if (event.type == SDL_MOUSEBUTTONUP)
         {

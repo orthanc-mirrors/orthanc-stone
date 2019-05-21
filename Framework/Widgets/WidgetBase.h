@@ -26,7 +26,7 @@
 #include "../Viewport/CairoContext.h"
 #include "../Viewport/WidgetViewport.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class WidgetBase : public IWidget
   {
@@ -42,7 +42,7 @@ namespace OrthancStone
   protected:
     void ClearBackgroundOrthanc(Orthanc::ImageAccessor& target) const;
 
-    void ClearBackgroundCairo(CairoContext& context) const;
+    void ClearBackgroundCairo(OrthancStone::CairoContext& context) const;
 
     void ClearBackgroundCairo(Orthanc::ImageAccessor& target) const;
 

@@ -26,26 +26,26 @@
 #include "../../Applications/Generic/NativeStoneApplicationContext.h"
 #include "DelayedCallCommand.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   // The OracleTimeout executes callbacks after a delay.
   class OracleDelayedCallExecutor : public IDelayedCallExecutor
   {
   private:
     Oracle&                        oracle_;
-    NativeStoneApplicationContext& context_;
+    OrthancStone::NativeStoneApplicationContext& context_;
 
   public:
-    OracleDelayedCallExecutor(MessageBroker& broker,
+    OracleDelayedCallExecutor(OrthancStone::MessageBroker& broker,
                               Oracle& oracle,
-                              NativeStoneApplicationContext& context) :
+                              OrthancStone::NativeStoneApplicationContext& context) :
       IDelayedCallExecutor(broker),
       oracle_(oracle),
       context_(context)
     {
     }
 
-    virtual void Schedule(MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
+    virtual void Schedule(OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
                           unsigned int timeoutInMs = 1000)
     {
       oracle_.Submit(new DelayedCallCommand(broker_, callback, timeoutInMs, NULL, context_));

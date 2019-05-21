@@ -24,9 +24,9 @@
 #include <Core/Images/ImageProcessing.h>
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
-  WidgetViewport::WidgetViewport(MessageBroker& broker) :
+  WidgetViewport::WidgetViewport(OrthancStone::MessageBroker& broker) :
     IViewport(broker),
     statusBar_(NULL),
     isMouseOver_(false),
@@ -139,7 +139,7 @@ namespace OrthancStone
 
   void WidgetViewport::TouchStart(const std::vector<Touch>& displayTouches)
   {
-    MouseDown(MouseButton_Left, (int)displayTouches[0].x, (int)displayTouches[0].y, KeyboardModifiers_None, displayTouches); // one touch is equivalent to a mouse tracker without left button -> set the mouse coordinates to the first touch coordinates
+    MouseDown(OrthancStone::MouseButton_Left, (int)displayTouches[0].x, (int)displayTouches[0].y, OrthancStone::KeyboardModifiers_None, displayTouches); // one touch is equivalent to a mouse tracker without left button -> set the mouse coordinates to the first touch coordinates
   }
       
   void WidgetViewport::TouchMove(const std::vector<Touch>& displayTouches)
@@ -154,10 +154,10 @@ namespace OrthancStone
     MouseUp();
   }
 
-  void WidgetViewport::MouseDown(MouseButton button,
+  void WidgetViewport::MouseDown(OrthancStone::MouseButton button,
                                  int x,
                                  int y,
-                                 KeyboardModifiers modifiers,
+                                 OrthancStone::KeyboardModifiers modifiers,
                                  const std::vector<Touch>& displayTouches
                                  )
   {
@@ -241,10 +241,10 @@ namespace OrthancStone
   }
 
 
-  void WidgetViewport::MouseWheel(MouseWheelDirection direction,
+  void WidgetViewport::MouseWheel(OrthancStone::MouseWheelDirection direction,
                                   int x,
                                   int y,
-                                  KeyboardModifiers modifiers)
+                                  OrthancStone::KeyboardModifiers modifiers)
   {
     if (centralWidget_.get() != NULL &&
         mouseTracker_.get() == NULL)
@@ -254,9 +254,9 @@ namespace OrthancStone
   }
 
 
-  void WidgetViewport::KeyPressed(KeyboardKeys key,
+  void WidgetViewport::KeyPressed(OrthancStone::KeyboardKeys key,
                                   char keyChar,
-                                  KeyboardModifiers modifiers)
+                                  OrthancStone::KeyboardModifiers modifiers)
   {
     if (centralWidget_.get() != NULL &&
         mouseTracker_.get() == NULL)

@@ -26,31 +26,31 @@
 #include "../Toolbox/OrthancSlicesLoader.h"
 #include "../Toolbox/OrthancApiClient.h"
 
-namespace OrthancStone
+namespace Deprecated
 {  
   // this class is in charge of loading a Frame.
   // once it's been loaded (first the geometry and then the image),
   // messages are sent to observers so they can use it
   class DicomSeriesVolumeSlicer :
     public IVolumeSlicer,
-    public IObserver
+    public OrthancStone::IObserver
     //private OrthancSlicesLoader::ISliceLoaderObserver
   {
   public:
     // TODO: Add "frame" and "instanceId"
-    class FrameReadyMessage : public OriginMessage<DicomSeriesVolumeSlicer>
+    class FrameReadyMessage : public OrthancStone::OriginMessage<DicomSeriesVolumeSlicer>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
       const Orthanc::ImageAccessor&  frame_;
-      SliceImageQuality              imageQuality_;
+      OrthancStone::SliceImageQuality              imageQuality_;
       const Slice&                   slice_;
 
     public:
       FrameReadyMessage(DicomSeriesVolumeSlicer& origin,
                         const Orthanc::ImageAccessor& frame,
-                        SliceImageQuality imageQuality,
+                        OrthancStone::SliceImageQuality imageQuality,
                         const Slice& slice) :
         OriginMessage(origin),
         frame_(frame),
@@ -64,7 +64,7 @@ namespace OrthancStone
         return frame_;
       }
 
-      SliceImageQuality GetImageQuality() const
+      OrthancStone::SliceImageQuality GetImageQuality() const
       {
         return imageQuality_;
       }
@@ -80,10 +80,11 @@ namespace OrthancStone
     class RendererFactory;
     
     OrthancSlicesLoader  loader_;
-    SliceImageQuality    quality_;
+    OrthancStone::SliceImageQuality    quality_;
 
   public:
-    DicomSeriesVolumeSlicer(MessageBroker& broker, OrthancApiClient& orthanc);
+    DicomSeriesVolumeSlicer(OrthancStone::MessageBroker& broker,
+                            OrthancApiClient& orthanc);
 
     void LoadSeries(const std::string& seriesId);
 
@@ -92,12 +93,12 @@ namespace OrthancStone
     void LoadFrame(const std::string& instanceId,
                    unsigned int frame);
 
-    void SetImageQuality(SliceImageQuality quality)
+    void SetImageQuality(OrthancStone::SliceImageQuality quality)
     {
       quality_ = quality;
     }
 
-    SliceImageQuality GetImageQuality() const
+    OrthancStone::SliceImageQuality GetImageQuality() const
     {
       return quality_;
     }
@@ -112,10 +113,10 @@ namespace OrthancStone
       return loader_.GetSlice(slice);
     }
 
-    virtual bool GetExtent(std::vector<Vector>& points,
-                           const CoordinateSystem3D& viewportSlice);
+    virtual bool GetExtent(std::vector<OrthancStone::Vector>& points,
+                           const OrthancStone::CoordinateSystem3D& viewportSlice);
 
-    virtual void ScheduleLayerCreation(const CoordinateSystem3D& viewportSlice);
+    virtual void ScheduleLayerCreation(const OrthancStone::CoordinateSystem3D& viewportSlice);
 
 protected:
     void OnSliceGeometryReady(const OrthancSlicesLoader::SliceGeometryReadyMessage& message);

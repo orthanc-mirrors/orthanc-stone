@@ -20,6 +20,9 @@
 
 #pragma once
 
+#include <Framework/Scene2DViewport/PointerTypes.h>
+#include <Framework/Scene2DViewport/ViewportController.h>
+
 #include <Framework/Scene2D/Scene2D.h>
 #include <Framework/Scene2D/ScenePoint2D.h>
 #include <Framework/Scene2D/PolylineSceneLayer.h>
@@ -55,10 +58,18 @@ namespace OrthancStone
     This method is called when the scene transform changes. It allows to 
     recompute the visual elements whose content depend upon the scene transform
     */
-    void OnSceneTransformChanged(const Scene2D::SceneTransformChanged& message);
+    void OnSceneTransformChanged(
+      const ViewportController::SceneTransformChanged& message);
 
   protected:
-    MeasureTool(MessageBroker& broker, Scene2D& scene);
+    MeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW);
+
+    /**
+    The measuring tool may exist in a standalone fashion, without any available
+    scene (because the controller is dead or dying). This call allows to check 
+    before accessing the scene.
+    */
+    bool IsSceneAlive() const;
     
     /**
     This is the meat of the tool: this method must [create (if needed) and]
@@ -67,8 +78,9 @@ namespace OrthancStone
     */
     virtual void RefreshScene() = 0;
 
-    Scene2D& GetScene();
-
+    ViewportControllerPtr GetController();
+    Scene2DPtr GetScene();
+    
     /**
     enabled_ is not accessible by subclasses because there is a state machine
     that we do not wanna mess with
@@ -76,12 +88,9 @@ namespace OrthancStone
     bool IsEnabled() const;
 
   private:
-    Scene2D& scene_;
+    ViewportControllerWPtr controllerW_;
     bool     enabled_;
   };
-
-  typedef boost::shared_ptr<MeasureTool> MeasureToolPtr;
-  typedef std::vector<MeasureToolPtr> MeasureToolList;
 }
 
 

@@ -98,8 +98,8 @@ namespace OrthancStone
                                               int displayY,
                                               double sceneX,
                                               double sceneY,
-                                              const std::vector<Touch>& displayTouches,
-                                              const std::vector<Touch>& sceneTouches)
+                                              const std::vector<Deprecated::Touch>& displayTouches,
+                                              const std::vector<Deprecated::Touch>& sceneTouches)
   {
     if (accessor_.IsValid())
     {

@@ -25,11 +25,12 @@
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
-  CairoSurface* ColorFrameRenderer::GenerateDisplay(const RenderStyle& style)
+  OrthancStone::CairoSurface* ColorFrameRenderer::GenerateDisplay(const RenderStyle& style)
   {
-    std::auto_ptr<CairoSurface> display(new CairoSurface(frame_->GetWidth(), frame_->GetHeight(), false /* no alpha */));
+    std::auto_ptr<OrthancStone::CairoSurface> display
+      (new OrthancStone::CairoSurface(frame_->GetWidth(), frame_->GetHeight(), false /* no alpha */));
 
     Orthanc::ImageAccessor target;
     display->GetWriteableAccessor(target);
@@ -41,7 +42,7 @@ namespace OrthancStone
 
 
   ColorFrameRenderer::ColorFrameRenderer(const Orthanc::ImageAccessor& frame,
-                                         const CoordinateSystem3D& framePlane,
+                                         const OrthancStone::CoordinateSystem3D& framePlane,
                                          double pixelSpacingX,
                                          double pixelSpacingY,
                                          bool isFullQuality) :

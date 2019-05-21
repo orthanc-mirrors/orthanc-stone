@@ -26,13 +26,13 @@
 #include "../Viewport/IStatusBar.h"
 #include "../Toolbox/CoordinateSystem3D.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class LineMeasureTracker : public IWorldSceneMouseTracker
   {
   private:
     IStatusBar*           statusBar_;
-    CoordinateSystem3D    slice_;
+    OrthancStone::CoordinateSystem3D    slice_;
     double                x1_;
     double                y1_;
     double                x2_;
@@ -43,7 +43,7 @@ namespace OrthancStone
 
   public:
     LineMeasureTracker(IStatusBar* statusBar,
-                       const CoordinateSystem3D& slice,
+                       const OrthancStone::CoordinateSystem3D& slice,
                        double x, 
                        double y,
                        uint8_t red,
@@ -56,7 +56,7 @@ namespace OrthancStone
       return true;
     }
 
-    virtual void Render(CairoContext& context,
+    virtual void Render(OrthancStone::CairoContext& context,
                         double zoom);
     
     double GetLength() const;  // In millimeters

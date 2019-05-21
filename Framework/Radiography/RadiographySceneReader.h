@@ -26,13 +26,13 @@
 #include "RadiographyDicomLayer.h"
 #include "RadiographyMaskLayer.h"
 #include "RadiographyTextLayer.h"
+#include "../Toolbox/OrthancApiClient.h"
+
 #include <json/value.h>
 #include <Core/Images/FontRegistry.h>
 
 namespace OrthancStone
 {
-  class OrthancApiClient;
-
   // HACK: I had to introduce this builder class in order to be able to recreate a RadiographyScene
   // from a serialized scene that is passed to web-workers.
   // It needs some architecturing...
@@ -42,7 +42,7 @@ namespace OrthancStone
     RadiographyScene&                               scene_;
     const Orthanc::FontRegistry*                    fontRegistry_;
     std::auto_ptr<Orthanc::ImageAccessor>           dicomImage_;
-    std::auto_ptr<DicomFrameConverter>              dicomFrameConverter_;
+    std::auto_ptr<Deprecated::DicomFrameConverter>              dicomFrameConverter_;
     PhotometricDisplayMode                          preferredPhotometricDisplayMode_;
 
   public:
@@ -55,7 +55,7 @@ namespace OrthancStone
     void Read(const Json::Value& input);
     void Read(const Json::Value& input,
               Orthanc::ImageAccessor* dicomImage, // takes ownership
-              DicomFrameConverter* dicomFrameConverter, // takes ownership
+              Deprecated::DicomFrameConverter* dicomFrameConverter, // takes ownership
               PhotometricDisplayMode preferredPhotometricDisplayMode
               );
 
@@ -72,10 +72,10 @@ namespace OrthancStone
 
   class RadiographySceneReader : public RadiographySceneBuilder
   {
-    OrthancApiClient&             orthancApiClient_;
+    Deprecated::OrthancApiClient&             orthancApiClient_;
 
   public:
-    RadiographySceneReader(RadiographyScene& scene, OrthancApiClient& orthancApiClient) :
+    RadiographySceneReader(RadiographyScene& scene, Deprecated::OrthancApiClient& orthancApiClient) :
       RadiographySceneBuilder(scene),
       orthancApiClient_(orthancApiClient)
     {

@@ -27,13 +27,13 @@
 
 #include <stdint.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   struct RenderStyle
   {
     bool visible_;
     bool reverse_;
-    ImageWindowing windowing_;
+    OrthancStone::ImageWindowing windowing_;
     float alpha_;   // In [0,1]
     bool applyLut_;
     Orthanc::EmbeddedResources::FileResourceId  lut_;
@@ -41,7 +41,7 @@ namespace OrthancStone
     uint8_t drawColor_[3];
     float customWindowCenter_;
     float customWindowWidth_;
-    ImageInterpolation interpolation_;
+    OrthancStone::ImageInterpolation interpolation_;
     unsigned int fontSize_;
     
     RenderStyle();

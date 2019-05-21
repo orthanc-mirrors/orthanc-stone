@@ -110,7 +110,7 @@ namespace OrthancStone
       return false;
     }
 
-    int count = slices_->GetSliceCount();
+    int count = static_cast<int>(slices_->GetSliceCount());
     if (count == 0)
     {
       return false;
@@ -123,7 +123,7 @@ namespace OrthancStone
     }
     else
     {
-      slice = currentSlice_;
+      slice = static_cast<int>(currentSlice_);
     }
 
     switch (mode)

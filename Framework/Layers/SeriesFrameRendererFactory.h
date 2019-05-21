@@ -25,7 +25,7 @@
 
 #include "../Toolbox/ISeriesLoader.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class SeriesFrameRendererFactory : public ILayerRendererFactory
   {

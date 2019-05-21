@@ -23,7 +23,7 @@
 
 #include <Core/IDynamicObject.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class IOracleCommand : public Orthanc::IDynamicObject
   {

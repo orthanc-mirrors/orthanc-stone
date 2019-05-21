@@ -110,7 +110,7 @@ namespace OrthancStone
       NativeStoneApplicationContext::GlobalMutexLocker locker(context);
 
       locker.GetCentralViewport().RegisterObserverCallback(
-        new Callable<SdlEngine, IViewport::ViewportChangedMessage>
+        new Callable<SdlEngine, Deprecated::IViewport::ViewportChangedMessage>
         (sdl, &SdlEngine::OnViewportChanged));
 
       //context.GetCentralViewport().Register(sdl);  // (*)

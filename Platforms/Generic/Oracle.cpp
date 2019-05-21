@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <boost/thread/mutex.hpp>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class Oracle::PImpl
   {

@@ -47,7 +47,7 @@ namespace OrthancStone
 
     virtual void DeclareStartupOptions(boost::program_options::options_description& options) = 0;
     virtual void Initialize(StoneApplicationContext* context,
-                            IStatusBar& statusBar,
+                            Deprecated::IStatusBar& statusBar,
                             const boost::program_options::variables_map& parameters) = 0;
 
     /**
@@ -63,7 +63,7 @@ namespace OrthancStone
 #endif
 
     virtual std::string GetTitle() const = 0;
-    virtual IWidget* GetCentralWidget() = 0;
+    virtual Deprecated::IWidget* GetCentralWidget() = 0;
     virtual void Finalize() = 0;
   };
 }

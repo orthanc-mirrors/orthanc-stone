@@ -24,12 +24,12 @@
 #include "ILayerRenderer.h"
 #include "../Toolbox/Slice.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class SliceOutlineRenderer : public ILayerRenderer
   {
   private:
-    CoordinateSystem3D  geometry_;
+    OrthancStone::CoordinateSystem3D  geometry_;
     double              pixelSpacingX_;
     double              pixelSpacingY_;
     unsigned int        width_;
@@ -46,7 +46,7 @@ namespace OrthancStone
     {
     }
 
-    virtual bool RenderLayer(CairoContext& context,
+    virtual bool RenderLayer(OrthancStone::CairoContext& context,
                              const ViewportGeometry& view);
 
     virtual void SetLayerStyle(const RenderStyle& style)
@@ -54,7 +54,7 @@ namespace OrthancStone
       style_ = style;
     }
 
-    virtual const CoordinateSystem3D& GetLayerSlice()
+    virtual const OrthancStone::CoordinateSystem3D& GetLayerSlice()
     {
       return geometry_;
     }

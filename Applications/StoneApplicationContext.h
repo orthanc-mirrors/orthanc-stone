@@ -60,9 +60,9 @@ namespace OrthancStone
   {
   private:
     MessageBroker&                   broker_;
-    IWebService*                     webService_;
-    IDelayedCallExecutor*            delayedCallExecutor_;
-    std::auto_ptr<OrthancApiClient>  orthanc_;
+    Deprecated::IWebService*         webService_;
+    Deprecated::IDelayedCallExecutor*            delayedCallExecutor_;
+    std::auto_ptr<Deprecated::OrthancApiClient>  orthanc_;
     std::string                      orthancBaseUrl_;
 
     void InitializeOrthanc();
@@ -89,20 +89,20 @@ namespace OrthancStone
       return webService_ != NULL;
     }
 
-    IWebService& GetWebService();
+    Deprecated::IWebService& GetWebService();
 
-    OrthancApiClient& GetOrthancApiClient();
+    Deprecated::OrthancApiClient& GetOrthancApiClient();
 
-    void SetWebService(IWebService& webService);
+    void SetWebService(Deprecated::IWebService& webService);
 
     void SetOrthancBaseUrl(const std::string& baseUrl);
 
-    void SetDelayedCallExecutor(IDelayedCallExecutor& delayedCallExecutor)
+    void SetDelayedCallExecutor(Deprecated::IDelayedCallExecutor& delayedCallExecutor)
     {
       delayedCallExecutor_ = &delayedCallExecutor;
     }
 
-    IDelayedCallExecutor& GetDelayedCallExecutor()
+    Deprecated::IDelayedCallExecutor& GetDelayedCallExecutor()
     {
       return *delayedCallExecutor_;
     }

@@ -24,7 +24,7 @@
 #include "CairoSurface.h"
 #include <vector>
 
-namespace OrthancStone
+namespace Deprecated
 {
   struct Touch
   {

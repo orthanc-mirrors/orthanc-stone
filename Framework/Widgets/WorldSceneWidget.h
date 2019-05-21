@@ -26,7 +26,7 @@
 
 #include "../Toolbox/ViewportGeometry.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class WorldSceneWidget : public CairoWidget
   {
@@ -38,16 +38,16 @@ namespace OrthancStone
     bool                   hasDefaultMouseEvents_;
 
   protected:
-    virtual Extent2D GetSceneExtent() = 0;
+    virtual OrthancStone::Extent2D GetSceneExtent() = 0;
 
-    virtual bool RenderScene(CairoContext& context,
+    virtual bool RenderScene(OrthancStone::CairoContext& context,
                              const ViewportGeometry& view) = 0;
 
     // From CairoWidget
-    virtual bool RenderCairo(CairoContext& context);
+    virtual bool RenderCairo(OrthancStone::CairoContext& context);
 
     // From CairoWidget
-    virtual void RenderMouseOverCairo(CairoContext& context,
+    virtual void RenderMouseOverCairo(OrthancStone::CairoContext& context,
                                       int x,
                                       int y);
 
@@ -85,19 +85,19 @@ namespace OrthancStone
 
     virtual void FitContent();
 
-    virtual IMouseTracker* CreateMouseTracker(MouseButton button,
+    virtual IMouseTracker* CreateMouseTracker(OrthancStone::MouseButton button,
                                               int x,
                                               int y,
-                                              KeyboardModifiers modifiers,
+                                              OrthancStone::KeyboardModifiers modifiers,
                                               const std::vector<Touch>& touches);
 
-    virtual void MouseWheel(MouseWheelDirection direction,
+    virtual void MouseWheel(OrthancStone::MouseWheelDirection direction,
                             int x,
                             int y,
-                            KeyboardModifiers modifiers);
+                            OrthancStone::KeyboardModifiers modifiers);
 
-    virtual void KeyPressed(KeyboardKeys key,
+    virtual void KeyPressed(OrthancStone::KeyboardKeys key,
                             char keyChar,
-                            KeyboardModifiers modifiers);
+                            OrthancStone::KeyboardModifiers modifiers);
   };
 }

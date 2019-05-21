@@ -74,7 +74,7 @@ namespace OrthancStone
   }
 
 
-  void SdlCairoSurface::Render(IViewport& viewport)
+  void SdlCairoSurface::Render(Deprecated::IViewport& viewport)
   {
     if (cairoSurface_.get() == NULL)
     {

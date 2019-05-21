@@ -241,8 +241,16 @@ Various notes to be sorted
 How to build the newest (2019-04-29) SDL samples under Windows, *inside* a
 folder that is sibling to the orthanc-stone folder: 
 
+**Visual Studio 2017 (v140) **
+
 ```
 cmake -G "Visual Studio 15 2017 Win64" -DMSVC_MULTIPLE_PROCESSES=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Samples/Sdl
+```
+
+**Visual Studio 2008 (v90) **
+
+```
+cmake -G "Visual Studio 9 2008" -DUSE_LEGACY_JSONCPP=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Samples/Sdl
 ```
 
 And under Ubuntu (note the /mnt/c/osi/dev/orthanc folder):
@@ -251,7 +259,8 @@ cmake -G "Ninja" -DENABLE_OPENGL=ON -DSTATIC_BUILD=OFF -DOPENSSL_NO_CAPIENG=ON -
 ```
 
 TODO trackers:
-- text overlay 50% --> ColorTextureLayer 50%
-- angle tracker: draw arcs
-
+- CANCELLED (using outlined text now) text overlay 50% --> ColorTextureLayer 50%
+- DONE angle tracker: draw arcs
+- Handles on arc
+- Select measure tool with hit test --> Delete command
 

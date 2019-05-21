@@ -24,10 +24,10 @@
 #include <stdio.h>
 #include <boost/math/constants/constants.hpp>
 
-namespace OrthancStone
+namespace Deprecated
 {
   CircleMeasureTracker::CircleMeasureTracker(IStatusBar* statusBar,
-                                             const CoordinateSystem3D& slice,
+                                             const OrthancStone::CoordinateSystem3D& slice,
                                              double x, 
                                              double y,
                                              uint8_t red,
@@ -48,14 +48,14 @@ namespace OrthancStone
   }
     
 
-  void CircleMeasureTracker::Render(CairoContext& context,
+  void CircleMeasureTracker::Render(OrthancStone::CairoContext& context,
                                     double zoom)
   {
     double x = (x1_ + x2_) / 2.0;
     double y = (y1_ + y2_) / 2.0;
 
-    Vector tmp;
-    LinearAlgebra::AssignVector(tmp, x2_ - x1_, y2_ - y1_);
+    OrthancStone::Vector tmp;
+    OrthancStone::LinearAlgebra::AssignVector(tmp, x2_ - x1_, y2_ - y1_);
     double r = boost::numeric::ublas::norm_2(tmp) / 2.0;
 
     context.SetSourceColor(color_[0], color_[1], color_[2]);
@@ -69,14 +69,14 @@ namespace OrthancStone
     cairo_stroke(cr);
     cairo_restore(cr);
 
-    context.DrawText(font_, FormatRadius(), x, y, BitmapAnchor_Center);
+    context.DrawText(font_, FormatRadius(), x, y, OrthancStone::BitmapAnchor_Center);
   }
     
 
   double CircleMeasureTracker::GetRadius() const  // In millimeters
   {
-    Vector a = slice_.MapSliceToWorldCoordinates(x1_, y1_);
-    Vector b = slice_.MapSliceToWorldCoordinates(x2_, y2_);
+    OrthancStone::Vector a = slice_.MapSliceToWorldCoordinates(x1_, y1_);
+    OrthancStone::Vector b = slice_.MapSliceToWorldCoordinates(x2_, y2_);
     return boost::numeric::ublas::norm_2(b - a) / 2.0;
   }
 

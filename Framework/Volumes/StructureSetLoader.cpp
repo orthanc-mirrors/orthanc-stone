@@ -25,9 +25,9 @@
 
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
-  StructureSetLoader::StructureSetLoader(MessageBroker& broker,
+  StructureSetLoader::StructureSetLoader(OrthancStone::MessageBroker& broker,
                                          OrthancApiClient& orthanc) :
     IVolumeLoader(broker),
     IObserver(broker),
@@ -41,7 +41,7 @@ namespace OrthancStone
     OrthancPlugins::FullOrthancDataset dataset(message.GetJson());
 
     Orthanc::DicomMap slice;
-    MessagingToolbox::ConvertDataset(slice, dataset);
+    OrthancStone::MessagingToolbox::ConvertDataset(slice, dataset);
     structureSet_->AddReferencedSlice(slice);
 
     BroadcastMessage(ContentChangedMessage(*this));
@@ -51,7 +51,7 @@ namespace OrthancStone
   void StructureSetLoader::OnStructureSetLoaded(const OrthancApiClient::JsonResponseReadyMessage& message)
   {
     OrthancPlugins::FullOrthancDataset dataset(message.GetJson());
-    structureSet_.reset(new DicomStructureSet(dataset));
+    structureSet_.reset(new OrthancStone::DicomStructureSet(dataset));
 
     std::set<std::string> instances;
     structureSet_->GetReferencedInstances(instances);
@@ -60,7 +60,7 @@ namespace OrthancStone
          it != instances.end(); ++it)
     {
       orthanc_.PostBinaryAsyncExpectJson("/tools/lookup", *it,
-                            new Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &StructureSetLoader::OnLookupCompleted));
+                                         new OrthancStone::Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &StructureSetLoader::OnLookupCompleted));
     }
 
     BroadcastMessage(GeometryReadyMessage(*this));
@@ -84,7 +84,7 @@ namespace OrthancStone
 
     const std::string& instance = lookup[0]["ID"].asString();
     orthanc_.GetJsonAsync("/instances/" + instance + "/tags",
-                          new Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &StructureSetLoader::OnReferencedSliceLoaded));
+                          new OrthancStone::Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &StructureSetLoader::OnReferencedSliceLoaded));
   }
 
   
@@ -97,12 +97,12 @@ namespace OrthancStone
     else
     {
       orthanc_.GetJsonAsync("/instances/" + instance + "/tags?ignore-length=3006-0050",
-                            new Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &StructureSetLoader::OnStructureSetLoaded));
+                            new OrthancStone::Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &StructureSetLoader::OnStructureSetLoaded));
     }
   }
 
 
-  DicomStructureSet& StructureSetLoader::GetStructureSet()
+  OrthancStone::DicomStructureSet& StructureSetLoader::GetStructureSet()
   {
     if (structureSet_.get() == NULL)
     {

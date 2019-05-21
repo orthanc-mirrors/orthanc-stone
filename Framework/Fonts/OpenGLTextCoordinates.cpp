@@ -35,8 +35,8 @@ namespace OrthancStone
                                       const Orthanc::IDynamicObject* payload)
     {
       // Rendering coordinates
-      float rx1 = x - box_.GetLeft();
-      float ry1 = y - box_.GetTop();
+      float rx1 = static_cast<float>(x - box_.GetLeft());
+      float ry1 = static_cast<float>(y - box_.GetTop());
       float rx2 = rx1 + static_cast<float>(width);
       float ry2 = ry1 + static_cast<float>(height);
 
@@ -81,8 +81,8 @@ namespace OrthancStone
     OpenGLTextCoordinates::OpenGLTextCoordinates(const GlyphTextureAlphabet& alphabet,
                                                  const std::string& utf8) :
       box_(alphabet.GetAlphabet(), utf8),
-      textureWidth_(alphabet.GetTextureWidth()),
-      textureHeight_(alphabet.GetTextureHeight())
+      textureWidth_(static_cast<float>(alphabet.GetTextureWidth())),
+      textureHeight_(static_cast<float>(alphabet.GetTextureHeight()))
     {
       if (textureWidth_ <= 0 ||
           textureHeight_ <= 0)

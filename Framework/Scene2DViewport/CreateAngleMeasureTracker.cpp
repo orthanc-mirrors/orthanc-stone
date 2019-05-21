@@ -27,19 +27,16 @@ namespace OrthancStone
 {
   CreateAngleMeasureTracker::CreateAngleMeasureTracker(
     MessageBroker&                  broker,
-    Scene2D&                        scene,
-    std::vector<TrackerCommandPtr>& undoStack,
-    std::vector<MeasureToolPtr>&    measureTools,
+    ViewportControllerWPtr          controllerW,
     const PointerEvent&             e)
-    : CreateMeasureTracker(scene, undoStack, measureTools)
+    : CreateMeasureTracker(controllerW)
     , state_(CreatingSide1)
   {
     command_.reset(
       new CreateAngleMeasureCommand(
         broker,
-        scene,
-        measureTools,
-        e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform())));
+        controllerW,
+        e.GetMainPosition().Apply(GetScene()->GetCanvasToSceneTransform())));
   }
 
   CreateAngleMeasureTracker::~CreateAngleMeasureTracker()
@@ -48,7 +45,9 @@ namespace OrthancStone
 
   void CreateAngleMeasureTracker::PointerMove(const PointerEvent& event)
   {
-    if (!active_)
+    assert(GetScene());
+
+    if (!alive_)
     {
       throw OrthancException(ErrorCode_InternalError,
         "Internal error: wrong state in CreateAngleMeasureTracker::"
@@ -56,7 +55,7 @@ namespace OrthancStone
     }
 
     ScenePoint2D scenePos = event.GetMainPosition().Apply(
-      scene_.GetCanvasToSceneTransform());
+      GetScene()->GetCanvasToSceneTransform());
 
     switch (state_)
     {
@@ -111,7 +110,7 @@ namespace OrthancStone
       break;
     case CreatingSide2:
       // we are done
-      active_ = false;
+      alive_ = false;
       break;
     default:
       throw OrthancException(ErrorCode_InternalError,

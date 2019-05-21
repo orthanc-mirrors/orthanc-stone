@@ -23,13 +23,13 @@
 
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   RenderStyle::RenderStyle()
   {
     visible_ = true;
     reverse_ = false;
-    windowing_ = ImageWindowing_Custom;
+    windowing_ = OrthancStone::ImageWindowing_Custom;
     alpha_ = 1;
     applyLut_ = false;
     lut_ = Orthanc::EmbeddedResources::COLORMAP_HOT;
@@ -39,7 +39,7 @@ namespace OrthancStone
     drawColor_[2] = 255;
     customWindowCenter_ = 128;
     customWindowWidth_ = 256;
-    interpolation_ = ImageInterpolation_Nearest;
+    interpolation_ = OrthancStone::ImageInterpolation_Nearest;
     fontSize_ = 14;
   }
 
@@ -49,7 +49,7 @@ namespace OrthancStone
                                      float defaultCenter,
                                      float defaultWidth) const
   {
-    if (windowing_ == ImageWindowing_Custom)
+    if (windowing_ == OrthancStone::ImageWindowing_Custom)
     {
       targetCenter = customWindowCenter_;
       targetWidth = customWindowWidth_;

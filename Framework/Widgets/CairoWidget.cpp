@@ -24,7 +24,7 @@
 #include <Core/Images/ImageProcessing.h>
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   static bool IsAligned(const Orthanc::ImageAccessor& target)
   {
@@ -51,14 +51,14 @@ namespace OrthancStone
 
     if (IsAligned(target))
     {
-      CairoSurface surface(target, false /* no alpha */);
-      CairoContext context(surface);
+      OrthancStone::CairoSurface surface(target, false /* no alpha */);
+      OrthancStone::CairoContext context(surface);
       ClearBackgroundCairo(context);
       return RenderCairo(context);
     }
     else
     {
-      CairoContext context(surface_);
+      OrthancStone::CairoContext context(surface_);
       ClearBackgroundCairo(context);
 
       if (RenderCairo(context))
@@ -82,8 +82,8 @@ namespace OrthancStone
   {
     if (IsAligned(target))
     {
-      CairoSurface surface(target, false /* no alpha */);
-      CairoContext context(surface);
+      OrthancStone::CairoSurface surface(target, false /* no alpha */);
+      OrthancStone::CairoContext context(surface);
       RenderMouseOverCairo(context, x, y);
     }
     else
@@ -92,7 +92,7 @@ namespace OrthancStone
       surface_.GetWriteableAccessor(accessor);
       Orthanc::ImageProcessing::Copy(accessor, target);
 
-      CairoContext context(surface_);
+      OrthancStone::CairoContext context(surface_);
       RenderMouseOverCairo(context, x, y);
 
       Orthanc::ImageProcessing::Copy(target, accessor);

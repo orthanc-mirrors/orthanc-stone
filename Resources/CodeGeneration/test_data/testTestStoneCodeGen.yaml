@@ -2,34 +2,49 @@
 #        1         2         3         4         5         6         7         8
 # 345678901234567890123456789012345678901234567890123456789012345678901234567890
 #
-rootName: VsolMessages
+rootName: TestStoneCodeGen
 
 struct B:
+  __handler: cpp
+
   someAs: vector<A>
   someInts: vector<int32>
 
 struct C:
+  __handler: cpp
+
   someBs: vector<B>
   ddd:    vector<string>
 
 struct A:
+  __handler: cpp
+
   someStrings: vector<string>
   someInts2: vector<int32>
   movies: vector<MovieType>
 
 struct Message1:
-  a: int32
-  b: string
-  c: EnumMonth0
-  d: bool
+  __handler: cpp
+
+  memberInt32: int32
+  memberString: string
+  memberEnumMonth: EnumMonth0
+  memberBool: bool
+  memberFloat32: float32
+  memberFloat64: float64
 
 struct Message2:
-  toto: string = "my-default-value"
-  tata: vector<Message1>
-  tutu: vector<string>
-  titi: map<string, string>
-  lulu: map<string, Message1>
-  movieType: MovieType
+  __handler: [cpp, ts]
+
+  memberString: string
+  memberStringWithDefault: string = "my-default-value"
+  memberVectorOfMessage1: vector<Message1>
+  memberVectorOfString: vector<string>
+  memberMapStringString: map<string, string>
+  memberMapStringStruct: map<string, Message1>
+  memberMapEnumFloat: map<CrispType, float32>
+  memberEnumMovieType: MovieType
+  memberJson: json
 
 enum MovieType:
   - RomCom

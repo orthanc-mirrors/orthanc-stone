@@ -160,6 +160,10 @@ namespace OrthancStone
   {
     DisplayInfoText();
 
+    // we seed the random number generator for random measure tool 
+    // generation
+    srand(42);
+
     if (event.type == SDL_MOUSEMOTION)
     {
       int scancodeCount = 0;
@@ -250,6 +254,11 @@ namespace OrthancStone
             " is taking place";
         }
         break;
+
+      case SDLK_m:
+        // let's create a random measuring tool
+        
+      
 
       case SDLK_s:
         controller_->FitContent(compositor_->GetCanvasWidth(),

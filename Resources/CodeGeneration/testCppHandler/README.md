@@ -25,7 +25,9 @@ How to build under Windows with Visual Studio
 - `cmake -G "Visual Studio 15 2017 Win64" ..`  (modify for your current Visual Studio version)
 - `cmake --build . --config Debug` or - `cmake --build . --config Release`
 
-
+How to execute the test
+=======================
+- `cd test_data && testCppHandler --pattern=*.json`
 
 
 

@@ -2,13 +2,12 @@
 
 #include <emscripten/emscripten.h>
 
-#include <Framework/dev.h>
-#include <Framework/Viewport/WidgetViewport.h>
-#include <Framework/Widgets/LayoutWidget.h>
+#include "../../Framework/Deprecated/Viewport/WidgetViewport.h"
+#include "../../Framework/Deprecated/Widgets/LayoutWidget.h"
 #include <Applications/IStoneApplication.h>
 #include <Platforms/Wasm/WasmPlatformApplicationAdapter.h>
 
-typedef OrthancStone::WidgetViewport* ViewportHandle; // the objects exchanged between JS and C++
+typedef Deprecated::WidgetViewport* ViewportHandle; // the objects exchanged between JS and C++
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,7 +56,7 @@ namespace OrthancStone {
       isScheduled_ = false;
     }
 
-    void OnViewportChanged(const IViewport::ViewportChangedMessage& message)
+    void OnViewportChanged(const Deprecated::IViewport::ViewportChangedMessage& message)
     {
       if (!isScheduled_)
       {
@@ -68,7 +67,7 @@ namespace OrthancStone {
   };
 
   // default status bar to log messages on the console/stdout
-  class StatusBar : public OrthancStone::IStatusBar
+  class StatusBar : public Deprecated::IStatusBar
   {
   public:
     virtual void ClearMessage()

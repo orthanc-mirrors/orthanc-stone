@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "Framework/Widgets/IWorldSceneInteractor.h"
+#include "../../../Framework/Deprecated/Widgets/IWorldSceneInteractor.h"
 
 using namespace OrthancStone;
 
@@ -28,7 +28,7 @@ namespace SimpleViewer {
 
   class SimpleViewerApplication;
 
-  class MainWidgetInteractor : public IWorldSceneInteractor
+  class MainWidgetInteractor : public Deprecated::IWorldSceneInteractor
   {
   private:
     SimpleViewerApplication&  application_;
@@ -42,34 +42,34 @@ namespace SimpleViewer {
     /**
         WorldSceneWidget: 
     */
-    virtual IWorldSceneMouseTracker* CreateMouseTracker(WorldSceneWidget& widget,
-                                                        const ViewportGeometry& view,
-                                                        MouseButton button,
-                                                        KeyboardModifiers modifiers,
-                                                        int viewportX,
-                                                        int viewportY,
-                                                        double x,
-                                                        double y,
-                                                        IStatusBar* statusBar,
-                                                        const std::vector<Touch>& displayTouches);
+    virtual Deprecated::IWorldSceneMouseTracker* CreateMouseTracker(Deprecated::WorldSceneWidget& widget,
+                                                                    const Deprecated::ViewportGeometry& view,
+                                                                    MouseButton button,
+                                                                    KeyboardModifiers modifiers,
+                                                                    int viewportX,
+                                                                    int viewportY,
+                                                                    double x,
+                                                                    double y,
+                                                                    Deprecated::IStatusBar* statusBar,
+                                                                    const std::vector<Deprecated::Touch>& displayTouches);
 
     virtual void MouseOver(CairoContext& context,
-                           WorldSceneWidget& widget,
-                           const ViewportGeometry& view,
+                           Deprecated::WorldSceneWidget& widget,
+                           const Deprecated::ViewportGeometry& view,
                            double x,
                            double y,
-                           IStatusBar* statusBar);
+                           Deprecated::IStatusBar* statusBar);
 
-    virtual void MouseWheel(WorldSceneWidget& widget,
+    virtual void MouseWheel(Deprecated::WorldSceneWidget& widget,
                             MouseWheelDirection direction,
                             KeyboardModifiers modifiers,
-                            IStatusBar* statusBar);
+                            Deprecated::IStatusBar* statusBar);
 
-    virtual void KeyPressed(WorldSceneWidget& widget,
+    virtual void KeyPressed(Deprecated::WorldSceneWidget& widget,
                             KeyboardKeys key,
                             char keyChar,
                             KeyboardModifiers modifiers,
-                            IStatusBar* statusBar);
+                            Deprecated::IStatusBar* statusBar);
   };
 
 

@@ -23,9 +23,7 @@
 
 #include <Core/OrthancException.h>
 
-#include <Framework/StoneException.h>
-
-using namespace Orthanc;
+#include "../StoneException.h"
 
 namespace OrthancStone
 {

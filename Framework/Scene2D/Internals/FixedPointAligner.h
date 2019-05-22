@@ -20,15 +20,15 @@
 
 #pragma once
 
-#include <Framework/Scene2DViewport/PointerTypes.h>
-#include <Framework/Scene2D/ScenePoint2D.h>
+#include "../../Scene2DViewport/PointerTypes.h"
+#include "../../Scene2D/ScenePoint2D.h"
 
 namespace OrthancStone
 {
   namespace Internals
   {
     // During a mouse event that modifies the view of a scene, keeps
-    // one point (the pivot) at the same position on the canvas
+    // one point (the pivot) at a fixed position on the canvas
     class FixedPointAligner : public boost::noncopyable
     {
     private:

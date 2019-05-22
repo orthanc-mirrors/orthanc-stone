@@ -33,28 +33,26 @@ namespace SimpleViewer
 {
 
   void SimpleViewerApplication::Initialize(StoneApplicationContext* context,
-                                           IStatusBar& statusBar,
+                                           Deprecated::IStatusBar& statusBar,
                                            const boost::program_options::variables_map& parameters)
   {
-    using namespace OrthancStone;
-
     context_ = context;
     statusBar_ = &statusBar;
 
     {// initialize viewports and layout
-      mainLayout_ = new LayoutWidget("main-layout");
+      mainLayout_ = new Deprecated::LayoutWidget("main-layout");
       mainLayout_->SetPadding(10);
       mainLayout_->SetBackgroundCleared(true);
       mainLayout_->SetBackgroundColor(0, 0, 0);
       mainLayout_->SetHorizontal();
 
-      thumbnailsLayout_ = new LayoutWidget("thumbnail-layout");
+      thumbnailsLayout_ = new Deprecated::LayoutWidget("thumbnail-layout");
       thumbnailsLayout_->SetPadding(10);
       thumbnailsLayout_->SetBackgroundCleared(true);
       thumbnailsLayout_->SetBackgroundColor(50, 50, 50);
       thumbnailsLayout_->SetVertical();
 
-      mainWidget_ = new SliceViewerWidget(IObserver::GetBroker(), "main-viewport");
+      mainWidget_ = new Deprecated::SliceViewerWidget(IObserver::GetBroker(), "main-viewport");
       //mainWidget_->RegisterObserver(*this);
 
       // hierarchy
@@ -62,8 +60,8 @@ namespace SimpleViewer
       mainLayout_->AddWidget(mainWidget_);
 
       // sources
-      smartLoader_.reset(new SmartLoader(IObserver::GetBroker(), context->GetOrthancApiClient()));
-      smartLoader_->SetImageQuality(SliceImageQuality_FullPam);
+      smartLoader_.reset(new Deprecated::SmartLoader(IObserver::GetBroker(), context->GetOrthancApiClient()));
+      smartLoader_->SetImageQuality(Deprecated::SliceImageQuality_FullPam);
 
       mainLayout_->SetTransmitMouseOver(true);
       mainWidgetInteractor_.reset(new MainWidgetInteractor(*this));
@@ -78,7 +76,7 @@ namespace SimpleViewer
     if (parameters.count("studyId") < 1)
     {
       LOG(WARNING) << "The study ID is missing, will take the first studyId found in Orthanc";
-      context->GetOrthancApiClient().GetJsonAsync("/studies", new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyListReceived));
+      context->GetOrthancApiClient().GetJsonAsync("/studies", new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyListReceived));
     }
     else
     {
@@ -98,7 +96,7 @@ namespace SimpleViewer
     options.add(generic);
   }
 
-  void SimpleViewerApplication::OnStudyListReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
+  void SimpleViewerApplication::OnStudyListReceived(const Deprecated::OrthancApiClient::JsonResponseReadyMessage& message)
   {
     const Json::Value& response = message.GetJson();
 
@@ -108,7 +106,7 @@ namespace SimpleViewer
       SelectStudy(response[0].asString());
     }
   }
-  void SimpleViewerApplication::OnStudyReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
+  void SimpleViewerApplication::OnStudyReceived(const Deprecated::OrthancApiClient::JsonResponseReadyMessage& message)
   {
     const Json::Value& response = message.GetJson();
 
@@ -116,12 +114,12 @@ namespace SimpleViewer
     {
       for (size_t i=0; i < response["Series"].size(); i++)
       {
-        context_->GetOrthancApiClient().GetJsonAsync("/series/" + response["Series"][(int)i].asString(), new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnSeriesReceived));
+        context_->GetOrthancApiClient().GetJsonAsync("/series/" + response["Series"][(int)i].asString(), new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnSeriesReceived));
       }
     }
   }
 
-  void SimpleViewerApplication::OnSeriesReceived(const OrthancApiClient::JsonResponseReadyMessage& message)
+  void SimpleViewerApplication::OnSeriesReceived(const Deprecated::OrthancApiClient::JsonResponseReadyMessage& message)
   {
     const Json::Value& response = message.GetJson();
 
@@ -154,13 +152,13 @@ namespace SimpleViewer
   {
     LOG(INFO) << "Loading thumbnail for series " << seriesId;
     
-    SliceViewerWidget* thumbnailWidget = 
-      new SliceViewerWidget(IObserver::GetBroker(), "thumbnail-series-" + seriesId);
+    Deprecated::SliceViewerWidget* thumbnailWidget = 
+      new Deprecated::SliceViewerWidget(IObserver::GetBroker(), "thumbnail-series-" + seriesId);
     thumbnails_.push_back(thumbnailWidget);
     thumbnailsLayout_->AddWidget(thumbnailWidget);
     
     thumbnailWidget->RegisterObserverCallback(
-      new Callable<SimpleViewerApplication, SliceViewerWidget::GeometryChangedMessage>
+      new Callable<SimpleViewerApplication, Deprecated::SliceViewerWidget::GeometryChangedMessage>
       (*this, &SimpleViewerApplication::OnWidgetGeometryChanged));
     
     smartLoader_->SetFrameInWidget(*thumbnailWidget, 0, instanceId, 0);
@@ -169,13 +167,13 @@ namespace SimpleViewer
 
   void SimpleViewerApplication::SelectStudy(const std::string& studyId)
   {
-    context_->GetOrthancApiClient().GetJsonAsync("/studies/" + studyId, new Callable<SimpleViewerApplication, OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyReceived));
+    context_->GetOrthancApiClient().GetJsonAsync("/studies/" + studyId, new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>(*this, &SimpleViewerApplication::OnStudyReceived));
   }
 
-  void SimpleViewerApplication::OnWidgetGeometryChanged(const SliceViewerWidget::GeometryChangedMessage& message)
+  void SimpleViewerApplication::OnWidgetGeometryChanged(const Deprecated::SliceViewerWidget::GeometryChangedMessage& message)
   {
     // TODO: The "const_cast" could probably be replaced by "mainWidget_"
-    const_cast<SliceViewerWidget&>(message.GetOrigin()).FitContent();
+    const_cast<Deprecated::SliceViewerWidget&>(message.GetOrigin()).FitContent();
   }
 
   void SimpleViewerApplication::SelectSeriesInMainViewport(const std::string& seriesId)

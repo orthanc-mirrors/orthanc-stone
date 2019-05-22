@@ -21,8 +21,8 @@
 #pragma once
 
 #include "IFlexiblePointerTracker.h"
-#include "../../Framework/Scene2D/Scene2D.h"
-#include "../../Framework/Scene2D/PointerEvent.h"
+#include "../Scene2D/Scene2D.h"
+#include "../Scene2D/PointerEvent.h"
 
 #include "MeasureTools.h"
 #include "MeasureCommands.h"

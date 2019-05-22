@@ -9,7 +9,7 @@
         "Test1 Test2 Test3 Test4 . . ." 
         ". . . . . . ." 
         "Test5 Test6 Test7 Test8 . . ."
-        ". . . . . . ." 
+        "TestTsCppTs . . . . . ." 
         ". . . . . . ." 
         ;
     height: 480px;
@@ -58,6 +58,8 @@
 .TestWasm-Test7 { grid-area: Test7; }
 
 .TestWasm-Test8 { grid-area: Test8; }
+
+.TestWasm-ts-cpp-ts { grid-area: TestTsCppTs; }
 
 .TestWasm-button {
     width:80px;

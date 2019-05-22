@@ -8,7 +8,7 @@ namespace fs = std::filesystem;
 #include <boost/program_options.hpp>
 using namespace boost::program_options;
 
-#include "VsolMessages_generated.hpp"
+#include "TestStoneCodeGen_generated.hpp"
 
 /**
 Transforms `str` by replacing occurrences of `oldStr` with `newStr`, using 
@@ -39,32 +39,32 @@ string SlurpFile(const string& fileName)
   return string(bytes.data(), fileSize);
 }
 
-class MyHandler : public VsolMessages::IHandler
+class MyHandler : public TestStoneCodeGen::IHandler
 {
 public:
-  virtual bool Handle(const VsolMessages::A& value) override
+  virtual bool Handle(const TestStoneCodeGen::A& value) override
   {
-    VsolMessages::StoneDumpValue(cout, value);
+    TestStoneCodeGen::StoneDumpValue(cout, value);
     return true;
   }
-  virtual bool Handle(const VsolMessages::B& value) override
+  virtual bool Handle(const TestStoneCodeGen::B& value) override
   {
-    VsolMessages::StoneDumpValue(cout, value);
+    TestStoneCodeGen::StoneDumpValue(cout, value);
     return true;
   }
-  virtual bool Handle(const VsolMessages::C& value) override
+  virtual bool Handle(const TestStoneCodeGen::C& value) override
   {
-    VsolMessages::StoneDumpValue(cout, value);
+    TestStoneCodeGen::StoneDumpValue(cout, value);
     return true;
   }
-  virtual bool Handle(const VsolMessages::Message1& value) override
+  virtual bool Handle(const TestStoneCodeGen::Message1& value) override
   {
-    VsolMessages::StoneDumpValue(cout, value);
+    TestStoneCodeGen::StoneDumpValue(cout, value);
     return true;
   }
-  virtual bool Handle(const VsolMessages::Message2& value) override
+  virtual bool Handle(const TestStoneCodeGen::Message2& value) override
   {
-    VsolMessages::StoneDumpValue(cout, value);
+    TestStoneCodeGen::StoneDumpValue(cout, value);
     return true;
   }
 };
@@ -77,7 +77,7 @@ void ProcessPath(T filePath)
   cout << "+--------------------------------------------+\n";
   MyHandler handler;
   auto contents = SlurpFile(filePath.path().string());
-  VsolMessages::StoneDispatchToHandler(contents, &handler);
+  TestStoneCodeGen::StoneDispatchToHandler(contents, &handler);
 }
 
 int main(int argc, char** argv)

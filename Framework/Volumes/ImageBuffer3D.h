@@ -22,10 +22,7 @@
 #pragma once
 
 #include "../StoneEnumerations.h"
-#include "../Layers/RenderStyle.h"
-#include "../Toolbox/VolumeImageGeometry.h"
-#include "../Toolbox/DicomFrameConverter.h"
-#include "../Toolbox/ParallelSlices.h"
+#include "../Toolbox/LinearAlgebra.h"
 
 #include <Core/Images/Image.h>
 
@@ -34,7 +31,6 @@ namespace OrthancStone
   class ImageBuffer3D : public boost::noncopyable
   {
   private:
-    VolumeImageGeometry    geometry_;  // TODO => Move this out of this class
     Orthanc::Image         image_;
     Orthanc::PixelFormat   format_;
     unsigned int           width_;
@@ -78,16 +74,6 @@ namespace OrthancStone
 
     void Clear();
 
-    VolumeImageGeometry& GetGeometry()
-    {
-      return geometry_;
-    }
-
-    const VolumeImageGeometry& GetGeometry() const
-    {
-      return geometry_;
-    }
-
     const Orthanc::ImageAccessor& GetInternalImage() const
     {
       return image_;
@@ -113,16 +99,10 @@ namespace OrthancStone
       return format_;
     }
 
-    // TODO - Remove
-    ParallelSlices* GetGeometry(VolumeProjection projection) const;
-    
     uint64_t GetEstimatedMemorySize() const;
 
     bool GetRange(float& minValue,
                   float& maxValue) const;
-
-    bool FitWindowingToRange(RenderStyle& style,
-                             const Deprecated::DicomFrameConverter& converter) const;
 
     uint8_t GetVoxelGrayscale8Unchecked(unsigned int x,
                                         unsigned int y,

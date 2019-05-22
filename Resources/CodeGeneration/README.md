@@ -10,11 +10,11 @@ Then:
 
 `testCppHandler` contains a C++ project that produces an executable 
 slurping a set of text files representing messages defined against 
-the `test_data/test1.yaml' schema and dumping them to `cout`.
+the `test_data/testTestStoneCodeGen.yaml' schema and dumping them to `cout`.
 
 'testWasmIntegrated` contains a small Web app demonstrating the 
 interaction between TypeScript and C++ in WASM.
 source ~/apps/emsdk/emsdk_env.sh
 
 
-Install Python and the following packages `pip install pyyaml jinja2`
+Install Python and the following packages `pip install pyyaml yamlloader jinja2`

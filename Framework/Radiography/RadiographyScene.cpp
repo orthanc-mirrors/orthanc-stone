@@ -25,7 +25,7 @@
 #include "RadiographyDicomLayer.h"
 #include "RadiographyTextLayer.h"
 #include "RadiographyMaskLayer.h"
-#include "../Toolbox/DicomFrameConverter.h"
+#include "../Deprecated/Toolbox/DicomFrameConverter.h"
 
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
@@ -172,18 +172,18 @@ namespace OrthancStone
     }
   }
 
-  PhotometricDisplayMode RadiographyScene::GetPreferredPhotomotricDisplayMode() const
+  RadiographyPhotometricDisplayMode RadiographyScene::GetPreferredPhotomotricDisplayMode() const
   {
     // return the mode of the first layer who "cares" about its display mode (normaly, the one and only layer that is a DicomLayer)
     for (Layers::const_iterator it = layers_.begin(); it != layers_.end(); it++)
     {
-      if (it->second->GetPreferredPhotomotricDisplayMode() != PhotometricDisplayMode_Default)
+      if (it->second->GetPreferredPhotomotricDisplayMode() != RadiographyPhotometricDisplayMode_Default)
       {
         return it->second->GetPreferredPhotomotricDisplayMode();
       }
     }
 
-    return PhotometricDisplayMode_Default;
+    return RadiographyPhotometricDisplayMode_Default;
   }
 
 
@@ -345,7 +345,7 @@ namespace OrthancStone
                                                      const std::string& instance,
                                                      unsigned int frame,
                                                      Deprecated::DicomFrameConverter* converter,  // takes ownership
-                                                     PhotometricDisplayMode preferredPhotometricDisplayMode,
+                                                     RadiographyPhotometricDisplayMode preferredPhotometricDisplayMode,
                                                      RadiographyLayer::Geometry* geometry)
   {
     RadiographyDicomLayer& layer = dynamic_cast<RadiographyDicomLayer&>(RegisterLayer(new RadiographyDicomLayer(IObservable::GetBroker(), *this)));
@@ -364,7 +364,7 @@ namespace OrthancStone
     return layer;
   }
 
-  RadiographyLayer& RadiographyScene::LoadDicomFrame(OrthancApiClient& orthanc,
+  RadiographyLayer& RadiographyScene::LoadDicomFrame(Deprecated::OrthancApiClient& orthanc,
                                                      const std::string& instance,
                                                      unsigned int frame,
                                                      bool httpCompression,
@@ -379,18 +379,18 @@ namespace OrthancStone
     }
 
     {
-      IWebService::HttpHeaders headers;
+      Deprecated::IWebService::HttpHeaders headers;
       std::string uri = "/instances/" + instance + "/tags";
 
       orthanc.GetBinaryAsync(
             uri, headers,
-            new Callable<RadiographyScene, OrthancApiClient::BinaryResponseReadyMessage>
+            new Callable<RadiographyScene, Deprecated::OrthancApiClient::BinaryResponseReadyMessage>
             (*this, &RadiographyScene::OnTagsReceived), NULL,
             new Orthanc::SingleValueObject<size_t>(layer.GetIndex()));
     }
 
     {
-      IWebService::HttpHeaders headers;
+      Deprecated::IWebService::HttpHeaders headers;
       headers["Accept"] = "image/x-portable-arbitrarymap";
 
       if (httpCompression)
@@ -403,7 +403,7 @@ namespace OrthancStone
 
       orthanc.GetBinaryAsync(
             uri, headers,
-            new Callable<RadiographyScene, OrthancApiClient::BinaryResponseReadyMessage>
+            new Callable<RadiographyScene, Deprecated::OrthancApiClient::BinaryResponseReadyMessage>
             (*this, &RadiographyScene::OnFrameReceived), NULL,
             new Orthanc::SingleValueObject<size_t>(layer.GetIndex()));
     }
@@ -412,7 +412,7 @@ namespace OrthancStone
   }
 
 
-  RadiographyLayer& RadiographyScene::LoadDicomWebFrame(IWebService& web)
+  RadiographyLayer& RadiographyScene::LoadDicomWebFrame(Deprecated::IWebService& web)
   {
     RadiographyLayer& layer = RegisterLayer(new RadiographyDicomLayer(IObservable::GetBroker(), *this));
 
@@ -422,7 +422,7 @@ namespace OrthancStone
 
 
 
-  void RadiographyScene::OnTagsReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
+  void RadiographyScene::OnTagsReceived(const Deprecated::OrthancApiClient::BinaryResponseReadyMessage& message)
   {
     size_t index = dynamic_cast<const Orthanc::SingleValueObject<size_t>&>
         (message.GetPayload()).GetValue();
@@ -452,7 +452,7 @@ namespace OrthancStone
   }
 
 
-  void RadiographyScene::OnFrameReceived(const OrthancApiClient::BinaryResponseReadyMessage& message)
+  void RadiographyScene::OnFrameReceived(const Deprecated::OrthancApiClient::BinaryResponseReadyMessage& message)
   {
     size_t index = dynamic_cast<const Orthanc::SingleValueObject<size_t>&>(message.GetPayload()).GetValue();
 
@@ -642,9 +642,9 @@ namespace OrthancStone
 
     createDicomRequestContent["Tags"] = dicomTags;
 
-    PhotometricDisplayMode photometricMode = GetPreferredPhotomotricDisplayMode();
-    if ((invert && photometricMode != PhotometricDisplayMode_Monochrome2) ||
-        (!invert && photometricMode == PhotometricDisplayMode_Monochrome1))
+    RadiographyPhotometricDisplayMode photometricMode = GetPreferredPhotomotricDisplayMode();
+    if ((invert && photometricMode != RadiographyPhotometricDisplayMode_Monochrome2) ||
+        (!invert && photometricMode == RadiographyPhotometricDisplayMode_Monochrome1))
     {
       createDicomRequestContent["Tags"]["PhotometricInterpretation"] = "MONOCHROME1";
     }
@@ -726,7 +726,7 @@ namespace OrthancStone
   }
 
 
-  void RadiographyScene::ExportDicom(OrthancApiClient& orthanc,
+  void RadiographyScene::ExportDicom(Deprecated::OrthancApiClient& orthanc,
                                      const Json::Value& dicomTags,
                                      const std::string& parentOrthancId,
                                      double pixelSpacingX,
@@ -741,7 +741,7 @@ namespace OrthancStone
 
     orthanc.PostJsonAsyncExpectJson(
           "/tools/create-dicom", createDicomRequestContent,
-          new Callable<RadiographyScene, OrthancApiClient::JsonResponseReadyMessage>
+          new Callable<RadiographyScene, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
           (*this, &RadiographyScene::OnDicomExported),
           NULL, NULL);
 
@@ -750,7 +750,7 @@ namespace OrthancStone
 
   // Export using PAM is faster than using PNG, but requires Orthanc
   // core >= 1.4.3
-  void RadiographyScene::ExportDicom(OrthancApiClient& orthanc,
+  void RadiographyScene::ExportDicom(Deprecated::OrthancApiClient& orthanc,
                                      const Orthanc::DicomMap& dicom,
                                      const std::string& parentOrthancId,
                                      double pixelSpacingX,
@@ -778,19 +778,19 @@ namespace OrthancStone
     ExportDicom(orthanc, jsonTags, parentOrthancId, pixelSpacingX, pixelSpacingY, invert, interpolation, usePam);
   }
 
-  void RadiographyScene::OnDicomExported(const OrthancApiClient::JsonResponseReadyMessage& message)
+  void RadiographyScene::OnDicomExported(const Deprecated::OrthancApiClient::JsonResponseReadyMessage& message)
   {
     LOG(INFO) << "DICOM export was successful: "
               << message.GetJson().toStyledString();
   }
 
 
-  void RadiographyScene::OnDicomWebReceived(const IWebService::HttpRequestSuccessMessage& message)
+  void RadiographyScene::OnDicomWebReceived(const Deprecated::IWebService::HttpRequestSuccessMessage& message)
   {
     LOG(INFO) << "DICOMweb WADO-RS received: " << message.GetAnswerSize() << " bytes";
 
-    const IWebService::HttpHeaders& h = message.GetAnswerHttpHeaders();
-    for (IWebService::HttpHeaders::const_iterator
+    const Deprecated::IWebService::HttpHeaders& h = message.GetAnswerHttpHeaders();
+    for (Deprecated::IWebService::HttpHeaders::const_iterator
          it = h.begin(); it != h.end(); ++it)
     {
       printf("[%s] = [%s]\n", it->first.c_str(), it->second.c_str());

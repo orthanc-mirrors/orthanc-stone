@@ -23,30 +23,30 @@
 
 #include "IOracleCommand.h"
 
-#include "../../Framework/Toolbox/IDelayedCallExecutor.h"
+#include "../../Framework/Deprecated/Toolbox/IDelayedCallExecutor.h"
 #include "../../Framework/Messages/IObservable.h"
 #include "../../Framework/Messages/ICallable.h"
 #include "../../Applications/Generic/NativeStoneApplicationContext.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-namespace OrthancStone
+namespace Deprecated
 {
-  class DelayedCallCommand : public IOracleCommand, IObservable
+  class DelayedCallCommand : public IOracleCommand, OrthancStone::IObservable
   {
   protected:
-    std::auto_ptr<MessageHandler<IDelayedCallExecutor::TimeoutMessage> >  callback_;
+    std::auto_ptr<OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage> >  callback_;
     std::auto_ptr<Orthanc::IDynamicObject>  payload_;
-    NativeStoneApplicationContext&          context_;
+    OrthancStone::NativeStoneApplicationContext&          context_;
     boost::posix_time::ptime                expirationTimePoint_;
     unsigned int                            timeoutInMs_;
 
   public:
-    DelayedCallCommand(MessageBroker& broker,
-                       MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,  // takes ownership
+    DelayedCallCommand(OrthancStone::MessageBroker& broker,
+                       OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,  // takes ownership
                        unsigned int timeoutInMs,
                        Orthanc::IDynamicObject* payload /* takes ownership */,
-                       NativeStoneApplicationContext& context
+                       OrthancStone::NativeStoneApplicationContext& context
                        );
 
     virtual void Execute();

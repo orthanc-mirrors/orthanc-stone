@@ -1,40 +1,47 @@
 {
-  "type": "VsolMessages.Message2",
+  "type": "TestStoneCodeGen.Message2",
   "value": {
-    "tata": [
+    "memberVectorOfMessage1": [
       {
-        "a": 42,
-        "b": "Benjamin",
-        "c": 0,
-        "d": false
+        "memberInt32": 42,
+        "memberString": "Benjamin",
+        "memberEnumMonth": "January",
+        "memberBool": false,
+        "memberFloat32": 0.1,
+        "memberFloat64": -0.2
       },
       {
-        "a": 43,
-        "b": "Sandrine",
-        "c": 2
+        "memberInt32": 43,
+        "memberString": "Sandrine",
+        "memberEnumMonth": "March"
       }
     ],
-    "tutu": [
+    "memberVectorOfString": [
       "Mercadet",
       "Poisson"
     ],
-    "titi": {
+    "memberMapStringString": {
       "44": "key 44",
       "45": "key 45"
     },
-    "lulu": {
+    "memberMapStringStruct": {
       "54": {
-        "a": 43,
-        "b": "Sandrine",
-        "c": 2
+        "memberInt32": 43,
+        "memberString": "Sandrine",
+        "memberEnumMonth": "March"
       },
       "55": {
-        "a": 42,
-        "b": "Benjamin",
-        "c": 0,
-        "d": false
+        "memberInt32": 42,
+        "memberString": "Benjamin",
+        "memberEnumMonth": "January",
+        "memberBool": false
       }
     },
-    "toto": "Prout zizi"
+    "memberString": "Prout zizi",
+    "memberMapEnumFloat" : {
+      "SaltAndPepper" : 0.1,
+      "CreamAndChives" : -0.2
+    },
+    "memberJson" : {"custom-key": "custom-value"}
   }
 }

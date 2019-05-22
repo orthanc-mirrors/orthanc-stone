@@ -25,7 +25,7 @@
 
 #include "SdlWindow.h"
 #include "../../Framework/Viewport/CairoSurface.h"
-#include "../../Framework/Viewport/IViewport.h"
+#include "../../Framework/Deprecated/Viewport/IViewport.h"
 
 #include <boost/thread/mutex.hpp>
 
@@ -46,7 +46,7 @@ namespace OrthancStone
     void SetSize(unsigned int width,
                  unsigned int height);
 
-    void Render(IViewport& viewport);
+    void Render(Deprecated::IViewport& viewport);
   };
 }
 

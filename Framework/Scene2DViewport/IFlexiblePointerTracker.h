@@ -23,7 +23,7 @@
 
 #include "PointerTypes.h"
 
-#include <Framework/Scene2D/PointerEvent.h>
+#include "../Scene2D/PointerEvent.h"
 
 namespace OrthancStone
 {

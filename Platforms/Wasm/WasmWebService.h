@@ -1,17 +1,17 @@
 #pragma once
 
-#include <Framework/Toolbox/BaseWebService.h>
+#include "../../Framework/Deprecated/Toolbox/BaseWebService.h"
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
 class WasmWebService : public BaseWebService
 {
 private:
-  static MessageBroker *broker_;
+  static OrthancStone::MessageBroker *broker_;
 
   // Private constructor => Singleton design pattern
-  WasmWebService(MessageBroker &broker) : BaseWebService(broker)
+  WasmWebService(OrthancStone::MessageBroker &broker) : BaseWebService(broker)
   {
   }
 
@@ -27,7 +27,7 @@ public:
     return instance;
   }
 
-  static void SetBroker(MessageBroker &broker)
+  static void SetBroker(OrthancStone::MessageBroker &broker)
   {
     broker_ = &broker;
   }
@@ -36,27 +36,27 @@ public:
                          const HttpHeaders &headers,
                          const std::string &body,
                          Orthanc::IDynamicObject *payload,
-                         MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallable,
-                         MessageHandler<IWebService::HttpRequestErrorMessage> *failureCallable = NULL,
+                         OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallable,
+                         OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage> *failureCallable = NULL,
                          unsigned int timeoutInSeconds = 60);
 
   virtual void DeleteAsync(const std::string &uri,
                            const HttpHeaders &headers,
                            Orthanc::IDynamicObject *payload,
-                           MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallable,
-                           MessageHandler<IWebService::HttpRequestErrorMessage> *failureCallable = NULL,
+                           OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallable,
+                           OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage> *failureCallable = NULL,
                            unsigned int timeoutInSeconds = 60);
 
 protected:
   virtual void GetAsyncInternal(const std::string &uri,
                                 const HttpHeaders &headers,
                                 Orthanc::IDynamicObject *payload,
-                                MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallable,
-                                MessageHandler<IWebService::HttpRequestErrorMessage> *failureCallable = NULL,
+                                OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallable,
+                                OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage> *failureCallable = NULL,
                                 unsigned int timeoutInSeconds = 60);
 
   virtual void NotifyHttpSuccessLater(boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedHttpMessage,
                                       Orthanc::IDynamicObject *payload, // takes ownership
-                                      MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallback);
+                                      OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage> *successCallback);
 };
-} // namespace OrthancStone
+} // namespace Deprecated

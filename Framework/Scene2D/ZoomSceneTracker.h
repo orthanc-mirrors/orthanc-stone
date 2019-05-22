@@ -27,8 +27,6 @@
 
 namespace OrthancStone
 {
-  class Scene2D;
-
   class ZoomSceneTracker : public OneGesturePointerTracker
   {
   public:

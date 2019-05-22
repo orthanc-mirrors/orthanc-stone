@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../../Applications/IStoneApplication.h"
-#include "../../Framework/Widgets/WorldSceneWidget.h"
+#include "../../Framework/Deprecated/Widgets/WorldSceneWidget.h"
 
 #if ORTHANC_ENABLE_WASM==1
 #include "../../Platforms/Wasm/WasmPlatformApplicationAdapter.h"
@@ -42,11 +42,11 @@ namespace OrthancStone
     {
     protected:
       // ownership is transferred to the application context
-      WorldSceneWidget*  mainWidget_;
+      Deprecated::WorldSceneWidget*  mainWidget_;
 
     public:
       virtual void Initialize(StoneApplicationContext* context,
-                              IStatusBar& statusBar,
+                              Deprecated::IStatusBar& statusBar,
                               const boost::program_options::variables_map& parameters) ORTHANC_OVERRIDE
       {
       }
@@ -64,7 +64,7 @@ namespace OrthancStone
 
 
       virtual void Finalize() ORTHANC_OVERRIDE {}
-      virtual IWidget* GetCentralWidget() ORTHANC_OVERRIDE {return mainWidget_;}
+      virtual Deprecated::IWidget* GetCentralWidget() ORTHANC_OVERRIDE {return mainWidget_;}
 
 #if ORTHANC_ENABLE_WASM==1
       // default implementations for a single canvas named "canvas" in the HTML and an emtpy WasmApplicationAdapter

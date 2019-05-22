@@ -22,9 +22,10 @@
 #pragma once
 
 #include "StoneApplicationContext.h"
+#include "../Framework/Deprecated/Viewport/WidgetViewport.h"
+
 #include <boost/program_options.hpp>
-#include "../Framework/Viewport/WidgetViewport.h"
-#include "json/json.h"
+#include <json/json.h>
 
 namespace OrthancStone
 {
@@ -47,7 +48,7 @@ namespace OrthancStone
 
     virtual void DeclareStartupOptions(boost::program_options::options_description& options) = 0;
     virtual void Initialize(StoneApplicationContext* context,
-                            IStatusBar& statusBar,
+                            Deprecated::IStatusBar& statusBar,
                             const boost::program_options::variables_map& parameters) = 0;
 
     /**
@@ -63,7 +64,7 @@ namespace OrthancStone
 #endif
 
     virtual std::string GetTitle() const = 0;
-    virtual IWidget* GetCentralWidget() = 0;
+    virtual Deprecated::IWidget* GetCentralWidget() = 0;
     virtual void Finalize() = 0;
   };
 }

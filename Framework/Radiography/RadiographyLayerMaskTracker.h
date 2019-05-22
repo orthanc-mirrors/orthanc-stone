@@ -22,13 +22,13 @@
 #pragma once
 
 #include "../Toolbox/UndoRedoStack.h"
-#include "../Toolbox/ViewportGeometry.h"
-#include "../Widgets/IWorldSceneMouseTracker.h"
+#include "../Deprecated/Toolbox/ViewportGeometry.h"
+#include "../Deprecated/Widgets/IWorldSceneMouseTracker.h"
 #include "RadiographyScene.h"
 
 namespace OrthancStone
 {
-  class RadiographyLayerMaskTracker : public IWorldSceneMouseTracker
+  class RadiographyLayerMaskTracker : public Deprecated::IWorldSceneMouseTracker
   {
   private:
     class UndoRedoCommand;
@@ -41,7 +41,7 @@ namespace OrthancStone
   public:
     RadiographyLayerMaskTracker(UndoRedoStack& undoRedoStack,
                                 RadiographyScene& scene,
-                                const ViewportGeometry& view,
+                                const Deprecated::ViewportGeometry& view,
                                 size_t layer,
                                 const ControlPoint& startSceneControlPoint);
 
@@ -59,7 +59,7 @@ namespace OrthancStone
                            int displayY,
                            double sceneX,
                            double sceneY,
-                           const std::vector<Touch>& displayTouches,
-                           const std::vector<Touch>& sceneTouches);
+                           const std::vector<Deprecated::Touch>& displayTouches,
+                           const std::vector<Deprecated::Touch>& sceneTouches);
   };
 }

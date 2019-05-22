@@ -109,6 +109,21 @@ namespace {{rootName}}
   }
 
   /** Throws in case of problem */
+  inline void _StoneDeserializeValue(float& destValue, const Json::Value& jsonValue)
+  {
+    if (!jsonValue.isNull())
+    {
+      destValue = jsonValue.asFloat();
+    }
+  }
+
+  inline Json::Value _StoneSerializeValue(float value)
+  {
+    Json::Value result(value);
+    return result;
+  }
+
+  /** Throws in case of problem */
   inline void _StoneDeserializeValue(bool& destValue, const Json::Value& jsonValue)
   {
     if (!jsonValue.isNull())
@@ -167,10 +182,21 @@ namespace {{rootName}}
     return out;
   }
 
+  inline std::string ToString(const std::string& str)
+  {
+    return str;
+  }
+
+  inline void FromString(std::string& value, std::string strValue)
+  {
+    value = strValue;
+  }
+
+
   /** Throws in case of problem */
-  template<typename T>
+  template<typename TK, typename TV>
   void _StoneDeserializeValue(
-    std::map<std::string, T>& destValue, const Json::Value& jsonValue)
+    std::map<TK, TV>& destValue, const Json::Value& jsonValue)
   {
     if (!jsonValue.isNull())
     {
@@ -180,10 +206,12 @@ namespace {{rootName}}
         itr != jsonValue.end();
         itr++)
       {
-        std::string key;
-        _StoneDeserializeValue(key, itr.key());
+        std::string strKey;
+        _StoneDeserializeValue(strKey, itr.key());
+        TK key;
+        FromString(key, strKey);  // if you have a compile error here, it means that your type is not suitable to be the key of a map (or you should overwrite the FromString/ToString in template.in.h.j2)
 
-        T innerDestValue;
+        TV innerDestValue;
         _StoneDeserializeValue(innerDestValue, *itr);
 
         destValue[key] = innerDestValue;
@@ -191,29 +219,30 @@ namespace {{rootName}}
     }
   }
 
-  template<typename T>
-  Json::Value _StoneSerializeValue(const std::map<std::string,T>& value)
+  template<typename TK, typename TV>
+  Json::Value _StoneSerializeValue(const std::map<TK, TV>& value)
   {
     Json::Value result(Json::objectValue);
 
-    for (typename std::map<std::string, T>::const_iterator it = value.cbegin();
+    for (typename std::map<TK, TV>::const_iterator it = value.cbegin();
       it != value.cend(); ++it)
     {
       // it->first it->second
-      result[it->first] = _StoneSerializeValue(it->second);
+      result[ToString(it->first)] = _StoneSerializeValue(it->second);
     }
     return result;
   }
 
-  template<typename T>
-  std::ostream& StoneDumpValue(std::ostream& out, const std::map<std::string,T>& value, size_t indent)
+  template<typename TK, typename TV>
+  std::ostream& StoneDumpValue(std::ostream& out, const std::map<TK, TV>& value, size_t indent)
   {
     out << MakeIndent(indent) << "{\n";
-    for (typename std::map<std::string, T>::const_iterator it = value.cbegin();
+    for (typename std::map<TK, TV>::const_iterator it = value.cbegin();
       it != value.cend(); ++it)
     {
       out << MakeIndent(indent+2) << "\"" << it->first << "\" : ";
       StoneDumpValue(out, it->second, indent+2);
+      out << ", \n";
     }
     out << MakeIndent(indent) << "}\n";
     return out;
@@ -224,7 +253,7 @@ namespace {{rootName}}
   void _StoneDeserializeValue(
     std::vector<T>& destValue, const Json::Value& jsonValue)
   {
-    if (!jsonValue.isNull())
+    if (!jsonValue.isNull() && jsonValue.isArray())
     {
       destValue.clear();
       destValue.reserve(jsonValue.size());
@@ -255,6 +284,7 @@ namespace {{rootName}}
     for (size_t i = 0; i < value.size(); ++i)
     {
       StoneDumpValue(out, value[i], indent+2);
+      out << ", \n";
     }
     out << MakeIndent(indent) << "]\n";
     return out;
@@ -265,7 +295,7 @@ namespace {{rootName}}
   void _StoneDeserializeValue(
     std::set<T>& destValue, const Json::Value& jsonValue)
   {
-    if (!jsonValue.isNull())
+    if (!jsonValue.isNull() && jsonValue.isArray())
     {
       destValue.clear();
       for (Json::Value::ArrayIndex i = 0; i != jsonValue.size(); i++)
@@ -295,6 +325,7 @@ namespace {{rootName}}
     for (typename std::set<T>::const_iterator it = value.begin(); it != value.end(); ++it)
     {
       StoneDumpValue(out, *it, indent+2);
+      out << ", \n";
     }
     out << MakeIndent(indent) << "]\n";
     return out;
@@ -381,7 +412,7 @@ namespace {{rootName}}
   {
 {% for key in enum['fields']%}    if( value == {{enum['name']}}_{{key}})
     {
-      out << MakeIndent(indent) << "{{key}}" << std::endl;
+      out << MakeIndent(indent) << "{{key}}";
     }
 {%endfor%}    return out;
   }
@@ -394,9 +425,9 @@ namespace {{rootName}}
 
   struct {{struct['name']}}
   {
-{% if struct %}{% if struct['fields'] %}{% for key in sorted(struct['fields']) %}    {{CanonToCpp(struct['fields'][key]['type'])}} {{key}};
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields'] %}    {{CanonToCpp(struct['fields'][key]['type'])}} {{key}};
 {% endfor %}{% endif %}{% endif %}
-    {{struct['name']}}({% if struct %}{% if struct['fields'] %}{% for key in sorted(struct['fields']) %}{{CanonToCpp(struct['fields'][key]['type'])}} {{key}} = {% if struct['fields'][key]['defaultValue'] %}{{DefaultValueToCpp(rootName,enums,struct['fields'][key])}} {%else%} {{CanonToCpp(struct['fields'][key]['type'])}}() {%endif%} {{ ", " if not loop.last }}{% endfor %}{% endif %}{% endif %})
+    {{struct['name']}}({% if struct %}{% if struct['fields'] %}{% for key in struct['fields'] %}{{CanonToCpp(struct['fields'][key]['type'])}} {{key}} = {% if struct['fields'][key]['defaultValue'] %}{{DefaultValueToCpp(rootName,enums,struct['fields'][key])}} {%else%} {{CanonToCpp(struct['fields'][key]['type'])}}() {%endif%} {{ ", " if not loop.last }}{% endfor %}{% endif %}{% endif %})
     {
 {% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}      this->{{key}} = {{key}};
 {% endfor %}{% endif %}{% endif %}    }
@@ -421,11 +452,11 @@ namespace {{rootName}}
   inline std::ostream& StoneDumpValue(std::ostream& out, const {{struct['name']}}& value, size_t indent = 0)
   {
     out << MakeIndent(indent) << "{\n";
-{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}    out << MakeIndent(indent) << "{{key}}:\n";
+{% if struct %}{% if struct['fields'] %}{% for key in struct['fields']%}    out << MakeIndent(indent+2) << "{{key}}: ";
     StoneDumpValue(out, value.{{key}},indent+2);
-    out << "\n";
+    out << ", \n";
 {% endfor %}{% endif %}{% endif %}
-    out << MakeIndent(indent) << "}\n";
+    out << MakeIndent(indent) << "}";
     return out;
   }
 

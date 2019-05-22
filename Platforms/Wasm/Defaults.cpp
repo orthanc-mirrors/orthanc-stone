@@ -2,9 +2,8 @@
 
 #include "WasmWebService.h"
 #include "WasmDelayedCallExecutor.h"
-#include <Framework/dev.h>
-#include "Framework/Widgets/TestCairoWidget.h"
-#include <Framework/Viewport/WidgetViewport.h>
+#include "../../Framework/Deprecated/Widgets/TestCairoWidget.h"
+#include <Framework/Deprecated/Viewport/WidgetViewport.h>
 #include <Applications/Wasm/StartupParametersBuilder.h>
 #include <Platforms/Wasm/WasmPlatformApplicationAdapter.h>
 #include <Core/Logging.h>
@@ -26,16 +25,16 @@ static OrthancStone::MessageBroker broker;
 static OrthancStone::ViewportContentChangedObserver viewportContentChangedObserver_(broker);
 static OrthancStone::StatusBar statusBar_;
 
-static std::list<std::shared_ptr<OrthancStone::WidgetViewport>> viewports_;
+static std::list<std::shared_ptr<Deprecated::WidgetViewport>> viewports_;
 
-std::shared_ptr<OrthancStone::WidgetViewport> FindViewportSharedPtr(ViewportHandle viewport) {
+std::shared_ptr<Deprecated::WidgetViewport> FindViewportSharedPtr(ViewportHandle viewport) {
   for (const auto& v : viewports_) {
     if (v.get() == viewport) {
       return v;
     }
   }
   assert(false);
-  return std::shared_ptr<OrthancStone::WidgetViewport>();
+  return std::shared_ptr<Deprecated::WidgetViewport>();
 }
 
 #ifdef __cplusplus
@@ -47,7 +46,7 @@ extern "C" {
   // when WASM needs a C++ viewport
   ViewportHandle EMSCRIPTEN_KEEPALIVE CreateCppViewport() {
     
-    std::shared_ptr<OrthancStone::WidgetViewport> viewport(new OrthancStone::WidgetViewport(broker));
+    std::shared_ptr<Deprecated::WidgetViewport> viewport(new Deprecated::WidgetViewport(broker));
     printf("viewport %x\n", (int)viewport.get());
 
     viewports_.push_back(viewport);
@@ -57,7 +56,7 @@ extern "C" {
     viewport->SetStatusBar(statusBar_);
 
     viewport->RegisterObserverCallback(
-      new Callable<ViewportContentChangedObserver, IViewport::ViewportChangedMessage>
+      new Callable<ViewportContentChangedObserver, Deprecated::IViewport::ViewportChangedMessage>
       (viewportContentChangedObserver_, &ViewportContentChangedObserver::OnViewportChanged));
 
     return viewport.get();
@@ -65,7 +64,7 @@ extern "C" {
 
   // when WASM does not need a viewport anymore, it should release it 
   void EMSCRIPTEN_KEEPALIVE ReleaseCppViewport(ViewportHandle viewport) {
-    viewports_.remove_if([viewport](const std::shared_ptr<OrthancStone::WidgetViewport>& v) { return v.get() == viewport;});
+    viewports_.remove_if([viewport](const std::shared_ptr<Deprecated::WidgetViewport>& v) { return v.get() == viewport;});
 
     printf("There are now %lu viewports in C++\n", viewports_.size());
   }
@@ -76,8 +75,8 @@ extern "C" {
 
     application.reset(CreateUserApplication(broker));
     applicationWasmAdapter.reset(CreateWasmApplicationAdapter(broker, application.get())); 
-    WasmWebService::SetBroker(broker);
-    WasmDelayedCallExecutor::SetBroker(broker);
+    Deprecated::WasmWebService::SetBroker(broker);
+    Deprecated::WasmDelayedCallExecutor::SetBroker(broker);
 
     startupParametersBuilder.Clear();
   }
@@ -104,8 +103,8 @@ extern "C" {
     context.reset(new OrthancStone::StoneApplicationContext(broker));
     context->SetOrthancBaseUrl(baseUri);
     printf("Base URL to Orthanc API: [%s]\n", baseUri);
-    context->SetWebService(OrthancStone::WasmWebService::GetInstance());
-    context->SetDelayedCallExecutor(OrthancStone::WasmDelayedCallExecutor::GetInstance());
+    context->SetWebService(Deprecated::WasmWebService::GetInstance());
+    context->SetDelayedCallExecutor(Deprecated::WasmDelayedCallExecutor::GetInstance());
     application->Initialize(context.get(), statusBar_, parameters);
     application->InitializeWasm();
 
@@ -208,7 +207,7 @@ extern "C" {
         return;  // Unknown button
     }
 
-    viewport->MouseDown(button, x, y, OrthancStone::KeyboardModifiers_None, std::vector<OrthancStone::Touch>());
+    viewport->MouseDown(button, x, y, OrthancStone::KeyboardModifiers_None, std::vector<Deprecated::Touch>());
   }
   
 
@@ -239,10 +238,10 @@ extern "C" {
                                               int x,
                                               int y)
   {
-    viewport->MouseMove(x, y, std::vector<OrthancStone::Touch>());
+    viewport->MouseMove(x, y, std::vector<Deprecated::Touch>());
   }
 
-  void GetTouchVector(std::vector<OrthancStone::Touch>& output,
+  void GetTouchVector(std::vector<Deprecated::Touch>& output,
                       int touchCount,
                       float x0,
                       float y0,
@@ -254,15 +253,15 @@ extern "C" {
     // TODO: it might be nice to try to pass all the x0,y0 coordinates as arrays but that's not so easy to pass array between JS and C++
     if (touchCount > 0)
     {
-      output.push_back(OrthancStone::Touch(x0, y0));
+      output.push_back(Deprecated::Touch(x0, y0));
     }
     if (touchCount > 1)
     {
-      output.push_back(OrthancStone::Touch(x1, y1));
+      output.push_back(Deprecated::Touch(x1, y1));
     }
     if (touchCount > 2)
     {
-      output.push_back(OrthancStone::Touch(x2, y2));
+      output.push_back(Deprecated::Touch(x2, y2));
     }
 
   }
@@ -278,7 +277,7 @@ extern "C" {
   {
     printf("touch start with %d touches\n", touchCount);
 
-    std::vector<OrthancStone::Touch> touches;
+    std::vector<Deprecated::Touch> touches;
     GetTouchVector(touches, touchCount, x0, y0, x1, y1, x2, y2);
     viewport->TouchStart(touches);
   }
@@ -294,7 +293,7 @@ extern "C" {
   {
     printf("touch move with %d touches\n", touchCount);
 
-    std::vector<OrthancStone::Touch> touches;
+    std::vector<Deprecated::Touch> touches;
     GetTouchVector(touches, touchCount, x0, y0, x1, y1, x2, y2);
     viewport->TouchMove(touches);
   }
@@ -310,7 +309,7 @@ extern "C" {
   {
     printf("touch end with %d touches remaining\n", touchCount);
 
-    std::vector<OrthancStone::Touch> touches;
+    std::vector<Deprecated::Touch> touches;
     GetTouchVector(touches, touchCount, x0, y0, x1, y1, x2, y2);
     viewport->TouchEnd(touches);
   }

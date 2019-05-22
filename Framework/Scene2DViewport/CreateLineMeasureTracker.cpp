@@ -21,8 +21,6 @@
 #include "CreateLineMeasureTracker.h"
 #include <Core/OrthancException.h>
 
-using namespace Orthanc;
-
 namespace OrthancStone
 {
   CreateLineMeasureTracker::CreateLineMeasureTracker(
@@ -49,7 +47,7 @@ namespace OrthancStone
     
     if (!alive_)
     {
-      throw OrthancException(ErrorCode_InternalError,
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
         "Internal error: wrong state in CreateLineMeasureTracker::"
         "PointerMove: active_ == false");
     }

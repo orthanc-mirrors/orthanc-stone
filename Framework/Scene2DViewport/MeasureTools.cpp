@@ -26,8 +26,6 @@
 
 #include <boost/math/constants/constants.hpp>
 
-using namespace Orthanc;
-
 namespace OrthancStone
 {
 
@@ -58,7 +56,7 @@ namespace OrthancStone
   {
     ViewportControllerPtr controller = controllerW_.lock();
     if (!controller)
-      throw OrthancException(ErrorCode_InternalError, 
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, 
         "Using dead ViewportController object!");
     return controller;
   }

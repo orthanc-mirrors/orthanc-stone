@@ -23,7 +23,7 @@
 
 #include "WebServiceCommandBase.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class WebServicePostCommand : public WebServiceCommandBase
   {
@@ -31,16 +31,16 @@ namespace OrthancStone
     std::string  body_;
 
   public:
-    WebServicePostCommand(MessageBroker& broker,
-                          MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
-                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
+    WebServicePostCommand(OrthancStone::MessageBroker& broker,
+                          OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                          OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                           const Orthanc::WebServiceParameters& parameters,
                           const std::string& url,
                           const IWebService::HttpHeaders& headers,
                           unsigned int timeoutInSeconds,
                           const std::string& body,
                           Orthanc::IDynamicObject* payload /* takes ownership */,
-                          NativeStoneApplicationContext& context);
+                          OrthancStone::NativeStoneApplicationContext& context);
 
     virtual void Execute();
   };

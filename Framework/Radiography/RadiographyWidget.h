@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../Widgets/WorldSceneWidget.h"
+#include "../Deprecated/Widgets/WorldSceneWidget.h"
 #include "RadiographyScene.h"
 
 
@@ -30,7 +30,7 @@ namespace OrthancStone
   class RadiographyMaskLayer;
 
   class RadiographyWidget :
-    public WorldSceneWidget,
+    public Deprecated::WorldSceneWidget,
     public IObserver
   {
   private:
@@ -53,7 +53,7 @@ namespace OrthancStone
     }
 
     virtual bool RenderScene(CairoContext& context,
-                             const ViewportGeometry& view);
+                             const Deprecated::ViewportGeometry& view);
 
     virtual void RenderBackground(Orthanc::ImageAccessor& image, float minValue, float maxValue);
 

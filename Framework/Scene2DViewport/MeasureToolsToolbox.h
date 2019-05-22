@@ -18,8 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "../Scene2D/PolylineSceneLayer.h"
 #include "PointerTypes.h"
+#include "../Scene2D/PolylineSceneLayer.h"
+#include "../Scene2D/Scene2D.h"
 
 namespace OrthancStone
 {

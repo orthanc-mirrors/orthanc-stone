@@ -23,8 +23,8 @@
 
 #include "ISceneLayer.h"
 #include "../Toolbox/AffineTransform2D.h"
-#include <Framework/Messages/IObservable.h>
-#include <Framework/Messages/IMessage.h>
+#include "../Messages/IObservable.h"
+#include "../Messages/IMessage.h"
 
 #include <map>
 

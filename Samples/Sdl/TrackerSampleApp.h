@@ -18,15 +18,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include <Framework/Scene2DViewport/PointerTypes.h>
 
-#include <Framework/Messages/IObserver.h>
-
-#include <Framework/Scene2D/OpenGLCompositor.h>
-
-#include <Framework/Scene2DViewport/ViewportController.h>
-#include <Framework/Scene2DViewport/IFlexiblePointerTracker.h>
-#include <Framework/Scene2DViewport/MeasureTools.h>
+#include "../../Framework/Messages/IObserver.h"
+#include "../../Framework/Scene2D/OpenGLCompositor.h"
+#include "../../Framework/Scene2DViewport/IFlexiblePointerTracker.h"
+#include "../../Framework/Scene2DViewport/MeasureTools.h"
+#include "../../Framework/Scene2DViewport/PointerTypes.h"
+#include "../../Framework/Scene2DViewport/ViewportController.h"
 
 #include <SDL.h>
 

@@ -125,7 +125,7 @@ namespace OrthancStone
     hasSize_(false),
     width_(0),
     height_(0),
-    prefferedPhotometricDisplayMode_(PhotometricDisplayMode_Default),
+    prefferedPhotometricDisplayMode_(RadiographyPhotometricDisplayMode_Default),
     scene_(scene)
   {
     UpdateTransform();
@@ -137,7 +137,7 @@ namespace OrthancStone
     UpdateTransform();
   }
 
-  void RadiographyLayer::SetPreferredPhotomotricDisplayMode(PhotometricDisplayMode  prefferedPhotometricDisplayMode)
+  void RadiographyLayer::SetPreferredPhotomotricDisplayMode(RadiographyPhotometricDisplayMode  prefferedPhotometricDisplayMode)
   {
     prefferedPhotometricDisplayMode_ = prefferedPhotometricDisplayMode;
 
@@ -349,21 +349,21 @@ namespace OrthancStone
     ControlPoint cp;
     switch (index)
     {
-    case ControlPoint_TopLeftCorner:
-      cp = ControlPoint(cropX, cropY, ControlPoint_TopLeftCorner);
-      break;
+      case RadiographyControlPointType_TopLeftCorner:
+        cp = ControlPoint(cropX, cropY, RadiographyControlPointType_TopLeftCorner);
+        break;
 
-    case ControlPoint_TopRightCorner:
-      cp = ControlPoint(cropX + cropWidth, cropY, ControlPoint_TopRightCorner);
-      break;
+      case RadiographyControlPointType_TopRightCorner:
+        cp = ControlPoint(cropX + cropWidth, cropY, RadiographyControlPointType_TopRightCorner);
+        break;
 
-    case ControlPoint_BottomLeftCorner:
-      cp = ControlPoint(cropX, cropY + cropHeight, ControlPoint_BottomLeftCorner);
-      break;
+      case RadiographyControlPointType_BottomLeftCorner:
+        cp = ControlPoint(cropX, cropY + cropHeight, RadiographyControlPointType_BottomLeftCorner);
+        break;
 
-    case ControlPoint_BottomRightCorner:
-      cp = ControlPoint(cropX + cropWidth, cropY + cropHeight, ControlPoint_BottomRightCorner);
-      break;
+      case RadiographyControlPointType_BottomRightCorner:
+        cp = ControlPoint(cropX + cropWidth, cropY + cropHeight, RadiographyControlPointType_BottomRightCorner);
+        break;
 
     default:
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);

@@ -49,7 +49,7 @@ namespace OrthancStone
               NativeStoneApplicationContext& context,
               MessageBroker& broker);
   
-    void OnViewportChanged(const IViewport::ViewportChangedMessage& message)
+    void OnViewportChanged(const Deprecated::IViewport::ViewportChangedMessage& message)
     {
       viewportChanged_ = true;
     }

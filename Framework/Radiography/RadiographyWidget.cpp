@@ -35,7 +35,7 @@ namespace OrthancStone
     // MONOCHROME1 images must be inverted and the user can invert the 
     // image, too -> XOR the two
     return (scene_->GetPreferredPhotomotricDisplayMode() == 
-      PhotometricDisplayMode_Monochrome1) ^ invert_; 
+            RadiographyPhotometricDisplayMode_Monochrome1) ^ invert_; 
   }
 
   void RadiographyWidget::RenderBackground(
@@ -46,14 +46,14 @@ namespace OrthancStone
 
     switch (scene_->GetPreferredPhotomotricDisplayMode())
     {
-    case PhotometricDisplayMode_Monochrome1:
-    case PhotometricDisplayMode_Default:
+    case RadiographyPhotometricDisplayMode_Monochrome1:
+    case RadiographyPhotometricDisplayMode_Default:
       if (IsInvertedInternal())
         backgroundValue = maxValue;
       else
         backgroundValue = minValue;
       break;
-    case PhotometricDisplayMode_Monochrome2:
+    case RadiographyPhotometricDisplayMode_Monochrome2:
       if (IsInvertedInternal())
         backgroundValue = minValue;
       else
@@ -151,7 +151,7 @@ namespace OrthancStone
 
 
   bool RadiographyWidget::RenderScene(CairoContext& context,
-                                      const ViewportGeometry& view)
+                                      const Deprecated::ViewportGeometry& view)
   {
     cairo_t* cr = context.GetObject();
 

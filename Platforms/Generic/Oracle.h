@@ -25,7 +25,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class Oracle : public boost::noncopyable
   {

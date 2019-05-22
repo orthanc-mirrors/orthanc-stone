@@ -21,7 +21,7 @@
 
 #include "RadiographySceneReader.h"
 
-#include <Framework/Toolbox/DicomFrameConverter.h>
+#include "../Deprecated/Toolbox/DicomFrameConverter.h"
 
 #include <Core/Images/FontRegistry.h>
 #include <Core/Images/PngReader.h>
@@ -33,7 +33,7 @@ namespace OrthancStone
 
   void RadiographySceneBuilder::Read(const Json::Value& input, Orthanc::ImageAccessor* dicomImage /* takes ownership */,
                                      Deprecated::DicomFrameConverter* dicomFrameConverter  /* takes ownership */,
-                                     PhotometricDisplayMode preferredPhotometricDisplayMode
+                                     RadiographyPhotometricDisplayMode preferredPhotometricDisplayMode
                                      )
   {
     dicomImage_.reset(dicomImage);

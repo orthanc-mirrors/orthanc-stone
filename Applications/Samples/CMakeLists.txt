@@ -8,6 +8,9 @@ project(OrthancStone)
 
 include(../../Resources/CMake/OrthancStoneParameters.cmake)
 
+set(ENABLE_STONE_DEPRECATED ON)  # Need deprecated classes for these samples
+
+
 if (OPENSSL_NO_CAPIENG)
 add_definitions(-DOPENSSL_NO_CAPIENG=1)
 endif()
@@ -208,7 +211,6 @@ elseif (ENABLE_WASM)
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/AppStatus.h
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.cpp
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.h
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Messages.h
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.cpp
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.h
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.cpp

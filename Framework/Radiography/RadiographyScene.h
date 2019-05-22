@@ -22,9 +22,9 @@
 #pragma once
 
 #include "RadiographyLayer.h"
-#include "../Toolbox/DicomFrameConverter.h"
-#include "../Toolbox/OrthancApiClient.h"
-#include "Framework/StoneEnumerations.h"
+#include "../Deprecated/Toolbox/DicomFrameConverter.h"
+#include "../Deprecated/Toolbox/OrthancApiClient.h"
+#include "../StoneEnumerations.h"
 #include "Core/Images/Image.h"
 #include "Core/Images/ImageProcessing.h"
 
@@ -149,15 +149,15 @@ namespace OrthancStone
   protected:
     RadiographyLayer& RegisterLayer(RadiographyLayer* layer);
 
-    void OnTagsReceived(const OrthancApiClient::BinaryResponseReadyMessage& message);
+    void OnTagsReceived(const Deprecated::OrthancApiClient::BinaryResponseReadyMessage& message);
 
-    virtual void OnFrameReceived(const OrthancApiClient::BinaryResponseReadyMessage& message);
+    virtual void OnFrameReceived(const Deprecated::OrthancApiClient::BinaryResponseReadyMessage& message);
     
-    void OnDicomExported(const OrthancApiClient::JsonResponseReadyMessage& message);
+    void OnDicomExported(const Deprecated::OrthancApiClient::JsonResponseReadyMessage& message);
 
-    void OnDicomWebReceived(const IWebService::HttpRequestSuccessMessage& message);
+    void OnDicomWebReceived(const Deprecated::IWebService::HttpRequestSuccessMessage& message);
 
-    void OnLayerEdited(const RadiographyLayer::LayerEditedMessage& message);
+    virtual void OnLayerEdited(const RadiographyLayer::LayerEditedMessage& message);
   public:
     RadiographyScene(MessageBroker& broker);
     
@@ -169,10 +169,10 @@ namespace OrthancStone
     void GetWindowingWithDefault(float& center,
                                  float& width) const;
 
-    void SetWindowing(float center,
-                      float width);
+    virtual void SetWindowing(float center,
+                              float width);
 
-    PhotometricDisplayMode GetPreferredPhotomotricDisplayMode() const;
+    RadiographyPhotometricDisplayMode GetPreferredPhotomotricDisplayMode() const;
 
     RadiographyLayer& LoadText(const Orthanc::Font& font,
                                const std::string& utf8,
@@ -194,16 +194,16 @@ namespace OrthancStone
                                              const std::string& instance,
                                              unsigned int frame,
                                              Deprecated::DicomFrameConverter* converter,  // takes ownership
-                                             PhotometricDisplayMode preferredPhotometricDisplayMode,
+                                             RadiographyPhotometricDisplayMode preferredPhotometricDisplayMode,
                                              RadiographyLayer::Geometry* geometry);
 
-    virtual RadiographyLayer& LoadDicomFrame(OrthancApiClient& orthanc,
+    virtual RadiographyLayer& LoadDicomFrame(Deprecated::OrthancApiClient& orthanc,
                                              const std::string& instance,
                                              unsigned int frame,
                                              bool httpCompression,
                                              RadiographyLayer::Geometry* geometry); // pass NULL if you want default geometry
 
-    RadiographyLayer& LoadDicomWebFrame(IWebService& web);
+    RadiographyLayer& LoadDicomWebFrame(Deprecated::IWebService& web);
 
     void RemoveLayer(size_t layerIndex);
 
@@ -278,7 +278,7 @@ namespace OrthancStone
 
     // Export using PAM is faster than using PNG, but requires Orthanc
     // core >= 1.4.3
-    void ExportDicom(OrthancApiClient& orthanc,
+    void ExportDicom(Deprecated::OrthancApiClient& orthanc,
                      const Orthanc::DicomMap& dicom,
                      const std::string& parentOrthancId,
                      double pixelSpacingX,
@@ -287,7 +287,7 @@ namespace OrthancStone
                      ImageInterpolation interpolation,
                      bool usePam);
 
-    void ExportDicom(OrthancApiClient& orthanc,
+    void ExportDicom(Deprecated::OrthancApiClient& orthanc,
                      const Json::Value& dicomTags,
                      const std::string& parentOrthancId,
                      double pixelSpacingX,

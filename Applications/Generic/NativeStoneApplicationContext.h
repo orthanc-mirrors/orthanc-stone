@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include "../../Framework/Viewport/WidgetViewport.h"
-#include "../../Framework/Volumes/ISlicedVolume.h"
-#include "../../Framework/Volumes/IVolumeLoader.h"
+#include "../../Framework/Deprecated/Viewport/WidgetViewport.h"
+#include "../../Framework/Deprecated/Volumes/ISlicedVolume.h"
+#include "../../Framework/Deprecated/Volumes/IVolumeLoader.h"
 
 #include <list>
 #include <boost/thread.hpp>
@@ -37,7 +37,7 @@ namespace OrthancStone
     static void UpdateThread(NativeStoneApplicationContext* that);
 
     boost::recursive_mutex    globalMutex_;
-    WidgetViewport  centralViewport_;
+    Deprecated::WidgetViewport  centralViewport_;
     boost::thread   updateThread_;
     bool            stopped_;
     unsigned int    updateDelayInMs_;
@@ -56,9 +56,9 @@ namespace OrthancStone
       {
       }
 
-      IWidget& SetCentralWidget(IWidget* widget);   // Takes ownership
+      Deprecated::IWidget& SetCentralWidget(Deprecated::IWidget* widget);   // Takes ownership
 
-      IViewport& GetCentralViewport() 
+      Deprecated::IViewport& GetCentralViewport() 
       {
         return that_.centralViewport_;
       }

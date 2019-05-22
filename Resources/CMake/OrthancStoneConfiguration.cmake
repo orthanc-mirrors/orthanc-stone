@@ -308,6 +308,10 @@ endif()
 
 if (ENABLE_STONE_DEPRECATED)
   list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomDatasetReader.cpp
+    ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomPath.cpp
+    ${ORTHANC_ROOT}/Plugins/Samples/Common/FullOrthancDataset.cpp
+    ${ORTHANC_ROOT}/Plugins/Samples/Common/IOrthancConnection.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/CircleMeasureTracker.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/ColorFrameRenderer.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/DicomSeriesVolumeSlicer.cpp
@@ -419,6 +423,14 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/TextBoundingBox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingItemsSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingStrategy.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObservable.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObserver.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageBroker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageForwarder.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/Promise.h
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/OracleCommandWithPayload.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyAlphaLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyDicomLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp
@@ -460,19 +472,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeReslicer.cpp
 
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObservable.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObserver.h
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageBroker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageForwarder.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/Promise.h
-
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomDatasetReader.cpp
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomPath.cpp
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/FullOrthancDataset.cpp
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/IOrthancConnection.cpp
-  
   ${PLATFORM_SOURCES}
   ${APPLICATIONS_SOURCES}
   ${ORTHANC_CORE_SOURCES}

@@ -21,6 +21,8 @@
 #pragma once
 
 #include "MeasureTools.h"
+
+#include "../Scene2DViewport/LayerHolder.h"
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2D/ScenePoint2D.h"
 #include "../Scene2D/PolylineSceneLayer.h"
@@ -37,14 +39,7 @@ namespace OrthancStone
   class AngleMeasureTool : public MeasureTool
   {
   public:
-    AngleMeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW)
-      : MeasureTool(broker, controllerW)
-      , layersCreated(false)
-      , polylineZIndex_(-1)
-      , textBaseZIndex_(-1)
-    {
-
-    }
+    AngleMeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW);
 
     ~AngleMeasureTool();
 
@@ -53,23 +48,15 @@ namespace OrthancStone
     void SetSide2End(ScenePoint2D start);
 
   private:
-    PolylineSceneLayer* GetPolylineLayer();
-    
-    // 0 --> 3 are for the text background (outline)
-    // 4 is for the actual text
-    TextSceneLayer*     GetTextLayer(int index);
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();
 
   private:
-    ScenePoint2D side1End_;
-    ScenePoint2D side2End_;
-    ScenePoint2D center_;
-    bool         layersCreated;
-    int          polylineZIndex_;
-    int          textBaseZIndex_;
+    ScenePoint2D    side1End_;
+    ScenePoint2D    side2End_;
+    ScenePoint2D    center_;
+    LayerHolderPtr  layerHolder_;
   };
-
 }
 
 

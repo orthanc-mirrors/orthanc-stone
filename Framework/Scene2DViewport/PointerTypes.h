@@ -29,6 +29,7 @@ namespace OrthancStone
 {
   class Scene2D;
   typedef boost::shared_ptr<Scene2D> Scene2DPtr;
+  typedef boost::shared_ptr<const Scene2D> Scene2DConstPtr;
 
   typedef boost::weak_ptr<Scene2D> Scene2DWPtr;
 
@@ -69,13 +70,13 @@ namespace OrthancStone
   typedef boost::shared_ptr<CreateAngleMeasureCommand>
     CreateAngleMeasureCommandPtr;
 
-
-  typedef boost::shared_ptr<Scene2D> Scene2DPtr;
-
   class TrackerCommand;
   typedef boost::shared_ptr<TrackerCommand> TrackerCommandPtr;
 
   class ViewportController;
   typedef boost::shared_ptr<ViewportController> ViewportControllerPtr;
   typedef boost::weak_ptr<ViewportController> ViewportControllerWPtr;
+
+  class LayerHolder;
+  typedef boost::shared_ptr<LayerHolder> LayerHolderPtr;
 }

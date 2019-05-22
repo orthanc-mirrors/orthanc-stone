@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#include "PointerTypes.h"
 #include "../Scene2D/PolylineSceneLayer.h"
 #include "../Scene2D/Scene2D.h"
 
@@ -30,10 +31,9 @@ namespace OrthancStone
   square sides are parallel to the canvas boundaries.
   */
   void AddSquare(PolylineSceneLayer::Chain& chain,
-    const Scene2D&      scene,
+    Scene2DConstPtr     scene,
     const ScenePoint2D& centerS,
-    const double&       sideLength);
-
+    const double&       sideLengthS);
 
   /**
     Creates an arc centered on c that goes
@@ -49,7 +49,6 @@ namespace OrthancStone
   */
   void AddShortestArc(
       PolylineSceneLayer::Chain&  chain
-    , const Scene2D&              scene
     , const ScenePoint2D&         p1
     , const ScenePoint2D&         c
     , const ScenePoint2D&         p2
@@ -64,7 +63,6 @@ namespace OrthancStone
   */
   void AddShortestArc(
       PolylineSceneLayer::Chain&  chain
-    , const Scene2D&              scene
     , const ScenePoint2D&         centerS
     , const double&               radiusS
     , const double                startAngleRad
@@ -182,6 +180,6 @@ namespace OrthancStone
   from layerIndex, up to (and not including) layerIndex+5. 
   */
   void SetTextLayerOutlineProperties(
-    Scene2D& scene, int baseLayerIndex, const char* text, ScenePoint2D p);
-
+    Scene2DPtr scene, LayerHolderPtr layerHolder,
+    const char* text, ScenePoint2D p);
 }

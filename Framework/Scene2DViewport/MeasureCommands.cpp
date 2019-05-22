@@ -28,11 +28,13 @@ namespace OrthancStone
   void CreateMeasureCommand::Undo()
   {
     // simply disable the measure tool upon undo
+    GetMeasureTool()->Disable();
     GetController()->RemoveMeasureTool(GetMeasureTool());
   }
 
   void CreateMeasureCommand::Redo()
   {
+    GetMeasureTool()->Enable();
     GetController()->AddMeasureTool(GetMeasureTool());
   }
 

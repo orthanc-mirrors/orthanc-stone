@@ -19,8 +19,11 @@
  **/
 
 #include "MeasureToolsToolbox.h"
+#include "PointerTypes.h"
+#include "LayerHolder.h"
 
 #include "../Scene2D/TextSceneLayer.h"
+#include "../Scene2D/Scene2D.h"
 
 #include <boost/math/constants/constants.hpp>
 
@@ -31,6 +34,24 @@ namespace
 
 namespace OrthancStone
 {
+    void GetPositionOnBisectingLine(
+      ScenePoint2D& result
+      , const ScenePoint2D& p1
+      , const ScenePoint2D& c
+      , const ScenePoint2D& p2
+      , const double d)
+    {
+      // TODO: fix correct half-plane
+      double p1cAngle = atan2(p1.GetY() - c.GetY(), p1.GetX() - c.GetX());
+      double p2cAngle = atan2(p2.GetY() - c.GetY(), p2.GetX() - c.GetX());
+      double angle = 0.5 * (p1cAngle + p2cAngle);
+      double unitVectorX = cos(angle);
+      double unitVectorY = sin(angle);
+      double posX = c.GetX() + d * unitVectorX;
+      double posY = c.GetX() + d * unitVectorY;
+      result = ScenePoint2D(posX, posY);
+    }
+
   double RadiansToDegrees(double angleRad)
   {
     static const double factor = 180.0 / g_pi;
@@ -38,27 +59,31 @@ namespace OrthancStone
   }
 
   void AddSquare(PolylineSceneLayer::Chain& chain,
-    const Scene2D&      scene,
+    Scene2DConstPtr     scene,
     const ScenePoint2D& centerS,
-    const double&       sideLength)
+    const double&       sideLengthS)
   {
+    // get the scaling factor 
+    const double sceneToCanvas = 
+      scene->GetSceneToCanvasTransform().ComputeZoom();
+
     chain.clear();
     chain.reserve(4);
-    ScenePoint2D centerC = centerS.Apply(scene.GetSceneToCanvasTransform());
+    ScenePoint2D centerC = centerS.Apply(scene->GetSceneToCanvasTransform());
     //TODO: take DPI into account 
-    double handleLX = centerC.GetX() - sideLength / 2;
-    double handleTY = centerC.GetY() - sideLength / 2;
-    double handleRX = centerC.GetX() + sideLength / 2;
-    double handleBY = centerC.GetY() + sideLength / 2;
+    double handleLX = centerC.GetX() - sideLengthS * sceneToCanvas * 0.5;
+    double handleTY = centerC.GetY() - sideLengthS * sceneToCanvas * 0.5;
+    double handleRX = centerC.GetX() + sideLengthS * sceneToCanvas * 0.5;
+    double handleBY = centerC.GetY() + sideLengthS * sceneToCanvas * 0.5;
     ScenePoint2D LTC(handleLX, handleTY);
     ScenePoint2D RTC(handleRX, handleTY);
     ScenePoint2D RBC(handleRX, handleBY);
     ScenePoint2D LBC(handleLX, handleBY);
 
-    ScenePoint2D startLT = LTC.Apply(scene.GetCanvasToSceneTransform());
-    ScenePoint2D startRT = RTC.Apply(scene.GetCanvasToSceneTransform());
-    ScenePoint2D startRB = RBC.Apply(scene.GetCanvasToSceneTransform());
-    ScenePoint2D startLB = LBC.Apply(scene.GetCanvasToSceneTransform());
+    ScenePoint2D startLT = LTC.Apply(scene->GetCanvasToSceneTransform());
+    ScenePoint2D startRT = RTC.Apply(scene->GetCanvasToSceneTransform());
+    ScenePoint2D startRB = RBC.Apply(scene->GetCanvasToSceneTransform());
+    ScenePoint2D startLB = LBC.Apply(scene->GetCanvasToSceneTransform());
 
     chain.push_back(startLT);
     chain.push_back(startRT);
@@ -86,7 +111,6 @@ namespace OrthancStone
 
   void AddShortestArc(
       PolylineSceneLayer::Chain& chain
-    , const Scene2D&             scene
     , const ScenePoint2D&        p1
     , const ScenePoint2D&        c
     , const ScenePoint2D&        p2
@@ -96,30 +120,11 @@ namespace OrthancStone
     double p1cAngle = atan2(p1.GetY() - c.GetY(), p1.GetX() - c.GetX());
     double p2cAngle = atan2(p2.GetY() - c.GetY(), p2.GetX() - c.GetX());
     AddShortestArc(
-      chain, scene, c, radiusS, p1cAngle, p2cAngle, subdivisionsCount);
+      chain, c, radiusS, p1cAngle, p2cAngle, subdivisionsCount);
   }
 
-  void GetPositionOnBisectingLine(
-    ScenePoint2D&       result
-    , const ScenePoint2D& p1
-    , const ScenePoint2D& c
-    , const ScenePoint2D& p2
-    , const double d)
-  {
-    // TODO: fix correct half-plane
-    double p1cAngle = atan2(p1.GetY() - c.GetY(), p1.GetX() - c.GetX());
-    double p2cAngle = atan2(p2.GetY() - c.GetY(), p2.GetX() - c.GetX());
-    double angle = 0.5*(p1cAngle + p2cAngle);
-    double unitVectorX = cos(angle);
-    double unitVectorY = sin(angle);
-    double posX = c.GetX() + d * unitVectorX;
-    double posY = c.GetX() + d * unitVectorY;
-    result = ScenePoint2D(posX, posY);
-  }
-   
   void AddShortestArc(
       PolylineSceneLayer::Chain&  chain
-    , const Scene2D&              scene
     , const ScenePoint2D&         centerS
     , const double&               radiusS
     , const double                startAngleRad
@@ -197,7 +202,6 @@ namespace OrthancStone
 #endif
 
   void AddCircle(PolylineSceneLayer::Chain& chain,
-    const Scene2D&      scene,
     const ScenePoint2D& centerS,
     const double&       radiusS,
     const int           numSubdivisions)
@@ -278,38 +282,25 @@ namespace OrthancStone
 #endif
 
 
-  namespace
-  {
-    /**
-    Helper function for outlined text rendering
-    */
-    TextSceneLayer* GetOutlineTextLayer(
-      Scene2D& scene, int baseLayerIndex, int index)
-    {
-      assert(scene.HasLayer(baseLayerIndex));
-      assert(index >= 0);
-      assert(index < 5);
-
-      ISceneLayer * layer = &(scene.GetLayer(baseLayerIndex + index));
-      TextSceneLayer * concreteLayer = dynamic_cast<TextSceneLayer*>(layer);
-      assert(concreteLayer != NULL);
-      return concreteLayer;
-    }
-  }
-   
+  /**
+  This utility function assumes that the layer holder contains 5 text layers
+  and will use the first four ones for the text background and the fifth one
+  for the actual text
+  */
   void SetTextLayerOutlineProperties(
-    Scene2D& scene, int baseLayerIndex, const char* text, ScenePoint2D p)
+    Scene2DPtr scene, LayerHolderPtr layerHolder, 
+    const char* text, ScenePoint2D p)
   {
     double xoffsets[5] = { 2, 0, -2, 0, 0 };
     double yoffsets[5] = { 0, -2, 0, 2, 0 };
 
     // get the scaling factor 
     const double pixelToScene =
-      scene.GetCanvasToSceneTransform().ComputeZoom();
+      scene->GetCanvasToSceneTransform().ComputeZoom();
 
     for (int i = 0; i < 5; ++i)
     {
-      TextSceneLayer* textLayer = GetOutlineTextLayer(scene, baseLayerIndex, i);
+      TextSceneLayer* textLayer = layerHolder->GetTextLayer(i);
       textLayer->SetText(text);
 
       if (i == 4)

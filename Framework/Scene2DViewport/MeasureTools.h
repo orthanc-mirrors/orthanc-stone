@@ -20,13 +20,12 @@
 
 #pragma once
 
-#include <Framework/Scene2DViewport/PointerTypes.h>
-#include <Framework/Scene2DViewport/ViewportController.h>
-
-#include <Framework/Scene2D/Scene2D.h>
-#include <Framework/Scene2D/ScenePoint2D.h>
-#include <Framework/Scene2D/PolylineSceneLayer.h>
-#include <Framework/Scene2D/TextSceneLayer.h>
+#include "../Scene2D/PolylineSceneLayer.h"
+#include "../Scene2D/Scene2D.h"
+#include "../Scene2D/ScenePoint2D.h"
+#include "../Scene2D/TextSceneLayer.h"
+#include "../Scene2DViewport/PointerTypes.h"
+#include "../Scene2DViewport/ViewportController.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>

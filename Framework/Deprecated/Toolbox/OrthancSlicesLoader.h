@@ -23,9 +23,9 @@
 
 #include "../../Messages/IObservable.h"
 #include "../../StoneEnumerations.h"
+#include "../../Toolbox/SlicesSorter.h"
 #include "IWebService.h"
 #include "OrthancApiClient.h"
-#include "../../Toolbox/SlicesSorter.h"
 #include "Slice.h"
 
 #include <Core/Images/Image.h>

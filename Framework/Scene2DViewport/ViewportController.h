@@ -22,9 +22,9 @@
 
 #include "PointerTypes.h"
 
-#include <Framework/Scene2D/Scene2D.h>
-#include <Framework/Scene2D/PointerEvent.h>
-#include <Framework/Scene2DViewport/IFlexiblePointerTracker.h>
+#include "../Scene2D/Scene2D.h"
+#include "../Scene2D/PointerEvent.h"
+#include "../Scene2DViewport/IFlexiblePointerTracker.h"
 
 #include <stack>
 

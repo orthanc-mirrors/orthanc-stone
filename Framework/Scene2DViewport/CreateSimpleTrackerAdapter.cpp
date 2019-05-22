@@ -19,7 +19,7 @@
  **/
 
 #include "IFlexiblePointerTracker.h"
-#include <Framework/Scene2D/IPointerTracker.h>
+#include "../Scene2D/IPointerTracker.h"
 
 
 namespace OrthancStone

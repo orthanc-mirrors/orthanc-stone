@@ -20,7 +20,7 @@
 
 #include "MeasureToolsToolbox.h"
 
-#include <Framework/Scene2D/TextSceneLayer.h>
+#include "../Scene2D/TextSceneLayer.h"
 
 #include <boost/math/constants/constants.hpp>
 

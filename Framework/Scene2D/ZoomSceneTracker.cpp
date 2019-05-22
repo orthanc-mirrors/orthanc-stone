@@ -20,7 +20,7 @@
 
 
 #include "ZoomSceneTracker.h"
-#include <Framework/Scene2DViewport/ViewportController.h>
+#include "../Scene2DViewport/ViewportController.h"
 
 namespace OrthancStone
 {

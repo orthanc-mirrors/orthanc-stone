@@ -19,15 +19,16 @@
  **/
 #pragma once
 
-#include <Framework/Scene2D/Scene2D.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/noncopyable.hpp>
+#include "../Scene2D/Scene2D.h"
 
 // to be moved into Stone
 #include "PointerTypes.h"
 #include "MeasureTools.h"
 #include "LineMeasureTool.h"
 #include "AngleMeasureTool.h"
+
+#include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 namespace OrthancStone
 {

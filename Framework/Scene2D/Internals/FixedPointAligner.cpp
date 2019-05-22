@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include <Framework/Scene2DViewport/ViewportController.h>
+#include "../../Scene2DViewport/ViewportController.h"
 #include "FixedPointAligner.h"
 
 namespace OrthancStone

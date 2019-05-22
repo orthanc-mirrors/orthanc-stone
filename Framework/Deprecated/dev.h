@@ -27,8 +27,8 @@
 #include "Toolbox/DownloadStack.h"
 #include "Toolbox/GeometryToolbox.h"
 #include "Toolbox/OrthancSlicesLoader.h"
-#include "Volumes/ImageBuffer3D.h"
 #include "Volumes/ISlicedVolume.h"
+#include "Volumes/ImageBuffer3D.h"
 #include "Widgets/SliceViewerWidget.h"
 
 #include <Core/Logging.h>

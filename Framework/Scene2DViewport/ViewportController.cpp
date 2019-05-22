@@ -21,7 +21,7 @@
 #include "ViewportController.h"
 #include "MeasureCommands.h"
 
-#include <Framework/StoneException.h>
+#include "../StoneException.h"
 
 #include <boost/make_shared.hpp>
 

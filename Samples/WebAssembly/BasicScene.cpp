@@ -158,7 +158,7 @@ namespace OrthancStone
     void SetupEvents(const std::string& canvas);
 
   public:
-    WebAssemblyViewport(const std::string& canvas) :
+    WebAssemblyViewport(MessageBroker& broker, const std::string& canvas) :
       context_(canvas),
       controller_(make_shared<ViewportController>(broker)),
       compositor_(context_, *controller_->GetScene())
@@ -380,6 +380,7 @@ void OrthancStone::WebAssemblyViewport::SetupEvents(const std::string& canvas)
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport1_;
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport2_;
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport3_;
+OrthancStone::MessageBroker  broker_;
 
 EM_BOOL OnWindowResize(
   int eventType, const EmscriptenUiEvent *uiEvent, void *userData)

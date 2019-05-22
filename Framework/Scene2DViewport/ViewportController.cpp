@@ -130,8 +130,9 @@ namespace OrthancStone
   {
     ORTHANC_ASSERT(std::find(measureTools_.begin(), measureTools_.end(), measureTool)
       != measureTools_.end(), "Measure tool not found");
-    measureTools_.push_back(measureTool);
+    measureTools_.erase(
+      std::remove(measureTools_.begin(), measureTools_.end(), measureTool), 
+      measureTools_.end());
   }
-
 }
 

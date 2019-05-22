@@ -328,7 +328,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextureBaseSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ZoomSceneTracker.cpp
-
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/AngleMeasureTool.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/AngleMeasureTool.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateAngleMeasureTracker.cpp
@@ -347,6 +346,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditLineMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditLineMeasureTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/IFlexiblePointerTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LayerHolder.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LayerHolder.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LineMeasureTool.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LineMeasureTool.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureCommands.cpp

@@ -38,14 +38,7 @@ namespace OrthancStone
   class LineMeasureTool : public MeasureTool
   {
   public:
-    LineMeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW)
-      : MeasureTool(broker, controllerW)
-      , layersCreated(false)
-      , polylineZIndex_(-1)
-      , textZIndex_(-1)
-    {
-
-    }
+    LineMeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW);
 
     ~LineMeasureTool();
 
@@ -54,17 +47,14 @@ namespace OrthancStone
     void Set(ScenePoint2D start, ScenePoint2D end);
 
   private:
-    PolylineSceneLayer* GetPolylineLayer();
-    TextSceneLayer*     GetTextLayer();
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();
 
   private:
-    ScenePoint2D start_;
-    ScenePoint2D end_;
-    bool         layersCreated;
-    int          polylineZIndex_;
-    int          textZIndex_;
+    ScenePoint2D   start_;
+    ScenePoint2D   end_;
+    LayerHolderPtr layerHolder_;
+    int            baseLayerIndex_;
   };
 
 }

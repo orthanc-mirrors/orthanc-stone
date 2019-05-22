@@ -34,3 +34,5 @@ Resources/CommandTool/protoc-tests/node_modules/
 Samples/Sdl/ThirdPartyDownloads/
 Samples/Sdl/CMakeLists.txt.orig
 
+Samples/WebAssembly/build/
+Samples/WebAssembly/ThirdPartyDownloads/

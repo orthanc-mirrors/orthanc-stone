@@ -20,12 +20,23 @@
 
 #include "LineMeasureTool.h"
 #include "MeasureToolsToolbox.h"
+#include "LayerHolder.h"
 
 #include <Core/Logging.h>
 
+#include <boost/make_shared.hpp>
 
 namespace OrthancStone
 {
+
+  LineMeasureTool::LineMeasureTool(
+    MessageBroker& broker, ViewportControllerWPtr controllerW)
+    : MeasureTool(broker, controllerW)
+    , layerHolder_(boost::make_shared<LayerHolder>(controllerW, 1, 5))
+  {
+
+  }
+
   LineMeasureTool::~LineMeasureTool()
   {
     // this measuring tool is a RABI for the corresponding visual layers
@@ -36,16 +47,12 @@ namespace OrthancStone
 
   void LineMeasureTool::RemoveFromScene()
   {
-    if (layersCreated)
+    if (layerHolder_->AreLayersCreated() && IsSceneAlive())
     {
-      assert(GetScene()->HasLayer(polylineZIndex_));
-      assert(GetScene()->HasLayer(textZIndex_));
-      GetScene()->DeleteLayer(polylineZIndex_);
-      GetScene()->DeleteLayer(textZIndex_);
+      layerHolder_->DeleteLayers();
     }
   }
-
-
+  
   void LineMeasureTool::SetStart(ScenePoint2D start)
   {
     start_ = start;
@@ -65,58 +72,22 @@ namespace OrthancStone
     RefreshScene();
   }
 
-  PolylineSceneLayer* LineMeasureTool::GetPolylineLayer()
-  {
-    assert(GetScene()->HasLayer(polylineZIndex_));
-    ISceneLayer* layer = &(GetScene()->GetLayer(polylineZIndex_));
-    PolylineSceneLayer* concreteLayer = dynamic_cast<PolylineSceneLayer*>(layer);
-    assert(concreteLayer != NULL);
-    return concreteLayer;
-  }
-
-  TextSceneLayer* LineMeasureTool::GetTextLayer()
-  {
-    assert(GetScene()->HasLayer(textZIndex_));
-    ISceneLayer* layer = &(GetScene()->GetLayer(textZIndex_));
-    TextSceneLayer* concreteLayer = dynamic_cast<TextSceneLayer*>(layer);
-    assert(concreteLayer != NULL);
-    return concreteLayer;
-  }
-
   void LineMeasureTool::RefreshScene()
   {
     if (IsSceneAlive())
     {
       if (IsEnabled())
       {
-        if (!layersCreated)
-        {
-          // Create the layers if need be
+        // get the scaling factor 
+        const double pixelToScene =
+          GetScene()->GetCanvasToSceneTransform().ComputeZoom();
 
-          assert(textZIndex_ == -1);
-          {
-            polylineZIndex_ = GetScene()->GetMaxDepth() + 100;
-            //LOG(INFO) << "set polylineZIndex_ to: " << polylineZIndex_;
-            std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
-            GetScene()->SetLayer(polylineZIndex_, layer.release());
-          }
-          {
-            textZIndex_ = GetScene()->GetMaxDepth() + 100;
-            //LOG(INFO) << "set textZIndex_ to: " << textZIndex_;
-            std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-            GetScene()->SetLayer(textZIndex_, layer.release());
-          }
-          layersCreated = true;
-        }
-        else
-        {
-          assert(GetScene()->HasLayer(polylineZIndex_));
-          assert(GetScene()->HasLayer(textZIndex_));
-        }
+        layerHolder_->CreateLayersIfNeeded();
+
         {
           // Fill the polyline layer with the measurement line
 
-          PolylineSceneLayer* polylineLayer = GetPolylineLayer();
+          PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(0);
           polylineLayer->ClearAllChains();
           polylineLayer->SetColor(0, 223, 21);
 
@@ -133,68 +104,46 @@ namespace OrthancStone
 
             {
               PolylineSceneLayer::Chain chain;
-              AddSquare(chain, *GetScene(), start_, 10.0); //TODO: take DPI into account
+              
+              //TODO: take DPI into account
+              AddSquare(chain, GetScene(), start_, 10.0 * pixelToScene);
+              
               polylineLayer->AddChain(chain, true);
             }
 
             {
               PolylineSceneLayer::Chain chain;
-              AddSquare(chain, *GetScene(), end_, 10.0); //TODO: take DPI into account
+              
+              //TODO: take DPI into account
+              AddSquare(chain, GetScene(), end_, 10.0 * pixelToScene);
+              
               polylineLayer->AddChain(chain, true);
             }
-
-            //ScenePoint2D startC = start_.Apply(GetScene()->GetSceneToCanvasTransform());
-            //double squareSize = 10.0; 
-            //double startHandleLX = startC.GetX() - squareSize/2;
-            //double startHandleTY = startC.GetY() - squareSize / 2;
-            //double startHandleRX = startC.GetX() + squareSize / 2;
-            //double startHandleBY = startC.GetY() + squareSize / 2;
-            //ScenePoint2D startLTC(startHandleLX, startHandleTY);
-            //ScenePoint2D startRTC(startHandleRX, startHandleTY);
-            //ScenePoint2D startRBC(startHandleRX, startHandleBY);
-            //ScenePoint2D startLBC(startHandleLX, startHandleBY);
-
-            //ScenePoint2D startLT = startLTC.Apply(GetScene()->GetCanvasToSceneTransform());
-            //ScenePoint2D startRT = startRTC.Apply(GetScene()->GetCanvasToSceneTransform());
-            //ScenePoint2D startRB = startRBC.Apply(GetScene()->GetCanvasToSceneTransform());
-            //ScenePoint2D startLB = startLBC.Apply(GetScene()->GetCanvasToSceneTransform());
-
-            //PolylineSceneLayer::Chain chain;
-            //chain.push_back(startLT);
-            //chain.push_back(startRT);
-            //chain.push_back(startRB);
-            //chain.push_back(startLB);
-            //polylineLayer->AddChain(chain, true);
           }
 
         }
         {
           // Set the text layer proporeties
 
-          TextSceneLayer* textLayer = GetTextLayer();
           double deltaX = end_.GetX() - start_.GetX();
           double deltaY = end_.GetY() - start_.GetY();
           double squareDist = deltaX * deltaX + deltaY * deltaY;
           double dist = sqrt(squareDist);
           char buf[64];
           sprintf(buf, "%0.02f units", dist);
-          textLayer->SetText(buf);
-          textLayer->SetColor(0, 223, 21);
 
           // TODO: for now we simply position the text overlay at the middle
           // of the measuring segment
           double midX = 0.5 * (end_.GetX() + start_.GetX());
           double midY = 0.5 * (end_.GetY() + start_.GetY());
-          textLayer->SetPosition(midX, midY);
+
+          SetTextLayerOutlineProperties(
+            GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY));
         }
       }
       else
       {
-        if (layersCreated)
-        {
-          RemoveFromScene();
-          layersCreated = false;
-        }
+        RemoveFromScene();
       }
     }
   }

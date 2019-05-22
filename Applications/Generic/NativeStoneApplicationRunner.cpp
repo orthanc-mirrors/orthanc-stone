@@ -19,8 +19,8 @@
  **/
 
 
-#if ORTHANC_ENABLE_NATIVE != 1
-#error this file shall be included only with the ORTHANC_ENABLE_NATIVE set to 1
+#if ORTHANC_ENABLE_THREADS != 1
+#error this file shall be included only with the ORTHANC_ENABLE_THREADS set to 1
 #endif
 
 #include "NativeStoneApplicationRunner.h"

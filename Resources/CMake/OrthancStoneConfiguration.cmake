@@ -109,7 +109,7 @@ elseif(ENABLE_SDL)
   message("SDL is enabled")
   include(${CMAKE_CURRENT_LIST_DIR}/SdlConfiguration.cmake)
   add_definitions(
-    -DORTHANC_ENABLE_NATIVE=1
+    -DORTHANC_ENABLE_THREADS=1
     -DORTHANC_ENABLE_QT=0
     -DORTHANC_ENABLE_SDL=1
     )
@@ -117,7 +117,7 @@ elseif(ENABLE_QT)
   message("QT is enabled")
   include(${CMAKE_CURRENT_LIST_DIR}/QtConfiguration.cmake)
   add_definitions(
-    -DORTHANC_ENABLE_NATIVE=1
+    -DORTHANC_ENABLE_THREADS=1
     -DORTHANC_ENABLE_QT=1
     -DORTHANC_ENABLE_SDL=0
     )
@@ -127,7 +127,7 @@ else()
   add_definitions(
     -DORTHANC_ENABLE_SDL=0
     -DORTHANC_ENABLE_QT=0
-    -DORTHANC_ENABLE_NATIVE=0
+    -DORTHANC_ENABLE_THREADS=0
     )
 endif()
 
@@ -433,6 +433,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancWebViewerJpegCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/OracleCommandWithPayload.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/OrthancRestApiCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/ThreadedOracle.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyAlphaLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyDicomLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp

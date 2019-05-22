@@ -36,3 +36,4 @@ Samples/Sdl/CMakeLists.txt.orig
 
 Samples/WebAssembly/build/
 Samples/WebAssembly/ThirdPartyDownloads/
+Samples/WebAssembly/installDir/

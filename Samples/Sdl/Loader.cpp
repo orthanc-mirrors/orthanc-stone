@@ -82,72 +82,71 @@ namespace OrthancStone
   };
 
 
+  class InvalidExtractedSlice : public IVolumeSlicer::ExtractedSlice
+  {
+  public:
+    virtual bool IsValid()
+    {
+      return false;
+    }
+
+    virtual uint64_t GetRevision()
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
+    virtual ISceneLayer* CreateSceneLayer()
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  };
+
 
   class DicomVolumeImageOrthogonalSlice : public IVolumeSlicer::ExtractedSlice
   {
   private:
-    CoordinateSystem3D  cuttingPlane_;
-    bool                isInitialized_;
-    bool                valid_;
-    VolumeProjection    projection_;
-    unsigned int        sliceIndex_;
-    uint64_t            revision_;
-
-    void Initialize()
-    {
-      if (!isInitialized_)
-      {
-        valid_ = DetectSlice(projection_, sliceIndex_, revision_, cuttingPlane_);
-        isInitialized_ = true;
-      }
-    }
+    const ImageBuffer3D&        image_;
+    const VolumeImageGeometry&  geometry_;
+    bool                        valid_;
+    VolumeProjection            projection_;
+    unsigned int                sliceIndex_;
 
   protected:
-    virtual const ImageBuffer3D& GetImage() const = 0;
-
-    virtual const VolumeImageGeometry& GetGeometry() const = 0;
-
-    // WARNING - This cannot be invoked from the constructor, hence lazy "Initialize()"
-    virtual bool DetectSlice(VolumeProjection& projection,
-                             unsigned int& sliceIndex,
-                             uint64_t& revision,
-                             const CoordinateSystem3D& cuttingPlane) const = 0;
+    virtual uint64_t GetRevisionInternal(VolumeProjection projection,
+                                         unsigned int sliceIndex) const = 0;
 
     virtual const DicomInstanceParameters& GetDicomParameters(VolumeProjection projection,
                                                               unsigned int sliceIndex) const = 0;
 
   public:
-    DicomVolumeImageOrthogonalSlice(const CoordinateSystem3D& cuttingPlane) :
-      cuttingPlane_(cuttingPlane),
-      isInitialized_(false)
+    DicomVolumeImageOrthogonalSlice(const ImageBuffer3D& image,
+                                    const VolumeImageGeometry& geometry,
+                                    const CoordinateSystem3D& cuttingPlane) :
+      image_(image),
+      geometry_(geometry)
     {
+      valid_ = geometry_.DetectSlice(projection_, sliceIndex_, cuttingPlane);
     }
 
     virtual bool IsValid()
     {
-      Initialize();
-
       return valid_;
     }
 
     virtual uint64_t GetRevision()
     {
-      Initialize();
-
       if (!valid_)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
       else
       {
-        return revision_;
+        return GetRevisionInternal(projection_, sliceIndex_);
       }
     }
 
     virtual ISceneLayer* CreateSceneLayer()
     {
-      Initialize();
-
       if (!valid_)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
@@ -157,11 +156,12 @@ namespace OrthancStone
         std::auto_ptr<TextureBaseSceneLayer> texture;
         
         {
-          ImageBuffer3D::SliceReader reader(GetImage(), projection_, sliceIndex_);
-          texture.reset(GetDicomParameters(projection_, sliceIndex_).CreateTexture(reader.GetAccessor()));
+          const DicomInstanceParameters& parameters = GetDicomParameters(projection_, sliceIndex_);
+          ImageBuffer3D::SliceReader reader(image_, projection_, sliceIndex_);
+          texture.reset(parameters.CreateTexture(reader.GetAccessor()));
         }
 
-        const CoordinateSystem3D& system = GetGeometry().GetProjectionGeometry(projection_);
+        const CoordinateSystem3D& system = geometry_.GetProjectionGeometry(projection_);
 
         double x0, y0, x1, y1;
         system.ProjectPoint(x0, y0, system.GetOrigin());
@@ -177,7 +177,7 @@ namespace OrthancStone
         }
         
         Vector tmp;
-        GetGeometry().GetVoxelDimensions(projection_);
+        geometry_.GetVoxelDimensions(projection_);
         texture->SetPixelSpacing(tmp[0], tmp[1]);
 
         // texture->SetLinearInterpolation(linearInterpolation_);   // TODO
@@ -199,40 +199,18 @@ namespace OrthancStone
       const DicomSeriesVolumeImage&  that_;
 
     protected:
-      virtual const ImageBuffer3D& GetImage() const 
+      virtual uint64_t GetRevisionInternal(VolumeProjection projection,
+                                           unsigned int sliceIndex) const
       {
-        return that_.GetImage();
-      }
-
-      virtual const VolumeImageGeometry& GetGeometry() const
-      {
-        return that_.GetGeometry();
-      }
-
-      virtual bool DetectSlice(VolumeProjection& projection,
-                               unsigned int& sliceIndex,
-                               uint64_t& revision,
-                               const CoordinateSystem3D& cuttingPlane) const
-      {
-        if (!that_.HasGeometry() ||
-            !that_.GetGeometry().DetectSlice(projection, sliceIndex, cuttingPlane))
+        if (projection == VolumeProjection_Axial)
         {
-          return false;
+          return that_.GetSliceRevision(sliceIndex);
         }
         else
         {
-          if (projection == VolumeProjection_Axial)
-          {
-            revision = that_.GetSliceRevision(sliceIndex);
-          }
-          else
-          {
-            // For coronal and sagittal projections, we take the global
-            // revision of the volume
-            revision = that_.GetRevision();
-          }
-
-          return true;
+          // For coronal and sagittal projections, we take the global
+          // revision of the volume
+          return that_.GetRevision();
         }
       }
 
@@ -245,7 +223,7 @@ namespace OrthancStone
     public:
       Slice(const DicomSeriesVolumeImage& that,
             const CoordinateSystem3D& plane) :
-        DicomVolumeImageOrthogonalSlice(plane),
+        DicomVolumeImageOrthogonalSlice(that.GetImage(), that.GetGeometry(), plane),
         that_(that)
       {
       }
@@ -497,7 +475,14 @@ namespace OrthancStone
 
     virtual IVolumeSlicer::ExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) const
     {
-      return new Slice(*this, cuttingPlane);
+      if (HasGeometry())
+      {
+        return new Slice(*this, cuttingPlane);
+      }
+      else
+      {
+        return new InvalidExtractedSlice;
+      }
     }
   };
 

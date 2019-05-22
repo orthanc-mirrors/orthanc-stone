@@ -44,13 +44,13 @@ namespace Deprecated
       
     private:
       const Orthanc::ImageAccessor&  frame_;
-      OrthancStone::SliceImageQuality              imageQuality_;
+      SliceImageQuality              imageQuality_;
       const Slice&                   slice_;
 
     public:
       FrameReadyMessage(DicomSeriesVolumeSlicer& origin,
                         const Orthanc::ImageAccessor& frame,
-                        OrthancStone::SliceImageQuality imageQuality,
+                        SliceImageQuality imageQuality,
                         const Slice& slice) :
         OriginMessage(origin),
         frame_(frame),
@@ -64,7 +64,7 @@ namespace Deprecated
         return frame_;
       }
 
-      OrthancStone::SliceImageQuality GetImageQuality() const
+      SliceImageQuality GetImageQuality() const
       {
         return imageQuality_;
       }
@@ -80,7 +80,7 @@ namespace Deprecated
     class RendererFactory;
     
     OrthancSlicesLoader  loader_;
-    OrthancStone::SliceImageQuality    quality_;
+    SliceImageQuality    quality_;
 
   public:
     DicomSeriesVolumeSlicer(OrthancStone::MessageBroker& broker,
@@ -93,12 +93,12 @@ namespace Deprecated
     void LoadFrame(const std::string& instanceId,
                    unsigned int frame);
 
-    void SetImageQuality(OrthancStone::SliceImageQuality quality)
+    void SetImageQuality(SliceImageQuality quality)
     {
       quality_ = quality;
     }
 
-    OrthancStone::SliceImageQuality GetImageQuality() const
+    SliceImageQuality GetImageQuality() const
     {
       return quality_;
     }

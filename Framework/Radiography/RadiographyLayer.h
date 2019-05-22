@@ -31,6 +31,23 @@ namespace OrthancStone
 {
   class RadiographyScene;
 
+  enum RadiographyControlPointType
+  {
+    RadiographyControlPointType_TopLeftCorner = 0,
+    RadiographyControlPointType_TopRightCorner = 1,
+    RadiographyControlPointType_BottomRightCorner = 2,
+    RadiographyControlPointType_BottomLeftCorner = 3
+  };
+
+  enum RadiographyPhotometricDisplayMode
+  {
+    RadiographyPhotometricDisplayMode_Default,
+
+    RadiographyPhotometricDisplayMode_Monochrome1,
+    RadiographyPhotometricDisplayMode_Monochrome2
+  };
+
+  
   struct ControlPoint
   {
     double x;
@@ -196,7 +213,7 @@ namespace OrthancStone
     AffineTransform2D  transform_;
     AffineTransform2D  transformInverse_;
     Geometry           geometry_;
-    PhotometricDisplayMode  prefferedPhotometricDisplayMode_;
+    RadiographyPhotometricDisplayMode  prefferedPhotometricDisplayMode_;
     const RadiographyScene&   scene_;
 
   protected:
@@ -210,7 +227,7 @@ namespace OrthancStone
       return transformInverse_;
     }
 
-    void SetPreferredPhotomotricDisplayMode(PhotometricDisplayMode  prefferedPhotometricDisplayMode);
+    void SetPreferredPhotomotricDisplayMode(RadiographyPhotometricDisplayMode  prefferedPhotometricDisplayMode);
 
   private:
     void UpdateTransform();
@@ -325,7 +342,7 @@ namespace OrthancStone
     virtual bool GetDefaultWindowing(float& center,
                                      float& width) const = 0;
 
-    PhotometricDisplayMode GetPreferredPhotomotricDisplayMode() const
+    RadiographyPhotometricDisplayMode GetPreferredPhotomotricDisplayMode() const
     {
       return prefferedPhotometricDisplayMode_;
     }

@@ -41,7 +41,7 @@ namespace Deprecated
     typedef std::map<std::string, boost::shared_ptr<IVolumeSlicer> > PreloadingInstances;
     PreloadingInstances preloadingInstances_;
 
-    OrthancStone::SliceImageQuality     imageQuality_;
+    SliceImageQuality     imageQuality_;
     OrthancApiClient&     orthancApiClient_;
 
   public:
@@ -51,7 +51,7 @@ namespace Deprecated
 //    void PreloadSeries(const std::string seriesId);
     void PreloadSlice(const std::string instanceId, unsigned int frame);
 
-    void SetImageQuality(OrthancStone::SliceImageQuality imageQuality) { imageQuality_ = imageQuality; }
+    void SetImageQuality(SliceImageQuality imageQuality) { imageQuality_ = imageQuality; }
 
     void SetFrameInWidget(SliceViewerWidget& sliceViewer, size_t layerIndex, const std::string& instanceId, unsigned int frame);
 

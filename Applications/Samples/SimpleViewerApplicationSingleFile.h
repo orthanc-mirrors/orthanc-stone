@@ -312,7 +312,7 @@ namespace OrthancStone
 
           // sources
           smartLoader_.reset(new Deprecated::SmartLoader(GetBroker(), context->GetOrthancApiClient()));
-          smartLoader_->SetImageQuality(SliceImageQuality_FullPam);
+          smartLoader_->SetImageQuality(Deprecated::SliceImageQuality_FullPam);
 
           mainLayout_->SetTransmitMouseOver(true);
           mainWidgetInteractor_.reset(new MainWidgetInteractor(*this));

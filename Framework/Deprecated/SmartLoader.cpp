@@ -54,8 +54,8 @@ namespace Deprecated
 
       virtual ILayerRenderer* CreateRenderer() const
       {
-        bool isFull = (that_.effectiveQuality_ == OrthancStone::SliceImageQuality_FullPng ||
-                       that_.effectiveQuality_ == OrthancStone::SliceImageQuality_FullPam);
+        bool isFull = (that_.effectiveQuality_ == SliceImageQuality_FullPng ||
+                       that_.effectiveQuality_ == SliceImageQuality_FullPam);
 
         return FrameRenderer::CreateRenderer(*that_.image_, *that_.slice_, isFull);
       }
@@ -64,7 +64,7 @@ namespace Deprecated
     unsigned int                    sliceIndex_;
     std::auto_ptr<Slice>            slice_;
     boost::shared_ptr<Orthanc::ImageAccessor>   image_;
-    OrthancStone::SliceImageQuality               effectiveQuality_;
+    SliceImageQuality               effectiveQuality_;
     CachedSliceStatus               status_;
 
   public:
@@ -123,7 +123,7 @@ namespace Deprecated
                            OrthancApiClient& orthancApiClient) :
     IObservable(broker),
     IObserver(broker),
-    imageQuality_(OrthancStone::SliceImageQuality_FullPam),
+    imageQuality_(SliceImageQuality_FullPam),
     orthancApiClient_(orthancApiClient)
   {
   }

@@ -63,8 +63,8 @@ namespace Deprecated
 
     virtual ILayerRenderer* CreateRenderer() const
     {
-      bool isFull = (message_.GetEffectiveQuality() == OrthancStone::SliceImageQuality_FullPng ||
-                     message_.GetEffectiveQuality() == OrthancStone::SliceImageQuality_FullPam);
+      bool isFull = (message_.GetEffectiveQuality() == SliceImageQuality_FullPng ||
+                     message_.GetEffectiveQuality() == SliceImageQuality_FullPam);
 
       return FrameRenderer::CreateRenderer(message_.GetImage(), message_.GetSlice(), isFull);
     }
@@ -92,7 +92,7 @@ namespace Deprecated
     IVolumeSlicer(broker),
     IObserver(broker),
     loader_(broker, orthanc),
-    quality_(OrthancStone::SliceImageQuality_FullPng)
+    quality_(SliceImageQuality_FullPng)
   {
     loader_.RegisterObserverCallback(
       new OrthancStone::Callable<DicomSeriesVolumeSlicer, OrthancSlicesLoader::SliceGeometryReadyMessage>

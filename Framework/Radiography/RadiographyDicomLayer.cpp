@@ -85,11 +85,11 @@ namespace OrthancStone
     {
       if (tmp == "MONOCHROME1")
       {
-        SetPreferredPhotomotricDisplayMode(PhotometricDisplayMode_Monochrome1);
+        SetPreferredPhotomotricDisplayMode(RadiographyPhotometricDisplayMode_Monochrome1);
       }
       else if (tmp == "MONOCHROME2")
       {
-        SetPreferredPhotomotricDisplayMode(PhotometricDisplayMode_Monochrome2);
+        SetPreferredPhotomotricDisplayMode(RadiographyPhotometricDisplayMode_Monochrome2);
       }
     }
   }

@@ -172,18 +172,18 @@ namespace OrthancStone
     }
   }
 
-  PhotometricDisplayMode RadiographyScene::GetPreferredPhotomotricDisplayMode() const
+  RadiographyPhotometricDisplayMode RadiographyScene::GetPreferredPhotomotricDisplayMode() const
   {
     // return the mode of the first layer who "cares" about its display mode (normaly, the one and only layer that is a DicomLayer)
     for (Layers::const_iterator it = layers_.begin(); it != layers_.end(); it++)
     {
-      if (it->second->GetPreferredPhotomotricDisplayMode() != PhotometricDisplayMode_Default)
+      if (it->second->GetPreferredPhotomotricDisplayMode() != RadiographyPhotometricDisplayMode_Default)
       {
         return it->second->GetPreferredPhotomotricDisplayMode();
       }
     }
 
-    return PhotometricDisplayMode_Default;
+    return RadiographyPhotometricDisplayMode_Default;
   }
 
 
@@ -345,7 +345,7 @@ namespace OrthancStone
                                                      const std::string& instance,
                                                      unsigned int frame,
                                                      Deprecated::DicomFrameConverter* converter,  // takes ownership
-                                                     PhotometricDisplayMode preferredPhotometricDisplayMode,
+                                                     RadiographyPhotometricDisplayMode preferredPhotometricDisplayMode,
                                                      RadiographyLayer::Geometry* geometry)
   {
     RadiographyDicomLayer& layer = dynamic_cast<RadiographyDicomLayer&>(RegisterLayer(new RadiographyDicomLayer(IObservable::GetBroker(), *this)));
@@ -642,9 +642,9 @@ namespace OrthancStone
 
     createDicomRequestContent["Tags"] = dicomTags;
 
-    PhotometricDisplayMode photometricMode = GetPreferredPhotomotricDisplayMode();
-    if ((invert && photometricMode != PhotometricDisplayMode_Monochrome2) ||
-        (!invert && photometricMode == PhotometricDisplayMode_Monochrome1))
+    RadiographyPhotometricDisplayMode photometricMode = GetPreferredPhotomotricDisplayMode();
+    if ((invert && photometricMode != RadiographyPhotometricDisplayMode_Monochrome2) ||
+        (!invert && photometricMode == RadiographyPhotometricDisplayMode_Monochrome1))
     {
       createDicomRequestContent["Tags"]["PhotometricInterpretation"] = "MONOCHROME1";
     }

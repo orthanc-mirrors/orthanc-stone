@@ -48,14 +48,14 @@ namespace Deprecated
       unsigned int                   sliceIndex_;
       const Slice&                   slice_;
       const Orthanc::ImageAccessor&  image_;
-      OrthancStone::SliceImageQuality  effectiveQuality_;
+      SliceImageQuality              effectiveQuality_;
 
     public:
       SliceImageReadyMessage(const OrthancSlicesLoader& origin,
                              unsigned int sliceIndex,
                              const Slice& slice,
                              const Orthanc::ImageAccessor& image,
-                             OrthancStone::SliceImageQuality effectiveQuality) :
+                             SliceImageQuality effectiveQuality) :
         OriginMessage(origin),
         sliceIndex_(sliceIndex),
         slice_(slice),
@@ -79,7 +79,7 @@ namespace Deprecated
         return image_;
       }
 
-      OrthancStone::SliceImageQuality GetEffectiveQuality() const
+      SliceImageQuality GetEffectiveQuality() const
       {
         return effectiveQuality_;
       }        
@@ -93,13 +93,13 @@ namespace Deprecated
     private:
       const Slice&       slice_;
       unsigned int       sliceIndex_;
-      OrthancStone::SliceImageQuality  effectiveQuality_;
+      SliceImageQuality  effectiveQuality_;
 
     public:
       SliceImageErrorMessage(const OrthancSlicesLoader& origin,
                              unsigned int sliceIndex,
                              const Slice& slice,
-                             OrthancStone::SliceImageQuality effectiveQuality) :
+                             SliceImageQuality effectiveQuality) :
         OriginMessage(origin),
         slice_(slice),
         sliceIndex_(sliceIndex),
@@ -116,7 +116,7 @@ namespace Deprecated
         return slice_;
       }
 
-      OrthancStone::SliceImageQuality GetEffectiveQuality() const
+      SliceImageQuality GetEffectiveQuality() const
       {
         return effectiveQuality_;
       }        
@@ -178,7 +178,7 @@ namespace Deprecated
 
     void ScheduleSliceImageJpeg(const Slice& slice,
                                 size_t index,
-                                OrthancStone::SliceImageQuality quality);
+                                SliceImageQuality quality);
 
     void SortAndFinalizeSlices();
     
@@ -204,6 +204,6 @@ namespace Deprecated
                      const OrthancStone::CoordinateSystem3D& plane) const;
 
     void ScheduleLoadSliceImage(size_t index,
-                                OrthancStone::SliceImageQuality requestedQuality);
+                                SliceImageQuality requestedQuality);
   };
 }

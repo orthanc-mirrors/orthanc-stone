@@ -78,7 +78,7 @@ namespace Deprecated
     unsigned int       sliceIndex_;
     const Slice*       slice_;
     std::string        instanceId_;
-    OrthancStone::SliceImageQuality  quality_;
+    SliceImageQuality  quality_;
 
     Operation(Mode mode) :
       mode_(mode)
@@ -91,7 +91,7 @@ namespace Deprecated
       return mode_;
     }
 
-    OrthancStone::SliceImageQuality GetQuality() const
+    SliceImageQuality GetQuality() const
     {
       assert(mode_ == Mode_LoadImage ||
              mode_ == Mode_LoadRawImage);
@@ -144,7 +144,7 @@ namespace Deprecated
 
     static Operation* DownloadSliceImage(unsigned int  sliceIndex,
                                          const Slice&  slice,
-                                         OrthancStone::SliceImageQuality quality)
+                                         SliceImageQuality quality)
     {
       std::auto_ptr<Operation> tmp(new Operation(Mode_LoadImage));
       tmp->sliceIndex_ = sliceIndex;
@@ -159,7 +159,7 @@ namespace Deprecated
       std::auto_ptr<Operation> tmp(new Operation(Mode_LoadRawImage));
       tmp->sliceIndex_ = sliceIndex;
       tmp->slice_ = &slice;
-      tmp->quality_ = OrthancStone::SliceImageQuality_InternalRaw;
+      tmp->quality_ = SliceImageQuality_InternalRaw;
       return tmp.release();
     }
 
@@ -778,7 +778,7 @@ namespace Deprecated
         IWebService::HttpRequestErrorMessage>
           (*this, &OrthancSlicesLoader::OnSliceImageError),
       Operation::DownloadSliceImage(
-        static_cast<unsigned int>(index), slice, OrthancStone::SliceImageQuality_FullPng));
+        static_cast<unsigned int>(index), slice, SliceImageQuality_FullPng));
 }
   
   void OrthancSlicesLoader::ScheduleSliceImagePam(const Slice& slice,
@@ -814,28 +814,28 @@ namespace Deprecated
         IWebService::HttpRequestErrorMessage>
           (*this, &OrthancSlicesLoader::OnSliceImageError),
       Operation::DownloadSliceImage(static_cast<unsigned int>(index), 
-                                    slice, OrthancStone::SliceImageQuality_FullPam));
+                                    slice, SliceImageQuality_FullPam));
   }
 
 
   
   void OrthancSlicesLoader::ScheduleSliceImageJpeg(const Slice& slice,
                                                    size_t index,
-                                                   OrthancStone::SliceImageQuality quality)
+                                                   SliceImageQuality quality)
   {
     unsigned int value;
     
     switch (quality)
     {
-      case OrthancStone::SliceImageQuality_Jpeg50:
+      case SliceImageQuality_Jpeg50:
         value = 50;
         break;
 
-      case OrthancStone::SliceImageQuality_Jpeg90:
+      case SliceImageQuality_Jpeg90:
         value = 90;
         break;
 
-      case OrthancStone::SliceImageQuality_Jpeg95:
+      case SliceImageQuality_Jpeg95:
         value = 95;
         break;
       
@@ -863,7 +863,7 @@ namespace Deprecated
   
   
   void OrthancSlicesLoader::ScheduleLoadSliceImage(size_t index,
-                                                   OrthancStone::SliceImageQuality quality)
+                                                   SliceImageQuality quality)
   {
     if (state_ != State_GeometryReady)
     {
@@ -876,10 +876,10 @@ namespace Deprecated
     {
       switch (quality)
       {
-        case OrthancStone::SliceImageQuality_FullPng:
+        case SliceImageQuality_FullPng:
           ScheduleSliceImagePng(slice, index);
           break;
-        case OrthancStone::SliceImageQuality_FullPam:
+        case SliceImageQuality_FullPam:
           ScheduleSliceImagePam(slice, index);
           break;
         default:

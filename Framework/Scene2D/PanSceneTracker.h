@@ -25,8 +25,6 @@
 
 namespace OrthancStone
 {
-  class ViewportController;
-
   class PanSceneTracker : public OneGesturePointerTracker
   {
   public:

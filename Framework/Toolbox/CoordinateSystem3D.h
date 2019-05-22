@@ -86,6 +86,8 @@ namespace OrthancStone
       return axisY_;
     }
 
+    void SetOrigin(const Vector& origin);
+
     Vector MapSliceToWorldCoordinates(double x,
                                       double y) const;
     

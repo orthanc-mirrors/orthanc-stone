@@ -79,7 +79,7 @@ namespace OrthancStone
 
     void SetOrthancParameters(const Orthanc::WebServiceParameters& orthanc);
 
-    void SetWorkersCount(unsigned int count);
+    void SetThreadsCount(unsigned int count);
 
     void SetSleepingTimeResolution(unsigned int milliseconds);
 

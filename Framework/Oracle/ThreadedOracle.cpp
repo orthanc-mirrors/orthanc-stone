@@ -87,7 +87,7 @@ namespace OrthancStone
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
         }
 
-        expiration_ = (boost::posix_time::second_clock::local_time() + 
+        expiration_ = (boost::posix_time::microsec_clock::local_time() + 
                        boost::posix_time::milliseconds(command_->GetDelay()));
       }
 
@@ -134,7 +134,7 @@ namespace OrthancStone
     {
       boost::mutex::scoped_lock lock(mutex_);
 
-      const boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+      const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
 
       Content  stillSleeping;
         
@@ -439,7 +439,7 @@ namespace OrthancStone
   }
 
 
-  void ThreadedOracle::SetWorkersCount(unsigned int count)
+  void ThreadedOracle::SetThreadsCount(unsigned int count)
   {
     boost::mutex::scoped_lock lock(mutex_);
 

@@ -30,6 +30,7 @@
 // From Stone
 #include "../../Framework/Loaders/BasicFetchingItemsSorter.h"
 #include "../../Framework/Loaders/BasicFetchingStrategy.h"
+#include "../../Framework/Scene2D/CairoCompositor.h"
 #include "../../Framework/Scene2D/Scene2D.h"
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Toolbox/GeometryToolbox.h"
@@ -38,7 +39,9 @@
 #include "../../Framework/Volumes/VolumeImageGeometry.h"
 
 // From Orthanc framework
+#include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
+#include <Core/Images/PngWriter.h>
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 #include <Core/SystemToolbox.h>
@@ -46,15 +49,6 @@
 
 namespace OrthancStone
 {
-  static bool IsSameCuttingPlane(const CoordinateSystem3D& a,
-                                  const CoordinateSystem3D& b)
-  {
-    double distance;
-    return (CoordinateSystem3D::ComputeDistance(distance, a, b) &&
-            LinearAlgebra::IsCloseToZero(distance));
-  }
-
-
   class IVolumeSlicer : public boost::noncopyable
   {
   public:
@@ -111,6 +105,14 @@ namespace OrthancStone
     VolumeProjection            projection_;
     unsigned int                sliceIndex_;
 
+    void CheckValid() const
+    {
+      if (!valid_)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+    }
+
   protected:
     virtual uint64_t GetRevisionInternal(VolumeProjection projection,
                                          unsigned int sliceIndex) const = 0;
@@ -128,6 +130,18 @@ namespace OrthancStone
       valid_ = geometry_.DetectSlice(projection_, sliceIndex_, cuttingPlane);
     }
 
+    VolumeProjection GetProjection() const
+    {
+      CheckValid();
+      return projection_;
+    }
+
+    unsigned int GetSliceIndex() const
+    {
+      CheckValid();
+      return sliceIndex_;
+    }
+
     virtual bool IsValid()
     {
       return valid_;
@@ -135,65 +149,51 @@ namespace OrthancStone
 
     virtual uint64_t GetRevision()
     {
-      if (!valid_)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      else
-      {
-        return GetRevisionInternal(projection_, sliceIndex_);
-      }
+      CheckValid();
+      return GetRevisionInternal(projection_, sliceIndex_);
     }
 
     virtual ISceneLayer* CreateSceneLayer()
     {
-      if (!valid_)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      else
-      {
-        std::auto_ptr<TextureBaseSceneLayer> texture;
+      CheckValid();
+
+      std::auto_ptr<TextureBaseSceneLayer> texture;
         
-        {
-          const DicomInstanceParameters& parameters = GetDicomParameters(projection_, sliceIndex_);
-          ImageBuffer3D::SliceReader reader(image_, projection_, sliceIndex_);
-          texture.reset(parameters.CreateTexture(reader.GetAccessor()));
-        }
-
-        const CoordinateSystem3D& system = geometry_.GetProjectionGeometry(projection_);
-
-        double x0, y0, x1, y1;
-        system.ProjectPoint(x0, y0, system.GetOrigin());
-        system.ProjectPoint(x1, y1, system.GetOrigin() + system.GetAxisX());
-        texture->SetOrigin(x0, y0);
-
-        double dx = x1 - x0;
-        double dy = y1 - y0;
-        if (!LinearAlgebra::IsCloseToZero(dx) ||
-            !LinearAlgebra::IsCloseToZero(dy))
-        {
-          texture->SetAngle(atan2(dy, dx));
-        }
-        
-        Vector tmp;
-        geometry_.GetVoxelDimensions(projection_);
-        texture->SetPixelSpacing(tmp[0], tmp[1]);
-
-        // texture->SetLinearInterpolation(linearInterpolation_);   // TODO
-
-        return texture.release();
+      {
+        const DicomInstanceParameters& parameters = GetDicomParameters(projection_, sliceIndex_);
+        ImageBuffer3D::SliceReader reader(image_, projection_, sliceIndex_);
+        texture.reset(parameters.CreateTexture(reader.GetAccessor()));
       }
+
+      const CoordinateSystem3D& system = geometry_.GetProjectionGeometry(projection_);
+
+      double x0, y0, x1, y1;
+      system.ProjectPoint(x0, y0, system.GetOrigin());
+      system.ProjectPoint(x1, y1, system.GetOrigin() + system.GetAxisX());
+      texture->SetOrigin(x0, y0);
+
+      double dx = x1 - x0;
+      double dy = y1 - y0;
+      if (!LinearAlgebra::IsCloseToZero(dx) ||
+          !LinearAlgebra::IsCloseToZero(dy))
+      {
+        texture->SetAngle(atan2(dy, dx));
+      }
+        
+      Vector tmp = geometry_.GetVoxelDimensions(projection_);
+      texture->SetPixelSpacing(tmp[0], tmp[1]);
+
+      return texture.release();
     }
   };
 
 
   // This class combines a 3D image buffer, a 3D volume geometry and
   // information about the DICOM parameters of each slice.
-  class DicomSeriesVolumeImage : public IVolumeSlicer
+  class DicomSeriesVolumeImage : public boost::noncopyable
   {
-  private:
-    class Slice : public DicomVolumeImageOrthogonalSlice
+  public:
+    class ExtractedSlice : public DicomVolumeImageOrthogonalSlice
     {
     private:
       const DicomSeriesVolumeImage&  that_;
@@ -221,8 +221,8 @@ namespace OrthancStone
       }
 
     public:
-      Slice(const DicomSeriesVolumeImage& that,
-            const CoordinateSystem3D& plane) :
+      ExtractedSlice(const DicomSeriesVolumeImage& that,
+                     const CoordinateSystem3D& plane) :
         DicomVolumeImageOrthogonalSlice(that.GetImage(), that.GetGeometry(), plane),
         that_(that)
       {
@@ -230,6 +230,7 @@ namespace OrthancStone
     };
 
 
+  private:
     std::auto_ptr<ImageBuffer3D>           image_;
     std::auto_ptr<VolumeImageGeometry>     geometry_;
     std::vector<DicomInstanceParameters*>  slices_;
@@ -472,40 +473,13 @@ namespace OrthancStone
         slicesRevision_[index] += 1;
       }
     }
-
-    virtual IVolumeSlicer::ExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) const
-    {
-      if (HasGeometry())
-      {
-        return new Slice(*this, cuttingPlane);
-      }
-      else
-      {
-        return new InvalidExtractedSlice;
-      }
-    }
   };
 
 
 
-  // This class combines a 3D DICOM volume together with its loader
-  class IDicomVolumeImageSource : public boost::noncopyable
-  {
-  public:
-    virtual ~IDicomVolumeImageSource()
-    {
-    }
-
-    virtual const DicomSeriesVolumeImage& GetVolume() const = 0;
-
-    virtual void NotifyAxialSliceAccessed(unsigned int sliceIndex) = 0;
-  };
-  
-  
-
-  class OrthancSeriesVolumeProgressiveLoader :
-    public IObserver,
-    public IDicomVolumeImageSource
+  class OrthancSeriesVolumeProgressiveLoader : 
+    public IObserver, 
+    public IVolumeSlicer
   {
   private:
     static const unsigned int LOW_QUALITY = 0;
@@ -641,10 +615,10 @@ namespace OrthancStone
     }
 
 
-    IOracle&          oracle_;
-    bool              active_;
+    IOracle&                oracle_;
+    bool                    active_;
     DicomSeriesVolumeImage  volume_;
-    unsigned int      simultaneousDownloads_;
+    unsigned int            simultaneousDownloads_;
 
     std::auto_ptr<IFetchingItemsSorter::IFactory>  sorter_;
     std::auto_ptr<IFetchingStrategy>               strategy_;
@@ -705,22 +679,33 @@ namespace OrthancStone
     }
     
 
-    virtual const DicomSeriesVolumeImage& GetVolume() const
+    const DicomSeriesVolumeImage& GetVolume() const
     {
       return volume_;
     }
 
-    
-    virtual void NotifyAxialSliceAccessed(unsigned int sliceIndex)
+
+    virtual IVolumeSlicer::ExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) const
     {
-      if (strategy_.get() == NULL)
+      if (volume_.HasGeometry() &&
+          volume_.GetSlicesCount() != 0)
       {
-        // Should have called GetVolume().HasGeometry() before
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+        std::auto_ptr<DicomVolumeImageOrthogonalSlice> slice
+          (new DicomSeriesVolumeImage::ExtractedSlice(volume_, cuttingPlane));
+
+        assert(slice.get() != NULL &&
+               strategy_.get() != NULL);            
+
+        if (slice->GetProjection() == VolumeProjection_Axial)
+        {
+          strategy_->SetCurrent(slice->GetSliceIndex());          
+        }
+
+        return slice.release();
       }
       else
       {
-        strategy_->SetCurrent(sliceIndex);
+        return new InvalidExtractedSlice;
       }
     }
   };
@@ -751,92 +736,39 @@ namespace OrthancStone
 #endif
 
 
-  /*  class VolumeSlicerBase : public OLD_IVolumeSlicer
-      {
-      private:
-      Scene2D&            scene_;
-      int                               layerDepth_;
-      bool                              first_;
-      CoordinateSystem3D  lastPlane_;
-
-      protected:
-      bool HasCuttingPlaneChanged(const CoordinateSystem3D& plane) const
-      {
-      if (first_ ||
-      !LinearAlgebra::IsCloseToZero(
-      boost::numeric::ublas::norm_2(lastPlane_.GetNormal() - plane.GetNormal())))
-      {
-      // This is the first rendering, or the plane has not the same orientation
-      return false;
-      }
-      else
-      {
-      double offset1 = lastPlane_.ProjectAlongNormal(plane.GetOrigin());
-      double offset2 = lastPlane_.ProjectAlongNormal(lastPlane_.GetOrigin());
-      return LinearAlgebra::IsCloseToZero(offset2 - offset1);
-      }
-      }
-
-      void SetLastCuttingPlane(const CoordinateSystem3D& plane)
-      {
-      first_ = false;
-      lastPlane_ = plane;
-      }
-
-      void SetLayer(ISceneLayer* layer)
-      {
-      scene_.SetLayer(layerDepth_, layer);
-      }
-
-      void DeleteLayer()
-      {
-      scene_.DeleteLayer(layerDepth_);
-      }
-    
-      public:
-      VolumeSlicerBase(Scene2D& scene,
-      int layerDepth) :
-      scene_(scene),
-      layerDepth_(layerDepth),
-      first_(true)
-      {
-      }
-      };*/
-  
-
-
-  class OLD_IVolumeSlicer : public boost::noncopyable
-  {
-  public:
-    virtual ~OLD_IVolumeSlicer()
-    {
-    }
-
-    virtual void SetCuttingPlane(Scene2D& scene,
-                                  const CoordinateSystem3D& plane) = 0;
-  };
-
-
-  class DicomVolumeMPRSlicer : public OLD_IVolumeSlicer
+  class SceneVolumeSlicer : public boost::noncopyable
   {
   private:
-    bool                      linearInterpolation_;
-    int                       layerDepth_;
-    IDicomVolumeImageSource&  source_;
-    bool                      first_;
-    VolumeProjection          lastProjection_;
-    unsigned int              lastSliceIndex_;
-    uint64_t                  lastSliceRevision_;
+    int                                layerDepth_;
+    std::auto_ptr<IVolumeSlicer>       volume_;
+    bool                               linearInterpolation_;
+    std::auto_ptr<CoordinateSystem3D>  lastPlane_;
+    uint64_t                           lastRevision_;
+
+    static bool IsSameCuttingPlane(const CoordinateSystem3D& a,
+                                   const CoordinateSystem3D& b)
+    {
+      double distance;
+      return (CoordinateSystem3D::ComputeDistance(distance, a, b) &&
+              LinearAlgebra::IsCloseToZero(distance));
+    }
 
   public:
-    DicomVolumeMPRSlicer(Scene2D& scene,
-                         int layerDepth,
-                         IDicomVolumeImageSource& source) :
-      linearInterpolation_(false),
+    SceneVolumeSlicer(int layerDepth,
+                      IVolumeSlicer* volume) :   // Takes ownership
       layerDepth_(layerDepth),
-      source_(source),
-      first_(true)
+      volume_(volume),
+      linearInterpolation_(false)
     {
+      if (volume == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+    }
+
+    const IVolumeSlicer& GetSlicer() const
+    {
+      return *volume_;
     }
 
     void SetLinearInterpolation(bool enabled)
@@ -848,96 +780,55 @@ namespace OrthancStone
     {
       return linearInterpolation_;
     }
-    
-    virtual void SetCuttingPlane(Scene2D& scene,
-                                  const CoordinateSystem3D& plane)
+
+    void Update(Scene2D& scene,
+                const CoordinateSystem3D& plane)
     {
-      if (!source_.GetVolume().HasGeometry() ||
-          source_.GetVolume().GetSlicesCount() == 0)
+      assert(volume_.get() != NULL);
+      std::auto_ptr<IVolumeSlicer::ExtractedSlice> slice(volume_->ExtractSlice(plane));
+
+      if (slice.get() == NULL)
       {
-        scene.DeleteLayer(layerDepth_);
-        return;
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);        
       }
 
-      const VolumeImageGeometry& geometry = source_.GetVolume().GetGeometry();
-
-      VolumeProjection projection;
-      unsigned int sliceIndex;
-      if (!geometry.DetectSlice(projection, sliceIndex, plane))
+      if (!slice->IsValid())
       {
-        // The cutting plane is neither axial, nor coronal, nor
-        // sagittal. Could use "VolumeReslicer" here.
+        // The slicer cannot handle this cutting plane: Clear the layer
         scene.DeleteLayer(layerDepth_);
-        return;
+        lastPlane_.reset(NULL);
       }
-
-      uint64_t sliceRevision;
-      if (projection == VolumeProjection_Axial)
+      else if (lastPlane_.get() != NULL &&
+               IsSameCuttingPlane(*lastPlane_, plane) &&
+               lastRevision_ == slice->GetRevision())
       {
-        sliceRevision = source_.GetVolume().GetSliceRevision(sliceIndex);
-
-        if (first_ ||
-            lastSliceIndex_ != sliceIndex)
-        {
-          // Reorder the prefetching queue
-          source_.NotifyAxialSliceAccessed(sliceIndex);
-        }
+        // The content of the slice has not changed: Do nothing
       }
       else
       {
-        // For coronal and sagittal projections, we take the global
-        // revision of the volume
-        sliceRevision = source_.GetVolume().GetRevision();
-      }
+        // Content has changed: An update is needed
+        lastPlane_.reset(new CoordinateSystem3D(plane));
+        lastRevision_ = slice->GetRevision();
 
-      if (first_ ||
-          lastProjection_ != projection ||
-          lastSliceIndex_ != sliceIndex ||
-          lastSliceRevision_ != sliceRevision)
-      {
-        // Either the cutting plane, or the content of the slice have not
-        // changed since the last time the layer was set: Update is needed
-
-        first_ = false;
-        lastProjection_ = projection;
-        lastSliceIndex_ = sliceIndex;
-        lastSliceRevision_ = sliceRevision;
-
-        std::auto_ptr<TextureBaseSceneLayer> texture;
-        
+        std::auto_ptr<ISceneLayer> layer(slice->CreateSceneLayer());
+        if (layer.get() == NULL)
         {
-          const DicomInstanceParameters& parameters = source_.GetVolume().GetSliceParameters
-            (projection == VolumeProjection_Axial ? sliceIndex : 0);
-
-          ImageBuffer3D::SliceReader reader(source_.GetVolume().GetImage(), projection, sliceIndex);
-          texture.reset(parameters.CreateTexture(reader.GetAccessor()));
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);        
         }
 
-        const CoordinateSystem3D& system = geometry.GetProjectionGeometry(projection);
-
-        double x0, y0, x1, y1;
-        system.ProjectPoint(x0, y0, system.GetOrigin());
-        system.ProjectPoint(x0, y0, system.GetOrigin() + system.GetAxisX());
-        texture->SetOrigin(x0, y0);
-
-        double dx = x1 - x0;
-        double dy = y1 - y0;
-        if (!LinearAlgebra::IsCloseToZero(dx) ||
-            !LinearAlgebra::IsCloseToZero(dy))
+        if (layer->GetType() == ISceneLayer::Type_ColorTexture ||
+            layer->GetType() == ISceneLayer::Type_FloatTexture)
         {
-          texture->SetAngle(atan2(dy, dx));
+          dynamic_cast<TextureBaseSceneLayer&>(*layer).SetLinearInterpolation(linearInterpolation_);
         }
         
-        Vector tmp;
-        geometry.GetVoxelDimensions(projection);
-        texture->SetPixelSpacing(tmp[0], tmp[1]);
-
-        texture->SetLinearInterpolation(linearInterpolation_);
-    
-        scene.SetLayer(layerDepth_, texture.release());    
+        scene.SetLayer(layerDepth_, layer.release());
       }
     }
   };
+
+
+
 
 
   class NativeApplicationContext : public IMessageEmitter
@@ -1015,9 +906,57 @@ namespace OrthancStone
 class Toto : public OrthancStone::IObserver
 {
 private:
+  OrthancStone::IOracle& oracle_;
+  OrthancStone::Scene2D             scene_;
+  std::auto_ptr<OrthancStone::SceneVolumeSlicer>  slicer_;
+
   void Handle(const OrthancStone::SleepOracleCommand::TimeoutMessage& message)
   {
-    printf("TIMEOUT! %d\n", dynamic_cast<const Orthanc::SingleValueObject<unsigned int>& >(message.GetOrigin().GetPayload()).GetValue());
+    if (message.GetOrigin().HasPayload())
+    {
+      printf("TIMEOUT! %d\n", dynamic_cast<const Orthanc::SingleValueObject<unsigned int>& >(message.GetOrigin().GetPayload()).GetValue());
+    }
+    else
+    {
+      printf("TIMEOUT\n");
+
+      if (slicer_.get() != NULL)
+      {
+        OrthancStone::CoordinateSystem3D plane;
+
+        const OrthancStone::OrthancSeriesVolumeProgressiveLoader& loader =
+          dynamic_cast<const OrthancStone::OrthancSeriesVolumeProgressiveLoader&>(slicer_->GetSlicer());
+        
+        if (loader.GetVolume().HasGeometry())
+        {
+          plane = loader.GetVolume().GetGeometry().GetSagittalGeometry();
+          plane.SetOrigin(loader.GetVolume().GetGeometry().GetCoordinates(0.5f, 0.5f, 0.5f));
+        }
+
+        slicer_->Update(scene_, plane);
+        scene_.FitContent(1024, 768);
+
+        {
+          OrthancStone::CairoCompositor compositor(scene_, 1024, 768);
+          compositor.Refresh();
+
+          Orthanc::ImageAccessor accessor;
+          compositor.GetCanvas().GetReadOnlyAccessor(accessor);
+
+          Orthanc::Image tmp(Orthanc::PixelFormat_RGB24, accessor.GetWidth(), accessor.GetHeight(), false);
+          Orthanc::ImageProcessing::Convert(tmp, accessor);
+
+          static unsigned int count = 0;
+          char buf[64];
+          sprintf(buf, "scene-%06d.png", count++);
+
+          Orthanc::PngWriter writer;
+          writer.WriteToFile(buf, tmp);
+        }
+      }
+
+      oracle_.Schedule(*this, new OrthancStone::SleepOracleCommand(message.GetOrigin().GetDelay()));
+    }
   }
 
   void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
@@ -1055,28 +994,36 @@ private:
   }
 
 public:
-  Toto(OrthancStone::IObservable& oracle) :
-    IObserver(oracle.GetBroker())
+  Toto(OrthancStone::IOracle& oracle,
+       OrthancStone::IObservable& oracleObservable) :
+    IObserver(oracleObservable.GetBroker()),
+    oracle_(oracle)
   {
-    oracle.RegisterObserverCallback
+    oracleObservable.RegisterObserverCallback
       (new OrthancStone::Callable
        <Toto, OrthancStone::SleepOracleCommand::TimeoutMessage>(*this, &Toto::Handle));
 
-    oracle.RegisterObserverCallback
+    oracleObservable.RegisterObserverCallback
       (new OrthancStone::Callable
        <Toto, OrthancStone::OrthancRestApiCommand::SuccessMessage>(*this, &Toto::Handle));
 
-    oracle.RegisterObserverCallback
+    oracleObservable.RegisterObserverCallback
       (new OrthancStone::Callable
        <Toto, OrthancStone::GetOrthancImageCommand::SuccessMessage>(*this, &Toto::Handle));
 
-    oracle.RegisterObserverCallback
+    oracleObservable.RegisterObserverCallback
       (new OrthancStone::Callable
        <Toto, OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage>(*this, &Toto::Handle));
 
-    oracle.RegisterObserverCallback
+    oracleObservable.RegisterObserverCallback
       (new OrthancStone::Callable
        <Toto, OrthancStone::OracleCommandExceptionMessage>(*this, &Toto::Handle));
+  }
+
+  void SetVolume(int depth,
+                 OrthancStone::IVolumeSlicer* volume)
+  {
+    slicer_.reset(new OrthancStone::SceneVolumeSlicer(0, volume));
   }
 };
 
@@ -1089,10 +1036,12 @@ void Run(OrthancStone::NativeApplicationContext& context,
 
   {
     OrthancStone::NativeApplicationContext::WriterLock lock(context);
-    toto.reset(new Toto(lock.GetOracleObservable()));
+    toto.reset(new Toto(oracle, lock.GetOracleObservable()));
     loader1.reset(new OrthancStone::OrthancSeriesVolumeProgressiveLoader(oracle, lock.GetOracleObservable()));
     loader2.reset(new OrthancStone::OrthancSeriesVolumeProgressiveLoader(oracle, lock.GetOracleObservable()));
   }
+
+  oracle.Schedule(*toto, new OrthancStone::SleepOracleCommand(100));
 
   if (0)
   {
@@ -1177,6 +1126,9 @@ void Run(OrthancStone::NativeApplicationContext& context,
   //loader1->LoadSeries("5990e39c-51e5f201-fe87a54c-31a55943-e59ef80e");  // CT
   loader1->LoadSeries("67f1b334-02c16752-45026e40-a5b60b6b-030ecab5");  // Lung 1/10mm
 
+
+  toto->SetVolume(0, loader1.release());
+
   LOG(WARNING) << "...Waiting for Ctrl-C...";
   Orthanc::SystemToolbox::ServerBarrier();
   //boost::this_thread::sleep(boost::posix_time::seconds(1));
@@ -1199,6 +1151,7 @@ int main(int argc, char* argv[])
     OrthancStone::NativeApplicationContext context;
 
     OrthancStone::ThreadedOracle oracle(context);
+    oracle.SetThreadsCount(1);
 
     {
       Orthanc::WebServiceParameters p;

@@ -25,8 +25,6 @@
 
 #include "../StoneException.h"
 
-using namespace Orthanc;
-
 namespace OrthancStone
 {
   OneGesturePointerTracker::OneGesturePointerTracker(

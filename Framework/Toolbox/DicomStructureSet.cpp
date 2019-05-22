@@ -367,9 +367,7 @@ namespace OrthancStone
 
   DicomStructureSet::DicomStructureSet(const OrthancPlugins::FullOrthancDataset& tags)
   {
-    using namespace OrthancPlugins;
-
-    DicomDatasetReader reader(tags);
+    OrthancPlugins::DicomDatasetReader reader(tags);
     
     size_t count, tmp;
     if (!tags.GetSequenceSize(count, DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE) ||
@@ -385,18 +383,18 @@ namespace OrthancStone
     for (size_t i = 0; i < count; i++)
     {
       structures_[i].interpretation_ = reader.GetStringValue
-        (DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
-                   DICOM_TAG_RT_ROI_INTERPRETED_TYPE),
+        (OrthancPlugins::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
+                                   DICOM_TAG_RT_ROI_INTERPRETED_TYPE),
          "No interpretation");
 
       structures_[i].name_ = reader.GetStringValue
-        (DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
-                   DICOM_TAG_ROI_NAME),
+        (OrthancPlugins::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
+                                   DICOM_TAG_ROI_NAME),
          "No interpretation");
 
       Vector color;
-      if (ParseVector(color, tags, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                             DICOM_TAG_ROI_DISPLAY_COLOR)) &&
+      if (ParseVector(color, tags, OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                             DICOM_TAG_ROI_DISPLAY_COLOR)) &&
           color.size() == 3)
       {
         structures_[i].red_ = ConvertColor(color[0]);
@@ -411,8 +409,8 @@ namespace OrthancStone
       }
 
       size_t countSlices;
-      if (!tags.GetSequenceSize(countSlices, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                       DICOM_TAG_CONTOUR_SEQUENCE)))
+      if (!tags.GetSequenceSize(countSlices, OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                                       DICOM_TAG_CONTOUR_SEQUENCE)))
       {
         countSlices = 0;
       }
@@ -429,9 +427,9 @@ namespace OrthancStone
         unsigned int countPoints;
 
         if (!reader.GetUnsignedIntegerValue
-            (countPoints, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                    DICOM_TAG_CONTOUR_SEQUENCE, j,
-                                    DICOM_TAG_NUMBER_OF_CONTOUR_POINTS)))
+            (countPoints, OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                    DICOM_TAG_CONTOUR_SEQUENCE, j,
+                                                    DICOM_TAG_NUMBER_OF_CONTOUR_POINTS)))
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
@@ -439,9 +437,9 @@ namespace OrthancStone
         //LOG(INFO) << "Parsing slice containing " << countPoints << " vertices";
 
         std::string type = reader.GetMandatoryStringValue
-          (DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                     DICOM_TAG_CONTOUR_SEQUENCE, j,
-                     DICOM_TAG_CONTOUR_GEOMETRIC_TYPE));
+          (OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                     DICOM_TAG_CONTOUR_SEQUENCE, j,
+                                     DICOM_TAG_CONTOUR_GEOMETRIC_TYPE));
         if (type != "CLOSED_PLANAR")
         {
           LOG(WARNING) << "Ignoring contour with geometry type: " << type;
@@ -449,24 +447,24 @@ namespace OrthancStone
         }
 
         size_t size;
-        if (!tags.GetSequenceSize(size, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                  DICOM_TAG_CONTOUR_SEQUENCE, j,
-                                                  DICOM_TAG_CONTOUR_IMAGE_SEQUENCE)) ||
+        if (!tags.GetSequenceSize(size, OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                                  DICOM_TAG_CONTOUR_SEQUENCE, j,
+                                                                  DICOM_TAG_CONTOUR_IMAGE_SEQUENCE)) ||
             size != 1)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
         }
 
         std::string sopInstanceUid = reader.GetMandatoryStringValue
-          (DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                     DICOM_TAG_CONTOUR_SEQUENCE, j,
-                     DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
-                     DICOM_TAG_REFERENCED_SOP_INSTANCE_UID));
+          (OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                     DICOM_TAG_CONTOUR_SEQUENCE, j,
+                                     DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
+                                     DICOM_TAG_REFERENCED_SOP_INSTANCE_UID));
         
         std::string slicesData = reader.GetMandatoryStringValue
-          (DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                     DICOM_TAG_CONTOUR_SEQUENCE, j,
-                     DICOM_TAG_CONTOUR_DATA));
+          (OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                     DICOM_TAG_CONTOUR_SEQUENCE, j,
+                                     DICOM_TAG_CONTOUR_DATA));
 
         Vector points;
         if (!LinearAlgebra::ParseVector(points, slicesData) ||

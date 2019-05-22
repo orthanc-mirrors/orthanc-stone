@@ -21,8 +21,6 @@
 #include "MeasureTrackers.h"
 #include <Core/OrthancException.h>
 
-using namespace Orthanc;
-
 namespace OrthancStone
 {
 

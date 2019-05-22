@@ -25,8 +25,6 @@
 
 #include <boost/make_shared.hpp>
 
-using namespace Orthanc;
-
 namespace OrthancStone
 {
   ViewportController::ViewportController(MessageBroker& broker)

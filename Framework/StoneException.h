@@ -120,6 +120,6 @@ namespace OrthancStone
       std::stringstream sst; \
       sst << "Assertion failed. Condition = \"" #cond "\" Message = \"" << streamChainMessage << "\""; \
       std::string sstr = sst.str(); \
-      throw OrthancException(ErrorCode_InternalError,sstr.c_str()); \
+      throw ::Orthanc::OrthancException(::Orthanc::ErrorCode_InternalError,sstr.c_str()); \
     } else (void)0
 

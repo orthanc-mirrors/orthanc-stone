@@ -21,8 +21,6 @@
 #include "CreateAngleMeasureTracker.h"
 #include <Core/OrthancException.h>
 
-using namespace Orthanc;
-
 namespace OrthancStone
 {
   CreateAngleMeasureTracker::CreateAngleMeasureTracker(
@@ -49,7 +47,7 @@ namespace OrthancStone
 
     if (!alive_)
     {
-      throw OrthancException(ErrorCode_InternalError,
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
         "Internal error: wrong state in CreateAngleMeasureTracker::"
         "PointerMove: active_ == false");
     }
@@ -66,7 +64,7 @@ namespace OrthancStone
       GetCommand()->SetSide2End(scenePos);
       break;
     default:
-      throw OrthancException(ErrorCode_InternalError,
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
         "Wrong state in CreateAngleMeasureTracker::"
         "PointerMove: state_ invalid");
     }
@@ -88,12 +86,12 @@ namespace OrthancStone
       state_ = CreatingSide2;
       break;
     case CreatingSide2:
-      throw OrthancException(ErrorCode_InternalError,
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
         "Wrong state in CreateAngleMeasureTracker::"
         "PointerUp: state_ == CreatingSide2 ; this should not happen");
       break;
     default:
-      throw OrthancException(ErrorCode_InternalError,
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
         "Wrong state in CreateAngleMeasureTracker::"
         "PointerMove: state_ invalid");
     }
@@ -104,7 +102,7 @@ namespace OrthancStone
     switch (state_)
     {
     case CreatingSide1:
-      throw OrthancException(ErrorCode_InternalError,
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
         "Wrong state in CreateAngleMeasureTracker::"
         "PointerDown: state_ == CreatingSide1 ; this should not happen");
       break;
@@ -113,7 +111,7 @@ namespace OrthancStone
       alive_ = false;
       break;
     default:
-      throw OrthancException(ErrorCode_InternalError,
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
         "Wrong state in CreateAngleMeasureTracker::"
         "PointerMove: state_ invalid");
     }

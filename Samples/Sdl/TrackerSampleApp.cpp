@@ -20,20 +20,18 @@
 
 #include "TrackerSampleApp.h"
 
-#include <Framework/Scene2DViewport/CreateLineMeasureTracker.h>
-#include <Framework/Scene2DViewport/CreateAngleMeasureTracker.h>
+#include "../../Applications/Sdl/SdlOpenGLWindow.h"
 
-#include <Framework/Scene2D/PanSceneTracker.h>
-#include <Framework/Scene2D/RotateSceneTracker.h>
-#include <Framework/Scene2D/Scene2D.h>
-#include <Framework/Scene2D/ZoomSceneTracker.h>
-#include <Framework/Scene2D/CairoCompositor.h>
-#include <Framework/Scene2D/ColorTextureSceneLayer.h>
-#include <Framework/Scene2D/OpenGLCompositor.h>
-
-#include <Framework/StoneInitialization.h>
-
-#include <Applications/Sdl/SdlOpenGLWindow.h>
+#include "../../Framework/Scene2D/CairoCompositor.h"
+#include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
+#include "../../Framework/Scene2D/OpenGLCompositor.h"
+#include "../../Framework/Scene2D/PanSceneTracker.h"
+#include "../../Framework/Scene2D/RotateSceneTracker.h"
+#include "../../Framework/Scene2D/Scene2D.h"
+#include "../../Framework/Scene2D/ZoomSceneTracker.h"
+#include "../../Framework/Scene2DViewport/CreateAngleMeasureTracker.h"
+#include "../../Framework/Scene2DViewport/CreateLineMeasureTracker.h"
+#include "../../Framework/StoneInitialization.h"
 
 // From Orthanc framework
 #include <Core/Logging.h>

@@ -521,8 +521,6 @@ if (ENABLE_OPENGL)
 endif()
 
 
-include_directories(${ORTHANC_STONE_ROOT})
-
 
 ##
 ## TEST - Automatically add all ".h" headers to the list of sources

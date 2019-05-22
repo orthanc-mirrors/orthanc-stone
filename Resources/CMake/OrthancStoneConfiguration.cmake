@@ -32,7 +32,6 @@ endif()
 
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
 include_directories(${ORTHANC_ROOT})
-include_directories(${ORTHANC_ROOT}/Core/Images) # hack for the numerous #include "../Enumerations.h" in Orthanc to work
 
 
 #####################################################################
@@ -430,7 +429,10 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageBroker.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageForwarder.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Messages/Promise.h
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancImageCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancWebViewerJpegCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/OracleCommandWithPayload.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/OrthancRestApiCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyAlphaLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyDicomLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp
@@ -452,6 +454,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/StoneInitialization.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/AffineTransform2D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/CoordinateSystem3D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomInstanceParameters.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DynamicBitmap.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Extent2D.cpp

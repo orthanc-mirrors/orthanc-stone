@@ -31,6 +31,15 @@ namespace OrthancStone
     unsigned int  itemsCount_;
 
   public:
+    class Factory : public IFactory
+    {
+    public:
+      virtual IFetchingItemsSorter* CreateSorter(unsigned int itemsCount) const
+      {
+        return new BasicFetchingItemsSorter(itemsCount);
+      }
+    };
+
     BasicFetchingItemsSorter(unsigned int itemsCount);
 
     virtual unsigned int GetItemsCount() const

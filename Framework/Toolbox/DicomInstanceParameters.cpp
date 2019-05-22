@@ -230,7 +230,7 @@ namespace OrthancStone
 
     double distance;
 
-    return (CoordinateSystem3D::GetDistance(distance, tmp, plane) &&
+    return (CoordinateSystem3D::ComputeDistance(distance, tmp, plane) &&
             distance <= thickness_ / 2.0);
   }
 

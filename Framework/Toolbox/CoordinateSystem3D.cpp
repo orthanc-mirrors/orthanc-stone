@@ -189,9 +189,9 @@ namespace OrthancStone
   }
 
 
-  bool CoordinateSystem3D::GetDistance(double& distance,
-                                       const CoordinateSystem3D& a,
-                                       const CoordinateSystem3D& b)
+  bool CoordinateSystem3D::ComputeDistance(double& distance,
+                                           const CoordinateSystem3D& a,
+                                           const CoordinateSystem3D& b)
   {
     bool opposite;   // Ignored
 

@@ -306,54 +306,54 @@ elseif (ENABLE_WASM)
 endif()
 
 
-set(ORTHANC_STONE_DEPRECATED_SOURCES
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/CircleMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/ColorFrameRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/DicomSeriesVolumeSlicer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/DicomStructureSetSlicer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/FrameRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/GrayscaleFrameRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/IVolumeSlicer.h
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/LineLayerRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/LineMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/RenderStyle.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/SliceOutlineRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/SmartLoader.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/BaseWebService.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/DicomFrameConverter.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/DownloadStack.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/IDelayedCallExecutor.h
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/IWebService.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancApiClient.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancSlicesLoader.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/Slice.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ViewportGeometry.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IMouseTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IStatusBar.h
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IViewport.h
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/WidgetViewport.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Volumes/StructureSetLoader.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/CairoWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/EmptyWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/IWidget.h
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/IWorldSceneInteractor.h
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/IWorldSceneMouseTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/LayoutWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/PanMouseTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/PanZoomMouseTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/SliceViewerWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/TestCairoWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/TestWorldSceneWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/WidgetBase.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/WorldSceneWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/ZoomMouseTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Deprecated/dev.h
-  )
+if (ENABLE_STONE_DEPRECATED)
+  list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/CircleMeasureTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/ColorFrameRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/DicomSeriesVolumeSlicer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/DicomStructureSetSlicer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/FrameRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/GrayscaleFrameRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/IVolumeSlicer.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/LineLayerRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/LineMeasureTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/RenderStyle.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/SliceOutlineRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/SmartLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/BaseWebService.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/DicomFrameConverter.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/DownloadStack.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/IDelayedCallExecutor.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/IWebService.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancApiClient.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancSlicesLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/Slice.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ViewportGeometry.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IMouseTracker.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IStatusBar.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IViewport.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/WidgetViewport.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Volumes/StructureSetLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/CairoWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/EmptyWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/IWidget.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/IWorldSceneInteractor.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/IWorldSceneMouseTracker.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/LayoutWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/PanMouseTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/PanZoomMouseTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/SliceViewerWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/TestCairoWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/TestWorldSceneWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/WidgetBase.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/WorldSceneWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/ZoomMouseTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/dev.h
+    )
+endif()
 
 
 list(APPEND ORTHANC_STONE_SOURCES
-  ${ORTHANC_STONE_DEPRECATED_SOURCES}
-  
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SeriesFrameRendererFactory.cpp
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SingleFrameRendererFactory.cpp
 

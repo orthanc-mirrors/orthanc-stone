@@ -8,6 +8,9 @@ project(OrthancStone)
 
 include(../../Resources/CMake/OrthancStoneParameters.cmake)
 
+set(ENABLE_STONE_DEPRECATED ON)  # Need deprecated classes for these samples
+
+
 if (OPENSSL_NO_CAPIENG)
 add_definitions(-DOPENSSL_NO_CAPIENG=1)
 endif()

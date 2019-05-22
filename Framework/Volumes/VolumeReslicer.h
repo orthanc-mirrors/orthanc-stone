@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Toolbox/Extent2D.h"
-#include "../Toolbox/OrientedBoundingBox.h"
+#include "OrientedVolumeBoundingBox.h"
 #include "ImageBuffer3D.h"
 
 namespace OrthancStone
@@ -46,7 +46,7 @@ namespace OrthancStone
 
     void CheckIterators(const ImageBuffer3D& source,
                         const CoordinateSystem3D& plane,
-                        const OrientedBoundingBox& box) const;
+                        const OrientedVolumeBoundingBox& box) const;
 
     void Reset();
 

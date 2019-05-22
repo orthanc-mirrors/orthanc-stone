@@ -21,14 +21,14 @@
 
 #pragma once
 
-#include "CoordinateSystem3D.h"
-#include "Extent2D.h"
-#include "LinearAlgebra.h"
+#include "../Toolbox/CoordinateSystem3D.h"
+#include "../Toolbox/Extent2D.h"
+#include "../Toolbox/LinearAlgebra.h"
 #include "VolumeImageGeometry.h"
 
 namespace OrthancStone
 {
-  class OrientedBoundingBox : public boost::noncopyable
+  class OrientedVolumeBoundingBox : public boost::noncopyable
   {
   private:
     Vector  c_;   // center
@@ -40,7 +40,7 @@ namespace OrthancStone
     double  hw_;  // half depth
 
   public:
-    OrientedBoundingBox(const VolumeImageGeometry& geometry);
+    OrientedVolumeBoundingBox(const VolumeImageGeometry& geometry);
 
     const Vector& GetCenter() const
     {

@@ -31,8 +31,8 @@
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Toolbox/GeometryToolbox.h"
 #include "../../Framework/Toolbox/SlicesSorter.h"
-#include "../../Framework/Toolbox/VolumeImageGeometry.h"
 #include "../../Framework/Volumes/ImageBuffer3D.h"
+#include "../../Framework/Volumes/VolumeImageGeometry.h"
 
 // From Orthanc framework
 #include <Core/Compression/GzipCompressor.h>

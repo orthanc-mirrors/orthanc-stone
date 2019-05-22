@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../StoneEnumerations.h"
-#include "CoordinateSystem3D.h"
+#include "../Toolbox/CoordinateSystem3D.h"
 
 namespace OrthancStone
 {

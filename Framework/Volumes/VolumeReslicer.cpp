@@ -230,7 +230,7 @@ namespace OrthancStone
       FastRowIterator(const Orthanc::ImageAccessor& slice,
                       const Extent2D& extent,
                       const CoordinateSystem3D& plane,
-                      const OrientedBoundingBox& box,
+                      const OrientedVolumeBoundingBox& box,
                       unsigned int y)
       {
         const double width = static_cast<double>(slice.GetWidth());
@@ -285,7 +285,7 @@ namespace OrthancStone
       const Orthanc::ImageAccessor&  slice_;
       const Extent2D&                extent_;
       const CoordinateSystem3D&      plane_;
-      const OrientedBoundingBox&     box_;
+      const OrientedVolumeBoundingBox&     box_;
       unsigned int                   x_;
       unsigned int                   y_;
       
@@ -293,7 +293,7 @@ namespace OrthancStone
       SlowRowIterator(const Orthanc::ImageAccessor& slice,
                       const Extent2D& extent,
                       const CoordinateSystem3D& plane,
-                      const OrientedBoundingBox& box,
+                      const OrientedVolumeBoundingBox& box,
                       unsigned int y) :
         slice_(slice),
         extent_(extent),
@@ -342,7 +342,7 @@ namespace OrthancStone
                              const Extent2D& extent,
                              const ImageBuffer3D& source,
                              const CoordinateSystem3D& plane,
-                             const OrientedBoundingBox& box,
+                             const OrientedVolumeBoundingBox& box,
                              float scaling,
                              float offset)
     {
@@ -386,7 +386,7 @@ namespace OrthancStone
                              const Extent2D& extent,
                              const ImageBuffer3D& source,
                              const CoordinateSystem3D& plane,
-                             const OrientedBoundingBox& box,
+                             const OrientedVolumeBoundingBox& box,
                              ImageInterpolation interpolation,
                              bool hasLinearFunction,
                              float scaling,
@@ -452,7 +452,7 @@ namespace OrthancStone
                              const Extent2D& extent,
                              const ImageBuffer3D& source,
                              const CoordinateSystem3D& plane,
-                             const OrientedBoundingBox& box,
+                             const OrientedVolumeBoundingBox& box,
                              ImageInterpolation interpolation,
                              bool hasLinearFunction,
                              float scaling,
@@ -501,7 +501,7 @@ namespace OrthancStone
 
   void VolumeReslicer::CheckIterators(const ImageBuffer3D& source,
                                       const CoordinateSystem3D& plane,
-                                      const OrientedBoundingBox& box) const
+                                      const OrientedVolumeBoundingBox& box) const
   {
     for (unsigned int y = 0; y < slice_->GetHeight(); y++)
     {
@@ -785,7 +785,7 @@ namespace OrthancStone
     // to 6 vertices. We compute the extent of the intersection
     // polygon, with respect to the coordinate system of the reslicing
     // plane.
-    OrientedBoundingBox box(geometry);
+    OrientedVolumeBoundingBox box(geometry);
 
     if (!box.ComputeExtent(extent_, plane))
     {

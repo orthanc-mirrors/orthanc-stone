@@ -409,8 +409,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/OneGesturePointerTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/PointerTypes.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.h
-  
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.h 
+
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/FontRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/Glyph.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphAlphabet.cpp
@@ -448,17 +448,16 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/MessagingToolbox.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrientedBoundingBox.cpp
-
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlices.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlicesCursor.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/VolumeImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/ImageBuffer3D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/OrientedVolumeBoundingBox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeReslicer.cpp
 
   ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h

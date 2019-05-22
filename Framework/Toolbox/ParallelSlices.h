@@ -22,7 +22,7 @@
 #pragma once
 
 #include "CoordinateSystem3D.h"
-#include "VolumeImageGeometry.h"
+#include "../Volumes/VolumeImageGeometry.h"
 
 namespace OrthancStone
 {

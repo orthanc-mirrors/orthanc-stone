@@ -19,10 +19,10 @@
  **/
 
 
-#include "OrientedBoundingBox.h"
+#include "OrientedVolumeBoundingBox.h"
 
-#include "GeometryToolbox.h"
-#include "../Volumes/ImageBuffer3D.h"
+#include "../Toolbox/GeometryToolbox.h"
+#include "ImageBuffer3D.h"
 
 #include <Core/OrthancException.h>
 
@@ -30,7 +30,7 @@
 
 namespace OrthancStone
 {
-  OrientedBoundingBox::OrientedBoundingBox(const VolumeImageGeometry& geometry)
+  OrientedVolumeBoundingBox::OrientedVolumeBoundingBox(const VolumeImageGeometry& geometry)
   {
     unsigned int n = geometry.GetDepth();
     if (n < 1)
@@ -55,9 +55,9 @@ namespace OrthancStone
   }
 
 
-  bool OrientedBoundingBox::HasIntersectionWithPlane(std::vector<Vector>& points,
-                                                     const Vector& normal,
-                                                     double d) const
+  bool OrientedVolumeBoundingBox::HasIntersectionWithPlane(std::vector<Vector>& points,
+                                                           const Vector& normal,
+                                                           double d) const
   {
     assert(normal.size() == 3);
 
@@ -183,8 +183,8 @@ namespace OrthancStone
   }
 
 
-  bool OrientedBoundingBox::HasIntersection(std::vector<Vector>& points,
-                                            const CoordinateSystem3D& plane) const
+  bool OrientedVolumeBoundingBox::HasIntersection(std::vector<Vector>& points,
+                                                  const CoordinateSystem3D& plane) const
   {
     // From the vector equation of a 3D plane (specified by origin
     // and normal), to the general equation of a 3D plane (which
@@ -197,7 +197,7 @@ namespace OrthancStone
   }
   
 
-  bool OrientedBoundingBox::Contains(const Vector& p) const
+  bool OrientedVolumeBoundingBox::Contains(const Vector& p) const
   {
     assert(p.size() == 3);
 
@@ -209,10 +209,10 @@ namespace OrthancStone
   }
 
   
-  void OrientedBoundingBox::FromInternalCoordinates(Vector& target,
-                                                    double x,
-                                                    double y,
-                                                    double z) const
+  void OrientedVolumeBoundingBox::FromInternalCoordinates(Vector& target,
+                                                          double x,
+                                                          double y,
+                                                          double z) const
   {
     target = (c_ +
               u_ * 2.0 * hu_ * (x - 0.5) +
@@ -221,16 +221,16 @@ namespace OrthancStone
   }
 
   
-  void OrientedBoundingBox::FromInternalCoordinates(Vector& target,
-                                                    const Vector& source) const
+  void OrientedVolumeBoundingBox::FromInternalCoordinates(Vector& target,
+                                                          const Vector& source) const
   {
     assert(source.size() == 3);
     FromInternalCoordinates(target, source[0], source[1], source[2]);
   }
 
   
-  void OrientedBoundingBox::ToInternalCoordinates(Vector& target,
-                                                  const Vector& source) const
+  void OrientedVolumeBoundingBox::ToInternalCoordinates(Vector& target,
+                                                        const Vector& source) const
   {
     assert(source.size() == 3);
     const Vector q = source - c_;
@@ -243,8 +243,8 @@ namespace OrthancStone
   }
 
 
-  bool OrientedBoundingBox::ComputeExtent(Extent2D& extent,
-                                          const CoordinateSystem3D& plane) const
+  bool OrientedVolumeBoundingBox::ComputeExtent(Extent2D& extent,
+                                                const CoordinateSystem3D& plane) const
   {
     extent.Reset();
     

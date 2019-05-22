@@ -23,7 +23,7 @@
 
 #include "LinearAlgebra.h"
 #include "../Volumes/ImageBuffer3D.h"
-#include "VolumeImageGeometry.h"
+#include "../Volumes/VolumeImageGeometry.h"
 
 namespace OrthancStone
 {

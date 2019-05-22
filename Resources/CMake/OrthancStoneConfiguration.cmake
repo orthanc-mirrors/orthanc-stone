@@ -65,6 +65,7 @@ if (ENABLE_WASM)
     message(FATAL_ERROR "WebAssembly target requires the emscripten compiler")    
   endif()
 
+  set(ENABLE_THREADS OFF)
   add_definitions(-DORTHANC_ENABLE_WASM=1)
 else()
   if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten" OR
@@ -74,6 +75,7 @@ else()
     message(FATAL_ERROR "Trying to use a Web compiler for a native build")
   endif()
 
+  set(ENABLE_THREADS ON)
   add_definitions(-DORTHANC_ENABLE_WASM=0)
 endif()
   
@@ -109,7 +111,6 @@ elseif(ENABLE_SDL)
   message("SDL is enabled")
   include(${CMAKE_CURRENT_LIST_DIR}/SdlConfiguration.cmake)
   add_definitions(
-    -DORTHANC_ENABLE_THREADS=1
     -DORTHANC_ENABLE_QT=0
     -DORTHANC_ENABLE_SDL=1
     )
@@ -117,7 +118,6 @@ elseif(ENABLE_QT)
   message("QT is enabled")
   include(${CMAKE_CURRENT_LIST_DIR}/QtConfiguration.cmake)
   add_definitions(
-    -DORTHANC_ENABLE_THREADS=1
     -DORTHANC_ENABLE_QT=1
     -DORTHANC_ENABLE_SDL=0
     )
@@ -127,8 +127,14 @@ else()
   add_definitions(
     -DORTHANC_ENABLE_SDL=0
     -DORTHANC_ENABLE_QT=0
-    -DORTHANC_ENABLE_THREADS=0
     )
+endif()
+
+
+if (ENABLE_THREADS)
+  add_definitions(-DORTHANC_ENABLE_THREADS=1)
+else()
+  add_definitions(-DORTHANC_ENABLE_THREADS=0)
 endif()
 
 
@@ -356,6 +362,13 @@ if (ENABLE_STONE_DEPRECATED)
 endif()
 
 
+if (ENABLE_THREADS)
+  list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Oracle/ThreadedOracle.cpp
+    )
+endif()
+
+
 list(APPEND ORTHANC_STONE_SOURCES
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SeriesFrameRendererFactory.cpp
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SingleFrameRendererFactory.cpp
@@ -434,7 +447,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancWebViewerJpegCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/OracleCommandWithPayload.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/OrthancRestApiCommand.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Oracle/ThreadedOracle.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyAlphaLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyDicomLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp

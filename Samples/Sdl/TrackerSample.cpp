@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
 {
   StoneInitialize();
   Orthanc::Logging::EnableInfoLevel(true);
-  Orthanc::Logging::EnableTraceLevel(true);
+//  Orthanc::Logging::EnableTraceLevel(true);
 
   try
   {

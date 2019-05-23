@@ -65,6 +65,7 @@ namespace OrthancStone
     void DisableTracker();
 
     Scene2DPtr GetScene();
+    Scene2DConstPtr GetScene() const;
 
     void HandleApplicationEvent(const SDL_Event& event);
 
@@ -77,7 +78,13 @@ namespace OrthancStone
 
   private:
     void SelectNextTool();
+    void CreateRandomMeasureTool();
 
+    /**
+    This returns a random point in the canvas part of the scene, but in
+    scene coordinates
+    */
+    ScenePoint2D GetRandomPointInScene() const;
 
     FlexiblePointerTrackerPtr TrackerHitTest(const PointerEvent& e);
 

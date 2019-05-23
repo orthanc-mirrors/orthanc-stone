@@ -62,12 +62,7 @@ namespace OrthancStone
     {
       if (frameOffsets_.size() >= 2)
       {
-        thickness_ = frameOffsets_[1] - frameOffsets_[0];
-
-        if (thickness_ < 0)
-        {
-          thickness_ = -thickness_;
-        }
+        thickness_ = std::abs(frameOffsets_[1] - frameOffsets_[0]);
       }
     }
   }

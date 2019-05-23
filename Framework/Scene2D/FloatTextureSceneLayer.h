@@ -33,7 +33,7 @@ namespace OrthancStone
     float            customWidth_;
 
   public:
-    // The pixel format must be "Float32"
+    // The pixel format must be convertible to "Float32"
     FloatTextureSceneLayer(const Orthanc::ImageAccessor& texture);
 
     void SetWindowing(ImageWindowing windowing);

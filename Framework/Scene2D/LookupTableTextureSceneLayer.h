@@ -33,18 +33,16 @@ namespace OrthancStone
     float                 maxValue_;
     std::vector<uint8_t>  lut_;
 
+    void SetLookupTableRgb(const std::vector<uint8_t>& lut);
+
   public:
-    // The pixel format must be "Flot32"
+    // The pixel format must be convertible to Float32
     LookupTableTextureSceneLayer(const Orthanc::ImageAccessor& texture);
 
-    void SetLookupTableGrayscale(float alpha);
-    
-    void SetLookupTableRgb(const std::vector<uint8_t>& lut,
-                           float alpha);
+    void SetLookupTableGrayscale();
 
-    void SetLookupTableRgb(const std::string& lut,
-                           float alpha);
-
+    // The vector must contain either 3 * 256 values (RGB), or 4 * 256
+    // (RGBA). In the RGB case, an alpha channel will be automatically added.
     void SetLookupTable(const std::vector<uint8_t>& lut);
 
     void SetLookupTable(const std::string& lut);
@@ -64,6 +62,7 @@ namespace OrthancStone
       return maxValue_;
     }
 
+    // This returns a vector of 4 * 256 values between 0 and 255, in RGBA.
     const std::vector<uint8_t>& GetLookupTable() const
     {
       return lut_;

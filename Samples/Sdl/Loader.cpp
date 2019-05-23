@@ -192,7 +192,7 @@ namespace OrthancStone
           
           std::auto_ptr<LookupTableTextureSceneLayer> tmp(parameters.CreateLookupTableTexture(reader.GetAccessor()));
           tmp->FitRange();
-          tmp->SetLookupTableRgb(lut, 1);
+          tmp->SetLookupTable(lut);
           texture.reset(tmp.release());
         }
 

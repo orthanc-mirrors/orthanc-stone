@@ -52,12 +52,12 @@ namespace OrthancStone
       SetTexture(t.release());
     }
 
-    SetLookupTableGrayscale(1);
+    SetLookupTableGrayscale();
     SetRange(0, 1);
   }
 
 
-  void LookupTableTextureSceneLayer::SetLookupTableGrayscale(float alpha)
+  void LookupTableTextureSceneLayer::SetLookupTableGrayscale()
   {
     std::vector<uint8_t> rgb(3 * 256);
 
@@ -68,18 +68,15 @@ namespace OrthancStone
       rgb[3 * i + 2] = i;
     }
 
-    SetLookupTableRgb(rgb, alpha);
+    SetLookupTableRgb(rgb);
   }  
 
 
-  void LookupTableTextureSceneLayer::SetLookupTableRgb(const std::vector<uint8_t>& lut,
-                                                       float alpha)
+  void LookupTableTextureSceneLayer::SetLookupTableRgb(const std::vector<uint8_t>& lut)
   {
-    if (lut.size() != 3 * 256 ||
-        alpha < 0 ||
-        alpha > 1)
+    if (lut.size() != 3 * 256)
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
 
     lut_.resize(4 * 256);
@@ -98,14 +95,16 @@ namespace OrthancStone
       }
       else
       {
-        float r = static_cast<float>(lut[3 * i]) * alpha;
-        float g = static_cast<float>(lut[3 * i + 1]) * alpha;
-        float b = static_cast<float>(lut[3 * i + 2]) * alpha;
+        float a = static_cast<float>(i) / 255.0f;
+        
+        float r = static_cast<float>(lut[3 * i]) * a;
+        float g = static_cast<float>(lut[3 * i + 1]) * a;
+        float b = static_cast<float>(lut[3 * i + 2]) * a;
         
         lut_[4 * i] = static_cast<uint8_t>(std::floor(r));
         lut_[4 * i + 1] = static_cast<uint8_t>(std::floor(g));
         lut_[4 * i + 2] = static_cast<uint8_t>(std::floor(b));
-        lut_[4 * i + 3] = static_cast<uint8_t>(std::floor(alpha * 255.0f));
+        lut_[4 * i + 3] = static_cast<uint8_t>(std::floor(a * 255.0f));
       }
     }
 
@@ -113,25 +112,21 @@ namespace OrthancStone
   }
 
 
-  void LookupTableTextureSceneLayer::SetLookupTableRgb(const std::string& lut,
-                                                       float alpha)
-  {
-    std::vector<uint8_t> tmp;
-    StringToVector(tmp, lut);
-    SetLookupTableRgb(tmp, alpha);
-  }
-
-  
   void LookupTableTextureSceneLayer::SetLookupTable(const std::vector<uint8_t>& lut)
   {
-    if (lut.size() != 4 * 256)
+    if (lut.size() == 4 * 256)
+    {
+      lut_ = lut;
+      IncrementRevision();
+    }
+    else if (lut.size() == 3 * 256)
+    {
+      SetLookupTableRgb(lut);
+    }
+    else
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-
-    lut_ = lut;
-
-    IncrementRevision();
   }
 
 

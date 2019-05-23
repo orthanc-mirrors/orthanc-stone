@@ -99,6 +99,11 @@ namespace OrthancStone
       return format_;
     }
 
+    unsigned int GetBytesPerPixel() const
+    {
+      return Orthanc::GetBytesPerPixel(format_);
+    }
+
     uint64_t GetEstimatedMemorySize() const;
 
     bool GetRange(float& minValue,

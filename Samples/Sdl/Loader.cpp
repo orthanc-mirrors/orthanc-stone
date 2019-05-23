@@ -871,11 +871,27 @@ namespace OrthancStone
     };
    
     
+    class LoadUncompressedPixelData : public State
+    {
+    public:
+      LoadUncompressedPixelData(OrthancMultiframeVolumeLoader& that) :
+        State(that)
+      {
+      }
+      
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
+      {
+        GetTarget().SetUncompressedPixelData(message.GetAnswer());
+      }
+    };
+   
+    
 
     IOracle&     oracle_;
     bool         active_;
     std::string  instanceId_;
     std::string  transferSyntaxUid_;
+    uint64_t     revision_;
 
     std::auto_ptr<DicomInstanceParameters>  dicom_;
     std::auto_ptr<VolumeImageGeometry>      geometry_;
@@ -903,9 +919,18 @@ namespace OrthancStone
         return;
       }
       
-      if (transferSyntaxUid_ != "1.2.840.10008.1.2" &&
-          transferSyntaxUid_ != "1.2.840.10008.1.2.1" &&
-          transferSyntaxUid_ != "1.2.840.10008.1.2.2")
+      if (transferSyntaxUid_ == "1.2.840.10008.1.2" ||
+          transferSyntaxUid_ == "1.2.840.10008.1.2.1" ||
+          transferSyntaxUid_ == "1.2.840.10008.1.2.2")
+      {
+        std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+        command->SetHttpHeader("Accept-Encoding", "gzip");
+        command->SetUri("/instances/" + instanceId_ + "/content/" +
+                        Orthanc::DICOM_TAG_PIXEL_DATA.Format() + "/0");
+        command->SetPayload(new LoadUncompressedPixelData(*this));
+        oracle_.Schedule(*this, command.release());
+      }
+      else
       {
         throw Orthanc::OrthancException(
           Orthanc::ErrorCode_NotImplemented,
@@ -961,6 +986,78 @@ namespace OrthancStone
       ScheduleFrameDownloads();
     }
 
+
+    ORTHANC_FORCE_INLINE
+    static void CopyPixel(uint32_t& target,
+                          const void* source)
+    {
+      // TODO - check alignement?
+      target = le32toh(*reinterpret_cast<const uint32_t*>(source));
+    }
+      
+
+    template <typename T>
+    void CopyPixelData(const std::string& pixelData)
+    {
+      const Orthanc::PixelFormat format = image_->GetFormat();
+      const unsigned int bpp = image_->GetBytesPerPixel();
+      const unsigned int width = image_->GetWidth();
+      const unsigned int height = image_->GetHeight();
+      const unsigned int depth = image_->GetDepth();
+
+      if (pixelData.size() != bpp * width * height * depth)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                        "The pixel data has not the proper size");
+      }
+
+      if (pixelData.empty())
+      {
+        return;
+      }
+
+      const uint8_t* source = reinterpret_cast<const uint8_t*>(pixelData.c_str());
+
+      for (unsigned int z = 0; z < depth; z++)
+      {
+        ImageBuffer3D::SliceWriter writer(*image_, VolumeProjection_Axial, z);
+
+        assert (writer.GetAccessor().GetWidth() == width &&
+                writer.GetAccessor().GetHeight() == height);
+
+        for (unsigned int y = 0; y < height; y++)
+        {
+          assert(sizeof(T) == Orthanc::GetBytesPerPixel(format));
+
+          T* target = reinterpret_cast<T*>(writer.GetAccessor().GetRow(y));
+
+          for (unsigned int x = 0; x < width; x++)
+          {
+            CopyPixel(*target, source);
+            
+            target ++;
+            source += bpp;
+          }
+        }
+      }
+    }
+    
+
+    void SetUncompressedPixelData(const std::string& pixelData)
+    {
+      switch (image_->GetFormat())
+      {
+        case Orthanc::PixelFormat_Grayscale32:
+          CopyPixelData<uint32_t>(pixelData);
+          break;
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+
+      revision_ ++;
+    }
+
     
   public:
     OrthancMultiframeVolumeLoader(IOracle& oracle,
@@ -996,6 +1093,7 @@ namespace OrthancStone
 
         {
           std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+          command->SetHttpHeader("Accept-Encoding", "gzip");
           command->SetUri("/instances/" + instanceId + "/tags");
           command->SetPayload(new LoadGeometry(*this));
           oracle_.Schedule(*this, command.release());
@@ -1232,6 +1330,13 @@ private:
         }
       }
 
+      /**
+       * The sleep() leads to a crash if the oracle is still running,
+       * while this object is destroyed. Always stop the oracle before
+       * destroying active objects.  (*)
+       **/
+      // boost::this_thread::sleep(boost::posix_time::seconds(2));
+
       oracle_.Schedule(*this, new OrthancStone::SleepOracleCommand(message.GetOrigin().GetDelay()));
     }
   }
@@ -1306,7 +1411,7 @@ public:
 
 
 void Run(OrthancStone::NativeApplicationContext& context,
-         OrthancStone::IOracle& oracle)
+         OrthancStone::ThreadedOracle& oracle)
 {
   boost::shared_ptr<Toto> toto;
   boost::shared_ptr<OrthancStone::OrthancSeriesVolumeProgressiveLoader> loader1, loader2;
@@ -1411,9 +1516,23 @@ void Run(OrthancStone::NativeApplicationContext& context,
 
   toto->SetVolume(0, new OrthancStone::OrthancSeriesVolumeProgressiveLoader::MPRSlicer(loader1));
 
-  LOG(WARNING) << "...Waiting for Ctrl-C...";
-  Orthanc::SystemToolbox::ServerBarrier();
-  //boost::this_thread::sleep(boost::posix_time::seconds(1));
+  {
+    oracle.Start();
+
+    LOG(WARNING) << "...Waiting for Ctrl-C...";
+    Orthanc::SystemToolbox::ServerBarrier();
+
+    /**
+     * WARNING => The oracle must be stopped BEFORE the objects using
+     * it are destroyed!!! This forces to wait for the completion of
+     * the running callback methods. Otherwise, the callbacks methods
+     * might still be running while their parent object is destroyed,
+     * resulting in crashes. This is very visible if adding a sleep(),
+     * as in (*).
+     **/
+
+    oracle.Stop();
+  }
 }
 
 
@@ -1442,11 +1561,11 @@ int main(int argc, char* argv[])
       oracle.SetOrthancParameters(p);
     }
 
-    oracle.Start();
+    //oracle.Start();
 
     Run(context, oracle);
-
-    oracle.Stop();
+    
+    //oracle.Stop();
   }
   catch (Orthanc::OrthancException& e)
   {

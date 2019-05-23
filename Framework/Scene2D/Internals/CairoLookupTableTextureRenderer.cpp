@@ -19,35 +19,49 @@
  **/
 
 
-#include "CairoFloatTextureRenderer.h"
+#include "CairoLookupTableTextureRenderer.h"
 
 #include "CairoColorTextureRenderer.h"
-#include "../FloatTextureSceneLayer.h"
+#include "../LookupTableTextureSceneLayer.h"
+
+#include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
   namespace Internals
   {
-    void CairoFloatTextureRenderer::Update(const ISceneLayer& layer)
+    void CairoLookupTableTextureRenderer::Update(const ISceneLayer& layer)
     {
-      const FloatTextureSceneLayer& l = dynamic_cast<const FloatTextureSceneLayer&>(layer);
+      const LookupTableTextureSceneLayer& l = dynamic_cast<const LookupTableTextureSceneLayer&>(layer);
 
       textureTransform_ = l.GetTransform();
       isLinearInterpolation_ = l.IsLinearInterpolation();
 
-      float windowCenter, windowWidth;
-      l.GetWindowing(windowCenter, windowWidth);
+      const float a = l.GetMinValue();
+      float slope;
 
-      const float a = windowCenter - windowWidth;
-      const float slope = 256.0f / (2.0f * windowWidth);
+      if (l.GetMinValue() >= l.GetMaxValue())
+      {
+        slope = 0;
+      }
+      else
+      {
+        slope = 256.0f / (l.GetMaxValue() - l.GetMinValue());
+      }
 
       const Orthanc::ImageAccessor& source = l.GetTexture();
       const unsigned int width = source.GetWidth();
       const unsigned int height = source.GetHeight();
-      texture_.SetSize(width, height, false);
+      texture_.SetSize(width, height, true /* alpha channel is enabled */);
 
       Orthanc::ImageAccessor target;
       texture_.GetWriteableAccessor(target);
+
+      const std::vector<uint8_t>& lut = l.GetLookupTable();
+      if (lut.size() != 4 * 256)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
 
       assert(source.GetFormat() == Orthanc::PixelFormat_Float32 &&
              target.GetFormat() == Orthanc::PixelFormat_BGRA32 &&
@@ -72,18 +86,20 @@ namespace OrthancStone
 
           uint8_t vv = static_cast<uint8_t>(v);
 
-          q[0] = vv;
-          q[1] = vv;
-          q[2] = vv;
+          q[0] = lut[4 * vv + 2];  // B
+          q[1] = lut[4 * vv + 1];  // G
+          q[2] = lut[4 * vv + 0];  // R
+          q[3] = lut[4 * vv + 3];  // A
 
           p++;
           q += 4;
         }
       }
+
+      cairo_surface_mark_dirty(texture_.GetObject());
     }
 
-      
-    void CairoFloatTextureRenderer::Render(const AffineTransform2D& transform)
+    void CairoLookupTableTextureRenderer::Render(const AffineTransform2D& transform)
     {
       CairoColorTextureRenderer::RenderColorTexture(target_, transform, texture_,
                                                     textureTransform_, isLinearInterpolation_);

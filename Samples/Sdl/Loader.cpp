@@ -33,6 +33,7 @@
 #include "../../Framework/Scene2D/CairoCompositor.h"
 #include "../../Framework/Scene2D/Scene2D.h"
 #include "../../Framework/Scene2D/PolylineSceneLayer.h"
+#include "../../Framework/Scene2D/LookupTableTextureSceneLayer.h"
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Toolbox/GeometryToolbox.h"
 #include "../../Framework/Toolbox/SlicesSorter.h"
@@ -48,6 +49,9 @@
 #include <Core/OrthancException.h>
 #include <Core/SystemToolbox.h>
 #include <Core/Toolbox.h>
+
+
+#include <EmbeddedResources.h>
 
 
 namespace OrthancStone
@@ -174,7 +178,25 @@ namespace OrthancStone
       {
         const DicomInstanceParameters& parameters = GetDicomParameters(projection_, sliceIndex_);
         ImageBuffer3D::SliceReader reader(image_, projection_, sliceIndex_);
-        texture.reset(parameters.CreateTexture(reader.GetAccessor()));
+
+        static unsigned int i = 1;
+        
+        if (i % 2)
+        {
+          texture.reset(parameters.CreateTexture(reader.GetAccessor()));
+        }
+        else
+        {
+          std::string lut;
+          Orthanc::EmbeddedResources::GetFileResource(lut, Orthanc::EmbeddedResources::COLORMAP_HOT);
+          
+          std::auto_ptr<LookupTableTextureSceneLayer> tmp(parameters.CreateLookupTableTexture(reader.GetAccessor()));
+          tmp->FitRange();
+          tmp->SetLookupTableRgb(lut, 1);
+          texture.reset(tmp.release());
+        }
+
+        i++;
       }
 
       const CoordinateSystem3D& system = geometry_.GetProjectionGeometry(projection_);

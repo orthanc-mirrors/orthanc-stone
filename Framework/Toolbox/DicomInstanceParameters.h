@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../StoneEnumerations.h"
-#include "../Scene2D/TextureBaseSceneLayer.h"
+#include "../Scene2D/LookupTableTextureSceneLayer.h"
 #include "../Toolbox/CoordinateSystem3D.h"
 
 #include <Core/IDynamicObject.h>
@@ -72,6 +72,9 @@ namespace OrthancStone
     };
 
     
+    Orthanc::ImageAccessor* ConvertToFloat(const Orthanc::ImageAccessor& pixelData) const;
+    
+
     Data  data_;
 
 
@@ -181,5 +184,7 @@ namespace OrthancStone
     }
 
     TextureBaseSceneLayer* CreateTexture(const Orthanc::ImageAccessor& pixelData) const;
+
+    LookupTableTextureSceneLayer* CreateLookupTableTexture(const Orthanc::ImageAccessor& pixelData) const;
   };
 }

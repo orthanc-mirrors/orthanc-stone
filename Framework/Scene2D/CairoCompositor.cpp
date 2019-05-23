@@ -24,6 +24,7 @@
 #include "Internals/CairoColorTextureRenderer.h"
 #include "Internals/CairoFloatTextureRenderer.h"
 #include "Internals/CairoInfoPanelRenderer.h"
+#include "Internals/CairoLookupTableTextureRenderer.h"
 #include "Internals/CairoPolylineRenderer.h"
 #include "Internals/CairoTextRenderer.h"
 
@@ -59,6 +60,9 @@ namespace OrthancStone
 
       case ISceneLayer::Type_FloatTexture:
         return new Internals::CairoFloatTextureRenderer(*this, layer);
+
+      case ISceneLayer::Type_LookupTableTexture:
+        return new Internals::CairoLookupTableTextureRenderer(*this, layer);
 
       case ISceneLayer::Type_Text:
       {

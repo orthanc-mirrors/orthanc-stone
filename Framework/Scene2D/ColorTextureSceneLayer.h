@@ -28,6 +28,7 @@ namespace OrthancStone
   class ColorTextureSceneLayer : public TextureBaseSceneLayer
   {
   public:
+    // If using RGBA32, premultiplied alpha is assumed
     ColorTextureSceneLayer(const Orthanc::ImageAccessor& texture);
 
     virtual ISceneLayer* Clone() const;

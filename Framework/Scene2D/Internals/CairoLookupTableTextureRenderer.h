@@ -21,36 +21,33 @@
 
 #pragma once
 
-#include "../Toolbox/Extent2D.h"
-
-#include <boost/noncopyable.hpp>
-#include <stdint.h>
+#include "../../Viewport/CairoSurface.h"
+#include "CompositorHelper.h"
+#include "ICairoContextProvider.h"
 
 namespace OrthancStone
 {
-  class ISceneLayer : public boost::noncopyable
+  namespace Internals
   {
-  public:
-    enum Type
+    class CairoLookupTableTextureRenderer : public CompositorHelper::ILayerRenderer
     {
-      Type_InfoPanel,
-      Type_ColorTexture,
-      Type_Polyline,
-      Type_Text,
-      Type_FloatTexture,
-      Type_LookupTableTexture
+    private:
+      ICairoContextProvider&  target_;
+      CairoSurface            texture_;
+      AffineTransform2D       textureTransform_;
+      bool                    isLinearInterpolation_;
+    
+    public:
+      CairoLookupTableTextureRenderer(ICairoContextProvider& target,
+                                      const ISceneLayer& layer) :
+        target_(target)
+      {
+        Update(layer);
+      }
+
+      virtual void Update(const ISceneLayer& layer);
+    
+      virtual void Render(const AffineTransform2D& transform);
     };
-
-    virtual ~ISceneLayer()
-    {
-    }
-
-    virtual ISceneLayer* Clone() const = 0;
-
-    virtual Type GetType() const = 0;
-
-    virtual bool GetBoundingBox(Extent2D& target) const = 0;
-
-    virtual uint64_t GetRevision() const = 0;
-  };
+  }
 }

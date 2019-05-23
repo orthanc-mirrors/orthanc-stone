@@ -740,21 +740,15 @@ namespace OrthancStone
   class OrthancMultiframeVolumeLoader : public IObserver
   {
   private:
-    class Handler : public Orthanc::IDynamicObject
+    class State : public Orthanc::IDynamicObject
     {
     private:
       OrthancMultiframeVolumeLoader&  that_;
-      std::string                     instanceId_;
 
     protected:
       void Schedule(OrthancRestApiCommand* command) const
       {
         that_.oracle_.Schedule(that_, command);
-      }
-
-      const std::string& GetInstanceId() const
-      {
-        return instanceId_;
       }
 
       OrthancMultiframeVolumeLoader& GetTarget() const
@@ -763,16 +757,8 @@ namespace OrthancStone
       }
 
     public:
-      Handler(OrthancMultiframeVolumeLoader& that,
-              const std::string& instanceId) :
-        that_(that),
-        instanceId_(instanceId)
-      {
-      }
-      
-      Handler(const Handler& previous) :
-        that_(previous.that_),
-        instanceId_(previous.instanceId_)
+      State(OrthancMultiframeVolumeLoader& that) :
+        that_(that)
       {
       }
       
@@ -781,19 +767,19 @@ namespace OrthancStone
     
     void Handle(const OrthancRestApiCommand::SuccessMessage& message)
     {
-      dynamic_cast<const Handler&>(message.GetOrigin().GetPayload()).Handle(message);
+      dynamic_cast<const State&>(message.GetOrigin().GetPayload()).Handle(message);
     }
 
 
-    class LoadRTDoseGeometry : public Handler
+    class LoadRTDoseGeometry : public State
     {
     private:
       std::auto_ptr<Orthanc::DicomMap>  dicom_;
 
     public:
-      LoadRTDoseGeometry(const Handler& previous,
+      LoadRTDoseGeometry(OrthancMultiframeVolumeLoader& that,
                          Orthanc::DicomMap* dicom) :
-        Handler(previous),
+        State(that),
         dicom_(dicom)
       {
         if (dicom == NULL)
@@ -811,14 +797,28 @@ namespace OrthancStone
         GetTarget().SetGeometry(*dicom_);
       }      
     };
+
+
+    static std::string GetSopClassUid(const Orthanc::DicomMap& dicom)
+    {
+      std::string s;
+      if (!dicom.CopyToString(s, Orthanc::DICOM_TAG_SOP_CLASS_UID, false))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                        "DICOM file without SOP class UID");
+      }
+      else
+      {
+        return s;
+      }
+    }
     
 
-    class LoadGeometry : public Handler
+    class LoadGeometry : public State
     {
     public:
-      LoadGeometry(OrthancMultiframeVolumeLoader& that,
-                   const std::string& instanceId) :
-        Handler(that, instanceId)
+      LoadGeometry(OrthancMultiframeVolumeLoader& that) :
+        State(that)
       {
       }
       
@@ -835,22 +835,15 @@ namespace OrthancStone
         std::auto_ptr<Orthanc::DicomMap> dicom(new Orthanc::DicomMap);
         dicom->FromDicomAsJson(body);
 
-        std::string s;
-        if (!dicom->CopyToString(s, Orthanc::DICOM_TAG_SOP_CLASS_UID, false))
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
-                                          "DICOM file without SOP class UID");
-        }
-
-        if (StringToSopClassUid(s) == SopClassUid_RTDose)
+        if (StringToSopClassUid(GetSopClassUid(*dicom)) == SopClassUid_RTDose)
         {
           // Download the "Grid Frame Offset Vector" DICOM tag, that is
           // mandatory for RT-DOSE, but is too long to be returned by default
           
           std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
-          command->SetUri("/instances/" + GetInstanceId() + "/content/" +
+          command->SetUri("/instances/" + GetTarget().GetInstanceId() + "/content/" +
                           Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR.Format());
-          command->SetPayload(new LoadRTDoseGeometry(*this, dicom.release()));
+          command->SetPayload(new LoadRTDoseGeometry(GetTarget(), dicom.release()));
 
           Schedule(command.release());
         }
@@ -860,16 +853,73 @@ namespace OrthancStone
         }
       }
     };
+
+
+
+    class LoadTransferSyntax : public State
+    {
+    public:
+      LoadTransferSyntax(OrthancMultiframeVolumeLoader& that) :
+        State(that)
+      {
+      }
+      
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
+      {
+        GetTarget().SetTransferSyntax(message.GetAnswer());
+      }
+    };
    
     
 
-    IOracle&  oracle_;
-    bool      active_;
+    IOracle&     oracle_;
+    bool         active_;
+    std::string  instanceId_;
+    std::string  transferSyntaxUid_;
 
-    std::auto_ptr<ImageBuffer3D>            image_;
     std::auto_ptr<DicomInstanceParameters>  dicom_;
     std::auto_ptr<VolumeImageGeometry>      geometry_;
+    std::auto_ptr<ImageBuffer3D>            image_;
 
+
+    const std::string& GetInstanceId() const
+    {
+      if (active_)
+      {
+        return instanceId_;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+    }
+
+
+    void ScheduleFrameDownloads()
+    {
+      if (transferSyntaxUid_.empty() ||
+          !HasGeometry())
+      {
+        return;
+      }
+      
+      if (transferSyntaxUid_ != "1.2.840.10008.1.2" &&
+          transferSyntaxUid_ != "1.2.840.10008.1.2.1" &&
+          transferSyntaxUid_ != "1.2.840.10008.1.2.2")
+      {
+        throw Orthanc::OrthancException(
+          Orthanc::ErrorCode_NotImplemented,
+          "No support for multiframe instances with transfer syntax: " + transferSyntaxUid_);
+      }
+    }
+      
+
+    void SetTransferSyntax(const std::string& transferSyntax)
+    {
+      transferSyntaxUid_ = Orthanc::Toolbox::StripSpaces(transferSyntax);
+      ScheduleFrameDownloads();
+    }
+    
 
     void SetGeometry(const Orthanc::DicomMap& dicom)
     {
@@ -881,6 +931,19 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
 
+      double spacingZ;
+      switch (dicom_->GetSopClassUid())
+      {
+        case SopClassUid_RTDose:
+          spacingZ = dicom_->GetThickness();
+          break;
+
+        default:
+          throw Orthanc::OrthancException(
+            Orthanc::ErrorCode_NotImplemented,
+            "No support for multiframe instances with SOP class UID: " + GetSopClassUid(dicom));
+      }
+
       const unsigned int width = dicom_->GetImageInformation().GetWidth();
       const unsigned int height = dicom_->GetImageInformation().GetHeight();
       const unsigned int depth = dicom_->GetImageInformation().GetNumberOfFrames();
@@ -890,15 +953,12 @@ namespace OrthancStone
       geometry_->SetAxialGeometry(dicom_->GetGeometry());
       geometry_->SetVoxelDimensions(dicom_->GetPixelSpacingX(),
                                     dicom_->GetPixelSpacingY(),
-                                    dicom_->GetThickness());
+                                    spacingZ);
 
       image_.reset(new ImageBuffer3D(format, width, height, depth,
                                      false /* don't compute range */));
 
-      {
-        Orthanc::DicomArray a(dicom);
-        a.Print(stdout);
-      }
+      ScheduleFrameDownloads();
     }
 
     
@@ -914,6 +974,15 @@ namespace OrthancStone
         (*this, &OrthancMultiframeVolumeLoader::Handle));
     }
 
+
+    bool HasGeometry() const
+    {
+      return (dicom_.get() != NULL &&
+              geometry_.get() != NULL &&
+              image_.get() != NULL);
+    }
+    
+
     void LoadInstance(const std::string& instanceId)
     {
       if (active_)
@@ -923,12 +992,21 @@ namespace OrthancStone
       else
       {
         active_ = true;
+        instanceId_ = instanceId;
 
-        std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
-        command->SetUri("/instances/" + instanceId + "/tags");
-        command->SetPayload(new LoadGeometry(*this, instanceId));
+        {
+          std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+          command->SetUri("/instances/" + instanceId + "/tags");
+          command->SetPayload(new LoadGeometry(*this));
+          oracle_.Schedule(*this, command.release());
+        }
 
-        oracle_.Schedule(*this, command.release());
+        {
+          std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+          command->SetUri("/instances/" + instanceId + "/metadata/TransferSyntax");
+          command->SetPayload(new LoadTransferSyntax(*this));
+          oracle_.Schedule(*this, command.release());
+        }
       }
     }
   };
@@ -1323,6 +1401,9 @@ void Run(OrthancStone::NativeApplicationContext& context,
   //loader1->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
   loader3->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
 
+  // 2015-01-28-Multiframe
+  //loader3->LoadInstance("88f71e2a-5fad1c61-96ed14d6-5b3d3cf7-a5825279");  // Multiframe CT
+  
   // Delphine
   //loader1->LoadSeries("5990e39c-51e5f201-fe87a54c-31a55943-e59ef80e");  // CT
   //loader1->LoadSeries("67f1b334-02c16752-45026e40-a5b60b6b-030ecab5");  // Lung 1/10mm

@@ -32,6 +32,7 @@
 #include "../../Framework/Loaders/BasicFetchingStrategy.h"
 #include "../../Framework/Scene2D/CairoCompositor.h"
 #include "../../Framework/Scene2D/Scene2D.h"
+#include "../../Framework/Scene2D/PolylineSceneLayer.h"
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Toolbox/GeometryToolbox.h"
 #include "../../Framework/Toolbox/SlicesSorter.h"
@@ -194,15 +195,29 @@ namespace OrthancStone
       Vector tmp = geometry_.GetVoxelDimensions(projection_);
       texture->SetPixelSpacing(tmp[0], tmp[1]);
 
+      return texture.release();
+
+#if 0
+      double w = texture->GetTexture().GetWidth() * tmp[0];
+      double h = texture->GetTexture().GetHeight() * tmp[1];
       printf("%.1f %.1f %.1f => %.1f %.1f => %.1f %.1f\n",
              system.GetOrigin() [0],
              system.GetOrigin() [1],
              system.GetOrigin() [2],
-             x0, y0,
-             x0 + texture->GetTexture().GetWidth() * tmp[0],
-             y0 + texture->GetTexture().GetHeight() * tmp[1]);
+             x0, y0, x0 + w, y0 + h);
 
-      return texture.release();
+      std::auto_ptr<PolylineSceneLayer> toto(new PolylineSceneLayer);
+
+      PolylineSceneLayer::Chain c;
+      c.push_back(ScenePoint2D(x0, y0));
+      c.push_back(ScenePoint2D(x0 + w, y0));
+      c.push_back(ScenePoint2D(x0 + w, y0 + h));
+      c.push_back(ScenePoint2D(x0, y0 + h));
+      
+      toto->AddChain(c, true);
+
+      return toto.release();
+#endif
     }
   };
 
@@ -1561,13 +1576,13 @@ public:
   void SetVolume1(int depth,
                   OrthancStone::IVolumeSlicer* volume)
   {
-    source1_.reset(new OrthancStone::VolumeSceneLayerSource(0, volume));
+    source1_.reset(new OrthancStone::VolumeSceneLayerSource(depth, volume));
   }
 
   void SetVolume2(int depth,
                   OrthancStone::IVolumeSlicer* volume)
   {
-    source2_.reset(new OrthancStone::VolumeSceneLayerSource(0, volume));
+    source2_.reset(new OrthancStone::VolumeSceneLayerSource(depth, volume));
   }
 };
 
@@ -1715,7 +1730,7 @@ int main(int argc, char* argv[])
     OrthancStone::NativeApplicationContext context;
 
     OrthancStone::ThreadedOracle oracle(context);
-    oracle.SetThreadsCount(1);
+    //oracle.SetThreadsCount(1);
 
     {
       Orthanc::WebServiceParameters p;

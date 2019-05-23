@@ -71,6 +71,11 @@ namespace OrthancStone
     return controller_->GetScene();
   }
 
+  Scene2DConstPtr TrackerSampleApp::GetScene() const
+  {
+    return controller_->GetScene();
+  }
+
   void TrackerSampleApp::SelectNextTool()
   {
     currentTool_ = static_cast<GuiTool>(currentTool_ + 1);
@@ -153,14 +158,75 @@ namespace OrthancStone
     GetScene()->DeleteLayer(FLOATING_INFOTEXT_LAYER_ZINDEX);
   }
 
+  ScenePoint2D TrackerSampleApp::GetRandomPointInScene() const
+  {
+    unsigned int w = compositor_->GetCanvasWidth();
+    LOG(TRACE) << "compositor_->GetCanvasWidth() = " << 
+      compositor_->GetCanvasWidth();
+    unsigned int h = compositor_->GetCanvasHeight();
+    LOG(TRACE) << "compositor_->GetCanvasHeight() = " << 
+      compositor_->GetCanvasHeight();
+
+    if ((w >= RAND_MAX) || (h >= RAND_MAX))
+      LOG(WARNING) << "Canvas is too big : tools will not be randomly placed";
+
+    int x = rand() % w;
+    int y = rand() % h;
+    LOG(TRACE) << "random x = " << x << "random y = " << y;
+
+    ScenePoint2D p = compositor_->GetPixelCenterCoordinates(x, y);
+    LOG(TRACE) << "--> p.GetX() = " << p.GetX() << " p.GetY() = " << p.GetY();
+
+    ScenePoint2D r = p.Apply(GetScene()->GetCanvasToSceneTransform());
+    LOG(TRACE) << "--> r.GetX() = " << r.GetX() << " r.GetY() = " << r.GetY();
+    return r;
+  }
+
+  void TrackerSampleApp::CreateRandomMeasureTool()
+  {
+    static bool srandCalled = false;
+    if (!srandCalled)
+    {
+      srand(42);
+      srandCalled = true;
+    }
+
+    int i = rand() % 2;
+    LOG(TRACE) << "random i = " << i;
+    switch (i)
+    {
+    case 0:
+      // line measure
+      {
+        CreateLineMeasureCommandPtr cmd = 
+          boost::make_shared<CreateLineMeasureCommand>(
+            IObserver::GetBroker(),
+            controller_,
+            GetRandomPointInScene());
+        cmd->SetEnd(GetRandomPointInScene());
+        controller_->PushCommand(cmd);
+      }
+      break;
+    case 1:
+      // angle measure
+      {
+      CreateAngleMeasureCommandPtr cmd =
+        boost::make_shared<CreateAngleMeasureCommand>(
+          IObserver::GetBroker(),
+          controller_,
+          GetRandomPointInScene());
+        cmd->SetCenter(GetRandomPointInScene());
+        cmd->SetSide2End(GetRandomPointInScene());
+        controller_->PushCommand(cmd);
+      }
+      break;
+    }
+  }
+
   void TrackerSampleApp::HandleApplicationEvent(
     const SDL_Event & event)
   {
     DisplayInfoText();
-
-    // we seed the random number generator for random measure tool 
-    // generation
-    srand(42);
 
     if (event.type == SDL_MOUSEMOTION)
     {
@@ -192,8 +258,8 @@ namespace OrthancStone
           
           //LOG(TRACE) << "event.button.x = " << event.button.x << "     " <<
           //  "event.button.y = " << event.button.y;
-          //LOG(TRACE) << "activeTracker_->PointerMove(e); " <<
-          //  e.GetMainPosition().GetX() << " " << e.GetMainPosition().GetY();
+          LOG(TRACE) << "activeTracker_->PointerMove(e); " <<
+            e.GetMainPosition().GetX() << " " << e.GetMainPosition().GetY();
           
           activeTracker_->PointerMove(e);
           if (!activeTracker_->IsAlive())
@@ -254,22 +320,20 @@ namespace OrthancStone
         break;
 
       case SDLK_m:
-        // let's create a random measuring tool
-        
-      
-
+        CreateRandomMeasureTool();
+        break;
       case SDLK_s:
         controller_->FitContent(compositor_->GetCanvasWidth(),
           compositor_->GetCanvasHeight());
         break;
 
       case SDLK_z:
-        LOG(INFO) << "SDLK_z has been pressed. event.key.keysym.mod == " << event.key.keysym.mod;
+        LOG(TRACE) << "SDLK_z has been pressed. event.key.keysym.mod == " << event.key.keysym.mod;
         if (event.key.keysym.mod & KMOD_CTRL)
         {
           if (controller_->CanUndo())
           {
-            LOG(INFO) << "Undoing...";
+            LOG(TRACE) << "Undoing...";
             controller_->Undo();
           }
           else
@@ -280,12 +344,12 @@ namespace OrthancStone
         break;
 
       case SDLK_y:
-        LOG(INFO) << "SDLK_y has been pressed. event.key.keysym.mod == " << event.key.keysym.mod;
+        LOG(TRACE) << "SDLK_y has been pressed. event.key.keysym.mod == " << event.key.keysym.mod;
         if (event.key.keysym.mod & KMOD_CTRL)
         {
           if (controller_->CanRedo())
           {
-            LOG(INFO) << "Redoing...";
+            LOG(TRACE) << "Redoing...";
             controller_->Redo();
           }
           else

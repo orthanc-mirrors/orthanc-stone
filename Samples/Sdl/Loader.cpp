@@ -380,9 +380,10 @@ namespace OrthancStone
         const DicomInstanceParameters& parameters = *slices_[0];
 
         image_.reset(new ImageBuffer3D(parameters.GetExpectedPixelFormat(),
-                                       parameters.GetImageInformation().GetWidth(),
-                                       parameters.GetImageInformation().GetHeight(),
-                                       slices.GetSlicesCount(), false /* don't compute range */));      
+                          parameters.GetImageInformation().GetWidth(),
+                          parameters.GetImageInformation().GetHeight(),
+                          static_cast<unsigned int>(slices.GetSlicesCount()),
+                          false /* don't compute range */));      
 
         geometry_->SetSize(image_->GetWidth(), image_->GetHeight(), image_->GetDepth());
         geometry_->SetAxialGeometry(slices.GetSliceGeometry(0));
@@ -465,7 +466,7 @@ namespace OrthancStone
       {
         {
           ImageBuffer3D::SliceWriter writer
-            (*image_, VolumeProjection_Axial, index);
+            (*image_, VolumeProjection_Axial, static_cast<unsigned int>(index));
           Orthanc::ImageProcessing::Copy(writer.GetAccessor(), image);
         }
         
@@ -570,8 +571,8 @@ namespace OrthancStone
 
       if (volume_.GetSlicesCount() != 0)
       {
-        strategy_.reset(new BasicFetchingStrategy(
-                          sorter_->CreateSorter(volume_.GetSlicesCount()), BEST_QUALITY));
+        strategy_.reset(new BasicFetchingStrategy(sorter_->CreateSorter(
+          static_cast<unsigned int>(volume_.GetSlicesCount())), BEST_QUALITY));
 
         assert(simultaneousDownloads_ != 0);
         for (unsigned int i = 0; i < simultaneousDownloads_; i++)

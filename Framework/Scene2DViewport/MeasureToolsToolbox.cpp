@@ -21,6 +21,7 @@
 #include "MeasureToolsToolbox.h"
 #include "PointerTypes.h"
 #include "LayerHolder.h"
+#include "ViewportController.h"
 
 #include "../Scene2D/TextSceneLayer.h"
 #include "../Scene2D/Scene2D.h"
@@ -281,7 +282,6 @@ namespace OrthancStone
 }
 #endif
 
-
   /**
   This utility function assumes that the layer holder contains 5 text layers
   and will use the first four ones for the text background and the fifth one
@@ -304,24 +304,22 @@ namespace OrthancStone
       textLayer->SetText(text);
 
       if (i == 4)
-        textLayer->SetColor(0, 223, 81);
+      {
+        textLayer->SetColor(TEXT_COLOR_RED,
+                            TEXT_COLOR_GREEN,
+                            TEXT_COLOR_BLUE);
+      }
       else
-        textLayer->SetColor(0, 56, 21);
+      {
+        textLayer->SetColor(TEXT_OUTLINE_COLOR_RED,
+                            TEXT_OUTLINE_COLOR_GREEN,
+                            TEXT_OUTLINE_COLOR_BLUE);
+      }
 
       ScenePoint2D textAnchor;
-      //GetPositionOnBisectingLine(
-      //  textAnchor, side1End_, center_, side2End_, 40.0*pixelToScene);
       textLayer->SetPosition(
         p.GetX() + xoffsets[i] * pixelToScene,
         p.GetY() + yoffsets[i] * pixelToScene);
     }
   }
-
-
-
-
-
-
-
-
 }

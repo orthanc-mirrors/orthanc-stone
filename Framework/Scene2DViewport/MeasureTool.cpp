@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "MeasureTools.h"
+#include "MeasureTool.h"
 
 #include <Core/Logging.h>
 #include <Core/Enumerations.h>
@@ -28,7 +28,6 @@
 
 namespace OrthancStone
 {
-
   MeasureTool::~MeasureTool()
   {
 
@@ -52,16 +51,37 @@ namespace OrthancStone
   }
 
 
+  ViewportControllerConstPtr MeasureTool::GetController() const
+  {
+    ViewportControllerConstPtr controller = controllerW_.lock();
+    if (!controller)
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+        "Using dead ViewportController object!");
+    return controller;
+  }
+
   ViewportControllerPtr MeasureTool::GetController()
   {
+#if 1
+    return boost::const_pointer_cast<ViewportController>
+      (const_cast<const MeasureTool*>(this)->GetController());
+    //return boost::const_<ViewportControllerPtr>
+    //  (const_cast<const MeasureTool*>(this)->GetController());
+#else
     ViewportControllerPtr controller = controllerW_.lock();
     if (!controller)
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, 
         "Using dead ViewportController object!");
     return controller;
+#endif
   }
 
-  OrthancStone::Scene2DPtr MeasureTool::GetScene()
+  Scene2DPtr MeasureTool::GetScene()
+  {
+    return GetController()->GetScene();
+  }
+
+  Scene2DConstPtr MeasureTool::GetScene() const
   {
     return GetController()->GetScene();
   }

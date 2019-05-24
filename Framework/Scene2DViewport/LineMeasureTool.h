@@ -24,7 +24,7 @@
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2D/ScenePoint2D.h"
 #include "../Scene2D/TextSceneLayer.h"
-#include "MeasureTools.h"
+#include "MeasureTool.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -44,6 +44,9 @@ namespace OrthancStone
     void SetStart(ScenePoint2D start);
     void SetEnd(ScenePoint2D end);
     void Set(ScenePoint2D start, ScenePoint2D end);
+
+
+    virtual bool HitTest(ScenePoint2D p) const ORTHANC_OVERRIDE;
 
   private:
     virtual void        RefreshScene() ORTHANC_OVERRIDE;

@@ -23,7 +23,7 @@
 
 // to be moved into Stone
 #include "PointerTypes.h"
-#include "MeasureTools.h"
+#include "MeasureTool.h"
 #include "LineMeasureTool.h"
 #include "AngleMeasureTool.h"
 

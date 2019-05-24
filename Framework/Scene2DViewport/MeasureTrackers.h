@@ -24,7 +24,7 @@
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2D/PointerEvent.h"
 
-#include "MeasureTools.h"
+#include "MeasureTool.h"
 #include "MeasureCommands.h"
 
 #include <vector>

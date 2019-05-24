@@ -31,6 +31,29 @@
 namespace OrthancStone
 {
   /**
+    These constats are used 
+  
+  */
+  const double ARC_RADIUS_CANVAS_COORD = 30.0;
+  const double TEXT_CENTER_DISTANCE_CANVAS_COORD = 90;
+
+  const double HANDLE_SIDE_LENGTH_CANVAS_COORD = 10.0;
+  const double HIT_TEST_MAX_DISTANCE_CANVAS_COORD = 15.0;
+
+  const uint8_t TEXT_COLOR_RED = 0;
+  const uint8_t TEXT_COLOR_GREEN = 223;
+  const uint8_t TEXT_COLOR_BLUE = 81;
+
+  const uint8_t TOOL_LINES_COLOR_RED = 0;
+  const uint8_t TOOL_LINES_COLOR_GREEN = 223;
+  const uint8_t TOOL_LINES_COLOR_BLUE = 21;
+
+
+  const uint8_t TEXT_OUTLINE_COLOR_RED = 0;
+  const uint8_t TEXT_OUTLINE_COLOR_GREEN = 56;
+  const uint8_t TEXT_OUTLINE_COLOR_BLUE = 21;
+
+  /**
   This object is responsible for hosting a scene, responding to messages from
   the model and updating the scene accordingly.
 
@@ -50,7 +73,8 @@ namespace OrthancStone
 
     ViewportController(MessageBroker& broker);
 
-    Scene2DPtr GetScene();
+    Scene2DConstPtr GetScene() const;
+    Scene2DPtr      GetScene();
 
     /** 
     This method is called by the GUI system and should update/delete the
@@ -119,7 +143,35 @@ namespace OrthancStone
     /** Removes a measure tool or throws if it cannot be found */
     void RemoveMeasureTool(MeasureToolPtr measureTool);
 
+    /**
+    The square handle side length in *scene* coordinates
+    */
+    double GetHandleSideLengthS() const;
+
+    /**
+    The angle measure too arc  radius in *scene* coordinates
+
+    Note: you might wonder why this is not part of the AngleMeasureTool itself,
+    but we prefer to put all such constants in the same location, to ease 
+    */
+    double GetAngleToolArcRadiusS() const;
+
+    /**
+    The hit test maximum distance in *scene* coordinates.
+    If a pointer event is less than GetHandleSideLengthS() to a GUI element,
+    the hit test for this GUI element is seen as true
+    */
+    double GetHitTestMaximumDistanceS() const;
+
+    /**
+    Distance between the top of the angle measuring tool and the center of 
+    the label showing the actual measure, in *scene* coordinates
+    */
+    double GetAngleTopTextLabelDistanceS() const;
+
   private:
+    double GetCanvasToSceneFactor() const;
+
     std::vector<TrackerCommandPtr> commandStack_;
     
     /**
@@ -128,9 +180,12 @@ namespace OrthancStone
     - If numAppliedCommands_ > 0, one can undo
     - If numAppliedCommands_ < numAppliedCommands_.size(), one can redo
     */
-    size_t                         numAppliedCommands_;
-    std::vector<MeasureToolPtr>    measureTools_;
-    Scene2DPtr                     scene_;
-    FlexiblePointerTrackerPtr      tracker_;
+    size_t                      numAppliedCommands_;
+    std::vector<MeasureToolPtr> measureTools_;
+    Scene2DPtr                  scene_;
+    FlexiblePointerTrackerPtr   tracker_;
+    
+    // this is cached
+    mutable double              canvasToSceneFactor_;
   };
 }

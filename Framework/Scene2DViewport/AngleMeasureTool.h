@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "MeasureTools.h"
+#include "MeasureTool.h"
 
 #include "../Scene2DViewport/LayerHolder.h"
 #include "../Scene2D/Scene2D.h"
@@ -46,6 +46,9 @@ namespace OrthancStone
     void SetSide1End(ScenePoint2D start);
     void SetCenter(ScenePoint2D start);
     void SetSide2End(ScenePoint2D start);
+
+
+    virtual bool HitTest(ScenePoint2D p) const ORTHANC_OVERRIDE;
 
   private:
     virtual void        RefreshScene() ORTHANC_OVERRIDE;

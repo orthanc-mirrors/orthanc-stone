@@ -56,6 +56,142 @@
 
 namespace OrthancStone
 {
+  // Application-configurable, can be shared between 3D/2D
+  class ILayerStyleConfigurator
+  {
+  public:
+    virtual ~ILayerStyleConfigurator()
+    {
+    }
+    
+    virtual uint64_t GetRevision() const = 0;
+    
+    virtual ISceneLayer* CreateFromImage(const Orthanc::ImageAccessor& image) const = 0;
+
+    virtual ISceneLayer* CreateFromDicomImage(const Orthanc::ImageAccessor& frame,
+                                              const DicomInstanceParameters& parameters) const = 0;
+
+    virtual void ApplyStyle(ISceneLayer& layer) const = 0;
+  };
+
+
+
+  class LookupTableStyleConfigurator : public ILayerStyleConfigurator
+  {
+  private:
+    uint64_t     revision_;
+    bool         hasLut_;
+    std::string  lut_;
+    bool         hasRange_;
+    float        minValue_;
+    float        maxValue_;
+    
+  public:
+    LookupTableStyleConfigurator() :
+      revision_(0),
+      hasLut_(false),
+      hasRange_(false)
+    {
+      SetLookupTable(Orthanc::EmbeddedResources::COLORMAP_HOT);   // TODO - test
+    }
+
+    void SetLookupTable(Orthanc::EmbeddedResources::FileResourceId resource)
+    {
+      hasLut_ = true;
+      Orthanc::EmbeddedResources::GetFileResource(lut_, resource);
+    }
+
+    void SetLookupTable(const std::string& lut)
+    {
+      hasLut_ = true;
+      lut_ = lut;
+    }
+
+    void SetRange(float minValue,
+                  float maxValue)
+    {
+      if (minValue > maxValue)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+      else
+      {
+        hasRange_ = true;
+        minValue_ = minValue;
+        maxValue_ = maxValue;
+      }
+    }
+
+    virtual uint64_t GetRevision() const
+    {
+      return revision_;
+    }
+    
+    virtual ISceneLayer* CreateFromImage(const Orthanc::ImageAccessor& image) const
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
+
+    virtual ISceneLayer* CreateFromDicomImage(const Orthanc::ImageAccessor& frame,
+                                              const DicomInstanceParameters& parameters) const
+    {
+      return parameters.CreateLookupTableTexture(frame);
+    }
+
+    virtual void ApplyStyle(ISceneLayer& layer) const
+    {
+      LookupTableTextureSceneLayer& l = dynamic_cast<LookupTableTextureSceneLayer&>(layer);
+      
+      if (hasLut_)
+      {
+        l.SetLookupTable(lut_);
+      }
+
+      if (hasRange_)
+      {
+        l.SetRange(minValue_, maxValue_);
+      }
+      else
+      {
+        l.FitRange();
+      }
+    }
+  };
+
+
+  class GrayscaleStyleConfigurator : public ILayerStyleConfigurator
+  {
+  private:
+    uint64_t revision_;
+    
+  public:
+    GrayscaleStyleConfigurator() :
+      revision_(0)
+    {
+    }
+
+    virtual uint64_t GetRevision() const
+    {
+      return revision_;
+    }
+    
+    virtual ISceneLayer* CreateFromImage(const Orthanc::ImageAccessor& image) const
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
+
+    virtual ISceneLayer* CreateFromDicomImage(const Orthanc::ImageAccessor& frame,
+                                              const DicomInstanceParameters& parameters) const
+    {
+      return parameters.CreateTexture(frame);
+    }
+
+    virtual void ApplyStyle(ISceneLayer& layer) const
+    {
+    }
+  };
+
+
   class IVolumeSlicer : public boost::noncopyable
   {
   public:
@@ -72,7 +208,8 @@ namespace OrthancStone
       virtual uint64_t GetRevision() = 0;
 
       // This call can take some time
-      virtual ISceneLayer* CreateSceneLayer(const CoordinateSystem3D& cuttingPlane) = 0;
+      virtual ISceneLayer* CreateSceneLayer(const ILayerStyleConfigurator* configurator,  // possibly absent
+                                            const CoordinateSystem3D& cuttingPlane) = 0;
     };
 
     virtual ~IVolumeSlicer()
@@ -83,6 +220,8 @@ namespace OrthancStone
   };
 
 
+
+  // TODO -> Remove
   class IVolumeImageSlicer : public IVolumeSlicer
   {
   public:
@@ -105,7 +244,8 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
 
-    virtual ISceneLayer* CreateSceneLayer(const CoordinateSystem3D& cuttingPlane)
+    virtual ISceneLayer* CreateSceneLayer(const ILayerStyleConfigurator* configurator,
+                                          const CoordinateSystem3D& cuttingPlane)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
@@ -169,34 +309,24 @@ namespace OrthancStone
       return GetRevisionInternal(projection_, sliceIndex_);
     }
 
-    virtual ISceneLayer* CreateSceneLayer(const CoordinateSystem3D& cuttingPlane)
+    virtual ISceneLayer* CreateSceneLayer(const ILayerStyleConfigurator* configurator,
+                                          const CoordinateSystem3D& cuttingPlane)
     {
       CheckValid();
+
+      if (configurator == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer,
+                                        "A style configurator is mandatory for textures");
+      }
 
       std::auto_ptr<TextureBaseSceneLayer> texture;
         
       {
         const DicomInstanceParameters& parameters = GetDicomParameters(projection_, sliceIndex_);
         ImageBuffer3D::SliceReader reader(image_, projection_, sliceIndex_);
-
-        static unsigned int i = 1;
-        
-        if (i % 2)
-        {
-          texture.reset(parameters.CreateTexture(reader.GetAccessor()));
-        }
-        else
-        {
-          std::string lut;
-          Orthanc::EmbeddedResources::GetFileResource(lut, Orthanc::EmbeddedResources::COLORMAP_HOT);
-          
-          std::auto_ptr<LookupTableTextureSceneLayer> tmp(parameters.CreateLookupTableTexture(reader.GetAccessor()));
-          tmp->FitRange();
-          tmp->SetLookupTable(lut);
-          texture.reset(tmp.release());
-        }
-
-        i++;
+        texture.reset(dynamic_cast<TextureBaseSceneLayer*>
+                      (configurator->CreateFromDicomImage(reader.GetAccessor(), parameters)));
       }
 
       const CoordinateSystem3D& system = geometry_.GetProjectionGeometry(projection_);
@@ -1280,26 +1410,30 @@ namespace OrthancStone
   class VolumeSceneLayerSource : public boost::noncopyable
   {
   private:
-    int                                layerDepth_;
-    boost::shared_ptr<IVolumeSlicer>   slicer_;
-    bool                               linearInterpolation_;
-    std::auto_ptr<CoordinateSystem3D>  lastPlane_;
-    uint64_t                           lastRevision_;
+    Scene2D&                                scene_;
+    int                                     layerDepth_;
+    boost::shared_ptr<IVolumeSlicer>        slicer_;
+    std::auto_ptr<ILayerStyleConfigurator>  configurator_;
+    std::auto_ptr<CoordinateSystem3D>       lastPlane_;
+    uint64_t                                lastRevision_;
+    uint64_t                                lastConfiguratorRevision_;
 
     static bool IsSameCuttingPlane(const CoordinateSystem3D& a,
                                    const CoordinateSystem3D& b)
     {
+      // TODO - What if the normal is reversed?
       double distance;
       return (CoordinateSystem3D::ComputeDistance(distance, a, b) &&
               LinearAlgebra::IsCloseToZero(distance));
     }
 
   public:
-    VolumeSceneLayerSource(int layerDepth,
+    VolumeSceneLayerSource(Scene2D& scene,
+                           int layerDepth,
                            IVolumeSlicer* slicer) :   // Takes ownership
+      scene_(scene),
       layerDepth_(layerDepth),
-      slicer_(slicer),
-      linearInterpolation_(false)
+      slicer_(slicer)
     {
       if (slicer == NULL)
       {
@@ -1312,18 +1446,41 @@ namespace OrthancStone
       return *slicer_;
     }
 
-    void SetLinearInterpolation(bool enabled)
+    void RemoveConfigurator()
     {
-      linearInterpolation_ = enabled;
+      configurator_.reset();
+      lastPlane_.reset();
     }
 
-    bool IsLinearInterpolation() const
+    void SetConfigurator(ILayerStyleConfigurator* configurator)  // Takes ownership
     {
-      return linearInterpolation_;
+      if (configurator == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+
+      configurator_.reset(configurator);
+
+      // Invalidate the layer
+      lastPlane_.reset(NULL);
     }
 
-    void Update(Scene2D& scene,
-                const CoordinateSystem3D& plane)
+    bool HasConfigurator() const
+    {
+      return configurator_.get() != NULL;
+    }
+
+    ILayerStyleConfigurator& GetConfigurator() const
+    {
+      if (configurator_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      
+      return *configurator_;
+    }
+
+    void Update(const CoordinateSystem3D& plane)
     {
       assert(slicer_.get() != NULL);
       std::auto_ptr<IVolumeSlicer::ExtractedSlice> slice(slicer_->ExtractSlice(plane));
@@ -1336,14 +1493,22 @@ namespace OrthancStone
       if (!slice->IsValid())
       {
         // The slicer cannot handle this cutting plane: Clear the layer
-        scene.DeleteLayer(layerDepth_);
+        scene_.DeleteLayer(layerDepth_);
         lastPlane_.reset(NULL);
       }
       else if (lastPlane_.get() != NULL &&
                IsSameCuttingPlane(*lastPlane_, plane) &&
                lastRevision_ == slice->GetRevision())
       {
-        // The content of the slice has not changed: Do nothing
+        // The content of the slice has not changed: Don't update the
+        // layer content, but possibly update its style
+
+        if (configurator_.get() != NULL &&
+            configurator_->GetRevision() != lastConfiguratorRevision_ &&
+            scene_.HasLayer(layerDepth_))
+        {
+          configurator_->ApplyStyle(scene_.GetLayer(layerDepth_));
+        }
       }
       else
       {
@@ -1351,19 +1516,19 @@ namespace OrthancStone
         lastPlane_.reset(new CoordinateSystem3D(plane));
         lastRevision_ = slice->GetRevision();
 
-        std::auto_ptr<ISceneLayer> layer(slice->CreateSceneLayer(plane));
+        std::auto_ptr<ISceneLayer> layer(slice->CreateSceneLayer(configurator_.get(), plane));
         if (layer.get() == NULL)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);        
         }
 
-        if (layer->GetType() == ISceneLayer::Type_ColorTexture ||
-            layer->GetType() == ISceneLayer::Type_FloatTexture)
+        if (configurator_.get() != NULL)
         {
-          dynamic_cast<TextureBaseSceneLayer&>(*layer).SetLinearInterpolation(linearInterpolation_);
+          lastConfiguratorRevision_ = configurator_->GetRevision();
+          configurator_->ApplyStyle(*layer);
         }
-        
-        scene.SetLayer(layerDepth_, layer.release());
+
+        scene_.SetLayer(layerDepth_, layer.release());
       }
     }
   };
@@ -1495,12 +1660,12 @@ private:
 
       if (source1_.get() != NULL)
       {
-        source1_->Update(scene_, plane);
+        source1_->Update(plane);
       }
       
       if (source2_.get() != NULL)
       {
-        source2_->Update(scene_, plane);
+        source2_->Update(plane);
       }
 
       scene_.FitContent(1024, 768);
@@ -1596,15 +1761,27 @@ public:
   }
 
   void SetVolume1(int depth,
-                  OrthancStone::IVolumeSlicer* volume)
+                  OrthancStone::IVolumeSlicer* volume,
+                  OrthancStone::ILayerStyleConfigurator* style)
   {
-    source1_.reset(new OrthancStone::VolumeSceneLayerSource(depth, volume));
+    source1_.reset(new OrthancStone::VolumeSceneLayerSource(scene_, depth, volume));
+
+    if (style != NULL)
+    {
+      source1_->SetConfigurator(style);
+    }
   }
 
   void SetVolume2(int depth,
-                  OrthancStone::IVolumeSlicer* volume)
+                  OrthancStone::IVolumeSlicer* volume,
+                  OrthancStone::ILayerStyleConfigurator* style)
   {
-    source2_.reset(new OrthancStone::VolumeSceneLayerSource(depth, volume));
+    source2_.reset(new OrthancStone::VolumeSceneLayerSource(scene_, depth, volume));
+
+    if (style != NULL)
+    {
+      source2_->SetConfigurator(style);
+    }
   }
 };
 
@@ -1713,8 +1890,10 @@ void Run(OrthancStone::NativeApplicationContext& context,
   //loader1->LoadSeries("67f1b334-02c16752-45026e40-a5b60b6b-030ecab5");  // Lung 1/10mm
 
 
-  toto->SetVolume2(1, new OrthancStone::OrthancMultiframeVolumeLoader::MPRSlicer(loader3));
-  toto->SetVolume1(0, new OrthancStone::OrthancSeriesVolumeProgressiveLoader::MPRSlicer(loader1));
+  toto->SetVolume2(1, new OrthancStone::OrthancMultiframeVolumeLoader::MPRSlicer(loader3),
+                   new OrthancStone::LookupTableStyleConfigurator);
+  toto->SetVolume1(0, new OrthancStone::OrthancSeriesVolumeProgressiveLoader::MPRSlicer(loader1),
+                   new OrthancStone::GrayscaleStyleConfigurator);
 
   {
     oracle.Start();

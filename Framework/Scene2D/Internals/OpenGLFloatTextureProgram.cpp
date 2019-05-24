@@ -41,7 +41,7 @@ static const char* FRAGMENT_SHADER =
   "  float v = (t.r * 256.0 + t.g) * 256.0;      \n"
   "  v = v * u_slope + u_offset;                 \n"  // (*)
   "  float a = u_windowCenter - u_windowWidth;   \n"
-  "  float dy = 1.0 / (2.0 * u_windowWidth);     \n"
+  "  float dy = 1.0 / u_windowWidth;             \n"
   "  if (v <= a)                                 \n"
   "    v = 0.0;                                  \n"
   "  else                                        \n"

@@ -204,6 +204,9 @@ namespace OrthancStone
           
       Orthanc::GzipCompressor compressor;
       compressor.Uncompress(answer, compressed.c_str(), compressed.size());
+
+      LOG(INFO) << "Uncompressing gzip Encoding: from " << compressed.size()
+                << " to " << answer.size() << " bytes";
     }
   }
 
@@ -424,6 +427,29 @@ namespace OrthancStone
   }
 
 
+  ThreadedOracle::~ThreadedOracle()
+  {
+    if (state_ == State_Running)
+    {
+      LOG(ERROR) << "The threaded oracle is still running, explicit call to "
+                 << "Stop() is mandatory to avoid crashes";
+    }
+
+    try
+    {
+      StopInternal();
+    }
+    catch (Orthanc::OrthancException& e)
+    {
+      LOG(ERROR) << "Exception while stopping the threaded oracle: " << e.What();
+    }
+    catch (...)
+    {
+      LOG(ERROR) << "Native exception while stopping the threaded oracle";
+    }           
+  }
+
+  
   void ThreadedOracle::SetOrthancParameters(const Orthanc::WebServiceParameters& orthanc)
   {
     boost::mutex::scoped_lock lock(mutex_);

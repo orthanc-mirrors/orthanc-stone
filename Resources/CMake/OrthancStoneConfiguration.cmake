@@ -380,10 +380,12 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoColorTextureRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoFloatTextureRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoInfoPanelRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoLookupTableTextureRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoPolylineRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoTextRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CompositorHelper.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/FixedPointAligner.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/LookupTableTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PanSceneTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PointerEvent.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PolylineSceneLayer.cpp

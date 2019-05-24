@@ -86,6 +86,13 @@ namespace OrthancStone
   }
 
 
+  void FloatTextureSceneLayer::SetInverted(bool inverted)
+  {
+    inverted_ = inverted;
+    IncrementRevision();
+  }
+
+  
   void FloatTextureSceneLayer::FitRange()
   {
     float minValue, maxValue;
@@ -116,6 +123,7 @@ namespace OrthancStone
     cloned->windowing_ = windowing_;
     cloned->customCenter_ = customCenter_;
     cloned->customWidth_ = customWidth_;
+    cloned->inverted_ = inverted_;
 
     return cloned.release();
   }

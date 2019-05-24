@@ -44,13 +44,17 @@ namespace OrthancStone
       isLinearInterpolation_ = l.IsLinearInterpolation();
     }
 
-    
-    void CairoColorTextureRenderer::Render(const AffineTransform2D& transform)
+
+    void CairoColorTextureRenderer::RenderColorTexture(ICairoContextProvider& target,
+                                                       const AffineTransform2D& transform,
+                                                       CairoSurface& texture,
+                                                       const AffineTransform2D& textureTransform,
+                                                       bool isLinearInterpolation)
     {
-      cairo_t* cr = target_.GetCairoContext();
+      cairo_t* cr = target.GetCairoContext();
 
       AffineTransform2D t =
-        AffineTransform2D::Combine(transform, textureTransform_);
+        AffineTransform2D::Combine(transform, textureTransform);
       Matrix h = t.GetHomogeneousMatrix();
       
       cairo_save(cr);
@@ -60,9 +64,9 @@ namespace OrthancStone
       cairo_transform(cr, &m);
 
       cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-      cairo_set_source_surface(cr, texture_.GetObject(), 0, 0);
+      cairo_set_source_surface(cr, texture.GetObject(), 0, 0);
 
-      if (isLinearInterpolation_)
+      if (isLinearInterpolation)
       {
         cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_BILINEAR);
       }

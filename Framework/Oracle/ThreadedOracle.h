@@ -72,10 +72,7 @@ namespace OrthancStone
   public:
     ThreadedOracle(IMessageEmitter& emitter);
 
-    virtual ~ThreadedOracle()
-    {
-      StopInternal();
-    }
+    virtual ~ThreadedOracle();
 
     void SetOrthancParameters(const Orthanc::WebServiceParameters& orthanc);
 
@@ -83,9 +80,9 @@ namespace OrthancStone
 
     void SetSleepingTimeResolution(unsigned int milliseconds);
 
-    void Start();
+    virtual void Start();
 
-    void Stop()
+    virtual void Stop()
     {
       StopInternal();
     }

@@ -31,9 +31,10 @@ namespace OrthancStone
     ImageWindowing   windowing_;
     float            customCenter_;
     float            customWidth_;
+    bool             inverted_;
 
   public:
-    // The pixel format must be "Float32"
+    // The pixel format must be convertible to "Float32"
     FloatTextureSceneLayer(const Orthanc::ImageAccessor& texture);
 
     void SetWindowing(ImageWindowing windowing);
@@ -47,6 +48,14 @@ namespace OrthancStone
     ImageWindowing GetWindowingType() const
     {
       return windowing_;
+    }
+
+    // To achieve MONOCHROME1 photometric interpretation
+    void SetInverted(bool inverted);
+
+    bool IsInverted() const
+    {
+      return inverted_;
     }
 
     void FitRange();

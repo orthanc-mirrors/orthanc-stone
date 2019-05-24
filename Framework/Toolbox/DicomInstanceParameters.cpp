@@ -62,12 +62,7 @@ namespace OrthancStone
     {
       if (frameOffsets_.size() >= 2)
       {
-        thickness_ = frameOffsets_[1] - frameOffsets_[0];
-
-        if (thickness_ < 0)
-        {
-          thickness_ = -thickness_;
-        }
+        thickness_ = std::abs(frameOffsets_[1] - frameOffsets_[0]);
       }
     }
   }
@@ -325,7 +320,24 @@ namespace OrthancStone
   }
 
 
-  TextureBaseSceneLayer* DicomInstanceParameters::CreateTexture(const Orthanc::ImageAccessor& pixelData) const
+  Orthanc::ImageAccessor* DicomInstanceParameters::ConvertToFloat(const Orthanc::ImageAccessor& pixelData) const
+  {
+    std::auto_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_Float32, 
+                                                               pixelData.GetWidth(), 
+                                                               pixelData.GetHeight(),
+                                                               false));
+    Orthanc::ImageProcessing::Convert(*converted, pixelData);
+
+    // Correct rescale slope/intercept if need be
+    data_.ApplyRescale(*converted, (pixelData.GetFormat() == Orthanc::PixelFormat_Grayscale32));
+
+    return converted.release();
+  }
+    
+
+
+  TextureBaseSceneLayer* DicomInstanceParameters::CreateTexture
+  (const Orthanc::ImageAccessor& pixelData) const
   {
     assert(sizeof(float) == 4);
 
@@ -343,26 +355,16 @@ namespace OrthancStone
     }
     else
     {
-      if (sourceFormat != Orthanc::PixelFormat_Grayscale16 &&
-          sourceFormat != Orthanc::PixelFormat_Grayscale32 &&
-          sourceFormat != Orthanc::PixelFormat_SignedGrayscale16)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-      }
-
+      // This is the case of a grayscale frame. Convert it to Float32.
       std::auto_ptr<FloatTextureSceneLayer> texture;
-        
+
+      if (pixelData.GetFormat() == Orthanc::PixelFormat_Float32)
       {
-        // This is the case of a grayscale frame. Convert it to Float32.
-        std::auto_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_Float32, 
-                                                                   pixelData.GetWidth(), 
-                                                                   pixelData.GetHeight(),
-                                                                   false));
-        Orthanc::ImageProcessing::Convert(*converted, pixelData);
-
-        // Correct rescale slope/intercept if need be
-        data_.ApplyRescale(*converted, (sourceFormat == Orthanc::PixelFormat_Grayscale32));
-
+        texture.reset(new FloatTextureSceneLayer(pixelData));
+      }
+      else
+      {
+        std::auto_ptr<Orthanc::ImageAccessor> converted(ConvertToFloat(pixelData));
         texture.reset(new FloatTextureSceneLayer(*converted));
       }
 
@@ -373,6 +375,23 @@ namespace OrthancStone
       }
         
       return texture.release();
+    }
+  }
+
+
+  LookupTableTextureSceneLayer* DicomInstanceParameters::CreateLookupTableTexture
+  (const Orthanc::ImageAccessor& pixelData) const
+  {
+    std::auto_ptr<FloatTextureSceneLayer> texture;
+
+    if (pixelData.GetFormat() == Orthanc::PixelFormat_Float32)
+    {
+      return new LookupTableTextureSceneLayer(pixelData);
+    }
+    else
+    {
+      std::auto_ptr<Orthanc::ImageAccessor> converted(ConvertToFloat(pixelData));
+      return new LookupTableTextureSceneLayer(*converted);
     }
   }
 }

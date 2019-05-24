@@ -72,6 +72,11 @@ namespace OrthancStone
 
           uint8_t vv = static_cast<uint8_t>(v);
 
+          if (l.IsInverted())
+          {
+            vv = 255 - vv;
+          }
+
           q[0] = vv;
           q[1] = vv;
           q[2] = vv;

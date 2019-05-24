@@ -72,16 +72,34 @@ namespace OrthancStone
     RefreshScene();
   }
 
+  
+
+  bool LineMeasureTool::HitTest(ScenePoint2D p) const
+  {
+    const double pixelToScene =
+      GetScene()->GetCanvasToSceneTransform().ComputeZoom();
+
+    // the hit test will return true if the supplied point (in scene coords)
+    // is close to the handle or to the line.
+
+    // since the handle is small, a nice approximation is to defined this
+    // as a threshold on the distance between the point and the handle center.
+
+    // this threshold is defined as a constant value in CANVAS units.
+
+
+    // line equation from two points (non-normalized)
+    // (y0-y1)*x + (x1-x0)*xy + (x0*y1 - x1*y0) = 0
+    // 
+    return false;
+  }
+
   void LineMeasureTool::RefreshScene()
   {
     if (IsSceneAlive())
     {
       if (IsEnabled())
       {
-        // get the scaling factor 
-        const double pixelToScene =
-          GetScene()->GetCanvasToSceneTransform().ComputeZoom();
-
         layerHolder_->CreateLayersIfNeeded();
 
         {
@@ -89,7 +107,10 @@ namespace OrthancStone
 
           PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(0);
           polylineLayer->ClearAllChains();
-          polylineLayer->SetColor(0, 223, 21);
+          polylineLayer->SetColor(
+            TOOL_LINES_COLOR_RED, 
+            TOOL_LINES_COLOR_GREEN, 
+            TOOL_LINES_COLOR_BLUE);
 
           {
             PolylineSceneLayer::Chain chain;
@@ -100,13 +121,12 @@ namespace OrthancStone
 
           // handles
           {
-            //void AddSquare(PolylineSceneLayer::Chain& chain,const Scene2D& scene,const ScenePoint2D& centerS,const double& sideLength)
-
             {
               PolylineSceneLayer::Chain chain;
               
               //TODO: take DPI into account
-              AddSquare(chain, GetScene(), start_, 10.0 * pixelToScene);
+              AddSquare(chain, GetScene(), start_, 
+                GetController()->GetHandleSideLengthS());
               
               polylineLayer->AddChain(chain, true);
             }
@@ -115,7 +135,8 @@ namespace OrthancStone
               PolylineSceneLayer::Chain chain;
               
               //TODO: take DPI into account
-              AddSquare(chain, GetScene(), end_, 10.0 * pixelToScene);
+              AddSquare(chain, GetScene(), end_, 
+                GetController()->GetHandleSideLengthS());
               
               polylineLayer->AddChain(chain, true);
             }
@@ -123,8 +144,7 @@ namespace OrthancStone
 
         }
         {
-          // Set the text layer proporeties
-
+          // Set the text layer propreties
           double deltaX = end_.GetX() - start_.GetX();
           double deltaY = end_.GetY() - start_.GetY();
           double squareDist = deltaX * deltaX + deltaY * deltaY;

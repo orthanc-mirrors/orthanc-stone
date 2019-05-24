@@ -59,7 +59,18 @@ namespace OrthancStone
     */
     void OnSceneTransformChanged(
       const ViewportController::SceneTransformChanged& message);
+    
+    /**
+    This function must be implemented by the measuring tool to return whether
+    a given point in scene coords is close to the measuring tool.
 
+    This is used for mouse hover highlighting.
+
+    It is assumed that if the pointer position leads to this function returning
+    true, then a click at that position will return a tracker to edit the 
+    measuring tool
+    */
+    virtual bool HitTest(ScenePoint2D p) const = 0;
   protected:
     MeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW);
 
@@ -77,9 +88,12 @@ namespace OrthancStone
     */
     virtual void RefreshScene() = 0;
 
-    ViewportControllerPtr GetController();
-    Scene2DPtr GetScene();
-    
+    ViewportControllerConstPtr GetController() const;
+    ViewportControllerPtr      GetController();
+
+    Scene2DConstPtr            GetScene() const;
+    Scene2DPtr                 GetScene();
+
     /**
     enabled_ is not accessible by subclasses because there is a state machine
     that we do not wanna mess with

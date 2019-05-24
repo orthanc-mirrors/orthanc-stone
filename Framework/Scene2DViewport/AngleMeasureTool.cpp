@@ -75,6 +75,12 @@ namespace OrthancStone
     RefreshScene();
   }
 
+
+  bool AngleMeasureTool::HitTest(ScenePoint2D p) const
+  {
+    throw std::logic_error("The method or operation is not implemented.");
+  }
+
   void AngleMeasureTool::SetCenter(ScenePoint2D pt)
   {
     center_ = pt;
@@ -85,12 +91,9 @@ namespace OrthancStone
   {
     if (IsSceneAlive())
     {
+      ViewportControllerPtr controller = GetController();
       if (IsEnabled())
       {
-        // get the scaling factor 
-        const double pixelToScene =
-          GetScene()->GetCanvasToSceneTransform().ComputeZoom();
-
         layerHolder_->CreateLayersIfNeeded();
 
         {
@@ -121,13 +124,15 @@ namespace OrthancStone
             {
               PolylineSceneLayer::Chain chain;
               //TODO: take DPI into account
-              AddSquare(chain, GetScene(), side1End_, 10.0 * pixelToScene);
+              AddSquare(chain, GetScene(), side1End_, 
+                GetController()->GetHandleSideLengthS());
               polylineLayer->AddChain(chain, true);
             }
             {
               PolylineSceneLayer::Chain chain;
               //TODO: take DPI into account
-              AddSquare(chain, GetScene(), side2End_, 10.0 * pixelToScene); 
+              AddSquare(chain, GetScene(), side2End_, 
+                GetController()->GetHandleSideLengthS());
               polylineLayer->AddChain(chain, true);
             }
           }
@@ -136,9 +141,8 @@ namespace OrthancStone
           {
             PolylineSceneLayer::Chain chain;
 
-            const double ARC_RADIUS_CANVAS_COORD = 30.0;
             AddShortestArc(chain, side1End_, center_, side2End_,
-                           ARC_RADIUS_CANVAS_COORD * pixelToScene);
+                           controller->GetAngleToolArcRadiusS());
             polylineLayer->AddChain(chain, false);
           }
         }
@@ -156,13 +160,11 @@ namespace OrthancStone
           double delta = NormalizeAngle(p2cAngle - p1cAngle);
           double theta = p1cAngle + delta / 2;
 
-          const double TEXT_CENTER_DISTANCE_CANVAS_COORD = 90;
+          double ox = controller->GetAngleTopTextLabelDistanceS() * cos(theta);
+          double oy = controller->GetAngleTopTextLabelDistanceS() * sin(theta);
 
-          double offsetX = TEXT_CENTER_DISTANCE_CANVAS_COORD * cos(theta);
-          double offsetY = TEXT_CENTER_DISTANCE_CANVAS_COORD * sin(theta);
-
-          double pointX = center_.GetX() + offsetX * pixelToScene;
-          double pointY = center_.GetY() + offsetY * pixelToScene;
+          double pointX = center_.GetX() + ox;
+          double pointY = center_.GetY() + oy;
 
           char buf[64];
           double angleDeg = RadiansToDegrees(delta);
@@ -207,11 +209,11 @@ namespace OrthancStone
             TrackerSample_SetInfoDisplayMessage("p2cAngle (deg)",
               boost::lexical_cast<std::string>(RadiansToDegrees(p2cAngle)));
 
-            TrackerSample_SetInfoDisplayMessage("offsetX (pix)",
-              boost::lexical_cast<std::string>(offsetX));
+            TrackerSample_SetInfoDisplayMessage("ox (scene)",
+              boost::lexical_cast<std::string>(ox));
 
-            TrackerSample_SetInfoDisplayMessage("offsetY (pix)",
-              boost::lexical_cast<std::string>(offsetY));
+            TrackerSample_SetInfoDisplayMessage("offsetY (scene)",
+              boost::lexical_cast<std::string>(oy));
 
             TrackerSample_SetInfoDisplayMessage("pointX",
               boost::lexical_cast<std::string>(pointX));

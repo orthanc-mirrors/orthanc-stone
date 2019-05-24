@@ -30,8 +30,14 @@ namespace OrthancStone
   ViewportController::ViewportController(MessageBroker& broker)
     : IObservable(broker)
     , numAppliedCommands_(0)
+    , canvasToSceneFactor_(0.0)
   {
     scene_ = boost::make_shared<Scene2D>();
+  }
+
+  Scene2DConstPtr ViewportController::GetScene() const
+  {
+    return scene_;
   }
 
   Scene2DPtr ViewportController::GetScene()
@@ -49,11 +55,11 @@ namespace OrthancStone
   {
     std::vector<MeasureToolPtr> ret;
     
-
-    //for (size_t i = 0; i < measureTools_.size(); ++i)
-    //{
-
-    //}
+    for (size_t i = 0; i < measureTools_.size(); ++i)
+    {
+      if (measureTools_[i]->HitTest(p))
+        ret.push_back(measureTools_[i]);
+    }
     return ret;
   }
 
@@ -72,6 +78,10 @@ namespace OrthancStone
   {
     scene_->SetSceneToCanvasTransform(transform);
     BroadcastMessage(SceneTransformChanged(*this));
+    
+    // update the canvas to scene factor
+    canvasToSceneFactor_ = 0.0;
+    canvasToSceneFactor_ = GetCanvasToSceneFactor();
   }
 
   void ViewportController::FitContent(
@@ -131,6 +141,37 @@ namespace OrthancStone
     measureTools_.erase(
       std::remove(measureTools_.begin(), measureTools_.end(), measureTool), 
       measureTools_.end());
+  }
+
+
+  double ViewportController::GetCanvasToSceneFactor() const
+  {
+    if (canvasToSceneFactor_ == 0)
+    {
+      canvasToSceneFactor_ =
+        GetScene()->GetCanvasToSceneTransform().ComputeZoom();
+    }
+    return canvasToSceneFactor_;
+  }
+
+  double ViewportController::GetHandleSideLengthS() const
+  {
+    return HANDLE_SIDE_LENGTH_CANVAS_COORD * GetCanvasToSceneFactor();
+  }
+
+  double ViewportController::GetAngleToolArcRadiusS() const
+  {
+    return ARC_RADIUS_CANVAS_COORD * GetCanvasToSceneFactor();
+  }
+
+  double ViewportController::GetHitTestMaximumDistanceS() const
+  {
+    return HIT_TEST_MAX_DISTANCE_CANVAS_COORD * GetCanvasToSceneFactor();
+  }
+
+  double ViewportController::GetAngleTopTextLabelDistanceS() const
+  {
+    return TEXT_CENTER_DISTANCE_CANVAS_COORD * GetCanvasToSceneFactor();
   }
 }
 

@@ -22,7 +22,7 @@
 #include "../../Framework/Messages/IObserver.h"
 #include "../../Framework/Scene2D/OpenGLCompositor.h"
 #include "../../Framework/Scene2DViewport/IFlexiblePointerTracker.h"
-#include "../../Framework/Scene2DViewport/MeasureTools.h"
+#include "../../Framework/Scene2DViewport/MeasureTool.h"
 #include "../../Framework/Scene2DViewport/PointerTypes.h"
 #include "../../Framework/Scene2DViewport/ViewportController.h"
 

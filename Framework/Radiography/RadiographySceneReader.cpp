@@ -60,6 +60,11 @@ namespace OrthancStone
     if (version != 1)
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
 
+    if (input.isMember("hasWindowing") && input["hasWindowing"].asBool())
+    {
+      scene_.SetWindowing(input["windowCenter"].asFloat(), input["windowWidth"].asFloat());
+    }
+
     RadiographyDicomLayer* dicomLayer = NULL;
     for(size_t layerIndex = 0; layerIndex < input["layers"].size(); layerIndex++)
     {
@@ -142,6 +147,11 @@ namespace OrthancStone
 
     if (version != 1)
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+
+    if (input.isMember("hasWindowing") && input["hasWindowing"].asBool())
+    {
+      scene_.SetWindowing(input["windowCenter"].asFloat(), input["windowWidth"].asFloat());
+    }
 
     RadiographyDicomLayer* dicomLayer = NULL;
     for(size_t layerIndex = 0; layerIndex < input["layers"].size(); layerIndex++)

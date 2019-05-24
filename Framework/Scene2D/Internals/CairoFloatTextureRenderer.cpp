@@ -38,7 +38,7 @@ namespace OrthancStone
       float windowCenter, windowWidth;
       l.GetWindowing(windowCenter, windowWidth);
 
-      const float a = windowCenter - windowWidth;
+      const float a = windowCenter - windowWidth / 2.0f;
       const float slope = 256.0f / windowWidth;
 
       const Orthanc::ImageAccessor& source = l.GetTexture();

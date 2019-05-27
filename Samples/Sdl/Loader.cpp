@@ -221,15 +221,28 @@ namespace OrthancStone
 
 
 
-  // TODO -> Remove
-  class IVolumeImageSlicer : public IVolumeSlicer
+  class VolumeGeometryReadyMessage : public OriginMessage<IVolumeSlicer>
   {
-  public:
-    virtual bool HasGeometry() const = 0;
+    ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
 
-    virtual const VolumeImageGeometry& GetGeometry() const = 0;
+  private:
+    const VolumeImageGeometry&  geometry_;
+    
+  public:
+    VolumeGeometryReadyMessage(const IVolumeSlicer& slicer,
+                               const VolumeImageGeometry& geometry) :
+      OriginMessage(slicer),
+      geometry_(geometry)
+    {
+    }
+
+    const VolumeImageGeometry& GetGeometry() const
+    {
+      return geometry_;
+    }
   };
 
+  
 
   class InvalidExtractedSlice : public IVolumeSlicer::ExtractedSlice
   {
@@ -666,7 +679,9 @@ namespace OrthancStone
 
 
   class OrthancSeriesVolumeProgressiveLoader : 
-    public IObserver
+    public IObserver,
+    public IObservable,
+    public IVolumeSlicer
   {
   private:
     static const unsigned int LOW_QUALITY = 0;
@@ -753,6 +768,8 @@ namespace OrthancStone
         }
 
         volume_.SetGeometry(slices);
+
+        BroadcastMessage(VolumeGeometryReadyMessage(*this, volume_.GetGeometry()));
       }
 
       if (volume_.GetSlicesCount() != 0)
@@ -811,63 +828,11 @@ namespace OrthancStone
     std::auto_ptr<IFetchingStrategy>               strategy_;
 
 
-    IVolumeSlicer::ExtractedSlice* ExtractOrthogonalSlice(const CoordinateSystem3D& cuttingPlane) const
-    {
-      if (volume_.HasGeometry() &&
-          volume_.GetSlicesCount() != 0)
-      {
-        std::auto_ptr<DicomVolumeImageOrthogonalSlice> slice
-          (new DicomSeriesVolumeImage::ExtractedOrthogonalSlice(volume_, cuttingPlane));
-
-        assert(slice.get() != NULL &&
-               strategy_.get() != NULL);            
-
-        if (slice->IsValid() &&
-            slice->GetProjection() == VolumeProjection_Axial)
-        {
-          strategy_->SetCurrent(slice->GetSliceIndex());
-        }
-
-        return slice.release();
-      }
-      else
-      {
-        return new InvalidExtractedSlice;
-      }
-    }
-
-    
   public:
-    class MPRSlicer : public IVolumeImageSlicer
-    {
-    private:
-      boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader>  that_;
-
-    public:
-      MPRSlicer(const boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader>& that) :
-        that_(that)
-      {
-      }
-
-      virtual ExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) const
-      {
-        return that_->ExtractOrthogonalSlice(cuttingPlane);
-      }
-
-      virtual bool HasGeometry() const
-      {
-        return that_->GetVolume().HasGeometry();
-      }
-
-      virtual const VolumeImageGeometry& GetGeometry() const
-      {
-        return that_->GetVolume().GetGeometry();
-      }
-    };
-    
     OrthancSeriesVolumeProgressiveLoader(IOracle& oracle,
                                          IObservable& oracleObservable) :
       IObserver(oracleObservable.GetBroker()),
+      IObservable(oracleObservable.GetBroker()),
       oracle_(oracle),
       active_(false),
       simultaneousDownloads_(4),
@@ -924,11 +889,40 @@ namespace OrthancStone
     {
       return volume_;
     }
+
+    
+    virtual ExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) const
+    {
+      if (volume_.HasGeometry() &&
+          volume_.GetSlicesCount() != 0)
+      {
+        std::auto_ptr<DicomVolumeImageOrthogonalSlice> slice
+          (new DicomSeriesVolumeImage::ExtractedOrthogonalSlice(volume_, cuttingPlane));
+
+        assert(slice.get() != NULL &&
+               strategy_.get() != NULL);            
+
+        if (slice->IsValid() &&
+            slice->GetProjection() == VolumeProjection_Axial)
+        {
+          strategy_->SetCurrent(slice->GetSliceIndex());
+        }
+
+        return slice.release();
+      }
+      else
+      {
+        return new InvalidExtractedSlice;
+      }
+    }
   };
 
 
 
-  class OrthancMultiframeVolumeLoader : public IObserver
+  class OrthancMultiframeVolumeLoader :
+    public IObserver,
+    public IObservable,
+    public IVolumeSlicer
   {
   private:
     class State : public Orthanc::IDynamicObject
@@ -1176,6 +1170,8 @@ namespace OrthancStone
       image_->Clear();
 
       ScheduleFrameDownloads();
+
+      BroadcastMessage(VolumeGeometryReadyMessage(*this, *geometry_));
     }
 
 
@@ -1281,44 +1277,10 @@ namespace OrthancStone
     
     
   public:
-    class MPRSlicer : public IVolumeImageSlicer
-    {
-    private:
-      boost::shared_ptr<OrthancMultiframeVolumeLoader>  that_;
-
-    public:
-      MPRSlicer(const boost::shared_ptr<OrthancMultiframeVolumeLoader>& that) :
-        that_(that)
-      {
-      }
-
-      virtual ExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) const
-      {
-        if (that_->HasGeometry())
-        {
-          return new ExtractedOrthogonalSlice(*that_, cuttingPlane);
-        }
-        else
-        {
-          return new InvalidExtractedSlice;
-        }
-      }
-
-      virtual bool HasGeometry() const
-      {
-        return that_->HasGeometry();
-      }
-
-      virtual const VolumeImageGeometry& GetGeometry() const
-      {
-        return that_->GetGeometry();
-      }
-    };
-
-    
     OrthancMultiframeVolumeLoader(IOracle& oracle,
                                   IObservable& oracleObservable) :
       IObserver(oracleObservable.GetBroker()),
+      IObservable(oracleObservable.GetBroker()),
       oracle_(oracle),
       active_(false),
       revision_(0)
@@ -1403,6 +1365,19 @@ namespace OrthancStone
         }
       }
     }
+
+
+    virtual ExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) const
+    {
+      if (HasGeometry())
+      {
+        return new ExtractedOrthogonalSlice(*this, cuttingPlane);
+      }
+      else
+      {
+        return new InvalidExtractedSlice;
+      }
+    }
   };
 
 
@@ -1430,7 +1405,7 @@ namespace OrthancStone
   public:
     VolumeSceneLayerSource(Scene2D& scene,
                            int layerDepth,
-                           IVolumeSlicer* slicer) :   // Takes ownership
+                           const boost::shared_ptr<IVolumeSlicer>& slicer) :
       scene_(scene),
       layerDepth_(layerDepth),
       slicer_(slicer)
@@ -1612,31 +1587,26 @@ namespace OrthancStone
 class Toto : public OrthancStone::IObserver
 {
 private:
-  OrthancStone::IOracle& oracle_;
+  OrthancStone::CoordinateSystem3D  plane_;
+  OrthancStone::IOracle&            oracle_;
   OrthancStone::Scene2D             scene_;
   std::auto_ptr<OrthancStone::VolumeSceneLayerSource>  source1_, source2_;
 
-  
-  OrthancStone::CoordinateSystem3D GetSamplePlane
-  (const OrthancStone::VolumeSceneLayerSource& source) const
+
+  void Handle(const OrthancStone::VolumeGeometryReadyMessage& message)
   {
-    const OrthancStone::IVolumeImageSlicer& slicer =
-      dynamic_cast<const OrthancStone::IVolumeImageSlicer&>(source.GetSlicer());
-        
-    OrthancStone::CoordinateSystem3D plane;
-
-    if (slicer.HasGeometry())
+    printf("Geometry ready\n");
+    
+    if (&source1_->GetSlicer() == &message.GetOrigin())
     {
-      //plane = slicer.GetGeometry().GetSagittalGeometry();
-      //plane = slicer.GetGeometry().GetAxialGeometry();
-      plane = slicer.GetGeometry().GetCoronalGeometry();
-      plane.SetOrigin(slicer.GetGeometry().GetCoordinates(0.5f, 0.5f, 0.5f));
+      //plane_ = message.GetGeometry().GetSagittalGeometry();
+      //plane_ = message.GetGeometry().GetAxialGeometry();
+      plane_ = message.GetGeometry().GetCoronalGeometry();
+      plane_.SetOrigin(message.GetGeometry().GetCoordinates(0.5f, 0.5f, 0.5f));
     }
-
-    return plane;
   }
   
-
+  
   void Handle(const OrthancStone::SleepOracleCommand::TimeoutMessage& message)
   {
     if (message.GetOrigin().HasPayload())
@@ -1647,25 +1617,14 @@ private:
     {
       printf("TIMEOUT\n");
 
-      OrthancStone::CoordinateSystem3D plane;
-
       if (source1_.get() != NULL)
       {
-        plane = GetSamplePlane(*source1_);
-      }
-      else if (source2_.get() != NULL)
-      {
-        plane = GetSamplePlane(*source2_);
-      }
-
-      if (source1_.get() != NULL)
-      {
-        source1_->Update(plane);
+        source1_->Update(plane_);
       }
       
       if (source2_.get() != NULL)
       {
-        source2_->Update(plane);
+        source2_->Update(plane_);
       }
 
       scene_.FitContent(1024, 768);
@@ -1761,9 +1720,13 @@ public:
   }
 
   void SetVolume1(int depth,
-                  OrthancStone::IVolumeSlicer* volume,
+                  const boost::shared_ptr<OrthancStone::IVolumeSlicer>& volume,
                   OrthancStone::ILayerStyleConfigurator* style)
   {
+    dynamic_cast<OrthancStone::IObservable&>(*volume).RegisterObserverCallback
+      (new OrthancStone::Callable
+       <Toto, OrthancStone::VolumeGeometryReadyMessage>(*this, &Toto::Handle));
+
     source1_.reset(new OrthancStone::VolumeSceneLayerSource(scene_, depth, volume));
 
     if (style != NULL)
@@ -1773,9 +1736,13 @@ public:
   }
 
   void SetVolume2(int depth,
-                  OrthancStone::IVolumeSlicer* volume,
+                  const boost::shared_ptr<OrthancStone::IVolumeSlicer>& volume,
                   OrthancStone::ILayerStyleConfigurator* style)
   {
+    dynamic_cast<OrthancStone::IObservable&>(*volume).RegisterObserverCallback
+      (new OrthancStone::Callable
+       <Toto, OrthancStone::VolumeGeometryReadyMessage>(*this, &Toto::Handle));
+
     source2_.reset(new OrthancStone::VolumeSceneLayerSource(scene_, depth, volume));
 
     if (style != NULL)
@@ -1800,6 +1767,9 @@ void Run(OrthancStone::NativeApplicationContext& context,
     loader2.reset(new OrthancStone::OrthancSeriesVolumeProgressiveLoader(oracle, lock.GetOracleObservable()));
     loader3.reset(new OrthancStone::OrthancMultiframeVolumeLoader(oracle, lock.GetOracleObservable()));
   }
+
+  toto->SetVolume1(0, loader1, new OrthancStone::GrayscaleStyleConfigurator);
+  toto->SetVolume2(1, loader3, new OrthancStone::LookupTableStyleConfigurator);
 
   oracle.Schedule(*toto, new OrthancStone::SleepOracleCommand(100));
 
@@ -1890,15 +1860,11 @@ void Run(OrthancStone::NativeApplicationContext& context,
   //loader1->LoadSeries("67f1b334-02c16752-45026e40-a5b60b6b-030ecab5");  // Lung 1/10mm
 
 
-  toto->SetVolume2(1, new OrthancStone::OrthancMultiframeVolumeLoader::MPRSlicer(loader3),
-                   new OrthancStone::LookupTableStyleConfigurator);
-  toto->SetVolume1(0, new OrthancStone::OrthancSeriesVolumeProgressiveLoader::MPRSlicer(loader1),
-                   new OrthancStone::GrayscaleStyleConfigurator);
-
   {
+    LOG(WARNING) << "...Waiting for Ctrl-C...";
+
     oracle.Start();
 
-    LOG(WARNING) << "...Waiting for Ctrl-C...";
     Orthanc::SystemToolbox::ServerBarrier();
 
     /**
@@ -1924,7 +1890,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
 int main(int argc, char* argv[])
 {
   OrthancStone::StoneInitialize();
-  Orthanc::Logging::EnableInfoLevel(true);
+  //Orthanc::Logging::EnableInfoLevel(true);
 
   try
   {

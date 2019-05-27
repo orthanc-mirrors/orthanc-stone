@@ -768,8 +768,6 @@ namespace OrthancStone
         }
 
         volume_.SetGeometry(slices);
-
-        BroadcastMessage(VolumeGeometryReadyMessage(*this, volume_.GetGeometry()));
       }
 
       if (volume_.GetSlicesCount() != 0)
@@ -783,6 +781,8 @@ namespace OrthancStone
           ScheduleNextSliceDownload();
         }
       }
+
+      BroadcastMessage(VolumeGeometryReadyMessage(*this, volume_.GetGeometry()));
     }
 
 
@@ -900,7 +900,7 @@ namespace OrthancStone
           (new DicomSeriesVolumeImage::ExtractedOrthogonalSlice(volume_, cuttingPlane));
 
         assert(slice.get() != NULL &&
-               strategy_.get() != NULL);            
+               strategy_.get() != NULL);
 
         if (slice->IsValid() &&
             slice->GetProjection() == VolumeProjection_Axial)
@@ -1593,6 +1593,40 @@ private:
   std::auto_ptr<OrthancStone::VolumeSceneLayerSource>  source1_, source2_;
 
 
+  void Refresh()
+  {
+    if (source1_.get() != NULL)
+    {
+      source1_->Update(plane_);
+    }
+      
+    if (source2_.get() != NULL)
+    {
+      source2_->Update(plane_);
+    }
+
+    scene_.FitContent(1024, 768);
+      
+    {
+      OrthancStone::CairoCompositor compositor(scene_, 1024, 768);
+      compositor.Refresh();
+        
+      Orthanc::ImageAccessor accessor;
+      compositor.GetCanvas().GetReadOnlyAccessor(accessor);
+
+      Orthanc::Image tmp(Orthanc::PixelFormat_RGB24, accessor.GetWidth(), accessor.GetHeight(), false);
+      Orthanc::ImageProcessing::Convert(tmp, accessor);
+        
+      static unsigned int count = 0;
+      char buf[64];
+      sprintf(buf, "scene-%06d.png", count++);
+        
+      Orthanc::PngWriter writer;
+      writer.WriteToFile(buf, tmp);
+    }
+  }
+
+  
   void Handle(const OrthancStone::VolumeGeometryReadyMessage& message)
   {
     printf("Geometry ready\n");
@@ -1604,6 +1638,8 @@ private:
       plane_ = message.GetGeometry().GetCoronalGeometry();
       plane_.SetOrigin(message.GetGeometry().GetCoordinates(0.5f, 0.5f, 0.5f));
     }
+
+    Refresh();
   }
   
   
@@ -1617,35 +1653,7 @@ private:
     {
       printf("TIMEOUT\n");
 
-      if (source1_.get() != NULL)
-      {
-        source1_->Update(plane_);
-      }
-      
-      if (source2_.get() != NULL)
-      {
-        source2_->Update(plane_);
-      }
-
-      scene_.FitContent(1024, 768);
-      
-      {
-        OrthancStone::CairoCompositor compositor(scene_, 1024, 768);
-        compositor.Refresh();
-        
-        Orthanc::ImageAccessor accessor;
-        compositor.GetCanvas().GetReadOnlyAccessor(accessor);
-
-        Orthanc::Image tmp(Orthanc::PixelFormat_RGB24, accessor.GetWidth(), accessor.GetHeight(), false);
-        Orthanc::ImageProcessing::Convert(tmp, accessor);
-        
-        static unsigned int count = 0;
-        char buf[64];
-        sprintf(buf, "scene-%06d.png", count++);
-        
-        Orthanc::PngWriter writer;
-        writer.WriteToFile(buf, tmp);
-      }
+      Refresh();
 
       /**
        * The sleep() leads to a crash if the oracle is still running,

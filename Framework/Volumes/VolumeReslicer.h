@@ -43,6 +43,7 @@ namespace OrthancStone
     bool                           success_;
     Extent2D                       extent_;
     std::auto_ptr<Orthanc::Image>  slice_;
+    double                         pixelSpacing_;
 
     void CheckIterators(const ImageBuffer3D& source,
                         const CoordinateSystem3D& plane,
@@ -118,5 +119,7 @@ namespace OrthancStone
                const VolumeImageGeometry& geometry,
                const CoordinateSystem3D& plane,
                double voxelSize);
+
+    double GetPixelSpacing() const;
   };
 }

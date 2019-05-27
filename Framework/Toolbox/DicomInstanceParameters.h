@@ -89,6 +89,11 @@ namespace OrthancStone
     {
     }
 
+    DicomInstanceParameters* Clone() const
+    {
+      return new DicomInstanceParameters(*this);
+    }
+
     void SetOrthancInstanceIdentifier(const std::string& id)
     {
       data_.orthancInstanceId_ = id;

@@ -779,6 +779,7 @@ namespace OrthancStone
                              double voxelSize)
   {
     Reset();
+    pixelSpacing_ = voxelSize;
 
     // Firstly, compute the intersection of the source volumetric
     // image with the reslicing plane. This leads to a polygon with 3
@@ -816,5 +817,18 @@ namespace OrthancStone
     }
 
     success_ = true;
+  }
+
+
+  double VolumeReslicer::GetPixelSpacing() const
+  {
+    if (success_)
+    {
+      return pixelSpacing_;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
   }
 }

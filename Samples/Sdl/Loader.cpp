@@ -92,7 +92,6 @@ namespace OrthancStone
       hasLut_(false),
       hasRange_(false)
     {
-      SetLookupTable(Orthanc::EmbeddedResources::COLORMAP_HOT);   // TODO - test
     }
 
     void SetLookupTable(Orthanc::EmbeddedResources::FileResourceId resource)
@@ -1777,7 +1776,12 @@ void Run(OrthancStone::NativeApplicationContext& context,
   }
 
   toto->SetVolume1(0, loader1, new OrthancStone::GrayscaleStyleConfigurator);
-  toto->SetVolume2(1, loader3, new OrthancStone::LookupTableStyleConfigurator);
+
+  {
+    std::auto_ptr<OrthancStone::LookupTableStyleConfigurator> config(new OrthancStone::LookupTableStyleConfigurator);
+    config->SetLookupTable(Orthanc::EmbeddedResources::COLORMAP_HOT);
+    toto->SetVolume2(1, loader3, config.release());
+  }
 
   oracle.Schedule(*toto, new OrthancStone::SleepOracleCommand(100));
 

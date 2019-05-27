@@ -37,6 +37,7 @@
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Toolbox/GeometryToolbox.h"
 #include "../../Framework/Toolbox/SlicesSorter.h"
+#include "../../Framework/Toolbox/DicomStructureSet.h"
 #include "../../Framework/Volumes/ImageBuffer3D.h"
 #include "../../Framework/Volumes/VolumeImageGeometry.h"
 #include "../../Framework/Volumes/VolumeReslicer.h"
@@ -1462,6 +1463,86 @@ namespace OrthancStone
 
 
 
+  class DicomStructureSetLoader :
+    public IObserver,
+    public IVolumeSlicer
+  {
+  private:
+    enum State
+    {
+      State_Setup,
+      State_Loading,
+      State_Ready
+    };    
+    
+    
+    std::auto_ptr<DicomStructureSet>  content_;
+    IOracle&                          oracle_;
+    State                             state_;
+    std::string                       instanceId_;
+
+    void Handle(const OrthancRestApiCommand::SuccessMessage& message)
+    {
+      if (state_ != State_Loading)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+
+      const boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
+
+      {
+        OrthancPlugins::FullOrthancDataset dicom(message.GetAnswer());
+        content_.reset(new DicomStructureSet(dicom));
+      }
+
+      const boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
+
+      printf("LOADED: %d\n", (end - start).total_milliseconds());
+      state_ = State_Ready;
+    }
+      
+    
+  public:
+    DicomStructureSetLoader(IOracle& oracle,
+                            IObservable& oracleObservable) :
+      IObserver(oracleObservable.GetBroker()),
+      oracle_(oracle),
+      state_(State_Setup)
+    {
+      oracleObservable.RegisterObserverCallback(
+        new Callable<DicomStructureSetLoader, OrthancRestApiCommand::SuccessMessage>
+        (*this, &DicomStructureSetLoader::Handle));
+    }
+    
+    
+    void LoadInstance(const std::string& instanceId)
+    {
+      if (state_ != State_Setup)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        state_ = State_Loading;
+        instanceId_ = instanceId;
+
+        {
+          std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+          command->SetHttpHeader("Accept-Encoding", "gzip");
+          command->SetUri("/instances/" + instanceId + "/tags?ignore-length=3006-0050");
+          oracle_.Schedule(*this, command.release());
+        }
+      }
+    }
+
+    virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane)
+    {
+      return NULL;
+    }
+  };
+
+
+
   class VolumeSceneLayerSource : public boost::noncopyable
   {
   private:
@@ -1854,12 +1935,14 @@ void Run(OrthancStone::NativeApplicationContext& context,
   boost::shared_ptr<Toto> toto;
   boost::shared_ptr<OrthancStone::OrthancSeriesVolumeProgressiveLoader> ctLoader;
   boost::shared_ptr<OrthancStone::OrthancMultiframeVolumeLoader> doseLoader;
+  boost::shared_ptr<OrthancStone::DicomStructureSetLoader>  rtstructLoader;
 
   {
     OrthancStone::NativeApplicationContext::WriterLock lock(context);
     toto.reset(new Toto(oracle, lock.GetOracleObservable()));
     ctLoader.reset(new OrthancStone::OrthancSeriesVolumeProgressiveLoader(ct, oracle, lock.GetOracleObservable()));
     doseLoader.reset(new OrthancStone::OrthancMultiframeVolumeLoader(dose, oracle, lock.GetOracleObservable()));
+    rtstructLoader.reset(new OrthancStone::DicomStructureSetLoader(oracle, lock.GetOracleObservable()));
   }
 
 
@@ -1882,7 +1965,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
     toto->SetVolume2(1, doseLoader, config.release());
   }
 
-  oracle.Schedule(*toto, new OrthancStone::SleepOracleCommand(100));
+  //oracle.Schedule(*toto, new OrthancStone::SleepOracleCommand(100));
 
   if (0)
   {
@@ -1959,9 +2042,11 @@ void Run(OrthancStone::NativeApplicationContext& context,
     }
   }
 
+  
   // 2017-11-17-Anonymized
-  ctLoader->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
-  doseLoader->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
+  //ctLoader->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
+  //doseLoader->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
+  rtstructLoader->LoadInstance("83d9c0c3-913a7fee-610097d7-cbf0522d-fd75bee6");  // RT-STRUCT
 
   // 2015-01-28-Multiframe
   //doseLoader->LoadInstance("88f71e2a-5fad1c61-96ed14d6-5b3d3cf7-a5825279");  // Multiframe CT

@@ -1,5 +1,5 @@
-import Stone = require('./stone-framework-loader');
-import StoneViewport = require('./wasm-viewport');
+import * as Stone from './stone-framework-loader'
+import * as StoneViewport from './wasm-viewport'
 import * as Logger from './logger'
 
 if (!('WebAssembly' in window)) {

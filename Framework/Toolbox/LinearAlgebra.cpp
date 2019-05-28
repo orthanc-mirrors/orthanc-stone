@@ -63,7 +63,7 @@ namespace OrthancStone
                      const std::string& value)
     {
       std::vector<std::string> items;
-      Orthanc::Toolbox::TokenizeString(items, value, '\\');
+      Orthanc::Toolbox::TokenizeString(items, Orthanc::Toolbox::StripSpaces(value), '\\');
 
       target.resize(items.size());
 
@@ -71,7 +71,7 @@ namespace OrthancStone
       {
         try
         {
-          target[i] = boost::lexical_cast<double>(Orthanc::Toolbox::StripSpaces(items[i]));
+          target[i] = boost::lexical_cast<double>(items[i]);
         }
         catch (boost::bad_lexical_cast&)
         {

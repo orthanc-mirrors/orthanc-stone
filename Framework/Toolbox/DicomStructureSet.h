@@ -170,6 +170,7 @@ namespace OrthancStone
 
     Vector GetNormal() const;
 
+    // TODO - Remove
     static DicomStructureSet* SynchronousLoad(OrthancPlugins::IOrthancConnection& orthanc,
                                               const std::string& instanceId);
 

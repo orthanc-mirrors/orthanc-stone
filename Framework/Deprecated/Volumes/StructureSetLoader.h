@@ -53,5 +53,9 @@ namespace Deprecated
     }
 
     OrthancStone::DicomStructureSet& GetStructureSet();
+
+    static OrthancStone::DicomStructureSet* SynchronousLoad(
+      OrthancPlugins::IOrthancConnection& orthanc,
+      const std::string& instanceId);
   };
 }

@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../StoneEnumerations.h"
+#include "../../StoneEnumerations.h"
 
 #include <Core/DicomFormat/DicomMap.h>
 #include <Core/Images/ImageAccessor.h>
@@ -30,7 +30,7 @@
 
 #include <json/value.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   namespace MessagingToolbox
   {

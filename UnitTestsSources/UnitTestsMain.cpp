@@ -23,10 +23,10 @@
 
 #include "../Framework/Deprecated/Layers/FrameRenderer.h"
 #include "../Framework/Deprecated/Toolbox/DownloadStack.h"
+#include "../Framework/Deprecated/Toolbox/MessagingToolbox.h"
 #include "../Framework/Deprecated/Toolbox/OrthancSlicesLoader.h"
 #include "../Framework/Toolbox/FiniteProjectiveCamera.h"
 #include "../Framework/Toolbox/GeometryToolbox.h"
-#include "../Framework/Toolbox/MessagingToolbox.h"
 #include "../Framework/Volumes/ImageBuffer3D.h"
 #include "../Platforms/Generic/OracleWebService.h"
 
@@ -636,7 +636,7 @@ TEST(MessagingToolbox, ParseJson)
 {
   Json::Value response;
   std::string source = "{\"command\":\"panel:takeDarkImage\",\"commandType\":\"simple\",\"args\":{}}";
-  ASSERT_TRUE(OrthancStone::MessagingToolbox::ParseJson(response, source.c_str(), source.size()));
+  ASSERT_TRUE(Deprecated::MessagingToolbox::ParseJson(response, source.c_str(), source.size()));
 }
 
 TEST(VolumeImageGeometry, Basic)

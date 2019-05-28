@@ -170,10 +170,6 @@ namespace OrthancStone
 
     Vector GetNormal() const;
 
-    // TODO - Remove
-    static DicomStructureSet* SynchronousLoad(OrthancPlugins::IOrthancConnection& orthanc,
-                                              const std::string& instanceId);
-
     bool ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
                           size_t index,
                           const CoordinateSystem3D& slice)

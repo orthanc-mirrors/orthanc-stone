@@ -1220,7 +1220,6 @@ namespace OrthancStone
     {
       ImageBuffer3D& target = volume_->GetPixelData();
       
-      const Orthanc::PixelFormat format = target.GetFormat();
       const unsigned int bpp = target.GetBytesPerPixel();
       const unsigned int width = target.GetWidth();
       const unsigned int height = target.GetHeight();
@@ -1248,7 +1247,7 @@ namespace OrthancStone
 
         for (unsigned int y = 0; y < height; y++)
         {
-          assert(sizeof(T) == Orthanc::GetBytesPerPixel(format));
+          assert(sizeof(T) == Orthanc::GetBytesPerPixel(target.GetFormat()));
 
           T* target = reinterpret_cast<T*>(writer.GetAccessor().GetRow(y));
 

@@ -21,7 +21,7 @@
 
 #include "OrthancSlicesLoader.h"
 
-#include "../../Toolbox/MessagingToolbox.h"
+#include "../Toolbox/MessagingToolbox.h"
 
 #include <Core/Compression/GzipCompressor.h>
 #include <Core/Endianness.h>
@@ -231,7 +231,7 @@ namespace Deprecated
       OrthancPlugins::FullOrthancDataset dataset(series[instances[i]]);
       
       Orthanc::DicomMap dicom;
-      OrthancStone::MessagingToolbox::ConvertDataset(dicom, dataset);
+      MessagingToolbox::ConvertDataset(dicom, dataset);
       
       unsigned int frames;
       if (!dicom.ParseUnsignedInteger32(frames, Orthanc::DICOM_TAG_NUMBER_OF_FRAMES))
@@ -265,7 +265,7 @@ namespace Deprecated
     OrthancPlugins::FullOrthancDataset dataset(tags);
     
     Orthanc::DicomMap dicom;
-    OrthancStone::MessagingToolbox::ConvertDataset(dicom, dataset);
+    MessagingToolbox::ConvertDataset(dicom, dataset);
 
     unsigned int frames;
     if (!dicom.ParseUnsignedInteger32(frames, Orthanc::DICOM_TAG_NUMBER_OF_FRAMES))
@@ -306,7 +306,7 @@ namespace Deprecated
     state_ = State_GeometryReady;
     
     Orthanc::DicomMap dicom;
-    OrthancStone::MessagingToolbox::ConvertDataset(dicom, dataset);
+    MessagingToolbox::ConvertDataset(dicom, dataset);
     
     std::auto_ptr<Slice> slice(new Slice);
     if (slice->ParseOrthancFrame(dicom, instanceId, frame))

@@ -20,7 +20,7 @@
 
 #include "OrthancApiClient.h"
 
-#include "../../Toolbox/MessagingToolbox.h"
+#include "../Toolbox/MessagingToolbox.h"
 
 #include <Core/OrthancException.h>
 
@@ -139,7 +139,7 @@ namespace Deprecated
       else if (jsonHandler_.get() != NULL)
       {
         Json::Value response;
-        if (OrthancStone::MessagingToolbox::ParseJson(response, message.GetAnswer(), message.GetAnswerSize()))
+        if (MessagingToolbox::ParseJson(response, message.GetAnswer(), message.GetAnswerSize()))
         {
           jsonHandler_->Apply(OrthancApiClient::JsonResponseReadyMessage
                               (message.GetUri(), response, userPayload_.get()));
@@ -270,7 +270,7 @@ namespace Deprecated
       Orthanc::IDynamicObject* payload)
   {
     std::string body;
-    OrthancStone::MessagingToolbox::JsonToString(body, data);
+    MessagingToolbox::JsonToString(body, data);
     return PostBinaryAsyncExpectJson(uri, body, successCallback, failureCallback, payload);
   }
 
@@ -279,7 +279,7 @@ namespace Deprecated
       const Json::Value& data)
   {
     std::string body;
-    OrthancStone::MessagingToolbox::JsonToString(body, data);
+    MessagingToolbox::JsonToString(body, data);
     return PostBinaryAsync(uri, body);
   }
 
@@ -291,7 +291,7 @@ namespace Deprecated
       Orthanc::IDynamicObject* payload   /* takes ownership */)
   {
     std::string body;
-    OrthancStone::MessagingToolbox::JsonToString(body, data);
+    MessagingToolbox::JsonToString(body, data);
     return PostBinaryAsync(uri, body, successCallback, failureCallback, payload);
   }
 

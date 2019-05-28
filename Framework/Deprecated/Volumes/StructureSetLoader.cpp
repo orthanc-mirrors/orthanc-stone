@@ -21,7 +21,7 @@
 
 #include "StructureSetLoader.h"
 
-#include "../../Toolbox/MessagingToolbox.h"
+#include "../Toolbox/MessagingToolbox.h"
 
 #include <Core/OrthancException.h>
 
@@ -41,7 +41,7 @@ namespace Deprecated
     OrthancPlugins::FullOrthancDataset dataset(message.GetJson());
 
     Orthanc::DicomMap slice;
-    OrthancStone::MessagingToolbox::ConvertDataset(slice, dataset);
+    MessagingToolbox::ConvertDataset(slice, dataset);
     structureSet_->AddReferencedSlice(slice);
 
     BroadcastMessage(ContentChangedMessage(*this));
@@ -112,5 +112,48 @@ namespace Deprecated
     {
       return *structureSet_;
     }
+  }
+
+
+  OrthancStone::DicomStructureSet* StructureSetLoader::SynchronousLoad(
+    OrthancPlugins::IOrthancConnection& orthanc,
+    const std::string& instanceId)
+  {
+    const std::string uri = "/instances/" + instanceId + "/tags?ignore-length=3006-0050";
+    OrthancPlugins::FullOrthancDataset dataset(orthanc, uri);
+
+    std::auto_ptr<OrthancStone::DicomStructureSet> result
+      (new OrthancStone::DicomStructureSet(dataset));
+
+    std::set<std::string> instances;
+    result->GetReferencedInstances(instances);
+
+    for (std::set<std::string>::const_iterator it = instances.begin();
+         it != instances.end(); ++it)
+    {
+      Json::Value lookup;
+      MessagingToolbox::RestApiPost(lookup, orthanc, "/tools/lookup", *it);
+
+      if (lookup.type() != Json::arrayValue ||
+          lookup.size() != 1 ||
+          !lookup[0].isMember("Type") ||
+          !lookup[0].isMember("Path") ||
+          lookup[0]["Type"].type() != Json::stringValue ||
+          lookup[0]["ID"].type() != Json::stringValue ||
+          lookup[0]["Type"].asString() != "Instance")
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_UnknownResource);          
+      }
+
+      OrthancPlugins::FullOrthancDataset slice
+        (orthanc, "/instances/" + lookup[0]["ID"].asString() + "/tags");
+      Orthanc::DicomMap m;
+      MessagingToolbox::ConvertDataset(m, slice);
+      result->AddReferencedSlice(m);
+    }
+
+    result->CheckReferencedSlices();
+
+    return result.release();
   }
 }

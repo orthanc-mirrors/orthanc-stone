@@ -33,7 +33,7 @@
 #include <json/reader.h>
 #include <json/writer.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   namespace MessagingToolbox
   {

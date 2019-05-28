@@ -31,7 +31,6 @@
 
 #include <limits>
 #include <stdio.h>
-#include <boost/lexical_cast.hpp>
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
@@ -421,7 +420,6 @@ namespace OrthancStone
                    << static_cast<int>(structures_[i].red_) << "," 
                    << static_cast<int>(structures_[i].green_) << ","
                    << static_cast<int>(structures_[i].blue_) << ")";
-
 
       // These temporary variables avoid allocating many vectors in the loop below
       OrthancPlugins::DicomPath countPointsPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,

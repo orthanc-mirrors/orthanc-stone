@@ -26,7 +26,6 @@
 #include <Core/Toolbox.h>
 
 #include <stdio.h>
-#include <boost/lexical_cast.hpp>
 #include <boost/numeric/ublas/lu.hpp>
 
 namespace OrthancStone
@@ -71,9 +70,16 @@ namespace OrthancStone
       {
         try
         {
-          target[i] = boost::lexical_cast<double>(items[i]);
+          /**
+           * We don't use "boost::lexical_cast<>" here, as it is very
+           * slow. As we are parsing many doubles, we prefer to use
+           * the standard "std::stod" function:
+           * http://www.cplusplus.com/reference/string/stod/
+           **/
+          
+          target[i] = std::stod(items[i]);
         }
-        catch (boost::bad_lexical_cast&)
+        catch (std::exception&)
         {
           target.clear();
           return false;

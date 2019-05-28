@@ -100,8 +100,8 @@ namespace OrthancStone
           // Fill the polyline layer with the measurement lines
           PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(0);
           polylineLayer->ClearAllChains();
-          polylineLayer->SetColor(0, 183, 17);
 
+          const Color color(0, 183, 17);
 
           // sides
           {
@@ -109,13 +109,13 @@ namespace OrthancStone
               PolylineSceneLayer::Chain chain;
               chain.push_back(side1End_);
               chain.push_back(center_);
-              polylineLayer->AddChain(chain, false);
+              polylineLayer->AddChain(chain, false, color);
             }
             {
               PolylineSceneLayer::Chain chain;
               chain.push_back(side2End_);
               chain.push_back(center_);
-              polylineLayer->AddChain(chain, false);
+              polylineLayer->AddChain(chain, false, color);
             }
           }
 
@@ -126,14 +126,14 @@ namespace OrthancStone
               //TODO: take DPI into account
               AddSquare(chain, GetScene(), side1End_, 
                 GetController()->GetHandleSideLengthS());
-              polylineLayer->AddChain(chain, true);
+              polylineLayer->AddChain(chain, true, color);
             }
             {
               PolylineSceneLayer::Chain chain;
               //TODO: take DPI into account
               AddSquare(chain, GetScene(), side2End_, 
                 GetController()->GetHandleSideLengthS());
-              polylineLayer->AddChain(chain, true);
+              polylineLayer->AddChain(chain, true, color);
             }
           }
 
@@ -143,7 +143,7 @@ namespace OrthancStone
 
             AddShortestArc(chain, side1End_, center_, side2End_,
                            controller->GetAngleToolArcRadiusS());
-            polylineLayer->AddChain(chain, false);
+            polylineLayer->AddChain(chain, false, color);
           }
         }
         {

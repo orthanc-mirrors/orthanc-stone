@@ -33,11 +33,15 @@ namespace OrthancStone
       
       cairo_t* cr = GetCairoContext();
 
-      cairo_set_source_rgb(cr, layer.GetRedAsFloat(), layer.GetGreenAsFloat(), layer.GetBlueAsFloat());
       cairo_set_line_width(cr, layer.GetThickness());
       
       for (size_t i = 0; i < layer.GetChainsCount(); i++)
       {
+        const Color& color = layer.GetColor(i);
+        cairo_set_source_rgb(cr, color.GetRedAsFloat(),
+                             color.GetGreenAsFloat(),
+                             color.GetBlueAsFloat());
+
         const PolylineSceneLayer::Chain& chain = layer.GetChain(i);
 
         if (!chain.empty())
@@ -62,9 +66,9 @@ namespace OrthancStone
             cairo_line_to(cr, p.GetX(), p.GetY());
           }
         }
-      }
 
-      cairo_stroke(cr);
+        cairo_stroke(cr);
+      }
     }
   }
 }

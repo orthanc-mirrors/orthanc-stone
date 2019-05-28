@@ -25,6 +25,14 @@
 
 namespace OrthancStone
 {
+  void PolylineSceneLayer::Copy(const PolylineSceneLayer& other)
+  {
+    items_ = other.items_;
+    thickness_ = other.thickness_;
+    revision_ ++;
+  }
+
+  
   ISceneLayer* PolylineSceneLayer::Clone() const
   {
     std::auto_ptr<PolylineSceneLayer> cloned(new PolylineSceneLayer);
@@ -42,52 +50,40 @@ namespace OrthancStone
     else
     {
       thickness_ = thickness;
-      BumpRevision();
+      revision_++;
     }
   }
 
 
-  void PolylineSceneLayer::Copy(const PolylineSceneLayer& from)
-  {
-    SetColor(from.GetRed(), from.GetGreen(), from.GetBlue());
-    chains_ = from.chains_;
-    closed_ = from.closed_;
-    thickness_ = from.thickness_;
-    BumpRevision();
-  }
-
-  
-  void PolylineSceneLayer::Reserve(size_t countChains)
-  {
-    chains_.reserve(countChains);
-    closed_.reserve(countChains);
-  }
-
-  
   void PolylineSceneLayer::AddChain(const Chain& chain,
-                                    bool isClosed)
+                                    bool isClosed,
+                                    uint8_t red,
+                                    uint8_t green,
+                                    uint8_t blue)
   {
     if (!chain.empty())
     {
-      chains_.push_back(chain);
-      closed_.push_back(isClosed);
-      BumpRevision();
+      items_.push_back(Item());
+      items_.back().chain_ = chain;
+      items_.back().closed_ = isClosed;
+      items_.back().color_ = Color(red, green, blue);
+
+      revision_++;
     }
   }
 
 
   void PolylineSceneLayer::ClearAllChains()
   {
-    chains_.clear();
-    closed_.clear();
-    BumpRevision();
+    items_.clear();
+    revision_++;
   }
 
-  const PolylineSceneLayer::Chain& PolylineSceneLayer::GetChain(size_t i) const
+  const PolylineSceneLayer::Item& PolylineSceneLayer::GetItem(size_t i) const
   {
-    if (i < chains_.size())
+    if (i < items_.size())
     {
-      return chains_[i];
+      return items_[i];
     }
     else
     {
@@ -96,28 +92,15 @@ namespace OrthancStone
   }
 
   
-  bool PolylineSceneLayer::IsClosedChain(size_t i) const
-  {
-    if (i < closed_.size())
-    {
-      return closed_[i];
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-  }
-
-
   bool PolylineSceneLayer::GetBoundingBox(Extent2D& target) const
   {
     target.Reset();
 
-    for (size_t i = 0; i < chains_.size(); i++)
+    for (size_t i = 0; i < items_.size(); i++)
     {
-      for (size_t j = 0; j < chains_[i].size(); j++)
+      for (size_t j = 0; j < items_[i].chain_.size(); j++)
       {
-        const ScenePoint2D& p = chains_[i][j];
+        const ScenePoint2D& p = items_[i].chain_[j];
         target.AddPoint(p.GetX(), p.GetY());
       }
     }

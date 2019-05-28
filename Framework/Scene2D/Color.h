@@ -21,55 +21,62 @@
 
 #pragma once
 
-#include "ISceneLayer.h"
-#include "Color.h"
-
-#include <Core/Enumerations.h>  // For ORTHANC_OVERRIDE
+#include <stdint.h>
 
 namespace OrthancStone
 {
-  // TODO - Is this needed?
-  class ColorSceneLayer : public ISceneLayer
+  class Color
   {
   private:
-    Color    color_;
-    uint64_t revision_;
-
-  protected:
-    void BumpRevision()
-    {
-      // this is *not* thread-safe!!!  => (SJO) no problem, Stone assumes mono-threading
-      revision_++;
-    }
+    uint8_t  red_;
+    uint8_t  green_;
+    uint8_t  blue_;
 
   public:
-    ColorSceneLayer() :
-      revision_(0)
+    Color() :
+      red_(255),
+      green_(255),
+      blue_(255)
     {
     }
 
-    virtual uint64_t GetRevision() const ORTHANC_OVERRIDE
+    Color(uint8_t red,
+          uint8_t green,
+          uint8_t blue) :
+      red_(red),
+      green_(green),
+      blue_(blue)
     {
-      return revision_;
     }
 
-    void SetColor(uint8_t red,
-                  uint8_t green,
-                  uint8_t blue)
+    uint8_t GetRed() const
     {
-      color_ = Color(red, green, blue);
-      BumpRevision();
+      return red_;
     }
 
-    void SetColor(const Color& color)
+    uint8_t GetGreen() const
     {
-      color_ = color;
-      BumpRevision();
+      return green_;
     }
 
-    const Color& GetColor() const
+    uint8_t GetBlue() const
     {
-      return color_;
+      return blue_;
+    }
+
+    float GetRedAsFloat() const
+    {
+      return static_cast<float>(red_) / 255.0f;
+    }
+
+    float GetGreenAsFloat() const
+    {
+      return static_cast<float>(green_) / 255.0f;
+    }
+
+    float GetBlueAsFloat() const
+    {
+      return static_cast<float>(blue_) / 255.0f;
     }
   };
 }

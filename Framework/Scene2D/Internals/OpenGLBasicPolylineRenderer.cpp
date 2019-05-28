@@ -28,7 +28,7 @@ namespace OrthancStone
   namespace Internals
   {
     OpenGLBasicPolylineRenderer::OpenGLBasicPolylineRenderer(OpenGL::IOpenGLContext& context,
-      const PolylineSceneLayer& layer) :
+                                                             const PolylineSceneLayer& layer) :
       context_(context)
     {
       layer_.Copy(layer);
@@ -42,12 +42,14 @@ namespace OrthancStone
         transform);
 
       glUseProgram(0);
-      glColor3ub(layer_.GetRed(), layer_.GetGreen(), layer_.GetBlue());
 
       glBegin(GL_LINES);
 
       for (size_t i = 0; i < layer_.GetChainsCount(); i++)
       {
+        const Color& color = layer_.GetColor(i);
+        glColor3ub(color.GetRed(), color.GetGreen(), color.GetBlue());
+
         const PolylineSceneLayer::Chain& chain = layer_.GetChain(i);
 
         if (chain.size() > 1)

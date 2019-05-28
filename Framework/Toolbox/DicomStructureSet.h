@@ -23,6 +23,7 @@
 
 #include "CoordinateSystem3D.h"
 #include "Extent2D.h"
+#include "../Scene2D/Color.h"
 
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 
@@ -152,6 +153,9 @@ namespace OrthancStone
 
     const std::string& GetStructureInterpretation(size_t index) const;
 
+    Color GetStructureColor(size_t index) const;
+
+    // TODO - remove
     void GetStructureColor(uint8_t& red,
                            uint8_t& green,
                            uint8_t& blue,

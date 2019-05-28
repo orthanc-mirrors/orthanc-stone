@@ -64,6 +64,10 @@ namespace OrthancStone
     OrthancStone::SdlWindow::GlobalFinalize();
 #endif
     
+#if ORTHANC_ENABLE_CURL == 1
+    Orthanc::HttpClient::GlobalFinalize();
+#endif
+
     Orthanc::Logging::Finalize();
   }
 }

@@ -540,6 +540,13 @@ namespace OrthancStone
   }
 
 
+  Color DicomStructureSet::GetStructureColor(size_t index) const
+  {
+    const Structure& s = GetStructure(index);
+    return Color(s.red_, s.green_, s.blue_);
+  }
+  
+    
   void DicomStructureSet::GetStructureColor(uint8_t& red,
                                             uint8_t& green,
                                             uint8_t& blue,

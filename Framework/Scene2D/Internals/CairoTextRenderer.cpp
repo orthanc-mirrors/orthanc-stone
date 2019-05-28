@@ -48,9 +48,7 @@ namespace OrthancStone
         }
         
         const unsigned int width = source->GetWidth();
-        const unsigned int red = layer.GetRed();
-        const unsigned int green = layer.GetGreen();
-        const unsigned int blue = layer.GetBlue();
+        const Color& color = layer.GetColor();
 
         for (unsigned int y = 0; y < source->GetHeight(); y++)
         {
@@ -62,9 +60,9 @@ namespace OrthancStone
             unsigned int alpha = *p;
 
             // Premultiplied alpha
-            q[0] = static_cast<uint8_t>((blue * alpha) / 255);
-            q[1] = static_cast<uint8_t>((green * alpha) / 255);
-            q[2] = static_cast<uint8_t>((red * alpha) / 255);
+            q[0] = static_cast<uint8_t>((color.GetBlue() * alpha) / 255);
+            q[1] = static_cast<uint8_t>((color.GetGreen() * alpha) / 255);
+            q[2] = static_cast<uint8_t>((color.GetRed() * alpha) / 255);
             q[3] = *p;
             
             p++;
@@ -85,7 +83,9 @@ namespace OrthancStone
         const TextSceneLayer& layer = GetLayer<TextSceneLayer>();
       
         cairo_t* cr = GetCairoContext();
-        cairo_set_source_rgb(cr, layer.GetRedAsFloat(), layer.GetGreenAsFloat(), layer.GetBlueAsFloat());
+        cairo_set_source_rgb(cr, layer.GetColor().GetRedAsFloat(),
+                             layer.GetColor().GetGreenAsFloat(),
+                             layer.GetColor().GetBlueAsFloat());
 
         double dx, dy;  // In pixels
         ComputeAnchorTranslation(dx, dy, layer.GetAnchor(), text_.GetWidth(),

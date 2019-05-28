@@ -1794,8 +1794,6 @@ namespace OrthancStone
           command->SetBody(*it);
           command->SetPayload(new LookupInstance(loader, *it));
           Schedule(command.release());
-
-          printf("[%s]\n", it->c_str());
         }
       }
     };
@@ -1852,12 +1850,12 @@ namespace OrthancStone
 
         for (size_t i = 0; i < content_.GetStructuresCount(); i++)
         {
+          const Color& color = content_.GetStructureColor(i);
+
           std::vector< std::vector<DicomStructureSet::PolygonPoint> > polygons;
           
           if (content_.ProjectStructure(polygons, i, cuttingPlane))
           {
-            printf(">> %d\n", static_cast<int>(polygons.size()));
-            
             for (size_t j = 0; j < polygons.size(); j++)
             {
               PolylineSceneLayer::Chain chain;
@@ -1868,7 +1866,7 @@ namespace OrthancStone
                 chain[k] = ScenePoint2D(polygons[j][k].first, polygons[j][k].second);
               }
 
-              layer->AddChain(chain, true /* closed */);
+              layer->AddChain(chain, true /* closed */, color);
             }
           }
         }
@@ -2491,6 +2489,8 @@ int main(int argc, char* argv[])
 {
   OrthancStone::StoneInitialize();
   //Orthanc::Logging::EnableInfoLevel(true);
+
+  printf("%d\n", __cplusplus);
 
   try
   {

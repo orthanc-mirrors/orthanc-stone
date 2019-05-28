@@ -107,16 +107,16 @@ namespace OrthancStone
 
           PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(0);
           polylineLayer->ClearAllChains();
-          polylineLayer->SetColor(
-            TOOL_LINES_COLOR_RED, 
-            TOOL_LINES_COLOR_GREEN, 
-            TOOL_LINES_COLOR_BLUE);
+
+          const Color color(TOOL_LINES_COLOR_RED, 
+                            TOOL_LINES_COLOR_GREEN, 
+                            TOOL_LINES_COLOR_BLUE);
 
           {
             PolylineSceneLayer::Chain chain;
             chain.push_back(start_);
             chain.push_back(end_);
-            polylineLayer->AddChain(chain, false);
+            polylineLayer->AddChain(chain, false, color);
           }
 
           // handles
@@ -128,7 +128,7 @@ namespace OrthancStone
               AddSquare(chain, GetScene(), start_, 
                 GetController()->GetHandleSideLengthS());
               
-              polylineLayer->AddChain(chain, true);
+              polylineLayer->AddChain(chain, true, color);
             }
 
             {
@@ -138,7 +138,7 @@ namespace OrthancStone
               AddSquare(chain, GetScene(), end_, 
                 GetController()->GetHandleSideLengthS());
               
-              polylineLayer->AddChain(chain, true);
+              polylineLayer->AddChain(chain, true, color);
             }
           }
 

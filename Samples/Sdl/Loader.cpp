@@ -1587,7 +1587,10 @@ namespace OrthancStone
   };
 
 
-
+  /**
+  This class is able to supply an extract slice for an arbitrary cutting
+  plane through a volume image
+  */
   class DicomVolumeImageReslicer : public IVolumeSlicer
   {
   private:

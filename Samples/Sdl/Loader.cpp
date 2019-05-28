@@ -193,10 +193,24 @@ namespace OrthancStone
     }
   };
 
-
+  /**
+  This interface is implemented by objects representing 3D volume data and 
+  that are able to return an object that represent a slice of their data 
+  and are able to create the corresponding visual representation.
+  */
   class IVolumeSlicer : public boost::noncopyable
   {
   public:
+    /**
+    This interface is implemented by objects representing a slice of 
+    volume data and that are able to create a 2D layer to display a this 
+    slice.
+
+    The CreateSceneLayer factory method is called with an optional
+    configurator that possibly impacts the ISceneLayer subclass that is 
+    created (for instance, if a LUT must be applied on the texture when
+    displaying it)
+    */
     class IExtractedSlice : public boost::noncopyable
     {
     public:
@@ -204,9 +218,18 @@ namespace OrthancStone
       {
       }
 
+      /**
+      Invalid slices are created when the data is not ready yet or if the
+      cut is outside of the available geometry.
+      */
       virtual bool IsValid() = 0;
 
-      // Must be a cheap call
+      /**
+      This retrieves the *revision* that gets incremented every time the 
+      underlying object undergoes a mutable operation (that it, changes its 
+      state).
+      This **must** be a cheap call.
+      */
       virtual uint64_t GetRevision() = 0;
 
       // This call can take some time
@@ -214,7 +237,9 @@ namespace OrthancStone
                                             const CoordinateSystem3D& cuttingPlane) = 0;
     };
 
-    
+    /**
+    See IExtractedSlice.IsValid()
+    */
     class InvalidSlice : public IExtractedSlice
     {
     public:
@@ -240,13 +265,21 @@ namespace OrthancStone
     {
     }
 
+    /**
+    This method is implemented by the objects representing volumetric data
+    and must returns an IExtractedSlice subclass that contains all the data
+    needed to, later one, create its visual representation through
+    CreateSceneLayer.
+    Subclasses a.o.: ExtractedSlice, Slice, InvalidSlice
+    */
     virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) = 0;
   };
 
-
-
-  // This class combines a 3D image buffer, a 3D volume geometry and
-  // information about the DICOM parameters of the series.
+  /**
+  This class combines a 3D image buffer, a 3D volume geometry and
+  information about the DICOM parameters of the series.
+  (MPR means MultiPlanar Reconstruction)
+  */ 
   class DicomVolumeImage : public boost::noncopyable
   {
   public:
@@ -341,8 +374,11 @@ namespace OrthancStone
     }
   };
 
-
-
+  /**
+  Implements the IVolumeSlicer on Dicom volume data when the cutting plane
+  that is supplied to the slicer is either axial, sagittal or coronal. 
+  Arbitrary planes are *not* supported
+  */
   class DicomVolumeImageMPRSlicer : public IVolumeSlicer
   {
   public:
@@ -371,6 +407,10 @@ namespace OrthancStone
       }
 
     public:
+      /**
+      The constructor initializes the type of projection (axial, sagittal or
+      coronal) and the corresponding slice index, from the cutting plane.
+      */
       Slice(const DicomVolumeImage& volume,
             const CoordinateSystem3D& cuttingPlane) :
         volume_(volume)
@@ -608,6 +648,7 @@ namespace OrthancStone
       }
 
       // WARNING: The payload of "slices" must be of class "DicomInstanceParameters"
+      // (called with the slices created in LoadGeometry)
       void ComputeGeometry(SlicesSorter& slices)
       {
         Clear();
@@ -705,7 +746,9 @@ namespace OrthancStone
         else
         {
           // For coronal and sagittal projections, we take the global
-          // revision of the volume
+          // revision of the volume because even if a single slice changes,
+          // this means the projection will yield a different result --> 
+          // we must increase the revision as soon as any slice changes 
           return that_.volume_->GetRevision();
         }
       }
@@ -777,7 +820,9 @@ namespace OrthancStone
       }
     }
 
-
+    /**
+    This is called in response to GET "/series/XXXXXXXXXXXXX/instances-tags"
+    */
     void LoadGeometry(const OrthancRestApiCommand::SuccessMessage& message)
     {
       Json::Value body;
@@ -801,6 +846,7 @@ namespace OrthancStone
           std::auto_ptr<DicomInstanceParameters> instance(new DicomInstanceParameters(dicom));
           instance->SetOrthancInstanceIdentifier(instances[i]);
 
+          // the 3D plane corresponding to the slice
           CoordinateSystem3D geometry = instance->GetGeometry();
           slices.AddSlice(geometry, instance.release());
         }
@@ -822,7 +868,7 @@ namespace OrthancStone
         volume_->SetDicomParameters(parameters);
         volume_->GetPixelData().Clear();
 
-        strategy_.reset(new BasicFetchingStrategy(sorter_->CreateSorter(slicesCount), BEST_QUALITY));
+        strategy_.reset(new BasicFetchingStrategy(sorter_->CreateSorter(static_cast<unsigned int>(slicesCount)), BEST_QUALITY));
         
         assert(simultaneousDownloads_ != 0);
         for (unsigned int i = 0; i < simultaneousDownloads_; i++)
@@ -974,7 +1020,12 @@ namespace OrthancStone
   };
 
 
-
+  /**
+  This class is supplied with Oracle commands and will schedule up to 
+  simultaneousDownloads_ of them at the same time, then will schedule the 
+  rest once slots become available. It is used, a.o., by the 
+  OrtancMultiframeVolumeLoader class.
+  */
   class LoaderStateMachine : public IObserver
   {
   protected:
@@ -1303,7 +1354,13 @@ namespace OrthancStone
       {
         return;
       }
-      
+      /*
+      1.2.840.10008.1.2	Implicit VR Endian: Default Transfer Syntax for DICOM
+      1.2.840.10008.1.2.1	Explicit VR Little Endian
+      1.2.840.10008.1.2.2	Explicit VR Big Endian
+
+      See https://www.dicomlibrary.com/dicom/transfer-syntax/
+      */
       if (transferSyntaxUid_ == "1.2.840.10008.1.2" ||
           transferSyntaxUid_ == "1.2.840.10008.1.2.1" ||
           transferSyntaxUid_ == "1.2.840.10008.1.2.2")
@@ -1685,7 +1742,7 @@ namespace OrthancStone
           
           if (content_.ProjectStructure(polygons, i, cuttingPlane))
           {
-            printf(">> %d\n", polygons.size());
+            printf(">> %d\n", static_cast<int>(polygons.size()));
             
             for (size_t j = 0; j < polygons.size(); j++)
             {
@@ -2276,10 +2333,16 @@ void Run(OrthancStone::NativeApplicationContext& context,
 
   
   // 2017-11-17-Anonymized
+#if 0
+  // BGO data
+  ctLoader->LoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // CT
+  doseLoader->LoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // RT-DOSE
+  //rtstructLoader->LoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // RT-STRUCT
+#else
   //ctLoader->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
   doseLoader->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
   //rtstructLoader->LoadInstance("83d9c0c3-913a7fee-610097d7-cbf0522d-fd75bee6");  // RT-STRUCT
-
+#endif
   // 2015-01-28-Multiframe
   //doseLoader->LoadInstance("88f71e2a-5fad1c61-96ed14d6-5b3d3cf7-a5825279");  // Multiframe CT
   

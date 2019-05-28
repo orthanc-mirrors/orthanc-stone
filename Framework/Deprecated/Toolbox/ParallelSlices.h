@@ -21,16 +21,16 @@
 
 #pragma once
 
-#include "CoordinateSystem3D.h"
-#include "../Volumes/VolumeImageGeometry.h"
+#include "../../Toolbox/CoordinateSystem3D.h"
+#include "../../Volumes/VolumeImageGeometry.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class ParallelSlices : public boost::noncopyable
   {
   private:
-    Vector                            normal_;
-    std::vector<CoordinateSystem3D*>  slices_;
+    OrthancStone::Vector  normal_;
+    std::vector<OrthancStone::CoordinateSystem3D*>  slices_;
     
     ParallelSlices& operator= (const ParallelSlices& other);  // Forbidden
 
@@ -43,31 +43,31 @@ namespace OrthancStone
 
     ~ParallelSlices();
 
-    const Vector& GetNormal() const
+    const OrthancStone::Vector& GetNormal() const
     {
       return normal_;
     }
 
-    void AddSlice(const CoordinateSystem3D& slice);
+    void AddSlice(const OrthancStone::CoordinateSystem3D& slice);
 
-    void AddSlice(const Vector& origin,
-                  const Vector& axisX,
-                  const Vector& axisY);
+    void AddSlice(const OrthancStone::Vector& origin,
+                  const OrthancStone::Vector& axisX,
+                  const OrthancStone::Vector& axisY);
 
     size_t GetSliceCount() const
     {
       return slices_.size();
     }
 
-    const CoordinateSystem3D& GetSlice(size_t index) const;
+    const OrthancStone::CoordinateSystem3D& GetSlice(size_t index) const;
 
     bool ComputeClosestSlice(size_t& closestSlice,
                              double& closestDistance,
-                             const Vector& origin) const;
+                             const OrthancStone::Vector& origin) const;
 
     ParallelSlices* Reverse() const;
 
-    static ParallelSlices* FromVolumeImage(const VolumeImageGeometry& geometry,
-                                           VolumeProjection projection);
+    static ParallelSlices* FromVolumeImage(const OrthancStone::VolumeImageGeometry& geometry,
+                                           OrthancStone::VolumeProjection projection);
   };
 }

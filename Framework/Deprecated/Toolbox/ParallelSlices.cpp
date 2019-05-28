@@ -21,13 +21,13 @@
 
 #include "ParallelSlices.h"
 
-#include "GeometryToolbox.h"
-#include "../Volumes/ImageBuffer3D.h"
+#include "../../Toolbox/GeometryToolbox.h"
+#include "../../Volumes/ImageBuffer3D.h"
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   ParallelSlices::ParallelSlices()
   {
@@ -44,7 +44,7 @@ namespace OrthancStone
     for (size_t i = 0; i < slices_.size(); i++)
     {
       assert(other.slices_[i] != NULL);
-      slices_[i] = new CoordinateSystem3D(*other.slices_[i]);
+      slices_[i] = new OrthancStone::CoordinateSystem3D(*other.slices_[i]);
     }
   }
 
@@ -61,7 +61,7 @@ namespace OrthancStone
     }
 
     slices_.clear();
-    LinearAlgebra::AssignVector(normal_, 0, 0, 1);
+    OrthancStone::LinearAlgebra::AssignVector(normal_, 0, 0, 1);
   }
   
 
@@ -71,16 +71,16 @@ namespace OrthancStone
   }
 
 
-  void ParallelSlices::AddSlice(const CoordinateSystem3D& slice)
+  void ParallelSlices::AddSlice(const OrthancStone::CoordinateSystem3D& slice)
   {
     if (slices_.empty())
     {
       normal_ = slice.GetNormal();
-      slices_.push_back(new CoordinateSystem3D(slice));
+      slices_.push_back(new OrthancStone::CoordinateSystem3D(slice));
     }
-    else if (GeometryToolbox::IsParallel(slice.GetNormal(), normal_))
+    else if (OrthancStone::GeometryToolbox::IsParallel(slice.GetNormal(), normal_))
     {
-      slices_.push_back(new CoordinateSystem3D(slice));
+      slices_.push_back(new OrthancStone::CoordinateSystem3D(slice));
     }
     else
     {
@@ -90,16 +90,16 @@ namespace OrthancStone
   }
 
 
-  void ParallelSlices::AddSlice(const Vector& origin,
-                                const Vector& axisX,
-                                const Vector& axisY)
+  void ParallelSlices::AddSlice(const OrthancStone::Vector& origin,
+                                const OrthancStone::Vector& axisX,
+                                const OrthancStone::Vector& axisY)
   {
-    CoordinateSystem3D slice(origin, axisX, axisY);
+    OrthancStone::CoordinateSystem3D slice(origin, axisX, axisY);
     AddSlice(slice);
   }
 
 
-  const CoordinateSystem3D& ParallelSlices::GetSlice(size_t index) const
+  const OrthancStone::CoordinateSystem3D& ParallelSlices::GetSlice(size_t index) const
   {
     if (index >= slices_.size())
     {
@@ -114,7 +114,7 @@ namespace OrthancStone
 
   bool ParallelSlices::ComputeClosestSlice(size_t& closestSlice,
                                            double& closestDistance,
-                                           const Vector& origin) const
+                                           const OrthancStone::Vector& origin) const
   {
     if (slices_.empty())
     {
@@ -147,7 +147,7 @@ namespace OrthancStone
 
     for (size_t i = slices_.size(); i > 0; i--)
     {
-      const CoordinateSystem3D& slice = *slices_[i - 1];
+      const OrthancStone::CoordinateSystem3D& slice = *slices_[i - 1];
 
       reversed->AddSlice(slice.GetOrigin(),
                          -slice.GetAxisX(),
@@ -158,20 +158,20 @@ namespace OrthancStone
   }
 
 
-  ParallelSlices* ParallelSlices::FromVolumeImage(const VolumeImageGeometry& geometry,
-                                                  VolumeProjection projection)
+  ParallelSlices* ParallelSlices::FromVolumeImage(const OrthancStone::VolumeImageGeometry& geometry,
+                                                  OrthancStone::VolumeProjection projection)
   {
-    const Vector dimensions = geometry.GetVoxelDimensions(VolumeProjection_Axial);
-    const CoordinateSystem3D& axial = geometry.GetAxialGeometry();
+    const OrthancStone::Vector dimensions = geometry.GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
+    const OrthancStone::CoordinateSystem3D& axial = geometry.GetAxialGeometry();
     
     std::auto_ptr<ParallelSlices> result(new ParallelSlices);
 
     switch (projection)
     {
-      case VolumeProjection_Axial:
+      case OrthancStone::VolumeProjection_Axial:
         for (unsigned int z = 0; z < geometry.GetDepth(); z++)
         {
-          Vector origin = axial.GetOrigin();
+          OrthancStone::Vector origin = axial.GetOrigin();
           origin += static_cast<double>(z) * dimensions[2] * axial.GetNormal();
 
           result->AddSlice(origin,
@@ -180,10 +180,10 @@ namespace OrthancStone
         }
         break;
 
-      case VolumeProjection_Coronal:
+      case OrthancStone::VolumeProjection_Coronal:
         for (unsigned int y = 0; y < geometry.GetHeight(); y++)
         {
-          Vector origin = axial.GetOrigin();
+          OrthancStone::Vector origin = axial.GetOrigin();
           origin += static_cast<double>(y) * dimensions[1] * axial.GetAxisY();
           origin += static_cast<double>(geometry.GetDepth() - 1) * dimensions[2] * axial.GetNormal();
 
@@ -193,10 +193,10 @@ namespace OrthancStone
         }
         break;
 
-      case VolumeProjection_Sagittal:
+      case OrthancStone::VolumeProjection_Sagittal:
         for (unsigned int x = 0; x < geometry.GetWidth(); x++)
         {
-          Vector origin = axial.GetOrigin();
+          OrthancStone::Vector origin = axial.GetOrigin();
           origin += static_cast<double>(x) * dimensions[0] * axial.GetAxisX();
           origin += static_cast<double>(geometry.GetDepth() - 1) * dimensions[2] * axial.GetNormal();
 

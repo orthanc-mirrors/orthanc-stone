@@ -129,6 +129,6 @@ namespace OrthancStone
                      const CoordinateSystem3D& plane) const;
 
     CoordinateSystem3D GetProjectionSlice(VolumeProjection projection,
-                                          unsigned int depth) const;
+                                          unsigned int z) const;
   };
 }

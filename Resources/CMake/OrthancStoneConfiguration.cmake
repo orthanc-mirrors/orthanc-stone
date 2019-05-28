@@ -338,6 +338,8 @@ if (ENABLE_STONE_DEPRECATED)
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/MessagingToolbox.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancApiClient.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancSlicesLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ParallelSlices.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ParallelSlicesCursor.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/Slice.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ViewportGeometry.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IMouseTracker.h
@@ -484,8 +486,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlices.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlicesCursor.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp

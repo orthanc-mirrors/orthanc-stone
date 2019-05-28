@@ -26,7 +26,7 @@
 #include <Images/ImageAccessor.h>
 #include <Plugins/Samples/Common/IDicomDataset.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class ISeriesLoader : public boost::noncopyable
   {

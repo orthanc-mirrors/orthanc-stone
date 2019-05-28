@@ -989,9 +989,20 @@ namespace OrthancStone
       {
       }
 
-      void Schedule(OracleCommandWithPayload* command)
+      State(const State& currentState) :
+        that_(currentState.that_)
+      {
+      }
+
+      void Schedule(OracleCommandWithPayload* command) const
       {
         that_.Schedule(command);
+      }
+
+      template <typename T>
+      T& GetLoader() const
+      {
+        return dynamic_cast<T&>(that_);
       }
       
       virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
@@ -1013,6 +1024,11 @@ namespace OrthancStone
     void Schedule(OracleCommandWithPayload* command)
     {
       std::auto_ptr<OracleCommandWithPayload> protection(command);
+
+      if (command == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
       
       if (!command->HasPayload())
       {
@@ -1021,6 +1037,7 @@ namespace OrthancStone
       }
 
       pendingCommands_.push_back(protection.release());
+      Step();
     }
 
     void Start()
@@ -1029,6 +1046,8 @@ namespace OrthancStone
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
+
+      active_ = true;
 
       for (size_t i = 0; i < simultaneousDownloads_; i++)
       {
@@ -1039,28 +1058,36 @@ namespace OrthancStone
   private:
     void Step()
     {
-      if (!pendingCommands_.empty())
+      if (!pendingCommands_.empty() &&
+          activeCommands_ < simultaneousDownloads_)
       {
         oracle_.Schedule(*this, pendingCommands_.front());
         pendingCommands_.pop_front();
+
+        activeCommands_++;
       }
     }
-    
-    void Handle(const OrthancRestApiCommand::SuccessMessage& message)
+
+    void Clear()
     {
-      dynamic_cast<const State&>(message.GetOrigin().GetPayload()).Handle(message);
-      Step();
+      for (PendingCommands::iterator it = pendingCommands_.begin();
+           it != pendingCommands_.end(); ++it)
+      {
+        delete *it;
+      }
     }
 
-    void Handle(const GetOrthancImageCommand::SuccessMessage& message)
+    void HandleException(const OracleCommandExceptionMessage& message)
     {
-      dynamic_cast<const State&>(message.GetOrigin().GetPayload()).Handle(message);
-      Step();
+      LOG(ERROR) << "Error in the state machine, stopping all processing";
+      Clear();
     }
 
-    void Handle(const GetOrthancWebViewerJpegCommand::SuccessMessage& message)
+    template <typename T>
+    void Handle(const T& message)
     {
       dynamic_cast<const State&>(message.GetOrigin().GetPayload()).Handle(message);
+      activeCommands_--;
       Step();
     }
 
@@ -1070,6 +1097,7 @@ namespace OrthancStone
     bool             active_;
     unsigned int     simultaneousDownloads_;
     PendingCommands  pendingCommands_;
+    unsigned int     activeCommands_;
 
   public:
     LoaderStateMachine(IOracle& oracle,
@@ -1077,31 +1105,37 @@ namespace OrthancStone
       IObserver(oracleObservable.GetBroker()),
       oracle_(oracle),
       active_(false),
-      simultaneousDownloads_(4)
+      simultaneousDownloads_(4),
+      activeCommands_(0)
     {
       oracleObservable.RegisterObserverCallback(
         new Callable<LoaderStateMachine, OrthancRestApiCommand::SuccessMessage>
-        (*this, &LoaderStateMachine::Handle));
+        (*this, &LoaderStateMachine::Handle<OrthancRestApiCommand::SuccessMessage>));
 
       oracleObservable.RegisterObserverCallback(
         new Callable<LoaderStateMachine, GetOrthancImageCommand::SuccessMessage>
-        (*this, &LoaderStateMachine::Handle));
+        (*this, &LoaderStateMachine::Handle<GetOrthancImageCommand::SuccessMessage>));
 
       oracleObservable.RegisterObserverCallback(
         new Callable<LoaderStateMachine, GetOrthancWebViewerJpegCommand::SuccessMessage>
-        (*this, &LoaderStateMachine::Handle));
+        (*this, &LoaderStateMachine::Handle<GetOrthancWebViewerJpegCommand::SuccessMessage>));
+
+      oracleObservable.RegisterObserverCallback(
+        new Callable<LoaderStateMachine, OracleCommandExceptionMessage>
+        (*this, &LoaderStateMachine::HandleException));
     }
 
     virtual ~LoaderStateMachine()
     {
-      for (PendingCommands::iterator it = pendingCommands_.begin();
-           it != pendingCommands_.end(); ++it)
-      {
-        delete *it;
-      }
+      Clear();
     }
 
-    virtual void SetSimultaneousDownloads(unsigned int count)
+    bool IsActive() const
+    {
+      return active_;
+    }
+
+    void SetSimultaneousDownloads(unsigned int count)
     {
       if (active_)
       {
@@ -1121,41 +1155,10 @@ namespace OrthancStone
 
 
   class OrthancMultiframeVolumeLoader :
-    public IObserver,
+    public LoaderStateMachine,
     public IObservable
   {
   private:
-    class State : public Orthanc::IDynamicObject
-    {
-    private:
-      OrthancMultiframeVolumeLoader&  that_;
-
-    protected:
-      void Schedule(OrthancRestApiCommand* command) const
-      {
-        that_.oracle_.Schedule(that_, command);
-      }
-
-      OrthancMultiframeVolumeLoader& GetTarget() const
-      {
-        return that_;
-      }
-
-    public:
-      State(OrthancMultiframeVolumeLoader& that) :
-        that_(that)
-      {
-      }
-      
-      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const = 0;
-    };
-    
-    void Handle(const OrthancRestApiCommand::SuccessMessage& message)
-    {
-      dynamic_cast<const State&>(message.GetOrigin().GetPayload()).Handle(message);
-    }
-
-
     class LoadRTDoseGeometry : public State
     {
     private:
@@ -1171,6 +1174,7 @@ namespace OrthancStone
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
         }
+
       }
 
       virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
@@ -1179,7 +1183,7 @@ namespace OrthancStone
         std::string s = Orthanc::Toolbox::StripSpaces(message.GetAnswer());
         dicom_->SetValue(Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR, s, false);
 
-        GetTarget().SetGeometry(*dicom_);
+        GetLoader<OrthancMultiframeVolumeLoader>().SetGeometry(*dicom_);
       }      
     };
 
@@ -1209,6 +1213,8 @@ namespace OrthancStone
       
       virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
       {
+        OrthancMultiframeVolumeLoader& loader = GetLoader<OrthancMultiframeVolumeLoader>();
+        
         Json::Value body;
         message.ParseJsonBody(body);
         
@@ -1226,15 +1232,15 @@ namespace OrthancStone
           // mandatory for RT-DOSE, but is too long to be returned by default
           
           std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
-          command->SetUri("/instances/" + GetTarget().GetInstanceId() + "/content/" +
+          command->SetUri("/instances/" + loader.GetInstanceId() + "/content/" +
                           Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR.Format());
-          command->SetPayload(new LoadRTDoseGeometry(GetTarget(), dicom.release()));
+          command->SetPayload(new LoadRTDoseGeometry(loader, dicom.release()));
 
           Schedule(command.release());
         }
         else
         {
-          GetTarget().SetGeometry(*dicom);
+          loader.SetGeometry(*dicom);
         }
       }
     };
@@ -1251,7 +1257,7 @@ namespace OrthancStone
       
       virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
       {
-        GetTarget().SetTransferSyntax(message.GetAnswer());
+        GetLoader<OrthancMultiframeVolumeLoader>().SetTransferSyntax(message.GetAnswer());
       }
     };
    
@@ -1266,22 +1272,20 @@ namespace OrthancStone
       
       virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
       {
-        GetTarget().SetUncompressedPixelData(message.GetAnswer());
+        GetLoader<OrthancMultiframeVolumeLoader>().SetUncompressedPixelData(message.GetAnswer());
       }
     };
    
     
 
     boost::shared_ptr<DicomVolumeImage>   volume_;
-    IOracle&     oracle_;
-    bool         active_;
     std::string  instanceId_;
     std::string  transferSyntaxUid_;
 
 
     const std::string& GetInstanceId() const
     {
-      if (active_)
+      if (IsActive())
       {
         return instanceId_;
       }
@@ -1309,7 +1313,7 @@ namespace OrthancStone
         command->SetUri("/instances/" + instanceId_ + "/content/" +
                         Orthanc::DICOM_TAG_PIXEL_DATA.Format() + "/0");
         command->SetPayload(new LoadUncompressedPixelData(*this));
-        oracle_.Schedule(*this, command.release());
+        Schedule(command.release());
       }
       else
       {
@@ -1451,48 +1455,36 @@ namespace OrthancStone
     OrthancMultiframeVolumeLoader(const boost::shared_ptr<DicomVolumeImage>& volume,
                                   IOracle& oracle,
                                   IObservable& oracleObservable) :
-      IObserver(oracleObservable.GetBroker()),
+      LoaderStateMachine(oracle, oracleObservable),
       IObservable(oracleObservable.GetBroker()),
-      volume_(volume),
-      oracle_(oracle),
-      active_(false)
+      volume_(volume)
     {
       if (volume.get() == NULL)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
-      
-      oracleObservable.RegisterObserverCallback(
-        new Callable<OrthancMultiframeVolumeLoader, OrthancRestApiCommand::SuccessMessage>
-        (*this, &OrthancMultiframeVolumeLoader::Handle));
     }
 
 
     void LoadInstance(const std::string& instanceId)
     {
-      if (active_)
+      Start();
+
+      instanceId_ = instanceId;
+
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+        std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+        command->SetHttpHeader("Accept-Encoding", "gzip");
+        command->SetUri("/instances/" + instanceId + "/tags");
+        command->SetPayload(new LoadGeometry(*this));
+        Schedule(command.release());
       }
-      else
+
       {
-        active_ = true;
-        instanceId_ = instanceId;
-
-        {
-          std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
-          command->SetHttpHeader("Accept-Encoding", "gzip");
-          command->SetUri("/instances/" + instanceId + "/tags");
-          command->SetPayload(new LoadGeometry(*this));
-          oracle_.Schedule(*this, command.release());
-        }
-
-        {
-          std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
-          command->SetUri("/instances/" + instanceId + "/metadata/TransferSyntax");
-          command->SetPayload(new LoadTransferSyntax(*this));
-          oracle_.Schedule(*this, command.release());
-        }
+        std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+        command->SetUri("/instances/" + instanceId + "/metadata/TransferSyntax");
+        command->SetPayload(new LoadTransferSyntax(*this));
+        Schedule(command.release());
       }
     }
   };
@@ -2028,8 +2020,8 @@ private:
     printf("Geometry ready\n");
     
     //plane_ = message.GetOrigin().GetGeometry().GetSagittalGeometry();
-    plane_ = message.GetOrigin().GetGeometry().GetAxialGeometry();
-    //plane_ = message.GetOrigin().GetGeometry().GetCoronalGeometry();
+    //plane_ = message.GetOrigin().GetGeometry().GetAxialGeometry();
+    plane_ = message.GetOrigin().GetGeometry().GetCoronalGeometry();
     plane_.SetOrigin(message.GetOrigin().GetGeometry().GetCoordinates(0.5f, 0.5f, 0.5f));
 
     Refresh();
@@ -2286,7 +2278,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
   // 2017-11-17-Anonymized
   //ctLoader->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
   doseLoader->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
-  rtstructLoader->LoadInstance("83d9c0c3-913a7fee-610097d7-cbf0522d-fd75bee6");  // RT-STRUCT
+  //rtstructLoader->LoadInstance("83d9c0c3-913a7fee-610097d7-cbf0522d-fd75bee6");  // RT-STRUCT
 
   // 2015-01-28-Multiframe
   //doseLoader->LoadInstance("88f71e2a-5fad1c61-96ed14d6-5b3d3cf7-a5825279");  // Multiframe CT

@@ -2517,8 +2517,6 @@ int main(int argc, char* argv[])
   OrthancStone::StoneInitialize();
   //Orthanc::Logging::EnableInfoLevel(true);
 
-  printf("%d\n", __cplusplus);
-
   try
   {
     OrthancStone::NativeApplicationContext context;

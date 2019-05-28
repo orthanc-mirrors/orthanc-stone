@@ -115,6 +115,15 @@ namespace OrthancStone
     bool DetectProjection(VolumeProjection& projection,
                           const Vector& planeNormal) const;
 
+    /**
+    Being given a cutting plane, this method will determine if it is an
+    axial, sagittal or coronal cut and returns 
+    the slice number corresponding to this cut.
+
+    If the cutting plane is not parallel to the tree x = 0, y = 0 or z = 0
+    planes, it is considered as arbitrary and the method returns false. 
+    Otherwise, it returns true.
+    */
     bool DetectSlice(VolumeProjection& projection,
                      unsigned int& slice,
                      const CoordinateSystem3D& plane) const;

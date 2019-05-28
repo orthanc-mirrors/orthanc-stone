@@ -382,9 +382,46 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_ROOT}/Plugins/Samples/Common/FullOrthancDataset.cpp
   ${ORTHANC_ROOT}/Plugins/Samples/Common/IOrthancConnection.cpp
 
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/FontRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/Glyph.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphAlphabet.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphBitmapAlphabet.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphTextureAlphabet.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Fonts/TextBoundingBox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingItemsSorter.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingStrategy.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObservable.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObserver.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageBroker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageForwarder.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/Promise.h
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancImageCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancWebViewerJpegCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/OracleCommandWithPayload.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/OrthancRestApiCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyAlphaLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyDicomLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerCropTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMaskTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMoveTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerResizeTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerRotateTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyMaskLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyScene.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneReader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneWriter.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyTextLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWidget.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWindowingTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CairoCompositor.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/FloatTextureSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/GrayscaleStyleConfigurator.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoColorTextureRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoFloatTextureRenderer.cpp
@@ -394,6 +431,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoTextRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CompositorHelper.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/FixedPointAligner.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/LookupTableStyleConfigurator.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/LookupTableTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PanSceneTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PointerEvent.cpp
@@ -438,41 +476,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/PointerTypes.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.h
-  ${ORTHANC_STONE_ROOT}/Framework/Fonts/FontRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Fonts/Glyph.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphAlphabet.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphBitmapAlphabet.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphTextureAlphabet.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Fonts/TextBoundingBox.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingItemsSorter.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingStrategy.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObservable.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObserver.h
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageBroker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageForwarder.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/Promise.h
-  ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancImageCommand.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancWebViewerJpegCommand.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Oracle/OracleCommandWithPayload.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Oracle/OrthancRestApiCommand.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyAlphaLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyDicomLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerCropTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMaskTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMoveTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerResizeTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerRotateTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyMaskLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyScene.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneCommand.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneReader.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneWriter.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyTextLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWindowingTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneException.h
   ${ORTHANC_STONE_ROOT}/Framework/StoneInitialization.cpp
@@ -489,12 +492,15 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Wrappers/CairoContext.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Wrappers/CairoSurface.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImage.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageMPRSlicer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/IVolumeSlicer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/ImageBuffer3D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/OrientedVolumeBoundingBox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeReslicer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Wrappers/CairoContext.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Wrappers/CairoSurface.cpp
 
   ${PLATFORM_SOURCES}
   ${APPLICATIONS_SOURCES}

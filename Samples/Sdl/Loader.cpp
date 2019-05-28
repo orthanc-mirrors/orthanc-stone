@@ -975,6 +975,151 @@ namespace OrthancStone
 
 
 
+  class LoaderStateMachine : public IObserver
+  {
+  protected:
+    class State : public Orthanc::IDynamicObject
+    {
+    private:
+      LoaderStateMachine&  that_;
+
+    public:
+      State(LoaderStateMachine& that) :
+        that_(that)
+      {
+      }
+
+      void Schedule(OracleCommandWithPayload* command)
+      {
+        that_.Schedule(command);
+      }
+      
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+      
+      virtual void Handle(const GetOrthancImageCommand::SuccessMessage& message) const
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+      
+      virtual void Handle(const GetOrthancWebViewerJpegCommand::SuccessMessage& message) const
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+    };
+
+    void Schedule(OracleCommandWithPayload* command)
+    {
+      std::auto_ptr<OracleCommandWithPayload> protection(command);
+      
+      if (!command->HasPayload())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
+                                        "The payload must contain the next state");
+      }
+
+      pendingCommands_.push_back(protection.release());
+    }
+
+    void Start()
+    {
+      if (active_)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+
+      for (size_t i = 0; i < simultaneousDownloads_; i++)
+      {
+        Step();
+      }
+    }
+
+  private:
+    void Step()
+    {
+      if (!pendingCommands_.empty())
+      {
+        oracle_.Schedule(*this, pendingCommands_.front());
+        pendingCommands_.pop_front();
+      }
+    }
+    
+    void Handle(const OrthancRestApiCommand::SuccessMessage& message)
+    {
+      dynamic_cast<const State&>(message.GetOrigin().GetPayload()).Handle(message);
+      Step();
+    }
+
+    void Handle(const GetOrthancImageCommand::SuccessMessage& message)
+    {
+      dynamic_cast<const State&>(message.GetOrigin().GetPayload()).Handle(message);
+      Step();
+    }
+
+    void Handle(const GetOrthancWebViewerJpegCommand::SuccessMessage& message)
+    {
+      dynamic_cast<const State&>(message.GetOrigin().GetPayload()).Handle(message);
+      Step();
+    }
+
+    typedef std::list<IOracleCommand*>  PendingCommands;
+
+    IOracle&         oracle_;
+    bool             active_;
+    unsigned int     simultaneousDownloads_;
+    PendingCommands  pendingCommands_;
+
+  public:
+    LoaderStateMachine(IOracle& oracle,
+                       IObservable& oracleObservable) :
+      IObserver(oracleObservable.GetBroker()),
+      oracle_(oracle),
+      active_(false),
+      simultaneousDownloads_(4)
+    {
+      oracleObservable.RegisterObserverCallback(
+        new Callable<LoaderStateMachine, OrthancRestApiCommand::SuccessMessage>
+        (*this, &LoaderStateMachine::Handle));
+
+      oracleObservable.RegisterObserverCallback(
+        new Callable<LoaderStateMachine, GetOrthancImageCommand::SuccessMessage>
+        (*this, &LoaderStateMachine::Handle));
+
+      oracleObservable.RegisterObserverCallback(
+        new Callable<LoaderStateMachine, GetOrthancWebViewerJpegCommand::SuccessMessage>
+        (*this, &LoaderStateMachine::Handle));
+    }
+
+    virtual ~LoaderStateMachine()
+    {
+      for (PendingCommands::iterator it = pendingCommands_.begin();
+           it != pendingCommands_.end(); ++it)
+      {
+        delete *it;
+      }
+    }
+
+    virtual void SetSimultaneousDownloads(unsigned int count)
+    {
+      if (active_)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else if (count == 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);        
+      }
+      else
+      {
+        simultaneousDownloads_ = count;
+      }
+    }
+  };
+
+
+
   class OrthancMultiframeVolumeLoader :
     public IObserver,
     public IObservable
@@ -1476,46 +1621,108 @@ namespace OrthancStone
     public IVolumeSlicer
   {
   private:
-    enum State
-    {
-      State_Setup,
-      State_Loading,
-      State_Ready
-    };    
-    
-    
     std::auto_ptr<DicomStructureSet>  content_;
     IOracle&                          oracle_;
-    State                             state_;
+    bool                              active_;
+    uint64_t                          revision_;
     std::string                       instanceId_;
 
     void Handle(const OrthancRestApiCommand::SuccessMessage& message)
     {
-      if (state_ != State_Loading)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-
-      const boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
+      assert(active_);
 
       {
         OrthancPlugins::FullOrthancDataset dicom(message.GetAnswer());
         content_.reset(new DicomStructureSet(dicom));
       }
 
-      const boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
+      std::set<std::string> instances;
+      content_->GetReferencedInstances(instances);
 
-      printf("LOADED: %d\n", (end - start).total_milliseconds());
-      state_ = State_Ready;
+      for (std::set<std::string>::const_iterator
+             it = instances.begin(); it != instances.end(); ++it)
+      {
+        printf("[%s]\n", it->c_str());
+      }
     }
+
+    
+    class Slice : public IExtractedSlice
+    {
+    private:
+      const DicomStructureSet&  content_;
+      uint64_t                  revision_;
+      bool                      isValid_;
       
+    public:
+      Slice(const DicomStructureSet& content,
+            uint64_t revision,
+            const CoordinateSystem3D& cuttingPlane) :
+        content_(content),
+        revision_(revision)
+      {
+        bool opposite;
+
+        const Vector normal = content.GetNormal();
+        isValid_ = (
+          GeometryToolbox::IsParallelOrOpposite(opposite, normal, cuttingPlane.GetNormal()) ||
+          GeometryToolbox::IsParallelOrOpposite(opposite, normal, cuttingPlane.GetAxisX()) ||
+          GeometryToolbox::IsParallelOrOpposite(opposite, normal, cuttingPlane.GetAxisY()));
+      }
+      
+      virtual bool IsValid()
+      {
+        return isValid_;
+      }
+
+      virtual uint64_t GetRevision()
+      {
+        return revision_;
+      }
+
+      virtual ISceneLayer* CreateSceneLayer(const ILayerStyleConfigurator* configurator,
+                                            const CoordinateSystem3D& cuttingPlane)
+      {
+        assert(isValid_);
+
+        std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
+
+        for (size_t i = 0; i < content_.GetStructuresCount(); i++)
+        {
+          std::vector< std::vector<DicomStructureSet::PolygonPoint> > polygons;
+          
+          if (content_.ProjectStructure(polygons, i, cuttingPlane))
+          {
+            printf(">> %d\n", polygons.size());
+            
+            for (size_t j = 0; j < polygons.size(); j++)
+            {
+              PolylineSceneLayer::Chain chain;
+              chain.resize(polygons[j].size());
+            
+              for (size_t k = 0; k < polygons[i].size(); k++)
+              {
+                chain[k] = ScenePoint2D(polygons[j][k].first, polygons[j][k].second);
+              }
+
+              layer->AddChain(chain, true /* closed */);
+            }
+          }
+        }
+
+        printf("OK\n");
+
+        return layer.release();
+      }
+    };
     
   public:
     DicomStructureSetLoader(IOracle& oracle,
                             IObservable& oracleObservable) :
       IObserver(oracleObservable.GetBroker()),
       oracle_(oracle),
-      state_(State_Setup)
+      active_(false),
+      revision_(0)
     {
       oracleObservable.RegisterObserverCallback(
         new Callable<DicomStructureSetLoader, OrthancRestApiCommand::SuccessMessage>
@@ -1525,13 +1732,13 @@ namespace OrthancStone
     
     void LoadInstance(const std::string& instanceId)
     {
-      if (state_ != State_Setup)
+      if (active_)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
       else
       {
-        state_ = State_Loading;
+        active_ = true;
         instanceId_ = instanceId;
 
         {
@@ -1545,7 +1752,15 @@ namespace OrthancStone
 
     virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane)
     {
-      return NULL;
+      if (content_.get() == NULL)
+      {
+        // Geometry is not available yet
+        return new IVolumeSlicer::InvalidSlice;
+      }
+      else
+      {
+        return new Slice(*content_, revision_, cuttingPlane);
+      }
     }
   };
 
@@ -1766,7 +1981,7 @@ private:
   OrthancStone::CoordinateSystem3D  plane_;
   OrthancStone::IOracle&            oracle_;
   OrthancStone::Scene2D             scene_;
-  std::auto_ptr<OrthancStone::VolumeSceneLayerSource>  source1_, source2_;
+  std::auto_ptr<OrthancStone::VolumeSceneLayerSource>  source1_, source2_, source3_;
 
 
   void Refresh()
@@ -1779,6 +1994,11 @@ private:
     if (source2_.get() != NULL)
     {
       source2_->Update(plane_);
+    }
+
+    if (source3_.get() != NULL)
+    {
+      source3_->Update(plane_);
     }
 
     scene_.FitContent(1024, 768);
@@ -1808,8 +2028,8 @@ private:
     printf("Geometry ready\n");
     
     //plane_ = message.GetOrigin().GetGeometry().GetSagittalGeometry();
-    //plane_ = message.GetOrigin().GetGeometry().GetAxialGeometry();
-    plane_ = message.GetOrigin().GetGeometry().GetCoronalGeometry();
+    plane_ = message.GetOrigin().GetGeometry().GetAxialGeometry();
+    //plane_ = message.GetOrigin().GetGeometry().GetCoronalGeometry();
     plane_.SetOrigin(message.GetOrigin().GetGeometry().GetCoordinates(0.5f, 0.5f, 0.5f));
 
     Refresh();
@@ -1930,6 +2150,13 @@ public:
       source2_->SetConfigurator(style);
     }
   }
+
+  void SetStructureSet(int depth,
+                       const boost::shared_ptr<OrthancStone::DicomStructureSetLoader>& volume)
+  {
+    source3_.reset(new OrthancStone::VolumeSceneLayerSource(scene_, depth, volume));
+  }
+                       
 };
 
 
@@ -1954,7 +2181,8 @@ void Run(OrthancStone::NativeApplicationContext& context,
   }
 
 
-  toto->SetReferenceLoader(*ctLoader);
+  //toto->SetReferenceLoader(*ctLoader);
+  toto->SetReferenceLoader(*doseLoader);
 
 
 #if 1
@@ -1975,6 +2203,8 @@ void Run(OrthancStone::NativeApplicationContext& context,
     toto->SetVolume2(1, tmp, config.release());
   }
 
+  toto->SetStructureSet(2, rtstructLoader);
+  
   oracle.Schedule(*toto, new OrthancStone::SleepOracleCommand(100));
 
   if (0)
@@ -2054,7 +2284,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
 
   
   // 2017-11-17-Anonymized
-  ctLoader->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
+  //ctLoader->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
   doseLoader->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
   rtstructLoader->LoadInstance("83d9c0c3-913a7fee-610097d7-cbf0522d-fd75bee6");  // RT-STRUCT
 

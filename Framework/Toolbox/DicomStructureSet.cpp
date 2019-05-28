@@ -678,8 +678,8 @@ namespace OrthancStone
 
   
   bool DicomStructureSet::ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
-                                           Structure& structure,
-                                           const CoordinateSystem3D& slice)
+                                           const Structure& structure,
+                                           const CoordinateSystem3D& slice) const
   {
     polygons.clear();
 
@@ -690,7 +690,7 @@ namespace OrthancStone
     {
       // This is an axial projection
 
-      for (Polygons::iterator polygon = structure.polygons_.begin();
+      for (Polygons::const_iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
         if (polygon->IsOnSlice(slice))
@@ -716,7 +716,7 @@ namespace OrthancStone
       // Sagittal or coronal projection
       std::vector<BoostPolygon> projected;
   
-      for (Polygons::iterator polygon = structure.polygons_.begin();
+      for (Polygons::const_iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
         double x1, y1, x2, y2;

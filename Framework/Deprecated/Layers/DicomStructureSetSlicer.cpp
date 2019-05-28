@@ -80,7 +80,7 @@ namespace Deprecated
              const OrthancStone::CoordinateSystem3D& plane) :
       plane_(plane)
     {
-      for (size_t k = 0; k < structureSet.GetStructureCount(); k++)
+      for (size_t k = 0; k < structureSet.GetStructuresCount(); k++)
       {
         structures_.push_back(new Structure(structureSet, plane, k));
       }

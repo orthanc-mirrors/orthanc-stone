@@ -135,13 +135,13 @@ namespace OrthancStone
     Structure& GetStructure(size_t index);
   
     bool ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
-                          Structure& structure,
-                          const CoordinateSystem3D& slice);
+                          const Structure& structure,
+                          const CoordinateSystem3D& slice) const;
 
   public:
     DicomStructureSet(const OrthancPlugins::FullOrthancDataset& instance);
 
-    size_t GetStructureCount() const
+    size_t GetStructuresCount() const
     {
       return structures_.size();
     }
@@ -172,7 +172,7 @@ namespace OrthancStone
 
     bool ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
                           size_t index,
-                          const CoordinateSystem3D& slice)
+                          const CoordinateSystem3D& slice) const
     {
       return ProjectStructure(polygons, GetStructure(index), slice);
     }

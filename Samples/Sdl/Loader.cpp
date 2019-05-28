@@ -59,7 +59,14 @@
 
 namespace OrthancStone
 {
-  // Application-configurable, can be shared between 3D/2D
+  /**
+  This interface is implemented by objects able to create an ISceneLayer 
+  suitable to display the Orthanc image supplied to the CreateTextureXX 
+  factory methods (taking Dicom parameters into account if relevant).
+
+  It can also refresh the style of an existing layer afterwards, to match
+  the configurator settings.
+  */
   class ILayerStyleConfigurator
   {
   public:
@@ -77,8 +84,9 @@ namespace OrthancStone
     virtual void ApplyStyle(ISceneLayer& layer) const = 0;
   };
 
-
-
+  /**
+  This configurator supplies an API to set a display range and a LUT.
+  */
   class LookupTableStyleConfigurator : public ILayerStyleConfigurator
   {
   private:
@@ -160,7 +168,10 @@ namespace OrthancStone
     }
   };
 
-
+  /**
+  Creates layers to display the supplied image in grayscale. No dynamic 
+  style is available.
+  */
   class GrayscaleStyleConfigurator : public ILayerStyleConfigurator
   {
   private:
@@ -195,8 +206,9 @@ namespace OrthancStone
 
   /**
   This interface is implemented by objects representing 3D volume data and 
-  that are able to return an object that represent a slice of their data 
-  and are able to create the corresponding visual representation.
+  that are able to return an object that:
+  - represent a slice of their data 
+  - are able to create the corresponding slice visual representation.
   */
   class IVolumeSlicer : public boost::noncopyable
   {
@@ -232,9 +244,10 @@ namespace OrthancStone
       */
       virtual uint64_t GetRevision() = 0;
 
-      // This call can take some time
-      virtual ISceneLayer* CreateSceneLayer(const ILayerStyleConfigurator* configurator,  // possibly absent
-                                            const CoordinateSystem3D& cuttingPlane) = 0;
+      /** Creates the slice visual representation */
+      virtual ISceneLayer* CreateSceneLayer(
+        const ILayerStyleConfigurator* configurator,  // possibly absent
+        const CoordinateSystem3D& cuttingPlane) = 0;
     };
 
     /**
@@ -268,9 +281,13 @@ namespace OrthancStone
     /**
     This method is implemented by the objects representing volumetric data
     and must returns an IExtractedSlice subclass that contains all the data
-    needed to, later one, create its visual representation through
+    needed to, later on, create its visual representation through
     CreateSceneLayer.
-    Subclasses a.o.: ExtractedSlice, Slice, InvalidSlice
+    Subclasses a.o.: 
+    - InvalidSlice, 
+    - DicomVolumeImageMPRSlicer::Slice, 
+    - DicomVolumeImageReslicer::Slice
+    - DicomStructureSetLoader::Slice 
     */
     virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) = 0;
   };
@@ -408,6 +425,8 @@ namespace OrthancStone
 
     public:
       /**
+      Represents a slice of a volume image that is parallel to the 
+      coordinate system axis. 
       The constructor initializes the type of projection (axial, sagittal or
       coronal) and the corresponding slice index, from the cutting plane.
       */
@@ -515,7 +534,7 @@ namespace OrthancStone
     {
     }
 
-    virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane)
+    virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE
     {
       if (volume_->HasGeometry())
       {
@@ -531,8 +550,13 @@ namespace OrthancStone
   
 
 
-
+  /**
+    This class is used to manage the progressive loading of a volume that
+    is stored in a Dicom series.
+  
   // TODO - Refactor using LoaderStateMachine?
+  // TODO:
+  */
   class OrthancSeriesVolumeProgressiveLoader : 
     public IObserver,
     public IObservable,
@@ -543,8 +567,7 @@ namespace OrthancStone
     static const unsigned int MIDDLE_QUALITY = 1;
     static const unsigned int BEST_QUALITY = 2;
     
-    
-    // Helper class internal to OrthancSeriesVolumeProgressiveLoader
+    /** Helper class internal to OrthancSeriesVolumeProgressiveLoader */
     class SeriesGeometry : public boost::noncopyable
     {
     private:
@@ -1006,7 +1029,11 @@ namespace OrthancStone
       }
     }
 
-
+    /**
+    When a slice is requested, the strategy algorithm (that defines the 
+    sequence of resources to be loaded from the server) is modified to 
+    take into account this request (this is done in the ExtractedSlice ctor)
+    */
     virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane)
     {
       if (volume_->HasGeometry())

@@ -42,7 +42,7 @@ namespace OrthancStone
       return (payload_.get() != NULL);
     }
 
-    const Orthanc::IDynamicObject& GetPayload() const;
+    Orthanc::IDynamicObject& GetPayload() const;
 
     Orthanc::IDynamicObject* ReleasePayload();
   };

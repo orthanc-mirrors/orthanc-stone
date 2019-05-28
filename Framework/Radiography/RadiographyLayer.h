@@ -23,7 +23,7 @@
 
 #include "../Toolbox/AffineTransform2D.h"
 #include "../Toolbox/Extent2D.h"
-#include "../Viewport/CairoContext.h"
+#include "../Wrappers/CairoContext.h"
 #include "../Messages/IMessage.h"
 #include "../Messages/IObservable.h"
 

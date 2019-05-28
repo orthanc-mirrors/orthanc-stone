@@ -23,7 +23,7 @@
 
 #include "IWidget.h"
 
-#include "../../Viewport/CairoContext.h"
+#include "../../Wrappers/CairoContext.h"
 #include "../Viewport/WidgetViewport.h"
 
 namespace Deprecated

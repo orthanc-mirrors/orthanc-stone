@@ -306,4 +306,21 @@ namespace OrthancStone
       return true;
     }
   }
+
+
+  CoordinateSystem3D VolumeImageGeometry::GetProjectionSlice(VolumeProjection projection,
+                                                             unsigned int z) const
+  {
+    if (z >= GetProjectionDepth(projection))
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    Vector dim = GetVoxelDimensions(projection);
+    CoordinateSystem3D plane = GetProjectionGeometry(projection);
+
+    plane.SetOrigin(plane.GetOrigin() + static_cast<double>(z) * plane.GetNormal() * dim[2]);
+
+    return plane;
+  }
 }

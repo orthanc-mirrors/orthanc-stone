@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../../Viewport/CairoContext.h"
+#include "../../Wrappers/CairoContext.h"
 #include "../../Toolbox/Extent2D.h"
 #include "../../Toolbox/LinearAlgebra.h"
 #include "../Viewport/IMouseTracker.h"  // to include "Touch" definition

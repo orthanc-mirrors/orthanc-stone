@@ -252,7 +252,6 @@ set(APPLICATIONS_SOURCES
 
 if (NOT ORTHANC_SANDBOXED)
   set(PLATFORM_SOURCES
-    ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoFont.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceCommandBase.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceGetCommand.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServicePostCommand.cpp
@@ -262,6 +261,12 @@ if (NOT ORTHANC_SANDBOXED)
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleWebService.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleDelayedCallExecutor.h
     )
+
+  if (ENABLE_STONE_DEPRECATED)
+    list(APPEND PLATFORM_SOURCES
+      ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/CairoFont.cpp
+      )
+  endif()
 
   if (ENABLE_SDL OR ENABLE_QT)
     list(APPEND APPLICATIONS_SOURCES
@@ -333,6 +338,8 @@ if (ENABLE_STONE_DEPRECATED)
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/MessagingToolbox.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancApiClient.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancSlicesLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ParallelSlices.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ParallelSlicesCursor.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/Slice.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ViewportGeometry.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IMouseTracker.h
@@ -479,13 +486,11 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlices.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlicesCursor.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Wrappers/CairoContext.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Wrappers/CairoSurface.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/ImageBuffer3D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/OrientedVolumeBoundingBox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeImageGeometry.cpp

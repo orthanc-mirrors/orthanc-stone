@@ -29,9 +29,9 @@
 #  error The class CairoFont cannot be used in sandboxed environments
 #endif
 
-#include "CairoContext.h"
+#include "../../Wrappers/CairoContext.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class CairoFont : public boost::noncopyable
   {
@@ -45,7 +45,7 @@ namespace OrthancStone
 
     ~CairoFont();
 
-    void Draw(CairoContext& context,
+    void Draw(OrthancStone::CairoContext& context,
               const std::string& text,
               double size);
   };

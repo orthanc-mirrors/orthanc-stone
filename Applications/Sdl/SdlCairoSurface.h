@@ -24,7 +24,7 @@
 #if ORTHANC_ENABLE_SDL == 1
 
 #include "SdlWindow.h"
-#include "../../Framework/Viewport/CairoSurface.h"
+#include "../../Framework/Wrappers/CairoSurface.h"
 #include "../../Framework/Deprecated/Viewport/IViewport.h"
 
 #include <boost/thread/mutex.hpp>

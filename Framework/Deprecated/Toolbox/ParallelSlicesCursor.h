@@ -22,9 +22,9 @@
 #pragma once
 
 #include "ParallelSlices.h"
-#include "../StoneEnumerations.h"
+#include "../../StoneEnumerations.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
   class ParallelSlicesCursor : public boost::noncopyable
   {
@@ -44,22 +44,22 @@ namespace OrthancStone
 
     size_t GetSliceCount();
 
-    CoordinateSystem3D GetSlice(size_t slice);
+    OrthancStone::CoordinateSystem3D GetSlice(size_t slice);
 
-    CoordinateSystem3D GetCurrentSlice();
+    OrthancStone::CoordinateSystem3D GetCurrentSlice();
 
     // Returns "true" iff. the slice has actually changed
     bool SetDefaultSlice();
 
     // Returns "true" iff. the slice has actually changed
-    bool ApplyOffset(SliceOffsetMode mode,
+    bool ApplyOffset(OrthancStone::SliceOffsetMode mode,
                      int offset);
 
     // Returns "true" iff. the slice has actually changed
-    bool ApplyWheelEvent(MouseWheelDirection direction,
-                         KeyboardModifiers modifiers);
+    bool ApplyWheelEvent(OrthancStone::MouseWheelDirection direction,
+                         OrthancStone::KeyboardModifiers modifiers);
 
     // Returns "true" iff. the slice has actually changed
-    bool LookupSliceContainingPoint(const Vector& p);
+    bool LookupSliceContainingPoint(const OrthancStone::Vector& p);
   };
 }

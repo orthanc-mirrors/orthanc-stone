@@ -24,7 +24,7 @@
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   CairoFont::CairoFont(const char* family,
                        cairo_font_slant_t slant,
@@ -48,7 +48,7 @@ namespace OrthancStone
   }
 
 
-  void CairoFont::Draw(CairoContext& context,
+  void CairoFont::Draw(OrthancStone::CairoContext& context,
                        const std::string& text,
                        double size)
   {

@@ -23,7 +23,6 @@
 
 #include "GeometryToolbox.h"
 #include "SubpixelReader.h"
-#include "ParallelSlices.h"
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
@@ -317,7 +316,7 @@ namespace OrthancStone
     LOG(WARNING) << "Output image size: " << target.GetWidth() << "x" << target.GetHeight();
     LOG(WARNING) << "Output pixel format: " << Orthanc::EnumerationToString(target.GetFormat());
 
-    std::auto_ptr<OrthancStone::ParallelSlices> slices(OrthancStone::ParallelSlices::FromVolumeImage(geometry, projection));
+    const unsigned int slicesCount = geometry.GetProjectionDepth(projection);
     const OrthancStone::Vector pixelSpacing = geometry.GetVoxelDimensions(projection);
     const unsigned int targetWidth = target.GetWidth();
     const unsigned int targetHeight = target.GetHeight();
@@ -329,11 +328,11 @@ namespace OrthancStone
 
     typedef SubpixelReader<SourceFormat, ImageInterpolation_Nearest>  SourceReader;
     
-    for (size_t z = 0; z < slices->GetSliceCount(); z++)
+    for (unsigned int z = 0; z < slicesCount; z++)
     {
-      LOG(INFO) << "Applying raytracer on slice: " << z << "/" << slices->GetSliceCount();
-      
-      const OrthancStone::CoordinateSystem3D& slice = slices->GetSlice(z);
+      LOG(INFO) << "Applying raytracer on slice: " << z << "/" << slicesCount;
+
+      OrthancStone::CoordinateSystem3D slice = geometry.GetProjectionSlice(projection, z);
       OrthancStone::ImageBuffer3D::SliceReader sliceReader(source, projection, static_cast<unsigned int>(z));
 
       SourceReader pixelReader(sliceReader.GetAccessor());

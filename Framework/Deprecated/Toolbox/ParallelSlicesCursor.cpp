@@ -23,7 +23,7 @@
 
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   size_t ParallelSlicesCursor::GetDefaultSlice()
   {
@@ -51,11 +51,11 @@ namespace OrthancStone
   }
 
 
-  CoordinateSystem3D ParallelSlicesCursor::GetSlice(size_t slice)
+  OrthancStone::CoordinateSystem3D ParallelSlicesCursor::GetSlice(size_t slice)
   {
     if (slices_.get() == NULL)
     {
-      return CoordinateSystem3D();
+      return OrthancStone::CoordinateSystem3D();
     }
     else
     {
@@ -72,7 +72,7 @@ namespace OrthancStone
   }
 
 
-  CoordinateSystem3D ParallelSlicesCursor::GetCurrentSlice()
+  OrthancStone::CoordinateSystem3D ParallelSlicesCursor::GetCurrentSlice()
   {
     if (slices_.get() != NULL &&
         currentSlice_ < slices_->GetSliceCount())
@@ -81,7 +81,7 @@ namespace OrthancStone
     }
     else
     {
-      return CoordinateSystem3D();  // No slice is available, return the canonical geometry
+      return OrthancStone::CoordinateSystem3D();  // No slice is available, return the canonical geometry
     }
   }
 
@@ -102,7 +102,7 @@ namespace OrthancStone
   }
 
 
-  bool ParallelSlicesCursor::ApplyOffset(SliceOffsetMode mode,
+  bool ParallelSlicesCursor::ApplyOffset(OrthancStone::SliceOffsetMode mode,
                                          int offset)
   {
     if (slices_.get() == NULL)
@@ -128,19 +128,19 @@ namespace OrthancStone
 
     switch (mode)
     {
-      case SliceOffsetMode_Absolute:
+      case OrthancStone::SliceOffsetMode_Absolute:
       {
         slice = offset;
         break;
       }
 
-      case SliceOffsetMode_Relative:
+      case OrthancStone::SliceOffsetMode_Relative:
       {
         slice += offset;
         break;
       }
 
-      case SliceOffsetMode_Loop:
+      case OrthancStone::SliceOffsetMode_Loop:
       {
         slice += offset;
         while (slice < 0)
@@ -182,18 +182,18 @@ namespace OrthancStone
   }
 
 
-  bool ParallelSlicesCursor::ApplyWheelEvent(MouseWheelDirection direction,
-                                             KeyboardModifiers modifiers)
+  bool ParallelSlicesCursor::ApplyWheelEvent(OrthancStone::MouseWheelDirection direction,
+                                             OrthancStone::KeyboardModifiers modifiers)
   {
-    int offset = (modifiers & KeyboardModifiers_Control ? 10 : 1);
+    int offset = (modifiers & OrthancStone::KeyboardModifiers_Control ? 10 : 1);
 
     switch (direction)
     {
-      case MouseWheelDirection_Down:
-        return ApplyOffset(SliceOffsetMode_Relative, -offset);
+      case OrthancStone::MouseWheelDirection_Down:
+        return ApplyOffset(OrthancStone::SliceOffsetMode_Relative, -offset);
 
-      case MouseWheelDirection_Up:
-        return ApplyOffset(SliceOffsetMode_Relative, offset);
+      case OrthancStone::MouseWheelDirection_Up:
+        return ApplyOffset(OrthancStone::SliceOffsetMode_Relative, offset);
 
       default:
         return false;
@@ -201,7 +201,7 @@ namespace OrthancStone
   }
 
 
-  bool ParallelSlicesCursor::LookupSliceContainingPoint(const Vector& p)
+  bool ParallelSlicesCursor::LookupSliceContainingPoint(const OrthancStone::Vector& p)
   {
     size_t slice;
     double distance;

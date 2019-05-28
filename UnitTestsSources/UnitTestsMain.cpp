@@ -699,18 +699,22 @@ TEST(VolumeImageGeometry, Basic)
     OrthancStone::VolumeProjection projection = (OrthancStone::VolumeProjection) p;
     const OrthancStone::CoordinateSystem3D& s = g.GetProjectionGeometry(projection);
     
+    ASSERT_THROW(g.GetProjectionSlice(projection, g.GetProjectionDepth(projection)), Orthanc::OrthancException);
+
     for (unsigned int i = 0; i < g.GetProjectionDepth(projection); i++)
     {
-      OrthancStone::CoordinateSystem3D plane(
-        s.GetOrigin() + static_cast<double>(i) * s.GetNormal() * g.GetVoxelDimensions(projection)[2],
-        s.GetAxisX(),
-        s.GetAxisY());
+      OrthancStone::CoordinateSystem3D plane = g.GetProjectionSlice(projection, i);
+
+      ASSERT_TRUE(IsEqualVector(plane.GetOrigin(), s.GetOrigin() + static_cast<double>(i) * 
+                                s.GetNormal() * g.GetVoxelDimensions(projection)[2]));
+      ASSERT_TRUE(IsEqualVector(plane.GetAxisX(), s.GetAxisX()));
+      ASSERT_TRUE(IsEqualVector(plane.GetAxisY(), s.GetAxisY()));
 
       unsigned int slice;
       OrthancStone::VolumeProjection q;
       ASSERT_TRUE(g.DetectSlice(q, slice, plane));
       ASSERT_EQ(projection, q);
-      ASSERT_EQ(i, slice);
+      ASSERT_EQ(i, slice);     
     }
   }
 }

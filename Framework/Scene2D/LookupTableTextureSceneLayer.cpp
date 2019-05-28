@@ -63,9 +63,9 @@ namespace OrthancStone
 
     for (size_t i = 0; i < 256; i++)
     {
-      rgb[3 * i] = i;
-      rgb[3 * i + 1] = i;
-      rgb[3 * i + 2] = i;
+      rgb[3 * i]     = static_cast<uint8_t>(i);
+      rgb[3 * i + 1] = static_cast<uint8_t>(i);
+      rgb[3 * i + 2] = static_cast<uint8_t>(i);
     }
 
     SetLookupTableRgb(rgb);

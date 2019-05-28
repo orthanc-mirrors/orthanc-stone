@@ -390,6 +390,9 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/TextBoundingBox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingItemsSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingStrategy.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomStructureSetLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderStateMachine.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancMultiframeVolumeLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h
@@ -494,11 +497,13 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImage.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageMPRSlicer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageReslicer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/IVolumeSlicer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/ImageBuffer3D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/OrientedVolumeBoundingBox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeReslicer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeSceneLayerSource.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Wrappers/CairoContext.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Wrappers/CairoSurface.cpp
 

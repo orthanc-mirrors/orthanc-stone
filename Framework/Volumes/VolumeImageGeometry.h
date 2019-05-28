@@ -127,5 +127,8 @@ namespace OrthancStone
     bool DetectSlice(VolumeProjection& projection,
                      unsigned int& slice,
                      const CoordinateSystem3D& plane) const;
+
+    CoordinateSystem3D GetProjectionSlice(VolumeProjection projection,
+                                          unsigned int depth) const;
   };
 }

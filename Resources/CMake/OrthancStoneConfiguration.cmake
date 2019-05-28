@@ -313,10 +313,6 @@ endif()
 
 if (ENABLE_STONE_DEPRECATED)
   list(APPEND ORTHANC_STONE_SOURCES
-    ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomDatasetReader.cpp
-    ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomPath.cpp
-    ${ORTHANC_ROOT}/Plugins/Samples/Common/FullOrthancDataset.cpp
-    ${ORTHANC_ROOT}/Plugins/Samples/Common/IOrthancConnection.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/CircleMeasureTracker.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/ColorFrameRenderer.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/DicomSeriesVolumeSlicer.cpp
@@ -372,6 +368,11 @@ endif()
 list(APPEND ORTHANC_STONE_SOURCES
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SeriesFrameRendererFactory.cpp
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SingleFrameRendererFactory.cpp
+
+  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomDatasetReader.cpp
+  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomPath.cpp
+  ${ORTHANC_ROOT}/Plugins/Samples/Common/FullOrthancDataset.cpp
+  ${ORTHANC_ROOT}/Plugins/Samples/Common/IOrthancConnection.cpp
 
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CairoCompositor.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp

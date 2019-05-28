@@ -422,24 +422,43 @@ namespace OrthancStone
                    << static_cast<int>(structures_[i].green_) << ","
                    << static_cast<int>(structures_[i].blue_) << ")";
 
+
+      // These temporary variables avoid allocating many vectors in the loop below
+      OrthancPlugins::DicomPath countPointsPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                                DICOM_TAG_NUMBER_OF_CONTOUR_POINTS);
+
+      OrthancPlugins::DicomPath geometricTypePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                  DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                                  DICOM_TAG_CONTOUR_GEOMETRIC_TYPE);
+      
+      OrthancPlugins::DicomPath imageSequencePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                  DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                                  DICOM_TAG_CONTOUR_IMAGE_SEQUENCE);
+
+      OrthancPlugins::DicomPath referencedInstancePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                       DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                                       DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
+                                                       DICOM_TAG_REFERENCED_SOP_INSTANCE_UID);
+
+      OrthancPlugins::DicomPath contourDataPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                                DICOM_TAG_CONTOUR_DATA);
+
       for (size_t j = 0; j < countSlices; j++)
       {
         unsigned int countPoints;
 
-        if (!reader.GetUnsignedIntegerValue
-            (countPoints, OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                    DICOM_TAG_CONTOUR_SEQUENCE, j,
-                                                    DICOM_TAG_NUMBER_OF_CONTOUR_POINTS)))
+        countPointsPath.SetPrefixIndex(1, j);
+        if (!reader.GetUnsignedIntegerValue(countPoints, countPointsPath))
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
             
         //LOG(INFO) << "Parsing slice containing " << countPoints << " vertices";
 
-        std::string type = reader.GetMandatoryStringValue
-          (OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                     DICOM_TAG_CONTOUR_SEQUENCE, j,
-                                     DICOM_TAG_CONTOUR_GEOMETRIC_TYPE));
+        geometricTypePath.SetPrefixIndex(1, j);
+        std::string type = reader.GetMandatoryStringValue(geometricTypePath);
         if (type != "CLOSED_PLANAR")
         {
           LOG(WARNING) << "Ignoring contour with geometry type: " << type;
@@ -447,24 +466,19 @@ namespace OrthancStone
         }
 
         size_t size;
-        if (!tags.GetSequenceSize(size, OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                                  DICOM_TAG_CONTOUR_SEQUENCE, j,
-                                                                  DICOM_TAG_CONTOUR_IMAGE_SEQUENCE)) ||
+
+        imageSequencePath.SetPrefixIndex(1, j);
+        if (!tags.GetSequenceSize(size, imageSequencePath) ||
             size != 1)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
         }
 
-        std::string sopInstanceUid = reader.GetMandatoryStringValue
-          (OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                     DICOM_TAG_CONTOUR_SEQUENCE, j,
-                                     DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
-                                     DICOM_TAG_REFERENCED_SOP_INSTANCE_UID));
-        
-        std::string slicesData = reader.GetMandatoryStringValue
-          (OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                     DICOM_TAG_CONTOUR_SEQUENCE, j,
-                                     DICOM_TAG_CONTOUR_DATA));
+        referencedInstancePath.SetPrefixIndex(1, j);
+        std::string sopInstanceUid = reader.GetMandatoryStringValue(referencedInstancePath);
+
+        contourDataPath.SetPrefixIndex(1, j);        
+        std::string slicesData = reader.GetMandatoryStringValue(contourDataPath);
 
         Vector points;
         if (!LinearAlgebra::ParseVector(points, slicesData) ||

@@ -40,7 +40,10 @@
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Images/PngWriter.h>
 
+#include <boost/ref.hpp>
+#include <boost/make_shared.hpp>
 #include <SDL.h>
+
 #include <stdio.h>
 
 using namespace Orthanc;
@@ -200,7 +203,7 @@ namespace OrthancStone
       {
         CreateLineMeasureCommandPtr cmd = 
           boost::make_shared<CreateLineMeasureCommand>(
-            IObserver::GetBroker(),
+		  boost::ref(IObserver::GetBroker()),
             controller_,
             GetRandomPointInScene());
         cmd->SetEnd(GetRandomPointInScene());
@@ -212,7 +215,7 @@ namespace OrthancStone
       {
       CreateAngleMeasureCommandPtr cmd =
         boost::make_shared<CreateAngleMeasureCommand>(
-          IObserver::GetBroker(),
+          boost::ref(IObserver::GetBroker()),
           controller_,
           GetRandomPointInScene());
         cmd->SetCenter(GetRandomPointInScene());

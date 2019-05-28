@@ -47,6 +47,7 @@
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Images/PngWriter.h>
+#include <Core/Endianness.h>
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 #include <Core/SystemToolbox.h>

@@ -21,6 +21,7 @@
 
 #include "OrthancMultiframeVolumeLoader.h"
 
+#include <Core/Endianness.h>
 #include <Core/Toolbox.h>
 
 namespace OrthancStone

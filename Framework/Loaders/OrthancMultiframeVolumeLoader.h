@@ -24,6 +24,8 @@
 #include "LoaderStateMachine.h"
 #include "../Volumes/DicomVolumeImage.h"
 
+#include <boost/shared_ptr.hpp>
+
 namespace OrthancStone
 {
   class OrthancMultiframeVolumeLoader :

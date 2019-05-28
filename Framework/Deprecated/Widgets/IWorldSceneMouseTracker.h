@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../../Viewport/CairoContext.h"
+#include "../../Wrappers/CairoContext.h"
 #include "../Viewport/IMouseTracker.h" // only to get the "Touch" definition
 
 namespace Deprecated

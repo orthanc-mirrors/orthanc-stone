@@ -38,7 +38,7 @@ namespace OrthancStone
   }
 
 
-  const Orthanc::IDynamicObject& OracleCommandWithPayload::GetPayload() const
+  Orthanc::IDynamicObject& OracleCommandWithPayload::GetPayload() const
   {
     if (HasPayload())
     {

@@ -532,6 +532,7 @@ namespace OrthancStone
 
 
 
+  // TODO - Refactor using LoaderStateMachine?
   class OrthancSeriesVolumeProgressiveLoader : 
     public IObserver,
     public IObservable,
@@ -1056,17 +1057,17 @@ namespace OrthancStone
         return dynamic_cast<T&>(that_);
       }
       
-      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
       
-      virtual void Handle(const GetOrthancImageCommand::SuccessMessage& message) const
+      virtual void Handle(const GetOrthancImageCommand::SuccessMessage& message)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
       
-      virtual void Handle(const GetOrthancWebViewerJpegCommand::SuccessMessage& message) const
+      virtual void Handle(const GetOrthancWebViewerJpegCommand::SuccessMessage& message)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
@@ -1126,20 +1127,32 @@ namespace OrthancStone
       {
         delete *it;
       }
+
+      pendingCommands_.clear();
     }
 
-    void HandleException(const OracleCommandExceptionMessage& message)
+    void HandleExceptionMessage(const OracleCommandExceptionMessage& message)
     {
       LOG(ERROR) << "Error in the state machine, stopping all processing";
       Clear();
     }
 
     template <typename T>
-    void Handle(const T& message)
+    void HandleSuccessMessage(const T& message)
     {
-      dynamic_cast<const State&>(message.GetOrigin().GetPayload()).Handle(message);
+      assert(activeCommands_ > 0);
       activeCommands_--;
-      Step();
+
+      try
+      {
+        dynamic_cast<State&>(message.GetOrigin().GetPayload()).Handle(message);
+        Step();
+      }
+      catch (Orthanc::OrthancException& e)
+      {
+        LOG(ERROR) << "Error in the state machine, stopping all processing: " << e.What();
+        Clear();
+      }
     }
 
     typedef std::list<IOracleCommand*>  PendingCommands;
@@ -1161,19 +1174,19 @@ namespace OrthancStone
     {
       oracleObservable.RegisterObserverCallback(
         new Callable<LoaderStateMachine, OrthancRestApiCommand::SuccessMessage>
-        (*this, &LoaderStateMachine::Handle<OrthancRestApiCommand::SuccessMessage>));
+        (*this, &LoaderStateMachine::HandleSuccessMessage));
 
       oracleObservable.RegisterObserverCallback(
         new Callable<LoaderStateMachine, GetOrthancImageCommand::SuccessMessage>
-        (*this, &LoaderStateMachine::Handle<GetOrthancImageCommand::SuccessMessage>));
+        (*this, &LoaderStateMachine::HandleSuccessMessage));
 
       oracleObservable.RegisterObserverCallback(
         new Callable<LoaderStateMachine, GetOrthancWebViewerJpegCommand::SuccessMessage>
-        (*this, &LoaderStateMachine::Handle<GetOrthancWebViewerJpegCommand::SuccessMessage>));
+        (*this, &LoaderStateMachine::HandleSuccessMessage));
 
       oracleObservable.RegisterObserverCallback(
         new Callable<LoaderStateMachine, OracleCommandExceptionMessage>
-        (*this, &LoaderStateMachine::HandleException));
+        (*this, &LoaderStateMachine::HandleExceptionMessage));
     }
 
     virtual ~LoaderStateMachine()
@@ -1228,7 +1241,7 @@ namespace OrthancStone
 
       }
 
-      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
       {
         // Complete the DICOM tags with just-received "Grid Frame Offset Vector"
         std::string s = Orthanc::Toolbox::StripSpaces(message.GetAnswer());
@@ -1262,7 +1275,7 @@ namespace OrthancStone
       {
       }
       
-      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
       {
         OrthancMultiframeVolumeLoader& loader = GetLoader<OrthancMultiframeVolumeLoader>();
         
@@ -1306,7 +1319,7 @@ namespace OrthancStone
       {
       }
       
-      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
       {
         GetLoader<OrthancMultiframeVolumeLoader>().SetTransferSyntax(message.GetAnswer());
       }
@@ -1321,7 +1334,7 @@ namespace OrthancStone
       {
       }
       
-      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) const
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
       {
         GetLoader<OrthancMultiframeVolumeLoader>().SetUncompressedPixelData(message.GetAnswer());
       }
@@ -1548,17 +1561,17 @@ namespace OrthancStone
 
 
 
-  class VolumeImageReslicer : public IVolumeSlicer
+  class DicomVolumeImageReslicer : public IVolumeSlicer
   {
   private:
     class Slice : public IExtractedSlice
     {
     private:
-      VolumeImageReslicer&  that_;
-      CoordinateSystem3D    cuttingPlane_;
+      DicomVolumeImageReslicer&  that_;
+      CoordinateSystem3D         cuttingPlane_;
       
     public:
-      Slice(VolumeImageReslicer& that,
+      Slice(DicomVolumeImageReslicer& that,
             const CoordinateSystem3D& cuttingPlane) :
         that_(that),
         cuttingPlane_(cuttingPlane)
@@ -1575,7 +1588,7 @@ namespace OrthancStone
         return that_.volume_->GetRevision();
       }
 
-      virtual ISceneLayer* CreateSceneLayer(const ILayerStyleConfigurator* configurator,  // possibly absent
+      virtual ISceneLayer* CreateSceneLayer(const ILayerStyleConfigurator* configurator,
                                             const CoordinateSystem3D& cuttingPlane)
       {
         VolumeReslicer& reslicer = that_.reslicer_;
@@ -1621,7 +1634,7 @@ namespace OrthancStone
     VolumeReslicer                       reslicer_;
 
   public:
-    VolumeImageReslicer(const boost::shared_ptr<DicomVolumeImage>& volume) :
+    DicomVolumeImageReslicer(const boost::shared_ptr<DicomVolumeImage>& volume) :
       volume_(volume)
     {
       if (volume.get() == NULL)
@@ -1666,34 +1679,134 @@ namespace OrthancStone
 
 
   class DicomStructureSetLoader :
-    public IObserver,
+    public LoaderStateMachine,
     public IVolumeSlicer
   {
   private:
+    class AddReferencedInstance : public State
+    {
+    private:
+      std::string instanceId_;
+      
+    public:
+      AddReferencedInstance(DicomStructureSetLoader& that,
+                            const std::string& instanceId) :
+        State(that),
+        instanceId_(instanceId)
+      {
+      }
+
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
+      {
+        Json::Value tags;
+        message.ParseJsonBody(tags);
+        
+        Orthanc::DicomMap dicom;
+        dicom.FromDicomAsJson(tags);
+
+        DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
+        loader.content_->AddReferencedSlice(dicom);
+
+        loader.countProcessedInstances_ ++;
+        assert(loader.countProcessedInstances_ <= loader.countReferencedInstances_);
+
+        if (loader.countProcessedInstances_ == loader.countReferencedInstances_)
+        {
+          // All the referenced instances have been loaded, finalize the RT-STRUCT
+          loader.content_->CheckReferencedSlices();
+          loader.revision_++;
+        }
+      }
+    };
+    
+    // State that converts a "SOP Instance UID" to an Orthanc identifier
+    class LookupInstance : public State
+    {
+    private:
+      std::string  sopInstanceUid_;
+      
+    public:
+      LookupInstance(DicomStructureSetLoader& that,
+                     const std::string& sopInstanceUid) :
+        State(that),
+        sopInstanceUid_(sopInstanceUid)
+      {
+      }
+
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
+      {
+        DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
+
+        Json::Value lookup;
+        message.ParseJsonBody(lookup);
+
+        if (lookup.type() != Json::arrayValue ||
+            lookup.size() != 1 ||
+            !lookup[0].isMember("Type") ||
+            !lookup[0].isMember("Path") ||
+            lookup[0]["Type"].type() != Json::stringValue ||
+            lookup[0]["ID"].type() != Json::stringValue ||
+            lookup[0]["Type"].asString() != "Instance")
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_UnknownResource);          
+        }
+
+        const std::string instanceId = lookup[0]["ID"].asString();
+
+        {
+          std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+          command->SetHttpHeader("Accept-Encoding", "gzip");
+          command->SetUri("/instances/" + instanceId + "/tags");
+          command->SetPayload(new AddReferencedInstance(loader, instanceId));
+          Schedule(command.release());
+        }
+      }
+    };
+    
+    class LoadStructure : public State
+    {
+    public:
+      LoadStructure(DicomStructureSetLoader& that) :
+        State(that)
+      {
+      }
+
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
+      {
+        DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
+        
+        {
+          OrthancPlugins::FullOrthancDataset dicom(message.GetAnswer());
+          loader.content_.reset(new DicomStructureSet(dicom));
+        }
+
+        std::set<std::string> instances;
+        loader.content_->GetReferencedInstances(instances);
+
+        loader.countReferencedInstances_ = instances.size();
+
+        for (std::set<std::string>::const_iterator
+               it = instances.begin(); it != instances.end(); ++it)
+        {
+          std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+          command->SetUri("/tools/lookup");
+          command->SetMethod(Orthanc::HttpMethod_Post);
+          command->SetBody(*it);
+          command->SetPayload(new LookupInstance(loader, *it));
+          Schedule(command.release());
+
+          printf("[%s]\n", it->c_str());
+        }
+      }
+    };
+
+
+    
     std::auto_ptr<DicomStructureSet>  content_;
-    IOracle&                          oracle_;
-    bool                              active_;
     uint64_t                          revision_;
     std::string                       instanceId_;
-
-    void Handle(const OrthancRestApiCommand::SuccessMessage& message)
-    {
-      assert(active_);
-
-      {
-        OrthancPlugins::FullOrthancDataset dicom(message.GetAnswer());
-        content_.reset(new DicomStructureSet(dicom));
-      }
-
-      std::set<std::string> instances;
-      content_->GetReferencedInstances(instances);
-
-      for (std::set<std::string>::const_iterator
-             it = instances.begin(); it != instances.end(); ++it)
-      {
-        printf("[%s]\n", it->c_str());
-      }
-    }
+    unsigned int                      countProcessedInstances_;
+    unsigned int                      countReferencedInstances_;
 
     
     class Slice : public IExtractedSlice
@@ -1735,6 +1848,7 @@ namespace OrthancStone
         assert(isValid_);
 
         std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
+        layer->SetThickness(2);
 
         for (size_t i = 0; i < content_.GetStructuresCount(); i++)
         {
@@ -1749,7 +1863,7 @@ namespace OrthancStone
               PolylineSceneLayer::Chain chain;
               chain.resize(polygons[j].size());
             
-              for (size_t k = 0; k < polygons[i].size(); k++)
+              for (size_t k = 0; k < polygons[j].size(); k++)
               {
                 chain[k] = ScenePoint2D(polygons[j][k].first, polygons[j][k].second);
               }
@@ -1759,8 +1873,6 @@ namespace OrthancStone
           }
         }
 
-        printf("OK\n");
-
         return layer.release();
       }
     };
@@ -1768,34 +1880,26 @@ namespace OrthancStone
   public:
     DicomStructureSetLoader(IOracle& oracle,
                             IObservable& oracleObservable) :
-      IObserver(oracleObservable.GetBroker()),
-      oracle_(oracle),
-      active_(false),
-      revision_(0)
+      LoaderStateMachine(oracle, oracleObservable),
+      revision_(0),
+      countProcessedInstances_(0),
+      countReferencedInstances_(0)
     {
-      oracleObservable.RegisterObserverCallback(
-        new Callable<DicomStructureSetLoader, OrthancRestApiCommand::SuccessMessage>
-        (*this, &DicomStructureSetLoader::Handle));
     }
     
     
     void LoadInstance(const std::string& instanceId)
     {
-      if (active_)
+      Start();
+      
+      instanceId_ = instanceId;
+      
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      else
-      {
-        active_ = true;
-        instanceId_ = instanceId;
-
-        {
-          std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
-          command->SetHttpHeader("Accept-Encoding", "gzip");
-          command->SetUri("/instances/" + instanceId + "/tags?ignore-length=3006-0050");
-          oracle_.Schedule(*this, command.release());
-        }
+        std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+        command->SetHttpHeader("Accept-Encoding", "gzip");
+        command->SetUri("/instances/" + instanceId + "/tags?ignore-length=3006-0050");
+        command->SetPayload(new LoadStructure(*this));
+        Schedule(command.release());
       }
     }
 
@@ -2238,7 +2342,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
   toto->SetVolume1(0, ctLoader, new OrthancStone::GrayscaleStyleConfigurator);
 #else
   {
-    boost::shared_ptr<OrthancStone::IVolumeSlicer> reslicer(new OrthancStone::VolumeImageReslicer(ct));
+    boost::shared_ptr<OrthancStone::IVolumeSlicer> reslicer(new OrthancStone::DicomVolumeImageReslicer(ct));
     toto->SetVolume1(0, reslicer, new OrthancStone::GrayscaleStyleConfigurator);
   }
 #endif  
@@ -2340,8 +2444,13 @@ void Run(OrthancStone::NativeApplicationContext& context,
   //rtstructLoader->LoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // RT-STRUCT
 #else
   //ctLoader->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
-  doseLoader->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
+  //doseLoader->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
   //rtstructLoader->LoadInstance("83d9c0c3-913a7fee-610097d7-cbf0522d-fd75bee6");  // RT-STRUCT
+
+  // 2017-05-16
+  ctLoader->LoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // CT
+  doseLoader->LoadInstance("eac822ef-a395f94e-e8121fe0-8411fef8-1f7bffad");  // RT-DOSE
+  rtstructLoader->LoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // RT-STRUCT
 #endif
   // 2015-01-28-Multiframe
   //doseLoader->LoadInstance("88f71e2a-5fad1c61-96ed14d6-5b3d3cf7-a5825279");  // Multiframe CT

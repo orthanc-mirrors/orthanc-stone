@@ -362,6 +362,34 @@ namespace OrthancStone
         viewport_.Refresh();
       }
     }
+
+    void Scroll(int delta)
+    {
+      if (!planes_.empty())
+      {
+        int tmp = static_cast<int>(currentPlane_) + delta;
+        unsigned int next;
+
+        if (tmp < 0)
+        {
+          next = 0;
+        }
+        else if (tmp >= static_cast<int>(planes_.size()))
+        {
+          next = planes_.size() - 1;
+        }
+        else
+        {
+          next = static_cast<size_t>(tmp);
+        }
+
+        if (next != currentPlane_)
+        {
+          currentPlane_ = next;
+          Refresh();
+        }
+      }
+    }
   };
 
 
@@ -846,6 +874,57 @@ EM_BOOL OnAnimationFrame(double time, void *userData)
 }
 
 
+static bool ctrlDown_ = false;
+
+
+EM_BOOL OnMouseWheel(int eventType,
+                     const EmscriptenWheelEvent *wheelEvent,
+                     void *userData)
+{
+  try
+  {
+    if (userData != NULL)
+    {
+      int delta = 0;
+
+      if (wheelEvent->deltaY < 0)
+      {
+        delta = -1;
+      }
+           
+      if (wheelEvent->deltaY > 0)
+      {
+        delta = 1;
+      }
+
+      if (ctrlDown_)
+      {
+        delta *= 10;
+      }
+           
+      reinterpret_cast<OrthancStone::VolumeSlicerViewport*>(userData)->Scroll(delta);
+    }
+  }
+  catch (Orthanc::OrthancException& e)
+  {
+    LOG(ERROR) << "Exception in the wheel event: " << e.What();
+  }
+  
+  return true;
+}
+
+
+EM_BOOL OnKey(int eventType,
+              const EmscriptenKeyboardEvent *keyEvent,
+              void *userData)
+{
+  ctrlDown_ = keyEvent->ctrlKey;
+  return false;
+}
+
+
+
+
 extern "C"
 {
   int main(int argc, char const *argv[]) 
@@ -876,6 +955,13 @@ extern "C"
       viewport3_->UpdateSize();
 
       emscripten_set_resize_callback("#window", NULL, false, OnWindowResize);
+
+      emscripten_set_wheel_callback("mycanvas1", viewport1_.get(), false, OnMouseWheel);
+      emscripten_set_wheel_callback("mycanvas2", viewport2_.get(), false, OnMouseWheel);
+      emscripten_set_wheel_callback("mycanvas3", viewport3_.get(), false, OnMouseWheel);
+
+      emscripten_set_keydown_callback("#window", NULL, false, OnKey);
+      emscripten_set_keyup_callback("#window", NULL, false, OnKey);
     
       emscripten_request_animation_frame_loop(OnAnimationFrame, NULL);
 

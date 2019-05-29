@@ -128,7 +128,7 @@ namespace OrthancStone
       std::set<std::string> instances;
       loader.content_->GetReferencedInstances(instances);
 
-      loader.countReferencedInstances_ = instances.size();
+      loader.countReferencedInstances_ = static_cast<unsigned int>(instances.size());
 
       for (std::set<std::string>::const_iterator
              it = instances.begin(); it != instances.end(); ++it)

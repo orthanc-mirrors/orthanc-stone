@@ -19,12 +19,17 @@
  **/
 
 #include "../../Framework/Messages/IObserver.h"
+#include "../../Framework/Messages/IMessageEmitter.h"
+#include "../../Framework/Oracle/OracleCommandExceptionMessage.h"
 #include "../../Framework/Scene2DViewport/ViewportController.h"
+#include "../../Framework/Volumes/DicomVolumeImage.h"
+#include "../../Framework/Oracle/ThreadedOracle.h"
 
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/thread.hpp>
+#include <boost/noncopyable.hpp>
+
 #include <SDL.h>
-#include "../../Framework/Volumes/DicomVolumeImage.h"
-#include "../../Framework/Oracle/OracleCommandExceptionMessage.h"
 
 namespace OrthancStone
 {
@@ -33,8 +38,11 @@ namespace OrthancStone
   class ILayerStyleConfigurator;
   class DicomStructureSetLoader;
   class IOracle;
+  class ThreadedOracle;
   class VolumeSceneLayerSource;
+  class NativeFusionMprApplicationContext;
 
+   
   enum FusionMprGuiTool
   {
     FusionMprGuiTool_Rotate = 0,
@@ -54,12 +62,18 @@ namespace OrthancStone
 
   class Scene2D;
 
+  /**
+  This application subclasses IMessageEmitter to use a mutex before forwarding Oracle messages (that
+  can be sent from multiple threads)
+  */
   class FusionMprSdlApp : public IObserver
     , public boost::enable_shared_from_this<FusionMprSdlApp>
+    , public IMessageEmitter
   {
   public:
     // 12 because.
     FusionMprSdlApp(MessageBroker& broker);
+
     void PrepareScene();
     void Run();
     void SetInfoDisplayMessage(std::string key, std::string value);
@@ -77,7 +91,31 @@ namespace OrthancStone
     void OnSceneTransformChanged(
       const ViewportController::SceneTransformChanged& message);
 
+
+    virtual void EmitMessage(const IObserver& observer,
+      const IMessage& message) ORTHANC_OVERRIDE
+    {
+      try
+      {
+        boost::unique_lock<boost::shared_mutex>  lock(mutex_);
+        oracleObservable_.EmitMessage(observer, message);
+      }
+      catch (Orthanc::OrthancException& e)
+      {
+        LOG(ERROR) << "Exception while emitting a message: " << e.What();
+        throw;
+      }
+    }
+    
   private:
+#if 1
+    // if threaded (not wasm)
+    MessageBroker& broker_;
+    IObservable oracleObservable_;
+    ThreadedOracle oracle_;
+    boost::shared_mutex mutex_; // to serialize messages from the ThreadedOracle
+#endif
+
     void SelectNextTool();
 
     /**
@@ -132,7 +170,7 @@ namespace OrthancStone
 
   private:
     CoordinateSystem3D  plane_;
-    IOracle* oracle_ = nullptr;
+
     boost::shared_ptr<VolumeSceneLayerSource>  source1_, source2_, source3_;
 
     std::auto_ptr<OpenGLCompositor> compositor_;

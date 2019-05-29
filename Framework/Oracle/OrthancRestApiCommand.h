@@ -95,6 +95,11 @@ namespace OrthancStone
 
     void SetBody(const Json::Value& json);
 
+    void SwapBody(std::string& body)
+    {
+      body_.swap(body);
+    }
+
     void SetHttpHeader(const std::string& key,
                        const std::string& value)
     {

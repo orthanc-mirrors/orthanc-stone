@@ -113,14 +113,14 @@ void PrepareScene(OrthancStone::Scene2DPtr scene)
     chain.push_back(ScenePoint2D(0 - 0.5, 2 - 0.5));
     chain.push_back(ScenePoint2D(2 - 0.5, 2 - 0.5));
     chain.push_back(ScenePoint2D(2 - 0.5, 0 - 0.5));
-    layer->AddChain(chain, true);
+    layer->AddChain(chain, true, 255, 0, 0);
 
     chain.clear();
     chain.push_back(ScenePoint2D(-5, -5));
     chain.push_back(ScenePoint2D(5, -5));
     chain.push_back(ScenePoint2D(5, 5));
     chain.push_back(ScenePoint2D(-5, 5));
-    layer->AddChain(chain, true);
+    layer->AddChain(chain, true, 0, 255, 0);
 
     double dy = 1.01;
     chain.clear();
@@ -128,9 +128,8 @@ void PrepareScene(OrthancStone::Scene2DPtr scene)
     chain.push_back(ScenePoint2D(4, -4 + dy));
     chain.push_back(ScenePoint2D(-4, -4 + 2.0 * dy));
     chain.push_back(ScenePoint2D(4, 2));
-    layer->AddChain(chain, false);
+    layer->AddChain(chain, false, 0, 0, 255);
 
-    layer->SetColor(0,255, 255);
     scene->SetLayer(50, layer.release());
   }
 

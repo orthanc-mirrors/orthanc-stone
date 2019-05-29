@@ -166,9 +166,9 @@ private:
   {
     printf("Geometry ready\n");
     
-    //plane_ = message.GetOrigin().GetGeometry().GetSagittalGeometry();
+    plane_ = message.GetOrigin().GetGeometry().GetSagittalGeometry();
     //plane_ = message.GetOrigin().GetGeometry().GetAxialGeometry();
-    plane_ = message.GetOrigin().GetGeometry().GetCoronalGeometry();
+    //plane_ = message.GetOrigin().GetGeometry().GetCoronalGeometry();
     plane_.SetOrigin(message.GetOrigin().GetGeometry().GetCoordinates(0.5f, 0.5f, 0.5f));
 
     Refresh();
@@ -302,6 +302,8 @@ public:
 void Run(OrthancStone::NativeApplicationContext& context,
          OrthancStone::ThreadedOracle& oracle)
 {
+  // the oracle has been supplied with the context (as an IEmitter) upon
+  // creation
   boost::shared_ptr<OrthancStone::DicomVolumeImage>  ct(new OrthancStone::DicomVolumeImage);
   boost::shared_ptr<OrthancStone::DicomVolumeImage>  dose(new OrthancStone::DicomVolumeImage);
 
@@ -314,6 +316,11 @@ void Run(OrthancStone::NativeApplicationContext& context,
   {
     OrthancStone::NativeApplicationContext::WriterLock lock(context);
     toto.reset(new Toto(oracle, lock.GetOracleObservable()));
+
+    // the oracle is used to schedule commands
+    // the oracleObservable is used by the loaders to:
+    // - request the broker (lifetime mgmt)
+    // - register the loader callbacks (called indirectly by the oracle)
     ctLoader.reset(new OrthancStone::OrthancSeriesVolumeProgressiveLoader(ct, oracle, lock.GetOracleObservable()));
     doseLoader.reset(new OrthancStone::OrthancMultiframeVolumeLoader(dose, oracle, lock.GetOracleObservable()));
     rtstructLoader.reset(new OrthancStone::DicomStructureSetLoader(oracle, lock.GetOracleObservable()));

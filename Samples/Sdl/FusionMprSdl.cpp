@@ -24,8 +24,6 @@
 
 #include "../../Framework/StoneInitialization.h"
 
-#include "../../Framework/Messages/IMessageEmitter.h"
-
 #include "../../Framework/Scene2D/CairoCompositor.h"
 #include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
 #include "../../Framework/Scene2D/OpenGLCompositor.h"
@@ -50,7 +48,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/make_shared.hpp>
-#include <boost/thread.hpp>
 
 #include <stdio.h>
 #include "../../Framework/Oracle/GetOrthancWebViewerJpegCommand.h"
@@ -65,76 +62,6 @@
 
 namespace OrthancStone
 {
-
-  class NativeApplicationContext : public IMessageEmitter
-  {
-  private:
-    boost::shared_mutex  mutex_;
-    MessageBroker        broker_;
-    IObservable          oracleObservable_;
-
-  public:
-    NativeApplicationContext() :
-      oracleObservable_(broker_)
-    {
-    }
-
-
-    virtual void EmitMessage(const IObserver& observer,
-      const IMessage& message) ORTHANC_OVERRIDE
-    {
-      try
-      {
-        boost::unique_lock<boost::shared_mutex>  lock(mutex_);
-        oracleObservable_.EmitMessage(observer, message);
-      }
-      catch (Orthanc::OrthancException& e)
-      {
-        LOG(ERROR) << "Exception while emitting a message: " << e.What();
-      }
-    }
-
-
-    class ReaderLock : public boost::noncopyable
-    {
-    private:
-      NativeApplicationContext& that_;
-      boost::shared_lock<boost::shared_mutex>  lock_;
-
-    public:
-      ReaderLock(NativeApplicationContext& that) :
-        that_(that),
-        lock_(that.mutex_)
-      {
-      }
-    };
-
-
-    class WriterLock : public boost::noncopyable
-    {
-    private:
-      NativeApplicationContext& that_;
-      boost::unique_lock<boost::shared_mutex>  lock_;
-
-    public:
-      WriterLock(NativeApplicationContext& that) :
-        that_(that),
-        lock_(that.mutex_)
-      {
-      }
-
-      MessageBroker& GetBroker()
-      {
-        return that_.broker_;
-      }
-
-      IObservable& GetOracleObservable()
-      {
-        return that_.oracleObservable_;
-      }
-    };
-  };
-
   const char* FusionMprMeasureToolToString(size_t i)
   {
     static const char* descs[] = {
@@ -474,10 +401,31 @@ namespace OrthancStone
   }
 
 
-  FusionMprSdlApp::FusionMprSdlApp(MessageBroker& broker) : IObserver(broker)
+  FusionMprSdlApp::FusionMprSdlApp(MessageBroker& broker)
+    : IObserver(broker)
+    , broker_(broker)
+    , oracleObservable_(broker)
+    , oracle_(*this)
     , currentTool_(FusionMprGuiTool_Rotate)
   {
-    controller_ = boost::shared_ptr<ViewportController>(new ViewportController(broker));
+    //oracleObservable.RegisterObserverCallback
+    //(new Callable
+    //  <FusionMprSdlApp, SleepOracleCommand::TimeoutMessage>(*this, &FusionMprSdlApp::Handle));
+
+    //oracleObservable.RegisterObserverCallback
+    //(new Callable
+    //  <Toto, GetOrthancImageCommand::SuccessMessage>(*this, &FusionMprSdlApp::Handle));
+
+    //oracleObservable.RegisterObserverCallback
+    //(new Callable
+    //  <FusionMprSdlApp, GetOrthancWebViewerJpegCommand::SuccessMessage>(*this, &ToFusionMprSdlAppto::Handle));
+
+    oracleObservable_.RegisterObserverCallback
+    (new Callable
+      <FusionMprSdlApp, OracleCommandExceptionMessage>(*this, &FusionMprSdlApp::Handle));
+    
+    controller_ = boost::shared_ptr<ViewportController>(
+      new ViewportController(broker_));
 
     controller_->RegisterObserverCallback(
       new Callable<FusionMprSdlApp, ViewportController::SceneTransformChanged>
@@ -653,18 +601,11 @@ namespace OrthancStone
 
 
     //////// from loader
-
-        // from main
-    NativeApplicationContext context;
-    ThreadedOracle oracle(context);
-
-
-
     {
       Orthanc::WebServiceParameters p;
       //p.SetUrl("http://localhost:8043/");
       p.SetCredentials("orthanc", "orthanc");
-      oracle.SetOrthancParameters(p);
+      oracle_.SetOrthancParameters(p);
     }
 
     //////// from Run
@@ -678,38 +619,16 @@ namespace OrthancStone
     boost::shared_ptr<DicomStructureSetLoader>  rtstructLoader;
 
     {
-      NativeApplicationContext::WriterLock lock(context);
-      //toto.reset(new Toto(oracle, lock.GetOracleObservable()));
-      oracle_ = &oracle;
-      IObservable* oracleObservable = &lock.GetOracleObservable();
-
-
-      //oracleObservable->RegisterObserverCallback
-      //(new Callable
-      //  <FusionMprSdlApp, SleepOracleCommand::TimeoutMessage>(*this, &FusionMprSdlApp::Handle));
-
-
-      //oracleObservable->RegisterObserverCallback
-      //(new Callable
-      //  <Toto, GetOrthancImageCommand::SuccessMessage>(*this, &FusionMprSdlApp::Handle));
-
-      //oracleObservable->RegisterObserverCallback
-      //(new Callable
-      //  <FusionMprSdlApp, GetOrthancWebViewerJpegCommand::SuccessMessage>(*this, &ToFusionMprSdlAppto::Handle));
-
-      oracleObservable->RegisterObserverCallback
-      (new Callable
-        <FusionMprSdlApp, OracleCommandExceptionMessage>(*this, &FusionMprSdlApp::Handle));
-      
-
-      ctLoader.reset(new OrthancSeriesVolumeProgressiveLoader(ct, oracle, lock.GetOracleObservable()));
-      doseLoader.reset(new OrthancMultiframeVolumeLoader(dose, oracle, lock.GetOracleObservable()));
-      rtstructLoader.reset(new DicomStructureSetLoader(oracle, lock.GetOracleObservable()));
+      ctLoader.reset(new OrthancSeriesVolumeProgressiveLoader(ct, oracle_, oracleObservable_));
+      doseLoader.reset(new OrthancMultiframeVolumeLoader(dose, oracle_, oracleObservable_));
+      rtstructLoader.reset(new DicomStructureSetLoader(oracle_, oracleObservable_));
     }
 
-
     //toto->SetReferenceLoader(*ctLoader);
-    doseLoader->RegisterObserverCallback
+    //doseLoader->RegisterObserverCallback
+    //(new Callable
+    //  <FusionMprSdlApp, DicomVolumeImage::GeometryReadyMessage>(*this, &FusionMprSdlApp::Handle));
+    ctLoader->RegisterObserverCallback
     (new Callable
       <FusionMprSdlApp, DicomVolumeImage::GeometryReadyMessage>(*this, &FusionMprSdlApp::Handle));
 
@@ -725,10 +644,10 @@ namespace OrthancStone
 
     this->SetStructureSet(2, rtstructLoader);
 
-#if 0
+#if 1
     // BGO data
     ctLoader->LoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // CT
-    doseLoader->LoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // RT-DOSE
+    //doseLoader->LoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // RT-DOSE
     //rtstructLoader->LoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // RT-STRUCT
 #else
     //ctLoader->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
@@ -741,7 +660,7 @@ namespace OrthancStone
     rtstructLoader->LoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // RT-STRUCT
 #endif
 
-    oracle.Start();
+    oracle_.Start();
 
 //// END from loader
 
@@ -818,7 +737,7 @@ namespace OrthancStone
      * as in (*).
      **/
 
-    oracle.Stop();
+    oracle_.Stop();
     //// END from loader
   }
 
@@ -861,7 +780,7 @@ int main(int argc, char* argv[])
 
   try
   {
-    MessageBroker broker;
+    OrthancStone::MessageBroker broker;
     boost::shared_ptr<FusionMprSdlApp> app(new FusionMprSdlApp(broker));
     g_app = app;
     app->PrepareScene();

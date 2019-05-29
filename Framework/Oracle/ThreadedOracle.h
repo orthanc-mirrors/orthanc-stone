@@ -74,6 +74,7 @@ namespace OrthancStone
 
     virtual ~ThreadedOracle();
 
+    // The reference is not stored.
     void SetOrthancParameters(const Orthanc::WebServiceParameters& orthanc);
 
     void SetThreadsCount(unsigned int count);

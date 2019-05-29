@@ -30,7 +30,7 @@ namespace OrthancStone
     class SimpleTrackerAdapter : public IFlexiblePointerTracker
     {
     public:
-      SimpleTrackerAdapter(PointerTrackerPtr wrappedTracker)
+      SimpleTrackerAdapter(boost::shared_ptr<IPointerTracker> wrappedTracker)
         : wrappedTracker_(wrappedTracker)
         , active_(true)
       {
@@ -66,14 +66,14 @@ namespace OrthancStone
       }
 
     private:
-      PointerTrackerPtr wrappedTracker_;
+      boost::shared_ptr<IPointerTracker> wrappedTracker_;
       bool active_;
     };
   }
 
-  FlexiblePointerTrackerPtr CreateSimpleTrackerAdapter(PointerTrackerPtr t)
+  boost::shared_ptr<IFlexiblePointerTracker> CreateSimpleTrackerAdapter(boost::shared_ptr<IPointerTracker> t)
   {
-    return FlexiblePointerTrackerPtr(new SimpleTrackerAdapter(t));
+    return boost::shared_ptr<IFlexiblePointerTracker>(new SimpleTrackerAdapter(t));
   }
 #endif
 }

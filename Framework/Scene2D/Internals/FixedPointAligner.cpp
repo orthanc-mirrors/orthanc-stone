@@ -25,19 +25,19 @@ namespace OrthancStone
 {
   namespace Internals
   {
-    FixedPointAligner::FixedPointAligner(ViewportControllerWPtr controllerW,
+    FixedPointAligner::FixedPointAligner(boost::weak_ptr<ViewportController> controllerW,
                                          const ScenePoint2D& p) 
       : controllerW_(controllerW)
       , canvas_(p)
     {
-      ViewportControllerPtr controller = controllerW_.lock();
+      boost::shared_ptr<ViewportController> controller = controllerW_.lock();
       pivot_ = canvas_.Apply(controller->GetCanvasToSceneTransform());
     }
 
     
     void FixedPointAligner::Apply()
     {
-      ViewportControllerPtr controller = controllerW_.lock();
+      boost::shared_ptr<ViewportController> controller = controllerW_.lock();
       ScenePoint2D p = canvas_.Apply(controller->GetCanvasToSceneTransform());
 
       controller->SetSceneToCanvasTransform(

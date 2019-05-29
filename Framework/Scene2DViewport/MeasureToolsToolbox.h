@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "PointerTypes.h"
+#include "PredeclaredTypes.h"
 #include "../Scene2D/PolylineSceneLayer.h"
 #include "../Scene2D/Scene2D.h"
 
@@ -31,7 +31,7 @@ namespace OrthancStone
   square sides are parallel to the canvas boundaries.
   */
   void AddSquare(PolylineSceneLayer::Chain& chain,
-    Scene2DConstPtr     scene,
+    boost::shared_ptr<const Scene2D>     scene,
     const ScenePoint2D& centerS,
     const double&       sideLengthS);
 
@@ -180,6 +180,6 @@ namespace OrthancStone
   from layerIndex, up to (and not including) layerIndex+5. 
   */
   void SetTextLayerOutlineProperties(
-    Scene2DPtr scene, LayerHolderPtr layerHolder,
+    boost::shared_ptr<Scene2D> scene, boost::shared_ptr<LayerHolder> layerHolder,
     const char* text, ScenePoint2D p);
 }

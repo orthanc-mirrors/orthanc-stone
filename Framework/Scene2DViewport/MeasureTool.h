@@ -24,7 +24,7 @@
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2D/ScenePoint2D.h"
 #include "../Scene2D/TextSceneLayer.h"
-#include "../Scene2DViewport/PointerTypes.h"
+#include "../Scene2DViewport/PredeclaredTypes.h"
 #include "../Scene2DViewport/ViewportController.h"
 
 #include <boost/shared_ptr.hpp>
@@ -72,7 +72,7 @@ namespace OrthancStone
     */
     virtual bool HitTest(ScenePoint2D p) const = 0;
   protected:
-    MeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW);
+    MeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);
 
     /**
     The measuring tool may exist in a standalone fashion, without any available
@@ -88,11 +88,11 @@ namespace OrthancStone
     */
     virtual void RefreshScene() = 0;
 
-    ViewportControllerConstPtr GetController() const;
-    ViewportControllerPtr      GetController();
+    boost::shared_ptr<const ViewportController> GetController() const;
+    boost::shared_ptr<ViewportController>      GetController();
 
-    Scene2DConstPtr            GetScene() const;
-    Scene2DPtr                 GetScene();
+    boost::shared_ptr<const Scene2D>            GetScene() const;
+    boost::shared_ptr<Scene2D>                 GetScene();
 
     /**
     enabled_ is not accessible by subclasses because there is a state machine
@@ -101,7 +101,7 @@ namespace OrthancStone
     bool IsEnabled() const;
 
   private:
-    ViewportControllerWPtr controllerW_;
+    boost::weak_ptr<ViewportController> controllerW_;
     bool     enabled_;
   };
 }

@@ -39,16 +39,16 @@ namespace OrthancStone
   class OneGesturePointerTracker : public IFlexiblePointerTracker
   {
   public:
-    OneGesturePointerTracker(ViewportControllerWPtr controllerW);
+    OneGesturePointerTracker(boost::weak_ptr<ViewportController> controllerW);
     virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE;
     virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE;
     virtual bool IsAlive() const ORTHANC_OVERRIDE;
   
   protected:
-    ViewportControllerPtr  GetController();
+    boost::shared_ptr<ViewportController>  GetController();
 
   private:
-    ViewportControllerWPtr controllerW_;
+    boost::weak_ptr<ViewportController> controllerW_;
     bool                   alive_;
     int                    currentTouchCount_;
   };

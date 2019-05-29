@@ -48,18 +48,11 @@ TODO:
 
 */
 
-
-using namespace Orthanc;
-using namespace OrthancStone;
-
-
-
-
-boost::weak_ptr<TrackerSampleApp> g_app;
+boost::weak_ptr<OrthancStone::TrackerSampleApp> g_app;
 
 void TrackerSample_SetInfoDisplayMessage(std::string key, std::string value)
 {
-  boost::shared_ptr<TrackerSampleApp> app = g_app.lock();
+  boost::shared_ptr<OrthancStone::TrackerSampleApp> app = g_app.lock();
   if (app)
   {
     app->SetInfoDisplayMessage(key, value);
@@ -73,6 +66,8 @@ void TrackerSample_SetInfoDisplayMessage(std::string key, std::string value)
  **/
 int main(int argc, char* argv[])
 {
+  using namespace OrthancStone;
+
   StoneInitialize();
   Orthanc::Logging::EnableInfoLevel(true);
 //  Orthanc::Logging::EnableTraceLevel(true);

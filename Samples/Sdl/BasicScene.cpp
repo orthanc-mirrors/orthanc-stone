@@ -49,10 +49,9 @@
 static const unsigned int FONT_SIZE = 32;
 static const int LAYER_POSITION = 150;
 
-using namespace OrthancStone;
-
-void PrepareScene(ViewportControllerPtr controller)
+void PrepareScene(boost::shared_ptr<OrthancStone::ViewportController> controller)
 {
+  using namespace OrthancStone;
   Scene2D& scene(*controller->GetScene());
   // Texture of 2x2 size
   {
@@ -141,10 +140,11 @@ void PrepareScene(ViewportControllerPtr controller)
 
 
 void TakeScreenshot(const std::string& target,
-                    const Scene2D& scene,
+                    const OrthancStone::Scene2D& scene,
                     unsigned int canvasWidth,
                     unsigned int canvasHeight)
 {
+  using namespace OrthancStone;
   // Take a screenshot, then save it as PNG file
   CairoCompositor compositor(scene, canvasWidth, canvasHeight);
   compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, FONT_SIZE, Orthanc::Encoding_Latin1);
@@ -161,11 +161,12 @@ void TakeScreenshot(const std::string& target,
 }
 
 
-void HandleApplicationEvent(ViewportControllerPtr controller,
-                            const OpenGLCompositor& compositor,
+void HandleApplicationEvent(boost::shared_ptr<OrthancStone::ViewportController> controller,
+                            const OrthancStone::OpenGLCompositor& compositor,
                             const SDL_Event& event,
-                            FlexiblePointerTrackerPtr& activeTracker)
+                            boost::shared_ptr<OrthancStone::IFlexiblePointerTracker>& activeTracker)
 {
+  using namespace OrthancStone;
   Scene2D& scene(*controller->GetScene());
   if (event.type == SDL_MOUSEMOTION)
   {
@@ -275,8 +276,9 @@ OpenGLMessageCallback(GLenum source,
 }
 
 
-void Run(ViewportControllerPtr controller)
+void Run(boost::shared_ptr<OrthancStone::ViewportController> controller)
 {
+  using namespace OrthancStone;
   SdlOpenGLWindow window("Hello", 1024, 768);
 
   controller->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
@@ -288,7 +290,7 @@ void Run(ViewportControllerPtr controller)
   compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
                      FONT_SIZE, Orthanc::Encoding_Latin1);
 
-  FlexiblePointerTrackerPtr tracker;
+  boost::shared_ptr<IFlexiblePointerTracker> tracker;
 
   bool stop = false;
   while (!stop)
@@ -367,13 +369,14 @@ void Run(ViewportControllerPtr controller)
  **/
 int main(int argc, char* argv[])
 {
+  using namespace OrthancStone;
   StoneInitialize();
   Orthanc::Logging::EnableInfoLevel(true);
 
   try
   {
     MessageBroker broker;
-    ViewportControllerPtr controller = boost::make_shared<ViewportController>(
+    boost::shared_ptr<ViewportController> controller = boost::make_shared<ViewportController>(
 		boost::ref(broker));
     PrepareScene(controller);
     Run(controller);

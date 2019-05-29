@@ -20,8 +20,11 @@
 
 #pragma once
 
-#include "PointerTypes.h"
+#include "PredeclaredTypes.h"
+
 #include "boost/noncopyable.hpp"
+#include "boost/weak_ptr.hpp"
+#include "boost/shared_ptr.hpp"
 
 namespace OrthancStone
 {
@@ -40,7 +43,7 @@ namespace OrthancStone
     performed at this time
     */
     LayerHolder(
-      ViewportControllerWPtr controllerW,
+      boost::weak_ptr<ViewportController> controllerW,
       int polylineLayerCount, int textLayerCount);
 
     /**
@@ -86,14 +89,12 @@ namespace OrthancStone
   private:
     int GetPolylineLayerIndex(int index = 0);
     int GetTextLayerIndex(int index = 0);
-    Scene2DPtr GetScene();
+    boost::shared_ptr<Scene2D> GetScene();
 
     int textLayerCount_;
     int polylineLayerCount_;
-    ViewportControllerWPtr controllerW_;
+    boost::weak_ptr<ViewportController> controllerW_;
     int baseLayerIndex_;
   };
-
-  typedef boost::shared_ptr<LayerHolder> LayerHolderPtr;
 }
 

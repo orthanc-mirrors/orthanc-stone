@@ -36,7 +36,7 @@ namespace OrthancStone
     */
     CreateLineMeasureTracker(
       MessageBroker&                  broker,
-      ViewportControllerWPtr          controllerW,
+      boost::weak_ptr<ViewportController>          controllerW,
       const PointerEvent&             e);
 
     ~CreateLineMeasureTracker();
@@ -46,6 +46,6 @@ namespace OrthancStone
     virtual void PointerDown(const PointerEvent& e) ORTHANC_OVERRIDE;
 
   private:
-    CreateLineMeasureCommandPtr GetCommand();
+    boost::shared_ptr<CreateLineMeasureCommand> GetCommand();
   };
 }

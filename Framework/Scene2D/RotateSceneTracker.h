@@ -29,7 +29,7 @@ namespace OrthancStone
   class RotateSceneTracker : public OneGesturePointerTracker
   {
   public:
-    RotateSceneTracker(ViewportControllerWPtr controllerW,
+    RotateSceneTracker(boost::weak_ptr<ViewportController> controllerW,
                        const PointerEvent& event);
 
     virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;

@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "PointerTypes.h"
+#include "PredeclaredTypes.h"
 
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2D/PointerEvent.h"
@@ -73,8 +73,8 @@ namespace OrthancStone
 
     ViewportController(MessageBroker& broker);
 
-    Scene2DConstPtr GetScene() const;
-    Scene2DPtr      GetScene();
+    boost::shared_ptr<const Scene2D> GetScene() const;
+    boost::shared_ptr<Scene2D>      GetScene();
 
     /** 
     This method is called by the GUI system and should update/delete the
@@ -87,13 +87,13 @@ namespace OrthancStone
     (in scene coords). A tracker can then be requested from the chosen 
     measure tool, if needed
     */
-    std::vector<MeasureToolPtr> HitTestMeasureTools(ScenePoint2D p);
+    std::vector<boost::shared_ptr<MeasureTool>> HitTestMeasureTools(ScenePoint2D p);
 
     /**
     With this method, the object takes ownership of the supplied tracker and
     updates it according to user interaction
     */
-    void SetActiveTracker(FlexiblePointerTrackerPtr tracker);
+    void SetActiveTracker(boost::shared_ptr<IFlexiblePointerTracker> tracker);
 
     /** Forwarded to the underlying scene */
     const AffineTransform2D& GetCanvasToSceneTransform() const;
@@ -115,7 +115,7 @@ namespace OrthancStone
     In other words, when a new command is pushed, all the undone (and not 
     redone) commands are removed.
     */
-    void PushCommand(TrackerCommandPtr command);
+    void PushCommand(boost::shared_ptr<TrackerCommand> command);
 
     /**
     Undoes the command at the top of the undo stack, or throws if there is no
@@ -138,10 +138,10 @@ namespace OrthancStone
     bool CanRedo() const;
 
     /** Adds a new measure tool */
-    void AddMeasureTool(MeasureToolPtr measureTool);
+    void AddMeasureTool(boost::shared_ptr<MeasureTool> measureTool);
 
     /** Removes a measure tool or throws if it cannot be found */
-    void RemoveMeasureTool(MeasureToolPtr measureTool);
+    void RemoveMeasureTool(boost::shared_ptr<MeasureTool> measureTool);
 
     /**
     The square handle side length in *scene* coordinates
@@ -172,7 +172,7 @@ namespace OrthancStone
   private:
     double GetCanvasToSceneFactor() const;
 
-    std::vector<TrackerCommandPtr> commandStack_;
+    std::vector<boost::shared_ptr<TrackerCommand>> commandStack_;
     
     /**
     This is always between >= 0 and <= undoStack_.size() and gives the 
@@ -181,9 +181,9 @@ namespace OrthancStone
     - If numAppliedCommands_ < numAppliedCommands_.size(), one can redo
     */
     size_t                      numAppliedCommands_;
-    std::vector<MeasureToolPtr> measureTools_;
-    Scene2DPtr                  scene_;
-    FlexiblePointerTrackerPtr   tracker_;
+    std::vector<boost::shared_ptr<MeasureTool>> measureTools_;
+    boost::shared_ptr<Scene2D>                  scene_;
+    boost::shared_ptr<IFlexiblePointerTracker>   tracker_;
     
     // this is cached
     mutable double              canvasToSceneFactor_;

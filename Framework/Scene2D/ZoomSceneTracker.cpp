@@ -22,9 +22,12 @@
 #include "ZoomSceneTracker.h"
 #include "../Scene2DViewport/ViewportController.h"
 
+using boost::weak_ptr;
+using boost::shared_ptr;
+
 namespace OrthancStone
 {
-  ZoomSceneTracker::ZoomSceneTracker(ViewportControllerWPtr controllerW,
+  ZoomSceneTracker::ZoomSceneTracker(weak_ptr<ViewportController> controllerW,
                                      const PointerEvent& event,
                                      unsigned int canvasHeight)
     : OneGesturePointerTracker(controllerW)

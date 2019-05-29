@@ -40,7 +40,7 @@ namespace OrthancStone
   // the params in the LayerHolder ctor specify the number of polyline and text
   // layers
   AngleMeasureTool::AngleMeasureTool(
-    MessageBroker& broker, ViewportControllerWPtr controllerW)
+    MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW)
     : MeasureTool(broker, controllerW)
     , layerHolder_(boost::make_shared<LayerHolder>(controllerW,1,5))
   {
@@ -91,7 +91,7 @@ namespace OrthancStone
   {
     if (IsSceneAlive())
     {
-      ViewportControllerPtr controller = GetController();
+      boost::shared_ptr<ViewportController> controller = GetController();
       if (IsEnabled())
       {
         layerHolder_->CreateLayersIfNeeded();

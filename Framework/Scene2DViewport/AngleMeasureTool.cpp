@@ -27,13 +27,13 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/make_shared.hpp>
 
-// <HACK>
-// REMOVE THIS
-#ifndef NDEBUG
-extern void 
-TrackerSample_SetInfoDisplayMessage(std::string key, std::string value);
-#endif
-// </HACK>
+//// <HACK>
+//// REMOVE THIS
+//#ifndef NDEBUG
+//extern void 
+//TrackerSample_SetInfoDisplayMessage(std::string key, std::string value);
+//#endif
+//// </HACK>
 
 namespace OrthancStone
 {
@@ -175,6 +175,7 @@ namespace OrthancStone
           SetTextLayerOutlineProperties(
             GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY));
 
+#if 0
           // TODO:make it togglable
           bool enableInfoDisplay = false;
           if (enableInfoDisplay)
@@ -224,6 +225,7 @@ namespace OrthancStone
             TrackerSample_SetInfoDisplayMessage("angleDeg",
               boost::lexical_cast<std::string>(angleDeg));
           }
+#endif
         }
       }
       else

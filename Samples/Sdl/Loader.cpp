@@ -57,7 +57,7 @@ namespace OrthancStone
 
 
     virtual void EmitMessage(const IObserver& observer,
-                             const IMessage& message)
+                             const IMessage& message) ORTHANC_OVERRIDE
     {
       try
       {

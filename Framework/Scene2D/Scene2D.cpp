@@ -102,8 +102,7 @@ namespace OrthancStone
   void Scene2D::SetLayer(int depth,
                          ISceneLayer* layer)  // Takes ownership
   {
-    LOG(INFO) << "SetLayer(" << depth << ", " <<
-      reinterpret_cast<intptr_t>(layer) << ")";
+    LOG(TRACE) << "SetLayer(" << depth << ", " << reinterpret_cast<intptr_t>(layer) << ")";
     std::auto_ptr<Item> item(new Item(layer, layerCounter_++));
 
     if (layer == NULL)

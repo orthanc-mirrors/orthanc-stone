@@ -26,6 +26,7 @@
 
 #include "../../Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
 #include "../../Framework/OpenGL/WebAssemblyOpenGLContext.h"
+#include "../../Framework/Oracle/SleepOracleCommand.h"
 #include "../../Framework/Scene2D/GrayscaleStyleConfigurator.h"
 #include "../../Framework/Scene2D/OpenGLCompositor.h"
 #include "../../Framework/Scene2D/PanSceneTracker.h"
@@ -402,27 +403,28 @@ namespace OrthancStone
   private:
     typedef std::map<std::string, std::string>  HttpHeaders;
     
+    class Emitter : public IMessageEmitter
+    {
+    private:
+      WebAssemblyOracle&  oracle_;
+
+    public:
+      Emitter(WebAssemblyOracle&  oracle) :
+        oracle_(oracle)
+      {
+      }
+
+      virtual void EmitMessage(const IObserver& receiver,
+                               const IMessage& message)
+      {
+        oracle_.EmitMessage(receiver, message);
+      }
+    };
+
+
     class FetchContext : public boost::noncopyable
     {
     private:
-      class Emitter : public IMessageEmitter
-      {
-      private:
-        WebAssemblyOracle&  oracle_;
-
-      public:
-        Emitter(WebAssemblyOracle&  oracle) :
-          oracle_(oracle)
-        {
-        }
-
-        virtual void EmitMessage(const IObserver& receiver,
-                                 const IMessage& message)
-        {
-          oracle_.EmitMessage(receiver, message);
-        }
-      };
-
       Emitter                        emitter_;
       const IObserver&               receiver_;
       std::auto_ptr<IOracleCommand>  command_;
@@ -754,6 +756,47 @@ namespace OrthancStone
       fetch.Execute();
     }
 
+
+
+    class TimeoutContext
+    {
+    private:
+      WebAssemblyOracle&                 oracle_;
+      const IObserver&                   receiver_;
+      std::auto_ptr<SleepOracleCommand>  command_;
+
+    public:
+      TimeoutContext(WebAssemblyOracle& oracle,
+                     const IObserver& receiver,
+                     IOracleCommand* command) :
+        oracle_(oracle),
+        receiver_(receiver)
+      {
+        if (command == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        }
+        else
+        {
+          command_.reset(dynamic_cast<SleepOracleCommand*>(command));
+        }
+      }
+
+      void EmitMessage()
+      {
+        SleepOracleCommand::TimeoutMessage message(*command_);
+        oracle_.EmitMessage(receiver_, message);
+      }
+    };
+    
+
+    static void TimeoutCallback(void *userData)
+    {
+      std::auto_ptr<TimeoutContext> context(reinterpret_cast<TimeoutContext*>(userData));
+      context->EmitMessage();
+    }
+
+
     
   public:
     WebAssemblyOracle(MessageBroker& broker) :
@@ -784,6 +827,13 @@ namespace OrthancStone
         case IOracleCommand::Type_GetOrthancWebViewerJpeg:
           Execute(receiver, dynamic_cast<GetOrthancWebViewerJpegCommand*>(protection.release()));
           break;          
+            
+        case IOracleCommand::Type_Sleep:
+        {
+          unsigned int timeoutMS = dynamic_cast<SleepOracleCommand*>(command)->GetDelay();
+          emscripten_set_timeout(TimeoutCallback, timeoutMS, new TimeoutContext(*this, receiver, protection.release()));
+          break;
+        }
             
         default:
           LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle: " << command->GetType();
@@ -923,6 +973,43 @@ EM_BOOL OnKey(int eventType,
 }
 
 
+
+
+namespace OrthancStone
+{
+  class TestSleep : public IObserver
+  {
+  private:
+    WebAssemblyOracle&  oracle_;
+
+    void Schedule()
+    {
+      oracle_.Schedule(*this, new OrthancStone::SleepOracleCommand(2000));
+    }
+    
+    void Handle(const SleepOracleCommand::TimeoutMessage& message)
+    {
+      LOG(INFO) << "TIMEOUT";
+      Schedule();
+    }
+    
+  public:
+    TestSleep(MessageBroker& broker,
+              WebAssemblyOracle& oracle) :
+      IObserver(broker),
+      oracle_(oracle)
+    {
+      oracle.RegisterObserverCallback(
+        new Callable<TestSleep, SleepOracleCommand::TimeoutMessage>
+        (*this, &TestSleep::Handle));
+
+      LOG(INFO) << "STARTING";
+      Schedule();
+    }
+  };
+
+  //static TestSleep testSleep(broker_, oracle_);
+}
 
 
 extern "C"

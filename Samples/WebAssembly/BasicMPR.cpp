@@ -91,6 +91,11 @@ namespace OrthancStone
       compositor_.Refresh();
     }
 
+    void FitContent()
+    {
+      GetScene().FitContent(context_.GetCanvasWidth(), context_.GetCanvasHeight());
+    }
+
     const std::string& GetCanvasIdentifier() const
     {
       return context_.GetCanvasIdentifier();
@@ -303,6 +308,10 @@ namespace OrthancStone
       {
         planes_[z] = geometry.GetProjectionSlice(projection_, z);
       }
+
+      Refresh();
+
+      viewport_.FitContent();
     }
     
   public:
@@ -350,6 +359,7 @@ namespace OrthancStone
           currentPlane_ < planes_.size())
       {
         source_->Update(planes_[currentPlane_]);
+        viewport_.Refresh();
       }
     }
   };

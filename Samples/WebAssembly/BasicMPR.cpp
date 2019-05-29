@@ -20,273 +20,21 @@
 
 
 
+#include "dev.h"
+
 #include <emscripten.h>
-#include <emscripten/fetch.h>
-#include <emscripten/html5.h>
 
 #include "../../Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
-#include "../../Framework/OpenGL/WebAssemblyOpenGLContext.h"
 #include "../../Framework/Oracle/SleepOracleCommand.h"
 #include "../../Framework/Oracle/WebAssemblyOracle.h"
 #include "../../Framework/Scene2D/GrayscaleStyleConfigurator.h"
-#include "../../Framework/Scene2D/OpenGLCompositor.h"
-#include "../../Framework/Scene2D/PanSceneTracker.h"
-#include "../../Framework/Scene2D/RotateSceneTracker.h"
-#include "../../Framework/Scene2D/ZoomSceneTracker.h"
-#include "../../Framework/Scene2DViewport/IFlexiblePointerTracker.h"
-#include "../../Framework/Scene2DViewport/ViewportController.h"
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Volumes/VolumeSceneLayerSource.h"
 
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
-
-
-static const unsigned int FONT_SIZE = 32;
-
 
 namespace OrthancStone
 {
-  class WebAssemblyViewport : public boost::noncopyable
-  {
-  private:
-    // the construction order is important because compositor_
-    // will hold a reference to the scene that belong to the 
-    // controller_ object
-    OpenGL::WebAssemblyOpenGLContext       context_;
-    boost::shared_ptr<ViewportController>  controller_;
-    OpenGLCompositor                       compositor_;
-
-    void SetupEvents(const std::string& canvas);
-
-  public:
-    WebAssemblyViewport(MessageBroker& broker,
-                        const std::string& canvas) :
-      context_(canvas),
-      controller_(new ViewportController(broker)),
-      compositor_(context_, *controller_->GetScene())
-    {
-      compositor_.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
-                          FONT_SIZE, Orthanc::Encoding_Latin1);
-      SetupEvents(canvas);
-    }
-
-    Scene2D& GetScene()
-    {
-      return *controller_->GetScene();
-    }
-
-    const boost::shared_ptr<ViewportController>& GetController()
-    {
-      return controller_;
-    }
-
-    void UpdateSize()
-    {
-      context_.UpdateSize();
-      compositor_.UpdateSize();
-      Refresh();
-    }
-
-    void Refresh()
-    {
-      compositor_.Refresh();
-    }
-
-    void FitContent()
-    {
-      GetScene().FitContent(context_.GetCanvasWidth(), context_.GetCanvasHeight());
-    }
-
-    const std::string& GetCanvasIdentifier() const
-    {
-      return context_.GetCanvasIdentifier();
-    }
-
-    ScenePoint2D GetPixelCenterCoordinates(int x, int y) const
-    {
-      return compositor_.GetPixelCenterCoordinates(x, y);
-    }
-
-    unsigned int GetCanvasWidth() const
-    {
-      return context_.GetCanvasWidth();
-    }
-
-    unsigned int GetCanvasHeight() const
-    {
-      return context_.GetCanvasHeight();
-    }
-  };
-
-  class ActiveTracker : public boost::noncopyable
-  {
-  private:
-    boost::shared_ptr<IFlexiblePointerTracker> tracker_;
-    std::string                             canvasIdentifier_;
-    bool                                    insideCanvas_;
-    
-  public:
-    ActiveTracker(const boost::shared_ptr<IFlexiblePointerTracker>& tracker,
-                  const WebAssemblyViewport& viewport) :
-      tracker_(tracker),
-      canvasIdentifier_(viewport.GetCanvasIdentifier()),
-      insideCanvas_(true)
-    {
-      if (tracker_.get() == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
-    }
-
-    bool IsAlive() const
-    {
-      return tracker_->IsAlive();
-    }
-
-    void PointerMove(const PointerEvent& event)
-    {
-      tracker_->PointerMove(event);
-    }
-
-    void PointerUp(const PointerEvent& event)
-    {
-      tracker_->PointerUp(event);
-    }
-  };
-}
-
-static OrthancStone::PointerEvent* ConvertMouseEvent(
-  const EmscriptenMouseEvent&        source,
-  OrthancStone::WebAssemblyViewport& viewport)
-{
-  std::auto_ptr<OrthancStone::PointerEvent> target(
-    new OrthancStone::PointerEvent);
-
-  target->AddPosition(viewport.GetPixelCenterCoordinates(
-    source.targetX, source.targetY));
-  target->SetAltModifier(source.altKey);
-  target->SetControlModifier(source.ctrlKey);
-  target->SetShiftModifier(source.shiftKey);
-
-  return target.release();
-}
-
-std::auto_ptr<OrthancStone::ActiveTracker> tracker_;
-
-EM_BOOL OnMouseEvent(int eventType, 
-                     const EmscriptenMouseEvent *mouseEvent, 
-                     void *userData)
-{
-  if (mouseEvent != NULL &&
-      userData != NULL)
-  {
-    OrthancStone::WebAssemblyViewport& viewport = 
-      *reinterpret_cast<OrthancStone::WebAssemblyViewport*>(userData);
-
-    switch (eventType)
-    {
-      case EMSCRIPTEN_EVENT_CLICK:
-      {
-        static unsigned int count = 0;
-        char buf[64];
-        sprintf(buf, "click %d", count++);
-
-        std::auto_ptr<OrthancStone::TextSceneLayer> layer(new OrthancStone::TextSceneLayer);
-        layer->SetText(buf);
-        viewport.GetScene().SetLayer(100, layer.release());
-        viewport.Refresh();
-        break;
-      }
-
-      case EMSCRIPTEN_EVENT_MOUSEDOWN:
-      {
-        boost::shared_ptr<OrthancStone::IFlexiblePointerTracker> t;
-
-        {
-          std::auto_ptr<OrthancStone::PointerEvent> event(
-            ConvertMouseEvent(*mouseEvent, viewport));
-
-          switch (mouseEvent->button)
-          {
-            case 0:  // Left button
-              emscripten_console_log("Creating RotateSceneTracker");
-              t.reset(new OrthancStone::RotateSceneTracker(
-                viewport.GetController(), *event));
-              break;
-
-            case 1:  // Middle button
-              emscripten_console_log("Creating PanSceneTracker");
-              LOG(INFO) << "Creating PanSceneTracker" ;
-              t.reset(new OrthancStone::PanSceneTracker(
-                viewport.GetController(), *event));
-              break;
-
-            case 2:  // Right button
-              emscripten_console_log("Creating ZoomSceneTracker");
-              t.reset(new OrthancStone::ZoomSceneTracker(
-                viewport.GetController(), *event, viewport.GetCanvasWidth()));
-              break;
-
-            default:
-              break;
-          }
-        }
-
-        if (t.get() != NULL)
-        {
-          tracker_.reset(
-            new OrthancStone::ActiveTracker(t, viewport));
-          viewport.Refresh();
-        }
-
-        break;
-      }
-
-      case EMSCRIPTEN_EVENT_MOUSEMOVE:
-        if (tracker_.get() != NULL)
-        {
-          std::auto_ptr<OrthancStone::PointerEvent> event(
-            ConvertMouseEvent(*mouseEvent, viewport));
-          tracker_->PointerMove(*event);
-          viewport.Refresh();
-        }
-        break;
-
-      case EMSCRIPTEN_EVENT_MOUSEUP:
-        if (tracker_.get() != NULL)
-        {
-          std::auto_ptr<OrthancStone::PointerEvent> event(
-            ConvertMouseEvent(*mouseEvent, viewport));
-          tracker_->PointerUp(*event);
-          viewport.Refresh();
-          if (!tracker_->IsAlive())
-            tracker_.reset();
-        }
-        break;
-
-      default:
-        break;
-    }
-  }
-
-  return true;
-}
-
-
-void OrthancStone::WebAssemblyViewport::SetupEvents(const std::string& canvas)
-{
-  emscripten_set_mousedown_callback(canvas.c_str(), this, false, OnMouseEvent);
-  emscripten_set_mousemove_callback(canvas.c_str(), this, false, OnMouseEvent);
-  emscripten_set_mouseup_callback(canvas.c_str(), this, false, OnMouseEvent);
-}
-
-
-
-
-namespace OrthancStone
-{
-  class VolumeSlicerViewport : public IObserver
+  class VolumeSlicerWidget : public IObserver
   {
   private:
     OrthancStone::WebAssemblyViewport      viewport_;
@@ -317,7 +65,7 @@ namespace OrthancStone
     }
     
   public:
-    VolumeSlicerViewport(MessageBroker& broker,
+    VolumeSlicerWidget(MessageBroker& broker,
                          const std::string& canvas,
                          VolumeProjection projection) :
       IObserver(broker),
@@ -344,8 +92,8 @@ namespace OrthancStone
       }
       
       loader.RegisterObserverCallback(
-        new Callable<VolumeSlicerViewport, DicomVolumeImage::GeometryReadyMessage>
-        (*this, &VolumeSlicerViewport::Handle));
+        new Callable<VolumeSlicerWidget, DicomVolumeImage::GeometryReadyMessage>
+        (*this, &VolumeSlicerWidget::Handle));
 
       source_.reset(new VolumeSceneLayerSource(viewport_.GetScene(), layerDepth, slicer));
 
@@ -363,6 +111,11 @@ namespace OrthancStone
         source_->Update(planes_[currentPlane_]);
         viewport_.Refresh();
       }
+    }
+
+    size_t GetSlicesCount() const
+    {
+      return planes_.size();
     }
 
     void Scroll(int delta)
@@ -402,9 +155,9 @@ boost::shared_ptr<OrthancStone::DicomVolumeImage>  ct_(new OrthancStone::DicomVo
 
 boost::shared_ptr<OrthancStone::OrthancSeriesVolumeProgressiveLoader>  loader_;
 
-std::auto_ptr<OrthancStone::VolumeSlicerViewport>  viewport1_;
-std::auto_ptr<OrthancStone::VolumeSlicerViewport>  viewport2_;
-std::auto_ptr<OrthancStone::VolumeSlicerViewport>  viewport3_;
+std::auto_ptr<OrthancStone::VolumeSlicerWidget>  widget1_;
+std::auto_ptr<OrthancStone::VolumeSlicerWidget>  widget2_;
+std::auto_ptr<OrthancStone::VolumeSlicerWidget>  widget3_;
 
 OrthancStone::MessageBroker  broker_;
 OrthancStone::WebAssemblyOracle  oracle_(broker_);
@@ -414,19 +167,19 @@ EM_BOOL OnWindowResize(int eventType, const EmscriptenUiEvent *uiEvent, void *us
 {
   try
   {
-    if (viewport1_.get() != NULL)
+    if (widget1_.get() != NULL)
     {
-      viewport1_->UpdateSize();
+      widget1_->UpdateSize();
     }
   
-    if (viewport2_.get() != NULL)
+    if (widget2_.get() != NULL)
     {
-      viewport2_->UpdateSize();
+      widget2_->UpdateSize();
     }
   
-    if (viewport3_.get() != NULL)
+    if (widget3_.get() != NULL)
     {
-      viewport3_->UpdateSize();
+      widget3_->UpdateSize();
     }
   }
   catch (Orthanc::OrthancException& e)
@@ -444,19 +197,19 @@ EM_BOOL OnAnimationFrame(double time, void *userData)
 {
   try
   {
-    if (viewport1_.get() != NULL)
+    if (widget1_.get() != NULL)
     {
-      viewport1_->Refresh();
+      widget1_->Refresh();
     }
   
-    if (viewport2_.get() != NULL)
+    if (widget2_.get() != NULL)
     {
-      viewport2_->Refresh();
+      widget2_->Refresh();
     }
   
-    if (viewport3_.get() != NULL)
+    if (widget3_.get() != NULL)
     {
-      viewport3_->Refresh();
+      widget3_->Refresh();
     }
 
     return true;
@@ -492,12 +245,15 @@ EM_BOOL OnMouseWheel(int eventType,
         delta = 1;
       }
 
+      OrthancStone::VolumeSlicerWidget& widget =
+        *reinterpret_cast<OrthancStone::VolumeSlicerWidget*>(userData);
+      
       if (ctrlDown_)
       {
-        delta *= 10;
+        delta *= static_cast<int>(widget.GetSlicesCount() / 10);
       }
-           
-      reinterpret_cast<OrthancStone::VolumeSlicerViewport*>(userData)->Scroll(delta);
+
+      widget.Scroll(delta);
     }
   }
   catch (Orthanc::OrthancException& e)
@@ -509,11 +265,20 @@ EM_BOOL OnMouseWheel(int eventType,
 }
 
 
-EM_BOOL OnKey(int eventType,
-              const EmscriptenKeyboardEvent *keyEvent,
-              void *userData)
+EM_BOOL OnKeyDown(int eventType,
+                  const EmscriptenKeyboardEvent *keyEvent,
+                  void *userData)
 {
   ctrlDown_ = keyEvent->ctrlKey;
+  return false;
+}
+
+
+EM_BOOL OnKeyUp(int eventType,
+                const EmscriptenKeyboardEvent *keyEvent,
+                void *userData)
+{
+  ctrlDown_ = false;
   return false;
 }
 
@@ -574,26 +339,26 @@ extern "C"
     {
       loader_.reset(new OrthancStone::OrthancSeriesVolumeProgressiveLoader(ct_, oracle_, oracle_));
     
-      viewport1_.reset(new OrthancStone::VolumeSlicerViewport(broker_, "mycanvas1", OrthancStone::VolumeProjection_Axial));
-      viewport1_->SetSlicer(0, loader_, *loader_, new OrthancStone::GrayscaleStyleConfigurator);
-      viewport1_->UpdateSize();
+      widget1_.reset(new OrthancStone::VolumeSlicerWidget(broker_, "mycanvas1", OrthancStone::VolumeProjection_Axial));
+      widget1_->SetSlicer(0, loader_, *loader_, new OrthancStone::GrayscaleStyleConfigurator);
+      widget1_->UpdateSize();
 
-      viewport2_.reset(new OrthancStone::VolumeSlicerViewport(broker_, "mycanvas2", OrthancStone::VolumeProjection_Coronal));
-      viewport2_->SetSlicer(0, loader_, *loader_, new OrthancStone::GrayscaleStyleConfigurator);
-      viewport2_->UpdateSize();
+      widget2_.reset(new OrthancStone::VolumeSlicerWidget(broker_, "mycanvas2", OrthancStone::VolumeProjection_Coronal));
+      widget2_->SetSlicer(0, loader_, *loader_, new OrthancStone::GrayscaleStyleConfigurator);
+      widget2_->UpdateSize();
 
-      viewport3_.reset(new OrthancStone::VolumeSlicerViewport(broker_, "mycanvas3", OrthancStone::VolumeProjection_Sagittal));
-      viewport3_->SetSlicer(0, loader_, *loader_, new OrthancStone::GrayscaleStyleConfigurator);
-      viewport3_->UpdateSize();
+      widget3_.reset(new OrthancStone::VolumeSlicerWidget(broker_, "mycanvas3", OrthancStone::VolumeProjection_Sagittal));
+      widget3_->SetSlicer(0, loader_, *loader_, new OrthancStone::GrayscaleStyleConfigurator);
+      widget3_->UpdateSize();
 
       emscripten_set_resize_callback("#window", NULL, false, OnWindowResize);
 
-      emscripten_set_wheel_callback("mycanvas1", viewport1_.get(), false, OnMouseWheel);
-      emscripten_set_wheel_callback("mycanvas2", viewport2_.get(), false, OnMouseWheel);
-      emscripten_set_wheel_callback("mycanvas3", viewport3_.get(), false, OnMouseWheel);
+      emscripten_set_wheel_callback("mycanvas1", widget1_.get(), false, OnMouseWheel);
+      emscripten_set_wheel_callback("mycanvas2", widget2_.get(), false, OnMouseWheel);
+      emscripten_set_wheel_callback("mycanvas3", widget3_.get(), false, OnMouseWheel);
 
-      emscripten_set_keydown_callback("#window", NULL, false, OnKey);
-      emscripten_set_keyup_callback("#window", NULL, false, OnKey);
+      emscripten_set_keydown_callback("#window", NULL, false, OnKeyDown);
+      emscripten_set_keyup_callback("#window", NULL, false, OnKeyUp);
     
       emscripten_request_animation_frame_loop(OnAnimationFrame, NULL);
 

@@ -70,7 +70,7 @@ add_library(OrthancStone STATIC
   )
 
 
-if (OFF)
+if (ON)
   add_executable(BasicScene
     BasicScene.cpp
     )

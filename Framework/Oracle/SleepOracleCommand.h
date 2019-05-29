@@ -35,7 +35,7 @@ namespace OrthancStone
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, TimeoutMessage, SleepOracleCommand);
 
     SleepOracleCommand(unsigned int milliseconds) : 
-    milliseconds_(milliseconds)
+      milliseconds_(milliseconds)
     {
     }
 

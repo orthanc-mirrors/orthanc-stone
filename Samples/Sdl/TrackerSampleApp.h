@@ -23,7 +23,7 @@
 #include "../../Framework/Scene2D/OpenGLCompositor.h"
 #include "../../Framework/Scene2DViewport/IFlexiblePointerTracker.h"
 #include "../../Framework/Scene2DViewport/MeasureTool.h"
-#include "../../Framework/Scene2DViewport/PointerTypes.h"
+#include "../../Framework/Scene2DViewport/PredeclaredTypes.h"
 #include "../../Framework/Scene2DViewport/ViewportController.h"
 
 #include <SDL.h>
@@ -64,8 +64,8 @@ namespace OrthancStone
     void SetInfoDisplayMessage(std::string key, std::string value);
     void DisableTracker();
 
-    Scene2DPtr GetScene();
-    Scene2DConstPtr GetScene() const;
+    boost::shared_ptr<Scene2D> GetScene();
+    boost::shared_ptr<const Scene2D> GetScene() const;
 
     void HandleApplicationEvent(const SDL_Event& event);
 
@@ -86,9 +86,9 @@ namespace OrthancStone
     */
     ScenePoint2D GetRandomPointInScene() const;
 
-    FlexiblePointerTrackerPtr TrackerHitTest(const PointerEvent& e);
+    boost::shared_ptr<IFlexiblePointerTracker> TrackerHitTest(const PointerEvent& e);
 
-    FlexiblePointerTrackerPtr CreateSuitableTracker(
+    boost::shared_ptr<IFlexiblePointerTracker> CreateSuitableTracker(
       const SDL_Event& event,
       const PointerEvent& e);
 
@@ -100,7 +100,7 @@ namespace OrthancStone
     /**
       This adds the command at the top of the undo stack
     */
-    void Commit(TrackerCommandPtr cmd);
+    void Commit(boost::shared_ptr<TrackerCommand> cmd);
     void Undo();
     void Redo();
 
@@ -115,10 +115,10 @@ namespace OrthancStone
     WARNING: the measuring tools do store a reference to the scene, and it 
     paramount that the scene gets destroyed AFTER the measurement tools.
     */
-    ViewportControllerPtr controller_;
+    boost::shared_ptr<ViewportController> controller_;
 
     std::map<std::string, std::string> infoTextMap_;
-    FlexiblePointerTrackerPtr activeTracker_;
+    boost::shared_ptr<IFlexiblePointerTracker> activeTracker_;
 
     //static const int LAYER_POSITION = 150;
 

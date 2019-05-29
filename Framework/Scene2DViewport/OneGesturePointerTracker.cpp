@@ -28,7 +28,7 @@
 namespace OrthancStone
 {
   OneGesturePointerTracker::OneGesturePointerTracker(
-    ViewportControllerWPtr controllerW)
+    boost::weak_ptr<ViewportController> controllerW)
     : controllerW_(controllerW)
     , alive_(true)
     , currentTouchCount_(1)
@@ -62,7 +62,7 @@ namespace OrthancStone
     return alive_;
   }
 
-  ViewportControllerPtr OneGesturePointerTracker::GetController()
+  boost::shared_ptr<ViewportController> OneGesturePointerTracker::GetController()
   {
     return controllerW_.lock();
   }

@@ -24,7 +24,7 @@
 
 namespace OrthancStone
 {
-  PanSceneTracker::PanSceneTracker(ViewportControllerWPtr controllerW,
+  PanSceneTracker::PanSceneTracker(boost::weak_ptr<ViewportController> controllerW,
                                    const PointerEvent& event)
     : OneGesturePointerTracker(controllerW)
     , originalSceneToCanvas_(GetController()->GetSceneToCanvasTransform())

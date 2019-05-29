@@ -30,7 +30,7 @@ namespace OrthancStone
 {
 
   LineMeasureTool::LineMeasureTool(
-    MessageBroker& broker, ViewportControllerWPtr controllerW)
+    MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW)
     : MeasureTool(broker, controllerW)
     , layerHolder_(boost::make_shared<LayerHolder>(controllerW, 1, 5))
   {

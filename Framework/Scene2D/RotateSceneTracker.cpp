@@ -23,7 +23,7 @@
 
 namespace OrthancStone
 {
-  RotateSceneTracker::RotateSceneTracker(ViewportControllerWPtr controllerW,
+  RotateSceneTracker::RotateSceneTracker(boost::weak_ptr<ViewportController> controllerW,
                                          const PointerEvent& event)
     : OneGesturePointerTracker(controllerW)
     , click_(event.GetMainPosition())

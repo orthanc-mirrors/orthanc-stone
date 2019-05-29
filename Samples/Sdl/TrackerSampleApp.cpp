@@ -46,8 +46,6 @@
 
 #include <stdio.h>
 
-using namespace Orthanc;
-
 namespace OrthancStone
 {
   const char* MeasureToolToString(size_t i)
@@ -69,12 +67,12 @@ namespace OrthancStone
     return descs[i];
   }
 
-  Scene2DPtr TrackerSampleApp::GetScene()
+  boost::shared_ptr<Scene2D> TrackerSampleApp::GetScene()
   {
     return controller_->GetScene();
   }
 
-  Scene2DConstPtr TrackerSampleApp::GetScene() const
+  boost::shared_ptr<const Scene2D> TrackerSampleApp::GetScene() const
   {
     return controller_->GetScene();
   }
@@ -201,7 +199,7 @@ namespace OrthancStone
     case 0:
       // line measure
       {
-        CreateLineMeasureCommandPtr cmd = 
+        boost::shared_ptr<CreateLineMeasureCommand> cmd = 
           boost::make_shared<CreateLineMeasureCommand>(
 		  boost::ref(IObserver::GetBroker()),
             controller_,
@@ -213,7 +211,7 @@ namespace OrthancStone
     case 1:
       // angle measure
       {
-      CreateAngleMeasureCommandPtr cmd =
+      boost::shared_ptr<CreateAngleMeasureCommand> cmd =
         boost::make_shared<CreateAngleMeasureCommand>(
           boost::ref(IObserver::GetBroker()),
           controller_,
@@ -382,18 +380,20 @@ namespace OrthancStone
     DisplayInfoText();
   }
 
-  FlexiblePointerTrackerPtr TrackerSampleApp::CreateSuitableTracker(
+  boost::shared_ptr<IFlexiblePointerTracker> TrackerSampleApp::CreateSuitableTracker(
     const SDL_Event & event,
     const PointerEvent & e)
   {
+    using namespace Orthanc;
+
     switch (event.button.button)
     {
     case SDL_BUTTON_MIDDLE:
-      return FlexiblePointerTrackerPtr(new PanSceneTracker
+      return boost::shared_ptr<IFlexiblePointerTracker>(new PanSceneTracker
         (controller_, e));
 
     case SDL_BUTTON_RIGHT:
-      return FlexiblePointerTrackerPtr(new ZoomSceneTracker
+      return boost::shared_ptr<IFlexiblePointerTracker>(new ZoomSceneTracker
         (controller_, e, compositor_->GetCanvasHeight()));
 
     case SDL_BUTTON_LEFT:
@@ -406,7 +406,7 @@ namespace OrthancStone
 
       // TODO: if there are conflicts, we should prefer a tracker that 
       // pertains to the type of measuring tool currently selected (TBD?)
-      FlexiblePointerTrackerPtr hitTestTracker = TrackerHitTest(e);
+      boost::shared_ptr<IFlexiblePointerTracker> hitTestTracker = TrackerHitTest(e);
 
       if (hitTestTracker != NULL)
       {
@@ -419,13 +419,13 @@ namespace OrthancStone
         {
         case GuiTool_Rotate:
           //LOG(TRACE) << "Creating RotateSceneTracker";
-          return FlexiblePointerTrackerPtr(new RotateSceneTracker(
+          return boost::shared_ptr<IFlexiblePointerTracker>(new RotateSceneTracker(
             controller_, e));
         case GuiTool_Pan:
-          return FlexiblePointerTrackerPtr(new PanSceneTracker(
+          return boost::shared_ptr<IFlexiblePointerTracker>(new PanSceneTracker(
             controller_, e));
         case GuiTool_Zoom:
-          return FlexiblePointerTrackerPtr(new ZoomSceneTracker(
+          return boost::shared_ptr<IFlexiblePointerTracker>(new ZoomSceneTracker(
             controller_, e, compositor_->GetCanvasHeight()));
         //case GuiTool_AngleMeasure:
         //  return new AngleMeasureTracker(GetScene(), e);
@@ -434,24 +434,24 @@ namespace OrthancStone
         //case GuiTool_EllipseMeasure:
         //  return new EllipseMeasureTracker(GetScene(), e);
         case GuiTool_LineMeasure:
-          return FlexiblePointerTrackerPtr(new CreateLineMeasureTracker(
+          return boost::shared_ptr<IFlexiblePointerTracker>(new CreateLineMeasureTracker(
             IObserver::GetBroker(), controller_, e));
         case GuiTool_AngleMeasure:
-          return FlexiblePointerTrackerPtr(new CreateAngleMeasureTracker(
+          return boost::shared_ptr<IFlexiblePointerTracker>(new CreateAngleMeasureTracker(
             IObserver::GetBroker(), controller_, e));
         case GuiTool_CircleMeasure:
           LOG(ERROR) << "Not implemented yet!";
-          return FlexiblePointerTrackerPtr();
+          return boost::shared_ptr<IFlexiblePointerTracker>();
         case GuiTool_EllipseMeasure:
           LOG(ERROR) << "Not implemented yet!";
-          return FlexiblePointerTrackerPtr();
+          return boost::shared_ptr<IFlexiblePointerTracker>();
         default:
           throw OrthancException(ErrorCode_InternalError, "Wrong tool!");
         }
       }
     }
     default:
-      return FlexiblePointerTrackerPtr();
+      return boost::shared_ptr<IFlexiblePointerTracker>();
     }
   }
 
@@ -459,7 +459,7 @@ namespace OrthancStone
   TrackerSampleApp::TrackerSampleApp(MessageBroker& broker) : IObserver(broker)
     , currentTool_(GuiTool_Rotate)
   {
-    controller_ = ViewportControllerPtr(new ViewportController(broker));
+    controller_ = boost::shared_ptr<ViewportController>(new ViewportController(broker));
 
     controller_->RegisterObserverCallback(
       new Callable<TrackerSampleApp, ViewportController::SceneTransformChanged>
@@ -590,10 +590,10 @@ namespace OrthancStone
   }
 
 
-  FlexiblePointerTrackerPtr TrackerSampleApp::TrackerHitTest(const PointerEvent & e)
+  boost::shared_ptr<IFlexiblePointerTracker> TrackerSampleApp::TrackerHitTest(const PointerEvent & e)
   {
-    // std::vector<MeasureToolPtr> measureTools_;
-    return FlexiblePointerTrackerPtr();
+    // std::vector<boost::shared_ptr<MeasureTool>> measureTools_;
+    return boost::shared_ptr<IFlexiblePointerTracker>();
   }
 
   static void GLAPIENTRY

@@ -25,7 +25,7 @@ namespace OrthancStone
 {
   CreateAngleMeasureTracker::CreateAngleMeasureTracker(
     MessageBroker&                  broker,
-    ViewportControllerWPtr          controllerW,
+    boost::weak_ptr<ViewportController>          controllerW,
     const PointerEvent&             e)
     : CreateMeasureTracker(controllerW)
     , state_(CreatingSide1)
@@ -117,7 +117,7 @@ namespace OrthancStone
     }
   }
 
-  CreateAngleMeasureCommandPtr CreateAngleMeasureTracker::GetCommand()
+  boost::shared_ptr<CreateAngleMeasureCommand> CreateAngleMeasureTracker::GetCommand()
   {
     return boost::dynamic_pointer_cast<CreateAngleMeasureCommand>(command_);
   }

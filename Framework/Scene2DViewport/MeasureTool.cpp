@@ -51,24 +51,24 @@ namespace OrthancStone
   }
 
 
-  ViewportControllerConstPtr MeasureTool::GetController() const
+  boost::shared_ptr<const ViewportController> MeasureTool::GetController() const
   {
-    ViewportControllerConstPtr controller = controllerW_.lock();
+    boost::shared_ptr<const ViewportController> controller = controllerW_.lock();
     if (!controller)
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
         "Using dead ViewportController object!");
     return controller;
   }
 
-  ViewportControllerPtr MeasureTool::GetController()
+  boost::shared_ptr<ViewportController> MeasureTool::GetController()
   {
 #if 1
     return boost::const_pointer_cast<ViewportController>
       (const_cast<const MeasureTool*>(this)->GetController());
-    //return boost::const_<ViewportControllerPtr>
+    //return boost::const_<boost::shared_ptr<ViewportController>>
     //  (const_cast<const MeasureTool*>(this)->GetController());
 #else
-    ViewportControllerPtr controller = controllerW_.lock();
+    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
     if (!controller)
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, 
         "Using dead ViewportController object!");
@@ -76,18 +76,18 @@ namespace OrthancStone
 #endif
   }
 
-  Scene2DPtr MeasureTool::GetScene()
+  boost::shared_ptr<Scene2D> MeasureTool::GetScene()
   {
     return GetController()->GetScene();
   }
 
-  Scene2DConstPtr MeasureTool::GetScene() const
+  boost::shared_ptr<const Scene2D> MeasureTool::GetScene() const
   {
     return GetController()->GetScene();
   }
 
   MeasureTool::MeasureTool(MessageBroker& broker,
-    ViewportControllerWPtr controllerW)
+    boost::weak_ptr<ViewportController> controllerW)
     : IObserver(broker)
     , controllerW_(controllerW)
     , enabled_(true)
@@ -100,7 +100,7 @@ namespace OrthancStone
 
   bool MeasureTool::IsSceneAlive() const
   {
-    ViewportControllerPtr controller = controllerW_.lock();
+    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
     return (controller.get() != NULL);
   }
 

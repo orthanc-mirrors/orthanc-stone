@@ -24,7 +24,7 @@
 namespace OrthancStone
 {
 
-  CreateMeasureTracker::CreateMeasureTracker(ViewportControllerWPtr controllerW)
+  CreateMeasureTracker::CreateMeasureTracker(boost::weak_ptr<ViewportController> controllerW)
     : controllerW_(controllerW)
     , alive_(true)
     , commitResult_(true)
@@ -54,7 +54,7 @@ namespace OrthancStone
       command_->Undo();
   }
 
-  OrthancStone::Scene2DPtr CreateMeasureTracker::GetScene()
+  boost::shared_ptr<Scene2D> CreateMeasureTracker::GetScene()
   {
     return controllerW_.lock()->GetScene();
   }

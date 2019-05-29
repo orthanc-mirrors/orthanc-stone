@@ -25,12 +25,10 @@
 #include "../Scene2DViewport/ViewportController.h"
 #include "../StoneException.h"
 
-using namespace Orthanc;
-
 namespace OrthancStone
 {
   LayerHolder::LayerHolder(
-    ViewportControllerWPtr controllerW,
+    boost::weak_ptr<ViewportController> controllerW,
     int                    polylineLayerCount,
     int                    textLayerCount)
     : textLayerCount_(textLayerCount)
@@ -74,9 +72,9 @@ namespace OrthancStone
     return (baseLayerIndex_ != -1);
   }
 
-  OrthancStone::Scene2DPtr LayerHolder::GetScene()
+  boost::shared_ptr<Scene2D> LayerHolder::GetScene()
   {
-    ViewportControllerPtr controller = controllerW_.lock();
+    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
     ORTHANC_ASSERT(controller.get() != 0, "Zombie attack!");
     return controller->GetScene();
   }
@@ -93,6 +91,7 @@ namespace OrthancStone
 
   PolylineSceneLayer* LayerHolder::GetPolylineLayer(int index /*= 0*/)
   {
+    using namespace Orthanc;
     ORTHANC_ASSERT(baseLayerIndex_ != -1);
     ORTHANC_ASSERT(GetScene()->HasLayer(GetPolylineLayerIndex(index)));
     ISceneLayer* layer =
@@ -107,6 +106,7 @@ namespace OrthancStone
 
   TextSceneLayer* LayerHolder::GetTextLayer(int index /*= 0*/)
   {
+    using namespace Orthanc;
     ORTHANC_ASSERT(baseLayerIndex_ != -1);
     ORTHANC_ASSERT(GetScene()->HasLayer(GetTextLayerIndex(index)));
     ISceneLayer* layer =
@@ -121,6 +121,7 @@ namespace OrthancStone
 
   int LayerHolder::GetPolylineLayerIndex(int index /*= 0*/)
   {
+    using namespace Orthanc;
     ORTHANC_ASSERT(index < polylineLayerCount_);
     return baseLayerIndex_ + index;
   }
@@ -128,6 +129,7 @@ namespace OrthancStone
 
   int LayerHolder::GetTextLayerIndex(int index /*= 0*/)
   {
+    using namespace Orthanc;
     ORTHANC_ASSERT(index < textLayerCount_);
 
     // the text layers are placed right after the polyline layers

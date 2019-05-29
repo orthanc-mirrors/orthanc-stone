@@ -21,9 +21,10 @@
 
 #pragma once
 
-#include "PointerTypes.h"
+#include "PredeclaredTypes.h"
 
 #include "../Scene2D/PointerEvent.h"
+
 
 namespace OrthancStone
 {
@@ -82,6 +83,6 @@ namespace OrthancStone
   This factory adopts the supplied simple tracker and creates a flexible 
   tracker wrapper around it.
   */
-  FlexiblePointerTrackerPtr CreateSimpleTrackerAdapter(PointerTrackerPtr);
+  boost::shared_ptr<IFlexiblePointerTracker> CreateSimpleTrackerAdapter(boost::shared_ptr<IPointerTracker>);
 }
 

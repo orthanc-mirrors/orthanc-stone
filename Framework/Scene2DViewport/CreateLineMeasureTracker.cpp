@@ -25,7 +25,7 @@ namespace OrthancStone
 {
   CreateLineMeasureTracker::CreateLineMeasureTracker(
     MessageBroker&                  broker,
-    ViewportControllerWPtr          controllerW,
+    boost::weak_ptr<ViewportController>          controllerW,
     const PointerEvent&             e)
     : CreateMeasureTracker(controllerW)
   {
@@ -80,7 +80,7 @@ namespace OrthancStone
       "are ignored when the line measure creation tracker is active";
   }
 
-  CreateLineMeasureCommandPtr CreateLineMeasureTracker::GetCommand()
+  boost::shared_ptr<CreateLineMeasureCommand> CreateLineMeasureTracker::GetCommand()
   {
     return boost::dynamic_pointer_cast<CreateLineMeasureCommand>(command_);
   }

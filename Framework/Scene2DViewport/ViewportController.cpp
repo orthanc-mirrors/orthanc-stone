@@ -35,12 +35,12 @@ namespace OrthancStone
     scene_ = boost::make_shared<Scene2D>();
   }
 
-  Scene2DConstPtr ViewportController::GetScene() const
+  boost::shared_ptr<const Scene2D> ViewportController::GetScene() const
   {
     return scene_;
   }
 
-  Scene2DPtr ViewportController::GetScene()
+  boost::shared_ptr<Scene2D> ViewportController::GetScene()
   {
     return scene_;
   }
@@ -50,10 +50,10 @@ namespace OrthancStone
     throw StoneException(ErrorCode_NotImplemented);
   }
 
-  std::vector<MeasureToolPtr> ViewportController::HitTestMeasureTools(
+  std::vector<boost::shared_ptr<MeasureTool>> ViewportController::HitTestMeasureTools(
     ScenePoint2D p)
   {
-    std::vector<MeasureToolPtr> ret;
+    std::vector<boost::shared_ptr<MeasureTool>> ret;
     
     for (size_t i = 0; i < measureTools_.size(); ++i)
     {
@@ -91,7 +91,7 @@ namespace OrthancStone
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
-  void ViewportController::PushCommand(TrackerCommandPtr command)
+  void ViewportController::PushCommand(boost::shared_ptr<TrackerCommand> command)
   {
     commandStack_.erase(
       commandStack_.begin() + numAppliedCommands_,
@@ -127,14 +127,14 @@ namespace OrthancStone
     return numAppliedCommands_ < commandStack_.size();
   }
 
-  void ViewportController::AddMeasureTool(MeasureToolPtr measureTool)
+  void ViewportController::AddMeasureTool(boost::shared_ptr<MeasureTool> measureTool)
   {
     ORTHANC_ASSERT(std::find(measureTools_.begin(), measureTools_.end(), measureTool)
       == measureTools_.end(), "Duplicate measure tool");
     measureTools_.push_back(measureTool);
   }
 
-  void ViewportController::RemoveMeasureTool(MeasureToolPtr measureTool)
+  void ViewportController::RemoveMeasureTool(boost::shared_ptr<MeasureTool> measureTool)
   {
     ORTHANC_ASSERT(std::find(measureTools_.begin(), measureTools_.end(), measureTool)
       != measureTools_.end(), "Measure tool not found");

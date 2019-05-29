@@ -19,7 +19,7 @@
  **/
 
 #include "MeasureToolsToolbox.h"
-#include "PointerTypes.h"
+#include "PredeclaredTypes.h"
 #include "LayerHolder.h"
 #include "ViewportController.h"
 
@@ -60,7 +60,7 @@ namespace OrthancStone
   }
 
   void AddSquare(PolylineSceneLayer::Chain& chain,
-    Scene2DConstPtr     scene,
+    boost::shared_ptr<const Scene2D>     scene,
     const ScenePoint2D& centerS,
     const double&       sideLengthS)
   {
@@ -288,7 +288,7 @@ namespace OrthancStone
   for the actual text
   */
   void SetTextLayerOutlineProperties(
-    Scene2DPtr scene, LayerHolderPtr layerHolder, 
+    boost::shared_ptr<Scene2D> scene, boost::shared_ptr<LayerHolder> layerHolder, 
     const char* text, ScenePoint2D p)
   {
     double xoffsets[5] = { 2, 0, -2, 0, 0 };

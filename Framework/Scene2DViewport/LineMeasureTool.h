@@ -37,7 +37,7 @@ namespace OrthancStone
   class LineMeasureTool : public MeasureTool
   {
   public:
-    LineMeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW);
+    LineMeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);
 
     ~LineMeasureTool();
 
@@ -55,7 +55,7 @@ namespace OrthancStone
   private:
     ScenePoint2D   start_;
     ScenePoint2D   end_;
-    LayerHolderPtr layerHolder_;
+    boost::shared_ptr<LayerHolder> layerHolder_;
     int            baseLayerIndex_;
   };
 

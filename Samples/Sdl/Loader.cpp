@@ -166,9 +166,9 @@ private:
   {
     printf("Geometry ready\n");
     
-    //plane_ = message.GetOrigin().GetGeometry().GetSagittalGeometry();
+    plane_ = message.GetOrigin().GetGeometry().GetSagittalGeometry();
     //plane_ = message.GetOrigin().GetGeometry().GetAxialGeometry();
-    plane_ = message.GetOrigin().GetGeometry().GetCoronalGeometry();
+    //plane_ = message.GetOrigin().GetGeometry().GetCoronalGeometry();
     plane_.SetOrigin(message.GetOrigin().GetGeometry().GetCoordinates(0.5f, 0.5f, 0.5f));
 
     Refresh();

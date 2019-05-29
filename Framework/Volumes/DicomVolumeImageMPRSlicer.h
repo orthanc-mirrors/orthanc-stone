@@ -40,19 +40,12 @@ namespace OrthancStone
     {
     private:
       const DicomVolumeImage&  volume_;
+      uint64_t                 revision_;
       bool                     valid_;
       VolumeProjection         projection_;
       unsigned int             sliceIndex_;
 
       void CheckValid() const;
-
-    protected:
-      // Can be overloaded in subclasses
-      virtual uint64_t GetRevisionInternal(VolumeProjection projection,
-                                           unsigned int sliceIndex) const
-      {
-        return volume_.GetRevision();
-      }
 
     public:
       /**
@@ -64,6 +57,11 @@ namespace OrthancStone
       Slice(const DicomVolumeImage& volume,
             const CoordinateSystem3D& cuttingPlane);
 
+      void SetRevision(uint64_t revision)
+      {
+        revision_ = revision;
+      }
+
       VolumeProjection GetProjection() const;
 
       unsigned int GetSliceIndex() const;
@@ -73,7 +71,10 @@ namespace OrthancStone
         return valid_;
       }
 
-      virtual uint64_t GetRevision();
+      virtual uint64_t GetRevision()
+      {
+        return revision_;
+      }
 
       virtual ISceneLayer* CreateSceneLayer(const ILayerStyleConfigurator* configurator,
                                             const CoordinateSystem3D& cuttingPlane);

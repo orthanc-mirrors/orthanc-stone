@@ -36,7 +36,8 @@ namespace OrthancStone
 
   DicomVolumeImageMPRSlicer::Slice::Slice(const DicomVolumeImage& volume,
                                           const CoordinateSystem3D& cuttingPlane) :
-    volume_(volume)
+    volume_(volume),
+    revision_(volume_.GetRevision())
   {
     valid_ = (volume_.HasDicomParameters() &&
               volume_.GetGeometry().DetectSlice(projection_, sliceIndex_, cuttingPlane));
@@ -55,13 +56,7 @@ namespace OrthancStone
     CheckValid();
     return sliceIndex_;
   }
-
-  uint64_t DicomVolumeImageMPRSlicer::Slice::GetRevision()
-  {
-    CheckValid();
-    return GetRevisionInternal(projection_, sliceIndex_);
-  }
-
+  
 
   ISceneLayer* DicomVolumeImageMPRSlicer::Slice::CreateSceneLayer(const ILayerStyleConfigurator* configurator,
                                                                   const CoordinateSystem3D& cuttingPlane)

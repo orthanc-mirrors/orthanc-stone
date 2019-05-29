@@ -36,30 +36,21 @@ namespace OrthancStone
   private:
     const OrthancSeriesVolumeProgressiveLoader&  that_;
 
-  protected:
-    virtual uint64_t GetRevisionInternal(VolumeProjection projection,
-                                         unsigned int sliceIndex) const
-    {
-      if (projection == VolumeProjection_Axial)
-      {
-        return that_.seriesGeometry_.GetSliceRevision(sliceIndex);
-      }
-      else
-      {
-        // For coronal and sagittal projections, we take the global
-        // revision of the volume because even if a single slice changes,
-        // this means the projection will yield a different result --> 
-        // we must increase the revision as soon as any slice changes 
-        return that_.volume_->GetRevision();
-      }
-    }
-
   public:
     ExtractedSlice(const OrthancSeriesVolumeProgressiveLoader& that,
                    const CoordinateSystem3D& plane) :
       DicomVolumeImageMPRSlicer::Slice(*that.volume_, plane),
       that_(that)
     {
+      if (GetProjection() == VolumeProjection_Axial)
+      {
+        // For coronal and sagittal projections, we take the global
+        // revision of the volume because even if a single slice changes,
+        // this means the projection will yield a different result --> 
+        // we must increase the revision as soon as any slice changes 
+        SetRevision(that_.seriesGeometry_.GetSliceRevision(GetSliceIndex()));
+      }
+      
       if (that_.strategy_.get() != NULL &&
           IsValid() &&
           GetProjection() == VolumeProjection_Axial)

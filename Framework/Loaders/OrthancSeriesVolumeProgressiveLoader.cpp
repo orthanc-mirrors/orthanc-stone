@@ -42,20 +42,22 @@ namespace OrthancStone
       DicomVolumeImageMPRSlicer::Slice(*that.volume_, plane),
       that_(that)
     {
-      if (GetProjection() == VolumeProjection_Axial)
+      if (IsValid())
       {
-        // For coronal and sagittal projections, we take the global
-        // revision of the volume because even if a single slice changes,
-        // this means the projection will yield a different result --> 
-        // we must increase the revision as soon as any slice changes 
-        SetRevision(that_.seriesGeometry_.GetSliceRevision(GetSliceIndex()));
-      }
+        if (GetProjection() == VolumeProjection_Axial)
+        {
+          // For coronal and sagittal projections, we take the global
+          // revision of the volume because even if a single slice changes,
+          // this means the projection will yield a different result --> 
+          // we must increase the revision as soon as any slice changes 
+          SetRevision(that_.seriesGeometry_.GetSliceRevision(GetSliceIndex()));
+        }
       
-      if (that_.strategy_.get() != NULL &&
-          IsValid() &&
-          GetProjection() == VolumeProjection_Axial)
-      {
-        that_.strategy_->SetCurrent(GetSliceIndex());
+        if (that_.strategy_.get() != NULL &&
+            GetProjection() == VolumeProjection_Axial)
+        {
+          that_.strategy_->SetCurrent(GetSliceIndex());
+        }
       }
     }
   };
@@ -264,7 +266,7 @@ namespace OrthancStone
         std::auto_ptr<GetOrthancImageCommand> tmp(new GetOrthancImageCommand);
         tmp->SetHttpHeader("Accept-Encoding", "gzip");
         tmp->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
-        tmp->SetInstanceUri(instance, slice.GetExpectedPixelFormat());          
+        tmp->SetInstanceUri(instance, slice.GetExpectedPixelFormat());
         tmp->SetExpectedPixelFormat(slice.GetExpectedPixelFormat());
         command.reset(tmp.release());
       }

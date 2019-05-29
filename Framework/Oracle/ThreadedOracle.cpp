@@ -248,7 +248,7 @@ namespace OrthancStone
     client.SetTimeout(command.GetTimeout());
 
     CopyHttpHeaders(client, command.GetHttpHeaders());
-
+    
     std::string answer;
     Orthanc::HttpClient::HttpHeaders answerHeaders;
     client.ApplyAndThrowException(answer, answerHeaders);

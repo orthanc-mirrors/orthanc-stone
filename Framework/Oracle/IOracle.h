@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "../Messages/IObserver.h"
 #include "IOracleCommand.h"
 
 namespace OrthancStone
@@ -31,10 +32,6 @@ namespace OrthancStone
     virtual ~IOracle()
     {
     }
-
-    virtual void Start() = 0;
-
-    virtual void Stop() = 0;
 
     virtual void Schedule(const IObserver& receiver,
                           IOracleCommand* command) = 0;  // Takes ownership

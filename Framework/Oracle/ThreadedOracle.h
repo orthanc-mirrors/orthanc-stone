@@ -80,9 +80,9 @@ namespace OrthancStone
 
     void SetSleepingTimeResolution(unsigned int milliseconds);
 
-    virtual void Start();
+    void Start();
 
-    virtual void Stop()
+    void Stop()
     {
       StopInternal();
     }

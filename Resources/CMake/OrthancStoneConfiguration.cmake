@@ -373,6 +373,13 @@ if (ENABLE_THREADS)
 endif()
 
 
+if (ENABLE_WASM)
+  list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Oracle/WebAssemblyOracle.cpp
+    )
+endif()
+
+
 list(APPEND ORTHANC_STONE_SOURCES
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SeriesFrameRendererFactory.cpp
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SingleFrameRendererFactory.cpp

@@ -318,7 +318,27 @@ namespace OrthancStone
     }
   };
 
-  static TestSleep testSleep(broker_, oracle_);
+  //static TestSleep testSleep(broker_, oracle_);
+}
+
+
+
+static std::map<std::string, std::string> arguments_;
+
+static bool GetArgument(std::string& value,
+                        const std::string& key)
+{
+  std::map<std::string, std::string>::const_iterator found = arguments_.find(key);
+
+  if (found == arguments_.end())
+  {
+    return false;
+  }
+  else
+  {
+    value = found->second;
+    return true;
+  }
 }
 
 
@@ -333,10 +353,20 @@ extern "C"
   }
 
   EMSCRIPTEN_KEEPALIVE
+  void SetArgument(const char* key, const char* value)
+  {
+    // This is called for each GET argument (cf. "app.js")
+    LOG(INFO) << "Received GET argument: [" << key << "] = [" << value << "]";
+    arguments_[key] = value;
+  }
+
+  EMSCRIPTEN_KEEPALIVE
   void Initialize()
   {
     try
     {
+      oracle_.SetOrthancRoot("..");
+      
       loader_.reset(new OrthancStone::OrthancSeriesVolumeProgressiveLoader(ct_, oracle_, oracle_));
     
       widget1_.reset(new OrthancStone::VolumeSlicerWidget(broker_, "mycanvas1", OrthancStone::VolumeProjection_Axial));
@@ -362,7 +392,17 @@ extern "C"
     
       emscripten_request_animation_frame_loop(OnAnimationFrame, NULL);
 
-      loader_->LoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");
+
+      std::string ct;
+      if (GetArgument(ct, "ct"))
+      {
+        //loader_->LoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");
+        loader_->LoadSeries(ct);
+      }
+      else
+      {
+        LOG(ERROR) << "No Orthanc identifier for the CT series was provided";
+      }
     }
     catch (Orthanc::OrthancException& e)
     {

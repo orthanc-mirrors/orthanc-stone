@@ -1,5 +1,5 @@
-Docker
-------
+Docker SJO
+----------
 
 $ source ~/Downloads/emsdk/emsdk_env.sh
 $ cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON .. -DCMAKE_INSTALL_PREFIX=/tmp/stone
@@ -9,21 +9,28 @@ $ docker run -p 4242:4242 -p 8042:8042 --rm -v /tmp/stone:/root/stone:ro -v /tmp
 WARNING: This won't work using "orthanc-plugins:1.5.6", as support for
 PAM is mandatatory in "/instances/.../image-uint16".
 
-
-
-notes BGO
+Docker BGO
 ---------
-
-source ~/apps/emsdk/emsdk_env.sh
-cd /mnt/c/osi/dev/orthanc-stone/Samples/WebAssembly
-mkdir build
-cd build
-cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON .. -DCMAKE_INSTALL_PREFIX=/mnt/c/osi/dev/orthanc-stone/Samples/WebAssembly/installDir
+. ~/apps/emsdk/emsdk_env.sh
+cd /mnt/c/osi/dev/
+mkdir -p build_stone_newsamples_wasm_wsl
+mkdir -p build_install_stone_newsamples_wasm_wsl
+cd build_stone_newsamples_wasm_wsl
+cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON /mnt/c/osi/dev/orthanc-stone/Samples/WebAssembly -DCMAKE_INSTALL_PREFIX=/mnt/c/osi/dev/build_install_stone_newsamples_wasm_wsl
 ninja install
 
 docker run -p 4242:4242 -p 8042:8042 --rm -v "C:/osi/dev/orthanc-stone/Samples/WebAssembly/installDir:/root/stone:ro" jodogne/orthanc-plugins:1.5.6 /root/stone/Configuration.json --verbose
 
+Local BGO
+----------
+. ~/apps/emsdk/emsdk_env.sh
+cd /mnt/c/osi/dev/
+mkdir -p build_stone_newsamples_wasm_wsl
+mkdir -p build_install_stone_newsamples_wasm_wsl
+cd build_stone_newsamples_wasm_wsl
+cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON /mnt/c/osi/dev/orthanc-stone/Samples/WebAssembly -DCMAKE_INSTALL_PREFIX=/mnt/c/osi/dev/build_install_stone_newsamples_wasm_wsl
 
+TODO: Orthanc.exe 
 
 
 Local SJO

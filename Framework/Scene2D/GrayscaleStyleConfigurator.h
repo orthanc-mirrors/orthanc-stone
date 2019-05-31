@@ -32,14 +32,32 @@ namespace OrthancStone
   class GrayscaleStyleConfigurator : public ILayerStyleConfigurator
   {
   private:
-    uint64_t revision_;
+    uint64_t        revision_;
+    bool            linearInterpolation_;
+    bool            hasWindowing_;
+    ImageWindowing  windowing_;
 
-    // TODO - Add windowing
+    // TODO - Add custom windowing
     
   public:
     GrayscaleStyleConfigurator() :
-      revision_(0)
+      revision_(0),
+      linearInterpolation_(false),
+      hasWindowing_(false)
     {
+    }
+
+    void SetWindowing(ImageWindowing windowing)
+    {
+      hasWindowing_ = true;
+      windowing_ = windowing;
+    }
+
+    void SetLinearInterpolation(bool enabled);
+
+    bool IsLinearInterpolation() const
+    {
+      return linearInterpolation_;
     }
 
     virtual uint64_t GetRevision() const
@@ -47,16 +65,13 @@ namespace OrthancStone
       return revision_;
     }
     
-    virtual TextureBaseSceneLayer* CreateTextureFromImage(const Orthanc::ImageAccessor& image) const;
+    virtual TextureBaseSceneLayer* CreateTextureFromImage(
+      const Orthanc::ImageAccessor& image) const;
 
-    virtual TextureBaseSceneLayer* CreateTextureFromDicom(const Orthanc::ImageAccessor& frame,
-                                                          const DicomInstanceParameters& parameters) const
-    {
-      return parameters.CreateTexture(frame);
-    }
+    virtual TextureBaseSceneLayer* CreateTextureFromDicom(
+      const Orthanc::ImageAccessor& frame,
+      const DicomInstanceParameters& parameters) const;
 
-    virtual void ApplyStyle(ISceneLayer& layer) const
-    {
-    }
+    virtual void ApplyStyle(ISceneLayer& layer) const;
   };
 }

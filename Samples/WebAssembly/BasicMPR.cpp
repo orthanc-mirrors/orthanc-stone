@@ -370,15 +370,30 @@ extern "C"
       loader_.reset(new OrthancStone::OrthancSeriesVolumeProgressiveLoader(ct_, oracle_, oracle_));
     
       widget1_.reset(new OrthancStone::VolumeSlicerWidget(broker_, "mycanvas1", OrthancStone::VolumeProjection_Axial));
-      widget1_->SetSlicer(0, loader_, *loader_, new OrthancStone::GrayscaleStyleConfigurator);
+      {
+        std::auto_ptr<OrthancStone::GrayscaleStyleConfigurator> style(new OrthancStone::GrayscaleStyleConfigurator);
+        style->SetLinearInterpolation(true);
+        style->SetWindowing(OrthancStone::ImageWindowing_Bone);
+        widget1_->SetSlicer(0, loader_, *loader_, style.release());
+      }
       widget1_->UpdateSize();
 
       widget2_.reset(new OrthancStone::VolumeSlicerWidget(broker_, "mycanvas2", OrthancStone::VolumeProjection_Coronal));
-      widget2_->SetSlicer(0, loader_, *loader_, new OrthancStone::GrayscaleStyleConfigurator);
+      {
+        std::auto_ptr<OrthancStone::GrayscaleStyleConfigurator> style(new OrthancStone::GrayscaleStyleConfigurator);
+        style->SetLinearInterpolation(true);
+        style->SetWindowing(OrthancStone::ImageWindowing_Bone);
+        widget2_->SetSlicer(0, loader_, *loader_, style.release());
+      }
       widget2_->UpdateSize();
 
       widget3_.reset(new OrthancStone::VolumeSlicerWidget(broker_, "mycanvas3", OrthancStone::VolumeProjection_Sagittal));
-      widget3_->SetSlicer(0, loader_, *loader_, new OrthancStone::GrayscaleStyleConfigurator);
+      {
+        std::auto_ptr<OrthancStone::GrayscaleStyleConfigurator> style(new OrthancStone::GrayscaleStyleConfigurator);
+        style->SetLinearInterpolation(true);
+        style->SetWindowing(OrthancStone::ImageWindowing_Bone);
+        widget3_->SetSlicer(0, loader_, *loader_, style.release());
+      }
       widget3_->UpdateSize();
 
       emscripten_set_resize_callback("#window", NULL, false, OnWindowResize);

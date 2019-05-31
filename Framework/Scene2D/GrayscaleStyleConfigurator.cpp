@@ -21,12 +21,51 @@
 
 #include "GrayscaleStyleConfigurator.h"
 
+#include "FloatTextureSceneLayer.h"
+
 #include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
-  TextureBaseSceneLayer* GrayscaleStyleConfigurator::CreateTextureFromImage(const Orthanc::ImageAccessor& image) const
+  void GrayscaleStyleConfigurator::SetLinearInterpolation(bool enabled)
+  {
+    linearInterpolation_ = enabled;
+    revision_++;
+  }
+
+  TextureBaseSceneLayer* GrayscaleStyleConfigurator::CreateTextureFromImage(
+    const Orthanc::ImageAccessor& image) const
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+  }
+
+  TextureBaseSceneLayer* GrayscaleStyleConfigurator::CreateTextureFromDicom(
+    const Orthanc::ImageAccessor& frame,
+    const DicomInstanceParameters& parameters) const
+  {
+    std::auto_ptr<TextureBaseSceneLayer> layer(parameters.CreateTexture(frame));
+
+    if (layer.get() == NULL ||
+        layer->GetTexture().GetFormat() != Orthanc::PixelFormat_Float32)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+    }
+    else
+    {
+      return layer.release();
+    }
+  }
+
+
+  void GrayscaleStyleConfigurator::ApplyStyle(ISceneLayer& layer) const
+  {
+    FloatTextureSceneLayer& l = dynamic_cast<FloatTextureSceneLayer&>(layer);
+    
+    l.SetLinearInterpolation(linearInterpolation_);
+
+    if (hasWindowing_)
+    {
+      l.SetWindowing(windowing_);
+    }
   }
 }

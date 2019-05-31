@@ -1,9 +1,19 @@
+Docker
+------
+
 $ source ~/Downloads/emsdk/emsdk_env.sh
 $ cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON .. -DCMAKE_INSTALL_PREFIX=/tmp/stone
 $ ninja install
-$ docker run -p 4242:4242 -p 8042:8042 --rm -v /tmp/stone:/root/stone:ro -v /tmp/stone-db/:/var/lib/orthanc/db/ jodogne/orthanc-plugins:1.5.6 /root/stone/Configuration.json --verbose
+$ docker run -p 4242:4242 -p 8042:8042 --rm -v /tmp/stone:/root/stone:ro -v /tmp/stone-db/:/var/lib/orthanc/db/ jodogne/orthanc-plugins:latest /root/stone/Configuration.json --verbose
 
-notes BGO :
+WARNING: This won't work using "orthanc-plugins:1.5.6", as support for
+PAM is mandatatory in "/instances/.../image-uint16".
+
+
+
+notes BGO
+---------
+
 source ~/apps/emsdk/emsdk_env.sh
 cd /mnt/c/osi/dev/orthanc-stone/Samples/WebAssembly
 mkdir build
@@ -12,3 +22,18 @@ cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscr
 ninja install
 
 docker run -p 4242:4242 -p 8042:8042 --rm -v "C:/osi/dev/orthanc-stone/Samples/WebAssembly/installDir:/root/stone:ro" jodogne/orthanc-plugins:1.5.6 /root/stone/Configuration.json --verbose
+
+
+
+
+Local SJO
+---------
+
+$ source ~/Downloads/emsdk/emsdk_env.sh
+$ cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON .. -DCMAKE_INSTALL_PREFIX=/tmp/stone
+$ ninja install
+
+$ make -C ~/Subversion/orthanc/r -j4
+$ make -C ~/Subversion/orthanc-webviewer/r -j4
+$ ~/Subversion/orthanc/r/Orthanc ../ConfigurationLocalSJO.json
+

@@ -19,38 +19,21 @@
  **/
 
 
+#include "dev.h"
 
 #include <emscripten.h>
 #include <emscripten/html5.h>
 
 // From Stone
-#include "../../Applications/Sdl/SdlOpenGLWindow.h"
-#include "../../Framework/Scene2D/CairoCompositor.h"
 #include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
-#include "../../Framework/Scene2D/OpenGLCompositor.h"
-#include "../../Framework/Scene2D/PanSceneTracker.h"
-#include "../../Framework/Scene2D/RotateSceneTracker.h"
-#include "../../Framework/Scene2D/Scene2D.h"
-#include "../../Framework/Scene2D/ZoomSceneTracker.h"
-#include "../../Framework/Scene2DViewport/ViewportController.h"
 #include "../../Framework/StoneInitialization.h"
-#include "../../Framework/OpenGL/WebAssemblyOpenGLContext.h"
 
 // From Orthanc framework
 #include <Core/Images/Image.h>
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 
-#include <boost/make_shared.hpp>
-
-#include <stdio.h>
-
-static const unsigned int FONT_SIZE = 32;
-
-using boost::shared_ptr;
-using boost::make_shared;
-
-void PrepareScene(OrthancStone::Scene2DPtr scene)
+void PrepareScene(OrthancStone::Scene2D& scene)
 {
   using namespace OrthancStone;
 
@@ -77,13 +60,13 @@ void PrepareScene(OrthancStone::Scene2DPtr scene)
     p[4] = 0;
     p[5] = 0;
 
-    scene->SetLayer(12, new ColorTextureSceneLayer(i));
+    scene.SetLayer(12, new ColorTextureSceneLayer(i));
 
     std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
     l->SetOrigin(-3, 2);
     l->SetPixelSpacing(1.5, 1);
     l->SetAngle(20.0 / 180.0 * M_PI);
-    scene->SetLayer(14, l.release());
+    scene.SetLayer(14, l.release());
   }
 
   // Texture of 1x1 size
@@ -99,7 +82,7 @@ void PrepareScene(OrthancStone::Scene2DPtr scene)
     std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
     l->SetOrigin(-2, 1);
     l->SetAngle(20.0 / 180.0 * M_PI);
-    scene->SetLayer(13, l.release());
+    scene.SetLayer(13, l.release());
   }
 
   // Some lines
@@ -130,7 +113,7 @@ void PrepareScene(OrthancStone::Scene2DPtr scene)
     chain.push_back(ScenePoint2D(4, 2));
     layer->AddChain(chain, false, 0, 0, 255);
 
-    scene->SetLayer(50, layer.release());
+    scene.SetLayer(50, layer.release());
   }
 
   // Some text
@@ -138,243 +121,10 @@ void PrepareScene(OrthancStone::Scene2DPtr scene)
   {
     std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer);
     layer->SetText("Hello");
-    scene->SetLayer(100, layer.release());
+    scene.SetLayer(100, layer.release());
   }
 }
 
-namespace OrthancStone
-{
-  class WebAssemblyViewport : public boost::noncopyable
-  {
-  private:
-    // the construction order is important because compositor_
-    // will hold a reference to the scene that belong to the 
-    // controller_ object
-    OpenGL::WebAssemblyOpenGLContext  context_;
-    ViewportControllerPtr             controller_;
-    OpenGLCompositor                  compositor_;
-
-    void SetupEvents(const std::string& canvas);
-
-  public:
-    WebAssemblyViewport(MessageBroker& broker, const std::string& canvas) :
-      context_(canvas),
-      controller_(make_shared<ViewportController>(broker)),
-      compositor_(context_, *controller_->GetScene())
-    {
-      compositor_.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
-                          FONT_SIZE, Orthanc::Encoding_Latin1);
-      SetupEvents(canvas);
-    }
-
-    Scene2DPtr GetScene()
-    {
-      return controller_->GetScene();
-    }
-
-    ViewportControllerPtr GetController()
-    {
-      return controller_;
-    }
-
-    void UpdateSize()
-    {
-      context_.UpdateSize();
-      compositor_.UpdateSize();
-      Refresh();
-    }
-
-    void Refresh()
-    {
-      compositor_.Refresh();
-    }
-
-    const std::string& GetCanvasIdentifier() const
-    {
-      return context_.GetCanvasIdentifier();
-    }
-
-    ScenePoint2D GetPixelCenterCoordinates(int x, int y) const
-    {
-      return compositor_.GetPixelCenterCoordinates(x, y);
-    }
-
-    unsigned int GetCanvasWidth() const
-    {
-      return context_.GetCanvasWidth();
-    }
-
-    unsigned int GetCanvasHeight() const
-    {
-      return context_.GetCanvasHeight();
-    }
-  };
-
-  class ActiveTracker : public boost::noncopyable
-  {
-  private:
-    OrthancStone::FlexiblePointerTrackerPtr tracker_;
-    std::string                             canvasIdentifier_;
-    bool                                    insideCanvas_;
-    
-  public:
-    ActiveTracker(FlexiblePointerTrackerPtr tracker,
-                  const WebAssemblyViewport& viewport) :
-      tracker_(tracker),
-      canvasIdentifier_(viewport.GetCanvasIdentifier()),
-      insideCanvas_(true)
-    {
-      if (tracker_.get() == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
-    }
-
-    bool IsAlive() const
-    {
-      return tracker_->IsAlive();
-    }
-
-    void PointerMove(const PointerEvent& event)
-    {
-      tracker_->PointerMove(event);
-    }
-
-    void PointerUp(const PointerEvent& event)
-    {
-      tracker_->PointerUp(event);
-    }
-  };
-}
-
-static OrthancStone::PointerEvent* ConvertMouseEvent(
-  const EmscriptenMouseEvent&        source,
-  OrthancStone::WebAssemblyViewport& viewport)
-{
-  std::auto_ptr<OrthancStone::PointerEvent> target(
-    new OrthancStone::PointerEvent);
-
-  target->AddPosition(viewport.GetPixelCenterCoordinates(
-    source.targetX, source.targetY));
-  target->SetAltModifier(source.altKey);
-  target->SetControlModifier(source.ctrlKey);
-  target->SetShiftModifier(source.shiftKey);
-
-  return target.release();
-}
-
-std::auto_ptr<OrthancStone::ActiveTracker> tracker_;
-
-EM_BOOL OnMouseEvent(int eventType, 
-                     const EmscriptenMouseEvent *mouseEvent, 
-                     void *userData)
-{
-  if (mouseEvent != NULL &&
-      userData != NULL)
-  {
-    OrthancStone::WebAssemblyViewport& viewport = 
-      *reinterpret_cast<OrthancStone::WebAssemblyViewport*>(userData);
-
-    switch (eventType)
-    {
-      case EMSCRIPTEN_EVENT_CLICK:
-      {
-        static unsigned int count = 0;
-        char buf[64];
-        sprintf(buf, "click %d", count++);
-
-        std::auto_ptr<OrthancStone::TextSceneLayer> layer(new OrthancStone::TextSceneLayer);
-        layer->SetText(buf);
-        viewport.GetScene()->SetLayer(100, layer.release());
-        viewport.Refresh();
-        break;
-      }
-
-      case EMSCRIPTEN_EVENT_MOUSEDOWN:
-      {
-        OrthancStone::FlexiblePointerTrackerPtr t;
-
-        {
-          std::auto_ptr<OrthancStone::PointerEvent> event(
-            ConvertMouseEvent(*mouseEvent, viewport));
-
-          switch (mouseEvent->button)
-          {
-            case 0:  // Left button
-              emscripten_console_log("Creating RotateSceneTracker");
-              t.reset(new OrthancStone::RotateSceneTracker(
-                viewport.GetController(), *event));
-              break;
-
-            case 1:  // Middle button
-              emscripten_console_log("Creating PanSceneTracker");
-              LOG(INFO) << "Creating PanSceneTracker" ;
-              t.reset(new OrthancStone::PanSceneTracker(
-                viewport.GetController(), *event));
-              break;
-
-            case 2:  // Right button
-              emscripten_console_log("Creating ZoomSceneTracker");
-              t.reset(new OrthancStone::ZoomSceneTracker(
-                viewport.GetController(), *event, viewport.GetCanvasWidth()));
-              break;
-
-            default:
-              break;
-          }
-        }
-
-        if (t.get() != NULL)
-        {
-          tracker_.reset(
-            new OrthancStone::ActiveTracker(t, viewport));
-          viewport.Refresh();
-        }
-
-        break;
-      }
-
-      case EMSCRIPTEN_EVENT_MOUSEMOVE:
-        if (tracker_.get() != NULL)
-        {
-          std::auto_ptr<OrthancStone::PointerEvent> event(
-            ConvertMouseEvent(*mouseEvent, viewport));
-          tracker_->PointerMove(*event);
-          viewport.Refresh();
-        }
-        break;
-
-      case EMSCRIPTEN_EVENT_MOUSEUP:
-        if (tracker_.get() != NULL)
-        {
-          std::auto_ptr<OrthancStone::PointerEvent> event(
-            ConvertMouseEvent(*mouseEvent, viewport));
-          tracker_->PointerUp(*event);
-          viewport.Refresh();
-          if (!tracker_->IsAlive())
-            tracker_.reset();
-        }
-        break;
-
-      default:
-        break;
-    }
-  }
-
-  return true;
-}
-
-
-void OrthancStone::WebAssemblyViewport::SetupEvents(const std::string& canvas)
-{
-#if 0
-  emscripten_set_click_callback(canvas.c_str(), this, false, OnMouseEvent);
-#else
-  emscripten_set_mousedown_callback(canvas.c_str(), this, false, OnMouseEvent);
-  emscripten_set_mousemove_callback(canvas.c_str(), this, false, OnMouseEvent);
-  emscripten_set_mouseup_callback(canvas.c_str(), this, false, OnMouseEvent);
-#endif
-}
 
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport1_;
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport2_;

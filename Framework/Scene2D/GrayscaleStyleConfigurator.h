@@ -47,11 +47,7 @@ namespace OrthancStone
     {
     }
 
-    void SetWindowing(ImageWindowing windowing)
-    {
-      hasWindowing_ = true;
-      windowing_ = windowing;
-    }
+    void SetWindowing(ImageWindowing windowing);
 
     void SetLinearInterpolation(bool enabled);
 

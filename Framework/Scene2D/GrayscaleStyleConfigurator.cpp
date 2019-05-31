@@ -27,18 +27,28 @@
 
 namespace OrthancStone
 {
+  void GrayscaleStyleConfigurator::SetWindowing(ImageWindowing windowing)
+  {
+    hasWindowing_ = true;
+    windowing_ = windowing;
+    revision_++;
+  }
+
+
   void GrayscaleStyleConfigurator::SetLinearInterpolation(bool enabled)
   {
     linearInterpolation_ = enabled;
     revision_++;
   }
 
+  
   TextureBaseSceneLayer* GrayscaleStyleConfigurator::CreateTextureFromImage(
     const Orthanc::ImageAccessor& image) const
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
 
+  
   TextureBaseSceneLayer* GrayscaleStyleConfigurator::CreateTextureFromDicom(
     const Orthanc::ImageAccessor& frame,
     const DicomInstanceParameters& parameters) const

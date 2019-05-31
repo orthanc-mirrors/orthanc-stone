@@ -279,7 +279,7 @@ namespace OrthancStone
 
     void SetUri(const std::string& uri)
     {
-      uri_ = uri;
+      uri_ = oracle_.orthancRoot_ + uri;
     }
 
     void SetBody(std::string& body /* will be swapped */)

@@ -59,10 +59,17 @@ namespace OrthancStone
     void Execute(const IObserver& receiver,
                  GetOrthancWebViewerJpegCommand* command);
 
+    std::string orthancRoot_;
+
   public:
     WebAssemblyOracle(MessageBroker& broker) :
       IObservable(broker)
     {
+    }
+
+    void SetOrthancRoot(const std::string& root)
+    {
+      orthancRoot_ = root;
     }
     
     virtual void Schedule(const IObserver& receiver,

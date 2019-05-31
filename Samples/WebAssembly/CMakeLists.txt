@@ -105,6 +105,7 @@ install(
   ${CMAKE_SOURCE_DIR}/BasicMPR.html
   ${CMAKE_SOURCE_DIR}/BasicScene.html
   ${CMAKE_SOURCE_DIR}/Configuration.json
+  ${CMAKE_SOURCE_DIR}/app.js
   ${CMAKE_SOURCE_DIR}/index.html
   DESTINATION ${CMAKE_INSTALL_PREFIX}
   )

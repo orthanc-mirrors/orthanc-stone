@@ -1,5 +1,5 @@
 Docker SJO
-----------
+==========
 
 $ source ~/Downloads/emsdk/emsdk_env.sh
 $ cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON .. -DCMAKE_INSTALL_PREFIX=/tmp/stone
@@ -9,8 +9,12 @@ $ docker run -p 4242:4242 -p 8042:8042 --rm -v /tmp/stone:/root/stone:ro -v /tmp
 WARNING: This won't work using "orthanc-plugins:1.5.6", as support for
 PAM is mandatatory in "/instances/.../image-uint16".
 
+
 Docker BGO
----------
+==========
+
+On Ubuntu WSL
+-------------
 . ~/apps/emsdk/emsdk_env.sh
 cd /mnt/c/osi/dev/
 mkdir -p build_stone_newsamples_wasm_wsl
@@ -19,10 +23,23 @@ cd build_stone_newsamples_wasm_wsl
 cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON /mnt/c/osi/dev/orthanc-stone/Samples/WebAssembly -DCMAKE_INSTALL_PREFIX=/mnt/c/osi/dev/build_install_stone_newsamples_wasm_wsl
 ninja install
 
-docker run -p 4242:4242 -p 8042:8042 --rm -v "C:/osi/dev/orthanc-stone/Samples/WebAssembly/installDir:/root/stone:ro" jodogne/orthanc-plugins:1.5.6 /root/stone/Configuration.json --verbose
+On Windows
+---------
+docker run -p 4242:4242 -p 8042:8042 --rm -v "C:/osi/dev/build_install_stone_newsamples_wasm_wsl:/root/stone:ro" jodogne/orthanc-plugins:1.5.6 /root/stone/Configuration.json --verbose
+
+# WAIT A COUPLE OF SECS
+# if the archive has NOT already been unzipped, unzip it
+# upload dicom files to running orthanc
+
+cd C:\osi\dev\twiga-orthanc-viewer\demo\dicomfiles
+if (-not (test-path RTVIEWER-c8febcc6-eb9e22a4-130f208c-e0a6a4cd-4d432c57)) { unzip RTVIEWER-c8febcc6-eb9e22a4-130f208c-e0a6a4cd-4d432c57.zip}
+ImportDicomFiles.ps1 127.0.0.1 8042 .\RTVIEWER-c8febcc6-eb9e22a4-130f208c-e0a6a4cd-4d432c57\
+
+--> localhost:8042 --> Plugins --> serve-folders --> stone --> ...
 
 Local BGO
-----------
+==========
+
 . ~/apps/emsdk/emsdk_env.sh
 cd /mnt/c/osi/dev/
 mkdir -p build_stone_newsamples_wasm_wsl
@@ -30,11 +47,13 @@ mkdir -p build_install_stone_newsamples_wasm_wsl
 cd build_stone_newsamples_wasm_wsl
 cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON /mnt/c/osi/dev/orthanc-stone/Samples/WebAssembly -DCMAKE_INSTALL_PREFIX=/mnt/c/osi/dev/build_install_stone_newsamples_wasm_wsl
 
+
+
 TODO: Orthanc.exe 
 
 
 Local SJO
----------
+==========
 
 $ source ~/Downloads/emsdk/emsdk_env.sh
 $ cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON .. -DCMAKE_INSTALL_PREFIX=/tmp/stone

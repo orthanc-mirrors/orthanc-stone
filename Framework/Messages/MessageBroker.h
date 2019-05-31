@@ -43,9 +43,6 @@ namespace OrthancStone
   public:
     MessageBroker()
     {
-      static bool created = false;
-      ORTHANC_ASSERT(!created, "One broker to rule them all!");
-      created = true;
     }
 
     void Register(const IObserver& observer)

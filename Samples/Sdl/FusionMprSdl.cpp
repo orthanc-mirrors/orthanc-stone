@@ -645,10 +645,17 @@ namespace OrthancStone
     this->SetStructureSet(2, rtstructLoader);
 
 #if 1
-    // BGO data
+    /*
+    BGO data
+    http://localhost:8042/twiga-orthanc-viewer-demo/twiga-orthanc-viewer-demo.html?ct-series=a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa
+    &
+    dose-instance=830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb
+    &
+    struct-instance=54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9
+    */
     ctLoader->LoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // CT
-    //doseLoader->LoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // RT-DOSE
-    //rtstructLoader->LoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // RT-STRUCT
+    doseLoader->LoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // RT-DOSE
+    rtstructLoader->LoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // RT-STRUCT
 #else
     //ctLoader->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
     //doseLoader->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE

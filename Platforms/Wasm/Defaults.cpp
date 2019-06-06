@@ -276,7 +276,7 @@ extern "C" {
                                               float x2,
                                               float y2)
   {
-    printf("touch start with %d touches\n", touchCount);
+    // printf("touch start with %d touches\n", touchCount);
 
     std::vector<Deprecated::Touch> touches;
     GetTouchVector(touches, touchCount, x0, y0, x1, y1, x2, y2);
@@ -292,7 +292,7 @@ extern "C" {
                                               float x2,
                                               float y2)
   {
-    printf("touch move with %d touches\n", touchCount);
+    // printf("touch move with %d touches\n", touchCount);
 
     std::vector<Deprecated::Touch> touches;
     GetTouchVector(touches, touchCount, x0, y0, x1, y1, x2, y2);
@@ -308,7 +308,7 @@ extern "C" {
                                               float x2,
                                               float y2)
   {
-    printf("touch end with %d touches remaining\n", touchCount);
+    // printf("touch end with %d touches remaining\n", touchCount);
 
     std::vector<Deprecated::Touch> touches;
     GetTouchVector(touches, touchCount, x0, y0, x1, y1, x2, y2);
@@ -363,14 +363,14 @@ extern "C" {
   {
     static std::string output; // we don't want the string to be deallocated when we return to JS code so we always use the same string (this is fine since JS is single-thread)
 
-    printf("SendSerializedMessageToStoneApplication\n");
-    printf("%s", message);
+    //printf("SendSerializedMessageToStoneApplication\n");
+    //printf("%s", message);
 
     if (applicationWasmAdapter.get() != NULL) {
       applicationWasmAdapter->HandleSerializedMessageFromWeb(output, std::string(message));
       return output.c_str();
     }
-    printf("This Stone application does not have a Web Adapter");
+    printf("This Stone application does not have a Web Adapter, unable to send messages");
     return NULL;
   }
 

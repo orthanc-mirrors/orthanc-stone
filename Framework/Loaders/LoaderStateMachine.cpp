@@ -107,7 +107,9 @@ namespace OrthancStone
   void LoaderStateMachine::HandleExceptionMessage(const OracleCommandExceptionMessage& message)
   {
     LOG(ERROR) << "Error in the state machine, stopping all processing";
-    Clear();
+    LOG(ERROR) << "Error: " << message.GetException().What() << " Details: " <<
+      message.GetException().GetDetails();
+      Clear();
   }
 
 
@@ -124,7 +126,8 @@ namespace OrthancStone
     }
     catch (Orthanc::OrthancException& e)
     {
-      LOG(ERROR) << "Error in the state machine, stopping all processing: " << e.What();
+      LOG(ERROR) << "Error in the state machine, stopping all processing: " << 
+        e.What() << " Details: " << e.GetDetails();
       Clear();
     }
   }

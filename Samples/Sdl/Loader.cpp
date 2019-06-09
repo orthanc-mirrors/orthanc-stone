@@ -367,67 +367,69 @@ void Run(OrthancStone::NativeApplicationContext& context,
     oracle.Schedule(*toto, command.release());
   }
   
-  if (0)
+  if(0)
   {
-    std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
-    command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Jpeg)));
-    command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/preview");
-    oracle.Schedule(*toto, command.release());
-  }
-  
-  if (0)
-  {
-    std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
-    command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Png)));
-    command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/preview");
-    oracle.Schedule(*toto, command.release());
-  }
-  
-  if (0)
-  {
-    std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
-    command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Png)));
-    command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
-    oracle.Schedule(*toto, command.release());
-  }
-  
-  if (0)
-  {
-    std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
-    command->SetHttpHeader("Accept-Encoding", "gzip");
-    command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
-    command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
-    oracle.Schedule(*toto, command.release());
-  }
-  
-  if (0)
-  {
-    std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
-    command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
-    command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
-    oracle.Schedule(*toto, command.release());
-  }
-
-  if (0)
-  {
-    std::auto_ptr<OrthancStone::GetOrthancWebViewerJpegCommand>  command(new OrthancStone::GetOrthancWebViewerJpegCommand);
-    command->SetHttpHeader("Accept-Encoding", "gzip");
-    command->SetInstance("e6c7c20b-c9f65d7e-0d76f2e2-830186f2-3e3c600e");
-    command->SetQuality(90);
-    oracle.Schedule(*toto, command.release());
-  }
-
-
-  if (0)
-  {
-    for (unsigned int i = 0; i < 10; i++)
+    if (0)
     {
-      std::auto_ptr<OrthancStone::SleepOracleCommand> command(new OrthancStone::SleepOracleCommand(i * 1000));
-      command->SetPayload(new Orthanc::SingleValueObject<unsigned int>(42 * i));
+      std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
+      command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Jpeg)));
+      command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/preview");
       oracle.Schedule(*toto, command.release());
     }
-  }
+    
+    if (0)
+    {
+      std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
+      command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Png)));
+      command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/preview");
+      oracle.Schedule(*toto, command.release());
+    }
+    
+    if (0)
+    {
+      std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
+      command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Png)));
+      command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
+      oracle.Schedule(*toto, command.release());
+    }
+    
+    if (0)
+    {
+      std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
+      command->SetHttpHeader("Accept-Encoding", "gzip");
+      command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
+      command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
+      oracle.Schedule(*toto, command.release());
+    }
+    
+    if (0)
+    {
+      std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
+      command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
+      command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
+      oracle.Schedule(*toto, command.release());
+    }
 
+    if (0)
+    {
+      std::auto_ptr<OrthancStone::GetOrthancWebViewerJpegCommand>  command(new OrthancStone::GetOrthancWebViewerJpegCommand);
+      command->SetHttpHeader("Accept-Encoding", "gzip");
+      command->SetInstance("e6c7c20b-c9f65d7e-0d76f2e2-830186f2-3e3c600e");
+      command->SetQuality(90);
+      oracle.Schedule(*toto, command.release());
+    }
+
+
+    if (0)
+    {
+      for (unsigned int i = 0; i < 10; i++)
+      {
+        std::auto_ptr<OrthancStone::SleepOracleCommand> command(new OrthancStone::SleepOracleCommand(i * 1000));
+        command->SetPayload(new Orthanc::SingleValueObject<unsigned int>(42 * i));
+        oracle.Schedule(*toto, command.release());
+      }
+    }
+  }
   
   // 2017-11-17-Anonymized
 #if 0

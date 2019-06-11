@@ -715,6 +715,11 @@ namespace OrthancStone
             window.GetWindow().ToggleMaximize();
             break;
 
+          case SDLK_s:
+            controller_->FitContent(
+              window.GetCanvasWidth(), window.GetCanvasHeight());
+            break;
+
           case SDLK_q:
             g_stopApplication = true;
             break;
@@ -733,7 +738,7 @@ namespace OrthancStone
 
     //// from loader
 
-    Orthanc::SystemToolbox::ServerBarrier();
+    //Orthanc::SystemToolbox::ServerBarrier();
 
     /**
      * WARNING => The oracle must be stopped BEFORE the objects using

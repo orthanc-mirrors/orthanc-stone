@@ -413,7 +413,7 @@ namespace OrthancStone
         countSlices = 0;
       }
 
-      LOG(WARNING) << "New RT structure: \"" << structures_[i].name_ 
+      LOG(INFO) << "New RT structure: \"" << structures_[i].name_ 
                    << "\" with interpretation \"" << structures_[i].interpretation_
                    << "\" containing " << countSlices << " slices (color: " 
                    << static_cast<int>(structures_[i].red_) << "," 

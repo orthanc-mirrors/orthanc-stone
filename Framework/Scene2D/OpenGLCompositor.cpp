@@ -26,6 +26,7 @@
 #include "Internals/OpenGLColorTextureRenderer.h"
 #include "Internals/OpenGLFloatTextureRenderer.h"
 #include "Internals/OpenGLInfoPanelRenderer.h"
+#include "Internals/OpenGLLookupTableTextureRenderer.h"
 #include "Internals/OpenGLTextRenderer.h"
 
 namespace OrthancStone
@@ -91,6 +92,10 @@ namespace OrthancStone
       case ISceneLayer::Type_FloatTexture:
         return new Internals::OpenGLFloatTextureRenderer
           (context_, floatTextureProgram_, dynamic_cast<const FloatTextureSceneLayer&>(layer));
+
+      case ISceneLayer::Type_LookupTableTexture:
+        return new Internals::OpenGLLookupTableTextureRenderer
+        (context_, colorTextureProgram_, dynamic_cast<const LookupTableTextureSceneLayer&>(layer));
 
       case ISceneLayer::Type_Polyline:
         return new Internals::OpenGLAdvancedPolylineRenderer

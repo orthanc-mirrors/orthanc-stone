@@ -284,7 +284,12 @@ namespace OrthancStone
 
     void SetBody(std::string& body /* will be swapped */)
     {
+      if (body != "")
+      {
+        LOG(ERROR) << "Setting non-empty body. body size = " << body.size() << " body = " << body;
+      }
       body_.swap(body);
+      LOG(ERROR) << "After setting non-empty body. body_ size = " << body_.size() << " body_ = " << body_;
     }
 
     void SetHttpHeaders(const HttpHeaders& headers)
@@ -365,18 +370,31 @@ namespace OrthancStone
 
       attr.requestHeaders = &headers[0];
 
+      char* requestData = NULL;
       if (!body_.empty())
+        requestData = reinterpret_cast<char*>(malloc(body_.size()));
+        
+      try 
       {
-        attr.requestDataSize = body_.size();
-        attr.requestData = body_.c_str();
-      }
+        if (!body_.empty())
+        {
+          memcpy(requestData, &(body_[0]), body_.size());
+          attr.requestDataSize = body_.size();
+          attr.requestData = requestData;
+        }
+        attr.userData = new FetchContext(oracle_, receiver_, command_.release(), expectedContentType);
 
-      // Must be the last call to prevent memory leak on error
-      attr.userData = new FetchContext(oracle_, receiver_, command_.release(), expectedContentType);
-      emscripten_fetch(&attr, uri_.c_str());
-    }        
+        // Must be the last call to prevent memory leak on error
+        emscripten_fetch(&attr, uri_.c_str());
+      }        
+      catch(...)
+      {
+        if(requestData != NULL)
+          free(requestData);
+        throw;
+      }
+    }
   };
-    
     
   void WebAssemblyOracle::Execute(const IObserver& receiver,
                                   OrthancRestApiCommand* command)
@@ -388,14 +406,14 @@ namespace OrthancStone
     fetch.SetHttpHeaders(command->GetHttpHeaders());
     fetch.SetTimeout(command->GetTimeout());
       
-    if (command->GetMethod() == Orthanc::HttpMethod_Put ||
+    if (command->GetMethod() == Orthanc::HttpMethod_Post ||
         command->GetMethod() == Orthanc::HttpMethod_Put)
     {
       std::string body;
       command->SwapBody(body);
       fetch.SetBody(body);
     }
-      
+
     fetch.Execute();
   }
     

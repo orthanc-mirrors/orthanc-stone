@@ -535,21 +535,39 @@ list(APPEND ORTHANC_STONE_SOURCES
 
 if (ENABLE_OPENGL)
   list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Fonts/OpenGLTextCoordinates.h
     ${ORTHANC_STONE_ROOT}/Framework/Fonts/OpenGLTextCoordinates.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLShader.h
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLShader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLTexture.h
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLTexture.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/OpenGLCompositor.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/OpenGLCompositor.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLAdvancedPolylineRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLAdvancedPolylineRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLBasicPolylineRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLBasicPolylineRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLInfoPanelRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLInfoPanelRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLinesProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLinesProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLookupTableTextureRenderer.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLookupTableTextureRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextureProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextureProgram.cpp
     )
 

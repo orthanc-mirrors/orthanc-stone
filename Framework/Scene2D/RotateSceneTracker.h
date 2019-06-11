@@ -23,6 +23,7 @@
 
 #include "../Scene2DViewport/OneGesturePointerTracker.h"
 #include "Internals/FixedPointAligner.h"
+#include <memory>
 
 namespace OrthancStone
 {

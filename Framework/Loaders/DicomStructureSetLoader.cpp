@@ -92,6 +92,14 @@ namespace OrthancStone
           lookup[0]["ID"].type() != Json::stringValue ||
           lookup[0]["Type"].asString() != "Instance")
       {
+        std::stringstream msg;
+        msg << "Unknown resource! message.GetAnswer() = " << message.GetAnswer() << " message.GetAnswerHeaders() = ";
+        for (const auto& it : message.GetAnswerHeaders())
+        {
+          msg << "\nkey: \"" << it.first << "\" value: \"" << it.second << "\"\n";
+        }
+        auto msgStr = msg.str();
+        LOG(ERROR) << msgStr;
         throw Orthanc::OrthancException(Orthanc::ErrorCode_UnknownResource);          
       }
 
@@ -138,6 +146,7 @@ namespace OrthancStone
         command->SetMethod(Orthanc::HttpMethod_Post);
         command->SetBody(*it);
         command->SetPayload(new LookupInstance(loader, *it));
+        //LOG(TRACE) << "About to schedule a /tools/lookup POST request. URI = " << command->GetUri() << " Body size = " << (*it).size() << " Body = " << (*it) << "\n";
         Schedule(command.release());
       }
     }

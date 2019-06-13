@@ -134,8 +134,8 @@ namespace OrthancStone
     }
     // position the fixed info text in the upper right corner
     layerP->SetText(msgS.c_str());
-    double cX = compositor_->GetCanvasWidth() * (-0.5);
-    double cY = compositor_->GetCanvasHeight() * (-0.5);
+    double cX = compositor_->GetWidth() * (-0.5);
+    double cY = compositor_->GetHeight() * (-0.5);
     GetScene()->GetCanvasToSceneTransform().Apply(cX,cY);
     layerP->SetPosition(cX, cY);
   }
@@ -269,8 +269,8 @@ namespace OrthancStone
         }
         break;
       case SDLK_s:
-        controller_->FitContent(compositor_->GetCanvasWidth(),
-          compositor_->GetCanvasHeight());
+        controller_->FitContent(compositor_->GetWidth(),
+          compositor_->GetHeight());
         break;
 
       case SDLK_z:
@@ -308,8 +308,8 @@ namespace OrthancStone
       case SDLK_c:
         TakeScreenshot(
           "screenshot.png",
-          compositor_->GetCanvasWidth(),
-          compositor_->GetCanvasHeight());
+          compositor_->GetWidth(),
+          compositor_->GetHeight());
         break;
 
       default:
@@ -339,7 +339,7 @@ namespace OrthancStone
 
     case SDL_BUTTON_RIGHT:
       return boost::shared_ptr<IFlexiblePointerTracker>(new ZoomSceneTracker
-        (controller_, e, compositor_->GetCanvasHeight()));
+        (controller_, e, compositor_->GetHeight()));
 
     case SDL_BUTTON_LEFT:
     {
@@ -371,7 +371,7 @@ namespace OrthancStone
             controller_, e));
         case FusionMprGuiTool_Zoom:
           return boost::shared_ptr<IFlexiblePointerTracker>(new ZoomSceneTracker(
-            controller_, e, compositor_->GetCanvasHeight()));
+            controller_, e, compositor_->GetHeight()));
         //case GuiTool_AngleMeasure:
         //  return new AngleMeasureTracker(GetScene(), e);
         //case GuiTool_CircleMeasure:

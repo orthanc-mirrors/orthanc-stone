@@ -42,7 +42,7 @@ namespace OrthancStone
       int dx, dy;
       InfoPanelSceneLayer::ComputeAnchorLocation(
         dx, dy, anchor_, texture_.GetWidth(), texture_.GetHeight(),
-        target_.GetCairoWidth(), target_.GetCairoHeight());
+        target_.GetWidth(), target_.GetHeight());
 
       cairo_t* cr = target_.GetCairoContext();
 

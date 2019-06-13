@@ -224,7 +224,7 @@ void HandleApplicationEvent(boost::shared_ptr<OrthancStone::ViewportController> 
 
       case SDL_BUTTON_RIGHT:
         activeTracker = boost::make_shared<ZoomSceneTracker>(controller, 
-          e, compositor.GetCanvasHeight());
+          e, compositor.GetHeight());
         break;
 
       case SDL_BUTTON_LEFT:
@@ -241,14 +241,14 @@ void HandleApplicationEvent(boost::shared_ptr<OrthancStone::ViewportController> 
     switch (event.key.keysym.sym)
     {
       case SDLK_s:
-        controller->FitContent(compositor.GetCanvasWidth(), 
-                         compositor.GetCanvasHeight());
+        controller->FitContent(compositor.GetWidth(),
+                         compositor.GetHeight());
         break;
               
       case SDLK_c:
         TakeScreenshot("screenshot.png", scene, 
-                       compositor.GetCanvasWidth(), 
-                       compositor.GetCanvasHeight());
+                       compositor.GetWidth(),
+                       compositor.GetHeight());
         break;
               
       default:

@@ -29,6 +29,7 @@
 namespace OrthancStone
 {
   class CairoCompositor :
+    public ICompositor,
     private Internals::CompositorHelper::IRendererFactory,
     private Internals::ICairoContextProvider
   {
@@ -44,16 +45,6 @@ namespace OrthancStone
 
     virtual cairo_t* GetCairoContext();
 
-    virtual unsigned int GetCairoWidth()
-    {
-      return canvas_.GetWidth();
-    }
-
-    virtual unsigned int GetCairoHeight()
-    {
-      return canvas_.GetHeight();
-    }
-    
     virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer);
 
   public:
@@ -62,6 +53,16 @@ namespace OrthancStone
                     unsigned int canvasHeight);
     
     ~CairoCompositor();
+
+    virtual unsigned int GetWidth() const
+    {
+      return canvas_.GetWidth();
+    }
+
+    virtual unsigned int GetHeight() const
+    {
+      return canvas_.GetHeight();
+    }
 
     const CairoSurface& GetCanvas() const
     {
@@ -78,7 +79,7 @@ namespace OrthancStone
                  Orthanc::Encoding codepage);
 #endif
 
-    void Refresh();
+    virtual void Refresh();
 
     Orthanc::ImageAccessor* RenderText(size_t fontIndex,
                                        const std::string& utf8) const;

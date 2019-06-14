@@ -94,11 +94,12 @@ namespace OrthancStone
       {
         std::stringstream msg;
         msg << "Unknown resource! message.GetAnswer() = " << message.GetAnswer() << " message.GetAnswerHeaders() = ";
-        for (const auto& it : message.GetAnswerHeaders())
+        for (OrthancRestApiCommand::HttpHeaders::const_iterator it = message.GetAnswerHeaders().begin();
+             it != message.GetAnswerHeaders().end(); ++it)
         {
-          msg << "\nkey: \"" << it.first << "\" value: \"" << it.second << "\"\n";
+          msg << "\nkey: \"" << it->first << "\" value: \"" << it->second << "\"\n";
         }
-        auto msgStr = msg.str();
+        const std::string msgStr = msg.str();
         LOG(ERROR) << msgStr;
         throw Orthanc::OrthancException(Orthanc::ErrorCode_UnknownResource);          
       }

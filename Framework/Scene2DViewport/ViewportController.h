@@ -87,7 +87,7 @@ namespace OrthancStone
     (in scene coords). A tracker can then be requested from the chosen 
     measure tool, if needed
     */
-    std::vector<boost::shared_ptr<MeasureTool>> HitTestMeasureTools(ScenePoint2D p);
+    std::vector<boost::shared_ptr<MeasureTool> > HitTestMeasureTools(ScenePoint2D p);
 
     /**
     With this method, the object takes ownership of the supplied tracker and
@@ -172,7 +172,7 @@ namespace OrthancStone
   private:
     double GetCanvasToSceneFactor() const;
 
-    std::vector<boost::shared_ptr<TrackerCommand>> commandStack_;
+    std::vector<boost::shared_ptr<TrackerCommand> > commandStack_;
     
     /**
     This is always between >= 0 and <= undoStack_.size() and gives the 
@@ -181,8 +181,8 @@ namespace OrthancStone
     - If numAppliedCommands_ < numAppliedCommands_.size(), one can redo
     */
     size_t                      numAppliedCommands_;
-    std::vector<boost::shared_ptr<MeasureTool>> measureTools_;
-    boost::shared_ptr<Scene2D>                  scene_;
+    std::vector<boost::shared_ptr<MeasureTool> > measureTools_;
+    boost::shared_ptr<Scene2D>                   scene_;
     boost::shared_ptr<IFlexiblePointerTracker>   tracker_;
     
     // this is cached

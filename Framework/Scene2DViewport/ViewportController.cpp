@@ -50,10 +50,10 @@ namespace OrthancStone
     throw StoneException(ErrorCode_NotImplemented);
   }
 
-  std::vector<boost::shared_ptr<MeasureTool>> ViewportController::HitTestMeasureTools(
+  std::vector<boost::shared_ptr<MeasureTool> > ViewportController::HitTestMeasureTools(
     ScenePoint2D p)
   {
-    std::vector<boost::shared_ptr<MeasureTool>> ret;
+    std::vector<boost::shared_ptr<MeasureTool> > ret;
     
     for (size_t i = 0; i < measureTools_.size(); ++i)
     {

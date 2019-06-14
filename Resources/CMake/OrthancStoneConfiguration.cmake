@@ -315,6 +315,12 @@ elseif (ENABLE_WASM)
     DEPENDS "${ORTHANC_STONE_ROOT}/Platforms/Wasm/default-library.js")
 endif()
 
+if (ENABLE_SDL OR ENABLE_WASM)
+  list(APPEND APPLICATIONS_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.h
+    )
+endif()
 
 if (ENABLE_STONE_DEPRECATED)
   list(APPEND ORTHANC_STONE_SOURCES
@@ -368,6 +374,7 @@ endif()
 
 if (ENABLE_THREADS)
   list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Messages/LockingEmitter.h
     ${ORTHANC_STONE_ROOT}/Framework/Oracle/ThreadedOracle.cpp
     )
 endif()

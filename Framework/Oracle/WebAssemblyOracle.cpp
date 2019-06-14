@@ -284,12 +284,7 @@ namespace OrthancStone
 
     void SetBody(std::string& body /* will be swapped */)
     {
-      if (body != "")
-      {
-        LOG(ERROR) << "Setting non-empty body. body size = " << body.size() << " body = " << body;
-      }
       body_.swap(body);
-      LOG(ERROR) << "After setting non-empty body. body_ size = " << body_.size() << " body_ = " << body_;
     }
 
     void SetHttpHeaders(const HttpHeaders& headers)

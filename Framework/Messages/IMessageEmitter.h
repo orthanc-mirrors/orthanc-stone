@@ -26,6 +26,12 @@
 
 namespace OrthancStone
 {
+  /**
+   This class may be used to customize the way the messages are sent between
+   a source and a destination, for instance by the ThreadedOracle.
+
+   See the concrete class LockingEmitter for an example of when it is useful.
+   */
   class IMessageEmitter : public boost::noncopyable
   {
   public:

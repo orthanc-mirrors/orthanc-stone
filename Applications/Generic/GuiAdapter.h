@@ -45,6 +45,7 @@
 # include "../../Framework/Messages/LockingEmitter.h"
 #endif
 
+#include <vector>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
@@ -309,13 +310,13 @@ namespace OrthancStone
     */
     void ViewportsUpdateSize();
 
-    std::vector<boost::weak_ptr<IGuiAdapterWidget>> widgets_;
+    std::vector<boost::weak_ptr<IGuiAdapterWidget> > widgets_;
 
     template<typename F> void VisitWidgets(F func)
     {
-      for (auto w : widgets_)
+      for (size_t i = 0; i < widgets_.size(); i++)
       {
-        boost::shared_ptr<IGuiAdapterWidget> widget = w.lock();
+        boost::shared_ptr<IGuiAdapterWidget> widget = widgets_[i].lock();
         func(widget);
       }
     }

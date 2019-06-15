@@ -49,7 +49,7 @@ namespace OrthancStone
   GetOrthancWebViewerJpegCommand::GetOrthancWebViewerJpegCommand() :
     frame_(0),
     quality_(95),
-    timeout_(10),
+    timeout_(60),
     expectedFormat_(Orthanc::PixelFormat_Grayscale8)
   {
   }

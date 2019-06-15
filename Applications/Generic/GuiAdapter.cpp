@@ -479,19 +479,19 @@ void ConvertFromPlatform(
 
   void GuiAdapter::OnAnimationFrame()
   {
-    for (const auto& handler : animationFrameHandlers_)
+    for (size_t i = 0; i < animationFrameHandlers_.size(); i++)
     {
       // TODO: fix time 
-      (*(handler.first))(0,handler.second);
+      (*(animationFrameHandlers_[i].first))(0, animationFrameHandlers_[i].second);
     }
   }
 
   void GuiAdapter::OnResize()
   {
-    for (const auto& handler : resizeHandlers_)
+    for (size_t i = 0; i < resizeHandlers_.size(); i++)
     {
       // TODO: fix time 
-      (*(handler.first))(0, handler.second);
+      (*(resizeHandlers_[i].first))(0, resizeHandlers_[i].second);
     }
   }
    

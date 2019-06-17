@@ -207,10 +207,14 @@ namespace OrthancStone
   public:
 #if ORTHANC_ENABLE_THREADS == 1
     GuiAdapter(LockingEmitter& lockingEmitter) : lockingEmitter_(lockingEmitter)
-    {}
 #else
-    GuiAdapter() {}
+    GuiAdapter()
 #endif
+    {
+      static int instanceCount = 0;
+      ORTHANC_ASSERT(instanceCount == 0);
+      instanceCount = 1;
+    }
 
     void RegisterWidget(boost::shared_ptr<IGuiAdapterWidget> widget);
     

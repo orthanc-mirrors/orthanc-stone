@@ -128,10 +128,8 @@ namespace OrthancStone
       std::stringstream sst; \
       sst << "Assertion failed. Condition = \"" #cond "\""; \
       std::string sstr = sst.str(); \
-      throw OrthancException(ErrorCode_InternalError,sstr.c_str()); \
+      throw ::Orthanc::OrthancException(::Orthanc::ErrorCode_InternalError,sstr.c_str()); \
     } else (void)0
-
-
 
 # define ORTHANC_EXPAND( x ) x 
 # define GET_ORTHANC_ASSERT(_1,_2,NAME,...) NAME

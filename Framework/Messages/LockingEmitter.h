@@ -49,6 +49,11 @@ namespace OrthancStone
     {
     }
 
+    MessageBroker& GetBroker()
+    {
+      return broker_;
+    }
+
     virtual void EmitMessage(const IObserver& observer,
       const IMessage& message) ORTHANC_OVERRIDE
     {

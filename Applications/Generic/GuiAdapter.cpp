@@ -20,17 +20,18 @@
 
 #include "GuiAdapter.h"
 
+#if ORTHANC_ENABLE_OPENGL == 1
+#  include "../../Framework/OpenGL/OpenGLIncludes.h"
+#endif
+
 #if ORTHANC_ENABLE_SDL == 1
-# if ORTHANC_ENABLE_OPENGL == 1
-#   include "../../Framework/OpenGL/OpenGLIncludes.h"
-#   include <SDL_video.h>
-#   include <SDL_render.h>
-#   include <SDL.h>
-# endif
+#  include <SDL_video.h>
+#  include <SDL_render.h>
+#  include <SDL.h>
 #endif
 
 #if ORTHANC_ENABLE_THREADS == 1
-# include "../../Framework/Messages/LockingEmitter.h"
+#  include "../../Framework/Messages/LockingEmitter.h"
 #endif
 
 namespace OrthancStone
@@ -505,7 +506,7 @@ void ConvertFromPlatform(
     animationFrameHandlers_.push_back(std::make_pair(func, userData));
   }
 
-# if ORTHANC_ENABLE_OPENGL == 1
+# if ORTHANC_ENABLE_OPENGL == 1 && !defined(__APPLE__)   /* OpenGL debug is not available on OS X */
 
   static void GLAPIENTRY
     OpenGLMessageCallback(GLenum source,
@@ -527,7 +528,7 @@ void ConvertFromPlatform(
 
   void GuiAdapter::Run()
   {
-# if ORTHANC_ENABLE_OPENGL == 1
+# if ORTHANC_ENABLE_OPENGL == 1 && !defined(__APPLE__)
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(OpenGLMessageCallback, 0);
 # endif

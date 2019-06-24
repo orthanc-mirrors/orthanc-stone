@@ -67,12 +67,14 @@ namespace OrthancStone
 
   };
 
-  enum GuiAdapterMouseEventType
+  enum GuiAdapterHidEventType
   {
     GUIADAPTER_EVENT_MOUSEDOWN = 1973,
     GUIADAPTER_EVENT_MOUSEMOVE = 1974,
     GUIADAPTER_EVENT_MOUSEUP   = 1975,
-    GUIADAPTER_EVENT_WHEEL     = 1976
+    GUIADAPTER_EVENT_WHEEL     = 1976,
+    GUIADAPTER_EVENT_KEYDOWN   = 1977,
+    GUIADAPTER_EVENT_KEYUP     = 1978,
   };
 
   const unsigned int GUIADAPTER_DELTA_PIXEL = 2973;
@@ -116,8 +118,9 @@ namespace OrthancStone
 #endif
 
 #endif
-  struct GuiAdapterMouseEvent {
-    GuiAdapterMouseEventType type;
+  struct GuiAdapterMouseEvent
+  {
+    GuiAdapterHidEventType type;
     //double                   timestamp;
     //long                     screenX;
     //long                     screenY;
@@ -152,6 +155,8 @@ namespace OrthancStone
   // EmscriptenKeyboardEvent
   struct GuiAdapterKeyboardEvent
   {
+    GuiAdapterHidEventType type;
+    char sym[32];
     bool ctrlKey;
     bool shiftKey;
     bool altKey;
@@ -177,37 +182,21 @@ namespace OrthancStone
     FROM: https://codingrepo.com/javascript/2017/05/19/javascript-difference-mousedown-mouseup-click-events/
   */
 #if ORTHANC_ENABLE_WASM == 1
-  void ConvertFromPlatform(
-    GuiAdapterUiEvent&       dest,
-    int                      eventType,
-    const EmscriptenUiEvent& src);
+  void ConvertFromPlatform(GuiAdapterUiEvent& dest, int eventType, const EmscriptenUiEvent& src);
 
-  void ConvertFromPlatform(
-    GuiAdapterMouseEvent&       dest,
-    int                         eventType,
-    const EmscriptenMouseEvent& src);
+  void ConvertFromPlatform(GuiAdapterMouseEvent& dest, int eventType, const EmscriptenMouseEvent& src);
   
-  void ConvertFromPlatform(
-    GuiAdapterWheelEvent&       dest,
-    int                         eventType,
-    const EmscriptenWheelEvent& src);
+  void ConvertFromPlatform(GuiAdapterWheelEvent& dest, int eventType, const EmscriptenWheelEvent& src);
 
-  void ConvertFromPlatform(
-    GuiAdapterKeyboardEvent&       dest,
-    const EmscriptenKeyboardEvent& src);
-
+  void ConvertFromPlatform(GuiAdapterKeyboardEvent& dest, const EmscriptenKeyboardEvent& src);
 #else
 
 # if ORTHANC_ENABLE_SDL == 1
-  void ConvertFromPlatform(
-    GuiAdapterMouseEvent& dest,
-    bool ctrlPressed, bool shiftPressed, bool altPressed,
-    const SDL_Event& source);
+  void ConvertFromPlatform(GuiAdapterMouseEvent& dest, bool ctrlPressed, bool shiftPressed, bool altPressed, const SDL_Event& source);
 
-  void ConvertFromPlatform(
-    GuiAdapterWheelEvent& dest,
-    bool ctrlPressed, bool shiftPressed, bool altPressed,
-    const SDL_Event& source);
+  void ConvertFromPlatform(GuiAdapterWheelEvent& dest, bool ctrlPressed, bool shiftPressed, bool altPressed, const SDL_Event& source);
+
+  void ConvertFromPlatform(GuiAdapterKeyboardEvent& dest, const SDL_Event& source);
 
 # endif
 
@@ -326,14 +315,17 @@ namespace OrthancStone
     std::vector<EventHandlerData<OnMouseEventFunc  > > mouseMoveHandlers_;
     std::vector<EventHandlerData<OnMouseEventFunc  > > mouseUpHandlers_;
     std::vector<EventHandlerData<OnMouseWheelFunc  > > mouseWheelHandlers_;
-    
+    std::vector<EventHandlerData<OnKeyDownFunc > > keyDownHandlers_;
+    std::vector<EventHandlerData<OnKeyUpFunc > > keyUpHandlers_;
 
     /**
     This executes all the registered headers if needed (in wasm, the browser
     deals with this)
     */
     void OnMouseEvent(uint32_t windowID, const GuiAdapterMouseEvent& event);
-    
+
+    void OnKeyboardEvent(uint32_t windowID, const GuiAdapterKeyboardEvent& event);
+
     /**
     Same remark as OnMouseEvent
     */

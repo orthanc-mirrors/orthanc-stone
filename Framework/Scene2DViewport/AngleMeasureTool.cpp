@@ -20,15 +20,33 @@
 
 #include "AngleMeasureTool.h"
 #include "MeasureToolsToolbox.h"
+#include "LayerHolder.h"
 
 #include <Core/Logging.h>
 
 #include <boost/math/constants/constants.hpp>
+#include <boost/make_shared.hpp>
 
-extern void TrackerSample_SetInfoDisplayMessage(std::string key, std::string value);
+//// <HACK>
+//// REMOVE THIS
+//#ifndef NDEBUG
+//extern void 
+//TrackerSample_SetInfoDisplayMessage(std::string key, std::string value);
+//#endif
+//// </HACK>
 
 namespace OrthancStone
 {
+  // the params in the LayerHolder ctor specify the number of polyline and text
+  // layers
+  AngleMeasureTool::AngleMeasureTool(
+    MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW)
+    : MeasureTool(broker, controllerW)
+    , layerHolder_(boost::make_shared<LayerHolder>(controllerW,1,5))
+  {
+
+  }
+
   AngleMeasureTool::~AngleMeasureTool()
   {
     // this measuring tool is a RABI for the corresponding visual layers
@@ -39,12 +57,9 @@ namespace OrthancStone
 
   void AngleMeasureTool::RemoveFromScene()
   {
-    if (layersCreated)
+    if (layerHolder_->AreLayersCreated() && IsSceneAlive())
     {
-      assert(GetScene()->HasLayer(polylineZIndex_));
-      assert(GetScene()->HasLayer(textBaseZIndex_));
-      GetScene()->DeleteLayer(polylineZIndex_);
-      GetScene()->DeleteLayer(textBaseZIndex_);
+      layerHolder_->DeleteLayers();
     }
   }
 
@@ -60,84 +75,33 @@ namespace OrthancStone
     RefreshScene();
   }
 
+
+  bool AngleMeasureTool::HitTest(ScenePoint2D p) const
+  {
+    throw std::logic_error("The method or operation is not implemented.");
+  }
+
   void AngleMeasureTool::SetCenter(ScenePoint2D pt)
   {
     center_ = pt;
     RefreshScene();
   }
   
-  PolylineSceneLayer* AngleMeasureTool::GetPolylineLayer()
-  {
-    assert(GetScene()->HasLayer(polylineZIndex_));
-    ISceneLayer* layer = &(GetScene()->GetLayer(polylineZIndex_));
-    PolylineSceneLayer* concreteLayer = dynamic_cast<PolylineSceneLayer*>(layer);
-    assert(concreteLayer != NULL);
-    return concreteLayer;
-  }
-
   void AngleMeasureTool::RefreshScene()
   {
     if (IsSceneAlive())
     {
-
+      boost::shared_ptr<ViewportController> controller = GetController();
       if (IsEnabled())
       {
-        // get the scaling factor 
-        const double pixelToScene =
-          GetScene()->GetCanvasToSceneTransform().ComputeZoom();
+        layerHolder_->CreateLayersIfNeeded();
 
-        if (!layersCreated)
         {
-          // Create the layers if need be
-
-          assert(textBaseZIndex_ == -1);
-          {
-            polylineZIndex_ = GetScene()->GetMaxDepth() + 100;
-            //LOG(INFO) << "set polylineZIndex_ to: " << polylineZIndex_;
-            std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
-            GetScene()->SetLayer(polylineZIndex_, layer.release());
-
-          }
-          {
-            textBaseZIndex_ = GetScene()->GetMaxDepth() + 100;
-            // create the four text background layers
-            {
-              std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-              GetScene()->SetLayer(textBaseZIndex_, layer.release());
-            }
-            {
-              std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-              GetScene()->SetLayer(textBaseZIndex_ + 1, layer.release());
-            }
-            {
-              std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-              GetScene()->SetLayer(textBaseZIndex_ + 2, layer.release());
-            }
-            {
-              std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-              GetScene()->SetLayer(textBaseZIndex_ + 3, layer.release());
-            }
-
-            // and the text layer itself
-            {
-              std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-              GetScene()->SetLayer(textBaseZIndex_ + 4, layer.release());
-            }
-
-          }
-          layersCreated = true;
-        }
-        else
-        {
-          assert(GetScene()->HasLayer(polylineZIndex_));
-          assert(GetScene()->HasLayer(textBaseZIndex_));
-        }
-        {
-          // Fill the polyline layer with the measurement line
-
-          PolylineSceneLayer* polylineLayer = GetPolylineLayer();
+          // Fill the polyline layer with the measurement lines
+          PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(0);
           polylineLayer->ClearAllChains();
-          polylineLayer->SetColor(0, 183, 17);
+
+          const Color color(0, 183, 17);
 
           // sides
           {
@@ -145,41 +109,41 @@ namespace OrthancStone
               PolylineSceneLayer::Chain chain;
               chain.push_back(side1End_);
               chain.push_back(center_);
-              polylineLayer->AddChain(chain, false);
+              polylineLayer->AddChain(chain, false, color);
             }
             {
               PolylineSceneLayer::Chain chain;
               chain.push_back(side2End_);
               chain.push_back(center_);
-              polylineLayer->AddChain(chain, false);
+              polylineLayer->AddChain(chain, false, color);
             }
           }
 
-          // handles
+          // Create the handles
           {
-            //void AddSquare(PolylineSceneLayer::Chain& chain,const Scene2D& scene,const ScenePoint2D& centerS,const double& sideLength)
-
             {
               PolylineSceneLayer::Chain chain;
-              AddSquare(chain, *GetScene(), side1End_, 10.0 * pixelToScene); //TODO: take DPI into account
-              polylineLayer->AddChain(chain, true);
+              //TODO: take DPI into account
+              AddSquare(chain, GetScene(), side1End_, 
+                GetController()->GetHandleSideLengthS());
+              polylineLayer->AddChain(chain, true, color);
             }
-
             {
               PolylineSceneLayer::Chain chain;
-              AddSquare(chain, *GetScene(), side2End_, 10.0 * pixelToScene); //TODO: take DPI into account
-              polylineLayer->AddChain(chain, true);
+              //TODO: take DPI into account
+              AddSquare(chain, GetScene(), side2End_, 
+                GetController()->GetHandleSideLengthS());
+              polylineLayer->AddChain(chain, true, color);
             }
           }
 
-          // arc
+          // Create the arc
           {
             PolylineSceneLayer::Chain chain;
 
-            const double ARC_RADIUS_CANVAS_COORD = 30.0;
-            AddShortestArc(chain, *GetScene(), side1End_, center_, side2End_,
-              ARC_RADIUS_CANVAS_COORD * pixelToScene);
-            polylineLayer->AddChain(chain, false);
+            AddShortestArc(chain, side1End_, center_, side2End_,
+                           controller->GetAngleToolArcRadiusS());
+            polylineLayer->AddChain(chain, false, color);
           }
         }
         {
@@ -189,25 +153,18 @@ namespace OrthancStone
             side1End_.GetY() - center_.GetY(),
             side1End_.GetX() - center_.GetX());
 
-
           double p2cAngle = atan2(
             side2End_.GetY() - center_.GetY(),
             side2End_.GetX() - center_.GetX());
 
           double delta = NormalizeAngle(p2cAngle - p1cAngle);
-
-
           double theta = p1cAngle + delta / 2;
 
+          double ox = controller->GetAngleTopTextLabelDistanceS() * cos(theta);
+          double oy = controller->GetAngleTopTextLabelDistanceS() * sin(theta);
 
-          const double TEXT_CENTER_DISTANCE_CANVAS_COORD = 90;
-
-          double offsetX = TEXT_CENTER_DISTANCE_CANVAS_COORD * cos(theta);
-
-          double offsetY = TEXT_CENTER_DISTANCE_CANVAS_COORD * sin(theta);
-
-          double pointX = center_.GetX() + offsetX * pixelToScene;
-          double pointY = center_.GetY() + offsetY * pixelToScene;
+          double pointX = center_.GetX() + ox;
+          double pointY = center_.GetY() + oy;
 
           char buf[64];
           double angleDeg = RadiansToDegrees(delta);
@@ -216,8 +173,9 @@ namespace OrthancStone
           sprintf(buf, "%0.02f\xc2\xb0", angleDeg);
 
           SetTextLayerOutlineProperties(
-            *GetScene(), textBaseZIndex_, buf, ScenePoint2D(pointX, pointY));
+            GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY));
 
+#if 0
           // TODO:make it togglable
           bool enableInfoDisplay = false;
           if (enableInfoDisplay)
@@ -252,11 +210,11 @@ namespace OrthancStone
             TrackerSample_SetInfoDisplayMessage("p2cAngle (deg)",
               boost::lexical_cast<std::string>(RadiansToDegrees(p2cAngle)));
 
-            TrackerSample_SetInfoDisplayMessage("offsetX (pix)",
-              boost::lexical_cast<std::string>(offsetX));
+            TrackerSample_SetInfoDisplayMessage("ox (scene)",
+              boost::lexical_cast<std::string>(ox));
 
-            TrackerSample_SetInfoDisplayMessage("offsetY (pix)",
-              boost::lexical_cast<std::string>(offsetY));
+            TrackerSample_SetInfoDisplayMessage("offsetY (scene)",
+              boost::lexical_cast<std::string>(oy));
 
             TrackerSample_SetInfoDisplayMessage("pointX",
               boost::lexical_cast<std::string>(pointX));
@@ -267,18 +225,12 @@ namespace OrthancStone
             TrackerSample_SetInfoDisplayMessage("angleDeg",
               boost::lexical_cast<std::string>(angleDeg));
           }
-
-
-
+#endif
         }
       }
       else
       {
-        if (layersCreated)
-        {
-          RemoveFromScene();
-          layersCreated = false;
-        }
+        RemoveFromScene();
       }
     }
   }

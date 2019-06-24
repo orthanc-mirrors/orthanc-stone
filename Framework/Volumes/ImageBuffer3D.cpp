@@ -21,8 +21,6 @@
 
 #include "ImageBuffer3D.h"
 
-#include "../Toolbox/GeometryToolbox.h"
-
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
@@ -118,8 +116,6 @@ namespace OrthancStone
     computeRange_(computeRange),
     hasRange_(false)
   {
-    geometry_.SetSize(width, height, depth);
-
     LOG(INFO) << "Created a 3D image of size " << width << "x" << height
               << "x" << depth << " in " << Orthanc::EnumerationToString(format)
               << " (" << (GetEstimatedMemorySize() / (1024ll * 1024ll)) << "MB)";
@@ -129,63 +125,6 @@ namespace OrthancStone
   void ImageBuffer3D::Clear()
   {
     memset(image_.GetBuffer(), 0, image_.GetHeight() * image_.GetPitch());
-  }
-
-
-
-
-  ParallelSlices* ImageBuffer3D::GetGeometry(VolumeProjection projection) const
-  {
-    const Vector dimensions = geometry_.GetVoxelDimensions(VolumeProjection_Axial);
-    const CoordinateSystem3D& axial = geometry_.GetAxialGeometry();
-    
-    std::auto_ptr<ParallelSlices> result(new ParallelSlices);
-
-    switch (projection)
-    {
-      case VolumeProjection_Axial:
-        for (unsigned int z = 0; z < depth_; z++)
-        {
-          Vector origin = axial.GetOrigin();
-          origin += static_cast<double>(z) * dimensions[2] * axial.GetNormal();
-
-          result->AddSlice(origin,
-                           axial.GetAxisX(),
-                           axial.GetAxisY());
-        }
-        break;
-
-      case VolumeProjection_Coronal:
-        for (unsigned int y = 0; y < height_; y++)
-        {
-          Vector origin = axial.GetOrigin();
-          origin += static_cast<double>(y) * dimensions[1] * axial.GetAxisY();
-          origin += static_cast<double>(depth_ - 1) * dimensions[2] * axial.GetNormal();
-
-          result->AddSlice(origin,
-                           axial.GetAxisX(),
-                           -axial.GetNormal());
-        }
-        break;
-
-      case VolumeProjection_Sagittal:
-        for (unsigned int x = 0; x < width_; x++)
-        {
-          Vector origin = axial.GetOrigin();
-          origin += static_cast<double>(x) * dimensions[0] * axial.GetAxisX();
-          origin += static_cast<double>(depth_ - 1) * dimensions[2] * axial.GetNormal();
-
-          result->AddSlice(origin,
-                           axial.GetAxisY(),
-                           -axial.GetNormal());
-        }
-        break;
-
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-
-    return result.release();
   }
 
 
@@ -255,35 +194,6 @@ namespace OrthancStone
     {
       return false;
     }
-  }
-
-
-  bool ImageBuffer3D::FitWindowingToRange(Deprecated::RenderStyle& style,
-                                          const Deprecated::DicomFrameConverter& converter) const
-  {
-    if (hasRange_)
-    {
-      style.windowing_ = ImageWindowing_Custom;
-      
-      // casting the narrower type to wider before calling the + operator
-      // will prevent overflowing (this is why the cast to double is only 
-      // done on the first operand)
-      style.customWindowCenter_ = static_cast<float>(
-        converter.Apply((static_cast<double>(minValue_) + maxValue_) / 2.0));
-      
-      style.customWindowWidth_ = static_cast<float>(
-        converter.Apply(static_cast<double>(maxValue_) - minValue_));
-      
-      if (style.customWindowWidth_ > 1)
-      {
-        return true;
-      }
-    }
-
-    style.windowing_ = ImageWindowing_Custom;
-    style.customWindowCenter_ = 128.0;
-    style.customWindowWidth_ = 256.0;
-    return false;
   }
 
 

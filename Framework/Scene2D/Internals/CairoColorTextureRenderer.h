@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../../Viewport/CairoSurface.h"
+#include "../../Wrappers/CairoSurface.h"
 #include "CompositorHelper.h"
 #include "ICairoContextProvider.h"
 
@@ -43,7 +43,17 @@ namespace OrthancStone
 
       virtual void Update(const ISceneLayer& layer);
     
-      virtual void Render(const AffineTransform2D& transform);
+      virtual void Render(const AffineTransform2D& transform)
+      {
+        RenderColorTexture(target_, transform, texture_,
+                           textureTransform_, isLinearInterpolation_);
+      }
+
+      static void RenderColorTexture(ICairoContextProvider& target,
+                                     const AffineTransform2D& transform,
+                                     CairoSurface& texture,
+                                     const AffineTransform2D& textureTransform,
+                                     bool isLinearInterpolation);
     };
   }
 }

@@ -21,8 +21,8 @@
 #pragma once
 
 #include "../../Applications/Generic/NativeStoneApplicationContext.h"
-#include "../../Framework/Viewport/CairoSurface.h"
-#include "../../Framework/Widgets/IWidget.h"
+#include "../../Framework/Wrappers/CairoSurface.h"
+#include "../../Framework/Deprecated/Widgets/IWidget.h"
 
 #include <QWidget>
 #include <memory>

@@ -23,12 +23,12 @@
 
 #include "SampleApplicationBase.h"
 
-#include "../../Framework/Layers/CircleMeasureTracker.h"
-#include "../../Framework/Layers/LineMeasureTracker.h"
-#include "../../Framework/Widgets/SliceViewerWidget.h"
-#include "../../Framework/Widgets/LayoutWidget.h"
+#include "../../Framework/Deprecated/Layers/CircleMeasureTracker.h"
+#include "../../Framework/Deprecated/Layers/LineMeasureTracker.h"
+#include "../../Framework/Deprecated/SmartLoader.h"
+#include "../../Framework/Deprecated/Widgets/LayoutWidget.h"
+#include "../../Framework/Deprecated/Widgets/SliceViewerWidget.h"
 #include "../../Framework/Messages/IObserver.h"
-#include "../../Framework/SmartLoader.h"
 
 #if ORTHANC_ENABLE_WASM==1
 #include "../../Platforms/Wasm/WasmPlatformApplicationAdapter.h"
@@ -312,7 +312,7 @@ namespace OrthancStone
 
           // sources
           smartLoader_.reset(new Deprecated::SmartLoader(GetBroker(), context->GetOrthancApiClient()));
-          smartLoader_->SetImageQuality(SliceImageQuality_FullPam);
+          smartLoader_->SetImageQuality(Deprecated::SliceImageQuality_FullPam);
 
           mainLayout_->SetTransmitMouseOver(true);
           mainWidgetInteractor_.reset(new MainWidgetInteractor(*this));

@@ -19,24 +19,65 @@
  **/
 
 #include "ViewportController.h"
+
+#include "UndoStack.h"
 #include "MeasureCommands.h"
 
-#include <Framework/StoneException.h>
+#include "../StoneException.h"
 
 #include <boost/make_shared.hpp>
 
-using namespace Orthanc;
-
 namespace OrthancStone
 {
-  ViewportController::ViewportController(MessageBroker& broker)
+  ViewportController::ViewportController(boost::weak_ptr<UndoStack> undoStackW, MessageBroker& broker)
     : IObservable(broker)
-    , numAppliedCommands_(0)
+    , undoStackW_(undoStackW)
+    , canvasToSceneFactor_(0.0)
   {
     scene_ = boost::make_shared<Scene2D>();
   }
 
-  Scene2DPtr ViewportController::GetScene()
+  boost::shared_ptr<UndoStack> ViewportController::GetUndoStack()
+  {
+    return undoStackW_.lock();
+  }
+
+  boost::shared_ptr<const UndoStack> ViewportController::GetUndoStack() const
+  {
+    return undoStackW_.lock();
+  }
+
+  void ViewportController::PushCommand(boost::shared_ptr<TrackerCommand> command)
+  {
+    GetUndoStack()->PushCommand(command);
+  }
+
+  void ViewportController::Undo()
+  {
+    GetUndoStack()->Undo();
+  }
+
+  void ViewportController::Redo()
+  {
+    GetUndoStack()->Redo();
+  }
+
+  bool ViewportController::CanUndo() const
+  {
+    return GetUndoStack()->CanUndo();
+  }
+
+  bool ViewportController::CanRedo() const
+  {
+    return GetUndoStack()->CanRedo();
+  }
+  
+  boost::shared_ptr<const Scene2D> ViewportController::GetScene() const
+  {
+    return scene_;
+  }
+
+  boost::shared_ptr<Scene2D> ViewportController::GetScene()
   {
     return scene_;
   }
@@ -46,16 +87,16 @@ namespace OrthancStone
     throw StoneException(ErrorCode_NotImplemented);
   }
 
-  std::vector<MeasureToolPtr> ViewportController::HitTestMeasureTools(
+  std::vector<boost::shared_ptr<MeasureTool> > ViewportController::HitTestMeasureTools(
     ScenePoint2D p)
   {
-    std::vector<MeasureToolPtr> ret;
+    std::vector<boost::shared_ptr<MeasureTool> > ret;
     
-
-    //for (size_t i = 0; i < measureTools_.size(); ++i)
-    //{
-
-    //}
+    for (size_t i = 0; i < measureTools_.size(); ++i)
+    {
+      if (measureTools_[i]->HitTest(p))
+        ret.push_back(measureTools_[i]);
+    }
     return ret;
   }
 
@@ -74,6 +115,10 @@ namespace OrthancStone
   {
     scene_->SetSceneToCanvasTransform(transform);
     BroadcastMessage(SceneTransformChanged(*this));
+    
+    // update the canvas to scene factor
+    canvasToSceneFactor_ = 0.0;
+    canvasToSceneFactor_ = GetCanvasToSceneFactor();
   }
 
   void ViewportController::FitContent(
@@ -83,55 +128,51 @@ namespace OrthancStone
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
-  void ViewportController::PushCommand(TrackerCommandPtr command)
-  {
-    commandStack_.erase(
-      commandStack_.begin() + numAppliedCommands_,
-      commandStack_.end());
-    
-    ORTHANC_ASSERT(std::find(commandStack_.begin(), commandStack_.end(), command) 
-      == commandStack_.end(), "Duplicate command");
-    commandStack_.push_back(command);
-    numAppliedCommands_++;
-  }
-
-  void ViewportController::Undo()
-  {
-    ORTHANC_ASSERT(CanUndo(), "");
-    commandStack_[numAppliedCommands_-1]->Undo();
-    numAppliedCommands_--;
-  }
-
-  void ViewportController::Redo()
-  {
-    ORTHANC_ASSERT(CanRedo(), "");
-    commandStack_[numAppliedCommands_]->Redo();
-    numAppliedCommands_++;
-  }
-
-  bool ViewportController::CanUndo() const
-  {
-    return numAppliedCommands_ > 0;
-  }
-
-  bool ViewportController::CanRedo() const
-  {
-    return numAppliedCommands_ < commandStack_.size();
-  }
-
-  void ViewportController::AddMeasureTool(MeasureToolPtr measureTool)
+  void ViewportController::AddMeasureTool(boost::shared_ptr<MeasureTool> measureTool)
   {
     ORTHANC_ASSERT(std::find(measureTools_.begin(), measureTools_.end(), measureTool)
       == measureTools_.end(), "Duplicate measure tool");
     measureTools_.push_back(measureTool);
   }
 
-  void ViewportController::RemoveMeasureTool(MeasureToolPtr measureTool)
+  void ViewportController::RemoveMeasureTool(boost::shared_ptr<MeasureTool> measureTool)
   {
     ORTHANC_ASSERT(std::find(measureTools_.begin(), measureTools_.end(), measureTool)
       != measureTools_.end(), "Measure tool not found");
-    measureTools_.push_back(measureTool);
+    measureTools_.erase(
+      std::remove(measureTools_.begin(), measureTools_.end(), measureTool), 
+      measureTools_.end());
   }
 
+
+  double ViewportController::GetCanvasToSceneFactor() const
+  {
+    if (canvasToSceneFactor_ == 0)
+    {
+      canvasToSceneFactor_ =
+        GetScene()->GetCanvasToSceneTransform().ComputeZoom();
+    }
+    return canvasToSceneFactor_;
+  }
+
+  double ViewportController::GetHandleSideLengthS() const
+  {
+    return HANDLE_SIDE_LENGTH_CANVAS_COORD * GetCanvasToSceneFactor();
+  }
+
+  double ViewportController::GetAngleToolArcRadiusS() const
+  {
+    return ARC_RADIUS_CANVAS_COORD * GetCanvasToSceneFactor();
+  }
+
+  double ViewportController::GetHitTestMaximumDistanceS() const
+  {
+    return HIT_TEST_MAX_DISTANCE_CANVAS_COORD * GetCanvasToSceneFactor();
+  }
+
+  double ViewportController::GetAngleTopTextLabelDistanceS() const
+  {
+    return TEXT_CENTER_DISTANCE_CANVAS_COORD * GetCanvasToSceneFactor();
+  }
 }
 

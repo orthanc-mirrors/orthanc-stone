@@ -143,6 +143,19 @@ namespace OrthancStone
   }
 
 
+  void CoordinateSystem3D::SetOrigin(const Vector& origin)
+  {
+    if (origin.size() != 3)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      origin_ = origin;
+    }
+  }
+
+
   Vector CoordinateSystem3D::MapSliceToWorldCoordinates(double x,
                                                         double y) const
   {
@@ -189,9 +202,9 @@ namespace OrthancStone
   }
 
 
-  bool CoordinateSystem3D::GetDistance(double& distance,
-                                       const CoordinateSystem3D& a,
-                                       const CoordinateSystem3D& b)
+  bool CoordinateSystem3D::ComputeDistance(double& distance,
+                                           const CoordinateSystem3D& a,
+                                           const CoordinateSystem3D& b)
   {
     bool opposite;   // Ignored
 

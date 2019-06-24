@@ -8,6 +8,9 @@ project(OrthancStone)
 
 include(../../Resources/CMake/OrthancStoneParameters.cmake)
 
+set(ENABLE_STONE_DEPRECATED ON)  # Need deprecated classes for these samples
+
+
 if (OPENSSL_NO_CAPIENG)
 add_definitions(-DOPENSSL_NO_CAPIENG=1)
 endif()
@@ -79,6 +82,7 @@ elseif (ENABLE_QT OR ENABLE_SDL)
 
 endif()
 
+
 #####################################################################
 ## Configuration for Orthanc
 #####################################################################
@@ -96,6 +100,10 @@ endif()
 set(ORTHANC_FRAMEWORK_SOURCE "${ORTHANC_FRAMEWORK_DEFAULT_SOURCE}" CACHE STRING "Source of the Orthanc source code (can be \"hg\", \"archive\", \"web\" or \"path\")")
 set(ORTHANC_FRAMEWORK_ARCHIVE "" CACHE STRING "Path to the Orthanc archive, if ORTHANC_FRAMEWORK_SOURCE is \"archive\"")
 set(ORTHANC_FRAMEWORK_ROOT "" CACHE STRING "Path to the Orthanc source directory, if ORTHANC_FRAMEWORK_SOURCE is \"path\"")
+
+add_definitions(
+  -DORTHANC_ENABLE_LOGGING_PLUGIN=0
+  )
 
 
 #####################################################################
@@ -208,7 +216,6 @@ elseif (ENABLE_WASM)
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/AppStatus.h
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.cpp
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.h
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Messages.h
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.cpp
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.h
       ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.cpp

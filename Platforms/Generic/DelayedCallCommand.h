@@ -23,7 +23,7 @@
 
 #include "IOracleCommand.h"
 
-#include "../../Framework/Toolbox/IDelayedCallExecutor.h"
+#include "../../Framework/Deprecated/Toolbox/IDelayedCallExecutor.h"
 #include "../../Framework/Messages/IObservable.h"
 #include "../../Framework/Messages/ICallable.h"
 #include "../../Applications/Generic/NativeStoneApplicationContext.h"

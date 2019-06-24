@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Toolbox/Extent2D.h"
-#include "../Toolbox/OrientedBoundingBox.h"
+#include "OrientedVolumeBoundingBox.h"
 #include "ImageBuffer3D.h"
 
 namespace OrthancStone
@@ -43,10 +43,11 @@ namespace OrthancStone
     bool                           success_;
     Extent2D                       extent_;
     std::auto_ptr<Orthanc::Image>  slice_;
+    double                         pixelSpacing_;
 
     void CheckIterators(const ImageBuffer3D& source,
                         const CoordinateSystem3D& plane,
-                        const OrientedBoundingBox& box) const;
+                        const OrientedVolumeBoundingBox& box) const;
 
     void Reset();
 
@@ -111,10 +112,14 @@ namespace OrthancStone
     Orthanc::ImageAccessor* ReleaseOutputSlice();
 
     void Apply(const ImageBuffer3D& source,
+               const VolumeImageGeometry& geometry,
                const CoordinateSystem3D& plane);
 
     void Apply(const ImageBuffer3D& source,
+               const VolumeImageGeometry& geometry,
                const CoordinateSystem3D& plane,
                double voxelSize);
+
+    double GetPixelSpacing() const;
   };
 }

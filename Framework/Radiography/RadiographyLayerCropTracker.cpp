@@ -112,8 +112,8 @@ namespace OrthancStone
       {
         unsigned int targetX, targetWidth;
 
-        if (startControlPoint_.index == ControlPoint_TopLeftCorner ||
-            startControlPoint_.index == ControlPoint_BottomLeftCorner)
+        if (startControlPoint_.index == RadiographyControlPointType_TopLeftCorner ||
+            startControlPoint_.index == RadiographyControlPointType_BottomLeftCorner)
         {
           targetX = std::min(x, cropX_ + cropWidth_);
           targetWidth = cropX_ + cropWidth_ - targetX;
@@ -126,8 +126,8 @@ namespace OrthancStone
 
         unsigned int targetY, targetHeight;
 
-        if (startControlPoint_.index == ControlPoint_TopLeftCorner ||
-            startControlPoint_.index == ControlPoint_TopRightCorner)
+        if (startControlPoint_.index == RadiographyControlPointType_TopLeftCorner ||
+            startControlPoint_.index == RadiographyControlPointType_TopRightCorner)
         {
           targetY = std::min(y, cropY_ + cropHeight_);
           targetHeight = cropY_ + cropHeight_ - targetY;

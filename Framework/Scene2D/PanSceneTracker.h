@@ -25,19 +25,17 @@
 
 namespace OrthancStone
 {
-  class ViewportController;
-
   class PanSceneTracker : public OneGesturePointerTracker
   {
   public:
-    PanSceneTracker(ViewportControllerWPtr controllerW,
+    PanSceneTracker(boost::weak_ptr<ViewportController> controllerW,
                     const PointerEvent& event);
 
     virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;
     virtual void Cancel() ORTHANC_OVERRIDE;
 
   private:
-    ViewportControllerWPtr controllerW_;
+    boost::weak_ptr<ViewportController> controllerW_;
     ScenePoint2D           pivot_;
     AffineTransform2D      originalSceneToCanvas_;
     AffineTransform2D      originalCanvasToScene_;

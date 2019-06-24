@@ -21,10 +21,10 @@
 #pragma once
 
 #include "IFlexiblePointerTracker.h"
-#include "../../Framework/Scene2D/Scene2D.h"
-#include "../../Framework/Scene2D/PointerEvent.h"
+#include "../Scene2D/Scene2D.h"
+#include "../Scene2D/PointerEvent.h"
 
-#include "MeasureTools.h"
+#include "MeasureTool.h"
 #include "MeasureCommands.h"
 
 #include <vector>
@@ -37,15 +37,15 @@ namespace OrthancStone
     virtual void Cancel() ORTHANC_OVERRIDE;
     virtual bool IsAlive() const ORTHANC_OVERRIDE;
   protected:
-    CreateMeasureTracker(ViewportControllerWPtr controllerW);
+    CreateMeasureTracker(boost::weak_ptr<ViewportController> controllerW);
 
     ~CreateMeasureTracker();
   
   protected:
-    CreateMeasureCommandPtr         command_;
-    ViewportControllerWPtr          controllerW_;
+    boost::shared_ptr<CreateMeasureCommand>         command_;
+    boost::weak_ptr<ViewportController>          controllerW_;
     bool                            alive_;
-    Scene2DPtr                      GetScene();
+    boost::shared_ptr<Scene2D>                      GetScene();
 
   private:
     bool                            commitResult_;

@@ -102,20 +102,20 @@ namespace OrthancStone
       size_t oppositeControlPointType;
       switch (startControlPoint.index)
       {
-        case ControlPoint_TopLeftCorner:
-          oppositeControlPointType = ControlPoint_BottomRightCorner;
+        case RadiographyControlPointType_TopLeftCorner:
+          oppositeControlPointType = RadiographyControlPointType_BottomRightCorner;
           break;
 
-        case ControlPoint_TopRightCorner:
-          oppositeControlPointType = ControlPoint_BottomLeftCorner;
+        case RadiographyControlPointType_TopRightCorner:
+          oppositeControlPointType = RadiographyControlPointType_BottomLeftCorner;
           break;
 
-        case ControlPoint_BottomLeftCorner:
-          oppositeControlPointType = ControlPoint_TopRightCorner;
+        case RadiographyControlPointType_BottomLeftCorner:
+          oppositeControlPointType = RadiographyControlPointType_TopRightCorner;
           break;
 
-        case ControlPoint_BottomRightCorner:
-          oppositeControlPointType = ControlPoint_TopLeftCorner;
+        case RadiographyControlPointType_BottomRightCorner:
+          oppositeControlPointType = RadiographyControlPointType_TopLeftCorner;
           break;
 
         default:

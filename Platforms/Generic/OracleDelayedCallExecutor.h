@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../../Framework/Toolbox/IDelayedCallExecutor.h"
+#include "../../Framework/Deprecated/Toolbox/IDelayedCallExecutor.h"
 #include "Oracle.h"
 #include "../../Applications/Generic/NativeStoneApplicationContext.h"
 #include "DelayedCallCommand.h"

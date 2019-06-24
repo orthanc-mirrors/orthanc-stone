@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Fonts/GlyphBitmapAlphabet.h"
-#include "../Viewport/CairoContext.h"
+#include "../Wrappers/CairoContext.h"
 #include "Internals/CompositorHelper.h"
 #include "Internals/ICairoContextProvider.h"
 

@@ -92,6 +92,7 @@ namespace OrthancStone
     static Orthanc::ImageAccessor* ApplyAxial(float& maxValue,
                                               const Matrix& M_view,  // cf. "CalibrateView()"
                                               const ImageBuffer3D& source,
+                                              const VolumeImageGeometry& geometry,
                                               Orthanc::PixelFormat targetFormat,
                                               unsigned int targetWidth,
                                               unsigned int targetHeight,

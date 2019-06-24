@@ -20,16 +20,37 @@
 
 #pragma once
 
-#include "PointerTypes.h"
+#include "PredeclaredTypes.h"
 
-#include <Framework/Scene2D/Scene2D.h>
-#include <Framework/Scene2D/PointerEvent.h>
-#include <Framework/Scene2DViewport/IFlexiblePointerTracker.h>
+#include "../Scene2D/Scene2D.h"
+#include "../Scene2D/PointerEvent.h"
+#include "../Scene2DViewport/IFlexiblePointerTracker.h"
 
 #include <stack>
 
 namespace OrthancStone
 {
+  class UndoStack;
+
+  const double ARC_RADIUS_CANVAS_COORD = 30.0;
+  const double TEXT_CENTER_DISTANCE_CANVAS_COORD = 90;
+
+  const double HANDLE_SIDE_LENGTH_CANVAS_COORD = 10.0;
+  const double HIT_TEST_MAX_DISTANCE_CANVAS_COORD = 15.0;
+
+  const uint8_t TEXT_COLOR_RED = 0;
+  const uint8_t TEXT_COLOR_GREEN = 223;
+  const uint8_t TEXT_COLOR_BLUE = 81;
+
+  const uint8_t TOOL_LINES_COLOR_RED = 0;
+  const uint8_t TOOL_LINES_COLOR_GREEN = 223;
+  const uint8_t TOOL_LINES_COLOR_BLUE = 21;
+
+
+  const uint8_t TEXT_OUTLINE_COLOR_RED = 0;
+  const uint8_t TEXT_OUTLINE_COLOR_GREEN = 56;
+  const uint8_t TEXT_OUTLINE_COLOR_BLUE = 21;
+
   /**
   This object is responsible for hosting a scene, responding to messages from
   the model and updating the scene accordingly.
@@ -48,9 +69,10 @@ namespace OrthancStone
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, \
       SceneTransformChanged, ViewportController);
 
-    ViewportController(MessageBroker& broker);
+    ViewportController(boost::weak_ptr<UndoStack> undoStackW, MessageBroker& broker);
 
-    Scene2DPtr GetScene();
+    boost::shared_ptr<const Scene2D> GetScene() const;
+    boost::shared_ptr<Scene2D>      GetScene();
 
     /** 
     This method is called by the GUI system and should update/delete the
@@ -63,13 +85,13 @@ namespace OrthancStone
     (in scene coords). A tracker can then be requested from the chosen 
     measure tool, if needed
     */
-    std::vector<MeasureToolPtr> HitTestMeasureTools(ScenePoint2D p);
+    std::vector<boost::shared_ptr<MeasureTool> > HitTestMeasureTools(ScenePoint2D p);
 
     /**
     With this method, the object takes ownership of the supplied tracker and
     updates it according to user interaction
     */
-    void SetActiveTracker(FlexiblePointerTrackerPtr tracker);
+    void SetActiveTracker(boost::shared_ptr<IFlexiblePointerTracker> tracker);
 
     /** Forwarded to the underlying scene */
     const AffineTransform2D& GetCanvasToSceneTransform() const;
@@ -83,54 +105,68 @@ namespace OrthancStone
     /** Forwarded to the underlying scene, and broadcasted to the observers */
     void FitContent(unsigned int canvasWidth, unsigned int canvasHeight);
 
-    /** 
-    Stores a command : 
-    - this first trims the undo stack to keep the first numAppliedCommands_ 
-    - then it adds the supplied command at the top of the undo stack
-
-    In other words, when a new command is pushed, all the undone (and not 
-    redone) commands are removed.
-    */
-    void PushCommand(TrackerCommandPtr command);
-
-    /**
-    Undoes the command at the top of the undo stack, or throws if there is no
-    command to undo.
-    You can check "CanUndo" first to protect against extraneous redo.
-    */
-    void Undo();
-
-    /**
-    Redoes the command that is just above the last applied command in the undo
-    stack or throws if there is no command to redo. 
-    You can check "CanRedo" first to protect against extraneous redo.
-    */
-    void Redo();
-
-    /** selfexpl */
-    bool CanUndo() const;
-
-    /** selfexpl */
-    bool CanRedo() const;
-
     /** Adds a new measure tool */
-    void AddMeasureTool(MeasureToolPtr measureTool);
+    void AddMeasureTool(boost::shared_ptr<MeasureTool> measureTool);
 
     /** Removes a measure tool or throws if it cannot be found */
-    void RemoveMeasureTool(MeasureToolPtr measureTool);
+    void RemoveMeasureTool(boost::shared_ptr<MeasureTool> measureTool);
+
+    /**
+    The square handle side length in *scene* coordinates
+    */
+    double GetHandleSideLengthS() const;
+
+    /**
+    The angle measure too arc  radius in *scene* coordinates
+
+    Note: you might wonder why this is not part of the AngleMeasureTool itself,
+    but we prefer to put all such constants in the same location, to ease 
+    */
+    double GetAngleToolArcRadiusS() const;
+
+    /**
+    The hit test maximum distance in *scene* coordinates.
+    If a pointer event is less than GetHandleSideLengthS() to a GUI element,
+    the hit test for this GUI element is seen as true
+    */
+    double GetHitTestMaximumDistanceS() const;
+
+    /**
+    Distance between the top of the angle measuring tool and the center of 
+    the label showing the actual measure, in *scene* coordinates
+    */
+    double GetAngleTopTextLabelDistanceS() const;
+
+
+    /** forwarded to the UndoStack */
+    void PushCommand(boost::shared_ptr<TrackerCommand> command);
+
+    /** forwarded to the UndoStack */
+    void Undo();
+
+    /** forwarded to the UndoStack */
+    void Redo();
+
+    /** forwarded to the UndoStack */
+    bool CanUndo() const;
+
+    /** forwarded to the UndoStack */
+    bool CanRedo() const;
+
 
   private:
-    std::vector<TrackerCommandPtr> commandStack_;
+    double GetCanvasToSceneFactor() const;
+
+    boost::weak_ptr<UndoStack>                   undoStackW_;
+
+    boost::shared_ptr<UndoStack>                 GetUndoStack();
+    boost::shared_ptr<const UndoStack>           GetUndoStack() const;
+
+    std::vector<boost::shared_ptr<MeasureTool> > measureTools_;
+    boost::shared_ptr<Scene2D>                   scene_;
+    boost::shared_ptr<IFlexiblePointerTracker>   tracker_;
     
-    /**
-    This is always between >= 0 and <= undoStack_.size() and gives the 
-    position where the controller is in the undo stack. 
-    - If numAppliedCommands_ > 0, one can undo
-    - If numAppliedCommands_ < numAppliedCommands_.size(), one can redo
-    */
-    size_t                         numAppliedCommands_;
-    std::vector<MeasureToolPtr>    measureTools_;
-    Scene2DPtr                     scene_;
-    FlexiblePointerTrackerPtr      tracker_;
+    // this is cached
+    mutable double              canvasToSceneFactor_;
   };
 }

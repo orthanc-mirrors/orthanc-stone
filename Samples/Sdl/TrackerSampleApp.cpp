@@ -20,20 +20,19 @@
 
 #include "TrackerSampleApp.h"
 
-#include <Framework/Scene2DViewport/CreateLineMeasureTracker.h>
-#include <Framework/Scene2DViewport/CreateAngleMeasureTracker.h>
+#include "../../Applications/Sdl/SdlOpenGLWindow.h"
 
-#include <Framework/Scene2D/PanSceneTracker.h>
-#include <Framework/Scene2D/RotateSceneTracker.h>
-#include <Framework/Scene2D/Scene2D.h>
-#include <Framework/Scene2D/ZoomSceneTracker.h>
-#include <Framework/Scene2D/CairoCompositor.h>
-#include <Framework/Scene2D/ColorTextureSceneLayer.h>
-#include <Framework/Scene2D/OpenGLCompositor.h>
-
-#include <Framework/StoneInitialization.h>
-
-#include <Applications/Sdl/SdlOpenGLWindow.h>
+#include "../../Framework/Scene2D/CairoCompositor.h"
+#include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
+#include "../../Framework/Scene2D/OpenGLCompositor.h"
+#include "../../Framework/Scene2D/PanSceneTracker.h"
+#include "../../Framework/Scene2D/RotateSceneTracker.h"
+#include "../../Framework/Scene2D/Scene2D.h"
+#include "../../Framework/Scene2D/ZoomSceneTracker.h"
+#include "../../Framework/Scene2DViewport/UndoStack.h"
+#include "../../Framework/Scene2DViewport/CreateAngleMeasureTracker.h"
+#include "../../Framework/Scene2DViewport/CreateLineMeasureTracker.h"
+#include "../../Framework/StoneInitialization.h"
 
 // From Orthanc framework
 #include <Core/Logging.h>
@@ -42,10 +41,11 @@
 #include <Core/Images/ImageProcessing.h>
 #include <Core/Images/PngWriter.h>
 
+#include <boost/ref.hpp>
+#include <boost/make_shared.hpp>
 #include <SDL.h>
-#include <stdio.h>
 
-using namespace Orthanc;
+#include <stdio.h>
 
 namespace OrthancStone
 {
@@ -68,7 +68,12 @@ namespace OrthancStone
     return descs[i];
   }
 
-  Scene2DPtr TrackerSampleApp::GetScene()
+  boost::shared_ptr<Scene2D> TrackerSampleApp::GetScene()
+  {
+    return controller_->GetScene();
+  }
+
+  boost::shared_ptr<const Scene2D> TrackerSampleApp::GetScene() const
   {
     return controller_->GetScene();
   }
@@ -155,6 +160,71 @@ namespace OrthancStone
     GetScene()->DeleteLayer(FLOATING_INFOTEXT_LAYER_ZINDEX);
   }
 
+  ScenePoint2D TrackerSampleApp::GetRandomPointInScene() const
+  {
+    unsigned int w = compositor_->GetCanvasWidth();
+    LOG(TRACE) << "compositor_->GetCanvasWidth() = " << 
+      compositor_->GetCanvasWidth();
+    unsigned int h = compositor_->GetCanvasHeight();
+    LOG(TRACE) << "compositor_->GetCanvasHeight() = " << 
+      compositor_->GetCanvasHeight();
+
+    if ((w >= RAND_MAX) || (h >= RAND_MAX))
+      LOG(WARNING) << "Canvas is too big : tools will not be randomly placed";
+
+    int x = rand() % w;
+    int y = rand() % h;
+    LOG(TRACE) << "random x = " << x << "random y = " << y;
+
+    ScenePoint2D p = compositor_->GetPixelCenterCoordinates(x, y);
+    LOG(TRACE) << "--> p.GetX() = " << p.GetX() << " p.GetY() = " << p.GetY();
+
+    ScenePoint2D r = p.Apply(GetScene()->GetCanvasToSceneTransform());
+    LOG(TRACE) << "--> r.GetX() = " << r.GetX() << " r.GetY() = " << r.GetY();
+    return r;
+  }
+
+  void TrackerSampleApp::CreateRandomMeasureTool()
+  {
+    static bool srandCalled = false;
+    if (!srandCalled)
+    {
+      srand(42);
+      srandCalled = true;
+    }
+
+    int i = rand() % 2;
+    LOG(TRACE) << "random i = " << i;
+    switch (i)
+    {
+    case 0:
+      // line measure
+      {
+        boost::shared_ptr<CreateLineMeasureCommand> cmd = 
+          boost::make_shared<CreateLineMeasureCommand>(
+		  boost::ref(IObserver::GetBroker()),
+            controller_,
+            GetRandomPointInScene());
+        cmd->SetEnd(GetRandomPointInScene());
+        controller_->PushCommand(cmd);
+      }
+      break;
+    case 1:
+      // angle measure
+      {
+      boost::shared_ptr<CreateAngleMeasureCommand> cmd =
+        boost::make_shared<CreateAngleMeasureCommand>(
+          boost::ref(IObserver::GetBroker()),
+          controller_,
+          GetRandomPointInScene());
+        cmd->SetCenter(GetRandomPointInScene());
+        cmd->SetSide2End(GetRandomPointInScene());
+        controller_->PushCommand(cmd);
+      }
+      break;
+    }
+  }
+
   void TrackerSampleApp::HandleApplicationEvent(
     const SDL_Event & event)
   {
@@ -166,8 +236,8 @@ namespace OrthancStone
       const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
 
       if (activeTracker_.get() == NULL &&
-        SDL_SCANCODE_LCTRL < scancodeCount &&
-        keyboardState[SDL_SCANCODE_LCTRL])
+        SDL_SCANCODE_LALT < scancodeCount &&
+        keyboardState[SDL_SCANCODE_LALT])
       {
         // The "left-ctrl" key is down, while no tracker is present
         // Let's display the info text
@@ -190,8 +260,8 @@ namespace OrthancStone
           
           //LOG(TRACE) << "event.button.x = " << event.button.x << "     " <<
           //  "event.button.y = " << event.button.y;
-          //LOG(TRACE) << "activeTracker_->PointerMove(e); " <<
-          //  e.GetMainPosition().GetX() << " " << e.GetMainPosition().GetY();
+          LOG(TRACE) << "activeTracker_->PointerMove(e); " <<
+            e.GetMainPosition().GetX() << " " << e.GetMainPosition().GetY();
           
           activeTracker_->PointerMove(e);
           if (!activeTracker_->IsAlive())
@@ -251,9 +321,44 @@ namespace OrthancStone
         }
         break;
 
+      case SDLK_m:
+        CreateRandomMeasureTool();
+        break;
       case SDLK_s:
         controller_->FitContent(compositor_->GetCanvasWidth(),
           compositor_->GetCanvasHeight());
+        break;
+
+      case SDLK_z:
+        LOG(TRACE) << "SDLK_z has been pressed. event.key.keysym.mod == " << event.key.keysym.mod;
+        if (event.key.keysym.mod & KMOD_CTRL)
+        {
+          if (controller_->CanUndo())
+          {
+            LOG(TRACE) << "Undoing...";
+            controller_->Undo();
+          }
+          else
+          {
+            LOG(WARNING) << "Nothing to undo!!!";
+          }
+        }
+        break;
+
+      case SDLK_y:
+        LOG(TRACE) << "SDLK_y has been pressed. event.key.keysym.mod == " << event.key.keysym.mod;
+        if (event.key.keysym.mod & KMOD_CTRL)
+        {
+          if (controller_->CanRedo())
+          {
+            LOG(TRACE) << "Redoing...";
+            controller_->Redo();
+          }
+          else
+          {
+            LOG(WARNING) << "Nothing to redo!!!";
+          }
+        }
         break;
 
       case SDLK_c:
@@ -276,18 +381,20 @@ namespace OrthancStone
     DisplayInfoText();
   }
 
-  FlexiblePointerTrackerPtr TrackerSampleApp::CreateSuitableTracker(
+  boost::shared_ptr<IFlexiblePointerTracker> TrackerSampleApp::CreateSuitableTracker(
     const SDL_Event & event,
     const PointerEvent & e)
   {
+    using namespace Orthanc;
+
     switch (event.button.button)
     {
     case SDL_BUTTON_MIDDLE:
-      return FlexiblePointerTrackerPtr(new PanSceneTracker
+      return boost::shared_ptr<IFlexiblePointerTracker>(new PanSceneTracker
         (controller_, e));
 
     case SDL_BUTTON_RIGHT:
-      return FlexiblePointerTrackerPtr(new ZoomSceneTracker
+      return boost::shared_ptr<IFlexiblePointerTracker>(new ZoomSceneTracker
         (controller_, e, compositor_->GetCanvasHeight()));
 
     case SDL_BUTTON_LEFT:
@@ -300,7 +407,7 @@ namespace OrthancStone
 
       // TODO: if there are conflicts, we should prefer a tracker that 
       // pertains to the type of measuring tool currently selected (TBD?)
-      FlexiblePointerTrackerPtr hitTestTracker = TrackerHitTest(e);
+      boost::shared_ptr<IFlexiblePointerTracker> hitTestTracker = TrackerHitTest(e);
 
       if (hitTestTracker != NULL)
       {
@@ -313,13 +420,13 @@ namespace OrthancStone
         {
         case GuiTool_Rotate:
           //LOG(TRACE) << "Creating RotateSceneTracker";
-          return FlexiblePointerTrackerPtr(new RotateSceneTracker(
+          return boost::shared_ptr<IFlexiblePointerTracker>(new RotateSceneTracker(
             controller_, e));
         case GuiTool_Pan:
-          return FlexiblePointerTrackerPtr(new PanSceneTracker(
+          return boost::shared_ptr<IFlexiblePointerTracker>(new PanSceneTracker(
             controller_, e));
         case GuiTool_Zoom:
-          return FlexiblePointerTrackerPtr(new ZoomSceneTracker(
+          return boost::shared_ptr<IFlexiblePointerTracker>(new ZoomSceneTracker(
             controller_, e, compositor_->GetCanvasHeight()));
         //case GuiTool_AngleMeasure:
         //  return new AngleMeasureTracker(GetScene(), e);
@@ -328,32 +435,34 @@ namespace OrthancStone
         //case GuiTool_EllipseMeasure:
         //  return new EllipseMeasureTracker(GetScene(), e);
         case GuiTool_LineMeasure:
-          return FlexiblePointerTrackerPtr(new CreateLineMeasureTracker(
+          return boost::shared_ptr<IFlexiblePointerTracker>(new CreateLineMeasureTracker(
             IObserver::GetBroker(), controller_, e));
         case GuiTool_AngleMeasure:
-          return FlexiblePointerTrackerPtr(new CreateAngleMeasureTracker(
+          return boost::shared_ptr<IFlexiblePointerTracker>(new CreateAngleMeasureTracker(
             IObserver::GetBroker(), controller_, e));
         case GuiTool_CircleMeasure:
           LOG(ERROR) << "Not implemented yet!";
-          return FlexiblePointerTrackerPtr();
+          return boost::shared_ptr<IFlexiblePointerTracker>();
         case GuiTool_EllipseMeasure:
           LOG(ERROR) << "Not implemented yet!";
-          return FlexiblePointerTrackerPtr();
+          return boost::shared_ptr<IFlexiblePointerTracker>();
         default:
           throw OrthancException(ErrorCode_InternalError, "Wrong tool!");
         }
       }
     }
     default:
-      return FlexiblePointerTrackerPtr();
+      return boost::shared_ptr<IFlexiblePointerTracker>();
     }
   }
 
 
   TrackerSampleApp::TrackerSampleApp(MessageBroker& broker) : IObserver(broker)
     , currentTool_(GuiTool_Rotate)
+    , undoStack_(new UndoStack)
   {
-    controller_ = ViewportControllerPtr(new ViewportController(broker));
+    controller_ = boost::shared_ptr<ViewportController>(
+      new ViewportController(undoStack_, broker));
 
     controller_->RegisterObserverCallback(
       new Callable<TrackerSampleApp, ViewportController::SceneTransformChanged>
@@ -427,14 +536,14 @@ namespace OrthancStone
       chain.push_back(ScenePoint2D(0 - 0.5, 2 - 0.5));
       chain.push_back(ScenePoint2D(2 - 0.5, 2 - 0.5));
       chain.push_back(ScenePoint2D(2 - 0.5, 0 - 0.5));
-      layer->AddChain(chain, true);
+      layer->AddChain(chain, true, 255, 0, 0);
 
       chain.clear();
       chain.push_back(ScenePoint2D(-5, -5));
       chain.push_back(ScenePoint2D(5, -5));
       chain.push_back(ScenePoint2D(5, 5));
       chain.push_back(ScenePoint2D(-5, 5));
-      layer->AddChain(chain, true);
+      layer->AddChain(chain, true, 0, 255, 0);
 
       double dy = 1.01;
       chain.clear();
@@ -442,9 +551,8 @@ namespace OrthancStone
       chain.push_back(ScenePoint2D(4, -4 + dy));
       chain.push_back(ScenePoint2D(-4, -4 + 2.0 * dy));
       chain.push_back(ScenePoint2D(4, 2));
-      layer->AddChain(chain, false);
+      layer->AddChain(chain, false, 0, 0, 255);
 
-      layer->SetColor(0, 255, 255);
       GetScene()->SetLayer(LINESET_1_ZINDEX, layer.release());
     }
 
@@ -485,10 +593,10 @@ namespace OrthancStone
   }
 
 
-  FlexiblePointerTrackerPtr TrackerSampleApp::TrackerHitTest(const PointerEvent & e)
+  boost::shared_ptr<IFlexiblePointerTracker> TrackerSampleApp::TrackerHitTest(const PointerEvent & e)
   {
-    // std::vector<MeasureToolPtr> measureTools_;
-    return FlexiblePointerTrackerPtr();
+    // std::vector<boost::shared_ptr<MeasureTool>> measureTools_;
+    return boost::shared_ptr<IFlexiblePointerTracker>();
   }
 
   static void GLAPIENTRY

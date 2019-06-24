@@ -2,9 +2,8 @@
 
 #include "WasmWebService.h"
 #include "WasmDelayedCallExecutor.h"
-#include <Framework/dev.h>
-#include "Framework/Widgets/TestCairoWidget.h"
-#include <Framework/Viewport/WidgetViewport.h>
+#include "../../Framework/Deprecated/Widgets/TestCairoWidget.h"
+#include <Framework/Deprecated/Viewport/WidgetViewport.h>
 #include <Applications/Wasm/StartupParametersBuilder.h>
 #include <Platforms/Wasm/WasmPlatformApplicationAdapter.h>
 #include <Core/Logging.h>

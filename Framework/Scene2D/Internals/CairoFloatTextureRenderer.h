@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../../Viewport/CairoSurface.h"
+#include "../../Wrappers/CairoSurface.h"
 #include "CompositorHelper.h"
 #include "ICairoContextProvider.h"
 

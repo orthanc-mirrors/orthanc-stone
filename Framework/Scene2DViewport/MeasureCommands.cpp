@@ -28,15 +28,17 @@ namespace OrthancStone
   void CreateMeasureCommand::Undo()
   {
     // simply disable the measure tool upon undo
+    GetMeasureTool()->Disable();
     GetController()->RemoveMeasureTool(GetMeasureTool());
   }
 
   void CreateMeasureCommand::Redo()
   {
+    GetMeasureTool()->Enable();
     GetController()->AddMeasureTool(GetMeasureTool());
   }
 
-  CreateMeasureCommand::CreateMeasureCommand(ViewportControllerWPtr controllerW)
+  CreateMeasureCommand::CreateMeasureCommand(boost::weak_ptr<ViewportController> controllerW)
     : TrackerCommand(controllerW)
   {
 
@@ -50,7 +52,7 @@ namespace OrthancStone
 
   CreateLineMeasureCommand::CreateLineMeasureCommand(
     MessageBroker&         broker, 
-    ViewportControllerWPtr controllerW,
+    boost::weak_ptr<ViewportController> controllerW,
     ScenePoint2D           point)
     : CreateMeasureCommand(controllerW)
     , measureTool_(
@@ -67,7 +69,7 @@ namespace OrthancStone
 
   CreateAngleMeasureCommand::CreateAngleMeasureCommand(
     MessageBroker&         broker, 
-    ViewportControllerWPtr controllerW,
+    boost::weak_ptr<ViewportController> controllerW,
     ScenePoint2D           point)
     : CreateMeasureCommand(controllerW)
     , measureTool_(
@@ -91,9 +93,9 @@ namespace OrthancStone
     measureTool_->SetSide2End(scenePos);
   }
 
-  ViewportControllerPtr TrackerCommand::GetController()
+  boost::shared_ptr<ViewportController> TrackerCommand::GetController()
   {
-    ViewportControllerPtr controller = controllerW_.lock();
+    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
     assert(controller); // accessing dead object?
     return controller;
   }

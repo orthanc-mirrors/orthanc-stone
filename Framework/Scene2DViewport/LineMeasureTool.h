@@ -20,12 +20,11 @@
 
 #pragma once
 
-#include "MeasureTools.h"
-
-#include <Framework/Scene2D/Scene2D.h>
-#include <Framework/Scene2D/ScenePoint2D.h>
-#include <Framework/Scene2D/PolylineSceneLayer.h>
-#include <Framework/Scene2D/TextSceneLayer.h>
+#include "../Scene2D/PolylineSceneLayer.h"
+#include "../Scene2D/Scene2D.h"
+#include "../Scene2D/ScenePoint2D.h"
+#include "../Scene2D/TextSceneLayer.h"
+#include "MeasureTool.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -38,14 +37,7 @@ namespace OrthancStone
   class LineMeasureTool : public MeasureTool
   {
   public:
-    LineMeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW)
-      : MeasureTool(broker, controllerW)
-      , layersCreated(false)
-      , polylineZIndex_(-1)
-      , textZIndex_(-1)
-    {
-
-    }
+    LineMeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);
 
     ~LineMeasureTool();
 
@@ -53,18 +45,18 @@ namespace OrthancStone
     void SetEnd(ScenePoint2D end);
     void Set(ScenePoint2D start, ScenePoint2D end);
 
+
+    virtual bool HitTest(ScenePoint2D p) const ORTHANC_OVERRIDE;
+
   private:
-    PolylineSceneLayer* GetPolylineLayer();
-    TextSceneLayer*     GetTextLayer();
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();
 
   private:
-    ScenePoint2D start_;
-    ScenePoint2D end_;
-    bool         layersCreated;
-    int          polylineZIndex_;
-    int          textZIndex_;
+    ScenePoint2D   start_;
+    ScenePoint2D   end_;
+    boost::shared_ptr<LayerHolder> layerHolder_;
+    int            baseLayerIndex_;
   };
 
 }

@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../Toolbox/DicomFrameConverter.h"
+#include "../Deprecated/Toolbox/DicomFrameConverter.h"
 #include "RadiographyLayer.h"
 
 #include <Plugins/Samples/Common/FullOrthancDataset.h>

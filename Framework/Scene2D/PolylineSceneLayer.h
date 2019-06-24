@@ -21,27 +21,45 @@
 
 #pragma once
 
-#include "ColorSceneLayer.h"
+#include "Color.h"
 #include "ScenePoint2D.h"
+#include "ISceneLayer.h"
 
 #include <vector>
 
 namespace OrthancStone
 {
-  class PolylineSceneLayer : public ColorSceneLayer
+  class PolylineSceneLayer : public ISceneLayer
   {
   public:
     typedef std::vector<ScenePoint2D>  Chain;
 
   private:
-    std::vector<Chain>  chains_;
-    std::vector<bool>   closed_;
-    double              thickness_;
+    struct Item
+    {
+      Chain  chain_;
+      bool   closed_;
+      Color  color_;
+    };
+    
+    std::vector<Item>  items_;
+    double             thickness_;
+    uint64_t           revision_;
+
+    const Item& GetItem(size_t i) const;
 
   public:
     PolylineSceneLayer() :
-      thickness_(1.0)
+      thickness_(1.0),
+      revision_(0)
     {
+    }
+
+    void Copy(const PolylineSceneLayer& other);
+
+    virtual uint64_t GetRevision() const
+    {
+      return revision_;
     }
 
     virtual ISceneLayer* Clone() const;
@@ -53,23 +71,45 @@ namespace OrthancStone
       return thickness_;
     }
 
-    void Copy(const PolylineSceneLayer& from);
-
-    void Reserve(size_t countChains);
+    void Reserve(size_t countChains)
+    {
+      items_.reserve(countChains);
+    }
 
     void AddChain(const Chain& chain,
-                  bool isClosed);
+                  bool isClosed,
+                  uint8_t red,
+                  uint8_t green,
+                  uint8_t blue);
+
+    void AddChain(const Chain& chain,
+                  bool isClosed,
+                  const Color& color)
+    {
+      AddChain(chain, isClosed, color.GetRed(), color.GetGreen(), color.GetBlue());
+    }
 
     void ClearAllChains();
 
     size_t GetChainsCount() const
     {
-      return chains_.size();
+      return items_.size();
     }
 
-    const Chain& GetChain(size_t i) const;
+    const Chain& GetChain(size_t i) const
+    {
+      return GetItem(i).chain_;
+    }
 
-    bool IsClosedChain(size_t i) const;
+    bool IsClosedChain(size_t i) const
+    {
+      return GetItem(i).closed_;
+    }
+
+    const Color& GetColor(size_t i) const
+    {
+      return GetItem(i).color_;
+    }
 
     virtual Type GetType() const
     {

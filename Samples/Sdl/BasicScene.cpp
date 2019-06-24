@@ -29,6 +29,7 @@
 #include "../../Framework/Scene2D/Scene2D.h"
 #include "../../Framework/Scene2D/ZoomSceneTracker.h"
 #include "../../Framework/Scene2DViewport/ViewportController.h"
+#include "../../Framework/Scene2DViewport/UndoStack.h"
 
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Messages/MessageBroker.h"
@@ -49,10 +50,9 @@
 static const unsigned int FONT_SIZE = 32;
 static const int LAYER_POSITION = 150;
 
-using namespace OrthancStone;
-
-void PrepareScene(ViewportControllerPtr controller)
+void PrepareScene(boost::shared_ptr<OrthancStone::ViewportController> controller)
 {
+  using namespace OrthancStone;
   Scene2D& scene(*controller->GetScene());
   // Texture of 2x2 size
   {
@@ -104,21 +104,21 @@ void PrepareScene(ViewportControllerPtr controller)
   {
     std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
 
-    layer->SetThickness(1);
+    layer->SetThickness(10);
 
     PolylineSceneLayer::Chain chain;
     chain.push_back(ScenePoint2D(0 - 0.5, 0 - 0.5));
     chain.push_back(ScenePoint2D(0 - 0.5, 2 - 0.5));
     chain.push_back(ScenePoint2D(2 - 0.5, 2 - 0.5));
     chain.push_back(ScenePoint2D(2 - 0.5, 0 - 0.5));
-    layer->AddChain(chain, true);
+    layer->AddChain(chain, true, 255, 0, 0);
 
     chain.clear();
     chain.push_back(ScenePoint2D(-5, -5));
     chain.push_back(ScenePoint2D(5, -5));
     chain.push_back(ScenePoint2D(5, 5));
     chain.push_back(ScenePoint2D(-5, 5));
-    layer->AddChain(chain, true);
+    layer->AddChain(chain, true, 0, 255, 0);
 
     double dy = 1.01;
     chain.clear();
@@ -126,9 +126,8 @@ void PrepareScene(ViewportControllerPtr controller)
     chain.push_back(ScenePoint2D(4, -4 + dy));
     chain.push_back(ScenePoint2D(-4, -4 + 2.0 * dy));
     chain.push_back(ScenePoint2D(4, 2));
-    layer->AddChain(chain, false);
+    layer->AddChain(chain, false, 0, 0, 255);
 
-    layer->SetColor(0,255, 255);
     scene.SetLayer(50, layer.release());
   }
 
@@ -142,10 +141,11 @@ void PrepareScene(ViewportControllerPtr controller)
 
 
 void TakeScreenshot(const std::string& target,
-                    const Scene2D& scene,
+                    const OrthancStone::Scene2D& scene,
                     unsigned int canvasWidth,
                     unsigned int canvasHeight)
 {
+  using namespace OrthancStone;
   // Take a screenshot, then save it as PNG file
   CairoCompositor compositor(scene, canvasWidth, canvasHeight);
   compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, FONT_SIZE, Orthanc::Encoding_Latin1);
@@ -162,11 +162,12 @@ void TakeScreenshot(const std::string& target,
 }
 
 
-void HandleApplicationEvent(ViewportControllerPtr controller,
-                            const OpenGLCompositor& compositor,
+void HandleApplicationEvent(boost::shared_ptr<OrthancStone::ViewportController> controller,
+                            const OrthancStone::OpenGLCompositor& compositor,
                             const SDL_Event& event,
-                            FlexiblePointerTrackerPtr& activeTracker)
+                            boost::shared_ptr<OrthancStone::IFlexiblePointerTracker>& activeTracker)
 {
+  using namespace OrthancStone;
   Scene2D& scene(*controller->GetScene());
   if (event.type == SDL_MOUSEMOTION)
   {
@@ -276,8 +277,9 @@ OpenGLMessageCallback(GLenum source,
 }
 
 
-void Run(ViewportControllerPtr controller)
+void Run(boost::shared_ptr<OrthancStone::ViewportController> controller)
 {
+  using namespace OrthancStone;
   SdlOpenGLWindow window("Hello", 1024, 768);
 
   controller->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
@@ -289,7 +291,7 @@ void Run(ViewportControllerPtr controller)
   compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
                      FONT_SIZE, Orthanc::Encoding_Latin1);
 
-  FlexiblePointerTrackerPtr tracker;
+  boost::shared_ptr<IFlexiblePointerTracker> tracker;
 
   bool stop = false;
   while (!stop)
@@ -368,14 +370,16 @@ void Run(ViewportControllerPtr controller)
  **/
 int main(int argc, char* argv[])
 {
+  using namespace OrthancStone;
   StoneInitialize();
   Orthanc::Logging::EnableInfoLevel(true);
 
   try
   {
     MessageBroker broker;
-    ViewportControllerPtr controller = boost::make_shared<ViewportController>(
-		boost::ref(broker));
+    boost::shared_ptr<UndoStack> undoStack(new UndoStack);
+    boost::shared_ptr<ViewportController> controller = boost::make_shared<ViewportController>(
+      undoStack, boost::ref(broker));
     PrepareScene(controller);
     Run(controller);
   }

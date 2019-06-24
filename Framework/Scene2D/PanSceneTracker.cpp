@@ -20,11 +20,11 @@
 
 
 #include "PanSceneTracker.h"
-#include <Framework/Scene2DViewport/ViewportController.h>
+#include "../Scene2DViewport/ViewportController.h"
 
 namespace OrthancStone
 {
-  PanSceneTracker::PanSceneTracker(ViewportControllerWPtr controllerW,
+  PanSceneTracker::PanSceneTracker(boost::weak_ptr<ViewportController> controllerW,
                                    const PointerEvent& event)
     : OneGesturePointerTracker(controllerW)
     , originalSceneToCanvas_(GetController()->GetSceneToCanvasTransform())

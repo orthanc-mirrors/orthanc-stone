@@ -23,6 +23,22 @@
 
 #include <string>
 
+
+namespace Deprecated
+{
+  enum SliceImageQuality
+  {
+    SliceImageQuality_FullPng,  // smaller to transmit but longer to generate on Orthanc side (better choice when on low bandwidth)
+    SliceImageQuality_FullPam,  // bigger to transmit but faster to generate on Orthanc side (better choice when on localhost or LAN)
+    SliceImageQuality_Jpeg50,
+    SliceImageQuality_Jpeg90,
+    SliceImageQuality_Jpeg95,
+
+    SliceImageQuality_InternalRaw   // downloads the raw pixels data as they are stored in the DICOM file (internal use only)
+  };  
+}
+
+
 namespace OrthancStone
 {
   enum SliceOffsetMode
@@ -85,17 +101,6 @@ namespace OrthancStone
     KeyboardKeys_Down = 40
   };
 
-  enum SliceImageQuality
-  {
-    SliceImageQuality_FullPng,  // smaller to transmit but longer to generate on Orthanc side (better choice when on low bandwidth)
-    SliceImageQuality_FullPam,  // bigger to transmit but faster to generate on Orthanc side (better choice when on localhost or LAN)
-    SliceImageQuality_Jpeg50,
-    SliceImageQuality_Jpeg90,
-    SliceImageQuality_Jpeg95,
-
-    SliceImageQuality_InternalRaw   // downloads the raw pixels data as they are stored in the DICOM file (internal use only)
-  };
-
   enum SopClassUid
   {
     SopClassUid_Other,
@@ -115,23 +120,6 @@ namespace OrthancStone
     BitmapAnchor_TopRight
   };
 
-  enum ControlPointType
-  {
-    ControlPoint_TopLeftCorner = 0,
-    ControlPoint_TopRightCorner = 1,
-    ControlPoint_BottomRightCorner = 2,
-    ControlPoint_BottomLeftCorner = 3
-  };
-
-  enum PhotometricDisplayMode
-  {
-    PhotometricDisplayMode_Default,
-
-    PhotometricDisplayMode_Monochrome1,
-    PhotometricDisplayMode_Monochrome2
-  };
-
-  
   SopClassUid StringToSopClassUid(const std::string& source);
 
   void ComputeWindowing(float& targetCenter,

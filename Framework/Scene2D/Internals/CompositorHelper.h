@@ -23,6 +23,10 @@
 
 #include "../Scene2D.h"
 
+#include <boost/noncopyable.hpp>
+
+#include <map>
+
 namespace OrthancStone
 {
   namespace Internals

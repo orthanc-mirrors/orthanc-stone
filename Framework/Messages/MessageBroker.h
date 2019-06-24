@@ -18,8 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
 #pragma once
+
+#include "../StoneException.h"
 
 #include "boost/noncopyable.hpp"
 
@@ -40,6 +41,10 @@ namespace OrthancStone
     std::set<const IObserver*> activeObservers_;  // the list of observers that are currently alive (that have not been deleted)
 
   public:
+    MessageBroker()
+    {
+    }
+
     void Register(const IObserver& observer)
     {
       activeObservers_.insert(&observer);

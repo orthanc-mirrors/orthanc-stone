@@ -47,6 +47,11 @@ LIST(APPEND ORTHANC_BOOST_COMPONENTS program_options)
 
 include(${CMAKE_SOURCE_DIR}/../../Resources/CMake/OrthancStoneConfiguration.cmake)
 
+add_definitions(
+  -DORTHANC_ENABLE_LOGGING_PLUGIN=0
+  )
+
+
 #####################################################################
 ## Build the samples
 #####################################################################
@@ -55,19 +60,19 @@ add_library(OrthancStone STATIC
   ${ORTHANC_STONE_SOURCES}
   )
 
+#
+# BasicScene
+# 
+
 add_executable(BasicScene
   BasicScene.cpp
   )
 
 target_link_libraries(BasicScene OrthancStone)
 
-if(ENABLE_SDL_CONSOLE)
-  add_definitions(
-    -DENABLE_SDL_CONSOLE=1
-    )
-  LIST(APPEND TRACKERSAMPLE_SOURCE "../../../SDL-Console/SDL_Console.c")
-  LIST(APPEND TRACKERSAMPLE_SOURCE "../../../SDL-Console/SDL_Console.h")
-endif()
+#
+# BasicScene
+# 
 
 LIST(APPEND TRACKERSAMPLE_SOURCE "TrackerSample.cpp")
 LIST(APPEND TRACKERSAMPLE_SOURCE "TrackerSampleApp.cpp")
@@ -83,8 +88,23 @@ add_executable(TrackerSample
 
 target_link_libraries(TrackerSample OrthancStone)
 
+#
+# Loader
+# 
+
 add_executable(Loader
   Loader.cpp
   )
 
 target_link_libraries(Loader OrthancStone)
+
+#
+# FusionMprSdl
+# 
+
+add_executable(FusionMprSdl
+  FusionMprSdl.cpp
+  FusionMprSdl.h
+)
+
+target_link_libraries(FusionMprSdl OrthancStone)

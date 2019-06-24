@@ -63,21 +63,40 @@ namespace OrthancStone
                      const std::string& value)
     {
       std::vector<std::string> items;
-      Orthanc::Toolbox::TokenizeString(items, value, '\\');
+      Orthanc::Toolbox::TokenizeString(items, Orthanc::Toolbox::StripSpaces(value), '\\');
 
       target.resize(items.size());
 
       for (size_t i = 0; i < items.size(); i++)
       {
+        /**
+         * We try and avoid the use of "boost::lexical_cast<>" here,
+         * as it is very slow. As we are parsing many doubles, we
+         * prefer to use the standard "std::stod" function if
+         * available: http://www.cplusplus.com/reference/string/stod/
+         **/
+          
+#if __cplusplus >= 201103L  // Is C++11 enabled?
         try
         {
-          target[i] = boost::lexical_cast<double>(Orthanc::Toolbox::StripSpaces(items[i]));
+          target[i] = std::stod(items[i]);
+        }
+        catch (std::exception&)
+        {
+          target.clear();
+          return false;
+        }
+#else  // Fallback implementation using Boost
+        try
+        {
+          target[i] = boost::lexical_cast<double>(items[i]);
         }
         catch (boost::bad_lexical_cast&)
         {
           target.clear();
           return false;
         }
+#endif
       }
 
       return true;

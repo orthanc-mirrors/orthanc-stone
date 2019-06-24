@@ -19,14 +19,14 @@
  **/
 
 
-#include "../Framework/dev.h"
 #include "gtest/gtest.h"
 
-#include "../Framework/Layers/FrameRenderer.h"
-#include "../Framework/Toolbox/DownloadStack.h"
+#include "../Framework/Deprecated/Layers/FrameRenderer.h"
+#include "../Framework/Deprecated/Toolbox/DownloadStack.h"
+#include "../Framework/Deprecated/Toolbox/MessagingToolbox.h"
+#include "../Framework/Deprecated/Toolbox/OrthancSlicesLoader.h"
 #include "../Framework/Toolbox/FiniteProjectiveCamera.h"
-#include "../Framework/Toolbox/MessagingToolbox.h"
-#include "../Framework/Toolbox/OrthancSlicesLoader.h"
+#include "../Framework/Toolbox/GeometryToolbox.h"
 #include "../Framework/Volumes/ImageBuffer3D.h"
 #include "../Platforms/Generic/OracleWebService.h"
 
@@ -40,97 +40,6 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/thread/thread.hpp> 
 #include <boost/math/special_functions/round.hpp>
-
-
-#if 0
-namespace OrthancStone
-{
-  class Tata : public OrthancSlicesLoader::ICallback
-  {
-  public:
-    virtual void NotifyGeometryReady(const OrthancSlicesLoader& loader)
-    {
-      printf(">> %d\n", (int) loader.GetSliceCount());
-
-      for (size_t i = 0; i < loader.GetSliceCount(); i++)
-      {
-        const_cast<OrthancSlicesLoader&>(loader).ScheduleLoadSliceImage(i, SliceImageQuality_FullPng);
-      }
-    }
-
-    virtual void NotifyGeometryError(const OrthancSlicesLoader& loader)
-    {
-      printf("Error\n");
-    }
-
-    virtual void NotifySliceImageReady(const OrthancSlicesLoader& loader,
-                                       unsigned int sliceIndex,
-                                       const Slice& slice,
-                                       std::auto_ptr<Orthanc::ImageAccessor>& image,
-                                       SliceImageQuality quality)
-    {
-      std::auto_ptr<Orthanc::ImageAccessor> tmp(image);
-      printf("Slice OK %dx%d\n", tmp->GetWidth(), tmp->GetHeight());
-    }
-
-    virtual void NotifySliceImageError(const OrthancSlicesLoader& loader,
-                                       unsigned int sliceIndex,
-                                       const Slice& slice,
-                                       SliceImageQuality quality)
-    {
-      printf("ERROR 2\n");
-    }
-  };
-}
-
-
-TEST(Toto, DISABLED_Tutu)
-{
-  OrthancStone::Oracle oracle(4);
-  oracle.Start();
-
-  Orthanc::WebServiceParameters web;
-  //OrthancStone::OrthancAsynchronousWebService orthanc(web, 4);
-  OrthancStone::OracleWebService orthanc(oracle, web);
-  //orthanc.Start();
-
-  OrthancStone::Tata tata;
-  OrthancStone::OrthancSlicesLoader loader(tata, orthanc);
-  loader.ScheduleLoadSeries("c1c4cb95-05e3bd11-8da9f5bb-87278f71-0b2b43f5");
-  //loader.ScheduleLoadSeries("67f1b334-02c16752-45026e40-a5b60b6b-030ecab5");
-
-  //loader.ScheduleLoadInstance("19816330-cb02e1cf-df3a8fe8-bf510623-ccefe9f5", 0);
-
-  /*printf(">> %d\n", loader.GetSliceCount());
-    loader.ScheduleLoadSliceImage(31);*/
-
-  boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-
-  //orthanc.Stop();
-  oracle.Stop();
-}
-
-
-TEST(Toto, Tata)
-{
-  OrthancStone::Oracle oracle(4);
-  oracle.Start();
-
-  Orthanc::WebServiceParameters web;
-  OrthancStone::OracleWebService orthanc(oracle, web);
-  OrthancStone::OrthancVolumeImage volume(orthanc, true);
-
-  //volume.ScheduleLoadInstance("19816330-cb02e1cf-df3a8fe8-bf510623-ccefe9f5", 0);
-  //volume.ScheduleLoadSeries("318603c5-03e8cffc-a82b6ee1-3ccd3c1e-18d7e3bb"); // COMUNIX PET
-  //volume.ScheduleLoadSeries("7124dba7-09803f33-98b73826-33f14632-ea842d29"); // COMUNIX CT
-  //volume.ScheduleLoadSeries("5990e39c-51e5f201-fe87a54c-31a55943-e59ef80e"); // Delphine sagital
-  volume.ScheduleLoadSeries("6f1b492a-e181e200-44e51840-ef8db55e-af529ab6"); // Delphine ax 2.5
-
-  boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-
-  oracle.Stop();
-}
-#endif
 
 
 TEST(GeometryToolbox, Interpolation)
@@ -727,7 +636,7 @@ TEST(MessagingToolbox, ParseJson)
 {
   Json::Value response;
   std::string source = "{\"command\":\"panel:takeDarkImage\",\"commandType\":\"simple\",\"args\":{}}";
-  ASSERT_TRUE(OrthancStone::MessagingToolbox::ParseJson(response, source.c_str(), source.size()));
+  ASSERT_TRUE(Deprecated::MessagingToolbox::ParseJson(response, source.c_str(), source.size()));
 }
 
 TEST(VolumeImageGeometry, Basic)
@@ -790,18 +699,22 @@ TEST(VolumeImageGeometry, Basic)
     OrthancStone::VolumeProjection projection = (OrthancStone::VolumeProjection) p;
     const OrthancStone::CoordinateSystem3D& s = g.GetProjectionGeometry(projection);
     
+    ASSERT_THROW(g.GetProjectionSlice(projection, g.GetProjectionDepth(projection)), Orthanc::OrthancException);
+
     for (unsigned int i = 0; i < g.GetProjectionDepth(projection); i++)
     {
-      OrthancStone::CoordinateSystem3D plane(
-        s.GetOrigin() + static_cast<double>(i) * s.GetNormal() * g.GetVoxelDimensions(projection)[2],
-        s.GetAxisX(),
-        s.GetAxisY());
+      OrthancStone::CoordinateSystem3D plane = g.GetProjectionSlice(projection, i);
+
+      ASSERT_TRUE(IsEqualVector(plane.GetOrigin(), s.GetOrigin() + static_cast<double>(i) * 
+                                s.GetNormal() * g.GetVoxelDimensions(projection)[2]));
+      ASSERT_TRUE(IsEqualVector(plane.GetAxisX(), s.GetAxisX()));
+      ASSERT_TRUE(IsEqualVector(plane.GetAxisY(), s.GetAxisY()));
 
       unsigned int slice;
       OrthancStone::VolumeProjection q;
       ASSERT_TRUE(g.DetectSlice(q, slice, plane));
       ASSERT_EQ(projection, q);
-      ASSERT_EQ(i, slice);
+      ASSERT_EQ(i, slice);     
     }
   }
 }

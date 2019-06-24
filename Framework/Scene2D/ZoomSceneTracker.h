@@ -27,12 +27,10 @@
 
 namespace OrthancStone
 {
-  class Scene2D;
-
   class ZoomSceneTracker : public OneGesturePointerTracker
   {
   public:
-    ZoomSceneTracker(ViewportControllerWPtr controllerW,
+    ZoomSceneTracker(boost::weak_ptr<ViewportController> controllerW,
                      const PointerEvent& event,
                      unsigned int canvasHeight);
 

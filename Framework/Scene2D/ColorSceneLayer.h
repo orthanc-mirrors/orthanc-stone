@@ -22,18 +22,17 @@
 #pragma once
 
 #include "ISceneLayer.h"
-#include <Core/Enumerations.h>
+#include "Color.h"
 
-#include <stdint.h>
+#include <Core/Enumerations.h>  // For ORTHANC_OVERRIDE
 
 namespace OrthancStone
 {
+  // TODO - Is this needed?
   class ColorSceneLayer : public ISceneLayer
   {
   private:
-    uint8_t  red_;
-    uint8_t  green_;
-    uint8_t  blue_;
+    Color    color_;
     uint64_t revision_;
 
   protected:
@@ -45,9 +44,6 @@ namespace OrthancStone
 
   public:
     ColorSceneLayer() :
-      red_(255),
-      green_(255),
-      blue_(255),
       revision_(0)
     {
     }
@@ -61,40 +57,19 @@ namespace OrthancStone
                   uint8_t green,
                   uint8_t blue)
     {
-      red_ = red;
-      green_ = green;
-      blue_ = blue;
+      color_ = Color(red, green, blue);
       BumpRevision();
     }
 
-    uint8_t GetRed() const
+    void SetColor(const Color& color)
     {
-      return red_;
+      color_ = color;
+      BumpRevision();
     }
 
-    uint8_t GetGreen() const
+    const Color& GetColor() const
     {
-      return green_;
-    }
-
-    uint8_t GetBlue() const
-    {
-      return blue_;
-    }
-
-    float GetRedAsFloat() const
-    {
-      return static_cast<float>(red_) / 255.0f;
-    }
-
-    float GetGreenAsFloat() const
-    {
-      return static_cast<float>(green_) / 255.0f;
-    }
-
-    float GetBlueAsFloat() const
-    {
-      return static_cast<float>(blue_) / 255.0f;
+      return color_;
     }
   };
 }

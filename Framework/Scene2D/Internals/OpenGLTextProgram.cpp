@@ -75,9 +75,9 @@ namespace OrthancStone
                                   const GlyphTextureAlphabet& alphabet,
                                   const TextSceneLayer& layer) :
       context_(context),
-      red_(layer.GetRedAsFloat()),
-      green_(layer.GetGreenAsFloat()),
-      blue_(layer.GetBlueAsFloat()),
+      red_(layer.GetColor().GetRedAsFloat()),
+      green_(layer.GetColor().GetGreenAsFloat()),
+      blue_(layer.GetColor().GetBlueAsFloat()),
       x_(layer.GetX()),
       y_(layer.GetY()),
       border_(layer.GetBorder()),

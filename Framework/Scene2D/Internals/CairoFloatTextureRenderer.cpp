@@ -21,6 +21,7 @@
 
 #include "CairoFloatTextureRenderer.h"
 
+#include "CairoColorTextureRenderer.h"
 #include "../FloatTextureSceneLayer.h"
 
 namespace OrthancStone
@@ -71,6 +72,11 @@ namespace OrthancStone
 
           uint8_t vv = static_cast<uint8_t>(v);
 
+          if (l.IsInverted())
+          {
+            vv = 255 - vv;
+          }
+
           q[0] = vv;
           q[1] = vv;
           q[2] = vv;
@@ -84,33 +90,8 @@ namespace OrthancStone
       
     void CairoFloatTextureRenderer::Render(const AffineTransform2D& transform)
     {
-      cairo_t* cr = target_.GetCairoContext();
-
-      AffineTransform2D t =
-        AffineTransform2D::Combine(transform, textureTransform_);
-      Matrix h = t.GetHomogeneousMatrix();
-      
-      cairo_save(cr);
-
-      cairo_matrix_t m;
-      cairo_matrix_init(&m, h(0, 0), h(1, 0), h(0, 1), h(1, 1), h(0, 2), h(1, 2));
-      cairo_transform(cr, &m);
-
-      cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-      cairo_set_source_surface(cr, texture_.GetObject(), 0, 0);
-
-      if (isLinearInterpolation_)
-      {
-        cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_BILINEAR);
-      }
-      else
-      {
-        cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_NEAREST);
-      }
-
-      cairo_paint(cr);
-
-      cairo_restore(cr);
+      CairoColorTextureRenderer::RenderColorTexture(target_, transform, texture_,
+                                                    textureTransform_, isLinearInterpolation_);
     }
   }
 }

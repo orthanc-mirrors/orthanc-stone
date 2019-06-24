@@ -25,7 +25,6 @@
 
 #include "SdlStoneApplicationRunner.h"
 
-#include "../../Framework/Toolbox/MessagingToolbox.h"
 #include "../../Platforms/Generic/OracleWebService.h"
 #include "SdlEngine.h"
 

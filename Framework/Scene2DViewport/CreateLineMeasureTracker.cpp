@@ -21,13 +21,11 @@
 #include "CreateLineMeasureTracker.h"
 #include <Core/OrthancException.h>
 
-using namespace Orthanc;
-
 namespace OrthancStone
 {
   CreateLineMeasureTracker::CreateLineMeasureTracker(
     MessageBroker&                  broker,
-    ViewportControllerWPtr          controllerW,
+    boost::weak_ptr<ViewportController>          controllerW,
     const PointerEvent&             e)
     : CreateMeasureTracker(controllerW)
   {
@@ -49,7 +47,7 @@ namespace OrthancStone
     
     if (!alive_)
     {
-      throw OrthancException(ErrorCode_InternalError,
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
         "Internal error: wrong state in CreateLineMeasureTracker::"
         "PointerMove: active_ == false");
     }
@@ -82,7 +80,7 @@ namespace OrthancStone
       "are ignored when the line measure creation tracker is active";
   }
 
-  CreateLineMeasureCommandPtr CreateLineMeasureTracker::GetCommand()
+  boost::shared_ptr<CreateLineMeasureCommand> CreateLineMeasureTracker::GetCommand()
   {
     return boost::dynamic_pointer_cast<CreateLineMeasureCommand>(command_);
   }

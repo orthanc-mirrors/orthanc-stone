@@ -343,6 +343,7 @@ namespace OrthancStone
                                  float& maxValue,
                                  const Matrix& M_view,
                                  const ImageBuffer3D& source,
+                                 const VolumeImageGeometry& geometry,
                                  double pixelSpacing,
                                  unsigned int countSlices,
                                  ImageInterpolation shearInterpolation,
@@ -385,8 +386,8 @@ namespace OrthancStone
     
     // Compute the "world" matrix that maps the source volume to the
     // (0,0,0)->(1,1,1) unit cube
-    Vector origin = source.GetGeometry().GetCoordinates(0, 0, 0);
-    Vector ps = source.GetGeometry().GetVoxelDimensions(VolumeProjection_Axial);
+    Vector origin = geometry.GetCoordinates(0, 0, 0);
+    Vector ps = geometry.GetVoxelDimensions(VolumeProjection_Axial);
     Matrix world = LinearAlgebra::Product(
       GeometryToolbox::CreateScalingMatrix(1.0 / ps[0], 1.0 / ps[1], 1.0 / ps[2]),
       GeometryToolbox::CreateTranslationMatrix(-origin[0], -origin[1], -origin[2]));
@@ -598,6 +599,7 @@ namespace OrthancStone
                                   float& maxValue,
                                   const Matrix& M_view,
                                   const ImageBuffer3D& source,
+                                  const VolumeImageGeometry& geometry,
                                   bool mip,
                                   double pixelSpacing,
                                   unsigned int countSlices,
@@ -607,13 +609,13 @@ namespace OrthancStone
     if (mip)
     {
       ApplyAxialInternal<SourceFormat, TargetFormat, true>
-        (target, maxValue, M_view, source, pixelSpacing,
+        (target, maxValue, M_view, source, geometry, pixelSpacing,
          countSlices, shearInterpolation, warpInterpolation);
     }
     else
     {
       ApplyAxialInternal<SourceFormat, TargetFormat, false>
-        (target, maxValue, M_view, source, pixelSpacing,
+        (target, maxValue, M_view, source, geometry, pixelSpacing,
          countSlices, shearInterpolation, warpInterpolation);
     } 
   }
@@ -623,6 +625,7 @@ namespace OrthancStone
   ShearWarpProjectiveTransform::ApplyAxial(float& maxValue,
                                            const Matrix& M_view,
                                            const ImageBuffer3D& source,
+                                           const VolumeImageGeometry& geometry,
                                            Orthanc::PixelFormat targetFormat,
                                            unsigned int targetWidth,
                                            unsigned int targetHeight,
@@ -640,7 +643,7 @@ namespace OrthancStone
     {
       ApplyAxialInternal2<Orthanc::PixelFormat_Grayscale16,
                           Orthanc::PixelFormat_Grayscale16>
-        (*target, maxValue, M_view, source, mip, pixelSpacing,
+        (*target, maxValue, M_view, source, geometry, mip, pixelSpacing,
          countSlices, shearInterpolation, warpInterpolation);
     }
     else if (source.GetFormat() == Orthanc::PixelFormat_SignedGrayscale16 &&
@@ -648,7 +651,7 @@ namespace OrthancStone
     {
       ApplyAxialInternal2<Orthanc::PixelFormat_SignedGrayscale16,
                           Orthanc::PixelFormat_SignedGrayscale16>
-        (*target, maxValue, M_view, source, mip, pixelSpacing,
+        (*target, maxValue, M_view, source, geometry, mip, pixelSpacing,
          countSlices, shearInterpolation, warpInterpolation);
     }
     else

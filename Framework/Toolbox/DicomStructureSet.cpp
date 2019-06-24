@@ -22,7 +22,6 @@
 #include "DicomStructureSet.h"
 
 #include "../Toolbox/GeometryToolbox.h"
-#include "../Toolbox/MessagingToolbox.h"
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
@@ -31,7 +30,6 @@
 
 #include <limits>
 #include <stdio.h>
-#include <boost/lexical_cast.hpp>
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
@@ -367,9 +365,7 @@ namespace OrthancStone
 
   DicomStructureSet::DicomStructureSet(const OrthancPlugins::FullOrthancDataset& tags)
   {
-    using namespace OrthancPlugins;
-
-    DicomDatasetReader reader(tags);
+    OrthancPlugins::DicomDatasetReader reader(tags);
     
     size_t count, tmp;
     if (!tags.GetSequenceSize(count, DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE) ||
@@ -385,18 +381,18 @@ namespace OrthancStone
     for (size_t i = 0; i < count; i++)
     {
       structures_[i].interpretation_ = reader.GetStringValue
-        (DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
-                   DICOM_TAG_RT_ROI_INTERPRETED_TYPE),
+        (OrthancPlugins::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
+                                   DICOM_TAG_RT_ROI_INTERPRETED_TYPE),
          "No interpretation");
 
       structures_[i].name_ = reader.GetStringValue
-        (DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
-                   DICOM_TAG_ROI_NAME),
+        (OrthancPlugins::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
+                                   DICOM_TAG_ROI_NAME),
          "No interpretation");
 
       Vector color;
-      if (ParseVector(color, tags, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                             DICOM_TAG_ROI_DISPLAY_COLOR)) &&
+      if (ParseVector(color, tags, OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                             DICOM_TAG_ROI_DISPLAY_COLOR)) &&
           color.size() == 3)
       {
         structures_[i].red_ = ConvertColor(color[0]);
@@ -411,37 +407,55 @@ namespace OrthancStone
       }
 
       size_t countSlices;
-      if (!tags.GetSequenceSize(countSlices, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                       DICOM_TAG_CONTOUR_SEQUENCE)))
+      if (!tags.GetSequenceSize(countSlices, OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                                       DICOM_TAG_CONTOUR_SEQUENCE)))
       {
         countSlices = 0;
       }
 
-      LOG(WARNING) << "New RT structure: \"" << structures_[i].name_ 
+      LOG(INFO) << "New RT structure: \"" << structures_[i].name_ 
                    << "\" with interpretation \"" << structures_[i].interpretation_
                    << "\" containing " << countSlices << " slices (color: " 
                    << static_cast<int>(structures_[i].red_) << "," 
                    << static_cast<int>(structures_[i].green_) << ","
                    << static_cast<int>(structures_[i].blue_) << ")";
 
+      // These temporary variables avoid allocating many vectors in the loop below
+      OrthancPlugins::DicomPath countPointsPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                                DICOM_TAG_NUMBER_OF_CONTOUR_POINTS);
+
+      OrthancPlugins::DicomPath geometricTypePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                  DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                                  DICOM_TAG_CONTOUR_GEOMETRIC_TYPE);
+      
+      OrthancPlugins::DicomPath imageSequencePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                  DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                                  DICOM_TAG_CONTOUR_IMAGE_SEQUENCE);
+
+      OrthancPlugins::DicomPath referencedInstancePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                       DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                                       DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
+                                                       DICOM_TAG_REFERENCED_SOP_INSTANCE_UID);
+
+      OrthancPlugins::DicomPath contourDataPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                                DICOM_TAG_CONTOUR_DATA);
+
       for (size_t j = 0; j < countSlices; j++)
       {
         unsigned int countPoints;
 
-        if (!reader.GetUnsignedIntegerValue
-            (countPoints, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                    DICOM_TAG_CONTOUR_SEQUENCE, j,
-                                    DICOM_TAG_NUMBER_OF_CONTOUR_POINTS)))
+        countPointsPath.SetPrefixIndex(1, j);
+        if (!reader.GetUnsignedIntegerValue(countPoints, countPointsPath))
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
             
         //LOG(INFO) << "Parsing slice containing " << countPoints << " vertices";
 
-        std::string type = reader.GetMandatoryStringValue
-          (DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                     DICOM_TAG_CONTOUR_SEQUENCE, j,
-                     DICOM_TAG_CONTOUR_GEOMETRIC_TYPE));
+        geometricTypePath.SetPrefixIndex(1, j);
+        std::string type = reader.GetMandatoryStringValue(geometricTypePath);
         if (type != "CLOSED_PLANAR")
         {
           LOG(WARNING) << "Ignoring contour with geometry type: " << type;
@@ -449,24 +463,19 @@ namespace OrthancStone
         }
 
         size_t size;
-        if (!tags.GetSequenceSize(size, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                  DICOM_TAG_CONTOUR_SEQUENCE, j,
-                                                  DICOM_TAG_CONTOUR_IMAGE_SEQUENCE)) ||
+
+        imageSequencePath.SetPrefixIndex(1, j);
+        if (!tags.GetSequenceSize(size, imageSequencePath) ||
             size != 1)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
         }
 
-        std::string sopInstanceUid = reader.GetMandatoryStringValue
-          (DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                     DICOM_TAG_CONTOUR_SEQUENCE, j,
-                     DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
-                     DICOM_TAG_REFERENCED_SOP_INSTANCE_UID));
-        
-        std::string slicesData = reader.GetMandatoryStringValue
-          (DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                     DICOM_TAG_CONTOUR_SEQUENCE, j,
-                     DICOM_TAG_CONTOUR_DATA));
+        referencedInstancePath.SetPrefixIndex(1, j);
+        std::string sopInstanceUid = reader.GetMandatoryStringValue(referencedInstancePath);
+
+        contourDataPath.SetPrefixIndex(1, j);        
+        std::string slicesData = reader.GetMandatoryStringValue(contourDataPath);
 
         Vector points;
         if (!LinearAlgebra::ParseVector(points, slicesData) ||
@@ -531,6 +540,13 @@ namespace OrthancStone
   }
 
 
+  Color DicomStructureSet::GetStructureColor(size_t index) const
+  {
+    const Structure& s = GetStructure(index);
+    return Color(s.red_, s.green_, s.blue_);
+  }
+  
+    
   void DicomStructureSet::GetStructureColor(uint8_t& red,
                                             uint8_t& green,
                                             uint8_t& blue,
@@ -668,50 +684,9 @@ namespace OrthancStone
   }
 
   
-  DicomStructureSet* DicomStructureSet::SynchronousLoad(OrthancPlugins::IOrthancConnection& orthanc,
-                                                        const std::string& instanceId)
-  {
-    const std::string uri = "/instances/" + instanceId + "/tags?ignore-length=3006-0050";
-    OrthancPlugins::FullOrthancDataset dataset(orthanc, uri);
-
-    std::auto_ptr<DicomStructureSet> result(new DicomStructureSet(dataset));
-
-    std::set<std::string> instances;
-    result->GetReferencedInstances(instances);
-
-    for (std::set<std::string>::const_iterator it = instances.begin();
-         it != instances.end(); ++it)
-    {
-      Json::Value lookup;
-      MessagingToolbox::RestApiPost(lookup, orthanc, "/tools/lookup", *it);
-
-      if (lookup.type() != Json::arrayValue ||
-          lookup.size() != 1 ||
-          !lookup[0].isMember("Type") ||
-          !lookup[0].isMember("Path") ||
-          lookup[0]["Type"].type() != Json::stringValue ||
-          lookup[0]["ID"].type() != Json::stringValue ||
-          lookup[0]["Type"].asString() != "Instance")
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_UnknownResource);          
-      }
-
-      OrthancPlugins::FullOrthancDataset slice
-        (orthanc, "/instances/" + lookup[0]["ID"].asString() + "/tags");
-      Orthanc::DicomMap m;
-      MessagingToolbox::ConvertDataset(m, slice);
-      result->AddReferencedSlice(m);
-    }
-
-    result->CheckReferencedSlices();
-
-    return result.release();
-  }
-
-
   bool DicomStructureSet::ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
-                                           Structure& structure,
-                                           const CoordinateSystem3D& slice)
+                                           const Structure& structure,
+                                           const CoordinateSystem3D& slice) const
   {
     polygons.clear();
 
@@ -722,7 +697,7 @@ namespace OrthancStone
     {
       // This is an axial projection
 
-      for (Polygons::iterator polygon = structure.polygons_.begin();
+      for (Polygons::const_iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
         if (polygon->IsOnSlice(slice))
@@ -748,7 +723,7 @@ namespace OrthancStone
       // Sagittal or coronal projection
       std::vector<BoostPolygon> projected;
   
-      for (Polygons::iterator polygon = structure.polygons_.begin();
+      for (Polygons::const_iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
         double x1, y1, x2, y2;

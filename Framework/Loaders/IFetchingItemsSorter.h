@@ -29,6 +29,16 @@ namespace OrthancStone
   class IFetchingItemsSorter : public boost::noncopyable
   {
   public:
+    class IFactory : public boost::noncopyable
+    {
+    public:
+      virtual ~IFactory()
+      {
+      }
+
+      virtual IFetchingItemsSorter* CreateSorter(unsigned int itemsCount) const = 0;
+    };
+
     virtual ~IFetchingItemsSorter()
     {
     }

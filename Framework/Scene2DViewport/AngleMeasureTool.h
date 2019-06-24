@@ -20,12 +20,13 @@
 
 #pragma once
 
-#include "MeasureTools.h"
+#include "MeasureTool.h"
 
-#include <Framework/Scene2D/Scene2D.h>
-#include <Framework/Scene2D/ScenePoint2D.h>
-#include <Framework/Scene2D/PolylineSceneLayer.h>
-#include <Framework/Scene2D/TextSceneLayer.h>
+#include "../Scene2DViewport/LayerHolder.h"
+#include "../Scene2D/Scene2D.h"
+#include "../Scene2D/ScenePoint2D.h"
+#include "../Scene2D/PolylineSceneLayer.h"
+#include "../Scene2D/TextSceneLayer.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -38,14 +39,7 @@ namespace OrthancStone
   class AngleMeasureTool : public MeasureTool
   {
   public:
-    AngleMeasureTool(MessageBroker& broker, ViewportControllerWPtr controllerW)
-      : MeasureTool(broker, controllerW)
-      , layersCreated(false)
-      , polylineZIndex_(-1)
-      , textBaseZIndex_(-1)
-    {
-
-    }
+    AngleMeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);
 
     ~AngleMeasureTool();
 
@@ -53,24 +47,19 @@ namespace OrthancStone
     void SetCenter(ScenePoint2D start);
     void SetSide2End(ScenePoint2D start);
 
+
+    virtual bool HitTest(ScenePoint2D p) const ORTHANC_OVERRIDE;
+
   private:
-    PolylineSceneLayer* GetPolylineLayer();
-    
-    // 0 --> 3 are for the text background (outline)
-    // 4 is for the actual text
-    TextSceneLayer*     GetTextLayer(int index);
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();
 
   private:
-    ScenePoint2D side1End_;
-    ScenePoint2D side2End_;
-    ScenePoint2D center_;
-    bool         layersCreated;
-    int          polylineZIndex_;
-    int          textBaseZIndex_;
+    ScenePoint2D    side1End_;
+    ScenePoint2D    side2End_;
+    ScenePoint2D    center_;
+    boost::shared_ptr<LayerHolder>  layerHolder_;
   };
-
 }
 
 

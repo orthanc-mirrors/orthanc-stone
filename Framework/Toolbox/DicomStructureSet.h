@@ -23,6 +23,7 @@
 
 #include "CoordinateSystem3D.h"
 #include "Extent2D.h"
+#include "../Scene2D/Color.h"
 
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 
@@ -135,13 +136,13 @@ namespace OrthancStone
     Structure& GetStructure(size_t index);
   
     bool ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
-                          Structure& structure,
-                          const CoordinateSystem3D& slice);
+                          const Structure& structure,
+                          const CoordinateSystem3D& slice) const;
 
   public:
     DicomStructureSet(const OrthancPlugins::FullOrthancDataset& instance);
 
-    size_t GetStructureCount() const
+    size_t GetStructuresCount() const
     {
       return structures_.size();
     }
@@ -152,6 +153,9 @@ namespace OrthancStone
 
     const std::string& GetStructureInterpretation(size_t index) const;
 
+    Color GetStructureColor(size_t index) const;
+
+    // TODO - remove
     void GetStructureColor(uint8_t& red,
                            uint8_t& green,
                            uint8_t& blue,
@@ -170,12 +174,9 @@ namespace OrthancStone
 
     Vector GetNormal() const;
 
-    static DicomStructureSet* SynchronousLoad(OrthancPlugins::IOrthancConnection& orthanc,
-                                              const std::string& instanceId);
-
     bool ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
                           size_t index,
-                          const CoordinateSystem3D& slice)
+                          const CoordinateSystem3D& slice) const
     {
       return ProjectStructure(polygons, GetStructure(index), slice);
     }

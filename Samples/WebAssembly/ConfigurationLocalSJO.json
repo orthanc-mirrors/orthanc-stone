@@ -1,0 +1,20 @@
+{
+  "Plugins": [
+    "/home/jodogne/Subversion/orthanc-webviewer/r/libOrthancWebViewer.so",
+    "/home/jodogne/Subversion/orthanc/r/libServeFolders.so"
+  ],
+  "StorageDirectory" : "/tmp/orthanc-db",
+  "IndexDirectory" : "/tmp/orthanc-db",
+  "RemoteAccessAllowed" : true,
+  "AuthenticationEnabled" : false,
+  "ServeFolders" : {
+    "AllowCache" : false,
+    "GenerateETag" : true,
+    "Folders" : {
+      "/stone" : "/tmp/stone"
+    }
+  },
+  "WebViewer" : {
+    "CachePath" : "/tmp/orthanc-db/WebViewerCache"
+  }
+}

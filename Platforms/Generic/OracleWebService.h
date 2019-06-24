@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../../Framework/Toolbox/BaseWebService.h"
+#include "../../Framework/Deprecated/Toolbox/BaseWebService.h"
 #include "Oracle.h"
 #include "WebServiceGetCommand.h"
 #include "WebServicePostCommand.h"

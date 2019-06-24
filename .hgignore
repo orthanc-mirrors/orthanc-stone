@@ -35,3 +35,6 @@ Samples/Sdl/ThirdPartyDownloads/
 Samples/Sdl/CMakeLists.txt.orig
 Samples/Qt/ThirdPartyDownloads/
 
+Samples/WebAssembly/build/
+Samples/WebAssembly/ThirdPartyDownloads/
+Samples/WebAssembly/installDir/

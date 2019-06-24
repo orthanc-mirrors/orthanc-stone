@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include "../Framework/Toolbox/IWebService.h"
-#include "../Framework/Toolbox/IDelayedCallExecutor.h"
-#include "../Framework/Toolbox/OrthancApiClient.h"
-#include "../Framework/Viewport/WidgetViewport.h"
+#include "../Framework/Deprecated/Toolbox/IWebService.h"
+#include "../Framework/Deprecated/Toolbox/IDelayedCallExecutor.h"
+#include "../Framework/Deprecated/Toolbox/OrthancApiClient.h"
+#include "../Framework/Deprecated/Viewport/WidgetViewport.h"
 
 
 #ifdef _MSC_VER

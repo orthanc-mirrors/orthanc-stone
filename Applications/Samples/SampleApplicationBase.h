@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../../Applications/IStoneApplication.h"
-#include "../../Framework/Widgets/WorldSceneWidget.h"
+#include "../../Framework/Deprecated/Widgets/WorldSceneWidget.h"
 
 #if ORTHANC_ENABLE_WASM==1
 #include "../../Platforms/Wasm/WasmPlatformApplicationAdapter.h"

@@ -19,11 +19,11 @@
  **/
 
 #include "RotateSceneTracker.h"
-#include <Framework/Scene2DViewport/ViewportController.h>
+#include "../Scene2DViewport/ViewportController.h"
 
 namespace OrthancStone
 {
-  RotateSceneTracker::RotateSceneTracker(ViewportControllerWPtr controllerW,
+  RotateSceneTracker::RotateSceneTracker(boost::weak_ptr<ViewportController> controllerW,
                                          const PointerEvent& event)
     : OneGesturePointerTracker(controllerW)
     , click_(event.GetMainPosition())

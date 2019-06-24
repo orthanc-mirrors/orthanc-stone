@@ -23,6 +23,7 @@
 
 #include "LinearAlgebra.h"
 #include "../Volumes/ImageBuffer3D.h"
+#include "../Volumes/VolumeImageGeometry.h"
 
 namespace OrthancStone
 {
@@ -109,6 +110,7 @@ namespace OrthancStone
     Vector ApplyGeneral(const Vector& v) const;
 
     Orthanc::ImageAccessor* ApplyRaytracer(const ImageBuffer3D& source,
+                                           const VolumeImageGeometry& geometry,
                                            Orthanc::PixelFormat targetFormat,
                                            unsigned int targetWidth,
                                            unsigned int targetHeight,

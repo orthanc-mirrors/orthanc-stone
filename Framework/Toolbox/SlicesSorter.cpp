@@ -271,7 +271,7 @@ namespace OrthancStone
       assert(slices_[i] != NULL);
 
       double tmp;
-      if (CoordinateSystem3D::GetDistance(tmp, slices_[i]->GetGeometry(), slice))
+      if (CoordinateSystem3D::ComputeDistance(tmp, slices_[i]->GetGeometry(), slice))
       {
         if (!found ||
             tmp < distance)

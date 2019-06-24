@@ -19,22 +19,23 @@
  **/
 #pragma once
 
-#include <Framework/Scene2D/Scene2D.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/noncopyable.hpp>
+#include "../Scene2D/Scene2D.h"
 
 // to be moved into Stone
-#include "PointerTypes.h"
-#include "MeasureTools.h"
+#include "PredeclaredTypes.h"
+#include "MeasureTool.h"
 #include "LineMeasureTool.h"
 #include "AngleMeasureTool.h"
+
+#include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 namespace OrthancStone
 {
   class TrackerCommand : public boost::noncopyable
   {
   public:
-    TrackerCommand(ViewportControllerWPtr controllerW) 
+    TrackerCommand(boost::weak_ptr<ViewportController> controllerW) 
       : controllerW_(controllerW)
     {
 
@@ -43,20 +44,20 @@ namespace OrthancStone
     virtual void Redo() = 0;
 
   protected:
-    ViewportControllerPtr  GetController();
-    ViewportControllerWPtr controllerW_;
+    boost::shared_ptr<ViewportController>  GetController();
+    boost::weak_ptr<ViewportController> controllerW_;
   };
 
   class CreateMeasureCommand : public TrackerCommand
   {
   public:
-    CreateMeasureCommand(ViewportControllerWPtr controllerW);
+    CreateMeasureCommand(boost::weak_ptr<ViewportController> controllerW);
     ~CreateMeasureCommand();
     virtual void Undo() ORTHANC_OVERRIDE;
     virtual void Redo() ORTHANC_OVERRIDE;
   private:
     /** Must be implemented by the subclasses that create the actual tool */
-    virtual MeasureToolPtr GetMeasureTool() = 0;
+    virtual boost::shared_ptr<MeasureTool> GetMeasureTool() = 0;
   };
   
   class CreateLineMeasureCommand : public CreateMeasureCommand
@@ -64,18 +65,18 @@ namespace OrthancStone
   public:
     CreateLineMeasureCommand(
       MessageBroker&         broker, 
-      ViewportControllerWPtr controllerW,
+      boost::weak_ptr<ViewportController> controllerW,
       ScenePoint2D           point);
     
     // the starting position is set in the ctor
     void SetEnd(ScenePoint2D scenePos);
 
   private:
-    virtual MeasureToolPtr GetMeasureTool() ORTHANC_OVERRIDE
+    virtual boost::shared_ptr<MeasureTool> GetMeasureTool() ORTHANC_OVERRIDE
     {
       return measureTool_;
     }
-    LineMeasureToolPtr measureTool_;
+    boost::shared_ptr<LineMeasureTool> measureTool_;
   };
 
 
@@ -85,7 +86,7 @@ namespace OrthancStone
     /** Ctor sets end of side 1*/
     CreateAngleMeasureCommand(
       MessageBroker&         broker, 
-      ViewportControllerWPtr controllerW,
+      boost::weak_ptr<ViewportController> controllerW,
       ScenePoint2D           point);
 
     /** This method sets center*/
@@ -95,11 +96,11 @@ namespace OrthancStone
     void SetSide2End(ScenePoint2D scenePos);
 
   private:
-    virtual MeasureToolPtr GetMeasureTool() ORTHANC_OVERRIDE
+    virtual boost::shared_ptr<MeasureTool> GetMeasureTool() ORTHANC_OVERRIDE
     {
       return measureTool_;
     }
-    AngleMeasureToolPtr measureTool_;
+    boost::shared_ptr<AngleMeasureTool> measureTool_;
   };
 
 }

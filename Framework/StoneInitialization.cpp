@@ -31,6 +31,10 @@
 #  include "../Applications/Sdl/SdlWindow.h"
 #endif
 
+#if ORTHANC_ENABLE_CURL == 1
+#include <Core/HttpClient.h>
+#endif
+
 namespace OrthancStone
 {
 #if ORTHANC_ENABLE_LOGGING_PLUGIN == 1
@@ -48,6 +52,10 @@ namespace OrthancStone
 #if ORTHANC_ENABLE_SDL == 1
     OrthancStone::SdlWindow::GlobalInitialize();
 #endif
+
+#if ORTHANC_ENABLE_CURL == 1
+    Orthanc::HttpClient::GlobalInitialize();
+#endif
   }
 
   void StoneFinalize()
@@ -56,6 +64,10 @@ namespace OrthancStone
     OrthancStone::SdlWindow::GlobalFinalize();
 #endif
     
+#if ORTHANC_ENABLE_CURL == 1
+    Orthanc::HttpClient::GlobalFinalize();
+#endif
+
     Orthanc::Logging::Finalize();
   }
 }

@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include "../../Framework/Viewport/WidgetViewport.h"
-#include "../../Framework/Volumes/ISlicedVolume.h"
-#include "../../Framework/Volumes/IVolumeLoader.h"
+#include "../../Framework/Deprecated/Viewport/WidgetViewport.h"
+#include "../../Framework/Deprecated/Volumes/ISlicedVolume.h"
+#include "../../Framework/Deprecated/Volumes/IVolumeLoader.h"
 
 #include <list>
 #include <boost/thread.hpp>

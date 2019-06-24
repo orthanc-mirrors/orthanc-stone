@@ -19,13 +19,13 @@
  **/
 
 
-#if ORTHANC_ENABLE_NATIVE != 1
-#error this file shall be included only with the ORTHANC_ENABLE_NATIVE set to 1
+#if ORTHANC_ENABLE_THREADS != 1
+#error this file shall be included only with the ORTHANC_ENABLE_THREADS set to 1
 #endif
 
 #include "NativeStoneApplicationRunner.h"
 
-#include "../../Framework/Toolbox/MessagingToolbox.h"
+#include "../../Framework/Deprecated/Toolbox/MessagingToolbox.h"
 #include "../../Platforms/Generic/OracleWebService.h"
 #include "../../Platforms/Generic/OracleDelayedCallExecutor.h"
 #include "NativeStoneApplicationContext.h"
@@ -180,7 +180,7 @@ namespace OrthancStone
 
       {
         OrthancPlugins::OrthancHttpConnection orthanc(webServiceParameters);
-        if (!MessagingToolbox::CheckOrthancVersion(orthanc))
+        if (!Deprecated::MessagingToolbox::CheckOrthancVersion(orthanc))
         {
           LOG(ERROR) << "Your version of Orthanc is incompatible with Stone of "
             << "Orthanc, please upgrade";

@@ -26,6 +26,7 @@
 
 
 static const unsigned int COMPONENTS_POSITION = 3;
+static const unsigned int COMPONENTS_COLOR = 3;
 static const unsigned int COMPONENTS_MITER = 2;
 
 
@@ -33,12 +34,15 @@ static const char* VERTEX_SHADER =
   ORTHANC_STONE_OPENGL_SHADER_VERSION_DIRECTIVE
   "attribute vec2 a_miter_direction; \n"
   "attribute vec4 a_position;        \n"
+  "attribute vec3 a_color;           \n"
   "uniform float u_thickness;        \n"
   "uniform mat4 u_matrix;            \n"
   "varying float v_distance;         \n"
+  "varying vec3 v_color;             \n"
   "void main()                       \n"
   "{                                 \n"
   "  v_distance = a_position.z;      \n"
+  "  v_color = a_color;              \n"
   "  gl_Position = u_matrix * vec4(a_position.xy + a_position.z * a_miter_direction * u_thickness, 0, 1); \n"
   "}";
 
@@ -47,20 +51,20 @@ static const char* FRAGMENT_SHADER =
   ORTHANC_STONE_OPENGL_SHADER_VERSION_DIRECTIVE
   "uniform bool u_antialiasing;           \n"
   "uniform float u_antialiasing_start;    \n"
-  "uniform vec3 u_color;                  \n"
   "varying float v_distance;              \n"   // Distance of the point to the segment
+  "varying vec3 v_color;                  \n"
   "void main()                            \n"
   "{                                      \n"
   "  float d = abs(v_distance);           \n"
   "  if (!u_antialiasing ||               \n"
   "      d <= u_antialiasing_start)       \n"
-  "    gl_FragColor = vec4(u_color, 1);   \n"
+  "    gl_FragColor = vec4(v_color, 1);   \n"
   "  else if (d >= 1.0)                   \n"
   "    gl_FragColor = vec4(0, 0, 0, 0);   \n"
   "  else                                 \n"
   "  {                                    \n"
   "    float alpha = 1.0 - smoothstep(u_antialiasing_start, 1.0, d); \n"
-  "    gl_FragColor = vec4(u_color * alpha, alpha); \n"
+  "    gl_FragColor = vec4(v_color * alpha, alpha); \n"
   "  }                                    \n"
   "}";
 
@@ -197,7 +201,9 @@ namespace OrthancStone
       }
 
       void AddTriangles(std::vector<float>& coords,
-                        std::vector<float>& miterDirections)
+                        std::vector<float>& miterDirections,
+                        std::vector<float>& colors,
+                        const Color& color)
       {
         if (isEmpty_)
         {
@@ -239,6 +245,14 @@ namespace OrthancStone
         miterDirections.push_back(static_cast<float>(miterY1_));
         miterDirections.push_back(static_cast<float>(miterX2_));
         miterDirections.push_back(static_cast<float>(miterY2_));
+
+        // Add the colors of the 2 triangles (leading to 2 * 3 values)
+        for (unsigned int i = 0; i < 6; i++)
+        {
+          colors.push_back(color.GetRedAsFloat());
+          colors.push_back(color.GetGreenAsFloat());
+          colors.push_back(color.GetBlueAsFloat());
+        }
       }        
     };
 
@@ -247,10 +261,7 @@ namespace OrthancStone
                                    const PolylineSceneLayer& layer) :
       context_(context),
       verticesCount_(0),
-      thickness_(static_cast<float>(layer.GetThickness())),
-      red_(layer.GetRedAsFloat()),
-      green_(layer.GetGreenAsFloat()),
-      blue_(layer.GetBlueAsFloat())
+      thickness_(static_cast<float>(layer.GetThickness()))
     {
       // High-level reference:
       // https://mattdesl.svbtle.com/drawing-lines-is-hard
@@ -271,8 +282,9 @@ namespace OrthancStone
         countVertices += countSegments * 2 * 3;
       }
 
-      std::vector<float>  coords, miterDirections;
+      std::vector<float>  coords, colors, miterDirections;
       coords.reserve(countVertices * COMPONENTS_POSITION);
+      colors.reserve(countVertices * COMPONENTS_COLOR);
       miterDirections.reserve(countVertices * COMPONENTS_MITER);
 
       for (size_t i = 0; i < layer.GetChainsCount(); i++)
@@ -307,24 +319,29 @@ namespace OrthancStone
           {
             if (!segments[j].IsEmpty())
             {
-              segments[j].AddTriangles(coords, miterDirections);
+              segments[j].AddTriangles(coords, miterDirections, colors, layer.GetColor(i));
             }
           }
         }
       }
+
+      assert(coords.size() == colors.size());
 
       if (!coords.empty())
       {
         verticesCount_ = coords.size() / COMPONENTS_POSITION;
 
         context_.MakeCurrent();
-        glGenBuffers(2, buffers_);
+        glGenBuffers(3, buffers_);
 
         glBindBuffer(GL_ARRAY_BUFFER, buffers_[0]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(float) * coords.size(), &coords[0], GL_STATIC_DRAW);
 
         glBindBuffer(GL_ARRAY_BUFFER, buffers_[1]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(float) * miterDirections.size(), &miterDirections[0], GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, buffers_[2]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * colors.size(), &colors[0], GL_STATIC_DRAW);
       }
     }
 
@@ -334,7 +351,7 @@ namespace OrthancStone
       if (!IsEmpty())
       {
         context_.MakeCurrent();
-        glDeleteBuffers(2, buffers_);
+        glDeleteBuffers(3, buffers_);
       }
     }
 
@@ -365,10 +382,22 @@ namespace OrthancStone
     }
 
 
+    GLuint OpenGLLinesProgram::Data::GetColorsBuffer() const
+    {
+      if (IsEmpty())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        return buffers_[2];
+      }
+    }
+
+
     OpenGLLinesProgram::OpenGLLinesProgram(OpenGL::IOpenGLContext&  context) :
       context_(context)
     {
-
       context_.MakeCurrent();
 
       program_.reset(new OpenGL::OpenGLProgram);
@@ -388,13 +417,12 @@ namespace OrthancStone
 
         GLint locationPosition = program_->GetAttributeLocation("a_position");
         GLint locationMiterDirection = program_->GetAttributeLocation("a_miter_direction");
+        GLint locationColor = program_->GetAttributeLocation("a_color");
 
         float m[16];
         transform.ConvertToOpenGLMatrix(m, context_.GetCanvasWidth(), context_.GetCanvasHeight());
 
         glUniformMatrix4fv(program_->GetUniformLocation("u_matrix"), 1, GL_FALSE, m);
-        glUniform3f(program_->GetUniformLocation("u_color"), 
-                    data.GetRed(), data.GetGreen(), data.GetBlue());
 
         glBindBuffer(GL_ARRAY_BUFFER, data.GetVerticesBuffer());
         glEnableVertexAttribArray(locationPosition);
@@ -403,6 +431,10 @@ namespace OrthancStone
         glBindBuffer(GL_ARRAY_BUFFER, data.GetMiterDirectionsBuffer());
         glEnableVertexAttribArray(locationMiterDirection);
         glVertexAttribPointer(locationMiterDirection, COMPONENTS_MITER, GL_FLOAT, GL_FALSE, 0, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, data.GetColorsBuffer());
+        glEnableVertexAttribArray(locationColor);
+        glVertexAttribPointer(locationColor, COMPONENTS_COLOR, GL_FLOAT, GL_FALSE, 0, 0);
 
         glUniform1i(program_->GetUniformLocation("u_antialiasing"), (antialiasing ? 1 : 0));
 
@@ -464,6 +496,7 @@ namespace OrthancStone
 
         glDisableVertexAttribArray(locationPosition);
         glDisableVertexAttribArray(locationMiterDirection);
+        glDisableVertexAttribArray(locationColor);
       }
     }
   }

@@ -37,7 +37,7 @@ namespace OrthancStone
   ISceneLayer* TextSceneLayer::Clone() const
   {
     std::auto_ptr<TextSceneLayer> cloned(new TextSceneLayer);
-    cloned->SetColor(GetRed(), GetGreen(), GetBlue());
+    cloned->SetColor(GetColor());
     cloned->x_ = x_;
     cloned->y_ = y_;
     cloned->utf8_ = utf8_;

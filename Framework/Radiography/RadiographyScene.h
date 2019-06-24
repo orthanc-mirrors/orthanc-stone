@@ -22,9 +22,9 @@
 #pragma once
 
 #include "RadiographyLayer.h"
-#include "../Toolbox/DicomFrameConverter.h"
-#include "../Toolbox/OrthancApiClient.h"
-#include "Framework/StoneEnumerations.h"
+#include "../Deprecated/Toolbox/DicomFrameConverter.h"
+#include "../Deprecated/Toolbox/OrthancApiClient.h"
+#include "../StoneEnumerations.h"
 #include "Core/Images/Image.h"
 #include "Core/Images/ImageProcessing.h"
 
@@ -172,7 +172,7 @@ namespace OrthancStone
     virtual void SetWindowing(float center,
                               float width);
 
-    PhotometricDisplayMode GetPreferredPhotomotricDisplayMode() const;
+    RadiographyPhotometricDisplayMode GetPreferredPhotomotricDisplayMode() const;
 
     RadiographyLayer& LoadText(const Orthanc::Font& font,
                                const std::string& utf8,
@@ -194,7 +194,7 @@ namespace OrthancStone
                                              const std::string& instance,
                                              unsigned int frame,
                                              Deprecated::DicomFrameConverter* converter,  // takes ownership
-                                             PhotometricDisplayMode preferredPhotometricDisplayMode,
+                                             RadiographyPhotometricDisplayMode preferredPhotometricDisplayMode,
                                              RadiographyLayer::Geometry* geometry);
 
     virtual RadiographyLayer& LoadDicomFrame(Deprecated::OrthancApiClient& orthanc,

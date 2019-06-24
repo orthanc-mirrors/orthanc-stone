@@ -39,12 +39,9 @@ namespace OrthancStone
         class Segment;
         
         OpenGL::IOpenGLContext&  context_;
-        GLuint                   buffers_[2];
+        GLuint                   buffers_[3];
         size_t                   verticesCount_;
         float                    thickness_;
-        float                    red_;
-        float                    green_;
-        float                    blue_;
 
       public:
         Data(OpenGL::IOpenGLContext& context,
@@ -66,24 +63,11 @@ namespace OrthancStone
 
         GLuint GetMiterDirectionsBuffer() const;
 
+        GLuint GetColorsBuffer() const;
+
         float GetThickness() const
         {
           return thickness_;
-        }
-
-        float GetRed() const
-        {
-          return red_;
-        }
-
-        float GetGreen() const
-        {
-          return green_;
-        }
-
-        float GetBlue() const
-        {
-          return blue_;
         }
       };
       

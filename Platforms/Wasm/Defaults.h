@@ -2,9 +2,8 @@
 
 #include <emscripten/emscripten.h>
 
-#include <Framework/dev.h>
-#include <Framework/Viewport/WidgetViewport.h>
-#include <Framework/Widgets/LayoutWidget.h>
+#include "../../Framework/Deprecated/Viewport/WidgetViewport.h"
+#include "../../Framework/Deprecated/Widgets/LayoutWidget.h"
 #include <Applications/IStoneApplication.h>
 #include <Platforms/Wasm/WasmPlatformApplicationAdapter.h>
 

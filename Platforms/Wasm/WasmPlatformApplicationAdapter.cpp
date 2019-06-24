@@ -1,6 +1,5 @@
 #include "WasmPlatformApplicationAdapter.h"
 
-#include "Framework/Toolbox/MessagingToolbox.h"
 #include "Framework/StoneException.h"
 #include <stdio.h>
 #include "Platforms/Wasm/Defaults.h"

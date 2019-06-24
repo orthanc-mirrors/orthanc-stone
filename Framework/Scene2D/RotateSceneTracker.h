@@ -23,15 +23,14 @@
 
 #include "../Scene2DViewport/OneGesturePointerTracker.h"
 #include "Internals/FixedPointAligner.h"
+#include <memory>
 
 namespace OrthancStone
 {
-  class ViewportController;
-
   class RotateSceneTracker : public OneGesturePointerTracker
   {
   public:
-    RotateSceneTracker(ViewportControllerWPtr controllerW,
+    RotateSceneTracker(boost::weak_ptr<ViewportController> controllerW,
                        const PointerEvent& event);
 
     virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;

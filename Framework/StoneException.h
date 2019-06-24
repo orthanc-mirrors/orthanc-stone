@@ -115,11 +115,44 @@ namespace OrthancStone
 
 // See https://isocpp.org/wiki/faq/misc-technical-issues#macros-with-multi-stmts
 // (or google "Multiple lines macro C++ faq lite" if link is dead)
-#define ORTHANC_ASSERT(cond,streamChainMessage) \
+#define ORTHANC_ASSERT2(cond,streamChainMessage) \
     if (!(cond)) { \
       std::stringstream sst; \
       sst << "Assertion failed. Condition = \"" #cond "\" Message = \"" << streamChainMessage << "\""; \
       std::string sstr = sst.str(); \
-      throw OrthancException(ErrorCode_InternalError,sstr.c_str()); \
+      throw ::Orthanc::OrthancException(::Orthanc::ErrorCode_InternalError,sstr.c_str()); \
     } else (void)0
+
+#define ORTHANC_ASSERT1(cond) \
+    if (!(cond)) { \
+      std::stringstream sst; \
+      sst << "Assertion failed. Condition = \"" #cond "\""; \
+      std::string sstr = sst.str(); \
+      throw ::Orthanc::OrthancException(::Orthanc::ErrorCode_InternalError,sstr.c_str()); \
+    } else (void)0
+
+# define ORTHANC_EXPAND( x ) x 
+# define GET_ORTHANC_ASSERT(_1,_2,NAME,...) NAME
+# define ORTHANC_ASSERT(...) ORTHANC_EXPAND(GET_ORTHANC_ASSERT(__VA_ARGS__, ORTHANC_ASSERT2, ORTHANC_ASSERT1, UNUSED)(__VA_ARGS__))
+
+/*
+Explanation:
+
+ORTHANC_ASSERT(a)
+ORTHANC_EXPAND(GET_ORTHANC_ASSERT(a, ORTHANC_ASSERT2, ORTHANC_ASSERT1, UNUSED)(a))
+ORTHANC_EXPAND(ORTHANC_ASSERT1(a))
+ORTHANC_ASSERT1(a)
+
+ORTHANC_ASSERT(a,b)
+ORTHANC_EXPAND(GET_ORTHANC_ASSERT(a, b, ORTHANC_ASSERT2, ORTHANC_ASSERT1, UNUSED)(a,b))
+ORTHANC_EXPAND(ORTHANC_ASSERT2(a,b))
+ORTHANC_ASSERT2(a,b)
+
+Note: ORTHANC_EXPAND is required for some older compilers (MS v100 cl.exe )
+*/
+
+
+
+
+
 

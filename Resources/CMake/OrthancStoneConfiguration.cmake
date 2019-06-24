@@ -32,7 +32,6 @@ endif()
 
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
 include_directories(${ORTHANC_ROOT})
-include_directories(${ORTHANC_ROOT}/Core/Images) # hack for the numerous #include "../Enumerations.h" in Orthanc to work
 
 
 #####################################################################
@@ -66,6 +65,7 @@ if (ENABLE_WASM)
     message(FATAL_ERROR "WebAssembly target requires the emscripten compiler")    
   endif()
 
+  set(ENABLE_THREADS OFF)
   add_definitions(-DORTHANC_ENABLE_WASM=1)
 else()
   if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten" OR
@@ -75,6 +75,7 @@ else()
     message(FATAL_ERROR "Trying to use a Web compiler for a native build")
   endif()
 
+  set(ENABLE_THREADS ON)
   add_definitions(-DORTHANC_ENABLE_WASM=0)
 endif()
   
@@ -110,7 +111,6 @@ elseif(ENABLE_SDL)
   message("SDL is enabled")
   include(${CMAKE_CURRENT_LIST_DIR}/SdlConfiguration.cmake)
   add_definitions(
-    -DORTHANC_ENABLE_NATIVE=1
     -DORTHANC_ENABLE_QT=0
     -DORTHANC_ENABLE_SDL=1
     )
@@ -118,7 +118,6 @@ elseif(ENABLE_QT)
   message("QT is enabled")
   include(${CMAKE_CURRENT_LIST_DIR}/QtConfiguration.cmake)
   add_definitions(
-    -DORTHANC_ENABLE_NATIVE=1
     -DORTHANC_ENABLE_QT=1
     -DORTHANC_ENABLE_SDL=0
     )
@@ -128,8 +127,14 @@ else()
   add_definitions(
     -DORTHANC_ENABLE_SDL=0
     -DORTHANC_ENABLE_QT=0
-    -DORTHANC_ENABLE_NATIVE=0
     )
+endif()
+
+
+if (ENABLE_THREADS)
+  add_definitions(-DORTHANC_ENABLE_THREADS=1)
+else()
+  add_definitions(-DORTHANC_ENABLE_THREADS=0)
 endif()
 
 
@@ -246,7 +251,6 @@ set(APPLICATIONS_SOURCES
 
 if (NOT ORTHANC_SANDBOXED)
   set(PLATFORM_SOURCES
-    ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoFont.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceCommandBase.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceGetCommand.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServicePostCommand.cpp
@@ -256,6 +260,12 @@ if (NOT ORTHANC_SANDBOXED)
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleWebService.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleDelayedCallExecutor.h
     )
+
+  if (ENABLE_STONE_DEPRECATED)
+    list(APPEND PLATFORM_SOURCES
+      ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/CairoFont.cpp
+      )
+  endif()
 
   if (ENABLE_SDL OR ENABLE_QT)
     list(APPEND APPLICATIONS_SOURCES
@@ -304,63 +314,86 @@ elseif (ENABLE_WASM)
     DEPENDS "${ORTHANC_STONE_ROOT}/Platforms/Wasm/default-library.js")
 endif()
 
+if (ENABLE_SDL OR ENABLE_WASM)
+  list(APPEND APPLICATIONS_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.h
+    )
+endif()
+
+if (ENABLE_STONE_DEPRECATED)
+  list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/CircleMeasureTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/ColorFrameRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/DicomSeriesVolumeSlicer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/DicomStructureSetSlicer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/FrameRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/GrayscaleFrameRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/IVolumeSlicer.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/LineLayerRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/LineMeasureTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/RenderStyle.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/SliceOutlineRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/SmartLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/BaseWebService.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/DicomFrameConverter.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/DownloadStack.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/IDelayedCallExecutor.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/IWebService.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/MessagingToolbox.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancApiClient.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancSlicesLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ParallelSlices.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ParallelSlicesCursor.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/Slice.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ViewportGeometry.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IMouseTracker.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IStatusBar.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IViewport.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/WidgetViewport.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Volumes/StructureSetLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/CairoWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/EmptyWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/IWidget.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/IWorldSceneInteractor.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/IWorldSceneMouseTracker.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/LayoutWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/PanMouseTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/PanZoomMouseTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/SliceViewerWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/TestCairoWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/TestWorldSceneWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/WidgetBase.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/WorldSceneWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/ZoomMouseTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/dev.h
+    )
+endif()
+
+
+if (ENABLE_THREADS)
+  list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Messages/LockingEmitter.h
+    ${ORTHANC_STONE_ROOT}/Framework/Oracle/ThreadedOracle.cpp
+    )
+endif()
+
+
+if (ENABLE_WASM)
+  list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Oracle/WebAssemblyOracle.cpp
+    )
+endif()
+
+
 list(APPEND ORTHANC_STONE_SOURCES
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SeriesFrameRendererFactory.cpp
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SingleFrameRendererFactory.cpp
 
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CairoCompositor.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/FloatTextureSceneLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoColorTextureRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoFloatTextureRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoInfoPanelRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoPolylineRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoTextRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CompositorHelper.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/FixedPointAligner.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PanSceneTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PointerEvent.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PolylineSceneLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/RotateSceneTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Scene2D.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextSceneLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextureBaseSceneLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ZoomSceneTracker.cpp
-
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/AngleMeasureTool.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/AngleMeasureTool.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateAngleMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateAngleMeasureTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateCircleMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateCircleMeasureTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateLineMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateLineMeasureTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateMeasureTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateSimpleTrackerAdapter.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditAngleMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditAngleMeasureTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditCircleMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditCircleMeasureTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditLineMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditLineMeasureTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/IFlexiblePointerTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LineMeasureTool.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LineMeasureTool.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureCommands.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureCommands.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureTools.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureTools.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureToolsToolbox.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureToolsToolbox.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureTrackers.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureTrackers.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/OneGesturePointerTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/OneGesturePointerTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/PointerTypes.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.h
+  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomDatasetReader.cpp
+  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomPath.cpp
+  ${ORTHANC_ROOT}/Plugins/Samples/Common/FullOrthancDataset.cpp
+  ${ORTHANC_ROOT}/Plugins/Samples/Common/IOrthancConnection.cpp
 
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/FontRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/Glyph.cpp
@@ -368,19 +401,23 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphBitmapAlphabet.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphTextureAlphabet.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/TextBoundingBox.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/CircleMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/ColorFrameRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/DicomSeriesVolumeSlicer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/DicomStructureSetSlicer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/FrameRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/GrayscaleFrameRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/IVolumeSlicer.h
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/LineLayerRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/LineMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/RenderStyle.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Layers/SliceOutlineRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingItemsSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingStrategy.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomStructureSetLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderStateMachine.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancMultiframeVolumeLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObservable.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObserver.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageBroker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageForwarder.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Messages/Promise.h
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancImageCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancWebViewerJpegCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/OracleCommandWithPayload.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/OrthancRestApiCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyAlphaLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyDicomLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp
@@ -397,75 +434,94 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyTextLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWidget.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWindowingTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/SmartLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CairoCompositor.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/FloatTextureSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/GrayscaleStyleConfigurator.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoColorTextureRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoFloatTextureRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoInfoPanelRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoLookupTableTextureRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoPolylineRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoTextRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CompositorHelper.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/FixedPointAligner.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/LookupTableStyleConfigurator.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/LookupTableTextureSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PanSceneTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PointerEvent.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PolylineSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/RotateSceneTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Scene2D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextureBaseSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ZoomSceneTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/AngleMeasureTool.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/AngleMeasureTool.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateAngleMeasureCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateAngleMeasureCommand.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateAngleMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateAngleMeasureTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateCircleMeasureCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateCircleMeasureCommand.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateCircleMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateCircleMeasureTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateLineMeasureCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateLineMeasureCommand.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateLineMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateLineMeasureTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateMeasureTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateSimpleTrackerAdapter.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/IFlexiblePointerTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LayerHolder.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LayerHolder.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LineMeasureTool.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LineMeasureTool.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureCommands.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureCommands.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureTool.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureTool.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureToolsToolbox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureToolsToolbox.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureTrackers.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/MeasureTrackers.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/OneGesturePointerTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/OneGesturePointerTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/PredeclaredTypes.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/UndoStack.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/UndoStack.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.h
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneException.h
   ${ORTHANC_STONE_ROOT}/Framework/StoneInitialization.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/AffineTransform2D.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/BaseWebService.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/CoordinateSystem3D.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomFrameConverter.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomInstanceParameters.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DownloadStack.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DynamicBitmap.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Extent2D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/FiniteProjectiveCamera.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/IDelayedCallExecutor.h
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/IWebService.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/MessagingToolbox.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrientedBoundingBox.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrthancApiClient.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrthancSlicesLoader.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlices.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParallelSlicesCursor.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Slice.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ViewportGeometry.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/VolumeImageGeometry.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoContext.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Viewport/CairoSurface.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Viewport/IMouseTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Viewport/IStatusBar.h
-  ${ORTHANC_STONE_ROOT}/Framework/Viewport/IViewport.h
-  ${ORTHANC_STONE_ROOT}/Framework/Viewport/WidgetViewport.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImage.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageMPRSlicer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageReslicer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/IVolumeSlicer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/ImageBuffer3D.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Volumes/StructureSetLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/OrientedVolumeBoundingBox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeReslicer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/CairoWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/EmptyWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/IWidget.h
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/IWorldSceneInteractor.h
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/IWorldSceneMouseTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/LayoutWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/PanMouseTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/PanZoomMouseTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/SliceViewerWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/TestCairoWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/TestWorldSceneWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/WidgetBase.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/WorldSceneWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Widgets/ZoomMouseTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeSceneLayerSource.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Wrappers/CairoContext.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Wrappers/CairoSurface.cpp
 
-  ${ORTHANC_STONE_ROOT}/Framework/dev.h
-
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObservable.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/IObserver.h
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageBroker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/MessageForwarder.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Messages/Promise.h
-
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomDatasetReader.cpp
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomPath.cpp
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/FullOrthancDataset.cpp
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/IOrthancConnection.cpp
-  
   ${PLATFORM_SOURCES}
   ${APPLICATIONS_SOURCES}
   ${ORTHANC_CORE_SOURCES}
@@ -487,21 +543,39 @@ list(APPEND ORTHANC_STONE_SOURCES
 
 if (ENABLE_OPENGL)
   list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Fonts/OpenGLTextCoordinates.h
     ${ORTHANC_STONE_ROOT}/Framework/Fonts/OpenGLTextCoordinates.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLShader.h
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLShader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLTexture.h
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLTexture.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/OpenGLCompositor.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/OpenGLCompositor.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLAdvancedPolylineRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLAdvancedPolylineRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLBasicPolylineRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLBasicPolylineRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLInfoPanelRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLInfoPanelRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLinesProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLinesProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLookupTableTextureRenderer.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLookupTableTextureRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextureProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextureProgram.cpp
     )
 
@@ -512,8 +586,6 @@ if (ENABLE_OPENGL)
   endif()
 endif()
 
-
-include_directories(${ORTHANC_STONE_ROOT})
 
 
 ##

@@ -37,7 +37,8 @@ namespace OrthancStone
       Type_ColorTexture,
       Type_Polyline,
       Type_Text,
-      Type_FloatTexture
+      Type_FloatTexture,
+      Type_LookupTableTexture
     };
 
     virtual ~ISceneLayer()

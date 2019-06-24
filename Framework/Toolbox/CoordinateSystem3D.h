@@ -86,6 +86,8 @@ namespace OrthancStone
       return axisY_;
     }
 
+    void SetOrigin(const Vector& origin);
+
     Vector MapSliceToWorldCoordinates(double x,
                                       double y) const;
     
@@ -104,8 +106,8 @@ namespace OrthancStone
                        const Vector& direction) const;
 
     // Returns "false" is the two planes are not parallel
-    static bool GetDistance(double& distance,
-                            const CoordinateSystem3D& a,
-                            const CoordinateSystem3D& b);
+    static bool ComputeDistance(double& distance,
+                                const CoordinateSystem3D& a,
+                                const CoordinateSystem3D& b);
   };
 }

@@ -39,7 +39,7 @@ namespace OrthancStone
     */
     CreateAngleMeasureTracker(
       MessageBroker&                  broker,
-      ViewportControllerWPtr          controllerW,
+      boost::weak_ptr<ViewportController>          controllerW,
       const PointerEvent&             e);
 
     ~CreateAngleMeasureTracker();
@@ -49,7 +49,7 @@ namespace OrthancStone
     virtual void PointerDown(const PointerEvent& e) ORTHANC_OVERRIDE;
 
   private:
-    CreateAngleMeasureCommandPtr GetCommand();
+    boost::shared_ptr<CreateAngleMeasureCommand> GetCommand();
 
     enum State
     {

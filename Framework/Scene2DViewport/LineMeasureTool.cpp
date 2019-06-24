@@ -150,7 +150,7 @@ namespace OrthancStone
           double squareDist = deltaX * deltaX + deltaY * deltaY;
           double dist = sqrt(squareDist);
           char buf[64];
-          sprintf(buf, "%0.02f units", dist);
+          sprintf(buf, "%0.02f mm", dist);
 
           // TODO: for now we simply position the text overlay at the middle
           // of the measuring segment

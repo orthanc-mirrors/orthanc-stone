@@ -82,6 +82,7 @@ elseif (ENABLE_QT OR ENABLE_SDL)
 
 endif()
 
+
 #####################################################################
 ## Configuration for Orthanc
 #####################################################################
@@ -99,6 +100,10 @@ endif()
 set(ORTHANC_FRAMEWORK_SOURCE "${ORTHANC_FRAMEWORK_DEFAULT_SOURCE}" CACHE STRING "Source of the Orthanc source code (can be \"hg\", \"archive\", \"web\" or \"path\")")
 set(ORTHANC_FRAMEWORK_ARCHIVE "" CACHE STRING "Path to the Orthanc archive, if ORTHANC_FRAMEWORK_SOURCE is \"archive\"")
 set(ORTHANC_FRAMEWORK_ROOT "" CACHE STRING "Path to the Orthanc source directory, if ORTHANC_FRAMEWORK_SOURCE is \"path\"")
+
+add_definitions(
+  -DORTHANC_ENABLE_LOGGING_PLUGIN=0
+  )
 
 
 #####################################################################

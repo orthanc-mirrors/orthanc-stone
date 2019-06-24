@@ -60,6 +60,10 @@ SET(ENABLE_WASM ON)
 
 include(${CMAKE_SOURCE_DIR}/../../Resources/CMake/OrthancStoneConfiguration.cmake)
 
+add_definitions(
+  -DORTHANC_ENABLE_LOGGING_PLUGIN=0
+  )
+
 
 #####################################################################
 ## Build the samples

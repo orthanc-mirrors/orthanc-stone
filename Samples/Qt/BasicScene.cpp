@@ -30,6 +30,7 @@
 #include "../../Framework/Scene2D/Scene2D.h"
 #include "../../Framework/Scene2D/ZoomSceneTracker.h"
 #include "../../Framework/Scene2DViewport/ViewportController.h"
+#include "../../Framework/Scene2DViewport/UndoStack.h"
 
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Messages/MessageBroker.h"
@@ -55,7 +56,7 @@ static const int LAYER_POSITION = 150;
 
 using namespace OrthancStone;
 
-void PrepareScene(ViewportControllerPtr controller)
+void PrepareScene(boost::shared_ptr<OrthancStone::ViewportController> controller)
 {
   Scene2D& scene(*controller->GetScene());
   // Texture of 2x2 size
@@ -115,14 +116,14 @@ void PrepareScene(ViewportControllerPtr controller)
     chain.push_back(ScenePoint2D(0 - 0.5, 2 - 0.5));
     chain.push_back(ScenePoint2D(2 - 0.5, 2 - 0.5));
     chain.push_back(ScenePoint2D(2 - 0.5, 0 - 0.5));
-    layer->AddChain(chain, true);
+    layer->AddChain(chain, true, 255, 0, 0);
 
     chain.clear();
     chain.push_back(ScenePoint2D(-5, -5));
     chain.push_back(ScenePoint2D(5, -5));
     chain.push_back(ScenePoint2D(5, 5));
     chain.push_back(ScenePoint2D(-5, 5));
-    layer->AddChain(chain, true);
+    layer->AddChain(chain, true, 0, 255, 0);
 
     double dy = 1.01;
     chain.clear();
@@ -130,9 +131,9 @@ void PrepareScene(ViewportControllerPtr controller)
     chain.push_back(ScenePoint2D(4, -4 + dy));
     chain.push_back(ScenePoint2D(-4, -4 + 2.0 * dy));
     chain.push_back(ScenePoint2D(4, 2));
-    layer->AddChain(chain, false);
+    layer->AddChain(chain, false, 0, 0, 255);
 
-    layer->SetColor(0,255, 255);
+//    layer->SetColor(0,255, 255);
     scene.SetLayer(50, layer.release());
   }
 
@@ -360,36 +361,39 @@ static void GLAPIENTRY OpenGLMessageCallback(GLenum source,
 //    SDL_Delay(1);
 //  }
 //}
+
+extern void InitGL();
+
 #include <QApplication>
 #include "BasicSceneWindow.h"
 int main(int argc, char* argv[])
 {
   {
-    QGuiApplication a(argc, argv);
+    QApplication a(argc, argv);
 
     QSurfaceFormat requestedFormat;
     requestedFormat.setVersion( 2, 0 );
 
     OrthancStone::Samples::BasicSceneWindow window;
-    //window->setFormat(requestedFormat);
-    window.setSurfaceType(QWindow::OpenGLSurface);
     window.show();
 
-//    QWindow * window = new QWindow;
-//    window->setSurfaceType(QWindow::OpenGLSurface);
-//    window->setFormat( requestedFormat );
-
-//    window->show();
+    MessageBroker broker;
+    boost::shared_ptr<UndoStack> undoStack(new UndoStack);
+    boost::shared_ptr<ViewportController> controller = boost::make_shared<ViewportController>(
+      undoStack, boost::ref(broker));
+    PrepareScene(controller);
 
     QOpenGLContext * context = new QOpenGLContext;
     context->setFormat( requestedFormat );
     context->create();
-    context->makeCurrent(&window);
+    context->makeCurrent(window.GetOpenGlWidget().context()->surface());
 
-    GLenum err = glewInit();
-    if( GLEW_OK != err ){
-    qDebug() << "[Error] GLEW failed to initialize. " << (const char*)glewGetErrorString(err);
-    }
+
+    boost::shared_ptr<OpenGLCompositor> compositor = boost::make_shared<OpenGLCompositor>(window.GetOpenGlWidget(), *controller->GetScene());
+    compositor->SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,
+                       FONT_SIZE, Orthanc::Encoding_Latin1);
+
+    window.GetOpenGlWidget().SetCompositor(compositor);
 
     return a.exec();
   }

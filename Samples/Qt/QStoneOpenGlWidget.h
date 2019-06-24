@@ -22,7 +22,7 @@ protected:
 
   void paintGL() override;
 
-  virtual void MakeCurrent() override {}
+  virtual void MakeCurrent() override;
 
   virtual void SwapBuffer() override {}
 

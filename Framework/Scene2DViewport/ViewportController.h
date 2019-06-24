@@ -30,10 +30,8 @@
 
 namespace OrthancStone
 {
-  /**
-    These constats are used 
-  
-  */
+  class UndoStack;
+
   const double ARC_RADIUS_CANVAS_COORD = 30.0;
   const double TEXT_CENTER_DISTANCE_CANVAS_COORD = 90;
 
@@ -71,7 +69,7 @@ namespace OrthancStone
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, \
       SceneTransformChanged, ViewportController);
 
-    ViewportController(MessageBroker& broker);
+    ViewportController(boost::weak_ptr<UndoStack> undoStackW, MessageBroker& broker);
 
     boost::shared_ptr<const Scene2D> GetScene() const;
     boost::shared_ptr<Scene2D>      GetScene();
@@ -107,36 +105,6 @@ namespace OrthancStone
     /** Forwarded to the underlying scene, and broadcasted to the observers */
     void FitContent(unsigned int canvasWidth, unsigned int canvasHeight);
 
-    /** 
-    Stores a command : 
-    - this first trims the undo stack to keep the first numAppliedCommands_ 
-    - then it adds the supplied command at the top of the undo stack
-
-    In other words, when a new command is pushed, all the undone (and not 
-    redone) commands are removed.
-    */
-    void PushCommand(boost::shared_ptr<TrackerCommand> command);
-
-    /**
-    Undoes the command at the top of the undo stack, or throws if there is no
-    command to undo.
-    You can check "CanUndo" first to protect against extraneous redo.
-    */
-    void Undo();
-
-    /**
-    Redoes the command that is just above the last applied command in the undo
-    stack or throws if there is no command to redo. 
-    You can check "CanRedo" first to protect against extraneous redo.
-    */
-    void Redo();
-
-    /** selfexpl */
-    bool CanUndo() const;
-
-    /** selfexpl */
-    bool CanRedo() const;
-
     /** Adds a new measure tool */
     void AddMeasureTool(boost::shared_ptr<MeasureTool> measureTool);
 
@@ -169,18 +137,31 @@ namespace OrthancStone
     */
     double GetAngleTopTextLabelDistanceS() const;
 
+
+    /** forwarded to the UndoStack */
+    void PushCommand(boost::shared_ptr<TrackerCommand> command);
+
+    /** forwarded to the UndoStack */
+    void Undo();
+
+    /** forwarded to the UndoStack */
+    void Redo();
+
+    /** forwarded to the UndoStack */
+    bool CanUndo() const;
+
+    /** forwarded to the UndoStack */
+    bool CanRedo() const;
+
+
   private:
     double GetCanvasToSceneFactor() const;
 
-    std::vector<boost::shared_ptr<TrackerCommand> > commandStack_;
-    
-    /**
-    This is always between >= 0 and <= undoStack_.size() and gives the 
-    position where the controller is in the undo stack. 
-    - If numAppliedCommands_ > 0, one can undo
-    - If numAppliedCommands_ < numAppliedCommands_.size(), one can redo
-    */
-    size_t                      numAppliedCommands_;
+    boost::weak_ptr<UndoStack>                   undoStackW_;
+
+    boost::shared_ptr<UndoStack>                 GetUndoStack();
+    boost::shared_ptr<const UndoStack>           GetUndoStack() const;
+
     std::vector<boost::shared_ptr<MeasureTool> > measureTools_;
     boost::shared_ptr<Scene2D>                   scene_;
     boost::shared_ptr<IFlexiblePointerTracker>   tracker_;

@@ -29,6 +29,7 @@
 #include "../../Framework/Scene2D/RotateSceneTracker.h"
 #include "../../Framework/Scene2D/Scene2D.h"
 #include "../../Framework/Scene2D/ZoomSceneTracker.h"
+#include "../../Framework/Scene2DViewport/UndoStack.h"
 #include "../../Framework/Scene2DViewport/CreateAngleMeasureTracker.h"
 #include "../../Framework/Scene2DViewport/CreateLineMeasureTracker.h"
 #include "../../Framework/StoneInitialization.h"
@@ -458,8 +459,10 @@ namespace OrthancStone
 
   TrackerSampleApp::TrackerSampleApp(MessageBroker& broker) : IObserver(broker)
     , currentTool_(GuiTool_Rotate)
+    , undoStack_(new UndoStack)
   {
-    controller_ = boost::shared_ptr<ViewportController>(new ViewportController(broker));
+    controller_ = boost::shared_ptr<ViewportController>(
+      new ViewportController(undoStack_, broker));
 
     controller_->RegisterObserverCallback(
       new Callable<TrackerSampleApp, ViewportController::SceneTransformChanged>

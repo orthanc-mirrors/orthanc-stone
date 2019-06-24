@@ -17,6 +17,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
+#pragma once
+
 #include <string>
 
 #if ORTHANC_ENABLE_WASM != 1
@@ -62,6 +64,7 @@ namespace OrthancStone
   {
   public:
     virtual ~IGuiAdapterWidget() {}
+
   };
 
   enum GuiAdapterMouseEventType
@@ -84,13 +87,13 @@ namespace OrthancStone
   class LockingEmitter;
     
 #if 1
-  typedef bool (*OnMouseEventFunc)(const GuiAdapterMouseEvent* mouseEvent, void* userData);
-  typedef bool (*OnMouseWheelFunc)(const GuiAdapterWheelEvent* wheelEvent, void* userData);
-  typedef bool (*OnKeyDownFunc)   (const GuiAdapterKeyboardEvent*   keyEvent,   void* userData);
-  typedef bool (*OnKeyUpFunc)     (const GuiAdapterKeyboardEvent*   keyEvent,   void* userData);
+  typedef bool (*OnMouseEventFunc)(std::string canvasId, const GuiAdapterMouseEvent* mouseEvent, void* userData);
+  typedef bool (*OnMouseWheelFunc)(std::string canvasId, const GuiAdapterWheelEvent* wheelEvent, void* userData);
+  typedef bool (*OnKeyDownFunc)   (std::string canvasId, const GuiAdapterKeyboardEvent*   keyEvent,   void* userData);
+  typedef bool (*OnKeyUpFunc)     (std::string canvasId, const GuiAdapterKeyboardEvent*   keyEvent,   void* userData);
 
   typedef bool (*OnAnimationFrameFunc)(double time, void* userData);
-  typedef bool (*OnWindowResizeFunc)(const GuiAdapterUiEvent* uiEvent, void* userData);
+  typedef bool (*OnWindowResizeFunc)(std::string canvasId, const GuiAdapterUiEvent* uiEvent, void* userData);
 
 #else
 
@@ -154,6 +157,8 @@ namespace OrthancStone
     bool altKey;
   };
 
+  std::ostream& operator<<(std::ostream& os, const GuiAdapterKeyboardEvent& event);
+
   /*
     Mousedown event trigger when either the left or right (or middle) mouse is pressed 
     on the object;
@@ -198,6 +203,12 @@ namespace OrthancStone
     GuiAdapterMouseEvent& dest,
     bool ctrlPressed, bool shiftPressed, bool altPressed,
     const SDL_Event& source);
+
+  void ConvertFromPlatform(
+    GuiAdapterWheelEvent& dest,
+    bool ctrlPressed, bool shiftPressed, bool altPressed,
+    const SDL_Event& source);
+
 # endif
 
 #endif
@@ -221,9 +232,9 @@ namespace OrthancStone
     /**
       emscripten_set_resize_callback("#window", NULL, false, OnWindowResize);
 
-      emscripten_set_wheel_callback("mycanvas1", widget1_.get(), false, OnMouseWheel);
-      emscripten_set_wheel_callback("mycanvas2", widget2_.get(), false, OnMouseWheel);
-      emscripten_set_wheel_callback("mycanvas3", widget3_.get(), false, OnMouseWheel);
+      emscripten_set_wheel_callback("mycanvas1", widget1_.get(), false, OnXXXMouseWheel);
+      emscripten_set_wheel_callback("mycanvas2", widget2_.get(), false, OnXXXMouseWheel);
+      emscripten_set_wheel_callback("mycanvas3", widget3_.get(), false, OnXXXMouseWheel);
 
       emscripten_set_keydown_callback("#window", NULL, false, OnKeyDown);
       emscripten_set_keyup_callback("#window", NULL, false, OnKeyUp);
@@ -295,17 +306,41 @@ namespace OrthancStone
     
     void OnResize();
 
-    std::vector<std::pair<OnWindowResizeFunc, void*> >
-      resizeHandlers_;
-    
-
 #if ORTHANC_ENABLE_SDL == 1
+    template<typename Func>
+    struct EventHandlerData
+    {
+      EventHandlerData(std::string canvasName, Func func, void* userData) 
+        : canvasName(canvasName)
+        , func(func)
+        , userData(userData)
+      {
+      }
+
+      std::string canvasName;
+      Func        func;
+      void*       userData;
+    };
+    std::vector<EventHandlerData<OnWindowResizeFunc> > resizeHandlers_;
+    std::vector<EventHandlerData<OnMouseEventFunc  > > mouseDownHandlers_;
+    std::vector<EventHandlerData<OnMouseEventFunc  > > mouseMoveHandlers_;
+    std::vector<EventHandlerData<OnMouseEventFunc  > > mouseUpHandlers_;
+    std::vector<EventHandlerData<OnMouseWheelFunc  > > mouseWheelHandlers_;
+    
 
     /**
     This executes all the registered headers if needed (in wasm, the browser
     deals with this)
     */
     void OnMouseEvent(uint32_t windowID, const GuiAdapterMouseEvent& event);
+    
+    /**
+    Same remark as OnMouseEvent
+    */
+    void OnMouseWheelEvent(uint32_t windowID, const GuiAdapterWheelEvent& event);
+
+    boost::shared_ptr<IGuiAdapterWidget> GetWidgetFromWindowId();
+
 #endif
 
     /**

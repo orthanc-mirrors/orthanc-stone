@@ -19,6 +19,8 @@
  **/
 
 #include "ViewportController.h"
+
+#include "UndoStack.h"
 #include "MeasureCommands.h"
 
 #include "../StoneException.h"
@@ -27,14 +29,49 @@
 
 namespace OrthancStone
 {
-  ViewportController::ViewportController(MessageBroker& broker)
+  ViewportController::ViewportController(boost::weak_ptr<UndoStack> undoStackW, MessageBroker& broker)
     : IObservable(broker)
-    , numAppliedCommands_(0)
+    , undoStackW_(undoStackW)
     , canvasToSceneFactor_(0.0)
   {
     scene_ = boost::make_shared<Scene2D>();
   }
 
+  boost::shared_ptr<UndoStack> ViewportController::GetUndoStack()
+  {
+    return undoStackW_.lock();
+  }
+
+  boost::shared_ptr<const UndoStack> ViewportController::GetUndoStack() const
+  {
+    return undoStackW_.lock();
+  }
+
+  void ViewportController::PushCommand(boost::shared_ptr<TrackerCommand> command)
+  {
+    GetUndoStack()->PushCommand(command);
+  }
+
+  void ViewportController::Undo()
+  {
+    GetUndoStack()->Undo();
+  }
+
+  void ViewportController::Redo()
+  {
+    GetUndoStack()->Redo();
+  }
+
+  bool ViewportController::CanUndo() const
+  {
+    return GetUndoStack()->CanUndo();
+  }
+
+  bool ViewportController::CanRedo() const
+  {
+    return GetUndoStack()->CanRedo();
+  }
+  
   boost::shared_ptr<const Scene2D> ViewportController::GetScene() const
   {
     return scene_;
@@ -89,42 +126,6 @@ namespace OrthancStone
   {
     scene_->FitContent(canvasWidth, canvasHeight);
     BroadcastMessage(SceneTransformChanged(*this));
-  }
-
-  void ViewportController::PushCommand(boost::shared_ptr<TrackerCommand> command)
-  {
-    commandStack_.erase(
-      commandStack_.begin() + numAppliedCommands_,
-      commandStack_.end());
-    
-    ORTHANC_ASSERT(std::find(commandStack_.begin(), commandStack_.end(), command) 
-      == commandStack_.end(), "Duplicate command");
-    commandStack_.push_back(command);
-    numAppliedCommands_++;
-  }
-
-  void ViewportController::Undo()
-  {
-    ORTHANC_ASSERT(CanUndo(), "");
-    commandStack_[numAppliedCommands_-1]->Undo();
-    numAppliedCommands_--;
-  }
-
-  void ViewportController::Redo()
-  {
-    ORTHANC_ASSERT(CanRedo(), "");
-    commandStack_[numAppliedCommands_]->Redo();
-    numAppliedCommands_++;
-  }
-
-  bool ViewportController::CanUndo() const
-  {
-    return numAppliedCommands_ > 0;
-  }
-
-  bool ViewportController::CanRedo() const
-  {
-    return numAppliedCommands_ < commandStack_.size();
   }
 
   void ViewportController::AddMeasureTool(boost::shared_ptr<MeasureTool> measureTool)

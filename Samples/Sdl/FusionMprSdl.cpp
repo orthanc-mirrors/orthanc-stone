@@ -31,6 +31,7 @@
 #include "../../Framework/Scene2D/ZoomSceneTracker.h"
 #include "../../Framework/Scene2D/RotateSceneTracker.h"
 
+#include "../../Framework/Scene2DViewport/UndoStack.h"
 #include "../../Framework/Scene2DViewport/CreateLineMeasureTracker.h"
 #include "../../Framework/Scene2DViewport/CreateAngleMeasureTracker.h"
 #include "../../Framework/Scene2DViewport/IFlexiblePointerTracker.h"
@@ -407,6 +408,7 @@ namespace OrthancStone
     , oracleObservable_(broker)
     , oracle_(*this)
     , currentTool_(FusionMprGuiTool_Rotate)
+    , undoStack_(new UndoStack)
   {
     //oracleObservable.RegisterObserverCallback
     //(new Callable
@@ -425,7 +427,7 @@ namespace OrthancStone
       <FusionMprSdlApp, OracleCommandExceptionMessage>(*this, &FusionMprSdlApp::Handle));
     
     controller_ = boost::shared_ptr<ViewportController>(
-      new ViewportController(broker_));
+      new ViewportController(undoStack_, broker_));
 
     controller_->RegisterObserverCallback(
       new Callable<FusionMprSdlApp, ViewportController::SceneTransformChanged>

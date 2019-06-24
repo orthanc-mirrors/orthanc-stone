@@ -491,6 +491,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/OneGesturePointerTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/OneGesturePointerTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/PredeclaredTypes.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/UndoStack.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/UndoStack.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/ViewportController.h
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp

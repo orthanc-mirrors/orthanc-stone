@@ -52,6 +52,7 @@ namespace OrthancStone
   static const unsigned int FONT_SIZE_1 = 24;
 
   class Scene2D;
+  class UndoStack;
 
   class TrackerSampleApp : public IObserver
     , public boost::enable_shared_from_this<TrackerSampleApp>
@@ -131,6 +132,7 @@ namespace OrthancStone
     int FIXED_INFOTEXT_LAYER_ZINDEX;
 
     GuiTool currentTool_;
+    boost::shared_ptr<UndoStack> undoStack_;
   };
 
 }

@@ -61,6 +61,7 @@ namespace OrthancStone
   static const unsigned int FONT_SIZE_1 = 24;
 
   class Scene2D;
+  class UndoStack;
 
   /**
   This application subclasses IMessageEmitter to use a mutex before forwarding Oracle messages (that
@@ -194,6 +195,8 @@ namespace OrthancStone
     int FIXED_INFOTEXT_LAYER_ZINDEX;
 
     FusionMprGuiTool currentTool_;
+    boost::shared_ptr<UndoStack> undoStack_;
+
   };
 
 }

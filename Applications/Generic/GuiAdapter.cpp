@@ -41,6 +41,15 @@ namespace OrthancStone
     widgets_.push_back(widget);
   }
 
+  std::ostream& operator<<(
+    std::ostream& os, const GuiAdapterKeyboardEvent& event)
+  {
+    os << "ctrl: " << event.ctrlKey << ", " <<
+      "shift: " << event.shiftKey << ", " <<
+      "alt: " << event.altKey;
+    return os;
+  }
+
 #if ORTHANC_ENABLE_WASM == 1
   void GuiAdapter::Run()
   {
@@ -141,7 +150,8 @@ namespace OrthancStone
   template<typename GenericFunc>
   struct FuncAdapterPayload
   {
-    void*       userData;
+    std::string canvasId;
+    void* userData;
     GenericFunc callback;
   };
 
@@ -149,7 +159,7 @@ namespace OrthancStone
            typename GuiAdapterEvent,
            typename EmscriptenEvent>
   EM_BOOL OnEventAdapterFunc(
-    int eventType, const EmscriptenEvent* wheelEvent, void* userData)
+    int eventType, const EmscriptenEvent* emEvent, void* userData)
   {
 
     // userData is OnMouseWheelFuncAdapterPayload
@@ -162,8 +172,8 @@ namespace OrthancStone
     //   " payload->userData: " << payload->userData;
     
     GuiAdapterEvent guiEvent;
-    ConvertFromPlatform(guiEvent, eventType, *wheelEvent);
-    bool ret = (*(payload->callback))(&guiEvent, payload->userData);
+    ConvertFromPlatform(guiEvent, eventType, *emEvent);
+    bool ret = (*(payload->callback))(payload->canvasId, &guiEvent, payload->userData);
     return static_cast<EM_BOOL>(ret);
   }
 
@@ -179,7 +189,7 @@ namespace OrthancStone
     
     GuiAdapterEvent guiEvent;
     ConvertFromPlatform(guiEvent, *wheelEvent);
-    bool ret = (*(payload->callback))(&guiEvent, payload->userData);
+    bool ret = (*(payload->callback))(payload->canvasId, &guiEvent, payload->userData);
     return static_cast<EM_BOOL>(ret);
   }
 
@@ -210,6 +220,7 @@ namespace OrthancStone
     FuncAdapterPayload<GenericFunc>* payload = 
       new FuncAdapterPayload<GenericFunc>();
     std::auto_ptr<FuncAdapterPayload<GenericFunc> > payloadP(payload);
+    payload->canvasId = canvasId;
     payload->callback = func;
     payload->userData = userData;
     void* userDataRaw = reinterpret_cast<void*>(payload);
@@ -236,6 +247,7 @@ namespace OrthancStone
     std::auto_ptr<FuncAdapterPayload<GenericFunc> > payload(
       new FuncAdapterPayload<GenericFunc>()
     );
+    payload->canvasId = canvasId;
     payload->callback = func;
     payload->userData = userData;
     void* userDataRaw = reinterpret_cast<void*>(payload.release());
@@ -250,14 +262,15 @@ namespace OrthancStone
   template<
     typename GenericFunc,
     typename EmscriptenSetCallbackFunc>
-    static void SetCallback3(
+    static void SetAnimationFrameCallback(
       EmscriptenSetCallbackFunc emFunc,
       void* userData, GenericFunc func)
   {
-    // LOG(ERROR) << "SetCallback3 !!!!!! (RequestAnimationFrame)";
+    // LOG(ERROR) << "SetAnimationFrameCallback !!!!!! (RequestAnimationFrame)";
     std::auto_ptr<FuncAdapterPayload<GenericFunc> > payload(
       new FuncAdapterPayload<GenericFunc>()
     );
+    payload->canvasId = "UNDEFINED";
     payload->callback = func;
     payload->userData = userData;
     void* userDataRaw = reinterpret_cast<void*>(payload.release());
@@ -352,7 +365,7 @@ namespace OrthancStone
     // LOG(ERROR) << "-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+";
     // LOG(ERROR) << "RequestAnimationFrame";
     // LOG(ERROR) << "-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+";
-    SetCallback3<OnAnimationFrameFunc>(
+    SetAnimationFrameCallback<OnAnimationFrameFunc>(
       &emscripten_request_animation_frame_loop,
       userData,
       func);
@@ -384,6 +397,7 @@ namespace OrthancStone
 
 #else
 
+// SDL ONLY
 void ConvertFromPlatform(
   GuiAdapterMouseEvent& dest,
   bool ctrlPressed, bool shiftPressed, bool altPressed,
@@ -400,6 +414,9 @@ void ConvertFromPlatform(
     break;
   case SDL_MOUSEBUTTONUP:
     dest.type = GUIADAPTER_EVENT_MOUSEUP;
+    break;
+  case SDL_MOUSEWHEEL:
+    dest.type = GUIADAPTER_EVENT_WHEEL;
     break;
   default:
     LOG(ERROR) << "SDL event: " << source.type << " is not supported";
@@ -441,43 +458,67 @@ void ConvertFromPlatform(
   //dest.padding = src.padding;
   }
 
+void ConvertFromPlatform(
+  GuiAdapterWheelEvent& dest,
+  bool ctrlPressed, bool shiftPressed, bool altPressed,
+  const SDL_Event& source)
+{
+  ConvertFromPlatform(dest.mouse, ctrlPressed, shiftPressed, altPressed, source);
+  dest.deltaX = source.wheel.x;
+  dest.deltaY = source.wheel.y;
+}
+
+
+
+  // SDL ONLY
   void GuiAdapter::SetResizeCallback(
     std::string canvasId, void* userData, bool capture, OnWindowResizeFunc func)
   {
-    resizeHandlers_.push_back(std::make_pair(func, userData));
+    resizeHandlers_.push_back(EventHandlerData<OnWindowResizeFunc>(canvasId, func, userData));
   }
 
+  // SDL ONLY
   void GuiAdapter::SetMouseDownCallback(
     std::string canvasId, void* userData, bool capture, OnMouseEventFunc func)
  {
+    mouseDownHandlers_.push_back(EventHandlerData<OnMouseEventFunc>(canvasId, func, userData));
  }
 
+  // SDL ONLY
   void GuiAdapter::SetMouseMoveCallback(
     std::string canvasId, void* userData, bool capture, OnMouseEventFunc  func)
  {
- }
+    mouseMoveHandlers_.push_back(EventHandlerData<OnMouseEventFunc>(canvasId, func, userData));
+  }
 
+  // SDL ONLY
   void GuiAdapter::SetMouseUpCallback(
     std::string canvasId, void* userData, bool capture, OnMouseEventFunc  func)
  {
- }
+    mouseUpHandlers_.push_back(EventHandlerData<OnMouseEventFunc>(canvasId, func, userData));
+  }
 
- void GuiAdapter::SetWheelCallback(
+  // SDL ONLY
+  void GuiAdapter::SetWheelCallback(
    std::string canvasId, void* userData, bool capture, OnMouseWheelFunc  func)
- {
- }
+  {
+    mouseWheelHandlers_.push_back(EventHandlerData<OnMouseWheelFunc>(canvasId, func, userData));
+  }
 
- void GuiAdapter::SetKeyDownCallback(
+  // SDL ONLY
+  void GuiAdapter::SetKeyDownCallback(
    std::string canvasId, void* userData, bool capture, OnKeyDownFunc   func)
  {
  }
 
- void GuiAdapter::SetKeyUpCallback(
+  // SDL ONLY
+  void GuiAdapter::SetKeyUpCallback(
    std::string canvasId, void* userData, bool capture, OnKeyUpFunc    func)
  {
  }
 
 
+  // SDL ONLY
   void GuiAdapter::OnAnimationFrame()
   {
     for (size_t i = 0; i < animationFrameHandlers_.size(); i++)
@@ -487,20 +528,101 @@ void ConvertFromPlatform(
     }
   }
 
+  // SDL ONLY
   void GuiAdapter::OnResize()
   {
     for (size_t i = 0; i < resizeHandlers_.size(); i++)
     {
-      // TODO: fix time 
-      (*(resizeHandlers_[i].first))(0, resizeHandlers_[i].second);
+      (*(resizeHandlers_[i].func))(
+        resizeHandlers_[i].canvasName, 0, resizeHandlers_[i].userData);
     }
   }
-   
-  void GuiAdapter::OnMouseEvent(uint32_t windowID, const GuiAdapterMouseEvent& event)
+
+  // SDL ONLY
+  void GuiAdapter::OnMouseWheelEvent(uint32_t windowID, const GuiAdapterWheelEvent& event)
   {
+
+    // the SDL window name IS the canvas name ("canvas" is used because this lib
+    // is designed for Wasm
+    SDL_Window* sdlWindow = SDL_GetWindowFromID(windowID);
+    ORTHANC_ASSERT(sdlWindow != NULL, "Window ID \"" << windowID << "\" is not a valid SDL window ID!");
+
+    const char* windowTitleSz = SDL_GetWindowTitle(sdlWindow);
+    ORTHANC_ASSERT(windowTitleSz != NULL, "Window ID \"" << windowID << "\" has a NULL window title!");
+
+    std::string windowTitle(windowTitleSz);
+    ORTHANC_ASSERT(windowTitle != "", "Window ID \"" << windowID << "\" has an empty window title!");
+
+    switch (event.mouse.type)
+    {
+    case GUIADAPTER_EVENT_WHEEL:
+      for (size_t i = 0; i < mouseWheelHandlers_.size(); i++)
+      {
+        if(mouseWheelHandlers_[i].canvasName == windowTitle)
+          (*(mouseWheelHandlers_[i].func))(windowTitle, &event, mouseWheelHandlers_[i].userData);
+      }
+      break;
+    default:
+      ORTHANC_ASSERT(false, "Wrong event.type: " << event.mouse.type << " in GuiAdapter::OnMouseWheelEvent(...)");
+      break;
+    }
   }
 
+  // SDL ONLY
+  void GuiAdapter::OnMouseEvent(uint32_t windowID, const GuiAdapterMouseEvent& event)
+  {
+    // the SDL window name IS the canvas name ("canvas" is used because this lib
+    // is designed for Wasm
+    SDL_Window* sdlWindow = SDL_GetWindowFromID(windowID);
+    ORTHANC_ASSERT(sdlWindow != NULL, "Window ID \"" << windowID << "\" is not a valid SDL window ID!");
+     
+    const char* windowTitleSz = SDL_GetWindowTitle(sdlWindow);
+    ORTHANC_ASSERT(windowTitleSz != NULL, "Window ID \"" << windowID << "\" has a NULL window title!");
 
+    std::string windowTitle(windowTitleSz);
+    ORTHANC_ASSERT(windowTitle != "", "Window ID \"" << windowID << "\" has an empty window title!");
+
+    switch (event.type)
+    {
+    case GUIADAPTER_EVENT_MOUSEDOWN:
+      for (size_t i = 0; i < mouseDownHandlers_.size(); i++)
+      {
+        if (mouseDownHandlers_[i].canvasName == windowTitle)
+          (*(mouseDownHandlers_[i].func))(windowTitle, &event, mouseDownHandlers_[i].userData);
+      }
+      break;
+    case GUIADAPTER_EVENT_MOUSEMOVE:
+      for (size_t i = 0; i < mouseMoveHandlers_.size(); i++)
+      {
+        if (mouseMoveHandlers_[i].canvasName == windowTitle)
+          (*(mouseMoveHandlers_[i].func))(windowTitle, &event, mouseMoveHandlers_[i].userData);
+      }
+      break;
+    case GUIADAPTER_EVENT_MOUSEUP:
+      for (size_t i = 0; i < mouseUpHandlers_.size(); i++)
+      {
+        if (mouseUpHandlers_[i].canvasName == windowTitle)
+          (*(mouseUpHandlers_[i].func))(windowTitle, &event, mouseUpHandlers_[i].userData);
+      }
+      break;
+    default:
+      ORTHANC_ASSERT(false, "Wrong event.type: " << event.type << " in GuiAdapter::OnMouseEvent(...)");
+      break;
+    }
+
+    ////boost::shared_ptr<IGuiAdapterWidget> GetWidgetFromWindowId();
+    //boost::shared_ptr<IGuiAdapterWidget> foundWidget;
+    //VisitWidgets([foundWidget, windowID](auto widget)
+    //  {
+    //    if (widget->GetSdlWindowID() == windowID)
+    //      foundWidget = widget;
+    //  });
+    //ORTHANC_ASSERT(foundWidget, "WindowID " << windowID << " was not found in the registered widgets!");
+    //if(foundWidget)
+    //  foundWidget->
+  }
+
+  // SDL ONLY
   void GuiAdapter::RequestAnimationFrame(OnAnimationFrameFunc func, void* userData)
   {
     animationFrameHandlers_.push_back(std::make_pair(func, userData));
@@ -508,6 +630,7 @@ void ConvertFromPlatform(
 
 # if ORTHANC_ENABLE_OPENGL == 1 && !defined(__APPLE__)   /* OpenGL debug is not available on OS X */
 
+  // SDL ONLY
   static void GLAPIENTRY
     OpenGLMessageCallback(GLenum source,
       GLenum type,
@@ -526,6 +649,7 @@ void ConvertFromPlatform(
 }
 # endif
 
+  // SDL ONLY
   void GuiAdapter::Run()
   {
 # if ORTHANC_ENABLE_OPENGL == 1 && !defined(__APPLE__)
@@ -590,6 +714,44 @@ void ConvertFromPlatform(
             tracker->PointerMove(e);
           }
 #endif
+        }
+        else if (event.type == SDL_MOUSEWHEEL)
+        {
+
+          int scancodeCount = 0;
+          const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
+          bool ctrlPressed(false);
+          bool shiftPressed(false);
+          bool altPressed(false);
+
+          if (SDL_SCANCODE_LCTRL < scancodeCount && keyboardState[SDL_SCANCODE_LCTRL])
+            ctrlPressed = true;
+          if (SDL_SCANCODE_RCTRL < scancodeCount && keyboardState[SDL_SCANCODE_RCTRL])
+            ctrlPressed = true;
+          if (SDL_SCANCODE_LSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_LSHIFT])
+            shiftPressed = true;
+          if (SDL_SCANCODE_RSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_RSHIFT])
+            shiftPressed = true;
+          if (SDL_SCANCODE_LALT < scancodeCount && keyboardState[SDL_SCANCODE_LALT])
+            altPressed = true;
+
+          GuiAdapterWheelEvent dest;
+          ConvertFromPlatform(dest, ctrlPressed, shiftPressed, altPressed, event);
+          OnMouseWheelEvent(event.window.windowID, dest);
+
+          //KeyboardModifiers modifiers = GetKeyboardModifiers(keyboardState, scancodeCount);
+
+          //int x, y;
+          //SDL_GetMouseState(&x, &y);
+
+          //if (event.wheel.y > 0)
+          //{
+          //  locker.GetCentralViewport().MouseWheel(MouseWheelDirection_Up, x, y, modifiers);
+          //}
+          //else if (event.wheel.y < 0)
+          //{
+          //  locker.GetCentralViewport().MouseWheel(MouseWheelDirection_Down, x, y, modifiers);
+          //}
         }
         else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
         {

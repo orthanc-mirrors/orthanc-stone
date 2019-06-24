@@ -29,6 +29,7 @@
 #include "../../Framework/Scene2D/Scene2D.h"
 #include "../../Framework/Scene2D/ZoomSceneTracker.h"
 #include "../../Framework/Scene2DViewport/ViewportController.h"
+#include "../../Framework/Scene2DViewport/UndoStack.h"
 
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Messages/MessageBroker.h"
@@ -376,8 +377,9 @@ int main(int argc, char* argv[])
   try
   {
     MessageBroker broker;
+    boost::shared_ptr<UndoStack> undoStack(new UndoStack);
     boost::shared_ptr<ViewportController> controller = boost::make_shared<ViewportController>(
-		boost::ref(broker));
+      undoStack, boost::ref(broker));
     PrepareScene(controller);
     Run(controller);
   }

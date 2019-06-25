@@ -42,10 +42,21 @@ namespace OrthancStone
   const uint8_t TEXT_COLOR_GREEN = 223;
   const uint8_t TEXT_COLOR_BLUE = 81;
 
+  const uint8_t TOOL_ANGLE_LINES_COLOR_RED = 0;
+  const uint8_t TOOL_ANGLE_LINES_COLOR_GREEN = 183;
+  const uint8_t TOOL_ANGLE_LINES_COLOR_BLUE = 17;
+                     
+  const uint8_t TOOL_ANGLE_LINES_HL_COLOR_RED = 0;
+  const uint8_t TOOL_ANGLE_LINES_HL_COLOR_GREEN = 17;
+  const uint8_t TOOL_ANGLE_LINES_HL_COLOR_BLUE = 183;
+
   const uint8_t TOOL_LINES_COLOR_RED = 0;
   const uint8_t TOOL_LINES_COLOR_GREEN = 223;
   const uint8_t TOOL_LINES_COLOR_BLUE = 21;
 
+  const uint8_t TOOL_LINES_HL_COLOR_RED = 0;
+  const uint8_t TOOL_LINES_HL_COLOR_GREEN = 21;
+  const uint8_t TOOL_LINES_HL_COLOR_BLUE = 223;
 
   const uint8_t TEXT_OUTLINE_COLOR_RED = 0;
   const uint8_t TEXT_OUTLINE_COLOR_GREEN = 56;
@@ -86,6 +97,12 @@ namespace OrthancStone
     measure tool, if needed
     */
     std::vector<boost::shared_ptr<MeasureTool> > HitTestMeasureTools(ScenePoint2D p);
+
+    /**
+    This function will traverse the measuring tools and will clear their 
+    highlighted state
+    */
+    void ResetMeasuringToolsHighlight();
 
     /**
     With this method, the object takes ownership of the supplied tracker and

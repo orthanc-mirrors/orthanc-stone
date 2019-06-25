@@ -71,6 +71,18 @@ namespace OrthancStone
     measuring tool
     */
     virtual bool HitTest(ScenePoint2D p) const = 0;
+
+    /**
+    Will change the measuring tool to provide visual feedback on the GUI 
+    element that is in the pointer hit zone
+    */
+    virtual void Highlight(ScenePoint2D p) = 0;
+
+    /**
+    This function must reset the visual highlighted hot zone feedback
+    */
+    virtual void ResetHighlightState() = 0;
+
   protected:
     MeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);
 

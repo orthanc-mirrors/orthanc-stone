@@ -100,6 +100,15 @@ namespace OrthancStone
     return ret;
   }
 
+
+  void ViewportController::ResetMeasuringToolsHighlight()
+  {
+    for (size_t i = 0; i < measureTools_.size(); ++i)
+    {
+      measureTools_[i]->ResetHighlightState();
+    }
+  }
+
   const OrthancStone::AffineTransform2D& ViewportController::GetCanvasToSceneTransform() const
   {
     return scene_->GetCanvasToSceneTransform();

@@ -47,16 +47,33 @@ namespace OrthancStone
 
 
     virtual bool HitTest(ScenePoint2D p) const ORTHANC_OVERRIDE;
+    virtual void Highlight(ScenePoint2D p) ORTHANC_OVERRIDE;
+    virtual void ResetHighlightState() ORTHANC_OVERRIDE;
+
+    enum LineHighlightArea
+    {
+      LineHighlightArea_None,
+      LineHighlightArea_Start,
+      LineHighlightArea_End,
+      LineHighlightArea_Segment
+    };
+
+
+    LineHighlightArea LineHitTest(ScenePoint2D p) const;
 
   private:
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();
+    void                SetLineHighlightArea(LineHighlightArea area);
 
   private:
-    ScenePoint2D   start_;
-    ScenePoint2D   end_;
-    boost::shared_ptr<LayerHolder> layerHolder_;
-    int            baseLayerIndex_;
+
+  private:
+    ScenePoint2D                    start_;
+    ScenePoint2D                    end_;
+    boost::shared_ptr<LayerHolder>  layerHolder_;
+    int                             baseLayerIndex_;
+    LineHighlightArea               lineHighlightArea_;
   };
 
 }

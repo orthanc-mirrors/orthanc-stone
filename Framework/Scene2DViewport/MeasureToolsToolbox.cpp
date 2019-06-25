@@ -322,4 +322,11 @@ namespace OrthancStone
         p.GetY() + yoffsets[i] * pixelToScene);
     }
   }
+
+  std::ostream& operator<<(std::ostream& os, const ScenePoint2D& p)
+  {
+    os << "x = " << p.GetX() << " , y = " << p.GetY();
+    return os;
+  }
+
 }

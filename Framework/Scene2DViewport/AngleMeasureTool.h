@@ -47,18 +47,34 @@ namespace OrthancStone
     void SetCenter(ScenePoint2D start);
     void SetSide2End(ScenePoint2D start);
 
-
     virtual bool HitTest(ScenePoint2D p) const ORTHANC_OVERRIDE;
+    virtual void Highlight(ScenePoint2D p) ORTHANC_OVERRIDE;
+    virtual void ResetHighlightState() ORTHANC_OVERRIDE;
+
+    enum AngleHighlightArea
+    {
+      AngleHighlightArea_None,
+      AngleHighlightArea_Side1End,
+      AngleHighlightArea_Side1,
+      AngleHighlightArea_Side2End,
+      AngleHighlightArea_Side2,
+      AngleHighlightArea_Center
+    };
+
+
+    AngleHighlightArea AngleHitTest(ScenePoint2D p) const;
 
   private:
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();
+    void                SetAngleHighlightArea(AngleHighlightArea area);
 
   private:
-    ScenePoint2D    side1End_;
-    ScenePoint2D    side2End_;
-    ScenePoint2D    center_;
+    ScenePoint2D                    side1End_;
+    ScenePoint2D                    side2End_;
+    ScenePoint2D                    center_;
     boost::shared_ptr<LayerHolder>  layerHolder_;
+    AngleHighlightArea              angleHighlightArea_;
   };
 }
 

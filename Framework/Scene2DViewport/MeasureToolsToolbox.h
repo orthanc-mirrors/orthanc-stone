@@ -33,7 +33,7 @@ namespace OrthancStone
   void AddSquare(PolylineSceneLayer::Chain& chain,
     boost::shared_ptr<const Scene2D>     scene,
     const ScenePoint2D& centerS,
-    const double&       sideLengthS);
+    const double& sideLengthS);
 
   /**
     Creates an arc centered on c that goes
@@ -48,23 +48,23 @@ namespace OrthancStone
     Warning: the existing chain content will be wiped out.
   */
   void AddShortestArc(
-      PolylineSceneLayer::Chain&  chain
-    , const ScenePoint2D&         p1
-    , const ScenePoint2D&         c
-    , const ScenePoint2D&         p2
-    , const double&               radiusS
+    PolylineSceneLayer::Chain& chain
+    , const ScenePoint2D& p1
+    , const ScenePoint2D& c
+    , const ScenePoint2D& p2
+    , const double& radiusS
     , const int                   subdivisionsCount = 63);
 
   /**
-    Creates an arc (open curve) with "numSubdivisions" (N + 1 points) from 
+    Creates an arc (open curve) with "numSubdivisions" (N + 1 points) from
     start angle to end angle, by following the shortest arc.
 
     Warning: the existing chain content will be wiped out.
   */
   void AddShortestArc(
-      PolylineSceneLayer::Chain&  chain
-    , const ScenePoint2D&         centerS
-    , const double&               radiusS
+    PolylineSceneLayer::Chain& chain
+    , const ScenePoint2D& centerS
+    , const double& radiusS
     , const double                startAngleRad
     , const double                endAngleRad
     , const int                   subdivisionsCount = 63);
@@ -79,24 +79,24 @@ namespace OrthancStone
       - so that r2 belongs to the p2,c line
       - so that the distance from c to r2 equals radius
 
-    if clockwise is true, the arc is drawn from r1 to r2 with increasing 
+    if clockwise is true, the arc is drawn from r1 to r2 with increasing
     angle values. Otherwise, the angle values decrease.
 
     Warning: the existing chain content will be wiped out.
   */
 
   void AddArc(
-      PolylineSceneLayer::Chain& chain
-    , const Scene2D&             scene
-    , const ScenePoint2D&        p1
-    , const ScenePoint2D&        c
-    , const ScenePoint2D&        p2
-    , const double&              radiusS
+    PolylineSceneLayer::Chain & chain
+    , const Scene2D & scene
+    , const ScenePoint2D & p1
+    , const ScenePoint2D & c
+    , const ScenePoint2D & p2
+    , const double& radiusS
     , const bool                 clockwise
     , const int                  subdivisionsCount = 63);
- 
+
   /**
-    Creates an arc (open curve) with "numSubdivisions" (N + 1 points) from 
+    Creates an arc (open curve) with "numSubdivisions" (N + 1 points) from
     start angle to end angle with the supplied radius.
 
     if clockwise is true, the arc is drawn from start to end by increasing the
@@ -107,10 +107,10 @@ namespace OrthancStone
     Warning: the existing chain content will be wiped out.
   */
   void AddArc(
-      PolylineSceneLayer::Chain& chain
-    , const Scene2D&      scene
+    PolylineSceneLayer::Chain& chain
+    , const Scene2D& scene
     , const ScenePoint2D& centerS
-    , const double&       radiusS
+    , const double& radiusS
     , const double        startAngleRad
     , const double        endAngleRad
     , const bool          clockwise
@@ -123,9 +123,9 @@ namespace OrthancStone
     Warning: the existing chain content will be wiped out.
   */
   void AddCircle(PolylineSceneLayer::Chain& chain,
-    const Scene2D&      scene,
+    const Scene2D& scene,
     const ScenePoint2D& centerS,
-    const double&       radiusS,
+    const double& radiusS,
     const int           numSubdivisions = 63);
 
   /**
@@ -135,10 +135,10 @@ namespace OrthancStone
   double NormalizeAngle(double angle);
 
   /**
-    Returns the angle magnitude between the p1,c and p2,c lines. 
+    Returns the angle magnitude between the p1,c and p2,c lines.
     The returned angle is between 0 and 2*pi
 
-    If the angle is between 0 and pi, this means that the shortest arc 
+    If the angle is between 0 and pi, this means that the shortest arc
     from p1 to p2 is clockwise.
 
     If the angle is between pi and 2*pi, this means that the shortest arc
@@ -146,7 +146,7 @@ namespace OrthancStone
 
   */
   double MeasureAngle(
-      const ScenePoint2D& p1
+    const ScenePoint2D& p1
     , const ScenePoint2D& c
     , const ScenePoint2D& p2);
 
@@ -163,7 +163,7 @@ namespace OrthancStone
   to the *smallest* half-plane defined by the [c,p1[ and [c,p2[ half-lines.
   */
   void GetPositionOnBisectingLine(
-      ScenePoint2D&       result
+    ScenePoint2D& result
     , const ScenePoint2D& p1
     , const ScenePoint2D& c
     , const ScenePoint2D& p2
@@ -172,14 +172,18 @@ namespace OrthancStone
 
   /**
   This helper is used when drawing text with an outline.
-  It set the properties for several text layers at once : first the 
-  four outline layers, with a position shift and then the actual main text 
+  It set the properties for several text layers at once : first the
+  four outline layers, with a position shift and then the actual main text
   layer.
 
   The five text layers are supposed to already exist in the scene, starting
-  from layerIndex, up to (and not including) layerIndex+5. 
+  from layerIndex, up to (and not including) layerIndex+5.
   */
   void SetTextLayerOutlineProperties(
     boost::shared_ptr<Scene2D> scene, boost::shared_ptr<LayerHolder> layerHolder,
     const char* text, ScenePoint2D p);
+
+
+  std::ostream& operator<<(std::ostream& os, const ScenePoint2D& p);
 }
+

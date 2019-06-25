@@ -35,6 +35,9 @@
 
 namespace OrthancStone
 {
+  class IFlexiblePointerTracker;
+  class MeasureToolMemento;
+
   class MeasureTool : public IObserver
   {
   public:
@@ -71,6 +74,25 @@ namespace OrthancStone
     measuring tool
     */
     virtual bool HitTest(ScenePoint2D p) const = 0;
+
+    /**
+    This method must return a memento the captures the tool state (not including
+    the highlighting state
+    */
+    virtual boost::shared_ptr<MeasureToolMemento> GetMemento() const = 0;
+
+    /**
+    This method must apply the supplied memento (this requires RTTI to check
+    the type)
+    */
+    virtual void SetMemento(boost::shared_ptr<MeasureToolMemento>) = 0;
+
+    /**
+    This must create an edition tracker suitable for the supplied click position,
+    or an empty pointer if no hit test (although this should have been checked
+    first)
+    */
+    virtual boost::shared_ptr<IFlexiblePointerTracker> CreateEditionTracker(const PointerEvent& e) = 0;
 
     /**
     Will change the measuring tool to provide visual feedback on the GUI 
@@ -116,6 +138,13 @@ namespace OrthancStone
     boost::weak_ptr<ViewportController> controllerW_;
     bool     enabled_;
   };
+
+  class MeasureToolMemento
+  {
+    public:
+      virtual ~MeasureToolMemento() {};
+  };
+
 }
 
 extern void TrackerSample_SetInfoDisplayMessage(

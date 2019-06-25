@@ -20,6 +20,7 @@
 
 #include "LineMeasureTool.h"
 #include "MeasureToolsToolbox.h"
+#include "EditLineMeasureTracker.h"
 #include "LayerHolder.h"
 
 #include <Core/Logging.h>
@@ -117,6 +118,44 @@ namespace OrthancStone
   bool LineMeasureTool::HitTest(ScenePoint2D p) const
   {
     return LineHitTest(p) != LineHighlightArea_None;
+  }
+
+  boost::shared_ptr<IFlexiblePointerTracker> LineMeasureTool::CreateEditionTracker(const PointerEvent& e)
+  {
+    ScenePoint2D scenePos = e.GetMainPosition().Apply(
+      GetScene()->GetCanvasToSceneTransform());
+
+    if (!HitTest(scenePos))
+      return boost::shared_ptr<IFlexiblePointerTracker>();
+
+    /**
+      new EditLineMeasureTracker(
+        boost::shared_ptr<LineMeasureTool> measureTool;
+        MessageBroker & broker,
+        boost::weak_ptr<ViewportController>          controllerW,
+        const PointerEvent & e);
+    */
+    boost::shared_ptr<EditLineMeasureTracker> editLineMeasureTracker(
+      new EditLineMeasureTracker(shared_from_this(), GetBroker(), GetController(), e));
+    return editLineMeasureTracker;
+  }
+
+
+  boost::shared_ptr<MeasureToolMemento> LineMeasureTool::GetMemento() const
+  {
+    boost::shared_ptr<LineMeasureToolMemento> memento(new LineMeasureToolMemento());
+    memento->start_ = start_;
+    memento->end_ = end_;
+    return memento;
+  }
+
+  void LineMeasureTool::SetMemento(boost::shared_ptr<MeasureToolMemento> mementoBase)
+  {
+    boost::shared_ptr<LineMeasureToolMemento> memento = boost::dynamic_pointer_cast<LineMeasureToolMemento>(mementoBase);
+    ORTHANC_ASSERT(memento.get() != NULL, "Internal error: wrong (or bad) memento");
+    start_ = memento->start_;
+    end_ = memento->end_;
+    RefreshScene();
   }
 
   void LineMeasureTool::RefreshScene()

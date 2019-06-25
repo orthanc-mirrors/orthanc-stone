@@ -50,5 +50,30 @@ namespace OrthancStone
   private:
     bool                            commitResult_;
   };
+
+  class EditMeasureTracker : public IFlexiblePointerTracker
+  {
+  public:
+    virtual void Cancel() ORTHANC_OVERRIDE;
+    virtual bool IsAlive() const ORTHANC_OVERRIDE;
+  protected:
+    EditMeasureTracker(boost::weak_ptr<ViewportController> controllerW, const PointerEvent& e);
+
+    ~EditMeasureTracker();
+
+  protected:
+    boost::shared_ptr<EditMeasureCommand> command_;
+    boost::weak_ptr<ViewportController>   controllerW_;
+    bool                                  alive_;
+    boost::shared_ptr<Scene2D>            GetScene();
+
+    ScenePoint2D                          GetOriginalClickPosition() const
+    {
+      return originalClickPosition_;
+    }
+  private:
+    ScenePoint2D                          originalClickPosition_;
+    bool                                  commitResult_;
+  };
 }
 

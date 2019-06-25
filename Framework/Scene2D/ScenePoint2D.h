@@ -73,6 +73,15 @@ namespace OrthancStone
       return v;
     }
 
+    const ScenePoint2D operator+(const ScenePoint2D& a) const
+    {
+      ScenePoint2D v;
+      v.x_ = x_ + a.x_;
+      v.y_ = y_ + a.y_;
+
+      return v;
+    }
+
     const ScenePoint2D operator*(double a) const
     {
       ScenePoint2D v;

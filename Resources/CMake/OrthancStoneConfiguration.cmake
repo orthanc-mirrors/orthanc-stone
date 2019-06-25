@@ -474,6 +474,14 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateMeasureTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateSimpleTrackerAdapter.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditAngleMeasureCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditAngleMeasureCommand.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditAngleMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditAngleMeasureTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditLineMeasureCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditLineMeasureCommand.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditLineMeasureTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/EditLineMeasureTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/IFlexiblePointerTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LayerHolder.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/LayerHolder.h

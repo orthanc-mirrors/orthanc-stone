@@ -30,13 +30,14 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <vector>
 #include <cmath>
 
 namespace OrthancStone
 {
-  class AngleMeasureTool : public MeasureTool
+  class AngleMeasureTool : public MeasureTool, public boost::enable_shared_from_this<AngleMeasureTool>
   {
   public:
     AngleMeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);
@@ -50,6 +51,9 @@ namespace OrthancStone
     virtual bool HitTest(ScenePoint2D p) const ORTHANC_OVERRIDE;
     virtual void Highlight(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void ResetHighlightState() ORTHANC_OVERRIDE;
+    virtual boost::shared_ptr<IFlexiblePointerTracker> CreateEditionTracker(const PointerEvent& e) ORTHANC_OVERRIDE;
+    virtual boost::shared_ptr<MeasureToolMemento> GetMemento() const ORTHANC_OVERRIDE;
+    virtual void SetMemento(boost::shared_ptr<MeasureToolMemento>) ORTHANC_OVERRIDE;
 
     enum AngleHighlightArea
     {
@@ -75,6 +79,14 @@ namespace OrthancStone
     ScenePoint2D                    center_;
     boost::shared_ptr<LayerHolder>  layerHolder_;
     AngleHighlightArea              angleHighlightArea_;
+  };
+
+  class AngleMeasureToolMemento : public MeasureToolMemento
+  {
+  public:
+    ScenePoint2D                    side1End_;
+    ScenePoint2D                    side2End_;
+    ScenePoint2D                    center_;
   };
 }
 

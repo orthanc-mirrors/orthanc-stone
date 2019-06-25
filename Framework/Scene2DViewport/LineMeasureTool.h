@@ -28,13 +28,14 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <vector>
 #include <cmath>
 
 namespace OrthancStone
 {
-  class LineMeasureTool : public MeasureTool
+  class LineMeasureTool : public MeasureTool, public boost::enable_shared_from_this<LineMeasureTool>
   {
   public:
     LineMeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);
@@ -49,6 +50,9 @@ namespace OrthancStone
     virtual bool HitTest(ScenePoint2D p) const ORTHANC_OVERRIDE;
     virtual void Highlight(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void ResetHighlightState() ORTHANC_OVERRIDE;
+    virtual boost::shared_ptr<IFlexiblePointerTracker> CreateEditionTracker(const PointerEvent& e) ORTHANC_OVERRIDE;
+    virtual boost::shared_ptr<MeasureToolMemento> GetMemento() const ORTHANC_OVERRIDE;
+    virtual void SetMemento(boost::shared_ptr<MeasureToolMemento>) ORTHANC_OVERRIDE;
 
     enum LineHighlightArea
     {
@@ -74,6 +78,13 @@ namespace OrthancStone
     boost::shared_ptr<LayerHolder>  layerHolder_;
     int                             baseLayerIndex_;
     LineHighlightArea               lineHighlightArea_;
+  };
+
+  class LineMeasureToolMemento : public MeasureToolMemento
+  {
+  public:
+    ScenePoint2D                    start_;
+    ScenePoint2D                    end_;
   };
 
 }

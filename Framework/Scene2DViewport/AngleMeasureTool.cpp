@@ -20,6 +20,7 @@
 
 #include "AngleMeasureTool.h"
 #include "MeasureToolsToolbox.h"
+#include "EditAngleMeasureTracker.h"
 #include "LayerHolder.h"
 
 #include <Core/Logging.h>
@@ -90,6 +91,26 @@ namespace OrthancStone
     SetAngleHighlightArea(AngleHighlightArea_None);
   }
 
+
+  boost::shared_ptr<OrthancStone::MeasureToolMemento> AngleMeasureTool::GetMemento() const
+  {
+    boost::shared_ptr<AngleMeasureToolMemento> memento(new AngleMeasureToolMemento());
+    memento->center_ = center_;
+    memento->side1End_ = side1End_;
+    memento->side2End_ = side2End_;
+    return memento;
+  }
+  
+  void AngleMeasureTool::SetMemento(boost::shared_ptr<MeasureToolMemento> mementoBase)
+  {
+    boost::shared_ptr<AngleMeasureToolMemento> memento = boost::dynamic_pointer_cast<AngleMeasureToolMemento>(mementoBase);
+    ORTHANC_ASSERT(memento.get() != NULL, "Internal error: wrong (or bad) memento");
+    center_   = memento->center_;
+    side1End_ = memento->side1End_;
+    side2End_ = memento->side2End_;
+    RefreshScene();
+  }
+
   void AngleMeasureTool::Highlight(ScenePoint2D p)
   {
     AngleHighlightArea angleHighlightArea = AngleHitTest(p);
@@ -138,6 +159,27 @@ namespace OrthancStone
   bool AngleMeasureTool::HitTest(ScenePoint2D p) const
   {
     return AngleHitTest(p) != AngleHighlightArea_None;
+  }
+
+
+  boost::shared_ptr<IFlexiblePointerTracker> AngleMeasureTool::CreateEditionTracker(const PointerEvent& e)
+  {
+    ScenePoint2D scenePos = e.GetMainPosition().Apply(
+      GetScene()->GetCanvasToSceneTransform());
+
+    if (!HitTest(scenePos))
+      return boost::shared_ptr<IFlexiblePointerTracker>();
+
+    /**
+      new EditLineMeasureTracker(
+        boost::shared_ptr<LineMeasureTool> measureTool;
+        MessageBroker & broker,
+        boost::weak_ptr<ViewportController>          controllerW,
+        const PointerEvent & e);
+    */
+    boost::shared_ptr<EditAngleMeasureTracker> editAngleMeasureTracker(
+      new EditAngleMeasureTracker(shared_from_this(), GetBroker(), GetController(), e));
+    return editAngleMeasureTracker;
   }
 
   void AngleMeasureTool::SetCenter(ScenePoint2D pt)

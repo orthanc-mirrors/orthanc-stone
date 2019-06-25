@@ -638,7 +638,7 @@ namespace OrthancStone
   {
     if (windowID == 0)
     {
-      LOG(WARN) << "GuiAdapter::OnMouseEvent -- windowID == 0 and event won't be routed!";
+      LOG(WARNING) << "GuiAdapter::OnMouseEvent -- windowID == 0 and event won't be routed!";
     }
     else
     {

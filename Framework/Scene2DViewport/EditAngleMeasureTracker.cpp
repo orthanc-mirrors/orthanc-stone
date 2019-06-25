@@ -86,7 +86,7 @@ namespace OrthancStone
     }
     break;
     default:
-      LOG(WARN) << "Warning: please retry the measuring tool editing operation!";
+      LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
       break;
     }
   }

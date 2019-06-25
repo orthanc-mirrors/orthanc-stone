@@ -247,7 +247,7 @@ namespace OrthancStone
 
         DisplayFloatingCtrlInfoText(e);
       }
-      else
+      else if (activeTracker_.get() != NULL)
       {
         HideInfoText();
         //LOG(TRACE) << "(event.type == SDL_MOUSEMOTION)";
@@ -266,6 +266,32 @@ namespace OrthancStone
           activeTracker_->PointerMove(e);
           if (!activeTracker_->IsAlive())
             activeTracker_.reset();
+        }
+      }
+      else
+      {
+        HideInfoText();
+
+        PointerEvent e;
+        e.AddPosition(compositor_->GetPixelCenterCoordinates(event.button.x, event.button.y));
+
+        ScenePoint2D scenePos = e.GetMainPosition().Apply(
+          controller_->GetScene()->GetCanvasToSceneTransform());
+        //auto measureTools = GetController()->HitTestMeasureTools(scenePos);
+        //LOG(TRACE) << "# of hit tests: " << measureTools.size();
+        
+        // this returns the collection of measuring tools where hit test is true
+        std::vector<boost::shared_ptr<MeasureTool> > measureTools = controller_->HitTestMeasureTools(scenePos);
+
+        // let's refresh the measuring tools highlighted state
+        // first let's tag them as "unhighlighted"
+        controller_->ResetMeasuringToolsHighlight();
+
+        // then immediately take the first one and ask it to highlight the 
+        // measuring tool UI part that is hot
+        if (measureTools.size() > 0)
+        {
+          measureTools[0]->Highlight(scenePos);
         }
       }
     }
@@ -596,6 +622,15 @@ namespace OrthancStone
   boost::shared_ptr<IFlexiblePointerTracker> TrackerSampleApp::TrackerHitTest(const PointerEvent & e)
   {
     // std::vector<boost::shared_ptr<MeasureTool>> measureTools_;
+    ScenePoint2D scenePos = e.GetMainPosition().Apply(
+      controller_->GetScene()->GetCanvasToSceneTransform());
+
+    std::vector<boost::shared_ptr<MeasureTool> > measureTools = controller_->HitTestMeasureTools(scenePos);
+
+    if (measureTools.size() > 0)
+    {
+      return measureTools[0]->CreateEditionTracker(e);
+    }
     return boost::shared_ptr<IFlexiblePointerTracker>();
   }
 

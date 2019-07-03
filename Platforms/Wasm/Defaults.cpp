@@ -41,6 +41,39 @@ std::shared_ptr<Deprecated::WidgetViewport> FindViewportSharedPtr(ViewportHandle
 extern "C" {
 #endif
 
+#if 0
+  size_t bigChunksTotalSize = 0;
+  std::map<void*, size_t> allocatedBigChunks;
+
+  extern void* emscripten_builtin_malloc(size_t bytes);
+  extern void emscripten_builtin_free(void* mem);
+
+  void * __attribute__((noinline)) malloc(size_t size)
+  {
+    void *ptr = emscripten_builtin_malloc(size);
+    if (size > 100000)
+    {
+      bigChunksTotalSize += size;
+      printf("++ Allocated %zu bytes, got %p. (%zu MB consumed by big chunks)\n", size, ptr, bigChunksTotalSize/(1024*1024));
+      allocatedBigChunks[ptr] = size;
+    }
+    return ptr;
+  }
+
+  void __attribute__((noinline)) free(void *ptr)
+  {
+    emscripten_builtin_free(ptr);
+
+    std::map<void*, size_t>::iterator it = allocatedBigChunks.find(ptr);
+    if (it != allocatedBigChunks.end())
+    {
+      bigChunksTotalSize -= it->second;
+      printf("--     Freed %zu bytes at %p.   (%zu MB consumed by big chunks)\n", it->second, ptr, bigChunksTotalSize/(1024*1024));
+      allocatedBigChunks.erase(it);
+    }
+  }
+#endif // 0
+
   using namespace OrthancStone;
 
   // when WASM needs a C++ viewport

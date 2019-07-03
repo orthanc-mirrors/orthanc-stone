@@ -163,6 +163,8 @@ namespace OrthancStone
     
     virtual ~RadiographyScene();
 
+    virtual size_t GetApproximateMemoryUsage() const;
+
     bool GetWindowing(float& center,
                       float& width) const;
 

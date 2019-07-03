@@ -355,5 +355,10 @@ namespace OrthancStone
                           float& maxValue) const = 0;
 
     friend class RadiographyMaskLayer; // because it needs to GetTransform on the dicomLayer it relates to
+
+    virtual size_t GetApproximateMemoryUsage() const // this is used to limit the number of scenes loaded in RAM when resources are limited (we actually only count the size used by the images, not the C structs)
+    {
+      return 0;
+    }
   };
 }

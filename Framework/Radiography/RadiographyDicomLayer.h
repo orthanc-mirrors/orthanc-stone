@@ -60,6 +60,22 @@ namespace OrthancStone
       return frame_;
     }
 
+    virtual size_t GetApproximateMemoryUsage() const
+    {
+      size_t size = 0;
+      if (source_.get() != NULL)
+      {
+        size += source_->GetPitch() * source_->GetHeight();
+      }
+      if (converted_.get() != NULL)
+      {
+        size += converted_->GetPitch() * converted_->GetHeight();
+      }
+
+      return size;
+    }
+
+
     void SetDicomTags(const OrthancPlugins::FullOrthancDataset& dataset);
 
     void SetSourceImage(Orthanc::ImageAccessor* image);   // Takes ownership

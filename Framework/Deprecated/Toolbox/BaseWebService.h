@@ -94,7 +94,7 @@ namespace Deprecated
     BaseWebService(OrthancStone::MessageBroker& broker) :
       IWebService(broker),
       IObserver(broker),
-      cacheEnabled_(true),
+      cacheEnabled_(false),
       cacheCurrentSize_(0),
       cacheMaxSize_(100*1024*1024)
     {

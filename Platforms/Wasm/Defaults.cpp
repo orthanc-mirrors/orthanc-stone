@@ -42,6 +42,8 @@ extern "C" {
 #endif
 
 #if 0
+  // rewrite malloc/free in order to monitor allocations.  We actually only monitor large allocations (like images ...)
+
   size_t bigChunksTotalSize = 0;
   std::map<void*, size_t> allocatedBigChunks;
 

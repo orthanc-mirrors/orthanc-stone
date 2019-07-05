@@ -20,6 +20,7 @@
 
 #include "AngleMeasureTool.h"
 #include "MeasureToolsToolbox.h"
+#include "EditAngleMeasureTracker.h"
 #include "LayerHolder.h"
 
 #include <Core/Logging.h>
@@ -43,6 +44,7 @@ namespace OrthancStone
     MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW)
     : MeasureTool(broker, controllerW)
     , layerHolder_(boost::make_shared<LayerHolder>(controllerW,1,5))
+    , angleHighlightArea_(AngleHighlightArea_None)
   {
 
   }
@@ -75,10 +77,109 @@ namespace OrthancStone
     RefreshScene();
   }
 
+  void AngleMeasureTool::SetAngleHighlightArea(AngleHighlightArea area)
+  {
+    if (angleHighlightArea_ != area)
+    {
+      angleHighlightArea_ = area;
+      RefreshScene();
+    }
+  }
+
+  void AngleMeasureTool::ResetHighlightState()
+  {
+    SetAngleHighlightArea(AngleHighlightArea_None);
+  }
+
+
+  boost::shared_ptr<OrthancStone::MeasureToolMemento> AngleMeasureTool::GetMemento() const
+  {
+    boost::shared_ptr<AngleMeasureToolMemento> memento(new AngleMeasureToolMemento());
+    memento->center_ = center_;
+    memento->side1End_ = side1End_;
+    memento->side2End_ = side2End_;
+    return memento;
+  }
+  
+  void AngleMeasureTool::SetMemento(boost::shared_ptr<MeasureToolMemento> mementoBase)
+  {
+    boost::shared_ptr<AngleMeasureToolMemento> memento = boost::dynamic_pointer_cast<AngleMeasureToolMemento>(mementoBase);
+    ORTHANC_ASSERT(memento.get() != NULL, "Internal error: wrong (or bad) memento");
+    center_   = memento->center_;
+    side1End_ = memento->side1End_;
+    side2End_ = memento->side2End_;
+    RefreshScene();
+  }
+
+  void AngleMeasureTool::Highlight(ScenePoint2D p)
+  {
+    AngleHighlightArea angleHighlightArea = AngleHitTest(p);
+    SetAngleHighlightArea(angleHighlightArea);
+  }
+
+  AngleMeasureTool::AngleHighlightArea AngleMeasureTool::AngleHitTest(ScenePoint2D p) const
+  {
+    const double pixelToScene =
+      GetScene()->GetCanvasToSceneTransform().ComputeZoom();
+    const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD * pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD;
+
+    {
+      const double sqDistanceFromSide1End = ScenePoint2D::SquaredDistancePtPt(p, side1End_);
+      if (sqDistanceFromSide1End <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+        return AngleHighlightArea_Side1End;
+    }
+
+    {
+      const double sqDistanceFromSide2End = ScenePoint2D::SquaredDistancePtPt(p, side2End_);
+      if (sqDistanceFromSide2End <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+        return AngleHighlightArea_Side2End;
+    }
+
+    {
+      const double sqDistanceFromCenter = ScenePoint2D::SquaredDistancePtPt(p, center_);
+      if (sqDistanceFromCenter <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+        return AngleHighlightArea_Center;
+    }
+
+    {
+      const double sqDistanceFromSide1 = ScenePoint2D::SquaredDistancePtSegment(center_, side1End_, p);
+      if (sqDistanceFromSide1 <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+        return AngleHighlightArea_Side1;
+    }
+
+    {
+      const double sqDistanceFromSide2 = ScenePoint2D::SquaredDistancePtSegment(center_, side2End_, p);
+      if (sqDistanceFromSide2 <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+        return AngleHighlightArea_Side2;
+    }
+
+    return AngleHighlightArea_None;
+  }
 
   bool AngleMeasureTool::HitTest(ScenePoint2D p) const
   {
-    throw std::logic_error("The method or operation is not implemented.");
+    return AngleHitTest(p) != AngleHighlightArea_None;
+  }
+
+
+  boost::shared_ptr<IFlexiblePointerTracker> AngleMeasureTool::CreateEditionTracker(const PointerEvent& e)
+  {
+    ScenePoint2D scenePos = e.GetMainPosition().Apply(
+      GetScene()->GetCanvasToSceneTransform());
+
+    if (!HitTest(scenePos))
+      return boost::shared_ptr<IFlexiblePointerTracker>();
+
+    /**
+      new EditLineMeasureTracker(
+        boost::shared_ptr<LineMeasureTool> measureTool;
+        MessageBroker & broker,
+        boost::weak_ptr<ViewportController>          controllerW,
+        const PointerEvent & e);
+    */
+    boost::shared_ptr<EditAngleMeasureTracker> editAngleMeasureTracker(
+      new EditAngleMeasureTracker(shared_from_this(), GetBroker(), GetController(), e));
+    return editAngleMeasureTracker;
   }
 
   void AngleMeasureTool::SetCenter(ScenePoint2D pt)
@@ -101,7 +202,8 @@ namespace OrthancStone
           PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(0);
           polylineLayer->ClearAllChains();
 
-          const Color color(0, 183, 17);
+          const Color color(TOOL_ANGLE_LINES_COLOR_RED, TOOL_ANGLE_LINES_COLOR_GREEN, TOOL_ANGLE_LINES_COLOR_BLUE);
+          const Color highlightColor(TOOL_ANGLE_LINES_HL_COLOR_RED, TOOL_ANGLE_LINES_HL_COLOR_GREEN, TOOL_ANGLE_LINES_HL_COLOR_BLUE);
 
           // sides
           {
@@ -109,13 +211,20 @@ namespace OrthancStone
               PolylineSceneLayer::Chain chain;
               chain.push_back(side1End_);
               chain.push_back(center_);
-              polylineLayer->AddChain(chain, false, color);
+
+              if ((angleHighlightArea_ == AngleHighlightArea_Side1) || (angleHighlightArea_ == AngleHighlightArea_Side2))
+                polylineLayer->AddChain(chain, false, highlightColor);
+              else
+                polylineLayer->AddChain(chain, false, color);
             }
             {
               PolylineSceneLayer::Chain chain;
               chain.push_back(side2End_);
               chain.push_back(center_);
-              polylineLayer->AddChain(chain, false, color);
+              if ((angleHighlightArea_ == AngleHighlightArea_Side1) || (angleHighlightArea_ == AngleHighlightArea_Side2))
+                polylineLayer->AddChain(chain, false, highlightColor);
+              else
+                polylineLayer->AddChain(chain, false, color);
             }
           }
 
@@ -126,14 +235,23 @@ namespace OrthancStone
               //TODO: take DPI into account
               AddSquare(chain, GetScene(), side1End_, 
                 GetController()->GetHandleSideLengthS());
-              polylineLayer->AddChain(chain, true, color);
+              
+              if (angleHighlightArea_ == AngleHighlightArea_Side1End)
+                polylineLayer->AddChain(chain, true, highlightColor);
+              else
+                polylineLayer->AddChain(chain, true, color);
+              
             }
             {
               PolylineSceneLayer::Chain chain;
               //TODO: take DPI into account
               AddSquare(chain, GetScene(), side2End_, 
                 GetController()->GetHandleSideLengthS());
-              polylineLayer->AddChain(chain, true, color);
+
+              if (angleHighlightArea_ == AngleHighlightArea_Side2End)
+                  polylineLayer->AddChain(chain, true, highlightColor);
+              else
+                polylineLayer->AddChain(chain, true, color);
             }
           }
 
@@ -143,7 +261,10 @@ namespace OrthancStone
 
             AddShortestArc(chain, side1End_, center_, side2End_,
                            controller->GetAngleToolArcRadiusS());
-            polylineLayer->AddChain(chain, false, color);
+            if (angleHighlightArea_ == AngleHighlightArea_Center)
+              polylineLayer->AddChain(chain, false, highlightColor);
+            else
+              polylineLayer->AddChain(chain, false, color);
           }
         }
         {

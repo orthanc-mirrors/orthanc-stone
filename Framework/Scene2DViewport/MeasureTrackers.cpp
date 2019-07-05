@@ -46,7 +46,6 @@ namespace OrthancStone
   {
     // if the tracker completes successfully, we add the command
     // to the undo stack
-
     // otherwise, we simply undo it
     if (commitResult_)
       controllerW_.lock()->PushCommand(command_);
@@ -59,6 +58,41 @@ namespace OrthancStone
     return controllerW_.lock()->GetScene();
   }
 
+  EditMeasureTracker::EditMeasureTracker(boost::weak_ptr<ViewportController> controllerW, const PointerEvent& e)
+    : controllerW_(controllerW)
+    , alive_(true)
+    , commitResult_(true)
+  {
+    boost::shared_ptr<ViewportController> controller = controllerW.lock();
+    originalClickPosition_ = e.GetMainPosition().Apply(controller->GetScene()->GetCanvasToSceneTransform());
+  }
+
+  boost::shared_ptr<Scene2D> EditMeasureTracker::GetScene()
+  {
+    return controllerW_.lock()->GetScene();
+  }
+
+  void EditMeasureTracker::Cancel()
+  {
+    commitResult_ = false;
+    alive_ = false;
+  }
+
+  bool EditMeasureTracker::IsAlive() const
+  {
+    return alive_;
+  }
+
+  EditMeasureTracker::~EditMeasureTracker()
+  {
+    // if the tracker completes successfully, we add the command
+    // to the undo stack
+    // otherwise, we simply undo it
+    if (commitResult_)
+      controllerW_.lock()->PushCommand(command_);
+    else
+      command_->Undo();
+  }
 }
 
 

@@ -20,6 +20,7 @@
 
 #include "LineMeasureTool.h"
 #include "MeasureToolsToolbox.h"
+#include "EditLineMeasureTracker.h"
 #include "LayerHolder.h"
 
 #include <Core/Logging.h>
@@ -33,6 +34,7 @@ namespace OrthancStone
     MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW)
     : MeasureTool(broker, controllerW)
     , layerHolder_(boost::make_shared<LayerHolder>(controllerW, 1, 5))
+    , lineHighlightArea_(LineHighlightArea_None)
   {
 
   }
@@ -72,26 +74,88 @@ namespace OrthancStone
     RefreshScene();
   }
 
-  
+  void LineMeasureTool::SetLineHighlightArea(LineHighlightArea area)
+  {
+    if (lineHighlightArea_ != area)
+    {
+      lineHighlightArea_ = area;
+      RefreshScene();
+    }
+  }
 
-  bool LineMeasureTool::HitTest(ScenePoint2D p) const
+  void LineMeasureTool::ResetHighlightState()
+  {
+    SetLineHighlightArea(LineHighlightArea_None);
+  }
+ 
+  void LineMeasureTool::Highlight(ScenePoint2D p)
+  {
+    LineHighlightArea lineHighlightArea = LineHitTest(p);
+    SetLineHighlightArea(lineHighlightArea);
+  }
+
+  LineMeasureTool::LineHighlightArea LineMeasureTool::LineHitTest(ScenePoint2D p) const
   {
     const double pixelToScene =
       GetScene()->GetCanvasToSceneTransform().ComputeZoom();
+    const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD * pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD;
 
-    // the hit test will return true if the supplied point (in scene coords)
-    // is close to the handle or to the line.
+    const double sqDistanceFromStart = ScenePoint2D::SquaredDistancePtPt(p, start_);
+    if (sqDistanceFromStart <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+      return LineHighlightArea_Start;
+    
+    const double sqDistanceFromEnd = ScenePoint2D::SquaredDistancePtPt(p, end_);
+    if (sqDistanceFromEnd <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+      return LineHighlightArea_End;
 
-    // since the handle is small, a nice approximation is to defined this
-    // as a threshold on the distance between the point and the handle center.
+    const double sqDistanceFromPtSegment = ScenePoint2D::SquaredDistancePtSegment(start_, end_, p);
+    if (sqDistanceFromPtSegment <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+      return LineHighlightArea_Segment;
 
-    // this threshold is defined as a constant value in CANVAS units.
+    return LineHighlightArea_None;
+  }
+
+  bool LineMeasureTool::HitTest(ScenePoint2D p) const
+  {
+    return LineHitTest(p) != LineHighlightArea_None;
+  }
+
+  boost::shared_ptr<IFlexiblePointerTracker> LineMeasureTool::CreateEditionTracker(const PointerEvent& e)
+  {
+    ScenePoint2D scenePos = e.GetMainPosition().Apply(
+      GetScene()->GetCanvasToSceneTransform());
+
+    if (!HitTest(scenePos))
+      return boost::shared_ptr<IFlexiblePointerTracker>();
+
+    /**
+      new EditLineMeasureTracker(
+        boost::shared_ptr<LineMeasureTool> measureTool;
+        MessageBroker & broker,
+        boost::weak_ptr<ViewportController>          controllerW,
+        const PointerEvent & e);
+    */
+    boost::shared_ptr<EditLineMeasureTracker> editLineMeasureTracker(
+      new EditLineMeasureTracker(shared_from_this(), GetBroker(), GetController(), e));
+    return editLineMeasureTracker;
+  }
 
 
-    // line equation from two points (non-normalized)
-    // (y0-y1)*x + (x1-x0)*xy + (x0*y1 - x1*y0) = 0
-    // 
-    return false;
+  boost::shared_ptr<MeasureToolMemento> LineMeasureTool::GetMemento() const
+  {
+    boost::shared_ptr<LineMeasureToolMemento> memento(new LineMeasureToolMemento());
+    memento->start_ = start_;
+    memento->end_ = end_;
+    return memento;
+  }
+
+  void LineMeasureTool::SetMemento(boost::shared_ptr<MeasureToolMemento> mementoBase)
+  {
+    boost::shared_ptr<LineMeasureToolMemento> memento = boost::dynamic_pointer_cast<LineMeasureToolMemento>(mementoBase);
+    ORTHANC_ASSERT(memento.get() != NULL, "Internal error: wrong (or bad) memento");
+    start_ = memento->start_;
+    end_ = memento->end_;
+    RefreshScene();
   }
 
   void LineMeasureTool::RefreshScene()
@@ -112,11 +176,18 @@ namespace OrthancStone
                             TOOL_LINES_COLOR_GREEN, 
                             TOOL_LINES_COLOR_BLUE);
 
+          const Color highlightColor(TOOL_LINES_HL_COLOR_RED,
+                                     TOOL_LINES_HL_COLOR_GREEN,
+                                     TOOL_LINES_HL_COLOR_BLUE);
+
           {
             PolylineSceneLayer::Chain chain;
             chain.push_back(start_);
             chain.push_back(end_);
-            polylineLayer->AddChain(chain, false, color);
+            if(lineHighlightArea_ == LineHighlightArea_Segment)
+              polylineLayer->AddChain(chain, false, highlightColor);
+            else
+              polylineLayer->AddChain(chain, false, color);
           }
 
           // handles
@@ -128,7 +199,10 @@ namespace OrthancStone
               AddSquare(chain, GetScene(), start_, 
                 GetController()->GetHandleSideLengthS());
               
-              polylineLayer->AddChain(chain, true, color);
+              if (lineHighlightArea_ == LineHighlightArea_Start)
+                polylineLayer->AddChain(chain, true, highlightColor);
+              else
+                polylineLayer->AddChain(chain, true, color);
             }
 
             {
@@ -138,7 +212,10 @@ namespace OrthancStone
               AddSquare(chain, GetScene(), end_, 
                 GetController()->GetHandleSideLengthS());
               
-              polylineLayer->AddChain(chain, true, color);
+              if (lineHighlightArea_ == LineHighlightArea_End)
+                polylineLayer->AddChain(chain, true, highlightColor);
+              else
+                polylineLayer->AddChain(chain, true, color);
             }
           }
 
@@ -150,7 +227,7 @@ namespace OrthancStone
           double squareDist = deltaX * deltaX + deltaY * deltaY;
           double dist = sqrt(squareDist);
           char buf[64];
-          sprintf(buf, "%0.02f units", dist);
+          sprintf(buf, "%0.02f mm", dist);
 
           // TODO: for now we simply position the text overlay at the middle
           // of the measuring segment

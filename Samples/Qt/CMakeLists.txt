@@ -74,9 +74,10 @@ ORTHANC_QT_WRAP_CPP(BASIC_SCENE_APPLICATIONS_SOURCES
 add_executable(BasicScene
   BasicScene.cpp
   QStoneOpenGlWidget.cpp
+  Scene2DInteractor.cpp
   ${BASIC_SCENE_APPLICATIONS_SOURCES}
   )
 
-target_include_directories(BasicScene PUBLIC ${CMAKE_SOURCE_DIR})
+target_include_directories(BasicScene PUBLIC ${CMAKE_SOURCE_DIR} ${STONE_SOURCES_DIR})
 
 target_link_libraries(BasicScene OrthancStone)

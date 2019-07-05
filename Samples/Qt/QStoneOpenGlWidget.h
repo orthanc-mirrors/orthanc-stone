@@ -6,40 +6,55 @@
 #include <boost/shared_ptr.hpp>
 #include "../../Framework/OpenGL/IOpenGLContext.h"
 #include "../../Framework/Scene2D/OpenGLCompositor.h"
+#include "Scene2DInteractor.h"
 
-
-class QStoneOpenGlWidget : public QOpenGLWidget, public OrthancStone::OpenGL::IOpenGLContext
+namespace OrthancStone
 {
-  boost::shared_ptr<OrthancStone::OpenGLCompositor> compositor_;
-
-public:
-  QStoneOpenGlWidget(QWidget *parent) : QOpenGLWidget(parent) { }
-
-protected:
-  void initializeGL() override;
-
-  void resizeGL(int w, int h) override;
-
-  void paintGL() override;
-
-  virtual void MakeCurrent() override;
-
-  virtual void SwapBuffer() override {}
-
-  virtual unsigned int GetCanvasWidth() const override
+  class QStoneOpenGlWidget : public QOpenGLWidget, public OrthancStone::OpenGL::IOpenGLContext
   {
-   return this->width();
-  }
+    boost::shared_ptr<OrthancStone::OpenGLCompositor> compositor_;
+    boost::shared_ptr<Scene2DInteractor> sceneInteractor_;
 
-  virtual unsigned int GetCanvasHeight() const override
-  {
-    return this->height();
-  }
+  public:
+    QStoneOpenGlWidget(QWidget *parent) :
+      QOpenGLWidget(parent)
+    {
+    }
 
-public:
-  void SetCompositor(boost::shared_ptr<OrthancStone::OpenGLCompositor> compositor)
-  {
-    compositor_ = compositor;
-  }
+  protected:
 
-};
+    //**** QWidget overrides
+    void initializeGL() override;
+    void resizeGL(int w, int h) override;
+    void paintGL() override;
+
+    void mousePressEvent(QMouseEvent* event) override;
+
+    //**** IOpenGLContext overrides
+
+    virtual void MakeCurrent() override;
+    virtual void SwapBuffer() override {}
+
+    virtual unsigned int GetCanvasWidth() const override
+    {
+      return this->width();
+    }
+
+    virtual unsigned int GetCanvasHeight() const override
+    {
+      return this->height();
+    }
+
+  public:
+    void SetInteractor(boost::shared_ptr<Scene2DInteractor> sceneInteractor)
+    {
+      sceneInteractor_ = sceneInteractor;
+    }
+
+    void SetCompositor(boost::shared_ptr<OrthancStone::OpenGLCompositor> compositor)
+    {
+      compositor_ = compositor;
+    }
+
+  };
+}

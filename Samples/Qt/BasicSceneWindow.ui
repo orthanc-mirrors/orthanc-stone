@@ -28,7 +28,7 @@
   <property name="layoutDirection">
    <enum>Qt::LeftToRight</enum>
   </property>
-  <widget class="QWidget" name="centralwidget">
+  <widget class="QWidget" name="mainWidget">
    <property name="sizePolicy">
     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
      <horstretch>0</horstretch>
@@ -43,7 +43,7 @@
      <enum>QLayout::SetDefaultConstraint</enum>
     </property>
     <item>
-     <widget class="QStoneOpenGlWidget" name="centralWidget">
+     <widget class="OrthancStone::QStoneOpenGlWidget" name="centralWidget" native="true">
       <property name="minimumSize">
        <size>
         <width>0</width>
@@ -75,7 +75,7 @@
  <customwidgets>
   <customwidget>
    <class>QStoneOpenGlWidget</class>
-   <extends>QStoneOpenGlWidget</extends>
+   <extends>QWidget</extends>
    <header location="global">QStoneOpenGlWidget.h</header>
   </customwidget>
  </customwidgets>

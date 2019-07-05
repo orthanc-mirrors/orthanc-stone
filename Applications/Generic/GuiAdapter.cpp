@@ -434,15 +434,15 @@ void ConvertFromPlatform(
   switch (source.button.button)
   {
   case SDL_BUTTON_MIDDLE:
-    dest.button = 1;
+    dest.button = GUIADAPTER_MOUSEBUTTON_MIDDLE;
     break;
 
   case SDL_BUTTON_RIGHT:
-    dest.button = 2;
+    dest.button = GUIADAPTER_MOUSEBUTTON_RIGHT;
     break;
 
   case SDL_BUTTON_LEFT:
-    dest.button = 0;
+    dest.button = GUIADAPTER_MOUSEBUTTON_LEFT;
     break;
 
   default:

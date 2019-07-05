@@ -366,6 +366,8 @@ extern void InitGL();
 
 #include <QApplication>
 #include "BasicSceneWindow.h"
+#include "Scene2DInteractor.h"
+
 int main(int argc, char* argv[])
 {
   {
@@ -383,11 +385,13 @@ int main(int argc, char* argv[])
       undoStack, boost::ref(broker));
     PrepareScene(controller);
 
+    boost::shared_ptr<OrthancStone::Scene2DInteractor> interactor(new BasicScene2DInteractor(controller));
+    window.GetOpenGlWidget().SetInteractor(interactor);
+
     QOpenGLContext * context = new QOpenGLContext;
     context->setFormat( requestedFormat );
     context->create();
     context->makeCurrent(window.GetOpenGlWidget().context()->surface());
-
 
     boost::shared_ptr<OpenGLCompositor> compositor = boost::make_shared<OpenGLCompositor>(window.GetOpenGlWidget(), *controller->GetScene());
     compositor->SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,

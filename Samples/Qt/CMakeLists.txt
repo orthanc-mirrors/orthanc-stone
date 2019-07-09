@@ -73,8 +73,9 @@ ORTHANC_QT_WRAP_CPP(BASIC_SCENE_APPLICATIONS_SOURCES
 
 add_executable(BasicScene
   BasicScene.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/../Shared/SharedBasicScene.h
+  ${CMAKE_CURRENT_LIST_DIR}/../Shared/SharedBasicScene.cpp
   QStoneOpenGlWidget.cpp
-  Scene2DInteractor.cpp
   ${BASIC_SCENE_APPLICATIONS_SOURCES}
   )
 

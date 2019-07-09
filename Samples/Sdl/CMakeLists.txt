@@ -66,6 +66,8 @@ add_library(OrthancStone STATIC
 
 add_executable(BasicScene
   BasicScene.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/../Shared/SharedBasicScene.h
+  ${CMAKE_CURRENT_LIST_DIR}/../Shared/SharedBasicScene.cpp
   )
 
 target_link_libraries(BasicScene OrthancStone)

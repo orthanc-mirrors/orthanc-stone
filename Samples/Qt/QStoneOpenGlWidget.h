@@ -6,7 +6,7 @@
 #include <boost/shared_ptr.hpp>
 #include "../../Framework/OpenGL/IOpenGLContext.h"
 #include "../../Framework/Scene2D/OpenGLCompositor.h"
-#include "Scene2DInteractor.h"
+#include "../../Applications/Generic/Scene2DInteractor.h"
 
 namespace OrthancStone
 {
@@ -19,7 +19,8 @@ namespace OrthancStone
     QStoneOpenGlWidget(QWidget *parent) :
       QOpenGLWidget(parent)
     {
-      setFocusPolicy(Qt::StrongFocus);
+      setFocusPolicy(Qt::StrongFocus);  // to enable keyPressEvent
+      setMouseTracking(true);           // to enable mouseMoveEvent event when no button is pressed
     }
 
   protected:

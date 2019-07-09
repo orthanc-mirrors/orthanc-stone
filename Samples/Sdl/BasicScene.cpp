@@ -21,25 +21,14 @@
 
 // From Stone
 #include "../../Applications/Sdl/SdlOpenGLWindow.h"
-#include "../../Framework/Scene2D/CairoCompositor.h"
-#include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
 #include "../../Framework/Scene2D/OpenGLCompositor.h"
-#include "../../Framework/Scene2D/PanSceneTracker.h"
-#include "../../Framework/Scene2D/RotateSceneTracker.h"
-#include "../../Framework/Scene2D/Scene2D.h"
-#include "../../Framework/Scene2D/ZoomSceneTracker.h"
-#include "../../Framework/Scene2DViewport/ViewportController.h"
 #include "../../Framework/Scene2DViewport/UndoStack.h"
-
 #include "../../Framework/StoneInitialization.h"
 #include "../../Framework/Messages/MessageBroker.h"
 
 // From Orthanc framework
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/Images/PngWriter.h>
 
 #include <boost/make_shared.hpp>
 #include <boost/ref.hpp>
@@ -47,215 +36,55 @@
 #include <SDL.h>
 #include <stdio.h>
 
-static const unsigned int FONT_SIZE = 32;
-static const int LAYER_POSITION = 150;
 
-void PrepareScene(boost::shared_ptr<OrthancStone::ViewportController> controller)
-{
-  using namespace OrthancStone;
-  Scene2D& scene(*controller->GetScene());
-  // Texture of 2x2 size
-  {
-    Orthanc::Image i(Orthanc::PixelFormat_RGB24, 2, 2, false);
-    
-    uint8_t *p = reinterpret_cast<uint8_t*>(i.GetRow(0));
-    p[0] = 255;
-    p[1] = 0;
-    p[2] = 0;
+#include "../Shared/SharedBasicScene.h"
 
-    p[3] = 0;
-    p[4] = 255;
-    p[5] = 0;
+using namespace OrthancStone;
 
-    p = reinterpret_cast<uint8_t*>(i.GetRow(1));
-    p[0] = 0;
-    p[1] = 0;
-    p[2] = 255;
-
-    p[3] = 255;
-    p[4] = 0;
-    p[5] = 0;
-
-    scene.SetLayer(12, new ColorTextureSceneLayer(i));
-
-    std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
-    l->SetOrigin(-3, 2);
-    l->SetPixelSpacing(1.5, 1);
-    l->SetAngle(20.0 / 180.0 * M_PI);
-    scene.SetLayer(14, l.release());
-  }
-
-  // Texture of 1x1 size
-  {
-    Orthanc::Image i(Orthanc::PixelFormat_RGB24, 1, 1, false);
-    
-    uint8_t *p = reinterpret_cast<uint8_t*>(i.GetRow(0));
-    p[0] = 255;
-    p[1] = 0;
-    p[2] = 0;
-
-    std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
-    l->SetOrigin(-2, 1);
-    l->SetAngle(20.0 / 180.0 * M_PI);
-    scene.SetLayer(13, l.release());
-  }
-
-  // Some lines
-  {
-    std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
-
-    layer->SetThickness(10);
-
-    PolylineSceneLayer::Chain chain;
-    chain.push_back(ScenePoint2D(0 - 0.5, 0 - 0.5));
-    chain.push_back(ScenePoint2D(0 - 0.5, 2 - 0.5));
-    chain.push_back(ScenePoint2D(2 - 0.5, 2 - 0.5));
-    chain.push_back(ScenePoint2D(2 - 0.5, 0 - 0.5));
-    layer->AddChain(chain, true, 255, 0, 0);
-
-    chain.clear();
-    chain.push_back(ScenePoint2D(-5, -5));
-    chain.push_back(ScenePoint2D(5, -5));
-    chain.push_back(ScenePoint2D(5, 5));
-    chain.push_back(ScenePoint2D(-5, 5));
-    layer->AddChain(chain, true, 0, 255, 0);
-
-    double dy = 1.01;
-    chain.clear();
-    chain.push_back(ScenePoint2D(-4, -4));
-    chain.push_back(ScenePoint2D(4, -4 + dy));
-    chain.push_back(ScenePoint2D(-4, -4 + 2.0 * dy));
-    chain.push_back(ScenePoint2D(4, 2));
-    layer->AddChain(chain, false, 0, 0, 255);
-
-    scene.SetLayer(50, layer.release());
-  }
-
-  // Some text
-  {
-    std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer);
-    layer->SetText("Hello");
-    scene.SetLayer(100, layer.release());
-  }
-}
-
-
-void TakeScreenshot(const std::string& target,
-                    const OrthancStone::Scene2D& scene,
-                    unsigned int canvasWidth,
-                    unsigned int canvasHeight)
-{
-  using namespace OrthancStone;
-  // Take a screenshot, then save it as PNG file
-  CairoCompositor compositor(scene, canvasWidth, canvasHeight);
-  compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, FONT_SIZE, Orthanc::Encoding_Latin1);
-  compositor.Refresh();
-
-  Orthanc::ImageAccessor canvas;
-  compositor.GetCanvas().GetReadOnlyAccessor(canvas);
-
-  Orthanc::Image png(Orthanc::PixelFormat_RGB24, canvas.GetWidth(), canvas.GetHeight(), false);
-  Orthanc::ImageProcessing::Convert(png, canvas);
-        
-  Orthanc::PngWriter writer;
-  writer.WriteToFile(target, png);
-}
-
+boost::shared_ptr<BasicScene2DInteractor> interactor;
 
 void HandleApplicationEvent(boost::shared_ptr<OrthancStone::ViewportController> controller,
                             const OrthancStone::OpenGLCompositor& compositor,
-                            const SDL_Event& event,
-                            boost::shared_ptr<OrthancStone::IFlexiblePointerTracker>& activeTracker)
+                            const SDL_Event& event)
 {
   using namespace OrthancStone;
   Scene2D& scene(*controller->GetScene());
-  if (event.type == SDL_MOUSEMOTION)
+  if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEMOTION)
   {
+    // TODO: this code is copy/pasted from GuiAdapter::Run() -> find the right place
     int scancodeCount = 0;
     const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
+    bool ctrlPressed(false);
+    bool shiftPressed(false);
+    bool altPressed(false);
 
-    if (activeTracker.get() == NULL &&
-        SDL_SCANCODE_LCTRL < scancodeCount &&
-        keyboardState[SDL_SCANCODE_LCTRL])
-    {
-      // The "left-ctrl" key is down, while no tracker is present
+    if (SDL_SCANCODE_LCTRL < scancodeCount && keyboardState[SDL_SCANCODE_LCTRL])
+      ctrlPressed = true;
+    if (SDL_SCANCODE_RCTRL < scancodeCount && keyboardState[SDL_SCANCODE_RCTRL])
+      ctrlPressed = true;
+    if (SDL_SCANCODE_LSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_LSHIFT])
+      shiftPressed = true;
+    if (SDL_SCANCODE_RSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_RSHIFT])
+      shiftPressed = true;
+    if (SDL_SCANCODE_LALT < scancodeCount && keyboardState[SDL_SCANCODE_LALT])
+      altPressed = true;
 
-      PointerEvent e;
-      e.AddPosition(compositor.GetPixelCenterCoordinates(event.button.x, event.button.y));
+    GuiAdapterMouseEvent guiEvent;
+    ConvertFromPlatform(guiEvent, ctrlPressed, shiftPressed, altPressed, event);
+    PointerEvent pointerEvent;
+    pointerEvent.AddPosition(compositor.GetPixelCenterCoordinates(event.button.x, event.button.y));
 
-      ScenePoint2D p = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
-
-      char buf[64];
-      sprintf(buf, "(%0.02f,%0.02f)", p.GetX(), p.GetY());
-
-      if (scene.HasLayer(LAYER_POSITION))
-      {
-        TextSceneLayer& layer =
-          dynamic_cast<TextSceneLayer&>(scene.GetLayer(LAYER_POSITION));
-        layer.SetText(buf);
-        layer.SetPosition(p.GetX(), p.GetY());
-      }
-      else
-      {
-        std::auto_ptr<TextSceneLayer> 
-          layer(new TextSceneLayer);
-        layer->SetColor(0, 255, 0);
-        layer->SetText(buf);
-        layer->SetBorder(20);
-        layer->SetAnchor(BitmapAnchor_BottomCenter);
-        layer->SetPosition(p.GetX(), p.GetY());
-        scene.SetLayer(LAYER_POSITION, layer.release());
-      }
-    }
-    else
-    {
-      scene.DeleteLayer(LAYER_POSITION);
-    }
+    interactor->OnMouseEvent(guiEvent, pointerEvent);
+    return;
   }
-  else if (event.type == SDL_MOUSEBUTTONDOWN)
+  else if ((event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) && event.key.repeat == 0  /* Ignore key bounce */)
   {
-    PointerEvent e;
-    e.AddPosition(compositor.GetPixelCenterCoordinates(event.button.x, event.button.y));
+    GuiAdapterKeyboardEvent guiEvent;
+    ConvertFromPlatform(guiEvent, event);
 
-    switch (event.button.button)
-    {
-      case SDL_BUTTON_MIDDLE:
-        activeTracker = boost::make_shared<PanSceneTracker>(controller, e);
-        break;
-
-      case SDL_BUTTON_RIGHT:
-        activeTracker = boost::make_shared<ZoomSceneTracker>(controller, 
-          e, compositor.GetHeight());
-        break;
-
-      case SDL_BUTTON_LEFT:
-        activeTracker = boost::make_shared<RotateSceneTracker>(controller, e);
-        break;
-
-      default:
-        break;
-    }
+    interactor->OnKeyboardEvent(guiEvent);
   }
-  else if (event.type == SDL_KEYDOWN &&
-           event.key.repeat == 0 /* Ignore key bounce */)
-  {
-    switch (event.key.keysym.sym)
-    {
-      case SDLK_s:
-        controller->FitContent(compositor.GetWidth(),
-                         compositor.GetHeight());
-        break;
-              
-      case SDLK_c:
-        TakeScreenshot("screenshot.png", scene, 
-                       compositor.GetWidth(),
-                       compositor.GetHeight());
-        break;
-              
-      default:
-        break;
-    }
-  }
+
 }
 
 
@@ -279,7 +108,6 @@ OpenGLMessageCallback(GLenum source,
 
 void Run(boost::shared_ptr<OrthancStone::ViewportController> controller)
 {
-  using namespace OrthancStone;
   SdlOpenGLWindow window("Hello", 1024, 768);
 
   controller->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
@@ -287,16 +115,15 @@ void Run(boost::shared_ptr<OrthancStone::ViewportController> controller)
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(OpenGLMessageCallback, 0);
 
-  OpenGLCompositor compositor(window, *controller->GetScene());
-  compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
-                     FONT_SIZE, Orthanc::Encoding_Latin1);
-
-  boost::shared_ptr<IFlexiblePointerTracker> tracker;
+  boost::shared_ptr<OpenGLCompositor> compositor(new OpenGLCompositor(window, *controller->GetScene()));
+  compositor->SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,
+                     BASIC_SCENE_FONT_SIZE, Orthanc::Encoding_Latin1);
+  interactor->SetCompositor(compositor);
 
   bool stop = false;
   while (!stop)
   {
-    compositor.Refresh();
+    compositor->Refresh();
 
     SDL_Event event;
     while (!stop &&
@@ -307,33 +134,10 @@ void Run(boost::shared_ptr<OrthancStone::ViewportController> controller)
         stop = true;
         break;
       }
-      else if (event.type == SDL_MOUSEMOTION)
-      {
-        if (tracker)
-        {
-          PointerEvent e;
-          e.AddPosition(compositor.GetPixelCenterCoordinates(
-            event.button.x, event.button.y));
-          tracker->PointerMove(e);
-        }
-      }
-      else if (event.type == SDL_MOUSEBUTTONUP)
-      {
-        if (tracker)
-        {
-          PointerEvent e;
-          e.AddPosition(compositor.GetPixelCenterCoordinates(
-            event.button.x, event.button.y));
-          tracker->PointerUp(e);
-          if(!tracker->IsAlive())
-            tracker.reset();
-        }
-      }
       else if (event.type == SDL_WINDOWEVENT &&
                event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
       {
-        tracker.reset();
-        compositor.UpdateSize();
+        compositor->UpdateSize();
       }
       else if (event.type == SDL_KEYDOWN &&
                event.key.repeat == 0 /* Ignore key bounce */)
@@ -353,11 +157,12 @@ void Run(boost::shared_ptr<OrthancStone::ViewportController> controller)
         }
       }
       
-      HandleApplicationEvent(controller, compositor, event, tracker);
+      HandleApplicationEvent(controller, *compositor, event);
     }
 
     SDL_Delay(1);
   }
+  interactor.reset();
 }
 
 
@@ -380,6 +185,7 @@ int main(int argc, char* argv[])
     boost::shared_ptr<UndoStack> undoStack(new UndoStack);
     boost::shared_ptr<ViewportController> controller = boost::make_shared<ViewportController>(
       undoStack, boost::ref(broker));
+    interactor.reset(new BasicScene2DInteractor(controller));
     PrepareScene(controller);
     Run(controller);
   }

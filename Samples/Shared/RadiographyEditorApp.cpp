@@ -31,6 +31,7 @@
 #include "../../Framework/Scene2D/ZoomSceneTracker.h"
 #include "../../Framework/Scene2DViewport/CreateAngleMeasureTracker.h"
 #include "../../Framework/Scene2DViewport/CreateLineMeasureTracker.h"
+#include "../../Framework/Scene2DViewport/UndoStack.h"
 #include "../../Framework/StoneInitialization.h"
 
 // From Orthanc framework
@@ -610,7 +611,8 @@ namespace OrthancStone
     compositorFactory_(compositorFactory),
     currentTool_(GuiTool_Rotate)
   {
-    controller_ = boost::shared_ptr<ViewportController>(new ViewportController(IObserver::GetBroker()));
+    boost::shared_ptr<UndoStack> undoStack(new UndoStack);
+    controller_ = boost::shared_ptr<ViewportController>(new ViewportController(undoStack, IObserver::GetBroker()));
 
     controller_->RegisterObserverCallback(
           new Callable<RadiographyEditorApp, ViewportController::SceneTransformChanged>

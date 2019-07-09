@@ -2,6 +2,7 @@
 
 #include "../../Framework/Scene2D/PanSceneTracker.h"
 #include "../../Framework/Scene2D/ZoomSceneTracker.h"
+#include "../../Framework/Scene2D/RotateSceneTracker.h"
 
 
 namespace OrthancStone
@@ -37,6 +38,7 @@ bool BasicScene2DInteractor::OnMouseEvent(const GuiAdapterMouseEvent& event, con
   {
     if (event.button == GUIADAPTER_MOUSEBUTTON_LEFT)
     {
+      currentTracker_.reset(new RotateSceneTracker(viewportController_, pointerEvent));
     }
     else if (event.button == GUIADAPTER_MOUSEBUTTON_MIDDLE)
     {

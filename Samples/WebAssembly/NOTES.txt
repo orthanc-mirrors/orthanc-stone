@@ -63,3 +63,15 @@ $ make -C ~/Subversion/orthanc/r -j4
 $ make -C ~/Subversion/orthanc-webviewer/r -j4
 $ ~/Subversion/orthanc/r/Orthanc ../ConfigurationLocalSJO.json
 
+
+Local AM
+========
+
+. ~/apps/emsdk/emsdk_env.sh
+cd /mnt/c/o/
+mkdir -p build_stone_newsamples_wasm_wsl
+mkdir -p build_install_stone_newsamples_wasm_wsl
+cd build_stone_newsamples_wasm_wsl
+cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT=/mnt/c/o/orthanc/ -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON /mnt/c/o/orthanc-stone/Samples/WebAssembly -DCMAKE_INSTALL_PREFIX=/mnt/c/o/build_install_stone_newsamples_wasm_wsl
+ninja
+

@@ -1,6 +1,8 @@
 #pragma once
 
+#include "../../Framework/Scene2D/PointerEvent.h"
 #include "../../Framework/Scene2DViewport/ViewportController.h"
+#include "../../Framework/Scene2DViewport/IFlexiblePointerTracker.h"
 #include "../../Applications/Generic/GuiAdapter.h"
 
 
@@ -11,13 +13,15 @@ namespace OrthancStone
   {
   protected:
     boost::shared_ptr<ViewportController> viewportController_;
+    boost::shared_ptr<IFlexiblePointerTracker> currentTracker_;
 
   public:
     Scene2DInteractor(boost::shared_ptr<ViewportController> viewportController) :
       viewportController_(viewportController)
     {}
 
-    virtual void OnMouseEvent(const GuiAdapterMouseEvent& event) = 0;
+    virtual void OnMouseEvent(const GuiAdapterMouseEvent& guiEvent, const PointerEvent& pointerEvent) = 0;
+
   };
 }
 
@@ -28,6 +32,6 @@ public:
     Scene2DInteractor(viewportController)
   {}
 
-  virtual void OnMouseEvent(const OrthancStone::GuiAdapterMouseEvent& event) override;
+  virtual void OnMouseEvent(const OrthancStone::GuiAdapterMouseEvent& event, const OrthancStone::PointerEvent& pointerEvent) override;
 };
 

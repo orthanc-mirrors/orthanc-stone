@@ -30,52 +30,66 @@ void QStoneOpenGlWidget::paintGL()
 }
 
 void ConvertFromPlatform(
-  OrthancStone::GuiAdapterMouseEvent& dest,
-  const QMouseEvent& qtEvent)
+    OrthancStone::GuiAdapterMouseEvent& guiEvent,
+    PointerEvent& pointerEvent,
+    const QMouseEvent& qtEvent,
+    const OrthancStone::OpenGLCompositor& compositor)
 {
-  dest.targetX = qtEvent.x();
-  dest.targetY = qtEvent.y();
+  guiEvent.targetX = qtEvent.x();
+  guiEvent.targetY = qtEvent.y();
+  pointerEvent.AddPosition(compositor.GetPixelCenterCoordinates(guiEvent.targetX, guiEvent.targetY));
 
   switch (qtEvent.button())
   {
-    case Qt::LeftButton: dest.button = OrthancStone::GUIADAPTER_MOUSEBUTTON_LEFT; break;
-    case Qt::MiddleButton: dest.button = OrthancStone::GUIADAPTER_MOUSEBUTTON_MIDDLE; break;
-    case Qt::RightButton: dest.button = OrthancStone::GUIADAPTER_MOUSEBUTTON_RIGHT; break;
+  case Qt::LeftButton: guiEvent.button = OrthancStone::GUIADAPTER_MOUSEBUTTON_LEFT; break;
+  case Qt::MiddleButton: guiEvent.button = OrthancStone::GUIADAPTER_MOUSEBUTTON_MIDDLE; break;
+  case Qt::RightButton: guiEvent.button = OrthancStone::GUIADAPTER_MOUSEBUTTON_RIGHT; break;
   default:
-    dest.button = OrthancStone::GUIADAPTER_MOUSEBUTTON_LEFT;
+    guiEvent.button = OrthancStone::GUIADAPTER_MOUSEBUTTON_LEFT;
   }
 
   if (qtEvent.modifiers().testFlag(Qt::ShiftModifier))
   {
-    dest.shiftKey = true;
+    guiEvent.shiftKey = true;
   }
   if (qtEvent.modifiers().testFlag(Qt::ControlModifier))
   {
-    dest.ctrlKey = true;
+    guiEvent.ctrlKey = true;
   }
   if (qtEvent.modifiers().testFlag(Qt::AltModifier))
   {
-    dest.altKey = true;
+    guiEvent.altKey = true;
   }
 
 }
 
+void QStoneOpenGlWidget::mouseEvent(QMouseEvent* qtEvent, OrthancStone::GuiAdapterHidEventType guiEventType)
+{
+  OrthancStone::GuiAdapterMouseEvent guiEvent;
+  PointerEvent pointerEvent;
+  ConvertFromPlatform(guiEvent, pointerEvent, *qtEvent, *compositor_);
+  guiEvent.type = guiEventType;
 
+  if (sceneInteractor_.get() != NULL && compositor_.get() != NULL)
+  {
+    sceneInteractor_->OnMouseEvent(guiEvent, pointerEvent);
+  }
+
+  // force redraw of the OpenGL widget
+  update();
+}
 
 void QStoneOpenGlWidget::mousePressEvent(QMouseEvent* qtEvent)
 {
-  OrthancStone::GuiAdapterMouseEvent event;
-  ConvertFromPlatform(event, *qtEvent);
-
-  if (sceneInteractor_.get() != NULL)
-  {
-    sceneInteractor_->OnMouseEvent(event);
-  }
-
-
-  // convert
-//TODO  event->
-
-//  sceneInteractor_->OnMouseEvent(event);
+  mouseEvent(qtEvent, GUIADAPTER_EVENT_MOUSEDOWN);
 }
 
+void QStoneOpenGlWidget::mouseMoveEvent(QMouseEvent* qtEvent)
+{
+  mouseEvent(qtEvent, GUIADAPTER_EVENT_MOUSEDOWN);
+}
+
+void QStoneOpenGlWidget::mouseReleaseEvent(QMouseEvent* qtEvent)
+{
+  mouseEvent(qtEvent, GUIADAPTER_EVENT_MOUSEUP);
+}

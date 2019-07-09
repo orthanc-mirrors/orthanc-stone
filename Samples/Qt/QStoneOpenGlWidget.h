@@ -29,6 +29,8 @@ namespace OrthancStone
     void paintGL() override;
 
     void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
 
     //**** IOpenGLContext overrides
 
@@ -55,6 +57,9 @@ namespace OrthancStone
     {
       compositor_ = compositor;
     }
+
+  protected:
+    void mouseEvent(QMouseEvent* qtEvent, OrthancStone::GuiAdapterHidEventType guiEventType);
 
   };
 }

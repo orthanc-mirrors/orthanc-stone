@@ -12,11 +12,26 @@ namespace OrthancStone
 using namespace OrthancStone;
 
 
-void BasicScene2DInteractor::OnMouseEvent(const GuiAdapterMouseEvent& event, const PointerEvent& pointerEvent)
+bool BasicScene2DInteractor::OnMouseEvent(const GuiAdapterMouseEvent& event, const PointerEvent& pointerEvent)
 {
   if (currentTracker_.get() != NULL)
   {
-    currentTracker_->PointerMove(pointerEvent);
+    switch (event.type)
+    {
+    case GUIADAPTER_EVENT_MOUSEUP:
+    {
+      currentTracker_->PointerUp(pointerEvent);
+      if (!currentTracker_->IsAlive())
+      {
+        currentTracker_.reset();
+      }
+    };break;
+    case GUIADAPTER_EVENT_MOUSEMOVE:
+    {
+      currentTracker_->PointerMove(pointerEvent);
+    };break;
+    }
+    return true;
   }
   else
   {
@@ -27,12 +42,29 @@ void BasicScene2DInteractor::OnMouseEvent(const GuiAdapterMouseEvent& event, con
     {
       currentTracker_.reset(new PanSceneTracker(viewportController_, pointerEvent));
     }
-    else if (event.button == GUIADAPTER_MOUSEBUTTON_RIGHT)
+    else if (event.button == GUIADAPTER_MOUSEBUTTON_RIGHT && compositor_.get() != NULL)
     {
-     // TODO: need a pointer to compositor currentTracker_.reset(new ZoomSceneTracker(viewportController_, pointerEvent, viewportController_->));
+      currentTracker_.reset(new ZoomSceneTracker(viewportController_, pointerEvent, compositor_->GetHeight()));
     }
+    return true;
   }
-
+  return false;
 }
 
+bool BasicScene2DInteractor::OnKeyboardEvent(const GuiAdapterKeyboardEvent& guiEvent)
+{
+  switch (guiEvent.sym[0])
+  {
+  case 's':
+  {
+    viewportController_->FitContent(compositor_->GetWidth(), compositor_->GetHeight());
+    return true;
+  };
+  }
+  return false;
+}
 
+bool BasicScene2DInteractor::OnWheelEvent(const GuiAdapterWheelEvent& guiEvent)
+{
+  return false;
+}

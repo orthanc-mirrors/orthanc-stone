@@ -19,6 +19,7 @@ namespace OrthancStone
     QStoneOpenGlWidget(QWidget *parent) :
       QOpenGLWidget(parent)
     {
+      setFocusPolicy(Qt::StrongFocus);
     }
 
   protected:
@@ -31,6 +32,9 @@ namespace OrthancStone
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
+    void wheelEvent(QWheelEvent* event) override;
 
     //**** IOpenGLContext overrides
 
@@ -60,6 +64,7 @@ namespace OrthancStone
 
   protected:
     void mouseEvent(QMouseEvent* qtEvent, OrthancStone::GuiAdapterHidEventType guiEventType);
+    bool keyEvent(QKeyEvent* qtEvent, OrthancStone::GuiAdapterHidEventType guiEventType);
 
   };
 }

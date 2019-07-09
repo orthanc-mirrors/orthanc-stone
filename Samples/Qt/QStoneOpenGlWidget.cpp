@@ -60,7 +60,6 @@ void ConvertFromPlatform(
   {
     guiEvent.altKey = true;
   }
-
 }
 
 void QStoneOpenGlWidget::mouseEvent(QMouseEvent* qtEvent, OrthancStone::GuiAdapterHidEventType guiEventType)
@@ -86,10 +85,84 @@ void QStoneOpenGlWidget::mousePressEvent(QMouseEvent* qtEvent)
 
 void QStoneOpenGlWidget::mouseMoveEvent(QMouseEvent* qtEvent)
 {
-  mouseEvent(qtEvent, GUIADAPTER_EVENT_MOUSEDOWN);
+  mouseEvent(qtEvent, GUIADAPTER_EVENT_MOUSEMOVE);
 }
 
 void QStoneOpenGlWidget::mouseReleaseEvent(QMouseEvent* qtEvent)
 {
   mouseEvent(qtEvent, GUIADAPTER_EVENT_MOUSEUP);
+}
+
+void ConvertFromPlatform(
+    OrthancStone::GuiAdapterKeyboardEvent& guiEvent,
+    const QKeyEvent& qtEvent)
+{
+  if (qtEvent.text().length() > 0)
+  {
+    guiEvent.sym[0] = qtEvent.text()[0].cell();
+  }
+  else
+  {
+    guiEvent.sym[0] = 0;
+  }
+  guiEvent.sym[1] = 0;
+
+  if (qtEvent.modifiers().testFlag(Qt::ShiftModifier))
+  {
+    guiEvent.shiftKey = true;
+  }
+  if (qtEvent.modifiers().testFlag(Qt::ControlModifier))
+  {
+    guiEvent.ctrlKey = true;
+  }
+  if (qtEvent.modifiers().testFlag(Qt::AltModifier))
+  {
+    guiEvent.altKey = true;
+  }
+
+}
+
+
+bool QStoneOpenGlWidget::keyEvent(QKeyEvent* qtEvent, OrthancStone::GuiAdapterHidEventType guiEventType)
+{
+  bool handled = false;
+  OrthancStone::GuiAdapterKeyboardEvent guiEvent;
+  ConvertFromPlatform(guiEvent, *qtEvent);
+  guiEvent.type = guiEventType;
+
+  if (sceneInteractor_.get() != NULL && compositor_.get() != NULL)
+  {
+    handled = sceneInteractor_->OnKeyboardEvent(guiEvent);
+
+    if (handled)
+    {
+      // force redraw of the OpenGL widget
+      update();
+    }
+  }
+  return handled;
+}
+
+void QStoneOpenGlWidget::keyPressEvent(QKeyEvent *qtEvent)
+{
+  bool handled = keyEvent(qtEvent, GUIADAPTER_EVENT_KEYDOWN);
+  if (!handled)
+  {
+    QOpenGLWidget::keyPressEvent(qtEvent);
+  }
+}
+
+void QStoneOpenGlWidget::keyReleaseEvent(QKeyEvent *qtEvent)
+{
+  bool handled = keyEvent(qtEvent, GUIADAPTER_EVENT_KEYUP);
+  if (!handled)
+  {
+    QOpenGLWidget::keyPressEvent(qtEvent);
+  }
+}
+
+void QStoneOpenGlWidget::wheelEvent(QWheelEvent *qtEvent)
+{
+  OrthancStone::GuiAdapterWheelEvent guiEvent;
+  throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
 }

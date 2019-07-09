@@ -71,7 +71,7 @@ add_executable(BasicScene
 target_link_libraries(BasicScene OrthancStone)
 
 #
-# BasicScene
+# TrackerSample
 # 
 
 LIST(APPEND TRACKERSAMPLE_SOURCE "TrackerSample.cpp")
@@ -108,3 +108,21 @@ add_executable(FusionMprSdl
 )
 
 target_link_libraries(FusionMprSdl OrthancStone)
+
+#
+# RadiographyEditor
+#
+
+LIST(APPEND RADIOGRAPHY_EDITOR_SOURCE "../Shared/RadiographyEditorApp.cpp")
+LIST(APPEND RADIOGRAPHY_EDITOR_SOURCE "../Shared/RadiographyEditorApp.h")
+LIST(APPEND RADIOGRAPHY_EDITOR_SOURCE "RadiographyEditor.cpp")
+
+if (MSVC AND MSVC_VERSION GREATER 1700)
+  LIST(APPEND RADIOGRAPHY_EDITOR_SOURCE "cpp.hint")
+endif()
+
+add_executable(RadiographyEditor
+  ${RADIOGRAPHY_EDITOR_SOURCE}
+  )
+
+target_link_libraries(RadiographyEditor OrthancStone)

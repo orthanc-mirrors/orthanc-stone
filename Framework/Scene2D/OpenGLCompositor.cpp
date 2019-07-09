@@ -207,12 +207,4 @@ namespace OrthancStone
     SetFont(index, dict);
   }
 #endif
-
-
-  ScenePoint2D OpenGLCompositor::GetPixelCenterCoordinates(int x, int y) const
-  {
-    return ScenePoint2D(
-      static_cast<double>(x) + 0.5 - static_cast<double>(canvasWidth_) / 2.0,
-      static_cast<double>(y) + 0.5 - static_cast<double>(canvasHeight_) / 2.0);
-  }
 }

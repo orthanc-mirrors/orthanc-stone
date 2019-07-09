@@ -22,13 +22,29 @@
 #pragma once
 
 #include "../Scene2D.h"
-
+#include "../ScenePoint2D.h"
 #include <boost/noncopyable.hpp>
 
 #include <map>
 
 namespace OrthancStone
 {
+  class ICompositor
+  {
+  public:
+    virtual unsigned int GetWidth() const = 0;
+    virtual unsigned int GetHeight() const = 0;
+    virtual void Refresh() = 0;
+
+    ScenePoint2D GetPixelCenterCoordinates(int x, int y) const
+    {
+      return ScenePoint2D(
+        static_cast<double>(x) + 0.5 - static_cast<double>(GetWidth()) / 2.0,
+        static_cast<double>(y) + 0.5 - static_cast<double>(GetHeight()) / 2.0);
+    }
+
+  };
+
   namespace Internals
   {
     class CompositorHelper : protected Scene2D::IVisitor

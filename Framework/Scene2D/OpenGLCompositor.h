@@ -29,7 +29,9 @@
 
 namespace OrthancStone
 {
-  class OpenGLCompositor : private Internals::CompositorHelper::IRendererFactory
+  class OpenGLCompositor :
+      public ICompositor,
+      private Internals::CompositorHelper::IRendererFactory
   {
   private:
     class Font;
@@ -58,7 +60,7 @@ namespace OrthancStone
 
     void UpdateSize();
 
-    void Refresh();
+    virtual void Refresh();
 
     void SetFont(size_t index,
                  const GlyphBitmapAlphabet& dict);
@@ -70,16 +72,15 @@ namespace OrthancStone
                  Orthanc::Encoding codepage);
 #endif
 
-    unsigned int GetCanvasWidth() const
+    virtual unsigned int GetWidth() const
     {
       return canvasWidth_;
     }
 
-    unsigned int GetCanvasHeight() const
+    unsigned int GetHeight() const
     {
       return canvasHeight_;
     }
 
-    ScenePoint2D GetPixelCenterCoordinates(int x, int y) const;
   };
 }

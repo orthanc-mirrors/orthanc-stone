@@ -34,12 +34,9 @@ namespace OrthancStone
 
     BasicSceneWindow::BasicSceneWindow(
       QWidget *parent) :
-//      QStoneMainWindow(context, parent),
       ui_(new Ui::BasicSceneWindow)
-      //stoneSampleApplication_(stoneSampleApplication)
     {
       ui_->setupUi(this);
-      //SetCentralStoneWidget(*ui_->cairoCentralWidget);
     }
 
     BasicSceneWindow::~BasicSceneWindow()

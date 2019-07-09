@@ -165,4 +165,7 @@ void QStoneOpenGlWidget::wheelEvent(QWheelEvent *qtEvent)
 {
   OrthancStone::GuiAdapterWheelEvent guiEvent;
   throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+
+  // force redraw of the OpenGL widget
+  update();
 }

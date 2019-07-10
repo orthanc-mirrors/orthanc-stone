@@ -54,19 +54,19 @@ namespace OrthancStone
     
     ~CairoCompositor();
 
-    virtual unsigned int GetWidth() const
+    const CairoSurface& GetCanvas() const
+    {
+      return canvas_;
+    }
+
+    virtual unsigned int GetCanvasWidth() const
     {
       return canvas_.GetWidth();
     }
 
-    virtual unsigned int GetHeight() const
+    virtual unsigned int GetCanvasHeight() const
     {
       return canvas_.GetHeight();
-    }
-
-    const CairoSurface& GetCanvas() const
-    {
-      return canvas_;
     }
     
     void SetFont(size_t index,

@@ -27,7 +27,9 @@ namespace OrthancStone
 {
   namespace Internals
   {
-    void CairoPolylineRenderer::Render(const AffineTransform2D& transform)
+    void CairoPolylineRenderer::Render(const AffineTransform2D& transform,
+                                       unsigned int canvasWidth,
+                                       unsigned int canvasHeight)
     {
       const PolylineSceneLayer& layer = GetLayer<PolylineSceneLayer>();
       

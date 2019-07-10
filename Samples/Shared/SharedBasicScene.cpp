@@ -214,7 +214,7 @@ bool BasicScene2DInteractor::OnMouseEvent(const GuiAdapterMouseEvent& event, con
     }
     else if (event.button == GUIADAPTER_MOUSEBUTTON_RIGHT && compositor_.get() != NULL)
     {
-      currentTracker_.reset(new ZoomSceneTracker(viewportController_, pointerEvent, compositor_->GetHeight()));
+      currentTracker_.reset(new ZoomSceneTracker(viewportController_, pointerEvent, compositor_->GetCanvasHeight()));
     }
   }
   else if (event.type == GUIADAPTER_EVENT_MOUSEMOVE)
@@ -237,13 +237,13 @@ bool BasicScene2DInteractor::OnKeyboardEvent(const GuiAdapterKeyboardEvent& guiE
     {
     case 's':
     {
-      viewportController_->FitContent(compositor_->GetWidth(), compositor_->GetHeight());
+      viewportController_->FitContent(compositor_->GetCanvasWidth(), compositor_->GetCanvasHeight());
       return true;
     };
     case 'c':
     {
       Scene2D& scene(*(viewportController_->GetScene()));
-      TakeScreenshot("screenshot.png", scene, compositor_->GetWidth(), compositor_->GetHeight());
+      TakeScreenshot("screenshot.png", scene, compositor_->GetCanvasWidth(), compositor_->GetCanvasHeight());
       return true;
     }
     case 'd':

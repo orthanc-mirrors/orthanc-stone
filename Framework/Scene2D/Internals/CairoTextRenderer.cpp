@@ -75,7 +75,9 @@ namespace OrthancStone
     }
 
       
-    void CairoTextRenderer::Render(const AffineTransform2D& transform)
+    void CairoTextRenderer::Render(const AffineTransform2D& transform,
+                                   unsigned int canvasWidth,
+                                   unsigned int canvasHeight)
     {
       if (text_.GetWidth() != 0 &&
           text_.GetHeight() != 0)

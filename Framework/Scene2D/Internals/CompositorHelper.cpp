@@ -107,7 +107,7 @@ namespace OrthancStone
 
         if (renderer.get() != NULL)
         {
-          renderer->Render(sceneTransform_);
+          renderer->Render(sceneTransform_, canvasWidth_, canvasHeight_);
           content_[depth] = new Item(renderer.release(), layer, layerIdentifier);
         }
       }
@@ -121,7 +121,7 @@ namespace OrthancStone
           found->second->UpdateRenderer();
         }
 
-        found->second->GetRenderer().Render(sceneTransform_);
+        found->second->GetRenderer().Render(sceneTransform_, canvasWidth_, canvasHeight_);
       }
 
       // Check invariants
@@ -150,6 +150,8 @@ namespace OrthancStone
         static_cast<double>(canvasHeight) / 2.0);
 
       sceneTransform_ = AffineTransform2D::Combine(offset, scene_.GetSceneToCanvasTransform());
+      canvasWidth_ = canvasWidth;
+      canvasHeight_ = canvasHeight;
       scene_.Apply(*this);
     }
   }

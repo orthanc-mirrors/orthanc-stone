@@ -57,7 +57,7 @@ namespace OrthancStone
       virtual void Update(const ISceneLayer& layer)
       {
         layer_.reset(layer.Clone());
-      }    
+      }
     };
   }
 }

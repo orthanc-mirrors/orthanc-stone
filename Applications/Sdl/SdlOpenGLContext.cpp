@@ -19,7 +19,7 @@
  **/
 
 
-#include "SdlOpenGLWindow.h"
+#include "SdlOpenGLContext.h"
 
 #if ORTHANC_ENABLE_SDL == 1
 
@@ -35,10 +35,10 @@
 
 namespace OrthancStone
 {
-  SdlOpenGLWindow::SdlOpenGLWindow(const char* title,
-                                   unsigned int width,
-                                   unsigned int height,
-                                   bool allowDpiScaling) :
+  SdlOpenGLContext::SdlOpenGLContext(const char* title,
+                                     unsigned int width,
+                                     unsigned int height,
+                                     bool allowDpiScaling) :
     window_(title, width, height, true /* enable OpenGL */, allowDpiScaling)
   {
     context_ = SDL_GL_CreateContext(window_.GetObject());
@@ -77,13 +77,13 @@ namespace OrthancStone
   }
 
   
-  SdlOpenGLWindow::~SdlOpenGLWindow()
+  SdlOpenGLContext::~SdlOpenGLContext()
   {
     SDL_GL_DeleteContext(context_);
   }
 
 
-  void SdlOpenGLWindow::MakeCurrent()
+  void SdlOpenGLContext::MakeCurrent()
   {
     if (SDL_GL_MakeCurrent(window_.GetObject(), context_) != 0)
     {
@@ -96,14 +96,14 @@ namespace OrthancStone
   }
 
   
-  void SdlOpenGLWindow::SwapBuffer()
+  void SdlOpenGLContext::SwapBuffer()
   {
     // Swap our buffer to display the current contents of buffer on screen
     SDL_GL_SwapWindow(window_.GetObject());
   }
 
   
-  unsigned int SdlOpenGLWindow::GetCanvasWidth() const
+  unsigned int SdlOpenGLContext::GetCanvasWidth() const
   {
     int w = 0;
     SDL_GL_GetDrawableSize(window_.GetObject(), &w, NULL);
@@ -111,7 +111,7 @@ namespace OrthancStone
   }
 
   
-  unsigned int SdlOpenGLWindow::GetCanvasHeight() const
+  unsigned int SdlOpenGLContext::GetCanvasHeight() const
   {
     int h = 0;
     SDL_GL_GetDrawableSize(window_.GetObject(), NULL, &h);

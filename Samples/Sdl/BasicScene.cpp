@@ -20,13 +20,12 @@
 
 
 // From Stone
-#include "../../Applications/Sdl/SdlOpenGLWindow.h"
+#include "../../Framework/Viewport/SdlViewport.h"
 #include "../../Framework/Scene2D/CairoCompositor.h"
 #include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
 #include "../../Framework/Scene2D/OpenGLCompositor.h"
 #include "../../Framework/Scene2D/PanSceneTracker.h"
 #include "../../Framework/Scene2D/RotateSceneTracker.h"
-#include "../../Framework/Scene2D/Scene2D.h"
 #include "../../Framework/Scene2D/ZoomSceneTracker.h"
 #include "../../Framework/Scene2DViewport/ViewportController.h"
 #include "../../Framework/Scene2DViewport/UndoStack.h"
@@ -42,7 +41,6 @@
 #include <Core/Images/PngWriter.h>
 
 #include <boost/make_shared.hpp>
-#include <boost/ref.hpp>
 
 #include <SDL.h>
 #include <stdio.h>
@@ -50,10 +48,11 @@
 static const unsigned int FONT_SIZE = 32;
 static const int LAYER_POSITION = 150;
 
-void PrepareScene(boost::shared_ptr<OrthancStone::ViewportController> controller)
+
+void PrepareScene(OrthancStone::Scene2D& scene)
 {
   using namespace OrthancStone;
-  Scene2D& scene(*controller->GetScene());
+
   // Texture of 2x2 size
   {
     Orthanc::Image i(Orthanc::PixelFormat_RGB24, 2, 2, false);
@@ -162,13 +161,15 @@ void TakeScreenshot(const std::string& target,
 }
 
 
-void HandleApplicationEvent(boost::shared_ptr<OrthancStone::ViewportController> controller,
-                            const OrthancStone::OpenGLCompositor& compositor,
-                            const SDL_Event& event,
+void HandleApplicationEvent(const SDL_Event& event,
+                            boost::shared_ptr<OrthancStone::ViewportController>& controller,
                             boost::shared_ptr<OrthancStone::IFlexiblePointerTracker>& activeTracker)
 {
   using namespace OrthancStone;
-  Scene2D& scene(*controller->GetScene());
+
+  Scene2D& scene = controller->GetScene();
+  IViewport& viewport = controller->GetViewport();
+
   if (event.type == SDL_MOUSEMOTION)
   {
     int scancodeCount = 0;
@@ -181,7 +182,7 @@ void HandleApplicationEvent(boost::shared_ptr<OrthancStone::ViewportController> 
       // The "left-ctrl" key is down, while no tracker is present
 
       PointerEvent e;
-      e.AddPosition(compositor.GetPixelCenterCoordinates(event.button.x, event.button.y));
+      e.AddPosition(viewport.GetPixelCenterCoordinates(event.button.x, event.button.y));
 
       ScenePoint2D p = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
@@ -215,7 +216,7 @@ void HandleApplicationEvent(boost::shared_ptr<OrthancStone::ViewportController> 
   else if (event.type == SDL_MOUSEBUTTONDOWN)
   {
     PointerEvent e;
-    e.AddPosition(compositor.GetPixelCenterCoordinates(event.button.x, event.button.y));
+    e.AddPosition(viewport.GetPixelCenterCoordinates(event.button.x, event.button.y));
 
     switch (event.button.button)
     {
@@ -224,8 +225,8 @@ void HandleApplicationEvent(boost::shared_ptr<OrthancStone::ViewportController> 
         break;
 
       case SDL_BUTTON_RIGHT:
-        activeTracker = boost::make_shared<ZoomSceneTracker>(controller, 
-          e, compositor.GetCanvasHeight());
+        activeTracker = boost::make_shared<ZoomSceneTracker>
+          (controller, e, viewport.GetCanvasHeight());
         break;
 
       case SDL_BUTTON_LEFT:
@@ -242,14 +243,14 @@ void HandleApplicationEvent(boost::shared_ptr<OrthancStone::ViewportController> 
     switch (event.key.keysym.sym)
     {
       case SDLK_s:
-        controller->FitContent(compositor.GetCanvasWidth(), 
-                         compositor.GetCanvasHeight());
+        controller->FitContent(viewport.GetCanvasWidth(), 
+                               viewport.GetCanvasHeight());
         break;
               
       case SDLK_c:
         TakeScreenshot("screenshot.png", scene, 
-                       compositor.GetCanvasWidth(), 
-                       compositor.GetCanvasHeight());
+                       viewport.GetCanvasWidth(), 
+                       viewport.GetCanvasHeight());
         break;
               
       default:
@@ -277,26 +278,24 @@ OpenGLMessageCallback(GLenum source,
 }
 
 
-void Run(boost::shared_ptr<OrthancStone::ViewportController> controller)
+void Run(OrthancStone::MessageBroker& broker,
+         OrthancStone::SdlViewport& viewport)
 {
   using namespace OrthancStone;
-  SdlOpenGLWindow window("Hello", 1024, 768);
-
-  controller->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
+  
+  boost::shared_ptr<ViewportController> controller(
+    new ViewportController(boost::make_shared<UndoStack>(), broker, viewport));
   
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(OpenGLMessageCallback, 0);
 
-  OpenGLCompositor compositor(window, *controller->GetScene());
-  compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
-                     FONT_SIZE, Orthanc::Encoding_Latin1);
-
   boost::shared_ptr<IFlexiblePointerTracker> tracker;
 
+  bool firstShown = true;
   bool stop = false;
   while (!stop)
   {
-    compositor.Refresh();
+    viewport.Refresh();
 
     SDL_Event event;
     while (!stop &&
@@ -312,7 +311,7 @@ void Run(boost::shared_ptr<OrthancStone::ViewportController> controller)
         if (tracker)
         {
           PointerEvent e;
-          e.AddPosition(compositor.GetPixelCenterCoordinates(
+          e.AddPosition(viewport.GetPixelCenterCoordinates(
             event.button.x, event.button.y));
           tracker->PointerMove(e);
         }
@@ -322,17 +321,34 @@ void Run(boost::shared_ptr<OrthancStone::ViewportController> controller)
         if (tracker)
         {
           PointerEvent e;
-          e.AddPosition(compositor.GetPixelCenterCoordinates(
+          e.AddPosition(viewport.GetPixelCenterCoordinates(
             event.button.x, event.button.y));
           tracker->PointerUp(e);
           if(!tracker->IsAlive())
             tracker.reset();
         }
       }
-      else if (event.type == SDL_WINDOWEVENT &&
-               event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+      else if (event.type == SDL_WINDOWEVENT)
       {
-        tracker.reset();
+        switch (event.window.event)
+        {
+          case SDL_WINDOWEVENT_SIZE_CHANGED:
+            tracker.reset();
+            break;
+
+          case SDL_WINDOWEVENT_SHOWN:
+            if (firstShown)
+            {
+              // Once the window is first shown, fit the content to its size
+              controller->FitContent(viewport.GetCanvasWidth(), viewport.GetCanvasHeight());
+              firstShown = false;
+            }
+            
+            break;
+
+          default:
+            break;
+        }
       }
       else if (event.type == SDL_KEYDOWN &&
                event.key.repeat == 0 /* Ignore key bounce */)
@@ -340,7 +356,7 @@ void Run(boost::shared_ptr<OrthancStone::ViewportController> controller)
         switch (event.key.keysym.sym)
         {
           case SDLK_f:
-            window.GetWindow().ToggleMaximize();
+            viewport.GetContext().GetWindow().ToggleMaximize();
             break;
               
           case SDLK_q:
@@ -352,7 +368,7 @@ void Run(boost::shared_ptr<OrthancStone::ViewportController> controller)
         }
       }
       
-      HandleApplicationEvent(controller, compositor, event, tracker);
+      HandleApplicationEvent(event, controller, tracker);
     }
 
     SDL_Delay(1);
@@ -369,25 +385,26 @@ void Run(boost::shared_ptr<OrthancStone::ViewportController> controller)
  **/
 int main(int argc, char* argv[])
 {
-  using namespace OrthancStone;
-  StoneInitialize();
+  OrthancStone::StoneInitialize();
   Orthanc::Logging::EnableInfoLevel(true);
 
   try
   {
-    MessageBroker broker;
-    boost::shared_ptr<UndoStack> undoStack(new UndoStack);
-    boost::shared_ptr<ViewportController> controller = boost::make_shared<ViewportController>(
-      undoStack, boost::ref(broker));
-    PrepareScene(controller);
-    Run(controller);
+    OrthancStone::SdlViewport viewport("Hello", 1024, 768);
+    PrepareScene(viewport.GetScene());
+
+    viewport.GetCompositor().SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
+                                     FONT_SIZE, Orthanc::Encoding_Latin1);
+    
+    OrthancStone::MessageBroker broker;
+    Run(broker, viewport);
   }
   catch (Orthanc::OrthancException& e)
   {
     LOG(ERROR) << "EXCEPTION: " << e.What();
   }
 
-  StoneFinalize();
+  OrthancStone::StoneFinalize();
 
   return 0;
 }

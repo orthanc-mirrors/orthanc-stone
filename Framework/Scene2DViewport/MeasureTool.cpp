@@ -76,16 +76,6 @@ namespace OrthancStone
 #endif
   }
 
-  boost::shared_ptr<Scene2D> MeasureTool::GetScene()
-  {
-    return GetController()->GetScene();
-  }
-
-  boost::shared_ptr<const Scene2D> MeasureTool::GetScene() const
-  {
-    return GetController()->GetScene();
-  }
-
   MeasureTool::MeasureTool(MessageBroker& broker,
     boost::weak_ptr<ViewportController> controllerW)
     : IObserver(broker)

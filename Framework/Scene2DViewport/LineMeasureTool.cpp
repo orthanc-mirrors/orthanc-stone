@@ -97,7 +97,7 @@ namespace OrthancStone
   LineMeasureTool::LineHighlightArea LineMeasureTool::LineHitTest(ScenePoint2D p) const
   {
     const double pixelToScene =
-      GetScene()->GetCanvasToSceneTransform().ComputeZoom();
+      GetController()->GetScene().GetCanvasToSceneTransform().ComputeZoom();
     const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD * pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD;
 
     const double sqDistanceFromStart = ScenePoint2D::SquaredDistancePtPt(p, start_);
@@ -123,7 +123,7 @@ namespace OrthancStone
   boost::shared_ptr<IFlexiblePointerTracker> LineMeasureTool::CreateEditionTracker(const PointerEvent& e)
   {
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      GetScene()->GetCanvasToSceneTransform());
+      GetController()->GetScene().GetCanvasToSceneTransform());
 
     if (!HitTest(scenePos))
       return boost::shared_ptr<IFlexiblePointerTracker>();
@@ -196,7 +196,7 @@ namespace OrthancStone
               PolylineSceneLayer::Chain chain;
               
               //TODO: take DPI into account
-              AddSquare(chain, GetScene(), start_, 
+              AddSquare(chain, GetController()->GetScene(), start_, 
                 GetController()->GetHandleSideLengthS());
               
               if (lineHighlightArea_ == LineHighlightArea_Start)
@@ -209,7 +209,7 @@ namespace OrthancStone
               PolylineSceneLayer::Chain chain;
               
               //TODO: take DPI into account
-              AddSquare(chain, GetScene(), end_, 
+              AddSquare(chain, GetController()->GetScene(), end_, 
                 GetController()->GetHandleSideLengthS());
               
               if (lineHighlightArea_ == LineHighlightArea_End)
@@ -235,7 +235,7 @@ namespace OrthancStone
           double midY = 0.5 * (end_.GetY() + start_.GetY());
 
           SetTextLayerOutlineProperties(
-            GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY));
+            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY));
         }
       }
       else

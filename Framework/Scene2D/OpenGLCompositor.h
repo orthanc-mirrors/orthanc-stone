@@ -77,8 +77,5 @@ namespace OrthancStone
     {
       return canvasHeight_;
     }
-
-    // TODO => REMOVE
-    ScenePoint2D GetPixelCenterCoordinates(int x, int y) const;
   };
 }

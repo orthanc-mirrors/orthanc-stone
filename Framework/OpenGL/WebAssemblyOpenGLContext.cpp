@@ -21,8 +21,6 @@
 
 #include "WebAssemblyOpenGLContext.h"
 
-#if ORTHANC_ENABLE_WASM == 1
-
 #include <Core/OrthancException.h>
 
 #include <emscripten/html5.h>
@@ -175,5 +173,3 @@ namespace OrthancStone
     }
   }
 }
-
-#endif

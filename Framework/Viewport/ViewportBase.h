@@ -13,58 +13,41 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
 #pragma once
 
-#if !defined(ORTHANC_ENABLE_WASM)
-#  error Macro ORTHANC_ENABLE_WASM must be defined
-#endif
-
-#if ORTHANC_ENABLE_WASM != 1
-#  error This file can only be used if targeting WebAssembly
-#endif
-
-#if !defined(ORTHANC_ENABLE_OPENGL)
-#  error The macro ORTHANC_ENABLE_OPENGL must be defined
-#endif
-
-#if ORTHANC_ENABLE_OPENGL != 1
-#  error Support for OpenGL is disabled
-#endif
-
-#include "IOpenGLContext.h"
+#include "IViewport.h"
 
 #include <boost/shared_ptr.hpp>
 
 namespace OrthancStone
 {
-  namespace OpenGL
+  class ViewportBase : public IViewport
   {
-    class WebAssemblyOpenGLContext : public OpenGL::IOpenGLContext
+  private:
+    std::string                 identifier_;
+    boost::shared_ptr<Scene2D>  scene_;
+
+  public:
+    ViewportBase(const std::string& identifier);
+
+    ViewportBase(const std::string& identifier,
+                 boost::shared_ptr<Scene2D>& scene);
+
+    virtual Scene2D& GetScene()
     {
-    private:
-      class PImpl;
-      boost::shared_ptr<PImpl>  pimpl_;
+      return *scene_;
+    }
 
-    public:
-      WebAssemblyOpenGLContext(const std::string& canvas);
+    virtual const std::string& GetCanvasIdentifier() const
+    {
+      return identifier_;
+    }
 
-      virtual void MakeCurrent();
-
-      virtual void SwapBuffer();
-
-      virtual unsigned int GetCanvasWidth() const;
-
-      virtual unsigned int GetCanvasHeight() const;
-
-      void UpdateSize();
-
-      const std::string& GetCanvasIdentifier() const;
-    };
-  }
+    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const;
+  };
 }

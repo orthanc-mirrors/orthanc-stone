@@ -13,48 +13,40 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
 #pragma once
 
-#if ORTHANC_ENABLE_SDL == 1
-
-#include "../../Framework/OpenGL/IOpenGLContext.h"
-#include "SdlWindow.h"
+#include "../Scene2D/Scene2D.h"
+#include "../Scene2D/ScenePoint2D.h"
 
 namespace OrthancStone
 {
-  class SdlOpenGLWindow : public OpenGL::IOpenGLContext
+  /**
+   * Class that combines a Scene2D with a canvas where to draw the
+   * scene. A call to "Refresh()" will update the content of the
+   * canvas.
+   **/  
+  class IViewport : public boost::noncopyable
   {
-  private:
-    SdlWindow      window_;
-    SDL_GLContext  context_;
-
   public:
-    SdlOpenGLWindow(const char* title,
-                    unsigned int width,
-                    unsigned int height,
-                    bool allowDpiScaling = true);
-
-    ~SdlOpenGLWindow();
-
-    SdlWindow& GetWindow()
+    virtual ~IViewport()
     {
-      return window_;
     }
 
-    virtual void MakeCurrent();
+    virtual Scene2D& GetScene() = 0;
 
-    virtual void SwapBuffer();
+    virtual void Refresh() = 0;
 
-    virtual unsigned int GetCanvasWidth() const;
+    virtual unsigned int GetCanvasWidth() const = 0;
 
-    virtual unsigned int GetCanvasHeight() const;
+    virtual unsigned int GetCanvasHeight() const = 0;
+
+    virtual const std::string& GetCanvasIdentifier() const = 0;
+
+    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const = 0;
   };
 }
-
-#endif

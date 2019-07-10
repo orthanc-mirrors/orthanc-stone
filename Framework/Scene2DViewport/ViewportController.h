@@ -22,7 +22,7 @@
 
 #include "PredeclaredTypes.h"
 
-#include "../Scene2D/Scene2D.h"
+#include "../Viewport/IViewport.h"
 #include "../Scene2D/PointerEvent.h"
 #include "../Scene2DViewport/IFlexiblePointerTracker.h"
 
@@ -80,10 +80,9 @@ namespace OrthancStone
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, \
       SceneTransformChanged, ViewportController);
 
-    ViewportController(boost::weak_ptr<UndoStack> undoStackW, MessageBroker& broker);
-
-    boost::shared_ptr<const Scene2D> GetScene() const;
-    boost::shared_ptr<Scene2D>      GetScene();
+    ViewportController(boost::weak_ptr<UndoStack> undoStackW,
+                       MessageBroker& broker,
+                       IViewport& viewport);
 
     /** 
     This method is called by the GUI system and should update/delete the
@@ -170,6 +169,20 @@ namespace OrthancStone
     /** forwarded to the UndoStack */
     bool CanRedo() const;
 
+    IViewport& GetViewport()
+    {
+      return viewport_;
+    }
+
+    Scene2D& GetScene()
+    {
+      return viewport_.GetScene();
+    }
+
+    const Scene2D& GetScene() const
+    {
+      return scene_;
+    }
 
   private:
     double GetCanvasToSceneFactor() const;
@@ -180,10 +193,14 @@ namespace OrthancStone
     boost::shared_ptr<const UndoStack>           GetUndoStack() const;
 
     std::vector<boost::shared_ptr<MeasureTool> > measureTools_;
-    boost::shared_ptr<Scene2D>                   scene_;
     boost::shared_ptr<IFlexiblePointerTracker>   tracker_;
     
     // this is cached
     mutable double              canvasToSceneFactor_;
+
+
+    // Refactoring on 2019-07-10: Removing shared_ptr from scene
+    IViewport&      viewport_;
+    const Scene2D&  scene_;  // As long as the viewport exists, its associated scene too   
   };
 }

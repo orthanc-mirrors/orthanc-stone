@@ -53,7 +53,7 @@ namespace OrthancStone
       command_->Undo();
   }
 
-  boost::shared_ptr<Scene2D> CreateMeasureTracker::GetScene()
+  Scene2D& CreateMeasureTracker::GetScene()
   {
     return controllerW_.lock()->GetScene();
   }
@@ -64,10 +64,10 @@ namespace OrthancStone
     , commitResult_(true)
   {
     boost::shared_ptr<ViewportController> controller = controllerW.lock();
-    originalClickPosition_ = e.GetMainPosition().Apply(controller->GetScene()->GetCanvasToSceneTransform());
+    originalClickPosition_ = e.GetMainPosition().Apply(controller->GetScene().GetCanvasToSceneTransform());
   }
 
-  boost::shared_ptr<Scene2D> EditMeasureTracker::GetScene()
+  Scene2D& EditMeasureTracker::GetScene()
   {
     return controllerW_.lock()->GetScene();
   }

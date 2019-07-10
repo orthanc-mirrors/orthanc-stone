@@ -30,7 +30,7 @@ namespace OrthancStone
     : EditMeasureTracker(controllerW, e)
   {
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      GetScene()->GetCanvasToSceneTransform());
+      GetScene().GetCanvasToSceneTransform());
 
     modifiedZone_ = measureTool->LineHitTest(scenePos);
 
@@ -49,7 +49,7 @@ namespace OrthancStone
   void EditLineMeasureTracker::PointerMove(const PointerEvent& e)
   {
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      GetScene()->GetCanvasToSceneTransform());
+      GetScene().GetCanvasToSceneTransform());
 
     ScenePoint2D delta = scenePos - GetOriginalClickPosition();
 

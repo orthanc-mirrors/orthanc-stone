@@ -33,7 +33,7 @@ namespace OrthancStone
       new CreateLineMeasureCommand(
         broker,
         controllerW,
-        e.GetMainPosition().Apply(GetScene()->GetCanvasToSceneTransform())));
+        e.GetMainPosition().Apply(GetScene().GetCanvasToSceneTransform())));
   }
 
   CreateLineMeasureTracker::~CreateLineMeasureTracker()
@@ -43,8 +43,6 @@ namespace OrthancStone
 
   void CreateLineMeasureTracker::PointerMove(const PointerEvent& event)
   {
-    assert(GetScene());
-    
     if (!alive_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
@@ -53,7 +51,7 @@ namespace OrthancStone
     }
 
     ScenePoint2D scenePos = event.GetMainPosition().Apply(
-      GetScene()->GetCanvasToSceneTransform());
+      GetScene().GetCanvasToSceneTransform());
 
     //LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
     //  "scenePos.GetY() = " << scenePos.GetY();

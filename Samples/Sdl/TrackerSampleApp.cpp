@@ -20,7 +20,7 @@
 
 #include "TrackerSampleApp.h"
 
-#include "../../Applications/Sdl/SdlOpenGLWindow.h"
+#include "../../Applications/Sdl/SdlOpenGLContext.h"
 
 #include "../../Framework/Scene2D/CairoCompositor.h"
 #include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
@@ -68,16 +68,6 @@ namespace OrthancStone
     return descs[i];
   }
 
-  boost::shared_ptr<Scene2D> TrackerSampleApp::GetScene()
-  {
-    return controller_->GetScene();
-  }
-
-  boost::shared_ptr<const Scene2D> TrackerSampleApp::GetScene() const
-  {
-    return controller_->GetScene();
-  }
-
   void TrackerSampleApp::SelectNextTool()
   {
     currentTool_ = static_cast<GuiTool>(currentTool_ + 1);
@@ -102,10 +92,10 @@ namespace OrthancStone
 	std::string msgS = msg.str();
 
     TextSceneLayer* layerP = NULL;
-    if (GetScene()->HasLayer(FIXED_INFOTEXT_LAYER_ZINDEX))
+    if (controller_->GetScene().HasLayer(FIXED_INFOTEXT_LAYER_ZINDEX))
     {
       TextSceneLayer& layer = dynamic_cast<TextSceneLayer&>(
-        GetScene()->GetLayer(FIXED_INFOTEXT_LAYER_ZINDEX));
+        controller_->GetScene().GetLayer(FIXED_INFOTEXT_LAYER_ZINDEX));
       layerP = &layer;
     }
     else
@@ -117,29 +107,29 @@ namespace OrthancStone
       layer->SetBorder(20);
       layer->SetAnchor(BitmapAnchor_TopLeft);
       //layer->SetPosition(0,0);
-      GetScene()->SetLayer(FIXED_INFOTEXT_LAYER_ZINDEX, layer.release());
+      controller_->GetScene().SetLayer(FIXED_INFOTEXT_LAYER_ZINDEX, layer.release());
     }
     // position the fixed info text in the upper right corner
     layerP->SetText(msgS.c_str());
     double cX = compositor_->GetCanvasWidth() * (-0.5);
     double cY = compositor_->GetCanvasHeight() * (-0.5);
-    GetScene()->GetCanvasToSceneTransform().Apply(cX,cY);
+    controller_->GetScene().GetCanvasToSceneTransform().Apply(cX,cY);
     layerP->SetPosition(cX, cY);
   }
 
   void TrackerSampleApp::DisplayFloatingCtrlInfoText(const PointerEvent& e)
   {
-    ScenePoint2D p = e.GetMainPosition().Apply(GetScene()->GetCanvasToSceneTransform());
+    ScenePoint2D p = e.GetMainPosition().Apply(controller_->GetScene().GetCanvasToSceneTransform());
 
     char buf[128];
     sprintf(buf, "S:(%0.02f,%0.02f) C:(%0.02f,%0.02f)", 
       p.GetX(), p.GetY(), 
       e.GetMainPosition().GetX(), e.GetMainPosition().GetY());
 
-    if (GetScene()->HasLayer(FLOATING_INFOTEXT_LAYER_ZINDEX))
+    if (controller_->GetScene().HasLayer(FLOATING_INFOTEXT_LAYER_ZINDEX))
     {
       TextSceneLayer& layer =
-        dynamic_cast<TextSceneLayer&>(GetScene()->GetLayer(FLOATING_INFOTEXT_LAYER_ZINDEX));
+        dynamic_cast<TextSceneLayer&>(controller_->GetScene().GetLayer(FLOATING_INFOTEXT_LAYER_ZINDEX));
       layer.SetText(buf);
       layer.SetPosition(p.GetX(), p.GetY());
     }
@@ -151,13 +141,13 @@ namespace OrthancStone
       layer->SetBorder(20);
       layer->SetAnchor(BitmapAnchor_BottomCenter);
       layer->SetPosition(p.GetX(), p.GetY());
-      GetScene()->SetLayer(FLOATING_INFOTEXT_LAYER_ZINDEX, layer.release());
+      controller_->GetScene().SetLayer(FLOATING_INFOTEXT_LAYER_ZINDEX, layer.release());
     }
   }
 
   void TrackerSampleApp::HideInfoText()
   {
-    GetScene()->DeleteLayer(FLOATING_INFOTEXT_LAYER_ZINDEX);
+    controller_->GetScene().DeleteLayer(FLOATING_INFOTEXT_LAYER_ZINDEX);
   }
 
   ScenePoint2D TrackerSampleApp::GetRandomPointInScene() const
@@ -179,7 +169,7 @@ namespace OrthancStone
     ScenePoint2D p = compositor_->GetPixelCenterCoordinates(x, y);
     LOG(TRACE) << "--> p.GetX() = " << p.GetX() << " p.GetY() = " << p.GetY();
 
-    ScenePoint2D r = p.Apply(GetScene()->GetCanvasToSceneTransform());
+    ScenePoint2D r = p.Apply(controller_->GetScene().GetCanvasToSceneTransform());
     LOG(TRACE) << "--> r.GetX() = " << r.GetX() << " r.GetY() = " << r.GetY();
     return r;
   }
@@ -276,7 +266,7 @@ namespace OrthancStone
         e.AddPosition(compositor_->GetPixelCenterCoordinates(event.button.x, event.button.y));
 
         ScenePoint2D scenePos = e.GetMainPosition().Apply(
-          controller_->GetScene()->GetCanvasToSceneTransform());
+          controller_->GetScene().GetCanvasToSceneTransform());
         //auto measureTools = GetController()->HitTestMeasureTools(scenePos);
         //LOG(TRACE) << "# of hit tests: " << measureTools.size();
         
@@ -527,13 +517,13 @@ namespace OrthancStone
       p[4] = 0;
       p[5] = 0;
 
-      GetScene()->SetLayer(TEXTURE_2x2_1_ZINDEX, new ColorTextureSceneLayer(i));
+      controller_->GetScene().SetLayer(TEXTURE_2x2_1_ZINDEX, new ColorTextureSceneLayer(i));
 
       std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
       l->SetOrigin(-3, 2);
       l->SetPixelSpacing(1.5, 1);
       l->SetAngle(20.0 / 180.0 * M_PI);
-      GetScene()->SetLayer(TEXTURE_2x2_2_ZINDEX, l.release());
+      controller_->GetScene().SetLayer(TEXTURE_2x2_2_ZINDEX, l.release());
     }
 
     // Texture of 1x1 size
@@ -548,7 +538,7 @@ namespace OrthancStone
       std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
       l->SetOrigin(-2, 1);
       l->SetAngle(20.0 / 180.0 * M_PI);
-      GetScene()->SetLayer(TEXTURE_1x1_ZINDEX, l.release());
+      controller_->GetScene().SetLayer(TEXTURE_1x1_ZINDEX, l.release());
     }
 
     // Some lines
@@ -579,14 +569,14 @@ namespace OrthancStone
       chain.push_back(ScenePoint2D(4, 2));
       layer->AddChain(chain, false, 0, 0, 255);
 
-      GetScene()->SetLayer(LINESET_1_ZINDEX, layer.release());
+      controller_->GetScene().SetLayer(LINESET_1_ZINDEX, layer.release());
     }
 
     // Some text
     {
       std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer);
       layer->SetText("Hello");
-      GetScene()->SetLayer(LINESET_2_ZINDEX, layer.release());
+      controller_->GetScene().SetLayer(LINESET_2_ZINDEX, layer.release());
     }
   }
 
@@ -623,7 +613,7 @@ namespace OrthancStone
   {
     // std::vector<boost::shared_ptr<MeasureTool>> measureTools_;
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      controller_->GetScene()->GetCanvasToSceneTransform());
+      controller_->GetScene().GetCanvasToSceneTransform());
 
     std::vector<boost::shared_ptr<MeasureTool> > measureTools = controller_->HitTestMeasureTools(scenePos);
 
@@ -657,7 +647,7 @@ namespace OrthancStone
   {
     // False means we do NOT let Windows treat this as a legacy application
     // that needs to be scaled
-    SdlOpenGLWindow window("Hello", 1024, 1024, false);
+    SdlOpenGLContext window("Hello", 1024, 1024, false);
 
     controller_->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
 

@@ -129,7 +129,11 @@ void PrepareScene(OrthancStone::Scene2D& scene)
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport1_;
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport2_;
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport3_;
-OrthancStone::MessageBroker  broker_;
+boost::shared_ptr<OrthancStone::ViewportController>   controller1_;
+boost::shared_ptr<OrthancStone::ViewportController>   controller2_;
+boost::shared_ptr<OrthancStone::ViewportController>   controller3_;
+OrthancStone::MessageBroker broker_;
+
 
 EM_BOOL OnWindowResize(
   int eventType, const EmscriptenUiEvent *uiEvent, void *userData)
@@ -165,20 +169,32 @@ extern "C"
   EMSCRIPTEN_KEEPALIVE
   void Initialize()
   {
-    viewport1_.reset(
-      new OrthancStone::WebAssemblyViewport(broker_, "mycanvas1"));
+    viewport1_.reset(new OrthancStone::WebAssemblyViewport("mycanvas1"));
     PrepareScene(viewport1_->GetScene());
     viewport1_->UpdateSize();
 
-    viewport2_.reset(
-      new OrthancStone::WebAssemblyViewport(broker_, "mycanvas2"));
+    viewport2_.reset(new OrthancStone::WebAssemblyViewport("mycanvas2"));
     PrepareScene(viewport2_->GetScene());
     viewport2_->UpdateSize();
 
-    viewport3_.reset(
-      new OrthancStone::WebAssemblyViewport(broker_, "mycanvas3"));
+    viewport3_.reset(new OrthancStone::WebAssemblyViewport("mycanvas3"));
     PrepareScene(viewport3_->GetScene());
     viewport3_->UpdateSize();
+
+    viewport1_->GetCompositor().SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
+                                        FONT_SIZE, Orthanc::Encoding_Latin1);
+    viewport2_->GetCompositor().SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
+                                        FONT_SIZE, Orthanc::Encoding_Latin1);
+    viewport3_->GetCompositor().SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
+                                        FONT_SIZE, Orthanc::Encoding_Latin1);
+    
+    controller1_.reset(new OrthancStone::ViewportController(boost::make_shared<OrthancStone::UndoStack>(), broker_, *viewport1_));
+    controller2_.reset(new OrthancStone::ViewportController(boost::make_shared<OrthancStone::UndoStack>(), broker_, *viewport2_));
+    controller3_.reset(new OrthancStone::ViewportController(boost::make_shared<OrthancStone::UndoStack>(), broker_, *viewport3_));
+
+    SetupEvents("mycanvas1", controller1_);
+    SetupEvents("mycanvas2", controller2_);
+    SetupEvents("mycanvas3", controller3_);
 
     emscripten_set_resize_callback("#window", NULL, false, OnWindowResize);
   }

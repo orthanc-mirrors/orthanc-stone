@@ -31,9 +31,9 @@ namespace OrthancStone
   square sides are parallel to the canvas boundaries.
   */
   void AddSquare(PolylineSceneLayer::Chain& chain,
-    boost::shared_ptr<const Scene2D>     scene,
-    const ScenePoint2D& centerS,
-    const double& sideLengthS);
+                 const Scene2D&     scene,
+                 const ScenePoint2D& centerS,
+                 const double& sideLengthS);
 
   /**
     Creates an arc centered on c that goes
@@ -180,9 +180,10 @@ namespace OrthancStone
   from layerIndex, up to (and not including) layerIndex+5.
   */
   void SetTextLayerOutlineProperties(
-    boost::shared_ptr<Scene2D> scene, boost::shared_ptr<LayerHolder> layerHolder,
-    const char* text, ScenePoint2D p);
-
+    Scene2D& scene,
+    boost::shared_ptr<LayerHolder> layerHolder,
+    const char* text,
+    ScenePoint2D p);
 
   std::ostream& operator<<(std::ostream& os, const ScenePoint2D& p);
 }

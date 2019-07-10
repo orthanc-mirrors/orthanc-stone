@@ -44,7 +44,9 @@ namespace OrthancStone
     }
 
     
-    void OpenGLColorTextureRenderer::Render(const AffineTransform2D& transform)
+    void OpenGLColorTextureRenderer::Render(const AffineTransform2D& transform,
+                                            unsigned int canvasWidth,
+                                            unsigned int canvasHeight)
     {
       if (texture_.get() != NULL)
       {

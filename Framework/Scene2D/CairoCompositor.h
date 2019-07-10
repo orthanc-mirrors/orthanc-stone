@@ -44,16 +44,6 @@ namespace OrthancStone
 
     virtual cairo_t* GetCairoContext();
 
-    virtual unsigned int GetCairoWidth()
-    {
-      return canvas_.GetWidth();
-    }
-
-    virtual unsigned int GetCairoHeight()
-    {
-      return canvas_.GetHeight();
-    }
-    
     virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer);
 
   public:
@@ -66,6 +56,16 @@ namespace OrthancStone
     const CairoSurface& GetCanvas() const
     {
       return canvas_;
+    }
+
+    unsigned int GetCanvasWidth() const
+    {
+      return canvas_.GetWidth();
+    }
+
+    unsigned int GetCanvasHeight() const
+    {
+      return canvas_.GetHeight();
     }
     
     void SetFont(size_t index,

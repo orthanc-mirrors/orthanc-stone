@@ -41,7 +41,9 @@ namespace OrthancStone
         {
         }
 
-        virtual void Render(const AffineTransform2D& transform) = 0;
+        virtual void Render(const AffineTransform2D& transform,
+                            unsigned int canvasWidth,
+                            unsigned int canvasHeight) = 0;
 
         // "Update()" is only called if the type of the layer has not changed
         virtual void Update(const ISceneLayer& layer) = 0;
@@ -65,8 +67,12 @@ namespace OrthancStone
       const Scene2D&     scene_;
       IRendererFactory&  factory_;
       Content            content_;
-      AffineTransform2D  sceneTransform_;
 
+      // Only valid during a call to Refresh()
+      AffineTransform2D  sceneTransform_;
+      unsigned int       canvasWidth_;
+      unsigned int       canvasHeight_;
+      
     protected:
       virtual void Visit(const ISceneLayer& layer,
                          uint64_t layerIdentifier,

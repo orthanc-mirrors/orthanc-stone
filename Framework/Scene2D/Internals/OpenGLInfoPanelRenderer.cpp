@@ -44,14 +44,16 @@ namespace OrthancStone
     }
 
     
-    void OpenGLInfoPanelRenderer::Render(const AffineTransform2D& transform)
+    void OpenGLInfoPanelRenderer::Render(const AffineTransform2D& transform,
+                                         unsigned int canvasWidth,
+                                         unsigned int canvasHeight)
     {
       if (texture_.get() != NULL)
       {
         int dx, dy;
         InfoPanelSceneLayer::ComputeAnchorLocation(
           dx, dy, anchor_, texture_->GetWidth(), texture_->GetHeight(),
-          context_.GetCanvasWidth(), context_.GetCanvasHeight());
+          canvasWidth, canvasHeight);
 
         // The position of this type of layer is layer: Ignore the
         // "transform" coming from the scene

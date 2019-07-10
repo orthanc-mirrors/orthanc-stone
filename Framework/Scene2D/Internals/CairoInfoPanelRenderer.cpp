@@ -37,12 +37,14 @@ namespace OrthancStone
     }
 
     
-    void CairoInfoPanelRenderer::Render(const AffineTransform2D& transform)
+    void CairoInfoPanelRenderer::Render(const AffineTransform2D& transform,
+                                        unsigned int canvasWidth,
+                                        unsigned int canvasHeight)
     {
       int dx, dy;
       InfoPanelSceneLayer::ComputeAnchorLocation(
         dx, dy, anchor_, texture_.GetWidth(), texture_.GetHeight(),
-        target_.GetCairoWidth(), target_.GetCairoHeight());
+        canvasWidth, canvasHeight);
 
       cairo_t* cr = target_.GetCairoContext();
 

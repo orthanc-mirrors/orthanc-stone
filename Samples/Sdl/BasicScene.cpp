@@ -333,7 +333,6 @@ void Run(boost::shared_ptr<OrthancStone::ViewportController> controller)
                event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
       {
         tracker.reset();
-        compositor.UpdateSize();
       }
       else if (event.type == SDL_KEYDOWN &&
                event.key.repeat == 0 /* Ignore key bounce */)

@@ -56,8 +56,6 @@ namespace OrthancStone
 
     ~OpenGLCompositor();
 
-    void UpdateSize();
-
     void Refresh();
 
     void SetFont(size_t index,
@@ -80,6 +78,7 @@ namespace OrthancStone
       return canvasHeight_;
     }
 
+    // TODO => REMOVE
     ScenePoint2D GetPixelCenterCoordinates(int x, int y) const;
   };
 }

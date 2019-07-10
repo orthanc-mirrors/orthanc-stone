@@ -134,7 +134,6 @@ namespace OrthancStone
     canvasWidth_(0),
     canvasHeight_(0)
   {
-    UpdateSize();
   }
 
   
@@ -148,20 +147,14 @@ namespace OrthancStone
   }
 
   
-  void OpenGLCompositor::UpdateSize()
+  void OpenGLCompositor::Refresh()
   {
     canvasWidth_ = context_.GetCanvasWidth();
     canvasHeight_ = context_.GetCanvasHeight();
 
     context_.MakeCurrent();
+
     glViewport(0, 0, canvasWidth_, canvasHeight_);
-  }
-
-  
-  void OpenGLCompositor::Refresh()
-  {
-    context_.MakeCurrent();
-
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 

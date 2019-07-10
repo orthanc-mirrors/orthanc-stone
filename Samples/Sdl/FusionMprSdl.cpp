@@ -706,7 +706,6 @@ namespace OrthancStone
           event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
         {
           DisableTracker(); // was: tracker.reset(NULL);
-          compositor_->UpdateSize();
         }
         else if (event.type == SDL_KEYDOWN &&
           event.key.repeat == 0 /* Ignore key bounce */)

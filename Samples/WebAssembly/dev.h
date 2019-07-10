@@ -26,11 +26,13 @@
 #include "../../Framework/Scene2D/PanSceneTracker.h"
 #include "../../Framework/Scene2D/RotateSceneTracker.h"
 #include "../../Framework/Scene2D/ZoomSceneTracker.h"
+#include "../../Framework/Scene2DViewport/UndoStack.h"
 #include "../../Framework/Scene2DViewport/ViewportController.h"
 
 #include <Core/OrthancException.h>
 
 #include <emscripten/html5.h>
+#include <boost/make_shared.hpp>
 
 static const unsigned int FONT_SIZE = 32;
 
@@ -52,7 +54,7 @@ namespace OrthancStone
     WebAssemblyViewport(MessageBroker& broker,
                         const std::string& canvas) :
       context_(canvas),
-      controller_(new ViewportController(broker)),
+      controller_(new ViewportController(boost::make_shared<UndoStack>(), broker)),
       compositor_(context_, *controller_->GetScene())
     {
       compositor_.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
@@ -73,7 +75,7 @@ namespace OrthancStone
     void UpdateSize()
     {
       context_.UpdateSize();
-      compositor_.UpdateSize();
+      //compositor_.UpdateSize();
       Refresh();
     }
 

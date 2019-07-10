@@ -29,9 +29,13 @@
 
 namespace OrthancStone
 {
-  class ICompositor
+  class ICompositor : public boost::noncopyable
   {
   public:
+    virtual ~ICompositor()
+    {
+    }
+    
     virtual unsigned int GetWidth() const = 0;
     virtual unsigned int GetHeight() const = 0;
     virtual void Refresh() = 0;

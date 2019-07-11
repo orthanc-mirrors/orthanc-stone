@@ -86,6 +86,7 @@ void PrepareScene(OrthancStone::Scene2D& scene)
   }
 
   // Some lines
+  if (1)
   {
     std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
 
@@ -187,10 +188,18 @@ extern "C"
                                         FONT_SIZE, Orthanc::Encoding_Latin1);
     viewport3_->GetCompositor().SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
                                         FONT_SIZE, Orthanc::Encoding_Latin1);
-    
+
     controller1_.reset(new OrthancStone::ViewportController(boost::make_shared<OrthancStone::UndoStack>(), broker_, *viewport1_));
     controller2_.reset(new OrthancStone::ViewportController(boost::make_shared<OrthancStone::UndoStack>(), broker_, *viewport2_));
     controller3_.reset(new OrthancStone::ViewportController(boost::make_shared<OrthancStone::UndoStack>(), broker_, *viewport3_));
+
+    controller1_->FitContent(viewport1_->GetCanvasWidth(), viewport1_->GetCanvasHeight());
+    controller2_->FitContent(viewport2_->GetCanvasWidth(), viewport2_->GetCanvasHeight());
+    controller3_->FitContent(viewport3_->GetCanvasWidth(), viewport3_->GetCanvasHeight());
+
+    viewport1_->Refresh();
+    viewport2_->Refresh();
+    viewport3_->Refresh();
 
     SetupEvents("mycanvas1", controller1_);
     SetupEvents("mycanvas2", controller2_);

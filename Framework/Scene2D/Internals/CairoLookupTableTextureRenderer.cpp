@@ -99,7 +99,9 @@ namespace OrthancStone
       cairo_surface_mark_dirty(texture_.GetObject());
     }
 
-    void CairoLookupTableTextureRenderer::Render(const AffineTransform2D& transform)
+    void CairoLookupTableTextureRenderer::Render(const AffineTransform2D& transform,
+                                                 unsigned int canvasWidth,
+                                                 unsigned int canvasHeight)
     {
       CairoColorTextureRenderer::RenderColorTexture(target_, transform, texture_,
                                                     textureTransform_, isLinearInterpolation_);

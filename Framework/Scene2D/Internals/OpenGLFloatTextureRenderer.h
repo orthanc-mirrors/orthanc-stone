@@ -47,7 +47,9 @@ namespace OrthancStone
                                  OpenGLFloatTextureProgram& program,
                                  const FloatTextureSceneLayer& layer);
 
-      virtual void Render(const AffineTransform2D& transform);
+      virtual void Render(const AffineTransform2D& transform,
+                          unsigned int canvasWidth,
+                          unsigned int canvasHeight);
 
       virtual void Update(const ISceneLayer& layer);
     };

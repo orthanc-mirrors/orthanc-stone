@@ -37,10 +37,6 @@ namespace OrthancStone
       }
 
       virtual cairo_t* GetCairoContext() = 0;
-
-      virtual unsigned int GetWidth() const = 0;
-
-      virtual unsigned int GetHeight() const = 0;
     };
   }
 }

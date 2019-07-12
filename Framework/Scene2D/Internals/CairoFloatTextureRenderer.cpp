@@ -88,7 +88,9 @@ namespace OrthancStone
     }
 
       
-    void CairoFloatTextureRenderer::Render(const AffineTransform2D& transform)
+    void CairoFloatTextureRenderer::Render(const AffineTransform2D& transform,
+                                           unsigned int canvasWidth,
+                                           unsigned int canvasHeight)
     {
       CairoColorTextureRenderer::RenderColorTexture(target_, transform, texture_,
                                                     textureTransform_, isLinearInterpolation_);

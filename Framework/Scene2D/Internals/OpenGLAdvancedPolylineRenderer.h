@@ -43,7 +43,9 @@ namespace OrthancStone
                                      OpenGLLinesProgram& program,
                                      const PolylineSceneLayer& layer);
 
-      virtual void Render(const AffineTransform2D& transform)
+      virtual void Render(const AffineTransform2D& transform,
+                          unsigned int canvasWidth,
+                          unsigned int canvasHeight)
       {
         program_.Apply(*data_, transform, true, true);
       }

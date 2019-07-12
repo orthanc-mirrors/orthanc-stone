@@ -43,7 +43,9 @@ namespace OrthancStone
 
       virtual void Update(const ISceneLayer& layer);
     
-      virtual void Render(const AffineTransform2D& transform)
+      virtual void Render(const AffineTransform2D& transform,
+                          unsigned int canvasWidth,
+                          unsigned int canvasHeight)
       {
         RenderColorTexture(target_, transform, texture_,
                            textureTransform_, isLinearInterpolation_);

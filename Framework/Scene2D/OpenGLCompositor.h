@@ -72,15 +72,14 @@ namespace OrthancStone
                  Orthanc::Encoding codepage);
 #endif
 
-    virtual unsigned int GetWidth() const
+    virtual unsigned int GetCanvasWidth() const
     {
       return canvasWidth_;
     }
 
-    unsigned int GetHeight() const
+    virtual unsigned int GetCanvasHeight() const
     {
       return canvasHeight_;
     }
-
   };
 }

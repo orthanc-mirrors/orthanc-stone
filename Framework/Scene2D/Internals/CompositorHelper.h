@@ -29,18 +29,22 @@
 
 namespace OrthancStone
 {
-  class ICompositor
+  class ICompositor : public boost::noncopyable
   {
   public:
-    virtual unsigned int GetWidth() const = 0;
-    virtual unsigned int GetHeight() const = 0;
+    virtual ~ICompositor()
+    {
+    }
+    
+    virtual unsigned int GetCanvasWidth() const = 0;
+    virtual unsigned int GetCanvasHeight() const = 0;
     virtual void Refresh() = 0;
 
     ScenePoint2D GetPixelCenterCoordinates(int x, int y) const
     {
       return ScenePoint2D(
-        static_cast<double>(x) + 0.5 - static_cast<double>(GetWidth()) / 2.0,
-        static_cast<double>(y) + 0.5 - static_cast<double>(GetHeight()) / 2.0);
+        static_cast<double>(x) + 0.5 - static_cast<double>(GetCanvasWidth()) / 2.0,
+        static_cast<double>(y) + 0.5 - static_cast<double>(GetCanvasHeight()) / 2.0);
     }
 
   };
@@ -57,7 +61,9 @@ namespace OrthancStone
         {
         }
 
-        virtual void Render(const AffineTransform2D& transform) = 0;
+        virtual void Render(const AffineTransform2D& transform,
+                            unsigned int canvasWidth,
+                            unsigned int canvasHeight) = 0;
 
         // "Update()" is only called if the type of the layer has not changed
         virtual void Update(const ISceneLayer& layer) = 0;
@@ -81,8 +87,12 @@ namespace OrthancStone
       const Scene2D&     scene_;
       IRendererFactory&  factory_;
       Content            content_;
-      AffineTransform2D  sceneTransform_;
 
+      // Only valid during a call to Refresh()
+      AffineTransform2D  sceneTransform_;
+      unsigned int       canvasWidth_;
+      unsigned int       canvasHeight_;
+      
     protected:
       virtual void Visit(const ISceneLayer& layer,
                          uint64_t layerIdentifier,

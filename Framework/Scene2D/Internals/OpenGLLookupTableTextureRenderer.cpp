@@ -119,7 +119,9 @@ namespace OrthancStone
     }
 
     
-    void OpenGLLookupTableTextureRenderer::Render(const AffineTransform2D& transform)
+    void OpenGLLookupTableTextureRenderer::Render(const AffineTransform2D& transform,
+                                                  unsigned int canvasWidth,
+                                                  unsigned int canvasHeight)
     {
       if (glTexture_.get() != NULL)
       {

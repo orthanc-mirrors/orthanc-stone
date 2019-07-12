@@ -45,7 +45,9 @@ namespace OrthancStone
     }
 
       
-    void OpenGLTextRenderer::Render(const AffineTransform2D& transform)
+    void OpenGLTextRenderer::Render(const AffineTransform2D& transform,
+                                    unsigned int canvasWidth,
+                                    unsigned int canvasHeight)
     {
       if (data_.get() != NULL)
       {

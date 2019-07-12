@@ -121,8 +121,8 @@ namespace OrthancStone
     }
     // position the fixed info text in the upper right corner
     layerP->SetText(msgS.c_str());
-    double cX = compositor_->GetWidth() * (-0.5);
-    double cY = compositor_->GetHeight() * (-0.5);
+    double cX = compositor_->GetCanvasWidth() * (-0.5);
+    double cY = compositor_->GetCanvasHeight() * (-0.5);
     GetScene()->GetCanvasToSceneTransform().Apply(cX,cY);
     layerP->SetPosition(cX, cY);
   }
@@ -162,12 +162,12 @@ namespace OrthancStone
 
   ScenePoint2D TrackerSampleApp::GetRandomPointInScene() const
   {
-    unsigned int w = compositor_->GetWidth();
-    LOG(TRACE) << "compositor_->GetWidth() = " <<
-      compositor_->GetWidth();
-    unsigned int h = compositor_->GetHeight();
-    LOG(TRACE) << "compositor_->GetHeight() = " <<
-      compositor_->GetHeight();
+    unsigned int w = compositor_->GetCanvasWidth();
+    LOG(TRACE) << "compositor_->GetCanvasWidth() = " <<
+      compositor_->GetCanvasWidth();
+    unsigned int h = compositor_->GetCanvasHeight();
+    LOG(TRACE) << "compositor_->GetCanvasHeight() = " <<
+      compositor_->GetCanvasHeight();
 
     if ((w >= RAND_MAX) || (h >= RAND_MAX))
       LOG(WARNING) << "Canvas is too big : tools will not be randomly placed";
@@ -351,8 +351,8 @@ namespace OrthancStone
         CreateRandomMeasureTool();
         break;
       case SDLK_s:
-        controller_->FitContent(compositor_->GetWidth(),
-          compositor_->GetHeight());
+        controller_->FitContent(compositor_->GetCanvasWidth(),
+          compositor_->GetCanvasHeight());
         break;
 
       case SDLK_z:
@@ -390,8 +390,8 @@ namespace OrthancStone
       case SDLK_c:
         TakeScreenshot(
           "screenshot.png",
-          compositor_->GetWidth(),
-          compositor_->GetHeight());
+          compositor_->GetCanvasWidth(),
+          compositor_->GetCanvasHeight());
         break;
 
       default:
@@ -421,7 +421,7 @@ namespace OrthancStone
 
     case SDL_BUTTON_RIGHT:
       return boost::shared_ptr<IFlexiblePointerTracker>(new ZoomSceneTracker
-        (controller_, e, compositor_->GetHeight()));
+        (controller_, e, compositor_->GetCanvasHeight()));
 
     case SDL_BUTTON_LEFT:
     {
@@ -453,7 +453,7 @@ namespace OrthancStone
             controller_, e));
         case GuiTool_Zoom:
           return boost::shared_ptr<IFlexiblePointerTracker>(new ZoomSceneTracker(
-            controller_, e, compositor_->GetHeight()));
+            controller_, e, compositor_->GetCanvasHeight()));
         //case GuiTool_AngleMeasure:
         //  return new AngleMeasureTracker(GetScene(), e);
         //case GuiTool_CircleMeasure:

@@ -42,9 +42,9 @@ using namespace OrthancStone;
 const unsigned int BASIC_SCENE_FONT_SIZE = 32;
 const int BASIC_SCENE_LAYER_POSITION = 150;
 
-void PrepareScene(boost::shared_ptr<OrthancStone::ViewportController> controller)
+void PrepareScene(Scene2D& scene)
 {
-  Scene2D& scene(*controller->GetScene());
+  //Scene2D& scene(*controller->GetScene());
   // Texture of 2x2 size
   {
     Orthanc::Image i(Orthanc::PixelFormat_RGB24, 2, 2, false);
@@ -131,6 +131,7 @@ void PrepareScene(boost::shared_ptr<OrthancStone::ViewportController> controller
   }
 }
 
+#if ORTHANC_SANDBOXED == 0
 void TakeScreenshot(const std::string& target,
                     const OrthancStone::Scene2D& scene,
                     unsigned int canvasWidth,
@@ -151,6 +152,7 @@ void TakeScreenshot(const std::string& target,
   Orthanc::PngWriter writer;
   writer.WriteToFile(target, png);
 }
+#endif
 
 void ShowCursorInfo(Scene2D& scene, const PointerEvent& pointerEvent)
 {
@@ -199,6 +201,8 @@ bool BasicScene2DInteractor::OnMouseEvent(const GuiAdapterMouseEvent& event, con
     {
       currentTracker_->PointerMove(pointerEvent);
     };break;
+    default:
+      return false;
     }
     return true;
   }
@@ -240,12 +244,14 @@ bool BasicScene2DInteractor::OnKeyboardEvent(const GuiAdapterKeyboardEvent& guiE
       viewportController_->FitContent(compositor_->GetWidth(), compositor_->GetHeight());
       return true;
     };
+#if ORTHANC_SANDBOXED == 0
     case 'c':
     {
       Scene2D& scene(*(viewportController_->GetScene()));
       TakeScreenshot("screenshot.png", scene, compositor_->GetWidth(), compositor_->GetHeight());
       return true;
     }
+#endif
     case 'd':
     {
       showCursorInfo_ = !showCursorInfo_;

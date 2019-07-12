@@ -22,11 +22,12 @@
 
 #include <boost/shared_ptr.hpp>
 #include "../../Framework/Scene2DViewport/ViewportController.h"
+#include "../../Framework/Scene2D/Scene2D.h"
 
 extern const unsigned int BASIC_SCENE_FONT_SIZE;
 extern const int BASIC_SCENE_LAYER_POSITION;
 
-extern void PrepareScene(boost::shared_ptr<OrthancStone::ViewportController> controller);
+extern void PrepareScene(OrthancStone::Scene2D& scene);
 extern void TakeScreenshot(const std::string& target,
                            const OrthancStone::Scene2D& scene,
                            unsigned int canvasWidth,
@@ -48,7 +49,7 @@ public:
   {}
 
   virtual bool OnMouseEvent(const OrthancStone::GuiAdapterMouseEvent& event, const OrthancStone::PointerEvent& pointerEvent) override;
-  virtual bool OnKeyboardEvent(const OrthancStone::GuiAdapterKeyboardEvent& guiEvent);
-  virtual bool OnWheelEvent(const OrthancStone::GuiAdapterWheelEvent& guiEvent);
+  virtual bool OnKeyboardEvent(const OrthancStone::GuiAdapterKeyboardEvent& guiEvent) override;
+  virtual bool OnWheelEvent(const OrthancStone::GuiAdapterWheelEvent& guiEvent) override;
 };
 

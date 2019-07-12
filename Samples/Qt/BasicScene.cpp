@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
     boost::shared_ptr<UndoStack> undoStack(new UndoStack);
     boost::shared_ptr<ViewportController> controller = boost::make_shared<ViewportController>(
       undoStack, boost::ref(broker));
-    PrepareScene(controller);
+    PrepareScene(*(controller->GetScene()));
 
     boost::shared_ptr<OrthancStone::Scene2DInteractor> interactor(new BasicScene2DInteractor(controller));
     window.GetOpenGlWidget().SetInteractor(interactor);

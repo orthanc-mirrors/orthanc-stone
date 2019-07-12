@@ -119,9 +119,9 @@ namespace OrthancStone
     
   public:
     ActiveTracker(const boost::shared_ptr<IFlexiblePointerTracker>& tracker,
-                  const WebAssemblyViewport& viewport) :
+                  const std::string& canvasIdentifier) :
       tracker_(tracker),
-      canvasIdentifier_(viewport.GetCanvasIdentifier()),
+      canvasIdentifier_(canvasIdentifier),
       insideCanvas_(true)
     {
       if (tracker_.get() == NULL)
@@ -227,7 +227,7 @@ EM_BOOL OnMouseEvent(int eventType,
         if (t.get() != NULL)
         {
           tracker_.reset(
-            new OrthancStone::ActiveTracker(t, viewport));
+            new OrthancStone::ActiveTracker(t, viewport.GetCanvasIdentifier()));
           viewport.Refresh();
         }
 

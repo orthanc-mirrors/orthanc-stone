@@ -36,7 +36,6 @@ namespace OrthancStone
     , undoStackW_(undoStackW)
     , canvasToSceneFactor_(0.0)
     , viewport_(viewport)
-    , scene_(viewport.GetScene())
   {
   }
 

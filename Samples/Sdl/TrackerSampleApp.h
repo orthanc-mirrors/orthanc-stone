@@ -25,6 +25,7 @@
 #include "../../Framework/Scene2DViewport/MeasureTool.h"
 #include "../../Framework/Scene2DViewport/PredeclaredTypes.h"
 #include "../../Framework/Scene2DViewport/ViewportController.h"
+#include "../../Framework/Viewport/SdlViewport.h"
 
 #include <SDL.h>
 
@@ -78,6 +79,18 @@ namespace OrthancStone
     void SelectNextTool();
     void CreateRandomMeasureTool();
 
+
+    /**
+    In the case of this app, the viewport is an SDL viewport and it has 
+    a OpenGLCompositor& GetCompositor() method
+    */
+    OpenGLCompositor& GetCompositor();
+
+    /**
+    See the other overload
+    */
+    const OpenGLCompositor& GetCompositor() const;
+
     /**
     This returns a random point in the canvas part of the scene, but in
     scene coordinates
@@ -108,7 +121,6 @@ namespace OrthancStone
     void HideInfoText();
 
   private:
-    std::auto_ptr<OpenGLCompositor> compositor_;
     /**
     WARNING: the measuring tools do store a reference to the scene, and it 
     paramount that the scene gets destroyed AFTER the measurement tools.
@@ -130,6 +142,7 @@ namespace OrthancStone
 
     GuiTool currentTool_;
     boost::shared_ptr<UndoStack> undoStack_;
+    SdlViewport viewport_;
   };
 
 }

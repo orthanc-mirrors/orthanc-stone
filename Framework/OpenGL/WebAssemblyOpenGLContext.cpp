@@ -49,8 +49,10 @@ namespace OrthancStone
         context_ = emscripten_webgl_create_context(canvas.c_str(), &attr);
         if (context_ < 0)
         {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-                                          "Cannot create an OpenGL context for canvas: " + canvas);
+          std::string message("Cannot create an OpenGL context for canvas: ");
+          message += canvas;
+          LOG(ERROR) << message;
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, message);
         }
 
         UpdateSize();

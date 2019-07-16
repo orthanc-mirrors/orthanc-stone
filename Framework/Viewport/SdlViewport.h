@@ -51,12 +51,14 @@ namespace OrthancStone
   public:
     SdlViewport(const char* title,
                 unsigned int width,
-                unsigned int height);
+                unsigned int height,
+                bool allowDpiScaling = true);
 
     SdlViewport(const char* title,
                 unsigned int width,
                 unsigned int height,
-                boost::shared_ptr<Scene2D>& scene);
+                boost::shared_ptr<Scene2D>& scene,
+                bool allowDpiScaling = true);
 
     virtual void Refresh()
     {

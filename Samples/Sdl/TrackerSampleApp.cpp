@@ -79,9 +79,6 @@ namespace OrthancStone
   void TrackerSampleApp::DisplayInfoText()
   {
     // do not try to use stuff too early!
-    if (compositor_.get() == NULL)
-      return;
-
     std::stringstream msg;
 	
 	for (std::map<std::string, std::string>::const_iterator kv = infoTextMap_.begin();
@@ -111,8 +108,8 @@ namespace OrthancStone
     }
     // position the fixed info text in the upper right corner
     layerP->SetText(msgS.c_str());
-    double cX = compositor_->GetCanvasWidth() * (-0.5);
-    double cY = compositor_->GetCanvasHeight() * (-0.5);
+    double cX = GetCompositor().GetCanvasWidth() * (-0.5);
+    double cY = GetCompositor().GetCanvasHeight() * (-0.5);
     controller_->GetScene().GetCanvasToSceneTransform().Apply(cX,cY);
     layerP->SetPosition(cX, cY);
   }
@@ -152,12 +149,12 @@ namespace OrthancStone
 
   ScenePoint2D TrackerSampleApp::GetRandomPointInScene() const
   {
-    unsigned int w = compositor_->GetCanvasWidth();
-    LOG(TRACE) << "compositor_->GetCanvasWidth() = " <<
-      compositor_->GetCanvasWidth();
-    unsigned int h = compositor_->GetCanvasHeight();
-    LOG(TRACE) << "compositor_->GetCanvasHeight() = " <<
-      compositor_->GetCanvasHeight();
+    unsigned int w = GetCompositor().GetCanvasWidth();
+    LOG(TRACE) << "GetCompositor().GetCanvasWidth() = " << 
+      GetCompositor().GetCanvasWidth();
+    unsigned int h = GetCompositor().GetCanvasHeight();
+    LOG(TRACE) << "GetCompositor().GetCanvasHeight() = " << 
+      GetCompositor().GetCanvasHeight();
 
     if ((w >= RAND_MAX) || (h >= RAND_MAX))
       LOG(WARNING) << "Canvas is too big : tools will not be randomly placed";
@@ -166,7 +163,7 @@ namespace OrthancStone
     int y = rand() % h;
     LOG(TRACE) << "random x = " << x << "random y = " << y;
 
-    ScenePoint2D p = compositor_->GetPixelCenterCoordinates(x, y);
+    ScenePoint2D p = controller_->GetViewport().GetPixelCenterCoordinates(x, y);
     LOG(TRACE) << "--> p.GetX() = " << p.GetX() << " p.GetY() = " << p.GetY();
 
     ScenePoint2D r = p.Apply(controller_->GetScene().GetCanvasToSceneTransform());
@@ -232,7 +229,7 @@ namespace OrthancStone
         // The "left-ctrl" key is down, while no tracker is present
         // Let's display the info text
         PointerEvent e;
-        e.AddPosition(compositor_->GetPixelCenterCoordinates(
+        e.AddPosition(controller_->GetViewport().GetPixelCenterCoordinates(
           event.button.x, event.button.y));
 
         DisplayFloatingCtrlInfoText(e);
@@ -245,7 +242,7 @@ namespace OrthancStone
         {
           //LOG(TRACE) << "(activeTracker_.get() != NULL)";
           PointerEvent e;
-          e.AddPosition(compositor_->GetPixelCenterCoordinates(
+          e.AddPosition(controller_->GetViewport().GetPixelCenterCoordinates(
             event.button.x, event.button.y));
           
           //LOG(TRACE) << "event.button.x = " << event.button.x << "     " <<
@@ -263,7 +260,7 @@ namespace OrthancStone
         HideInfoText();
 
         PointerEvent e;
-        e.AddPosition(compositor_->GetPixelCenterCoordinates(event.button.x, event.button.y));
+        e.AddPosition(controller_->GetViewport().GetPixelCenterCoordinates(event.button.x, event.button.y));
 
         ScenePoint2D scenePos = e.GetMainPosition().Apply(
           controller_->GetScene().GetCanvasToSceneTransform());
@@ -290,7 +287,7 @@ namespace OrthancStone
       if (activeTracker_)
       {
         PointerEvent e;
-        e.AddPosition(compositor_->GetPixelCenterCoordinates(event.button.x, event.button.y));
+        e.AddPosition(controller_->GetViewport().GetPixelCenterCoordinates(event.button.x, event.button.y));
         activeTracker_->PointerUp(e);
         if (!activeTracker_->IsAlive())
           activeTracker_.reset();
@@ -299,7 +296,7 @@ namespace OrthancStone
     else if (event.type == SDL_MOUSEBUTTONDOWN)
     {
       PointerEvent e;
-      e.AddPosition(compositor_->GetPixelCenterCoordinates(
+      e.AddPosition(controller_->GetViewport().GetPixelCenterCoordinates(
         event.button.x, event.button.y));
       if (activeTracker_)
       {
@@ -341,8 +338,8 @@ namespace OrthancStone
         CreateRandomMeasureTool();
         break;
       case SDLK_s:
-        controller_->FitContent(compositor_->GetCanvasWidth(),
-          compositor_->GetCanvasHeight());
+        controller_->FitContent(GetCompositor().GetCanvasWidth(),
+          GetCompositor().GetCanvasHeight());
         break;
 
       case SDLK_z:
@@ -380,8 +377,8 @@ namespace OrthancStone
       case SDLK_c:
         TakeScreenshot(
           "screenshot.png",
-          compositor_->GetCanvasWidth(),
-          compositor_->GetCanvasHeight());
+          GetCompositor().GetCanvasWidth(),
+          GetCompositor().GetCanvasHeight());
         break;
 
       default:
@@ -411,7 +408,7 @@ namespace OrthancStone
 
     case SDL_BUTTON_RIGHT:
       return boost::shared_ptr<IFlexiblePointerTracker>(new ZoomSceneTracker
-        (controller_, e, compositor_->GetCanvasHeight()));
+        (controller_, e, GetCompositor().GetCanvasHeight()));
 
     case SDL_BUTTON_LEFT:
     {
@@ -443,7 +440,7 @@ namespace OrthancStone
             controller_, e));
         case GuiTool_Zoom:
           return boost::shared_ptr<IFlexiblePointerTracker>(new ZoomSceneTracker(
-            controller_, e, compositor_->GetCanvasHeight()));
+            controller_, e, GetCompositor().GetCanvasHeight()));
         //case GuiTool_AngleMeasure:
         //  return new AngleMeasureTracker(GetScene(), e);
         //case GuiTool_CircleMeasure:
@@ -476,9 +473,10 @@ namespace OrthancStone
   TrackerSampleApp::TrackerSampleApp(MessageBroker& broker) : IObserver(broker)
     , currentTool_(GuiTool_Rotate)
     , undoStack_(new UndoStack)
+    , viewport_("Hello", 1024, 1024, false) // False means we do NOT let Windows treat this as a legacy application that needs to be scaled
   {
     controller_ = boost::shared_ptr<ViewportController>(
-      new ViewportController(undoStack_, broker));
+      new ViewportController(undoStack_, broker, viewport_));
 
     controller_->RegisterObserverCallback(
       new Callable<TrackerSampleApp, ViewportController::SceneTransformChanged>
@@ -594,7 +592,7 @@ namespace OrthancStone
     unsigned int canvasWidth,
     unsigned int canvasHeight)
   {
-    CairoCompositor compositor(*GetScene(), canvasWidth, canvasHeight);
+    CairoCompositor compositor(controller_->GetScene(), canvasWidth, canvasHeight);
     compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, FONT_SIZE_0, Orthanc::Encoding_Latin1);
     compositor.Refresh();
 
@@ -643,27 +641,50 @@ namespace OrthancStone
 
   static bool g_stopApplication = false;
   
+  OpenGLCompositor& TrackerSampleApp::GetCompositor()
+  {
+    using namespace Orthanc;
+    try
+    {
+      SdlViewport& viewport = dynamic_cast<SdlViewport&>(viewport_);
+      return viewport.GetCompositor();
+    }
+    catch (std::bad_cast e)
+    {
+      throw OrthancException(ErrorCode_InternalError, "Wrong viewport type!");
+     }
+  }
+
+  const OpenGLCompositor& TrackerSampleApp::GetCompositor() const
+  {
+    using namespace Orthanc;
+    try
+    {
+      SdlViewport& viewport = const_cast<SdlViewport&>(dynamic_cast<const SdlViewport&>(viewport_));
+      return viewport.GetCompositor();
+    }
+    catch (std::bad_cast e)
+    {
+      throw OrthancException(ErrorCode_InternalError, "Wrong viewport type!");
+    }
+  }
+
+
   void TrackerSampleApp::Run()
   {
-    // False means we do NOT let Windows treat this as a legacy application
-    // that needs to be scaled
-    SdlOpenGLContext window("Hello", 1024, 1024, false);
-
-    controller_->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
+    controller_->FitContent(viewport_.GetCanvasWidth(), viewport_.GetCanvasHeight());
 
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(OpenGLMessageCallback, 0);
 
-    compositor_.reset(new OpenGLCompositor(window, *GetScene()));
-
-    compositor_->SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,
+    GetCompositor().SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,
       FONT_SIZE_0, Orthanc::Encoding_Latin1);
-    compositor_->SetFont(1, Orthanc::EmbeddedResources::UBUNTU_FONT,
+    GetCompositor().SetFont(1, Orthanc::EmbeddedResources::UBUNTU_FONT,
       FONT_SIZE_1, Orthanc::Encoding_Latin1);
 
     while (!g_stopApplication)
     {
-      compositor_->Refresh();
+      GetCompositor().Refresh();
 
       SDL_Event event;
       while (!g_stopApplication && SDL_PollEvent(&event))
@@ -684,7 +705,7 @@ namespace OrthancStone
           switch (event.key.keysym.sym)
           {
           case SDLK_f:
-            window.GetWindow().ToggleMaximize();
+            viewport_.GetContext().GetWindow().ToggleMaximize();
             break;
 
           case SDLK_q:
@@ -698,10 +719,6 @@ namespace OrthancStone
       }
       SDL_Delay(1);
     }
-
-    // the following is paramount because the compositor holds a reference
-    // to the scene and we do not want this reference to become dangling
-    compositor_.reset(NULL);
   }
 
   void TrackerSampleApp::SetInfoDisplayMessage(

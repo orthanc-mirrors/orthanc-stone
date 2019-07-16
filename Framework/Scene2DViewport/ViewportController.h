@@ -181,7 +181,7 @@ namespace OrthancStone
 
     const Scene2D& GetScene() const
     {
-      return scene_;
+      return const_cast<IViewport&>(viewport_).GetScene();
     }
 
   private:
@@ -197,10 +197,8 @@ namespace OrthancStone
     
     // this is cached
     mutable double              canvasToSceneFactor_;
-
-
+    
     // Refactoring on 2019-07-10: Removing shared_ptr from scene
     IViewport&      viewport_;
-    const Scene2D&  scene_;  // As long as the viewport exists, its associated scene too   
   };
 }

@@ -82,12 +82,12 @@ namespace OrthancStone
     return descs[i];
   }
 
-  boost::shared_ptr<Scene2D> FusionMprSdlApp::GetScene()
+  Scene2D& FusionMprSdlApp::GetScene()
   {
     return controller_->GetScene();
   }
 
-  boost::shared_ptr<const Scene2D> FusionMprSdlApp::GetScene() const
+  const Scene2D& FusionMprSdlApp::GetScene() const
   {
     return controller_->GetScene();
   }

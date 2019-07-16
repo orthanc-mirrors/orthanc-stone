@@ -60,17 +60,17 @@ namespace OrthancStone
   }
 
   void AddSquare(PolylineSceneLayer::Chain& chain,
-    boost::shared_ptr<const Scene2D>     scene,
+    const Scene2D&      scene,
     const ScenePoint2D& centerS,
     const double&       sideLengthS)
   {
     // get the scaling factor 
     const double sceneToCanvas = 
-      scene->GetSceneToCanvasTransform().ComputeZoom();
+      scene.GetSceneToCanvasTransform().ComputeZoom();
 
     chain.clear();
     chain.reserve(4);
-    ScenePoint2D centerC = centerS.Apply(scene->GetSceneToCanvasTransform());
+    ScenePoint2D centerC = centerS.Apply(scene.GetSceneToCanvasTransform());
     //TODO: take DPI into account 
     double handleLX = centerC.GetX() - sideLengthS * sceneToCanvas * 0.5;
     double handleTY = centerC.GetY() - sideLengthS * sceneToCanvas * 0.5;
@@ -81,10 +81,10 @@ namespace OrthancStone
     ScenePoint2D RBC(handleRX, handleBY);
     ScenePoint2D LBC(handleLX, handleBY);
 
-    ScenePoint2D startLT = LTC.Apply(scene->GetCanvasToSceneTransform());
-    ScenePoint2D startRT = RTC.Apply(scene->GetCanvasToSceneTransform());
-    ScenePoint2D startRB = RBC.Apply(scene->GetCanvasToSceneTransform());
-    ScenePoint2D startLB = LBC.Apply(scene->GetCanvasToSceneTransform());
+    ScenePoint2D startLT = LTC.Apply(scene.GetCanvasToSceneTransform());
+    ScenePoint2D startRT = RTC.Apply(scene.GetCanvasToSceneTransform());
+    ScenePoint2D startRB = RBC.Apply(scene.GetCanvasToSceneTransform());
+    ScenePoint2D startLB = LBC.Apply(scene.GetCanvasToSceneTransform());
 
     chain.push_back(startLT);
     chain.push_back(startRT);
@@ -288,7 +288,7 @@ namespace OrthancStone
   for the actual text
   */
   void SetTextLayerOutlineProperties(
-    boost::shared_ptr<Scene2D> scene, boost::shared_ptr<LayerHolder> layerHolder, 
+    Scene2D& scene, boost::shared_ptr<LayerHolder> layerHolder, 
     const char* text, ScenePoint2D p)
   {
     double xoffsets[5] = { 2, 0, -2, 0, 0 };
@@ -296,7 +296,7 @@ namespace OrthancStone
 
     // get the scaling factor 
     const double pixelToScene =
-      scene->GetCanvasToSceneTransform().ComputeZoom();
+      scene.GetCanvasToSceneTransform().ComputeZoom();
 
     for (int i = 0; i < 5; ++i)
     {

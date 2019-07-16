@@ -28,9 +28,10 @@ namespace OrthancStone
 {
   SdlViewport::SdlViewport(const char* title,
                            unsigned int width,
-                           unsigned int height) :
+                           unsigned int height,
+                           bool allowDpiScaling) :
     ViewportBase(title),
-    context_(title, width, height),
+    context_(title, width, height, allowDpiScaling),
     compositor_(context_, GetScene())
   {
   }
@@ -38,9 +39,10 @@ namespace OrthancStone
   SdlViewport::SdlViewport(const char* title,
                            unsigned int width,
                            unsigned int height,
-                           boost::shared_ptr<Scene2D>& scene) :
+                           boost::shared_ptr<Scene2D>& scene,
+                           bool allowDpiScaling) :
     ViewportBase(title, scene),
-    context_(title, width, height),
+    context_(title, width, height, allowDpiScaling),
     compositor_(context_, GetScene())
   {
   }

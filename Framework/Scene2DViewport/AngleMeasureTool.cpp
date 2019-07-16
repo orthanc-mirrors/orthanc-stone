@@ -298,7 +298,7 @@ namespace OrthancStone
 
 #if 0
           // TODO:make it togglable
-          bool enableInfoDisplay = false;
+          bool enableInfoDisplay = true;
           if (enableInfoDisplay)
           {
             TrackerSample_SetInfoDisplayMessage("center_.GetX()",

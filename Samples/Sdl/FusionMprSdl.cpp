@@ -20,7 +20,7 @@
 
 #include "FusionMprSdl.h"
 
-#include "../../Applications/Sdl/SdlOpenGLWindow.h"
+#include "../../Applications/Sdl/SdlOpenGLContext.h"
 
 #include "../../Framework/StoneInitialization.h"
 
@@ -587,7 +587,7 @@ namespace OrthancStone
   {
     // False means we do NOT let Windows treat this as a legacy application
     // that needs to be scaled
-    SdlOpenGLWindow window("Hello", 1024, 1024, false);
+    SdlOpenGLContext window("Hello", 1024, 1024, false);
 
     controller_->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
 
@@ -706,7 +706,6 @@ namespace OrthancStone
           event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
         {
           DisableTracker(); // was: tracker.reset(NULL);
-          compositor_->UpdateSize();
         }
         else if (event.type == SDL_KEYDOWN &&
           event.key.repeat == 0 /* Ignore key bounce */)

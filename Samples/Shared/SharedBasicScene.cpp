@@ -225,7 +225,7 @@ bool BasicScene2DInteractor::OnMouseEvent(const GuiAdapterMouseEvent& event, con
   {
     if (showCursorInfo_)
     {
-      Scene2D& scene(*(viewportController_->GetScene()));
+      Scene2D& scene(viewportController_->GetScene());
       ShowCursorInfo(scene, pointerEvent);
     }
     return true;
@@ -247,7 +247,7 @@ bool BasicScene2DInteractor::OnKeyboardEvent(const GuiAdapterKeyboardEvent& guiE
 #if ORTHANC_SANDBOXED == 0
     case 'c':
     {
-      Scene2D& scene(*(viewportController_->GetScene()));
+      Scene2D& scene(viewportController_->GetScene());
       TakeScreenshot("screenshot.png", scene, compositor_->GetCanvasWidth(), compositor_->GetCanvasHeight());
       return true;
     }
@@ -257,7 +257,7 @@ bool BasicScene2DInteractor::OnKeyboardEvent(const GuiAdapterKeyboardEvent& guiE
       showCursorInfo_ = !showCursorInfo_;
       if (!showCursorInfo_)
       {
-        Scene2D& scene(*(viewportController_->GetScene()));
+        Scene2D& scene(viewportController_->GetScene());
         scene.DeleteLayer(BASIC_SCENE_LAYER_POSITION);
       }
 

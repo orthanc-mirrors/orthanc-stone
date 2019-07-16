@@ -89,7 +89,7 @@ namespace OrthancStone
   private:
     int GetPolylineLayerIndex(int index = 0);
     int GetTextLayerIndex(int index = 0);
-    boost::shared_ptr<Scene2D> GetScene();
+    Scene2D& GetScene();
 
     int textLayerCount_;
     int polylineLayerCount_;

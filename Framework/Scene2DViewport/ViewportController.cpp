@@ -29,12 +29,15 @@
 
 namespace OrthancStone
 {
-  ViewportController::ViewportController(boost::weak_ptr<UndoStack> undoStackW, MessageBroker& broker)
+  ViewportController::ViewportController(boost::weak_ptr<UndoStack> undoStackW,
+                                         MessageBroker& broker,
+                                         IViewport& viewport)
     : IObservable(broker)
     , undoStackW_(undoStackW)
     , canvasToSceneFactor_(0.0)
+    , viewport_(viewport)
+    , scene_(viewport.GetScene())
   {
-    scene_ = boost::make_shared<Scene2D>();
   }
 
   boost::shared_ptr<UndoStack> ViewportController::GetUndoStack()
@@ -72,16 +75,6 @@ namespace OrthancStone
     return GetUndoStack()->CanRedo();
   }
   
-  boost::shared_ptr<const Scene2D> ViewportController::GetScene() const
-  {
-    return scene_;
-  }
-
-  boost::shared_ptr<Scene2D> ViewportController::GetScene()
-  {
-    return scene_;
-  }
-
   bool ViewportController::HandlePointerEvent(PointerEvent e)
   {
     throw StoneException(ErrorCode_NotImplemented);
@@ -111,18 +104,18 @@ namespace OrthancStone
 
   const OrthancStone::AffineTransform2D& ViewportController::GetCanvasToSceneTransform() const
   {
-    return scene_->GetCanvasToSceneTransform();
+    return GetScene().GetCanvasToSceneTransform();
   }
 
   const OrthancStone::AffineTransform2D& ViewportController::GetSceneToCanvasTransform() const
   {
-    return scene_->GetSceneToCanvasTransform();
+    return GetScene().GetSceneToCanvasTransform();
   }
 
   void ViewportController::SetSceneToCanvasTransform(
     const AffineTransform2D& transform)
   {
-    scene_->SetSceneToCanvasTransform(transform);
+    viewport_.GetScene().SetSceneToCanvasTransform(transform);
     BroadcastMessage(SceneTransformChanged(*this));
     
     // update the canvas to scene factor
@@ -133,7 +126,7 @@ namespace OrthancStone
   void ViewportController::FitContent(
     unsigned int canvasWidth, unsigned int canvasHeight)
   {
-    scene_->FitContent(canvasWidth, canvasHeight);
+    viewport_.GetScene().FitContent(canvasWidth, canvasHeight);
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
@@ -159,7 +152,7 @@ namespace OrthancStone
     if (canvasToSceneFactor_ == 0)
     {
       canvasToSceneFactor_ =
-        GetScene()->GetCanvasToSceneTransform().ComputeZoom();
+        GetScene().GetCanvasToSceneTransform().ComputeZoom();
     }
     return canvasToSceneFactor_;
   }

@@ -134,7 +134,6 @@ namespace OrthancStone
     canvasWidth_(0),
     canvasHeight_(0)
   {
-    UpdateSize();
   }
 
   
@@ -148,20 +147,14 @@ namespace OrthancStone
   }
 
   
-  void OpenGLCompositor::UpdateSize()
-  {
-    canvasWidth_ = context_.GetCanvasWidth();
-    canvasHeight_ = context_.GetCanvasHeight();
-
-    context_.MakeCurrent();
-    glViewport(0, 0, canvasWidth_, canvasHeight_);
-  }
-
-  
   void OpenGLCompositor::Refresh()
   {
     context_.MakeCurrent();
 
+    canvasWidth_ = context_.GetCanvasWidth();
+    canvasHeight_ = context_.GetCanvasHeight();
+
+    glViewport(0, 0, canvasWidth_, canvasHeight_);
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -174,6 +167,8 @@ namespace OrthancStone
   void OpenGLCompositor::SetFont(size_t index,
                                  const GlyphBitmapAlphabet& dict)
   {
+    context_.MakeCurrent();
+      
     std::auto_ptr<Font> font(new Font(dict));
       
     Fonts::iterator found = fonts_.find(index);

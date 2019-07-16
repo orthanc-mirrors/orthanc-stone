@@ -21,7 +21,7 @@
 #define GLEW_STATIC 1
 // From Stone
 #include "../../Framework/OpenGL/OpenGLIncludes.h"
-#include "../../Applications/Sdl/SdlOpenGLWindow.h"
+#include "../../Applications/Sdl/SdlWindow.h"
 #include "../../Framework/Scene2D/CairoCompositor.h"
 #include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
 #include "../../Framework/Scene2D/OpenGLCompositor.h"
@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
     boost::shared_ptr<UndoStack> undoStack(new UndoStack);
     boost::shared_ptr<ViewportController> controller = boost::make_shared<ViewportController>(
       undoStack, boost::ref(broker));
-    PrepareScene(*(controller->GetScene()));
+    PrepareScene(controller->GetScene());
 
     boost::shared_ptr<OrthancStone::Scene2DInteractor> interactor(new BasicScene2DInteractor(controller));
     window.GetOpenGlWidget().SetInteractor(interactor);

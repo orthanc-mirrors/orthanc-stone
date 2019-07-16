@@ -33,12 +33,108 @@
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 
-#include "../Shared/SharedBasicScene.h"
+void PrepareScene(OrthancStone::Scene2D& scene)
+{
+  using namespace OrthancStone;
+
+  // Texture of 2x2 size
+  if (1)
+  {
+    Orthanc::Image i(Orthanc::PixelFormat_RGB24, 2, 2, false);
+    
+    uint8_t *p = reinterpret_cast<uint8_t*>(i.GetRow(0));
+    p[0] = 255;
+    p[1] = 0;
+    p[2] = 0;
+
+    p[3] = 0;
+    p[4] = 255;
+    p[5] = 0;
+
+    p = reinterpret_cast<uint8_t*>(i.GetRow(1));
+    p[0] = 0;
+    p[1] = 0;
+    p[2] = 255;
+
+    p[3] = 255;
+    p[4] = 0;
+    p[5] = 0;
+
+    scene.SetLayer(12, new ColorTextureSceneLayer(i));
+
+    std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
+    l->SetOrigin(-3, 2);
+    l->SetPixelSpacing(1.5, 1);
+    l->SetAngle(20.0 / 180.0 * M_PI);
+    scene.SetLayer(14, l.release());
+  }
+
+  // Texture of 1x1 size
+  if (1)
+  {
+    Orthanc::Image i(Orthanc::PixelFormat_RGB24, 1, 1, false);
+    
+    uint8_t *p = reinterpret_cast<uint8_t*>(i.GetRow(0));
+    p[0] = 255;
+    p[1] = 0;
+    p[2] = 0;
+
+    std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
+    l->SetOrigin(-2, 1);
+    l->SetAngle(20.0 / 180.0 * M_PI);
+    scene.SetLayer(13, l.release());
+  }
+
+  // Some lines
+  if (1)
+  {
+    std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
+
+    layer->SetThickness(1);
+
+    PolylineSceneLayer::Chain chain;
+    chain.push_back(ScenePoint2D(0 - 0.5, 0 - 0.5));
+    chain.push_back(ScenePoint2D(0 - 0.5, 2 - 0.5));
+    chain.push_back(ScenePoint2D(2 - 0.5, 2 - 0.5));
+    chain.push_back(ScenePoint2D(2 - 0.5, 0 - 0.5));
+    layer->AddChain(chain, true, 255, 0, 0);
+
+    chain.clear();
+    chain.push_back(ScenePoint2D(-5, -5));
+    chain.push_back(ScenePoint2D(5, -5));
+    chain.push_back(ScenePoint2D(5, 5));
+    chain.push_back(ScenePoint2D(-5, 5));
+    layer->AddChain(chain, true, 0, 255, 0);
+
+    double dy = 1.01;
+    chain.clear();
+    chain.push_back(ScenePoint2D(-4, -4));
+    chain.push_back(ScenePoint2D(4, -4 + dy));
+    chain.push_back(ScenePoint2D(-4, -4 + 2.0 * dy));
+    chain.push_back(ScenePoint2D(4, 2));
+    layer->AddChain(chain, false, 0, 0, 255);
+
+    scene.SetLayer(50, layer.release());
+  }
+
+  // Some text
+  if (1)
+  {
+    std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer);
+    layer->SetText("Hello");
+    scene.SetLayer(100, layer.release());
+  }
+}
+
 
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport1_;
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport2_;
 std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport3_;
-OrthancStone::MessageBroker  broker_;
+boost::shared_ptr<OrthancStone::ViewportController>   controller1_;
+boost::shared_ptr<OrthancStone::ViewportController>   controller2_;
+boost::shared_ptr<OrthancStone::ViewportController>   controller3_;
+OrthancStone::MessageBroker broker_;
+
 
 EM_BOOL OnWindowResize(
   int eventType, const EmscriptenUiEvent *uiEvent, void *userData)
@@ -74,20 +170,40 @@ extern "C"
   EMSCRIPTEN_KEEPALIVE
   void Initialize()
   {
-    viewport1_.reset(
-      new OrthancStone::WebAssemblyViewport(broker_, "mycanvas1"));
+    viewport1_.reset(new OrthancStone::WebAssemblyViewport("mycanvas1"));
     PrepareScene(viewport1_->GetScene());
     viewport1_->UpdateSize();
 
-    viewport2_.reset(
-      new OrthancStone::WebAssemblyViewport(broker_, "mycanvas2"));
+    viewport2_.reset(new OrthancStone::WebAssemblyViewport("mycanvas2"));
     PrepareScene(viewport2_->GetScene());
     viewport2_->UpdateSize();
 
-    viewport3_.reset(
-      new OrthancStone::WebAssemblyViewport(broker_, "mycanvas3"));
+    viewport3_.reset(new OrthancStone::WebAssemblyViewport("mycanvas3"));
     PrepareScene(viewport3_->GetScene());
     viewport3_->UpdateSize();
+
+    viewport1_->GetCompositor().SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
+                                        FONT_SIZE, Orthanc::Encoding_Latin1);
+    viewport2_->GetCompositor().SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
+                                        FONT_SIZE, Orthanc::Encoding_Latin1);
+    viewport3_->GetCompositor().SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 
+                                        FONT_SIZE, Orthanc::Encoding_Latin1);
+
+    controller1_.reset(new OrthancStone::ViewportController(boost::make_shared<OrthancStone::UndoStack>(), broker_, *viewport1_));
+    controller2_.reset(new OrthancStone::ViewportController(boost::make_shared<OrthancStone::UndoStack>(), broker_, *viewport2_));
+    controller3_.reset(new OrthancStone::ViewportController(boost::make_shared<OrthancStone::UndoStack>(), broker_, *viewport3_));
+
+    controller1_->FitContent(viewport1_->GetCanvasWidth(), viewport1_->GetCanvasHeight());
+    controller2_->FitContent(viewport2_->GetCanvasWidth(), viewport2_->GetCanvasHeight());
+    controller3_->FitContent(viewport3_->GetCanvasWidth(), viewport3_->GetCanvasHeight());
+
+    viewport1_->Refresh();
+    viewport2_->Refresh();
+    viewport3_->Refresh();
+
+    SetupEvents("mycanvas1", controller1_);
+    SetupEvents("mycanvas2", controller2_);
+    SetupEvents("mycanvas3", controller3_);
 
     emscripten_set_resize_callback("#window", NULL, false, OnWindowResize);
   }

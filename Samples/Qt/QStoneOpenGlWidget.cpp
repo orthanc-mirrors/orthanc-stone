@@ -33,11 +33,11 @@ void ConvertFromPlatform(
     OrthancStone::GuiAdapterMouseEvent& guiEvent,
     PointerEvent& pointerEvent,
     const QMouseEvent& qtEvent,
-    const OrthancStone::OpenGLCompositor& compositor)
+    const IViewport& viewport)
 {
   guiEvent.targetX = qtEvent.x();
   guiEvent.targetY = qtEvent.y();
-  pointerEvent.AddPosition(compositor.GetPixelCenterCoordinates(guiEvent.targetX, guiEvent.targetY));
+  pointerEvent.AddPosition(viewport.GetPixelCenterCoordinates(guiEvent.targetX, guiEvent.targetY));
 
   switch (qtEvent.button())
   {
@@ -66,7 +66,7 @@ void QStoneOpenGlWidget::mouseEvent(QMouseEvent* qtEvent, OrthancStone::GuiAdapt
 {
   OrthancStone::GuiAdapterMouseEvent guiEvent;
   PointerEvent pointerEvent;
-  ConvertFromPlatform(guiEvent, pointerEvent, *qtEvent, *compositor_);
+  ConvertFromPlatform(guiEvent, pointerEvent, *qtEvent, *viewport_);
   guiEvent.type = guiEventType;
 
   if (sceneInteractor_.get() != NULL && compositor_.get() != NULL)

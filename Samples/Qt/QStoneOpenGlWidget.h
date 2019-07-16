@@ -6,12 +6,14 @@
 #include <boost/shared_ptr.hpp>
 #include "../../Framework/OpenGL/IOpenGLContext.h"
 #include "../../Framework/Scene2D/OpenGLCompositor.h"
+#include "../../Framework/Viewport/IViewport.h"
 #include "../../Applications/Generic/Scene2DInteractor.h"
 
 namespace OrthancStone
 {
   class QStoneOpenGlWidget : public QOpenGLWidget, public OrthancStone::OpenGL::IOpenGLContext
   {
+    boost::shared_ptr<IViewport> viewport_;
     boost::shared_ptr<OrthancStone::OpenGLCompositor> compositor_;
     boost::shared_ptr<Scene2DInteractor> sceneInteractor_;
 

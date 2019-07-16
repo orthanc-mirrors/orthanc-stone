@@ -120,7 +120,7 @@ namespace OrthancStone
   AngleMeasureTool::AngleHighlightArea AngleMeasureTool::AngleHitTest(ScenePoint2D p) const
   {
     const double pixelToScene =
-      GetScene()->GetCanvasToSceneTransform().ComputeZoom();
+      GetController()->GetScene().GetCanvasToSceneTransform().ComputeZoom();
     const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD * pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD;
 
     {
@@ -165,7 +165,7 @@ namespace OrthancStone
   boost::shared_ptr<IFlexiblePointerTracker> AngleMeasureTool::CreateEditionTracker(const PointerEvent& e)
   {
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      GetScene()->GetCanvasToSceneTransform());
+      GetController()->GetScene().GetCanvasToSceneTransform());
 
     if (!HitTest(scenePos))
       return boost::shared_ptr<IFlexiblePointerTracker>();
@@ -233,7 +233,7 @@ namespace OrthancStone
             {
               PolylineSceneLayer::Chain chain;
               //TODO: take DPI into account
-              AddSquare(chain, GetScene(), side1End_, 
+              AddSquare(chain, GetController()->GetScene(), side1End_, 
                 GetController()->GetHandleSideLengthS());
               
               if (angleHighlightArea_ == AngleHighlightArea_Side1End)
@@ -245,7 +245,7 @@ namespace OrthancStone
             {
               PolylineSceneLayer::Chain chain;
               //TODO: take DPI into account
-              AddSquare(chain, GetScene(), side2End_, 
+              AddSquare(chain, GetController()->GetScene(), side2End_, 
                 GetController()->GetHandleSideLengthS());
 
               if (angleHighlightArea_ == AngleHighlightArea_Side2End)
@@ -294,7 +294,7 @@ namespace OrthancStone
           sprintf(buf, "%0.02f\xc2\xb0", angleDeg);
 
           SetTextLayerOutlineProperties(
-            GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY));
+            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY));
 
 #if 0
           // TODO:make it togglable

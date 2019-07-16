@@ -125,9 +125,6 @@ namespace OrthancStone
     boost::shared_ptr<const ViewportController> GetController() const;
     boost::shared_ptr<ViewportController>      GetController();
 
-    boost::shared_ptr<const Scene2D>            GetScene() const;
-    boost::shared_ptr<Scene2D>                 GetScene();
-
     /**
     enabled_ is not accessible by subclasses because there is a state machine
     that we do not wanna mess with

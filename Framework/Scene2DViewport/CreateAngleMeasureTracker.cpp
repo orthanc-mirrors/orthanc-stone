@@ -34,7 +34,7 @@ namespace OrthancStone
       new CreateAngleMeasureCommand(
         broker,
         controllerW,
-        e.GetMainPosition().Apply(GetScene()->GetCanvasToSceneTransform())));
+        e.GetMainPosition().Apply(GetScene().GetCanvasToSceneTransform())));
   }
 
   CreateAngleMeasureTracker::~CreateAngleMeasureTracker()
@@ -43,8 +43,6 @@ namespace OrthancStone
 
   void CreateAngleMeasureTracker::PointerMove(const PointerEvent& event)
   {
-    assert(GetScene());
-
     if (!alive_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
@@ -53,7 +51,7 @@ namespace OrthancStone
     }
 
     ScenePoint2D scenePos = event.GetMainPosition().Apply(
-      GetScene()->GetCanvasToSceneTransform());
+      GetScene().GetCanvasToSceneTransform());
 
     switch (state_)
     {

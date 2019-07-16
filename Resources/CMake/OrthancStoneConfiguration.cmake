@@ -276,11 +276,17 @@ if (NOT ORTHANC_SANDBOXED)
       list(APPEND APPLICATIONS_SOURCES
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlCairoSurface.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
-        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOpenGLWindow.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOrthancSurface.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlStoneApplicationRunner.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlWindow.cpp
         )
+
+      if (ENABLE_OPENGL)
+        list(APPEND APPLICATIONS_SOURCES
+          ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOpenGLContext.cpp
+          ${ORTHANC_STONE_ROOT}/Framework/Viewport/SdlViewport.cpp
+          )
+      endif()
     endif()
   endif()
 elseif (ENABLE_WASM)
@@ -518,6 +524,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Viewport/ViewportBase.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImage.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageMPRSlicer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageReslicer.cpp
@@ -590,6 +597,7 @@ if (ENABLE_OPENGL)
   if (ENABLE_WASM)
     list(APPEND ORTHANC_STONE_SOURCES
       ${ORTHANC_STONE_ROOT}/Framework/OpenGL/WebAssemblyOpenGLContext.cpp
+      ${ORTHANC_STONE_ROOT}/Framework/Viewport/WebAssemblyViewport.cpp
       )
   endif()
 endif()

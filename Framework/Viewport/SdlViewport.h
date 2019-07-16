@@ -13,20 +13,19 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
 #pragma once
 
-#if !defined(ORTHANC_ENABLE_WASM)
-#  error Macro ORTHANC_ENABLE_WASM must be defined
+#if !defined(ORTHANC_ENABLE_SDL)
+#  error Macro ORTHANC_ENABLE_SDL must be defined
 #endif
 
-#if ORTHANC_ENABLE_WASM != 1
-#  error This file can only be used if targeting WebAssembly
+#if ORTHANC_ENABLE_SDL != 1
+#  error SDL must be enabled to use this file
 #endif
 
 #if !defined(ORTHANC_ENABLE_OPENGL)
@@ -37,34 +36,51 @@
 #  error Support for OpenGL is disabled
 #endif
 
-#include "IOpenGLContext.h"
-
-#include <boost/shared_ptr.hpp>
+#include "../../Applications/Sdl/SdlOpenGLContext.h"
+#include "../Scene2D/OpenGLCompositor.h"
+#include "ViewportBase.h"
 
 namespace OrthancStone
 {
-  namespace OpenGL
+  class SdlViewport : public ViewportBase
   {
-    class WebAssemblyOpenGLContext : public OpenGL::IOpenGLContext
+  private:
+    SdlOpenGLContext  context_;
+    OpenGLCompositor  compositor_;
+
+  public:
+    SdlViewport(const char* title,
+                unsigned int width,
+                unsigned int height);
+
+    SdlViewport(const char* title,
+                unsigned int width,
+                unsigned int height,
+                boost::shared_ptr<Scene2D>& scene);
+
+    virtual void Refresh()
     {
-    private:
-      class PImpl;
-      boost::shared_ptr<PImpl>  pimpl_;
+      compositor_.Refresh();
+    }
 
-    public:
-      WebAssemblyOpenGLContext(const std::string& canvas);
+    virtual unsigned int GetCanvasWidth() const
+    {
+      return compositor_.GetCanvasWidth();
+    }
 
-      virtual void MakeCurrent();
+    virtual unsigned int GetCanvasHeight() const
+    {
+      return compositor_.GetCanvasHeight();
+    }
 
-      virtual void SwapBuffer();
+    OpenGLCompositor& GetCompositor()
+    {
+      return compositor_;
+    }
 
-      virtual unsigned int GetCanvasWidth() const;
-
-      virtual unsigned int GetCanvasHeight() const;
-
-      void UpdateSize();
-
-      const std::string& GetCanvasIdentifier() const;
-    };
-  }
+    SdlOpenGLContext& GetContext()
+    {
+      return context_;
+    }
+  };
 }

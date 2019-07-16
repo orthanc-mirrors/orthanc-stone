@@ -65,9 +65,6 @@ namespace OrthancStone
     void SetInfoDisplayMessage(std::string key, std::string value);
     void DisableTracker();
 
-    boost::shared_ptr<Scene2D> GetScene();
-    boost::shared_ptr<const Scene2D> GetScene() const;
-
     void HandleApplicationEvent(const SDL_Event& event);
 
     /**

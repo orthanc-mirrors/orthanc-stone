@@ -180,10 +180,11 @@ namespace OrthancStone
   from layerIndex, up to (and not including) layerIndex+5.
   */
   void SetTextLayerOutlineProperties(
-    Scene2D& scene,
-    boost::shared_ptr<LayerHolder> layerHolder,
-    const char* text,
-    ScenePoint2D p);
+      Scene2D& scene
+    , boost::shared_ptr<LayerHolder> layerHolder
+    , const char* text
+    , ScenePoint2D p
+    , int startingLayerIndex = 0);
 
   std::ostream& operator<<(std::ostream& os, const ScenePoint2D& p);
 }

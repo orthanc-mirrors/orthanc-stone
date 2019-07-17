@@ -35,23 +35,23 @@ namespace
 
 namespace OrthancStone
 {
-    void GetPositionOnBisectingLine(
-      ScenePoint2D& result
-      , const ScenePoint2D& p1
-      , const ScenePoint2D& c
-      , const ScenePoint2D& p2
-      , const double d)
-    {
-      // TODO: fix correct half-plane
-      double p1cAngle = atan2(p1.GetY() - c.GetY(), p1.GetX() - c.GetX());
-      double p2cAngle = atan2(p2.GetY() - c.GetY(), p2.GetX() - c.GetX());
-      double angle = 0.5 * (p1cAngle + p2cAngle);
-      double unitVectorX = cos(angle);
-      double unitVectorY = sin(angle);
-      double posX = c.GetX() + d * unitVectorX;
-      double posY = c.GetX() + d * unitVectorY;
-      result = ScenePoint2D(posX, posY);
-    }
+  void GetPositionOnBisectingLine(
+    ScenePoint2D& result
+    , const ScenePoint2D& p1
+    , const ScenePoint2D& c
+    , const ScenePoint2D& p2
+    , const double d)
+  {
+    // TODO: fix correct half-plane
+    double p1cAngle = atan2(p1.GetY() - c.GetY(), p1.GetX() - c.GetX());
+    double p2cAngle = atan2(p2.GetY() - c.GetY(), p2.GetX() - c.GetX());
+    double angle = 0.5 * (p1cAngle + p2cAngle);
+    double unitVectorX = cos(angle);
+    double unitVectorY = sin(angle);
+    double posX = c.GetX() + d * unitVectorX;
+    double posY = c.GetX() + d * unitVectorY;
+    result = ScenePoint2D(posX, posY);
+  }
 
   double RadiansToDegrees(double angleRad)
   {
@@ -60,12 +60,12 @@ namespace OrthancStone
   }
 
   void AddSquare(PolylineSceneLayer::Chain& chain,
-    const Scene2D&      scene,
+    const Scene2D& scene,
     const ScenePoint2D& centerS,
-    const double&       sideLengthS)
+    const double& sideLengthS)
   {
     // get the scaling factor 
-    const double sceneToCanvas = 
+    const double sceneToCanvas =
       scene.GetSceneToCanvasTransform().ComputeZoom();
 
     chain.clear();
@@ -93,29 +93,29 @@ namespace OrthancStone
   }
 #if 0
   void AddArc(
-      PolylineSceneLayer::Chain& chain
-    , const Scene2D&      scene
-    , const ScenePoint2D& p1
-    , const ScenePoint2D& c
-    , const ScenePoint2D& p2
-    , const double&       radiusS
+    PolylineSceneLayer::Chain & chain
+    , const Scene2D & scene
+    , const ScenePoint2D & p1
+    , const ScenePoint2D & c
+    , const ScenePoint2D & p2
+    , const double& radiusS
     , const bool          clockwise
     , const int           subdivisionsCount)
   {
     double p1cAngle = atan2(p1.GetY() - c.GetY(), p1.GetX() - c.GetX());
     double p2cAngle = atan2(p2.GetY() - c.GetY(), p2.GetX() - c.GetX());
     AddArc(
-      chain, scene, c, radiusS, p1cAngle, p2cAngle, 
+      chain, scene, c, radiusS, p1cAngle, p2cAngle,
       clockwise, subdivisionsCount);
   }
 #endif
 
   void AddShortestArc(
-      PolylineSceneLayer::Chain& chain
-    , const ScenePoint2D&        p1
-    , const ScenePoint2D&        c
-    , const ScenePoint2D&        p2
-    , const double&              radiusS
+    PolylineSceneLayer::Chain& chain
+    , const ScenePoint2D& p1
+    , const ScenePoint2D& c
+    , const ScenePoint2D& p2
+    , const double& radiusS
     , const int                  subdivisionsCount)
   {
     double p1cAngle = atan2(p1.GetY() - c.GetY(), p1.GetX() - c.GetX());
@@ -125,9 +125,9 @@ namespace OrthancStone
   }
 
   void AddShortestArc(
-      PolylineSceneLayer::Chain&  chain
-    , const ScenePoint2D&         centerS
-    , const double&               radiusS
+    PolylineSceneLayer::Chain& chain
+    , const ScenePoint2D& centerS
+    , const double& radiusS
     , const double                startAngleRad
     , const double                endAngleRad
     , const int                   subdivisionsCount)
@@ -135,12 +135,12 @@ namespace OrthancStone
     // this gives a signed difference between angle which
     // is the smallest difference (in magnitude) between 
     // the angles
-    double delta = NormalizeAngle(endAngleRad-startAngleRad);
+    double delta = NormalizeAngle(endAngleRad - startAngleRad);
 
     chain.clear();
     chain.reserve(subdivisionsCount + 1);
 
-    double angleIncr = delta/static_cast<double>(subdivisionsCount);
+    double angleIncr = delta / static_cast<double>(subdivisionsCount);
 
     double theta = startAngleRad;
     for (int i = 0; i < subdivisionsCount + 1; ++i)
@@ -156,10 +156,10 @@ namespace OrthancStone
 
 #if 0
   void AddArc(
-      PolylineSceneLayer::Chain& chain
-    , const Scene2D&      scene
-    , const ScenePoint2D& centerS
-    , const double&       radiusS
+    PolylineSceneLayer::Chain & chain
+    , const Scene2D & scene
+    , const ScenePoint2D & centerS
+    , const double& radiusS
     , const double        startAngleRad
     , const double        endAngleRad
     , const bool          clockwise
@@ -204,7 +204,7 @@ namespace OrthancStone
 
   void AddCircle(PolylineSceneLayer::Chain& chain,
     const ScenePoint2D& centerS,
-    const double&       radiusS,
+    const double& radiusS,
     const int           numSubdivisions)
   {
     //ScenePoint2D centerC = centerS.Apply(scene.GetSceneToCanvasTransform());
@@ -234,7 +234,7 @@ namespace OrthancStone
   double NormalizeAngle(double angle)
   {
     double retAngle = angle;
-    while (retAngle < -1.0*g_pi)
+    while (retAngle < -1.0 * g_pi)
       retAngle += 2 * g_pi;
     while (retAngle >= g_pi)
       retAngle -= 2 * g_pi;
@@ -251,11 +251,11 @@ namespace OrthancStone
 
 
 #if 0
-  void AddEllipse(PolylineSceneLayer::Chain& chain,
-    const Scene2D&      scene,
-    const ScenePoint2D& centerS,
-    const double&       halfHAxis,
-    const double&       halfVAxis)
+  void AddEllipse(PolylineSceneLayer::Chain & chain,
+    const Scene2D & scene,
+    const ScenePoint2D & centerS,
+    const double& halfHAxis,
+    const double& halfVAxis)
   {
     chain.clear();
     chain.reserve(4);
@@ -279,7 +279,7 @@ namespace OrthancStone
     chain.push_back(startRT);
     chain.push_back(startRB);
     chain.push_back(startLB);
-}
+  }
 #endif
 
   /**
@@ -288,8 +288,11 @@ namespace OrthancStone
   for the actual text
   */
   void SetTextLayerOutlineProperties(
-    Scene2D& scene, boost::shared_ptr<LayerHolder> layerHolder, 
-    const char* text, ScenePoint2D p)
+    Scene2D& scene
+    , boost::shared_ptr<LayerHolder> layerHolder
+    , const char* text
+    , ScenePoint2D p
+    , int startingLayerIndex) 
   {
     double xoffsets[5] = { 2, 0, -2, 0, 0 };
     double yoffsets[5] = { 0, -2, 0, 2, 0 };
@@ -298,22 +301,23 @@ namespace OrthancStone
     const double pixelToScene =
       scene.GetCanvasToSceneTransform().ComputeZoom();
 
-    for (int i = 0; i < 5; ++i)
+    for (int i = startingLayerIndex; i < startingLayerIndex + 5; ++i)
     {
       TextSceneLayer* textLayer = layerHolder->GetTextLayer(i);
+      ORTHANC_ASSERT(textLayer != NULL);
       textLayer->SetText(text);
 
       if (i == 4)
       {
         textLayer->SetColor(TEXT_COLOR_RED,
-                            TEXT_COLOR_GREEN,
-                            TEXT_COLOR_BLUE);
+          TEXT_COLOR_GREEN,
+          TEXT_COLOR_BLUE);
       }
       else
       {
         textLayer->SetColor(TEXT_OUTLINE_COLOR_RED,
-                            TEXT_OUTLINE_COLOR_GREEN,
-                            TEXT_OUTLINE_COLOR_BLUE);
+          TEXT_OUTLINE_COLOR_GREEN,
+          TEXT_OUTLINE_COLOR_BLUE);
       }
 
       ScenePoint2D textAnchor;

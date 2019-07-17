@@ -91,15 +91,49 @@ namespace OrthancStone
       return v;
     }
 
+    const ScenePoint2D operator/(double a) const
+    {
+      ScenePoint2D v;
+      v.x_ = x_ / a;
+      v.y_ = y_ / a;
+
+      return v;
+    }
+
+    static void MidPoint(ScenePoint2D& result, const ScenePoint2D& a, const ScenePoint2D& b)
+    {
+      result.x_ = 0.5 * (a.x_ + b.x_);
+      result.y_ = 0.5 * (a.y_ + b.y_);
+    }
+
     static double Dot(const ScenePoint2D& a, const ScenePoint2D& b)
     {
       return a.x_ * b.x_ + a.y_ * b.y_;
+    }
+
+    static double SquaredMagnitude(const ScenePoint2D& v)
+    {
+      return v.x_ * v.x_ + v.y_ * v.y_;
+    }
+
+    static double Magnitude(const ScenePoint2D& v)
+    {
+      double squaredMagnitude = SquaredMagnitude(v);
+      if (LinearAlgebra::IsCloseToZero(squaredMagnitude))
+        return 0.0;
+      return sqrt(squaredMagnitude);
     }
 
     static double SquaredDistancePtPt(const ScenePoint2D& a, const ScenePoint2D& b)
     {
       ScenePoint2D n = b - a;
       return Dot(n, n);
+    }
+
+    static double DistancePtPt(const ScenePoint2D& a, const ScenePoint2D& b)
+    {
+      double squaredDist = SquaredDistancePtPt(a, b);
+      return sqrt(squaredDist);
     }
 
     /**

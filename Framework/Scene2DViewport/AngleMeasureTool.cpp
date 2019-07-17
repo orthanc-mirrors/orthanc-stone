@@ -46,7 +46,7 @@ namespace OrthancStone
     , layerHolder_(boost::make_shared<LayerHolder>(controllerW,1,5))
     , angleHighlightArea_(AngleHighlightArea_None)
   {
-
+    RefreshScene();
   }
 
   AngleMeasureTool::~AngleMeasureTool()

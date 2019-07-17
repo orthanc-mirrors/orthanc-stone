@@ -39,25 +39,10 @@ namespace OrthancStone
     WebAssemblyViewport(const std::string& canvas,
                         boost::shared_ptr<Scene2D>& scene);
     
-    virtual void Refresh()
-    {
-      compositor_.Refresh();
-    }
-
-    virtual unsigned int GetCanvasWidth() const
-    {
-      return context_.GetCanvasWidth();
-    }
-
-    virtual unsigned int GetCanvasHeight() const
-    {
-      return context_.GetCanvasHeight();
-    }
-
     // This function must be called each time the browser window is resized
     void UpdateSize();
 
-    OpenGLCompositor& GetCompositor()
+    ICompositor& GetCompositor()
     {
       return compositor_;
     }

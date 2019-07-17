@@ -444,6 +444,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/FloatTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/GrayscaleStyleConfigurator.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ICompositor.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoColorTextureRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoFloatTextureRenderer.cpp

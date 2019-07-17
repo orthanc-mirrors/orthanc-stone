@@ -170,6 +170,7 @@ namespace OrthancStone
     , const double d);
 
 
+#if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
   /**
   This helper is used when drawing text with an outline.
   It set the properties for several text layers at once : first the
@@ -177,14 +178,22 @@ namespace OrthancStone
   layer.
 
   The five text layers are supposed to already exist in the scene, starting
-  from layerIndex, up to (and not including) layerIndex+5.
+  from startingLayerIndex, up to (and not including) startingLayerIndex+5.
   */
   void SetTextLayerOutlineProperties(
       Scene2D& scene
     , boost::shared_ptr<LayerHolder> layerHolder
     , const char* text
     , ScenePoint2D p
-    , int startingLayerIndex = 0);
+    , int startingLayerIndex);
+#else
+  void SetTextLayerProperties(
+    Scene2D& scene
+    , boost::shared_ptr<LayerHolder> layerHolder
+    , const char* text
+    , ScenePoint2D p
+    , int layerIndex);
+#endif
 
   std::ostream& operator<<(std::ostream& os, const ScenePoint2D& p);
 }

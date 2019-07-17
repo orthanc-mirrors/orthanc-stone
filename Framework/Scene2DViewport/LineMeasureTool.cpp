@@ -33,7 +33,11 @@ namespace OrthancStone
   LineMeasureTool::LineMeasureTool(
     MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW)
     : MeasureTool(broker, controllerW)
+#if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
     , layerHolder_(boost::make_shared<LayerHolder>(controllerW, 1, 5))
+#else
+    , layerHolder_(boost::make_shared<LayerHolder>(controllerW, 1, 1))
+#endif
     , lineHighlightArea_(LineHighlightArea_None)
   {
 
@@ -234,8 +238,13 @@ namespace OrthancStone
           double midX = 0.5 * (end_.GetX() + start_.GetX());
           double midY = 0.5 * (end_.GetY() + start_.GetY());
 
+#if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
           SetTextLayerOutlineProperties(
-            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY));
+            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY), 0);
+#else
+          SetTextLayerProperties(
+            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY), 0);
+#endif
         }
       }
       else

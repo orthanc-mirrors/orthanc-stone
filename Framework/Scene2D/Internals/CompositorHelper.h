@@ -29,26 +29,6 @@
 
 namespace OrthancStone
 {
-  class ICompositor : public boost::noncopyable
-  {
-  public:
-    virtual ~ICompositor()
-    {
-    }
-    
-    virtual unsigned int GetCanvasWidth() const = 0;
-    virtual unsigned int GetCanvasHeight() const = 0;
-    virtual void Refresh() = 0;
-
-    ScenePoint2D GetPixelCenterCoordinates(int x, int y) const
-    {
-      return ScenePoint2D(
-        static_cast<double>(x) + 0.5 - static_cast<double>(GetCanvasWidth()) / 2.0,
-        static_cast<double>(y) + 0.5 - static_cast<double>(GetCanvasHeight()) / 2.0);
-    }
-
-  };
-
   namespace Internals
   {
     class CompositorHelper : protected Scene2D::IVisitor

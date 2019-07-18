@@ -282,6 +282,7 @@ namespace OrthancStone
   }
 #endif
 
+#if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
   /**
   This utility function assumes that the layer holder contains 5 text layers
   and will use the first four ones for the text background and the fifth one
@@ -307,7 +308,7 @@ namespace OrthancStone
       ORTHANC_ASSERT(textLayer != NULL);
       textLayer->SetText(text);
 
-      if (i == 4)
+      if (i == startingLayerIndex + 4)
       {
         textLayer->SetColor(TEXT_COLOR_RED,
           TEXT_COLOR_GREEN,
@@ -321,11 +322,35 @@ namespace OrthancStone
       }
 
       ScenePoint2D textAnchor;
+      int offIndex = i - startingLayerIndex;
+      ORTHANC_ASSERT(offIndex >= 0 && offIndex < 5);
       textLayer->SetPosition(
-        p.GetX() + xoffsets[i] * pixelToScene,
-        p.GetY() + yoffsets[i] * pixelToScene);
+        p.GetX() + xoffsets[offIndex] * pixelToScene,
+        p.GetY() + yoffsets[offIndex] * pixelToScene);
     }
   }
+#else
+  void SetTextLayerProperties(
+    Scene2D& scene
+    , boost::shared_ptr<LayerHolder> layerHolder
+    , const char* text
+    , ScenePoint2D p
+    , int layerIndex)
+  {
+    // get the scaling factor 
+    const double pixelToScene =
+      scene.GetCanvasToSceneTransform().ComputeZoom();
+
+    TextSceneLayer* textLayer = layerHolder->GetTextLayer(layerIndex);
+    ORTHANC_ASSERT(textLayer != NULL);
+    textLayer->SetText(text);
+
+    textLayer->SetColor(TEXT_COLOR_RED, TEXT_COLOR_GREEN, TEXT_COLOR_BLUE);
+
+    ScenePoint2D textAnchor;
+    textLayer->SetPosition(p.GetX(), p.GetY());
+  }
+#endif 
 
   std::ostream& operator<<(std::ostream& os, const ScenePoint2D& p)
   {

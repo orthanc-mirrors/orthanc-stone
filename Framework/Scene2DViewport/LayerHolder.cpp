@@ -30,9 +30,11 @@ namespace OrthancStone
   LayerHolder::LayerHolder(
     boost::weak_ptr<ViewportController> controllerW,
     int                    polylineLayerCount,
-    int                    textLayerCount)
+    int                    textLayerCount,
+    int                    infoTextCount)
     : textLayerCount_(textLayerCount)
     , polylineLayerCount_(polylineLayerCount)
+    , infoTextCount_(infoTextCount)
     , controllerW_(controllerW)
     , baseLayerIndex_(-1)
   {

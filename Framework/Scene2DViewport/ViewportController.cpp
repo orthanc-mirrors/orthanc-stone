@@ -51,27 +51,59 @@ namespace OrthancStone
 
   void ViewportController::PushCommand(boost::shared_ptr<TrackerCommand> command)
   {
-    GetUndoStack()->PushCommand(command);
+    boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
+    if(undoStack.get() != NULL)
+      undoStack->PushCommand(command);
+    else
+    {
+      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+    }
   }
 
   void ViewportController::Undo()
   {
-    GetUndoStack()->Undo();
+    boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
+    if (undoStack.get() != NULL)
+      undoStack->Undo();
+    else
+    {
+      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+    }
   }
 
   void ViewportController::Redo()
   {
-    GetUndoStack()->Redo();
+    boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
+    if (undoStack.get() != NULL)
+      undoStack->Redo();
+    else
+    {
+      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+    }
   }
 
   bool ViewportController::CanUndo() const
   {
-    return GetUndoStack()->CanUndo();
+    boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
+    if (undoStack.get() != NULL)
+      return undoStack->CanUndo();
+    else
+    {
+      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+      return false;
+    }
   }
 
   bool ViewportController::CanRedo() const
   {
-    return GetUndoStack()->CanRedo();
+    boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
+    if (undoStack.get() != NULL)
+      return undoStack->CanRedo();
+    else
+    {
+      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+      return false;
+    }
   }
   
   bool ViewportController::HandlePointerEvent(PointerEvent e)

@@ -57,7 +57,6 @@ namespace OrthancStone
 
     }
 
-
     virtual SdlWindow& GetWindow() = 0;
   };
 
@@ -89,10 +88,6 @@ namespace OrthancStone
     {
       return context_.GetWindow();
     }
-    //    SdlOpenGLContext& GetContext()
-    //    {
-    //      return context_;
-    //    }
   };
 
 

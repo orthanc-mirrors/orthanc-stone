@@ -23,26 +23,42 @@
 
 namespace OrthancStone
 {
-  WebAssemblyViewport::WebAssemblyViewport(const std::string& canvas) :
-    ViewportBase(canvas),
+  WebAssemblyOpenGLViewport::WebAssemblyOpenGLViewport(const std::string& canvas) :
+    WebAssemblyViewport(canvas),
     context_(canvas),
     compositor_(context_, GetScene())
   {
   }
 
     
-  WebAssemblyViewport::WebAssemblyViewport(const std::string& canvas,
-                                           boost::shared_ptr<Scene2D>& scene) :
-    ViewportBase(canvas, scene),
+  WebAssemblyOpenGLViewport::WebAssemblyOpenGLViewport(const std::string& canvas,
+                                                       boost::shared_ptr<Scene2D>& scene) :
+    WebAssemblyViewport(canvas, scene),
     context_(canvas),
     compositor_(context_, GetScene())
   {
   }
     
 
-  void WebAssemblyViewport::UpdateSize()
+  void WebAssemblyOpenGLViewport::UpdateSize()
   {
     context_.UpdateSize();  // First read the size of the canvas
     compositor_.Refresh();  // Then refresh the content of the canvas
   }
+
+
+  WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvas, unsigned int width, unsigned int height) :
+    WebAssemblyViewport(canvas),
+    compositor_(GetScene(), width, height)
+  {
+  }
+
+    
+  WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvas,
+                                                     boost::shared_ptr<Scene2D>& scene, unsigned int width, unsigned int height) :
+    WebAssemblyViewport(canvas, scene),
+    compositor_(GetScene(), width, height)
+  {
+  }
+
 }

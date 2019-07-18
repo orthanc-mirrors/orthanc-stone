@@ -78,53 +78,11 @@ namespace OrthancStone
     }
   }
 
-//  void SdlCairoViewport::SetSize(unsigned int width,
-//                                 unsigned int height)
-//  {
-    //    if (cairoSurface_.get() == NULL ||
-    //        cairoSurface_->GetWidth() != width ||
-    //        cairoSurface_->GetHeight() != height)
-    //    {
-    //      cairoSurface_.reset(new CairoSurface(width, height, false /* no alpha */));
-
-    //      // TODO Big endian?
-    //      static const uint32_t rmask = 0x00ff0000;
-    //      static const uint32_t gmask = 0x0000ff00;
-    //      static const uint32_t bmask = 0x000000ff;
-
-    //      if (sdlSurface_)
-    //      {
-    //        SDL_FreeSurface(sdlSurface_);
-    //      }
-
-    //      sdlSurface_ = SDL_CreateRGBSurfaceFrom(cairoSurface_->GetBuffer(), width, height, 32,
-    //                                             cairoSurface_->GetPitch(), rmask, gmask, bmask, 0);
-    //      if (!sdlSurface_)
-    //      {
-    //        LOG(ERROR) << "Cannot create a SDL surface from a Cairo surface";
-    //        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-    //      }
-    //    }
-//  }
-
 
   void SdlCairoViewport::Refresh()
   {
     GetCompositor().Refresh();
     window_.Render(sdlSurface_);
   }
-
-
-  //  void SdlCairoViewport::Render()
-  //  {
-  //    Orthanc::ImageAccessor target;
-  //    compositor_.GetCanvas() cairoSurface_->GetWriteableAccessor(target);
-
-  //    if (viewport.Render(target))
-  //    {
-  //      window_.Render(sdlSurface_);
-  //    }
-  //  }
-
 
 }

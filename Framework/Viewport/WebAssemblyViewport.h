@@ -23,28 +23,70 @@
 
 #include "../OpenGL/WebAssemblyOpenGLContext.h"
 #include "../Scene2D/OpenGLCompositor.h"
+#include "../Scene2D/CairoCompositor.h"
 #include "ViewportBase.h"
 
 namespace OrthancStone
 {
   class WebAssemblyViewport : public ViewportBase
   {
+  public:
+    WebAssemblyViewport(const std::string& identifier)
+      : ViewportBase(identifier)
+    {
+    }
+
+    WebAssemblyViewport(const std::string& identifier,
+                        boost::shared_ptr<Scene2D>& scene)
+      : ViewportBase(identifier, scene)
+    {
+    }
+  };
+
+  class WebAssemblyOpenGLViewport : public WebAssemblyViewport
+  {
   private:
     OpenGL::WebAssemblyOpenGLContext  context_;
     OpenGLCompositor                  compositor_;
 
   public:
-    WebAssemblyViewport(const std::string& canvas);
+    WebAssemblyOpenGLViewport(const std::string& canvas);
     
-    WebAssemblyViewport(const std::string& canvas,
-                        boost::shared_ptr<Scene2D>& scene);
+    WebAssemblyOpenGLViewport(const std::string& canvas,
+                              boost::shared_ptr<Scene2D>& scene);
     
     // This function must be called each time the browser window is resized
     void UpdateSize();
 
-    ICompositor& GetCompositor()
+    virtual ICompositor& GetCompositor()
     {
       return compositor_;
     }
   };
+
+  class WebAssemblyCairoViewport : public WebAssemblyViewport
+  {
+  private:
+    CairoCompositor                  compositor_;
+
+  public:
+    WebAssemblyCairoViewport(const std::string& canvas, 
+                             unsigned int width, 
+                             unsigned int height);
+    
+    WebAssemblyCairoViewport(const std::string& canvas,
+                             boost::shared_ptr<Scene2D>& scene, 
+                             unsigned int width, 
+                             unsigned int height);
+    
+    // This function must be called each time the browser window is resized
+    void UpdateSize(); // TODO: implement
+
+    // TODO: implement Refresh
+    virtual ICompositor& GetCompositor()
+    {
+      return compositor_;
+    }
+  };
+
 }

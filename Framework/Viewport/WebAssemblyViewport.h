@@ -68,21 +68,18 @@ namespace OrthancStone
   {
   private:
     CairoCompositor                  compositor_;
+    std::string                      canvas_;
 
   public:
-    WebAssemblyCairoViewport(const std::string& canvas, 
-                             unsigned int width, 
-                             unsigned int height);
+    WebAssemblyCairoViewport(const std::string& canvas);
     
     WebAssemblyCairoViewport(const std::string& canvas,
-                             boost::shared_ptr<Scene2D>& scene, 
-                             unsigned int width, 
-                             unsigned int height);
+                             boost::shared_ptr<Scene2D>& scene);
     
-    // This function must be called each time the browser window is resized
-    void UpdateSize(); // TODO: implement
+    void UpdateSize(); 
 
-    // TODO: implement Refresh
+    virtual void Refresh();
+
     virtual ICompositor& GetCompositor()
     {
       return compositor_;

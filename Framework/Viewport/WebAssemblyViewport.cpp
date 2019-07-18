@@ -20,6 +20,7 @@
 
 
 #include "WebAssemblyViewport.h"
+#include <emscripten/html5.h>
 
 namespace OrthancStone
 {
@@ -47,18 +48,56 @@ namespace OrthancStone
   }
 
 
-  WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvas, unsigned int width, unsigned int height) :
+  WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvas) :
     WebAssemblyViewport(canvas),
-    compositor_(GetScene(), width, height)
+    canvas_(canvas),
+    compositor_(GetScene(), 1024, 768)
   {
   }
 
     
   WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvas,
-                                                     boost::shared_ptr<Scene2D>& scene, unsigned int width, unsigned int height) :
+                                                     boost::shared_ptr<Scene2D>& scene) :
     WebAssemblyViewport(canvas, scene),
-    compositor_(GetScene(), width, height)
+    canvas_(canvas),
+    compositor_(GetScene(), 1024, 768)
   {
+  }
+
+
+  void WebAssemblyCairoViewport::UpdateSize()
+  {
+    LOG(INFO) << "updating cairo viewport size";
+    double w, h;
+    emscripten_get_element_css_size(canvas_.c_str(), &w, &h);
+
+    /**
+     * Emscripten has the function emscripten_get_element_css_size()
+     * to query the width and height of a named HTML element. I'm
+     * calling this first to get the initial size of the canvas DOM
+     * element, and then call emscripten_set_canvas_size() to
+     * initialize the framebuffer size of the canvas to the same
+     * size as its DOM element.
+     * https://floooh.github.io/2017/02/22/emsc-html.html
+     **/
+    unsigned int canvasWidth = 0;
+    unsigned int canvasHeight = 0;
+
+    if (w > 0 ||
+        h > 0)
+    {
+      canvasWidth = static_cast<unsigned int>(boost::math::iround(w));
+      canvasHeight = static_cast<unsigned int>(boost::math::iround(h));
+    }
+
+    emscripten_set_canvas_element_size(canvas_.c_str(), canvasWidth, canvasHeight);
+    compositor_.UpdateSize(canvasWidth, canvasHeight);
+  }
+
+  void WebAssemblyCairoViewport::Refresh()
+  {
+    LOG(INFO) << "refreshing cairo viewport, TODO: blit to the canvans.getContext('2d')";
+    GetCompositor().Refresh();
   }
 
 }

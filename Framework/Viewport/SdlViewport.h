@@ -38,51 +38,106 @@
 
 #include "../../Applications/Sdl/SdlOpenGLContext.h"
 #include "../Scene2D/OpenGLCompositor.h"
+#include "../Scene2D/CairoCompositor.h"
 #include "ViewportBase.h"
 
 namespace OrthancStone
 {
   class SdlViewport : public ViewportBase
   {
+  public:
+    SdlViewport(const std::string& identifier)
+      : ViewportBase(identifier)
+    {}
+
+    SdlViewport(const std::string& identifier,
+                boost::shared_ptr<Scene2D>& scene)
+      : ViewportBase(identifier, scene)
+    {
+
+    }
+
+    virtual SdlWindow& GetWindow() = 0;
+    
+    virtual void UpdateSize(unsigned int width,
+                            unsigned int height) = 0;
+  };
+
+  class SdlOpenGLViewport : public SdlViewport
+  {
   private:
     SdlOpenGLContext  context_;
     OpenGLCompositor  compositor_;
 
   public:
-    SdlViewport(const char* title,
-                unsigned int width,
-                unsigned int height,
-                bool allowDpiScaling = true);
+    SdlOpenGLViewport(const char* title,
+                      unsigned int width,
+                      unsigned int height,
+                      bool allowDpiScaling = true);
 
-    SdlViewport(const char* title,
-                unsigned int width,
-                unsigned int height,
-                boost::shared_ptr<Scene2D>& scene,
-                bool allowDpiScaling = true);
+    SdlOpenGLViewport(const char* title,
+                      unsigned int width,
+                      unsigned int height,
+                      boost::shared_ptr<Scene2D>& scene,
+                      bool allowDpiScaling = true);
 
-    virtual void Refresh()
-    {
-      compositor_.Refresh();
-    }
 
-    virtual unsigned int GetCanvasWidth() const
-    {
-      return compositor_.GetCanvasWidth();
-    }
-
-    virtual unsigned int GetCanvasHeight() const
-    {
-      return compositor_.GetCanvasHeight();
-    }
-
-    OpenGLCompositor& GetCompositor()
+    virtual ICompositor& GetCompositor()
     {
       return compositor_;
     }
 
-    SdlOpenGLContext& GetContext()
+    virtual SdlWindow& GetWindow()
     {
-      return context_;
+      return context_.GetWindow();
     }
+
+    virtual void UpdateSize(unsigned int width,
+                            unsigned int height)
+    {
+      // nothing to do in OpenGL, the OpenGLCompositor::UpdateSize will be called automatically
+    }
+  };
+
+
+  class SdlCairoViewport : public SdlViewport
+  {
+  private:
+    SdlWindow         window_;
+    CairoCompositor   compositor_;
+    SDL_Surface*      sdlSurface_;
+
+  public:
+    SdlCairoViewport(const char* title,
+                     unsigned int width,
+                     unsigned int height,
+                     bool allowDpiScaling = true);
+
+    SdlCairoViewport(const char* title,
+                     unsigned int width,
+                     unsigned int height,
+                     boost::shared_ptr<Scene2D>& scene,
+                     bool allowDpiScaling = true);
+
+    ~SdlCairoViewport();
+
+    virtual ICompositor& GetCompositor()
+    {
+      return compositor_;
+    }
+
+    virtual SdlWindow& GetWindow()
+    {
+      return window_;
+    }
+
+    virtual void Refresh();
+
+    virtual void UpdateSize(unsigned int width,
+                            unsigned int height);
+
+  private:
+    void UpdateSdlSurfaceSize(unsigned int width,
+                              unsigned int height);
   };
 }

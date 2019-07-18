@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "../Scene2D/ICompositor.h"
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2D/ScenePoint2D.h"
 
@@ -48,5 +49,13 @@ namespace OrthancStone
     virtual const std::string& GetCanvasIdentifier() const = 0;
 
     virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const = 0;
+
+    virtual ICompositor& GetCompositor() = 0;
+
+    virtual const ICompositor& GetCompositor() const
+    {
+      IViewport* self = const_cast<IViewport*>(this);
+      return self->GetCompositor();
+    }
   };
 }

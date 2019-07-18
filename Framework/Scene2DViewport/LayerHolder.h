@@ -44,7 +44,7 @@ namespace OrthancStone
     */
     LayerHolder(
       boost::weak_ptr<ViewportController> controllerW,
-      int polylineLayerCount, int textLayerCount);
+      int polylineLayerCount, int textLayerCount, int infoTextCount = 0);
 
     /**
     This actually creates the layers
@@ -86,13 +86,17 @@ namespace OrthancStone
     */
     TextSceneLayer* GetTextLayer(int index = 0);
 
+    //TextSceneLayer* GetTextLayer(int index = 0);
+
   private:
     int GetPolylineLayerIndex(int index = 0);
     int GetTextLayerIndex(int index = 0);
+    int GetInfoTextLayerIndex(int index = 0);
     Scene2D& GetScene();
 
     int textLayerCount_;
     int polylineLayerCount_;
+    int infoTextCount_;
     boost::weak_ptr<ViewportController> controllerW_;
     int baseLayerIndex_;
   };

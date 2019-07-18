@@ -43,7 +43,11 @@ namespace OrthancStone
   AngleMeasureTool::AngleMeasureTool(
     MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW)
     : MeasureTool(broker, controllerW)
+#if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
     , layerHolder_(boost::make_shared<LayerHolder>(controllerW,1,5))
+#else
+    , layerHolder_(boost::make_shared<LayerHolder>(controllerW, 1, 1))
+#endif
     , angleHighlightArea_(AngleHighlightArea_None)
   {
     RefreshScene();
@@ -293,8 +297,13 @@ namespace OrthancStone
           // http://www.ltg.ed.ac.uk/~richard/utf-8.cgi?input=00B0&mode=hex
           sprintf(buf, "%0.02f\xc2\xb0", angleDeg);
 
+#if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
           SetTextLayerOutlineProperties(
-            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY));
+            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY), 0);
+#else
+          SetTextLayerProperties(
+            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY) , 0);
+#endif
 
 #if 0
           // TODO:make it togglable

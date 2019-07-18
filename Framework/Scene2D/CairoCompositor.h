@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "ICompositor.h"
 #include "../Fonts/GlyphBitmapAlphabet.h"
 #include "../Wrappers/CairoContext.h"
 #include "Internals/CompositorHelper.h"
@@ -29,9 +30,9 @@
 namespace OrthancStone
 {
   class CairoCompositor :
-    public ICompositor,
-    private Internals::CompositorHelper::IRendererFactory,
-    private Internals::ICairoContextProvider
+      public ICompositor,
+      private Internals::CompositorHelper::IRendererFactory,
+      private Internals::ICairoContextProvider
   {
   private:
     typedef std::map<size_t, GlyphBitmapAlphabet*>   Fonts;
@@ -52,7 +53,7 @@ namespace OrthancStone
                     unsigned int canvasWidth,
                     unsigned int canvasHeight);
     
-    ~CairoCompositor();
+    virtual ~CairoCompositor();
 
     const CairoSurface& GetCanvas() const
     {
@@ -73,13 +74,16 @@ namespace OrthancStone
                  GlyphBitmapAlphabet* dict);  // Takes ownership
 
 #if ORTHANC_ENABLE_LOCALE == 1
-    void SetFont(size_t index,
-                 Orthanc::EmbeddedResources::FileResourceId resource,
-                 unsigned int fontSize,
-                 Orthanc::Encoding codepage);
+    virtual void SetFont(size_t index,
+                         Orthanc::EmbeddedResources::FileResourceId resource,
+                         unsigned int fontSize,
+                         Orthanc::Encoding codepage);
 #endif
 
     virtual void Refresh();
+
+    void UpdateSize(unsigned int canvasWidth,
+                    unsigned int canvasHeight);
 
     Orthanc::ImageAccessor* RenderText(size_t fontIndex,
                                        const std::string& utf8) const;

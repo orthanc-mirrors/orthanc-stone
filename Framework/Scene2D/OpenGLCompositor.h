@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "ICompositor.h"
 #include "Internals/CompositorHelper.h"
 #include "Internals/OpenGLColorTextureProgram.h"
 #include "Internals/OpenGLFloatTextureProgram.h"
@@ -29,7 +30,9 @@
 
 namespace OrthancStone
 {
-  class OpenGLCompositor : private Internals::CompositorHelper::IRendererFactory
+  class OpenGLCompositor :
+      public ICompositor,
+      private Internals::CompositorHelper::IRendererFactory
   {
   private:
     class Font;
@@ -54,9 +57,9 @@ namespace OrthancStone
     OpenGLCompositor(OpenGL::IOpenGLContext& context,
                      const Scene2D& scene);
 
-    ~OpenGLCompositor();
+    virtual ~OpenGLCompositor();
 
-    void Refresh();
+    virtual void Refresh();
 
     void SetFont(size_t index,
                  const GlyphBitmapAlphabet& dict);
@@ -68,12 +71,12 @@ namespace OrthancStone
                  Orthanc::Encoding codepage);
 #endif
 
-    unsigned int GetCanvasWidth() const
+    virtual unsigned int GetCanvasWidth() const
     {
       return canvasWidth_;
     }
 
-    unsigned int GetCanvasHeight() const
+    virtual unsigned int GetCanvasHeight() const
     {
       return canvasHeight_;
     }

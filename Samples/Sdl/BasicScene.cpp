@@ -48,6 +48,7 @@
 static const unsigned int FONT_SIZE = 32;
 static const int LAYER_POSITION = 150;
 
+#define OPENGL_ENABLED 0
 
 void PrepareScene(OrthancStone::Scene2D& scene)
 {
@@ -259,7 +260,7 @@ void HandleApplicationEvent(const SDL_Event& event,
   }
 }
 
-
+#if OPENGL_ENABLED==1
 static void GLAPIENTRY
 OpenGLMessageCallback(GLenum source,
                       GLenum type,
@@ -276,7 +277,7 @@ OpenGLMessageCallback(GLenum source,
             type, severity, message );
   }
 }
-
+#endif
 
 void Run(OrthancStone::MessageBroker& broker,
          OrthancStone::SdlViewport& viewport)
@@ -286,8 +287,10 @@ void Run(OrthancStone::MessageBroker& broker,
   boost::shared_ptr<ViewportController> controller(
     new ViewportController(boost::make_shared<UndoStack>(), broker, viewport));
   
+#if OPENGL_ENABLED==1
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(OpenGLMessageCallback, 0);
+#endif
 
   boost::shared_ptr<IFlexiblePointerTracker> tracker;
 
@@ -334,6 +337,7 @@ void Run(OrthancStone::MessageBroker& broker,
         {
           case SDL_WINDOWEVENT_SIZE_CHANGED:
             tracker.reset();
+            viewport.UpdateSize(event.window.data1, event.window.data2);
             break;
 
           case SDL_WINDOWEVENT_SHOWN:
@@ -356,7 +360,7 @@ void Run(OrthancStone::MessageBroker& broker,
         switch (event.key.keysym.sym)
         {
           case SDLK_f:
-            viewport.GetContext().GetWindow().ToggleMaximize();
+            viewport.GetWindow().ToggleMaximize();
             break;
               
           case SDLK_q:
@@ -390,7 +394,11 @@ int main(int argc, char* argv[])
 
   try
   {
-    OrthancStone::SdlViewport viewport("Hello", 1024, 768);
+#if OPENGL_ENABLED==1
+    OrthancStone::SdlOpenGLViewport viewport("Hello", 1024, 768);
+#else
+    OrthancStone::SdlCairoViewport viewport("Hello", 1024, 768);
+#endif
     PrepareScene(viewport.GetScene());
 
     viewport.GetCompositor().SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, 

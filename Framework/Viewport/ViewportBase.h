@@ -49,5 +49,21 @@ namespace OrthancStone
     }
 
     virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const;
+
+    virtual void Refresh()
+    {
+      GetCompositor().Refresh();
+    }
+
+    virtual unsigned int GetCanvasWidth() const
+    {
+      return GetCompositor().GetCanvasWidth();
+    }
+
+    virtual unsigned int GetCanvasHeight() const
+    {
+      return GetCompositor().GetCanvasHeight();
+    }
+
   };
 }

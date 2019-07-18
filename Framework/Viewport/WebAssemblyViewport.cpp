@@ -20,29 +20,84 @@
 
 
 #include "WebAssemblyViewport.h"
+#include <emscripten/html5.h>
 
 namespace OrthancStone
 {
-  WebAssemblyViewport::WebAssemblyViewport(const std::string& canvas) :
-    ViewportBase(canvas),
+  WebAssemblyOpenGLViewport::WebAssemblyOpenGLViewport(const std::string& canvas) :
+    WebAssemblyViewport(canvas),
     context_(canvas),
     compositor_(context_, GetScene())
   {
   }
 
     
-  WebAssemblyViewport::WebAssemblyViewport(const std::string& canvas,
-                                           boost::shared_ptr<Scene2D>& scene) :
-    ViewportBase(canvas, scene),
+  WebAssemblyOpenGLViewport::WebAssemblyOpenGLViewport(const std::string& canvas,
+                                                       boost::shared_ptr<Scene2D>& scene) :
+    WebAssemblyViewport(canvas, scene),
     context_(canvas),
     compositor_(context_, GetScene())
   {
   }
     
 
-  void WebAssemblyViewport::UpdateSize()
+  void WebAssemblyOpenGLViewport::UpdateSize()
   {
     context_.UpdateSize();  // First read the size of the canvas
     compositor_.Refresh();  // Then refresh the content of the canvas
   }
+
+
+  WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvas) :
+    WebAssemblyViewport(canvas),
+    canvas_(canvas),
+    compositor_(GetScene(), 1024, 768)
+  {
+  }
+
+    
+  WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvas,
+                                                     boost::shared_ptr<Scene2D>& scene) :
+    WebAssemblyViewport(canvas, scene),
+    canvas_(canvas),
+    compositor_(GetScene(), 1024, 768)
+  {
+  }
+
+
+  void WebAssemblyCairoViewport::UpdateSize()
+  {
+    LOG(INFO) << "updating cairo viewport size";
+    double w, h;
+    emscripten_get_element_css_size(canvas_.c_str(), &w, &h);
+
+    /**
+     * Emscripten has the function emscripten_get_element_css_size()
+     * to query the width and height of a named HTML element. I'm
+     * calling this first to get the initial size of the canvas DOM
+     * element, and then call emscripten_set_canvas_size() to
+     * initialize the framebuffer size of the canvas to the same
+     * size as its DOM element.
+     * https://floooh.github.io/2017/02/22/emsc-html.html
+     **/
+    unsigned int canvasWidth = 0;
+    unsigned int canvasHeight = 0;
+
+    if (w > 0 ||
+        h > 0)
+    {
+      canvasWidth = static_cast<unsigned int>(boost::math::iround(w));
+      canvasHeight = static_cast<unsigned int>(boost::math::iround(h));
+    }
+
+    emscripten_set_canvas_element_size(canvas_.c_str(), canvasWidth, canvasHeight);
+    compositor_.UpdateSize(canvasWidth, canvasHeight);
+  }
+
+  void WebAssemblyCairoViewport::Refresh()
+  {
+    LOG(INFO) << "refreshing cairo viewport, TODO: blit to the canvans.getContext('2d')";
+    GetCompositor().Refresh();
+  }
+
 }

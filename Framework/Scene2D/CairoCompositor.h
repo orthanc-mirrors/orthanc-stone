@@ -82,6 +82,9 @@ namespace OrthancStone
 
     virtual void Refresh();
 
+    void UpdateSize(unsigned int canvasWidth,
+                    unsigned int canvasHeight);
+
     Orthanc::ImageAccessor* RenderText(size_t fontIndex,
                                        const std::string& utf8) const;
   };

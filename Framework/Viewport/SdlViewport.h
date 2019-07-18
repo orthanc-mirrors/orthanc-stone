@@ -58,6 +58,9 @@ namespace OrthancStone
     }
 
     virtual SdlWindow& GetWindow() = 0;
+    
+    virtual void UpdateSize(unsigned int width,
+                            unsigned int height) = 0;
   };
 
   class SdlOpenGLViewport : public SdlViewport
@@ -87,6 +90,12 @@ namespace OrthancStone
     virtual SdlWindow& GetWindow()
     {
       return context_.GetWindow();
+    }
+
+    virtual void UpdateSize(unsigned int width,
+                            unsigned int height)
+    {
+      // nothing to do in OpenGL, the OpenGLCompositor::UpdateSize will be called automatically
     }
   };
 
@@ -124,5 +133,11 @@ namespace OrthancStone
 
     virtual void Refresh();
 
+    virtual void UpdateSize(unsigned int width,
+                            unsigned int height);
+
+  private:
+    void UpdateSdlSurfaceSize(unsigned int width,
+                              unsigned int height);
   };
 }

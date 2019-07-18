@@ -56,17 +56,7 @@ namespace OrthancStone
     window_(title, width, height, false /* enable OpenGL */, allowDpiScaling),
     compositor_(GetScene(), width, height)
   {
-    static const uint32_t rmask = 0x00ff0000;
-    static const uint32_t gmask = 0x0000ff00;
-    static const uint32_t bmask = 0x000000ff;
-
-    sdlSurface_ = SDL_CreateRGBSurfaceFrom((void*)(compositor_.GetCanvas().GetBuffer()), width, height, 32,
-                                           compositor_.GetCanvas().GetPitch(), rmask, gmask, bmask, 0);
-    if (!sdlSurface_)
-    {
-      LOG(ERROR) << "Cannot create a SDL surface from a Cairo surface";
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-    }
+    UpdateSdlSurfaceSize(width, height);
   }
 
 
@@ -83,6 +73,31 @@ namespace OrthancStone
   {
     GetCompositor().Refresh();
     window_.Render(sdlSurface_);
+  }
+
+  void SdlCairoViewport::UpdateSize(unsigned int width,
+                                    unsigned int height)
+  {
+    compositor_.UpdateSize(width, height);
+    UpdateSdlSurfaceSize(width, height);
+    Refresh();
+  }
+
+
+  void SdlCairoViewport::UpdateSdlSurfaceSize(unsigned int width,
+                                              unsigned int height)
+  {
+    static const uint32_t rmask = 0x00ff0000;
+    static const uint32_t gmask = 0x0000ff00;
+    static const uint32_t bmask = 0x000000ff;
+
+    sdlSurface_ = SDL_CreateRGBSurfaceFrom((void*)(compositor_.GetCanvas().GetBuffer()), width, height, 32,
+                                           compositor_.GetCanvas().GetPitch(), rmask, gmask, bmask, 0);
+    if (!sdlSurface_)
+    {
+      LOG(ERROR) << "Cannot create a SDL surface from a Cairo surface";
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
   }
 
 }

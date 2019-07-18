@@ -337,6 +337,7 @@ void Run(OrthancStone::MessageBroker& broker,
         {
           case SDL_WINDOWEVENT_SIZE_CHANGED:
             tracker.reset();
+            viewport.UpdateSize(event.window.data1, event.window.data2);
             break;
 
           case SDL_WINDOWEVENT_SHOWN:

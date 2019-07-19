@@ -66,7 +66,7 @@ void QStoneOpenGlWidget::mouseEvent(QMouseEvent* qtEvent, OrthancStone::GuiAdapt
 {
   OrthancStone::GuiAdapterMouseEvent guiEvent;
   PointerEvent pointerEvent;
-  ConvertFromPlatform(guiEvent, pointerEvent, *qtEvent, *viewport_);
+  ConvertFromPlatform(guiEvent, pointerEvent, *qtEvent, *this);
   guiEvent.type = guiEventType;
 
   if (sceneInteractor_.get() != NULL && compositor_.get() != NULL)

@@ -49,10 +49,5 @@ namespace OrthancStone
       return *(ui_->centralWidget);
     }
 
-    void BasicSceneWindow::SetCompositor(boost::shared_ptr<OrthancStone::OpenGLCompositor> compositor)
-    {
-      ui_->centralWidget->SetCompositor(compositor);
-    }
-
   }
 }

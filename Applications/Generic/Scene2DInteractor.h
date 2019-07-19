@@ -21,7 +21,7 @@
 
 #include "../../Framework/Scene2D/PointerEvent.h"
 #include "../../Framework/Scene2DViewport/ViewportController.h"
-#include "../../Framework/Scene2D/Internals/CompositorHelper.h"
+//#include "../../Framework/Scene2D/Internals/CompositorHelper.h"
 #include "GuiAdapter.h"
 
 
@@ -32,17 +32,17 @@ namespace OrthancStone
   {
   protected:
     boost::shared_ptr<ViewportController>       viewportController_;
-    boost::shared_ptr<ICompositor>              compositor_;
+//    boost::shared_ptr<ICompositor>              compositor_;
 
   public:
     Scene2DInteractor(boost::shared_ptr<ViewportController> viewportController) :
       viewportController_(viewportController)
     {}
 
-    void SetCompositor(boost::shared_ptr<ICompositor> compositor)
-    {
-      compositor_ = compositor;
-    }
+//    void SetCompositor(boost::shared_ptr<ICompositor> compositor)
+//    {
+//      compositor_ = compositor;
+//    }
 
     virtual bool OnMouseEvent(const GuiAdapterMouseEvent& guiEvent, const PointerEvent& pointerEvent) = 0; // returns true if it has handled the event
     virtual bool OnKeyboardEvent(const GuiAdapterKeyboardEvent& guiEvent) = 0; // returns true if it has handled the event

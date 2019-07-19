@@ -21,8 +21,8 @@
 #pragma once
 
 #include <boost/shared_ptr.hpp>
-#include "../../Framework/Scene2DViewport/ViewportController.h"
-#include "../../Framework/Scene2D/Scene2D.h"
+#include "Framework/Scene2DViewport/ViewportController.h"
+#include "Framework/Scene2D/Scene2D.h"
 
 extern const unsigned int BASIC_SCENE_FONT_SIZE;
 extern const int BASIC_SCENE_LAYER_POSITION;
@@ -34,8 +34,8 @@ extern void TakeScreenshot(const std::string& target,
                            unsigned int canvasHeight);
 
 
-#include "../../Applications/Generic/Scene2DInteractor.h"
-#include "../../Framework/Scene2DViewport/IFlexiblePointerTracker.h"
+#include "Applications/Generic/Scene2DInteractor.h"
+#include "Framework/Scene2DViewport/IFlexiblePointerTracker.h"
 
 
 class BasicScene2DInteractor : public OrthancStone::Scene2DInteractor

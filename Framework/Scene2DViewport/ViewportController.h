@@ -120,6 +120,7 @@ namespace OrthancStone
 
     /** Forwarded to the underlying scene, and broadcasted to the observers */
     void FitContent(unsigned int canvasWidth, unsigned int canvasHeight);
+    void FitContent();
 
     /** Adds a new measure tool */
     void AddMeasureTool(boost::shared_ptr<MeasureTool> measureTool);

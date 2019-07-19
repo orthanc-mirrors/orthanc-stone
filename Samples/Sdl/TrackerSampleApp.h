@@ -142,7 +142,7 @@ namespace OrthancStone
 
     GuiTool currentTool_;
     boost::shared_ptr<UndoStack> undoStack_;
-    SdlViewport viewport_;
+    SdlOpenGLViewport viewport_;
   };
 
 }

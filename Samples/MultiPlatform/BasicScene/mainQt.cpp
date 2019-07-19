@@ -46,12 +46,11 @@
 #include <boost/ref.hpp>
 #include "EmbeddedResources.h"
 
-//#include <SDL.h>
 #include <stdio.h>
 #include <QDebug>
 #include <QWindow>
 
-#include "../Shared/SharedBasicScene.h"
+#include "BasicScene.h"
 
 
 using namespace OrthancStone;
@@ -81,36 +80,24 @@ extern void InitGL();
 
 int main(int argc, char* argv[])
 {
-  {
-    QApplication a(argc, argv);
+  QApplication a(argc, argv);
 
-    QSurfaceFormat requestedFormat;
-    requestedFormat.setVersion( 2, 0 );
+  OrthancStone::Samples::BasicSceneWindow window;
+  window.show();
+  window.GetOpenGlWidget().Init();
 
-    OrthancStone::Samples::BasicSceneWindow window;
-    window.show();
+  MessageBroker broker;
+  boost::shared_ptr<UndoStack> undoStack(new UndoStack);
+  boost::shared_ptr<ViewportController> controller = boost::make_shared<ViewportController>(undoStack, boost::ref(broker), window.GetOpenGlWidget());
+  PrepareScene(controller->GetScene());
 
-    MessageBroker broker;
-    boost::shared_ptr<UndoStack> undoStack(new UndoStack);
-    boost::shared_ptr<ViewportController> controller = boost::make_shared<ViewportController>(
-      undoStack, boost::ref(broker));
-    PrepareScene(controller->GetScene());
+  window.GetOpenGlWidget().GetCompositor().SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,
+                     BASIC_SCENE_FONT_SIZE, Orthanc::Encoding_Latin1);
 
-    boost::shared_ptr<OrthancStone::Scene2DInteractor> interactor(new BasicScene2DInteractor(controller));
-    window.GetOpenGlWidget().SetInteractor(interactor);
+  boost::shared_ptr<OrthancStone::Scene2DInteractor> interactor(new BasicScene2DInteractor(controller));
+  window.GetOpenGlWidget().SetInteractor(interactor);
 
-    QOpenGLContext * context = new QOpenGLContext;
-    context->setFormat( requestedFormat );
-    context->create();
-    context->makeCurrent(window.GetOpenGlWidget().context()->surface());
+  controller->FitContent();
 
-    boost::shared_ptr<OpenGLCompositor> compositor = boost::make_shared<OpenGLCompositor>(window.GetOpenGlWidget(), *controller->GetScene());
-    compositor->SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,
-                       BASIC_SCENE_FONT_SIZE, Orthanc::Encoding_Latin1);
-
-    interactor->SetCompositor(compositor);
-    window.GetOpenGlWidget().SetCompositor(compositor);
-
-    return a.exec();
-  }
+  return a.exec();
 }

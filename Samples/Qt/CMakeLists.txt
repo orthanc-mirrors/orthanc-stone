@@ -71,14 +71,13 @@ ORTHANC_QT_WRAP_CPP(BASIC_SCENE_APPLICATIONS_SOURCES
   QStoneOpenGlWidget.h
   )
 
-add_executable(BasicScene
-  BasicScene.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/../Shared/SharedBasicScene.h
-  ${CMAKE_CURRENT_LIST_DIR}/../Shared/SharedBasicScene.cpp
+add_executable(MpBasicScene
+  ${CMAKE_CURRENT_LIST_DIR}/../MultiPlatform/BasicScene/BasicScene.h
+  ${CMAKE_CURRENT_LIST_DIR}/../MultiPlatform/BasicScene/BasicScene.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/../MultiPlatform/BasicScene/mainQt.cpp
   QStoneOpenGlWidget.cpp
   ${BASIC_SCENE_APPLICATIONS_SOURCES}
   )
 
-target_include_directories(BasicScene PUBLIC ${CMAKE_SOURCE_DIR} ${STONE_SOURCES_DIR})
-
-target_link_libraries(BasicScene OrthancStone)
+target_include_directories(MpBasicScene PUBLIC ${CMAKE_SOURCE_DIR} ${ORTHANC_STONE_ROOT})
+target_link_libraries(MpBasicScene OrthancStone)

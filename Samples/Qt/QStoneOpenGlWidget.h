@@ -2,27 +2,43 @@
 #include "../../Framework/OpenGL/OpenGLIncludes.h"
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
+#include <QOpenGLContext>
 
 #include <boost/shared_ptr.hpp>
 #include "../../Framework/OpenGL/IOpenGLContext.h"
 #include "../../Framework/Scene2D/OpenGLCompositor.h"
-#include "../../Framework/Viewport/IViewport.h"
+#include "../../Framework/Viewport/ViewportBase.h"
 #include "../../Applications/Generic/Scene2DInteractor.h"
 
 namespace OrthancStone
 {
-  class QStoneOpenGlWidget : public QOpenGLWidget, public OrthancStone::OpenGL::IOpenGLContext
+  class QStoneOpenGlWidget :
+      public QOpenGLWidget,
+      public OpenGL::IOpenGLContext,
+      public ViewportBase
   {
-    boost::shared_ptr<IViewport> viewport_;
-    boost::shared_ptr<OrthancStone::OpenGLCompositor> compositor_;
+    std::unique_ptr<OrthancStone::OpenGLCompositor> compositor_;
     boost::shared_ptr<Scene2DInteractor> sceneInteractor_;
+    QOpenGLContext                        openGlContext_;
 
   public:
     QStoneOpenGlWidget(QWidget *parent) :
-      QOpenGLWidget(parent)
+      QOpenGLWidget(parent),
+      ViewportBase("QtStoneOpenGlWidget")  // TODO: we shall be able to define a name but construction time is too early !
     {
       setFocusPolicy(Qt::StrongFocus);  // to enable keyPressEvent
       setMouseTracking(true);           // to enable mouseMoveEvent event when no button is pressed
+    }
+
+    void Init()
+    {
+      QSurfaceFormat requestedFormat;
+      requestedFormat.setVersion( 2, 0 );
+      openGlContext_.setFormat( requestedFormat );
+      openGlContext_.create();
+      openGlContext_.makeCurrent(context()->surface());
+
+      compositor_.reset(new OpenGLCompositor(*this, GetScene()));
     }
 
   protected:
@@ -55,14 +71,15 @@ namespace OrthancStone
     }
 
   public:
+
     void SetInteractor(boost::shared_ptr<Scene2DInteractor> sceneInteractor)
     {
       sceneInteractor_ = sceneInteractor;
     }
 
-    void SetCompositor(boost::shared_ptr<OrthancStone::OpenGLCompositor> compositor)
+    virtual ICompositor& GetCompositor()
     {
-      compositor_ = compositor;
+      return *compositor_;
     }
 
   protected:

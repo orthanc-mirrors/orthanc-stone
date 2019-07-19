@@ -18,19 +18,19 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "SharedBasicScene.h"
+#include "BasicScene.h"
 
 // From Stone
-#include "../../Framework/Scene2D/Scene2D.h"
-#include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
-#include "../../Framework/Scene2D/PolylineSceneLayer.h"
-#include "../../Framework/Scene2D/TextSceneLayer.h"
+#include "Framework/Scene2D/Scene2D.h"
+#include "Framework/Scene2D/ColorTextureSceneLayer.h"
+#include "Framework/Scene2D/PolylineSceneLayer.h"
+#include "Framework/Scene2D/TextSceneLayer.h"
 
-#include "../../Framework/Scene2D/PanSceneTracker.h"
-#include "../../Framework/Scene2D/ZoomSceneTracker.h"
-#include "../../Framework/Scene2D/RotateSceneTracker.h"
+#include "Framework/Scene2D/PanSceneTracker.h"
+#include "Framework/Scene2D/ZoomSceneTracker.h"
+#include "Framework/Scene2D/RotateSceneTracker.h"
 
-#include "../../Framework/Scene2D/CairoCompositor.h"
+#include "Framework/Scene2D/CairoCompositor.h"
 
 // From Orthanc framework
 #include <Core/Images/Image.h>
@@ -216,9 +216,9 @@ bool BasicScene2DInteractor::OnMouseEvent(const GuiAdapterMouseEvent& event, con
     {
       currentTracker_.reset(new PanSceneTracker(viewportController_, pointerEvent));
     }
-    else if (event.button == GUIADAPTER_MOUSEBUTTON_RIGHT && compositor_.get() != NULL)
+    else if (event.button == GUIADAPTER_MOUSEBUTTON_RIGHT)
     {
-      currentTracker_.reset(new ZoomSceneTracker(viewportController_, pointerEvent, compositor_->GetCanvasHeight()));
+      currentTracker_.reset(new ZoomSceneTracker(viewportController_, pointerEvent, viewportController_->GetViewport().GetCanvasHeight()));
     }
   }
   else if (event.type == GUIADAPTER_EVENT_MOUSEMOVE)
@@ -241,14 +241,15 @@ bool BasicScene2DInteractor::OnKeyboardEvent(const GuiAdapterKeyboardEvent& guiE
     {
     case 's':
     {
-      viewportController_->FitContent(compositor_->GetCanvasWidth(), compositor_->GetCanvasHeight());
+      //viewportController_->FitContent(viewportController_->GetViewport().GetCanvasWidth(), viewportController_->GetViewport().GetCanvasHeight());
+      viewportController_->FitContent();
       return true;
     };
 #if ORTHANC_SANDBOXED == 0
     case 'c':
     {
       Scene2D& scene(viewportController_->GetScene());
-      TakeScreenshot("screenshot.png", scene, compositor_->GetCanvasWidth(), compositor_->GetCanvasHeight());
+      TakeScreenshot("screenshot.png", scene, viewportController_->GetViewport().GetCanvasWidth(), viewportController_->GetViewport().GetCanvasHeight());
       return true;
     }
 #endif

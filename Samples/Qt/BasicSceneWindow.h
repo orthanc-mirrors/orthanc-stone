@@ -48,8 +48,6 @@ namespace OrthancStone
       ~BasicSceneWindow();
 
       QStoneOpenGlWidget& GetOpenGlWidget();
-
-      void SetCompositor(boost::shared_ptr<OpenGLCompositor> compositor);
     };
   }
 }

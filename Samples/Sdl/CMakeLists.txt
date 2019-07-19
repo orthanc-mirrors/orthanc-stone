@@ -110,19 +110,20 @@ add_executable(FusionMprSdl
 target_link_libraries(FusionMprSdl OrthancStone)
 
 #
-# RadiographyEditor
+# Multiplatform Basic Scene
 #
 
-LIST(APPEND RADIOGRAPHY_EDITOR_SOURCE "../Shared/RadiographyEditorApp.cpp")
-LIST(APPEND RADIOGRAPHY_EDITOR_SOURCE "../Shared/RadiographyEditorApp.h")
-LIST(APPEND RADIOGRAPHY_EDITOR_SOURCE "RadiographyEditor.cpp")
+LIST(APPEND MP_BASIC_SCENE_SOURCE "../MultiPlatform/BasicScene/BasicScene.cpp")
+LIST(APPEND MP_BASIC_SCENE_SOURCE "../MultiPlatform/BasicScene/BasicScene.h")
+LIST(APPEND MP_BASIC_SCENE_SOURCE "../MultiPlatform/BasicScene/mainSdl.cpp")
 
 if (MSVC AND MSVC_VERSION GREATER 1700)
-  LIST(APPEND RADIOGRAPHY_EDITOR_SOURCE "cpp.hint")
+  LIST(APPEND MP_BASIC_SCENE_SOURCE "cpp.hint")
 endif()
 
-add_executable(RadiographyEditor
-  ${RADIOGRAPHY_EDITOR_SOURCE}
+add_executable(MpBasicScene
+  ${MP_BASIC_SCENE_SOURCE}
   )
 
-target_link_libraries(RadiographyEditor OrthancStone)
+target_include_directories(MpBasicScene PUBLIC ${ORTHANC_STONE_ROOT})
+target_link_libraries(MpBasicScene OrthancStone)

@@ -725,7 +725,7 @@ namespace OrthancStone
   // SDL ONLY
   void GuiAdapter::Run()
   {
-#if 0 
+#if 1
     // TODO: MAKE THIS DYNAMIC !!! See SdlOpenGLViewport vs Cairo in ViewportWrapper
 # if ORTHANC_ENABLE_OPENGL == 1 && !defined(__APPLE__)
     glEnable(GL_DEBUG_OUTPUT);

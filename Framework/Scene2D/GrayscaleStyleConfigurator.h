@@ -36,18 +36,23 @@ namespace OrthancStone
     bool            linearInterpolation_;
     bool            hasWindowing_;
     ImageWindowing  windowing_;
-
+    float           customWindowWidth_;
+    float           customWindowCenter_;
     // TODO - Add custom windowing
     
   public:
     GrayscaleStyleConfigurator() :
       revision_(0),
       linearInterpolation_(false),
-      hasWindowing_(false)
+      hasWindowing_(false),
+      customWindowWidth_(0),
+      customWindowCenter_(0)
     {
     }
 
     void SetWindowing(ImageWindowing windowing);
+
+    void SetCustomWindowing(float windowWidth, float windowCenter);
 
     void SetLinearInterpolation(bool enabled);
 

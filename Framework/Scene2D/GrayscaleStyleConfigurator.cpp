@@ -34,6 +34,12 @@ namespace OrthancStone
     revision_++;
   }
 
+  void GrayscaleStyleConfigurator::SetCustomWindowing(float windowCenter, float windowWidth)
+  {
+    SetWindowing(ImageWindowing_Custom);
+    customWindowCenter_ = windowCenter;
+    customWindowWidth_ = windowWidth;
+  }
 
   void GrayscaleStyleConfigurator::SetLinearInterpolation(bool enabled)
   {
@@ -41,14 +47,12 @@ namespace OrthancStone
     revision_++;
   }
 
-  
   TextureBaseSceneLayer* GrayscaleStyleConfigurator::CreateTextureFromImage(
     const Orthanc::ImageAccessor& image) const
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
 
-  
   TextureBaseSceneLayer* GrayscaleStyleConfigurator::CreateTextureFromDicom(
     const Orthanc::ImageAccessor& frame,
     const DicomInstanceParameters& parameters) const
@@ -66,7 +70,6 @@ namespace OrthancStone
     }
   }
 
-
   void GrayscaleStyleConfigurator::ApplyStyle(ISceneLayer& layer) const
   {
     FloatTextureSceneLayer& l = dynamic_cast<FloatTextureSceneLayer&>(layer);
@@ -75,7 +78,14 @@ namespace OrthancStone
 
     if (hasWindowing_)
     {
-      l.SetWindowing(windowing_);
+      if (windowing_ != ImageWindowing_Custom)
+      {
+        l.SetWindowing(windowing_);
+      }
+      else
+      {
+        l.SetCustomWindowing(customWindowCenter_, customWindowWidth_);
+      }
     }
   }
 }

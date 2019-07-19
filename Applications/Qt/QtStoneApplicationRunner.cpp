@@ -27,7 +27,7 @@
 #include <boost/program_options.hpp>
 #include <QApplication>
 
-#include "../../Framework/Toolbox/MessagingToolbox.h"
+#include "../../Framework/Deprecated/Toolbox/MessagingToolbox.h"
 
 #include <Core/Logging.h>
 #include <Core/HttpClient.h>

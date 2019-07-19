@@ -25,6 +25,7 @@
 
 #include <string>
 #include <map>
+#include <deque>
 
 namespace Deprecated
 {
@@ -81,14 +82,21 @@ namespace Deprecated
     class BaseWebServicePayload;
 
     bool          cacheEnabled_;
-    std::map<std::string, boost::shared_ptr<CachedHttpRequestSuccessMessage> > cache_;  // TODO: this is currently an infinite cache !
+    size_t        cacheCurrentSize_;
+    size_t        cacheMaxSize_;
+
+    typedef std::map<std::string, boost::shared_ptr<CachedHttpRequestSuccessMessage> > HttpCache;
+    HttpCache cache_;
+    std::deque<std::string> orderedCacheKeys_;
 
   public:
 
     BaseWebService(OrthancStone::MessageBroker& broker) :
       IWebService(broker),
       IObserver(broker),
-      cacheEnabled_(true)
+      cacheEnabled_(false),
+      cacheCurrentSize_(0),
+      cacheMaxSize_(100*1024*1024)
     {
     }
 

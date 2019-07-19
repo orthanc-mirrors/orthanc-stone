@@ -71,7 +71,7 @@ add_executable(BasicScene
 target_link_libraries(BasicScene OrthancStone)
 
 #
-# BasicScene
+# TrackerSample
 # 
 
 LIST(APPEND TRACKERSAMPLE_SOURCE "TrackerSample.cpp")
@@ -108,3 +108,22 @@ add_executable(FusionMprSdl
 )
 
 target_link_libraries(FusionMprSdl OrthancStone)
+
+#
+# Multiplatform Basic Scene
+#
+
+LIST(APPEND MP_BASIC_SCENE_SOURCE "../MultiPlatform/BasicScene/BasicScene.cpp")
+LIST(APPEND MP_BASIC_SCENE_SOURCE "../MultiPlatform/BasicScene/BasicScene.h")
+LIST(APPEND MP_BASIC_SCENE_SOURCE "../MultiPlatform/BasicScene/mainSdl.cpp")
+
+if (MSVC AND MSVC_VERSION GREATER 1700)
+  LIST(APPEND MP_BASIC_SCENE_SOURCE "cpp.hint")
+endif()
+
+add_executable(MpBasicScene
+  ${MP_BASIC_SCENE_SOURCE}
+  )
+
+target_include_directories(MpBasicScene PUBLIC ${ORTHANC_STONE_ROOT})
+target_link_libraries(MpBasicScene OrthancStone)

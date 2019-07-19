@@ -73,7 +73,7 @@ export class StandardConsoleLogger {
 
   private getOutput(source: LogSource, args: any[]): any[] {
     var prefix = this.getPrefix();
-    var prefixAndSource = [];
+    var prefixAndSource = Array<string>();
 
     if (prefix != null) {
       prefixAndSource = [prefix];
@@ -94,7 +94,7 @@ export class StandardConsoleLogger {
     return [...prefixAndSource, ...args];
   }
 
-  protected getPrefix(): string {
+  protected getPrefix(): string | null {
     return null;
   }
 }

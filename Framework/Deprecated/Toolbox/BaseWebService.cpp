@@ -27,6 +27,8 @@
 #include <Core/OrthancException.h>
 
 #include <boost/shared_ptr.hpp>
+#include <algorithm>
+#include <Core/Logging.h>
 
 namespace Deprecated
 {
@@ -89,7 +91,7 @@ namespace Deprecated
                                 OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                 unsigned int timeoutInSeconds)
   {
-    if (cache_.find(uri) == cache_.end())
+    if (!cacheEnabled_ || cache_.find(uri) == cache_.end())
     {
       GetAsyncInternal(uri, headers,
                        new BaseWebService::BaseWebServicePayload(successCallback, failureCallback, payload), // ownership is transfered
@@ -101,6 +103,15 @@ namespace Deprecated
     }
     else
     {
+      // put the uri on top of the most recently accessed list
+      std::deque<std::string>::iterator it = std::find(orderedCacheKeys_.begin(), orderedCacheKeys_.end(), uri);
+      if (it != orderedCacheKeys_.end())
+      {
+        std::string uri = *it;
+        orderedCacheKeys_.erase(it);
+        orderedCacheKeys_.push_front(uri);
+      }
+
       // create a command and "post" it to the Oracle so it is executed and commited "later"
       NotifyHttpSuccessLater(cache_[uri], payload, successCallback);
     }
@@ -123,7 +134,28 @@ namespace Deprecated
 
   void BaseWebService::CacheAndNotifyHttpSuccess(const IWebService::HttpRequestSuccessMessage& message)
   {
-    cache_[message.GetUri()] = boost::shared_ptr<CachedHttpRequestSuccessMessage>(new CachedHttpRequestSuccessMessage(message));
+    if (cacheEnabled_)
+    {
+      while (cacheCurrentSize_ + message.GetAnswerSize() > cacheMaxSize_ && orderedCacheKeys_.size() > 0)
+      {
+        VLOG(1) << "BaseWebService: clearing cache: " << cacheCurrentSize_ << "/" << cacheMaxSize_ << "(" << message.GetAnswerSize() << ")";
+        const std::string& oldestUri = orderedCacheKeys_.back();
+        HttpCache::iterator it = cache_.find(oldestUri);
+        if (it != cache_.end())
+        {
+          cacheCurrentSize_ -= it->second->GetAnswerSize();
+          cache_.erase(it);
+        }
+        orderedCacheKeys_.pop_back();
+
+      }
+
+      boost::shared_ptr<CachedHttpRequestSuccessMessage> cachedMessage(new CachedHttpRequestSuccessMessage(message));
+      cache_[message.GetUri()] = cachedMessage;
+      orderedCacheKeys_.push_front(message.GetUri());
+      cacheCurrentSize_ += message.GetAnswerSize();
+    }
+
     NotifyHttpSuccess(message);
   }
 

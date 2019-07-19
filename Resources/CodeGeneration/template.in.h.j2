@@ -51,7 +51,7 @@ namespace {{rootName}}
 
   inline Json::Value _StoneSerializeValue(int64_t value)
   {
-    Json::Value result(value);
+    Json::Value result(static_cast<Json::Value::Int64>(value));
     return result;
   }
 
@@ -79,7 +79,7 @@ namespace {{rootName}}
 
   inline Json::Value _StoneSerializeValue(uint64_t value)
   {
-    Json::Value result(value);
+    Json::Value result(static_cast<Json::Value::UInt64>(value));
     return result;
   }
 

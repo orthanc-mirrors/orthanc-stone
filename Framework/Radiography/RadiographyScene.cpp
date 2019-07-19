@@ -147,6 +147,16 @@ namespace OrthancStone
     return *layer;
   }
 
+  size_t RadiographyScene::GetApproximateMemoryUsage() const
+  {
+    size_t size = 0;
+    for (Layers::const_iterator it = layers_.begin(); it != layers_.end(); it++)
+    {
+      size += it->second->GetApproximateMemoryUsage();
+    }
+    return size;
+  }
+
   void RadiographyScene::OnLayerEdited(const RadiographyLayer::LayerEditedMessage& message)
   {
     BroadcastMessage(RadiographyScene::LayerEditedMessage(*this, message.GetOrigin()));

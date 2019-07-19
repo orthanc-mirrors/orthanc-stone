@@ -30,6 +30,14 @@ namespace OrthancStone
   void RadiographySceneWriter::Write(Json::Value& output, const RadiographyScene& scene)
   {
     output["version"] = 1;
+    float windowCenter, windowWidth;
+    bool hasWindowing = scene.GetWindowing(windowCenter, windowWidth);
+    output["hasWindowing"] = hasWindowing;
+    if (hasWindowing)
+    {
+      output["windowCenter"] = windowCenter;
+      output["windowWidth"] = windowWidth;
+    }
     output["layers"] = Json::arrayValue;
 
     std::vector<size_t> layersIndexes;

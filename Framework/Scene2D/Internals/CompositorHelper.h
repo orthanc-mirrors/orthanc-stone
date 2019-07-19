@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Scene2D.h"
-
+#include "../ScenePoint2D.h"
 #include <boost/noncopyable.hpp>
 
 #include <map>

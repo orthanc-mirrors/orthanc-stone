@@ -67,6 +67,14 @@ namespace OrthancStone
 
   };
 
+  enum GuiAdapterMouseButtonType
+  {
+    GUIADAPTER_MOUSEBUTTON_LEFT = 0,
+    GUIADAPTER_MOUSEBUTTON_MIDDLE = 1,
+    GUIADAPTER_MOUSEBUTTON_RIGHT = 2
+  };
+
+
   enum GuiAdapterHidEventType
   {
     GUIADAPTER_EVENT_MOUSEDOWN = 1973,
@@ -140,6 +148,14 @@ namespace OrthancStone
     //long                     canvasX;
     //long                     canvasY;
     //long                     padding;
+
+  public:
+    GuiAdapterMouseEvent()
+      : ctrlKey(false),
+        shiftKey(false),
+        altKey(false)
+    {
+    }
   };
 
   struct GuiAdapterWheelEvent {

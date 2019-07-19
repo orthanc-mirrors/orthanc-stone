@@ -73,7 +73,7 @@ namespace Deprecated
     std::auto_ptr< OrthancStone::MessageHandler<BinaryResponseReadyMessage> >            binaryHandler_;
     std::auto_ptr< OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage> >  failureHandler_;
     std::auto_ptr< Orthanc::IDynamicObject >                               userPayload_;
-
+    OrthancStone::MessageBroker&                                                         broker_;
     void NotifyConversionError(const IWebService::HttpRequestSuccessMessage& message) const
     {
       if (failureHandler_.get() != NULL)
@@ -84,12 +84,15 @@ namespace Deprecated
     }
     
   public:
-    WebServicePayload(OrthancStone::MessageHandler<EmptyResponseReadyMessage>* handler,
+    WebServicePayload(OrthancStone::MessageBroker& broker,
+                      OrthancStone::MessageHandler<EmptyResponseReadyMessage>* handler,
                       OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureHandler,
                       Orthanc::IDynamicObject* userPayload) :
       emptyHandler_(handler),
       failureHandler_(failureHandler),
-      userPayload_(userPayload)
+      userPayload_(userPayload),
+      broker_(broker)
+
     {
       if (handler == NULL)
       {
@@ -97,12 +100,14 @@ namespace Deprecated
       }
     }
 
-    WebServicePayload(OrthancStone::MessageHandler<BinaryResponseReadyMessage>* handler,
+    WebServicePayload(OrthancStone::MessageBroker& broker,
+                      OrthancStone::MessageHandler<BinaryResponseReadyMessage>* handler,
                       OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureHandler,
                       Orthanc::IDynamicObject* userPayload) :
       binaryHandler_(handler),
       failureHandler_(failureHandler),
-      userPayload_(userPayload)
+      userPayload_(userPayload),
+      broker_(broker)
     {
       if (handler == NULL)
       {
@@ -110,12 +115,14 @@ namespace Deprecated
       }
     }
 
-    WebServicePayload(OrthancStone::MessageHandler<JsonResponseReadyMessage>* handler,
+    WebServicePayload(OrthancStone::MessageBroker& broker,
+                      OrthancStone::MessageHandler<JsonResponseReadyMessage>* handler,
                       OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureHandler,
                       Orthanc::IDynamicObject* userPayload) :
       jsonHandler_(handler),
       failureHandler_(failureHandler),
-      userPayload_(userPayload)
+      userPayload_(userPayload),
+      broker_(broker)
     {
       if (handler == NULL)
       {
@@ -127,26 +134,35 @@ namespace Deprecated
     {
       if (emptyHandler_.get() != NULL)
       {
-        emptyHandler_->Apply(OrthancApiClient::EmptyResponseReadyMessage
-                             (message.GetUri(), userPayload_.get()));
+        if (broker_.IsActive(*(emptyHandler_->GetObserver())))
+        {
+          emptyHandler_->Apply(OrthancApiClient::EmptyResponseReadyMessage
+                               (message.GetUri(), userPayload_.get()));
+        }
       }
       else if (binaryHandler_.get() != NULL)
       {
-        binaryHandler_->Apply(OrthancApiClient::BinaryResponseReadyMessage
-                              (message.GetUri(), message.GetAnswer(),
-                               message.GetAnswerSize(), userPayload_.get()));
+        if (broker_.IsActive(*(binaryHandler_->GetObserver())))
+        {
+          binaryHandler_->Apply(OrthancApiClient::BinaryResponseReadyMessage
+                                (message.GetUri(), message.GetAnswer(),
+                                 message.GetAnswerSize(), userPayload_.get()));
+        }
       }
       else if (jsonHandler_.get() != NULL)
       {
-        Json::Value response;
-        if (MessagingToolbox::ParseJson(response, message.GetAnswer(), message.GetAnswerSize()))
+        if (broker_.IsActive(*(jsonHandler_->GetObserver())))
         {
-          jsonHandler_->Apply(OrthancApiClient::JsonResponseReadyMessage
-                              (message.GetUri(), response, userPayload_.get()));
-        }
-        else
-        {
-          NotifyConversionError(message);
+          Json::Value response;
+          if (MessagingToolbox::ParseJson(response, message.GetAnswer(), message.GetAnswerSize()))
+          {
+            jsonHandler_->Apply(OrthancApiClient::JsonResponseReadyMessage
+                                (message.GetUri(), response, userPayload_.get()));
+          }
+          else
+          {
+            NotifyConversionError(message);
+          }
         }
       }
       else
@@ -186,7 +202,7 @@ namespace Deprecated
     IWebService::HttpHeaders emptyHeaders;
     web_.GetAsync(baseUrl_ + uri,
                   emptyHeaders,
-                  new WebServicePayload(successCallback, failureCallback, payload),
+                  new WebServicePayload(IObservable::GetBroker(), successCallback, failureCallback, payload),
                   new OrthancStone::Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
                   (*this, &OrthancApiClient::NotifyHttpSuccess),
                   new OrthancStone::Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
@@ -216,7 +232,7 @@ namespace Deprecated
     // printf("GET [%s] [%s]\n", baseUrl_.c_str(), uri.c_str());
 
     web_.GetAsync(baseUrl_ + uri, headers,
-                  new WebServicePayload(successCallback, failureCallback, payload),
+                  new WebServicePayload(IObservable::GetBroker(), successCallback, failureCallback, payload),
                   new OrthancStone::Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
                   (*this, &OrthancApiClient::NotifyHttpSuccess),
                   new OrthancStone::Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
@@ -232,7 +248,7 @@ namespace Deprecated
       Orthanc::IDynamicObject* payload)
   {
     web_.PostAsync(baseUrl_ + uri, IWebService::HttpHeaders(), body,
-                   new WebServicePayload(successCallback, failureCallback, payload),
+                   new WebServicePayload(IObservable::GetBroker(), successCallback, failureCallback, payload),
                    new OrthancStone::Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
                    (*this, &OrthancApiClient::NotifyHttpSuccess),
                    new OrthancStone::Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
@@ -255,7 +271,7 @@ namespace Deprecated
       Orthanc::IDynamicObject* payload   /* takes ownership */)
   {
     web_.PostAsync(baseUrl_ + uri, IWebService::HttpHeaders(), body,
-                   new WebServicePayload(successCallback, failureCallback, payload),
+                   new WebServicePayload(IObservable::GetBroker(), successCallback, failureCallback, payload),
                    new OrthancStone::Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
                    (*this, &OrthancApiClient::NotifyHttpSuccess),
                    new OrthancStone::Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>
@@ -302,7 +318,7 @@ namespace Deprecated
       Orthanc::IDynamicObject* payload)
   {
     web_.DeleteAsync(baseUrl_ + uri, IWebService::HttpHeaders(),
-                     new WebServicePayload(successCallback, failureCallback, payload),
+                     new WebServicePayload(IObservable::GetBroker(), successCallback, failureCallback, payload),
                      new OrthancStone::Callable<OrthancApiClient, IWebService::HttpRequestSuccessMessage>
                      (*this, &OrthancApiClient::NotifyHttpSuccess),
                      new OrthancStone::Callable<OrthancApiClient, IWebService::HttpRequestErrorMessage>

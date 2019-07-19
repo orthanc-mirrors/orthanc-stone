@@ -49,6 +49,18 @@ namespace OrthancStone
     {
     }
 
+    virtual size_t GetApproximateMemoryUsage() const
+    {
+      size_t size = 0;
+      if (mask_.get() != NULL)
+      {
+        size += mask_->GetPitch() * mask_->GetHeight();
+      }
+
+      return size;
+    }
+
+
     void SetCorners(const std::vector<Orthanc::ImageProcessing::ImagePoint>& corners);
     void SetCorner(const Orthanc::ImageProcessing::ImagePoint& corner, size_t index);
 

@@ -161,6 +161,12 @@ namespace OrthancStone
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
+  void ViewportController::FitContent()
+  {
+    viewport_.GetScene().FitContent(viewport_.GetCanvasWidth(), viewport_.GetCanvasHeight());
+    BroadcastMessage(SceneTransformChanged(*this));
+  }
+
   void ViewportController::AddMeasureTool(boost::shared_ptr<MeasureTool> measureTool)
   {
     ORTHANC_ASSERT(std::find(measureTools_.begin(), measureTools_.end(), measureTool)

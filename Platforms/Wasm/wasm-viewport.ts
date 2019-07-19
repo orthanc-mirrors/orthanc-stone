@@ -1,4 +1,4 @@
-import wasmApplicationRunner = require('./wasm-application-runner');
+import * as wasmApplicationRunner from './wasm-application-runner'
 import * as Logger from './logger'
 
 var isPendingRedraw = false;
@@ -10,14 +10,17 @@ function ScheduleWebViewportRedraw(cppViewportHandle: any) : void
     Logger.defaultLogger.debug('Scheduling a refresh of the viewport, as its content changed');
     window.requestAnimationFrame(function() {
       isPendingRedraw = false;
-      WasmViewport.GetFromCppViewport(cppViewportHandle).Redraw();
+      let viewport = WasmViewport.GetFromCppViewport(cppViewportHandle);
+      if (viewport) {
+        viewport.Redraw();
+      }
     });
   }
 }
 
 (<any>window).ScheduleWebViewportRedraw = ScheduleWebViewportRedraw;
 
-declare function UTF8ToString(any): string;
+declare function UTF8ToString(v: any): string;
 
 function CreateWasmViewport(htmlCanvasId: string) : any {
   var cppViewportHandle = wasmApplicationRunner.CreateCppViewport();
@@ -38,7 +41,7 @@ export class WasmViewport {
     private module_ : any;
     private canvasId_ : string;
     private htmlCanvas_ : HTMLCanvasElement;
-    private context_ : CanvasRenderingContext2D;
+    private context_ : CanvasRenderingContext2D | null;
     private imageData_ : any = null;
     private renderingBuffer_ : any = null;
     
@@ -96,20 +99,20 @@ export class WasmViewport {
       return this.pimpl_;
     }
 
-    public static GetFromCppViewport(cppViewportHandle: number) : WasmViewport {
+    public static GetFromCppViewport(cppViewportHandle: number) : WasmViewport | null {
       if (WasmViewport.viewportsMapByCppHandle_[cppViewportHandle] !== undefined) {
         return WasmViewport.viewportsMapByCppHandle_[cppViewportHandle];
       }
       Logger.defaultLogger.error("WasmViewport not found !");
-      return undefined;
+      return null;
     }
 
-    public static GetFromCanvasId(canvasId: string) : WasmViewport {
+    public static GetFromCanvasId(canvasId: string) : WasmViewport | null {
       if (WasmViewport.viewportsMapByCanvasId_[canvasId] !== undefined) {
         return WasmViewport.viewportsMapByCanvasId_[canvasId];
       }
       Logger.defaultLogger.error("WasmViewport not found !");
-      return undefined;
+      return null;
     }
 
     public static ResizeAll() {
@@ -135,7 +138,9 @@ export class WasmViewport {
           this.renderingBuffer_,
           this.imageData_.width * this.imageData_.height * 4));
         
-        this.context_.putImageData(this.imageData_, 0, 0);
+        if (this.context_) {
+          this.context_.putImageData(this.imageData_, 0, 0);
+        }
       }
     }
   
@@ -147,25 +152,27 @@ export class WasmViewport {
       }
       
       // width/height is defined by the parent width/height
-      this.htmlCanvas_.width = this.htmlCanvas_.parentElement.offsetWidth;  
-      this.htmlCanvas_.height = this.htmlCanvas_.parentElement.offsetHeight;  
+      if (this.htmlCanvas_.parentElement) {
+        this.htmlCanvas_.width = this.htmlCanvas_.parentElement.offsetWidth;  
+        this.htmlCanvas_.height = this.htmlCanvas_.parentElement.offsetHeight;  
 
-      Logger.defaultLogger.debug("resizing WasmViewport: ", this.htmlCanvas_.width, "x", this.htmlCanvas_.height);
+        Logger.defaultLogger.debug("resizing WasmViewport: ", this.htmlCanvas_.width, "x", this.htmlCanvas_.height);
 
-      if (this.imageData_ === null) {
-        this.imageData_ = this.context_.getImageData(0, 0, this.htmlCanvas_.width, this.htmlCanvas_.height);
-        this.ViewportSetSize(this.pimpl_, this.htmlCanvas_.width, this.htmlCanvas_.height);
-  
-        if (this.renderingBuffer_ != null) {
-          this.module_._free(this.renderingBuffer_);
+        if (this.imageData_ === null && this.context_) {
+          this.imageData_ = this.context_.getImageData(0, 0, this.htmlCanvas_.width, this.htmlCanvas_.height);
+          this.ViewportSetSize(this.pimpl_, this.htmlCanvas_.width, this.htmlCanvas_.height);
+    
+          if (this.renderingBuffer_ != null) {
+            this.module_._free(this.renderingBuffer_);
+          }
+          
+          this.renderingBuffer_ = this.module_._malloc(this.imageData_.width * this.imageData_.height * 4);
+        } else {
+          this.ViewportSetSize(this.pimpl_, this.htmlCanvas_.width, this.htmlCanvas_.height);
         }
         
-        this.renderingBuffer_ = this.module_._malloc(this.imageData_.width * this.imageData_.height * 4);
-      } else {
-        this.ViewportSetSize(this.pimpl_, this.htmlCanvas_.width, this.htmlCanvas_.height);
+        this.Redraw();
       }
-      
-      this.Redraw();
     }
 
     public Initialize() {
@@ -211,7 +218,7 @@ export class WasmViewport {
       });
     
       window.addEventListener('keydown', function(event) {
-        var keyChar = event.key;
+        var keyChar: string | null = event.key;
         var keyCode = event.keyCode
         if (keyChar.length == 1) {
           keyCode = 0; // maps to OrthancStone::KeyboardKeys_Generic
@@ -328,7 +335,7 @@ export class WasmViewport {
     this.touchZoom_ = false;
   }
   
-  public GetTouchTranslation(event) {
+  public GetTouchTranslation(event: any) {
     var touch = event.targetTouches[0];
     return [
       touch.pageX,
@@ -336,7 +343,7 @@ export class WasmViewport {
     ];
   }
     
-  public GetTouchZoom(event) {
+  public GetTouchZoom(event: any) {
     var touch1 = event.targetTouches[0];
     var touch2 = event.targetTouches[1];
     var dx = (touch1.pageX - touch2.pageX);

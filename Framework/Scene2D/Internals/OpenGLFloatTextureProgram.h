@@ -66,7 +66,8 @@ namespace OrthancStone
       void Apply(Data& data,
                  const AffineTransform2D& transform,
                  float windowCenter,
-                 float windowWidth);
+                 float windowWidth,
+                 bool  invert);
     };
   }
 }

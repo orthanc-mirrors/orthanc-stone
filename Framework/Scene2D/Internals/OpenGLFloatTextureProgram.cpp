@@ -33,6 +33,7 @@ static const char* FRAGMENT_SHADER =
   "uniform float u_slope;                            \n"
   "uniform float u_windowCenter;                     \n"
   "uniform float u_windowWidth;                      \n"
+  "uniform bool  u_invert;                           \n"
   "uniform sampler2D u_texture;                      \n"
   "varying vec2 v_texcoord;                          \n"
   "void main()                                       \n"
@@ -50,6 +51,8 @@ static const char* FRAGMENT_SHADER =
   "    if (v >= 1.0)                                 \n"
   "      v = 1.0;                                    \n"
   "  }                                               \n"
+  "  if (u_invert)                                   \n"
+  "      v = 1.0 - v;                                \n"
   "  gl_FragColor = vec4(v, v, v, 1);                \n"
   "}";
 
@@ -133,7 +136,8 @@ namespace OrthancStone
     void OpenGLFloatTextureProgram::Apply(Data& data,
                                           const AffineTransform2D& transform,
                                           float windowCenter,
-                                          float windowWidth)
+                                          float windowWidth,
+                                          bool invert)
     {
       OpenGLTextureProgram::Execution execution(program_, data.GetTexture(), transform);
 
@@ -141,6 +145,7 @@ namespace OrthancStone
       glUniform1f(execution.GetUniformLocation("u_offset"), data.GetOffset());
       glUniform1f(execution.GetUniformLocation("u_windowCenter"), windowCenter);
       glUniform1f(execution.GetUniformLocation("u_windowWidth"), windowWidth);
+      glUniform1f(execution.GetUniformLocation("u_invert"), invert);
 
       execution.DrawTriangles();
     }

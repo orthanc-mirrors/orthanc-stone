@@ -36,6 +36,7 @@ namespace OrthancStone
 
       layerTransform_ = layer.GetTransform();
       layer.GetWindowing(windowCenter_, windowWidth_);
+      invert_ = layer.IsInverted();
     }
 
 
@@ -56,7 +57,7 @@ namespace OrthancStone
       if (texture_.get() != NULL)
       {
         program_.Apply(*texture_, AffineTransform2D::Combine(transform, layerTransform_), 
-                       windowCenter_, windowWidth_);
+                       windowCenter_, windowWidth_, invert_);
       }
     }
 

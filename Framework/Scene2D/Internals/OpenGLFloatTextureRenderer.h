@@ -38,6 +38,7 @@ namespace OrthancStone
       AffineTransform2D                               layerTransform_;
       float                                           windowCenter_;
       float                                           windowWidth_;
+      bool                                            invert_;
 
       void UpdateInternal(const FloatTextureSceneLayer& layer,
                           bool loadTexture);

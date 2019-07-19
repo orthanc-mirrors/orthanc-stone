@@ -41,6 +41,13 @@ namespace OrthancStone
     customWindowWidth_ = windowWidth;
   }
 
+
+  void GrayscaleStyleConfigurator::SetInverted(bool inverted)
+  {
+    inverted_ = inverted;
+    revision_++;
+  }
+
   void GrayscaleStyleConfigurator::SetLinearInterpolation(bool enabled)
   {
     linearInterpolation_ = enabled;
@@ -87,5 +94,6 @@ namespace OrthancStone
         l.SetCustomWindowing(customWindowCenter_, customWindowWidth_);
       }
     }
+    l.SetInverted(inverted_);
   }
 }

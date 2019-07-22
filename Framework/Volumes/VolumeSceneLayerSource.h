@@ -34,7 +34,7 @@ namespace OrthancStone
      scene". The style of the layer can be fine-tuned using a "layer
      style configurator". The class only changes the layer if the
      cutting plane has been modified since the last call to "Update()".
-   **/
+   */
   class VolumeSceneLayerSource : public boost::noncopyable
   {
   private:

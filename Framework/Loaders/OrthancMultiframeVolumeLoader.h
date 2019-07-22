@@ -42,7 +42,6 @@ namespace OrthancStone
     std::string                          instanceId_;
     std::string                          transferSyntaxUid_;
 
-
     const std::string& GetInstanceId() const;
 
     void ScheduleFrameDownloads();
@@ -57,7 +56,7 @@ namespace OrthancStone
     void SetUncompressedPixelData(const std::string& pixelData);
 
   public:
-    OrthancMultiframeVolumeLoader(const boost::shared_ptr<DicomVolumeImage>& volume,
+    OrthancMultiframeVolumeLoader(boost::shared_ptr<DicomVolumeImage> volume,
                                   IOracle& oracle,
                                   IObservable& oracleObservable);
 

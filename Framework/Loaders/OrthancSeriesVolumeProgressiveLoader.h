@@ -92,7 +92,6 @@ namespace OrthancStone
       void IncrementSliceRevision(size_t index);
     };
 
-
     void ScheduleNextSliceDownload();
 
     void LoadGeometry(const OrthancRestApiCommand::SuccessMessage& message);
@@ -123,6 +122,24 @@ namespace OrthancStone
     void SetSimultaneousDownloads(unsigned int count);
 
     void LoadSeries(const std::string& seriesId);
+
+    /**
+    This getter is used by clients that do not receive the geometry through
+    subscribing, for instance if they are created or listening only AFTER the
+    "geometry loaded" message is broadcast 
+    */
+    bool HasGeometry() const
+    {
+      return seriesGeometry_.HasGeometry();
+    }
+
+    /**
+    Same remark as HasGeometry
+    */
+    const VolumeImageGeometry& GetImageGeometry() const
+    {
+      return seriesGeometry_.GetImageGeometry();
+    }
 
     /**
     When a slice is requested, the strategy algorithm (that defines the 

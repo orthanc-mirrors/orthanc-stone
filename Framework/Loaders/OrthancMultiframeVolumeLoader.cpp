@@ -196,7 +196,6 @@ namespace OrthancStone
     transferSyntaxUid_ = Orthanc::Toolbox::StripSpaces(transferSyntax);
     ScheduleFrameDownloads();
   }
-    
 
   void OrthancMultiframeVolumeLoader::SetGeometry(const Orthanc::DicomMap& dicom)
   {
@@ -298,7 +297,6 @@ namespace OrthancStone
       }
     }
   }
-    
 
   void OrthancMultiframeVolumeLoader::SetUncompressedPixelData(const std::string& pixelData)
   {
@@ -318,7 +316,7 @@ namespace OrthancStone
   }
 
 
-  OrthancMultiframeVolumeLoader::OrthancMultiframeVolumeLoader(const boost::shared_ptr<DicomVolumeImage>& volume,
+  OrthancMultiframeVolumeLoader::OrthancMultiframeVolumeLoader(boost::shared_ptr<DicomVolumeImage> volume,
                                                                IOracle& oracle,
                                                                IObservable& oracleObservable) :
     LoaderStateMachine(oracle, oracleObservable),

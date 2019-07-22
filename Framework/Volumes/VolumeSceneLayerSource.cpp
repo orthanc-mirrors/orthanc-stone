@@ -119,6 +119,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(TRACE) << "VolumeSceneLayerSource::Update -- Content has changed: An update is needed";
       // Content has changed: An update is needed
       lastPlane_.reset(new CoordinateSystem3D(plane));
       lastRevision_ = slice->GetRevision();
@@ -126,10 +127,12 @@ namespace OrthancStone
       std::auto_ptr<ISceneLayer> layer(slice->CreateSceneLayer(configurator_.get(), plane));
       if (layer.get() == NULL)
       {
+        LOG(TRACE) << "VolumeSceneLayerSource::Update -- (layer.get() == NULL)";
         ClearLayer();
       }
       else
       {
+        LOG(TRACE) << "VolumeSceneLayerSource::Update -- (layer.get() != NULL)";
         if (configurator_.get() != NULL)
         {
           lastConfiguratorRevision_ = configurator_->GetRevision();

@@ -31,12 +31,11 @@ namespace OrthancStone
   class DicomVolumeImageMPRSlicer;
   class DicomStructureSetLoader;
   class OrthancMultiframeVolumeLoader;
-  class IOracle;
 
 #if ORTHANC_ENABLE_WASM == 1
-  //class WebAssemblyOracle;
+  class WebAssemblyOracle;
 #else
-  //class ThreadedOracle;
+  class ThreadedOracle;
   class LockingEmitter;
 #endif
 
@@ -44,9 +43,9 @@ namespace OrthancStone
   {
   public:
 #if ORTHANC_ENABLE_WASM == 1
-    LoaderCache(IOracle& oracle);
+    LoaderCache(WebAssemblyOracle& oracle);
 #else
-    LoaderCache(IOracle& oracle, LockingEmitter& lockingEmitter);
+    LoaderCache(ThreadedOracle& oracle, LockingEmitter& lockingEmitter);
 #endif
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader>
@@ -59,11 +58,11 @@ namespace OrthancStone
     void ClearCache();
 
   private:
-    IOracle& oracle_;
+    
 #if ORTHANC_ENABLE_WASM == 1
-    //WebAssemblyOracle& oracle_;
+    WebAssemblyOracle& oracle_;
 #else
-    //ThreadedOracle& oracle_;
+    ThreadedOracle& oracle_;
     LockingEmitter& lockingEmitter_;
 #endif
 

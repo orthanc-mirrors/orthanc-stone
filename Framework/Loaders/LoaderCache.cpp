@@ -24,6 +24,13 @@
 #include "OrthancMultiframeVolumeLoader.h"
 #include "DicomStructureSetLoader.h"
 
+#if ORTHANC_ENABLE_WASM == 1
+# include <unistd.h>
+# include "../Oracle/WebAssemblyOracle.h"
+#else
+# include "../Oracle/ThreadedOracle.h"
+#endif
+
 #include "../Messages/LockingEmitter.h"
 #include "../Volumes/DicomVolumeImage.h"
 #include "../Volumes/DicomVolumeImageMPRSlicer.h"
@@ -34,13 +41,13 @@
 namespace OrthancStone
 {
 #if ORTHANC_ENABLE_WASM == 1
-  LoaderCache::LoaderCache(IOracle& oracle)
+  LoaderCache::LoaderCache(WebAssemblyOracle& oracle)
     : oracle_(oracle)
   {
 
   }
 #else
-  LoaderCache::LoaderCache(IOracle& oracle, LockingEmitter& lockingEmitter)
+  LoaderCache::LoaderCache(ThreadedOracle& oracle, LockingEmitter& lockingEmitter)
     : oracle_(oracle)
     , lockingEmitter_(lockingEmitter)
   {
@@ -59,12 +66,17 @@ namespace OrthancStone
       // find in cache
       if (seriesVolumeProgressiveLoaders_.find(seriesUuid) == seriesVolumeProgressiveLoaders_.end())
       {
+#if ORTHANC_ENABLE_WASM == 1
+        LOG(WARNING) << "Performing request for series " << seriesUuid << " sbrk(0) = " << sbrk(0);
+#else
+        LOG(WARNING) << "Performing request for series " << seriesUuid;
+#endif
         boost::shared_ptr<DicomVolumeImage> volumeImage(new DicomVolumeImage);
         boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> loader;
 
         {
 #if ORTHANC_ENABLE_WASM == 1
-          loader.reset(new OrthancSeriesVolumeProgressiveLoader(volumeImage, GetParent()->GetOracleRef(), GetParent()->GetOracleRef()));
+          loader.reset(new OrthancSeriesVolumeProgressiveLoader(volumeImage, oracle_, oracle_));
 #else
           LockingEmitter::WriterLock lock(lockingEmitter_);
           loader.reset(new OrthancSeriesVolumeProgressiveLoader(volumeImage, oracle_, lock.GetOracleObservable()));
@@ -115,7 +127,7 @@ namespace OrthancStone
 
         {
 #if ORTHANC_ENABLE_WASM == 1
-          loader.reset(new OrthancMultiframeVolumeLoader(volumeImage, GetParent()->GetOracleRef(), GetParent()->GetOracleRef()));
+          loader.reset(new OrthancMultiframeVolumeLoader(volumeImage, oracle_, oracle_));
 #else
           LockingEmitter::WriterLock lock(lockingEmitter_);
           loader.reset(new OrthancMultiframeVolumeLoader(volumeImage, oracle_, lock.GetOracleObservable()));
@@ -167,7 +179,7 @@ namespace OrthancStone
 
         {
 #if ORTHANC_ENABLE_WASM == 1
-          loader.reset(new DicomStructureSetLoader(volumeImage, GetParent()->GetOracleRef(), GetParent()->GetOracleRef()));
+          loader.reset(new DicomStructureSetLoader(oracle_, oracle_));
 #else
           LockingEmitter::WriterLock lock(lockingEmitter_);
           loader.reset(new DicomStructureSetLoader(oracle_, lock.GetOracleObservable()));

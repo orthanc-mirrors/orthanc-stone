@@ -410,6 +410,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingItemsSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingStrategy.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomStructureSetLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderCache.h
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderCache.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderStateMachine.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancMultiframeVolumeLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.cpp

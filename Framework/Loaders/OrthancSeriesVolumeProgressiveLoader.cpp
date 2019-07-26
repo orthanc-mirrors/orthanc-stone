@@ -450,8 +450,10 @@ namespace OrthancStone
 
   void OrthancSeriesVolumeProgressiveLoader::LoadSeries(const std::string& seriesId)
   {
+//    LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries seriesId=" << seriesId;
     if (active_)
     {
+//      LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries NOT ACTIVE! --> ERROR";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else
@@ -461,7 +463,9 @@ namespace OrthancStone
       std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetUri("/series/" + seriesId + "/instances-tags");
 
+//      LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries about to call oracle_.Schedule";
       oracle_.Schedule(*this, command.release());
+//      LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries called oracle_.Schedule";
     }
   }
   

@@ -59,6 +59,7 @@ namespace OrthancStone
   {
     try
     {
+      
       // normalize keys a little
       seriesUuid = Orthanc::Toolbox::StripSpaces(seriesUuid);
       Orthanc::Toolbox::ToLowerCase(seriesUuid);
@@ -66,14 +67,15 @@ namespace OrthancStone
       // find in cache
       if (seriesVolumeProgressiveLoaders_.find(seriesUuid) == seriesVolumeProgressiveLoaders_.end())
       {
+//        LOG(TRACE) << "LoaderCache::GetSeriesVolumeProgressiveLoader : CACHEMISS --> need to load seriesUUid = " << seriesUuid;
 #if ORTHANC_ENABLE_WASM == 1
-        LOG(WARNING) << "Performing request for series " << seriesUuid << " sbrk(0) = " << sbrk(0);
+//        LOG(TRACE) << "Performing request for series " << seriesUuid << " sbrk(0) = " << sbrk(0);
 #else
-        LOG(WARNING) << "Performing request for series " << seriesUuid;
+//        LOG(TRACE) << "Performing request for series " << seriesUuid;
 #endif
         boost::shared_ptr<DicomVolumeImage> volumeImage(new DicomVolumeImage);
         boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> loader;
-
+//        LOG(TRACE) << "volumeImage = " << volumeImage.get();
         {
 #if ORTHANC_ENABLE_WASM == 1
           loader.reset(new OrthancSeriesVolumeProgressiveLoader(volumeImage, oracle_, oracle_));
@@ -81,9 +83,15 @@ namespace OrthancStone
           LockingEmitter::WriterLock lock(lockingEmitter_);
           loader.reset(new OrthancSeriesVolumeProgressiveLoader(volumeImage, oracle_, lock.GetOracleObservable()));
 #endif
+//          LOG(TRACE) << "LoaderCache::GetSeriesVolumeProgressiveLoader : loader = " << loader.get();
           loader->LoadSeries(seriesUuid);
+//          LOG(TRACE) << "LoaderCache::GetSeriesVolumeProgressiveLoader : loader->LoadSeries successful";
         }
         seriesVolumeProgressiveLoaders_[seriesUuid] = loader;
+      }
+      else
+      {
+//        LOG(TRACE) << "LoaderCache::GetSeriesVolumeProgressiveLoader : returning cached loader for seriesUUid = " << seriesUuid;
       }
       return seriesVolumeProgressiveLoaders_[seriesUuid];
     }

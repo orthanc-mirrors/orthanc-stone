@@ -132,7 +132,7 @@ namespace OrthancStone
 
     if (found != content_.end())
     {
-      LOG(INFO) << "DeleteLayer --found-- (" << depth << ")";
+      LOG(TRACE) << "DeleteLayer --found-- (" << depth << ")";
       assert(found->second != NULL);
       delete found->second;
       content_.erase(found);

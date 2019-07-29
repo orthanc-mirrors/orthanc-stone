@@ -55,6 +55,10 @@ namespace OrthancStone
     }
   }
 
+  VolumeSceneLayerSource::~VolumeSceneLayerSource()
+  {
+    ClearLayer();
+  }
 
   void VolumeSceneLayerSource::RemoveConfigurator()
   {

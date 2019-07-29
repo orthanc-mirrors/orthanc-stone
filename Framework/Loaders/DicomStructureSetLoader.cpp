@@ -233,6 +233,11 @@ namespace OrthancStone
   }
     
     
+  DicomStructureSetLoader::~DicomStructureSetLoader()
+  {
+    LOG(TRACE) << "DicomStructureSetLoader::~DicomStructureSetLoader()";
+  }
+
   void DicomStructureSetLoader::LoadInstance(const std::string& instanceId)
   {
     Start();

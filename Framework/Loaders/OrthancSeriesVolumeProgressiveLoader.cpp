@@ -430,6 +430,10 @@ namespace OrthancStone
       (*this, &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent));
   }
 
+  OrthancSeriesVolumeProgressiveLoader::~OrthancSeriesVolumeProgressiveLoader()
+  {
+    LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::~OrthancSeriesVolumeProgressiveLoader()";
+  }
 
   void OrthancSeriesVolumeProgressiveLoader::SetSimultaneousDownloads(unsigned int count)
   {

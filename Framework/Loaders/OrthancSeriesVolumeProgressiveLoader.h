@@ -119,6 +119,8 @@ namespace OrthancStone
                                          IOracle& oracle,
                                          IObservable& oracleObservable);
 
+    virtual ~OrthancSeriesVolumeProgressiveLoader();
+
     void SetSimultaneousDownloads(unsigned int count);
 
     void LoadSeries(const std::string& seriesId);

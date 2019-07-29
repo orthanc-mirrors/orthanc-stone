@@ -89,6 +89,8 @@ namespace OrthancStone
     {
     }
 
+    virtual ~DicomVolumeImageMPRSlicer();
+
     virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
   };
 }

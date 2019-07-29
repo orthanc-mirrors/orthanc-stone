@@ -49,6 +49,8 @@ namespace OrthancStone
     DicomStructureSetLoader(IOracle& oracle,
                             IObservable& oracleObservable);    
     
+    ~DicomStructureSetLoader();
+    
     void LoadInstance(const std::string& instanceId);
 
     virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane);

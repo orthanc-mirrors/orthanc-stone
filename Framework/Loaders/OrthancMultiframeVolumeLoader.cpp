@@ -333,6 +333,10 @@ namespace OrthancStone
     }
   }
 
+  OrthancMultiframeVolumeLoader::~OrthancMultiframeVolumeLoader()
+  {
+    LOG(TRACE) << "OrthancMultiframeVolumeLoader::~OrthancMultiframeVolumeLoader()";
+  }
 
   void OrthancMultiframeVolumeLoader::LoadInstance(const std::string& instanceId)
   {

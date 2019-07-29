@@ -364,7 +364,12 @@ namespace OrthancStone
       for (size_t i = 0; i < widgets_.size(); i++)
       {
         boost::shared_ptr<IGuiAdapterWidget> widget = widgets_[i].lock();
-        func(widget);
+
+        // TODO: we need to clean widgets!
+        if (widget.get() != NULL)
+        {
+          func(widget);
+        }
       }
     }
   };

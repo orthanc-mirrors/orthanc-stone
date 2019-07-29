@@ -100,7 +100,12 @@ namespace OrthancStone
   }
 
 
-  IVolumeSlicer::IExtractedSlice* 
+  DicomVolumeImageMPRSlicer::~DicomVolumeImageMPRSlicer()
+  {
+    LOG(TRACE) << "DicomVolumeImageMPRSlicer::~DicomVolumeImageMPRSlicer()";
+  }
+
+  IVolumeSlicer::IExtractedSlice*
   DicomVolumeImageMPRSlicer::ExtractSlice(const CoordinateSystem3D& cuttingPlane)
   {
     if (volume_->HasGeometry())

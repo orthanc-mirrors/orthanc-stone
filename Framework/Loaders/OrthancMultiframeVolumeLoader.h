@@ -59,6 +59,8 @@ namespace OrthancStone
     OrthancMultiframeVolumeLoader(boost::shared_ptr<DicomVolumeImage> volume,
                                   IOracle& oracle,
                                   IObservable& oracleObservable);
+    
+    virtual ~OrthancMultiframeVolumeLoader();
 
     void LoadInstance(const std::string& instanceId);
   };

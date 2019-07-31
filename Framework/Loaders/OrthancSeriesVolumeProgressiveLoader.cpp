@@ -264,10 +264,14 @@ namespace OrthancStone
       if (quality == BEST_QUALITY)
       {
         std::auto_ptr<GetOrthancImageCommand> tmp(new GetOrthancImageCommand);
-        // TODO: review the following comment. Commented out by bgo on 2019-07-19
-        // reason: Alain has seen cases where gzipping the uint16 image took 11 sec 
-        // to produce 5mb. The unzipped request was much much faster.
-        //tmp->SetHttpHeader("Accept-Encoding", "gzip");
+        // TODO: review the following comment. 
+        // - Commented out by bgo on 2019-07-19 | reason: Alain has seen cases 
+        //   where gzipping the uint16 image took 11 sec to produce 5mb. 
+        //   The unzipped request was much much faster.
+        // - Re-enabled on 2019-07-30. Reason: in Web Assembly, the browser 
+        //   does not use the Accept-Encoding header and always requests
+        //   compression. Furthermore, NOT 
+        tmp->SetHttpHeader("Accept-Encoding", "gzip");
         tmp->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
         tmp->SetInstanceUri(instance, slice.GetExpectedPixelFormat());
         tmp->SetExpectedPixelFormat(slice.GetExpectedPixelFormat());
@@ -287,6 +291,12 @@ namespace OrthancStone
 
       command->SetPayload(new Orthanc::SingleValueObject<unsigned int>(sliceIndex));
       oracle_.Schedule(*this, command.release());
+    }
+    else
+    {
+      // loading is finished!
+      volumeImageReadyInHighQuality_ = true;
+      BroadcastMessage(OrthancSeriesVolumeProgressiveLoader::VolumeImageReadyInHighQuality(*this));
     }
   }
 
@@ -415,7 +425,8 @@ namespace OrthancStone
     active_(false),
     simultaneousDownloads_(4),
     volume_(volume),
-    sorter_(new BasicFetchingItemsSorter::Factory)
+    sorter_(new BasicFetchingItemsSorter::Factory),
+    volumeImageReadyInHighQuality_(false)
   {
     oracleObservable.RegisterObserverCallback(
       new Callable<OrthancSeriesVolumeProgressiveLoader, OrthancRestApiCommand::SuccessMessage>

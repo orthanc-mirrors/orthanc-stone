@@ -316,6 +316,7 @@ namespace OrthancStone
 
     volume_->IncrementRevision();
 
+    pixelDataLoaded_ = true;
     BroadcastMessage(DicomVolumeImage::ContentUpdatedMessage(*volume_));
   }
 
@@ -325,7 +326,8 @@ namespace OrthancStone
                                                                IObservable& oracleObservable) :
     LoaderStateMachine(oracle, oracleObservable),
     IObservable(oracleObservable.GetBroker()),
-    volume_(volume)
+    volume_(volume),
+    pixelDataLoaded_(false)
   {
     if (volume.get() == NULL)
     {

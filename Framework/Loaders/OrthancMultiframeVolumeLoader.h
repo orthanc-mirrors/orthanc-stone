@@ -41,6 +41,7 @@ namespace OrthancStone
     boost::shared_ptr<DicomVolumeImage>  volume_;
     std::string                          instanceId_;
     std::string                          transferSyntaxUid_;
+    bool                                 pixelDataLoaded_;
 
     const std::string& GetInstanceId() const;
 
@@ -61,6 +62,11 @@ namespace OrthancStone
                                   IObservable& oracleObservable);
     
     virtual ~OrthancMultiframeVolumeLoader();
+
+    bool IsPixelDataLoaded() const
+    {
+      return pixelDataLoaded_;
+    }
 
     void LoadInstance(const std::string& instanceId);
   };

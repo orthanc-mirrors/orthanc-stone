@@ -218,6 +218,8 @@ namespace OrthancStone
 
 #endif
 
+  typedef void (*GuiAdapterRunFunc)(void*);
+
   class GuiAdapter
   {
   public:
@@ -276,7 +278,7 @@ namespace OrthancStone
     Under wasm, it returns without doing anything, since the event loop is managed
     by the browser.
     */
-    void Run();
+    void Run(GuiAdapterRunFunc func = NULL, void* cookie = NULL);
 
 #if ORTHANC_ENABLE_WASM != 1
     /**

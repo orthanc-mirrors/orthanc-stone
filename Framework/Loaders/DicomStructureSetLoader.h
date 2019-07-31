@@ -29,7 +29,8 @@ namespace OrthancStone
 {
   class DicomStructureSetLoader :
     public LoaderStateMachine,
-    public IVolumeSlicer
+    public IVolumeSlicer,
+    public IObservable
   {
   private:
     class Slice;
@@ -44,8 +45,13 @@ namespace OrthancStone
     std::string                       instanceId_;
     unsigned int                      countProcessedInstances_;
     unsigned int                      countReferencedInstances_;  
+
+    // will be set to true once the loading is finished
+    bool                              structuresReady_;
     
   public:
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, StructuresReady, DicomStructureSetLoader);
+
     DicomStructureSetLoader(IOracle& oracle,
                             IObservable& oracleObservable);    
     
@@ -54,5 +60,9 @@ namespace OrthancStone
     void LoadInstance(const std::string& instanceId);
 
     virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane);
+
+    void SetStructuresReady();
+
+    bool AreStructuresReady() const;
   };
 }

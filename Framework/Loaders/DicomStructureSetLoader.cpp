@@ -58,6 +58,7 @@ namespace OrthancStone
         // All the referenced instances have been loaded, finalize the RT-STRUCT
         loader.content_->CheckReferencedSlices();
         loader.revision_++;
+        loader.SetStructuresReady();
       }
     }
   };
@@ -225,10 +226,12 @@ namespace OrthancStone
 
   DicomStructureSetLoader::DicomStructureSetLoader(IOracle& oracle,
                                                    IObservable& oracleObservable) :
+    IObservable(oracleObservable.GetBroker()),
     LoaderStateMachine(oracle, oracleObservable),
     revision_(0),
     countProcessedInstances_(0),
-    countReferencedInstances_(0)
+    countReferencedInstances_(0),
+    structuresReady_(false)
   {
   }
     
@@ -266,4 +269,17 @@ namespace OrthancStone
       return new Slice(*content_, revision_, cuttingPlane);
     }
   }
+
+  void DicomStructureSetLoader::SetStructuresReady()
+  {
+    ORTHANC_ASSERT(!structuresReady_);
+    structuresReady_ = true;
+    BroadcastMessage(DicomStructureSetLoader::StructuresReady(*this));
+  }
+
+  bool DicomStructureSetLoader::AreStructuresReady() const
+  {
+    return structuresReady_;
+  }
+
 }

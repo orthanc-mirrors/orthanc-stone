@@ -119,6 +119,18 @@ namespace OrthancStone
     }
   }
 
+  boost::shared_ptr<OrthancMultiframeVolumeLoader> LoaderCache::GetMultiframeVolumeLoader(std::string instanceUuid)
+  {
+    // if the loader is not available, let's trigger its creation
+    if(multiframeVolumeLoaders_.find(instanceUuid) == multiframeVolumeLoaders_.end())
+    {
+      GetMultiframeDicomVolumeImageMPRSlicer(instanceUuid);
+    }
+    ORTHANC_ASSERT(multiframeVolumeLoaders_.find(instanceUuid) != multiframeVolumeLoaders_.end());
+
+    return multiframeVolumeLoaders_[instanceUuid];
+  }
+
   boost::shared_ptr<DicomVolumeImageMPRSlicer> LoaderCache::GetMultiframeDicomVolumeImageMPRSlicer(std::string instanceUuid)
   {
     try

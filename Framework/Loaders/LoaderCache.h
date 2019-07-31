@@ -50,8 +50,13 @@ namespace OrthancStone
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader>
       GetSeriesVolumeProgressiveLoader      (std::string seriesUuid);
+    
     boost::shared_ptr<DicomVolumeImageMPRSlicer>
       GetMultiframeDicomVolumeImageMPRSlicer(std::string instanceUuid);
+
+    boost::shared_ptr<OrthancMultiframeVolumeLoader>
+      GetMultiframeVolumeLoader(std::string instanceUuid);
+
     boost::shared_ptr<DicomStructureSetLoader>
       GetDicomStructureSetLoader            (std::string instanceUuid);
 

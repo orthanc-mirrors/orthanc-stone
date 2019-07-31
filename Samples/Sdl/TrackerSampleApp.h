@@ -84,12 +84,12 @@ namespace OrthancStone
     In the case of this app, the viewport is an SDL viewport and it has 
     a OpenGLCompositor& GetCompositor() method
     */
-    OpenGLCompositor& GetCompositor();
+    ICompositor& GetCompositor();
 
     /**
     See the other overload
     */
-    const OpenGLCompositor& GetCompositor() const;
+    const ICompositor& GetCompositor() const;
 
     /**
     This returns a random point in the canvas part of the scene, but in

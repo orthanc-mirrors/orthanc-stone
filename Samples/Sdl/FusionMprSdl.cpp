@@ -103,7 +103,8 @@ namespace OrthancStone
   void FusionMprSdlApp::DisplayInfoText()
   {
     // do not try to use stuff too early!
-    if (compositor_.get() == NULL)
+    ICompositor* pCompositor = &(viewport_.GetCompositor());
+    if (pCompositor == NULL)
       return;
 
     std::stringstream msg;
@@ -116,10 +117,10 @@ namespace OrthancStone
 	std::string msgS = msg.str();
 
     TextSceneLayer* layerP = NULL;
-    if (GetScene()->HasLayer(FIXED_INFOTEXT_LAYER_ZINDEX))
+    if (GetScene().HasLayer(FIXED_INFOTEXT_LAYER_ZINDEX))
     {
       TextSceneLayer& layer = dynamic_cast<TextSceneLayer&>(
-        GetScene()->GetLayer(FIXED_INFOTEXT_LAYER_ZINDEX));
+        GetScene().GetLayer(FIXED_INFOTEXT_LAYER_ZINDEX));
       layerP = &layer;
     }
     else
@@ -131,29 +132,29 @@ namespace OrthancStone
       layer->SetBorder(20);
       layer->SetAnchor(BitmapAnchor_TopLeft);
       //layer->SetPosition(0,0);
-      GetScene()->SetLayer(FIXED_INFOTEXT_LAYER_ZINDEX, layer.release());
+      GetScene().SetLayer(FIXED_INFOTEXT_LAYER_ZINDEX, layer.release());
     }
     // position the fixed info text in the upper right corner
     layerP->SetText(msgS.c_str());
-    double cX = compositor_->GetCanvasWidth() * (-0.5);
-    double cY = compositor_->GetCanvasHeight() * (-0.5);
-    GetScene()->GetCanvasToSceneTransform().Apply(cX,cY);
+    double cX = viewport_.GetCompositor().GetCanvasWidth() * (-0.5);
+    double cY = viewport_.GetCompositor().GetCanvasHeight() * (-0.5);
+    GetScene().GetCanvasToSceneTransform().Apply(cX,cY);
     layerP->SetPosition(cX, cY);
   }
 
   void FusionMprSdlApp::DisplayFloatingCtrlInfoText(const PointerEvent& e)
   {
-    ScenePoint2D p = e.GetMainPosition().Apply(GetScene()->GetCanvasToSceneTransform());
+    ScenePoint2D p = e.GetMainPosition().Apply(GetScene().GetCanvasToSceneTransform());
 
     char buf[128];
     sprintf(buf, "S:(%0.02f,%0.02f) C:(%0.02f,%0.02f)", 
       p.GetX(), p.GetY(), 
       e.GetMainPosition().GetX(), e.GetMainPosition().GetY());
 
-    if (GetScene()->HasLayer(FLOATING_INFOTEXT_LAYER_ZINDEX))
+    if (GetScene().HasLayer(FLOATING_INFOTEXT_LAYER_ZINDEX))
     {
       TextSceneLayer& layer =
-        dynamic_cast<TextSceneLayer&>(GetScene()->GetLayer(FLOATING_INFOTEXT_LAYER_ZINDEX));
+        dynamic_cast<TextSceneLayer&>(GetScene().GetLayer(FLOATING_INFOTEXT_LAYER_ZINDEX));
       layer.SetText(buf);
       layer.SetPosition(p.GetX(), p.GetY());
     }
@@ -165,13 +166,13 @@ namespace OrthancStone
       layer->SetBorder(20);
       layer->SetAnchor(BitmapAnchor_BottomCenter);
       layer->SetPosition(p.GetX(), p.GetY());
-      GetScene()->SetLayer(FLOATING_INFOTEXT_LAYER_ZINDEX, layer.release());
+      GetScene().SetLayer(FLOATING_INFOTEXT_LAYER_ZINDEX, layer.release());
     }
   }
 
   void FusionMprSdlApp::HideInfoText()
   {
-    GetScene()->DeleteLayer(FLOATING_INFOTEXT_LAYER_ZINDEX);
+    GetScene().DeleteLayer(FLOATING_INFOTEXT_LAYER_ZINDEX);
   }
 
   void FusionMprSdlApp::HandleApplicationEvent(
@@ -191,7 +192,7 @@ namespace OrthancStone
         // The "left-ctrl" key is down, while no tracker is present
         // Let's display the info text
         PointerEvent e;
-        e.AddPosition(compositor_->GetPixelCenterCoordinates(
+        e.AddPosition(controller_->GetViewport().GetPixelCenterCoordinates(
           event.button.x, event.button.y));
 
         DisplayFloatingCtrlInfoText(e);
@@ -204,7 +205,7 @@ namespace OrthancStone
         {
           //LOG(TRACE) << "(activeTracker_.get() != NULL)";
           PointerEvent e;
-          e.AddPosition(compositor_->GetPixelCenterCoordinates(
+          e.AddPosition(controller_->GetViewport().GetPixelCenterCoordinates(
             event.button.x, event.button.y));
           
           //LOG(TRACE) << "event.button.x = " << event.button.x << "     " <<
@@ -223,7 +224,7 @@ namespace OrthancStone
       if (activeTracker_)
       {
         PointerEvent e;
-        e.AddPosition(compositor_->GetPixelCenterCoordinates(event.button.x, event.button.y));
+        e.AddPosition(controller_->GetViewport().GetPixelCenterCoordinates(event.button.x, event.button.y));
         activeTracker_->PointerUp(e);
         if (!activeTracker_->IsAlive())
           activeTracker_.reset();
@@ -232,7 +233,7 @@ namespace OrthancStone
     else if (event.type == SDL_MOUSEBUTTONDOWN)
     {
       PointerEvent e;
-      e.AddPosition(compositor_->GetPixelCenterCoordinates(
+      e.AddPosition(controller_->GetViewport().GetPixelCenterCoordinates(
         event.button.x, event.button.y));
       if (activeTracker_)
       {
@@ -270,8 +271,8 @@ namespace OrthancStone
         }
         break;
       case SDLK_s:
-        controller_->FitContent(compositor_->GetCanvasWidth(),
-          compositor_->GetCanvasHeight());
+        controller_->FitContent(viewport_.GetCompositor().GetCanvasWidth(),
+          viewport_.GetCompositor().GetCanvasHeight());
         break;
 
       case SDLK_z:
@@ -309,8 +310,8 @@ namespace OrthancStone
       case SDLK_c:
         TakeScreenshot(
           "screenshot.png",
-          compositor_->GetCanvasWidth(),
-          compositor_->GetCanvasHeight());
+          viewport_.GetCompositor().GetCanvasWidth(),
+          viewport_.GetCompositor().GetCanvasHeight());
         break;
 
       default:
@@ -340,7 +341,7 @@ namespace OrthancStone
 
     case SDL_BUTTON_RIGHT:
       return boost::shared_ptr<IFlexiblePointerTracker>(new ZoomSceneTracker
-        (controller_, e, compositor_->GetCanvasHeight()));
+        (controller_, e, viewport_.GetCompositor().GetCanvasHeight()));
 
     case SDL_BUTTON_LEFT:
     {
@@ -372,7 +373,7 @@ namespace OrthancStone
             controller_, e));
         case FusionMprGuiTool_Zoom:
           return boost::shared_ptr<IFlexiblePointerTracker>(new ZoomSceneTracker(
-            controller_, e, compositor_->GetCanvasHeight()));
+            controller_, e, viewport_.GetCompositor().GetCanvasHeight()));
         //case GuiTool_AngleMeasure:
         //  return new AngleMeasureTracker(GetScene(), e);
         //case GuiTool_CircleMeasure:
@@ -409,6 +410,7 @@ namespace OrthancStone
     , oracle_(*this)
     , currentTool_(FusionMprGuiTool_Rotate)
     , undoStack_(new UndoStack)
+    , viewport_("Hello", 1024, 1024, false) // False means we do NOT let Windows treat this as a legacy application that needs to be scaled
   {
     //oracleObservable.RegisterObserverCallback
     //(new Callable
@@ -427,7 +429,7 @@ namespace OrthancStone
       <FusionMprSdlApp, OracleCommandExceptionMessage>(*this, &FusionMprSdlApp::Handle));
     
     controller_ = boost::shared_ptr<ViewportController>(
-      new ViewportController(undoStack_, broker_));
+      new ViewportController(undoStack_, broker_, viewport_));
 
     controller_->RegisterObserverCallback(
       new Callable<FusionMprSdlApp, ViewportController::SceneTransformChanged>
@@ -466,7 +468,7 @@ namespace OrthancStone
       p[4] = 0;
       p[5] = 0;
 
-      GetScene()->SetLayer(TEXTURE_2x2_1_ZINDEX, new ColorTextureSceneLayer(i));
+      GetScene().SetLayer(TEXTURE_2x2_1_ZINDEX, new ColorTextureSceneLayer(i));
     }
   }
 
@@ -483,7 +485,7 @@ namespace OrthancStone
     unsigned int canvasWidth,
     unsigned int canvasHeight)
   {
-    CairoCompositor compositor(*GetScene(), canvasWidth, canvasHeight);
+    CairoCompositor compositor(GetScene(), canvasWidth, canvasHeight);
     compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, FONT_SIZE_0, Orthanc::Encoding_Latin1);
     compositor.Refresh();
 
@@ -557,7 +559,7 @@ namespace OrthancStone
     const boost::shared_ptr<OrthancStone::IVolumeSlicer>& volume,
     OrthancStone::ILayerStyleConfigurator* style)
   {
-    source1_.reset(new OrthancStone::VolumeSceneLayerSource(*controller_->GetScene(), depth, volume));
+    source1_.reset(new OrthancStone::VolumeSceneLayerSource(controller_->GetScene(), depth, volume));
 
     if (style != NULL)
     {
@@ -569,7 +571,7 @@ namespace OrthancStone
     const boost::shared_ptr<OrthancStone::IVolumeSlicer>& volume,
     OrthancStone::ILayerStyleConfigurator* style)
   {
-    source2_.reset(new OrthancStone::VolumeSceneLayerSource(*controller_->GetScene(), depth, volume));
+    source2_.reset(new OrthancStone::VolumeSceneLayerSource(controller_->GetScene(), depth, volume));
 
     if (style != NULL)
     {
@@ -580,25 +582,21 @@ namespace OrthancStone
   void FusionMprSdlApp::SetStructureSet(int depth,
     const boost::shared_ptr<OrthancStone::DicomStructureSetLoader>& volume)
   {
-    source3_.reset(new OrthancStone::VolumeSceneLayerSource(*controller_->GetScene(), depth, volume));
+    source3_.reset(new OrthancStone::VolumeSceneLayerSource(controller_->GetScene(), depth, volume));
   }
   
   void FusionMprSdlApp::Run()
   {
     // False means we do NOT let Windows treat this as a legacy application
     // that needs to be scaled
-    SdlOpenGLContext window("Hello", 1024, 1024, false);
-
-    controller_->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());
+    controller_->FitContent(viewport_.GetCanvasWidth(), viewport_.GetCanvasHeight());
 
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(OpenGLMessageCallback, 0);
 
-    compositor_.reset(new OpenGLCompositor(window, *GetScene()));
-
-    compositor_->SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,
+    viewport_.GetCompositor().SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,
       FONT_SIZE_0, Orthanc::Encoding_Latin1);
-    compositor_->SetFont(1, Orthanc::EmbeddedResources::UBUNTU_FONT,
+    viewport_.GetCompositor().SetFont(1, Orthanc::EmbeddedResources::UBUNTU_FONT,
       FONT_SIZE_1, Orthanc::Encoding_Latin1);
 
 
@@ -675,7 +673,7 @@ namespace OrthancStone
 
     while (!g_stopApplication)
     {
-      compositor_->Refresh();
+      viewport_.GetCompositor().Refresh();
 
 //////// from loader
       if (source1_.get() != NULL)
@@ -713,12 +711,11 @@ namespace OrthancStone
           switch (event.key.keysym.sym)
           {
           case SDLK_f:
-            window.GetWindow().ToggleMaximize();
+            viewport_.GetWindow().ToggleMaximize();
             break;
 
           case SDLK_s:
-            controller_->FitContent(
-              window.GetCanvasWidth(), window.GetCanvasHeight());
+            controller_->FitContent(viewport_.GetCanvasWidth(), viewport_.GetCanvasHeight());
             break;
 
           case SDLK_q:
@@ -732,10 +729,6 @@ namespace OrthancStone
       }
       SDL_Delay(1);
     }
-
-    // the following is paramount because the compositor holds a reference
-    // to the scene and we do not want this reference to become dangling
-    compositor_.reset(NULL);
 
     //// from loader
 

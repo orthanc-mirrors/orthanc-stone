@@ -641,7 +641,7 @@ namespace OrthancStone
 
   static bool g_stopApplication = false;
   
-  OpenGLCompositor& TrackerSampleApp::GetCompositor()
+  ICompositor& TrackerSampleApp::GetCompositor()
   {
     using namespace Orthanc;
     try
@@ -655,7 +655,7 @@ namespace OrthancStone
      }
   }
 
-  const OpenGLCompositor& TrackerSampleApp::GetCompositor() const
+  const ICompositor& TrackerSampleApp::GetCompositor() const
   {
     using namespace Orthanc;
     try
@@ -705,7 +705,7 @@ namespace OrthancStone
           switch (event.key.keysym.sym)
           {
           case SDLK_f:
-            viewport_.GetContext().GetWindow().ToggleMaximize();
+            viewport_.GetWindow().ToggleMaximize();
             break;
 
           case SDLK_q:

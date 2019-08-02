@@ -218,6 +218,8 @@ namespace OrthancStone
 
 #endif
 
+  typedef void (*GuiAdapterRunFunc)(void*);
+
   class GuiAdapter
   {
   public:
@@ -276,7 +278,7 @@ namespace OrthancStone
     Under wasm, it returns without doing anything, since the event loop is managed
     by the browser.
     */
-    void Run();
+    void Run(GuiAdapterRunFunc func = NULL, void* cookie = NULL);
 
 #if ORTHANC_ENABLE_WASM != 1
     /**
@@ -364,7 +366,12 @@ namespace OrthancStone
       for (size_t i = 0; i < widgets_.size(); i++)
       {
         boost::shared_ptr<IGuiAdapterWidget> widget = widgets_[i].lock();
-        func(widget);
+
+        // TODO: we need to clean widgets!
+        if (widget.get() != NULL)
+        {
+          func(widget);
+        }
       }
     }
   };

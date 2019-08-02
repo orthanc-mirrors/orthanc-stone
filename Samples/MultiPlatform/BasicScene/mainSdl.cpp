@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
     SdlOpenGLViewport viewport("Hello", 1024, 768);
     MessageBroker broker;
     boost::shared_ptr<UndoStack> undoStack(new UndoStack);
-    boost::shared_ptr<ViewportController> controller = boost::make_shared<ViewportController>(undoStack, boost::ref(broker), viewport);
+    boost::shared_ptr<ViewportController> controller = boost::make_shared<ViewportController>(undoStack, boost::ref(broker), boost::ref(viewport));
     interactor.reset(new BasicScene2DInteractor(controller));
     PrepareScene(controller->GetScene());
     Run(controller);

@@ -51,7 +51,7 @@ namespace OrthancStone
   }
 
 #if ORTHANC_ENABLE_WASM == 1
-  void GuiAdapter::Run()
+  void GuiAdapter::Run(GuiAdapterRunFunc /*func*/, void* /*cookie*/)
   {
   }
 
@@ -723,7 +723,7 @@ namespace OrthancStone
 # endif
 
   // SDL ONLY
-  void GuiAdapter::Run()
+  void GuiAdapter::Run(GuiAdapterRunFunc func, void* cookie)
   {
 #if 1
     // TODO: MAKE THIS DYNAMIC !!! See SdlOpenGLViewport vs Cairo in ViewportWrapper
@@ -741,6 +741,8 @@ namespace OrthancStone
     {
       {
         LockingEmitter::WriterLock lock(lockingEmitter_);
+        if(func != NULL)
+          (*func)(cookie);
         OnAnimationFrame(); // in SDL we must call it
       }
 

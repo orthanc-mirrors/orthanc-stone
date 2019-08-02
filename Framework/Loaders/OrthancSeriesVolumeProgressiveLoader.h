@@ -104,22 +104,33 @@ namespace OrthancStone
 
     void LoadJpegSliceContent(const GetOrthancWebViewerJpegCommand::SuccessMessage& message);
 
-    IOracle&                                       oracle_;
-    bool                                           active_;
-    unsigned int                                   simultaneousDownloads_;
-    SeriesGeometry                                 seriesGeometry_;
-    boost::shared_ptr<DicomVolumeImage>            volume_;
-    std::auto_ptr<IFetchingItemsSorter::IFactory>  sorter_;
-    std::auto_ptr<IFetchingStrategy>               strategy_;
-    std::vector<unsigned int>                      slicesQuality_;
+    IOracle&                                      oracle_;
+    bool                                          active_;
+    unsigned int                                  simultaneousDownloads_;
+    SeriesGeometry                                seriesGeometry_;
+    boost::shared_ptr<DicomVolumeImage>           volume_;
+    std::auto_ptr<IFetchingItemsSorter::IFactory> sorter_;
+    std::auto_ptr<IFetchingStrategy>              strategy_;
+    std::vector<unsigned int>                     slicesQuality_;
+    bool                                          volumeImageReadyInHighQuality_;
 
 
   public:
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, VolumeImageReadyInHighQuality, OrthancSeriesVolumeProgressiveLoader);
+
+
     OrthancSeriesVolumeProgressiveLoader(const boost::shared_ptr<DicomVolumeImage>& volume,
                                          IOracle& oracle,
                                          IObservable& oracleObservable);
 
+    virtual ~OrthancSeriesVolumeProgressiveLoader();
+
     void SetSimultaneousDownloads(unsigned int count);
+
+    bool IsVolumeImageReadyInHighQuality() const
+    {
+      return volumeImageReadyInHighQuality_;
+    }
 
     void LoadSeries(const std::string& seriesId);
 

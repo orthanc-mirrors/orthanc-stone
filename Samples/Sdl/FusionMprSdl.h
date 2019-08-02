@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#include "../../Framework/Viewport/SdlViewport.h"
+
 #include "../../Framework/Messages/IObserver.h"
 #include "../../Framework/Messages/IMessageEmitter.h"
 #include "../../Framework/Oracle/OracleCommandExceptionMessage.h"
@@ -41,7 +43,7 @@ namespace OrthancStone
   class ThreadedOracle;
   class VolumeSceneLayerSource;
   class NativeFusionMprApplicationContext;
-
+  class SdlOpenGLViewport;
    
   enum FusionMprGuiTool
   {
@@ -80,8 +82,8 @@ namespace OrthancStone
     void SetInfoDisplayMessage(std::string key, std::string value);
     void DisableTracker();
 
-    boost::shared_ptr<Scene2D> GetScene();
-    boost::shared_ptr<const Scene2D> GetScene() const;
+    Scene2D&       GetScene();
+    const Scene2D& GetScene() const;
 
     void HandleApplicationEvent(const SDL_Event& event);
 
@@ -174,7 +176,6 @@ namespace OrthancStone
 
     boost::shared_ptr<VolumeSceneLayerSource>  source1_, source2_, source3_;
 
-    std::auto_ptr<OpenGLCompositor> compositor_;
     /**
     WARNING: the measuring tools do store a reference to the scene, and it
     paramount that the scene gets destroyed AFTER the measurement tools.
@@ -196,7 +197,7 @@ namespace OrthancStone
 
     FusionMprGuiTool currentTool_;
     boost::shared_ptr<UndoStack> undoStack_;
-
+    SdlOpenGLViewport viewport_;
   };
 
 }

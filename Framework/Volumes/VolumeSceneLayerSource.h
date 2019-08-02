@@ -53,6 +53,8 @@ namespace OrthancStone
                            int layerDepth,
                            const boost::shared_ptr<IVolumeSlicer>& slicer);
 
+    ~VolumeSceneLayerSource();
+
     const IVolumeSlicer& GetSlicer() const
     {
       return *slicer_;

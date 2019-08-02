@@ -127,8 +127,7 @@ namespace OrthancStone
       GetLoader<OrthancMultiframeVolumeLoader>().SetTransferSyntax(message.GetAnswer());
     }
   };
-   
-    
+
   class OrthancMultiframeVolumeLoader::LoadUncompressedPixelData : public State
   {
   public:
@@ -142,8 +141,7 @@ namespace OrthancStone
       GetLoader<OrthancMultiframeVolumeLoader>().SetUncompressedPixelData(message.GetAnswer());
     }
   };
-   
-    
+
   const std::string& OrthancMultiframeVolumeLoader::GetInstanceId() const
   {
     if (IsActive())
@@ -155,7 +153,6 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
-
 
   void OrthancMultiframeVolumeLoader::ScheduleFrameDownloads()
   {
@@ -243,13 +240,18 @@ namespace OrthancStone
 
 
   ORTHANC_FORCE_INLINE
-  static void CopyPixel(uint32_t& target,
-                        const void* source)
+  static void CopyPixel(uint32_t& target, const void* source)
   {
     // TODO - check alignement?
     target = le32toh(*reinterpret_cast<const uint32_t*>(source));
   }
-      
+
+  ORTHANC_FORCE_INLINE
+    static void CopyPixel(uint16_t& target, const void* source)
+  {
+    // TODO - check alignement?
+    target = le16toh(*reinterpret_cast<const uint16_t*>(source));
+  }
 
   template <typename T>
   void OrthancMultiframeVolumeLoader::CopyPixelData(const std::string& pixelData)
@@ -305,13 +307,16 @@ namespace OrthancStone
       case Orthanc::PixelFormat_Grayscale32:
         CopyPixelData<uint32_t>(pixelData);
         break;
-
+      case Orthanc::PixelFormat_Grayscale16:
+        CopyPixelData<uint16_t>(pixelData);
+        break;
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
     }
 
     volume_->IncrementRevision();
 
+    pixelDataLoaded_ = true;
     BroadcastMessage(DicomVolumeImage::ContentUpdatedMessage(*volume_));
   }
 
@@ -321,7 +326,8 @@ namespace OrthancStone
                                                                IObservable& oracleObservable) :
     LoaderStateMachine(oracle, oracleObservable),
     IObservable(oracleObservable.GetBroker()),
-    volume_(volume)
+    volume_(volume),
+    pixelDataLoaded_(false)
   {
     if (volume.get() == NULL)
     {
@@ -329,6 +335,10 @@ namespace OrthancStone
     }
   }
 
+  OrthancMultiframeVolumeLoader::~OrthancMultiframeVolumeLoader()
+  {
+    LOG(TRACE) << "OrthancMultiframeVolumeLoader::~OrthancMultiframeVolumeLoader()";
+  }
 
   void OrthancMultiframeVolumeLoader::LoadInstance(const std::string& instanceId)
   {

@@ -153,6 +153,10 @@ namespace OrthancStone
        **/
       
       std::auto_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
+      if (fetch->userData == NULL)
+      {
+        LOG(ERROR) << "WebAssemblyOracle::FetchContext::SuccessCallback fetch->userData is NULL!!!!!!!";
+      }
 
       std::string answer;
       if (fetch->numBytes > 0)
@@ -170,11 +174,13 @@ namespace OrthancStone
        **/
 
       HttpHeaders headers;
-      if (!context->GetExpectedContentType().empty())
+      if (fetch->userData != NULL)
       {
-        headers["Content-Type"] = context->GetExpectedContentType();
+        if (!context->GetExpectedContentType().empty())
+        {
+          headers["Content-Type"] = context->GetExpectedContentType();
+        }
       }
-      
       
       emscripten_fetch_close(fetch);
 
@@ -394,22 +400,53 @@ namespace OrthancStone
   void WebAssemblyOracle::Execute(const IObserver& receiver,
                                   OrthancRestApiCommand* command)
   {
-    FetchCommand fetch(*this, receiver, command);
-
-    fetch.SetMethod(command->GetMethod());
-    fetch.SetUri(command->GetUri());
-    fetch.SetHttpHeaders(command->GetHttpHeaders());
-    fetch.SetTimeout(command->GetTimeout());
-      
-    if (command->GetMethod() == Orthanc::HttpMethod_Post ||
-        command->GetMethod() == Orthanc::HttpMethod_Put)
+    try
     {
-      std::string body;
-      command->SwapBody(body);
-      fetch.SetBody(body);
-    }
+      //LOG(TRACE) << "*********** WebAssemblyOracle::Execute.";
+      //LOG(TRACE) << "WebAssemblyOracle::Execute | command = " << command;
+      FetchCommand fetch(*this, receiver, command);
 
-    fetch.Execute();
+      fetch.SetMethod(command->GetMethod());
+      fetch.SetUri(command->GetUri());
+      fetch.SetHttpHeaders(command->GetHttpHeaders());
+      fetch.SetTimeout(command->GetTimeout());
+
+      if (command->GetMethod() == Orthanc::HttpMethod_Post ||
+        command->GetMethod() == Orthanc::HttpMethod_Put)
+      {
+        std::string body;
+        command->SwapBody(body);
+        fetch.SetBody(body);
+      }
+
+      fetch.Execute();
+      //LOG(TRACE) << "*********** successful end of WebAssemblyOracle::Execute.";
+    }
+    catch (const Orthanc::OrthancException& e)
+    {
+      if (e.HasDetails())
+      {
+        LOG(ERROR) << "OrthancException in WebAssemblyOracle::Execute: " << e.What() << " Details: " << e.GetDetails();
+      }
+      else
+      {
+        LOG(ERROR) << "OrthancException in WebAssemblyOracle::Execute: " << e.What();
+      }
+      //LOG(TRACE) << "*********** failing end of WebAssemblyOracle::Execute.";
+      throw;
+    }
+    catch (const std::exception& e)
+    {
+      LOG(ERROR) << "std::exception in WebAssemblyOracle::Execute: " << e.what();
+//       LOG(TRACE) << "*********** failing end of WebAssemblyOracle::Execute.";
+      throw;
+    }
+    catch (...)
+    {
+      LOG(ERROR) << "Unknown exception in WebAssemblyOracle::Execute";
+//       LOG(TRACE) << "*********** failing end of WebAssemblyOracle::Execute.";
+      throw;
+    }
   }
     
     
@@ -453,14 +490,36 @@ namespace OrthancStone
     switch (command->GetType())
     {
       case IOracleCommand::Type_OrthancRestApi:
+        //// DIAGNOSTIC. PLEASE REMOVE IF IT HAS BEEN COMMITTED BY MISTAKE
+        //{
+        //  const IObserver* pReceiver = &receiver;
+        //  LOG(TRACE) << "WebAssemblyOracle::Schedule | pReceiver is " << pReceiver;
+        //  LOG(TRACE) << "WebAssemblyOracle::Schedule | command = " << command;
+        //  OrthancRestApiCommand* rac = dynamic_cast<OrthancRestApiCommand*>(protection.get());
+        //  LOG(TRACE) << "WebAssemblyOracle::Schedule | typed command = " << rac;
+        //  LOG(TRACE) << "WebAssemblyOracle::Schedule" << rac->GetUri();
+        //}
+        //// END OF BLOCK TO REMOVE
         Execute(receiver, dynamic_cast<OrthancRestApiCommand*>(protection.release()));
         break;
         
       case IOracleCommand::Type_GetOrthancImage:
+        //// DIAGNOSTIC. PLEASE REMOVE IF IT HAS BEEN COMMITTED BY MISTAKE
+        //{
+        //  GetOrthancImageCommand* rac = dynamic_cast<GetOrthancImageCommand*>(protection.get());
+        //  LOG(TRACE) << "WebAssemblyOracle::Schedule" << rac->GetUri();
+        //}
+        //// END OF BLOCK TO REMOVE
         Execute(receiver, dynamic_cast<GetOrthancImageCommand*>(protection.release()));
         break;
 
       case IOracleCommand::Type_GetOrthancWebViewerJpeg:
+        //// DIAGNOSTIC. PLEASE REMOVE IF IT HAS BEEN COMMITTED BY MISTAKE
+        //{
+        //  GetOrthancWebViewerJpegCommand* rac = dynamic_cast<GetOrthancWebViewerJpegCommand*>(protection.get());
+        //  LOG(TRACE) << "WebAssemblyOracle::Schedule" << rac->GetUri();
+        //}
+        //// END OF BLOCK TO REMOVE
         Execute(receiver, dynamic_cast<GetOrthancWebViewerJpegCommand*>(protection.release()));
         break;          
             

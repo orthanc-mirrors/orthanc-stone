@@ -606,8 +606,8 @@ namespace OrthancStone
 
     Extent2D extent = GetSceneExtent();
 
-    int w = static_cast<int>(std::round(extent.GetWidth() / pixelSpacingX));
-    int h = static_cast<int>(std::round(extent.GetHeight() / pixelSpacingY));
+    int w = boost::math::iround(extent.GetWidth() / pixelSpacingX);
+    int h = boost::math::iround(extent.GetHeight() / pixelSpacingY);
 
     if (w < 0 || h < 0)
     {

@@ -43,12 +43,13 @@ extern "C" {
 
   void EMSCRIPTEN_KEEPALIVE WasmWebService_NotifyError(void* failureCallable,
                                                        const char* uri,
+                                                       unsigned int httpStatus,
                                                        void* payload)
   {
     if (failureCallable != NULL)
     {
       reinterpret_cast<OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestErrorMessage>*>(failureCallable)->
-        Apply(Deprecated::IWebService::HttpRequestErrorMessage(uri, reinterpret_cast<Orthanc::IDynamicObject*>(payload)));
+        Apply(Deprecated::IWebService::HttpRequestErrorMessage(uri, static_cast<Orthanc::HttpStatus>(httpStatus), reinterpret_cast<Orthanc::IDynamicObject*>(payload)));
     }
   }
 

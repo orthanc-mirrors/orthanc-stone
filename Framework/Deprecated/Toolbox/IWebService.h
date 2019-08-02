@@ -106,18 +106,26 @@ namespace Deprecated
     private:
       const std::string&              uri_;
       const Orthanc::IDynamicObject*  payload_;
+      Orthanc::HttpStatus             httpStatus_;
 
     public:
       HttpRequestErrorMessage(const std::string& uri,
+                              Orthanc::HttpStatus httpStatus,
                               const Orthanc::IDynamicObject* payload) :
         uri_(uri),
-        payload_(payload)
+        payload_(payload),
+        httpStatus_(httpStatus)
       {
       }
 
       const std::string& GetUri() const
       {
         return uri_;
+      }
+
+      Orthanc::HttpStatus GetHttpStatus() const
+      {
+        return httpStatus_;
       }
 
       bool HasPayload() const

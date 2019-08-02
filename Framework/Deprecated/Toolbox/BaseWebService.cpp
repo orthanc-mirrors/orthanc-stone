@@ -75,6 +75,7 @@ namespace Deprecated
       {
         // recreate a failure message with the user payload
         IWebService::HttpRequestErrorMessage failureMessage(message.GetUri(),
+                                                            message.GetHttpStatus(),
                                                             userPayload_.get());
 
         userFailureHandler_->Apply(failureMessage);

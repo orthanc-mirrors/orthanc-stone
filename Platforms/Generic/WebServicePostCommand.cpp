@@ -54,5 +54,6 @@ namespace Deprecated
     }
 
     success_ = client.Apply(answer_, answerHeaders_);
+    httpStatus_ = client.GetLastStatus();
   }
 }

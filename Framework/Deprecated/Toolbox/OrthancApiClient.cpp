@@ -79,7 +79,7 @@ namespace Deprecated
       if (failureHandler_.get() != NULL)
       {
         failureHandler_->Apply(IWebService::HttpRequestErrorMessage
-                               (message.GetUri(), userPayload_.get()));
+                               (message.GetUri(), Orthanc::HttpStatus_None, userPayload_.get()));
       }
     }
     
@@ -176,7 +176,7 @@ namespace Deprecated
       if (failureHandler_.get() != NULL)
       {
         failureHandler_->Apply(IWebService::HttpRequestErrorMessage
-                               (message.GetUri(), userPayload_.get()));
+                               (message.GetUri(), message.GetHttpStatus(), userPayload_.get()));
       }
     }
   };

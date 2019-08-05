@@ -41,6 +41,8 @@ namespace Deprecated
     url_(url),
     headers_(headers),
     payload_(payload),
+    success_(false),
+    httpStatus_(Orthanc::HttpStatus_None),
     context_(context),
     timeoutInSeconds_(timeoutInSeconds)
   {
@@ -62,7 +64,7 @@ namespace Deprecated
     }
     else if (!success_ && failureCallback_.get() != NULL)
     {
-      IWebService::HttpRequestErrorMessage message(url_, payload_.get());
+      IWebService::HttpRequestErrorMessage message(url_, httpStatus_, payload_.get());
       failureCallback_->Apply(message);
     }
   }

@@ -27,7 +27,7 @@ mergeInto(LibraryManager.library, {
           window.WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
                                        this.response.byteLength, headers, payload);
         } else {
-          window.WasmWebService_NotifyError(callableFailure, url_, payload);
+          window.WasmWebService_NotifyError(callableFailure, url_, xhr.status, payload);
         }
       }
     }
@@ -65,7 +65,7 @@ mergeInto(LibraryManager.library, {
           window.WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
                                        this.response.byteLength, headers, payload);
         } else {
-          window.WasmWebService_NotifyError(callableFailure, url_, payload);
+          window.WasmWebService_NotifyError(callableFailure, url_, xhr.status, payload);
         }
       }
     }
@@ -97,7 +97,7 @@ mergeInto(LibraryManager.library, {
           window.WasmWebService_NotifySuccess(callableSuccess, url_, new Uint8Array(this.response),
                                        this.response.byteLength, headers, payload);
         } else {
-          window.WasmWebService_NotifyError(callableFailure, url_, payload);
+          window.WasmWebService_NotifyError(callableFailure, url_, xhr.status, payload);
         }
       }
     }

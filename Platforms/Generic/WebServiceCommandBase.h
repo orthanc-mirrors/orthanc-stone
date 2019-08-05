@@ -44,6 +44,7 @@ namespace Deprecated
     IWebService::HttpHeaders                headers_;
     std::auto_ptr<Orthanc::IDynamicObject>  payload_;
     bool                                    success_;
+    Orthanc::HttpStatus                     httpStatus_;
     std::string                             answer_;
     IWebService::HttpHeaders                answerHeaders_;
     OrthancStone::NativeStoneApplicationContext&          context_;

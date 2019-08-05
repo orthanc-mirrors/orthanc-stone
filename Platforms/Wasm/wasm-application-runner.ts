@@ -121,7 +121,7 @@ export function InitializeWasmApplication(wasmModuleName: string, orthancBaseUrl
 
     (<any> window).WasmWebService_NotifyCachedSuccess = (<any> window).StoneFrameworkModule.cwrap('WasmWebService_NotifyCachedSuccess', null, ['number']);
     (<any> window).WasmWebService_NotifySuccess = (<any> window).StoneFrameworkModule.cwrap('WasmWebService_NotifySuccess', null, ['number', 'string', 'array', 'number', 'number']);
-    (<any> window).WasmWebService_NotifyError = (<any> window).StoneFrameworkModule.cwrap('WasmWebService_NotifyError', null, ['number', 'string', 'number']);
+    (<any> window).WasmWebService_NotifyError = (<any> window).StoneFrameworkModule.cwrap('WasmWebService_NotifyError', null, ['number', 'string', 'number', 'number']);
     (<any> window).WasmDelayedCallExecutor_ExecuteCallback = (<any> window).StoneFrameworkModule.cwrap('WasmDelayedCallExecutor_ExecuteCallback', null, ['number']);
     // no need to put this into the globals for it's only used in this very module
     WasmDoAnimation = (<any> window).StoneFrameworkModule.cwrap('WasmDoAnimation', null, []);

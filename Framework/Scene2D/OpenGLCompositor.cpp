@@ -18,7 +18,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
 #include "OpenGLCompositor.h"
 
 #include "Internals/OpenGLAdvancedPolylineRenderer.h"
@@ -60,7 +59,6 @@ namespace OrthancStone
     }
   };
 
-
   const OpenGLCompositor::Font* OpenGLCompositor::GetFont(size_t fontIndex) const
   {
     Fonts::const_iterator found = fonts_.find(fontIndex);
@@ -75,7 +73,6 @@ namespace OrthancStone
       return found->second;
     }
   }
-
 
   Internals::CompositorHelper::ILayerRenderer* OpenGLCompositor::Create(const ISceneLayer& layer)
   {
@@ -122,7 +119,6 @@ namespace OrthancStone
     }
   }
 
-
   OpenGLCompositor::OpenGLCompositor(OpenGL::IOpenGLContext& context,
                                      const Scene2D& scene) :
     context_(context),
@@ -136,7 +132,6 @@ namespace OrthancStone
   {
   }
 
-  
   OpenGLCompositor::~OpenGLCompositor()
   {
     for (Fonts::iterator it = fonts_.begin(); it != fonts_.end(); ++it)
@@ -146,7 +141,6 @@ namespace OrthancStone
     }
   }
 
-  
   void OpenGLCompositor::Refresh()
   {
     context_.MakeCurrent();
@@ -163,7 +157,6 @@ namespace OrthancStone
     context_.SwapBuffer();
   }
 
-  
   void OpenGLCompositor::SetFont(size_t index,
                                  const GlyphBitmapAlphabet& dict)
   {
@@ -185,7 +178,6 @@ namespace OrthancStone
       found->second = font.release();
     }
   }
-  
 
 #if ORTHANC_ENABLE_LOCALE == 1
   void OpenGLCompositor::SetFont(size_t index,

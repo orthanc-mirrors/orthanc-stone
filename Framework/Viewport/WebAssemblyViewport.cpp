@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -26,27 +26,94 @@ namespace OrthancStone
 {
   WebAssemblyOpenGLViewport::WebAssemblyOpenGLViewport(const std::string& canvas) :
     WebAssemblyViewport(canvas),
-    context_(canvas),
-    compositor_(context_, GetScene())
+    context_(canvas)
   {
+    compositor_.reset(new OpenGLCompositor(context_, GetScene()));
+    RegisterContextCallbacks();
   }
 
-    
   WebAssemblyOpenGLViewport::WebAssemblyOpenGLViewport(const std::string& canvas,
-                                                       boost::shared_ptr<Scene2D>& scene) :
+    boost::shared_ptr<Scene2D>& scene) :
     WebAssemblyViewport(canvas, scene),
-    context_(canvas),
-    compositor_(context_, GetScene())
+    context_(canvas)
   {
+    compositor_.reset(new OpenGLCompositor(context_, GetScene()));
+    RegisterContextCallbacks();
   }
-    
 
   void WebAssemblyOpenGLViewport::UpdateSize()
   {
     context_.UpdateSize();  // First read the size of the canvas
-    compositor_.Refresh();  // Then refresh the content of the canvas
+    compositor_->Refresh();  // Then refresh the content of the canvas
   }
 
+  /*
+  typedef EM_BOOL (*em_webgl_context_callback)(int eventType, const void *reserved, void *userData);
+
+  EMSCRIPTEN_EVENT_WEBGLCONTEXTLOST EMSCRIPTEN_EVENT_WEBGLCONTEXTRESTORED
+
+  EMSCRIPTEN_RESULT emscripten_set_webglcontextlost_callback(
+    const char *target, void *userData, EM_BOOL useCapture, em_webgl_context_callback callback)
+
+  EMSCRIPTEN_RESULT emscripten_set_webglcontextrestored_callback(
+    const char *target, void *userData, EM_BOOL useCapture, em_webgl_context_callback callback)
+
+  */
+
+  EM_BOOL WebAssemblyOpenGLViewport_OpenGLContextLost_callback(
+    int eventType, const void* reserved, void* userData)
+  {
+    ORTHANC_ASSERT(eventType == EMSCRIPTEN_EVENT_WEBGLCONTEXTLOST);
+    WebAssemblyOpenGLViewport* viewport = reinterpret_cast<WebAssemblyOpenGLViewport*>(userData);
+    return viewport->OpenGLContextLost();
+  }
+
+  EM_BOOL WebAssemblyOpenGLViewport_OpenGLContextRestored_callback(
+    int eventType, const void* reserved, void* userData)
+  {
+    ORTHANC_ASSERT(eventType == EMSCRIPTEN_EVENT_WEBGLCONTEXTRESTORED);
+    WebAssemblyOpenGLViewport* viewport = reinterpret_cast<WebAssemblyOpenGLViewport*>(userData);
+    return viewport->OpenGLContextRestored();
+  }
+
+  void WebAssemblyOpenGLViewport::RegisterContextCallbacks()
+  {
+    // TODO: what's the impact of userCapture=true ?
+    const char* canvasId = GetCanvasIdentifier().c_str();
+    void* that = reinterpret_cast<void*>(this);
+    EMSCRIPTEN_RESULT status = EMSCRIPTEN_RESULT_SUCCESS;
+
+    status = emscripten_set_webglcontextlost_callback(canvasId, that, true, WebAssemblyOpenGLViewport_OpenGLContextLost_callback);
+    if (status != EMSCRIPTEN_RESULT_SUCCESS)
+    {
+      std::stringstream ss;
+      ss << "Error while calling emscripten_set_webglcontextlost_callback for: \"" << GetCanvasIdentifier() << "\"";
+      std::string msg = ss.str();
+      LOG(ERROR) << msg;
+      ORTHANC_ASSERT(false, msg.c_str());
+    }
+    status = emscripten_set_webglcontextrestored_callback(canvasId, that, true, WebAssemblyOpenGLViewport_OpenGLContextRestored_callback);
+    if (status != EMSCRIPTEN_RESULT_SUCCESS)
+    {
+      std::stringstream ss;
+      ss << "Error while calling emscripten_set_webglcontextrestored_callback for: \"" << GetCanvasIdentifier() << "\"";
+      std::string msg = ss.str();
+      LOG(ERROR) << msg;
+      ORTHANC_ASSERT(false, msg.c_str());
+    }
+  }
+
+  bool WebAssemblyOpenGLViewport::OpenGLContextLost()
+  {
+    LOG(ERROR) << "WebAssemblyOpenGLViewport::OpenGLContextLost() for canvas: " << GetCanvasIdentifier();
+    return false;
+  }
+
+  bool WebAssemblyOpenGLViewport::OpenGLContextRestored()
+  {
+    LOG(ERROR) << "WebAssemblyOpenGLViewport::OpenGLContextRestored() for canvas: " << GetCanvasIdentifier();
+    return false;
+  }
 
   WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvas) :
     WebAssemblyViewport(canvas),
@@ -55,15 +122,13 @@ namespace OrthancStone
   {
   }
 
-    
   WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvas,
-                                                     boost::shared_ptr<Scene2D>& scene) :
+    boost::shared_ptr<Scene2D>& scene) :
     WebAssemblyViewport(canvas, scene),
     canvas_(canvas),
     compositor_(GetScene(), 1024, 768)
   {
   }
-
 
   void WebAssemblyCairoViewport::UpdateSize()
   {
@@ -84,7 +149,7 @@ namespace OrthancStone
     unsigned int canvasHeight = 0;
 
     if (w > 0 ||
-        h > 0)
+      h > 0)
     {
       canvasWidth = static_cast<unsigned int>(boost::math::iround(w));
       canvasHeight = static_cast<unsigned int>(boost::math::iround(h));

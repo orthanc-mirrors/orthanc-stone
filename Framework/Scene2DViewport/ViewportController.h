@@ -170,11 +170,6 @@ namespace OrthancStone
     /** forwarded to the UndoStack */
     bool CanRedo() const;
 
-    IViewport& GetViewport()
-    {
-      return viewport_;
-    }
-
     Scene2D& GetScene()
     {
       return viewport_.GetScene();

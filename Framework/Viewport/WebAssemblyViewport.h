@@ -47,7 +47,7 @@ namespace OrthancStone
   {
   private:
     OpenGL::WebAssemblyOpenGLContext  context_;
-    OpenGLCompositor                  compositor_;
+    std::auto_ptr<OpenGLCompositor>   compositor_;
 
   public:
     WebAssemblyOpenGLViewport(const std::string& canvas);
@@ -60,8 +60,14 @@ namespace OrthancStone
 
     virtual ICompositor& GetCompositor()
     {
-      return compositor_;
+      return *compositor_;
     }
+
+    bool OpenGLContextLost();
+    bool OpenGLContextRestored();
+
+  private:
+    void RegisterContextCallbacks();
   };
 
   class WebAssemblyCairoViewport : public WebAssemblyViewport

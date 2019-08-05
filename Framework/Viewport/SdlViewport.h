@@ -81,21 +81,20 @@ namespace OrthancStone
                       boost::shared_ptr<Scene2D>& scene,
                       bool allowDpiScaling = true);
 
-
-    virtual ICompositor& GetCompositor()
-    {
-      return compositor_;
-    }
-
-    virtual SdlWindow& GetWindow()
+    virtual SdlWindow& GetWindow() ORTHANC_OVERRIDE
     {
       return context_.GetWindow();
     }
 
-    virtual void UpdateSize(unsigned int width,
-                            unsigned int height)
+    virtual void UpdateSize(unsigned int width, unsigned int height) ORTHANC_OVERRIDE
     {
       // nothing to do in OpenGL, the OpenGLCompositor::UpdateSize will be called automatically
+    }
+
+  protected:
+    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
+    {
+      return compositor_;
     }
   };
 
@@ -121,20 +120,20 @@ namespace OrthancStone
 
     ~SdlCairoViewport();
 
-    virtual ICompositor& GetCompositor()
-    {
-      return compositor_;
-    }
-
-    virtual SdlWindow& GetWindow()
+    virtual SdlWindow& GetWindow() ORTHANC_OVERRIDE
     {
       return window_;
     }
 
-    virtual void Refresh();
+    virtual void Refresh() ORTHANC_OVERRIDE;
 
     virtual void UpdateSize(unsigned int width,
-                            unsigned int height);
+                            unsigned int height) ORTHANC_OVERRIDE;
+  protected:
+    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
+    {
+      return compositor_;
+    }
 
   private:
     void UpdateSdlSurfaceSize(unsigned int width,

@@ -44,9 +44,9 @@ namespace OrthancStone
     // Only valid during a call to "Refresh()"
     std::auto_ptr<CairoContext>  context_;
 
-    virtual cairo_t* GetCairoContext();
+    virtual cairo_t* GetCairoContext() ORTHANC_OVERRIDE;
 
-    virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer);
+    virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer) ORTHANC_OVERRIDE;
 
   public:
     CairoCompositor(const Scene2D& scene,
@@ -60,27 +60,27 @@ namespace OrthancStone
       return canvas_;
     }
 
-    virtual unsigned int GetCanvasWidth() const
+    virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE
     {
       return canvas_.GetWidth();
     }
 
-    virtual unsigned int GetCanvasHeight() const
+    virtual unsigned int GetCanvasHeight() const ORTHANC_OVERRIDE
     {
       return canvas_.GetHeight();
     }
     
     void SetFont(size_t index,
-                 GlyphBitmapAlphabet* dict);  // Takes ownership
+                 GlyphBitmapAlphabet* dict); // Takes ownership
 
 #if ORTHANC_ENABLE_LOCALE == 1
     virtual void SetFont(size_t index,
                          Orthanc::EmbeddedResources::FileResourceId resource,
                          unsigned int fontSize,
-                         Orthanc::Encoding codepage);
+                         Orthanc::Encoding codepage) ORTHANC_OVERRIDE;
 #endif
 
-    virtual void Refresh();
+    virtual void Refresh() ORTHANC_OVERRIDE;
 
     void UpdateSize(unsigned int canvasWidth,
                     unsigned int canvasHeight);

@@ -50,6 +50,14 @@ namespace OrthancStone
 
     virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const = 0;
 
+#if ORTHANC_ENABLE_LOCALE == 1
+    virtual void SetFont(size_t index,
+      Orthanc::EmbeddedResources::FileResourceId resource,
+      unsigned int fontSize,
+      Orthanc::Encoding codepage) = 0;
+#endif
+
+  protected:
     virtual ICompositor& GetCompositor() = 0;
 
     virtual const ICompositor& GetCompositor() const

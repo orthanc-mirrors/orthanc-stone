@@ -24,6 +24,8 @@
 #include <Core/OrthancException.h>
 
 #include <emscripten/html5.h>
+#include <emscripten/em_asm.h>
+
 #include <boost/math/special_functions/round.hpp>
 
 namespace OrthancStone
@@ -70,6 +72,13 @@ namespace OrthancStone
 
       void MakeCurrent()
       {
+        if (emscripten_is_webgl_context_lost(context_))
+        {
+          LOG(ERROR) << "OpenGL context has been lost! for canvas: " << canvas_;
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+            "OpenGL context has been lost!");
+        }
+
         if (emscripten_webgl_make_context_current(context_) != EMSCRIPTEN_RESULT_SUCCESS)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,

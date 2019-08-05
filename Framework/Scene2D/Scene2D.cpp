@@ -199,8 +199,7 @@ namespace OrthancStone
       return layer.release();
     }    
   }
-  
-  
+
   void Scene2D::Apply(IVisitor& visitor) const
   {
     for (Content::const_iterator it = content_.begin(); 

@@ -30,9 +30,7 @@
 
 namespace OrthancStone
 {
-  class OpenGLCompositor :
-      public ICompositor,
-      private Internals::CompositorHelper::IRendererFactory
+  class OpenGLCompositor : public ICompositor, private Internals::CompositorHelper::IRendererFactory
   {
   private:
     class Font;
@@ -51,7 +49,7 @@ namespace OrthancStone
     
     const Font* GetFont(size_t fontIndex) const;
 
-    virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer);
+    virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer) ORTHANC_OVERRIDE;
 
   public:
     OpenGLCompositor(OpenGL::IOpenGLContext& context,
@@ -59,7 +57,7 @@ namespace OrthancStone
 
     virtual ~OpenGLCompositor();
 
-    virtual void Refresh();
+    virtual void Refresh() ORTHANC_OVERRIDE;
 
     void SetFont(size_t index,
                  const GlyphBitmapAlphabet& dict);
@@ -68,15 +66,15 @@ namespace OrthancStone
     void SetFont(size_t index,
                  Orthanc::EmbeddedResources::FileResourceId resource,
                  unsigned int fontSize,
-                 Orthanc::Encoding codepage);
+                 Orthanc::Encoding codepage) ORTHANC_OVERRIDE;
 #endif
 
-    virtual unsigned int GetCanvasWidth() const
+    virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE
     {
       return canvasWidth_;
     }
 
-    virtual unsigned int GetCanvasHeight() const
+    virtual unsigned int GetCanvasHeight() const ORTHANC_OVERRIDE
     {
       return canvasHeight_;
     }

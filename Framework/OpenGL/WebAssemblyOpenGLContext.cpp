@@ -49,7 +49,7 @@ namespace OrthancStone
         emscripten_webgl_init_context_attributes(&attr);
 
         context_ = emscripten_webgl_create_context(canvas.c_str(), &attr);
-        if (context_ < 0)
+        if (context_ == 0)
         {
           std::string message("Cannot create an OpenGL context for canvas: ");
           message += canvas;

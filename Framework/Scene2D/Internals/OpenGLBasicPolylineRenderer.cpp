@@ -34,53 +34,55 @@ namespace OrthancStone
       layer_.Copy(layer);
     }
 
-
     void OpenGLBasicPolylineRenderer::Render(const AffineTransform2D& transform)
     {
-      AffineTransform2D t = AffineTransform2D::Combine(
-        AffineTransform2D::CreateOpenGLClipspace(context_.GetCanvasWidth(), context_.GetCanvasHeight()),
-        transform);
-
-      glUseProgram(0);
-
-      glBegin(GL_LINES);
-
-      for (size_t i = 0; i < layer_.GetChainsCount(); i++)
+      if (!context_.IsContextLost())
       {
-        const Color& color = layer_.GetColor(i);
-        glColor3ub(color.GetRed(), color.GetGreen(), color.GetBlue());
+        AffineTransform2D t = AffineTransform2D::Combine(
+          AffineTransform2D::CreateOpenGLClipspace(context_.GetCanvasWidth(), context_.GetCanvasHeight()),
+          transform);
 
-        const PolylineSceneLayer::Chain& chain = layer_.GetChain(i);
+        glUseProgram(0);
 
-        if (chain.size() > 1)
+        glBegin(GL_LINES);
+
+        for (size_t i = 0; i < layer_.GetChainsCount(); i++)
         {
-          ScenePoint2D previous = chain[0].Apply(t);
+          const Color& color = layer_.GetColor(i);
+          glColor3ub(color.GetRed(), color.GetGreen(), color.GetBlue());
 
-          for (size_t j = 1; j < chain.size(); j++)
+          const PolylineSceneLayer::Chain& chain = layer_.GetChain(i);
+
+          if (chain.size() > 1)
           {
-            ScenePoint2D p = chain[j].Apply(t);
+            ScenePoint2D previous = chain[0].Apply(t);
 
-            glVertex2f(static_cast<GLfloat>(previous.GetX()),
-                       static_cast<GLfloat>(previous.GetY()));
-            glVertex2f(static_cast<GLfloat>(p.GetX()), 
-                       static_cast<GLfloat>(p.GetY()));
+            for (size_t j = 1; j < chain.size(); j++)
+            {
+              ScenePoint2D p = chain[j].Apply(t);
 
-            previous = p;
-          }
+              glVertex2f(static_cast<GLfloat>(previous.GetX()),
+                static_cast<GLfloat>(previous.GetY()));
+              glVertex2f(static_cast<GLfloat>(p.GetX()),
+                static_cast<GLfloat>(p.GetY()));
 
-          if (layer_.IsClosedChain(i))
-          {
-            ScenePoint2D p = chain[0].Apply(t);
+              previous = p;
+            }
 
-            glVertex2f(static_cast<GLfloat>(previous.GetX()),
-                       static_cast<GLfloat>(previous.GetY()));
-            glVertex2f(static_cast<GLfloat>(p.GetX()),
-                       static_cast<GLfloat>(p.GetY()));
+            if (layer_.IsClosedChain(i))
+            {
+              ScenePoint2D p = chain[0].Apply(t);
+
+              glVertex2f(static_cast<GLfloat>(previous.GetX()),
+                static_cast<GLfloat>(previous.GetY()));
+              glVertex2f(static_cast<GLfloat>(p.GetX()),
+                static_cast<GLfloat>(p.GetY()));
+            }
           }
         }
-      }
 
-      glEnd();
+        glEnd();
+      }
     }
 
 

@@ -60,14 +60,16 @@ namespace OrthancStone
     OpenGLTextProgram::OpenGLTextProgram(OpenGL::IOpenGLContext&  context) :
       context_(context)
     {
+      if (!context_.IsContextLost())
+      {
+        context_.MakeCurrent();
 
-      context_.MakeCurrent();
+        program_.reset(new OpenGL::OpenGLProgram(context_));
+        program_->CompileShaders(VERTEX_SHADER, FRAGMENT_SHADER);
 
-      program_.reset(new OpenGL::OpenGLProgram);
-      program_->CompileShaders(VERTEX_SHADER, FRAGMENT_SHADER);
-
-      positionLocation_ = program_->GetAttributeLocation("a_position");
-      textureLocation_ = program_->GetAttributeLocation("a_texcoord");
+        positionLocation_ = program_->GetAttributeLocation("a_position");
+        textureLocation_ = program_->GetAttributeLocation("a_texcoord");
+      }
     }
 
 
@@ -95,26 +97,58 @@ namespace OrthancStone
       {
         coordinatesCount_ = coordinates.GetRenderingCoords().size();
 
-        context_.MakeCurrent();
-        glGenBuffers(2, buffers_);
+        if (!context_.IsContextLost())
+        {
+          context_.MakeCurrent();
+          glGenBuffers(2, buffers_);
+          ORTHANC_OPENGL_CHECK("glGenBuffers");
 
-        glBindBuffer(GL_ARRAY_BUFFER, buffers_[0]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * coordinatesCount_,
-                     &coordinates.GetRenderingCoords() [0], GL_STATIC_DRAW);
+          glBindBuffer(GL_ARRAY_BUFFER, buffers_[0]);
+          ORTHANC_OPENGL_CHECK("glBindBuffer");
+          glBufferData(GL_ARRAY_BUFFER, sizeof(float) * coordinatesCount_,
+            &coordinates.GetRenderingCoords()[0], GL_STATIC_DRAW);
+          ORTHANC_OPENGL_CHECK("glBufferData");
 
-        glBindBuffer(GL_ARRAY_BUFFER, buffers_[1]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * coordinatesCount_,
-                     &coordinates.GetTextureCoords() [0], GL_STATIC_DRAW);
+          glBindBuffer(GL_ARRAY_BUFFER, buffers_[1]);
+          ORTHANC_OPENGL_CHECK("glBindBuffer");
+          glBufferData(GL_ARRAY_BUFFER, sizeof(float) * coordinatesCount_,
+            &coordinates.GetTextureCoords()[0], GL_STATIC_DRAW);
+          ORTHANC_OPENGL_CHECK("glBufferData");
+        }
       }
     }
 
     
     OpenGLTextProgram::Data::~Data()
     {
-      if (!IsEmpty())
+      if (!context_.IsContextLost() && !IsEmpty())
       {
-        context_.MakeCurrent();
-        glDeleteBuffers(2, buffers_);
+        try
+        {
+          context_.MakeCurrent();
+          ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glDeleteBuffers");
+          glDeleteBuffers(2, buffers_);
+          ORTHANC_OPENGL_CHECK("glDeleteBuffers");
+        }
+        catch (const Orthanc::OrthancException& e)
+        {
+          if (e.HasDetails())
+          {
+            LOG(ERROR) << "OrthancException in ~Data: " << e.What() << " Details: " << e.GetDetails();
+          }
+          else
+          {
+            LOG(ERROR) << "OrthancException in ~Data: " << e.What();
+          }
+        }
+        catch (const std::exception& e)
+        {
+          LOG(ERROR) << "std::exception in ~Data: " << e.what();
+        }
+        catch (...)
+        {
+          LOG(ERROR) << "Unknown exception in ~Data";
+        }
       }
     }
 
@@ -131,7 +165,6 @@ namespace OrthancStone
       }
     }
 
-    
     GLuint OpenGLTextProgram::Data::GetTextureLocationsBuffer() const
     {
       if (IsEmpty())
@@ -144,12 +177,11 @@ namespace OrthancStone
       }
     }
 
-
     void OpenGLTextProgram::Apply(OpenGL::OpenGLTexture& fontTexture,
                                   const Data& data,
                                   const AffineTransform2D& transform)
     {
-      if (!data.IsEmpty())
+      if (!context_.IsContextLost() && !data.IsEmpty())
       {
         context_.MakeCurrent();
         program_->Use();

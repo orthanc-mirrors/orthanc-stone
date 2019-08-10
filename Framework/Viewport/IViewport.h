@@ -58,9 +58,9 @@ namespace OrthancStone
 #endif
 
   protected:
-    virtual ICompositor& GetCompositor() = 0;
+    virtual ICompositor* GetCompositor() = 0;
 
-    virtual const ICompositor& GetCompositor() const
+    virtual const ICompositor* GetCompositor() const
     {
       IViewport* self = const_cast<IViewport*>(this);
       return self->GetCompositor();

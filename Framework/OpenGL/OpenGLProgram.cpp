@@ -22,17 +22,19 @@
 #include "OpenGLProgram.h"
 
 #include "OpenGLShader.h"
+#include "IOpenGLContext.h"
 
 #include <Core/OrthancException.h>
-
 
 namespace OrthancStone
 {
   namespace OpenGL
   {
-    OpenGLProgram::OpenGLProgram()
+    OpenGLProgram::OpenGLProgram(OpenGL::IOpenGLContext& context)
+      : context_(context)
     {
       program_ = glCreateProgram();
+      ORTHANC_OPENGL_CHECK("glCreateProgram");
       if (program_ == 0)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
@@ -43,17 +45,45 @@ namespace OrthancStone
 
     OpenGLProgram::~OpenGLProgram()
     {
-      assert(program_ != 0);
-      glDeleteProgram(program_);
+      try
+      {
+        if (!context_.IsContextLost())
+        {
+          ORTHANC_CHECK_CURRENT_CONTEXT(context_);
+          ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glDeleteProgram");
+          assert(program_ != 0);
+          glDeleteProgram(program_);
+          ORTHANC_OPENGL_CHECK("glDeleteProgram");
+        }
+      }
+      catch (const Orthanc::OrthancException& e)
+      {
+        if (e.HasDetails())
+        {
+          LOG(ERROR) << "OrthancException in ~OpenGLProgram: " << e.What() << " Details: " << e.GetDetails();
+        }
+        else
+        {
+          LOG(ERROR) << "OrthancException in ~OpenGLProgram: " << e.What();
+        }
+      }
+      catch (const std::exception& e)
+      {
+        LOG(ERROR) << "std::exception in ~OpenGLProgram: " << e.what();
+      }
+      catch (...)
+      {
+        LOG(ERROR) << "Unknown exception in ~OpenGLProgram";
+      }
     }
-
 
     void OpenGLProgram::Use()
     {
+      //ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glUseProgram");
       glUseProgram(program_);
+      ORTHANC_OPENGL_CHECK("glUseProgram");
     }
-
-    
+        
     void OpenGLProgram::CompileShaders(const std::string& vertexCode,
                                        const std::string& fragmentCode)
     {
@@ -63,15 +93,19 @@ namespace OrthancStone
       OpenGLShader fragmentShader(GL_FRAGMENT_SHADER, fragmentCode);
 
       glAttachShader(program_, vertexShader.Release());
+      ORTHANC_OPENGL_CHECK("glAttachShader");
       glAttachShader(program_, fragmentShader.Release());
+      ORTHANC_OPENGL_CHECK("glAttachShader");
       glLinkProgram(program_);
+      ORTHANC_OPENGL_CHECK("glLinkProgram");
       glValidateProgram(program_);
+      ORTHANC_OPENGL_CHECK("glValidateProgram");
     }
-
 
     GLint OpenGLProgram::GetUniformLocation(const std::string& name)
     { 
       GLint location = glGetUniformLocation(program_, name.c_str());
+      ORTHANC_OPENGL_CHECK("glGetUniformLocation");
 
       if (location == -1)
       {
@@ -88,6 +122,7 @@ namespace OrthancStone
     GLint OpenGLProgram::GetAttributeLocation(const std::string& name)
     { 
       GLint location = glGetAttribLocation(program_, name.c_str());
+      ORTHANC_OPENGL_CHECK("glGetAttribLocation");
 
       if (location == -1)
       {

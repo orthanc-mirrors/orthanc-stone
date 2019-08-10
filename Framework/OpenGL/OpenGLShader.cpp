@@ -37,6 +37,7 @@ namespace OrthancStone
       sourceString[0] = source.c_str();
       sourceStringLengths[0] = static_cast<GLint>(source.length());
       GLuint shader = glCreateShader(type);
+      ORTHANC_OPENGL_CHECK("glCreateShader");
 
       if (shader == 0)
       {
@@ -47,18 +48,24 @@ namespace OrthancStone
       {
         // Assign and compile the source to the shader object
         glShaderSource(shader, 1, sourceString, sourceStringLengths);
+        ORTHANC_OPENGL_CHECK("glShaderSource");
         glCompileShader(shader);
+        ORTHANC_OPENGL_CHECK("glCompileShader");
 
         // Check if there were errors
         int infoLen = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
+        ORTHANC_OPENGL_CHECK("glGetShaderiv");
 
         if (infoLen > 1)  // Might be equal to 1, which amounts to no error
         {
           std::string infoLog;
           infoLog.resize(infoLen + 1);
           glGetShaderInfoLog(shader, infoLen, NULL, &infoLog[0]);
+          ORTHANC_OPENGL_CHECK("glGetShaderInfoLog");
+          ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glDeleteShader");
           glDeleteShader(shader);
+          ORTHANC_OPENGL_CHECK("glDeleteShader");
 
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
                                           "Error while creating an OpenGL shader: " + infoLog);
@@ -81,12 +88,35 @@ namespace OrthancStone
     
     OpenGLShader::~OpenGLShader()
     {
-      if (isValid_)
+      try
       {
-        glDeleteShader(shader_);
+        if (isValid_)
+        {
+          ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glDeleteShader");
+          glDeleteShader(shader_);
+          ORTHANC_OPENGL_CHECK("glDeleteShader");
+        }
+      }
+      catch (const Orthanc::OrthancException& e)
+      {
+        if (e.HasDetails())
+        {
+          LOG(ERROR) << "OrthancException in ~OpenGLShader: " << e.What() << " Details: " << e.GetDetails();
+        }
+        else
+        {
+          LOG(ERROR) << "OrthancException in ~OpenGLShader: " << e.What();
+        }
+      }
+      catch (const std::exception& e)
+      {
+        LOG(ERROR) << "std::exception in ~OpenGLShader: " << e.what();
+      }
+      catch (...)
+      {
+        LOG(ERROR) << "Unknown exception in ~OpenGLShader";
       }
     }
-
 
     GLuint OpenGLShader::Release()
     {

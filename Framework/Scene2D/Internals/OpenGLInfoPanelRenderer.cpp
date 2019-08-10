@@ -27,18 +27,21 @@ namespace OrthancStone
   {
     void OpenGLInfoPanelRenderer::LoadTexture(const InfoPanelSceneLayer& layer)
     {
-      context_.MakeCurrent();
-      texture_.reset(new OpenGL::OpenGLTexture);
-      texture_->Load(layer.GetTexture(), layer.IsLinearInterpolation());
-      anchor_ = layer.GetAnchor();
+      if (!context_.IsContextLost())
+      {
+        context_.MakeCurrent();
+        texture_.reset(new OpenGL::OpenGLTexture(context_));
+        texture_->Load(layer.GetTexture(), layer.IsLinearInterpolation());
+        anchor_ = layer.GetAnchor();
+      }
     }
-
 
     OpenGLInfoPanelRenderer::OpenGLInfoPanelRenderer(OpenGL::IOpenGLContext& context,
                                                      OpenGLColorTextureProgram& program,
                                                      const InfoPanelSceneLayer& layer) :
       context_(context),
-      program_(program)
+      program_(program),
+      anchor_(BitmapAnchor_TopLeft)
     {
       LoadTexture(layer);
     }
@@ -48,9 +51,9 @@ namespace OrthancStone
                                          unsigned int canvasWidth,
                                          unsigned int canvasHeight)
     {
-      if (texture_.get() != NULL)
+      if (!context_.IsContextLost() && texture_.get() != NULL)
       {
-        int dx, dy;
+        int dx = 0, dy = 0;
         InfoPanelSceneLayer::ComputeAnchorLocation(
           dx, dy, anchor_, texture_->GetWidth(), texture_->GetHeight(),
           canvasWidth, canvasHeight);

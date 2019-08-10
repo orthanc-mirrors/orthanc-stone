@@ -37,10 +37,10 @@ namespace OrthancStone
     std::auto_ptr<OpenGL::OpenGLTexture>  texture_;
 
   public:
-    Font(const GlyphBitmapAlphabet& dict)
+    Font(OpenGL::IOpenGLContext& context, const GlyphBitmapAlphabet& dict)
     {
       alphabet_.reset(new GlyphTextureAlphabet(dict));
-      texture_.reset(new OpenGL::OpenGLTexture);
+      texture_.reset(new OpenGL::OpenGLTexture(context));
 
       std::auto_ptr<Orthanc::ImageAccessor> bitmap(alphabet_->ReleaseTexture());
       texture_->Load(*bitmap, true /* enable linear interpolation */);
@@ -76,19 +76,21 @@ namespace OrthancStone
 
   Internals::CompositorHelper::ILayerRenderer* OpenGLCompositor::Create(const ISceneLayer& layer)
   {
-    switch (layer.GetType())
+    if (!context_.IsContextLost())
     {
+      switch (layer.GetType())
+      {
       case ISceneLayer::Type_InfoPanel:
         return new Internals::OpenGLInfoPanelRenderer
-          (context_, colorTextureProgram_, dynamic_cast<const InfoPanelSceneLayer&>(layer));
+        (context_, colorTextureProgram_, dynamic_cast<const InfoPanelSceneLayer&>(layer));
 
       case ISceneLayer::Type_ColorTexture:
         return new Internals::OpenGLColorTextureRenderer
-          (context_, colorTextureProgram_, dynamic_cast<const ColorTextureSceneLayer&>(layer));
+        (context_, colorTextureProgram_, dynamic_cast<const ColorTextureSceneLayer&>(layer));
 
       case ISceneLayer::Type_FloatTexture:
         return new Internals::OpenGLFloatTextureRenderer
-          (context_, floatTextureProgram_, dynamic_cast<const FloatTextureSceneLayer&>(layer));
+        (context_, floatTextureProgram_, dynamic_cast<const FloatTextureSceneLayer&>(layer));
 
       case ISceneLayer::Type_LookupTableTexture:
         return new Internals::OpenGLLookupTableTextureRenderer
@@ -96,7 +98,7 @@ namespace OrthancStone
 
       case ISceneLayer::Type_Polyline:
         return new Internals::OpenGLAdvancedPolylineRenderer
-          (context_, linesProgram_, dynamic_cast<const PolylineSceneLayer&>(layer));
+        (context_, linesProgram_, dynamic_cast<const PolylineSceneLayer&>(layer));
         //return new Internals::OpenGLBasicPolylineRenderer(context_, dynamic_cast<const PolylineSceneLayer&>(layer));
 
       case ISceneLayer::Type_Text:
@@ -110,12 +112,18 @@ namespace OrthancStone
         else
         {
           return new Internals::OpenGLTextRenderer
-            (context_, textProgram_, font->GetAlphabet(), font->GetTexture(), l);
+          (context_, textProgram_, font->GetAlphabet(), font->GetTexture(), l);
         }
       }
 
       default:
         return NULL;
+      }
+    }
+    else
+    {
+      // context is lost. returning null.
+      return NULL;
     }
   }
 
@@ -134,48 +142,59 @@ namespace OrthancStone
 
   OpenGLCompositor::~OpenGLCompositor()
   {
-    for (Fonts::iterator it = fonts_.begin(); it != fonts_.end(); ++it)
+    if (!context_.IsContextLost())
     {
-      assert(it->second != NULL);
-      delete it->second;
+      context_.MakeCurrent(); // this can throw if context lost!
+      for (Fonts::iterator it = fonts_.begin(); it != fonts_.end(); ++it)
+      {
+        assert(it->second != NULL);
+        delete it->second;
+      }
     }
   }
 
   void OpenGLCompositor::Refresh()
   {
-    context_.MakeCurrent();
+    if (!context_.IsContextLost())
+    {
+      context_.MakeCurrent(); // this can throw if context lost!
 
-    canvasWidth_ = context_.GetCanvasWidth();
-    canvasHeight_ = context_.GetCanvasHeight();
+      canvasWidth_ = context_.GetCanvasWidth();
+      canvasHeight_ = context_.GetCanvasHeight();
 
-    glViewport(0, 0, canvasWidth_, canvasHeight_);
-    glClearColor(0, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
+      glViewport(0, 0, canvasWidth_, canvasHeight_);
+      glClearColor(0, 0, 0, 1);
+      glClear(GL_COLOR_BUFFER_BIT);
 
-    helper_.Refresh(canvasWidth_, canvasHeight_);
+      helper_.Refresh(canvasWidth_, canvasHeight_);
 
-    context_.SwapBuffer();
+      context_.SwapBuffer();
+    }
+
   }
 
   void OpenGLCompositor::SetFont(size_t index,
                                  const GlyphBitmapAlphabet& dict)
   {
-    context_.MakeCurrent();
-      
-    std::auto_ptr<Font> font(new Font(dict));
-      
-    Fonts::iterator found = fonts_.find(index);
-
-    if (found == fonts_.end())
+    if (!context_.IsContextLost())
     {
-      fonts_[index] = font.release();
-    }
-    else
-    {
-      assert(found->second != NULL);
-      delete found->second;
+      context_.MakeCurrent(); // this can throw if context lost
 
-      found->second = font.release();
+      std::auto_ptr<Font> font(new Font(context_, dict));
+
+      Fonts::iterator found = fonts_.find(index);
+
+      if (found == fonts_.end())
+      {
+        fonts_[index] = font.release();
+      }
+      else
+      {
+        assert(found->second != NULL);
+        delete found->second;
+
+        found->second = font.release();
+      }
     }
   }
 
@@ -185,13 +204,16 @@ namespace OrthancStone
                                  unsigned int fontSize,
                                  Orthanc::Encoding codepage)
   {
-    FontRenderer renderer;
-    renderer.LoadFont(resource, fontSize);
+    if (!context_.IsContextLost())
+    {
+      FontRenderer renderer;
+      renderer.LoadFont(resource, fontSize);
 
-    GlyphBitmapAlphabet dict;
-    dict.LoadCodepage(renderer, codepage);
+      GlyphBitmapAlphabet dict;
+      dict.LoadCodepage(renderer, codepage);
 
-    SetFont(index, dict);
+      SetFont(index, dict);
+    }
   }
 #endif
 }

@@ -38,7 +38,7 @@ namespace OrthancStone
         float                  slope_;
 
       public:
-        Data(const Orthanc::ImageAccessor& texture,
+        Data(OpenGL::IOpenGLContext& context, const Orthanc::ImageAccessor& texture,
              bool isLinearInterpolation);
 
         float GetOffset() const
@@ -57,9 +57,6 @@ namespace OrthancStone
         }
       };
 
-    private:
-      OpenGLTextureProgram  program_;
-
     public:
       OpenGLFloatTextureProgram(OpenGL::IOpenGLContext&  context);
 
@@ -68,6 +65,9 @@ namespace OrthancStone
                  float windowCenter,
                  float windowWidth,
                  bool  invert);
+    private:
+      OpenGLTextureProgram  program_;
+      OpenGL::IOpenGLContext& context_;
     };
   }
 }

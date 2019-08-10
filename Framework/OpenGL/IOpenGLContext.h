@@ -34,6 +34,8 @@ namespace OrthancStone
       {
       }
 
+      virtual bool IsContextLost() const = 0;
+
       virtual void MakeCurrent() = 0;
 
       virtual void SwapBuffer() = 0;
@@ -41,6 +43,13 @@ namespace OrthancStone
       virtual unsigned int GetCanvasWidth() const = 0;
 
       virtual unsigned int GetCanvasHeight() const = 0;
+
+      virtual void* DebugGetInternalContext() const = 0;
+
+      // This is for manual context loss (debug purposes)
+      virtual void SetLostContext() = 0;
+      virtual void RestoreLostContext() = 0;
+
     };
   }
 }

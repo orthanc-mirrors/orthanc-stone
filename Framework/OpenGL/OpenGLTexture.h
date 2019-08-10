@@ -32,15 +32,18 @@ namespace OrthancStone
 {
   namespace OpenGL
   {
+    class IOpenGLContext;
+
     class OpenGLTexture : public boost::noncopyable
     {
     private:
       GLuint        texture_;
       unsigned int  width_;
       unsigned int  height_;
+      OpenGL::IOpenGLContext& context_;
 
     public:
-      OpenGLTexture();
+      OpenGLTexture(OpenGL::IOpenGLContext& context);
 
       ~OpenGLTexture();
 

@@ -58,15 +58,20 @@ namespace OrthancStone
     // This function must be called each time the browser window is resized
     void UpdateSize();
 
-    virtual ICompositor& GetCompositor()
+    virtual ICompositor* GetCompositor() ORTHANC_OVERRIDE
     {
-      return *compositor_;
+      return compositor_.get();
     }
+
+    virtual void Refresh() ORTHANC_OVERRIDE;
 
     bool OpenGLContextLost();
     bool OpenGLContextRestored();
 
   private:
+    virtual void DisableCompositor() ORTHANC_OVERRIDE;
+    virtual void RestoreCompositor() ORTHANC_OVERRIDE;
+
     void RegisterContextCallbacks();
   };
 
@@ -86,9 +91,9 @@ namespace OrthancStone
 
     virtual void Refresh();
 
-    virtual ICompositor& GetCompositor()
+    virtual ICompositor* GetCompositor()
     {
-      return compositor_;
+      return &compositor_;
     }
   };
 

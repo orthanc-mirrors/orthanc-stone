@@ -43,8 +43,9 @@ namespace OrthancStone
 
   void WebAssemblyOpenGLViewport::UpdateSize()
   {
+    if(compositor_.get() != NULL)
+      compositor_->Refresh();  // Then refresh the content of the canvas
     context_.UpdateSize();  // First read the size of the canvas
-    compositor_->Refresh();  // Then refresh the content of the canvas
   }
 
   /*
@@ -76,6 +77,61 @@ namespace OrthancStone
     return viewport->OpenGLContextRestored();
   }
 
+  void WebAssemblyOpenGLViewport::DisableCompositor()
+  {
+    compositor_.reset(NULL);
+  }
+
+  void WebAssemblyOpenGLViewport::Refresh()
+  {
+    try
+    {
+      // the compositor COULD be dead!
+      if (GetCompositor())
+        GetCompositor()->Refresh();
+    }
+    catch (const OpenGLContextLostException& e)
+    {
+      LOG(WARNING) << "Context " << std::hex << e.context_ << " is lost! Compositor will be disabled.";
+      DisableCompositor();
+      // we now need to wait for the "context restored" callback
+    }
+    catch (...)
+    {
+      // something else nasty happened
+      throw;
+    }
+  }
+  
+  void WebAssemblyOpenGLViewport::RestoreCompositor()
+  {
+    // the context must have been restored!
+    ORTHANC_ASSERT(!context_.IsContextLost());
+    if (compositor_.get() == NULL)
+    {
+      compositor_.reset(new OpenGLCompositor(context_, GetScene()));
+    }
+    else
+    {
+      LOG(WARNING) << "RestoreCompositor() called for \"" << GetCanvasIdentifier() << "\" while it was NOT lost! Nothing done.";
+    }
+  }
+
+  bool WebAssemblyOpenGLViewport::OpenGLContextLost()
+  {
+    LOG(ERROR) << "WebAssemblyOpenGLViewport::OpenGLContextLost() for canvas: " << GetCanvasIdentifier();
+    DisableCompositor();
+    return true;
+  }
+
+  bool WebAssemblyOpenGLViewport::OpenGLContextRestored()
+  {
+    LOG(ERROR) << "WebAssemblyOpenGLViewport::OpenGLContextRestored() for canvas: " << GetCanvasIdentifier();
+    RestoreCompositor();
+    UpdateSize();
+    return false;
+  }
+
   void WebAssemblyOpenGLViewport::RegisterContextCallbacks()
   {
     // TODO: what's the impact of userCapture=true ?
@@ -83,15 +139,15 @@ namespace OrthancStone
     void* that = reinterpret_cast<void*>(this);
     EMSCRIPTEN_RESULT status = EMSCRIPTEN_RESULT_SUCCESS;
 
-    status = emscripten_set_webglcontextlost_callback(canvasId, that, true, WebAssemblyOpenGLViewport_OpenGLContextLost_callback);
-    if (status != EMSCRIPTEN_RESULT_SUCCESS)
-    {
-      std::stringstream ss;
-      ss << "Error while calling emscripten_set_webglcontextlost_callback for: \"" << GetCanvasIdentifier() << "\"";
-      std::string msg = ss.str();
-      LOG(ERROR) << msg;
-      ORTHANC_ASSERT(false, msg.c_str());
-    }
+    //status = emscripten_set_webglcontextlost_callback(canvasId, that, true, WebAssemblyOpenGLViewport_OpenGLContextLost_callback);
+    //if (status != EMSCRIPTEN_RESULT_SUCCESS)
+    //{
+    //  std::stringstream ss;
+    //  ss << "Error while calling emscripten_set_webglcontextlost_callback for: \"" << GetCanvasIdentifier() << "\"";
+    //  std::string msg = ss.str();
+    //  LOG(ERROR) << msg;
+    //  ORTHANC_ASSERT(false, msg.c_str());
+    //}
     status = emscripten_set_webglcontextrestored_callback(canvasId, that, true, WebAssemblyOpenGLViewport_OpenGLContextRestored_callback);
     if (status != EMSCRIPTEN_RESULT_SUCCESS)
     {
@@ -101,18 +157,7 @@ namespace OrthancStone
       LOG(ERROR) << msg;
       ORTHANC_ASSERT(false, msg.c_str());
     }
-  }
-
-  bool WebAssemblyOpenGLViewport::OpenGLContextLost()
-  {
-    LOG(ERROR) << "WebAssemblyOpenGLViewport::OpenGLContextLost() for canvas: " << GetCanvasIdentifier();
-    return false;
-  }
-
-  bool WebAssemblyOpenGLViewport::OpenGLContextRestored()
-  {
-    LOG(ERROR) << "WebAssemblyOpenGLViewport::OpenGLContextRestored() for canvas: " << GetCanvasIdentifier();
-    return false;
+    LOG(TRACE) << "WebAssemblyOpenGLViewport::RegisterContextCallbacks() SUCCESS!!!";
   }
 
   WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvas) :
@@ -162,7 +207,7 @@ namespace OrthancStone
   void WebAssemblyCairoViewport::Refresh()
   {
     LOG(INFO) << "refreshing cairo viewport, TODO: blit to the canvans.getContext('2d')";
-    GetCompositor().Refresh();
+    GetCompositor()->Refresh();
   }
 
 }

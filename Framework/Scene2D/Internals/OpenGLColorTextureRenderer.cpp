@@ -27,13 +27,16 @@ namespace OrthancStone
   {
     void OpenGLColorTextureRenderer::LoadTexture(const ColorTextureSceneLayer& layer)
     {
-      context_.MakeCurrent();
-      texture_.reset(new OpenGL::OpenGLTexture);
-      texture_->Load(layer.GetTexture(), layer.IsLinearInterpolation());
-      layerTransform_ = layer.GetTransform();
+      if (!context_.IsContextLost())
+      {
+        context_.MakeCurrent();
+        texture_.reset(new OpenGL::OpenGLTexture(context_));
+        texture_->Load(layer.GetTexture(), layer.IsLinearInterpolation());
+        layerTransform_ = layer.GetTransform();
+      }
     }
 
-    
+
     OpenGLColorTextureRenderer::OpenGLColorTextureRenderer(OpenGL::IOpenGLContext& context,
                                                            OpenGLColorTextureProgram& program,
                                                            const ColorTextureSceneLayer& layer) :
@@ -48,7 +51,7 @@ namespace OrthancStone
                                             unsigned int canvasWidth,
                                             unsigned int canvasHeight)
     {
-      if (texture_.get() != NULL)
+      if (!context_.IsContextLost() && texture_.get() != NULL)
       {
         program_.Apply(*texture_, AffineTransform2D::Combine(transform, layerTransform_), true);
       }

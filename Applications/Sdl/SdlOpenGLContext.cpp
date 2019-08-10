@@ -20,6 +20,7 @@
 
 
 #include "SdlOpenGLContext.h"
+#include "../../Framework/StoneException.h"
 
 #if ORTHANC_ENABLE_SDL == 1
 
@@ -38,8 +39,10 @@ namespace OrthancStone
   SdlOpenGLContext::SdlOpenGLContext(const char* title,
                                      unsigned int width,
                                      unsigned int height,
-                                     bool allowDpiScaling) :
-    window_(title, width, height, true /* enable OpenGL */, allowDpiScaling)
+                                     bool allowDpiScaling) 
+    : window_(title, width, height, true /* enable OpenGL */, allowDpiScaling)
+    , context_(NULL)
+    , contextLost_(false)
   {
     context_ = SDL_GL_CreateContext(window_.GetObject());
     
@@ -83,15 +86,53 @@ namespace OrthancStone
   }
 
 
+  bool SdlOpenGLContext::IsContextLost() const
+  {
+    return contextLost_;
+  }
+
+
+  void SdlOpenGLContext::SetLostContext()
+  {
+    contextLost_ = true;
+  }
+
+  void SdlOpenGLContext::RestoreLostContext()
+  {
+    contextLost_ = false;
+  }
+   
+  // extern bool Debug_MustContextBeKilled(std::string title);
+  // extern void Debug_Context_ClearKillFlag(std::string title);
+
   void SdlOpenGLContext::MakeCurrent()
   {
+    if (IsContextLost())
+      throw OpenGLContextLostException(context_);
+
+    // <DEBUG STUFF>
+    // This is used for context loss simulation
+    // SDL_Window* internalWindow = GetWindow().GetObject();
+    // std::string title(SDL_GetWindowTitle(internalWindow));
+
+    // if (Debug_MustContextBeKilled(title))
+    // {
+    //   Debug_Context_ClearKillFlag(title);
+    //   SetLostContext();
+    //   throw OpenGLContextLostException(context_);
+    // }
+    // </DEBUG STUFF>
+
     if (SDL_GL_MakeCurrent(window_.GetObject(), context_) != 0)
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-                                      "Cannot set current OpenGL context");
+      const char* errText = SDL_GetError();
+      std::stringstream ss;
+      ss << "Cannot set current OpenGL context. SDL error text: " << errText;
+      std::string errStr = ss.str();
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, errStr.c_str());
     }
 
-    // This makes our buffer swap syncronized with the monitor's vertical refresh
+    // This makes our buffer swap synchronized with the monitor's vertical refresh
     SDL_GL_SetSwapInterval(1);
   }
 

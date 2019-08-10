@@ -32,10 +32,10 @@ namespace OrthancStone
     class OpenGLColorTextureRenderer : public CompositorHelper::ILayerRenderer
     {
     private:
-      OpenGL::IOpenGLContext&                context_;
-      OpenGLColorTextureProgram&             program_;
-      std::auto_ptr<OpenGL::OpenGLTexture>   texture_;
-      AffineTransform2D                      layerTransform_;
+      OpenGL::IOpenGLContext&               context_;
+      OpenGLColorTextureProgram&            program_;
+      std::auto_ptr<OpenGL::OpenGLTexture>  texture_;
+      AffineTransform2D                     layerTransform_;
 
       void LoadTexture(const ColorTextureSceneLayer& layer);
 

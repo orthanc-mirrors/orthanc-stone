@@ -263,98 +263,101 @@ namespace OrthancStone
       verticesCount_(0),
       thickness_(static_cast<float>(layer.GetThickness()))
     {
-      // High-level reference:
-      // https://mattdesl.svbtle.com/drawing-lines-is-hard
-      // https://forum.libcinder.org/topic/smooth-thick-lines-using-geometry-shader
-      
-      size_t countVertices = 0;
-      for (size_t i = 0; i < layer.GetChainsCount(); i++)
+      if (!context_.IsContextLost())
       {
-        size_t countSegments = layer.GetChain(i).size() - 1;
+        // High-level reference:
+        // https://mattdesl.svbtle.com/drawing-lines-is-hard
+        // https://forum.libcinder.org/topic/smooth-thick-lines-using-geometry-shader
 
-        if (layer.IsClosedChain(i))
+        size_t countVertices = 0;
+        for (size_t i = 0; i < layer.GetChainsCount(); i++)
         {
-          countSegments++;
+          size_t countSegments = layer.GetChain(i).size() - 1;
+
+          if (layer.IsClosedChain(i))
+          {
+            countSegments++;
+          }
+
+          // Each segment is made of 2 triangles. One triangle is
+          // defined by 3 points in 2D => 6 vertices per segment.
+          countVertices += countSegments * 2 * 3;
         }
-        
-        // Each segment is made of 2 triangles. One triangle is
-        // defined by 3 points in 2D => 6 vertices per segment.
-        countVertices += countSegments * 2 * 3;
-      }
 
-      std::vector<float>  coords, colors, miterDirections;
-      coords.reserve(countVertices * COMPONENTS_POSITION);
-      colors.reserve(countVertices * COMPONENTS_COLOR);
-      miterDirections.reserve(countVertices * COMPONENTS_MITER);
+        std::vector<float>  coords, colors, miterDirections;
+        coords.reserve(countVertices * COMPONENTS_POSITION);
+        colors.reserve(countVertices * COMPONENTS_COLOR);
+        miterDirections.reserve(countVertices * COMPONENTS_MITER);
 
-      for (size_t i = 0; i < layer.GetChainsCount(); i++)
-      {
-        const PolylineSceneLayer::Chain& chain = layer.GetChain(i);
-
-        if (chain.size() > 1)
+        for (size_t i = 0; i < layer.GetChainsCount(); i++)
         {
-          std::vector<Segment> segments;
-          for (size_t j = 1; j < chain.size(); j++)
-          {
-            segments.push_back(Segment(chain, j - 1, j));
-          }
+          const PolylineSceneLayer::Chain& chain = layer.GetChain(i);
 
-          if (layer.IsClosedChain(i))
+          if (chain.size() > 1)
           {
-            segments.push_back(Segment(chain, chain.size() - 1, 0));
-          }
-
-          // Try and create nice miters
-          for (size_t j = 1; j < segments.size(); j++)
-          {
-            Segment::CreateMiter(segments[j - 1], segments[j]);
-          }
-
-          if (layer.IsClosedChain(i))
-          {
-            Segment::CreateMiter(segments.back(), segments.front());
-          }
-
-          for (size_t j = 0; j < segments.size(); j++)
-          {
-            if (!segments[j].IsEmpty())
+            std::vector<Segment> segments;
+            for (size_t j = 1; j < chain.size(); j++)
             {
-              segments[j].AddTriangles(coords, miterDirections, colors, layer.GetColor(i));
+              segments.push_back(Segment(chain, j - 1, j));
+            }
+
+            if (layer.IsClosedChain(i))
+            {
+              segments.push_back(Segment(chain, chain.size() - 1, 0));
+            }
+
+            // Try and create nice miters
+            for (size_t j = 1; j < segments.size(); j++)
+            {
+              Segment::CreateMiter(segments[j - 1], segments[j]);
+            }
+
+            if (layer.IsClosedChain(i))
+            {
+              Segment::CreateMiter(segments.back(), segments.front());
+            }
+
+            for (size_t j = 0; j < segments.size(); j++)
+            {
+              if (!segments[j].IsEmpty())
+              {
+                segments[j].AddTriangles(coords, miterDirections, colors, layer.GetColor(i));
+              }
             }
           }
         }
-      }
 
-      assert(coords.size() == colors.size());
+        assert(coords.size() == colors.size());
 
-      if (!coords.empty())
-      {
-        verticesCount_ = coords.size() / COMPONENTS_POSITION;
+        if (!coords.empty())
+        {
+          verticesCount_ = coords.size() / COMPONENTS_POSITION;
 
-        context_.MakeCurrent();
-        glGenBuffers(3, buffers_);
+          context_.MakeCurrent();
+          glGenBuffers(3, buffers_);
 
-        glBindBuffer(GL_ARRAY_BUFFER, buffers_[0]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * coords.size(), &coords[0], GL_STATIC_DRAW);
+          glBindBuffer(GL_ARRAY_BUFFER, buffers_[0]);
+          glBufferData(GL_ARRAY_BUFFER, sizeof(float) * coords.size(), &coords[0], GL_STATIC_DRAW);
 
-        glBindBuffer(GL_ARRAY_BUFFER, buffers_[1]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * miterDirections.size(), &miterDirections[0], GL_STATIC_DRAW);
+          glBindBuffer(GL_ARRAY_BUFFER, buffers_[1]);
+          glBufferData(GL_ARRAY_BUFFER, sizeof(float) * miterDirections.size(), &miterDirections[0], GL_STATIC_DRAW);
 
-        glBindBuffer(GL_ARRAY_BUFFER, buffers_[2]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * colors.size(), &colors[0], GL_STATIC_DRAW);
+          glBindBuffer(GL_ARRAY_BUFFER, buffers_[2]);
+          glBufferData(GL_ARRAY_BUFFER, sizeof(float) * colors.size(), &colors[0], GL_STATIC_DRAW);
+        }
       }
     }
 
     
     OpenGLLinesProgram::Data::~Data()
     {
-      if (!IsEmpty())
+      if (!context_.IsContextLost() && !IsEmpty())
       {
         context_.MakeCurrent();
+        ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glDeleteBuffers");
         glDeleteBuffers(3, buffers_);
       }
     }
-
 
     GLuint OpenGLLinesProgram::Data::GetVerticesBuffer() const
     {
@@ -398,19 +401,20 @@ namespace OrthancStone
     OpenGLLinesProgram::OpenGLLinesProgram(OpenGL::IOpenGLContext&  context) :
       context_(context)
     {
-      context_.MakeCurrent();
-
-      program_.reset(new OpenGL::OpenGLProgram);
-      program_->CompileShaders(VERTEX_SHADER, FRAGMENT_SHADER);
+      if (!context_.IsContextLost())
+      {
+        context_.MakeCurrent();
+        program_.reset(new OpenGL::OpenGLProgram(context_));
+        program_->CompileShaders(VERTEX_SHADER, FRAGMENT_SHADER);
+      }
     }
-
 
     void OpenGLLinesProgram::Apply(const Data& data,
                                    const AffineTransform2D& transform,
                                    bool antialiasing,
                                    bool scaleIndependantThickness)
     {
-      if (!data.IsEmpty())
+      if (!context_.IsContextLost() && !data.IsEmpty())
       {
         context_.MakeCurrent();
         program_->Use();

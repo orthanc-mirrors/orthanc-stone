@@ -61,8 +61,13 @@ namespace OrthancStone
 {
   namespace Internals
   {
-    OpenGLFloatTextureProgram::Data::Data(const Orthanc::ImageAccessor& texture,
-                                          bool isLinearInterpolation)
+    OpenGLFloatTextureProgram::Data::Data(
+        OpenGL::IOpenGLContext& context
+      , const Orthanc::ImageAccessor& texture
+      , bool isLinearInterpolation) 
+      : texture_(context)
+      , offset_(0.0f)
+      , slope_(0.0f)
     {
       if (texture.GetFormat() != Orthanc::PixelFormat_Float32)
       {
@@ -127,8 +132,9 @@ namespace OrthancStone
     }
 
     
-    OpenGLFloatTextureProgram::OpenGLFloatTextureProgram(OpenGL::IOpenGLContext&  context) :
-      program_(context, FRAGMENT_SHADER)
+    OpenGLFloatTextureProgram::OpenGLFloatTextureProgram(OpenGL::IOpenGLContext&  context) 
+      : program_(context, FRAGMENT_SHADER)
+      , context_(context)
     {
     }
 
@@ -139,15 +145,18 @@ namespace OrthancStone
                                           float windowWidth,
                                           bool invert)
     {
-      OpenGLTextureProgram::Execution execution(program_, data.GetTexture(), transform);
+      if (!context_.IsContextLost())
+      {
+        OpenGLTextureProgram::Execution execution(program_, data.GetTexture(), transform);
 
-      glUniform1f(execution.GetUniformLocation("u_slope"), data.GetSlope());
-      glUniform1f(execution.GetUniformLocation("u_offset"), data.GetOffset());
-      glUniform1f(execution.GetUniformLocation("u_windowCenter"), windowCenter);
-      glUniform1f(execution.GetUniformLocation("u_windowWidth"), windowWidth);
-      glUniform1f(execution.GetUniformLocation("u_invert"), invert);
+        glUniform1f(execution.GetUniformLocation("u_slope"), data.GetSlope());
+        glUniform1f(execution.GetUniformLocation("u_offset"), data.GetOffset());
+        glUniform1f(execution.GetUniformLocation("u_windowCenter"), windowCenter);
+        glUniform1f(execution.GetUniformLocation("u_windowWidth"), windowWidth);
+        glUniform1f(execution.GetUniformLocation("u_invert"), invert);
 
-      execution.DrawTriangles();
+        execution.DrawTriangles();
+      }
     }
   }
 }

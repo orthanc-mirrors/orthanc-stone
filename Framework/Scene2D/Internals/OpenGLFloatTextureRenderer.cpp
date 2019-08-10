@@ -28,15 +28,19 @@ namespace OrthancStone
     void OpenGLFloatTextureRenderer::UpdateInternal(const FloatTextureSceneLayer& layer,
                                                     bool loadTexture)
     {
-      if (loadTexture)
+      if (!context_.IsContextLost())
       {
-        context_.MakeCurrent();
-        texture_.reset(new OpenGLFloatTextureProgram::Data(layer.GetTexture(), layer.IsLinearInterpolation()));
-      }
+        if (loadTexture)
+        {
+          context_.MakeCurrent();
+          texture_.reset(new OpenGLFloatTextureProgram::Data(
+            context_, layer.GetTexture(), layer.IsLinearInterpolation()));
+        }
 
-      layerTransform_ = layer.GetTransform();
-      layer.GetWindowing(windowCenter_, windowWidth_);
-      invert_ = layer.IsInverted();
+        layerTransform_ = layer.GetTransform();
+        layer.GetWindowing(windowCenter_, windowWidth_);
+        invert_ = layer.IsInverted();
+      }
     }
 
 
@@ -54,7 +58,7 @@ namespace OrthancStone
                                             unsigned int canvasWidth,
                                             unsigned int canvasHeight)
     {
-      if (texture_.get() != NULL)
+      if (!context_.IsContextLost() && texture_.get() != NULL)
       {
         program_.Apply(*texture_, AffineTransform2D::Combine(transform, layerTransform_), 
                        windowCenter_, windowWidth_, invert_);

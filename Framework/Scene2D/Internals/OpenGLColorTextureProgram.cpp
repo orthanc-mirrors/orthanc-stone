@@ -36,8 +36,9 @@ namespace OrthancStone
 {
   namespace Internals
   {
-    OpenGLColorTextureProgram::OpenGLColorTextureProgram(OpenGL::IOpenGLContext&  context) :
-      program_(context, FRAGMENT_SHADER)
+    OpenGLColorTextureProgram::OpenGLColorTextureProgram(OpenGL::IOpenGLContext&  context)
+      : program_(context, FRAGMENT_SHADER)
+      , context_(context)
     {
     }
 
@@ -46,18 +47,21 @@ namespace OrthancStone
                                           const AffineTransform2D& transform,
                                           bool useAlpha)
     {
-      OpenGLTextureProgram::Execution execution(program_, texture, transform);
+      if (!context_.IsContextLost())
+      {
+        OpenGLTextureProgram::Execution execution(program_, texture, transform);
 
-      if (useAlpha)
-      {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        execution.DrawTriangles();
-        glDisable(GL_BLEND);
-      }
-      else
-      {
-        execution.DrawTriangles();
+        if (useAlpha)
+        {
+          glEnable(GL_BLEND);
+          glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+          execution.DrawTriangles();
+          glDisable(GL_BLEND);
+        }
+        else
+        {
+          execution.DrawTriangles();
+        }
       }
     }
   }

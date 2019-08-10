@@ -61,13 +61,14 @@ namespace OrthancStone
     
     virtual void UpdateSize(unsigned int width,
                             unsigned int height) = 0;
+
   };
 
   class SdlOpenGLViewport : public SdlViewport
   {
   private:
     SdlOpenGLContext  context_;
-    OpenGLCompositor  compositor_;
+    std::auto_ptr<OpenGLCompositor>   compositor_;
 
   public:
     SdlOpenGLViewport(const char* title,
@@ -86,15 +87,21 @@ namespace OrthancStone
       return context_.GetWindow();
     }
 
+    bool OpenGLContextLost();
+
     virtual void UpdateSize(unsigned int width, unsigned int height) ORTHANC_OVERRIDE
     {
       // nothing to do in OpenGL, the OpenGLCompositor::UpdateSize will be called automatically
     }
+    virtual void Refresh() ORTHANC_OVERRIDE;
 
   protected:
-    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
+    virtual void DisableCompositor() ORTHANC_OVERRIDE;
+    virtual void RestoreCompositor() ORTHANC_OVERRIDE;
+
+    virtual ICompositor* GetCompositor() ORTHANC_OVERRIDE
     {
-      return compositor_;
+      return compositor_.get();
     }
   };
 
@@ -125,14 +132,17 @@ namespace OrthancStone
       return window_;
     }
 
+    virtual void DisableCompositor() ORTHANC_OVERRIDE;
+    virtual void RestoreCompositor() ORTHANC_OVERRIDE;
+
     virtual void Refresh() ORTHANC_OVERRIDE;
 
     virtual void UpdateSize(unsigned int width,
                             unsigned int height) ORTHANC_OVERRIDE;
   protected:
-    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
+    virtual ICompositor* GetCompositor() ORTHANC_OVERRIDE
     {
-      return compositor_;
+      return &compositor_;
     }
 
   private:

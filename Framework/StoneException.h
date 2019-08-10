@@ -38,6 +38,7 @@ namespace OrthancStone
 
     ErrorCode_CanOnlyAddOneLayerAtATime,
     ErrorCode_CommandJsonInvalidFormat,
+    ErrorCode_WebGLContextLost,
     ErrorCode_Last
   };
 
@@ -63,6 +64,21 @@ namespace OrthancStone
     {
       return "TODO: EnumerationToString for StoneException";
     }
+  };
+
+  class OpenGLContextLostException : public StoneException
+  {
+  public:
+    explicit OpenGLContextLostException(void* context)
+      : StoneException(ErrorCode_WebGLContextLost)
+      , context_(context)
+    {
+    }
+    virtual const char* What() const
+    {
+      return "The OpenGL/WebGL context has been lost!";
+    }
+    void* context_;
   };
 
   class StoneOrthancException : public StoneException

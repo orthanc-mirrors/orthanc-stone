@@ -26,6 +26,8 @@
 #include "../../Framework/OpenGL/IOpenGLContext.h"
 #include "SdlWindow.h"
 
+#include <Core/Enumerations.h>
+
 namespace OrthancStone
 {
   class SdlOpenGLContext : public OpenGL::IOpenGLContext
@@ -33,6 +35,7 @@ namespace OrthancStone
   private:
     SdlWindow      window_;
     SDL_GLContext  context_;
+    bool           contextLost_;
 
   public:
     SdlOpenGLContext(const char* title,
@@ -47,13 +50,23 @@ namespace OrthancStone
       return window_;
     }
 
-    virtual void MakeCurrent();
+    virtual bool IsContextLost() const ORTHANC_OVERRIDE;
 
-    virtual void SwapBuffer();
+    virtual void SetLostContext() ORTHANC_OVERRIDE;
+    virtual void RestoreLostContext() ORTHANC_OVERRIDE;
 
-    virtual unsigned int GetCanvasWidth() const;
+    virtual void MakeCurrent() ORTHANC_OVERRIDE;
 
-    virtual unsigned int GetCanvasHeight() const;
+    virtual void SwapBuffer() ORTHANC_OVERRIDE;
+
+    virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE;
+
+    virtual unsigned int GetCanvasHeight() const ORTHANC_OVERRIDE;
+
+    virtual void* DebugGetInternalContext() const ORTHANC_OVERRIDE
+    {
+      return context_;
+    }
   };
 }
 

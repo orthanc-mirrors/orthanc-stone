@@ -28,10 +28,6 @@ namespace OrthancStone
 {
   class ViewportBase : public IViewport
   {
-  private:
-    std::string                 identifier_;
-    boost::shared_ptr<Scene2D>  scene_;
-
   public:
     ViewportBase(const std::string& identifier);
 
@@ -50,19 +46,20 @@ namespace OrthancStone
 
     virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const ORTHANC_OVERRIDE;
 
-    virtual void Refresh() ORTHANC_OVERRIDE
-    {
-      GetCompositor().Refresh();
-    }
-
     virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE
     {
-      return GetCompositor().GetCanvasWidth();
+      if (GetCompositor())
+        return GetCompositor()->GetCanvasWidth();
+      else
+        return 0;
     }
 
     virtual unsigned int GetCanvasHeight() const ORTHANC_OVERRIDE
     {
-      return GetCompositor().GetCanvasHeight();
+      if (GetCompositor())
+        return GetCompositor()->GetCanvasHeight();
+      else
+        return 0;
     }
 
 #if ORTHANC_ENABLE_LOCALE == 1
@@ -71,8 +68,15 @@ namespace OrthancStone
       unsigned int fontSize,
       Orthanc::Encoding codepage) ORTHANC_OVERRIDE
     {
-      return GetCompositor().SetFont(index, resource, fontSize, codepage);
+      return GetCompositor()->SetFont(index, resource, fontSize, codepage);
     }
 #endif
+
+  private:
+    std::string                 identifier_;
+    boost::shared_ptr<Scene2D>  scene_;
+  protected:
+    virtual void RestoreCompositor() = 0;
+    virtual void DisableCompositor() = 0;
   };
 }

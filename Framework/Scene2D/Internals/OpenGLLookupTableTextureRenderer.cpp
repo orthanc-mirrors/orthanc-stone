@@ -28,86 +28,88 @@ namespace OrthancStone
     void OpenGLLookupTableTextureRenderer::LoadTexture(
       const LookupTableTextureSceneLayer& layer)
     {
-      const Orthanc::ImageAccessor& source = layer.GetTexture();
-      const unsigned int width = source.GetWidth();
-      const unsigned int height = source.GetHeight();
+      if (!context_.IsContextLost())
+      {
+        const Orthanc::ImageAccessor& source = layer.GetTexture();
+        const unsigned int width = source.GetWidth();
+        const unsigned int height = source.GetHeight();
 
-      if ((texture_.get() == NULL) || 
-          (texture_->GetWidth() != width) || 
+        if ((texture_.get() == NULL) ||
+          (texture_->GetWidth() != width) ||
           (texture_->GetHeight() != height))
-      {
-
-        texture_.reset(new Orthanc::Image(
-          Orthanc::PixelFormat_RGBA32,
-          width,
-          height,
-          false));
-      }
-
-      {
-
-        const float a = layer.GetMinValue();
-        float slope = 0;
-
-        if (layer.GetMinValue() >= layer.GetMaxValue())
         {
-          slope = 0;
-        }
-        else
-        {
-          slope = 256.0f / (layer.GetMaxValue() - layer.GetMinValue());
+
+          texture_.reset(new Orthanc::Image(
+            Orthanc::PixelFormat_RGBA32,
+            width,
+            height,
+            false));
         }
 
-        Orthanc::ImageAccessor target;
-        texture_->GetWriteableAccessor(target);
-
-        const std::vector<uint8_t>& lut = layer.GetLookupTable();
-        if (lut.size() != 4 * 256)
         {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-        }
 
-        assert(source.GetFormat() == Orthanc::PixelFormat_Float32 &&
-          target.GetFormat() == Orthanc::PixelFormat_RGBA32 &&
-          sizeof(float) == 4);
+          const float a = layer.GetMinValue();
+          float slope = 0;
 
-        for (unsigned int y = 0; y < height; y++)
-        {
-          const float* p = reinterpret_cast<const float*>(source.GetConstRow(y));
-          uint8_t* q = reinterpret_cast<uint8_t*>(target.GetRow(y));
-
-          for (unsigned int x = 0; x < width; x++)
+          if (layer.GetMinValue() >= layer.GetMaxValue())
           {
-            float v = (*p - a) * slope;
-            if (v <= 0)
+            slope = 0;
+          }
+          else
+          {
+            slope = 256.0f / (layer.GetMaxValue() - layer.GetMinValue());
+          }
+
+          Orthanc::ImageAccessor target;
+          texture_->GetWriteableAccessor(target);
+
+          const std::vector<uint8_t>& lut = layer.GetLookupTable();
+          if (lut.size() != 4 * 256)
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+          }
+
+          assert(source.GetFormat() == Orthanc::PixelFormat_Float32 &&
+            target.GetFormat() == Orthanc::PixelFormat_RGBA32 &&
+            sizeof(float) == 4);
+
+          for (unsigned int y = 0; y < height; y++)
+          {
+            const float* p = reinterpret_cast<const float*>(source.GetConstRow(y));
+            uint8_t* q = reinterpret_cast<uint8_t*>(target.GetRow(y));
+
+            for (unsigned int x = 0; x < width; x++)
             {
-              v = 0;
+              float v = (*p - a) * slope;
+              if (v <= 0)
+              {
+                v = 0;
+              }
+              else if (v >= 255)
+              {
+                v = 255;
+              }
+
+              uint8_t vv = static_cast<uint8_t>(v);
+
+              q[0] = lut[4 * vv + 0];  // R
+              q[1] = lut[4 * vv + 1];  // G
+              q[2] = lut[4 * vv + 2];  // B
+              q[3] = lut[4 * vv + 3];  // A
+
+              p++;
+              q += 4;
             }
-            else if (v >= 255)
-            {
-              v = 255;
-            }
-
-            uint8_t vv = static_cast<uint8_t>(v);
-
-            q[0] = lut[4 * vv + 0];  // R
-            q[1] = lut[4 * vv + 1];  // G
-            q[2] = lut[4 * vv + 2];  // B
-            q[3] = lut[4 * vv + 3];  // A
-
-            p++;
-            q += 4;
           }
         }
-      }
 
-      context_.MakeCurrent();
-      glTexture_.reset(new OpenGL::OpenGLTexture);
-      glTexture_->Load(*texture_, layer.IsLinearInterpolation());
-      layerTransform_ = layer.GetTransform();
+        context_.MakeCurrent();
+        glTexture_.reset(new OpenGL::OpenGLTexture(context_));
+        glTexture_->Load(*texture_, layer.IsLinearInterpolation());
+        layerTransform_ = layer.GetTransform();
+      }
     }
 
-    
     OpenGLLookupTableTextureRenderer::OpenGLLookupTableTextureRenderer(
       OpenGL::IOpenGLContext&                 context,
       OpenGLColorTextureProgram&              program,
@@ -123,7 +125,7 @@ namespace OrthancStone
                                                   unsigned int canvasWidth,
                                                   unsigned int canvasHeight)
     {
-      if (glTexture_.get() != NULL)
+      if (!context_.IsContextLost() && glTexture_.get() != NULL)
       {
         program_.Apply(
           *glTexture_, 

@@ -550,10 +550,21 @@ namespace OrthancStone
   // SDL ONLY
   void GuiAdapter::OnAnimationFrame()
   {
+    std::vector<size_t> disabledAnimationHandlers;
     for (size_t i = 0; i < animationFrameHandlers_.size(); i++)
     {
       // TODO: fix time 
-      (*(animationFrameHandlers_[i].first))(0, animationFrameHandlers_[i].second);
+      bool goOn = (*(animationFrameHandlers_[i].first))(0, animationFrameHandlers_[i].second);
+
+      // If the function returns false, we need to emulate what happens in Web 
+      // and remove the function from the handlers...
+      if (!goOn)
+        disabledAnimationHandlers.push_back(i);
+    }
+    for (size_t i = 0; i < disabledAnimationHandlers.size(); i++)
+    {
+      ORTHANC_ASSERT(animationFrameHandlers_.begin() + disabledAnimationHandlers[i] < animationFrameHandlers_.end());
+      animationFrameHandlers_.erase(animationFrameHandlers_.begin() + disabledAnimationHandlers[i]);
     }
   }
 
@@ -694,6 +705,10 @@ namespace OrthancStone
       //  foundWidget->
     }
   }
+
+
+  // extern void Debug_SetContextToBeKilled(std::string title);
+  // extern void Debug_SetContextToBeRestored(std::string title);
 
   // SDL ONLY
   void GuiAdapter::RequestAnimationFrame(OnAnimationFrameFunc func, void* userData)
@@ -845,6 +860,23 @@ namespace OrthancStone
           case SDLK_f:
             // window.GetWindow().ToggleMaximize(); //TODO: move to particular handler
             break;
+
+          // This commented out code was used to debug the context
+          // loss/restoring code (2019-08-10)
+          // case SDLK_k:
+          //   {
+          //     SDL_Window* window = SDL_GetWindowFromID(event.window.windowID);
+          //     std::string windowTitle(SDL_GetWindowTitle(window));
+          //     Debug_SetContextToBeKilled(windowTitle);
+          //   }
+          //   break;
+          // case SDLK_l:
+          //   {
+          //     SDL_Window* window = SDL_GetWindowFromID(event.window.windowID);
+          //     std::string windowTitle(SDL_GetWindowTitle(window));
+          //     Debug_SetContextToBeRestored(windowTitle);
+          //   }
+          //   break;
 
           case SDLK_q:
             stop = true;

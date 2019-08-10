@@ -21,6 +21,8 @@
 
 #include "WebAssemblyOpenGLContext.h"
 
+#include "../StoneException.h"
+
 #include <Core/OrthancException.h>
 
 #include <emscripten/html5.h>
@@ -35,14 +37,16 @@ namespace OrthancStone
     class WebAssemblyOpenGLContext::PImpl
     {
     private:
-      std::string                      canvas_;
-      EMSCRIPTEN_WEBGL_CONTEXT_HANDLE  context_;
-      unsigned int                     canvasWidth_;
-      unsigned int                     canvasHeight_;
+      std::string                     canvas_;
+      EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context_;
+      unsigned int                    canvasWidth_;
+      unsigned int                    canvasHeight_;
+      bool                            isContextLost_;
 
     public:
-      PImpl(const std::string& canvas) :
-        canvas_(canvas)
+      PImpl(const std::string& canvas)
+        : canvas_(canvas)
+        , isContextLost_(false)
       {
         // Context configuration
         EmscriptenWebGLContextAttributes attr; 
@@ -60,6 +64,27 @@ namespace OrthancStone
         UpdateSize();
       }
 
+      void* DebugGetInternalContext() const
+      {
+        return reinterpret_cast<void*>(context_);
+      }
+
+      bool IsContextLost() const
+      {
+        bool apiFlag = (emscripten_is_webgl_context_lost(context_) != 0);
+        bool ownFlag = isContextLost_;
+        if (ownFlag != apiFlag)
+        {
+          LOG(WARNING) << "Context loss, according to emscripten, is: " << apiFlag << " | while, according to internal state, is: " << ownFlag;
+        }
+        return ownFlag | apiFlag;
+      }
+
+      void SetLostContext()
+      {
+        isContextLost_ = true;
+      }
+
       ~PImpl()
       {
         emscripten_webgl_destroy_context(context_);
@@ -72,11 +97,17 @@ namespace OrthancStone
 
       void MakeCurrent()
       {
+        if (IsContextLost())
+        {
+          LOG(ERROR) << "MakeCurrent() called on lost context " << context_;
+          throw OpenGLContextLostException(reinterpret_cast<void*>(context_));
+        }
+
         if (emscripten_is_webgl_context_lost(context_))
         {
-          LOG(ERROR) << "OpenGL context has been lost! for canvas: " << canvas_;
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-            "OpenGL context has been lost!");
+          LOG(ERROR) << "OpenGL context has been lost for canvas: " << canvas_;
+          SetLostContext();
+          throw OpenGLContextLostException(reinterpret_cast<void*>(context_));
         }
 
         if (emscripten_webgl_make_context_current(context_) != EMSCRIPTEN_RESULT_SUCCESS)
@@ -146,12 +177,31 @@ namespace OrthancStone
     {
     }
 
+    bool WebAssemblyOpenGLContext::IsContextLost() const
+    {
+      return pimpl_->IsContextLost();
+    }
+
+    void WebAssemblyOpenGLContext::RestoreLostContext()
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
+
+    void WebAssemblyOpenGLContext::SetLostContext()
+    {
+      pimpl_->SetLostContext();
+    }
+
+    void* WebAssemblyOpenGLContext::DebugGetInternalContext() const
+    {
+      return pimpl_->DebugGetInternalContext();
+    }
+    
     void WebAssemblyOpenGLContext::MakeCurrent()
     {
       assert(pimpl_.get() != NULL);
       pimpl_->MakeCurrent();
     }
-
 
     void WebAssemblyOpenGLContext::SwapBuffer() 
     {

@@ -47,7 +47,10 @@ namespace OrthancStone
                           unsigned int canvasWidth,
                           unsigned int canvasHeight)
       {
-        program_.Apply(*data_, transform, true, true);
+        if (!context_.IsContextLost())
+        {
+          program_.Apply(*data_, transform, true, true);
+        }
       }
 
       virtual void Update(const ISceneLayer& layer)

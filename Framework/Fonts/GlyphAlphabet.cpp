@@ -34,7 +34,6 @@ namespace OrthancStone
       assert(it->second != NULL);
       delete it->second;
     }
-      
     content_.clear();
     lineHeight_ = 0;
   }

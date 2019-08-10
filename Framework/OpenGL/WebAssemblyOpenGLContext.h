@@ -39,6 +39,8 @@
 
 #include "IOpenGLContext.h"
 
+#include <Core/Enumerations.h>
+
 #include <boost/shared_ptr.hpp>
 
 namespace OrthancStone
@@ -54,13 +56,20 @@ namespace OrthancStone
     public:
       WebAssemblyOpenGLContext(const std::string& canvas);
 
-      virtual void MakeCurrent();
+      virtual bool IsContextLost() const ORTHANC_OVERRIDE;
 
-      virtual void SwapBuffer();
+      virtual void SetLostContext() ORTHANC_OVERRIDE;
+      virtual void RestoreLostContext() ORTHANC_OVERRIDE;
 
-      virtual unsigned int GetCanvasWidth() const;
+      virtual void MakeCurrent() ORTHANC_OVERRIDE;
 
-      virtual unsigned int GetCanvasHeight() const;
+      virtual void SwapBuffer() ORTHANC_OVERRIDE;
+
+      virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE;
+
+      virtual unsigned int GetCanvasHeight() const ORTHANC_OVERRIDE;
+
+      virtual void* DebugGetInternalContext() const ORTHANC_OVERRIDE;
 
       void UpdateSize();
 

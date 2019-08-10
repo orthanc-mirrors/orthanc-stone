@@ -46,7 +46,7 @@ namespace OrthancStone
     Internals::OpenGLTextProgram          textProgram_;
     unsigned int                          canvasWidth_;
     unsigned int                          canvasHeight_;
-    
+
     const Font* GetFont(size_t fontIndex) const;
 
     virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer) ORTHANC_OVERRIDE;
@@ -59,8 +59,7 @@ namespace OrthancStone
 
     virtual void Refresh() ORTHANC_OVERRIDE;
 
-    void SetFont(size_t index,
-                 const GlyphBitmapAlphabet& dict);
+    void SetFont(size_t index, const GlyphBitmapAlphabet& dict);
 
 #if ORTHANC_ENABLE_LOCALE == 1
     void SetFont(size_t index,

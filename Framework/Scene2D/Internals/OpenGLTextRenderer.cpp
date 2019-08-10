@@ -27,7 +27,10 @@ namespace OrthancStone
   {
     void OpenGLTextRenderer::LoadLayer(const TextSceneLayer& layer)
     {
-      data_.reset(new OpenGLTextProgram::Data(context_, alphabet_, layer));
+      if (!context_.IsContextLost())
+        data_.reset(new OpenGLTextProgram::Data(context_, alphabet_, layer));
+      else
+        data_.reset(NULL);
     }
 
 
@@ -49,13 +52,12 @@ namespace OrthancStone
                                     unsigned int canvasWidth,
                                     unsigned int canvasHeight)
     {
-      if (data_.get() != NULL)
+      if (!context_.IsContextLost() && data_.get() != NULL)
       {
         program_.Apply(texture_, *data_, transform);
       }
     }
 
-      
     void OpenGLTextRenderer::Update(const ISceneLayer& layer)
     {
       LoadLayer(dynamic_cast<const TextSceneLayer&>(layer));

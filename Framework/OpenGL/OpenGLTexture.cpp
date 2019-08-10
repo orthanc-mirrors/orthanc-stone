@@ -20,6 +20,7 @@
 
 
 #include "OpenGLTexture.h"
+#include "IOpenGLContext.h"
 
 #include <Core/OrthancException.h>
 
@@ -27,46 +28,82 @@ namespace OrthancStone
 {
   namespace OpenGL
   {
-    OpenGLTexture::OpenGLTexture() :
-      width_(0),
-      height_(0)
+    OpenGLTexture::OpenGLTexture(OpenGL::IOpenGLContext& context)
+      : width_(0)
+      , height_(0)
+      , context_(context)
     {
-      // Generate a texture object
-      glGenTextures(1, &texture_);
-      if (texture_ == 0)
+      if (!context_.IsContextLost())
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-                                        "Cannot create an OpenGL program");
+        // context is made current externally. Let's check this!
+        ORTHANC_CHECK_CURRENT_CONTEXT(context_);
+        // Generate a texture object
+        glGenTextures(1, &texture_);
+        if (texture_ == 0)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+            "Cannot create an OpenGL program");
+        }
       }
     }
 
-    
     OpenGLTexture::~OpenGLTexture()
     {
-      assert(texture_ != 0);
-      glDeleteTextures(1, &texture_);
+      try
+      {
+        if (!context_.IsContextLost())
+        {
+          // context is made current externally. Let's check this!
+          ORTHANC_CHECK_CURRENT_CONTEXT(context_);
+          assert(texture_ != 0);
+          ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glDeleteTextures");
+          glDeleteTextures(1, &texture_);
+        }
+      }
+      catch (const Orthanc::OrthancException& e)
+      {
+        if (e.HasDetails())
+        {
+          LOG(ERROR) << "OrthancException in ~OpenGLTexture: " << e.What() << " Details: " << e.GetDetails();
+        }
+        else
+        {
+          LOG(ERROR) << "OrthancException in ~OpenGLTexture: " << e.What();
+        }
+      }
+      catch (const std::exception& e)
+      {
+        LOG(ERROR) << "std::exception in ~OpenGLTexture: " << e.what();
+      }
+      catch (...)
+      {
+        LOG(ERROR) << "Unknown exception in ~OpenGLTexture";
+      }
     }
-
 
     void OpenGLTexture::Load(const Orthanc::ImageAccessor& image,
                              bool isLinearInterpolation)
     {
-      glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
-    
-      if (image.GetPitch() != image.GetBytesPerPixel() * image.GetWidth())
+      // context is made current externally. Let's check this!
+      ORTHANC_CHECK_CURRENT_CONTEXT(context_);
+      if (!context_.IsContextLost())
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
-                                        "Unsupported non-zero padding");
-      }
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
 
-      // Bind it
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture_);
+        if (image.GetPitch() != image.GetBytesPerPixel() * image.GetWidth())
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+            "Unsupported non-zero padding");
+        }
 
-      GLenum sourceFormat, internalFormat;
+        // Bind it
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture_);
 
-      switch (image.GetFormat())
-      {
+        GLenum sourceFormat, internalFormat;
+
+        switch (image.GetFormat())
+        {
         case Orthanc::PixelFormat_Grayscale8:
           sourceFormat = GL_RED;
           internalFormat = GL_RED;
@@ -84,22 +121,23 @@ namespace OrthancStone
 
         default:
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
-                                          "No support for this format in OpenGL textures: " + 
-                                          std::string(EnumerationToString(image.GetFormat())));
+            "No support for this format in OpenGL textures: " +
+            std::string(EnumerationToString(image.GetFormat())));
+        }
+
+        width_ = image.GetWidth();
+        height_ = image.GetHeight();
+
+        GLint interpolation = (isLinearInterpolation ? GL_LINEAR : GL_NEAREST);
+
+        // Load the texture from the image buffer
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, image.GetWidth(), image.GetHeight(),
+          0, sourceFormat, GL_UNSIGNED_BYTE, image.GetBuffer());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, interpolation);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, interpolation);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
       }
-
-      width_ = image.GetWidth();
-      height_ = image.GetHeight();
-    
-      GLint interpolation = (isLinearInterpolation ? GL_LINEAR : GL_NEAREST);
-
-      // Load the texture from the image buffer
-      glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, image.GetWidth(), image.GetHeight(), 
-                   0, sourceFormat, GL_UNSIGNED_BYTE, image.GetBuffer());
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, interpolation);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, interpolation);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
 
 

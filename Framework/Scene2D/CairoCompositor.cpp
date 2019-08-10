@@ -44,7 +44,6 @@ namespace OrthancStone
     }
   }
 
-    
   Internals::CompositorHelper::ILayerRenderer* CairoCompositor::Create(const ISceneLayer& layer)
   {
     switch (layer.GetType())

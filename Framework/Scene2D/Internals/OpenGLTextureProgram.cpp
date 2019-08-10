@@ -22,6 +22,8 @@
 #include "OpenGLTextureProgram.h"
 #include "OpenGLShaderVersionDirective.h"
 
+#include <Core/OrthancException.h>
+
 static const unsigned int COMPONENTS = 2;
 static const unsigned int COUNT = 6;  // 2 triangles in 2D
 
@@ -45,37 +47,41 @@ namespace OrthancStone
     void OpenGLTextureProgram::InitializeExecution(OpenGL::OpenGLTexture& texture,
                                                    const AffineTransform2D& transform)
     {
-      context_.MakeCurrent();
-      program_->Use();
+      if (!context_.IsContextLost())
+      {
+        context_.MakeCurrent();
+        program_->Use();
 
-      AffineTransform2D scale = AffineTransform2D::CreateScaling
+        AffineTransform2D scale = AffineTransform2D::CreateScaling
         (texture.GetWidth(), texture.GetHeight());
 
-      AffineTransform2D t = AffineTransform2D::Combine(transform, scale);
+        AffineTransform2D t = AffineTransform2D::Combine(transform, scale);
 
-      float m[16];
-      t.ConvertToOpenGLMatrix(m, context_.GetCanvasWidth(), context_.GetCanvasHeight());
+        float m[16];
+        t.ConvertToOpenGLMatrix(m, context_.GetCanvasWidth(), context_.GetCanvasHeight());
 
-      texture.Bind(program_->GetUniformLocation("u_texture"));
-      glUniformMatrix4fv(program_->GetUniformLocation("u_matrix"), 1, GL_FALSE, m);
+        texture.Bind(program_->GetUniformLocation("u_texture"));
+        glUniformMatrix4fv(program_->GetUniformLocation("u_matrix"), 1, GL_FALSE, m);
 
-      glBindBuffer(GL_ARRAY_BUFFER, buffers_[0]);
-      glEnableVertexAttribArray(positionLocation_);
-      glVertexAttribPointer(positionLocation_, COMPONENTS, GL_FLOAT, GL_FALSE, 0, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, buffers_[0]);
+        glEnableVertexAttribArray(positionLocation_);
+        glVertexAttribPointer(positionLocation_, COMPONENTS, GL_FLOAT, GL_FALSE, 0, 0);
 
-      glBindBuffer(GL_ARRAY_BUFFER, buffers_[1]);
-      glEnableVertexAttribArray(textureLocation_);
-      glVertexAttribPointer(textureLocation_, COMPONENTS, GL_FLOAT, GL_FALSE, 0, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, buffers_[1]);
+        glEnableVertexAttribArray(textureLocation_);
+        glVertexAttribPointer(textureLocation_, COMPONENTS, GL_FLOAT, GL_FALSE, 0, 0);
+      }
     }
 
-    
     void OpenGLTextureProgram::FinalizeExecution()
     {
-      glDisableVertexAttribArray(positionLocation_);
-      glDisableVertexAttribArray(textureLocation_);
+      if (!context_.IsContextLost())
+      {
+        glDisableVertexAttribArray(positionLocation_);
+        glDisableVertexAttribArray(textureLocation_);
+      }
     }
 
-    
     OpenGLTextureProgram::OpenGLTextureProgram(OpenGL::IOpenGLContext& context,
                                                const char* fragmentShader) :
       context_(context)
@@ -88,35 +94,44 @@ namespace OrthancStone
         0, 1,
         1, 1
       };
-        
-      context_.MakeCurrent();
 
-      program_.reset(new OpenGL::OpenGLProgram);
-      program_->CompileShaders(VERTEX_SHADER, fragmentShader);
+      if (!context_.IsContextLost())
+      {
+        context_.MakeCurrent();
 
-      positionLocation_ = program_->GetAttributeLocation("a_position");
-      textureLocation_ = program_->GetAttributeLocation("a_texcoord");
+        program_.reset(new OpenGL::OpenGLProgram(context_));
+        program_->CompileShaders(VERTEX_SHADER, fragmentShader);
 
-      glGenBuffers(2, buffers_);
+        positionLocation_ = program_->GetAttributeLocation("a_position");
+        textureLocation_ = program_->GetAttributeLocation("a_texcoord");
 
-      glBindBuffer(GL_ARRAY_BUFFER, buffers_[0]);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * COMPONENTS * COUNT, POSITIONS, GL_STATIC_DRAW);
+        glGenBuffers(2, buffers_);
 
-      glBindBuffer(GL_ARRAY_BUFFER, buffers_[1]);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * COMPONENTS * COUNT, POSITIONS, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, buffers_[0]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * COMPONENTS * COUNT, POSITIONS, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, buffers_[1]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * COMPONENTS * COUNT, POSITIONS, GL_STATIC_DRAW);
+      }
     }
-
 
     OpenGLTextureProgram::~OpenGLTextureProgram()
     {
-      context_.MakeCurrent();
-      glDeleteBuffers(2, buffers_);
+      if (!context_.IsContextLost())
+      {
+        ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("OpenGLTextureProgram::~OpenGLTextureProgram() | About to call glDeleteBuffers");
+        context_.MakeCurrent();
+        glDeleteBuffers(2, buffers_);
+      }
     }
 
 
     void OpenGLTextureProgram::Execution::DrawTriangles()
     {
-      glDrawArrays(GL_TRIANGLES, 0, COUNT);
+      if (!that_.context_.IsContextLost())
+      {
+        glDrawArrays(GL_TRIANGLES, 0, COUNT);
+      }
     }
   }
 }

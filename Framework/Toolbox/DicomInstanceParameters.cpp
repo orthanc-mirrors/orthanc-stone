@@ -44,7 +44,7 @@ namespace OrthancStone
       if (dicom.CopyToString(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
       {
         Orthanc::Toolbox::ToUpperCase(increment);
-        if (increment != "3004,000C")  // This is the "Grid Frame Offset Vector" tag
+        if (increment != "3004,000C")  // This is the "Grid Frame Offset Vector" tag (DICOM_TAG_GRID_FRAME_OFFSET_VECTOR)
         {
           LOG(ERROR) << "RT-DOSE: Bad value for the \"FrameIncrementPointer\" tag";
           return;

@@ -25,6 +25,8 @@
 
 #include <Plugins/Samples/Common/IDicomDataset.h>
 
+#include <iosfwd>
+
 namespace OrthancStone
 {
   // Geometry of a 3D plane
@@ -51,6 +53,8 @@ namespace OrthancStone
     {
       SetupCanonical();
     }
+
+    friend std::ostream& operator<< (std::ostream& s, const CoordinateSystem3D& that);
 
     CoordinateSystem3D(const Vector& origin,
                        const Vector& axisX,

@@ -220,4 +220,13 @@ namespace OrthancStone
       return false;
     }
   }
+
+  std::ostream& operator<< (std::ostream& s, const CoordinateSystem3D& that)
+  {
+    s << "origin: " << that.origin_ << " normal: " << that.normal_ 
+      << " axisX: " << that.axisX_ << " axisY: " << that.axisY_ 
+      << " D: " << that.d_;
+    return s;
+  }
+
 }

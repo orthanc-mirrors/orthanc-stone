@@ -21,13 +21,17 @@
 
 #include "LinearAlgebra.h"
 
+#include "../StoneException.h"
+
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
 
-#include <stdio.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/ublas/lu.hpp>
+
+#include <stdio.h>
+#include <iostream>
 
 namespace OrthancStone
 {
@@ -651,5 +655,39 @@ namespace OrthancStone
 
       return m;
     }
+  }
+
+  std::ostream& operator<<(std::ostream& s, const Vector& vec)
+  {
+    s << "(";
+    for (size_t i = 0; i < vec.size(); ++i)
+    {
+      s << vec(i);
+      if (i < (vec.size() - 1))
+        s << ", ";
+    }
+    s << ")";
+    return s;
+  }
+
+  std::ostream& operator<<(std::ostream& s, const Matrix& m)
+  {
+    ORTHANC_ASSERT(m.size1() == m.size2());
+    s << "(";
+    for (size_t i = 0; i < m.size1(); ++i)
+    {
+      s << "(";
+      for (size_t j = 0; j < m.size2(); ++j)
+      {
+        s << m(i,j);
+        if (j < (m.size2() - 1))
+          s << ", ";
+      }
+      s << ")";
+      if (i < (m.size1() - 1))
+        s << ", ";
+    }
+    s << ")";
+    return s;
   }
 }

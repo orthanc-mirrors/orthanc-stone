@@ -81,6 +81,12 @@ namespace OrthancStone
     return controller->GetScene();
   }
 
+  void LayerHolder::DeleteLayersIfNeeded()
+  {
+    if (baseLayerIndex_ != -1)
+      DeleteLayers();
+  }
+  
   void LayerHolder::DeleteLayers()
   {
     for (int i = 0; i < textLayerCount_ + polylineLayerCount_; ++i)

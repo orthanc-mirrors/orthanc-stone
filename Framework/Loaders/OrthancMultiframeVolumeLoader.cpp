@@ -224,7 +224,7 @@ namespace OrthancStone
 
     {
       VolumeImageGeometry geometry;
-      geometry.SetSize(width, height, depth);
+      geometry.SetSizeInVoxels(width, height, depth);
       geometry.SetAxialGeometry(parameters.GetGeometry());
       geometry.SetVoxelDimensions(parameters.GetPixelSpacingX(),
                                   parameters.GetPixelSpacingY(), spacingZ);
@@ -234,6 +234,8 @@ namespace OrthancStone
     volume_->GetPixelData().Clear();
 
     ScheduleFrameDownloads();
+
+
 
     BroadcastMessage(DicomVolumeImage::GeometryReadyMessage(*volume_));
   }
@@ -319,7 +321,16 @@ namespace OrthancStone
     pixelDataLoaded_ = true;
     BroadcastMessage(DicomVolumeImage::ContentUpdatedMessage(*volume_));
   }
+  
+  bool OrthancMultiframeVolumeLoader::HasGeometry() const
+  {
+    return volume_->HasGeometry();
+  }
 
+  const OrthancStone::VolumeImageGeometry& OrthancMultiframeVolumeLoader::GetImageGeometry() const
+  {
+    return volume_->GetGeometry();
+  }
 
   OrthancMultiframeVolumeLoader::OrthancMultiframeVolumeLoader(boost::shared_ptr<DicomVolumeImage> volume,
                                                                IOracle& oracle,

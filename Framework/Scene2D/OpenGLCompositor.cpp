@@ -107,6 +107,7 @@ namespace OrthancStone
         const Font* font = GetFont(l.GetFontIndex());
         if (font == NULL)
         {
+          LOG(WARNING) << "There is no font at index " << l.GetFontIndex();
           return NULL;
         }
         else

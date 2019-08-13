@@ -46,6 +46,8 @@ namespace OrthancStone
                                                 -0.5 * voxelDimensions_[1]) -
       0.5 * voxelDimensions_[2] * axialGeometry_.GetNormal());
 
+    LOG(TRACE) << "VolumeImageGeometry::Invalidate() origin = " << origin(0) << "," << origin(1) << "," << origin(2) << " | width_ = " << width_ << " | height_ = " << height_ << " | depth_ = " << depth_;
+
     Vector scaling;
     
     if (width_ == 0 ||
@@ -80,7 +82,7 @@ namespace OrthancStone
   }
 
 
-  void VolumeImageGeometry::SetSize(unsigned int width,
+  void VolumeImageGeometry::SetSizeInVoxels(unsigned int width,
                                     unsigned int height,
                                     unsigned int depth)
   {
@@ -323,4 +325,19 @@ namespace OrthancStone
 
     return plane;
   }
+
+  std::ostream& operator<<(std::ostream& s, const VolumeImageGeometry& v)
+  {
+    s << "width: " << v.width_ << " height: " << v.height_
+      << " depth: "             << v.depth_
+      << " axialGeometry: "     << v.axialGeometry_
+      << " coronalGeometry: "   << v.coronalGeometry_
+      << " sagittalGeometry: "  << v.sagittalGeometry_
+      << " voxelDimensions_: "  << v.voxelDimensions_
+      << " height: "            << v.height_
+      << " transform: "         << v.transform_
+      << " transformInverse: "  << v.transformInverse_;
+    return s;
+  }
+
 }

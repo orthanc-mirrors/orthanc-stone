@@ -24,6 +24,8 @@
 #include "../StoneEnumerations.h"
 #include "../Toolbox/CoordinateSystem3D.h"
 
+#include <iosfwd>
+
 namespace OrthancStone
 {
   class VolumeImageGeometry
@@ -40,6 +42,8 @@ namespace OrthancStone
     Matrix                 transformInverse_;
 
     void Invalidate();
+
+    friend std::ostream& operator<<(std::ostream& s, const VolumeImageGeometry& v);
 
   public:
     VolumeImageGeometry();
@@ -86,7 +90,7 @@ namespace OrthancStone
       return transformInverse_;
     }
 
-    void SetSize(unsigned int width,
+    void SetSizeInVoxels(unsigned int width,
                  unsigned int height,
                  unsigned int depth);
 
@@ -120,7 +124,7 @@ namespace OrthancStone
     axial, sagittal or coronal cut and returns 
     the slice number corresponding to this cut.
 
-    If the cutting plane is not parallel to the tree x = 0, y = 0 or z = 0
+    If the cutting plane is not parallel to the three x = 0, y = 0 or z = 0
     planes, it is considered as arbitrary and the method returns false. 
     Otherwise, it returns true.
     */

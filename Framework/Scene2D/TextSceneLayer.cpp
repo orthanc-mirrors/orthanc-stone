@@ -50,32 +50,47 @@ namespace OrthancStone
   void TextSceneLayer::SetPosition(double x,
                                    double y)
   {
-    x_ = x;
-    y_ = y;
-    revision_ ++;
+    if (x != x_ || y != y_)
+    {
+      x_ = x;
+      y_ = y;
+      revision_++;
+    }
   }
 
   void TextSceneLayer::SetText(const std::string& utf8)
   {
-    utf8_ = utf8;
-    revision_ ++;
+    if (utf8 != utf8_)
+    {
+      utf8_ = utf8;
+      revision_++;
+    }
   }
 
   void TextSceneLayer::SetFontIndex(size_t fontIndex)
   {
-    fontIndex_ = fontIndex;
-    revision_ ++;
+    if (fontIndex != fontIndex_)
+    {
+      fontIndex_ = fontIndex;
+      revision_++;
+    }
   }
 
   void TextSceneLayer::SetAnchor(BitmapAnchor anchor)
   {
-    anchor_ = anchor;
-    revision_ ++;
+    if (anchor != anchor_)
+    {
+      anchor_ = anchor;
+      revision_++;
+    }
   }
 
   void TextSceneLayer::SetBorder(unsigned int border)
   {
-    border_ = border;
-    revision_ ++;
+    if (border != border_)
+    {
+      border_ = border;
+      revision_++;
+    }
   }
 }

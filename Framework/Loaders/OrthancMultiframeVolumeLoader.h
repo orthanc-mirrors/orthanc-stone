@@ -30,7 +30,8 @@ namespace OrthancStone
 {
   class OrthancMultiframeVolumeLoader :
     public LoaderStateMachine,
-    public IObservable
+    public IObservable,
+    public IGeometryProvider
   {
   private:
     class LoadRTDoseGeometry;
@@ -55,6 +56,9 @@ namespace OrthancStone
     void CopyPixelData(const std::string& pixelData);
 
     void SetUncompressedPixelData(const std::string& pixelData);
+
+    virtual bool HasGeometry() const ORTHANC_OVERRIDE;
+    virtual const VolumeImageGeometry& GetImageGeometry() const ORTHANC_OVERRIDE;
 
   public:
     OrthancMultiframeVolumeLoader(boost::shared_ptr<DicomVolumeImage> volume,

@@ -22,6 +22,9 @@
 #pragma once
 
 #include "Core/OrthancException.h"
+#include "Toolbox/LinearAlgebra.h"
+
+#include <iostream>
 #include <boost/lexical_cast.hpp>
 
 namespace OrthancStone
@@ -126,7 +129,6 @@ namespace OrthancStone
       return boost::lexical_cast<std::string>(applicationErrorCode_).c_str();
     }
   };
-
 }
 
 // See https://isocpp.org/wiki/faq/misc-technical-issues#macros-with-multi-stmts
@@ -150,6 +152,18 @@ namespace OrthancStone
 # define ORTHANC_EXPAND( x ) x 
 # define GET_ORTHANC_ASSERT(_1,_2,NAME,...) NAME
 # define ORTHANC_ASSERT(...) ORTHANC_EXPAND(GET_ORTHANC_ASSERT(__VA_ARGS__, ORTHANC_ASSERT2, ORTHANC_ASSERT1, UNUSED)(__VA_ARGS__))
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
 Explanation:

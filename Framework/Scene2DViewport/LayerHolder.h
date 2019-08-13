@@ -69,6 +69,11 @@ namespace OrthancStone
     void DeleteLayers();
 
     /**
+    This removes the layers from the scene if they are already created
+    */
+    void DeleteLayersIfNeeded();
+
+    /**
     Please note that the returned pointer belongs to the scene.Don't you dare
     storing or deleting it, you fool!
 

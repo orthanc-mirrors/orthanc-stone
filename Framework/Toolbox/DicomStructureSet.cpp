@@ -362,7 +362,6 @@ namespace OrthancStone
     return structures_[index];
   }
 
-
   DicomStructureSet::DicomStructureSet(const OrthancPlugins::FullOrthancDataset& tags)
   {
     OrthancPlugins::DicomDatasetReader reader(tags);
@@ -388,7 +387,7 @@ namespace OrthancStone
       structures_[i].name_ = reader.GetStringValue
         (OrthancPlugins::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
                                    DICOM_TAG_ROI_NAME),
-         "No interpretation");
+         "No name");
 
       Vector color;
       if (ParseVector(color, tags, OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,

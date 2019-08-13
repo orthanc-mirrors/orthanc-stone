@@ -38,6 +38,10 @@ namespace OrthancStone
   typedef boost::numeric::ublas::matrix<double>   Matrix;
   typedef boost::numeric::ublas::vector<double>   Vector;
 
+  // logs, debugging...
+  std::ostream& operator<<(std::ostream& s, const Vector& vec);
+  std::ostream& operator<<(std::ostream& s, const Matrix& m);
+
   namespace LinearAlgebra
   {
     void Print(const Vector& v);

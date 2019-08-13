@@ -190,7 +190,7 @@ namespace OrthancStone
       const DicomInstanceParameters& parameters = *slices_[0];
 
       geometry_.reset(new VolumeImageGeometry);
-      geometry_->SetSize(parameters.GetImageInformation().GetWidth(),
+      geometry_->SetSizeInVoxels(parameters.GetImageInformation().GetWidth(),
                          parameters.GetImageInformation().GetHeight(),
                          static_cast<unsigned int>(slices.GetSlicesCount()));
       geometry_->SetAxialGeometry(slices.GetSliceGeometry(0));

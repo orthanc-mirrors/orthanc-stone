@@ -21,7 +21,10 @@
 
 #include "DicomVolumeImage.h"
 
+#include "../StoneException.h"
+
 #include <Core/OrthancException.h>
+
 
 namespace OrthancStone
 {

@@ -158,6 +158,7 @@ namespace OrthancStone
     sequence of resources to be loaded from the server) is modified to 
     take into account this request (this is done in the ExtractedSlice ctor)
     */
-    virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane);
+    virtual IExtractedSlice*
+      ExtractSlice(const CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
   };
 }

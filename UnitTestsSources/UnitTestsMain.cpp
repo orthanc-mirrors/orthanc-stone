@@ -642,7 +642,7 @@ TEST(MessagingToolbox, ParseJson)
 TEST(VolumeImageGeometry, Basic)
 {
   OrthancStone::VolumeImageGeometry g;
-  g.SetSize(10, 20, 30);
+  g.SetSizeInVoxels(10, 20, 30);
   g.SetVoxelDimensions(1, 2, 3);
 
   OrthancStone::Vector p = g.GetCoordinates(0, 0, 0);

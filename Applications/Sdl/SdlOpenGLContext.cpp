@@ -86,12 +86,11 @@ namespace OrthancStone
   }
 
 
-  bool SdlOpenGLContext::IsContextLost() const
+  bool SdlOpenGLContext::IsContextLost()
   {
     return contextLost_;
   }
-
-
+  
   void SdlOpenGLContext::SetLostContext()
   {
     contextLost_ = true;

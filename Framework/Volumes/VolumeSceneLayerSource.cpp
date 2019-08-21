@@ -85,6 +85,7 @@ namespace OrthancStone
   {
     if (configurator_.get() == NULL)
     {
+      LOG(ERROR) << "VolumeSceneLayerSource::GetConfigurator(): (configurator_.get() == NULL)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
       

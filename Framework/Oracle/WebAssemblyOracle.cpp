@@ -308,7 +308,8 @@ namespace OrthancStone
       if (command_.get() == NULL)
       {
         // Cannot call Execute() twice
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);          
+        LOG(ERROR) << "WebAssemblyOracle::Execute(): (command_.get() == NULL)";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
 
       emscripten_fetch_attr_t attr;

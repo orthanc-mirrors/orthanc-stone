@@ -236,6 +236,15 @@ using the following BibTeX entry:
   url="https://doi.org/10.1007/s10278-018-0082-y"
 }
 
+Build the Application Samples
+-----------------------------
+
+**Visual Studio 2008 (v90) **
+
+```
+cmake -G "Visual Studio 9 2008" -DUSE_LEGACY_JSONCPP=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Applications/Samples
+```
+
 Various notes to be sorted
 ---------------------------
 How to build the newest (2019-04-29) SDL samples under Windows, *inside* a

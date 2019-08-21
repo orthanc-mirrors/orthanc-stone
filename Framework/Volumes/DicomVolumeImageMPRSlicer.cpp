@@ -33,6 +33,7 @@ namespace OrthancStone
   {
     if (!valid_)
     {
+      LOG(ERROR) << "DicomVolumeImageMPRSlicer::Slice::CheckValid(): (!valid_)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }

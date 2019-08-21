@@ -50,6 +50,10 @@ namespace OrthancStone
 
     virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const = 0;
 
+    virtual bool IsContextLost() = 0;
+
+    virtual void* DebugGetInternalContext() const = 0;
+
 #if ORTHANC_ENABLE_LOCALE == 1
     virtual void SetFont(size_t index,
       Orthanc::EmbeddedResources::FileResourceId resource,

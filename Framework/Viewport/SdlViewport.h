@@ -87,7 +87,11 @@ namespace OrthancStone
       return context_.GetWindow();
     }
 
+    virtual void* DebugGetInternalContext() const ORTHANC_OVERRIDE;
+
+    virtual bool IsContextLost() ORTHANC_OVERRIDE;
     bool OpenGLContextLost();
+    bool OpenGLContextRestored();
 
     virtual void UpdateSize(unsigned int width, unsigned int height) ORTHANC_OVERRIDE
     {

@@ -140,6 +140,7 @@ namespace Deprecated
 
       if (state_ != State_Init)
       {
+        LOG(ERROR) << "Oracle::PImpl::Start: (state_ != State_Init)";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
       
@@ -158,6 +159,7 @@ namespace Deprecated
 
         if (state_ != State_Started)
         {
+          LOG(ERROR) << "Oracle::PImpl::Stop(): (state_ != State_Started)";
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
         }
 

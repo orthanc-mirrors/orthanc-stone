@@ -48,6 +48,7 @@ namespace OrthancStone
     {
       if (layer_.get() == NULL)
       {
+        LOG(ERROR) << "Scene2D::Item::GetLayer(): (layer_.get() == NULL)";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
       else
@@ -60,6 +61,7 @@ namespace OrthancStone
     {
       if (layer_.get() == NULL)
       {
+        LOG(ERROR) << "Scene2D::Item::ReleaseLayer(): (layer_.get() == NULL)";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
       else

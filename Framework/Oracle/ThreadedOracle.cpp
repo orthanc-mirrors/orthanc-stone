@@ -456,6 +456,7 @@ namespace OrthancStone
 
     if (state_ != State_Setup)
     {
+      LOG(ERROR) << "ThreadedOracle::SetOrthancParameters(): (state_ != State_Setup)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else
@@ -475,6 +476,7 @@ namespace OrthancStone
     }
     else if (state_ != State_Setup)
     {
+      LOG(ERROR) << "ThreadedOracle::SetThreadsCount(): (state_ != State_Setup)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else
@@ -494,6 +496,7 @@ namespace OrthancStone
     }
     else if (state_ != State_Setup)
     {
+      LOG(ERROR) << "ThreadedOracle::SetSleepingTimeResolution(): (state_ != State_Setup)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else
@@ -509,6 +512,7 @@ namespace OrthancStone
 
     if (state_ != State_Setup)
     {
+      LOG(ERROR) << "ThreadedOracle::Start(): (state_ != State_Setup)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else

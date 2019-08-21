@@ -32,6 +32,7 @@ namespace OrthancStone
   {
     if (!HasGeometry())
     {
+      LOG(ERROR) << "DicomVolumeImage::CheckHasGeometry(): (!HasGeometry())";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
@@ -91,6 +92,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(ERROR) << "DicomVolumeImage::GetDicomParameters(): (!HasDicomParameters())";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }      
   }

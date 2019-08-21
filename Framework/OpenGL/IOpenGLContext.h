@@ -34,7 +34,7 @@ namespace OrthancStone
       {
       }
 
-      virtual bool IsContextLost() const = 0;
+      virtual bool IsContextLost() = 0;
 
       virtual void MakeCurrent() = 0;
 

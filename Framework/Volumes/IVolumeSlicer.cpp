@@ -27,12 +27,14 @@ namespace OrthancStone
 {
   uint64_t IVolumeSlicer::InvalidSlice::GetRevision()
   {
+    LOG(ERROR) << "IVolumeSlicer::InvalidSlice::GetRevision()";
     throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
   }
 
   ISceneLayer* IVolumeSlicer::InvalidSlice::CreateSceneLayer(const ILayerStyleConfigurator* configurator,
                                                              const CoordinateSystem3D& cuttingPlane)
   {
+    LOG(ERROR) << "IVolumeSlicer::InvalidSlice::CreateSceneLayer()";
     throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
   }
 }

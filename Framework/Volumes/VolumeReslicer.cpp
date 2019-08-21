@@ -710,6 +710,8 @@ namespace OrthancStone
     }
     else
     {
+      LOG(ERROR) << "VolumeReslicer::GetOutputExtent(): (!success_)";
+
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
@@ -724,6 +726,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(ERROR) << "VolumeReslicer::GetOutputSlice(): (!success_)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
@@ -739,6 +742,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(ERROR) << "VolumeReslicer::ReleaseOutputSlice(): (!success_)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
@@ -828,6 +832,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(ERROR) << "VolumeReslicer::GetPixelSpacing(): (!success_)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }

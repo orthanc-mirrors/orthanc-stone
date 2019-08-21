@@ -46,6 +46,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(ERROR) << "OracleCommandWithPayload::GetPayload(): (!HasPayload())";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
@@ -59,6 +60,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(ERROR) << "OracleCommandWithPayload::ReleasePayload(): (!HasPayload())";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }

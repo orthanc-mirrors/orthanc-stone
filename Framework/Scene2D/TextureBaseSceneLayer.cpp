@@ -111,6 +111,7 @@ namespace OrthancStone
   {
     if (!HasTexture())
     {
+      LOG(ERROR) << "TextureBaseSceneLayer::GetTexture(): (!HasTexture())";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else

@@ -276,6 +276,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(ERROR) << "DicomInstanceParameters::GetRescaleIntercept(): !data_.hasRescale_";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
@@ -289,6 +290,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(ERROR) << "DicomInstanceParameters::GetRescaleSlope(): !data_.hasRescale_";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
@@ -302,6 +304,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(ERROR) << "DicomInstanceParameters::GetDefaultWindowingCenter(): !data_.hasRescale_";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
@@ -315,6 +318,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(ERROR) << "DicomInstanceParameters::GetDefaultWindowingWidth(): !data_.hasRescale_";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }

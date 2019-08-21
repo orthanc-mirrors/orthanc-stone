@@ -140,6 +140,7 @@ namespace OrthancStone
   {
     if (!HasGeometry())
     {
+      LOG(ERROR) << "OrthancSeriesVolumeProgressiveLoader::SeriesGeometry::CheckSliceIndex(size_t index): (!HasGeometry())";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else if (index >= slices_.size())
@@ -204,6 +205,7 @@ namespace OrthancStone
   {
     if (!HasGeometry())
     {
+      LOG(ERROR) << "OrthancSeriesVolumeProgressiveLoader::SeriesGeometry::GetImageGeometry(): (!HasGeometry())";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else
@@ -450,6 +452,7 @@ namespace OrthancStone
   {
     if (active_)
     {
+      LOG(ERROR) << "OrthancSeriesVolumeProgressiveLoader::SetSimultaneousDownloads(): (active_)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else if (count == 0)
@@ -469,6 +472,7 @@ namespace OrthancStone
     if (active_)
     {
 //      LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries NOT ACTIVE! --> ERROR";
+      LOG(ERROR) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries(const std::string& seriesId): (active_)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else

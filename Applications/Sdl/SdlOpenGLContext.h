@@ -50,7 +50,7 @@ namespace OrthancStone
       return window_;
     }
 
-    virtual bool IsContextLost() const ORTHANC_OVERRIDE;
+    virtual bool IsContextLost() ORTHANC_OVERRIDE;
 
     virtual void SetLostContext() ORTHANC_OVERRIDE;
     virtual void RestoreLostContext() ORTHANC_OVERRIDE;

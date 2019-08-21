@@ -45,7 +45,7 @@ namespace OrthancStone
 
   GetOrthancImageCommand::GetOrthancImageCommand() :
     uri_("/"),
-    timeout_(60),
+    timeout_(600),
     hasExpectedFormat_(false)
   {
   }

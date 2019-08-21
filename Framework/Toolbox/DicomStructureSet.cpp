@@ -580,6 +580,7 @@ namespace OrthancStone
     if (referencedSlices_.find(sopInstanceUid) != referencedSlices_.end())
     {
       // This geometry is already known
+      LOG(ERROR) << "DicomStructureSet::AddReferencedSlice(): (referencedSlices_.find(sopInstanceUid) != referencedSlices_.end()). sopInstanceUid = " << sopInstanceUid;
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else
@@ -659,7 +660,7 @@ namespace OrthancStone
       {
         if (!polygon->UpdateReferencedSlice(referencedSlices_))
         {
-          LOG(ERROR) << "Missing information about referenced instance: "
+          LOG(ERROR) << "DicomStructureSet::CheckReferencedSlices(): missing information about referenced instance: "
                      << polygon->GetSopInstanceUid();
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
         }

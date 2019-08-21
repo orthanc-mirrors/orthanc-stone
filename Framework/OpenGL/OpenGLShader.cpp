@@ -127,6 +127,7 @@ namespace OrthancStone
       }
       else
       {
+        LOG(ERROR) << "OpenGLShader::Release(): (!isValid_)";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
     }

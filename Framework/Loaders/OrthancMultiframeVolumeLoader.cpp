@@ -150,6 +150,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(ERROR) << "OrthancMultiframeVolumeLoader::GetInstanceId(): (!IsActive())";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }

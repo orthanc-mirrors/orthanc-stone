@@ -56,7 +56,7 @@ namespace OrthancStone
     public:
       WebAssemblyOpenGLContext(const std::string& canvas);
 
-      virtual bool IsContextLost() const ORTHANC_OVERRIDE;
+      virtual bool IsContextLost() ORTHANC_OVERRIDE;
 
       virtual void SetLostContext() ORTHANC_OVERRIDE;
       virtual void RestoreLostContext() ORTHANC_OVERRIDE;
@@ -70,6 +70,11 @@ namespace OrthancStone
       virtual unsigned int GetCanvasHeight() const ORTHANC_OVERRIDE;
 
       virtual void* DebugGetInternalContext() const ORTHANC_OVERRIDE;
+
+      /**
+      Returns true if the underlying context has been successfully recreated
+      */
+      //bool TryRecreate();
 
       void UpdateSize();
 

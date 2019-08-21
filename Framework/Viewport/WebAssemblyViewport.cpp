@@ -86,9 +86,26 @@ namespace OrthancStone
   {
     try
     {
-      // the compositor COULD be dead!
-      if (GetCompositor())
+      if (!GetCompositor())
+      {
+        // this block was added because of (perceived?) bugs in the 
+        // browser where the WebGL contexts are NOT automatically restored 
+        // after being lost. 
+        // the WebGL context has been lost. Sce 
+
+        //LOG(ERROR) << "About to call WebAssemblyOpenGLContext::TryRecreate().";
+        //LOG(ERROR) << "Before calling it, isContextLost == " << context_.IsContextLost();
+
+        if (!context_.IsContextLost()) {
+          LOG(ERROR) << "Context restored!";
+          //LOG(ERROR) << "After calling it, isContextLost == " << context_.IsContextLost();
+          RestoreCompositor();
+          UpdateSize();
+        }
+      }
+      if (GetCompositor()) {
         GetCompositor()->Refresh();
+      }
     }
     catch (const OpenGLContextLostException& e)
     {
@@ -103,6 +120,11 @@ namespace OrthancStone
     }
   }
   
+  bool WebAssemblyOpenGLViewport::IsContextLost()
+  {
+    return context_.IsContextLost();
+  }
+
   void WebAssemblyOpenGLViewport::RestoreCompositor()
   {
     // the context must have been restored!
@@ -127,13 +149,27 @@ namespace OrthancStone
   bool WebAssemblyOpenGLViewport::OpenGLContextRestored()
   {
     LOG(ERROR) << "WebAssemblyOpenGLViewport::OpenGLContextRestored() for canvas: " << GetCanvasIdentifier();
-    RestoreCompositor();
-    UpdateSize();
+    
+    // maybe the context has already been restored by other means (the 
+    // Refresh() function)
+    if (!GetCompositor())
+    {
+      RestoreCompositor();
+      UpdateSize();
+    }
     return false;
+  }
+
+  void* WebAssemblyOpenGLViewport::DebugGetInternalContext() const
+  {
+    return context_.DebugGetInternalContext();
   }
 
   void WebAssemblyOpenGLViewport::RegisterContextCallbacks()
   {
+#if 0
+    // DISABLED ON 2019-08-20 and replaced by external JS calls because I could
+    // not get emscripten API to work
     // TODO: what's the impact of userCapture=true ?
     const char* canvasId = GetCanvasIdentifier().c_str();
     void* that = reinterpret_cast<void*>(this);
@@ -148,6 +184,7 @@ namespace OrthancStone
     //  LOG(ERROR) << msg;
     //  ORTHANC_ASSERT(false, msg.c_str());
     //}
+
     status = emscripten_set_webglcontextrestored_callback(canvasId, that, true, WebAssemblyOpenGLViewport_OpenGLContextRestored_callback);
     if (status != EMSCRIPTEN_RESULT_SUCCESS)
     {
@@ -158,6 +195,7 @@ namespace OrthancStone
       ORTHANC_ASSERT(false, msg.c_str());
     }
     LOG(TRACE) << "WebAssemblyOpenGLViewport::RegisterContextCallbacks() SUCCESS!!!";
+#endif
   }
 
   WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvas) :
@@ -209,5 +247,4 @@ namespace OrthancStone
     LOG(INFO) << "refreshing cairo viewport, TODO: blit to the canvans.getContext('2d')";
     GetCompositor()->Refresh();
   }
-
 }

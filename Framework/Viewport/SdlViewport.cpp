@@ -47,7 +47,22 @@ namespace OrthancStone
     compositor_.reset(new OpenGLCompositor(context_, GetScene()));
   }
 
+
+  void* SdlOpenGLViewport::DebugGetInternalContext() const
+  {
+    return context_.DebugGetInternalContext();
+  }
+
+  bool SdlOpenGLViewport::IsContextLost() {
+    return context_.IsContextLost();
+  }
+
   bool SdlOpenGLViewport::OpenGLContextLost()
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+  }
+
+  bool SdlOpenGLViewport::OpenGLContextRestored()
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }

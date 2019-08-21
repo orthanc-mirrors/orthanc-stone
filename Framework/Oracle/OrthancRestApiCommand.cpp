@@ -72,6 +72,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(ERROR) << "OrthancRestApiCommand::GetBody(): method_  not _Post or _Put";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }

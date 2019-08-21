@@ -72,6 +72,7 @@ namespace OrthancStone
       }
       else
       {
+        LOG(ERROR) << "SlicesSorter::SliceWithDepth::GetPayload(): (!HasPayload())";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
     }
@@ -152,6 +153,7 @@ namespace OrthancStone
   {
     if (!hasNormal_)
     {
+      LOG(ERROR) << "SlicesSorter::SortInternal(): (!hasNormal_)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
 
@@ -305,6 +307,7 @@ namespace OrthancStone
 
     if (spacingZ <= 0)
     {
+      LOG(ERROR) << "SlicesSorter::ComputeSpacingBetweenSlices(): (spacingZ <= 0)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls,
                                       "Please call the Sort() method before");
     }

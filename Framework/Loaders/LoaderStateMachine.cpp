@@ -67,6 +67,7 @@ namespace OrthancStone
   {
     if (active_)
     {
+      LOG(ERROR) << "LoaderStateMachine::Start() called while active_ is true";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
 
@@ -106,12 +107,11 @@ namespace OrthancStone
 
   void LoaderStateMachine::HandleExceptionMessage(const OracleCommandExceptionMessage& message)
   {
-    LOG(ERROR) << "Error in the state machine, stopping all processing";
+    LOG(ERROR) << "LoaderStateMachine::HandleExceptionMessage: error in the state machine, stopping all processing";
     LOG(ERROR) << "Error: " << message.GetException().What() << " Details: " <<
       message.GetException().GetDetails();
       Clear();
   }
-
 
   template <typename T>
   void LoaderStateMachine::HandleSuccessMessage(const T& message)
@@ -163,6 +163,7 @@ namespace OrthancStone
   {
     if (active_)
     {
+      LOG(ERROR) << "LoaderStateMachine::SetSimultaneousDownloads called while active_ is true";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else if (count == 0)

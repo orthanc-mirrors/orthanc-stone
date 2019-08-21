@@ -207,6 +207,7 @@ namespace OrthancStone
       {
         if (isEmpty_)
         {
+          LOG(ERROR) << "OpenGLLinesProgram -- AddTriangles: (isEmpty_)";
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
         }
 
@@ -363,6 +364,7 @@ namespace OrthancStone
     {
       if (IsEmpty())
       {
+        LOG(ERROR) << "OpenGLLinesProgram::Data::GetVerticesBuffer(): (IsEmpty())";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
       else
@@ -376,6 +378,7 @@ namespace OrthancStone
     {
       if (IsEmpty())
       {
+        LOG(ERROR) << "OpenGLLinesProgram::Data::GetMiterDirectionsBuffer(): (IsEmpty())";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
       else
@@ -389,6 +392,7 @@ namespace OrthancStone
     {
       if (IsEmpty())
       {
+        LOG(ERROR) << "OpenGLLinesProgram::Data::GetColorsBuffer(): (IsEmpty())";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
       else

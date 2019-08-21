@@ -157,6 +157,7 @@ namespace OrthancStone
     {
       if (IsEmpty())
       {
+        LOG(ERROR) << "OpenGLTextProgram::Data::GetSceneLocationsBuffer(): (IsEmpty())";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
       else
@@ -169,6 +170,7 @@ namespace OrthancStone
     {
       if (IsEmpty())
       {
+        LOG(ERROR) << "OpenGLTextProgram::Data::GetTextureLocationsBuffer(): (IsEmpty())";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
       else

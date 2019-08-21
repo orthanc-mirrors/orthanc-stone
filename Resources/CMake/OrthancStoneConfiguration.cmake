@@ -245,9 +245,8 @@ endif()
 #####################################################################
 
 set(APPLICATIONS_SOURCES
-    ${ORTHANC_STONE_ROOT}/Applications/IStoneApplication.h
-    ${ORTHANC_STONE_ROOT}/Applications/StoneApplicationContext.cpp
-    )
+  ${ORTHANC_STONE_ROOT}/Applications/IStoneApplication.h
+  )
 
 if (NOT ORTHANC_SANDBOXED)
   set(PLATFORM_SOURCES
@@ -257,12 +256,12 @@ if (NOT ORTHANC_SANDBOXED)
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceDeleteCommand.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/DelayedCallCommand.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/Oracle.cpp
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleWebService.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleDelayedCallExecutor.h
     )
 
   if (ENABLE_STONE_DEPRECATED)
     list(APPEND PLATFORM_SOURCES
+      ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleWebService.cpp
       ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/CairoFont.cpp
       )
   endif()
@@ -329,6 +328,7 @@ endif()
 
 if (ENABLE_STONE_DEPRECATED)
   list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/StoneApplicationContext.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/CircleMeasureTracker.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/ColorFrameRenderer.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/DicomSeriesVolumeSlicer.cpp
@@ -373,6 +373,22 @@ if (ENABLE_STONE_DEPRECATED)
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/WorldSceneWidget.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/ZoomMouseTracker.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/dev.h
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyAlphaLayer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyDicomLayer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerCropTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMaskTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMoveTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerResizeTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerRotateTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyMaskLayer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyScene.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneReader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneWriter.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyTextLayer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWindowingTracker.cpp
     )
 endif()
 
@@ -426,22 +442,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancWebViewerJpegCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/OracleCommandWithPayload.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/OrthancRestApiCommand.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyAlphaLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyDicomLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerCropTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMaskTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerMoveTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerResizeTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayerRotateTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyMaskLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyScene.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneCommand.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneReader.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographySceneWriter.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyTextLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyWindowingTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CairoCompositor.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/FloatTextureSceneLayer.cpp

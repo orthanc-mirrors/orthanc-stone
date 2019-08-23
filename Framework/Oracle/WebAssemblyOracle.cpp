@@ -237,13 +237,23 @@ namespace OrthancStone
     {
       std::auto_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
       
-      LOG(ERROR) << "Fetching " << fetch->url << " failed, HTTP failure status code: " << fetch->status;
+      const size_t kEmscriptenStatusTextSize = sizeof(emscripten_fetch_t::statusText);
+      char message[kEmscriptenStatusTextSize + 1];
+      memcpy(message, fetch->statusText, kEmscriptenStatusTextSize);
+      message[kEmscriptenStatusTextSize] = 0;
+
+      LOG(ERROR) << "Fetching " << fetch->url
+        << " failed, HTTP failure status code: " << fetch->status
+        << " | statusText = " << message
+        << " | numBytes = " << fetch->numBytes
+        << " | totalBytes = " << fetch->totalBytes
+        << " | readyState = " << fetch->readyState;
 
       /**
        * TODO - The following code leads to an infinite recursion, at
        * least with Firefox running on incognito mode => WHY?
        **/      
-      //emscripten_fetch_close(fetch); // Also free data on failure.
+      emscripten_fetch_close(fetch); // Also free data on failure.
     }
   };
     

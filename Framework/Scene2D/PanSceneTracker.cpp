@@ -37,17 +37,26 @@ namespace OrthancStone
   void PanSceneTracker::PointerMove(const PointerEvent& event)
   {
     ScenePoint2D p = event.GetMainPosition().Apply(originalCanvasToScene_);
-      
-    GetController()->SetSceneToCanvasTransform(
-      AffineTransform2D::Combine(
-        originalSceneToCanvas_,
-        AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
-                                        p.GetY() - pivot_.GetY())));
+
+      // The controller is a weak pointer. It could be deleted when the
+      // tracker is still alive (for instance, because of a lost WebGL
+      // context)
+      if(GetController().get() != NULL)
+      {
+      GetController()->SetSceneToCanvasTransform(
+        AffineTransform2D::Combine(
+          originalSceneToCanvas_,
+          AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
+                                          p.GetY() - pivot_.GetY())));
+      }
   }
 
   void PanSceneTracker::Cancel()
   {
-    GetController()->SetSceneToCanvasTransform(originalSceneToCanvas_);
+      if(GetController().get() != NULL)
+      {
+        GetController()->SetSceneToCanvasTransform(originalSceneToCanvas_);
+      }
   }
 
 }

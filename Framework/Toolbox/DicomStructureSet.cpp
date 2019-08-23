@@ -581,7 +581,11 @@ namespace OrthancStone
     {
       // This geometry is already known
       LOG(ERROR) << "DicomStructureSet::AddReferencedSlice(): (referencedSlices_.find(sopInstanceUid) != referencedSlices_.end()). sopInstanceUid = " << sopInstanceUid;
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      
+      // TODO: the following assertion has been disabled on 20190822 by BGO
+      // because it occurred from time to time. Since it wrecked havoc on the
+      
+      //throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else
     {

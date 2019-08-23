@@ -76,17 +76,26 @@ namespace OrthancStone
 
       double zoom = pow(2.0, z);
 
-      GetController()->SetSceneToCanvasTransform(
-        AffineTransform2D::Combine(
-          AffineTransform2D::CreateScaling(zoom, zoom),
-          originalSceneToCanvas_));
+      // The controller is a weak pointer. It could be deleted when the
+      // tracker is still alive (for instance, because of a lost WebGL
+      // context)
+      if(GetController().get() != NULL)
+      {
+        GetController()->SetSceneToCanvasTransform(
+          AffineTransform2D::Combine(
+            AffineTransform2D::CreateScaling(zoom, zoom),
+            originalSceneToCanvas_));
 
-      aligner_.Apply();
+        aligner_.Apply();
+      }
     }
   }
 
   void ZoomSceneTracker::Cancel()
   {
-    GetController()->SetSceneToCanvasTransform(originalSceneToCanvas_);
+      if(GetController().get() != NULL)
+      {
+        GetController()->SetSceneToCanvasTransform(originalSceneToCanvas_);
+      }
   }
 }

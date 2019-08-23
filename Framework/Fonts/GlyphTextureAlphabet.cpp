@@ -28,8 +28,17 @@
 #include <Core/Images/ImageProcessing.h>
 #include <Core/OrthancException.h>
 
-#include <boost/math/special_functions/round.hpp>
+#ifdef __EMSCRIPTEN__
+/* 
+Avoid this error:
+.../boost/math/special_functions/round.hpp:86:12: warning: implicit conversion from 'std::__2::numeric_limits<int>::type' (aka 'int') to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-int-float-conversion]
+.../boost/math/special_functions/round.hpp:93:11: note: in instantiation of function template specialization 'boost::math::iround<float, boost::math::policies::policy<boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy> >' requested here
+.../orthanc-stone/Framework/Fonts/GlyphTextureAlphabet.cpp:92:28: note: in instantiation of function template specialization 'boost::math::iround<float>' requested here
+*/
+#pragma GCC diagnostic ignored "-Wimplicit-int-float-conversion"
+#endif 
 
+#include <boost/math/special_functions/round.hpp>
 
 namespace OrthancStone
 {

@@ -50,18 +50,28 @@ namespace OrthancStone
         isFirst_ = false;
       }
 
-      GetController()->SetSceneToCanvasTransform(
-        AffineTransform2D::Combine(
-          AffineTransform2D::CreateRotation(a - referenceAngle_),
-          originalSceneToCanvas_));
-      
-      aligner_.Apply();
+      // The controller is a weak pointer. It could be deleted when the
+      // tracker is still alive (for instance, because of a lost WebGL
+      // context that triggers a recreation of the viewport)
+      if(GetController().get() != NULL)
+      {
+        GetController()->SetSceneToCanvasTransform(
+          AffineTransform2D::Combine(
+            AffineTransform2D::CreateRotation(a - referenceAngle_),
+            originalSceneToCanvas_));
+        
+        aligner_.Apply();
+      }
     }
   }
 
   void RotateSceneTracker::Cancel()
   {
-    GetController()->SetSceneToCanvasTransform(originalSceneToCanvas_);
+      // See remark above
+      if(GetController().get() != NULL)
+      {
+        GetController()->SetSceneToCanvasTransform(originalSceneToCanvas_);
+      }
   }
 
 }

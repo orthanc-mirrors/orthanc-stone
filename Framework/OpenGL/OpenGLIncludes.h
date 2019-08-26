@@ -41,9 +41,19 @@
 #endif
 
 #if ORTHANC_ENABLE_SDL == 1
-#include <SDL_video.h>
+# include <SDL_video.h>
 
-#define ORTHANC_OPENGL_CHECK(name) \
+# ifdef NDEBUG
+
+// glGetError is very expensive!
+
+#   define ORTHANC_OPENGL_CHECK(name)
+#   define ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT(msg)
+#   define ORTHANC_CHECK_CURRENT_CONTEXT(context)
+
+# else 
+
+#   define ORTHANC_OPENGL_CHECK(name) \
 if(true)                                                                                                                                \
 {                                                                                                                                       \
   GLenum error = glGetError();                                                                                                          \
@@ -54,14 +64,14 @@ if(true)                                                                        
   }                                                                                                                                     \
 } else (void)0
 
-#define ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT(msg)                          \
+#   define ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT(msg)                          \
 if(true)                                                                   \
 {                                                                          \
   SDL_GLContext ctx = SDL_GL_GetCurrentContext();                          \
   LOG(TRACE) << msg << " | Current OpenGL context is " << std::hex << ctx; \
 } else (void)0
 
-#define ORTHANC_CHECK_CURRENT_CONTEXT(context)                                                                                                         \
+#   define ORTHANC_CHECK_CURRENT_CONTEXT(context)                                                                                                         \
 if(true)                                                                                                                                               \
 {                                                                                                                                                      \
   SDL_GLContext actualCtx = SDL_GL_GetCurrentContext();                                                                                                \
@@ -71,6 +81,8 @@ if(true)                                                                        
     LOG(ERROR) << "Expected context was " << std::hex << expectedCtx << " while actual context is " << std::hex << actualCtx;                          \
   }                                                                                                                                                    \
 } else (void)0
+
+# endif
 
 #endif
 

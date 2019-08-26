@@ -64,6 +64,7 @@ namespace OrthancStone
 
   private:
     
+    void DebugDisplayObjRefCounts();
 #if ORTHANC_ENABLE_WASM == 1
     WebAssemblyOracle& oracle_;
 #else

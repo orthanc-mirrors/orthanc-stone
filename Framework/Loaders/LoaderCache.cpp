@@ -240,10 +240,36 @@ namespace OrthancStone
 #if ORTHANC_ENABLE_WASM != 1
     LockingEmitter::WriterLock lock(lockingEmitter_);
 #endif
+    
+//#ifndef NDEBUG
+    // ISO way of checking for debug builds
+    DebugDisplayObjRefCounts();
+//#endif
     seriesVolumeProgressiveLoaders_.clear();
     multiframeVolumeLoaders_.clear();
     dicomVolumeImageMPRSlicers_.clear();
     dicomStructureSetLoaders_.clear();
   }
 
+
+  template<typename T> void DebugDisplayObjRefCountsInMap(
+    const std::string& name, const std::map<std::string, boost::shared_ptr<T> >& myMap)
+  {
+    LOG(TRACE) << "Map \"" << name << "\" ref counts:";
+    size_t i = 0;
+    for (const auto& it : myMap)
+    {
+      auto ptr = it.second;
+      LOG(TRACE) << "  element #" << i << ": ref count = " << it.second.use_count();
+      i++;
+    }
+  }
+
+  void LoaderCache::DebugDisplayObjRefCounts()
+  {
+    DebugDisplayObjRefCountsInMap("seriesVolumeProgressiveLoaders_", seriesVolumeProgressiveLoaders_);
+    DebugDisplayObjRefCountsInMap("multiframeVolumeLoaders_", multiframeVolumeLoaders_);
+    DebugDisplayObjRefCountsInMap("dicomVolumeImageMPRSlicers_", dicomVolumeImageMPRSlicers_);
+    DebugDisplayObjRefCountsInMap("dicomStructureSetLoaders_", dicomStructureSetLoaders_);
+  }
 }

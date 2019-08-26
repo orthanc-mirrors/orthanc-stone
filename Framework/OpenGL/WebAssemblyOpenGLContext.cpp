@@ -71,7 +71,7 @@ namespace OrthancStone
 
       bool IsContextLost()
       {
-        LOG(TRACE) << "IsContextLost() for context " << std::hex << context_ << std::dec;
+        //LOG(TRACE) << "IsContextLost() for context " << std::hex << context_ << std::dec;
         bool apiFlag = (emscripten_is_webgl_context_lost(context_) != 0);
         isContextLost_ = apiFlag;
         return isContextLost_;

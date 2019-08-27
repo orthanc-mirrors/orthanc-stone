@@ -24,8 +24,31 @@
 #include "../Scene2D/PolylineSceneLayer.h"
 #include "../Toolbox/GeometryToolbox.h"
 
+#if 0
+bool logbgo233 = false;
+bool logbgo115 = false;
+#endif
+
 namespace OrthancStone
 {
+
+#if 0
+  void DumpDicomMap(std::ostream& o, const Orthanc::DicomMap& dicomMap)
+  {
+    using namespace std;
+    //ios_base::fmtflags state = o.flags();
+    //o.flags(ios::right | ios::hex);
+    //o << "(" << setfill('0') << setw(4) << tag.GetGroup()
+    //  << "," << setw(4) << tag.GetElement() << ")";
+    //o.flags(state);
+    Json::Value val;
+    dicomMap.Serialize(val);
+    o << val;
+    //return o;
+  }
+#endif
+
+
   class DicomStructureSetLoader::AddReferencedInstance : public LoaderStateMachine::State
   {
   private:
@@ -41,6 +64,10 @@ namespace OrthancStone
 
     virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
     {
+#if 0
+      if (logbgo115)
+        LOG(TRACE) << "DicomStructureSetLoader::AddReferencedInstance::Handle() (SUCCESS)";
+#endif
       Json::Value tags;
       message.ParseJsonBody(tags);
         
@@ -48,6 +75,18 @@ namespace OrthancStone
       dicom.FromDicomAsJson(tags);
 
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
+
+#if 0
+      {
+        std::stringstream ss;
+        //DumpDicomMap(ss, dicom);
+        std::string dicomMapStr = ss.str();
+        if (logbgo115)
+          LOG(TRACE) << "  DicomStructureSetLoader::AddReferencedInstance::Handle() about to call AddReferencedSlice on dicom = " << dicomMapStr;
+      }
+#endif
+
+
       loader.content_->AddReferencedSlice(dicom);
 
       loader.countProcessedInstances_ ++;
@@ -80,6 +119,9 @@ namespace OrthancStone
 
     virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
     {
+#if 0
+      LOG(TRACE) << "DicomStructureSetLoader::LookupInstance::Handle() (SUCCESS)";
+#endif
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
 
       Json::Value lookup;
@@ -108,11 +150,24 @@ namespace OrthancStone
       const std::string instanceId = lookup[0]["ID"].asString();
 
       {
+#if 0
+        if(logbgo115)
+          LOG(TRACE) << "DicomStructureSetLoader::LookupInstance::Handle() (SUCCESS)";
+#endif
         std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
         command->SetHttpHeader("Accept-Encoding", "gzip");
-        command->SetUri("/instances/" + instanceId + "/tags");
+        std::string uri = "/instances/" + instanceId + "/tags";
+        command->SetUri(uri);
         command->SetPayload(new AddReferencedInstance(loader, instanceId));
+#if 0
+        if (logbgo115)
+          LOG(TRACE) << "  DicomStructureSetLoader::LookupInstance::Handle() about to schedule request with AddReferencedInstance subsequent command on uri \"" << uri << "\"";
+#endif
         Schedule(command.release());
+#if 0
+        if (logbgo115)
+          LOG(TRACE) << "  DicomStructureSetLoader::LookupInstance::Handle() request+command scheduled";
+#endif
       }
     }
   };
@@ -126,8 +181,13 @@ namespace OrthancStone
     {
     }
 
+
     virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
     {
+#if 0
+      if (logbgo115)
+        LOG(TRACE) << "DicomStructureSetLoader::LoadStructure::Handle() (SUCCESS)";
+#endif
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
         
       {
@@ -144,12 +204,30 @@ namespace OrthancStone
              it = instances.begin(); it != instances.end(); ++it)
       {
         std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+#if 0
+        if (logbgo115)
+          LOG(TRACE) << "  DicomStructureSetLoader::LoadStructure::Handle() about to schedule /tools/lookup command with LookupInstance on result";
+#endif
         command->SetUri("/tools/lookup");
         command->SetMethod(Orthanc::HttpMethod_Post);
         command->SetBody(*it);
+        command->SetHttpHeader("pragma", "no-cache");
+        command->SetHttpHeader("cache-control", "no-cache");
+#if 0
+        std::string itStr(*it);
+        if(itStr == "1.3.12.2.1107.5.1.4.66930.30000018062412550879500002198") {
+          if (logbgo115)
+            LOG(ERROR) << "******** BOGUS LOOKUPS FROM NOW ON ***********";
+          logbgo233 = true;
+        }
+#endif
         command->SetPayload(new LookupInstance(loader, *it));
         //LOG(TRACE) << "About to schedule a /tools/lookup POST request. URI = " << command->GetUri() << " Body size = " << (*it).size() << " Body = " << (*it) << "\n";
         Schedule(command.release());
+#if 0
+        if (logbgo115)
+          LOG(TRACE) << "  DicomStructureSetLoader::LoadStructure::Handle() request scheduled. Command will be LookupInstance and post body is " << *it;
+#endif
       }
     }
   };
@@ -250,9 +328,19 @@ namespace OrthancStone
     {
       std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
-      command->SetUri("/instances/" + instanceId + "/tags?ignore-length=3006-0050");
+
+      std::string uri = "/instances/" + instanceId + "/tags?ignore-length=3006-0050";
+#if 0
+      if (logbgo115)
+        LOG(TRACE) << "DicomStructureSetLoader::LoadInstance() instanceId = " << instanceId << " | uri = \"" << uri << "\"";
+#endif
+      command->SetUri(uri);
       command->SetPayload(new LoadStructure(*this));
       Schedule(command.release());
+#if 0
+      if (logbgo115)
+        LOG(TRACE) << "DicomStructureSetLoader::LoadInstance() command (with LoadStructure) scheduled.";
+#endif
     }
   }
 

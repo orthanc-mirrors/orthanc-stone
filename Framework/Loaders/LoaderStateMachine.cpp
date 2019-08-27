@@ -23,6 +23,11 @@
 
 #include <Core/OrthancException.h>
 
+#if 0
+extern bool logbgo233;
+extern bool logbgo115;
+#endif
+
 namespace OrthancStone
 {
   void LoaderStateMachine::State::Handle(const OrthancRestApiCommand::SuccessMessage& message)
@@ -45,6 +50,13 @@ namespace OrthancStone
 
   void LoaderStateMachine::Schedule(OracleCommandWithPayload* command)
   {
+#if 0
+    if (logbgo233) {
+      if (logbgo115)
+        LOG(TRACE) << "  LoaderStateMachine::Schedule()";
+    }
+#endif
+
     std::auto_ptr<OracleCommandWithPayload> protection(command);
 
     if (command == NULL)
@@ -58,7 +70,14 @@ namespace OrthancStone
                                       "The payload must contain the next state");
     }
 
+#if 0
+    if (logbgo233) {
+      if (logbgo115)
+        LOG(TRACE) << "  * LoaderStateMachine::Schedule(): adding command with addr: " << std::hex << protection.get() << std::dec << " pendingCommands_.size() is now : " << pendingCommands_.size()+1;
+    }
+#endif
     pendingCommands_.push_back(protection.release());
+
     Step();
   }
 
@@ -67,7 +86,7 @@ namespace OrthancStone
   {
     if (active_)
     {
-      LOG(ERROR) << "LoaderStateMachine::Start() called while active_ is true";
+      LOG(TRACE) << "LoaderStateMachine::Start() called while active_ is true";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
 
@@ -82,13 +101,36 @@ namespace OrthancStone
 
   void LoaderStateMachine::Step()
   {
+#if 0
+    if (logbgo115)
+      LOG(TRACE) << "    LoaderStateMachine::Step(): pendingCommands_.size() =  " << pendingCommands_.size();
+#endif
     if (!pendingCommands_.empty() &&
         activeCommands_ < simultaneousDownloads_)
     {
-      oracle_.Schedule(*this, pendingCommands_.front());
+
+      IOracleCommand* nextCommand = pendingCommands_.front();
+
+#if 0
+      if (logbgo233) {
+        if (logbgo115)
+          LOG(TRACE) << "    * LoaderStateMachine::Step(): activeCommands_ (" << activeCommands_ << ") < simultaneousDownloads_ (" << simultaneousDownloads_ << ") --> will Schedule command addr " << std::hex << nextCommand << std::dec;
+      }
+#endif
+
+      oracle_.Schedule(*this, nextCommand);
       pendingCommands_.pop_front();
 
       activeCommands_++;
+    }
+    else
+    {
+#if 0
+      if (logbgo233) {
+        if (logbgo115)
+          LOG(TRACE) << "    * pendingCommands_.size() == " << pendingCommands_.size() << " LoaderStateMachine::Step(): activeCommands_ (" << activeCommands_ << ") >= simultaneousDownloads_ (" << simultaneousDownloads_ << ") --> will NOT Schedule anything";
+      }
+#endif
     }
   }
 

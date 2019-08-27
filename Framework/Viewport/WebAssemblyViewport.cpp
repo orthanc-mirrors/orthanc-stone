@@ -97,7 +97,7 @@ namespace OrthancStone
         //LOG(ERROR) << "Before calling it, isContextLost == " << context_.IsContextLost();
 
         if (!context_.IsContextLost()) {
-          LOG(ERROR) << "Context restored!";
+          LOG(TRACE) << "Context restored!";
           //LOG(ERROR) << "After calling it, isContextLost == " << context_.IsContextLost();
           RestoreCompositor();
           UpdateSize();

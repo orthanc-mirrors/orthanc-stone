@@ -257,10 +257,10 @@ namespace OrthancStone
   {
     LOG(TRACE) << "Map \"" << name << "\" ref counts:";
     size_t i = 0;
-    for (const auto& it : myMap)
+    for (typename std::map<std::string, boost::shared_ptr<T> >::const_iterator 
+           it = myMap.begin(); it != myMap.end(); ++it)
     {
-      auto ptr = it.second;
-      LOG(TRACE) << "  element #" << i << ": ref count = " << it.second.use_count();
+      LOG(TRACE) << "  element #" << i << ": ref count = " << it->second.use_count();
       i++;
     }
   }

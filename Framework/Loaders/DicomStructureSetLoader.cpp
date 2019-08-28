@@ -211,7 +211,7 @@ namespace OrthancStone
         command->SetUri("/tools/lookup");
         command->SetMethod(Orthanc::HttpMethod_Post);
         command->SetBody(*it);
-        command->SetHttpHeader("pragma", "no-cache");
+        //command->SetHttpHeader("pragma", "no-cache");
         command->SetHttpHeader("cache-control", "no-cache");
 #if 0
         std::string itStr(*it);

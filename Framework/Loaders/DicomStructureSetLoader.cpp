@@ -211,8 +211,12 @@ namespace OrthancStone
         command->SetUri("/tools/lookup");
         command->SetMethod(Orthanc::HttpMethod_Post);
         command->SetBody(*it);
+        
+        // The following headers have been commented out because
+        // they were causing issues in the reverse proxy in a dev scenario.
+        // They should NOT be required for POST requests
         //command->SetHttpHeader("pragma", "no-cache");
-        command->SetHttpHeader("cache-control", "no-cache");
+        //command->SetHttpHeader("cache-control", "no-cache");
 #if 0
         std::string itStr(*it);
         if(itStr == "1.3.12.2.1107.5.1.4.66930.30000018062412550879500002198") {

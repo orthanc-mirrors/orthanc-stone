@@ -405,7 +405,7 @@ namespace OrthancStone
 
       strcpy(attr.requestMethod, method);
 
-      attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
+      attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY | EMSCRIPTEN_FETCH_REPLACE;
       attr.onsuccess = FetchContext::SuccessCallback;
       attr.onerror = FetchContext::FailureCallback;
       attr.timeoutMSecs = timeout_ * 1000;

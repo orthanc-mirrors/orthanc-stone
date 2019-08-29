@@ -24,23 +24,35 @@
 #include "MessageBroker.h"
 #include "IMessage.h"
 
+#include <Core/Toolbox.h>
+
 namespace OrthancStone 
 {
   class IObserver : public boost::noncopyable
   {
   private:
     MessageBroker&  broker_;
-
+    // the following is a UUID that is used to disambiguate different observers
+    // that may have the same address
+    std::string     fingerprint_;
   public:
-    IObserver(MessageBroker& broker) :
-      broker_(broker)
+    IObserver(MessageBroker& broker)
+      : broker_(broker)
+      , fingerprint_(Orthanc::Toolbox::GenerateUuid())
     {
+      LOG(TRACE) << "IObserver(" << std::hex << this << std::dec << ")::IObserver : fingerprint_ == " << fingerprint_;
       broker_.Register(*this);
     }
 
     virtual ~IObserver()
     {
+      LOG(TRACE) << "IObserver(" << std::hex << this << std::dec << ")::~IObserver : fingerprint_ == " << fingerprint_;
       broker_.Unregister(*this);
+    }
+
+    const std::string& GetFingerprint() const
+    {
+      return fingerprint_;
     }
 
     MessageBroker& GetBroker() const

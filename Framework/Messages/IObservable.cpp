@@ -21,6 +21,7 @@
 
 #include "IObservable.h"
 
+#include <Core/Logging.h>
 #include <Core/OrthancException.h>
 
 #include <cassert>

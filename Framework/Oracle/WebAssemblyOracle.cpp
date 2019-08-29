@@ -99,6 +99,7 @@ namespace OrthancStone
   private:
     Emitter                        emitter_;
     const IObserver&               receiver_;
+    std::string                    receiverFingerprint_;
     std::auto_ptr<IOracleCommand>  command_;
     std::string                    expectedContentType_;
 
@@ -109,6 +110,7 @@ namespace OrthancStone
                  const std::string& expectedContentType) :
       emitter_(oracle),
       receiver_(receiver),
+      receiverFingerprint_(receiver.GetFingerprint()),
       command_(command),
       expectedContentType_(expectedContentType)
     {
@@ -116,6 +118,16 @@ namespace OrthancStone
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
+    }
+
+    bool IsFingerprintOK() const
+    {
+      bool ok = receiverFingerprint_ == receiver_.GetFingerprint();
+      if (!ok)
+      {
+        LOG(TRACE) << "IsFingerprintOK returned false. receiverFingerprint_ = " << receiverFingerprint_ << " | receiver_(" << std::hex << (&receiver_) << std::dec << ").GetFingerprint() = " << receiver_.GetFingerprint();
+      }
+      return ok;
     }
 
     const std::string& GetExpectedContentType() const
@@ -195,6 +207,7 @@ namespace OrthancStone
        **/
       
       std::auto_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
+
       if (fetch->userData == NULL)
       {
         LOG(ERROR) << "WebAssemblyOracle::FetchContext::SuccessCallback fetch->userData is NULL!!!!!!!";
@@ -234,49 +247,57 @@ namespace OrthancStone
 
       /**
        * Secondly, use the retrieved data.
+       * We only use the receiver if its fingerprint matches the one stored
+       * at command creation. 
        **/
-
-      try
+      if (!context->IsFingerprintOK())
       {
-        if (context.get() == NULL)
+        LOG(WARNING) << "FetchContext::SuccessCallback -- the initial request initiator has been destroyed. Response will be discarded.";
+      }
+      else
+      {
+        try
         {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-        }
-        else
-        {
-          switch (context->GetCommand().GetType())
+          if (context.get() == NULL)
           {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+          }
+          else
+          {
+            switch (context->GetCommand().GetType())
+            {
             case IOracleCommand::Type_OrthancRestApi:
             {
               OrthancRestApiCommand::SuccessMessage message
-                (context->GetTypedCommand<OrthancRestApiCommand>(), headers, answer);
+              (context->GetTypedCommand<OrthancRestApiCommand>(), headers, answer);
               context->EmitMessage(message);
               break;
             }
-            
+
             case IOracleCommand::Type_GetOrthancImage:
             {
               context->GetTypedCommand<GetOrthancImageCommand>().ProcessHttpAnswer
-                (context->GetEmitter(), context->GetReceiver(), answer, headers);
+              (context->GetEmitter(), context->GetReceiver(), answer, headers);
               break;
             }
-          
+
             case IOracleCommand::Type_GetOrthancWebViewerJpeg:
             {
               context->GetTypedCommand<GetOrthancWebViewerJpegCommand>().ProcessHttpAnswer
-                (context->GetEmitter(), context->GetReceiver(), answer);
+              (context->GetEmitter(), context->GetReceiver(), answer);
               break;
             }
-          
+
             default:
               LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle: "
-                         << context->GetCommand().GetType();
+                << context->GetCommand().GetType();
+            }
           }
         }
-      }
-      catch (Orthanc::OrthancException& e)
-      {
-        LOG(ERROR) << "Error while processing a fetch answer in the oracle: " << e.What();
+        catch (Orthanc::OrthancException& e)
+        {
+          LOG(ERROR) << "Error while processing a fetch answer in the oracle: " << e.What();
+        }
       }
     }
 

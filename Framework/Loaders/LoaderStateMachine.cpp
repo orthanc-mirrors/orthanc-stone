@@ -23,11 +23,6 @@
 
 #include <Core/OrthancException.h>
 
-#if 0
-extern bool logbgo233;
-extern bool logbgo115;
-#endif
-
 namespace OrthancStone
 {
   void LoaderStateMachine::State::Handle(const OrthancRestApiCommand::SuccessMessage& message)
@@ -50,12 +45,7 @@ namespace OrthancStone
 
   void LoaderStateMachine::Schedule(OracleCommandWithPayload* command)
   {
-#if 0
-    if (logbgo233) {
-      if (logbgo115)
-        LOG(TRACE) << "  LoaderStateMachine::Schedule()";
-    }
-#endif
+    LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::Schedule()";
 
     std::auto_ptr<OracleCommandWithPayload> protection(command);
 
@@ -69,13 +59,6 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
                                       "The payload must contain the next state");
     }
-
-#if 0
-    if (logbgo233) {
-      if (logbgo115)
-        LOG(TRACE) << "  * LoaderStateMachine::Schedule(): adding command with addr: " << std::hex << protection.get() << std::dec << " pendingCommands_.size() is now : " << pendingCommands_.size()+1;
-    }
-#endif
     pendingCommands_.push_back(protection.release());
 
     Step();
@@ -84,6 +67,8 @@ namespace OrthancStone
 
   void LoaderStateMachine::Start()
   {
+    LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::Start()";
+
     if (active_)
     {
       LOG(TRACE) << "LoaderStateMachine::Start() called while active_ is true";
@@ -101,22 +86,16 @@ namespace OrthancStone
 
   void LoaderStateMachine::Step()
   {
-#if 0
-    if (logbgo115)
-      LOG(TRACE) << "    LoaderStateMachine::Step(): pendingCommands_.size() =  " << pendingCommands_.size();
-#endif
     if (!pendingCommands_.empty() &&
         activeCommands_ < simultaneousDownloads_)
     {
 
       IOracleCommand* nextCommand = pendingCommands_.front();
 
-#if 0
-      if (logbgo233) {
-        if (logbgo115)
-          LOG(TRACE) << "    * LoaderStateMachine::Step(): activeCommands_ (" << activeCommands_ << ") < simultaneousDownloads_ (" << simultaneousDownloads_ << ") --> will Schedule command addr " << std::hex << nextCommand << std::dec;
-      }
-#endif
+      LOG(TRACE) << "    LoaderStateMachine(" << std::hex << this << std::dec << 
+        ")::Step(): activeCommands_ (" << activeCommands_ << 
+        ") < simultaneousDownloads_ (" << simultaneousDownloads_ << 
+        ") --> will Schedule command addr " << std::hex << nextCommand << std::dec;
 
       oracle_.Schedule(*this, nextCommand);
       pendingCommands_.pop_front();
@@ -125,18 +104,17 @@ namespace OrthancStone
     }
     else
     {
-#if 0
-      if (logbgo233) {
-        if (logbgo115)
-          LOG(TRACE) << "    * pendingCommands_.size() == " << pendingCommands_.size() << " LoaderStateMachine::Step(): activeCommands_ (" << activeCommands_ << ") >= simultaneousDownloads_ (" << simultaneousDownloads_ << ") --> will NOT Schedule anything";
-      }
-#endif
+      LOG(TRACE) << "    LoaderStateMachine(" << std::hex << this << std::dec << 
+        ")::Step(): activeCommands_ (" << activeCommands_ << 
+        ") < simultaneousDownloads_ (" << simultaneousDownloads_ << 
+        ") --> will NOT Schedule command";
     }
   }
 
 
   void LoaderStateMachine::Clear()
   {
+    LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::Clear()";
     for (PendingCommands::iterator it = pendingCommands_.begin();
          it != pendingCommands_.end(); ++it)
     {
@@ -158,7 +136,10 @@ namespace OrthancStone
   template <typename T>
   void LoaderStateMachine::HandleSuccessMessage(const T& message)
   {
-    assert(activeCommands_ > 0);
+    LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::HandleSuccessMessage()";
+    if (activeCommands_ <= 0) {
+      LOG(ERROR) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::HandleSuccessMessage : activeCommands_ should be > 0 but is: " << activeCommands_;
+    }
     activeCommands_--;
 
     try
@@ -183,6 +164,8 @@ namespace OrthancStone
     simultaneousDownloads_(4),
     activeCommands_(0)
   {
+    LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::LoaderStateMachine()";
+
     oracleObservable.RegisterObserverCallback(
       new Callable<LoaderStateMachine, OrthancRestApiCommand::SuccessMessage>
       (*this, &LoaderStateMachine::HandleSuccessMessage));
@@ -200,6 +183,11 @@ namespace OrthancStone
       (*this, &LoaderStateMachine::HandleExceptionMessage));
   }
 
+  LoaderStateMachine::~LoaderStateMachine()
+  {
+    LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::~LoaderStateMachine()";
+    Clear();
+  }
 
   void LoaderStateMachine::SetSimultaneousDownloads(unsigned int count)
   {

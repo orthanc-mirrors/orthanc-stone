@@ -104,10 +104,7 @@ namespace OrthancStone
     LoaderStateMachine(IOracle& oracle,
                        IObservable& oracleObservable);
 
-    virtual ~LoaderStateMachine()
-    {
-      Clear();
-    }
+    virtual ~LoaderStateMachine();
 
     bool IsActive() const
     {

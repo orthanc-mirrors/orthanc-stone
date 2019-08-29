@@ -23,7 +23,11 @@
 
 #include "IMessage.h"
 
+#include <Core/Logging.h>
+
 #include <boost/noncopyable.hpp>
+
+#include <string>
 
 namespace OrthancStone {
 
@@ -61,18 +65,32 @@ namespace OrthancStone {
 
     TObserver&         observer_;
     MemberFunction     function_;
+    std::string        observerFingerprint_;
 
   public:
     Callable(TObserver& observer,
              MemberFunction function) :
       observer_(observer),
+      observerFingerprint_(observer.GetFingerprint()),
       function_(function)
     {
     }
 
     void ApplyInternal(const TMessage& message)
     {
+#if 0
       (observer_.*function_) (message);
+#else
+      if (observerFingerprint_ != observer_.GetFingerprint())
+      {
+        LOG(WARNING) << "The observer at address " << std::hex << &observer_ << std::dec << ") has a different fingerprint than the one recorded at callback registration time. Callback will NOT be sent!";
+        LOG(WARNING) << " recorded fingerprint = " << observerFingerprint_ << " current fingerprint = " << observer_.GetFingerprint();
+      }
+      else
+      {
+        (observer_.*function_) (message);
+      }
+#endif
     }
 
     virtual void Apply(const IMessage& message)

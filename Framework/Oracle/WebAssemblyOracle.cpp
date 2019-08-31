@@ -99,7 +99,6 @@ namespace OrthancStone
   private:
     Emitter                        emitter_;
     const IObserver&               receiver_;
-    std::string                    receiverFingerprint_;
     std::auto_ptr<IOracleCommand>  command_;
     std::string                    expectedContentType_;
 
@@ -110,7 +109,6 @@ namespace OrthancStone
                  const std::string& expectedContentType) :
       emitter_(oracle),
       receiver_(receiver),
-      receiverFingerprint_(receiver.GetFingerprint()),
       command_(command),
       expectedContentType_(expectedContentType)
     {
@@ -118,16 +116,6 @@ namespace OrthancStone
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
-    }
-
-    bool IsFingerprintOK() const
-    {
-      bool ok = receiverFingerprint_ == receiver_.GetFingerprint();
-      if (!ok)
-      {
-        LOG(TRACE) << "IsFingerprintOK returned false. receiverFingerprint_ = " << receiverFingerprint_ << " | receiver_(" << std::hex << (&receiver_) << std::dec << ").GetFingerprint() = " << receiver_.GetFingerprint();
-      }
-      return ok;
     }
 
     const std::string& GetExpectedContentType() const
@@ -208,6 +196,18 @@ namespace OrthancStone
       
       std::auto_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
 
+      // an UUID is 36 chars : 32 hex chars + 4 hyphens: char #0 --> char #35
+      // char #36 is \0.
+      
+      // TODO: remove this line because we are NOT allowed to call methods on GetReceiver that is maybe a dangling ref
+      if (context->GetReceiver().DoesFingerprintLookGood()) {
+        LOG(TRACE) << "SuccessCallback for object at address (" << std::hex << &(context->GetReceiver()) << std::dec << " with current fingerprint = " << context->GetReceiver().GetFingerprint();
+      }
+      else {
+        LOG(TRACE) << "SuccessCallback for object at address (" << std::hex << &(context->GetReceiver()) << std::dec << " with current fingerprint is XXXXX -- NOT A VALID FINGERPRINT! OBJECT IS READ ! CALLBACK WILL NOT BE CALLED!";
+      }
+      
+
       if (fetch->userData == NULL)
       {
         LOG(ERROR) << "WebAssemblyOracle::FetchContext::SuccessCallback fetch->userData is NULL!!!!!!!";
@@ -243,27 +243,25 @@ namespace OrthancStone
         DumpCommand(fetch, answer);
       }
 #endif
+      LOG(TRACE) << "About to call emscripten_fetch_close";
       emscripten_fetch_close(fetch);
+      LOG(TRACE) << "Successfully called emscripten_fetch_close";
 
       /**
        * Secondly, use the retrieved data.
-       * We only use the receiver if its fingerprint matches the one stored
-       * at command creation. 
+       * IMPORTANT NOTE: the receiver might be dead. This is prevented 
+       * by the object responsible for zombie check, later on.
        **/
-      if (!context->IsFingerprintOK())
+      try
       {
-        LOG(WARNING) << "FetchContext::SuccessCallback -- the initial request initiator has been destroyed. Response will be discarded.";
-      }
-      else
-      {
-        try
+        if (context.get() == NULL)
         {
-          if (context.get() == NULL)
-          {
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-          }
-          else
-          {
+          LOG(ERROR) << "WebAssemblyOracle::FetchContext::SuccessCallback: (context.get() == NULL)";
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        }
+        else
+        {
+          if (context->GetReceiver().DoesFingerprintLookGood()) {
             switch (context->GetCommand().GetType())
             {
             case IOracleCommand::Type_OrthancRestApi:
@@ -294,10 +292,10 @@ namespace OrthancStone
             }
           }
         }
-        catch (Orthanc::OrthancException& e)
-        {
-          LOG(ERROR) << "Error while processing a fetch answer in the oracle: " << e.What();
-        }
+      }
+      catch (Orthanc::OrthancException& e)
+      {
+        LOG(ERROR) << "Error while processing a fetch answer in the oracle: " << e.What();
       }
     }
 

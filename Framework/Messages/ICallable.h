@@ -78,19 +78,15 @@ namespace OrthancStone {
 
     void ApplyInternal(const TMessage& message)
     {
-#if 0
-      (observer_.*function_) (message);
-#else
       if (observerFingerprint_ != observer_.GetFingerprint())
       {
-        LOG(WARNING) << "The observer at address " << std::hex << &observer_ << std::dec << ") has a different fingerprint than the one recorded at callback registration time. Callback will NOT be sent!";
-        LOG(WARNING) << " recorded fingerprint = " << observerFingerprint_ << " current fingerprint = " << observer_.GetFingerprint();
+        LOG(TRACE) << "The observer at address " << std::hex << &observer_ << std::dec << ") has a different fingerprint than the one recorded at callback registration time. This means that it is not the same object as the one recorded, even though their addresses are the same.  Callback will NOT be sent!";
+        LOG(TRACE) << " recorded fingerprint = " << observerFingerprint_ << " current fingerprint = " << observer_.GetFingerprint();
       }
       else
       {
         (observer_.*function_) (message);
       }
-#endif
     }
 
     virtual void Apply(const IMessage& message)

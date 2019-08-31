@@ -34,12 +34,20 @@ namespace OrthancStone
     MessageBroker&  broker_;
     // the following is a UUID that is used to disambiguate different observers
     // that may have the same address
-    std::string     fingerprint_;
+    char     fingerprint_[37];
   public:
     IObserver(MessageBroker& broker)
       : broker_(broker)
-      , fingerprint_(Orthanc::Toolbox::GenerateUuid())
+      , fingerprint_()
     {
+      // we store the fingerprint_ as a char array to avoid problems when
+      // reading it in a deceased object.
+      // remember this is panic-level code to track zombie object usage
+      std::string fingerprint = Orthanc::Toolbox::GenerateUuid();
+      const char* fingerprintRaw = fingerprint.c_str();
+      ORTHANC_ASSERT(strlen(fingerprintRaw) == 36);
+      ORTHANC_ASSERT(fingerprintRaw[36] == 0);
+      memcpy(fingerprint_, fingerprintRaw, 37);
       LOG(TRACE) << "IObserver(" << std::hex << this << std::dec << ")::IObserver : fingerprint_ == " << fingerprint_;
       broker_.Register(*this);
     }
@@ -50,9 +58,25 @@ namespace OrthancStone
       broker_.Unregister(*this);
     }
 
-    const std::string& GetFingerprint() const
+    const char* GetFingerprint() const
     {
       return fingerprint_;
+    }
+
+    bool DoesFingerprintLookGood() const
+    {
+      for (size_t i = 0; i < 36; ++i) {
+        bool ok = false;
+        if (fingerprint_[i] >= 'a' && fingerprint_[i] <= 'f')
+          ok = true;
+        if (fingerprint_[i] >= '0' && fingerprint_[i] <= '9')
+          ok = true;
+        if (fingerprint_[i] == '-')
+          ok = true;
+        if (!ok)
+          return false;
+      }
+      return fingerprint_[36] == 0;
     }
 
     MessageBroker& GetBroker() const

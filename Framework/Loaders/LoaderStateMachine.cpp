@@ -139,19 +139,21 @@ namespace OrthancStone
     LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::HandleSuccessMessage()";
     if (activeCommands_ <= 0) {
       LOG(ERROR) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::HandleSuccessMessage : activeCommands_ should be > 0 but is: " << activeCommands_;
+      LOG(ERROR) << "LoaderStateMachine(" << std::hex << this << std::dec << ") fingerprint = " << GetFingerprint();
     }
-    activeCommands_--;
-
-    try
-    {
-      dynamic_cast<State&>(message.GetOrigin().GetPayload()).Handle(message);
-      Step();
-    }
-    catch (Orthanc::OrthancException& e)
-    {
-      LOG(ERROR) << "Error in the state machine, stopping all processing: " << 
-        e.What() << " Details: " << e.GetDetails();
-      Clear();
+    else {
+      activeCommands_--;
+      try
+      {
+        dynamic_cast<State&>(message.GetOrigin().GetPayload()).Handle(message);
+        Step();
+      }
+      catch (Orthanc::OrthancException& e)
+      {
+        LOG(ERROR) << "Error in the state machine, stopping all processing: " <<
+          e.What() << " Details: " << e.GetDetails();
+        Clear();
+      }
     }
   }
 

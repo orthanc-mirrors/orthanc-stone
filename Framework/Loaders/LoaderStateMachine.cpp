@@ -136,10 +136,9 @@ namespace OrthancStone
   template <typename T>
   void LoaderStateMachine::HandleSuccessMessage(const T& message)
   {
-    LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::HandleSuccessMessage()";
+    LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::HandleSuccessMessage(). Receiver fingerprint = " << GetFingerprint();
     if (activeCommands_ <= 0) {
       LOG(ERROR) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::HandleSuccessMessage : activeCommands_ should be > 0 but is: " << activeCommands_;
-      LOG(ERROR) << "LoaderStateMachine(" << std::hex << this << std::dec << ") fingerprint = " << GetFingerprint();
     }
     else {
       activeCommands_--;
@@ -162,6 +161,7 @@ namespace OrthancStone
                                          IObservable& oracleObservable) :
     IObserver(oracleObservable.GetBroker()),
     oracle_(oracle),
+    oracleObservable_(oracleObservable),
     active_(false),
     simultaneousDownloads_(4),
     activeCommands_(0)
@@ -187,6 +187,7 @@ namespace OrthancStone
 
   LoaderStateMachine::~LoaderStateMachine()
   {
+    oracleObservable_.Unregister(this);
     LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::~LoaderStateMachine()";
     Clear();
   }

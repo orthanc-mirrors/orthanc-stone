@@ -95,6 +95,7 @@ namespace OrthancStone
     typedef std::list<IOracleCommand*>  PendingCommands;
 
     IOracle&         oracle_;
+    IObservable&     oracleObservable_;
     bool             active_;
     unsigned int     simultaneousDownloads_;
     PendingCommands  pendingCommands_;

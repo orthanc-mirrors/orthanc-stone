@@ -424,6 +424,7 @@ namespace OrthancStone
     IObserver(oracleObservable.GetBroker()),
     IObservable(oracleObservable.GetBroker()),
     oracle_(oracle),
+    oracleObservable_(oracleObservable),
     active_(false),
     simultaneousDownloads_(4),
     volume_(volume),
@@ -445,6 +446,7 @@ namespace OrthancStone
 
   OrthancSeriesVolumeProgressiveLoader::~OrthancSeriesVolumeProgressiveLoader()
   {
+    oracleObservable_.Unregister(this);
     LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::~OrthancSeriesVolumeProgressiveLoader()";
   }
 

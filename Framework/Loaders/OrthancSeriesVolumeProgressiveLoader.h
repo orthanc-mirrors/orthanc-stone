@@ -106,6 +106,7 @@ namespace OrthancStone
     void LoadJpegSliceContent(const GetOrthancWebViewerJpegCommand::SuccessMessage& message);
 
     IOracle&                                      oracle_;
+    IObservable&                                  oracleObservable_;
     bool                                          active_;
     unsigned int                                  simultaneousDownloads_;
     SeriesGeometry                                seriesGeometry_;

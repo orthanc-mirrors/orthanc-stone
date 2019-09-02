@@ -54,8 +54,33 @@ namespace OrthancStone
 
     virtual ~IObserver()
     {
-      LOG(TRACE) << "IObserver(" << std::hex << this << std::dec << ")::~IObserver : fingerprint_ == " << fingerprint_;
-      broker_.Unregister(*this);
+      try
+      {
+        LOG(TRACE) << "IObserver(" << std::hex << this << std::dec << ")::~IObserver : fingerprint_ == " << fingerprint_;
+        const char* deadMarker = "deadbeef-dead-dead-0000-0000deadbeef";
+        ORTHANC_ASSERT(strlen(deadMarker) == 36);
+        memcpy(fingerprint_, deadMarker, 37);
+        broker_.Unregister(*this);
+      }
+      catch (const Orthanc::OrthancException& e)
+      {
+        if (e.HasDetails())
+        {
+          LOG(ERROR) << "OrthancException in ~IObserver: " << e.What() << " Details: " << e.GetDetails();
+        }
+        else
+        {
+          LOG(ERROR) << "OrthancException in ~IObserver: " << e.What();
+        }
+      }
+      catch (const std::exception& e)
+      {
+        LOG(ERROR) << "std::exception in ~IObserver: " << e.what();
+      }
+      catch (...)
+      {
+        LOG(ERROR) << "Unknown exception in ~IObserver";
+      }
     }
 
     const char* GetFingerprint() const

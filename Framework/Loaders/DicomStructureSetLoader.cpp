@@ -204,10 +204,6 @@ namespace OrthancStone
              it = instances.begin(); it != instances.end(); ++it)
       {
         std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
-#if 0
-        if (logbgo115)
-          LOG(TRACE) << "  DicomStructureSetLoader::LoadStructure::Handle() about to schedule /tools/lookup command with LookupInstance on result";
-#endif
         command->SetUri("/tools/lookup");
         command->SetMethod(Orthanc::HttpMethod_Post);
         command->SetBody(*it);
@@ -217,21 +213,10 @@ namespace OrthancStone
         // They should NOT be required for POST requests
         //command->SetHttpHeader("pragma", "no-cache");
         //command->SetHttpHeader("cache-control", "no-cache");
-#if 0
-        std::string itStr(*it);
-        if(itStr == "1.3.12.2.1107.5.1.4.66930.30000018062412550879500002198") {
-          if (logbgo115)
-            LOG(ERROR) << "******** BOGUS LOOKUPS FROM NOW ON ***********";
-          logbgo233 = true;
-        }
-#endif
+
         command->SetPayload(new LookupInstance(loader, *it));
         //LOG(TRACE) << "About to schedule a /tools/lookup POST request. URI = " << command->GetUri() << " Body size = " << (*it).size() << " Body = " << (*it) << "\n";
         Schedule(command.release());
-#if 0
-        if (logbgo115)
-          LOG(TRACE) << "  DicomStructureSetLoader::LoadStructure::Handle() request scheduled. Command will be LookupInstance and post body is " << *it;
-#endif
       }
     }
   };

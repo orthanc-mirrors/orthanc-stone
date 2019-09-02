@@ -30,7 +30,7 @@ namespace OrthancStone
 {
   MeasureTool::~MeasureTool()
   {
-
+    GetController()->Unregister(this);
   }
 
   void MeasureTool::Enable()

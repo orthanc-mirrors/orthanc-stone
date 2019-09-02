@@ -89,11 +89,21 @@ namespace OrthancStone
     virtual void EmitMessage(const IObserver& receiver,
                              const IMessage& message)
     {
+      LOG(TRACE) << "WebAssemblyOracle::Emitter::EmitMessage receiver = "
+        << std::hex << &receiver << std::dec;
       oracle_.EmitMessage(receiver, message);
     }
   };
 
+  /**
+  This object is created on the heap for every http request.
+  It is deleted in the success (or error) callbacks.
 
+  This object references the receiver of the request. Since this is a raw
+  reference, we need additional checks to make sure we send the response to
+  the same object, for the object can be deleted and a new one recreated at the
+  same address (it often happens in the [single-threaded] browser context).
+  */
   class WebAssemblyOracle::FetchContext : public boost::noncopyable
   {
   private:
@@ -101,6 +111,7 @@ namespace OrthancStone
     const IObserver&               receiver_;
     std::auto_ptr<IOracleCommand>  command_;
     std::string                    expectedContentType_;
+    std::string                    receiverFingerprint_;
 
   public:
     FetchContext(WebAssemblyOracle& oracle,
@@ -110,8 +121,13 @@ namespace OrthancStone
       emitter_(oracle),
       receiver_(receiver),
       command_(command),
-      expectedContentType_(expectedContentType)
+      expectedContentType_(expectedContentType),
+      receiverFingerprint_(receiver.GetFingerprint())
     {
+      LOG(TRACE) << "WebAssemblyOracle::FetchContext::FetchContext() | "
+        << "receiver address = " << std::hex << &receiver << std::dec 
+        << " with fingerprint = " << receiverFingerprint_;
+
       if (command == NULL)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
@@ -125,6 +141,8 @@ namespace OrthancStone
 
     void EmitMessage(const IMessage& message)
     {
+      LOG(TRACE) << "WebAssemblyOracle::FetchContext::EmitMessage receiver_ = "
+        << std::hex << &receiver_ << std::dec;
       emitter_.EmitMessage(receiver_, message);
     }
 
@@ -198,15 +216,38 @@ namespace OrthancStone
 
       // an UUID is 36 chars : 32 hex chars + 4 hyphens: char #0 --> char #35
       // char #36 is \0.
+      bool callHandler = true;
       
       // TODO: remove this line because we are NOT allowed to call methods on GetReceiver that is maybe a dangling ref
-      if (context->GetReceiver().DoesFingerprintLookGood()) {
-        LOG(TRACE) << "SuccessCallback for object at address (" << std::hex << &(context->GetReceiver()) << std::dec << " with current fingerprint = " << context->GetReceiver().GetFingerprint();
+      if (context->GetReceiver().DoesFingerprintLookGood())
+      {
+        callHandler = true;
+        std::string currentFingerprint(context->GetReceiver().GetFingerprint());
+       
+        LOG(TRACE) << "SuccessCallback for object at address (" << std::hex 
+          << &(context->GetReceiver()) << std::dec 
+          << " with current fingerprint = " << currentFingerprint 
+          << ". Fingerprint looks OK";
+        
+        if (currentFingerprint != context->receiverFingerprint_)
+        {
+          LOG(TRACE) << "  ** SuccessCallback: BUT currentFingerprint != "
+            << "receiverFingerprint_(" << context->receiverFingerprint_ << ")";
+          callHandler = false;
+        }
+        else
+        {
+          LOG(TRACE) << "  ** SuccessCallback: FetchContext-level "
+            << "fingerprints are the same: "
+            << context->receiverFingerprint_
+            << " ---> oracle will dispatch the response to observer: "
+            << std::hex << &(context->GetReceiver()) << std::dec;
+        }
       }
       else {
         LOG(TRACE) << "SuccessCallback for object at address (" << std::hex << &(context->GetReceiver()) << std::dec << " with current fingerprint is XXXXX -- NOT A VALID FINGERPRINT! OBJECT IS READ ! CALLBACK WILL NOT BE CALLED!";
+        callHandler = false;
       }
-      
 
       if (fetch->userData == NULL)
       {
@@ -261,11 +302,13 @@ namespace OrthancStone
         }
         else
         {
-          if (context->GetReceiver().DoesFingerprintLookGood()) {
+          if (callHandler)
+          {
             switch (context->GetCommand().GetType())
             {
             case IOracleCommand::Type_OrthancRestApi:
             {
+              LOG(TRACE) << "WebAssemblyOracle::FetchContext::SuccessCallback. About to call context->EmitMessage(message);";
               OrthancRestApiCommand::SuccessMessage message
               (context->GetTypedCommand<OrthancRestApiCommand>(), headers, answer);
               context->EmitMessage(message);
@@ -611,13 +654,10 @@ namespace OrthancStone
   void WebAssemblyOracle::Schedule(const IObserver& receiver,
                                    IOracleCommand* command)
   {
-#if 0
-    if (logbgo233) {
-      if (logbgo115)
-        LOG(TRACE) << "      WebAssemblyOracle::Schedule command addr " <<
-        std::hex << command << std::dec;
-    }
-#endif
+    LOG(TRACE) << "WebAssemblyOracle::Schedule : receiver = "
+      << std::hex << &receiver << std::dec
+      << " | Current fingerprint is " << receiver.GetFingerprint();
+    
     std::auto_ptr<IOracleCommand> protection(command);
 
     if (command == NULL)

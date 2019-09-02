@@ -66,6 +66,8 @@ namespace OrthancStone
 
   void IObservable::Unregister(IObserver *observer)
   {
+    LOG(TRACE) << "IObservable::Unregister for IObserver at addr: "
+      << std::hex << observer << std::dec;
     // delete all callables from this observer
     for (Callables::iterator itCallableSet = callables_.begin();
          itCallableSet != callables_.end(); ++itCallableSet)
@@ -75,6 +77,8 @@ namespace OrthancStone
       {
         if ((*itCallable)->GetObserver() == observer)
         {
+          LOG(TRACE) << "  ** IObservable::Unregister : deleting callable: "
+            << std::hex << (*itCallable) << std::dec;
           delete *itCallable;
           itCallableSet->second.erase(itCallable++);
         }
@@ -87,6 +91,8 @@ namespace OrthancStone
   void IObservable::EmitMessageInternal(const IObserver* receiver,
                                         const IMessage& message)
   {
+    LOG(TRACE) << "IObservable::EmitMessageInternal receiver = "
+      << std::hex << receiver << std::dec;
     Callables::const_iterator found = callables_.find(message.GetIdentifier());
 
     if (found != callables_.end())
@@ -119,9 +125,10 @@ namespace OrthancStone
   void IObservable::EmitMessage(const IObserver& observer,
                                 const IMessage& message)
   {
+    LOG(TRACE) << "IObservable::EmitMessage observer = "
+      << std::hex << &observer << std::dec;
     EmitMessageInternal(&observer, message);
   }
-
   
   void IObservable::RegisterForwarder(IMessageForwarder* forwarder)
   {

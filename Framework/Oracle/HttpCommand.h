@@ -31,12 +31,12 @@
 
 namespace OrthancStone
 {
-  class OrthancRestApiCommand : public OracleCommandWithPayload
+  class HttpCommand : public OracleCommandWithPayload
   {
   public:
     typedef std::map<std::string, std::string>  HttpHeaders;
 
-    class SuccessMessage : public OriginMessage<OrthancRestApiCommand>
+    class SuccessMessage : public OriginMessage<HttpCommand>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
@@ -45,7 +45,7 @@ namespace OrthancStone
       std::string   answer_;
 
     public:
-      SuccessMessage(const OrthancRestApiCommand& command,
+      SuccessMessage(const HttpCommand& command,
                      const HttpHeaders& answerHeaders,
                      std::string& answer  /* will be swapped to avoid a memcpy() */);
 
@@ -65,17 +65,17 @@ namespace OrthancStone
 
   private:
     Orthanc::HttpMethod  method_;
-    std::string          uri_;
+    std::string          url_;
     std::string          body_;
     HttpHeaders          headers_;
     unsigned int         timeout_;
 
   public:
-    OrthancRestApiCommand();
+    HttpCommand();
 
     virtual Type GetType() const
     {
-      return Type_OrthancRestApi;
+      return Type_Http;
     }
 
     void SetMethod(Orthanc::HttpMethod method)
@@ -83,9 +83,9 @@ namespace OrthancStone
       method_ = method;
     }
 
-    void SetUri(const std::string& uri)
+    void SetUrl(const std::string& url)
     {
-      uri_ = uri;
+      url_ = url;
     }
 
     void SetBody(const std::string& body)
@@ -116,9 +116,9 @@ namespace OrthancStone
       return method_;
     }
 
-    const std::string& GetUri() const
+    const std::string& GetUrl() const
     {
-      return uri_;
+      return url_;
     }
 
     const std::string& GetBody() const;

@@ -23,6 +23,7 @@
 
 #include "GetOrthancImageCommand.h"
 #include "GetOrthancWebViewerJpegCommand.h"
+#include "HttpCommand.h"
 #include "OrthancRestApiCommand.h"
 #include "SleepOracleCommand.h"
 #include "OracleCommandExceptionMessage.h"
@@ -212,6 +213,34 @@ namespace OrthancStone
 
 
   static void Execute(IMessageEmitter& emitter,
+                      const IObserver& receiver,
+                      const HttpCommand& command)
+  {
+    Orthanc::HttpClient client;
+    client.SetUrl(command.GetUrl());
+    client.SetMethod(command.GetMethod());
+    client.SetTimeout(command.GetTimeout());
+
+    CopyHttpHeaders(client, command.GetHttpHeaders());
+
+    if (command.GetMethod() == Orthanc::HttpMethod_Post ||
+        command.GetMethod() == Orthanc::HttpMethod_Put)
+    {
+      client.SetBody(command.GetBody());
+    }
+
+    std::string answer;
+    Orthanc::HttpClient::HttpHeaders answerHeaders;
+    client.ApplyAndThrowException(answer, answerHeaders);
+
+    DecodeAnswer(answer, answerHeaders);
+
+    HttpCommand::SuccessMessage message(command, answerHeaders, answer);
+    emitter.EmitMessage(receiver, message);
+  }
+
+
+  static void Execute(IMessageEmitter& emitter,
                       const Orthanc::WebServiceParameters& orthanc,
                       const IObserver& receiver,
                       const OrthancRestApiCommand& command)
@@ -306,6 +335,11 @@ namespace OrthancStone
 
             break;
           }
+
+          case IOracleCommand::Type_Http:
+            Execute(emitter_, item.GetReceiver(), 
+                    dynamic_cast<const HttpCommand&>(item.GetCommand()));
+            break;
 
           case IOracleCommand::Type_OrthancRestApi:
             Execute(emitter_, orthanc_, item.GetReceiver(), 

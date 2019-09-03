@@ -30,6 +30,7 @@ namespace OrthancStone
   public:
     enum Type
     {
+      Type_Http,
       Type_Sleep,
       Type_OrthancRestApi,
       Type_GetOrthancImage,

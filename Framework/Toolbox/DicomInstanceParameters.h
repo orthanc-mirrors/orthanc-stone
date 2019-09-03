@@ -57,6 +57,8 @@ namespace OrthancStone
       float                             defaultWindowingCenter_;
       float                             defaultWindowingWidth_;
       Orthanc::PixelFormat              expectedPixelFormat_;
+      bool                              hasIndexInSeries_;
+      unsigned int                      indexInSeries_;
 
       void ComputeDoseOffsets(const Orthanc::DicomMap& dicom);
 
@@ -191,5 +193,12 @@ namespace OrthancStone
     TextureBaseSceneLayer* CreateTexture(const Orthanc::ImageAccessor& pixelData) const;
 
     LookupTableTextureSceneLayer* CreateLookupTableTexture(const Orthanc::ImageAccessor& pixelData) const;
+
+    bool HasIndexInSeries() const
+    {
+      return data_.hasIndexInSeries_;
+    }
+
+    unsigned int GetIndexInSeries() const;
   };
 }

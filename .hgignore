@@ -38,3 +38,5 @@ Samples/Qt/ThirdPartyDownloads/
 Samples/WebAssembly/build/
 Samples/WebAssembly/ThirdPartyDownloads/
 Samples/WebAssembly/installDir/
+
+node_modules/

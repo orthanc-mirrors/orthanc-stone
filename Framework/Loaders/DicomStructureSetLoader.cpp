@@ -64,10 +64,6 @@ namespace OrthancStone
 
     virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
     {
-#if 0
-      if (logbgo115)
-        LOG(TRACE) << "DicomStructureSetLoader::AddReferencedInstance::Handle() (SUCCESS)";
-#endif
       Json::Value tags;
       message.ParseJsonBody(tags);
         
@@ -75,17 +71,6 @@ namespace OrthancStone
       dicom.FromDicomAsJson(tags);
 
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
-
-#if 0
-      {
-        std::stringstream ss;
-        //DumpDicomMap(ss, dicom);
-        std::string dicomMapStr = ss.str();
-        if (logbgo115)
-          LOG(TRACE) << "  DicomStructureSetLoader::AddReferencedInstance::Handle() about to call AddReferencedSlice on dicom = " << dicomMapStr;
-      }
-#endif
-
 
       loader.content_->AddReferencedSlice(dicom);
 
@@ -150,24 +135,12 @@ namespace OrthancStone
       const std::string instanceId = lookup[0]["ID"].asString();
 
       {
-#if 0
-        if(logbgo115)
-          LOG(TRACE) << "DicomStructureSetLoader::LookupInstance::Handle() (SUCCESS)";
-#endif
         std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
         command->SetHttpHeader("Accept-Encoding", "gzip");
         std::string uri = "/instances/" + instanceId + "/tags";
         command->SetUri(uri);
         command->SetPayload(new AddReferencedInstance(loader, instanceId));
-#if 0
-        if (logbgo115)
-          LOG(TRACE) << "  DicomStructureSetLoader::LookupInstance::Handle() about to schedule request with AddReferencedInstance subsequent command on uri \"" << uri << "\"";
-#endif
         Schedule(command.release());
-#if 0
-        if (logbgo115)
-          LOG(TRACE) << "  DicomStructureSetLoader::LookupInstance::Handle() request+command scheduled";
-#endif
       }
     }
   };
@@ -195,27 +168,30 @@ namespace OrthancStone
         loader.content_.reset(new DicomStructureSet(dicom));
       }
 
+      // Some (admittedly invalid) Dicom files have empty values in the 
+      // 0008,1155 tag. We try our best to cope with this.
       std::set<std::string> instances;
+      std::set<std::string> nonEmptyInstances;
       loader.content_->GetReferencedInstances(instances);
+      for (std::set<std::string>::const_iterator
+        it = instances.begin(); it != instances.end(); ++it)
+      {
+        std::string instance = Orthanc::Toolbox::StripSpaces(*it);
+        if(instance != "")
+          nonEmptyInstances.insert(instance);
+      }
 
-      loader.countReferencedInstances_ = static_cast<unsigned int>(instances.size());
+      loader.countReferencedInstances_ = 
+        static_cast<unsigned int>(nonEmptyInstances.size());
 
       for (std::set<std::string>::const_iterator
-             it = instances.begin(); it != instances.end(); ++it)
+        it = nonEmptyInstances.begin(); it != nonEmptyInstances.end(); ++it)
       {
         std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
         command->SetUri("/tools/lookup");
         command->SetMethod(Orthanc::HttpMethod_Post);
         command->SetBody(*it);
-        
-        // The following headers have been commented out because
-        // they were causing issues in the reverse proxy in a dev scenario.
-        // They should NOT be required for POST requests
-        //command->SetHttpHeader("pragma", "no-cache");
-        //command->SetHttpHeader("cache-control", "no-cache");
-
         command->SetPayload(new LookupInstance(loader, *it));
-        //LOG(TRACE) << "About to schedule a /tools/lookup POST request. URI = " << command->GetUri() << " Body size = " << (*it).size() << " Body = " << (*it) << "\n";
         Schedule(command.release());
       }
     }
@@ -267,7 +243,7 @@ namespace OrthancStone
       {
         const Color& color = content_.GetStructureColor(i);
 
-        std::vector< std::vector<DicomStructureSet::PolygonPoint> > polygons;
+        std::vector< std::vector<DicomStructureSet::PolygonPoint2D> > polygons;
           
         if (content_.ProjectStructure(polygons, i, cuttingPlane))
         {
@@ -319,17 +295,10 @@ namespace OrthancStone
       command->SetHttpHeader("Accept-Encoding", "gzip");
 
       std::string uri = "/instances/" + instanceId + "/tags?ignore-length=3006-0050";
-#if 0
-      if (logbgo115)
-        LOG(TRACE) << "DicomStructureSetLoader::LoadInstance() instanceId = " << instanceId << " | uri = \"" << uri << "\"";
-#endif
+
       command->SetUri(uri);
       command->SetPayload(new LoadStructure(*this));
       Schedule(command.release());
-#if 0
-      if (logbgo115)
-        LOG(TRACE) << "DicomStructureSetLoader::LoadInstance() command (with LoadStructure) scheduled.";
-#endif
     }
   }
 

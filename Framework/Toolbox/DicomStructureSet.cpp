@@ -25,6 +25,7 @@
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
+#include <Core/Toolbox.h>
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 
@@ -126,26 +127,66 @@ namespace OrthancStone
             LinearAlgebra::ParseVector(target, value));
   }
 
-
-  void DicomStructureSet::Polygon::CheckPoint(const Vector& v)
+  void DicomStructureSet::Polygon::CheckPointIsOnSlice(const Vector& v) const
   {
     if (hasSlice_)
     {
-      if (!LinearAlgebra::IsNear(GeometryToolbox::ProjectAlongNormal(v, geometry_.GetNormal()),
-                                 projectionAlongNormal_, 
-                                 sliceThickness_ / 2.0 /* in mm */))
+      double magnitude =
+        GeometryToolbox::ProjectAlongNormal(v, geometry_.GetNormal());
+      if(!LinearAlgebra::IsNear(
+        magnitude,
+        projectionAlongNormal_,
+        sliceThickness_ / 2.0 /* in mm */ ))
       {
-        LOG(ERROR) << "This RT-STRUCT contains a point that is off the slice of its instance";
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);          
+        LOG(ERROR) << "This RT-STRUCT contains a point that is off the "
+          << "slice of its instance | "
+          << "magnitude = " << magnitude << " | "
+          << "projectionAlongNormal_ = " << projectionAlongNormal_ << " | "
+          << "tolerance (sliceThickness_ / 2.0) = " << (sliceThickness_ / 2.0);
+
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
       }
     }
   }
 
+  bool DicomStructureSet::Polygon::IsPointOnSlice(const Vector& v) const
+  {
+    if (hasSlice_)
+    {
+      double magnitude = 
+        GeometryToolbox::ProjectAlongNormal(v, geometry_.GetNormal());
+      bool onSlice = LinearAlgebra::IsNear(
+        magnitude,
+        projectionAlongNormal_,
+        sliceThickness_ / 2.0 /* in mm */);
+      if (!onSlice)
+      {
+        LOG(WARNING) << "This RT-STRUCT contains a point that is off the "
+          << "slice of its instance | "
+          << "magnitude = " << magnitude << " | "
+          << "projectionAlongNormal_ = " << projectionAlongNormal_ << " | "
+          << "tolerance (sliceThickness_ / 2.0) = " << (sliceThickness_ / 2.0);
+      }
+      return onSlice;
+    }
+    else
+    {
+      return false;
+    }
+  }
 
   void DicomStructureSet::Polygon::AddPoint(const Vector& v)
   {
+#if 1
+    // BGO 2019-09-03
+    if (IsPointOnSlice(v))
+    {
+      points_.push_back(v);
+    }
+#else
     CheckPoint(v);
     points_.push_back(v);
+#endif 
   }
 
 
@@ -176,22 +217,21 @@ namespace OrthancStone
         
         for (Points::const_iterator it = points_.begin(); it != points_.end(); ++it)
         {
-          CheckPoint(*it);
-
-          double x, y;
-          geometry.ProjectPoint(x, y, *it);
-          extent_.AddPoint(x, y);
+          if (IsPointOnSlice(*it))
+          {
+            double x, y;
+            geometry.ProjectPoint(x, y, *it);
+            extent_.AddPoint(x, y);
+          }
         }
-
         return true;
       }
     }
   }
 
-
   bool DicomStructureSet::Polygon::IsOnSlice(const CoordinateSystem3D& slice) const
   {
-    bool isOpposite;
+    bool isOpposite = false;
 
     if (points_.empty() ||
         !hasSlice_ ||
@@ -205,15 +245,14 @@ namespace OrthancStone
     return (LinearAlgebra::IsNear(d, projectionAlongNormal_,
                                   sliceThickness_ / 2.0));
   }
-
-  
+    
   bool DicomStructureSet::Polygon::Project(double& x1,
                                            double& y1,
                                            double& x2,
                                            double& y2,
                                            const CoordinateSystem3D& slice) const
   {
-    // TODO Optimize this method using a sweep-line algorithm for polygons
+    // TODO: optimize this method using a sweep-line algorithm for polygons
     
     if (!hasSlice_ ||
         points_.size() <= 1)
@@ -432,6 +471,7 @@ namespace OrthancStone
                                                   DICOM_TAG_CONTOUR_SEQUENCE, 0,
                                                   DICOM_TAG_CONTOUR_IMAGE_SEQUENCE);
 
+      // (3006,0039)[i] / (0x3006, 0x0040)[0] / (0x3006, 0x0016)[0] / (0x0008, 0x1155)
       OrthancPlugins::DicomPath referencedInstancePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
                                                        DICOM_TAG_CONTOUR_SEQUENCE, 0,
                                                        DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
@@ -464,9 +504,9 @@ namespace OrthancStone
         size_t size;
 
         imageSequencePath.SetPrefixIndex(1, j);
-        if (!tags.GetSequenceSize(size, imageSequencePath) ||
-            size != 1)
+        if (!tags.GetSequenceSize(size, imageSequencePath) || size != 1)
         {
+          LOG(ERROR) << "The ContourImageSequence sequence (tag 3006,0016) must be present and contain one entry.";
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
         }
 
@@ -481,6 +521,12 @@ namespace OrthancStone
             points.size() != 3 * countPoints)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);          
+        }
+
+        // seen in real world
+        if(Orthanc::Toolbox::StripSpaces(sopInstanceUid) == "") 
+        {
+          LOG(ERROR) << "WARNING. The following Dicom tag (Referenced SOP Instance UID) contains an empty value : // (3006,0039)[" << i << "] / (0x3006, 0x0040)[0] / (0x3006, 0x0016)[0] / (0x0008, 0x1155)";
         }
 
         Polygon polygon(sopInstanceUid);
@@ -581,11 +627,8 @@ namespace OrthancStone
     {
       // This geometry is already known
       LOG(ERROR) << "DicomStructureSet::AddReferencedSlice(): (referencedSlices_.find(sopInstanceUid) != referencedSlices_.end()). sopInstanceUid = " << sopInstanceUid;
-      
-      // TODO: the following assertion has been disabled on 20190822 by BGO
-      // because it occurred from time to time. Since it wrecked havoc on the
-      
-      //throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+     
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     else
     {
@@ -664,9 +707,20 @@ namespace OrthancStone
       {
         if (!polygon->UpdateReferencedSlice(referencedSlices_))
         {
-          LOG(ERROR) << "DicomStructureSet::CheckReferencedSlices(): missing information about referenced instance: "
-                     << polygon->GetSopInstanceUid();
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+          std::string sopInstanceUid = polygon->GetSopInstanceUid();
+          if (Orthanc::Toolbox::StripSpaces(sopInstanceUid) == "")
+          {
+            LOG(ERROR) << "DicomStructureSet::CheckReferencedSlices(): "
+              << " missing information about referenced instance "
+              << "(sopInstanceUid is empty!)";
+          }
+          else
+          {
+            LOG(ERROR) << "DicomStructureSet::CheckReferencedSlices(): "
+              << " missing information about referenced instance "
+              << "(sopInstanceUid = " << sopInstanceUid << ")";
+          }
+          //throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
         }
       }
     }
@@ -688,7 +742,7 @@ namespace OrthancStone
   }
 
   
-  bool DicomStructureSet::ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
+  bool DicomStructureSet::ProjectStructure(std::vector< std::vector<PolygonPoint2D> >& polygons,
                                            const Structure& structure,
                                            const CoordinateSystem3D& slice) const
   {
@@ -706,7 +760,7 @@ namespace OrthancStone
       {
         if (polygon->IsOnSlice(slice))
         {
-          polygons.push_back(std::vector<PolygonPoint>());
+          polygons.push_back(std::vector<PolygonPoint2D>());
           
           for (Points::const_iterator p = polygon->GetPoints().begin();
                p != polygon->GetPoints().end(); ++p)
@@ -762,7 +816,7 @@ namespace OrthancStone
         double x1, y1, x2, y2;
         if (polygon->Project(x1, y1, x2, y2, slice))
         {
-          std::vector<PolygonPoint> p(4);
+          std::vector<PolygonPoint2D> p(4);
           p[0] = std::make_pair(x1, y1);
           p[1] = std::make_pair(x2, y1);
           p[2] = std::make_pair(x2, y2);

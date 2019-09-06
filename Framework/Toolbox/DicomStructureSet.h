@@ -34,7 +34,7 @@ namespace OrthancStone
   class DicomStructureSet : public boost::noncopyable
   {
   public:
-    typedef std::pair<double, double> PolygonPoint;
+    typedef std::pair<double, double> PolygonPoint2D;
     
   private:
     struct ReferencedSlice
@@ -72,7 +72,8 @@ namespace OrthancStone
       Points              points_;
       Extent2D            extent_;
 
-      void CheckPoint(const Vector& v);
+      void CheckPointIsOnSlice(const Vector& v) const;
+      bool IsPointOnSlice(const Vector& v) const;
 
     public:
       Polygon(const std::string& sopInstanceUid) :
@@ -135,7 +136,7 @@ namespace OrthancStone
 
     Structure& GetStructure(size_t index);
   
-    bool ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
+    bool ProjectStructure(std::vector< std::vector<PolygonPoint2D> >& polygons,
                           const Structure& structure,
                           const CoordinateSystem3D& slice) const;
 
@@ -174,7 +175,7 @@ namespace OrthancStone
 
     Vector GetNormal() const;
 
-    bool ProjectStructure(std::vector< std::vector<PolygonPoint> >& polygons,
+    bool ProjectStructure(std::vector< std::vector<PolygonPoint2D> >& polygons,
                           size_t index,
                           const CoordinateSystem3D& slice) const
     {

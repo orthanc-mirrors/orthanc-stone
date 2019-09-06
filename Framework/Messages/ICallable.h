@@ -92,7 +92,9 @@ namespace OrthancStone {
       }
       else
       {
-        LOG(TRACE) << "The recorded fingerprint is " << observerFingerprint_ << " and the current fingerprint is " << currentFingerprint << " -- callable will be called.";
+        LOG(TRACE) << "The recorded fingerprint is " << observerFingerprint_
+          << " and the current fingerprint is " << currentFingerprint
+          << " -- callable will be called.";
         (observer_.*function_) (message);
       }
     }

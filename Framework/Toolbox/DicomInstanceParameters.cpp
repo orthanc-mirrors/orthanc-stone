@@ -176,6 +176,12 @@ namespace OrthancStone
     {
       expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
     }
+
+    // This computes the "IndexInSeries" metadata from Orthanc (check
+    // out "Orthanc::ServerIndex::Store()")
+    hasIndexInSeries_ = (
+      dicom.ParseUnsignedInteger32(indexInSeries_, Orthanc::DICOM_TAG_INSTANCE_NUMBER) ||
+      dicom.ParseUnsignedInteger32(indexInSeries_, Orthanc::DICOM_TAG_IMAGE_INDEX));
   }
 
 
@@ -396,6 +402,20 @@ namespace OrthancStone
     {
       std::auto_ptr<Orthanc::ImageAccessor> converted(ConvertToFloat(pixelData));
       return new LookupTableTextureSceneLayer(*converted);
+    }
+  }
+
+  
+  unsigned int DicomInstanceParameters::GetIndexInSeries() const
+  {
+    if (data_.hasIndexInSeries_)
+    {
+      return data_.indexInSeries_;
+    }
+    else
+    {
+      LOG(ERROR) << "DicomInstanceParameters::GetIndexInSeries(): !data_.hasIndexInSeries_";
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
 }

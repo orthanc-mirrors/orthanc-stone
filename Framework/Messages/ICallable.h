@@ -71,8 +71,8 @@ namespace OrthancStone {
     Callable(TObserver& observer,
              MemberFunction function) :
       observer_(observer),
-      observerFingerprint_(observer.GetFingerprint()),
-      function_(function)
+      function_(function),
+      observerFingerprint_(observer.GetFingerprint())
     {
     }
 

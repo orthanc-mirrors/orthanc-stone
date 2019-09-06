@@ -442,6 +442,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancWebViewerJpegCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/OracleCommandWithPayload.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/OrthancRestApiCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/HttpCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CairoCompositor.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/FloatTextureSceneLayer.cpp

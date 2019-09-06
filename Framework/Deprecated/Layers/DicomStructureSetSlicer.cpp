@@ -34,7 +34,7 @@ namespace Deprecated
       uint8_t                                                      green_;
       uint8_t                                                      blue_;
       std::string                                                  name_;
-      std::vector< std::vector<OrthancStone::DicomStructureSet::PolygonPoint> >  polygons_;
+      std::vector< std::vector<OrthancStone::DicomStructureSet::PolygonPoint2D> >  polygons_;
 
     public:
       Structure(OrthancStone::DicomStructureSet& structureSet,

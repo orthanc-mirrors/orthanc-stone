@@ -73,7 +73,7 @@ namespace OrthancStone
       Extent2D            extent_;
 
       void CheckPointIsOnSlice(const Vector& v) const;
-      bool IsPointOnSlice(const Vector& v) const;
+      bool IsPointOnSliceIfAny(const Vector& v) const;
 
     public:
       Polygon(const std::string& sopInstanceUid) :

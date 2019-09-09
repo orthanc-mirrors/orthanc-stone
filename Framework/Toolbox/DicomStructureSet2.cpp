@@ -149,7 +149,7 @@ namespace OrthancStone
     }
   }
 
-  bool DicomStructureSet2::Polygon::IsPointOnSlice(const Vector& v) const
+  bool DicomStructureSet2::Polygon::IsPointOnSliceIfAny(const Vector& v) const
   {
     if (hasSlice_)
     {
@@ -179,7 +179,7 @@ namespace OrthancStone
   {
 #if 1
     // BGO 2019-09-03
-    if (IsPointOnSlice(v))
+    if (IsPointOnSliceIfAny(v))
     {
       points_.push_back(v);
     }
@@ -217,7 +217,7 @@ namespace OrthancStone
         
         for (Points::const_iterator it = points_.begin(); it != points_.end(); ++it)
         {
-          if (IsPointOnSlice(*it))
+          if (IsPointOnSliceIfAny(*it))
           {
             double x, y;
             geometry.ProjectPoint(x, y, *it);

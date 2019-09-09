@@ -206,7 +206,7 @@ namespace OrthancStone
                                            const CoordinateSystem3D& a,
                                            const CoordinateSystem3D& b)
   {
-    bool opposite;   // Ignored
+    bool opposite = false;   // Ignored
 
     if (OrthancStone::GeometryToolbox::IsParallelOrOpposite(
           opposite, a.GetNormal(), b.GetNormal()))

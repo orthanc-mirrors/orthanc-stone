@@ -423,14 +423,26 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphBitmapAlphabet.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/GlyphTextureAlphabet.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/TextBoundingBox.cpp
+
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingItemsSorter.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingItemsSorter.h
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingStrategy.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingStrategy.h
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomStructureSetLoader.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderCache.h
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomStructureSetLoader.h
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomStructureSetLoader2.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomStructureSetLoader2.h
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/IFetchingItemsSorter.h
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/IFetchingStrategy.h
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderCache.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderCache.h
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderStateMachine.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderStateMachine.h
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancMultiframeVolumeLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancMultiframeVolumeLoader.h
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h
+  
   ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IObservable.cpp
@@ -515,19 +527,38 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneException.h
   ${ORTHANC_STONE_ROOT}/Framework/StoneInitialization.cpp
+  
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/AffineTransform2D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/AffineTransform2D.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/CoordinateSystem3D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/CoordinateSystem3D.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomInstanceParameters.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomInstanceParameters.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet2.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet2.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DynamicBitmap.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DynamicBitmap.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Extent2D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Extent2D.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/FiniteProjectiveCamera.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/FiniteProjectiveCamera.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SubpixelReader.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SubvoxelReader.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.h
+  
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/ViewportBase.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImage.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageMPRSlicer.cpp

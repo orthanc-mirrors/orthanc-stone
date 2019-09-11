@@ -6,7 +6,9 @@
 #include <Framework/Deprecated/Viewport/WidgetViewport.h>
 #include <Applications/Wasm/StartupParametersBuilder.h>
 #include <Platforms/Wasm/WasmPlatformApplicationAdapter.h>
+#include <Framework/StoneInitialization.h>
 #include <Core/Logging.h>
+#include <sstream>
 
 #include <algorithm>
 
@@ -105,7 +107,8 @@ extern "C" {
   }
 
   void EMSCRIPTEN_KEEPALIVE CreateWasmApplication(ViewportHandle viewport) {
-
+    printf("Initializing Stone\n");
+    OrthancStone::StoneInitialize();
     printf("CreateWasmApplication\n");
 
     application.reset(CreateUserApplication(broker));

@@ -45,10 +45,7 @@ namespace OrthancStone
       // remember this is panic-level code to track zombie object usage
       std::string fingerprint = Orthanc::Toolbox::GenerateUuid();
       const char* fingerprintRaw = fingerprint.c_str();
-      ORTHANC_ASSERT(strlen(fingerprintRaw) == 36);
-      ORTHANC_ASSERT(fingerprintRaw[36] == 0);
       memcpy(fingerprint_, fingerprintRaw, 37);
-      LOG(TRACE) << "IObserver(" << std::hex << this << std::dec << ")::IObserver : fingerprint_ == " << fingerprint_;
       broker_.Register(*this);
     }
 

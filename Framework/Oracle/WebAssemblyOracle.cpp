@@ -306,32 +306,39 @@ namespace OrthancStone
           {
             switch (context->GetCommand().GetType())
             {
-            case IOracleCommand::Type_OrthancRestApi:
-            {
-              LOG(TRACE) << "WebAssemblyOracle::FetchContext::SuccessCallback. About to call context->EmitMessage(message);";
-              OrthancRestApiCommand::SuccessMessage message
-              (context->GetTypedCommand<OrthancRestApiCommand>(), headers, answer);
-              context->EmitMessage(message);
-              break;
-            }
+              case IOracleCommand::Type_Http:
+              {
+                HttpCommand::SuccessMessage message(context->GetTypedCommand<HttpCommand>(), headers, answer);
+                context->EmitMessage(message);
+                break;
+              }
 
-            case IOracleCommand::Type_GetOrthancImage:
-            {
-              context->GetTypedCommand<GetOrthancImageCommand>().ProcessHttpAnswer
-              (context->GetEmitter(), context->GetReceiver(), answer, headers);
-              break;
-            }
+              case IOracleCommand::Type_OrthancRestApi:
+              {
+                LOG(TRACE) << "WebAssemblyOracle::FetchContext::SuccessCallback. About to call context->EmitMessage(message);";
+                OrthancRestApiCommand::SuccessMessage message
+                  (context->GetTypedCommand<OrthancRestApiCommand>(), headers, answer);
+                context->EmitMessage(message);
+                break;
+              }
 
-            case IOracleCommand::Type_GetOrthancWebViewerJpeg:
-            {
-              context->GetTypedCommand<GetOrthancWebViewerJpegCommand>().ProcessHttpAnswer
-              (context->GetEmitter(), context->GetReceiver(), answer);
-              break;
-            }
+              case IOracleCommand::Type_GetOrthancImage:
+              {
+                context->GetTypedCommand<GetOrthancImageCommand>().ProcessHttpAnswer
+                  (context->GetEmitter(), context->GetReceiver(), answer, headers);
+                break;
+              }
 
-            default:
-              LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle: "
-                << context->GetCommand().GetType();
+              case IOracleCommand::Type_GetOrthancWebViewerJpeg:
+              {
+                context->GetTypedCommand<GetOrthancWebViewerJpegCommand>().ProcessHttpAnswer
+                  (context->GetEmitter(), context->GetReceiver(), answer);
+                break;
+              }
+
+              default:
+                LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle: "
+                           << context->GetCommand().GetType();
             }
           }
         }
@@ -375,7 +382,7 @@ namespace OrthancStone
     const IObserver&               receiver_;
     std::auto_ptr<IOracleCommand>  command_;
     Orthanc::HttpMethod            method_;
-    std::string                    uri_;
+    std::string                    url_;
     std::string                    body_;
     HttpHeaders                    headers_;
     unsigned int                   timeout_;
@@ -402,9 +409,14 @@ namespace OrthancStone
       method_ = method;
     }
 
-    void SetUri(const std::string& uri)
+    void SetOrthancUri(const std::string& uri)
     {
-      uri_ = oracle_.orthancRoot_ + uri;
+      url_ = oracle_.orthancRoot_ + uri;
+    }
+
+    void SetUrl(const std::string& url)
+    {
+      url_ = url;
     }
 
     void SetBody(std::string& body /* will be swapped */)
@@ -514,9 +526,9 @@ namespace OrthancStone
 
         // Must be the last call to prevent memory leak on error
 #if 0
-        LOG(TRACE) << "Performing " << method << " request on URI: \"" << uri_ << "\"";
+        LOG(TRACE) << "Performing " << method << " request on URI: \"" << url_ << "\"";
 #endif
-        emscripten_fetch(&attr, uri_.c_str());
+        emscripten_fetch(&attr, url_.c_str());
       }        
       catch(...)
       {
@@ -546,6 +558,29 @@ namespace OrthancStone
   }
 #endif
 
+  
+  void WebAssemblyOracle::Execute(const IObserver& receiver,
+                                  HttpCommand* command)
+  {
+    FetchCommand fetch(*this, receiver, command);
+    
+    fetch.SetMethod(command->GetMethod());
+    fetch.SetUrl(command->GetUrl());
+    fetch.SetHttpHeaders(command->GetHttpHeaders());
+    fetch.SetTimeout(command->GetTimeout());
+    
+    if (command->GetMethod() == Orthanc::HttpMethod_Post ||
+        command->GetMethod() == Orthanc::HttpMethod_Put)
+    {
+      std::string body;
+      command->SwapBody(body);
+      fetch.SetBody(body);
+    }
+    
+    fetch.Execute();
+  }
+  
+
   void WebAssemblyOracle::Execute(const IObserver& receiver,
                                   OrthancRestApiCommand* command)
   {
@@ -566,7 +601,7 @@ namespace OrthancStone
       FetchCommand fetch(*this, receiver, command);
 
       fetch.SetMethod(command->GetMethod());
-      fetch.SetUri(command->GetUri());
+      fetch.SetOrthancUri(command->GetUri());
       fetch.SetHttpHeaders(command->GetHttpHeaders());
       fetch.SetTimeout(command->GetTimeout());
 
@@ -622,7 +657,7 @@ namespace OrthancStone
 
     FetchCommand fetch(*this, receiver, command);
 
-    fetch.SetUri(command->GetUri());
+    fetch.SetOrthancUri(command->GetUri());
     fetch.SetHttpHeaders(command->GetHttpHeaders());
     fetch.SetTimeout(command->GetTimeout());
       
@@ -642,7 +677,7 @@ namespace OrthancStone
 
     FetchCommand fetch(*this, receiver, command);
 
-    fetch.SetUri(command->GetUri());
+    fetch.SetOrthancUri(command->GetUri());
     fetch.SetHttpHeaders(command->GetHttpHeaders());
     fetch.SetTimeout(command->GetTimeout());
       
@@ -667,6 +702,10 @@ namespace OrthancStone
 
     switch (command->GetType())
     {
+      case IOracleCommand::Type_Http:
+        Execute(receiver, dynamic_cast<HttpCommand*>(protection.release()));
+        break;
+        
       case IOracleCommand::Type_OrthancRestApi:
         //// DIAGNOSTIC. PLEASE REMOVE IF IT HAS BEEN COMMITTED BY MISTAKE
         //{

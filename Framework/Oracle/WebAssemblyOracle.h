@@ -32,6 +32,7 @@
 #include "../Messages/IObservable.h"
 #include "GetOrthancImageCommand.h"
 #include "GetOrthancWebViewerJpegCommand.h"
+#include "HttpCommand.h"
 #include "IOracle.h"
 #include "OrthancRestApiCommand.h"
 
@@ -49,6 +50,9 @@ namespace OrthancStone
     class Emitter;
     class FetchContext;
     class FetchCommand;    
+    
+    void Execute(const IObserver& receiver,
+                 HttpCommand* command);    
     
     void Execute(const IObserver& receiver,
                  OrthancRestApiCommand* command);    

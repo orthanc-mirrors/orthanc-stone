@@ -112,7 +112,7 @@ namespace OrthancStone
                      const Orthanc::DicomTag& tag)
     {
       std::string value;
-      return (dataset.CopyToString(value, tag, false) &&
+      return (dataset.LookupStringValue(value, tag, false) &&
               ParseVector(target, value));
     }
 

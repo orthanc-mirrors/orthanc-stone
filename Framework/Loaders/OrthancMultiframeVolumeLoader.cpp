@@ -58,7 +58,7 @@ namespace OrthancStone
   static std::string GetSopClassUid(const Orthanc::DicomMap& dicom)
   {
     std::string s;
-    if (!dicom.CopyToString(s, Orthanc::DICOM_TAG_SOP_CLASS_UID, false))
+    if (!dicom.LookupStringValue(s, Orthanc::DICOM_TAG_SOP_CLASS_UID, false))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
                                       "DICOM file without SOP class UID");

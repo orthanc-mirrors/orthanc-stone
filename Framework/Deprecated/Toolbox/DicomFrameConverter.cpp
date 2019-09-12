@@ -119,7 +119,7 @@ namespace Deprecated
     }
 
     std::string photometric;
-    if (dicom.CopyToString(photometric, Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION, false))
+    if (dicom.LookupStringValue(photometric, Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION, false))
     {
       photometric = Orthanc::Toolbox::StripSpaces(photometric);
     }

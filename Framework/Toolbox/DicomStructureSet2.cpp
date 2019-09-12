@@ -677,7 +677,7 @@ namespace OrthancStone
 
     std::string s;
     Vector v;
-    if (dataset.CopyToString(s, Orthanc::DICOM_TAG_SLICE_THICKNESS, false) &&
+    if (dataset.LookupStringValue(s, Orthanc::DICOM_TAG_SLICE_THICKNESS, false) &&
         LinearAlgebra::ParseVector(v, s) &&
         v.size() > 0)
     {
@@ -685,8 +685,8 @@ namespace OrthancStone
     }
 
     std::string instance, series;
-    if (dataset.CopyToString(instance, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false) &&
-        dataset.CopyToString(series, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false))
+    if (dataset.LookupStringValue(instance, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false) &&
+        dataset.LookupStringValue(series, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false))
     {
       AddReferencedSlice(instance, series, slice, thickness);
     }

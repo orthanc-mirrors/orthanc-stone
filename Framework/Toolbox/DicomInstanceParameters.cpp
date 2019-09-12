@@ -41,7 +41,7 @@ namespace OrthancStone
     {
       std::string increment;
 
-      if (dicom.CopyToString(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
+      if (dicom.LookupStringValue(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
       {
         Orthanc::Toolbox::ToUpperCase(increment);
         if (increment != "3004,000C")  // This is the "Grid Frame Offset Vector" tag (DICOM_TAG_GRID_FRAME_OFFSET_VECTOR)
@@ -76,15 +76,15 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
 
-    if (!dicom.CopyToString(studyInstanceUid_, Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, false) ||
-        !dicom.CopyToString(seriesInstanceUid_, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false) ||
-        !dicom.CopyToString(sopInstanceUid_, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
+    if (!dicom.LookupStringValue(studyInstanceUid_, Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, false) ||
+        !dicom.LookupStringValue(seriesInstanceUid_, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false) ||
+        !dicom.LookupStringValue(sopInstanceUid_, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
         
     std::string s;
-    if (!dicom.CopyToString(s, Orthanc::DICOM_TAG_SOP_CLASS_UID, false))
+    if (!dicom.LookupStringValue(s, Orthanc::DICOM_TAG_SOP_CLASS_UID, false))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
@@ -101,8 +101,8 @@ namespace OrthancStone
     GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, dicom);
 
     std::string position, orientation;
-    if (dicom.CopyToString(position, Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT, false) &&
-        dicom.CopyToString(orientation, Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT, false))
+    if (dicom.LookupStringValue(position, Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT, false) &&
+        dicom.LookupStringValue(orientation, Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT, false))
     {
       geometry_ = CoordinateSystem3D(position, orientation);
     }

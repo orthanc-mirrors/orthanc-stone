@@ -79,7 +79,7 @@ add_library(OrthancStone STATIC
 if (ON)
   add_executable(BasicScene
     BasicScene.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/../Shared/SharedBasicScene.h
+    #${CMAKE_CURRENT_LIST_DIR}/../Shared/SharedBasicScene.h
     ${CMAKE_CURRENT_LIST_DIR}/../Shared/SharedBasicScene.cpp
     )
 

@@ -76,7 +76,7 @@ namespace Deprecated
     {
       std::string increment;
 
-      if (dataset.CopyToString(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
+      if (dataset.LookupStringValue(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
       {
         Orthanc::Toolbox::ToUpperCase(increment);
         if (increment != "3004,000C")  // This is the "Grid Frame Offset Vector" tag
@@ -89,7 +89,7 @@ namespace Deprecated
 
     std::string offsetTag;
 
-    if (!dataset.CopyToString(offsetTag, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR, false) ||
+    if (!dataset.LookupStringValue(offsetTag, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR, false) ||
         offsetTag.empty())
     {
       LOG(ERROR) << "Cannot read the \"GridFrameOffsetVector\" tag, check you are using Orthanc >= 1.3.1";
@@ -148,7 +148,7 @@ namespace Deprecated
     type_ = Type_OrthancDecodableFrame;
     imageInformation_.reset(new Orthanc::DicomImageInformation(dataset));
 
-    if (!dataset.CopyToString(sopClassUid_, Orthanc::DICOM_TAG_SOP_CLASS_UID, false) ||
+    if (!dataset.LookupStringValue(sopClassUid_, Orthanc::DICOM_TAG_SOP_CLASS_UID, false) ||
         sopClassUid_.empty())
     {
       LOG(ERROR) << "Instance without a SOP class UID";
@@ -174,7 +174,7 @@ namespace Deprecated
     thickness_ = 100.0 * std::numeric_limits<double>::epsilon();
 
     std::string tmp;
-    if (dataset.CopyToString(tmp, Orthanc::DICOM_TAG_SLICE_THICKNESS, false))
+    if (dataset.LookupStringValue(tmp, Orthanc::DICOM_TAG_SLICE_THICKNESS, false))
     {
       if (!tmp.empty() &&
           !ParseDouble(thickness_, tmp))
@@ -188,8 +188,8 @@ namespace Deprecated
     OrthancStone::GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, dataset);
 
     std::string position, orientation;
-    if (dataset.CopyToString(position, Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT, false) &&
-        dataset.CopyToString(orientation, Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT, false))
+    if (dataset.LookupStringValue(position, Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT, false) &&
+        dataset.LookupStringValue(orientation, Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT, false))
     {
       geometry_ = OrthancStone::CoordinateSystem3D(position, orientation);
 

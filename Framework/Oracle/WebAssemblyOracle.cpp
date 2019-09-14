@@ -22,6 +22,7 @@
 #include "WebAssemblyOracle.h"
 
 #include "SleepOracleCommand.h"
+#include "OracleCommandExceptionMessage.h"
 
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
@@ -352,19 +353,27 @@ namespace OrthancStone
     static void FailureCallback(emscripten_fetch_t *fetch)
     {
       std::auto_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
+
+      {
+        const size_t kEmscriptenStatusTextSize = sizeof(emscripten_fetch_t::statusText);
+        char message[kEmscriptenStatusTextSize + 1];
+        memcpy(message, fetch->statusText, kEmscriptenStatusTextSize);
+        message[kEmscriptenStatusTextSize] = 0;
+
+        LOG(ERROR) << "Fetching " << fetch->url
+                   << " failed, HTTP failure status code: " << fetch->status
+                   << " | statusText = " << message
+                   << " | numBytes = " << fetch->numBytes
+                   << " | totalBytes = " << fetch->totalBytes
+                   << " | readyState = " << fetch->readyState;
+      }
+
+      {
+        OracleCommandExceptionMessage message
+          (context->GetCommand(), Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol));
+        context->EmitMessage(message);
+      }
       
-      const size_t kEmscriptenStatusTextSize = sizeof(emscripten_fetch_t::statusText);
-      char message[kEmscriptenStatusTextSize + 1];
-      memcpy(message, fetch->statusText, kEmscriptenStatusTextSize);
-      message[kEmscriptenStatusTextSize] = 0;
-
-      LOG(ERROR) << "Fetching " << fetch->url
-        << " failed, HTTP failure status code: " << fetch->status
-        << " | statusText = " << message
-        << " | numBytes = " << fetch->numBytes
-        << " | totalBytes = " << fetch->totalBytes
-        << " | readyState = " << fetch->readyState;
-
       /**
        * TODO - The following code leads to an infinite recursion, at
        * least with Firefox running on incognito mode => WHY?

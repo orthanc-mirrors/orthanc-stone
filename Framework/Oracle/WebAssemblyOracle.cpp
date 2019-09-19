@@ -360,12 +360,12 @@ namespace OrthancStone
         memcpy(message, fetch->statusText, kEmscriptenStatusTextSize);
         message[kEmscriptenStatusTextSize] = 0;
 
-        LOG(ERROR) << "Fetching " << fetch->url
+        /*LOG(ERROR) << "Fetching " << fetch->url
                    << " failed, HTTP failure status code: " << fetch->status
                    << " | statusText = " << message
                    << " | numBytes = " << fetch->numBytes
                    << " | totalBytes = " << fetch->totalBytes
-                   << " | readyState = " << fetch->readyState;
+                   << " | readyState = " << fetch->readyState;*/
       }
 
       {

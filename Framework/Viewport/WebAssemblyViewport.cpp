@@ -43,9 +43,12 @@ namespace OrthancStone
 
   void WebAssemblyOpenGLViewport::UpdateSize()
   {
-    if(compositor_.get() != NULL)
-      compositor_->Refresh();  // Then refresh the content of the canvas
     context_.UpdateSize();  // First read the size of the canvas
+
+    if (compositor_.get() != NULL)
+    {
+      compositor_->Refresh();  // Then refresh the content of the canvas
+    }
   }
 
   /*

@@ -26,7 +26,7 @@
 #include "Extent2D.h"
 #include "../Scene2D/Color.h"
 
-//#define USE_OLD_SJO_CUT_CODE 1
+//#define USE_BOOST_UNION_FOR_POLYGONS 1
 
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 
@@ -141,7 +141,7 @@ namespace OrthancStone
 
     Structure& GetStructure(size_t index);
   
-#ifdef USE_OLD_SJO_CUT_CODE 
+#ifdef USE_BOOST_UNION_FOR_POLYGONS 
     bool ProjectStructure(std::vector< std::vector<Point2D> >& polygons,
                           const Structure& structure,
                           const CoordinateSystem3D& slice) const;
@@ -185,7 +185,7 @@ namespace OrthancStone
 
     Vector GetNormal() const;
 
-#ifdef USE_OLD_SJO_CUT_CODE 
+#ifdef USE_BOOST_UNION_FOR_POLYGONS 
     bool ProjectStructure(std::vector< std::vector<Point2D> >& polygons,
       size_t index,
       const CoordinateSystem3D& slice) const

@@ -243,7 +243,7 @@ namespace OrthancStone
       {
         const Color& color = content_.GetStructureColor(i);
 
-#ifdef USE_OLD_SJO_CUT_CODE 
+#ifdef USE_BOOST_UNION_FOR_POLYGONS 
         std::vector< std::vector<Point2D> > polygons;
           
         if (content_.ProjectStructure(polygons, i, cuttingPlane))

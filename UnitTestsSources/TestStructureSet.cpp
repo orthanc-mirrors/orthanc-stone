@@ -4810,14 +4810,14 @@ static size_t FillTestRectangleList(std::vector< RtStructRectanglesInSlab >& rec
 }
 
 /*
-void DicomStructure2::AddSlabBoundaries(
+void AddSlabBoundaries(
   std::vector<std::pair<double, RectangleBoundaryKind> >& boundaries,
   const std::vector<RtStructRectanglesInSlab>& slabCuts, size_t iSlab)
 */
 
 
 /*
-void DicomStructure2::ProcessBoundaryList(
+void ProcessBoundaryList(
   std::vector< std::pair<Point2D, Point2D> >& segments,
   const std::vector<std::pair<double, RectangleBoundaryKind> >& boundaries,
   double y)
@@ -4830,7 +4830,7 @@ TEST(StructureSet, ProcessBoundaryList_Empty)
   std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
 
   boundaries.clear();
-  EXPECT_NO_THROW(DicomStructure2::AddSlabBoundaries(boundaries, slabCuts, 0));
+  EXPECT_NO_THROW(AddSlabBoundaries(boundaries, slabCuts, 0));
   ASSERT_EQ(0, boundaries.size());
 }
 
@@ -4841,7 +4841,7 @@ TEST(StructureSet, ProcessBoundaryListTopRow)
   FillTestRectangleList(slabCuts);
 
   boundaries.clear();
-  DicomStructure2::AddSlabBoundaries(boundaries, slabCuts, 0);
+  AddSlabBoundaries(boundaries, slabCuts, 0);
 
   {
     size_t i = 0;
@@ -4872,8 +4872,8 @@ TEST(StructureSet, ProcessBoundaryListRows_0_and_1)
   FillTestRectangleList(slabCuts);
 
   boundaries.clear();
-  DicomStructure2::AddSlabBoundaries(boundaries, slabCuts, 0);
-  DicomStructure2::AddSlabBoundaries(boundaries, slabCuts, 1);
+  AddSlabBoundaries(boundaries, slabCuts, 0);
+  AddSlabBoundaries(boundaries, slabCuts, 1);
 
   ASSERT_EQ(8, boundaries.size());
 
@@ -4921,7 +4921,7 @@ TEST(StructureSet, ConvertListOfSlabsToSegments_EmptyBoundaries)
   FillTestRectangleList(slabCuts);
   boundaries.clear();
   std::vector< std::pair<Point2D, Point2D> > segments;
-  ASSERT_NO_THROW(DicomStructure2::ProcessBoundaryList(segments, boundaries, 42.0));
+  ASSERT_NO_THROW(ProcessBoundaryList(segments, boundaries, 42.0));
   ASSERT_EQ(0u, segments.size());
 }
 
@@ -4934,8 +4934,8 @@ TEST(StructureSet, ConvertListOfSlabsToSegments_TopRow_Horizontal)
   {
     std::vector< std::pair<Point2D, Point2D> > segments;
     std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
-    DicomStructure2::AddSlabBoundaries(boundaries, slabCuts, 0);
-    DicomStructure2::ProcessBoundaryList(segments, boundaries, slabCuts[0][0].ymin);
+    AddSlabBoundaries(boundaries, slabCuts, 0);
+    ProcessBoundaryList(segments, boundaries, slabCuts[0][0].ymin);
 
     ASSERT_EQ(2u, segments.size());
 
@@ -4960,18 +4960,18 @@ TEST(StructureSet, ConvertListOfSlabsToSegments_All_Horizontal)
   // top row
   {
     std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
-    DicomStructure2::AddSlabBoundaries(boundaries, slabCuts, 0);
+    AddSlabBoundaries(boundaries, slabCuts, 0);
     std::vector< std::pair<Point2D, Point2D> > segments;
-    DicomStructure2::ProcessBoundaryList(segments, boundaries, slabCuts[0][0].ymin);
+    ProcessBoundaryList(segments, boundaries, slabCuts[0][0].ymin);
   }
 
   // mids
   {
     std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
-    DicomStructure2::AddSlabBoundaries(boundaries, slabCuts, 0);
-    DicomStructure2::AddSlabBoundaries(boundaries, slabCuts, 1);
+    AddSlabBoundaries(boundaries, slabCuts, 0);
+    AddSlabBoundaries(boundaries, slabCuts, 1);
     std::vector< std::pair<Point2D, Point2D> > segments;
-    DicomStructure2::ProcessBoundaryList(segments, boundaries, slabCuts[0][0].ymax);
+    ProcessBoundaryList(segments, boundaries, slabCuts[0][0].ymax);
 
     ASSERT_EQ(4u, segments.size());
 
@@ -4999,9 +4999,9 @@ TEST(StructureSet, ConvertListOfSlabsToSegments_All_Horizontal)
   // bottom row
   {
     std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
-    DicomStructure2::AddSlabBoundaries(boundaries, slabCuts, 1);
+    AddSlabBoundaries(boundaries, slabCuts, 1);
     std::vector< std::pair<Point2D, Point2D> > segments;
-    DicomStructure2::ProcessBoundaryList(segments, boundaries, slabCuts[1][0].ymax);
+    ProcessBoundaryList(segments, boundaries, slabCuts[1][0].ymax);
 
     ASSERT_EQ(2u, segments.size());
 
@@ -5025,7 +5025,7 @@ TEST(StructureSet, ConvertListOfSlabsToSegments_Complete_Empty)
 
   std::vector< std::pair<Point2D, Point2D> > segments;
 
-  ASSERT_NO_THROW(DicomStructure2::ConvertListOfSlabsToSegments(segments, slabCuts, 0));
+  ASSERT_NO_THROW(ConvertListOfSlabsToSegments(segments, slabCuts, 0));
   ASSERT_EQ(0u, segments.size());
 }
 
@@ -5037,7 +5037,7 @@ TEST(StructureSet, ConvertListOfSlabsToSegments_Complete_Regular)
 
   std::vector< std::pair<Point2D, Point2D> > segments;
 
-  ASSERT_NO_THROW(DicomStructure2::ConvertListOfSlabsToSegments(segments, slabCuts, totalRectCount));
+  ASSERT_NO_THROW(ConvertListOfSlabsToSegments(segments, slabCuts, totalRectCount));
   ASSERT_EQ(60u, segments.size());
 
   size_t i = 0;

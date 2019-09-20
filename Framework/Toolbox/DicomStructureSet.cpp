@@ -81,7 +81,7 @@ static void Union(BoostMultiPolygon& output,
   }
 }
 
-#ifdef USE_OLD_SJO_CUT_CODE
+#ifdef USE_BOOST_UNION_FOR_POLYGONS
 
 static BoostPolygon CreateRectangle(float x1, float y1,
                                     float x2, float y2)
@@ -803,7 +803,7 @@ namespace OrthancStone
     }
   }
 
-#ifdef USE_OLD_SJO_CUT_CODE 
+#ifdef USE_BOOST_UNION_FOR_POLYGONS 
   bool DicomStructureSet::ProjectStructure(std::vector< std::vector<Point2D> >& polygons,
                                            const Structure& structure,
                                            const CoordinateSystem3D& slice) const
@@ -813,7 +813,7 @@ namespace OrthancStone
     const CoordinateSystem3D& slice) const
 #endif
   {
-#ifdef USE_OLD_SJO_CUT_CODE 
+#ifdef USE_BOOST_UNION_FOR_POLYGONS 
     polygons.clear();
 #else
     segments.clear();
@@ -831,7 +831,7 @@ namespace OrthancStone
       {
         if (polygon->IsOnSlice(slice))
         {
-#ifdef USE_OLD_SJO_CUT_CODE 
+#ifdef USE_BOOST_UNION_FOR_POLYGONS 
           polygons.push_back(std::vector<Point2D>());
           
           for (Points::const_iterator p = polygon->GetPoints().begin();
@@ -882,7 +882,7 @@ namespace OrthancStone
 #if 1
       // Sagittal or coronal projection
 
-#ifdef USE_OLD_SJO_CUT_CODE 
+#ifdef USE_BOOST_UNION_FOR_POLYGONS 
       std::vector<BoostPolygon> projected;
 #else
       // this will contain the intersection of the polygon slab with
@@ -909,7 +909,7 @@ namespace OrthancStone
             static_cast<float>(y2)),curZ));
         }
       }
-#ifndef USE_OLD_SJO_CUT_CODE
+#ifndef USE_BOOST_UNION_FOR_POLYGONS
       // projected contains a set of rectangles specified by two opposite
       // corners (x1,y1,x2,y2)
       // we need to merge them 

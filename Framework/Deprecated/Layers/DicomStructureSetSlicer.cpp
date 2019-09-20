@@ -29,12 +29,12 @@ namespace Deprecated
     class Structure
     {
     private:
-      bool                                                         visible_;
-      uint8_t                                                      red_;
-      uint8_t                                                      green_;
-      uint8_t                                                      blue_;
-      std::string                                                  name_;
-      std::vector< std::vector<OrthancStone::DicomStructureSet::PolygonPoint2D> >  polygons_;
+      bool                                                                   visible_;
+      uint8_t                                                                red_;
+      uint8_t                                                                green_;
+      uint8_t                                                                blue_;
+      std::string                                                            name_;
+      std::vector< std::pair<OrthancStone::Point2D, OrthancStone::Point2D> > segments_;
 
     public:
       Structure(OrthancStone::DicomStructureSet& structureSet,
@@ -43,7 +43,7 @@ namespace Deprecated
         name_(structureSet.GetStructureName(index))
       {
         structureSet.GetStructureColor(red_, green_, blue_, index);
-        visible_ = structureSet.ProjectStructure(polygons_, index, plane);
+        visible_ = structureSet.ProjectStructure(segments_, index, plane);
       }
 
       void Render(OrthancStone::CairoContext& context)
@@ -54,16 +54,10 @@ namespace Deprecated
         
           context.SetSourceColor(red_, green_, blue_);
 
-          for (size_t i = 0; i < polygons_.size(); i++)
+          for (size_t i = 0; i < segments_.size(); i++)
           {
-            cairo_move_to(cr, polygons_[i][0].first, polygons_[i][0].second);
-
-            for (size_t j = 1; j < polygons_[i].size(); j++)
-            {
-              cairo_line_to(cr, polygons_[i][j].first, polygons_[i][j].second);
-            }
-
-            cairo_line_to(cr, polygons_[i][0].first, polygons_[i][0].second);
+            cairo_move_to(cr, segments_[i].first.x, segments_[i].first.y);
+            cairo_move_to(cr, segments_[i].second.x, segments_[i].second.y);
             cairo_stroke(cr);
           }
         }

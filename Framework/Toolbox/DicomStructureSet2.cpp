@@ -92,6 +92,17 @@ namespace OrthancStone
   }
 
 
+  DicomStructureSet2::DicomStructureSet2()
+  {
+
+  }
+
+
+  DicomStructureSet2::~DicomStructureSet2()
+  {
+
+  }
+
   void DicomStructureSet2::SetContents(const OrthancPlugins::FullOrthancDataset& tags)
   {
     FillStructuresFromDataset(tags);

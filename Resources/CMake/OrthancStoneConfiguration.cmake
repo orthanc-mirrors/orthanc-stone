@@ -534,10 +534,17 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/CoordinateSystem3D.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomInstanceParameters.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomInstanceParameters.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructure2.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructure2.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructurePolygon2.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructurePolygon2.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet2.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSet2.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSetUtils.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DicomStructureSetUtils.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DisjointDataSet.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DynamicBitmap.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/DynamicBitmap.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Extent2D.cpp
@@ -560,15 +567,29 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.h
   
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/ViewportBase.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImage.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageMPRSlicer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageReslicer.cpp
+  
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/IVolumeSlicer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Volumes/ImageBuffer3D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/IVolumeSlicer.h
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/OrientedVolumeBoundingBox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/OrientedVolumeBoundingBox.h
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeImageGeometry.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeImageGeometry.h
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeReslicer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeReslicer.h
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeSceneLayerSource.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeSceneLayerSource.h
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomStructureSetSlicer2.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomStructureSetSlicer2.h
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImage.h
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImage.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImage.h
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageMPRSlicer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageMPRSlicer.h
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageReslicer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/DicomVolumeImageReslicer.h
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/ImageBuffer3D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/ImageBuffer3D.h
+
   ${ORTHANC_STONE_ROOT}/Framework/Wrappers/CairoContext.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Wrappers/CairoSurface.cpp
 

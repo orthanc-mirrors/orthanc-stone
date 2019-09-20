@@ -245,10 +245,29 @@ Build the Application Samples
 cmake -G "Visual Studio 9 2008" -DUSE_LEGACY_JSONCPP=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Applications/Samples
 ```
 
-Various notes to be sorted
+**Visual Studio 2019 (v142) **
+
+```
+cmake -G "Visual Studio 16 2019" -A x64 -DMSVC_MULTIPLE_PROCESSES=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Applications/Samples
+```
+
+**Visual Studio 2017 (v140) **
+
+```
+cmake -G "Visual Studio 15 2017 Win64" -DMSVC_MULTIPLE_PROCESSES=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Applications/Samples
+```
+
+
+Build the core Samples
 ---------------------------
 How to build the newest (2019-04-29) SDL samples under Windows, *inside* a
 folder that is sibling to the orthanc-stone folder: 
+
+**Visual Studio 2019 (v142) **
+
+```
+cmake -G "Visual Studio 16 2019" -A x64 -DMSVC_MULTIPLE_PROCESSES=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Samples/Sdl
+```
 
 **Visual Studio 2017 (v140) **
 

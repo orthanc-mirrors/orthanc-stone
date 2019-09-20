@@ -189,7 +189,7 @@ namespace OrthancStone
           canvasWidth_ = static_cast<unsigned int>(boost::math::iround(w));
           canvasHeight_ = static_cast<unsigned int>(boost::math::iround(h));
         }
-    
+        
         emscripten_set_canvas_element_size(canvas_.c_str(), canvasWidth_, canvasHeight_);
       }
     };

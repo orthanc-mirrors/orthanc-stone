@@ -70,14 +70,15 @@ namespace OrthancStone
     return (dataset.GetStringValue(value, tag) &&
       LinearAlgebra::ParseVector(target, value));
   }
-  
-  std::ostream& operator<<(std::ostream& s, const OrthancPlugins::DicomPath& dicomPath)
+
+
+  void DicomPathToString(std::string& s, const OrthancPlugins::DicomPath& dicomPath)
   {
     std::stringstream tmp;
     for (size_t i = 0; i < dicomPath.GetPrefixLength(); ++i)
     {
       OrthancPlugins::DicomTag tag = dicomPath.GetPrefixTag(i);
-      
+
       // We use this other object to be able to use GetMainTagsName
       // and Format
       Orthanc::DicomTag tag2(tag.GetGroup(), tag.GetElement());
@@ -87,7 +88,14 @@ namespace OrthancStone
     const OrthancPlugins::DicomTag& tag = dicomPath.GetFinalTag();
     Orthanc::DicomTag tag2(tag.GetGroup(), tag.GetElement());
     tmp << tag2.GetMainTagsName() << " (" << tag2.Format() << ")";
-    s << tmp.str();
+    s = tmp.str();
+  }
+
+  std::ostream& operator<<(std::ostream& s, const OrthancPlugins::DicomPath& dicomPath)
+  {
+    std::string tmp;
+    DicomPathToString(tmp, dicomPath);
+    s << tmp;
     return s;
   }
 
@@ -227,7 +235,9 @@ namespace OrthancStone
         countPointsPath.SetPrefixIndex(1, j);
         if (!reader.GetUnsignedIntegerValue(countPoints, countPointsPath))
         {
-          LOG(ERROR) << "Dicom path " << countPointsPath << " is not valid (should contain an unsigned integer)";
+          std::string s;
+          DicomPathToString(s, countPointsPath);
+          LOG(ERROR) << "Dicom path " << s << " is not valid (should contain an unsigned integer)";
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
 

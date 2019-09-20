@@ -162,7 +162,9 @@ namespace OrthancStone
     void CrossProduct(Vector& result,
                       const Vector& u,
                       const Vector& v);
-    
+
+    double DotProduct(const Vector& u, const Vector& v);
+
     void FillMatrix(Matrix& target,
                     size_t rows,
                     size_t columns,

@@ -126,7 +126,6 @@ namespace OrthancStone
       }
     }
 
-
     void CrossProduct(Vector& result,
                       const Vector& u,
                       const Vector& v)
@@ -144,6 +143,16 @@ namespace OrthancStone
       result[2] = u[0] * v[1] - u[1] * v[0];
     }
 
+    double DotProduct(const Vector& u, const Vector& v)
+    {
+      if (u.size() != 3 ||
+        v.size() != 3)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+
+      return (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]);
+    }
 
     void FillMatrix(Matrix& target,
                     size_t rows,

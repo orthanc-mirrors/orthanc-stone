@@ -59,7 +59,7 @@ namespace OrthancStone
     
     void LoadInstance(const std::string& instanceId);
 
-    virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane);
+    virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
 
     void SetStructuresReady();
 

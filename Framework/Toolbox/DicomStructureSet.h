@@ -21,9 +21,12 @@
 
 #pragma once
 
+#include "DicomStructureSetUtils.h"
 #include "CoordinateSystem3D.h"
 #include "Extent2D.h"
 #include "../Scene2D/Color.h"
+
+//#define USE_OLD_SJO_CUT_CODE 1
 
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 
@@ -33,9 +36,6 @@ namespace OrthancStone
 {
   class DicomStructureSet : public boost::noncopyable
   {
-  public:
-    typedef std::pair<double, double> PolygonPoint2D;
-    
   private:
     struct ReferencedSlice
     {
@@ -93,6 +93,11 @@ namespace OrthancStone
 
       bool IsOnSlice(const CoordinateSystem3D& geometry) const;
 
+      const Vector& GetGeometryOrigin() const
+      {
+        return geometry_.GetOrigin();
+      }
+
       const std::string& GetSopInstanceUid() const
       {
         return sopInstanceUid_;
@@ -136,10 +141,15 @@ namespace OrthancStone
 
     Structure& GetStructure(size_t index);
   
-    bool ProjectStructure(std::vector< std::vector<PolygonPoint2D> >& polygons,
+#ifdef USE_OLD_SJO_CUT_CODE 
+    bool ProjectStructure(std::vector< std::vector<Point2D> >& polygons,
                           const Structure& structure,
                           const CoordinateSystem3D& slice) const;
-
+#else
+    bool ProjectStructure(std::vector< std::pair<Point2D, Point2D> >& segments,
+      const Structure& structure,
+      const CoordinateSystem3D& slice) const;
+#endif
   public:
     DicomStructureSet(const OrthancPlugins::FullOrthancDataset& instance);
 
@@ -175,11 +185,20 @@ namespace OrthancStone
 
     Vector GetNormal() const;
 
-    bool ProjectStructure(std::vector< std::vector<PolygonPoint2D> >& polygons,
-                          size_t index,
-                          const CoordinateSystem3D& slice) const
+#ifdef USE_OLD_SJO_CUT_CODE 
+    bool ProjectStructure(std::vector< std::vector<Point2D> >& polygons,
+      size_t index,
+      const CoordinateSystem3D& slice) const
     {
       return ProjectStructure(polygons, GetStructure(index), slice);
     }
+#else
+    bool ProjectStructure(std::vector< std::pair<Point2D, Point2D> >& segments,
+      size_t index,
+      const CoordinateSystem3D& slice) const
+    {
+      return ProjectStructure(segments, GetStructure(index), slice);
+    }
+#endif
   };
 }

@@ -20,6 +20,7 @@
 
 
 #include "DicomStructureSet.h"
+#include "DicomStructureSetUtils.h"
 
 #include "../Toolbox/GeometryToolbox.h"
 
@@ -29,12 +30,21 @@
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4244)
+#endif
+
 #include <limits>
 #include <stdio.h>
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
 #include <boost/geometry/multi/geometries/multi_polygon.hpp>
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 typedef boost::geometry::model::d2::point_xy<double> BoostPoint;
 typedef boost::geometry::model::polygon<BoostPoint> BoostPolygon;
@@ -71,6 +81,7 @@ static void Union(BoostMultiPolygon& output,
   }
 }
 
+#ifdef USE_OLD_SJO_CUT_CODE
 
 static BoostPolygon CreateRectangle(float x1, float y1,
                                     float x2, float y2)
@@ -83,7 +94,36 @@ static BoostPolygon CreateRectangle(float x1, float y1,
   return r;
 }
 
+#else
 
+namespace OrthancStone
+{
+  static RtStructRectangleInSlab CreateRectangle(float x1, float y1,
+    float x2, float y2)
+  {
+    RtStructRectangleInSlab rect;
+    rect.xmin = std::min(x1, x2);
+    rect.xmax = std::max(x1, x2);
+    rect.ymin = std::min(y1, y2);
+    rect.ymax = std::max(y1, y2);
+    return rect;
+  }
+
+  bool CompareRectanglesForProjection(const std::pair<RtStructRectangleInSlab,double>& r1, const std::pair<RtStructRectangleInSlab, double>& r2)
+  {
+    return r1.second < r2.second;
+  }
+
+  bool CompareSlabsY(const RtStructRectanglesInSlab& r1, const RtStructRectanglesInSlab& r2)
+  {
+    if ((r1.size() == 0) || (r2.size() == 0))
+      return false;
+
+    return r1[0].ymax < r2[0].ymax;
+  }
+}
+
+#endif
 
 namespace OrthancStone
 {
@@ -267,6 +307,8 @@ namespace OrthancStone
     if (GeometryToolbox::IsParallelOrOpposite
         (isOpposite, slice.GetNormal(), geometry_.GetAxisY()))
     {
+      // plane is constant Y
+
       if (y < extent_.GetY1() ||
           y > extent_.GetY2())
       {
@@ -287,6 +329,8 @@ namespace OrthancStone
         double curX, curY;
         geometry_.ProjectPoint(curX, curY, points_[i]);
 
+        // if prev* and cur* are on opposite sides of y, this means that the
+        // segment intersects the plane.
         if ((prevY < y && curY > y) ||
             (prevY > y && curY < y))
         {
@@ -294,23 +338,33 @@ namespace OrthancStone
           xmin = std::min(xmin, p);
           xmax = std::max(xmax, p);
           isFirst = false;
+
+          // xmin and xmax represent the extent of the rectangle along the 
+          // intersection between the plane and the polygon geometry
+
         }
 
         prevX = curX;
         prevY = curY;
       }
         
+      // if NO segment intersects the plane
       if (isFirst)
       {
         return false;
       }
       else
       {
+        // y is the plane y coord in the polygon geometry
+        // xmin and xmax are ALSO expressed in the polygon geometry
+
+        // let's convert them to 3D world geometry...
         Vector p1 = (geometry_.MapSliceToWorldCoordinates(xmin, y) +
                      sliceThickness_ / 2.0 * geometry_.GetNormal());
         Vector p2 = (geometry_.MapSliceToWorldCoordinates(xmax, y) -
                      sliceThickness_ / 2.0 * geometry_.GetNormal());
           
+        // then to the cutting plane geometry...
         slice.ProjectPoint(x1, y1, p1);
         slice.ProjectPoint(x2, y2, p2);
         return true;
@@ -319,6 +373,14 @@ namespace OrthancStone
     else if (GeometryToolbox::IsParallelOrOpposite
              (isOpposite, slice.GetNormal(), geometry_.GetAxisX()))
     {
+      // plane is constant X
+
+      /*
+      Please read the comments in the section above, by taking into account
+      the fact that, in this case, the plane has a constant X, not Y (in 
+      polygon geometry_ coordinates)
+      */
+
       if (x < extent_.GetX1() ||
           x > extent_.GetX2())
       {
@@ -741,12 +803,21 @@ namespace OrthancStone
     }
   }
 
-  
-  bool DicomStructureSet::ProjectStructure(std::vector< std::vector<PolygonPoint2D> >& polygons,
+#ifdef USE_OLD_SJO_CUT_CODE 
+  bool DicomStructureSet::ProjectStructure(std::vector< std::vector<Point2D> >& polygons,
                                            const Structure& structure,
                                            const CoordinateSystem3D& slice) const
+#else
+  bool DicomStructureSet::ProjectStructure(std::vector< std::pair<Point2D, Point2D> >& segments,
+    const Structure& structure,
+    const CoordinateSystem3D& slice) const
+#endif
   {
+#ifdef USE_OLD_SJO_CUT_CODE 
     polygons.clear();
+#else
+    segments.clear();
+#endif
 
     Vector normal = GetNormal();
     
@@ -760,15 +831,46 @@ namespace OrthancStone
       {
         if (polygon->IsOnSlice(slice))
         {
-          polygons.push_back(std::vector<PolygonPoint2D>());
+#ifdef USE_OLD_SJO_CUT_CODE 
+          polygons.push_back(std::vector<Point2D>());
           
           for (Points::const_iterator p = polygon->GetPoints().begin();
                p != polygon->GetPoints().end(); ++p)
           {
             double x, y;
             slice.ProjectPoint(x, y, *p);
-            polygons.back().push_back(std::make_pair(x, y));
+            polygons.back().push_back(Point2D(x, y));
           }
+#else
+          // we need to add all the segments corresponding to this polygon
+          const std::vector<Vector>& points3D = polygon->GetPoints();
+          if (points3D.size() >= 3)
+          {
+            Point2D prev2D;
+            {
+              Vector prev = points3D[0];
+              double prevX, prevY;
+              slice.ProjectPoint(prevX, prevY, prev);
+              prev2D = Point2D(prevX, prevY);
+            }
+
+            size_t pointCount = points3D.size();
+            for (size_t ipt = 1; ipt < pointCount; ++ipt)
+            {
+              Vector next = points3D[ipt];
+              double nextX, nextY;
+              slice.ProjectPoint(nextX, nextY, next);
+              Point2D next2D(nextX, nextY);
+              segments.push_back(std::pair<Point2D, Point2D>(prev2D, next2D));
+              prev2D = next2D;
+            }
+          }
+          else
+          {
+            LOG(ERROR) << "Contour with less than 3 points!";
+            // !!!
+          }
+#endif
         }
       }
 
@@ -779,22 +881,84 @@ namespace OrthancStone
     {
 #if 1
       // Sagittal or coronal projection
+
+#ifdef USE_OLD_SJO_CUT_CODE 
       std::vector<BoostPolygon> projected;
-  
+#else
+      // this will contain the intersection of the polygon slab with
+      // the cutting plane, projected on the cutting plane coord system 
+      // (that yields a rectangle) + the Z coordinate of the polygon 
+      // (this is required to group polygons with the same Z later)
+      std::vector<std::pair<RtStructRectangleInSlab, double> > projected;
+#endif
       for (Polygons::const_iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
         double x1, y1, x2, y2;
+
         if (polygon->Project(x1, y1, x2, y2, slice))
         {
-          projected.push_back(CreateRectangle(
+          double curZ = polygon->GetGeometryOrigin()[2];
+
+          // x1,y1 and x2,y2 are in "slice" coordinates (the cutting plane 
+          // geometry)
+          projected.push_back(std::make_pair(CreateRectangle(
             static_cast<float>(x1), 
             static_cast<float>(y1), 
             static_cast<float>(x2), 
-            static_cast<float>(y2)));
+            static_cast<float>(y2)),curZ));
         }
       }
+#ifndef USE_OLD_SJO_CUT_CODE
+      // projected contains a set of rectangles specified by two opposite
+      // corners (x1,y1,x2,y2)
+      // we need to merge them 
+      // each slab yields ONE polygon!
 
+      // we need to sorted all the rectangles that originate from the same Z
+      // into lanes. To make sure they are grouped together in the array, we
+      // sort it.
+      std::sort(projected.begin(), projected.end(), CompareRectanglesForProjection);
+
+      std::vector<RtStructRectanglesInSlab> rectanglesForEachSlab;
+      rectanglesForEachSlab.reserve(projected.size());
+
+      double curZ = 0;
+      for (size_t i = 0; i < projected.size(); ++i)
+      {
+#if 0
+        rectanglesForEachSlab.push_back(RtStructRectanglesInSlab());
+#else
+        if (i == 0)
+        {
+          curZ = projected[i].second;
+          rectanglesForEachSlab.push_back(RtStructRectanglesInSlab());
+        }
+        else
+        {
+          // this check is needed to prevent creating a new slab if 
+          // the new polygon is at the same Z coord than last one
+          if (!LinearAlgebra::IsNear(curZ, projected[i].second))
+          {
+            rectanglesForEachSlab.push_back(RtStructRectanglesInSlab());
+            curZ = projected[i].second;
+          }
+        }
+#endif
+
+        rectanglesForEachSlab.back().push_back(projected[i].first);
+
+        // as long as they have the same y, we should put them into the same lane
+        // BUT in Sebastien's code, there is only one polygon per lane.
+
+        //std::cout << "rect: xmin = " << rect.xmin << " xmax = " << rect.xmax << " ymin = " << rect.ymin << " ymax = " << rect.ymax << std::endl;
+      }
+      
+      // now we need to sort the slabs in increasing Y order (see ConvertListOfSlabsToSegments)
+      std::sort(rectanglesForEachSlab.begin(), rectanglesForEachSlab.end(), CompareSlabsY);
+
+      ConvertListOfSlabsToSegments(segments, rectanglesForEachSlab, projected.size());
+#else
       BoostMultiPolygon merged;
       Union(merged, projected);
 
@@ -806,9 +970,11 @@ namespace OrthancStone
         polygons[i].resize(outer.size());
         for (size_t j = 0; j < outer.size(); j++)
         {
-          polygons[i][j] = std::make_pair(outer[j].x(), outer[j].y());
+          polygons[i][j] = Point2D(outer[j].x(), outer[j].y());
         }
       }  
+#endif
+
 #else
       for (Polygons::iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
@@ -816,7 +982,7 @@ namespace OrthancStone
         double x1, y1, x2, y2;
         if (polygon->Project(x1, y1, x2, y2, slice))
         {
-          std::vector<PolygonPoint2D> p(4);
+          std::vector<Point2D> p(4);
           p[0] = std::make_pair(x1, y1);
           p[1] = std::make_pair(x2, y1);
           p[2] = std::make_pair(x2, y2);

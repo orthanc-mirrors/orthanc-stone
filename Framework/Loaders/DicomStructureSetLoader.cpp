@@ -243,7 +243,8 @@ namespace OrthancStone
       {
         const Color& color = content_.GetStructureColor(i);
 
-        std::vector< std::vector<DicomStructureSet::PolygonPoint2D> > polygons;
+#ifdef USE_OLD_SJO_CUT_CODE 
+        std::vector< std::vector<Point2D> > polygons;
           
         if (content_.ProjectStructure(polygons, i, cuttingPlane))
         {
@@ -254,12 +255,29 @@ namespace OrthancStone
             
             for (size_t k = 0; k < polygons[j].size(); k++)
             {
-              chain[k] = ScenePoint2D(polygons[j][k].first, polygons[j][k].second);
+              chain[k] = ScenePoint2D(polygons[j][k].x, polygons[j][k].y);
             }
 
             layer->AddChain(chain, true /* closed */, color);
           }
         }
+#else
+        std::vector< std::pair<Point2D, Point2D> > segments;
+
+        if (content_.ProjectStructure(segments, i, cuttingPlane))
+        {
+          for (size_t j = 0; j < segments.size(); j++)
+          {
+            PolylineSceneLayer::Chain chain;
+            chain.resize(2);
+
+            chain[0] = ScenePoint2D(segments[j].first.x, segments[j].first.y);
+            chain[1] = ScenePoint2D(segments[j].second.x, segments[j].second.y);
+
+            layer->AddChain(chain, false /* NOT closed */, color);
+          }
+        }
+#endif
       }
 
       return layer.release();

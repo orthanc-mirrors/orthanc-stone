@@ -23,6 +23,7 @@
 #include "OrthancSeriesVolumeProgressiveLoader.h"
 #include "OrthancMultiframeVolumeLoader.h"
 #include "DicomStructureSetLoader.h"
+#include "DicomStructureSetLoader2.h"
 
 #if ORTHANC_ENABLE_WASM == 1
 # include <unistd.h>
@@ -32,8 +33,10 @@
 #endif
 
 #include "../Messages/LockingEmitter.h"
+#include "../Toolbox/DicomStructureSet2.h"
 #include "../Volumes/DicomVolumeImage.h"
 #include "../Volumes/DicomVolumeImageMPRSlicer.h"
+#include "../Volumes/DicomStructureSetSlicer2.h"
 
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
@@ -184,6 +187,18 @@ namespace OrthancStone
     }
   }
   
+  boost::shared_ptr<DicomStructureSetSlicer2> LoaderCache::GetDicomStructureSetSlicer2(std::string instanceUuid)
+  {
+    // if the loader is not available, let's trigger its creation
+    if (dicomStructureSetSlicers2_.find(instanceUuid) == dicomStructureSetSlicers2_.end())
+    {
+      GetDicomStructureSetLoader2(instanceUuid);
+    }
+    ORTHANC_ASSERT(dicomStructureSetSlicers2_.find(instanceUuid) != dicomStructureSetSlicers2_.end());
+
+    return dicomStructureSetSlicers2_[instanceUuid];
+  }
+
   boost::shared_ptr<DicomStructureSetLoader> LoaderCache::GetDicomStructureSetLoader(std::string instanceUuid)
   {
     try
@@ -235,6 +250,60 @@ namespace OrthancStone
   }
 
 
+  boost::shared_ptr<DicomStructureSetLoader2> LoaderCache::GetDicomStructureSetLoader2(std::string instanceUuid)
+  {
+    try
+    {
+      // normalize keys a little
+      instanceUuid = Orthanc::Toolbox::StripSpaces(instanceUuid);
+      Orthanc::Toolbox::ToLowerCase(instanceUuid);
+
+      // find in cache
+      if (dicomStructureSetLoaders2_.find(instanceUuid) == dicomStructureSetLoaders2_.end())
+      {
+        boost::shared_ptr<DicomStructureSetLoader2> loader;
+        boost::shared_ptr<DicomStructureSet2> structureSet(new DicomStructureSet2());
+        boost::shared_ptr<DicomStructureSetSlicer2> rtSlicer(new DicomStructureSetSlicer2(structureSet));
+        dicomStructureSetSlicers2_[instanceUuid] = rtSlicer;
+        dicomStructureSets2_[instanceUuid] = structureSet; // to prevent it from being deleted
+        {
+#if ORTHANC_ENABLE_WASM == 1
+          loader.reset(new DicomStructureSetLoader2(*(structureSet.get()), oracle_, oracle_));
+#else
+          LockingEmitter::WriterLock lock(lockingEmitter_);
+          // TODO: clarify lifetimes... this is DANGEROUS!
+          loader.reset(new DicomStructureSetLoader2(*(structureSet.get()), oracle_, lock.GetOracleObservable()));
+#endif
+          loader->LoadInstance(instanceUuid);
+        }
+        dicomStructureSetLoaders2_[instanceUuid] = loader;
+      }
+      return dicomStructureSetLoaders2_[instanceUuid];
+    }
+    catch (const Orthanc::OrthancException& e)
+    {
+      if (e.HasDetails())
+      {
+        LOG(ERROR) << "OrthancException in GetDicomStructureSetLoader2: " << e.What() << " Details: " << e.GetDetails();
+      }
+      else
+      {
+        LOG(ERROR) << "OrthancException in GetDicomStructureSetLoader2: " << e.What();
+      }
+      throw;
+    }
+    catch (const std::exception& e)
+    {
+      LOG(ERROR) << "std::exception in GetDicomStructureSetLoader2: " << e.what();
+      throw;
+    }
+    catch (...)
+    {
+      LOG(ERROR) << "Unknown exception in GetDicomStructureSetLoader2";
+      throw;
+    }
+  }
+
   void LoaderCache::ClearCache()
   {
 #if ORTHANC_ENABLE_WASM != 1
@@ -249,8 +318,12 @@ namespace OrthancStone
     multiframeVolumeLoaders_.clear();
     dicomVolumeImageMPRSlicers_.clear();
     dicomStructureSetLoaders_.clear();
-  }
 
+    // order is important!
+    dicomStructureSetLoaders2_.clear();
+    dicomStructureSetSlicers2_.clear();
+    dicomStructureSets2_.clear();
+  }
 
   template<typename T> void DebugDisplayObjRefCountsInMap(
     const std::string& name, const std::map<std::string, boost::shared_ptr<T> >& myMap)
@@ -271,5 +344,7 @@ namespace OrthancStone
     DebugDisplayObjRefCountsInMap("multiframeVolumeLoaders_", multiframeVolumeLoaders_);
     DebugDisplayObjRefCountsInMap("dicomVolumeImageMPRSlicers_", dicomVolumeImageMPRSlicers_);
     DebugDisplayObjRefCountsInMap("dicomStructureSetLoaders_", dicomStructureSetLoaders_);
+    DebugDisplayObjRefCountsInMap("dicomStructureSetLoaders2_", dicomStructureSetLoaders2_);
+    DebugDisplayObjRefCountsInMap("dicomStructureSetSlicers2_", dicomStructureSetSlicers2_);
   }
 }

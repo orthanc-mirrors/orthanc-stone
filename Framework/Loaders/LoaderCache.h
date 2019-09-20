@@ -30,6 +30,9 @@ namespace OrthancStone
   class OrthancSeriesVolumeProgressiveLoader;
   class DicomVolumeImageMPRSlicer;
   class DicomStructureSetLoader;
+  class DicomStructureSetLoader2;
+  class DicomStructureSetSlicer2;
+  class DicomStructureSet2;
   class OrthancMultiframeVolumeLoader;
 
 #if ORTHANC_ENABLE_WASM == 1
@@ -60,6 +63,12 @@ namespace OrthancStone
     boost::shared_ptr<DicomStructureSetLoader>
       GetDicomStructureSetLoader            (std::string instanceUuid);
 
+    boost::shared_ptr<DicomStructureSetLoader2>
+      GetDicomStructureSetLoader2(std::string instanceUuid);
+
+    boost::shared_ptr<DicomStructureSetSlicer2>
+      GetDicomStructureSetSlicer2(std::string instanceUuid);
+
     void ClearCache();
 
   private:
@@ -80,6 +89,12 @@ namespace OrthancStone
       dicomVolumeImageMPRSlicers_;
     std::map<std::string, boost::shared_ptr<DicomStructureSetLoader> >
       dicomStructureSetLoaders_;
+    std::map<std::string, boost::shared_ptr<DicomStructureSetLoader2> >
+      dicomStructureSetLoaders2_;
+    std::map<std::string, boost::shared_ptr<DicomStructureSet2> >
+      dicomStructureSets2_;
+    std::map<std::string, boost::shared_ptr<DicomStructureSetSlicer2> >
+      dicomStructureSetSlicers2_;
   };
 }
 

@@ -28,7 +28,6 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 
-
 #set(ENABLE_DCMTK ON)
 
 set(ENABLE_SDL OFF CACHE BOOL "Target SDL Native application")
@@ -236,10 +235,20 @@ if (ENABLE_NATIVE)
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestExceptions.cpp
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestMessageBroker.cpp
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestStrategy.cpp
+    ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestStructureSet.cpp
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/UnitTestsMain.cpp
     )
 
   target_link_libraries(UnitTests OrthancStone)
+
+  add_custom_command(
+    TARGET UnitTests
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+      "${ORTHANC_STONE_ROOT}/UnitTestsSources/72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json" 
+      "$<TARGET_FILE_DIR:UnitTests>/72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json"
+    )
+
 endif()
 
 #####################################################################

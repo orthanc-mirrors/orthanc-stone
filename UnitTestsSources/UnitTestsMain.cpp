@@ -647,14 +647,14 @@ TEST(VolumeImageGeometry, Basic)
 
   OrthancStone::Vector p = g.GetCoordinates(0, 0, 0);
   ASSERT_EQ(3u, p.size());
-  ASSERT_FLOAT_EQ(-1.0 / 2.0, p[0]);
-  ASSERT_FLOAT_EQ(-2.0 / 2.0, p[1]);
-  ASSERT_FLOAT_EQ(-3.0 / 2.0, p[2]);
+  ASSERT_DOUBLE_EQ(-1.0 / 2.0, p[0]);
+  ASSERT_DOUBLE_EQ(-2.0 / 2.0, p[1]);
+  ASSERT_DOUBLE_EQ(-3.0 / 2.0, p[2]);
   
   p = g.GetCoordinates(1, 1, 1);
-  ASSERT_FLOAT_EQ(-1.0 / 2.0 + 10.0 * 1.0, p[0]);
-  ASSERT_FLOAT_EQ(-2.0 / 2.0 + 20.0 * 2.0, p[1]);
-  ASSERT_FLOAT_EQ(-3.0 / 2.0 + 30.0 * 3.0, p[2]);
+  ASSERT_DOUBLE_EQ(-1.0 / 2.0 + 10.0 * 1.0, p[0]);
+  ASSERT_DOUBLE_EQ(-2.0 / 2.0 + 20.0 * 2.0, p[1]);
+  ASSERT_DOUBLE_EQ(-3.0 / 2.0 + 30.0 * 3.0, p[2]);
 
   OrthancStone::VolumeProjection proj;
   ASSERT_TRUE(g.DetectProjection(proj, g.GetAxialGeometry().GetNormal()));
@@ -676,19 +676,19 @@ TEST(VolumeImageGeometry, Basic)
 
   p = g.GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
   ASSERT_EQ(3u, p.size());
-  ASSERT_FLOAT_EQ(1, p[0]);
-  ASSERT_FLOAT_EQ(2, p[1]);
-  ASSERT_FLOAT_EQ(3, p[2]);
+  ASSERT_DOUBLE_EQ(1, p[0]);
+  ASSERT_DOUBLE_EQ(2, p[1]);
+  ASSERT_DOUBLE_EQ(3, p[2]);
   p = g.GetVoxelDimensions(OrthancStone::VolumeProjection_Coronal);
   ASSERT_EQ(3u, p.size());
-  ASSERT_FLOAT_EQ(1, p[0]);
-  ASSERT_FLOAT_EQ(3, p[1]);
-  ASSERT_FLOAT_EQ(2, p[2]);
+  ASSERT_DOUBLE_EQ(1, p[0]);
+  ASSERT_DOUBLE_EQ(3, p[1]);
+  ASSERT_DOUBLE_EQ(2, p[2]);
   p = g.GetVoxelDimensions(OrthancStone::VolumeProjection_Sagittal);
   ASSERT_EQ(3u, p.size());
-  ASSERT_FLOAT_EQ(2, p[0]);
-  ASSERT_FLOAT_EQ(3, p[1]);
-  ASSERT_FLOAT_EQ(1, p[2]);
+  ASSERT_DOUBLE_EQ(2, p[0]);
+  ASSERT_DOUBLE_EQ(3, p[1]);
+  ASSERT_DOUBLE_EQ(1, p[2]);
 
   ASSERT_EQ(0, (int) OrthancStone::VolumeProjection_Axial);
   ASSERT_EQ(1, (int) OrthancStone::VolumeProjection_Coronal);

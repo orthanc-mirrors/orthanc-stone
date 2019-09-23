@@ -260,7 +260,7 @@ namespace OrthancStone
           if (IsPointOnSliceIfAny(*it))
           {
             double x, y;
-            geometry.ProjectPoint(x, y, *it);
+            geometry.ProjectPoint2(x, y, *it);
             extent_.AddPoint(x, y);
           }
         }
@@ -301,7 +301,7 @@ namespace OrthancStone
     }
 
     double x, y;
-    geometry_.ProjectPoint(x, y, slice.GetOrigin());
+    geometry_.ProjectPoint2(x, y, slice.GetOrigin());
       
     bool isOpposite;
     if (GeometryToolbox::IsParallelOrOpposite
@@ -321,13 +321,13 @@ namespace OrthancStone
       double xmax = -std::numeric_limits<double>::infinity();
 
       double prevX, prevY;
-      geometry_.ProjectPoint(prevX, prevY, points_[points_.size() - 1]);
+      geometry_.ProjectPoint2(prevX, prevY, points_[points_.size() - 1]);
         
       for (size_t i = 0; i < points_.size(); i++)
       {
         // Reference: ../../Resources/Computations/IntersectSegmentAndHorizontalLine.py
         double curX, curY;
-        geometry_.ProjectPoint(curX, curY, points_[i]);
+        geometry_.ProjectPoint2(curX, curY, points_[i]);
 
         // if prev* and cur* are on opposite sides of y, this means that the
         // segment intersects the plane.
@@ -365,8 +365,8 @@ namespace OrthancStone
                      sliceThickness_ / 2.0 * geometry_.GetNormal());
           
         // then to the cutting plane geometry...
-        slice.ProjectPoint(x1, y1, p1);
-        slice.ProjectPoint(x2, y2, p2);
+        slice.ProjectPoint2(x1, y1, p1);
+        slice.ProjectPoint2(x2, y2, p2);
         return true;
       }
     }
@@ -392,13 +392,13 @@ namespace OrthancStone
       double ymax = -std::numeric_limits<double>::infinity();
 
       double prevX, prevY;
-      geometry_.ProjectPoint(prevX, prevY, points_[points_.size() - 1]);
+      geometry_.ProjectPoint2(prevX, prevY, points_[points_.size() - 1]);
         
       for (size_t i = 0; i < points_.size(); i++)
       {
         // Reference: ../../Resources/Computations/IntersectSegmentAndVerticalLine.py
         double curX, curY;
-        geometry_.ProjectPoint(curX, curY, points_[i]);
+        geometry_.ProjectPoint2(curX, curY, points_[i]);
 
         if ((prevX < x && curX > x) ||
             (prevX > x && curX < x))
@@ -424,8 +424,8 @@ namespace OrthancStone
         Vector p2 = (geometry_.MapSliceToWorldCoordinates(x, ymax) -
                      sliceThickness_ / 2.0 * geometry_.GetNormal());
 
-        slice.ProjectPoint(x1, y1, p1);
-        slice.ProjectPoint(x2, y2, p2);
+        slice.ProjectPoint2(x1, y1, p1);
+        slice.ProjectPoint2(x2, y2, p2);
 
         // TODO WHY THIS???
         y1 = -y1;
@@ -838,7 +838,7 @@ namespace OrthancStone
                p != polygon->GetPoints().end(); ++p)
           {
             double x, y;
-            slice.ProjectPoint(x, y, *p);
+            slice.ProjectPoint2(x, y, *p);
             polygons.back().push_back(Point2D(x, y));
           }
 #else
@@ -850,7 +850,7 @@ namespace OrthancStone
             {
               Vector prev = points3D[0];
               double prevX, prevY;
-              slice.ProjectPoint(prevX, prevY, prev);
+              slice.ProjectPoint2(prevX, prevY, prev);
               prev2D = Point2D(prevX, prevY);
             }
 
@@ -859,7 +859,7 @@ namespace OrthancStone
             {
               Vector next = points3D[ipt];
               double nextX, nextY;
-              slice.ProjectPoint(nextX, nextY, next);
+              slice.ProjectPoint2(nextX, nextY, next);
               Point2D next2D(nextX, nextY);
               segments.push_back(std::pair<Point2D, Point2D>(prev2D, next2D));
               prev2D = next2D;

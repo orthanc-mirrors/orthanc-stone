@@ -32,6 +32,16 @@ namespace OrthancStone
                                const Vector& planeNormal,
                                const Vector& planeOrigin);
 
+    /*
+    Alternated faster implementation (untested yet)
+    */
+    void ProjectPointOntoPlane2(double& resultX,
+                                double& resultY,
+                                double& resultZ,
+                                const Vector& point,
+                                const Vector& planeNormal,
+                                const Vector& planeOrigin);
+
     bool IsParallel(const Vector& u,
                     const Vector& v);
 

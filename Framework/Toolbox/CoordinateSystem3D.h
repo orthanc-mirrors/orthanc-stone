@@ -101,6 +101,13 @@ namespace OrthancStone
                       double& offsetY,
                       const Vector& point) const;
 
+    /*
+    Alternated faster implementation (untested yet)
+    */
+    void ProjectPoint2(double& offsetX, 
+                       double& offsetY, 
+                       const Vector& point) const;
+
     bool IntersectSegment(Vector& p,
                           const Vector& edgeFrom,
                           const Vector& edgeTo) const;

@@ -52,7 +52,67 @@ namespace OrthancStone
       result = boost::numeric::ublas::inner_prod(planeOrigin - point, n) * n + point;
     }
 
+    /*
+    undefined results if vector are not 3D
+    */
+    void ProjectPointOntoPlane2(
+      double& resultX,
+      double& resultY,
+      double& resultZ,
+      const Vector& point,
+      const Vector& planeNormal,
+      const Vector& planeOrigin)
+    {
+      double pointX = point[0];
+      double pointY = point[1];
+      double pointZ = point[2];
 
+      double planeNormalX = planeNormal[0];
+      double planeNormalY = planeNormal[1];
+      double planeNormalZ = planeNormal[2];
+
+      double planeOriginX = planeOrigin[0];
+      double planeOriginY = planeOrigin[1];
+      double planeOriginZ = planeOrigin[2];
+
+      double normSq = (planeNormalX * planeNormalX) + (planeNormalY * planeNormalY) + (planeNormalZ * planeNormalZ);
+
+      // Algebraic form of line–plane intersection, where the line passes
+      // through "point" along the direction "normal" (thus, l == n)
+      // https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection#Algebraic_form
+
+      if (LinearAlgebra::IsNear(1.0, normSq))
+      {
+        double nX = planeNormalX;
+        double nY = planeNormalY;
+        double nZ = planeNormalZ;
+        
+        double prod = (planeOriginX - pointX) * nX + (planeOriginY - pointY) * nY + (planeOriginZ - pointZ) * nZ;
+
+        resultX = prod * nX + pointX; 
+        resultY = prod * nY + pointY; 
+        resultZ = prod * nZ + pointZ;
+      }
+      else
+      {
+        double norm = sqrt(normSq);
+        if (LinearAlgebra::IsCloseToZero(norm))
+        {
+          // Division by zero
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        }
+        double invNorm = 1.0 / norm;
+        double nX = planeNormalX * invNorm;
+        double nY = planeNormalY * invNorm;
+        double nZ = planeNormalZ * invNorm;
+
+        double prod = (planeOriginX - pointX) * nX + (planeOriginY - pointY) * nY + (planeOriginZ - pointZ) * nZ;
+
+        resultX = prod * nX + pointX;
+        resultY = prod * nY + pointY;
+        resultZ = prod * nZ + pointZ;
+      }
+    }
 
     bool IsParallelOrOpposite(bool& isOpposite,
                               const Vector& u,

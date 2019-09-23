@@ -168,6 +168,19 @@ namespace OrthancStone
     return boost::numeric::ublas::inner_prod(point, normal_);
   }
 
+  void CoordinateSystem3D::ProjectPoint2(double& offsetX, double& offsetY, const Vector& point) const
+  {
+    // Project the point onto the slice
+    double projectionX,projectionY,projectionZ;
+    GeometryToolbox::ProjectPointOntoPlane2(projectionX, projectionY, projectionZ, point, normal_, origin_);
+
+    // As the axes are orthonormal vectors thanks to
+    // CheckAndComputeNormal(), the following dot products give the
+    // offset of the origin of the slice wrt. the origin of the
+    // reference plane https://en.wikipedia.org/wiki/Vector_projection
+    offsetX = axisX_[0] * (projectionX - origin_[0]) + axisX_[1] * (projectionY - origin_[1]) + axisX_[2] * (projectionZ - origin_[2]);
+    offsetY = axisY_[0] * (projectionX - origin_[0]) + axisY_[1] * (projectionY - origin_[1]) + axisY_[2] * (projectionZ - origin_[2]);
+  }
 
   void CoordinateSystem3D::ProjectPoint(double& offsetX,
                                         double& offsetY,

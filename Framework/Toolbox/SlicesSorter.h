@@ -92,5 +92,8 @@ namespace OrthancStone
 
     // WARNING - The slices must have been sorted before calling this method
     double ComputeSpacingBetweenSlices() const;
+
+    // WARNING - The slices must have been sorted before calling this method
+    bool AreAllSlicesDistinct() const;
   };
 }

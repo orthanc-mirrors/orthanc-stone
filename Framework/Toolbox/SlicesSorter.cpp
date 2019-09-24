@@ -326,4 +326,32 @@ namespace OrthancStone
 
     return spacingZ;
   }
+
+
+  bool SlicesSorter::AreAllSlicesDistinct() const
+  {
+    if (GetSlicesCount() <= 1)
+    {
+      return true;
+    }
+    else
+    {
+      const OrthancStone::CoordinateSystem3D& reference = GetSliceGeometry(0);
+      double previousPosition = reference.ProjectAlongNormal(GetSliceGeometry(0).GetOrigin());
+     
+      for (size_t i = 1; i < GetSlicesCount(); i++)
+      {
+        double position = reference.ProjectAlongNormal(GetSliceGeometry(i).GetOrigin());
+
+        if (OrthancStone::LinearAlgebra::IsNear(position, previousPosition, 0.001 /* tolerance expressed in mm */))
+        {
+          return false;
+        }
+
+        previousPosition = position;
+      }
+
+      return true;
+    }
+  }
 }

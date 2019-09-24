@@ -74,9 +74,6 @@ namespace OrthancStone
     };
 
     
-    Orthanc::ImageAccessor* ConvertToFloat(const Orthanc::ImageAccessor& pixelData) const;
-    
-
     Data  data_;
 
 
@@ -190,6 +187,8 @@ namespace OrthancStone
       return data_.expectedPixelFormat_;
     }
 
+    Orthanc::ImageAccessor* ConvertToFloat(const Orthanc::ImageAccessor& pixelData) const;
+    
     TextureBaseSceneLayer* CreateTexture(const Orthanc::ImageAccessor& pixelData) const;
 
     LookupTableTextureSceneLayer* CreateLookupTableTexture(const Orthanc::ImageAccessor& pixelData) const;

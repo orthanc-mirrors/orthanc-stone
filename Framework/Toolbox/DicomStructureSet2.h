@@ -20,6 +20,8 @@
 
 #pragma once
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 #include "DicomStructure2.h"
 #include "CoordinateSystem3D.h"
 #include "Extent2D.h"
@@ -62,3 +64,8 @@ namespace OrthancStone
     std::vector<DicomStructure2> structures_;
   };
 }
+
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
+

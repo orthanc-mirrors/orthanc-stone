@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 #include "DicomStructurePolygon2.h"
 
 #include "../Toolbox/LinearAlgebra.h"
@@ -297,3 +299,7 @@ double OrthancStone::DicomStructurePolygon2::GetZ() const
 
 
 }
+
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+

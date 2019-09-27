@@ -24,6 +24,8 @@
 #include "../Scene2D/PolylineSceneLayer.h"
 #include "../Toolbox/GeometryToolbox.h"
 
+#include <algorithm>
+
 #if 0
 bool logbgo233 = false;
 bool logbgo115 = false;
@@ -153,8 +155,7 @@ namespace OrthancStone
     State(that)
     {
     }
-
-
+    
     virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
     {
 #if 0
@@ -166,6 +167,33 @@ namespace OrthancStone
       {
         OrthancPlugins::FullOrthancDataset dicom(message.GetAnswer());
         loader.content_.reset(new DicomStructureSet(dicom));
+        size_t structureCount = loader.content_->GetStructuresCount();
+        loader.structureVisibility_.resize(structureCount);
+        for (size_t i = 0; i < structureCount; ++i)
+        {
+          // if nothing is specified in the ctor, this means we want everything visible
+          if (loader.initiallyVisibleStructures_.size() == 0)
+          {
+            loader.structureVisibility_.at(i) = true;
+          }
+          else
+          {
+            // otherwise, we only enable visibility for those structures whose 
+            // names are mentioned in the initiallyVisibleStructures_ array
+            const std::string& structureName = loader.content_->GetStructureName(i);
+
+            std::vector<std::string>::iterator foundIt =
+              std::find(
+                loader.initiallyVisibleStructures_.begin(),
+                loader.initiallyVisibleStructures_.end(),
+                structureName);
+            std::vector<std::string>::iterator endIt = loader.initiallyVisibleStructures_.end();
+            if (foundIt != endIt)
+              loader.structureVisibility_.at(i) = true;
+            else
+              loader.structureVisibility_.at(i) = false;
+          }
+        }
       }
 
       // Some (admittedly invalid) Dicom files have empty values in the 
@@ -204,14 +232,30 @@ namespace OrthancStone
     const DicomStructureSet&  content_;
     uint64_t                  revision_;
     bool                      isValid_;
+    std::vector<bool>         visibility_;
       
   public:
+    /**
+    The visibility vector must either:
+    - be empty
+    or
+    - contain the same number of items as the number of structures in the 
+      structure set.
+    In the first case (empty vector), all the structures are displayed.
+    In the second case, the visibility of each structure is defined by the 
+    content of the vector at the corresponding index.
+    */
     Slice(const DicomStructureSet& content,
           uint64_t revision,
-          const CoordinateSystem3D& cuttingPlane) :
-      content_(content),
-      revision_(revision)
+          const CoordinateSystem3D& cuttingPlane,
+          std::vector<bool> visibility = std::vector<bool>()) 
+      : content_(content)
+      , revision_(revision)
+      , visibility_(visibility)
     {
+      ORTHANC_ASSERT((visibility_.size() == content_.GetStructuresCount())
+        || (visibility_.size() == 0u));
+
       bool opposite;
 
       const Vector normal = content.GetNormal();
@@ -241,43 +285,46 @@ namespace OrthancStone
 
       for (size_t i = 0; i < content_.GetStructuresCount(); i++)
       {
-        const Color& color = content_.GetStructureColor(i);
+        if ((visibility_.size() == 0) || visibility_.at(i))
+        {
+          const Color& color = content_.GetStructureColor(i);
 
 #ifdef USE_BOOST_UNION_FOR_POLYGONS 
-        std::vector< std::vector<Point2D> > polygons;
-          
-        if (content_.ProjectStructure(polygons, i, cuttingPlane))
-        {
-          for (size_t j = 0; j < polygons.size(); j++)
-          {
-            PolylineSceneLayer::Chain chain;
-            chain.resize(polygons[j].size());
-            
-            for (size_t k = 0; k < polygons[j].size(); k++)
-            {
-              chain[k] = ScenePoint2D(polygons[j][k].x, polygons[j][k].y);
-            }
+          std::vector< std::vector<Point2D> > polygons;
 
-            layer->AddChain(chain, true /* closed */, color);
-          }
+          if (content_.ProjectStructure(polygons, i, cuttingPlane))
+          {
+            for (size_t j = 0; j < polygons.size(); j++)
+            {
+              PolylineSceneLayer::Chain chain;
+              chain.resize(polygons[j].size());
+
+              for (size_t k = 0; k < polygons[j].size(); k++)
+              {
+                chain[k] = ScenePoint2D(polygons[j][k].x, polygons[j][k].y);
+    }
+
+              layer->AddChain(chain, true /* closed */, color);
+  }
         }
 #else
-        std::vector< std::pair<Point2D, Point2D> > segments;
+          std::vector< std::pair<Point2D, Point2D> > segments;
 
-        if (content_.ProjectStructure(segments, i, cuttingPlane))
-        {
-          for (size_t j = 0; j < segments.size(); j++)
+          if (content_.ProjectStructure(segments, i, cuttingPlane))
           {
-            PolylineSceneLayer::Chain chain;
-            chain.resize(2);
+            for (size_t j = 0; j < segments.size(); j++)
+            {
+              PolylineSceneLayer::Chain chain;
+              chain.resize(2);
 
-            chain[0] = ScenePoint2D(segments[j].first.x, segments[j].first.y);
-            chain[1] = ScenePoint2D(segments[j].second.x, segments[j].second.y);
+              chain[0] = ScenePoint2D(segments[j].first.x, segments[j].first.y);
+              chain[1] = ScenePoint2D(segments[j].second.x, segments[j].second.y);
 
-            layer->AddChain(chain, false /* NOT closed */, color);
+              layer->AddChain(chain, false /* NOT closed */, color);
+            }
           }
+#endif        
         }
-#endif
       }
 
       return layer.release();
@@ -297,17 +344,26 @@ namespace OrthancStone
   }
     
     
+  void DicomStructureSetLoader::SetStructureDisplayState(size_t structureIndex, bool display)
+  {
+    structureVisibility_.at(structureIndex) = display;
+    revision_++;
+  }
+
   DicomStructureSetLoader::~DicomStructureSetLoader()
   {
     LOG(TRACE) << "DicomStructureSetLoader::~DicomStructureSetLoader()";
   }
 
-  void DicomStructureSetLoader::LoadInstance(const std::string& instanceId)
+  void DicomStructureSetLoader::LoadInstance(
+    const std::string& instanceId, 
+    const std::vector<std::string>& initiallyVisibleStructures)
   {
     Start();
       
     instanceId_ = instanceId;
-      
+    initiallyVisibleStructures_ = initiallyVisibleStructures;
+
     {
       std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
@@ -330,7 +386,7 @@ namespace OrthancStone
     }
     else
     {
-      return new Slice(*content_, revision_, cuttingPlane);
+      return new Slice(*content_, revision_, cuttingPlane, structureVisibility_);
     }
   }
 

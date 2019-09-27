@@ -20,6 +20,8 @@
 
 #pragma once
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 #include "DicomStructurePolygon2.h"
 #include "DicomStructureSetUtils.h"
 
@@ -49,7 +51,7 @@ namespace OrthancStone
     void ComputeDependentProperties();
 
     /**
-    Being given a plane that is PARALLEL to the set of polygon contours, this 
+    Being given a plane that is PARALLEL to the set of polygon structures, this 
     returns a pointer to the polygon located at that position (if it is closer
     than thickness/2) or NULL if there is none.
 
@@ -153,3 +155,7 @@ namespace OrthancStone
     State state_;
   };
 }
+
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+

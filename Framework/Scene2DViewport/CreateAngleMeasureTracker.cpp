@@ -19,6 +19,8 @@
  **/
 
 #include "CreateAngleMeasureTracker.h"
+#include "CreateAngleMeasureCommand.h"
+
 #include <Core/OrthancException.h>
 
 namespace OrthancStone

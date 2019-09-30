@@ -30,7 +30,10 @@ namespace OrthancStone
 {
   MeasureTool::~MeasureTool()
   {
-    GetController()->Unregister(this);
+    // if the controller is dead, let's not bother.
+    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
+    if (controller)
+      controller->Unregister(this);
   }
 
   void MeasureTool::Enable()

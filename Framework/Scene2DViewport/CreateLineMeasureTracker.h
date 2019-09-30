@@ -22,6 +22,9 @@
 
 #include "MeasureTrackers.h"
 
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
+
 namespace OrthancStone
 {
   class CreateLineMeasureTracker : public CreateMeasureTracker

@@ -87,6 +87,13 @@ namespace OrthancStone
     }
   }
 
+  std::string LineMeasureTool::GetDescription()
+  {
+    std::stringstream ss;
+    ss << "LineMeasureTool. Start = " << start_ << " End = " << end_;
+    return ss.str();
+  }
+
   void LineMeasureTool::ResetHighlightState()
   {
     SetLineHighlightArea(LineHighlightArea_None);

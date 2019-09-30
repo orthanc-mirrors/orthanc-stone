@@ -35,7 +35,7 @@ namespace OrthancStone
   class CreateMeasureCommand;
   class CreateLineMeasureCommand;
   class CreateAngleMeasureCommand;
-  class TrackerCommand;
+  class MeasureCommand;
   class ViewportController;
   class LayerHolder;
 }

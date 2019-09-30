@@ -78,6 +78,9 @@ namespace OrthancStone
     case EMSCRIPTEN_EVENT_MOUSEDOWN:
       dest.type = GUIADAPTER_EVENT_MOUSEDOWN;
       break;
+    case EMSCRIPTEN_EVENT_DBLCLICK:
+      dest.type = GUIADAPTER_EVENT_MOUSEDBLCLICK;
+      break;
     case EMSCRIPTEN_EVENT_MOUSEMOVE:
       dest.type = GUIADAPTER_EVENT_MOUSEMOVE;
       break;
@@ -287,6 +290,19 @@ namespace OrthancStone
       func);
   }
 
+  
+  void GuiAdapter::SetMouseDblClickCallback(
+      std::string canvasId, void* userData, bool capture, OnMouseEventFunc func)
+  {
+    SetCallback<OnMouseEventFunc, GuiAdapterMouseEvent, EmscriptenMouseEvent>(
+      &emscripten_set_dblclick_callback_on_thread,
+      canvasId,
+      userData,
+      capture,
+      func);
+  }
+
+
   void GuiAdapter::SetMouseDownCallback(
     std::string canvasId, void* userData, bool capture, OnMouseEventFunc func)
   {
@@ -401,7 +417,14 @@ namespace OrthancStone
     switch (source.type)
     {
     case SDL_MOUSEBUTTONDOWN:
-      dest.type = GUIADAPTER_EVENT_MOUSEDOWN;
+      if (source.button.clicks == 1) {
+        dest.type = GUIADAPTER_EVENT_MOUSEDOWN;
+      } else if (source.button.clicks == 2) {
+        dest.type = GUIADAPTER_EVENT_MOUSEDBLCLICK;
+      } else {
+        dest.type = GUIADAPTER_EVENT_MOUSEDBLCLICK;
+        LOG(WARNING) << "Multiple-click ignored.";
+      }
       break;
     case SDL_MOUSEMOTION:
       dest.type = GUIADAPTER_EVENT_MOUSEMOVE;
@@ -510,6 +533,13 @@ namespace OrthancStone
     std::string canvasId, void* userData, bool capture, OnMouseEventFunc func)
   {
     mouseDownHandlers_.push_back(EventHandlerData<OnMouseEventFunc>(canvasId, func, userData));
+  }
+
+  // SDL ONLY
+  void GuiAdapter::SetMouseDblClickCallback(
+    std::string canvasId, void* userData, bool capture, OnMouseEventFunc func)
+  {
+    mouseDblCickHandlers_.push_back(EventHandlerData<OnMouseEventFunc>(canvasId, func, userData));
   }
 
   // SDL ONLY
@@ -672,6 +702,13 @@ namespace OrthancStone
         {
           if (mouseDownHandlers_[i].canvasName == windowTitle)
             (*(mouseDownHandlers_[i].func))(windowTitle, &event, mouseDownHandlers_[i].userData);
+        }
+        break;
+      case GUIADAPTER_EVENT_MOUSEDBLCLICK:
+        for (size_t i = 0; i < mouseDblCickHandlers_.size(); i++)
+        {
+          if (mouseDblCickHandlers_[i].canvasName == windowTitle)
+            (*(mouseDblCickHandlers_[i].func))(windowTitle, &event, mouseDblCickHandlers_[i].userData);
         }
         break;
       case GUIADAPTER_EVENT_MOUSEMOVE:

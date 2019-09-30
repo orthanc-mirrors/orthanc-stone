@@ -26,7 +26,7 @@
 
 namespace OrthancStone
 {
-  class TrackerCommand;
+  class MeasureCommand;
 
   class UndoStack
   {
@@ -41,7 +41,7 @@ namespace OrthancStone
     In other words, when a new command is pushed, all the undone (and not
     redone) commands are removed.
     */
-    void PushCommand(boost::shared_ptr<TrackerCommand> command);
+    void PushCommand(boost::shared_ptr<MeasureCommand> command);
 
     /**
     Undoes the command at the top of the undo stack, or throws if there is no
@@ -64,7 +64,7 @@ namespace OrthancStone
     bool CanRedo() const;
   
   private:
-    std::vector<boost::shared_ptr<TrackerCommand> > commandStack_;
+    std::vector<boost::shared_ptr<MeasureCommand> > commandStack_;
 
     /**
     This is always between >= 0 and <= undoStack_.size() and gives the

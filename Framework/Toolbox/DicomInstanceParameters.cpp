@@ -340,7 +340,7 @@ namespace OrthancStone
 
     // Correct rescale slope/intercept if need be
     //data_.ApplyRescale(*converted, (pixelData.GetFormat() == Orthanc::PixelFormat_Grayscale32));
-    data_.ApplyRescale(*converted, false);  // Using "true" is incompatible with asm.js on IE11
+    data_.ApplyRescale(*converted, false);
 
     return converted.release();
   }

@@ -29,9 +29,9 @@ namespace OrthancStone
   class DisjointDataSet
   {
   public:
-    DisjointDataSet(size_t itemCount)
-      : ranks_(itemCount)
-      , parents_(itemCount)
+    DisjointDataSet(size_t itemCount) :
+      parents_(itemCount),
+      ranks_(itemCount)
     {
       for (size_t index = 0; index < parents_.size(); index++)
       {

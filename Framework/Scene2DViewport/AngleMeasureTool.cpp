@@ -115,6 +115,13 @@ namespace OrthancStone
     RefreshScene();
   }
 
+  std::string AngleMeasureTool::GetDescription()
+  {
+    std::stringstream ss;
+    ss << "AngleMeasureTool. Center = " << center_ << " Side1End = " << side1End_ << " Side2End = " << side2End_;
+    return ss.str();
+  }
+
   void AngleMeasureTool::Highlight(ScenePoint2D p)
   {
     AngleHighlightArea angleHighlightArea = AngleHitTest(p);

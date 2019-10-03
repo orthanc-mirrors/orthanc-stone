@@ -39,7 +39,7 @@ namespace OrthancStone
   }
 
   CreateMeasureCommand::CreateMeasureCommand(boost::weak_ptr<ViewportController> controllerW)
-    : TrackerCommand(controllerW)
+    : MeasureCommand(controllerW)
   {
 
   }
@@ -50,8 +50,37 @@ namespace OrthancStone
     // we thus leave it as is
   }
 
+  void DeleteMeasureCommand::Redo()
+  {
+    // simply disable the measure tool upon undo
+    GetMeasureTool()->Disable();
+    GetController()->RemoveMeasureTool(GetMeasureTool());
+  }
+
+  void DeleteMeasureCommand::Undo()
+  {
+    GetMeasureTool()->Enable();
+    GetController()->AddMeasureTool(GetMeasureTool());
+  }
+
+  DeleteMeasureCommand::~DeleteMeasureCommand()
+  {
+    // deleting the command should not change the model state
+    // we thus leave it as is
+  }
+
+  DeleteMeasureCommand::DeleteMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, boost::weak_ptr<ViewportController> controllerW)
+    : MeasureCommand(controllerW)
+    , measureTool_(measureTool)
+    , mementoOriginal_(measureTool->GetMemento())
+    , mementoModified_(measureTool->GetMemento())
+  {
+    GetMeasureTool()->Disable();
+    GetController()->RemoveMeasureTool(GetMeasureTool());
+  }
+
   EditMeasureCommand::EditMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, boost::weak_ptr<ViewportController> controllerW)
-    : TrackerCommand(controllerW)
+    : MeasureCommand(controllerW)
     , mementoOriginal_(measureTool->GetMemento())
     , mementoModified_(measureTool->GetMemento())
   {
@@ -74,106 +103,10 @@ namespace OrthancStone
     GetMeasureTool()->SetMemento(mementoModified_);
   }
 
-  CreateLineMeasureCommand::CreateLineMeasureCommand(
-    MessageBroker&         broker, 
-    boost::weak_ptr<ViewportController> controllerW,
-    ScenePoint2D           point)
-    : CreateMeasureCommand(controllerW)
-    , measureTool_(
-        boost::make_shared<LineMeasureTool>(boost::ref(broker), controllerW))
-  {
-    GetController()->AddMeasureTool(measureTool_);
-    measureTool_->Set(point, point);
-  }
-
-  void CreateLineMeasureCommand::SetEnd(ScenePoint2D scenePos)
-  {
-    measureTool_->SetEnd(scenePos);
-  }
-
-  EditLineMeasureCommand::EditLineMeasureCommand(
-    boost::shared_ptr<LineMeasureTool>  measureTool,
-    MessageBroker& broker,
-    boost::weak_ptr<ViewportController> controllerW)
-    : EditMeasureCommand(measureTool,controllerW)
-    , measureTool_(measureTool)
-  {
-  }
-
-
-  void EditLineMeasureCommand::SetStart(ScenePoint2D scenePos)
-  {
-    measureTool_->SetStart(scenePos);
-    mementoModified_ = measureTool_->GetMemento();
-  }
-
-
-  void EditLineMeasureCommand::SetEnd(ScenePoint2D scenePos)
-  {
-    measureTool_->SetEnd(scenePos);
-    mementoModified_ = measureTool_->GetMemento();
-  }
-    
-  CreateAngleMeasureCommand::CreateAngleMeasureCommand(
-    MessageBroker&         broker, 
-    boost::weak_ptr<ViewportController> controllerW,
-    ScenePoint2D           point)
-    : CreateMeasureCommand(controllerW)
-    , measureTool_(
-      boost::make_shared<AngleMeasureTool>(boost::ref(broker), controllerW))
-  {
-    GetController()->AddMeasureTool(measureTool_);
-    measureTool_->SetSide1End(point);
-    measureTool_->SetCenter(point);
-    measureTool_->SetSide2End(point);
-  }
-
-  /** This method sets center*/
-  void CreateAngleMeasureCommand::SetCenter(ScenePoint2D scenePos)
-  {
-    measureTool_->SetCenter(scenePos);
-  }
-
-  /** This method sets end of side 2*/
-  void CreateAngleMeasureCommand::SetSide2End(ScenePoint2D scenePos)
-  {
-    measureTool_->SetSide2End(scenePos);
-  }
-
-  boost::shared_ptr<ViewportController> TrackerCommand::GetController()
+  boost::shared_ptr<ViewportController> MeasureCommand::GetController()
   {
     boost::shared_ptr<ViewportController> controller = controllerW_.lock();
     assert(controller); // accessing dead object?
     return controller;
   }
-
-  EditAngleMeasureCommand::EditAngleMeasureCommand(
-    boost::shared_ptr<AngleMeasureTool>  measureTool,
-    MessageBroker& broker,
-    boost::weak_ptr<ViewportController> controllerW)
-    : EditMeasureCommand(measureTool, controllerW)
-    , measureTool_(measureTool)
-  {
-  }
-
-  void EditAngleMeasureCommand::SetCenter(ScenePoint2D scenePos)
-  {
-    measureTool_->SetCenter(scenePos);
-    mementoModified_ = measureTool_->GetMemento();
-  }
-
-
-  void EditAngleMeasureCommand::SetSide1End(ScenePoint2D scenePos)
-  {
-    measureTool_->SetSide1End(scenePos);
-    mementoModified_ = measureTool_->GetMemento();
-  }
-
-
-  void EditAngleMeasureCommand::SetSide2End(ScenePoint2D scenePos)
-  {
-    measureTool_->SetSide2End(scenePos);
-    mementoModified_ = measureTool_->GetMemento();
-  }
-
 }

@@ -337,10 +337,6 @@ namespace OrthancStone
     , ScenePoint2D p
     , int layerIndex)
   {
-    // get the scaling factor 
-    const double pixelToScene =
-      scene.GetCanvasToSceneTransform().ComputeZoom();
-
     TextSceneLayer* textLayer = layerHolder->GetTextLayer(layerIndex);
     ORTHANC_ASSERT(textLayer != NULL);
     textLayer->SetText(text);

@@ -25,6 +25,8 @@
 #include "../Volumes/IVolumeSlicer.h"
 #include "LoaderStateMachine.h"
 
+#include <vector>
+
 namespace OrthancStone
 {
   class DicomStructureSetLoader :
@@ -48,16 +50,46 @@ namespace OrthancStone
 
     // will be set to true once the loading is finished
     bool                              structuresReady_;
-    
+
+    /**
+    At load time, these strings is used to initialize the 
+    structureVisibility_ vector.
+
+    As a special case, if initiallyVisibleStructures_ is empty, ALL structures
+    will be made visible.
+    */
+    std::vector<std::string> initiallyVisibleStructures_;
+
+    /**
+    Contains the "Should this structure be displayed?" flag for all structures.
+    Only filled when structures are loaded.
+
+    Changing this value directly affects the rendering
+    */
+    std::vector<bool>                  structureVisibility_;
+
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, StructuresReady, DicomStructureSetLoader);
 
     DicomStructureSetLoader(IOracle& oracle,
                             IObservable& oracleObservable);    
     
+    DicomStructureSet* GetContent()
+    {
+      return content_.get();
+    }
+
+    void SetStructureDisplayState(size_t structureIndex, bool display);
+    
+    bool GetStructureDisplayState(size_t structureIndex) const
+    {
+      return structureVisibility_.at(structureIndex);
+    }
+
     ~DicomStructureSetLoader();
     
-    void LoadInstance(const std::string& instanceId);
+    void LoadInstance(const std::string& instanceId, 
+                      const std::vector<std::string>& initiallyVisibleStructures = std::vector<std::string>());
 
     virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
 

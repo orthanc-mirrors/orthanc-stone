@@ -23,7 +23,12 @@
 #include "OrthancSeriesVolumeProgressiveLoader.h"
 #include "OrthancMultiframeVolumeLoader.h"
 #include "DicomStructureSetLoader.h"
+
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 #include "DicomStructureSetLoader2.h"
+#endif 
+ //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 
 #if ORTHANC_ENABLE_WASM == 1
 # include <unistd.h>
@@ -33,10 +38,19 @@
 #endif
 
 #include "../Messages/LockingEmitter.h"
+
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 #include "../Toolbox/DicomStructureSet2.h"
+#endif 
+//BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 #include "../Volumes/DicomVolumeImage.h"
 #include "../Volumes/DicomVolumeImageMPRSlicer.h"
+
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 #include "../Volumes/DicomStructureSetSlicer2.h"
+#endif 
+//BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
@@ -187,6 +201,8 @@ namespace OrthancStone
     }
   }
   
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
   boost::shared_ptr<DicomStructureSetSlicer2> LoaderCache::GetDicomStructureSetSlicer2(std::string instanceUuid)
   {
     // if the loader is not available, let's trigger its creation
@@ -198,17 +214,52 @@ namespace OrthancStone
 
     return dicomStructureSetSlicers2_[instanceUuid];
   }
+#endif
+//BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
-  boost::shared_ptr<DicomStructureSetLoader> LoaderCache::GetDicomStructureSetLoader(std::string instanceUuid)
+
+  /**
+  This method allows to convert a list of string into a string by 
+  sorting the strings then joining them
+  */
+  static std::string SortAndJoin(const std::vector<std::string>& stringList)
+  {
+    if (stringList.size() == 0)
+    {
+      return "";
+    } 
+    else
+    {
+      std::vector<std::string> sortedStringList = stringList;
+      std::sort(sortedStringList.begin(), sortedStringList.end());
+      std::stringstream s;
+      s << sortedStringList[0];
+      for (size_t i = 1; i < sortedStringList.size(); ++i)
+      {
+        s << "-" << sortedStringList[i];
+      }
+      return s.str();
+    }
+  }
+  
+  boost::shared_ptr<DicomStructureSetLoader> 
+    LoaderCache::GetDicomStructureSetLoader(
+      std::string inInstanceUuid, 
+      const std::vector<std::string>& initiallyVisibleStructures)
   {
     try
     {
       // normalize keys a little
-      instanceUuid = Orthanc::Toolbox::StripSpaces(instanceUuid);
-      Orthanc::Toolbox::ToLowerCase(instanceUuid);
+      inInstanceUuid = Orthanc::Toolbox::StripSpaces(inInstanceUuid);
+      Orthanc::Toolbox::ToLowerCase(inInstanceUuid);
+
+      std::string initiallyVisibleStructuresKey = 
+        SortAndJoin(initiallyVisibleStructures);
+
+      std::string entryKey = inInstanceUuid + "_" + initiallyVisibleStructuresKey;
 
       // find in cache
-      if (dicomStructureSetLoaders_.find(instanceUuid) == dicomStructureSetLoaders_.end())
+      if (dicomStructureSetLoaders_.find(entryKey) == dicomStructureSetLoaders_.end())
       {
         boost::shared_ptr<DicomStructureSetLoader> loader;
 
@@ -219,11 +270,11 @@ namespace OrthancStone
           LockingEmitter::WriterLock lock(lockingEmitter_);
           loader.reset(new DicomStructureSetLoader(oracle_, lock.GetOracleObservable()));
 #endif
-          loader->LoadInstance(instanceUuid);
+          loader->LoadInstance(inInstanceUuid, initiallyVisibleStructures);
         }
-        dicomStructureSetLoaders_[instanceUuid] = loader;
+        dicomStructureSetLoaders_[entryKey] = loader;
       }
-      return dicomStructureSetLoaders_[instanceUuid];
+      return dicomStructureSetLoaders_[entryKey];
     }
     catch (const Orthanc::OrthancException& e)
     {
@@ -249,6 +300,7 @@ namespace OrthancStone
     }
   }
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
   boost::shared_ptr<DicomStructureSetLoader2> LoaderCache::GetDicomStructureSetLoader2(std::string instanceUuid)
   {
@@ -304,6 +356,10 @@ namespace OrthancStone
     }
   }
 
+#endif
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
+
   void LoaderCache::ClearCache()
   {
 #if ORTHANC_ENABLE_WASM != 1
@@ -319,10 +375,13 @@ namespace OrthancStone
     dicomVolumeImageMPRSlicers_.clear();
     dicomStructureSetLoaders_.clear();
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
     // order is important!
     dicomStructureSetLoaders2_.clear();
     dicomStructureSetSlicers2_.clear();
     dicomStructureSets2_.clear();
+#endif
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
   }
 
   template<typename T> void DebugDisplayObjRefCountsInMap(
@@ -344,7 +403,10 @@ namespace OrthancStone
     DebugDisplayObjRefCountsInMap("multiframeVolumeLoaders_", multiframeVolumeLoaders_);
     DebugDisplayObjRefCountsInMap("dicomVolumeImageMPRSlicers_", dicomVolumeImageMPRSlicers_);
     DebugDisplayObjRefCountsInMap("dicomStructureSetLoaders_", dicomStructureSetLoaders_);
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
     DebugDisplayObjRefCountsInMap("dicomStructureSetLoaders2_", dicomStructureSetLoaders2_);
     DebugDisplayObjRefCountsInMap("dicomStructureSetSlicers2_", dicomStructureSetSlicers2_);
+#endif
+//BGO_ENABLE_DICOMSTRUCTURESETLOADER2
   }
 }

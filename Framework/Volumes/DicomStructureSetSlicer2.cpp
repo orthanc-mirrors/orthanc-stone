@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 #include "DicomStructureSetSlicer2.h"
 
 #include "../Toolbox/GeometryToolbox.h"
@@ -106,4 +108,9 @@ namespace OrthancStone
     return layer.release();
   }
 }
+
+
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 

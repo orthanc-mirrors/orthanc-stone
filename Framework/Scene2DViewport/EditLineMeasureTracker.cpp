@@ -19,6 +19,8 @@
  **/
 
 #include "EditLineMeasureTracker.h"
+#include "EditLineMeasureCommand.h"
+
 
 namespace OrthancStone
 {

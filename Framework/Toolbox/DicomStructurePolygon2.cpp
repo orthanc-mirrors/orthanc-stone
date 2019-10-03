@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 #include "DicomStructurePolygon2.h"
 
 #include "../Toolbox/LinearAlgebra.h"
@@ -89,9 +91,6 @@ namespace OrthancStone
     // if true, then "u" in the code is "x" and "v" is "y". 
     // (v is constant in the plane)
     bool uvxy = false;
-    // if true, then "u" in the code is "y" and "v" is "x"
-    // (v is constant in the plane)
-    bool uvyx = false;
 
     size_t uindex = static_cast<size_t>(-1);
     size_t vindex = static_cast<size_t>(-1);
@@ -106,7 +105,6 @@ namespace OrthancStone
       vindex = 0;
 
       uvxy = false;
-      uvyx = true;
       planeV = plane.GetOrigin()[0];
       if (planeV < minX_)
         return;
@@ -121,7 +119,6 @@ namespace OrthancStone
       vindex = 1;
 
       uvxy = true;
-      uvyx = false;
       planeV = plane.GetOrigin()[1];
       if (planeV < minY_)
         return;
@@ -254,8 +251,6 @@ void OrthancStone::DicomStructurePolygon2::ProjectOnParallelPlane(
   ORTHANC_ASSERT(LinearAlgebra::IsNear(plane.GetNormal()[0], 0.0));
   ORTHANC_ASSERT(LinearAlgebra::IsNear(plane.GetNormal()[1], 0.0));
 
-  size_t pointCount = GetPointCount();
-
   segments.clear();
   segments.reserve(points_.size());
   // since the returned values need to be expressed in the supplied coordinate
@@ -304,3 +299,7 @@ double OrthancStone::DicomStructurePolygon2::GetZ() const
 
 
 }
+
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+

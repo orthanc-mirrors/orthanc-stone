@@ -27,6 +27,9 @@
 #include "MeasureTool.h"
 #include "MeasureCommands.h"
 
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
+
 #include <vector>
 
 namespace OrthancStone

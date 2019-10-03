@@ -20,6 +20,8 @@
 
 #pragma once
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 #include "../Toolbox/DicomStructureSet2.h"
 #include "../Messages/IMessage.h"
 #include "../Messages/IObserver.h"
@@ -78,3 +80,8 @@ namespace OrthancStone
     bool                structuresReady_;
   };
 }
+
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
+

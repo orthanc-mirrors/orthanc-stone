@@ -24,15 +24,19 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 namespace OrthancStone
 {
   class OrthancSeriesVolumeProgressiveLoader;
   class DicomVolumeImageMPRSlicer;
   class DicomStructureSetLoader;
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
   class DicomStructureSetLoader2;
   class DicomStructureSetSlicer2;
   class DicomStructureSet2;
+#endif 
+  //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
   class OrthancMultiframeVolumeLoader;
 
 #if ORTHANC_ENABLE_WASM == 1
@@ -61,13 +65,18 @@ namespace OrthancStone
       GetMultiframeVolumeLoader(std::string instanceUuid);
 
     boost::shared_ptr<DicomStructureSetLoader>
-      GetDicomStructureSetLoader            (std::string instanceUuid);
+      GetDicomStructureSetLoader(
+        std::string instanceUuid,
+        const std::vector<std::string>& initiallyVisibleStructures);
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
     boost::shared_ptr<DicomStructureSetLoader2>
       GetDicomStructureSetLoader2(std::string instanceUuid);
 
     boost::shared_ptr<DicomStructureSetSlicer2>
       GetDicomStructureSetSlicer2(std::string instanceUuid);
+#endif 
+    //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
     void ClearCache();
 
@@ -89,12 +98,15 @@ namespace OrthancStone
       dicomVolumeImageMPRSlicers_;
     std::map<std::string, boost::shared_ptr<DicomStructureSetLoader> >
       dicomStructureSetLoaders_;
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
     std::map<std::string, boost::shared_ptr<DicomStructureSetLoader2> >
       dicomStructureSetLoaders2_;
     std::map<std::string, boost::shared_ptr<DicomStructureSet2> >
       dicomStructureSets2_;
     std::map<std::string, boost::shared_ptr<DicomStructureSetSlicer2> >
       dicomStructureSetSlicers2_;
+#endif 
+    //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
   };
 }
 

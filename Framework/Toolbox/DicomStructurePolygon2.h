@@ -20,6 +20,8 @@
 
 #pragma once
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 #include "CoordinateSystem3D.h"
 #include "DicomStructureSetUtils.h"
 #include "Extent2D.h"
@@ -152,4 +154,8 @@ namespace OrthancStone
     Type                  type_;
   };
 }
+
+#endif
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 

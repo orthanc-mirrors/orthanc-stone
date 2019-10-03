@@ -198,7 +198,6 @@ namespace OrthancStone
     offsetY = boost::numeric::ublas::inner_prod(axisY_, projection - origin_);
   }
 
-
   bool CoordinateSystem3D::IntersectSegment(Vector& p,
                                             const Vector& edgeFrom,
                                             const Vector& edgeTo) const

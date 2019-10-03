@@ -4283,6 +4283,8 @@ static std::string& GetTestJson()
 
 #define STONE_ARRAY_SIZE(arr)     (sizeof(arr) / sizeof((arr)[0]))
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 static void CheckGroundTruth(
   const std::vector<OrthancStone::DicomStructure2>& structures,
   const size_t structureIndex,
@@ -4295,7 +4297,9 @@ static void CheckGroundTruth(
   //double groundTruth[] = { 7.657838, 108.2725, 304.01, 6.826687, 107.4413, 304.01, 6.152492, 106.4785, 304.01, 5.655735, 105.4132, 304.01, 5.351513, 104.2778, 304.01, 5.249068, 103.1069, 304.01, 5.351513, 101.9359, 304.01, 5.655735, 100.8005, 304.01, 6.152492, 99.73524, 304.01, 6.826687, 98.77239, 304.01, 7.657838, 97.94124, 304.01, 8.620689, 97.26704, 304.01, 9.685987, 96.77029, 304.01, 10.82136, 96.46606, 304.01, 11.99231, 96.36362, 304.01, 13.16326, 96.46606, 304.01, 14.29864, 96.77029, 304.01, 15.36393, 97.26704, 304.01, 16.32678, 97.94124, 304.01, 17.15794, 98.77239, 304.01, 17.83213, 99.73524, 304.01, 18.32889, 100.8005, 304.01, 18.63311, 101.9359, 304.01, 18.73555, 103.1069, 304.01, 18.63311, 104.2778, 304.01, 18.32889, 105.4132, 304.01, 17.83213, 106.4785, 304.01, 17.15794, 107.4413, 304.01, 16.32678, 108.2725, 304.01, 15.36393, 108.9467, 304.01, 14.29864, 109.4434, 304.01, 13.16326, 109.7477, 304.01, 11.99231, 109.8501, 304.01, 10.82136, 109.7477, 304.01, 9.685987, 109.4434, 304.01, 8.620689, 108.9467, 304.01 };
   size_t groundTruthItems = groundTruth.size();
 
-  EXPECT_EQ(groundTruthItems, 3 * polygon.GetPointCount());
+  size_t pointCount = 3 * polygon.GetPointCount();
+
+  EXPECT_EQ(groundTruthItems, pointCount);
 
   for (size_t i = 0; i < polygon.GetPointCount(); ++i)
   {
@@ -4311,7 +4315,6 @@ static void CheckGroundTruth(
     }
   }
 }
-
 
 
 TEST(StructureSet, ReadFromJsonThatsAll)
@@ -4431,6 +4434,9 @@ TEST(StructureSet, ReadFromJsonThatsAll)
   }
 }
 
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 #if 0
 
 TEST(StructureSet, ReadFromJsonAndCompute1)
@@ -4458,6 +4464,8 @@ TEST(StructureSet, ReadFromJsonAndCompute2)
 }
 #endif
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 static bool CutStructureWithPlane(
   std::vector< std::pair<Point2D, Point2D> >& segments,
   const DicomStructure2& structure,
@@ -4479,11 +4487,16 @@ static bool CutStructureWithPlane(
   return ok;
 }
 
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 static double pointsCoord1[] = { 2, 2, 3,  3,  6,  8, 8, 7, 8, 8, 6 };
 static double pointsCoord2[] = { 2, 6, 8, 10, 12, 10, 8, 6, 4, 2, 4 };
 static const size_t pointsCoord1Count = STONE_ARRAY_SIZE(pointsCoord1);
 static const size_t pointsCoord2Count = STONE_ARRAY_SIZE(pointsCoord2);
 const size_t POLYGON_POINT_COUNT = pointsCoord1Count;
+
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
 static void CreateBasicStructure(DicomStructure2& structure)
 {
@@ -4691,6 +4704,10 @@ TEST(StructureSet, CutCoronalInsideClose)
   EXPECT_EQ(8, numberOfVeryShortSegments);
 }
 
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
+
 TEST(DisjointDataSet, BasicTest)
 {
   const size_t ITEM_COUNT = 10;
@@ -4751,6 +4768,7 @@ TEST(DisjointDataSet, BasicTest)
   }
 }
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
 TEST(StructureSet, CutSagittalInsideClose)
 {
@@ -4769,6 +4787,10 @@ TEST(StructureSet, CutSagittalInsideClose)
   bool ok = structure.Project(segments, cuttingPlane);
   EXPECT_TRUE(ok);
 }
+
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 
 static size_t ConvertListOfSlabsToSegments_Add(RtStructRectanglesInSlab& rectangles, int row, double xmin, double xmax)
 {
@@ -5355,6 +5377,8 @@ TEST(StructureSet, ConvertListOfSlabsToSegments_Complete_Regular)
   ASSERT_NEAR(segments[i].second.y, 30.000000000000000, DELTA_MAX);
 }
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 TEST(StructureSet, ReadFromJsonPart2)
 {
   DicomStructureSet2 structureSet;
@@ -5373,5 +5397,7 @@ TEST(StructureSet, ReadFromJsonPart2)
 }
 
 
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
 

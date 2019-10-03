@@ -21,6 +21,8 @@
 
 #pragma once
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 #include "../Toolbox/DicomStructureSet2.h"
 #include "../Volumes/IVolumeSlicer.h"
 
@@ -68,3 +70,7 @@ namespace OrthancStone
     boost::weak_ptr<DicomStructureSet2> structureSet_;
   };
 }
+
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+

@@ -19,6 +19,8 @@
  **/
 
 #include "CreateLineMeasureTracker.h"
+#include "CreateLineMeasureCommand.h"
+
 #include <Core/OrthancException.h>
 
 namespace OrthancStone

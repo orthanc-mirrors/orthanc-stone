@@ -232,7 +232,6 @@ namespace OrthancStone
     for(size_t layerIndex = 0; layerIndex < input["layers"].size(); layerIndex++)
     {
       const Json::Value& jsonLayer = input["layers"][(int)layerIndex];
-      RadiographyLayer::Geometry geometry;
       if (jsonLayer["type"].asString() == "dicom")
       {
         ReadLayerGeometry(geometry, jsonLayer);

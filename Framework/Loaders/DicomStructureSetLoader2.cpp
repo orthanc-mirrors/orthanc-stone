@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 #include "DicomStructureSetLoader2.h"
 
 #include "../Messages/IObservable.h"
@@ -117,3 +119,7 @@ namespace OrthancStone
   */
 
 }
+
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+

@@ -19,6 +19,7 @@
  **/
 
 #include "EditAngleMeasureTracker.h"
+#include "EditAngleMeasureCommand.h"
 
 namespace OrthancStone
 {

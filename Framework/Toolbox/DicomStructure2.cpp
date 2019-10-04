@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 #include "DicomStructure2.h"
 
 #include "../Toolbox/GeometryToolbox.h"
@@ -81,7 +83,7 @@ namespace OrthancStone
     }
     if (polygons_.size() < 2)
     {
-      // cannot compute thickness if there are not at least 2 slabs (contours)
+      // cannot compute thickness if there are not at least 2 slabs (structures)
       sliceThickness_ = 1.0;
       state_ = Invalid;
     }
@@ -277,7 +279,7 @@ namespace OrthancStone
           // 180.0 / [Math]::Pi = 57.2957795130823
           double acDot = 57.2957795130823 * acos(dot);
           LOG(ERROR) << "DicomStructure2::Project -- cutting plane must be "
-            << "perpendicular to the contours, but dot product is: "
+            << "perpendicular to the structures, but dot product is: "
             << dot << " and (180/pi)*acos(dot) = " << acDot;
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
         }
@@ -285,3 +287,7 @@ namespace OrthancStone
       return segments.size() != 0;
     }
 }
+
+#endif 
+// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+

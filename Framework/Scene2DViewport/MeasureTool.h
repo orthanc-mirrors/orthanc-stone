@@ -105,6 +105,11 @@ namespace OrthancStone
     */
     virtual void ResetHighlightState() = 0;
 
+    /**
+    A description of the measuring tool, useful in debug logs
+    */
+    virtual std::string GetDescription() = 0;
+
   protected:
     MeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);
 

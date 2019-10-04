@@ -64,9 +64,12 @@ namespace OrthancStone
       fontRegistry_ = &fontRegistry;
     }
 
+    static void ReadLayerGeometry(RadiographyLayer::Geometry& geometry, const Json::Value& input);
+    static void ReadDicomLayerGeometry(RadiographyLayer::Geometry& geometry, const Json::Value& input);
+
   protected:
-    void ReadLayerGeometry(RadiographyLayer::Geometry& geometry, const Json::Value& input);
     virtual RadiographyDicomLayer* LoadDicom(const std::string& instanceId, unsigned int frame, RadiographyLayer::Geometry* geometry);
+
   };
 
 

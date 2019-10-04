@@ -77,6 +77,12 @@ namespace OrthancStone
                                      const AffineTransform2D& c,
                                      const AffineTransform2D& d);
 
+    static AffineTransform2D Combine(const AffineTransform2D& a,
+                                     const AffineTransform2D& b,
+                                     const AffineTransform2D& c,
+                                     const AffineTransform2D& d,
+                                     const AffineTransform2D& e);
+
     static AffineTransform2D CreateOffset(double dx,
                                           double dy);
 

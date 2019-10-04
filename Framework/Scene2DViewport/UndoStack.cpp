@@ -29,7 +29,7 @@ namespace OrthancStone
   UndoStack::UndoStack() : numAppliedCommands_(0)
   {}
 
-  void UndoStack::PushCommand(boost::shared_ptr<TrackerCommand> command)
+  void UndoStack::PushCommand(boost::shared_ptr<MeasureCommand> command)
   {
     commandStack_.erase(
       commandStack_.begin() + numAppliedCommands_,

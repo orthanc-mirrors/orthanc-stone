@@ -38,6 +38,11 @@ namespace OrthancStone
     , viewport_(viewport)
   {
   }
+ 
+  ViewportController::~ViewportController()
+  {
+
+  }
 
   boost::shared_ptr<UndoStack> ViewportController::GetUndoStack()
   {
@@ -49,7 +54,7 @@ namespace OrthancStone
     return undoStackW_.lock();
   }
 
-  void ViewportController::PushCommand(boost::shared_ptr<TrackerCommand> command)
+  void ViewportController::PushCommand(boost::shared_ptr<MeasureCommand> command)
   {
     boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
     if(undoStack.get() != NULL)

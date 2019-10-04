@@ -24,6 +24,8 @@
 
 namespace OrthancStone
 {
+  class EditAngleMeasureCommand;
+
   class EditAngleMeasureTracker : public EditMeasureTracker
   {
   public:

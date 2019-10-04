@@ -77,12 +77,13 @@ namespace OrthancStone
 
   enum GuiAdapterHidEventType
   {
-    GUIADAPTER_EVENT_MOUSEDOWN = 1973,
-    GUIADAPTER_EVENT_MOUSEMOVE = 1974,
-    GUIADAPTER_EVENT_MOUSEUP   = 1975,
-    GUIADAPTER_EVENT_WHEEL     = 1976,
-    GUIADAPTER_EVENT_KEYDOWN   = 1977,
-    GUIADAPTER_EVENT_KEYUP     = 1978,
+    GUIADAPTER_EVENT_MOUSEDOWN      = 1973,
+    GUIADAPTER_EVENT_MOUSEMOVE      = 1974,
+    GUIADAPTER_EVENT_MOUSEDBLCLICK  = 1975,
+    GUIADAPTER_EVENT_MOUSEUP        = 1976,
+    GUIADAPTER_EVENT_WHEEL          = 1977,
+    GUIADAPTER_EVENT_KEYDOWN        = 1978,
+    GUIADAPTER_EVENT_KEYUP          = 1979,
   };
 
   const unsigned int GUIADAPTER_DELTA_PIXEL = 2973;
@@ -253,12 +254,13 @@ namespace OrthancStone
 
     */
 
-    void SetMouseDownCallback(std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
-    void SetMouseMoveCallback(std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
-    void SetMouseUpCallback  (std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
-    void SetWheelCallback    (std::string canvasId, void* userData, bool capture, OnMouseWheelFunc   func);
-    void SetKeyDownCallback  (std::string canvasId, void* userData, bool capture, OnKeyDownFunc      func);
-    void SetKeyUpCallback    (std::string canvasId, void* userData, bool capture, OnKeyUpFunc        func);
+    void SetMouseDownCallback     (std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
+    void SetMouseDblClickCallback (std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
+    void SetMouseMoveCallback     (std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
+    void SetMouseUpCallback       (std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
+    void SetWheelCallback         (std::string canvasId, void* userData, bool capture, OnMouseWheelFunc   func);
+    void SetKeyDownCallback       (std::string canvasId, void* userData, bool capture, OnKeyDownFunc      func);
+    void SetKeyUpCallback         (std::string canvasId, void* userData, bool capture, OnKeyUpFunc        func);
     
     // if you pass "#window", under SDL, then any Window resize will trigger the callback
     void SetResizeCallback (std::string canvasId, void* userData, bool capture, OnWindowResizeFunc func);
@@ -330,6 +332,7 @@ namespace OrthancStone
     };
     std::vector<EventHandlerData<OnWindowResizeFunc> > resizeHandlers_;
     std::vector<EventHandlerData<OnMouseEventFunc  > > mouseDownHandlers_;
+    std::vector<EventHandlerData<OnMouseEventFunc  > > mouseDblCickHandlers_;
     std::vector<EventHandlerData<OnMouseEventFunc  > > mouseMoveHandlers_;
     std::vector<EventHandlerData<OnMouseEventFunc  > > mouseUpHandlers_;
     std::vector<EventHandlerData<OnMouseWheelFunc  > > mouseWheelHandlers_;

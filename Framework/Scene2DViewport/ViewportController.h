@@ -84,6 +84,9 @@ namespace OrthancStone
                        MessageBroker& broker,
                        IViewport& viewport);
 
+
+    ~ViewportController();
+
     /** 
     This method is called by the GUI system and should update/delete the
     current tracker
@@ -156,7 +159,7 @@ namespace OrthancStone
 
 
     /** forwarded to the UndoStack */
-    void PushCommand(boost::shared_ptr<TrackerCommand> command);
+    void PushCommand(boost::shared_ptr<MeasureCommand> command);
 
     /** forwarded to the UndoStack */
     void Undo();

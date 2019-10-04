@@ -197,6 +197,18 @@ namespace OrthancStone
                                                     d.GetHomogeneousMatrix()));
   }
   
+  AffineTransform2D AffineTransform2D::Combine(const AffineTransform2D& a,
+                                               const AffineTransform2D& b,
+                                               const AffineTransform2D& c,
+                                               const AffineTransform2D& d,
+                                               const AffineTransform2D& e)
+  {
+    return AffineTransform2D(LinearAlgebra::Product(a.GetHomogeneousMatrix(),
+                                                    b.GetHomogeneousMatrix(),
+                                                    c.GetHomogeneousMatrix(),
+                                                    d.GetHomogeneousMatrix(),
+                                                    e.GetHomogeneousMatrix()));
+  }
 
   AffineTransform2D AffineTransform2D::CreateOffset(double dx,
                                                     double dy)

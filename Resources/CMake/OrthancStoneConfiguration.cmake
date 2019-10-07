@@ -106,7 +106,7 @@ endif()
 
 
 if (ENABLE_SDL AND ENABLE_QT)
-  message("SDL and QT may not be defined together")
+  message("SDL and QT cannot not be enabled together")
 elseif(ENABLE_SDL)
   message("SDL is enabled")
   include(${CMAKE_CURRENT_LIST_DIR}/SdlConfiguration.cmake)
@@ -267,10 +267,13 @@ if (NOT ORTHANC_SANDBOXED)
   endif()
 
   if (ENABLE_SDL OR ENABLE_QT)
-    list(APPEND APPLICATIONS_SOURCES
-      ${ORTHANC_STONE_ROOT}/Applications/Generic/NativeStoneApplicationRunner.cpp
-      ${ORTHANC_STONE_ROOT}/Applications/Generic/NativeStoneApplicationContext.cpp
-      )
+    if (ENABLE_STONE_DEPRECATED)
+      list(APPEND APPLICATIONS_SOURCES
+        ${ORTHANC_STONE_ROOT}/Applications/Generic/NativeStoneApplicationRunner.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Generic/NativeStoneApplicationContext.cpp
+        )
+    endif()
+      
     if (ENABLE_SDL)
       list(APPEND APPLICATIONS_SOURCES
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlCairoSurface.cpp

@@ -58,17 +58,26 @@ else()
   
 endif()
 
+
 list(APPEND QT_SOURCES
   ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Applications/Qt/QtStoneApplicationRunner.cpp
-  ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.cpp
   )
 
 ORTHANC_QT_WRAP_CPP(QT_SOURCES
   ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.h
-  ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.h
   )
 
+if (ENABLE_STONE_DEPRECATED)
+  list(APPEND QT_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/Qt/QtStoneApplicationRunner.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.cpp
+    )
+
+  ORTHANC_QT_WRAP_CPP(QT_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.h
+    )
+endif()
+  
 
 # NB: Including CMAKE_CURRENT_BINARY_DIR is mandatory, as the CMake
 # macros for Qt will put their result in that directory, which cannot

@@ -140,7 +140,6 @@ namespace OrthancStone
     }
   }
 
-
   void RadiographySceneReader::Read(const Json::Value& input)
   {
     unsigned int version = input["version"].asUInt();
@@ -225,6 +224,19 @@ namespace OrthancStone
       }
       else
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
+  }
+
+  void RadiographySceneBuilder::ReadDicomLayerGeometry(RadiographyLayer::Geometry& geometry, const Json::Value& input)
+  {
+    for(size_t layerIndex = 0; layerIndex < input["layers"].size(); layerIndex++)
+    {
+      const Json::Value& jsonLayer = input["layers"][(int)layerIndex];
+      if (jsonLayer["type"].asString() == "dicom")
+      {
+        ReadLayerGeometry(geometry, jsonLayer);
+        return;
+      }
     }
   }
 

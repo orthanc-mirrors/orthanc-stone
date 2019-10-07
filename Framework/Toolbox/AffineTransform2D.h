@@ -77,6 +77,7 @@ namespace OrthancStone
                                      const AffineTransform2D& c,
                                      const AffineTransform2D& d);
 
+    // transformations are applied right to left: e is the first transfo applied, a is the last one
     static AffineTransform2D Combine(const AffineTransform2D& a,
                                      const AffineTransform2D& b,
                                      const AffineTransform2D& c,

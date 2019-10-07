@@ -52,11 +52,11 @@ namespace OrthancStone
     bool                              structuresReady_;
 
     /**
-    At load time, these strings is used to initialize the 
-    structureVisibility_ vector.
+    At load time, these strings are used to initialize the structureVisibility_ 
+    vector.
 
-    As a special case, if initiallyVisibleStructures_ is empty, ALL structures
-    will be made visible.
+    As a special case, if initiallyVisibleStructures_ contains a single string
+    that is '*', ALL structures will be made visible.
     */
     std::vector<std::string> initiallyVisibleStructures_;
 

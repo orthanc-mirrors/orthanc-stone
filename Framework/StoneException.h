@@ -58,6 +58,8 @@ namespace OrthancStone
     {
     }
 
+    virtual ~StoneException() {}
+
     ErrorCode GetErrorCode() const
     {
       return errorCode_;
@@ -111,6 +113,7 @@ namespace OrthancStone
   {
   protected:
     int applicationErrorCode_;
+    mutable std::string errorMessage_;
 
   public:
     explicit StoneApplicationException(int applicationErrorCode) :
@@ -126,7 +129,10 @@ namespace OrthancStone
 
     virtual const char* What() const
     {
-      return boost::lexical_cast<std::string>(applicationErrorCode_).c_str();
+      if (errorMessage_.size() == 0)
+        errorMessage_ = boost::lexical_cast<std::string>(applicationErrorCode_);
+
+      return errorMessage_.c_str();
     }
   };
 }

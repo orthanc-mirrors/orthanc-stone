@@ -31,6 +31,12 @@ if (Qt5Widgets_FOUND)
     Qt5::Core
     )
 
+  if (ENABLE_OPENGL)
+    link_libraries(
+      Qt5::QtOpenGL
+      )
+  endif()
+    
   # Create aliases for the CMake commands
   macro(ORTHANC_QT_WRAP_UI)
     QT5_WRAP_UI(${ARGN})
@@ -39,7 +45,7 @@ if (Qt5Widgets_FOUND)
   macro(ORTHANC_QT_WRAP_CPP)
     QT5_WRAP_CPP(${ARGN})
   endmacro()
-    
+
 else()
   message("Qt5 has not been found, trying with Qt4")
   find_package(Qt4 REQUIRED QtGui)
@@ -47,6 +53,12 @@ else()
     Qt4::QtGui
     )
 
+  if (ENABLE_OPENGL)
+    link_libraries(
+      Qt4::QtOpenGL
+      )
+  endif()
+    
   # Create aliases for the CMake commands
   macro(ORTHANC_QT_WRAP_UI)
     QT4_WRAP_UI(${ARGN})

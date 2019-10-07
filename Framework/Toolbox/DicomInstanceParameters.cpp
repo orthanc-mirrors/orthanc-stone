@@ -339,11 +339,11 @@ namespace OrthancStone
     Orthanc::ImageProcessing::Convert(*converted, pixelData);
 
     // Correct rescale slope/intercept if need be
-    data_.ApplyRescale(*converted, (pixelData.GetFormat() == Orthanc::PixelFormat_Grayscale32));
+    //data_.ApplyRescale(*converted, (pixelData.GetFormat() == Orthanc::PixelFormat_Grayscale32));
+    data_.ApplyRescale(*converted, false);
 
     return converted.release();
   }
-    
 
 
   TextureBaseSceneLayer* DicomInstanceParameters::CreateTexture

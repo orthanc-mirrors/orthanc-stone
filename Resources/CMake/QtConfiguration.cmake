@@ -31,6 +31,12 @@ if (Qt5Widgets_FOUND)
     Qt5::Core
     )
 
+  if (ENABLE_OPENGL)
+    link_libraries(
+      Qt5::QtOpenGL
+      )
+  endif()
+    
   # Create aliases for the CMake commands
   macro(ORTHANC_QT_WRAP_UI)
     QT5_WRAP_UI(${ARGN})
@@ -39,7 +45,7 @@ if (Qt5Widgets_FOUND)
   macro(ORTHANC_QT_WRAP_CPP)
     QT5_WRAP_CPP(${ARGN})
   endmacro()
-    
+
 else()
   message("Qt5 has not been found, trying with Qt4")
   find_package(Qt4 REQUIRED QtGui)
@@ -47,6 +53,12 @@ else()
     Qt4::QtGui
     )
 
+  if (ENABLE_OPENGL)
+    link_libraries(
+      Qt4::QtOpenGL
+      )
+  endif()
+    
   # Create aliases for the CMake commands
   macro(ORTHANC_QT_WRAP_UI)
     QT4_WRAP_UI(${ARGN})
@@ -58,17 +70,26 @@ else()
   
 endif()
 
+
 list(APPEND QT_SOURCES
   ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.cpp
-  ${ORTHANC_STONE_ROOT}/Applications/Qt/QtStoneApplicationRunner.cpp
-  ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.cpp
   )
 
 ORTHANC_QT_WRAP_CPP(QT_SOURCES
   ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.h
-  ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.h
   )
 
+if (ENABLE_STONE_DEPRECATED)
+  list(APPEND QT_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/Qt/QtStoneApplicationRunner.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.cpp
+    )
+
+  ORTHANC_QT_WRAP_CPP(QT_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.h
+    )
+endif()
+  
 
 # NB: Including CMAKE_CURRENT_BINARY_DIR is mandatory, as the CMake
 # macros for Qt will put their result in that directory, which cannot

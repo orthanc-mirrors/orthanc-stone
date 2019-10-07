@@ -169,10 +169,19 @@ namespace OrthancStone
         loader.content_.reset(new DicomStructureSet(dicom));
         size_t structureCount = loader.content_->GetStructuresCount();
         loader.structureVisibility_.resize(structureCount);
+        bool everythingVisible = false;
+        if ((loader.initiallyVisibleStructures_.size() == 1)
+          && (loader.initiallyVisibleStructures_[0].size() == 1)
+          && (loader.initiallyVisibleStructures_[0][0] == '*'))
+        {
+          everythingVisible = true;
+        }
+
         for (size_t i = 0; i < structureCount; ++i)
         {
-          // if nothing is specified in the ctor, this means we want everything visible
-          if (loader.initiallyVisibleStructures_.size() == 0)
+          // if a single "*" string is supplied, this means we want everything 
+          // to be visible...
+          if(everythingVisible)
           {
             loader.structureVisibility_.at(i) = true;
           }

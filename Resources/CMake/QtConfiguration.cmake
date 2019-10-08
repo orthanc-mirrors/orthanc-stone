@@ -24,7 +24,11 @@ if ("${CMAKE_SYSTEM_VERSION}" STREQUAL "LinuxStandardBase")
   # Linux Standard Base version 5 ships Qt 4.2.3
   include(Qt4Macros)
 
-  set(QT_UIC_EXECUTABLE ${LSB_PATH}/bin/uic)
+  # The script "LinuxStandardBaseUic.py" is just a wrapper around the
+  # "uic" compiler from LSB that does not support the "<?xml ...?>"
+  # header that is automatically added by Qt Creator
+  set(QT_UIC_EXECUTABLE ${CMAKE_CURRENT_LIST_DIR}/LinuxStandardBaseUic.py)
+
   set(QT_MOC_EXECUTABLE ${LSB_PATH}/bin/moc)
 
   include_directories(

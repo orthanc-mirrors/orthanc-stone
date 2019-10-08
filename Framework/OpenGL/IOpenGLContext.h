@@ -49,7 +49,6 @@ namespace OrthancStone
       // This is for manual context loss (debug purposes)
       virtual void SetLostContext() = 0;
       virtual void RestoreLostContext() = 0;
-
     };
   }
 }

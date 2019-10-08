@@ -20,72 +20,93 @@
 set(CMAKE_AUTOMOC OFF)
 set(CMAKE_AUTOUIC OFF)
 
-# Find the QtWidgets library
-find_package(Qt5Widgets QUIET)
+if ("${CMAKE_SYSTEM_VERSION}" STREQUAL "LinuxStandardBase")
+  # Linux Standard Base version 5 ships Qt 4.2.3
+  include(Qt4Macros)
 
-if (Qt5Widgets_FOUND)
-  message("Qt5 has been detected")
-  find_package(Qt5Core REQUIRED)
-  link_libraries(
-    Qt5::Widgets
-    Qt5::Core
+  set(QT_UIC_EXECUTABLE ${LSB_PATH}/bin/uic)
+  set(QT_MOC_EXECUTABLE ${LSB_PATH}/bin/moc)
+
+  include_directories(
+    ${LSB_PATH}/include/QtCore
+    ${LSB_PATH}/include/QtGui
+    ${LSB_PATH}/include/QtOpenGL
     )
 
-  if (ENABLE_OPENGL)
-    link_libraries(
-      Qt5::QtOpenGL
-      )
-  endif()
-    
-  # Create aliases for the CMake commands
-  macro(ORTHANC_QT_WRAP_UI)
-    QT5_WRAP_UI(${ARGN})
-  endmacro()
-  
-  macro(ORTHANC_QT_WRAP_CPP)
-    QT5_WRAP_CPP(${ARGN})
-  endmacro()
-
-else()
-  message("Qt5 has not been found, trying with Qt4")
-  find_package(Qt4 REQUIRED QtGui)
-  link_libraries(
-    Qt4::QtGui
-    )
-
-  if (ENABLE_OPENGL)
-    link_libraries(
-      Qt4::QtOpenGL
-      )
-  endif()
-    
-  # Create aliases for the CMake commands
   macro(ORTHANC_QT_WRAP_UI)
     QT4_WRAP_UI(${ARGN})
   endmacro()
   
   macro(ORTHANC_QT_WRAP_CPP)
     QT4_WRAP_CPP(${ARGN})
-  endmacro()
+  endmacro()  
+
+  link_libraries(QtCore QtGui QtOpenGL)
   
+else()
+  # Not using Linux Standard Base
+  # Find the QtWidgets library
+  find_package(Qt5Widgets QUIET)
+
+  if (Qt5Widgets_FOUND)
+    message("Qt5 has been detected")
+    find_package(Qt5Core REQUIRED)
+    link_libraries(
+      Qt5::Widgets
+      Qt5::Core
+      )
+
+    if (ENABLE_OPENGL)
+      find_package(Qt5OpenGL REQUIRED)
+      link_libraries(
+        Qt5::OpenGL
+        )
+    endif()
+    
+    # Create aliases for the CMake commands
+    macro(ORTHANC_QT_WRAP_UI)
+      QT5_WRAP_UI(${ARGN})
+    endmacro()
+    
+    macro(ORTHANC_QT_WRAP_CPP)
+      QT5_WRAP_CPP(${ARGN})
+    endmacro()
+
+  else()
+    message("Qt5 has not been found, trying with Qt4")
+    find_package(Qt4 REQUIRED QtGui)
+    link_libraries(
+      Qt4::QtGui
+      )
+
+    if (ENABLE_OPENGL)
+      find_package(Qt4 REQUIRED QtOpenGL)
+      link_libraries(
+        Qt4::QtOpenGL
+        )
+    endif()
+    
+    # Create aliases for the CMake commands
+    macro(ORTHANC_QT_WRAP_UI)
+      QT4_WRAP_UI(${ARGN})
+    endmacro()
+    
+    macro(ORTHANC_QT_WRAP_CPP)
+      QT4_WRAP_CPP(${ARGN})
+    endmacro()  
+  endif()
 endif()
 
 
-list(APPEND QT_SOURCES
-  ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.cpp
-  )
-
-ORTHANC_QT_WRAP_CPP(QT_SOURCES
-  ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.h
-  )
-
 if (ENABLE_STONE_DEPRECATED)
   list(APPEND QT_SOURCES
-    ${ORTHANC_STONE_ROOT}/Applications/Qt/QtStoneApplicationRunner.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.cpp
     ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Qt/QtStoneApplicationRunner.cpp
     )
 
   ORTHANC_QT_WRAP_CPP(QT_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.h
     ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.h
     )
 endif()

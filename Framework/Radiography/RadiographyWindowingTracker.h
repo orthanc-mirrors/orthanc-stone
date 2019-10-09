@@ -27,6 +27,9 @@
 
 namespace OrthancStone
 {
+
+  class RadiographyWidget;
+
   class RadiographyWindowingTracker : public Deprecated::IWorldSceneMouseTracker
   {   
   public:
@@ -43,6 +46,8 @@ namespace OrthancStone
 
     UndoRedoStack&      undoRedoStack_;
     RadiographyScene&   scene_;
+    RadiographyWidget&  widget_;
+    ImageInterpolation  initialWidgetInterpolation_;
     int                 clickX_;
     int                 clickY_;
     Action              leftAction_;
@@ -62,6 +67,8 @@ namespace OrthancStone
   public:
     RadiographyWindowingTracker(UndoRedoStack& undoRedoStack,
                                 RadiographyScene& scene,
+                                RadiographyWidget& widget,
+                                ImageInterpolation interpolationDuringTracking,
                                 int x,
                                 int y,
                                 Action leftAction,

@@ -20,6 +20,7 @@
 
 
 #include "RadiographyWindowingTracker.h"
+#include "RadiographyWidget.h"
 
 #include <Core/OrthancException.h>
 
@@ -115,6 +116,8 @@ namespace OrthancStone
     
   RadiographyWindowingTracker::RadiographyWindowingTracker(UndoRedoStack& undoRedoStack,
                                                            RadiographyScene& scene,
+                                                           RadiographyWidget& widget,
+                                                           ImageInterpolation interpolationDuringTracking,
                                                            int x,
                                                            int y,
                                                            Action leftAction,
@@ -123,6 +126,8 @@ namespace OrthancStone
                                                            Action downAction) :
     undoRedoStack_(undoRedoStack),
     scene_(scene),
+    widget_(widget),
+    initialWidgetInterpolation_(widget.GetInterpolation()),
     clickX_(x),
     clickY_(y),
     leftAction_(leftAction),
@@ -131,6 +136,7 @@ namespace OrthancStone
     downAction_(downAction)
   {
     scene_.GetWindowingWithDefault(sourceCenter_, sourceWidth_);
+    widget_.SetInterpolation(interpolationDuringTracking);
 
     float minValue, maxValue;
     scene.GetRange(minValue, maxValue);
@@ -156,6 +162,7 @@ namespace OrthancStone
 
   void RadiographyWindowingTracker::MouseUp()
   {
+    widget_.SetInterpolation(initialWidgetInterpolation_);
     undoRedoStack_.Add(new UndoRedoCommand(*this));
   }
 

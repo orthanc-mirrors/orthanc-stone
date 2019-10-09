@@ -36,7 +36,7 @@
 #  error Support for OpenGL is disabled
 #endif
 
-#include "../../Applications/Sdl/SdlOpenGLContext.h"
+#include "../OpenGL/SdlOpenGLContext.h"
 #include "../Scene2D/OpenGLCompositor.h"
 #include "../Scene2D/CairoCompositor.h"
 #include "ViewportBase.h"

@@ -23,8 +23,8 @@
 
 #if ORTHANC_ENABLE_SDL == 1
 
-#include "../../Framework/OpenGL/IOpenGLContext.h"
-#include "SdlWindow.h"
+#include "IOpenGLContext.h"
+#include "../Viewport/SdlWindow.h"
 
 #include <Core/Enumerations.h>
 

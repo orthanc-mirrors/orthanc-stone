@@ -21,7 +21,7 @@
 #include "TrackerSampleApp.h"
 
  // From Stone
-#include "../../Applications/Sdl/SdlOpenGLContext.h"
+#include "../../Framework/OpenGL/SdlOpenGLContext.h"
 #include "../../Framework/Scene2D/CairoCompositor.h"
 #include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
 #include "../../Framework/Scene2D/OpenGLCompositor.h"

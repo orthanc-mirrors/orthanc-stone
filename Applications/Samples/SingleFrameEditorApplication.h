@@ -117,12 +117,12 @@ namespace OrthancStone
           if (tool_ == Tool_Windowing)
           {
             return new RadiographyWindowingTracker(
-                  undoRedoStack_, widget.GetScene(),
-                  viewportX, viewportY,
-                  RadiographyWindowingTracker::Action_DecreaseWidth,
-                  RadiographyWindowingTracker::Action_IncreaseWidth,
-                  RadiographyWindowingTracker::Action_DecreaseCenter,
-                  RadiographyWindowingTracker::Action_IncreaseCenter);
+              undoRedoStack_, widget.GetScene(), widget, ImageInterpolation_Nearest,
+              viewportX, viewportY,
+              RadiographyWindowingTracker::Action_DecreaseWidth,
+              RadiographyWindowingTracker::Action_IncreaseWidth,
+              RadiographyWindowingTracker::Action_DecreaseCenter,
+              RadiographyWindowingTracker::Action_IncreaseCenter);
           }
           else if (!widget.LookupSelectedLayer(selected))
           {

@@ -20,7 +20,7 @@
 
 #include "FusionMprSdl.h"
 
-#include "../../Applications/Sdl/SdlOpenGLContext.h"
+#include "../../Framework/OpenGL/SdlOpenGLContext.h"
 
 #include "../../Framework/StoneInitialization.h"
 

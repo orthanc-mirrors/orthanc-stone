@@ -23,7 +23,7 @@
 
 #if ORTHANC_ENABLE_SDL == 1
 
-#include "SdlWindow.h"
+#include "../../Framework/Viewport/SdlWindow.h"
 
 #include <Core/Images/ImageAccessor.h>
 #include <boost/thread/mutex.hpp>

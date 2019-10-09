@@ -86,6 +86,7 @@ namespace OrthancStone
     void* context_;
   };
 
+  // TODO - Is this still necessary?
   class StoneOrthancException : public StoneException
   {
   protected:
@@ -109,6 +110,7 @@ namespace OrthancStone
     }
   };
 
+  // TODO - To be moved in "../Applications/"
   class StoneApplicationException : public StoneException
   {
   protected:

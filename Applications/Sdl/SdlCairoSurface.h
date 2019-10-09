@@ -23,7 +23,7 @@
 
 #if ORTHANC_ENABLE_SDL == 1
 
-#include "SdlWindow.h"
+#include "../../Framework/Viewport/SdlWindow.h"
 #include "../../Framework/Wrappers/CairoSurface.h"
 #include "../../Framework/Deprecated/Viewport/IViewport.h"
 

@@ -275,17 +275,20 @@ if (NOT ORTHANC_SANDBOXED)
     endif()
       
     if (ENABLE_SDL)
+      list(APPEND ORTHANC_STONE_SOURCES
+        ${ORTHANC_STONE_ROOT}/Framework/Viewport/SdlWindow.cpp
+        )
+
       list(APPEND APPLICATIONS_SOURCES
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlCairoSurface.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOrthancSurface.cpp
         ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlStoneApplicationRunner.cpp
-        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlWindow.cpp
         )
 
       if (ENABLE_OPENGL)
-        list(APPEND APPLICATIONS_SOURCES
-          ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOpenGLContext.cpp
+        list(APPEND ORTHANC_STONE_SOURCES
+          ${ORTHANC_STONE_ROOT}/Framework/OpenGL/SdlOpenGLContext.cpp
           ${ORTHANC_STONE_ROOT}/Framework/Viewport/SdlViewport.cpp
           )
       endif()

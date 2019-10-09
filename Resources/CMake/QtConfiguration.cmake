@@ -37,16 +37,56 @@ if ("${CMAKE_SYSTEM_VERSION}" STREQUAL "LinuxStandardBase")
     ${LSB_PATH}/include/QtOpenGL
     )
 
-  macro(ORTHANC_QT_WRAP_UI)
-    QT4_WRAP_UI(${ARGN})
-  endmacro()
-  
-  macro(ORTHANC_QT_WRAP_CPP)
-    QT4_WRAP_CPP(${ARGN})
-  endmacro()  
-
   link_libraries(QtCore QtGui QtOpenGL)
+
+
+  ##
+  ## This part is adapted from file "Qt4Macros.cmake" shipped with
+  ## CMake 3.5.1, released under the following license:
+  ##
+  ##=============================================================================
+  ## Copyright 2005-2009 Kitware, Inc.
+  ##
+  ## Distributed under the OSI-approved BSD License (the "License");
+  ## see accompanying file Copyright.txt for details.
+  ##
+  ## This software is distributed WITHOUT ANY WARRANTY; without even the
+  ## implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ## See the License for more information.
+  ##=============================================================================
+  ## 
+  macro (ORTHANC_QT_WRAP_UI outfiles)
+    QT4_EXTRACT_OPTIONS(ui_files ui_options ui_target ${ARGN})
+    foreach (it ${ui_files})
+      get_filename_component(outfile ${it} NAME_WE)
+      get_filename_component(infile ${it} ABSOLUTE)
+      set(outfile ${CMAKE_CURRENT_BINARY_DIR}/ui_${outfile}.h)
+      add_custom_command(OUTPUT ${outfile}
+        COMMAND ${QT_UIC_EXECUTABLE}
+        ARGS ${ui_options} -o ${outfile} ${infile}
+        MAIN_DEPENDENCY ${infile} VERBATIM)
+      set(${outfiles} ${${outfiles}} ${outfile})
+    endforeach ()
+  endmacro ()
   
+  macro (ORTHANC_QT_WRAP_CPP outfiles )
+    QT4_GET_MOC_FLAGS(moc_flags)
+    QT4_EXTRACT_OPTIONS(moc_files moc_options moc_target ${ARGN})
+    foreach (it ${moc_files})
+      get_filename_component(outfile ${it} NAME_WE)
+      get_filename_component(infile ${it} ABSOLUTE)
+      set(outfile ${CMAKE_CURRENT_BINARY_DIR}/moc_${outfile}.cxx)
+      add_custom_command(OUTPUT ${outfile}
+        COMMAND ${QT_MOC_EXECUTABLE}
+        ARGS ${infile} "${moc_flags}" -o ${outfile}
+        MAIN_DEPENDENCY ${infile} VERBATIM)
+      set(${outfiles} ${${outfiles}} ${outfile})
+    endforeach ()
+  endmacro ()
+  ##
+  ## End of "Qt4Macros.cmake" adaptation.
+  ##
+
 else()
   # Not using Linux Standard Base
   # Find the QtWidgets library

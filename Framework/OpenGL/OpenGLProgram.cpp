@@ -49,7 +49,6 @@ namespace OrthancStone
       {
         if (!context_.IsContextLost())
         {
-          ORTHANC_CHECK_CURRENT_CONTEXT(context_);
           ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glDeleteProgram");
           assert(program_ != 0);
           glDeleteProgram(program_);

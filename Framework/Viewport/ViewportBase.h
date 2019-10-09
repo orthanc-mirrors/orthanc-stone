@@ -75,8 +75,5 @@ namespace OrthancStone
   private:
     std::string                 identifier_;
     boost::shared_ptr<Scene2D>  scene_;
-  protected:
-    virtual void RestoreCompositor() = 0;
-    virtual void DisableCompositor() = 0;
   };
 }

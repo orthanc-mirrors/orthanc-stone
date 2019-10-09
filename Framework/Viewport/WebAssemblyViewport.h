@@ -65,8 +65,6 @@ namespace OrthancStone
 
     virtual void Refresh() ORTHANC_OVERRIDE;
 
-    virtual bool IsContextLost() ORTHANC_OVERRIDE;
-
     // this does NOT return whether the context is lost! This is called to 
     // tell Stone that the context has been lost
     bool OpenGLContextLost();
@@ -74,12 +72,9 @@ namespace OrthancStone
     // This should be called to indicate that the context has been lost
     bool OpenGLContextRestored();
 
-
-    virtual void* DebugGetInternalContext() const ORTHANC_OVERRIDE;
-
   private:
-    virtual void DisableCompositor() ORTHANC_OVERRIDE;
-    virtual void RestoreCompositor() ORTHANC_OVERRIDE;
+    void DisableCompositor();
+    void RestoreCompositor();
 
     void RegisterContextCallbacks();
   };
@@ -105,5 +100,4 @@ namespace OrthancStone
       return &compositor_;
     }
   };
-
 }

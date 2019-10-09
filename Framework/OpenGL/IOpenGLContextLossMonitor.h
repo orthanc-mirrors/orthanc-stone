@@ -13,36 +13,29 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
 #pragma once
-
-#include <boost/noncopyable.hpp>
 
 namespace OrthancStone
 {
   namespace OpenGL
   {
-    class IOpenGLContext : public boost::noncopyable
+    class IOpenGLContextLossMonitor : public boost::noncopyable
     {
     public:
-      virtual ~IOpenGLContext()
+      virtual ~IOpenGLContextLossMonitor()
       {
       }
 
-      virtual bool IsContextLost() = 0;
+      virtual void* DebugGetInternalContext() const = 0;
 
-      virtual void MakeCurrent() = 0;
-
-      virtual void SwapBuffer() = 0;
-
-      virtual unsigned int GetCanvasWidth() const = 0;
-
-      virtual unsigned int GetCanvasHeight() const = 0;
+      // This is for manual context loss (debug purposes)
+      virtual void SetLostContext() = 0;
+      virtual void RestoreLostContext() = 0;
     };
   }
 }

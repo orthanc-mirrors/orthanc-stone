@@ -122,11 +122,6 @@ namespace OrthancStone
       throw;
     }
   }
-  
-  bool WebAssemblyOpenGLViewport::IsContextLost()
-  {
-    return context_.IsContextLost();
-  }
 
   void WebAssemblyOpenGLViewport::RestoreCompositor()
   {
@@ -161,11 +156,6 @@ namespace OrthancStone
       UpdateSize();
     }
     return false;
-  }
-
-  void* WebAssemblyOpenGLViewport::DebugGetInternalContext() const
-  {
-    return context_.DebugGetInternalContext();
   }
 
   void WebAssemblyOpenGLViewport::RegisterContextCallbacks()

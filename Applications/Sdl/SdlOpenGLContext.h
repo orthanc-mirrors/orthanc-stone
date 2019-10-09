@@ -35,7 +35,6 @@ namespace OrthancStone
   private:
     SdlWindow      window_;
     SDL_GLContext  context_;
-    bool           contextLost_;
 
   public:
     SdlOpenGLContext(const char* title,
@@ -50,10 +49,11 @@ namespace OrthancStone
       return window_;
     }
 
-    virtual bool IsContextLost() ORTHANC_OVERRIDE;
-
-    virtual void SetLostContext() ORTHANC_OVERRIDE;
-    virtual void RestoreLostContext() ORTHANC_OVERRIDE;
+    virtual bool IsContextLost() ORTHANC_OVERRIDE
+    {
+      // On desktop applications, an OpenGL context should never be lost
+      return false;
+    }
 
     virtual void MakeCurrent() ORTHANC_OVERRIDE;
 
@@ -62,11 +62,6 @@ namespace OrthancStone
     virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE;
 
     virtual unsigned int GetCanvasHeight() const ORTHANC_OVERRIDE;
-
-    virtual void* DebugGetInternalContext() const ORTHANC_OVERRIDE
-    {
-      return context_;
-    }
   };
 }
 

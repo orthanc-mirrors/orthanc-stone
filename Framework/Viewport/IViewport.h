@@ -46,13 +46,10 @@ namespace OrthancStone
 
     virtual unsigned int GetCanvasHeight() const = 0;
 
+    // TODO - Is this needed at this level (e.g. for SDL)?
     virtual const std::string& GetCanvasIdentifier() const = 0;
 
     virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const = 0;
-
-    virtual bool IsContextLost() = 0;
-
-    virtual void* DebugGetInternalContext() const = 0;
 
 #if ORTHANC_ENABLE_LOCALE == 1
     virtual void SetFont(size_t index,
@@ -62,6 +59,7 @@ namespace OrthancStone
 #endif
 
   protected:
+    // TODO - Replace this by "ICompositor& GetCompositor()"    
     virtual ICompositor* GetCompositor() = 0;
 
     virtual const ICompositor* GetCompositor() const

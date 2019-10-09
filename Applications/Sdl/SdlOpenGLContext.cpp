@@ -42,7 +42,6 @@ namespace OrthancStone
                                      bool allowDpiScaling) 
     : window_(title, width, height, true /* enable OpenGL */, allowDpiScaling)
     , context_(NULL)
-    , contextLost_(false)
   {
     context_ = SDL_GL_CreateContext(window_.GetObject());
     
@@ -85,43 +84,8 @@ namespace OrthancStone
     SDL_GL_DeleteContext(context_);
   }
 
-
-  bool SdlOpenGLContext::IsContextLost()
-  {
-    return contextLost_;
-  }
-  
-  void SdlOpenGLContext::SetLostContext()
-  {
-    contextLost_ = true;
-  }
-
-  void SdlOpenGLContext::RestoreLostContext()
-  {
-    contextLost_ = false;
-  }
-   
-  // extern bool Debug_MustContextBeKilled(std::string title);
-  // extern void Debug_Context_ClearKillFlag(std::string title);
-
   void SdlOpenGLContext::MakeCurrent()
   {
-    if (IsContextLost())
-      throw OpenGLContextLostException(context_);
-
-    // <DEBUG STUFF>
-    // This is used for context loss simulation
-    // SDL_Window* internalWindow = GetWindow().GetObject();
-    // std::string title(SDL_GetWindowTitle(internalWindow));
-
-    // if (Debug_MustContextBeKilled(title))
-    // {
-    //   Debug_Context_ClearKillFlag(title);
-    //   SetLostContext();
-    //   throw OpenGLContextLostException(context_);
-    // }
-    // </DEBUG STUFF>
-
     if (SDL_GL_MakeCurrent(window_.GetObject(), context_) != 0)
     {
       const char* errText = SDL_GetError();

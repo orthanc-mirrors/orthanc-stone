@@ -87,12 +87,6 @@ namespace OrthancStone
       return context_.GetWindow();
     }
 
-    virtual void* DebugGetInternalContext() const ORTHANC_OVERRIDE;
-
-    virtual bool IsContextLost() ORTHANC_OVERRIDE;
-    bool OpenGLContextLost();
-    bool OpenGLContextRestored();
-
     virtual void UpdateSize(unsigned int width, unsigned int height) ORTHANC_OVERRIDE
     {
       // nothing to do in OpenGL, the OpenGLCompositor::UpdateSize will be called automatically
@@ -100,9 +94,6 @@ namespace OrthancStone
     virtual void Refresh() ORTHANC_OVERRIDE;
 
   protected:
-    virtual void DisableCompositor() ORTHANC_OVERRIDE;
-    virtual void RestoreCompositor() ORTHANC_OVERRIDE;
-
     virtual ICompositor* GetCompositor() ORTHANC_OVERRIDE
     {
       return compositor_.get();
@@ -135,9 +126,6 @@ namespace OrthancStone
     {
       return window_;
     }
-
-    virtual void DisableCompositor() ORTHANC_OVERRIDE;
-    virtual void RestoreCompositor() ORTHANC_OVERRIDE;
 
     virtual void Refresh() ORTHANC_OVERRIDE;
 

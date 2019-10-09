@@ -38,6 +38,7 @@
 #endif
 
 #include "IOpenGLContext.h"
+#include "IOpenGLContextLossMonitor.h"
 
 #include <Core/Enumerations.h>
 
@@ -47,7 +48,9 @@ namespace OrthancStone
 {
   namespace OpenGL
   {
-    class WebAssemblyOpenGLContext : public OpenGL::IOpenGLContext
+    class WebAssemblyOpenGLContext :
+      public OpenGL::IOpenGLContext,
+      public OpenGL::IOpenGLContextLossMonitor
     {
     private:
       class PImpl;

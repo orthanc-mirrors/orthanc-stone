@@ -8,9 +8,10 @@ namespace OrthancStone
 {
   class ICompositor : public boost::noncopyable
   {
-
   public:
-    virtual ~ICompositor() {}
+    virtual ~ICompositor() 
+    {
+    }
 
     virtual unsigned int GetCanvasWidth() const = 0;
 
@@ -24,6 +25,5 @@ namespace OrthancStone
                          unsigned int fontSize,
                          Orthanc::Encoding codepage) = 0;
 #endif
-
   };
 }

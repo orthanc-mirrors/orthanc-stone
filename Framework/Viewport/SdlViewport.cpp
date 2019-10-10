@@ -49,10 +49,7 @@ namespace OrthancStone
 
   void SdlOpenGLViewport::Refresh()
   {
-    if (GetCompositor())
-    {
-      GetCompositor()->Refresh();
-    }
+    compositor_->Refresh();
   }
 
 
@@ -77,7 +74,7 @@ namespace OrthancStone
   
   void SdlCairoViewport::Refresh()
   {
-    GetCompositor()->Refresh();
+    compositor_.Refresh();
     window_.Render(sdlSurface_);
   }
 
@@ -104,5 +101,4 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
   }
-
 }

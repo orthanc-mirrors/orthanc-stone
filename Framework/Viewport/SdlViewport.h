@@ -48,21 +48,21 @@ namespace OrthancStone
   public:
     SdlViewport(const std::string& identifier)
       : ViewportBase(identifier)
-    {}
+    {
+    }
 
     SdlViewport(const std::string& identifier,
                 boost::shared_ptr<Scene2D>& scene)
       : ViewportBase(identifier, scene)
     {
-
     }
 
     virtual SdlWindow& GetWindow() = 0;
     
     virtual void UpdateSize(unsigned int width,
                             unsigned int height) = 0;
-
   };
+
 
   class SdlOpenGLViewport : public SdlViewport
   {
@@ -87,16 +87,21 @@ namespace OrthancStone
       return context_.GetWindow();
     }
 
+    virtual void Refresh() ORTHANC_OVERRIDE;
+
     virtual void UpdateSize(unsigned int width, unsigned int height) ORTHANC_OVERRIDE
     {
       // nothing to do in OpenGL, the OpenGLCompositor::UpdateSize will be called automatically
     }
-    virtual void Refresh() ORTHANC_OVERRIDE;
 
-  protected:
-    virtual ICompositor* GetCompositor() ORTHANC_OVERRIDE
+    virtual bool HasCompositor() const ORTHANC_OVERRIDE
     {
-      return compositor_.get();
+      return true;
+    }
+
+    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
+    {
+      return *compositor_.get();
     }
   };
 
@@ -107,6 +112,10 @@ namespace OrthancStone
     SdlWindow         window_;
     CairoCompositor   compositor_;
     SDL_Surface*      sdlSurface_;
+
+  private:
+    void UpdateSdlSurfaceSize(unsigned int width,
+                              unsigned int height);
 
   public:
     SdlCairoViewport(const char* title,
@@ -126,19 +135,20 @@ namespace OrthancStone
     {
       return window_;
     }
-
+    
     virtual void Refresh() ORTHANC_OVERRIDE;
 
     virtual void UpdateSize(unsigned int width,
                             unsigned int height) ORTHANC_OVERRIDE;
-  protected:
-    virtual ICompositor* GetCompositor() ORTHANC_OVERRIDE
+
+    virtual bool HasCompositor() const ORTHANC_OVERRIDE
     {
-      return &compositor_;
+      return true;
     }
 
-  private:
-    void UpdateSdlSurfaceSize(unsigned int width,
-                              unsigned int height);
+    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
+    {
+      return compositor_;
+    }
   };
 }

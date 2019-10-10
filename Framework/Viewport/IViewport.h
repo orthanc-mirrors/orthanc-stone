@@ -42,30 +42,13 @@ namespace OrthancStone
 
     virtual void Refresh() = 0;
 
-    virtual unsigned int GetCanvasWidth() const = 0;
-
-    virtual unsigned int GetCanvasHeight() const = 0;
-
     // TODO - Is this needed at this level (e.g. for SDL)?
     virtual const std::string& GetCanvasIdentifier() const = 0;
 
-    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const = 0;
+    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) = 0;
 
-#if ORTHANC_ENABLE_LOCALE == 1
-    virtual void SetFont(size_t index,
-      Orthanc::EmbeddedResources::FileResourceId resource,
-      unsigned int fontSize,
-      Orthanc::Encoding codepage) = 0;
-#endif
+    virtual bool HasCompositor() const = 0;
 
-  protected:
-    // TODO - Replace this by "ICompositor& GetCompositor()"    
-    virtual ICompositor* GetCompositor() = 0;
-
-    virtual const ICompositor* GetCompositor() const
-    {
-      IViewport* self = const_cast<IViewport*>(this);
-      return self->GetCompositor();
-    }
+    virtual ICompositor& GetCompositor() = 0;
   };
 }

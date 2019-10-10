@@ -30,18 +30,28 @@ namespace OrthancStone
 {
   class WebAssemblyViewport : public ViewportBase
   {
+  private:
+    std::string  canvasIdentifier_;
+
   public:
-    WebAssemblyViewport(const std::string& identifier)
-      : ViewportBase(identifier)
+    WebAssemblyViewport(const std::string& canvasIdentifier) :
+      canvasIdentifier_(canvasIdentifier)
     {
     }
 
-    WebAssemblyViewport(const std::string& identifier,
-                        boost::shared_ptr<Scene2D>& scene)
-      : ViewportBase(identifier, scene)
+    WebAssemblyViewport(const std::string& canvasIdentifier,
+                        boost::shared_ptr<Scene2D>& scene) :
+      ViewportBase(scene),
+      canvasIdentifier_(canvasIdentifier)
     {
     }
+
+    const std::string& GetCanvasIdentifier() const
+    {
+      return canvasIdentifier_;
+    }
   };
+
 
   class WebAssemblyOpenGLViewport : public WebAssemblyViewport
   {
@@ -80,6 +90,7 @@ namespace OrthancStone
 
     void RegisterContextCallbacks();
   };
+
 
   class WebAssemblyCairoViewport : public WebAssemblyViewport
   {

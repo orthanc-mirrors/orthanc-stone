@@ -30,7 +30,6 @@ namespace OrthancStone
                                        unsigned int width,
                                        unsigned int height,
                                        bool allowDpiScaling) :
-    SdlViewport(title),
     context_(title, width, height, allowDpiScaling)
   {
     compositor_.reset(new OpenGLCompositor(context_, GetScene()));
@@ -41,7 +40,7 @@ namespace OrthancStone
                                        unsigned int height,
                                        boost::shared_ptr<Scene2D>& scene,
                                        bool allowDpiScaling) :
-    SdlViewport(title, scene),
+    SdlViewport(scene),
     context_(title, width, height, allowDpiScaling)
   {
     compositor_.reset(new OpenGLCompositor(context_, GetScene()));
@@ -57,7 +56,6 @@ namespace OrthancStone
                                      unsigned int width,
                                      unsigned int height,
                                      bool allowDpiScaling) :
-    SdlViewport(title),
     window_(title, width, height, false /* enable OpenGL */, allowDpiScaling),
     compositor_(GetScene(), width, height)
   {

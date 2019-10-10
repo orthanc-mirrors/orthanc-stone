@@ -42,9 +42,6 @@ namespace OrthancStone
 
     virtual void Refresh() = 0;
 
-    // TODO - Is this needed at this level (e.g. for SDL)?
-    virtual const std::string& GetCanvasIdentifier() const = 0;
-
     virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) = 0;
 
     virtual bool HasCompositor() const = 0;

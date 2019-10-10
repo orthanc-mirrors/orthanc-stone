@@ -46,14 +46,12 @@ namespace OrthancStone
   class SdlViewport : public ViewportBase
   {
   public:
-    SdlViewport(const std::string& identifier)
-      : ViewportBase(identifier)
+    SdlViewport()
     {
     }
 
-    SdlViewport(const std::string& identifier,
-                boost::shared_ptr<Scene2D>& scene)
-      : ViewportBase(identifier, scene)
+    SdlViewport(boost::shared_ptr<Scene2D>& scene) : 
+      ViewportBase(scene)
     {
     }
 

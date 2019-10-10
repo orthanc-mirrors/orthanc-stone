@@ -29,23 +29,16 @@ namespace OrthancStone
   class ViewportBase : public IViewport
   {
   private:
-    std::string                 identifier_;
     boost::shared_ptr<Scene2D>  scene_;
 
   public:
-    ViewportBase(const std::string& identifier);
+    ViewportBase();
 
-    ViewportBase(const std::string& identifier,
-                 boost::shared_ptr<Scene2D>& scene);
+    ViewportBase(boost::shared_ptr<Scene2D>& scene);
 
     virtual Scene2D& GetScene() ORTHANC_OVERRIDE
     {
       return *scene_;
-    }
-
-    virtual const std::string& GetCanvasIdentifier() const ORTHANC_OVERRIDE
-    {
-      return identifier_;
     }
 
     virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) ORTHANC_OVERRIDE;

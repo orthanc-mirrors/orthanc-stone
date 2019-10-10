@@ -26,16 +26,13 @@
 
 namespace OrthancStone
 {
-  ViewportBase::ViewportBase(const std::string& identifier) :
-    identifier_(identifier),
+  ViewportBase::ViewportBase() :
     scene_(boost::make_shared<Scene2D>())
   {
   }
 
   
-  ViewportBase::ViewportBase(const std::string& identifier,
-                             boost::shared_ptr<Scene2D>& scene) :
-    identifier_(identifier),
+  ViewportBase::ViewportBase(boost::shared_ptr<Scene2D>& scene) :
     scene_(scene)
   {
     if (scene.get() == NULL)

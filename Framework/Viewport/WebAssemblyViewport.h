@@ -58,10 +58,12 @@ namespace OrthancStone
     // This function must be called each time the browser window is resized
     void UpdateSize();
 
-    virtual ICompositor* GetCompositor() ORTHANC_OVERRIDE
+    virtual bool HasCompositor() const ORTHANC_OVERRIDE
     {
-      return compositor_.get();
+      return (compositor_.get() != NULL);
     }
+    
+    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE;
 
     virtual void Refresh() ORTHANC_OVERRIDE;
 
@@ -93,11 +95,16 @@ namespace OrthancStone
     
     void UpdateSize(); 
 
-    virtual void Refresh();
+    virtual void Refresh() ORTHANC_OVERRIDE;
 
-    virtual ICompositor* GetCompositor()
+    virtual bool HasCompositor() const ORTHANC_OVERRIDE
     {
-      return &compositor_;
+      return true;
+    }
+    
+    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
+    {
+      return compositor_;
     }
   };
 }

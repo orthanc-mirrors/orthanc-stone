@@ -85,14 +85,31 @@ namespace OrthancStone
 
   void WebAssemblyOpenGLViewport::DisableCompositor()
   {
-    compositor_.reset(NULL);
+    compositor_.reset();
+  }
+
+  ICompositor& WebAssemblyOpenGLViewport::GetCompositor()
+  {
+    if (compositor_.get() == NULL)
+    {
+      // "HasCompositor()" should have been called
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      return *compositor_;
+    }
   }
 
   void WebAssemblyOpenGLViewport::Refresh()
   {
     try
     {
-      if (!GetCompositor())
+      if (HasCompositor())
+      {
+        GetCompositor().Refresh();
+      }
+      else
       {
         // this block was added because of (perceived?) bugs in the 
         // browser where the WebGL contexts are NOT automatically restored 
@@ -102,15 +119,13 @@ namespace OrthancStone
         //LOG(ERROR) << "About to call WebAssemblyOpenGLContext::TryRecreate().";
         //LOG(ERROR) << "Before calling it, isContextLost == " << context_.IsContextLost();
 
-        if (!context_.IsContextLost()) {
+        if (!context_.IsContextLost())
+        {
           LOG(TRACE) << "Context restored!";
           //LOG(ERROR) << "After calling it, isContextLost == " << context_.IsContextLost();
           RestoreCompositor();
           UpdateSize();
         }
-      }
-      if (GetCompositor()) {
-        GetCompositor()->Refresh();
       }
     }
     catch (const StoneException& e)
@@ -160,7 +175,7 @@ namespace OrthancStone
     
     // maybe the context has already been restored by other means (the 
     // Refresh() function)
-    if (!GetCompositor())
+    if (!HasCompositor())
     {
       RestoreCompositor();
       UpdateSize();
@@ -248,6 +263,6 @@ namespace OrthancStone
   void WebAssemblyCairoViewport::Refresh()
   {
     LOG(INFO) << "refreshing cairo viewport, TODO: blit to the canvans.getContext('2d')";
-    GetCompositor()->Refresh();
+    GetCompositor().Refresh();
   }
 }

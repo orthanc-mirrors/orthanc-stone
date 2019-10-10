@@ -21,6 +21,8 @@
 #include "EditAngleMeasureTracker.h"
 #include "EditAngleMeasureCommand.h"
 
+#include "../StoneException.h"
+
 namespace OrthancStone
 {
   EditAngleMeasureTracker::EditAngleMeasureTracker(

@@ -22,9 +22,6 @@
 #pragma once
 
 #include "MessageBroker.h"
-#include "IMessage.h"
-
-#include <Core/Toolbox.h>
 
 namespace OrthancStone 
 {
@@ -35,71 +32,18 @@ namespace OrthancStone
     // the following is a UUID that is used to disambiguate different observers
     // that may have the same address
     char     fingerprint_[37];
-  public:
-    IObserver(MessageBroker& broker)
-      : broker_(broker)
-      , fingerprint_()
-    {
-      // we store the fingerprint_ as a char array to avoid problems when
-      // reading it in a deceased object.
-      // remember this is panic-level code to track zombie object usage
-      std::string fingerprint = Orthanc::Toolbox::GenerateUuid();
-      const char* fingerprintRaw = fingerprint.c_str();
-      memcpy(fingerprint_, fingerprintRaw, 37);
-      broker_.Register(*this);
-    }
 
-    virtual ~IObserver()
-    {
-      try
-      {
-        LOG(TRACE) << "IObserver(" << std::hex << this << std::dec << ")::~IObserver : fingerprint_ == " << fingerprint_;
-        const char* deadMarker = "deadbeef-dead-dead-0000-0000deadbeef";
-        ORTHANC_ASSERT(strlen(deadMarker) == 36);
-        memcpy(fingerprint_, deadMarker, 37);
-        broker_.Unregister(*this);
-      }
-      catch (const Orthanc::OrthancException& e)
-      {
-        if (e.HasDetails())
-        {
-          LOG(ERROR) << "OrthancException in ~IObserver: " << e.What() << " Details: " << e.GetDetails();
-        }
-        else
-        {
-          LOG(ERROR) << "OrthancException in ~IObserver: " << e.What();
-        }
-      }
-      catch (const std::exception& e)
-      {
-        LOG(ERROR) << "std::exception in ~IObserver: " << e.what();
-      }
-      catch (...)
-      {
-        LOG(ERROR) << "Unknown exception in ~IObserver";
-      }
-    }
+  public:
+    IObserver(MessageBroker& broker);
+
+    virtual ~IObserver();
 
     const char* GetFingerprint() const
     {
       return fingerprint_;
     }
 
-    bool DoesFingerprintLookGood() const
-    {
-      for (size_t i = 0; i < 36; ++i) {
-        bool ok = false;
-        if (fingerprint_[i] >= 'a' && fingerprint_[i] <= 'f')
-          ok = true;
-        if (fingerprint_[i] >= '0' && fingerprint_[i] <= '9')
-          ok = true;
-        if (fingerprint_[i] == '-')
-          ok = true;
-        if (!ok)
-          return false;
-      }
-      return fingerprint_[36] == 0;
-    }
+    bool DoesFingerprintLookGood() const;
 
     MessageBroker& GetBroker() const
     {

@@ -25,6 +25,7 @@
 
 #include "../Scene2D/TextSceneLayer.h"
 #include "../Scene2D/Scene2D.h"
+#include "../StoneException.h"
 
 #include <boost/math/constants/constants.hpp>
 

@@ -22,6 +22,7 @@
 #include "MeasureToolsToolbox.h"
 #include "EditAngleMeasureTracker.h"
 #include "LayerHolder.h"
+#include "../StoneException.h"
 
 #include <Core/Logging.h>
 

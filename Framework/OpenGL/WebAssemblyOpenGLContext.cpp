@@ -248,11 +248,6 @@ namespace OrthancStone
       return pimpl_->IsContextLost();
     }
 
-    void WebAssemblyOpenGLContext::RestoreLostContext()
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-    }
-
     void WebAssemblyOpenGLContext::SetLostContext()
     {
       pimpl_->SetLostContext();

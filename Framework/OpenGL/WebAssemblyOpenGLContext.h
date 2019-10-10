@@ -38,7 +38,6 @@
 #endif
 
 #include "IOpenGLContext.h"
-#include "IOpenGLContextLossMonitor.h"
 
 #include <Core/Enumerations.h>
 
@@ -48,9 +47,7 @@ namespace OrthancStone
 {
   namespace OpenGL
   {
-    class WebAssemblyOpenGLContext :
-      public OpenGL::IOpenGLContext,
-      public OpenGL::IOpenGLContextLossMonitor
+    class WebAssemblyOpenGLContext : public OpenGL::IOpenGLContext
     {
     private:
       class PImpl;
@@ -61,9 +58,6 @@ namespace OrthancStone
 
       virtual bool IsContextLost() ORTHANC_OVERRIDE;
 
-      virtual void SetLostContext() ORTHANC_OVERRIDE;
-      virtual void RestoreLostContext() ORTHANC_OVERRIDE;
-
       virtual void MakeCurrent() ORTHANC_OVERRIDE;
 
       virtual void SwapBuffer() ORTHANC_OVERRIDE;
@@ -71,8 +65,6 @@ namespace OrthancStone
       virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE;
 
       virtual unsigned int GetCanvasHeight() const ORTHANC_OVERRIDE;
-
-      virtual void* DebugGetInternalContext() const ORTHANC_OVERRIDE;
 
       /**
       Returns true if the underlying context has been successfully recreated
@@ -82,6 +74,13 @@ namespace OrthancStone
       void UpdateSize();
 
       const std::string& GetCanvasIdentifier() const;
+
+
+      /**
+       * This is for manual context loss (debug purposes)
+       **/
+      void* DebugGetInternalContext() const;
+      void SetLostContext();
     };
   }
 }

@@ -20,6 +20,9 @@
 
 
 #include "WebAssemblyViewport.h"
+
+#include "../StoneException.h"
+
 #include <emscripten/html5.h>
 
 namespace OrthancStone
@@ -110,11 +113,18 @@ namespace OrthancStone
         GetCompositor()->Refresh();
       }
     }
-    catch (const OpenGLContextLostException& e)
+    catch (const StoneException& e)
     {
-      LOG(WARNING) << "Context " << std::hex << e.context_ << " is lost! Compositor will be disabled.";
-      DisableCompositor();
-      // we now need to wait for the "context restored" callback
+      if (e.GetErrorCode() == ErrorCode_WebGLContextLost)
+      {
+        LOG(WARNING) << "Context is lost! Compositor will be disabled.";
+        DisableCompositor();
+        // we now need to wait for the "context restored" callback
+      }
+      else
+      {
+        throw;
+      }
     }
     catch (...)
     {

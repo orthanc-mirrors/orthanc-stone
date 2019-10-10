@@ -123,14 +123,14 @@ namespace OrthancStone
         if (IsContextLost())
         {
           LOG(ERROR) << "MakeCurrent() called on lost context " << context_;
-          throw OpenGLContextLostException(reinterpret_cast<void*>(context_));
+          throw StoneException(ErrorCode_WebGLContextLost);
         }
 
         if (emscripten_is_webgl_context_lost(context_))
         {
           LOG(ERROR) << "OpenGL context has been lost for canvas: " << canvas_;
           SetLostContext();
-          throw OpenGLContextLostException(reinterpret_cast<void*>(context_));
+          throw StoneException(ErrorCode_WebGLContextLost);
         }
 
         if (emscripten_webgl_make_context_current(context_) != EMSCRIPTEN_RESULT_SUCCESS)

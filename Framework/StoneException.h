@@ -46,7 +46,6 @@ namespace OrthancStone
   };
 
 
-
   class StoneException
   {
   protected:
@@ -68,73 +67,6 @@ namespace OrthancStone
     virtual const char* What() const
     {
       return "TODO: EnumerationToString for StoneException";
-    }
-  };
-
-  class OpenGLContextLostException : public StoneException
-  {
-  public:
-    explicit OpenGLContextLostException(void* context)
-      : StoneException(ErrorCode_WebGLContextLost)
-      , context_(context)
-    {
-    }
-    virtual const char* What() const
-    {
-      return "The OpenGL/WebGL context has been lost!";
-    }
-    void* context_;
-  };
-
-  // TODO - Is this still necessary?
-  class StoneOrthancException : public StoneException
-  {
-  protected:
-    Orthanc::OrthancException&  orthancException_;
-
-  public:
-    explicit StoneOrthancException(Orthanc::OrthancException& orthancException) :
-      StoneException(ErrorCode_OrthancError),
-      orthancException_(orthancException)
-    {
-    }
-
-    Orthanc::ErrorCode GetOrthancErrorCode() const
-    {
-      return orthancException_.GetErrorCode();
-    }
-
-    virtual const char* What() const
-    {
-      return orthancException_.What();
-    }
-  };
-
-  // TODO - To be moved in "../Applications/"
-  class StoneApplicationException : public StoneException
-  {
-  protected:
-    int applicationErrorCode_;
-    mutable std::string errorMessage_;
-
-  public:
-    explicit StoneApplicationException(int applicationErrorCode) :
-      StoneException(ErrorCode_ApplicationException),
-      applicationErrorCode_(applicationErrorCode)
-    {
-    }
-
-    int GetApplicationErrorCode() const
-    {
-      return applicationErrorCode_;
-    }
-
-    virtual const char* What() const
-    {
-      if (errorMessage_.size() == 0)
-        errorMessage_ = boost::lexical_cast<std::string>(applicationErrorCode_);
-
-      return errorMessage_.c_str();
     }
   };
 }
@@ -160,14 +92,6 @@ namespace OrthancStone
 # define ORTHANC_EXPAND( x ) x 
 # define GET_ORTHANC_ASSERT(_1,_2,NAME,...) NAME
 # define ORTHANC_ASSERT(...) ORTHANC_EXPAND(GET_ORTHANC_ASSERT(__VA_ARGS__, ORTHANC_ASSERT2, ORTHANC_ASSERT1, UNUSED)(__VA_ARGS__))
-
-
-
-
-
-
-
-
 
 
 

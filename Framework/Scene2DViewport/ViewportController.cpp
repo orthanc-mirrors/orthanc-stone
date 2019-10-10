@@ -113,7 +113,7 @@ namespace OrthancStone
   
   bool ViewportController::HandlePointerEvent(PointerEvent e)
   {
-    throw StoneException(ErrorCode_NotImplemented);
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
 
   std::vector<boost::shared_ptr<MeasureTool> > ViewportController::HitTestMeasureTools(

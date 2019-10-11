@@ -26,7 +26,6 @@
 
 #include "IWebService.h"
 #include "../../Messages/IObservable.h"
-#include "../../Messages/Promise.h"
 
 namespace Deprecated
 {

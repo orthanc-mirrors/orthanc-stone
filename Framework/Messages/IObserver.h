@@ -26,17 +26,10 @@
 
 namespace OrthancStone 
 {
-  class MessageBroker;  // TODO - Remove
-
   class IObserver : public boost::noncopyable
   {
   public:
     IObserver()
-    {
-    }
-
-    // TODO - Remove
-    IObserver(MessageBroker& broker)
     {
     }
 

@@ -26,12 +26,11 @@
 namespace OrthancStone
 {
   CreateLineMeasureCommand::CreateLineMeasureCommand(
-    MessageBroker& broker,
     boost::weak_ptr<ViewportController> controllerW,
     ScenePoint2D           point)
     : CreateMeasureCommand(controllerW)
     , measureTool_(
-      boost::make_shared<LineMeasureTool>(boost::ref(broker), controllerW))
+      boost::make_shared<LineMeasureTool>(controllerW))
   {
     GetController()->AddMeasureTool(measureTool_);
     measureTool_->Set(point, point);

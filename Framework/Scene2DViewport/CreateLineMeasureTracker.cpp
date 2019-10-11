@@ -26,14 +26,12 @@
 namespace OrthancStone
 {
   CreateLineMeasureTracker::CreateLineMeasureTracker(
-    MessageBroker&                  broker,
     boost::weak_ptr<ViewportController>          controllerW,
     const PointerEvent&             e)
     : CreateMeasureTracker(controllerW)
   {
     command_.reset(
       new CreateLineMeasureCommand(
-        broker,
         controllerW,
         e.GetMainPosition().Apply(GetScene().GetCanvasToSceneTransform())));
   }

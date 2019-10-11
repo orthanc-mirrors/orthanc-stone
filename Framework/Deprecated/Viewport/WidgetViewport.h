@@ -41,7 +41,7 @@ namespace Deprecated
     bool                          backgroundChanged_;
 
   public:
-    WidgetViewport(OrthancStone::MessageBroker& broker);
+    WidgetViewport();
 
     virtual void FitContent();
 

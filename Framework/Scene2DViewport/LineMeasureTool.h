@@ -38,7 +38,7 @@ namespace OrthancStone
   class LineMeasureTool : public MeasureTool
   {
   public:
-    LineMeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);
+    LineMeasureTool(boost::weak_ptr<ViewportController> controllerW);
 
     ~LineMeasureTool();
 

@@ -40,9 +40,6 @@ namespace Deprecated
   // and you'll be notified when the response/error is ready.
   class IWebService : public boost::noncopyable
   {
-  protected:
-    OrthancStone::MessageBroker& broker_;
-    
   public:
     typedef std::map<std::string, std::string> HttpHeaders;
 
@@ -138,12 +135,6 @@ namespace Deprecated
     };
 
 
-    IWebService(OrthancStone::MessageBroker& broker) :
-      broker_(broker)
-    {
-    }
-
-    
     virtual ~IWebService()
     {
     }

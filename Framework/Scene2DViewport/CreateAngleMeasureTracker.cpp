@@ -26,7 +26,6 @@
 namespace OrthancStone
 {
   CreateAngleMeasureTracker::CreateAngleMeasureTracker(
-    MessageBroker&                  broker,
     boost::weak_ptr<ViewportController>          controllerW,
     const PointerEvent&             e)
     : CreateMeasureTracker(controllerW)
@@ -34,7 +33,6 @@ namespace OrthancStone
   {
     command_.reset(
       new CreateAngleMeasureCommand(
-        broker,
         controllerW,
         e.GetMainPosition().Apply(GetScene().GetCanvasToSceneTransform())));
   }

@@ -69,7 +69,7 @@ namespace OrthancStone
       }
     };
 
-    NativeStoneApplicationContext(MessageBroker& broker);
+    NativeStoneApplicationContext();
 
     void Start();
 

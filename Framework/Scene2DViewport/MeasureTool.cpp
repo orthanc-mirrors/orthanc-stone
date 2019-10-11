@@ -79,7 +79,7 @@ namespace OrthancStone
 #endif
   }
 
-  MeasureTool::MeasureTool(MessageBroker& broker,
+  MeasureTool::MeasureTool(
     boost::weak_ptr<ViewportController> controllerW)
     : controllerW_(controllerW)
     , enabled_(true)

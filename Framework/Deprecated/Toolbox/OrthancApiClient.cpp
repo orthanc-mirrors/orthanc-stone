@@ -73,7 +73,6 @@ namespace Deprecated
     std::auto_ptr< OrthancStone::MessageHandler<BinaryResponseReadyMessage> >            binaryHandler_;
     std::auto_ptr< OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage> >  failureHandler_;
     std::auto_ptr< Orthanc::IDynamicObject >                               userPayload_;
-    OrthancStone::MessageBroker&                                                         broker_;
     void NotifyConversionError(const IWebService::HttpRequestSuccessMessage& message) const
     {
       if (failureHandler_.get() != NULL)
@@ -84,14 +83,12 @@ namespace Deprecated
     }
     
   public:
-    WebServicePayload(OrthancStone::MessageBroker& broker,
-                      OrthancStone::MessageHandler<EmptyResponseReadyMessage>* handler,
+    WebServicePayload(OrthancStone::MessageHandler<EmptyResponseReadyMessage>* handler,
                       OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureHandler,
                       Orthanc::IDynamicObject* userPayload) :
       emptyHandler_(handler),
       failureHandler_(failureHandler),
-      userPayload_(userPayload),
-      broker_(broker)
+      userPayload_(userPayload)
 
     {
       if (handler == NULL)
@@ -100,14 +97,12 @@ namespace Deprecated
       }
     }
 
-    WebServicePayload(OrthancStone::MessageBroker& broker,
-                      OrthancStone::MessageHandler<BinaryResponseReadyMessage>* handler,
+    WebServicePayload(OrthancStone::MessageHandler<BinaryResponseReadyMessage>* handler,
                       OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureHandler,
                       Orthanc::IDynamicObject* userPayload) :
       binaryHandler_(handler),
       failureHandler_(failureHandler),
-      userPayload_(userPayload),
-      broker_(broker)
+      userPayload_(userPayload)
     {
       if (handler == NULL)
       {
@@ -115,14 +110,12 @@ namespace Deprecated
       }
     }
 
-    WebServicePayload(OrthancStone::MessageBroker& broker,
-                      OrthancStone::MessageHandler<JsonResponseReadyMessage>* handler,
+    WebServicePayload(OrthancStone::MessageHandler<JsonResponseReadyMessage>* handler,
                       OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureHandler,
                       Orthanc::IDynamicObject* userPayload) :
       jsonHandler_(handler),
       failureHandler_(failureHandler),
-      userPayload_(userPayload),
-      broker_(broker)
+      userPayload_(userPayload)
     {
       if (handler == NULL)
       {

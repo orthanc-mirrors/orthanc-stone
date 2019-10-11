@@ -26,12 +26,11 @@
 namespace OrthancStone
 {
   CreateAngleMeasureCommand::CreateAngleMeasureCommand(
-    MessageBroker& broker,
     boost::weak_ptr<ViewportController> controllerW,
     ScenePoint2D           point)
     : CreateMeasureCommand(controllerW)
     , measureTool_(
-      boost::make_shared<AngleMeasureTool>(boost::ref(broker), controllerW))
+      boost::make_shared<AngleMeasureTool>(controllerW))
   {
     GetController()->AddMeasureTool(measureTool_);
     measureTool_->SetSide1End(point);

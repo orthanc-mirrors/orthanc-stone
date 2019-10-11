@@ -157,8 +157,7 @@ namespace Deprecated
     std::string   baseUrl_;
 
   public:
-    OrthancApiClient(OrthancStone::MessageBroker& broker,
-                     IWebService& web,
+    OrthancApiClient(IWebService& web,
                      const std::string& baseUrl);
     
     virtual ~OrthancApiClient()

@@ -40,7 +40,7 @@ namespace OrthancStone
   class AngleMeasureTool : public MeasureTool
   {
   public:
-    AngleMeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);
+    AngleMeasureTool(boost::weak_ptr<ViewportController> controllerW);
 
     ~AngleMeasureTool();
 

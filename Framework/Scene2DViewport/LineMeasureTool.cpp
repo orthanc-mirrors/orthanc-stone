@@ -32,8 +32,8 @@ namespace OrthancStone
 {
 
   LineMeasureTool::LineMeasureTool(
-    MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW)
-    : MeasureTool(broker, controllerW)
+    boost::weak_ptr<ViewportController> controllerW)
+    : MeasureTool(controllerW)
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
     , layerHolder_(boost::make_shared<LayerHolder>(controllerW, 1, 5))
 #else

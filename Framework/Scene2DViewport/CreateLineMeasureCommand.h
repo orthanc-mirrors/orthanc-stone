@@ -27,7 +27,6 @@ namespace OrthancStone
   {
   public:
     CreateLineMeasureCommand(
-      MessageBroker& broker,
       boost::weak_ptr<ViewportController> controllerW,
       ScenePoint2D           point);
 

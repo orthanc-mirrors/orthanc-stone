@@ -35,9 +35,8 @@ namespace OrthancStone
   {
     IObservable& emitter_;
   public:
-    IMessageForwarder(MessageBroker& broker, IObservable& emitter)
-      : IObserver(broker),
-        emitter_(emitter)
+    IMessageForwarder(IObservable& emitter)
+      : emitter_(emitter)
     {}
     virtual ~IMessageForwarder() {}
 
@@ -68,10 +67,9 @@ namespace OrthancStone
   class MessageForwarder : public IMessageForwarder, public Callable<MessageForwarder<TMessage>, TMessage>
   {
   public:
-    MessageForwarder(MessageBroker& broker,
-                     IObservable& emitter // the object that will emit the messages to forward
+    MessageForwarder(IObservable& emitter // the object that will emit the messages to forward
                      )
-      : IMessageForwarder(broker, emitter),
+      : IMessageForwarder(emitter),
         Callable<MessageForwarder<TMessage>, TMessage>(*this, &MessageForwarder::ForwardMessage)
     {
       RegisterForwarderInEmitter();

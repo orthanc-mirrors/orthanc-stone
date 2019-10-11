@@ -111,7 +111,7 @@ namespace OrthancStone
     virtual std::string GetDescription() = 0;
 
   protected:
-    MeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);
+    MeasureTool(boost::weak_ptr<ViewportController> controllerW);
 
     /**
     The measuring tool may exist in a standalone fashion, without any available

@@ -28,7 +28,6 @@ namespace OrthancStone
   public:
     /** Ctor sets end of side 1*/
     CreateAngleMeasureCommand(
-      MessageBroker& broker,
       boost::weak_ptr<ViewportController> controllerW,
       ScenePoint2D           point);
 

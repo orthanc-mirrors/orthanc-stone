@@ -59,7 +59,6 @@ namespace OrthancStone
   class StoneApplicationContext : public boost::noncopyable
   {
   private:
-    MessageBroker&                   broker_;
     Deprecated::IWebService*         webService_;
     Deprecated::IDelayedCallExecutor*            delayedCallExecutor_;
     std::auto_ptr<Deprecated::OrthancApiClient>  orthanc_;
@@ -68,8 +67,7 @@ namespace OrthancStone
     void InitializeOrthanc();
 
   public:
-    StoneApplicationContext(MessageBroker& broker) :
-      broker_(broker),
+    StoneApplicationContext() :
       webService_(NULL),
       delayedCallExecutor_(NULL)
     {
@@ -77,11 +75,6 @@ namespace OrthancStone
 
     virtual ~StoneApplicationContext()
     {
-    }
-
-    MessageBroker& GetMessageBroker()
-    {
-      return broker_;
     }
 
     bool HasWebService() const

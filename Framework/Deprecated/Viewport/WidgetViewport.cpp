@@ -26,8 +26,7 @@
 
 namespace Deprecated
 {
-  WidgetViewport::WidgetViewport(OrthancStone::MessageBroker& broker) :
-    IViewport(broker),
+  WidgetViewport::WidgetViewport() :
     statusBar_(NULL),
     isMouseOver_(false),
     lastMouseX_(0),

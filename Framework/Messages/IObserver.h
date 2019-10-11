@@ -21,33 +21,34 @@
 
 #pragma once
 
-#include "MessageBroker.h"
+#include <boost/noncopyable.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 namespace OrthancStone 
 {
+  class MessageBroker;  // TODO - Remove
+
   class IObserver : public boost::noncopyable
   {
-  private:
-    MessageBroker&  broker_;
-    // the following is a UUID that is used to disambiguate different observers
-    // that may have the same address
-    char     fingerprint_[37];
-
   public:
-    IObserver(MessageBroker& broker);
-
-    virtual ~IObserver();
-
-    const char* GetFingerprint() const
+    IObserver()
     {
-      return fingerprint_;
     }
 
-    bool DoesFingerprintLookGood() const;
-
-    MessageBroker& GetBroker() const
+    // TODO - Remove
+    IObserver(MessageBroker& broker)
     {
-      return broker_;
     }
+
+    virtual ~IObserver()
+    {
+    }
+  };
+
+  template <typename T>
+  class ObserverBase : 
+    public IObserver,
+    public boost::enable_shared_from_this<T>    
+  {
   };
 }

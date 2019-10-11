@@ -41,7 +41,7 @@ namespace OrthancStone
      rest once slots become available. It is used, a.o., by the 
      OrtancMultiframeVolumeLoader class.
   */
-  class LoaderStateMachine : public IObserver
+  class LoaderStateMachine : public ObserverBase<LoaderStateMachine>
   {
   protected:
     class State : public Orthanc::IDynamicObject

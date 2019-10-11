@@ -33,7 +33,7 @@ namespace Deprecated
   // messages are sent to observers so they can use it
   class DicomSeriesVolumeSlicer :
     public IVolumeSlicer,
-    public OrthancStone::IObserver
+    public OrthancStone::ObserverBase<DicomSeriesVolumeSlicer>
     //private OrthancSlicesLoader::ISliceLoaderObserver
   {
   public:

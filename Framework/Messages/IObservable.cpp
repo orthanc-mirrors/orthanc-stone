@@ -48,7 +48,10 @@ namespace OrthancStone
          it != forwarders_.end(); ++it)
     {
       IMessageForwarder* fw = *it;
-      broker_.Unregister(dynamic_cast<IObserver&>(*fw));
+
+      // TODO - What to do with forwarders?
+      
+      //broker_.Unregister(dynamic_cast<IObserver&>(*fw));
     }
   }
   
@@ -75,7 +78,10 @@ namespace OrthancStone
       for (std::set<ICallable*>::const_iterator
              itCallable = itCallableSet->second.begin(); itCallable != itCallableSet->second.end(); )
       {
-        if ((*itCallable)->GetObserver() == observer)
+        boost::shared_ptr<IObserver> shared((*itCallable)->GetObserver());
+
+        if (shared &&
+            shared.get() == observer)
         {
           LOG(TRACE) << "  ** IObservable::Unregister : deleting callable: "
             << std::hex << (*itCallable) << std::dec;
@@ -102,11 +108,12 @@ namespace OrthancStone
       {
         assert(*it != NULL);
 
-        const IObserver* observer = (*it)->GetObserver();
-        if (broker_.IsActive(*observer))
+        boost::shared_ptr<IObserver> observer((*it)->GetObserver());
+
+        if (observer)
         {
           if (receiver == NULL ||    // Are we broadcasting?
-              observer == receiver)  // Not broadcasting, but this is the receiver
+              observer.get() == receiver)  // Not broadcasting, but this is the receiver
           {
             (*it)->Apply(message);
           }

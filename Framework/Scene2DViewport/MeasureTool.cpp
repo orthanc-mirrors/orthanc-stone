@@ -81,13 +81,12 @@ namespace OrthancStone
 
   MeasureTool::MeasureTool(MessageBroker& broker,
     boost::weak_ptr<ViewportController> controllerW)
-    : IObserver(broker)
-    , controllerW_(controllerW)
+    : controllerW_(controllerW)
     , enabled_(true)
   {
     GetController()->RegisterObserverCallback(
       new Callable<MeasureTool, ViewportController::SceneTransformChanged>
-      (*this, &MeasureTool::OnSceneTransformChanged));
+      (shared_from_this(), &MeasureTool::OnSceneTransformChanged));
   }
 
 

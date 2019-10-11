@@ -30,10 +30,8 @@
 namespace OrthancStone
 {
   ViewportController::ViewportController(boost::weak_ptr<UndoStack> undoStackW,
-                                         MessageBroker& broker,
                                          IViewport& viewport)
-    : IObservable(broker)
-    , undoStackW_(undoStackW)
+    : undoStackW_(undoStackW)
     , canvasToSceneFactor_(0.0)
     , viewport_(viewport)
   {

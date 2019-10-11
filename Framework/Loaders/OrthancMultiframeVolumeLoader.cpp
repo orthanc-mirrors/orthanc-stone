@@ -337,7 +337,6 @@ namespace OrthancStone
                                                                IOracle& oracle,
                                                                IObservable& oracleObservable) :
     LoaderStateMachine(oracle, oracleObservable),
-    IObservable(oracleObservable.GetBroker()),
     volume_(volume),
     pixelDataLoaded_(false)
   {

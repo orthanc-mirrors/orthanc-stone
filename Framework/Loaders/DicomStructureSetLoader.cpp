@@ -347,7 +347,6 @@ namespace OrthancStone
   DicomStructureSetLoader::DicomStructureSetLoader(IOracle& oracle,
                                                    IObservable& oracleObservable) :
     LoaderStateMachine(oracle, oracleObservable),
-    IObservable(oracleObservable.GetBroker()),
     revision_(0),
     countProcessedInstances_(0),
     countReferencedInstances_(0),

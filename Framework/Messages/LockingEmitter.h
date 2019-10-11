@@ -39,21 +39,10 @@ namespace OrthancStone
   class LockingEmitter : public IMessageEmitter
   {
   private:
-    boost::shared_mutex                mutex_;
-    MessageBroker        broker_;
+    boost::shared_mutex  mutex_;
     IObservable          oracleObservable_;
 
   public:
-    LockingEmitter() :
-      oracleObservable_(broker_)
-    {
-    }
-
-    MessageBroker& GetBroker()
-    {
-      return broker_;
-    }
-
     virtual void EmitMessage(const IObserver& observer,
       const IMessage& message) ORTHANC_OVERRIDE
     {
@@ -95,11 +84,6 @@ namespace OrthancStone
         that_(that),
         lock_(that.mutex_)
       {
-      }
-
-      MessageBroker& GetBroker()
-      {
-        return that_.broker_;
       }
 
       IObservable& GetOracleObservable()

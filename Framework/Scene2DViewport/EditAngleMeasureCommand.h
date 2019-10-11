@@ -28,8 +28,7 @@ namespace OrthancStone
   public:
     /** Ctor sets end of side 1*/
     EditAngleMeasureCommand(
-      boost::shared_ptr<AngleMeasureTool>  measureTool,
-      MessageBroker& broker,
+      boost::shared_ptr<MeasureTool>  measureTool,
       boost::weak_ptr<ViewportController> controllerW);
 
     /** This method sets center*/
@@ -46,6 +45,6 @@ namespace OrthancStone
     {
       return measureTool_;
     }
-    boost::shared_ptr<AngleMeasureTool> measureTool_;
+    boost::shared_ptr<MeasureTool> measureTool_;
   };
 }

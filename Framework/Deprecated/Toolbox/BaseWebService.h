@@ -31,7 +31,7 @@ namespace Deprecated
 {
   // This is an intermediate of IWebService that implements some caching on
   // the HTTP GET requests
-  class BaseWebService : public IWebService, public OrthancStone::IObserver
+  class BaseWebService : public IWebService, public OrthancStone::ObserverBase<BaseWebService>
   {
   public:
     class CachedHttpRequestSuccessMessage
@@ -93,7 +93,6 @@ namespace Deprecated
 
     BaseWebService(OrthancStone::MessageBroker& broker) :
       IWebService(broker),
-      IObserver(broker),
       cacheEnabled_(false),
       cacheCurrentSize_(0),
       cacheMaxSize_(100*1024*1024)

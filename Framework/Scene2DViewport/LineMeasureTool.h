@@ -35,7 +35,7 @@
 
 namespace OrthancStone
 {
-  class LineMeasureTool : public MeasureTool, public boost::enable_shared_from_this<LineMeasureTool>
+  class LineMeasureTool : public MeasureTool
   {
   public:
     LineMeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);

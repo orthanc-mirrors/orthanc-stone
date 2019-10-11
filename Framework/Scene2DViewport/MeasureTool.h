@@ -38,7 +38,7 @@ namespace OrthancStone
   class IFlexiblePointerTracker;
   class MeasureToolMemento;
 
-  class MeasureTool : public IObserver
+  class MeasureTool : public ObserverBase<MeasureTool>
   {
   public:
     virtual ~MeasureTool();

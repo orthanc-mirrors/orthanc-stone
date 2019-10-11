@@ -27,8 +27,7 @@
 namespace OrthancStone
 {
   EditLineMeasureTracker::EditLineMeasureTracker(
-    boost::shared_ptr<LineMeasureTool>  measureTool,
-    MessageBroker& broker,
+    boost::shared_ptr<MeasureTool>  measureTool,
     boost::weak_ptr<ViewportController> controllerW,
     const PointerEvent& e) 
     : EditMeasureTracker(controllerW, e)
@@ -36,13 +35,9 @@ namespace OrthancStone
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
       GetScene().GetCanvasToSceneTransform());
 
-    modifiedZone_ = measureTool->LineHitTest(scenePos);
+    modifiedZone_ = dynamic_cast<LineMeasureTool&>(*measureTool).LineHitTest(scenePos);
 
-    command_.reset(
-      new EditLineMeasureCommand(
-        measureTool,
-        broker,
-        controllerW));
+    command_.reset(new EditLineMeasureCommand(measureTool, controllerW));
   }
 
   EditLineMeasureTracker::~EditLineMeasureTracker()

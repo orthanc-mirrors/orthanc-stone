@@ -20,9 +20,7 @@
 
 #pragma once
 
-#include "boost/noncopyable.hpp"
-
-#include <set>
+#include <boost/noncopyable.hpp>
 
 namespace OrthancStone
 {
@@ -35,27 +33,18 @@ namespace OrthancStone
    */
   class MessageBroker : public boost::noncopyable
   {
-  private:
-    std::set<const IObserver*> activeObservers_;  // the list of observers that are currently alive (that have not been deleted)
-
   public:
-    MessageBroker()
-    {
-    }
-
     void Register(const IObserver& observer)
     {
-      activeObservers_.insert(&observer);
     }
 
     void Unregister(const IObserver& observer)
     {
-      activeObservers_.erase(&observer);
     }
 
     bool IsActive(const IObserver& observer)
     {
-      return activeObservers_.find(&observer) != activeObservers_.end();
+      return false;
     }
   };
 }

@@ -90,25 +90,24 @@ namespace Deprecated
   DicomSeriesVolumeSlicer::DicomSeriesVolumeSlicer(OrthancStone::MessageBroker& broker,
                                                    OrthancApiClient& orthanc) :
     IVolumeSlicer(broker),
-    IObserver(broker),
     loader_(broker, orthanc),
     quality_(SliceImageQuality_FullPng)
   {
     loader_.RegisterObserverCallback(
       new OrthancStone::Callable<DicomSeriesVolumeSlicer, OrthancSlicesLoader::SliceGeometryReadyMessage>
-        (*this, &DicomSeriesVolumeSlicer::OnSliceGeometryReady));
+      (shared_from_this(), &DicomSeriesVolumeSlicer::OnSliceGeometryReady));
 
     loader_.RegisterObserverCallback(
       new OrthancStone::Callable<DicomSeriesVolumeSlicer, OrthancSlicesLoader::SliceGeometryErrorMessage>
-      (*this, &DicomSeriesVolumeSlicer::OnSliceGeometryError));
+      (shared_from_this(), &DicomSeriesVolumeSlicer::OnSliceGeometryError));
 
     loader_.RegisterObserverCallback(
       new OrthancStone::Callable<DicomSeriesVolumeSlicer, OrthancSlicesLoader::SliceImageReadyMessage>
-        (*this, &DicomSeriesVolumeSlicer::OnSliceImageReady));
+        (shared_from_this(), &DicomSeriesVolumeSlicer::OnSliceImageReady));
 
     loader_.RegisterObserverCallback(
       new OrthancStone::Callable<DicomSeriesVolumeSlicer, OrthancSlicesLoader::SliceImageErrorMessage>
-      (*this, &DicomSeriesVolumeSlicer::OnSliceImageError));
+      (shared_from_this(), &DicomSeriesVolumeSlicer::OnSliceImageError));
   }
 
   

@@ -144,12 +144,11 @@ namespace Deprecated
   DicomStructureSetSlicer::DicomStructureSetSlicer(OrthancStone::MessageBroker& broker,
                                                    StructureSetLoader& loader) :
     IVolumeSlicer(broker),
-    IObserver(broker),
     loader_(loader)
   {
     loader_.RegisterObserverCallback(
       new OrthancStone::Callable<DicomStructureSetSlicer, StructureSetLoader::ContentChangedMessage>
-      (*this, &DicomStructureSetSlicer::OnStructureSetLoaded));
+      (shared_from_this(), &DicomStructureSetSlicer::OnStructureSetLoaded));
   }
 
 

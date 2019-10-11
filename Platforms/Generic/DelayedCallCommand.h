@@ -42,8 +42,7 @@ namespace Deprecated
     unsigned int                            timeoutInMs_;
 
   public:
-    DelayedCallCommand(OrthancStone::MessageBroker& broker,
-                       OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,  // takes ownership
+    DelayedCallCommand(OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,  // takes ownership
                        unsigned int timeoutInMs,
                        Orthanc::IDynamicObject* payload /* takes ownership */,
                        OrthancStone::NativeStoneApplicationContext& context

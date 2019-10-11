@@ -189,8 +189,9 @@ namespace OrthancStone
         boost::weak_ptr<ViewportController>          controllerW,
         const PointerEvent & e);
     */
+
     boost::shared_ptr<EditAngleMeasureTracker> editAngleMeasureTracker(
-      new EditAngleMeasureTracker(shared_from_this(), GetBroker(), GetController(), e));
+      new EditAngleMeasureTracker(shared_from_this(), GetController(), e));
     return editAngleMeasureTracker;
   }
 

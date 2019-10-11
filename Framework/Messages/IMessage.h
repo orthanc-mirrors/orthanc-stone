@@ -33,6 +33,12 @@ namespace OrthancStone
     const char*  file_;
     int          line_;
 
+    bool IsEqual(const MessageIdentifier& other) const
+    {
+      return (line_ == other.line_ &&
+              strcmp(file_, other.file_) == 0);
+    }
+
   public:
     MessageIdentifier(const char* file,
                       int line) :
@@ -61,6 +67,16 @@ namespace OrthancStone
       {
         return strcmp(file_, other.file_) < 0;
       }
+    }
+
+    bool operator== (const MessageIdentifier& other) const
+    {
+      return IsEqual(other);
+    }
+
+    bool operator!= (const MessageIdentifier& other) const
+    {
+      return !IsEqual(other);
     }
   };
 

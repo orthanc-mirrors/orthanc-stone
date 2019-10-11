@@ -25,8 +25,7 @@
 
 namespace Deprecated
 {
-  WebServiceDeleteCommand::WebServiceDeleteCommand(OrthancStone::MessageBroker& broker,
-                                                   OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+  WebServiceDeleteCommand::WebServiceDeleteCommand(OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
                                                    OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                                                    const Orthanc::WebServiceParameters& parameters,
                                                    const std::string& url,
@@ -34,7 +33,7 @@ namespace Deprecated
                                                    unsigned int timeoutInSeconds,
                                                    Orthanc::IDynamicObject* payload /* takes ownership */,
                                                    OrthancStone::NativeStoneApplicationContext& context) :
-    WebServiceCommandBase(broker, successCallback, failureCallback, parameters, url, headers, timeoutInSeconds, payload, context)
+    WebServiceCommandBase(successCallback, failureCallback, parameters, url, headers, timeoutInSeconds, payload, context)
   {
   }
 

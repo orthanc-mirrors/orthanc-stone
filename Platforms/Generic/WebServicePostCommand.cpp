@@ -25,8 +25,7 @@
 
 namespace Deprecated
 {
-  WebServicePostCommand::WebServicePostCommand(OrthancStone::MessageBroker& broker,
-                                               OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+  WebServicePostCommand::WebServicePostCommand(OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
                                                OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                                                const Orthanc::WebServiceParameters& parameters,
                                                const std::string& url,
@@ -35,7 +34,7 @@ namespace Deprecated
                                                const std::string& body,
                                                Orthanc::IDynamicObject* payload /* takes ownership */,
                                                OrthancStone::NativeStoneApplicationContext& context) :
-    WebServiceCommandBase(broker, successCallback, failureCallback, parameters, url, headers, timeoutInSeconds, payload, context),
+    WebServiceCommandBase(successCallback, failureCallback, parameters, url, headers, timeoutInSeconds, payload, context),
     body_(body)
   {
   }

@@ -37,15 +37,6 @@ namespace Deprecated
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ViewportChangedMessage, IViewport);
 
-    IViewport(OrthancStone::MessageBroker& broker) :
-      IObservable(broker)
-    {
-    }
-    
-    virtual ~IViewport()
-    {
-    }
-
     virtual void FitContent() = 0;
 
     virtual void SetStatusBar(IStatusBar& statusBar) = 0;

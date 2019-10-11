@@ -51,8 +51,7 @@ namespace Deprecated
     unsigned int                            timeoutInSeconds_;
 
   public:
-    WebServiceCommandBase(OrthancStone::MessageBroker& broker,
-                          OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+    WebServiceCommandBase(OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
                           OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                           const Orthanc::WebServiceParameters& parameters,
                           const std::string& url,

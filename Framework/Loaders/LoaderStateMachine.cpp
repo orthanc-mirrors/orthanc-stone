@@ -136,7 +136,6 @@ namespace OrthancStone
   template <typename T>
   void LoaderStateMachine::HandleSuccessMessage(const T& message)
   {
-    LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::HandleSuccessMessage(). Receiver fingerprint = " << GetFingerprint();
     if (activeCommands_ <= 0) {
       LOG(ERROR) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::HandleSuccessMessage : activeCommands_ should be > 0 but is: " << activeCommands_;
     }
@@ -159,7 +158,6 @@ namespace OrthancStone
 
   LoaderStateMachine::LoaderStateMachine(IOracle& oracle,
                                          IObservable& oracleObservable) :
-    IObserver(oracleObservable.GetBroker()),
     oracle_(oracle),
     oracleObservable_(oracleObservable),
     active_(false),
@@ -170,19 +168,19 @@ namespace OrthancStone
 
     oracleObservable.RegisterObserverCallback(
       new Callable<LoaderStateMachine, OrthancRestApiCommand::SuccessMessage>
-      (*this, &LoaderStateMachine::HandleSuccessMessage));
+      (shared_from_this(), &LoaderStateMachine::HandleSuccessMessage));
 
     oracleObservable.RegisterObserverCallback(
       new Callable<LoaderStateMachine, GetOrthancImageCommand::SuccessMessage>
-      (*this, &LoaderStateMachine::HandleSuccessMessage));
+      (shared_from_this(), &LoaderStateMachine::HandleSuccessMessage));
 
     oracleObservable.RegisterObserverCallback(
       new Callable<LoaderStateMachine, GetOrthancWebViewerJpegCommand::SuccessMessage>
-      (*this, &LoaderStateMachine::HandleSuccessMessage));
+      (shared_from_this(), &LoaderStateMachine::HandleSuccessMessage));
 
     oracleObservable.RegisterObserverCallback(
       new Callable<LoaderStateMachine, OracleCommandExceptionMessage>
-      (*this, &LoaderStateMachine::HandleExceptionMessage));
+      (shared_from_this(), &LoaderStateMachine::HandleExceptionMessage));
   }
 
   LoaderStateMachine::~LoaderStateMachine()

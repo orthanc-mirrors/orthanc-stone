@@ -22,17 +22,17 @@
 #pragma once
 
 #include "IMessage.h"
+#include "IObserver.h"
 
 #include <Core/Logging.h>
 
 #include <boost/noncopyable.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include <string>
 
-namespace OrthancStone {
-
-  class IObserver;
-
+namespace OrthancStone 
+{
   // This is referencing an object and member function that can be notified
   // by an IObservable.  The object must derive from IO
   // The member functions must be of type "void Function(const IMessage& message)" or reference a derived class of IMessage
@@ -47,11 +47,14 @@ namespace OrthancStone {
 
     virtual const MessageIdentifier& GetMessageIdentifier() = 0;
 
-    virtual IObserver* GetObserver() const = 0;
+    // TODO - Is this needed?
+    virtual boost::weak_ptr<IObserver> GetObserver() const = 0;
   };
 
+
+  // TODO - Remove this class
   template <typename TMessage>
-  class MessageHandler: public ICallable
+  class MessageHandler : public ICallable
   {
   };
 
@@ -63,45 +66,26 @@ namespace OrthancStone {
   private:
     typedef void (TObserver::* MemberFunction) (const TMessage&);
 
-    TObserver&         observer_;
-    MemberFunction     function_;
-    std::string        observerFingerprint_;
+    boost::weak_ptr<IObserver>  observer_;
+    MemberFunction              function_;
 
   public:
-    Callable(TObserver& observer,
+    Callable(boost::shared_ptr<TObserver> observer,
              MemberFunction function) :
       observer_(observer),
-      function_(function),
-      observerFingerprint_(observer.GetFingerprint())
+      function_(function)
     {
-    }
-
-    void ApplyInternal(const TMessage& message)
-    {
-      std::string currentFingerprint(observer_.GetFingerprint());
-      if (observerFingerprint_ != currentFingerprint)
-      {
-        LOG(TRACE) << "The observer at address " << 
-          std::hex << &observer_ << std::dec << 
-          ") has a different fingerprint than the one recorded at callback " <<
-          "registration time. This means that it is not the same object as " <<
-          "the one recorded, even though their addresses are the same. " <<
-          "Callback will NOT be sent!";
-        LOG(TRACE) << " recorded fingerprint = " << observerFingerprint_ << 
-          " current fingerprint = " << currentFingerprint;
-      }
-      else
-      {
-        LOG(TRACE) << "The recorded fingerprint is " << observerFingerprint_
-          << " and the current fingerprint is " << currentFingerprint
-          << " -- callable will be called.";
-        (observer_.*function_) (message);
-      }
     }
 
     virtual void Apply(const IMessage& message)
     {
-      ApplyInternal(dynamic_cast<const TMessage&>(message));
+      boost::shared_ptr<IObserver> lock(observer_);
+      if (lock)
+      {
+        TObserver& observer = dynamic_cast<TObserver&>(*lock);
+        const TMessage& typedMessage = dynamic_cast<const TMessage&>(message);
+        (observer.*function_) (typedMessage);
+      }
     }
 
     virtual const MessageIdentifier& GetMessageIdentifier()
@@ -109,9 +93,9 @@ namespace OrthancStone {
       return TMessage::GetStaticIdentifier();
     }
 
-    virtual IObserver* GetObserver() const
+    virtual boost::weak_ptr<IObserver> GetObserver() const
     {
-      return &observer_;
+      return observer_;
     }
   };
 

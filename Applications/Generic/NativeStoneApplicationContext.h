@@ -67,11 +67,6 @@ namespace OrthancStone
       {
         that_.updateDelayInMs_ = delayInMs;
       }
-
-      MessageBroker& GetMessageBroker()
-      {
-        return that_.GetMessageBroker();
-      }
     };
 
     NativeStoneApplicationContext(MessageBroker& broker);

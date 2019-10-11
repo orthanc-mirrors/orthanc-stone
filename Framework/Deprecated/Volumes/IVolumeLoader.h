@@ -31,10 +31,5 @@ namespace Deprecated
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryReadyMessage, IVolumeLoader);
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryErrorMessage, IVolumeLoader);
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ContentChangedMessage, IVolumeLoader);
-
-    IVolumeLoader(OrthancStone::MessageBroker& broker) :
-      IObservable(broker)
-    {
-    }
   };
 }

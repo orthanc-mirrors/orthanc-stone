@@ -26,8 +26,7 @@
 namespace OrthancStone
 {
   EditAngleMeasureTracker::EditAngleMeasureTracker(
-    boost::shared_ptr<AngleMeasureTool>  measureTool,
-    MessageBroker& broker,
+    boost::shared_ptr<MeasureTool>  measureTool,
     boost::weak_ptr<ViewportController> controllerW,
     const PointerEvent& e)
     : EditMeasureTracker(controllerW, e)
@@ -35,9 +34,9 @@ namespace OrthancStone
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
       GetScene().GetCanvasToSceneTransform());
 
-    modifiedZone_ = measureTool->AngleHitTest(scenePos);
+    modifiedZone_ = dynamic_cast<AngleMeasureTool&>(*measureTool).AngleHitTest(scenePos);
 
-    command_.reset(new EditAngleMeasureCommand(measureTool, broker, controllerW));
+    command_.reset(new EditAngleMeasureCommand(measureTool, controllerW));
   }
 
   EditAngleMeasureTracker::~EditAngleMeasureTracker()

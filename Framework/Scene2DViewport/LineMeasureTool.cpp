@@ -148,7 +148,7 @@ namespace OrthancStone
         const PointerEvent & e);
     */
     boost::shared_ptr<EditLineMeasureTracker> editLineMeasureTracker(
-      new EditLineMeasureTracker(shared_from_this(), GetBroker(), GetController(), e));
+      new EditLineMeasureTracker(shared_from_this(), GetController(), e));
     return editLineMeasureTracker;
   }
 

@@ -27,8 +27,7 @@ namespace OrthancStone
   {
   public:
     EditLineMeasureCommand(
-      boost::shared_ptr<LineMeasureTool>  measureTool,
-      MessageBroker& broker,
+      boost::shared_ptr<MeasureTool>  measureTool,
       boost::weak_ptr<ViewportController> controllerW);
 
     void SetStart(ScenePoint2D scenePos);
@@ -39,7 +38,6 @@ namespace OrthancStone
     {
       return measureTool_;
     }
-    boost::shared_ptr<LineMeasureTool> measureTool_;
+    boost::shared_ptr<MeasureTool> measureTool_;
   };
 }
-

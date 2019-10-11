@@ -28,7 +28,7 @@ namespace Deprecated
 {
   class DicomStructureSetSlicer :
     public IVolumeSlicer,
-    public OrthancStone::IObserver
+    public OrthancStone::ObserverBase<DicomStructureSetSlicer>
   {
   private:
     class Renderer;

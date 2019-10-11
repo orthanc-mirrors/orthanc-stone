@@ -81,7 +81,6 @@ namespace OrthancStone
       SceneTransformChanged, ViewportController);
 
     ViewportController(boost::weak_ptr<UndoStack> undoStackW,
-                       MessageBroker& broker,
                        IViewport& viewport);
 
 

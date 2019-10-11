@@ -30,7 +30,7 @@ namespace Deprecated
 {
   class SliceViewerWidget;
 
-  class SmartLoader : public OrthancStone::IObservable, public OrthancStone::IObserver
+  class SmartLoader : public OrthancStone::IObservable, public OrthancStone::ObserverBase<SmartLoader>
   {
     class CachedSlice;
 

@@ -421,8 +421,6 @@ namespace OrthancStone
   OrthancSeriesVolumeProgressiveLoader::OrthancSeriesVolumeProgressiveLoader(const boost::shared_ptr<DicomVolumeImage>& volume,
                                                                              IOracle& oracle,
                                                                              IObservable& oracleObservable) :
-    IObserver(oracleObservable.GetBroker()),
-    IObservable(oracleObservable.GetBroker()),
     oracle_(oracle),
     oracleObservable_(oracleObservable),
     active_(false),
@@ -433,15 +431,15 @@ namespace OrthancStone
   {
     oracleObservable.RegisterObserverCallback(
       new Callable<OrthancSeriesVolumeProgressiveLoader, OrthancRestApiCommand::SuccessMessage>
-      (*this, &OrthancSeriesVolumeProgressiveLoader::LoadGeometry));
+      (shared_from_this(), &OrthancSeriesVolumeProgressiveLoader::LoadGeometry));
 
     oracleObservable.RegisterObserverCallback(
       new Callable<OrthancSeriesVolumeProgressiveLoader, GetOrthancImageCommand::SuccessMessage>
-      (*this, &OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent));
+      (shared_from_this(), &OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent));
 
     oracleObservable.RegisterObserverCallback(
       new Callable<OrthancSeriesVolumeProgressiveLoader, GetOrthancWebViewerJpegCommand::SuccessMessage>
-      (*this, &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent));
+      (shared_from_this(), &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent));
   }
 
   OrthancSeriesVolumeProgressiveLoader::~OrthancSeriesVolumeProgressiveLoader()

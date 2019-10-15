@@ -238,7 +238,7 @@ namespace OrthancStone
         int frame = parameters["frame"].as<unsigned int>();
 
         widget_.reset(new Deprecated::SliceViewerWidget("main-widget"));
-        mainWidget_ = widget_.get();  // TODO - awful
+        SetCentralWidget(widget_);
 
         boost::shared_ptr<Deprecated::DicomSeriesVolumeSlicer> layer(new Deprecated::DicomSeriesVolumeSlicer);
         layer->Connect(context->GetOrthancApiClient());

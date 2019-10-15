@@ -56,7 +56,7 @@ namespace OrthancStone
       {
       }
 
-      Deprecated::IWidget& SetCentralWidget(Deprecated::IWidget* widget);   // Takes ownership
+      void SetCentralWidget(boost::shared_ptr<Deprecated::IWidget> widget);
 
       Deprecated::IViewport& GetCentralViewport() 
       {

@@ -31,7 +31,7 @@ namespace Deprecated
   class WidgetViewport : public IViewport
   {
   private:
-    std::auto_ptr<IWidget>        centralWidget_;
+    boost::shared_ptr<IWidget>    centralWidget_;
     IStatusBar*                   statusBar_;
     std::auto_ptr<IMouseTracker>  mouseTracker_;
     bool                          isMouseOver_;
@@ -47,7 +47,7 @@ namespace Deprecated
 
     virtual void SetStatusBar(IStatusBar& statusBar);
 
-    IWidget& SetCentralWidget(IWidget* widget);  // Takes ownership
+    void SetCentralWidget(boost::shared_ptr<IWidget> widget);
 
     virtual void NotifyBackgroundChanged();
 

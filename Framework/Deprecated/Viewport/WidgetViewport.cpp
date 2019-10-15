@@ -56,7 +56,7 @@ namespace Deprecated
   }
 
 
-  IWidget& WidgetViewport::SetCentralWidget(IWidget* widget)
+  void WidgetViewport::SetCentralWidget(boost::shared_ptr<IWidget> widget)
   {
     if (widget == NULL)
     {
@@ -65,7 +65,7 @@ namespace Deprecated
 
     mouseTracker_.reset(NULL);
 
-    centralWidget_.reset(widget);
+    centralWidget_ = widget;
     centralWidget_->SetViewport(*this);
 
     if (statusBar_ != NULL)
@@ -74,8 +74,6 @@ namespace Deprecated
     }
 
     NotifyBackgroundChanged();
-
-    return *widget;
   }
 
 

@@ -24,10 +24,10 @@
 
 namespace OrthancStone
 {
-  Deprecated::IWidget& NativeStoneApplicationContext::GlobalMutexLocker::SetCentralWidget(Deprecated::IWidget* widget)
+  void NativeStoneApplicationContext::GlobalMutexLocker::SetCentralWidget(
+    boost::shared_ptr<Deprecated::IWidget> widget)
   {
     that_.centralViewport_.SetCentralWidget(widget);
-    return *widget;
   }
 
 

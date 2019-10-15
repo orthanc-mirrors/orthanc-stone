@@ -40,9 +40,8 @@ namespace OrthancStone
   {
     class SampleApplicationBase : public IStoneApplication
     {
-    protected:
-      // ownership is transferred to the application context
-      Deprecated::WorldSceneWidget*  mainWidget_;
+    private:
+      boost::shared_ptr<Deprecated::IWidget>  mainWidget_;
 
     public:
       virtual void Initialize(StoneApplicationContext* context,
@@ -64,7 +63,16 @@ namespace OrthancStone
 
 
       virtual void Finalize() ORTHANC_OVERRIDE {}
-      virtual Deprecated::IWidget* GetCentralWidget() ORTHANC_OVERRIDE {return mainWidget_;}
+
+      virtual void SetCentralWidget(boost::shared_ptr<Deprecated::IWidget> widget) ORTHANC_OVERRIDE
+      {
+        mainWidget_ = widget;
+      }
+
+      virtual boost::shared_ptr<Deprecated::IWidget> GetCentralWidget() ORTHANC_OVERRIDE
+      {
+        return mainWidget_;
+      }
 
 #if ORTHANC_ENABLE_WASM==1
       // default implementations for a single canvas named "canvas" in the HTML and an emtpy WasmApplicationAdapter

@@ -41,7 +41,9 @@ namespace OrthancStone
   class MeasureTool : public ObserverBase<MeasureTool>
   {
   public:
-    virtual ~MeasureTool();
+    virtual ~MeasureTool()
+    {
+    }
 
     /**
     Enabled tools are rendered in the scene.

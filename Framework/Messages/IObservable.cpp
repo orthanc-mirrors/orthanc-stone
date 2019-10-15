@@ -40,19 +40,6 @@ namespace OrthancStone
         delete *it2;
       }
     }
-
-    // unregister the forwarders but don't delete them (they'll be
-    // deleted by the observable they are observing as any other
-    // callable)
-    for (Forwarders::iterator it = forwarders_.begin();
-         it != forwarders_.end(); ++it)
-    {
-      IMessageForwarder* fw = *it;
-
-      // TODO - What to do with forwarders?
-      
-      //broker_.Unregister(dynamic_cast<IObserver&>(*fw));
-    }
   }
   
 
@@ -67,33 +54,6 @@ namespace OrthancStone
     callables_[id].insert(callable);
   }
 
-  void IObservable::Unregister(IObserver *observer)
-  {
-    LOG(TRACE) << "IObservable::Unregister for IObserver at addr: "
-      << std::hex << observer << std::dec;
-    // delete all callables from this observer
-    for (Callables::iterator itCallableSet = callables_.begin();
-         itCallableSet != callables_.end(); ++itCallableSet)
-    {
-      for (std::set<ICallable*>::const_iterator
-             itCallable = itCallableSet->second.begin(); itCallable != itCallableSet->second.end(); )
-      {
-        boost::shared_ptr<IObserver> shared((*itCallable)->GetObserver());
-
-        if (shared &&
-            shared.get() == observer)
-        {
-          LOG(TRACE) << "  ** IObservable::Unregister : deleting callable: "
-            << std::hex << (*itCallable) << std::dec;
-          delete *itCallable;
-          itCallableSet->second.erase(itCallable++);
-        }
-        else
-          ++itCallable;
-      }
-    }
-  }
-  
   void IObservable::EmitMessageInternal(const IObserver* receiver,
                                         const IMessage& message)
   {
@@ -108,7 +68,7 @@ namespace OrthancStone
       {
         assert(*it != NULL);
 
-        boost::shared_ptr<IObserver> observer((*it)->GetObserver());
+        boost::shared_ptr<IObserver> observer((*it)->GetObserver().lock());
 
         if (observer)
         {
@@ -140,15 +100,5 @@ namespace OrthancStone
     LOG(TRACE) << "IObservable::EmitMessage observer = "
       << std::hex << &observer << std::dec;
     EmitMessageInternal(&observer, message);
-  }
-  
-  void IObservable::RegisterForwarder(IMessageForwarder* forwarder)
-  {
-    if (forwarder == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-    
-    forwarders_.insert(forwarder);
   }
 }

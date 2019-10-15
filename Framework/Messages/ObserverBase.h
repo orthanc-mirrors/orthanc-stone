@@ -45,8 +45,10 @@ namespace OrthancStone
       }
       catch (boost::bad_weak_ptr&)
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-                                        "Cannot get a shared pointer to an observer from a constructor");
+        throw Orthanc::OrthancException(
+          Orthanc::ErrorCode_InternalError,
+          "Cannot get a shared pointer to an observer from its constructor, "
+          "or the observer is not created as a shared pointer");
       }
     }
 

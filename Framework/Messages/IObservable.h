@@ -24,7 +24,6 @@
 #include "../StoneEnumerations.h"
 #include "ICallable.h"
 #include "IObserver.h"
-#include "MessageForwarder.h"
 
 #include <set>
 #include <map>
@@ -36,10 +35,7 @@ namespace OrthancStone
   private:
     typedef std::map<MessageIdentifier, std::set<ICallable*> >  Callables;
 
-    typedef std::set<IMessageForwarder*>     Forwarders;
-
     Callables       callables_;
-    Forwarders      forwarders_;
 
     void EmitMessageInternal(const IObserver* receiver,
                              const IMessage& message);
@@ -50,15 +46,9 @@ namespace OrthancStone
     // Takes ownsership of the callable
     void RegisterCallable(ICallable* callable);
 
-    // TODO - Remove this?
-    void Unregister(IObserver* observer);
-
     void BroadcastMessage(const IMessage& message);
 
     void EmitMessage(const IObserver& observer,
                      const IMessage& message);
-
-    // Takes ownsership
-    void RegisterForwarder(IMessageForwarder* forwarder);
   };
 }

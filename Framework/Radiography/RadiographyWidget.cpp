@@ -279,11 +279,6 @@ namespace OrthancStone
 
   void RadiographyWidget::SetScene(boost::shared_ptr<RadiographyScene> scene)
   {
-    if (scene_ != NULL)
-    {
-      scene_->Unregister(this);
-    }
-
     scene_ = scene;
 
     Register<RadiographyScene::GeometryChangedMessage>(*scene_, &RadiographyWidget::OnGeometryChanged);

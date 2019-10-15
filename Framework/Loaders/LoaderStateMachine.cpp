@@ -106,7 +106,7 @@ namespace OrthancStone
     {
       LOG(TRACE) << "    LoaderStateMachine(" << std::hex << this << std::dec << 
         ")::Step(): activeCommands_ (" << activeCommands_ << 
-        ") < simultaneousDownloads_ (" << simultaneousDownloads_ << 
+        ") >= simultaneousDownloads_ (" << simultaneousDownloads_ << 
         ") --> will NOT Schedule command";
     }
   }

@@ -35,8 +35,6 @@ namespace OrthancStone
     {
       if (!context_.IsContextLost())
       {
-        // context is made current externally. Let's check this!
-        ORTHANC_CHECK_CURRENT_CONTEXT(context_);
         // Generate a texture object
         glGenTextures(1, &texture_);
         if (texture_ == 0)
@@ -53,8 +51,6 @@ namespace OrthancStone
       {
         if (!context_.IsContextLost())
         {
-          // context is made current externally. Let's check this!
-          ORTHANC_CHECK_CURRENT_CONTEXT(context_);
           assert(texture_ != 0);
           ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glDeleteTextures");
           glDeleteTextures(1, &texture_);
@@ -84,8 +80,6 @@ namespace OrthancStone
     void OpenGLTexture::Load(const Orthanc::ImageAccessor& image,
                              bool isLinearInterpolation)
     {
-      // context is made current externally. Let's check this!
-      ORTHANC_CHECK_CURRENT_CONTEXT(context_);
       if (!context_.IsContextLost())
       {
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction

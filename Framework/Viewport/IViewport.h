@@ -42,32 +42,10 @@ namespace OrthancStone
 
     virtual void Refresh() = 0;
 
-    virtual unsigned int GetCanvasWidth() const = 0;
+    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) = 0;
 
-    virtual unsigned int GetCanvasHeight() const = 0;
+    virtual bool HasCompositor() const = 0;
 
-    virtual const std::string& GetCanvasIdentifier() const = 0;
-
-    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const = 0;
-
-    virtual bool IsContextLost() = 0;
-
-    virtual void* DebugGetInternalContext() const = 0;
-
-#if ORTHANC_ENABLE_LOCALE == 1
-    virtual void SetFont(size_t index,
-      Orthanc::EmbeddedResources::FileResourceId resource,
-      unsigned int fontSize,
-      Orthanc::Encoding codepage) = 0;
-#endif
-
-  protected:
-    virtual ICompositor* GetCompositor() = 0;
-
-    virtual const ICompositor* GetCompositor() const
-    {
-      IViewport* self = const_cast<IViewport*>(this);
-      return self->GetCompositor();
-    }
+    virtual ICompositor& GetCompositor() = 0;
   };
 }

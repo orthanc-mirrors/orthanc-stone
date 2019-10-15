@@ -113,7 +113,7 @@ namespace OrthancStone
   
   bool ViewportController::HandlePointerEvent(PointerEvent e)
   {
-    throw StoneException(ErrorCode_NotImplemented);
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
 
   std::vector<boost::shared_ptr<MeasureTool> > ViewportController::HitTestMeasureTools(
@@ -168,8 +168,12 @@ namespace OrthancStone
 
   void ViewportController::FitContent()
   {
-    viewport_.GetScene().FitContent(viewport_.GetCanvasWidth(), viewport_.GetCanvasHeight());
-    BroadcastMessage(SceneTransformChanged(*this));
+    if (viewport_.HasCompositor())
+    {
+      const ICompositor& compositor = viewport_.GetCompositor();
+      viewport_.GetScene().FitContent(compositor.GetCanvasWidth(), compositor.GetCanvasHeight());
+      BroadcastMessage(SceneTransformChanged(*this));
+    }
   }
 
   void ViewportController::AddMeasureTool(boost::shared_ptr<MeasureTool> measureTool)
@@ -219,4 +223,3 @@ namespace OrthancStone
     return TEXT_CENTER_DISTANCE_CANVAS_COORD * GetCanvasToSceneFactor();
   }
 }
-

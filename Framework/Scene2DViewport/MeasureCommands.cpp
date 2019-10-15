@@ -71,8 +71,8 @@ namespace OrthancStone
 
   DeleteMeasureCommand::DeleteMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, boost::weak_ptr<ViewportController> controllerW)
     : MeasureCommand(controllerW)
-    , measureTool_(measureTool)
     , mementoOriginal_(measureTool->GetMemento())
+    , measureTool_(measureTool)
     , mementoModified_(measureTool->GetMemento())
   {
     GetMeasureTool()->Disable();

@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include "../StoneException.h"
-
 #include "boost/noncopyable.hpp"
 
 #include <set>

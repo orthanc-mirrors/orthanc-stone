@@ -43,14 +43,6 @@ namespace OrthancStone
       virtual unsigned int GetCanvasWidth() const = 0;
 
       virtual unsigned int GetCanvasHeight() const = 0;
-
-      virtual void* DebugGetInternalContext() const = 0;
-
-      // This is for manual context loss (debug purposes)
-      virtual void SetLostContext() = 0;
-      virtual void RestoreLostContext() = 0;
-
     };
   }
 }
-

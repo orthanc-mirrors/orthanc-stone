@@ -36,15 +36,11 @@ namespace OrthancStone
     ErrorCode_ApplicationException, // this StoneException is specific to an application (and should have its own internal error code)
     ErrorCode_NotImplemented, // case not implemented
 
-    ErrorCode_PromiseSingleSuccessHandler, // a Promise can only have a single success handler
-    ErrorCode_PromiseSingleFailureHandler, // a Promise can only have a single failure handler
-
     ErrorCode_CanOnlyAddOneLayerAtATime,
     ErrorCode_CommandJsonInvalidFormat,
     ErrorCode_WebGLContextLost,
     ErrorCode_Last
   };
-
 
 
   class StoneException
@@ -70,71 +66,6 @@ namespace OrthancStone
       return "TODO: EnumerationToString for StoneException";
     }
   };
-
-  class OpenGLContextLostException : public StoneException
-  {
-  public:
-    explicit OpenGLContextLostException(void* context)
-      : StoneException(ErrorCode_WebGLContextLost)
-      , context_(context)
-    {
-    }
-    virtual const char* What() const
-    {
-      return "The OpenGL/WebGL context has been lost!";
-    }
-    void* context_;
-  };
-
-  class StoneOrthancException : public StoneException
-  {
-  protected:
-    Orthanc::OrthancException&  orthancException_;
-
-  public:
-    explicit StoneOrthancException(Orthanc::OrthancException& orthancException) :
-      StoneException(ErrorCode_OrthancError),
-      orthancException_(orthancException)
-    {
-    }
-
-    Orthanc::ErrorCode GetOrthancErrorCode() const
-    {
-      return orthancException_.GetErrorCode();
-    }
-
-    virtual const char* What() const
-    {
-      return orthancException_.What();
-    }
-  };
-
-  class StoneApplicationException : public StoneException
-  {
-  protected:
-    int applicationErrorCode_;
-    mutable std::string errorMessage_;
-
-  public:
-    explicit StoneApplicationException(int applicationErrorCode) :
-      StoneException(ErrorCode_ApplicationException),
-      applicationErrorCode_(applicationErrorCode)
-    {
-    }
-
-    int GetApplicationErrorCode() const
-    {
-      return applicationErrorCode_;
-    }
-
-    virtual const char* What() const
-    {
-      if (errorMessage_.size() == 0)
-        errorMessage_ = boost::lexical_cast<std::string>(applicationErrorCode_);
-
-      return errorMessage_.c_str();
-    }
-  };
 }
 
 // See https://isocpp.org/wiki/faq/misc-technical-issues#macros-with-multi-stmts
@@ -158,14 +89,6 @@ namespace OrthancStone
 # define ORTHANC_EXPAND( x ) x 
 # define GET_ORTHANC_ASSERT(_1,_2,NAME,...) NAME
 # define ORTHANC_ASSERT(...) ORTHANC_EXPAND(GET_ORTHANC_ASSERT(__VA_ARGS__, ORTHANC_ASSERT2, ORTHANC_ASSERT1, UNUSED)(__VA_ARGS__))
-
-
-
-
-
-
-
-
 
 
 

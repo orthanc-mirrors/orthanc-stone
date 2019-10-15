@@ -22,7 +22,6 @@
 #include "gtest/gtest.h"
 
 #include "Framework/Messages/MessageBroker.h"
-#include "Framework/Messages/Promise.h"
 #include "Framework/Messages/IObservable.h"
 #include "Framework/Messages/IObserver.h"
 #include "Framework/Messages/MessageForwarder.h"
@@ -80,67 +79,6 @@ namespace {
         observedObject_(observedObject)
     {
       observedObject_.RegisterObserverCallback(new MessageForwarder<MyObservable::MyCustomMessage>(broker, *this));
-    }
-  };
-
-
-  class MyPromiseSource : public IObservable
-  {
-    Promise* currentPromise_;
-
-  public:
-    struct MyPromiseMessage: public IMessage
-    {
-      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
-
-      int increment;
-
-      MyPromiseMessage(int increment) :
-        increment(increment)
-      {
-      }
-    };
-
-    MyPromiseSource(MessageBroker& broker)
-      : IObservable(broker),
-        currentPromise_(NULL)
-    {}
-
-    Promise& StartSomethingAsync()
-    {
-      currentPromise_ = new Promise(GetBroker());
-      return *currentPromise_;
-    }
-
-    void CompleteSomethingAsyncWithSuccess(int payload)
-    {
-      currentPromise_->Success(MyPromiseMessage(payload));
-      delete currentPromise_;
-    }
-
-    void CompleteSomethingAsyncWithFailure(int payload)
-    {
-      currentPromise_->Failure(MyPromiseMessage(payload));
-      delete currentPromise_;
-    }
-  };
-
-
-  class MyPromiseTarget : public IObserver
-  {
-  public:
-    MyPromiseTarget(MessageBroker& broker)
-      : IObserver(broker)
-    {}
-
-    void IncrementCounter(const MyPromiseSource::MyPromiseMessage& args)
-    {
-      testCounter += args.increment;
-    }
-
-    void DecrementCounter(const MyPromiseSource::MyPromiseMessage& args)
-    {
-      testCounter -= args.increment;
     }
   };
 }
@@ -253,60 +191,6 @@ TEST(MessageBroker, TestCustomMessage)
   ASSERT_EQ(20, testCounter);
 }
 
-
-TEST(MessageBroker, TestPromiseSuccessFailure)
-{
-  MessageBroker broker;
-  MyPromiseSource  source(broker);
-  MyPromiseTarget target(broker);
-
-  // test a successful promise
-  source.StartSomethingAsync()
-      .Then(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(target, &MyPromiseTarget::IncrementCounter))
-      .Else(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(target, &MyPromiseTarget::DecrementCounter));
-
-  testCounter = 0;
-  source.CompleteSomethingAsyncWithSuccess(10);
-  ASSERT_EQ(10, testCounter);
-
-  // test a failing promise
-  source.StartSomethingAsync()
-      .Then(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(target, &MyPromiseTarget::IncrementCounter))
-      .Else(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(target, &MyPromiseTarget::DecrementCounter));
-
-  testCounter = 0;
-  source.CompleteSomethingAsyncWithFailure(15);
-  ASSERT_EQ(-15, testCounter);
-}
-
-TEST(MessageBroker, TestPromiseDeleteTarget)
-{
-  MessageBroker broker;
-  MyPromiseSource source(broker);
-  MyPromiseTarget* target = new MyPromiseTarget(broker);
-
-  // create the promise
-  source.StartSomethingAsync()
-      .Then(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(*target, &MyPromiseTarget::IncrementCounter))
-      .Else(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(*target, &MyPromiseTarget::DecrementCounter));
-
-  // delete the promise target
-  delete target;
-
-  // trigger the promise, make sure it does not throw and does not call the callback
-  testCounter = 0;
-  source.CompleteSomethingAsyncWithSuccess(10);
-  ASSERT_EQ(0, testCounter);
-
-  // test a failing promise
-  source.StartSomethingAsync()
-      .Then(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(*target, &MyPromiseTarget::IncrementCounter))
-      .Else(new Callable<MyPromiseTarget, MyPromiseSource::MyPromiseMessage>(*target, &MyPromiseTarget::DecrementCounter));
-
-  testCounter = 0;
-  source.CompleteSomethingAsyncWithFailure(15);
-  ASSERT_EQ(0, testCounter);
-}
 
 #if 0 /* __cplusplus >= 201103L*/
 

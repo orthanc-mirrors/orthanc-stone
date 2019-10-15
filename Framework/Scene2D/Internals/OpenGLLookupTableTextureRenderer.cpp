@@ -21,6 +21,8 @@
 
 #include "OpenGLLookupTableTextureRenderer.h"
 
+#include <Core/OrthancException.h>
+
 namespace OrthancStone
 {
   namespace Internals

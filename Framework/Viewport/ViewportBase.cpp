@@ -26,16 +26,13 @@
 
 namespace OrthancStone
 {
-  ViewportBase::ViewportBase(const std::string& identifier) :
-    identifier_(identifier),
+  ViewportBase::ViewportBase() :
     scene_(boost::make_shared<Scene2D>())
   {
   }
 
   
-  ViewportBase::ViewportBase(const std::string& identifier,
-                             boost::shared_ptr<Scene2D>& scene) :
-    identifier_(identifier),
+  ViewportBase::ViewportBase(boost::shared_ptr<Scene2D>& scene) :
     scene_(scene)
   {
     if (scene.get() == NULL)
@@ -45,10 +42,18 @@ namespace OrthancStone
   }
   
 
-  ScenePoint2D ViewportBase::GetPixelCenterCoordinates(int x, int y) const
+  ScenePoint2D ViewportBase::GetPixelCenterCoordinates(int x, int y)
   {
-    return ScenePoint2D(
-      static_cast<double>(x) + 0.5 - static_cast<double>(GetCanvasWidth()) / 2.0,
-      static_cast<double>(y) + 0.5 - static_cast<double>(GetCanvasHeight()) / 2.0);
+    if (HasCompositor())
+    {
+      const ICompositor& compositor = GetCompositor();
+      return ScenePoint2D(
+        static_cast<double>(x) + 0.5 - static_cast<double>(compositor.GetCanvasWidth()) / 2.0,
+        static_cast<double>(y) + 0.5 - static_cast<double>(compositor.GetCanvasHeight()) / 2.0);
+    }
+    else
+    {
+      return ScenePoint2D(0, 0);
+    }
   }
 }

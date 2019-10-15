@@ -30,18 +30,28 @@ namespace OrthancStone
 {
   class WebAssemblyViewport : public ViewportBase
   {
+  private:
+    std::string  canvasIdentifier_;
+
   public:
-    WebAssemblyViewport(const std::string& identifier)
-      : ViewportBase(identifier)
+    WebAssemblyViewport(const std::string& canvasIdentifier) :
+      canvasIdentifier_(canvasIdentifier)
     {
     }
 
-    WebAssemblyViewport(const std::string& identifier,
-                        boost::shared_ptr<Scene2D>& scene)
-      : ViewportBase(identifier, scene)
+    WebAssemblyViewport(const std::string& canvasIdentifier,
+                        boost::shared_ptr<Scene2D>& scene) :
+      ViewportBase(scene),
+      canvasIdentifier_(canvasIdentifier)
     {
     }
+
+    const std::string& GetCanvasIdentifier() const
+    {
+      return canvasIdentifier_;
+    }
   };
+
 
   class WebAssemblyOpenGLViewport : public WebAssemblyViewport
   {
@@ -58,14 +68,14 @@ namespace OrthancStone
     // This function must be called each time the browser window is resized
     void UpdateSize();
 
-    virtual ICompositor* GetCompositor() ORTHANC_OVERRIDE
+    virtual bool HasCompositor() const ORTHANC_OVERRIDE
     {
-      return compositor_.get();
+      return (compositor_.get() != NULL);
     }
+    
+    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE;
 
     virtual void Refresh() ORTHANC_OVERRIDE;
-
-    virtual bool IsContextLost() ORTHANC_OVERRIDE;
 
     // this does NOT return whether the context is lost! This is called to 
     // tell Stone that the context has been lost
@@ -74,15 +84,13 @@ namespace OrthancStone
     // This should be called to indicate that the context has been lost
     bool OpenGLContextRestored();
 
-
-    virtual void* DebugGetInternalContext() const ORTHANC_OVERRIDE;
-
   private:
-    virtual void DisableCompositor() ORTHANC_OVERRIDE;
-    virtual void RestoreCompositor() ORTHANC_OVERRIDE;
+    void DisableCompositor();
+    void RestoreCompositor();
 
     void RegisterContextCallbacks();
   };
+
 
   class WebAssemblyCairoViewport : public WebAssemblyViewport
   {
@@ -98,12 +106,16 @@ namespace OrthancStone
     
     void UpdateSize(); 
 
-    virtual void Refresh();
+    virtual void Refresh() ORTHANC_OVERRIDE;
 
-    virtual ICompositor* GetCompositor()
+    virtual bool HasCompositor() const ORTHANC_OVERRIDE
     {
-      return &compositor_;
+      return true;
+    }
+    
+    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
+    {
+      return compositor_;
     }
   };
-
 }

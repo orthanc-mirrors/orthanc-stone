@@ -20,6 +20,7 @@
 
 #include "LoaderCache.h"
 
+#include "../StoneException.h"
 #include "OrthancSeriesVolumeProgressiveLoader.h"
 #include "OrthancMultiframeVolumeLoader.h"
 #include "DicomStructureSetLoader.h"

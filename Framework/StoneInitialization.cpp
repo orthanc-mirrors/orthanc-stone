@@ -28,7 +28,7 @@
 #endif
 
 #if ORTHANC_ENABLE_SDL == 1
-#  include "../Applications/Sdl/SdlWindow.h"
+#  include "Viewport/SdlWindow.h"
 #endif
 
 #if ORTHANC_ENABLE_CURL == 1

@@ -21,6 +21,8 @@
 #include "EditLineMeasureTracker.h"
 #include "EditLineMeasureCommand.h"
 
+#include "../StoneException.h"
+
 
 namespace OrthancStone
 {

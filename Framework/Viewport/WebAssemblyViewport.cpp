@@ -20,6 +20,9 @@
 
 
 #include "WebAssemblyViewport.h"
+
+#include "../StoneException.h"
+
 #include <emscripten/html5.h>
 
 namespace OrthancStone
@@ -82,14 +85,31 @@ namespace OrthancStone
 
   void WebAssemblyOpenGLViewport::DisableCompositor()
   {
-    compositor_.reset(NULL);
+    compositor_.reset();
+  }
+
+  ICompositor& WebAssemblyOpenGLViewport::GetCompositor()
+  {
+    if (compositor_.get() == NULL)
+    {
+      // "HasCompositor()" should have been called
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      return *compositor_;
+    }
   }
 
   void WebAssemblyOpenGLViewport::Refresh()
   {
     try
     {
-      if (!GetCompositor())
+      if (HasCompositor())
+      {
+        GetCompositor().Refresh();
+      }
+      else
       {
         // this block was added because of (perceived?) bugs in the 
         // browser where the WebGL contexts are NOT automatically restored 
@@ -99,33 +119,33 @@ namespace OrthancStone
         //LOG(ERROR) << "About to call WebAssemblyOpenGLContext::TryRecreate().";
         //LOG(ERROR) << "Before calling it, isContextLost == " << context_.IsContextLost();
 
-        if (!context_.IsContextLost()) {
+        if (!context_.IsContextLost())
+        {
           LOG(TRACE) << "Context restored!";
           //LOG(ERROR) << "After calling it, isContextLost == " << context_.IsContextLost();
           RestoreCompositor();
           UpdateSize();
         }
       }
-      if (GetCompositor()) {
-        GetCompositor()->Refresh();
-      }
     }
-    catch (const OpenGLContextLostException& e)
+    catch (const StoneException& e)
     {
-      LOG(WARNING) << "Context " << std::hex << e.context_ << " is lost! Compositor will be disabled.";
-      DisableCompositor();
-      // we now need to wait for the "context restored" callback
+      if (e.GetErrorCode() == ErrorCode_WebGLContextLost)
+      {
+        LOG(WARNING) << "Context is lost! Compositor will be disabled.";
+        DisableCompositor();
+        // we now need to wait for the "context restored" callback
+      }
+      else
+      {
+        throw;
+      }
     }
     catch (...)
     {
       // something else nasty happened
       throw;
     }
-  }
-  
-  bool WebAssemblyOpenGLViewport::IsContextLost()
-  {
-    return context_.IsContextLost();
   }
 
   void WebAssemblyOpenGLViewport::RestoreCompositor()
@@ -155,17 +175,12 @@ namespace OrthancStone
     
     // maybe the context has already been restored by other means (the 
     // Refresh() function)
-    if (!GetCompositor())
+    if (!HasCompositor())
     {
       RestoreCompositor();
       UpdateSize();
     }
     return false;
-  }
-
-  void* WebAssemblyOpenGLViewport::DebugGetInternalContext() const
-  {
-    return context_.DebugGetInternalContext();
   }
 
   void WebAssemblyOpenGLViewport::RegisterContextCallbacks()
@@ -248,6 +263,6 @@ namespace OrthancStone
   void WebAssemblyCairoViewport::Refresh()
   {
     LOG(INFO) << "refreshing cairo viewport, TODO: blit to the canvans.getContext('2d')";
-    GetCompositor()->Refresh();
+    GetCompositor().Refresh();
   }
 }

@@ -58,7 +58,6 @@
 
 #   define ORTHANC_OPENGL_CHECK(name)
 #   define ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT(msg)
-#   define ORTHANC_CHECK_CURRENT_CONTEXT(context)
 
 # else 
 
@@ -78,17 +77,6 @@ if(true)                                                                   \
 {                                                                          \
   SDL_GLContext ctx = SDL_GL_GetCurrentContext();                          \
   LOG(TRACE) << msg << " | Current OpenGL context is " << std::hex << ctx; \
-} else (void)0
-
-#   define ORTHANC_CHECK_CURRENT_CONTEXT(context)                                                                                                         \
-if(true)                                                                                                                                               \
-{                                                                                                                                                      \
-  SDL_GLContext actualCtx = SDL_GL_GetCurrentContext();                                                                                                \
-  void* expectedCtx = context.DebugGetInternalContext();                                                                                               \
-  if(expectedCtx != actualCtx)                                                                                                                         \
-  {                                                                                                                                                    \
-    LOG(ERROR) << "Expected context was " << std::hex << expectedCtx << " while actual context is " << std::hex << actualCtx;                          \
-  }                                                                                                                                                    \
 } else (void)0
 
 # endif

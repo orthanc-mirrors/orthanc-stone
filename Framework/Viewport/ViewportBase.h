@@ -28,55 +28,19 @@ namespace OrthancStone
 {
   class ViewportBase : public IViewport
   {
-  public:
-    ViewportBase(const std::string& identifier);
+  private:
+    boost::shared_ptr<Scene2D>  scene_;
 
-    ViewportBase(const std::string& identifier,
-                 boost::shared_ptr<Scene2D>& scene);
+  public:
+    ViewportBase();
+
+    ViewportBase(boost::shared_ptr<Scene2D>& scene);
 
     virtual Scene2D& GetScene() ORTHANC_OVERRIDE
     {
       return *scene_;
     }
 
-    virtual const std::string& GetCanvasIdentifier() const ORTHANC_OVERRIDE
-    {
-      return identifier_;
-    }
-
-    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const ORTHANC_OVERRIDE;
-
-    virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE
-    {
-      if (GetCompositor())
-        return GetCompositor()->GetCanvasWidth();
-      else
-        return 0;
-    }
-
-    virtual unsigned int GetCanvasHeight() const ORTHANC_OVERRIDE
-    {
-      if (GetCompositor())
-        return GetCompositor()->GetCanvasHeight();
-      else
-        return 0;
-    }
-
-#if ORTHANC_ENABLE_LOCALE == 1
-    virtual void SetFont(size_t index,
-      Orthanc::EmbeddedResources::FileResourceId resource,
-      unsigned int fontSize,
-      Orthanc::Encoding codepage) ORTHANC_OVERRIDE
-    {
-      return GetCompositor()->SetFont(index, resource, fontSize, codepage);
-    }
-#endif
-
-  private:
-    std::string                 identifier_;
-    boost::shared_ptr<Scene2D>  scene_;
-  protected:
-    virtual void RestoreCompositor() = 0;
-    virtual void DisableCompositor() = 0;
+    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) ORTHANC_OVERRIDE;
   };
 }

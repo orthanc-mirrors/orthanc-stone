@@ -263,9 +263,9 @@ namespace OrthancStone
 
     Extent2D GetSceneExtent() const;
 
-    void Render(Orthanc::ImageAccessor& buffer,
-                const AffineTransform2D& viewTransform,
-                ImageInterpolation interpolation) const;
+    virtual void Render(Orthanc::ImageAccessor& buffer,
+                        const AffineTransform2D& viewTransform,
+                        ImageInterpolation interpolation) const;
 
     bool LookupLayer(size_t& index /* out */,
                      double x,

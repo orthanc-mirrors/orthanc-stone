@@ -22,7 +22,10 @@
 #include "DicomStructureSetLoader.h"
 
 #include "../Scene2D/PolylineSceneLayer.h"
+#include "../StoneException.h"
 #include "../Toolbox/GeometryToolbox.h"
+
+#include <Core/Toolbox.h>
 
 #include <algorithm>
 

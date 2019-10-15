@@ -113,7 +113,7 @@ namespace Deprecated
   };
 
 
-  SmartLoader::SmartLoader(OrthancApiClient& orthancApiClient) :
+  SmartLoader::SmartLoader(boost::shared_ptr<OrthancApiClient> orthancApiClient) :
     imageQuality_(SliceImageQuality_FullPam),
     orthancApiClient_(orthancApiClient)
   {
@@ -131,7 +131,7 @@ namespace Deprecated
     //   the messages to its observables
     // in both cases, we must be carefull about objects lifecycle !!!
 
-    std::auto_ptr<IVolumeSlicer> layerSource;
+    boost::shared_ptr<IVolumeSlicer> layerSource;
     std::string sliceKeyId = instanceId + ":" + boost::lexical_cast<std::string>(frame);
     SmartLoader::CachedSlice* cachedSlice = NULL;
 
@@ -142,7 +142,8 @@ namespace Deprecated
     }
     else
     {
-      layerSource.reset(new DicomSeriesVolumeSlicer(orthancApiClient_));
+      layerSource.reset(new DicomSeriesVolumeSlicer);
+      dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->Connect(orthancApiClient_);
       dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->SetImageQuality(imageQuality_);
       Register<IVolumeSlicer::GeometryReadyMessage>(*layerSource, &SmartLoader::OnLayerGeometryReady);
       Register<DicomSeriesVolumeSlicer::FrameReadyMessage>(*layerSource, &SmartLoader::OnFrameReady);
@@ -153,11 +154,11 @@ namespace Deprecated
     // make sure that the widget registers the events before we trigger them
     if (sliceViewer.GetLayerCount() == layerIndex)
     {
-      sliceViewer.AddLayer(layerSource.release());
+      sliceViewer.AddLayer(layerSource);
     }
     else if (sliceViewer.GetLayerCount() > layerIndex)
     {
-      sliceViewer.ReplaceLayer(layerIndex, layerSource.release());
+      sliceViewer.ReplaceLayer(layerIndex, layerSource);
     }
     else
     {
@@ -190,8 +191,8 @@ namespace Deprecated
 
     cachedSlices_[sliceKeyId] = boost::shared_ptr<CachedSlice>(cachedSlice);
 
-    std::auto_ptr<IVolumeSlicer> layerSource(new DicomSeriesVolumeSlicer(orthancApiClient_));
-
+    std::auto_ptr<IVolumeSlicer> layerSource(new DicomSeriesVolumeSlicer);
+    dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->Connect(orthancApiClient_);
     dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->SetImageQuality(imageQuality_);
     Register<IVolumeSlicer::GeometryReadyMessage>(*layerSource, &SmartLoader::OnLayerGeometryReady);
     Register<DicomSeriesVolumeSlicer::FrameReadyMessage>(*layerSource, &SmartLoader::OnFrameReady);

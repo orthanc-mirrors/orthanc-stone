@@ -29,12 +29,13 @@
 
 int main(int argc, char* argv[]) 
 {
-  SampleApplication sampleStoneApplication;
+  boost::shared_ptr<SampleApplication> sampleStoneApplication(new SampleApplication);
 
 #if ORTHANC_ENABLE_SDL==1
   OrthancStone::SdlStoneApplicationRunner sdlApplicationRunner(sampleStoneApplication);
   return sdlApplicationRunner.Execute(argc, argv);
 #endif
+  
 #if ORTHANC_ENABLE_QT==1
   OrthancStone::Samples::SampleQtApplicationRunner qtAppRunner(sampleStoneApplication);
   return qtAppRunner.Execute(argc, argv);

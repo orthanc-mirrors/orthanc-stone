@@ -80,12 +80,14 @@ namespace Deprecated
   private:
     class RendererFactory;
     
-    OrthancSlicesLoader  loader_;
+    boost::shared_ptr<OrthancSlicesLoader> loader_;
     SliceImageQuality    quality_;
 
   public:
-    DicomSeriesVolumeSlicer(OrthancApiClient& orthanc);
+    DicomSeriesVolumeSlicer();
 
+    void Connect(boost::shared_ptr<OrthancApiClient> orthanc);
+    
     void LoadSeries(const std::string& seriesId);
 
     void LoadInstance(const std::string& instanceId);
@@ -105,12 +107,12 @@ namespace Deprecated
 
     size_t GetSlicesCount() const
     {
-      return loader_.GetSlicesCount();
+      return loader_->GetSlicesCount();
     }
 
     const Slice& GetSlice(size_t slice) const 
     {
-      return loader_.GetSlice(slice);
+      return loader_->GetSlice(slice);
     }
 
     virtual bool GetExtent(std::vector<OrthancStone::Vector>& points,

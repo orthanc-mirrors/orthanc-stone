@@ -87,46 +87,73 @@ namespace Deprecated
   }
 
 
-  DicomSeriesVolumeSlicer::DicomSeriesVolumeSlicer(OrthancApiClient& orthanc) :
-    loader_(orthanc),
+  DicomSeriesVolumeSlicer::DicomSeriesVolumeSlicer() :
     quality_(SliceImageQuality_FullPng)
   {
-    // TODO => Move this out of the constructor
-    Register<OrthancSlicesLoader::SliceGeometryReadyMessage>(loader_, &DicomSeriesVolumeSlicer::OnSliceGeometryReady);
-    Register<OrthancSlicesLoader::SliceGeometryErrorMessage>(loader_, &DicomSeriesVolumeSlicer::OnSliceGeometryError);
-    Register<OrthancSlicesLoader::SliceImageReadyMessage>(loader_, &DicomSeriesVolumeSlicer::OnSliceImageReady);
-    Register<OrthancSlicesLoader::SliceImageErrorMessage>(loader_, &DicomSeriesVolumeSlicer::OnSliceImageError);
+  }
+
+  void DicomSeriesVolumeSlicer::Connect(boost::shared_ptr<OrthancApiClient> orthanc)
+  {
+    loader_.reset(new OrthancSlicesLoader(orthanc));
+    Register<OrthancSlicesLoader::SliceGeometryReadyMessage>(*loader_, &DicomSeriesVolumeSlicer::OnSliceGeometryReady);
+    Register<OrthancSlicesLoader::SliceGeometryErrorMessage>(*loader_, &DicomSeriesVolumeSlicer::OnSliceGeometryError);
+    Register<OrthancSlicesLoader::SliceImageReadyMessage>(*loader_, &DicomSeriesVolumeSlicer::OnSliceImageReady);
+    Register<OrthancSlicesLoader::SliceImageErrorMessage>(*loader_, &DicomSeriesVolumeSlicer::OnSliceImageError);
   }
 
   
   void DicomSeriesVolumeSlicer::LoadSeries(const std::string& seriesId)
   {
-    loader_.ScheduleLoadSeries(seriesId);
+    if (loader_.get() == NULL)
+    {
+      // Should have called "Connect()"
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    
+    loader_->ScheduleLoadSeries(seriesId);
   }
 
 
   void DicomSeriesVolumeSlicer::LoadInstance(const std::string& instanceId)
   {
-    loader_.ScheduleLoadInstance(instanceId);
+    if (loader_.get() == NULL)
+    {
+      // Should have called "Connect()"
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    
+    loader_->ScheduleLoadInstance(instanceId);
   }
 
 
   void DicomSeriesVolumeSlicer::LoadFrame(const std::string& instanceId,
                                           unsigned int frame)
   {
-    loader_.ScheduleLoadFrame(instanceId, frame);
+    if (loader_.get() == NULL)
+    {
+      // Should have called "Connect()"
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    
+    loader_->ScheduleLoadFrame(instanceId, frame);
   }
 
 
   bool DicomSeriesVolumeSlicer::GetExtent(std::vector<OrthancStone::Vector>& points,
                                           const OrthancStone::CoordinateSystem3D& viewportSlice)
   {
+    if (loader_.get() == NULL)
+    {
+      // Should have called "Connect()"
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    
     size_t index;
 
-    if (loader_.IsGeometryReady() &&
-        loader_.LookupSlice(index, viewportSlice))
+    if (loader_->IsGeometryReady() &&
+        loader_->LookupSlice(index, viewportSlice))
     {
-      loader_.GetSlice(index).GetExtent(points);
+      loader_->GetSlice(index).GetExtent(points);
       return true;
     }
     else
@@ -138,12 +165,18 @@ namespace Deprecated
   
   void DicomSeriesVolumeSlicer::ScheduleLayerCreation(const OrthancStone::CoordinateSystem3D& viewportSlice)
   {
+    if (loader_.get() == NULL)
+    {
+      // Should have called "Connect()"
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    
     size_t index;
 
-    if (loader_.IsGeometryReady() &&
-        loader_.LookupSlice(index, viewportSlice))
+    if (loader_->IsGeometryReady() &&
+        loader_->LookupSlice(index, viewportSlice))
     {
-      loader_.ScheduleLoadSliceImage(index, quality_);
+      loader_->ScheduleLoadSliceImage(index, quality_);
     }
   }
 }

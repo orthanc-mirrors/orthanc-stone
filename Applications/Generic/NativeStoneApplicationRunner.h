@@ -34,10 +34,10 @@ namespace OrthancStone
   class NativeStoneApplicationRunner
   {
   protected:
-    IStoneApplication&  application_;
+    boost::shared_ptr<IStoneApplication>  application_;
+    
   public:
-
-    NativeStoneApplicationRunner(IStoneApplication& application)
+    NativeStoneApplicationRunner(boost::shared_ptr<IStoneApplication> application)
       : application_(application)
     {
     }

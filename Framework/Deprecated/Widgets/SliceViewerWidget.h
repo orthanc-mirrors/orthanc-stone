@@ -72,7 +72,7 @@ namespace Deprecated
 
     bool                         started_;
     LayersIndex                  layersIndex_;
-    std::vector<IVolumeSlicer*>  layers_;
+    std::vector<boost::shared_ptr<IVolumeSlicer> >  layers_;
     std::vector<RenderStyle>     styles_;
     OrthancStone::CoordinateSystem3D           plane_;
     std::auto_ptr<Scene>         currentScene_;
@@ -119,11 +119,13 @@ namespace Deprecated
     void InvalidateLayer(size_t layer);
     
   public:
-    virtual ~SliceViewerWidget();
+    virtual ~SliceViewerWidget()
+    {
+    }
 
-    size_t AddLayer(IVolumeSlicer* layer);  // Takes ownership
+    size_t AddLayer(boost::shared_ptr<IVolumeSlicer> layer);
 
-    void ReplaceLayer(size_t layerIndex, IVolumeSlicer* layer); // Takes ownership
+    void ReplaceLayer(size_t layerIndex, boost::shared_ptr<IVolumeSlicer> layer); // Takes ownership
 
     void RemoveLayer(size_t layerIndex);
 

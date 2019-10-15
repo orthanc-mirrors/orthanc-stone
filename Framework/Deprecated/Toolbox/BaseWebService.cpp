@@ -97,9 +97,9 @@ namespace Deprecated
       GetAsyncInternal(uri, headers,
                        new BaseWebService::BaseWebServicePayload(successCallback, failureCallback, payload), // ownership is transfered
                        new OrthancStone::Callable<BaseWebService, IWebService::HttpRequestSuccessMessage>
-                       (shared_from_this(), &BaseWebService::CacheAndNotifyHttpSuccess),
+                       (GetSharedObserver(), &BaseWebService::CacheAndNotifyHttpSuccess),
                        new OrthancStone::Callable<BaseWebService, IWebService::HttpRequestErrorMessage>
-                       (shared_from_this(), &BaseWebService::NotifyHttpError),
+                       (GetSharedObserver(), &BaseWebService::NotifyHttpError),
                        timeoutInSeconds);
     }
     else

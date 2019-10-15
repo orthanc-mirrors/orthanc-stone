@@ -42,10 +42,10 @@ namespace Deprecated
     PreloadingInstances preloadingInstances_;
 
     SliceImageQuality     imageQuality_;
-    OrthancApiClient&     orthancApiClient_;
+    boost::shared_ptr<OrthancApiClient>  orthancApiClient_;
 
   public:
-    SmartLoader(OrthancApiClient& orthancApiClient);  // TODO: add maxPreloadStorageSizeInBytes
+    SmartLoader(boost::shared_ptr<OrthancApiClient> orthancApiClient);  // TODO: add maxPreloadStorageSizeInBytes
 
 //    void PreloadStudy(const std::string studyId);
 //    void PreloadSeries(const std::string seriesId);

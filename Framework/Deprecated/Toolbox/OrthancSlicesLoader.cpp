@@ -639,7 +639,7 @@ namespace Deprecated
   }
   
   
-  OrthancSlicesLoader::OrthancSlicesLoader(OrthancApiClient& orthanc) :
+  OrthancSlicesLoader::OrthancSlicesLoader(boost::shared_ptr<OrthancApiClient> orthanc) :
     orthanc_(orthanc),
     state_(State_Initialization)
   {
@@ -655,10 +655,10 @@ namespace Deprecated
     else
     {
       state_ = State_LoadingGeometry;
-      orthanc_.GetJsonAsync("/series/" + seriesId + "/instances-tags",
-                            new OrthancStone::Callable<OrthancSlicesLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &OrthancSlicesLoader::ParseSeriesGeometry),
-                            new OrthancStone::Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(GetSharedObserver(), &OrthancSlicesLoader::OnGeometryError),
-                            NULL);
+      orthanc_->GetJsonAsync("/series/" + seriesId + "/instances-tags",
+                             new OrthancStone::Callable<OrthancSlicesLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &OrthancSlicesLoader::ParseSeriesGeometry),
+                             new OrthancStone::Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(GetSharedObserver(), &OrthancSlicesLoader::OnGeometryError),
+                             NULL);
     }
   }
   
@@ -674,10 +674,10 @@ namespace Deprecated
       
       // Tag "3004-000c" is "Grid Frame Offset Vector", which is
       // mandatory to read RT DOSE, but is too long to be returned by default
-      orthanc_.GetJsonAsync("/instances/" + instanceId + "/tags?ignore-length=3004-000c",
-                            new OrthancStone::Callable<OrthancSlicesLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &OrthancSlicesLoader::ParseInstanceGeometry),
-                            new OrthancStone::Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(GetSharedObserver(), &OrthancSlicesLoader::OnGeometryError),
-                            Operation::DownloadInstanceGeometry(instanceId));
+      orthanc_->GetJsonAsync("/instances/" + instanceId + "/tags?ignore-length=3004-000c",
+                             new OrthancStone::Callable<OrthancSlicesLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &OrthancSlicesLoader::ParseInstanceGeometry),
+                             new OrthancStone::Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(GetSharedObserver(), &OrthancSlicesLoader::OnGeometryError),
+                             Operation::DownloadInstanceGeometry(instanceId));
     }
   }
   
@@ -693,10 +693,10 @@ namespace Deprecated
     {
       state_ = State_LoadingGeometry;
 
-      orthanc_.GetJsonAsync("/instances/" + instanceId + "/tags",
-                            new OrthancStone::Callable<OrthancSlicesLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &OrthancSlicesLoader::ParseFrameGeometry),
-                            new OrthancStone::Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(GetSharedObserver(), &OrthancSlicesLoader::OnGeometryError),
-                            Operation::DownloadFrameGeometry(instanceId, frame));
+      orthanc_->GetJsonAsync("/instances/" + instanceId + "/tags",
+                             new OrthancStone::Callable<OrthancSlicesLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &OrthancSlicesLoader::ParseFrameGeometry),
+                             new OrthancStone::Callable<OrthancSlicesLoader, IWebService::HttpRequestErrorMessage>(GetSharedObserver(), &OrthancSlicesLoader::OnGeometryError),
+                             Operation::DownloadFrameGeometry(instanceId, frame));
     }
   }
   
@@ -767,15 +767,15 @@ namespace Deprecated
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
     
-    orthanc_.GetBinaryAsync(uri, "image/png",
-                            new OrthancStone::Callable<OrthancSlicesLoader, 
-                            OrthancApiClient::BinaryResponseReadyMessage>
-                            (GetSharedObserver(), &OrthancSlicesLoader::ParseSliceImagePng),
-                            new OrthancStone::Callable<OrthancSlicesLoader, 
-                            IWebService::HttpRequestErrorMessage>
-                            (GetSharedObserver(), &OrthancSlicesLoader::OnSliceImageError),
-                            Operation::DownloadSliceImage(
-                              static_cast<unsigned int>(index), slice, SliceImageQuality_FullPng));
+    orthanc_->GetBinaryAsync(uri, "image/png",
+                             new OrthancStone::Callable<OrthancSlicesLoader, 
+                             OrthancApiClient::BinaryResponseReadyMessage>
+                             (GetSharedObserver(), &OrthancSlicesLoader::ParseSliceImagePng),
+                             new OrthancStone::Callable<OrthancSlicesLoader, 
+                             IWebService::HttpRequestErrorMessage>
+                             (GetSharedObserver(), &OrthancSlicesLoader::OnSliceImageError),
+                             Operation::DownloadSliceImage(
+                               static_cast<unsigned int>(index), slice, SliceImageQuality_FullPng));
   }
   
   void OrthancSlicesLoader::ScheduleSliceImagePam(const Slice& slice,
@@ -803,15 +803,15 @@ namespace Deprecated
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    orthanc_.GetBinaryAsync(uri, "image/x-portable-arbitrarymap",
-                            new OrthancStone::Callable<OrthancSlicesLoader, 
-                            OrthancApiClient::BinaryResponseReadyMessage>
-                            (GetSharedObserver(), &OrthancSlicesLoader::ParseSliceImagePam),
-                            new OrthancStone::Callable<OrthancSlicesLoader, 
-                            IWebService::HttpRequestErrorMessage>
-                            (GetSharedObserver(), &OrthancSlicesLoader::OnSliceImageError),
-                            Operation::DownloadSliceImage(static_cast<unsigned int>(index), 
-                                                          slice, SliceImageQuality_FullPam));
+    orthanc_->GetBinaryAsync(uri, "image/x-portable-arbitrarymap",
+                             new OrthancStone::Callable<OrthancSlicesLoader, 
+                             OrthancApiClient::BinaryResponseReadyMessage>
+                             (GetSharedObserver(), &OrthancSlicesLoader::ParseSliceImagePam),
+                             new OrthancStone::Callable<OrthancSlicesLoader, 
+                             IWebService::HttpRequestErrorMessage>
+                             (GetSharedObserver(), &OrthancSlicesLoader::OnSliceImageError),
+                             Operation::DownloadSliceImage(static_cast<unsigned int>(index), 
+                                                           slice, SliceImageQuality_FullPam));
   }
 
 
@@ -846,15 +846,15 @@ namespace Deprecated
                        "-" + slice.GetOrthancInstanceId() + "_" +
                        boost::lexical_cast<std::string>(slice.GetFrame()));
 
-    orthanc_.GetJsonAsync(uri,
-                          new OrthancStone::Callable<OrthancSlicesLoader, 
-                          OrthancApiClient::JsonResponseReadyMessage>
-                          (GetSharedObserver(), &OrthancSlicesLoader::ParseSliceImageJpeg),
-                          new OrthancStone::Callable<OrthancSlicesLoader, 
-                          IWebService::HttpRequestErrorMessage>
-                          (GetSharedObserver(), &OrthancSlicesLoader::OnSliceImageError),
-                          Operation::DownloadSliceImage(
-                            static_cast<unsigned int>(index), slice, quality));
+    orthanc_->GetJsonAsync(uri,
+                           new OrthancStone::Callable<OrthancSlicesLoader, 
+                           OrthancApiClient::JsonResponseReadyMessage>
+                           (GetSharedObserver(), &OrthancSlicesLoader::ParseSliceImageJpeg),
+                           new OrthancStone::Callable<OrthancSlicesLoader, 
+                           IWebService::HttpRequestErrorMessage>
+                           (GetSharedObserver(), &OrthancSlicesLoader::OnSliceImageError),
+                           Operation::DownloadSliceImage(
+                             static_cast<unsigned int>(index), slice, quality));
   }
   
   
@@ -887,15 +887,15 @@ namespace Deprecated
     {
       std::string uri = ("/instances/" + slice.GetOrthancInstanceId() + "/frames/" +
                          boost::lexical_cast<std::string>(slice.GetFrame()) + "/raw.gz");
-      orthanc_.GetBinaryAsync(uri, IWebService::HttpHeaders(),
-                              new OrthancStone::Callable<OrthancSlicesLoader, 
-                              OrthancApiClient::BinaryResponseReadyMessage>
-                              (GetSharedObserver(), &OrthancSlicesLoader::ParseSliceRawImage),
-                              new OrthancStone::Callable<OrthancSlicesLoader,
-                              IWebService::HttpRequestErrorMessage>
-                              (GetSharedObserver(), &OrthancSlicesLoader::OnSliceImageError),
-                              Operation::DownloadSliceRawImage(
-                                static_cast<unsigned int>(index), slice));
+      orthanc_->GetBinaryAsync(uri, IWebService::HttpHeaders(),
+                               new OrthancStone::Callable<OrthancSlicesLoader, 
+                               OrthancApiClient::BinaryResponseReadyMessage>
+                               (GetSharedObserver(), &OrthancSlicesLoader::ParseSliceRawImage),
+                               new OrthancStone::Callable<OrthancSlicesLoader,
+                               IWebService::HttpRequestErrorMessage>
+                               (GetSharedObserver(), &OrthancSlicesLoader::OnSliceImageError),
+                               Operation::DownloadSliceRawImage(
+                                 static_cast<unsigned int>(index), slice));
     }
   }
 }

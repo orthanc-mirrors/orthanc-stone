@@ -34,6 +34,7 @@
 #include <Core/OrthancException.h>
 #include <Plugins/Samples/Common/OrthancHttpConnection.h>
 
+#include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 
 namespace OrthancStone
@@ -103,19 +104,19 @@ namespace OrthancStone
     LOG(WARNING) << "Starting the application";
 
     SdlWindow window(title.c_str(), width_, height_, enableOpenGl_);
-    SdlEngine sdl(window, context);
+    boost::shared_ptr<SdlEngine> sdl(boost::make_shared<SdlEngine>(window, context));
 
     {
       NativeStoneApplicationContext::GlobalMutexLocker locker(context);
 
-      sdl.Register<Deprecated::IViewport::ViewportChangedMessage>
+      sdl->Register<Deprecated::IViewport::ViewportChangedMessage>
         (locker.GetCentralViewport(), &SdlEngine::OnViewportChanged);
 
       //context.GetCentralViewport().Register(sdl);  // (*)
     }
 
     context.Start();
-    sdl.Run();
+    sdl->Run();
 
     LOG(WARNING) << "Stopping the application";
 

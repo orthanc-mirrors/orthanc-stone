@@ -36,6 +36,7 @@
 #include <Core/OrthancException.h>
 #include <Plugins/Samples/Common/OrthancHttpConnection.h>
 
+#include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 
 namespace OrthancStone
@@ -97,7 +98,7 @@ namespace OrthancStone
     DeclareCommandLineOptions(options);
     
     // application specific options
-    application_.DeclareStartupOptions(options);
+    application_->DeclareStartupOptions(options);
 
     boost::program_options::variables_map parameters;
     bool error = false;
@@ -206,23 +207,21 @@ namespace OrthancStone
         oracle.Start();
 
         {
-          Deprecated::OracleWebService webService(oracle, webServiceParameters, context);
-          
-          context.SetWebService(webService);
+          context.SetWebService(boost::make_shared<Deprecated::OracleWebService>(oracle, webServiceParameters, context));
           context.SetOrthancBaseUrl(webServiceParameters.GetUrl());
 
           Deprecated::OracleDelayedCallExecutor delayedExecutor(oracle, context);
           context.SetDelayedCallExecutor(delayedExecutor);
 
-          application_.Initialize(&context, statusBar, parameters);
+          application_->Initialize(&context, statusBar, parameters);
 
           {
             NativeStoneApplicationContext::GlobalMutexLocker locker(context);
-            locker.SetCentralWidget(application_.GetCentralWidget());
+            locker.SetCentralWidget(application_->GetCentralWidget());
             locker.GetCentralViewport().SetStatusBar(statusBar);
           }
 
-          std::string title = application_.GetTitle();
+          std::string title = application_->GetTitle();
           if (title.empty())
           {
             title = "Stone of Orthanc";
@@ -243,7 +242,7 @@ namespace OrthancStone
       }
 
       LOG(WARNING) << "The application is stopping";
-      application_.Finalize();
+      application_->Finalize();
     }
     catch (Orthanc::OrthancException& e)
     {

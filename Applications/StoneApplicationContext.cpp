@@ -36,31 +36,31 @@ namespace OrthancStone
   }
 
 
-  Deprecated::IWebService& StoneApplicationContext::GetWebService()
+  boost::shared_ptr<Deprecated::IWebService> StoneApplicationContext::GetWebService()
   {
     if (webService_ == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     
-    return *webService_;
+    return webService_;
   }
 
   
-  Deprecated::OrthancApiClient& StoneApplicationContext::GetOrthancApiClient()
+  boost::shared_ptr<Deprecated::OrthancApiClient> StoneApplicationContext::GetOrthancApiClient()
   {
     if (orthanc_.get() == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
     
-    return *orthanc_;
+    return orthanc_;
   }
 
   
-  void StoneApplicationContext::SetWebService(Deprecated::IWebService& webService)
+  void StoneApplicationContext::SetWebService(boost::shared_ptr<Deprecated::IWebService> webService)
   {
-    webService_ = &webService;
+    webService_ = webService;
     InitializeOrthanc();
   }
 

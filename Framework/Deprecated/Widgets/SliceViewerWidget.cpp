@@ -250,7 +250,7 @@ namespace Deprecated
     {
       index = found->second;
       assert(index < layers_.size() &&
-             layers_[index] == &layer);
+             layers_[index].get() == &layer);
       return true;
     }
   }
@@ -372,14 +372,6 @@ namespace Deprecated
   }
   
   
-  SliceViewerWidget::~SliceViewerWidget()
-  {
-    for (size_t i = 0; i < layers_.size(); i++)
-    {
-      delete layers_[i];
-    }
-  }
-  
   void SliceViewerWidget::ObserveLayer(IVolumeSlicer& layer)
   {
     // currently ignoring errors of type IVolumeSlicer::GeometryErrorMessage
@@ -392,7 +384,7 @@ namespace Deprecated
   }
 
 
-  size_t SliceViewerWidget::AddLayer(IVolumeSlicer* layer)  // Takes ownership
+  size_t SliceViewerWidget::AddLayer(boost::shared_ptr<IVolumeSlicer> layer)
   {
     if (layer == NULL)
     {
@@ -402,7 +394,7 @@ namespace Deprecated
     size_t index = layers_.size();
     layers_.push_back(layer);
     styles_.push_back(RenderStyle());
-    layersIndex_[layer] = index;
+    layersIndex_[layer.get()] = index;
 
     ResetPendingScene();
 
@@ -414,7 +406,8 @@ namespace Deprecated
   }
 
 
-  void SliceViewerWidget::ReplaceLayer(size_t index, IVolumeSlicer* layer)  // Takes ownership
+  void SliceViewerWidget::ReplaceLayer(size_t index,
+                                       boost::shared_ptr<IVolumeSlicer> layer)
   {
     if (layer == NULL)
     {
@@ -426,9 +419,8 @@ namespace Deprecated
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    delete layers_[index];
     layers_[index] = layer;
-    layersIndex_[layer] = index;
+    layersIndex_[layer.get()] = index;
 
     ResetPendingScene();
 
@@ -445,13 +437,13 @@ namespace Deprecated
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    IVolumeSlicer* previousLayer = layers_[index];
+    IVolumeSlicer* previousLayer = layers_[index].get();
     layersIndex_.erase(layersIndex_.find(previousLayer));
     layers_.erase(layers_.begin() + index);
     changedLayers_.erase(changedLayers_.begin() + index);
     styles_.erase(styles_.begin() + index);
 
-    delete layers_[index];
+    layers_[index].reset();
 
     currentScene_->DeleteLayer(index);
     ResetPendingScene();

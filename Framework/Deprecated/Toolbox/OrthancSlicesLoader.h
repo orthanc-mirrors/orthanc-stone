@@ -146,7 +146,7 @@ namespace Deprecated
 
     class Operation;
 
-    OrthancApiClient&  orthanc_;
+    boost::shared_ptr<OrthancApiClient>  orthanc_;
     State         state_;
     OrthancStone::SlicesSorter  slices_;
 
@@ -187,7 +187,7 @@ namespace Deprecated
     
   public:
     OrthancSlicesLoader(//ISliceLoaderObserver& callback,
-                        OrthancApiClient& orthancApi);
+      boost::shared_ptr<OrthancApiClient> orthancApi);
 
     void ScheduleLoadSeries(const std::string& seriesId);
 

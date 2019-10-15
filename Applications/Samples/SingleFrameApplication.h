@@ -127,7 +127,7 @@ namespace OrthancStone
 
       void OffsetSlice(int offset)
       {
-        if (source_ != NULL)
+        if (source_)
         {
           int slice = static_cast<int>(slice_) + offset;
 
@@ -149,21 +149,15 @@ namespace OrthancStone
       }
 
 
-      Deprecated::SliceViewerWidget& GetMainWidget()
-      {
-        return *dynamic_cast<Deprecated::SliceViewerWidget*>(mainWidget_);
-      }
-      
-
       void SetSlice(size_t index)
       {
-        if (source_ != NULL &&
+        if (source_ &&
             index < source_->GetSlicesCount())
         {
           slice_ = static_cast<unsigned int>(index);
           
 #if 1
-          GetMainWidget().SetSlice(source_->GetSlice(slice_).GetGeometry());
+          widget_->SetSlice(source_->GetSlice(slice_).GetGeometry());
 #else
           // TEST for scene extents - Rotate the axes
           double a = 15.0 / 180.0 * boost::math::constants::pi<double>();
@@ -189,21 +183,22 @@ namespace OrthancStone
         // Once the geometry of the series is downloaded from Orthanc,
         // display its middle slice, and adapt the viewport to fit this
         // slice
-        if (source_ == &message.GetOrigin())
+        if (source_ &&
+            source_.get() == &message.GetOrigin())
         {
           SetSlice(source_->GetSlicesCount() / 2);
         }
 
-        GetMainWidget().FitContent();
+        widget_->FitContent();
       }
-      
+
+      boost::shared_ptr<Deprecated::SliceViewerWidget>  widget_;
       std::auto_ptr<Interactor>         mainWidgetInteractor_;
-      const Deprecated::DicomSeriesVolumeSlicer*    source_;
+      boost::shared_ptr<Deprecated::DicomSeriesVolumeSlicer> source_;
       unsigned int                      slice_;
 
     public:
       SingleFrameApplication() :
-        source_(NULL),
         slice_(0)
       {
       }
@@ -242,13 +237,15 @@ namespace OrthancStone
         std::string instance = parameters["instance"].as<std::string>();
         int frame = parameters["frame"].as<unsigned int>();
 
-        mainWidget_ = new Deprecated::SliceViewerWidget("main-widget");
+        widget_.reset(new Deprecated::SliceViewerWidget("main-widget"));
+        mainWidget_ = widget_.get();  // TODO - awful
 
-        std::auto_ptr<Deprecated::DicomSeriesVolumeSlicer> layer(new Deprecated::DicomSeriesVolumeSlicer(context->GetOrthancApiClient()));
-        source_ = layer.get();
+        boost::shared_ptr<Deprecated::DicomSeriesVolumeSlicer> layer(new Deprecated::DicomSeriesVolumeSlicer);
+        layer->Connect(context->GetOrthancApiClient());
+        source_ = layer;
         layer->LoadFrame(instance, frame);
         Register<Deprecated::IVolumeSlicer::GeometryReadyMessage>(*layer, &SingleFrameApplication::OnMainWidgetGeometryReady);
-        GetMainWidget().AddLayer(layer.release());
+        widget_->AddLayer(layer);
 
         Deprecated::RenderStyle s;
 
@@ -257,11 +254,11 @@ namespace OrthancStone
           s.interpolation_ = ImageInterpolation_Bilinear;
         }
 
-        GetMainWidget().SetLayerStyle(0, s);
-        GetMainWidget().SetTransmitMouseOver(true);
+        widget_->SetLayerStyle(0, s);
+        widget_->SetTransmitMouseOver(true);
 
         mainWidgetInteractor_.reset(new Interactor(*this));
-        GetMainWidget().SetInteractor(*mainWidgetInteractor_);
+        widget_->SetInteractor(*mainWidgetInteractor_);
       }
     };
 

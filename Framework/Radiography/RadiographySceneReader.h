@@ -75,10 +75,12 @@ namespace OrthancStone
 
   class RadiographySceneReader : public RadiographySceneBuilder
   {
-    Deprecated::OrthancApiClient&             orthancApiClient_;
+  private:
+    boost::shared_ptr<Deprecated::OrthancApiClient>  orthancApiClient_;
 
   public:
-    RadiographySceneReader(RadiographyScene& scene, Deprecated::OrthancApiClient& orthancApiClient) :
+    RadiographySceneReader(RadiographyScene& scene,
+                           boost::shared_ptr<Deprecated::OrthancApiClient> orthancApiClient) :
       RadiographySceneBuilder(scene),
       orthancApiClient_(orthancApiClient)
     {

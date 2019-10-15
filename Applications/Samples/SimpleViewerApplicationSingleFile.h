@@ -243,7 +243,7 @@ namespace OrthancStone
       std::auto_ptr<ThumbnailInteractor>   thumbnailInteractor_;
       Deprecated::LayoutWidget*                        mainLayout_;
       Deprecated::LayoutWidget*                        thumbnailsLayout_;
-      std::vector<Deprecated::SliceViewerWidget*>      thumbnails_;
+      std::vector<boost::shared_ptr<Deprecated::SliceViewerWidget> >      thumbnails_;
 
       std::map<std::string, std::vector<std::string> > instancesIdsPerSeriesId_;
       std::map<std::string, Json::Value> seriesTags_;
@@ -296,18 +296,20 @@ namespace OrthancStone
           mainLayout_->SetBackgroundColor(0, 0, 0);
           mainLayout_->SetHorizontal();
 
-          thumbnailsLayout_ = new Deprecated::LayoutWidget("thumbnail-layout");
+          boost::shared_ptr<Deprecated::LayoutWidget> thumbnailsLayout_(new Deprecated::LayoutWidget("thumbnail-layout"));
           thumbnailsLayout_->SetPadding(10);
           thumbnailsLayout_->SetBackgroundCleared(true);
           thumbnailsLayout_->SetBackgroundColor(50, 50, 50);
           thumbnailsLayout_->SetVertical();
 
-          mainWidget_ = new Deprecated::SliceViewerWidget("main-viewport");
+          boost::shared_ptr<Deprecated::SliceViewerWidget> widget
+            (new Deprecated::SliceViewerWidget("main-viewport"));
+          SetCentralWidget(widget);
           //mainWidget_->RegisterObserver(*this);
 
           // hierarchy
           mainLayout_->AddWidget(thumbnailsLayout_);
-          mainLayout_->AddWidget(mainWidget_);
+          mainLayout_->AddWidget(widget);
 
           // sources
           smartLoader_.reset(new Deprecated::SmartLoader(context->GetOrthancApiClient()));
@@ -315,7 +317,7 @@ namespace OrthancStone
 
           mainLayout_->SetTransmitMouseOver(true);
           mainWidgetInteractor_.reset(new MainWidgetInteractor(*this));
-          mainWidget_->SetInteractor(*mainWidgetInteractor_);
+          widget->SetInteractor(*mainWidgetInteractor_);
           thumbnailInteractor_.reset(new ThumbnailInteractor(*this));
         }
 
@@ -326,7 +328,7 @@ namespace OrthancStone
         if (parameters.count("studyId") < 1)
         {
           LOG(WARNING) << "The study ID is missing, will take the first studyId found in Orthanc";
-          context->GetOrthancApiClient().GetJsonAsync(
+          context->GetOrthancApiClient()->GetJsonAsync(
             "/studies",
             new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
             (GetSharedObserver(), &SimpleViewerApplication::OnStudyListReceived));
@@ -356,7 +358,7 @@ namespace OrthancStone
         {
           for (size_t i=0; i < response["Series"].size(); i++)
           {
-            context_->GetOrthancApiClient().GetJsonAsync(
+            context_->GetOrthancApiClient()->GetJsonAsync(
               "/series/" + response["Series"][(int)i].asString(),
               new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
               (GetSharedObserver(), &SimpleViewerApplication::OnSeriesReceived));
@@ -386,7 +388,7 @@ namespace OrthancStone
           LoadThumbnailForSeries(seriesId, instancesIdsPerSeriesId_[seriesId][0]);
 
           // if this is the first thumbnail loaded, load the first instance in the mainWidget
-          Deprecated::SliceViewerWidget& widget = *dynamic_cast<Deprecated::SliceViewerWidget*>(mainWidget_);
+          Deprecated::SliceViewerWidget& widget = dynamic_cast<Deprecated::SliceViewerWidget&>(*GetCentralWidget());
           if (widget.GetLayerCount() == 0)
           {
             smartLoader_->SetFrameInWidget(widget, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
@@ -397,7 +399,7 @@ namespace OrthancStone
       void LoadThumbnailForSeries(const std::string& seriesId, const std::string& instanceId)
       {
         LOG(INFO) << "Loading thumbnail for series " << seriesId;
-        Deprecated::SliceViewerWidget* thumbnailWidget = new Deprecated::SliceViewerWidget("thumbnail-series-" + seriesId);
+        boost::shared_ptr<Deprecated::SliceViewerWidget> thumbnailWidget(new Deprecated::SliceViewerWidget("thumbnail-series-" + seriesId));
         thumbnails_.push_back(thumbnailWidget);
         thumbnailsLayout_->AddWidget(thumbnailWidget);
         Register<Deprecated::SliceViewerWidget::GeometryChangedMessage>(*thumbnailWidget, &SimpleViewerApplication::OnWidgetGeometryChanged);
@@ -408,7 +410,7 @@ namespace OrthancStone
       void SelectStudy(const std::string& studyId)
       {
         LOG(INFO) << "Selecting study: " << studyId;
-        context_->GetOrthancApiClient().GetJsonAsync(
+        context_->GetOrthancApiClient()->GetJsonAsync(
           "/studies/" + studyId, new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
           (GetSharedObserver(), &SimpleViewerApplication::OnStudyReceived));
       }
@@ -421,7 +423,7 @@ namespace OrthancStone
 
       void SelectSeriesInMainViewport(const std::string& seriesId)
       {
-        Deprecated::SliceViewerWidget& widget = *dynamic_cast<Deprecated::SliceViewerWidget*>(mainWidget_);
+        Deprecated::SliceViewerWidget& widget = dynamic_cast<Deprecated::SliceViewerWidget&>(*GetCentralWidget());
         smartLoader_->SetFrameInWidget(widget, 0, instancesIdsPerSeriesId_[seriesId][0], 0);
       }
 
@@ -450,7 +452,7 @@ namespace OrthancStone
       virtual void InitializeWasm()
       {
         AttachWidgetToWasmViewport("canvas", thumbnailsLayout_);
-        AttachWidgetToWasmViewport("canvas2", mainWidget_);
+        AttachWidgetToWasmViewport("canvas2", widget);
       }
 #endif
 

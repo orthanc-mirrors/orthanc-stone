@@ -50,7 +50,7 @@ namespace OrthancStone
 
   RadiographyDicomLayer* RadiographySceneReader::LoadDicom(const std::string& instanceId, unsigned int frame, RadiographyLayer::Geometry* geometry)
   {
-    return dynamic_cast<RadiographyDicomLayer*>(&(scene_.LoadDicomFrame(orthancApiClient_, instanceId, frame, false, geometry)));
+    return dynamic_cast<RadiographyDicomLayer*>(&(scene_.LoadDicomFrame(*orthancApiClient_, instanceId, frame, false, geometry)));
   }
 
   void RadiographySceneBuilder::Read(const Json::Value& input)
@@ -161,7 +161,7 @@ namespace OrthancStone
       if (jsonLayer["type"].asString() == "dicom")
       {
         ReadLayerGeometry(geometry, jsonLayer);
-        dicomLayer = dynamic_cast<RadiographyDicomLayer*>(&(scene_.LoadDicomFrame(orthancApiClient_, jsonLayer["instanceId"].asString(), jsonLayer["frame"].asUInt(), false, &geometry)));
+        dicomLayer = dynamic_cast<RadiographyDicomLayer*>(&(scene_.LoadDicomFrame(*orthancApiClient_, jsonLayer["instanceId"].asString(), jsonLayer["frame"].asUInt(), false, &geometry)));
       }
       else if (jsonLayer["type"].asString() == "mask")
       {

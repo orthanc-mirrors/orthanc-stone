@@ -85,14 +85,14 @@ namespace Deprecated
   class LayoutWidget::ChildWidget : public boost::noncopyable
   {
   private:
-    std::auto_ptr<IWidget>  widget_;
+    boost::shared_ptr<IWidget>  widget_;
     int                     left_;
     int                     top_;
     unsigned int            width_;
     unsigned int            height_;
 
   public:
-    ChildWidget(IWidget* widget) :
+    ChildWidget(boost::shared_ptr<IWidget> widget) :
       widget_(widget)
     {
       assert(widget != NULL);
@@ -354,7 +354,7 @@ namespace Deprecated
   }
 
 
-  IWidget& LayoutWidget::AddWidget(IWidget* widget)  // Takes ownership
+  void LayoutWidget::AddWidget(boost::shared_ptr<IWidget> widget)  // Takes ownership
   {
     if (widget == NULL)
     {
@@ -375,8 +375,6 @@ namespace Deprecated
     {
       hasAnimation_ = true;
     }
-
-    return *widget;
   }
 
 

@@ -94,7 +94,7 @@ namespace Deprecated
       return paddingInternal_;
     }
 
-    IWidget& AddWidget(IWidget* widget);  // Takes ownership
+    void AddWidget(boost::shared_ptr<IWidget> widget);
 
     virtual void SetStatusBar(IStatusBar& statusBar);
 

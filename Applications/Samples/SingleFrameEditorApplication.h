@@ -345,7 +345,7 @@ namespace OrthancStone
 
           if (context_ != NULL)
           {
-            widget.GetScene().ExportDicom(context_->GetOrthancApiClient(),
+            widget.GetScene().ExportDicom(*context_->GetOrthancApiClient(),
                                           tags, std::string(), 0.1, 0.1, widget.IsInverted(),
                                           widget.GetInterpolation(), EXPORT_USING_PAM);
           }
@@ -484,7 +484,7 @@ namespace OrthancStone
         
         scene_.reset(new RadiographyScene);
         
-        RadiographyLayer& dicomLayer = scene_->LoadDicomFrame(context->GetOrthancApiClient(), instance, 0, false, NULL);
+        RadiographyLayer& dicomLayer = scene_->LoadDicomFrame(*context->GetOrthancApiClient(), instance, 0, false, NULL);
         //scene_->LoadDicomFrame(instance, frame, false); //.SetPan(200, 0);
         // = scene_->LoadDicomFrame(context->GetOrthancApiClient(), "61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b", 0, false, NULL);
 
@@ -514,10 +514,10 @@ namespace OrthancStone
           layer.SetPan(0, 200);
         }
         
-        
-        mainWidget_ = new RadiographyWidget(scene_, "main-widget");
-        mainWidget_->SetTransmitMouseOver(true);
-        mainWidget_->SetInteractor(interactor_);
+        boost::shared_ptr<RadiographyWidget> widget(new RadiographyWidget(scene_, "main-widget"));
+        widget->SetTransmitMouseOver(true);
+        widget->SetInteractor(interactor_);
+        SetCentralWidget(widget);
 
         //scene_->SetWindowing(128, 256);
       }

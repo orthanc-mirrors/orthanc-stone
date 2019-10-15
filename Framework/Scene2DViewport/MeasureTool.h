@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "../Messages/ObserverBase.h"
 #include "../Scene2D/PolylineSceneLayer.h"
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2D/ScenePoint2D.h"
@@ -27,7 +28,6 @@
 #include "../Scene2DViewport/PredeclaredTypes.h"
 #include "../Scene2DViewport/ViewportController.h"
 
-#include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
 #include <vector>

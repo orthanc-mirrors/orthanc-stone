@@ -422,29 +422,24 @@ namespace OrthancStone
                                                                              IOracle& oracle,
                                                                              IObservable& oracleObservable) :
     oracle_(oracle),
-    oracleObservable_(oracleObservable),
     active_(false),
     simultaneousDownloads_(4),
     volume_(volume),
     sorter_(new BasicFetchingItemsSorter::Factory),
     volumeImageReadyInHighQuality_(false)
   {
-    oracleObservable.RegisterObserverCallback(
-      new Callable<OrthancSeriesVolumeProgressiveLoader, OrthancRestApiCommand::SuccessMessage>
-      (shared_from_this(), &OrthancSeriesVolumeProgressiveLoader::LoadGeometry));
-
-    oracleObservable.RegisterObserverCallback(
-      new Callable<OrthancSeriesVolumeProgressiveLoader, GetOrthancImageCommand::SuccessMessage>
-      (shared_from_this(), &OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent));
-
-    oracleObservable.RegisterObserverCallback(
-      new Callable<OrthancSeriesVolumeProgressiveLoader, GetOrthancWebViewerJpegCommand::SuccessMessage>
-      (shared_from_this(), &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent));
+    oracleObservable.RegisterObserver<OrthancSeriesVolumeProgressiveLoader, OrthancRestApiCommand::SuccessMessage>
+      (*this, &OrthancSeriesVolumeProgressiveLoader::LoadGeometry);
+  
+    oracleObservable.RegisterObserver<OrthancSeriesVolumeProgressiveLoader, GetOrthancImageCommand::SuccessMessage>
+      (*this, &OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent);
+    
+    oracleObservable.RegisterObserver<OrthancSeriesVolumeProgressiveLoader, GetOrthancWebViewerJpegCommand::SuccessMessage>
+      (*this, &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent);
   }
 
   OrthancSeriesVolumeProgressiveLoader::~OrthancSeriesVolumeProgressiveLoader()
   {
-    oracleObservable_.Unregister(this);
     LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::~OrthancSeriesVolumeProgressiveLoader()";
   }
 

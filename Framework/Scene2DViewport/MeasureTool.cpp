@@ -84,9 +84,8 @@ namespace OrthancStone
     : controllerW_(controllerW)
     , enabled_(true)
   {
-    GetController()->RegisterObserverCallback(
-      new Callable<MeasureTool, ViewportController::SceneTransformChanged>
-      (shared_from_this(), &MeasureTool::OnSceneTransformChanged));
+    GetController()->RegisterObserver<MeasureTool, ViewportController::SceneTransformChanged>
+      (*this, &MeasureTool::OnSceneTransformChanged);
   }
 
 

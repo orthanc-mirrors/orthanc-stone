@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Messages/IObservable.h"
-#include "../Messages/IObserver.h"
+#include "../Messages/ObserverBase.h"
 #include "../Oracle/GetOrthancImageCommand.h"
 #include "../Oracle/GetOrthancWebViewerJpegCommand.h"
 #include "../Oracle/IOracle.h"
@@ -95,7 +95,6 @@ namespace OrthancStone
     typedef std::list<IOracleCommand*>  PendingCommands;
 
     IOracle&         oracle_;
-    IObservable&     oracleObservable_;
     bool             active_;
     unsigned int     simultaneousDownloads_;
     PendingCommands  pendingCommands_;

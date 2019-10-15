@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Messages/IObservable.h"
-#include "../Messages/IObserver.h"
+#include "../Messages/ObserverBase.h"
 #include "../Oracle/GetOrthancImageCommand.h"
 #include "../Oracle/GetOrthancWebViewerJpegCommand.h"
 #include "../Oracle/IOracle.h"
@@ -106,7 +106,6 @@ namespace OrthancStone
     void LoadJpegSliceContent(const GetOrthancWebViewerJpegCommand::SuccessMessage& message);
 
     IOracle&                                      oracle_;
-    IObservable&                                  oracleObservable_;
     bool                                          active_;
     unsigned int                                  simultaneousDownloads_;
     SeriesGeometry                                seriesGeometry_;

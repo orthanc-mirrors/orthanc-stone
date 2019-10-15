@@ -21,19 +21,38 @@
 
 #pragma once
 
-#include <boost/noncopyable.hpp>
+#include "ICallable.h"
+#include "IObserver.h"
+
+#include <Core/OrthancException.h>
+
+#include <boost/enable_shared_from_this.hpp>
 
 namespace OrthancStone 
 {
-  class IObserver : public boost::noncopyable
+  template <typename TObserver>
+  class ObserverBase : 
+    public IObserver,
+    public boost::enable_shared_from_this<TObserver>
   {
   public:
-    IObserver()
+    boost::shared_ptr<TObserver> GetSharedObserver()
     {
+      try
+      {
+        return this->shared_from_this();
+      }
+      catch (boost::bad_weak_ptr&)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                        "Cannot get a shared pointer to an observer from a constructor");
+      }
     }
 
-    virtual ~IObserver()
+    template <typename TMessage>
+    ICallable* CreateCallable(void (TObserver::* MemberMethod) (const TMessage&))
     {
+      return new Callable<TObserver, TMessage>(GetSharedObserver(), MemberMethod);
     }
   };
 }

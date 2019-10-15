@@ -118,6 +118,11 @@ namespace OrthancStone
             (*it)->Apply(message);
           }
         }
+        else
+        {
+          // TODO => Remove "it" from the list of callables => This
+          // allows to suppress the need for "Unregister()"
+        }
       }
     }
   }

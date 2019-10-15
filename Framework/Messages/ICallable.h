@@ -35,7 +35,7 @@ namespace OrthancStone
 {
   // This is referencing an object and member function that can be notified
   // by an IObservable.  The object must derive from IO
-  // The member functions must be of type "void Function(const IMessage& message)" or reference a derived class of IMessage
+  // The member functions must be of type "void Method(const IMessage& message)" or reference a derived class of IMessage
   class ICallable : public boost::noncopyable
   {
   public:
@@ -64,14 +64,14 @@ namespace OrthancStone
   class Callable : public MessageHandler<TMessage>
   {
   private:
-    typedef void (TObserver::* MemberFunction) (const TMessage&);
+    typedef void (TObserver::* MemberMethod) (const TMessage&);
 
     boost::weak_ptr<IObserver>  observer_;
-    MemberFunction              function_;
+    MemberMethod                function_;
 
   public:
     Callable(boost::shared_ptr<TObserver> observer,
-             MemberFunction function) :
+             MemberMethod function) :
       observer_(observer),
       function_(function)
     {

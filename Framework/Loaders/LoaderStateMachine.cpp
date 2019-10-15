@@ -159,33 +159,27 @@ namespace OrthancStone
   LoaderStateMachine::LoaderStateMachine(IOracle& oracle,
                                          IObservable& oracleObservable) :
     oracle_(oracle),
-    oracleObservable_(oracleObservable),
     active_(false),
     simultaneousDownloads_(4),
     activeCommands_(0)
   {
     LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::LoaderStateMachine()";
 
-    oracleObservable.RegisterObserverCallback(
-      new Callable<LoaderStateMachine, OrthancRestApiCommand::SuccessMessage>
-      (shared_from_this(), &LoaderStateMachine::HandleSuccessMessage));
+    oracleObservable.RegisterObserver<LoaderStateMachine, OrthancRestApiCommand::SuccessMessage>
+      (*this, &LoaderStateMachine::HandleSuccessMessage);
 
-    oracleObservable.RegisterObserverCallback(
-      new Callable<LoaderStateMachine, GetOrthancImageCommand::SuccessMessage>
-      (shared_from_this(), &LoaderStateMachine::HandleSuccessMessage));
+    oracleObservable.RegisterObserver<LoaderStateMachine, GetOrthancImageCommand::SuccessMessage>
+      (*this, &LoaderStateMachine::HandleSuccessMessage);
 
-    oracleObservable.RegisterObserverCallback(
-      new Callable<LoaderStateMachine, GetOrthancWebViewerJpegCommand::SuccessMessage>
-      (shared_from_this(), &LoaderStateMachine::HandleSuccessMessage));
+    oracleObservable.RegisterObserver<LoaderStateMachine, GetOrthancWebViewerJpegCommand::SuccessMessage>
+      (*this, &LoaderStateMachine::HandleSuccessMessage);
 
-    oracleObservable.RegisterObserverCallback(
-      new Callable<LoaderStateMachine, OracleCommandExceptionMessage>
-      (shared_from_this(), &LoaderStateMachine::HandleExceptionMessage));
+    oracleObservable.RegisterObserver<LoaderStateMachine, OracleCommandExceptionMessage>
+      (*this, &LoaderStateMachine::HandleExceptionMessage);
   }
 
   LoaderStateMachine::~LoaderStateMachine()
   {
-    oracleObservable_.Unregister(this);
     LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::~LoaderStateMachine()";
     Clear();
   }

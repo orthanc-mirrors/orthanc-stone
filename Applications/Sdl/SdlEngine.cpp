@@ -99,9 +99,7 @@ namespace OrthancStone
 
 
   SdlEngine::SdlEngine(SdlWindow& window,
-                       NativeStoneApplicationContext& context,
-                       MessageBroker& broker) :
-    IObserver(broker),
+                       NativeStoneApplicationContext& context) :
     window_(window),
     context_(context),
     surface_(window),

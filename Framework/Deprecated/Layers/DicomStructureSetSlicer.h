@@ -42,8 +42,7 @@ namespace Deprecated
     }
 
   public:
-    DicomStructureSetSlicer(OrthancStone::MessageBroker& broker,
-                            StructureSetLoader& loader);
+    DicomStructureSetSlicer(StructureSetLoader& loader);
 
     virtual bool GetExtent(std::vector<OrthancStone::Vector>& points,
                            const OrthancStone::CoordinateSystem3D& viewportPlane)

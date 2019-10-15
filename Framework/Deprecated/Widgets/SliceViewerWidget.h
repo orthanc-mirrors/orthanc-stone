@@ -24,7 +24,7 @@
 #include "WorldSceneWidget.h"
 #include "../Layers/IVolumeSlicer.h"
 #include "../../Toolbox/Extent2D.h"
-#include "../../Messages/IObserver.h"
+#include "../../Messages/ObserverBase.h"
 
 #include <map>
 
@@ -32,7 +32,7 @@ namespace Deprecated
 {
   class SliceViewerWidget :
     public WorldSceneWidget,
-    public OrthancStone::IObserver,
+    public OrthancStone::ObserverBase<SliceViewerWidget>,
     public OrthancStone::IObservable
   {
   public:
@@ -100,8 +100,7 @@ namespace Deprecated
     void ResetChangedLayers();
 
   public:
-    SliceViewerWidget(OrthancStone::MessageBroker& broker, 
-                      const std::string& name);
+    SliceViewerWidget(const std::string& name);
 
     virtual OrthancStone::Extent2D GetSceneExtent();
 

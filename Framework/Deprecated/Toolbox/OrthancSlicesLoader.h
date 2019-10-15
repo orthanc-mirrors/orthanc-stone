@@ -22,6 +22,7 @@
 #pragma once
 
 #include "../../Messages/IObservable.h"
+#include "../../Messages/ObserverBase.h"
 #include "../../StoneEnumerations.h"
 #include "../../Toolbox/SlicesSorter.h"
 #include "IWebService.h"
@@ -33,7 +34,9 @@
 
 namespace Deprecated
 {
-  class OrthancSlicesLoader : public OrthancStone::IObservable, public OrthancStone::IObserver
+  class OrthancSlicesLoader :
+    public OrthancStone::IObservable,
+    public OrthancStone::ObserverBase<OrthancSlicesLoader>
   {
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, SliceGeometryReadyMessage, OrthancSlicesLoader);
@@ -183,8 +186,7 @@ namespace Deprecated
     void SortAndFinalizeSlices();
     
   public:
-    OrthancSlicesLoader(OrthancStone::MessageBroker& broker,
-                        //ISliceLoaderObserver& callback,
+    OrthancSlicesLoader(//ISliceLoaderObserver& callback,
                         OrthancApiClient& orthancApi);
 
     void ScheduleLoadSeries(const std::string& seriesId);

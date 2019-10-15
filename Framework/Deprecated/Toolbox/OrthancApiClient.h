@@ -25,13 +25,13 @@
 #include <json/json.h>
 
 #include "IWebService.h"
-#include "../../Messages/IObservable.h"
+#include "../../Messages/ObserverBase.h"
 
 namespace Deprecated
 {
   class OrthancApiClient :
       public OrthancStone::IObservable,
-      public OrthancStone::IObserver
+      public OrthancStone::ObserverBase<OrthancApiClient>
   {
   public:
     class JsonResponseReadyMessage : public OrthancStone::IMessage

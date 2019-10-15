@@ -47,7 +47,8 @@ namespace OrthancStone
   }
 
 
-  RadiographyDicomLayer::RadiographyDicomLayer(MessageBroker& broker, const RadiographyScene& scene) : RadiographyLayer(broker, scene)
+  RadiographyDicomLayer::RadiographyDicomLayer(const RadiographyScene& scene) :
+    RadiographyLayer(scene)
   {
 
   }

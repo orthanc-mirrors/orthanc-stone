@@ -142,7 +142,7 @@ namespace OrthancStone
 
     BroadcastMessage(GeometryChangedMessage(*this, *layer));
     BroadcastMessage(ContentChangedMessage(*this, *layer));
-    layer->RegisterObserverCallback(new Callable<RadiographyScene, RadiographyLayer::LayerEditedMessage>(*this, &RadiographyScene::OnLayerEdited));
+    Register<RadiographyLayer::LayerEditedMessage>(*layer, &RadiographyScene::OnLayerEdited);
 
     return *layer;
   }
@@ -162,9 +162,7 @@ namespace OrthancStone
     BroadcastMessage(RadiographyScene::LayerEditedMessage(*this, message.GetOrigin()));
   }
 
-  RadiographyScene::RadiographyScene(MessageBroker& broker) :
-    IObserver(broker),
-    IObservable(broker),
+  RadiographyScene::RadiographyScene() :
     countLayers_(0),
     hasWindowing_(false),
     windowingCenter_(0),  // Dummy initialization
@@ -284,7 +282,7 @@ namespace OrthancStone
                                                const std::string& utf8,
                                                RadiographyLayer::Geometry* geometry)
   {
-    std::auto_ptr<RadiographyTextLayer>  alpha(new RadiographyTextLayer(IObservable::GetBroker(), *this));
+    std::auto_ptr<RadiographyTextLayer>  alpha(new RadiographyTextLayer(*this));
     alpha->LoadText(font, utf8);
     if (geometry != NULL)
     {
@@ -328,7 +326,7 @@ namespace OrthancStone
                                                float foreground,
                                                RadiographyLayer::Geometry* geometry)
   {
-    std::auto_ptr<RadiographyMaskLayer>  mask(new RadiographyMaskLayer(IObservable::GetBroker(), *this, dicomLayer, foreground));
+    std::auto_ptr<RadiographyMaskLayer>  mask(new RadiographyMaskLayer(*this, dicomLayer, foreground));
     mask->SetCorners(corners);
     if (geometry != NULL)
     {
@@ -341,7 +339,7 @@ namespace OrthancStone
 
   RadiographyLayer& RadiographyScene::LoadAlphaBitmap(Orthanc::ImageAccessor* bitmap, RadiographyLayer::Geometry *geometry)
   {
-    std::auto_ptr<RadiographyAlphaLayer>  alpha(new RadiographyAlphaLayer(IObservable::GetBroker(), *this));
+    std::auto_ptr<RadiographyAlphaLayer>  alpha(new RadiographyAlphaLayer(*this));
     alpha->SetAlpha(bitmap);
     if (geometry != NULL)
     {
@@ -358,7 +356,7 @@ namespace OrthancStone
                                                      RadiographyPhotometricDisplayMode preferredPhotometricDisplayMode,
                                                      RadiographyLayer::Geometry* geometry)
   {
-    RadiographyDicomLayer& layer = dynamic_cast<RadiographyDicomLayer&>(RegisterLayer(new RadiographyDicomLayer(IObservable::GetBroker(), *this)));
+    RadiographyDicomLayer& layer = dynamic_cast<RadiographyDicomLayer&>(RegisterLayer(new RadiographyDicomLayer(*this)));
 
     layer.SetInstance(instance, frame);
 
@@ -380,7 +378,7 @@ namespace OrthancStone
                                                      bool httpCompression,
                                                      RadiographyLayer::Geometry* geometry)
   {
-    RadiographyDicomLayer& layer = dynamic_cast<RadiographyDicomLayer&>(RegisterLayer(new RadiographyDicomLayer(IObservable::GetBroker(), *this)));
+    RadiographyDicomLayer& layer = dynamic_cast<RadiographyDicomLayer&>(RegisterLayer(new RadiographyDicomLayer( *this)));
     layer.SetInstance(instance, frame);
 
     if (geometry != NULL)
@@ -395,7 +393,7 @@ namespace OrthancStone
       orthanc.GetBinaryAsync(
             uri, headers,
             new Callable<RadiographyScene, Deprecated::OrthancApiClient::BinaryResponseReadyMessage>
-            (*this, &RadiographyScene::OnTagsReceived), NULL,
+            (GetSharedObserver(), &RadiographyScene::OnTagsReceived), NULL,
             new Orthanc::SingleValueObject<size_t>(layer.GetIndex()));
     }
 
@@ -414,7 +412,7 @@ namespace OrthancStone
       orthanc.GetBinaryAsync(
             uri, headers,
             new Callable<RadiographyScene, Deprecated::OrthancApiClient::BinaryResponseReadyMessage>
-            (*this, &RadiographyScene::OnFrameReceived), NULL,
+            (GetSharedObserver(), &RadiographyScene::OnFrameReceived), NULL,
             new Orthanc::SingleValueObject<size_t>(layer.GetIndex()));
     }
 
@@ -424,7 +422,7 @@ namespace OrthancStone
 
   RadiographyLayer& RadiographyScene::LoadDicomWebFrame(Deprecated::IWebService& web)
   {
-    RadiographyLayer& layer = RegisterLayer(new RadiographyDicomLayer(IObservable::GetBroker(), *this));
+    RadiographyLayer& layer = RegisterLayer(new RadiographyDicomLayer(*this));
 
 
     return layer;
@@ -752,7 +750,7 @@ namespace OrthancStone
     orthanc.PostJsonAsyncExpectJson(
           "/tools/create-dicom", createDicomRequestContent,
           new Callable<RadiographyScene, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
-          (*this, &RadiographyScene::OnDicomExported),
+          (GetSharedObserver(), &RadiographyScene::OnDicomExported),
           NULL, NULL);
 
   }

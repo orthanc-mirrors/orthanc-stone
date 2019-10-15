@@ -53,7 +53,7 @@ namespace OrthancStone
   {
     class RadiographyEditorInteractor :
         public Deprecated::IWorldSceneInteractor,
-        public IObserver
+        public ObserverBase<RadiographyEditorInteractor>
     {
     private:
       enum Tool
@@ -80,8 +80,7 @@ namespace OrthancStone
 
 
     public:
-      RadiographyEditorInteractor(MessageBroker& broker) :
-        IObserver(broker),
+      RadiographyEditorInteractor() :
         context_(NULL),
         tool_(Tool_Move),
         maskLayer_(NULL)
@@ -310,7 +309,7 @@ namespace OrthancStone
           LOG(INFO) << "JSON export was successful: "
                     << snapshot.toStyledString();
 
-          boost::shared_ptr<RadiographyScene> scene(new RadiographyScene(GetBroker()));
+          boost::shared_ptr<RadiographyScene> scene(new RadiographyScene);
           RadiographySceneReader reader(*scene, context_->GetOrthancApiClient());
 
           Orthanc::FontRegistry fontRegistry;
@@ -430,12 +429,6 @@ namespace OrthancStone
       RadiographyMaskLayer*                 maskLayer_;
 
     public:
-      SingleFrameEditorApplication(MessageBroker& broker) :
-        IObserver(broker),
-        interactor_(broker)
-      {
-      }
-
       virtual ~SingleFrameEditorApplication()
       {
         LOG(WARNING) << "Destroying the application";
@@ -489,7 +482,7 @@ namespace OrthancStone
 
         fontRegistry_.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
         
-        scene_.reset(new RadiographyScene(GetBroker()));
+        scene_.reset(new RadiographyScene);
         
         RadiographyLayer& dicomLayer = scene_->LoadDicomFrame(context->GetOrthancApiClient(), instance, 0, false, NULL);
         //scene_->LoadDicomFrame(instance, frame, false); //.SetPan(200, 0);
@@ -522,7 +515,7 @@ namespace OrthancStone
         }
         
         
-        mainWidget_ = new RadiographyWidget(GetBroker(), scene_, "main-widget");
+        mainWidget_ = new RadiographyWidget(scene_, "main-widget");
         mainWidget_->SetTransmitMouseOver(true);
         mainWidget_->SetInteractor(interactor_);
 

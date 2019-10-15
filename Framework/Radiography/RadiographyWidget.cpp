@@ -181,11 +181,9 @@ namespace OrthancStone
   }
 
 
-  RadiographyWidget::RadiographyWidget(MessageBroker& broker,
-                                       boost::shared_ptr<RadiographyScene> scene,
+  RadiographyWidget::RadiographyWidget(boost::shared_ptr<RadiographyScene> scene,
                                        const std::string& name) :
     WorldSceneWidget(name),
-    IObserver(broker),
     invert_(false),
     interpolation_(ImageInterpolation_Nearest),
     hasSelection_(false),
@@ -288,13 +286,8 @@ namespace OrthancStone
 
     scene_ = scene;
 
-    scene_->RegisterObserverCallback(
-          new Callable<RadiographyWidget, RadiographyScene::GeometryChangedMessage>
-          (*this, &RadiographyWidget::OnGeometryChanged));
-
-    scene_->RegisterObserverCallback(
-          new Callable<RadiographyWidget, RadiographyScene::ContentChangedMessage>
-          (*this, &RadiographyWidget::OnContentChanged));
+    Register<RadiographyScene::GeometryChangedMessage>(*scene_, &RadiographyWidget::OnGeometryChanged);
+    Register<RadiographyScene::ContentChangedMessage>(*scene_, &RadiographyWidget::OnContentChanged);
 
     NotifyContentChanged();
 

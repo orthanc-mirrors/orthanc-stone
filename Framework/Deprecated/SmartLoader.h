@@ -45,7 +45,7 @@ namespace Deprecated
     OrthancApiClient&     orthancApiClient_;
 
   public:
-    SmartLoader(OrthancStone::MessageBroker& broker, OrthancApiClient& orthancApiClient);  // TODO: add maxPreloadStorageSizeInBytes
+    SmartLoader(OrthancApiClient& orthancApiClient);  // TODO: add maxPreloadStorageSizeInBytes
 
 //    void PreloadStudy(const std::string studyId);
 //    void PreloadSeries(const std::string seriesId);

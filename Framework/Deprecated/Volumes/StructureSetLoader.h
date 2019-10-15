@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "../../Messages/ObserverBase.h"
 #include "../../Toolbox/DicomStructureSet.h"
 #include "../Toolbox/OrthancApiClient.h"
 #include "IVolumeLoader.h"
@@ -29,7 +30,7 @@ namespace Deprecated
 {
   class StructureSetLoader :
     public IVolumeLoader,
-    public OrthancStone::IObserver
+    public OrthancStone::ObserverBase<StructureSetLoader>
   {
   private:
     OrthancApiClient&                 orthanc_;
@@ -42,8 +43,7 @@ namespace Deprecated
     void OnLookupCompleted(const OrthancApiClient::JsonResponseReadyMessage& message);
 
   public:
-    StructureSetLoader(OrthancStone::MessageBroker& broker,
-                       OrthancApiClient& orthanc);
+    StructureSetLoader(OrthancApiClient& orthanc);
 
     void ScheduleLoadInstance(const std::string& instance);
 

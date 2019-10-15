@@ -22,6 +22,7 @@
 #pragma once
 
 #include "IWebService.h"
+#include "../../Messages/ObserverBase.h"
 
 #include <string>
 #include <map>
@@ -90,9 +91,7 @@ namespace Deprecated
     std::deque<std::string> orderedCacheKeys_;
 
   public:
-
-    BaseWebService(OrthancStone::MessageBroker& broker) :
-      IWebService(broker),
+    BaseWebService() :
       cacheEnabled_(false),
       cacheCurrentSize_(0),
       cacheMaxSize_(100*1024*1024)

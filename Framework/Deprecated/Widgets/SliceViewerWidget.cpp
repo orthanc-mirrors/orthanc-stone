@@ -364,11 +364,8 @@ namespace Deprecated
   }
 
   
-  SliceViewerWidget::SliceViewerWidget(OrthancStone::MessageBroker& broker, 
-                                       const std::string& name) :
+  SliceViewerWidget::SliceViewerWidget(const std::string& name) :
     WorldSceneWidget(name),
-    IObserver(broker),
-    IObservable(broker),
     started_(false)
   {
     SetBackgroundCleared(true);
@@ -385,17 +382,13 @@ namespace Deprecated
   
   void SliceViewerWidget::ObserveLayer(IVolumeSlicer& layer)
   {
-    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::GeometryReadyMessage>
-                                   (*this, &SliceViewerWidget::OnGeometryReady));
-    // currently ignore errors layer->RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::GeometryErrorMessage>(*this, &SliceViewerWidget::...));
-    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::SliceContentChangedMessage>
-                                   (*this, &SliceViewerWidget::OnSliceChanged));
-    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::ContentChangedMessage>
-                                   (*this, &SliceViewerWidget::OnContentChanged));
-    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::LayerReadyMessage>
-                                   (*this, &SliceViewerWidget::OnLayerReady));
-    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::LayerErrorMessage>
-                                   (*this, &SliceViewerWidget::OnLayerError));
+    // currently ignoring errors of type IVolumeSlicer::GeometryErrorMessage
+
+    Register<IVolumeSlicer::GeometryReadyMessage>(layer, &SliceViewerWidget::OnGeometryReady);
+    Register<IVolumeSlicer::SliceContentChangedMessage>(layer, &SliceViewerWidget::OnSliceChanged);
+    Register<IVolumeSlicer::ContentChangedMessage>(layer, &SliceViewerWidget::OnContentChanged);
+    Register<IVolumeSlicer::LayerReadyMessage>(layer, &SliceViewerWidget::OnLayerReady);
+    Register<IVolumeSlicer::LayerErrorMessage>(layer, &SliceViewerWidget::OnLayerError);
   }
 
 

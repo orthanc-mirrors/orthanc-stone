@@ -197,7 +197,7 @@ namespace OrthancStone
 
       LogStatusBar statusBar;
 
-      NativeStoneApplicationContext context(broker_);
+      NativeStoneApplicationContext context;
 
       {
         // use multiple threads to execute asynchronous tasks like 
@@ -206,13 +206,12 @@ namespace OrthancStone
         oracle.Start();
 
         {
-          Deprecated::OracleWebService webService(
-            broker_, oracle, webServiceParameters, context);
+          Deprecated::OracleWebService webService(oracle, webServiceParameters, context);
           
           context.SetWebService(webService);
           context.SetOrthancBaseUrl(webServiceParameters.GetUrl());
 
-          Deprecated::OracleDelayedCallExecutor delayedExecutor(broker_, oracle, context);
+          Deprecated::OracleDelayedCallExecutor delayedExecutor(oracle, context);
           context.SetDelayedCallExecutor(delayedExecutor);
 
           application_.Initialize(&context, statusBar, parameters);

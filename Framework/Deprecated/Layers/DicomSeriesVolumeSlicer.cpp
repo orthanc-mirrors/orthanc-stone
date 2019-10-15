@@ -87,27 +87,15 @@ namespace Deprecated
   }
 
 
-  DicomSeriesVolumeSlicer::DicomSeriesVolumeSlicer(OrthancStone::MessageBroker& broker,
-                                                   OrthancApiClient& orthanc) :
-    IVolumeSlicer(broker),
-    loader_(broker, orthanc),
+  DicomSeriesVolumeSlicer::DicomSeriesVolumeSlicer(OrthancApiClient& orthanc) :
+    loader_(orthanc),
     quality_(SliceImageQuality_FullPng)
   {
-    loader_.RegisterObserverCallback(
-      new OrthancStone::Callable<DicomSeriesVolumeSlicer, OrthancSlicesLoader::SliceGeometryReadyMessage>
-      (shared_from_this(), &DicomSeriesVolumeSlicer::OnSliceGeometryReady));
-
-    loader_.RegisterObserverCallback(
-      new OrthancStone::Callable<DicomSeriesVolumeSlicer, OrthancSlicesLoader::SliceGeometryErrorMessage>
-      (shared_from_this(), &DicomSeriesVolumeSlicer::OnSliceGeometryError));
-
-    loader_.RegisterObserverCallback(
-      new OrthancStone::Callable<DicomSeriesVolumeSlicer, OrthancSlicesLoader::SliceImageReadyMessage>
-        (shared_from_this(), &DicomSeriesVolumeSlicer::OnSliceImageReady));
-
-    loader_.RegisterObserverCallback(
-      new OrthancStone::Callable<DicomSeriesVolumeSlicer, OrthancSlicesLoader::SliceImageErrorMessage>
-      (shared_from_this(), &DicomSeriesVolumeSlicer::OnSliceImageError));
+    // TODO => Move this out of the constructor
+    Register<OrthancSlicesLoader::SliceGeometryReadyMessage>(loader_, &DicomSeriesVolumeSlicer::OnSliceGeometryReady);
+    Register<OrthancSlicesLoader::SliceGeometryErrorMessage>(loader_, &DicomSeriesVolumeSlicer::OnSliceGeometryError);
+    Register<OrthancSlicesLoader::SliceImageReadyMessage>(loader_, &DicomSeriesVolumeSlicer::OnSliceImageReady);
+    Register<OrthancSlicesLoader::SliceImageErrorMessage>(loader_, &DicomSeriesVolumeSlicer::OnSliceImageError);
   }
 
   

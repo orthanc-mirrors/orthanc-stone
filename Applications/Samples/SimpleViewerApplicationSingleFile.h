@@ -44,7 +44,7 @@ namespace OrthancStone
   {
     class SimpleViewerApplication :
       public SampleSingleCanvasWithButtonsApplicationBase,
-      public IObserver
+      public ObserverBase<SimpleViewerApplication>
     {
     private:
       class ThumbnailInteractor : public Deprecated::IWorldSceneInteractor
@@ -199,8 +199,8 @@ namespace OrthancStone
         SimpleViewerApplication&  viewerApplication_;
 
       public:
-        SimpleViewerApplicationAdapter(MessageBroker& broker, SimpleViewerApplication& application)
-          : WasmPlatformApplicationAdapter(broker, application),
+        SimpleViewerApplicationAdapter(SimpleViewerApplication& application)
+          : WasmPlatformApplicationAdapter(application),
             viewerApplication_(application)
         {
         }
@@ -258,8 +258,7 @@ namespace OrthancStone
       Orthanc::Font                        font_;
 
     public:
-      SimpleViewerApplication(MessageBroker& broker) :
-        IObserver(broker),
+      SimpleViewerApplication() :
         currentTool_(Tool_LineMeasure),
         mainLayout_(NULL),
         currentInstanceIndex_(0),
@@ -303,7 +302,7 @@ namespace OrthancStone
           thumbnailsLayout_->SetBackgroundColor(50, 50, 50);
           thumbnailsLayout_->SetVertical();
 
-          mainWidget_ = new Deprecated::SliceViewerWidget(GetBroker(), "main-viewport");
+          mainWidget_ = new Deprecated::SliceViewerWidget("main-viewport");
           //mainWidget_->RegisterObserver(*this);
 
           // hierarchy
@@ -311,7 +310,7 @@ namespace OrthancStone
           mainLayout_->AddWidget(mainWidget_);
 
           // sources
-          smartLoader_.reset(new Deprecated::SmartLoader(GetBroker(), context->GetOrthancApiClient()));
+          smartLoader_.reset(new Deprecated::SmartLoader(context->GetOrthancApiClient()));
           smartLoader_->SetImageQuality(Deprecated::SliceImageQuality_FullPam);
 
           mainLayout_->SetTransmitMouseOver(true);
@@ -330,7 +329,7 @@ namespace OrthancStone
           context->GetOrthancApiClient().GetJsonAsync(
             "/studies",
             new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
-            (*this, &SimpleViewerApplication::OnStudyListReceived));
+            (GetSharedObserver(), &SimpleViewerApplication::OnStudyListReceived));
         }
         else
         {
@@ -360,7 +359,7 @@ namespace OrthancStone
             context_->GetOrthancApiClient().GetJsonAsync(
               "/series/" + response["Series"][(int)i].asString(),
               new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
-              (*this, &SimpleViewerApplication::OnSeriesReceived));
+              (GetSharedObserver(), &SimpleViewerApplication::OnSeriesReceived));
           }
         }
       }
@@ -398,10 +397,10 @@ namespace OrthancStone
       void LoadThumbnailForSeries(const std::string& seriesId, const std::string& instanceId)
       {
         LOG(INFO) << "Loading thumbnail for series " << seriesId;
-        Deprecated::SliceViewerWidget* thumbnailWidget = new Deprecated::SliceViewerWidget(GetBroker(), "thumbnail-series-" + seriesId);
+        Deprecated::SliceViewerWidget* thumbnailWidget = new Deprecated::SliceViewerWidget("thumbnail-series-" + seriesId);
         thumbnails_.push_back(thumbnailWidget);
         thumbnailsLayout_->AddWidget(thumbnailWidget);
-        thumbnailWidget->RegisterObserverCallback(new Callable<SimpleViewerApplication, Deprecated::SliceViewerWidget::GeometryChangedMessage>(*this, &SimpleViewerApplication::OnWidgetGeometryChanged));
+        Register<Deprecated::SliceViewerWidget::GeometryChangedMessage>(*thumbnailWidget, &SimpleViewerApplication::OnWidgetGeometryChanged);
         smartLoader_->SetFrameInWidget(*thumbnailWidget, 0, instanceId, 0);
         thumbnailWidget->SetInteractor(*thumbnailInteractor_);
       }
@@ -411,7 +410,7 @@ namespace OrthancStone
         LOG(INFO) << "Selecting study: " << studyId;
         context_->GetOrthancApiClient().GetJsonAsync(
           "/studies/" + studyId, new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
-          (*this, &SimpleViewerApplication::OnStudyReceived));
+          (GetSharedObserver(), &SimpleViewerApplication::OnStudyReceived));
       }
 
       void OnWidgetGeometryChanged(const Deprecated::SliceViewerWidget::GeometryChangedMessage& message)

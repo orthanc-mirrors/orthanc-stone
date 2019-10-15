@@ -141,14 +141,10 @@ namespace Deprecated
   };
   
 
-  DicomStructureSetSlicer::DicomStructureSetSlicer(OrthancStone::MessageBroker& broker,
-                                                   StructureSetLoader& loader) :
-    IVolumeSlicer(broker),
+  DicomStructureSetSlicer::DicomStructureSetSlicer(StructureSetLoader& loader) :
     loader_(loader)
   {
-    loader_.RegisterObserverCallback(
-      new OrthancStone::Callable<DicomStructureSetSlicer, StructureSetLoader::ContentChangedMessage>
-      (shared_from_this(), &DicomStructureSetSlicer::OnStructureSetLoaded));
+    Register<StructureSetLoader::ContentChangedMessage>(loader_, &DicomStructureSetSlicer::OnStructureSetLoaded);
   }
 
 

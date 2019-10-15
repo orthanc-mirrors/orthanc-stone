@@ -22,6 +22,7 @@
 #pragma once
 
 #include "IVolumeSlicer.h"
+#include "../../Messages/ObserverBase.h"
 #include "../Toolbox/IWebService.h"
 #include "../Toolbox/OrthancSlicesLoader.h"
 #include "../Toolbox/OrthancApiClient.h"
@@ -83,8 +84,7 @@ namespace Deprecated
     SliceImageQuality    quality_;
 
   public:
-    DicomSeriesVolumeSlicer(OrthancStone::MessageBroker& broker,
-                            OrthancApiClient& orthanc);
+    DicomSeriesVolumeSlicer(OrthancApiClient& orthanc);
 
     void LoadSeries(const std::string& seriesId);
 

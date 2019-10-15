@@ -22,6 +22,7 @@
 #pragma once
 
 #include "RadiographyLayer.h"
+#include "../Messages/ObserverBase.h"
 #include "../Deprecated/Toolbox/DicomFrameConverter.h"
 #include "../Deprecated/Toolbox/OrthancApiClient.h"
 #include "../StoneEnumerations.h"
@@ -33,8 +34,8 @@ namespace OrthancStone
   class RadiographyDicomLayer;
 
   class RadiographyScene :
-      public IObserver,
-      public IObservable
+    public ObserverBase<RadiographyScene>,
+    public IObservable
   {
   public:
     class GeometryChangedMessage : public OriginMessage<RadiographyScene>
@@ -159,7 +160,7 @@ namespace OrthancStone
 
     virtual void OnLayerEdited(const RadiographyLayer::LayerEditedMessage& message);
   public:
-    RadiographyScene(MessageBroker& broker);
+    RadiographyScene();
     
     virtual ~RadiographyScene();
 

@@ -38,7 +38,7 @@ namespace OrthancStone
   {
     class SingleFrameApplication :
       public SampleSingleCanvasApplicationBase,
-      public IObserver
+      public ObserverBase<SingleFrameApplication>
     {
     private:
       class Interactor : public Deprecated::IWorldSceneInteractor
@@ -202,8 +202,7 @@ namespace OrthancStone
       unsigned int                      slice_;
 
     public:
-      SingleFrameApplication(MessageBroker& broker) :
-        IObserver(broker),
+      SingleFrameApplication() :
         source_(NULL),
         slice_(0)
       {
@@ -243,12 +242,12 @@ namespace OrthancStone
         std::string instance = parameters["instance"].as<std::string>();
         int frame = parameters["frame"].as<unsigned int>();
 
-        mainWidget_ = new Deprecated::SliceViewerWidget(GetBroker(), "main-widget");
+        mainWidget_ = new Deprecated::SliceViewerWidget("main-widget");
 
-        std::auto_ptr<Deprecated::DicomSeriesVolumeSlicer> layer(new Deprecated::DicomSeriesVolumeSlicer(GetBroker(), context->GetOrthancApiClient()));
+        std::auto_ptr<Deprecated::DicomSeriesVolumeSlicer> layer(new Deprecated::DicomSeriesVolumeSlicer(context->GetOrthancApiClient()));
         source_ = layer.get();
         layer->LoadFrame(instance, frame);
-        layer->RegisterObserverCallback(new Callable<SingleFrameApplication, Deprecated::IVolumeSlicer::GeometryReadyMessage>(*this, &SingleFrameApplication::OnMainWidgetGeometryReady));
+        Register<Deprecated::IVolumeSlicer::GeometryReadyMessage>(*layer, &SingleFrameApplication::OnMainWidgetGeometryReady);
         GetMainWidget().AddLayer(layer.release());
 
         Deprecated::RenderStyle s;

@@ -27,10 +27,7 @@
 
 namespace Deprecated
 {
-  StructureSetLoader::StructureSetLoader(OrthancStone::MessageBroker& broker,
-                                         OrthancApiClient& orthanc) :
-    IVolumeLoader(broker),
-    IObserver(broker),
+  StructureSetLoader::StructureSetLoader(OrthancApiClient& orthanc) :
     orthanc_(orthanc)
   {
   }
@@ -60,7 +57,7 @@ namespace Deprecated
          it != instances.end(); ++it)
     {
       orthanc_.PostBinaryAsyncExpectJson("/tools/lookup", *it,
-                                         new OrthancStone::Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &StructureSetLoader::OnLookupCompleted));
+                                         new OrthancStone::Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &StructureSetLoader::OnLookupCompleted));
     }
 
     BroadcastMessage(GeometryReadyMessage(*this));
@@ -84,7 +81,7 @@ namespace Deprecated
 
     const std::string& instance = lookup[0]["ID"].asString();
     orthanc_.GetJsonAsync("/instances/" + instance + "/tags",
-                          new OrthancStone::Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &StructureSetLoader::OnReferencedSliceLoaded));
+                          new OrthancStone::Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &StructureSetLoader::OnReferencedSliceLoaded));
   }
 
   
@@ -97,7 +94,7 @@ namespace Deprecated
     else
     {
       orthanc_.GetJsonAsync("/instances/" + instance + "/tags?ignore-length=3006-0050",
-                            new OrthancStone::Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(*this, &StructureSetLoader::OnStructureSetLoaded));
+                            new OrthancStone::Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &StructureSetLoader::OnStructureSetLoaded));
     }
   }
 

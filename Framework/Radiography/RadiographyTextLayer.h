@@ -34,8 +34,8 @@ namespace OrthancStone
     std::string                fontName_;
 
   public:
-    RadiographyTextLayer(MessageBroker& broker, const RadiographyScene& scene) :
-      RadiographyAlphaLayer(broker, scene)
+    RadiographyTextLayer(const RadiographyScene& scene) :
+      RadiographyAlphaLayer(scene)
     {
     }
 

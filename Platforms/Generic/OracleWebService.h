@@ -43,11 +43,9 @@ namespace Deprecated
     class WebServiceCachedGetCommand;
 
   public:
-    OracleWebService(OrthancStone::MessageBroker& broker,
-                     Oracle& oracle,
+    OracleWebService(Oracle& oracle,
                      const Orthanc::WebServiceParameters& parameters,
                      OrthancStone::NativeStoneApplicationContext& context) :
-      BaseWebService(broker),
       oracle_(oracle),
       context_(context),
       parameters_(parameters)
@@ -62,7 +60,7 @@ namespace Deprecated
                            OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL, // takes ownership
                            unsigned int timeoutInSeconds = 60)
     {
-      oracle_.Submit(new WebServicePostCommand(GetBroker(), successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, body, payload, context_));
+      oracle_.Submit(new WebServicePostCommand(successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, body, payload, context_));
     }
 
     virtual void DeleteAsync(const std::string& uri,
@@ -72,7 +70,7 @@ namespace Deprecated
                              OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                              unsigned int timeoutInSeconds = 60)
     {
-      oracle_.Submit(new WebServiceDeleteCommand(GetBroker(), successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, payload, context_));
+      oracle_.Submit(new WebServiceDeleteCommand(successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, payload, context_));
     }
 
   protected:
@@ -83,7 +81,7 @@ namespace Deprecated
                                   OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,// takes ownership
                                   unsigned int timeoutInSeconds = 60)
     {
-      oracle_.Submit(new WebServiceGetCommand(GetBroker(), successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, payload, context_));
+      oracle_.Submit(new WebServiceGetCommand(successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, payload, context_));
     }
 
     virtual void NotifyHttpSuccessLater(boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedHttpMessage,

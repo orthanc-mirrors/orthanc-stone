@@ -32,7 +32,7 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
 
-    orthanc_.reset(new Deprecated::OrthancApiClient(broker_, *webService_, orthancBaseUrl_));
+    orthanc_.reset(new Deprecated::OrthancApiClient(*webService_, orthancBaseUrl_));
   }
 
 

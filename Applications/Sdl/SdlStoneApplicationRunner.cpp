@@ -103,14 +103,13 @@ namespace OrthancStone
     LOG(WARNING) << "Starting the application";
 
     SdlWindow window(title.c_str(), width_, height_, enableOpenGl_);
-    SdlEngine sdl(window, context, broker_);
+    SdlEngine sdl(window, context);
 
     {
       NativeStoneApplicationContext::GlobalMutexLocker locker(context);
 
-      locker.GetCentralViewport().RegisterObserverCallback(
-        new Callable<SdlEngine, Deprecated::IViewport::ViewportChangedMessage>
-        (sdl, &SdlEngine::OnViewportChanged));
+      sdl.Register<Deprecated::IViewport::ViewportChangedMessage>
+        (locker.GetCentralViewport(), &SdlEngine::OnViewportChanged);
 
       //context.GetCentralViewport().Register(sdl);  // (*)
     }

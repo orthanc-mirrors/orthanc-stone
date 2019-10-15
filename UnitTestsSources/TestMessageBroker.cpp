@@ -21,7 +21,6 @@
 
 #include "gtest/gtest.h"
 
-#include "Framework/Messages/MessageBroker.h"
 #include "Framework/Messages/IObservable.h"
 #include "Framework/Messages/IObserver.h"
 #include "Framework/Messages/MessageForwarder.h"
@@ -47,20 +46,11 @@ namespace {
       {
       }
     };
-
-    MyObservable(MessageBroker& broker) :
-      IObservable(broker)
-    {
-    }
   };
 
   class MyObserver : public IObserver
   {
   public:
-    MyObserver(MessageBroker& broker)
-      : IObserver(broker)
-    {}
-
     void HandleCompletedMessage(const MyObservable::MyCustomMessage& message)
     {
       testCounter += message.payload_;
@@ -73,12 +63,10 @@ namespace {
   {
     IObservable& observedObject_;
   public:
-    MyIntermediate(MessageBroker& broker, IObservable& observedObject)
-      : IObserver(broker),
-        IObservable(broker),
-        observedObject_(observedObject)
+    MyIntermediate(IObservable& observedObject)
+      : observedObject_(observedObject)
     {
-      observedObject_.RegisterObserverCallback(new MessageForwarder<MyObservable::MyCustomMessage>(broker, *this));
+      observedObject_.RegisterObserverCallback(new MessageForwarder<MyObservable::MyCustomMessage>(*this));
     }
   };
 }
@@ -86,9 +74,8 @@ namespace {
 
 TEST(MessageBroker, TestPermanentConnectionSimpleUseCase)
 {
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyObserver    observer(broker);
+  MyObservable  observable;
+  MyObserver    observer;
 
   // create a permanent connection between an observable and an observer
   observable.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
@@ -111,10 +98,9 @@ TEST(MessageBroker, TestPermanentConnectionSimpleUseCase)
 
 TEST(MessageBroker, TestMessageForwarderSimpleUseCase)
 {
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyIntermediate intermediate(broker, observable);
-  MyObserver    observer(broker);
+  MyObservable  observable;
+  MyIntermediate intermediate(observable);
+  MyObserver    observer;
 
   // let the observer observers the intermediate that is actually forwarding the messages from the observable
   intermediate.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
@@ -131,9 +117,8 @@ TEST(MessageBroker, TestMessageForwarderSimpleUseCase)
 
 TEST(MessageBroker, TestPermanentConnectionDeleteObserver)
 {
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyObserver*   observer = new MyObserver(broker);
+  MyObservable  observable;
+  MyObserver*   observer(new MyObserver);
 
   // create a permanent connection between an observable and an observer
   observable.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(*observer, &MyObserver::HandleCompletedMessage));
@@ -153,10 +138,9 @@ TEST(MessageBroker, TestPermanentConnectionDeleteObserver)
 
 TEST(MessageBroker, TestMessageForwarderDeleteIntermediate)
 {
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyIntermediate* intermediate = new MyIntermediate(broker, observable);
-  MyObserver    observer(broker);
+  MyObservable  observable;
+  MyIntermediate* intermediate(new MyIntermediate(observable));
+  MyObserver    observer;
 
   // let the observer observers the intermediate that is actually forwarding the messages from the observable
   intermediate->RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
@@ -173,10 +157,9 @@ TEST(MessageBroker, TestMessageForwarderDeleteIntermediate)
 
 TEST(MessageBroker, TestCustomMessage)
 {
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyIntermediate intermediate(broker, observable);
-  MyObserver    observer(broker);
+  MyObservable  observable;
+  MyIntermediate intermediate(observable);
+  MyObserver    observer;
 
   // let the observer observers the intermediate that is actually forwarding the messages from the observable
   intermediate.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
@@ -196,9 +179,8 @@ TEST(MessageBroker, TestCustomMessage)
 
 TEST(MessageBroker, TestLambdaSimpleUseCase)
 {
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyObserver*   observer = new MyObserver(broker);
+  MyObservable  observable;
+  MyObserver*   observer(new MyObserver);
 
   // create a permanent connection between an observable and an observer
   observable.RegisterObserverCallback(new LambdaCallable<MyObservable::MyCustomMessage>(*observer, [&](const MyObservable::MyCustomMessage& message) {testCounter += 2 * message.payload_;}));
@@ -222,9 +204,8 @@ namespace {
     int multiplier_;  // this is a private variable we want to access in a lambda
 
   public:
-    MyObserverWithLambda(MessageBroker& broker, int multiplier, MyObservable& observable)
-      : IObserver(broker),
-        multiplier_(multiplier)
+    MyObserverWithLambda(int multiplier, MyObservable& observable)
+      : multiplier_(multiplier)
     {
       // register a callable to a lambda that access private members
       observable.RegisterObserverCallback(new LambdaCallable<MyObservable::MyCustomMessage>(*this, [this](const MyObservable::MyCustomMessage& message) {
@@ -237,9 +218,8 @@ namespace {
 
 TEST(MessageBroker, TestLambdaCaptureThisAndAccessPrivateMembers)
 {
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyObserverWithLambda*   observer = new MyObserverWithLambda(broker, 3, observable);
+  MyObservable  observable;
+  MyObserverWithLambda*   observer = new MyObserverWithLambda(3, observable);
 
   testCounter = 0;
   observable.BroadcastMessage(MyObservable::MyCustomMessage(12));

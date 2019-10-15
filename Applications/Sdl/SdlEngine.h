@@ -23,12 +23,13 @@
 
 #if ORTHANC_ENABLE_SDL == 1
 
-#include "SdlCairoSurface.h"
+#include "../../Framework/Messages/ObserverBase.h"
 #include "../Generic/NativeStoneApplicationContext.h"
+#include "SdlCairoSurface.h"
 
 namespace OrthancStone
 {
-  class SdlEngine : public IObserver
+  class SdlEngine : public ObserverBase<SdlEngine>
   {
   private:
     SdlWindow&                window_;
@@ -46,8 +47,7 @@ namespace OrthancStone
 
   public:
     SdlEngine(SdlWindow& window,
-              NativeStoneApplicationContext& context,
-              MessageBroker& broker);
+              NativeStoneApplicationContext& context);
   
     void OnViewportChanged(const Deprecated::IViewport::ViewportChangedMessage& message)
     {

@@ -35,13 +35,11 @@ namespace Deprecated
     OrthancStone::NativeStoneApplicationContext&                                          context_;
 
   public:
-    WebServiceCachedGetCommand(OrthancStone::MessageBroker& broker,
-                               OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+    WebServiceCachedGetCommand(OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
                                boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedMessage,
                                Orthanc::IDynamicObject* payload /* takes ownership */,
                                OrthancStone::NativeStoneApplicationContext& context
                                ) :
-      IObservable(broker),
       successCallback_(successCallback),
       payload_(payload),
       cachedMessage_(cachedMessage),
@@ -75,7 +73,7 @@ namespace Deprecated
                                                 Orthanc::IDynamicObject* payload, // takes ownership
                                                 OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback)
   {
-    oracle_.Submit(new WebServiceCachedGetCommand(GetBroker(), successCallback, cachedMessage, payload, context_));
+    oracle_.Submit(new WebServiceCachedGetCommand(successCallback, cachedMessage, payload, context_));
   }
 
 

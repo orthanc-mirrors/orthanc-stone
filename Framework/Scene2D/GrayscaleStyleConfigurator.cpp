@@ -41,6 +41,11 @@ namespace OrthancStone
     customWindowWidth_ = windowWidth;
   }
 
+  void GrayscaleStyleConfigurator::GetCustomWindowing(float& windowCenter, float& windowWidth) const
+  {
+    windowCenter = customWindowCenter_;
+    windowWidth  = customWindowWidth_;
+  }
 
   void GrayscaleStyleConfigurator::SetInverted(bool inverted)
   {

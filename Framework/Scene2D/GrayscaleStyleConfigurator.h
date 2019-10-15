@@ -53,7 +53,9 @@ namespace OrthancStone
 
     void SetWindowing(ImageWindowing windowing);
 
-    void SetCustomWindowing(float windowWidth, float windowCenter);
+    void SetCustomWindowing(float windowCenter, float windowWidth);
+
+    void GetCustomWindowing(float& windowCenter, float& windowWidth) const;
 
     void SetInverted(bool inverted);
 

@@ -61,7 +61,6 @@ namespace OrthancStone
     }
   }
 
-
   void FloatTextureSceneLayer::SetCustomWindowing(float customCenter,
                                                   float customWidth)
   {

@@ -20,6 +20,9 @@
 
 #pragma once
 
+#include <Core/Enumerations.h>
+#include <Core/OrthancException.h>
+
 #include "IMessageEmitter.h"
 #include "IObservable.h"
 
@@ -39,7 +42,7 @@ namespace OrthancStone
   class LockingEmitter : public IMessageEmitter
   {
   private:
-    boost::shared_mutex                mutex_;
+    boost::shared_mutex  mutex_;
     MessageBroker        broker_;
     IObservable          oracleObservable_;
 

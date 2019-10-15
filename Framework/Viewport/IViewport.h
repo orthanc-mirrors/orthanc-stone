@@ -42,10 +42,13 @@ namespace OrthancStone
 
     virtual void Refresh() = 0;
 
-    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) = 0;
+    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const = 0;
 
     virtual bool HasCompositor() const = 0;
 
     virtual ICompositor& GetCompositor() = 0;
+
+    virtual const ICompositor& GetCompositor() const = 0;
   };
 }
+

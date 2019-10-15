@@ -42,7 +42,7 @@ namespace OrthancStone
   }
   
 
-  ScenePoint2D ViewportBase::GetPixelCenterCoordinates(int x, int y)
+  ScenePoint2D ViewportBase::GetPixelCenterCoordinates(int x, int y) const
   {
     if (HasCompositor())
     {

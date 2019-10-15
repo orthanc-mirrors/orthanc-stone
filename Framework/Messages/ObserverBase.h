@@ -23,6 +23,7 @@
 
 #include "ICallable.h"
 #include "IObserver.h"
+#include "IObservable.h"
 
 #include <Core/OrthancException.h>
 
@@ -53,6 +54,13 @@ namespace OrthancStone
     ICallable* CreateCallable(void (TObserver::* MemberMethod) (const TMessage&))
     {
       return new Callable<TObserver, TMessage>(GetSharedObserver(), MemberMethod);
+    }
+
+    template <typename TMessage>
+    void Register(IObservable& observable,
+                  void (TObserver::* MemberMethod) (const TMessage&))
+    {
+      observable.RegisterCallable(CreateCallable(MemberMethod));
     }
   };
 }

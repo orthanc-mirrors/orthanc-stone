@@ -165,17 +165,11 @@ namespace OrthancStone
   {
     LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::LoaderStateMachine()";
 
-    oracleObservable.RegisterObserver<LoaderStateMachine, OrthancRestApiCommand::SuccessMessage>
-      (*this, &LoaderStateMachine::HandleSuccessMessage);
-
-    oracleObservable.RegisterObserver<LoaderStateMachine, GetOrthancImageCommand::SuccessMessage>
-      (*this, &LoaderStateMachine::HandleSuccessMessage);
-
-    oracleObservable.RegisterObserver<LoaderStateMachine, GetOrthancWebViewerJpegCommand::SuccessMessage>
-      (*this, &LoaderStateMachine::HandleSuccessMessage);
-
-    oracleObservable.RegisterObserver<LoaderStateMachine, OracleCommandExceptionMessage>
-      (*this, &LoaderStateMachine::HandleExceptionMessage);
+    // TODO => Move this out of constructor
+    Register<OrthancRestApiCommand::SuccessMessage>(oracleObservable, &LoaderStateMachine::HandleSuccessMessage);
+    Register<GetOrthancImageCommand::SuccessMessage>(oracleObservable, &LoaderStateMachine::HandleSuccessMessage);
+    Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(oracleObservable, &LoaderStateMachine::HandleSuccessMessage);
+    Register<OracleCommandExceptionMessage>(oracleObservable, &LoaderStateMachine::HandleExceptionMessage);
   }
 
   LoaderStateMachine::~LoaderStateMachine()

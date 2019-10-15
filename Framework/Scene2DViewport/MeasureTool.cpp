@@ -84,8 +84,8 @@ namespace OrthancStone
     : controllerW_(controllerW)
     , enabled_(true)
   {
-    GetController()->RegisterObserver<MeasureTool, ViewportController::SceneTransformChanged>
-      (*this, &MeasureTool::OnSceneTransformChanged);
+    // TODO => Move this out of constructor
+    Register<ViewportController::SceneTransformChanged>(*GetController(), &MeasureTool::OnSceneTransformChanged);
   }
 
 

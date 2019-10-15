@@ -428,14 +428,15 @@ namespace OrthancStone
     sorter_(new BasicFetchingItemsSorter::Factory),
     volumeImageReadyInHighQuality_(false)
   {
-    oracleObservable.RegisterObserver<OrthancSeriesVolumeProgressiveLoader, OrthancRestApiCommand::SuccessMessage>
-      (*this, &OrthancSeriesVolumeProgressiveLoader::LoadGeometry);
-  
-    oracleObservable.RegisterObserver<OrthancSeriesVolumeProgressiveLoader, GetOrthancImageCommand::SuccessMessage>
-      (*this, &OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent);
-    
-    oracleObservable.RegisterObserver<OrthancSeriesVolumeProgressiveLoader, GetOrthancWebViewerJpegCommand::SuccessMessage>
-      (*this, &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent);
+    // TODO => Move this out of constructor
+    Register<OrthancRestApiCommand::SuccessMessage>
+      (oracleObservable, &OrthancSeriesVolumeProgressiveLoader::LoadGeometry);
+
+    Register<GetOrthancImageCommand::SuccessMessage>
+      (oracleObservable, &OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent);
+
+    Register<GetOrthancWebViewerJpegCommand::SuccessMessage>
+      (oracleObservable, &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent);
   }
 
   OrthancSeriesVolumeProgressiveLoader::~OrthancSeriesVolumeProgressiveLoader()

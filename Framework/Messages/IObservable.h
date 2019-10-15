@@ -44,11 +44,11 @@ namespace OrthancStone
     void EmitMessageInternal(const IObserver* receiver,
                              const IMessage& message);
 
-    // Takes ownsership of the callable
-    void RegisterObserverCallback(ICallable* callable);
-
   public:
     virtual ~IObservable();
+
+    // Takes ownsership of the callable
+    void RegisterCallable(ICallable* callable);
 
     // TODO - Remove this?
     void Unregister(IObserver* observer);
@@ -60,13 +60,5 @@ namespace OrthancStone
 
     // Takes ownsership
     void RegisterForwarder(IMessageForwarder* forwarder);
-
-    template<typename TObserver,
-             typename TMessage>
-    void RegisterObserver(TObserver& observer,
-                          void (TObserver::* MemberMethod) (const TMessage&))
-    {
-      RegisterObserverCallback(new Callable<TObserver, TMessage>(observer.GetSharedObserver(), MemberMethod));
-    }
   };
 }

@@ -56,7 +56,7 @@ namespace OrthancStone
   }
   
 
-  void IObservable::RegisterObserverCallback(ICallable* callable)
+  void IObservable::RegisterCallable(ICallable* callable)
   {
     if (callable == NULL)
     {

@@ -73,6 +73,11 @@ namespace OrthancStone
       return (compositor_.get() != NULL);
     }
     
+    bool IsContextLost()
+    {
+      return context_.IsContextLost();
+    }
+
     virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE;
 
     virtual void Refresh() ORTHANC_OVERRIDE;

@@ -89,6 +89,11 @@ namespace OrthancStone
     {
     }
 
+    boost::shared_ptr<const DicomVolumeImage> GetVolume() const
+    {
+      return volume_;
+    }
+
     virtual ~DicomVolumeImageMPRSlicer();
 
     virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;

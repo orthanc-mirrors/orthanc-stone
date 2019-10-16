@@ -67,7 +67,7 @@ namespace OrthancStone
     }
 
     void Initialize(const VolumeImageGeometry& geometry,
-                    Orthanc::PixelFormat format);
+                    Orthanc::PixelFormat format, bool computeRange = false);
 
     void SetDicomParameters(const DicomInstanceParameters& parameters);
     

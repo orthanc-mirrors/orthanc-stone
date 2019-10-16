@@ -36,12 +36,14 @@ namespace OrthancStone
   }
     
 
-  void DicomVolumeImage::Initialize(const VolumeImageGeometry& geometry,
-                                    Orthanc::PixelFormat format)
+  void DicomVolumeImage::Initialize(
+    const VolumeImageGeometry& geometry,
+    Orthanc::PixelFormat format, 
+    bool computeRange)
   {
     geometry_.reset(new VolumeImageGeometry(geometry));
     image_.reset(new ImageBuffer3D(format, geometry_->GetWidth(), geometry_->GetHeight(),
-                                   geometry_->GetDepth(), false /* don't compute range */));
+                                   geometry_->GetDepth(), computeRange));
 
     revision_ ++;
   }

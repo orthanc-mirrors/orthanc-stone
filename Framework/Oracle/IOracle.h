@@ -37,13 +37,5 @@ namespace OrthancStone
 
     virtual void Schedule(boost::shared_ptr<IObserver>& receiver,
                           IOracleCommand* command) = 0;  // Takes ownership
-
-    template <typename TObserver>
-    void ScheduleAdapter(boost::shared_ptr<TObserver>& receiver,
-                         IOracleCommand* command)
-    {
-      boost::shared_ptr<IObserver> converted(receiver);
-      Schedule(converted, command);
-    }
   };
 }

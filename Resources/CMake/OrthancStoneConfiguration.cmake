@@ -404,6 +404,7 @@ if (ENABLE_THREADS)
     ${ORTHANC_STONE_ROOT}/Framework/Messages/LockingEmitter.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Messages/LockingEmitter.h
     ${ORTHANC_STONE_ROOT}/Framework/Oracle/ThreadedOracle.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Oracle/GenericOracleRunner.cpp
     )
 endif()
 

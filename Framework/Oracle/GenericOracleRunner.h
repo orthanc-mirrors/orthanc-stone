@@ -21,27 +21,29 @@
 
 #pragma once
 
-#include <boost/noncopyable.hpp>
+#include "../Messages/IMessageEmitter.h"
+#include "IOracleRunner.h"
+
+#include <Core/Enumerations.h>  // For ORTHANC_OVERRIDE
+#include <Core/WebServiceParameters.h>
 
 namespace OrthancStone
 {
-  class IOracleCommand : public boost::noncopyable
+  class GenericOracleRunner : public IOracleRunner
   {
-  public:
-    enum Type
-    {
-      Type_Http,
-      Type_Sleep,
-      Type_OrthancRestApi,
-      Type_GetOrthancImage,
-      Type_GetOrthancWebViewerJpeg,
-      Type_Custom
-    };
+  private:
+    IMessageEmitter&                      emitter_;
+    const Orthanc::WebServiceParameters&  orthanc_;
 
-    virtual ~IOracleCommand()
+  public:
+    GenericOracleRunner(IMessageEmitter&  emitter,
+                        const Orthanc::WebServiceParameters& orthanc) :
+      emitter_(emitter),
+      orthanc_(orthanc)
     {
     }
 
-    virtual Type GetType() const = 0;
+    virtual void Run(boost::weak_ptr<IObserver>& receiver,
+                     IOracleCommand& command) ORTHANC_OVERRIDE;
   };
 }

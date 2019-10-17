@@ -21,27 +21,20 @@
 
 #pragma once
 
-#include <boost/noncopyable.hpp>
+#include "IOracleRunner.h"
 
 namespace OrthancStone
 {
-  class IOracleCommand : public boost::noncopyable
+  class CustomOracleCommand : public IOracleCommand
   {
   public:
-    enum Type
+    virtual Type GetType() const
     {
-      Type_Http,
-      Type_Sleep,
-      Type_OrthancRestApi,
-      Type_GetOrthancImage,
-      Type_GetOrthancWebViewerJpeg,
-      Type_Custom
-    };
-
-    virtual ~IOracleCommand()
-    {
+      return Type_Custom;
     }
 
-    virtual Type GetType() const = 0;
+    virtual void Execute(IMessageEmitter& emitter,
+                         boost::weak_ptr<IObserver>& receiver,
+                         IOracleRunner& runner) = 0;
   };
 }

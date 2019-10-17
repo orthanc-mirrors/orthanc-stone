@@ -21,18 +21,10 @@
 
 #include "ThreadedOracle.h"
 
-#include "GetOrthancImageCommand.h"
-#include "GetOrthancWebViewerJpegCommand.h"
-#include "HttpCommand.h"
-#include "OrthancRestApiCommand.h"
 #include "SleepOracleCommand.h"
-#include "OracleCommandExceptionMessage.h"
 
-#include <Core/Compression/GzipCompressor.h>
-#include <Core/HttpClient.h>
+#include <Core/Logging.h>
 #include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
-
 
 namespace OrthancStone
 {
@@ -160,154 +152,6 @@ namespace OrthancStone
   };
 
 
-  static void CopyHttpHeaders(Orthanc::HttpClient& client,
-                              const Orthanc::HttpClient::HttpHeaders& headers)
-  {
-    for (Orthanc::HttpClient::HttpHeaders::const_iterator
-           it = headers.begin(); it != headers.end(); it++ )
-    {
-      client.AddHeader(it->first, it->second);
-    }
-  }
-
-
-  static void DecodeAnswer(std::string& answer,
-                           const Orthanc::HttpClient::HttpHeaders& headers)
-  {
-    Orthanc::HttpCompression contentEncoding = Orthanc::HttpCompression_None;
-
-    for (Orthanc::HttpClient::HttpHeaders::const_iterator it = headers.begin(); 
-         it != headers.end(); ++it)
-    {
-      std::string s;
-      Orthanc::Toolbox::ToLowerCase(s, it->first);
-
-      if (s == "content-encoding")
-      {
-        if (it->second == "gzip")
-        {
-          contentEncoding = Orthanc::HttpCompression_Gzip;
-        }
-        else 
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
-                                          "Unsupported HTTP Content-Encoding: " + it->second);
-        }
-
-        break;
-      }
-    }
-
-    if (contentEncoding == Orthanc::HttpCompression_Gzip)
-    {
-      std::string compressed;
-      answer.swap(compressed);
-          
-      Orthanc::GzipCompressor compressor;
-      compressor.Uncompress(answer, compressed.c_str(), compressed.size());
-
-      LOG(INFO) << "Uncompressing gzip Encoding: from " << compressed.size()
-                << " to " << answer.size() << " bytes";
-    }
-  }
-
-
-  static void Execute(IMessageEmitter& emitter,
-                      boost::weak_ptr<IObserver>& receiver,
-                      const HttpCommand& command)
-  {
-    Orthanc::HttpClient client;
-    client.SetUrl(command.GetUrl());
-    client.SetMethod(command.GetMethod());
-    client.SetTimeout(command.GetTimeout());
-
-    CopyHttpHeaders(client, command.GetHttpHeaders());
-
-    if (command.GetMethod() == Orthanc::HttpMethod_Post ||
-        command.GetMethod() == Orthanc::HttpMethod_Put)
-    {
-      client.SetBody(command.GetBody());
-    }
-
-    std::string answer;
-    Orthanc::HttpClient::HttpHeaders answerHeaders;
-    client.ApplyAndThrowException(answer, answerHeaders);
-
-    DecodeAnswer(answer, answerHeaders);
-
-    HttpCommand::SuccessMessage message(command, answerHeaders, answer);
-    emitter.EmitMessage(receiver, message);
-  }
-
-
-  static void Execute(IMessageEmitter& emitter,
-                      const Orthanc::WebServiceParameters& orthanc,
-                      boost::weak_ptr<IObserver>& receiver,
-                      const OrthancRestApiCommand& command)
-  {
-    Orthanc::HttpClient client(orthanc, command.GetUri());
-    client.SetMethod(command.GetMethod());
-    client.SetTimeout(command.GetTimeout());
-
-    CopyHttpHeaders(client, command.GetHttpHeaders());
-
-    if (command.GetMethod() == Orthanc::HttpMethod_Post ||
-        command.GetMethod() == Orthanc::HttpMethod_Put)
-    {
-      client.SetBody(command.GetBody());
-    }
-
-    std::string answer;
-    Orthanc::HttpClient::HttpHeaders answerHeaders;
-    client.ApplyAndThrowException(answer, answerHeaders);
-
-    DecodeAnswer(answer, answerHeaders);
-
-    OrthancRestApiCommand::SuccessMessage message(command, answerHeaders, answer);
-    emitter.EmitMessage(receiver, message);
-  }
-
-
-  static void Execute(IMessageEmitter& emitter,
-                      const Orthanc::WebServiceParameters& orthanc,
-                      boost::weak_ptr<IObserver>& receiver,
-                      const GetOrthancImageCommand& command)
-  {
-    Orthanc::HttpClient client(orthanc, command.GetUri());
-    client.SetTimeout(command.GetTimeout());
-
-    CopyHttpHeaders(client, command.GetHttpHeaders());
-    
-    std::string answer;
-    Orthanc::HttpClient::HttpHeaders answerHeaders;
-    client.ApplyAndThrowException(answer, answerHeaders);
-
-    DecodeAnswer(answer, answerHeaders);
-
-    command.ProcessHttpAnswer(emitter, receiver, answer, answerHeaders);
-  }
-
-
-  static void Execute(IMessageEmitter& emitter,
-                      const Orthanc::WebServiceParameters& orthanc,
-                      boost::weak_ptr<IObserver>& receiver,
-                      const GetOrthancWebViewerJpegCommand& command)
-  {
-    Orthanc::HttpClient client(orthanc, command.GetUri());
-    client.SetTimeout(command.GetTimeout());
-
-    CopyHttpHeaders(client, command.GetHttpHeaders());
-
-    std::string answer;
-    Orthanc::HttpClient::HttpHeaders answerHeaders;
-    client.ApplyAndThrowException(answer, answerHeaders);
-
-    DecodeAnswer(answer, answerHeaders);
-
-    command.ProcessHttpAnswer(emitter, receiver, answer);
-  }
-
-
   void ThreadedOracle::Step()
   {
     std::auto_ptr<Orthanc::IDynamicObject>  object(queue_.Dequeue(100));
@@ -316,60 +160,23 @@ namespace OrthancStone
     {
       Item& item = dynamic_cast<Item&>(*object);
 
-      try
+      if (item.GetCommand().GetType() == IOracleCommand::Type_Sleep)
       {
-        switch (item.GetCommand().GetType())
+        SleepOracleCommand& command = dynamic_cast<SleepOracleCommand&>(item.GetCommand());
+          
+        std::auto_ptr<SleepOracleCommand> copy(new SleepOracleCommand(command.GetDelay()));
+          
+        if (command.HasPayload())
         {
-          case IOracleCommand::Type_Sleep:
-          {
-            SleepOracleCommand& command = dynamic_cast<SleepOracleCommand&>(item.GetCommand());
-
-            std::auto_ptr<SleepOracleCommand> copy(new SleepOracleCommand(command.GetDelay()));
-
-            if (command.HasPayload())
-            {
-              copy->SetPayload(command.ReleasePayload());
-            }
-
-            sleepingCommands_->Add(item.GetReceiver(), copy.release());
-
-            break;
-          }
-
-          case IOracleCommand::Type_Http:
-            Execute(emitter_, item.GetReceiver(), 
-                    dynamic_cast<const HttpCommand&>(item.GetCommand()));
-            break;
-
-          case IOracleCommand::Type_OrthancRestApi:
-            Execute(emitter_, orthanc_, item.GetReceiver(), 
-                    dynamic_cast<const OrthancRestApiCommand&>(item.GetCommand()));
-            break;
-
-          case IOracleCommand::Type_GetOrthancImage:
-            Execute(emitter_, orthanc_, item.GetReceiver(), 
-                    dynamic_cast<const GetOrthancImageCommand&>(item.GetCommand()));
-            break;
-
-          case IOracleCommand::Type_GetOrthancWebViewerJpeg:
-            Execute(emitter_, orthanc_, item.GetReceiver(), 
-                    dynamic_cast<const GetOrthancWebViewerJpegCommand&>(item.GetCommand()));
-            break;
-
-          default:
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+          copy->SetPayload(command.ReleasePayload());
         }
+          
+        sleepingCommands_->Add(item.GetReceiver(), copy.release());
       }
-      catch (Orthanc::OrthancException& e)
+      else
       {
-        LOG(ERROR) << "Exception within the oracle: " << e.What();
-        emitter_.EmitMessage(item.GetReceiver(), OracleCommandExceptionMessage(item.GetCommand(), e));
-      }
-      catch (...)
-      {
-        LOG(ERROR) << "Threaded exception within the oracle";
-        emitter_.EmitMessage(item.GetReceiver(), OracleCommandExceptionMessage
-                             (item.GetCommand(), Orthanc::ErrorCode_InternalError));
+        GenericOracleRunner runner(emitter_, orthanc_);
+        runner.Run(item.GetReceiver(), item.GetCommand());
       }
     }
   }

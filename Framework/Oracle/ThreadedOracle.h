@@ -29,10 +29,9 @@
 #  error This file can only compiled for native targets
 #endif
 
-#include "../Messages/IMessageEmitter.h"
 #include "IOracle.h"
+#include "GenericOracleRunner.h"
 
-#include <Core/WebServiceParameters.h>
 #include <Core/MultiThreading/SharedMessageQueue.h>
 
 
@@ -74,7 +73,6 @@ namespace OrthancStone
 
     virtual ~ThreadedOracle();
 
-    // The reference is not stored.
     void SetOrthancParameters(const Orthanc::WebServiceParameters& orthanc);
 
     void SetThreadsCount(unsigned int count);
@@ -89,6 +87,6 @@ namespace OrthancStone
     }
 
     virtual void Schedule(boost::shared_ptr<IObserver>& receiver,
-                          IOracleCommand* command);
+                          IOracleCommand* command) ORTHANC_OVERRIDE;
   };
 }

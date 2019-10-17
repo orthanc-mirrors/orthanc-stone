@@ -129,7 +129,7 @@ namespace OrthancStone
     std::string GetUri() const;
 
     void ProcessHttpAnswer(IMessageEmitter& emitter,
-                           const IObserver& receiver,
+                           boost::weak_ptr<IObserver>& receiver,
                            const std::string& answer) const;
   };
 }

@@ -94,11 +94,16 @@ namespace OrthancStone
   }
 
   
-  void IObservable::EmitMessage(const IObserver& observer,
+  void IObservable::EmitMessage(boost::weak_ptr<IObserver>& observer,
                                 const IMessage& message)
   {
     LOG(TRACE) << "IObservable::EmitMessage observer = "
       << std::hex << &observer << std::dec;
-    EmitMessageInternal(&observer, message);
+
+    boost::shared_ptr<IObserver> lock(observer.lock());
+    if (lock)
+    {
+      EmitMessageInternal(lock.get(), message);
+    }
   }
 }

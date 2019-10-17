@@ -33,7 +33,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void Schedule(const IObserver& receiver,
+    virtual void Schedule(boost::shared_ptr<IObserver>& receiver,
                           IOracleCommand* command) = 0;  // Takes ownership
   };
 }

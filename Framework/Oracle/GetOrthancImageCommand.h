@@ -112,7 +112,7 @@ namespace OrthancStone
     }
 
     void ProcessHttpAnswer(IMessageEmitter& emitter,
-                           const IObserver& receiver,
+                           boost::weak_ptr<IObserver>& receiver,
                            const std::string& answer,
                            const HttpHeaders& answerHeaders) const;
   };

@@ -292,7 +292,9 @@ namespace OrthancStone
       }
 
       command->SetPayload(new Orthanc::SingleValueObject<unsigned int>(sliceIndex));
-      oracle_.Schedule(*this, command.release());
+
+      boost::shared_ptr<IObserver> observer(GetSharedObserver());
+      oracle_.Schedule(observer, command.release());
     }
     else
     {
@@ -479,7 +481,8 @@ namespace OrthancStone
       command->SetUri("/series/" + seriesId + "/instances-tags");
 
 //      LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries about to call oracle_.Schedule";
-      oracle_.Schedule(*this, command.release());
+      boost::shared_ptr<IObserver> observer(GetSharedObserver());
+      oracle_.Schedule(observer, command.release());
 //      LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries called oracle_.Schedule";
     }
   }

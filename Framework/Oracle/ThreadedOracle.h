@@ -88,7 +88,7 @@ namespace OrthancStone
       StopInternal();
     }
 
-    virtual void Schedule(const IObserver& receiver,
+    virtual void Schedule(boost::shared_ptr<IObserver>& receiver,
                           IOracleCommand* command);
   };
 }

@@ -97,7 +97,8 @@ namespace OrthancStone
         ") < simultaneousDownloads_ (" << simultaneousDownloads_ << 
         ") --> will Schedule command addr " << std::hex << nextCommand << std::dec;
 
-      oracle_.Schedule(*this, nextCommand);
+      boost::shared_ptr<IObserver> observer(GetSharedObserver());
+      oracle_.Schedule(observer, nextCommand);
       pendingCommands_.pop_front();
 
       activeCommands_++;

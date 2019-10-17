@@ -24,6 +24,8 @@
 #include "IObserver.h"
 #include "IMessage.h"
 
+#include <boost/weak_ptr.hpp>
+
 namespace OrthancStone
 {
   /**
@@ -39,7 +41,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void EmitMessage(const IObserver& observer,
+    virtual void EmitMessage(boost::weak_ptr<IObserver>& observer,
                              const IMessage& message) = 0;
   };
 }

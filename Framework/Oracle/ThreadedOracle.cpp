@@ -39,11 +39,11 @@ namespace OrthancStone
   class ThreadedOracle::Item : public Orthanc::IDynamicObject
   {
   private:
-    const IObserver&                receiver_;
+    boost::weak_ptr<IObserver>      receiver_;
     std::auto_ptr<IOracleCommand>   command_;
 
   public:
-    Item(const IObserver& receiver,
+    Item(boost::weak_ptr<IObserver> receiver,
          IOracleCommand* command) :
       receiver_(receiver),
       command_(command)
@@ -54,7 +54,7 @@ namespace OrthancStone
       }
     }
 
-    const IObserver& GetReceiver() const
+    boost::weak_ptr<IObserver>& GetReceiver()
     {
       return receiver_;
     }
@@ -73,12 +73,12 @@ namespace OrthancStone
     class Item
     {
     private:
-      const IObserver&                   receiver_;
+      boost::weak_ptr<IObserver>         receiver_;
       std::auto_ptr<SleepOracleCommand>  command_;
       boost::posix_time::ptime           expiration_;
 
     public:
-      Item(const IObserver& receiver,
+      Item(boost::weak_ptr<IObserver>& receiver,
            SleepOracleCommand* command) :
         receiver_(receiver),
         command_(command)
@@ -123,7 +123,7 @@ namespace OrthancStone
       }
     }
 
-    void Add(const IObserver& receiver,
+    void Add(boost::weak_ptr<IObserver>& receiver,
              SleepOracleCommand* command)   // Takes ownership
     {
       boost::mutex::scoped_lock lock(mutex_);
@@ -213,7 +213,7 @@ namespace OrthancStone
 
 
   static void Execute(IMessageEmitter& emitter,
-                      const IObserver& receiver,
+                      boost::weak_ptr<IObserver>& receiver,
                       const HttpCommand& command)
   {
     Orthanc::HttpClient client;
@@ -242,7 +242,7 @@ namespace OrthancStone
 
   static void Execute(IMessageEmitter& emitter,
                       const Orthanc::WebServiceParameters& orthanc,
-                      const IObserver& receiver,
+                      boost::weak_ptr<IObserver>& receiver,
                       const OrthancRestApiCommand& command)
   {
     Orthanc::HttpClient client(orthanc, command.GetUri());
@@ -270,7 +270,7 @@ namespace OrthancStone
 
   static void Execute(IMessageEmitter& emitter,
                       const Orthanc::WebServiceParameters& orthanc,
-                      const IObserver& receiver,
+                      boost::weak_ptr<IObserver>& receiver,
                       const GetOrthancImageCommand& command)
   {
     Orthanc::HttpClient client(orthanc, command.GetUri());
@@ -290,7 +290,7 @@ namespace OrthancStone
 
   static void Execute(IMessageEmitter& emitter,
                       const Orthanc::WebServiceParameters& orthanc,
-                      const IObserver& receiver,
+                      boost::weak_ptr<IObserver>& receiver,
                       const GetOrthancWebViewerJpegCommand& command)
   {
     Orthanc::HttpClient client(orthanc, command.GetUri());
@@ -563,7 +563,7 @@ namespace OrthancStone
   }
 
 
-  void ThreadedOracle::Schedule(const IObserver& receiver,
+  void ThreadedOracle::Schedule(boost::shared_ptr<IObserver>& receiver,
                                 IOracleCommand* command)
   {
     queue_.Enqueue(new Item(receiver, command));

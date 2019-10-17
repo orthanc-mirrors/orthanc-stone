@@ -24,7 +24,7 @@
 
 namespace OrthancStone
 {
-  void LockingEmitter::EmitMessage(IObserver& observer,
+  void LockingEmitter::EmitMessage(boost::weak_ptr<IObserver>& observer,
                                    const IMessage& message)
   {
     try

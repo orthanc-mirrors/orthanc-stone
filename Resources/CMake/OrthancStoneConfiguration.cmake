@@ -401,6 +401,7 @@ endif()
 
 if (ENABLE_THREADS)
   list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Messages/LockingEmitter.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Messages/LockingEmitter.h
     ${ORTHANC_STONE_ROOT}/Framework/Oracle/ThreadedOracle.cpp
     )

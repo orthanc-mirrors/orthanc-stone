@@ -23,7 +23,9 @@
 #include "IMessageEmitter.h"
 #include "IObservable.h"
 
-#include <boost/thread.hpp>
+#include <Core/Enumerations.h>  // For ORTHANC_OVERRIDE
+
+#include <boost/thread/shared_mutex.hpp>
 
 namespace OrthancStone
 {
@@ -43,19 +45,8 @@ namespace OrthancStone
     IObservable          oracleObservable_;
 
   public:
-    virtual void EmitMessage(const IObserver& observer,
-      const IMessage& message) ORTHANC_OVERRIDE
-    {
-      try
-      {
-        boost::unique_lock<boost::shared_mutex>  lock(mutex_);
-        oracleObservable_.EmitMessage(observer, message);
-      }
-      catch (Orthanc::OrthancException& e)
-      {
-        LOG(ERROR) << "Exception while emitting a message: " << e.What();
-      }
-    }
+    virtual void EmitMessage(IObserver& observer,
+                             const IMessage& message) ORTHANC_OVERRIDE;
 
 
     class ReaderLock : public boost::noncopyable
@@ -66,8 +57,8 @@ namespace OrthancStone
 
     public:
       ReaderLock(LockingEmitter& that) :
-        that_(that),
-        lock_(that.mutex_)
+      that_(that),
+      lock_(that.mutex_)
       {
       }
     };
@@ -81,8 +72,8 @@ namespace OrthancStone
 
     public:
       WriterLock(LockingEmitter& that) :
-        that_(that),
-        lock_(that.mutex_)
+      that_(that),
+      lock_(that.mutex_)
       {
       }
 

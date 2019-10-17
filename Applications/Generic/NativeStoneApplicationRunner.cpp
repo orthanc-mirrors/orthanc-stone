@@ -36,7 +36,6 @@
 #include <Core/OrthancException.h>
 #include <Plugins/Samples/Common/OrthancHttpConnection.h>
 
-#include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 
 namespace OrthancStone
@@ -207,7 +206,9 @@ namespace OrthancStone
         oracle.Start();
 
         {
-          context.SetWebService(boost::make_shared<Deprecated::OracleWebService>(oracle, webServiceParameters, context));
+          boost::shared_ptr<Deprecated::OracleWebService> webService
+            (new Deprecated::OracleWebService(oracle, webServiceParameters, context));
+          context.SetWebService(webService);
           context.SetOrthancBaseUrl(webServiceParameters.GetUrl());
 
           Deprecated::OracleDelayedCallExecutor delayedExecutor(oracle, context);

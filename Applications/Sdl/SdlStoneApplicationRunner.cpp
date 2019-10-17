@@ -34,7 +34,6 @@
 #include <Core/OrthancException.h>
 #include <Plugins/Samples/Common/OrthancHttpConnection.h>
 
-#include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 
 namespace OrthancStone
@@ -104,7 +103,7 @@ namespace OrthancStone
     LOG(WARNING) << "Starting the application";
 
     SdlWindow window(title.c_str(), width_, height_, enableOpenGl_);
-    boost::shared_ptr<SdlEngine> sdl(boost::make_shared<SdlEngine>(window, context));
+    boost::shared_ptr<SdlEngine> sdl(new SdlEngine(window, context));
 
     {
       NativeStoneApplicationContext::GlobalMutexLocker locker(context);

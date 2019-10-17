@@ -69,6 +69,8 @@ namespace OrthancStone
     std::string          body_;
     HttpHeaders          headers_;
     unsigned int         timeout_;
+    std::string          username_;
+    std::string          password_;
 
   public:
     HttpCommand();
@@ -137,5 +139,27 @@ namespace OrthancStone
     {
       return timeout_;
     }
+
+    void SetCredentials(const std::string& username,
+                        const std::string& password)
+    {
+      username_ = username;
+      password_ = password;
+    }
+
+    void ClearCredentials()
+    {
+      username_.clear();
+      password_.clear();
+    }
+
+    bool HasCredentials() const
+    {
+      return !username_.empty();
+    }
+
+    const std::string& GetUsername() const;
+
+    const std::string& GetPassword() const;
   };
 }

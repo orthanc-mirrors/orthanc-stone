@@ -98,6 +98,11 @@ namespace OrthancStone
 
     CopyHttpHeaders(client, command.GetHttpHeaders());
 
+    if (command.HasCredentials())
+    {
+      client.SetCredentials(command.GetUsername().c_str(), command.GetPassword().c_str());
+    }
+
     if (command.GetMethod() == Orthanc::HttpMethod_Post ||
         command.GetMethod() == Orthanc::HttpMethod_Put)
     {
@@ -196,8 +201,7 @@ namespace OrthancStone
           break;
 
         case IOracleCommand::Type_Http:
-          Execute(emitter_, receiver, 
-                  dynamic_cast<const HttpCommand&>(command));
+          Execute(emitter_, receiver, dynamic_cast<const HttpCommand&>(command));
           break;
 
         case IOracleCommand::Type_OrthancRestApi:

@@ -76,4 +76,30 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
+
+
+  const std::string& HttpCommand::GetUsername() const
+  {
+    if (HasCredentials())
+    {
+      return username_;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+
+
+  const std::string& HttpCommand::GetPassword() const
+  {
+    if (HasCredentials())
+    {
+      return password_;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
 }

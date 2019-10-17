@@ -76,7 +76,7 @@ namespace OrthancStone
       orthancRoot_ = root;
     }
     
-    virtual void Schedule(const IObserver& receiver,
-                          IOracleCommand* command);
+    virtual void Schedule(boost::shared_ptr<IObserver>& receiver,
+                          IOracleCommand* command) ORTHANC_OVERRIDE;
   };
 }

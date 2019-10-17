@@ -695,7 +695,7 @@ namespace OrthancStone
 
 
 
-  void WebAssemblyOracle::Schedule(const IObserver& receiver,
+  void WebAssemblyOracle::Schedule(boost::shared_ptr<IObserver>& receiver,
                                    IOracleCommand* command)
   {
     LOG(TRACE) << "WebAssemblyOracle::Schedule : receiver = "

@@ -138,7 +138,9 @@ namespace OrthancStone
     Orthanc::ImageProcessing::GetMinMaxFloatValue(minValue_, maxValue_, GetTexture());
     assert(minValue_ <= maxValue_);
     // TODO: debug to be removed
-    LOG(ERROR) << "LookupTableTextureSceneLayer::FitRange(): minValue_ = " << minValue_ << " maxValue_ = " << maxValue_;
+    if (fabs(maxValue_ - minValue_) < 0.0001) {
+      LOG(INFO) << "LookupTableTextureSceneLayer::FitRange(): minValue_ = " << minValue_ << " maxValue_ = " << maxValue_;
+    }
     IncrementRevision();
   }
 

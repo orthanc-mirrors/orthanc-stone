@@ -25,6 +25,17 @@
 
 namespace OrthancStone
 {
+  static void StringToVector(std::vector<uint8_t>& target,
+    const std::string& source)
+  {
+    target.resize(source.size());
+
+    for (size_t i = 0; i < source.size(); i++)
+    {
+      target[i] = source[i];
+    }
+  }
+
   LookupTableStyleConfigurator::LookupTableStyleConfigurator() :
     revision_(0),
     hasLut_(false),
@@ -32,20 +43,27 @@ namespace OrthancStone
   {
   }
 
-
   void LookupTableStyleConfigurator::SetLookupTable(Orthanc::EmbeddedResources::FileResourceId resource)
   {
     hasLut_ = true;
-    Orthanc::EmbeddedResources::GetFileResource(lut_, resource);
+    std::string tmp;
+    Orthanc::EmbeddedResources::GetFileResource(tmp, resource);
+    SetLookupTable(tmp);
   }
 
-
-  void LookupTableStyleConfigurator::SetLookupTable(const std::string& lut)
+  void LookupTableStyleConfigurator::SetLookupTable(const std::vector<uint8_t>& lut)
   {
     hasLut_ = true;
     lut_ = lut;
+    revision_++;
   }
 
+  void LookupTableStyleConfigurator::SetLookupTable(const std::string& lut)
+  {
+    std::vector<uint8_t> tmp;
+    StringToVector(tmp, lut);
+    SetLookupTable(tmp);
+  }
 
   void LookupTableStyleConfigurator::SetRange(float minValue,
                                               float maxValue)
@@ -56,18 +74,18 @@ namespace OrthancStone
     }
     else
     {
+      if ((!hasRange_) || (minValue_ != minValue) || (maxValue_ != maxValue))
+        revision_++;
       hasRange_ = true;
       minValue_ = minValue;
       maxValue_ = maxValue;
     }
   }
 
-    
   TextureBaseSceneLayer* LookupTableStyleConfigurator::CreateTextureFromImage(const Orthanc::ImageAccessor& image) const
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
-
 
   void LookupTableStyleConfigurator::ApplyStyle(ISceneLayer& layer) const
   {

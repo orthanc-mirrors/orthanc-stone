@@ -231,6 +231,7 @@ endif()
 if (ENABLE_NATIVE)
   add_executable(UnitTests
     ${GOOGLE_TEST_SOURCES}
+    ${ORTHANC_STONE_ROOT}/UnitTestsSources/GenericToolboxTests.cpp
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestCommands.cpp
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestMessageBroker.cpp
     ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestStrategy.cpp

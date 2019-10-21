@@ -27,18 +27,6 @@
 
 namespace OrthancStone
 {
-  static void StringToVector(std::vector<uint8_t>& target,
-                             const std::string& source)
-  {
-    target.resize(source.size());
-
-    for (size_t i = 0; i < source.size(); i++)
-    {
-      target[i] = source[i];
-    }
-  }
-
-  
   LookupTableTextureSceneLayer::LookupTableTextureSceneLayer(const Orthanc::ImageAccessor& texture)
   {
     {
@@ -129,15 +117,6 @@ namespace OrthancStone
     }
   }
 
-
-  void LookupTableTextureSceneLayer::SetLookupTable(const std::string& lut)
-  {
-    std::vector<uint8_t> tmp;
-    StringToVector(tmp, lut);
-    SetLookupTable(tmp);
-  }
-
-  
   void LookupTableTextureSceneLayer::SetRange(float minValue,
                                               float maxValue)
   {

@@ -21,10 +21,10 @@
 
 #include "gtest/gtest.h"
 
-#include "Framework/Messages/MessageBroker.h"
-#include "Framework/Messages/IObservable.h"
-#include "Framework/Messages/IObserver.h"
-#include "Framework/Messages/MessageForwarder.h"
+#include "../Framework/Messages/MessageBroker.h"
+#include "../Framework/Messages/IObservable.h"
+#include "../Framework/Messages/IObserver.h"
+#include "../Framework/Messages/MessageForwarder.h"
 
 
 int testCounter = 0;

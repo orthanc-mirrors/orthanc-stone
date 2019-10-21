@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -33,13 +33,13 @@ namespace OrthancStone
   class LookupTableStyleConfigurator : public ILayerStyleConfigurator
   {
   private:
-    uint64_t     revision_;
-    bool         hasLut_;
-    std::string  lut_;
-    bool         hasRange_;
-    float        minValue_;
-    float        maxValue_;
-    
+    uint64_t              revision_;
+    bool                  hasLut_;
+    std::vector<uint8_t>  lut_;
+    bool                  hasRange_;
+    float                 minValue_;
+    float                 maxValue_;
+
   public:
     LookupTableStyleConfigurator();
 
@@ -47,18 +47,23 @@ namespace OrthancStone
 
     void SetLookupTable(const std::string& lut);
 
-    void SetRange(float minValue,
-                  float maxValue);
+    /**
+     See the SetLookupTable(const std::vector<uint8_t>& lut) method in the
+     LookupTableTextureSceneLayer class.
+     */
+    void SetLookupTable(const std::vector<uint8_t>& lut);
+
+    void SetRange(float minValue, float maxValue);
 
     virtual uint64_t GetRevision() const
     {
       return revision_;
     }
-    
+
     virtual TextureBaseSceneLayer* CreateTextureFromImage(const Orthanc::ImageAccessor& image) const;
 
     virtual TextureBaseSceneLayer* CreateTextureFromDicom(const Orthanc::ImageAccessor& frame,
-                                                          const DicomInstanceParameters& parameters) const
+      const DicomInstanceParameters& parameters) const
     {
       return parameters.CreateLookupTableTexture(frame);
     }

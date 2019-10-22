@@ -112,8 +112,6 @@ namespace OrthancStone
     }
   };
 
-
-
   class OrthancMultiframeVolumeLoader::LoadTransferSyntax : public State
   {
   public:
@@ -229,7 +227,7 @@ namespace OrthancStone
       geometry.SetAxialGeometry(parameters.GetGeometry());
       geometry.SetVoxelDimensions(parameters.GetPixelSpacingX(),
                                   parameters.GetPixelSpacingY(), spacingZ);
-      volume_->Initialize(geometry, format);
+      volume_->Initialize(geometry, format, true /* Do compute range */);
     }
 
     volume_->GetPixelData().Clear();

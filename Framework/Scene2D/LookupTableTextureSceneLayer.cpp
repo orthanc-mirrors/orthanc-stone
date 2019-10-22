@@ -27,18 +27,6 @@
 
 namespace OrthancStone
 {
-  static void StringToVector(std::vector<uint8_t>& target,
-                             const std::string& source)
-  {
-    target.resize(source.size());
-
-    for (size_t i = 0; i < source.size(); i++)
-    {
-      target[i] = source[i];
-    }
-  }
-
-  
   LookupTableTextureSceneLayer::LookupTableTextureSceneLayer(const Orthanc::ImageAccessor& texture)
   {
     {
@@ -52,7 +40,7 @@ namespace OrthancStone
       SetTexture(t.release());
     }
 
-    SetLookupTableGrayscale();
+    SetLookupTableGrayscale(); // simple ramp between 0 and 255
     SetRange(0, 1);
   }
 
@@ -129,15 +117,6 @@ namespace OrthancStone
     }
   }
 
-
-  void LookupTableTextureSceneLayer::SetLookupTable(const std::string& lut)
-  {
-    std::vector<uint8_t> tmp;
-    StringToVector(tmp, lut);
-    SetLookupTable(tmp);
-  }
-
-  
   void LookupTableTextureSceneLayer::SetRange(float minValue,
                                               float maxValue)
   {
@@ -158,7 +137,10 @@ namespace OrthancStone
   {
     Orthanc::ImageProcessing::GetMinMaxFloatValue(minValue_, maxValue_, GetTexture());
     assert(minValue_ <= maxValue_);
-    
+    // TODO: debug to be removed
+    if (fabs(maxValue_ - minValue_) < 0.0001) {
+      LOG(INFO) << "LookupTableTextureSceneLayer::FitRange(): minValue_ = " << minValue_ << " maxValue_ = " << maxValue_;
+    }
     IncrementRevision();
   }
 
@@ -168,6 +150,8 @@ namespace OrthancStone
     std::auto_ptr<LookupTableTextureSceneLayer> cloned
       (new LookupTableTextureSceneLayer(GetTexture()));
 
+
+    // TODO: why is windowing_ not copied??????
     cloned->CopyParameters(*this);
     cloned->minValue_ = minValue_;
     cloned->maxValue_ = maxValue_;

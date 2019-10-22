@@ -43,6 +43,7 @@ namespace OrthancStone
   };
 
 
+
   class StoneException
   {
   protected:
@@ -63,7 +64,35 @@ namespace OrthancStone
 
     virtual const char* What() const
     {
-      return "TODO: EnumerationToString for StoneException";
+      switch (errorCode_)
+      {
+      case ErrorCode_Success:
+        return "Success";
+        break;
+      case ErrorCode_OrthancError:
+        return "OrthancError";
+        break;
+      case ErrorCode_ApplicationException:
+        return "ApplicationException";
+        break;
+      case ErrorCode_NotImplemented:
+        return "NotImplemented";
+        break;
+      case ErrorCode_CanOnlyAddOneLayerAtATime:
+        return "CanOnlyAddOneLayerAtATime";
+        break;
+      case ErrorCode_CommandJsonInvalidFormat:
+        return "CommandJsonInvalidFormat";
+        break;
+      case ErrorCode_WebGLContextLost:
+        return "WebGLContextLost";
+        break;
+      case ErrorCode_Last:
+        return "Last";
+        break;
+      default:
+        return "Unknown exception code!";
+      }
     }
   };
 }

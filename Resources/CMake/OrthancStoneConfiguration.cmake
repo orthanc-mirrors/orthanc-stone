@@ -570,7 +570,11 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SubvoxelReader.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GenericToolbox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GenericToolbox.h
   
+  ${ORTHANC_STONE_ROOT}/Framework/Viewport/IViewport.h
+  ${ORTHANC_STONE_ROOT}/Framework/Viewport/ViewportBase.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/ViewportBase.cpp
   
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/IVolumeSlicer.cpp
@@ -657,12 +661,13 @@ if (ENABLE_OPENGL)
 
   if (ENABLE_WASM)
     list(APPEND ORTHANC_STONE_SOURCES
+      ${ORTHANC_STONE_ROOT}/Framework/OpenGL/WebAssemblyOpenGLContext.h
       ${ORTHANC_STONE_ROOT}/Framework/OpenGL/WebAssemblyOpenGLContext.cpp
+      ${ORTHANC_STONE_ROOT}/Framework/Viewport/WebAssemblyViewport.h
       ${ORTHANC_STONE_ROOT}/Framework/Viewport/WebAssemblyViewport.cpp
       )
   endif()
 endif()
-
 
 
 ##

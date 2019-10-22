@@ -41,6 +41,14 @@ namespace OrthancStone
       return *scene_;
     }
 
-    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) ORTHANC_OVERRIDE;
+    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const ORTHANC_OVERRIDE;
+
+    virtual const ICompositor& GetCompositor() const ORTHANC_OVERRIDE
+    {
+      IViewport* mutableThis = 
+        const_cast<IViewport*>(static_cast<const IViewport*>(this));
+      return mutableThis->GetCompositor();
+    }
+
   };
 }

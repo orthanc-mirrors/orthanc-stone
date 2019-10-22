@@ -20,6 +20,9 @@
 
 #pragma once
 
+#include <Core/Enumerations.h>
+#include <Core/OrthancException.h>
+
 #include "IMessageEmitter.h"
 #include "IObservable.h"
 

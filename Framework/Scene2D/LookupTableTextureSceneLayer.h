@@ -45,8 +45,6 @@ namespace OrthancStone
     // (RGBA). In the RGB case, an alpha channel will be automatically added.
     void SetLookupTable(const std::vector<uint8_t>& lut);
 
-    void SetLookupTable(const std::string& lut);
-
     void SetRange(float minValue,
                   float maxValue);
     

@@ -569,6 +569,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SubpixelReader.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SubvoxelReader.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/TextRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/TextRenderer.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GenericToolbox.cpp

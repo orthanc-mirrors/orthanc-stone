@@ -36,10 +36,14 @@
 #include "../../Framework/Radiography/RadiographySceneReader.h"
 #include "../../Framework/Radiography/RadiographyMaskLayer.h"
 
+#include <../../Framework/Toolbox/TextRenderer.h>
+
 #include <Core/HttpClient.h>
 #include <Core/Images/FontRegistry.h>
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
+#include <Core/Images/PngWriter.h>
+#include <Core/Images/PngReader.h>
 
 
 // Export using PAM is faster than using PNG, but requires Orthanc
@@ -117,12 +121,15 @@ namespace OrthancStone
           if (tool_ == Tool_Windowing)
           {
             return new RadiographyWindowingTracker(
-              undoRedoStack_, widget.GetScene(), widget, ImageInterpolation_Nearest,
-              viewportX, viewportY,
-              RadiographyWindowingTracker::Action_DecreaseWidth,
-              RadiographyWindowingTracker::Action_IncreaseWidth,
-              RadiographyWindowingTracker::Action_DecreaseCenter,
-              RadiographyWindowingTracker::Action_IncreaseCenter);
+                  undoRedoStack_,
+                  widget.GetScene(),
+                  widget,
+                  OrthancStone::ImageInterpolation_Nearest,
+                  viewportX, viewportY,
+                  RadiographyWindowingTracker::Action_DecreaseWidth,
+                  RadiographyWindowingTracker::Action_IncreaseWidth,
+                  RadiographyWindowingTracker::Action_DecreaseCenter,
+                  RadiographyWindowingTracker::Action_IncreaseCenter);
           }
           else if (!widget.LookupSelectedLayer(selected))
           {
@@ -509,6 +516,13 @@ namespace OrthancStone
         mask.push_back(Orthanc::ImageProcessing::ImagePoint(1500, 550));
         maskLayer_ = dynamic_cast<RadiographyMaskLayer*>(&(scene_->LoadMask(mask, dynamic_cast<RadiographyDicomLayer&>(dicomLayer), 128.0f, NULL)));
         interactor_.SetMaskLayer(maskLayer_);
+
+        {
+          std::auto_ptr<Orthanc::ImageAccessor> renderedTextAlpha(TextRenderer::RenderWhiteOnBlack(Orthanc::EmbeddedResources::UBUNTU_FONT, 100,
+                                                                                    "%öÇaA&#"));
+          RadiographyLayer& layer = scene_->LoadAlphaBitmap(renderedTextAlpha.release(), NULL);
+          dynamic_cast<RadiographyAlphaLayer&>(layer).SetForegroundValue(200);
+        }
 
         {
           RadiographyLayer& layer = scene_->LoadText(fontRegistry_.GetFont(0), "Hello\nworld", NULL);

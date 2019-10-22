@@ -21,12 +21,12 @@
 
 #include "TextRenderer.h"
 
-#include <../../Framework/Scene2D/CairoCompositor.h>
-#include <../../Framework/Scene2D/ColorTextureSceneLayer.h>
-#include <../../Framework/Scene2D/FloatTextureSceneLayer.h>
-#include <../../Framework/Scene2D/TextSceneLayer.h>
-#include <../../Framework/Fonts/GlyphBitmapAlphabet.h>
-#include <../../Framework/Fonts/FontRenderer.h>
+#include <Framework/Scene2D/CairoCompositor.h>
+#include <Framework/Scene2D/ColorTextureSceneLayer.h>
+#include <Framework/Scene2D/FloatTextureSceneLayer.h>
+#include <Framework/Scene2D/TextSceneLayer.h>
+#include <Framework/Fonts/GlyphBitmapAlphabet.h>
+#include <Framework/Fonts/FontRenderer.h>
 #include <Core/Images/PngWriter.h>
 #include <Core/Toolbox.h>
 

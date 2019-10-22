@@ -116,7 +116,7 @@ namespace OrthancStone
       if (*p == '.')
       {
         double f = 0.0;
-        int n = 1;
+        size_t n = 1;
         ++p;
         while (*p >= '0' && *p <= '9' && n < FRAC_FACTORS_LEN)
         {

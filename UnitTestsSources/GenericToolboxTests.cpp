@@ -3762,7 +3762,7 @@ TEST(GenericToolbox, TestStringToDoubleHard)
   for (double b = DBL_EPSILON; b < DBL_MAX && i < COUNT; ++i, b *= FACTOR)
   {
     char txt[1024];
-    sprintf_s(txt, "%.17f", b);
+    snprintf(txt, sizeof(txt) - 1, "%.17f", b);
     double r = 0.0;
     bool ok = StringToDouble(r, txt);
     
@@ -3802,7 +3802,7 @@ TEST(GenericToolbox, TestStringToDoubleHardNeg)
   for (double b = -1.0*DBL_EPSILON; b < DBL_MAX && i < COUNT; ++i, b *= FACTOR)
   {
     char txt[1024];
-    sprintf_s(txt, "%.17f", b);
+    snprintf(txt, sizeof(txt) - 1, "%.17f", b);
     double r = 0.0;
     bool ok = StringToDouble(r, txt);
 
@@ -3843,9 +3843,9 @@ TEST(GenericToolbox, TestStringToIntegerHard)
     int64_t bi = static_cast<int64_t>(b);
     char txt[1024];
 #if (defined __clang__) || (defined __GNUC__) || ( (defined _MSC_VER) && (_MSC_VER > 1800) )
-    sprintf_s(txt, "%lld", bi);
+    snprintf(txt, sizeof(txt) - 1, "%ld", bi);
 #elif (defined _MSC_VER)
-    sprintf_s(txt, "%I64d", bi);
+    snprintf(txt, sizeof(txt) - 1, "%I64d", bi);
 #else
 #error Please adjust for your platform
 #endif

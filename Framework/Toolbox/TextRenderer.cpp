@@ -28,6 +28,7 @@
 #include <../../Framework/Fonts/GlyphBitmapAlphabet.h>
 #include <../../Framework/Fonts/FontRenderer.h>
 #include <Core/Images/PngWriter.h>
+#include <Core/Toolbox.h>
 
 #include "Core/Images/Image.h"
 #include "Core/Images/ImageProcessing.h"
@@ -65,7 +66,7 @@ namespace OrthancStone
                                                         const std::string& utf8String,
                                                         uint8_t foreground)
   {
-    std::auto_ptr<Orthanc::ImageAccessor> renderedText8(RenderWhiteOnBlack(resource, fontSize, utf8String));
+    std::auto_ptr<Orthanc::ImageAccessor> renderedText8(Render(resource, fontSize, utf8String));
     std::auto_ptr<Orthanc::Image> target(new Orthanc::Image(Orthanc::PixelFormat_RGBA32, renderedText8->GetWidth(), renderedText8->GetHeight(), true));
 
     Orthanc::ImageProcessing::Set(*target, foreground, foreground, foreground, *renderedText8);

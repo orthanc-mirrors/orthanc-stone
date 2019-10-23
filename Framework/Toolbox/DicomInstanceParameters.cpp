@@ -110,6 +110,15 @@ namespace OrthancStone
     if (sopClassUid_ == SopClassUid_RTDose)
     {
       ComputeDoseOffsets(dicom);
+
+      static const Orthanc::DicomTag DICOM_TAG_DOSE_UNITS(0x3004, 0x0002);
+
+      if (!dicom.LookupStringValue(doseUnits_, DICOM_TAG_DOSE_UNITS, false))
+      {
+        LOG(WARNING) << "Tag DoseUnits (0x3004, 0x0002) is missing in " << sopInstanceUid_;
+        doseUnits_ = "";
+      }
+
     }
 
     isColor_ = (imageInformation_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome1 &&

@@ -59,6 +59,7 @@ namespace OrthancStone
       Orthanc::PixelFormat              expectedPixelFormat_;
       bool                              hasIndexInSeries_;
       unsigned int                      indexInSeries_;
+      std::string                       doseUnits_;
 
       void ComputeDoseOffsets(const Orthanc::DicomMap& dicom);
 
@@ -199,5 +200,10 @@ namespace OrthancStone
     }
 
     unsigned int GetIndexInSeries() const;
+
+    const std::string& GetDoseUnits() const
+    {
+      return data_.doseUnits_;
+    }
   };
 }

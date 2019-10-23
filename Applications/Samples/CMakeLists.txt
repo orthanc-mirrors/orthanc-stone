@@ -10,6 +10,15 @@ include(../../Resources/CMake/OrthancStoneParameters.cmake)
 
 set(ENABLE_STONE_DEPRECATED ON)  # Need deprecated classes for these samples
 
+include(${ORTHANC_ROOT}/Resources/CMake/DownloadPackage.cmake)
+DownloadPackage(
+  "a24b8136b8f3bb93f166baf97d9328de"
+  "http://orthanc.osimis.io/ThirdPartyDownloads/ubuntu-font-family-0.83.zip"
+  "${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83")
+
+set(ORTHANC_STONE_APPLICATION_RESOURCES
+  UBUNTU_FONT  ${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83/Ubuntu-R.ttf
+  )
 
 if (OPENSSL_NO_CAPIENG)
 add_definitions(-DOPENSSL_NO_CAPIENG=1)

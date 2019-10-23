@@ -23,6 +23,8 @@
 
 #include "IOracleRunner.h"
 
+#include "../Messages/IMessageEmitter.h"
+
 namespace OrthancStone
 {
   class CustomOracleCommand : public IOracleCommand

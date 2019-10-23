@@ -29,7 +29,7 @@ namespace OrthancStone
   {
     bool GetRgbaValuesFromString(uint8_t& red, uint8_t& green, uint8_t& blue, uint8_t& alpha, const char* text)
     {
-      boost::regex pattern(R"bgo(\s*rgb\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*\)\s*)bgo");
+      boost::regex pattern("\\s*rgb\\s*\\(\\s*([0-9]+)\\s*,\\s*([0-9]+)\\s*,\\s*([0-9]+)\\s*,\\s*([0-9]+)\\s*\\)\\s*");
 
       boost::cmatch what;
 
@@ -68,7 +68,7 @@ namespace OrthancStone
     }
     bool GetRgbValuesFromString(uint8_t& red, uint8_t& green, uint8_t& blue, const char* text)
     {
-      boost::regex pattern(R"bgo(\s*rgb\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*\)\s*)bgo");
+      boost::regex pattern("\\s*rgb\\s*\\(\\s*([0-9]+)\\s*,\\s*([0-9]+)\\s*,\\s*([0-9]+)\\s*\\)\\s*");
 
       boost::cmatch what;
 

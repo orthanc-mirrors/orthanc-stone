@@ -43,7 +43,10 @@ namespace OrthancStone
   class WebAssemblyOracle;
 #else
   class ThreadedOracle;
-  class LockingEmitter;
+  namespace Deprecated
+  {
+    class LockingEmitter;
+  }
 #endif
 
   class LoaderCache
@@ -52,7 +55,7 @@ namespace OrthancStone
 #if ORTHANC_ENABLE_WASM == 1
     LoaderCache(WebAssemblyOracle& oracle);
 #else
-    LoaderCache(ThreadedOracle& oracle, LockingEmitter& lockingEmitter);
+    LoaderCache(ThreadedOracle& oracle, Deprecated::LockingEmitter& lockingEmitter);
 #endif
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader>
@@ -87,7 +90,7 @@ namespace OrthancStone
     WebAssemblyOracle& oracle_;
 #else
     ThreadedOracle& oracle_;
-    LockingEmitter& lockingEmitter_;
+    Deprecated::LockingEmitter& lockingEmitter_;
 #endif
 
     std::map<std::string, boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> >

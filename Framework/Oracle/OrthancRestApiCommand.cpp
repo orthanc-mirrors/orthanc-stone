@@ -51,7 +51,8 @@ namespace OrthancStone
   OrthancRestApiCommand::OrthancRestApiCommand() :
     method_(Orthanc::HttpMethod_Get),
     uri_("/"),
-    timeout_(600)
+    timeout_(600),
+    applyPlugins_(false)
   {
   }
 

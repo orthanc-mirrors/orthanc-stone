@@ -95,7 +95,10 @@ namespace OrthancStone
   struct GuiAdapterWheelEvent;
   struct GuiAdapterKeyboardEvent;
 
-  class LockingEmitter;
+  namespace Deprecated
+  {
+    class LockingEmitter;
+  }
     
 #if 1
   typedef bool (*OnMouseEventFunc)(std::string canvasId, const GuiAdapterMouseEvent* mouseEvent, void* userData);
@@ -225,7 +228,7 @@ namespace OrthancStone
   {
   public:
 #if ORTHANC_ENABLE_THREADS == 1
-    GuiAdapter(LockingEmitter& lockingEmitter) : lockingEmitter_(lockingEmitter)
+    GuiAdapter(Deprecated::LockingEmitter& lockingEmitter) : lockingEmitter_(lockingEmitter)
 #else
     GuiAdapter()
 #endif
@@ -301,7 +304,7 @@ namespace OrthancStone
     This object is used by the multithreaded Oracle to serialize access to
     shared data. We need to use it as soon as we access the state.
     */
-    LockingEmitter& lockingEmitter_;
+    Deprecated::LockingEmitter& lockingEmitter_;
 #endif
 
     /**

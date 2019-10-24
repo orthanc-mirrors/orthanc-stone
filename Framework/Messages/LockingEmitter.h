@@ -32,58 +32,61 @@
 
 namespace OrthancStone
 {
-  /**
-   * This class is used when using the ThreadedOracle : since messages
-   * can be sent from multiple Oracle threads, this IMessageEmitter
-   * implementation serializes the callbacks.
-   * 
-   * The internal mutex used in Oracle messaging can also be used to 
-   * protect the application data. Thus, this class can be used as a single
-   * application-wide mutex.
-   */
-  class LockingEmitter : public IMessageEmitter
+  namespace Deprecated
   {
-  private:
-    boost::shared_mutex  mutex_;
-    IObservable          oracleObservable_;
-
-  public:
-    virtual void EmitMessage(boost::weak_ptr<IObserver>& observer,
-                             const IMessage& message) ORTHANC_OVERRIDE;
-
-
-    class ReaderLock : public boost::noncopyable
+    /**
+     * This class is used when using the ThreadedOracle : since messages
+     * can be sent from multiple Oracle threads, this IMessageEmitter
+     * implementation serializes the callbacks.
+     * 
+     * The internal mutex used in Oracle messaging can also be used to 
+     * protect the application data. Thus, this class can be used as a single
+     * application-wide mutex.
+     */
+    class LockingEmitter : public IMessageEmitter
     {
     private:
-      LockingEmitter& that_;
-      boost::shared_lock<boost::shared_mutex>  lock_;
+      boost::shared_mutex  mutex_;
+      IObservable          oracleObservable_;
 
     public:
-      ReaderLock(LockingEmitter& that) :
-      that_(that),
-      lock_(that.mutex_)
+      virtual void EmitMessage(boost::weak_ptr<IObserver>& observer,
+                               const IMessage& message) ORTHANC_OVERRIDE;
+
+
+      class ReaderLock : public boost::noncopyable
       {
-      }
+      private:
+        LockingEmitter& that_;
+        boost::shared_lock<boost::shared_mutex>  lock_;
+
+      public:
+        ReaderLock(LockingEmitter& that) :
+        that_(that),
+        lock_(that.mutex_)
+        {
+        }
+      };
+
+
+      class WriterLock : public boost::noncopyable
+      {
+      private:
+        LockingEmitter& that_;
+        boost::unique_lock<boost::shared_mutex>  lock_;
+
+      public:
+        WriterLock(LockingEmitter& that) :
+        that_(that),
+        lock_(that.mutex_)
+        {
+        }
+
+        IObservable& GetOracleObservable()
+        {
+          return that_.oracleObservable_;
+        }
+      };
     };
-
-
-    class WriterLock : public boost::noncopyable
-    {
-    private:
-      LockingEmitter& that_;
-      boost::unique_lock<boost::shared_mutex>  lock_;
-
-    public:
-      WriterLock(LockingEmitter& that) :
-      that_(that),
-      lock_(that.mutex_)
-      {
-      }
-
-      IObservable& GetOracleObservable()
-      {
-        return that_.oracleObservable_;
-      }
-    };
-  };
+  }
 }

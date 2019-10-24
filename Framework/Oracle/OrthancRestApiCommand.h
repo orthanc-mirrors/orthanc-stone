@@ -69,6 +69,7 @@ namespace OrthancStone
     std::string          body_;
     HttpHeaders          headers_;
     unsigned int         timeout_;
+    bool                 applyPlugins_;  // Only makes sense for Stone as an Orthanc plugin
 
   public:
     OrthancRestApiCommand();
@@ -136,6 +137,16 @@ namespace OrthancStone
     unsigned int GetTimeout() const
     {
       return timeout_;
+    }
+
+    void SetApplyPlugins(bool applyPlugins)
+    {
+      applyPlugins_ = applyPlugins;
+    }
+
+    bool IsApplyPlugins() const
+    {
+      return applyPlugins_;
     }
   };
 }

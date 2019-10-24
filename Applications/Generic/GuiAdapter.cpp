@@ -792,7 +792,7 @@ namespace OrthancStone
     while (!stop)
     {
       {
-        LockingEmitter::WriterLock lock(lockingEmitter_);
+        Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
         if(func != NULL)
           (*func)(cookie);
         OnAnimationFrame(); // in SDL we must call it
@@ -802,7 +802,7 @@ namespace OrthancStone
 
       while (!stop && SDL_PollEvent(&event))
       {
-        LockingEmitter::WriterLock lock(lockingEmitter_);
+        Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
 
         if (event.type == SDL_QUIT)
         {

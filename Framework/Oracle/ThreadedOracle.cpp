@@ -255,6 +255,8 @@ namespace OrthancStone
         delete workers_[i];
       }
     } 
+
+    queue_.Clear();
   }
 
 
@@ -287,7 +289,7 @@ namespace OrthancStone
     catch (...)
     {
       LOG(ERROR) << "Native exception while stopping the threaded oracle";
-    }           
+    }
   }
 
   

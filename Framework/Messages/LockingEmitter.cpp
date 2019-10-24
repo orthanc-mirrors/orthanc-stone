@@ -24,17 +24,20 @@
 
 namespace OrthancStone
 {
-  void LockingEmitter::EmitMessage(boost::weak_ptr<IObserver>& observer,
-                                   const IMessage& message)
+  namespace Deprecated
   {
-    try
+    void LockingEmitter::EmitMessage(boost::weak_ptr<IObserver>& observer,
+                                     const IMessage& message)
     {
-      boost::unique_lock<boost::shared_mutex>  lock(mutex_);
-      oracleObservable_.EmitMessage(observer, message);
-    }
-    catch (Orthanc::OrthancException& e)
-    {
-      LOG(ERROR) << "Exception while emitting a message: " << e.What();
+      try
+      {
+        boost::unique_lock<boost::shared_mutex>  lock(mutex_);
+        oracleObservable_.EmitMessage(observer, message);
+      }
+      catch (Orthanc::OrthancException& e)
+      {
+        LOG(ERROR) << "Exception while emitting a message: " << e.What();
+      }
     }
   }
 }

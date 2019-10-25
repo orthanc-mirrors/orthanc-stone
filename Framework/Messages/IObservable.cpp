@@ -21,8 +21,9 @@
 
 #include "IObservable.h"
 
+#include "../StoneException.h"
+
 #include <Core/Logging.h>
-#include <Core/OrthancException.h>
 
 #include <cassert>
 
@@ -75,7 +76,22 @@ namespace OrthancStone
           if (receiver == NULL ||    // Are we broadcasting?
               observer.get() == receiver)  // Not broadcasting, but this is the receiver
           {
-            (*it)->Apply(message);
+            try
+            {
+              (*it)->Apply(message);
+            }
+            catch (Orthanc::OrthancException& e)
+            {
+              LOG(ERROR) << "Exception on callable: " << e.What();
+            }
+            catch (StoneException& e)
+            {
+              LOG(ERROR) << "Exception on callable: " << e.What();
+            }
+            catch (...)
+            {
+              LOG(ERROR) << "Native exception on callable";
+            }
           }
         }
         else

@@ -389,15 +389,6 @@ namespace OrthancStone
       else
       {
         LOG(INFO) << "Command not enqueued, as the oracle is stopped";
-
-        /**
-         * Answering "true" below results in a memory leak within
-         * "OracleScheduler", as the scheduler believes that the
-         * command is still active (i.e. pending to be executed by the
-         * oracle), hereby stalling the scheduler during its
-         * destruction (check out
-         * "sjo-playground/WebViewer/Backend/Leak")
-         **/
         return false;
       }
     }

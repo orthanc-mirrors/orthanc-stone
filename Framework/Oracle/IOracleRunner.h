@@ -22,8 +22,7 @@
 #pragma once
 
 #include "IOracleCommand.h"
-
-#include <boost/weak_ptr.hpp>
+#include "../Messages/IMessage.h"
 
 namespace OrthancStone
 {
@@ -34,7 +33,6 @@ namespace OrthancStone
     {
     }
 
-    virtual void Run(boost::weak_ptr<IObserver>& receiver,
-                     IOracleCommand& command) = 0;
+    virtual IMessage* Run(IOracleCommand& command) = 0;
   };
 }

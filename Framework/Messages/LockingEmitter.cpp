@@ -26,7 +26,7 @@ namespace OrthancStone
 {
   namespace Deprecated
   {
-    void LockingEmitter::EmitMessage(boost::weak_ptr<IObserver>& observer,
+    void LockingEmitter::EmitMessage(boost::weak_ptr<IObserver> observer,
                                      const IMessage& message)
     {
       try

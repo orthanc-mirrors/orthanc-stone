@@ -31,6 +31,7 @@
 
 #include "IOracle.h"
 #include "GenericOracleRunner.h"
+#include "../Messages/IMessageEmitter.h"
 
 #include <Core/MultiThreading/SharedMessageQueue.h>
 
@@ -86,7 +87,7 @@ namespace OrthancStone
       StopInternal();
     }
 
-    virtual void Schedule(boost::shared_ptr<IObserver>& receiver,
+    virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
                           IOracleCommand* command) ORTHANC_OVERRIDE;
   };
 }

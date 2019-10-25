@@ -82,10 +82,8 @@ namespace OrthancStone
     }
   }
 
-  void GetOrthancImageCommand::ProcessHttpAnswer(IMessageEmitter& emitter,
-                                                 boost::weak_ptr<IObserver>& receiver,
-                                                 const std::string& answer,
-                                                 const HttpHeaders& answerHeaders) const
+  IMessage* GetOrthancImageCommand::ProcessHttpAnswer(const std::string& answer,
+                                                      const HttpHeaders& answerHeaders) const
   {
     Orthanc::MimeType contentType = Orthanc::MimeType_Binary;
 
@@ -147,7 +145,6 @@ namespace OrthancStone
       }
     }
 
-    SuccessMessage message(*this, image.release(), contentType);
-    emitter.EmitMessage(receiver, message);
+    return new SuccessMessage(*this, image.release(), contentType);
   }
 }

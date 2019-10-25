@@ -87,9 +87,7 @@ namespace OrthancStone
   }
 
 
-  static void Execute(IMessageEmitter& emitter,
-                      boost::weak_ptr<IObserver>& receiver,
-                      const HttpCommand& command)
+  static IMessage* Execute(const HttpCommand& command)
   {
     Orthanc::HttpClient client;
     client.SetUrl(command.GetUrl());
@@ -115,15 +113,12 @@ namespace OrthancStone
 
     DecodeAnswer(answer, answerHeaders);
 
-    HttpCommand::SuccessMessage message(command, answerHeaders, answer);
-    emitter.EmitMessage(receiver, message);
+    return new HttpCommand::SuccessMessage(command, answerHeaders, answer);
   }
 
 
-  static void Execute(IMessageEmitter& emitter,
-                      const Orthanc::WebServiceParameters& orthanc,
-                      boost::weak_ptr<IObserver>& receiver,
-                      const OrthancRestApiCommand& command)
+  static IMessage* Execute(const Orthanc::WebServiceParameters& orthanc,
+                           const OrthancRestApiCommand& command)
   {
     Orthanc::HttpClient client(orthanc, command.GetUri());
     client.SetMethod(command.GetMethod());
@@ -143,15 +138,12 @@ namespace OrthancStone
 
     DecodeAnswer(answer, answerHeaders);
 
-    OrthancRestApiCommand::SuccessMessage message(command, answerHeaders, answer);
-    emitter.EmitMessage(receiver, message);
+    return new OrthancRestApiCommand::SuccessMessage(command, answerHeaders, answer);
   }
 
 
-  static void Execute(IMessageEmitter& emitter,
-                      const Orthanc::WebServiceParameters& orthanc,
-                      boost::weak_ptr<IObserver>& receiver,
-                      const GetOrthancImageCommand& command)
+  static IMessage* Execute(const Orthanc::WebServiceParameters& orthanc,
+                           const GetOrthancImageCommand& command)
   {
     Orthanc::HttpClient client(orthanc, command.GetUri());
     client.SetTimeout(command.GetTimeout());
@@ -164,14 +156,12 @@ namespace OrthancStone
 
     DecodeAnswer(answer, answerHeaders);
 
-    command.ProcessHttpAnswer(emitter, receiver, answer, answerHeaders);
+    return command.ProcessHttpAnswer(answer, answerHeaders);
   }
 
 
-  static void Execute(IMessageEmitter& emitter,
-                      const Orthanc::WebServiceParameters& orthanc,
-                      boost::weak_ptr<IObserver>& receiver,
-                      const GetOrthancWebViewerJpegCommand& command)
+  static IMessage* Execute(const Orthanc::WebServiceParameters& orthanc,
+                           const GetOrthancWebViewerJpegCommand& command)
   {
     Orthanc::HttpClient client(orthanc, command.GetUri());
     client.SetTimeout(command.GetTimeout());
@@ -184,12 +174,11 @@ namespace OrthancStone
 
     DecodeAnswer(answer, answerHeaders);
 
-    command.ProcessHttpAnswer(emitter, receiver, answer);
+    return command.ProcessHttpAnswer(answer);
   }
 
 
-  void GenericOracleRunner::Run(boost::weak_ptr<IObserver>& receiver,
-                                IOracleCommand& command)
+  IMessage* GenericOracleRunner::Run(IOracleCommand& command)
   {
     try
     {
@@ -198,27 +187,21 @@ namespace OrthancStone
         case IOracleCommand::Type_Sleep:
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadParameterType,
                                           "Sleep command cannot be executed by the runner");
-          break;
 
         case IOracleCommand::Type_Http:
-          Execute(emitter_, receiver, dynamic_cast<const HttpCommand&>(command));
-          break;
+          return Execute(dynamic_cast<const HttpCommand&>(command));
 
         case IOracleCommand::Type_OrthancRestApi:
-          Execute(emitter_, orthanc_, receiver, dynamic_cast<const OrthancRestApiCommand&>(command));
-          break;
+          return Execute(orthanc_, dynamic_cast<const OrthancRestApiCommand&>(command));
 
         case IOracleCommand::Type_GetOrthancImage:
-          Execute(emitter_, orthanc_, receiver, dynamic_cast<const GetOrthancImageCommand&>(command));
-          break;
+          return Execute(orthanc_, dynamic_cast<const GetOrthancImageCommand&>(command));
 
         case IOracleCommand::Type_GetOrthancWebViewerJpeg:
-          Execute(emitter_, orthanc_, receiver, dynamic_cast<const GetOrthancWebViewerJpegCommand&>(command));
-          break;
+          return Execute(orthanc_, dynamic_cast<const GetOrthancWebViewerJpegCommand&>(command));
 
         case IOracleCommand::Type_Custom:
-          dynamic_cast<CustomOracleCommand&>(command).Execute(emitter_, receiver, *this);
-          break;
+          return dynamic_cast<CustomOracleCommand&>(command).Execute(*this);
 
         default:
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
@@ -227,13 +210,12 @@ namespace OrthancStone
     catch (Orthanc::OrthancException& e)
     {
       LOG(ERROR) << "Exception within the oracle: " << e.What();
-      emitter_.EmitMessage(receiver, OracleCommandExceptionMessage(command, e));
+      return new OracleCommandExceptionMessage(command, e);
     }
     catch (...)
     {
       LOG(ERROR) << "Threaded exception within the oracle";
-      emitter_.EmitMessage(receiver, OracleCommandExceptionMessage
-                           (command, Orthanc::ErrorCode_InternalError));
+      return new OracleCommandExceptionMessage(command, Orthanc::ErrorCode_InternalError);
     }
   }
 }

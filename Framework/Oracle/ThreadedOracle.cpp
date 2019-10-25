@@ -46,7 +46,7 @@ namespace OrthancStone
       }
     }
 
-    boost::weak_ptr<IObserver>& GetReceiver()
+    boost::weak_ptr<IObserver> GetReceiver()
     {
       return receiver_;
     }
@@ -70,7 +70,7 @@ namespace OrthancStone
       boost::posix_time::ptime           expiration_;
 
     public:
-      Item(boost::weak_ptr<IObserver>& receiver,
+      Item(boost::weak_ptr<IObserver> receiver,
            SleepOracleCommand* command) :
         receiver_(receiver),
         command_(command)
@@ -115,7 +115,7 @@ namespace OrthancStone
       }
     }
 
-    void Add(boost::weak_ptr<IObserver>& receiver,
+    void Add(boost::weak_ptr<IObserver> receiver,
              SleepOracleCommand* command)   // Takes ownership
     {
       boost::mutex::scoped_lock lock(mutex_);
@@ -175,8 +175,10 @@ namespace OrthancStone
       }
       else
       {
-        GenericOracleRunner runner(emitter_, orthanc_);
-        runner.Run(item.GetReceiver(), item.GetCommand());
+        GenericOracleRunner runner(orthanc_);
+        std::auto_ptr<IMessage> message(runner.Run(item.GetCommand()));
+        
+        emitter_.EmitMessage(item.GetReceiver(), *message);
       }
     }
   }
@@ -255,8 +257,6 @@ namespace OrthancStone
         delete workers_[i];
       }
     } 
-
-    queue_.Clear();
   }
 
 
@@ -372,9 +372,34 @@ namespace OrthancStone
   }
 
 
-  void ThreadedOracle::Schedule(boost::shared_ptr<IObserver>& receiver,
+  bool ThreadedOracle::Schedule(boost::shared_ptr<IObserver> receiver,
                                 IOracleCommand* command)
   {
-    queue_.Enqueue(new Item(receiver, command));
+    std::auto_ptr<Item> item(new Item(receiver, command));
+
+    {
+      boost::mutex::scoped_lock lock(mutex_);
+
+      if (state_ == State_Running)
+      {
+        //LOG(INFO) << "New oracle command queued";
+        queue_.Enqueue(item.release());
+        return true;
+      }
+      else
+      {
+        LOG(INFO) << "Command not enqueued, as the oracle is stopped";
+
+        /**
+         * Answering "true" below results in a memory leak within
+         * "OracleScheduler", as the scheduler believes that the
+         * command is still active (i.e. pending to be executed by the
+         * oracle), hereby stalling the scheduler during its
+         * destruction (check out
+         * "sjo-playground/WebViewer/Backend/Leak")
+         **/
+        return false;
+      }
+    }
   }
 }

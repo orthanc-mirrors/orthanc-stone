@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../Messages/IMessageEmitter.h"
+#include "../Messages/IMessage.h"
 #include "OracleCommandWithPayload.h"
 
 #include <Core/Images/ImageAccessor.h>
@@ -111,9 +111,7 @@ namespace OrthancStone
       return timeout_;
     }
 
-    void ProcessHttpAnswer(IMessageEmitter& emitter,
-                           boost::weak_ptr<IObserver>& receiver,
-                           const std::string& answer,
-                           const HttpHeaders& answerHeaders) const;
+    IMessage* ProcessHttpAnswer(const std::string& answer,
+                                const HttpHeaders& answerHeaders) const;
   };
 }

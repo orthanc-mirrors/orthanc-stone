@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <boost/lexical_cast.hpp>
 #include <boost/noncopyable.hpp>
 
 #include <string.h>
@@ -51,6 +52,11 @@ namespace OrthancStone
       file_(NULL),
       line_(0)
     {
+    }
+
+    std::string AsString() const
+    {
+      return std::string(file_) + ":" + boost::lexical_cast<std::string>(line_);
     }
 
     bool operator< (const MessageIdentifier& other) const

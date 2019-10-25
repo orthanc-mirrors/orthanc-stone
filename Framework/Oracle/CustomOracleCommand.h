@@ -23,8 +23,6 @@
 
 #include "IOracleRunner.h"
 
-#include "../Messages/IMessageEmitter.h"
-
 namespace OrthancStone
 {
   class CustomOracleCommand : public IOracleCommand
@@ -35,8 +33,6 @@ namespace OrthancStone
       return Type_Custom;
     }
 
-    virtual void Execute(IMessageEmitter& emitter,
-                         boost::weak_ptr<IObserver>& receiver,
-                         IOracleRunner& runner) = 0;
+    virtual IMessage* Execute(IOracleRunner& runner) = 0;
   };
 }

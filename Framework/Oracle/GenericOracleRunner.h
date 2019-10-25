@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "../Messages/IMessageEmitter.h"
 #include "IOracleRunner.h"
 
 #include <Core/Enumerations.h>  // For ORTHANC_OVERRIDE
@@ -32,18 +31,14 @@ namespace OrthancStone
   class GenericOracleRunner : public IOracleRunner
   {
   private:
-    IMessageEmitter&                      emitter_;
     const Orthanc::WebServiceParameters&  orthanc_;
 
   public:
-    GenericOracleRunner(IMessageEmitter&  emitter,
-                        const Orthanc::WebServiceParameters& orthanc) :
-      emitter_(emitter),
+    GenericOracleRunner(const Orthanc::WebServiceParameters& orthanc) :
       orthanc_(orthanc)
     {
     }
 
-    virtual void Run(boost::weak_ptr<IObserver>& receiver,
-                     IOracleCommand& command) ORTHANC_OVERRIDE;
+    virtual IMessage* Run(IOracleCommand& command) ORTHANC_OVERRIDE;
   };
 }

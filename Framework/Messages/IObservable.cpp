@@ -94,7 +94,7 @@ namespace OrthancStone
   }
 
   
-  void IObservable::EmitMessage(boost::weak_ptr<IObserver>& observer,
+  void IObservable::EmitMessage(boost::weak_ptr<IObserver> observer,
                                 const IMessage& message)
   {
     LOG(TRACE) << "IObservable::EmitMessage observer = "

@@ -48,7 +48,7 @@ namespace OrthancStone
 
     void BroadcastMessage(const IMessage& message);
 
-    void EmitMessage(boost::weak_ptr<IObserver>& observer,
+    void EmitMessage(boost::weak_ptr<IObserver> observer,
                      const IMessage& message);
   };
 }

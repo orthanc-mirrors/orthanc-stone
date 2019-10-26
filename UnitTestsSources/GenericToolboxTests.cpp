@@ -3762,7 +3762,11 @@ TEST(GenericToolbox, TestStringToDoubleHard)
   for (double b = DBL_EPSILON; b < DBL_MAX && i < COUNT; ++i, b *= FACTOR)
   {
     char txt[1024];
+#if defined(_MSC_VER)
+    sprintf_s(txt, "%.17f", b);
+#else
     snprintf(txt, sizeof(txt) - 1, "%.17f", b);
+#endif
     double r = 0.0;
     bool ok = StringToDouble(r, txt);
     
@@ -3802,7 +3806,11 @@ TEST(GenericToolbox, TestStringToDoubleHardNeg)
   for (double b = -1.0*DBL_EPSILON; b < DBL_MAX && i < COUNT; ++i, b *= FACTOR)
   {
     char txt[1024];
+#if defined(_MSC_VER)
+    sprintf_s(txt, "%.17f", b);
+#else
     snprintf(txt, sizeof(txt) - 1, "%.17f", b);
+#endif
     double r = 0.0;
     bool ok = StringToDouble(r, txt);
 
@@ -3842,12 +3850,14 @@ TEST(GenericToolbox, TestStringToIntegerHard)
   {
     int64_t bi = static_cast<int64_t>(b);
     char txt[1024];
-#if (defined __clang__) || (defined __GNUC__) || ( (defined _MSC_VER) && (_MSC_VER > 1800) )
-    snprintf(txt, sizeof(txt) - 1, "%ld", bi);
-#elif (defined _MSC_VER)
-    snprintf(txt, sizeof(txt) - 1, "%I64d", bi);
+#if defined(_MSC_VER)
+#  if (_MSC_VER > 1800)
+    sprintf_s(txt, "%lld", bi);
+#  else
+    sprintf_s(txt, "%I64d", bi);
+#  endif
 #else
-#error Please adjust for your platform
+    snprintf(txt, sizeof(txt) - 1, "%ld", bi);
 #endif
     int64_t r = 0;
     bool ok = StringToInteger<int64_t>(r, txt);

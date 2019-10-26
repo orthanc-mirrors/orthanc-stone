@@ -175,7 +175,8 @@ namespace OrthancStone
       }
       else
       {
-        GenericOracleRunner runner(orthanc_);
+        GenericOracleRunner runner;
+        runner.SetOrthanc(orthanc_);
         std::auto_ptr<IMessage> message(runner.Run(item.GetCommand()));
         
         emitter_.EmitMessage(item.GetReceiver(), *message);

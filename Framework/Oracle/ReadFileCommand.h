@@ -21,45 +21,53 @@
 
 #pragma once
 
-#include "IOracleRunner.h"
-
-#include <Core/Enumerations.h>  // For ORTHANC_OVERRIDE
-#include <Core/WebServiceParameters.h>
+#include "../Messages/IMessage.h"
+#include "OracleCommandWithPayload.h"
 
 namespace OrthancStone
 {
-  class GenericOracleRunner : public IOracleRunner
+  class ReadFileCommand : public OracleCommandWithPayload
   {
+  public:
+    class SuccessMessage : public OriginMessage<ReadFileCommand>
+    {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+      
+    private:
+      std::string  content_;
+
+    public:
+      SuccessMessage(const ReadFileCommand& command,
+                     std::string& content  /* will be swapped to avoid a memcpy() */) :
+        OriginMessage(command)
+      {
+        content_.swap(content);
+      }
+
+      const std::string& GetContent() const
+      {
+        return content_;
+      }
+    };
+
+
   private:
-    Orthanc::WebServiceParameters  orthanc_;
-    std::string                    rootDirectory_;
+    std::string  path_;
 
   public:
-    GenericOracleRunner() :
-      rootDirectory_(".")
+    ReadFileCommand(const std::string& path) : 
+      path_(path)
     {
     }
 
-    void SetOrthanc(const Orthanc::WebServiceParameters& orthanc)
+    virtual Type GetType() const
     {
-      orthanc_ = orthanc;
+      return Type_ReadFile;
     }
 
-    const Orthanc::WebServiceParameters& GetOrthanc() const
+    const std::string& GetPath() const
     {
-      return orthanc_;
+      return path_;
     }
-
-    void SetRootDirectory(const std::string& rootDirectory)
-    {
-      rootDirectory_ = rootDirectory;
-    }
-
-    const std::string GetRootDirectory() const
-    {
-      return rootDirectory_;
-    }
-
-    virtual IMessage* Run(IOracleCommand& command) ORTHANC_OVERRIDE;
   };
 }

@@ -27,11 +27,15 @@
 #include "HttpCommand.h"
 #include "OracleCommandExceptionMessage.h"
 #include "OrthancRestApiCommand.h"
+#include "ReadFileCommand.h"
 
 #include <Core/Compression/GzipCompressor.h>
 #include <Core/HttpClient.h>
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
+#include <Core/SystemToolbox.h>
+
+#include <boost/filesystem.hpp>
 
 namespace OrthancStone
 {
@@ -178,6 +182,29 @@ namespace OrthancStone
   }
 
 
+  static IMessage* Execute(const std::string& root,
+                           const ReadFileCommand& command)
+  {
+    boost::filesystem::path a(root);
+    boost::filesystem::path b(command.GetPath());
+
+    boost::filesystem::path path;
+    if (b.is_absolute())
+    {
+      path = b;
+    }
+    else
+    {
+      path = a / b;
+    }
+
+    std::string content;
+    Orthanc::SystemToolbox::ReadFile(content, path.string(), true /* log */);
+
+    return new ReadFileCommand::SuccessMessage(command, content);
+  }
+
+
   IMessage* GenericOracleRunner::Run(IOracleCommand& command)
   {
     try
@@ -202,6 +229,9 @@ namespace OrthancStone
 
         case IOracleCommand::Type_Custom:
           return dynamic_cast<CustomOracleCommand&>(command).Execute(*this);
+
+        case IOracleCommand::Type_ReadFile:
+          return Execute(rootDirectory_, dynamic_cast<const ReadFileCommand&>(command));
 
         default:
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);

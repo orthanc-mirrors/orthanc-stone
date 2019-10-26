@@ -30,12 +30,13 @@ namespace OrthancStone
   public:
     enum Type
     {
-      Type_Http,
-      Type_Sleep,
-      Type_OrthancRestApi,
+      Type_Custom,
       Type_GetOrthancImage,
       Type_GetOrthancWebViewerJpeg,
-      Type_Custom
+      Type_Http,
+      Type_OrthancRestApi,
+      Type_ReadFile,
+      Type_Sleep
     };
 
     virtual ~IOracleCommand()

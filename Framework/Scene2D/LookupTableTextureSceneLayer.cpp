@@ -131,7 +131,6 @@ namespace OrthancStone
       IncrementRevision();
     }
   }
-    
 
   void LookupTableTextureSceneLayer::FitRange()
   {

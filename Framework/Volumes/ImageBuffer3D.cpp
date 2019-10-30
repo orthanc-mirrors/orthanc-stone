@@ -118,7 +118,7 @@ namespace OrthancStone
     computeRange_(computeRange),
     hasRange_(false)
   {
-    LOG(INFO) << "Created a 3D image of size " << width << "x" << height
+    LOG(TRACE) << "Created a 3D image of size " << width << "x" << height
               << "x" << depth << " in " << Orthanc::EnumerationToString(format)
               << " (" << (GetEstimatedMemorySize() / (1024ll * 1024ll)) << "MB)";
   }

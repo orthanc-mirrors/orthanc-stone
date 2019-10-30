@@ -45,7 +45,8 @@ namespace OrthancStone
     revision_(volume_.GetRevision())
   {
     valid_ = (volume_.HasDicomParameters() &&
-              volume_.GetGeometry().DetectSlice(projection_, sliceIndex_, cuttingPlane));
+              volume_.GetGeometry().DetectSlice(projection_, sliceIndex_, 
+                                                cuttingPlane));
   }
 
 
@@ -75,7 +76,7 @@ namespace OrthancStone
     }
 
     std::auto_ptr<TextureBaseSceneLayer> texture;
-        
+      
     {
       const DicomInstanceParameters& parameters = volume_.GetDicomParameters();
       ImageBuffer3D::SliceReader reader(volume_.GetPixelData(), projection_, sliceIndex_);

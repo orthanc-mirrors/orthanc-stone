@@ -53,6 +53,7 @@ namespace OrthancStone
 
     IMessageEmitter&                     emitter_;
     Orthanc::WebServiceParameters        orthanc_;
+    std::string                          rootDirectory_;
     Orthanc::SharedMessageQueue          queue_;
     State                                state_;
     boost::mutex                         mutex_;
@@ -75,6 +76,8 @@ namespace OrthancStone
     virtual ~ThreadedOracle();
 
     void SetOrthancParameters(const Orthanc::WebServiceParameters& orthanc);
+
+    void SetRootDirectory(const std::string& rootDirectory);
 
     void SetThreadsCount(unsigned int count);
 

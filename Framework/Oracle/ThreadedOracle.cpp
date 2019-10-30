@@ -176,7 +176,13 @@ namespace OrthancStone
       else
       {
         GenericOracleRunner runner;
-        runner.SetOrthanc(orthanc_);
+
+        {
+          boost::mutex::scoped_lock lock(mutex_);
+          runner.SetOrthanc(orthanc_);
+          runner.SetRootDirectory(rootDirectory_);
+        }
+        
         std::auto_ptr<IMessage> message(runner.Run(item.GetCommand()));
         
         emitter_.EmitMessage(item.GetReceiver(), *message);
@@ -263,6 +269,7 @@ namespace OrthancStone
 
   ThreadedOracle::ThreadedOracle(IMessageEmitter& emitter) :
     emitter_(emitter),
+    rootDirectory_("."),
     state_(State_Setup),
     workers_(4),
     sleepingCommands_(new SleepingCommands),
@@ -297,16 +304,14 @@ namespace OrthancStone
   void ThreadedOracle::SetOrthancParameters(const Orthanc::WebServiceParameters& orthanc)
   {
     boost::mutex::scoped_lock lock(mutex_);
+    orthanc_ = orthanc;
+  }
 
-    if (state_ != State_Setup)
-    {
-      LOG(ERROR) << "ThreadedOracle::SetOrthancParameters(): (state_ != State_Setup)";
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    else
-    {
-      orthanc_ = orthanc;
-    }
+
+  void ThreadedOracle::SetRootDirectory(const std::string& rootDirectory)
+  {
+    boost::mutex::scoped_lock lock(mutex_);
+    rootDirectory_ = rootDirectory;
   }
 
 

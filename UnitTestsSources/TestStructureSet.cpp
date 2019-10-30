@@ -4719,8 +4719,8 @@ TEST(DisjointDataSet, BasicTest)
   }
 
   ds.Union(0, 4);
-  EXPECT_EQ(0, ds.Find(0));
-  EXPECT_EQ(0, ds.Find(4));
+  EXPECT_EQ(0u, ds.Find(0));
+  EXPECT_EQ(0u, ds.Find(4));
 
   ds.Union(4, 6);
   ds.Union(8, 9);
@@ -4865,7 +4865,7 @@ TEST(StructureSet, ProcessBoundaryList_Empty)
 
   boundaries.clear();
   EXPECT_NO_THROW(AddSlabBoundaries(boundaries, slabCuts, 0));
-  ASSERT_EQ(0, boundaries.size());
+  ASSERT_EQ(0u, boundaries.size());
 }
 
 TEST(StructureSet, ProcessBoundaryListTopRow)
@@ -4879,7 +4879,7 @@ TEST(StructureSet, ProcessBoundaryListTopRow)
 
   {
     size_t i = 0;
-    ASSERT_EQ(4, boundaries.size());
+    ASSERT_EQ(4u, boundaries.size());
 
     ASSERT_EQ(RectangleBoundaryKind_Start, boundaries[i].second);
     ASSERT_NEAR(5, boundaries[i].first, DELTA_MAX);
@@ -4909,7 +4909,7 @@ TEST(StructureSet, ProcessBoundaryListRows_0_and_1)
   AddSlabBoundaries(boundaries, slabCuts, 0);
   AddSlabBoundaries(boundaries, slabCuts, 1);
 
-  ASSERT_EQ(8, boundaries.size());
+  ASSERT_EQ(8u, boundaries.size());
 
   {
     size_t i = 0;

@@ -52,10 +52,14 @@ namespace OrthancStone
       SuccessMessage(const ParseDicomFileCommand& command,
                      DcmFileFormat& content);
 
-      const Orthanc::ParsedDicomFile& GetDicom() const
+      bool HasDicom() const
       {
-        return *dicom_;
+        return dicom_.get() != NULL;
       }
+
+      Orthanc::ParsedDicomFile& GetDicom() const;
+
+      Orthanc::ParsedDicomFile* ReleaseDicom();
     };
 
   private:
@@ -68,6 +72,16 @@ namespace OrthancStone
       pixelDataIncluded_(true)
     {
     }
+
+    ParseDicomFileCommand(const std::string& dicomDirPath,
+                          const std::string& file) :
+      path_(GetDicomDirPath(dicomDirPath, file)),
+      pixelDataIncluded_(true)
+    {
+    }
+
+    static std::string GetDicomDirPath(const std::string& dicomDirPath,
+                                       const std::string& file);
 
     virtual Type GetType() const
     {

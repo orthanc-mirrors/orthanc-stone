@@ -21,6 +21,10 @@
 
 #include "ParseDicomFileCommand.h"
 
+#include <Core/OrthancException.h>
+
+#include <boost/filesystem/path.hpp>
+
 namespace OrthancStone
 {
   ParseDicomFileCommand::SuccessMessage::SuccessMessage(const ParseDicomFileCommand& command,
@@ -28,5 +32,46 @@ namespace OrthancStone
     OriginMessage(command)
   {
     dicom_.reset(new Orthanc::ParsedDicomFile(content));
+  }
+
+
+  Orthanc::ParsedDicomFile& ParseDicomFileCommand::SuccessMessage::GetDicom() const
+  {
+    if (dicom_.get())
+    {
+      return *dicom_;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+
+
+  Orthanc::ParsedDicomFile* ParseDicomFileCommand::SuccessMessage::ReleaseDicom()
+  {
+    if (dicom_.get())
+    {
+      return dicom_.release();
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+
+  
+  std::string ParseDicomFileCommand::GetDicomDirPath(const std::string& dicomDirPath,
+                                                     const std::string& file)
+  {
+    std::string tmp = file;
+
+#if !defined(_WIN32)
+    std::replace(tmp.begin(), tmp.end(), '\\', '/');
+#endif
+
+    boost::filesystem::path base = boost::filesystem::path(dicomDirPath).parent_path();
+
+    return (base / tmp).string();
   }
 }

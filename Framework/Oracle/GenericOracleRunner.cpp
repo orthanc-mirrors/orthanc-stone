@@ -208,7 +208,7 @@ namespace OrthancStone
       c = a / b;
     }
 
-    LOG(INFO) << "Oracle reading file: " << c.string();
+    LOG(TRACE) << "Oracle reading file: " << c.string();
     return c.string();
   }
 

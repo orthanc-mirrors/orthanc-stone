@@ -399,6 +399,12 @@ if (ENABLE_STONE_DEPRECATED)
 endif()
 
 
+if (ENABLE_DCMTK)
+  list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Framework/Oracle/ParseDicomFileCommand.cpp
+    )
+endif()
+
 if (ENABLE_THREADS)
   list(APPEND ORTHANC_STONE_SOURCES
     ${ORTHANC_STONE_ROOT}/Framework/Messages/LockingEmitter.cpp

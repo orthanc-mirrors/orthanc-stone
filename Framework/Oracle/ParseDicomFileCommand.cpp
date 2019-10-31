@@ -19,31 +19,14 @@
  **/
 
 
-#pragma once
-
-#include <boost/noncopyable.hpp>
+#include "ParseDicomFileCommand.h"
 
 namespace OrthancStone
 {
-  class IOracleCommand : public boost::noncopyable
+  ParseDicomFileCommand::SuccessMessage::SuccessMessage(const ParseDicomFileCommand& command,
+                                                        DcmFileFormat& content) :
+    OriginMessage(command)
   {
-  public:
-    enum Type
-    {
-      Type_Custom,
-      Type_GetOrthancImage,
-      Type_GetOrthancWebViewerJpeg,
-      Type_Http,
-      Type_OrthancRestApi,
-      Type_ParseDicomFile,
-      Type_ReadFile,
-      Type_Sleep
-    };
-
-    virtual ~IOracleCommand()
-    {
-    }
-
-    virtual Type GetType() const = 0;
-  };
+    dicom_.reset(new Orthanc::ParsedDicomFile(content));
+  }
 }

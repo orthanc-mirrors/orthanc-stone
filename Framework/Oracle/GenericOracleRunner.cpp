@@ -21,6 +21,10 @@
 
 #include "GenericOracleRunner.h"
 
+#if !defined(ORTHANC_ENABLE_DCMTK)
+#  error The macro ORTHANC_ENABLE_DCMTK must be defined
+#endif
+
 #include "CustomOracleCommand.h"
 #include "GetOrthancImageCommand.h"
 #include "GetOrthancWebViewerJpegCommand.h"
@@ -29,6 +33,11 @@
 #include "OrthancRestApiCommand.h"
 #include "ReadFileCommand.h"
 
+#if ORTHANC_ENABLE_DCMTK == 1
+#  include "ParseDicomFileCommand.h"
+#  include <dcmtk/dcmdata/dcdeftag.h>
+#endif
+
 #include <Core/Compression/GzipCompressor.h>
 #include <Core/HttpClient.h>
 #include <Core/OrthancException.h>
@@ -36,6 +45,7 @@
 #include <Core/SystemToolbox.h>
 
 #include <boost/filesystem.hpp>
+
 
 namespace OrthancStone
 {
@@ -182,27 +192,80 @@ namespace OrthancStone
   }
 
 
-  static IMessage* Execute(const std::string& root,
-                           const ReadFileCommand& command)
+  static std::string GetPath(const std::string& root,
+                             const std::string& file)
   {
     boost::filesystem::path a(root);
-    boost::filesystem::path b(command.GetPath());
+    boost::filesystem::path b(file);
 
-    boost::filesystem::path path;
+    boost::filesystem::path c;
     if (b.is_absolute())
     {
-      path = b;
+      c = b;
     }
     else
     {
-      path = a / b;
+      c = a / b;
     }
 
+    LOG(INFO) << "Oracle reading file: " << c.string();
+    return c.string();
+  }
+
+
+  static IMessage* Execute(const std::string& root,
+                           const ReadFileCommand& command)
+  {
+    std::string path = GetPath(root, command.GetPath());
+
     std::string content;
-    Orthanc::SystemToolbox::ReadFile(content, path.string(), true /* log */);
+    Orthanc::SystemToolbox::ReadFile(content, path, true /* log */);
 
     return new ReadFileCommand::SuccessMessage(command, content);
   }
+
+
+#if ORTHANC_ENABLE_DCMTK == 1
+  static IMessage* Execute(const std::string& root,
+                           const ParseDicomFileCommand& command)
+  {
+    std::string path = GetPath(root, command.GetPath());
+
+    DcmFileFormat f;
+    bool ok;
+
+    if (command.IsPixelDataIncluded())
+    {
+      ok = f.loadFile(path.c_str()).good();
+    }
+    else
+    {
+#if DCMTK_VERSION_NUMBER >= 362
+      // NB : We could stop at (0x3007, 0x0000) instead of
+      // DCM_PixelData, cf. the Orthanc::DICOM_TAG_* constants
+
+      static const DcmTagKey STOP = DCM_PixelData;
+      //static const DcmTagKey STOP(0x3007, 0x0000);
+
+      ok = f.loadFileUntilTag(path.c_str(), EXS_Unknown, EGL_noChange,
+                              DCM_MaxReadLength, ERM_autoDetect, STOP).good();
+#else
+      // The primitive "loadFileUntilTag" was introduced in DCMTK 3.6.2
+      ok = f.loadFile(path.c_str()).good();
+#endif
+    }
+
+    if (ok)
+    {
+      return new ParseDicomFileCommand::SuccessMessage(command, f);
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                      "Cannot parse file: " + path);
+    }
+  }
+#endif
 
 
   IMessage* GenericOracleRunner::Run(IOracleCommand& command)
@@ -232,6 +295,14 @@ namespace OrthancStone
 
         case IOracleCommand::Type_ReadFile:
           return Execute(rootDirectory_, dynamic_cast<const ReadFileCommand&>(command));
+
+        case IOracleCommand::Type_ParseDicomFile:
+#if ORTHANC_ENABLE_DCMTK == 1
+          return Execute(rootDirectory_, dynamic_cast<const ParseDicomFileCommand&>(command));
+#else
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+                                          "DCMTK must be enabled to parse DICOM files");
+#endif
 
         default:
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);

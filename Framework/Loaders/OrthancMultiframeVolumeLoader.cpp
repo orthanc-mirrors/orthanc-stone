@@ -185,7 +185,6 @@ namespace OrthancStone
         "No support for multiframe instances with transfer syntax: " + transferSyntaxUid_);
     }
   }
-      
 
   void OrthancMultiframeVolumeLoader::SetTransferSyntax(const std::string& transferSyntax)
   {
@@ -254,6 +253,15 @@ namespace OrthancStone
     target = le16toh(*reinterpret_cast<const uint16_t*>(source));
   }
 
+  ORTHANC_FORCE_INLINE
+    static void CopyPixel(int16_t& target, const void* source)
+  {
+    // byte swapping is the same for unsigned and signed integers
+    // (the sign bit is always stored with the MSByte)
+    uint16_t* targetUp = reinterpret_cast<uint16_t*>(&target);
+    CopyPixel(*targetUp, source);
+  }
+
   template <typename T>
   void OrthancMultiframeVolumeLoader::CopyPixelData(const std::string& pixelData)
   {
@@ -293,7 +301,6 @@ namespace OrthancStone
         for (unsigned int x = 0; x < width; x++)
         {
           CopyPixel(*target, source);
-            
           target ++;
           source += bpp;
         }
@@ -310,6 +317,9 @@ namespace OrthancStone
         break;
       case Orthanc::PixelFormat_Grayscale16:
         CopyPixelData<uint16_t>(pixelData);
+        break;
+      case Orthanc::PixelFormat_SignedGrayscale16:
+        CopyPixelData<int16_t>(pixelData);
         break;
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);

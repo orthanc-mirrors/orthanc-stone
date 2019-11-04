@@ -323,7 +323,8 @@ namespace OrthancStone
                           double sceneY) const;
 
     void SetPixelSpacing(double x,
-                         double y);
+                         double y,
+                         bool emitLayerEditedEvent = true);
 
     void GetCenter(double& centerX,
                    double& centerY) const;

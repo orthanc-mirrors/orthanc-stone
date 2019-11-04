@@ -81,9 +81,9 @@ namespace Deprecated
 
   void ViewportGeometry::SetSceneExtent(const OrthancStone::Extent2D& extent)
   {
-    LOG(INFO) << "New scene extent: ("
-              << extent.GetX1() << "," << extent.GetY1() << ") => ("
-              << extent.GetX2() << "," << extent.GetY2() << ")";
+//    LOG(INFO) << "New scene extent: ("
+//              << extent.GetX1() << "," << extent.GetY1() << ") => ("
+//              << extent.GetX2() << "," << extent.GetY2() << ")";
 
     sceneExtent_ = extent;
     ComputeTransform();

@@ -134,7 +134,7 @@ namespace OrthancStone
 
     std::auto_ptr<RadiographyLayer> raii(layer);
 
-    LOG(INFO) << "Registering layer: " << countLayers_;
+    // LOG(INFO) << "Registering layer: " << countLayers_;
 
     size_t index = countLayers_++;
     raii->SetIndex(index);

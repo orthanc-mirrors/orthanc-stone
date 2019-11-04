@@ -238,15 +238,14 @@ namespace OrthancStone
   
   void RadiographyWidget::OnGeometryChanged(const RadiographyScene::GeometryChangedMessage& message)
   {
-    LOG(INFO) << "Scene geometry has changed";
-
+//    LOG(INFO) << "Scene geometry has changed";
     FitContent();
   }
 
   
   void RadiographyWidget::OnContentChanged(const RadiographyScene::ContentChangedMessage& message)
   {
-    LOG(INFO) << "Scene content has changed";
+//    LOG(INFO) << "Scene content has changed";
     NotifyContentChanged();
   }
 

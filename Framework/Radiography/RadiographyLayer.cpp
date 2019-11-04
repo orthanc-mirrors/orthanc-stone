@@ -224,13 +224,6 @@ namespace OrthancStone
   void RadiographyLayer::SetSize(unsigned int width,
                                  unsigned int height)
   {
-    if (hasSize_ &&
-        (width != width_ ||
-         height != height_))
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageSize);
-    }
-
     hasSize_ = true;
     width_ = width;
     height_ = height;

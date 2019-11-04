@@ -231,6 +231,19 @@ namespace OrthancStone
   {
     std::string path = GetPath(root, command.GetPath());
 
+    if (!Orthanc::SystemToolbox::IsRegularFile(path))
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentFile);
+    }
+
+    uint64_t fileSize = Orthanc::SystemToolbox::GetFileSize(path);
+
+    // Check for 32bit systems
+    if (fileSize != static_cast<uint64_t>(static_cast<size_t>(fileSize)))
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotEnoughMemory);
+    }
+    
     DcmFileFormat f;
     bool ok;
 
@@ -257,7 +270,7 @@ namespace OrthancStone
 
     if (ok)
     {
-      return new ParseDicomFileCommand::SuccessMessage(command, f);
+      return new ParseDicomFileCommand::SuccessMessage(command, f, static_cast<size_t>(fileSize));
     }
     else
     {

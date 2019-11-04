@@ -402,6 +402,7 @@ endif()
 if (ENABLE_DCMTK)
   list(APPEND ORTHANC_STONE_SOURCES
     ${ORTHANC_STONE_ROOT}/Framework/Oracle/ParseDicomFileCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParsedDicomFileCache.cpp
     )
 endif()
 
@@ -562,6 +563,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Extent2D.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/FiniteProjectiveCamera.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/FiniteProjectiveCamera.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GenericToolbox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GenericToolbox.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
@@ -578,8 +581,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/TextRenderer.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.h
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GenericToolbox.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GenericToolbox.h
   
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IViewport.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/ViewportBase.h

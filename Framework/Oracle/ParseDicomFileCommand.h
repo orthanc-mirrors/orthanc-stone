@@ -46,20 +46,26 @@ namespace OrthancStone
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
 
     private:
-      std::auto_ptr<Orthanc::ParsedDicomFile>  dicom_;
+      boost::shared_ptr<Orthanc::ParsedDicomFile>  dicom_;
+      size_t                                       fileSize_;
+      std::string                                  sopInstanceUid_;
 
     public:
       SuccessMessage(const ParseDicomFileCommand& command,
-                     DcmFileFormat& content);
+                     DcmFileFormat& content,
+                     size_t fileSize);
 
-      bool HasDicom() const
+      size_t GetFileSize() const
       {
-        return dicom_.get() != NULL;
+        return fileSize_;
       }
-
-      Orthanc::ParsedDicomFile& GetDicom() const;
-
-      Orthanc::ParsedDicomFile* ReleaseDicom();
+      
+      const std::string& GetSopInstanceUid() const
+      {
+        return sopInstanceUid_;
+      }
+      
+      boost::shared_ptr<Orthanc::ParsedDicomFile> GetDicom() const;
     };
 
   private:

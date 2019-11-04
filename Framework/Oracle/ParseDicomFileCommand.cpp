@@ -28,39 +28,28 @@
 namespace OrthancStone
 {
   ParseDicomFileCommand::SuccessMessage::SuccessMessage(const ParseDicomFileCommand& command,
-                                                        DcmFileFormat& content) :
-    OriginMessage(command)
+                                                        DcmFileFormat& content,
+                                                        size_t fileSize) :
+    OriginMessage(command),
+    fileSize_(fileSize)
   {
     dicom_.reset(new Orthanc::ParsedDicomFile(content));
+
+    if (!dicom_->GetTagValue(sopInstanceUid_, Orthanc::DICOM_TAG_SOP_INSTANCE_UID))
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                      "DICOM instance missing tag SOPInstanceUID");
+    }
   }
 
 
-  Orthanc::ParsedDicomFile& ParseDicomFileCommand::SuccessMessage::GetDicom() const
+  boost::shared_ptr<Orthanc::ParsedDicomFile> ParseDicomFileCommand::SuccessMessage::GetDicom() const
   {
-    if (dicom_.get())
-    {
-      return *dicom_;
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
+    assert(dicom_.get() != NULL);
+    return dicom_;
   }
 
 
-  Orthanc::ParsedDicomFile* ParseDicomFileCommand::SuccessMessage::ReleaseDicom()
-  {
-    if (dicom_.get())
-    {
-      return dicom_.release();
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-  }
-
-  
   std::string ParseDicomFileCommand::GetDicomDirPath(const std::string& dicomDirPath,
                                                      const std::string& file)
   {

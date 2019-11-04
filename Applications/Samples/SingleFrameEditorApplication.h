@@ -35,8 +35,7 @@
 #include "../../Framework/Radiography/RadiographySceneWriter.h"
 #include "../../Framework/Radiography/RadiographySceneReader.h"
 #include "../../Framework/Radiography/RadiographyMaskLayer.h"
-
-#include <../../Framework/Toolbox/TextRenderer.h>
+#include "../../Framework/Toolbox/TextRenderer.h"
 
 #include <Core/HttpClient.h>
 #include <Core/Images/FontRegistry.h>

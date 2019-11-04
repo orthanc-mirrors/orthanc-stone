@@ -168,7 +168,9 @@ namespace OrthancStone
           loader.reset(new OrthancMultiframeVolumeLoader(volumeImage, oracle_, oracle_));
 #else
           LockingEmitter::WriterLock lock(lockingEmitter_);
-          loader.reset(new OrthancMultiframeVolumeLoader(volumeImage, oracle_, lock.GetOracleObservable()));
+          loader.reset(new OrthancMultiframeVolumeLoader(volumeImage, 
+            oracle_, 
+            lock.GetOracleObservable()));
 #endif
           loader->LoadInstance(instanceUuid);
         }

@@ -22,12 +22,10 @@
 // stuck trying to compile this cpp file in release mode
 // (versions: https://en.wikipedia.org/wiki/Microsoft_Visual_C%2B%2B)
 #ifdef _MSC_VER
-#  if _MSC_VER < 1600
-#    pragma optimize("", off)
+#  pragma optimize("", off)
 // warning C4748: /GS can not protect parameters and local variables from
 // local buffer overrun because optimizations are disabled in function
-#    pragma warning(disable: 4748)
-#  endif
+#  pragma warning(disable: 4748)
 #endif
 
 #include "Framework/Toolbox/DicomStructureSetUtils.h"

@@ -182,10 +182,12 @@ namespace OrthancStone
           runner.SetOrthanc(orthanc_);
           runner.SetRootDirectory(rootDirectory_);
 
+#if ORTHANC_ENABLE_DCMTK == 1
           if (dicomCache_)
           {
             runner.SetDicomCache(dicomCache_);
           }
+#endif
         }
         
         std::auto_ptr<IMessage> message(runner.Run(item.GetCommand()));

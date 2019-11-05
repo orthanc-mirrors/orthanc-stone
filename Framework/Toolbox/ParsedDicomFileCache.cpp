@@ -26,44 +26,116 @@ namespace OrthancStone
   class ParsedDicomFileCache::Item : public Orthanc::ICacheable
   {
   private:
-    std::auto_ptr<Orthanc::ParsedDicomFile>  dicom_;
-    size_t                                   fileSize_;
-
+    boost::mutex                                 mutex_;
+    boost::shared_ptr<Orthanc::ParsedDicomFile>  dicom_;
+    size_t                                       fileSize_;
+    bool                                         hasPixelData_;
+    
   public:
-    Item(Orthanc::ParsedDicomFile* dicom,
-         size_t fileSize) :
+    Item(boost::shared_ptr<Orthanc::ParsedDicomFile> dicom,
+         size_t fileSize,
+         bool hasPixelData) :
       dicom_(dicom),
-      fileSize_(fileSize)
+      fileSize_(fileSize),
+      hasPixelData_(hasPixelData)
     {
       if (dicom == NULL)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
-    }           
+    }
+
+    boost::mutex& GetMutex()
+    {
+      return mutex_;
+    }
            
     virtual size_t GetMemoryUsage() const
     {
       return fileSize_;
     }
 
-    const Orthanc::ParsedDicomFile& GetDicom() const
+    boost::shared_ptr<Orthanc::ParsedDicomFile> GetDicom() const
     {
       assert(dicom_.get() != NULL);
-      return *dicom_;
+      return dicom_;
+    }
+
+    bool HasPixelData() const
+    {
+      return hasPixelData_;
     }
   };
     
 
-  void ParsedDicomFileCache::Acquire(const std::string& sopInstanceUid,
-                                     Orthanc::ParsedDicomFile* dicom,
-                                     size_t fileSize)
+  void ParsedDicomFileCache::Acquire(const std::string& path,
+                                     boost::shared_ptr<Orthanc::ParsedDicomFile> dicom,
+                                     size_t fileSize,
+                                     bool hasPixelData)
   {
-    cache_.Acquire(sopInstanceUid, new Item(dicom, fileSize));
+    cache_.Acquire(path, new Item(dicom, fileSize, hasPixelData));
   }
 
   
-  const Orthanc::ParsedDicomFile& ParsedDicomFileCache::Reader::GetDicom() const
+  ParsedDicomFileCache::Reader::Reader(ParsedDicomFileCache& cache,
+                                       const std::string& path) :
+    reader_(cache.cache_, path)
   {
-    return dynamic_cast<const Item&>(reader_.GetValue()).GetDicom();
+    if (reader_.IsValid())
+    {
+      /**
+       * The "Orthanc::MemoryObjectCache" uses readers/writers. The
+       * "Reader" subclass of the cache locks as a reader. This means
+       * that multiple threads can still access the underlying
+       * "ParsedDicomFile" object, which is not supported by DCMTK. We
+       * thus protect the DCMTK object by a simple mutex.
+       **/
+      
+      item_ = &dynamic_cast<Item&>(reader_.GetValue());
+      lock_.reset(new boost::mutex::scoped_lock(item_->GetMutex()));
+    }
+    else
+    {
+      item_ = NULL;
+    }
+  }
+
+
+  bool ParsedDicomFileCache::Reader::HasPixelData() const
+  {
+    if (item_ == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      return item_->HasPixelData();
+    }
+  }
+
+  
+  boost::shared_ptr<Orthanc::ParsedDicomFile> ParsedDicomFileCache::Reader::GetDicom() const
+  {
+    if (item_ == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      return item_->GetDicom();
+    }
+  }
+
+  
+  size_t ParsedDicomFileCache::Reader::GetFileSize() const
+  {
+    if (item_ == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      return item_->GetMemoryUsage();
+    }
   }
 }

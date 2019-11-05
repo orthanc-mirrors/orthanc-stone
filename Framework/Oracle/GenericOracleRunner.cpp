@@ -226,8 +226,8 @@ namespace OrthancStone
 
 
 #if ORTHANC_ENABLE_DCMTK == 1
-  static IMessage* Execute(const std::string& root,
-                           const ParseDicomFileCommand& command)
+  static ParseDicomFileCommand::SuccessMessage* Execute(const std::string& root,
+                                                        const ParseDicomFileCommand& command)
   {
     std::string path = GetPath(root, command.GetPath());
 
@@ -243,13 +243,13 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NotEnoughMemory);
     }
-    
-    DcmFileFormat f;
+
+    DcmFileFormat dicom;
     bool ok;
 
     if (command.IsPixelDataIncluded())
     {
-      ok = f.loadFile(path.c_str()).good();
+      ok = dicom.loadFile(path.c_str()).good();
     }
     else
     {
@@ -260,17 +260,20 @@ namespace OrthancStone
       static const DcmTagKey STOP = DCM_PixelData;
       //static const DcmTagKey STOP(0x3007, 0x0000);
 
-      ok = f.loadFileUntilTag(path.c_str(), EXS_Unknown, EGL_noChange,
-                              DCM_MaxReadLength, ERM_autoDetect, STOP).good();
+      ok = dicom.loadFileUntilTag(path.c_str(), EXS_Unknown, EGL_noChange,
+                                  DCM_MaxReadLength, ERM_autoDetect, STOP).good();
 #else
       // The primitive "loadFileUntilTag" was introduced in DCMTK 3.6.2
-      ok = f.loadFile(path.c_str()).good();
+      ok = dicom.loadFile(path.c_str()).good();
 #endif
     }
 
+    printf("Reading %s\n", path.c_str());
+
     if (ok)
     {
-      return new ParseDicomFileCommand::SuccessMessage(command, f, static_cast<size_t>(fileSize));
+      return new ParseDicomFileCommand::SuccessMessage
+        (command, dicom, static_cast<size_t>(fileSize), command.IsPixelDataIncluded());
     }
     else
     {
@@ -278,6 +281,48 @@ namespace OrthancStone
                                       "Cannot parse file: " + path);
     }
   }
+
+
+  static ParseDicomFileCommand::SuccessMessage* Execute(boost::shared_ptr<ParsedDicomFileCache> cache,
+                                                        const std::string& root,
+                                                        const ParseDicomFileCommand& command)
+  {
+#if 0
+    // The code to use the cache is buggy in multithreaded environments => TODO FIX
+    if (cache.get())
+    {
+      {
+        ParsedDicomFileCache::Reader reader(*cache, command.GetPath());
+        if (reader.IsValid() &&
+            (!command.IsPixelDataIncluded() ||
+             reader.HasPixelData()))
+        {
+          // Reuse the DICOM file from the cache
+          return new ParseDicomFileCommand::SuccessMessage(
+            command, reader.GetDicom(), reader.GetFileSize(), reader.HasPixelData());
+        }
+      }
+      
+      // Not in the cache, first read and parse the DICOM file
+      std::auto_ptr<ParseDicomFileCommand::SuccessMessage> message(Execute(root, command));
+
+      // Secondly, store it into the cache for future use
+      assert(&message->GetOrigin() == &command);
+      cache->Acquire(message->GetOrigin().GetPath(), message->GetDicom(),
+                     message->GetFileSize(), message->HasPixelData());
+
+      return message.release();
+    }
+    else
+    {
+      // No cache available
+      return Execute(root, command);
+    }
+#else
+    return Execute(root, command);
+#endif
+  }
+  
 #endif
 
 
@@ -311,7 +356,8 @@ namespace OrthancStone
 
         case IOracleCommand::Type_ParseDicomFile:
 #if ORTHANC_ENABLE_DCMTK == 1
-          return Execute(rootDirectory_, dynamic_cast<const ParseDicomFileCommand&>(command));
+          return Execute(dicomCache_, rootDirectory_,
+                         dynamic_cast<const ParseDicomFileCommand&>(command));
 #else
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
                                           "DCMTK must be enabled to parse DICOM files");

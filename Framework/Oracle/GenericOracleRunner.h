@@ -23,6 +23,15 @@
 
 #include "IOracleRunner.h"
 
+#if !defined(ORTHANC_ENABLE_DCMTK)
+#  error The macro ORTHANC_ENABLE_DCMTK must be defined
+#endif
+
+#if ORTHANC_ENABLE_DCMTK == 1
+#  include "../Toolbox/ParsedDicomFileCache.h"
+#endif
+
+
 #include <Core/Enumerations.h>  // For ORTHANC_OVERRIDE
 #include <Core/WebServiceParameters.h>
 
@@ -34,9 +43,16 @@ namespace OrthancStone
     Orthanc::WebServiceParameters  orthanc_;
     std::string                    rootDirectory_;
 
+#if ORTHANC_ENABLE_DCMTK == 1
+    boost::shared_ptr<ParsedDicomFileCache>  dicomCache_;
+#endif
+
   public:
-    GenericOracleRunner() :
-      rootDirectory_(".")
+    GenericOracleRunner()
+      : rootDirectory_(".")
+#if ORTHANC_ENABLE_DCMTK == 1
+      , dicomCache_(NULL)
+#endif
     {
     }
 
@@ -59,6 +75,13 @@ namespace OrthancStone
     {
       return rootDirectory_;
     }
+
+#if ORTHANC_ENABLE_DCMTK == 1
+    void SetDicomCache(boost::shared_ptr<ParsedDicomFileCache> cache)
+    {
+      dicomCache_ = cache;
+    }
+#endif
 
     virtual IMessage* Run(IOracleCommand& command) ORTHANC_OVERRIDE;
   };

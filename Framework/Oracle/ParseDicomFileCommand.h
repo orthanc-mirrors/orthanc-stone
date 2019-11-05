@@ -48,24 +48,41 @@ namespace OrthancStone
     private:
       boost::shared_ptr<Orthanc::ParsedDicomFile>  dicom_;
       size_t                                       fileSize_;
+      bool                                         hasPixelData_;
       std::string                                  sopInstanceUid_;
 
+      void Setup();
+      
     public:
       SuccessMessage(const ParseDicomFileCommand& command,
-                     DcmFileFormat& content,
-                     size_t fileSize);
+                     DcmFileFormat& dicom,
+                     size_t fileSize,
+                     bool hasPixelData);
+      
+      SuccessMessage(const ParseDicomFileCommand& command,
+                     boost::shared_ptr<Orthanc::ParsedDicomFile> dicom,
+                     size_t fileSize,
+                     bool hasPixelData);
+      
+      boost::shared_ptr<Orthanc::ParsedDicomFile> GetDicom() const
+      {
+        return dicom_;
+      }
 
       size_t GetFileSize() const
       {
         return fileSize_;
+      }
+
+      bool HasPixelData() const
+      {
+        return hasPixelData_;
       }
       
       const std::string& GetSopInstanceUid() const
       {
         return sopInstanceUid_;
       }
-      
-      boost::shared_ptr<Orthanc::ParsedDicomFile> GetDicom() const;
     };
 
   private:

@@ -27,14 +27,8 @@
 
 namespace OrthancStone
 {
-  ParseDicomFileCommand::SuccessMessage::SuccessMessage(const ParseDicomFileCommand& command,
-                                                        DcmFileFormat& content,
-                                                        size_t fileSize) :
-    OriginMessage(command),
-    fileSize_(fileSize)
+  void ParseDicomFileCommand::SuccessMessage::Setup()
   {
-    dicom_.reset(new Orthanc::ParsedDicomFile(content));
-
     if (!dicom_->GetTagValue(sopInstanceUid_, Orthanc::DICOM_TAG_SOP_INSTANCE_UID))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
@@ -43,10 +37,29 @@ namespace OrthancStone
   }
 
 
-  boost::shared_ptr<Orthanc::ParsedDicomFile> ParseDicomFileCommand::SuccessMessage::GetDicom() const
+  ParseDicomFileCommand::SuccessMessage::SuccessMessage(const ParseDicomFileCommand& command,
+                                                        DcmFileFormat& dicom,
+                                                        size_t fileSize,
+                                                        bool hasPixelData) :
+    OriginMessage(command),
+    fileSize_(fileSize),
+    hasPixelData_(hasPixelData)
   {
-    assert(dicom_.get() != NULL);
-    return dicom_;
+    dicom_.reset(new Orthanc::ParsedDicomFile(dicom));
+    Setup();
+  }
+
+
+  ParseDicomFileCommand::SuccessMessage::SuccessMessage(const ParseDicomFileCommand& command,
+                                                        boost::shared_ptr<Orthanc::ParsedDicomFile> dicom,
+                                                        size_t fileSize,
+                                                        bool hasPixelData) :
+    OriginMessage(command),
+    dicom_(dicom),
+    fileSize_(fileSize),
+    hasPixelData_(hasPixelData)
+  {
+    Setup();
   }
 
 

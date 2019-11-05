@@ -24,6 +24,8 @@
 #include <Core/Cache/MemoryObjectCache.h>
 #include <Core/DicomParsing/ParsedDicomFile.h>
 
+#include <boost/shared_ptr.hpp>
+
 namespace OrthancStone
 {
   class ParsedDicomFileCache : public boost::noncopyable
@@ -39,28 +41,32 @@ namespace OrthancStone
       cache_.SetMaximumSize(size);
     }
     
-    void Acquire(const std::string& sopInstanceUid,
-                 Orthanc::ParsedDicomFile* dicom,  // Takes ownership
-                 size_t fileSize);
+    void Acquire(const std::string& path,
+                 boost::shared_ptr<Orthanc::ParsedDicomFile> dicom,
+                 size_t fileSize,
+                 bool hasPixelData);
 
     class Reader : public boost::noncopyable
     {
     private:
       Orthanc::MemoryObjectCache::Reader reader_;
+      std::auto_ptr<boost::mutex::scoped_lock>  lock_;
+      Item*                         item_;
 
     public:
       Reader(ParsedDicomFileCache& cache,
-             const std::string& sopInstanceUid) :
-        reader_(cache.cache_, sopInstanceUid)
-      {
-      }
+             const std::string& path);
 
       bool IsValid() const
       {
-        return reader_.IsValid();
+        return item_ != NULL;
       }
 
-      const Orthanc::ParsedDicomFile& GetDicom() const;
+      bool HasPixelData() const;
+
+      boost::shared_ptr<Orthanc::ParsedDicomFile> GetDicom() const;
+
+      size_t GetFileSize() const;
     };
   };
 }

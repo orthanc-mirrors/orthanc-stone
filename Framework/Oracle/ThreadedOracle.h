@@ -25,8 +25,16 @@
 #  error The macro ORTHANC_ENABLE_THREADS must be defined
 #endif
 
+#if !defined(ORTHANC_ENABLE_DCMTK)
+#  error The macro ORTHANC_ENABLE_DCMTK must be defined
+#endif
+
 #if ORTHANC_ENABLE_THREADS != 1
 #  error This file can only compiled for native targets
+#endif
+
+#if ORTHANC_ENABLE_DCMTK == 1
+#  include "../Toolbox/ParsedDicomFileCache.h"
 #endif
 
 #include "IOracle.h"
@@ -62,6 +70,10 @@ namespace OrthancStone
     boost::thread                        sleepingWorker_;
     unsigned int                         sleepingTimeResolution_;
 
+#if ORTHANC_ENABLE_DCMTK == 1
+    boost::shared_ptr<ParsedDicomFileCache>  dicomCache_;
+#endif
+    
     void Step();
 
     static void Worker(ThreadedOracle* that);
@@ -82,6 +94,8 @@ namespace OrthancStone
     void SetThreadsCount(unsigned int count);
 
     void SetSleepingTimeResolution(unsigned int milliseconds);
+
+    void SetDicomCacheSize(size_t size);
 
     void Start();
 

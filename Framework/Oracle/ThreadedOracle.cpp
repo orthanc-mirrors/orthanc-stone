@@ -181,6 +181,11 @@ namespace OrthancStone
           boost::mutex::scoped_lock lock(mutex_);
           runner.SetOrthanc(orthanc_);
           runner.SetRootDirectory(rootDirectory_);
+
+          if (dicomCache_)
+          {
+            runner.SetDicomCache(dicomCache_);
+          }
         }
         
         std::auto_ptr<IMessage> message(runner.Run(item.GetCommand()));
@@ -352,6 +357,31 @@ namespace OrthancStone
     {
       sleepingTimeResolution_ = milliseconds;
     }
+  }
+
+
+  void ThreadedOracle::SetDicomCacheSize(size_t size)
+  {
+#if ORTHANC_ENABLE_DCMTK == 1
+    boost::mutex::scoped_lock lock(mutex_);
+
+    if (state_ != State_Setup)
+    {
+      LOG(ERROR) << "ThreadedOracle::SetDicomCacheSize(): (state_ != State_Setup)";
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      if (size == 0)
+      {
+        dicomCache_.reset();
+      }
+      else
+      {
+        dicomCache_.reset(new ParsedDicomFileCache(size));
+      }
+    }
+#endif
   }
 
 

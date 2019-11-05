@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Messages/IObserver.h"
-#include "IOracleRunner.h"
+#include "IOracleCommand.h"
 
 #include <boost/shared_ptr.hpp>
 

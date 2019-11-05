@@ -21,8 +21,6 @@
 
 #pragma once
 
-#include "IOracleRunner.h"
-
 #if !defined(ORTHANC_ENABLE_DCMTK)
 #  error The macro ORTHANC_ENABLE_DCMTK must be defined
 #endif
@@ -31,13 +29,14 @@
 #  include "../Toolbox/ParsedDicomFileCache.h"
 #endif
 
+#include "IOracleCommand.h"
 
 #include <Core/Enumerations.h>  // For ORTHANC_OVERRIDE
 #include <Core/WebServiceParameters.h>
 
 namespace OrthancStone
 {
-  class GenericOracleRunner : public IOracleRunner
+  class GenericOracleRunner : public boost::noncopyable
   {
   private:
     Orthanc::WebServiceParameters  orthanc_;
@@ -80,6 +79,6 @@ namespace OrthancStone
     }
 #endif
 
-    virtual IMessage* Run(IOracleCommand& command) ORTHANC_OVERRIDE;
+    IMessage* Run(IOracleCommand& command);
   };
 }

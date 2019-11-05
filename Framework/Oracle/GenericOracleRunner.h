@@ -48,11 +48,8 @@ namespace OrthancStone
 #endif
 
   public:
-    GenericOracleRunner()
-      : rootDirectory_(".")
-#if ORTHANC_ENABLE_DCMTK == 1
-      , dicomCache_(NULL)
-#endif
+    GenericOracleRunner() :
+      rootDirectory_(".")
     {
     }
 

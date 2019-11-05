@@ -168,7 +168,7 @@ namespace OrthancStone
           
         if (command.HasPayload())
         {
-          copy->SetPayload(command.ReleasePayload());
+          copy->AcquirePayload(command.ReleasePayload());
         }
           
         sleepingCommands_->Add(item.GetReceiver(), copy.release());

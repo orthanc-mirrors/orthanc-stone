@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Messages/IMessage.h"
-#include "OracleCommandWithPayload.h"
+#include "OracleCommandBase.h"
 
 #include <Core/Enumerations.h>
 
@@ -31,7 +31,7 @@
 
 namespace OrthancStone
 {
-  class OrthancRestApiCommand : public OracleCommandWithPayload
+  class OrthancRestApiCommand : public OracleCommandBase
   {
   public:
     typedef std::map<std::string, std::string>  HttpHeaders;

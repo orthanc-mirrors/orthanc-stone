@@ -43,11 +43,11 @@ namespace OrthancStone
   }
 
 
-  void LoaderStateMachine::Schedule(OracleCommandWithPayload* command)
+  void LoaderStateMachine::Schedule(OracleCommandBase* command)
   {
     LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::Schedule()";
 
-    std::auto_ptr<OracleCommandWithPayload> protection(command);
+    std::auto_ptr<OracleCommandBase> protection(command);
 
     if (command == NULL)
     {

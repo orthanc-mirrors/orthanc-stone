@@ -464,7 +464,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IObserver.h
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancImageCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/GetOrthancWebViewerJpegCommand.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Oracle/OracleCommandWithPayload.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Oracle/OracleCommandBase.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/OrthancRestApiCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/HttpCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CairoCompositor.cpp

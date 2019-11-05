@@ -22,24 +22,24 @@
 #pragma once
 
 #include "../Messages/IMessage.h"
-#include "OracleCommandWithPayload.h"
+#include "OracleCommandBase.h"
 
 namespace OrthancStone
 {
-  class ReadFileCommand : public OracleCommandWithPayload
+  class ReadFileCommand : public OracleCommandBase
   {
   public:
-    class SuccessMessage : public OriginMessage<ReadFileCommand>
+    class SuccessMessage : public OracleMessageBase
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      std::string  content_;
+      std::string content_;
 
     public:
-      SuccessMessage(const ReadFileCommand& command,
+      SuccessMessage(ReadFileCommand& command,
                      std::string& content  /* will be swapped to avoid a memcpy() */) :
-        OriginMessage(command)
+        OracleMessageBase(command)
       {
         content_.swap(content);
       }

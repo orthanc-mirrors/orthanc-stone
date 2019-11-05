@@ -19,13 +19,13 @@
  **/
 
 
-#include "OracleCommandWithPayload.h"
+#include "OracleCommandBase.h"
 
 #include <Core/OrthancException.h>
 
 namespace OrthancStone
 {
-  void OracleCommandWithPayload::SetPayload(Orthanc::IDynamicObject* payload)
+  void OracleCommandBase::AcquirePayload(Orthanc::IDynamicObject* payload)
   {
     if (payload == NULL)
     {
@@ -38,7 +38,7 @@ namespace OrthancStone
   }
 
 
-  Orthanc::IDynamicObject& OracleCommandWithPayload::GetPayload() const
+  Orthanc::IDynamicObject& OracleCommandBase::GetPayload() const
   {
     if (HasPayload())
     {
@@ -46,13 +46,13 @@ namespace OrthancStone
     }
     else
     {
-      LOG(ERROR) << "OracleCommandWithPayload::GetPayload(): (!HasPayload())";
+      LOG(ERROR) << "OracleCommandBase::GetPayload(): (!HasPayload())";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
 
 
-  Orthanc::IDynamicObject* OracleCommandWithPayload::ReleasePayload()
+  Orthanc::IDynamicObject* OracleCommandBase::ReleasePayload()
   {
     if (HasPayload())
     {
@@ -60,7 +60,7 @@ namespace OrthancStone
     }
     else
     {
-      LOG(ERROR) << "OracleCommandWithPayload::ReleasePayload(): (!HasPayload())";
+      LOG(ERROR) << "OracleCommandBase::ReleasePayload(): (!HasPayload())";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }

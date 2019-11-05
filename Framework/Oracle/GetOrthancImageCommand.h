@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Messages/IMessage.h"
-#include "OracleCommandWithPayload.h"
+#include "OracleCommandBase.h"
 
 #include <Core/Images/ImageAccessor.h>
 
@@ -30,7 +30,7 @@
 
 namespace OrthancStone
 {
-  class GetOrthancImageCommand : public OracleCommandWithPayload
+  class GetOrthancImageCommand : public OracleCommandBase
   {
   public:
     typedef std::map<std::string, std::string>  HttpHeaders;

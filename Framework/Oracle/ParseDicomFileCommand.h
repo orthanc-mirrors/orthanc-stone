@@ -30,7 +30,7 @@
 #endif
 
 #include "../Messages/IMessage.h"
-#include "OracleCommandWithPayload.h"
+#include "OracleCommandBase.h"
 
 #include <Core/DicomParsing/ParsedDicomFile.h>
 
@@ -38,7 +38,7 @@
 
 namespace OrthancStone
 {
-  class ParseDicomFileCommand : public OracleCommandWithPayload
+  class ParseDicomFileCommand : public OracleCommandBase
   {
   public:
     class SuccessMessage : public OriginMessage<ParseDicomFileCommand>

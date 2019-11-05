@@ -25,7 +25,6 @@
 #  error The macro ORTHANC_ENABLE_DCMTK must be defined
 #endif
 
-#include "CustomOracleCommand.h"
 #include "GetOrthancImageCommand.h"
 #include "GetOrthancWebViewerJpegCommand.h"
 #include "HttpCommand.h"
@@ -214,7 +213,7 @@ namespace OrthancStone
 
 
   static IMessage* Execute(const std::string& root,
-                           const ReadFileCommand& command)
+                           ReadFileCommand& command)
   {
     std::string path = GetPath(root, command.GetPath());
 
@@ -348,11 +347,8 @@ namespace OrthancStone
         case IOracleCommand::Type_GetOrthancWebViewerJpeg:
           return Execute(orthanc_, dynamic_cast<const GetOrthancWebViewerJpegCommand&>(command));
 
-        case IOracleCommand::Type_Custom:
-          return dynamic_cast<CustomOracleCommand&>(command).Execute(*this);
-
         case IOracleCommand::Type_ReadFile:
-          return Execute(rootDirectory_, dynamic_cast<const ReadFileCommand&>(command));
+          return Execute(rootDirectory_, dynamic_cast<ReadFileCommand&>(command));
 
         case IOracleCommand::Type_ParseDicomFile:
 #if ORTHANC_ENABLE_DCMTK == 1

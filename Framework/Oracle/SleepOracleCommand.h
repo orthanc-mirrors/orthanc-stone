@@ -22,11 +22,11 @@
 #pragma once
 
 #include "../Messages/IMessage.h"
-#include "OracleCommandWithPayload.h"
+#include "OracleCommandBase.h"
 
 namespace OrthancStone
 {
-  class SleepOracleCommand : public OracleCommandWithPayload
+  class SleepOracleCommand : public OracleCommandBase
   {
   private:
     unsigned int  milliseconds_;

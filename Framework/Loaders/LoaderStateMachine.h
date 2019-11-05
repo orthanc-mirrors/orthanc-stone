@@ -60,7 +60,7 @@ namespace OrthancStone
       {
       }
 
-      void Schedule(OracleCommandWithPayload* command) const
+      void Schedule(OracleCommandBase* command) const
       {
         that_.Schedule(command);
       }
@@ -78,7 +78,7 @@ namespace OrthancStone
       virtual void Handle(const GetOrthancWebViewerJpegCommand::SuccessMessage& message);
     };
 
-    void Schedule(OracleCommandWithPayload* command);
+    void Schedule(OracleCommandBase* command);
 
     void Start();
 

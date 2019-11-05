@@ -21,18 +21,27 @@
 
 #pragma once
 
-#include "IOracleRunner.h"
+#include "IOracleCommand.h"
+
+#include <memory>
 
 namespace OrthancStone
 {
-  class CustomOracleCommand : public IOracleCommand
+  class OracleCommandBase : public IOracleCommand
   {
+  private:
+    std::auto_ptr<Orthanc::IDynamicObject>  payload_;
+
   public:
-    virtual Type GetType() const
+    virtual void AcquirePayload(Orthanc::IDynamicObject* payload);
+
+    virtual bool HasPayload() const
     {
-      return Type_Custom;
+      return (payload_.get() != NULL);
     }
 
-    virtual IMessage* Execute(IOracleRunner& runner) = 0;
+    virtual Orthanc::IDynamicObject& GetPayload() const;
+
+    Orthanc::IDynamicObject* ReleasePayload();
   };
 }

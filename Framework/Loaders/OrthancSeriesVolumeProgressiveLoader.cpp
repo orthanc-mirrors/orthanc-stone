@@ -237,7 +237,7 @@ namespace OrthancStone
   }
 
 
-  static unsigned int GetSliceIndexPayload(const OracleCommandWithPayload& command)
+  static unsigned int GetSliceIndexPayload(const OracleCommandBase& command)
   {
     return dynamic_cast< const Orthanc::SingleValueObject<unsigned int>& >(command.GetPayload()).GetValue();
   }
@@ -261,7 +261,7 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
 
-      std::auto_ptr<OracleCommandWithPayload> command;
+      std::auto_ptr<OracleCommandBase> command;
         
       if (quality == BEST_QUALITY)
       {
@@ -291,7 +291,7 @@ namespace OrthancStone
         command.reset(tmp.release());
       }
 
-      command->SetPayload(new Orthanc::SingleValueObject<unsigned int>(sliceIndex));
+      command->AcquirePayload(new Orthanc::SingleValueObject<unsigned int>(sliceIndex));
 
       boost::shared_ptr<IObserver> observer(GetSharedObserver());
       oracle_.Schedule(observer, command.release());

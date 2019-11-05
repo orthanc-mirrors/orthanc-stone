@@ -21,6 +21,10 @@
 
 #pragma once
 
+#include "../Messages/IMessage.h"
+
+#include <Core/IDynamicObject.h>
+
 #include <boost/noncopyable.hpp>
 
 namespace OrthancStone
@@ -28,9 +32,30 @@ namespace OrthancStone
   class IOracleCommand : public boost::noncopyable
   {
   public:
+    class OracleMessageBase : public IMessage
+    {
+    private:
+      IOracleCommand&  command_;
+
+    public:
+      OracleMessageBase(IOracleCommand& command) :
+        command_(command)
+      {
+      }
+
+      void AcquireCommandPayload(Orthanc::IDynamicObject* payload) const
+      {
+        command_.AcquirePayload(payload);
+      }
+
+      const IOracleCommand& GetCommand() const
+      {
+        return command_;
+      }
+    };
+
     enum Type
     {
-      Type_Custom,
       Type_GetOrthancImage,
       Type_GetOrthancWebViewerJpeg,
       Type_Http,
@@ -45,5 +70,11 @@ namespace OrthancStone
     }
 
     virtual Type GetType() const = 0;
+
+    virtual void AcquirePayload(Orthanc::IDynamicObject* payload) = 0;
+    
+    virtual bool HasPayload() const = 0;
+
+    virtual Orthanc::IDynamicObject& GetPayload() const = 0;
   };
 }

@@ -101,7 +101,7 @@ namespace OrthancStone
         std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
         command->SetUri("/instances/" + loader.GetInstanceId() + "/content/" +
                         Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR.Format());
-        command->SetPayload(new LoadRTDoseGeometry(loader, dicom.release()));
+        command->AcquirePayload(new LoadRTDoseGeometry(loader, dicom.release()));
 
         Schedule(command.release());
       }
@@ -175,7 +175,7 @@ namespace OrthancStone
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetUri("/instances/" + instanceId_ + "/content/" +
                       Orthanc::DICOM_TAG_PIXEL_DATA.Format() + "/0");
-      command->SetPayload(new LoadUncompressedPixelData(*this));
+      command->AcquirePayload(new LoadUncompressedPixelData(*this));
       Schedule(command.release());
     }
     else
@@ -369,14 +369,14 @@ namespace OrthancStone
       std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetUri("/instances/" + instanceId + "/tags");
-      command->SetPayload(new LoadGeometry(*this));
+      command->AcquirePayload(new LoadGeometry(*this));
       Schedule(command.release());
     }
 
     {
       std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetUri("/instances/" + instanceId + "/metadata/TransferSyntax");
-      command->SetPayload(new LoadTransferSyntax(*this));
+      command->AcquirePayload(new LoadTransferSyntax(*this));
       Schedule(command.release());
     }
   }

@@ -144,7 +144,7 @@ namespace OrthancStone
         command->SetHttpHeader("Accept-Encoding", "gzip");
         std::string uri = "/instances/" + instanceId + "/tags";
         command->SetUri(uri);
-        command->SetPayload(new AddReferencedInstance(loader, instanceId));
+        command->AcquirePayload(new AddReferencedInstance(loader, instanceId));
         Schedule(command.release());
       }
     }
@@ -231,7 +231,7 @@ namespace OrthancStone
         command->SetUri("/tools/lookup");
         command->SetMethod(Orthanc::HttpMethod_Post);
         command->SetBody(*it);
-        command->SetPayload(new LookupInstance(loader, *it));
+        command->AcquirePayload(new LookupInstance(loader, *it));
         Schedule(command.release());
       }
     }
@@ -382,7 +382,7 @@ namespace OrthancStone
       std::string uri = "/instances/" + instanceId + "/tags?ignore-length=3006-0050";
 
       command->SetUri(uri);
-      command->SetPayload(new LoadStructure(*this));
+      command->AcquirePayload(new LoadStructure(*this));
       Schedule(command.release());
     }
   }

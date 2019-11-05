@@ -112,6 +112,25 @@ namespace OrthancStone
     BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
+  void RadiographyDicomLayer::SetSourceImage(Orthanc::ImageAccessor* image, double newPixelSpacingX, double newPixelSpacingY)   // Takes ownership
+  {
+    std::auto_ptr<Orthanc::ImageAccessor> raii(image);
+
+    if (image == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+
+    SetSize(image->GetWidth(), image->GetHeight());
+
+    source_ = raii;
+    ApplyConverter();
+
+    SetPixelSpacing(newPixelSpacingX, newPixelSpacingY, false);
+
+    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
+  }
+
 
   void RadiographyDicomLayer::SetDicomFrameConverter(Deprecated::DicomFrameConverter* converter)
   {

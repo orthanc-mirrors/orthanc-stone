@@ -18,6 +18,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+// working around a bug where the Visual C++ compiler would get 
+// stuck trying to compile this cpp file in release mode
+// (versions: https://en.wikipedia.org/wiki/Microsoft_Visual_C%2B%2B)
+#ifdef _MSC_VER
+#  pragma optimize("", off)
+// warning C4748: /GS can not protect parameters and local variables from
+// local buffer overrun because optimizations are disabled in function
+#  pragma warning(disable: 4748)
+#endif
+
 #include "Framework/Toolbox/DicomStructureSetUtils.h"
 #include "Framework/Toolbox/DicomStructureSet2.h"
 #include "Framework/Toolbox/DisjointDataSet.h"
@@ -5399,5 +5409,6 @@ TEST(StructureSet, ReadFromJsonPart2)
 
 #endif 
 // BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
 
 

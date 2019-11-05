@@ -150,7 +150,7 @@ namespace OrthancStone
   protected:
     RadiographyLayer& RegisterLayer(RadiographyLayer* layer);
 
-    void OnTagsReceived(const Deprecated::OrthancApiClient::BinaryResponseReadyMessage& message);
+    virtual void OnTagsReceived(const Deprecated::OrthancApiClient::BinaryResponseReadyMessage& message);
 
     virtual void OnFrameReceived(const Deprecated::OrthancApiClient::BinaryResponseReadyMessage& message);
     

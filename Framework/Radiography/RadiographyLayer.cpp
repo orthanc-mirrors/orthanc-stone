@@ -312,11 +312,15 @@ namespace OrthancStone
 
 
   void RadiographyLayer::SetPixelSpacing(double x,
-                                         double y)
+                                         double y,
+                                         bool emitLayerEditedEvent)
   {
     geometry_.SetPixelSpacing(x, y);
     UpdateTransform();
-    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
+    if (emitLayerEditedEvent)
+    {
+      BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
+    }
   }
 
 

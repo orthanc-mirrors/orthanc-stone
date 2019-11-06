@@ -76,8 +76,8 @@ Pointers
   oracle/message handling.
 
 * The use of "boost::shared_ptr<>" should be minimized to avoid
-  clutter. It is however mandatory to hold references to the "loaders"
-  and to the "data part" objects.
+  clutter. The "loaders" and "data parts" objects must however
+  be created as "boost::shared_ptr<>".
 
 
 Global context

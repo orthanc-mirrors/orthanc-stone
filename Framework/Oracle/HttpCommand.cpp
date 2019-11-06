@@ -28,10 +28,10 @@
 
 namespace OrthancStone
 {
-  HttpCommand::SuccessMessage::SuccessMessage(const HttpCommand& command,
+  HttpCommand::SuccessMessage::SuccessMessage(HttpCommand& command,
                                               const HttpHeaders& answerHeaders,
-                                              std::string& answer) :
-    OriginMessage(command),
+                                              const std::string& answer) :
+    OracleMessageBase(command),
     headers_(answerHeaders),
     answer_(answer)
   {

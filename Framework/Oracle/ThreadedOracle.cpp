@@ -189,10 +189,8 @@ namespace OrthancStone
           }
 #endif
         }
-        
-        std::auto_ptr<IMessage> message(runner.Run(item.GetCommand()));
-        
-        emitter_.EmitMessage(item.GetReceiver(), *message);
+
+        runner.Run(item.GetReceiver(), emitter_, item.GetCommand());
       }
     }
   }

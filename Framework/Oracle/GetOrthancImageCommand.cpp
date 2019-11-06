@@ -29,20 +29,6 @@
 
 namespace OrthancStone
 {
-  GetOrthancImageCommand::SuccessMessage::SuccessMessage(const GetOrthancImageCommand& command,
-                                                         Orthanc::ImageAccessor* image,   // Takes ownership
-                                                         Orthanc::MimeType mime) :
-    OriginMessage(command),
-    image_(image),
-    mime_(mime)
-  {
-    if (image == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-  }
-
-
   GetOrthancImageCommand::GetOrthancImageCommand() :
     uri_("/"),
     timeout_(600),
@@ -82,8 +68,11 @@ namespace OrthancStone
     }
   }
 
-  IMessage* GetOrthancImageCommand::ProcessHttpAnswer(const std::string& answer,
-                                                      const HttpHeaders& answerHeaders) const
+  
+  void GetOrthancImageCommand::ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
+                                                 IMessageEmitter& emitter,
+                                                 const std::string& answer,
+                                                 const HttpHeaders& answerHeaders)
   {
     Orthanc::MimeType contentType = Orthanc::MimeType_Binary;
 
@@ -145,6 +134,7 @@ namespace OrthancStone
       }
     }
 
-    return new SuccessMessage(*this, image.release(), contentType);
+    SuccessMessage message(*this, *image, contentType);
+    emitter.EmitMessage(receiver, message);
   }
 }

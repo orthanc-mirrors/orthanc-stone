@@ -144,7 +144,7 @@ namespace OrthancStone
       activeCommands_--;
       try
       {
-        dynamic_cast<State&>(message.GetOrigin().GetPayload()).Handle(message);
+        dynamic_cast<State&>(message.GetCommand().GetPayload()).Handle(message);
         Step();
       }
       catch (Orthanc::OrthancException& e)

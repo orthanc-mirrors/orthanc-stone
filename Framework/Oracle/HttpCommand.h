@@ -36,18 +36,18 @@ namespace OrthancStone
   public:
     typedef std::map<std::string, std::string>  HttpHeaders;
 
-    class SuccessMessage : public OriginMessage<HttpCommand>
+    class SuccessMessage : public OracleMessageBase
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      HttpHeaders   headers_;
-      std::string   answer_;
+      const HttpHeaders&  headers_;
+      const std::string&  answer_;
 
     public:
-      SuccessMessage(const HttpCommand& command,
+      SuccessMessage(HttpCommand& command,
                      const HttpHeaders& answerHeaders,
-                     std::string& answer  /* will be swapped to avoid a memcpy() */);
+                     const std::string& answer);
 
       const std::string& GetAnswer() const
       {
@@ -56,7 +56,7 @@ namespace OrthancStone
 
       void ParseJsonBody(Json::Value& target) const;
 
-      const HttpHeaders&  GetAnswerHeaders() const
+      const HttpHeaders& GetAnswerHeaders() const
       {
         return headers_;
       }

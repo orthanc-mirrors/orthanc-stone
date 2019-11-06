@@ -28,16 +28,6 @@
 
 namespace OrthancStone
 {
-  OrthancRestApiCommand::SuccessMessage::SuccessMessage(const OrthancRestApiCommand& command,
-                                                        const HttpHeaders& answerHeaders,
-                                                        std::string& answer) :
-    OriginMessage(command),
-    headers_(answerHeaders),
-    answer_(answer)
-  {
-  }
-
-
   void OrthancRestApiCommand::SuccessMessage::ParseJsonBody(Json::Value& target) const
   {
     Json::Reader reader;

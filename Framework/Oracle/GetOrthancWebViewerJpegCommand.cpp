@@ -34,18 +34,6 @@
 
 namespace OrthancStone
 {
-  GetOrthancWebViewerJpegCommand::SuccessMessage::SuccessMessage(const GetOrthancWebViewerJpegCommand& command,
-                                                                 Orthanc::ImageAccessor* image) :   // Takes ownership
-    OriginMessage(command),
-    image_(image)
-  {
-    if (image == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-  }
-
-
   GetOrthancWebViewerJpegCommand::GetOrthancWebViewerJpegCommand() :
     frame_(0),
     quality_(95),
@@ -76,7 +64,9 @@ namespace OrthancStone
   }
 
 
-  IMessage* GetOrthancWebViewerJpegCommand::ProcessHttpAnswer(const std::string& answer) const
+  void GetOrthancWebViewerJpegCommand::ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
+                                                         IMessageEmitter& emitter,
+                                                         const std::string& answer)
   {
     // This code comes from older "OrthancSlicesLoader::ParseSliceImageJpeg()"
       
@@ -147,7 +137,9 @@ namespace OrthancStone
       }
       else
       {
-        return new SuccessMessage(*this, reader.release());
+        SuccessMessage message(*this, *reader);
+        emitter.EmitMessage(receiver, message);
+        return;
       }
     }
     
@@ -164,7 +156,9 @@ namespace OrthancStone
       }
       else
       {
-        return new SuccessMessage(*this, reader.release());
+        SuccessMessage message(*this, *reader);
+        emitter.EmitMessage(receiver, message);
+        return;
       }
     }
     
@@ -205,6 +199,7 @@ namespace OrthancStone
       Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling, true);
     }
 
-    return new SuccessMessage(*this, image.release());
+    SuccessMessage message(*this, *image);
+    emitter.EmitMessage(receiver, message);
   }
 }

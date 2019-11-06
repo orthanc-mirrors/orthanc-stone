@@ -27,39 +27,20 @@
 
 namespace OrthancStone
 {
-  void ParseDicomFileCommand::SuccessMessage::Setup()
-  {
-    if (!dicom_->GetTagValue(sopInstanceUid_, Orthanc::DICOM_TAG_SOP_INSTANCE_UID))
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
-                                      "DICOM instance missing tag SOPInstanceUID");
-    }
-  }
-
-
-  ParseDicomFileCommand::SuccessMessage::SuccessMessage(const ParseDicomFileCommand& command,
-                                                        DcmFileFormat& dicom,
+  ParseDicomFileCommand::SuccessMessage::SuccessMessage(ParseDicomFileCommand& command,
+                                                        Orthanc::ParsedDicomFile& dicom,
                                                         size_t fileSize,
                                                         bool hasPixelData) :
-    OriginMessage(command),
-    fileSize_(fileSize),
-    hasPixelData_(hasPixelData)
-  {
-    dicom_.reset(new Orthanc::ParsedDicomFile(dicom));
-    Setup();
-  }
-
-
-  ParseDicomFileCommand::SuccessMessage::SuccessMessage(const ParseDicomFileCommand& command,
-                                                        boost::shared_ptr<Orthanc::ParsedDicomFile> dicom,
-                                                        size_t fileSize,
-                                                        bool hasPixelData) :
-    OriginMessage(command),
+    OracleMessageBase(command),
     dicom_(dicom),
     fileSize_(fileSize),
     hasPixelData_(hasPixelData)
   {
-    Setup();
+    if (!dicom.GetTagValue(sopInstanceUid_, Orthanc::DICOM_TAG_SOP_INSTANCE_UID))
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                      "DICOM instance missing tag SOPInstanceUID");
+    }
   }
 
 

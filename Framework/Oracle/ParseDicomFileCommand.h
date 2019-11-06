@@ -41,30 +41,23 @@ namespace OrthancStone
   class ParseDicomFileCommand : public OracleCommandBase
   {
   public:
-    class SuccessMessage : public OriginMessage<ParseDicomFileCommand>
+    class SuccessMessage : public OracleMessageBase
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
 
     private:
-      boost::shared_ptr<Orthanc::ParsedDicomFile>  dicom_;
-      size_t                                       fileSize_;
-      bool                                         hasPixelData_;
-      std::string                                  sopInstanceUid_;
+      Orthanc::ParsedDicomFile&  dicom_;
+      size_t                     fileSize_;
+      bool                       hasPixelData_;
+      std::string                sopInstanceUid_;
 
-      void Setup();
-      
     public:
-      SuccessMessage(const ParseDicomFileCommand& command,
-                     DcmFileFormat& dicom,
+      SuccessMessage(ParseDicomFileCommand& command,
+                     Orthanc::ParsedDicomFile& dicom,
                      size_t fileSize,
                      bool hasPixelData);
       
-      SuccessMessage(const ParseDicomFileCommand& command,
-                     boost::shared_ptr<Orthanc::ParsedDicomFile> dicom,
-                     size_t fileSize,
-                     bool hasPixelData);
-      
-      boost::shared_ptr<Orthanc::ParsedDicomFile> GetDicom() const
+      Orthanc::ParsedDicomFile& GetDicom() const
       {
         return dicom_;
       }

@@ -36,19 +36,24 @@ namespace OrthancStone
   public:
     typedef std::map<std::string, std::string>  HttpHeaders;
 
-    class SuccessMessage : public OriginMessage<OrthancRestApiCommand>
+    class SuccessMessage : public OracleMessageBase
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      HttpHeaders   headers_;
-      std::string   answer_;
+      const HttpHeaders&  headers_;
+      const std::string&  answer_;
 
     public:
-      SuccessMessage(const OrthancRestApiCommand& command,
+      SuccessMessage(OrthancRestApiCommand& command,
                      const HttpHeaders& answerHeaders,
-                     std::string& answer  /* will be swapped to avoid a memcpy() */);
-
+                     const std::string& answer) :
+        OracleMessageBase(command),
+        headers_(answerHeaders),
+        answer_(answer)
+      {
+      }
+      
       const std::string& GetAnswer() const
       {
         return answer_;

@@ -37,13 +37,6 @@ namespace OrthancStone
 
   public:
     OracleCommandExceptionMessage(IOracleCommand& command,
-                                  const Orthanc::OrthancException& exception) :
-      OracleMessageBase(command),
-      exception_(exception)
-    {
-    }
-
-    OracleCommandExceptionMessage(IOracleCommand& command,
                                   const Orthanc::ErrorCode& error) :
       OracleMessageBase(command),
       exception_(error)

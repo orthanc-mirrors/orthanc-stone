@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../Messages/IMessage.h"
+#include "../Messages/IMessageEmitter.h"
 #include "OracleCommandBase.h"
 
 #include <Core/Images/ImageAccessor.h>
@@ -35,20 +35,24 @@ namespace OrthancStone
   public:
     typedef std::map<std::string, std::string>  HttpHeaders;
 
-    class SuccessMessage : public OriginMessage<GetOrthancWebViewerJpegCommand>
+    class SuccessMessage : public OracleMessageBase
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      std::auto_ptr<Orthanc::ImageAccessor>  image_;
+      const Orthanc::ImageAccessor&  image_;
 
     public:
-      SuccessMessage(const GetOrthancWebViewerJpegCommand& command,
-                     Orthanc::ImageAccessor* image);   // Takes ownership
+      SuccessMessage(GetOrthancWebViewerJpegCommand& command,
+                     const Orthanc::ImageAccessor& image) :
+        OracleMessageBase(command),
+        image_(image)
+      {
+      }
 
       const Orthanc::ImageAccessor& GetImage() const
       {
-        return *image_;
+        return image_;
       }
     };
 
@@ -128,6 +132,8 @@ namespace OrthancStone
 
     std::string GetUri() const;
 
-    IMessage* ProcessHttpAnswer(const std::string& answer) const;
+    void ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
+                           IMessageEmitter& emitter,
+                           const std::string& answer);
   };
 }

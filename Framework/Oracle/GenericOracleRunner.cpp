@@ -249,14 +249,13 @@ namespace OrthancStone
 
       virtual void Handle(Orthanc::ParsedDicomFile* dicom,
                           const ParseDicomFileCommand& command,
+                          const std::string& path,
                           uint64_t fileSize) = 0;
 
       static void Apply(IDicomHandler& handler,
-                        const std::string& root,
+                        const std::string& path,
                         const ParseDicomFileCommand& command)
       {
-        std::string path = GetPath(root, command.GetPath());
-
         if (!Orthanc::SystemToolbox::IsRegularFile(path))
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentFile);
@@ -298,7 +297,7 @@ namespace OrthancStone
 
         if (ok)
         {
-          handler.Handle(new Orthanc::ParsedDicomFile(dicom), command, fileSize);
+          handler.Handle(new Orthanc::ParsedDicomFile(dicom), command, path, fileSize);
         }
         else
         {
@@ -325,6 +324,7 @@ namespace OrthancStone
       
       virtual void Handle(Orthanc::ParsedDicomFile* dicom,
                           const ParseDicomFileCommand& command,
+                          const std::string& path,
                           uint64_t fileSize)
       {
         std::auto_ptr<Orthanc::ParsedDicomFile> parsed(dicom);
@@ -359,6 +359,7 @@ namespace OrthancStone
       
       virtual void Handle(Orthanc::ParsedDicomFile* dicom,
                           const ParseDicomFileCommand& command,
+                          const std::string& path,
                           uint64_t fileSize)
       {
         std::auto_ptr<Orthanc::ParsedDicomFile> parsed(dicom);
@@ -371,7 +372,7 @@ namespace OrthancStone
 
         // Store it into the cache for future use
         assert(cache_);
-        cache_->Acquire(command.GetPath(), parsed.release(),
+        cache_->Acquire(path, parsed.release(),
                         static_cast<size_t>(fileSize), command.IsPixelDataIncluded());
       }
     };
@@ -384,11 +385,13 @@ namespace OrthancStone
                           const std::string& root,
                           const ParseDicomFileCommand& command)
   {
+    const std::string path = GetPath(root, command.GetPath());
+
 #if 1
     if (cache.get())
     {
       {
-        ParsedDicomFileCache::Reader reader(*cache, command.GetPath());
+        ParsedDicomFileCache::Reader reader(*cache, path);
         if (reader.IsValid() &&
             (!command.IsPixelDataIncluded() ||
              reader.HasPixelData()))
@@ -402,17 +405,17 @@ namespace OrthancStone
       }
       
       DicomHandlerWithCache handler(receiver, emitter, cache);
-      IDicomHandler::Apply(handler, root, command);
+      IDicomHandler::Apply(handler, path, command);
     }
     else
     {
       // No cache available
       DicomHandlerWithoutCache handler(receiver, emitter);
-      IDicomHandler::Apply(handler, root, command);
+      IDicomHandler::Apply(handler, path, command);
     }
 #else
     DicomHandlerWithoutCache handler(receiver, emitter);
-    IDicomHandler::Apply(handler, root, command);
+    IDicomHandler::Apply(handler, path, command);
 #endif
   }
   

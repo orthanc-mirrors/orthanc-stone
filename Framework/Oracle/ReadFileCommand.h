@@ -29,19 +29,19 @@ namespace OrthancStone
   class ReadFileCommand : public OracleCommandBase
   {
   public:
-    class SuccessMessage : public OracleMessageBase
+    class SuccessMessage : public OriginMessage<ReadFileCommand>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      std::string content_;
+      const std::string& content_;
 
     public:
-      SuccessMessage(ReadFileCommand& command,
-                     std::string& content  /* will be swapped to avoid a memcpy() */) :
-        OracleMessageBase(command)
+      SuccessMessage(const ReadFileCommand& command,
+                     const std::string& content) :
+        OriginMessage(command),
+        content_(content)
       {
-        content_.swap(content);
       }
 
       const std::string& GetContent() const
@@ -63,6 +63,11 @@ namespace OrthancStone
     virtual Type GetType() const
     {
       return Type_ReadFile;
+    }
+
+    virtual IOracleCommand* Clone() const
+    {
+      return new ReadFileCommand(path_);
     }
 
     const std::string& GetPath() const

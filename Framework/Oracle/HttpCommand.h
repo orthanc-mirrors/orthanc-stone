@@ -36,7 +36,7 @@ namespace OrthancStone
   public:
     typedef std::map<std::string, std::string>  HttpHeaders;
 
-    class SuccessMessage : public OracleMessageBase
+    class SuccessMessage : public OriginMessage<HttpCommand>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
@@ -45,9 +45,14 @@ namespace OrthancStone
       const std::string&  answer_;
 
     public:
-      SuccessMessage(HttpCommand& command,
+      SuccessMessage(const HttpCommand& command,
                      const HttpHeaders& answerHeaders,
-                     const std::string& answer);
+                     const std::string& answer) :
+        OriginMessage(command),
+        headers_(answerHeaders),
+        answer_(answer)
+      {
+      }
 
       const std::string& GetAnswer() const
       {
@@ -72,12 +77,28 @@ namespace OrthancStone
     std::string          username_;
     std::string          password_;
 
+    HttpCommand(const HttpCommand& other) :
+      method_(other.method_),
+      url_(other.url_),
+      body_(other.body_),
+      headers_(other.headers_),
+      timeout_(other.timeout_),
+      username_(other.username_),
+      password_(other.password_)
+    {
+    }
+
   public:
     HttpCommand();
 
     virtual Type GetType() const
     {
       return Type_Http;
+    }
+
+    virtual IOracleCommand* Clone() const
+    {
+      return new HttpCommand(*this);
     }
 
     void SetMethod(Orthanc::HttpMethod method)

@@ -237,8 +237,9 @@ namespace OrthancStone
   }
 
 
-  static unsigned int GetSliceIndexPayload(const IOracleCommand& command)
+  static unsigned int GetSliceIndexPayload(const OracleCommandBase& command)
   {
+    assert(command.HasPayload());
     return dynamic_cast< const Orthanc::SingleValueObject<unsigned int>& >(command.GetPayload()).GetValue();
   }
 
@@ -394,7 +395,7 @@ namespace OrthancStone
 
   void OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent(const GetOrthancImageCommand::SuccessMessage& message)
   {
-    SetSliceContent(GetSliceIndexPayload(message.GetCommand()), message.GetImage(), BEST_QUALITY);
+    SetSliceContent(GetSliceIndexPayload(message.GetOrigin()), message.GetImage(), BEST_QUALITY);
   }
 
 
@@ -402,7 +403,7 @@ namespace OrthancStone
   {
     unsigned int quality;
       
-    switch (dynamic_cast<const GetOrthancWebViewerJpegCommand&>(message.GetCommand()).GetQuality())
+    switch (dynamic_cast<const GetOrthancWebViewerJpegCommand&>(message.GetOrigin()).GetQuality())
     {
       case 50:
         quality = LOW_QUALITY;
@@ -416,7 +417,7 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
       
-    SetSliceContent(GetSliceIndexPayload(message.GetCommand()), message.GetImage(), quality);
+    SetSliceContent(GetSliceIndexPayload(message.GetOrigin()), message.GetImage(), quality);
   }
 
 

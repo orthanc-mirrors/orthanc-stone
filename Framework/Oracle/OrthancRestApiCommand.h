@@ -36,7 +36,7 @@ namespace OrthancStone
   public:
     typedef std::map<std::string, std::string>  HttpHeaders;
 
-    class SuccessMessage : public OracleMessageBase
+    class SuccessMessage : public OriginMessage<OrthancRestApiCommand>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
@@ -45,10 +45,10 @@ namespace OrthancStone
       const std::string&  answer_;
 
     public:
-      SuccessMessage(OrthancRestApiCommand& command,
+      SuccessMessage(const OrthancRestApiCommand& command,
                      const HttpHeaders& answerHeaders,
                      const std::string& answer) :
-        OracleMessageBase(command),
+        OriginMessage(command),
         headers_(answerHeaders),
         answer_(answer)
       {
@@ -76,12 +76,27 @@ namespace OrthancStone
     unsigned int         timeout_;
     bool                 applyPlugins_;  // Only makes sense for Stone as an Orthanc plugin
 
+    OrthancRestApiCommand(const OrthancRestApiCommand& other) :
+      method_(other.method_),
+      uri_(other.uri_),
+      body_(other.body_),
+      headers_(other.headers_),
+      timeout_(other.timeout_),
+      applyPlugins_(other.applyPlugins_)
+    {
+    }
+    
   public:
     OrthancRestApiCommand();
 
     virtual Type GetType() const
     {
       return Type_OrthancRestApi;
+    }
+
+    virtual IOracleCommand* Clone() const
+    {
+      return new OrthancRestApiCommand(*this);
     }
 
     void SetMethod(Orthanc::HttpMethod method)

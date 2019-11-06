@@ -72,7 +72,7 @@ namespace OrthancStone
   void GetOrthancImageCommand::ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
                                                  IMessageEmitter& emitter,
                                                  const std::string& answer,
-                                                 const HttpHeaders& answerHeaders)
+                                                 const HttpHeaders& answerHeaders) const
   {
     Orthanc::MimeType contentType = Orthanc::MimeType_Binary;
 

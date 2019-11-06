@@ -28,16 +28,6 @@
 
 namespace OrthancStone
 {
-  HttpCommand::SuccessMessage::SuccessMessage(HttpCommand& command,
-                                              const HttpHeaders& answerHeaders,
-                                              const std::string& answer) :
-    OracleMessageBase(command),
-    headers_(answerHeaders),
-    answer_(answer)
-  {
-  }
-
-
   void HttpCommand::SuccessMessage::ParseJsonBody(Json::Value& target) const
   {
     Json::Reader reader;

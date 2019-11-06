@@ -66,7 +66,7 @@ namespace OrthancStone
 
   void GetOrthancWebViewerJpegCommand::ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
                                                          IMessageEmitter& emitter,
-                                                         const std::string& answer)
+                                                         const std::string& answer) const
   {
     // This code comes from older "OrthancSlicesLoader::ParseSliceImageJpeg()"
       

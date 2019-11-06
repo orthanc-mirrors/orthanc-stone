@@ -44,6 +44,11 @@ namespace OrthancStone
       return Type_Sleep;
     }
 
+    virtual IOracleCommand* Clone() const
+    {
+      return new SleepOracleCommand(milliseconds_);
+    }
+
     unsigned int GetDelay() const
     {
       return milliseconds_;

@@ -27,11 +27,11 @@
 
 namespace OrthancStone
 {
-  ParseDicomFileCommand::SuccessMessage::SuccessMessage(ParseDicomFileCommand& command,
+  ParseDicomFileCommand::SuccessMessage::SuccessMessage(const ParseDicomFileCommand& command,
                                                         Orthanc::ParsedDicomFile& dicom,
                                                         size_t fileSize,
                                                         bool hasPixelData) :
-    OracleMessageBase(command),
+    OriginMessage(command),
     dicom_(dicom),
     fileSize_(fileSize),
     hasPixelData_(hasPixelData)

@@ -35,7 +35,7 @@ namespace OrthancStone
   public:
     typedef std::map<std::string, std::string>  HttpHeaders;
 
-    class SuccessMessage : public OracleMessageBase
+    class SuccessMessage : public OriginMessage<GetOrthancImageCommand>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
@@ -44,10 +44,10 @@ namespace OrthancStone
       Orthanc::MimeType              mime_;
 
     public:
-      SuccessMessage(GetOrthancImageCommand& command,
+      SuccessMessage(const GetOrthancImageCommand& command,
                      const Orthanc::ImageAccessor& image,
                      Orthanc::MimeType mime) :
-        OracleMessageBase(command),
+        OriginMessage(command),
         image_(image),
         mime_(mime)
       {
@@ -72,12 +72,26 @@ namespace OrthancStone
     bool                  hasExpectedFormat_;
     Orthanc::PixelFormat  expectedFormat_;
 
+    GetOrthancImageCommand(const GetOrthancImageCommand& other) :
+      uri_(other.uri_),
+      headers_(other.headers_),
+      timeout_(other.timeout_),
+      hasExpectedFormat_(other.hasExpectedFormat_),
+      expectedFormat_(other.expectedFormat_)
+    {
+    }
+
   public:
     GetOrthancImageCommand();
 
     virtual Type GetType() const
     {
       return Type_GetOrthancImage;
+    }
+
+    virtual IOracleCommand* Clone() const
+    {
+      return new GetOrthancImageCommand(*this);
     }
 
     void SetExpectedPixelFormat(Orthanc::PixelFormat format);
@@ -119,6 +133,6 @@ namespace OrthancStone
     void ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
                            IMessageEmitter& emitter,
                            const std::string& answer,
-                           const HttpHeaders& answerHeaders);
+                           const HttpHeaders& answerHeaders) const;
   };
 }

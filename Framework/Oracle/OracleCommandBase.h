@@ -33,7 +33,7 @@ namespace OrthancStone
     std::auto_ptr<Orthanc::IDynamicObject>  payload_;
 
   public:
-    virtual void AcquirePayload(Orthanc::IDynamicObject* payload);
+    void AcquirePayload(Orthanc::IDynamicObject* payload);
 
     virtual bool HasPayload() const
     {

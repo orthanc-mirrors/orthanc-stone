@@ -41,7 +41,7 @@ namespace OrthancStone
   class ParseDicomFileCommand : public OracleCommandBase
   {
   public:
-    class SuccessMessage : public OracleMessageBase
+    class SuccessMessage : public OriginMessage<ParseDicomFileCommand>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
 
@@ -52,7 +52,7 @@ namespace OrthancStone
       std::string                sopInstanceUid_;
 
     public:
-      SuccessMessage(ParseDicomFileCommand& command,
+      SuccessMessage(const ParseDicomFileCommand& command,
                      Orthanc::ParsedDicomFile& dicom,
                      size_t fileSize,
                      bool hasPixelData);
@@ -82,6 +82,12 @@ namespace OrthancStone
     std::string  path_;
     bool         pixelDataIncluded_;
 
+    ParseDicomFileCommand(const ParseDicomFileCommand& other) :
+      path_(other.path_),
+      pixelDataIncluded_(other.pixelDataIncluded_)
+    {
+    }
+
   public:
     ParseDicomFileCommand(const std::string& path) :
       path_(path),
@@ -102,6 +108,11 @@ namespace OrthancStone
     virtual Type GetType() const
     {
       return Type_ParseDicomFile;
+    }
+
+    virtual IOracleCommand* Clone() const
+    {
+      return new ParseDicomFileCommand(*this);
     }
 
     const std::string& GetPath() const

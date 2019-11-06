@@ -82,6 +82,6 @@ namespace OrthancStone
 
     void Run(boost::weak_ptr<IObserver> receiver,
              IMessageEmitter& emitter,
-             IOracleCommand& command);
+             const IOracleCommand& command);
   };
 }

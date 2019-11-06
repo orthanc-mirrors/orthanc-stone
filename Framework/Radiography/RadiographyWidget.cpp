@@ -201,6 +201,11 @@ namespace OrthancStone
     selectedLayer_ = layer;
   }
 
+  void RadiographyWidget::ClearSelectedLayer()
+  {
+    hasSelection_ = false;
+  }
+
   bool RadiographyWidget::SelectMaskLayer(size_t index)
   {
     std::vector<size_t> layerIndexes;
@@ -251,6 +256,14 @@ namespace OrthancStone
     NotifyContentChanged();
   }
 
+  void RadiographyWidget::OnLayerRemoved(const RadiographyScene::LayerRemovedMessage& message)
+  {
+    size_t removedLayerIndex = message.GetLayerIndex();
+    if (hasSelection_ && selectedLayer_ == removedLayerIndex)
+    {
+      ClearSelectedLayer();
+    }
+  }
   
   void RadiographyWidget::SetInvert(bool invert)
   {
@@ -262,7 +275,7 @@ namespace OrthancStone
   }
 
   
-  void RadiographyWidget::SwitchInvert()
+    void RadiographyWidget::SwitchInvert()
   {
     invert_ = !invert_;
     NotifyContentChanged();
@@ -294,6 +307,10 @@ namespace OrthancStone
     scene_->RegisterObserverCallback(
           new Callable<RadiographyWidget, RadiographyScene::ContentChangedMessage>
           (*this, &RadiographyWidget::OnContentChanged));
+
+    scene_->RegisterObserverCallback(
+          new Callable<RadiographyWidget, RadiographyScene::LayerRemovedMessage>
+          (*this, &RadiographyWidget::OnLayerRemoved));
 
     NotifyContentChanged();
 

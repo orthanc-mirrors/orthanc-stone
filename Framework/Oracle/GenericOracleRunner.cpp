@@ -238,64 +238,143 @@ namespace OrthancStone
 
 
 #if ORTHANC_ENABLE_DCMTK == 1
-  static void RunInternal(boost::weak_ptr<IObserver> receiver,
-                          IMessageEmitter& emitter,
-                          const std::string& root,
-                          const ParseDicomFileCommand& command)
+  namespace
   {
-    std::string path = GetPath(root, command.GetPath());
-
-    if (!Orthanc::SystemToolbox::IsRegularFile(path))
+    class IDicomHandler : public boost::noncopyable
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentFile);
-    }
+    public:
+      virtual ~IDicomHandler()
+      {
+      }
 
-    uint64_t fileSize = Orthanc::SystemToolbox::GetFileSize(path);
+      virtual void Handle(Orthanc::ParsedDicomFile* dicom,
+                          const ParseDicomFileCommand& command,
+                          uint64_t fileSize) = 0;
 
-    // Check for 32bit systems
-    if (fileSize != static_cast<uint64_t>(static_cast<size_t>(fileSize)))
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotEnoughMemory);
-    }
+      static void Apply(IDicomHandler& handler,
+                        const std::string& root,
+                        const ParseDicomFileCommand& command)
+      {
+        std::string path = GetPath(root, command.GetPath());
 
-    DcmFileFormat dicom;
-    bool ok;
+        if (!Orthanc::SystemToolbox::IsRegularFile(path))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentFile);
+        }
 
-    if (command.IsPixelDataIncluded())
-    {
-      ok = dicom.loadFile(path.c_str()).good();
-    }
-    else
-    {
+        uint64_t fileSize = Orthanc::SystemToolbox::GetFileSize(path);
+
+        // Check for 32bit systems
+        if (fileSize != static_cast<uint64_t>(static_cast<size_t>(fileSize)))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotEnoughMemory);
+        }
+
+        DcmFileFormat dicom;
+        bool ok;
+
+        if (command.IsPixelDataIncluded())
+        {
+          ok = dicom.loadFile(path.c_str()).good();
+        }
+        else
+        {
 #if DCMTK_VERSION_NUMBER >= 362
-      // NB : We could stop at (0x3007, 0x0000) instead of
-      // DCM_PixelData, cf. the Orthanc::DICOM_TAG_* constants
+          // NB : We could stop at (0x3007, 0x0000) instead of
+          // DCM_PixelData, cf. the Orthanc::DICOM_TAG_* constants
 
-      static const DcmTagKey STOP = DCM_PixelData;
-      //static const DcmTagKey STOP(0x3007, 0x0000);
+          static const DcmTagKey STOP = DCM_PixelData;
+          //static const DcmTagKey STOP(0x3007, 0x0000);
 
-      ok = dicom.loadFileUntilTag(path.c_str(), EXS_Unknown, EGL_noChange,
-                                  DCM_MaxReadLength, ERM_autoDetect, STOP).good();
+          ok = dicom.loadFileUntilTag(path.c_str(), EXS_Unknown, EGL_noChange,
+                                      DCM_MaxReadLength, ERM_autoDetect, STOP).good();
 #else
-      // The primitive "loadFileUntilTag" was introduced in DCMTK 3.6.2
-      ok = dicom.loadFile(path.c_str()).good();
+          // The primitive "loadFileUntilTag" was introduced in DCMTK 3.6.2
+          ok = dicom.loadFile(path.c_str()).good();
 #endif
-    }
+        }
 
-    printf("Reading %s\n", path.c_str());
+        printf("Reading %s\n", path.c_str());
 
-    if (ok)
+        if (ok)
+        {
+          handler.Handle(new Orthanc::ParsedDicomFile(dicom), command, fileSize);
+        }
+        else
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                          "Cannot parse file: " + path);
+        }
+      }
+    };
+
+
+    class DicomHandlerWithoutCache : public IDicomHandler
     {
-      Orthanc::ParsedDicomFile parsed(dicom);
-      ParseDicomFileCommand::SuccessMessage message
-        (command, parsed, static_cast<size_t>(fileSize), command.IsPixelDataIncluded());
-      emitter.EmitMessage(receiver, message);
-    }
-    else
+    private:
+      boost::weak_ptr<IObserver> receiver_;
+      IMessageEmitter&           emitter_;
+      
+    public:
+      DicomHandlerWithoutCache(boost::weak_ptr<IObserver> receiver,
+                               IMessageEmitter& emitter) :
+        receiver_(receiver),
+        emitter_(emitter)
+      {
+      }        
+      
+      virtual void Handle(Orthanc::ParsedDicomFile* dicom,
+                          const ParseDicomFileCommand& command,
+                          uint64_t fileSize)
+      {
+        std::auto_ptr<Orthanc::ParsedDicomFile> parsed(dicom);
+
+        ParseDicomFileCommand::SuccessMessage message
+          (command, *parsed, static_cast<size_t>(fileSize), command.IsPixelDataIncluded());
+        emitter_.EmitMessage(receiver_, message);
+      }
+    };
+
+
+    class DicomHandlerWithCache : public IDicomHandler
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
-                                      "Cannot parse file: " + path);
-    }
+    private:
+      boost::weak_ptr<IObserver> receiver_;
+      IMessageEmitter&           emitter_;
+      boost::shared_ptr<ParsedDicomFileCache>  cache_;
+
+    public:
+      DicomHandlerWithCache(boost::weak_ptr<IObserver> receiver,
+                            IMessageEmitter& emitter,
+                            boost::shared_ptr<ParsedDicomFileCache> cache) :
+        receiver_(receiver),
+        emitter_(emitter),
+        cache_(cache)
+      {
+        if (!cache)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        }
+      }
+      
+      virtual void Handle(Orthanc::ParsedDicomFile* dicom,
+                          const ParseDicomFileCommand& command,
+                          uint64_t fileSize)
+      {
+        std::auto_ptr<Orthanc::ParsedDicomFile> parsed(dicom);
+
+        {
+          ParseDicomFileCommand::SuccessMessage message
+            (command, *parsed, static_cast<size_t>(fileSize), command.IsPixelDataIncluded());
+          emitter_.EmitMessage(receiver_, message);
+        }
+
+        // Store it into the cache for future use
+        assert(cache_);
+        cache_->Acquire(command.GetPath(), parsed.release(),
+                        static_cast<size_t>(fileSize), command.IsPixelDataIncluded());
+      }
+    };
   }
 
   
@@ -305,8 +384,7 @@ namespace OrthancStone
                           const std::string& root,
                           const ParseDicomFileCommand& command)
   {
-#if 0
-    // The code to use the cache is buggy in multithreaded environments => TODO FIX
+#if 1
     if (cache.get())
     {
       {
@@ -316,30 +394,25 @@ namespace OrthancStone
              reader.HasPixelData()))
         {
           // Reuse the DICOM file from the cache
-          return new ParseDicomFileCommand::SuccessMessage(
+          ParseDicomFileCommand::SuccessMessage message(
             command, reader.GetDicom(), reader.GetFileSize(), reader.HasPixelData());
           emitter.EmitMessage(receiver, message);
           return;
         }
       }
       
-      // Not in the cache, first read and parse the DICOM file
-      std::auto_ptr<ParseDicomFileCommand::SuccessMessage> message(RunInternal(root, command));
-
-      // Secondly, store it into the cache for future use
-      assert(&message->GetOrigin() == &command);
-      cache->Acquire(message->GetOrigin().GetPath(), message->GetDicom(),
-                     message->GetFileSize(), message->HasPixelData());
-
-      return message.release();
+      DicomHandlerWithCache handler(receiver, emitter, cache);
+      IDicomHandler::Apply(handler, root, command);
     }
     else
     {
       // No cache available
-      return RunInternal(root, command);
+      DicomHandlerWithoutCache handler(receiver, emitter);
+      IDicomHandler::Apply(handler, root, command);
     }
 #else
-    return RunInternal(receiver, emitter, root, command);
+    DicomHandlerWithoutCache handler(receiver, emitter);
+    IDicomHandler::Apply(handler, root, command);
 #endif
   }
   

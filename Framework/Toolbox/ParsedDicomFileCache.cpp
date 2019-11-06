@@ -26,13 +26,13 @@ namespace OrthancStone
   class ParsedDicomFileCache::Item : public Orthanc::ICacheable
   {
   private:
-    boost::mutex                                 mutex_;
-    boost::shared_ptr<Orthanc::ParsedDicomFile>  dicom_;
-    size_t                                       fileSize_;
-    bool                                         hasPixelData_;
+    boost::mutex                             mutex_;
+    std::auto_ptr<Orthanc::ParsedDicomFile>  dicom_;
+    size_t                                   fileSize_;
+    bool                                     hasPixelData_;
     
   public:
-    Item(boost::shared_ptr<Orthanc::ParsedDicomFile> dicom,
+    Item(Orthanc::ParsedDicomFile* dicom,
          size_t fileSize,
          bool hasPixelData) :
       dicom_(dicom),
@@ -55,10 +55,10 @@ namespace OrthancStone
       return fileSize_;
     }
 
-    boost::shared_ptr<Orthanc::ParsedDicomFile> GetDicom() const
+    Orthanc::ParsedDicomFile& GetDicom() const
     {
       assert(dicom_.get() != NULL);
-      return dicom_;
+      return *dicom_;
     }
 
     bool HasPixelData() const
@@ -69,7 +69,7 @@ namespace OrthancStone
     
 
   void ParsedDicomFileCache::Acquire(const std::string& path,
-                                     boost::shared_ptr<Orthanc::ParsedDicomFile> dicom,
+                                     Orthanc::ParsedDicomFile* dicom,
                                      size_t fileSize,
                                      bool hasPixelData)
   {
@@ -114,7 +114,7 @@ namespace OrthancStone
   }
 
   
-  boost::shared_ptr<Orthanc::ParsedDicomFile> ParsedDicomFileCache::Reader::GetDicom() const
+  Orthanc::ParsedDicomFile& ParsedDicomFileCache::Reader::GetDicom() const
   {
     if (item_ == NULL)
     {

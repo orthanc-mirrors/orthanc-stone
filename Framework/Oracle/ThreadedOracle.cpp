@@ -396,6 +396,7 @@ namespace OrthancStone
     }
     else
     {
+      LOG(WARNING) << "Starting oracle with " << workers_.size() << " worker threads";
       state_ = State_Running;
 
       for (unsigned int i = 0; i < workers_.size(); i++)
@@ -424,7 +425,7 @@ namespace OrthancStone
       }
       else
       {
-        LOG(INFO) << "Command not enqueued, as the oracle is stopped";
+        LOG(TRACE) << "Command not enqueued, as the oracle has stopped";
         return false;
       }
     }

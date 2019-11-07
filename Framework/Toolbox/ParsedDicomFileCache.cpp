@@ -79,20 +79,16 @@ namespace OrthancStone
   
   ParsedDicomFileCache::Reader::Reader(ParsedDicomFileCache& cache,
                                        const std::string& path) :
-    reader_(cache.cache_, path)
+    /**
+     * The "DcmFileFormat" object cannot be accessed from multiple
+     * threads, even if using only getters. An unique lock (mutex) is
+     * mandatory.
+     **/
+    accessor_(cache.cache_, path, true /* unique */)
   {
-    if (reader_.IsValid())
+    if (accessor_.IsValid())
     {
-      /**
-       * The "Orthanc::MemoryObjectCache" uses readers/writers. The
-       * "Reader" subclass of the cache locks as a reader. This means
-       * that multiple threads can still access the underlying
-       * "ParsedDicomFile" object, which is not supported by DCMTK. We
-       * thus protect the DCMTK object by a simple mutex.
-       **/
-      
-      item_ = &dynamic_cast<Item&>(reader_.GetValue());
-      lock_.reset(new boost::mutex::scoped_lock(item_->GetMutex()));
+      item_ = &dynamic_cast<Item&>(accessor_.GetValue());
     }
     else
     {

@@ -261,6 +261,10 @@ namespace OrthancStone
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentFile);
         }
 
+        LOG(TRACE) << "Parsing DICOM file, " 
+                   << (command.IsPixelDataIncluded() ? "with" : "witout")
+                   << " pixel data: " << path;
+
         uint64_t fileSize = Orthanc::SystemToolbox::GetFileSize(path);
 
         // Check for 32bit systems
@@ -292,8 +296,6 @@ namespace OrthancStone
           ok = dicom.loadFile(path.c_str()).good();
 #endif
         }
-
-        printf("Reading %s\n", path.c_str());
 
         if (ok)
         {
@@ -372,6 +374,11 @@ namespace OrthancStone
 
         // Store it into the cache for future use
         assert(cache_);
+
+        // Invalidate to overwrite DICOM instance that would already
+        // be stored without pixel data
+        cache_->Invalidate(path);
+
         cache_->Acquire(path, parsed.release(),
                         static_cast<size_t>(fileSize), command.IsPixelDataIncluded());
       }

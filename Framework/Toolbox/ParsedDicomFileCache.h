@@ -38,6 +38,11 @@ namespace OrthancStone
     {
       cache_.SetMaximumSize(size);
     }
+
+    void Invalidate(const std::string& path)
+    {
+      cache_.Invalidate(path);
+    }
     
     void Acquire(const std::string& path,
                  Orthanc::ParsedDicomFile* dicom,
@@ -47,9 +52,8 @@ namespace OrthancStone
     class Reader : public boost::noncopyable
     {
     private:
-      Orthanc::MemoryObjectCache::Reader reader_;
-      std::auto_ptr<boost::mutex::scoped_lock>  lock_;
-      Item*                         item_;
+      Orthanc::MemoryObjectCache::Accessor accessor_;
+      Item*                                item_;
 
     public:
       Reader(ParsedDicomFileCache& cache,

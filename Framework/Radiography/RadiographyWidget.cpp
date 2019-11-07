@@ -295,10 +295,7 @@ namespace OrthancStone
 
     Register<RadiographyScene::GeometryChangedMessage>(*scene_, &RadiographyWidget::OnGeometryChanged);
     Register<RadiographyScene::ContentChangedMessage>(*scene_, &RadiographyWidget::OnContentChanged);
-
-    scene_->RegisterObserverCallback(
-          new Callable<RadiographyWidget, RadiographyScene::LayerRemovedMessage>
-          (*this, &RadiographyWidget::OnLayerRemoved));
+    Register<RadiographyScene::LayerRemovedMessage>(*scene_, &RadiographyWidget::OnLayerRemoved);
 
     NotifyContentChanged();
 

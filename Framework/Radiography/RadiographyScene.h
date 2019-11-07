@@ -101,6 +101,27 @@ namespace OrthancStone
       }
     };
 
+    class LayerRemovedMessage : public OriginMessage<RadiographyScene>
+    {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
+    private:
+      size_t&        layerIndex_;
+
+    public:
+      LayerRemovedMessage(const RadiographyScene& origin,
+                          size_t& layerIndex) :
+        OriginMessage(origin),
+        layerIndex_(layerIndex)
+      {
+      }
+
+      size_t& GetLayerIndex() const
+      {
+        return layerIndex_;
+      }
+    };
+
 
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, WindowingChangedMessage, RadiographyScene);
 

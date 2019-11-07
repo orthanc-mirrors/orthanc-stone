@@ -78,6 +78,8 @@ namespace OrthancStone
 
     void Select(size_t layer);
 
+    void ClearSelectedLayer();
+
     bool SelectMaskLayer(size_t index = 0);
 
     bool LookupSelectedLayer(size_t& layer);
@@ -85,6 +87,8 @@ namespace OrthancStone
     void OnGeometryChanged(const RadiographyScene::GeometryChangedMessage& message);
 
     void OnContentChanged(const RadiographyScene::ContentChangedMessage& message);
+
+    void OnLayerRemoved(const RadiographyScene::LayerRemovedMessage& message);
 
     void SetInvert(bool invert);
 

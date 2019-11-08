@@ -115,31 +115,48 @@ namespace OrthancStone
 
       if (!dicom.LookupStringValue(doseUnits_, DICOM_TAG_DOSE_UNITS, false))
       {
-        LOG(WARNING) << "Tag DoseUnits (0x3004, 0x0002) is missing in " << sopInstanceUid_;
+        LOG(ERROR) << "Tag DoseUnits (0x3004, 0x0002) is missing in " << sopInstanceUid_;
         doseUnits_ = "";
       }
-
     }
 
     isColor_ = (imageInformation_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome1 &&
                 imageInformation_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome2);
 
-    double doseGridScaling;
-
     if (dicom.ParseDouble(rescaleIntercept_, Orthanc::DICOM_TAG_RESCALE_INTERCEPT) &&
         dicom.ParseDouble(rescaleSlope_, Orthanc::DICOM_TAG_RESCALE_SLOPE))
     {
-      hasRescale_ = true;
-    }
-    else if (dicom.ParseDouble(doseGridScaling, Orthanc::DICOM_TAG_DOSE_GRID_SCALING))
-    {
-      hasRescale_ = true;
-      rescaleIntercept_ = 0;
-      rescaleSlope_ = doseGridScaling;
+      if (sopClassUid_ == SopClassUid_RTDose)
+      {
+        LOG(INFO) << "DOSE HAS Rescale*: rescaleIntercept_ = " << rescaleIntercept_ << " rescaleSlope_ = " << rescaleSlope_;
+        // WE SHOULD NOT TAKE THE RESCALE VALUE INTO ACCOUNT IN THE CASE OF DOSES
+        hasRescale_ = false;
+      }
+      else
+      {
+        hasRescale_ = true;
+      }
+      
     }
     else
     {
       hasRescale_ = false;
+    }
+
+    if (dicom.ParseDouble(doseGridScaling_, Orthanc::DICOM_TAG_DOSE_GRID_SCALING))
+    {
+      if (sopClassUid_ == SopClassUid_RTDose)
+      {
+        LOG(INFO) << "DOSE HAS DoseGridScaling: doseGridScaling_ = " << doseGridScaling_;
+      }
+    }
+    else
+    {
+      doseGridScaling_ = 1.0;
+      if (sopClassUid_ == SopClassUid_RTDose)
+      {
+        LOG(ERROR) << "Tag DoseGridScaling (0x3004, 0x000e) is missing in " << sopInstanceUid_ << " doseGridScaling_ will be set to 1.0";
+      }
     }
 
     Vector c, w;
@@ -155,6 +172,8 @@ namespace OrthancStone
     else
     {
       hasDefaultWindowing_ = false;
+      defaultWindowingCenter_ = 0;
+      defaultWindowingWidth_  = 0;
     }
 
     if (sopClassUid_ == SopClassUid_RTDose)
@@ -245,15 +264,24 @@ namespace OrthancStone
   }
 
       
-  void DicomInstanceParameters::Data::ApplyRescale(Orthanc::ImageAccessor& image,
+  void DicomInstanceParameters::Data::ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
                                                    bool useDouble) const
   {
     if (image.GetFormat() != Orthanc::PixelFormat_Float32)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
     }
-    
+
+    double factor = doseGridScaling_;
+    double offset = 0.0;
+
     if (hasRescale_)
+    {
+      factor *= rescaleSlope_;
+      offset = rescaleIntercept_;
+    }
+
+    if ( (factor != 1.0) || (offset != 0.0) )
     {
       const unsigned int width = image.GetWidth();
       const unsigned int height = image.GetHeight();
@@ -268,7 +296,7 @@ namespace OrthancStone
           for (unsigned int x = 0; x < width; x++, p++)
           {
             double value = static_cast<double>(*p);
-            *p = static_cast<float>(value * rescaleSlope_ + rescaleIntercept_);
+            *p = static_cast<float>(value * factor + offset);
           }
         }
         else
@@ -276,7 +304,7 @@ namespace OrthancStone
           // Fast, approximate implementation using float
           for (unsigned int x = 0; x < width; x++, p++)
           {
-            *p = (*p) * static_cast<float>(rescaleSlope_) + static_cast<float>(rescaleIntercept_);
+            *p = (*p) * static_cast<float>(factor) + static_cast<float>(offset);
           }
         }
       }
@@ -348,8 +376,8 @@ namespace OrthancStone
     Orthanc::ImageProcessing::Convert(*converted, pixelData);
 
     // Correct rescale slope/intercept if need be
-    //data_.ApplyRescale(*converted, (pixelData.GetFormat() == Orthanc::PixelFormat_Grayscale32));
-    data_.ApplyRescale(*converted, false);
+    //data_.ApplyRescaleAndDoseScaling(*converted, (pixelData.GetFormat() == Orthanc::PixelFormat_Grayscale32));
+    data_.ApplyRescaleAndDoseScaling(*converted, false);
 
     return converted.release();
   }

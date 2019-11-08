@@ -60,6 +60,7 @@ namespace OrthancStone
       bool                              hasIndexInSeries_;
       unsigned int                      indexInSeries_;
       std::string                       doseUnits_;
+      double                            doseGridScaling_;
 
       void ComputeDoseOffsets(const Orthanc::DicomMap& dicom);
 
@@ -70,8 +71,8 @@ namespace OrthancStone
       bool IsPlaneWithinSlice(unsigned int frame,
                               const CoordinateSystem3D& plane) const;
       
-      void ApplyRescale(Orthanc::ImageAccessor& image,
-                        bool useDouble) const;
+      void ApplyRescaleAndDoseScaling(
+        Orthanc::ImageAccessor& image, bool useDouble) const;
     };
 
     
@@ -204,6 +205,11 @@ namespace OrthancStone
     const std::string& GetDoseUnits() const
     {
       return data_.doseUnits_;
+    }
+
+    double GetDoseGridScaling() const
+    {
+      return data_.doseGridScaling_;
     }
   };
 }

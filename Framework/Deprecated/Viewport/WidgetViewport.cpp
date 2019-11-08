@@ -116,7 +116,7 @@ namespace Deprecated
     {
       return false;
     }
-
+    
     if (background.GetWidth() != surface.GetWidth() ||
         background.GetHeight() != surface.GetHeight())
     {

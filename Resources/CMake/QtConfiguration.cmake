@@ -99,9 +99,14 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   
   include_directories(${QT5_INSTALL_ROOT}/include)
   link_directories(${QT5_INSTALL_ROOT}/lib)
-  
-  set(QT_UIC_EXECUTABLE ${QT5_INSTALL_ROOT}/bin/uic)
-  set(QT_MOC_EXECUTABLE ${QT5_INSTALL_ROOT}/bin/moc)
+
+  if (OFF) #CMAKE_CROSSCOMPILING)
+    set(QT_UIC_EXECUTABLE wine ${QT5_INSTALL_ROOT}/bin/uic.exe)
+    set(QT_MOC_EXECUTABLE wine ${QT5_INSTALL_ROOT}/bin/moc.exe)
+  else()
+    set(QT_UIC_EXECUTABLE ${QT5_INSTALL_ROOT}/bin/uic)
+    set(QT_MOC_EXECUTABLE ${QT5_INSTALL_ROOT}/bin/moc)
+  endif()
 
   include_directories(
     ${QT5_INSTALL_ROOT}/include/QtCore
@@ -110,19 +115,46 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     ${QT5_INSTALL_ROOT}/include/QtWidgets
     )
 
-  link_libraries(Qt5Core Qt5Gui Qt5OpenGL Qt5Widgets)
+  if (OFF)
+    # Dynamic Qt
+    link_libraries(Qt5Core Qt5Gui Qt5OpenGL Qt5Widgets)
 
-  file(COPY
-    ${QT5_INSTALL_ROOT}/bin/Qt5Core.dll
-    ${QT5_INSTALL_ROOT}/bin/Qt5Gui.dll
-    ${QT5_INSTALL_ROOT}/bin/Qt5OpenGL.dll
-    ${QT5_INSTALL_ROOT}/bin/Qt5Widgets.dll
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    file(COPY
+      ${QT5_INSTALL_ROOT}/bin/Qt5Core.dll
+      ${QT5_INSTALL_ROOT}/bin/Qt5Gui.dll
+      ${QT5_INSTALL_ROOT}/bin/Qt5OpenGL.dll
+      ${QT5_INSTALL_ROOT}/bin/Qt5Widgets.dll
+      ${QT5_INSTALL_ROOT}/bin/libstdc++-6.dll
+      ${QT5_INSTALL_ROOT}/bin/libgcc_s_dw2-1.dll
+      ${QT5_INSTALL_ROOT}/bin/libwinpthread-1.dll
+      DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-  file(COPY
-    ${QT5_INSTALL_ROOT}/plugins/platforms/qwindows.dll
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/platforms)
+    file(COPY
+      ${QT5_INSTALL_ROOT}/plugins/platforms/qwindows.dll
+      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/platforms)
 
+  else()
+    # Static Qt
+    link_libraries(
+      ${QT5_INSTALL_ROOT}/lib/libQt5Widgets.a
+      ${QT5_INSTALL_ROOT}/lib/libQt5Gui.a
+      ${QT5_INSTALL_ROOT}/lib/libQt5OpenGL.a
+      ${QT5_INSTALL_ROOT}/lib/libQt5Core.a
+      ${QT5_INSTALL_ROOT}/lib/libqtharfbuzz.a
+      ${QT5_INSTALL_ROOT}/lib/libqtpcre2.a
+      ${QT5_INSTALL_ROOT}/lib/libQt5FontDatabaseSupport.a
+      ${QT5_INSTALL_ROOT}/lib/libQt5EventDispatcherSupport.a
+      ${QT5_INSTALL_ROOT}/lib/libQt5ThemeSupport.a
+      ${QT5_INSTALL_ROOT}/plugins/platforms/libqwindows.a
+      winmm
+      version
+      ws2_32
+      uxtheme
+      imm32
+      dwmapi
+      )
+  endif()
+  
 else()
   # Not using Windows, not using Linux Standard Base, 
   # Find the QtWidgets library

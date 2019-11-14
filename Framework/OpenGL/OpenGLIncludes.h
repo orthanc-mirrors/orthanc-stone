@@ -32,6 +32,8 @@
 #if defined(__APPLE__)
 #  include <OpenGL/gl.h>
 #  include <OpenGL/glext.h>
+#elif defined(QT_VERSION_MAJOR) && (QT_VERSION >= 5)
+// Qt5 takes care of the inclusions
 #elif defined(_WIN32)
 // On Windows, use the compatibility headers provided by glew
 #  include <GL/glew.h>

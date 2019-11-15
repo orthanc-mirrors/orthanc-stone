@@ -19,11 +19,11 @@
  **/
 
 
-#include "ParsedDicomFileCache.h"
+#include "ParsedDicomCache.h"
 
 namespace OrthancStone
 {
-  class ParsedDicomFileCache::Item : public Orthanc::ICacheable
+  class ParsedDicomCache::Item : public Orthanc::ICacheable
   {
   private:
     boost::mutex                             mutex_;
@@ -68,23 +68,23 @@ namespace OrthancStone
   };
     
 
-  void ParsedDicomFileCache::Acquire(const std::string& path,
-                                     Orthanc::ParsedDicomFile* dicom,
-                                     size_t fileSize,
-                                     bool hasPixelData)
+  void ParsedDicomCache::Acquire(const std::string& key,
+                                 Orthanc::ParsedDicomFile* dicom,
+                                 size_t fileSize,
+                                 bool hasPixelData)
   {
-    cache_.Acquire(path, new Item(dicom, fileSize, hasPixelData));
+    cache_.Acquire(key, new Item(dicom, fileSize, hasPixelData));
   }
 
   
-  ParsedDicomFileCache::Reader::Reader(ParsedDicomFileCache& cache,
-                                       const std::string& path) :
+  ParsedDicomCache::Reader::Reader(ParsedDicomCache& cache,
+                                   const std::string& key) :
     /**
      * The "DcmFileFormat" object cannot be accessed from multiple
      * threads, even if using only getters. An unique lock (mutex) is
      * mandatory.
      **/
-    accessor_(cache.cache_, path, true /* unique */)
+    accessor_(cache.cache_, key, true /* unique */)
   {
     if (accessor_.IsValid())
     {
@@ -97,7 +97,7 @@ namespace OrthancStone
   }
 
 
-  bool ParsedDicomFileCache::Reader::HasPixelData() const
+  bool ParsedDicomCache::Reader::HasPixelData() const
   {
     if (item_ == NULL)
     {
@@ -110,7 +110,7 @@ namespace OrthancStone
   }
 
   
-  Orthanc::ParsedDicomFile& ParsedDicomFileCache::Reader::GetDicom() const
+  Orthanc::ParsedDicomFile& ParsedDicomCache::Reader::GetDicom() const
   {
     if (item_ == NULL)
     {
@@ -123,7 +123,7 @@ namespace OrthancStone
   }
 
   
-  size_t ParsedDicomFileCache::Reader::GetFileSize() const
+  size_t ParsedDicomCache::Reader::GetFileSize() const
   {
     if (item_ == NULL)
     {

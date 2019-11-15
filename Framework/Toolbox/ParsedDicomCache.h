@@ -26,7 +26,7 @@
 
 namespace OrthancStone
 {
-  class ParsedDicomFileCache : public boost::noncopyable
+  class ParsedDicomCache : public boost::noncopyable
   {
   private:
     class Item;
@@ -34,17 +34,17 @@ namespace OrthancStone
     Orthanc::MemoryObjectCache  cache_;
 
   public:
-    ParsedDicomFileCache(size_t size)
+    ParsedDicomCache(size_t size)
     {
       cache_.SetMaximumSize(size);
     }
 
-    void Invalidate(const std::string& path)
+    void Invalidate(const std::string& key)
     {
-      cache_.Invalidate(path);
+      cache_.Invalidate(key);
     }
     
-    void Acquire(const std::string& path,
+    void Acquire(const std::string& key,
                  Orthanc::ParsedDicomFile* dicom,
                  size_t fileSize,
                  bool hasPixelData);
@@ -56,8 +56,8 @@ namespace OrthancStone
       Item*                                item_;
 
     public:
-      Reader(ParsedDicomFileCache& cache,
-             const std::string& path);
+      Reader(ParsedDicomCache& cache,
+             const std::string& key);
 
       bool IsValid() const
       {

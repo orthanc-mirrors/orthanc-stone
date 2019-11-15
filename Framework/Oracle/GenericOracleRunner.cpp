@@ -217,7 +217,6 @@ namespace OrthancStone
       c = a / b;
     }
 
-    LOG(TRACE) << "Oracle reading file: " << c.string();
     return c.string();
   }
 
@@ -228,6 +227,7 @@ namespace OrthancStone
                           const ReadFileCommand& command)
   {
     std::string path = GetPath(root, command.GetPath());
+    LOG(TRACE) << "Oracle reading file: " << path;
 
     std::string content;
     Orthanc::SystemToolbox::ReadFile(content, path, true /* log */);
@@ -262,7 +262,7 @@ namespace OrthancStone
         }
 
         LOG(TRACE) << "Parsing DICOM file, " 
-                   << (command.IsPixelDataIncluded() ? "with" : "witout")
+                   << (command.IsPixelDataIncluded() ? "with" : "without")
                    << " pixel data: " << path;
 
         boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();

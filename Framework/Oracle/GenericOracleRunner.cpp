@@ -265,6 +265,8 @@ namespace OrthancStone
                    << (command.IsPixelDataIncluded() ? "with" : "witout")
                    << " pixel data: " << path;
 
+        boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
+
         uint64_t fileSize = Orthanc::SystemToolbox::GetFileSize(path);
 
         // Check for 32bit systems
@@ -283,9 +285,13 @@ namespace OrthancStone
         else
         {
 #if DCMTK_VERSION_NUMBER >= 362
-          // NB : We could stop at (0x3007, 0x0000) instead of
-          // DCM_PixelData, cf. the Orthanc::DICOM_TAG_* constants
-
+          /**
+           * NB : We could stop at (0x3007, 0x0000) instead of
+           * DCM_PixelData as the Stone framework does not use further
+           * tags (cf. the Orthanc::DICOM_TAG_* constants), but we
+           * still use "PixelData" as this does not change the runtime
+           * much, and as it is more explicit.
+           **/
           static const DcmTagKey STOP = DCM_PixelData;
           //static const DcmTagKey STOP(0x3007, 0x0000);
 
@@ -300,6 +306,9 @@ namespace OrthancStone
         if (ok)
         {
           handler.Handle(new Orthanc::ParsedDicomFile(dicom), command, path, fileSize);
+
+          boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
+          LOG(TRACE) << path << ": parsed in " << (end-start).total_milliseconds() << " ms";
         }
         else
         {

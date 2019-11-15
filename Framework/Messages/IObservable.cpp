@@ -58,8 +58,7 @@ namespace OrthancStone
   void IObservable::EmitMessageInternal(const IObserver* receiver,
                                         const IMessage& message)
   {
-    LOG(TRACE) << "IObservable::EmitMessageInternal receiver = "
-      << std::hex << receiver << std::dec;
+    //LOG(TRACE) << "IObservable::EmitMessageInternal receiver = " << std::hex << receiver << std::dec;
     Callables::const_iterator found = callables_.find(message.GetIdentifier());
 
     if (found != callables_.end())
@@ -113,8 +112,7 @@ namespace OrthancStone
   void IObservable::EmitMessage(boost::weak_ptr<IObserver> observer,
                                 const IMessage& message)
   {
-    LOG(TRACE) << "IObservable::EmitMessage observer = "
-      << std::hex << &observer << std::dec;
+    //LOG(TRACE) << "IObservable::EmitMessage observer = " << std::hex << &observer << std::dec;
 
     boost::shared_ptr<IObserver> lock(observer.lock());
     if (lock)

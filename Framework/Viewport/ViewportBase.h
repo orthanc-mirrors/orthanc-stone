@@ -49,6 +49,5 @@ namespace OrthancStone
         const_cast<IViewport*>(static_cast<const IViewport*>(this));
       return mutableThis->GetCompositor();
     }
-
   };
 }

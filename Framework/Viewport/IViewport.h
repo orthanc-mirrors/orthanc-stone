@@ -51,4 +51,3 @@ namespace OrthancStone
     virtual const ICompositor& GetCompositor() const = 0;
   };
 }
-

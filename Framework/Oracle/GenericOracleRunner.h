@@ -26,7 +26,7 @@
 #endif
 
 #if ORTHANC_ENABLE_DCMTK == 1
-#  include "../Toolbox/ParsedDicomFileCache.h"
+#  include "../Toolbox/ParsedDicomCache.h"
 #endif
 
 #include "IOracleCommand.h"
@@ -44,7 +44,7 @@ namespace OrthancStone
     std::string                    rootDirectory_;
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    boost::shared_ptr<ParsedDicomFileCache>  dicomCache_;
+    boost::shared_ptr<ParsedDicomCache>  dicomCache_;
 #endif
 
   public:
@@ -74,7 +74,7 @@ namespace OrthancStone
     }
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    void SetDicomCache(boost::shared_ptr<ParsedDicomFileCache> cache)
+    void SetDicomCache(boost::shared_ptr<ParsedDicomCache> cache)
     {
       dicomCache_ = cache;
     }

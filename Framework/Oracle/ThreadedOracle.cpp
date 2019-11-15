@@ -378,7 +378,7 @@ namespace OrthancStone
       }
       else
       {
-        dicomCache_.reset(new ParsedDicomFileCache(size));
+        dicomCache_.reset(new ParsedDicomCache(size));
       }
     }
 #endif

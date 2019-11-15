@@ -352,12 +352,12 @@ namespace OrthancStone
     private:
       boost::weak_ptr<IObserver> receiver_;
       IMessageEmitter&           emitter_;
-      boost::shared_ptr<ParsedDicomFileCache>  cache_;
+      boost::shared_ptr<ParsedDicomCache>  cache_;
 
     public:
       DicomHandlerWithCache(boost::weak_ptr<IObserver> receiver,
                             IMessageEmitter& emitter,
-                            boost::shared_ptr<ParsedDicomFileCache> cache) :
+                            boost::shared_ptr<ParsedDicomCache> cache) :
         receiver_(receiver),
         emitter_(emitter),
         cache_(cache)
@@ -397,7 +397,7 @@ namespace OrthancStone
   
   static void RunInternal(boost::weak_ptr<IObserver> receiver,
                           IMessageEmitter& emitter,
-                          boost::shared_ptr<ParsedDicomFileCache> cache,
+                          boost::shared_ptr<ParsedDicomCache> cache,
                           const std::string& root,
                           const ParseDicomFileCommand& command)
   {
@@ -407,7 +407,7 @@ namespace OrthancStone
     if (cache.get())
     {
       {
-        ParsedDicomFileCache::Reader reader(*cache, path);
+        ParsedDicomCache::Reader reader(*cache, path);
         if (reader.IsValid() &&
             (!command.IsPixelDataIncluded() ||
              reader.HasPixelData()))

@@ -34,7 +34,7 @@
 #endif
 
 #if ORTHANC_ENABLE_DCMTK == 1
-#  include "../Toolbox/ParsedDicomFileCache.h"
+#  include "../Toolbox/ParsedDicomCache.h"
 #endif
 
 #include "IOracle.h"
@@ -71,7 +71,7 @@ namespace OrthancStone
     unsigned int                         sleepingTimeResolution_;
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    boost::shared_ptr<ParsedDicomFileCache>  dicomCache_;
+    boost::shared_ptr<ParsedDicomCache>  dicomCache_;
 #endif
     
     void Step();

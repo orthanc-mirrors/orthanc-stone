@@ -30,6 +30,9 @@ namespace OrthancStone
   {
   private:
     class Item;
+
+    static std::string GetIndex(unsigned int bucket,
+                                const std::string& bucketKey);
     
     Orthanc::MemoryObjectCache  cache_;
 
@@ -39,12 +42,14 @@ namespace OrthancStone
       cache_.SetMaximumSize(size);
     }
 
-    void Invalidate(const std::string& key)
+    void Invalidate(unsigned int bucket,
+                    const std::string& bucketKey)
     {
-      cache_.Invalidate(key);
+      cache_.Invalidate(GetIndex(bucket, bucketKey));
     }
     
-    void Acquire(const std::string& key,
+    void Acquire(unsigned int bucket,
+                 const std::string& bucketKey,
                  Orthanc::ParsedDicomFile* dicom,
                  size_t fileSize,
                  bool hasPixelData);
@@ -57,7 +62,8 @@ namespace OrthancStone
 
     public:
       Reader(ParsedDicomCache& cache,
-             const std::string& key);
+             unsigned int bucket,
+             const std::string& bucketKey);
 
       bool IsValid() const
       {

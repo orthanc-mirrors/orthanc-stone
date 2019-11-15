@@ -68,30 +68,42 @@ namespace OrthancStone
   };
     
 
-  void ParsedDicomCache::Acquire(const std::string& key,
+  std::string ParsedDicomCache::GetIndex(unsigned int bucket,
+                                         const std::string& bucketKey)
+  {
+    return boost::lexical_cast<std::string>(bucket) + "|" + bucketKey;
+  }
+  
+
+  void ParsedDicomCache::Acquire(unsigned int bucket,
+                                 const std::string& bucketKey,
                                  Orthanc::ParsedDicomFile* dicom,
                                  size_t fileSize,
                                  bool hasPixelData)
   {
-    cache_.Acquire(key, new Item(dicom, fileSize, hasPixelData));
+    LOG(TRACE) << "new item stored in cache: bucket " << bucket << ", key " << bucketKey;
+    cache_.Acquire(GetIndex(bucket, bucketKey), new Item(dicom, fileSize, hasPixelData));
   }
 
   
   ParsedDicomCache::Reader::Reader(ParsedDicomCache& cache,
-                                   const std::string& key) :
+                                   unsigned int bucket,
+                                   const std::string& bucketKey) :
     /**
      * The "DcmFileFormat" object cannot be accessed from multiple
      * threads, even if using only getters. An unique lock (mutex) is
      * mandatory.
      **/
-    accessor_(cache.cache_, key, true /* unique */)
+    accessor_(cache.cache_, GetIndex(bucket, bucketKey), true /* unique */)
   {
     if (accessor_.IsValid())
     {
+      LOG(TRACE) << "accessing item within cache: bucket " << bucket << ", key " << bucketKey;
       item_ = &dynamic_cast<Item&>(accessor_.GetValue());
     }
     else
     {
+      LOG(TRACE) << "missing item within cache: bucket " << bucket << ", key " << bucketKey;
       item_ = NULL;
     }
   }

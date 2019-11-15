@@ -21,32 +21,32 @@
 
 #pragma once
 
-#include <Core/IDynamicObject.h>
+#include "OracleCommandBase.h"
 
 namespace OrthancStone
 {
-  class IOracleCommand : public boost::noncopyable
+  class ParseDicomFromWadoCommand : public OracleCommandBase
   {
-  public:
-    enum Type
-    {
-      Type_GetOrthancImage,
-      Type_GetOrthancWebViewerJpeg,
-      Type_Http,
-      Type_OrthancRestApi,
-      Type_ParseDicomFromFile,
-      Type_ParseDicomFromWado,
-      Type_ReadFile,
-      Type_Sleep
-    };
+  private:
+    std::string                    sopInstanceUid_;
+    std::auto_ptr<IOracleCommand>  restCommand_;
 
-    virtual ~IOracleCommand()
+  public:
+    ParseDicomFromWadoCommand(const std::string& sopInstanceUid,
+                              IOracleCommand* restCommand);
+
+    virtual Type GetType() const
     {
+      return Type_ParseDicomFromWado;
     }
 
-    virtual Type GetType() const = 0;
+    virtual IOracleCommand* Clone() const;
 
-    // This only clones the command, *not* its possibly associated payload
-    virtual IOracleCommand* Clone() const = 0;
+    const std::string& GetSopInstanceUid() const
+    {
+      return sopInstanceUid_;
+    }
+    
+    const IOracleCommand& GetRestCommand() const;
   };
 }

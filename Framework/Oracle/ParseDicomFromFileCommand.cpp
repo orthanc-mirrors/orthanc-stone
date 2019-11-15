@@ -19,7 +19,7 @@
  **/
 
 
-#include "ParseDicomFileCommand.h"
+#include "ParseDicomFromFileCommand.h"
 
 #include <Core/OrthancException.h>
 
@@ -27,25 +27,8 @@
 
 namespace OrthancStone
 {
-  ParseDicomFileCommand::SuccessMessage::SuccessMessage(const ParseDicomFileCommand& command,
-                                                        Orthanc::ParsedDicomFile& dicom,
-                                                        size_t fileSize,
-                                                        bool hasPixelData) :
-    OriginMessage(command),
-    dicom_(dicom),
-    fileSize_(fileSize),
-    hasPixelData_(hasPixelData)
-  {
-    if (!dicom.GetTagValue(sopInstanceUid_, Orthanc::DICOM_TAG_SOP_INSTANCE_UID))
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
-                                      "DICOM instance missing tag SOPInstanceUID");
-    }
-  }
-
-
-  std::string ParseDicomFileCommand::GetDicomDirPath(const std::string& dicomDirPath,
-                                                     const std::string& file)
+  std::string ParseDicomFromFileCommand::GetDicomDirPath(const std::string& dicomDirPath,
+                                                         const std::string& file)
   {
     std::string tmp = file;
 

@@ -401,7 +401,9 @@ endif()
 
 if (ENABLE_DCMTK)
   list(APPEND ORTHANC_STONE_SOURCES
-    ${ORTHANC_STONE_ROOT}/Framework/Oracle/ParseDicomFileCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Oracle/ParseDicomFromFileCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Oracle/ParseDicomFromWadoCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Oracle/ParseDicomSuccessMessage.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParsedDicomCache.cpp
     )
 endif()

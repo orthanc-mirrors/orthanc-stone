@@ -21,98 +21,47 @@
 
 #pragma once
 
-#if !defined(ORTHANC_ENABLE_DCMTK)
-#  error The macro ORTHANC_ENABLE_DCMTK must be defined
-#endif
-
-#if ORTHANC_ENABLE_DCMTK != 1
-#  error Support for DCMTK must be enabled to use ParseDicomFileCommand
-#endif
-
-#include "../Messages/IMessage.h"
 #include "OracleCommandBase.h"
-
-#include <Core/DicomParsing/ParsedDicomFile.h>
-
-#include <dcmtk/dcmdata/dcfilefo.h>
 
 namespace OrthancStone
 {
-  class ParseDicomFileCommand : public OracleCommandBase
+  class ParseDicomFromFileCommand : public OracleCommandBase
   {
-  public:
-    class SuccessMessage : public OriginMessage<ParseDicomFileCommand>
-    {
-      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
-
-    private:
-      Orthanc::ParsedDicomFile&  dicom_;
-      size_t                     fileSize_;
-      bool                       hasPixelData_;
-      std::string                sopInstanceUid_;
-
-    public:
-      SuccessMessage(const ParseDicomFileCommand& command,
-                     Orthanc::ParsedDicomFile& dicom,
-                     size_t fileSize,
-                     bool hasPixelData);
-      
-      Orthanc::ParsedDicomFile& GetDicom() const
-      {
-        return dicom_;
-      }
-
-      size_t GetFileSize() const
-      {
-        return fileSize_;
-      }
-
-      bool HasPixelData() const
-      {
-        return hasPixelData_;
-      }
-      
-      const std::string& GetSopInstanceUid() const
-      {
-        return sopInstanceUid_;
-      }
-    };
-
   private:
     std::string  path_;
     bool         pixelDataIncluded_;
 
-    ParseDicomFileCommand(const ParseDicomFileCommand& other) :
+    ParseDicomFromFileCommand(const ParseDicomFromFileCommand& other) :
       path_(other.path_),
       pixelDataIncluded_(other.pixelDataIncluded_)
     {
     }
 
   public:
-    ParseDicomFileCommand(const std::string& path) :
+    ParseDicomFromFileCommand(const std::string& path) :
       path_(path),
       pixelDataIncluded_(true)
     {
     }
 
-    ParseDicomFileCommand(const std::string& dicomDirPath,
-                          const std::string& file) :
+    ParseDicomFromFileCommand(const std::string& dicomDirPath,
+                              const std::string& file) :
       path_(GetDicomDirPath(dicomDirPath, file)),
       pixelDataIncluded_(true)
     {
     }
-
+    
     static std::string GetDicomDirPath(const std::string& dicomDirPath,
                                        const std::string& file);
 
     virtual Type GetType() const
     {
-      return Type_ParseDicomFile;
+      return Type_ParseDicomFromFile;
     }
 
     virtual IOracleCommand* Clone() const
     {
-      return new ParseDicomFileCommand(*this);
+      return new ParseDicomFromFileCommand(*this);
     }
 
     const std::string& GetPath() const

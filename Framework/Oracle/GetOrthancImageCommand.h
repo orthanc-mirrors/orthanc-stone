@@ -104,6 +104,10 @@ namespace OrthancStone
     void SetInstanceUri(const std::string& instance,
                         Orthanc::PixelFormat pixelFormat);
 
+    void SetFrameUri(const std::string& instance,
+                     unsigned int frame,
+                     Orthanc::PixelFormat pixelFormat);
+
     void SetHttpHeader(const std::string& key,
                        const std::string& value)
     {

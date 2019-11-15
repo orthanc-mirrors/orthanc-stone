@@ -44,31 +44,41 @@ namespace OrthancStone
   }
 
 
-  void GetOrthancImageCommand::SetInstanceUri(const std::string& instance,
-                                              Orthanc::PixelFormat pixelFormat)
+  static std::string GetFormatSuffix(Orthanc::PixelFormat pixelFormat)
   {
-    uri_ = "/instances/" + instance;
-          
     switch (pixelFormat)
     {
       case Orthanc::PixelFormat_RGB24:
-        uri_ += "/preview";
-        break;
+        return "preview";
       
       case Orthanc::PixelFormat_Grayscale16:
-        uri_ += "/image-uint16";
-        break;
+        return "image-uint16";
       
       case Orthanc::PixelFormat_SignedGrayscale16:
-        uri_ += "/image-int16";
-        break;
+        return "image-int16";
       
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
   }
 
-  
+
+  void GetOrthancImageCommand::SetInstanceUri(const std::string& instance,
+                                              Orthanc::PixelFormat pixelFormat)
+  {
+    uri_ = "/instances/" + instance + "/" + GetFormatSuffix(pixelFormat);
+  }
+
+
+  void GetOrthancImageCommand::SetFrameUri(const std::string& instance,
+                                           unsigned int frame,
+                                           Orthanc::PixelFormat pixelFormat)
+  {
+    uri_ = ("/instances/" + instance + "/frames/" +
+            boost::lexical_cast<std::string>(frame) + "/" + GetFormatSuffix(pixelFormat));
+  }
+
+
   void GetOrthancImageCommand::ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
                                                  IMessageEmitter& emitter,
                                                  const std::string& answer,

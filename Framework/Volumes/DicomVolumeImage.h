@@ -36,11 +36,12 @@ namespace OrthancStone
   class DicomVolumeImage : public boost::noncopyable
   {
   public:
+    // TODO - Are these messages still useful?
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryReadyMessage, DicomVolumeImage);
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ContentUpdatedMessage, DicomVolumeImage);
 
   private:
-    uint64_t                                revision_;
+    uint64_t                                revision_;  // TODO - Is revision still useful?
     std::auto_ptr<VolumeImageGeometry>      geometry_;
     std::auto_ptr<ImageBuffer3D>            image_;
     std::auto_ptr<DicomInstanceParameters>  parameters_;
@@ -59,8 +60,10 @@ namespace OrthancStone
     }
 
     void Initialize(const VolumeImageGeometry& geometry,
-                    Orthanc::PixelFormat format, bool computeRange = false);
+                    Orthanc::PixelFormat format, 
+                    bool computeRange = false);
 
+    // Used by volume slicers
     void SetDicomParameters(const DicomInstanceParameters& parameters);
     
     uint64_t GetRevision() const

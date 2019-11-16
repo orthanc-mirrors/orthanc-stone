@@ -23,6 +23,8 @@
 
 #include "OracleCommandBase.h"
 
+#include <string>
+
 namespace OrthancStone
 {
   class ParseDicomFromFileCommand : public OracleCommandBase

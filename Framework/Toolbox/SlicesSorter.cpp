@@ -289,13 +289,14 @@ namespace OrthancStone
   }
 
 
-  double SlicesSorter::ComputeSpacingBetweenSlices() const
+  bool SlicesSorter::ComputeSpacingBetweenSlices(double& spacing /* out */) const
   {
     if (GetSlicesCount() <= 1)
     {
       // This is a volume that is empty or that contains one single
       // slice: Choose a dummy z-dimension for voxels
-      return 1.0;
+      spacing = 1.0;
+      return true;
     }
     
     const OrthancStone::CoordinateSystem3D& reference = GetSliceGeometry(0);
@@ -303,28 +304,27 @@ namespace OrthancStone
     double referencePosition = reference.ProjectAlongNormal(reference.GetOrigin());
         
     double p = reference.ProjectAlongNormal(GetSliceGeometry(1).GetOrigin());
-    double spacingZ = p - referencePosition;
+    spacing = p - referencePosition;
 
-    if (spacingZ <= 0)
+    if (spacing <= 0)
     {
-      LOG(ERROR) << "SlicesSorter::ComputeSpacingBetweenSlices(): (spacingZ <= 0)";
+      LOG(ERROR) << "SlicesSorter::ComputeSpacingBetweenSlices(): (spacing <= 0)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls,
                                       "Please call the Sort() method before");
     }
 
     for (size_t i = 1; i < GetSlicesCount(); i++)
     {
-      OrthancStone::Vector p = reference.GetOrigin() + spacingZ * static_cast<double>(i) * reference.GetNormal();        
+      OrthancStone::Vector p = reference.GetOrigin() + spacing * static_cast<double>(i) * reference.GetNormal();
       double d = boost::numeric::ublas::norm_2(p - GetSliceGeometry(i).GetOrigin());
 
       if (!OrthancStone::LinearAlgebra::IsNear(d, 0, 0.001 /* tolerance expressed in mm */))
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadGeometry,
-                                        "The origins of the slices of a volume image are not regularly spaced");
+        return false;
       }
     }
 
-    return spacingZ;
+    return true;
   }
 
 

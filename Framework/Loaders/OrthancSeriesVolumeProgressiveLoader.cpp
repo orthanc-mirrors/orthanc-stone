@@ -185,18 +185,27 @@ namespace OrthancStone
 
       CheckVolume();
 
-      const double spacingZ = slices.ComputeSpacingBetweenSlices();
-      LOG(INFO) << "Computed spacing between slices: " << spacingZ << "mm";
-      
-      const DicomInstanceParameters& parameters = *slices_[0];
+      double spacingZ;
 
-      geometry_.reset(new VolumeImageGeometry);
-      geometry_->SetSizeInVoxels(parameters.GetImageInformation().GetWidth(),
-                         parameters.GetImageInformation().GetHeight(),
-                         static_cast<unsigned int>(slices.GetSlicesCount()));
-      geometry_->SetAxialGeometry(slices.GetSliceGeometry(0));
-      geometry_->SetVoxelDimensions(parameters.GetPixelSpacingX(),
-                                    parameters.GetPixelSpacingY(), spacingZ);
+      if (slices.ComputeSpacingBetweenSlices(spacingZ))
+      {
+        LOG(INFO) << "Computed spacing between slices: " << spacingZ << "mm";
+      
+        const DicomInstanceParameters& parameters = *slices_[0];
+
+        geometry_.reset(new VolumeImageGeometry);
+        geometry_->SetSizeInVoxels(parameters.GetImageInformation().GetWidth(),
+                                   parameters.GetImageInformation().GetHeight(),
+                                   static_cast<unsigned int>(slices.GetSlicesCount()));
+        geometry_->SetAxialGeometry(slices.GetSliceGeometry(0));
+        geometry_->SetVoxelDimensions(parameters.GetPixelSpacingX(),
+                                      parameters.GetPixelSpacingY(), spacingZ);
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadGeometry,
+                                        "The origins of the slices of a volume image are not regularly spaced");
+     }
     }
   }
 

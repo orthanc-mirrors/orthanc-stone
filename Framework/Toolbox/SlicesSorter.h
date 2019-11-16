@@ -91,7 +91,7 @@ namespace OrthancStone
                             const CoordinateSystem3D& slice) const;
 
     // WARNING - The slices must have been sorted before calling this method
-    double ComputeSpacingBetweenSlices() const;
+    bool ComputeSpacingBetweenSlices(double& spacing /* out */) const;
 
     // WARNING - The slices must have been sorted before calling this method
     bool AreAllSlicesDistinct() const;

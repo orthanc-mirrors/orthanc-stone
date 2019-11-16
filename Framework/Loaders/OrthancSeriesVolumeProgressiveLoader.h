@@ -44,8 +44,7 @@ namespace OrthancStone
   class OrthancSeriesVolumeProgressiveLoader : 
     public ObserverBase<OrthancSeriesVolumeProgressiveLoader>,
     public IObservable,
-    public IVolumeSlicer,
-    public IGeometryProvider
+    public IVolumeSlicer
   {
   private:
     static const unsigned int LOW_QUALITY = 0;
@@ -140,7 +139,7 @@ namespace OrthancStone
     subscribing, for instance if they are created or listening only AFTER the
     "geometry loaded" message is broadcast 
     */
-    bool HasGeometry() const ORTHANC_OVERRIDE
+    bool HasGeometry() const
     {
       return seriesGeometry_.HasGeometry();
     }
@@ -148,7 +147,7 @@ namespace OrthancStone
     /**
     Same remark as HasGeometry
     */
-    const VolumeImageGeometry& GetImageGeometry() const ORTHANC_OVERRIDE
+    const VolumeImageGeometry& GetImageGeometry() const
     {
       return seriesGeometry_.GetImageGeometry();
     }

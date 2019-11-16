@@ -28,14 +28,6 @@
 
 namespace OrthancStone
 {
-  class IGeometryProvider
-  {
-  public:
-    virtual ~IGeometryProvider() {}
-    virtual bool HasGeometry() const = 0;
-    virtual const VolumeImageGeometry& GetImageGeometry() const = 0;
-  };
-
   /**
   This class combines a 3D image buffer, a 3D volume geometry and
   information about the DICOM parameters of the series.

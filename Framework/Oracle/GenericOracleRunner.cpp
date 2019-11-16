@@ -37,6 +37,7 @@
 #if ORTHANC_ENABLE_DCMTK == 1
 #  include "ParseDicomSuccessMessage.h"
 #  include <dcmtk/dcmdata/dcdeftag.h>
+#  include <dcmtk/dcmdata/dcfilefo.h>
 static unsigned int BUCKET_DICOMDIR = 0;
 static unsigned int BUCKET_SOP = 1;
 #endif
@@ -49,7 +50,6 @@ static unsigned int BUCKET_SOP = 1;
 
 #include <boost/filesystem.hpp>
 
-#include <dcmtk/dcmdata/dcfilefo.h>
 
 
 namespace OrthancStone

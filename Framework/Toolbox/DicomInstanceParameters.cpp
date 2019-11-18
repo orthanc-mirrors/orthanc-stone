@@ -265,7 +265,7 @@ namespace OrthancStone
 
       
   void DicomInstanceParameters::Data::ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
-                                                   bool useDouble) const
+                                                                 bool useDouble) const
   {
     if (image.GetFormat() != Orthanc::PixelFormat_Float32)
     {
@@ -454,5 +454,20 @@ namespace OrthancStone
       LOG(ERROR) << "DicomInstanceParameters::GetIndexInSeries(): !data_.hasIndexInSeries_";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
+  }
+
+
+  double DicomInstanceParameters::Data::ApplyRescale(double value) const
+  {
+    double factor = doseGridScaling_;
+    double offset = 0.0;
+
+    if (hasRescale_)
+    {
+      factor *= rescaleSlope_;
+      offset = rescaleIntercept_;
+    }
+
+    return (value * factor + offset);
   }
 }

@@ -71,8 +71,10 @@ namespace OrthancStone
       bool IsPlaneWithinSlice(unsigned int frame,
                               const CoordinateSystem3D& plane) const;
       
-      void ApplyRescaleAndDoseScaling(
-        Orthanc::ImageAccessor& image, bool useDouble) const;
+      void ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
+                                      bool useDouble) const;
+
+      double ApplyRescale(double value) const;
     };
 
     
@@ -210,6 +212,11 @@ namespace OrthancStone
     double GetDoseGridScaling() const
     {
       return data_.doseGridScaling_;
+    }
+
+    double ApplyRescale(double value) const
+    {
+      return data_.ApplyRescale(value);
     }
   };
 }

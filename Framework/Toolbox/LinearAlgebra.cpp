@@ -74,13 +74,23 @@ namespace OrthancStone
       for (size_t i = 0; i < items.size(); i++)
       {
         /**
+         * SJO - 2019-11-19 - WARNING: I reverted from "std::stod()"
+         * to "boost::lexical_cast", as "std::stod()" is sensitive to
+         * locale settings, making this code non portable and very
+         * dangerous as it fails silently. A string such as
+         * "1.3671875\1.3671875" is interpreted as "1\1", because
+         * "std::stod()" expects a comma (",") instead of a point
+         * (".").
+         **/
+        
+#if 0  // __cplusplus >= 201103L  // Is C++11 enabled?
+        /**
          * We try and avoid the use of "boost::lexical_cast<>" here,
          * as it is very slow. As we are parsing many doubles, we
          * prefer to use the standard "std::stod" function if
          * available: http://www.cplusplus.com/reference/string/stod/
          **/
           
-#if __cplusplus >= 201103L  // Is C++11 enabled?
         try
         {
           target[i] = std::stod(items[i]);

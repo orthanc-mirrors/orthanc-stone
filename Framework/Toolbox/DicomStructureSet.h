@@ -187,8 +187,8 @@ namespace OrthancStone
 
 #ifdef USE_BOOST_UNION_FOR_POLYGONS 
     bool ProjectStructure(std::vector< std::vector<Point2D> >& polygons,
-      size_t index,
-      const CoordinateSystem3D& slice) const
+                          size_t index,
+                          const CoordinateSystem3D& slice) const
     {
       return ProjectStructure(polygons, GetStructure(index), slice);
     }

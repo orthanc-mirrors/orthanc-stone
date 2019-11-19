@@ -20,6 +20,8 @@
 
 #include "DicomStructureSetSlicer.h"
 
+#include "../../Toolbox/DicomStructureSet.h"
+
 namespace Deprecated
 {
   class DicomStructureSetSlicer::Renderer : public ILayerRenderer
@@ -28,13 +30,18 @@ namespace Deprecated
     class Structure
     {
     private:
-      bool                                                                   visible_;
-      uint8_t                                                                red_;
-      uint8_t                                                                green_;
-      uint8_t                                                                blue_;
-      std::string                                                            name_;
-      std::vector< std::pair<OrthancStone::Point2D, OrthancStone::Point2D> > segments_;
+      bool         visible_;
+      uint8_t      red_;
+      uint8_t      green_;
+      uint8_t      blue_;
+      std::string  name_;
 
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
+      std::vector< std::vector<OrthancStone::Point2D> > polygons_;
+#else
+      std::vector< std::pair<OrthancStone::Point2D, OrthancStone::Point2D> > segments_;
+#endif
+      
     public:
       Structure(OrthancStone::DicomStructureSet& structureSet,
                 const OrthancStone::CoordinateSystem3D& plane,
@@ -42,7 +49,12 @@ namespace Deprecated
         name_(structureSet.GetStructureName(index))
       {
         structureSet.GetStructureColor(red_, green_, blue_, index);
+
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
+        visible_ = structureSet.ProjectStructure(polygons_, index, plane);
+#else
         visible_ = structureSet.ProjectStructure(segments_, index, plane);
+#endif
       }
 
       void Render(OrthancStone::CairoContext& context)
@@ -53,12 +65,25 @@ namespace Deprecated
         
           context.SetSourceColor(red_, green_, blue_);
 
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
+          for (size_t i = 0; i < polygons_.size(); i++)
+          {
+            cairo_move_to(cr, polygons_[i][0].x, polygons_[i][0].y);
+            for (size_t j = 0; j < polygons_[i].size(); j++)
+            {
+              cairo_line_to(cr, polygons_[i][j].x, polygons_[i][j].y);
+            }
+            cairo_line_to(cr, polygons_[i][0].x, polygons_[i][0].y);
+            cairo_stroke(cr);
+          }
+#else
           for (size_t i = 0; i < segments_.size(); i++)
           {
             cairo_move_to(cr, segments_[i].first.x, segments_[i].first.y);
-            cairo_move_to(cr, segments_[i].second.x, segments_[i].second.y);
+            cairo_line_to(cr, segments_[i].second.x, segments_[i].second.y);
             cairo_stroke(cr);
           }
+#endif
         }
       }
     };

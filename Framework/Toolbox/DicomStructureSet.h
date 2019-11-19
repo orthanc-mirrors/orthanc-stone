@@ -26,7 +26,7 @@
 #include "Extent2D.h"
 #include "../Scene2D/Color.h"
 
-//#define USE_BOOST_UNION_FOR_POLYGONS 1
+#define USE_BOOST_UNION_FOR_POLYGONS 1
 
 #include <Plugins/Samples/Common/FullOrthancDataset.h>
 

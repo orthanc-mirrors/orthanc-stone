@@ -884,13 +884,24 @@ namespace OrthancStone
 
 #ifdef USE_BOOST_UNION_FOR_POLYGONS 
       std::vector<BoostPolygon> projected;
+
+      for (Polygons::const_iterator polygon = structure.polygons_.begin();
+           polygon != structure.polygons_.end(); ++polygon)
+      {
+        double x1, y1, x2, y2;
+
+        if (polygon->Project(x1, y1, x2, y2, slice))
+        {
+          projected.push_back(CreateRectangle(x1, y1, x2, y2));
+        }
+      }
 #else
       // this will contain the intersection of the polygon slab with
       // the cutting plane, projected on the cutting plane coord system 
       // (that yields a rectangle) + the Z coordinate of the polygon 
       // (this is required to group polygons with the same Z later)
       std::vector<std::pair<RtStructRectangleInSlab, double> > projected;
-#endif
+
       for (Polygons::const_iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
@@ -909,6 +920,8 @@ namespace OrthancStone
             static_cast<float>(y2)),curZ));
         }
       }
+#endif
+
 #ifndef USE_BOOST_UNION_FOR_POLYGONS
       // projected contains a set of rectangles specified by two opposite
       // corners (x1,y1,x2,y2)

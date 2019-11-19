@@ -59,6 +59,12 @@ namespace OrthancStone
     revision_++;
   }
 
+  void GrayscaleStyleConfigurator::SetApplyLog(bool apply)
+  {
+    applyLog_ = apply;
+    revision_++;
+  }
+
   TextureBaseSceneLayer* GrayscaleStyleConfigurator::CreateTextureFromImage(
     const Orthanc::ImageAccessor& image) const
   {
@@ -99,6 +105,8 @@ namespace OrthancStone
         l.SetCustomWindowing(customWindowCenter_, customWindowWidth_);
       }
     }
+
     l.SetInverted(inverted_);
+    l.SetApplyLog(applyLog_);
   }
 }

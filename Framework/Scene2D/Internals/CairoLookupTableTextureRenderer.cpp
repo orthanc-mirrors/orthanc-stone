@@ -84,6 +84,20 @@ namespace OrthancStone
             v = 255;
           }
 
+          if (1) //l.IsApplyLog())
+          {
+            // https://theailearner.com/2019/01/01/log-transformation/
+            v = 255.0f / log(1.0f + 255.0f * 1.5f) * log(1.0f + static_cast<float>(v));
+            if (v <= 0)
+            {
+              v = 0;
+            }
+            else if (v >= 255)
+            {
+              v = 255;
+            }
+          }
+
           uint8_t vv = static_cast<uint8_t>(v);
 
           q[0] = lut[4 * vv + 2];  // B

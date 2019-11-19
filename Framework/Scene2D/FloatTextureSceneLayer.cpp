@@ -92,6 +92,14 @@ namespace OrthancStone
     IncrementRevision();
   }
 
+
+  void FloatTextureSceneLayer::SetApplyLog(bool apply)
+  {
+    applyLog_ = apply;
+    IncrementRevision();
+  }
+
+
   void FloatTextureSceneLayer::FitRange()
   {
     float minValue, maxValue;

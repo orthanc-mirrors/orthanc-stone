@@ -32,6 +32,7 @@ namespace OrthancStone
     float            customCenter_;
     float            customWidth_;
     bool             inverted_;
+    bool             applyLog_;
 
   public:
     // The pixel format must be convertible to "Float32"
@@ -59,6 +60,13 @@ namespace OrthancStone
     }
 
     void FitRange();
+
+    void SetApplyLog(bool apply);
+
+    bool IsApplyLog() const
+    {
+      return applyLog_;
+    }
 
     virtual ISceneLayer* Clone() const;
 

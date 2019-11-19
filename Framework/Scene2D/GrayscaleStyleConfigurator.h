@@ -39,6 +39,7 @@ namespace OrthancStone
     float           customWindowWidth_;
     float           customWindowCenter_;
     bool            inverted_;
+    bool            applyLog_;
     
   public:
     GrayscaleStyleConfigurator() :
@@ -47,7 +48,8 @@ namespace OrthancStone
       hasWindowing_(false),
       customWindowWidth_(0),
       customWindowCenter_(0),
-      inverted_(false)
+      inverted_(false),
+      applyLog_(false)
     {
     }
 
@@ -64,6 +66,13 @@ namespace OrthancStone
     bool IsLinearInterpolation() const
     {
       return linearInterpolation_;
+    }
+
+    void SetApplyLog(bool apply);
+
+    bool IsApplyLog() const
+    {
+      return applyLog_;
     }
 
     virtual uint64_t GetRevision() const

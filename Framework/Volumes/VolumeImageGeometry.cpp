@@ -39,7 +39,7 @@ namespace OrthancStone
     
     sagittalGeometry_ = CoordinateSystem3D(p,
                                            axialGeometry_.GetAxisY(),
-                                           axialGeometry_.GetNormal());
+                                           -axialGeometry_.GetNormal());
 
     Vector origin = (
       axialGeometry_.MapSliceToWorldCoordinates(-0.5 * voxelDimensions_[0],

@@ -241,4 +241,14 @@ namespace OrthancStone
     return s;
   }
 
+
+  CoordinateSystem3D CoordinateSystem3D::NormalizeCuttingPlane(const CoordinateSystem3D& plane)
+  {
+    double ox, oy;
+    plane.ProjectPoint(ox, oy, LinearAlgebra::CreateVector(0, 0, 0));
+
+    CoordinateSystem3D normalized(plane);
+    normalized.SetOrigin(plane.MapSliceToWorldCoordinates(ox, oy));
+    return normalized;
+  }
 }

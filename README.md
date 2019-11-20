@@ -146,6 +146,15 @@ cd stone_build_sdl
 cmake -G Ninja -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Applications/Samples/
 ```
 
+**Ninja generator with static SDL build (bash/zsh script)**
+
+```
+# Please yourself one level above the orthanc-stone and orthanc folders
+if( -not (test-path stone_build_sdl)) { mkdir stone_build_sdl }
+cd stone_build_sdl
+cmake -G Ninja -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="`pwd`/../orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Applications/Samples/
+```
+
 **Visual Studio 2017 generator with static SDL build  (pwsh script)**
 
 ```

@@ -567,8 +567,83 @@ TEST(FiniteProjectiveCamera, Calibration)
 }
 
 
-static bool IsEqualVector(OrthancStone::Vector a,
-                          OrthancStone::Vector b)
+static bool IsEqualRotationVector(OrthancStone::Vector a,
+                                  OrthancStone::Vector b)
+{
+  if (a.size() != b.size() ||
+      a.size() != 3)
+  {
+    return false;
+  }
+  else
+  {
+    OrthancStone::LinearAlgebra::NormalizeVector(a);
+    OrthancStone::LinearAlgebra::NormalizeVector(b);
+    return OrthancStone::LinearAlgebra::IsCloseToZero(boost::numeric::ublas::norm_2(a - b));
+  }
+}
+
+
+TEST(GeometryToolbox, AlignVectorsWithRotation)
+{
+  OrthancStone::Vector a, b;
+  OrthancStone::Matrix r;
+
+  OrthancStone::LinearAlgebra::AssignVector(a, -200, 200, -846.63);
+  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
+
+  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
+  ASSERT_TRUE(IsEqualRotationVector(OrthancStone::LinearAlgebra::Product(r, a), b));
+
+  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, b, a);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
+  ASSERT_TRUE(IsEqualRotationVector(OrthancStone::LinearAlgebra::Product(r, b), a));
+
+  OrthancStone::LinearAlgebra::AssignVector(a, 1, 0, 0);
+  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
+  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
+  ASSERT_TRUE(IsEqualRotationVector(OrthancStone::LinearAlgebra::Product(r, a), b));
+
+  OrthancStone::LinearAlgebra::AssignVector(a, 0, 1, 0);
+  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
+  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
+  ASSERT_TRUE(IsEqualRotationVector(OrthancStone::LinearAlgebra::Product(r, a), b));
+
+  OrthancStone::LinearAlgebra::AssignVector(a, 0, 0, 1);
+  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
+  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
+  ASSERT_TRUE(IsEqualRotationVector(OrthancStone::LinearAlgebra::Product(r, a), b));
+
+  OrthancStone::LinearAlgebra::AssignVector(a, 0, 0, 0);
+  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
+  ASSERT_THROW(OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b), Orthanc::OrthancException);
+
+  // TODO: Deal with opposite vectors
+
+  /*
+    OrthancStone::LinearAlgebra::AssignVector(a, 0, 0, -1);
+    OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
+    OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
+    OrthancStone::LinearAlgebra::Print(r);
+    OrthancStone::LinearAlgebra::Print(boost::numeric::ublas::prod(r, a));
+  */
+}
+
+TEST(MessagingToolbox, ParseJson)
+{
+  Json::Value response;
+  std::string source = "{\"command\":\"panel:takeDarkImage\",\"commandType\":\"simple\",\"args\":{}}";
+  ASSERT_TRUE(Deprecated::MessagingToolbox::ParseJson(response, source.c_str(), source.size()));
+}
+
+
+
+static bool IsEqualVectorL1(OrthancStone::Vector a,
+                            OrthancStone::Vector b)
 {
   if (a.size() != b.size())
   {
@@ -588,62 +663,6 @@ static bool IsEqualVector(OrthancStone::Vector a,
   }
 }
 
-
-TEST(GeometryToolbox, AlignVectorsWithRotation)
-{
-  OrthancStone::Vector a, b;
-  OrthancStone::Matrix r;
-
-  OrthancStone::LinearAlgebra::AssignVector(a, -200, 200, -846.63);
-  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
-
-  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
-  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
-  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, a), b));
-
-  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, b, a);
-  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
-  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, b), a));
-
-  OrthancStone::LinearAlgebra::AssignVector(a, 1, 0, 0);
-  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
-  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
-  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
-  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, a), b));
-
-  OrthancStone::LinearAlgebra::AssignVector(a, 0, 1, 0);
-  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
-  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
-  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
-  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, a), b));
-
-  OrthancStone::LinearAlgebra::AssignVector(a, 0, 0, 1);
-  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
-  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
-  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
-  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, a), b));
-
-  OrthancStone::LinearAlgebra::AssignVector(a, 0, 0, 0);
-  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
-  ASSERT_THROW(OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b), Orthanc::OrthancException);
-
-  // TODO: Deal with opposite vectors
-
-  /*
-  OrthancStone::LinearAlgebra::AssignVector(a, 0, 0, -1);
-  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
-  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
-  OrthancStone::LinearAlgebra::Print(r);
-  OrthancStone::LinearAlgebra::Print(boost::numeric::ublas::prod(r, a));
-  */
-}
-
-TEST(MessagingToolbox, ParseJson)
-{
-  Json::Value response;
-  std::string source = "{\"command\":\"panel:takeDarkImage\",\"commandType\":\"simple\",\"args\":{}}";
-  ASSERT_TRUE(Deprecated::MessagingToolbox::ParseJson(response, source.c_str(), source.size()));
-}
 
 TEST(VolumeImageGeometry, Basic)
 {
@@ -721,13 +740,13 @@ TEST(VolumeImageGeometry, Basic)
                       static_cast<double>(x) * sx,
                       static_cast<double>(y) * sy) +
                     z * sz * g.GetAxialGeometry().GetNormal());
-        ASSERT_TRUE(IsEqualVector(p, q));
+        ASSERT_TRUE(IsEqualVectorL1(p, q));
         
         q = (g.GetCoronalGeometry().MapSliceToWorldCoordinates(
                static_cast<double>(x) * sx,
                static_cast<double>(g.GetDepth() - 1 - z) * sz) +
              y * sy * g.GetCoronalGeometry().GetNormal());
-        ASSERT_TRUE(IsEqualVector(p, q));
+        ASSERT_TRUE(IsEqualVectorL1(p, q));
 
         /**
          * WARNING: In sagittal geometry, the normal points to
@@ -738,7 +757,7 @@ TEST(VolumeImageGeometry, Basic)
                static_cast<double>(y) * sy,
                static_cast<double>(g.GetDepth() - 1 - z) * sz) +
              x * sx * (-g.GetSagittalGeometry().GetNormal()));
-        ASSERT_TRUE(IsEqualVector(p, q));
+        ASSERT_TRUE(IsEqualVectorL1(p, q));
       }
     }
   }
@@ -760,17 +779,17 @@ TEST(VolumeImageGeometry, Basic)
 
       if (projection == VolumeProjection_Sagittal)
       {
-        ASSERT_TRUE(IsEqualVector(plane.GetOrigin(), s.GetOrigin() + static_cast<double>(i) * 
-                                  (-s.GetNormal()) * g.GetVoxelDimensions(projection)[2]));
+        ASSERT_TRUE(IsEqualVectorL1(plane.GetOrigin(), s.GetOrigin() + static_cast<double>(i) * 
+                                    (-s.GetNormal()) * g.GetVoxelDimensions(projection)[2]));
       }
       else
       {
-        ASSERT_TRUE(IsEqualVector(plane.GetOrigin(), s.GetOrigin() + static_cast<double>(i) * 
-                                  s.GetNormal() * g.GetVoxelDimensions(projection)[2]));
+        ASSERT_TRUE(IsEqualVectorL1(plane.GetOrigin(), s.GetOrigin() + static_cast<double>(i) * 
+                                    s.GetNormal() * g.GetVoxelDimensions(projection)[2]));
       }
       
-      ASSERT_TRUE(IsEqualVector(plane.GetAxisX(), s.GetAxisX()));
-      ASSERT_TRUE(IsEqualVector(plane.GetAxisY(), s.GetAxisY()));
+      ASSERT_TRUE(IsEqualVectorL1(plane.GetAxisX(), s.GetAxisX()));
+      ASSERT_TRUE(IsEqualVectorL1(plane.GetAxisY(), s.GetAxisY()));
 
       unsigned int slice;
       VolumeProjection q;

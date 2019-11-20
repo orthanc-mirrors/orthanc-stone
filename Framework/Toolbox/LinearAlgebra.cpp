@@ -125,6 +125,10 @@ namespace OrthancStone
         }
 
 #elif 1
+        /**
+         * Use of our homemade implementation of
+         * "boost::lexical_cast<double>()". It is much faster than boost.
+         **/
         if (!GenericToolbox::StringToDouble(target[i], items[i].c_str()))
         {
           return false;
@@ -132,8 +136,9 @@ namespace OrthancStone
         
 #else
         /**
-         * Fallback implementation using Boost (slower, but somewhat
-         * independent to locale).
+         * Fallback implementation using Boost (slower, but somehow
+         * independent to locale contrarily to "std::stod()", and
+         * generic as it does not use our custom implementation).
          **/
         try
         {

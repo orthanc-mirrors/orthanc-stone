@@ -24,6 +24,8 @@
 
 #include "stdint.h"
 
+#include <cmath>
+
 TEST(GenericToolbox, TestLegitDoubleString)
 {
   using OrthancStone::GenericToolbox::LegitDoubleString;

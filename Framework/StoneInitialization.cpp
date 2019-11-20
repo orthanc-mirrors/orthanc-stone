@@ -21,10 +21,23 @@
 
 #include "StoneInitialization.h"
 
-#include <Core/OrthancException.h>
-
 #if !defined(ORTHANC_ENABLE_SDL)
 #  error Macro ORTHANC_ENABLE_SDL must be defined
+#endif
+
+#if !defined(ORTHANC_ENABLE_SSL)
+#  error Macro ORTHANC_ENABLE_SSL must be defined
+#endif
+
+#if !defined(ORTHANC_ENABLE_CURL)
+#  error Macro ORTHANC_ENABLE_CURL must be defined
+#endif
+
+#if !defined(ORTHANC_ENABLE_DCMTK)
+#  error Macro ORTHANC_ENABLE_DCMTK must be defined
+#  if !defined(DCMTK_VERSION_NUMBER)
+#    error Macro DCMTK_VERSION_NUMBER must be defined
+#  endif
 #endif
 
 #if ORTHANC_ENABLE_SDL == 1
@@ -32,8 +45,18 @@
 #endif
 
 #if ORTHANC_ENABLE_CURL == 1
-#include <Core/HttpClient.h>
+#  include <Core/HttpClient.h>
 #endif
+
+#if ORTHANC_ENABLE_DCMTK == 1
+#  include <Core/DicomParsing/FromDcmtkBridge.h>
+#endif
+
+#include "Toolbox/LinearAlgebra.h"
+
+#include <Core/OrthancException.h>
+#include <Core/Toolbox.h>
+
 
 namespace OrthancStone
 {
@@ -49,14 +72,46 @@ namespace OrthancStone
     Orthanc::Logging::Initialize();
 #endif
 
-#if ORTHANC_ENABLE_SDL == 1
-    OrthancStone::SdlWindow::GlobalInitialize();
+#if ORTHANC_ENABLE_SSL == 1
+    // Must be before curl
+    Orthanc::Toolbox::InitializeOpenSsl();
 #endif
 
 #if ORTHANC_ENABLE_CURL == 1
     Orthanc::HttpClient::GlobalInitialize();
+#  if ORTHANC_ENABLE_SSL == 1
+    Orthanc::HttpClient::ConfigureSsl(false, "");
+#  endif
+#endif
+
+#if ORTHANC_ENABLE_DCMTK == 1
+    Orthanc::FromDcmtkBridge::InitializeDictionary(true);
+    Orthanc::FromDcmtkBridge::InitializeCodecs();
+#  if DCMTK_VERSION_NUMBER <= 360
+    OFLog::configure(OFLogger::FATAL_LOG_LEVEL);
+#  else
+    OFLog::configure(OFLogger::OFF_LOG_LEVEL);
+#  endif
+#endif
+
+    {
+      // Run-time check of locale settings after Qt has been initialized
+      OrthancStone::Vector v;
+      if (!OrthancStone::LinearAlgebra::ParseVector(v, "1.3671875\\-1.3671875") ||
+          v.size() != 2 ||
+          !OrthancStone::LinearAlgebra::IsNear(1.3671875f, v[0]) ||
+          !OrthancStone::LinearAlgebra::IsNear(-1.3671875f, v[1]))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                        "Error in the locale settings, giving up");
+      }
+    }
+
+#if ORTHANC_ENABLE_SDL == 1
+    OrthancStone::SdlWindow::GlobalInitialize();
 #endif
   }
+  
 
   void StoneFinalize()
   {
@@ -64,8 +119,16 @@ namespace OrthancStone
     OrthancStone::SdlWindow::GlobalFinalize();
 #endif
     
+#if ORTHANC_ENABLE_DCMTK == 1
+    Orthanc::FromDcmtkBridge::FinalizeCodecs();
+#endif
+
 #if ORTHANC_ENABLE_CURL == 1
     Orthanc::HttpClient::GlobalFinalize();
+#endif
+
+#if ORTHANC_ENABLE_SSL == 1
+    Orthanc::Toolbox::FinalizeOpenSsl();
 #endif
 
     Orthanc::Logging::Finalize();

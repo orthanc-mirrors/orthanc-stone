@@ -25,6 +25,7 @@
 #include "../Framework/Deprecated/Toolbox/DownloadStack.h"
 #include "../Framework/Deprecated/Toolbox/MessagingToolbox.h"
 #include "../Framework/Deprecated/Toolbox/OrthancSlicesLoader.h"
+#include "../Framework/StoneInitialization.h"
 #include "../Framework/Toolbox/FiniteProjectiveCamera.h"
 #include "../Framework/Toolbox/GeometryToolbox.h"
 #include "../Framework/Volumes/ImageBuffer3D.h"
@@ -696,6 +697,8 @@ TEST(VolumeImageGeometry, Basic)
   
   for (int p = 0; p < 3; p++)
   {
+    printf("=========== %d\n", p);
+    
     OrthancStone::VolumeProjection projection = (OrthancStone::VolumeProjection) p;
     const OrthancStone::CoordinateSystem3D& s = g.GetProjectionGeometry(projection);
     
@@ -703,6 +706,8 @@ TEST(VolumeImageGeometry, Basic)
 
     for (unsigned int i = 0; i < g.GetProjectionDepth(projection); i++)
     {
+      printf("------------- %d\n", i);
+    
       OrthancStone::CoordinateSystem3D plane = g.GetProjectionSlice(projection, i);
 
       ASSERT_TRUE(IsEqualVector(plane.GetOrigin(), s.GetOrigin() + static_cast<double>(i) * 
@@ -714,20 +719,44 @@ TEST(VolumeImageGeometry, Basic)
       OrthancStone::VolumeProjection q;
       ASSERT_TRUE(g.DetectSlice(q, slice, plane));
       ASSERT_EQ(projection, q);
-      ASSERT_EQ(i, slice);     
+      ASSERT_EQ(i, slice);
     }
   }
 }
 
+
+TEST(LinearAlgebra, ParseVectorLocale)
+{
+  OrthancStone::Vector v;
+
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::ParseVector(v, "1.2"));
+  ASSERT_EQ(1u, v.size());
+  ASSERT_FLOAT_EQ(1.2f, v[0]);
+
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::ParseVector(v, "-1.2e+2"));
+  ASSERT_EQ(1u, v.size());
+  ASSERT_FLOAT_EQ(-120.0f, v[0]);
+
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::ParseVector(v, "-1e-2\\2"));
+  ASSERT_EQ(2u, v.size());
+  ASSERT_FLOAT_EQ(-0.01f, v[0]);
+  ASSERT_FLOAT_EQ(2.0f, v[1]);
+
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::ParseVector(v, "1.3671875\\1.3671875"));
+  ASSERT_EQ(2u, v.size());
+  ASSERT_FLOAT_EQ(1.3671875, v[0]);
+  ASSERT_FLOAT_EQ(1.3671875, v[1]); 
+}
+
+
 int main(int argc, char **argv)
 {
-  Orthanc::Logging::Initialize();
-  Orthanc::Logging::EnableInfoLevel(true);
+  OrthancStone::StoneInitialize();
 
   ::testing::InitGoogleTest(&argc, argv);
   int result = RUN_ALL_TESTS();
 
-  Orthanc::Logging::Finalize();
+  OrthancStone::StoneFinalize();
 
   return result;
 }

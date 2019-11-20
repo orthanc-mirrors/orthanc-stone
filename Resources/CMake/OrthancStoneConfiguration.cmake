@@ -56,6 +56,12 @@ if (ORTHANC_SANDBOXED)
   endif()
 endif()
 
+if (ENABLE_OPENGL)
+  if (NOT ENABLE_QT AND NOT ENABLE_SDL AND NOT ENABLE_WASM)
+    message(FATAL_ERROR "Cannot enable OpenGL if WebAssembly, SDL and Qt are all disabled")
+  endif()
+endif()
+
 if (ENABLE_WASM)
   if (NOT ORTHANC_SANDBOXED)
     message(FATAL_ERROR "WebAssembly target must me configured as sandboxed")

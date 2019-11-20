@@ -827,12 +827,13 @@ TEST(LinearAlgebra, ParseVectorLocale)
 
 int main(int argc, char **argv)
 {
-  OrthancStone::StoneInitialize();
+  Orthanc::Logging::Initialize();
+  Orthanc::Logging::EnableInfoLevel(true);
 
   ::testing::InitGoogleTest(&argc, argv);
   int result = RUN_ALL_TESTS();
 
-  OrthancStone::StoneFinalize();
+  Orthanc::Logging::Finalize();
 
   return result;
 }

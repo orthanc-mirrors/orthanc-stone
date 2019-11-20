@@ -47,14 +47,16 @@ TEST(GenericToolbox, TestLegitDoubleString)
   EXPECT_TRUE(LegitDoubleString("0."));
   EXPECT_TRUE(LegitDoubleString(".0"));
 
+  EXPECT_TRUE(LegitDoubleString("1e-15"));
+  EXPECT_TRUE(LegitDoubleString("1E-15"));
+  EXPECT_TRUE(LegitDoubleString("0.31E-15"));
+  EXPECT_TRUE(LegitDoubleString(".0031E-15"));
+  EXPECT_TRUE(LegitDoubleString("1e-15"));
+  EXPECT_TRUE(LegitDoubleString("1E015"));
+  EXPECT_TRUE(LegitDoubleString("0.31E015"));
+
+
   EXPECT_FALSE(LegitDoubleString(".5f"));
-  EXPECT_FALSE(LegitDoubleString("1e-15"));
-  EXPECT_FALSE(LegitDoubleString("1E-15"));
-  EXPECT_FALSE(LegitDoubleString("0.31E-15"));
-  EXPECT_FALSE(LegitDoubleString(".0031E-15"));
-  EXPECT_FALSE(LegitDoubleString("1e-15"));
-  EXPECT_FALSE(LegitDoubleString("1E015"));
-  EXPECT_FALSE(LegitDoubleString("0.31E015"));
   EXPECT_FALSE(LegitDoubleString("\n.0031E015"));
   EXPECT_FALSE(LegitDoubleString(".05f"));
   EXPECT_FALSE(LegitDoubleString(" 1 2 "));
@@ -3837,6 +3839,119 @@ TEST(GenericToolbox, TestStringToDoubleHardNeg)
     EXPECT_NEAR(b, r, TOLERANCE);
   }
 }
+
+
+TEST(GenericToolbox, TestStringToDoubleHardScientific)
+{
+  using OrthancStone::GenericToolbox::StringToDouble;
+  const double TOLERANCE = 0.00000000000001;
+
+  size_t i = 0;
+  const size_t COUNT = 125;
+  //const double FACTOR = 1.000000000171271211;
+  const double FACTOR = 1.71271211;
+  for (double b = DBL_EPSILON; b < DBL_MAX && i < COUNT; ++i, b *= FACTOR)
+  {
+
+    // the tolerance must be adapted depending on the exponent
+    double exponent = (b == 0) ? 0 : 1.0 + std::floor(std::log10(std::fabs(b)));
+    double actualTolerance = TOLERANCE * pow(10.0, exponent);
+
+    char txt[1024];
+#if defined(_MSC_VER)
+    sprintf_s(txt, "%.17e", b);
+#else
+    snprintf(txt, sizeof(txt) - 1, "%.17e", b);
+#endif
+    double r = 0.0;
+    bool ok = StringToDouble(r, txt);
+
+#if 0
+    if (ok)
+    {
+      printf("OK for txt = \"%s\" and r = %.17e\n", txt, r);
+    }
+    else
+    {
+      printf("Not ok for txt = \"%s\" and r = %.17e\n", txt, r);
+      ok = StringToDouble(r, txt);
+    }
+#endif
+
+    EXPECT_TRUE(ok);
+
+#if 0
+    if (fabs(b - r) > actualTolerance)
+    {
+      printf("NOK fabs(b (%.17f) - r (%.17f)) ((%.17f))  > actualTolerance (%.17f)\n", b, r, fabs(b - r), actualTolerance);
+      printf("NOK fabs(b (%.17e) - r (%.17e)) ((%.17e))  > actualTolerance (%.17e)\n", b, r, fabs(b - r), actualTolerance);
+      ok = StringToDouble(r, txt);
+    }
+    else
+    {
+      printf("OK  fabs(b (%.17f) - r (%.17f)) ((%.17f)) <= actualTolerance (%.17f)\n", b, r, fabs(b - r), actualTolerance);
+      printf("OK  fabs(b (%.17e) - r (%.17e)) ((%.17e)) <= actualTolerance (%.17e)\n", b, r, fabs(b - r), actualTolerance);
+    }
+#endif
+    EXPECT_NEAR(b, r, actualTolerance);
+  }
+}
+
+TEST(GenericToolbox, TestStringToDoubleHardNegScientific)
+{
+  using OrthancStone::GenericToolbox::StringToDouble;
+  const double TOLERANCE = 0.00000000000001;
+
+  size_t i = 0;
+  const size_t COUNT = 125;
+  //const double FACTOR = 1.000000000171271211;
+  const double FACTOR = 1.71271211;
+  for (double b = -1.0 * DBL_EPSILON; b < DBL_MAX && i < COUNT; ++i, b *= FACTOR)
+  {
+    // the tolerance must be adapted depending on the exponent
+    double exponent = (b == 0) ? 0 : 1.0 + std::floor(std::log10(std::fabs(b)));
+    double actualTolerance = TOLERANCE * pow(10.0, exponent);
+
+    char txt[1024];
+#if defined(_MSC_VER)
+    sprintf_s(txt, "%.17e", b);
+#else
+    snprintf(txt, sizeof(txt) - 1, "%.17e", b);
+#endif
+    double r = 0.0;
+    bool ok = StringToDouble(r, txt);
+
+#if 0
+    if (ok)
+    {
+      printf("OK for txt = \"%s\" and r = %.17e\n", txt, r);
+    }
+    else
+    {
+      printf("Not ok for txt = \"%s\" and r = %.17e\n", txt, r);
+      ok = StringToDouble(r, txt);
+    }
+#endif
+
+    EXPECT_TRUE(ok);
+
+#if 0
+    if (fabs(b - r) > actualTolerance)
+    {
+      printf("NOK fabs(b (%.17f) - r (%.17f)) ((%.17f))  > actualTolerance (%.17f)\n", b, r, fabs(b - r), actualTolerance);
+      printf("NOK fabs(b (%.17e) - r (%.17e)) ((%.17e))  > actualTolerance (%.17e)\n", b, r, fabs(b - r), actualTolerance);
+      ok = StringToDouble(r, txt);
+    }
+    else
+    {
+      printf("OK  fabs(b (%.17f) - r (%.17f)) ((%.17f)) <= actualTolerance (%.17f)\n", b, r, fabs(b - r), actualTolerance);
+      printf("OK  fabs(b (%.17e) - r (%.17e)) ((%.17e)) <= actualTolerance (%.17e)\n", b, r, fabs(b - r), actualTolerance);
+    }
+#endif
+    EXPECT_NEAR(b, r, actualTolerance);
+  }
+}
+
 
 TEST(GenericToolbox, TestStringToIntegerHard)
 {

@@ -22,6 +22,8 @@
 
 #include <string>
 #include <stdint.h>
+#include <math.h>
+
 
 namespace OrthancStone
 {
@@ -45,8 +47,25 @@ namespace OrthancStone
             period++;
         ++p;
         }
+        else if (*p == 'e' || *p == 'E')
+        {
+          ++p;
+          if (*p == '-' || *p == '+')
+            ++p;
+          // "e+"/"E+" "e-"/"E-" or "e"/"E" must be followed by a number
+          if (!(*p >= '0' && *p <= '9'))
+            return false;
+
+          // these must be the last in the string
+          while(*p >= '0' && *p <= '9')
+            ++p;
+
+          return (*p == 0);
+        }
         else
+        {
           return false;
+        }
       }
       return true;
     }
@@ -128,10 +147,62 @@ namespace OrthancStone
         r += f;
       }
       r *= neg;
-      if (*p == 0 || (*p >= '0' && *p <= '9') )
+
+      // skip the remaining numbers until we reach not-a-digit (either the 
+      // end of the string OR the scientific notation symbol)
+      while ((*p >= '0' && *p <= '9'))
+        ++p;
+
+      if (*p == 0 )
+      {
         return true;
+      }
+      else if ((*p == 'e') || (*p == 'E'))
+      {
+        // process the scientific notation
+        double sign; // no init is safe (read below)
+        ++p;
+        if (*p == '-')
+        {
+          sign = -1.0;
+          // point to first number
+          ++p;
+        }
+        else if (*p == '+')
+        {
+          sign = 1.0;
+          // point to first number
+          ++p;
+        }
+        else if (*p >= '0' && *p <= '9')
+        {
+          sign = 1.0;
+        }
+        else
+        {
+          // only a sign char or a number is allowed
+          return false;
+        }
+        // now p points to the absolute value of the exponent
+        double exp = 0;
+        while (*p >= '0' && *p <= '9')
+        {
+          exp = (exp * 10.0) + static_cast<double>(*p - '0'); // 1 12 123 123 12345
+          ++p;
+        }
+        // now we have our exponent. put a sign on it.
+        exp *= sign;
+        double scFac = ::pow(10.0, exp);
+        r *= scFac;
+
+        // only allowed symbol here is EOS
+        return (*p == 0);
+      }
       else
+      {
+        // not allowed
         return false;
+      }
     }
 
     inline bool StringToDouble(double& r, const std::string& text)

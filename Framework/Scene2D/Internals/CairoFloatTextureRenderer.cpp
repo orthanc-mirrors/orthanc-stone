@@ -53,6 +53,8 @@ namespace OrthancStone
              target.GetFormat() == Orthanc::PixelFormat_BGRA32 &&
              sizeof(float) == 4);
 
+      static const float LOG_NORMALIZATION = 255.0f / log(1.0f + 255.0f);
+      
       for (unsigned int y = 0; y < height; y++)
       {
         const float* p = reinterpret_cast<const float*>(source.GetConstRow(y));
@@ -69,6 +71,14 @@ namespace OrthancStone
           {
             v = 255;
           }
+
+          if (l.IsApplyLog())
+          {
+            // https://theailearner.com/2019/01/01/log-transformation/
+            v = LOG_NORMALIZATION * log(1.0f + static_cast<float>(v));
+          }
+
+          assert(v >= 0.0f && v <= 255.0f);
 
           uint8_t vv = static_cast<uint8_t>(v);
 

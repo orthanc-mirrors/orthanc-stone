@@ -42,16 +42,7 @@ namespace OrthancStone
     bool            applyLog_;
     
   public:
-    GrayscaleStyleConfigurator() :
-      revision_(0),
-      linearInterpolation_(false),
-      hasWindowing_(false),
-      customWindowWidth_(0),
-      customWindowCenter_(0),
-      inverted_(false),
-      applyLog_(false)
-    {
-    }
+    GrayscaleStyleConfigurator();
 
     void SetWindowing(ImageWindowing windowing);
 

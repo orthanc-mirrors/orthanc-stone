@@ -27,6 +27,17 @@
 
 namespace OrthancStone
 {
+  GrayscaleStyleConfigurator::GrayscaleStyleConfigurator() :
+    revision_(0),
+    linearInterpolation_(false),
+    hasWindowing_(false),
+    customWindowWidth_(0),
+    customWindowCenter_(0),
+    inverted_(false),
+    applyLog_(false)
+  {
+  }
+
   void GrayscaleStyleConfigurator::SetWindowing(ImageWindowing windowing)
   {
     hasWindowing_ = true;

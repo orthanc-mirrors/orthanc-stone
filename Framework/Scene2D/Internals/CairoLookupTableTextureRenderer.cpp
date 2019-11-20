@@ -37,18 +37,6 @@ namespace OrthancStone
       textureTransform_ = l.GetTransform();
       isLinearInterpolation_ = l.IsLinearInterpolation();
 
-      const float a = l.GetMinValue();
-      float slope;
-
-      if (l.GetMinValue() >= l.GetMaxValue())
-      {
-        slope = 0;
-      }
-      else
-      {
-        slope = 256.0f / (l.GetMaxValue() - l.GetMinValue());
-      }
-
       const Orthanc::ImageAccessor& source = l.GetTexture();
       const unsigned int width = source.GetWidth();
       const unsigned int height = source.GetHeight();
@@ -56,60 +44,8 @@ namespace OrthancStone
 
       Orthanc::ImageAccessor target;
       texture_.GetWriteableAccessor(target);
-
-      const std::vector<uint8_t>& lut = l.GetLookupTable();
-      if (lut.size() != 4 * 256)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }
-
-      assert(source.GetFormat() == Orthanc::PixelFormat_Float32 &&
-             target.GetFormat() == Orthanc::PixelFormat_BGRA32 &&
-             sizeof(float) == 4);
-
-      for (unsigned int y = 0; y < height; y++)
-      {
-        const float* p = reinterpret_cast<const float*>(source.GetConstRow(y));
-        uint8_t* q = reinterpret_cast<uint8_t*>(target.GetRow(y));
-
-        for (unsigned int x = 0; x < width; x++)
-        {
-          float v = (*p - a) * slope;
-          if (v <= 0)
-          {
-            v = 0;
-          }
-          else if (v >= 255)
-          {
-            v = 255;
-          }
-
-          if (1) //l.IsApplyLog())
-          {
-            // https://theailearner.com/2019/01/01/log-transformation/
-            v = 255.0f / log(1.0f + 255.0f * 1.5f) * log(1.0f + static_cast<float>(v));
-            if (v <= 0)
-            {
-              v = 0;
-            }
-            else if (v >= 255)
-            {
-              v = 255;
-            }
-          }
-
-          uint8_t vv = static_cast<uint8_t>(v);
-
-          q[0] = lut[4 * vv + 2];  // B
-          q[1] = lut[4 * vv + 1];  // G
-          q[2] = lut[4 * vv + 0];  // R
-          q[3] = lut[4 * vv + 3];  // A
-
-          p++;
-          q += 4;
-        }
-      }
-
+      l.Render(target);
+      
       cairo_surface_mark_dirty(texture_.GetObject());
     }
 

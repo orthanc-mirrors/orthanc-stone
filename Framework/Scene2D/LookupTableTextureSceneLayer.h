@@ -32,6 +32,7 @@ namespace OrthancStone
     float                 minValue_;
     float                 maxValue_;
     std::vector<uint8_t>  lut_;
+    bool                  applyLog_;
 
     void SetLookupTableRgb(const std::vector<uint8_t>& lut);
 
@@ -66,11 +67,22 @@ namespace OrthancStone
       return lut_;
     }
 
+    void SetApplyLog(bool apply);
+
+    bool IsApplyLog() const
+    {
+      return applyLog_;
+    }
+
     virtual ISceneLayer* Clone() const;
 
     virtual Type GetType() const
     {
       return Type_LookupTableTexture;
     }
+
+    // Render the texture to a color image of format BGRA32 (Cairo
+    // surfaces) or RGBA32 (OpenGL)
+    void Render(Orthanc::ImageAccessor& target) const;
   };
 }

@@ -39,6 +39,7 @@ namespace OrthancStone
     bool                  hasRange_;
     float                 minValue_;
     float                 maxValue_;
+    bool                  applyLog_;
 
   public:
     LookupTableStyleConfigurator();
@@ -55,6 +56,13 @@ namespace OrthancStone
 
     void SetRange(float minValue, float maxValue);
 
+    void SetApplyLog(bool apply);
+
+    bool IsApplyLog() const
+    {
+      return applyLog_;
+    }
+    
     virtual uint64_t GetRevision() const
     {
       return revision_;
@@ -63,7 +71,7 @@ namespace OrthancStone
     virtual TextureBaseSceneLayer* CreateTextureFromImage(const Orthanc::ImageAccessor& image) const;
 
     virtual TextureBaseSceneLayer* CreateTextureFromDicom(const Orthanc::ImageAccessor& frame,
-      const DicomInstanceParameters& parameters) const
+                                                          const DicomInstanceParameters& parameters) const
     {
       return parameters.CreateLookupTableTexture(frame);
     }

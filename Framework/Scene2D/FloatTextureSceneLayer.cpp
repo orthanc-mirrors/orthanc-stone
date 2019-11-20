@@ -131,6 +131,7 @@ namespace OrthancStone
     cloned->customCenter_ = customCenter_;
     cloned->customWidth_ = customWidth_;
     cloned->inverted_ = inverted_;
+    cloned->applyLog_ = applyLog_;
 
     return cloned.release();
   }

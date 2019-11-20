@@ -22,6 +22,7 @@
 #include "LinearAlgebra.h"
 
 #include "../StoneException.h"
+#include "GenericToolbox.h"
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
@@ -123,6 +124,12 @@ namespace OrthancStone
           return false;
         }
 
+#elif 1
+        if (!GenericToolbox::StringToDouble(target[i], items[i].c_str()))
+        {
+          return false;
+        }
+        
 #else
         /**
          * Fallback implementation using Boost (slower, but somewhat

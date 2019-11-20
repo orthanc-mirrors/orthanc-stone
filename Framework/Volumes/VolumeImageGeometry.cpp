@@ -296,16 +296,18 @@ namespace OrthancStone
     {
       return false;
     }
-        
-    unsigned int d = static_cast<unsigned int>(std::floor(z));
-    if (d >= projectionDepth)
-    {
-      return false;
-    }
     else
     {
-      slice = d;
-      return true;
+      unsigned int d = static_cast<unsigned int>(std::floor(z));
+      if (d >= projectionDepth)
+      {
+        return false;
+      }
+      else
+      {
+        slice = d;
+        return true;
+      }
     }
   }
 
@@ -321,7 +323,18 @@ namespace OrthancStone
     Vector dim = GetVoxelDimensions(projection);
     CoordinateSystem3D plane = GetProjectionGeometry(projection);
 
-    plane.SetOrigin(plane.GetOrigin() + static_cast<double>(z) * plane.GetNormal() * dim[2]);
+    Vector normal = plane.GetNormal();
+    if (projection == VolumeProjection_Sagittal)
+    {
+      /**
+       * WARNING: In sagittal geometry, the normal points to REDUCING
+       * X-axis in the 3D world. This is necessary to keep the
+       * right-hand coordinate system. Hence the negation.
+       **/
+      normal = -normal;
+    }
+    
+    plane.SetOrigin(plane.GetOrigin() + static_cast<double>(z) * dim[2] * normal);
 
     return plane;
   }

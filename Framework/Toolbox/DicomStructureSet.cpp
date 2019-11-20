@@ -373,8 +373,10 @@ namespace OrthancStone
     else if (GeometryToolbox::IsParallelOrOpposite
              (isOpposite, slice.GetNormal(), geometry_.GetAxisX()))
     {
-      // plane is constant X
+      // plane is constant X => Sagittal view (remember that in the
+      // sagittal projection, the normal must be swapped)
 
+      
       /*
       Please read the comments in the section above, by taking into account
       the fact that, in this case, the plane has a constant X, not Y (in 
@@ -426,10 +428,6 @@ namespace OrthancStone
 
         slice.ProjectPoint2(x1, y1, p1);
         slice.ProjectPoint2(x2, y2, p2);
-
-        // TODO WHY THIS???
-        y1 = -y1;
-        y2 = -y2;
 
         return true;
       }

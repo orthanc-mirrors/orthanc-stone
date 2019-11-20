@@ -409,6 +409,7 @@ if (ENABLE_DCMTK)
   list(APPEND ORTHANC_STONE_SOURCES
     ${ORTHANC_STONE_ROOT}/Framework/Oracle/ParseDicomSuccessMessage.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParsedDicomCache.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ParsedDicomDataset.cpp
     )
 endif()
 
@@ -435,6 +436,7 @@ list(APPEND ORTHANC_STONE_SOURCES
 
   ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomDatasetReader.cpp
   ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomPath.cpp
+  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomTag.cpp
   ${ORTHANC_ROOT}/Plugins/Samples/Common/FullOrthancDataset.cpp
   ${ORTHANC_ROOT}/Plugins/Samples/Common/IOrthancConnection.cpp
 

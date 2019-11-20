@@ -27,7 +27,6 @@
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
-#include <Plugins/Samples/Common/FullOrthancDataset.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 
 #if defined(_MSC_VER)
@@ -45,6 +44,11 @@
 #if defined(_MSC_VER)
 #  pragma warning(pop)
 #endif
+
+#if ORTHANC_ENABLE_DCMTK == 1
+#  include "ParsedDicomDataset.h"
+#endif
+
 
 typedef boost::geometry::model::d2::point_xy<double> BoostPoint;
 typedef boost::geometry::model::polygon<BoostPoint> BoostPolygon;
@@ -461,7 +465,7 @@ namespace OrthancStone
     return structures_[index];
   }
 
-  DicomStructureSet::DicomStructureSet(const OrthancPlugins::FullOrthancDataset& tags)
+  void DicomStructureSet::Setup(const OrthancPlugins::IDicomDataset& tags)
   {
     OrthancPlugins::DicomDatasetReader reader(tags);
     
@@ -606,6 +610,15 @@ namespace OrthancStone
     }
   }
 
+
+#if ORTHANC_ENABLE_DCMTK == 1
+  DicomStructureSet::DicomStructureSet(Orthanc::ParsedDicomFile& instance)
+  {
+    ParsedDicomDataset dataset(instance);
+    Setup(dataset);
+  }
+#endif
+  
 
   Vector DicomStructureSet::GetStructureCenter(size_t index) const
   {

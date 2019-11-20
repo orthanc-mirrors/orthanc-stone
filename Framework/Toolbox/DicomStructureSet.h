@@ -21,11 +21,19 @@
 
 #pragma once
 
+#if !defined(ORTHANC_ENABLE_DCMTK)
+#  error The macro ORTHANC_ENABLE_DCMTK must be defined
+#endif
+
 #include "DicomStructureSetUtils.h"
 #include "CoordinateSystem3D.h"
 #include "Extent2D.h"
 #include "../Scene2D/Color.h"
 #include "../Scene2D/PolylineSceneLayer.h"
+
+#if ORTHANC_ENABLE_DCMTK == 1
+#  include <Core/DicomParsing/ParsedDicomFile.h>
+#endif
 
 //#define USE_BOOST_UNION_FOR_POLYGONS 1
 
@@ -138,6 +146,8 @@ namespace OrthancStone
     Structures        structures_;
     ReferencedSlices  referencedSlices_;
 
+    void Setup(const OrthancPlugins::IDicomDataset& dataset);
+    
     const Structure& GetStructure(size_t index) const;
 
     Structure& GetStructure(size_t index);
@@ -152,7 +162,14 @@ namespace OrthancStone
       const CoordinateSystem3D& slice) const;
 
   public:
-    DicomStructureSet(const OrthancPlugins::FullOrthancDataset& instance);
+    DicomStructureSet(const OrthancPlugins::FullOrthancDataset& instance)
+    {
+      Setup(instance);
+    }
+
+#if ORTHANC_ENABLE_DCMTK == 1
+    DicomStructureSet(Orthanc::ParsedDicomFile& instance);
+#endif
 
     size_t GetStructuresCount() const
     {

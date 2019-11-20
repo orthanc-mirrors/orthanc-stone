@@ -31,8 +31,8 @@
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
 
 #if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4244)
+#  pragma warning(push)
+#  pragma warning(disable:4244)
 #endif
 
 #include <limits>
@@ -43,7 +43,7 @@
 #include <boost/geometry/multi/geometries/multi_polygon.hpp>
 
 #if defined(_MSC_VER)
-#pragma warning(pop)
+#  pragma warning(pop)
 #endif
 
 typedef boost::geometry::model::d2::point_xy<double> BoostPoint;
@@ -81,7 +81,7 @@ static void Union(BoostMultiPolygon& output,
   }
 }
 
-#ifdef USE_BOOST_UNION_FOR_POLYGONS
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
 
 static BoostPolygon CreateRectangle(float x1, float y1,
                                     float x2, float y2)
@@ -99,7 +99,7 @@ static BoostPolygon CreateRectangle(float x1, float y1,
 namespace OrthancStone
 {
   static RtStructRectangleInSlab CreateRectangle(float x1, float y1,
-    float x2, float y2)
+                                                 float x2, float y2)
   {
     RtStructRectangleInSlab rect;
     rect.xmin = std::min(x1, x2);
@@ -174,15 +174,15 @@ namespace OrthancStone
       double magnitude =
         GeometryToolbox::ProjectAlongNormal(v, geometry_.GetNormal());
       if(!LinearAlgebra::IsNear(
-        magnitude,
-        projectionAlongNormal_,
-        sliceThickness_ / 2.0 /* in mm */ ))
+           magnitude,
+           projectionAlongNormal_,
+           sliceThickness_ / 2.0 /* in mm */ ))
       {
         LOG(ERROR) << "This RT-STRUCT contains a point that is off the "
-          << "slice of its instance | "
-          << "magnitude = " << magnitude << " | "
-          << "projectionAlongNormal_ = " << projectionAlongNormal_ << " | "
-          << "tolerance (sliceThickness_ / 2.0) = " << (sliceThickness_ / 2.0);
+                   << "slice of its instance | "
+                   << "magnitude = " << magnitude << " | "
+                   << "projectionAlongNormal_ = " << projectionAlongNormal_ << " | "
+                   << "tolerance (sliceThickness_ / 2.0) = " << (sliceThickness_ / 2.0);
 
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
       }
@@ -202,10 +202,10 @@ namespace OrthancStone
       if (!onSlice)
       {
         LOG(WARNING) << "This RT-STRUCT contains a point that is off the "
-          << "slice of its instance | "
-          << "magnitude = " << magnitude << " | "
-          << "projectionAlongNormal_ = " << projectionAlongNormal_ << " | "
-          << "tolerance (sliceThickness_ / 2.0) = " << (sliceThickness_ / 2.0);
+                     << "slice of its instance | "
+                     << "magnitude = " << magnitude << " | "
+                     << "projectionAlongNormal_ = " << projectionAlongNormal_ << " | "
+                     << "tolerance (sliceThickness_ / 2.0) = " << (sliceThickness_ / 2.0);
       }
       return onSlice;
     }
@@ -378,9 +378,9 @@ namespace OrthancStone
 
       
       /*
-      Please read the comments in the section above, by taking into account
-      the fact that, in this case, the plane has a constant X, not Y (in 
-      polygon geometry_ coordinates)
+        Please read the comments in the section above, by taking into account
+        the fact that, in this case, the plane has a constant X, not Y (in 
+        polygon geometry_ coordinates)
       */
 
       if (x < extent_.GetX1() ||
@@ -512,11 +512,11 @@ namespace OrthancStone
       }
 
       LOG(INFO) << "New RT structure: \"" << structures_[i].name_ 
-                   << "\" with interpretation \"" << structures_[i].interpretation_
-                   << "\" containing " << countSlices << " slices (color: " 
-                   << static_cast<int>(structures_[i].red_) << "," 
-                   << static_cast<int>(structures_[i].green_) << ","
-                   << static_cast<int>(structures_[i].blue_) << ")";
+                << "\" with interpretation \"" << structures_[i].interpretation_
+                << "\" containing " << countSlices << " slices (color: " 
+                << static_cast<int>(structures_[i].red_) << "," 
+                << static_cast<int>(structures_[i].green_) << ","
+                << static_cast<int>(structures_[i].blue_) << ")";
 
       // These temporary variables avoid allocating many vectors in the loop below
       OrthancPlugins::DicomPath countPointsPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
@@ -771,14 +771,14 @@ namespace OrthancStone
           if (Orthanc::Toolbox::StripSpaces(sopInstanceUid) == "")
           {
             LOG(ERROR) << "DicomStructureSet::CheckReferencedSlices(): "
-              << " missing information about referenced instance "
-              << "(sopInstanceUid is empty!)";
+                       << " missing information about referenced instance "
+                       << "(sopInstanceUid is empty!)";
           }
           else
           {
             LOG(ERROR) << "DicomStructureSet::CheckReferencedSlices(): "
-              << " missing information about referenced instance "
-              << "(sopInstanceUid = " << sopInstanceUid << ")";
+                       << " missing information about referenced instance "
+                       << "(sopInstanceUid = " << sopInstanceUid << ")";
           }
           //throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
         }
@@ -801,17 +801,18 @@ namespace OrthancStone
     }
   }
 
-#ifdef USE_BOOST_UNION_FOR_POLYGONS 
-  bool DicomStructureSet::ProjectStructure(std::vector< std::vector<Point2D> >& polygons,
-                                           const Structure& structure,
-                                           const CoordinateSystem3D& slice) const
+  bool DicomStructureSet::ProjectStructure(
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
+    std::vector< std::vector<Point2D> >& polygons,
 #else
-  bool DicomStructureSet::ProjectStructure(std::vector< std::pair<Point2D, Point2D> >& segments,
-    const Structure& structure,
-    const CoordinateSystem3D& slice) const
+    std::vector< std::pair<Point2D, Point2D> >& segments,
 #endif
+    const Structure& structure,
+    const CoordinateSystem3D& sourceSlice) const
   {
-#ifdef USE_BOOST_UNION_FOR_POLYGONS 
+    const CoordinateSystem3D slice = CoordinateSystem3D::NormalizeCuttingPlane(sourceSlice);
+    
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
     polygons.clear();
 #else
     segments.clear();
@@ -829,7 +830,7 @@ namespace OrthancStone
       {
         if (polygon->IsOnSlice(slice))
         {
-#ifdef USE_BOOST_UNION_FOR_POLYGONS 
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
           polygons.push_back(std::vector<Point2D>());
           
           for (Points::const_iterator p = polygon->GetPoints().begin();
@@ -880,7 +881,7 @@ namespace OrthancStone
 #if 1
       // Sagittal or coronal projection
 
-#ifdef USE_BOOST_UNION_FOR_POLYGONS 
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
       std::vector<BoostPolygon> projected;
 
       for (Polygons::const_iterator polygon = structure.polygons_.begin();
@@ -912,15 +913,15 @@ namespace OrthancStone
           // x1,y1 and x2,y2 are in "slice" coordinates (the cutting plane 
           // geometry)
           projected.push_back(std::make_pair(CreateRectangle(
-            static_cast<float>(x1), 
-            static_cast<float>(y1), 
-            static_cast<float>(x2), 
-            static_cast<float>(y2)),curZ));
+                                               static_cast<float>(x1), 
+                                               static_cast<float>(y1), 
+                                               static_cast<float>(x2), 
+                                               static_cast<float>(y2)),curZ));
         }
       }
 #endif
 
-#ifndef USE_BOOST_UNION_FOR_POLYGONS
+#if USE_BOOST_UNION_FOR_POLYGONS != 1
       // projected contains a set of rectangles specified by two opposite
       // corners (x1,y1,x2,y2)
       // we need to merge them 
@@ -1009,5 +1010,45 @@ namespace OrthancStone
     {
       return false;
     }
+  }
+
+
+  void DicomStructureSet::ProjectOntoLayer(PolylineSceneLayer& layer,
+                                           const CoordinateSystem3D& plane,
+                                           size_t structureIndex,
+                                           const Color& color) const
+  {
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
+    std::vector< std::vector<Point2D> > polygons;
+    if (ProjectStructure(polygons, structureIndex, plane))
+    {
+      for (size_t j = 0; j < polygons.size(); j++)
+      {
+        std::vector<ScenePoint2D> chain;
+        chain.reserve(polygons[j].size());
+
+        for (size_t k = 0; k < polygons[j].size(); k++)
+        {
+          chain.push_back(ScenePoint2D(polygons[j][k].x, polygons[j][k].y));
+        }
+
+        layer.AddChain(chain, true, color.GetRed(), color.GetGreen(), color.GetBlue());
+      }
+    }
+    
+#else
+    std::vector< std::pair<Point2D, Point2D> >  segments;
+
+    if (ProjectStructure(segments, structureIndex, plane))
+    {
+      for (size_t j = 0; j < segments.size(); j++)
+      {
+        std::vector<ScenePoint2D> chain(2);
+        chain[0] = ScenePoint2D(segments[j].first.x, segments[j].first.y);
+        chain[1] = ScenePoint2D(segments[j].second.x, segments[j].second.y);
+        layer.AddChain(chain, false, color.GetRed(), color.GetGreen(), color.GetBlue());
+      }
+    }
+#endif
   }
 }

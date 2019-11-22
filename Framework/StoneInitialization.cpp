@@ -25,6 +25,10 @@
 #  error Macro ORTHANC_ENABLE_SDL must be defined
 #endif
 
+#if !defined(ORTHANC_ENABLE_QT)
+#  error Macro ORTHANC_ENABLE_QT must be defined
+#endif
+
 #if !defined(ORTHANC_ENABLE_SSL)
 #  error Macro ORTHANC_ENABLE_SSL must be defined
 #endif
@@ -44,6 +48,10 @@
 #  include "Viewport/SdlWindow.h"
 #endif
 
+#if ORTHANC_ENABLE_QT == 1
+#  include <QCoreApplication>
+#endif
+
 #if ORTHANC_ENABLE_CURL == 1
 #  include <Core/HttpClient.h>
 #endif
@@ -56,6 +64,8 @@
 
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
+
+#include <locale>
 
 
 namespace OrthancStone
@@ -94,16 +104,61 @@ namespace OrthancStone
 #  endif
 #endif
 
+    /**
+     * This call is necessary to make "boost::lexical_cast<>" work in
+     * a consistent way in the presence of "double" or "float", and of
+     * a numeric locale that replaces dot (".") by comma (",") as the
+     * decimal separator.
+     * https://stackoverflow.com/a/18981514/881731
+     **/
+    std::locale::global(std::locale::classic());
+
     {
-      // Run-time check of locale settings after Qt has been initialized
-      OrthancStone::Vector v;
-      if (!OrthancStone::LinearAlgebra::ParseVector(v, "1.3671875\\-1.3671875") ||
-          v.size() != 2 ||
-          !OrthancStone::LinearAlgebra::IsNear(1.3671875f, v[0]) ||
-          !OrthancStone::LinearAlgebra::IsNear(-1.3671875f, v[1]))
+      // Run-time checks of locale settings, to be run after Qt has
+      // been initialized, as Qt changes locale settings
+
+#if ORTHANC_ENABLE_QT == 1
+      if (QCoreApplication::instance() == NULL)
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-                                        "Error in the locale settings, giving up");
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls,
+                                        "Qt must be initialized before Stone");
+      }
+#endif
+      
+      {
+        OrthancStone::Vector v;
+        if (!OrthancStone::LinearAlgebra::ParseVector(v, "1.3671875\\-1.3671875") ||
+            v.size() != 2 ||
+            !OrthancStone::LinearAlgebra::IsNear(1.3671875f, v[0]) ||
+            !OrthancStone::LinearAlgebra::IsNear(-1.3671875f, v[1]))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                          "Error in the locale settings, giving up");
+        }
+      }
+
+      {
+        Json::Value dicomweb = Json::objectValue;
+        dicomweb["00280030"] = Json::objectValue;
+        dicomweb["00280030"]["vr"] = "DS";
+        dicomweb["00280030"]["Value"] = Json::arrayValue;
+        dicomweb["00280030"]["Value"].append(1.2f);
+        dicomweb["00280030"]["Value"].append(-1.5f);
+
+        Orthanc::DicomMap source;
+        source.FromDicomWeb(dicomweb);
+
+        std::string s;
+        OrthancStone::Vector v;
+        if (!source.LookupStringValue(s, Orthanc::DICOM_TAG_PIXEL_SPACING, false) ||
+            !OrthancStone::LinearAlgebra::ParseVector(v, s) ||
+            v.size() != 2 ||
+            !OrthancStone::LinearAlgebra::IsNear(1.2f, v[0]) ||
+            !OrthancStone::LinearAlgebra::IsNear(-1.5f, v[1]))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                          "Error in the locale settings, giving up");
+        }
       }
     }
 

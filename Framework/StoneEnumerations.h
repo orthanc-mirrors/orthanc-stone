@@ -120,6 +120,15 @@ namespace OrthancStone
     BitmapAnchor_TopRight
   };
 
+  enum SliceAction
+  {
+    SliceAction_FastPlus,
+    SliceAction_Plus,
+    SliceAction_None,
+    SliceAction_Minus,
+    SliceAction_FastMinus
+  };
+
   SopClassUid StringToSopClassUid(const std::string& source);
 
   void ComputeWindowing(float& targetCenter,

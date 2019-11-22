@@ -41,7 +41,7 @@ namespace OrthancStone
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ContentUpdatedMessage, DicomVolumeImage);
 
   private:
-    uint64_t                                revision_;  // TODO - Is revision still useful?
+    uint64_t                                revision_;
     std::auto_ptr<VolumeImageGeometry>      geometry_;
     std::auto_ptr<ImageBuffer3D>            image_;
     std::auto_ptr<DicomInstanceParameters>  parameters_;

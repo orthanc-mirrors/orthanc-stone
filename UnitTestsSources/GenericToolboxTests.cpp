@@ -20,6 +20,9 @@
 
 #include <Framework/Toolbox/GenericToolbox.h>
 
+#include <boost/chrono.hpp>
+#include <boost/lexical_cast.hpp>
+
 #include "gtest/gtest.h"
 
 #include "stdint.h"
@@ -3842,6 +3845,112 @@ TEST(GenericToolbox, TestStringToDoubleHardNeg)
   }
 }
 
+static const size_t NUM_TIMINGS_CONVS = 2000;
+
+
+//4444444444444444$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+TEST(GenericToolbox, TestStringToDoubleHardNeg_lexical_cast_vs_StringToDouble)
+{
+  using OrthancStone::GenericToolbox::StringToDouble;
+  const double TOLERANCE = 0.00000000000001;
+
+  double total_us_StringToDouble = 0.0;
+  double total_us_lexical_cast = 0.0;
+  int64_t numConversions = 0;
+
+  size_t i = 0;
+  const size_t COUNT = 125;
+  //const double FACTOR = 1.000000000171271211;
+  const double FACTOR = 1.71271211;
+  for (double b = -1.0 * DBL_EPSILON; b < DBL_MAX && i < COUNT; ++i, b *= FACTOR)
+  {
+    char txt[1024];
+#if defined(_MSC_VER)
+    sprintf_s(txt, "%.17f", b);
+#else
+    snprintf(txt, sizeof(txt) - 1, "%.17f", b);
+#endif
+    
+    
+    double r = 0.0;
+
+    bool ok = true;
+
+    {
+      boost::chrono::system_clock::time_point start = boost::chrono::system_clock::now();
+      for (size_t i = 0; i < NUM_TIMINGS_CONVS; ++i)
+      {
+        ok = StringToDouble(r, txt);
+      }
+      boost::chrono::system_clock::time_point end = boost::chrono::system_clock::now();
+      boost::chrono::microseconds elapsed =
+        boost::chrono::duration_cast<boost::chrono::microseconds>(end - start);
+      total_us_StringToDouble += elapsed.count();
+    }
+
+    {
+      boost::chrono::system_clock::time_point start = boost::chrono::system_clock::now();
+      for (size_t i = 0; i < NUM_TIMINGS_CONVS; ++i)
+      {
+        try
+        {
+          r = boost::lexical_cast<double>(txt);
+          ok = true;
+        }
+        catch (boost::bad_lexical_cast& )
+        {
+          ok = false;
+        }
+      }
+      boost::chrono::system_clock::time_point end = boost::chrono::system_clock::now();
+      boost::chrono::microseconds elapsed =
+        boost::chrono::duration_cast<boost::chrono::microseconds>(end - start);
+      total_us_lexical_cast += elapsed.count();
+    }
+    numConversions += NUM_TIMINGS_CONVS;
+
+#if 0
+    if (ok)
+    {
+      printf("OK for txt = \"%s\" and r = %.17f\n", txt, r);
+    }
+    else
+    {
+      printf("Not ok for txt = \"%s\" and r = %.17f\n", txt, r);
+      ok = StringToDouble(r, txt);
+    }
+#endif
+
+    EXPECT_TRUE(ok);
+
+#if 0
+    if (fabs(b - r) > TOLERANCE)
+    {
+      printf("fabs(b (%.17f) - r (%.17f)) ((%.17f))  > TOLERANCE (%.17f)\n", b, r, fabs(b - r), TOLERANCE);
+    }
+#endif
+    EXPECT_NEAR(b, r, TOLERANCE);
+  }
+  std::cout << "Total time (us) for " << numConversions 
+    << " conversions using StringToDouble (with NO scientific notation)      = " 
+    << static_cast<int64_t>(total_us_StringToDouble) << std::endl;
+  
+  std::cout << "Time per conversion using StringToDouble (ns) = " 
+    << (int64_t)( (total_us_StringToDouble * 1000) /((double)numConversions)) << std::endl;
+
+  std::cout << "Total time (us) for " << numConversions 
+    << " conversions using boost::lexical_cast (with NO scientific notation) = " 
+    << static_cast<int64_t>(total_us_lexical_cast) << std::endl;
+
+  std::cout << "Time per conversion using boost::lexical_cast (ns) = "
+    << (int64_t)( (total_us_lexical_cast * 1000) / ((double)numConversions)) << std::endl;
+
+  std::cout << "StringToDouble is " << (int)((total_us_lexical_cast / total_us_StringToDouble) + 0.5) << " times faster than boost::lexical_cast" << std::endl;
+
+}
+//4444444444444444$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
 
 TEST(GenericToolbox, TestStringToDoubleHardScientific)
 {
@@ -3952,6 +4061,117 @@ TEST(GenericToolbox, TestStringToDoubleHardNegScientific)
 #endif
     EXPECT_NEAR(b, r, actualTolerance);
   }
+}
+
+
+TEST(GenericToolbox, TestStringToDoubleHardNegScientific_lexical_cast_vs_StringToDouble)
+{
+  using OrthancStone::GenericToolbox::StringToDouble;
+  const double TOLERANCE = 0.00000000000001;
+
+  size_t i = 0;
+  const size_t COUNT = 125;
+  //const double FACTOR = 1.000000000171271211;
+  const double FACTOR = 1.71271211;
+
+  double total_us_StringToDouble = 0.0;
+  double total_us_lexical_cast = 0.0;
+  int64_t numConversions = 0;
+
+  for (double b = -1.0 * DBL_EPSILON; b < DBL_MAX && i < COUNT; ++i, b *= FACTOR)
+  {
+    // the tolerance must be adapted depending on the exponent
+    double exponent = (b == 0) ? 0 : 1.0 + std::floor(std::log10(std::fabs(b)));
+    double actualTolerance = TOLERANCE * pow(10.0, exponent);
+
+    char txt[1024];
+#if defined(_MSC_VER)
+    sprintf_s(txt, "%.17e", b);
+#else
+    snprintf(txt, sizeof(txt) - 1, "%.17e", b);
+#endif
+    double r = 0.0;
+
+    bool ok = true;
+
+    {
+      boost::chrono::system_clock::time_point start = boost::chrono::system_clock::now();
+      for (size_t i = 0; i < NUM_TIMINGS_CONVS; ++i)
+      {
+        ok = StringToDouble(r, txt);
+      }
+      boost::chrono::system_clock::time_point end = boost::chrono::system_clock::now();
+      boost::chrono::microseconds elapsed =
+        boost::chrono::duration_cast<boost::chrono::microseconds>(end - start);
+      total_us_StringToDouble += elapsed.count();
+    }
+
+    {
+      boost::chrono::system_clock::time_point start = boost::chrono::system_clock::now();
+      for (size_t i = 0; i < NUM_TIMINGS_CONVS; ++i)
+      {
+        try
+        {
+          r = boost::lexical_cast<double>(txt);
+          ok = true;
+        }
+        catch (boost::bad_lexical_cast& )
+        {
+          ok = false;
+        }
+      }
+      boost::chrono::system_clock::time_point end = boost::chrono::system_clock::now();
+      boost::chrono::microseconds elapsed =
+        boost::chrono::duration_cast<boost::chrono::microseconds>(end - start);
+      total_us_lexical_cast += elapsed.count();
+    }
+    numConversions += NUM_TIMINGS_CONVS;
+
+#if 0
+    if (ok)
+    {
+      printf("OK for txt = \"%s\" and r = %.17e\n", txt, r);
+    }
+    else
+    {
+      printf("Not ok for txt = \"%s\" and r = %.17e\n", txt, r);
+      ok = StringToDouble(r, txt);
+    }
+#endif
+
+    EXPECT_TRUE(ok);
+
+#if 0
+    if (fabs(b - r) > actualTolerance)
+    {
+      printf("NOK fabs(b (%.17f) - r (%.17f)) ((%.17f))  > actualTolerance (%.17f)\n", b, r, fabs(b - r), actualTolerance);
+      printf("NOK fabs(b (%.17e) - r (%.17e)) ((%.17e))  > actualTolerance (%.17e)\n", b, r, fabs(b - r), actualTolerance);
+      ok = StringToDouble(r, txt);
+    }
+    else
+    {
+      printf("OK  fabs(b (%.17f) - r (%.17f)) ((%.17f)) <= actualTolerance (%.17f)\n", b, r, fabs(b - r), actualTolerance);
+      printf("OK  fabs(b (%.17e) - r (%.17e)) ((%.17e)) <= actualTolerance (%.17e)\n", b, r, fabs(b - r), actualTolerance);
+    }
+#endif
+    EXPECT_NEAR(b, r, actualTolerance);
+  }
+
+  std::cout << "Total time (us) for " << numConversions
+    << " conversions using StringToDouble (WITH scientific notation)      = "
+    << static_cast<int64_t>(total_us_StringToDouble) << std::endl;
+
+  std::cout << "Time per conversion using StringToDouble (ns) = "
+    << (int64_t)( (total_us_StringToDouble*1000) / ((double)numConversions)) << std::endl;
+
+  std::cout << "Total time (us) for " << numConversions
+    << " conversions using boost::lexical_cast (WITH  scientific notation) = "
+    << static_cast<int64_t>(total_us_lexical_cast) << std::endl;
+
+  std::cout << "Time per conversion using boost::lexical_cast (ns) = "
+    << (int64_t)( (total_us_lexical_cast * 1000) / ((double)numConversions)) << std::endl;
+
+  std::cout << "StringToDouble is " << (int)((total_us_lexical_cast / total_us_StringToDouble)+ 0.5) << " times faster than boost::lexical_cast" << std::endl;
 }
 
 

@@ -20,7 +20,7 @@
 
 #include <Framework/Toolbox/GenericToolbox.h>
 
-#include <boost/chrono.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include "gtest/gtest.h"
@@ -3878,19 +3878,17 @@ TEST(GenericToolbox, TestStringToDoubleHardNeg_lexical_cast_vs_StringToDouble)
     bool ok = true;
 
     {
-      boost::chrono::system_clock::time_point start = boost::chrono::system_clock::now();
+      boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
       for (size_t i = 0; i < NUM_TIMINGS_CONVS; ++i)
       {
         ok = StringToDouble(r, txt);
       }
-      boost::chrono::system_clock::time_point end = boost::chrono::system_clock::now();
-      boost::chrono::microseconds elapsed =
-        boost::chrono::duration_cast<boost::chrono::microseconds>(end - start);
-      total_us_StringToDouble += elapsed.count();
+      boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
+      total_us_StringToDouble += (end - start).total_microseconds();
     }
 
     {
-      boost::chrono::system_clock::time_point start = boost::chrono::system_clock::now();
+      boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
       for (size_t i = 0; i < NUM_TIMINGS_CONVS; ++i)
       {
         try
@@ -3903,10 +3901,8 @@ TEST(GenericToolbox, TestStringToDoubleHardNeg_lexical_cast_vs_StringToDouble)
           ok = false;
         }
       }
-      boost::chrono::system_clock::time_point end = boost::chrono::system_clock::now();
-      boost::chrono::microseconds elapsed =
-        boost::chrono::duration_cast<boost::chrono::microseconds>(end - start);
-      total_us_lexical_cast += elapsed.count();
+      boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
+      total_us_lexical_cast += (end - start).total_microseconds();
     }
     numConversions += NUM_TIMINGS_CONVS;
 
@@ -4095,19 +4091,17 @@ TEST(GenericToolbox, TestStringToDoubleHardNegScientific_lexical_cast_vs_StringT
     bool ok = true;
 
     {
-      boost::chrono::system_clock::time_point start = boost::chrono::system_clock::now();
+      boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
       for (size_t i = 0; i < NUM_TIMINGS_CONVS; ++i)
       {
         ok = StringToDouble(r, txt);
       }
-      boost::chrono::system_clock::time_point end = boost::chrono::system_clock::now();
-      boost::chrono::microseconds elapsed =
-        boost::chrono::duration_cast<boost::chrono::microseconds>(end - start);
-      total_us_StringToDouble += elapsed.count();
+      boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
+      total_us_StringToDouble += (end - start).total_microseconds();
     }
 
     {
-      boost::chrono::system_clock::time_point start = boost::chrono::system_clock::now();
+      boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
       for (size_t i = 0; i < NUM_TIMINGS_CONVS; ++i)
       {
         try
@@ -4120,10 +4114,8 @@ TEST(GenericToolbox, TestStringToDoubleHardNegScientific_lexical_cast_vs_StringT
           ok = false;
         }
       }
-      boost::chrono::system_clock::time_point end = boost::chrono::system_clock::now();
-      boost::chrono::microseconds elapsed =
-        boost::chrono::duration_cast<boost::chrono::microseconds>(end - start);
-      total_us_lexical_cast += elapsed.count();
+      boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
+      total_us_lexical_cast += (end - start).total_microseconds();
     }
     numConversions += NUM_TIMINGS_CONVS;
 

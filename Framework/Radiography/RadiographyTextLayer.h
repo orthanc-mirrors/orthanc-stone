@@ -49,12 +49,12 @@ namespace OrthancStone
       return text_;
     }
 
-    const size_t& GetFontSize() const
+    size_t GetFontSize() const
     {
       return fontSize_;
     }
 
-    const size_t& GetForeground() const
+    uint8_t GetForeground() const
     {
       return foreground_;
     }

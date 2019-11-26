@@ -62,7 +62,7 @@ namespace OrthancStone
   {
     output["type"] = "text";
     output["text"] = layer.GetText();
-    output["fontSize"] = layer.GetFontSize();
+    output["fontSize"] = static_cast<uint32_t>(layer.GetFontSize());
     output["foreground"] = layer.GetForeground();
   }
 

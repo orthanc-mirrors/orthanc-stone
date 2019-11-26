@@ -40,15 +40,13 @@ namespace OrthancStone
   {
   protected:
     RadiographyScene&                               scene_;
-    const Orthanc::FontRegistry*                    fontRegistry_;
     std::auto_ptr<Orthanc::ImageAccessor>           dicomImage_;
     std::auto_ptr<Deprecated::DicomFrameConverter>  dicomFrameConverter_;
     RadiographyPhotometricDisplayMode               preferredPhotometricDisplayMode_;
 
   public:
     RadiographySceneBuilder(RadiographyScene& scene) :
-      scene_(scene),
-      fontRegistry_(NULL)
+      scene_(scene)
     {
     }
 
@@ -58,11 +56,6 @@ namespace OrthancStone
               Deprecated::DicomFrameConverter* dicomFrameConverter, // takes ownership
               RadiographyPhotometricDisplayMode preferredPhotometricDisplayMode
               );
-
-    void SetFontRegistry(const Orthanc::FontRegistry& fontRegistry)
-    {
-      fontRegistry_ = &fontRegistry;
-    }
 
     static void ReadLayerGeometry(RadiographyLayer::Geometry& geometry, const Json::Value& input);
     static void ReadDicomLayerGeometry(RadiographyLayer::Geometry& geometry, const Json::Value& input);

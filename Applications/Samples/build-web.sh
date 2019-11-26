@@ -19,29 +19,29 @@ mkdir -p "$outputDir"
 cp "$samplesRootDir/Web/index.html" "$outputDir"
 cp "$samplesRootDir/Web/samples-styles.css" "$outputDir"
 
-# build simple-viewer-single-file (obsolete project)
-if [[ $target == "all" || $target == "OrthancStoneSimpleViewerSingleFile" ]]; then
-  cp $samplesRootDir/Web/simple-viewer-single-file.html $outputDir
-  tsc --project $samplesRootDir/Web/simple-viewer-single-file.tsconfig.json --outDir "$outputDir"
-  browserify \
-      "$outputDir/Platforms/Wasm/wasm-application-runner.js" \
-      "$outputDir/Applications/Samples/Web/simple-viewer-single-file.js" \
-      -o "$outputDir/app-simple-viewer-single-file.js"
-  cp "$currentDir/build-wasm/OrthancStoneSimpleViewerSingleFile.js"  $outputDir
-  cp "$currentDir/build-wasm/OrthancStoneSimpleViewerSingleFile.wasm"  $outputDir
-fi
+# # build simple-viewer-single-file (obsolete project)
+# if [[ $target == "all" || $target == "OrthancStoneSimpleViewerSingleFile" ]]; then
+#   cp $samplesRootDir/Web/simple-viewer-single-file.html $outputDir
+#   tsc --project $samplesRootDir/Web/simple-viewer-single-file.tsconfig.json --outDir "$outputDir"
+#   browserify \
+#       "$outputDir/Platforms/Wasm/wasm-application-runner.js" \
+#       "$outputDir/Applications/Samples/Web/simple-viewer-single-file.js" \
+#       -o "$outputDir/app-simple-viewer-single-file.js"
+#   cp "$currentDir/build-wasm/OrthancStoneSimpleViewerSingleFile.js"  $outputDir
+#   cp "$currentDir/build-wasm/OrthancStoneSimpleViewerSingleFile.wasm"  $outputDir
+# fi
 
-# build single-frame
-if [[ $target == "all" || $target == "OrthancStoneSingleFrame" ]]; then
-  cp $samplesRootDir/Web/single-frame.html $outputDir
-  tsc --project $samplesRootDir/Web/single-frame.tsconfig.json --outDir "$outputDir"
-  browserify \
-      "$outputDir/Platforms/Wasm/wasm-application-runner.js" \
-      "$outputDir/Applications/Samples/Web/single-frame.js" \
-      -o "$outputDir/app-single-frame.js"
-  cp "$currentDir/build-wasm/OrthancStoneSingleFrame.js"  $outputDir
-  cp "$currentDir/build-wasm/OrthancStoneSingleFrame.wasm"  $outputDir
-fi
+# # build single-frame
+# if [[ $target == "all" || $target == "OrthancStoneSingleFrame" ]]; then
+#   cp $samplesRootDir/Web/single-frame.html $outputDir
+#   tsc --project $samplesRootDir/Web/single-frame.tsconfig.json --outDir "$outputDir"
+#   browserify \
+#       "$outputDir/Platforms/Wasm/wasm-application-runner.js" \
+#       "$outputDir/Applications/Samples/Web/single-frame.js" \
+#       -o "$outputDir/app-single-frame.js"
+#   cp "$currentDir/build-wasm/OrthancStoneSingleFrame.js"  $outputDir
+#   cp "$currentDir/build-wasm/OrthancStoneSingleFrame.wasm"  $outputDir
+# fi
 
 # build single-frame-editor
 if [[ $target == "all" || $target == "OrthancStoneSingleFrameEditor" ]]; then

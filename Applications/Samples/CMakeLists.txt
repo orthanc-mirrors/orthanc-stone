@@ -9,6 +9,7 @@ project(OrthancStone)
 include(../../Resources/CMake/OrthancStoneParameters.cmake)
 
 set(ENABLE_STONE_DEPRECATED ON)  # Need deprecated classes for these samples
+set(EMSCRIPTEN_SET_LLVM_WASM_BACKEND ON)
 
 include(${ORTHANC_ROOT}/Resources/CMake/DownloadPackage.cmake)
 DownloadPackage(
@@ -53,7 +54,7 @@ if (ENABLE_WASM)
   set(WASM_FLAGS "${WASM_FLAGS} -s FILESYSTEM=1") # if we don't include it, gen_uuid.c fails to build because srand, getpid(), ... are not defined
   set(WASM_FLAGS "${WASM_FLAGS} -s DISABLE_EXCEPTION_CATCHING=0") # actually enable exception catching 
   set(WASM_FLAGS "${WASM_FLAGS} -s ERROR_ON_MISSING_LIBRARIES=1")
-
+  
   if (CMAKE_BUILD_TYPE MATCHES DEBUG)
     set(WASM_FLAGS "${WASM_FLAGS} -g4") # generate debug information
     set(WASM_FLAGS "${WASM_FLAGS} -s ASSERTIONS=2") # more runtime checks
@@ -238,6 +239,8 @@ elseif (ENABLE_WASM)
       ${SIMPLE_VIEWER_APPLICATION_SOURCES}
       )
     target_link_libraries(OrthancStoneSimpleViewer OrthancStone)
+
+    BuildSingleFileSample(OrthancStoneSingleFrameEditor SingleFrameEditorApplication.h 9)
 endif()
 
 #####################################################################

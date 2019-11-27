@@ -97,7 +97,6 @@ namespace OrthancStone
     Orthanc::Toolbox::EncodeDataUriScheme(pngContentBase64, "image/png", pngContent);
     output["content"] = pngContentBase64;
     output["foreground"] = layer.GetForegroundValue();
-    output["isUsingWindowing"] = layer.IsUsingWindowing();
   }
 
   void RadiographySceneWriter::WriteLayer(Json::Value& output, const RadiographyLayer& layer)

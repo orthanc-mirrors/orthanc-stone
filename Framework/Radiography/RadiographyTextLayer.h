@@ -31,7 +31,7 @@ namespace OrthancStone
   {
   private:
     std::string                 text_;
-    size_t                      fontSize_;
+    unsigned int                fontSize_;
     uint8_t                     foreground_;
 
     static bool                                       fontHasBeenConfigured_;
@@ -42,14 +42,14 @@ namespace OrthancStone
     {
     }
 
-    void LoadText(const std::string& utf8, size_t fontSize, uint8_t foreground);
+    void LoadText(const std::string& utf8, unsigned int fontSize, uint8_t foreground);
 
     const std::string& GetText() const
     {
       return text_;
     }
 
-    size_t GetFontSize() const
+    unsigned int GetFontSize() const
     {
       return fontSize_;
     }

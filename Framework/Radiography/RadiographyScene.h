@@ -198,7 +198,7 @@ namespace OrthancStone
     RadiographyPhotometricDisplayMode GetPreferredPhotomotricDisplayMode() const;
 
     RadiographyLayer& LoadText(const std::string& utf8,
-                               size_t fontSize,
+                               unsigned int fontSize,
                                uint8_t foreground,
                                RadiographyLayer::Geometry* geometry);
     
@@ -287,7 +287,8 @@ namespace OrthancStone
 
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,
-                        ImageInterpolation interpolation) const;
+                        ImageInterpolation interpolation,
+                        bool applyWindowing) const;
 
     bool LookupLayer(size_t& index /* out */,
                      double x,
@@ -339,15 +340,17 @@ namespace OrthancStone
 
     Orthanc::Image* ExportToImage(double pixelSpacingX,
                                   double pixelSpacingY,
-                                  ImageInterpolation interpolation)
+                                  ImageInterpolation interpolation,
+                                  bool applyWindowing)
     {
-      return ExportToImage(pixelSpacingX, pixelSpacingY, interpolation, false, 0);
+      return ExportToImage(pixelSpacingX, pixelSpacingY, interpolation, false, 0, applyWindowing);
     }
 
     Orthanc::Image* ExportToImage(double pixelSpacingX,
                                   double pixelSpacingY,
                                   ImageInterpolation interpolation,
                                   bool invert,
-                                  int64_t maxValue /* for inversion */);
+                                  int64_t maxValue /* for inversion */,
+                                  bool applyWindowing);  // i.e.: when
   };
 }

@@ -25,6 +25,7 @@
 
 #include <Core/Images/Image.h>
 #include <Core/OrthancException.h>
+#include "../Toolbox/ImageGeometry.h"
 
 namespace OrthancStone
 {
@@ -51,7 +52,10 @@ namespace OrthancStone
 
   void RadiographyAlphaLayer::Render(Orthanc::ImageAccessor& buffer,
                                      const AffineTransform2D& viewTransform,
-                                     ImageInterpolation interpolation) const
+                                     ImageInterpolation interpolation,
+                                     float windowCenter,
+                                     float windowWidth,
+                                     bool applyWindowing) const
   {
     if (alpha_.get() == NULL)
     {
@@ -77,27 +81,37 @@ namespace OrthancStone
 
     t.Apply(tmp, cropped, interpolation, true /* clear */);
 
-    // Blit
-    const unsigned int width = buffer.GetWidth();
-    const unsigned int height = buffer.GetHeight();
+    unsigned int x1, y1, x2, y2;
+    OrthancStone::GetProjectiveTransformExtent(x1, y1, x2, y2,
+                                               t.GetHomogeneousMatrix(),
+                                               cropped.GetWidth(),
+                                               cropped.GetHeight(),
+                                               buffer.GetWidth(),
+                                               buffer.GetHeight());
 
     float value = foreground_;
 
-    if (useWindowing_)
+    if (!applyWindowing) // if applying the windowing, it means we are ie rendering the image for a realtime visualization -> the foreground_ value is the value we want to see on the screen -> don't change it
     {
-      float center, width;
-      if (GetScene().GetWindowing(center, width))
+      // if not applying the windowing, it means ie that we are saving a dicom image to file and the windowing will be applied by a viewer later on -> we want the "foreground" value to be correct once the windowing will be applied
+      value = windowCenter - windowWidth/2 + (foreground_ / 65535.0f) * windowWidth;
+
+      if (value < 0.0f)
       {
-        value = center + width / 2.0f;  // set it to the maximum pixel value of the image
+        value = 0.0f;
+      }
+      if (value > 65535.0f)
+      {
+        value = 65535.0f;
       }
     }
 
-    for (unsigned int y = 0; y < height; y++)
+    for (unsigned int y = y1; y <= y2; y++)
     {
-      float *q = reinterpret_cast<float*>(buffer.GetRow(y));
-      const uint8_t *p = reinterpret_cast<uint8_t*>(tmp.GetRow(y));
+      float *q = reinterpret_cast<float*>(buffer.GetRow(y)) + x1;
+      const uint8_t *p = reinterpret_cast<uint8_t*>(tmp.GetRow(y)) + x1;
 
-      for (unsigned int x = 0; x < width; x++, p++, q++)
+      for (unsigned int x = x1; x <= x2; x++, p++, q++)
       {
         float a = static_cast<float>(*p) / 255.0f;
 
@@ -109,26 +123,19 @@ namespace OrthancStone
   bool RadiographyAlphaLayer::GetRange(float& minValue,
                                        float& maxValue) const
   {
-    if (useWindowing_)
+    minValue = 0;
+    maxValue = 0;
+
+    if (foreground_ < 0)
     {
-      return false;
+      minValue = foreground_;
     }
-    else
+
+    if (foreground_ > 0)
     {
-      minValue = 0;
-      maxValue = 0;
-
-      if (foreground_ < 0)
-      {
-        minValue = foreground_;
-      }
-
-      if (foreground_ > 0)
-      {
-        maxValue = foreground_;
-      }
-
-      return true;
+      maxValue = foreground_;
     }
+
+    return true;
   }
 }

@@ -283,7 +283,7 @@ namespace OrthancStone
 
 
   RadiographyLayer& RadiographyScene::LoadText(const std::string& utf8,
-                                               size_t fontSize,
+                                               unsigned int fontSize,
                                                uint8_t foreground,
                                                RadiographyLayer::Geometry* geometry)
   {
@@ -509,7 +509,8 @@ namespace OrthancStone
 
   void RadiographyScene::Render(Orthanc::ImageAccessor& buffer,
                                 const AffineTransform2D& viewTransform,
-                                ImageInterpolation interpolation) const
+                                ImageInterpolation interpolation,
+                                bool applyWindowing) const
   {
     // Render layers in the background-to-foreground order
     for (size_t index = 0; index < countLayers_; index++)
@@ -518,7 +519,7 @@ namespace OrthancStone
       if (it != layers_.end())
       {
         assert(it->second != NULL);
-        it->second->Render(buffer, viewTransform, interpolation);
+        it->second->Render(buffer, viewTransform, interpolation, windowingCenter_, windowingWidth_, applyWindowing);
       }
     }
   }
@@ -599,7 +600,8 @@ namespace OrthancStone
                                                   double pixelSpacingY,
                                                   ImageInterpolation interpolation,
                                                   bool invert,
-                                                  int64_t maxValue /* for inversion */)
+                                                  int64_t maxValue /* for inversion */,
+                                                  bool applyWindowing)
   {
     if (pixelSpacingX <= 0 ||
         pixelSpacingY <= 0)
@@ -628,7 +630,7 @@ namespace OrthancStone
     // wipe background before rendering
     Orthanc::ImageProcessing::Set(layers, 0);
 
-    Render(layers, view, interpolation);
+    Render(layers, view, interpolation, applyWindowing);
 
     std::auto_ptr<Orthanc::Image> rendered(new Orthanc::Image(Orthanc::PixelFormat_Grayscale16,
                                                               layers.GetWidth(), layers.GetHeight(), false));
@@ -651,7 +653,7 @@ namespace OrthancStone
   {
     LOG(INFO) << "Exporting RadiographyScene to DICOM";
 
-    std::auto_ptr<Orthanc::Image> rendered(ExportToImage(pixelSpacingX, pixelSpacingY, interpolation)); // note: we don't invert the image in the pixels data because we'll set the PhotometricDisplayMode correctly in the DICOM tags
+    std::auto_ptr<Orthanc::Image> rendered(ExportToImage(pixelSpacingX, pixelSpacingY, interpolation, false)); // note: we don't invert the image in the pixels data because we'll set the PhotometricDisplayMode correctly in the DICOM tags
 
     createDicomRequestContent["Tags"] = dicomTags;
 

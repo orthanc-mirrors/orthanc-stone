@@ -38,7 +38,6 @@
 #include "../../Framework/Toolbox/TextRenderer.h"
 
 #include <Core/HttpClient.h>
-#include <Core/Images/FontRegistry.h>
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 #include <Core/Images/PngWriter.h>
@@ -318,11 +317,6 @@ namespace OrthancStone
 
           boost::shared_ptr<RadiographyScene> scene(new RadiographyScene(GetBroker()));
           RadiographySceneReader reader(*scene, context_->GetOrthancApiClient());
-
-          Orthanc::FontRegistry fontRegistry;
-          fontRegistry.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
-
-          reader.SetFontRegistry(fontRegistry);
           reader.Read(snapshot);
 
           widget.SetScene(scene);
@@ -493,8 +487,6 @@ namespace OrthancStone
         std::string instance = parameters["instance"].as<std::string>();
         //int frame = parameters["frame"].as<unsigned int>();
 
-        fontRegistry_.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
-        
         scene_.reset(new RadiographyScene(GetBroker()));
         
         RadiographyLayer& dicomLayer = scene_->LoadDicomFrame(context->GetOrthancApiClient(), instance, 0, false, NULL);
@@ -520,11 +512,12 @@ namespace OrthancStone
           std::auto_ptr<Orthanc::ImageAccessor> renderedTextAlpha(TextRenderer::Render(Orthanc::EmbeddedResources::UBUNTU_FONT, 100,
                                                                                     "%öÇaA&#"));
           RadiographyLayer& layer = scene_->LoadAlphaBitmap(renderedTextAlpha.release(), NULL);
-          dynamic_cast<RadiographyAlphaLayer&>(layer).SetForegroundValue(200);
+          dynamic_cast<RadiographyAlphaLayer&>(layer).SetForegroundValue(200.0f * 256.0f);
         }
 
         {
-          RadiographyLayer& layer = scene_->LoadText(fontRegistry_.GetFont(0), "Hello\nworld", NULL);
+          RadiographyTextLayer::SetFont(Orthanc::EmbeddedResources::UBUNTU_FONT);
+          RadiographyLayer& layer = scene_->LoadText("Hello\nworld", 20, 128, NULL);
           layer.SetResizeable(true);
         }
         

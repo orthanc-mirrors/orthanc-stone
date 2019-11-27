@@ -28,6 +28,7 @@
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
 #include <Plugins/Samples/Common/DicomDatasetReader.h>
+#include "../Toolbox/ImageGeometry.h"
 
 static OrthancPlugins::DicomTag  ConvertTag(const Orthanc::DicomTag& tag)
 {
@@ -138,7 +139,10 @@ namespace OrthancStone
 
   void RadiographyDicomLayer::Render(Orthanc::ImageAccessor& buffer,
                                      const AffineTransform2D& viewTransform,
-                                     ImageInterpolation interpolation) const
+                                     ImageInterpolation interpolation,
+                                     float windowCenter,
+                                     float windowWidth,
+                                     bool applyWindowing) const
   {
     if (converted_.get() != NULL)
     {
@@ -158,6 +162,47 @@ namespace OrthancStone
       converted_->GetRegion(cropped, cropX, cropY, cropWidth, cropHeight);
 
       t.Apply(buffer, cropped, interpolation, false);
+      unsigned int x1, y1, x2, y2;
+      OrthancStone::GetProjectiveTransformExtent(x1, y1, x2, y2,
+                                                 t.GetHomogeneousMatrix(),
+                                                 cropped.GetWidth(),
+                                                 cropped.GetHeight(),
+                                                 buffer.GetWidth(),
+                                                 buffer.GetHeight());
+
+      if (applyWindowing)
+      {
+        // apply windowing but stay in the range [0.0, 65535.0]
+        float w0 = windowCenter - windowWidth / 2.0f;
+        float w1 = windowCenter + windowWidth / 2.0f;
+
+        if (windowWidth >= 0.001f)  // Avoid division by zero at (*)
+        {
+          float scaling = 1.0f / (w1 - w0) * 65535.0f;
+          for (unsigned int y = y1; y <= y2; y++)
+          {
+            float* p = reinterpret_cast<float*>(buffer.GetRow(y)) + x1;
+
+            for (unsigned int x = x1; x <= x2; x++, p++)
+            {
+              if (*p >= w1)
+              {
+                *p = 65535.0;
+              }
+              else if (*p <= w0)
+              {
+                *p = 0;
+              }
+              else
+              {
+                // https://en.wikipedia.org/wiki/Linear_interpolation
+                *p = scaling * (*p - w0);  // (*)
+              }
+            }
+          }
+        }
+      }
+
     }
   }
 

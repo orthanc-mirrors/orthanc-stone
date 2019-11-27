@@ -280,12 +280,13 @@ namespace OrthancStone
   }
 
 
-  RadiographyLayer& RadiographyScene::LoadText(const Orthanc::Font& font,
-                                               const std::string& utf8,
+  RadiographyLayer& RadiographyScene::LoadText(const std::string& utf8,
+                                               size_t fontSize,
+                                               uint8_t foreground,
                                                RadiographyLayer::Geometry* geometry)
   {
     std::auto_ptr<RadiographyTextLayer>  alpha(new RadiographyTextLayer(*this));
-    alpha->LoadText(font, utf8);
+    alpha->LoadText(utf8, fontSize, foreground);
     if (geometry != NULL)
     {
       alpha->SetGeometry(*geometry);

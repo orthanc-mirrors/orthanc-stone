@@ -38,7 +38,6 @@
 #include "../../Framework/Toolbox/TextRenderer.h"
 
 #include <Core/HttpClient.h>
-#include <Core/Images/FontRegistry.h>
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 #include <Core/Images/PngWriter.h>
@@ -317,11 +316,6 @@ namespace OrthancStone
 
           boost::shared_ptr<RadiographyScene> scene(new RadiographyScene);
           RadiographySceneReader reader(*scene, context_->GetOrthancApiClient());
-
-          Orthanc::FontRegistry fontRegistry;
-          fontRegistry.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
-
-          reader.SetFontRegistry(fontRegistry);
           reader.Read(snapshot);
 
           widget.SetScene(scene);
@@ -517,7 +511,7 @@ namespace OrthancStone
         }
 
         {
-          RadiographyLayer& layer = scene_->LoadText(fontRegistry_.GetFont(0), "Hello\nworld", NULL);
+          RadiographyLayer& layer = scene_->LoadText("Hello\nworld", 20, 128, NULL);
           layer.SetResizeable(true);
         }
         

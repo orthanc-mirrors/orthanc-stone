@@ -198,8 +198,9 @@ namespace OrthancStone
 
     RadiographyPhotometricDisplayMode GetPreferredPhotomotricDisplayMode() const;
 
-    RadiographyLayer& LoadText(const Orthanc::Font& font,
-                               const std::string& utf8,
+    RadiographyLayer& LoadText(const std::string& utf8,
+                               size_t fontSize,
+                               uint8_t foreground,
                                RadiographyLayer::Geometry* geometry);
     
     RadiographyLayer& LoadTestBlock(unsigned int width,

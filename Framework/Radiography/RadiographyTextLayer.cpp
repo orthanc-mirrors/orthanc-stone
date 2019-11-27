@@ -18,19 +18,32 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
 #include "RadiographyTextLayer.h"
 
+#include "Core/OrthancException.h"
 #include "RadiographyScene.h"
+#include "Framework/Toolbox/TextRenderer.h"
 
 namespace OrthancStone
 {
-  void RadiographyTextLayer::LoadText(const Orthanc::Font& font,
-                                      const std::string& utf8)
-  {
-    text_ = utf8;
-    fontName_ = font.GetName();
+  bool RadiographyTextLayer::fontHasBeenConfigured_ = false;
+  Orthanc::EmbeddedResources::FileResourceId RadiographyTextLayer::fontResourceId_;
 
-    SetAlpha(font.RenderAlpha(utf8));
+  void RadiographyTextLayer::LoadText(const std::string& utf8,
+                                      size_t fontSize,
+                                      uint8_t foreground)
+  {
+    if (!fontHasBeenConfigured_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls, "No font has been loaded");
+    }
+
+    text_ = utf8;
+    fontSize_ = fontSize;
+    foreground_ = foreground;
+
+    SetAlpha(TextRenderer::Render(fontResourceId_,
+                                  fontSize_,
+                                  text_));
   }
 }

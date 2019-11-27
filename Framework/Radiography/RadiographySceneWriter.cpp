@@ -62,7 +62,8 @@ namespace OrthancStone
   {
     output["type"] = "text";
     output["text"] = layer.GetText();
-    output["fontName"] = layer.GetFontName();
+    output["fontSize"] = static_cast<unsigned int>(layer.GetFontSize());
+    output["foreground"] = layer.GetForeground();
   }
 
   void RadiographySceneWriter::WriteLayer(Json::Value& output, const RadiographyMaskLayer& layer)

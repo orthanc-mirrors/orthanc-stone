@@ -97,18 +97,8 @@ namespace OrthancStone
       }
       else if (jsonLayer["type"].asString() == "text")
       {
-        if (fontRegistry_ == NULL || fontRegistry_->GetSize() == 0)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls); // you must provide a FontRegistry if you need to re-create text layers.
-        }
-
         ReadLayerGeometry(geometry, jsonLayer);
-        const Orthanc::Font* font = fontRegistry_->FindFont(jsonLayer["fontName"].asString());
-        if (font == NULL) // if not found, take the first font in the registry
-        {
-          font = &(fontRegistry_->GetFont(0));
-        }
-        scene_.LoadText(*font, jsonLayer["text"].asString(), &geometry);
+        scene_.LoadText(jsonLayer["text"].asString(), jsonLayer["fontSize"].asUInt(), static_cast<uint8_t>(jsonLayer["foreground"].asUInt()), &geometry);
       }
       else if (jsonLayer["type"].asString() == "alpha")
       {
@@ -184,18 +174,8 @@ namespace OrthancStone
       }
       else if (jsonLayer["type"].asString() == "text")
       {
-        if (fontRegistry_ == NULL || fontRegistry_->GetSize() == 0)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls); // you must provide a FontRegistry if you need to re-create text layers.
-        }
-
         ReadLayerGeometry(geometry, jsonLayer);
-        const Orthanc::Font* font = fontRegistry_->FindFont(jsonLayer["fontName"].asString());
-        if (font == NULL) // if not found, take the first font in the registry
-        {
-          font = &(fontRegistry_->GetFont(0));
-        }
-        scene_.LoadText(*font, jsonLayer["text"].asString(), &geometry);
+        scene_.LoadText(jsonLayer["text"].asString(), jsonLayer["fontSize"].asUInt(), static_cast<uint8_t>(jsonLayer["foreground"].asUInt()), &geometry);
       }
       else if (jsonLayer["type"].asString() == "alpha")
       {

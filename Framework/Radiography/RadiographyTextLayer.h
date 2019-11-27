@@ -30,26 +30,39 @@ namespace OrthancStone
   class RadiographyTextLayer : public RadiographyAlphaLayer
   {
   private:
-    std::string                text_;
-    std::string                fontName_;
+    std::string                 text_;
+    size_t                      fontSize_;
+    uint8_t                     foreground_;
 
+    static bool                                       fontHasBeenConfigured_;
+    static Orthanc::EmbeddedResources::FileResourceId fontResourceId_;
   public:
     RadiographyTextLayer(const RadiographyScene& scene) :
       RadiographyAlphaLayer(scene)
     {
     }
 
-    void LoadText(const Orthanc::Font& font,
-                  const std::string& utf8);
+    void LoadText(const std::string& utf8, size_t fontSize, uint8_t foreground);
 
     const std::string& GetText() const
     {
       return text_;
     }
 
-    const std::string& GetFontName() const
+    size_t GetFontSize() const
     {
-      return fontName_;
+      return fontSize_;
+    }
+
+    uint8_t GetForeground() const
+    {
+      return foreground_;
+    }
+
+    static void SetFont(Orthanc::EmbeddedResources::FileResourceId fontResourceId)
+    {
+      fontResourceId_ = fontResourceId;
+      fontHasBeenConfigured_ = true;
     }
   };
 }

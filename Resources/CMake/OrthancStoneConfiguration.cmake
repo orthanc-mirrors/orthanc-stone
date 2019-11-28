@@ -250,10 +250,6 @@ endif()
 ## All the source files required to build Stone of Orthanc
 #####################################################################
 
-set(APPLICATIONS_SOURCES
-  ${ORTHANC_STONE_ROOT}/Applications/IStoneApplication.h
-  )
-
 if (NOT ORTHANC_SANDBOXED)
   set(PLATFORM_SOURCES
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceCommandBase.cpp
@@ -265,46 +261,21 @@ if (NOT ORTHANC_SANDBOXED)
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleDelayedCallExecutor.h
     )
 
-  if (ENABLE_STONE_DEPRECATED)
-    list(APPEND PLATFORM_SOURCES
-      ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleWebService.cpp
-      ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/CairoFont.cpp
+  if (ENABLE_SDL)
+    list(APPEND ORTHANC_STONE_SOURCES
+      ${ORTHANC_STONE_ROOT}/Framework/Viewport/SdlWindow.cpp
       )
   endif()
 
   if (ENABLE_SDL OR ENABLE_QT)
-    if (ENABLE_STONE_DEPRECATED)
-      list(APPEND APPLICATIONS_SOURCES
-        ${ORTHANC_STONE_ROOT}/Applications/Generic/NativeStoneApplicationRunner.cpp
-        ${ORTHANC_STONE_ROOT}/Applications/Generic/NativeStoneApplicationContext.cpp
-        )
-    endif()
-      
-    if (ENABLE_SDL)
+    if (ENABLE_OPENGL)
       list(APPEND ORTHANC_STONE_SOURCES
-        ${ORTHANC_STONE_ROOT}/Framework/Viewport/SdlWindow.cpp
+        ${ORTHANC_STONE_ROOT}/Framework/OpenGL/SdlOpenGLContext.cpp
+        ${ORTHANC_STONE_ROOT}/Framework/Viewport/SdlViewport.cpp
         )
-
-      list(APPEND APPLICATIONS_SOURCES
-        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlCairoSurface.cpp
-        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
-        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOrthancSurface.cpp
-        ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlStoneApplicationRunner.cpp
-        )
-
-      if (ENABLE_OPENGL)
-        list(APPEND ORTHANC_STONE_SOURCES
-          ${ORTHANC_STONE_ROOT}/Framework/OpenGL/SdlOpenGLContext.cpp
-          ${ORTHANC_STONE_ROOT}/Framework/Viewport/SdlViewport.cpp
-          )
-      endif()
     endif()
   endif()
 elseif (ENABLE_WASM)
-  list(APPEND APPLICATIONS_SOURCES
-    ${ORTHANC_STONE_ROOT}/Applications/Wasm/StartupParametersBuilder.cpp
-    )
-
   set(STONE_WASM_SOURCES
     ${ORTHANC_STONE_ROOT}/Platforms/Wasm/Defaults.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Wasm/WasmDelayedCallExecutor.cpp
@@ -331,15 +302,45 @@ elseif (ENABLE_WASM)
     DEPENDS "${ORTHANC_STONE_ROOT}/Platforms/Wasm/default-library.js")
 endif()
 
-if (ENABLE_SDL OR ENABLE_WASM)
-  list(APPEND APPLICATIONS_SOURCES
-    ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.h
-    )
-endif()
-
 if (ENABLE_STONE_DEPRECATED)
+  if (NOT ORTHANC_SANDBOXED)
+    list(APPEND PLATFORM_SOURCES
+      ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleWebService.cpp
+      ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/CairoFont.cpp
+      )
+  endif()
+
+  if (ENABLE_SDL OR ENABLE_WASM)
+    list(APPEND APPLICATIONS_SOURCES
+      ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.h
+      )
+  endif()
+
+  if (ENABLE_SDL OR ENABLE_QT)
+    list(APPEND APPLICATIONS_SOURCES
+      ${ORTHANC_STONE_ROOT}/Applications/Generic/NativeStoneApplicationRunner.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Generic/NativeStoneApplicationContext.cpp
+      )
+  endif()
+
+  if (ENABLE_SDL)
+    list(APPEND APPLICATIONS_SOURCES
+      ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlCairoSurface.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlEngine.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlOrthancSurface.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Sdl/SdlStoneApplicationRunner.cpp
+      )
+  endif()
+
+  if (ENABLE_WASM)
+    list(APPEND APPLICATIONS_SOURCES
+      ${ORTHANC_STONE_ROOT}/Applications/Wasm/StartupParametersBuilder.cpp
+      )
+  endif()
+
   list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Applications/IStoneApplication.h
     ${ORTHANC_STONE_ROOT}/Applications/StoneApplicationContext.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/CircleMeasureTracker.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/ColorFrameRenderer.cpp

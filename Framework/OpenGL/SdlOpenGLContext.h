@@ -26,6 +26,8 @@
 #include "IOpenGLContext.h"
 #include "../Viewport/SdlWindow.h"
 
+#include <SDL_render.h>
+
 #include <Core/Enumerations.h>
 
 namespace OrthancStone

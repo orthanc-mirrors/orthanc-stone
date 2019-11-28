@@ -27,6 +27,8 @@
 #include <Core/OrthancException.h>
 #include <Core/Images/Image.h>
 
+#include <SDL_render.h>
+
 namespace OrthancStone
 {
   SdlOrthancSurface::SdlOrthancSurface(SdlWindow& window) :

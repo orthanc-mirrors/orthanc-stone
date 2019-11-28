@@ -161,7 +161,7 @@ namespace OrthancStone
   protected:
     typedef std::map<size_t, RadiographyLayer*>  Layers;
 
-    size_t  countLayers_;
+    size_t  nextLayerIndex_;
     bool    hasWindowing_;
     float   windowingCenter_;
     float   windowingWidth_;

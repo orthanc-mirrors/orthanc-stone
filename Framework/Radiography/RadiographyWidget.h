@@ -71,16 +71,14 @@ namespace OrthancStone
 
     void SetScene(boost::shared_ptr<RadiographyScene> scene);
 
+    void Select(size_t layer);
+
     void Unselect()
     {
       hasSelection_ = false;
     }
 
-    void Select(size_t layer);
-
-    void ClearSelectedLayer();
-
-    bool SelectMaskLayer(size_t index = 0);
+    template<typename LayerType> bool SelectLayerByType(size_t index = 0);
 
     bool LookupSelectedLayer(size_t& layer);
 
@@ -106,4 +104,27 @@ namespace OrthancStone
       return interpolation_;
     }
   };
+
+  template<typename LayerType> bool RadiographyWidget::SelectLayerByType(size_t index)
+  {
+    std::vector<size_t> layerIndexes;
+    size_t count = 0;
+    scene_->GetLayersIndexes(layerIndexes);
+
+    for (size_t i = 0; i < layerIndexes.size(); ++i)
+    {
+      const LayerType* typedLayer = dynamic_cast<const LayerType*>(&(scene_->GetLayer(layerIndexes[i])));
+      if (typedLayer != NULL)
+      {
+        if (count == index)
+        {
+          Select(layerIndexes[i]);
+          return true;
+        }
+        count++;
+      }
+    }
+
+    return false;
+  }
 }

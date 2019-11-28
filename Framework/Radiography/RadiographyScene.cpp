@@ -136,7 +136,7 @@ namespace OrthancStone
 
     // LOG(INFO) << "Registering layer: " << countLayers_;
 
-    size_t index = countLayers_++;
+    size_t index = nextLayerIndex_++;
     raii->SetIndex(index);
     layers_[index] = raii.release();
 
@@ -165,7 +165,7 @@ namespace OrthancStone
   RadiographyScene::RadiographyScene(MessageBroker& broker) :
     IObserver(broker),
     IObservable(broker),
-    countLayers_(0),
+    nextLayerIndex_(0),
     hasWindowing_(false),
     windowingCenter_(0),  // Dummy initialization
     windowingWidth_(0)    // Dummy initialization
@@ -221,9 +221,8 @@ namespace OrthancStone
       delete found->second;
       
       layers_.erase(found);
-      countLayers_--;
       
-      LOG(INFO) << "Removing layer, there are now : " << countLayers_ << " layers";
+      LOG(INFO) << "Removing layer, there are now : " << layers_.size() << " layers";
 
       BroadcastMessage(RadiographyScene::LayerRemovedMessage(*this, layerIndex));
     }
@@ -294,7 +293,10 @@ namespace OrthancStone
       alpha->SetGeometry(*geometry);
     }
 
-    return RegisterLayer(alpha.release());
+    RadiographyLayer& registeredLayer = RegisterLayer(alpha.release());
+
+    BroadcastMessage(RadiographyScene::LayerEditedMessage(*this, registeredLayer));
+    return registeredLayer;
   }
 
 
@@ -513,7 +515,7 @@ namespace OrthancStone
                                 bool applyWindowing) const
   {
     // Render layers in the background-to-foreground order
-    for (size_t index = 0; index < countLayers_; index++)
+    for (size_t index = 0; index < nextLayerIndex_; index++)
     {
       Layers::const_iterator it = layers_.find(index);
       if (it != layers_.end())
@@ -530,7 +532,7 @@ namespace OrthancStone
                                      double y) const
   {
     // Render layers in the foreground-to-background order
-    for (size_t i = countLayers_; i > 0; i--)
+    for (size_t i = nextLayerIndex_; i > 0; i--)
     {
       index = i - 1;
       Layers::const_iterator it = layers_.find(index);

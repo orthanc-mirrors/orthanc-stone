@@ -185,6 +185,16 @@ void QCairoWidget::keyPressEvent(QKeyEvent *event)
       break;
     }
   }
+  else if (keyChar == 127)
+  {
+    switch (event->key())
+    {
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_Delete, KeyboardKeys_Delete);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_Backspace, KeyboardKeys_Backspace);
+    default:
+      break;
+    }
+  }
 
   {
     OrthancStone::NativeStoneApplicationContext::GlobalMutexLocker locker(*context_);    

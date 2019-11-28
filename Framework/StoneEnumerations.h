@@ -95,10 +95,12 @@ namespace OrthancStone
     KeyboardKeys_Generic = 0,
 
     // let's use the same ids as in javascript to avoid some conversion in WASM: https://css-tricks.com/snippets/javascript/javascript-keycodes/
+    KeyboardKeys_Backspace = 8,
     KeyboardKeys_Left = 37,
     KeyboardKeys_Up = 38,
     KeyboardKeys_Right = 39,
-    KeyboardKeys_Down = 40
+    KeyboardKeys_Down = 40,
+    KeyboardKeys_Delete = 46
   };
 
   enum SopClassUid

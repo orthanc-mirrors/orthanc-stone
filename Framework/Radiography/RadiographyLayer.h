@@ -350,7 +350,10 @@ namespace OrthancStone
 
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,
-                        ImageInterpolation interpolation) const = 0;
+                        ImageInterpolation interpolation,
+                        float windowCenter,
+                        float windowWidth,
+                        bool applyWindowing) const = 0;
 
     virtual bool GetRange(float& minValue,
                           float& maxValue) const = 0;

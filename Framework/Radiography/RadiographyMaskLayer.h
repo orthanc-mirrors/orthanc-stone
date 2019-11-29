@@ -76,7 +76,10 @@ namespace OrthancStone
 
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,
-                        ImageInterpolation interpolation) const;
+                        ImageInterpolation interpolation,
+                        float windowCenter,
+                        float windowWidth,
+                        bool applyWindowing) const;
 
     std::string GetInstanceId() const;
 

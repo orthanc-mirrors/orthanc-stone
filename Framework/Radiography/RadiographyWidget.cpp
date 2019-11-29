@@ -70,83 +70,66 @@ namespace OrthancStone
                                          unsigned int height,
                                          ImageInterpolation interpolation)
   {
-    float windowCenter, windowWidth;
-    scene_->GetWindowingWithDefault(windowCenter, windowWidth);
-
-    float x0 = windowCenter - windowWidth / 2.0f;
-    float x1 = windowCenter + windowWidth / 2.0f;
-
-    if (windowWidth <= 0.001f)  // Avoid division by zero at (*)
+    if (floatBuffer_.get() == NULL ||
+        floatBuffer_->GetWidth() != width ||
+        floatBuffer_->GetHeight() != height)
     {
-      return false;
+      floatBuffer_.reset(new Orthanc::Image(
+        Orthanc::PixelFormat_Float32, width, height, false));
     }
-    else
+
+    if (cairoBuffer_.get() == NULL ||
+        cairoBuffer_->GetWidth() != width ||
+        cairoBuffer_->GetHeight() != height)
     {
-      if (floatBuffer_.get() == NULL ||
-          floatBuffer_->GetWidth() != width ||
-          floatBuffer_->GetHeight() != height)
+      cairoBuffer_.reset(new CairoSurface(width, height, false /* no alpha */));
+    }
+
+    RenderBackground(*floatBuffer_, 0.0, 65535.0);
+
+    scene_->Render(*floatBuffer_, GetView().GetMatrix(), interpolation, true);
+
+    // Conversion from Float32 to BGRA32 (cairo). Very similar to
+    // GrayscaleFrameRenderer => TODO MERGE?
+    Orthanc::ImageAccessor target;
+    cairoBuffer_->GetWriteableAccessor(target);
+
+    bool invert = IsInvertedInternal();
+
+    for (unsigned int y = 0; y < height; y++)
+    {
+      const float* p = reinterpret_cast<const float*>(floatBuffer_->GetConstRow(y));
+      uint8_t* q = reinterpret_cast<uint8_t*>(target.GetRow(y));
+
+      for (unsigned int x = 0; x < width; x++, p++, q += 4)
       {
-        floatBuffer_.reset(new Orthanc::Image(
-          Orthanc::PixelFormat_Float32, width, height, false));
-      }
-
-      if (cairoBuffer_.get() == NULL ||
-          cairoBuffer_->GetWidth() != width ||
-          cairoBuffer_->GetHeight() != height)
-      {
-        cairoBuffer_.reset(new CairoSurface(width, height, false /* no alpha */));
-      }
-
-      RenderBackground(*floatBuffer_, x0, x1);
-
-      scene_->Render(*floatBuffer_, GetView().GetMatrix(), interpolation);
-
-      // Conversion from Float32 to BGRA32 (cairo). Very similar to
-      // GrayscaleFrameRenderer => TODO MERGE?
-
-      Orthanc::ImageAccessor target;
-      cairoBuffer_->GetWriteableAccessor(target);
-
-      float scaling = 255.0f / (x1 - x0);
-
-      bool invert = IsInvertedInternal();
-
-      for (unsigned int y = 0; y < height; y++)
-      {
-        const float* p = reinterpret_cast<const float*>(floatBuffer_->GetConstRow(y));
-        uint8_t* q = reinterpret_cast<uint8_t*>(target.GetRow(y));
-
-        for (unsigned int x = 0; x < width; x++, p++, q += 4)
+        uint8_t v = 0;
+        if (*p >= 65535.0)
         {
-          uint8_t v = 0;
-          if (*p >= x1)
-          {
-            v = 255;
-          }
-          else if (*p <= x0)
-          {
-            v = 0;
-          }
-          else
-          {
-            // https://en.wikipedia.org/wiki/Linear_interpolation
-            v = static_cast<uint8_t>(scaling * (*p - x0));  // (*)
-          }
-
-          if (invert)
-          {
-            v = 255 - v;
-          }
-
-          q[0] = v;
-          q[1] = v;
-          q[2] = v;
-          q[3] = 255;
+          v = 255;
         }
-      }
+        else if (*p <= 0.0)
+        {
+          v = 0;
+        }
+        else
+        {
+          v = static_cast<uint8_t>(*p / 256.0);
+        }
 
-      return true;
+        if (invert)
+        {
+          v = 255 - v;
+        }
+
+        q[0] = v;
+        q[1] = v;
+        q[2] = v;
+        q[3] = 255;
+      }
     }
+
+    return true;
   }
 
 
@@ -199,34 +182,6 @@ namespace OrthancStone
     selectedLayer_ = layer;
   }
 
-  void RadiographyWidget::ClearSelectedLayer()
-  {
-    hasSelection_ = false;
-  }
-
-  bool RadiographyWidget::SelectMaskLayer(size_t index)
-  {
-    std::vector<size_t> layerIndexes;
-    size_t count = 0;
-    scene_->GetLayersIndexes(layerIndexes);
-
-    for (size_t i = 0; i < layerIndexes.size(); ++i)
-    {
-      const RadiographyMaskLayer* maskLayer = dynamic_cast<const RadiographyMaskLayer*>(&(scene_->GetLayer(layerIndexes[i])));
-      if (maskLayer != NULL)
-      {
-        if (count == index)
-        {
-          Select(layerIndexes[i]);
-          return true;
-        }
-        count++;
-      }
-    }
-
-    return false;
-  }
-
   bool RadiographyWidget::LookupSelectedLayer(size_t& layer)
   {
     if (hasSelection_)
@@ -259,8 +214,9 @@ namespace OrthancStone
     size_t removedLayerIndex = message.GetLayerIndex();
     if (hasSelection_ && selectedLayer_ == removedLayerIndex)
     {
-      ClearSelectedLayer();
+      Unselect();
     }
+    NotifyContentChanged();
   }
   
   void RadiographyWidget::SetInvert(bool invert)

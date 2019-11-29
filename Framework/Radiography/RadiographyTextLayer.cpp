@@ -30,7 +30,7 @@ namespace OrthancStone
   Orthanc::EmbeddedResources::FileResourceId RadiographyTextLayer::fontResourceId_;
 
   void RadiographyTextLayer::LoadText(const std::string& utf8,
-                                      size_t fontSize,
+                                      unsigned int fontSize,
                                       uint8_t foreground)
   {
     if (!fontHasBeenConfigured_)
@@ -45,5 +45,6 @@ namespace OrthancStone
     SetAlpha(TextRenderer::Render(fontResourceId_,
                                   fontSize_,
                                   text_));
+    SetForegroundValue(foreground * 256.0f);
   }
 }

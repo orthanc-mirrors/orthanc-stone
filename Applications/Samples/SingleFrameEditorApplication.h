@@ -425,7 +425,6 @@ namespace OrthancStone
     private:
       boost::shared_ptr<RadiographyScene>   scene_;
       RadiographyEditorInteractor           interactor_;
-      Orthanc::FontRegistry                 fontRegistry_;
       RadiographyMaskLayer*                 maskLayer_;
 
     public:
@@ -480,8 +479,6 @@ namespace OrthancStone
         std::string instance = parameters["instance"].as<std::string>();
         //int frame = parameters["frame"].as<unsigned int>();
 
-        fontRegistry_.AddFromResource(Orthanc::EmbeddedResources::FONT_UBUNTU_MONO_BOLD_16);
-        
         scene_.reset(new RadiographyScene);
         
         RadiographyLayer& dicomLayer = scene_->LoadDicomFrame(*context->GetOrthancApiClient(), instance, 0, false, NULL);
@@ -507,10 +504,11 @@ namespace OrthancStone
           std::auto_ptr<Orthanc::ImageAccessor> renderedTextAlpha(TextRenderer::Render(Orthanc::EmbeddedResources::UBUNTU_FONT, 100,
                                                                                     "%öÇaA&#"));
           RadiographyLayer& layer = scene_->LoadAlphaBitmap(renderedTextAlpha.release(), NULL);
-          dynamic_cast<RadiographyAlphaLayer&>(layer).SetForegroundValue(200);
+          dynamic_cast<RadiographyAlphaLayer&>(layer).SetForegroundValue(200.0f * 256.0f);
         }
 
         {
+          RadiographyTextLayer::SetFont(Orthanc::EmbeddedResources::UBUNTU_FONT);
           RadiographyLayer& layer = scene_->LoadText("Hello\nworld", 20, 128, NULL);
           layer.SetResizeable(true);
         }

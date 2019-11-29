@@ -255,6 +255,10 @@ namespace OrthancStone
           case SDLK_KP_MINUS:
             locker.GetCentralViewport().KeyPressed(KeyboardKeys_Generic, '-', modifiers);  break;
 
+          case SDLK_DELETE:
+            locker.GetCentralViewport().KeyPressed(KeyboardKeys_Delete, 0, modifiers);  break;
+          case SDLK_BACKSPACE:
+            locker.GetCentralViewport().KeyPressed(KeyboardKeys_Backspace, 0, modifiers);  break;
           case SDLK_RIGHT:
             locker.GetCentralViewport().KeyPressed(KeyboardKeys_Right, 0, modifiers);  break;
           case SDLK_LEFT:

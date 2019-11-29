@@ -26,10 +26,11 @@
 #include "Core/Images/Image.h"
 #include "Core/Images/ImageProcessing.h"
 #include <Core/OrthancException.h>
+#include "../Toolbox/ImageGeometry.h"
 
 namespace OrthancStone
 {
-  const unsigned char IN_MASK_VALUE = 0x00;
+  const unsigned char IN_MASK_VALUE = 0x77;
   const unsigned char OUT_MASK_VALUE = 0xFF;
 
   const AffineTransform2D& RadiographyMaskLayer::GetTransform() const
@@ -76,7 +77,10 @@ namespace OrthancStone
 
   void RadiographyMaskLayer::Render(Orthanc::ImageAccessor& buffer,
                                     const AffineTransform2D& viewTransform,
-                                    ImageInterpolation interpolation) const
+                                    ImageInterpolation interpolation,
+                                    float windowCenter,
+                                    float windowWidth,
+                                    bool applyWindowing) const
   {
     if (dicomLayer_.GetWidth() == 0) // nothing to do if the DICOM layer is not displayed (or not loaded)
       return;
@@ -108,20 +112,36 @@ namespace OrthancStone
 
       Orthanc::Image tmp(Orthanc::PixelFormat_Grayscale8, buffer.GetWidth(), buffer.GetHeight(), false);
 
-      t.Apply(tmp, cropped, interpolation, true /* clear */);
+      t.Apply(tmp, cropped, ImageInterpolation_Nearest, true /* clear */);
+
+      unsigned int x1, y1, x2, y2;
+      OrthancStone::GetProjectiveTransformExtent(x1, y1, x2, y2,
+                                                 t.GetHomogeneousMatrix(),
+                                                 cropped.GetWidth(),
+                                                 cropped.GetHeight(),
+                                                 buffer.GetWidth(),
+                                                 buffer.GetHeight());
+
+      // we have observed vertical lines at the image border (probably due to bilinear filtering of the DICOM image when it is not aligned with the buffer pixels)
+      // -> draw the mask one line further on each side
+      if (x1 >= 1)
+      {
+        x1 = x1 - 1;
+      }
+      if (x2 < buffer.GetWidth() - 2)
+      {
+        x2 = x2 + 1;
+      }
 
       // Blit
-      const unsigned int width = buffer.GetWidth();
-      const unsigned int height = buffer.GetHeight();
-
-      for (unsigned int y = 0; y < height; y++)
+      for (unsigned int y = y1; y <= y2; y++)
       {
-        float *q = reinterpret_cast<float*>(buffer.GetRow(y));
-        const uint8_t *p = reinterpret_cast<uint8_t*>(tmp.GetRow(y));
+        float *q = reinterpret_cast<float*>(buffer.GetRow(y)) + x1;
+        const uint8_t *p = reinterpret_cast<uint8_t*>(tmp.GetRow(y)) + x1;
 
-        for (unsigned int x = 0; x < width; x++, p++, q++)
+        for (unsigned int x = x1; x <= x2; x++, p++, q++)
         {
-          if (*p == OUT_MASK_VALUE)
+          if (*p != IN_MASK_VALUE)
             *q = foreground_;
           // else keep the underlying pixel value
         }

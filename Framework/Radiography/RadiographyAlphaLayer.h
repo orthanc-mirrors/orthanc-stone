@@ -33,14 +33,12 @@ namespace OrthancStone
   class RadiographyAlphaLayer : public RadiographyLayer
   {
   private:
-    std::auto_ptr<Orthanc::ImageAccessor>  alpha_;      // Grayscale8
-    bool                                   useWindowing_;
-    float                                  foreground_;
+    std::auto_ptr<Orthanc::ImageAccessor>  alpha_;       // Grayscale8 in the range [0, 255]  0 = transparent, 255 = opaque -> the foreground value will be displayed
+    float                                  foreground_;  // in the range [0.0, 65535.0]
 
   public:
     RadiographyAlphaLayer(const RadiographyScene& scene) :
       RadiographyLayer(scene),
-      useWindowing_(true),
       foreground_(0)
     {
     }
@@ -48,18 +46,12 @@ namespace OrthancStone
 
     void SetForegroundValue(float foreground)
     {
-      useWindowing_ = false;
       foreground_ = foreground;
     }
 
     float GetForegroundValue() const
     {
       return foreground_;
-    }
-
-    bool IsUsingWindowing() const
-    {
-      return useWindowing_;
     }
 
     void SetAlpha(Orthanc::ImageAccessor* image);
@@ -73,7 +65,10 @@ namespace OrthancStone
 
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,
-                        ImageInterpolation interpolation) const;
+                        ImageInterpolation interpolation,
+                        float windowCenter,
+                        float windowWidth,
+                        bool applyWindowing) const;
 
     virtual bool GetRange(float& minValue,
                           float& maxValue) const;

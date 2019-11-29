@@ -162,14 +162,18 @@ namespace OrthancStone
       Orthanc::ImageAccessor cropped;
       converted_->GetRegion(cropped, cropX, cropY, cropWidth, cropHeight);
 
-      t.Apply(buffer, cropped, interpolation, false);
       unsigned int x1, y1, x2, y2;
-      OrthancStone::GetProjectiveTransformExtent(x1, y1, x2, y2,
-                                                 t.GetHomogeneousMatrix(),
-                                                 cropped.GetWidth(),
-                                                 cropped.GetHeight(),
-                                                 buffer.GetWidth(),
-                                                 buffer.GetHeight());
+      if (!OrthancStone::GetProjectiveTransformExtent(x1, y1, x2, y2,
+                                                      t.GetHomogeneousMatrix(),
+                                                      cropped.GetWidth(),
+                                                      cropped.GetHeight(),
+                                                      buffer.GetWidth(),
+                                                      buffer.GetHeight()))
+      {
+        return;  // layer is outside the buffer
+      }
+
+      t.Apply(buffer, cropped, interpolation, false);
 
       if (applyWindowing)
       {

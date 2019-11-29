@@ -180,6 +180,7 @@ namespace OrthancStone
     void OnDicomWebReceived(const Deprecated::IWebService::HttpRequestSuccessMessage& message);
 
     virtual void OnLayerEdited(const RadiographyLayer::LayerEditedMessage& message);
+
   public:
     RadiographyScene();
     
@@ -202,7 +203,12 @@ namespace OrthancStone
                                unsigned int fontSize,
                                uint8_t foreground,
                                RadiographyLayer::Geometry* geometry);
-    
+
+    RadiographyLayer& UpdateText(size_t layerIndex,
+                                 const std::string& utf8,
+                                 unsigned int fontSize,
+                                 uint8_t foreground);
+
     RadiographyLayer& LoadTestBlock(unsigned int width,
                                     unsigned int height,
                                     RadiographyLayer::Geometry* geometry);
@@ -232,10 +238,12 @@ namespace OrthancStone
 
     void RemoveLayer(size_t layerIndex);
 
+    RadiographyLayer& GetLayer(size_t layerIndex);
+
     const RadiographyLayer& GetLayer(size_t layerIndex) const;
 
     template <typename TypeLayer>
-    TypeLayer* GetLayer(size_t index = 0)
+    TypeLayer* GetTypedLayer(size_t indexOfType = 0)
     {
       std::vector<size_t> layerIndexes;
       GetLayersIndexes(layerIndexes);
@@ -247,31 +255,7 @@ namespace OrthancStone
         TypeLayer* typedLayer = dynamic_cast<TypeLayer*>(layers_[layerIndexes[i]]);
         if (typedLayer != NULL)
         {
-          if (count == index)
-          {
-            return typedLayer;
-          }
-          count++;
-        }
-      }
-
-      return NULL;
-    }
-
-    template <typename TypeLayer>
-    const TypeLayer* GetLayer(size_t index = 0) const
-    {
-      std::vector<size_t> layerIndexes;
-      GetLayersIndexes(layerIndexes);
-
-      size_t count = 0;
-
-      for (size_t i = 0; i < layerIndexes.size(); ++i)
-      {
-        const TypeLayer* typedLayer = dynamic_cast<const TypeLayer*>(layers_.at(layerIndexes[i]));
-        if (typedLayer != NULL)
-        {
-          if (count == index)
+          if (count == indexOfType)
           {
             return typedLayer;
           }
@@ -352,6 +336,7 @@ namespace OrthancStone
                                   ImageInterpolation interpolation,
                                   bool invert,
                                   int64_t maxValue /* for inversion */,
-                                  bool applyWindowing);  // i.e.: when
+                                  bool applyWindowing);
+
   };
 }

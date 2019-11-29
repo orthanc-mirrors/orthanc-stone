@@ -240,6 +240,21 @@ namespace OrthancStone
     }
   }
 
+  RadiographyLayer& RadiographyScene::GetLayer(size_t layerIndex)
+  {
+    Layers::const_iterator found = layers_.find(layerIndex);
+
+    if (found == layers_.end())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      assert(found->second != NULL);
+      return *found->second;
+    }
+  }
+
   bool RadiographyScene::GetWindowing(float& center,
                                       float& width) const
   {
@@ -278,13 +293,27 @@ namespace OrthancStone
   }
 
 
+  RadiographyLayer& RadiographyScene::UpdateText(size_t layerIndex,
+                                                 const std::string& utf8,
+                                                 unsigned int fontSize,
+                                                 uint8_t foreground)
+  {
+    RadiographyTextLayer& textLayer = dynamic_cast<RadiographyTextLayer&>(GetLayer(layerIndex));
+    textLayer.SetText(utf8, fontSize, foreground);
+
+    BroadcastMessage(RadiographyScene::ContentChangedMessage(*this, textLayer));
+    BroadcastMessage(RadiographyScene::LayerEditedMessage(*this, textLayer));
+    return textLayer;
+  }
+
+
   RadiographyLayer& RadiographyScene::LoadText(const std::string& utf8,
                                                unsigned int fontSize,
                                                uint8_t foreground,
                                                RadiographyLayer::Geometry* geometry)
   {
     std::auto_ptr<RadiographyTextLayer>  alpha(new RadiographyTextLayer(*this));
-    alpha->LoadText(utf8, fontSize, foreground);
+    alpha->SetText(utf8, fontSize, foreground);
     if (geometry != NULL)
     {
       alpha->SetGeometry(*geometry);

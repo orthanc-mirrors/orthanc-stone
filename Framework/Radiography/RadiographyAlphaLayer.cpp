@@ -79,15 +79,19 @@ namespace OrthancStone
 
     Orthanc::Image tmp(Orthanc::PixelFormat_Grayscale8, buffer.GetWidth(), buffer.GetHeight(), false);
 
-    t.Apply(tmp, cropped, interpolation, true /* clear */);
-
     unsigned int x1, y1, x2, y2;
-    OrthancStone::GetProjectiveTransformExtent(x1, y1, x2, y2,
-                                               t.GetHomogeneousMatrix(),
-                                               cropped.GetWidth(),
-                                               cropped.GetHeight(),
-                                               buffer.GetWidth(),
-                                               buffer.GetHeight());
+
+    if (!OrthancStone::GetProjectiveTransformExtent(x1, y1, x2, y2,
+                                                    t.GetHomogeneousMatrix(),
+                                                    cropped.GetWidth(),
+                                                    cropped.GetHeight(),
+                                                    buffer.GetWidth(),
+                                                    buffer.GetHeight()))
+    {
+      return;  // layer is outside the buffer
+    }
+
+    t.Apply(tmp, cropped, interpolation, true /* clear */);
 
     float value = foreground_;
 

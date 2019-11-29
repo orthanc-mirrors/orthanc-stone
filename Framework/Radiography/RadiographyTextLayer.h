@@ -42,7 +42,7 @@ namespace OrthancStone
     {
     }
 
-    void LoadText(const std::string& utf8, unsigned int fontSize, uint8_t foreground);
+    void SetText(const std::string& utf8, unsigned int fontSize, uint8_t foreground);
 
     const std::string& GetText() const
     {

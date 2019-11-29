@@ -335,6 +335,7 @@ namespace OrthancStone
                                   ImageInterpolation interpolation,
                                   bool invert,
                                   int64_t maxValue /* for inversion */,
-                                  bool applyWindowing);  // i.e.: when
+                                  bool applyWindowing);
+
   };
 }

@@ -112,10 +112,10 @@ namespace OrthancStone
     void SetActiveTracker(boost::shared_ptr<IFlexiblePointerTracker> tracker);
 
     /** Forwarded to the underlying scene */
-    const AffineTransform2D& GetCanvasToSceneTransform() const;
+    AffineTransform2D GetCanvasToSceneTransform() const;
 
     /** Forwarded to the underlying scene */
-    const AffineTransform2D& GetSceneToCanvasTransform() const;
+    AffineTransform2D GetSceneToCanvasTransform() const;
 
     /** Forwarded to the underlying scene, and broadcasted to the observers */
     void SetSceneToCanvasTransform(const AffineTransform2D& transform);
@@ -172,14 +172,9 @@ namespace OrthancStone
     /** forwarded to the UndoStack */
     bool CanRedo() const;
 
-    Scene2D& GetScene()
+    IViewport& GetViewport() const
     {
-      return viewport_.GetScene();
-    }
-
-    const Scene2D& GetScene() const
-    {
-      return const_cast<IViewport&>(viewport_).GetScene();
+      return viewport_;
     }
 
   private:

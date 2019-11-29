@@ -108,8 +108,10 @@ namespace OrthancStone
 
   LineMeasureTool::LineHighlightArea LineMeasureTool::LineHitTest(ScenePoint2D p) const
   {
+    std::auto_ptr<IViewport::ILock> lock(GetController()->GetViewport().Lock());
+    
     const double pixelToScene =
-      GetController()->GetScene().GetCanvasToSceneTransform().ComputeZoom();
+      lock->GetScene().GetCanvasToSceneTransform().ComputeZoom();
     const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD * pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD;
 
     const double sqDistanceFromStart = ScenePoint2D::SquaredDistancePtPt(p, start_);
@@ -134,8 +136,10 @@ namespace OrthancStone
 
   boost::shared_ptr<IFlexiblePointerTracker> LineMeasureTool::CreateEditionTracker(const PointerEvent& e)
   {
+    std::auto_ptr<IViewport::ILock> lock(GetController()->GetViewport().Lock());
+    
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      GetController()->GetScene().GetCanvasToSceneTransform());
+      lock->GetScene().GetCanvasToSceneTransform());
 
     if (!HitTest(scenePos))
       return boost::shared_ptr<IFlexiblePointerTracker>();
@@ -176,61 +180,65 @@ namespace OrthancStone
     {
       if (IsEnabled())
       {
+        std::auto_ptr<IViewport::ILock> lock(GetController()->GetViewport().Lock());
+    
         layerHolder_->CreateLayersIfNeeded();
 
         {
           // Fill the polyline layer with the measurement line
 
           PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(0);
-          polylineLayer->ClearAllChains();
-
-          const Color color(TOOL_LINES_COLOR_RED, 
-                            TOOL_LINES_COLOR_GREEN, 
-                            TOOL_LINES_COLOR_BLUE);
-
-          const Color highlightColor(TOOL_LINES_HL_COLOR_RED,
-                                     TOOL_LINES_HL_COLOR_GREEN,
-                                     TOOL_LINES_HL_COLOR_BLUE);
-
+          if (polylineLayer)
           {
-            PolylineSceneLayer::Chain chain;
-            chain.push_back(start_);
-            chain.push_back(end_);
-            if(lineHighlightArea_ == LineHighlightArea_Segment)
-              polylineLayer->AddChain(chain, false, highlightColor);
-            else
-              polylineLayer->AddChain(chain, false, color);
-          }
+            polylineLayer->ClearAllChains();
 
-          // handles
-          {
-            {
-              PolylineSceneLayer::Chain chain;
-              
-              //TODO: take DPI into account
-              AddSquare(chain, GetController()->GetScene(), start_, 
-                GetController()->GetHandleSideLengthS());
-              
-              if (lineHighlightArea_ == LineHighlightArea_Start)
-                polylineLayer->AddChain(chain, true, highlightColor);
-              else
-                polylineLayer->AddChain(chain, true, color);
-            }
+            const Color color(TOOL_LINES_COLOR_RED, 
+                              TOOL_LINES_COLOR_GREEN, 
+                              TOOL_LINES_COLOR_BLUE);
+
+            const Color highlightColor(TOOL_LINES_HL_COLOR_RED,
+                                       TOOL_LINES_HL_COLOR_GREEN,
+                                       TOOL_LINES_HL_COLOR_BLUE);
 
             {
               PolylineSceneLayer::Chain chain;
-              
-              //TODO: take DPI into account
-              AddSquare(chain, GetController()->GetScene(), end_, 
-                GetController()->GetHandleSideLengthS());
-              
-              if (lineHighlightArea_ == LineHighlightArea_End)
-                polylineLayer->AddChain(chain, true, highlightColor);
+              chain.push_back(start_);
+              chain.push_back(end_);
+              if(lineHighlightArea_ == LineHighlightArea_Segment)
+                polylineLayer->AddChain(chain, false, highlightColor);
               else
-                polylineLayer->AddChain(chain, true, color);
+                polylineLayer->AddChain(chain, false, color);
+            }
+
+            // handles
+            {
+              {
+                PolylineSceneLayer::Chain chain;
+              
+                //TODO: take DPI into account
+                AddSquare(chain, lock->GetScene(), start_, 
+                          GetController()->GetHandleSideLengthS());
+              
+                if (lineHighlightArea_ == LineHighlightArea_Start)
+                  polylineLayer->AddChain(chain, true, highlightColor);
+                else
+                  polylineLayer->AddChain(chain, true, color);
+              }
+
+              {
+                PolylineSceneLayer::Chain chain;
+              
+                //TODO: take DPI into account
+                AddSquare(chain, lock->GetScene(), end_, 
+                          GetController()->GetHandleSideLengthS());
+              
+                if (lineHighlightArea_ == LineHighlightArea_End)
+                  polylineLayer->AddChain(chain, true, highlightColor);
+                else
+                  polylineLayer->AddChain(chain, true, color);
+              }
             }
           }
-
         }
         {
           // Set the text layer propreties
@@ -248,10 +256,10 @@ namespace OrthancStone
 
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
           SetTextLayerOutlineProperties(
-            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY), 0);
+            lock->GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY), 0);
 #else
           SetTextLayerProperties(
-            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY), 0);
+            lock->GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY), 0);
 #endif
         }
       }

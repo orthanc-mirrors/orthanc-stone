@@ -131,8 +131,10 @@ namespace OrthancStone
 
   AngleMeasureTool::AngleHighlightArea AngleMeasureTool::AngleHitTest(ScenePoint2D p) const
   {
+    std::auto_ptr<IViewport::ILock> lock(GetController()->GetViewport().Lock());
+    
     const double pixelToScene =
-      GetController()->GetScene().GetCanvasToSceneTransform().ComputeZoom();
+      lock->GetScene().GetCanvasToSceneTransform().ComputeZoom();
     const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD * pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD;
 
     {
@@ -176,8 +178,10 @@ namespace OrthancStone
 
   boost::shared_ptr<IFlexiblePointerTracker> AngleMeasureTool::CreateEditionTracker(const PointerEvent& e)
   {
+    std::auto_ptr<IViewport::ILock> lock(GetController()->GetViewport().Lock());
+    
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      GetController()->GetScene().GetCanvasToSceneTransform());
+      lock->GetScene().GetCanvasToSceneTransform());
 
     if (!HitTest(scenePos))
       return boost::shared_ptr<IFlexiblePointerTracker>();
@@ -208,76 +212,81 @@ namespace OrthancStone
       boost::shared_ptr<ViewportController> controller = GetController();
       if (IsEnabled())
       {
+        std::auto_ptr<IViewport::ILock> lock(GetController()->GetViewport().Lock());
+    
         layerHolder_->CreateLayersIfNeeded();
 
         {
           // Fill the polyline layer with the measurement lines
           PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(0);
-          polylineLayer->ClearAllChains();
-
-          const Color color(TOOL_ANGLE_LINES_COLOR_RED, TOOL_ANGLE_LINES_COLOR_GREEN, TOOL_ANGLE_LINES_COLOR_BLUE);
-          const Color highlightColor(TOOL_ANGLE_LINES_HL_COLOR_RED, TOOL_ANGLE_LINES_HL_COLOR_GREEN, TOOL_ANGLE_LINES_HL_COLOR_BLUE);
-
-          // sides
+          if (polylineLayer)
           {
-            {
-              PolylineSceneLayer::Chain chain;
-              chain.push_back(side1End_);
-              chain.push_back(center_);
+            polylineLayer->ClearAllChains();
 
-              if ((angleHighlightArea_ == AngleHighlightArea_Side1) || (angleHighlightArea_ == AngleHighlightArea_Side2))
-                polylineLayer->AddChain(chain, false, highlightColor);
-              else
-                polylineLayer->AddChain(chain, false, color);
-            }
-            {
-              PolylineSceneLayer::Chain chain;
-              chain.push_back(side2End_);
-              chain.push_back(center_);
-              if ((angleHighlightArea_ == AngleHighlightArea_Side1) || (angleHighlightArea_ == AngleHighlightArea_Side2))
-                polylineLayer->AddChain(chain, false, highlightColor);
-              else
-                polylineLayer->AddChain(chain, false, color);
-            }
-          }
+            const Color color(TOOL_ANGLE_LINES_COLOR_RED, TOOL_ANGLE_LINES_COLOR_GREEN, TOOL_ANGLE_LINES_COLOR_BLUE);
+            const Color highlightColor(TOOL_ANGLE_LINES_HL_COLOR_RED, TOOL_ANGLE_LINES_HL_COLOR_GREEN, TOOL_ANGLE_LINES_HL_COLOR_BLUE);
 
-          // Create the handles
-          {
+            // sides
             {
-              PolylineSceneLayer::Chain chain;
-              //TODO: take DPI into account
-              AddSquare(chain, GetController()->GetScene(), side1End_, 
-                GetController()->GetHandleSideLengthS());
+              {
+                PolylineSceneLayer::Chain chain;
+                chain.push_back(side1End_);
+                chain.push_back(center_);
+
+                if ((angleHighlightArea_ == AngleHighlightArea_Side1) || (angleHighlightArea_ == AngleHighlightArea_Side2))
+                  polylineLayer->AddChain(chain, false, highlightColor);
+                else
+                  polylineLayer->AddChain(chain, false, color);
+              }
+              {
+                PolylineSceneLayer::Chain chain;
+                chain.push_back(side2End_);
+                chain.push_back(center_);
+                if ((angleHighlightArea_ == AngleHighlightArea_Side1) || (angleHighlightArea_ == AngleHighlightArea_Side2))
+                  polylineLayer->AddChain(chain, false, highlightColor);
+                else
+                  polylineLayer->AddChain(chain, false, color);
+              }
+            }
+
+            // Create the handles
+            {
+              {
+                PolylineSceneLayer::Chain chain;
+                //TODO: take DPI into account
+                AddSquare(chain, lock->GetScene(), side1End_, 
+                          GetController()->GetHandleSideLengthS());
               
-              if (angleHighlightArea_ == AngleHighlightArea_Side1End)
-                polylineLayer->AddChain(chain, true, highlightColor);
-              else
-                polylineLayer->AddChain(chain, true, color);
-              
-            }
-            {
-              PolylineSceneLayer::Chain chain;
-              //TODO: take DPI into account
-              AddSquare(chain, GetController()->GetScene(), side2End_, 
-                GetController()->GetHandleSideLengthS());
-
-              if (angleHighlightArea_ == AngleHighlightArea_Side2End)
+                if (angleHighlightArea_ == AngleHighlightArea_Side1End)
                   polylineLayer->AddChain(chain, true, highlightColor);
-              else
-                polylineLayer->AddChain(chain, true, color);
+                else
+                  polylineLayer->AddChain(chain, true, color);
+              
+              }
+              {
+                PolylineSceneLayer::Chain chain;
+                //TODO: take DPI into account
+                AddSquare(chain, lock->GetScene(), side2End_, 
+                          GetController()->GetHandleSideLengthS());
+
+                if (angleHighlightArea_ == AngleHighlightArea_Side2End)
+                  polylineLayer->AddChain(chain, true, highlightColor);
+                else
+                  polylineLayer->AddChain(chain, true, color);
+              }
             }
-          }
 
-          // Create the arc
-          {
-            PolylineSceneLayer::Chain chain;
+            // Create the arc
+            {
+              PolylineSceneLayer::Chain chain;
 
-            AddShortestArc(chain, side1End_, center_, side2End_,
-                           controller->GetAngleToolArcRadiusS());
-            if (angleHighlightArea_ == AngleHighlightArea_Center)
-              polylineLayer->AddChain(chain, false, highlightColor);
-            else
-              polylineLayer->AddChain(chain, false, color);
+              AddShortestArc(chain, side1End_, center_, side2End_,
+                             controller->GetAngleToolArcRadiusS());
+              if (angleHighlightArea_ == AngleHighlightArea_Center)
+                polylineLayer->AddChain(chain, false, highlightColor);
+              else
+                polylineLayer->AddChain(chain, false, color);
+            }
           }
         }
         {
@@ -308,10 +317,10 @@ namespace OrthancStone
 
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
           SetTextLayerOutlineProperties(
-            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY), 0);
+            lock->GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY), 0);
 #else
           SetTextLayerProperties(
-            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY) , 0);
+            lock->GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY) , 0);
 #endif
 
 #if 0

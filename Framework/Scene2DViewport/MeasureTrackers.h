@@ -48,7 +48,6 @@ namespace OrthancStone
     boost::shared_ptr<CreateMeasureCommand>         command_;
     boost::weak_ptr<ViewportController>          controllerW_;
     bool                            alive_;
-    Scene2D&                      GetScene();
 
   private:
     bool                            commitResult_;
@@ -68,7 +67,6 @@ namespace OrthancStone
     boost::shared_ptr<EditMeasureCommand> command_;
     boost::weak_ptr<ViewportController>   controllerW_;
     bool                                  alive_;
-    Scene2D&            GetScene();
     
     ScenePoint2D                          GetOriginalClickPosition() const
     {

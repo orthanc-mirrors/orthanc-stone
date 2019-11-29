@@ -306,28 +306,30 @@ namespace OrthancStone
     for (int i = startingLayerIndex; i < startingLayerIndex + 5; ++i)
     {
       TextSceneLayer* textLayer = layerHolder->GetTextLayer(i);
-      ORTHANC_ASSERT(textLayer != NULL);
-      textLayer->SetText(text);
-
-      if (i == startingLayerIndex + 4)
+      if (textLayer != NULL)
       {
-        textLayer->SetColor(TEXT_COLOR_RED,
-          TEXT_COLOR_GREEN,
-          TEXT_COLOR_BLUE);
-      }
-      else
-      {
-        textLayer->SetColor(TEXT_OUTLINE_COLOR_RED,
-          TEXT_OUTLINE_COLOR_GREEN,
-          TEXT_OUTLINE_COLOR_BLUE);
-      }
+        textLayer->SetText(text);
 
-      ScenePoint2D textAnchor;
-      int offIndex = i - startingLayerIndex;
-      ORTHANC_ASSERT(offIndex >= 0 && offIndex < 5);
-      textLayer->SetPosition(
-        p.GetX() + xoffsets[offIndex] * pixelToScene,
-        p.GetY() + yoffsets[offIndex] * pixelToScene);
+        if (i == startingLayerIndex + 4)
+        {
+          textLayer->SetColor(TEXT_COLOR_RED,
+                              TEXT_COLOR_GREEN,
+                              TEXT_COLOR_BLUE);
+        }
+        else
+        {
+          textLayer->SetColor(TEXT_OUTLINE_COLOR_RED,
+                              TEXT_OUTLINE_COLOR_GREEN,
+                              TEXT_OUTLINE_COLOR_BLUE);
+        }
+
+        ScenePoint2D textAnchor;
+        int offIndex = i - startingLayerIndex;
+        ORTHANC_ASSERT(offIndex >= 0 && offIndex < 5);
+        textLayer->SetPosition(
+          p.GetX() + xoffsets[offIndex] * pixelToScene,
+          p.GetY() + yoffsets[offIndex] * pixelToScene);
+      }
     }
   }
 #else
@@ -339,13 +341,14 @@ namespace OrthancStone
     , int layerIndex)
   {
     TextSceneLayer* textLayer = layerHolder->GetTextLayer(layerIndex);
-    ORTHANC_ASSERT(textLayer != NULL);
-    textLayer->SetText(text);
+    if (textLayer != NULL)
+    {
+      textLayer->SetText(text);
+      textLayer->SetColor(TEXT_COLOR_RED, TEXT_COLOR_GREEN, TEXT_COLOR_BLUE);
 
-    textLayer->SetColor(TEXT_COLOR_RED, TEXT_COLOR_GREEN, TEXT_COLOR_BLUE);
-
-    ScenePoint2D textAnchor;
-    textLayer->SetPosition(p.GetX(), p.GetY());
+      ScenePoint2D textAnchor;
+      textLayer->SetPosition(p.GetX(), p.GetY());
+    }
   }
 #endif 
 

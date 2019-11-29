@@ -53,23 +53,18 @@ namespace OrthancStone
       command_->Undo();
   }
 
-  Scene2D& CreateMeasureTracker::GetScene()
-  {
-    return controllerW_.lock()->GetScene();
-  }
-
   EditMeasureTracker::EditMeasureTracker(boost::weak_ptr<ViewportController> controllerW, const PointerEvent& e)
     : controllerW_(controllerW)
     , alive_(true)
     , commitResult_(true)
   {
     boost::shared_ptr<ViewportController> controller = controllerW.lock();
-    originalClickPosition_ = e.GetMainPosition().Apply(controller->GetScene().GetCanvasToSceneTransform());
-  }
 
-  Scene2D& EditMeasureTracker::GetScene()
-  {
-    return controllerW_.lock()->GetScene();
+    if (controller)
+    {
+      std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
+      originalClickPosition_ = e.GetMainPosition().Apply(lock->GetScene().GetCanvasToSceneTransform());
+    }
   }
 
   void EditMeasureTracker::Cancel()

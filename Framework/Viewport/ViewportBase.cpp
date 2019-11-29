@@ -26,27 +26,11 @@
 
 namespace OrthancStone
 {
-  ViewportBase::ViewportBase() :
-    scene_(boost::make_shared<Scene2D>())
-  {
-  }
-
-  
-  ViewportBase::ViewportBase(boost::shared_ptr<Scene2D>& scene) :
-    scene_(scene)
-  {
-    if (scene.get() == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-  }
-  
-
-  ScenePoint2D ViewportBase::GetPixelCenterCoordinates(int x, int y) const
+  ScenePoint2D ViewportBase::LockBase::GetPixelCenterCoordinates(int x, int y)
   {
     if (HasCompositor())
     {
-      const ICompositor& compositor = GetCompositor();
+      ICompositor& compositor = GetCompositor();
       return ScenePoint2D(
         static_cast<double>(x) + 0.5 - static_cast<double>(compositor.GetCanvasWidth()) / 2.0,
         static_cast<double>(y) + 0.5 - static_cast<double>(compositor.GetCanvasHeight()) / 2.0);

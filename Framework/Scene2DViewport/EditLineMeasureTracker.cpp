@@ -32,8 +32,16 @@ namespace OrthancStone
     const PointerEvent& e) 
     : EditMeasureTracker(controllerW, e)
   {
-    ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      GetScene().GetCanvasToSceneTransform());
+    ScenePoint2D scenePos = e.GetMainPosition();
+
+    {
+      boost::shared_ptr<ViewportController> controller = controllerW.lock();
+      if (controller)
+      {
+        std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
+        scenePos = e.GetMainPosition().Apply(lock->GetScene().GetCanvasToSceneTransform());
+      }
+    }
 
     modifiedZone_ = dynamic_cast<LineMeasureTool&>(*measureTool).LineHitTest(scenePos);
 
@@ -47,44 +55,49 @@ namespace OrthancStone
 
   void EditLineMeasureTracker::PointerMove(const PointerEvent& e)
   {
-    ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      GetScene().GetCanvasToSceneTransform());
-
-    ScenePoint2D delta = scenePos - GetOriginalClickPosition();
-
-    boost::shared_ptr<LineMeasureToolMemento> memento =
-      boost::dynamic_pointer_cast<LineMeasureToolMemento>(command_->mementoOriginal_);
-
-    ORTHANC_ASSERT(memento.get() != NULL);
-
-    switch (modifiedZone_)
+    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
+    if (controller)
     {
-    case LineMeasureTool::LineHighlightArea_Start:
-    {
-      ScenePoint2D newStart = memento->start_ + delta;
-      GetCommand()->SetStart(newStart);
-    }
-    break;
-    case LineMeasureTool::LineHighlightArea_End:
-    {
-      ScenePoint2D newEnd = memento->end_ + delta;
-      GetCommand()->SetEnd(newEnd);
-    }
-    break;
-    case LineMeasureTool::LineHighlightArea_Segment:
-    {
-      ScenePoint2D newStart = memento->start_ + delta;
-      ScenePoint2D newEnd = memento->end_ + delta;
-      GetCommand()->SetStart(newStart);
-      GetCommand()->SetEnd(newEnd);
-    }
-    break;
-    default:
-      LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
+      std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
+      ScenePoint2D scenePos = e.GetMainPosition().Apply(
+        lock->GetScene().GetCanvasToSceneTransform());
+
+      ScenePoint2D delta = scenePos - GetOriginalClickPosition();
+
+      boost::shared_ptr<LineMeasureToolMemento> memento =
+        boost::dynamic_pointer_cast<LineMeasureToolMemento>(command_->mementoOriginal_);
+
+      ORTHANC_ASSERT(memento.get() != NULL);
+
+      switch (modifiedZone_)
+      {
+        case LineMeasureTool::LineHighlightArea_Start:
+        {
+          ScenePoint2D newStart = memento->start_ + delta;
+          GetCommand()->SetStart(newStart);
+        }
         break;
+        case LineMeasureTool::LineHighlightArea_End:
+        {
+          ScenePoint2D newEnd = memento->end_ + delta;
+          GetCommand()->SetEnd(newEnd);
+        }
+        break;
+        case LineMeasureTool::LineHighlightArea_Segment:
+        {
+          ScenePoint2D newStart = memento->start_ + delta;
+          ScenePoint2D newEnd = memento->end_ + delta;
+          GetCommand()->SetStart(newStart);
+          GetCommand()->SetEnd(newEnd);
+        }
+        break;
+        default:
+          LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
+          break;
+      }
     }
   }
-
+  
   void EditLineMeasureTracker::PointerUp(const PointerEvent& e)
   {
     alive_ = false;

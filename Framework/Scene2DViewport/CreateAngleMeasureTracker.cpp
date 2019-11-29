@@ -31,10 +31,18 @@ namespace OrthancStone
     : CreateMeasureTracker(controllerW)
     , state_(CreatingSide1)
   {
-    command_.reset(
-      new CreateAngleMeasureCommand(
-        controllerW,
-        e.GetMainPosition().Apply(GetScene().GetCanvasToSceneTransform())));
+    ScenePoint2D point = e.GetMainPosition();
+    
+    {
+      boost::shared_ptr<ViewportController> controller = controllerW.lock();
+      if (controller)
+      {
+        std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
+        point = e.GetMainPosition().Apply(lock->GetScene().GetCanvasToSceneTransform());
+      }
+    }
+    
+    command_.reset(new CreateAngleMeasureCommand(controllerW, point));
   }
 
   CreateAngleMeasureTracker::~CreateAngleMeasureTracker()
@@ -50,24 +58,29 @@ namespace OrthancStone
         "PointerMove: active_ == false");
     }
 
-    ScenePoint2D scenePos = event.GetMainPosition().Apply(
-      GetScene().GetCanvasToSceneTransform());
-
-    switch (state_)
+    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
+    if (controller)
     {
-    case CreatingSide1:
-      GetCommand()->SetCenter(scenePos);
-      break;
-    case CreatingSide2:
-      GetCommand()->SetSide2End(scenePos);
-      break;
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-        "Wrong state in CreateAngleMeasureTracker::"
-        "PointerMove: state_ invalid");
+      std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
+      ScenePoint2D scenePos = event.GetMainPosition().Apply(
+        lock->GetScene().GetCanvasToSceneTransform());
+
+      switch (state_)
+      {
+        case CreatingSide1:
+          GetCommand()->SetCenter(scenePos);
+          break;
+        case CreatingSide2:
+          GetCommand()->SetSide2End(scenePos);
+          break;
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                          "Wrong state in CreateAngleMeasureTracker::"
+                                          "PointerMove: state_ invalid");
+      }
+      //LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
+      //  "scenePos.GetY() = " << scenePos.GetY();
     }
-    //LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
-    //  "scenePos.GetY() = " << scenePos.GetY();
   }
 
   void CreateAngleMeasureTracker::PointerUp(const PointerEvent& e)

@@ -29,25 +29,39 @@ namespace OrthancStone
   /**
    * Class that combines a Scene2D with a canvas where to draw the
    * scene. A call to "Refresh()" will update the content of the
-   * canvas.
+   * canvas. A "IViewport" can possibly be accessed from several
+   * threads depending on the rendering back-end (e.g. in SDL or Qt):
+   * The "ILock" subclass implements the locking mechanism to modify
+   * the content of the scene. 
+   *
+   * NB: The lock must be a "recursive_mutex", as the viewport
+   * controller can lock it a second time (TODO - Why so?).
    **/  
   class IViewport : public boost::noncopyable
   {
   public:
+    class ILock : public boost::noncopyable
+    {
+    public:
+      virtual ~ILock()
+      {
+      }
+
+      virtual Scene2D& GetScene() = 0;
+
+      virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) = 0;
+
+      virtual bool HasCompositor() const = 0;
+
+      virtual ICompositor& GetCompositor() = 0;
+    };   
+    
     virtual ~IViewport()
     {
     }
 
-    virtual Scene2D& GetScene() = 0;
-
     virtual void Refresh() = 0;
 
-    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const = 0;
-
-    virtual bool HasCompositor() const = 0;
-
-    virtual ICompositor& GetCompositor() = 0;
-
-    virtual const ICompositor& GetCompositor() const = 0;
+    virtual ILock* Lock() = 0;
   };
 }

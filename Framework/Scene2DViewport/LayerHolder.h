@@ -97,7 +97,6 @@ namespace OrthancStone
     int GetPolylineLayerIndex(int index = 0);
     int GetTextLayerIndex(int index = 0);
     int GetInfoTextLayerIndex(int index = 0);
-    Scene2D& GetScene();
 
     int textLayerCount_;
     int polylineLayerCount_;

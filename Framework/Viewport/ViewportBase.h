@@ -29,25 +29,31 @@ namespace OrthancStone
   class ViewportBase : public IViewport
   {
   private:
-    boost::shared_ptr<Scene2D>  scene_;
+    Scene2D  scene_;
 
-  public:
-    ViewportBase();
-
-    ViewportBase(boost::shared_ptr<Scene2D>& scene);
-
-    virtual Scene2D& GetScene() ORTHANC_OVERRIDE
+  protected:
+    class LockBase : public ILock
     {
-      return *scene_;
-    }
+    private:
+      ViewportBase& that_;
 
-    virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) const ORTHANC_OVERRIDE;
+    public:
+      LockBase(ViewportBase& that) :
+        that_(that)
+      {
+      }
 
-    virtual const ICompositor& GetCompositor() const ORTHANC_OVERRIDE
+      virtual Scene2D& GetScene() ORTHANC_OVERRIDE
+      {
+        return that_.scene_;
+      }
+
+      virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) ORTHANC_OVERRIDE;
+    };
+
+    Scene2D& GetScene()
     {
-      IViewport* mutableThis = 
-        const_cast<IViewport*>(static_cast<const IViewport*>(this));
-      return mutableThis->GetCompositor();
+      return scene_;
     }
   };
 }

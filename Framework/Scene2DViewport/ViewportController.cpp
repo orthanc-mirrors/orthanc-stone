@@ -136,20 +136,26 @@ namespace OrthancStone
     }
   }
 
-  const OrthancStone::AffineTransform2D& ViewportController::GetCanvasToSceneTransform() const
+  OrthancStone::AffineTransform2D ViewportController::GetCanvasToSceneTransform() const
   {
-    return GetScene().GetCanvasToSceneTransform();
+    std::auto_ptr<IViewport::ILock> lock(viewport_.Lock());
+    return lock->GetScene().GetCanvasToSceneTransform();
   }
 
-  const OrthancStone::AffineTransform2D& ViewportController::GetSceneToCanvasTransform() const
+  OrthancStone::AffineTransform2D ViewportController::GetSceneToCanvasTransform() const
   {
-    return GetScene().GetSceneToCanvasTransform();
+    std::auto_ptr<IViewport::ILock> lock(viewport_.Lock());
+    return lock->GetScene().GetSceneToCanvasTransform();
   }
 
   void ViewportController::SetSceneToCanvasTransform(
     const AffineTransform2D& transform)
   {
-    viewport_.GetScene().SetSceneToCanvasTransform(transform);
+    {
+      std::auto_ptr<IViewport::ILock> lock(viewport_.Lock());
+      lock->GetScene().SetSceneToCanvasTransform(transform);
+    }
+    
     BroadcastMessage(SceneTransformChanged(*this));
     
     // update the canvas to scene factor
@@ -160,16 +166,22 @@ namespace OrthancStone
   void ViewportController::FitContent(
     unsigned int canvasWidth, unsigned int canvasHeight)
   {
-    viewport_.GetScene().FitContent(canvasWidth, canvasHeight);
+    {
+      std::auto_ptr<IViewport::ILock> lock(viewport_.Lock());
+      lock->GetScene().FitContent(canvasWidth, canvasHeight);
+    }
+    
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
   void ViewportController::FitContent()
   {
-    if (viewport_.HasCompositor())
+    std::auto_ptr<IViewport::ILock> lock(viewport_.Lock());
+
+    if (lock->HasCompositor())
     {
-      const ICompositor& compositor = viewport_.GetCompositor();
-      viewport_.GetScene().FitContent(compositor.GetCanvasWidth(), compositor.GetCanvasHeight());
+      const ICompositor& compositor = lock->GetCompositor();
+      lock->GetScene().FitContent(compositor.GetCanvasWidth(), compositor.GetCanvasHeight());
       BroadcastMessage(SceneTransformChanged(*this));
     }
   }
@@ -195,8 +207,8 @@ namespace OrthancStone
   {
     if (canvasToSceneFactor_ == 0)
     {
-      canvasToSceneFactor_ =
-        GetScene().GetCanvasToSceneTransform().ComputeZoom();
+      std::auto_ptr<IViewport::ILock> lock(viewport_.Lock());
+      canvasToSceneFactor_ = lock->GetScene().GetCanvasToSceneTransform().ComputeZoom();
     }
     return canvasToSceneFactor_;
   }

@@ -22,8 +22,6 @@
 
 #include <Core/OrthancException.h>
 
-#include <boost/make_shared.hpp>
-
 namespace OrthancStone
 {
   SdlOpenGLViewport::SdlOpenGLViewport(const char* title,
@@ -35,19 +33,9 @@ namespace OrthancStone
     compositor_.reset(new OpenGLCompositor(context_, GetScene()));
   }
 
-  SdlOpenGLViewport::SdlOpenGLViewport(const char* title,
-                                       unsigned int width,
-                                       unsigned int height,
-                                       boost::shared_ptr<Scene2D>& scene,
-                                       bool allowDpiScaling) :
-    SdlViewport(scene),
-    context_(title, width, height, allowDpiScaling)
-  {
-    compositor_.reset(new OpenGLCompositor(context_, GetScene()));
-  }
-
   void SdlOpenGLViewport::Refresh()
   {
+    boost::mutex::scoped_lock lock(mutex_);
     compositor_->Refresh();
   }
 
@@ -70,22 +58,29 @@ namespace OrthancStone
     }
   }
   
-  void SdlCairoViewport::Refresh()
+  void SdlCairoViewport::RefreshInternal()  // Assumes that the mutex is locked
   {
     compositor_.Refresh();
     window_.Render(sdlSurface_);
   }
 
+  void SdlCairoViewport::Refresh()
+  {
+    boost::mutex::scoped_lock lock(mutex_);
+    RefreshInternal();
+  }
+
   void SdlCairoViewport::UpdateSize(unsigned int width,
                                     unsigned int height)
   {
+    boost::mutex::scoped_lock lock(mutex_);
     compositor_.UpdateSize(width, height);
     UpdateSdlSurfaceSize(width, height);
-    Refresh();
+    RefreshInternal();
   }
   
   void SdlCairoViewport::UpdateSdlSurfaceSize(unsigned int width,
-                                              unsigned int height)
+                                              unsigned int height)  // Assumes that the mutex is locked
   {
     static const uint32_t rmask = 0x00ff0000;
     static const uint32_t gmask = 0x0000ff00;

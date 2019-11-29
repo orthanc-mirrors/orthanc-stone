@@ -45,18 +45,14 @@ namespace OrthancStone
 {
   class SdlViewport : public ViewportBase
   {
+  protected:
+    boost::mutex  mutex_;
+
   public:
     SdlViewport()
     {
     }
 
-    SdlViewport(boost::shared_ptr<Scene2D>& scene) : 
-      ViewportBase(scene)
-    {
-    }
-
-    virtual SdlWindow& GetWindow() = 0;
-    
     virtual void UpdateSize(unsigned int width,
                             unsigned int height) = 0;
   };
@@ -66,40 +62,49 @@ namespace OrthancStone
   {
   private:
     SdlOpenGLContext  context_;
-    std::auto_ptr<OpenGLCompositor>   compositor_;
+    std::auto_ptr<OpenGLCompositor>  compositor_;
 
+    class SdlLock : public LockBase
+    {
+    private:
+      SdlOpenGLViewport&         that_;
+      boost::mutex::scoped_lock  lock_;
+      
+    public:
+      SdlLock(SdlOpenGLViewport& viewport) :
+        LockBase(viewport),
+        that_(viewport),
+        lock_(viewport.mutex_)
+      {
+      }
+
+      virtual bool HasCompositor() const ORTHANC_OVERRIDE
+      {
+        return true;
+      }
+
+      virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
+      {
+        return *that_.compositor_;
+      }
+    };
+    
   public:
     SdlOpenGLViewport(const char* title,
                       unsigned int width,
                       unsigned int height,
                       bool allowDpiScaling = true);
 
-    SdlOpenGLViewport(const char* title,
-                      unsigned int width,
-                      unsigned int height,
-                      boost::shared_ptr<Scene2D>& scene,
-                      bool allowDpiScaling = true);
-
-    virtual SdlWindow& GetWindow() ORTHANC_OVERRIDE
-    {
-      return context_.GetWindow();
-    }
-
     virtual void Refresh() ORTHANC_OVERRIDE;
+
+    virtual ILock* Lock() ORTHANC_OVERRIDE
+    {
+      return new SdlLock(*this);
+    }
 
     virtual void UpdateSize(unsigned int width, unsigned int height) ORTHANC_OVERRIDE
     {
       // nothing to do in OpenGL, the OpenGLCompositor::UpdateSize will be called automatically
-    }
-
-    virtual bool HasCompositor() const ORTHANC_OVERRIDE
-    {
-      return true;
-    }
-
-    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
-    {
-      return *compositor_.get();
     }
   };
 
@@ -107,11 +112,37 @@ namespace OrthancStone
   class SdlCairoViewport : public SdlViewport
   {
   private:
+    class SdlLock : public LockBase
+    {
+    private:
+      SdlCairoViewport&          that_;
+      boost::mutex::scoped_lock  lock_;
+      
+    public:
+      SdlLock(SdlCairoViewport& viewport) :
+        LockBase(viewport),
+        that_(viewport),
+        lock_(viewport.mutex_)
+      {
+      }
+
+      virtual bool HasCompositor() const ORTHANC_OVERRIDE
+      {
+        return true;
+      }
+
+      virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
+      {
+        return that_.compositor_;
+      }
+    };
+ 
     SdlWindow         window_;
     CairoCompositor   compositor_;
     SDL_Surface*      sdlSurface_;
 
-  private:
+    void RefreshInternal();
+    
     void UpdateSdlSurfaceSize(unsigned int width,
                               unsigned int height);
 
@@ -121,32 +152,11 @@ namespace OrthancStone
                      unsigned int height,
                      bool allowDpiScaling = true);
 
-    SdlCairoViewport(const char* title,
-                     unsigned int width,
-                     unsigned int height,
-                     boost::shared_ptr<Scene2D>& scene,
-                     bool allowDpiScaling = true);
-
     ~SdlCairoViewport();
 
-    virtual SdlWindow& GetWindow() ORTHANC_OVERRIDE
-    {
-      return window_;
-    }
-    
     virtual void Refresh() ORTHANC_OVERRIDE;
 
     virtual void UpdateSize(unsigned int width,
                             unsigned int height) ORTHANC_OVERRIDE;
-
-    virtual bool HasCompositor() const ORTHANC_OVERRIDE
-    {
-      return true;
-    }
-
-    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
-    {
-      return compositor_;
-    }
   };
 }

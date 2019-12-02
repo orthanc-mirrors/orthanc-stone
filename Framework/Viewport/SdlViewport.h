@@ -41,27 +41,38 @@
 #include "../Scene2D/CairoCompositor.h"
 #include "ViewportBase.h"
 
+#include <SDL_events.h>
+
 namespace OrthancStone
 {
   class SdlViewport : public ViewportBase
   {
-  protected:
-    boost::mutex  mutex_;
+  private:
+    uint32_t  refreshEvent_;
 
+  protected:
+    void SendRefreshEvent();
+    
   public:
-    SdlViewport()
+    SdlViewport();
+
+    bool IsRefreshEvent(const SDL_Event& event) const
     {
+      return (event.type == refreshEvent_);
     }
 
     virtual void UpdateSize(unsigned int width,
                             unsigned int height) = 0;
+
+    virtual void ToggleMaximize() = 0;
   };
 
 
   class SdlOpenGLViewport : public SdlViewport
   {
   private:
-    SdlOpenGLContext  context_;
+    boost::mutex                     mutex_;
+    SdlOpenGLContext                 context_;
     std::auto_ptr<OpenGLCompositor>  compositor_;
 
     class SdlLock : public LockBase
@@ -95,7 +106,9 @@ namespace OrthancStone
                       unsigned int height,
                       bool allowDpiScaling = true);
 
-    virtual void Refresh() ORTHANC_OVERRIDE;
+    virtual void Invalidate() ORTHANC_OVERRIDE;
+
+    virtual void Paint() ORTHANC_OVERRIDE;
 
     virtual ILock* Lock() ORTHANC_OVERRIDE
     {
@@ -105,6 +118,12 @@ namespace OrthancStone
     virtual void UpdateSize(unsigned int width, unsigned int height) ORTHANC_OVERRIDE
     {
       // nothing to do in OpenGL, the OpenGLCompositor::UpdateSize will be called automatically
+    }
+
+    virtual void ToggleMaximize() ORTHANC_OVERRIDE
+    {
+      boost::mutex::scoped_lock lock(mutex_);
+      context_.ToggleMaximize();
     }
   };
 
@@ -137,14 +156,14 @@ namespace OrthancStone
       }
     };
  
+    boost::mutex      mutex_;
     SdlWindow         window_;
     CairoCompositor   compositor_;
     SDL_Surface*      sdlSurface_;
 
-    void RefreshInternal();
+    void InvalidateInternal();
     
-    void UpdateSdlSurfaceSize(unsigned int width,
-                              unsigned int height);
+    void CreateSdlSurfaceFromCompositor();
 
   public:
     SdlCairoViewport(const char* title,
@@ -154,9 +173,22 @@ namespace OrthancStone
 
     ~SdlCairoViewport();
 
-    virtual void Refresh() ORTHANC_OVERRIDE;
+    virtual void Invalidate() ORTHANC_OVERRIDE;
+
+    virtual void Paint() ORTHANC_OVERRIDE;
+
+    virtual ILock* Lock() ORTHANC_OVERRIDE
+    {
+      return new SdlLock(*this);
+    }
 
     virtual void UpdateSize(unsigned int width,
                             unsigned int height) ORTHANC_OVERRIDE;
+
+    virtual void ToggleMaximize() ORTHANC_OVERRIDE
+    {
+      boost::mutex::scoped_lock lock(mutex_);
+      window_.ToggleMaximize();
+    }
   };
 }

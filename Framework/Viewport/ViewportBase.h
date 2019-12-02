@@ -49,6 +49,8 @@ namespace OrthancStone
       }
 
       virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) ORTHANC_OVERRIDE;
+
+      virtual void FitContent() ORTHANC_OVERRIDE;
     };
 
     Scene2D& GetScene()

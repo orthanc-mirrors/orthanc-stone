@@ -156,7 +156,14 @@ namespace OrthancStone
 
   void SdlWindow::Render(SDL_Surface* surface)
   {
-    //SDL_RenderClear(renderer_);
+    /**
+     * "You are strongly encouraged to call SDL_RenderClear() to
+     * initialize the backbuffer before starting each new frame's
+     * drawing, even if you plan to overwrite every pixel."
+     * https://wiki.libsdl.org/SDL_RenderPresent
+     **/
+    SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+    SDL_RenderClear(renderer_);  // Clear the entire screen to our selected color
 
     SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer_, surface);
     if (texture != NULL)

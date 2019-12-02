@@ -54,13 +54,23 @@ namespace OrthancStone
       virtual bool HasCompositor() const = 0;
 
       virtual ICompositor& GetCompositor() = 0;
+
+      virtual void FitContent() = 0;
     };   
     
     virtual ~IViewport()
     {
     }
 
-    virtual void Refresh() = 0;
+    // Can be invoked from any thread (notably from the thread of the
+    // Stone context)
+    virtual void Invalidate() = 0;
+
+    // Must be invoked from the main (GUI) thread
+    virtual void Paint() = 0;
+
+    virtual void UpdateSize(unsigned int width,
+                            unsigned int height) = 0;
 
     virtual ILock* Lock() = 0;
   };

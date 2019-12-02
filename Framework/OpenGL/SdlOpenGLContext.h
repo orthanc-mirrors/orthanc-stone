@@ -64,6 +64,11 @@ namespace OrthancStone
     virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE;
 
     virtual unsigned int GetCanvasHeight() const ORTHANC_OVERRIDE;
+
+    void ToggleMaximize()
+    {
+      window_.ToggleMaximize();
+    }
   };
 }
 

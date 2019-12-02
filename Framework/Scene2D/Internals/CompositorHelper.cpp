@@ -115,7 +115,7 @@ namespace OrthancStone
       {
         // This layer has already been rendered
         assert(found->second->GetLastRevision() <= layer.GetRevision());
-        
+
         if (found->second->GetLastRevision() < layer.GetRevision())
         {
           found->second->UpdateRenderer();

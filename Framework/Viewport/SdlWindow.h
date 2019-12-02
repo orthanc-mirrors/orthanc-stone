@@ -58,6 +58,11 @@ namespace OrthancStone
 
     unsigned int GetHeight() const;
 
+    /**
+     * WARNING: "Refresh()" cannot only be called from the main SDL
+     * thread, in which the window was created. Otherwise, the
+     * renderer displays nothing!
+     **/
     void Render(struct SDL_Surface* surface);
 
     void ToggleMaximize();

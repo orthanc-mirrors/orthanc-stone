@@ -26,6 +26,7 @@
 namespace OrthancStone
 {
   PointerEvent::PointerEvent() :
+    button_(MouseButton_None),
     hasAltModifier_(false),
     hasControlModifier_(false),
     hasShiftModifier_(false)

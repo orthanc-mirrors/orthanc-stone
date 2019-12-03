@@ -23,13 +23,35 @@
 #include "PredeclaredTypes.h"
 
 #include "../Viewport/IViewport.h"
-#include "../Scene2D/PointerEvent.h"
 #include "../Scene2DViewport/IFlexiblePointerTracker.h"
 
+#include <boost/enable_shared_from_this.hpp>
 #include <stack>
 
 namespace OrthancStone
 {
+  // TODO - Move this to another file
+  class IViewportInteractor : public boost::noncopyable
+  {
+  public:
+    virtual ~IViewportInteractor()
+    {
+    }
+
+    virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<ViewportController> controller,
+                                                   const PointerEvent& event) = 0;
+  };
+
+
+  // TODO - Move this to another file
+  class DefaultViewportInteractor : public IViewportInteractor
+  {
+  public:
+    virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<ViewportController> controller,
+                                                   const PointerEvent& event) ORTHANC_OVERRIDE;
+  };
+
+
   class UndoStack;
 
   const double ARC_RADIUS_CANVAS_COORD = 30.0;
@@ -74,23 +96,20 @@ namespace OrthancStone
   Each canvas or other GUI area where we want to display a 2D image, either 
   directly or through slicing must be assigned a ViewportController.
   */
-  class ViewportController : public IObservable
+  class ViewportController : 
+    public IObservable,
+    public boost::enable_shared_from_this<ViewportController>
   {
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, \
-      SceneTransformChanged, ViewportController);
+                                        SceneTransformChanged, ViewportController);
 
     ViewportController(boost::weak_ptr<UndoStack> undoStackW,
-                       IViewport& viewport);
-
+                       boost::shared_ptr<IViewport> viewport);
 
     ~ViewportController();
 
-    /** 
-    This method is called by the GUI system and should update/delete the
-    current tracker
-    */
-    bool HandlePointerEvent(PointerEvent e);
+    void SetInteractor(boost::shared_ptr<IViewportInteractor> interactor);
 
     /**
     This method returns the list of measure tools containing the supplied point
@@ -109,7 +128,7 @@ namespace OrthancStone
     With this method, the object takes ownership of the supplied tracker and
     updates it according to user interaction
     */
-    void SetActiveTracker(boost::shared_ptr<IFlexiblePointerTracker> tracker);
+    void AcquireActiveTracker(IFlexiblePointerTracker* tracker);
 
     /** Forwarded to the underlying scene */
     AffineTransform2D GetCanvasToSceneTransform() const;
@@ -121,7 +140,6 @@ namespace OrthancStone
     void SetSceneToCanvasTransform(const AffineTransform2D& transform);
 
     /** Forwarded to the underlying scene, and broadcasted to the observers */
-    void FitContent(unsigned int canvasWidth, unsigned int canvasHeight);
     void FitContent();
 
     /** Adds a new measure tool */
@@ -174,24 +192,29 @@ namespace OrthancStone
 
     IViewport& GetViewport() const
     {
-      return viewport_;
+      return *viewport_;
     }
+
+
+    // Must be expressed in canvas coordinates
+    void HandleMousePress(const PointerEvent& event);
+
+    // Must be expressed in canvas coordinates
+    void HandleMouseMove(const PointerEvent& event);
+
+    // Must be expressed in canvas coordinates
+    void HandleMouseRelease(const PointerEvent& event);
 
   private:
     double GetCanvasToSceneFactor() const;
 
-    boost::weak_ptr<UndoStack>                   undoStackW_;
-
-    boost::shared_ptr<UndoStack>                 GetUndoStack();
-    boost::shared_ptr<const UndoStack>           GetUndoStack() const;
-
-    std::vector<boost::shared_ptr<MeasureTool> > measureTools_;
-    boost::shared_ptr<IFlexiblePointerTracker>   tracker_;
+    boost::weak_ptr<UndoStack>                    undoStackW_;  // Global stack, possibly shared by all viewports
+    boost::shared_ptr<IViewport>                  viewport_;
+    boost::shared_ptr<IViewportInteractor>        interactor_;   // Application-specific factory of trackers
+    std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;
+    boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Can't this be a "std::auto_ptr"?
     
     // this is cached
-    mutable double              canvasToSceneFactor_;
-    
-    // Refactoring on 2019-07-10: Removing shared_ptr from scene
-    IViewport&      viewport_;
+    double  canvasToSceneFactor_;    
   };
 }

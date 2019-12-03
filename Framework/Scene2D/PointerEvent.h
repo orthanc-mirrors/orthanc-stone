@@ -31,6 +31,7 @@ namespace OrthancStone
   class PointerEvent : public boost::noncopyable
   {
   private:
+    MouseButton                button_;
     std::vector<ScenePoint2D>  positions_;
     bool                       hasAltModifier_;
     bool                       hasControlModifier_;
@@ -87,6 +88,16 @@ namespace OrthancStone
     bool HasShiftModifier() const
     {
       return hasShiftModifier_;
+    }
+
+    void SetMouseButton(MouseButton button)
+    {
+      button_ = button;
+    }
+
+    MouseButton GetMouseButton() const
+    {
+      return button_;
     }
   };
 }

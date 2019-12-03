@@ -59,7 +59,8 @@ namespace OrthancStone
   {
     MouseButton_Left,
     MouseButton_Right,
-    MouseButton_Middle
+    MouseButton_Middle,
+    MouseButton_None   // For instance, because of touch event
   };
 
   enum MouseWheelDirection

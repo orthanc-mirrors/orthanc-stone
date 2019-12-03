@@ -420,7 +420,19 @@ namespace OrthancStone
         texture->SetCustomWindowing(data_.defaultWindowingCenter_,
                                     data_.defaultWindowingWidth_);
       }
-        
+      
+
+      if (data_.imageInformation_.GetPhotometricInterpretation()
+        == Orthanc::PhotometricInterpretation_Monochrome1)
+      {
+        texture->SetInverted(true);
+      }
+      else if (data_.imageInformation_.GetPhotometricInterpretation()
+        == Orthanc::PhotometricInterpretation_Monochrome2)
+      {
+        texture->SetInverted(false);
+      }
+
       return texture.release();
     }
   }

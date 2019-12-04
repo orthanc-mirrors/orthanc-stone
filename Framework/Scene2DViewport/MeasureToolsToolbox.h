@@ -31,9 +31,9 @@ namespace OrthancStone
   square sides are parallel to the canvas boundaries.
   */
   void AddSquare(PolylineSceneLayer::Chain& chain,
-                 const Scene2D&     scene,
-                 const ScenePoint2D& centerS,
-                 const double& sideLengthS);
+                 const Scene2D&             scene,
+                 const ScenePoint2D&        centerS,
+                 const double&              sideLengthS);
 
   /**
     Creates an arc centered on c that goes
@@ -123,10 +123,9 @@ namespace OrthancStone
     Warning: the existing chain content will be wiped out.
   */
   void AddCircle(PolylineSceneLayer::Chain& chain,
-    const Scene2D& scene,
-    const ScenePoint2D& centerS,
-    const double& radiusS,
-    const int           numSubdivisions = 63);
+                 const ScenePoint2D&        centerS,
+                 const double&              radiusS,
+                 const int                  numSubdivisions = 63);
 
   /**
     Adds or subtracts 2*pi as many times as need to shift the specified
@@ -146,9 +145,7 @@ namespace OrthancStone
 
   */
   double MeasureAngle(
-    const ScenePoint2D& p1
-    , const ScenePoint2D& c
-    , const ScenePoint2D& p2);
+    const ScenePoint2D& p1, const ScenePoint2D& c, const ScenePoint2D& p2);
 
   /**
   RadiansToDegrees

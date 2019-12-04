@@ -34,19 +34,21 @@ namespace OrthancStone
   private:
     uint64_t        revision_;
     bool            linearInterpolation_;
-    bool            hasWindowing_;
+    bool            hasWindowingOverride_;
     ImageWindowing  windowing_;
     float           customWindowWidth_;
     float           customWindowCenter_;
+    bool            hasInversionOverride_;
     bool            inverted_;
     
   public:
     GrayscaleStyleConfigurator() :
       revision_(0),
       linearInterpolation_(false),
-      hasWindowing_(false),
+      hasWindowingOverride_(false),
       customWindowWidth_(0),
       customWindowCenter_(0),
+      hasInversionOverride_(false),
       inverted_(false)
     {
     }

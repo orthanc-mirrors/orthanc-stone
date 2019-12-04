@@ -1,8 +1,8 @@
 #pragma once
 
-#include <boost/noncopyable.hpp>
+#include "Scene2D.h"
+
 #include <EmbeddedResources.h>
-#include <Core/Enumerations.h>
 
 namespace OrthancStone
 {
@@ -17,7 +17,14 @@ namespace OrthancStone
 
     virtual unsigned int GetCanvasHeight() const = 0;
 
-    virtual void Refresh() = 0;
+    /**
+     * WARNING: "Refresh()" must always be called with the same
+     * scene. If the scene changes, a call to "ResetScene()" must be
+     * done to reset the tracking of the revisions of the layers.
+     **/
+    virtual void Refresh(const Scene2D& scene) = 0;
+
+    virtual void ResetScene() = 0;
 
 #if ORTHANC_ENABLE_LOCALE == 1
     virtual void SetFont(size_t index,

@@ -50,7 +50,7 @@ namespace OrthancStone
                                        bool allowDpiScaling) :
     context_(title, width, height, allowDpiScaling)
   {
-    compositor_.reset(new OpenGLCompositor(context_, GetScene()));
+    compositor_.reset(new OpenGLCompositor(context_));
   }
 
   void SdlOpenGLViewport::Invalidate()
@@ -61,7 +61,7 @@ namespace OrthancStone
   void SdlOpenGLViewport::Paint()
   {
     boost::mutex::scoped_lock lock(mutex_);
-    compositor_->Refresh();
+    compositor_->Refresh(GetScene());
   }
 
 
@@ -70,7 +70,7 @@ namespace OrthancStone
                                      unsigned int height,
                                      bool allowDpiScaling) :
     window_(title, width, height, false /* enable OpenGL */, allowDpiScaling),
-    compositor_(GetScene(), width, height),
+    compositor_(width, height),
     sdlSurface_(NULL)
   {
   }
@@ -85,7 +85,7 @@ namespace OrthancStone
   
   void SdlCairoViewport::InvalidateInternal()  // Assumes that the mutex is locked
   {
-    compositor_.Refresh();
+    compositor_.Refresh(GetScene());
     CreateSdlSurfaceFromCompositor();
   }
 

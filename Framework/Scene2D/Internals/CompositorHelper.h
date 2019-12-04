@@ -64,9 +64,9 @@ namespace OrthancStone
 
       typedef std::map<int, Item*>  Content;
 
-      const Scene2D&     scene_;
       IRendererFactory&  factory_;
       Content            content_;
+      const Scene2D*     lastScene_;   // This is only a safeguard, don't use it!
 
       // Only valid during a call to Refresh()
       AffineTransform2D  sceneTransform_;
@@ -74,21 +74,22 @@ namespace OrthancStone
       unsigned int       canvasHeight_;
       
     protected:
-      virtual void Visit(const ISceneLayer& layer,
+      virtual void Visit(const Scene2D& scene,
+                         const ISceneLayer& layer,
                          uint64_t layerIdentifier,
                          int depth);
 
     public:
-      CompositorHelper(const Scene2D& scene,
-                       IRendererFactory& factory) :
-        scene_(scene),
-        factory_(factory)
+      CompositorHelper(IRendererFactory& factory) :
+      factory_(factory),
+      lastScene_(NULL)
       {
       }
 
       ~CompositorHelper();
 
-      void Refresh(unsigned int canvasWidth,
+      void Refresh(const Scene2D& scene,
+                   unsigned int canvasWidth,
                    unsigned int canvasHeight);
     };
   }

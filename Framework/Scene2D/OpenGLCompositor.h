@@ -37,27 +37,31 @@ namespace OrthancStone
 
     typedef std::map<size_t, Font*>  Fonts;
 
-    OpenGL::IOpenGLContext&               context_;
-    Fonts                                 fonts_;
-    Internals::CompositorHelper           helper_;
-    Internals::OpenGLColorTextureProgram  colorTextureProgram_;
-    Internals::OpenGLFloatTextureProgram  floatTextureProgram_;
-    Internals::OpenGLLinesProgram         linesProgram_;
-    Internals::OpenGLTextProgram          textProgram_;
-    unsigned int                          canvasWidth_;
-    unsigned int                          canvasHeight_;
+    OpenGL::IOpenGLContext&                     context_;
+    Fonts                                       fonts_;
+    std::auto_ptr<Internals::CompositorHelper>  helper_;
+    Internals::OpenGLColorTextureProgram        colorTextureProgram_;
+    Internals::OpenGLFloatTextureProgram        floatTextureProgram_;
+    Internals::OpenGLLinesProgram               linesProgram_;
+    Internals::OpenGLTextProgram                textProgram_;
+    unsigned int                                canvasWidth_;
+    unsigned int                                canvasHeight_;
 
     const Font* GetFont(size_t fontIndex) const;
 
     virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer) ORTHANC_OVERRIDE;
 
   public:
-    OpenGLCompositor(OpenGL::IOpenGLContext& context,
-                     const Scene2D& scene);
+    OpenGLCompositor(OpenGL::IOpenGLContext& context);
 
     virtual ~OpenGLCompositor();
 
-    virtual void Refresh() ORTHANC_OVERRIDE;
+    virtual void Refresh(const Scene2D& scene) ORTHANC_OVERRIDE;
+
+    virtual void ResetScene() ORTHANC_OVERRIDE
+    {
+      helper_.reset(new Internals::CompositorHelper(*this));
+    }
 
     void SetFont(size_t index, const GlyphBitmapAlphabet& dict);
 

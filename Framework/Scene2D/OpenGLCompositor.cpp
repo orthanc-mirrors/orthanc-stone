@@ -128,10 +128,8 @@ namespace OrthancStone
     }
   }
 
-  OpenGLCompositor::OpenGLCompositor(OpenGL::IOpenGLContext& context,
-                                     const Scene2D& scene) :
+  OpenGLCompositor::OpenGLCompositor(OpenGL::IOpenGLContext& context) :
     context_(context),
-    helper_(scene, *this),
     colorTextureProgram_(context),
     floatTextureProgram_(context),
     linesProgram_(context),
@@ -139,6 +137,7 @@ namespace OrthancStone
     canvasWidth_(0),
     canvasHeight_(0)
   {
+    ResetScene();
   }
 
   OpenGLCompositor::~OpenGLCompositor()
@@ -154,7 +153,7 @@ namespace OrthancStone
     }
   }
 
-  void OpenGLCompositor::Refresh()
+  void OpenGLCompositor::Refresh(const Scene2D& scene)
   {
     if (!context_.IsContextLost())
     {
@@ -167,11 +166,10 @@ namespace OrthancStone
       glClearColor(0, 0, 0, 1);
       glClear(GL_COLOR_BUFFER_BIT);
 
-      helper_.Refresh(canvasWidth_, canvasHeight_);
+      helper_->Refresh(scene, canvasWidth_, canvasHeight_);
 
       context_.SwapBuffer();
     }
-
   }
 
   void OpenGLCompositor::SetFont(size_t index,

@@ -40,7 +40,8 @@ namespace OrthancStone
       {
       }
 
-      virtual void Visit(const ISceneLayer& layer,
+      virtual void Visit(const Scene2D& scene,
+                         const ISceneLayer& layer,
                          uint64_t layerIdentifier,
                          int depth) = 0;
     };

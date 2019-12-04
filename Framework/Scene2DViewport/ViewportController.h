@@ -109,8 +109,6 @@ namespace OrthancStone
 
     ~ViewportController();
 
-    void SetInteractor(boost::shared_ptr<IViewportInteractor> interactor);
-
     /**
     This method returns the list of measure tools containing the supplied point
     (in scene coords). A tracker can then be requested from the chosen 
@@ -197,7 +195,8 @@ namespace OrthancStone
 
 
     // Must be expressed in canvas coordinates
-    void HandleMousePress(const PointerEvent& event);
+    void HandleMousePress(IViewportInteractor& interactor,
+                          const PointerEvent& event);
 
     // Must be expressed in canvas coordinates
     void HandleMouseMove(const PointerEvent& event);
@@ -210,7 +209,6 @@ namespace OrthancStone
 
     boost::weak_ptr<UndoStack>                    undoStackW_;  // Global stack, possibly shared by all viewports
     boost::shared_ptr<IViewport>                  viewport_;
-    boost::shared_ptr<IViewportInteractor>        interactor_;   // Application-specific factory of trackers
     std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;
     boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Can't this be a "std::auto_ptr"?
     

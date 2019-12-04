@@ -72,18 +72,10 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
-
-    interactor_.reset(new DefaultViewportInteractor);
   }
  
   ViewportController::~ViewportController()
   {
-  }
-
-  void ViewportController::SetInteractor(boost::shared_ptr<IViewportInteractor> interactor)
-  {
-    activeTracker_.reset();
-    interactor_ = interactor;
   }
 
   void ViewportController::PushCommand(boost::shared_ptr<MeasureCommand> command)
@@ -251,7 +243,8 @@ namespace OrthancStone
   }
 
 
-  void ViewportController::HandleMousePress(const PointerEvent& event)
+  void ViewportController::HandleMousePress(IViewportInteractor& interactor,
+                                            const PointerEvent& event)
   {
     if (activeTracker_)
     {
@@ -276,14 +269,7 @@ namespace OrthancStone
       }
 
       // No measure tool, create new tracker from the interactor
-      if (interactor_)
-      {
-        activeTracker_.reset(interactor_->CreateTracker(shared_from_this(), event));
-      }
-      else
-      {
-        activeTracker_.reset();
-      }
+      activeTracker_.reset(interactor.CreateTracker(shared_from_this(), event));
     }
   }
 

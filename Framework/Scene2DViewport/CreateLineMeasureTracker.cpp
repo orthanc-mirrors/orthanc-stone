@@ -36,8 +36,7 @@ namespace OrthancStone
       boost::shared_ptr<ViewportController> controller = controllerW.lock();
       if (controller)
       {
-        std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
-        point = e.GetMainPosition().Apply(lock->GetScene().GetCanvasToSceneTransform());
+        point = e.GetMainPosition().Apply(controller->GetScene().GetCanvasToSceneTransform());
       }
     }
 
@@ -61,9 +60,8 @@ namespace OrthancStone
     boost::shared_ptr<ViewportController> controller = controllerW_.lock();
     if (controller)
     {
-      std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
       ScenePoint2D scenePos = event.GetMainPosition().Apply(
-        lock->GetScene().GetCanvasToSceneTransform());
+        controller->GetScene().GetCanvasToSceneTransform());
       
       //LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
       //  "scenePos.GetY() = " << scenePos.GetY();
@@ -95,5 +93,4 @@ namespace OrthancStone
   {
     return boost::dynamic_pointer_cast<CreateLineMeasureCommand>(command_);
   }
-
 }

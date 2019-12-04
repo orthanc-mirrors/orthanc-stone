@@ -108,10 +108,8 @@ namespace OrthancStone
 
   LineMeasureTool::LineHighlightArea LineMeasureTool::LineHitTest(ScenePoint2D p) const
   {
-    std::auto_ptr<IViewport::ILock> lock(GetController()->GetViewport().Lock());
-    
     const double pixelToScene =
-      lock->GetScene().GetCanvasToSceneTransform().ComputeZoom();
+      GetController()->GetScene().GetCanvasToSceneTransform().ComputeZoom();
     const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD * pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD;
 
     const double sqDistanceFromStart = ScenePoint2D::SquaredDistancePtPt(p, start_);
@@ -136,10 +134,8 @@ namespace OrthancStone
 
   boost::shared_ptr<IFlexiblePointerTracker> LineMeasureTool::CreateEditionTracker(const PointerEvent& e)
   {
-    std::auto_ptr<IViewport::ILock> lock(GetController()->GetViewport().Lock());
-    
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      lock->GetScene().GetCanvasToSceneTransform());
+      GetController()->GetScene().GetCanvasToSceneTransform());
 
     if (!HitTest(scenePos))
       return boost::shared_ptr<IFlexiblePointerTracker>();
@@ -180,8 +176,6 @@ namespace OrthancStone
     {
       if (IsEnabled())
       {
-        std::auto_ptr<IViewport::ILock> lock(GetController()->GetViewport().Lock());
-    
         layerHolder_->CreateLayersIfNeeded();
 
         {
@@ -216,7 +210,7 @@ namespace OrthancStone
                 PolylineSceneLayer::Chain chain;
               
                 //TODO: take DPI into account
-                AddSquare(chain, lock->GetScene(), start_, 
+                AddSquare(chain, GetController()->GetScene(), start_, 
                           GetController()->GetHandleSideLengthS());
               
                 if (lineHighlightArea_ == LineHighlightArea_Start)
@@ -229,7 +223,7 @@ namespace OrthancStone
                 PolylineSceneLayer::Chain chain;
               
                 //TODO: take DPI into account
-                AddSquare(chain, lock->GetScene(), end_, 
+                AddSquare(chain, GetController()->GetScene(), end_, 
                           GetController()->GetHandleSideLengthS());
               
                 if (lineHighlightArea_ == LineHighlightArea_End)
@@ -256,10 +250,10 @@ namespace OrthancStone
 
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
           SetTextLayerOutlineProperties(
-            lock->GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY), 0);
+            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY), 0);
 #else
           SetTextLayerProperties(
-            lock->GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY), 0);
+            GetController()->GetScene(), layerHolder_, buf, ScenePoint2D(midX, midY), 0);
 #endif
         }
       }

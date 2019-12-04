@@ -62,8 +62,7 @@ namespace OrthancStone
 
     if (controller)
     {
-      std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
-      originalClickPosition_ = e.GetMainPosition().Apply(lock->GetScene().GetCanvasToSceneTransform());
+      originalClickPosition_ = e.GetMainPosition().Apply(controller->GetScene().GetCanvasToSceneTransform());
     }
   }
 

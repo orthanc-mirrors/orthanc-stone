@@ -47,8 +47,6 @@ namespace OrthancStone
       {
       }
 
-      virtual Scene2D& GetScene() = 0;
-
       // Get the center of the given pixel, in canvas coordinates
       virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) = 0;
 
@@ -56,7 +54,7 @@ namespace OrthancStone
 
       virtual ICompositor& GetCompositor() = 0;
 
-      virtual void FitContent() = 0;
+      virtual void FitContent(Scene2D& scene) = 0;
     };   
     
     virtual ~IViewport()
@@ -68,7 +66,7 @@ namespace OrthancStone
     virtual void Invalidate() = 0;
 
     // Must be invoked from the main (GUI) thread
-    virtual void Paint() = 0;
+    virtual void Paint(const Scene2D& scene) = 0;
 
     virtual void UpdateSize(unsigned int width,
                             unsigned int height) = 0;

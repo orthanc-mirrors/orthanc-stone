@@ -47,22 +47,20 @@ namespace OrthancStone
 
     if (controller)
     {
-      std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
-    
       assert(baseLayerIndex_ == -1);
 
-      baseLayerIndex_ = lock->GetScene().GetMaxDepth() + 100;
+      baseLayerIndex_ = controller->GetScene().GetMaxDepth() + 100;
 
       for (int i = 0; i < polylineLayerCount_; ++i)
       {
         std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
-        lock->GetScene().SetLayer(baseLayerIndex_ + i, layer.release());
+        controller->GetScene().SetLayer(baseLayerIndex_ + i, layer.release());
       }
 
       for (int i = 0; i < textLayerCount_; ++i)
       {
         std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-        lock->GetScene().SetLayer(
+        controller->GetScene().SetLayer(
           baseLayerIndex_ + polylineLayerCount_ + i,
           layer.release());
       }
@@ -92,12 +90,10 @@ namespace OrthancStone
 
     if (controller)
     {
-      std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
-    
       for (int i = 0; i < textLayerCount_ + polylineLayerCount_; ++i)
       {
-        ORTHANC_ASSERT(lock->GetScene().HasLayer(baseLayerIndex_ + i), "No layer");
-        lock->GetScene().DeleteLayer(baseLayerIndex_ + i);
+        ORTHANC_ASSERT(controller->GetScene().HasLayer(baseLayerIndex_ + i), "No layer");
+        controller->GetScene().DeleteLayer(baseLayerIndex_ + i);
       }
       baseLayerIndex_ = -1;
     }
@@ -109,13 +105,11 @@ namespace OrthancStone
 
     if (controller)
     {
-      std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
-
       using namespace Orthanc;
       ORTHANC_ASSERT(baseLayerIndex_ != -1);
-      ORTHANC_ASSERT(lock->GetScene().HasLayer(GetPolylineLayerIndex(index)));
+      ORTHANC_ASSERT(controller->GetScene().HasLayer(GetPolylineLayerIndex(index)));
       ISceneLayer* layer =
-        &(lock->GetScene().GetLayer(GetPolylineLayerIndex(index)));
+        &(controller->GetScene().GetLayer(GetPolylineLayerIndex(index)));
       
       PolylineSceneLayer* concreteLayer =
         dynamic_cast<PolylineSceneLayer*>(layer);
@@ -135,13 +129,11 @@ namespace OrthancStone
 
     if (controller)
     {
-      std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
-
       using namespace Orthanc;
       ORTHANC_ASSERT(baseLayerIndex_ != -1);
-      ORTHANC_ASSERT(lock->GetScene().HasLayer(GetTextLayerIndex(index)));
+      ORTHANC_ASSERT(controller->GetScene().HasLayer(GetTextLayerIndex(index)));
       ISceneLayer* layer =
-        &(lock->GetScene().GetLayer(GetTextLayerIndex(index)));
+        &(controller->GetScene().GetLayer(GetTextLayerIndex(index)));
       
       TextSceneLayer* concreteLayer =
         dynamic_cast<TextSceneLayer*>(layer);

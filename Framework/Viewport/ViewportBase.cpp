@@ -42,12 +42,12 @@ namespace OrthancStone
   }
 
 
-  void ViewportBase::LockBase::FitContent()
+  void ViewportBase::LockBase::FitContent(Scene2D& scene)
   {
     if (HasCompositor())
     {
       ICompositor& compositor = GetCompositor();
-      GetScene().FitContent(compositor.GetCanvasWidth(), compositor.GetCanvasHeight());
+      scene.FitContent(compositor.GetCanvasWidth(), compositor.GetCanvasHeight());
     }
   }
 }

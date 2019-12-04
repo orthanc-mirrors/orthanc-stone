@@ -108,7 +108,7 @@ namespace OrthancStone
 
     virtual void Invalidate() ORTHANC_OVERRIDE;
 
-    virtual void Paint() ORTHANC_OVERRIDE;
+    virtual void Paint(const Scene2D& scene) ORTHANC_OVERRIDE;
 
     virtual ILock* Lock() ORTHANC_OVERRIDE
     {
@@ -161,8 +161,6 @@ namespace OrthancStone
     CairoCompositor   compositor_;
     SDL_Surface*      sdlSurface_;
 
-    void InvalidateInternal();
-    
     void CreateSdlSurfaceFromCompositor();
 
   public:
@@ -175,7 +173,7 @@ namespace OrthancStone
 
     virtual void Invalidate() ORTHANC_OVERRIDE;
 
-    virtual void Paint() ORTHANC_OVERRIDE;
+    virtual void Paint(const Scene2D& scene) ORTHANC_OVERRIDE;
 
     virtual ILock* Lock() ORTHANC_OVERRIDE
     {

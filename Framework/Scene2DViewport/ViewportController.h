@@ -204,6 +204,16 @@ namespace OrthancStone
     // Must be expressed in canvas coordinates
     void HandleMouseRelease(const PointerEvent& event);
 
+    const Scene2D& GetScene() const
+    {
+      return scene_;
+    }
+
+    Scene2D& GetScene()
+    {
+      return scene_;
+    }
+
   private:
     double GetCanvasToSceneFactor() const;
 
@@ -211,7 +221,9 @@ namespace OrthancStone
     boost::shared_ptr<IViewport>                  viewport_;
     std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;
     boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Can't this be a "std::auto_ptr"?
-    
+
+    Scene2D   scene_;
+
     // this is cached
     double  canvasToSceneFactor_;    
   };

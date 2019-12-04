@@ -36,8 +36,7 @@ namespace OrthancStone
     boost::shared_ptr<ViewportController> controller = controllerW_.lock();
     if (controller)
     {
-      std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
-      scenePos = e.GetMainPosition().Apply(lock->GetScene().GetCanvasToSceneTransform());
+      scenePos = e.GetMainPosition().Apply(controller->GetScene().GetCanvasToSceneTransform());
     }
 
     modifiedZone_ = dynamic_cast<AngleMeasureTool&>(*measureTool).AngleHitTest(scenePos);
@@ -55,9 +54,8 @@ namespace OrthancStone
     boost::shared_ptr<ViewportController> controller = controllerW_.lock();
     if (controller)
     {
-      std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
       ScenePoint2D scenePos = e.GetMainPosition().Apply(
-        lock->GetScene().GetCanvasToSceneTransform());
+        controller->GetScene().GetCanvasToSceneTransform());
 
       ScenePoint2D delta = scenePos - GetOriginalClickPosition();
 

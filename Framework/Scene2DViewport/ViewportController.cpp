@@ -169,24 +169,19 @@ namespace OrthancStone
 
   OrthancStone::AffineTransform2D ViewportController::GetCanvasToSceneTransform() const
   {
-    std::auto_ptr<IViewport::ILock> lock(viewport_->Lock());
-    return lock->GetScene().GetCanvasToSceneTransform();
+    return scene_.GetCanvasToSceneTransform();
   }
 
   OrthancStone::AffineTransform2D ViewportController::GetSceneToCanvasTransform() const
   {
-    std::auto_ptr<IViewport::ILock> lock(viewport_->Lock());
-    return lock->GetScene().GetSceneToCanvasTransform();
+    return scene_.GetSceneToCanvasTransform();
   }
 
   void ViewportController::SetSceneToCanvasTransform(const AffineTransform2D& transform)
   {
-    {
-      std::auto_ptr<IViewport::ILock> lock(viewport_->Lock());
-      lock->GetScene().SetSceneToCanvasTransform(transform);
-      canvasToSceneFactor_ = lock->GetScene().GetCanvasToSceneTransform().ComputeZoom();
-    }
-    
+    scene_.SetSceneToCanvasTransform(transform);
+
+    canvasToSceneFactor_ = scene_.GetCanvasToSceneTransform().ComputeZoom();
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
@@ -194,10 +189,10 @@ namespace OrthancStone
   {
     {
       std::auto_ptr<IViewport::ILock> lock(viewport_->Lock());
-      lock->FitContent();
-      canvasToSceneFactor_ = lock->GetScene().GetCanvasToSceneTransform().ComputeZoom();
+      lock->FitContent(scene_);
     }
 
+    canvasToSceneFactor_ = scene_.GetCanvasToSceneTransform().ComputeZoom();
     BroadcastMessage(SceneTransformChanged(*this));
   }
 

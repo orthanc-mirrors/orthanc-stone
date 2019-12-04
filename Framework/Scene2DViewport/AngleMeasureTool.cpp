@@ -131,10 +131,8 @@ namespace OrthancStone
 
   AngleMeasureTool::AngleHighlightArea AngleMeasureTool::AngleHitTest(ScenePoint2D p) const
   {
-    std::auto_ptr<IViewport::ILock> lock(GetController()->GetViewport().Lock());
-    
-    const double pixelToScene =
-      lock->GetScene().GetCanvasToSceneTransform().ComputeZoom();
+    const double pixelToScene = GetController()->GetScene().GetCanvasToSceneTransform().ComputeZoom();
+
     const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD * pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD;
 
     {
@@ -178,10 +176,8 @@ namespace OrthancStone
 
   boost::shared_ptr<IFlexiblePointerTracker> AngleMeasureTool::CreateEditionTracker(const PointerEvent& e)
   {
-    std::auto_ptr<IViewport::ILock> lock(GetController()->GetViewport().Lock());
-    
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      lock->GetScene().GetCanvasToSceneTransform());
+      GetController()->GetScene().GetCanvasToSceneTransform());
 
     if (!HitTest(scenePos))
       return boost::shared_ptr<IFlexiblePointerTracker>();
@@ -212,8 +208,6 @@ namespace OrthancStone
       boost::shared_ptr<ViewportController> controller = GetController();
       if (IsEnabled())
       {
-        std::auto_ptr<IViewport::ILock> lock(GetController()->GetViewport().Lock());
-    
         layerHolder_->CreateLayersIfNeeded();
 
         {
@@ -254,7 +248,7 @@ namespace OrthancStone
               {
                 PolylineSceneLayer::Chain chain;
                 //TODO: take DPI into account
-                AddSquare(chain, lock->GetScene(), side1End_, 
+                AddSquare(chain, controller->GetScene(), side1End_, 
                           GetController()->GetHandleSideLengthS());
               
                 if (angleHighlightArea_ == AngleHighlightArea_Side1End)
@@ -266,7 +260,7 @@ namespace OrthancStone
               {
                 PolylineSceneLayer::Chain chain;
                 //TODO: take DPI into account
-                AddSquare(chain, lock->GetScene(), side2End_, 
+                AddSquare(chain, controller->GetScene(), side2End_, 
                           GetController()->GetHandleSideLengthS());
 
                 if (angleHighlightArea_ == AngleHighlightArea_Side2End)
@@ -317,10 +311,10 @@ namespace OrthancStone
 
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
           SetTextLayerOutlineProperties(
-            lock->GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY), 0);
+            controller->GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY), 0);
 #else
           SetTextLayerProperties(
-            lock->GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY) , 0);
+            controller->GetScene(), layerHolder_, buf, ScenePoint2D(pointX, pointY) , 0);
 #endif
 
 #if 0

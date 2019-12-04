@@ -28,9 +28,6 @@ namespace OrthancStone
 {
   class ViewportBase : public IViewport
   {
-  private:
-    Scene2D  scene_;
-
   protected:
     class LockBase : public ILock
     {
@@ -43,19 +40,9 @@ namespace OrthancStone
       {
       }
 
-      virtual Scene2D& GetScene() ORTHANC_OVERRIDE
-      {
-        return that_.scene_;
-      }
-
       virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) ORTHANC_OVERRIDE;
 
-      virtual void FitContent() ORTHANC_OVERRIDE;
+      virtual void FitContent(Scene2D& scene) ORTHANC_OVERRIDE;
     };
-
-    Scene2D& GetScene()
-    {
-      return scene_;
-    }
   };
 }

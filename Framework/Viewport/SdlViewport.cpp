@@ -58,10 +58,10 @@ namespace OrthancStone
     SendRefreshEvent();
   }
 
-  void SdlOpenGLViewport::Paint()
+  void SdlOpenGLViewport::Paint(const Scene2D& scene)
   {
     boost::mutex::scoped_lock lock(mutex_);
-    compositor_->Refresh(GetScene());
+    compositor_->Refresh(scene);
   }
 
 
@@ -83,15 +83,12 @@ namespace OrthancStone
     }
   }
   
-  void SdlCairoViewport::InvalidateInternal()  // Assumes that the mutex is locked
-  {
-    compositor_.Refresh(GetScene());
-    CreateSdlSurfaceFromCompositor();
-  }
-
-  void SdlCairoViewport::Paint()
+  void SdlCairoViewport::Paint(const Scene2D& scene)
   {
     boost::mutex::scoped_lock lock(mutex_);
+
+    compositor_.Refresh(scene);
+    CreateSdlSurfaceFromCompositor();
     
     if (sdlSurface_ != NULL)
     {
@@ -101,20 +98,18 @@ namespace OrthancStone
 
   void SdlCairoViewport::Invalidate()
   {
-    {
-      boost::mutex::scoped_lock lock(mutex_);
-      InvalidateInternal();
-    }
-
     SendRefreshEvent();
   }
 
   void SdlCairoViewport::UpdateSize(unsigned int width,
                                     unsigned int height)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-    compositor_.UpdateSize(width, height);
-    InvalidateInternal();
+    {
+      boost::mutex::scoped_lock lock(mutex_);
+      compositor_.UpdateSize(width, height);
+    }
+
+    Invalidate();
   }
   
   void SdlCairoViewport::CreateSdlSurfaceFromCompositor()  // Assumes that the mutex is locked

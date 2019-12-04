@@ -38,8 +38,7 @@ namespace OrthancStone
       boost::shared_ptr<ViewportController> controller = controllerW.lock();
       if (controller)
       {
-        std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
-        scenePos = e.GetMainPosition().Apply(lock->GetScene().GetCanvasToSceneTransform());
+        scenePos = e.GetMainPosition().Apply(controller->GetScene().GetCanvasToSceneTransform());
       }
     }
 
@@ -58,10 +57,9 @@ namespace OrthancStone
     boost::shared_ptr<ViewportController> controller = controllerW_.lock();
     if (controller)
     {
-      std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
       ScenePoint2D scenePos = e.GetMainPosition().Apply(
-        lock->GetScene().GetCanvasToSceneTransform());
-
+        controller->GetScene().GetCanvasToSceneTransform());
+      
       ScenePoint2D delta = scenePos - GetOriginalClickPosition();
 
       boost::shared_ptr<LineMeasureToolMemento> memento =

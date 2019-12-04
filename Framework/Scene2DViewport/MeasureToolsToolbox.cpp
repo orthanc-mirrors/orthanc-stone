@@ -65,6 +65,11 @@ namespace OrthancStone
     const ScenePoint2D& centerS,
     const double& sideLengthS)
   {
+    /*
+    The scene is required here because we need to draw the square with its
+    sides parallel to the SCREEN axis, not the SCENE axis
+    */
+
     // get the scaling factor 
     const double sceneToCanvas =
       scene.GetSceneToCanvasTransform().ComputeZoom();
@@ -204,9 +209,9 @@ namespace OrthancStone
 #endif
 
   void AddCircle(PolylineSceneLayer::Chain& chain,
-    const ScenePoint2D& centerS,
-    const double& radiusS,
-    const int           numSubdivisions)
+                 const ScenePoint2D&        centerS,
+                 const double&              radiusS,
+                 const int                  numSubdivisions)
   {
     //ScenePoint2D centerC = centerS.Apply(scene.GetSceneToCanvasTransform());
     //TODO: take DPI into account

@@ -34,10 +34,11 @@ namespace OrthancStone
   private:
     uint64_t        revision_;
     bool            linearInterpolation_;
-    bool            hasWindowing_;
+    bool            hasWindowingOverride_;
     ImageWindowing  windowing_;
     float           customWindowWidth_;
     float           customWindowCenter_;
+    bool            hasInversionOverride_;
     bool            inverted_;
     bool            applyLog_;
     

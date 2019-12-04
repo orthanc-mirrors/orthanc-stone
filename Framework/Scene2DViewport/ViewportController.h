@@ -39,6 +39,7 @@ namespace OrthancStone
     }
 
     virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<ViewportController> controller,
+                                                   IViewport& viewport,
                                                    const PointerEvent& event) = 0;
   };
 
@@ -48,6 +49,7 @@ namespace OrthancStone
   {
   public:
     virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<ViewportController> controller,
+                                                   IViewport& viewport,
                                                    const PointerEvent& event) ORTHANC_OVERRIDE;
   };
 
@@ -104,8 +106,7 @@ namespace OrthancStone
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, \
                                         SceneTransformChanged, ViewportController);
 
-    ViewportController(boost::weak_ptr<UndoStack> undoStackW,
-                       boost::shared_ptr<IViewport> viewport);
+    ViewportController(boost::weak_ptr<UndoStack> undoStackW);
 
     ~ViewportController();
 
@@ -138,7 +139,7 @@ namespace OrthancStone
     void SetSceneToCanvasTransform(const AffineTransform2D& transform);
 
     /** Forwarded to the underlying scene, and broadcasted to the observers */
-    void FitContent();
+    void FitContent(IViewport& viewport);
 
     /** Adds a new measure tool */
     void AddMeasureTool(boost::shared_ptr<MeasureTool> measureTool);
@@ -188,14 +189,10 @@ namespace OrthancStone
     /** forwarded to the UndoStack */
     bool CanRedo() const;
 
-    IViewport& GetViewport() const
-    {
-      return *viewport_;
-    }
-
 
     // Must be expressed in canvas coordinates
-    void HandleMousePress(IViewportInteractor& interactor,
+    void HandleMousePress(IViewport& viewport,
+                          IViewportInteractor& interactor,
                           const PointerEvent& event);
 
     // Must be expressed in canvas coordinates
@@ -218,9 +215,8 @@ namespace OrthancStone
     double GetCanvasToSceneFactor() const;
 
     boost::weak_ptr<UndoStack>                    undoStackW_;  // Global stack, possibly shared by all viewports
-    boost::shared_ptr<IViewport>                  viewport_;
     std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;
-    boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Can't this be a "std::auto_ptr"?
+    boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Couldn't this be a "std::auto_ptr"?
 
     Scene2D   scene_;
 

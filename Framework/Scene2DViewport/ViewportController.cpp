@@ -32,8 +32,10 @@
 
 namespace OrthancStone
 {
-  IFlexiblePointerTracker* DefaultViewportInteractor::CreateTracker(boost::shared_ptr<ViewportController> controller,
-                                                                    const PointerEvent& event)
+  IFlexiblePointerTracker* DefaultViewportInteractor::CreateTracker(
+    boost::shared_ptr<ViewportController> controller,
+    IViewport& viewport,
+    const PointerEvent& event)
   {
     switch (event.GetMouseButton())
     {
@@ -45,7 +47,7 @@ namespace OrthancStone
       
       case MouseButton_Right:
       {
-        std::auto_ptr<IViewport::ILock> lock(controller->GetViewport().Lock());
+        std::auto_ptr<IViewport::ILock> lock(viewport.Lock());
         if (lock->HasCompositor())
         {
           return new ZoomSceneTracker(controller, event, lock->GetCompositor().GetCanvasWidth());
@@ -62,16 +64,10 @@ namespace OrthancStone
   }
 
 
-  ViewportController::ViewportController(boost::weak_ptr<UndoStack> undoStackW,
-                                         boost::shared_ptr<IViewport> viewport)
+  ViewportController::ViewportController(boost::weak_ptr<UndoStack> undoStackW)
     : undoStackW_(undoStackW)
-    , viewport_(viewport)
     , canvasToSceneFactor_(1)
   {
-    if (viewport.get() == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
   }
  
   ViewportController::~ViewportController()
@@ -185,10 +181,10 @@ namespace OrthancStone
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
-  void ViewportController::FitContent()
+  void ViewportController::FitContent(IViewport& viewport)
   {
     {
-      std::auto_ptr<IViewport::ILock> lock(viewport_->Lock());
+      std::auto_ptr<IViewport::ILock> lock(viewport.Lock());
       lock->FitContent(scene_);
     }
 
@@ -238,7 +234,8 @@ namespace OrthancStone
   }
 
 
-  void ViewportController::HandleMousePress(IViewportInteractor& interactor,
+  void ViewportController::HandleMousePress(IViewport& viewport,
+                                            IViewportInteractor& interactor,
                                             const PointerEvent& event)
   {
     if (activeTracker_)
@@ -264,7 +261,7 @@ namespace OrthancStone
       }
 
       // No measure tool, create new tracker from the interactor
-      activeTracker_.reset(interactor.CreateTracker(shared_from_this(), event));
+      activeTracker_.reset(interactor.CreateTracker(shared_from_this(), viewport, event));
     }
   }
 

@@ -47,14 +47,9 @@ namespace OrthancStone
       {
       }
 
-      // Get the center of the given pixel, in canvas coordinates
-      virtual ScenePoint2D GetPixelCenterCoordinates(int x, int y) = 0;
-
       virtual bool HasCompositor() const = 0;
 
       virtual ICompositor& GetCompositor() = 0;
-
-      virtual void FitContent(Scene2D& scene) = 0;
     };   
     
     virtual ~IViewport()

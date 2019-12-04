@@ -594,8 +594,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.h
   
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IViewport.h
-  ${ORTHANC_STONE_ROOT}/Framework/Viewport/ViewportBase.h
-  ${ORTHANC_STONE_ROOT}/Framework/Viewport/ViewportBase.cpp
   
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/IVolumeSlicer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/IVolumeSlicer.h

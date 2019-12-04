@@ -34,8 +34,9 @@ namespace OrthancStone
 {
   IFlexiblePointerTracker* DefaultViewportInteractor::CreateTracker(
     boost::shared_ptr<ViewportController> controller,
-    IViewport& viewport,
-    const PointerEvent& event)
+    const PointerEvent& event,
+    unsigned int viewportWidth,
+    unsigned int viewportHeight)
   {
     switch (event.GetMouseButton())
     {
@@ -47,10 +48,9 @@ namespace OrthancStone
       
       case MouseButton_Right:
       {
-        std::auto_ptr<IViewport::ILock> lock(viewport.Lock());
-        if (lock->HasCompositor())
+        if (viewportWidth != 0)
         {
-          return new ZoomSceneTracker(controller, event, lock->GetCompositor().GetCanvasWidth());
+          return new ZoomSceneTracker(controller, event, viewportWidth);
         }
         else
         {
@@ -181,13 +181,10 @@ namespace OrthancStone
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
-  void ViewportController::FitContent(IViewport& viewport)
+  void ViewportController::FitContent(unsigned int viewportWidth,
+                                      unsigned int viewportHeight)
   {
-    {
-      std::auto_ptr<IViewport::ILock> lock(viewport.Lock());
-      lock->FitContent(scene_);
-    }
-
+    scene_.FitContent(viewportWidth, viewportHeight);
     canvasToSceneFactor_ = scene_.GetCanvasToSceneTransform().ComputeZoom();
     BroadcastMessage(SceneTransformChanged(*this));
   }
@@ -234,9 +231,10 @@ namespace OrthancStone
   }
 
 
-  void ViewportController::HandleMousePress(IViewport& viewport,
-                                            IViewportInteractor& interactor,
-                                            const PointerEvent& event)
+  void ViewportController::HandleMousePress(OrthancStone::IViewportInteractor& interactor,
+                                            const PointerEvent& event,
+                                            unsigned int viewportWidth,
+                                            unsigned int viewportHeight)
   {
     if (activeTracker_)
     {
@@ -261,7 +259,7 @@ namespace OrthancStone
       }
 
       // No measure tool, create new tracker from the interactor
-      activeTracker_.reset(interactor.CreateTracker(shared_from_this(), viewport, event));
+      activeTracker_.reset(interactor.CreateTracker(shared_from_this(), event, viewportWidth, viewportHeight));
     }
   }
 

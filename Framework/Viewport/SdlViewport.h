@@ -39,13 +39,13 @@
 #include "../OpenGL/SdlOpenGLContext.h"
 #include "../Scene2D/OpenGLCompositor.h"
 #include "../Scene2D/CairoCompositor.h"
-#include "ViewportBase.h"
+#include "IViewport.h"
 
 #include <SDL_events.h>
 
 namespace OrthancStone
 {
-  class SdlViewport : public ViewportBase
+  class SdlViewport : public IViewport
   {
   private:
     uint32_t  refreshEvent_;
@@ -75,7 +75,7 @@ namespace OrthancStone
     SdlOpenGLContext                 context_;
     std::auto_ptr<OpenGLCompositor>  compositor_;
 
-    class SdlLock : public LockBase
+    class SdlLock : public ILock
     {
     private:
       SdlOpenGLViewport&         that_;
@@ -83,7 +83,6 @@ namespace OrthancStone
       
     public:
       SdlLock(SdlOpenGLViewport& viewport) :
-        LockBase(viewport),
         that_(viewport),
         lock_(viewport.mutex_)
       {
@@ -131,7 +130,7 @@ namespace OrthancStone
   class SdlCairoViewport : public SdlViewport
   {
   private:
-    class SdlLock : public LockBase
+    class SdlLock : public ILock
     {
     private:
       SdlCairoViewport&          that_;
@@ -139,7 +138,6 @@ namespace OrthancStone
       
     public:
       SdlLock(SdlCairoViewport& viewport) :
-        LockBase(viewport),
         that_(viewport),
         lock_(viewport.mutex_)
       {

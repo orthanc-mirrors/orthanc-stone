@@ -22,7 +22,8 @@
 
 #include "PredeclaredTypes.h"
 
-#include "../Viewport/IViewport.h"
+#include "../Messages/IObservable.h"
+#include "../Scene2D/Scene2D.h"
 #include "../Scene2DViewport/IFlexiblePointerTracker.h"
 
 #include <boost/enable_shared_from_this.hpp>
@@ -39,8 +40,9 @@ namespace OrthancStone
     }
 
     virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<ViewportController> controller,
-                                                   IViewport& viewport,
-                                                   const PointerEvent& event) = 0;
+                                                   const PointerEvent& event,
+                                                   unsigned int viewportWidth,
+                                                   unsigned int viewportHeight) = 0;
   };
 
 
@@ -49,8 +51,9 @@ namespace OrthancStone
   {
   public:
     virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<ViewportController> controller,
-                                                   IViewport& viewport,
-                                                   const PointerEvent& event) ORTHANC_OVERRIDE;
+                                                   const PointerEvent& event,
+                                                   unsigned int viewportWidth,
+                                                   unsigned int viewportHeight) ORTHANC_OVERRIDE;
   };
 
 
@@ -139,7 +142,8 @@ namespace OrthancStone
     void SetSceneToCanvasTransform(const AffineTransform2D& transform);
 
     /** Forwarded to the underlying scene, and broadcasted to the observers */
-    void FitContent(IViewport& viewport);
+    void FitContent(unsigned int viewportWidth,
+                    unsigned int viewportHeight);
 
     /** Adds a new measure tool */
     void AddMeasureTool(boost::shared_ptr<MeasureTool> measureTool);
@@ -191,9 +195,10 @@ namespace OrthancStone
 
 
     // Must be expressed in canvas coordinates
-    void HandleMousePress(IViewport& viewport,
-                          IViewportInteractor& interactor,
-                          const PointerEvent& event);
+    void HandleMousePress(IViewportInteractor& interactor,
+                          const PointerEvent& event,
+                          unsigned int viewportWidth,
+                          unsigned int viewportHeight);
 
     // Must be expressed in canvas coordinates
     void HandleMouseMove(const PointerEvent& event);

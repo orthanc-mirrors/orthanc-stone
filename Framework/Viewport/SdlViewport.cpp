@@ -174,8 +174,6 @@ namespace OrthancStone
     const unsigned int width = compositor.GetCanvas().GetWidth();
     const unsigned int height = compositor.GetCanvas().GetHeight();
 
-    printf("%dx%d\n", width, height);
-    
     if (sdlSurface_ != NULL)
     {
       if (sdlSurface_->pixels == compositor.GetCanvas().GetBuffer() &&

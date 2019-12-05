@@ -109,6 +109,8 @@ namespace OrthancStone
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, \
                                         SceneTransformChanged, ViewportController);
 
+    ViewportController();
+
     ViewportController(boost::weak_ptr<UndoStack> undoStackW);
 
     ~ViewportController();

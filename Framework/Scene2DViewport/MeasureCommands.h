@@ -47,6 +47,8 @@ namespace OrthancStone
 
   protected:
     boost::shared_ptr<ViewportController>  GetController();
+
+  private:
     boost::weak_ptr<ViewportController> controllerW_;
   };
 

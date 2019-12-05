@@ -48,11 +48,52 @@ namespace OrthancStone
   class SdlViewport : public IViewport
   {
   private:
-    uint32_t  refreshEvent_;
+    boost::mutex                           mutex_;
+    uint32_t                               refreshEvent_;
+    boost::shared_ptr<ViewportController>  controller_;
+    std::auto_ptr<ICompositor>             compositor_;
+
+    void SendRefreshEvent();
 
   protected:
-    void SendRefreshEvent();
-    
+    class SdlLock : public ILock
+    {
+    private:
+      SdlViewport&                that_;
+      boost::mutex::scoped_lock   lock_;
+
+    public:
+      SdlLock(SdlViewport& that) :
+      that_(that),
+      lock_(that.mutex_)
+      {
+      }
+
+      virtual bool HasCompositor() const ORTHANC_OVERRIDE
+      {
+        return true;
+      }
+
+      virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE;
+      
+      virtual ViewportController& GetController() ORTHANC_OVERRIDE
+      {
+        return *that_.controller_;
+      }
+
+      virtual void Invalidate() ORTHANC_OVERRIDE
+      {
+        that_.SendRefreshEvent();
+      }
+    };
+
+    void ClearCompositor()
+    {
+      compositor_.reset();
+    }
+
+    void AcquireCompositor(ICompositor* compositor /* takes ownership */);
+
   public:
     SdlViewport();
 
@@ -61,105 +102,50 @@ namespace OrthancStone
       return (event.type == refreshEvent_);
     }
 
+    virtual ILock* Lock() ORTHANC_OVERRIDE
+    {
+      return new SdlLock(*this);
+    }
+
     virtual void UpdateSize(unsigned int width,
                             unsigned int height) = 0;
 
     virtual void ToggleMaximize() = 0;
+
+    // Must be invoked from the main SDL thread
+    virtual void Paint() = 0;
   };
 
 
   class SdlOpenGLViewport : public SdlViewport
   {
   private:
-    boost::mutex                     mutex_;
-    SdlOpenGLContext                 context_;
-    std::auto_ptr<OpenGLCompositor>  compositor_;
+    SdlOpenGLContext  context_;
 
-    class SdlLock : public ILock
-    {
-    private:
-      SdlOpenGLViewport&         that_;
-      boost::mutex::scoped_lock  lock_;
-      
-    public:
-      SdlLock(SdlOpenGLViewport& viewport) :
-        that_(viewport),
-        lock_(viewport.mutex_)
-      {
-      }
-
-      virtual bool HasCompositor() const ORTHANC_OVERRIDE
-      {
-        return true;
-      }
-
-      virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
-      {
-        return *that_.compositor_;
-      }
-    };
-    
   public:
     SdlOpenGLViewport(const char* title,
                       unsigned int width,
                       unsigned int height,
                       bool allowDpiScaling = true);
 
-    virtual void Invalidate() ORTHANC_OVERRIDE;
+    virtual ~SdlOpenGLViewport();
 
-    virtual void Paint(const Scene2D& scene) ORTHANC_OVERRIDE;
+    virtual void Paint() ORTHANC_OVERRIDE;
 
-    virtual ILock* Lock() ORTHANC_OVERRIDE
-    {
-      return new SdlLock(*this);
-    }
+    virtual void UpdateSize(unsigned int width, 
+                            unsigned int height) ORTHANC_OVERRIDE;
 
-    virtual void UpdateSize(unsigned int width, unsigned int height) ORTHANC_OVERRIDE
-    {
-      // nothing to do in OpenGL, the OpenGLCompositor::UpdateSize will be called automatically
-    }
-
-    virtual void ToggleMaximize() ORTHANC_OVERRIDE
-    {
-      boost::mutex::scoped_lock lock(mutex_);
-      context_.ToggleMaximize();
-    }
+    virtual void ToggleMaximize() ORTHANC_OVERRIDE;
   };
 
 
   class SdlCairoViewport : public SdlViewport
   {
   private:
-    class SdlLock : public ILock
-    {
-    private:
-      SdlCairoViewport&          that_;
-      boost::mutex::scoped_lock  lock_;
-      
-    public:
-      SdlLock(SdlCairoViewport& viewport) :
-        that_(viewport),
-        lock_(viewport.mutex_)
-      {
-      }
+    SdlWindow     window_;
+    SDL_Surface*  sdlSurface_;
 
-      virtual bool HasCompositor() const ORTHANC_OVERRIDE
-      {
-        return true;
-      }
-
-      virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
-      {
-        return that_.compositor_;
-      }
-    };
- 
-    boost::mutex      mutex_;
-    SdlWindow         window_;
-    CairoCompositor   compositor_;
-    SDL_Surface*      sdlSurface_;
-
-    void CreateSdlSurfaceFromCompositor();
+    void CreateSdlSurfaceFromCompositor(CairoCompositor& compositor);
 
   public:
     SdlCairoViewport(const char* title,
@@ -167,24 +153,13 @@ namespace OrthancStone
                      unsigned int height,
                      bool allowDpiScaling = true);
 
-    ~SdlCairoViewport();
+    virtual ~SdlCairoViewport();
 
-    virtual void Invalidate() ORTHANC_OVERRIDE;
-
-    virtual void Paint(const Scene2D& scene) ORTHANC_OVERRIDE;
-
-    virtual ILock* Lock() ORTHANC_OVERRIDE
-    {
-      return new SdlLock(*this);
-    }
+    virtual void Paint() ORTHANC_OVERRIDE;
 
     virtual void UpdateSize(unsigned int width,
                             unsigned int height) ORTHANC_OVERRIDE;
 
-    virtual void ToggleMaximize() ORTHANC_OVERRIDE
-    {
-      boost::mutex::scoped_lock lock(mutex_);
-      window_.ToggleMaximize();
-    }
+    virtual void ToggleMaximize() ORTHANC_OVERRIDE;
   };
 }

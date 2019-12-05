@@ -24,7 +24,33 @@
 
 namespace OrthancStone
 {
-  SdlViewport::SdlViewport()
+  ICompositor& SdlViewport::SdlLock::GetCompositor()
+  {
+    if (that_.compositor_.get() == NULL)
+    {
+      // The derived class should have called "AcquireCompositor()"
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+    else
+    {
+      return *that_.compositor_;
+    }
+  }
+
+
+  void SdlViewport::AcquireCompositor(ICompositor* compositor /* takes ownership */)
+  {
+    if (compositor == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+
+    compositor_.reset(compositor);
+  }
+
+
+  SdlViewport::SdlViewport() :
+    controller_(new ViewportController)
   {
     refreshEvent_ = SDL_RegisterEvents(1);
     
@@ -50,19 +76,42 @@ namespace OrthancStone
                                        bool allowDpiScaling) :
     context_(title, width, height, allowDpiScaling)
   {
-    compositor_.reset(new OpenGLCompositor(context_));
+    AcquireCompositor(new OpenGLCompositor(context_));  // (*)
   }
 
-  void SdlOpenGLViewport::Invalidate()
+
+  SdlOpenGLViewport::~SdlOpenGLViewport()
   {
-    SendRefreshEvent();
+    // Make sure that the "OpenGLCompositor" is destroyed BEFORE the
+    // "OpenGLContext" it references (*)
+    ClearCompositor();
   }
 
-  void SdlOpenGLViewport::Paint(const Scene2D& scene)
+
+  void SdlOpenGLViewport::Paint()
   {
-    boost::mutex::scoped_lock lock(mutex_);
-    compositor_->Refresh(scene);
+    SdlLock lock(*this);
+    lock.GetCompositor().Refresh(lock.GetController().GetScene());
   }
+
+
+  void SdlOpenGLViewport::UpdateSize(unsigned int width, 
+                                     unsigned int height)
+  {
+    // nothing to do in OpenGL, the OpenGLCompositor::UpdateSize will be called automatically
+    SdlLock lock(*this);
+    lock.Invalidate();
+  }
+
+
+  void SdlOpenGLViewport::ToggleMaximize()
+  {
+    // No need to call "Invalidate()" here, as "UpdateSize()" will
+    // be invoked after event "SDL_WINDOWEVENT_SIZE_CHANGED"
+    SdlLock lock(*this);
+    context_.ToggleMaximize();
+  }
+
 
 
   SdlCairoViewport::SdlCairoViewport(const char* title,
@@ -70,9 +119,9 @@ namespace OrthancStone
                                      unsigned int height,
                                      bool allowDpiScaling) :
     window_(title, width, height, false /* enable OpenGL */, allowDpiScaling),
-    compositor_(width, height),
     sdlSurface_(NULL)
   {
+    AcquireCompositor(new CairoCompositor(width, height));
   }
 
   SdlCairoViewport::~SdlCairoViewport()
@@ -83,50 +132,56 @@ namespace OrthancStone
     }
   }
   
-  void SdlCairoViewport::Paint(const Scene2D& scene)
+  void SdlCairoViewport::Paint()
   {
-    boost::mutex::scoped_lock lock(mutex_);
+    SdlLock lock(*this);
 
-    compositor_.Refresh(scene);
-    CreateSdlSurfaceFromCompositor();
+    lock.GetCompositor().Refresh(lock.GetController().GetScene());
+    CreateSdlSurfaceFromCompositor(dynamic_cast<CairoCompositor&>(lock.GetCompositor()));
     
     if (sdlSurface_ != NULL)
     {
       window_.Render(sdlSurface_);
-    }    
+    }
   }
 
-  void SdlCairoViewport::Invalidate()
-  {
-    SendRefreshEvent();
-  }
 
   void SdlCairoViewport::UpdateSize(unsigned int width,
                                     unsigned int height)
   {
-    {
-      boost::mutex::scoped_lock lock(mutex_);
-      compositor_.UpdateSize(width, height);
-    }
-
-    Invalidate();
+    SdlLock lock(*this);
+    dynamic_cast<CairoCompositor&>(lock.GetCompositor()).UpdateSize(width, height);
+    lock.Invalidate();
   }
   
-  void SdlCairoViewport::CreateSdlSurfaceFromCompositor()  // Assumes that the mutex is locked
+
+  void SdlCairoViewport::ToggleMaximize()
+  {
+    // No need to call "Invalidate()" here, as "UpdateSize()" will
+    // be invoked after event "SDL_WINDOWEVENT_SIZE_CHANGED"
+    SdlLock lock(*this);
+    window_.ToggleMaximize();
+  }
+
+  
+  // Assumes that the mutex is locked
+  void SdlCairoViewport::CreateSdlSurfaceFromCompositor(CairoCompositor& compositor)
   {
     static const uint32_t rmask = 0x00ff0000;
     static const uint32_t gmask = 0x0000ff00;
     static const uint32_t bmask = 0x000000ff;
 
-    const unsigned int width = compositor_.GetCanvas().GetWidth();
-    const unsigned int height = compositor_.GetCanvas().GetHeight();
+    const unsigned int width = compositor.GetCanvas().GetWidth();
+    const unsigned int height = compositor.GetCanvas().GetHeight();
+
+    printf("%dx%d\n", width, height);
     
     if (sdlSurface_ != NULL)
     {
-      if (sdlSurface_->pixels == compositor_.GetCanvas().GetBuffer() &&
+      if (sdlSurface_->pixels == compositor.GetCanvas().GetBuffer() &&
           sdlSurface_->w == static_cast<int>(width) &&
           sdlSurface_->h == static_cast<int>(height) &&
-          sdlSurface_->pitch == static_cast<int>(compositor_.GetCanvas().GetPitch()))
+          sdlSurface_->pitch == static_cast<int>(compositor.GetCanvas().GetPitch()))
       {
         // The image from the compositor has not changed, no need to update the surface
         return;
@@ -137,8 +192,8 @@ namespace OrthancStone
       }
     }
 
-    sdlSurface_ = SDL_CreateRGBSurfaceFrom((void*)(compositor_.GetCanvas().GetBuffer()), width, height, 32,
-                                           compositor_.GetCanvas().GetPitch(), rmask, gmask, bmask, 0);
+    sdlSurface_ = SDL_CreateRGBSurfaceFrom((void*)(compositor.GetCanvas().GetBuffer()), width, height, 32,
+                                           compositor.GetCanvas().GetPitch(), rmask, gmask, bmask, 0);
     if (!sdlSurface_)
     {
       LOG(ERROR) << "Cannot create a SDL surface from a Cairo surface";

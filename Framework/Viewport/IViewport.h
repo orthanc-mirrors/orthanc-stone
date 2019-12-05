@@ -21,8 +21,7 @@
 #pragma once
 
 #include "../Scene2D/ICompositor.h"
-#include "../Scene2D/Scene2D.h"
-#include "../Scene2D/ScenePoint2D.h"
+#include "../Scene2DViewport/ViewportController.h"
 
 namespace OrthancStone
 {
@@ -50,21 +49,15 @@ namespace OrthancStone
       virtual bool HasCompositor() const = 0;
 
       virtual ICompositor& GetCompositor() = 0;
+
+      virtual ViewportController& GetController() = 0;
+
+      virtual void Invalidate() = 0;
     };   
     
     virtual ~IViewport()
     {
     }
-
-    // Can be invoked from any thread (notably from the thread of the
-    // Stone context)
-    virtual void Invalidate() = 0;
-
-    // Must be invoked from the main (GUI) thread
-    virtual void Paint(const Scene2D& scene) = 0;
-
-    virtual void UpdateSize(unsigned int width,
-                            unsigned int height) = 0;
 
     virtual ILock* Lock() = 0;
   };

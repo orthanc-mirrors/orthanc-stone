@@ -55,6 +55,15 @@ namespace OrthancStone
     // the number of active touches
     currentTouchCount_++;
     LOG(INFO) << "currentTouchCount_ becomes: " << currentTouchCount_;
+
+    /**
+     * 2019-12-06 (SJO): Patch to have consistent behavior when mouse
+     * leaves the canvas while the tracker is still active, then
+     * button is released while out-of-canvas. Such an event is not
+     * catched (at least in WebAssembly), so we delete the tracker on
+     * the next click inside the canvas.
+     **/
+    alive_ = false;
   }
 
   bool OneGesturePointerTracker::IsAlive() const

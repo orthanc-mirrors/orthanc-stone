@@ -218,6 +218,11 @@ namespace OrthancStone
       return scene_;
     }
 
+    bool HasActiveTracker() const
+    {
+      return activeTracker_.get() != NULL;
+    }
+
   private:
     double GetCanvasToSceneFactor() const;
 

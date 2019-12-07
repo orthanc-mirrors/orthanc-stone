@@ -28,8 +28,8 @@ namespace Deprecated
   class WebServiceDeleteCommand : public WebServiceCommandBase
   {
   public:
-    WebServiceDeleteCommand(OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
-                            OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
+    WebServiceDeleteCommand(MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                            MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                             const Orthanc::WebServiceParameters& parameters,
                             const std::string& url,
                             const IWebService::HttpHeaders& headers,

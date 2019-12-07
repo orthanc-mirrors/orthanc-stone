@@ -52,16 +52,9 @@ namespace OrthancStone
   };
 
 
-  // TODO - Remove this class
-  template <typename TMessage>
-  class MessageHandler : public ICallable
-  {
-  };
-
-
   template <typename TObserver,
             typename TMessage>
-  class Callable : public MessageHandler<TMessage>
+  class Callable : public ICallable
   {
   private:
     typedef void (TObserver::* MemberMethod) (const TMessage&);

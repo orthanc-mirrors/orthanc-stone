@@ -57,7 +57,7 @@ namespace Deprecated
          it != instances.end(); ++it)
     {
       orthanc_.PostBinaryAsyncExpectJson("/tools/lookup", *it,
-                                         new OrthancStone::Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &StructureSetLoader::OnLookupCompleted));
+                                         new DeprecatedCallable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &StructureSetLoader::OnLookupCompleted));
     }
 
     BroadcastMessage(GeometryReadyMessage(*this));
@@ -81,7 +81,7 @@ namespace Deprecated
 
     const std::string& instance = lookup[0]["ID"].asString();
     orthanc_.GetJsonAsync("/instances/" + instance + "/tags",
-                          new OrthancStone::Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &StructureSetLoader::OnReferencedSliceLoaded));
+                          new DeprecatedCallable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &StructureSetLoader::OnReferencedSliceLoaded));
   }
 
   
@@ -94,7 +94,7 @@ namespace Deprecated
     else
     {
       orthanc_.GetJsonAsync("/instances/" + instance + "/tags?ignore-length=3006-0050",
-                            new OrthancStone::Callable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &StructureSetLoader::OnStructureSetLoaded));
+                            new DeprecatedCallable<StructureSetLoader, OrthancApiClient::JsonResponseReadyMessage>(GetSharedObserver(), &StructureSetLoader::OnStructureSetLoaded));
     }
   }
 

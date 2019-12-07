@@ -25,8 +25,8 @@
 
 namespace Deprecated
 {
-  WebServiceDeleteCommand::WebServiceDeleteCommand(OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
-                                                   OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
+  WebServiceDeleteCommand::WebServiceDeleteCommand(MessageHandler<Deprecated::IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                                                   MessageHandler<Deprecated::IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                                                    const Orthanc::WebServiceParameters& parameters,
                                                    const std::string& url,
                                                    const Deprecated::IWebService::HttpHeaders& headers,

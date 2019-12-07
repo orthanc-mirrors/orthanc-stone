@@ -425,7 +425,7 @@ namespace OrthancStone
 
       orthanc.GetBinaryAsync(
             uri, headers,
-            new Callable<RadiographyScene, Deprecated::OrthancApiClient::BinaryResponseReadyMessage>
+            new Deprecated::DeprecatedCallable<RadiographyScene, Deprecated::OrthancApiClient::BinaryResponseReadyMessage>
             (GetSharedObserver(), &RadiographyScene::OnTagsReceived), NULL,
             new Orthanc::SingleValueObject<size_t>(layer.GetIndex()));
     }
@@ -444,7 +444,7 @@ namespace OrthancStone
 
       orthanc.GetBinaryAsync(
             uri, headers,
-            new Callable<RadiographyScene, Deprecated::OrthancApiClient::BinaryResponseReadyMessage>
+            new Deprecated::DeprecatedCallable<RadiographyScene, Deprecated::OrthancApiClient::BinaryResponseReadyMessage>
             (GetSharedObserver(), &RadiographyScene::OnFrameReceived), NULL,
             new Orthanc::SingleValueObject<size_t>(layer.GetIndex()));
     }
@@ -784,7 +784,7 @@ namespace OrthancStone
 
     orthanc.PostJsonAsyncExpectJson(
           "/tools/create-dicom", createDicomRequestContent,
-          new Callable<RadiographyScene, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
+          new Deprecated::DeprecatedCallable<RadiographyScene, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
           (GetSharedObserver(), &RadiographyScene::OnDicomExported),
           NULL, NULL);
 

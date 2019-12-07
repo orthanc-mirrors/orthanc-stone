@@ -330,7 +330,7 @@ namespace OrthancStone
           LOG(WARNING) << "The study ID is missing, will take the first studyId found in Orthanc";
           context->GetOrthancApiClient()->GetJsonAsync(
             "/studies",
-            new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
+            new Deprecated::DeprecatedCallable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
             (GetSharedObserver(), &SimpleViewerApplication::OnStudyListReceived));
         }
         else
@@ -360,7 +360,7 @@ namespace OrthancStone
           {
             context_->GetOrthancApiClient()->GetJsonAsync(
               "/series/" + response["Series"][(int)i].asString(),
-              new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
+              new Deprecated::DeprecatedCallable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
               (GetSharedObserver(), &SimpleViewerApplication::OnSeriesReceived));
           }
         }
@@ -411,7 +411,7 @@ namespace OrthancStone
       {
         LOG(INFO) << "Selecting study: " << studyId;
         context_->GetOrthancApiClient()->GetJsonAsync(
-          "/studies/" + studyId, new Callable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
+          "/studies/" + studyId, new Deprecated::DeprecatedCallable<SimpleViewerApplication, Deprecated::OrthancApiClient::JsonResponseReadyMessage>
           (GetSharedObserver(), &SimpleViewerApplication::OnStudyReceived));
       }
 

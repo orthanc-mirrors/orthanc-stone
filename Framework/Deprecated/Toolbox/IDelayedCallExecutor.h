@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "IWebService.h"
 #include "../../Messages/IObserver.h"
 #include "../../Messages/ICallable.h"
 
@@ -42,7 +43,7 @@ namespace Deprecated
     {
     }
     
-    virtual void Schedule(OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
+    virtual void Schedule(MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
                           unsigned int timeoutInMs = 1000) = 0;
   };
 }

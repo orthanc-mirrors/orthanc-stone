@@ -29,13 +29,13 @@ namespace Deprecated
   class OracleWebService::WebServiceCachedGetCommand : public IOracleCommand, OrthancStone::IObservable
   {
   protected:
-    std::auto_ptr<OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
+    std::auto_ptr<MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
     std::auto_ptr<Orthanc::IDynamicObject>                                  payload_;
     boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage>      cachedMessage_;
     OrthancStone::NativeStoneApplicationContext&                                          context_;
 
   public:
-    WebServiceCachedGetCommand(OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+    WebServiceCachedGetCommand(MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
                                boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedMessage,
                                Orthanc::IDynamicObject* payload /* takes ownership */,
                                OrthancStone::NativeStoneApplicationContext& context
@@ -71,7 +71,7 @@ namespace Deprecated
 
   void OracleWebService::NotifyHttpSuccessLater(boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedMessage,
                                                 Orthanc::IDynamicObject* payload, // takes ownership
-                                                OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback)
+                                                MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback)
   {
     oracle_.Submit(new WebServiceCachedGetCommand(successCallback, cachedMessage, payload, context_));
   }

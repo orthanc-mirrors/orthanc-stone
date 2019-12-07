@@ -43,7 +43,7 @@ namespace Deprecated
     {
     }
 
-    virtual void Schedule(OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
+    virtual void Schedule(MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
                           unsigned int timeoutInMs = 1000)
     {
       oracle_.Submit(new DelayedCallCommand(callback, timeoutInMs, NULL, context_));

@@ -56,8 +56,8 @@ namespace Deprecated
                            const HttpHeaders& headers,
                            const std::string& body,
                            Orthanc::IDynamicObject* payload, // takes ownership
-                           OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback, // takes ownership
-                           OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL, // takes ownership
+                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback, // takes ownership
+                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL, // takes ownership
                            unsigned int timeoutInSeconds = 60)
     {
       oracle_.Submit(new WebServicePostCommand(successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, body, payload, context_));
@@ -66,8 +66,8 @@ namespace Deprecated
     virtual void DeleteAsync(const std::string& uri,
                              const HttpHeaders& headers,
                              Orthanc::IDynamicObject* payload,
-                             OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                             OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                             MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                             MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                              unsigned int timeoutInSeconds = 60)
     {
       oracle_.Submit(new WebServiceDeleteCommand(successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, payload, context_));
@@ -77,8 +77,8 @@ namespace Deprecated
     virtual void GetAsyncInternal(const std::string& uri,
                                   const HttpHeaders& headers,
                                   Orthanc::IDynamicObject* payload, // takes ownership
-                                  OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,   // takes ownership
-                                  OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,// takes ownership
+                                  MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,   // takes ownership
+                                  MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,// takes ownership
                                   unsigned int timeoutInSeconds = 60)
     {
       oracle_.Submit(new WebServiceGetCommand(successCallback, failureCallback, parameters_, uri, headers, timeoutInSeconds, payload, context_));
@@ -86,7 +86,7 @@ namespace Deprecated
 
     virtual void NotifyHttpSuccessLater(boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedHttpMessage,
                                         Orthanc::IDynamicObject* payload, // takes ownership
-                                        OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback);
+                                        MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback);
 
   };
 }

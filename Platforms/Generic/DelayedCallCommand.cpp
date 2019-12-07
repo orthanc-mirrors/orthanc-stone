@@ -26,7 +26,7 @@
 
 namespace Deprecated
 {
-  DelayedCallCommand::DelayedCallCommand(OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,  // takes ownership
+  DelayedCallCommand::DelayedCallCommand(MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,  // takes ownership
                                          unsigned int timeoutInMs,
                                          Orthanc::IDynamicObject* payload /* takes ownership */,
                                          OrthancStone::NativeStoneApplicationContext& context

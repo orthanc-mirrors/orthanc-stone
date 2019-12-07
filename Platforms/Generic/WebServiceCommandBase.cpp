@@ -25,8 +25,8 @@
 
 namespace Deprecated
 {
-  WebServiceCommandBase::WebServiceCommandBase(OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                                               OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
+  WebServiceCommandBase::WebServiceCommandBase(MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                                               MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                                const Orthanc::WebServiceParameters& parameters,
                                                const std::string& url,
                                                const IWebService::HttpHeaders& headers,

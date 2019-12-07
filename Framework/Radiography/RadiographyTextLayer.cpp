@@ -26,27 +26,28 @@
 
 namespace OrthancStone
 {
-  bool RadiographyTextLayer::fontHasBeenConfigured_ = false;
-  Orthanc::EmbeddedResources::FileResourceId RadiographyTextLayer::fontResourceId_;
+  std::map<std::string, Orthanc::EmbeddedResources::FileResourceId> RadiographyTextLayer::fonts_;
 
   void RadiographyTextLayer::SetText(const std::string& utf8,
-                                      unsigned int fontSize,
-                                      uint8_t foreground)
+                                     const std::string& font,
+                                     unsigned int fontSize,
+                                     uint8_t foregroundGreyLevel)
   {
-    if (!fontHasBeenConfigured_)
+    if (fonts_.find(font) == fonts_.end())
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls, "No font has been loaded");
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls, "The font has not been registered");
     }
 
     text_ = utf8;
+    font_ = font;
     fontSize_ = fontSize;
-    foreground_ = foreground;
+    foregroundGreyLevel_ = foregroundGreyLevel;
 
-    SetAlpha(TextRenderer::Render(fontResourceId_,
+    SetAlpha(TextRenderer::Render(fonts_[font_],
                                   fontSize_,
                                   text_));
 
-    SetForegroundValue(foreground * 256.0f);
+    SetForegroundValue(foregroundGreyLevel * 256.0f);
   }
 
 }

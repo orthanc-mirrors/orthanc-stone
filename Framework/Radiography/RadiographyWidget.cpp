@@ -180,6 +180,15 @@ namespace OrthancStone
   {
     hasSelection_ = true;
     selectedLayer_ = layer;
+
+    NotifyContentChanged();
+    BroadcastMessage(SelectionChangedMessage(*this));
+  }
+
+  void RadiographyWidget::Unselect()
+  {
+    hasSelection_ = false;
+    BroadcastMessage(SelectionChangedMessage(*this));
   }
 
   bool RadiographyWidget::LookupSelectedLayer(size_t& layer)

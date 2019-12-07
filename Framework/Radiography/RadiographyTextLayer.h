@@ -31,22 +31,27 @@ namespace OrthancStone
   {
   private:
     std::string                 text_;
+    std::string                 font_;
     unsigned int                fontSize_;
-    uint8_t                     foreground_;
+    uint8_t                     foregroundGreyLevel_;
 
-    static bool                                       fontHasBeenConfigured_;
-    static Orthanc::EmbeddedResources::FileResourceId fontResourceId_;
+    static std::map<std::string, Orthanc::EmbeddedResources::FileResourceId>  fonts_;
   public:
     RadiographyTextLayer(const RadiographyScene& scene) :
       RadiographyAlphaLayer(scene)
     {
     }
 
-    void SetText(const std::string& utf8, unsigned int fontSize, uint8_t foreground);
+    void SetText(const std::string& utf8, const std::string& font, unsigned int fontSize, uint8_t foregroundGreyLevel);
 
     const std::string& GetText() const
     {
       return text_;
+    }
+
+    const std::string& GetFont() const
+    {
+      return font_;
     }
 
     unsigned int GetFontSize() const
@@ -54,15 +59,14 @@ namespace OrthancStone
       return fontSize_;
     }
 
-    uint8_t GetForeground() const
+    uint8_t GetForegroundGreyLevel() const
     {
-      return foreground_;
+      return foregroundGreyLevel_;
     }
 
-    static void SetFont(Orthanc::EmbeddedResources::FileResourceId fontResourceId)
+    static void RegisterFont(const std::string& name, Orthanc::EmbeddedResources::FileResourceId fontResourceId)
     {
-      fontResourceId_ = fontResourceId;
-      fontHasBeenConfigured_ = true;
+      fonts_[name] = fontResourceId;
     }
   };
 }

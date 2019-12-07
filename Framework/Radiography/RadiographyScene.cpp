@@ -295,11 +295,12 @@ namespace OrthancStone
 
   RadiographyLayer& RadiographyScene::UpdateText(size_t layerIndex,
                                                  const std::string& utf8,
+                                                 const std::string& font,
                                                  unsigned int fontSize,
                                                  uint8_t foreground)
   {
     RadiographyTextLayer& textLayer = dynamic_cast<RadiographyTextLayer&>(GetLayer(layerIndex));
-    textLayer.SetText(utf8, fontSize, foreground);
+    textLayer.SetText(utf8, font, fontSize, foreground);
 
     BroadcastMessage(RadiographyScene::ContentChangedMessage(*this, textLayer));
     BroadcastMessage(RadiographyScene::LayerEditedMessage(*this, textLayer));
@@ -308,15 +309,27 @@ namespace OrthancStone
 
 
   RadiographyLayer& RadiographyScene::LoadText(const std::string& utf8,
+                                               const std::string& font,
                                                unsigned int fontSize,
                                                uint8_t foreground,
-                                               RadiographyLayer::Geometry* geometry)
+                                               RadiographyLayer::Geometry* centerGeometry,
+                                               bool isCenterGeometry)
   {
     std::auto_ptr<RadiographyTextLayer>  alpha(new RadiographyTextLayer(*this));
-    alpha->SetText(utf8, fontSize, foreground);
-    if (geometry != NULL)
+    alpha->SetText(utf8, font, fontSize, foreground);
+    if (centerGeometry != NULL)
     {
-      alpha->SetGeometry(*geometry);
+      if (isCenterGeometry)
+      {
+        // modify geometry to reference the top left corner
+        double tlx = centerGeometry->GetPanX();
+        double tly = centerGeometry->GetPanY();
+        Extent2D textExtent = alpha->GetExtent();
+        tlx = tlx - (textExtent.GetWidth() / 2) * centerGeometry->GetPixelSpacingX();
+        tly = tly - (textExtent.GetHeight() / 2) * centerGeometry->GetPixelSpacingY();
+        centerGeometry->SetPan(tlx, tly);
+      }
+      alpha->SetGeometry(*centerGeometry);
     }
 
     RadiographyLayer& registeredLayer = RegisterLayer(alpha.release());

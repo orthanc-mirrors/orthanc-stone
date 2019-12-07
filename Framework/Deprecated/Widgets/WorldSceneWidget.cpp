@@ -179,10 +179,8 @@ namespace Deprecated
     }
     else if (hasDefaultMouseEvents_)
     {
-      printf("has default mouse events\n");
       if (touches.size() == 2)
       {
-        printf("2 touches !\n");
         return new SceneMouseTracker(view_, new PanZoomMouseTracker(*this, touches));
       }
       else

@@ -516,8 +516,8 @@ namespace OrthancStone
         }
 
         {
-          RadiographyTextLayer::SetFont(Orthanc::EmbeddedResources::UBUNTU_FONT);
-          RadiographyLayer& layer = scene_->LoadText("Hello\nworld", 20, 128, NULL);
+          RadiographyTextLayer::RegisterFont("ubuntu", Orthanc::EmbeddedResources::UBUNTU_FONT);
+          RadiographyLayer& layer = scene_->LoadText("Hello\nworld", "ubuntu", 20, 128, NULL, false);
           layer.SetResizeable(true);
         }
         

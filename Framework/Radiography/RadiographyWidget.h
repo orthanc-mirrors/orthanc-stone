@@ -31,8 +31,12 @@ namespace OrthancStone
 
   class RadiographyWidget :
     public Deprecated::WorldSceneWidget,
-    public IObserver
+    public IObserver,
+    public IObservable
   {
+  public:
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, SelectionChangedMessage, RadiographyWidget);
+
   private:
     boost::shared_ptr<RadiographyScene>    scene_;
     std::auto_ptr<Orthanc::ImageAccessor>  floatBuffer_;
@@ -73,10 +77,7 @@ namespace OrthancStone
 
     void Select(size_t layer);
 
-    void Unselect()
-    {
-      hasSelection_ = false;
-    }
+    void Unselect();
 
     template<typename LayerType> bool SelectLayerByType(size_t index = 0);
 

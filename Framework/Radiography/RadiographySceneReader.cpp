@@ -98,7 +98,7 @@ namespace OrthancStone
       else if (jsonLayer["type"].asString() == "text")
       {
         ReadLayerGeometry(geometry, jsonLayer);
-        scene_.LoadText(jsonLayer["text"].asString(), jsonLayer["fontSize"].asUInt(), static_cast<uint8_t>(jsonLayer["foreground"].asUInt()), &geometry);
+        scene_.LoadText(jsonLayer["text"].asString(), jsonLayer["font"].asString(), jsonLayer["fontSize"].asUInt(), static_cast<uint8_t>(jsonLayer["foreground"].asUInt()), &geometry, false);
       }
       else if (jsonLayer["type"].asString() == "alpha")
       {
@@ -175,7 +175,7 @@ namespace OrthancStone
       else if (jsonLayer["type"].asString() == "text")
       {
         ReadLayerGeometry(geometry, jsonLayer);
-        scene_.LoadText(jsonLayer["text"].asString(), jsonLayer["fontSize"].asUInt(), static_cast<uint8_t>(jsonLayer["foreground"].asUInt()), &geometry);
+        scene_.LoadText(jsonLayer["text"].asString(), jsonLayer["font"].asString(), jsonLayer["fontSize"].asUInt(), static_cast<uint8_t>(jsonLayer["foreground"].asUInt()), &geometry, false);
       }
       else if (jsonLayer["type"].asString() == "alpha")
       {

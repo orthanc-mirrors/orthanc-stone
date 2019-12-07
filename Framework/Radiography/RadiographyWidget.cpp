@@ -169,6 +169,7 @@ namespace OrthancStone
                                        const std::string& name) :
     WorldSceneWidget(name),
     IObserver(broker),
+    IObservable(broker),
     invert_(false),
     interpolation_(ImageInterpolation_Nearest),
     hasSelection_(false),
@@ -182,6 +183,15 @@ namespace OrthancStone
   {
     hasSelection_ = true;
     selectedLayer_ = layer;
+
+    NotifyContentChanged();
+    BroadcastMessage(SelectionChangedMessage(*this));
+  }
+
+  void RadiographyWidget::Unselect()
+  {
+    hasSelection_ = false;
+    BroadcastMessage(SelectionChangedMessage(*this));
   }
 
   bool RadiographyWidget::LookupSelectedLayer(size_t& layer)

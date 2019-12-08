@@ -24,21 +24,6 @@
 #include <string>
 
 
-namespace Deprecated
-{
-  enum SliceImageQuality
-  {
-    SliceImageQuality_FullPng,  // smaller to transmit but longer to generate on Orthanc side (better choice when on low bandwidth)
-    SliceImageQuality_FullPam,  // bigger to transmit but faster to generate on Orthanc side (better choice when on localhost or LAN)
-    SliceImageQuality_Jpeg50,
-    SliceImageQuality_Jpeg90,
-    SliceImageQuality_Jpeg95,
-
-    SliceImageQuality_InternalRaw   // downloads the raw pixels data as they are stored in the DICOM file (internal use only)
-  };  
-}
-
-
 namespace OrthancStone
 {
   enum SliceOffsetMode

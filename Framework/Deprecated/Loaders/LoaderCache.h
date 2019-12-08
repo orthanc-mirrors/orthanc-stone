@@ -20,6 +20,12 @@
 
 #pragma once
 
+#include "../../Messages/LockingEmitter.h"
+#include "../../Volumes/DicomVolumeImageMPRSlicer.h"
+#include "OrthancSeriesVolumeProgressiveLoader.h"
+#include "OrthancMultiframeVolumeLoader.h"
+#include "DicomStructureSetLoader.h"
+
 #include <boost/shared_ptr.hpp>
 
 #include <map>
@@ -28,40 +34,28 @@
 
 namespace OrthancStone
 {
-  class OrthancSeriesVolumeProgressiveLoader;
-  class DicomVolumeImageMPRSlicer;
-  class DicomStructureSetLoader;
-#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-  class DicomStructureSetLoader2;
-  class DicomStructureSetSlicer2;
-  class DicomStructureSet2;
-#endif 
-  //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-  class OrthancMultiframeVolumeLoader;
-
 #if ORTHANC_ENABLE_WASM == 1
   class WebAssemblyOracle;
 #else
   class ThreadedOracle;
-  namespace Deprecated
-  {
-    class LockingEmitter;
-  }
 #endif
+}
 
+namespace Deprecated
+{
   class LoaderCache
   {
   public:
 #if ORTHANC_ENABLE_WASM == 1
-    LoaderCache(WebAssemblyOracle& oracle);
+    LoaderCache(OrthancStone::WebAssemblyOracle& oracle);
 #else
-    LoaderCache(ThreadedOracle& oracle, Deprecated::LockingEmitter& lockingEmitter);
+    LoaderCache(OrthancStone::ThreadedOracle& oracle, OrthancStone::Deprecated::LockingEmitter& lockingEmitter);
 #endif
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader>
       GetSeriesVolumeProgressiveLoader      (std::string seriesUuid);
     
-    boost::shared_ptr<DicomVolumeImageMPRSlicer>
+    boost::shared_ptr<OrthancStone::DicomVolumeImageMPRSlicer>
       GetMultiframeDicomVolumeImageMPRSlicer(std::string instanceUuid);
 
     boost::shared_ptr<OrthancMultiframeVolumeLoader>
@@ -87,17 +81,17 @@ namespace OrthancStone
     
     void DebugDisplayObjRefCounts();
 #if ORTHANC_ENABLE_WASM == 1
-    WebAssemblyOracle& oracle_;
+    OrthancStone::WebAssemblyOracle& oracle_;
 #else
-    ThreadedOracle& oracle_;
-    Deprecated::LockingEmitter& lockingEmitter_;
+    OrthancStone::ThreadedOracle& oracle_;
+    OrthancStone::Deprecated::LockingEmitter& lockingEmitter_;
 #endif
 
     std::map<std::string, boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> >
       seriesVolumeProgressiveLoaders_;
     std::map<std::string, boost::shared_ptr<OrthancMultiframeVolumeLoader> >
       multiframeVolumeLoaders_;
-    std::map<std::string, boost::shared_ptr<DicomVolumeImageMPRSlicer> >
+    std::map<std::string, boost::shared_ptr<OrthancStone::DicomVolumeImageMPRSlicer> >
       dicomVolumeImageMPRSlicers_;
     std::map<std::string, boost::shared_ptr<DicomStructureSetLoader> >
       dicomStructureSetLoaders_;

@@ -353,6 +353,18 @@ if (ENABLE_STONE_DEPRECATED)
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/LineMeasureTracker.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/RenderStyle.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/SliceOutlineRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/DicomStructureSetLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/DicomStructureSetLoader.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/DicomStructureSetLoader2.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/DicomStructureSetLoader2.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/LoaderCache.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/LoaderCache.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/LoaderStateMachine.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/LoaderStateMachine.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/OrthancMultiframeVolumeLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/OrthancMultiframeVolumeLoader.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/OrthancSeriesVolumeProgressiveLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/OrthancSeriesVolumeProgressiveLoader.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/SmartLoader.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/BaseWebService.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/DicomFrameConverter.cpp
@@ -452,20 +464,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingItemsSorter.h
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingStrategy.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingStrategy.h
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomStructureSetLoader.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomStructureSetLoader.h
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomStructureSetLoader2.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomStructureSetLoader2.h
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/IFetchingItemsSorter.h
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/IFetchingStrategy.h
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderCache.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderCache.h
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderStateMachine.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoaderStateMachine.h
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancMultiframeVolumeLoader.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancMultiframeVolumeLoader.h
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h
   
   ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h

@@ -30,7 +30,7 @@
 
 #include <boost/noncopyable.hpp>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class IOracle;
   class IObservable;

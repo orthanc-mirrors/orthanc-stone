@@ -21,18 +21,18 @@
 
 #pragma once
 
-#include "../Toolbox/DicomStructureSet.h"
-#include "../Volumes/IVolumeSlicer.h"
+#include "../../Toolbox/DicomStructureSet.h"
+#include "../../Volumes/IVolumeSlicer.h"
 #include "LoaderStateMachine.h"
 
 #include <vector>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class DicomStructureSetLoader :
     public LoaderStateMachine,
-    public IVolumeSlicer,
-    public IObservable
+    public OrthancStone::IVolumeSlicer,
+    public OrthancStone::IObservable
   {
   private:
     class Slice;
@@ -42,7 +42,7 @@ namespace OrthancStone
     class LookupInstance;          // 2nd state
     class LoadStructure;           // 1st state
     
-    std::auto_ptr<DicomStructureSet>  content_;
+    std::auto_ptr<OrthancStone::DicomStructureSet>  content_;
     uint64_t                          revision_;
     std::string                       instanceId_;
     unsigned int                      countProcessedInstances_;
@@ -71,10 +71,10 @@ namespace OrthancStone
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, StructuresReady, DicomStructureSetLoader);
 
-    DicomStructureSetLoader(IOracle& oracle,
-                            IObservable& oracleObservable);    
+    DicomStructureSetLoader(OrthancStone::IOracle& oracle,
+                            OrthancStone::IObservable& oracleObservable);    
     
-    DicomStructureSet* GetContent()
+    OrthancStone::DicomStructureSet* GetContent()
     {
       return content_.get();
     }
@@ -91,7 +91,7 @@ namespace OrthancStone
     void LoadInstance(const std::string& instanceId, 
                       const std::vector<std::string>& initiallyVisibleStructures = std::vector<std::string>());
 
-    virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
+    virtual IExtractedSlice* ExtractSlice(const OrthancStone::CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
 
     void SetStructuresReady();
 

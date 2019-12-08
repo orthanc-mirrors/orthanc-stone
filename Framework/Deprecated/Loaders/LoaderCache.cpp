@@ -20,7 +20,7 @@
 
 #include "LoaderCache.h"
 
-#include "../StoneException.h"
+#include "../../StoneException.h"
 #include "OrthancSeriesVolumeProgressiveLoader.h"
 #include "OrthancMultiframeVolumeLoader.h"
 #include "DicomStructureSetLoader.h"
@@ -33,46 +33,45 @@
 
 #if ORTHANC_ENABLE_WASM == 1
 # include <unistd.h>
-# include "../Oracle/WebAssemblyOracle.h"
+# include "../../Oracle/WebAssemblyOracle.h"
 #else
-# include "../Oracle/ThreadedOracle.h"
+# include "../../Oracle/ThreadedOracle.h"
 #endif
 
-#include "../Messages/LockingEmitter.h"
-
 #ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-#include "../Toolbox/DicomStructureSet2.h"
+#include "../../Toolbox/DicomStructureSet2.h"
 #endif 
 //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
-#include "../Volumes/DicomVolumeImage.h"
-#include "../Volumes/DicomVolumeImageMPRSlicer.h"
+#include "../../Volumes/DicomVolumeImage.h"
+#include "../../Volumes/DicomVolumeImageMPRSlicer.h"
 
 #ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-#include "../Volumes/DicomStructureSetSlicer2.h"
+#include "../../Volumes/DicomStructureSetSlicer2.h"
 #endif 
 //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
 #if ORTHANC_ENABLE_WASM == 1
-  LoaderCache::LoaderCache(WebAssemblyOracle& oracle)
+  LoaderCache::LoaderCache(OrthancStone::WebAssemblyOracle& oracle)
     : oracle_(oracle)
   {
 
   }
 #else
-  LoaderCache::LoaderCache(ThreadedOracle& oracle, Deprecated::LockingEmitter& lockingEmitter)
+  LoaderCache::LoaderCache(OrthancStone::ThreadedOracle& oracle,
+                           OrthancStone::Deprecated::LockingEmitter& lockingEmitter)
     : oracle_(oracle)
     , lockingEmitter_(lockingEmitter)
   {
   }
 #endif
 
-  boost::shared_ptr<OrthancStone::OrthancSeriesVolumeProgressiveLoader> 
+  boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> 
     LoaderCache::GetSeriesVolumeProgressiveLoader(std::string seriesUuid)
   {
     try
@@ -91,14 +90,14 @@ namespace OrthancStone
 #else
 //        LOG(TRACE) << "Performing request for series " << seriesUuid;
 #endif
-        boost::shared_ptr<DicomVolumeImage> volumeImage(new DicomVolumeImage);
+        boost::shared_ptr<OrthancStone::DicomVolumeImage> volumeImage(new OrthancStone::DicomVolumeImage);
         boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> loader;
 //        LOG(TRACE) << "volumeImage = " << volumeImage.get();
         {
 #if ORTHANC_ENABLE_WASM == 1
           loader.reset(new OrthancSeriesVolumeProgressiveLoader(volumeImage, oracle_, oracle_));
 #else
-          Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
+          OrthancStone::Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
           loader.reset(new OrthancSeriesVolumeProgressiveLoader(volumeImage, oracle_, lock.GetOracleObservable()));
 #endif
 //          LOG(TRACE) << "LoaderCache::GetSeriesVolumeProgressiveLoader : loader = " << loader.get();
@@ -149,7 +148,7 @@ namespace OrthancStone
     return multiframeVolumeLoaders_[instanceUuid];
   }
 
-  boost::shared_ptr<DicomVolumeImageMPRSlicer> LoaderCache::GetMultiframeDicomVolumeImageMPRSlicer(std::string instanceUuid)
+  boost::shared_ptr<OrthancStone::DicomVolumeImageMPRSlicer> LoaderCache::GetMultiframeDicomVolumeImageMPRSlicer(std::string instanceUuid)
   {
     try
     {
@@ -160,20 +159,20 @@ namespace OrthancStone
       // find in cache
       if (dicomVolumeImageMPRSlicers_.find(instanceUuid) == dicomVolumeImageMPRSlicers_.end())
       {
-        boost::shared_ptr<DicomVolumeImage> volumeImage(new DicomVolumeImage);
+        boost::shared_ptr<OrthancStone::DicomVolumeImage> volumeImage(new OrthancStone::DicomVolumeImage);
         boost::shared_ptr<OrthancMultiframeVolumeLoader> loader;
 
         {
 #if ORTHANC_ENABLE_WASM == 1
           loader.reset(new OrthancMultiframeVolumeLoader(volumeImage, oracle_, oracle_));
 #else
-          Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
+          OrthancStone::Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
           loader.reset(new OrthancMultiframeVolumeLoader(volumeImage, oracle_, lock.GetOracleObservable()));
 #endif
           loader->LoadInstance(instanceUuid);
         }
         multiframeVolumeLoaders_[instanceUuid] = loader;
-        boost::shared_ptr<DicomVolumeImageMPRSlicer> mprSlicer(new DicomVolumeImageMPRSlicer(volumeImage));
+        boost::shared_ptr<OrthancStone::DicomVolumeImageMPRSlicer> mprSlicer(new OrthancStone::DicomVolumeImageMPRSlicer(volumeImage));
         dicomVolumeImageMPRSlicers_[instanceUuid] = mprSlicer;
       }
       return dicomVolumeImageMPRSlicers_[instanceUuid];
@@ -268,7 +267,7 @@ namespace OrthancStone
 #if ORTHANC_ENABLE_WASM == 1
           loader.reset(new DicomStructureSetLoader(oracle_, oracle_));
 #else
-          Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
+          OrthancStone::Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
           loader.reset(new DicomStructureSetLoader(oracle_, lock.GetOracleObservable()));
 #endif
           loader->LoadInstance(inInstanceUuid, initiallyVisibleStructures);
@@ -364,7 +363,7 @@ namespace OrthancStone
   void LoaderCache::ClearCache()
   {
 #if ORTHANC_ENABLE_WASM != 1
-    Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
+    OrthancStone::Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
 #endif
     
 //#ifndef NDEBUG

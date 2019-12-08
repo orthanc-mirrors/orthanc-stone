@@ -23,31 +23,31 @@
 
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
-  void LoaderStateMachine::State::Handle(const OrthancRestApiCommand::SuccessMessage& message)
+  void LoaderStateMachine::State::Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
       
 
-  void LoaderStateMachine::State::Handle(const GetOrthancImageCommand::SuccessMessage& message)
+  void LoaderStateMachine::State::Handle(const OrthancStone::GetOrthancImageCommand::SuccessMessage& message)
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
 
       
-  void LoaderStateMachine::State::Handle(const GetOrthancWebViewerJpegCommand::SuccessMessage& message)
+  void LoaderStateMachine::State::Handle(const OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage& message)
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
 
 
-  void LoaderStateMachine::Schedule(OracleCommandBase* command)
+  void LoaderStateMachine::Schedule(OrthancStone::OracleCommandBase* command)
   {
     LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::Schedule()";
 
-    std::auto_ptr<OracleCommandBase> protection(command);
+    std::auto_ptr<OrthancStone::OracleCommandBase> protection(command);
 
     if (command == NULL)
     {
@@ -90,7 +90,7 @@ namespace OrthancStone
         activeCommands_ < simultaneousDownloads_)
     {
 
-      IOracleCommand* nextCommand = pendingCommands_.front();
+      OrthancStone::IOracleCommand* nextCommand = pendingCommands_.front();
 
       LOG(TRACE) << "    LoaderStateMachine(" << std::hex << this << std::dec << 
         ")::Step(): activeCommands_ (" << activeCommands_ << 
@@ -124,9 +124,9 @@ namespace OrthancStone
 
     pendingCommands_.clear();
   }
+  
 
-
-  void LoaderStateMachine::HandleExceptionMessage(const OracleCommandExceptionMessage& message)
+  void LoaderStateMachine::HandleExceptionMessage(const OrthancStone::OracleCommandExceptionMessage& message)
   {
     LOG(ERROR) << "LoaderStateMachine::HandleExceptionMessage: error in the state machine, stopping all processing";
     LOG(ERROR) << "Error: " << message.GetException().What() << " Details: " <<
@@ -157,8 +157,8 @@ namespace OrthancStone
   }
 
 
-  LoaderStateMachine::LoaderStateMachine(IOracle& oracle,
-                                         IObservable& oracleObservable) :
+  LoaderStateMachine::LoaderStateMachine(OrthancStone::IOracle& oracle,
+                                         OrthancStone::IObservable& oracleObservable) :
     oracle_(oracle),
     active_(false),
     simultaneousDownloads_(4),
@@ -167,10 +167,10 @@ namespace OrthancStone
     LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::LoaderStateMachine()";
 
     // TODO => Move this out of constructor
-    Register<OrthancRestApiCommand::SuccessMessage>(oracleObservable, &LoaderStateMachine::HandleSuccessMessage);
-    Register<GetOrthancImageCommand::SuccessMessage>(oracleObservable, &LoaderStateMachine::HandleSuccessMessage);
-    Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(oracleObservable, &LoaderStateMachine::HandleSuccessMessage);
-    Register<OracleCommandExceptionMessage>(oracleObservable, &LoaderStateMachine::HandleExceptionMessage);
+    Register<OrthancStone::OrthancRestApiCommand::SuccessMessage>(oracleObservable, &LoaderStateMachine::HandleSuccessMessage);
+    Register<OrthancStone::GetOrthancImageCommand::SuccessMessage>(oracleObservable, &LoaderStateMachine::HandleSuccessMessage);
+    Register<OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage>(oracleObservable, &LoaderStateMachine::HandleSuccessMessage);
+    Register<OrthancStone::OracleCommandExceptionMessage>(oracleObservable, &LoaderStateMachine::HandleExceptionMessage);
   }
 
   LoaderStateMachine::~LoaderStateMachine()

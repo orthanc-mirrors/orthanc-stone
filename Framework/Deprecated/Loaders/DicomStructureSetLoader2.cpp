@@ -26,7 +26,7 @@
 #include "../Oracle/IOracle.h"
 #include "../Oracle/OracleCommandExceptionMessage.h"
 
-namespace OrthancStone
+namespace Deprecated
 {
 
   DicomStructureSetLoader2::DicomStructureSetLoader2(

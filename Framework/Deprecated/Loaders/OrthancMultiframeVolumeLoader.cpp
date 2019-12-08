@@ -24,7 +24,7 @@
 #include <Core/Endianness.h>
 #include <Core/Toolbox.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class OrthancMultiframeVolumeLoader::LoadRTDoseGeometry : public LoaderStateMachine::State
   {
@@ -44,7 +44,7 @@ namespace OrthancStone
 
     }
 
-    virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
+    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
     {
       // Complete the DICOM tags with just-received "Grid Frame Offset Vector"
       std::string s = Orthanc::Toolbox::StripSpaces(message.GetAnswer());
@@ -78,7 +78,7 @@ namespace OrthancStone
     {
     }
       
-    virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
+    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
     {
       OrthancMultiframeVolumeLoader& loader = GetLoader<OrthancMultiframeVolumeLoader>();
         
@@ -93,12 +93,12 @@ namespace OrthancStone
       std::auto_ptr<Orthanc::DicomMap> dicom(new Orthanc::DicomMap);
       dicom->FromDicomAsJson(body);
 
-      if (StringToSopClassUid(GetSopClassUid(*dicom)) == SopClassUid_RTDose)
+      if (OrthancStone::StringToSopClassUid(GetSopClassUid(*dicom)) == OrthancStone::SopClassUid_RTDose)
       {
         // Download the "Grid Frame Offset Vector" DICOM tag, that is
         // mandatory for RT-DOSE, but is too long to be returned by default
           
-        std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+        std::auto_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
         command->SetUri("/instances/" + loader.GetInstanceId() + "/content/" +
                         Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR.Format());
         command->AcquirePayload(new LoadRTDoseGeometry(loader, dicom.release()));
@@ -120,7 +120,7 @@ namespace OrthancStone
     {
     }
       
-    virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
+    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
     {
       GetLoader<OrthancMultiframeVolumeLoader>().SetTransferSyntax(message.GetAnswer());
     }
@@ -134,7 +134,7 @@ namespace OrthancStone
     {
     }
       
-    virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
+    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
     {
       GetLoader<OrthancMultiframeVolumeLoader>().SetUncompressedPixelData(message.GetAnswer());
     }
@@ -171,7 +171,7 @@ namespace OrthancStone
         transferSyntaxUid_ == "1.2.840.10008.1.2.1" ||
         transferSyntaxUid_ == "1.2.840.10008.1.2.2")
     {
-      std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      std::auto_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetUri("/instances/" + instanceId_ + "/content/" +
                       Orthanc::DICOM_TAG_PIXEL_DATA.Format() + "/0");
@@ -194,7 +194,7 @@ namespace OrthancStone
 
   void OrthancMultiframeVolumeLoader::SetGeometry(const Orthanc::DicomMap& dicom)
   {
-    DicomInstanceParameters parameters(dicom);
+    OrthancStone::DicomInstanceParameters parameters(dicom);
     volume_->SetDicomParameters(parameters);
       
     Orthanc::PixelFormat format;
@@ -206,7 +206,7 @@ namespace OrthancStone
     double spacingZ;
     switch (parameters.GetSopClassUid())
     {
-      case SopClassUid_RTDose:
+      case OrthancStone::SopClassUid_RTDose:
         spacingZ = parameters.GetThickness();
         break;
 
@@ -221,7 +221,7 @@ namespace OrthancStone
     const unsigned int depth = parameters.GetImageInformation().GetNumberOfFrames();
 
     {
-      VolumeImageGeometry geometry;
+      OrthancStone::VolumeImageGeometry geometry;
       geometry.SetSizeInVoxels(width, height, depth);
       geometry.SetAxialGeometry(parameters.GetGeometry());
       geometry.SetVoxelDimensions(parameters.GetPixelSpacingX(),
@@ -235,7 +235,7 @@ namespace OrthancStone
 
 
 
-    BroadcastMessage(DicomVolumeImage::GeometryReadyMessage(*volume_));
+    BroadcastMessage(OrthancStone::DicomVolumeImage::GeometryReadyMessage(*volume_));
   }
 
 
@@ -265,7 +265,7 @@ namespace OrthancStone
   template <typename T>
   void OrthancMultiframeVolumeLoader::CopyPixelData(const std::string& pixelData)
   {
-    ImageBuffer3D& target = volume_->GetPixelData();
+    OrthancStone::ImageBuffer3D& target = volume_->GetPixelData();
       
     const unsigned int bpp = target.GetBytesPerPixel();
     const unsigned int width = target.GetWidth();
@@ -287,7 +287,7 @@ namespace OrthancStone
 
     for (unsigned int z = 0; z < depth; z++)
     {
-      ImageBuffer3D::SliceWriter writer(target, VolumeProjection_Axial, z);
+      OrthancStone::ImageBuffer3D::SliceWriter writer(target, OrthancStone::VolumeProjection_Axial, z);
 
       assert (writer.GetAccessor().GetWidth() == width &&
               writer.GetAccessor().GetHeight() == height);
@@ -328,7 +328,7 @@ namespace OrthancStone
     volume_->IncrementRevision();
 
     pixelDataLoaded_ = true;
-    BroadcastMessage(DicomVolumeImage::ContentUpdatedMessage(*volume_));
+    BroadcastMessage(OrthancStone::DicomVolumeImage::ContentUpdatedMessage(*volume_));
   }
   
   bool OrthancMultiframeVolumeLoader::HasGeometry() const
@@ -341,9 +341,9 @@ namespace OrthancStone
     return volume_->GetGeometry();
   }
 
-  OrthancMultiframeVolumeLoader::OrthancMultiframeVolumeLoader(boost::shared_ptr<DicomVolumeImage> volume,
-                                                               IOracle& oracle,
-                                                               IObservable& oracleObservable) :
+  OrthancMultiframeVolumeLoader::OrthancMultiframeVolumeLoader(boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+                                                               OrthancStone::IOracle& oracle,
+                                                               OrthancStone::IObservable& oracleObservable) :
     LoaderStateMachine(oracle, oracleObservable),
     volume_(volume),
     pixelDataLoaded_(false)
@@ -366,7 +366,7 @@ namespace OrthancStone
     instanceId_ = instanceId;
 
     {
-      std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      std::auto_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetUri("/instances/" + instanceId + "/tags");
       command->AcquirePayload(new LoadGeometry(*this));
@@ -374,7 +374,7 @@ namespace OrthancStone
     }
 
     {
-      std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      std::auto_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
       command->SetUri("/instances/" + instanceId + "/metadata/TransferSyntax");
       command->AcquirePayload(new LoadTransferSyntax(*this));
       Schedule(command.release());

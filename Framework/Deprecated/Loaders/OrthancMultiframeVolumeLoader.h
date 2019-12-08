@@ -22,15 +22,15 @@
 #pragma once
 
 #include "LoaderStateMachine.h"
-#include "../Volumes/DicomVolumeImage.h"
+#include "../../Volumes/DicomVolumeImage.h"
 
 #include <boost/shared_ptr.hpp>
 
-namespace OrthancStone
+namespace Deprecated
 {
   class OrthancMultiframeVolumeLoader :
     public LoaderStateMachine,
-    public IObservable
+    public OrthancStone::IObservable
   {
   private:
     class LoadRTDoseGeometry;
@@ -38,7 +38,7 @@ namespace OrthancStone
     class LoadTransferSyntax;    
     class LoadUncompressedPixelData;
 
-    boost::shared_ptr<DicomVolumeImage>  volume_;
+    boost::shared_ptr<OrthancStone::DicomVolumeImage>  volume_;
     std::string                          instanceId_;
     std::string                          transferSyntaxUid_;
     bool                                 pixelDataLoaded_;
@@ -57,12 +57,12 @@ namespace OrthancStone
     void SetUncompressedPixelData(const std::string& pixelData);
 
     bool HasGeometry() const;
-    const VolumeImageGeometry& GetImageGeometry() const;
+    const OrthancStone::VolumeImageGeometry& GetImageGeometry() const;
 
   public:
-    OrthancMultiframeVolumeLoader(boost::shared_ptr<DicomVolumeImage> volume,
-                                  IOracle& oracle,
-                                  IObservable& oracleObservable);
+    OrthancMultiframeVolumeLoader(boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+                                  OrthancStone::IOracle& oracle,
+                                  OrthancStone::IObservable& oracleObservable);
     
     virtual ~OrthancMultiframeVolumeLoader();
 

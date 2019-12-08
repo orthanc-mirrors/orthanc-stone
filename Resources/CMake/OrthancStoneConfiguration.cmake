@@ -339,6 +339,13 @@ if (ENABLE_STONE_DEPRECATED)
       )
   endif()
 
+  if (ENABLE_THREADS)
+    list(APPEND ORTHANC_STONE_SOURCES
+      ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Messages/LockingEmitter.cpp
+      ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Messages/LockingEmitter.h
+      )
+  endif()
+
   list(APPEND ORTHANC_STONE_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/IStoneApplication.h
     ${ORTHANC_STONE_ROOT}/Applications/StoneApplicationContext.cpp
@@ -428,8 +435,6 @@ endif()
 
 if (ENABLE_THREADS)
   list(APPEND ORTHANC_STONE_SOURCES
-    ${ORTHANC_STONE_ROOT}/Framework/Messages/LockingEmitter.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Messages/LockingEmitter.h
     ${ORTHANC_STONE_ROOT}/Framework/Oracle/ThreadedOracle.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Oracle/GenericOracleRunner.cpp
     )

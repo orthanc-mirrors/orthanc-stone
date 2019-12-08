@@ -31,7 +31,7 @@
 #endif
 
 #if ORTHANC_ENABLE_THREADS == 1
-#  include "../../Framework/Messages/LockingEmitter.h"
+#  include "../../Framework/Deprecated/Messages/LockingEmitter.h"
 #endif
 
 namespace OrthancStone

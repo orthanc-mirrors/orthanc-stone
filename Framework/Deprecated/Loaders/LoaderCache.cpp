@@ -64,7 +64,7 @@ namespace Deprecated
   }
 #else
   LoaderCache::LoaderCache(OrthancStone::ThreadedOracle& oracle,
-                           OrthancStone::Deprecated::LockingEmitter& lockingEmitter)
+                           LockingEmitter& lockingEmitter)
     : oracle_(oracle)
     , lockingEmitter_(lockingEmitter)
   {
@@ -97,7 +97,7 @@ namespace Deprecated
 #if ORTHANC_ENABLE_WASM == 1
           loader.reset(new OrthancSeriesVolumeProgressiveLoader(volumeImage, oracle_, oracle_));
 #else
-          OrthancStone::Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
+          LockingEmitter::WriterLock lock(lockingEmitter_);
           loader.reset(new OrthancSeriesVolumeProgressiveLoader(volumeImage, oracle_, lock.GetOracleObservable()));
 #endif
 //          LOG(TRACE) << "LoaderCache::GetSeriesVolumeProgressiveLoader : loader = " << loader.get();
@@ -166,7 +166,7 @@ namespace Deprecated
 #if ORTHANC_ENABLE_WASM == 1
           loader.reset(new OrthancMultiframeVolumeLoader(volumeImage, oracle_, oracle_));
 #else
-          OrthancStone::Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
+          LockingEmitter::WriterLock lock(lockingEmitter_);
           loader.reset(new OrthancMultiframeVolumeLoader(volumeImage, oracle_, lock.GetOracleObservable()));
 #endif
           loader->LoadInstance(instanceUuid);
@@ -267,7 +267,7 @@ namespace Deprecated
 #if ORTHANC_ENABLE_WASM == 1
           loader.reset(new DicomStructureSetLoader(oracle_, oracle_));
 #else
-          OrthancStone::Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
+          LockingEmitter::WriterLock lock(lockingEmitter_);
           loader.reset(new DicomStructureSetLoader(oracle_, lock.GetOracleObservable()));
 #endif
           loader->LoadInstance(inInstanceUuid, initiallyVisibleStructures);
@@ -363,7 +363,7 @@ namespace Deprecated
   void LoaderCache::ClearCache()
   {
 #if ORTHANC_ENABLE_WASM != 1
-    OrthancStone::Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
+    LockingEmitter::WriterLock lock(lockingEmitter_);
 #endif
     
 //#ifndef NDEBUG

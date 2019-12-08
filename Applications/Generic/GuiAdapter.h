@@ -43,8 +43,8 @@
 
 #include "../../Framework/StoneException.h"
 
-#if ORTHANC_ENABLE_THREADS != 1
-# include "../../Framework/Messages/LockingEmitter.h"
+#if ORTHANC_ENABLE_THREADS == 1
+# include "../../Framework/Deprecated/Messages/LockingEmitter.h"
 #endif
 
 #include <vector>
@@ -95,11 +95,6 @@ namespace OrthancStone
   struct GuiAdapterWheelEvent;
   struct GuiAdapterKeyboardEvent;
 
-  namespace Deprecated
-  {
-    class LockingEmitter;
-  }
-    
 #if 1
   typedef bool (*OnMouseEventFunc)(std::string canvasId, const GuiAdapterMouseEvent* mouseEvent, void* userData);
   typedef bool (*OnMouseWheelFunc)(std::string canvasId, const GuiAdapterWheelEvent* wheelEvent, void* userData);

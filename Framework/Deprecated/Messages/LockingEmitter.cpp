@@ -22,22 +22,19 @@
 
 #include <Core/OrthancException.h>
 
-namespace OrthancStone
+namespace Deprecated
 {
-  namespace Deprecated
+  void LockingEmitter::EmitMessage(boost::weak_ptr<OrthancStone::IObserver> observer,
+                                   const OrthancStone::IMessage& message)
   {
-    void LockingEmitter::EmitMessage(boost::weak_ptr<IObserver> observer,
-                                     const IMessage& message)
+    try
     {
-      try
-      {
-        boost::unique_lock<boost::shared_mutex>  lock(mutex_);
-        oracleObservable_.EmitMessage(observer, message);
-      }
-      catch (Orthanc::OrthancException& e)
-      {
-        LOG(ERROR) << "Exception while emitting a message: " << e.What();
-      }
+      boost::unique_lock<boost::shared_mutex>  lock(mutex_);
+      oracleObservable_.EmitMessage(observer, message);
+    }
+    catch (Orthanc::OrthancException& e)
+    {
+      LOG(ERROR) << "Exception while emitting a message: " << e.What();
     }
   }
 }

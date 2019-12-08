@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "../../Messages/LockingEmitter.h"
+#include "../Messages/LockingEmitter.h"
 #include "../../Volumes/DicomVolumeImageMPRSlicer.h"
 #include "OrthancSeriesVolumeProgressiveLoader.h"
 #include "OrthancMultiframeVolumeLoader.h"
@@ -49,7 +49,7 @@ namespace Deprecated
 #if ORTHANC_ENABLE_WASM == 1
     LoaderCache(OrthancStone::WebAssemblyOracle& oracle);
 #else
-    LoaderCache(OrthancStone::ThreadedOracle& oracle, OrthancStone::Deprecated::LockingEmitter& lockingEmitter);
+    LoaderCache(OrthancStone::ThreadedOracle& oracle, LockingEmitter& lockingEmitter);
 #endif
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader>
@@ -84,7 +84,7 @@ namespace Deprecated
     OrthancStone::WebAssemblyOracle& oracle_;
 #else
     OrthancStone::ThreadedOracle& oracle_;
-    OrthancStone::Deprecated::LockingEmitter& lockingEmitter_;
+    LockingEmitter& lockingEmitter_;
 #endif
 
     std::map<std::string, boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> >

@@ -38,8 +38,8 @@ namespace OrthancStone
   private:
     typedef std::map<std::string, WebGLViewport*>  Viewports;
 
-    unsigned int  timeoutSeconds_;
-    Viewports     viewports_;
+    double     timeoutMS_;
+    Viewports  viewports_;
 
     void LaunchTimer();
 
@@ -48,13 +48,18 @@ namespace OrthancStone
     static void OnTimeoutCallback(void *userData);
     
   public:
-    WebGLViewportsRegistry(unsigned int timeoutSeconds);
+    WebGLViewportsRegistry(double timeoutMS /* in milliseconds */);
     
-    ~WebGLViewportsRegistry();
+    ~WebGLViewportsRegistry()
+    {
+      Clear();
+    }
 
     void Add(const std::string& canvasId);
 
     void Remove(const std::string& canvasId);
+
+    void Clear();
 
     class Accessor : public boost::noncopyable
     {

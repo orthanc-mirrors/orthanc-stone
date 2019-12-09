@@ -27,7 +27,7 @@ namespace OrthancStone
 {
   void WebGLViewportsRegistry::LaunchTimer()
   {
-    emscripten_set_timeout(OnTimeoutCallback, 1000.0 * static_cast<double>(timeoutSeconds_), this);
+    emscripten_set_timeout(OnTimeoutCallback, timeoutMS_, this);
   }
 
   
@@ -88,30 +88,18 @@ namespace OrthancStone
   }
 
     
-  WebGLViewportsRegistry::WebGLViewportsRegistry(unsigned int timeoutSeconds) :
-    timeoutSeconds_(timeoutSeconds)
+  WebGLViewportsRegistry::WebGLViewportsRegistry(double timeoutMS) :
+    timeoutMS_(timeoutMS)
   {
-    if (timeoutSeconds <= 0)
+    if (timeoutMS <= 0)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }          
-
+    
     LaunchTimer();
   }
 
-    
-  WebGLViewportsRegistry::~WebGLViewportsRegistry()
-  {
-    for (Viewports::iterator it = viewports_.begin(); it != viewports_.end(); ++it)
-    {
-      if (it->second != NULL)
-      {
-        delete it->second;
-      }
-    }
-  }
 
-    
   void WebGLViewportsRegistry::Add(const std::string& canvasId)
   {
     if (viewports_.find(canvasId) != viewports_.end())
@@ -146,6 +134,20 @@ namespace OrthancStone
   }
 
     
+  void WebGLViewportsRegistry::Clear()
+  {
+    for (Viewports::iterator it = viewports_.begin(); it != viewports_.end(); ++it)
+    {
+      if (it->second != NULL)
+      {
+        delete it->second;
+      }
+    }
+
+    viewports_.clear();
+  }
+
+
   WebGLViewportsRegistry::Accessor::Accessor(WebGLViewportsRegistry& that,
                                              const std::string& canvasId) :
     that_(that)

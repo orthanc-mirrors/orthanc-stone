@@ -57,7 +57,22 @@ namespace OrthancStone
       posInString += utf8CharLength;
     }
 
-    return alphabet->RenderText(utf8String);
+
+    std::auto_ptr<Orthanc::ImageAccessor> renderedText(alphabet->RenderText(utf8String));
+
+    // add a blank line on top of the text (to improve bilinear filtering of the topmost line)
+    std::auto_ptr<Orthanc::Image> renderedTextExtended(new Orthanc::Image(renderedText->GetFormat(), renderedText->GetWidth(), renderedText->GetHeight() + 1, true));
+
+    Orthanc::ImageAccessor textRegion;
+    Orthanc::ImageAccessor firstLineRegion;
+
+    renderedTextExtended->GetRegion(firstLineRegion, 0, 0, renderedText->GetWidth(), 1);
+    Orthanc::ImageProcessing::Set(firstLineRegion, 0);
+
+    renderedTextExtended->GetRegion(textRegion, 0, 1, renderedText->GetWidth(), renderedText->GetHeight());
+    Orthanc::ImageProcessing::Copy(textRegion, *renderedText);
+
+    return renderedTextExtended.release();
   }
 
 

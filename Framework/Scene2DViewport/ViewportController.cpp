@@ -66,13 +66,22 @@ namespace OrthancStone
 
   ViewportController::ViewportController() :
     undoStackW_(boost::make_shared<OrthancStone::UndoStack>()),
-    canvasToSceneFactor_(1)
+    canvasToSceneFactor_(1),
+    scene_(new Scene2D)
   {
   }
 
-  ViewportController::ViewportController(boost::weak_ptr<UndoStack> undoStackW)
-    : undoStackW_(undoStackW)
-    , canvasToSceneFactor_(1)
+  ViewportController::ViewportController(const Scene2D& scene) : 
+    undoStackW_(boost::make_shared<OrthancStone::UndoStack>()),
+    canvasToSceneFactor_(1),
+    scene_(scene.Clone())
+  {
+  }
+
+  ViewportController::ViewportController(boost::weak_ptr<UndoStack> undoStackW) :
+    undoStackW_(undoStackW),
+    canvasToSceneFactor_(1),
+    scene_(new Scene2D)
   {
   }
  
@@ -171,27 +180,27 @@ namespace OrthancStone
 
   OrthancStone::AffineTransform2D ViewportController::GetCanvasToSceneTransform() const
   {
-    return scene_.GetCanvasToSceneTransform();
+    return scene_->GetCanvasToSceneTransform();
   }
 
   OrthancStone::AffineTransform2D ViewportController::GetSceneToCanvasTransform() const
   {
-    return scene_.GetSceneToCanvasTransform();
+    return scene_->GetSceneToCanvasTransform();
   }
 
   void ViewportController::SetSceneToCanvasTransform(const AffineTransform2D& transform)
   {
-    scene_.SetSceneToCanvasTransform(transform);
+    scene_->SetSceneToCanvasTransform(transform);
 
-    canvasToSceneFactor_ = scene_.GetCanvasToSceneTransform().ComputeZoom();
+    canvasToSceneFactor_ = scene_->GetCanvasToSceneTransform().ComputeZoom();
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
   void ViewportController::FitContent(unsigned int viewportWidth,
                                       unsigned int viewportHeight)
   {
-    scene_.FitContent(viewportWidth, viewportHeight);
-    canvasToSceneFactor_ = scene_.GetCanvasToSceneTransform().ComputeZoom();
+    scene_->FitContent(viewportWidth, viewportHeight);
+    canvasToSceneFactor_ = scene_->GetCanvasToSceneTransform().ComputeZoom();
     BroadcastMessage(SceneTransformChanged(*this));
   }
 

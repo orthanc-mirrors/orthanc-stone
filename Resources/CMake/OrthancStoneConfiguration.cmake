@@ -445,6 +445,9 @@ endif()
 if (ENABLE_WASM)
   list(APPEND ORTHANC_STONE_SOURCES
     ${ORTHANC_STONE_ROOT}/Framework/Oracle/WebAssemblyOracle.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Viewport/WebAssemblyCairoViewport.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Viewport/WebAssemblyViewport.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Viewport/WebAssemblyViewport.h
     )
 endif()
 
@@ -694,10 +697,10 @@ if (ENABLE_OPENGL)
 
   if (ENABLE_WASM)
     list(APPEND ORTHANC_STONE_SOURCES
-      ${ORTHANC_STONE_ROOT}/Framework/OpenGL/WebAssemblyOpenGLContext.h
       ${ORTHANC_STONE_ROOT}/Framework/OpenGL/WebAssemblyOpenGLContext.cpp
-      ${ORTHANC_STONE_ROOT}/Framework/Viewport/WebAssemblyViewport.h
-      ${ORTHANC_STONE_ROOT}/Framework/Viewport/WebAssemblyViewport.cpp
+      ${ORTHANC_STONE_ROOT}/Framework/OpenGL/WebAssemblyOpenGLContext.h
+      ${ORTHANC_STONE_ROOT}/Framework/Viewport/WebGLViewport.cpp
+      ${ORTHANC_STONE_ROOT}/Framework/Viewport/WebGLViewportsRegistry.cpp
       )
   endif()
 endif()

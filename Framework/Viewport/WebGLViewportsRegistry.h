@@ -1,0 +1,77 @@
+/**
+ * Stone of Orthanc
+ * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
+ * Department, University Hospital of Liege, Belgium
+ * Copyright (C) 2017-2019 Osimis S.A., Belgium
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ **/
+
+
+#pragma once
+
+#include "WebGLViewport.h"
+
+namespace OrthancStone
+{
+  /**
+   * This singleton class must be used if many WebGL viewports are
+   * created by the higher-level application, implying possible loss
+   * of WebGL contexts. The object will run an infinite update loop
+   * that checks whether all the WebGL context are still valid (not
+   * lost). If some WebGL context is lost, it is automatically
+   * reinitialized by created a fresh HTML5 canvas.
+   **/  
+  class WebGLViewportsRegistry : public boost::noncopyable
+  {
+  private:
+    typedef std::map<std::string, WebGLViewport*>  Viewports;
+
+    unsigned int  timeoutSeconds_;
+    Viewports     viewports_;
+
+    void LaunchTimer();
+
+    void OnTimeout();
+
+    static void OnTimeoutCallback(void *userData);
+    
+  public:
+    WebGLViewportsRegistry(unsigned int timeoutSeconds);
+    
+    ~WebGLViewportsRegistry();
+
+    void Add(const std::string& canvasId);
+
+    void Remove(const std::string& canvasId);
+
+    class Accessor : public boost::noncopyable
+    {
+    private:
+      WebGLViewportsRegistry&          that_;
+      std::auto_ptr<IViewport::ILock>  lock_;
+
+    public:
+      Accessor(WebGLViewportsRegistry& that,
+               const std::string& canvasId);
+
+      bool IsValid() const
+      {
+        return lock_.get() != NULL;
+      }
+
+      IViewport::ILock& GetViewport() const;
+    };
+  };
+}

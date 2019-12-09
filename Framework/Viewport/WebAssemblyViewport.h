@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -21,106 +21,78 @@
 
 #pragma once
 
-#include "../OpenGL/WebAssemblyOpenGLContext.h"
-#include "../Scene2D/OpenGLCompositor.h"
-#include "../Scene2D/CairoCompositor.h"
-#include "ViewportBase.h"
+#if !defined(ORTHANC_ENABLE_WASM)
+#  error Macro ORTHANC_ENABLE_WASM must be defined
+#endif
+
+#if ORTHANC_ENABLE_WASM != 1
+#  error This file can only be used if targeting WebAssembly
+#endif
+
+#include "IViewport.h"
+
+#include <emscripten.h>
+#include <emscripten/html5.h>
 
 namespace OrthancStone
 {
-  class WebAssemblyViewport : public ViewportBase
+  class WebAssemblyViewport : public IViewport
   {
   private:
-    std::string  canvasIdentifier_;
+    class WasmLock;
+    
+    std::string                            shortCanvasId_;
+    std::string                            fullCanvasId_;
+    std::auto_ptr<ICompositor>             compositor_;
+    boost::shared_ptr<ViewportController>  controller_;
+    std::auto_ptr<IViewportInteractor>     interactor_;
+
+    static EM_BOOL OnRequestAnimationFrame(double time, void *userData);
+    
+    static EM_BOOL OnResize(int eventType, const EmscriptenUiEvent *uiEvent, void *userData);
+
+    static EM_BOOL OnMouseDown(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
+    
+    static EM_BOOL OnMouseMove(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
+    
+    static EM_BOOL OnMouseUp(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
+
+  protected:
+    void Invalidate();
+    
+    void ClearCompositor()
+    {
+      compositor_.reset();
+    }
+
+    bool HasCompositor() const
+    {
+      return compositor_.get() != NULL;
+    }
+
+    void AcquireCompositor(ICompositor* compositor /* takes ownership */);
+
+    virtual void Paint(ICompositor& compositor,
+                       ViewportController& controller) = 0;
+
+    virtual void UpdateSize(ICompositor& compositor) = 0;
 
   public:
-    WebAssemblyViewport(const std::string& canvasIdentifier) :
-      canvasIdentifier_(canvasIdentifier)
+    WebAssemblyViewport(const std::string& canvasId,
+                        const Scene2D* scene);
+
+    virtual ILock* Lock() ORTHANC_OVERRIDE;
+
+    void AcquireInteractor(IViewportInteractor* interactor);
+
+    const std::string& GetShortCanvasId() const
     {
+      return shortCanvasId_;
     }
 
-    WebAssemblyViewport(const std::string& canvasIdentifier,
-                        boost::shared_ptr<Scene2D>& scene) :
-      ViewportBase(scene),
-      canvasIdentifier_(canvasIdentifier)
+    const std::string& GetFullCanvasId() const
     {
-    }
-
-    const std::string& GetCanvasIdentifier() const
-    {
-      return canvasIdentifier_;
-    }
-  };
-
-
-  class WebAssemblyOpenGLViewport : public WebAssemblyViewport
-  {
-  private:
-    OpenGL::WebAssemblyOpenGLContext  context_;
-    std::auto_ptr<OpenGLCompositor>   compositor_;
-
-  public:
-    WebAssemblyOpenGLViewport(const std::string& canvas);
-    
-    WebAssemblyOpenGLViewport(const std::string& canvas,
-                              boost::shared_ptr<Scene2D>& scene);
-    
-    // This function must be called each time the browser window is resized
-    void UpdateSize();
-
-    virtual bool HasCompositor() const ORTHANC_OVERRIDE
-    {
-      return (compositor_.get() != NULL);
-    }
-    
-    bool IsContextLost()
-    {
-      return context_.IsContextLost();
-    }
-
-    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE;
-
-    virtual void Refresh() ORTHANC_OVERRIDE;
-
-    // this does NOT return whether the context is lost! This is called to 
-    // tell Stone that the context has been lost
-    bool OpenGLContextLost();
-
-    // This should be called to indicate that the context has been lost
-    bool OpenGLContextRestored();
-
-  private:
-    void DisableCompositor();
-    void RestoreCompositor();
-
-    void RegisterContextCallbacks();
-  };
-
-
-  class WebAssemblyCairoViewport : public WebAssemblyViewport
-  {
-  private:
-    CairoCompositor                  compositor_;
-    std::string                      canvas_;
-
-  public:
-    WebAssemblyCairoViewport(const std::string& canvas);
-    
-    WebAssemblyCairoViewport(const std::string& canvas,
-                             boost::shared_ptr<Scene2D>& scene);
-    
-    void UpdateSize(); 
-
-    virtual void Refresh() ORTHANC_OVERRIDE;
-
-    virtual bool HasCompositor() const ORTHANC_OVERRIDE
-    {
-      return true;
-    }
-    
-    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
-    {
-      return compositor_;
+      return fullCanvasId_;
     }
   };
 }

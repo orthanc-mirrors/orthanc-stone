@@ -111,6 +111,8 @@ namespace OrthancStone
 
     ViewportController();
 
+    ViewportController(const Scene2D& scene /* will be cloned */);
+
     ViewportController(boost::weak_ptr<UndoStack> undoStackW);
 
     ~ViewportController();
@@ -210,12 +212,12 @@ namespace OrthancStone
 
     const Scene2D& GetScene() const
     {
-      return scene_;
+      return *scene_;
     }
 
     Scene2D& GetScene()
     {
-      return scene_;
+      return *scene_;
     }
 
     bool HasActiveTracker() const
@@ -230,7 +232,7 @@ namespace OrthancStone
     std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;
     boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Couldn't this be a "std::auto_ptr"?
 
-    Scene2D   scene_;
+    std::auto_ptr<Scene2D>   scene_;
 
     // this is cached
     double  canvasToSceneFactor_;    

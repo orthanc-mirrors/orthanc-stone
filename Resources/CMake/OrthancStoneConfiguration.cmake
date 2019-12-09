@@ -252,13 +252,14 @@ endif()
 
 if (NOT ORTHANC_SANDBOXED)
   set(PLATFORM_SOURCES
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceCommandBase.cpp
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceGetCommand.cpp
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServicePostCommand.cpp
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceDeleteCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Loaders/GenericLoadersContext.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/DelayedCallCommand.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/Oracle.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleDelayedCallExecutor.h
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceCommandBase.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceDeleteCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceGetCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServicePostCommand.cpp
     )
 
   if (ENABLE_SDL)
@@ -469,8 +470,17 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingItemsSorter.h
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingStrategy.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/BasicFetchingStrategy.h
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomResourcesLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomSource.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/DicomVolumeLoader.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/IFetchingItemsSorter.h
   ${ORTHANC_STONE_ROOT}/Framework/Loaders/IFetchingStrategy.h
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/LoadedDicomResources.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/OracleScheduler.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/SeriesFramesLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/SeriesMetadataLoader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/SeriesOrderedFrames.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Loaders/SeriesThumbnailsLoader.cpp
   
   ${ORTHANC_STONE_ROOT}/Framework/Messages/ICallable.h
   ${ORTHANC_STONE_ROOT}/Framework/Messages/IMessage.h

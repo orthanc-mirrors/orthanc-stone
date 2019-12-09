@@ -60,6 +60,11 @@
 #  include <Core/DicomParsing/FromDcmtkBridge.h>
 #endif
 
+#if ORTHANC_ENABLE_WASM == 1
+static double viewportsTimeout_ = 1000;
+static std::auto_ptr<OrthancStone::WebGLViewportsRegistry>  viewportsRegistry_;
+#endif
+
 #include "Toolbox/LinearAlgebra.h"
 
 #include <Core/OrthancException.h>
@@ -170,6 +175,10 @@ namespace OrthancStone
 
   void StoneFinalize()
   {
+#if ORTHANC_ENABLE_WASM == 1
+    viewportsRegistry_.reset();
+#endif
+    
 #if ORTHANC_ENABLE_SDL == 1
     OrthancStone::SdlWindow::GlobalFinalize();
 #endif
@@ -188,4 +197,32 @@ namespace OrthancStone
 
     Orthanc::Logging::Finalize();
   }
+
+
+#if ORTHANC_ENABLE_WASM == 1
+  void SetWebGLViewportsRegistryTimeout(double timeout)
+  {
+    if (viewportsRegistry_.get())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      viewportsTimeout_ = timeout;
+    }
+  }
+#endif
+
+
+#if ORTHANC_ENABLE_WASM == 1
+  WebGLViewportsRegistry& GetWebGLViewportsRegistry()
+  {
+    if (viewportsRegistry_.get() == NULL)
+    {
+      viewportsRegistry_.reset(new WebGLViewportsRegistry(viewportsTimeout_));
+    }
+
+    return *viewportsRegistry_;
+  }
+#endif
 }

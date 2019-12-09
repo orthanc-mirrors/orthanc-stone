@@ -41,42 +41,49 @@ namespace OrthancStone
 {
   class WebAssemblyOracle :
     public IOracle,
-    public IObservable
+    public IObservable,
+    public IMessageEmitter
   {
   private:
     typedef std::map<std::string, std::string>  HttpHeaders;
     
     class TimeoutContext;
-    class Emitter;
     class FetchContext;
     class FetchCommand;    
     
-    void Execute(const IObserver& receiver,
+    void Execute(boost::weak_ptr<IObserver> receiver,
                  HttpCommand* command);    
     
-    void Execute(const IObserver& receiver,
+    void Execute(boost::weak_ptr<IObserver> receiver,
                  OrthancRestApiCommand* command);    
     
-    void Execute(const IObserver& receiver,
+    void Execute(boost::weak_ptr<IObserver> receiver,
                  GetOrthancImageCommand* command);    
     
-    void Execute(const IObserver& receiver,
+    void Execute(boost::weak_ptr<IObserver> receiver,
                  GetOrthancWebViewerJpegCommand* command);
 
+    IObservable oracleObservable_;
     std::string orthancRoot_;
 
   public:
-    WebAssemblyOracle(MessageBroker& broker) :
-      IObservable(broker)
+    virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
+                             const IMessage& message) ORTHANC_OVERRIDE
     {
+      oracleObservable_.EmitMessage(observer, message);
+    }
+    
+    virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
+                          IOracleCommand* command) ORTHANC_OVERRIDE;
+
+    IObservable& GetOracleObservable()
+    {
+      return oracleObservable_;
     }
 
     void SetOrthancRoot(const std::string& root)
     {
       orthancRoot_ = root;
     }
-    
-    virtual void Schedule(boost::shared_ptr<IObserver>& receiver,
-                          IOracleCommand* command) ORTHANC_OVERRIDE;
   };
 }

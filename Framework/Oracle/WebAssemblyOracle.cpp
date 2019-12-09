@@ -42,12 +42,12 @@ namespace OrthancStone
   {
   private:
     WebAssemblyOracle&                 oracle_;
-    const IObserver&                   receiver_;
+    boost::weak_ptr<IObserver>         receiver_;
     std::auto_ptr<SleepOracleCommand>  command_;
 
   public:
     TimeoutContext(WebAssemblyOracle& oracle,
-                   const IObserver& receiver,
+                   boost::weak_ptr<IObserver> receiver,
                    IOracleCommand* command) :
       oracle_(oracle),
       receiver_(receiver)
@@ -63,7 +63,9 @@ namespace OrthancStone
     }
 
     void EmitMessage()
-    {
+    {      
+      assert(command_.get() != NULL);
+
       SleepOracleCommand::TimeoutMessage message(*command_);
       oracle_.EmitMessage(receiver_, message);
     }
@@ -75,26 +77,6 @@ namespace OrthancStone
     }
   };
     
-
-  class WebAssemblyOracle::Emitter : public IMessageEmitter
-  {
-  private:
-    WebAssemblyOracle&  oracle_;
-
-  public:
-    Emitter(WebAssemblyOracle&  oracle) :
-      oracle_(oracle)
-    {
-    }
-
-    virtual void EmitMessage(const IObserver& receiver,
-                             const IMessage& message)
-    {
-      LOG(TRACE) << "WebAssemblyOracle::Emitter::EmitMessage receiver = "
-        << std::hex << &receiver << std::dec;
-      oracle_.EmitMessage(receiver, message);
-    }
-  };
 
   /**
   This object is created on the heap for every http request.
@@ -108,26 +90,23 @@ namespace OrthancStone
   class WebAssemblyOracle::FetchContext : public boost::noncopyable
   {
   private:
-    Emitter                        emitter_;
-    const IObserver&               receiver_;
+    WebAssemblyOracle&             oracle_;
+    boost::weak_ptr<IObserver>     receiver_;
     std::auto_ptr<IOracleCommand>  command_;
     std::string                    expectedContentType_;
-    std::string                    receiverFingerprint_;
 
   public:
     FetchContext(WebAssemblyOracle& oracle,
-                 const IObserver& receiver,
+                 boost::weak_ptr<IObserver> receiver,
                  IOracleCommand* command,
                  const std::string& expectedContentType) :
-      emitter_(oracle),
+      oracle_(oracle),
       receiver_(receiver),
       command_(command),
-      expectedContentType_(expectedContentType),
-      receiverFingerprint_(receiver.GetFingerprint())
+      expectedContentType_(expectedContentType)
     {
       LOG(TRACE) << "WebAssemblyOracle::FetchContext::FetchContext() | "
-        << "receiver address = " << std::hex << &receiver << std::dec 
-        << " with fingerprint = " << receiverFingerprint_;
+                 << "receiver address = " << std::hex << &receiver;
 
       if (command == NULL)
       {
@@ -140,21 +119,21 @@ namespace OrthancStone
       return expectedContentType_;
     }
 
+    IMessageEmitter& GetEmitter() const
+    {
+      return oracle_;
+    }
+
+    boost::weak_ptr<IObserver> GetReceiver() const
+    {
+      return receiver_;
+    }
+
     void EmitMessage(const IMessage& message)
     {
       LOG(TRACE) << "WebAssemblyOracle::FetchContext::EmitMessage receiver_ = "
         << std::hex << &receiver_ << std::dec;
-      emitter_.EmitMessage(receiver_, message);
-    }
-
-    IMessageEmitter& GetEmitter()
-    {
-      return emitter_;
-    }
-
-    const IObserver& GetReceiver() const
-    {
-      return receiver_;
+      oracle_.EmitMessage(receiver_, message);
     }
 
     IOracleCommand& GetCommand() const
@@ -213,47 +192,13 @@ namespace OrthancStone
        * free data associated with the fetch.
        **/
       
-      std::auto_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
-
-      // an UUID is 36 chars : 32 hex chars + 4 hyphens: char #0 --> char #35
-      // char #36 is \0.
-      bool callHandler = true;
-      
-      // TODO: remove this line because we are NOT allowed to call methods on GetReceiver that is maybe a dangling ref
-      if (context->GetReceiver().DoesFingerprintLookGood())
-      {
-        callHandler = true;
-        std::string currentFingerprint(context->GetReceiver().GetFingerprint());
-       
-        LOG(TRACE) << "SuccessCallback for object at address (" << std::hex 
-          << &(context->GetReceiver()) << std::dec 
-          << " with current fingerprint = " << currentFingerprint 
-          << ". Fingerprint looks OK";
-        
-        if (currentFingerprint != context->receiverFingerprint_)
-        {
-          LOG(TRACE) << "  ** SuccessCallback: BUT currentFingerprint != "
-            << "receiverFingerprint_(" << context->receiverFingerprint_ << ")";
-          callHandler = false;
-        }
-        else
-        {
-          LOG(TRACE) << "  ** SuccessCallback: FetchContext-level "
-            << "fingerprints are the same: "
-            << context->receiverFingerprint_
-            << " ---> oracle will dispatch the response to observer: "
-            << std::hex << &(context->GetReceiver()) << std::dec;
-        }
-      }
-      else {
-        LOG(TRACE) << "SuccessCallback for object at address (" << std::hex << &(context->GetReceiver()) << std::dec << " with current fingerprint is XXXXX -- NOT A VALID FINGERPRINT! OBJECT IS READ ! CALLBACK WILL NOT BE CALLED!";
-        callHandler = false;
-      }
-
       if (fetch->userData == NULL)
       {
         LOG(ERROR) << "WebAssemblyOracle::FetchContext::SuccessCallback fetch->userData is NULL!!!!!!!";
+        return;
       }
+
+      std::auto_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
 
       std::string answer;
       if (fetch->numBytes > 0)
@@ -303,44 +248,41 @@ namespace OrthancStone
         }
         else
         {
-          if (callHandler)
+          switch (context->GetCommand().GetType())
           {
-            switch (context->GetCommand().GetType())
+            case IOracleCommand::Type_Http:
             {
-              case IOracleCommand::Type_Http:
-              {
-                HttpCommand::SuccessMessage message(context->GetTypedCommand<HttpCommand>(), headers, answer);
-                context->EmitMessage(message);
-                break;
-              }
-
-              case IOracleCommand::Type_OrthancRestApi:
-              {
-                LOG(TRACE) << "WebAssemblyOracle::FetchContext::SuccessCallback. About to call context->EmitMessage(message);";
-                OrthancRestApiCommand::SuccessMessage message
-                  (context->GetTypedCommand<OrthancRestApiCommand>(), headers, answer);
-                context->EmitMessage(message);
-                break;
-              }
-
-              case IOracleCommand::Type_GetOrthancImage:
-              {
-                context->GetTypedCommand<GetOrthancImageCommand>().ProcessHttpAnswer
-                  (context->GetEmitter(), context->GetReceiver(), answer, headers);
-                break;
-              }
-
-              case IOracleCommand::Type_GetOrthancWebViewerJpeg:
-              {
-                context->GetTypedCommand<GetOrthancWebViewerJpegCommand>().ProcessHttpAnswer
-                  (context->GetEmitter(), context->GetReceiver(), answer);
-                break;
-              }
-
-              default:
-                LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle: "
-                           << context->GetCommand().GetType();
+              HttpCommand::SuccessMessage message(context->GetTypedCommand<HttpCommand>(), headers, answer);
+              context->EmitMessage(message);
+              break;
             }
+
+            case IOracleCommand::Type_OrthancRestApi:
+            {
+              LOG(TRACE) << "WebAssemblyOracle::FetchContext::SuccessCallback. About to call context->EmitMessage(message);";
+              OrthancRestApiCommand::SuccessMessage message
+                (context->GetTypedCommand<OrthancRestApiCommand>(), headers, answer);
+              context->EmitMessage(message);
+              break;
+            }
+
+            case IOracleCommand::Type_GetOrthancImage:
+            {
+              context->GetTypedCommand<GetOrthancImageCommand>().ProcessHttpAnswer
+                (context->GetReceiver(), context->GetEmitter(), answer, headers);
+              break;
+            }
+
+            case IOracleCommand::Type_GetOrthancWebViewerJpeg:
+            {
+              context->GetTypedCommand<GetOrthancWebViewerJpegCommand>().ProcessHttpAnswer
+                (context->GetReceiver(), context->GetEmitter(), answer);
+              break;
+            }
+
+            default:
+              LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle: "
+                         << context->GetCommand().GetType();
           }
         }
       }
@@ -388,7 +330,7 @@ namespace OrthancStone
   {
   private:
     WebAssemblyOracle&             oracle_;
-    const IObserver&               receiver_;
+    boost::weak_ptr<IObserver>     receiver_;
     std::auto_ptr<IOracleCommand>  command_;
     Orthanc::HttpMethod            method_;
     std::string                    url_;
@@ -399,7 +341,7 @@ namespace OrthancStone
 
   public:
     FetchCommand(WebAssemblyOracle& oracle,
-                 const IObserver& receiver,
+                 boost::weak_ptr<IObserver> receiver,
                  IOracleCommand* command) :
       oracle_(oracle),
       receiver_(receiver),
@@ -568,7 +510,7 @@ namespace OrthancStone
 #endif
 
   
-  void WebAssemblyOracle::Execute(const IObserver& receiver,
+  void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
                                   HttpCommand* command)
   {
     FetchCommand fetch(*this, receiver, command);
@@ -590,7 +532,7 @@ namespace OrthancStone
   }
   
 
-  void WebAssemblyOracle::Execute(const IObserver& receiver,
+  void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
                                   OrthancRestApiCommand* command)
   {
 #if 0
@@ -653,7 +595,7 @@ namespace OrthancStone
   }
     
     
-  void WebAssemblyOracle::Execute(const IObserver& receiver,
+  void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
                                   GetOrthancImageCommand* command)
   {
 #if 0
@@ -674,7 +616,7 @@ namespace OrthancStone
   }
     
     
-  void WebAssemblyOracle::Execute(const IObserver& receiver,
+  void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
                                   GetOrthancWebViewerJpegCommand* command)
   {
 #if 0
@@ -695,12 +637,11 @@ namespace OrthancStone
 
 
 
-  void WebAssemblyOracle::Schedule(boost::shared_ptr<IObserver>& receiver,
+  bool WebAssemblyOracle::Schedule(boost::shared_ptr<IObserver> receiver,
                                    IOracleCommand* command)
   {
     LOG(TRACE) << "WebAssemblyOracle::Schedule : receiver = "
-      << std::hex << &receiver << std::dec
-      << " | Current fingerprint is " << receiver.GetFingerprint();
+               << std::hex << &receiver;
     
     std::auto_ptr<IOracleCommand> protection(command);
 
@@ -759,6 +700,9 @@ namespace OrthancStone
             
       default:
         LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle: " << command->GetType();
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
     }
+
+    return true;
   }
 }

@@ -194,7 +194,7 @@ namespace OrthancStone
     BroadcastMessage(SelectionChangedMessage(*this));
   }
 
-  bool RadiographyWidget::LookupSelectedLayer(size_t& layer)
+  bool RadiographyWidget::LookupSelectedLayer(size_t& layer) const
   {
     if (hasSelection_)
     {

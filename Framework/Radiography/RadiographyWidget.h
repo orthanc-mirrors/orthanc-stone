@@ -81,7 +81,7 @@ namespace OrthancStone
 
     template<typename LayerType> bool SelectLayerByType(size_t index = 0);
 
-    bool LookupSelectedLayer(size_t& layer);
+    bool LookupSelectedLayer(size_t& layer) const;
 
     void OnGeometryChanged(const RadiographyScene::GeometryChangedMessage& message);
 

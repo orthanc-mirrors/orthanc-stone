@@ -278,6 +278,8 @@ namespace OrthancStone
           new Callable<RadiographyWidget, RadiographyScene::LayerRemovedMessage>
           (*this, &RadiographyWidget::OnLayerRemoved));
 
+    Unselect();
+
     NotifyContentChanged();
 
     // force redraw

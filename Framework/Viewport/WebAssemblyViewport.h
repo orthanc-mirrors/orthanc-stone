@@ -34,15 +34,15 @@ namespace OrthancStone
     std::string  canvasIdentifier_;
 
   public:
-    WebAssemblyViewport(const std::string& canvasIdentifier) :
-      canvasIdentifier_(canvasIdentifier)
+    WebAssemblyViewport(const std::string& canvasIdentifier) 
+      : canvasIdentifier_(canvasIdentifier)
     {
     }
 
     WebAssemblyViewport(const std::string& canvasIdentifier,
-                        boost::shared_ptr<Scene2D>& scene) :
-      ViewportBase(scene),
-      canvasIdentifier_(canvasIdentifier)
+                        boost::shared_ptr<Scene2D>& scene) 
+      : ViewportBase(scene)
+      , canvasIdentifier_(canvasIdentifier)
     {
     }
 
@@ -58,6 +58,13 @@ namespace OrthancStone
   private:
     OpenGL::WebAssemblyOpenGLContext  context_;
     std::auto_ptr<OpenGLCompositor>   compositor_;
+    double                            cssWidth_;
+    double                            cssHeight_;
+    int                               pixelWidth_;
+    int                               pixelHeight_;
+
+  private:
+    void UpdateSizeIfNeeded();
 
   public:
     WebAssemblyOpenGLViewport(const std::string& canvas);

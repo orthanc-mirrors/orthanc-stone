@@ -27,18 +27,26 @@
 
 namespace OrthancStone
 {
-  WebAssemblyOpenGLViewport::WebAssemblyOpenGLViewport(const std::string& canvas) :
-    WebAssemblyViewport(canvas),
-    context_(canvas)
+  WebAssemblyOpenGLViewport::WebAssemblyOpenGLViewport(const std::string& canvas) 
+    : WebAssemblyViewport(canvas)
+    , context_(canvas)
+    , cssWidth_(0)    // will be set in Refresh()
+    , cssHeight_(0)   // ditto
+    , pixelWidth_(0)  // ditto
+    , pixelHeight_(0) // ditto
   {
     compositor_.reset(new OpenGLCompositor(context_, GetScene()));
     RegisterContextCallbacks();
   }
 
   WebAssemblyOpenGLViewport::WebAssemblyOpenGLViewport(const std::string& canvas,
-    boost::shared_ptr<Scene2D>& scene) :
-    WebAssemblyViewport(canvas, scene),
-    context_(canvas)
+    boost::shared_ptr<Scene2D>& scene) 
+    : WebAssemblyViewport(canvas, scene)
+    , context_(canvas)
+    , cssWidth_(0)    // will be set in Refresh()
+    , cssHeight_(0)   // ditto
+    , pixelWidth_(0)  // ditto
+    , pixelHeight_(0) // ditto
   {
     compositor_.reset(new OpenGLCompositor(context_, GetScene()));
     RegisterContextCallbacks();
@@ -101,10 +109,65 @@ namespace OrthancStone
     }
   }
 
+  void WebAssemblyOpenGLViewport::UpdateSizeIfNeeded()
+  {
+    bool needsRefresh = false;
+    std::string canvasId = GetCanvasIdentifier();
+
+    {
+      double cssWidth = 0;
+      double cssHeight = 0;
+      EMSCRIPTEN_RESULT res = EMSCRIPTEN_RESULT_SUCCESS;
+      res =
+        emscripten_get_element_css_size(canvasId.c_str(), &cssWidth, &cssHeight);
+
+      if (res == EMSCRIPTEN_RESULT_SUCCESS)
+      {
+        if ((cssWidth != cssWidth_) || (cssHeight != cssHeight_))
+        {
+          cssWidth_ = cssWidth;
+          cssHeight_ = cssHeight;
+          needsRefresh = true;
+        }
+      }
+    }
+
+    {
+      int pixelWidth = 0;
+      int pixelHeight = 0;
+      EMSCRIPTEN_RESULT res = EMSCRIPTEN_RESULT_SUCCESS;
+      res =
+        emscripten_get_canvas_element_size(canvasId.c_str(), &pixelWidth, &pixelHeight);
+
+      if (res == EMSCRIPTEN_RESULT_SUCCESS)
+      {
+        if ((pixelWidth != pixelWidth_) || (pixelHeight != pixelHeight_))
+        {
+          pixelWidth_ = pixelWidth;
+          pixelHeight_ = pixelHeight;
+          needsRefresh = true;
+        }
+      }
+    }
+
+    if (needsRefresh)
+      UpdateSize();
+  }
+
   void WebAssemblyOpenGLViewport::Refresh()
   {
     try
     {
+      // first, we check if the canvas size (both css size in css pixels and
+      // backing store) have changed. if so, we call UpdateSize to deal with
+      // it
+
+      LOG(INFO) << "updating cairo viewport size";
+
+      // maybe the canvas size has changed and we need to update the 
+      // canvas backing store size
+      UpdateSizeIfNeeded();
+           
       if (HasCompositor())
       {
         GetCompositor().Refresh();

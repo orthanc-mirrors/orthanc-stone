@@ -191,7 +191,7 @@ namespace OrthancStone
     BroadcastMessage(SelectionChangedMessage(*this));
   }
 
-  bool RadiographyWidget::LookupSelectedLayer(size_t& layer)
+  bool RadiographyWidget::LookupSelectedLayer(size_t& layer) const
   {
     if (hasSelection_)
     {
@@ -261,6 +261,8 @@ namespace OrthancStone
     Register<RadiographyScene::GeometryChangedMessage>(*scene_, &RadiographyWidget::OnGeometryChanged);
     Register<RadiographyScene::ContentChangedMessage>(*scene_, &RadiographyWidget::OnContentChanged);
     Register<RadiographyScene::LayerRemovedMessage>(*scene_, &RadiographyWidget::OnLayerRemoved);
+
+    Unselect();
 
     NotifyContentChanged();
 

@@ -91,7 +91,6 @@ namespace OrthancStone
       return;  // layer is outside the buffer
     }
 
-    printf("rendering alpha: %d \n", y1);
     t.Apply(tmp, cropped, interpolation, true /* clear */);
 
     float value = foreground_;

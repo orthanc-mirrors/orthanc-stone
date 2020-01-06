@@ -21,8 +21,12 @@
 
 #include "WebAssemblyOracle.h"
 
-#include "SleepOracleCommand.h"
 #include "OracleCommandExceptionMessage.h"
+#include "SleepOracleCommand.h"
+
+#if ORTHANC_ENABLE_DCMTK == 1
+#  include "ParseDicomSuccessMessage.h"
+#endif
 
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
@@ -170,6 +174,10 @@ namespace OrthancStone
        * of the response is the same as the "Accept" header of the
        * query. This should be fixed in future versions of emscripten.
        * https://github.com/emscripten-core/emscripten/pull/8486
+       *
+       * TODO - The function "emscripten_fetch_get_response_headers()"
+       * was added to "fetch.h" at emscripten-1.38.37 on 2019-06-26.
+       * https://github.com/emscripten-core/emscripten/blob/1.38.37/system/include/emscripten/fetch.h
        **/
 
       HttpHeaders headers;
@@ -231,8 +239,21 @@ namespace OrthancStone
               break;
             }
 
+            case IOracleCommand::Type_ParseDicomFromWado:
+            {
+#if ORTHANC_ENABLE_DCMTK == 1
+              size_t fileSize;
+              std::auto_ptr<Orthanc::ParsedDicomFile> dicom
+                (ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, headers));
+              LOG(WARNING) << "bingo";
+#else
+              throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+#endif
+              break;
+            }
+
             default:
-              LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle: "
+              LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle (in SuccessCallback): "
                          << context->GetCommand().GetType();
           }
         }
@@ -574,8 +595,61 @@ namespace OrthancStone
                                   ParseDicomFromWadoCommand* command)
   {
     std::auto_ptr<ParseDicomFromWadoCommand> protection(command);
+    
+    // TODO - CACHE
 
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    
+    switch (command->GetRestCommand().GetType())
+    {
+      case IOracleCommand::Type_Http:
+      {
+        const HttpCommand& rest =
+          dynamic_cast<const HttpCommand&>(protection->GetRestCommand());
+        
+        FetchCommand fetch(*this, receiver, protection.release());
+    
+        fetch.SetMethod(rest.GetMethod());
+        fetch.SetUrl(rest.GetUrl());
+        fetch.AddHttpHeaders(rest.GetHttpHeaders());
+        fetch.SetTimeout(rest.GetTimeout());
+    
+        if (rest.GetMethod() == Orthanc::HttpMethod_Post ||
+            rest.GetMethod() == Orthanc::HttpMethod_Put)
+        {
+          std::string body = rest.GetBody();
+          fetch.SetBody(body);
+        }
+    
+        fetch.Execute();
+        break;
+      }
+
+      case IOracleCommand::Type_OrthancRestApi:
+      {
+        const OrthancRestApiCommand& rest =
+          dynamic_cast<const OrthancRestApiCommand&>(protection->GetRestCommand());
+        
+        FetchCommand fetch(*this, receiver, protection.release());
+
+        fetch.SetMethod(rest.GetMethod());
+        SetOrthancUrl(fetch, rest.GetUri());
+        fetch.AddHttpHeaders(rest.GetHttpHeaders());
+        fetch.SetTimeout(rest.GetTimeout());
+
+        if (rest.GetMethod() == Orthanc::HttpMethod_Post ||
+            rest.GetMethod() == Orthanc::HttpMethod_Put)
+        {
+          std::string body = rest.GetBody();
+          fetch.SetBody(body);
+        }
+
+        fetch.Execute();
+        break;
+      }
+
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
   }
 
 
@@ -618,11 +692,17 @@ namespace OrthancStone
       }
             
       case IOracleCommand::Type_ParseDicomFromWado:
+#if ORTHANC_ENABLE_DCMTK == 1
         Execute(receiver, dynamic_cast<ParseDicomFromWadoCommand*>(protection.release()));
+#else
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+                                          "DCMTK must be enabled to parse DICOM files");
+#endif
         break;
             
       default:
-        LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle: " << command->GetType();
+        LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle (in Schedule): "
+                   << command->GetType();
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
     }
 

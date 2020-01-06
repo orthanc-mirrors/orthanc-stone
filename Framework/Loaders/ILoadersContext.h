@@ -101,6 +101,10 @@ namespace OrthancStone
       virtual void AddLoader(boost::shared_ptr<IObserver> loader) = 0;
     };
 
+    virtual ~ILoadersContext()
+    {
+    }
+
     /**
      * Locks the Stone loaders context, to give access to its
      * underlying features. This is important for Stone applications

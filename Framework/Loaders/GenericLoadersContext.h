@@ -60,7 +60,7 @@ namespace OrthancStone
 
   public:
     GenericLoadersContext(unsigned int maxHighPriority,
-                        unsigned int maxStandardPriority,
+                          unsigned int maxStandardPriority,
                           unsigned int maxLowPriority);
 
     virtual ~GenericLoadersContext();

@@ -26,7 +26,6 @@ namespace OrthancStone
   class ParsedDicomCache::Item : public Orthanc::ICacheable
   {
   private:
-    boost::mutex                             mutex_;
     std::auto_ptr<Orthanc::ParsedDicomFile>  dicom_;
     size_t                                   fileSize_;
     bool                                     hasPixelData_;
@@ -43,11 +42,6 @@ namespace OrthancStone
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
-    }
-
-    boost::mutex& GetMutex()
-    {
-      return mutex_;
     }
            
     virtual size_t GetMemoryUsage() const

@@ -36,7 +36,7 @@ namespace OrthancStone
   class WebGLViewportsRegistry : public boost::noncopyable
   {
   private:
-    typedef std::map<std::string, WebGLViewport*>  Viewports;
+    typedef std::map<std::string, boost::shared_ptr<WebGLViewport> >  Viewports;
 
     double     timeoutMS_;
     Viewports  viewports_;
@@ -55,7 +55,7 @@ namespace OrthancStone
       Clear();
     }
 
-    void Add(const std::string& canvasId);
+    boost::shared_ptr<WebGLViewport> Add(const std::string& canvasId);
 
     void Remove(const std::string& canvasId);
 

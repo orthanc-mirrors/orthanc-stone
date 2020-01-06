@@ -338,6 +338,9 @@ namespace OrthancStone
     HttpHeaders                    headers_;
     unsigned int                   timeout_;
     std::string                    expectedContentType_;
+    bool                           hasCredentials_;
+    std::string                    username_;
+    std::string                    password_;
 
   public:
     FetchCommand(WebAssemblyOracle& oracle,
@@ -347,7 +350,8 @@ namespace OrthancStone
       receiver_(receiver),
       command_(command),
       method_(Orthanc::HttpMethod_Get),
-      timeout_(0)
+      timeout_(0),
+      hasCredentials_(false)
     {
       if (command == NULL)
       {
@@ -360,11 +364,6 @@ namespace OrthancStone
       method_ = method;
     }
 
-    void SetOrthancUri(const std::string& uri)
-    {
-      url_ = oracle_.orthancRoot_ + uri;
-    }
-
     void SetUrl(const std::string& url)
     {
       url_ = url;
@@ -375,14 +374,25 @@ namespace OrthancStone
       body_.swap(body);
     }
 
-    void SetHttpHeaders(const HttpHeaders& headers)
+    void AddHttpHeaders(const HttpHeaders& headers)
     {
-      headers_ = headers;
+      for (HttpHeaders::const_iterator it = headers.begin(); it != headers.end(); ++it)
+      {
+        headers_[it->first] = it->second;
+      }
     }
 
     void SetTimeout(unsigned int timeout)
     {
       timeout_ = timeout;
+    }
+
+    void SetCredentials(const std::string& username,
+                        const std::string& password)
+    {
+      hasCredentials_ = true;
+      username_ = username;
+      password_ = password;
     }
 
     void Execute()
@@ -435,6 +445,13 @@ namespace OrthancStone
       attr.onerror = FetchContext::FailureCallback;
       attr.timeoutMSecs = timeout_ * 1000;
 
+      if (hasCredentials_)
+      {
+        attr.withCredentials = EM_TRUE;
+        attr.userName = username_.c_str();
+        attr.password = password_.c_str();
+      }
+      
       std::vector<const char*> headers;
       headers.reserve(2 * headers_.size() + 1);
 
@@ -510,6 +527,26 @@ namespace OrthancStone
 #endif
 
   
+  void WebAssemblyOracle::SetOrthancUrl(FetchCommand& command,
+                                        const std::string& uri) const
+  {
+    if (isLocalOrthanc_)
+    {
+      command.SetUrl(localOrthancRoot_ + uri);
+    }
+    else
+    {
+      command.SetUrl(remoteOrthanc_.GetUrl() + uri);
+      command.AddHttpHeaders(remoteOrthanc_.GetHttpHeaders());
+      
+      if (!remoteOrthanc_.GetUsername().empty())
+      {
+        command.SetCredentials(remoteOrthanc_.GetUsername(), remoteOrthanc_.GetPassword());
+      }
+    }
+  }
+    
+
   void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
                                   HttpCommand* command)
   {
@@ -517,7 +554,7 @@ namespace OrthancStone
     
     fetch.SetMethod(command->GetMethod());
     fetch.SetUrl(command->GetUrl());
-    fetch.SetHttpHeaders(command->GetHttpHeaders());
+    fetch.AddHttpHeaders(command->GetHttpHeaders());
     fetch.SetTimeout(command->GetTimeout());
     
     if (command->GetMethod() == Orthanc::HttpMethod_Post ||
@@ -552,8 +589,8 @@ namespace OrthancStone
       FetchCommand fetch(*this, receiver, command);
 
       fetch.SetMethod(command->GetMethod());
-      fetch.SetOrthancUri(command->GetUri());
-      fetch.SetHttpHeaders(command->GetHttpHeaders());
+      SetOrthancUrl(fetch, command->GetUri());
+      fetch.AddHttpHeaders(command->GetHttpHeaders());
       fetch.SetTimeout(command->GetTimeout());
 
       if (command->GetMethod() == Orthanc::HttpMethod_Post ||
@@ -608,8 +645,8 @@ namespace OrthancStone
 
     FetchCommand fetch(*this, receiver, command);
 
-    fetch.SetOrthancUri(command->GetUri());
-    fetch.SetHttpHeaders(command->GetHttpHeaders());
+    SetOrthancUrl(fetch, command->GetUri());
+    fetch.AddHttpHeaders(command->GetHttpHeaders());
     fetch.SetTimeout(command->GetTimeout());
       
     fetch.Execute();
@@ -628,8 +665,8 @@ namespace OrthancStone
 
     FetchCommand fetch(*this, receiver, command);
 
-    fetch.SetOrthancUri(command->GetUri());
-    fetch.SetHttpHeaders(command->GetHttpHeaders());
+    SetOrthancUrl(fetch, command->GetUri());
+    fetch.AddHttpHeaders(command->GetHttpHeaders());
     fetch.SetTimeout(command->GetTimeout());
       
     fetch.Execute();

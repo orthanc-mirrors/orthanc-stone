@@ -39,7 +39,7 @@ namespace OrthancStone
   private:
     class Payload;
 
-    ILoadersContext&                           context_;
+    ILoadersContext&                         context_;
     SeriesOrderedFrames                      frames_;
     std::string                              dicomDirPath_;
     boost::shared_ptr<LoadedDicomResources>  dicomDir_;

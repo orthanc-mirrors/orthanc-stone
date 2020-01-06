@@ -36,12 +36,13 @@
 #include "IOracle.h"
 #include "OrthancRestApiCommand.h"
 
+#include <Core/WebServiceParameters.h>
+
 
 namespace OrthancStone
 {
   class WebAssemblyOracle :
     public IOracle,
-    public IObservable,
     public IMessageEmitter
   {
   private:
@@ -49,7 +50,10 @@ namespace OrthancStone
     
     class TimeoutContext;
     class FetchContext;
-    class FetchCommand;    
+    class FetchCommand;
+
+    void SetOrthancUrl(FetchCommand& command,
+                       const std::string& uri) const;
     
     void Execute(boost::weak_ptr<IObserver> receiver,
                  HttpCommand* command);    
@@ -63,10 +67,17 @@ namespace OrthancStone
     void Execute(boost::weak_ptr<IObserver> receiver,
                  GetOrthancWebViewerJpegCommand* command);
 
-    IObservable oracleObservable_;
-    std::string orthancRoot_;
+    IObservable                    oracleObservable_;
+    bool                           isLocalOrthanc_;
+    std::string                    localOrthancRoot_;
+    Orthanc::WebServiceParameters  remoteOrthanc_;
 
   public:
+    WebAssemblyOracle() :
+      isLocalOrthanc_(false)
+    {
+    }
+    
     virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
                              const IMessage& message) ORTHANC_OVERRIDE
     {
@@ -81,9 +92,16 @@ namespace OrthancStone
       return oracleObservable_;
     }
 
-    void SetOrthancRoot(const std::string& root)
+    void SetLocalOrthanc(const std::string& root)
     {
-      orthancRoot_ = root;
+      isLocalOrthanc_ = true;
+      localOrthancRoot_ = root;
+    }
+
+    void SetRemoteOrthanc(const Orthanc::WebServiceParameters& orthanc)
+    {
+      isLocalOrthanc_ = false;
+      remoteOrthanc_ = orthanc;
     }
   };
 }

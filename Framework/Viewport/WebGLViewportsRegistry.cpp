@@ -23,6 +23,8 @@
 
 #include <Core/OrthancException.h>
 
+#include <boost/make_shared.hpp>
+
 namespace OrthancStone
 {
   void WebGLViewportsRegistry::LaunchTimer()
@@ -58,16 +60,15 @@ namespace OrthancStone
         // At this point, the old canvas is removed from the DOM and
         // replaced by a fresh one with the same ID: Recreate the
         // WebGL context on the new canvas
-        std::auto_ptr<WebGLViewport> viewport;
+        boost::shared_ptr<WebGLViewport> viewport;
           
         {
           std::auto_ptr<IViewport::ILock> lock(it->second->Lock());
-          viewport.reset(new WebGLViewport(it->first, lock->GetController().GetScene()));
+          viewport = boost::make_shared<WebGLViewport>(it->first, lock->GetController().GetScene());
         }
 
         // Replace the old WebGL viewport by the new one
-        delete it->second;
-        it->second = viewport.release();
+        it->second = viewport;
 
         // Tag the fresh canvas as needing a repaint
         {
@@ -100,7 +101,7 @@ namespace OrthancStone
   }
 
 
-  void WebGLViewportsRegistry::Add(const std::string& canvasId)
+  boost::shared_ptr<WebGLViewport> WebGLViewportsRegistry::Add(const std::string& canvasId)
   {
     if (viewports_.find(canvasId) != viewports_.end())
     {
@@ -109,7 +110,9 @@ namespace OrthancStone
     }
     else
     {
-      viewports_[canvasId] = new WebGLViewport(canvasId);
+      boost::shared_ptr<WebGLViewport> viewport(new WebGLViewport(canvasId));
+      viewports_[canvasId] = viewport;
+      return viewport;
     }
   }
 
@@ -124,11 +127,6 @@ namespace OrthancStone
     }
     else
     {
-      if (found->second != NULL)
-      {
-        delete found->second;
-      }
-
       viewports_.erase(found);
     }
   }
@@ -136,14 +134,6 @@ namespace OrthancStone
     
   void WebGLViewportsRegistry::Clear()
   {
-    for (Viewports::iterator it = viewports_.begin(); it != viewports_.end(); ++it)
-    {
-      if (it->second != NULL)
-      {
-        delete it->second;
-      }
-    }
-
     viewports_.clear();
   }
 

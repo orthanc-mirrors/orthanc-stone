@@ -171,6 +171,7 @@ namespace OrthancStone
                                             uint64_t& processedCommands)
   {
     boost::recursive_mutex::scoped_lock lock(mutex_);
+
     if (scheduler_)
     {
       scheduledCommands = scheduler_->GetTotalScheduled();
@@ -178,8 +179,7 @@ namespace OrthancStone
     }
     else
     {
-      scheduledCommands = 0;
-      processedCommands = 0;
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
   }
 }

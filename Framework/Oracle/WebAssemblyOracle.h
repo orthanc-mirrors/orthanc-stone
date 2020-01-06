@@ -35,6 +35,7 @@
 #include "HttpCommand.h"
 #include "IOracle.h"
 #include "OrthancRestApiCommand.h"
+#include "ParseDicomFromWadoCommand.h"
 
 #include <Core/WebServiceParameters.h>
 
@@ -66,6 +67,9 @@ namespace OrthancStone
     
     void Execute(boost::weak_ptr<IObserver> receiver,
                  GetOrthancWebViewerJpegCommand* command);
+    
+    void Execute(boost::weak_ptr<IObserver> receiver,
+                 ParseDicomFromWadoCommand* command);
 
     IObservable                    oracleObservable_;
     bool                           isLocalOrthanc_;

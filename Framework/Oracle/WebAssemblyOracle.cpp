@@ -31,11 +31,6 @@
 #include <emscripten/html5.h>
 #include <emscripten/fetch.h>
 
-#if 0
-extern bool logbgo233;
-extern bool logbgo115;
-#endif
-
 namespace OrthancStone
 {
   class WebAssemblyOracle::TimeoutContext
@@ -147,44 +142,6 @@ namespace OrthancStone
       return dynamic_cast<T&>(*command_);
     }
 
-#if 0
-    static std::string ToString(Orthanc::HttpMethod method)
-    {
-      switch (method) {
-      case Orthanc::HttpMethod_Get:
-        return "GET";
-        break;
-      case Orthanc::HttpMethod_Post:
-        return "POST";
-        break;
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-        break;
-      }
-    }
-    static void DumpCommand(emscripten_fetch_t* fetch, std::string answer)
-    {
-      FetchContext* context = reinterpret_cast<FetchContext*>(fetch->userData);
-
-      const auto& command = context->GetTypedCommand<OrthancRestApiCommand>();
-      auto commandStr = ToString(command.GetMethod());
-      LOG(TRACE) << "SuccessCallback for REST command. Method is : " << commandStr;
-      switch (command.GetMethod()) {
-      case Orthanc::HttpMethod_Get:
-        LOG(TRACE) << "  * SuccessCallback GET URI = " << command.GetUri() << " timeout = " << command.GetTimeout();
-        LOG(TRACE) << "  * SuccessCallback GET RESPONSE = " << answer;
-        break;
-      case Orthanc::HttpMethod_Post:
-        LOG(TRACE) << "  * SuccessCallback POST URI = " << command.GetUri() << " body = " << command.GetBody() << " timeout = " << command.GetTimeout();
-        LOG(TRACE) << "  * SuccessCallback POST RESPONSE = " << answer;
-        break;
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-        break;
-      }
-    }
-#endif
-
     static void SuccessCallback(emscripten_fetch_t *fetch)
     {
       /**
@@ -224,12 +181,6 @@ namespace OrthancStone
         }
       }
       
-#if 0
-      if (context->GetCommand().GetType() == IOracleCommand::Type_OrthancRestApi) {
-        //if (logbgo115)
-        DumpCommand(fetch, answer);
-      }
-#endif
       LOG(TRACE) << "About to call emscripten_fetch_close";
       emscripten_fetch_close(fetch);
       LOG(TRACE) << "Successfully called emscripten_fetch_close";
@@ -397,13 +348,6 @@ namespace OrthancStone
 
     void Execute()
     {
-#if 0
-      if (logbgo233) {
-        if (logbgo115)
-          LOG(TRACE) << "        WebAssemblyOracle::Execute () command addr " <<
-          std::hex << command_.get() << std::dec;
-      }
-#endif
       if (command_.get() == NULL)
       {
         // Cannot call Execute() twice
@@ -493,9 +437,6 @@ namespace OrthancStone
         attr.userData = new FetchContext(oracle_, receiver_, command_.release(), expectedContentType);
 
         // Must be the last call to prevent memory leak on error
-#if 0
-        LOG(TRACE) << "Performing " << method << " request on URI: \"" << url_ << "\"";
-#endif
         emscripten_fetch(&attr, url_.c_str());
       }        
       catch(...)
@@ -507,26 +448,7 @@ namespace OrthancStone
     }
   };
 
-#if 0
-  static void DumpCommand(OrthancRestApiCommand* pCommand)
-  {
-    OrthancRestApiCommand& command = *pCommand;
-    LOG(TRACE) << "WebAssemblyOracle::Execute for REST command.";
-    switch (command.GetMethod()) {
-    case Orthanc::HttpMethod_Get:
-      LOG(TRACE) << "  * WebAssemblyOracle::Execute GET URI = " << command.GetUri() << " timeout = " << command.GetTimeout();
-      break;
-    case Orthanc::HttpMethod_Post:
-      LOG(TRACE) << "  * WebAssemblyOracle::Execute POST URI = " << command.GetUri() << " body = " << command.GetBody() << " timeout = " << command.GetTimeout();
-      break;
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-      break;
-    }
-  }
-#endif
 
-  
   void WebAssemblyOracle::SetOrthancUrl(FetchCommand& command,
                                         const std::string& uri) const
   {
@@ -572,16 +494,6 @@ namespace OrthancStone
   void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
                                   OrthancRestApiCommand* command)
   {
-#if 0
-    DumpCommand(command);
-
-    if (logbgo233) {
-      if (logbgo115)
-        LOG(TRACE) << "        WebAssemblyOracle::Execute (OrthancRestApiCommand) command addr " <<
-        std::hex << command << std::dec;
-    }
-#endif
-
     try
     {
       //LOG(TRACE) << "*********** WebAssemblyOracle::Execute.";
@@ -635,14 +547,6 @@ namespace OrthancStone
   void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
                                   GetOrthancImageCommand* command)
   {
-#if 0
-    if (logbgo233) {
-      if (logbgo115)
-        LOG(TRACE) << "        WebAssemblyOracle::Execute (GetOrthancImageCommand) command addr " <<
-        std::hex << command << std::dec;
-    }
-#endif
-
     FetchCommand fetch(*this, receiver, command);
 
     SetOrthancUrl(fetch, command->GetUri());
@@ -656,13 +560,6 @@ namespace OrthancStone
   void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
                                   GetOrthancWebViewerJpegCommand* command)
   {
-#if 0
-    if (logbgo233) {
-      if (logbgo115)
-        LOG(TRACE) << "        WebAssemblyOracle::Execute (GetOrthancWebViewerJpegCommand) command addr " << std::hex << command << std::dec;
-    }
-#endif
-
     FetchCommand fetch(*this, receiver, command);
 
     SetOrthancUrl(fetch, command->GetUri());
@@ -672,6 +569,14 @@ namespace OrthancStone
     fetch.Execute();
   }
 
+
+  void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
+                                  ParseDicomFromWadoCommand* command)
+  {
+    std::auto_ptr<ParseDicomFromWadoCommand> protection(command);
+
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+  }
 
 
   bool WebAssemblyOracle::Schedule(boost::shared_ptr<IObserver> receiver,
@@ -694,37 +599,14 @@ namespace OrthancStone
         break;
         
       case IOracleCommand::Type_OrthancRestApi:
-        //// DIAGNOSTIC. PLEASE REMOVE IF IT HAS BEEN COMMITTED BY MISTAKE
-        //{
-        //  const IObserver* pReceiver = &receiver;
-        //  LOG(TRACE) << "WebAssemblyOracle::Schedule | pReceiver is " << pReceiver;
-        //  LOG(TRACE) << "WebAssemblyOracle::Schedule | command = " << command;
-        //  OrthancRestApiCommand* rac = dynamic_cast<OrthancRestApiCommand*>(protection.get());
-        //  LOG(TRACE) << "WebAssemblyOracle::Schedule | typed command = " << rac;
-        //  LOG(TRACE) << "WebAssemblyOracle::Schedule" << rac->GetUri();
-        //}
-        //// END OF BLOCK TO REMOVE
         Execute(receiver, dynamic_cast<OrthancRestApiCommand*>(protection.release()));
         break;
         
       case IOracleCommand::Type_GetOrthancImage:
-        //// DIAGNOSTIC. PLEASE REMOVE IF IT HAS BEEN COMMITTED BY MISTAKE
-        //{
-        //  GetOrthancImageCommand* rac = dynamic_cast<GetOrthancImageCommand*>(protection.get());
-        //  LOG(TRACE) << "WebAssemblyOracle::Schedule" << rac->GetUri();
-        //}
-        //// END OF BLOCK TO REMOVE
         Execute(receiver, dynamic_cast<GetOrthancImageCommand*>(protection.release()));
         break;
 
       case IOracleCommand::Type_GetOrthancWebViewerJpeg:
-        //// DIAGNOSTIC. PLEASE REMOVE IF IT HAS BEEN COMMITTED BY MISTAKE
-        //{
-        //  GetOrthancWebViewerJpegCommand* rac = dynamic_cast<GetOrthancWebViewerJpegCommand*>(protection.get());
-        //  LOG(TRACE) << "WebAssemblyOracle::Schedule" << rac->GetUri();
-        //}
-        //// END OF BLOCK TO REMOVE
-        Execute(receiver, dynamic_cast<GetOrthancWebViewerJpegCommand*>(protection.release()));
         break;          
             
       case IOracleCommand::Type_Sleep:
@@ -734,6 +616,10 @@ namespace OrthancStone
                                new TimeoutContext(*this, receiver, protection.release()));
         break;
       }
+            
+      case IOracleCommand::Type_ParseDicomFromWado:
+        Execute(receiver, dynamic_cast<ParseDicomFromWadoCommand*>(protection.release()));
+        break;
             
       default:
         LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle: " << command->GetType();

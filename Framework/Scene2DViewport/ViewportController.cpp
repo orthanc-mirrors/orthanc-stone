@@ -278,11 +278,16 @@ namespace OrthancStone
     }
   }
 
-  void ViewportController::HandleMouseMove(const PointerEvent& event)
+  bool ViewportController::HandleMouseMove(const PointerEvent& event)
   {
     if (activeTracker_)
     {
       activeTracker_->PointerMove(event);
+      return true;
+    }
+    else
+    {
+      return false;
     }
   }
 

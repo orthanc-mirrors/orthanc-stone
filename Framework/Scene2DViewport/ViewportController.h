@@ -204,8 +204,9 @@ namespace OrthancStone
                           unsigned int viewportWidth,
                           unsigned int viewportHeight);
 
-    // Must be expressed in canvas coordinates
-    void HandleMouseMove(const PointerEvent& event);
+    // Must be expressed in canvas coordinates. Returns "true" if the
+    // state has changed, so that "Invalidate()" can be called.
+    bool HandleMouseMove(const PointerEvent& event);
 
     // Must be expressed in canvas coordinates
     void HandleMouseRelease(const PointerEvent& event);

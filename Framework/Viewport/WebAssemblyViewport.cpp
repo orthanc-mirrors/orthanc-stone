@@ -160,8 +160,10 @@ namespace OrthancStone
     {
       PointerEvent pointer;
       ConvertMouseEvent(pointer, *mouseEvent, *that.compositor_);
-      that.controller_->HandleMouseMove(pointer);        
-      that.Invalidate();
+      if (that.controller_->HandleMouseMove(pointer))
+      {
+        that.Invalidate();
+      }
     }
 
     return true;

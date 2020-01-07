@@ -137,6 +137,12 @@ namespace OrthancStone
     canvasWidth_(0),
     canvasHeight_(0)
   {
+    if (!context_.IsContextLost())
+    {
+      canvasWidth_ = context_.GetCanvasWidth();
+      canvasHeight_ = context_.GetCanvasHeight();
+    }
+
     ResetScene();
   }
 

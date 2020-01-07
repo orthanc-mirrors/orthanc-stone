@@ -34,6 +34,10 @@ namespace OrthancStone
       that_(that),
       lock_(that.mutex_)
     {
+      if (!that_.scheduler_)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
     }
       
     virtual ILoadersContext& GetContext() const ORTHANC_OVERRIDE
@@ -67,6 +71,13 @@ namespace OrthancStone
     {
       that_.scheduler_->CancelAllRequests();
     }
+
+    virtual void GetStatistics(uint64_t& scheduledCommands,
+                               uint64_t& processedCommands)
+    {
+      scheduledCommands = that_.scheduler_->GetTotalScheduled();
+      processedCommands = that_.scheduler_->GetTotalProcessed();
+    }
   };
 
 
@@ -87,6 +98,11 @@ namespace OrthancStone
     oracle_.reset(new ThreadedOracle(*this));
     scheduler_ = OracleScheduler::Create(*oracle_, oracleObservable_, *this,
                                          maxHighPriority, maxStandardPriority, maxLowPriority);
+
+    if (!scheduler_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
   }
 
 
@@ -160,26 +176,8 @@ namespace OrthancStone
     }
   }
    
-
   ILoadersContext::ILock* GenericLoadersContext::Lock()
   {
     return new Locker(*this);
-  }
-
-  
-  void GenericLoadersContext::GetStatistics(uint64_t& scheduledCommands,
-                                            uint64_t& processedCommands)
-  {
-    boost::recursive_mutex::scoped_lock lock(mutex_);
-
-    if (scheduler_)
-    {
-      scheduledCommands = scheduler_->GetTotalScheduled();
-      processedCommands = scheduler_->GetTotalProcessed();
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-    }
   }
 }

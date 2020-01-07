@@ -67,9 +67,6 @@ namespace OrthancStone
    
     virtual ILock* Lock() ORTHANC_OVERRIDE;
 
-    virtual void GetStatistics(uint64_t& scheduledCommands,
-                               uint64_t& processedCommands) ORTHANC_OVERRIDE;
-
     void SetOrthancParameters(const Orthanc::WebServiceParameters& parameters);
 
     void SetRootDirectory(const std::string& root);

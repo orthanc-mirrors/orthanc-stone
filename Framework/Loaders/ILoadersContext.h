@@ -99,6 +99,16 @@ namespace OrthancStone
        * variable is left.
        **/
       virtual void AddLoader(boost::shared_ptr<IObserver> loader) = 0;
+
+      /**
+       * Returns the number of commands that were scheduled and
+       * processed using the "Schedule()" method. By "processed"
+       * commands, we refer to the number of commands that were either
+       * executed by the oracle, or canceled by the user. So the
+       * counting sequences are monotonically increasing over time.
+       **/
+      virtual void GetStatistics(uint64_t& scheduledCommands,
+                                 uint64_t& processedCommands) = 0;
     };
 
     virtual ~ILoadersContext()
@@ -112,15 +122,5 @@ namespace OrthancStone
      * mutex is locked.
      **/
     virtual ILock* Lock() = 0;
-
-    /**
-     * Returns the number of commands that were scheduled and
-     * processed using the "ILock::Schedule()" method. By "processed"
-     * commands, we refer to the number of commands that were either
-     * executed by the oracle, or canceled by the user. So the
-     * counting sequences are monotonically increasing over time.
-     **/
-    virtual void GetStatistics(uint64_t& scheduledCommands,
-                               uint64_t& processedCommands) = 0;
   };
 }

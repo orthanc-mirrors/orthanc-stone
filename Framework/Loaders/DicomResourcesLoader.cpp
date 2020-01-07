@@ -648,12 +648,12 @@ namespace OrthancStone
   }
   
   
-  void DicomResourcesLoader::ScheduleWado(boost::shared_ptr<LoadedDicomResources> target,
-                                          int priority,
-                                          const DicomSource& source,
-                                          const std::string& uri,
-                                          const std::set<Orthanc::DicomTag>& includeTags,
-                                          Orthanc::IDynamicObject* userPayload)
+  void DicomResourcesLoader::ScheduleGetDicomWeb(boost::shared_ptr<LoadedDicomResources> target,
+                                                 int priority,
+                                                 const DicomSource& source,
+                                                 const std::string& uri,
+                                                 const std::set<Orthanc::DicomTag>& includeTags,
+                                                 Orthanc::IDynamicObject* userPayload)
   {
     boost::shared_ptr<Orthanc::IDynamicObject> protection(userPayload);
     

@@ -72,6 +72,9 @@ namespace OrthancStone
     {
       return resources_.find(id) != resources_.end();
     }
+
+    void MergeResource(Orthanc::DicomMap& target,
+                       const std::string& id) const;
   
     bool LookupStringValue(std::string& target,
                            const std::string& id,

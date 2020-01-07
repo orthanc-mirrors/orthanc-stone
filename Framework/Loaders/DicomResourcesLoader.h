@@ -148,21 +148,21 @@ namespace OrthancStone
       virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& stone);
     };
 
-    void ScheduleWado(boost::shared_ptr<LoadedDicomResources> target,
-                      int priority,
-                      const DicomSource& source,
-                      const std::string& uri,
-                      const std::set<Orthanc::DicomTag>& includeTags,
-                      Orthanc::IDynamicObject* userPayload);
+    void ScheduleGetDicomWeb(boost::shared_ptr<LoadedDicomResources> target,
+                             int priority,
+                             const DicomSource& source,
+                             const std::string& uri,
+                             const std::set<Orthanc::DicomTag>& includeTags,
+                             Orthanc::IDynamicObject* userPayload);
 
-    void ScheduleWado(boost::shared_ptr<LoadedDicomResources> target,
-                      int priority,
-                      const DicomSource& source,
-                      const std::string& uri,
-                      Orthanc::IDynamicObject* userPayload)
+    void ScheduleGetDicomWeb(boost::shared_ptr<LoadedDicomResources> target,
+                             int priority,
+                             const DicomSource& source,
+                             const std::string& uri,
+                             Orthanc::IDynamicObject* userPayload)
     {
       std::set<Orthanc::DicomTag> includeTags;
-      ScheduleWado(target, priority, source, uri, includeTags, userPayload);
+      ScheduleGetDicomWeb(target, priority, source, uri, includeTags, userPayload);
     }        
 
     void ScheduleQido(boost::shared_ptr<LoadedDicomResources> target,

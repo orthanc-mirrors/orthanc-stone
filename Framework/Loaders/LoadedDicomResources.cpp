@@ -100,6 +100,23 @@ namespace OrthancStone
   }
 
 
+  void LoadedDicomResources::MergeResource(Orthanc::DicomMap& target,
+                                           const std::string& id) const
+  {
+    Resources::const_iterator it = resources_.find(id);
+    
+    if (it == resources_.end())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem);
+    }
+    else
+    {
+      assert(it->second != NULL);
+      target.Merge(*it->second);
+    }
+  }
+  
+
   bool LoadedDicomResources::LookupStringValue(std::string& target,
                                                const std::string& id,
                                                const Orthanc::DicomTag& tag) const

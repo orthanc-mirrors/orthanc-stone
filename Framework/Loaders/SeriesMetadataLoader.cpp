@@ -258,9 +258,10 @@ namespace OrthancStone
       {
         boost::shared_ptr<LoadedDicomResources> target
           (new LoadedDicomResources(Orthanc::DICOM_TAG_SOP_INSTANCE_UID));
-        loader_->ScheduleWado(target, priority, source,
-                              "/studies/" + studyInstanceUid + "/series/" + seriesInstanceUid + "/metadata",
-                              NULL /* TODO PAYLOAD */);
+        loader_->ScheduleGetDicomWeb(
+          target, priority, source,
+          "/studies/" + studyInstanceUid + "/series/" + seriesInstanceUid + "/metadata",
+          NULL /* TODO PAYLOAD */);
 
         scheduled_[seriesInstanceUid] = priority;
       }

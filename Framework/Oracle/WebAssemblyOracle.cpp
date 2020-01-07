@@ -26,6 +26,7 @@
 
 #if ORTHANC_ENABLE_DCMTK == 1
 #  include "ParseDicomSuccessMessage.h"
+static unsigned int BUCKET_SOP = 1;
 #endif
 
 #include <Core/OrthancException.h>
@@ -146,6 +147,20 @@ namespace OrthancStone
       return dynamic_cast<T&>(*command_);
     }
 
+#if ORTHANC_ENABLE_DCMTK == 1
+    void StoreInCache(const std::string& sopInstanceUid,
+                      std::auto_ptr<Orthanc::ParsedDicomFile>& dicom,
+                      size_t fileSize)
+    {
+      if (oracle_.dicomCache_.get())
+      {
+        // Store it into the cache for future use
+        oracle_.dicomCache_->Acquire(BUCKET_SOP, sopInstanceUid,
+                                     dicom.release(), fileSize, true);
+      }              
+    }
+#endif
+
     static void SuccessCallback(emscripten_fetch_t *fetch)
     {
       /**
@@ -167,20 +182,29 @@ namespace OrthancStone
         answer.assign(fetch->data, fetch->numBytes);
       }
 
-      /**
-       * TODO - HACK - As of emscripten-1.38.31, the fetch API does
-       * not contain a way to retrieve the HTTP headers of the
-       * answer. We make the assumption that the "Content-Type" header
-       * of the response is the same as the "Accept" header of the
-       * query. This should be fixed in future versions of emscripten.
-       * https://github.com/emscripten-core/emscripten/pull/8486
-       *
-       * TODO - The function "emscripten_fetch_get_response_headers()"
-       * was added to "fetch.h" at emscripten-1.38.37 on 2019-06-26.
-       * https://github.com/emscripten-core/emscripten/blob/1.38.37/system/include/emscripten/fetch.h
-       **/
 
+      /**
+       * Retrieving the headers of the HTTP answer.
+       **/
       HttpHeaders headers;
+
+#if (__EMSCRIPTEN_major__ < 1 ||                                        \
+     (__EMSCRIPTEN_major__ == 1 && __EMSCRIPTEN_minor__ < 38) ||        \
+     (__EMSCRIPTEN_major__ == 1 && __EMSCRIPTEN_minor__ == 38 && __EMSCRIPTEN_tiny__ < 37))
+#  warning Consider upgrading Emscripten to a version above 1.38.37, incomplete support of Fetch API
+
+      /**
+       * HACK - If emscripten < 1.38.37, the fetch API does not
+       * contain a way to retrieve the HTTP headers of the answer. We
+       * make the assumption that the "Content-Type" header of the
+       * response is the same as the "Accept" header of the
+       * query. This is fixed thanks to the
+       * "emscripten_fetch_get_response_headers()" function that was
+       * added to "fetch.h" at emscripten-1.38.37 on 2019-06-26.
+       *
+       * https://github.com/emscripten-core/emscripten/blob/1.38.37/system/include/emscripten/fetch.h
+       * https://github.com/emscripten-core/emscripten/pull/8486
+       **/
       if (fetch->userData != NULL)
       {
         if (!context->GetExpectedContentType().empty())
@@ -188,6 +212,28 @@ namespace OrthancStone
           headers["Content-Type"] = context->GetExpectedContentType();
         }
       }
+#else
+      {
+        size_t size = emscripten_fetch_get_response_headers_length(fetch);
+
+        std::string plainHeaders(size + 1, '\0');
+        emscripten_fetch_get_response_headers(fetch, &plainHeaders[0], size + 1);
+
+        std::vector<std::string> tokens;
+        Orthanc::Toolbox::TokenizeString(tokens, plainHeaders, '\n');
+
+        for (size_t i = 0; i < tokens.size(); i++)
+        {
+          size_t p = tokens[i].find(':');
+          if (p != std::string::npos)
+          {
+            std::string key = Orthanc::Toolbox::StripSpaces(tokens[i].substr(0, p));
+            std::string value = Orthanc::Toolbox::StripSpaces(tokens[i].substr(p + 1));
+            headers[key] = value;
+          }
+        }
+      }
+#endif
       
       LOG(TRACE) << "About to call emscripten_fetch_close";
       emscripten_fetch_close(fetch);
@@ -242,10 +288,19 @@ namespace OrthancStone
             case IOracleCommand::Type_ParseDicomFromWado:
             {
 #if ORTHANC_ENABLE_DCMTK == 1
+              const ParseDicomFromWadoCommand& command =
+                context->GetTypedCommand<ParseDicomFromWadoCommand>();
+              
               size_t fileSize;
               std::auto_ptr<Orthanc::ParsedDicomFile> dicom
                 (ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, headers));
-              LOG(WARNING) << "bingo";
+
+              {
+                ParseDicomSuccessMessage message(command, *dicom, fileSize, true);
+                context->EmitMessage(message);
+              }
+
+              context->StoreInCache(command.GetSopInstanceUid(), dicom, fileSize);
 #else
               throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
 #endif
@@ -596,9 +651,22 @@ namespace OrthancStone
   {
     std::auto_ptr<ParseDicomFromWadoCommand> protection(command);
     
-    // TODO - CACHE
+#if ORTHANC_ENABLE_DCMTK == 1
+    if (dicomCache_.get())
+    {
+      ParsedDicomCache::Reader reader(*dicomCache_, BUCKET_SOP, protection->GetSopInstanceUid());
+      if (reader.IsValid() &&
+          reader.HasPixelData())
+      {
+        // Reuse the DICOM file from the cache
+        ParseDicomSuccessMessage message(*protection, reader.GetDicom(),
+                                         reader.GetFileSize(), reader.HasPixelData());
+        EmitMessage(receiver, message);
+        return;
+      }
+    }
+#endif
 
-    
     switch (command->GetRestCommand().GetType())
     {
       case IOracleCommand::Type_Http:
@@ -707,5 +775,22 @@ namespace OrthancStone
     }
 
     return true;
+  }
+
+
+  void WebAssemblyOracle::SetDicomCacheSize(size_t size)
+  {
+#if ORTHANC_ENABLE_DCMTK == 1
+    if (size == 0)
+    {
+      dicomCache_.reset();
+    }
+    else
+    {
+      dicomCache_.reset(new ParsedDicomCache(size));
+    }
+#else
+    LOG(INFO) << "DCMTK support is disabled, the DICOM cache is disabled";
+#endif
   }
 }

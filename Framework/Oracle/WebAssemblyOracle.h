@@ -37,6 +37,10 @@
 #include "OrthancRestApiCommand.h"
 #include "ParseDicomFromWadoCommand.h"
 
+#if ORTHANC_ENABLE_DCMTK == 1
+#  include "../Toolbox/ParsedDicomCache.h"
+#endif
+
 #include <Core/WebServiceParameters.h>
 
 
@@ -76,6 +80,10 @@ namespace OrthancStone
     std::string                    localOrthancRoot_;
     Orthanc::WebServiceParameters  remoteOrthanc_;
 
+#if ORTHANC_ENABLE_DCMTK == 1
+    std::auto_ptr<ParsedDicomCache>  dicomCache_;
+#endif
+
   public:
     WebAssemblyOracle() :
       isLocalOrthanc_(false)
@@ -107,5 +115,7 @@ namespace OrthancStone
       isLocalOrthanc_ = false;
       remoteOrthanc_ = orthanc;
     }
+
+    void SetDicomCacheSize(size_t size);
   };
 }

@@ -152,6 +152,7 @@ namespace OrthancStone
                                        const OrthancRestApiCommand& command)
   {
     Orthanc::HttpClient client(orthanc, command.GetUri());
+    client.SetRedirectionFollowed(false);
     client.SetMethod(command.GetMethod());
     client.SetTimeout(command.GetTimeout());
 
@@ -188,6 +189,7 @@ namespace OrthancStone
                           const GetOrthancImageCommand& command)
   {
     Orthanc::HttpClient client(orthanc, command.GetUri());
+    client.SetRedirectionFollowed(false);
     client.SetTimeout(command.GetTimeout());
 
     CopyHttpHeaders(client, command.GetHttpHeaders());
@@ -208,6 +210,7 @@ namespace OrthancStone
                           const GetOrthancWebViewerJpegCommand& command)
   {
     Orthanc::HttpClient client(orthanc, command.GetUri());
+    client.SetRedirectionFollowed(false);
     client.SetTimeout(command.GetTimeout());
 
     CopyHttpHeaders(client, command.GetHttpHeaders());

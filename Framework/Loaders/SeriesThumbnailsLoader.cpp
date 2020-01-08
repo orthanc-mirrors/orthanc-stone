@@ -47,7 +47,7 @@ namespace OrthancStone
     }
     else
     {
-      return SeriesThumbnailType_Unknown;
+      return SeriesThumbnailType_Unsupported;
     }
   }
 
@@ -185,7 +185,7 @@ namespace OrthancStone
       }
       else
       {
-        SeriesThumbnailType type = SeriesThumbnailType_Unknown;
+        SeriesThumbnailType type = SeriesThumbnailType_Unsupported;
 
         std::string sopClassUid;
         if (value.size() > 0 &&
@@ -429,7 +429,19 @@ namespace OrthancStone
   {
     const OracleCommandBase& command = dynamic_cast<const OracleCommandBase&>(message.GetOrigin());
     assert(command.HasPayload());
-    dynamic_cast<Handler&>(command.GetPayload()).HandleError();
+
+    if (command.GetType() == IOracleCommand::Type_GetOrthancImage)
+    {
+      // This is presumably a HTTP status 301 (Moved permanently)
+      // because of an unsupported DICOM file in "/preview"
+      const ThumbnailInformation& info = dynamic_cast<const ThumbnailInformation&>(command.GetPayload());
+      AcquireThumbnail(info.GetDicomSource(), info.GetStudyInstanceUid(),
+                       info.GetSeriesInstanceUid(), new Thumbnail(SeriesThumbnailType_Unsupported));
+    }
+    else
+    {
+      dynamic_cast<Handler&>(command.GetPayload()).HandleError();
+    }
   }
 
 
@@ -490,7 +502,7 @@ namespace OrthancStone
 
     if (found == thumbnails_.end())
     {
-      return SeriesThumbnailType_Unknown;
+      return SeriesThumbnailType_NotLoaded;
     }
     else
     {

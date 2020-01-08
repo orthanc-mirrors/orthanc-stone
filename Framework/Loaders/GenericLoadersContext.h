@@ -23,12 +23,9 @@
 
 #include "../Messages/IMessageEmitter.h"
 #include "../Oracle/ThreadedOracle.h"
+#include "ILoadersContext.h"
 #include "DicomSource.h"
-#include "ILoaderFactory.h"
 #include "OracleScheduler.h"
-
-#include <Core/HttpClient.h>
-#include <Core/Toolbox.h>
 
 #include <boost/thread/recursive_mutex.hpp>
 

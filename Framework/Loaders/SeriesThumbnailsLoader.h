@@ -34,10 +34,11 @@ namespace OrthancStone
 {
   enum SeriesThumbnailType
   {
-    SeriesThumbnailType_Unknown = 1,
-    SeriesThumbnailType_Pdf = 2,
-    SeriesThumbnailType_Video = 3,
-    SeriesThumbnailType_Image = 4
+    SeriesThumbnailType_NotLoaded = 1,  // The remote server cannot decode this image
+    SeriesThumbnailType_Unsupported = 2,  // The remote server cannot decode this image
+    SeriesThumbnailType_Pdf = 3,
+    SeriesThumbnailType_Video = 4,
+    SeriesThumbnailType_Image = 5
   };
   
 

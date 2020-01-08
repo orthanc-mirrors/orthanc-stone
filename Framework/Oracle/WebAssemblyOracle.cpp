@@ -310,12 +310,18 @@ namespace OrthancStone
             default:
               LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle (in SuccessCallback): "
                          << context->GetCommand().GetType();
+              throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
           }
         }
       }
       catch (Orthanc::OrthancException& e)
       {
-        LOG(ERROR) << "Error while processing a fetch answer in the oracle: " << e.What();
+        LOG(INFO) << "Error while processing a fetch answer in the oracle: " << e.What();
+
+        {
+          OracleCommandExceptionMessage message(context->GetCommand(), e);
+          context->EmitMessage(message);
+        }
       }
     }
 

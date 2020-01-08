@@ -84,6 +84,19 @@ namespace OrthancStone
                                                  const std::string& answer,
                                                  const HttpHeaders& answerHeaders) const
   {
+    for (HttpHeaders::const_iterator it = answerHeaders.begin(); it != answerHeaders.end(); ++it)
+    {
+      std::string key = Orthanc::Toolbox::StripSpaces(it->first);
+      Orthanc::Toolbox::ToLowerCase(key);
+        
+      if (key == "content-disposition" &&
+          it->second == "filename=\"unsupported.png\"")
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat,
+                                        "Orthanc cannot decode this image");
+      }
+    }
+    
     Orthanc::MimeType contentType = Orthanc::MimeType_Binary;
 
     for (HttpHeaders::const_iterator it = answerHeaders.begin(); 

@@ -28,7 +28,8 @@
 namespace OrthancStone
 {
   FloatTextureSceneLayer::FloatTextureSceneLayer(const Orthanc::ImageAccessor& texture) :
-    inverted_(false)
+    inverted_(false),
+    applyLog_(false)
   {
     {
       std::auto_ptr<Orthanc::ImageAccessor> t(

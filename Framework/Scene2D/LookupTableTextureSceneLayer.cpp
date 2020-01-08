@@ -27,7 +27,8 @@
 
 namespace OrthancStone
 {
-  LookupTableTextureSceneLayer::LookupTableTextureSceneLayer(const Orthanc::ImageAccessor& texture)
+  LookupTableTextureSceneLayer::LookupTableTextureSceneLayer(const Orthanc::ImageAccessor& texture) :
+    applyLog_(false)
   {
     {
       std::auto_ptr<Orthanc::ImageAccessor> t(

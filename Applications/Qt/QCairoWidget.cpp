@@ -181,6 +181,18 @@ void QCairoWidget::keyPressEvent(QKeyEvent *event)
       CASE_QT_KEY_TO_ORTHANC(Qt::Key_Down, KeyboardKeys_Down);
       CASE_QT_KEY_TO_ORTHANC(Qt::Key_Left, KeyboardKeys_Left);
       CASE_QT_KEY_TO_ORTHANC(Qt::Key_Right, KeyboardKeys_Right);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_F1, KeyboardKeys_F1);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_F2, KeyboardKeys_F2);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_F3, KeyboardKeys_F3);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_F4, KeyboardKeys_F4);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_F5, KeyboardKeys_F5);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_F6, KeyboardKeys_F6);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_F7, KeyboardKeys_F7);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_F8, KeyboardKeys_F8);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_F9, KeyboardKeys_F9);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_F10, KeyboardKeys_F10);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_F11, KeyboardKeys_F11);
+      CASE_QT_KEY_TO_ORTHANC(Qt::Key_F12, KeyboardKeys_F12);
     default:
       break;
     }

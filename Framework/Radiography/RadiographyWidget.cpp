@@ -191,6 +191,8 @@ namespace OrthancStone
   void RadiographyWidget::Unselect()
   {
     hasSelection_ = false;
+
+    NotifyContentChanged();
     BroadcastMessage(SelectionChangedMessage(*this));
   }
 

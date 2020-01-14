@@ -125,13 +125,8 @@ namespace OrthancStone
     }
   }
 
-  RadiographyLayer& RadiographyScene::RegisterLayer(RadiographyLayer* layer)
+  void RadiographyScene::_RegisterLayer(RadiographyLayer* layer)
   {
-    if (layer == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-
     std::auto_ptr<RadiographyLayer> raii(layer);
 
     // LOG(INFO) << "Registering layer: " << countLayers_;
@@ -139,6 +134,16 @@ namespace OrthancStone
     size_t index = nextLayerIndex_++;
     raii->SetIndex(index);
     layers_[index] = raii.release();
+  }
+
+  RadiographyLayer& RadiographyScene::RegisterLayer(RadiographyLayer* layer)
+  {
+    if (layer == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+
+    _RegisterLayer(layer);
 
     BroadcastMessage(GeometryChangedMessage(*this, *layer));
     BroadcastMessage(ContentChangedMessage(*this, *layer));

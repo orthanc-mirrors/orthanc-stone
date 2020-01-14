@@ -170,6 +170,13 @@ namespace OrthancStone
   protected:
     RadiographyLayer& RegisterLayer(RadiographyLayer* layer);
 
+    virtual void _RegisterLayer(RadiographyLayer* layer);
+
+    void SetLayerIndex(RadiographyLayer* layer, size_t index)
+    {
+      layer->SetIndex(index);
+    }
+
     virtual void OnTagsReceived(const Deprecated::OrthancApiClient::BinaryResponseReadyMessage& message);
 
     virtual void OnFrameReceived(const Deprecated::OrthancApiClient::BinaryResponseReadyMessage& message);

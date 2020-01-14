@@ -564,11 +564,24 @@ namespace OrthancStone
     // Render layers in the background-to-foreground order
     for (size_t index = 0; index < nextLayerIndex_; index++)
     {
-      Layers::const_iterator it = layers_.find(index);
-      if (it != layers_.end())
+      try
       {
-        assert(it->second != NULL);
-        it->second->Render(buffer, viewTransform, interpolation, windowingCenter_, windowingWidth_, applyWindowing);
+        Layers::const_iterator it = layers_.find(index);
+        if (it != layers_.end())
+        {
+          assert(it->second != NULL);
+          it->second->Render(buffer, viewTransform, interpolation, windowingCenter_, windowingWidth_, applyWindowing);
+        }
+      }
+      catch (Orthanc::OrthancException& ex)
+      {
+        LOG(ERROR) << "RadiographyScene::Render: " << index << ", OrthancException: " << ex.GetDetails();
+        throw ex; // rethrow because we want it to crash to see there's a problem !
+      }
+      catch (...)
+      {
+        LOG(ERROR) << "RadiographyScene::Render: " << index << ", unkown exception: ";
+        throw; // rethrow because we want it to crash to see there's a problem !
       }
     }
   }

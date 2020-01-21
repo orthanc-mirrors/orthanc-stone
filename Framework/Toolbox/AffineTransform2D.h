@@ -90,8 +90,12 @@ namespace OrthancStone
 
     static AffineTransform2D CreateScaling(double sx,
                                            double sy);
-    
-    static AffineTransform2D CreateRotation(double angle);
+
+    static AffineTransform2D CreateRotation(double angle); // CW rotation in radians
+
+    static AffineTransform2D CreateRotation(double angle, // CW rotation in radians
+                                            double cx,    // rotation center
+                                            double cy);   // rotation center
 
     static AffineTransform2D CreateOpenGLClipspace(unsigned int canvasWidth,
                                                    unsigned int canvasHeight);

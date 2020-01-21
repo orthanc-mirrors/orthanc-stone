@@ -246,6 +246,16 @@ namespace OrthancStone
     return t;
   }
 
+  AffineTransform2D AffineTransform2D::CreateRotation(double angle, // CW rotation
+                                                      double cx,    // rotation center
+                                                      double cy)    // rotation center
+  {
+    return Combine(
+          CreateOffset(cx, cy),
+          CreateRotation(angle),
+          CreateOffset(-cx, -cy)
+          );
+  }
 
   AffineTransform2D AffineTransform2D::CreateOpenGLClipspace(unsigned int canvasWidth,
                                                              unsigned int canvasHeight)

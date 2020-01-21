@@ -36,6 +36,7 @@ namespace OrthancStone
       public IObserver,
       public IObservable
   {
+    friend class RadiographySceneGeometryReader;
   public:
     class GeometryChangedMessage : public OriginMessage<RadiographyScene>
     {
@@ -167,9 +168,10 @@ namespace OrthancStone
     float   windowingWidth_;
     Layers  layers_;
 
-  protected:
+  public:
     RadiographyLayer& RegisterLayer(RadiographyLayer* layer);
 
+  protected:
     virtual void _RegisterLayer(RadiographyLayer* layer);
 
     void SetLayerIndex(RadiographyLayer* layer, size_t index)
@@ -347,5 +349,9 @@ namespace OrthancStone
                                   int64_t maxValue /* for inversion */,
                                   bool applyWindowing);
 
+    void ExtractLayerFromRenderedScene(Orthanc::ImageAccessor& layer,
+                                       const Orthanc::ImageAccessor& renderedScene,
+                                       size_t layerIndex,
+                                       ImageInterpolation interpolation);
   };
 }

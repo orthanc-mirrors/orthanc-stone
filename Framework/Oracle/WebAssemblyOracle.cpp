@@ -108,11 +108,11 @@ namespace OrthancStone
   class WebAssemblyOracle::FetchContext : public boost::noncopyable
   {
   private:
-    Emitter                        emitter_;
-    const IObserver&               receiver_;
-    std::auto_ptr<IOracleCommand>  command_;
-    std::string                    expectedContentType_;
-    std::string                    receiverFingerprint_;
+    Emitter                       emitter_;
+    const IObserver&              receiver_;
+    std::auto_ptr<IOracleCommand> command_;
+    std::string                   expectedContentType_;
+    int64_t                       receiverFingerprint_;
 
   public:
     FetchContext(WebAssemblyOracle& oracle,
@@ -223,7 +223,7 @@ namespace OrthancStone
       if (context->GetReceiver().DoesFingerprintLookGood())
       {
         callHandler = true;
-        std::string currentFingerprint(context->GetReceiver().GetFingerprint());
+        int64_t currentFingerprint(context->GetReceiver().GetFingerprint());
        
         LOG(TRACE) << "SuccessCallback for object at address (" << std::hex 
           << &(context->GetReceiver()) << std::dec 

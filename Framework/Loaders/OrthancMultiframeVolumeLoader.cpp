@@ -263,7 +263,8 @@ namespace OrthancStone
   }
 
   template <typename T>
-  void OrthancMultiframeVolumeLoader::CopyPixelData(const std::string& pixelData)
+  void OrthancMultiframeVolumeLoader::CopyPixelDataAndComputeDistribution(
+    const std::string& pixelData, std::map<T,uint64_t>& distribution)
   {
     ImageBuffer3D& target = volume_->GetPixelData();
       
@@ -283,29 +284,195 @@ namespace OrthancStone
       return;
     }
 
-    const uint8_t* source = reinterpret_cast<const uint8_t*>(pixelData.c_str());
-
-    for (unsigned int z = 0; z < depth; z++)
+    // first pass to initialize map
     {
-      ImageBuffer3D::SliceWriter writer(target, VolumeProjection_Axial, z);
+      const uint8_t* source = reinterpret_cast<const uint8_t*>(pixelData.c_str());
 
-      assert (writer.GetAccessor().GetWidth() == width &&
-              writer.GetAccessor().GetHeight() == height);
-
-      for (unsigned int y = 0; y < height; y++)
+      for (unsigned int z = 0; z < depth; z++)
       {
-        assert(sizeof(T) == Orthanc::GetBytesPerPixel(target.GetFormat()));
-
-        T* target = reinterpret_cast<T*>(writer.GetAccessor().GetRow(y));
-
-        for (unsigned int x = 0; x < width; x++)
+        for (unsigned int y = 0; y < height; y++)
         {
-          CopyPixel(*target, source);
-          target ++;
-          source += bpp;
+          for (unsigned int x = 0; x < width; x++)
+          {
+            T value;
+            CopyPixel(value, source);
+            distribution[value] = 0;
+            source += bpp;
+          }
         }
       }
     }
+
+    {
+      const uint8_t* source = reinterpret_cast<const uint8_t*>(pixelData.c_str());
+
+      for (unsigned int z = 0; z < depth; z++)
+      {
+        ImageBuffer3D::SliceWriter writer(target, VolumeProjection_Axial, z);
+
+        assert(writer.GetAccessor().GetWidth() == width &&
+          writer.GetAccessor().GetHeight() == height);
+
+        for (unsigned int y = 0; y < height; y++)
+        {
+          assert(sizeof(T) == Orthanc::GetBytesPerPixel(target.GetFormat()));
+
+          T* target = reinterpret_cast<T*>(writer.GetAccessor().GetRow(y));
+
+          for (unsigned int x = 0; x < width; x++)
+          {
+            CopyPixel(*target, source);
+
+            distribution[*target] += 1;
+
+            target++;
+            source += bpp;
+          }
+        }
+      }
+    }
+  }
+
+  template <typename T>
+  void OrthancMultiframeVolumeLoader::ComputeMinMaxWithOutlierRejection(
+    const std::map<T, uint64_t>& distribution)
+  {
+    if (distribution.size() == 0)
+    {
+      LOG(ERROR) << "ComputeMinMaxWithOutlierRejection -- Volume image empty.";
+    }
+    else
+    {
+      ImageBuffer3D& target = volume_->GetPixelData();
+
+      const uint64_t bpp = target.GetBytesPerPixel();
+      const uint64_t width = target.GetWidth();
+      const uint64_t height = target.GetHeight();
+      const uint64_t depth = target.GetDepth();
+      const uint64_t voxelCount = width * height * depth;
+
+      // now that we have distribution[pixelValue] == numberOfPixelsWithValue
+      // compute number of values and check (assertion) that it is equal to 
+      // width * height * depth 
+      {
+        typename std::map<T, uint64_t>::const_iterator it = distribution.begin();
+        uint64_t totalCount = 0;
+        distributionRawMin_ = static_cast<float>(it->first);
+
+        while (it != distribution.end())
+        {
+          T pixelValue = it->first;
+          uint64_t count = it->second;
+          totalCount += count;
+          it++;
+          if (it == distribution.end())
+            distributionRawMax_ = static_cast<float>(pixelValue);
+        }
+        LOG(INFO) << "Volume image. First distribution value = " 
+          << static_cast<float>(distributionRawMin_) 
+          << " | Last distribution value = " 
+          << static_cast<float>(distributionRawMax_);
+
+        if (totalCount != voxelCount)
+        {
+          LOG(ERROR) << "Internal error in dose distribution computation. TC (" 
+            << totalCount << ") != VoxC (" << voxelCount;
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+        }
+      }
+
+      // compute the number of voxels to reject at each end of the distribution
+      uint64_t endRejectionCount = static_cast<uint64_t>(
+        outliersHalfRejectionRate_ * voxelCount);
+
+      if (endRejectionCount > voxelCount)
+      {
+        LOG(ERROR) << "Internal error in dose distribution computation."
+          << " endRejectionCount = " << endRejectionCount
+          << " | voxelCount = " << voxelCount;
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      // this will contain the actual distribution minimum after outlier 
+      // rejection
+      T resultMin = 0;
+
+      // then start from start and remove pixel values up to 
+      // endRejectionCount voxels rejected
+      {
+        typename std::map<T, uint64_t>::const_iterator it = distribution.begin();
+        
+        uint64_t currentCount = 0;
+
+        while (it != distribution.end())
+        {
+          T pixelValue = it->first;
+          uint64_t count = it->second;
+
+          // if this pixelValue crosses the rejection threshold, let's set it
+          // and exit the loop
+          if ((currentCount <= endRejectionCount) &&
+              (currentCount + count > endRejectionCount))
+          {
+            resultMin = pixelValue;
+            break;
+          }
+          else
+          {
+            currentCount += count;
+          }
+          // and continue walking along the distribution
+          it++;
+        }
+      }
+
+      // this will contain the actual distribution maximum after outlier 
+      // rejection
+      T resultMax = 0;
+      // now start from END and remove pixel values up to 
+      // endRejectionCount voxels rejected
+      {
+        typename std::map<T, uint64_t>::const_reverse_iterator it = distribution.rbegin();
+
+        uint64_t currentCount = 0;
+
+        while (it != distribution.rend())
+        {
+          T pixelValue = it->first;
+          uint64_t count = it->second;
+
+          if ((currentCount <= endRejectionCount) &&
+              (currentCount + count > endRejectionCount))
+          {
+            resultMax = pixelValue;
+            break;
+          }
+          else
+          {
+            currentCount += count;
+          }
+          // and continue walking along the distribution
+          it++;
+        }
+      }
+      if (resultMin > resultMax)
+      {
+        LOG(ERROR) << "Internal error in dose distribution computation! " << 
+          "resultMin (" << resultMin << ") > resultMax (" << resultMax << ")";
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+      computedDistributionMin_ = static_cast<float>(resultMin);
+      computedDistributionMax_ = static_cast<float>(resultMax);
+    }
+  }
+
+  template <typename T>
+  void OrthancMultiframeVolumeLoader::CopyPixelDataAndComputeMinMax(
+    const std::string& pixelData)
+  {
+    std::map<T, uint64_t> distribution;
+    CopyPixelDataAndComputeDistribution(pixelData, distribution);
+    ComputeMinMaxWithOutlierRejection(distribution);
   }
 
   void OrthancMultiframeVolumeLoader::SetUncompressedPixelData(const std::string& pixelData)
@@ -313,13 +480,13 @@ namespace OrthancStone
     switch (volume_->GetPixelData().GetFormat())
     {
       case Orthanc::PixelFormat_Grayscale32:
-        CopyPixelData<uint32_t>(pixelData);
+        CopyPixelDataAndComputeMinMax<uint32_t>(pixelData);
         break;
       case Orthanc::PixelFormat_Grayscale16:
-        CopyPixelData<uint16_t>(pixelData);
+        CopyPixelDataAndComputeMinMax<uint16_t>(pixelData);
         break;
       case Orthanc::PixelFormat_SignedGrayscale16:
-        CopyPixelData<int16_t>(pixelData);
+        CopyPixelDataAndComputeMinMax<int16_t>(pixelData);
         break;
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
@@ -341,13 +508,20 @@ namespace OrthancStone
     return volume_->GetGeometry();
   }
 
-  OrthancMultiframeVolumeLoader::OrthancMultiframeVolumeLoader(boost::shared_ptr<DicomVolumeImage> volume,
-                                                               IOracle& oracle,
-                                                               IObservable& oracleObservable) :
+  OrthancMultiframeVolumeLoader::OrthancMultiframeVolumeLoader(
+    boost::shared_ptr<DicomVolumeImage> volume,
+    IOracle& oracle,
+    IObservable& oracleObservable,
+    float outliersHalfRejectionRate) :
     LoaderStateMachine(oracle, oracleObservable),
     IObservable(oracleObservable.GetBroker()),
     volume_(volume),
-    pixelDataLoaded_(false)
+    pixelDataLoaded_(false),
+    outliersHalfRejectionRate_(outliersHalfRejectionRate),
+    distributionRawMin_(0),
+    distributionRawMax_(0),
+    computedDistributionMin_(0),
+    computedDistributionMax_(0)
   {
     if (volume.get() == NULL)
     {
@@ -358,6 +532,29 @@ namespace OrthancStone
   OrthancMultiframeVolumeLoader::~OrthancMultiframeVolumeLoader()
   {
     LOG(TRACE) << "OrthancMultiframeVolumeLoader::~OrthancMultiframeVolumeLoader()";
+  }
+
+
+  void OrthancMultiframeVolumeLoader::GetDistributionMinMax
+  (float& minValue, float& maxValue) const
+  {
+    if (distributionRawMin_ == 0 && distributionRawMax_ == 0)
+    {
+      LOG(WARNING) << "GetDistributionMinMaxWithOutliersRejection called before computation!";
+    }
+    minValue = distributionRawMin_;
+    maxValue = distributionRawMax_;
+  }
+  
+  void OrthancMultiframeVolumeLoader::GetDistributionMinMaxWithOutliersRejection
+    (float& minValue, float& maxValue) const
+  {
+    if (computedDistributionMin_ == 0 && computedDistributionMax_ == 0)
+    {
+      LOG(WARNING) << "GetDistributionMinMaxWithOutliersRejection called before computation!";
+    }
+    minValue = computedDistributionMin_;
+    maxValue = computedDistributionMax_;
   }
 
   void OrthancMultiframeVolumeLoader::LoadInstance(const std::string& instanceId)

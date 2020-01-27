@@ -65,7 +65,7 @@ namespace OrthancStone {
 
     TObserver&         observer_;
     MemberFunction     function_;
-    std::string        observerFingerprint_;
+    int64_t            observerFingerprint_;
 
   public:
     Callable(TObserver& observer,
@@ -78,7 +78,7 @@ namespace OrthancStone {
 
     void ApplyInternal(const TMessage& message)
     {
-      std::string currentFingerprint(observer_.GetFingerprint());
+      int64_t currentFingerprint(observer_.GetFingerprint());
       if (observerFingerprint_ != currentFingerprint)
       {
         LOG(TRACE) << "The observer at address " << 

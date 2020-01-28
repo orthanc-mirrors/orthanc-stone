@@ -28,6 +28,7 @@
 #include <boost/noncopyable.hpp>
 
 #include <string>
+#include <stdint.h>
 
 namespace OrthancStone {
 

@@ -2,7 +2,7 @@
  * Stone of Orthanc
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
- * Copyright (C) 2017-2019 Osimis S.A., Belgium
+ * Copyright (C) 2017-2020 Osimis S.A., Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License
@@ -43,6 +43,11 @@ namespace OrthancStone
     std::string                          instanceId_;
     std::string                          transferSyntaxUid_;
     bool                                 pixelDataLoaded_;
+    float                                outliersHalfRejectionRate_;
+    float                                distributionRawMin_;
+    float                                distributionRawMax_;
+    float                                computedDistributionMin_;
+    float                                computedDistributionMax_;
 
     const std::string& GetInstanceId() const;
 
@@ -52,8 +57,35 @@ namespace OrthancStone
 
     void SetGeometry(const Orthanc::DicomMap& dicom);
 
+
+    /**
+    This method will :
+    
+    - copy the pixel values from the response to the volume image
+    - compute the maximum and minimum value while discarding the
+      outliersHalfRejectionRate_ fraction of the outliers from both the start 
+      and the end of the distribution.
+
+      In English, this means that, if the volume dataset contains a few extreme
+      values very different from the rest (outliers) that we want to get rid of,
+      this method allows to do so.
+
+      If you supply 0.005, for instance, it means 1% of the extreme values will
+      be rejected (0.5% on each side of the distribution)
+    */
     template <typename T>
-    void CopyPixelData(const std::string& pixelData);
+    void CopyPixelDataAndComputeMinMax(const std::string& pixelData);
+      
+    /** Service method for CopyPixelDataAndComputeMinMax*/
+    template <typename T>
+    void CopyPixelDataAndComputeDistribution(
+      const std::string& pixelData, 
+      std::map<T, uint64_t>& distribution);
+
+    /** Service method for CopyPixelDataAndComputeMinMax*/
+    template <typename T>
+    void ComputeMinMaxWithOutlierRejection(
+      const std::map<T, uint64_t>& distribution);
 
     void SetUncompressedPixelData(const std::string& pixelData);
 
@@ -63,7 +95,8 @@ namespace OrthancStone
   public:
     OrthancMultiframeVolumeLoader(boost::shared_ptr<DicomVolumeImage> volume,
                                   IOracle& oracle,
-                                  IObservable& oracleObservable);
+                                  IObservable& oracleObservable,
+                                  float outliersHalfRejectionRate = 0.0005);
     
     virtual ~OrthancMultiframeVolumeLoader();
 
@@ -71,6 +104,12 @@ namespace OrthancStone
     {
       return pixelDataLoaded_;
     }
+
+    void GetDistributionMinMax
+      (float& minValue, float& maxValue) const;
+
+    void GetDistributionMinMaxWithOutliersRejection
+      (float& minValue, float& maxValue) const;
 
     void LoadInstance(const std::string& instanceId);
   };

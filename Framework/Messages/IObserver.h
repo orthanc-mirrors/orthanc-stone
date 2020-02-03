@@ -2,7 +2,7 @@
  * Stone of Orthanc
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
- * Copyright (C) 2017-2019 Osimis S.A., Belgium
+ * Copyright (C) 2017-2020 Osimis S.A., Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License
@@ -23,24 +23,28 @@
 
 #include "MessageBroker.h"
 
+#include <stdint.h>
+
 namespace OrthancStone 
 {
   class IObserver : public boost::noncopyable
   {
   private:
     MessageBroker&  broker_;
-    // the following is a UUID that is used to disambiguate different observers
-    // that may have the same address
-    char     fingerprint_[37];
+    // the following is a int64_t with some checks that is used to 
+    // disambiguate different observers that may have the same address
+    int64_t     fingerprint_[3];
+
+    void AssignFingerprint();
 
   public:
     IObserver(MessageBroker& broker);
 
     virtual ~IObserver();
 
-    const char* GetFingerprint() const
+    int64_t GetFingerprint() const
     {
-      return fingerprint_;
+      return fingerprint_[0];
     }
 
     bool DoesFingerprintLookGood() const;

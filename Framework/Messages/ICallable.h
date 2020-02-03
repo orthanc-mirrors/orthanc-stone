@@ -2,7 +2,7 @@
  * Stone of Orthanc
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
- * Copyright (C) 2017-2019 Osimis S.A., Belgium
+ * Copyright (C) 2017-2020 Osimis S.A., Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License
@@ -28,6 +28,7 @@
 #include <boost/noncopyable.hpp>
 
 #include <string>
+#include <stdint.h>
 
 namespace OrthancStone {
 
@@ -65,7 +66,7 @@ namespace OrthancStone {
 
     TObserver&         observer_;
     MemberFunction     function_;
-    std::string        observerFingerprint_;
+    int64_t            observerFingerprint_;
 
   public:
     Callable(TObserver& observer,
@@ -78,7 +79,7 @@ namespace OrthancStone {
 
     void ApplyInternal(const TMessage& message)
     {
-      std::string currentFingerprint(observer_.GetFingerprint());
+      int64_t currentFingerprint(observer_.GetFingerprint());
       if (observerFingerprint_ != currentFingerprint)
       {
         LOG(TRACE) << "The observer at address " << 

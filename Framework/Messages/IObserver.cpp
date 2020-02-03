@@ -2,7 +2,7 @@
  * Stone of Orthanc
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
- * Copyright (C) 2017-2019 Osimis S.A., Belgium
+ * Copyright (C) 2017-2020 Osimis S.A., Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License
@@ -29,28 +29,24 @@
 
 namespace OrthancStone 
 {
+  static const uint64_t IObserver_FIRST_UNIQUE_ID = 10973;
+  static uint64_t IObserver_nextUniqueId = IObserver_FIRST_UNIQUE_ID;
+  
   IObserver::IObserver(MessageBroker& broker)
     : broker_(broker)
-    , fingerprint_()
   {
-    // we store the fingerprint_ as a char array to avoid problems when
-    // reading it in a deceased object.
-    // remember this is panic-level code to track zombie object usage
-    std::string fingerprint = Orthanc::Toolbox::GenerateUuid();
-    const char* fingerprintRaw = fingerprint.c_str();
-    memcpy(fingerprint_, fingerprintRaw, 37);
+    AssignFingerprint();
     broker_.Register(*this);
   }
-
 
   IObserver::~IObserver()
   {
     try
     {
-      LOG(TRACE) << "IObserver(" << std::hex << this << std::dec << ")::~IObserver : fingerprint_ == " << fingerprint_;
-      const char* deadMarker = "deadbeef-dead-dead-0000-0000deadbeef";
-      ORTHANC_ASSERT(strlen(deadMarker) == 36);
-      memcpy(fingerprint_, deadMarker, 37);
+      LOG(TRACE) << "IObserver(" << std::hex << this << std::dec << ")::~IObserver : fingerprint_[0] == " << fingerprint_[0];
+      fingerprint_[0] = 0xdeadbeef;
+      fingerprint_[1] = 0xdeadbeef;
+      fingerprint_[2] = 0xdeadbeef;
       broker_.Unregister(*this);
     }
     catch (const Orthanc::OrthancException& e)
@@ -74,20 +70,20 @@ namespace OrthancStone
     }
   }
 
+  static const int64_t IObserver_UNIQUE_ID_MAGIC_NUMBER = 2742024;
+
+  void IObserver::AssignFingerprint()
+  {
+    fingerprint_[0] = IObserver_nextUniqueId;
+    fingerprint_[1] = fingerprint_[0] / 2;
+    fingerprint_[2] = fingerprint_[1] + IObserver_UNIQUE_ID_MAGIC_NUMBER;
+    IObserver_nextUniqueId++;
+  }
 
   bool IObserver::DoesFingerprintLookGood() const
   {
-    for (size_t i = 0; i < 36; ++i) {
-      bool ok = false;
-      if (fingerprint_[i] >= 'a' && fingerprint_[i] <= 'f')
-        ok = true;
-      if (fingerprint_[i] >= '0' && fingerprint_[i] <= '9')
-        ok = true;
-      if (fingerprint_[i] == '-')
-        ok = true;
-      if (!ok)
-        return false;
-    }
-    return fingerprint_[36] == 0;
+    return (fingerprint_[0] >= IObserver_FIRST_UNIQUE_ID) &&
+      (fingerprint_[1] == fingerprint_[0] / 2) &&
+      (fingerprint_[2] == fingerprint_[1] + IObserver_UNIQUE_ID_MAGIC_NUMBER);
   }
 }

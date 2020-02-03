@@ -2,7 +2,7 @@
  * Stone of Orthanc
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
- * Copyright (C) 2017-2019 Osimis S.A., Belgium
+ * Copyright (C) 2017-2020 Osimis S.A., Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License
@@ -108,11 +108,11 @@ namespace OrthancStone
   class WebAssemblyOracle::FetchContext : public boost::noncopyable
   {
   private:
-    Emitter                        emitter_;
-    const IObserver&               receiver_;
-    std::auto_ptr<IOracleCommand>  command_;
-    std::string                    expectedContentType_;
-    std::string                    receiverFingerprint_;
+    Emitter                       emitter_;
+    const IObserver&              receiver_;
+    std::auto_ptr<IOracleCommand> command_;
+    std::string                   expectedContentType_;
+    int64_t                       receiverFingerprint_;
 
   public:
     FetchContext(WebAssemblyOracle& oracle,
@@ -223,7 +223,7 @@ namespace OrthancStone
       if (context->GetReceiver().DoesFingerprintLookGood())
       {
         callHandler = true;
-        std::string currentFingerprint(context->GetReceiver().GetFingerprint());
+        int64_t currentFingerprint(context->GetReceiver().GetFingerprint());
        
         LOG(TRACE) << "SuccessCallback for object at address (" << std::hex 
           << &(context->GetReceiver()) << std::dec 

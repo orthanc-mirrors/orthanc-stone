@@ -229,6 +229,8 @@ namespace OrthancStone
       
       LOG(INFO) << "Removing layer, there are now : " << layers_.size() << " layers";
 
+      _OnLayerRemoved();
+
       BroadcastMessage(RadiographyScene::LayerRemovedMessage(*this, layerIndex));
     }
   }

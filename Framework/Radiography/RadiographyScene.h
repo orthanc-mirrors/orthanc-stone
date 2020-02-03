@@ -173,6 +173,7 @@ namespace OrthancStone
 
   protected:
     virtual void _RegisterLayer(RadiographyLayer* layer);
+    virtual void _OnLayerRemoved() {}
 
     void SetLayerIndex(RadiographyLayer* layer, size_t index)
     {

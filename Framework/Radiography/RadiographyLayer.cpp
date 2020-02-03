@@ -223,14 +223,19 @@ namespace OrthancStone
   }
 
   void RadiographyLayer::SetSize(unsigned int width,
-                                 unsigned int height)
+                                 unsigned int height,
+                                 bool emitLayerEditedEvent)
   {
     hasSize_ = true;
     width_ = width;
     height_ = height;
 
     UpdateTransform();
-    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
+
+    if (emitLayerEditedEvent)
+    {
+      BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
+    }
   }
 
 

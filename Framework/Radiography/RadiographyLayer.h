@@ -298,7 +298,8 @@ namespace OrthancStone
     }
 
     void SetSize(unsigned int width,
-                 unsigned int height);
+                 unsigned int height,
+                 bool emitLayerEditedEvent = true);
 
     bool HasSize() const
     {

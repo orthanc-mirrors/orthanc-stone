@@ -82,8 +82,13 @@ namespace OrthancStone
 
   bool IObserver::DoesFingerprintLookGood() const
   {
-    return (fingerprint_[0] >= IObserver_FIRST_UNIQUE_ID) &&
+    bool ok = (fingerprint_[0] >= IObserver_FIRST_UNIQUE_ID) &&
       (fingerprint_[1] == fingerprint_[0] / 2) &&
       (fingerprint_[2] == fingerprint_[1] + IObserver_UNIQUE_ID_MAGIC_NUMBER);
+    if(!ok) 
+    {
+      LOG(INFO) << "Fingerprint not valid: " << " fingerprint_[0] = " << fingerprint_[0] << " fingerprint_[1] = " << fingerprint_[1]<< " fingerprint_[2] = " << fingerprint_[2];
+    }
+    return ok;
   }
 }

@@ -564,12 +564,16 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/Extent2D.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/FiniteProjectiveCamera.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/FiniteProjectiveCamera.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GenericToolbox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GenericToolbox.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/PixelTestPatterns.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/PixelTestPatterns.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
@@ -580,8 +584,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/TextRenderer.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/UndoRedoStack.h
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GenericToolbox.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GenericToolbox.h
   
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IViewport.h
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/ViewportBase.h
@@ -591,6 +593,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/IVolumeSlicer.h
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/OrientedVolumeBoundingBox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/OrientedVolumeBoundingBox.h
+
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeImageGeometry.h
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeReslicer.cpp

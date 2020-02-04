@@ -217,16 +217,6 @@ namespace OrthancStone
     const RadiographyScene&   scene_;
 
   protected:
-    virtual const AffineTransform2D& GetTransform() const
-    {
-      return transform_;
-    }
-
-    virtual const AffineTransform2D& GetTransformInverse() const
-    {
-      return transformInverse_;
-    }
-
     void SetPreferredPhotomotricDisplayMode(RadiographyPhotometricDisplayMode  prefferedPhotometricDisplayMode);
 
   private:
@@ -252,6 +242,16 @@ namespace OrthancStone
 
     virtual ~RadiographyLayer()
     {
+    }
+
+    virtual const AffineTransform2D& GetTransform() const
+    {
+      return transform_;
+    }
+
+    virtual const AffineTransform2D& GetTransformInverse() const
+    {
+      return transformInverse_;
     }
 
     size_t GetIndex() const
@@ -298,7 +298,8 @@ namespace OrthancStone
     }
 
     void SetSize(unsigned int width,
-                 unsigned int height);
+                 unsigned int height,
+                 bool emitLayerEditedEvent = true);
 
     bool HasSize() const
     {
@@ -357,8 +358,6 @@ namespace OrthancStone
 
     virtual bool GetRange(float& minValue,
                           float& maxValue) const = 0;
-
-    friend class RadiographyMaskLayer; // because it needs to GetTransform on the dicomLayer it relates to
 
     virtual size_t GetApproximateMemoryUsage() const // this is used to limit the number of scenes loaded in RAM when resources are limited (we actually only count the size used by the images, not the C structs)
     {

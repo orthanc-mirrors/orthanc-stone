@@ -30,6 +30,7 @@
 #include <boost/weak_ptr.hpp>
 
 #include <string>
+#include <stdint.h>
 
 namespace OrthancStone 
 {

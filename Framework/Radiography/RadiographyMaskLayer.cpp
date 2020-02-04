@@ -82,7 +82,7 @@ namespace OrthancStone
                                     float windowWidth,
                                     bool applyWindowing) const
   {
-    if (dicomLayer_.GetWidth() == 0) // nothing to do if the DICOM layer is not displayed (or not loaded)
+    if (dicomLayer_.GetWidth() == 0 || dicomLayer_.GetSourceImage() == NULL) // nothing to do if the DICOM layer is not displayed (or not loaded)
       return;
 
     if (invalidated_)

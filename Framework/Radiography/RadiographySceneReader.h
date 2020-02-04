@@ -33,6 +33,18 @@
 
 namespace OrthancStone
 {
+  // a layer containing only the geometry of a DICOM layer (bit hacky !)
+  class RadiographyPlaceholderLayer : public RadiographyDicomLayer
+  {
+  public:
+    RadiographyPlaceholderLayer(const RadiographyScene& scene) :
+      RadiographyDicomLayer(scene)
+    {
+    }
+
+  };
+
+
   // HACK: I had to introduce this builder class in order to be able to recreate a RadiographyScene
   // from a serialized scene that is passed to web-workers.
   // It needs some architecturing...
@@ -68,18 +80,32 @@ namespace OrthancStone
 
   class RadiographySceneReader : public RadiographySceneBuilder
   {
-  private:
-    boost::shared_ptr<Deprecated::OrthancApiClient>  orthancApiClient_;
+    Deprecated::OrthancApiClient&             orthancApiClient_;
 
   public:
-    RadiographySceneReader(RadiographyScene& scene,
-                           boost::shared_ptr<Deprecated::OrthancApiClient> orthancApiClient) :
+    RadiographySceneReader(RadiographyScene& scene, Deprecated::OrthancApiClient& orthancApiClient) :
       RadiographySceneBuilder(scene),
       orthancApiClient_(orthancApiClient)
     {
     }
 
-    void Read(const Json::Value& input);
+  protected:
+    virtual RadiographyDicomLayer*  LoadDicom(const std::string& instanceId, unsigned int frame, RadiographyLayer::Geometry* geometry);
+  };
+
+  // reads the whole scene but the DICOM image such that we have the full geometry
+  class RadiographySceneGeometryReader : public RadiographySceneBuilder
+  {
+    unsigned int dicomImageWidth_;
+    unsigned int dicomImageHeight_;
+
+  public:
+    RadiographySceneGeometryReader(RadiographyScene& scene, unsigned int dicomImageWidth, unsigned int dicomImageHeight) :
+      RadiographySceneBuilder(scene),
+      dicomImageWidth_(dicomImageWidth),
+      dicomImageHeight_(dicomImageHeight)
+    {
+    }
 
   protected:
     virtual RadiographyDicomLayer*  LoadDicom(const std::string& instanceId, unsigned int frame, RadiographyLayer::Geometry* geometry);

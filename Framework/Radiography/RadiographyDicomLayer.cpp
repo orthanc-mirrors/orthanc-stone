@@ -113,7 +113,7 @@ namespace OrthancStone
     BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
-  void RadiographyDicomLayer::SetSourceImage(Orthanc::ImageAccessor* image, double newPixelSpacingX, double newPixelSpacingY)   // Takes ownership
+  void RadiographyDicomLayer::SetSourceImage(Orthanc::ImageAccessor* image, double newPixelSpacingX, double newPixelSpacingY, bool emitLayerEditedEvent)   // Takes ownership
   {
     std::auto_ptr<Orthanc::ImageAccessor> raii(image);
 
@@ -122,14 +122,17 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
 
-    SetSize(image->GetWidth(), image->GetHeight());
+    SetSize(image->GetWidth(), image->GetHeight(), false);
 
     source_ = raii;
     ApplyConverter();
 
     SetPixelSpacing(newPixelSpacingX, newPixelSpacingY, false);
 
-    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
+    if (emitLayerEditedEvent)
+    {
+      BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
+    }
   }
 
 

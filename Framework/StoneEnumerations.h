@@ -86,7 +86,20 @@ namespace OrthancStone
     KeyboardKeys_Up = 38,
     KeyboardKeys_Right = 39,
     KeyboardKeys_Down = 40,
-    KeyboardKeys_Delete = 46
+    KeyboardKeys_Delete = 46,
+
+    KeyboardKeys_F1 = 112,
+    KeyboardKeys_F2 = 113,
+    KeyboardKeys_F3 = 114,
+    KeyboardKeys_F4 = 115,
+    KeyboardKeys_F5 = 116,
+    KeyboardKeys_F6 = 117,
+    KeyboardKeys_F7 = 118,
+    KeyboardKeys_F8 = 119,
+    KeyboardKeys_F9 = 120,
+    KeyboardKeys_F10 = 121,
+    KeyboardKeys_F11 = 122,
+    KeyboardKeys_F12 = 123,
   };
 
   enum SopClassUid

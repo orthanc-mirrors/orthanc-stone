@@ -23,6 +23,8 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <stdint.h>
+
 namespace OrthancStone 
 {
   class IObserver : public boost::noncopyable

@@ -76,6 +76,11 @@ namespace OrthancStone
     {
       floatBuffer_.reset(new Orthanc::Image(
         Orthanc::PixelFormat_Float32, width, height, false));
+
+      if (floatBuffer_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotEnoughMemory, "RadiographyWidget::RenderInternal: unable to allocate float buffer");
+      }
     }
 
     if (cairoBuffer_.get() == NULL ||
@@ -83,6 +88,11 @@ namespace OrthancStone
         cairoBuffer_->GetHeight() != height)
     {
       cairoBuffer_.reset(new CairoSurface(width, height, false /* no alpha */));
+
+      if (cairoBuffer_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotEnoughMemory, "RadiographyWidget::RenderInternal: unable to allocate cairo buffer");
+      }
     }
 
     RenderBackground(*floatBuffer_, 0.0, 65535.0);
@@ -188,6 +198,8 @@ namespace OrthancStone
   void RadiographyWidget::Unselect()
   {
     hasSelection_ = false;
+
+    NotifyContentChanged();
     BroadcastMessage(SelectionChangedMessage(*this));
   }
 

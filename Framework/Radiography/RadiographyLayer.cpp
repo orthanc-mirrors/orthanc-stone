@@ -59,15 +59,15 @@ namespace OrthancStone
 
   void RadiographyLayer::UpdateTransform()
   {
+    // important to update transform_ before getting the center to use the right scaling !!!
     transform_ = AffineTransform2D::CreateScaling(geometry_.GetScalingX(), geometry_.GetScalingY());
 
     double centerX, centerY;
     GetCenter(centerX, centerY);
 
     transform_ = AffineTransform2D::Combine(
-          AffineTransform2D::CreateOffset(geometry_.GetPanX() + centerX, geometry_.GetPanY() + centerY),
-          AffineTransform2D::CreateRotation(geometry_.GetAngle()),
-          AffineTransform2D::CreateOffset(-centerX, -centerY),
+          AffineTransform2D::CreateOffset(geometry_.GetPanX(), geometry_.GetPanY()),
+          AffineTransform2D::CreateRotation(geometry_.GetAngle(), centerX, centerY),
           transform_);
 
     transformInverse_ = AffineTransform2D::Invert(transform_);
@@ -222,14 +222,19 @@ namespace OrthancStone
   }
 
   void RadiographyLayer::SetSize(unsigned int width,
-                                 unsigned int height)
+                                 unsigned int height,
+                                 bool emitLayerEditedEvent)
   {
     hasSize_ = true;
     width_ = width;
     height_ = height;
 
     UpdateTransform();
-    BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
+
+    if (emitLayerEditedEvent)
+    {
+      BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
+    }
   }
 
 

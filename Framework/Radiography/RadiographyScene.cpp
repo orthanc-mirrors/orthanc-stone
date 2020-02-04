@@ -125,6 +125,17 @@ namespace OrthancStone
     }
   }
 
+  void RadiographyScene::_RegisterLayer(RadiographyLayer* layer)
+  {
+    std::auto_ptr<RadiographyLayer> raii(layer);
+
+    // LOG(INFO) << "Registering layer: " << countLayers_;
+
+    size_t index = nextLayerIndex_++;
+    raii->SetIndex(index);
+    layers_[index] = raii.release();
+  }
+
   RadiographyLayer& RadiographyScene::RegisterLayer(RadiographyLayer* layer)
   {
     if (layer == NULL)
@@ -132,11 +143,7 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
 
-    std::auto_ptr<RadiographyLayer> raii(layer);
-
-    size_t index = nextLayerIndex_++;
-    raii->SetIndex(index);
-    layers_[index] = raii.release();
+    _RegisterLayer(layer);
 
     BroadcastMessage(GeometryChangedMessage(*this, *layer));
     BroadcastMessage(ContentChangedMessage(*this, *layer));
@@ -220,6 +227,8 @@ namespace OrthancStone
       layers_.erase(found);
       
       LOG(INFO) << "Removing layer, there are now : " << layers_.size() << " layers";
+
+      _OnLayerRemoved();
 
       BroadcastMessage(RadiographyScene::LayerRemovedMessage(*this, layerIndex));
     }
@@ -556,11 +565,24 @@ namespace OrthancStone
     // Render layers in the background-to-foreground order
     for (size_t index = 0; index < nextLayerIndex_; index++)
     {
-      Layers::const_iterator it = layers_.find(index);
-      if (it != layers_.end())
+      try
       {
-        assert(it->second != NULL);
-        it->second->Render(buffer, viewTransform, interpolation, windowingCenter_, windowingWidth_, applyWindowing);
+        Layers::const_iterator it = layers_.find(index);
+        if (it != layers_.end())
+        {
+          assert(it->second != NULL);
+          it->second->Render(buffer, viewTransform, interpolation, windowingCenter_, windowingWidth_, applyWindowing);
+        }
+      }
+      catch (Orthanc::OrthancException& ex)
+      {
+        LOG(ERROR) << "RadiographyScene::Render: " << index << ", OrthancException: " << ex.GetDetails();
+        throw ex; // rethrow because we want it to crash to see there's a problem !
+      }
+      catch (...)
+      {
+        LOG(ERROR) << "RadiographyScene::Render: " << index << ", unkown exception: ";
+        throw; // rethrow because we want it to crash to see there's a problem !
       }
     }
   }
@@ -637,6 +659,28 @@ namespace OrthancStone
     }
   }
 
+  void RadiographyScene::ExtractLayerFromRenderedScene(Orthanc::ImageAccessor& layer,
+                                                       const Orthanc::ImageAccessor& renderedScene,
+                                                       size_t layerIndex,
+                                                       ImageInterpolation interpolation)
+  {
+    Extent2D sceneExtent = GetSceneExtent();
+
+    double pixelSpacingX = sceneExtent.GetWidth() / renderedScene.GetWidth();
+    double pixelSpacingY = sceneExtent.GetHeight() / renderedScene.GetHeight();
+
+    AffineTransform2D view = AffineTransform2D::Combine(
+          AffineTransform2D::CreateScaling(1.0 / pixelSpacingX, 1.0 / pixelSpacingY),
+          AffineTransform2D::CreateOffset(-sceneExtent.GetX1(), -sceneExtent.GetY1()));
+
+    AffineTransform2D layerToSceneTransform = AffineTransform2D::Combine(
+          view,
+          GetLayer(layerIndex).GetTransform());
+
+    AffineTransform2D sceneToLayerTransform = AffineTransform2D::Invert(layerToSceneTransform);
+    sceneToLayerTransform.Apply(layer, renderedScene, interpolation, false);
+  }
+
   Orthanc::Image* RadiographyScene::ExportToImage(double pixelSpacingX,
                                                   double pixelSpacingY,
                                                   ImageInterpolation interpolation,
@@ -669,7 +713,14 @@ namespace OrthancStone
           AffineTransform2D::CreateOffset(-extent.GetX1(), -extent.GetY1()));
 
     // wipe background before rendering
-    Orthanc::ImageProcessing::Set(layers, 0);
+    if (GetPreferredPhotomotricDisplayMode() == RadiographyPhotometricDisplayMode_Monochrome1)
+    {
+      Orthanc::ImageProcessing::Set(layers, 65535.0f);
+    }
+    else
+    {
+      Orthanc::ImageProcessing::Set(layers, 0);
+    }
 
     Render(layers, view, interpolation, applyWindowing);
 

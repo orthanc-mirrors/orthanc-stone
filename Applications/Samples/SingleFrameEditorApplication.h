@@ -315,7 +315,7 @@ namespace OrthancStone
                     << snapshot.toStyledString();
 
           boost::shared_ptr<RadiographyScene> scene(new RadiographyScene);
-          RadiographySceneReader reader(*scene, context_->GetOrthancApiClient());
+          RadiographySceneReader reader(*scene, *context_->GetOrthancApiClient());
           reader.Read(snapshot);
 
           widget.SetScene(scene);

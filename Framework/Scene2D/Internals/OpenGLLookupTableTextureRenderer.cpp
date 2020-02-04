@@ -23,6 +23,9 @@
 
 #include <Core/OrthancException.h>
 
+
+int OrthancStone_Internals_dump_LoadTexture_histogram = 0;
+
 namespace OrthancStone
 {
   namespace Internals
@@ -75,6 +78,18 @@ namespace OrthancStone
             target.GetFormat() == Orthanc::PixelFormat_RGBA32 &&
             sizeof(float) == 4);
 
+          
+          std::map<uint8_t, int> debugHistogram;
+          if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
+          {
+            for (int i = 0; i <= 255; ++i)
+            {
+              uint8_t k = static_cast<uint8_t>(i);
+              debugHistogram[k] = 0;
+            }
+          }
+
+
           for (unsigned int y = 0; y < height; y++)
           {
             const float* p = reinterpret_cast<const float*>(source.GetConstRow(y));
@@ -94,6 +109,9 @@ namespace OrthancStone
 
               uint8_t vv = static_cast<uint8_t>(v);
 
+              if(OrthancStone_Internals_dump_LoadTexture_histogram == 1)
+                debugHistogram[vv] += 1;
+
               q[0] = lut[4 * vv + 0];  // R
               q[1] = lut[4 * vv + 1];  // G
               q[2] = lut[4 * vv + 2];  // B
@@ -101,6 +119,25 @@ namespace OrthancStone
 
               p++;
               q += 4;
+            }
+          }
+
+          if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
+          {
+            uint8_t vv;
+            LOG(INFO) << "Dumping texture loaded with OpenGLLookupTableTextureRenderer::LoadTexture";
+            for (int i = 0; i <= 255; ++i)
+            {
+              vv = static_cast<uint8_t>(i);
+              int ivv = vv;
+              int count = debugHistogram[vv];
+              int lutr = lut[4 * vv + 0];
+              int lutg = lut[4 * vv + 1]; 
+              int lutb = lut[4 * vv + 2];
+              int luta = lut[4 * vv + 3];
+
+              LOG(ERROR) << "This is no error! Y= " << ivv << " count= " << count
+                << " lut R= " << lutr << " lut G= " << lutg << " lut B= " << lutb << " lut A= " << luta;
             }
           }
         }

@@ -491,8 +491,8 @@ namespace OrthancStone
     size_t index = dynamic_cast<const Orthanc::SingleValueObject<size_t>&>
         (message.GetPayload()).GetValue();
 
-    LOG(INFO) << "JSON received: " << message.GetUri().c_str()
-              << " (" << message.GetAnswerSize() << " bytes) for layer " << index;
+    VLOG(1) << "JSON received: " << message.GetUri().c_str()
+            << " (" << message.GetAnswerSize() << " bytes) for layer " << index;
 
     Layers::iterator layer = layers_.find(index);
     if (layer != layers_.end())
@@ -520,8 +520,8 @@ namespace OrthancStone
   {
     size_t index = dynamic_cast<const Orthanc::SingleValueObject<size_t>&>(message.GetPayload()).GetValue();
 
-    LOG(INFO) << "DICOM frame received: " << message.GetUri().c_str()
-              << " (" << message.GetAnswerSize() << " bytes) for layer " << index;
+    VLOG(1) << "DICOM frame received: " << message.GetUri().c_str()
+            << " (" << message.GetAnswerSize() << " bytes) for layer " << index;
 
     Layers::iterator layer = layers_.find(index);
     if (layer != layers_.end())

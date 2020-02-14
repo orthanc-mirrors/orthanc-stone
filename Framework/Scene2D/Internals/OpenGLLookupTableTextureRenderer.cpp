@@ -21,6 +21,9 @@
 
 #include "OpenGLLookupTableTextureRenderer.h"
 
+#include "../../Toolbox/ImageToolbox.h"
+
+
 #include <Core/OrthancException.h>
 
 
@@ -89,7 +92,6 @@ namespace OrthancStone
             }
           }
 
-
           for (unsigned int y = 0; y < height; y++)
           {
             const float* p = reinterpret_cast<const float*>(source.GetConstRow(y));
@@ -109,8 +111,9 @@ namespace OrthancStone
 
               uint8_t vv = static_cast<uint8_t>(v);
 
-              if(OrthancStone_Internals_dump_LoadTexture_histogram == 1)
+              if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
                 debugHistogram[vv] += 1;
+
 
               q[0] = lut[4 * vv + 0];  // R
               q[1] = lut[4 * vv + 1];  // G
@@ -124,21 +127,60 @@ namespace OrthancStone
 
           if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
           {
-            uint8_t vv;
-            LOG(INFO) << "Dumping texture loaded with OpenGLLookupTableTextureRenderer::LoadTexture";
-            for (int i = 0; i <= 255; ++i)
-            {
-              vv = static_cast<uint8_t>(i);
-              int ivv = vv;
-              int count = debugHistogram[vv];
-              int lutr = lut[4 * vv + 0];
-              int lutg = lut[4 * vv + 1]; 
-              int lutb = lut[4 * vv + 2];
-              int luta = lut[4 * vv + 3];
+            LOG(ERROR) << "+----------------------------------------+";
+            LOG(ERROR) << "|        This is not an error!           |";
+            LOG(ERROR) << "+----------------------------------------+";
+            LOG(ERROR) << "Work on the \"invisible slice\" bug";
+            LOG(ERROR) << "--> in OpenGLLookupTableTextureRenderer::LoadTexture():";
+            LOG(ERROR) << "layer.GetMinValue() = " << layer.GetMinValue() << " | layer.GetMaxValue() = " << layer.GetMaxValue();
+            LOG(ERROR) << "a = " << a << " | slope = " << slope;
 
-              LOG(ERROR) << "This is no error! Y= " << ivv << " count= " << count
-                << " lut R= " << lutr << " lut G= " << lutg << " lut B= " << lutb << " lut A= " << luta;
+            LOG(ERROR) << "SOURCE gets scaled and offset, this yields --> TEMP that gets through the lut to yield RESULT";
+            LOG(ERROR) << "The SOURCE (layer.GetTexture()) will be dumped below (format is Float32)";
+            LOG(ERROR) << "";
+            HistogramData hd;
+            double minValue = 0;
+            double maxValue = 0;
+            ComputeMinMax(source, minValue, maxValue);
+            double binSize = (maxValue - minValue) * 0.01; // split in 100 bins
+            ComputeHistogram(source, hd, binSize);
+            std::string s;
+            DumpHistogramResult(s, hd);
+            LOG(ERROR) << s;
+            LOG(ERROR) << "";
+
+
+            LOG(ERROR) << "TEMP will be dumped below (format is uint8_t)";
+            LOG(ERROR) << "";
+
+            {
+              uint8_t vv = 0;
+              do
+              {
+                LOG(ERROR) << "    TEMP. Pixel " << (int)vv << " is present "
+                  << debugHistogram[vv] << " times";
+              } while (vv++ != 255);
             }
+
+            LOG(ERROR) << "\nThe LUT will be dumped below";
+            LOG(ERROR) << "----------------------------";
+            LOG(ERROR) << "";
+
+            {
+              uint8_t vv = 0;
+              // proper way to loop on all unsigned values is a do while loop
+              do
+              {
+                LOG(ERROR) << "    LUT[" << (int)vv << "] ="
+                  << " R:" << (int)lut[4 * vv + 0]
+                  << " G:" << (int)lut[4 * vv + 1]
+                  << " B:" << (int)lut[4 * vv + 2]
+                  << " A:" << (int)lut[4 * vv + 3];
+              } while (vv++ != 255);
+            }
+            LOG(ERROR) << "+----------------------------------------+";
+            LOG(ERROR) << "|        end of debug dump               |";
+            LOG(ERROR) << "+----------------------------------------+";
           }
         }
 

@@ -23,6 +23,8 @@
 
 #include "../StoneException.h"
 
+#include "../Toolbox/ImageToolbox.h"
+
 #include <Core/OrthancException.h>
 //#include <Core/Images/PngWriter.h>
 #include <Core/Images/JpegWriter.h>
@@ -80,6 +82,33 @@ namespace OrthancStone
     {
       const DicomInstanceParameters& parameters = volume_.GetDicomParameters();
       ImageBuffer3D::SliceReader reader(volume_.GetPixelData(), projection_, sliceIndex_);
+
+      if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
+      {
+        LOG(ERROR) << "+----------------------------------------+";
+        LOG(ERROR) << "|        This is not an error!           |";
+        LOG(ERROR) << "+----------------------------------------+";
+        LOG(ERROR) << "Work on the \"invisible slice\" bug";
+        LOG(ERROR) << "InvisibleSlice -- about to dump histogram (100 buckets) for volume_ "
+          << "with OrthancId: " << parameters.GetOrthancInstanceIdentifier()
+          << " and SopInstanceUid: " << parameters.GetSopInstanceUid()
+          << " for projection_ (AxiCorSag): projection_ "
+          << " and slice: " << sliceIndex_;
+
+        HistogramData hd;
+        double minValue = 0;
+        double maxValue = 0;
+        ComputeMinMax(reader.GetAccessor(), minValue, maxValue);
+        double binSize = (maxValue - minValue) * 0.01;
+        ComputeHistogram(reader.GetAccessor(), hd, binSize);
+        std::string s;
+        DumpHistogramResult(s, hd);
+        LOG(ERROR) << s;
+        LOG(ERROR) << "+----------------------------------------+";
+        LOG(ERROR) << "|        end of debug dump               |";
+        LOG(ERROR) << "+----------------------------------------+";
+      }
+
       texture.reset(dynamic_cast<TextureBaseSceneLayer*>
                     (configurator->CreateTextureFromDicom(reader.GetAccessor(), parameters)));
 

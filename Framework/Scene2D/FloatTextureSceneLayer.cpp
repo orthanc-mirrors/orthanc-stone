@@ -21,6 +21,8 @@
 
 #include "FloatTextureSceneLayer.h"
 
+#include "../Toolbox/ImageToolbox.h"
+
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
 #include <Core/OrthancException.h>
@@ -38,6 +40,30 @@ namespace OrthancStone
                            false));
 
       Orthanc::ImageProcessing::Convert(*t, texture);
+
+      if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
+      {
+        LOG(ERROR) << "+----------------------------------------+";
+        LOG(ERROR) << "|        This is not an error!           |";
+        LOG(ERROR) << "+----------------------------------------+";
+        LOG(ERROR) << "Work on the \"invisible slice\" bug";
+        LOG(ERROR) << "in FloatTextureSceneLayer::FloatTextureSceneLayer";
+        LOG(ERROR) << "will dump \"t\" after \"Orthanc::ImageProcessing::Convert(*t, texture);\"";
+
+        HistogramData hd;
+        double minValue = 0;
+        double maxValue = 0;
+        ComputeMinMax(*t, minValue, maxValue);
+        double binSize = (maxValue - minValue) * 0.01;
+        ComputeHistogram(*t, hd, binSize);
+        std::string s;
+        DumpHistogramResult(s, hd);
+        LOG(ERROR) << s;
+        LOG(ERROR) << "+----------------------------------------+";
+        LOG(ERROR) << "|        end of debug dump               |";
+        LOG(ERROR) << "+----------------------------------------+";
+      }
+
       SetTexture(t.release());
     }
 

@@ -42,11 +42,11 @@ namespace OrthancStone
     using Orthanc::ImageAccessor;
     using Orthanc::PixelFormat;
 
-    template<typename PixelFormat Format>
+    template<typename Orthanc::PixelFormat Format>
     class PixelBinner
     {
       // "PixelBinner requires an arithmetic (integer or floating-point) pixel format"
-      typedef typename PixelTraits<Format>::PixelType PixelType;
+      typedef typename Orthanc::PixelTraits<Format>::PixelType PixelType;
       BOOST_STATIC_ASSERT(boost::is_arithmetic<PixelType>::value);
     
     public:

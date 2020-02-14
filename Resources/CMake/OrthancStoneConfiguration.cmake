@@ -570,6 +570,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageToolbox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageToolbox.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/PixelTestPatterns.cpp

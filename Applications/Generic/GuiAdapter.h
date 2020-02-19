@@ -235,7 +235,10 @@ namespace OrthancStone
       instanceCount = 1;
     }
 
+
+#if 0
     void RegisterWidget(boost::shared_ptr<IGuiAdapterWidget> widget);
+#endif
     
     /**
       emscripten_set_resize_callback("#window", NULL, false, OnWindowResize);
@@ -362,6 +365,8 @@ namespace OrthancStone
     */
     void ViewportsUpdateSize();
 
+
+#if 0
     std::vector<boost::weak_ptr<IGuiAdapterWidget> > widgets_;
 
     template<typename F> void VisitWidgets(F func)
@@ -377,5 +382,6 @@ namespace OrthancStone
         }
       }
     }
+#endif
   };
 }

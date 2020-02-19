@@ -127,17 +127,17 @@ namespace OrthancStone
 
           if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
           {
-            LOG(ERROR) << "+----------------------------------------+";
-            LOG(ERROR) << "|        This is not an error!           |";
-            LOG(ERROR) << "+----------------------------------------+";
-            LOG(ERROR) << "Work on the \"invisible slice\" bug";
-            LOG(ERROR) << "--> in OpenGLLookupTableTextureRenderer::LoadTexture():";
-            LOG(ERROR) << "layer.GetMinValue() = " << layer.GetMinValue() << " | layer.GetMaxValue() = " << layer.GetMaxValue();
-            LOG(ERROR) << "a = " << a << " | slope = " << slope;
+            LOG(INFO) << "+----------------------------------------+";
+            LOG(INFO) << "|        This is not an error!           |";
+            LOG(INFO) << "+----------------------------------------+";
+            LOG(INFO) << "Work on the \"invisible slice\" bug";
+            LOG(INFO) << "--> in OpenGLLookupTableTextureRenderer::LoadTexture():";
+            LOG(INFO) << "layer.GetMinValue() = " << layer.GetMinValue() << " | layer.GetMaxValue() = " << layer.GetMaxValue();
+            LOG(INFO) << "a = " << a << " | slope = " << slope;
 
-            LOG(ERROR) << "SOURCE gets scaled and offset, this yields --> TEMP that gets through the lut to yield RESULT";
-            LOG(ERROR) << "The SOURCE (layer.GetTexture()) will be dumped below (format is Float32)";
-            LOG(ERROR) << "";
+            LOG(INFO) << "SOURCE gets scaled and offset, this yields --> TEMP that gets through the lut to yield RESULT";
+            LOG(INFO) << "The SOURCE (layer.GetTexture()) will be dumped below (format is Float32)";
+            LOG(INFO) << "";
             HistogramData hd;
             double minValue = 0;
             double maxValue = 0;
@@ -146,41 +146,42 @@ namespace OrthancStone
             ComputeHistogram(source, hd, binSize);
             std::string s;
             DumpHistogramResult(s, hd);
-            LOG(ERROR) << s;
-            LOG(ERROR) << "";
+            LOG(INFO) << s;
+            LOG(INFO) << "";
 
 
-            LOG(ERROR) << "TEMP will be dumped below (format is uint8_t)";
-            LOG(ERROR) << "";
+            LOG(INFO) << "TEMP will be dumped below (format is uint8_t)";
+            LOG(INFO) << "";
 
             {
               uint8_t vv = 0;
               do
               {
-                LOG(ERROR) << "    TEMP. Pixel " << (int)vv << " is present "
+                LOG(INFO) << "    TEMP. Pixel " << (int)vv << " is present "
                   << debugHistogram[vv] << " times";
               } while (vv++ != 255);
             }
 
-            LOG(ERROR) << "\nThe LUT will be dumped below";
-            LOG(ERROR) << "----------------------------";
-            LOG(ERROR) << "";
+            LOG(INFO) << "\nThe LUT will be dumped below";
+            LOG(INFO) << "----------------------------";
+            LOG(INFO) << "bgotag-2020-02-18-20-26";
+            LOG(INFO) << "";
 
             {
               uint8_t vv = 0;
               // proper way to loop on all unsigned values is a do while loop
               do
               {
-                LOG(ERROR) << "    LUT[" << (int)vv << "] ="
+                LOG(INFO) << "    LUT[" << (int)vv << "] ="
                   << " R:" << (int)lut[4 * vv + 0]
                   << " G:" << (int)lut[4 * vv + 1]
                   << " B:" << (int)lut[4 * vv + 2]
                   << " A:" << (int)lut[4 * vv + 3];
               } while (vv++ != 255);
             }
-            LOG(ERROR) << "+----------------------------------------+";
-            LOG(ERROR) << "|        end of debug dump               |";
-            LOG(ERROR) << "+----------------------------------------+";
+            LOG(INFO) << "+----------------------------------------+";
+            LOG(INFO) << "|        end of debug dump               |";
+            LOG(INFO) << "+----------------------------------------+";
           }
         }
 

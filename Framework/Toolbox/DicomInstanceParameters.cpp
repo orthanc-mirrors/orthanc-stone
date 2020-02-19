@@ -264,7 +264,6 @@ namespace OrthancStone
             distance <= thickness_ / 2.0);
   }
 
-      
   void DicomInstanceParameters::Data::ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
                                                    bool useDouble) const
   {
@@ -284,12 +283,12 @@ namespace OrthancStone
 
     if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
     {
-      LOG(ERROR) << "in DicomInstanceParameters::Data::ApplyRescaleAndDoseScaling:";
-      LOG(ERROR) << "    doseGridScaling_ = " << doseGridScaling_ 
+      LOG(INFO) << "in DicomInstanceParameters::Data::ApplyRescaleAndDoseScaling:";
+      LOG(INFO) << "    doseGridScaling_ = " << doseGridScaling_ 
         << " hasRescale_ = " << hasRescale_ 
         << " rescaleSlope_ = " << rescaleSlope_ 
         << " rescaleIntercept_ = " << rescaleIntercept_;
-      LOG(ERROR) << "    --> factor = " << factor << " offset = " << offset;
+      LOG(INFO) << "    --> factor = " << factor << " offset = " << offset;
     }
 
     if ( (factor != 1.0) || (offset != 0.0) )
@@ -388,17 +387,17 @@ namespace OrthancStone
 
     if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
     {
-      LOG(ERROR) << "+----------------------------------------+";
-      LOG(ERROR) << "|        This is not an error!           |";
-      LOG(ERROR) << "+----------------------------------------+";
-      LOG(ERROR) << "Work on the \"invisible slice\" bug";
-      LOG(ERROR) << "in: DicomInstanceParameters::ConvertToFloat()";
-      LOG(ERROR) << "dumping texture hist after conversion from native sliceReader to Float32";
-      LOG(ERROR) << "(source buffer address before conversion is: " << pixelData.GetConstBuffer() << ")";
-      LOG(ERROR) << " target buffer address after conversion is: " << converted->GetConstBuffer();
+      LOG(INFO) << "+----------------------------------------+";
+      LOG(INFO) << "|        This is not an error!           |";
+      LOG(INFO) << "+----------------------------------------+";
+      LOG(INFO) << "Work on the \"invisible slice\" bug";
+      LOG(INFO) << "in: DicomInstanceParameters::ConvertToFloat()";
+      LOG(INFO) << "dumping texture hist after conversion from native sliceReader to Float32";
+      LOG(INFO) << "(source buffer address before conversion is: " << pixelData.GetConstBuffer() << ")";
+      LOG(INFO) << " target buffer address after conversion is: " << converted->GetConstBuffer();
 
-      LOG(ERROR) << "Target histo:";
-      LOG(ERROR) << "-------------";
+      LOG(INFO) << "Target histo:";
+      LOG(INFO) << "-------------";
       {
         HistogramData hd;
         double minValue = 0;
@@ -408,7 +407,7 @@ namespace OrthancStone
         ComputeHistogram(*converted, hd, binSize);
         std::string s;
         DumpHistogramResult(s, hd);
-        LOG(ERROR) << s;
+        LOG(INFO) << s;
       }
     }
                                                    
@@ -419,8 +418,8 @@ namespace OrthancStone
     if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
     {
 
-      LOG(ERROR) << "Target histo after data_.ApplyRescaleAndDoseScaling";
-      LOG(ERROR) << "---------------------------------------------------";
+      LOG(INFO) << "Target histo after data_.ApplyRescaleAndDoseScaling";
+      LOG(INFO) << "---------------------------------------------------";
       {
         HistogramData hd;
         double minValue = 0;
@@ -430,11 +429,11 @@ namespace OrthancStone
         ComputeHistogram(*converted, hd, binSize);
         std::string s;
         DumpHistogramResult(s, hd);
-        LOG(ERROR) << s;
+        LOG(INFO) << s;
       }
-      LOG(ERROR) << "+----------------------------------------+";
-      LOG(ERROR) << "|        end of debug dump               |";
-      LOG(ERROR) << "+----------------------------------------+";
+      LOG(INFO) << "+----------------------------------------+";
+      LOG(INFO) << "|        end of debug dump               |";
+      LOG(INFO) << "+----------------------------------------+";
     }
 
     return converted.release();

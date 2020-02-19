@@ -77,6 +77,8 @@ namespace OrthancStone
                                       "A style configurator is mandatory for textures");
     }
 
+    LOG(INFO) << "DicomVolumeImageMPRSlicer::Slice::CreateSceneLayer(). volume_ address is " << (void*)(&volume_) << " and its SOPInstanceUID is " << volume_.GetDicomParameters().GetSopInstanceUid();
+
     std::auto_ptr<TextureBaseSceneLayer> texture;
       
     {
@@ -85,11 +87,12 @@ namespace OrthancStone
 
       if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
       {
-        LOG(ERROR) << "+----------------------------------------+";
-        LOG(ERROR) << "|        This is not an error!           |";
-        LOG(ERROR) << "+----------------------------------------+";
-        LOG(ERROR) << "Work on the \"invisible slice\" bug";
-        LOG(ERROR) << "InvisibleSlice -- about to dump histogram (100 buckets) for volume_ "
+        LOG(INFO) << "+----------------------------------------+";
+        LOG(INFO) << "|        This is not an error!           |";
+        LOG(INFO) << "+----------------------------------------+";
+        LOG(INFO) << "Work on the \"invisible slice\" bug";
+        LOG(INFO) << "DicomVolumeImageMPRSlicer::Slice::CreateSceneLayer";
+        LOG(INFO) << "InvisibleSlice -- about to dump histogram (100 buckets) for volume_ "
           << "with OrthancId: " << parameters.GetOrthancInstanceIdentifier()
           << " and SopInstanceUid: " << parameters.GetSopInstanceUid()
           << " for projection_ (AxiCorSag): projection_ "
@@ -103,10 +106,10 @@ namespace OrthancStone
         ComputeHistogram(reader.GetAccessor(), hd, binSize);
         std::string s;
         DumpHistogramResult(s, hd);
-        LOG(ERROR) << s;
-        LOG(ERROR) << "+----------------------------------------+";
-        LOG(ERROR) << "|        end of debug dump               |";
-        LOG(ERROR) << "+----------------------------------------+";
+        LOG(INFO) << s;
+        LOG(INFO) << "+----------------------------------------+";
+        LOG(INFO) << "|        end of debug dump               |";
+        LOG(INFO) << "+----------------------------------------+";
       }
 
       texture.reset(dynamic_cast<TextureBaseSceneLayer*>

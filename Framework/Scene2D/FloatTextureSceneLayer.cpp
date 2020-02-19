@@ -43,12 +43,12 @@ namespace OrthancStone
 
       if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
       {
-        LOG(ERROR) << "+----------------------------------------+";
-        LOG(ERROR) << "|        This is not an error!           |";
-        LOG(ERROR) << "+----------------------------------------+";
-        LOG(ERROR) << "Work on the \"invisible slice\" bug";
-        LOG(ERROR) << "in FloatTextureSceneLayer::FloatTextureSceneLayer";
-        LOG(ERROR) << "will dump \"t\" after \"Orthanc::ImageProcessing::Convert(*t, texture);\"";
+        LOG(INFO) << "+----------------------------------------+";
+        LOG(INFO) << "|        This is not an error!           |";
+        LOG(INFO) << "+----------------------------------------+";
+        LOG(INFO) << "Work on the \"invisible slice\" bug";
+        LOG(INFO) << "in FloatTextureSceneLayer::FloatTextureSceneLayer";
+        LOG(INFO) << "will dump \"t\" after \"Orthanc::ImageProcessing::Convert(*t, texture);\"";
 
         HistogramData hd;
         double minValue = 0;
@@ -58,10 +58,10 @@ namespace OrthancStone
         ComputeHistogram(*t, hd, binSize);
         std::string s;
         DumpHistogramResult(s, hd);
-        LOG(ERROR) << s;
-        LOG(ERROR) << "+----------------------------------------+";
-        LOG(ERROR) << "|        end of debug dump               |";
-        LOG(ERROR) << "+----------------------------------------+";
+        LOG(INFO) << s;
+        LOG(INFO) << "+----------------------------------------+";
+        LOG(INFO) << "|        end of debug dump               |";
+        LOG(INFO) << "+----------------------------------------+";
       }
 
       SetTexture(t.release());

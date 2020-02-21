@@ -23,6 +23,8 @@
 
 #include "../StoneException.h"
 
+#include "../Toolbox/ImageToolbox.h"
+
 #include <Core/OrthancException.h>
 //#include <Core/Images/PngWriter.h>
 #include <Core/Images/JpegWriter.h>
@@ -80,6 +82,7 @@ namespace OrthancStone
     {
       const DicomInstanceParameters& parameters = volume_.GetDicomParameters();
       ImageBuffer3D::SliceReader reader(volume_.GetPixelData(), projection_, sliceIndex_);
+
       texture.reset(dynamic_cast<TextureBaseSceneLayer*>
                     (configurator->CreateTextureFromDicom(reader.GetAccessor(), parameters)));
 
@@ -160,7 +163,7 @@ namespace OrthancStone
     {
       texture->SetAngle(atan2(dy, dx));
     }
-        
+
     Vector tmp = volume_.GetGeometry().GetVoxelDimensions(projection_);
     texture->SetPixelSpacing(tmp[0], tmp[1]);
 

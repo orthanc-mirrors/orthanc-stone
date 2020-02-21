@@ -162,7 +162,7 @@ namespace OrthancStone
       // backing store) have changed. if so, we call UpdateSize to deal with
       // it
 
-      LOG(INFO) << "updating cairo viewport size";
+      LOG(TRACE) << "WebAssemblyOpenGLViewport::Refresh";
 
       // maybe the canvas size has changed and we need to update the 
       // canvas backing store size

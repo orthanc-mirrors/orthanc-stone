@@ -21,6 +21,9 @@
 
 #include "OpenGLLookupTableTextureRenderer.h"
 
+#include "../../Toolbox/ImageToolbox.h"
+
+
 #include <Core/OrthancException.h>
 
 namespace OrthancStone
@@ -75,6 +78,7 @@ namespace OrthancStone
             target.GetFormat() == Orthanc::PixelFormat_RGBA32 &&
             sizeof(float) == 4);
 
+          
           for (unsigned int y = 0; y < height; y++)
           {
             const float* p = reinterpret_cast<const float*>(source.GetConstRow(y));
@@ -103,6 +107,7 @@ namespace OrthancStone
               q += 4;
             }
           }
+
         }
 
         context_.MakeCurrent();

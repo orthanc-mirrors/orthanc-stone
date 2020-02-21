@@ -30,6 +30,8 @@
 #include <string>
 #include <stdint.h>
 
+#include <stdint.h>
+
 namespace OrthancStone {
 
   class IObserver;

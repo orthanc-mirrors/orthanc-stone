@@ -85,33 +85,6 @@ namespace OrthancStone
       const DicomInstanceParameters& parameters = volume_.GetDicomParameters();
       ImageBuffer3D::SliceReader reader(volume_.GetPixelData(), projection_, sliceIndex_);
 
-      if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
-      {
-        LOG(INFO) << "+----------------------------------------+";
-        LOG(INFO) << "|        This is not an error!           |";
-        LOG(INFO) << "+----------------------------------------+";
-        LOG(INFO) << "Work on the \"invisible slice\" bug";
-        LOG(INFO) << "DicomVolumeImageMPRSlicer::Slice::CreateSceneLayer";
-        LOG(INFO) << "InvisibleSlice -- about to dump histogram (100 buckets) for volume_ "
-          << "with OrthancId: " << parameters.GetOrthancInstanceIdentifier()
-          << " and SopInstanceUid: " << parameters.GetSopInstanceUid()
-          << " for projection_ (AxiCorSag): projection_ "
-          << " and slice: " << sliceIndex_;
-
-        HistogramData hd;
-        double minValue = 0;
-        double maxValue = 0;
-        ComputeMinMax(reader.GetAccessor(), minValue, maxValue);
-        double binSize = (maxValue - minValue) * 0.01;
-        ComputeHistogram(reader.GetAccessor(), hd, binSize);
-        std::string s;
-        DumpHistogramResult(s, hd);
-        LOG(INFO) << s;
-        LOG(INFO) << "+----------------------------------------+";
-        LOG(INFO) << "|        end of debug dump               |";
-        LOG(INFO) << "+----------------------------------------+";
-      }
-
       texture.reset(dynamic_cast<TextureBaseSceneLayer*>
                     (configurator->CreateTextureFromDicom(reader.GetAccessor(), parameters)));
 

@@ -235,11 +235,6 @@ namespace OrthancStone
       instanceCount = 1;
     }
 
-
-#if 0
-    void RegisterWidget(boost::shared_ptr<IGuiAdapterWidget> widget);
-#endif
-    
     /**
       emscripten_set_resize_callback("#window", NULL, false, OnWindowResize);
 
@@ -364,24 +359,5 @@ namespace OrthancStone
     deals with this)
     */
     void ViewportsUpdateSize();
-
-
-#if 0
-    std::vector<boost::weak_ptr<IGuiAdapterWidget> > widgets_;
-
-    template<typename F> void VisitWidgets(F func)
-    {
-      for (size_t i = 0; i < widgets_.size(); i++)
-      {
-        boost::shared_ptr<IGuiAdapterWidget> widget = widgets_[i].lock();
-
-        // TODO: we need to clean widgets!
-        if (widget.get() != NULL)
-        {
-          func(widget);
-        }
-      }
-    }
-#endif
   };
 }

@@ -41,29 +41,6 @@ namespace OrthancStone
 
       Orthanc::ImageProcessing::Convert(*t, texture);
 
-      if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
-      {
-        LOG(INFO) << "+----------------------------------------+";
-        LOG(INFO) << "|        This is not an error!           |";
-        LOG(INFO) << "+----------------------------------------+";
-        LOG(INFO) << "Work on the \"invisible slice\" bug";
-        LOG(INFO) << "in FloatTextureSceneLayer::FloatTextureSceneLayer";
-        LOG(INFO) << "will dump \"t\" after \"Orthanc::ImageProcessing::Convert(*t, texture);\"";
-
-        HistogramData hd;
-        double minValue = 0;
-        double maxValue = 0;
-        ComputeMinMax(*t, minValue, maxValue);
-        double binSize = (maxValue - minValue) * 0.01;
-        ComputeHistogram(*t, hd, binSize);
-        std::string s;
-        DumpHistogramResult(s, hd);
-        LOG(INFO) << s;
-        LOG(INFO) << "+----------------------------------------+";
-        LOG(INFO) << "|        end of debug dump               |";
-        LOG(INFO) << "+----------------------------------------+";
-      }
-
       SetTexture(t.release());
     }
 

@@ -165,7 +165,7 @@ namespace OrthancStone
     {
       texture->SetAngle(atan2(dy, dx));
     }
-        
+
     Vector tmp = volume_.GetGeometry().GetVoxelDimensions(projection_);
     texture->SetPixelSpacing(tmp[0], tmp[1]);
 

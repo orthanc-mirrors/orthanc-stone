@@ -281,16 +281,6 @@ namespace OrthancStone
       offset = rescaleIntercept_;
     }
 
-    if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
-    {
-      LOG(INFO) << "in DicomInstanceParameters::Data::ApplyRescaleAndDoseScaling:";
-      LOG(INFO) << "    doseGridScaling_ = " << doseGridScaling_ 
-        << " hasRescale_ = " << hasRescale_ 
-        << " rescaleSlope_ = " << rescaleSlope_ 
-        << " rescaleIntercept_ = " << rescaleIntercept_;
-      LOG(INFO) << "    --> factor = " << factor << " offset = " << offset;
-    }
-
     if ( (factor != 1.0) || (offset != 0.0) )
     {
       const unsigned int width = image.GetWidth();
@@ -385,56 +375,10 @@ namespace OrthancStone
                                                                false));
     Orthanc::ImageProcessing::Convert(*converted, pixelData);
 
-    if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
-    {
-      LOG(INFO) << "+----------------------------------------+";
-      LOG(INFO) << "|        This is not an error!           |";
-      LOG(INFO) << "+----------------------------------------+";
-      LOG(INFO) << "Work on the \"invisible slice\" bug";
-      LOG(INFO) << "in: DicomInstanceParameters::ConvertToFloat()";
-      LOG(INFO) << "dumping texture hist after conversion from native sliceReader to Float32";
-      LOG(INFO) << "(source buffer address before conversion is: " << pixelData.GetConstBuffer() << ")";
-      LOG(INFO) << " target buffer address after conversion is: " << converted->GetConstBuffer();
-
-      LOG(INFO) << "Target histo:";
-      LOG(INFO) << "-------------";
-      {
-        HistogramData hd;
-        double minValue = 0;
-        double maxValue = 0;
-        ComputeMinMax(*converted, minValue, maxValue);
-        double binSize = (maxValue - minValue) * 0.01;
-        ComputeHistogram(*converted, hd, binSize);
-        std::string s;
-        DumpHistogramResult(s, hd);
-        LOG(INFO) << s;
-      }
-    }
                                                    
     // Correct rescale slope/intercept if need be
     //data_.ApplyRescaleAndDoseScaling(*converted, (pixelData.GetFormat() == Orthanc::PixelFormat_Grayscale32));
     data_.ApplyRescaleAndDoseScaling(*converted, false);
-
-    if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
-    {
-
-      LOG(INFO) << "Target histo after data_.ApplyRescaleAndDoseScaling";
-      LOG(INFO) << "---------------------------------------------------";
-      {
-        HistogramData hd;
-        double minValue = 0;
-        double maxValue = 0;
-        ComputeMinMax(*converted, minValue, maxValue);
-        double binSize = (maxValue - minValue) * 0.01;
-        ComputeHistogram(*converted, hd, binSize);
-        std::string s;
-        DumpHistogramResult(s, hd);
-        LOG(INFO) << s;
-      }
-      LOG(INFO) << "+----------------------------------------+";
-      LOG(INFO) << "|        end of debug dump               |";
-      LOG(INFO) << "+----------------------------------------+";
-    }
 
     return converted.release();
   }

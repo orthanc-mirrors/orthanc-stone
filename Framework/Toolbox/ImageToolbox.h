@@ -74,5 +74,3 @@ namespace OrthancStone
                      double& minValue, double& maxValue);
 
 }
-
-extern int OrthancStone_Internals_dump_LoadTexture_histogram;

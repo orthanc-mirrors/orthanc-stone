@@ -26,9 +26,6 @@
 
 #include <Core/OrthancException.h>
 
-
-int OrthancStone_Internals_dump_LoadTexture_histogram = 0;
-
 namespace OrthancStone
 {
   namespace Internals
@@ -82,16 +79,6 @@ namespace OrthancStone
             sizeof(float) == 4);
 
           
-          std::map<uint8_t, int> debugHistogram;
-          if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
-          {
-            for (int i = 0; i <= 255; ++i)
-            {
-              uint8_t k = static_cast<uint8_t>(i);
-              debugHistogram[k] = 0;
-            }
-          }
-
           for (unsigned int y = 0; y < height; y++)
           {
             const float* p = reinterpret_cast<const float*>(source.GetConstRow(y));
@@ -111,10 +98,6 @@ namespace OrthancStone
 
               uint8_t vv = static_cast<uint8_t>(v);
 
-              if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
-                debugHistogram[vv] += 1;
-
-
               q[0] = lut[4 * vv + 0];  // R
               q[1] = lut[4 * vv + 1];  // G
               q[2] = lut[4 * vv + 2];  // B
@@ -125,64 +108,6 @@ namespace OrthancStone
             }
           }
 
-          if (OrthancStone_Internals_dump_LoadTexture_histogram == 1)
-          {
-            LOG(INFO) << "+----------------------------------------+";
-            LOG(INFO) << "|        This is not an error!           |";
-            LOG(INFO) << "+----------------------------------------+";
-            LOG(INFO) << "Work on the \"invisible slice\" bug";
-            LOG(INFO) << "--> in OpenGLLookupTableTextureRenderer::LoadTexture():";
-            LOG(INFO) << "layer.GetMinValue() = " << layer.GetMinValue() << " | layer.GetMaxValue() = " << layer.GetMaxValue();
-            LOG(INFO) << "a = " << a << " | slope = " << slope;
-
-            LOG(INFO) << "SOURCE gets scaled and offset, this yields --> TEMP that gets through the lut to yield RESULT";
-            LOG(INFO) << "The SOURCE (layer.GetTexture()) will be dumped below (format is Float32)";
-            LOG(INFO) << "";
-            HistogramData hd;
-            double minValue = 0;
-            double maxValue = 0;
-            ComputeMinMax(source, minValue, maxValue);
-            double binSize = (maxValue - minValue) * 0.01; // split in 100 bins
-            ComputeHistogram(source, hd, binSize);
-            std::string s;
-            DumpHistogramResult(s, hd);
-            LOG(INFO) << s;
-            LOG(INFO) << "";
-
-
-            LOG(INFO) << "TEMP will be dumped below (format is uint8_t)";
-            LOG(INFO) << "";
-
-            {
-              uint8_t vv = 0;
-              do
-              {
-                LOG(INFO) << "    TEMP. Pixel " << (int)vv << " is present "
-                  << debugHistogram[vv] << " times";
-              } while (vv++ != 255);
-            }
-
-            LOG(INFO) << "\nThe LUT will be dumped below";
-            LOG(INFO) << "----------------------------";
-            LOG(INFO) << "bgotag-2020-02-18-20-26";
-            LOG(INFO) << "";
-
-            {
-              uint8_t vv = 0;
-              // proper way to loop on all unsigned values is a do while loop
-              do
-              {
-                LOG(INFO) << "    LUT[" << (int)vv << "] ="
-                  << " R:" << (int)lut[4 * vv + 0]
-                  << " G:" << (int)lut[4 * vv + 1]
-                  << " B:" << (int)lut[4 * vv + 2]
-                  << " A:" << (int)lut[4 * vv + 3];
-              } while (vv++ != 255);
-            }
-            LOG(INFO) << "+----------------------------------------+";
-            LOG(INFO) << "|        end of debug dump               |";
-            LOG(INFO) << "+----------------------------------------+";
-          }
         }
 
         context_.MakeCurrent();

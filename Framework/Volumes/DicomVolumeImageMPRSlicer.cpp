@@ -77,8 +77,6 @@ namespace OrthancStone
                                       "A style configurator is mandatory for textures");
     }
 
-    LOG(INFO) << "DicomVolumeImageMPRSlicer::Slice::CreateSceneLayer(). volume_ address is " << (void*)(&volume_) << " and its SOPInstanceUID is " << volume_.GetDicomParameters().GetSopInstanceUid();
-
     std::auto_ptr<TextureBaseSceneLayer> texture;
       
     {

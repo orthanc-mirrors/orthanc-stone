@@ -99,12 +99,6 @@ namespace OrthancStone
         ORTHANC_ASSERT(Format == img.GetFormat(), 
                        "Internal error. Wrong template histogram type");
     
-        const uint8_t*  buffer = reinterpret_cast<const uint8_t*>(
-          img.GetConstBuffer());
-
-        const size_t pitch = img.GetPitch();
-        const size_t bytesPerPix = img.GetBytesPerPixel();
-
         const size_t height = img.GetHeight();
         const size_t width = img.GetHeight();
 
@@ -152,12 +146,6 @@ namespace OrthancStone
       {
         ORTHANC_ASSERT(Format == img.GetFormat(), 
                        "Internal error. Wrong template histogram type");
-
-        const uint8_t* buffer = reinterpret_cast<const uint8_t*>(
-          img.GetConstBuffer());
-        
-        const size_t   pitch = img.GetPitch();
-        const size_t   bytesPerPix = img.GetBytesPerPixel();
 
         const size_t height = img.GetHeight();
         const size_t width = img.GetHeight();

@@ -136,7 +136,7 @@ void SimpleHisto_T_BinSize1_2()
   std::auto_ptr<Orthanc::Image> image(new Orthanc::Image(
     Format, W, H, false));
 
-  typedef Orthanc::PixelTraits<Format>::PixelType PixelType;
+  typedef typename Orthanc::PixelTraits<Format>::PixelType PixelType;
 
   PixelType pixValue = 0;
 
@@ -206,7 +206,7 @@ void SimpleHisto_T_BinSize10_2()
   std::auto_ptr<Orthanc::Image> image(new Orthanc::Image(
     Format, W, H, false));
 
-  typedef Orthanc::PixelTraits<Format>::PixelType PixelType;
+  typedef typename Orthanc::PixelTraits<Format>::PixelType PixelType;
 
   PixelType pixValue = 0;
 

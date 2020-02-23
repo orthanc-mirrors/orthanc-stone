@@ -24,6 +24,7 @@
 #include "../Scene2D/ColorTextureSceneLayer.h"
 #include "../Scene2D/FloatTextureSceneLayer.h"
 #include "../Toolbox/GeometryToolbox.h"
+#include "../Toolbox/ImageToolbox.h"
 
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
@@ -263,7 +264,6 @@ namespace OrthancStone
             distance <= thickness_ / 2.0);
   }
 
-      
   void DicomInstanceParameters::Data::ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
                                                                  bool useDouble) const
   {
@@ -375,6 +375,7 @@ namespace OrthancStone
                                                                false));
     Orthanc::ImageProcessing::Convert(*converted, pixelData);
 
+                                                   
     // Correct rescale slope/intercept if need be
     //data_.ApplyRescaleAndDoseScaling(*converted, (pixelData.GetFormat() == Orthanc::PixelFormat_Grayscale32));
     data_.ApplyRescaleAndDoseScaling(*converted, false);

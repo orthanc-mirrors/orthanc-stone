@@ -345,7 +345,6 @@ namespace Deprecated
     {
       OrthancStone::ImageBuffer3D& target = volume_->GetPixelData();
 
-      const uint64_t bpp = target.GetBytesPerPixel();
       const uint64_t width = target.GetWidth();
       const uint64_t height = target.GetHeight();
       const uint64_t depth = target.GetDepth();

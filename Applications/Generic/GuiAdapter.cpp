@@ -36,11 +36,6 @@
 
 namespace OrthancStone
 {
-  void GuiAdapter::RegisterWidget(boost::shared_ptr<IGuiAdapterWidget> widget)
-  {
-    widgets_.push_back(widget);
-  }
-
   std::ostream& operator<<(
     std::ostream& os, const GuiAdapterKeyboardEvent& event)
   {

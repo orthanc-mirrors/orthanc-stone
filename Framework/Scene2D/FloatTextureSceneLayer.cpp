@@ -21,6 +21,8 @@
 
 #include "FloatTextureSceneLayer.h"
 
+#include "../Toolbox/ImageToolbox.h"
+
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
 #include <Core/OrthancException.h>
@@ -39,6 +41,7 @@ namespace OrthancStone
                            false));
 
       Orthanc::ImageProcessing::Convert(*t, texture);
+
       SetTexture(t.release());
     }
 

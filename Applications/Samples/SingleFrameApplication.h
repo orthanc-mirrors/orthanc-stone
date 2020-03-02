@@ -243,6 +243,7 @@ namespace OrthancStone
         boost::shared_ptr<Deprecated::DicomSeriesVolumeSlicer> layer(new Deprecated::DicomSeriesVolumeSlicer);
         layer->Connect(context->GetOrthancApiClient());
         source_ = layer;
+
         layer->LoadFrame(instance, frame);
         Register<Deprecated::IVolumeSlicer::GeometryReadyMessage>(*layer, &SingleFrameApplication::OnMainWidgetGeometryReady);
         widget_->AddLayer(layer);

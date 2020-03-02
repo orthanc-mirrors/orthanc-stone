@@ -27,8 +27,9 @@
 #include "../../Framework/Wrappers/CairoSurface.h"
 #include "../../Framework/Deprecated/Viewport/IViewport.h"
 
-#include <SDL_render.h>
+#include <Core/Compatibility.h>
 
+#include <SDL_render.h>
 #include <boost/thread/mutex.hpp>
 
 namespace OrthancStone

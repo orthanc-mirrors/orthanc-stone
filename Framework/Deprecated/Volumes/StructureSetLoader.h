@@ -26,6 +26,8 @@
 #include "../Toolbox/OrthancApiClient.h"
 #include "IVolumeLoader.h"
 
+#include <Core/Compatibility.h>
+
 namespace Deprecated
 {
   class StructureSetLoader :

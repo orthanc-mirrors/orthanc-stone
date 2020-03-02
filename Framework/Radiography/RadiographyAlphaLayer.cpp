@@ -23,8 +23,10 @@
 
 #include "RadiographyScene.h"
 
+#include <Core/Compatibility.h>
 #include <Core/Images/Image.h>
 #include <Core/OrthancException.h>
+
 #include "../Toolbox/ImageGeometry.h"
 
 namespace OrthancStone

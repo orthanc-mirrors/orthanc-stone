@@ -34,6 +34,8 @@
 #  include "../../Framework/Deprecated/Messages/LockingEmitter.h"
 #endif
 
+#include <Core/Compatibility.h>
+
 namespace OrthancStone
 {
   std::ostream& operator<<(

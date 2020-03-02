@@ -73,6 +73,7 @@ namespace Deprecated
     std::unique_ptr< MessageHandler<BinaryResponseReadyMessage> >            binaryHandler_;
     std::unique_ptr< MessageHandler<IWebService::HttpRequestErrorMessage> >  failureHandler_;
     std::unique_ptr< Orthanc::IDynamicObject >                               userPayload_;
+
     void NotifyConversionError(const IWebService::HttpRequestSuccessMessage& message) const
     {
       if (failureHandler_.get() != NULL)

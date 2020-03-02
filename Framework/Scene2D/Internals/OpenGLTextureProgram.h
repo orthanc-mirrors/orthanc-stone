@@ -26,6 +26,8 @@
 #include "../../OpenGL/OpenGLTexture.h"
 #include "../../Toolbox/AffineTransform2D.h"
 
+#include <Core/Compatibility.h>
+
 namespace OrthancStone
 {
   namespace Internals

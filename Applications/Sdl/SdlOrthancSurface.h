@@ -25,7 +25,9 @@
 
 #include "../../Framework/Viewport/SdlWindow.h"
 
+#include <Core/Compatibility.h>
 #include <Core/Images/ImageAccessor.h>
+
 #include <boost/thread/mutex.hpp>
 
 namespace OrthancStone

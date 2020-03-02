@@ -24,6 +24,7 @@
 #include "IOracleCommand.h"
 
 #include <Core/Compatibility.h>
+#include <Core/IDynamicObject.h>
 
 #include <memory>
 

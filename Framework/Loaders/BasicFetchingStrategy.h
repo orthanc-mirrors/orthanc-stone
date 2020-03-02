@@ -24,6 +24,8 @@
 #include "IFetchingItemsSorter.h"
 #include "IFetchingStrategy.h"
 
+#include <Core/Compatibility.h>
+
 #include <memory>
 
 namespace OrthancStone
@@ -56,7 +58,7 @@ namespace OrthancStone
       }
     };
 
-    std::auto_ptr<IFetchingItemsSorter>  sorter_;
+    std::unique_ptr<IFetchingItemsSorter>  sorter_;
     std::vector<unsigned int>            nextQuality_;
     unsigned int                         maxQuality_;
     std::vector<ContentItem>             content_;

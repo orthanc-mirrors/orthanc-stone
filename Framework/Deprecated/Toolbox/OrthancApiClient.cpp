@@ -68,11 +68,11 @@ namespace Deprecated
   class OrthancApiClient::WebServicePayload : public Orthanc::IDynamicObject
   {
   private:
-    std::auto_ptr< OrthancStone::MessageHandler<EmptyResponseReadyMessage> >             emptyHandler_;
-    std::auto_ptr< OrthancStone::MessageHandler<JsonResponseReadyMessage> >              jsonHandler_;
-    std::auto_ptr< OrthancStone::MessageHandler<BinaryResponseReadyMessage> >            binaryHandler_;
-    std::auto_ptr< OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage> >  failureHandler_;
-    std::auto_ptr< Orthanc::IDynamicObject >                               userPayload_;
+    std::unique_ptr< OrthancStone::MessageHandler<EmptyResponseReadyMessage> >             emptyHandler_;
+    std::unique_ptr< OrthancStone::MessageHandler<JsonResponseReadyMessage> >              jsonHandler_;
+    std::unique_ptr< OrthancStone::MessageHandler<BinaryResponseReadyMessage> >            binaryHandler_;
+    std::unique_ptr< OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage> >  failureHandler_;
+    std::unique_ptr< Orthanc::IDynamicObject >                               userPayload_;
     OrthancStone::MessageBroker&                                                         broker_;
     void NotifyConversionError(const IWebService::HttpRequestSuccessMessage& message) const
     {

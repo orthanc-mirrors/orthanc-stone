@@ -179,9 +179,9 @@ namespace OrthancStone
         VolumeImage& petVolume = context.AddSeriesVolume(pet, true /* progressive download */, 1);
 
         // Take the PET volume as the reference for the slices
-        std::auto_ptr<Interactor> interactor(new Interactor(petVolume, VolumeProjection_Axial, false /* don't reverse normal */));
+        std::unique_ptr<Interactor> interactor(new Interactor(petVolume, VolumeProjection_Axial, false /* don't reverse normal */));
 
-        std::auto_ptr<LayeredSceneWidget> widget(new LayeredSceneWidget);
+        std::unique_ptr<LayeredSceneWidget> widget(new LayeredSceneWidget);
         widget->AddLayer(new VolumeImage::LayerFactory(ctVolume));
         widget->AddLayer(new VolumeImage::LayerFactory(petVolume));
         widget->SetSlice(interactor->GetCursor().GetCurrentSlice());

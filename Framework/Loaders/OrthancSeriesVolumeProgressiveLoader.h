@@ -67,7 +67,7 @@ namespace OrthancStone
 
       void CheckSliceIndex(size_t index) const;
 
-      std::auto_ptr<VolumeImageGeometry>     geometry_;
+      std::unique_ptr<VolumeImageGeometry>     geometry_;
       std::vector<DicomInstanceParameters*>  slices_;
       std::vector<uint64_t>                  slicesRevision_;
 
@@ -111,8 +111,8 @@ namespace OrthancStone
     unsigned int                                  simultaneousDownloads_;
     SeriesGeometry                                seriesGeometry_;
     boost::shared_ptr<DicomVolumeImage>           volume_;
-    std::auto_ptr<IFetchingItemsSorter::IFactory> sorter_;
-    std::auto_ptr<IFetchingStrategy>              strategy_;
+    std::unique_ptr<IFetchingItemsSorter::IFactory> sorter_;
+    std::unique_ptr<IFetchingStrategy>              strategy_;
     std::vector<unsigned int>                     slicesQuality_;
     bool                                          volumeImageReadyInHighQuality_;
 

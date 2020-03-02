@@ -43,7 +43,7 @@ namespace OrthancStone
   private:
     WebAssemblyOracle&                 oracle_;
     const IObserver&                   receiver_;
-    std::auto_ptr<SleepOracleCommand>  command_;
+    std::unique_ptr<SleepOracleCommand>  command_;
 
   public:
     TimeoutContext(WebAssemblyOracle& oracle,
@@ -70,7 +70,7 @@ namespace OrthancStone
 
     static void Callback(void *userData)
     {
-      std::auto_ptr<TimeoutContext> context(reinterpret_cast<TimeoutContext*>(userData));
+      std::unique_ptr<TimeoutContext> context(reinterpret_cast<TimeoutContext*>(userData));
       context->EmitMessage();
     }
   };
@@ -110,7 +110,7 @@ namespace OrthancStone
   private:
     Emitter                       emitter_;
     const IObserver&              receiver_;
-    std::auto_ptr<IOracleCommand> command_;
+    std::unique_ptr<IOracleCommand> command_;
     std::string                   expectedContentType_;
     int64_t                       receiverFingerprint_;
 
@@ -213,7 +213,7 @@ namespace OrthancStone
        * free data associated with the fetch.
        **/
       
-      std::auto_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
+      std::unique_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
 
       // an UUID is 36 chars : 32 hex chars + 4 hyphens: char #0 --> char #35
       // char #36 is \0.
@@ -352,7 +352,7 @@ namespace OrthancStone
 
     static void FailureCallback(emscripten_fetch_t *fetch)
     {
-      std::auto_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
+      std::unique_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
 
       {
         const size_t kEmscriptenStatusTextSize = sizeof(emscripten_fetch_t::statusText);
@@ -389,7 +389,7 @@ namespace OrthancStone
   private:
     WebAssemblyOracle&             oracle_;
     const IObserver&               receiver_;
-    std::auto_ptr<IOracleCommand>  command_;
+    std::unique_ptr<IOracleCommand>  command_;
     Orthanc::HttpMethod            method_;
     std::string                    url_;
     std::string                    body_;
@@ -702,7 +702,7 @@ namespace OrthancStone
       << std::hex << &receiver << std::dec
       << " | Current fingerprint is " << receiver.GetFingerprint();
     
-    std::auto_ptr<IOracleCommand> protection(command);
+    std::unique_ptr<IOracleCommand> protection(command);
 
     if (command == NULL)
     {

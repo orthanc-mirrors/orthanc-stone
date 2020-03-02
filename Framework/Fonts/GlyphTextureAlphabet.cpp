@@ -77,7 +77,7 @@ namespace OrthancStone
   class GlyphTextureAlphabet::TextureGenerator : public GlyphAlphabet::IGlyphVisitor
   {
   private:
-    std::auto_ptr<Orthanc::ImageAccessor>  texture_;
+    std::unique_ptr<Orthanc::ImageAccessor>  texture_;
 
     unsigned int    countColumns_;
     unsigned int    countRows_;
@@ -289,7 +289,7 @@ namespace OrthancStone
   {
     TextBoundingBox box(alphabet_, utf8);
 
-    std::auto_ptr<Orthanc::ImageAccessor> bitmap(
+    std::unique_ptr<Orthanc::ImageAccessor> bitmap(
       new Orthanc::Image(Orthanc::PixelFormat_RGBA32,
                          box.GetWidth(), box.GetHeight(),
                          true /* force minimal pitch */));

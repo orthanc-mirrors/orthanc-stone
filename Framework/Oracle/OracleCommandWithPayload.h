@@ -23,6 +23,7 @@
 
 #include "IOracleCommand.h"
 
+#include <Core/Compatibility.h>
 #include <Core/IDynamicObject.h>
 
 #include <memory>
@@ -32,7 +33,7 @@ namespace OrthancStone
   class OracleCommandWithPayload : public IOracleCommand
   {
   private:
-    std::auto_ptr<Orthanc::IDynamicObject>  payload_;
+    std::unique_ptr<Orthanc::IDynamicObject>  payload_;
 
   public:
     void SetPayload(Orthanc::IDynamicObject* payload);

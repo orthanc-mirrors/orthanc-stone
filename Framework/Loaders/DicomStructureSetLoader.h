@@ -42,7 +42,7 @@ namespace OrthancStone
     class LookupInstance;          // 2nd state
     class LoadStructure;           // 1st state
     
-    std::auto_ptr<DicomStructureSet>  content_;
+    std::unique_ptr<DicomStructureSet>  content_;
     uint64_t                          revision_;
     std::string                       instanceId_;
     unsigned int                      countProcessedInstances_;

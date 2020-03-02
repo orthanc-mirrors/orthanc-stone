@@ -102,7 +102,7 @@ namespace OrthancStone
       }
     }
 
-    std::auto_ptr<Orthanc::ImageAccessor> image;
+    std::unique_ptr<Orthanc::ImageAccessor> image;
 
     switch (contentType)
     {

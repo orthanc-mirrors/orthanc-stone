@@ -62,7 +62,7 @@ namespace Deprecated
           break;
         }
 
-        std::auto_ptr<Orthanc::IDynamicObject> item(that->queue_.Dequeue(100));
+        std::unique_ptr<Orthanc::IDynamicObject> item(that->queue_.Dequeue(100));
         if (item.get() != NULL)
         {
           IOracleCommand& command = dynamic_cast<IOracleCommand&>(*item);
@@ -107,7 +107,7 @@ namespace Deprecated
 
     void Submit(IOracleCommand* command)
     {
-      std::auto_ptr<IOracleCommand> protection(command);
+      std::unique_ptr<IOracleCommand> protection(command);
 
       if (command == NULL)
       {

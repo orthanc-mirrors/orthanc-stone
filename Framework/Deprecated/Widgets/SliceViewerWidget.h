@@ -75,8 +75,8 @@ namespace Deprecated
     std::vector<IVolumeSlicer*>  layers_;
     std::vector<RenderStyle>     styles_;
     OrthancStone::CoordinateSystem3D           plane_;
-    std::auto_ptr<Scene>         currentScene_;
-    std::auto_ptr<Scene>         pendingScene_;
+    std::unique_ptr<Scene>         currentScene_;
+    std::unique_ptr<Scene>         pendingScene_;
     std::vector<bool>            changedLayers_;
 
     bool LookupLayer(size_t& index /* out */,

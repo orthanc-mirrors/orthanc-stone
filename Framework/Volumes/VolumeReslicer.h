@@ -42,7 +42,7 @@ namespace OrthancStone
     // Output of reslicing
     bool                           success_;
     Extent2D                       extent_;
-    std::auto_ptr<Orthanc::Image>  slice_;
+    std::unique_ptr<Orthanc::Image>  slice_;
     double                         pixelSpacing_;
 
     void CheckIterators(const ImageBuffer3D& source,

@@ -49,9 +49,9 @@ namespace OrthancStone
 
   private:
     uint64_t                                revision_;
-    std::auto_ptr<VolumeImageGeometry>      geometry_;
-    std::auto_ptr<ImageBuffer3D>            image_;
-    std::auto_ptr<DicomInstanceParameters>  parameters_;
+    std::unique_ptr<VolumeImageGeometry>      geometry_;
+    std::unique_ptr<ImageBuffer3D>            image_;
+    std::unique_ptr<DicomInstanceParameters>  parameters_;
 
     void CheckHasGeometry() const;
     

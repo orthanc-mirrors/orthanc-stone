@@ -30,7 +30,7 @@ namespace Deprecated
   {
     assert(frame_->GetFormat() == Orthanc::PixelFormat_Float32);
 
-    std::auto_ptr<OrthancStone::CairoSurface> result;
+    std::unique_ptr<OrthancStone::CairoSurface> result;
 
     float windowCenter, windowWidth;
     style.ComputeWindowing(windowCenter, windowWidth,

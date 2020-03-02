@@ -59,7 +59,7 @@ namespace Deprecated
     unsigned int         height_;   // TODO : Redundant with "imageInformation_"
     DicomFrameConverter  converter_;   // TODO : Partially redundant with "imageInformation_"
 
-    std::auto_ptr<Orthanc::DicomImageInformation>  imageInformation_;
+    std::unique_ptr<Orthanc::DicomImageInformation>  imageInformation_;
 
   public:
     Slice() :

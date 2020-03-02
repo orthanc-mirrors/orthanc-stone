@@ -33,7 +33,7 @@ namespace OrthancStone
   class QtStoneApplicationRunner : public NativeStoneApplicationRunner
   {
   protected:
-    std::auto_ptr<QStoneMainWindow> window_;
+    std::unique_ptr<QStoneMainWindow> window_;
 
   public:
     QtStoneApplicationRunner(MessageBroker& broker,

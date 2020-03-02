@@ -21,6 +21,8 @@
 
 #include "TextSceneLayer.h"
 
+#include <Core/Compatibility.h>
+
 namespace OrthancStone
 {
   TextSceneLayer::TextSceneLayer() :
@@ -36,7 +38,7 @@ namespace OrthancStone
 
   ISceneLayer* TextSceneLayer::Clone() const
   {
-    std::auto_ptr<TextSceneLayer> cloned(new TextSceneLayer);
+    std::unique_ptr<TextSceneLayer> cloned(new TextSceneLayer);
     cloned->SetColor(GetColor());
     cloned->x_ = x_;
     cloned->y_ = y_;

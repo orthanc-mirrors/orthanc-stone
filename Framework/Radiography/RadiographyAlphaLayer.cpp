@@ -23,8 +23,10 @@
 
 #include "RadiographyScene.h"
 
+#include <Core/Compatibility.h>
 #include <Core/Images/Image.h>
 #include <Core/OrthancException.h>
+
 #include "../Toolbox/ImageGeometry.h"
 
 namespace OrthancStone
@@ -32,7 +34,7 @@ namespace OrthancStone
 
   void RadiographyAlphaLayer::SetAlpha(Orthanc::ImageAccessor* image)
   {
-    std::auto_ptr<Orthanc::ImageAccessor> raii(image);
+    std::unique_ptr<Orthanc::ImageAccessor> raii(image);
 
     if (image == NULL)
     {
@@ -45,7 +47,12 @@ namespace OrthancStone
     }
 
     SetSize(image->GetWidth(), image->GetHeight());
-    alpha_ = raii;
+
+#if __cplusplus < 201103L
+    alpha_.reset(raii.release());
+#else
+    alpha_ = std::move(raii);
+#endif
 
     BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }

@@ -41,8 +41,8 @@ namespace OrthancStone
     Scene2D&                                scene_;
     int                                     layerDepth_;
     boost::shared_ptr<IVolumeSlicer>        slicer_;
-    std::auto_ptr<ILayerStyleConfigurator>  configurator_;
-    std::auto_ptr<CoordinateSystem3D>       lastPlane_;
+    std::unique_ptr<ILayerStyleConfigurator>  configurator_;
+    std::unique_ptr<CoordinateSystem3D>       lastPlane_;
     uint64_t                                lastRevision_;
     uint64_t                                lastConfiguratorRevision_;
 

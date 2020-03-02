@@ -24,6 +24,7 @@
 #include "../StoneEnumerations.h"
 #include "../Toolbox/LinearAlgebra.h"
 
+#include <Core/Compatibility.h>
 #include <Core/Images/Image.h>
 
 namespace OrthancStone
@@ -143,7 +144,7 @@ namespace OrthancStone
     {
     private:
       Orthanc::ImageAccessor         accessor_;
-      std::auto_ptr<Orthanc::Image>  sagittal_;  // Unused for axial and coronal
+      std::unique_ptr<Orthanc::Image>  sagittal_;  // Unused for axial and coronal
 
     public:
       SliceReader(const ImageBuffer3D& that,
@@ -163,7 +164,7 @@ namespace OrthancStone
       ImageBuffer3D&                 that_;
       bool                           modified_;
       Orthanc::ImageAccessor         accessor_;
-      std::auto_ptr<Orthanc::Image>  sagittal_;  // Unused for axial and coronal
+      std::unique_ptr<Orthanc::Image>  sagittal_;  // Unused for axial and coronal
 
       void Flush();
 

@@ -34,7 +34,7 @@ namespace OrthancStone
     private:
       OpenGL::IOpenGLContext&                  context_;
       OpenGLLinesProgram&                      program_;
-      std::auto_ptr<OpenGLLinesProgram::Data>  data_;
+      std::unique_ptr<OpenGLLinesProgram::Data>  data_;
 
       void LoadLayer(const PolylineSceneLayer& layer);
 

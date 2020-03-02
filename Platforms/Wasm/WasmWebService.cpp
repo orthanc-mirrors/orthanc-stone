@@ -7,7 +7,7 @@
 struct CachedSuccessNotification
 {
   boost::shared_ptr<Deprecated::BaseWebService::CachedHttpRequestSuccessMessage>    cachedMessage;
-  std::auto_ptr<Orthanc::IDynamicObject>                                              payload;
+  std::unique_ptr<Orthanc::IDynamicObject>                                              payload;
   OrthancStone::MessageHandler<Deprecated::IWebService::HttpRequestSuccessMessage>* successCallback;
 };
 
@@ -56,7 +56,7 @@ extern "C" {
   void EMSCRIPTEN_KEEPALIVE WasmWebService_NotifyCachedSuccess(void* notification_)
   {
     // notification has been allocated in C++ and passed to JS.  It must be deleted by this method
-    std::auto_ptr<CachedSuccessNotification> notification(reinterpret_cast<CachedSuccessNotification*>(notification_));
+    std::unique_ptr<CachedSuccessNotification> notification(reinterpret_cast<CachedSuccessNotification*>(notification_));
 
     notification->successCallback->Apply(Deprecated::IWebService::HttpRequestSuccessMessage(
       notification->cachedMessage->GetUri(), 

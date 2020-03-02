@@ -37,9 +37,9 @@ namespace Deprecated
   class BaseWebService::BaseWebServicePayload : public Orthanc::IDynamicObject
   {
   private:
-    std::auto_ptr< OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage> >   userSuccessHandler_;
-    std::auto_ptr< OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage> >     userFailureHandler_;
-    std::auto_ptr< Orthanc::IDynamicObject>                                   userPayload_;
+    std::unique_ptr< OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage> >   userSuccessHandler_;
+    std::unique_ptr< OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage> >     userFailureHandler_;
+    std::unique_ptr< Orthanc::IDynamicObject>                                   userPayload_;
 
   public:
     BaseWebServicePayload(OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* userSuccessHandler,

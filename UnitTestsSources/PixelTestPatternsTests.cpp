@@ -36,7 +36,7 @@ static const unsigned char bin2c_SimpleRedBlueHGradient_png[391] = "\211PNG\15\1
 
 TEST(PixelTestPatterns, SimpleRedHGradient)
 {
-  std::auto_ptr<Orthanc::Image> texture;
+  std::unique_ptr<Orthanc::Image> texture;
 
   texture.reset(new Orthanc::Image(
     Orthanc::PixelFormat_RGBA32,
@@ -72,7 +72,7 @@ static const unsigned char bin2c_SimpleRedBlueVGradient_png[400] = "\211PNG\15\1
 
 TEST(PixelTestPatterns, SimpleRedBlueVGradient)
 {
-  std::auto_ptr<Orthanc::Image> texture;
+  std::unique_ptr<Orthanc::Image> texture;
 
   texture.reset(new Orthanc::Image(
     Orthanc::PixelFormat_RGBA32,
@@ -109,7 +109,7 @@ static const unsigned char bin2c_MultiGradient_png[774] = "\211PNG\15\12\32\12\0
 
 TEST(PixelTestPatterns, MultiGradient)
 {
-  std::auto_ptr<Orthanc::Image> texture;
+  std::unique_ptr<Orthanc::Image> texture;
 
   const int CELLW = 64;
   const int CELLH = 64;

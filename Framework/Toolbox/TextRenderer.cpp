@@ -44,7 +44,7 @@ namespace OrthancStone
     renderer.LoadFont(font, fontSize);
 
     // add each char to be rendered to the alphabet
-    std::auto_ptr<GlyphBitmapAlphabet> alphabet(new GlyphBitmapAlphabet);
+    std::unique_ptr<GlyphBitmapAlphabet> alphabet(new GlyphBitmapAlphabet);
 
     size_t posInString = 0;
     uint32_t unicode;
@@ -58,10 +58,10 @@ namespace OrthancStone
     }
 
 
-    std::auto_ptr<Orthanc::ImageAccessor> renderedText(alphabet->RenderText(utf8String));
+    std::unique_ptr<Orthanc::ImageAccessor> renderedText(alphabet->RenderText(utf8String));
 
     // add a blank line on top of the text (to improve bilinear filtering of the topmost line)
-    std::auto_ptr<Orthanc::Image> renderedTextExtended(new Orthanc::Image(renderedText->GetFormat(), renderedText->GetWidth(), renderedText->GetHeight() + 1, true));
+    std::unique_ptr<Orthanc::Image> renderedTextExtended(new Orthanc::Image(renderedText->GetFormat(), renderedText->GetWidth(), renderedText->GetHeight() + 1, true));
 
     Orthanc::ImageAccessor textRegion;
     Orthanc::ImageAccessor firstLineRegion;
@@ -81,8 +81,8 @@ namespace OrthancStone
                                                         const std::string& utf8String,
                                                         uint8_t foreground)
   {
-    std::auto_ptr<Orthanc::ImageAccessor> renderedText8(Render(resource, fontSize, utf8String));
-    std::auto_ptr<Orthanc::Image> target(new Orthanc::Image(Orthanc::PixelFormat_RGBA32, renderedText8->GetWidth(), renderedText8->GetHeight(), true));
+    std::unique_ptr<Orthanc::ImageAccessor> renderedText8(Render(resource, fontSize, utf8String));
+    std::unique_ptr<Orthanc::Image> target(new Orthanc::Image(Orthanc::PixelFormat_RGBA32, renderedText8->GetWidth(), renderedText8->GetHeight(), true));
 
     Orthanc::ImageProcessing::Set(*target, foreground, foreground, foreground, *renderedText8);
     return target.release();
@@ -98,18 +98,18 @@ namespace OrthancStone
   //                                                        uint8_t foreground,
   //                                                        uint8_t borderColor)
   //  {
-  //    std::auto_ptr<Orthanc::ImageAccessor> renderedBorderAlpha(RenderWithAlpha(resource, fontSize, utf8String, borderColor));
-  //    std::auto_ptr<Orthanc::ImageAccessor> renderedTextAlpha(RenderWithAlpha(resource, fontSize, utf8String, foreground));
+  //    std::unique_ptr<Orthanc::ImageAccessor> renderedBorderAlpha(RenderWithAlpha(resource, fontSize, utf8String, borderColor));
+  //    std::unique_ptr<Orthanc::ImageAccessor> renderedTextAlpha(RenderWithAlpha(resource, fontSize, utf8String, foreground));
 
   //    unsigned int textWidth = renderedBorderAlpha->GetWidth();
   //    unsigned int textHeight = renderedBorderAlpha->GetHeight();
 
   //    Scene2D targetScene;
-  //    std::auto_ptr<ColorTextureSceneLayer> borderLayerLeft(new ColorTextureSceneLayer(*renderedBorderAlpha));
-  //    std::auto_ptr<ColorTextureSceneLayer> borderLayerRight(new ColorTextureSceneLayer(*renderedBorderAlpha));
-  //    std::auto_ptr<ColorTextureSceneLayer> borderLayerTop(new ColorTextureSceneLayer(*renderedBorderAlpha));
-  //    std::auto_ptr<ColorTextureSceneLayer> borderLayerBottom(new ColorTextureSceneLayer(*renderedBorderAlpha));
-  //    std::auto_ptr<ColorTextureSceneLayer> textLayerCenter(new ColorTextureSceneLayer(*renderedTextAlpha));
+  //    std::unique_ptr<ColorTextureSceneLayer> borderLayerLeft(new ColorTextureSceneLayer(*renderedBorderAlpha));
+  //    std::unique_ptr<ColorTextureSceneLayer> borderLayerRight(new ColorTextureSceneLayer(*renderedBorderAlpha));
+  //    std::unique_ptr<ColorTextureSceneLayer> borderLayerTop(new ColorTextureSceneLayer(*renderedBorderAlpha));
+  //    std::unique_ptr<ColorTextureSceneLayer> borderLayerBottom(new ColorTextureSceneLayer(*renderedBorderAlpha));
+  //    std::unique_ptr<ColorTextureSceneLayer> textLayerCenter(new ColorTextureSceneLayer(*renderedTextAlpha));
 
   //    borderLayerLeft->SetOrigin(0, 1);
   //    borderLayerRight->SetOrigin(2, 1);
@@ -129,7 +129,7 @@ namespace OrthancStone
   //    Orthanc::ImageAccessor canvas;
   //    compositor.GetCanvas().GetReadOnlyAccessor(canvas);
 
-  //    std::auto_ptr<Orthanc::Image> output(new Orthanc::Image(Orthanc::PixelFormat_RGBA32, canvas.GetWidth(), canvas.GetHeight(), false));
+  //    std::unique_ptr<Orthanc::Image> output(new Orthanc::Image(Orthanc::PixelFormat_RGBA32, canvas.GetWidth(), canvas.GetHeight(), false));
   //    Orthanc::ImageProcessing::Convert(*output, canvas);
   //    return output.release();
   //  }

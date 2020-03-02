@@ -47,7 +47,7 @@ namespace OrthancStone
                        VolumeProjection projection, 
                        bool reverse)
       {
-        std::auto_ptr<ParallelSlices> slices(volume.GetGeometry(projection, reverse));
+        std::unique_ptr<ParallelSlices> slices(volume.GetGeometry(projection, reverse));
         cursor_.SetGeometry(*slices);
       }
 
@@ -56,7 +56,7 @@ namespace OrthancStone
       {
         if (reverse)
         {
-          std::auto_ptr<ParallelSlices> slices(series.GetGeometry().Reverse());
+          std::unique_ptr<ParallelSlices> slices(series.GetGeometry().Reverse());
           cursor_.SetGeometry(*slices);
         }
         else

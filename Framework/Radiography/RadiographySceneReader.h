@@ -52,8 +52,8 @@ namespace OrthancStone
   {
   protected:
     RadiographyScene&                               scene_;
-    std::auto_ptr<Orthanc::ImageAccessor>           dicomImage_;
-    std::auto_ptr<Deprecated::DicomFrameConverter>  dicomFrameConverter_;
+    std::unique_ptr<Orthanc::ImageAccessor>           dicomImage_;
+    std::unique_ptr<Deprecated::DicomFrameConverter>  dicomFrameConverter_;
     RadiographyPhotometricDisplayMode               preferredPhotometricDisplayMode_;
 
   public:

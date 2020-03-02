@@ -23,6 +23,7 @@
 // #include <boost/chrono.hpp>
 // #include <boost/lexical_cast.hpp>
 
+#include <Core/Compatibility.h>
 #include <Core/Images/Image.h>
 #include <Core/Images/PixelTraits.h>
 
@@ -52,7 +53,7 @@ TEST(ImageToolbox, SimpleHisto_Grayscale8_BinSize1)
 
   size_t pixCounter = 0;
 
-  std::auto_ptr<Orthanc::Image> image(new Orthanc::Image(
+  std::unique_ptr<Orthanc::Image> image(new Orthanc::Image(
     Orthanc::PixelFormat_Grayscale8, W, H, false));
 
   for (unsigned int y = 0; y < H; ++y)
@@ -92,7 +93,7 @@ TEST(ImageToolbox, SimpleHisto_Grayscale8_BinSize1_FormatString)
 
   size_t pixCounter = 0;
 
-  std::auto_ptr<Orthanc::Image> image(new Orthanc::Image(
+  std::unique_ptr<Orthanc::Image> image(new Orthanc::Image(
     Orthanc::PixelFormat_Grayscale8, W, H, false));
 
   for (unsigned int y = 0; y < H; ++y)
@@ -133,7 +134,7 @@ void SimpleHisto_T_BinSize1_2()
 
   size_t pixCounter = 0;
 
-  std::auto_ptr<Orthanc::Image> image(new Orthanc::Image(
+  std::unique_ptr<Orthanc::Image> image(new Orthanc::Image(
     Format, W, H, false));
 
   typedef typename Orthanc::PixelTraits<Format>::PixelType PixelType;
@@ -203,7 +204,7 @@ void SimpleHisto_T_BinSize10_2()
 
   size_t pixCounter = 0;
 
-  std::auto_ptr<Orthanc::Image> image(new Orthanc::Image(
+  std::unique_ptr<Orthanc::Image> image(new Orthanc::Image(
     Format, W, H, false));
 
   typedef typename Orthanc::PixelTraits<Format>::PixelType PixelType;

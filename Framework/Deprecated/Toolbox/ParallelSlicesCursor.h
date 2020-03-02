@@ -24,12 +24,14 @@
 #include "ParallelSlices.h"
 #include "../../StoneEnumerations.h"
 
+#include <Core/Compatibility.h>
+
 namespace Deprecated
 {
   class ParallelSlicesCursor : public boost::noncopyable
   {
   private:
-    std::auto_ptr<ParallelSlices>  slices_;
+    std::unique_ptr<ParallelSlices>  slices_;
     size_t                         currentSlice_;
 
     size_t GetDefaultSlice();

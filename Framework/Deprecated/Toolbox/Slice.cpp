@@ -48,7 +48,7 @@ namespace Deprecated
 
   Slice* Slice::Clone() const
   {
-    std::auto_ptr<Slice> target(new Slice());
+    std::unique_ptr<Slice> target(new Slice());
 
     target->type_ = type_;
     target->orthancInstanceId_ = orthancInstanceId_;

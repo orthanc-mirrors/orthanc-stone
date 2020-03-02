@@ -42,7 +42,7 @@ namespace OrthancStone
     Fonts                        fonts_;
 
     // Only valid during a call to "Refresh()"
-    std::auto_ptr<CairoContext>  context_;
+    std::unique_ptr<CairoContext>  context_;
 
     virtual cairo_t* GetCairoContext() ORTHANC_OVERRIDE;
 

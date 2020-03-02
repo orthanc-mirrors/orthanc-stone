@@ -62,7 +62,7 @@ namespace OrthancStone
     MessageBroker&                   broker_;
     Deprecated::IWebService*         webService_;
     Deprecated::IDelayedCallExecutor*            delayedCallExecutor_;
-    std::auto_ptr<Deprecated::OrthancApiClient>  orthanc_;
+    std::unique_ptr<Deprecated::OrthancApiClient>  orthanc_;
     std::string                      orthancBaseUrl_;
 
     void InitializeOrthanc();

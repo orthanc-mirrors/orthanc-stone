@@ -66,7 +66,7 @@ namespace OrthancStone
   {
   private:
     SdlOpenGLContext  context_;
-    std::auto_ptr<OpenGLCompositor>   compositor_;
+    std::unique_ptr<OpenGLCompositor>   compositor_;
 
   public:
     SdlOpenGLViewport(const char* title,

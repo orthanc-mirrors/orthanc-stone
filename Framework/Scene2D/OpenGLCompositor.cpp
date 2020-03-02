@@ -33,8 +33,8 @@ namespace OrthancStone
   class OpenGLCompositor::Font : public boost::noncopyable
   {
   private:
-    std::auto_ptr<GlyphTextureAlphabet>   alphabet_;
-    std::auto_ptr<OpenGL::OpenGLTexture>  texture_;
+    std::unique_ptr<GlyphTextureAlphabet>   alphabet_;
+    std::unique_ptr<OpenGL::OpenGLTexture>  texture_;
 
   public:
     Font(OpenGL::IOpenGLContext& context, const GlyphBitmapAlphabet& dict)
@@ -42,7 +42,7 @@ namespace OrthancStone
       alphabet_.reset(new GlyphTextureAlphabet(dict));
       texture_.reset(new OpenGL::OpenGLTexture(context));
 
-      std::auto_ptr<Orthanc::ImageAccessor> bitmap(alphabet_->ReleaseTexture());
+      std::unique_ptr<Orthanc::ImageAccessor> bitmap(alphabet_->ReleaseTexture());
       texture_->Load(*bitmap, true /* enable linear interpolation */);
     }
 
@@ -181,7 +181,7 @@ namespace OrthancStone
     {
       context_.MakeCurrent(); // this can throw if context lost
 
-      std::auto_ptr<Font> font(new Font(context_, dict));
+      std::unique_ptr<Font> font(new Font(context_, dict));
 
       Fonts::iterator found = fonts_.find(index);
 

@@ -77,7 +77,7 @@ namespace OrthancStone
                                       "A style configurator is mandatory for textures");
     }
 
-    std::auto_ptr<TextureBaseSceneLayer> texture;
+    std::unique_ptr<TextureBaseSceneLayer> texture;
       
     {
       const DicomInstanceParameters& parameters = volume_.GetDicomParameters();

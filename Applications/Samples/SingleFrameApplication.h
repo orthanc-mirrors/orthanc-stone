@@ -197,7 +197,7 @@ namespace OrthancStone
         GetMainWidget().FitContent();
       }
       
-      std::auto_ptr<Interactor>         mainWidgetInteractor_;
+      std::unique_ptr<Interactor>         mainWidgetInteractor_;
       const Deprecated::DicomSeriesVolumeSlicer*    source_;
       unsigned int                      slice_;
 
@@ -245,7 +245,7 @@ namespace OrthancStone
 
         mainWidget_ = new Deprecated::SliceViewerWidget(GetBroker(), "main-widget");
 
-        std::auto_ptr<Deprecated::DicomSeriesVolumeSlicer> layer(new Deprecated::DicomSeriesVolumeSlicer(GetBroker(), context->GetOrthancApiClient()));
+        std::unique_ptr<Deprecated::DicomSeriesVolumeSlicer> layer(new Deprecated::DicomSeriesVolumeSlicer(GetBroker(), context->GetOrthancApiClient()));
         source_ = layer.get();
         layer->LoadFrame(instance, frame);
         layer->RegisterObserverCallback(new Callable<SingleFrameApplication, Deprecated::IVolumeSlicer::GeometryReadyMessage>(*this, &SingleFrameApplication::OnMainWidgetGeometryReady));

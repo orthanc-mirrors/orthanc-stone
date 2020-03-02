@@ -33,9 +33,9 @@ namespace OrthancStone
   class RadiographyDicomLayer : public RadiographyLayer
   {
   private:
-    std::auto_ptr<Orthanc::ImageAccessor>  source_;  // Content of PixelData
-    std::auto_ptr<Deprecated::DicomFrameConverter>     converter_;
-    std::auto_ptr<Orthanc::ImageAccessor>  converted_;  // Float32
+    std::unique_ptr<Orthanc::ImageAccessor>  source_;  // Content of PixelData
+    std::unique_ptr<Deprecated::DicomFrameConverter>     converter_;
+    std::unique_ptr<Orthanc::ImageAccessor>  converted_;  // Float32
     std::string                            instanceId_;
     unsigned int                           frame_;
 

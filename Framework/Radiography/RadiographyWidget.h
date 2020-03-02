@@ -39,8 +39,8 @@ namespace OrthancStone
 
   private:
     boost::shared_ptr<RadiographyScene>    scene_;
-    std::auto_ptr<Orthanc::ImageAccessor>  floatBuffer_;
-    std::auto_ptr<CairoSurface>            cairoBuffer_;
+    std::unique_ptr<Orthanc::ImageAccessor>  floatBuffer_;
+    std::unique_ptr<CairoSurface>            cairoBuffer_;
     bool                                   invert_;
     ImageInterpolation                     interpolation_;
     bool                                   hasSelection_;

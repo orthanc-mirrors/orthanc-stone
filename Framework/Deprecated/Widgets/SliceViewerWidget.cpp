@@ -327,7 +327,7 @@ namespace Deprecated
   {
     LOG(INFO) << "Updating layer " << index;
     
-    std::auto_ptr<ILayerRenderer> tmp(renderer);
+    std::unique_ptr<ILayerRenderer> tmp(renderer);
 
     if (renderer == NULL)
     {
@@ -357,7 +357,12 @@ namespace Deprecated
           !currentScene_->IsComplete() ||
           pendingScene_->IsComplete())
       {
-        currentScene_ = pendingScene_;
+#if __cplusplus < 201103L
+        currentScene_.reset(pendingScene_.release());
+#else
+        currentScene_ = std::move(pendingScene_);
+#endif
+
         NotifyContentChanged();
       }
     }
@@ -518,7 +523,11 @@ namespace Deprecated
           (pendingScene_.get() != NULL &&
            pendingScene_->IsComplete()))
       {
-        currentScene_ = pendingScene_;
+#if __cplusplus < 201103L
+        currentScene_.reset(pendingScene_.release());
+#else
+        currentScene_ = std::move(pendingScene_);
+#endif
       }
 
       plane_ = plane;

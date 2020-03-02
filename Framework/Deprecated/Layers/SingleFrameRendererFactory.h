@@ -30,7 +30,7 @@ namespace Deprecated
   {
   private:
     OrthancPlugins::IOrthancConnection&           orthanc_;
-    std::auto_ptr<OrthancPlugins::IDicomDataset>  dicom_;
+    std::unique_ptr<OrthancPlugins::IDicomDataset>  dicom_;
 
     std::string           instance_;
     unsigned int          frame_;

@@ -261,11 +261,11 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
 
-      std::auto_ptr<OracleCommandWithPayload> command;
+      std::unique_ptr<OracleCommandWithPayload> command;
         
       if (quality == BEST_QUALITY)
       {
-        std::auto_ptr<GetOrthancImageCommand> tmp(new GetOrthancImageCommand);
+        std::unique_ptr<GetOrthancImageCommand> tmp(new GetOrthancImageCommand);
         // TODO: review the following comment. 
         // - Commented out by bgo on 2019-07-19 | reason: Alain has seen cases 
         //   where gzipping the uint16 image took 11 sec to produce 5mb. 
@@ -281,7 +281,7 @@ namespace OrthancStone
       }
       else
       {
-        std::auto_ptr<GetOrthancWebViewerJpegCommand> tmp(new GetOrthancWebViewerJpegCommand);
+        std::unique_ptr<GetOrthancWebViewerJpegCommand> tmp(new GetOrthancWebViewerJpegCommand);
         // TODO: review the following comment. Commented out by bgo on 2019-07-19
         // (gzip for jpeg seems overkill)
         //tmp->SetHttpHeader("Accept-Encoding", "gzip");
@@ -325,7 +325,7 @@ namespace OrthancStone
         Orthanc::DicomMap dicom;
         dicom.FromDicomAsJson(body[instances[i]]);
 
-        std::auto_ptr<DicomInstanceParameters> instance(new DicomInstanceParameters(dicom));
+        std::unique_ptr<DicomInstanceParameters> instance(new DicomInstanceParameters(dicom));
         instance->SetOrthancInstanceIdentifier(instances[i]);
 
         // the 3D plane corresponding to the slice
@@ -481,7 +481,7 @@ namespace OrthancStone
     {
       active_ = true;
 
-      std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetUri("/series/" + seriesId + "/instances-tags");
 
 //      LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries about to call oracle_.Schedule";

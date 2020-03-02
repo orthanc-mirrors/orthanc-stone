@@ -120,7 +120,7 @@ private:
   OrthancStone::CoordinateSystem3D  plane_;
   OrthancStone::IOracle&            oracle_;
   OrthancStone::Scene2D             scene_;
-  std::auto_ptr<OrthancStone::VolumeSceneLayerSource>  source1_, source2_, source3_;
+  std::unique_ptr<OrthancStone::VolumeSceneLayerSource>  source1_, source2_, source3_;
 
 
   void Refresh()
@@ -342,7 +342,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
   
 
   {
-    std::auto_ptr<OrthancStone::LookupTableStyleConfigurator> config(new OrthancStone::LookupTableStyleConfigurator);
+    std::unique_ptr<OrthancStone::LookupTableStyleConfigurator> config(new OrthancStone::LookupTableStyleConfigurator);
     config->SetLookupTable(Orthanc::EmbeddedResources::COLORMAP_HOT);
 
     boost::shared_ptr<OrthancStone::DicomVolumeImageMPRSlicer> tmp(new OrthancStone::DicomVolumeImageMPRSlicer(dose));
@@ -359,7 +359,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
     v["Level"] = "Series";
     v["Query"] = Json::objectValue;
 
-    std::auto_ptr<OrthancStone::OrthancRestApiCommand>  command(new OrthancStone::OrthancRestApiCommand);
+    std::unique_ptr<OrthancStone::OrthancRestApiCommand>  command(new OrthancStone::OrthancRestApiCommand);
     command->SetMethod(Orthanc::HttpMethod_Post);
     command->SetUri("/tools/find");
     command->SetBody(v);
@@ -371,7 +371,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
   {
     if (0)
     {
-      std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
+      std::unique_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
       command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Jpeg)));
       command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/preview");
       oracle.Schedule(*toto, command.release());
@@ -379,7 +379,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
     
     if (0)
     {
-      std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
+      std::unique_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
       command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Png)));
       command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/preview");
       oracle.Schedule(*toto, command.release());
@@ -387,7 +387,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
     
     if (0)
     {
-      std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
+      std::unique_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
       command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Png)));
       command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
       oracle.Schedule(*toto, command.release());
@@ -395,7 +395,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
     
     if (0)
     {
-      std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
+      std::unique_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
       command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
@@ -404,7 +404,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
     
     if (0)
     {
-      std::auto_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
+      std::unique_ptr<OrthancStone::GetOrthancImageCommand>  command(new OrthancStone::GetOrthancImageCommand);
       command->SetHttpHeader("Accept", std::string(Orthanc::EnumerationToString(Orthanc::MimeType_Pam)));
       command->SetUri("/instances/6687cc73-07cae193-52ff29c8-f646cb16-0753ed92/image-uint16");
       oracle.Schedule(*toto, command.release());
@@ -412,7 +412,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
 
     if (0)
     {
-      std::auto_ptr<OrthancStone::GetOrthancWebViewerJpegCommand>  command(new OrthancStone::GetOrthancWebViewerJpegCommand);
+      std::unique_ptr<OrthancStone::GetOrthancWebViewerJpegCommand>  command(new OrthancStone::GetOrthancWebViewerJpegCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetInstance("e6c7c20b-c9f65d7e-0d76f2e2-830186f2-3e3c600e");
       command->SetQuality(90);
@@ -424,7 +424,7 @@ void Run(OrthancStone::NativeApplicationContext& context,
     {
       for (unsigned int i = 0; i < 10; i++)
       {
-        std::auto_ptr<OrthancStone::SleepOracleCommand> command(new OrthancStone::SleepOracleCommand(i * 1000));
+        std::unique_ptr<OrthancStone::SleepOracleCommand> command(new OrthancStone::SleepOracleCommand(i * 1000));
         command->SetPayload(new Orthanc::SingleValueObject<unsigned int>(42 * i));
         oracle.Schedule(*toto, command.release());
       }

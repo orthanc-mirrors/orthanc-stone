@@ -57,7 +57,7 @@ namespace OrthancStone
   {
   private:
     OpenGL::WebAssemblyOpenGLContext  context_;
-    std::auto_ptr<OpenGLCompositor>   compositor_;
+    std::unique_ptr<OpenGLCompositor>   compositor_;
     double                            cssWidth_;
     double                            cssHeight_;
     int                               pixelWidth_;

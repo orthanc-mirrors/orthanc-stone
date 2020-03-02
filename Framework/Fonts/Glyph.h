@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <Core/Compatibility.h>
 #include <Core/IDynamicObject.h>
 
 #include <memory>
@@ -38,7 +39,7 @@ namespace OrthancStone
     int            advanceX_;
     unsigned int   lineHeight_;
       
-    std::auto_ptr<Orthanc::IDynamicObject>  payload_;
+    std::unique_ptr<Orthanc::IDynamicObject>  payload_;
 
   public:
     // WARNING: This does not copy the payload

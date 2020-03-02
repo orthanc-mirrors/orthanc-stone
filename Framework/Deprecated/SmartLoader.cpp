@@ -62,7 +62,7 @@ namespace Deprecated
     };
     
     unsigned int                    sliceIndex_;
-    std::auto_ptr<Slice>            slice_;
+    std::unique_ptr<Slice>            slice_;
     boost::shared_ptr<Orthanc::ImageAccessor>   image_;
     SliceImageQuality               effectiveQuality_;
     CachedSliceStatus               status_;
@@ -140,7 +140,7 @@ namespace Deprecated
     //   the messages to its observables
     // in both cases, we must be carefull about objects lifecycle !!!
 
-    std::auto_ptr<IVolumeSlicer> layerSource;
+    std::unique_ptr<IVolumeSlicer> layerSource;
     std::string sliceKeyId = instanceId + ":" + boost::lexical_cast<std::string>(frame);
     SmartLoader::CachedSlice* cachedSlice = NULL;
 
@@ -199,7 +199,7 @@ namespace Deprecated
 
     cachedSlices_[sliceKeyId] = boost::shared_ptr<CachedSlice>(cachedSlice);
 
-    std::auto_ptr<IVolumeSlicer> layerSource(new DicomSeriesVolumeSlicer(IObserver::GetBroker(), orthancApiClient_));
+    std::unique_ptr<IVolumeSlicer> layerSource(new DicomSeriesVolumeSlicer(IObserver::GetBroker(), orthancApiClient_));
 
     dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->SetImageQuality(imageQuality_);
     layerSource->RegisterObserverCallback(new OrthancStone::Callable<SmartLoader, IVolumeSlicer::GeometryReadyMessage>(*this, &SmartLoader::OnLayerGeometryReady));

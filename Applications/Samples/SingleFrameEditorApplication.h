@@ -509,7 +509,7 @@ namespace OrthancStone
         interactor_.SetMaskLayer(maskLayer_);
 
         {
-          std::auto_ptr<Orthanc::ImageAccessor> renderedTextAlpha(TextRenderer::Render(Orthanc::EmbeddedResources::UBUNTU_FONT, 100,
+          std::unique_ptr<Orthanc::ImageAccessor> renderedTextAlpha(TextRenderer::Render(Orthanc::EmbeddedResources::UBUNTU_FONT, 100,
                                                                                     "%öÇaA&#"));
           RadiographyLayer& layer = scene_->LoadAlphaBitmap(renderedTextAlpha.release(), NULL);
           dynamic_cast<RadiographyAlphaLayer&>(layer).SetForegroundValue(200.0f * 256.0f);

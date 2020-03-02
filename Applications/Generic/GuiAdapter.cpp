@@ -34,6 +34,8 @@
 #  include "../../Framework/Messages/LockingEmitter.h"
 #endif
 
+#include <Core/Compatibility.h>
+
 namespace OrthancStone
 {
   std::ostream& operator<<(
@@ -195,7 +197,7 @@ namespace OrthancStone
     // userData is OnMouseWheelFuncAdapterPayload
     FuncAdapterPayload<GenericFunc>* payload =
       reinterpret_cast<FuncAdapterPayload<GenericFunc>*>(userData);
-    //std::auto_ptr< FuncAdapterPayload<GenericFunc> > deleter(payload);
+    //std::unique_ptr< FuncAdapterPayload<GenericFunc> > deleter(payload);
     bool ret = (*(payload->callback))(time, payload->userData);
     return static_cast<EM_BOOL>(ret);
   }
@@ -214,7 +216,7 @@ namespace OrthancStone
     // here
     FuncAdapterPayload<GenericFunc>* payload =
       new FuncAdapterPayload<GenericFunc>();
-    std::auto_ptr<FuncAdapterPayload<GenericFunc> > payloadP(payload);
+    std::unique_ptr<FuncAdapterPayload<GenericFunc> > payloadP(payload);
     payload->canvasId = canvasId;
     payload->callback = func;
     payload->userData = userData;
@@ -239,7 +241,7 @@ namespace OrthancStone
       EmscriptenSetCallbackFunc emFunc,
       std::string canvasId, void* userData, bool capture, GenericFunc func)
   {
-    std::auto_ptr<FuncAdapterPayload<GenericFunc> > payload(
+    std::unique_ptr<FuncAdapterPayload<GenericFunc> > payload(
       new FuncAdapterPayload<GenericFunc>()
     );
     payload->canvasId = canvasId;
@@ -262,7 +264,7 @@ namespace OrthancStone
       void* userData, GenericFunc func)
   {
     // LOG(ERROR) << "SetAnimationFrameCallback !!!!!! (RequestAnimationFrame)";
-    std::auto_ptr<FuncAdapterPayload<GenericFunc> > payload(
+    std::unique_ptr<FuncAdapterPayload<GenericFunc> > payload(
       new FuncAdapterPayload<GenericFunc>()
     );
     payload->canvasId = "UNDEFINED";

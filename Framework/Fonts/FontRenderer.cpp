@@ -141,7 +141,7 @@ namespace OrthancStone
                               face_->glyph->bitmap.pitch,
                               face_->glyph->bitmap.buffer);
 
-        std::auto_ptr<Glyph> glyph(
+        std::unique_ptr<Glyph> glyph(
           new Glyph(bitmap.GetWidth(),
                     bitmap.GetHeight(),
                     face_->glyph->bitmap_left,

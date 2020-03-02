@@ -29,7 +29,7 @@ namespace OrthancStone
   class Scene2D::Item
   {
   private:
-    std::auto_ptr<ISceneLayer>  layer_;
+    std::unique_ptr<ISceneLayer>  layer_;
     uint64_t                    identifier_;
 
   public:
@@ -105,7 +105,7 @@ namespace OrthancStone
                          ISceneLayer* layer)  // Takes ownership
   {
     LOG(TRACE) << "SetLayer(" << depth << ", " << reinterpret_cast<intptr_t>(layer) << ")";
-    std::auto_ptr<Item> item(new Item(layer, layerCounter_++));
+    std::unique_ptr<Item> item(new Item(layer, layerCounter_++));
 
     if (layer == NULL)
     {
@@ -193,7 +193,7 @@ namespace OrthancStone
     {
       assert(found->second != NULL);
 
-      std::auto_ptr<ISceneLayer> layer(found->second->ReleaseLayer());
+      std::unique_ptr<ISceneLayer> layer(found->second->ReleaseLayer());
       assert(layer.get() != NULL);
 
       content_.erase(found);

@@ -40,7 +40,7 @@ namespace OrthancStone
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      std::auto_ptr<Orthanc::ImageAccessor>  image_;
+      std::unique_ptr<Orthanc::ImageAccessor>  image_;
 
     public:
       SuccessMessage(const GetOrthancWebViewerJpegCommand& command,

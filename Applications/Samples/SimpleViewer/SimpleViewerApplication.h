@@ -81,8 +81,8 @@ namespace SimpleViewer
   private:
     Tool                                currentTool_;
 
-    std::auto_ptr<MainWidgetInteractor> mainWidgetInteractor_;
-    std::auto_ptr<ThumbnailInteractor>  thumbnailInteractor_;
+    std::unique_ptr<MainWidgetInteractor> mainWidgetInteractor_;
+    std::unique_ptr<ThumbnailInteractor>  thumbnailInteractor_;
     Deprecated::LayoutWidget*                       mainLayout_;
     Deprecated::LayoutWidget*                       thumbnailsLayout_;
     Deprecated::SliceViewerWidget*                  mainWidget_;
@@ -94,7 +94,7 @@ namespace SimpleViewer
     Deprecated::WidgetViewport*       wasmViewport2_;
 
     Deprecated::IStatusBar*                         statusBar_;
-    std::auto_ptr<Deprecated::SmartLoader>          smartLoader_;
+    std::unique_ptr<Deprecated::SmartLoader>          smartLoader_;
 
     Orthanc::Font                       font_;
 

@@ -49,13 +49,13 @@ namespace OrthancStone
 
     for (int i = 0; i < polylineLayerCount_; ++i)
     {
-      std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
+      std::unique_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
       GetScene().SetLayer(baseLayerIndex_ + i, layer.release());
     }
 
     for (int i = 0; i < textLayerCount_; ++i)
     {
-      std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
+      std::unique_ptr<TextSceneLayer> layer(new TextSceneLayer());
       GetScene().SetLayer(
         baseLayerIndex_ + polylineLayerCount_ + i,
         layer.release());

@@ -35,7 +35,7 @@ namespace OrthancStone
       OpenGLTextProgram&                      program_;
       const GlyphTextureAlphabet&             alphabet_;
       OpenGL::OpenGLTexture&                  texture_;
-      std::auto_ptr<OpenGLTextProgram::Data>  data_;
+      std::unique_ptr<OpenGLTextProgram::Data>  data_;
 
       void LoadLayer(const TextSceneLayer& layer);
 

@@ -30,7 +30,7 @@ namespace OrthancStone
     class CompositorHelper::Item : public boost::noncopyable
     {
     private:
-      std::auto_ptr<ILayerRenderer>  renderer_;
+      std::unique_ptr<ILayerRenderer>  renderer_;
       const ISceneLayer&             layer_;
       uint64_t                       layerIdentifier_;
       uint64_t                       lastRevision_;
@@ -103,7 +103,7 @@ namespace OrthancStone
           content_.erase(found);
         }
 
-        std::auto_ptr<ILayerRenderer> renderer(factory_.Create(layer));
+        std::unique_ptr<ILayerRenderer> renderer(factory_.Create(layer));
 
         if (renderer.get() != NULL)
         {

@@ -96,7 +96,7 @@ namespace OrthancStone
   void VolumeSceneLayerSource::Update(const CoordinateSystem3D& plane)
   {
     assert(slicer_.get() != NULL);
-    std::auto_ptr<IVolumeSlicer::IExtractedSlice> slice(slicer_->ExtractSlice(plane));
+    std::unique_ptr<IVolumeSlicer::IExtractedSlice> slice(slicer_->ExtractSlice(plane));
 
     if (slice.get() == NULL)
     {
@@ -129,7 +129,7 @@ namespace OrthancStone
       lastPlane_.reset(new CoordinateSystem3D(plane));
       lastRevision_ = slice->GetRevision();
 
-      std::auto_ptr<ISceneLayer> layer(slice->CreateSceneLayer(configurator_.get(), plane));
+      std::unique_ptr<ISceneLayer> layer(slice->CreateSceneLayer(configurator_.get(), plane));
       if (layer.get() == NULL)
       {
         LOG(TRACE) << "VolumeSceneLayerSource::Update -- (layer.get() == NULL)";

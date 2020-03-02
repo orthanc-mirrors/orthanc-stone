@@ -29,7 +29,7 @@ namespace OrthancStone
   class OrthancMultiframeVolumeLoader::LoadRTDoseGeometry : public LoaderStateMachine::State
   {
   private:
-    std::auto_ptr<Orthanc::DicomMap>  dicom_;
+    std::unique_ptr<Orthanc::DicomMap>  dicom_;
 
   public:
     LoadRTDoseGeometry(OrthancMultiframeVolumeLoader& that,
@@ -90,7 +90,7 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
       }
 
-      std::auto_ptr<Orthanc::DicomMap> dicom(new Orthanc::DicomMap);
+      std::unique_ptr<Orthanc::DicomMap> dicom(new Orthanc::DicomMap);
       dicom->FromDicomAsJson(body);
 
       if (StringToSopClassUid(GetSopClassUid(*dicom)) == SopClassUid_RTDose)
@@ -98,7 +98,7 @@ namespace OrthancStone
         // Download the "Grid Frame Offset Vector" DICOM tag, that is
         // mandatory for RT-DOSE, but is too long to be returned by default
           
-        std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+        std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
         command->SetUri("/instances/" + loader.GetInstanceId() + "/content/" +
                         Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR.Format());
         command->SetPayload(new LoadRTDoseGeometry(loader, dicom.release()));
@@ -171,7 +171,7 @@ namespace OrthancStone
         transferSyntaxUid_ == "1.2.840.10008.1.2.1" ||
         transferSyntaxUid_ == "1.2.840.10008.1.2.2")
     {
-      std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetUri("/instances/" + instanceId_ + "/content/" +
                       Orthanc::DICOM_TAG_PIXEL_DATA.Format() + "/0");
@@ -563,7 +563,7 @@ namespace OrthancStone
     instanceId_ = instanceId;
 
     {
-      std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetUri("/instances/" + instanceId + "/tags");
       command->SetPayload(new LoadGeometry(*this));
@@ -571,7 +571,7 @@ namespace OrthancStone
     }
 
     {
-      std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetUri("/instances/" + instanceId + "/metadata/TransferSyntax");
       command->SetPayload(new LoadTransferSyntax(*this));
       Schedule(command.release());

@@ -26,6 +26,8 @@
 #include "../../OpenGL/OpenGLTexture.h"
 #include "../../Toolbox/AffineTransform2D.h"
 
+#include <Core/Compatibility.h>
+
 namespace OrthancStone
 {
   namespace Internals
@@ -34,7 +36,7 @@ namespace OrthancStone
     {
     private:
       OpenGL::IOpenGLContext&               context_;
-      std::auto_ptr<OpenGL::OpenGLProgram>  program_;
+      std::unique_ptr<OpenGL::OpenGLProgram>  program_;
       GLint                                 positionLocation_;
       GLint                                 textureLocation_;
       GLuint                                buffers_[2];

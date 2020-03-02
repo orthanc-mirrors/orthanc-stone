@@ -81,7 +81,7 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    std::auto_ptr<Orthanc::Image> result(new Orthanc::Image(format_, height_, depth_, false));
+    std::unique_ptr<Orthanc::Image> result(new Orthanc::Image(format_, height_, depth_, false));
     //LOG(TRACE) << "ImageBuffer3D::ExtractSagittalSlice result will be an image of WIDTH = " << height_ << " and HEIGHT = " << depth_;
 
     unsigned int bytesPerPixel = Orthanc::GetBytesPerPixel(format_);

@@ -127,7 +127,7 @@ namespace OrthancStone
 
   void RadiographyScene::_RegisterLayer(RadiographyLayer* layer)
   {
-    std::auto_ptr<RadiographyLayer> raii(layer);
+    std::unique_ptr<RadiographyLayer> raii(layer);
 
     // LOG(INFO) << "Registering layer: " << countLayers_;
 
@@ -325,7 +325,7 @@ namespace OrthancStone
                                                RadiographyLayer::Geometry* centerGeometry,
                                                bool isCenterGeometry)
   {
-    std::auto_ptr<RadiographyTextLayer>  alpha(new RadiographyTextLayer(IObservable::GetBroker(), *this));
+    std::unique_ptr<RadiographyTextLayer>  alpha(new RadiographyTextLayer(IObservable::GetBroker(), *this));
     alpha->SetText(utf8, font, fontSize, foreground);
     if (centerGeometry != NULL)
     {
@@ -353,7 +353,7 @@ namespace OrthancStone
                                                     unsigned int height,
                                                     RadiographyLayer::Geometry* geometry)
   {
-    std::auto_ptr<Orthanc::Image>  block(new Orthanc::Image(Orthanc::PixelFormat_Grayscale8, width, height, false));
+    std::unique_ptr<Orthanc::Image>  block(new Orthanc::Image(Orthanc::PixelFormat_Grayscale8, width, height, false));
 
     for (unsigned int padding = 0;
          (width > 2 * padding) && (height > 2 * padding);
@@ -382,7 +382,7 @@ namespace OrthancStone
                                                float foreground,
                                                RadiographyLayer::Geometry* geometry)
   {
-    std::auto_ptr<RadiographyMaskLayer>  mask(new RadiographyMaskLayer(IObservable::GetBroker(), *this, dicomLayer, foreground));
+    std::unique_ptr<RadiographyMaskLayer>  mask(new RadiographyMaskLayer(IObservable::GetBroker(), *this, dicomLayer, foreground));
     mask->SetCorners(corners);
     if (geometry != NULL)
     {
@@ -395,7 +395,7 @@ namespace OrthancStone
 
   RadiographyLayer& RadiographyScene::LoadAlphaBitmap(Orthanc::ImageAccessor* bitmap, RadiographyLayer::Geometry *geometry)
   {
-    std::auto_ptr<RadiographyAlphaLayer>  alpha(new RadiographyAlphaLayer(IObservable::GetBroker(), *this));
+    std::unique_ptr<RadiographyAlphaLayer>  alpha(new RadiographyAlphaLayer(IObservable::GetBroker(), *this));
     alpha->SetAlpha(bitmap);
     if (geometry != NULL)
     {
@@ -534,7 +534,7 @@ namespace OrthancStone
         content.assign(reinterpret_cast<const char*>(message.GetAnswer()), message.GetAnswerSize());
       }
 
-      std::auto_ptr<Orthanc::PamReader> reader(new Orthanc::PamReader);
+      std::unique_ptr<Orthanc::PamReader> reader(new Orthanc::PamReader);
       reader->ReadFromMemory(content);
       dynamic_cast<RadiographyDicomLayer*>(layer->second)->SetSourceImage(reader.release());
 
@@ -725,7 +725,7 @@ namespace OrthancStone
 
     Render(layers, view, interpolation, applyWindowing);
 
-    std::auto_ptr<Orthanc::Image> rendered(new Orthanc::Image(Orthanc::PixelFormat_Grayscale16,
+    std::unique_ptr<Orthanc::Image> rendered(new Orthanc::Image(Orthanc::PixelFormat_Grayscale16,
                                                               layers.GetWidth(), layers.GetHeight(), false));
 
     Orthanc::ImageProcessing::Convert(*rendered, layers);
@@ -746,7 +746,7 @@ namespace OrthancStone
   {
     LOG(INFO) << "Exporting RadiographyScene to DICOM";
 
-    std::auto_ptr<Orthanc::Image> rendered(ExportToImage(pixelSpacingX, pixelSpacingY, interpolation, false)); // note: we don't invert the image in the pixels data because we'll set the PhotometricDisplayMode correctly in the DICOM tags
+    std::unique_ptr<Orthanc::Image> rendered(ExportToImage(pixelSpacingX, pixelSpacingY, interpolation, false)); // note: we don't invert the image in the pixels data because we'll set the PhotometricDisplayMode correctly in the DICOM tags
 
     createDicomRequestContent["Tags"] = dicomTags;
 
@@ -801,7 +801,7 @@ namespace OrthancStone
     LOG(INFO) << "Exporting RadiographyScene to DICOM";
     VLOG(1) << "Exporting RadiographyScene to: export to image";
 
-    std::auto_ptr<Orthanc::Image> rendered(ExportToCreateDicomRequestAndImage(createDicomRequestContent, dicomTags, parentOrthancId, pixelSpacingX, pixelSpacingY, invert, interpolation));
+    std::unique_ptr<Orthanc::Image> rendered(ExportToCreateDicomRequestAndImage(createDicomRequestContent, dicomTags, parentOrthancId, pixelSpacingX, pixelSpacingY, invert, interpolation));
 
     // convert the image into base64 for inclusing in the createDicomRequest
     std::string base64;

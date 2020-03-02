@@ -143,7 +143,7 @@ namespace Deprecated
 
   ParallelSlices* ParallelSlices::Reverse() const
   {
-    std::auto_ptr<ParallelSlices> reversed(new ParallelSlices);
+    std::unique_ptr<ParallelSlices> reversed(new ParallelSlices);
 
     for (size_t i = slices_.size(); i > 0; i--)
     {
@@ -164,7 +164,7 @@ namespace Deprecated
     const OrthancStone::Vector dimensions = geometry.GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
     const OrthancStone::CoordinateSystem3D& axial = geometry.GetAxialGeometry();
     
-    std::auto_ptr<ParallelSlices> result(new ParallelSlices);
+    std::unique_ptr<ParallelSlices> result(new ParallelSlices);
 
     switch (projection)
     {

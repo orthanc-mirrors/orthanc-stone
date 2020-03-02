@@ -125,7 +125,7 @@ namespace OrthancStone
     }
     else
     {
-      std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer);
+      std::unique_ptr<TextSceneLayer> layer(new TextSceneLayer);
       layerP = layer.get();
       layer->SetColor(0, 255, 0);
       layer->SetFontIndex(1);
@@ -160,7 +160,7 @@ namespace OrthancStone
     }
     else
     {
-      std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer);
+      std::unique_ptr<TextSceneLayer> layer(new TextSceneLayer);
       layer->SetColor(0, 255, 0);
       layer->SetText(buf);
       layer->SetBorder(20);
@@ -635,7 +635,7 @@ namespace OrthancStone
     this->SetVolume1(0, ctLoader, new GrayscaleStyleConfigurator);
 
     {
-      std::auto_ptr<LookupTableStyleConfigurator> config(new LookupTableStyleConfigurator);
+      std::unique_ptr<LookupTableStyleConfigurator> config(new LookupTableStyleConfigurator);
       config->SetLookupTable(Orthanc::EmbeddedResources::COLORMAP_HOT);
 
       boost::shared_ptr<DicomVolumeImageMPRSlicer> tmp(new DicomVolumeImageMPRSlicer(dose));

@@ -36,8 +36,8 @@ namespace OrthancStone
     private:
       OpenGL::IOpenGLContext&                context_;
       OpenGLColorTextureProgram&             program_;
-      std::auto_ptr<OpenGL::OpenGLTexture>   glTexture_;
-      std::auto_ptr<Orthanc::Image>          texture_;
+      std::unique_ptr<OpenGL::OpenGLTexture>   glTexture_;
+      std::unique_ptr<Orthanc::Image>          texture_;
       AffineTransform2D                      layerTransform_;
 
       void LoadTexture(const LookupTableTextureSceneLayer& layer);

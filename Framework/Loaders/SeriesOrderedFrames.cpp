@@ -29,7 +29,7 @@ namespace OrthancStone
   class SeriesOrderedFrames::Instance : public boost::noncopyable
   {
   private:
-    std::auto_ptr<Orthanc::DicomMap>  dicom_;
+    std::unique_ptr<Orthanc::DicomMap>  dicom_;
     DicomInstanceParameters           parameters_;
 
   public:
@@ -276,7 +276,7 @@ namespace OrthancStone
     {
       try
       {
-        std::auto_ptr<Instance> instance(new Instance(instances.GetResource(i)));
+        std::unique_ptr<Instance> instance(new Instance(instances.GetResource(i)));
         numberOfFrames += instance->GetInstanceParameters().GetImageInformation().GetNumberOfFrames();
         instances_.push_back(instance.release());
       }

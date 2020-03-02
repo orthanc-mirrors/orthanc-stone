@@ -65,7 +65,7 @@ namespace OrthancStone
     {
     private:
       WebGLViewportsRegistry&          that_;
-      std::auto_ptr<IViewport::ILock>  lock_;
+      std::unique_ptr<IViewport::ILock>  lock_;
 
     public:
       Accessor(WebGLViewportsRegistry& that,

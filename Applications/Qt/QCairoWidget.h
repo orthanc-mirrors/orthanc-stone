@@ -49,10 +49,10 @@ private:
     }
   };
   
-  std::auto_ptr<QImage>         image_;
+  std::unique_ptr<QImage>         image_;
   OrthancStone::CairoSurface    surface_;
   OrthancStone::NativeStoneApplicationContext* context_;
-  std::auto_ptr<StoneObserver>  observer_;
+  std::unique_ptr<StoneObserver>  observer_;
 
 protected:
   virtual void paintEvent(QPaintEvent *event);

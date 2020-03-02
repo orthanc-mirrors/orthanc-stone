@@ -34,7 +34,7 @@ namespace OrthancStone
     applyLog_(false)
   {
     {
-      std::auto_ptr<Orthanc::ImageAccessor> t(
+      std::unique_ptr<Orthanc::ImageAccessor> t(
         new Orthanc::Image(Orthanc::PixelFormat_Float32, 
                            texture.GetWidth(), 
                            texture.GetHeight(), 
@@ -127,7 +127,7 @@ namespace OrthancStone
     
   ISceneLayer* FloatTextureSceneLayer::Clone() const
   {
-    std::auto_ptr<FloatTextureSceneLayer> cloned
+    std::unique_ptr<FloatTextureSceneLayer> cloned
       (new FloatTextureSceneLayer(GetTexture()));
 
     cloned->CopyParameters(*this);

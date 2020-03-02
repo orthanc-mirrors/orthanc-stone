@@ -32,7 +32,7 @@ namespace OrthancStone
                                          const TextSceneLayer& layer) :
       CairoBaseRenderer(target, layer)
     {
-      std::auto_ptr<Orthanc::ImageAccessor> source(alphabet.RenderText(layer.GetText()));
+      std::unique_ptr<Orthanc::ImageAccessor> source(alphabet.RenderText(layer.GetText()));
 
       if (source.get() != NULL)
       {

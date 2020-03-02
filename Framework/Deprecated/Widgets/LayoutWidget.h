@@ -38,7 +38,7 @@ namespace Deprecated
     bool                          isHorizontal_;
     unsigned int                  width_;
     unsigned int                  height_;
-    std::auto_ptr<IMouseTracker>  mouseTracker_;
+    std::unique_ptr<IMouseTracker>  mouseTracker_;
     unsigned int                  paddingLeft_;
     unsigned int                  paddingTop_;
     unsigned int                  paddingRight_;

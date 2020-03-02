@@ -26,6 +26,8 @@
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2DViewport/IFlexiblePointerTracker.h"
 
+#include <Core/Compatibility.h>
+
 #include <boost/enable_shared_from_this.hpp>
 #include <stack>
 
@@ -231,9 +233,9 @@ namespace OrthancStone
 
     boost::weak_ptr<UndoStack>                    undoStackW_;  // Global stack, possibly shared by all viewports
     std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;
-    boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Couldn't this be a "std::auto_ptr"?
+    boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Couldn't this be a "std::unique_ptr"?
 
-    std::auto_ptr<Scene2D>   scene_;
+    std::unique_ptr<Scene2D>   scene_;
 
     // this is cached
     double  canvasToSceneFactor_;    

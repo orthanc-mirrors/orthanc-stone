@@ -417,7 +417,7 @@ namespace OrthancStone
 
     for (;;)
     {
-      std::auto_ptr<Orthanc::DicomMap> current(dicomDir.GetItem(index).Clone());
+      std::unique_ptr<Orthanc::DicomMap> current(dicomDir.GetItem(index).Clone());
       current->RemoveBinaryTags();
       current->Merge(parent);
 
@@ -556,13 +556,13 @@ namespace OrthancStone
                                                              boost::shared_ptr<unsigned int> remainingCommands,
                                                              boost::shared_ptr<Orthanc::IDynamicObject> userPayload)
   {
-    std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+    std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
     command->SetUri("/instances/" + instanceId + "/tags");
     command->AcquirePayload(new OrthancInstanceTagsHandler(shared_from_this(), target, priority,
                                                            source, remainingCommands, userPayload));
 
     {
-      std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
       lock->Schedule(GetSharedObserver(), priority, command.release());
     }
   }
@@ -576,13 +576,13 @@ namespace OrthancStone
                                                                  boost::shared_ptr<unsigned int> remainingCommands,
                                                                  boost::shared_ptr<Orthanc::IDynamicObject> userPayload)
   {
-    std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+    std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
     command->SetUri("/" + GetUri(level) + "/" + id + "/instances");
     command->AcquirePayload(new OrthancOneChildInstanceHandler(shared_from_this(), target, priority,
                                                                source, remainingCommands, userPayload));
 
     {
-      std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
       lock->Schedule(GetSharedObserver(), priority, command.release());
     }
   }
@@ -665,12 +665,12 @@ namespace OrthancStone
     std::map<std::string, std::string> arguments, headers;
     SetIncludeTags(arguments, includeTags);
   
-    std::auto_ptr<IOracleCommand> command(
+    std::unique_ptr<IOracleCommand> command(
       source.CreateDicomWebCommand(uri, arguments, headers, 
                                    new DicomWebHandler(shared_from_this(), target, priority, source, protection)));
       
     {
-      std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
       lock->Schedule(GetSharedObserver(), priority, command.release());
     }
   }
@@ -728,13 +728,13 @@ namespace OrthancStone
 
     SetIncludeTags(arguments, includeTags);
 
-    std::auto_ptr<IOracleCommand> command(
+    std::unique_ptr<IOracleCommand> command(
       source.CreateDicomWebCommand(uri, arguments, headers, 
                                    new DicomWebHandler(shared_from_this(), target, priority, source, protection)));
 
 
     {
-      std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
       lock->Schedule(GetSharedObserver(), priority, command.release());
     }
   }
@@ -802,14 +802,14 @@ namespace OrthancStone
     }
     else 
     {
-      std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetUri("/" + GetUri(topLevel) + "/" + topId + "/" + GetUri(bottomLevel));
       command->AcquirePayload(new OrthancAllChildrenInstancesHandler
                               (shared_from_this(), target, priority, source,
                                remainingCommands, bottomLevel, protection));
 
       {
-        std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+        std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
         lock->Schedule(GetSharedObserver(), priority, command.release());
       }
     }
@@ -836,11 +836,11 @@ namespace OrthancStone
     }
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    std::auto_ptr<ReadFileCommand> command(new ReadFileCommand(path));
+    std::unique_ptr<ReadFileCommand> command(new ReadFileCommand(path));
     command->AcquirePayload(new DicomDirHandler(shared_from_this(), target, priority, source, protection));
 
     {
-      std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());      
+      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());      
       lock->Schedule(GetSharedObserver(), priority, command.release());
     }
 #else
@@ -860,12 +860,12 @@ namespace OrthancStone
     boost::shared_ptr<Orthanc::IDynamicObject> protection(userPayload);
     
 #if ORTHANC_ENABLE_DCMTK == 1
-    std::auto_ptr<ParseDicomFromFileCommand> command(new ParseDicomFromFileCommand(path));
+    std::unique_ptr<ParseDicomFromFileCommand> command(new ParseDicomFromFileCommand(path));
     command->SetPixelDataIncluded(includePixelData);
     command->AcquirePayload(new Handler(shared_from_this(), target, priority, source, protection));
 
     {
-      std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
       lock->Schedule(GetSharedObserver(), priority, command.release());
     }
 #else
@@ -883,7 +883,7 @@ namespace OrthancStone
                                                    bool includePixelData,
                                                    Orthanc::IDynamicObject* userPayload)
   {
-    std::auto_ptr<Orthanc::IDynamicObject> protection(userPayload);
+    std::unique_ptr<Orthanc::IDynamicObject> protection(userPayload);
     
 #if ORTHANC_ENABLE_DCMTK == 1
     std::string file;

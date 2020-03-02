@@ -31,7 +31,7 @@ namespace Deprecated
   class LayoutWidget::LayoutMouseTracker : public IMouseTracker
   {
   private:
-    std::auto_ptr<IMouseTracker>   tracker_;
+    std::unique_ptr<IMouseTracker>   tracker_;
     int                            left_;
     int                            top_;
     unsigned int                   width_;

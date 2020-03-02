@@ -43,12 +43,12 @@ namespace OrthancStone
                                const Glyph& glyph,
                                Orthanc::IDynamicObject* payload)
   {
-    std::auto_ptr<Orthanc::IDynamicObject> protection(payload);
+    std::unique_ptr<Orthanc::IDynamicObject> protection(payload);
       
     // Don't add twice the same character
     if (content_.find(unicode) == content_.end())
     {
-      std::auto_ptr<Glyph> raii(new Glyph(glyph));
+      std::unique_ptr<Glyph> raii(new Glyph(glyph));
         
       if (payload != NULL)
       {
@@ -65,7 +65,7 @@ namespace OrthancStone
   void GlyphAlphabet::Register(FontRenderer& renderer,
                                uint32_t unicode)
   {
-    std::auto_ptr<Glyph>  glyph(renderer.Render(unicode));
+    std::unique_ptr<Glyph>  glyph(renderer.Render(unicode));
       
     if (glyph.get() != NULL)
     {

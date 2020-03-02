@@ -117,7 +117,7 @@ namespace OrthancStone
     }
     else
     {
-      std::auto_ptr<GlyphBitmapAlphabet> protection(dict);
+      std::unique_ptr<GlyphBitmapAlphabet> protection(dict);
       
       Fonts::iterator found = fonts_.find(index);
 
@@ -145,7 +145,7 @@ namespace OrthancStone
     FontRenderer renderer;
     renderer.LoadFont(resource, fontSize);
 
-    std::auto_ptr<GlyphBitmapAlphabet> alphabet(new GlyphBitmapAlphabet);
+    std::unique_ptr<GlyphBitmapAlphabet> alphabet(new GlyphBitmapAlphabet);
     alphabet->LoadCodepage(renderer, codepage);
 
     SetFont(index, alphabet.release());

@@ -47,7 +47,7 @@ namespace OrthancStone
     bool          hasWindowing_;
     float         windowingCenter_;
     float         windowingWidth_;
-    std::auto_ptr<Orthanc::IDynamicObject>  userPayload_;
+    std::unique_ptr<Orthanc::IDynamicObject>  userPayload_;
 
   public:
     Payload(const DicomSource& source,
@@ -169,7 +169,7 @@ namespace OrthancStone
   {     
     size_t frameIndex = frames_.GetFrameIndex(payload.GetSeriesIndex());
 
-    std::auto_ptr<Orthanc::ImageAccessor> decoded;
+    std::unique_ptr<Orthanc::ImageAccessor> decoded;
     decoded.reset(Orthanc::DicomImageDecoder::Decode(dicom, frameIndex));
 
     if (decoded.get() == NULL)
@@ -381,7 +381,7 @@ namespace OrthancStone
                                              unsigned int quality,
                                              Orthanc::IDynamicObject* userPayload)
   {
-    std::auto_ptr<Orthanc::IDynamicObject> protection(userPayload);
+    std::unique_ptr<Orthanc::IDynamicObject> protection(userPayload);
     
     if (index >= frames_.GetFramesCount() ||
         quality >= source.GetQualityCount())
@@ -413,12 +413,12 @@ namespace OrthancStone
       std::string file;
       if (dicomDir_->LookupStringValue(file, sopInstanceUid, Orthanc::DICOM_TAG_REFERENCED_FILE_ID))
       {
-        std::auto_ptr<ParseDicomFromFileCommand> command(new ParseDicomFromFileCommand(dicomDirPath_, file));
+        std::unique_ptr<ParseDicomFromFileCommand> command(new ParseDicomFromFileCommand(dicomDirPath_, file));
         command->SetPixelDataIncluded(true);
         command->AcquirePayload(new Payload(source, index, sopInstanceUid, quality, protection.release()));
 
         {
-          std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+          std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
           lock->Schedule(GetSharedObserver(), priority, command.release());
         }
       }
@@ -452,11 +452,11 @@ namespace OrthancStone
                                boost::lexical_cast<std::string>(w) + ",linear");
         headers["Accept"] = "image/jpeg";
 
-        std::auto_ptr<Payload> payload(new Payload(source, index, sopInstanceUid, quality, protection.release()));
+        std::unique_ptr<Payload> payload(new Payload(source, index, sopInstanceUid, quality, protection.release()));
         payload->SetWindowing(c, w);
 
         {
-          std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+          std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
           lock->Schedule(GetSharedObserver(), priority,
                          source.CreateDicomWebCommand(uri + "/rendered", arguments, headers, payload.release()));
         }
@@ -467,16 +467,16 @@ namespace OrthancStone
                (!source.HasDicomWebRendered() && quality == 0));
 
 #if ORTHANC_ENABLE_DCMTK == 1
-        std::auto_ptr<Payload> payload(new Payload(source, index, sopInstanceUid, quality, protection.release()));
+        std::unique_ptr<Payload> payload(new Payload(source, index, sopInstanceUid, quality, protection.release()));
 
         const std::map<std::string, std::string> empty;
 
-        std::auto_ptr<ParseDicomFromWadoCommand> command(
+        std::unique_ptr<ParseDicomFromWadoCommand> command(
           new ParseDicomFromWadoCommand(sopInstanceUid, source.CreateDicomWebCommand(uri, empty, empty, NULL)));
         command->AcquirePayload(payload.release());
 
         {
-          std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+          std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
           lock->Schedule(GetSharedObserver(), priority, command.release());
         }
 #else
@@ -507,13 +507,13 @@ namespace OrthancStone
 
       if (quality == 0 && source.HasOrthancWebViewer1())
       {
-        std::auto_ptr<GetOrthancWebViewerJpegCommand> command(new GetOrthancWebViewerJpegCommand);
+        std::unique_ptr<GetOrthancWebViewerJpegCommand> command(new GetOrthancWebViewerJpegCommand);
         command->SetInstance(orthancId);
         command->SetExpectedPixelFormat(parameters.GetExpectedPixelFormat());
         command->AcquirePayload(new Payload(source, index, sopInstanceUid, quality, protection.release()));
 
         {
-          std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+          std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
           lock->Schedule(GetSharedObserver(), priority, command.release());
         }
       }
@@ -528,14 +528,14 @@ namespace OrthancStone
                source.HasOrthancWebViewer1() || 
                source.HasOrthancAdvancedPreview());
 
-        std::auto_ptr<GetOrthancImageCommand> command(new GetOrthancImageCommand);
+        std::unique_ptr<GetOrthancImageCommand> command(new GetOrthancImageCommand);
         command->SetFrameUri(orthancId, frames_.GetFrameIndex(index), parameters.GetExpectedPixelFormat());
         command->SetExpectedPixelFormat(parameters.GetExpectedPixelFormat());
         command->SetHttpHeader("Accept", Orthanc::MIME_PAM);
         command->AcquirePayload(new Payload(source, index, sopInstanceUid, quality, protection.release()));
 
         {
-          std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+          std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
           lock->Schedule(GetSharedObserver(), priority, command.release());
         }
       }

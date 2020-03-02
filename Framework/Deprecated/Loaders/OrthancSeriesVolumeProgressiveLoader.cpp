@@ -271,11 +271,11 @@ namespace Deprecated
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
 
-      std::auto_ptr<OrthancStone::OracleCommandBase> command;
+      std::unique_ptr<OrthancStone::OracleCommandBase> command;
         
       if (quality == BEST_QUALITY)
       {
-        std::auto_ptr<OrthancStone::GetOrthancImageCommand> tmp(new OrthancStone::GetOrthancImageCommand);
+        std::unique_ptr<OrthancStone::GetOrthancImageCommand> tmp(new OrthancStone::GetOrthancImageCommand);
         // TODO: review the following comment. 
         // - Commented out by bgo on 2019-07-19 | reason: Alain has seen cases 
         //   where gzipping the uint16 image took 11 sec to produce 5mb. 
@@ -291,7 +291,7 @@ namespace Deprecated
       }
       else
       {
-        std::auto_ptr<OrthancStone::GetOrthancWebViewerJpegCommand> tmp(new OrthancStone::GetOrthancWebViewerJpegCommand);
+        std::unique_ptr<OrthancStone::GetOrthancWebViewerJpegCommand> tmp(new OrthancStone::GetOrthancWebViewerJpegCommand);
         // TODO: review the following comment. Commented out by bgo on 2019-07-19
         // (gzip for jpeg seems overkill)
         //tmp->SetHttpHeader("Accept-Encoding", "gzip");
@@ -337,7 +337,7 @@ namespace Deprecated
         Orthanc::DicomMap dicom;
         dicom.FromDicomAsJson(body[instances[i]]);
 
-        std::auto_ptr<OrthancStone::DicomInstanceParameters> instance(new OrthancStone::DicomInstanceParameters(dicom));
+        std::unique_ptr<OrthancStone::DicomInstanceParameters> instance(new OrthancStone::DicomInstanceParameters(dicom));
         instance->SetOrthancInstanceIdentifier(instances[i]);
 
         // the 3D plane corresponding to the slice
@@ -487,7 +487,7 @@ namespace Deprecated
     {
       active_ = true;
 
-      std::auto_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
       command->SetUri("/series/" + seriesId + "/instances-tags");
 
 //      LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries about to call oracle_.Schedule";

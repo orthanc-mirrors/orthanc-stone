@@ -29,7 +29,7 @@ namespace Deprecated
   class GrayscaleFrameRenderer : public FrameRenderer
   {
   private:
-    std::auto_ptr<Orthanc::ImageAccessor>   frame_;  // In Float32
+    std::unique_ptr<Orthanc::ImageAccessor>   frame_;  // In Float32
     float                                   defaultWindowCenter_;
     float                                   defaultWindowWidth_;
     Orthanc::PhotometricInterpretation      photometric_;

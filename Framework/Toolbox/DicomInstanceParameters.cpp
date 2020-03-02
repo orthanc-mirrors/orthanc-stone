@@ -369,7 +369,7 @@ namespace OrthancStone
 
   Orthanc::ImageAccessor* DicomInstanceParameters::ConvertToFloat(const Orthanc::ImageAccessor& pixelData) const
   {
-    std::auto_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_Float32, 
+    std::unique_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_Float32, 
                                                                pixelData.GetWidth(), 
                                                                pixelData.GetHeight(),
                                                                false));
@@ -404,7 +404,7 @@ namespace OrthancStone
     else
     {
       // This is the case of a grayscale frame. Convert it to Float32.
-      std::auto_ptr<FloatTextureSceneLayer> texture;
+      std::unique_ptr<FloatTextureSceneLayer> texture;
 
       if (pixelData.GetFormat() == Orthanc::PixelFormat_Float32)
       {
@@ -412,7 +412,7 @@ namespace OrthancStone
       }
       else
       {
-        std::auto_ptr<Orthanc::ImageAccessor> converted(ConvertToFloat(pixelData));
+        std::unique_ptr<Orthanc::ImageAccessor> converted(ConvertToFloat(pixelData));
         texture.reset(new FloatTextureSceneLayer(*converted));
       }
 
@@ -442,7 +442,7 @@ namespace OrthancStone
   LookupTableTextureSceneLayer* DicomInstanceParameters::CreateLookupTableTexture
   (const Orthanc::ImageAccessor& pixelData) const
   {
-    std::auto_ptr<FloatTextureSceneLayer> texture;
+    std::unique_ptr<FloatTextureSceneLayer> texture;
 
     if (pixelData.GetFormat() == Orthanc::PixelFormat_Float32)
     {
@@ -450,7 +450,7 @@ namespace OrthancStone
     }
     else
     {
-      std::auto_ptr<Orthanc::ImageAccessor> converted(ConvertToFloat(pixelData));
+      std::unique_ptr<Orthanc::ImageAccessor> converted(ConvertToFloat(pixelData));
       return new LookupTableTextureSceneLayer(*converted);
     }
   }

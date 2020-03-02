@@ -193,7 +193,7 @@ namespace OrthancStone
       }
 
       boost::shared_ptr<Deprecated::SliceViewerWidget>  widget_;
-      std::auto_ptr<Interactor>         mainWidgetInteractor_;
+      std::unique_ptr<Interactor>         mainWidgetInteractor_;
       boost::shared_ptr<Deprecated::DicomSeriesVolumeSlicer> source_;
       unsigned int                      slice_;
 

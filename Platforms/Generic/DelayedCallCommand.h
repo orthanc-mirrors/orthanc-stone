@@ -35,8 +35,8 @@ namespace Deprecated
   class DelayedCallCommand : public IOracleCommand, OrthancStone::IObservable
   {
   protected:
-    std::auto_ptr<MessageHandler<IDelayedCallExecutor::TimeoutMessage> >  callback_;
-    std::auto_ptr<Orthanc::IDynamicObject>  payload_;
+    std::unique_ptr<MessageHandler<IDelayedCallExecutor::TimeoutMessage> >  callback_;
+    std::unique_ptr<Orthanc::IDynamicObject>  payload_;
     OrthancStone::NativeStoneApplicationContext&          context_;
     boost::posix_time::ptime                expirationTimePoint_;
     unsigned int                            timeoutInMs_;

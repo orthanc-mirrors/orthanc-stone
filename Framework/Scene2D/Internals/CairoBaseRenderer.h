@@ -24,6 +24,8 @@
 #include "ICairoContextProvider.h"
 #include "CompositorHelper.h"
 
+#include <Core/Compatibility.h>
+
 namespace OrthancStone
 {
   namespace Internals
@@ -32,7 +34,7 @@ namespace OrthancStone
     {
     private:
       ICairoContextProvider&      target_;
-      std::auto_ptr<ISceneLayer>  layer_;
+      std::unique_ptr<ISceneLayer>  layer_;
 
     protected:
       template<typename T>

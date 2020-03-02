@@ -32,7 +32,7 @@ namespace OrthancStone
   {
   private:
     boost::weak_ptr<IObserver>      receiver_;
-    std::auto_ptr<IOracleCommand>   command_;
+    std::unique_ptr<IOracleCommand>   command_;
 
   public:
     Item(boost::weak_ptr<IObserver> receiver,
@@ -66,7 +66,7 @@ namespace OrthancStone
     {
     private:
       boost::weak_ptr<IObserver>         receiver_;
-      std::auto_ptr<SleepOracleCommand>  command_;
+      std::unique_ptr<SleepOracleCommand>  command_;
       boost::posix_time::ptime           expiration_;
 
     public:
@@ -154,7 +154,7 @@ namespace OrthancStone
 
   void ThreadedOracle::Step()
   {
-    std::auto_ptr<Orthanc::IDynamicObject>  object(queue_.Dequeue(100));
+    std::unique_ptr<Orthanc::IDynamicObject>  object(queue_.Dequeue(100));
 
     if (object.get() != NULL)
     {
@@ -164,7 +164,7 @@ namespace OrthancStone
       {
         SleepOracleCommand& command = dynamic_cast<SleepOracleCommand&>(item.GetCommand());
           
-        std::auto_ptr<SleepOracleCommand> copy(new SleepOracleCommand(command.GetDelay()));
+        std::unique_ptr<SleepOracleCommand> copy(new SleepOracleCommand(command.GetDelay()));
           
         if (command.HasPayload())
         {
@@ -412,7 +412,7 @@ namespace OrthancStone
   bool ThreadedOracle::Schedule(boost::shared_ptr<IObserver> receiver,
                                 IOracleCommand* command)
   {
-    std::auto_ptr<Item> item(new Item(receiver, command));
+    std::unique_ptr<Item> item(new Item(receiver, command));
 
     {
       boost::mutex::scoped_lock lock(mutex_);

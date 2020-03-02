@@ -144,13 +144,13 @@ namespace OrthancStone
                                                      const std::map<std::string, std::string>& headers,
                                                      Orthanc::IDynamicObject* payload) const
   {
-    std::auto_ptr<Orthanc::IDynamicObject> protection(payload);
+    std::unique_ptr<Orthanc::IDynamicObject> protection(payload);
 
     switch (type_)
     {
       case DicomSourceType_DicomWeb:
       {
-        std::auto_ptr<HttpCommand> command(new HttpCommand);
+        std::unique_ptr<HttpCommand> command(new HttpCommand);
         
         command->SetMethod(Orthanc::HttpMethod_Get);
         command->SetUrl(webService_.GetUrl() + "/" + EncodeGetArguments(uri, arguments));
@@ -196,7 +196,7 @@ namespace OrthancStone
         body["Arguments"] = args;
         body["Headers"] = h;
 
-        std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+        std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
         command->SetMethod(Orthanc::HttpMethod_Post);
         command->SetUri(orthancDicomWebRoot_ + "/servers/" + serverName_ + "/get");
         command->SetBody(body);

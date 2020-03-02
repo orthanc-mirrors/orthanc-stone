@@ -30,11 +30,11 @@ namespace Deprecated
   class SeriesFrameRendererFactory : public ILayerRendererFactory
   {
   private:
-    std::auto_ptr<ISeriesLoader>  loader_;
+    std::unique_ptr<ISeriesLoader>  loader_;
     size_t                        currentFrame_;
     bool                          fast_;
 
-    std::auto_ptr<OrthancPlugins::IDicomDataset>  currentDataset_;
+    std::unique_ptr<OrthancPlugins::IDicomDataset>  currentDataset_;
 
     void ReadCurrentFrameDataset(size_t frame);
 

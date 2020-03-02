@@ -140,7 +140,7 @@ namespace Deprecated
       const std::string instanceId = lookup[0]["ID"].asString();
 
       {
-        std::auto_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+        std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
         command->SetHttpHeader("Accept-Encoding", "gzip");
         std::string uri = "/instances/" + instanceId + "/tags";
         command->SetUri(uri);
@@ -227,7 +227,7 @@ namespace Deprecated
       for (std::set<std::string>::const_iterator
         it = nonEmptyInstances.begin(); it != nonEmptyInstances.end(); ++it)
       {
-        std::auto_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+        std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
         command->SetUri("/tools/lookup");
         command->SetMethod(Orthanc::HttpMethod_Post);
         command->SetBody(*it);
@@ -293,7 +293,7 @@ namespace Deprecated
     {
       assert(isValid_);
 
-      std::auto_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
+      std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
       layer->SetThickness(2);
 
       for (size_t i = 0; i < content_.GetStructuresCount(); i++)
@@ -377,7 +377,7 @@ namespace Deprecated
     initiallyVisibleStructures_ = initiallyVisibleStructures;
 
     {
-      std::auto_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
 
       std::string uri = "/instances/" + instanceId + "/tags?ignore-length=3006-0050";

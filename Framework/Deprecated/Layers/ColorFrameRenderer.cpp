@@ -29,7 +29,7 @@ namespace Deprecated
 {
   OrthancStone::CairoSurface* ColorFrameRenderer::GenerateDisplay(const RenderStyle& style)
   {
-    std::auto_ptr<OrthancStone::CairoSurface> display
+    std::unique_ptr<OrthancStone::CairoSurface> display
       (new OrthancStone::CairoSurface(frame_->GetWidth(), frame_->GetHeight(), false /* no alpha */));
 
     Orthanc::ImageAccessor target;

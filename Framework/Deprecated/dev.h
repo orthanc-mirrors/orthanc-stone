@@ -47,8 +47,8 @@ namespace Deprecated
   {
   private:
     OrthancSlicesLoader           loader_;
-    std::auto_ptr<OrthancStone::ImageBuffer3D>  image_;
-    std::auto_ptr<DownloadStack>  downloadStack_;
+    std::unique_ptr<OrthancStone::ImageBuffer3D>  image_;
+    std::unique_ptr<DownloadStack>  downloadStack_;
     bool                          computeRange_;
     size_t                        pendingSlices_;
 
@@ -521,9 +521,9 @@ namespace Deprecated
 
 
     OrthancVolumeImage&                 volume_;
-    std::auto_ptr<VolumeImageGeometry>  axialGeometry_;
-    std::auto_ptr<VolumeImageGeometry>  coronalGeometry_;
-    std::auto_ptr<VolumeImageGeometry>  sagittalGeometry_;
+    std::unique_ptr<VolumeImageGeometry>  axialGeometry_;
+    std::unique_ptr<VolumeImageGeometry>  coronalGeometry_;
+    std::unique_ptr<VolumeImageGeometry>  sagittalGeometry_;
 
 
     bool IsGeometryReady() const
@@ -662,7 +662,7 @@ namespace Deprecated
       {
         // As the slices of the volumic image are arranged in a box,
         // we only consider one single reference slice (the one with index 0).
-        std::auto_ptr<Slice> slice(GetProjectionGeometry(projection).GetSlice(0));
+        std::unique_ptr<Slice> slice(GetProjectionGeometry(projection).GetSlice(0));
         slice->GetExtent(points);
 
         return true;
@@ -684,7 +684,7 @@ namespace Deprecated
         {
           bool isFullQuality = true;  // TODO
 
-          std::auto_ptr<Orthanc::Image> frame;
+          std::unique_ptr<Orthanc::Image> frame;
 
           {
             OrthancStone::ImageBuffer3D::SliceReader reader(volume_.GetImage(), projection, static_cast<unsigned int>(closest));
@@ -693,7 +693,7 @@ namespace Deprecated
             frame.reset(Orthanc::Image::Clone(reader.GetAccessor()));
           }
 
-          std::auto_ptr<Slice> slice(geometry.GetSlice(closest));
+          std::unique_ptr<Slice> slice(geometry.GetSlice(closest));
 
           RendererFactory factory(*frame, *slice, isFullQuality);
 
@@ -716,7 +716,7 @@ namespace Deprecated
   private:
     SliceViewerWidget&                  widget_;
     OrthancStone::VolumeProjection      projection_;
-    std::auto_ptr<VolumeImageGeometry>  slices_;
+    std::unique_ptr<VolumeImageGeometry>  slices_;
     size_t                              slice_;
 
   protected:
@@ -858,7 +858,7 @@ namespace Deprecated
       {
         slice_ = slice;
 
-        std::auto_ptr<Slice> tmp(slices_->GetSlice(slice_));
+        std::unique_ptr<Slice> tmp(slices_->GetSlice(slice_));
         widget_.SetSlice(tmp->GetGeometry());
       }
     }

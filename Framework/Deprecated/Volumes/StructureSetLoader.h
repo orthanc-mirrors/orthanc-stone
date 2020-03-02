@@ -34,7 +34,7 @@ namespace Deprecated
   {
   private:
     OrthancApiClient&                 orthanc_;
-    std::auto_ptr<OrthancStone::DicomStructureSet>  structureSet_;
+    std::unique_ptr<OrthancStone::DicomStructureSet>  structureSet_;
 
     void OnReferencedSliceLoaded(const OrthancApiClient::JsonResponseReadyMessage& message);
 

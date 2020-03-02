@@ -61,7 +61,7 @@ namespace Deprecated
     };
     
     unsigned int                    sliceIndex_;
-    std::auto_ptr<Slice>            slice_;
+    std::unique_ptr<Slice>            slice_;
     boost::shared_ptr<Orthanc::ImageAccessor>   image_;
     SliceImageQuality               effectiveQuality_;
     CachedSliceStatus               status_;
@@ -191,7 +191,7 @@ namespace Deprecated
 
     cachedSlices_[sliceKeyId] = boost::shared_ptr<CachedSlice>(cachedSlice);
 
-    std::auto_ptr<IVolumeSlicer> layerSource(new DicomSeriesVolumeSlicer);
+    std::unique_ptr<IVolumeSlicer> layerSource(new DicomSeriesVolumeSlicer);
     dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->Connect(orthancApiClient_);
     dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->SetImageQuality(imageQuality_);
     Register<IVolumeSlicer::GeometryReadyMessage>(*layerSource, &SmartLoader::OnLayerGeometryReady);

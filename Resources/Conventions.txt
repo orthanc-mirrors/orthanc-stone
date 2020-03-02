@@ -62,14 +62,14 @@ Pointers
 --------
 
 * As we are targeting C++03 (for VS2008 and LSB compatibility), use
-  "std::auto_ptr<>" and "boost::shared_ptr<>" (*not*
+  "std::unique_ptr<>" and "boost::shared_ptr<>" (*not*
   "std::shared_ptr<>").
 
 * The fact of transfering the ownership of one object to another must
   be tagged by naming the method "Acquire...()", and by providing a
   raw pointer.
 
-* Use "std::auto_ptr<>" if the goal is to internally store a pointer
+* Use "std::unique_ptr<>" if the goal is to internally store a pointer
   whose lifetime corresponds to the host object.
 
 * The use of "boost::weak_ptr<>" should be restricted to

@@ -101,7 +101,7 @@ namespace OrthancStone
                                              x1, y1, x2, y2,
                                              sx1, sy1, sx2, sy2))
     {
-      std::auto_ptr<ILayerRenderer> layer(new LineLayerRenderer(x1, y1, x2, y2));
+      std::unique_ptr<ILayerRenderer> layer(new LineLayerRenderer(x1, y1, x2, y2));
       layer->SetLayerStyle(style_);
       return layer.release();
     }

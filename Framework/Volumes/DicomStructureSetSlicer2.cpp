@@ -78,7 +78,7 @@ namespace OrthancStone
   {
     assert(isValid_);
 
-    std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
+    std::unique_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
     layer->SetThickness(2); // thickness of the on-screen line
 
     for (size_t i = 0; i < structureSet_->GetStructuresCount(); i++)

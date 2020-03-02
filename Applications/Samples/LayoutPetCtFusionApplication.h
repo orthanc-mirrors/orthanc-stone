@@ -208,7 +208,7 @@ namespace OrthancStone
 
       LayeredSceneWidget* CreateWidget()
       {
-        std::auto_ptr<LayeredSceneWidget> widget(new LayeredSceneWidget);
+        std::unique_ptr<LayeredSceneWidget> widget(new LayeredSceneWidget);
         widget->Register(dynamic_cast<WorldSceneWidget::IWorldObserver&>(*this));
         widget->Register(dynamic_cast<LayeredSceneWidget::ISliceObserver&>(*this));
         return widget.release();
@@ -217,7 +217,7 @@ namespace OrthancStone
 
       void CreateLayout(BasicApplicationContext& context)
       {
-        std::auto_ptr<OrthancStone::LayoutWidget> layout(new OrthancStone::LayoutWidget);
+        std::unique_ptr<OrthancStone::LayoutWidget> layout(new OrthancStone::LayoutWidget);
         layout->SetBackgroundCleared(true);
         //layout->SetBackgroundColor(255,0,0);
         layout->SetPadding(5);

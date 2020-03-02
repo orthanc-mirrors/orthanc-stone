@@ -98,7 +98,7 @@ namespace OrthancStone
   {
     TextBoundingBox box(alphabet_, utf8);
 
-    std::auto_ptr<Orthanc::ImageAccessor> bitmap(
+    std::unique_ptr<Orthanc::ImageAccessor> bitmap(
       new Orthanc::Image(Orthanc::PixelFormat_Grayscale8,
                          box.GetWidth(), box.GetHeight(),
                          true /* force minimal pitch */));

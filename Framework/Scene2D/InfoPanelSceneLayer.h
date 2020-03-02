@@ -24,6 +24,7 @@
 #include "ISceneLayer.h"
 #include "../StoneEnumerations.h"
 
+#include <Core/Compatibility.h>
 #include <Core/Images/ImageAccessor.h>
 
 #include <memory>
@@ -33,7 +34,7 @@ namespace OrthancStone
   class InfoPanelSceneLayer : public ISceneLayer
   {
   private:
-    std::auto_ptr<Orthanc::ImageAccessor>  texture_;
+    std::unique_ptr<Orthanc::ImageAccessor>  texture_;
     BitmapAnchor                           anchor_;
     bool                                   isLinearInterpolation_;
 

@@ -42,7 +42,7 @@ namespace OrthancStone
 
   ISceneLayer* ColorTextureSceneLayer::Clone() const
   {
-    std::auto_ptr<ColorTextureSceneLayer> cloned(new ColorTextureSceneLayer(GetTexture()));
+    std::unique_ptr<ColorTextureSceneLayer> cloned(new ColorTextureSceneLayer(GetTexture()));
     cloned->CopyParameters(*this);
     return cloned.release();
   }

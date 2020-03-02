@@ -73,7 +73,7 @@ namespace OrthancStone
       
     private:
       OpenGL::IOpenGLContext&               context_;
-      std::auto_ptr<OpenGL::OpenGLProgram>  program_;
+      std::unique_ptr<OpenGL::OpenGLProgram>  program_;
 
     public:
       OpenGLLinesProgram(OpenGL::IOpenGLContext&  context);

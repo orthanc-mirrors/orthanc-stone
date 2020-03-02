@@ -23,6 +23,8 @@
 
 #include "RadiographyLayer.h"
 
+#include <Core/Compatibility.h>
+
 namespace OrthancStone
 {
   class RadiographyScene;
@@ -33,7 +35,7 @@ namespace OrthancStone
   class RadiographyAlphaLayer : public RadiographyLayer
   {
   private:
-    std::auto_ptr<Orthanc::ImageAccessor>  alpha_;       // Grayscale8 in the range [0, 255]  0 = transparent, 255 = opaque -> the foreground value will be displayed
+    std::unique_ptr<Orthanc::ImageAccessor>  alpha_;       // Grayscale8 in the range [0, 255]  0 = transparent, 255 = opaque -> the foreground value will be displayed
     float                                  foreground_;  // in the range [0.0, 65535.0]
 
   public:

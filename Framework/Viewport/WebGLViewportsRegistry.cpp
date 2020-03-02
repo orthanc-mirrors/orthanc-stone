@@ -63,7 +63,7 @@ namespace OrthancStone
         boost::shared_ptr<WebGLViewport> viewport;
           
         {
-          std::auto_ptr<IViewport::ILock> lock(it->second->Lock());
+          std::unique_ptr<IViewport::ILock> lock(it->second->Lock());
           viewport = boost::make_shared<WebGLViewport>(it->first, lock->GetController().GetScene());
         }
 
@@ -72,7 +72,7 @@ namespace OrthancStone
 
         // Tag the fresh canvas as needing a repaint
         {
-          std::auto_ptr<IViewport::ILock> lock(it->second->Lock());
+          std::unique_ptr<IViewport::ILock> lock(it->second->Lock());
           lock->Invalidate();
         }
       }

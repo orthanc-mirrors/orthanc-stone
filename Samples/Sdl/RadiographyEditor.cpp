@@ -179,7 +179,7 @@ int main(int argc, char* argv[])
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(OpenGLMessageCallback, 0);
 
-    std::auto_ptr<OpenGlSdlCompositorFactory> compositorFactory(new OpenGlSdlCompositorFactory(window));
+    std::unique_ptr<OpenGlSdlCompositorFactory> compositorFactory(new OpenGlSdlCompositorFactory(window));
     boost::shared_ptr<RadiographyEditorApp> app(new RadiographyEditorApp(oracle, lock.GetOracleObservable(), compositorFactory.release()));
     app->PrepareScene();
     app->FitContent(window.GetCanvasWidth(), window.GetCanvasHeight());

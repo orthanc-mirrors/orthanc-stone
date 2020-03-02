@@ -28,7 +28,7 @@ namespace OrthancStone
   class WebAssemblyCairoViewport : public WebAssemblyViewport
   {
   private:
-    std::auto_ptr<Orthanc::ImageAccessor>  javascript_;
+    std::unique_ptr<Orthanc::ImageAccessor>  javascript_;
         
     void GetCanvasSize(unsigned int& width,
                        unsigned int& height);

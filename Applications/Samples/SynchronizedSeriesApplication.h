@@ -40,12 +40,12 @@ namespace OrthancStone
       LayeredSceneWidget* CreateSeriesWidget(BasicApplicationContext& context,
                                              const std::string& series)
       {
-        std::auto_ptr<ISeriesLoader> loader
+        std::unique_ptr<ISeriesLoader> loader
           (new OrthancSeriesLoader(context.GetWebService().GetConnection(), series));
 
-        std::auto_ptr<SampleInteractor> interactor(new SampleInteractor(*loader, false));
+        std::unique_ptr<SampleInteractor> interactor(new SampleInteractor(*loader, false));
 
-        std::auto_ptr<LayeredSceneWidget> widget(new LayeredSceneWidget);
+        std::unique_ptr<LayeredSceneWidget> widget(new LayeredSceneWidget);
         widget->AddLayer(new SeriesFrameRendererFactory(loader.release(), false));
         widget->SetSlice(interactor->GetCursor().GetCurrentSlice());
         widget->SetInteractor(*interactor);
@@ -83,19 +83,19 @@ namespace OrthancStone
           throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
         }
 
-        std::auto_ptr<LayeredSceneWidget> a(CreateSeriesWidget(context, parameters["a"].as<std::string>()));
-        std::auto_ptr<LayeredSceneWidget> b(CreateSeriesWidget(context, parameters["b"].as<std::string>()));
-        std::auto_ptr<LayeredSceneWidget> c(CreateSeriesWidget(context, parameters["c"].as<std::string>()));
+        std::unique_ptr<LayeredSceneWidget> a(CreateSeriesWidget(context, parameters["a"].as<std::string>()));
+        std::unique_ptr<LayeredSceneWidget> b(CreateSeriesWidget(context, parameters["b"].as<std::string>()));
+        std::unique_ptr<LayeredSceneWidget> c(CreateSeriesWidget(context, parameters["c"].as<std::string>()));
 
         ReferenceLineFactory::Configure(*a, *b);
         ReferenceLineFactory::Configure(*a, *c);
         ReferenceLineFactory::Configure(*b, *c);
 
-        std::auto_ptr<LayoutWidget> layout(new LayoutWidget);
+        std::unique_ptr<LayoutWidget> layout(new LayoutWidget);
         layout->SetPadding(5);
         layout->AddWidget(a.release());
 
-        std::auto_ptr<LayoutWidget> layoutB(new LayoutWidget);
+        std::unique_ptr<LayoutWidget> layoutB(new LayoutWidget);
         layoutB->SetVertical();
         layoutB->SetPadding(5);
         layoutB->AddWidget(b.release());

@@ -24,6 +24,7 @@
 #include "ISceneLayer.h"
 #include "../Toolbox/AffineTransform2D.h"
 
+#include <Core/Compatibility.h>
 #include <Core/Images/ImageAccessor.h>
 
 namespace OrthancStone
@@ -31,7 +32,7 @@ namespace OrthancStone
   class TextureBaseSceneLayer : public ISceneLayer
   {
   private:
-    std::auto_ptr<Orthanc::ImageAccessor>  texture_;
+    std::unique_ptr<Orthanc::ImageAccessor>  texture_;
     double                                 originX_;
     double                                 originY_;
     double                                 pixelSpacingX_;

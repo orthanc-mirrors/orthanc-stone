@@ -35,8 +35,8 @@ namespace OrthancStone
   {
   private:
     boost::mutex                 mutex_;
-    std::auto_ptr<CairoSurface>  offscreenSurface_;
-    std::auto_ptr<CairoSurface>  onscreenSurface_;
+    std::unique_ptr<CairoSurface>  offscreenSurface_;
+    std::unique_ptr<CairoSurface>  onscreenSurface_;
     SDL_Surface*                 sdlSurface_;
     bool                         pendingFrame_;
 

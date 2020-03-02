@@ -114,7 +114,7 @@ namespace OrthancStone
       }
     }
     
-    std::auto_ptr<Orthanc::ImageAccessor> reader;
+    std::unique_ptr<Orthanc::ImageAccessor> reader;
     
     {
       std::string jpeg;
@@ -185,7 +185,7 @@ namespace OrthancStone
     }
     
     // Decode a grayscale JPEG 8bpp image coming from the Web viewer
-    std::auto_ptr<Orthanc::ImageAccessor> image
+    std::unique_ptr<Orthanc::ImageAccessor> image
       (new Orthanc::Image(expectedFormat_, reader->GetWidth(), reader->GetHeight(), false));
 
     Orthanc::ImageProcessing::Convert(*image, *reader);

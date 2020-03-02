@@ -88,7 +88,7 @@ namespace OrthancStone
     const Orthanc::ImageAccessor& frame,
     const DicomInstanceParameters& parameters) const
   {
-    std::auto_ptr<TextureBaseSceneLayer> layer(parameters.CreateTexture(frame));
+    std::unique_ptr<TextureBaseSceneLayer> layer(parameters.CreateTexture(frame));
 
     if (layer.get() == NULL ||
         layer->GetTexture().GetFormat() != Orthanc::PixelFormat_Float32)

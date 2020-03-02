@@ -174,7 +174,7 @@ namespace Deprecated
   }
     
 
-  void DicomFrameConverter::ConvertFrameInplace(std::auto_ptr<Orthanc::ImageAccessor>& source) const
+  void DicomFrameConverter::ConvertFrameInplace(std::unique_ptr<Orthanc::ImageAccessor>& source) const
   {
     assert(sizeof(float) == 4);
 
@@ -210,7 +210,7 @@ namespace Deprecated
     if (sourceFormat == Orthanc::PixelFormat_RGB24)
     {
       // This is the case of a color image. No conversion has to be done (*)
-      std::auto_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_RGB24, 
+      std::unique_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_RGB24, 
                                                                  source.GetWidth(), 
                                                                  source.GetHeight(),
                                                                  false));
@@ -224,7 +224,7 @@ namespace Deprecated
              sourceFormat == Orthanc::PixelFormat_SignedGrayscale16);
 
       // This is the case of a grayscale frame. Convert it to Float32.
-      std::auto_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_Float32, 
+      std::unique_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_Float32, 
                                                                  source.GetWidth(), 
                                                                  source.GetHeight(),
                                                                  false));

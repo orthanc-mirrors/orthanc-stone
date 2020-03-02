@@ -69,7 +69,7 @@ void PrepareScene(Scene2D& scene)
 
     scene.SetLayer(12, new ColorTextureSceneLayer(i));
 
-    std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
+    std::unique_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
     l->SetOrigin(-3, 2);
     l->SetPixelSpacing(1.5, 1);
     l->SetAngle(20.0 / 180.0 * 3.14);
@@ -85,7 +85,7 @@ void PrepareScene(Scene2D& scene)
     p[1] = 0;
     p[2] = 0;
 
-    std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
+    std::unique_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
     l->SetOrigin(-2, 1);
     l->SetAngle(20.0 / 180.0 * 3.14);
     scene.SetLayer(13, l.release());
@@ -93,7 +93,7 @@ void PrepareScene(Scene2D& scene)
 
   // Some lines
   {
-    std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
+    std::unique_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
 
     layer->SetThickness(1);
 
@@ -125,7 +125,7 @@ void PrepareScene(Scene2D& scene)
 
   // Some text
   {
-    std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer);
+    std::unique_ptr<TextSceneLayer> layer(new TextSceneLayer);
     layer->SetText("Hello");
     scene.SetLayer(100, layer.release());
   }
@@ -170,7 +170,7 @@ void ShowCursorInfo(Scene2D& scene, const PointerEvent& pointerEvent)
   }
   else
   {
-    std::auto_ptr<TextSceneLayer>
+    std::unique_ptr<TextSceneLayer>
         layer(new TextSceneLayer);
     layer->SetColor(0, 255, 0);
     layer->SetText(buf);

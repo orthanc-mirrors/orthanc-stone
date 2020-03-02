@@ -44,7 +44,7 @@ namespace OrthancStone
     boost::recursive_mutex  mutex_;
 
     IObservable                         oracleObservable_;
-    std::auto_ptr<ThreadedOracle>       oracle_;
+    std::unique_ptr<ThreadedOracle>       oracle_;
     boost::shared_ptr<OracleScheduler>  scheduler_;
 
     // Necessary to keep the loaders persistent (including global

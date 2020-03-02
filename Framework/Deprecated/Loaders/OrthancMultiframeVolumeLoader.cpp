@@ -29,7 +29,7 @@ namespace Deprecated
   class OrthancMultiframeVolumeLoader::LoadRTDoseGeometry : public LoaderStateMachine::State
   {
   private:
-    std::auto_ptr<Orthanc::DicomMap>  dicom_;
+    std::unique_ptr<Orthanc::DicomMap>  dicom_;
 
   public:
     LoadRTDoseGeometry(OrthancMultiframeVolumeLoader& that,
@@ -90,7 +90,7 @@ namespace Deprecated
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
       }
 
-      std::auto_ptr<Orthanc::DicomMap> dicom(new Orthanc::DicomMap);
+      std::unique_ptr<Orthanc::DicomMap> dicom(new Orthanc::DicomMap);
       dicom->FromDicomAsJson(body);
 
       if (OrthancStone::StringToSopClassUid(GetSopClassUid(*dicom)) == OrthancStone::SopClassUid_RTDose)
@@ -98,7 +98,7 @@ namespace Deprecated
         // Download the "Grid Frame Offset Vector" DICOM tag, that is
         // mandatory for RT-DOSE, but is too long to be returned by default
           
-        std::auto_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+        std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
         command->SetUri("/instances/" + loader.GetInstanceId() + "/content/" +
                         Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR.Format());
         command->AcquirePayload(new LoadRTDoseGeometry(loader, dicom.release()));
@@ -171,7 +171,7 @@ namespace Deprecated
         transferSyntaxUid_ == "1.2.840.10008.1.2.1" ||
         transferSyntaxUid_ == "1.2.840.10008.1.2.2")
     {
-      std::auto_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetUri("/instances/" + instanceId_ + "/content/" +
                       Orthanc::DICOM_TAG_PIXEL_DATA.Format() + "/0");
@@ -562,7 +562,7 @@ namespace Deprecated
     instanceId_ = instanceId;
 
     {
-      std::auto_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetUri("/instances/" + instanceId + "/tags");
       command->AcquirePayload(new LoadGeometry(*this));
@@ -570,7 +570,7 @@ namespace Deprecated
     }
 
     {
-      std::auto_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
       command->SetUri("/instances/" + instanceId + "/metadata/TransferSyntax");
       command->AcquirePayload(new LoadTransferSyntax(*this));
       Schedule(command.release());

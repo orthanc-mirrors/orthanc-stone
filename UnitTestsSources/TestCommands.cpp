@@ -60,7 +60,7 @@
 //  Json::Value cmdJson;
 //  cmdJson["command"] = "noop";
 
-//  std::auto_ptr<OrthancStone::ICommand> command(factory.CreateFromJson(cmdJson));
+//  std::unique_ptr<OrthancStone::ICommand> command(factory.CreateFromJson(cmdJson));
 
 //  ASSERT_TRUE(command.get() != NULL);
 //  ASSERT_EQ("noop", command->GetName());
@@ -77,7 +77,7 @@
 //  cmdJson["command"] = "increment";
 //  cmdJson["args"]["increment"] = 2;
 
-//  std::auto_ptr<OrthancStone::ICommand> command(factory.CreateFromJson(cmdJson));
+//  std::unique_ptr<OrthancStone::ICommand> command(factory.CreateFromJson(cmdJson));
 
 //  ASSERT_TRUE(command.get() != NULL);
 //  CommandIncrement::counter = 0;
@@ -93,7 +93,7 @@
 //  Json::Value cmdJson;
 //  cmdJson["command"] = "unknown";
 
-//  ASSERT_THROW(std::auto_ptr<OrthancStone::ICommand> command(factory.CreateFromJson(cmdJson)), Orthanc::OrthancException);
+//  ASSERT_THROW(std::unique_ptr<OrthancStone::ICommand> command(factory.CreateFromJson(cmdJson)), Orthanc::OrthancException);
 //}
 
 //TEST(Commands, TryCreateCommandFromInvalidJson)
@@ -104,5 +104,5 @@
 //  Json::Value cmdJson;
 //  cmdJson["command-name"] = "noop";
 
-//  ASSERT_THROW(std::auto_ptr<OrthancStone::ICommand> command(factory.CreateFromJson(cmdJson)), Orthanc::OrthancException);
+//  ASSERT_THROW(std::unique_ptr<OrthancStone::ICommand> command(factory.CreateFromJson(cmdJson)), Orthanc::OrthancException);
 //}

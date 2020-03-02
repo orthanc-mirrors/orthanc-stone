@@ -47,7 +47,7 @@ namespace Deprecated
   {
     LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::Schedule()";
 
-    std::auto_ptr<OrthancStone::OracleCommandBase> protection(command);
+    std::unique_ptr<OrthancStone::OracleCommandBase> protection(command);
 
     if (command == NULL)
     {

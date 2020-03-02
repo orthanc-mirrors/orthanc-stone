@@ -42,7 +42,7 @@ namespace Deprecated
   {
   private:
     ViewportGeometry                        view_;
-    std::auto_ptr<IWorldSceneMouseTracker>  tracker_;
+    std::unique_ptr<IWorldSceneMouseTracker>  tracker_;
 
   public:
     SceneMouseTracker(const ViewportGeometry& view,
@@ -166,7 +166,7 @@ namespace Deprecated
     view_.MapPixelCenterToScene(sceneX, sceneY, x, y);
 
     // asks the Widget Interactor to provide a mouse tracker
-    std::auto_ptr<IWorldSceneMouseTracker> tracker;
+    std::unique_ptr<IWorldSceneMouseTracker> tracker;
 
     if (interactor_)
     {

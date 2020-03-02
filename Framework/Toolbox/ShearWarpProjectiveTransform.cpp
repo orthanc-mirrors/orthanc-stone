@@ -414,7 +414,7 @@ namespace OrthancStone
      * for each pixel is stored in the "counter" image.
      **/
 
-    std::auto_ptr<Orthanc::ImageAccessor> accumulator, counter, intermediate;
+    std::unique_ptr<Orthanc::ImageAccessor> accumulator, counter, intermediate;
 
     accumulator.reset(new Orthanc::Image(Orthanc::PixelFormat_Float32,
                                          intermediateWidth, intermediateHeight, false));
@@ -635,7 +635,7 @@ namespace OrthancStone
                                            ImageInterpolation shearInterpolation,
                                            ImageInterpolation warpInterpolation)
   {
-    std::auto_ptr<Orthanc::ImageAccessor> target
+    std::unique_ptr<Orthanc::ImageAccessor> target
       (new Orthanc::Image(targetFormat, targetWidth, targetHeight, false));
     
     if (source.GetFormat() == Orthanc::PixelFormat_Grayscale16 &&

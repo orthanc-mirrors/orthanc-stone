@@ -81,7 +81,7 @@ namespace OrthancStone
     Orthanc::WebServiceParameters  remoteOrthanc_;
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    std::auto_ptr<ParsedDicomCache>  dicomCache_;
+    std::unique_ptr<ParsedDicomCache>  dicomCache_;
 #endif
 
   public:

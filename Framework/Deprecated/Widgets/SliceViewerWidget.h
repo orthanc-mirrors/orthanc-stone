@@ -66,7 +66,61 @@ namespace Deprecated
     SliceViewerWidget(const SliceViewerWidget&);
     SliceViewerWidget& operator=(const SliceViewerWidget&);
 
-    class Scene;
+    class Scene : public boost::noncopyable
+    {
+    private:
+      OrthancStone::CoordinateSystem3D  plane_;
+      double                            thickness_;
+      size_t                            countMissing_;
+      std::vector<ILayerRenderer*>      renderers_;
+
+    public:
+      void DeleteLayer(size_t index);
+
+      Scene(const OrthancStone::CoordinateSystem3D& plane,
+            double thickness,
+            size_t countLayers);
+
+      ~Scene();
+
+      void SetLayer(size_t index,
+                    ILayerRenderer* renderer);  // Takes ownership
+
+      const OrthancStone::CoordinateSystem3D& GetPlane() const
+      {
+        return plane_;
+      }
+
+      bool HasRenderer(size_t index)
+      {
+        return renderers_[index] != NULL;
+      }
+
+      bool IsComplete() const
+      {
+        return countMissing_ == 0;
+      }
+
+      unsigned int GetCountMissing() const
+      {
+        return static_cast<unsigned int>(countMissing_);
+      }
+
+      bool RenderScene(OrthancStone::CairoContext& context,
+                       const ViewportGeometry& view,
+                       const OrthancStone::CoordinateSystem3D& viewportPlane);
+
+      void SetLayerStyle(size_t index,
+                         const RenderStyle& style);
+
+      bool ContainsPlane(const OrthancStone::CoordinateSystem3D& plane) const;
+
+      double GetThickness() const
+      {
+        return thickness_;
+      }
+    };
+
     
     typedef std::map<const IVolumeSlicer*, size_t>  LayersIndex;
 
@@ -75,8 +129,8 @@ namespace Deprecated
     std::vector<boost::shared_ptr<IVolumeSlicer> >  layers_;
     std::vector<RenderStyle>     styles_;
     OrthancStone::CoordinateSystem3D           plane_;
-    std::auto_ptr<Scene>         currentScene_;
-    std::auto_ptr<Scene>         pendingScene_;
+    std::unique_ptr<Scene>         currentScene_;
+    std::unique_ptr<Scene>         pendingScene_;
     std::vector<bool>            changedLayers_;
 
     bool LookupLayer(size_t& index /* out */,

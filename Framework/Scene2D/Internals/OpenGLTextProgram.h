@@ -28,6 +28,8 @@
 #include "../../Toolbox/AffineTransform2D.h"
 #include "../TextSceneLayer.h"
 
+#include <Core/Compatibility.h>
+
 namespace OrthancStone
 {
   namespace Internals

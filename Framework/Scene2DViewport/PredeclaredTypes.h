@@ -38,4 +38,5 @@ namespace OrthancStone
   class MeasureCommand;
   class ViewportController;
   class LayerHolder;
+  class IViewport;
 }

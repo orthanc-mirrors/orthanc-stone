@@ -26,6 +26,10 @@
 
 namespace OrthancStone
 {
+  /**
+    Stores an indexed collection of DicomMap objects. The index is a 
+    user-specified DicomTag.
+  */
   class LoadedDicomResources : public boost::noncopyable
   {
   private:

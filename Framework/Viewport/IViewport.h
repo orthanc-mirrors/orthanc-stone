@@ -48,8 +48,16 @@ namespace OrthancStone
 
       virtual bool HasCompositor() const = 0;
 
+      /**
+      Do not store the result! Only access the compositor interface through
+      the lock.
+      */
       virtual ICompositor& GetCompositor() = 0;
 
+      /**
+      Do not store the result! Only access the compositor interface through
+      the lock.
+      */
       virtual ViewportController& GetController() = 0;
 
       virtual void Invalidate() = 0;

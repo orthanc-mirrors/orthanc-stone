@@ -308,6 +308,7 @@ if (ENABLE_STONE_DEPRECATED)
     list(APPEND PLATFORM_SOURCES
       ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleWebService.cpp
       ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/CairoFont.cpp
+      ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/CairoFont.h
       )
   endif()
 
@@ -350,17 +351,36 @@ if (ENABLE_STONE_DEPRECATED)
   list(APPEND ORTHANC_STONE_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/IStoneApplication.h
     ${ORTHANC_STONE_ROOT}/Applications/StoneApplicationContext.cpp
+
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/dev.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/SmartLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/SmartLoader.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/CircleMeasureTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/CircleMeasureTracker.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/ColorFrameRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/ColorFrameRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/DicomSeriesVolumeSlicer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/DicomSeriesVolumeSlicer.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/DicomStructureSetSlicer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/DicomStructureSetSlicer.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/FrameRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/FrameRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/GrayscaleFrameRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/GrayscaleFrameRenderer.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/ILayerRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/IVolumeSlicer.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/LineLayerRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/LineLayerRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/LineMeasureTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/LineMeasureTracker.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/RenderStyle.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/RenderStyle.h
+    # ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/SeriesFrameRendererFactory.cpp
+    # ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/SeriesFrameRendererFactory.h
+    # ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/SingleFrameRendererFactory.cpp
+    # ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/SingleFrameRendererFactory.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/SliceOutlineRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Layers/SliceOutlineRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/DicomStructureSetLoader.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/DicomStructureSetLoader.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/DicomStructureSetLoader2.cpp
@@ -373,39 +393,66 @@ if (ENABLE_STONE_DEPRECATED)
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/OrthancMultiframeVolumeLoader.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/OrthancSeriesVolumeProgressiveLoader.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Loaders/OrthancSeriesVolumeProgressiveLoader.h
-    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/SmartLoader.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/BaseWebService.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/BaseWebService.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/DicomFrameConverter.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/DicomFrameConverter.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/DownloadStack.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/DownloadStack.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/IDelayedCallExecutor.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ISeriesLoader.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/IWebService.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/IWebService.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/MessagingToolbox.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/MessagingToolbox.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancApiClient.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancApiClient.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancSlicesLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/OrthancSlicesLoader.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ParallelSlices.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ParallelSlices.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ParallelSlicesCursor.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ParallelSlicesCursor.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/Slice.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/Slice.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ViewportGeometry.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Toolbox/ViewportGeometry.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IMouseTracker.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IStatusBar.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IViewport.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/WidgetViewport.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/WidgetViewport.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Volumes/IGeometryProvider.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Volumes/ISlicedVolume.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Volumes/IVolumeLoader.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Volumes/StructureSetLoader.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Volumes/StructureSetLoader.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/CairoWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/CairoWidget.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/EmptyWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/EmptyWidget.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/IWidget.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/IWorldSceneInteractor.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/IWorldSceneMouseTracker.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/LayoutWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/LayoutWidget.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/PanMouseTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/PanMouseTracker.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/PanZoomMouseTracker.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/PanZoomMouseTracker.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/SliceViewerWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/SliceViewerWidget.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/TestCairoWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/TestCairoWidget.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/TestWorldSceneWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/TestWorldSceneWidget.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/WidgetBase.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/WidgetBase.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/WorldSceneWidget.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/WorldSceneWidget.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/ZoomMouseTracker.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/dev.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Widgets/ZoomMouseTracker.h
+
     ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyAlphaLayer.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyDicomLayer.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Radiography/RadiographyLayer.cpp

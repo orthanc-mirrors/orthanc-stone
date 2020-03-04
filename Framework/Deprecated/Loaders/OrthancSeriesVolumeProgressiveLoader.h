@@ -33,6 +33,9 @@
 #include "../../Volumes/DicomVolumeImage.h"
 #include "../../Volumes/IVolumeSlicer.h"
 
+#include "../Volumes/IGeometryProvider.h"
+
+
 #include <boost/shared_ptr.hpp>
 
 namespace Deprecated
@@ -44,7 +47,8 @@ namespace Deprecated
   class OrthancSeriesVolumeProgressiveLoader : 
     public OrthancStone::ObserverBase<OrthancSeriesVolumeProgressiveLoader>,
     public OrthancStone::IObservable,
-    public OrthancStone::IVolumeSlicer
+    public OrthancStone::IVolumeSlicer,
+    public IGeometryProvider
   {
   private:
     static const unsigned int LOW_QUALITY = 0;

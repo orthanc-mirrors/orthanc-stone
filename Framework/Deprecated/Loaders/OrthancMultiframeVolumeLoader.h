@@ -23,6 +23,7 @@
 
 #include "LoaderStateMachine.h"
 #include "../../Volumes/DicomVolumeImage.h"
+#include "../Volumes/IGeometryProvider.h"
 
 #include <boost/shared_ptr.hpp>
 
@@ -30,7 +31,8 @@ namespace Deprecated
 {
   class OrthancMultiframeVolumeLoader :
     public LoaderStateMachine,
-    public OrthancStone::IObservable
+    public OrthancStone::IObservable,
+    public IGeometryProvider
   {
   private:
     class LoadRTDoseGeometry;

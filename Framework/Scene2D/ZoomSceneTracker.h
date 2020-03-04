@@ -23,14 +23,17 @@
 
 
 #include "../Scene2DViewport/OneGesturePointerTracker.h"
+#include "../Viewport/IViewport.h"
 #include "Internals/FixedPointAligner.h"
+
+#include <boost/weak_ptr.hpp>
 
 namespace OrthancStone
 {
   class ZoomSceneTracker : public OneGesturePointerTracker
   {
   public:
-    ZoomSceneTracker(boost::weak_ptr<ViewportController> controllerW,
+    ZoomSceneTracker(IViewport& viewport,
                      const PointerEvent& event,
                      unsigned int canvasHeight);
 

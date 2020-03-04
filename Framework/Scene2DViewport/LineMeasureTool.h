@@ -38,7 +38,7 @@ namespace OrthancStone
   class LineMeasureTool : public MeasureTool
   {
   public:
-    LineMeasureTool(boost::weak_ptr<ViewportController> controllerW);
+    LineMeasureTool(IViewport& viewport);
 
     ~LineMeasureTool();
 
@@ -47,7 +47,7 @@ namespace OrthancStone
     void Set(ScenePoint2D start, ScenePoint2D end);
 
 
-    virtual bool HitTest(ScenePoint2D p) const ORTHANC_OVERRIDE;
+    virtual bool HitTest(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void Highlight(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void ResetHighlightState() ORTHANC_OVERRIDE;
     virtual boost::shared_ptr<IFlexiblePointerTracker> CreateEditionTracker(const PointerEvent& e) ORTHANC_OVERRIDE;
@@ -64,7 +64,7 @@ namespace OrthancStone
     };
 
 
-    LineHighlightArea LineHitTest(ScenePoint2D p) const;
+    LineHighlightArea LineHitTest(ScenePoint2D p);
 
   private:
     virtual void        RefreshScene() ORTHANC_OVERRIDE;

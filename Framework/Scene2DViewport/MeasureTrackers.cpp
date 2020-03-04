@@ -24,8 +24,8 @@
 namespace OrthancStone
 {
 
-  CreateMeasureTracker::CreateMeasureTracker(boost::weak_ptr<ViewportController> controllerW)
-    : controllerW_(controllerW)
+  CreateMeasureTracker::CreateMeasureTracker(IViewport& viewport)
+    : viewport_(viewport)
     , alive_(true)
     , commitResult_(true)
   {
@@ -47,23 +47,28 @@ namespace OrthancStone
     // if the tracker completes successfully, we add the command
     // to the undo stack
     // otherwise, we simply undo it
+
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    ViewportController& controller = lock->GetController();
+
     if (commitResult_)
-      controllerW_.lock()->PushCommand(command_);
+      lock->GetController().PushCommand(command_);
     else
       command_->Undo();
+
+    lock->Invalidate();
   }
 
-  EditMeasureTracker::EditMeasureTracker(boost::weak_ptr<ViewportController> controllerW, const PointerEvent& e)
-    : controllerW_(controllerW)
+  EditMeasureTracker::EditMeasureTracker(IViewport& viewport, const PointerEvent& e)
+    : viewport_(viewport)
     , alive_(true)
     , commitResult_(true)
   {
-    boost::shared_ptr<ViewportController> controller = controllerW.lock();
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    ViewportController& controller = lock->GetController();
 
-    if (controller)
-    {
-      originalClickPosition_ = e.GetMainPosition().Apply(controller->GetScene().GetCanvasToSceneTransform());
-    }
+    originalClickPosition_ = e.GetMainPosition().Apply(
+      controller.GetScene().GetCanvasToSceneTransform());
   }
 
   void EditMeasureTracker::Cancel()
@@ -82,10 +87,16 @@ namespace OrthancStone
     // if the tracker completes successfully, we add the command
     // to the undo stack
     // otherwise, we simply undo it
+
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    ViewportController& controller = lock->GetController();
+
     if (commitResult_)
-      controllerW_.lock()->PushCommand(command_);
+      lock->GetController().PushCommand(command_);
     else
       command_->Undo();
+
+    lock->Invalidate();
   }
 }
 

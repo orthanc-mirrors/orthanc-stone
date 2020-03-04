@@ -26,22 +26,18 @@
 namespace OrthancStone
 {
   CreateAngleMeasureTracker::CreateAngleMeasureTracker(
-    boost::weak_ptr<ViewportController>          controllerW,
-    const PointerEvent&             e)
-    : CreateMeasureTracker(controllerW)
+    IViewport& viewport,
+    const PointerEvent& e)
+    : CreateMeasureTracker(viewport)
     , state_(CreatingSide1)
   {
     ScenePoint2D point = e.GetMainPosition();
-    
-    {
-      boost::shared_ptr<ViewportController> controller = controllerW.lock();
-      if (controller)
-      {
-        point = e.GetMainPosition().Apply(controller->GetScene().GetCanvasToSceneTransform());
-      }
+    {    
+      std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+      Scene2D& scene = lock->GetController().GetScene();
+      point = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
     }
-    
-    command_.reset(new CreateAngleMeasureCommand(controllerW, point));
+    command_.reset(new CreateAngleMeasureCommand(viewport, point));
   }
 
   CreateAngleMeasureTracker::~CreateAngleMeasureTracker()
@@ -57,11 +53,13 @@ namespace OrthancStone
         "PointerMove: active_ == false");
     }
 
-    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
-    if (controller)
+    
     {
+      std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+      ViewportController& controller = lock->GetController();
+
       ScenePoint2D scenePos = event.GetMainPosition().Apply(
-        controller->GetScene().GetCanvasToSceneTransform());
+        controller.GetScene().GetCanvasToSceneTransform());
 
       switch (state_)
       {
@@ -78,6 +76,7 @@ namespace OrthancStone
       }
       //LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
       //  "scenePos.GetY() = " << scenePos.GetY();
+      lock->Invalidate();
     }
   }
 

@@ -26,6 +26,8 @@
 
 #include <boost/math/constants/constants.hpp>
 
+#include "../Viewport/IViewport.h"
+
 namespace OrthancStone
 {
   void MeasureTool::Enable()
@@ -45,46 +47,26 @@ namespace OrthancStone
     return enabled_;
   }
 
-
-  boost::shared_ptr<const ViewportController> MeasureTool::GetController() const
-  {
-    boost::shared_ptr<const ViewportController> controller = controllerW_.lock();
-    if (!controller)
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-        "Using dead ViewportController object!");
-    return controller;
-  }
-
-  boost::shared_ptr<ViewportController> MeasureTool::GetController()
-  {
-#if 1
-    return boost::const_pointer_cast<ViewportController>
-      (const_cast<const MeasureTool*>(this)->GetController());
-    //return boost::const_<boost::shared_ptr<ViewportController>>
-    //  (const_cast<const MeasureTool*>(this)->GetController());
-#else
-    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
-    if (!controller)
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, 
-        "Using dead ViewportController object!");
-    return controller;
-#endif
-  }
-
   MeasureTool::MeasureTool(
-    boost::weak_ptr<ViewportController> controllerW)
-    : controllerW_(controllerW)
+    IViewport& viewport)
+    : viewport_(viewport)
     , enabled_(true)
   {
-    // TODO => Move this out of constructor
-    Register<ViewportController::SceneTransformChanged>(*GetController(), &MeasureTool::OnSceneTransformChanged);
-  }
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    ViewportController& controller = lock->GetController();
 
+    // TODO => Move this out of constructor
+    Register<ViewportController::SceneTransformChanged>(
+      controller, 
+      &MeasureTool::OnSceneTransformChanged);
+  }
 
   bool MeasureTool::IsSceneAlive() const
   {
-    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
-    return (controller.get() != NULL);
+    // since the lifetimes of the viewport, viewportcontroller (and the
+    // measuring tools inside it) are linked, the scene is always alive as 
+    // long as "this" is alive
+    return true;
   }
 
   void MeasureTool::OnSceneTransformChanged(

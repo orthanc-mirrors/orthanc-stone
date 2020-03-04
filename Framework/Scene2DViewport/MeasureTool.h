@@ -75,7 +75,7 @@ namespace OrthancStone
     true, then a click at that position will return a tracker to edit the 
     measuring tool
     */
-    virtual bool HitTest(ScenePoint2D p) const = 0;
+    virtual bool HitTest(ScenePoint2D p) = 0;
 
     /**
     This method must return a memento the captures the tool state (not including
@@ -113,7 +113,7 @@ namespace OrthancStone
     virtual std::string GetDescription() = 0;
 
   protected:
-    MeasureTool(boost::weak_ptr<ViewportController> controllerW);
+    MeasureTool(IViewport& viewport);
 
     /**
     The measuring tool may exist in a standalone fashion, without any available
@@ -129,17 +129,20 @@ namespace OrthancStone
     */
     virtual void RefreshScene() = 0;
 
-    boost::shared_ptr<const ViewportController> GetController() const;
-    boost::shared_ptr<ViewportController>      GetController();
-
     /**
     enabled_ is not accessible by subclasses because there is a state machine
     that we do not wanna mess with
     */
     bool IsEnabled() const;
 
+    /**
+    Protected to allow sub-classes to use this weak pointer in factory methods
+    (pass them to created objects)
+    */
+    IViewport& viewport_;
+
+
   private:
-    boost::weak_ptr<ViewportController> controllerW_;
     bool     enabled_;
   };
 

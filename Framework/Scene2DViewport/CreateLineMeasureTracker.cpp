@@ -26,21 +26,17 @@
 namespace OrthancStone
 {
   CreateLineMeasureTracker::CreateLineMeasureTracker(
-    boost::weak_ptr<ViewportController>          controllerW,
+    IViewport&          viewport,
     const PointerEvent&             e)
-    : CreateMeasureTracker(controllerW)
+    : CreateMeasureTracker(viewport)
   {
     ScenePoint2D point = e.GetMainPosition();
-    
     {
-      boost::shared_ptr<ViewportController> controller = controllerW.lock();
-      if (controller)
-      {
-        point = e.GetMainPosition().Apply(controller->GetScene().GetCanvasToSceneTransform());
-      }
+      std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+      ViewportController& controller = lock->GetController();
+      point = e.GetMainPosition().Apply(controller.GetScene().GetCanvasToSceneTransform());
     }
-
-    command_.reset(new CreateLineMeasureCommand(controllerW, point));
+    command_.reset(new CreateLineMeasureCommand(viewport, point));
   }
 
   CreateLineMeasureTracker::~CreateLineMeasureTracker()
@@ -57,20 +53,19 @@ namespace OrthancStone
         "PointerMove: active_ == false");
     }
 
-    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
-    if (controller)
-    {
-      ScenePoint2D scenePos = event.GetMainPosition().Apply(
-        controller->GetScene().GetCanvasToSceneTransform());
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    ViewportController& controller = lock->GetController();
+
+    ScenePoint2D scenePos = event.GetMainPosition().Apply(
+      controller.GetScene().GetCanvasToSceneTransform());
       
-      //LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
-      //  "scenePos.GetY() = " << scenePos.GetY();
+    //LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
+    //  "scenePos.GetY() = " << scenePos.GetY();
       
-      CreateLineMeasureTracker* concreteThis =
-        dynamic_cast<CreateLineMeasureTracker*>(this);
-      assert(concreteThis != NULL);
-      GetCommand()->SetEnd(scenePos);
-    }
+    CreateLineMeasureTracker* concreteThis =
+      dynamic_cast<CreateLineMeasureTracker*>(this);
+    assert(concreteThis != NULL);
+    GetCommand()->SetEnd(scenePos);
   }
 
   void CreateLineMeasureTracker::PointerUp(const PointerEvent& e)

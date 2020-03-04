@@ -22,20 +22,20 @@
 #include "../Scene2D/TextSceneLayer.h"
 #include "../Scene2D/PolylineSceneLayer.h"
 #include "../Scene2D/Scene2D.h"
-#include "../Scene2DViewport/ViewportController.h"
+#include "../Viewport/IViewport.h"
 #include "../StoneException.h"
 
 namespace OrthancStone
 {
   LayerHolder::LayerHolder(
-    boost::weak_ptr<ViewportController> controllerW,
-    int                    polylineLayerCount,
-    int                    textLayerCount,
-    int                    infoTextCount)
+    IViewport& viewport,
+    int        polylineLayerCount,
+    int        textLayerCount,
+    int        infoTextCount)
     : textLayerCount_(textLayerCount)
     , polylineLayerCount_(polylineLayerCount)
     , infoTextCount_(infoTextCount)
-    , controllerW_(controllerW)
+    , viewport_(viewport)
     , baseLayerIndex_(-1)
   {
 
@@ -43,28 +43,26 @@ namespace OrthancStone
 
   void LayerHolder::CreateLayers()
   {
-    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
 
-    if (controller)
+    assert(baseLayerIndex_ == -1);
+
+    baseLayerIndex_ = lock->GetController().GetScene().GetMaxDepth() + 100;
+
+    for (int i = 0; i < polylineLayerCount_; ++i)
     {
-      assert(baseLayerIndex_ == -1);
-
-      baseLayerIndex_ = controller->GetScene().GetMaxDepth() + 100;
-
-      for (int i = 0; i < polylineLayerCount_; ++i)
-      {
-        std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
-        controller->GetScene().SetLayer(baseLayerIndex_ + i, layer.release());
-      }
-
-      for (int i = 0; i < textLayerCount_; ++i)
-      {
-        std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-        controller->GetScene().SetLayer(
-          baseLayerIndex_ + polylineLayerCount_ + i,
-          layer.release());
-      }
+      std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
+      lock->GetController().GetScene().SetLayer(baseLayerIndex_ + i, layer.release());
     }
+
+    for (int i = 0; i < textLayerCount_; ++i)
+    {
+      std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
+      lock->GetController().GetScene().SetLayer(
+        baseLayerIndex_ + polylineLayerCount_ + i,
+        layer.release());
+    }
+    lock->Invalidate();
   }
 
   void LayerHolder::CreateLayersIfNeeded()
@@ -86,65 +84,50 @@ namespace OrthancStone
   
   void LayerHolder::DeleteLayers()
   {
-    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    Scene2D& scene = lock->GetController().GetScene();
 
-    if (controller)
+    for (int i = 0; i < textLayerCount_ + polylineLayerCount_; ++i)
     {
-      for (int i = 0; i < textLayerCount_ + polylineLayerCount_; ++i)
-      {
-        ORTHANC_ASSERT(controller->GetScene().HasLayer(baseLayerIndex_ + i), "No layer");
-        controller->GetScene().DeleteLayer(baseLayerIndex_ + i);
-      }
-      baseLayerIndex_ = -1;
+      ORTHANC_ASSERT(scene.HasLayer(baseLayerIndex_ + i), "No layer");
+      scene.DeleteLayer(baseLayerIndex_ + i);
     }
+    baseLayerIndex_ = -1;
+    lock->Invalidate();
   }
   
   PolylineSceneLayer* LayerHolder::GetPolylineLayer(int index /*= 0*/)
   {
-    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    Scene2D& scene = lock->GetController().GetScene();
 
-    if (controller)
-    {
-      using namespace Orthanc;
-      ORTHANC_ASSERT(baseLayerIndex_ != -1);
-      ORTHANC_ASSERT(controller->GetScene().HasLayer(GetPolylineLayerIndex(index)));
-      ISceneLayer* layer =
-        &(controller->GetScene().GetLayer(GetPolylineLayerIndex(index)));
+    using namespace Orthanc;
+    ORTHANC_ASSERT(baseLayerIndex_ != -1);
+    ORTHANC_ASSERT(scene.HasLayer(GetPolylineLayerIndex(index)));
+    ISceneLayer* layer = &(scene.GetLayer(GetPolylineLayerIndex(index)));
       
-      PolylineSceneLayer* concreteLayer =
-        dynamic_cast<PolylineSceneLayer*>(layer);
+    PolylineSceneLayer* concreteLayer =
+      dynamic_cast<PolylineSceneLayer*>(layer);
       
-      ORTHANC_ASSERT(concreteLayer != NULL);
-      return concreteLayer;
-    }
-    else
-    {
-      return NULL; // TODO
-    }
+    ORTHANC_ASSERT(concreteLayer != NULL);
+    return concreteLayer;
   }
 
   TextSceneLayer* LayerHolder::GetTextLayer(int index /*= 0*/)
   {
-    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    Scene2D& scene = lock->GetController().GetScene();
 
-    if (controller)
-    {
-      using namespace Orthanc;
-      ORTHANC_ASSERT(baseLayerIndex_ != -1);
-      ORTHANC_ASSERT(controller->GetScene().HasLayer(GetTextLayerIndex(index)));
-      ISceneLayer* layer =
-        &(controller->GetScene().GetLayer(GetTextLayerIndex(index)));
+    using namespace Orthanc;
+    ORTHANC_ASSERT(baseLayerIndex_ != -1);
+    ORTHANC_ASSERT(scene.HasLayer(GetTextLayerIndex(index)));
+    ISceneLayer* layer = &(scene.GetLayer(GetTextLayerIndex(index)));
       
-      TextSceneLayer* concreteLayer =
-        dynamic_cast<TextSceneLayer*>(layer);
+    TextSceneLayer* concreteLayer =
+      dynamic_cast<TextSceneLayer*>(layer);
       
-      ORTHANC_ASSERT(concreteLayer != NULL);
-      return concreteLayer;
-    }
-    else
-    {
-      return NULL; // TODO
-    }
+    ORTHANC_ASSERT(concreteLayer != NULL);
+    return concreteLayer;
   }
 
   int LayerHolder::GetPolylineLayerIndex(int index /*= 0*/)
@@ -153,8 +136,7 @@ namespace OrthancStone
     ORTHANC_ASSERT(index < polylineLayerCount_);
     return baseLayerIndex_ + index;
   }
-
-
+  
   int LayerHolder::GetTextLayerIndex(int index /*= 0*/)
   {
     using namespace Orthanc;

@@ -26,14 +26,18 @@
 namespace OrthancStone
 {
   CreateLineMeasureCommand::CreateLineMeasureCommand(
-    boost::weak_ptr<ViewportController> controllerW,
+    IViewport& viewport,
     ScenePoint2D           point)
-    : CreateMeasureCommand(controllerW)
+    : CreateMeasureCommand(viewport)
     , measureTool_(
-      boost::make_shared<LineMeasureTool>(controllerW))
+      boost::make_shared<LineMeasureTool>(viewport))
   {
-    GetController()->AddMeasureTool(measureTool_);
+    
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    ViewportController& controller = lock->GetController();
+    controller.AddMeasureTool(measureTool_);
     measureTool_->Set(point, point);
+    lock->Invalidate();
   }
 
   void CreateLineMeasureCommand::SetEnd(ScenePoint2D scenePos)

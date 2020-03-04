@@ -28,8 +28,8 @@
 namespace OrthancStone
 {
   OneGesturePointerTracker::OneGesturePointerTracker(
-    boost::weak_ptr<ViewportController> controllerW)
-    : controllerW_(controllerW)
+    IViewport& viewport)
+    : viewport_(viewport)
     , alive_(true)
     , currentTouchCount_(1)
   {
@@ -60,7 +60,7 @@ namespace OrthancStone
      * 2019-12-06 (SJO): Patch to have consistent behavior when mouse
      * leaves the canvas while the tracker is still active, then
      * button is released while out-of-canvas. Such an event is not
-     * catched (at least in WebAssembly), so we delete the tracker on
+     * caught (at least in WebAssembly), so we delete the tracker on
      * the next click inside the canvas.
      **/
     alive_ = false;
@@ -69,10 +69,5 @@ namespace OrthancStone
   bool OneGesturePointerTracker::IsAlive() const
   {
     return alive_;
-  }
-
-  boost::shared_ptr<ViewportController> OneGesturePointerTracker::GetController()
-  {
-    return controllerW_.lock();
   }
 }

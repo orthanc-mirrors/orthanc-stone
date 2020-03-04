@@ -28,23 +28,18 @@ namespace OrthancStone
 {
   EditLineMeasureTracker::EditLineMeasureTracker(
     boost::shared_ptr<MeasureTool>  measureTool,
-    boost::weak_ptr<ViewportController> controllerW,
-    const PointerEvent& e) 
-    : EditMeasureTracker(controllerW, e)
+    IViewport& viewport,
+    const PointerEvent& e)
+    : EditMeasureTracker(viewport, e)
   {
     ScenePoint2D scenePos = e.GetMainPosition();
-
     {
-      boost::shared_ptr<ViewportController> controller = controllerW.lock();
-      if (controller)
-      {
-        scenePos = e.GetMainPosition().Apply(controller->GetScene().GetCanvasToSceneTransform());
-      }
+      std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+      Scene2D& scene = lock->GetController().GetScene();
+      scenePos = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
     }
-
     modifiedZone_ = dynamic_cast<LineMeasureTool&>(*measureTool).LineHitTest(scenePos);
-
-    command_.reset(new EditLineMeasureCommand(measureTool, controllerW));
+    command_.reset(new EditLineMeasureCommand(measureTool, viewport));
   }
 
   EditLineMeasureTracker::~EditLineMeasureTracker()
@@ -54,48 +49,48 @@ namespace OrthancStone
 
   void EditLineMeasureTracker::PointerMove(const PointerEvent& e)
   {
-    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
-    if (controller)
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    ViewportController& controller = lock->GetController();
+    Scene2D& scene = controller.GetScene();
+
+    ScenePoint2D scenePos = e.GetMainPosition().Apply(
+      scene.GetCanvasToSceneTransform());
+
+    ScenePoint2D delta = scenePos - GetOriginalClickPosition();
+
+    boost::shared_ptr<LineMeasureToolMemento> memento =
+      boost::dynamic_pointer_cast<LineMeasureToolMemento>(command_->mementoOriginal_);
+
+    ORTHANC_ASSERT(memento.get() != NULL);
+
+    switch (modifiedZone_)
     {
-      ScenePoint2D scenePos = e.GetMainPosition().Apply(
-        controller->GetScene().GetCanvasToSceneTransform());
-      
-      ScenePoint2D delta = scenePos - GetOriginalClickPosition();
-
-      boost::shared_ptr<LineMeasureToolMemento> memento =
-        boost::dynamic_pointer_cast<LineMeasureToolMemento>(command_->mementoOriginal_);
-
-      ORTHANC_ASSERT(memento.get() != NULL);
-
-      switch (modifiedZone_)
-      {
-        case LineMeasureTool::LineHighlightArea_Start:
-        {
-          ScenePoint2D newStart = memento->start_ + delta;
-          GetCommand()->SetStart(newStart);
-        }
-        break;
-        case LineMeasureTool::LineHighlightArea_End:
-        {
-          ScenePoint2D newEnd = memento->end_ + delta;
-          GetCommand()->SetEnd(newEnd);
-        }
-        break;
-        case LineMeasureTool::LineHighlightArea_Segment:
-        {
-          ScenePoint2D newStart = memento->start_ + delta;
-          ScenePoint2D newEnd = memento->end_ + delta;
-          GetCommand()->SetStart(newStart);
-          GetCommand()->SetEnd(newEnd);
-        }
-        break;
-        default:
-          LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
-          break;
-      }
+    case LineMeasureTool::LineHighlightArea_Start:
+    {
+      ScenePoint2D newStart = memento->start_ + delta;
+      GetCommand()->SetStart(newStart);
+    }
+    break;
+    case LineMeasureTool::LineHighlightArea_End:
+    {
+      ScenePoint2D newEnd = memento->end_ + delta;
+      GetCommand()->SetEnd(newEnd);
+    }
+    break;
+    case LineMeasureTool::LineHighlightArea_Segment:
+    {
+      ScenePoint2D newStart = memento->start_ + delta;
+      ScenePoint2D newEnd = memento->end_ + delta;
+      GetCommand()->SetStart(newStart);
+      GetCommand()->SetEnd(newEnd);
+    }
+    break;
+    default:
+      LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
+      break;
     }
   }
-  
+
   void EditLineMeasureTracker::PointerUp(const PointerEvent& e)
   {
     alive_ = false;

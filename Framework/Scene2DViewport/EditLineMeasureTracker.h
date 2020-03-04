@@ -38,7 +38,7 @@ namespace OrthancStone
     */
     EditLineMeasureTracker(
       boost::shared_ptr<MeasureTool>  measureTool,
-      boost::weak_ptr<ViewportController> controllerW,
+      IViewport& viewport,
       const PointerEvent&                 e);
 
     ~EditLineMeasureTracker();

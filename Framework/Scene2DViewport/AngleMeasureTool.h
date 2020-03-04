@@ -40,7 +40,7 @@ namespace OrthancStone
   class AngleMeasureTool : public MeasureTool
   {
   public:
-    AngleMeasureTool(boost::weak_ptr<ViewportController> controllerW);
+    AngleMeasureTool(IViewport& viewport);
 
     ~AngleMeasureTool();
 
@@ -48,7 +48,7 @@ namespace OrthancStone
     void SetCenter(ScenePoint2D start);
     void SetSide2End(ScenePoint2D start);
 
-    virtual bool HitTest(ScenePoint2D p) const ORTHANC_OVERRIDE;
+    virtual bool HitTest(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void Highlight(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void ResetHighlightState() ORTHANC_OVERRIDE;
     virtual boost::shared_ptr<IFlexiblePointerTracker> CreateEditionTracker(const PointerEvent& e) ORTHANC_OVERRIDE;

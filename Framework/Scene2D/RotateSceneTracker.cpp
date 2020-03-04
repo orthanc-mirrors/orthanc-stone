@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -23,23 +23,25 @@
 
 namespace OrthancStone
 {
-  RotateSceneTracker::RotateSceneTracker(boost::weak_ptr<ViewportController> controllerW,
+  RotateSceneTracker::RotateSceneTracker(IViewport& viewport,
                                          const PointerEvent& event)
-    : OneGesturePointerTracker(controllerW)
+    : OneGesturePointerTracker(viewport)
     , click_(event.GetMainPosition())
-    , aligner_(controllerW, click_)
+    , aligner_(viewport, click_)
     , isFirst_(true)
-    , originalSceneToCanvas_(GetController()->GetSceneToCanvasTransform())
   {
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    originalSceneToCanvas_ = lock->GetController().GetSceneToCanvasTransform();
+
   }
-  
+
   void RotateSceneTracker::PointerMove(const PointerEvent& event)
   {
     ScenePoint2D p = event.GetMainPosition();
     double dx = p.GetX() - click_.GetX();
     double dy = p.GetY() - click_.GetY();
 
-    if (std::abs(dx) > 5.0 || 
+    if (std::abs(dx) > 5.0 ||
         std::abs(dy) > 5.0)
     {
       double a = atan2(dy, dx);
@@ -50,28 +52,22 @@ namespace OrthancStone
         isFirst_ = false;
       }
 
-      // The controller is a weak pointer. It could be deleted when the
-      // tracker is still alive (for instance, because of a lost WebGL
-      // context that triggers a recreation of the viewport)
-      if(GetController().get() != NULL)
-      {
-        GetController()->SetSceneToCanvasTransform(
-          AffineTransform2D::Combine(
-            AffineTransform2D::CreateRotation(a - referenceAngle_),
-            originalSceneToCanvas_));
-        
-        aligner_.Apply();
-      }
+      std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+
+      lock->GetController().SetSceneToCanvasTransform(
+        AffineTransform2D::Combine(
+          AffineTransform2D::CreateRotation(a - referenceAngle_),
+          originalSceneToCanvas_));
+      aligner_.Apply();
+      lock->Invalidate();
     }
   }
 
   void RotateSceneTracker::Cancel()
   {
-      // See remark above
-      if(GetController().get() != NULL)
-      {
-        GetController()->SetSceneToCanvasTransform(originalSceneToCanvas_);
-      }
+    // See remark above
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    lock->GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
+    lock->Invalidate();
   }
-
 }

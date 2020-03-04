@@ -20,16 +20,23 @@
 
 
 #include "PanSceneTracker.h"
+#include "../Viewport/IViewport.h"
 #include "../Scene2DViewport/ViewportController.h"
+
+#include <memory>
 
 namespace OrthancStone
 {
-  PanSceneTracker::PanSceneTracker(boost::weak_ptr<ViewportController> controllerW,
+  PanSceneTracker::PanSceneTracker(IViewport& viewport,
                                    const PointerEvent& event)
-    : OneGesturePointerTracker(controllerW)
-    , originalSceneToCanvas_(GetController()->GetSceneToCanvasTransform())
-    , originalCanvasToScene_(GetController()->GetCanvasToSceneTransform())
+    : OneGesturePointerTracker(viewport)
   {
+    
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+
+    originalSceneToCanvas_ = lock->GetController().GetSceneToCanvasTransform();
+    originalCanvasToScene_ = lock->GetController().GetCanvasToSceneTransform();
+
     pivot_ = event.GetMainPosition().Apply(originalCanvasToScene_);
   }
 
@@ -38,25 +45,19 @@ namespace OrthancStone
   {
     ScenePoint2D p = event.GetMainPosition().Apply(originalCanvasToScene_);
 
-      // The controller is a weak pointer. It could be deleted when the
-      // tracker is still alive (for instance, because of a lost WebGL
-      // context)
-      if(GetController().get() != NULL)
-      {
-      GetController()->SetSceneToCanvasTransform(
-        AffineTransform2D::Combine(
-          originalSceneToCanvas_,
-          AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
-                                          p.GetY() - pivot_.GetY())));
-      }
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+
+    lock->GetController().SetSceneToCanvasTransform(
+      AffineTransform2D::Combine(
+        originalSceneToCanvas_,
+        AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
+                                        p.GetY() - pivot_.GetY())));
+    lock->Invalidate();
   }
 
   void PanSceneTracker::Cancel()
   {
-      if(GetController().get() != NULL)
-      {
-        GetController()->SetSceneToCanvasTransform(originalSceneToCanvas_);
-      }
+    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    lock->GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
   }
-
 }

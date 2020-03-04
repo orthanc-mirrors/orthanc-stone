@@ -43,7 +43,7 @@ namespace OrthancStone
     performed at this time
     */
     LayerHolder(
-      boost::weak_ptr<ViewportController> controllerW,
+      IViewport& viewport,
       int polylineLayerCount, int textLayerCount, int infoTextCount = 0);
 
     /**
@@ -101,7 +101,7 @@ namespace OrthancStone
     int textLayerCount_;
     int polylineLayerCount_;
     int infoTextCount_;
-    boost::weak_ptr<ViewportController> controllerW_;
+    IViewport& viewport_;
     int baseLayerIndex_;
   };
 }

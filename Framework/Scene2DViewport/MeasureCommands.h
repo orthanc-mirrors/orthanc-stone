@@ -19,7 +19,7 @@
  **/
 #pragma once
 
-#include "../Scene2D/Scene2D.h"
+#include "../Viewport/IViewport.h"
 
 // to be moved into Stone
 #include "PredeclaredTypes.h"
@@ -35,27 +35,21 @@ namespace OrthancStone
   class MeasureCommand : public boost::noncopyable
   {
   public:
-    MeasureCommand(boost::weak_ptr<ViewportController> controllerW) 
-      : controllerW_(controllerW)
-    {
-
-    }
+    MeasureCommand(IViewport& viewport) : viewport_(viewport)
+    {}
     virtual void Undo() = 0;
     virtual void Redo() = 0;
     
     virtual ~MeasureCommand() {};
 
   protected:
-    boost::shared_ptr<ViewportController>  GetController();
-
-  private:
-    boost::weak_ptr<ViewportController> controllerW_;
+    IViewport& viewport_;
   };
 
   class CreateMeasureCommand : public MeasureCommand
   {
   public:
-    CreateMeasureCommand(boost::weak_ptr<ViewportController> controllerW);
+    CreateMeasureCommand(IViewport& viewport);
     virtual ~CreateMeasureCommand();
     virtual void Undo() ORTHANC_OVERRIDE;
     virtual void Redo() ORTHANC_OVERRIDE;
@@ -67,7 +61,7 @@ namespace OrthancStone
   class EditMeasureCommand : public MeasureCommand
   {
   public:
-    EditMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, boost::weak_ptr<ViewportController> controllerW);
+    EditMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, IViewport& viewport);
     virtual ~EditMeasureCommand();
     virtual void Undo() ORTHANC_OVERRIDE;
     virtual void Redo() ORTHANC_OVERRIDE;
@@ -88,7 +82,7 @@ namespace OrthancStone
   class DeleteMeasureCommand : public MeasureCommand
   {
   public:
-    DeleteMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, boost::weak_ptr<ViewportController> controllerW);
+    DeleteMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, IViewport& viewport);
     virtual ~DeleteMeasureCommand();
     virtual void Undo() ORTHANC_OVERRIDE;
     virtual void Redo() ORTHANC_OVERRIDE;

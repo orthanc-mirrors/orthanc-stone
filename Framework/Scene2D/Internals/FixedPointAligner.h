@@ -22,6 +22,9 @@
 
 #include "../../Scene2DViewport/PredeclaredTypes.h"
 #include "../../Scene2D/ScenePoint2D.h"
+#include "../../Viewport/IViewport.h"
+
+#include <boost/weak_ptr.hpp>
 
 namespace OrthancStone
 {
@@ -32,12 +35,12 @@ namespace OrthancStone
     class FixedPointAligner : public boost::noncopyable
     {
     private:
-      boost::weak_ptr<ViewportController> controllerW_;
+      IViewport& viewport_;
       ScenePoint2D           pivot_;
       ScenePoint2D           canvas_;
 
     public:
-      FixedPointAligner(boost::weak_ptr<ViewportController> controllerW,
+      FixedPointAligner(IViewport& viewport,
                         const ScenePoint2D& p);
 
       void Apply();

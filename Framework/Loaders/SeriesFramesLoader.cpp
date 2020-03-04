@@ -226,7 +226,7 @@ namespace OrthancStone
         float w = payload.GetWindowingWidth();
         if (w <= 0.01f)
         {
-          w = 0.01;  // Prevent division by zero
+          w = 0.01f;  // Prevent division by zero
         }
 
         const float c = payload.GetWindowingCenter();

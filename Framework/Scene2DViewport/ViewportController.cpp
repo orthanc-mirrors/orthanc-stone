@@ -66,7 +66,8 @@ namespace OrthancStone
 
   ViewportController::ViewportController(IViewport& viewport) 
     : viewport_(viewport)
-    , undoStackW_(boost::make_shared<OrthancStone::UndoStack>())
+    , undoStackW_(boost::shared_ptr<UndoStack>(new UndoStack()))
+
     , scene_(new Scene2D)
     , canvasToSceneFactor_(1)
   {
@@ -75,7 +76,7 @@ namespace OrthancStone
   ViewportController::ViewportController(IViewport& viewport,
                                          const Scene2D& scene)
     : viewport_(viewport)
-    , undoStackW_(boost::make_shared<OrthancStone::UndoStack>())
+    , undoStackW_(boost::shared_ptr<UndoStack>(new UndoStack()))
     , scene_(scene.Clone())
     , canvasToSceneFactor_(1)
   {

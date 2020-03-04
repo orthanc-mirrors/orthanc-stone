@@ -715,7 +715,7 @@ namespace OrthancStone
     // wipe background before rendering
     if (GetPreferredPhotomotricDisplayMode() == RadiographyPhotometricDisplayMode_Monochrome1)
     {
-      Orthanc::ImageProcessing::Set(layers, 65535.0f);
+      Orthanc::ImageProcessing::Set(layers, 65535);
     }
     else
     {

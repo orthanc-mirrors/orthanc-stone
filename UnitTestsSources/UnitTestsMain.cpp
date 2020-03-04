@@ -807,21 +807,21 @@ TEST(LinearAlgebra, ParseVectorLocale)
 
   ASSERT_TRUE(OrthancStone::LinearAlgebra::ParseVector(v, "1.2"));
   ASSERT_EQ(1u, v.size());
-  ASSERT_FLOAT_EQ(1.2f, v[0]);
+  ASSERT_DOUBLE_EQ(1.2, v[0]);
 
   ASSERT_TRUE(OrthancStone::LinearAlgebra::ParseVector(v, "-1.2e+2"));
   ASSERT_EQ(1u, v.size());
-  ASSERT_FLOAT_EQ(-120.0f, v[0]);
+  ASSERT_DOUBLE_EQ(-120.0, v[0]);
 
   ASSERT_TRUE(OrthancStone::LinearAlgebra::ParseVector(v, "-1e-2\\2"));
   ASSERT_EQ(2u, v.size());
-  ASSERT_FLOAT_EQ(-0.01f, v[0]);
-  ASSERT_FLOAT_EQ(2.0f, v[1]);
+  ASSERT_DOUBLE_EQ(-0.01, v[0]);
+  ASSERT_DOUBLE_EQ(2.0, v[1]);
 
   ASSERT_TRUE(OrthancStone::LinearAlgebra::ParseVector(v, "1.3671875\\1.3671875"));
   ASSERT_EQ(2u, v.size());
-  ASSERT_FLOAT_EQ(1.3671875, v[0]);
-  ASSERT_FLOAT_EQ(1.3671875, v[1]); 
+  ASSERT_DOUBLE_EQ(1.3671875, v[0]);
+  ASSERT_DOUBLE_EQ(1.3671875, v[1]); 
 }
 
 

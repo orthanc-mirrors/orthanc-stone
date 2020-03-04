@@ -45,9 +45,9 @@ namespace OrthancStone
     IViewport& viewport)
     : MeasureTool(viewport)
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
-    , layerHolder_(boost::make_shared<LayerHolder>(viewport,1,5))
+    , layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(viewport,1,5)))
 #else
-    , layerHolder_(boost::make_shared<LayerHolder>(viewport, 1, 1))
+    , layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(viewport,1,1)))
 #endif
     , angleHighlightArea_(AngleHighlightArea_None)
   {

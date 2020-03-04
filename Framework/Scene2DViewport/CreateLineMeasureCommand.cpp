@@ -30,7 +30,7 @@ namespace OrthancStone
     ScenePoint2D           point)
     : CreateMeasureCommand(viewport)
     , measureTool_(
-      boost::make_shared<LineMeasureTool>(viewport))
+      boost::shared_ptr<LineMeasureTool>(new LineMeasureTool(viewport)))
   {
     
     std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());

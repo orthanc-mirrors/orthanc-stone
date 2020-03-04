@@ -251,7 +251,7 @@ namespace Deprecated
           throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
       
-      std::auto_ptr<Orthanc::PngReader> result(new Orthanc::PngReader);
+      std::unique_ptr<Orthanc::PngReader> result(new Orthanc::PngReader);
       result->ReadFromMemory(compressed);
 
       if (targetFormat == Orthanc::PixelFormat_SignedGrayscale16)
@@ -328,7 +328,7 @@ namespace Deprecated
       std::string jpeg;
       Orthanc::Toolbox::DecodeBase64(jpeg, info["PixelData"].asString());
 
-      std::auto_ptr<Orthanc::JpegReader> reader(new Orthanc::JpegReader);
+      std::unique_ptr<Orthanc::JpegReader> reader(new Orthanc::JpegReader);
       reader->ReadFromMemory(jpeg);
 
       if (reader->GetFormat() == Orthanc::PixelFormat_RGB24)  // This is a color image
@@ -386,7 +386,7 @@ namespace Deprecated
       }
 
       // Decode a grayscale JPEG 8bpp image coming from the Web viewer
-      std::auto_ptr<Orthanc::ImageAccessor> image
+      std::unique_ptr<Orthanc::ImageAccessor> image
         (new Orthanc::Image(targetFormat, reader->GetWidth(), reader->GetHeight(), false));
 
       float scaling = static_cast<float>(stretchHigh - stretchLow) / 255.0f;

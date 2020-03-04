@@ -29,8 +29,8 @@ namespace Deprecated
   class OracleWebService::WebServiceCachedGetCommand : public IOracleCommand, OrthancStone::IObservable
   {
   protected:
-    std::auto_ptr<MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
-    std::auto_ptr<Orthanc::IDynamicObject>                                  payload_;
+    std::unique_ptr<MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
+    std::unique_ptr<Orthanc::IDynamicObject>                                  payload_;
     boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage>      cachedMessage_;
     OrthancStone::NativeStoneApplicationContext&                                          context_;
 

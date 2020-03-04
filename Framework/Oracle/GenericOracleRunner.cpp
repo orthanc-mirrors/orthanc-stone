@@ -314,7 +314,7 @@ namespace OrthancStone
 
     if (ok)
     {
-      std::auto_ptr<Orthanc::ParsedDicomFile> result(new Orthanc::ParsedDicomFile(dicom));
+      std::unique_ptr<Orthanc::ParsedDicomFile> result(new Orthanc::ParsedDicomFile(dicom));
 
       boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
       LOG(TRACE) << path << ": parsed in " << (end-start).total_milliseconds() << " ms";
@@ -352,7 +352,7 @@ namespace OrthancStone
     }
 
     uint64_t fileSize;
-    std::auto_ptr<Orthanc::ParsedDicomFile> parsed(ParseDicom(fileSize, path, command.IsPixelDataIncluded()));
+    std::unique_ptr<Orthanc::ParsedDicomFile> parsed(ParseDicom(fileSize, path, command.IsPixelDataIncluded()));
 
     if (fileSize != static_cast<size_t>(fileSize))
     {
@@ -418,7 +418,7 @@ namespace OrthancStone
     }
 
     size_t fileSize;
-    std::auto_ptr<Orthanc::ParsedDicomFile> parsed(ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, answerHeaders));
+    std::unique_ptr<Orthanc::ParsedDicomFile> parsed(ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, answerHeaders));
 
     {
       ParseDicomSuccessMessage message(command, *parsed, fileSize,

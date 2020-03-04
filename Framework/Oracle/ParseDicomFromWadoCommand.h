@@ -31,7 +31,7 @@ namespace OrthancStone
   {
   private:
     std::string                    sopInstanceUid_;
-    std::auto_ptr<IOracleCommand>  restCommand_;
+    std::unique_ptr<IOracleCommand>  restCommand_;
 
   public:
     ParseDicomFromWadoCommand(const std::string& sopInstanceUid,

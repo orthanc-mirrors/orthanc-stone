@@ -33,7 +33,7 @@ namespace OrthancStone
     CoordinateSystem3D  geometry_;
     double              depth_;
 
-    std::auto_ptr<Orthanc::IDynamicObject>   payload_;
+    std::unique_ptr<Orthanc::IDynamicObject>   payload_;
 
   public:
     SliceWithDepth(const CoordinateSystem3D& geometry,

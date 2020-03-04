@@ -35,7 +35,7 @@ namespace OrthancStone
   
   ISceneLayer* PolylineSceneLayer::Clone() const
   {
-    std::auto_ptr<PolylineSceneLayer> cloned(new PolylineSceneLayer);
+    std::unique_ptr<PolylineSceneLayer> cloned(new PolylineSceneLayer);
     cloned->Copy(*this);
     return cloned.release();
   }

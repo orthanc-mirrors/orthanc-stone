@@ -434,7 +434,7 @@ namespace OrthancStone
     // to the line joining the camera center and the principal point
     const VolumeProjection projection = VolumeProjection_Axial;
 
-    std::auto_ptr<Orthanc::ImageAccessor> target
+    std::unique_ptr<Orthanc::ImageAccessor> target
       (new Orthanc::Image(targetFormat, targetWidth, targetHeight, false));
     
     if (targetFormat == Orthanc::PixelFormat_Grayscale16 &&

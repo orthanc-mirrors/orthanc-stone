@@ -128,7 +128,7 @@ namespace Deprecated
 
     static Operation* DownloadInstanceGeometry(const std::string& instanceId)
     {
-      std::auto_ptr<Operation> operation(new Operation(Mode_InstanceGeometry));
+      std::unique_ptr<Operation> operation(new Operation(Mode_InstanceGeometry));
       operation->instanceId_ = instanceId;
       return operation.release();
     }
@@ -136,7 +136,7 @@ namespace Deprecated
     static Operation* DownloadFrameGeometry(const std::string& instanceId,
                                             unsigned int frame)
     {
-      std::auto_ptr<Operation> operation(new Operation(Mode_FrameGeometry));
+      std::unique_ptr<Operation> operation(new Operation(Mode_FrameGeometry));
       operation->instanceId_ = instanceId;
       operation->frame_ = frame;
       return operation.release();
@@ -146,7 +146,7 @@ namespace Deprecated
                                          const Slice&  slice,
                                          SliceImageQuality quality)
     {
-      std::auto_ptr<Operation> tmp(new Operation(Mode_LoadImage));
+      std::unique_ptr<Operation> tmp(new Operation(Mode_LoadImage));
       tmp->sliceIndex_ = sliceIndex;
       tmp->slice_ = &slice;
       tmp->quality_ = quality;
@@ -156,7 +156,7 @@ namespace Deprecated
     static Operation* DownloadSliceRawImage(unsigned int  sliceIndex,
                                             const Slice&  slice)
     {
-      std::auto_ptr<Operation> tmp(new Operation(Mode_LoadRawImage));
+      std::unique_ptr<Operation> tmp(new Operation(Mode_LoadRawImage));
       tmp->sliceIndex_ = sliceIndex;
       tmp->slice_ = &slice;
       tmp->quality_ = SliceImageQuality_InternalRaw;
@@ -165,7 +165,7 @@ namespace Deprecated
 
     static Operation* DownloadDicomFile(const Slice&  slice)
     {
-      std::auto_ptr<Operation> tmp(new Operation(Mode_LoadDicomFile));
+      std::unique_ptr<Operation> tmp(new Operation(Mode_LoadDicomFile));
       tmp->slice_ = &slice;
       return tmp.release();
     }
@@ -241,7 +241,7 @@ namespace Deprecated
       
       for (unsigned int frame = 0; frame < frames; frame++)
       {
-        std::auto_ptr<Slice> slice(new Slice);
+        std::unique_ptr<Slice> slice(new Slice);
         if (slice->ParseOrthancFrame(dicom, instances[i], frame))
         {
           OrthancStone::CoordinateSystem3D geometry = slice->GetGeometry();
@@ -277,7 +277,7 @@ namespace Deprecated
     
     for (unsigned int frame = 0; frame < frames; frame++)
     {
-      std::auto_ptr<Slice> slice(new Slice);
+      std::unique_ptr<Slice> slice(new Slice);
       if (slice->ParseOrthancFrame(dicom, instanceId, frame))
       {
         OrthancStone::CoordinateSystem3D geometry = slice->GetGeometry();
@@ -308,7 +308,7 @@ namespace Deprecated
     Orthanc::DicomMap dicom;
     MessagingToolbox::ConvertDataset(dicom, dataset);
     
-    std::auto_ptr<Slice> slice(new Slice);
+    std::unique_ptr<Slice> slice(new Slice);
     if (slice->ParseOrthancFrame(dicom, instanceId, frame))
     {
       LOG(INFO) << "Loaded instance geometry " << instanceId;
@@ -329,7 +329,7 @@ namespace Deprecated
   void OrthancSlicesLoader::ParseSliceImagePng(const OrthancApiClient::BinaryResponseReadyMessage& message)
   {
     const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(message.GetPayload());
-    std::auto_ptr<Orthanc::ImageAccessor>  image;
+    std::unique_ptr<Orthanc::ImageAccessor>  image;
     
     try
     {
@@ -369,7 +369,7 @@ namespace Deprecated
   void OrthancSlicesLoader::ParseSliceImagePam(const OrthancApiClient::BinaryResponseReadyMessage& message)
   {
     const Operation& operation = dynamic_cast<const OrthancSlicesLoader::Operation&>(message.GetPayload());
-    std::auto_ptr<Orthanc::ImageAccessor>  image;
+    std::unique_ptr<Orthanc::ImageAccessor>  image;
 
     try
     {
@@ -449,7 +449,7 @@ namespace Deprecated
       }
     }
     
-    std::auto_ptr<Orthanc::ImageAccessor> reader;
+    std::unique_ptr<Orthanc::ImageAccessor> reader;
     
     {
       std::string jpeg;
@@ -536,7 +536,7 @@ namespace Deprecated
     }
     
     // Decode a grayscale JPEG 8bpp image coming from the Web viewer
-    std::auto_ptr<Orthanc::ImageAccessor> image
+    std::unique_ptr<Orthanc::ImageAccessor> image
       (new Orthanc::Image(expectedFormat, reader->GetWidth(), reader->GetHeight(), false));
 
     Orthanc::ImageProcessing::Convert(*image, *reader);
@@ -599,7 +599,7 @@ namespace Deprecated
     {
       // This is the case of RT-DOSE (uint32_t values)
       
-      std::auto_ptr<Orthanc::ImageAccessor> image
+      std::unique_ptr<Orthanc::ImageAccessor> image
         (new StringImage(Orthanc::PixelFormat_Grayscale32, info.GetWidth(),
                          info.GetHeight(), raw));
       
@@ -623,7 +623,7 @@ namespace Deprecated
              info.GetPhotometricInterpretation() == Orthanc::PhotometricInterpretation_Monochrome2 &&
              raw.size() == info.GetWidth() * info.GetHeight() * 2)
     {
-      std::auto_ptr<Orthanc::ImageAccessor> image
+      std::unique_ptr<Orthanc::ImageAccessor> image
         (new StringImage(Orthanc::PixelFormat_Grayscale16, info.GetWidth(),
                          info.GetHeight(), raw));
       

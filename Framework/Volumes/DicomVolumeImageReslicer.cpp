@@ -67,7 +67,7 @@ namespace OrthancStone
 
       if (reslicer.IsSuccess())
       {
-        std::auto_ptr<TextureBaseSceneLayer> layer
+        std::unique_ptr<TextureBaseSceneLayer> layer
           (configurator->CreateTextureFromDicom(reslicer.GetOutputSlice(),
                                                 that_.volume_->GetDicomParameters()));
         if (layer.get() == NULL)

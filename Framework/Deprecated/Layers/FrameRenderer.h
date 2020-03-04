@@ -35,7 +35,7 @@ namespace Deprecated
     double                        pixelSpacingY_;
     RenderStyle                   style_;
     bool                          isFullQuality_;
-    std::auto_ptr<OrthancStone::CairoSurface>   display_;
+    std::unique_ptr<OrthancStone::CairoSurface>   display_;
 
   protected:
     virtual OrthancStone::CairoSurface* GenerateDisplay(const RenderStyle& style) = 0;

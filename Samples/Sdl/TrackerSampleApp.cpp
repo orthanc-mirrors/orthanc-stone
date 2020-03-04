@@ -96,7 +96,7 @@ namespace OrthancStone
     }
     else
     {
-      std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer);
+      std::unique_ptr<TextSceneLayer> layer(new TextSceneLayer);
       layerP = layer.get();
       layer->SetColor(0, 255, 0);
       layer->SetFontIndex(1);
@@ -131,7 +131,7 @@ namespace OrthancStone
     }
     else
     {
-      std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer);
+      std::unique_ptr<TextSceneLayer> layer(new TextSceneLayer);
       layer->SetColor(0, 255, 0);
       layer->SetText(buf);
       layer->SetBorder(20);
@@ -516,7 +516,7 @@ namespace OrthancStone
 
       controller_->GetScene().SetLayer(TEXTURE_2x2_1_ZINDEX, new ColorTextureSceneLayer(i));
 
-      std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
+      std::unique_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
       l->SetOrigin(-3, 2);
       l->SetPixelSpacing(1.5, 1);
       l->SetAngle(20.0 / 180.0 * M_PI);
@@ -532,7 +532,7 @@ namespace OrthancStone
       p[1] = 0;
       p[2] = 0;
 
-      std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
+      std::unique_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
       l->SetOrigin(-2, 1);
       l->SetAngle(20.0 / 180.0 * M_PI);
       controller_->GetScene().SetLayer(TEXTURE_1x1_ZINDEX, l.release());
@@ -540,7 +540,7 @@ namespace OrthancStone
 
     // Some lines
     {
-      std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
+      std::unique_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
 
       layer->SetThickness(1);
 
@@ -571,7 +571,7 @@ namespace OrthancStone
 
     // Some text
     {
-      std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer);
+      std::unique_ptr<TextSceneLayer> layer(new TextSceneLayer);
       layer->SetText("Hello");
       controller_->GetScene().SetLayer(LINESET_2_ZINDEX, layer.release());
     }

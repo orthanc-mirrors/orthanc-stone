@@ -78,7 +78,7 @@ namespace OrthancStone
   {
     assert(thumbnail != NULL);
   
-    std::auto_ptr<Thumbnail> protection(thumbnail);
+    std::unique_ptr<Thumbnail> protection(thumbnail);
   
     Thumbnails::iterator found = thumbnails_.find(seriesInstanceUid);
     if (found == thumbnails_.end())
@@ -254,7 +254,7 @@ namespace OrthancStone
       arguments["0020000E"] = GetSeriesInstanceUid();
       arguments["includefield"] = "00080016";
 
-      std::auto_ptr<IOracleCommand> command(
+      std::unique_ptr<IOracleCommand> command(
         GetSource().CreateDicomWebCommand(
           "/instances", arguments, headers, new DicomWebSopClassHandler(
             GetLoader(), GetSource(), GetStudyInstanceUid(), GetSeriesInstanceUid())));
@@ -326,7 +326,7 @@ namespace OrthancStone
       }
       else
       {
-        std::auto_ptr<GetOrthancImageCommand> command(new GetOrthancImageCommand);
+        std::unique_ptr<GetOrthancImageCommand> command(new GetOrthancImageCommand);
         command->SetUri("/instances/" + instanceId_ + "/preview");
         command->SetHttpHeader("Accept", Orthanc::MIME_JPEG);
         command->AcquirePayload(new ThumbnailInformation(
@@ -375,7 +375,7 @@ namespace OrthancStone
 
           const std::string instance = json[INSTANCES][index].asString();
 
-          std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+          std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
           command->SetUri("/instances/" + instance + "/metadata/SopClassUid");
           command->AcquirePayload(
             new OrthancSopClassHandler(
@@ -389,7 +389,7 @@ namespace OrthancStone
     
   void SeriesThumbnailsLoader::Schedule(IOracleCommand* command)
   {
-    std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+    std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
     lock->Schedule(GetSharedObserver(), priority_, command);
   }    
 
@@ -412,7 +412,7 @@ namespace OrthancStone
   {
     assert(message.GetOrigin().HasPayload());
 
-    std::auto_ptr<Orthanc::ImageAccessor> resized(Orthanc::ImageProcessing::FitSize(message.GetImage(), width_, height_));
+    std::unique_ptr<Orthanc::ImageAccessor> resized(Orthanc::ImageProcessing::FitSize(message.GetImage(), width_, height_));
 
     std::string jpeg;
     Orthanc::JpegWriter writer;
@@ -540,7 +540,7 @@ namespace OrthancStone
       // https://github.com/emscripten-core/emscripten/pull/8486
       headers["Accept"] = Orthanc::MIME_JPEG;
 
-      std::auto_ptr<IOracleCommand> command(
+      std::unique_ptr<IOracleCommand> command(
         source.CreateDicomWebCommand(
           uri, arguments, headers, new DicomWebThumbnailHandler(
             shared_from_this(), source, studyInstanceUid, seriesInstanceUid)));
@@ -551,7 +551,7 @@ namespace OrthancStone
       // Dummy SOP Instance UID, as we are working at the "series" level
       Orthanc::DicomInstanceHasher hasher(patientId, studyInstanceUid, seriesInstanceUid, "dummy");
 
-      std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetUri("/series/" + hasher.HashSeries());
       command->AcquirePayload(new SelectOrthancInstanceHandler(
                                 shared_from_this(), source, studyInstanceUid, seriesInstanceUid));

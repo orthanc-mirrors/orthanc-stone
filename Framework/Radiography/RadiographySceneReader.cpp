@@ -55,7 +55,7 @@ namespace OrthancStone
 
   RadiographyDicomLayer* RadiographySceneGeometryReader::LoadDicom(const std::string& instanceId, unsigned int frame, RadiographyLayer::Geometry* geometry)
   {
-    std::auto_ptr<RadiographyPlaceholderLayer>  layer(new RadiographyPlaceholderLayer(scene_));
+    std::unique_ptr<RadiographyPlaceholderLayer>  layer(new RadiographyPlaceholderLayer(scene_));
     layer->SetGeometry(*geometry);
     layer->SetSize(dicomImageWidth_, dicomImageHeight_);
     scene_.RegisterLayer(layer.get());
@@ -119,7 +119,7 @@ namespace OrthancStone
         std::string mimeType;
         Orthanc::Toolbox::DecodeDataUriScheme(mimeType, pngContent, pngContentBase64);
 
-        std::auto_ptr<Orthanc::ImageAccessor>  image;
+        std::unique_ptr<Orthanc::ImageAccessor>  image;
         if (mimeType == "image/png")
         {
           image.reset(new Orthanc::PngReader());

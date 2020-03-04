@@ -37,12 +37,12 @@ namespace Deprecated
   class WebServiceCommandBase : public IOracleCommand, OrthancStone::IObservable
   {
   protected:
-    std::auto_ptr<MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
-    std::auto_ptr<MessageHandler<IWebService::HttpRequestErrorMessage> >    failureCallback_;
+    std::unique_ptr<MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
+    std::unique_ptr<MessageHandler<IWebService::HttpRequestErrorMessage> >    failureCallback_;
     Orthanc::WebServiceParameters           parameters_;
     std::string                             url_;
     IWebService::HttpHeaders                headers_;
-    std::auto_ptr<Orthanc::IDynamicObject>  payload_;
+    std::unique_ptr<Orthanc::IDynamicObject>  payload_;
     bool                                    success_;
     Orthanc::HttpStatus                     httpStatus_;
     std::string                             answer_;

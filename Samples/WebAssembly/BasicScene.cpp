@@ -62,7 +62,7 @@ void PrepareScene(OrthancStone::Scene2D& scene)
 
     scene.SetLayer(12, new ColorTextureSceneLayer(i));
 
-    std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
+    std::unique_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
     l->SetOrigin(-3, 2);
     l->SetPixelSpacing(1.5, 1);
     l->SetAngle(20.0 / 180.0 * M_PI);
@@ -79,7 +79,7 @@ void PrepareScene(OrthancStone::Scene2D& scene)
     p[1] = 0;
     p[2] = 0;
 
-    std::auto_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
+    std::unique_ptr<ColorTextureSceneLayer> l(new ColorTextureSceneLayer(i));
     l->SetOrigin(-2, 1);
     l->SetAngle(20.0 / 180.0 * M_PI);
     scene.SetLayer(13, l.release());
@@ -88,7 +88,7 @@ void PrepareScene(OrthancStone::Scene2D& scene)
   // Some lines
   if (1)
   {
-    std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
+    std::unique_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
 
     layer->SetThickness(1);
 
@@ -120,16 +120,16 @@ void PrepareScene(OrthancStone::Scene2D& scene)
   // Some text
   if (1)
   {
-    std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer);
+    std::unique_ptr<TextSceneLayer> layer(new TextSceneLayer);
     layer->SetText("Hello");
     scene.SetLayer(100, layer.release());
   }
 }
 
 
-std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport1_;
-std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport2_;
-std::auto_ptr<OrthancStone::WebAssemblyViewport>  viewport3_;
+std::unique_ptr<OrthancStone::WebAssemblyViewport>  viewport1_;
+std::unique_ptr<OrthancStone::WebAssemblyViewport>  viewport2_;
+std::unique_ptr<OrthancStone::WebAssemblyViewport>  viewport3_;
 boost::shared_ptr<OrthancStone::ViewportController>   controller1_;
 boost::shared_ptr<OrthancStone::ViewportController>   controller2_;
 boost::shared_ptr<OrthancStone::ViewportController>   controller3_;

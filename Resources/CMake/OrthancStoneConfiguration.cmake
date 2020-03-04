@@ -646,8 +646,12 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/GeometryToolbox.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageGeometry.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageToolbox.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageToolbox.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/PixelTestPatterns.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/PixelTestPatterns.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
@@ -665,6 +669,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/IVolumeSlicer.h
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/OrientedVolumeBoundingBox.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/OrientedVolumeBoundingBox.h
+
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeImageGeometry.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeImageGeometry.h
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/VolumeReslicer.cpp

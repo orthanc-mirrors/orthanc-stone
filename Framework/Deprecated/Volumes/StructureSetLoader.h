@@ -26,6 +26,8 @@
 #include "../Toolbox/OrthancApiClient.h"
 #include "IVolumeLoader.h"
 
+#include <Core/Compatibility.h>
+
 namespace Deprecated
 {
   class StructureSetLoader :
@@ -34,7 +36,7 @@ namespace Deprecated
   {
   private:
     OrthancApiClient&                 orthanc_;
-    std::auto_ptr<OrthancStone::DicomStructureSet>  structureSet_;
+    std::unique_ptr<OrthancStone::DicomStructureSet>  structureSet_;
 
     void OnReferencedSliceLoaded(const OrthancApiClient::JsonResponseReadyMessage& message);
 

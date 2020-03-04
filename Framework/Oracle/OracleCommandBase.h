@@ -23,6 +23,9 @@
 
 #include "IOracleCommand.h"
 
+#include <Core/Compatibility.h>
+#include <Core/IDynamicObject.h>
+
 #include <memory>
 
 namespace OrthancStone
@@ -30,7 +33,7 @@ namespace OrthancStone
   class OracleCommandBase : public IOracleCommand
   {
   private:
-    std::auto_ptr<Orthanc::IDynamicObject>  payload_;
+    std::unique_ptr<Orthanc::IDynamicObject>  payload_;
 
   public:
     void AcquirePayload(Orthanc::IDynamicObject* payload);

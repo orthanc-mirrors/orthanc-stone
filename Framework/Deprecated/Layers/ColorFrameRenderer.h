@@ -28,7 +28,7 @@ namespace Deprecated
   class ColorFrameRenderer : public FrameRenderer
   {
   private:
-    std::auto_ptr<Orthanc::ImageAccessor>   frame_;  // In RGB24
+    std::unique_ptr<Orthanc::ImageAccessor>   frame_;  // In RGB24
 
   protected:
     virtual OrthancStone::CairoSurface* GenerateDisplay(const RenderStyle& style);

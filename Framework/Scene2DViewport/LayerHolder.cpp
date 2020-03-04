@@ -44,23 +44,23 @@ namespace OrthancStone
   void LayerHolder::CreateLayers()
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    ViewportController& controller = lock->GetController();
+    Scene2D& scene = controller.GetScene();
 
     assert(baseLayerIndex_ == -1);
 
-    baseLayerIndex_ = lock->GetController().GetScene().GetMaxDepth() + 100;
+    baseLayerIndex_ = scene.GetMaxDepth() + 100;
 
     for (int i = 0; i < polylineLayerCount_; ++i)
     {
-      std::auto_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
-      lock->GetController().GetScene().SetLayer(baseLayerIndex_ + i, layer.release());
+      std::unique_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer());
+      scene.SetLayer(baseLayerIndex_ + i, layer.release());
     }
 
     for (int i = 0; i < textLayerCount_; ++i)
     {
-      std::auto_ptr<TextSceneLayer> layer(new TextSceneLayer());
-      lock->GetController().GetScene().SetLayer(
-        baseLayerIndex_ + polylineLayerCount_ + i,
-        layer.release());
+      std::unique_ptr<TextSceneLayer> layer(new TextSceneLayer());
+      scene.SetLayer(baseLayerIndex_ + polylineLayerCount_ + i, layer.release());
     }
     lock->Invalidate();
   }

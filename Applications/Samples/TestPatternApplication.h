@@ -49,7 +49,7 @@ namespace OrthancStone
       {
         using namespace OrthancStone;
 
-        std::auto_ptr<LayoutWidget> layout(new LayoutWidget);
+        std::unique_ptr<LayoutWidget> layout(new LayoutWidget);
         layout->SetPadding(10);
         layout->SetBackgroundCleared(true);
         layout->AddWidget(new TestCairoWidget(parameters["animate"].as<bool>()));

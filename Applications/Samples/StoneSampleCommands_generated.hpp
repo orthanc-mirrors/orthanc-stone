@@ -18,7 +18,7 @@ Generated on 2019-03-18 12:07:42.696093 by stonegentool
 //#define STONEGEN_NO_CPP11 1
 
 #ifdef STONEGEN_NO_CPP11
-#define StoneSmartPtr std::auto_ptr
+#define StoneSmartPtr std::unique_ptr
 #else 
 #define StoneSmartPtr std::unique_ptr
 #endif 

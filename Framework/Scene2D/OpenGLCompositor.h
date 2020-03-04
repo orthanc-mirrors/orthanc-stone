@@ -39,7 +39,7 @@ namespace OrthancStone
 
     OpenGL::IOpenGLContext&                     context_;
     Fonts                                       fonts_;
-    std::auto_ptr<Internals::CompositorHelper>  helper_;
+    std::unique_ptr<Internals::CompositorHelper>  helper_;
     Internals::OpenGLColorTextureProgram        colorTextureProgram_;
     Internals::OpenGLFloatTextureProgram        floatTextureProgram_;
     Internals::OpenGLLinesProgram               linesProgram_;

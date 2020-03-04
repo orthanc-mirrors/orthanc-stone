@@ -26,7 +26,7 @@ namespace OrthancStone
   class ParsedDicomCache::Item : public Orthanc::ICacheable
   {
   private:
-    std::auto_ptr<Orthanc::ParsedDicomFile>  dicom_;
+    std::unique_ptr<Orthanc::ParsedDicomFile>  dicom_;
     size_t                                   fileSize_;
     bool                                     hasPixelData_;
     

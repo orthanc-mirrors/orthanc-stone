@@ -79,7 +79,7 @@ static OrthancStone::PointerEvent* ConvertMouseEvent(
   const EmscriptenMouseEvent&        source,
   OrthancStone::IViewport& viewport)
 {
-  std::auto_ptr<OrthancStone::PointerEvent> target(
+  std::unique_ptr<OrthancStone::PointerEvent> target(
     new OrthancStone::PointerEvent);
 
   target->AddPosition(viewport.GetPixelCenterCoordinates(
@@ -91,7 +91,7 @@ static OrthancStone::PointerEvent* ConvertMouseEvent(
   return target.release();
 }
 
-std::auto_ptr<OrthancStone::ActiveTracker> tracker_;
+std::unique_ptr<OrthancStone::ActiveTracker> tracker_;
 
 EM_BOOL OnMouseEvent(int eventType, 
                      const EmscriptenMouseEvent *mouseEvent, 
@@ -111,7 +111,7 @@ EM_BOOL OnMouseEvent(int eventType,
         char buf[64];
         sprintf(buf, "click %d", count++);
 
-        std::auto_ptr<OrthancStone::TextSceneLayer> layer(new OrthancStone::TextSceneLayer);
+        std::unique_ptr<OrthancStone::TextSceneLayer> layer(new OrthancStone::TextSceneLayer);
         layer->SetText(buf);
         controller->GetViewport().GetScene().SetLayer(100, layer.release());
         controller->GetViewport().Refresh();
@@ -123,7 +123,7 @@ EM_BOOL OnMouseEvent(int eventType,
         boost::shared_ptr<OrthancStone::IFlexiblePointerTracker> t;
 
         {
-          std::auto_ptr<OrthancStone::PointerEvent> event(
+          std::unique_ptr<OrthancStone::PointerEvent> event(
             ConvertMouseEvent(*mouseEvent, controller->GetViewport()));
 
           switch (mouseEvent->button)
@@ -165,7 +165,7 @@ EM_BOOL OnMouseEvent(int eventType,
       case EMSCRIPTEN_EVENT_MOUSEMOVE:
         if (tracker_.get() != NULL)
         {
-          std::auto_ptr<OrthancStone::PointerEvent> event(
+          std::unique_ptr<OrthancStone::PointerEvent> event(
             ConvertMouseEvent(*mouseEvent, controller->GetViewport()));
           tracker_->PointerMove(*event);
           controller->GetViewport().Refresh();
@@ -175,7 +175,7 @@ EM_BOOL OnMouseEvent(int eventType,
       case EMSCRIPTEN_EVENT_MOUSEUP:
         if (tracker_.get() != NULL)
         {
-          std::auto_ptr<OrthancStone::PointerEvent> event(
+          std::unique_ptr<OrthancStone::PointerEvent> event(
             ConvertMouseEvent(*mouseEvent, controller->GetViewport()));
           tracker_->PointerUp(*event);
           controller->GetViewport().Refresh();

@@ -43,9 +43,9 @@ namespace OrthancStone
     
     std::string                            shortCanvasId_;
     std::string                            fullCanvasId_;
-    std::auto_ptr<ICompositor>             compositor_;
+    std::unique_ptr<ICompositor>             compositor_;
     boost::shared_ptr<ViewportController>  controller_;
-    std::auto_ptr<IViewportInteractor>     interactor_;
+    std::unique_ptr<IViewportInteractor>     interactor_;
 
     static EM_BOOL OnRequestAnimationFrame(double time, void *userData);
     

@@ -43,7 +43,7 @@ namespace OrthancStone
   private:
     WebAssemblyOracle&                 oracle_;
     boost::weak_ptr<IObserver>         receiver_;
-    std::auto_ptr<SleepOracleCommand>  command_;
+    std::unique_ptr<SleepOracleCommand>  command_;
 
   public:
     TimeoutContext(WebAssemblyOracle& oracle,
@@ -72,7 +72,7 @@ namespace OrthancStone
 
     static void Callback(void *userData)
     {
-      std::auto_ptr<TimeoutContext> context(reinterpret_cast<TimeoutContext*>(userData));
+      std::unique_ptr<TimeoutContext> context(reinterpret_cast<TimeoutContext*>(userData));
       context->EmitMessage();
     }
   };
@@ -92,7 +92,7 @@ namespace OrthancStone
   private:
     WebAssemblyOracle&             oracle_;
     boost::weak_ptr<IObserver>     receiver_;
-    std::auto_ptr<IOracleCommand>  command_;
+    std::unique_ptr<IOracleCommand>  command_;
     std::string                    expectedContentType_;
 
   public:
@@ -149,7 +149,7 @@ namespace OrthancStone
 
 #if ORTHANC_ENABLE_DCMTK == 1
     void StoreInCache(const std::string& sopInstanceUid,
-                      std::auto_ptr<Orthanc::ParsedDicomFile>& dicom,
+                      std::unique_ptr<Orthanc::ParsedDicomFile>& dicom,
                       size_t fileSize)
     {
       if (oracle_.dicomCache_.get())
@@ -174,7 +174,7 @@ namespace OrthancStone
         return;
       }
 
-      std::auto_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
+      std::unique_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
 
       std::string answer;
       if (fetch->numBytes > 0)
@@ -292,7 +292,7 @@ namespace OrthancStone
                 context->GetTypedCommand<ParseDicomFromWadoCommand>();
               
               size_t fileSize;
-              std::auto_ptr<Orthanc::ParsedDicomFile> dicom
+              std::unique_ptr<Orthanc::ParsedDicomFile> dicom
                 (ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, headers));
 
               {
@@ -327,7 +327,7 @@ namespace OrthancStone
 
     static void FailureCallback(emscripten_fetch_t *fetch)
     {
-      std::auto_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
+      std::unique_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
 
       {
         const size_t kEmscriptenStatusTextSize = sizeof(emscripten_fetch_t::statusText);
@@ -364,7 +364,7 @@ namespace OrthancStone
   private:
     WebAssemblyOracle&             oracle_;
     boost::weak_ptr<IObserver>     receiver_;
-    std::auto_ptr<IOracleCommand>  command_;
+    std::unique_ptr<IOracleCommand>  command_;
     Orthanc::HttpMethod            method_;
     std::string                    url_;
     std::string                    body_;
@@ -655,7 +655,7 @@ namespace OrthancStone
   void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
                                   ParseDicomFromWadoCommand* command)
   {
-    std::auto_ptr<ParseDicomFromWadoCommand> protection(command);
+    std::unique_ptr<ParseDicomFromWadoCommand> protection(command);
     
 #if ORTHANC_ENABLE_DCMTK == 1
     if (dicomCache_.get())
@@ -733,7 +733,7 @@ namespace OrthancStone
     LOG(TRACE) << "WebAssemblyOracle::Schedule : receiver = "
                << std::hex << &receiver;
     
-    std::auto_ptr<IOracleCommand> protection(command);
+    std::unique_ptr<IOracleCommand> protection(command);
 
     if (command == NULL)
     {

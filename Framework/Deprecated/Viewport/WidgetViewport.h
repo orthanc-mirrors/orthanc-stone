@@ -24,6 +24,8 @@
 #include "IViewport.h"
 #include "../Widgets/IWidget.h"
 
+#include <Core/Compatibility.h>
+
 #include <memory>
 
 namespace Deprecated
@@ -33,7 +35,7 @@ namespace Deprecated
   private:
     boost::shared_ptr<IWidget>    centralWidget_;
     IStatusBar*                   statusBar_;
-    std::auto_ptr<IMouseTracker>  mouseTracker_;
+    std::unique_ptr<IMouseTracker>  mouseTracker_;
     bool                          isMouseOver_;
     int                           lastMouseX_;
     int                           lastMouseY_;

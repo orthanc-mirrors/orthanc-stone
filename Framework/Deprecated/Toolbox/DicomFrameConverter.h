@@ -22,6 +22,7 @@
 #pragma once
 
 #include <Plugins/Samples/Common/IDicomDataset.h>
+#include <Core/Compatibility.h>
 #include <Core/DicomFormat/DicomMap.h>
 #include <Core/Images/ImageAccessor.h>
 
@@ -63,7 +64,7 @@ namespace Deprecated
     {
       // TODO: check whether this dtor is called or not
       // An MSVC warning explains that declaring an
-      // std::auto_ptr with a forward-declared type
+      // std::unique_ptr with a forward-declared type
       // prevents its dtor from being called. Does not
       // seem an issue here (only POD types inside), but
       // definitely something to keep an eye on.
@@ -157,7 +158,7 @@ namespace Deprecated
       return rescaleSlope_;
     }
 
-    void ConvertFrameInplace(std::auto_ptr<Orthanc::ImageAccessor>& source) const;
+    void ConvertFrameInplace(std::unique_ptr<Orthanc::ImageAccessor>& source) const;
 
     Orthanc::ImageAccessor* ConvertFrame(const Orthanc::ImageAccessor& source) const;
 

@@ -70,7 +70,7 @@ namespace Deprecated
 
       void CheckSliceIndex(size_t index) const;
 
-      std::auto_ptr<OrthancStone::VolumeImageGeometry>     geometry_;
+      std::unique_ptr<OrthancStone::VolumeImageGeometry>     geometry_;
       std::vector<OrthancStone::DicomInstanceParameters*>  slices_;
       std::vector<uint64_t>                  slicesRevision_;
 
@@ -113,8 +113,8 @@ namespace Deprecated
     unsigned int                                  simultaneousDownloads_;
     SeriesGeometry                                seriesGeometry_;
     boost::shared_ptr<OrthancStone::DicomVolumeImage>           volume_;
-    std::auto_ptr<OrthancStone::IFetchingItemsSorter::IFactory> sorter_;
-    std::auto_ptr<OrthancStone::IFetchingStrategy>              strategy_;
+    std::unique_ptr<OrthancStone::IFetchingItemsSorter::IFactory> sorter_;
+    std::unique_ptr<OrthancStone::IFetchingStrategy>              strategy_;
     std::vector<unsigned int>                     slicesQuality_;
     bool                                          volumeImageReadyInHighQuality_;
 

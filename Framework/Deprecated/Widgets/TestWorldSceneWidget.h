@@ -34,7 +34,7 @@ namespace Deprecated
     private:
       class Interactor;
 
-      std::auto_ptr<Interactor>   interactor_;
+      std::unique_ptr<Interactor>   interactor_;
       bool                        animate_;
       unsigned int                count_;
 

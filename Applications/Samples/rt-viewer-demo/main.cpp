@@ -506,14 +506,14 @@ namespace OrthancStone
         SliceViewerWidget& widget, StructureSetLoader& loader);
 
       SliceViewerWidget* CreateDoseCtWidget(
-        std::auto_ptr<OrthancVolumeImage>& ct,
-        std::auto_ptr<OrthancVolumeImage>& dose,
-        std::auto_ptr<StructureSetLoader>& structLoader,
+        std::unique_ptr<OrthancVolumeImage>& ct,
+        std::unique_ptr<OrthancVolumeImage>& dose,
+        std::unique_ptr<StructureSetLoader>& structLoader,
         VolumeProjection projection);
 
       void AddCtLayer(SliceViewerWidget& widget, OrthancVolumeImage& volume);
 
-      std::auto_ptr<Interactor>         mainWidgetInteractor_;
+      std::unique_ptr<Interactor>         mainWidgetInteractor_;
       const DicomSeriesVolumeSlicer*    source_;
       unsigned int                      slice_;
 
@@ -521,9 +521,9 @@ namespace OrthancStone
       std::string                                        doseInstance_;
       std::string                                        doseSeries_;
       std::string                                        structInstance_;
-      std::auto_ptr<OrthancStone::OrthancVolumeImage>    dose_;
-      std::auto_ptr<OrthancStone::OrthancVolumeImage>    ct_;
-      std::auto_ptr<OrthancStone::StructureSetLoader>    struct_;
+      std::unique_ptr<OrthancStone::OrthancVolumeImage>    dose_;
+      std::unique_ptr<OrthancStone::OrthancVolumeImage>    ct_;
+      std::unique_ptr<OrthancStone::StructureSetLoader>    struct_;
 
     public:
       RtViewerDemoApplication(MessageBroker& broker) :
@@ -729,7 +729,7 @@ namespace OrthancStone
         (ct_, dose_, struct_, OrthancStone::VolumeProjection_Axial);
         mainWidget_->AddWidget(axialWidget);
                
-        std::auto_ptr<OrthancStone::LayoutWidget> subLayout(
+        std::unique_ptr<OrthancStone::LayoutWidget> subLayout(
           new OrthancStone::LayoutWidget("main-layout"));
         subLayout->SetVertical();
         subLayout->SetPadding(5);
@@ -774,12 +774,12 @@ namespace OrthancStone
     }
 
     SliceViewerWidget* RtViewerDemoApplication::CreateDoseCtWidget(
-      std::auto_ptr<OrthancVolumeImage>& ct,
-      std::auto_ptr<OrthancVolumeImage>& dose,
-      std::auto_ptr<StructureSetLoader>& structLoader,
+      std::unique_ptr<OrthancVolumeImage>& ct,
+      std::unique_ptr<OrthancVolumeImage>& dose,
+      std::unique_ptr<StructureSetLoader>& structLoader,
       VolumeProjection projection)
     {
-      std::auto_ptr<OrthancStone::SliceViewerWidget> widget(
+      std::unique_ptr<OrthancStone::SliceViewerWidget> widget(
         new OrthancStone::SliceViewerWidget(IObserver::GetBroker(),
           "ct-dose-widget"));
 

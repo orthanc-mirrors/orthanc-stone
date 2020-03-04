@@ -30,7 +30,7 @@ namespace OrthancStone
   private:
     Priority   priority_;
     boost::weak_ptr<IObserver>  receiver_;
-    std::auto_ptr<IOracleCommand>  command_;
+    std::unique_ptr<IOracleCommand>  command_;
 
   public:
     ReceiverPayload(Priority priority,
@@ -68,7 +68,7 @@ namespace OrthancStone
   {
   private:
     boost::weak_ptr<IObserver>     receiver_;
-    std::auto_ptr<IOracleCommand>  command_;
+    std::unique_ptr<IOracleCommand>  command_;
 
   public:
     ScheduledCommand(boost::shared_ptr<IObserver> receiver,
@@ -103,7 +103,7 @@ namespace OrthancStone
       }
       else
       {
-        std::auto_ptr<IOracleCommand> wrapped(command_->Clone());
+        std::unique_ptr<IOracleCommand> wrapped(command_->Clone());
         dynamic_cast<OracleCommandBase&>(*wrapped).AcquirePayload(new ReceiverPayload(priority, receiver_, command_.release()));
         return wrapped.release();
       }
@@ -198,7 +198,7 @@ namespace OrthancStone
     Queue::iterator item = queue.begin();
     assert(item != queue.end());
 
-    std::auto_ptr<ScheduledCommand> command(dynamic_cast<ScheduledCommand*>(item->second));
+    std::unique_ptr<ScheduledCommand> command(dynamic_cast<ScheduledCommand*>(item->second));
     queue.erase(item);
 
     if (command.get() != NULL)
@@ -522,7 +522,7 @@ namespace OrthancStone
                                  int priority,
                                  IOracleCommand* command /* Takes ownership */)
   {
-    std::auto_ptr<ScheduledCommand> pending(new ScheduledCommand(receiver, dynamic_cast<IOracleCommand*>(command)));
+    std::unique_ptr<ScheduledCommand> pending(new ScheduledCommand(receiver, dynamic_cast<IOracleCommand*>(command)));
 
     /**
      * Safeguard to remember that a new "Handle()" method and a call

@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <Core/Compatibility.h>
 #include <Core/IDynamicObject.h>
 #include <Core/Images/ImageAccessor.h>
 
@@ -31,7 +32,7 @@ namespace OrthancStone
   class DynamicBitmap : public Orthanc::IDynamicObject
   {
   private:
-    std::auto_ptr<Orthanc::ImageAccessor>  bitmap_;
+    std::unique_ptr<Orthanc::ImageAccessor>  bitmap_;
 
   public:
     DynamicBitmap(const Orthanc::ImageAccessor& bitmap);

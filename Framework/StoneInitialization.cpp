@@ -62,7 +62,7 @@
 
 #if ORTHANC_ENABLE_WASM == 1
 static double viewportsTimeout_ = 1000;
-static std::auto_ptr<OrthancStone::WebGLViewportsRegistry>  viewportsRegistry_;
+static std::unique_ptr<OrthancStone::WebGLViewportsRegistry>  viewportsRegistry_;
 #endif
 
 #include "Toolbox/LinearAlgebra.h"

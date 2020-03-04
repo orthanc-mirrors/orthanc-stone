@@ -21,6 +21,8 @@
 
 #include "FloatTextureSceneLayer.h"
 
+#include "../Toolbox/ImageToolbox.h"
+
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
 #include <Core/OrthancException.h>
@@ -32,13 +34,14 @@ namespace OrthancStone
     applyLog_(false)
   {
     {
-      std::auto_ptr<Orthanc::ImageAccessor> t(
+      std::unique_ptr<Orthanc::ImageAccessor> t(
         new Orthanc::Image(Orthanc::PixelFormat_Float32, 
                            texture.GetWidth(), 
                            texture.GetHeight(), 
                            false));
 
       Orthanc::ImageProcessing::Convert(*t, texture);
+
       SetTexture(t.release());
     }
 
@@ -124,7 +127,7 @@ namespace OrthancStone
     
   ISceneLayer* FloatTextureSceneLayer::Clone() const
   {
-    std::auto_ptr<FloatTextureSceneLayer> cloned
+    std::unique_ptr<FloatTextureSceneLayer> cloned
       (new FloatTextureSceneLayer(GetTexture()));
 
     cloned->CopyParameters(*this);

@@ -34,7 +34,7 @@ namespace OrthancStone
     private:
       OpenGL::IOpenGLContext&                         context_;
       OpenGLFloatTextureProgram&                      program_;
-      std::auto_ptr<OpenGLFloatTextureProgram::Data>  texture_;
+      std::unique_ptr<OpenGLFloatTextureProgram::Data>  texture_;
       AffineTransform2D                               layerTransform_;
       float                                           windowCenter_;
       float                                           windowWidth_;

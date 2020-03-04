@@ -22,8 +22,10 @@
 #pragma once
 
 #include "RadiographyLayer.h"
-#include "Core/Images/Image.h"
-#include "Core/Images/ImageProcessing.h"
+
+#include <Core/Compatibility.h>
+#include <Core/Images/Image.h>
+#include <Core/Images/ImageProcessing.h>
 
 namespace OrthancStone
 {
@@ -38,7 +40,7 @@ namespace OrthancStone
     mutable bool                      invalidated_;
     float                             foreground_;
 
-    mutable std::auto_ptr<Orthanc::ImageAccessor>  mask_;
+    mutable std::unique_ptr<Orthanc::ImageAccessor>  mask_;
   public:
     RadiographyMaskLayer(const RadiographyScene& scene, const RadiographyDicomLayer& dicomLayer,
                          float foreground) :

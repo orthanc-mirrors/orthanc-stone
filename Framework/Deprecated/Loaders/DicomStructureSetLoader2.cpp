@@ -81,7 +81,7 @@ namespace Deprecated
 
   void DicomStructureSetLoader2::LoadInstance(const std::string& instanceId)
   {
-    std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+    std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
     command->SetHttpHeader("Accept-Encoding", "gzip");
 
     std::string uri = "/instances/" + instanceId + "/tags?ignore-length=3006-0050";

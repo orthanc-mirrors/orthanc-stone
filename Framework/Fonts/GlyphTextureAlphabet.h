@@ -61,7 +61,7 @@ namespace OrthancStone
     class RenderTextVisitor;
     
     GlyphAlphabet                          alphabet_;
-    std::auto_ptr<Orthanc::ImageAccessor>  texture_;
+    std::unique_ptr<Orthanc::ImageAccessor>  texture_;
     unsigned int                           textureWidth_;
     unsigned int                           textureHeight_;
     

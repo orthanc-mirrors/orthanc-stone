@@ -59,7 +59,7 @@ namespace OrthancStone
     boost::recursive_mutex                 mutex_;
     uint32_t                               refreshEvent_;
     boost::shared_ptr<ViewportController>  controller_;
-    std::auto_ptr<ICompositor>             compositor_;
+    std::unique_ptr<ICompositor>             compositor_;
 
     void SendRefreshEvent();
 

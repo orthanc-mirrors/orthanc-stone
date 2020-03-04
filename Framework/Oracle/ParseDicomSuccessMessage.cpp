@@ -30,7 +30,7 @@ namespace OrthancStone
   class MultipartHandler : public Orthanc::MultipartStreamReader::IHandler
   {
   private:
-    std::auto_ptr<Orthanc::ParsedDicomFile>  dicom_;
+    std::unique_ptr<Orthanc::ParsedDicomFile>  dicom_;
     size_t                                   size_;
 
   public:

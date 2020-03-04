@@ -119,7 +119,7 @@ namespace Deprecated
     const std::string uri = "/instances/" + instanceId + "/tags?ignore-length=3006-0050";
     OrthancPlugins::FullOrthancDataset dataset(orthanc, uri);
 
-    std::auto_ptr<OrthancStone::DicomStructureSet> result
+    std::unique_ptr<OrthancStone::DicomStructureSet> result
       (new OrthancStone::DicomStructureSet(dataset));
 
     std::set<std::string> instances;

@@ -25,7 +25,9 @@
 
 #include "../../Framework/Viewport/SdlWindow.h"
 
+#include <Core/Compatibility.h>
 #include <Core/Images/ImageAccessor.h>
+
 #include <boost/thread/mutex.hpp>
 
 namespace OrthancStone
@@ -33,7 +35,7 @@ namespace OrthancStone
   class SdlOrthancSurface : public boost::noncopyable
   {
   private:
-    std::auto_ptr<Orthanc::ImageAccessor>  image_;
+    std::unique_ptr<Orthanc::ImageAccessor>  image_;
     SdlWindow&                             window_;
     SDL_Surface*                           sdlSurface_;
 

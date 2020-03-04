@@ -213,11 +213,11 @@ namespace OrthancStone
   {
     if (scene == NULL)
     {
-      controller_ = boost::make_shared<ViewportController>();
+      controller_ = boost::make_shared<ViewportController>(*this);
     }
     else
     {
-      controller_ = boost::make_shared<ViewportController>(*scene);
+      controller_ = boost::make_shared<ViewportController>(*this,*scene);
     }
 
     LOG(INFO) << "Initializing Stone viewport on HTML canvas: " << canvasId;

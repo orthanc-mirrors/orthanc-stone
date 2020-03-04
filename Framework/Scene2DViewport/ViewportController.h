@@ -39,7 +39,7 @@ namespace OrthancStone
     {
     }
 
-    virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<ViewportController> controller,
+    virtual IFlexiblePointerTracker* CreateTracker(IViewport& viewport,
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) = 0;
@@ -50,7 +50,7 @@ namespace OrthancStone
   class DefaultViewportInteractor : public IViewportInteractor
   {
   public:
-    virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<ViewportController> controller,
+    virtual IFlexiblePointerTracker* CreateTracker(IViewport& viewport,
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) ORTHANC_OVERRIDE;
@@ -109,11 +109,11 @@ namespace OrthancStone
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, \
                                         SceneTransformChanged, ViewportController);
 
-    ViewportController();
+    ViewportController(IViewport& viewport);
 
-    ViewportController(const Scene2D& scene /* will be cloned */);
+    ViewportController(IViewport& viewport, const Scene2D& scene /* will be cloned */);
 
-    ViewportController(boost::weak_ptr<UndoStack> undoStackW);
+    ViewportController(IViewport& viewport, boost::weak_ptr<UndoStack> undoStackW);
 
     ~ViewportController();
 
@@ -229,6 +229,7 @@ namespace OrthancStone
   private:
     double GetCanvasToSceneFactor() const;
 
+    IViewport&                                    viewport_;
     boost::weak_ptr<UndoStack>                    undoStackW_;  // Global stack, possibly shared by all viewports
     std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;
     boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Couldn't this be a "std::auto_ptr"?

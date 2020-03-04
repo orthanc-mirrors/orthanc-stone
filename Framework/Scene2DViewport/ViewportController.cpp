@@ -33,24 +33,24 @@
 namespace OrthancStone
 {
   IFlexiblePointerTracker* DefaultViewportInteractor::CreateTracker(
-    boost::shared_ptr<ViewportController> controller,
+    IViewport&          viewport,
     const PointerEvent& event,
-    unsigned int viewportWidth,
-    unsigned int viewportHeight)
+    unsigned int        viewportWidth,
+    unsigned int        viewportHeight)
   {
     switch (event.GetMouseButton())
     {
       case MouseButton_Left:
-        return new RotateSceneTracker(controller, event);
+        return new RotateSceneTracker(viewport, event);
 
       case MouseButton_Middle:
-        return new PanSceneTracker(controller, event);
+        return new PanSceneTracker(viewport, event);
       
       case MouseButton_Right:
       {
         if (viewportWidth != 0)
         {
-          return new ZoomSceneTracker(controller, event, viewportWidth);
+          return new ZoomSceneTracker(viewport, event, viewportWidth);
         }
         else
         {
@@ -64,24 +64,29 @@ namespace OrthancStone
   }
 
 
-  ViewportController::ViewportController() :
-    undoStackW_(boost::make_shared<OrthancStone::UndoStack>()),
-    scene_(new Scene2D),
-    canvasToSceneFactor_(1)
+  ViewportController::ViewportController(IViewport& viewport) 
+    : viewport_(viewport)
+    , undoStackW_(boost::make_shared<OrthancStone::UndoStack>())
+    , scene_(new Scene2D)
+    , canvasToSceneFactor_(1)
   {
   }
 
-  ViewportController::ViewportController(const Scene2D& scene) : 
-    undoStackW_(boost::make_shared<OrthancStone::UndoStack>()),
-    scene_(scene.Clone()),
-    canvasToSceneFactor_(1)
+  ViewportController::ViewportController(IViewport& viewport,
+                                         const Scene2D& scene)
+    : viewport_(viewport)
+    , undoStackW_(boost::make_shared<OrthancStone::UndoStack>())
+    , scene_(scene.Clone())
+    , canvasToSceneFactor_(1)
   {
   }
 
-  ViewportController::ViewportController(boost::weak_ptr<UndoStack> undoStackW) :
-    undoStackW_(undoStackW),
-    scene_(new Scene2D),
-    canvasToSceneFactor_(1)
+  ViewportController::ViewportController(IViewport& viewport, 
+                                         boost::weak_ptr<UndoStack> undoStackW)
+    : viewport_(viewport)
+    , undoStackW_(undoStackW)
+    , scene_(new Scene2D)
+    , canvasToSceneFactor_(1)
   {
   }
  
@@ -274,7 +279,7 @@ namespace OrthancStone
       }
 
       // No measure tool, create new tracker from the interactor
-      activeTracker_.reset(interactor.CreateTracker(shared_from_this(), event, viewportWidth, viewportHeight));
+      activeTracker_.reset(interactor.CreateTracker(viewport_, event, viewportWidth, viewportHeight));
     }
   }
 

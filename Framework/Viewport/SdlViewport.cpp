@@ -48,18 +48,27 @@ namespace OrthancStone
     compositor_.reset(compositor);
   }
 
-
   SdlViewport::SdlViewport() :
-    controller_(new ViewportController)
+    controller_(new ViewportController(*this))
   {
     refreshEvent_ = SDL_RegisterEvents(1);
-    
+
     if (refreshEvent_ == static_cast<uint32_t>(-1))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
   }
 
+  SdlViewport::SdlViewport(boost::weak_ptr<UndoStack> undoStackW) :
+    controller_(new ViewportController(*this,undoStackW))
+  {
+    refreshEvent_ = SDL_RegisterEvents(1);
+
+    if (refreshEvent_ == static_cast<uint32_t>(-1))
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+  }
 
   void SdlViewport::SendRefreshEvent()
   {
@@ -79,6 +88,16 @@ namespace OrthancStone
     AcquireCompositor(new OpenGLCompositor(context_));  // (*)
   }
 
+  SdlOpenGLViewport::SdlOpenGLViewport(const char* title,
+                                       boost::weak_ptr<UndoStack> undoStackW,
+                                       unsigned int width,
+                                       unsigned int height,
+                                       bool allowDpiScaling) :
+    SdlViewport(undoStackW),
+    context_(title, width, height, allowDpiScaling)
+  {
+    AcquireCompositor(new OpenGLCompositor(context_));  // (*)
+  }
 
   SdlOpenGLViewport::~SdlOpenGLViewport()
   {

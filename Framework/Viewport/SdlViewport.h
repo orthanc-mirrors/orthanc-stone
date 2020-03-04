@@ -43,12 +43,20 @@
 
 #include <SDL_events.h>
 
+// TODO: required for UndoStack injection
+// I don't like it either :)
+#include <boost/weak_ptr.hpp>
+
+#include <boost/thread/recursive_mutex.hpp>
+
 namespace OrthancStone
 {
+  class UndoStack;
+
   class SdlViewport : public IViewport
   {
   private:
-    boost::mutex                           mutex_;
+    boost::recursive_mutex                 mutex_;
     uint32_t                               refreshEvent_;
     boost::shared_ptr<ViewportController>  controller_;
     std::auto_ptr<ICompositor>             compositor_;
@@ -59,8 +67,8 @@ namespace OrthancStone
     class SdlLock : public ILock
     {
     private:
-      SdlViewport&                that_;
-      boost::mutex::scoped_lock   lock_;
+      SdlViewport&                        that_;
+      boost::recursive_mutex::scoped_lock lock_;
 
     public:
       SdlLock(SdlViewport& that) :
@@ -96,6 +104,7 @@ namespace OrthancStone
 
   public:
     SdlViewport();
+    SdlViewport(boost::weak_ptr<UndoStack> undoStackW);
 
     bool IsRefreshEvent(const SDL_Event& event) const
     {
@@ -124,6 +133,12 @@ namespace OrthancStone
 
   public:
     SdlOpenGLViewport(const char* title,
+                      unsigned int width,
+                      unsigned int height,
+                      bool allowDpiScaling = true);
+
+    SdlOpenGLViewport(const char* title,
+                      boost::weak_ptr<UndoStack> undoStackW,
                       unsigned int width,
                       unsigned int height,
                       bool allowDpiScaling = true);

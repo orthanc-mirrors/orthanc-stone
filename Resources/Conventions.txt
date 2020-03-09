@@ -63,7 +63,8 @@ Pointers
 
 * As we are targeting C++03 (for VS2008 and LSB compatibility), use
   "std::unique_ptr<>" and "boost::shared_ptr<>" (*not*
-  "std::shared_ptr<>").
+  "std::shared_ptr<>"). We provide an implementation of std::unique_ptr for
+  pre-C++11 compilers.
 
 * The fact of transfering the ownership of one object to another must
   be tagged by naming the method "Acquire...()", and by providing a

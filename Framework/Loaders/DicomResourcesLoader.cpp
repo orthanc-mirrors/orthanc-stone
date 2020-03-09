@@ -810,6 +810,10 @@ namespace OrthancStone
 
       {
         std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
+
+        // GetSharedObserver() means "this" (for use as an IObserver), as a 
+        // shared_ptr
+        // The oracle will thus call "this" 
         lock->Schedule(GetSharedObserver(), priority, command.release());
       }
     }

@@ -43,7 +43,7 @@ namespace OrthancStone
   public:
     virtual ~IObservable();
 
-    // Takes ownsership of the callable
+    // Takes ownership of the callable
     void RegisterCallable(ICallable* callable);
 
     void BroadcastMessage(const IMessage& message);

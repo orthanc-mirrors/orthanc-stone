@@ -154,13 +154,6 @@ namespace OrthancStone
     if (!HitTest(scenePos))
       return boost::shared_ptr<IFlexiblePointerTracker>();
 
-    /**
-      new EditLineMeasureTracker(
-        boost::shared_ptr<LineMeasureTool> measureTool;
-        MessageBroker & broker,
-        IViewport&          viewport,
-        const PointerEvent & e);
-    */
     boost::shared_ptr<EditLineMeasureTracker> editLineMeasureTracker(
       new EditLineMeasureTracker(shared_from_this(), viewport_, e));
     return editLineMeasureTracker;

@@ -38,13 +38,14 @@ namespace OrthancStone
   class VolumeSceneLayerSource : public boost::noncopyable
   {
   private:
-    Scene2D&                                scene_;
-    int                                     layerDepth_;
-    boost::shared_ptr<IVolumeSlicer>        slicer_;
+    Scene2D&                                  scene_;
+    int                                       layerDepth_;
+    boost::shared_ptr<IVolumeSlicer>          slicer_;
     std::unique_ptr<ILayerStyleConfigurator>  configurator_;
     std::unique_ptr<CoordinateSystem3D>       lastPlane_;
-    uint64_t                                lastRevision_;
-    uint64_t                                lastConfiguratorRevision_;
+    uint64_t                                  lastRevision_;
+    uint64_t                                  lastConfiguratorRevision_;
+    bool                                      layerInScene_;
 
     void ClearLayer();
 
@@ -71,6 +72,14 @@ namespace OrthancStone
 
     ILayerStyleConfigurator& GetConfigurator() const;
 
+    /**
+    Make sure the Scene2D is protected from concurrent accesses before 
+    calling this method.
+
+    If the scene that has been supplied to the ctor is part of an IViewport, 
+    you can lock the whole viewport data (including scene) by means of the 
+    IViewport::Lock method.
+    */ 
     void Update(const CoordinateSystem3D& plane);  
   };
 }

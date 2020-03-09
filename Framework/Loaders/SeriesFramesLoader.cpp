@@ -170,7 +170,9 @@ namespace OrthancStone
     size_t frameIndex = frames_.GetFrameIndex(payload.GetSeriesIndex());
 
     std::unique_ptr<Orthanc::ImageAccessor> decoded;
-    decoded.reset(Orthanc::DicomImageDecoder::Decode(dicom, frameIndex));
+    decoded.reset(Orthanc::DicomImageDecoder::Decode(
+      dicom, 
+      static_cast<unsigned int>(frameIndex)));
 
     if (decoded.get() == NULL)
     {

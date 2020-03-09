@@ -102,7 +102,14 @@ namespace OrthancStone
   typedef bool (*OnKeyUpFunc)     (std::string canvasId, const GuiAdapterKeyboardEvent*   keyEvent,   void* userData);
 
   typedef bool (*OnAnimationFrameFunc)(double time, void* userData);
-  typedef bool (*OnWindowResizeFunc)(std::string canvasId, const GuiAdapterUiEvent* uiEvent, void* userData);
+  
+#if ORTHANC_ENABLE_WASM != 1
+  typedef bool (*OnSdlWindowResizeFunc)(std::string canvasId, 
+                                        const GuiAdapterUiEvent* uiEvent, 
+                                        unsigned int width, 
+                                        unsigned int height, 
+                                        void* userData);
+#endif
 
 #else
 
@@ -222,11 +229,7 @@ namespace OrthancStone
   class GuiAdapter
   {
   public:
-#if ORTHANC_ENABLE_THREADS == 1
-    GuiAdapter(Deprecated::LockingEmitter& lockingEmitter) : lockingEmitter_(lockingEmitter)
-#else
     GuiAdapter()
-#endif
     {
       static int instanceCount = 0;
       ORTHANC_ASSERT(instanceCount == 0);
@@ -258,18 +261,18 @@ namespace OrthancStone
     void SetKeyDownCallback       (std::string canvasId, void* userData, bool capture, OnKeyDownFunc      func);
     void SetKeyUpCallback         (std::string canvasId, void* userData, bool capture, OnKeyUpFunc        func);
     
-    // if you pass "#window", under SDL, then any Window resize will trigger the callback
-    void SetResizeCallback (std::string canvasId, void* userData, bool capture, OnWindowResizeFunc func);
+#if ORTHANC_ENABLE_WASM != 1
+    // if you pass "#window", then any Window resize will trigger the callback
+    void SetSdlResizeCallback(std::string canvasId, 
+                              void* userData, 
+                              bool capture, 
+                              OnSdlWindowResizeFunc func);
+#endif
 
     void RequestAnimationFrame(OnAnimationFrameFunc func, void* userData);
 
     // TODO: implement and call to remove canvases [in SDL, although code should be generic]
     void SetOnExitCallback();
-
-    // void 
-    // OnWindowResize
-    // oracle
-    // broker
 
     /**
     Under SDL, this function does NOT return until all windows have been closed.
@@ -278,27 +281,8 @@ namespace OrthancStone
     */
     void Run(GuiAdapterRunFunc func = NULL, void* cookie = NULL);
 
-#if ORTHANC_ENABLE_WASM != 1
-    /**
-    This method must be called in order for callback handler to be allowed to 
-    be registered.
-
-    We'll retrieve its name and use it as the canvas name in all subsequent 
-    calls
-    */
-    //void RegisterSdlWindow(SDL_Window* window);
-    //void UnregisterSdlWindow(SDL_Window* window);
-#endif
-
   private:
 
-#if ORTHANC_ENABLE_THREADS == 1
-    /**
-    This object is used by the multithreaded Oracle to serialize access to
-    shared data. We need to use it as soon as we access the state.
-    */
-    Deprecated::LockingEmitter& lockingEmitter_;
-#endif
 
     /**
     In SDL, this executes all the registered headers
@@ -309,7 +293,7 @@ namespace OrthancStone
     std::vector<std::pair<OnAnimationFrameFunc, void*> >  
       animationFrameHandlers_;
     
-    void OnResize();
+    void OnResize(unsigned int width, unsigned int height);
 
 #if ORTHANC_ENABLE_SDL == 1
     template<typename Func>
@@ -326,14 +310,14 @@ namespace OrthancStone
       Func        func;
       void*       userData;
     };
-    std::vector<EventHandlerData<OnWindowResizeFunc> > resizeHandlers_;
-    std::vector<EventHandlerData<OnMouseEventFunc  > > mouseDownHandlers_;
-    std::vector<EventHandlerData<OnMouseEventFunc  > > mouseDblCickHandlers_;
-    std::vector<EventHandlerData<OnMouseEventFunc  > > mouseMoveHandlers_;
-    std::vector<EventHandlerData<OnMouseEventFunc  > > mouseUpHandlers_;
-    std::vector<EventHandlerData<OnMouseWheelFunc  > > mouseWheelHandlers_;
-    std::vector<EventHandlerData<OnKeyDownFunc > > keyDownHandlers_;
-    std::vector<EventHandlerData<OnKeyUpFunc > > keyUpHandlers_;
+    std::vector<EventHandlerData<OnSdlWindowResizeFunc> > resizeHandlers_;
+    std::vector<EventHandlerData<OnMouseEventFunc  > >    mouseDownHandlers_;
+    std::vector<EventHandlerData<OnMouseEventFunc  > >    mouseDblCickHandlers_;
+    std::vector<EventHandlerData<OnMouseEventFunc  > >    mouseMoveHandlers_;
+    std::vector<EventHandlerData<OnMouseEventFunc  > >    mouseUpHandlers_;
+    std::vector<EventHandlerData<OnMouseWheelFunc  > >    mouseWheelHandlers_;
+    std::vector<EventHandlerData<OnKeyDownFunc > >        keyDownHandlers_;
+    std::vector<EventHandlerData<OnKeyUpFunc > >          keyUpHandlers_;
 
     /**
     This executes all the registered headers if needed (in wasm, the browser

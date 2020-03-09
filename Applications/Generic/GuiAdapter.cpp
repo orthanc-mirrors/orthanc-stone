@@ -358,6 +358,8 @@ namespace OrthancStone
       func);
   }
 
+#if 0
+  // useless under Wasm where canvas resize is handled automatically
   void GuiAdapter::SetResizeCallback(
     std::string canvasId, void* userData, bool capture, OnWindowResizeFunc func)
   {
@@ -368,6 +370,7 @@ namespace OrthancStone
       capture,
       func);
   }
+#endif
 
   void GuiAdapter::RequestAnimationFrame(
     OnAnimationFrameFunc func, void* userData)
@@ -393,10 +396,11 @@ namespace OrthancStone
     emscripten_set_keyup_callback(canvasId.c_str(), userData, static_cast<EM_BOOL>(capture), func);
   }
 
-  void GuiAdapter::SetResizeCallback(std::string canvasId, void* userData, bool capture, OnWindowResizeFunc func)
-  {
-    emscripten_set_resize_callback(canvasId.c_str(), userData, static_cast<EM_BOOL>(capture), func);
-  }
+  // handled from within WebAssemblyViewport
+  //void GuiAdapter::SetResizeCallback(std::string canvasId, void* userData, bool capture, OnWindowResizeFunc func)
+  //{
+  //  emscripten_set_resize_callback(canvasId.c_str(), userData, static_cast<EM_BOOL>(capture), func);
+  //}
 
   void GuiAdapter::RequestAnimationFrame(OnAnimationFrameFunc func, void* userData)
   {
@@ -517,13 +521,14 @@ namespace OrthancStone
   }
 
 
-
+#if ORTHANC_ENABLE_WASM != 1
   // SDL ONLY
-  void GuiAdapter::SetResizeCallback(
-    std::string canvasId, void* userData, bool capture, OnWindowResizeFunc func)
+  void GuiAdapter::SetSdlResizeCallback(
+    std::string canvasId, void* userData, bool capture, OnSdlWindowResizeFunc func)
   {
-    resizeHandlers_.push_back(EventHandlerData<OnWindowResizeFunc>(canvasId, func, userData));
+    resizeHandlers_.push_back(EventHandlerData<OnSdlWindowResizeFunc>(canvasId, func, userData));
   }
+#endif
 
   // SDL ONLY
   void GuiAdapter::SetMouseDownCallback(
@@ -596,12 +601,12 @@ namespace OrthancStone
   }
 
   // SDL ONLY
-  void GuiAdapter::OnResize()
+  void GuiAdapter::OnResize(unsigned int width, unsigned int height)
   {
     for (size_t i = 0; i < resizeHandlers_.size(); i++)
     {
       (*(resizeHandlers_[i].func))(
-        resizeHandlers_[i].canvasName, 0, resizeHandlers_[i].userData);
+        resizeHandlers_[i].canvasName, nullptr, width, height, resizeHandlers_[i].userData);
     }
   }
 
@@ -789,7 +794,7 @@ namespace OrthancStone
     while (!stop)
     {
       {
-        Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
+        // TODO: lock all viewports here! (use a scoped object)
         if(func != NULL)
           (*func)(cookie);
         OnAnimationFrame(); // in SDL we must call it
@@ -799,7 +804,7 @@ namespace OrthancStone
 
       while (!stop && SDL_PollEvent(&event))
       {
-        Deprecated::LockingEmitter::WriterLock lock(lockingEmitter_);
+        // TODO: lock all viewports here! (use a scoped object)
 
         if (event.type == SDL_QUIT)
         {
@@ -880,12 +885,14 @@ namespace OrthancStone
           //  locker.GetCentralViewport().MouseWheel(MouseWheelDirection_Down, x, y, modifiers);
           //}
         }
-        else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+        else if (event.type == SDL_WINDOWEVENT && 
+          (event.window.event == SDL_WINDOWEVENT_RESIZED ||
+           event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
         {
 #if 0
           tracker.reset();
 #endif
-          OnResize();
+          OnResize(event.window.data1, event.window.data2);
         }
         else if (event.type == SDL_KEYDOWN && event.key.repeat == 0 /* Ignore key bounce */)
         {

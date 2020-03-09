@@ -42,14 +42,15 @@ namespace Deprecated
     class LookupInstance;          // 2nd state
     class LoadStructure;           // 1st state
     
+    OrthancStone::ILoadersContext&                    loadersContext_;
     std::unique_ptr<OrthancStone::DicomStructureSet>  content_;
-    uint64_t                          revision_;
-    std::string                       instanceId_;
-    unsigned int                      countProcessedInstances_;
-    unsigned int                      countReferencedInstances_;  
+    uint64_t                                          revision_;
+    std::string                                       instanceId_;
+    unsigned int                                      countProcessedInstances_;
+    unsigned int                                      countReferencedInstances_;  
 
     // will be set to true once the loading is finished
-    bool                              structuresReady_;
+    bool                                              structuresReady_;
 
     /**
     At load time, these strings are used to initialize the structureVisibility_ 
@@ -71,8 +72,7 @@ namespace Deprecated
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, StructuresReady, DicomStructureSetLoader);
 
-    DicomStructureSetLoader(OrthancStone::IOracle& oracle,
-                            OrthancStone::IObservable& oracleObservable);    
+    DicomStructureSetLoader(OrthancStone::ILoadersContext& loadersContext);
     
     OrthancStone::DicomStructureSet* GetContent()
     {

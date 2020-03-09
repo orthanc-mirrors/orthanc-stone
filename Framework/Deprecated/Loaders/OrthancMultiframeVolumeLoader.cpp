@@ -508,18 +508,17 @@ namespace Deprecated
   }
 
   OrthancMultiframeVolumeLoader::OrthancMultiframeVolumeLoader(
+    OrthancStone::ILoadersContext& loadersContext,
     boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
-    OrthancStone::IOracle& oracle,
-    OrthancStone::IObservable& oracleObservable,
-    float outliersHalfRejectionRate) :
-    LoaderStateMachine(oracle, oracleObservable),
-    volume_(volume),
-    pixelDataLoaded_(false),
-    outliersHalfRejectionRate_(outliersHalfRejectionRate),
-    distributionRawMin_(0),
-    distributionRawMax_(0),
-    computedDistributionMin_(0),
-    computedDistributionMax_(0)
+    float outliersHalfRejectionRate) 
+    : LoaderStateMachine(loadersContext)
+    , volume_(volume)
+    , pixelDataLoaded_(false)
+    , outliersHalfRejectionRate_(outliersHalfRejectionRate)
+    , distributionRawMin_(0)
+    , distributionRawMax_(0)
+    , computedDistributionMin_(0)
+    , computedDistributionMax_(0)
   {
     if (volume.get() == NULL)
     {

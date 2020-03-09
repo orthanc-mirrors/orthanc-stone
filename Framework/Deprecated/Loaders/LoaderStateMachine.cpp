@@ -21,6 +21,8 @@
 
 #include "LoaderStateMachine.h"
 
+#include "../../Loaders/ILoadersContext.h"
+
 #include <Core/OrthancException.h>
 
 namespace Deprecated
@@ -97,8 +99,11 @@ namespace Deprecated
         ") < simultaneousDownloads_ (" << simultaneousDownloads_ << 
         ") --> will Schedule command addr " << std::hex << nextCommand << std::dec;
 
-      boost::shared_ptr<IObserver> observer(GetSharedObserver());
-      oracle_.Schedule(observer, nextCommand);
+      {
+        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext_.Lock());
+        boost::shared_ptr<IObserver> observer(GetSharedObserver());
+        lock->Schedule(observer, 0, nextCommand); // TODO: priority!
+      }
       pendingCommands_.pop_front();
 
       activeCommands_++;
@@ -157,20 +162,32 @@ namespace Deprecated
   }
 
 
-  LoaderStateMachine::LoaderStateMachine(OrthancStone::IOracle& oracle,
-                                         OrthancStone::IObservable& oracleObservable) :
-    oracle_(oracle),
-    active_(false),
-    simultaneousDownloads_(4),
-    activeCommands_(0)
+  LoaderStateMachine::LoaderStateMachine(
+    OrthancStone::ILoadersContext& loadersContext)
+    : loadersContext_(loadersContext)
+    , active_(false)
+    , simultaneousDownloads_(4)
+    , activeCommands_(0)
   {
-    LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::LoaderStateMachine()";
+    using OrthancStone::ILoadersContext;
 
-    // TODO => Move this out of constructor
-    Register<OrthancStone::OrthancRestApiCommand::SuccessMessage>(oracleObservable, &LoaderStateMachine::HandleSuccessMessage);
-    Register<OrthancStone::GetOrthancImageCommand::SuccessMessage>(oracleObservable, &LoaderStateMachine::HandleSuccessMessage);
-    Register<OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage>(oracleObservable, &LoaderStateMachine::HandleSuccessMessage);
-    Register<OrthancStone::OracleCommandExceptionMessage>(oracleObservable, &LoaderStateMachine::HandleExceptionMessage);
+    LOG(TRACE) 
+      << "LoaderStateMachine(" << std::hex << this 
+      << std::dec << ")::LoaderStateMachine()";
+
+    std::unique_ptr<ILoadersContext::ILock> lock(loadersContext_.Lock());
+
+    OrthancStone::IObservable& observable = lock->GetOracleObservable();
+
+    // TODO => Move this out of constructor WHY?
+    Register<OrthancStone::OrthancRestApiCommand::SuccessMessage>(
+      observable, &LoaderStateMachine::HandleSuccessMessage);
+    Register<OrthancStone::GetOrthancImageCommand::SuccessMessage>(
+      observable, &LoaderStateMachine::HandleSuccessMessage);
+    Register<OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage>(
+      observable, &LoaderStateMachine::HandleSuccessMessage);
+    Register<OrthancStone::OracleCommandExceptionMessage>(
+      observable, &LoaderStateMachine::HandleExceptionMessage);
   }
 
   LoaderStateMachine::~LoaderStateMachine()

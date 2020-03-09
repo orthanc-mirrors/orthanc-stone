@@ -94,10 +94,10 @@ namespace Deprecated
     const OrthancStone::VolumeImageGeometry& GetImageGeometry() const;
 
   public:
-    OrthancMultiframeVolumeLoader(boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
-                                  OrthancStone::IOracle& oracle,
-                                  OrthancStone::IObservable& oracleObservable,
-                                  float outliersHalfRejectionRate = 0.0005);
+    OrthancMultiframeVolumeLoader(
+      OrthancStone::ILoadersContext& loadersContext,
+      boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+      float outliersHalfRejectionRate = 0.0005);
     
     virtual ~OrthancMultiframeVolumeLoader();
 

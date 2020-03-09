@@ -34,11 +34,7 @@
 
 namespace OrthancStone
 {
-#if ORTHANC_ENABLE_WASM == 1
-  class WebAssemblyOracle;
-#else
-  class ThreadedOracle;
-#endif
+  class ILoadersContext;
 }
 
 namespace Deprecated
@@ -46,11 +42,7 @@ namespace Deprecated
   class LoaderCache
   {
   public:
-#if ORTHANC_ENABLE_WASM == 1
-    LoaderCache(OrthancStone::WebAssemblyOracle& oracle);
-#else
-    LoaderCache(OrthancStone::ThreadedOracle& oracle, LockingEmitter& lockingEmitter);
-#endif
+    LoaderCache(OrthancStone::ILoadersContext& loadersContext);
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader>
       GetSeriesVolumeProgressiveLoader      (std::string seriesUuid);
@@ -80,12 +72,8 @@ namespace Deprecated
   private:
     
     void DebugDisplayObjRefCounts();
-#if ORTHANC_ENABLE_WASM == 1
-    OrthancStone::WebAssemblyOracle& oracle_;
-#else
-    OrthancStone::ThreadedOracle& oracle_;
-    LockingEmitter& lockingEmitter_;
-#endif
+
+    OrthancStone::ILoadersContext& loadersContext_;
 
     std::map<std::string, boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> >
       seriesVolumeProgressiveLoaders_;

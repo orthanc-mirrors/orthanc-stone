@@ -21,6 +21,7 @@
 
 #include "OrthancSeriesVolumeProgressiveLoader.h"
 
+#include "../../Loaders/ILoadersContext.h"
 #include "../../Loaders/BasicFetchingItemsSorter.h"
 #include "../../Loaders/BasicFetchingStrategy.h"
 #include "../../Toolbox/GeometryToolbox.h"
@@ -31,6 +32,8 @@
 
 namespace Deprecated
 {
+  using OrthancStone::ILoadersContext;
+
   class OrthancSeriesVolumeProgressiveLoader::ExtractedSlice : public OrthancStone::DicomVolumeImageMPRSlicer::Slice
   {
   private:
@@ -302,9 +305,12 @@ namespace Deprecated
       }
 
       command->AcquirePayload(new Orthanc::SingleValueObject<unsigned int>(sliceIndex));
-
-      boost::shared_ptr<IObserver> observer(GetSharedObserver());
-      oracle_.Schedule(observer, command.release());
+      
+      {
+        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext_.Lock());
+        boost::shared_ptr<IObserver> observer(GetSharedObserver());
+        lock->Schedule(observer, 0, command.release()); // TODO: priority!
+      }
     }
     else
     {
@@ -430,25 +436,30 @@ namespace Deprecated
   }
 
 
-  OrthancSeriesVolumeProgressiveLoader::OrthancSeriesVolumeProgressiveLoader(const boost::shared_ptr<OrthancStone::DicomVolumeImage>& volume,
-                                                                             OrthancStone::IOracle& oracle,
-                                                                             OrthancStone::IObservable& oracleObservable) :
-    oracle_(oracle),
-    active_(false),
-    simultaneousDownloads_(4),
-    volume_(volume),
-    sorter_(new OrthancStone::BasicFetchingItemsSorter::Factory),
-    volumeImageReadyInHighQuality_(false)
+  OrthancSeriesVolumeProgressiveLoader::OrthancSeriesVolumeProgressiveLoader(
+    OrthancStone::ILoadersContext& loadersContext,
+    const boost::shared_ptr<OrthancStone::DicomVolumeImage>& volume)
+    : loadersContext_(loadersContext)
+    , active_(false)
+    , simultaneousDownloads_(4)
+    , volume_(volume)
+    , sorter_(new OrthancStone::BasicFetchingItemsSorter::Factory)
+    , volumeImageReadyInHighQuality_(false)
   {
-    // TODO => Move this out of constructor
-    Register<OrthancStone::OrthancRestApiCommand::SuccessMessage>
-      (oracleObservable, &OrthancSeriesVolumeProgressiveLoader::LoadGeometry);
+    std::auto_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext.Lock());
 
-    Register<OrthancStone::GetOrthancImageCommand::SuccessMessage>
-      (oracleObservable, &OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent);
+    // TODO => Move this out of constructor WHY?
+    Register<OrthancStone::OrthancRestApiCommand::SuccessMessage>(
+      lock->GetOracleObservable(), 
+      &OrthancSeriesVolumeProgressiveLoader::LoadGeometry);
 
-    Register<OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage>
-      (oracleObservable, &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent);
+    Register<OrthancStone::GetOrthancImageCommand::SuccessMessage>(
+      lock->GetOracleObservable(),
+      &OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent);
+
+    Register<OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage>(
+      lock->GetOracleObservable(),
+      &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent);
   }
 
   OrthancSeriesVolumeProgressiveLoader::~OrthancSeriesVolumeProgressiveLoader()
@@ -489,11 +500,11 @@ namespace Deprecated
 
       std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
       command->SetUri("/series/" + seriesId + "/instances-tags");
-
-//      LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries about to call oracle_.Schedule";
-      boost::shared_ptr<IObserver> observer(GetSharedObserver());
-      oracle_.Schedule(observer, command.release());
-//      LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries called oracle_.Schedule";
+      {
+        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext_.Lock());
+        boost::shared_ptr<IObserver> observer(GetSharedObserver());
+        lock->Schedule(observer, 0, command.release()); //TODO: priority!
+      }
     }
   }
   

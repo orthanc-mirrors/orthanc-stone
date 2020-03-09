@@ -38,6 +38,11 @@
 
 #include <boost/shared_ptr.hpp>
 
+namespace OrthancStone
+{
+  class ILoadersContext;
+}
+
 namespace Deprecated
 {
   /**
@@ -108,7 +113,7 @@ namespace Deprecated
 
     void LoadJpegSliceContent(const OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage& message);
 
-    OrthancStone::IOracle&                                      oracle_;
+    OrthancStone::ILoadersContext&                loadersContext_;
     bool                                          active_;
     unsigned int                                  simultaneousDownloads_;
     SeriesGeometry                                seriesGeometry_;
@@ -118,14 +123,12 @@ namespace Deprecated
     std::vector<unsigned int>                     slicesQuality_;
     bool                                          volumeImageReadyInHighQuality_;
 
-
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, VolumeImageReadyInHighQuality, OrthancSeriesVolumeProgressiveLoader);
 
-
-    OrthancSeriesVolumeProgressiveLoader(const boost::shared_ptr<OrthancStone::DicomVolumeImage>& volume,
-                                         OrthancStone::IOracle& oracle,
-                                         OrthancStone::IObservable& oracleObservable);
+    OrthancSeriesVolumeProgressiveLoader(
+      OrthancStone::ILoadersContext& context,
+      const boost::shared_ptr<OrthancStone::DicomVolumeImage>& volume);
 
     virtual ~OrthancSeriesVolumeProgressiveLoader();
 

@@ -345,16 +345,17 @@ namespace Deprecated
   };
     
 
-  DicomStructureSetLoader::DicomStructureSetLoader(OrthancStone::IOracle& oracle,
-                                                   OrthancStone::IObservable& oracleObservable) :
-    LoaderStateMachine(oracle, oracleObservable),
-    revision_(0),
-    countProcessedInstances_(0),
-    countReferencedInstances_(0),
-    structuresReady_(false)
+  DicomStructureSetLoader::DicomStructureSetLoader(
+    OrthancStone::ILoadersContext& loadersContext) 
+    : LoaderStateMachine(loadersContext)
+    , loadersContext_(loadersContext)
+    , revision_(0)
+    , countProcessedInstances_(0)
+    , countReferencedInstances_(0)
+    , structuresReady_(false)
   {
   }
-    
+   
     
   void DicomStructureSetLoader::SetStructureDisplayState(size_t structureIndex, bool display)
   {

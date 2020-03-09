@@ -33,6 +33,11 @@
 
 #include <list>
 
+namespace OrthancStone
+{
+  class ILoadersContext;
+}
+
 namespace Deprecated
 {
   /**
@@ -94,15 +99,14 @@ namespace Deprecated
 
     typedef std::list<OrthancStone::IOracleCommand*>  PendingCommands;
 
-    OrthancStone::IOracle&         oracle_;
-    bool             active_;
-    unsigned int     simultaneousDownloads_;
-    PendingCommands  pendingCommands_;
-    unsigned int     activeCommands_;
+    OrthancStone::ILoadersContext&  loadersContext_;
+    bool                            active_;
+    unsigned int                    simultaneousDownloads_;
+    PendingCommands                 pendingCommands_;
+    unsigned int                    activeCommands_;
 
   public:
-    LoaderStateMachine(OrthancStone::IOracle& oracle,
-                       OrthancStone::IObservable& oracleObservable);
+    LoaderStateMachine(OrthancStone::ILoadersContext& loadersContext);
 
     virtual ~LoaderStateMachine();
 

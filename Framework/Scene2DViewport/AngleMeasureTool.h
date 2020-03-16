@@ -40,7 +40,7 @@ namespace OrthancStone
   class AngleMeasureTool : public MeasureTool
   {
   public:
-    AngleMeasureTool(IViewport& viewport);
+    static boost::shared_ptr<AngleMeasureTool> Create(IViewport& viewport);
 
     ~AngleMeasureTool();
 
@@ -70,6 +70,8 @@ namespace OrthancStone
     AngleHighlightArea AngleHitTest(ScenePoint2D p) const;
 
   private:
+    AngleMeasureTool(IViewport& viewport);
+
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();
     void                SetAngleHighlightArea(AngleHighlightArea area);

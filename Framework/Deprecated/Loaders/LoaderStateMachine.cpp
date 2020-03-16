@@ -174,12 +174,16 @@ namespace Deprecated
     LOG(TRACE) 
       << "LoaderStateMachine(" << std::hex << this 
       << std::dec << ")::LoaderStateMachine()";
+  }
 
-    std::unique_ptr<ILoadersContext::ILock> lock(loadersContext_.Lock());
+  void LoaderStateMachine::PostConstructor()
+  {
+    std::unique_ptr<OrthancStone::ILoadersContext::ILock>
+      lock(loadersContext_.Lock());
 
     OrthancStone::IObservable& observable = lock->GetOracleObservable();
 
-    // TODO => Move this out of constructor WHY?
+    // TODO => Move this out of constructor
     Register<OrthancStone::OrthancRestApiCommand::SuccessMessage>(
       observable, &LoaderStateMachine::HandleSuccessMessage);
     Register<OrthancStone::GetOrthancImageCommand::SuccessMessage>(

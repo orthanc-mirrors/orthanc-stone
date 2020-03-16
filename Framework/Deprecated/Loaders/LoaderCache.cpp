@@ -83,7 +83,7 @@ namespace Deprecated
         boost::shared_ptr<OrthancStone::DicomVolumeImage> volumeImage(new OrthancStone::DicomVolumeImage);
         boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> loader;
       
-        loader.reset(new OrthancSeriesVolumeProgressiveLoader(loadersContext_, volumeImage));
+        loader = OrthancSeriesVolumeProgressiveLoader::Create(loadersContext_, volumeImage);
         loader->LoadSeries(seriesUuid);
         seriesVolumeProgressiveLoaders_[seriesUuid] = loader;
       }
@@ -144,7 +144,7 @@ namespace Deprecated
         boost::shared_ptr<OrthancStone::DicomVolumeImage> volumeImage(new OrthancStone::DicomVolumeImage);
         boost::shared_ptr<OrthancMultiframeVolumeLoader> loader;
         {
-          loader.reset(new OrthancMultiframeVolumeLoader(loadersContext_, volumeImage));
+          loader = OrthancMultiframeVolumeLoader::Create(loadersContext_, volumeImage);
           loader->LoadInstance(instanceUuid);
         }
         multiframeVolumeLoaders_[instanceUuid] = loader;
@@ -241,7 +241,7 @@ namespace Deprecated
 
         boost::shared_ptr<DicomStructureSetLoader> loader;
         {
-          loader.reset(new DicomStructureSetLoader(loadersContext_));
+          loader = DicomStructureSetLoader::Create(loadersContext_);
           loader->LoadInstance(inInstanceUuid, initiallyVisibleStructures);
         }
         dicomStructureSetLoaders_[entryKey] = loader;

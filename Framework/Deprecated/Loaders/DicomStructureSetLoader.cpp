@@ -357,6 +357,16 @@ namespace Deprecated
   }
    
     
+  boost::shared_ptr<Deprecated::DicomStructureSetLoader> DicomStructureSetLoader::Create(OrthancStone::ILoadersContext& loadersContext)
+  {
+    boost::shared_ptr<DicomStructureSetLoader> obj(
+      new DicomStructureSetLoader(
+        loadersContext));
+    obj->LoaderStateMachine::PostConstructor();
+    return obj;
+
+  }
+
   void DicomStructureSetLoader::SetStructureDisplayState(size_t structureIndex, bool display)
   {
     structureVisibility_.at(structureIndex) = display;

@@ -38,7 +38,7 @@ namespace OrthancStone
   class LineMeasureTool : public MeasureTool
   {
   public:
-    LineMeasureTool(IViewport& viewport);
+    static boost::shared_ptr<LineMeasureTool> Create(IViewport& viewport);
 
     ~LineMeasureTool();
 
@@ -67,6 +67,8 @@ namespace OrthancStone
     LineHighlightArea LineHitTest(ScenePoint2D p);
 
   private:
+    LineMeasureTool(IViewport& viewport);
+
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();
     void                SetLineHighlightArea(LineHighlightArea area);

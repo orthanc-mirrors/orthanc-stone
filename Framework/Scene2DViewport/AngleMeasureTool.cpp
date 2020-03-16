@@ -51,7 +51,14 @@ namespace OrthancStone
 #endif
     , angleHighlightArea_(AngleHighlightArea_None)
   {
-    RefreshScene();
+  }
+
+  boost::shared_ptr<AngleMeasureTool> AngleMeasureTool::Create(IViewport& viewport)
+  {
+    boost::shared_ptr<AngleMeasureTool> obj(new AngleMeasureTool(viewport));
+    obj->MeasureTool::PostConstructor();
+    obj->RefreshScene();
+    return obj;
   }
 
   AngleMeasureTool::~AngleMeasureTool()

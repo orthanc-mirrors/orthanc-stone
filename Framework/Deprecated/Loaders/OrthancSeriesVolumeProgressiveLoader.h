@@ -123,10 +123,15 @@ namespace Deprecated
     std::vector<unsigned int>                     slicesQuality_;
     bool                                          volumeImageReadyInHighQuality_;
 
+
+    OrthancSeriesVolumeProgressiveLoader(
+      OrthancStone::ILoadersContext& loadersContext,
+      const boost::shared_ptr<OrthancStone::DicomVolumeImage>& volume);
+  
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, VolumeImageReadyInHighQuality, OrthancSeriesVolumeProgressiveLoader);
 
-    OrthancSeriesVolumeProgressiveLoader(
+    static boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> Create(
       OrthancStone::ILoadersContext& context,
       const boost::shared_ptr<OrthancStone::DicomVolumeImage>& volume);
 

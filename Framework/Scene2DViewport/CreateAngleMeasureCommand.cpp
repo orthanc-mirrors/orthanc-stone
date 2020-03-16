@@ -29,8 +29,7 @@ namespace OrthancStone
     IViewport& viewport,
     ScenePoint2D           point)
     : CreateMeasureCommand(viewport)
-    , measureTool_(
-      boost::shared_ptr<AngleMeasureTool>(new AngleMeasureTool(viewport)))
+    , measureTool_(AngleMeasureTool::Create(viewport))
   {
     
     std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());

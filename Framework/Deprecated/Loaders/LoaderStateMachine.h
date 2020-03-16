@@ -45,10 +45,16 @@ namespace Deprecated
      simultaneousDownloads_ of them at the same time, then will schedule the 
      rest once slots become available. It is used, a.o., by the 
      OrtancMultiframeVolumeLoader class.
+
+     To use it, you need to create commands that derive from State.
+
+     You need to initialize them with the object that must be called when 
+     an answer is received. 
   */
+
   class LoaderStateMachine : public OrthancStone::ObserverBase<LoaderStateMachine>
   {
-  protected:
+  public:
     class State : public Orthanc::IDynamicObject
     {
     private:
@@ -105,8 +111,11 @@ namespace Deprecated
     PendingCommands                 pendingCommands_;
     unsigned int                    activeCommands_;
 
+
   public:
     LoaderStateMachine(OrthancStone::ILoadersContext& loadersContext);
+
+    void PostConstructor();
 
     virtual ~LoaderStateMachine();
 

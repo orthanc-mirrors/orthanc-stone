@@ -52,10 +52,14 @@ namespace OrthancStone
     : viewport_(viewport)
     , enabled_(true)
   {
+
+  }
+
+  void MeasureTool::PostConstructor()
+  {
     std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
     ViewportController& controller = lock->GetController();
 
-    // TODO => Move this out of constructor
     Register<ViewportController::SceneTransformChanged>(
       controller, 
       &MeasureTool::OnSceneTransformChanged);

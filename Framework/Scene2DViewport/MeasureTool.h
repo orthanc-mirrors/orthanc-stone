@@ -115,6 +115,8 @@ namespace OrthancStone
   protected:
     MeasureTool(IViewport& viewport);
 
+    void PostConstructor();
+
     /**
     The measuring tool may exist in a standalone fashion, without any available
     scene (because the controller is dead or dying). This call allows to check 

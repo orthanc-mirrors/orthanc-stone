@@ -93,12 +93,18 @@ namespace Deprecated
     bool HasGeometry() const;
     const OrthancStone::VolumeImageGeometry& GetImageGeometry() const;
 
-  public:
+  protected:
     OrthancMultiframeVolumeLoader(
       OrthancStone::ILoadersContext& loadersContext,
       boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+      float outliersHalfRejectionRate);
+  public:
+
+    static boost::shared_ptr<OrthancMultiframeVolumeLoader> Create(
+      OrthancStone::ILoadersContext& loadersContext,
+      boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
       float outliersHalfRejectionRate = 0.0005);
-    
+
     virtual ~OrthancMultiframeVolumeLoader();
 
     bool IsPixelDataLoaded() const

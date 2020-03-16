@@ -446,21 +446,33 @@ namespace Deprecated
     , sorter_(new OrthancStone::BasicFetchingItemsSorter::Factory)
     , volumeImageReadyInHighQuality_(false)
   {
+  }
+
+  boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> 
+    OrthancSeriesVolumeProgressiveLoader::Create(
+      OrthancStone::ILoadersContext& loadersContext,
+      const boost::shared_ptr<OrthancStone::DicomVolumeImage>& volume)
+  {
     std::auto_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext.Lock());
 
-    // TODO => Move this out of constructor WHY?
-    Register<OrthancStone::OrthancRestApiCommand::SuccessMessage>(
-      lock->GetOracleObservable(), 
+    boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> obj(
+        new OrthancSeriesVolumeProgressiveLoader(loadersContext,volume));
+
+    obj->Register<OrthancStone::OrthancRestApiCommand::SuccessMessage>(
+      lock->GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadGeometry);
 
-    Register<OrthancStone::GetOrthancImageCommand::SuccessMessage>(
+    obj->Register<OrthancStone::GetOrthancImageCommand::SuccessMessage>(
       lock->GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent);
 
-    Register<OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage>(
+    obj->Register<OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage>(
       lock->GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent);
+
+    return obj;
   }
+
 
   OrthancSeriesVolumeProgressiveLoader::~OrthancSeriesVolumeProgressiveLoader()
   {

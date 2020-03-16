@@ -69,11 +69,15 @@ namespace Deprecated
     */
     std::vector<bool>                  structureVisibility_;
 
+  protected:
+    DicomStructureSetLoader(OrthancStone::ILoadersContext& loadersContext);
+
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, StructuresReady, DicomStructureSetLoader);
 
-    DicomStructureSetLoader(OrthancStone::ILoadersContext& loadersContext);
-    
+    static boost::shared_ptr<DicomStructureSetLoader> Create(
+      OrthancStone::ILoadersContext& loadersContext);
+
     OrthancStone::DicomStructureSet* GetContent()
     {
       return content_.get();

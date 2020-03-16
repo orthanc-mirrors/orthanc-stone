@@ -44,6 +44,14 @@ namespace OrthancStone
 
   }
 
+  boost::shared_ptr<LineMeasureTool> LineMeasureTool::Create(IViewport& viewport)
+  {
+    boost::shared_ptr<LineMeasureTool> obj(new LineMeasureTool(viewport));
+    obj->MeasureTool::PostConstructor();
+    obj->RefreshScene();
+    return obj;
+  }
+
   LineMeasureTool::~LineMeasureTool()
   {
     // this measuring tool is a RABI for the corresponding visual layers

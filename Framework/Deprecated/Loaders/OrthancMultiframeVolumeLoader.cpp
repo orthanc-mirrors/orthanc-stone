@@ -526,12 +526,27 @@ namespace Deprecated
     }
   }
 
+
+  boost::shared_ptr<OrthancMultiframeVolumeLoader>
+    OrthancMultiframeVolumeLoader::Create(
+      OrthancStone::ILoadersContext& loadersContext, 
+      boost::shared_ptr<OrthancStone::DicomVolumeImage> volume, 
+      float outliersHalfRejectionRate /*= 0.0005*/)
+  {
+    boost::shared_ptr<OrthancMultiframeVolumeLoader> obj(
+      new OrthancMultiframeVolumeLoader(
+        loadersContext,
+        volume,
+        outliersHalfRejectionRate));
+    obj->LoaderStateMachine::PostConstructor();
+    return obj;
+  }
+
   OrthancMultiframeVolumeLoader::~OrthancMultiframeVolumeLoader()
   {
     LOG(TRACE) << "OrthancMultiframeVolumeLoader::~OrthancMultiframeVolumeLoader()";
   }
-
-
+  
   void OrthancMultiframeVolumeLoader::GetDistributionMinMax
   (float& minValue, float& maxValue) const
   {

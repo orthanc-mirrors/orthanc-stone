@@ -121,12 +121,16 @@ elseif(ENABLE_SDL)
     -DORTHANC_ENABLE_SDL=1
     )
 elseif(ENABLE_QT)
-  message("QT is enabled")
-  include(${CMAKE_CURRENT_LIST_DIR}/QtConfiguration.cmake)
   add_definitions(
     -DORTHANC_ENABLE_QT=1
     -DORTHANC_ENABLE_SDL=0
     )
+  if(DISABLE_STONE_QT_CMAKE_FILE)
+    message("QT is enabled, but QtConfiguration.cmake will not be included")  
+  else()    
+    message("QT is enabled")  
+    include(${CMAKE_CURRENT_LIST_DIR}/QtConfiguration.cmake)
+  endif()
 else()
   message("SDL and QT are both disabled")
   unset(USE_SYSTEM_SDL CACHE)

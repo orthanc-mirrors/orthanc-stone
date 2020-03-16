@@ -53,6 +53,14 @@
 
 namespace OrthancStone
 {
+#if ORTHANC_ENABLE_WASM != 1
+  class SdlViewport;
+#endif
+
+#if 0
+
+  // events are now handled directly by the VolumeSlicerWidget... The 
+  // GuiAdapter doesn't know about widgets anymore
 
   /**
   This interface is used to store the widgets that are controlled by the 
@@ -64,8 +72,17 @@ namespace OrthancStone
   {
   public:
     virtual ~IGuiAdapterWidget() {}
-
+    
+#if ORTHANC_ENABLE_WASM != 1
+    /**
+    Returns the SdlViewport that this widget contains. If the underlying 
+    viewport type is *not* SDL, then an error is returned.
+    */
+    virtual SdlViewport& GetSdlViewport() = 0;
+#endif
   };
+
+#endif
 
   enum GuiAdapterMouseButtonType
   {
@@ -96,12 +113,12 @@ namespace OrthancStone
   struct GuiAdapterKeyboardEvent;
 
 #if 1
-  typedef bool (*OnMouseEventFunc)(std::string canvasId, const GuiAdapterMouseEvent* mouseEvent, void* userData);
-  typedef bool (*OnMouseWheelFunc)(std::string canvasId, const GuiAdapterWheelEvent* wheelEvent, void* userData);
-  typedef bool (*OnKeyDownFunc)   (std::string canvasId, const GuiAdapterKeyboardEvent*   keyEvent,   void* userData);
-  typedef bool (*OnKeyUpFunc)     (std::string canvasId, const GuiAdapterKeyboardEvent*   keyEvent,   void* userData);
-
+  typedef bool (*OnMouseEventFunc)    (std::string canvasId, const GuiAdapterMouseEvent* mouseEvent, void* userData);
+  typedef bool (*OnMouseWheelFunc)    (std::string canvasId, const GuiAdapterWheelEvent* wheelEvent, void* userData);
+  typedef bool (*OnKeyDownFunc)       (std::string canvasId, const GuiAdapterKeyboardEvent*   keyEvent,   void* userData);
+  typedef bool (*OnKeyUpFunc)         (std::string canvasId, const GuiAdapterKeyboardEvent*   keyEvent,   void* userData);
   typedef bool (*OnAnimationFrameFunc)(double time, void* userData);
+  typedef bool (*OnSdlEventCallback)  (std::string canvasId, const SDL_Event& sdlEvent, void* userData);
   
 #if ORTHANC_ENABLE_WASM != 1
   typedef bool (*OnSdlWindowResizeFunc)(std::string canvasId, 
@@ -109,6 +126,8 @@ namespace OrthancStone
                                         unsigned int width, 
                                         unsigned int height, 
                                         void* userData);
+
+
 #endif
 
 #else
@@ -253,14 +272,18 @@ namespace OrthancStone
 
     */
 
-    void SetMouseDownCallback     (std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
-    void SetMouseDblClickCallback (std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
-    void SetMouseMoveCallback     (std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
-    void SetMouseUpCallback       (std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
-    void SetWheelCallback         (std::string canvasId, void* userData, bool capture, OnMouseWheelFunc   func);
-    void SetKeyDownCallback       (std::string canvasId, void* userData, bool capture, OnKeyDownFunc      func);
-    void SetKeyUpCallback         (std::string canvasId, void* userData, bool capture, OnKeyUpFunc        func);
-    
+    void SetMouseDownCallback       (std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
+    void SetMouseDblClickCallback   (std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
+    void SetMouseMoveCallback       (std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
+    void SetMouseUpCallback         (std::string canvasId, void* userData, bool capture, OnMouseEventFunc   func);
+    void SetWheelCallback           (std::string canvasId, void* userData, bool capture, OnMouseWheelFunc   func);
+    void SetKeyDownCallback         (std::string canvasId, void* userData, bool capture, OnKeyDownFunc      func);
+    void SetKeyUpCallback           (std::string canvasId, void* userData, bool capture, OnKeyUpFunc        func);
+    void SetGenericSdlEventCallback (std::string canvasId, void* userData, bool capture, OnSdlEventCallback func);
+
+    typedef bool (*OnSdlEventCallback)  (std::string canvasId, const SDL_Event& sdlEvent, void* userData);
+
+
 #if ORTHANC_ENABLE_WASM != 1
     // if you pass "#window", then any Window resize will trigger the callback
     void SetSdlResizeCallback(std::string canvasId, 
@@ -283,6 +306,13 @@ namespace OrthancStone
 
   private:
 
+#if ORTHANC_ENABLE_WASM != 1
+    /**
+    Gives observers a chance to react based on generic event handlers. This 
+    is used, for instance, when the viewport lock interface is invalidated.
+    */
+    void OnSdlGenericEvent(const SDL_Event& sdlEvent);
+#endif
 
     /**
     In SDL, this executes all the registered headers
@@ -318,6 +348,7 @@ namespace OrthancStone
     std::vector<EventHandlerData<OnMouseWheelFunc  > >    mouseWheelHandlers_;
     std::vector<EventHandlerData<OnKeyDownFunc > >        keyDownHandlers_;
     std::vector<EventHandlerData<OnKeyUpFunc > >          keyUpHandlers_;
+    std::vector<EventHandlerData<OnSdlEventCallback > >   sdlEventHandlers_;
 
     /**
     This executes all the registered headers if needed (in wasm, the browser
@@ -331,8 +362,6 @@ namespace OrthancStone
     Same remark as OnMouseEvent
     */
     void OnMouseWheelEvent(uint32_t windowID, const GuiAdapterWheelEvent& event);
-
-    boost::shared_ptr<IGuiAdapterWidget> GetWidgetFromWindowId();
 
 #endif
 

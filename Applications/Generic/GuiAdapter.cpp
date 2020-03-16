@@ -520,15 +520,12 @@ namespace OrthancStone
       dest.altKey = false;
   }
 
-
-#if ORTHANC_ENABLE_WASM != 1
   // SDL ONLY
   void GuiAdapter::SetSdlResizeCallback(
     std::string canvasId, void* userData, bool capture, OnSdlWindowResizeFunc func)
   {
     resizeHandlers_.push_back(EventHandlerData<OnSdlWindowResizeFunc>(canvasId, func, userData));
   }
-#endif
 
   // SDL ONLY
   void GuiAdapter::SetMouseDownCallback(
@@ -580,6 +577,13 @@ namespace OrthancStone
   }
 
   // SDL ONLY
+  void GuiAdapter::SetGenericSdlEventCallback(
+    std::string canvasId, void* userData, bool capture, OnSdlEventCallback func)
+  {
+    sdlEventHandlers_.push_back(EventHandlerData<OnSdlEventCallback>(canvasId, func, userData));
+  }
+
+  // SDL ONLY
   void GuiAdapter::OnAnimationFrame()
   {
     std::vector<size_t> disabledAnimationHandlers;
@@ -610,10 +614,82 @@ namespace OrthancStone
     }
   }
 
+
+
+  void GuiAdapter::OnSdlGenericEvent(const SDL_Event& sdlEvent)
+  {
+    // Events related to a window are only sent to the related canvas
+    // User events are sent to everyone (we can't filter them here)
+    
+    /*
+    SDL_WindowEvent    SDL_WINDOWEVENT
+    SDL_KeyboardEvent     SDL_KEYDOWN
+                          SDL_KEYUP
+    SDL_TextEditingEvent  SDL_TEXTEDITING
+    SDL_TextInputEvent    SDL_TEXTINPUT
+    SDL_MouseMotionEvent  SDL_MOUSEMOTION
+    SDL_MouseButtonEvent  SDL_MOUSEBUTTONDOWN 
+                          SDL_MOUSEBUTTONUP
+    SDL_MouseWheelEvent   SDL_MOUSEWHEEL
+    SDL_UserEvent         SDL_USEREVENT through ::SDL_LASTEVENT-1
+    */
+
+    // if this string is left empty, it means the message will be sent to
+    // all widgets.
+    // otherwise, it contains the originating message window title
+
+    std::string windowTitle;
+    uint32_t windowId = 0;
+
+    if (sdlEvent.type == SDL_WINDOWEVENT)
+      windowId = sdlEvent.window.windowID;
+    else if (sdlEvent.type == SDL_KEYDOWN || sdlEvent.type == SDL_KEYUP)
+      windowId = sdlEvent.key.windowID;
+    else if (sdlEvent.type == SDL_TEXTEDITING)
+      windowId = sdlEvent.edit.windowID;
+    else if (sdlEvent.type == SDL_TEXTINPUT)
+      windowId = sdlEvent.text.windowID;
+    else if (sdlEvent.type == SDL_MOUSEMOTION)
+      windowId = sdlEvent.motion.windowID;
+    else if (sdlEvent.type == SDL_MOUSEBUTTONDOWN || sdlEvent.type == SDL_MOUSEBUTTONUP)
+      windowId = sdlEvent.button.windowID;
+    else if (sdlEvent.type == SDL_MOUSEWHEEL)
+      windowId = sdlEvent.wheel.windowID;
+    else if (sdlEvent.type >= SDL_USEREVENT && sdlEvent.type <= (SDL_LASTEVENT-1))
+      windowId = sdlEvent.user.windowID;
+
+    if (windowId != 0)
+    {
+      SDL_Window* sdlWindow = SDL_GetWindowFromID(windowId);
+      ORTHANC_ASSERT(sdlWindow != NULL, "Window ID \"" << windowId << "\" is not a valid SDL window ID!");
+      const char* windowTitleSz = SDL_GetWindowTitle(sdlWindow);
+      ORTHANC_ASSERT(windowTitleSz != NULL, "Window ID \"" << windowId << "\" has a NULL window title!");
+      windowTitle = windowTitleSz;
+      ORTHANC_ASSERT(windowTitle != "", "Window ID \"" << windowId << "\" has an empty window title!");
+    }
+
+    for (size_t i = 0; i < sdlEventHandlers_.size(); i++)
+    {
+      // normally, the handlers return a bool indicating whether they
+      // have handled the event or not, but we don't really care about this
+      std::string& canvasName = sdlEventHandlers_[i].canvasName;
+      
+      bool sendEvent = true;
+
+      if (windowTitle != "" && (canvasName != windowTitle))
+        sendEvent = false;
+
+      if (sendEvent)
+      {
+        auto func = sdlEventHandlers_[i].func;
+        (*func)(canvasName, sdlEvent, sdlEventHandlers_[i].userData);
+      }
+    }
+  }
+
   // SDL ONLY
   void GuiAdapter::OnMouseWheelEvent(uint32_t windowID, const GuiAdapterWheelEvent& event)
   {
-
     // the SDL window name IS the canvas name ("canvas" is used because this lib
     // is designed for Wasm
     SDL_Window* sdlWindow = SDL_GetWindowFromID(windowID);
@@ -731,17 +807,6 @@ namespace OrthancStone
         ORTHANC_ASSERT(false, "Wrong event.type: " << event.type << " in GuiAdapter::OnMouseEvent(...)");
         break;
       }
-
-      ////boost::shared_ptr<IGuiAdapterWidget> GetWidgetFromWindowId();
-      //boost::shared_ptr<IGuiAdapterWidget> foundWidget;
-      //VisitWidgets([foundWidget, windowID](auto widget)
-      //  {
-      //    if (widget->GetSdlWindowID() == windowID)
-      //      foundWidget = widget;
-      //  });
-      //ORTHANC_ASSERT(foundWidget, "WindowID " << windowID << " was not found in the registered widgets!");
-      //if(foundWidget)
-      //  foundWidget->
     }
   }
 
@@ -776,6 +841,31 @@ namespace OrthancStone
   }
 # endif
 
+#if 0
+  // TODO: remove this when generic sdl event handlers are implemented in 
+  // the VolumeSlicerWidget
+  // SDL ONLY
+  bool GuiAdapter::IsSdlViewPortRefreshEvent(const SDL_Event& event) const
+  {
+    SDL_Window* sdlWindow = SDL_GetWindowFromID(event.window.windowID);
+
+    ORTHANC_ASSERT(sdlWindow != NULL, "Window ID \"" << event.window.windowID << "\" is not a valid SDL window ID!");
+
+    const char* windowTitleSz = SDL_GetWindowTitle(sdlWindow);
+
+    // now we need to find the VolumeSlicerWidget from from the canvas name!
+    // (and retrieve the SdlViewport)
+    boost::shared_ptr<IGuiAdapterWidget> foundWidget;
+    VisitWidgets([&foundWidget, windowTitleSz](auto widget)
+    {
+      if (widget->GetCanvasIdentifier() == std::string(windowTitleSz))
+        foundWidget = widget;
+    });
+    ORTHANC_ASSERT(foundWidget, "The window named: \"" << windowTitleSz << "\" was not found in the registered widgets!");
+    return foundWidget->GetSdlViewport().IsRefreshEvent(event);
+  }
+#endif
+
   // SDL ONLY
   void GuiAdapter::Run(GuiAdapterRunFunc func, void* cookie)
   {
@@ -800,137 +890,164 @@ namespace OrthancStone
         OnAnimationFrame(); // in SDL we must call it
       }
 
-      SDL_Event event;
-
-      while (!stop && SDL_PollEvent(&event))
+      while (!stop)
       {
-        // TODO: lock all viewports here! (use a scoped object)
+        std::vector<SDL_Event> sdlEvents;
+        std::map<Uint32,SDL_Event> userEventsMap;
+        
+        SDL_Event sdlEvent;
 
-        if (event.type == SDL_QUIT)
+        // FIRST: collect all pending events
+        while (SDL_PollEvent(&sdlEvent) != 0)
         {
-          // TODO: call exit callbacks here
-          stop = true;
-          break;
-        }
-        else if ((event.type == SDL_MOUSEMOTION) ||
-          (event.type == SDL_MOUSEBUTTONDOWN) ||
-          (event.type == SDL_MOUSEBUTTONUP))
-        {
-          int scancodeCount = 0;
-          const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
-          bool ctrlPressed(false);
-          bool shiftPressed(false);
-          bool altPressed(false);
-
-          if (SDL_SCANCODE_LCTRL < scancodeCount && keyboardState[SDL_SCANCODE_LCTRL])
-            ctrlPressed = true;
-          if (SDL_SCANCODE_RCTRL < scancodeCount && keyboardState[SDL_SCANCODE_RCTRL])
-            ctrlPressed = true;
-          if (SDL_SCANCODE_LSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_LSHIFT])
-            shiftPressed = true;
-          if (SDL_SCANCODE_RSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_RSHIFT])
-            shiftPressed = true;
-          if (SDL_SCANCODE_LALT < scancodeCount && keyboardState[SDL_SCANCODE_LALT])
-            altPressed = true;
-
-          GuiAdapterMouseEvent dest;
-          ConvertFromPlatform(dest, ctrlPressed, shiftPressed, altPressed, event);
-          OnMouseEvent(event.window.windowID, dest);
-#if 0
-          // for reference, how to create trackers
-          if (tracker)
+          if ( (sdlEvent.type >= SDL_USEREVENT) && 
+               (sdlEvent.type <= SDL_USEREVENT) )
           {
-            PointerEvent e;
-            e.AddPosition(compositor.GetPixelCenterCoordinates(
-              event.button.x, event.button.y));
-            tracker->PointerMove(e);
+            // we don't want to have multiple events with the same event.type
+            userEventsMap[sdlEvent.type] = sdlEvent;
           }
-#endif
-        }
-        else if (event.type == SDL_MOUSEWHEEL)
-        {
-
-          int scancodeCount = 0;
-          const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
-          bool ctrlPressed(false);
-          bool shiftPressed(false);
-          bool altPressed(false);
-
-          if (SDL_SCANCODE_LCTRL < scancodeCount && keyboardState[SDL_SCANCODE_LCTRL])
-            ctrlPressed = true;
-          if (SDL_SCANCODE_RCTRL < scancodeCount && keyboardState[SDL_SCANCODE_RCTRL])
-            ctrlPressed = true;
-          if (SDL_SCANCODE_LSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_LSHIFT])
-            shiftPressed = true;
-          if (SDL_SCANCODE_RSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_RSHIFT])
-            shiftPressed = true;
-          if (SDL_SCANCODE_LALT < scancodeCount && keyboardState[SDL_SCANCODE_LALT])
-            altPressed = true;
-
-          GuiAdapterWheelEvent dest;
-          ConvertFromPlatform(dest, ctrlPressed, shiftPressed, altPressed, event);
-          OnMouseWheelEvent(event.window.windowID, dest);
-
-          //KeyboardModifiers modifiers = GetKeyboardModifiers(keyboardState, scancodeCount);
-
-          //int x, y;
-          //SDL_GetMouseState(&x, &y);
-
-          //if (event.wheel.y > 0)
-          //{
-          //  locker.GetCentralViewport().MouseWheel(MouseWheelDirection_Up, x, y, modifiers);
-          //}
-          //else if (event.wheel.y < 0)
-          //{
-          //  locker.GetCentralViewport().MouseWheel(MouseWheelDirection_Down, x, y, modifiers);
-          //}
-        }
-        else if (event.type == SDL_WINDOWEVENT && 
-          (event.window.event == SDL_WINDOWEVENT_RESIZED ||
-           event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
-        {
-#if 0
-          tracker.reset();
-#endif
-          OnResize(event.window.data1, event.window.data2);
-        }
-        else if (event.type == SDL_KEYDOWN && event.key.repeat == 0 /* Ignore key bounce */)
-        {
-          switch (event.key.keysym.sym)
+          else
           {
-          case SDLK_f:
-            // window.GetWindow().ToggleMaximize(); //TODO: move to particular handler
-            break;
+            sdlEvents.push_back(sdlEvent);
+          }
+        }
 
-          // This commented out code was used to debug the context
-          // loss/restoring code (2019-08-10)
-          // case SDLK_k:
-          //   {
-          //     SDL_Window* window = SDL_GetWindowFromID(event.window.windowID);
-          //     std::string windowTitle(SDL_GetWindowTitle(window));
-          //     Debug_SetContextToBeKilled(windowTitle);
-          //   }
-          //   break;
-          // case SDLK_l:
-          //   {
-          //     SDL_Window* window = SDL_GetWindowFromID(event.window.windowID);
-          //     std::string windowTitle(SDL_GetWindowTitle(window));
-          //     Debug_SetContextToBeRestored(windowTitle);
-          //   }
-          //   break;
+        // SECOND: collect all user events
+        for (auto& it : userEventsMap)
+          sdlEvents.push_back(it.second);
+                
+        // now process the events
+        for(const SDL_Event& sdlEvent : sdlEvents)
+        {
+          // TODO: lock all viewports here! (use a scoped object)
 
-          case SDLK_q:
+          if (sdlEvent.type == SDL_QUIT)
+          {
+            // TODO: call exit callbacks here
             stop = true;
             break;
-
-          default:
-            GuiAdapterKeyboardEvent dest;
-            ConvertFromPlatform(dest, event);
-            OnKeyboardEvent(event.window.windowID, dest);
-            break;
           }
+          else if ((sdlEvent.type == SDL_MOUSEMOTION) ||
+            (sdlEvent.type == SDL_MOUSEBUTTONDOWN) ||
+                   (sdlEvent.type == SDL_MOUSEBUTTONUP))
+          {
+            int scancodeCount = 0;
+            const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
+            bool ctrlPressed(false);
+            bool shiftPressed(false);
+            bool altPressed(false);
+
+            if (SDL_SCANCODE_LCTRL < scancodeCount && keyboardState[SDL_SCANCODE_LCTRL])
+              ctrlPressed = true;
+            if (SDL_SCANCODE_RCTRL < scancodeCount && keyboardState[SDL_SCANCODE_RCTRL])
+              ctrlPressed = true;
+            if (SDL_SCANCODE_LSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_LSHIFT])
+              shiftPressed = true;
+            if (SDL_SCANCODE_RSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_RSHIFT])
+              shiftPressed = true;
+            if (SDL_SCANCODE_LALT < scancodeCount && keyboardState[SDL_SCANCODE_LALT])
+              altPressed = true;
+
+            GuiAdapterMouseEvent dest;
+            ConvertFromPlatform(dest, ctrlPressed, shiftPressed, altPressed, sdlEvent);
+            OnMouseEvent(sdlEvent.window.windowID, dest);
+  #if 0
+            // for reference, how to create trackers
+            if (tracker)
+            {
+              PointerEvent e;
+              e.AddPosition(compositor.GetPixelCenterCoordinates(
+                sdlEvent.button.x, sdlEvent.button.y));
+              tracker->PointerMove(e);
+            }
+  #endif
+          }
+          else if (sdlEvent.type == SDL_MOUSEWHEEL)
+          {
+
+            int scancodeCount = 0;
+            const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
+            bool ctrlPressed(false);
+            bool shiftPressed(false);
+            bool altPressed(false);
+
+            if (SDL_SCANCODE_LCTRL < scancodeCount && keyboardState[SDL_SCANCODE_LCTRL])
+              ctrlPressed = true;
+            if (SDL_SCANCODE_RCTRL < scancodeCount && keyboardState[SDL_SCANCODE_RCTRL])
+              ctrlPressed = true;
+            if (SDL_SCANCODE_LSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_LSHIFT])
+              shiftPressed = true;
+            if (SDL_SCANCODE_RSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_RSHIFT])
+              shiftPressed = true;
+            if (SDL_SCANCODE_LALT < scancodeCount && keyboardState[SDL_SCANCODE_LALT])
+              altPressed = true;
+
+            GuiAdapterWheelEvent dest;
+            ConvertFromPlatform(dest, ctrlPressed, shiftPressed, altPressed, sdlEvent);
+            OnMouseWheelEvent(sdlEvent.window.windowID, dest);
+
+            //KeyboardModifiers modifiers = GetKeyboardModifiers(keyboardState, scancodeCount);
+
+            //int x, y;
+            //SDL_GetMouseState(&x, &y);
+
+            //if (sdlEvent.wheel.y > 0)
+            //{
+            //  locker.GetCentralViewport().MouseWheel(MouseWheelDirection_Up, x, y, modifiers);
+            //}
+            //else if (sdlEvent.wheel.y < 0)
+            //{
+            //  locker.GetCentralViewport().MouseWheel(MouseWheelDirection_Down, x, y, modifiers);
+            //}
+          }
+          else if (sdlEvent.type == SDL_WINDOWEVENT &&
+            (sdlEvent.window.event == SDL_WINDOWEVENT_RESIZED ||
+             sdlEvent.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
+          {
+  #if 0
+            tracker.reset();
+  #endif
+            OnResize(sdlEvent.window.data1, sdlEvent.window.data2);
+          }
+          else if (sdlEvent.type == SDL_KEYDOWN && sdlEvent.key.repeat == 0 /* Ignore key bounce */)
+          {
+            switch (sdlEvent.key.keysym.sym)
+            {
+            case SDLK_f:
+              // window.GetWindow().ToggleMaximize(); //TODO: move to particular handler
+              break;
+
+            // This commented out code was used to debug the context
+            // loss/restoring code (2019-08-10)
+            // case SDLK_k:
+            //   {
+            //     SDL_Window* window = SDL_GetWindowFromID(sdlEvent.window.windowID);
+            //     std::string windowTitle(SDL_GetWindowTitle(window));
+            //     Debug_SetContextToBeKilled(windowTitle);
+            //   }
+            //   break;
+            // case SDLK_l:
+            //   {
+            //     SDL_Window* window = SDL_GetWindowFromID(sdlEvent.window.windowID);
+            //     std::string windowTitle(SDL_GetWindowTitle(window));
+            //     Debug_SetContextToBeRestored(windowTitle);
+            //   }
+            //   break;
+
+            case SDLK_q:
+              stop = true;
+              break;
+
+            default:
+              GuiAdapterKeyboardEvent dest;
+              ConvertFromPlatform(dest, sdlEvent);
+              OnKeyboardEvent(sdlEvent.window.windowID, dest);
+              break;
+            }
+          }
+        
+          OnSdlGenericEvent(sdlEvent);
         }
-        //        HandleApplicationEvent(controller, compositor, event, tracker);
       }
 
       SDL_Delay(1);

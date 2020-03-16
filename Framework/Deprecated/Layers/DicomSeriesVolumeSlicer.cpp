@@ -100,7 +100,6 @@ namespace Deprecated
     Register<OrthancSlicesLoader::SliceImageReadyMessage>(*loader_, &DicomSeriesVolumeSlicer::OnSliceImageReady);
     Register<OrthancSlicesLoader::SliceImageErrorMessage>(*loader_, &DicomSeriesVolumeSlicer::OnSliceImageError);
   }
-
   
   void DicomSeriesVolumeSlicer::LoadSeries(const std::string& seriesId)
   {

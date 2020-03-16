@@ -30,8 +30,10 @@
 
 #include <boost/lexical_cast.hpp>
 
+#ifdef _MSC_VER
 // 'Json::Reader': Use CharReader and CharReaderBuilder instead
 #pragma warning(disable:4996)
+#endif
 
 #include <json/reader.h>
 #include <json/writer.h>

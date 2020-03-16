@@ -114,7 +114,6 @@ namespace OrthancStone
     return true;
   }
 
-    
   EM_BOOL WebAssemblyViewport::OnResize(int eventType, const EmscriptenUiEvent *uiEvent, void *userData)
   {
     WebAssemblyViewport& that = *reinterpret_cast<WebAssemblyViewport*>(userData);

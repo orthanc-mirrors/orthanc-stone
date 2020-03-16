@@ -105,21 +105,23 @@ namespace OrthancStone
     // "OpenGLContext" it references (*)
     ClearCompositor();
   }
-  
+
+
   void SdlOpenGLViewport::Paint()
   {
     SdlLock lock(*this);
     lock.GetCompositor().Refresh(lock.GetController().GetScene());
   }
-  
-  void SdlOpenGLViewport::UpdateSize(unsigned int width,
-                                     unsigned int height)
+
+
+  void SdlOpenGLViewport::UpdateSize(unsigned int width, unsigned int height)
   {
     // nothing to do in OpenGL, the OpenGLCompositor::UpdateSize will be called automatically
     SdlLock lock(*this);
     lock.Invalidate();
   }
-  
+
+
   void SdlOpenGLViewport::ToggleMaximize()
   {
     // No need to call "Invalidate()" here, as "UpdateSize()" will
@@ -127,7 +129,9 @@ namespace OrthancStone
     SdlLock lock(*this);
     context_.ToggleMaximize();
   }
-   
+
+
+
   SdlCairoViewport::SdlCairoViewport(const char* title,
                                      unsigned int width,
                                      unsigned int height,

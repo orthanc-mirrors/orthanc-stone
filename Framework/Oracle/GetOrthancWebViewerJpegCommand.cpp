@@ -29,6 +29,11 @@
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
 
+#ifdef _MSC_VER
+// 'Json::Reader': Use CharReader and CharReaderBuilder instead
+#pragma warning(disable:4996)
+#endif
+
 #include <json/reader.h>
 #include <json/value.h>
 

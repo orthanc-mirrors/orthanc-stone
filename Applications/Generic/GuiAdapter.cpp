@@ -681,7 +681,7 @@ namespace OrthancStone
 
       if (sendEvent)
       {
-        auto func = sdlEventHandlers_[i].func;
+        OnSdlEventCallback func = sdlEventHandlers_[i].func;
         (*func)(canvasName, sdlEvent, sdlEventHandlers_[i].userData);
       }
     }
@@ -913,12 +913,13 @@ namespace OrthancStone
         }
 
         // SECOND: collect all user events
-        for (auto& it : userEventsMap)
-          sdlEvents.push_back(it.second);
+        for (std::map<Uint32,SDL_Event>::const_iterator it = userEventsMap.begin(); it != userEventsMap.end(); ++it)
+          sdlEvents.push_back(it->second);
                 
         // now process the events
-        for(const SDL_Event& sdlEvent : sdlEvents)
+        for (std::vector<SDL_Event>::const_iterator it = sdlEvents.begin(); it != sdlEvents.end(); ++it)
         {
+          const SDL_Event& sdlEvent = *it;
           // TODO: lock all viewports here! (use a scoped object)
 
           if (sdlEvent.type == SDL_QUIT)

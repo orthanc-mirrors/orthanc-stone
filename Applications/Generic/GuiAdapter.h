@@ -53,7 +53,7 @@
 
 namespace OrthancStone
 {
-#if ORTHANC_ENABLE_WASM != 1
+#if ORTHANC_ENABLE_SDL == 1
   class SdlViewport;
 #endif
 
@@ -73,7 +73,7 @@ namespace OrthancStone
   public:
     virtual ~IGuiAdapterWidget() {}
     
-#if ORTHANC_ENABLE_WASM != 1
+#if #if ORTHANC_ENABLE_SDL == 1
     /**
     Returns the SdlViewport that this widget contains. If the underlying 
     viewport type is *not* SDL, then an error is returned.
@@ -118,9 +118,10 @@ namespace OrthancStone
   typedef bool (*OnKeyDownFunc)       (std::string canvasId, const GuiAdapterKeyboardEvent*   keyEvent,   void* userData);
   typedef bool (*OnKeyUpFunc)         (std::string canvasId, const GuiAdapterKeyboardEvent*   keyEvent,   void* userData);
   typedef bool (*OnAnimationFrameFunc)(double time, void* userData);
-  typedef bool (*OnSdlEventCallback)  (std::string canvasId, const SDL_Event& sdlEvent, void* userData);
   
-#if ORTHANC_ENABLE_WASM != 1
+#if ORTHANC_ENABLE_SDL == 1
+  typedef bool (*OnSdlEventCallback)  (std::string canvasId, const SDL_Event& sdlEvent, void* userData);
+
   typedef bool (*OnSdlWindowResizeFunc)(std::string canvasId, 
                                         const GuiAdapterUiEvent* uiEvent, 
                                         unsigned int width, 
@@ -279,12 +280,13 @@ namespace OrthancStone
     void SetWheelCallback           (std::string canvasId, void* userData, bool capture, OnMouseWheelFunc   func);
     void SetKeyDownCallback         (std::string canvasId, void* userData, bool capture, OnKeyDownFunc      func);
     void SetKeyUpCallback           (std::string canvasId, void* userData, bool capture, OnKeyUpFunc        func);
+
+#if ORTHANC_ENABLE_SDL == 1
+
     void SetGenericSdlEventCallback (std::string canvasId, void* userData, bool capture, OnSdlEventCallback func);
 
     typedef bool (*OnSdlEventCallback)  (std::string canvasId, const SDL_Event& sdlEvent, void* userData);
 
-
-#if ORTHANC_ENABLE_WASM != 1
     // if you pass "#window", then any Window resize will trigger the callback
     void SetSdlResizeCallback(std::string canvasId, 
                               void* userData, 
@@ -306,7 +308,7 @@ namespace OrthancStone
 
   private:
 
-#if ORTHANC_ENABLE_WASM != 1
+#if ORTHANC_ENABLE_SDL == 1
     /**
     Gives observers a chance to react based on generic event handlers. This 
     is used, for instance, when the viewport lock interface is invalidated.

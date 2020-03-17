@@ -25,6 +25,8 @@
 #include "../Oracle/WebAssemblyOracle.h"
 #include "OracleScheduler.h"
 
+#include <list>
+
 namespace OrthancStone
 {
   class WebAssemblyLoadersContext : public ILoadersContext

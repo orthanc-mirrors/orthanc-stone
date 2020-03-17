@@ -79,7 +79,8 @@ namespace OrthancStone
 
   public:
     WebAssemblyViewport(const std::string& canvasId,
-                        const Scene2D* scene);
+                        const Scene2D* scene,
+                        boost::weak_ptr<UndoStack> undoStackW);
 
     virtual ILock* Lock() ORTHANC_OVERRIDE;
 

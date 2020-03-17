@@ -123,7 +123,7 @@ namespace OrthancStone
 
 
   WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvasId) :
-    WebAssemblyViewport(canvasId, NULL)
+    WebAssemblyViewport(canvasId, NULL, boost::weak_ptr<UndoStack>())
   {
     unsigned int width, height;
     GetCanvasSize(width, height);

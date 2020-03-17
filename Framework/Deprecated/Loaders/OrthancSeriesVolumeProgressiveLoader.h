@@ -151,7 +151,7 @@ namespace Deprecated
     subscribing, for instance if they are created or listening only AFTER the
     "geometry loaded" message is broadcast 
     */
-    bool HasGeometry() const
+    bool HasGeometry() const ORTHANC_OVERRIDE
     {
       return seriesGeometry_.HasGeometry();
     }
@@ -159,7 +159,7 @@ namespace Deprecated
     /**
     Same remark as HasGeometry
     */
-    const OrthancStone::VolumeImageGeometry& GetImageGeometry() const
+    const OrthancStone::VolumeImageGeometry& GetImageGeometry() const ORTHANC_OVERRIDE
     {
       return seriesGeometry_.GetImageGeometry();
     }

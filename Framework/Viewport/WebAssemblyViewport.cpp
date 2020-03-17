@@ -203,14 +203,19 @@ namespace OrthancStone
     }
   }
 
-
-  WebAssemblyViewport::WebAssemblyViewport(const std::string& canvasId,
-                                           const Scene2D* scene) :
+  WebAssemblyViewport::WebAssemblyViewport(
+    const std::string& canvasId,
+    const Scene2D* scene,
+    boost::weak_ptr<UndoStack> undoStackW) :
     shortCanvasId_(canvasId),
-    fullCanvasId_("#" + canvasId),
+    fullCanvasId_(canvasId),
     interactor_(new DefaultViewportInteractor)
   {
-    if (scene == NULL)
+    if(undoStackW.lock() != NULL)
+    {
+      controller_ = boost::make_shared<ViewportController>(*this,undoStackW);
+    }
+    else if (scene == NULL)
     {
       controller_ = boost::make_shared<ViewportController>(*this);
     }
@@ -237,6 +242,10 @@ namespace OrthancStone
       canvasId.c_str()   // $0
       );
 
+    LOG(TRACE) << "2020-03-16-16h23 About to call emscripten_set_XXXX_callback on \"" 
+      << fullCanvasId_.c_str() << "\" from WebAssemblyViewport::WebAssemblyViewport";
+
+#if 1
     // It is not possible to monitor the resizing of individual
     // canvas, so we track the full window of the browser
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, OnResize);
@@ -244,6 +253,9 @@ namespace OrthancStone
     emscripten_set_mousedown_callback(fullCanvasId_.c_str(), this, false, OnMouseDown);
     emscripten_set_mousemove_callback(fullCanvasId_.c_str(), this, false, OnMouseMove);
     emscripten_set_mouseup_callback(fullCanvasId_.c_str(), this, false, OnMouseUp);
+#endif
+    LOG(TRACE) << "2020-03-16-16h23 DONE calling emscripten_set_XXXX_callback on \"" 
+      << fullCanvasId_.c_str() << "\" from WebAssemblyViewport::WebAssemblyViewport";
   }
 
   

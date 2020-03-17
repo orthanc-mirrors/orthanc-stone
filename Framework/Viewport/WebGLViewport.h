@@ -41,6 +41,9 @@ namespace OrthancStone
     WebGLViewport(const std::string& canvasId);
 
     WebGLViewport(const std::string& canvasId,
+                  boost::weak_ptr<UndoStack> undoStackW);
+
+    WebGLViewport(const std::string& canvasId,
                   const Scene2D& scene);
 
     virtual ~WebGLViewport();

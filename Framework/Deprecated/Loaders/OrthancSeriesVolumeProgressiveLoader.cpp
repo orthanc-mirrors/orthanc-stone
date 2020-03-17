@@ -387,6 +387,7 @@ namespace Deprecated
                                                              const Orthanc::ImageAccessor& image,
                                                              unsigned int quality)
   {
+    LOG(ERROR) << "SetSliceContent sliceIndex = " << sliceIndex;
     assert(sliceIndex < slicesQuality_.size() &&
            slicesQuality_.size() == volume_->GetPixelData().GetDepth());
       
@@ -416,6 +417,7 @@ namespace Deprecated
 
   void OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent(const OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage& message)
   {
+    LOG(ERROR) << "OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent";
     unsigned int quality;
       
     switch (dynamic_cast<const OrthancStone::GetOrthancWebViewerJpegCommand&>(message.GetOrigin()).GetQuality())

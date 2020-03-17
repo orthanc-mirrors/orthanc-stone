@@ -610,7 +610,7 @@ namespace OrthancStone
     for (size_t i = 0; i < resizeHandlers_.size(); i++)
     {
       (*(resizeHandlers_[i].func))(
-        resizeHandlers_[i].canvasName, nullptr, width, height, resizeHandlers_[i].userData);
+        resizeHandlers_[i].canvasName, NULL, width, height, resizeHandlers_[i].userData);
     }
   }
 

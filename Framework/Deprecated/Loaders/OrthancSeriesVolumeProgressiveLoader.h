@@ -38,6 +38,9 @@
 
 #include <boost/shared_ptr.hpp>
 
+#define USE_SINGLE_QUALITY 1
+
+
 namespace OrthancStone
 {
   class ILoadersContext;
@@ -56,9 +59,14 @@ namespace Deprecated
     public IGeometryProvider
   {
   private:
+#if USE_SINGLE_QUALITY
+    static const unsigned int SINGLE_QUALITY = 0;
+#else
     static const unsigned int LOW_QUALITY = 0;
     static const unsigned int MIDDLE_QUALITY = 1;
     static const unsigned int BEST_QUALITY = 2;
+#endif
+
     
     class ExtractedSlice;
     
@@ -111,7 +119,10 @@ namespace Deprecated
 
     void LoadBestQualitySliceContent(const OrthancStone::GetOrthancImageCommand::SuccessMessage& message);
 
+#if USE_SINGLE_QUALITY
+#else
     void LoadJpegSliceContent(const OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage& message);
+#endif
 
     OrthancStone::ILoadersContext&                loadersContext_;
     bool                                          active_;

@@ -75,6 +75,23 @@ namespace OrthancStone
     BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
+  Extent2D RadiographyMaskLayer::GetMaskMinimalSceneExtent() const
+  {
+    Extent2D sceneExtent;
+
+    for (auto corner: corners_)
+    {
+      double x = static_cast<double>(corner.GetX());
+      double y = static_cast<double>(corner.GetY());
+
+      dicomLayer_.GetTransform().Apply(x, y);
+      sceneExtent.AddPoint(x, y);
+    }
+    return sceneExtent;
+  }
+
+
+
   void RadiographyMaskLayer::Render(Orthanc::ImageAccessor& buffer,
                                     const AffineTransform2D& viewTransform,
                                     ImageInterpolation interpolation,

@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <algorithm>
+
 #include "../Toolbox/AffineTransform2D.h"
 #include "../Toolbox/Extent2D.h"
 #include "../Wrappers/CairoContext.h"
@@ -273,10 +275,36 @@ namespace OrthancStone
 
     void ResetCrop();
 
-    void SetCrop(unsigned int x,
+    void SetCrop(unsigned int x,       // those are pixel coordinates/size
                  unsigned int y,
                  unsigned int width,
                  unsigned int height);
+
+    void SetCrop(const Extent2D& sceneExtent)
+    {
+      Extent2D imageCrop;
+
+      {
+        double x = sceneExtent.GetX1();
+        double y = sceneExtent.GetY1();
+        GetTransformInverse().Apply(x, y);
+        imageCrop.AddPoint(x, y);
+      }
+
+      {
+        double x = sceneExtent.GetX2();
+        double y = sceneExtent.GetY2();
+        GetTransformInverse().Apply(x, y);
+        imageCrop.AddPoint(x, y);
+      }
+
+      SetCrop(static_cast<unsigned int>(std::max(0.0, std::floor(imageCrop.GetX1()))),
+              static_cast<unsigned int>(std::max(0.0, std::floor(imageCrop.GetY1()))),
+              std::min(width_, static_cast<unsigned int>(std::ceil(imageCrop.GetWidth()))),
+              std::min(height_, static_cast<unsigned int>(std::ceil(imageCrop.GetHeight())))
+              );
+    }
+
 
     void GetCrop(unsigned int& x,
                  unsigned int& y,
@@ -316,7 +344,7 @@ namespace OrthancStone
       return height_;
     }
 
-    Extent2D GetExtent() const;
+    Extent2D GetSceneExtent() const;
 
     virtual bool GetPixel(unsigned int& imageX,
                           unsigned int& imageY,

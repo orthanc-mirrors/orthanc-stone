@@ -238,8 +238,7 @@ namespace OrthancStone
     }
   }
 
-
-  Extent2D RadiographyLayer::GetExtent() const
+  Extent2D RadiographyLayer::GetSceneExtent() const
   {
     Extent2D extent;
 
@@ -251,6 +250,7 @@ namespace OrthancStone
     double dwidth = static_cast<double>(width);
     double dheight = static_cast<double>(height);
 
+    // AddToExtent transforms the coordinates from image to scene
     AddToExtent(extent, dx, dy);
     AddToExtent(extent, dx + dwidth, dy);
     AddToExtent(extent, dx, dy + dheight);

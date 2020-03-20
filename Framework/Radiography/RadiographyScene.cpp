@@ -334,7 +334,7 @@ namespace OrthancStone
         // modify geometry to reference the top left corner
         double tlx = centerGeometry->GetPanX();
         double tly = centerGeometry->GetPanY();
-        Extent2D textExtent = alpha->GetExtent();
+        Extent2D textExtent = alpha->GetSceneExtent();
         tlx = tlx - (textExtent.GetWidth() / 2) * centerGeometry->GetPixelSpacingX();
         tly = tly - (textExtent.GetHeight() / 2) * centerGeometry->GetPixelSpacingY();
         centerGeometry->SetPan(tlx, tly);
@@ -551,7 +551,7 @@ namespace OrthancStone
          it != layers_.end(); ++it)
     {
       assert(it->second != NULL);
-      extent.Union(it->second->GetExtent());
+      extent.Union(it->second->GetSceneExtent());
     }
 
     return extent;
@@ -716,7 +716,7 @@ namespace OrthancStone
     // wipe background before rendering
     if (GetPreferredPhotomotricDisplayMode() == RadiographyPhotometricDisplayMode_Monochrome1)
     {
-      Orthanc::ImageProcessing::Set(layers, 65535.0f);
+      Orthanc::ImageProcessing::Set(layers, 65535);
     }
     else
     {

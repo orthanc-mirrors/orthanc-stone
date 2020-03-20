@@ -280,7 +280,7 @@ namespace OrthancStone
 
     void GetLayersIndexes(std::vector<size_t>& output) const;
 
-    Extent2D GetSceneExtent() const;
+    virtual Extent2D GetSceneExtent() const;
 
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,

@@ -100,6 +100,8 @@ namespace OrthancStone
       cpScene = cp;
     }
 
+    Extent2D GetMaskMinimalSceneExtent() const;
+
     virtual bool GetDefaultWindowing(float& center,
                                      float& width) const
     {

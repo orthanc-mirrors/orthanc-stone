@@ -42,12 +42,13 @@ namespace OrthancStone
   }
 
 
-  VolumeSceneLayerSource::VolumeSceneLayerSource(Scene2D& scene,
-                                                 int layerDepth,
-                                                 const boost::shared_ptr<IVolumeSlicer>& slicer) :
-    scene_(scene),
-    layerDepth_(layerDepth),
-    slicer_(slicer)
+  VolumeSceneLayerSource::VolumeSceneLayerSource(
+    Scene2D& scene,
+    int layerDepth,
+    const boost::shared_ptr<IVolumeSlicer>& slicer)
+    : scene_(scene)
+    , layerDepth_(layerDepth)
+    , slicer_(slicer)
   {
     if (slicer == NULL)
     {

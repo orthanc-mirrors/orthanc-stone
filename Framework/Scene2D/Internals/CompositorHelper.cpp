@@ -104,6 +104,8 @@ namespace OrthancStone
           content_.erase(found);
         }
 
+        // the returned renderer can be NULL in case of an unknown layer
+        // or a NullLayer
         std::unique_ptr<ILayerRenderer> renderer(factory_.Create(layer));
 
         if (renderer.get() != NULL)

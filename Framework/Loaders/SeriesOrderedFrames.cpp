@@ -216,7 +216,8 @@ namespace OrthancStone
               
         for (size_t j = 0; j < payload.GetValue()->GetInstanceParameters().GetImageInformation().GetNumberOfFrames(); j++)
         {
-          orderedFrames_.push_back(new Frame(*payload.GetValue(), j));
+          orderedFrames_.push_back(new Frame(*payload.GetValue(), 
+                                             static_cast<unsigned int>(j)));
         }
       }
 
@@ -243,7 +244,8 @@ namespace OrthancStone
     {
       for (size_t j = 0; j < tmp[i].GetInstance().GetInstanceParameters().GetImageInformation().GetNumberOfFrames(); j++)
       {
-        orderedFrames_.push_back(new Frame(tmp[i].GetInstance(), j));
+        orderedFrames_.push_back(new Frame(tmp[i].GetInstance(), 
+                                           static_cast<unsigned int>(j)));
       }
     }
   }

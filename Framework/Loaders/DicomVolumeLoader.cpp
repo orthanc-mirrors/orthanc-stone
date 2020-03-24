@@ -106,17 +106,23 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    size_t frameIndex = dynamic_cast<const Orthanc::SingleValueObject<size_t>&>(message.GetUserPayload()).GetValue();
+    size_t frameIndex = dynamic_cast<const Orthanc::SingleValueObject<size_t>&>
+    (message.GetUserPayload()).GetValue();
 
     {
-      ImageBuffer3D::SliceWriter writer(volume_->GetPixelData(), VolumeProjection_Axial, frameIndex);
+      ImageBuffer3D::SliceWriter writer(volume_->GetPixelData(), 
+                                        VolumeProjection_Axial, 
+                                        static_cast<unsigned int>(frameIndex));
+      
       Orthanc::ImageProcessing::Copy(writer.GetAccessor(), message.GetImage());
     }
 
     volume_->IncrementRevision();
 
     {
-      VolumeUpdatedMessage updated(*this, frameIndex);
+      VolumeUpdatedMessage updated(*this, 
+                                   static_cast<unsigned int>(frameIndex));
+      
       BroadcastMessage(updated);
     }
 

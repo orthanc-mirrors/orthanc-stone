@@ -36,6 +36,7 @@ namespace OrthancStone
       OpenGLColorTextureProgram&            program_;
       std::unique_ptr<OpenGL::OpenGLTexture>  texture_;
       BitmapAnchor                          anchor_;
+      bool                                  applySceneRotation_;
 
       void LoadTexture(const InfoPanelSceneLayer& layer);
 

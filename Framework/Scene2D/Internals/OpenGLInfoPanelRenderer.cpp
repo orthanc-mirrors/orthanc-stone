@@ -32,6 +32,7 @@ namespace OrthancStone
         context_.MakeCurrent();
         texture_.reset(new OpenGL::OpenGLTexture(context_));
         texture_->Load(layer.GetTexture(), layer.IsLinearInterpolation());
+        applySceneRotation_ = layer.ShouldApplySceneRotation();
         anchor_ = layer.GetAnchor();
       }
     }
@@ -41,11 +42,11 @@ namespace OrthancStone
                                                      const InfoPanelSceneLayer& layer) :
       context_(context),
       program_(program),
-      anchor_(BitmapAnchor_TopLeft)
+      anchor_(BitmapAnchor_TopLeft),
+      applySceneRotation_(false)
     {
       LoadTexture(layer);
     }
-
     
     void OpenGLInfoPanelRenderer::Render(const AffineTransform2D& transform,
                                          unsigned int canvasWidth,
@@ -60,7 +61,56 @@ namespace OrthancStone
 
         // The position of this type of layer is layer: Ignore the
         // "transform" coming from the scene
-        program_.Apply(*texture_, AffineTransform2D::CreateOffset(dx, dy), true);
+        AffineTransform2D actualTransform = 
+          AffineTransform2D::CreateOffset(dx, dy);
+
+        if (applySceneRotation_)
+        {
+          // the transformation is as follows:
+          // - originally, the image is aligned so that its top left corner
+          // is at 0,0
+          // - first, we translate the image by -w/2,-h/2 
+          // - then we rotate it, so that the next rotation will make the  
+          //   image rotate around its center.
+          // - then, we translate the image by +w/2,+h/2 to put it
+          //   back in place
+          // - the fourth and last transform is the one that brings the 
+          //   image to its desired anchored location.
+
+          int32_t halfWidth = 
+            static_cast<int32_t>(0.5 * texture_->GetWidth());
+
+          int32_t halfHeight=
+            static_cast<int32_t>(0.5 * texture_->GetHeight());
+
+          AffineTransform2D translation1 =
+            AffineTransform2D::CreateOffset(-halfWidth, -halfHeight);
+
+          const Matrix& sceneTransformM = transform.GetHomogeneousMatrix();
+          Matrix r;
+          Matrix q;
+          LinearAlgebra::RQDecomposition3x3(r, q, sceneTransformM);
+
+          // counterintuitively, q is the rotation and r is the upper
+          // triangular
+          AffineTransform2D rotation(q);
+
+          AffineTransform2D translation2 =
+            AffineTransform2D::CreateOffset(halfWidth, halfHeight);
+
+          // please note that the last argument is the 1st applied 
+          // transformation (rationale: if arguments are a, b and c, then
+          // the resulting matrix is a*b*c:
+          // x2 = (a*b*c)*x1 = (a*(b*(c*x1))) (you can see that the result
+          // of c*x1 is transformed by b, and the result of b*c*x1 is trans-
+          // formed by a)
+          actualTransform = AffineTransform2D::Combine(actualTransform,
+                                                       translation2,
+                                                       rotation,
+                                                       translation1);
+        }
+
+        program_.Apply(*texture_, actualTransform, true);
       }
     }
   }

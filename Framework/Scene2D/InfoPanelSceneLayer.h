@@ -37,15 +37,26 @@ namespace OrthancStone
     std::unique_ptr<Orthanc::ImageAccessor>  texture_;
     BitmapAnchor                           anchor_;
     bool                                   isLinearInterpolation_;
+    bool                                   applySceneRotation_;
 
   public:
+  /**
+   * If you supply `true` for `applySceneRotation`, then, in addition to 
+   * a translation to bring it at the desired anchoring location, the image
+   * will be rotated around its center by the same rotation as the scene
+   * transformation.
+   */
     InfoPanelSceneLayer(const Orthanc::ImageAccessor& texture,
                         BitmapAnchor anchor,
-                        bool isLinearInterpolation);
+                        bool isLinearInterpolation,
+                        bool applySceneRotation = false);
 
     virtual ISceneLayer* Clone() const
     {
-      return new InfoPanelSceneLayer(*texture_, anchor_, isLinearInterpolation_);
+      return new InfoPanelSceneLayer(*texture_, 
+                                     anchor_, 
+                                     isLinearInterpolation_, 
+                                     applySceneRotation_);
     }
 
     const Orthanc::ImageAccessor& GetTexture() const
@@ -56,6 +67,11 @@ namespace OrthancStone
     BitmapAnchor GetAnchor() const
     {
       return anchor_;
+    }
+
+    bool ShouldApplySceneRotation() const
+    {
+      return applySceneRotation_;
     }
 
     bool IsLinearInterpolation() const

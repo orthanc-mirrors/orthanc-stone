@@ -21,6 +21,9 @@
 
 #include "VolumeSceneLayerSource.h"
 
+#include "../Scene2D/NullLayer.h"
+#include "../StoneException.h"
+
 #include <Core/OrthancException.h>
 
 namespace OrthancStone
@@ -54,6 +57,11 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
+    ORTHANC_ASSERT(!scene_.HasLayer(layerDepth_));
+
+    // we need to book the scene layer depth by adding a dummy layer
+    std::unique_ptr<NullLayer> nullLayer(new NullLayer);
+    scene_.SetLayer(layerDepth_,nullLayer.release());
   }
 
   VolumeSceneLayerSource::~VolumeSceneLayerSource()

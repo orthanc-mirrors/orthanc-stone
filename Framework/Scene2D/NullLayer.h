@@ -18,40 +18,45 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
 #pragma once
 
-#include "../Toolbox/Extent2D.h"
+#include "ISceneLayer.h"
 
-#include <boost/noncopyable.hpp>
+#include <Core/Enumerations.h>
+
 #include <stdint.h>
 
+/**
+ This layer can be used when a z-index needs to be booked inside a Scene2D.
+
+ It can later be replaced by the actual layer.
+*/
 namespace OrthancStone
 {
-  class ISceneLayer : public boost::noncopyable
+  class NullLayer : public ISceneLayer
   {
   public:
-    enum Type
-    {
-      Type_NullLayer,
-      Type_InfoPanel,
-      Type_ColorTexture,
-      Type_Polyline,
-      Type_Text,
-      Type_FloatTexture,
-      Type_LookupTableTexture
-    };
+    NullLayer() {}
 
-    virtual ~ISceneLayer()
+    virtual ISceneLayer* Clone() const ORTHANC_OVERRIDE
     {
+      return new NullLayer();
     }
 
-    virtual ISceneLayer* Clone() const = 0;
+    virtual Type GetType() const ORTHANC_OVERRIDE
+    {
+      return Type_NullLayer;
+    }
 
-    virtual Type GetType() const = 0;
+    virtual bool GetBoundingBox(Extent2D& target) const ORTHANC_OVERRIDE
+    {
+      target = Extent2D();
+      return false; 
+    }
 
-    virtual bool GetBoundingBox(Extent2D& target) const = 0;
-
-    virtual uint64_t GetRevision() const = 0;
+    virtual uint64_t GetRevision() const ORTHANC_OVERRIDE
+    {
+      return 0;
+    }
   };
 }

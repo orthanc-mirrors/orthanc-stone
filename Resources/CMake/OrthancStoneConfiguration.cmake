@@ -552,30 +552,65 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/OrthancRestApiCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/ParseDicomFromFileCommand.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Oracle/ParseDicomFromWadoCommand.cpp
+
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CairoCompositor.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/CairoCompositor.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Color.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ColorTextureSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/FloatTextureSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/FloatTextureSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/GrayscaleStyleConfigurator.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/GrayscaleStyleConfigurator.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ICompositor.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ILayerStyleConfigurator.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoColorTextureRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoFloatTextureRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoInfoPanelRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoLookupTableTextureRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoPolylineRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoTextRenderer.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CompositorHelper.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/FixedPointAligner.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/InfoPanelSceneLayer.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/IPointerTracker.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ISceneLayer.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/LookupTableStyleConfigurator.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/LookupTableStyleConfigurator.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/LookupTableTextureSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/LookupTableTextureSceneLayer.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/NullLayer.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PanSceneTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PanSceneTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PointerEvent.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PointerEvent.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PolylineSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/PolylineSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/RotateSceneTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/RotateSceneTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Scene2D.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Scene2D.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ScenePoint2D.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextureBaseSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/TextureBaseSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ZoomSceneTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/ZoomSceneTracker.h
+
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoBaseRenderer.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoColorTextureRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoColorTextureRenderer.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoFloatTextureRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoFloatTextureRenderer.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoInfoPanelRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoInfoPanelRenderer.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoLookupTableTextureRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoLookupTableTextureRenderer.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoPolylineRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoPolylineRenderer.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoTextRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CairoTextRenderer.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CompositorHelper.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/CompositorHelper.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/FixedPointAligner.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/FixedPointAligner.h
+  ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/ICairoContextProvider.h
+  
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/AngleMeasureTool.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/AngleMeasureTool.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateAngleMeasureCommand.cpp
@@ -730,30 +765,32 @@ if (ENABLE_OPENGL)
     ${ORTHANC_STONE_ROOT}/Framework/OpenGL/OpenGLTexture.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/OpenGLCompositor.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/OpenGLCompositor.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLAdvancedPolylineRenderer.h
+
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLAdvancedPolylineRenderer.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLBasicPolylineRenderer.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLAdvancedPolylineRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLBasicPolylineRenderer.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureProgram.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLBasicPolylineRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureProgram.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureRenderer.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureRenderer.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureProgram.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLColorTextureRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureProgram.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureRenderer.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureRenderer.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLInfoPanelRenderer.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLFloatTextureRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLInfoPanelRenderer.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLinesProgram.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLInfoPanelRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLinesProgram.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLookupTableTextureRenderer.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLinesProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLookupTableTextureRenderer.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextProgram.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLLookupTableTextureRenderer.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLShaderVersionDirective.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextProgram.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextRenderer.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextProgram.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextRenderer.cpp
-    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextureProgram.h
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextRenderer.h
     ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextureProgram.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Scene2D/Internals/OpenGLTextureProgram.h
     )
 
   if (ENABLE_WASM)

@@ -21,6 +21,7 @@
 
 #include "OrthancSeriesVolumeProgressiveLoader.h"
 
+#include "../../StoneException.h"
 #include "../../Loaders/ILoadersContext.h"
 #include "../../Loaders/BasicFetchingItemsSorter.h"
 #include "../../Loaders/BasicFetchingStrategy.h"
@@ -64,11 +65,9 @@ namespace Deprecated
       }
     }
   };
-
     
-    
-  void OrthancSeriesVolumeProgressiveLoader::SeriesGeometry::CheckSlice(size_t index,
-                                                                        const OrthancStone::DicomInstanceParameters& reference) const
+  void OrthancSeriesVolumeProgressiveLoader::SeriesGeometry::CheckSlice(
+    size_t index, const OrthancStone::DicomInstanceParameters& reference) const
   {
     const OrthancStone::DicomInstanceParameters& slice = *slices_[index];
       
@@ -260,16 +259,15 @@ namespace Deprecated
   {
     assert(strategy_.get() != NULL);
       
-    unsigned int sliceIndex, quality;
+    unsigned int sliceIndex = 0, quality = 0;
       
     if (strategy_->GetNext(sliceIndex, quality))
     {
-
-#if USE_SINGLE_QUALITY
-      assert(quality == SINGLE_QUALITY);
-#else
-      assert(quality <= BEST_QUALITY);
-#endif
+      if (!progressiveQuality_)
+      {
+        ORTHANC_ASSERT(quality == QUALITY_00, "INTERNAL ERROR. quality != QUALITY_00 in "
+                       << "OrthancSeriesVolumeProgressiveLoader::ScheduleNextSliceDownload");
+      }
 
       const OrthancStone::DicomInstanceParameters& slice = seriesGeometry_.GetSliceParameters(sliceIndex);
           
@@ -281,10 +279,7 @@ namespace Deprecated
 
       std::unique_ptr<OrthancStone::OracleCommandBase> command;
         
-#if USE_SINGLE_QUALITY
-#else
-      if (quality == BEST_QUALITY)
-#endif
+      if (!progressiveQuality_ || quality == QUALITY_02)
       {
         std::unique_ptr<OrthancStone::GetOrthancImageCommand> tmp(new OrthancStone::GetOrthancImageCommand);
         // TODO: review the following comment. 
@@ -304,23 +299,22 @@ namespace Deprecated
         //  << " URI = " << tmp->GetUri();
         command.reset(tmp.release());
       }
-#if USE_SINGLE_QUALITY
-#else
-      else
+      else // progressive mode is true AND quality is not final (different from QUALITY_02
       {
-        std::unique_ptr<OrthancStone::GetOrthancWebViewerJpegCommand> tmp(new OrthancStone::GetOrthancWebViewerJpegCommand);
+        std::unique_ptr<OrthancStone::GetOrthancWebViewerJpegCommand> tmp(
+          new OrthancStone::GetOrthancWebViewerJpegCommand);
+
         // TODO: review the following comment. Commented out by bgo on 2019-07-19
         // (gzip for jpeg seems overkill)
         //tmp->SetHttpHeader("Accept-Encoding", "gzip");
         tmp->SetInstance(instance);
-        tmp->SetQuality((quality == 0 ? 50 : 90));
+        tmp->SetQuality((quality == 0 ? 50 : 90)); // QUALITY_00 is Jpeg50 while QUALITY_01 is Jpeg90
         tmp->SetExpectedPixelFormat(slice.GetExpectedPixelFormat());
         LOG(TRACE)
           << "OrthancSeriesVolumeProgressiveLoader.ScheduleNextSliceDownload()"
           << " sliceIndex = " << sliceIndex << " slice quality = " << quality;
         command.reset(tmp.release());
       }
-#endif
 
       command->AcquirePayload(new Orthanc::SingleValueObject<unsigned int>(sliceIndex));
       
@@ -386,15 +380,15 @@ namespace Deprecated
       volume_->SetDicomParameters(parameters);
       volume_->GetPixelData().Clear();
 
-#if USE_SINGLE_QUALITY
+      // If we are in progressive mode, the Fetching strategy will first request QUALITY_00, then QUALITY_01, then
+      // QUALITY_02... Otherwise, it's only QUALITY_00
+      unsigned int maxQuality = QUALITY_00;
+      if (progressiveQuality_)
+        maxQuality = QUALITY_02;
+
       strategy_.reset(new OrthancStone::BasicFetchingStrategy(
         sorter_->CreateSorter(static_cast<unsigned int>(slicesCount)),
-        SINGLE_QUALITY));
-#else
-      strategy_.reset(new OrthancStone::BasicFetchingStrategy(
-        sorter_->CreateSorter(static_cast<unsigned int>(slicesCount)), 
-        BEST_QUALITY));
-#endif
+        maxQuality));
 
       assert(simultaneousDownloads_ != 0);
       for (unsigned int i = 0; i < simultaneousDownloads_; i++)
@@ -413,13 +407,22 @@ namespace Deprecated
                                                              const Orthanc::ImageAccessor& image,
                                                              unsigned int quality)
   {
-    assert(sliceIndex < slicesQuality_.size() &&
+    ORTHANC_ASSERT(sliceIndex < slicesQuality_.size() &&
            slicesQuality_.size() == volume_->GetPixelData().GetDepth());
       
+    if (!progressiveQuality_)
+    {
+      ORTHANC_ASSERT(quality                    == QUALITY_00);
+      ORTHANC_ASSERT(slicesQuality_[sliceIndex] == QUALITY_00);
+    }
+
     if (quality >= slicesQuality_[sliceIndex])
     {
       {
-        OrthancStone::ImageBuffer3D::SliceWriter writer(volume_->GetPixelData(), OrthancStone::VolumeProjection_Axial, sliceIndex);
+        OrthancStone::ImageBuffer3D::SliceWriter writer(volume_->GetPixelData(), 
+                                                        OrthancStone::VolumeProjection_Axial, 
+                                                        sliceIndex);
+        
         Orthanc::ImageProcessing::Copy(writer.GetAccessor(), image);
       }
 
@@ -434,30 +437,35 @@ namespace Deprecated
     ScheduleNextSliceDownload();
   }
 
-  void OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent(const OrthancStone::GetOrthancImageCommand::SuccessMessage& message)
+  void OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent(
+    const OrthancStone::GetOrthancImageCommand::SuccessMessage& message)
   {
-#if USE_SINGLE_QUALITY
-    SetSliceContent(GetSliceIndexPayload(message.GetOrigin()), message.GetImage(), SINGLE_QUALITY);
-#else
-    SetSliceContent(GetSliceIndexPayload(message.GetOrigin()), message.GetImage(), BEST_QUALITY);
-#endif
+    unsigned int quality = QUALITY_00;
+    if (progressiveQuality_)
+      quality = QUALITY_02;
+
+    SetSliceContent(GetSliceIndexPayload(message.GetOrigin()), 
+                                         message.GetImage(),
+                                         quality);
   }
 
-#if USE_SINGLE_QUALITY
-#else
-  void OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent(const OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage& message)
+  void OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent(
+    const OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage& message)
   {
+    ORTHANC_ASSERT(progressiveQuality_, "INTERNAL ERROR: OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent"
+                   << " called while progressiveQuality_ is false!");
+
     LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent";
     unsigned int quality;
       
     switch (dynamic_cast<const OrthancStone::GetOrthancWebViewerJpegCommand&>(message.GetOrigin()).GetQuality())
     {
       case 50:
-        quality = LOW_QUALITY;
+        quality = QUALITY_00;
         break;
 
       case 90:
-        quality = MIDDLE_QUALITY;
+        quality = QUALITY_01;
         break;
 
       default:
@@ -466,13 +474,14 @@ namespace Deprecated
       
     SetSliceContent(GetSliceIndexPayload(message.GetOrigin()), message.GetImage(), quality);
   }
-#endif
 
   OrthancSeriesVolumeProgressiveLoader::OrthancSeriesVolumeProgressiveLoader(
     OrthancStone::ILoadersContext& loadersContext,
-    const boost::shared_ptr<OrthancStone::DicomVolumeImage>& volume)
+    boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+    bool progressiveQuality)
     : loadersContext_(loadersContext)
     , active_(false)
+    , progressiveQuality_(progressiveQuality)
     , simultaneousDownloads_(4)
     , volume_(volume)
     , sorter_(new OrthancStone::BasicFetchingItemsSorter::Factory)
@@ -483,12 +492,14 @@ namespace Deprecated
   boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> 
     OrthancSeriesVolumeProgressiveLoader::Create(
       OrthancStone::ILoadersContext& loadersContext,
-      const boost::shared_ptr<OrthancStone::DicomVolumeImage>& volume)
+      boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+      bool progressiveQuality)
   {
     std::auto_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext.Lock());
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> obj(
-        new OrthancSeriesVolumeProgressiveLoader(loadersContext,volume));
+        new OrthancSeriesVolumeProgressiveLoader(
+          loadersContext, volume, progressiveQuality));
 
     obj->Register<OrthancStone::OrthancRestApiCommand::SuccessMessage>(
       lock->GetOracleObservable(),
@@ -498,12 +509,10 @@ namespace Deprecated
       lock->GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent);
 
-#if USE_SINGLE_QUALITY
-#else
     obj->Register<OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage>(
       lock->GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent);
-#endif
+
     return obj;
   }
 
@@ -533,10 +542,8 @@ namespace Deprecated
 
   void OrthancSeriesVolumeProgressiveLoader::LoadSeries(const std::string& seriesId)
   {
-//    LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries seriesId=" << seriesId;
     if (active_)
     {
-//      LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries NOT ACTIVE! --> ERROR";
       LOG(ERROR) << "OrthancSeriesVolumeProgressiveLoader::LoadSeries(const std::string& seriesId): (active_)";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }

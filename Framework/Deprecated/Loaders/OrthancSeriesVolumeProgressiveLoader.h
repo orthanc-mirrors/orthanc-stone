@@ -38,9 +38,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#define USE_SINGLE_QUALITY 1
-
-
 namespace OrthancStone
 {
   class ILoadersContext;
@@ -59,15 +56,10 @@ namespace Deprecated
     public IGeometryProvider
   {
   private:
-#if USE_SINGLE_QUALITY
-    static const unsigned int SINGLE_QUALITY = 0;
-#else
-    static const unsigned int LOW_QUALITY = 0;
-    static const unsigned int MIDDLE_QUALITY = 1;
-    static const unsigned int BEST_QUALITY = 2;
-#endif
-
-    
+    static const unsigned int QUALITY_00 = 0;
+    static const unsigned int QUALITY_01 = 1;
+    static const unsigned int QUALITY_02 = 2;
+        
     class ExtractedSlice;
     
     /** Helper class internal to OrthancSeriesVolumeProgressiveLoader */
@@ -119,32 +111,34 @@ namespace Deprecated
 
     void LoadBestQualitySliceContent(const OrthancStone::GetOrthancImageCommand::SuccessMessage& message);
 
-#if USE_SINGLE_QUALITY
-#else
     void LoadJpegSliceContent(const OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage& message);
-#endif
 
-    OrthancStone::ILoadersContext&                loadersContext_;
+    OrthancStone::ILoadersContext&  loadersContext_;
     bool                                          active_;
+    bool                                          progressiveQuality_;
     unsigned int                                  simultaneousDownloads_;
     SeriesGeometry                                seriesGeometry_;
-    boost::shared_ptr<OrthancStone::DicomVolumeImage>           volume_;
+    boost::shared_ptr<OrthancStone::DicomVolumeImage> volume_;
     std::unique_ptr<OrthancStone::IFetchingItemsSorter::IFactory> sorter_;
-    std::unique_ptr<OrthancStone::IFetchingStrategy>              strategy_;
-    std::vector<unsigned int>                     slicesQuality_;
-    bool                                          volumeImageReadyInHighQuality_;
-
-
+    std::unique_ptr<OrthancStone::IFetchingStrategy> strategy_;
+    std::vector<unsigned int>     slicesQuality_;
+    bool                          volumeImageReadyInHighQuality_;
+    
     OrthancSeriesVolumeProgressiveLoader(
       OrthancStone::ILoadersContext& loadersContext,
-      const boost::shared_ptr<OrthancStone::DicomVolumeImage>& volume);
+      boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+      bool progressiveQuality);
   
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, VolumeImageReadyInHighQuality, OrthancSeriesVolumeProgressiveLoader);
 
+    /**
+    See doc for the progressiveQuality_ field
+    */
     static boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> Create(
       OrthancStone::ILoadersContext& context,
-      const boost::shared_ptr<OrthancStone::DicomVolumeImage>& volume);
+      boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+      bool progressiveQuality = false);
 
     virtual ~OrthancSeriesVolumeProgressiveLoader();
 

@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -150,11 +150,34 @@ namespace OrthancStone
   {
     if (!context_.IsContextLost())
     {
-      context_.MakeCurrent(); // this can throw if context lost!
-      for (Fonts::iterator it = fonts_.begin(); it != fonts_.end(); ++it)
+      try
       {
-        assert(it->second != NULL);
-        delete it->second;
+        try
+        {
+          context_.MakeCurrent(); // this can throw if context lost!
+        }
+        catch (...)
+        {
+          LOG(ERROR) << "context_.MakeCurrent() failed in OpenGLCompositor::~OpenGLCompositor()!";
+        }
+
+        for (Fonts::iterator it = fonts_.begin(); it != fonts_.end(); ++it)
+        {
+          try
+          {
+
+            assert(it->second != NULL);
+            delete it->second;
+          }
+          catch (...)
+          {
+            LOG(ERROR) << "Exception thrown while deleting OpenGL-based font!";
+          }
+        }
+      }
+      catch (...)
+      {
+        // logging threw an exception!
       }
     }
   }

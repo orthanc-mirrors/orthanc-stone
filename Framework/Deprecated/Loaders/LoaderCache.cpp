@@ -83,7 +83,9 @@ namespace Deprecated
         boost::shared_ptr<OrthancStone::DicomVolumeImage> volumeImage(new OrthancStone::DicomVolumeImage);
         boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> loader;
       
-        loader = OrthancSeriesVolumeProgressiveLoader::Create(loadersContext_, volumeImage);
+        // true means "use progressive quality"
+        // false means "load high quality slices only"
+        loader = OrthancSeriesVolumeProgressiveLoader::Create(loadersContext_, volumeImage, false);
         loader->LoadSeries(seriesUuid);
         seriesVolumeProgressiveLoaders_[seriesUuid] = loader;
       }

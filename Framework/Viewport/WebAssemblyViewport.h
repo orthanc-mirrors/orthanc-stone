@@ -36,7 +36,9 @@
 
 namespace OrthancStone
 {
-  class WebAssemblyViewport : public IViewport
+  class WebAssemblyViewport : public IViewport,
+                              public boost::enable_shared_from_this<WebAssemblyViewport>
+
   {
   private:
     class WasmLock;
@@ -84,6 +86,9 @@ namespace OrthancStone
 
     virtual ILock* Lock() ORTHANC_OVERRIDE;
 
+    /**
+    This method takes ownership
+    */
     void AcquireInteractor(IViewportInteractor* interactor);
 
     const std::string& GetShortCanvasId() const

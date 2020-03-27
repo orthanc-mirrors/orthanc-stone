@@ -21,9 +21,12 @@
 
 #include "WebAssemblyViewport.h"
 
+#include "../Toolbox/GenericToolbox.h"
+
 #include <Core/OrthancException.h>
 
 #include <boost/make_shared.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 namespace OrthancStone
 {
@@ -103,12 +106,12 @@ namespace OrthancStone
 
   EM_BOOL WebAssemblyViewport::OnRequestAnimationFrame(double time, void *userData)
   {
-    WebAssemblyViewport& that = *reinterpret_cast<WebAssemblyViewport*>(userData);
+    boost::shared_ptr<WebAssemblyViewport> that = GenericToolbox::HoldingRef<WebAssemblyViewport>::Unwrap(userData);
 
-    if (that.compositor_.get() != NULL &&
-        that.controller_ /* should always be true */)
+    if (that->compositor_.get() != NULL &&
+        that->controller_ /* should always be true */)
     {
-      that.Paint(*that.compositor_, *that.controller_);
+      that->Paint(*that->compositor_, *that->controller_);
     }
       
     return true;
@@ -116,12 +119,12 @@ namespace OrthancStone
 
   EM_BOOL WebAssemblyViewport::OnResize(int eventType, const EmscriptenUiEvent *uiEvent, void *userData)
   {
-    WebAssemblyViewport& that = *reinterpret_cast<WebAssemblyViewport*>(userData);
+    boost::shared_ptr<WebAssemblyViewport> that = GenericToolbox::HoldingRef<WebAssemblyViewport>::Unwrap(userData);
 
-    if (that.compositor_.get() != NULL)
+    if (that->compositor_.get() != NULL)
     {
-      that.UpdateSize(*that.compositor_);
-      that.Invalidate();
+      that->UpdateSize(*that->compositor_);
+      that->Invalidate();
     }
       
     return true;
@@ -130,20 +133,20 @@ namespace OrthancStone
 
   EM_BOOL WebAssemblyViewport::OnMouseDown(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
   {
-    WebAssemblyViewport& that = *reinterpret_cast<WebAssemblyViewport*>(userData);
+    boost::shared_ptr<WebAssemblyViewport> that = GenericToolbox::HoldingRef<WebAssemblyViewport>::Unwrap(userData);
 
-    LOG(INFO) << "mouse down: " << that.GetFullCanvasId();      
+    LOG(INFO) << "mouse down: " << that->GetFullCanvasId();      
 
-    if (that.compositor_.get() != NULL &&
-        that.interactor_.get() != NULL)
+    if (that->compositor_.get() != NULL &&
+        that->interactor_.get() != NULL)
     {
       PointerEvent pointer;
-      ConvertMouseEvent(pointer, *mouseEvent, *that.compositor_);
+      ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
 
-      that.controller_->HandleMousePress(*that.interactor_, pointer,
-                                         that.compositor_->GetCanvasWidth(),
-                                         that.compositor_->GetCanvasHeight());        
-      that.Invalidate();
+      that->controller_->HandleMousePress(*that->interactor_, pointer,
+                                         that->compositor_->GetCanvasWidth(),
+                                         that->compositor_->GetCanvasHeight());        
+      that->Invalidate();
     }
 
     return true;
@@ -152,44 +155,41 @@ namespace OrthancStone
     
   EM_BOOL WebAssemblyViewport::OnMouseMove(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
   {
-    WebAssemblyViewport& that = *reinterpret_cast<WebAssemblyViewport*>(userData);
+    boost::shared_ptr<WebAssemblyViewport> that = GenericToolbox::HoldingRef<WebAssemblyViewport>::Unwrap(userData);
 
-    if (that.compositor_.get() != NULL &&
-        that.controller_->HasActiveTracker())
+    if (that->compositor_.get() != NULL &&
+        that->controller_->HasActiveTracker())
     {
       PointerEvent pointer;
-      ConvertMouseEvent(pointer, *mouseEvent, *that.compositor_);
-      if (that.controller_->HandleMouseMove(pointer))
+      ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
+      if (that->controller_->HandleMouseMove(pointer))
       {
-        that.Invalidate();
+        that->Invalidate();
       }
     }
 
     return true;
   }
-
     
   EM_BOOL WebAssemblyViewport::OnMouseUp(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
   {
-    WebAssemblyViewport& that = *reinterpret_cast<WebAssemblyViewport*>(userData);
+    boost::shared_ptr<WebAssemblyViewport> that = GenericToolbox::HoldingRef<WebAssemblyViewport>::Unwrap(userData);
 
-    if (that.compositor_.get() != NULL)
+    if (that->compositor_.get() != NULL)
     {
       PointerEvent pointer;
-      ConvertMouseEvent(pointer, *mouseEvent, *that.compositor_);
-      that.controller_->HandleMouseRelease(pointer);
-      that.Invalidate();
+      ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
+      that->controller_->HandleMouseRelease(pointer);
+      that->Invalidate();
     }
 
     return true;
   }
 
-    
   void WebAssemblyViewport::Invalidate()
   {
-    emscripten_request_animation_frame(OnRequestAnimationFrame, this);
+    emscripten_request_animation_frame(OnRequestAnimationFrame, GenericToolbox::HoldingRef<WebAssemblyViewport>::Wrap(this));
   }
-    
 
   void WebAssemblyViewport::AcquireCompositor(ICompositor* compositor /* takes ownership */)
   {

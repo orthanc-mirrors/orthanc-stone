@@ -20,10 +20,15 @@
 
 #pragma once
 
+#include <Core/Compatibility.h>
+
+#include <boost/shared_ptr.hpp>
+
 #include <string>
 #include <stdint.h>
 #include <math.h>
 
+#include <memory>
 
 namespace OrthancStone
 {
@@ -281,14 +286,52 @@ namespace OrthancStone
     /**
     Same as GetRgbValuesFromString
     */
-    bool GetRgbaValuesFromString(uint8_t& red, uint8_t& green, uint8_t& blue, uint8_t& alpha, const char* text);
+    bool GetRgbaValuesFromString(uint8_t& red,
+                                 uint8_t& green,
+                                 uint8_t& blue,
+                                 uint8_t& alpha,
+                                 const char* text);
 
     /**
     Same as GetRgbValuesFromString
     */
-    inline bool GetRgbaValuesFromString(uint8_t& red, uint8_t& green, uint8_t& blue, uint8_t& alpha, const std::string& text)
+    inline bool GetRgbaValuesFromString(uint8_t& red, 
+                                        uint8_t& green, 
+                                        uint8_t& blue, 
+                                        uint8_t& alpha, 
+                                        const std::string& text)
     {
       return GetRgbaValuesFromString(red, green, blue, alpha, text.c_str());
     }
+
+
+    template<typename Wrappee> 
+    struct HoldingRef
+    {
+      HoldingRef(Wrappee* object)
+      {
+        // a crash here means that the object is not stored in a shared_ptr
+        // using shared_ptr is mandatory for this
+        object_ = object->shared_from_this();
+      }
+      boost::shared_ptr<Wrappee> object_;
+
+      static void* Wrap(Wrappee* object)
+      {
+        std::unique_ptr<HoldingRef<Wrappee > > up(new HoldingRef<Wrappee>(object));
+        void* userData = reinterpret_cast<void*>(up.release());
+        return userData;
+      }
+
+      static boost::shared_ptr<Wrappee> Unwrap(void* userData)
+      {
+        // the stored shared_ptr will be deleted because of wrapping
+        // the data in a RAII
+        std::unique_ptr<HoldingRef<Wrappee > >
+          up(reinterpret_cast<HoldingRef<Wrappee>*>(userData));
+        boost::shared_ptr<Wrappee> object = up->object_;
+        return object;
+      }
+    };
   }
 }

@@ -48,7 +48,7 @@ namespace OrthancStone
   }
 
   MeasureTool::MeasureTool(
-    IViewport& viewport)
+    boost::shared_ptr<IViewport> viewport)
     : viewport_(viewport)
     , enabled_(true)
   {
@@ -57,7 +57,7 @@ namespace OrthancStone
 
   void MeasureTool::PostConstructor()
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
 
     Register<ViewportController::SceneTransformChanged>(

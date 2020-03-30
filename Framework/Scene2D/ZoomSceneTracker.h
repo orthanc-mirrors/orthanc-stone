@@ -33,7 +33,7 @@ namespace OrthancStone
   class ZoomSceneTracker : public OneGesturePointerTracker
   {
   public:
-    ZoomSceneTracker(IViewport& viewport,
+    ZoomSceneTracker(boost::shared_ptr<IViewport> viewport,
                      const PointerEvent& event,
                      unsigned int canvasHeight);
 

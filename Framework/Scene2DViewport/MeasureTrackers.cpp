@@ -24,7 +24,7 @@
 namespace OrthancStone
 {
 
-  CreateMeasureTracker::CreateMeasureTracker(IViewport& viewport)
+  CreateMeasureTracker::CreateMeasureTracker(boost::shared_ptr<IViewport> viewport)
     : viewport_(viewport)
     , alive_(true)
     , commitResult_(true)
@@ -48,7 +48,7 @@ namespace OrthancStone
     // to the undo stack
     // otherwise, we simply undo it
 
-    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
 
     if (commitResult_)
@@ -59,12 +59,12 @@ namespace OrthancStone
     lock->Invalidate();
   }
 
-  EditMeasureTracker::EditMeasureTracker(IViewport& viewport, const PointerEvent& e)
+  EditMeasureTracker::EditMeasureTracker(boost::shared_ptr<IViewport> viewport, const PointerEvent& e)
     : viewport_(viewport)
     , alive_(true)
     , commitResult_(true)
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
 
     originalClickPosition_ = e.GetMainPosition().Apply(
@@ -88,7 +88,7 @@ namespace OrthancStone
     // to the undo stack
     // otherwise, we simply undo it
 
-    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
 
     if (commitResult_)

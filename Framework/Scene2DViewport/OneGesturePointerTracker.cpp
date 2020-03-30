@@ -28,7 +28,7 @@
 namespace OrthancStone
 {
   OneGesturePointerTracker::OneGesturePointerTracker(
-    IViewport& viewport)
+    boost::shared_ptr<IViewport> viewport)
     : viewport_(viewport)
     , alive_(true)
     , currentTouchCount_(1)

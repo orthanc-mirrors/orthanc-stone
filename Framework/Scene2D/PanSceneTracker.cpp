@@ -27,12 +27,12 @@
 
 namespace OrthancStone
 {
-  PanSceneTracker::PanSceneTracker(IViewport& viewport,
+  PanSceneTracker::PanSceneTracker(boost::shared_ptr<IViewport> viewport,
                                    const PointerEvent& event)
     : OneGesturePointerTracker(viewport)
   {
     
-    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
 
     originalSceneToCanvas_ = lock->GetController().GetSceneToCanvasTransform();
     originalCanvasToScene_ = lock->GetController().GetCanvasToSceneTransform();
@@ -45,7 +45,7 @@ namespace OrthancStone
   {
     ScenePoint2D p = event.GetMainPosition().Apply(originalCanvasToScene_);
 
-    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
 
     lock->GetController().SetSceneToCanvasTransform(
       AffineTransform2D::Combine(
@@ -57,7 +57,7 @@ namespace OrthancStone
 
   void PanSceneTracker::Cancel()
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     lock->GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
   }
 }

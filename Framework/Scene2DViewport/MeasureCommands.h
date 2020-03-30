@@ -35,7 +35,7 @@ namespace OrthancStone
   class MeasureCommand : public boost::noncopyable
   {
   public:
-    MeasureCommand(IViewport& viewport) : viewport_(viewport)
+    MeasureCommand(boost::shared_ptr<IViewport> viewport) : viewport_(viewport)
     {}
     virtual void Undo() = 0;
     virtual void Redo() = 0;
@@ -43,13 +43,13 @@ namespace OrthancStone
     virtual ~MeasureCommand() {};
 
   protected:
-    IViewport& viewport_;
+    boost::shared_ptr<IViewport> viewport_;
   };
 
   class CreateMeasureCommand : public MeasureCommand
   {
   public:
-    CreateMeasureCommand(IViewport& viewport);
+    CreateMeasureCommand(boost::shared_ptr<IViewport> viewport);
     virtual ~CreateMeasureCommand();
     virtual void Undo() ORTHANC_OVERRIDE;
     virtual void Redo() ORTHANC_OVERRIDE;
@@ -61,7 +61,7 @@ namespace OrthancStone
   class EditMeasureCommand : public MeasureCommand
   {
   public:
-    EditMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, IViewport& viewport);
+    EditMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, boost::shared_ptr<IViewport> viewport);
     virtual ~EditMeasureCommand();
     virtual void Undo() ORTHANC_OVERRIDE;
     virtual void Redo() ORTHANC_OVERRIDE;
@@ -82,7 +82,7 @@ namespace OrthancStone
   class DeleteMeasureCommand : public MeasureCommand
   {
   public:
-    DeleteMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, IViewport& viewport);
+    DeleteMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, boost::shared_ptr<IViewport> viewport);
     virtual ~DeleteMeasureCommand();
     virtual void Undo() ORTHANC_OVERRIDE;
     virtual void Redo() ORTHANC_OVERRIDE;

@@ -41,7 +41,7 @@ namespace OrthancStone
     {
     }
 
-    virtual IFlexiblePointerTracker* CreateTracker(IViewport& viewport,
+    virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<IViewport> viewport,
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) = 0;
@@ -52,7 +52,7 @@ namespace OrthancStone
   class DefaultViewportInteractor : public IViewportInteractor
   {
   public:
-    virtual IFlexiblePointerTracker* CreateTracker(IViewport& viewport,
+    virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<IViewport> viewport,
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) ORTHANC_OVERRIDE;
@@ -109,13 +109,10 @@ namespace OrthancStone
   {
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, \
-                                        SceneTransformChanged, ViewportController);
+                                        SceneTransformChanged, \
+                                        ViewportController);
 
-    ViewportController(IViewport& viewport);
-
-    ViewportController(IViewport& viewport, const Scene2D& scene /* will be cloned */);
-
-    ViewportController(IViewport& viewport, boost::weak_ptr<UndoStack> undoStackW);
+    ViewportController(boost::shared_ptr<IViewport> viewport);
 
     ~ViewportController();
 
@@ -124,7 +121,8 @@ namespace OrthancStone
     (in scene coords). A tracker can then be requested from the chosen 
     measure tool, if needed
     */
-    std::vector<boost::shared_ptr<MeasureTool> > HitTestMeasureTools(ScenePoint2D p);
+    std::vector<boost::shared_ptr<MeasureTool> > HitTestMeasureTools(
+      ScenePoint2D p);
 
     /**
     This function will traverse the measuring tools and will clear their 
@@ -223,6 +221,34 @@ namespace OrthancStone
       return *scene_;
     }
 
+    /**
+    This method is used in a move pattern: when the ownership of the scene 
+    managed by this viewport controller must be transferred to another 
+    controller.
+    */
+    Scene2D* ReleaseScene()
+    {
+      return scene_.release();
+    }
+
+    /**
+    This method is used when one wishes to replace the scene that is currently
+    managed by the controller. The previous scene is deleted and the controller
+    now has ownership of the new one.
+    */
+    void AcquireScene(Scene2D* scene)
+    {
+      scene_.reset(scene);
+    }
+
+    /**
+    Sets the undo stack that is used by PushCommand, Undo...
+    */
+    void SetUndoStack(boost::weak_ptr<UndoStack> undoStackW)
+    {
+      undoStackW_ = undoStackW;
+    }
+    
     bool HasActiveTracker() const
     {
       return activeTracker_.get() != NULL;
@@ -231,7 +257,7 @@ namespace OrthancStone
   private:
     double GetCanvasToSceneFactor() const;
 
-    IViewport&                                    viewport_;
+    boost::shared_ptr<IViewport>                  viewport_;
     boost::weak_ptr<UndoStack>                    undoStackW_;  // Global stack, possibly shared by all viewports
     std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;
     boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Couldn't this be a "std::unique_ptr"?

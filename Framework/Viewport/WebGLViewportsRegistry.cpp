@@ -21,6 +21,8 @@
 
 #include "WebGLViewportsRegistry.h"
 
+#include "../Toolbox/GenericToolbox.h"
+
 #include <Core/OrthancException.h>
 
 #include <boost/make_shared.hpp>
@@ -29,13 +31,17 @@ namespace OrthancStone
 {
   void WebGLViewportsRegistry::LaunchTimer()
   {
-    emscripten_set_timeout(OnTimeoutCallback, timeoutMS_, this);
+    timeOutID_ = emscripten_set_timeout(
+      OnTimeoutCallback, 
+      timeoutMS_, 
+      reinterpret_cast<void*>(this));
   }
-
   
   void WebGLViewportsRegistry::OnTimeout()
   {
-    for (Viewports::iterator it = viewports_.begin(); it != viewports_.end(); ++it)
+    for (Viewports::iterator it = viewports_.begin();
+         it != viewports_.end(); 
+         ++it)
     {
       if (it->second == NULL ||
           it->second->IsContextLost())
@@ -61,10 +67,20 @@ namespace OrthancStone
         // replaced by a fresh one with the same ID: Recreate the
         // WebGL context on the new canvas
         boost::shared_ptr<WebGLViewport> viewport;
-          
+
+        // we need to steal the properties from the old viewport
+        // and set them to the new viewport
         {
           std::unique_ptr<IViewport::ILock> lock(it->second->Lock());
-          viewport = boost::make_shared<WebGLViewport>(it->first, lock->GetController().GetScene());
+
+          // TODO: remove ViewportController
+          Scene2D* scene = lock->GetController().ReleaseScene();
+          viewport = WebGLViewport::Create(it->first);
+
+          {
+            std::unique_ptr<IViewport::ILock> newLock(viewport->Lock());
+            newLock->GetController().AcquireScene(scene);
+          }
         }
 
         // Replace the old WebGL viewport by the new one
@@ -81,16 +97,17 @@ namespace OrthancStone
     LaunchTimer();
   }
 
-    
   void WebGLViewportsRegistry::OnTimeoutCallback(void *userData)
   {
-    WebGLViewportsRegistry& that = *reinterpret_cast<WebGLViewportsRegistry*>(userData);
-    that.OnTimeout();
+    // This object dies with the process or tab. 
+    WebGLViewportsRegistry* that = 
+      reinterpret_cast<WebGLViewportsRegistry*>(userData);
+    that->OnTimeout();
   }
 
-    
   WebGLViewportsRegistry::WebGLViewportsRegistry(double timeoutMS) :
-    timeoutMS_(timeoutMS)
+    timeoutMS_(timeoutMS),
+    timeOutID_(0)
   {
     if (timeoutMS <= 0)
     {
@@ -100,8 +117,14 @@ namespace OrthancStone
     LaunchTimer();
   }
 
+  WebGLViewportsRegistry::~WebGLViewportsRegistry()
+  {
+    emscripten_clear_timeout(timeOutID_);
+    Clear();
+  }
 
-  boost::shared_ptr<WebGLViewport> WebGLViewportsRegistry::Add(const std::string& canvasId)
+  boost::shared_ptr<WebGLViewport> WebGLViewportsRegistry::Add(
+    const std::string& canvasId)
   {
     if (viewports_.find(canvasId) != viewports_.end())
     {
@@ -110,13 +133,13 @@ namespace OrthancStone
     }
     else
     {
-      boost::shared_ptr<WebGLViewport> viewport(new WebGLViewport(canvasId));
+      boost::shared_ptr<WebGLViewport> viewport = 
+        WebGLViewport::Create(canvasId);
       viewports_[canvasId] = viewport;
       return viewport;
     }
   }
-
-    
+      
   void WebGLViewportsRegistry::Remove(const std::string& canvasId)
   {
     Viewports::iterator found = viewports_.find(canvasId);
@@ -130,13 +153,11 @@ namespace OrthancStone
       viewports_.erase(found);
     }
   }
-
-    
+  
   void WebGLViewportsRegistry::Clear()
   {
     viewports_.clear();
   }
-
 
   WebGLViewportsRegistry::Accessor::Accessor(WebGLViewportsRegistry& that,
                                              const std::string& canvasId) :
@@ -149,7 +170,6 @@ namespace OrthancStone
       lock_.reset(viewport->second->Lock());
     }
   }
-
 
   IViewport::ILock& WebGLViewportsRegistry::Accessor::GetViewport() const
   {

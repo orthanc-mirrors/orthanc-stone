@@ -122,12 +122,16 @@ namespace OrthancStone
   }
 
 
-  WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvasId) :
-    WebAssemblyViewport(canvasId, NULL, boost::weak_ptr<UndoStack>())
+  WebAssemblyCairoViewport::WebAssemblyCairoViewport(
+    const std::string& canvasId) :
+    WebAssemblyViewport(canvasId)
   {
     unsigned int width, height;
     GetCanvasSize(width, height);
-    emscripten_set_canvas_element_size(GetFullCanvasId().c_str(), width, height);
+    emscripten_set_canvas_element_size(GetFullCanvasId().c_str(), 
+                                       width, 
+                                       height);
+
     AcquireCompositor(new CairoCompositor(width, height));
   }
 }

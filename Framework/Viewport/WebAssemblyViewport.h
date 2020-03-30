@@ -43,11 +43,12 @@ namespace OrthancStone
   private:
     class WasmLock;
     
-    std::string                            shortCanvasId_;
-    std::string                            fullCanvasId_;
-    std::unique_ptr<ICompositor>             compositor_;
-    boost::shared_ptr<ViewportController>  controller_;
-    std::unique_ptr<IViewportInteractor>     interactor_;
+    std::string                           shortCanvasId_;
+    std::string                           fullCanvasId_;
+    std::unique_ptr<ICompositor>          compositor_;
+    std::unique_ptr<ViewportController>   controller_;
+    std::unique_ptr<IViewportInteractor>  interactor_;
+    bool                                  enableEmscriptenEvents_;
 
     static EM_BOOL OnRequestAnimationFrame(double time, void *userData);
     
@@ -79,12 +80,20 @@ namespace OrthancStone
 
     virtual void UpdateSize(ICompositor& compositor) = 0;
 
-  public:
-    WebAssemblyViewport(const std::string& canvasId,
-                        const Scene2D* scene,
-                        boost::weak_ptr<UndoStack> undoStackW);
+    /**
+    The second argument is temporary and should be deleted once the migration 
+    to interactors is finished.
+    */
+    WebAssemblyViewport(const std::string& canvasId, 
+                        bool enableEmscriptenEvents = true);
 
+    void PostConstructor();
+
+  public:
     virtual ILock* Lock() ORTHANC_OVERRIDE;
+
+    ~WebAssemblyViewport();
+
 
     /**
     This method takes ownership

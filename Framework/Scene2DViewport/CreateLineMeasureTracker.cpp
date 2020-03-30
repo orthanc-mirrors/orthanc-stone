@@ -26,13 +26,13 @@
 namespace OrthancStone
 {
   CreateLineMeasureTracker::CreateLineMeasureTracker(
-    IViewport&          viewport,
+    boost::shared_ptr<IViewport>          viewport,
     const PointerEvent&             e)
     : CreateMeasureTracker(viewport)
   {
     ScenePoint2D point = e.GetMainPosition();
     {
-      std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
       ViewportController& controller = lock->GetController();
       point = e.GetMainPosition().Apply(controller.GetScene().GetCanvasToSceneTransform());
     }
@@ -53,7 +53,7 @@ namespace OrthancStone
         "PointerMove: active_ == false");
     }
 
-    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
 
     ScenePoint2D scenePos = event.GetMainPosition().Apply(

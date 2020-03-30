@@ -24,7 +24,7 @@ namespace OrthancStone
 {
   EditAngleMeasureCommand::EditAngleMeasureCommand(
     boost::shared_ptr<MeasureTool>  measureTool,
-    IViewport& viewport)
+    boost::shared_ptr<IViewport> viewport)
     : EditMeasureCommand(measureTool, viewport)
     , measureTool_(measureTool)
   {

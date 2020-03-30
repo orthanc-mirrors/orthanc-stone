@@ -27,13 +27,13 @@ namespace OrthancStone
 {
   EditAngleMeasureTracker::EditAngleMeasureTracker(
     boost::shared_ptr<MeasureTool>  measureTool,
-    IViewport& viewport,
+    boost::shared_ptr<IViewport> viewport,
     const PointerEvent& e)
     : EditMeasureTracker(viewport, e)
   {
     ScenePoint2D scenePos = e.GetMainPosition();
     {
-      std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
       ViewportController& controller = lock->GetController();
       scenePos = e.GetMainPosition().Apply(controller.GetScene().GetCanvasToSceneTransform());
     }
@@ -48,7 +48,7 @@ namespace OrthancStone
 
   void EditAngleMeasureTracker::PointerMove(const PointerEvent& e)
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
     Scene2D& scene = controller.GetScene();
 

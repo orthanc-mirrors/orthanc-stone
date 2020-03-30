@@ -53,13 +53,14 @@ namespace OrthancStone
 {
   class UndoStack;
 
-  class SdlViewport : public IViewport
+  class SdlViewport : public IViewport,
+                      public boost::enable_shared_from_this<SdlViewport>
   {
   private:
     boost::recursive_mutex                 mutex_;
     uint32_t                               refreshEvent_;
     boost::shared_ptr<ViewportController>  controller_;
-    std::unique_ptr<ICompositor>             compositor_;
+    std::unique_ptr<ICompositor>           compositor_;
 
     void SendRefreshEvent();
 
@@ -102,9 +103,11 @@ namespace OrthancStone
 
     void AcquireCompositor(ICompositor* compositor /* takes ownership */);
 
-  public:
+  protected:
     SdlViewport();
-    SdlViewport(boost::weak_ptr<UndoStack> undoStackW);
+    void PostConstructor();
+
+  public:
 
     bool IsRefreshEvent(const SDL_Event& event) const
     {
@@ -131,17 +134,17 @@ namespace OrthancStone
   private:
     SdlOpenGLContext  context_;
 
+  private:
+    SdlOpenGLViewport(const char* title,
+                      unsigned int width,
+                      unsigned int height,
+                      bool allowDpiScaling = true);
   public:
-    SdlOpenGLViewport(const char* title,
-                      unsigned int width,
-                      unsigned int height,
-                      bool allowDpiScaling = true);
+    static boost::shared_ptr<SdlOpenGLViewport> Create(const char* title,
+                                                       unsigned int width,
+                                                       unsigned int height,
+                                                       bool allowDpiScaling = true);
 
-    SdlOpenGLViewport(const char* title,
-                      boost::weak_ptr<UndoStack> undoStackW,
-                      unsigned int width,
-                      unsigned int height,
-                      bool allowDpiScaling = true);
 
     virtual ~SdlOpenGLViewport();
 
@@ -162,11 +165,17 @@ namespace OrthancStone
 
     void CreateSdlSurfaceFromCompositor(CairoCompositor& compositor);
 
-  public:
+  private:
     SdlCairoViewport(const char* title,
                      unsigned int width,
                      unsigned int height,
                      bool allowDpiScaling = true);
+  public:
+    static boost::shared_ptr<SdlCairoViewport> Create(const char* title,
+                     unsigned int width,
+                     unsigned int height,
+                     bool allowDpiScaling = true);
+
 
     virtual ~SdlCairoViewport();
 

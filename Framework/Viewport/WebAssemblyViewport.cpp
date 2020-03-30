@@ -106,7 +106,8 @@ namespace OrthancStone
 
   EM_BOOL WebAssemblyViewport::OnRequestAnimationFrame(double time, void *userData)
   {
-    boost::shared_ptr<WebAssemblyViewport> that = GenericToolbox::HoldingRef<WebAssemblyViewport>::Unwrap(userData);
+    LOG(TRACE) << __func__;
+    WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
 
     if (that->compositor_.get() != NULL &&
         that->controller_ /* should always be true */)
@@ -114,12 +115,14 @@ namespace OrthancStone
       that->Paint(*that->compositor_, *that->controller_);
     }
       
+    LOG(TRACE) << "Exiting: " << __func__;
     return true;
   }
 
   EM_BOOL WebAssemblyViewport::OnResize(int eventType, const EmscriptenUiEvent *uiEvent, void *userData)
   {
-    boost::shared_ptr<WebAssemblyViewport> that = GenericToolbox::HoldingRef<WebAssemblyViewport>::Unwrap(userData);
+    LOG(TRACE) << __func__;
+    WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
 
     if (that->compositor_.get() != NULL)
     {
@@ -127,15 +130,16 @@ namespace OrthancStone
       that->Invalidate();
     }
       
+    LOG(TRACE) << "Exiting: " << __func__;
     return true;
   }
 
 
   EM_BOOL WebAssemblyViewport::OnMouseDown(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
   {
-    boost::shared_ptr<WebAssemblyViewport> that = GenericToolbox::HoldingRef<WebAssemblyViewport>::Unwrap(userData);
+    WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
 
-    LOG(INFO) << "mouse down: " << that->GetFullCanvasId();      
+    LOG(TRACE) << "mouse down: " << that->GetFullCanvasId();      
 
     if (that->compositor_.get() != NULL &&
         that->interactor_.get() != NULL)
@@ -149,31 +153,41 @@ namespace OrthancStone
       that->Invalidate();
     }
 
+    LOG(TRACE) << "Exiting: " << __func__;
     return true;
   }
 
     
   EM_BOOL WebAssemblyViewport::OnMouseMove(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
   {
-    boost::shared_ptr<WebAssemblyViewport> that = GenericToolbox::HoldingRef<WebAssemblyViewport>::Unwrap(userData);
+    LOG(TRACE) << "WebAssemblyViewport::OnMouseMove CP1. userData = " << userData;
+    
+    WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
+    LOG(TRACE) << "WebAssemblyViewport::OnMouseMove CP2";
 
     if (that->compositor_.get() != NULL &&
         that->controller_->HasActiveTracker())
     {
+      LOG(TRACE) << "WebAssemblyViewport::OnMouseMove CP3";
       PointerEvent pointer;
       ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
+      LOG(TRACE) << "WebAssemblyViewport::OnMouseMove CP4";
       if (that->controller_->HandleMouseMove(pointer))
       {
+        LOG(TRACE) << "WebAssemblyViewport::OnMouseMove CP5";
         that->Invalidate();
+        LOG(TRACE) << "WebAssemblyViewport::OnMouseMove CP6";
       }
     }
 
+    LOG(TRACE) << "Exiting: " << __func__;
     return true;
   }
     
   EM_BOOL WebAssemblyViewport::OnMouseUp(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
   {
-    boost::shared_ptr<WebAssemblyViewport> that = GenericToolbox::HoldingRef<WebAssemblyViewport>::Unwrap(userData);
+    LOG(TRACE) << __func__;
+    WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
 
     if (that->compositor_.get() != NULL)
     {
@@ -183,12 +197,13 @@ namespace OrthancStone
       that->Invalidate();
     }
 
+    LOG(TRACE) << "Exiting: " << __func__;
     return true;
   }
 
   void WebAssemblyViewport::Invalidate()
   {
-    emscripten_request_animation_frame(OnRequestAnimationFrame, GenericToolbox::HoldingRef<WebAssemblyViewport>::Wrap(this));
+    emscripten_request_animation_frame(OnRequestAnimationFrame, reinterpret_cast<void*>(this));
   }
 
   void WebAssemblyViewport::AcquireCompositor(ICompositor* compositor /* takes ownership */)
@@ -204,66 +219,96 @@ namespace OrthancStone
   }
 
   WebAssemblyViewport::WebAssemblyViewport(
-    const std::string& canvasId,
-    const Scene2D* scene,
-    boost::weak_ptr<UndoStack> undoStackW) :
+    const std::string& canvasId, bool enableEmscriptenEvents) :
     shortCanvasId_(canvasId),
     fullCanvasId_(canvasId),
-    interactor_(new DefaultViewportInteractor)
+    interactor_(new DefaultViewportInteractor),
+    enableEmscriptenEvents_(enableEmscriptenEvents)
   {
-    if(undoStackW.lock() != NULL)
-    {
-      controller_ = boost::make_shared<ViewportController>(*this,undoStackW);
-    }
-    else if (scene == NULL)
-    {
-      controller_ = boost::make_shared<ViewportController>(*this);
-    }
-    else
-    {
-      controller_ = boost::make_shared<ViewportController>(*this,*scene);
-    }
+  }
 
-    LOG(INFO) << "Initializing Stone viewport on HTML canvas: " << canvasId;
+  void WebAssemblyViewport::PostConstructor()
+  {
+    boost::shared_ptr<IViewport> viewport = shared_from_this();
+    controller_.reset(new ViewportController(viewport));
 
-    if (canvasId.empty() ||
-        canvasId[0] == '#')
+    LOG(INFO) << "Initializing Stone viewport on HTML canvas: " 
+      << shortCanvasId_;
+
+    if (shortCanvasId_.empty() ||
+        shortCanvasId_[0] == '#')
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
-                                      "The canvas identifier must not start with '#'");
+        "The canvas identifier must not start with '#'");
     }
 
     // Disable right-click on the canvas (i.e. context menu)
     EM_ASM({
-        document.getElementById(UTF8ToString($0)).oncontextmenu = function(event) {
+        document.getElementById(UTF8ToString($0)).oncontextmenu = 
+        function(event)
+        {
           event.preventDefault();
         }
       },
-      canvasId.c_str()   // $0
+      shortCanvasId_.c_str()   // $0
       );
 
-    LOG(TRACE) << "2020-03-16-16h23 About to call emscripten_set_XXXX_callback on \"" 
-      << fullCanvasId_.c_str() << "\" from WebAssemblyViewport::WebAssemblyViewport";
+    if (enableEmscriptenEvents_)
+    {
+      // It is not possible to monitor the resizing of individual
+      // canvas, so we track the full window of the browser
+      emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,
+                                     reinterpret_cast<void*>(this),
+                                     false,
+                                     OnResize);
 
-#if 1
-    // It is not possible to monitor the resizing of individual
-    // canvas, so we track the full window of the browser
-    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, OnResize);
+      emscripten_set_mousedown_callback(fullCanvasId_.c_str(),
+                                        reinterpret_cast<void*>(this),
+                                        false,
+                                        OnMouseDown);
 
-    emscripten_set_mousedown_callback(fullCanvasId_.c_str(), this, false, OnMouseDown);
-    emscripten_set_mousemove_callback(fullCanvasId_.c_str(), this, false, OnMouseMove);
-    emscripten_set_mouseup_callback(fullCanvasId_.c_str(), this, false, OnMouseUp);
-#endif
-    LOG(TRACE) << "2020-03-16-16h23 DONE calling emscripten_set_XXXX_callback on \"" 
-      << fullCanvasId_.c_str() << "\" from WebAssemblyViewport::WebAssemblyViewport";
+      emscripten_set_mousemove_callback(fullCanvasId_.c_str(),
+                                        reinterpret_cast<void*>(this),
+                                        false,
+                                        OnMouseMove);
+
+      emscripten_set_mouseup_callback(fullCanvasId_.c_str(),
+                                      reinterpret_cast<void*>(this),
+                                      false,
+                                      OnMouseUp);
+    }
   }
 
+  WebAssemblyViewport::~WebAssemblyViewport()
+  {
+    if (enableEmscriptenEvents_)
+    {
+      emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,
+                                     reinterpret_cast<void*>(this),
+                                     false,
+                                     NULL);
+
+      emscripten_set_mousedown_callback(fullCanvasId_.c_str(),
+                                        reinterpret_cast<void*>(this),
+                                        false,
+                                        OnMouseDown);
+
+      emscripten_set_mousemove_callback(fullCanvasId_.c_str(),
+                                        reinterpret_cast<void*>(this),
+                                        false,
+                                        OnMouseMove);
+
+      emscripten_set_mouseup_callback(fullCanvasId_.c_str(),
+                                      reinterpret_cast<void*>(this),
+                                      false,
+                                      OnMouseUp);
+    }
+  }
   
   IViewport::ILock* WebAssemblyViewport::Lock()
   {
     return new WasmLock(*this);
   }
-
   
   void WebAssemblyViewport::AcquireInteractor(IViewportInteractor* interactor)
   {

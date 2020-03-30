@@ -113,7 +113,7 @@ namespace OrthancStone
     virtual std::string GetDescription() = 0;
 
   protected:
-    MeasureTool(IViewport& viewport);
+    MeasureTool(boost::shared_ptr<IViewport> viewport);
 
     void PostConstructor();
 
@@ -141,7 +141,7 @@ namespace OrthancStone
     Protected to allow sub-classes to use this weak pointer in factory methods
     (pass them to created objects)
     */
-    IViewport& viewport_;
+    boost::shared_ptr<IViewport> viewport_;
 
 
   private:

@@ -31,6 +31,8 @@ namespace OrthancStone
   private:
     OpenGL::WebAssemblyOpenGLContext  context_;
 
+    WebGLViewport(const std::string& canvasId);
+
   protected:
     virtual void Paint(ICompositor& compositor,
                        ViewportController& controller) ORTHANC_OVERRIDE;
@@ -38,13 +40,7 @@ namespace OrthancStone
     virtual void UpdateSize(ICompositor& compositor) ORTHANC_OVERRIDE;
 
   public:
-    WebGLViewport(const std::string& canvasId);
-
-    WebGLViewport(const std::string& canvasId,
-                  boost::weak_ptr<UndoStack> undoStackW);
-
-    WebGLViewport(const std::string& canvasId,
-                  const Scene2D& scene);
+    static boost::shared_ptr<WebGLViewport> Create(const std::string& canvasId);
 
     virtual ~WebGLViewport();
 

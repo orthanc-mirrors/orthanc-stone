@@ -43,7 +43,7 @@ namespace OrthancStone
     performed at this time
     */
     LayerHolder(
-      IViewport& viewport,
+      boost::shared_ptr<IViewport> viewport,
       int polylineLayerCount, int textLayerCount, int infoTextCount = 0);
 
     /**
@@ -101,7 +101,7 @@ namespace OrthancStone
     int textLayerCount_;
     int polylineLayerCount_;
     int infoTextCount_;
-    IViewport& viewport_;
+    boost::shared_ptr<IViewport> viewport_;
     int baseLayerIndex_;
   };
 }

@@ -22,6 +22,8 @@
 
 #include <Core/OrthancException.h>
 
+#include <boost/make_shared.hpp>
+
 namespace OrthancStone
 {
   ICompositor& SdlViewport::SdlLock::GetCompositor()
@@ -48,8 +50,7 @@ namespace OrthancStone
     compositor_.reset(compositor);
   }
 
-  SdlViewport::SdlViewport() :
-    controller_(new ViewportController(*this))
+  SdlViewport::SdlViewport()
   {
     refreshEvent_ = SDL_RegisterEvents(1);
 
@@ -58,18 +59,12 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
   }
-
-  SdlViewport::SdlViewport(boost::weak_ptr<UndoStack> undoStackW) :
-    controller_(new ViewportController(*this,undoStackW))
+  
+  void SdlViewport::PostConstructor()
   {
-    refreshEvent_ = SDL_RegisterEvents(1);
-
-    if (refreshEvent_ == static_cast<uint32_t>(-1))
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-    }
+    controller_ = boost::make_shared<ViewportController>(shared_from_this());
   }
-
+    
   void SdlViewport::SendRefreshEvent()
   {
     SDL_Event event;
@@ -88,15 +83,15 @@ namespace OrthancStone
     AcquireCompositor(new OpenGLCompositor(context_));  // (*)
   }
 
-  SdlOpenGLViewport::SdlOpenGLViewport(const char* title,
-                                       boost::weak_ptr<UndoStack> undoStackW,
-                                       unsigned int width,
-                                       unsigned int height,
-                                       bool allowDpiScaling) :
-    SdlViewport(undoStackW),
-    context_(title, width, height, allowDpiScaling)
+  boost::shared_ptr<SdlOpenGLViewport> SdlOpenGLViewport::Create(const char* title,
+                                                                 unsigned int width,
+                                                                 unsigned int height,
+                                                                 bool allowDpiScaling)
   {
-    AcquireCompositor(new OpenGLCompositor(context_));  // (*)
+    boost::shared_ptr<SdlOpenGLViewport> that =
+      boost::shared_ptr<SdlOpenGLViewport>(new SdlOpenGLViewport(title, width, height, allowDpiScaling));
+    that->SdlViewport::PostConstructor();
+    return that;
   }
 
   SdlOpenGLViewport::~SdlOpenGLViewport()

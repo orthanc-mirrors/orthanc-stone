@@ -33,7 +33,7 @@
 namespace OrthancStone
 {
   IFlexiblePointerTracker* DefaultViewportInteractor::CreateTracker(
-    IViewport&          viewport,
+    boost::shared_ptr<IViewport>          viewport,
     const PointerEvent& event,
     unsigned int        viewportWidth,
     unsigned int        viewportHeight)
@@ -63,39 +63,21 @@ namespace OrthancStone
     }
   }
 
-
-  ViewportController::ViewportController(IViewport& viewport) 
+  ViewportController::ViewportController(boost::shared_ptr<IViewport> viewport)
     : viewport_(viewport)
-    , undoStackW_(boost::shared_ptr<UndoStack>(new UndoStack()))
-
     , scene_(new Scene2D)
     , canvasToSceneFactor_(1)
   {
+    // undoStack_ is not default-initialized, which basically means empty.
+    // The controller must be able to cope with this.
   }
 
-  ViewportController::ViewportController(IViewport& viewport,
-                                         const Scene2D& scene)
-    : viewport_(viewport)
-    , undoStackW_(boost::shared_ptr<UndoStack>(new UndoStack()))
-    , scene_(scene.Clone())
-    , canvasToSceneFactor_(1)
-  {
-  }
-
-  ViewportController::ViewportController(IViewport& viewport, 
-                                         boost::weak_ptr<UndoStack> undoStackW)
-    : viewport_(viewport)
-    , undoStackW_(undoStackW)
-    , scene_(new Scene2D)
-    , canvasToSceneFactor_(1)
-  {
-  }
- 
   ViewportController::~ViewportController()
   {
   }
 
-  void ViewportController::PushCommand(boost::shared_ptr<MeasureCommand> command)
+  void ViewportController::PushCommand(
+    boost::shared_ptr<MeasureCommand> command)
   {
     boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
     if (undoStack.get() != NULL)
@@ -104,7 +86,7 @@ namespace OrthancStone
     }
     else
     {
-      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+      LOG(ERROR) << "Internal error: no undo stack!";
     }
   }
 
@@ -117,7 +99,7 @@ namespace OrthancStone
     }
     else
     {
-      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+      LOG(ERROR) << "Internal error: no undo stack!";
     }
   }
 
@@ -130,7 +112,7 @@ namespace OrthancStone
     }
     else
     {
-      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+      LOG(ERROR) << "Internal error: no undo stack!";
     }
   }
 
@@ -143,7 +125,7 @@ namespace OrthancStone
     }
     else
     {
-      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+      LOG(ERROR) << "Internal error: no undo stack!";
       return false;
     }
   }
@@ -157,13 +139,13 @@ namespace OrthancStone
     }
     else
     {
-      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+      LOG(ERROR) << "Internal error: no undo stack!";
       return false;
     }
   }
   
-  std::vector<boost::shared_ptr<MeasureTool> > ViewportController::HitTestMeasureTools(
-    ScenePoint2D p)
+  std::vector<boost::shared_ptr<MeasureTool> > 
+    ViewportController::HitTestMeasureTools(ScenePoint2D p)
   {
     std::vector<boost::shared_ptr<MeasureTool> > ret;
     
@@ -174,8 +156,7 @@ namespace OrthancStone
     }
     return ret;
   }
-
-
+  
   void ViewportController::ResetMeasuringToolsHighlight()
   {
     for (size_t i = 0; i < measureTools_.size(); ++i)
@@ -184,17 +165,20 @@ namespace OrthancStone
     }
   }
 
-  OrthancStone::AffineTransform2D ViewportController::GetCanvasToSceneTransform() const
+  OrthancStone::AffineTransform2D 
+    ViewportController::GetCanvasToSceneTransform() const
   {
     return scene_->GetCanvasToSceneTransform();
   }
 
-  OrthancStone::AffineTransform2D ViewportController::GetSceneToCanvasTransform() const
+  OrthancStone::AffineTransform2D 
+    ViewportController::GetSceneToCanvasTransform() const
   {
     return scene_->GetSceneToCanvasTransform();
   }
 
-  void ViewportController::SetSceneToCanvasTransform(const AffineTransform2D& transform)
+  void ViewportController::SetSceneToCanvasTransform(
+    const AffineTransform2D& transform)
   {
     scene_->SetSceneToCanvasTransform(transform);
 
@@ -210,17 +194,23 @@ namespace OrthancStone
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
-  void ViewportController::AddMeasureTool(boost::shared_ptr<MeasureTool> measureTool)
+  void ViewportController::AddMeasureTool(
+    boost::shared_ptr<MeasureTool> measureTool)
   {
-    ORTHANC_ASSERT(std::find(measureTools_.begin(), measureTools_.end(), measureTool)
-      == measureTools_.end(), "Duplicate measure tool");
+    ORTHANC_ASSERT(std::find(measureTools_.begin(), 
+                             measureTools_.end(), 
+                             measureTool) == measureTools_.end(), 
+                  "Duplicate measure tool");
     measureTools_.push_back(measureTool);
   }
 
-  void ViewportController::RemoveMeasureTool(boost::shared_ptr<MeasureTool> measureTool)
+  void ViewportController::RemoveMeasureTool(
+    boost::shared_ptr<MeasureTool> measureTool)
   {
-    ORTHANC_ASSERT(std::find(measureTools_.begin(), measureTools_.end(), measureTool)
-      != measureTools_.end(), "Measure tool not found");
+    ORTHANC_ASSERT(std::find(measureTools_.begin(), 
+                             measureTools_.end(), 
+                             measureTool) != measureTools_.end(), 
+                  "Measure tool not found");
     measureTools_.erase(
       std::remove(measureTools_.begin(), measureTools_.end(), measureTool), 
       measureTools_.end());
@@ -252,14 +242,16 @@ namespace OrthancStone
   }
 
 
-  void ViewportController::HandleMousePress(OrthancStone::IViewportInteractor& interactor,
-                                            const PointerEvent& event,
-                                            unsigned int viewportWidth,
-                                            unsigned int viewportHeight)
+  void ViewportController::HandleMousePress(
+    OrthancStone::IViewportInteractor&  interactor,
+    const PointerEvent&                 event,
+    unsigned int                        viewportWidth,
+    unsigned int                        viewportHeight)
   {
     if (activeTracker_)
     {
-      // We are dealing with a multi-stage tracker (that is made of several interactions)
+      // We are dealing with a multi-stage tracker (that is made of several 
+      // interactions)
       activeTracker_->PointerDown(event);
 
       if (!activeTracker_->IsAlive())
@@ -280,7 +272,10 @@ namespace OrthancStone
       }
 
       // No measure tool, create new tracker from the interactor
-      activeTracker_.reset(interactor.CreateTracker(viewport_, event, viewportWidth, viewportHeight));
+      activeTracker_.reset(interactor.CreateTracker(viewport_, 
+                                                    event, 
+                                                    viewportWidth, 
+                                                    viewportHeight));
     }
   }
 

@@ -42,7 +42,7 @@ namespace OrthancStone
   // the params in the LayerHolder ctor specify the number of polyline and text
   // layers
   AngleMeasureTool::AngleMeasureTool(
-    IViewport& viewport)
+    boost::shared_ptr<IViewport> viewport)
     : MeasureTool(viewport)
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
     , layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(viewport,1,5)))
@@ -53,7 +53,7 @@ namespace OrthancStone
   {
   }
 
-  boost::shared_ptr<AngleMeasureTool> AngleMeasureTool::Create(IViewport& viewport)
+  boost::shared_ptr<AngleMeasureTool> AngleMeasureTool::Create(boost::shared_ptr<IViewport> viewport)
   {
     boost::shared_ptr<AngleMeasureTool> obj(new AngleMeasureTool(viewport));
     obj->MeasureTool::PostConstructor();
@@ -141,7 +141,7 @@ namespace OrthancStone
 
   AngleMeasureTool::AngleHighlightArea AngleMeasureTool::AngleHitTest(ScenePoint2D p) const
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
     Scene2D& scene = controller.GetScene();
 
@@ -201,7 +201,7 @@ namespace OrthancStone
 
   boost::shared_ptr<IFlexiblePointerTracker> AngleMeasureTool::CreateEditionTracker(const PointerEvent& e)
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
     Scene2D& scene = controller.GetScene();
 
@@ -215,7 +215,7 @@ namespace OrthancStone
       new EditLineMeasureTracker(
         boost::shared_ptr<LineMeasureTool> measureTool;
         MessageBroker & broker,
-        IViewport&          viewport,
+        boost::shared_ptr<IViewport>          viewport,
         const PointerEvent & e);
     */
 
@@ -234,7 +234,7 @@ namespace OrthancStone
   {
     if (IsSceneAlive())
     {
-      std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
       ViewportController& controller = lock->GetController();
       Scene2D& scene = controller.GetScene();
 

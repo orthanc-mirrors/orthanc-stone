@@ -35,12 +35,12 @@ namespace OrthancStone
     class FixedPointAligner : public boost::noncopyable
     {
     private:
-      IViewport& viewport_;
+      boost::shared_ptr<IViewport> viewport_;
       ScenePoint2D           pivot_;
       ScenePoint2D           canvas_;
 
     public:
-      FixedPointAligner(IViewport& viewport,
+      FixedPointAligner(boost::shared_ptr<IViewport> viewport,
                         const ScenePoint2D& p);
 
       void Apply();

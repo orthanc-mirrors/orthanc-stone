@@ -26,13 +26,13 @@
 namespace OrthancStone
 {
   CreateAngleMeasureCommand::CreateAngleMeasureCommand(
-    IViewport& viewport,
+    boost::shared_ptr<IViewport> viewport,
     ScenePoint2D           point)
     : CreateMeasureCommand(viewport)
     , measureTool_(AngleMeasureTool::Create(viewport))
   {
     
-    std::unique_ptr<IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
 
     controller.AddMeasureTool(measureTool_);

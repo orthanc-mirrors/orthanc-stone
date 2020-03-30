@@ -23,6 +23,8 @@
 
 #include "WebGLViewport.h"
 
+#include <boost/enable_shared_from_this.hpp>
+
 namespace OrthancStone
 {
   /**
@@ -33,13 +35,15 @@ namespace OrthancStone
    * lost). If some WebGL context is lost, it is automatically
    * reinitialized by created a fresh HTML5 canvas.
    **/  
-  class WebGLViewportsRegistry : public boost::noncopyable
+  class WebGLViewportsRegistry : public boost::noncopyable,
+    public boost::enable_shared_from_this<WebGLViewportsRegistry>
   {
   private:
     typedef std::map<std::string, boost::shared_ptr<WebGLViewport> >  Viewports;
 
     double     timeoutMS_;
     Viewports  viewports_;
+    long       timeOutID_;
 
     void LaunchTimer();
 
@@ -50,10 +54,7 @@ namespace OrthancStone
   public:
     WebGLViewportsRegistry(double timeoutMS /* in milliseconds */);
     
-    ~WebGLViewportsRegistry()
-    {
-      Clear();
-    }
+    ~WebGLViewportsRegistry();
 
     boost::shared_ptr<WebGLViewport> Add(const std::string& canvasId);
 
@@ -64,7 +65,7 @@ namespace OrthancStone
     class Accessor : public boost::noncopyable
     {
     private:
-      WebGLViewportsRegistry&          that_;
+      WebGLViewportsRegistry&            that_;
       std::unique_ptr<IViewport::ILock>  lock_;
 
     public:

@@ -29,7 +29,7 @@ namespace OrthancStone
 {
   void CreateMeasureCommand::Undo()
   {
-    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
     // simply disable the measure tool upon undo
     GetMeasureTool()->Disable();
     lock->GetController().RemoveMeasureTool(GetMeasureTool());
@@ -37,12 +37,12 @@ namespace OrthancStone
 
   void CreateMeasureCommand::Redo()
   {
-    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
     GetMeasureTool()->Enable();
     lock->GetController().AddMeasureTool(GetMeasureTool());
   }
 
-  CreateMeasureCommand::CreateMeasureCommand(IViewport& viewport)
+  CreateMeasureCommand::CreateMeasureCommand(boost::shared_ptr<IViewport> viewport)
     : MeasureCommand(viewport)
   {
 
@@ -56,7 +56,7 @@ namespace OrthancStone
 
   void DeleteMeasureCommand::Redo()
   {
-    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
     // simply disable the measure tool upon undo
     GetMeasureTool()->Disable();
     lock->GetController().RemoveMeasureTool(GetMeasureTool());
@@ -64,7 +64,7 @@ namespace OrthancStone
 
   void DeleteMeasureCommand::Undo()
   {
-    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
     GetMeasureTool()->Enable();
     lock->GetController().AddMeasureTool(GetMeasureTool());
   }
@@ -75,18 +75,18 @@ namespace OrthancStone
     // we thus leave it as is
   }
 
-  DeleteMeasureCommand::DeleteMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, IViewport& viewport)
+  DeleteMeasureCommand::DeleteMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, boost::shared_ptr<IViewport> viewport)
     : MeasureCommand(viewport)
     , mementoOriginal_(measureTool->GetMemento())
     , measureTool_(measureTool)
     , mementoModified_(measureTool->GetMemento())
   {
-    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_.Lock());
+    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
     GetMeasureTool()->Disable();
     lock->GetController().RemoveMeasureTool(GetMeasureTool());
   }
 
-  EditMeasureCommand::EditMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, IViewport& viewport)
+  EditMeasureCommand::EditMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, boost::shared_ptr<IViewport> viewport)
     : MeasureCommand(viewport)
     , mementoOriginal_(measureTool->GetMemento())
     , mementoModified_(measureTool->GetMemento())

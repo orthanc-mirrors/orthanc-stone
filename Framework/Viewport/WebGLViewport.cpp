@@ -79,32 +79,26 @@ namespace OrthancStone
     }
   }
 
-  WebGLViewport::WebGLViewport(const std::string& canvasId,
-                               boost::weak_ptr<UndoStack> undoStackW) :
-    WebAssemblyViewport(canvasId, NULL, undoStackW),
-    context_(GetFullCanvasId())
-  {
-    AcquireCompositor(new OpenGLCompositor(context_));
-  }
-
   WebGLViewport::WebGLViewport(const std::string& canvasId) :
-    WebAssemblyViewport(canvasId, NULL, boost::weak_ptr<UndoStack>()),
+    WebAssemblyViewport(canvasId),
     context_(GetFullCanvasId())
   {
     AcquireCompositor(new OpenGLCompositor(context_));
   }
 
-  WebGLViewport::WebGLViewport(const std::string& canvasId,
-                               const Scene2D& scene) :
-    WebAssemblyViewport(canvasId, &scene, boost::weak_ptr<UndoStack>()),
-    context_(GetFullCanvasId())
+  boost::shared_ptr<WebGLViewport> WebGLViewport::Create(
+    const std::string& canvasId)
   {
-    AcquireCompositor(new OpenGLCompositor(context_));
+    boost::shared_ptr<WebGLViewport> that = 
+      boost::shared_ptr<WebGLViewport>(new WebGLViewport(canvasId));
+    that->WebAssemblyViewport::PostConstructor();
+    return that;
   }
 
   WebGLViewport::~WebGLViewport()
   {
-    // Make sure to delete the compositor before its parent "context_" gets deleted
+    // Make sure to delete the compositor before its parent "context_" gets
+    // deleted
     ClearCompositor();
   }
 }

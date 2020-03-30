@@ -4245,47 +4245,6 @@ TEST(GenericToolbox, TestGetRgbValuesFromString)
   EXPECT_EQ(0, blue);
 }
 
-static int Test_GenericToolbox_HoldingRef_ctor_trace = 100;
-static int Test_GenericToolbox_HoldingRef_dtor_trace = 1000;
-
-class Test_GenericToolbox_HoldingRef : public boost::enable_shared_from_this<Test_GenericToolbox_HoldingRef>
-{
-public:
-  Test_GenericToolbox_HoldingRef() : answer_(42) { Test_GenericToolbox_HoldingRef_ctor_trace++; }
-  unsigned int answer_;
-
-  ~Test_GenericToolbox_HoldingRef()
-  {
-    Test_GenericToolbox_HoldingRef_dtor_trace--;
-  }
-};
-
-TEST(GenericToolbox, HoldingRef)
-{
-  using namespace OrthancStone::GenericToolbox;
-
-  void* userData = NULL;
-
-  {
-    boost::shared_ptr<Test_GenericToolbox_HoldingRef> test(new Test_GenericToolbox_HoldingRef() );
-    Test_GenericToolbox_HoldingRef* This = test.get();
-    userData = HoldingRef<Test_GenericToolbox_HoldingRef>::Wrap(This);
-    EXPECT_EQ(42u,This->answer_);
-    This->answer_ = 0xdeadbeef;
-    EXPECT_EQ(0xdeadbeef,This->answer_);
-  }
-  
-  EXPECT_EQ(101,Test_GenericToolbox_HoldingRef_ctor_trace);
-  EXPECT_EQ(1000,Test_GenericToolbox_HoldingRef_dtor_trace);
-  
-  {
-    boost::shared_ptr<Test_GenericToolbox_HoldingRef> test2 = HoldingRef<Test_GenericToolbox_HoldingRef>::Unwrap(userData);
-    EXPECT_EQ(0xdeadbeef,test2->answer_);
-  }
-  
-  EXPECT_EQ(999,Test_GenericToolbox_HoldingRef_dtor_trace); // make sure wrapper was deleted once
-}
-
 
 
 

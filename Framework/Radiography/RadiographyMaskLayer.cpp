@@ -75,19 +75,26 @@ namespace OrthancStone
     BroadcastMessage(RadiographyLayer::LayerEditedMessage(*this));
   }
 
-  Extent2D RadiographyMaskLayer::GetMaskMinimalSceneExtent() const
+  Extent2D RadiographyMaskLayer::GetSceneExtent(bool minimal) const
   {
-    Extent2D sceneExtent;
-
-    for (auto corner: corners_)
+    if (!minimal)
     {
-      double x = static_cast<double>(corner.GetX());
-      double y = static_cast<double>(corner.GetY());
-
-      dicomLayer_.GetTransform().Apply(x, y);
-      sceneExtent.AddPoint(x, y);
+      return RadiographyLayer::GetSceneExtent(minimal);
     }
-    return sceneExtent;
+    else
+    { // get the extent of the in-mask area
+      Extent2D sceneExtent;
+
+      for (std::vector<Orthanc::ImageProcessing::ImagePoint>::const_iterator& corner = corners_.begin(); corner != corners_.end(); corner++)
+      {
+        double x = static_cast<double>(corner->GetX());
+        double y = static_cast<double>(corner->GetY());
+
+        dicomLayer_.GetTransform().Apply(x, y);
+        sceneExtent.AddPoint(x, y);
+      }
+      return sceneExtent;
+    }
   }
 
 

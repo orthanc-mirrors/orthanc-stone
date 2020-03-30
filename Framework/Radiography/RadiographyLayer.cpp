@@ -238,7 +238,7 @@ namespace OrthancStone
     }
   }
 
-  Extent2D RadiographyLayer::GetSceneExtent() const
+  Extent2D RadiographyLayer::GetSceneExtent(bool /*minimal*/) const
   {
     Extent2D extent;
 

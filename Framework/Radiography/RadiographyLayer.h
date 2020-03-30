@@ -344,7 +344,7 @@ namespace OrthancStone
       return height_;
     }
 
-    Extent2D GetSceneExtent() const;
+    virtual Extent2D GetSceneExtent(bool minimal) const;
 
     virtual bool GetPixel(unsigned int& imageX,
                           unsigned int& imageY,

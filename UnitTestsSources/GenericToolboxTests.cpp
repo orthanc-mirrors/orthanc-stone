@@ -4283,7 +4283,7 @@ TEST(GenericToolbox, HoldingRef)
     EXPECT_EQ(0xdeadbeef,test2->answer_);
   }
   
-  EXPECT_EQ(1001,Test_GenericToolbox_HoldingRef_dtor_trace); // make sure wrapper was deleted once
+  EXPECT_EQ(999,Test_GenericToolbox_HoldingRef_dtor_trace); // make sure wrapper was deleted once
 }
 
 

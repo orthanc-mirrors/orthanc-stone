@@ -31,8 +31,13 @@
 
 #include "IViewport.h"
 
+#include <Core/Compatibility.h>
+
 #include <emscripten.h>
 #include <emscripten/html5.h>
+
+#include <memory>
+#include <string>
 
 namespace OrthancStone
 {

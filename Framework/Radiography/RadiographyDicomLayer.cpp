@@ -108,9 +108,9 @@ namespace OrthancStone
     SetSize(image->GetWidth(), image->GetHeight());
 
 #if __cplusplus < 201103L
-    source_.reset(raii.release());
+      source_.reset(raii.release());
 #else
-    source_ = std::move(raii);
+      source_ = std::move(raii);
 #endif
 
     ApplyConverter();

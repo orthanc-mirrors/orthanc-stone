@@ -333,7 +333,7 @@ namespace OrthancStone
         // modify geometry to reference the top left corner
         double tlx = centerGeometry->GetPanX();
         double tly = centerGeometry->GetPanY();
-        Extent2D textExtent = alpha->GetExtent();
+        Extent2D textExtent = alpha->GetSceneExtent(false);
         tlx = tlx - (textExtent.GetWidth() / 2) * centerGeometry->GetPixelSpacingX();
         tly = tly - (textExtent.GetHeight() / 2) * centerGeometry->GetPixelSpacingY();
         centerGeometry->SetPan(tlx, tly);
@@ -542,7 +542,7 @@ namespace OrthancStone
   }
 
 
-  Extent2D RadiographyScene::GetSceneExtent() const
+  Extent2D RadiographyScene::GetSceneExtent(bool minimal) const
   {
     Extent2D extent;
 
@@ -550,7 +550,7 @@ namespace OrthancStone
          it != layers_.end(); ++it)
     {
       assert(it->second != NULL);
-      extent.Union(it->second->GetExtent());
+      extent.Union(it->second->GetSceneExtent(minimal));
     }
 
     return extent;
@@ -662,9 +662,10 @@ namespace OrthancStone
   void RadiographyScene::ExtractLayerFromRenderedScene(Orthanc::ImageAccessor& layer,
                                                        const Orthanc::ImageAccessor& renderedScene,
                                                        size_t layerIndex,
+                                                       bool isCropped,
                                                        ImageInterpolation interpolation)
   {
-    Extent2D sceneExtent = GetSceneExtent();
+    Extent2D sceneExtent = GetSceneExtent(isCropped);
 
     double pixelSpacingX = sceneExtent.GetWidth() / renderedScene.GetWidth();
     double pixelSpacingY = sceneExtent.GetHeight() / renderedScene.GetHeight();
@@ -686,6 +687,7 @@ namespace OrthancStone
                                                   ImageInterpolation interpolation,
                                                   bool invert,
                                                   int64_t maxValue /* for inversion */,
+                                                  bool autoCrop,
                                                   bool applyWindowing)
   {
     if (pixelSpacingX <= 0 ||
@@ -694,7 +696,7 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    Extent2D extent = GetSceneExtent();
+    Extent2D extent = GetSceneExtent(autoCrop);
 
     int w = boost::math::iround(extent.GetWidth() / pixelSpacingX);
     int h = boost::math::iround(extent.GetHeight() / pixelSpacingY);
@@ -741,11 +743,12 @@ namespace OrthancStone
                                                                        double pixelSpacingX,
                                                                        double pixelSpacingY,
                                                                        bool invert,
+                                                                       bool autoCrop,
                                                                        ImageInterpolation interpolation)
   {
     LOG(INFO) << "Exporting RadiographyScene to DICOM";
 
-    std::unique_ptr<Orthanc::Image> rendered(ExportToImage(pixelSpacingX, pixelSpacingY, interpolation, false)); // note: we don't invert the image in the pixels data because we'll set the PhotometricDisplayMode correctly in the DICOM tags
+    std::unique_ptr<Orthanc::Image> rendered(ExportToImage(pixelSpacingX, pixelSpacingY, interpolation, autoCrop, false)); // note: we don't invert the image in the pixels data because we'll set the PhotometricDisplayMode correctly in the DICOM tags
 
     createDicomRequestContent["Tags"] = dicomTags;
 
@@ -794,13 +797,14 @@ namespace OrthancStone
                                                     double pixelSpacingX,
                                                     double pixelSpacingY,
                                                     bool invert,
+                                                    bool autoCrop,
                                                     ImageInterpolation interpolation,
                                                     bool usePam)
   {
     LOG(INFO) << "Exporting RadiographyScene to DICOM";
     VLOG(1) << "Exporting RadiographyScene to: export to image";
 
-    std::unique_ptr<Orthanc::Image> rendered(ExportToCreateDicomRequestAndImage(createDicomRequestContent, dicomTags, parentOrthancId, pixelSpacingX, pixelSpacingY, invert, interpolation));
+    std::unique_ptr<Orthanc::Image> rendered(ExportToCreateDicomRequestAndImage(createDicomRequestContent, dicomTags, parentOrthancId, pixelSpacingX, pixelSpacingY, invert, autoCrop, interpolation));
 
     // convert the image into base64 for inclusing in the createDicomRequest
     std::string base64;
@@ -839,12 +843,13 @@ namespace OrthancStone
                                      double pixelSpacingX,
                                      double pixelSpacingY,
                                      bool invert,
+                                     bool autoCrop,
                                      ImageInterpolation interpolation,
                                      bool usePam)
   {
     Json::Value createDicomRequestContent;
 
-    ExportToCreateDicomRequest(createDicomRequestContent, dicomTags, parentOrthancId, pixelSpacingX, pixelSpacingY, invert, interpolation, usePam);
+    ExportToCreateDicomRequest(createDicomRequestContent, dicomTags, parentOrthancId, pixelSpacingX, pixelSpacingY, invert, autoCrop, interpolation, usePam);
 
     orthanc.PostJsonAsyncExpectJson(
           "/tools/create-dicom", createDicomRequestContent,
@@ -863,6 +868,7 @@ namespace OrthancStone
                                      double pixelSpacingX,
                                      double pixelSpacingY,
                                      bool invert,
+                                     bool autoCrop,
                                      ImageInterpolation interpolation,
                                      bool usePam)
   {
@@ -882,7 +888,7 @@ namespace OrthancStone
       }
     }
 
-    ExportDicom(orthanc, jsonTags, parentOrthancId, pixelSpacingX, pixelSpacingY, invert, interpolation, usePam);
+    ExportDicom(orthanc, jsonTags, parentOrthancId, pixelSpacingX, pixelSpacingY, invert, autoCrop, interpolation, usePam);
   }
 
   void RadiographyScene::OnDicomExported(const Deprecated::OrthancApiClient::JsonResponseReadyMessage& message)

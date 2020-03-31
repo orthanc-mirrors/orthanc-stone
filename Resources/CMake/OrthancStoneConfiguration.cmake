@@ -257,18 +257,26 @@ endif()
 if (NOT ORTHANC_SANDBOXED)
   set(PLATFORM_SOURCES
     ${ORTHANC_STONE_ROOT}/Framework/Loaders/GenericLoadersContext.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Loaders/GenericLoadersContext.h
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/DelayedCallCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/DelayedCallCommand.h
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/Oracle.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/Oracle.h
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleDelayedCallExecutor.h
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceCommandBase.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceCommandBase.h
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceDeleteCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceDeleteCommand.h
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceGetCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceGetCommand.h
     ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServicePostCommand.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServicePostCommand.h
     )
 
   if (ENABLE_SDL)
     list(APPEND ORTHANC_STONE_SOURCES
       ${ORTHANC_STONE_ROOT}/Framework/Viewport/SdlWindow.cpp
+      ${ORTHANC_STONE_ROOT}/Framework/Viewport/SdlWindow.h
       )
   endif()
 
@@ -276,7 +284,9 @@ if (NOT ORTHANC_SANDBOXED)
     if (ENABLE_OPENGL)
       list(APPEND ORTHANC_STONE_SOURCES
         ${ORTHANC_STONE_ROOT}/Framework/OpenGL/SdlOpenGLContext.cpp
+        ${ORTHANC_STONE_ROOT}/Framework/OpenGL/SdlOpenGLContext.h
         ${ORTHANC_STONE_ROOT}/Framework/Viewport/SdlViewport.cpp
+        ${ORTHANC_STONE_ROOT}/Framework/Viewport/SdlViewport.h
         )
     endif()
   endif()

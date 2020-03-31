@@ -74,19 +74,20 @@ namespace OrthancStone
   }
 
   
-  SdlOpenGLViewport::SdlOpenGLViewport(const char* title,
+  SdlOpenGLViewport::SdlOpenGLViewport(const std::string& title,
                                        unsigned int width,
                                        unsigned int height,
                                        bool allowDpiScaling) :
-    context_(title, width, height, allowDpiScaling)
+    context_(title.c_str(), width, height, allowDpiScaling)
   {
     AcquireCompositor(new OpenGLCompositor(context_));  // (*)
   }
 
-  boost::shared_ptr<SdlOpenGLViewport> SdlOpenGLViewport::Create(const char* title,
-                                                                 unsigned int width,
-                                                                 unsigned int height,
-                                                                 bool allowDpiScaling)
+  boost::shared_ptr<SdlOpenGLViewport> SdlOpenGLViewport::Create(
+    const std::string& title,
+    unsigned int width,
+    unsigned int height,
+    bool allowDpiScaling)
   {
     boost::shared_ptr<SdlOpenGLViewport> that =
       boost::shared_ptr<SdlOpenGLViewport>(new SdlOpenGLViewport(title, width, height, allowDpiScaling));

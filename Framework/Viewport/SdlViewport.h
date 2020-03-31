@@ -135,12 +135,12 @@ namespace OrthancStone
     SdlOpenGLContext  context_;
 
   private:
-    SdlOpenGLViewport(const char* title,
-                      unsigned int width,
-                      unsigned int height,
-                      bool allowDpiScaling = true);
+    SdlOpenGLViewport(const std::string& title,
+                      unsigned int       width,
+                      unsigned int       height,
+                      bool               allowDpiScaling = true);
   public:
-    static boost::shared_ptr<SdlOpenGLViewport> Create(const char* title,
+    static boost::shared_ptr<SdlOpenGLViewport> Create(const std::string&,
                                                        unsigned int width,
                                                        unsigned int height,
                                                        bool allowDpiScaling = true);

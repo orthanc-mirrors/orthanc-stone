@@ -263,7 +263,6 @@ namespace OrthancStone
       EmscriptenSetCallbackFunc emFunc,
       void* userData, GenericFunc func)
   {
-    // LOG(ERROR) << "SetAnimationFrameCallback !!!!!! (RequestAnimationFrame)";
     std::unique_ptr<FuncAdapterPayload<GenericFunc> > payload(
       new FuncAdapterPayload<GenericFunc>()
     );
@@ -375,9 +374,6 @@ namespace OrthancStone
   void GuiAdapter::RequestAnimationFrame(
     OnAnimationFrameFunc func, void* userData)
   {
-    // LOG(ERROR) << "-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+";
-    // LOG(ERROR) << "RequestAnimationFrame";
-    // LOG(ERROR) << "-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+";
     SetAnimationFrameCallback<OnAnimationFrameFunc>(
       &emscripten_request_animation_frame_loop,
       userData,

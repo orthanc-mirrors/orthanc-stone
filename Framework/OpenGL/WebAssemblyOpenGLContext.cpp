@@ -200,49 +200,6 @@ namespace OrthancStone
     {
     }
 
-    //bool WebAssemblyOpenGLContext::TryRecreate()
-    //{
-    //  // LOG(ERROR) << "WebAssemblyOpenGLContext::TryRecreate() trying to recreate context";
-    //  try
-    //  {
-    //    std::string canvasId = GetCanvasIdentifier();
-    //    pimpl_.reset(new PImpl(canvasId));
-
-    //    // no exception does not mean the context is fully 
-    //    // functional! Most probably, if we have >= than 16 
-    //    // contexts, context wil remain lost for some time
-    //    bool lost = IsContextLost();
-    //    if (lost) {
-    //      // LOG(ERROR) << "WebAssemblyOpenGLContext::TryRecreate() context is still lost!";
-    //      return false;
-    //    } else {
-    //      return true;
-    //    }
-    //  }
-    //  catch (const Orthanc::OrthancException& e)
-    //  {
-    //    if (e.HasDetails())
-    //    {
-    //      LOG(ERROR) << "OrthancException in WebAssemblyOpenGLContext::TryRecreate: " << e.What() << " Details: " << e.GetDetails();
-    //    }
-    //    else
-    //    {
-    //      LOG(ERROR) << "OrthancException in WebAssemblyOpenGLContext::TryRecreate: " << e.What();
-    //    }
-    //    return false;
-    //  }
-    //  catch (const std::exception& e)
-    //  {
-    //    LOG(ERROR) << "std::exception in WebAssemblyOpenGLContext::TryRecreate: " << e.what();
-    //    return false;
-    //  }
-    //  catch (...)
-    //  {
-    //    LOG(ERROR) << "Unknown exception WebAssemblyOpenGLContext::in TryRecreate";
-    //    return false;
-    //  }
-    //}
-
     bool WebAssemblyOpenGLContext::IsContextLost()
     {
       return pimpl_->IsContextLost();

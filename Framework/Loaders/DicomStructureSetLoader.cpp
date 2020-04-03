@@ -21,9 +21,9 @@
 
 #include "DicomStructureSetLoader.h"
 
-#include "../../Scene2D/PolylineSceneLayer.h"
-#include "../../StoneException.h"
-#include "../../Toolbox/GeometryToolbox.h"
+#include "../Scene2D/PolylineSceneLayer.h"
+#include "../StoneException.h"
+#include "../Toolbox/GeometryToolbox.h"
 
 #include <Core/Toolbox.h>
 
@@ -357,7 +357,7 @@ namespace OrthancStone
   }
    
     
-  boost::shared_ptr<Deprecated::DicomStructureSetLoader> DicomStructureSetLoader::Create(OrthancStone::ILoadersContext& loadersContext)
+  boost::shared_ptr<OrthancStone::DicomStructureSetLoader> DicomStructureSetLoader::Create(OrthancStone::ILoadersContext& loadersContext)
   {
     boost::shared_ptr<DicomStructureSetLoader> obj(
       new DicomStructureSetLoader(

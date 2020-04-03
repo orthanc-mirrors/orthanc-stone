@@ -22,7 +22,7 @@
 #pragma once
 
 #include "LoaderStateMachine.h"
-#include "../../Volumes/DicomVolumeImage.h"
+#include "../Volumes/DicomVolumeImage.h"
 #include "../Volumes/IGeometryProvider.h"
 
 #include <boost/shared_ptr.hpp>

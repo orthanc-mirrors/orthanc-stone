@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include "../../Volumes/VolumeImageGeometry.h"
+#include "../Volumes/VolumeImageGeometry.h"
 
-namespace Deprecated
+namespace OrthancStone
 {
   class IGeometryProvider
   {

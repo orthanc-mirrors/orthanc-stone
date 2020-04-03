@@ -21,12 +21,12 @@
 
 #include "OrthancSeriesVolumeProgressiveLoader.h"
 
-#include "../../StoneException.h"
-#include "../../Loaders/ILoadersContext.h"
-#include "../../Loaders/BasicFetchingItemsSorter.h"
-#include "../../Loaders/BasicFetchingStrategy.h"
-#include "../../Toolbox/GeometryToolbox.h"
-#include "../../Volumes/DicomVolumeImageMPRSlicer.h"
+#include "../StoneException.h"
+#include "../Loaders/ILoadersContext.h"
+#include "../Loaders/BasicFetchingItemsSorter.h"
+#include "../Loaders/BasicFetchingStrategy.h"
+#include "../Toolbox/GeometryToolbox.h"
+#include "../Volumes/DicomVolumeImageMPRSlicer.h"
 
 #include <Core/Images/ImageProcessing.h>
 #include <Core/OrthancException.h>

@@ -21,7 +21,7 @@
 
 #include "LoaderStateMachine.h"
 
-#include "../../Loaders/ILoadersContext.h"
+#include "../Loaders/ILoadersContext.h"
 
 #include <Core/OrthancException.h>
 

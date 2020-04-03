@@ -20,12 +20,12 @@
 
 #include "LoaderCache.h"
 
-#include "../../StoneException.h"
+#include "../StoneException.h"
 #include "OrthancSeriesVolumeProgressiveLoader.h"
 #include "OrthancMultiframeVolumeLoader.h"
 #include "DicomStructureSetLoader.h"
 
-#include "../../Loaders/ILoadersContext.h"
+#include "../Loaders/ILoadersContext.h"
 
 
 #ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
@@ -36,9 +36,9 @@
 
 #if ORTHANC_ENABLE_WASM == 1
 # include <unistd.h>
-# include "../../Oracle/WebAssemblyOracle.h"
+# include "../Oracle/WebAssemblyOracle.h"
 #else
-# include "../../Oracle/ThreadedOracle.h"
+# include "../Oracle/ThreadedOracle.h"
 #endif
 
 #ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
@@ -46,8 +46,8 @@
 #endif 
 //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
-#include "../../Volumes/DicomVolumeImage.h"
-#include "../../Volumes/DicomVolumeImageMPRSlicer.h"
+#include "../Volumes/DicomVolumeImage.h"
+#include "../Volumes/DicomVolumeImageMPRSlicer.h"
 
 #ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 #include "../../Volumes/DicomStructureSetSlicer2.h"

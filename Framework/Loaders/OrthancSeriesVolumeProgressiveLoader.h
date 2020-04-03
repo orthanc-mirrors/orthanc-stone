@@ -21,17 +21,17 @@
 
 #pragma once
 
-#include "../../Loaders/IFetchingItemsSorter.h"
-#include "../../Loaders/IFetchingStrategy.h"
-#include "../../Messages/IObservable.h"
-#include "../../Messages/ObserverBase.h"
-#include "../../Oracle/GetOrthancImageCommand.h"
-#include "../../Oracle/GetOrthancWebViewerJpegCommand.h"
-#include "../../Oracle/IOracle.h"
-#include "../../Oracle/OrthancRestApiCommand.h"
-#include "../../Toolbox/SlicesSorter.h"
-#include "../../Volumes/DicomVolumeImage.h"
-#include "../../Volumes/IVolumeSlicer.h"
+#include "../Loaders/IFetchingItemsSorter.h"
+#include "../Loaders/IFetchingStrategy.h"
+#include "../Messages/IObservable.h"
+#include "../Messages/ObserverBase.h"
+#include "../Oracle/GetOrthancImageCommand.h"
+#include "../Oracle/GetOrthancWebViewerJpegCommand.h"
+#include "../Oracle/IOracle.h"
+#include "../Oracle/OrthancRestApiCommand.h"
+#include "../Toolbox/SlicesSorter.h"
+#include "../Volumes/DicomVolumeImage.h"
+#include "../Volumes/IVolumeSlicer.h"
 
 #include "../Volumes/IGeometryProvider.h"
 
@@ -40,6 +40,7 @@
 
 namespace OrthancStone
 {
+  class ILoadersContext;
   /**
     This class is used to manage the progressive loading of a volume that
     is stored in a Dicom series.
@@ -109,13 +110,14 @@ namespace OrthancStone
     void LoadJpegSliceContent(const OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage& message);
 
     OrthancStone::ILoadersContext&  loadersContext_;
-    bool                                          active_;
-    bool                                          progressiveQuality_;
-    unsigned int                                  simultaneousDownloads_;
-    SeriesGeometry                                seriesGeometry_;
-    boost::shared_ptr<OrthancStone::DicomVolumeImage> volume_;
+    bool                            active_;
+    bool                            progressiveQuality_;
+    unsigned int                    simultaneousDownloads_;
+    SeriesGeometry                  seriesGeometry_;
+    boost::shared_ptr<OrthancStone::DicomVolumeImage>             volume_;
     std::unique_ptr<OrthancStone::IFetchingItemsSorter::IFactory> sorter_;
-    std::unique_ptr<OrthancStone::IFetchingStrategy> strategy_;
+    std::unique_ptr<OrthancStone::IFetchingStrategy>              strategy_;
+    
     std::vector<unsigned int>     slicesQuality_;
     bool                          volumeImageReadyInHighQuality_;
     

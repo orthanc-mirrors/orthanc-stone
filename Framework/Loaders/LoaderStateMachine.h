@@ -21,13 +21,13 @@
 
 #pragma once
 
-#include "../../Messages/IObservable.h"
-#include "../../Messages/ObserverBase.h"
-#include "../../Oracle/GetOrthancImageCommand.h"
-#include "../../Oracle/GetOrthancWebViewerJpegCommand.h"
-#include "../../Oracle/IOracle.h"
-#include "../../Oracle/OracleCommandExceptionMessage.h"
-#include "../../Oracle/OrthancRestApiCommand.h"
+#include "../Messages/IObservable.h"
+#include "../Messages/ObserverBase.h"
+#include "../Oracle/GetOrthancImageCommand.h"
+#include "../Oracle/GetOrthancWebViewerJpegCommand.h"
+#include "../Oracle/IOracle.h"
+#include "../Oracle/OracleCommandExceptionMessage.h"
+#include "../Oracle/OrthancRestApiCommand.h"
 
 #include <Core/IDynamicObject.h>
 
@@ -35,6 +35,8 @@
 
 namespace OrthancStone
 {
+  class ILoadersContext;
+
   /**
      This class is supplied with Oracle commands and will schedule up to 
      simultaneousDownloads_ of them at the same time, then will schedule the 

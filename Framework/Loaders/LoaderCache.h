@@ -20,8 +20,7 @@
 
 #pragma once
 
-#include "../Messages/LockingEmitter.h"
-#include "../../Volumes/DicomVolumeImageMPRSlicer.h"
+#include "../Volumes/DicomVolumeImageMPRSlicer.h"
 #include "OrthancSeriesVolumeProgressiveLoader.h"
 #include "OrthancMultiframeVolumeLoader.h"
 #include "DicomStructureSetLoader.h"

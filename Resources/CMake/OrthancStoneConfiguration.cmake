@@ -326,13 +326,6 @@ if (ENABLE_STONE_DEPRECATED)
       )
   endif()
 
-  if (ENABLE_SDL OR ENABLE_WASM)
-    list(APPEND APPLICATIONS_SOURCES
-      ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.cpp
-      ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.h
-      )
-  endif()
-
   if (ENABLE_SDL OR ENABLE_QT)
     list(APPEND APPLICATIONS_SOURCES
       ${ORTHANC_STONE_ROOT}/Applications/Generic/NativeStoneApplicationRunner.cpp
@@ -426,7 +419,6 @@ if (ENABLE_STONE_DEPRECATED)
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/IViewport.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/WidgetViewport.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Viewport/WidgetViewport.h
-    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Volumes/IGeometryProvider.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Volumes/ISlicedVolume.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Volumes/IVolumeLoader.h
     ${ORTHANC_STONE_ROOT}/Framework/Deprecated/Volumes/StructureSetLoader.cpp
@@ -501,6 +493,13 @@ if (ENABLE_WASM)
     ${ORTHANC_STONE_ROOT}/Framework/Viewport/WebAssemblyViewport.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Viewport/WebAssemblyViewport.h
     )
+endif()
+
+if (ENABLE_SDL OR ENABLE_WASM)
+list(APPEND APPLICATIONS_SOURCES
+  ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.cpp
+  ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.h
+  )
 endif()
 
 
@@ -718,6 +717,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   
   ${ORTHANC_STONE_ROOT}/Framework/Viewport/IViewport.h
   
+  ${ORTHANC_STONE_ROOT}/Framework/Volumes/IGeometryProvider.h
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/IVolumeSlicer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/IVolumeSlicer.h
   ${ORTHANC_STONE_ROOT}/Framework/Volumes/OrientedVolumeBoundingBox.cpp

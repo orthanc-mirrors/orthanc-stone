@@ -281,7 +281,7 @@ namespace OrthancStone
 
     void GetLayersIndexes(std::vector<size_t>& output) const;
 
-    Extent2D GetSceneExtent() const;
+    virtual Extent2D GetSceneExtent(bool minimal) const;
 
     virtual void Render(Orthanc::ImageAccessor& buffer,
                         const AffineTransform2D& viewTransform,
@@ -307,6 +307,7 @@ namespace OrthancStone
                      double pixelSpacingX,
                      double pixelSpacingY,
                      bool invert,
+                     bool autoCrop,
                      ImageInterpolation interpolation,
                      bool usePam);
 
@@ -316,6 +317,7 @@ namespace OrthancStone
                      double pixelSpacingX,
                      double pixelSpacingY,
                      bool invert,
+                     bool autoCrop,
                      ImageInterpolation interpolation,
                      bool usePam);
 
@@ -325,6 +327,7 @@ namespace OrthancStone
                                     double pixelSpacingX,
                                     double pixelSpacingY,
                                     bool invert,
+                                    bool autoCrop,
                                     ImageInterpolation interpolation,
                                     bool usePam);
 
@@ -334,14 +337,16 @@ namespace OrthancStone
                                                        double pixelSpacingX,
                                                        double pixelSpacingY,
                                                        bool invert,
+                                                       bool autoCrop,
                                                        ImageInterpolation interpolation);
 
     Orthanc::Image* ExportToImage(double pixelSpacingX,
                                   double pixelSpacingY,
                                   ImageInterpolation interpolation,
+                                  bool autoCrop,
                                   bool applyWindowing)
     {
-      return ExportToImage(pixelSpacingX, pixelSpacingY, interpolation, false, 0, applyWindowing);
+      return ExportToImage(pixelSpacingX, pixelSpacingY, interpolation, false, 0, autoCrop, applyWindowing);
     }
 
     Orthanc::Image* ExportToImage(double pixelSpacingX,
@@ -349,11 +354,13 @@ namespace OrthancStone
                                   ImageInterpolation interpolation,
                                   bool invert,
                                   int64_t maxValue /* for inversion */,
+                                  bool autoCrop,
                                   bool applyWindowing);
 
     void ExtractLayerFromRenderedScene(Orthanc::ImageAccessor& layer,
                                        const Orthanc::ImageAccessor& renderedScene,
                                        size_t layerIndex,
+                                       bool isCropped,
                                        ImageInterpolation interpolation);
   };
 }

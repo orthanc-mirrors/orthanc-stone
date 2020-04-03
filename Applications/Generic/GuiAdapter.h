@@ -59,9 +59,6 @@ namespace OrthancStone
 
 #if 0
 
-  // events are now handled directly by the VolumeSlicerWidget... The 
-  // GuiAdapter doesn't know about widgets anymore
-
   /**
   This interface is used to store the widgets that are controlled by the 
   GuiAdapter and receive event callbacks.

@@ -839,7 +839,7 @@ namespace OrthancStone
 
 #if 0
   // TODO: remove this when generic sdl event handlers are implemented in 
-  // the VolumeSlicerWidget
+  // the DoseView
   // SDL ONLY
   bool GuiAdapter::IsSdlViewPortRefreshEvent(const SDL_Event& event) const
   {
@@ -849,7 +849,7 @@ namespace OrthancStone
 
     const char* windowTitleSz = SDL_GetWindowTitle(sdlWindow);
 
-    // now we need to find the VolumeSlicerWidget from from the canvas name!
+    // now we need to find the DoseView from from the canvas name!
     // (and retrieve the SdlViewport)
     boost::shared_ptr<IGuiAdapterWidget> foundWidget;
     VisitWidgets([&foundWidget, windowTitleSz](auto widget)

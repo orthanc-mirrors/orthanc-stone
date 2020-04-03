@@ -24,7 +24,7 @@
 #include <Core/Endianness.h>
 #include <Core/Toolbox.h>
 
-namespace Deprecated
+namespace OrthancStone
 {
   class OrthancMultiframeVolumeLoader::LoadRTDoseGeometry : public LoaderStateMachine::State
   {

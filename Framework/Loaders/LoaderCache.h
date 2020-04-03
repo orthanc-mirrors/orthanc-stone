@@ -37,7 +37,7 @@ namespace OrthancStone
   class ILoadersContext;
 }
 
-namespace Deprecated
+namespace OrthancStone
 {
   class LoaderCache
   {

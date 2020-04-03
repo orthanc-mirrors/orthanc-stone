@@ -25,7 +25,7 @@
 
 #include <Core/OrthancException.h>
 
-namespace Deprecated
+namespace OrthancStone
 {
   void LoaderStateMachine::State::Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
   {

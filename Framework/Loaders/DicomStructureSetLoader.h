@@ -27,7 +27,7 @@
 
 #include <vector>
 
-namespace Deprecated
+namespace OrthancStone
 {
   class DicomStructureSetLoader :
     public LoaderStateMachine,

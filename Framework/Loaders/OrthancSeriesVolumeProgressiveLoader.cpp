@@ -31,7 +31,7 @@
 #include <Core/Images/ImageProcessing.h>
 #include <Core/OrthancException.h>
 
-namespace Deprecated
+namespace OrthancStone
 {
   using OrthancStone::ILoadersContext;
 

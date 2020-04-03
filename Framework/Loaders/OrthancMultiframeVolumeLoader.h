@@ -27,7 +27,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace Deprecated
+namespace OrthancStone
 {
   class OrthancMultiframeVolumeLoader :
     public LoaderStateMachine,

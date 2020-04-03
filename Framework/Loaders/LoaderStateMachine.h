@@ -35,11 +35,6 @@
 
 namespace OrthancStone
 {
-  class ILoadersContext;
-}
-
-namespace Deprecated
-{
   /**
      This class is supplied with Oracle commands and will schedule up to 
      simultaneousDownloads_ of them at the same time, then will schedule the 

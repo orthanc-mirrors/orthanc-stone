@@ -34,7 +34,7 @@ bool logbgo233 = false;
 bool logbgo115 = false;
 #endif
 
-namespace Deprecated
+namespace OrthancStone
 {
 
 #if 0

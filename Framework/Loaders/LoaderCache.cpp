@@ -57,7 +57,7 @@
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
 
-namespace Deprecated
+namespace OrthancStone
 {
   LoaderCache::LoaderCache(OrthancStone::ILoadersContext& loadersContext)
     : loadersContext_(loadersContext)

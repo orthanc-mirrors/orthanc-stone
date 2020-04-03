@@ -40,11 +40,6 @@
 
 namespace OrthancStone
 {
-  class ILoadersContext;
-}
-
-namespace Deprecated
-{
   /**
     This class is used to manage the progressive loading of a volume that
     is stored in a Dicom series.

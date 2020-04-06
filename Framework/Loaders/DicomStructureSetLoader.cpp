@@ -76,6 +76,7 @@ namespace OrthancStone
       loader.countProcessedInstances_ ++;
       assert(loader.countProcessedInstances_ <= loader.countReferencedInstances_);
 
+      loader.revision_++;
       loader.SetStructuresUpdated();
 
       if (loader.countProcessedInstances_ == loader.countReferencedInstances_)

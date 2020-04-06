@@ -102,7 +102,7 @@ namespace OrthancStone
   }
 
 
-  void VolumeSceneLayerSource::Update(const CoordinateSystem3D& plane, bool forceLayerRecreation)
+  void VolumeSceneLayerSource::Update(const CoordinateSystem3D& plane)
   {
     assert(slicer_.get() != NULL);
     std::unique_ptr<IVolumeSlicer::IExtractedSlice> slice(slicer_->ExtractSlice(plane));
@@ -117,8 +117,7 @@ namespace OrthancStone
       // The slicer cannot handle this cutting plane: Clear the layer
       ClearLayer();
     }
-    else if (!forceLayerRecreation && 
-             lastPlane_.get() != NULL &&
+    else if (lastPlane_.get() != NULL &&
              IsSameCuttingPlane(*lastPlane_, plane) &&
              lastRevision_ == slice->GetRevision())
     {

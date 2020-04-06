@@ -80,6 +80,6 @@ namespace OrthancStone
     you can lock the whole viewport data (including scene) by means of the 
     IViewport::Lock method.
     */ 
-    void Update(const CoordinateSystem3D& plane);  
+    void Update(const CoordinateSystem3D& plane, bool forceLayerRecreation = false); 
   };
 }

@@ -160,23 +160,16 @@ namespace OrthancStone
     
   EM_BOOL WebAssemblyViewport::OnMouseMove(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
   {
-    LOG(TRACE) << "WebAssemblyViewport::OnMouseMove CP1. userData = " << userData;
-    
     WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
-    LOG(TRACE) << "WebAssemblyViewport::OnMouseMove CP2";
 
     if (that->compositor_.get() != NULL &&
         that->controller_->HasActiveTracker())
     {
-      LOG(TRACE) << "WebAssemblyViewport::OnMouseMove CP3";
       PointerEvent pointer;
       ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
-      LOG(TRACE) << "WebAssemblyViewport::OnMouseMove CP4";
       if (that->controller_->HandleMouseMove(pointer))
       {
-        LOG(TRACE) << "WebAssemblyViewport::OnMouseMove CP5";
         that->Invalidate();
-        LOG(TRACE) << "WebAssemblyViewport::OnMouseMove CP6";
       }
     }
 
@@ -219,11 +212,11 @@ namespace OrthancStone
   }
 
   WebAssemblyViewport::WebAssemblyViewport(
-    const std::string& canvasId, bool enableEmscriptenEvents) :
+    const std::string& canvasId, bool enableEmscriptenMouseEvents) :
     shortCanvasId_(canvasId),
     fullCanvasId_(canvasId),
     interactor_(new DefaultViewportInteractor),
-    enableEmscriptenEvents_(enableEmscriptenEvents)
+    enableEmscriptenMouseEvents_(enableEmscriptenMouseEvents)
   {
   }
 
@@ -253,14 +246,15 @@ namespace OrthancStone
       shortCanvasId_.c_str()   // $0
       );
 
-    if (enableEmscriptenEvents_)
+    // It is not possible to monitor the resizing of individual
+    // canvas, so we track the full window of the browser
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,
+                                   reinterpret_cast<void*>(this),
+                                   false,
+                                   OnResize);
+
+    if (enableEmscriptenMouseEvents_)
     {
-      // It is not possible to monitor the resizing of individual
-      // canvas, so we track the full window of the browser
-      emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,
-                                     reinterpret_cast<void*>(this),
-                                     false,
-                                     OnResize);
 
       emscripten_set_mousedown_callback(fullCanvasId_.c_str(),
                                         reinterpret_cast<void*>(this),
@@ -281,12 +275,13 @@ namespace OrthancStone
 
   WebAssemblyViewport::~WebAssemblyViewport()
   {
-    if (enableEmscriptenEvents_)
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,
+                                   reinterpret_cast<void*>(this),
+                                   false,
+                                   NULL);
+
+    if (enableEmscriptenMouseEvents_)
     {
-      emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,
-                                     reinterpret_cast<void*>(this),
-                                     false,
-                                     NULL);
 
       emscripten_set_mousedown_callback(fullCanvasId_.c_str(),
                                         reinterpret_cast<void*>(this),

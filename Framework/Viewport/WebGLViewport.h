@@ -30,8 +30,8 @@ namespace OrthancStone
   {
   private:
     OpenGL::WebAssemblyOpenGLContext  context_;
-
-    WebGLViewport(const std::string& canvasId);
+    
+    WebGLViewport(const std::string& canvasId, bool enableEmscriptenMouseEvents);
 
   protected:
     virtual void Paint(ICompositor& compositor,
@@ -40,7 +40,7 @@ namespace OrthancStone
     virtual void UpdateSize(ICompositor& compositor) ORTHANC_OVERRIDE;
 
   public:
-    static boost::shared_ptr<WebGLViewport> Create(const std::string& canvasId);
+    static boost::shared_ptr<WebGLViewport> Create(const std::string& canvasId, bool enableEmscriptenMouseEvents = true);
 
     virtual ~WebGLViewport();
 

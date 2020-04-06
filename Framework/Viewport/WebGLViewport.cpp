@@ -79,18 +79,19 @@ namespace OrthancStone
     }
   }
 
-  WebGLViewport::WebGLViewport(const std::string& canvasId) :
-    WebAssemblyViewport(canvasId),
+  WebGLViewport::WebGLViewport(const std::string& canvasId, bool enableEmscriptenMouseEvents) :
+    WebAssemblyViewport(canvasId,enableEmscriptenMouseEvents),
     context_(GetFullCanvasId())
   {
     AcquireCompositor(new OpenGLCompositor(context_));
   }
 
   boost::shared_ptr<WebGLViewport> WebGLViewport::Create(
-    const std::string& canvasId)
+    const std::string& canvasId, bool enableEmscriptenMouseEvents)
   {
-    boost::shared_ptr<WebGLViewport> that = 
-      boost::shared_ptr<WebGLViewport>(new WebGLViewport(canvasId));
+    boost::shared_ptr<WebGLViewport> that = boost::shared_ptr<WebGLViewport>(
+        new WebGLViewport(canvasId, enableEmscriptenMouseEvents));
+    
     that->WebAssemblyViewport::PostConstructor();
     return that;
   }

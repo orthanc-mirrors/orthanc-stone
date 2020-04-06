@@ -53,7 +53,7 @@ namespace OrthancStone
     std::unique_ptr<ICompositor>          compositor_;
     std::unique_ptr<ViewportController>   controller_;
     std::unique_ptr<IViewportInteractor>  interactor_;
-    bool                                  enableEmscriptenEvents_;
+    bool                                  enableEmscriptenMouseEvents_;
 
     static EM_BOOL OnRequestAnimationFrame(double time, void *userData);
     
@@ -90,7 +90,7 @@ namespace OrthancStone
     to interactors is finished.
     */
     WebAssemblyViewport(const std::string& canvasId, 
-                        bool enableEmscriptenEvents = true);
+                        bool enableEmscriptenMouseEvents = true);
 
     void PostConstructor();
 

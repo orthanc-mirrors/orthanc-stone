@@ -57,15 +57,6 @@ namespace OrthancStone
         std::string instanceUuid,
         const std::vector<std::string>& initiallyVisibleStructures);
 
-#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-    boost::shared_ptr<DicomStructureSetLoader2>
-      GetDicomStructureSetLoader2(std::string instanceUuid);
-
-    boost::shared_ptr<DicomStructureSetSlicer2>
-      GetDicomStructureSetSlicer2(std::string instanceUuid);
-#endif 
-    //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-
     void ClearCache();
 
   private:
@@ -82,15 +73,6 @@ namespace OrthancStone
       dicomVolumeImageMPRSlicers_;
     std::map<std::string, boost::shared_ptr<DicomStructureSetLoader> >
       dicomStructureSetLoaders_;
-#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-    std::map<std::string, boost::shared_ptr<DicomStructureSetLoader2> >
-      dicomStructureSetLoaders2_;
-    std::map<std::string, boost::shared_ptr<DicomStructureSet2> >
-      dicomStructureSets2_;
-    std::map<std::string, boost::shared_ptr<DicomStructureSetSlicer2> >
-      dicomStructureSetSlicers2_;
-#endif 
-    //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
   };
 }
 

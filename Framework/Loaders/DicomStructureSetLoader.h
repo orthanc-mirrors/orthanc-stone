@@ -75,6 +75,7 @@ namespace OrthancStone
 
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, StructuresReady, DicomStructureSetLoader);
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, StructuresUpdated, DicomStructureSetLoader);
 
     static boost::shared_ptr<DicomStructureSetLoader> Create(
       OrthancStone::ILoadersContext& loadersContext);
@@ -99,6 +100,7 @@ namespace OrthancStone
     virtual IExtractedSlice* ExtractSlice(const OrthancStone::CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
 
     void SetStructuresReady();
+    void SetStructuresUpdated();
 
     bool AreStructuresReady() const;
   };

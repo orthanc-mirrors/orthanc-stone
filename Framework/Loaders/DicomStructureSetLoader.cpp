@@ -29,11 +29,6 @@
 
 #include <algorithm>
 
-#if 0
-bool logbgo233 = false;
-bool logbgo115 = false;
-#endif
-
 namespace OrthancStone
 {
 
@@ -78,9 +73,10 @@ namespace OrthancStone
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
 
       loader.content_->AddReferencedSlice(dicom);
-
       loader.countProcessedInstances_ ++;
       assert(loader.countProcessedInstances_ <= loader.countReferencedInstances_);
+
+      loader.SetStructuresUpdated();
 
       if (loader.countProcessedInstances_ == loader.countReferencedInstances_)
       {
@@ -161,10 +157,6 @@ namespace OrthancStone
     
     virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
     {
-#if 0
-      if (logbgo115)
-        LOG(TRACE) << "DicomStructureSetLoader::LoadStructure::Handle() (SUCCESS)";
-#endif
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
         
       {
@@ -411,6 +403,11 @@ namespace OrthancStone
     {
       return new Slice(*content_, revision_, cuttingPlane, structureVisibility_);
     }
+  }
+
+  void DicomStructureSetLoader::SetStructuresUpdated()
+  {
+    BroadcastMessage(DicomStructureSetLoader::StructuresUpdated(*this));
   }
 
   void DicomStructureSetLoader::SetStructuresReady()

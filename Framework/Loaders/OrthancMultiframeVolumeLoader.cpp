@@ -313,21 +313,23 @@ namespace OrthancStone
         assert(writer.GetAccessor().GetWidth() == width &&
           writer.GetAccessor().GetHeight() == height);
 
+        T* targetAddr0 = reinterpret_cast<T*>(writer.GetAccessor().GetRow(0));
+        unsigned int pitch = writer.GetAccessor().GetPitch();
+        T* targetAddr = targetAddr0;
+        assert(sizeof(T) == Orthanc::GetBytesPerPixel(target.GetFormat()));
+
         for (unsigned int y = 0; y < height; y++)
         {
-          assert(sizeof(T) == Orthanc::GetBytesPerPixel(target.GetFormat()));
-
-          T* target = reinterpret_cast<T*>(writer.GetAccessor().GetRow(y));
-
           for (unsigned int x = 0; x < width; x++)
           {
-            CopyPixel(*target, source);
+            CopyPixel(*targetAddr, source);
 
-            distribution[*target] += 1;
+            distribution[*targetAddr] += 1;
 
-            target++;
+            targetAddr++;
             source += bpp;
           }
+          targetAddr += pitch;
         }
       }
     }

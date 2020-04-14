@@ -23,9 +23,9 @@
 
 #include "SampleInteractor.h"
 
-#include "../../Framework/Layers/ReferenceLineFactory.h"
-#include "../../Framework/Layers/DicomStructureSetSlicer.h"
-#include "../../Framework/Widgets/LayoutWidget.h"
+#include "../../../Framework/Layers/ReferenceLineFactory.h"
+#include "../../../Framework/Layers/DicomStructureSetSlicer.h"
+#include "../../../Framework/Widgets/LayoutWidget.h"
 
 #include <Core/Logging.h>
 

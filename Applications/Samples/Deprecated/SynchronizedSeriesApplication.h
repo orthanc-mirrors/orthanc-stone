@@ -23,10 +23,10 @@
 
 #include "SampleInteractor.h"
 
-#include "../../Framework/Toolbox/OrthancSeriesLoader.h"
-#include "../../Framework/Layers/SeriesFrameRendererFactory.h"
-#include "../../Framework/Layers/ReferenceLineFactory.h"
-#include "../../Framework/Widgets/LayoutWidget.h"
+#include "../../../Framework/Toolbox/OrthancSeriesLoader.h"
+#include "../../../Framework/Layers/SeriesFrameRendererFactory.h"
+#include "../../../Framework/Layers/ReferenceLineFactory.h"
+#include "../../../Framework/Widgets/LayoutWidget.h"
 
 #include <Core/Logging.h>
 

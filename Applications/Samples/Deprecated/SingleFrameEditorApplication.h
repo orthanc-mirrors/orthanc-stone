@@ -23,19 +23,19 @@
 
 #include "SampleApplicationBase.h"
 
-#include "../../Framework/Radiography/RadiographyLayerCropTracker.h"
-#include "../../Framework/Radiography/RadiographyLayerMaskTracker.h"
-#include "../../Framework/Radiography/RadiographyLayerMoveTracker.h"
-#include "../../Framework/Radiography/RadiographyLayerResizeTracker.h"
-#include "../../Framework/Radiography/RadiographyLayerRotateTracker.h"
-#include "../../Framework/Radiography/RadiographyMaskLayer.h"
-#include "../../Framework/Radiography/RadiographyScene.h"
-#include "../../Framework/Radiography/RadiographySceneCommand.h"
-#include "../../Framework/Radiography/RadiographySceneReader.h"
-#include "../../Framework/Radiography/RadiographySceneWriter.h"
-#include "../../Framework/Radiography/RadiographyWidget.h"
-#include "../../Framework/Radiography/RadiographyWindowingTracker.h"
-#include "../../Framework/Toolbox/TextRenderer.h"
+#include "../../../Framework/Radiography/RadiographyLayerCropTracker.h"
+#include "../../../Framework/Radiography/RadiographyLayerMaskTracker.h"
+#include "../../../Framework/Radiography/RadiographyLayerMoveTracker.h"
+#include "../../../Framework/Radiography/RadiographyLayerResizeTracker.h"
+#include "../../../Framework/Radiography/RadiographyLayerRotateTracker.h"
+#include "../../../Framework/Radiography/RadiographyMaskLayer.h"
+#include "../../../Framework/Radiography/RadiographyScene.h"
+#include "../../../Framework/Radiography/RadiographySceneCommand.h"
+#include "../../../Framework/Radiography/RadiographySceneReader.h"
+#include "../../../Framework/Radiography/RadiographySceneWriter.h"
+#include "../../../Framework/Radiography/RadiographyWidget.h"
+#include "../../../Framework/Radiography/RadiographyWindowingTracker.h"
+#include "../../../Framework/Toolbox/TextRenderer.h"
 
 #include <Core/HttpClient.h>
 #include <Core/Logging.h>

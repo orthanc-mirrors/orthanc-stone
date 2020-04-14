@@ -25,7 +25,7 @@
  * this makes CMake unable to detect when the UI file changes.
  **/
 #include <ui_SampleMainWindow.h>
-#include "../../Applications/Samples/SampleApplicationBase.h"
+#include "../../../Applications/Samples/SampleApplicationBase.h"
 
 namespace OrthancStone
 {

@@ -24,7 +24,7 @@
 #include <Framework/Messages/IObserver.h>
 #include <Platforms/Wasm/WasmPlatformApplicationAdapter.h>
 
-#include "../SimpleViewerApplication.h"
+#include "../../SimpleViewerApplication.h"
 
 namespace SimpleViewer {
 

@@ -23,7 +23,7 @@
 
 #include <emscripten/emscripten.h>
 
-#include "../SimpleViewerApplication.h"
+#include "../../SimpleViewerApplication.h"
 #include "SimpleViewerWasmApplicationAdapter.h"
 
 

@@ -6,7 +6,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(OrthancStone)
 
-include(../../Resources/CMake/OrthancStoneParameters.cmake)
+include(../../../Resources/CMake/OrthancStoneParameters.cmake)
 
 set(ENABLE_STONE_DEPRECATED ON)  # Need deprecated classes for these samples
 set(EMSCRIPTEN_SET_LLVM_WASM_BACKEND ON)
@@ -126,7 +126,7 @@ add_definitions(
 
 LIST(APPEND ORTHANC_BOOST_COMPONENTS program_options)
 
-include(../../Resources/CMake/OrthancStoneConfiguration.cmake)
+include(../../../Resources/CMake/OrthancStoneConfiguration.cmake)
 
 add_library(OrthancStone STATIC
   ${ORTHANC_STONE_SOURCES}
@@ -140,39 +140,39 @@ include_directories(${ORTHANC_STONE_ROOT})
 
 # files common to all samples
 list(APPEND SAMPLE_APPLICATIONS_SOURCES
-  ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleInteractor.h
-  ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleApplicationBase.h
+  ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SampleInteractor.h
+  ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SampleApplicationBase.h
   )
 
 if (ENABLE_QT)
   list(APPEND SAMPLE_APPLICATIONS_SOURCES
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleQtApplicationRunner.h
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindow.cpp
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindowWithButtons.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/Qt/SampleQtApplicationRunner.h
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/Qt/SampleMainWindow.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/Qt/SampleMainWindowWithButtons.cpp
     )
 
   ORTHANC_QT_WRAP_UI(SAMPLE_APPLICATIONS_SOURCES
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindow.ui
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindowWithButtons.ui
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/Qt/SampleMainWindow.ui
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/Qt/SampleMainWindowWithButtons.ui
     )
 
   ORTHANC_QT_WRAP_CPP(SAMPLE_APPLICATIONS_SOURCES
     ${ORTHANC_STONE_ROOT}/Applications/Qt/QCairoWidget.h
     ${ORTHANC_STONE_ROOT}/Applications/Qt/QStoneMainWindow.h
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindow.h
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/Qt/SampleMainWindowWithButtons.h
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/Qt/SampleMainWindow.h
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/Qt/SampleMainWindowWithButtons.h
     )
 endif()
 
 if (ENABLE_NATIVE)
   list(APPEND SAMPLE_APPLICATIONS_SOURCES
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleMainNative.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SampleMainNative.cpp
     )
 
 elseif (ENABLE_WASM)
 
   list(APPEND SAMPLE_APPLICATIONS_SOURCES
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/SampleMainWasm.cpp
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SampleMainWasm.cpp
     ${STONE_WASM_SOURCES}
     )
 endif()
@@ -180,7 +180,7 @@ endif()
 
 macro(BuildSingleFileSample Target Header Sample)
   add_executable(${Target}
-    ${ORTHANC_STONE_ROOT}/Applications/Samples/${Header}
+    ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/${Header}
     ${SAMPLE_APPLICATIONS_SOURCES}
     )
   set_target_properties(${Target} PROPERTIES COMPILE_DEFINITIONS ORTHANC_STONE_SAMPLE=${Sample})
@@ -206,36 +206,36 @@ if (ENABLE_QT OR ENABLE_WASM)
 
     if (ENABLE_QT)
       list(APPEND SIMPLE_VIEWER_APPLICATION_SOURCES
-        ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/SimpleViewerMainWindow.cpp
-        ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/SimpleViewerMainWindow.ui
-        ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/mainQt.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/Qt/SimpleViewerMainWindow.cpp
+        ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/Qt/SimpleViewerMainWindow.ui
+        ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/Qt/mainQt.cpp
         )
 
       ORTHANC_QT_WRAP_UI(SIMPLE_VIEWER_APPLICATION_SOURCES
-        ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/SimpleViewerMainWindow.ui
+        ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/Qt/SimpleViewerMainWindow.ui
         )
 
       ORTHANC_QT_WRAP_CPP(SIMPLE_VIEWER_APPLICATION_SOURCES
-        ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Qt/SimpleViewerMainWindow.h
+        ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/Qt/SimpleViewerMainWindow.h
         )
 
 elseif (ENABLE_WASM)
         list(APPEND SIMPLE_VIEWER_APPLICATION_SOURCES
-            ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/mainWasm.cpp
-            ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/SimpleViewerWasmApplicationAdapter.cpp
-            ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/Wasm/SimpleViewerWasmApplicationAdapter.h
+            ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/Wasm/mainWasm.cpp
+            ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/Wasm/SimpleViewerWasmApplicationAdapter.cpp
+            ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/Wasm/SimpleViewerWasmApplicationAdapter.h
             ${STONE_WASM_SOURCES}
           )
     endif()
 
     add_executable(OrthancStoneSimpleViewer
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/AppStatus.h
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.cpp
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/MainWidgetInteractor.h
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.cpp
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/SimpleViewerApplication.h
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.cpp
-      ${ORTHANC_STONE_ROOT}/Applications/Samples/SimpleViewer/ThumbnailInteractor.h
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/AppStatus.h
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/MainWidgetInteractor.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/MainWidgetInteractor.h
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/SimpleViewerApplication.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/SimpleViewerApplication.h
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/ThumbnailInteractor.cpp
+      ${ORTHANC_STONE_ROOT}/Applications/Samples/Deprecated/SimpleViewer/ThumbnailInteractor.h
       ${SIMPLE_VIEWER_APPLICATION_SOURCES}
       )
     target_link_libraries(OrthancStoneSimpleViewer OrthancStone)

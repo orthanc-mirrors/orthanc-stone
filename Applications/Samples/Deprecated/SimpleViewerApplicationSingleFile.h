@@ -23,16 +23,16 @@
 
 #include "SampleApplicationBase.h"
 
-#include "../../Framework/Deprecated/Layers/CircleMeasureTracker.h"
-#include "../../Framework/Deprecated/Layers/LineMeasureTracker.h"
-#include "../../Framework/Deprecated/SmartLoader.h"
-#include "../../Framework/Deprecated/Widgets/LayoutWidget.h"
-#include "../../Framework/Deprecated/Widgets/SliceViewerWidget.h"
-#include "../../Framework/Messages/IObserver.h"
+#include "../../../Framework/Deprecated/Layers/CircleMeasureTracker.h"
+#include "../../../Framework/Deprecated/Layers/LineMeasureTracker.h"
+#include "../../../Framework/Deprecated/SmartLoader.h"
+#include "../../../Framework/Deprecated/Widgets/LayoutWidget.h"
+#include "../../../Framework/Deprecated/Widgets/SliceViewerWidget.h"
+#include "../../../Framework/Messages/IObserver.h"
 
 #if ORTHANC_ENABLE_WASM==1
-#include "../../Platforms/Wasm/WasmPlatformApplicationAdapter.h"
-#include "../../Platforms/Wasm/Defaults.h"
+#include "../../../Platforms/Wasm/WasmPlatformApplicationAdapter.h"
+#include "../../../Platforms/Wasm/Defaults.h"
 #endif
 
 #include <Core/Images/Font.h>

@@ -23,8 +23,8 @@
 
 #include "SampleApplicationBase.h"
 
-#include "../../Framework/Deprecated/Layers/DicomSeriesVolumeSlicer.h"
-#include "../../Framework/Deprecated/Widgets/SliceViewerWidget.h"
+#include "../../../Framework/Deprecated/Layers/DicomSeriesVolumeSlicer.h"
+#include "../../../Framework/Deprecated/Widgets/SliceViewerWidget.h"
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>

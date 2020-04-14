@@ -19,8 +19,8 @@
  **/
 #pragma once
 
-#include "../../Qt/QCairoWidget.h"
-#include "../../Qt/QStoneMainWindow.h"
+#include "../../../Qt/QCairoWidget.h"
+#include "../../../Qt/QStoneMainWindow.h"
 
 namespace Ui 
 {

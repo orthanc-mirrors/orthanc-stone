@@ -1,6 +1,6 @@
 #include "Applications/Qt/QtStoneApplicationRunner.h"
 
-#include "../SimpleViewerApplication.h"
+#include "../../SimpleViewerApplication.h"
 #include "Framework/Messages/MessageBroker.h"
 
 

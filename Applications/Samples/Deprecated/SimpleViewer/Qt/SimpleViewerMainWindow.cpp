@@ -25,7 +25,7 @@
  * this makes CMake unable to detect when the UI file changes.
  **/
 #include <ui_SimpleViewerMainWindow.h>
-#include "../SimpleViewerApplication.h"
+#include "../../SimpleViewerApplication.h"
 
 
 namespace SimpleViewer

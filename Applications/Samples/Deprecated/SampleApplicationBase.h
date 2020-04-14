@@ -21,12 +21,12 @@
 
 #pragma once
 
-#include "../../Applications/IStoneApplication.h"
-#include "../../Framework/Deprecated/Widgets/WorldSceneWidget.h"
+#include "../../../Applications/IStoneApplication.h"
+#include "../../../Framework/Deprecated/Widgets/WorldSceneWidget.h"
 
 #if ORTHANC_ENABLE_WASM==1
-#include "../../Platforms/Wasm/WasmPlatformApplicationAdapter.h"
-#include "../../Platforms/Wasm/Defaults.h"
+#include "../../../Platforms/Wasm/WasmPlatformApplicationAdapter.h"
+#include "../../../Platforms/Wasm/Defaults.h"
 #endif
 
 #if ORTHANC_ENABLE_QT==1

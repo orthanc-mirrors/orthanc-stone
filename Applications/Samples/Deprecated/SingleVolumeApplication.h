@@ -22,16 +22,16 @@
 #pragma once
 
 #include "SampleApplicationBase.h"
-#include "../../Framework/dev.h"
-#include "../../Framework/Layers/LineMeasureTracker.h"
-#include "../../Framework/Layers/CircleMeasureTracker.h"
+#include "../../../Framework/dev.h"
+#include "../../../Framework/Layers/LineMeasureTracker.h"
+#include "../../../Framework/Layers/CircleMeasureTracker.h"
 
 #include <Core/Toolbox.h>
 #include <Core/Logging.h>
 
 #include <Plugins/Samples/Common/OrthancHttpConnection.h>   // TODO REMOVE
-#include "../../Framework/Layers/DicomStructureSetSlicer.h"   // TODO REMOVE
-#include "../../Framework/Toolbox/MessagingToolbox.h"   // TODO REMOVE
+#include "../../../Framework/Layers/DicomStructureSetSlicer.h"   // TODO REMOVE
+#include "../../../Framework/Toolbox/MessagingToolbox.h"   // TODO REMOVE
 
 namespace OrthancStone
 {

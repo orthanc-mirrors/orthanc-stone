@@ -23,7 +23,7 @@
 
 #include "SampleApplicationBase.h"
 
-#include "../../Framework/Widgets/EmptyWidget.h"
+#include "../../../Framework/Widgets/EmptyWidget.h"
 
 namespace OrthancStone
 {

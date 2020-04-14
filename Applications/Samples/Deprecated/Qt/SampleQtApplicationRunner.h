@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../../Qt/QtStoneApplicationRunner.h"
+#include "../../../Qt/QtStoneApplicationRunner.h"
 
 #if ORTHANC_ENABLE_QT != 1
 #error this file shall be included only with the ORTHANC_ENABLE_QT set to 1

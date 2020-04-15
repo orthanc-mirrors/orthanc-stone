@@ -139,7 +139,7 @@ namespace OrthancStone
   {
     WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
 
-    LOG(TRACE) << "mouse down: " << that->GetFullCanvasId();      
+    LOG(TRACE) << "mouse down: " << that->GetCanvasCssSelector();      
 
     if (that->compositor_.get() != NULL &&
         that->interactor_.get() != NULL)
@@ -213,8 +213,8 @@ namespace OrthancStone
 
   WebAssemblyViewport::WebAssemblyViewport(
     const std::string& canvasId, bool enableEmscriptenMouseEvents) :
-    shortCanvasId_(canvasId),
-    fullCanvasId_(canvasId),
+    canvasId_(canvasId),
+    canvasCssSelector_("#" + canvasId),
     interactor_(new DefaultViewportInteractor),
     enableEmscriptenMouseEvents_(enableEmscriptenMouseEvents)
   {
@@ -226,10 +226,10 @@ namespace OrthancStone
     controller_.reset(new ViewportController(viewport));
 
     LOG(INFO) << "Initializing Stone viewport on HTML canvas: " 
-      << shortCanvasId_;
+      << canvasId_;
 
-    if (shortCanvasId_.empty() ||
-        shortCanvasId_[0] == '#')
+    if (canvasId_.empty() ||
+        canvasId_[0] == '#')
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
         "The canvas identifier must not start with '#'");
@@ -243,7 +243,7 @@ namespace OrthancStone
           event.preventDefault();
         }
       },
-      shortCanvasId_.c_str()   // $0
+      canvasId_.c_str()   // $0
       );
 
     // It is not possible to monitor the resizing of individual
@@ -256,17 +256,22 @@ namespace OrthancStone
     if (enableEmscriptenMouseEvents_)
     {
 
-      emscripten_set_mousedown_callback(fullCanvasId_.c_str(),
+      // if any of this function causes an error in the console, please
+      // make sure you are using the new (as of 1.39.x) version of 
+      // emscripten element lookup rules( pass 
+      // "-s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1" to the linker.
+
+      emscripten_set_mousedown_callback(canvasCssSelector_.c_str(),
                                         reinterpret_cast<void*>(this),
                                         false,
                                         OnMouseDown);
 
-      emscripten_set_mousemove_callback(fullCanvasId_.c_str(),
+      emscripten_set_mousemove_callback(canvasCssSelector_.c_str(),
                                         reinterpret_cast<void*>(this),
                                         false,
                                         OnMouseMove);
 
-      emscripten_set_mouseup_callback(fullCanvasId_.c_str(),
+      emscripten_set_mouseup_callback(canvasCssSelector_.c_str(),
                                       reinterpret_cast<void*>(this),
                                       false,
                                       OnMouseUp);
@@ -283,17 +288,17 @@ namespace OrthancStone
     if (enableEmscriptenMouseEvents_)
     {
 
-      emscripten_set_mousedown_callback(fullCanvasId_.c_str(),
+      emscripten_set_mousedown_callback(canvasCssSelector_.c_str(),
                                         reinterpret_cast<void*>(this),
                                         false,
                                         OnMouseDown);
 
-      emscripten_set_mousemove_callback(fullCanvasId_.c_str(),
+      emscripten_set_mousemove_callback(canvasCssSelector_.c_str(),
                                         reinterpret_cast<void*>(this),
                                         false,
                                         OnMouseMove);
 
-      emscripten_set_mouseup_callback(fullCanvasId_.c_str(),
+      emscripten_set_mouseup_callback(canvasCssSelector_.c_str(),
                                       reinterpret_cast<void*>(this),
                                       false,
                                       OnMouseUp);

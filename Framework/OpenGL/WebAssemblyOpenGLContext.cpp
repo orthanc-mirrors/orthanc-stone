@@ -37,26 +37,27 @@ namespace OrthancStone
     class WebAssemblyOpenGLContext::PImpl
     {
     private:
-      std::string                     canvas_;
+      std::string                     canvasSelector_;
       EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context_;
       unsigned int                    canvasWidth_;
       unsigned int                    canvasHeight_;
       bool                            isContextLost_;
 
     public:
-      PImpl(const std::string& canvas)
-        : canvas_(canvas)
+      PImpl(const std::string& canvasSelector)
+        : canvasSelector_(canvasSelector)
         , isContextLost_(false)
       {
         // Context configuration
         EmscriptenWebGLContextAttributes attr; 
         emscripten_webgl_init_context_attributes(&attr);
 
-        context_ = emscripten_webgl_create_context(canvas.c_str(), &attr);
+        context_ = emscripten_webgl_create_context(canvasSelector.c_str(), &attr);
         if (context_ == 0)
         {
-          std::string message("Cannot create an OpenGL context for canvas: ");
-          message += canvas;
+          std::string message("Cannot create an OpenGL context for the element with the following CSS selector: \"");
+          message += canvasSelector;
+          message += "\"  Please make sure the -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1 flag has been passed to Emscripten when building.";
           LOG(ERROR) << message;
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, message);
         }
@@ -113,9 +114,9 @@ namespace OrthancStone
         }
       }
 
-      const std::string& GetCanvasIdentifier() const
+      const std::string& GetCanvasSelector() const
       {
-        return canvas_;
+        return canvasSelector_;
       }
 
       void MakeCurrent()
@@ -128,7 +129,7 @@ namespace OrthancStone
 
         if (emscripten_is_webgl_context_lost(context_))
         {
-          LOG(ERROR) << "OpenGL context has been lost for canvas: " << canvas_;
+          LOG(ERROR) << "OpenGL context has been lost for canvas selector: " << canvasSelector_;
           SetLostContext();
           throw StoneException(ErrorCode_WebGLContextLost);
         }
@@ -166,7 +167,7 @@ namespace OrthancStone
       void UpdateSize()
       {
         double w, h;
-        emscripten_get_element_css_size(canvas_.c_str(), &w, &h);
+        emscripten_get_element_css_size(canvasSelector_.c_str(), &w, &h);
 
         /**
          * Emscripten has the function emscripten_get_element_css_size()
@@ -190,13 +191,13 @@ namespace OrthancStone
           canvasHeight_ = static_cast<unsigned int>(boost::math::iround(h));
         }
         
-        emscripten_set_canvas_element_size(canvas_.c_str(), canvasWidth_, canvasHeight_);
+        emscripten_set_canvas_element_size(canvasSelector_.c_str(), canvasWidth_, canvasHeight_);
       }
     };
 
 
-    WebAssemblyOpenGLContext::WebAssemblyOpenGLContext(const std::string& canvas) :
-      pimpl_(new PImpl(canvas))
+    WebAssemblyOpenGLContext::WebAssemblyOpenGLContext(const std::string& canvasSelector) :
+      pimpl_(new PImpl(canvasSelector))
     {
     }
 
@@ -245,10 +246,10 @@ namespace OrthancStone
       pimpl_->UpdateSize();
     }
 
-    const std::string& WebAssemblyOpenGLContext::GetCanvasIdentifier() const
+    const std::string& WebAssemblyOpenGLContext::GetCanvasSelector() const
     {
       assert(pimpl_.get() != NULL);
-      return pimpl_->GetCanvasIdentifier();
+      return pimpl_->GetCanvasSelector();
     }
   }
 }

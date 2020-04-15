@@ -31,7 +31,7 @@ namespace OrthancStone
                                                unsigned int& height)
   {
     double w, h;
-    emscripten_get_element_css_size(GetFullCanvasId().c_str(), &w, &h);
+    emscripten_get_element_css_size(GetCanvasCssSelector().c_str(), &w, &h);
 
     /**
      * Emscripten has the function emscripten_get_element_css_size()
@@ -105,7 +105,7 @@ namespace OrthancStone
         const ctx = document.getElementById(UTF8ToString($0)).getContext('2d');
         ctx.putImageData(img, 0, 0);
       },
-      GetShortCanvasId().c_str(), // $0
+      GetCanvasId().c_str(), // $0
       javascript_->GetBuffer(),   // $1
       javascript_->GetWidth(),    // $2
       javascript_->GetHeight());  // $3
@@ -116,7 +116,7 @@ namespace OrthancStone
   {
     unsigned int width, height;
     GetCanvasSize(width, height);
-    emscripten_set_canvas_element_size(GetFullCanvasId().c_str(), width, height);
+    emscripten_set_canvas_element_size(GetCanvasCssSelector().c_str(), width, height);
 
     dynamic_cast<CairoCompositor&>(compositor).UpdateSize(width, height);
   }
@@ -128,7 +128,7 @@ namespace OrthancStone
   {
     unsigned int width, height;
     GetCanvasSize(width, height);
-    emscripten_set_canvas_element_size(GetFullCanvasId().c_str(), 
+    emscripten_set_canvas_element_size(GetCanvasCssSelector().c_str(), 
                                        width, 
                                        height);
 

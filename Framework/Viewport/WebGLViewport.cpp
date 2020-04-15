@@ -81,7 +81,7 @@ namespace OrthancStone
 
   WebGLViewport::WebGLViewport(const std::string& canvasId, bool enableEmscriptenMouseEvents) :
     WebAssemblyViewport(canvasId,enableEmscriptenMouseEvents),
-    context_(GetFullCanvasId())
+    context_(GetCanvasCssSelector())
   {
     AcquireCompositor(new OpenGLCompositor(context_));
   }

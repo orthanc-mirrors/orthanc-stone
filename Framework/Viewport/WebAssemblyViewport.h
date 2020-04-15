@@ -48,8 +48,8 @@ namespace OrthancStone
   private:
     class WasmLock;
     
-    std::string                           shortCanvasId_;
-    std::string                           fullCanvasId_;
+    std::string                           canvasId_;
+    std::string                           canvasCssSelector_;
     std::unique_ptr<ICompositor>          compositor_;
     std::unique_ptr<ViewportController>   controller_;
     std::unique_ptr<IViewportInteractor>  interactor_;
@@ -105,14 +105,18 @@ namespace OrthancStone
     */
     void AcquireInteractor(IViewportInteractor* interactor);
 
-    const std::string& GetShortCanvasId() const
+    const std::string& GetCanvasId() const
     {
-      return shortCanvasId_;
+      return canvasId_;
     }
 
-    const std::string& GetFullCanvasId() const
+    /**
+    emscripten functions requires the css selector for the canvas. This is 
+    different from the canvas id (the syntax is '#mycanvasid')
+    */
+    const std::string& GetCanvasCssSelector() const
     {
-      return fullCanvasId_;
+      return canvasCssSelector_;
     }
   };
 }

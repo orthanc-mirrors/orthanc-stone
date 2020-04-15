@@ -387,6 +387,21 @@ namespace OrthancStone
   TextureBaseSceneLayer* DicomInstanceParameters::CreateTexture
   (const Orthanc::ImageAccessor& pixelData) const
   {
+    // {
+    //   const Orthanc::ImageAccessor& source = pixelData;
+    //   const void* sourceBuffer = source.GetConstBuffer();
+    //   intptr_t sourceBufferInt = reinterpret_cast<intptr_t>(sourceBuffer);
+    //   int sourceWidth = source.GetWidth();
+    //   int sourceHeight = source.GetHeight();
+    //   int sourcePitch = source.GetPitch();
+
+    //   // TODO: turn error into trace below
+    //   LOG(ERROR) << "ConvertGrayscaleToFloat | source:"
+    //     << " W = " << sourceWidth << " H = " << sourceHeight
+    //     << " P = " << sourcePitch << " B = " << sourceBufferInt
+    //     << " B % 4 == " << sourceBufferInt % 4;
+    // }
+
     assert(sizeof(float) == 4);
 
     Orthanc::PixelFormat sourceFormat = pixelData.GetFormat();

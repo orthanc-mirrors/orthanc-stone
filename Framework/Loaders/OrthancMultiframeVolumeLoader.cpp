@@ -312,25 +312,45 @@ namespace OrthancStone
 
         assert(writer.GetAccessor().GetWidth() == width &&
           writer.GetAccessor().GetHeight() == height);
+#if 0
+        for (unsigned int y = 0; y < height; y++)
+        {
+          assert(sizeof(T) == Orthanc::GetBytesPerPixel(target.GetFormat()));
 
-        T* targetAddr0 = reinterpret_cast<T*>(writer.GetAccessor().GetRow(0));
+          T* target = reinterpret_cast<T*>(writer.GetAccessor().GetRow(y));
+
+          for (unsigned int x = 0; x < width; x++)
+          {
+            CopyPixel(*target, source);
+
+            distribution[*target] += 1;
+
+            target++;
+            source += bpp;
+          }
+        }
+#else
+        // optimized version (fixed) as of 2020-04-15
         unsigned int pitch = writer.GetAccessor().GetPitch();
-        T* targetAddr = targetAddr0;
+        T* targetAddrLine = reinterpret_cast<T*>(writer.GetAccessor().GetRow(0));
         assert(sizeof(T) == Orthanc::GetBytesPerPixel(target.GetFormat()));
 
         for (unsigned int y = 0; y < height; y++)
         {
+          T* targetAddrPix = targetAddrLine;
           for (unsigned int x = 0; x < width; x++)
           {
-            CopyPixel(*targetAddr, source);
+            CopyPixel(*targetAddrPix, source);
 
-            distribution[*targetAddr] += 1;
+            distribution[*targetAddrPix] += 1;
 
-            targetAddr++;
+            targetAddrPix++;
             source += bpp;
           }
-          targetAddr += pitch;
+          uint8_t* targetAddrLineBytes = reinterpret_cast<uint8_t*>(targetAddrLine) + pitch;
+          targetAddrLine = reinterpret_cast<T*>(targetAddrLineBytes);
         }
+#endif
       }
     }
   }

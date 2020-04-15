@@ -32,6 +32,7 @@ Resources/CommandTool/protoc-tests/generated_js/
 Resources/CommandTool/protoc-tests/generated_ts/
 Resources/CommandTool/protoc-tests/node_modules/
 Samples/WebAssembly/*/ThirdPartyDownloads/
+Samples/Sdl/*/ThirdPartyDownloads/
 Samples/Deprecated/Sdl/ThirdPartyDownloads/
 Samples/Deprecated/Sdl/CMakeLists.txt.orig
 Samples/Deprecated/Qt/ThirdPartyDownloads/

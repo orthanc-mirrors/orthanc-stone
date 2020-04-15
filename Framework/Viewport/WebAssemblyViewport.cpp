@@ -211,10 +211,20 @@ namespace OrthancStone
     }
   }
 
+#if DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR == 1
+// everything OK..... we're using the new setting
+#else
+#pragma message("WARNING: DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR is not defined or equal to 0. Stone will use the OLD Emscripten rules for DOM element selection.")
+#endif
+
   WebAssemblyViewport::WebAssemblyViewport(
     const std::string& canvasId, bool enableEmscriptenMouseEvents) :
     canvasId_(canvasId),
+#if DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR == 1
     canvasCssSelector_("#" + canvasId),
+#else
+    canvasCssSelector_(canvasId),
+#endif
     interactor_(new DefaultViewportInteractor),
     enableEmscriptenMouseEvents_(enableEmscriptenMouseEvents)
   {

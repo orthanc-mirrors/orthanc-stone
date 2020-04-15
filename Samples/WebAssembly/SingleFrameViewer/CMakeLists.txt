@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.8.3)
 # ---------------------------------------------------------------
 set(USE_WASM ON CACHE BOOL "")
 set(ORTHANC_FRAMEWORK_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../../orthanc CACHE STRING "")
-set(STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../../orthanc-stone)
+set(STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../)
 
 set(EMSCRIPTEN_SET_LLVM_WASM_BACKEND ON CACHE BOOL "")
 
@@ -21,6 +21,9 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ERROR_ON_UNDEFINED_SYMB
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ASSERTIONS=1 -s DISABLE_EXCEPTION_CATCHING=0")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_MEMORY=268435456")  # 256MB + resize
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1")
+add_definitions(
+  -DDISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1
+)
 
 # Stone of Orthanc configuration
 # ---------------------------------------------------------------

@@ -125,7 +125,16 @@ namespace OrthancStone
 
       case Orthanc::MimeType_Pam:
       {
+#ifdef __EMSCRIPTEN__
+        // "true" means we ask the PamReader to make an extra copy so that
+        // the resulting Orthanc::ImageAccessor is aligned (as malloc is).
+        // Indeed, even though alignment is not required in Web Assembly,
+        // Emscripten seems to check it and bail out if addresses are "odd"
+        image.reset(new Orthanc::PamReader(true));
+#else
+        // potentially unaligned, with is faster and consumes less heap memory
         image.reset(new Orthanc::PamReader);
+#endif
         dynamic_cast<Orthanc::PamReader&>(*image).ReadFromMemory(answer);
         break;
       }
@@ -156,6 +165,23 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
       }
     }
+
+    //{
+    //  // DEBUG DISPLAY IMAGE PROPERTIES BGO 2020-04-11
+    //  const Orthanc::ImageAccessor& source = *image;
+    //  const void* sourceBuffer = source.GetConstBuffer();
+    //  intptr_t sourceBufferInt = reinterpret_cast<intptr_t>(sourceBuffer);
+    //  int sourceWidth = source.GetWidth();
+    //  int sourceHeight = source.GetHeight();
+    //  int sourcePitch = source.GetPitch();
+
+    //  // TODO: turn error into trace below
+    //  LOG(ERROR) << "GetOrthancImageCommand::ProcessHttpAnswer | source:"
+    //    << " W = " << sourceWidth << " H = " << sourceHeight
+    //    << " P = " << sourcePitch << " B = " << sourceBufferInt
+    //    << " B % 4 == " << sourceBufferInt % 4;
+    //}
+
 
     SuccessMessage message(*this, *image, contentType);
     emitter.EmitMessage(receiver, message);

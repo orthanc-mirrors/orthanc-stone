@@ -234,7 +234,7 @@ interactor.
   - pass commands to undostack (trivial)
   - logic to locate `MeasureTool` in the HitTest
   - OTOH, the meat of the measuring tool logic (highlighting etc..) is 
-    done in app-specific code (`VolumeSlicerWidget` for IBA)
+    done in app-specific code (`VolumeSlicerWidget`)
   - accept new Scene transform and notify listeners
   - **the code that uses the interactor** (`HandleMousePress`) is only 
     called by the new `WebAssemblyViewport` !!! **TODO** clean this mess
@@ -420,16 +420,6 @@ Call, in WASM:
 ```
 DISPATCH_JAVASCRIPT_EVENT("StoneInitialized");
 ```
-
-
-
-# TODO order
-- **IBA** remove SDL Console failed attempt
-- **IBA** understand refresh issue --> push fix
-- **IBA** move main.cpp to tests/
-- **IBA** Remove deprecated tag from loaders and rename loaders (ensure "Progressive" only means spatially progressive, not in terms of quality.. make sure Yoann doesn't need Jpeg)
-- **IBA** 
-
 
 # Notes
 

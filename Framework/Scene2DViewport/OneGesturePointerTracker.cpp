@@ -41,10 +41,10 @@ namespace OrthancStone
     // gesture
     ORTHANC_ASSERT(currentTouchCount_ > 0, "Wrong state in tracker");
     currentTouchCount_--;
-    LOG(INFO) << "currentTouchCount_ becomes: " << currentTouchCount_;
+    //LOG(TRACE) << "currentTouchCount_ becomes: " << currentTouchCount_;
     if (currentTouchCount_ == 0)
     {
-      LOG(INFO) << "currentTouchCount_ == 0 --> alive_ = false";
+      //LOG(TRACE) << "currentTouchCount_ == 0 --> alive_ = false";
       alive_ = false;
     }
   }
@@ -54,7 +54,7 @@ namespace OrthancStone
     // additional touches are not taken into account but we need to count 
     // the number of active touches
     currentTouchCount_++;
-    LOG(INFO) << "currentTouchCount_ becomes: " << currentTouchCount_;
+    //LOG(TRACE) << "currentTouchCount_ becomes: " << currentTouchCount_;
 
     /**
      * 2019-12-06 (SJO): Patch to have consistent behavior when mouse

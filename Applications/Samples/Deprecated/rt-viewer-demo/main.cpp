@@ -672,9 +672,9 @@ namespace OrthancStone
             IObserver::GetBroker(), context->GetOrthancApiClient(), false));
           ct_->ScheduleLoadSeries(ctSeries_);
           //ct_->ScheduleLoadSeries(
-          //  "a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa"); // IBA
+          //  "a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");
           //ct_->ScheduleLoadSeries(
-          //  "03677739-1d8bca40-db1daf59-d74ff548-7f6fc9c0"); // 0522c0001 TCIA
+          //  "03677739-1d8bca40-db1daf59-d74ff548-7f6fc9c0");
         }
 
         if (!doseSeries_.empty() ||
@@ -702,7 +702,7 @@ namespace OrthancStone
           }
 
           //dose_->ScheduleLoadInstance(
-            //"830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // IBA 1
+            //"830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // 1
           //dose_->ScheduleLoadInstance(
             //"269f26f4-0c83eeeb-2e67abbd-5467a40f-f1bec90c"); //0522c0001 TCIA
         }
@@ -715,7 +715,7 @@ namespace OrthancStone
           struct_->ScheduleLoadInstance(structInstance_);
 
           //struct_->ScheduleLoadInstance(
-            //"54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9"); // IBA
+            //"54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");
           //struct_->ScheduleLoadInstance(
             //"17cd032b-ad92a438-ca05f06a-f9e96668-7e3e9e20"); // 0522c0001 TCIA
         }

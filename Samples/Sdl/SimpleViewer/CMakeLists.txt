@@ -1,16 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 
-project(SdlViewer)
-
-set(ALLOW_DOWNLOADS ON)
-
-set(STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../)
-
-set(STATIC_BUILD ON)
-set(MSVC_MULTIPLE_PROCESSES ON)
+project(SdlSimpleViewer)
 
 set(ORTHANC_FRAMEWORK_SOURCE "path")
 set(ORTHANC_FRAMEWORK_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../../orthanc)
+set(STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../)
+
 include(${STONE_ROOT}/Resources/CMake/OrthancStoneParameters.cmake)
 
 SET(ENABLE_GOOGLE_TEST OFF)
@@ -33,10 +28,10 @@ add_definitions(
   -DORTHANC_DEFAULT_DICOM_ENCODING=Encoding_Latin1
   )
 
-add_executable(OrthancStone
+add_executable(SdlSimpleViewer
   SdlSimpleViewerApplication.h
-  SimpleViewer.cpp
+  SdlSimpleViewer.cpp
   ${ORTHANC_STONE_SOURCES}
   )
 
-target_link_libraries(OrthancStone ${DCMTK_LIBRARIES})
+target_link_libraries(SdlSimpleViewer ${DCMTK_LIBRARIES})

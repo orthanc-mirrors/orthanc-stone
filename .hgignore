@@ -32,12 +32,15 @@ Resources/CommandTool/protoc-tests/generated_js/
 Resources/CommandTool/protoc-tests/generated_ts/
 Resources/CommandTool/protoc-tests/node_modules/
 Samples/WebAssembly/*/ThirdPartyDownloads/
+Samples/WebAssembly/*/out
 Samples/Sdl/*/ThirdPartyDownloads/
+Samples/Sdl/*/out
 Samples/Deprecated/Sdl/ThirdPartyDownloads/
 Samples/Deprecated/Sdl/CMakeLists.txt.orig
 Samples/Deprecated/Qt/ThirdPartyDownloads/
 Samples/Deprecated/WebAssembly/build/
 Samples/Deprecated/WebAssembly/ThirdPartyDownloads/
 Samples/Deprecated/WebAssembly/installDir/
+
 node_modules/
 

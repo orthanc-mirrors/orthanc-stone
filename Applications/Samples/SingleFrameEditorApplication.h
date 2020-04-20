@@ -348,7 +348,7 @@ namespace OrthancStone
           {
             widget.GetScene().ExportDicom(context_->GetOrthancApiClient(),
                                           tags, std::string(), 0.1, 0.1, widget.IsInverted(),
-                                          widget.GetInterpolation(), EXPORT_USING_PAM);
+                                          false /* autoCrop */, widget.GetInterpolation(), EXPORT_USING_PAM);
           }
 
           break;

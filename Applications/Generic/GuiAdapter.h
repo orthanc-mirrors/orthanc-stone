@@ -254,14 +254,14 @@ namespace OrthancStone
     }
 
     /**
-      emscripten_set_resize_callback("#window", NULL, false, OnWindowResize);
+      emscripten_set_resize_callback("EMSCRIPTEN_EVENT_TARGET_WINDOW", NULL, false, OnWindowResize);
 
-      emscripten_set_wheel_callback("mycanvas1", widget1_.get(), false, OnXXXMouseWheel);
-      emscripten_set_wheel_callback("mycanvas2", widget2_.get(), false, OnXXXMouseWheel);
-      emscripten_set_wheel_callback("mycanvas3", widget3_.get(), false, OnXXXMouseWheel);
+      emscripten_set_wheel_callback("#mycanvas1", widget1_.get(), false, OnXXXMouseWheel);
+      emscripten_set_wheel_callback("#mycanvas2", widget2_.get(), false, OnXXXMouseWheel);
+      emscripten_set_wheel_callback("#mycanvas3", widget3_.get(), false, OnXXXMouseWheel);
 
-      emscripten_set_keydown_callback("#window", NULL, false, OnKeyDown);
-      emscripten_set_keyup_callback("#window", NULL, false, OnKeyUp);
+      emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, false, OnKeyDown); ---> NO!
+      emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, false, OnKeyUp);
 
       emscripten_request_animation_frame_loop(OnAnimationFrame, NULL);
     
@@ -285,6 +285,7 @@ namespace OrthancStone
     typedef bool (*OnSdlEventCallback)  (std::string canvasId, const SDL_Event& sdlEvent, void* userData);
 
     // if you pass "#window", then any Window resize will trigger the callback
+    // (this special string is converted to EMSCRIPTEN_EVENT_TARGET_WINDOW in DOM, when DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1)
     void SetSdlResizeCallback(std::string canvasId, 
                               void* userData, 
                               bool capture, 

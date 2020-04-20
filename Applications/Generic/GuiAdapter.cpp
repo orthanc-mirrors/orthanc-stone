@@ -147,7 +147,7 @@ namespace OrthancStone
   template<typename GenericFunc>
   struct FuncAdapterPayload
   {
-    std::string canvasId;
+    std::string canvasCssSelector;
     void* userData;
     GenericFunc callback;
   };
@@ -158,7 +158,6 @@ namespace OrthancStone
     EM_BOOL OnEventAdapterFunc(
       int eventType, const EmscriptenEvent* emEvent, void* userData)
   {
-
     // userData is OnMouseWheelFuncAdapterPayload
     FuncAdapterPayload<GenericFunc>* payload =
       reinterpret_cast<FuncAdapterPayload<GenericFunc>*>(userData);
@@ -170,7 +169,7 @@ namespace OrthancStone
 
     GuiAdapterEvent guiEvent;
     ConvertFromPlatform(guiEvent, eventType, *emEvent);
-    bool ret = (*(payload->callback))(payload->canvasId, &guiEvent, payload->userData);
+    bool ret = (*(payload->callback))(payload->canvasCssSelector, &guiEvent, payload->userData);
     return static_cast<EM_BOOL>(ret);
   }
 
@@ -186,7 +185,7 @@ namespace OrthancStone
 
     GuiAdapterEvent guiEvent;
     ConvertFromPlatform(guiEvent, *wheelEvent);
-    bool ret = (*(payload->callback))(payload->canvasId, &guiEvent, payload->userData);
+    bool ret = (*(payload->callback))(payload->canvasCssSelector, &guiEvent, payload->userData);
     return static_cast<EM_BOOL>(ret);
   }
 
@@ -202,6 +201,76 @@ namespace OrthancStone
     return static_cast<EM_BOOL>(ret);
   }
 
+  /*
+  
+  Explanation
+  ===========
+
+  - in "older" Emscripten, where DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR doesn't exist or is set to 0,
+    the following strings need to be used to register events:
+    - for canvas, the canvas DOM id. In case of <canvas id="mycanvas1" width='640' ...></canvas>", the string needs 
+      to be "mycanvas"
+    - for the window (for key events), the string needs to be "#window"
+  - in newer Emscripten where DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR==1 (or maybe is not there anymore, in the
+    future as of 2020-04-20)
+    - for canvas, the canvas DOM id. In case of <canvas id="mycanvas1" width='640' ...></canvas>", the string needs
+      to be "#mycanvas"  (notice the "number sign", aka "hash", NOT AKA "sharp", as can be read on https://en.wikipedia.org/wiki/Number_sign)
+    - for the window (for key events), the string needs to be EMSCRIPTEN_EVENT_TARGET_WINDOW. I do not mean 
+      "EMSCRIPTEN_EVENT_TARGET_WINDOW", but the #define EMSCRIPTEN_EVENT_TARGET_WINDOW         ((const char*)2) that
+      can be found in emscripten/html5.h
+
+  The code below converts the input canvasId (as in the old emscripten) to the emscripten-compliant one, with the
+  following compile condition : #if DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR == 1
+
+  If the DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR build parameter disappears, you might want to refactor this code
+  or continue to pass the DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR compile macro (which is different from the CMake
+  variable)     
+
+  What we are doing below:
+  - in older Emscripten, the registration functions will receive "mycanvas" and "#window" and the callbacks will receive 
+    the same std::string in their payload ("mycanvas" and "#window")
+
+  - in newer Emscripten, the registration functions will receive "#mycanvas" and EMSCRIPTEN_EVENT_TARGET_WINDOW, but 
+    the callbacks will receive "#mycanvas" and "#window" (since it is not possible to store the EMSCRIPTEN_EVENT_TARGET_WINDOW
+    magic value in an std::string, while we still want the callback to be able to change its behavior according to the
+    target element.
+  
+  */
+
+  void convertElementTarget(const char*& outCanvasCssSelectorSz, std::string& outCanvasCssSelector, const std::string& canvasId)
+  {
+    // only "#window" can start with a #
+    if (canvasId[0] == '#')
+    {
+      ORTHANC_ASSERT(canvasId == "#window");
+    }
+#if DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR == 1
+    if (canvasId == "#window")
+    {
+      // we store this in the payload so that the callback can 
+      outCanvasCssSelector = "#window";
+      outCanvasCssSelectorSz = EMSCRIPTEN_EVENT_TARGET_WINDOW;
+    }
+    else
+    {
+      outCanvasCssSelector = "#" + canvasId;
+      outCanvasCssSelectorSz = outCanvasCssSelector.c_str();
+    }
+#else
+    if (canvasId == "#window")
+    {
+      // we store this in the payload so that the callback can 
+      outCanvasCssSelector = "#window";
+      outCanvasCssSelectorSz = outCanvasCssSelector.c_str();;
+    }
+    else
+    {
+      outCanvasCssSelector = canvasId;
+      outCanvasCssSelectorSz = outCanvasCssSelector.c_str();;
+    }
+#endif
+  }
+
   // resize: (const char* target, void* userData, EM_BOOL useCapture, em_ui_callback_func callback)
   template<
     typename GenericFunc,
@@ -212,24 +281,26 @@ namespace OrthancStone
       EmscriptenSetCallbackFunc emFunc,
       std::string canvasId, void* userData, bool capture, GenericFunc func)
   {
-    // TODO: write RemoveCallback with an int id that gets returned from
-    // here
-    FuncAdapterPayload<GenericFunc>* payload =
-      new FuncAdapterPayload<GenericFunc>();
-    std::unique_ptr<FuncAdapterPayload<GenericFunc> > payloadP(payload);
-    payload->canvasId = canvasId;
+    std::string canvasCssSelector;
+    const char* canvasCssSelectorSz = NULL;
+    convertElementTarget(canvasCssSelectorSz, canvasCssSelector, canvasId);
+
+    // TODO: write RemoveCallback with an int id that gets returned from here
+
+    // create userdata payload
+    std::unique_ptr<FuncAdapterPayload<GenericFunc> > payload(new FuncAdapterPayload<GenericFunc>());
+    payload->canvasCssSelector = canvasCssSelector;
     payload->callback = func;
     payload->userData = userData;
-    void* userDataRaw = reinterpret_cast<void*>(payload);
-    // LOG(INFO) << "SetCallback -- userDataRaw: " << userDataRaw <<
-    //   " payload: " << payload << " payload->userData: " << payload->userData;
+    void* userDataRaw = reinterpret_cast<void*>(payload.release());
+
+    // call the registration function
     (*emFunc)(
-      canvasId.c_str(),
+      canvasCssSelectorSz,
       userDataRaw,
       static_cast<EM_BOOL>(capture),
       &OnEventAdapterFunc<GenericFunc, GuiAdapterEvent, EmscriptenEvent>,
       EM_CALLBACK_THREAD_CONTEXT_CALLING_THREAD);
-    payloadP.release();
   }
 
   template<
@@ -241,15 +312,22 @@ namespace OrthancStone
       EmscriptenSetCallbackFunc emFunc,
       std::string canvasId, void* userData, bool capture, GenericFunc func)
   {
-    std::unique_ptr<FuncAdapterPayload<GenericFunc> > payload(
-      new FuncAdapterPayload<GenericFunc>()
-    );
-    payload->canvasId = canvasId;
+    std::string canvasCssSelector;
+    const char* canvasCssSelectorSz = NULL;
+    convertElementTarget(canvasCssSelectorSz, canvasCssSelector, canvasId);
+
+    // TODO: write RemoveCallback with an int id that gets returned from here
+
+    // create userdata payload
+    std::unique_ptr<FuncAdapterPayload<GenericFunc> > payload(new FuncAdapterPayload<GenericFunc>());
+    payload->canvasCssSelector = canvasCssSelector;
     payload->callback = func;
     payload->userData = userData;
     void* userDataRaw = reinterpret_cast<void*>(payload.release());
+
+    // call the registration function
     (*emFunc)(
-      canvasId.c_str(),
+      canvasCssSelectorSz,
       userDataRaw,
       static_cast<EM_BOOL>(capture),
       &OnEventAdapterFunc2<GenericFunc, GuiAdapterEvent, EmscriptenEvent>,
@@ -266,7 +344,7 @@ namespace OrthancStone
     std::unique_ptr<FuncAdapterPayload<GenericFunc> > payload(
       new FuncAdapterPayload<GenericFunc>()
     );
-    payload->canvasId = "UNDEFINED";
+    payload->canvasCssSelector = "UNDEFINED";
     payload->callback = func;
     payload->userData = userData;
     void* userDataRaw = reinterpret_cast<void*>(payload.release());

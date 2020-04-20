@@ -396,14 +396,14 @@ extern "C"
       }
       widget3_->UpdateSize();
 
-      emscripten_set_resize_callback("#window", NULL, false, OnWindowResize);
+      emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, false, OnWindowResize); // DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1 !!
 
-      emscripten_set_wheel_callback("mycanvas1", widget1_.get(), false, OnMouseWheel);
-      emscripten_set_wheel_callback("mycanvas2", widget2_.get(), false, OnMouseWheel);
-      emscripten_set_wheel_callback("mycanvas3", widget3_.get(), false, OnMouseWheel);
+      emscripten_set_wheel_callback("#mycanvas1", widget1_.get(), false, OnMouseWheel);
+      emscripten_set_wheel_callback("#mycanvas2", widget2_.get(), false, OnMouseWheel);
+      emscripten_set_wheel_callback("#mycanvas3", widget3_.get(), false, OnMouseWheel);
 
-      emscripten_set_keydown_callback("#window", NULL, false, OnKeyDown);
-      emscripten_set_keyup_callback("#window", NULL, false, OnKeyUp);
+      emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, false, OnKeyDown);
+      emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, false, OnKeyUp);
     
       emscripten_request_animation_frame_loop(OnAnimationFrame, NULL);
 

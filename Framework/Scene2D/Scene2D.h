@@ -113,5 +113,7 @@ namespace OrthancStone
 
     void FitContent(unsigned int canvasWidth,
                     unsigned int canvasHeight);
+
+    void GetBoundingBox(Extent2D& target) const;
   };
 }

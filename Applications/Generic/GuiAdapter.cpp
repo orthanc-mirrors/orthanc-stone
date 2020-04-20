@@ -47,6 +47,15 @@ namespace OrthancStone
     return os;
   }
 
+  std::ostream& operator<<(
+    std::ostream& os, const GuiAdapterMouseEvent& event)
+  {
+    os << "targetX: " << event.targetX << " targetY: " << event.targetY << " button: " << event.button
+      << "ctrlKey: " << event.ctrlKey << "shiftKey: " << event.shiftKey << "altKey: " << event.altKey;
+      
+    return os;
+  }
+
 #if ORTHANC_ENABLE_WASM == 1
   void GuiAdapter::Run(GuiAdapterRunFunc /*func*/, void* /*cookie*/)
   {

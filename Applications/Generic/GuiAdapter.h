@@ -202,6 +202,7 @@ namespace OrthancStone
   };
 
   std::ostream& operator<<(std::ostream& os, const GuiAdapterKeyboardEvent& event);
+  std::ostream& operator<<(std::ostream& os, const GuiAdapterMouseEvent& event);
 
   /*
     Mousedown event trigger when either the left or right (or middle) mouse is pressed 

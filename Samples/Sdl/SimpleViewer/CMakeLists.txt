@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 2.8.10)
 
 project(SdlSimpleViewer)
 
@@ -18,6 +18,7 @@ SET(ENABLE_WEB_CLIENT ON)
 SET(ORTHANC_SANDBOXED OFF)
 
 include(${STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
+include(${STONE_ROOT}/Resources/CMake/Utilities.cmake)
 
 include_directories(${STONE_ROOT})
 
@@ -28,10 +29,14 @@ add_definitions(
   -DORTHANC_DEFAULT_DICOM_ENCODING=Encoding_Latin1
   )
 
+SortFilesInSourceGroups()
+
 add_executable(SdlSimpleViewer
   SdlSimpleViewerApplication.h
   SdlSimpleViewer.cpp
   ${ORTHANC_STONE_SOURCES}
   )
 
+
 target_link_libraries(SdlSimpleViewer ${DCMTK_LIBRARIES})
+

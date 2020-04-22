@@ -20,6 +20,15 @@ devroot/
  ```
  hg clone https://hg.orthanc-server.com/orthanc
  ```
+
+Furthermore, the samples usually assume that an Orthanc is running locally,
+without authentication, on port 8042. The samples can easily be tweaked if 
+your setup is different.
+
+When Dicom resources are to be displayed, their IDs can be supplied in the 
+various ways suitable for the platform (command-line arguments, URL parameters
+or through the GUI)
+
  
 WebAssembly samples
 ===================
@@ -125,3 +134,50 @@ I suggest that you do *not* use the `Debug` confirmation unless you really
 need it, for the additional checks that are made will lead to a very long 
 build time and much slower execution (more severe than with a native non-wasm
 target)
+
+Native samples
+=================
+
+SdlSimpleViewer
+---------------
+
+### Windows build 
+
+Here's how to build the SdlSimpleViewer example using Visual Studio 2019
+(the shell is Powershell, but the legacy shell can also be used with some 
+tweaks). This example is meant to be launched from the folder above 
+orthanc-stone.
+
+```
+  # create the build folder and navigate to it
+  $buildDir = "build-stone-sdlviewer-msvc16-x64"
+
+  if (-not (Test-Path $buildDir)) {
+    mkdir -p $buildDir | Out-Null
+  }
+  
+  cd $buildDir
+  
+  # perform the configuration
+  cmake -G "Visual Studio 16 2019" -A x64 `
+    -DMSVC_MULTIPLE_PROCESSES=ON `
+    -DALLOW_DOWNLOADS=ON `
+    -DSTATIC_BUILD=ON `
+    -DOPENSSL_NO_CAPIENG=ON `
+    ../orthanc-stone/Samples/Sdl/SimpleViewer
+  
+  $solutionPath = ls -filter *.sln
+  Write-Host "Solution file(s) available at: $solutionPath"
+```
+
+The initial configuration step will be quite lengthy, for CMake needs to 
+setup its internal cache based on your environment and build tools.
+
+Subsequent runs will be several orders of magnitude faster!
+
+One the solution (.sln) file is ready, you can open it using the Visual Studio
+IDE and choose Build --> Build solution.
+
+An alternative is to execute `cmake --build .` in the build folder created by
+the script.
+

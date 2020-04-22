@@ -122,11 +122,6 @@ namespace Deprecated
     };
 
 
-    IVolumeSlicer(OrthancStone::MessageBroker& broker) :
-      IObservable(broker)
-    {
-    }
-    
     virtual ~IVolumeSlicer()
     {
     }

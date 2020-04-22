@@ -33,6 +33,7 @@ namespace OrthancStone
   public:
     enum Type
     {
+      Type_NullLayer,
       Type_InfoPanel,
       Type_ColorTexture,
       Type_Polyline,

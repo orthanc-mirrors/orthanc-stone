@@ -21,10 +21,19 @@
 
 #pragma once
 
+#if !defined(ORTHANC_ENABLE_DCMTK)
+#  error The macro ORTHANC_ENABLE_DCMTK must be defined
+#endif
+
 #include "DicomStructureSetUtils.h"
 #include "CoordinateSystem3D.h"
 #include "Extent2D.h"
 #include "../Scene2D/Color.h"
+#include "../Scene2D/PolylineSceneLayer.h"
+
+#if ORTHANC_ENABLE_DCMTK == 1
+#  include <Core/DicomParsing/ParsedDicomFile.h>
+#endif
 
 //#define USE_BOOST_UNION_FOR_POLYGONS 1
 
@@ -137,21 +146,30 @@ namespace OrthancStone
     Structures        structures_;
     ReferencedSlices  referencedSlices_;
 
+    void Setup(const OrthancPlugins::IDicomDataset& dataset);
+    
     const Structure& GetStructure(size_t index) const;
 
     Structure& GetStructure(size_t index);
   
-#ifdef USE_BOOST_UNION_FOR_POLYGONS 
-    bool ProjectStructure(std::vector< std::vector<Point2D> >& polygons,
-                          const Structure& structure,
-                          const CoordinateSystem3D& slice) const;
+    bool ProjectStructure(
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
+      std::vector< std::vector<Point2D> >& polygons,
 #else
-    bool ProjectStructure(std::vector< std::pair<Point2D, Point2D> >& segments,
+      std::vector< std::pair<Point2D, Point2D> >& segments,
+#endif
       const Structure& structure,
       const CoordinateSystem3D& slice) const;
-#endif
+
   public:
-    DicomStructureSet(const OrthancPlugins::FullOrthancDataset& instance);
+    DicomStructureSet(const OrthancPlugins::FullOrthancDataset& instance)
+    {
+      Setup(instance);
+    }
+
+#if ORTHANC_ENABLE_DCMTK == 1
+    DicomStructureSet(Orthanc::ParsedDicomFile& instance);
+#endif
 
     size_t GetStructuresCount() const
     {
@@ -185,20 +203,32 @@ namespace OrthancStone
 
     Vector GetNormal() const;
 
-#ifdef USE_BOOST_UNION_FOR_POLYGONS 
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
     bool ProjectStructure(std::vector< std::vector<Point2D> >& polygons,
-      size_t index,
-      const CoordinateSystem3D& slice) const
+                          size_t index,
+                          const CoordinateSystem3D& slice) const
     {
       return ProjectStructure(polygons, GetStructure(index), slice);
     }
 #else
     bool ProjectStructure(std::vector< std::pair<Point2D, Point2D> >& segments,
-      size_t index,
-      const CoordinateSystem3D& slice) const
+                          size_t index,
+                          const CoordinateSystem3D& slice) const
     {
       return ProjectStructure(segments, GetStructure(index), slice);
     }
 #endif
+
+    void ProjectOntoLayer(PolylineSceneLayer& layer,
+                          const CoordinateSystem3D& plane,
+                          size_t structureIndex,
+                          const Color& color) const;
+
+    void ProjectOntoLayer(PolylineSceneLayer& layer,
+                          const CoordinateSystem3D& plane,
+                          size_t structureIndex) const
+    {
+      ProjectOntoLayer(layer, plane, structureIndex, GetStructureColor(structureIndex));
+    }
   };
 }

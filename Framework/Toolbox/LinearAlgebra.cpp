@@ -22,6 +22,7 @@
 #include "LinearAlgebra.h"
 
 #include "../StoneException.h"
+#include "GenericToolbox.h"
 
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
@@ -32,6 +33,7 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <cstdlib>
 
 namespace OrthancStone
 {
@@ -74,13 +76,30 @@ namespace OrthancStone
       for (size_t i = 0; i < items.size(); i++)
       {
         /**
+         * SJO - 2019-11-19 - WARNING: I reverted from "std::stod()"
+         * to "boost::lexical_cast", as both "std::stod()" and
+         * "std::strtod()" are sensitive to locale settings, making
+         * this code non portable and very dangerous as it fails
+         * silently. A string such as "1.3671875\1.3671875" is
+         * interpreted as "1\1", because "std::stod()" expects a comma
+         * (",") instead of a point ("."). This problem is notably
+         * seen in Qt-based applications, that somehow set locales
+         * aggressively.
+         *
+         * "boost::lexical_cast<>" is also dependent on the locale
+         * settings, but apparently not in a way that makes this
+         * function fail with Qt. The Orthanc core defines macro
+         * "-DBOOST_LEXICAL_CAST_ASSUME_C_LOCALE" in static builds to
+         * this end.
+         **/
+        
+#if 0  // __cplusplus >= 201103L  // Is C++11 enabled?
+        /**
          * We try and avoid the use of "boost::lexical_cast<>" here,
-         * as it is very slow. As we are parsing many doubles, we
-         * prefer to use the standard "std::stod" function if
-         * available: http://www.cplusplus.com/reference/string/stod/
+         * as it is very slow, and as Stone has to parse many doubles.
+         * https://tinodidriksen.com/2011/05/cpp-convert-string-to-double-speed/
          **/
           
-#if __cplusplus >= 201103L  // Is C++11 enabled?
         try
         {
           target[i] = std::stod(items[i]);
@@ -90,7 +109,37 @@ namespace OrthancStone
           target.clear();
           return false;
         }
-#else  // Fallback implementation using Boost
+
+#elif 0
+        /**
+         * "std::strtod()" is the recommended alternative to
+         * "std::stod()". It is apparently as fast as plain-C
+         * "atof()", with more security.
+         **/
+        char* end = NULL;
+        target[i] = std::strtod(items[i].c_str(), &end);
+        if (end == NULL ||
+            end != items[i].c_str() + items[i].size())
+        {
+          return false;
+        }
+
+#elif 1
+        /**
+         * Use of our homemade implementation of
+         * "boost::lexical_cast<double>()". It is much faster than boost.
+         **/
+        if (!GenericToolbox::StringToDouble(target[i], items[i].c_str()))
+        {
+          return false;
+        }
+        
+#else
+        /**
+         * Fallback implementation using Boost (slower, but somehow
+         * independent to locale contrarily to "std::stod()", and
+         * generic as it does not use our custom implementation).
+         **/
         try
         {
           target[i] = boost::lexical_cast<double>(items[i]);

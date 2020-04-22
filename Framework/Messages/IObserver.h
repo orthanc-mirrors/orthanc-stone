@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "MessageBroker.h"
+#include <boost/noncopyable.hpp>
 
 #include <stdint.h>
 
@@ -29,29 +29,13 @@ namespace OrthancStone
 {
   class IObserver : public boost::noncopyable
   {
-  private:
-    MessageBroker&  broker_;
-    // the following is a int64_t with some checks that is used to 
-    // disambiguate different observers that may have the same address
-    int64_t     fingerprint_[3];
-
-    void AssignFingerprint();
-
   public:
-    IObserver(MessageBroker& broker);
-
-    virtual ~IObserver();
-
-    int64_t GetFingerprint() const
+    IObserver()
     {
-      return fingerprint_[0];
     }
 
-    bool DoesFingerprintLookGood() const;
-
-    MessageBroker& GetBroker() const
+    virtual ~IObserver()
     {
-      return broker_;
     }
   };
 }

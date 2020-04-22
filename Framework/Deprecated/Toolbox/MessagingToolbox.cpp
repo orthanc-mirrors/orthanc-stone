@@ -18,7 +18,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-
 #include "MessagingToolbox.h"
 
 #include <Core/Images/Image.h>
@@ -30,8 +29,15 @@
 #include <Core/Logging.h>
 
 #include <boost/lexical_cast.hpp>
+
+#ifdef _MSC_VER
+// 'Json::Reader': Use CharReader and CharReaderBuilder instead
+#pragma warning(disable:4996)
+#endif
+
 #include <json/reader.h>
 #include <json/writer.h>
+
 
 namespace Deprecated
 {

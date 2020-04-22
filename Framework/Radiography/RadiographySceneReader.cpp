@@ -55,7 +55,7 @@ namespace OrthancStone
 
   RadiographyDicomLayer* RadiographySceneGeometryReader::LoadDicom(const std::string& instanceId, unsigned int frame, RadiographyLayer::Geometry* geometry)
   {
-    std::unique_ptr<RadiographyPlaceholderLayer>  layer(new RadiographyPlaceholderLayer(dynamic_cast<IObservable&>(scene_).GetBroker(), scene_));
+    std::unique_ptr<RadiographyPlaceholderLayer>  layer(new RadiographyPlaceholderLayer(scene_));
     layer->SetGeometry(*geometry);
     layer->SetSize(dicomImageWidth_, dicomImageHeight_);
     scene_.RegisterLayer(layer.get());

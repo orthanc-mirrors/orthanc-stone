@@ -26,18 +26,19 @@
 namespace OrthancStone
 {
   EditAngleMeasureTracker::EditAngleMeasureTracker(
-    boost::shared_ptr<AngleMeasureTool>  measureTool,
-    MessageBroker& broker,
-    boost::weak_ptr<ViewportController> controllerW,
+    boost::shared_ptr<MeasureTool>  measureTool,
+    boost::shared_ptr<IViewport> viewport,
     const PointerEvent& e)
-    : EditMeasureTracker(controllerW, e)
+    : EditMeasureTracker(viewport, e)
   {
-    ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      GetScene().GetCanvasToSceneTransform());
-
-    modifiedZone_ = measureTool->AngleHitTest(scenePos);
-
-    command_.reset(new EditAngleMeasureCommand(measureTool, broker, controllerW));
+    ScenePoint2D scenePos = e.GetMainPosition();
+    {
+      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+      ViewportController& controller = lock->GetController();
+      scenePos = e.GetMainPosition().Apply(controller.GetScene().GetCanvasToSceneTransform());
+    }
+    modifiedZone_ = dynamic_cast<AngleMeasureTool&>(*measureTool).AngleHitTest(scenePos);
+    command_.reset(new EditAngleMeasureCommand(measureTool, viewport));
   }
 
   EditAngleMeasureTracker::~EditAngleMeasureTracker()
@@ -47,8 +48,12 @@ namespace OrthancStone
 
   void EditAngleMeasureTracker::PointerMove(const PointerEvent& e)
   {
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    ViewportController& controller = lock->GetController();
+    Scene2D& scene = controller.GetScene();
+
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      GetScene().GetCanvasToSceneTransform());
+      scene.GetCanvasToSceneTransform());
 
     ScenePoint2D delta = scenePos - GetOriginalClickPosition();
 
@@ -59,38 +64,38 @@ namespace OrthancStone
 
     switch (modifiedZone_)
     {
-    case AngleMeasureTool::AngleHighlightArea_Center:
-    {
-      ScenePoint2D newCenter = memento->center_ + delta;
-      GetCommand()->SetCenter(newCenter);
-    }
-    break;
-    case AngleMeasureTool::AngleHighlightArea_Side1:
-    case AngleMeasureTool::AngleHighlightArea_Side2:
-    {
-      ScenePoint2D newCenter = memento->center_ + delta;
-      ScenePoint2D newSide1End = memento->side1End_ + delta;
-      ScenePoint2D newSide2End = memento->side2End_ + delta;
-      GetCommand()->SetCenter(newCenter);
-      GetCommand()->SetSide1End(newSide1End);
-      GetCommand()->SetSide2End(newSide2End);
-    }
-    break;
-    case AngleMeasureTool::AngleHighlightArea_Side1End:
-    {
-      ScenePoint2D newSide1End = memento->side1End_ + delta;
-      GetCommand()->SetSide1End(newSide1End);
-    }
-    break;
-    case AngleMeasureTool::AngleHighlightArea_Side2End:
-    {
-      ScenePoint2D newSide2End = memento->side2End_ + delta;
-      GetCommand()->SetSide2End(newSide2End);
-    }
-    break;
-    default:
-      LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
+      case AngleMeasureTool::AngleHighlightArea_Center:
+      {
+        ScenePoint2D newCenter = memento->center_ + delta;
+        GetCommand()->SetCenter(newCenter);
+      }
       break;
+      case AngleMeasureTool::AngleHighlightArea_Side1:
+      case AngleMeasureTool::AngleHighlightArea_Side2:
+      {
+        ScenePoint2D newCenter = memento->center_ + delta;
+        ScenePoint2D newSide1End = memento->side1End_ + delta;
+        ScenePoint2D newSide2End = memento->side2End_ + delta;
+        GetCommand()->SetCenter(newCenter);
+        GetCommand()->SetSide1End(newSide1End);
+        GetCommand()->SetSide2End(newSide2End);
+      }
+      break;
+      case AngleMeasureTool::AngleHighlightArea_Side1End:
+      {
+        ScenePoint2D newSide1End = memento->side1End_ + delta;
+        GetCommand()->SetSide1End(newSide1End);
+      }
+      break;
+      case AngleMeasureTool::AngleHighlightArea_Side2End:
+      {
+        ScenePoint2D newSide2End = memento->side2End_ + delta;
+        GetCommand()->SetSide2End(newSide2End);
+      }
+      break;
+      default:
+        LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
+        break;
     }
   }
 
@@ -111,5 +116,4 @@ namespace OrthancStone
     ORTHANC_ASSERT(ret.get() != NULL, "Internal error in EditAngleMeasureTracker::GetCommand()");
     return ret;
   }
-
 }

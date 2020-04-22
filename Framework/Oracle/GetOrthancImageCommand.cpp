@@ -29,20 +29,6 @@
 
 namespace OrthancStone
 {
-  GetOrthancImageCommand::SuccessMessage::SuccessMessage(const GetOrthancImageCommand& command,
-                                                         Orthanc::ImageAccessor* image,   // Takes ownership
-                                                         Orthanc::MimeType mime) :
-    OriginMessage(command),
-    image_(image),
-    mime_(mime)
-  {
-    if (image == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-  }
-
-
   GetOrthancImageCommand::GetOrthancImageCommand() :
     uri_("/"),
     timeout_(600),
@@ -58,35 +44,59 @@ namespace OrthancStone
   }
 
 
-  void GetOrthancImageCommand::SetInstanceUri(const std::string& instance,
-                                              Orthanc::PixelFormat pixelFormat)
+  static std::string GetFormatSuffix(Orthanc::PixelFormat pixelFormat)
   {
-    uri_ = "/instances/" + instance;
-          
     switch (pixelFormat)
     {
       case Orthanc::PixelFormat_RGB24:
-        uri_ += "/preview";
-        break;
+        return "preview";
       
       case Orthanc::PixelFormat_Grayscale16:
-        uri_ += "/image-uint16";
-        break;
+        return "image-uint16";
       
       case Orthanc::PixelFormat_SignedGrayscale16:
-        uri_ += "/image-int16";
-        break;
+        return "image-int16";
       
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
   }
 
-  void GetOrthancImageCommand::ProcessHttpAnswer(IMessageEmitter& emitter,
-                                                 const IObserver& receiver,
+
+  void GetOrthancImageCommand::SetInstanceUri(const std::string& instance,
+                                              Orthanc::PixelFormat pixelFormat)
+  {
+    uri_ = "/instances/" + instance + "/" + GetFormatSuffix(pixelFormat);
+  }
+
+
+  void GetOrthancImageCommand::SetFrameUri(const std::string& instance,
+                                           unsigned int frame,
+                                           Orthanc::PixelFormat pixelFormat)
+  {
+    uri_ = ("/instances/" + instance + "/frames/" +
+            boost::lexical_cast<std::string>(frame) + "/" + GetFormatSuffix(pixelFormat));
+  }
+
+
+  void GetOrthancImageCommand::ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
+                                                 IMessageEmitter& emitter,
                                                  const std::string& answer,
                                                  const HttpHeaders& answerHeaders) const
   {
+    for (HttpHeaders::const_iterator it = answerHeaders.begin(); it != answerHeaders.end(); ++it)
+    {
+      std::string key = Orthanc::Toolbox::StripSpaces(it->first);
+      Orthanc::Toolbox::ToLowerCase(key);
+        
+      if (key == "content-disposition" &&
+          it->second == "filename=\"unsupported.png\"")
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat,
+                                        "Orthanc cannot decode this image");
+      }
+    }
+    
     Orthanc::MimeType contentType = Orthanc::MimeType_Binary;
 
     for (HttpHeaders::const_iterator it = answerHeaders.begin(); 
@@ -115,7 +125,16 @@ namespace OrthancStone
 
       case Orthanc::MimeType_Pam:
       {
+#ifdef __EMSCRIPTEN__
+        // "true" means we ask the PamReader to make an extra copy so that
+        // the resulting Orthanc::ImageAccessor is aligned (as malloc is).
+        // Indeed, even though alignment is not required in Web Assembly,
+        // Emscripten seems to check it and bail out if addresses are "odd"
+        image.reset(new Orthanc::PamReader(true));
+#else
+        // potentially unaligned, with is faster and consumes less heap memory
         image.reset(new Orthanc::PamReader);
+#endif
         dynamic_cast<Orthanc::PamReader&>(*image).ReadFromMemory(answer);
         break;
       }
@@ -147,7 +166,24 @@ namespace OrthancStone
       }
     }
 
-    SuccessMessage message(*this, image.release(), contentType);
+    //{
+    //  // DEBUG DISPLAY IMAGE PROPERTIES BGO 2020-04-11
+    //  const Orthanc::ImageAccessor& source = *image;
+    //  const void* sourceBuffer = source.GetConstBuffer();
+    //  intptr_t sourceBufferInt = reinterpret_cast<intptr_t>(sourceBuffer);
+    //  int sourceWidth = source.GetWidth();
+    //  int sourceHeight = source.GetHeight();
+    //  int sourcePitch = source.GetPitch();
+
+    //  // TODO: turn error into trace below
+    //  LOG(ERROR) << "GetOrthancImageCommand::ProcessHttpAnswer | source:"
+    //    << " W = " << sourceWidth << " H = " << sourceHeight
+    //    << " P = " << sourcePitch << " B = " << sourceBufferInt
+    //    << " B % 4 == " << sourceBufferInt % 4;
+    //}
+
+
+    SuccessMessage message(*this, *image, contentType);
     emitter.EmitMessage(receiver, message);
   }
 }

@@ -24,10 +24,10 @@
 
 namespace OrthancStone
 {
-  Deprecated::IWidget& NativeStoneApplicationContext::GlobalMutexLocker::SetCentralWidget(Deprecated::IWidget* widget)
+  void NativeStoneApplicationContext::GlobalMutexLocker::SetCentralWidget(
+    boost::shared_ptr<Deprecated::IWidget> widget)
   {
     that_.centralViewport_.SetCentralWidget(widget);
-    return *widget;
   }
 
 
@@ -45,9 +45,7 @@ namespace OrthancStone
   }
   
 
-  NativeStoneApplicationContext::NativeStoneApplicationContext(MessageBroker& broker) :
-    StoneApplicationContext(broker),
-    centralViewport_(broker),
+  NativeStoneApplicationContext::NativeStoneApplicationContext() :
     stopped_(true),
     updateDelayInMs_(100)   // By default, 100ms between each refresh of the content
   {

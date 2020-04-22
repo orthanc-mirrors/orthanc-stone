@@ -21,6 +21,8 @@
 
 #include "OpenGLFloatTextureRenderer.h"
 
+#include <Core/OrthancException.h>
+
 namespace OrthancStone
 {
   namespace Internals
@@ -32,6 +34,11 @@ namespace OrthancStone
       {
         if (loadTexture)
         {
+          if (layer.IsApplyLog())
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+          }
+          
           context_.MakeCurrent();
           texture_.reset(new OpenGLFloatTextureProgram::Data(
             context_, layer.GetTexture(), layer.IsLinearInterpolation()));

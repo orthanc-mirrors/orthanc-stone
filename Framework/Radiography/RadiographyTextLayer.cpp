@@ -22,7 +22,7 @@
 
 #include "Core/OrthancException.h"
 #include "RadiographyScene.h"
-#include "Framework/Toolbox/TextRenderer.h"
+#include "../Toolbox/TextRenderer.h"
 
 namespace OrthancStone
 {

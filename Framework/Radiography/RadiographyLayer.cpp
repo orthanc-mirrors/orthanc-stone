@@ -119,8 +119,7 @@ namespace OrthancStone
   }
 
 
-  RadiographyLayer::RadiographyLayer(MessageBroker& broker, const RadiographyScene& scene) :
-    IObservable(broker),
+  RadiographyLayer::RadiographyLayer(const RadiographyScene& scene) :
     index_(0),
     hasSize_(false),
     width_(0),

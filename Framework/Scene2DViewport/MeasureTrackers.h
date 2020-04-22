@@ -40,15 +40,14 @@ namespace OrthancStone
     virtual void Cancel() ORTHANC_OVERRIDE;
     virtual bool IsAlive() const ORTHANC_OVERRIDE;
   protected:
-    CreateMeasureTracker(boost::weak_ptr<ViewportController> controllerW);
+    CreateMeasureTracker(boost::shared_ptr<IViewport> viewport);
 
     ~CreateMeasureTracker();
   
   protected:
     boost::shared_ptr<CreateMeasureCommand>         command_;
-    boost::weak_ptr<ViewportController>          controllerW_;
+    boost::shared_ptr<IViewport>          viewport_;
     bool                            alive_;
-    Scene2D&                      GetScene();
 
   private:
     bool                            commitResult_;
@@ -60,15 +59,14 @@ namespace OrthancStone
     virtual void Cancel() ORTHANC_OVERRIDE;
     virtual bool IsAlive() const ORTHANC_OVERRIDE;
   protected:
-    EditMeasureTracker(boost::weak_ptr<ViewportController> controllerW, const PointerEvent& e);
+    EditMeasureTracker(boost::shared_ptr<IViewport> viewport, const PointerEvent& e);
 
     ~EditMeasureTracker();
 
   protected:
     boost::shared_ptr<EditMeasureCommand> command_;
-    boost::weak_ptr<ViewportController>   controllerW_;
+    boost::shared_ptr<IViewport>   viewport_;
     bool                                  alive_;
-    Scene2D&            GetScene();
     
     ScenePoint2D                          GetOriginalClickPosition() const
     {

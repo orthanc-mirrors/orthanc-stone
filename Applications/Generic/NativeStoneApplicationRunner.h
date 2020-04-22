@@ -34,14 +34,11 @@ namespace OrthancStone
   class NativeStoneApplicationRunner
   {
   protected:
-    MessageBroker&      broker_;
-    IStoneApplication&  application_;
+    boost::shared_ptr<IStoneApplication>  application_;
+    
   public:
-
-    NativeStoneApplicationRunner(MessageBroker& broker,
-                                 IStoneApplication& application)
-      : broker_(broker),
-        application_(application)
+    NativeStoneApplicationRunner(boost::shared_ptr<IStoneApplication> application)
+      : application_(application)
     {
     }
     int Execute(int argc,

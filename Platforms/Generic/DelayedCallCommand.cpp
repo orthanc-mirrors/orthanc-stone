@@ -26,13 +26,11 @@
 
 namespace Deprecated
 {
-  DelayedCallCommand::DelayedCallCommand(OrthancStone::MessageBroker& broker,
-                                         OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,  // takes ownership
+  DelayedCallCommand::DelayedCallCommand(MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,  // takes ownership
                                          unsigned int timeoutInMs,
                                          Orthanc::IDynamicObject* payload /* takes ownership */,
                                          OrthancStone::NativeStoneApplicationContext& context
                                          ) :
-    IObservable(broker),
     callback_(callback),
     payload_(payload),
     context_(context),

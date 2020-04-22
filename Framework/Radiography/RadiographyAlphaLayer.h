@@ -39,8 +39,8 @@ namespace OrthancStone
     float                                  foreground_;  // in the range [0.0, 65535.0]
 
   public:
-    RadiographyAlphaLayer(MessageBroker& broker, const RadiographyScene& scene) :
-      RadiographyLayer(broker, scene),
+    RadiographyAlphaLayer(const RadiographyScene& scene) :
+      RadiographyLayer(scene),
       foreground_(0)
     {
     }

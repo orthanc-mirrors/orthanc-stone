@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Messages/IMessage.h"
-#include "OracleCommandWithPayload.h"
+#include "OracleCommandBase.h"
 
 #include <Core/Enumerations.h>
 
@@ -31,7 +31,7 @@
 
 namespace OrthancStone
 {
-  class OrthancRestApiCommand : public OracleCommandWithPayload
+  class OrthancRestApiCommand : public OracleCommandBase
   {
   public:
     typedef std::map<std::string, std::string>  HttpHeaders;
@@ -41,14 +41,19 @@ namespace OrthancStone
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      HttpHeaders   headers_;
-      std::string   answer_;
+      const HttpHeaders&  headers_;
+      const std::string&  answer_;
 
     public:
       SuccessMessage(const OrthancRestApiCommand& command,
                      const HttpHeaders& answerHeaders,
-                     std::string& answer  /* will be swapped to avoid a memcpy() */);
-
+                     const std::string& answer) :
+        OriginMessage(command),
+        headers_(answerHeaders),
+        answer_(answer)
+      {
+      }
+      
       const std::string& GetAnswer() const
       {
         return answer_;
@@ -69,13 +74,29 @@ namespace OrthancStone
     std::string          body_;
     HttpHeaders          headers_;
     unsigned int         timeout_;
+    bool                 applyPlugins_;  // Only makes sense for Stone as an Orthanc plugin
 
+    OrthancRestApiCommand(const OrthancRestApiCommand& other) :
+      method_(other.method_),
+      uri_(other.uri_),
+      body_(other.body_),
+      headers_(other.headers_),
+      timeout_(other.timeout_),
+      applyPlugins_(other.applyPlugins_)
+    {
+    }
+    
   public:
     OrthancRestApiCommand();
 
     virtual Type GetType() const
     {
       return Type_OrthancRestApi;
+    }
+
+    virtual IOracleCommand* Clone() const
+    {
+      return new OrthancRestApiCommand(*this);
     }
 
     void SetMethod(Orthanc::HttpMethod method)
@@ -136,6 +157,16 @@ namespace OrthancStone
     unsigned int GetTimeout() const
     {
       return timeout_;
+    }
+
+    void SetApplyPlugins(bool applyPlugins)
+    {
+      applyPlugins_ = applyPlugins;
+    }
+
+    bool IsApplyPlugins() const
+    {
+      return applyPlugins_;
     }
   };
 }

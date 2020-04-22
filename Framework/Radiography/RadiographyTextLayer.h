@@ -37,8 +37,8 @@ namespace OrthancStone
 
     static std::map<std::string, Orthanc::EmbeddedResources::FileResourceId>  fonts_;
   public:
-    RadiographyTextLayer(MessageBroker& broker, const RadiographyScene& scene) :
-      RadiographyAlphaLayer(broker, scene)
+    RadiographyTextLayer(const RadiographyScene& scene) :
+      RadiographyAlphaLayer(scene)
     {
     }
 

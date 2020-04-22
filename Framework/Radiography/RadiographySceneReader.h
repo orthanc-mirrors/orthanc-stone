@@ -37,8 +37,8 @@ namespace OrthancStone
   class RadiographyPlaceholderLayer : public RadiographyDicomLayer
   {
   public:
-    RadiographyPlaceholderLayer(MessageBroker& broker, const RadiographyScene& scene) :
-      RadiographyDicomLayer(broker, scene)
+    RadiographyPlaceholderLayer(const RadiographyScene& scene) :
+      RadiographyDicomLayer(scene)
     {
     }
 

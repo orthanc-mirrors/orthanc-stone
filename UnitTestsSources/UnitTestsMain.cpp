@@ -25,6 +25,7 @@
 #include "../Framework/Deprecated/Toolbox/DownloadStack.h"
 #include "../Framework/Deprecated/Toolbox/MessagingToolbox.h"
 #include "../Framework/Deprecated/Toolbox/OrthancSlicesLoader.h"
+#include "../Framework/StoneInitialization.h"
 #include "../Framework/Toolbox/FiniteProjectiveCamera.h"
 #include "../Framework/Toolbox/GeometryToolbox.h"
 #include "../Framework/Volumes/ImageBuffer3D.h"
@@ -566,20 +567,20 @@ TEST(FiniteProjectiveCamera, Calibration)
 }
 
 
-static bool IsEqualVector(OrthancStone::Vector a,
-                          OrthancStone::Vector b)
+static bool IsEqualRotationVector(OrthancStone::Vector a,
+                                  OrthancStone::Vector b)
 {
-  if (a.size() == 3 &&
-      b.size() == 3)
+  if (a.size() != b.size() ||
+      a.size() != 3)
+  {
+    return false;
+  }
+  else
   {
     OrthancStone::LinearAlgebra::NormalizeVector(a);
     OrthancStone::LinearAlgebra::NormalizeVector(b);
     return OrthancStone::LinearAlgebra::IsCloseToZero(boost::numeric::ublas::norm_2(a - b));
   }
-  else
-  {
-    return false;
-  } 
 }
 
 
@@ -593,29 +594,29 @@ TEST(GeometryToolbox, AlignVectorsWithRotation)
 
   OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
   ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
-  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, a), b));
+  ASSERT_TRUE(IsEqualRotationVector(OrthancStone::LinearAlgebra::Product(r, a), b));
 
   OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, b, a);
   ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
-  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, b), a));
+  ASSERT_TRUE(IsEqualRotationVector(OrthancStone::LinearAlgebra::Product(r, b), a));
 
   OrthancStone::LinearAlgebra::AssignVector(a, 1, 0, 0);
   OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
   OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
   ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
-  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, a), b));
+  ASSERT_TRUE(IsEqualRotationVector(OrthancStone::LinearAlgebra::Product(r, a), b));
 
   OrthancStone::LinearAlgebra::AssignVector(a, 0, 1, 0);
   OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
   OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
   ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
-  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, a), b));
+  ASSERT_TRUE(IsEqualRotationVector(OrthancStone::LinearAlgebra::Product(r, a), b));
 
   OrthancStone::LinearAlgebra::AssignVector(a, 0, 0, 1);
   OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
   OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
   ASSERT_TRUE(OrthancStone::LinearAlgebra::IsRotationMatrix(r));
-  ASSERT_TRUE(IsEqualVector(OrthancStone::LinearAlgebra::Product(r, a), b));
+  ASSERT_TRUE(IsEqualRotationVector(OrthancStone::LinearAlgebra::Product(r, a), b));
 
   OrthancStone::LinearAlgebra::AssignVector(a, 0, 0, 0);
   OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
@@ -624,11 +625,11 @@ TEST(GeometryToolbox, AlignVectorsWithRotation)
   // TODO: Deal with opposite vectors
 
   /*
-  OrthancStone::LinearAlgebra::AssignVector(a, 0, 0, -1);
-  OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
-  OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
-  OrthancStone::LinearAlgebra::Print(r);
-  OrthancStone::LinearAlgebra::Print(boost::numeric::ublas::prod(r, a));
+    OrthancStone::LinearAlgebra::AssignVector(a, 0, 0, -1);
+    OrthancStone::LinearAlgebra::AssignVector(b, 0, 0, 1);
+    OrthancStone::GeometryToolbox::AlignVectorsWithRotation(r, a, b);
+    OrthancStone::LinearAlgebra::Print(r);
+    OrthancStone::LinearAlgebra::Print(boost::numeric::ublas::prod(r, a));
   */
 }
 
@@ -639,13 +640,39 @@ TEST(MessagingToolbox, ParseJson)
   ASSERT_TRUE(Deprecated::MessagingToolbox::ParseJson(response, source.c_str(), source.size()));
 }
 
+
+
+static bool IsEqualVectorL1(OrthancStone::Vector a,
+                            OrthancStone::Vector b)
+{
+  if (a.size() != b.size())
+  {
+    return false;
+  }
+  else
+  {
+    for (size_t i = 0; i < a.size(); i++)
+    {
+      if (!OrthancStone::LinearAlgebra::IsNear(a[i], b[i], 0.0001))
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+}
+
+
 TEST(VolumeImageGeometry, Basic)
 {
-  OrthancStone::VolumeImageGeometry g;
+  using namespace OrthancStone;
+  
+  VolumeImageGeometry g;
   g.SetSizeInVoxels(10, 20, 30);
   g.SetVoxelDimensions(1, 2, 3);
 
-  OrthancStone::Vector p = g.GetCoordinates(0, 0, 0);
+  Vector p = g.GetCoordinates(0, 0, 0);
   ASSERT_EQ(3u, p.size());
   ASSERT_DOUBLE_EQ(-1.0 / 2.0, p[0]);
   ASSERT_DOUBLE_EQ(-2.0 / 2.0, p[1]);
@@ -656,68 +683,147 @@ TEST(VolumeImageGeometry, Basic)
   ASSERT_DOUBLE_EQ(-2.0 / 2.0 + 20.0 * 2.0, p[1]);
   ASSERT_DOUBLE_EQ(-3.0 / 2.0 + 30.0 * 3.0, p[2]);
 
-  OrthancStone::VolumeProjection proj;
+  VolumeProjection proj;
   ASSERT_TRUE(g.DetectProjection(proj, g.GetAxialGeometry().GetNormal()));
-  ASSERT_EQ(OrthancStone::VolumeProjection_Axial, proj);
+  ASSERT_EQ(VolumeProjection_Axial, proj);
   ASSERT_TRUE(g.DetectProjection(proj, g.GetCoronalGeometry().GetNormal()));
-  ASSERT_EQ(OrthancStone::VolumeProjection_Coronal, proj);
+  ASSERT_EQ(VolumeProjection_Coronal, proj);
   ASSERT_TRUE(g.DetectProjection(proj, g.GetSagittalGeometry().GetNormal()));
-  ASSERT_EQ(OrthancStone::VolumeProjection_Sagittal, proj);
+  ASSERT_EQ(VolumeProjection_Sagittal, proj);
 
-  ASSERT_EQ(10u, g.GetProjectionWidth(OrthancStone::VolumeProjection_Axial));
-  ASSERT_EQ(20u, g.GetProjectionHeight(OrthancStone::VolumeProjection_Axial));
-  ASSERT_EQ(30u, g.GetProjectionDepth(OrthancStone::VolumeProjection_Axial));
-  ASSERT_EQ(10u, g.GetProjectionWidth(OrthancStone::VolumeProjection_Coronal));
-  ASSERT_EQ(30u, g.GetProjectionHeight(OrthancStone::VolumeProjection_Coronal));
-  ASSERT_EQ(20u, g.GetProjectionDepth(OrthancStone::VolumeProjection_Coronal));
-  ASSERT_EQ(20u, g.GetProjectionWidth(OrthancStone::VolumeProjection_Sagittal));
-  ASSERT_EQ(30u, g.GetProjectionHeight(OrthancStone::VolumeProjection_Sagittal));
-  ASSERT_EQ(10u, g.GetProjectionDepth(OrthancStone::VolumeProjection_Sagittal));
+  ASSERT_EQ(10u, g.GetProjectionWidth(VolumeProjection_Axial));
+  ASSERT_EQ(20u, g.GetProjectionHeight(VolumeProjection_Axial));
+  ASSERT_EQ(30u, g.GetProjectionDepth(VolumeProjection_Axial));
+  ASSERT_EQ(10u, g.GetProjectionWidth(VolumeProjection_Coronal));
+  ASSERT_EQ(30u, g.GetProjectionHeight(VolumeProjection_Coronal));
+  ASSERT_EQ(20u, g.GetProjectionDepth(VolumeProjection_Coronal));
+  ASSERT_EQ(20u, g.GetProjectionWidth(VolumeProjection_Sagittal));
+  ASSERT_EQ(30u, g.GetProjectionHeight(VolumeProjection_Sagittal));
+  ASSERT_EQ(10u, g.GetProjectionDepth(VolumeProjection_Sagittal));
 
-  p = g.GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
+  p = g.GetVoxelDimensions(VolumeProjection_Axial);
   ASSERT_EQ(3u, p.size());
   ASSERT_DOUBLE_EQ(1, p[0]);
   ASSERT_DOUBLE_EQ(2, p[1]);
   ASSERT_DOUBLE_EQ(3, p[2]);
-  p = g.GetVoxelDimensions(OrthancStone::VolumeProjection_Coronal);
+  p = g.GetVoxelDimensions(VolumeProjection_Coronal);
   ASSERT_EQ(3u, p.size());
   ASSERT_DOUBLE_EQ(1, p[0]);
   ASSERT_DOUBLE_EQ(3, p[1]);
   ASSERT_DOUBLE_EQ(2, p[2]);
-  p = g.GetVoxelDimensions(OrthancStone::VolumeProjection_Sagittal);
+  p = g.GetVoxelDimensions(VolumeProjection_Sagittal);
   ASSERT_EQ(3u, p.size());
   ASSERT_DOUBLE_EQ(2, p[0]);
   ASSERT_DOUBLE_EQ(3, p[1]);
   ASSERT_DOUBLE_EQ(1, p[2]);
 
-  ASSERT_EQ(0, (int) OrthancStone::VolumeProjection_Axial);
-  ASSERT_EQ(1, (int) OrthancStone::VolumeProjection_Coronal);
-  ASSERT_EQ(2, (int) OrthancStone::VolumeProjection_Sagittal);
+  // Loop over all the voxels of the volume
+  for (unsigned int z = 0; z < g.GetDepth(); z++)
+  {
+    const float zz = (0.5f + static_cast<float>(z)) / static_cast<float>(g.GetDepth());  // Z-center of the voxel
+    
+    for (unsigned int y = 0; y < g.GetHeight(); y++)
+    {
+      const float yy = (0.5f + static_cast<float>(y)) / static_cast<float>(g.GetHeight());  // Y-center of the voxel
+
+      for (unsigned int x = 0; x < g.GetWidth(); x++)
+      {
+        const float xx = (0.5f + static_cast<float>(x)) / static_cast<float>(g.GetWidth());  // X-center of the voxel
+
+        const float sx = 1.0f;
+        const float sy = 2.0f;
+        const float sz = 3.0f;
+        
+        Vector p = g.GetCoordinates(xx, yy, zz);
+
+        Vector q = (g.GetAxialGeometry().MapSliceToWorldCoordinates(
+                      static_cast<double>(x) * sx,
+                      static_cast<double>(y) * sy) +
+                    z * sz * g.GetAxialGeometry().GetNormal());
+        ASSERT_TRUE(IsEqualVectorL1(p, q));
+        
+        q = (g.GetCoronalGeometry().MapSliceToWorldCoordinates(
+               static_cast<double>(x) * sx,
+               static_cast<double>(g.GetDepth() - 1 - z) * sz) +
+             y * sy * g.GetCoronalGeometry().GetNormal());
+        ASSERT_TRUE(IsEqualVectorL1(p, q));
+
+        /**
+         * WARNING: In sagittal geometry, the normal points to
+         * REDUCING X-axis in the 3D world. This is necessary to keep
+         * the right-hand coordinate system. Hence the "-".
+         **/
+        q = (g.GetSagittalGeometry().MapSliceToWorldCoordinates(
+               static_cast<double>(y) * sy,
+               static_cast<double>(g.GetDepth() - 1 - z) * sz) +
+             x * sx * (-g.GetSagittalGeometry().GetNormal()));
+        ASSERT_TRUE(IsEqualVectorL1(p, q));
+      }
+    }
+  }
+
+  ASSERT_EQ(0, (int) VolumeProjection_Axial);
+  ASSERT_EQ(1, (int) VolumeProjection_Coronal);
+  ASSERT_EQ(2, (int) VolumeProjection_Sagittal);
   
   for (int p = 0; p < 3; p++)
   {
-    OrthancStone::VolumeProjection projection = (OrthancStone::VolumeProjection) p;
-    const OrthancStone::CoordinateSystem3D& s = g.GetProjectionGeometry(projection);
+    VolumeProjection projection = (VolumeProjection) p;
+    const CoordinateSystem3D& s = g.GetProjectionGeometry(projection);
     
     ASSERT_THROW(g.GetProjectionSlice(projection, g.GetProjectionDepth(projection)), Orthanc::OrthancException);
 
     for (unsigned int i = 0; i < g.GetProjectionDepth(projection); i++)
     {
-      OrthancStone::CoordinateSystem3D plane = g.GetProjectionSlice(projection, i);
+      CoordinateSystem3D plane = g.GetProjectionSlice(projection, i);
 
-      ASSERT_TRUE(IsEqualVector(plane.GetOrigin(), s.GetOrigin() + static_cast<double>(i) * 
-                                s.GetNormal() * g.GetVoxelDimensions(projection)[2]));
-      ASSERT_TRUE(IsEqualVector(plane.GetAxisX(), s.GetAxisX()));
-      ASSERT_TRUE(IsEqualVector(plane.GetAxisY(), s.GetAxisY()));
+      if (projection == VolumeProjection_Sagittal)
+      {
+        ASSERT_TRUE(IsEqualVectorL1(plane.GetOrigin(), s.GetOrigin() + static_cast<double>(i) * 
+                                    (-s.GetNormal()) * g.GetVoxelDimensions(projection)[2]));
+      }
+      else
+      {
+        ASSERT_TRUE(IsEqualVectorL1(plane.GetOrigin(), s.GetOrigin() + static_cast<double>(i) * 
+                                    s.GetNormal() * g.GetVoxelDimensions(projection)[2]));
+      }
+      
+      ASSERT_TRUE(IsEqualVectorL1(plane.GetAxisX(), s.GetAxisX()));
+      ASSERT_TRUE(IsEqualVectorL1(plane.GetAxisY(), s.GetAxisY()));
 
       unsigned int slice;
-      OrthancStone::VolumeProjection q;
+      VolumeProjection q;
       ASSERT_TRUE(g.DetectSlice(q, slice, plane));
       ASSERT_EQ(projection, q);
-      ASSERT_EQ(i, slice);     
+      ASSERT_EQ(i, slice);
     }
   }
 }
+
+
+TEST(LinearAlgebra, ParseVectorLocale)
+{
+  OrthancStone::Vector v;
+
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::ParseVector(v, "1.2"));
+  ASSERT_EQ(1u, v.size());
+  ASSERT_DOUBLE_EQ(1.2, v[0]);
+
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::ParseVector(v, "-1.2e+2"));
+  ASSERT_EQ(1u, v.size());
+  ASSERT_DOUBLE_EQ(-120.0, v[0]);
+
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::ParseVector(v, "-1e-2\\2"));
+  ASSERT_EQ(2u, v.size());
+  ASSERT_DOUBLE_EQ(-0.01, v[0]);
+  ASSERT_DOUBLE_EQ(2.0, v[1]);
+
+  ASSERT_TRUE(OrthancStone::LinearAlgebra::ParseVector(v, "1.3671875\\1.3671875"));
+  ASSERT_EQ(2u, v.size());
+  ASSERT_DOUBLE_EQ(1.3671875, v[0]);
+  ASSERT_DOUBLE_EQ(1.3671875, v[1]); 
+}
+
 
 int main(int argc, char **argv)
 {

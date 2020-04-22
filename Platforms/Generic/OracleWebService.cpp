@@ -29,19 +29,17 @@ namespace Deprecated
   class OracleWebService::WebServiceCachedGetCommand : public IOracleCommand, OrthancStone::IObservable
   {
   protected:
-    std::unique_ptr<OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
+    std::unique_ptr<MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
     std::unique_ptr<Orthanc::IDynamicObject>                                  payload_;
     boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage>      cachedMessage_;
     OrthancStone::NativeStoneApplicationContext&                                          context_;
 
   public:
-    WebServiceCachedGetCommand(OrthancStone::MessageBroker& broker,
-                               OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+    WebServiceCachedGetCommand(MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
                                boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedMessage,
                                Orthanc::IDynamicObject* payload /* takes ownership */,
                                OrthancStone::NativeStoneApplicationContext& context
                                ) :
-      IObservable(broker),
       successCallback_(successCallback),
       payload_(payload),
       cachedMessage_(cachedMessage),
@@ -73,9 +71,9 @@ namespace Deprecated
 
   void OracleWebService::NotifyHttpSuccessLater(boost::shared_ptr<BaseWebService::CachedHttpRequestSuccessMessage> cachedMessage,
                                                 Orthanc::IDynamicObject* payload, // takes ownership
-                                                OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback)
+                                                MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback)
   {
-    oracle_.Submit(new WebServiceCachedGetCommand(GetBroker(), successCallback, cachedMessage, payload, context_));
+    oracle_.Submit(new WebServiceCachedGetCommand(successCallback, cachedMessage, payload, context_));
   }
 
 

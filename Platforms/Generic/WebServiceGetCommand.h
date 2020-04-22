@@ -28,9 +28,8 @@ namespace Deprecated
   class WebServiceGetCommand : public WebServiceCommandBase
   {
   public:
-    WebServiceGetCommand(OrthancStone::MessageBroker& broker,
-                         OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
-                         OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
+    WebServiceGetCommand(MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                         MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                          const Orthanc::WebServiceParameters& parameters,
                          const std::string& url,
                          const IWebService::HttpHeaders& headers,

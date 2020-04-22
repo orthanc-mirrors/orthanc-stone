@@ -20,6 +20,11 @@
 
 #pragma once
 
+#include "../Volumes/DicomVolumeImageMPRSlicer.h"
+#include "OrthancSeriesVolumeProgressiveLoader.h"
+#include "OrthancMultiframeVolumeLoader.h"
+#include "DicomStructureSetLoader.h"
+
 #include <boost/shared_ptr.hpp>
 
 #include <map>
@@ -28,37 +33,20 @@
 
 namespace OrthancStone
 {
-  class OrthancSeriesVolumeProgressiveLoader;
-  class DicomVolumeImageMPRSlicer;
-  class DicomStructureSetLoader;
-#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-  class DicomStructureSetLoader2;
-  class DicomStructureSetSlicer2;
-  class DicomStructureSet2;
-#endif 
-  //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-  class OrthancMultiframeVolumeLoader;
+  class ILoadersContext;
+}
 
-#if ORTHANC_ENABLE_WASM == 1
-  class WebAssemblyOracle;
-#else
-  class ThreadedOracle;
-  class LockingEmitter;
-#endif
-
+namespace OrthancStone
+{
   class LoaderCache
   {
   public:
-#if ORTHANC_ENABLE_WASM == 1
-    LoaderCache(WebAssemblyOracle& oracle);
-#else
-    LoaderCache(ThreadedOracle& oracle, LockingEmitter& lockingEmitter);
-#endif
+    LoaderCache(OrthancStone::ILoadersContext& loadersContext);
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader>
       GetSeriesVolumeProgressiveLoader      (std::string seriesUuid);
     
-    boost::shared_ptr<DicomVolumeImageMPRSlicer>
+    boost::shared_ptr<OrthancStone::DicomVolumeImageMPRSlicer>
       GetMultiframeDicomVolumeImageMPRSlicer(std::string instanceUuid);
 
     boost::shared_ptr<OrthancMultiframeVolumeLoader>
@@ -69,44 +57,22 @@ namespace OrthancStone
         std::string instanceUuid,
         const std::vector<std::string>& initiallyVisibleStructures);
 
-#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-    boost::shared_ptr<DicomStructureSetLoader2>
-      GetDicomStructureSetLoader2(std::string instanceUuid);
-
-    boost::shared_ptr<DicomStructureSetSlicer2>
-      GetDicomStructureSetSlicer2(std::string instanceUuid);
-#endif 
-    //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-
     void ClearCache();
 
   private:
     
     void DebugDisplayObjRefCounts();
-#if ORTHANC_ENABLE_WASM == 1
-    WebAssemblyOracle& oracle_;
-#else
-    ThreadedOracle& oracle_;
-    LockingEmitter& lockingEmitter_;
-#endif
+
+    OrthancStone::ILoadersContext& loadersContext_;
 
     std::map<std::string, boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> >
       seriesVolumeProgressiveLoaders_;
     std::map<std::string, boost::shared_ptr<OrthancMultiframeVolumeLoader> >
       multiframeVolumeLoaders_;
-    std::map<std::string, boost::shared_ptr<DicomVolumeImageMPRSlicer> >
+    std::map<std::string, boost::shared_ptr<OrthancStone::DicomVolumeImageMPRSlicer> >
       dicomVolumeImageMPRSlicers_;
     std::map<std::string, boost::shared_ptr<DicomStructureSetLoader> >
       dicomStructureSetLoaders_;
-#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-    std::map<std::string, boost::shared_ptr<DicomStructureSetLoader2> >
-      dicomStructureSetLoaders2_;
-    std::map<std::string, boost::shared_ptr<DicomStructureSet2> >
-      dicomStructureSets2_;
-    std::map<std::string, boost::shared_ptr<DicomStructureSetSlicer2> >
-      dicomStructureSetSlicers2_;
-#endif 
-    //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
   };
 }
 

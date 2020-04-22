@@ -20,15 +20,27 @@
 
 #pragma once
 
+#include <Core/Compatibility.h>
+#include <Core/OrthancException.h>
+
+#include <boost/shared_ptr.hpp>
+
 #include <string>
 #include <stdint.h>
 #include <math.h>
 
+#include <memory>
 
 namespace OrthancStone
 {
   namespace GenericToolbox
   {
+    /**
+    Fast floating point string validation.
+    No trimming applied, so the input must match regex 
+    /^[-]?[0-9]*\.?[0-9]*([eE][-+]?[0-9]+)?$/
+    The following are allowed as edge cases: "" and "-"
+    */
     inline bool LegitDoubleString(const char* text)
     {
       const char* p = text;
@@ -70,6 +82,11 @@ namespace OrthancStone
       return true;
     }
 
+    /**
+    Fast integer string validation.
+    No trimming applied, so the input must match regex /^-?[0-9]*$/
+    The following are allowed as edge cases: "" and "-"
+    */
     inline bool LegitIntegerString(const char* text)
     {
       const char* p = text;
@@ -86,6 +103,9 @@ namespace OrthancStone
     }
 
     /*
+      Fast string --> double conversion.
+      Must pass the LegitDoubleString test
+
       String to doubles with at most 18 digits
     */
     inline bool StringToDouble(double& r, const char* text)
@@ -210,10 +230,17 @@ namespace OrthancStone
       return StringToDouble(r, text.c_str());
     }
 
+    /**
+    Fast string to integer conversion. Leading zeroes and minus are accepted,
+    but a leading + sign is NOT.
+    Must pass the LegitIntegerString function test.
+    In addition, an empty string (or lone minus sign) yields 0.
+    */
+
     template<typename T>
     inline bool StringToInteger(T& r, const char* text)
     {
-      if (!LegitDoubleString(text))
+      if (!LegitIntegerString(text))
         return false;
 
       r = 0;
@@ -244,22 +271,36 @@ namespace OrthancStone
     }
 
     /**
-    "rgb(12,23,255)"  --> red, green, blue and returns true
-    "everything else" --> returns false (other values left untouched)
+    if input is "rgb(12,23,255)"  --> function fills `red`, `green` and `blue` and returns true
+    else ("everything else")      --> function returns false and leaves all values untouched
     */
     bool GetRgbValuesFromString(uint8_t& red, uint8_t& green, uint8_t& blue, const char* text);
 
     /**
-    See other overload
+    See main overload
     */
     inline bool GetRgbValuesFromString(uint8_t& red, uint8_t& green, uint8_t& blue, const std::string& text)
     {
       return GetRgbValuesFromString(red, green, blue, text.c_str());
     }
 
-    bool GetRgbaValuesFromString(uint8_t& red, uint8_t& green, uint8_t& blue, uint8_t& alpha, const char* text);
+    /**
+    Same as GetRgbValuesFromString
+    */
+    bool GetRgbaValuesFromString(uint8_t& red,
+                                 uint8_t& green,
+                                 uint8_t& blue,
+                                 uint8_t& alpha,
+                                 const char* text);
 
-    inline bool GetRgbaValuesFromString(uint8_t& red, uint8_t& green, uint8_t& blue, uint8_t& alpha, const std::string& text)
+    /**
+    Same as GetRgbValuesFromString
+    */
+    inline bool GetRgbaValuesFromString(uint8_t& red, 
+                                        uint8_t& green, 
+                                        uint8_t& blue, 
+                                        uint8_t& alpha, 
+                                        const std::string& text)
     {
       return GetRgbaValuesFromString(red, green, blue, alpha, text.c_str());
     }

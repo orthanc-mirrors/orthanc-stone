@@ -35,48 +35,87 @@
 #include "HttpCommand.h"
 #include "IOracle.h"
 #include "OrthancRestApiCommand.h"
+#include "ParseDicomFromWadoCommand.h"
+
+#if ORTHANC_ENABLE_DCMTK == 1
+#  include "../Toolbox/ParsedDicomCache.h"
+#endif
+
+#include <Core/WebServiceParameters.h>
 
 
 namespace OrthancStone
 {
   class WebAssemblyOracle :
     public IOracle,
-    public IObservable
+    public IMessageEmitter
   {
   private:
     typedef std::map<std::string, std::string>  HttpHeaders;
     
     class TimeoutContext;
-    class Emitter;
     class FetchContext;
-    class FetchCommand;    
+    class FetchCommand;
+
+    void SetOrthancUrl(FetchCommand& command,
+                       const std::string& uri) const;
     
-    void Execute(const IObserver& receiver,
+    void Execute(boost::weak_ptr<IObserver> receiver,
                  HttpCommand* command);    
     
-    void Execute(const IObserver& receiver,
+    void Execute(boost::weak_ptr<IObserver> receiver,
                  OrthancRestApiCommand* command);    
     
-    void Execute(const IObserver& receiver,
+    void Execute(boost::weak_ptr<IObserver> receiver,
                  GetOrthancImageCommand* command);    
     
-    void Execute(const IObserver& receiver,
+    void Execute(boost::weak_ptr<IObserver> receiver,
                  GetOrthancWebViewerJpegCommand* command);
+    
+    void Execute(boost::weak_ptr<IObserver> receiver,
+                 ParseDicomFromWadoCommand* command);
 
-    std::string orthancRoot_;
+    IObservable                    oracleObservable_;
+    bool                           isLocalOrthanc_;
+    std::string                    localOrthancRoot_;
+    Orthanc::WebServiceParameters  remoteOrthanc_;
+
+#if ORTHANC_ENABLE_DCMTK == 1
+    std::unique_ptr<ParsedDicomCache>  dicomCache_;
+#endif
 
   public:
-    WebAssemblyOracle(MessageBroker& broker) :
-      IObservable(broker)
+    WebAssemblyOracle() :
+      isLocalOrthanc_(false)
     {
-    }
-
-    void SetOrthancRoot(const std::string& root)
-    {
-      orthancRoot_ = root;
     }
     
-    virtual void Schedule(const IObserver& receiver,
-                          IOracleCommand* command);
+    virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
+                             const IMessage& message) ORTHANC_OVERRIDE
+    {
+      oracleObservable_.EmitMessage(observer, message);
+    }
+    
+    virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
+                          IOracleCommand* command) ORTHANC_OVERRIDE;
+
+    IObservable& GetOracleObservable()
+    {
+      return oracleObservable_;
+    }
+
+    void SetLocalOrthanc(const std::string& root)
+    {
+      isLocalOrthanc_ = true;
+      localOrthancRoot_ = root;
+    }
+
+    void SetRemoteOrthanc(const Orthanc::WebServiceParameters& orthanc)
+    {
+      isLocalOrthanc_ = false;
+      remoteOrthanc_ = orthanc;
+    }
+
+    void SetDicomCacheSize(size_t size);
   };
 }

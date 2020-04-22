@@ -39,7 +39,8 @@ namespace OrthancStone
   LookupTableStyleConfigurator::LookupTableStyleConfigurator() :
     revision_(0),
     hasLut_(false),
-    hasRange_(false)
+    hasRange_(false),
+    applyLog_(false)
   {
   }
 
@@ -82,6 +83,12 @@ namespace OrthancStone
     }
   }
 
+  void LookupTableStyleConfigurator::SetApplyLog(bool apply)
+  {
+    applyLog_ = apply;
+    revision_++;
+  }
+
   TextureBaseSceneLayer* LookupTableStyleConfigurator::CreateTextureFromImage(const Orthanc::ImageAccessor& image) const
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
@@ -104,5 +111,7 @@ namespace OrthancStone
     {
       l.FitRange();
     }
+
+    l.SetApplyLog(applyLog_);
   }
 }

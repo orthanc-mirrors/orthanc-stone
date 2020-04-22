@@ -27,8 +27,7 @@ namespace OrthancStone
   {
   public:
     CreateLineMeasureCommand(
-      MessageBroker& broker,
-      boost::weak_ptr<ViewportController> controllerW,
+      boost::shared_ptr<IViewport> viewport,
       ScenePoint2D           point);
 
     // the starting position is set in the ctor

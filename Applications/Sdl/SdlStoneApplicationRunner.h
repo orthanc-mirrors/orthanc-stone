@@ -39,9 +39,8 @@ namespace OrthancStone
     bool          enableOpenGl_;
     
   public:
-    SdlStoneApplicationRunner(MessageBroker& broker,
-                              IStoneApplication& application) :
-      NativeStoneApplicationRunner(broker, application)
+    SdlStoneApplicationRunner(boost::shared_ptr<IStoneApplication> application) :
+      NativeStoneApplicationRunner(application)
     {
     }
 

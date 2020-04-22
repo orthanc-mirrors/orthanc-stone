@@ -22,6 +22,7 @@
 #pragma once
 
 #include "../Deprecated/Widgets/WorldSceneWidget.h"
+#include "../Messages/ObserverBase.h"
 #include "RadiographyScene.h"
 
 
@@ -31,7 +32,7 @@ namespace OrthancStone
 
   class RadiographyWidget :
     public Deprecated::WorldSceneWidget,
-    public IObserver,
+    public ObserverBase<RadiographyWidget>,
     public IObservable
   {
   public:
@@ -64,8 +65,7 @@ namespace OrthancStone
     bool IsInvertedInternal() const;
 
   public:
-    RadiographyWidget(MessageBroker& broker,
-                      boost::shared_ptr<RadiographyScene> scene,  // TODO: check how we can avoid boost::shared_ptr here since we don't want them in the public API (app is keeping a boost::shared_ptr to this right now)
+    RadiographyWidget(boost::shared_ptr<RadiographyScene> scene,  // TODO: check how we can avoid boost::shared_ptr here since we don't want them in the public API (app is keeping a boost::shared_ptr to this right now)
                       const std::string& name);
 
     RadiographyScene& GetScene() const

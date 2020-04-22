@@ -28,7 +28,7 @@
 #include <Core/Images/ImageProcessing.h>
 #include <Core/OrthancException.h>
 
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__)
 /* 
 Avoid this error:
 .../boost/math/special_functions/round.hpp:86:12: warning: implicit conversion from 'std::__2::numeric_limits<int>::type' (aka 'int') to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-int-float-conversion]

@@ -40,18 +40,10 @@ namespace OrthancStone
     float           customWindowCenter_;
     bool            hasInversionOverride_;
     bool            inverted_;
+    bool            applyLog_;
     
   public:
-    GrayscaleStyleConfigurator() :
-      revision_(0),
-      linearInterpolation_(false),
-      hasWindowingOverride_(false),
-      customWindowWidth_(0),
-      customWindowCenter_(0),
-      hasInversionOverride_(false),
-      inverted_(false)
-    {
-    }
+    GrayscaleStyleConfigurator();
 
     void SetWindowing(ImageWindowing windowing);
 
@@ -66,6 +58,13 @@ namespace OrthancStone
     bool IsLinearInterpolation() const
     {
       return linearInterpolation_;
+    }
+
+    void SetApplyLog(bool apply);
+
+    bool IsApplyLog() const
+    {
+      return applyLog_;
     }
 
     virtual uint64_t GetRevision() const

@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Messages/IMessageEmitter.h"
-#include "OracleCommandWithPayload.h"
+#include "OracleCommandBase.h"
 
 #include <Core/Images/ImageAccessor.h>
 
@@ -30,7 +30,7 @@
 
 namespace OrthancStone
 {
-  class GetOrthancImageCommand : public OracleCommandWithPayload
+  class GetOrthancImageCommand : public OracleCommandBase
   {
   public:
     typedef std::map<std::string, std::string>  HttpHeaders;
@@ -40,17 +40,22 @@ namespace OrthancStone
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      std::unique_ptr<Orthanc::ImageAccessor>  image_;
-      Orthanc::MimeType                      mime_;
+      const Orthanc::ImageAccessor&  image_;
+      Orthanc::MimeType              mime_;
 
     public:
       SuccessMessage(const GetOrthancImageCommand& command,
-                     Orthanc::ImageAccessor* image,   // Takes ownership
-                     Orthanc::MimeType mime);
+                     const Orthanc::ImageAccessor& image,
+                     Orthanc::MimeType mime) :
+        OriginMessage(command),
+        image_(image),
+        mime_(mime)
+      {
+      }
 
       const Orthanc::ImageAccessor& GetImage() const
       {
-        return *image_;
+        return image_;
       }
 
       Orthanc::MimeType GetMimeType() const
@@ -67,12 +72,26 @@ namespace OrthancStone
     bool                  hasExpectedFormat_;
     Orthanc::PixelFormat  expectedFormat_;
 
+    GetOrthancImageCommand(const GetOrthancImageCommand& other) :
+      uri_(other.uri_),
+      headers_(other.headers_),
+      timeout_(other.timeout_),
+      hasExpectedFormat_(other.hasExpectedFormat_),
+      expectedFormat_(other.expectedFormat_)
+    {
+    }
+
   public:
     GetOrthancImageCommand();
 
     virtual Type GetType() const
     {
       return Type_GetOrthancImage;
+    }
+
+    virtual IOracleCommand* Clone() const
+    {
+      return new GetOrthancImageCommand(*this);
     }
 
     void SetExpectedPixelFormat(Orthanc::PixelFormat format);
@@ -84,6 +103,10 @@ namespace OrthancStone
 
     void SetInstanceUri(const std::string& instance,
                         Orthanc::PixelFormat pixelFormat);
+
+    void SetFrameUri(const std::string& instance,
+                     unsigned int frame,
+                     Orthanc::PixelFormat pixelFormat);
 
     void SetHttpHeader(const std::string& key,
                        const std::string& value)
@@ -111,8 +134,8 @@ namespace OrthancStone
       return timeout_;
     }
 
-    void ProcessHttpAnswer(IMessageEmitter& emitter,
-                           const IObserver& receiver,
+    void ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
+                           IMessageEmitter& emitter,
                            const std::string& answer,
                            const HttpHeaders& answerHeaders) const;
   };

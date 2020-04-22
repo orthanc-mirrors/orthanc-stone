@@ -25,11 +25,7 @@
 #include "OrthancMultiframeVolumeLoader.h"
 #include "DicomStructureSetLoader.h"
 
-#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-#include "DicomStructureSetLoader2.h"
-#endif 
- //BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-
+#include "../Loaders/ILoadersContext.h"
 
 #if ORTHANC_ENABLE_WASM == 1
 # include <unistd.h>
@@ -38,41 +34,21 @@
 # include "../Oracle/ThreadedOracle.h"
 #endif
 
-#include "../Messages/LockingEmitter.h"
-
-#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-#include "../Toolbox/DicomStructureSet2.h"
-#endif 
-//BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-
 #include "../Volumes/DicomVolumeImage.h"
 #include "../Volumes/DicomVolumeImageMPRSlicer.h"
-
-#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-#include "../Volumes/DicomStructureSetSlicer2.h"
-#endif 
-//BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
 
 namespace OrthancStone
 {
-#if ORTHANC_ENABLE_WASM == 1
-  LoaderCache::LoaderCache(WebAssemblyOracle& oracle)
-    : oracle_(oracle)
+  LoaderCache::LoaderCache(OrthancStone::ILoadersContext& loadersContext)
+    : loadersContext_(loadersContext)
   {
 
   }
-#else
-  LoaderCache::LoaderCache(ThreadedOracle& oracle, LockingEmitter& lockingEmitter)
-    : oracle_(oracle)
-    , lockingEmitter_(lockingEmitter)
-  {
-  }
-#endif
 
-  boost::shared_ptr<OrthancStone::OrthancSeriesVolumeProgressiveLoader> 
+  boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> 
     LoaderCache::GetSeriesVolumeProgressiveLoader(std::string seriesUuid)
   {
     try
@@ -85,26 +61,15 @@ namespace OrthancStone
       // find in cache
       if (seriesVolumeProgressiveLoaders_.find(seriesUuid) == seriesVolumeProgressiveLoaders_.end())
       {
-//        LOG(TRACE) << "LoaderCache::GetSeriesVolumeProgressiveLoader : CACHEMISS --> need to load seriesUUid = " << seriesUuid;
-#if ORTHANC_ENABLE_WASM == 1
-//        LOG(TRACE) << "Performing request for series " << seriesUuid << " sbrk(0) = " << sbrk(0);
-#else
-//        LOG(TRACE) << "Performing request for series " << seriesUuid;
-#endif
-        boost::shared_ptr<DicomVolumeImage> volumeImage(new DicomVolumeImage);
+        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext_.Lock());
+
+        boost::shared_ptr<OrthancStone::DicomVolumeImage> volumeImage(new OrthancStone::DicomVolumeImage);
         boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> loader;
-//        LOG(TRACE) << "volumeImage = " << volumeImage.get();
-        {
-#if ORTHANC_ENABLE_WASM == 1
-          loader.reset(new OrthancSeriesVolumeProgressiveLoader(volumeImage, oracle_, oracle_));
-#else
-          LockingEmitter::WriterLock lock(lockingEmitter_);
-          loader.reset(new OrthancSeriesVolumeProgressiveLoader(volumeImage, oracle_, lock.GetOracleObservable()));
-#endif
-//          LOG(TRACE) << "LoaderCache::GetSeriesVolumeProgressiveLoader : loader = " << loader.get();
-          loader->LoadSeries(seriesUuid);
-//          LOG(TRACE) << "LoaderCache::GetSeriesVolumeProgressiveLoader : loader->LoadSeries successful";
-        }
+      
+        // true means "use progressive quality"
+        // false means "load high quality slices only"
+        loader = OrthancSeriesVolumeProgressiveLoader::Create(loadersContext_, volumeImage, false);
+        loader->LoadSeries(seriesUuid);
         seriesVolumeProgressiveLoaders_[seriesUuid] = loader;
       }
       else
@@ -149,7 +114,7 @@ namespace OrthancStone
     return multiframeVolumeLoaders_[instanceUuid];
   }
 
-  boost::shared_ptr<DicomVolumeImageMPRSlicer> LoaderCache::GetMultiframeDicomVolumeImageMPRSlicer(std::string instanceUuid)
+  boost::shared_ptr<OrthancStone::DicomVolumeImageMPRSlicer> LoaderCache::GetMultiframeDicomVolumeImageMPRSlicer(std::string instanceUuid)
   {
     try
     {
@@ -160,22 +125,15 @@ namespace OrthancStone
       // find in cache
       if (dicomVolumeImageMPRSlicers_.find(instanceUuid) == dicomVolumeImageMPRSlicers_.end())
       {
-        boost::shared_ptr<DicomVolumeImage> volumeImage(new DicomVolumeImage);
+        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext_.Lock());
+        boost::shared_ptr<OrthancStone::DicomVolumeImage> volumeImage(new OrthancStone::DicomVolumeImage);
         boost::shared_ptr<OrthancMultiframeVolumeLoader> loader;
-
         {
-#if ORTHANC_ENABLE_WASM == 1
-          loader.reset(new OrthancMultiframeVolumeLoader(volumeImage, oracle_, oracle_));
-#else
-          LockingEmitter::WriterLock lock(lockingEmitter_);
-          loader.reset(new OrthancMultiframeVolumeLoader(volumeImage, 
-            oracle_, 
-            lock.GetOracleObservable()));
-#endif
+          loader = OrthancMultiframeVolumeLoader::Create(loadersContext_, volumeImage);
           loader->LoadInstance(instanceUuid);
         }
         multiframeVolumeLoaders_[instanceUuid] = loader;
-        boost::shared_ptr<DicomVolumeImageMPRSlicer> mprSlicer(new DicomVolumeImageMPRSlicer(volumeImage));
+        boost::shared_ptr<OrthancStone::DicomVolumeImageMPRSlicer> mprSlicer(new OrthancStone::DicomVolumeImageMPRSlicer(volumeImage));
         dicomVolumeImageMPRSlicers_[instanceUuid] = mprSlicer;
       }
       return dicomVolumeImageMPRSlicers_[instanceUuid];
@@ -204,23 +162,6 @@ namespace OrthancStone
     }
   }
   
-#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-
-  boost::shared_ptr<DicomStructureSetSlicer2> LoaderCache::GetDicomStructureSetSlicer2(std::string instanceUuid)
-  {
-    // if the loader is not available, let's trigger its creation
-    if (dicomStructureSetSlicers2_.find(instanceUuid) == dicomStructureSetSlicers2_.end())
-    {
-      GetDicomStructureSetLoader2(instanceUuid);
-    }
-    ORTHANC_ASSERT(dicomStructureSetSlicers2_.find(instanceUuid) != dicomStructureSetSlicers2_.end());
-
-    return dicomStructureSetSlicers2_[instanceUuid];
-  }
-#endif
-//BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-
-
   /**
   This method allows to convert a list of string into a string by 
   sorting the strings then joining them
@@ -264,15 +205,11 @@ namespace OrthancStone
       // find in cache
       if (dicomStructureSetLoaders_.find(entryKey) == dicomStructureSetLoaders_.end())
       {
-        boost::shared_ptr<DicomStructureSetLoader> loader;
+        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext_.Lock());
 
+        boost::shared_ptr<DicomStructureSetLoader> loader;
         {
-#if ORTHANC_ENABLE_WASM == 1
-          loader.reset(new DicomStructureSetLoader(oracle_, oracle_));
-#else
-          LockingEmitter::WriterLock lock(lockingEmitter_);
-          loader.reset(new DicomStructureSetLoader(oracle_, lock.GetOracleObservable()));
-#endif
+          loader = DicomStructureSetLoader::Create(loadersContext_);
           loader->LoadInstance(inInstanceUuid, initiallyVisibleStructures);
         }
         dicomStructureSetLoaders_[entryKey] = loader;
@@ -303,88 +240,19 @@ namespace OrthancStone
     }
   }
 
-#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-
-  boost::shared_ptr<DicomStructureSetLoader2> LoaderCache::GetDicomStructureSetLoader2(std::string instanceUuid)
-  {
-    try
-    {
-      // normalize keys a little
-      instanceUuid = Orthanc::Toolbox::StripSpaces(instanceUuid);
-      Orthanc::Toolbox::ToLowerCase(instanceUuid);
-
-      // find in cache
-      if (dicomStructureSetLoaders2_.find(instanceUuid) == dicomStructureSetLoaders2_.end())
-      {
-        boost::shared_ptr<DicomStructureSetLoader2> loader;
-        boost::shared_ptr<DicomStructureSet2> structureSet(new DicomStructureSet2());
-        boost::shared_ptr<DicomStructureSetSlicer2> rtSlicer(new DicomStructureSetSlicer2(structureSet));
-        dicomStructureSetSlicers2_[instanceUuid] = rtSlicer;
-        dicomStructureSets2_[instanceUuid] = structureSet; // to prevent it from being deleted
-        {
-#if ORTHANC_ENABLE_WASM == 1
-          loader.reset(new DicomStructureSetLoader2(*(structureSet.get()), oracle_, oracle_));
-#else
-          LockingEmitter::WriterLock lock(lockingEmitter_);
-          // TODO: clarify lifetimes... this is DANGEROUS!
-          loader.reset(new DicomStructureSetLoader2(*(structureSet.get()), oracle_, lock.GetOracleObservable()));
-#endif
-          loader->LoadInstance(instanceUuid);
-        }
-        dicomStructureSetLoaders2_[instanceUuid] = loader;
-      }
-      return dicomStructureSetLoaders2_[instanceUuid];
-    }
-    catch (const Orthanc::OrthancException& e)
-    {
-      if (e.HasDetails())
-      {
-        LOG(ERROR) << "OrthancException in GetDicomStructureSetLoader2: " << e.What() << " Details: " << e.GetDetails();
-      }
-      else
-      {
-        LOG(ERROR) << "OrthancException in GetDicomStructureSetLoader2: " << e.What();
-      }
-      throw;
-    }
-    catch (const std::exception& e)
-    {
-      LOG(ERROR) << "std::exception in GetDicomStructureSetLoader2: " << e.what();
-      throw;
-    }
-    catch (...)
-    {
-      LOG(ERROR) << "Unknown exception in GetDicomStructureSetLoader2";
-      throw;
-    }
-  }
-
-#endif
-// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-
-
   void LoaderCache::ClearCache()
   {
-#if ORTHANC_ENABLE_WASM != 1
-    LockingEmitter::WriterLock lock(lockingEmitter_);
-#endif
+    std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext_.Lock());
     
-//#ifndef NDEBUG
+#ifndef NDEBUG
     // ISO way of checking for debug builds
     DebugDisplayObjRefCounts();
-//#endif
+#endif
     seriesVolumeProgressiveLoaders_.clear();
     multiframeVolumeLoaders_.clear();
     dicomVolumeImageMPRSlicers_.clear();
     dicomStructureSetLoaders_.clear();
 
-#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-    // order is important!
-    dicomStructureSetLoaders2_.clear();
-    dicomStructureSetSlicers2_.clear();
-    dicomStructureSets2_.clear();
-#endif
-// BGO_ENABLE_DICOMSTRUCTURESETLOADER2
   }
 
   template<typename T> void DebugDisplayObjRefCountsInMap(
@@ -406,10 +274,5 @@ namespace OrthancStone
     DebugDisplayObjRefCountsInMap("multiframeVolumeLoaders_", multiframeVolumeLoaders_);
     DebugDisplayObjRefCountsInMap("dicomVolumeImageMPRSlicers_", dicomVolumeImageMPRSlicers_);
     DebugDisplayObjRefCountsInMap("dicomStructureSetLoaders_", dicomStructureSetLoaders_);
-#ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
-    DebugDisplayObjRefCountsInMap("dicomStructureSetLoaders2_", dicomStructureSetLoaders2_);
-    DebugDisplayObjRefCountsInMap("dicomStructureSetSlicers2_", dicomStructureSetSlicers2_);
-#endif
-//BGO_ENABLE_DICOMSTRUCTURESETLOADER2
   }
 }

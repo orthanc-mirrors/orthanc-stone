@@ -37,10 +37,10 @@
 
 namespace OrthancStone
 {
-  class AngleMeasureTool : public MeasureTool, public boost::enable_shared_from_this<AngleMeasureTool>
+  class AngleMeasureTool : public MeasureTool
   {
   public:
-    AngleMeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);
+    static boost::shared_ptr<AngleMeasureTool> Create(boost::shared_ptr<IViewport> viewport);
 
     ~AngleMeasureTool();
 
@@ -48,7 +48,7 @@ namespace OrthancStone
     void SetCenter(ScenePoint2D start);
     void SetSide2End(ScenePoint2D start);
 
-    virtual bool HitTest(ScenePoint2D p) const ORTHANC_OVERRIDE;
+    virtual bool HitTest(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void Highlight(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void ResetHighlightState() ORTHANC_OVERRIDE;
     virtual boost::shared_ptr<IFlexiblePointerTracker> CreateEditionTracker(const PointerEvent& e) ORTHANC_OVERRIDE;
@@ -70,6 +70,8 @@ namespace OrthancStone
     AngleHighlightArea AngleHitTest(ScenePoint2D p) const;
 
   private:
+    AngleMeasureTool(boost::shared_ptr<IViewport> viewport);
+
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();
     void                SetAngleHighlightArea(AngleHighlightArea area);

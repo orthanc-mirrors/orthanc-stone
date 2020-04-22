@@ -27,22 +27,19 @@
 namespace OrthancStone
 {
   EditLineMeasureTracker::EditLineMeasureTracker(
-    boost::shared_ptr<LineMeasureTool>  measureTool,
-    MessageBroker& broker,
-    boost::weak_ptr<ViewportController> controllerW,
-    const PointerEvent& e) 
-    : EditMeasureTracker(controllerW, e)
+    boost::shared_ptr<MeasureTool>  measureTool,
+    boost::shared_ptr<IViewport> viewport,
+    const PointerEvent& e)
+    : EditMeasureTracker(viewport, e)
   {
-    ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      GetScene().GetCanvasToSceneTransform());
-
-    modifiedZone_ = measureTool->LineHitTest(scenePos);
-
-    command_.reset(
-      new EditLineMeasureCommand(
-        measureTool,
-        broker,
-        controllerW));
+    ScenePoint2D scenePos = e.GetMainPosition();
+    {
+      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+      Scene2D& scene = lock->GetController().GetScene();
+      scenePos = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
+    }
+    modifiedZone_ = dynamic_cast<LineMeasureTool&>(*measureTool).LineHitTest(scenePos);
+    command_.reset(new EditLineMeasureCommand(measureTool, viewport));
   }
 
   EditLineMeasureTracker::~EditLineMeasureTracker()
@@ -52,8 +49,12 @@ namespace OrthancStone
 
   void EditLineMeasureTracker::PointerMove(const PointerEvent& e)
   {
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    ViewportController& controller = lock->GetController();
+    Scene2D& scene = controller.GetScene();
+
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      GetScene().GetCanvasToSceneTransform());
+      scene.GetCanvasToSceneTransform());
 
     ScenePoint2D delta = scenePos - GetOriginalClickPosition();
 
@@ -86,7 +87,7 @@ namespace OrthancStone
     break;
     default:
       LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
-        break;
+      break;
     }
   }
 

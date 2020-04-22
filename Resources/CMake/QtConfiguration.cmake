@@ -20,25 +20,11 @@
 set(CMAKE_AUTOMOC OFF)
 set(CMAKE_AUTOUIC OFF)
 
-if ("${CMAKE_SYSTEM_VERSION}" STREQUAL "LinuxStandardBase")
-  # Linux Standard Base version 5 ships Qt 4.2.3
+
+## Note that these set of macros MUST be defined as a "function()",
+## otherwise it fails
+function(DEFINE_QT_MACROS)
   include(Qt4Macros)
-
-  # The script "LinuxStandardBaseUic.py" is just a wrapper around the
-  # "uic" compiler from LSB that does not support the "<?xml ...?>"
-  # header that is automatically added by Qt Creator
-  set(QT_UIC_EXECUTABLE ${CMAKE_CURRENT_LIST_DIR}/LinuxStandardBaseUic.py)
-
-  set(QT_MOC_EXECUTABLE ${LSB_PATH}/bin/moc)
-
-  include_directories(
-    ${LSB_PATH}/include/QtCore
-    ${LSB_PATH}/include/QtGui
-    ${LSB_PATH}/include/QtOpenGL
-    )
-
-  link_libraries(QtCore QtGui QtOpenGL)
-
 
   ##
   ## This part is adapted from file "Qt4Macros.cmake" shipped with
@@ -86,9 +72,91 @@ if ("${CMAKE_SYSTEM_VERSION}" STREQUAL "LinuxStandardBase")
   ##
   ## End of "Qt4Macros.cmake" adaptation.
   ##
+endfunction()
 
+
+if ("${CMAKE_SYSTEM_VERSION}" STREQUAL "LinuxStandardBase")
+  # Linux Standard Base version 5 ships Qt 4.2.3
+  DEFINE_QT_MACROS()
+ 
+  # The script "LinuxStandardBaseUic.py" is just a wrapper around the
+  # "uic" compiler from LSB that does not support the "<?xml ...?>"
+  # header that is automatically added by Qt Creator
+  set(QT_UIC_EXECUTABLE ${CMAKE_CURRENT_LIST_DIR}/LinuxStandardBaseUic.py)
+
+  set(QT_MOC_EXECUTABLE ${LSB_PATH}/bin/moc)
+
+  include_directories(
+    ${LSB_PATH}/include/QtCore
+    ${LSB_PATH}/include/QtGui
+    ${LSB_PATH}/include/QtOpenGL
+    )
+
+  link_libraries(QtCore QtGui QtOpenGL)
+
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  DEFINE_QT_MACROS()
+  
+  include_directories(${QT5_INSTALL_ROOT}/include)
+  link_directories(${QT5_INSTALL_ROOT}/lib)
+
+  if (OFF) #CMAKE_CROSSCOMPILING)
+    set(QT_UIC_EXECUTABLE wine ${QT5_INSTALL_ROOT}/bin/uic.exe)
+    set(QT_MOC_EXECUTABLE wine ${QT5_INSTALL_ROOT}/bin/moc.exe)
+  else()
+    set(QT_UIC_EXECUTABLE ${QT5_INSTALL_ROOT}/bin/uic)
+    set(QT_MOC_EXECUTABLE ${QT5_INSTALL_ROOT}/bin/moc)
+  endif()
+
+  include_directories(
+    ${QT5_INSTALL_ROOT}/include/QtCore
+    ${QT5_INSTALL_ROOT}/include/QtGui
+    ${QT5_INSTALL_ROOT}/include/QtOpenGL
+    ${QT5_INSTALL_ROOT}/include/QtWidgets
+    )
+
+  if (OFF)
+    # Dynamic Qt
+    link_libraries(Qt5Core Qt5Gui Qt5OpenGL Qt5Widgets)
+
+    file(COPY
+      ${QT5_INSTALL_ROOT}/bin/Qt5Core.dll
+      ${QT5_INSTALL_ROOT}/bin/Qt5Gui.dll
+      ${QT5_INSTALL_ROOT}/bin/Qt5OpenGL.dll
+      ${QT5_INSTALL_ROOT}/bin/Qt5Widgets.dll
+      ${QT5_INSTALL_ROOT}/bin/libstdc++-6.dll
+      ${QT5_INSTALL_ROOT}/bin/libgcc_s_dw2-1.dll
+      ${QT5_INSTALL_ROOT}/bin/libwinpthread-1.dll
+      DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+    file(COPY
+      ${QT5_INSTALL_ROOT}/plugins/platforms/qwindows.dll
+      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/platforms)
+
+  else()
+    # Static Qt
+    link_libraries(
+      ${QT5_INSTALL_ROOT}/lib/libQt5Widgets.a
+      ${QT5_INSTALL_ROOT}/lib/libQt5Gui.a
+      ${QT5_INSTALL_ROOT}/lib/libQt5OpenGL.a
+      ${QT5_INSTALL_ROOT}/lib/libQt5Core.a
+      ${QT5_INSTALL_ROOT}/lib/libqtharfbuzz.a
+      ${QT5_INSTALL_ROOT}/lib/libqtpcre2.a
+      ${QT5_INSTALL_ROOT}/lib/libQt5FontDatabaseSupport.a
+      ${QT5_INSTALL_ROOT}/lib/libQt5EventDispatcherSupport.a
+      ${QT5_INSTALL_ROOT}/lib/libQt5ThemeSupport.a
+      ${QT5_INSTALL_ROOT}/plugins/platforms/libqwindows.a
+      winmm
+      version
+      ws2_32
+      uxtheme
+      imm32
+      dwmapi
+      )
+  endif()
+  
 else()
-  # Not using Linux Standard Base
+  # Not using Windows, not using Linux Standard Base, 
   # Find the QtWidgets library
   find_package(Qt5Widgets QUIET)
 

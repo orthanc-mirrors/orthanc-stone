@@ -29,23 +29,16 @@
 #include <Core/OrthancException.h>
 #include <Core/Toolbox.h>
 
+#ifdef _MSC_VER
+// 'Json::Reader': Use CharReader and CharReaderBuilder instead
+#pragma warning(disable:4996)
+#endif
+
 #include <json/reader.h>
 #include <json/value.h>
 
 namespace OrthancStone
 {
-  GetOrthancWebViewerJpegCommand::SuccessMessage::SuccessMessage(const GetOrthancWebViewerJpegCommand& command,
-                                                                 Orthanc::ImageAccessor* image) :   // Takes ownership
-    OriginMessage(command),
-    image_(image)
-  {
-    if (image == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-  }
-
-
   GetOrthancWebViewerJpegCommand::GetOrthancWebViewerJpegCommand() :
     frame_(0),
     quality_(95),
@@ -76,8 +69,8 @@ namespace OrthancStone
   }
 
 
-  void GetOrthancWebViewerJpegCommand::ProcessHttpAnswer(IMessageEmitter& emitter,
-                                                         const IObserver& receiver,
+  void GetOrthancWebViewerJpegCommand::ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
+                                                         IMessageEmitter& emitter,
                                                          const std::string& answer) const
   {
     // This code comes from older "OrthancSlicesLoader::ParseSliceImageJpeg()"
@@ -149,7 +142,7 @@ namespace OrthancStone
       }
       else
       {
-        SuccessMessage message(*this, reader.release());
+        SuccessMessage message(*this, *reader);
         emitter.EmitMessage(receiver, message);
         return;
       }
@@ -168,7 +161,7 @@ namespace OrthancStone
       }
       else
       {
-        SuccessMessage message(*this, reader.release());
+        SuccessMessage message(*this, *reader);
         emitter.EmitMessage(receiver, message);
         return;
       }
@@ -210,8 +203,8 @@ namespace OrthancStone
       float offset = static_cast<float>(stretchLow) / scaling;
       Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling, true);
     }
-    
-    SuccessMessage message(*this, image.release());
+
+    SuccessMessage message(*this, *image);
     emitter.EmitMessage(receiver, message);
   }
 }

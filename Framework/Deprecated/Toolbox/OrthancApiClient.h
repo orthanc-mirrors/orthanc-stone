@@ -25,13 +25,24 @@
 #include <json/json.h>
 
 #include "IWebService.h"
-#include "../../Messages/IObservable.h"
+#include "../../Messages/ObserverBase.h"
 
 namespace Deprecated
 {
+  enum SliceImageQuality
+  {
+    SliceImageQuality_FullPng,  // smaller to transmit but longer to generate on Orthanc side (better choice when on low bandwidth)
+    SliceImageQuality_FullPam,  // bigger to transmit but faster to generate on Orthanc side (better choice when on localhost or LAN)
+    SliceImageQuality_Jpeg50,
+    SliceImageQuality_Jpeg90,
+    SliceImageQuality_Jpeg95,
+
+    SliceImageQuality_InternalRaw   // downloads the raw pixels data as they are stored in the DICOM file (internal use only)
+  };  
+
   class OrthancApiClient :
       public OrthancStone::IObservable,
-      public OrthancStone::IObserver
+      public OrthancStone::ObserverBase<OrthancApiClient>
   {
   public:
     class JsonResponseReadyMessage : public OrthancStone::IMessage
@@ -157,8 +168,7 @@ namespace Deprecated
     std::string   baseUrl_;
 
   public:
-    OrthancApiClient(OrthancStone::MessageBroker& broker,
-                     IWebService& web,
+    OrthancApiClient(IWebService& web,
                      const std::string& baseUrl);
     
     virtual ~OrthancApiClient()
@@ -169,36 +179,36 @@ namespace Deprecated
 
     // schedule a GET request expecting a JSON response.
     void GetJsonAsync(const std::string& uri,
-                      OrthancStone::MessageHandler<JsonResponseReadyMessage>* successCallback,
-                      OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                      MessageHandler<JsonResponseReadyMessage>* successCallback,
+                      MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                       Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);
 
     // schedule a GET request expecting a binary response.
     void GetBinaryAsync(const std::string& uri,
                         const std::string& contentType,
-                        OrthancStone::MessageHandler<BinaryResponseReadyMessage>* successCallback,
-                        OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                        MessageHandler<BinaryResponseReadyMessage>* successCallback,
+                        MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                         Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);
 
     // schedule a GET request expecting a binary response.
     void GetBinaryAsync(const std::string& uri,
                         const IWebService::HttpHeaders& headers,
-                        OrthancStone::MessageHandler<BinaryResponseReadyMessage>* successCallback,
-                        OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                        MessageHandler<BinaryResponseReadyMessage>* successCallback,
+                        MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                         Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);
 
     // schedule a POST request expecting a JSON response.
     void PostBinaryAsyncExpectJson(const std::string& uri,
                                    const std::string& body,
-                                   OrthancStone::MessageHandler<JsonResponseReadyMessage>* successCallback,
-                                   OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                                   MessageHandler<JsonResponseReadyMessage>* successCallback,
+                                   MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                                    Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);
 
     // schedule a POST request expecting a JSON response.
     void PostJsonAsyncExpectJson(const std::string& uri,
                                  const Json::Value& data,
-                                 OrthancStone::MessageHandler<JsonResponseReadyMessage>* successCallback,
-                                 OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                                 MessageHandler<JsonResponseReadyMessage>* successCallback,
+                                 MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                                  Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);
 
     // schedule a POST request and don't mind the response.
@@ -208,8 +218,8 @@ namespace Deprecated
     // schedule a POST request and don't expect any response.
     void PostJsonAsync(const std::string& uri,
                        const Json::Value& data,
-                       OrthancStone::MessageHandler<EmptyResponseReadyMessage>* successCallback,
-                       OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                       MessageHandler<EmptyResponseReadyMessage>* successCallback,
+                       MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                        Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);
 
 
@@ -220,14 +230,14 @@ namespace Deprecated
     // schedule a POST request and don't expect any response.
     void PostBinaryAsync(const std::string& uri,
                          const std::string& body,
-                         OrthancStone::MessageHandler<EmptyResponseReadyMessage>* successCallback,
-                         OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                         MessageHandler<EmptyResponseReadyMessage>* successCallback,
+                         MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                          Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);
 
     // schedule a DELETE request expecting an empty response.
     void DeleteAsync(const std::string& uri,
-                     OrthancStone::MessageHandler<EmptyResponseReadyMessage>* successCallback,
-                     OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                     MessageHandler<EmptyResponseReadyMessage>* successCallback,
+                     MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                      Orthanc::IDynamicObject* payload = NULL   /* takes ownership */);
 
     void NotifyHttpSuccess(const IWebService::HttpRequestSuccessMessage& message);

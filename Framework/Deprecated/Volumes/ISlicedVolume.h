@@ -65,11 +65,6 @@ namespace Deprecated
     };
 
 
-    ISlicedVolume(OrthancStone::MessageBroker& broker) :
-      IObservable(broker)
-    {
-    }
-    
     virtual size_t GetSliceCount() const = 0;
 
     virtual const Slice& GetSlice(size_t slice) const = 0;

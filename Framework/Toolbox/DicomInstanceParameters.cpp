@@ -265,7 +265,7 @@ namespace OrthancStone
   }
 
   void DicomInstanceParameters::Data::ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
-                                                   bool useDouble) const
+                                                                 bool useDouble) const
   {
     if (image.GetFormat() != Orthanc::PixelFormat_Float32)
     {
@@ -387,6 +387,21 @@ namespace OrthancStone
   TextureBaseSceneLayer* DicomInstanceParameters::CreateTexture
   (const Orthanc::ImageAccessor& pixelData) const
   {
+    // {
+    //   const Orthanc::ImageAccessor& source = pixelData;
+    //   const void* sourceBuffer = source.GetConstBuffer();
+    //   intptr_t sourceBufferInt = reinterpret_cast<intptr_t>(sourceBuffer);
+    //   int sourceWidth = source.GetWidth();
+    //   int sourceHeight = source.GetHeight();
+    //   int sourcePitch = source.GetPitch();
+
+    //   // TODO: turn error into trace below
+    //   LOG(ERROR) << "ConvertGrayscaleToFloat | source:"
+    //     << " W = " << sourceWidth << " H = " << sourceHeight
+    //     << " P = " << sourcePitch << " B = " << sourceBufferInt
+    //     << " B % 4 == " << sourceBufferInt % 4;
+    // }
+
     assert(sizeof(float) == 4);
 
     Orthanc::PixelFormat sourceFormat = pixelData.GetFormat();
@@ -466,6 +481,50 @@ namespace OrthancStone
     {
       LOG(ERROR) << "DicomInstanceParameters::GetIndexInSeries(): !data_.hasIndexInSeries_";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+
+
+  double DicomInstanceParameters::Data::ApplyRescale(double value) const
+  {
+    double factor = doseGridScaling_;
+    double offset = 0.0;
+
+    if (hasRescale_)
+    {
+      factor *= rescaleSlope_;
+      offset = rescaleIntercept_;
+    }
+
+    return (value * factor + offset);
+  }
+
+
+  bool DicomInstanceParameters::Data::ComputeRegularSpacing(double& spacing) const
+  {
+    if (frameOffsets_.size() == 0)  // Not a RT-DOSE
+    {
+      return false;
+    }
+    else if (frameOffsets_.size() == 1)
+    {
+      spacing = 1;   // Edge case: RT-DOSE with one single frame
+      return true;
+    }
+    else
+    {
+      spacing = std::abs(frameOffsets_[1] - frameOffsets_[0]);
+
+      for (size_t i = 1; i + 1 < frameOffsets_.size(); i++)
+      {
+        double s = frameOffsets_[i + 1] - frameOffsets_[i];
+        if (!LinearAlgebra::IsNear(spacing, s, 0.001))
+        {
+          return false;
+        }
+      }
+      
+      return true;
     }
   }
 }

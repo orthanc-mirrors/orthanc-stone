@@ -23,21 +23,16 @@
 
 #include <Core/OrthancException.h>
 
+#ifdef _MSC_VER
+// 'Json::Reader': Use CharReader and CharReaderBuilder instead
+#pragma warning(disable:4996)
+#endif
+
 #include <json/reader.h>
 #include <json/writer.h>
 
 namespace OrthancStone
 {
-  OrthancRestApiCommand::SuccessMessage::SuccessMessage(const OrthancRestApiCommand& command,
-                                                        const HttpHeaders& answerHeaders,
-                                                        std::string& answer) :
-    OriginMessage(command),
-    headers_(answerHeaders),
-    answer_(answer)
-  {
-  }
-
-
   void OrthancRestApiCommand::SuccessMessage::ParseJsonBody(Json::Value& target) const
   {
     Json::Reader reader;
@@ -51,7 +46,8 @@ namespace OrthancStone
   OrthancRestApiCommand::OrthancRestApiCommand() :
     method_(Orthanc::HttpMethod_Get),
     uri_("/"),
-    timeout_(600)
+    timeout_(600),
+    applyPlugins_(false)
   {
   }
 

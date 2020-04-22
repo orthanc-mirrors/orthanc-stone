@@ -64,7 +64,11 @@ namespace OrthancStone
 #endif
 
     virtual std::string GetTitle() const = 0;
-    virtual Deprecated::IWidget* GetCentralWidget() = 0;
+    
+    virtual void SetCentralWidget(boost::shared_ptr<Deprecated::IWidget> widget) = 0;
+    
+    virtual boost::shared_ptr<Deprecated::IWidget> GetCentralWidget() = 0;
+    
     virtual void Finalize() = 0;
   };
 }

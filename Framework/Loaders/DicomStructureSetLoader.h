@@ -23,6 +23,7 @@
 
 #include "../Toolbox/DicomStructureSet.h"
 #include "../Volumes/IVolumeSlicer.h"
+#include "../Loaders/ILoadersContext.h"
 #include "LoaderStateMachine.h"
 
 #include <vector>
@@ -31,8 +32,8 @@ namespace OrthancStone
 {
   class DicomStructureSetLoader :
     public LoaderStateMachine,
-    public IVolumeSlicer,
-    public IObservable
+    public OrthancStone::IVolumeSlicer,
+    public OrthancStone::IObservable
   {
   private:
     class Slice;
@@ -42,14 +43,15 @@ namespace OrthancStone
     class LookupInstance;          // 2nd state
     class LoadStructure;           // 1st state
     
-    std::unique_ptr<DicomStructureSet>  content_;
-    uint64_t                          revision_;
-    std::string                       instanceId_;
-    unsigned int                      countProcessedInstances_;
-    unsigned int                      countReferencedInstances_;  
+    OrthancStone::ILoadersContext&                    loadersContext_;
+    std::unique_ptr<OrthancStone::DicomStructureSet>  content_;
+    uint64_t                                          revision_;
+    std::string                                       instanceId_;
+    unsigned int                                      countProcessedInstances_;
+    unsigned int                                      countReferencedInstances_;  
 
     // will be set to true once the loading is finished
-    bool                              structuresReady_;
+    bool                                              structuresReady_;
 
     /**
     At load time, these strings are used to initialize the structureVisibility_ 
@@ -68,13 +70,17 @@ namespace OrthancStone
     */
     std::vector<bool>                  structureVisibility_;
 
+  protected:
+    DicomStructureSetLoader(OrthancStone::ILoadersContext& loadersContext);
+
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, StructuresReady, DicomStructureSetLoader);
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, StructuresUpdated, DicomStructureSetLoader);
 
-    DicomStructureSetLoader(IOracle& oracle,
-                            IObservable& oracleObservable);    
-    
-    DicomStructureSet* GetContent()
+    static boost::shared_ptr<DicomStructureSetLoader> Create(
+      OrthancStone::ILoadersContext& loadersContext);
+
+    OrthancStone::DicomStructureSet* GetContent()
     {
       return content_.get();
     }
@@ -91,9 +97,10 @@ namespace OrthancStone
     void LoadInstance(const std::string& instanceId, 
                       const std::vector<std::string>& initiallyVisibleStructures = std::vector<std::string>());
 
-    virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
+    virtual IExtractedSlice* ExtractSlice(const OrthancStone::CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
 
     void SetStructuresReady();
+    void SetStructuresUpdated();
 
     bool AreStructuresReady() const;
   };

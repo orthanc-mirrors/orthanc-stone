@@ -33,6 +33,53 @@
 
 namespace Deprecated
 {
+  template <typename TMessage>
+  class MessageHandler : public OrthancStone::ICallable
+  {
+  };
+
+
+  template <typename TObserver,
+            typename TMessage>
+  class DeprecatedCallable : public MessageHandler<TMessage>
+  {
+  private:
+    typedef void (TObserver::* MemberMethod) (const TMessage&);
+
+    boost::weak_ptr<OrthancStone::IObserver>  observer_;
+    MemberMethod                function_;
+
+  public:
+    DeprecatedCallable(boost::shared_ptr<TObserver> observer,
+                       MemberMethod function) :
+      observer_(observer),
+      function_(function)
+    {
+    }
+
+    virtual void Apply(const OrthancStone::IMessage& message)
+    {
+      boost::shared_ptr<OrthancStone::IObserver> lock(observer_);
+      if (lock)
+      {
+        TObserver& observer = dynamic_cast<TObserver&>(*lock);
+        const TMessage& typedMessage = dynamic_cast<const TMessage&>(message);
+        (observer.*function_) (typedMessage);
+      }
+    }
+
+    virtual const OrthancStone::MessageIdentifier& GetMessageIdentifier()
+    {
+      return TMessage::GetStaticIdentifier();
+    }
+
+    virtual boost::weak_ptr<OrthancStone::IObserver> GetObserver() const
+    {
+      return observer_;
+    }
+  };
+
+
   // The IWebService performs HTTP requests.
   // Since applications can run in native or WASM environment and, since
   // in a WASM environment, the WebService is asynchronous, the IWebservice
@@ -40,9 +87,6 @@ namespace Deprecated
   // and you'll be notified when the response/error is ready.
   class IWebService : public boost::noncopyable
   {
-  protected:
-    OrthancStone::MessageBroker& broker_;
-    
   public:
     typedef std::map<std::string, std::string> HttpHeaders;
 
@@ -138,12 +182,6 @@ namespace Deprecated
     };
 
 
-    IWebService(OrthancStone::MessageBroker& broker) :
-      broker_(broker)
-    {
-    }
-
-    
     virtual ~IWebService()
     {
     }
@@ -153,23 +191,23 @@ namespace Deprecated
     virtual void GetAsync(const std::string& uri,
                           const HttpHeaders& headers,
                           Orthanc::IDynamicObject* payload  /* takes ownership */,
-                          OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                          OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                          MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                           unsigned int timeoutInSeconds = 60) = 0;
 
     virtual void PostAsync(const std::string& uri,
                            const HttpHeaders& headers,
                            const std::string& body,
                            Orthanc::IDynamicObject* payload  /* takes ownership */,
-                           OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                           OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                           MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                           MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                            unsigned int timeoutInSeconds = 60) = 0;
 
     virtual void DeleteAsync(const std::string& uri,
                              const HttpHeaders& headers,
                              Orthanc::IDynamicObject* payload  /* takes ownership */,
-                             OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                             OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
+                             MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                             MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback = NULL,
                              unsigned int timeoutInSeconds = 60) = 0;
   };
 }

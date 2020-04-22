@@ -30,7 +30,8 @@
 namespace OrthancStone
 {
   FloatTextureSceneLayer::FloatTextureSceneLayer(const Orthanc::ImageAccessor& texture) :
-    inverted_(false)
+    inverted_(false),
+    applyLog_(false)
   {
     {
       std::unique_ptr<Orthanc::ImageAccessor> t(
@@ -95,6 +96,14 @@ namespace OrthancStone
     IncrementRevision();
   }
 
+
+  void FloatTextureSceneLayer::SetApplyLog(bool apply)
+  {
+    applyLog_ = apply;
+    IncrementRevision();
+  }
+
+
   void FloatTextureSceneLayer::FitRange()
   {
     float minValue, maxValue;
@@ -126,6 +135,7 @@ namespace OrthancStone
     cloned->customCenter_ = customCenter_;
     cloned->customWidth_ = customWidth_;
     cloned->inverted_ = inverted_;
+    cloned->applyLog_ = applyLog_;
 
     return cloned.release();
   }

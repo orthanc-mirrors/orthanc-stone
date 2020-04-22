@@ -36,11 +36,15 @@ namespace OrthancStone
       CairoSurface           texture_;
       BitmapAnchor           anchor_;
       bool                   isLinearInterpolation_;
+      bool                   applySceneRotation_;
 
     public:
       CairoInfoPanelRenderer(ICairoContextProvider& target,
                              const ISceneLayer& layer) :
-        target_(target)
+        target_(target),
+        anchor_(BitmapAnchor_TopLeft),
+        applySceneRotation_(false)
+
       {
         Update(layer);
       }

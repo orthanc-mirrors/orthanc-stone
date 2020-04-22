@@ -25,14 +25,22 @@
 #  error The macro ORTHANC_ENABLE_THREADS must be defined
 #endif
 
+#if !defined(ORTHANC_ENABLE_DCMTK)
+#  error The macro ORTHANC_ENABLE_DCMTK must be defined
+#endif
+
 #if ORTHANC_ENABLE_THREADS != 1
 #  error This file can only compiled for native targets
 #endif
 
-#include "../Messages/IMessageEmitter.h"
-#include "IOracle.h"
+#if ORTHANC_ENABLE_DCMTK == 1
+#  include "../Toolbox/ParsedDicomCache.h"
+#endif
 
-#include <Core/WebServiceParameters.h>
+#include "IOracle.h"
+#include "GenericOracleRunner.h"
+#include "../Messages/IMessageEmitter.h"
+
 #include <Core/MultiThreading/SharedMessageQueue.h>
 
 
@@ -53,6 +61,7 @@ namespace OrthancStone
 
     IMessageEmitter&                     emitter_;
     Orthanc::WebServiceParameters        orthanc_;
+    std::string                          rootDirectory_;
     Orthanc::SharedMessageQueue          queue_;
     State                                state_;
     boost::mutex                         mutex_;
@@ -61,6 +70,10 @@ namespace OrthancStone
     boost::thread                        sleepingWorker_;
     unsigned int                         sleepingTimeResolution_;
 
+#if ORTHANC_ENABLE_DCMTK == 1
+    boost::shared_ptr<ParsedDicomCache>  dicomCache_;
+#endif
+    
     void Step();
 
     static void Worker(ThreadedOracle* that);
@@ -74,12 +87,15 @@ namespace OrthancStone
 
     virtual ~ThreadedOracle();
 
-    // The reference is not stored.
     void SetOrthancParameters(const Orthanc::WebServiceParameters& orthanc);
+
+    void SetRootDirectory(const std::string& rootDirectory);
 
     void SetThreadsCount(unsigned int count);
 
     void SetSleepingTimeResolution(unsigned int milliseconds);
+
+    void SetDicomCacheSize(size_t size);
 
     void Start();
 
@@ -88,7 +104,7 @@ namespace OrthancStone
       StopInternal();
     }
 
-    virtual void Schedule(const IObserver& receiver,
-                          IOracleCommand* command);
+    virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
+                          IOracleCommand* command) ORTHANC_OVERRIDE;
   };
 }

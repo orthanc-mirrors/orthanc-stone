@@ -24,8 +24,6 @@
 #include "../StoneEnumerations.h"
 #include "ICallable.h"
 #include "IObserver.h"
-#include "MessageBroker.h"
-#include "MessageForwarder.h"
 
 #include <set>
 #include <map>
@@ -37,39 +35,20 @@ namespace OrthancStone
   private:
     typedef std::map<MessageIdentifier, std::set<ICallable*> >  Callables;
 
-    typedef std::set<IMessageForwarder*>     Forwarders;
-
-    MessageBroker&  broker_;
     Callables       callables_;
-    Forwarders      forwarders_;
 
     void EmitMessageInternal(const IObserver* receiver,
                              const IMessage& message);
 
   public:
-    IObservable(MessageBroker& broker) :
-      broker_(broker)
-    {
-    }
-
     virtual ~IObservable();
 
-    MessageBroker& GetBroker() const
-    {
-      return broker_;
-    }
-
-    // Takes ownsership
-    void RegisterObserverCallback(ICallable* callable);
-
-    void Unregister(IObserver* observer);
+    // Takes ownership of the callable
+    void RegisterCallable(ICallable* callable);
 
     void BroadcastMessage(const IMessage& message);
 
-    void EmitMessage(const IObserver& observer,
+    void EmitMessage(boost::weak_ptr<IObserver> observer,
                      const IMessage& message);
-
-    // Takes ownsership
-    void RegisterForwarder(IMessageForwarder* forwarder);
   };
 }

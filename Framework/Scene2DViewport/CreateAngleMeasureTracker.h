@@ -38,8 +38,7 @@ namespace OrthancStone
     must be supplied, too
     */
     CreateAngleMeasureTracker(
-      MessageBroker&                  broker,
-      boost::weak_ptr<ViewportController>          controllerW,
+      boost::shared_ptr<IViewport>          viewport,
       const PointerEvent&             e);
 
     ~CreateAngleMeasureTracker();

@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <boost/lexical_cast.hpp>
 #include <boost/noncopyable.hpp>
 
 #include <string.h>
@@ -32,6 +33,12 @@ namespace OrthancStone
   private:
     const char*  file_;
     int          line_;
+
+    bool IsEqual(const MessageIdentifier& other) const
+    {
+      return (line_ == other.line_ &&
+              strcmp(file_, other.file_) == 0);
+    }
 
   public:
     MessageIdentifier(const char* file,
@@ -45,6 +52,11 @@ namespace OrthancStone
       file_(NULL),
       line_(0)
     {
+    }
+
+    std::string AsString() const
+    {
+      return std::string(file_) + ":" + boost::lexical_cast<std::string>(line_);
     }
 
     bool operator< (const MessageIdentifier& other) const
@@ -61,6 +73,16 @@ namespace OrthancStone
       {
         return strcmp(file_, other.file_) < 0;
       }
+    }
+
+    bool operator== (const MessageIdentifier& other) const
+    {
+      return IsEqual(other);
+    }
+
+    bool operator!= (const MessageIdentifier& other) const
+    {
+      return !IsEqual(other);
     }
   };
 

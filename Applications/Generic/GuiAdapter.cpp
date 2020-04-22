@@ -31,7 +31,7 @@
 #endif
 
 #if ORTHANC_ENABLE_THREADS == 1
-#  include "../../Framework/Messages/LockingEmitter.h"
+#  include "../../Framework/Deprecated/Messages/LockingEmitter.h"
 #endif
 
 #include <Core/Compatibility.h>
@@ -44,6 +44,15 @@ namespace OrthancStone
     os << "sym: " << event.sym << " (" << (int)(event.sym[0]) << ") ctrl: " << event.ctrlKey << ", " <<
       "shift: " << event.shiftKey << ", " <<
       "alt: " << event.altKey;
+    return os;
+  }
+
+  std::ostream& operator<<(
+    std::ostream& os, const GuiAdapterMouseEvent& event)
+  {
+    os << "targetX: " << event.targetX << " targetY: " << event.targetY << " button: " << event.button
+      << "ctrlKey: " << event.ctrlKey << "shiftKey: " << event.shiftKey << "altKey: " << event.altKey;
+      
     return os;
   }
 
@@ -147,7 +156,7 @@ namespace OrthancStone
   template<typename GenericFunc>
   struct FuncAdapterPayload
   {
-    std::string canvasId;
+    std::string canvasCssSelector;
     void* userData;
     GenericFunc callback;
   };
@@ -158,7 +167,6 @@ namespace OrthancStone
     EM_BOOL OnEventAdapterFunc(
       int eventType, const EmscriptenEvent* emEvent, void* userData)
   {
-
     // userData is OnMouseWheelFuncAdapterPayload
     FuncAdapterPayload<GenericFunc>* payload =
       reinterpret_cast<FuncAdapterPayload<GenericFunc>*>(userData);
@@ -170,7 +178,7 @@ namespace OrthancStone
 
     GuiAdapterEvent guiEvent;
     ConvertFromPlatform(guiEvent, eventType, *emEvent);
-    bool ret = (*(payload->callback))(payload->canvasId, &guiEvent, payload->userData);
+    bool ret = (*(payload->callback))(payload->canvasCssSelector, &guiEvent, payload->userData);
     return static_cast<EM_BOOL>(ret);
   }
 
@@ -186,7 +194,7 @@ namespace OrthancStone
 
     GuiAdapterEvent guiEvent;
     ConvertFromPlatform(guiEvent, *wheelEvent);
-    bool ret = (*(payload->callback))(payload->canvasId, &guiEvent, payload->userData);
+    bool ret = (*(payload->callback))(payload->canvasCssSelector, &guiEvent, payload->userData);
     return static_cast<EM_BOOL>(ret);
   }
 
@@ -202,6 +210,76 @@ namespace OrthancStone
     return static_cast<EM_BOOL>(ret);
   }
 
+  /*
+  
+  Explanation
+  ===========
+
+  - in "older" Emscripten, where DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR doesn't exist or is set to 0,
+    the following strings need to be used to register events:
+    - for canvas, the canvas DOM id. In case of <canvas id="mycanvas1" width='640' ...></canvas>", the string needs 
+      to be "mycanvas"
+    - for the window (for key events), the string needs to be "#window"
+  - in newer Emscripten where DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR==1 (or maybe is not there anymore, in the
+    future as of 2020-04-20)
+    - for canvas, the canvas DOM id. In case of <canvas id="mycanvas1" width='640' ...></canvas>", the string needs
+      to be "#mycanvas"  (notice the "number sign", aka "hash", NOT AKA "sharp", as can be read on https://en.wikipedia.org/wiki/Number_sign)
+    - for the window (for key events), the string needs to be EMSCRIPTEN_EVENT_TARGET_WINDOW. I do not mean 
+      "EMSCRIPTEN_EVENT_TARGET_WINDOW", but the #define EMSCRIPTEN_EVENT_TARGET_WINDOW         ((const char*)2) that
+      can be found in emscripten/html5.h
+
+  The code below converts the input canvasId (as in the old emscripten) to the emscripten-compliant one, with the
+  following compile condition : #if DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR == 1
+
+  If the DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR build parameter disappears, you might want to refactor this code
+  or continue to pass the DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR compile macro (which is different from the CMake
+  variable)     
+
+  What we are doing below:
+  - in older Emscripten, the registration functions will receive "mycanvas" and "#window" and the callbacks will receive 
+    the same std::string in their payload ("mycanvas" and "#window")
+
+  - in newer Emscripten, the registration functions will receive "#mycanvas" and EMSCRIPTEN_EVENT_TARGET_WINDOW, but 
+    the callbacks will receive "#mycanvas" and "#window" (since it is not possible to store the EMSCRIPTEN_EVENT_TARGET_WINDOW
+    magic value in an std::string, while we still want the callback to be able to change its behavior according to the
+    target element.
+  
+  */
+
+  void convertElementTarget(const char*& outCanvasCssSelectorSz, std::string& outCanvasCssSelector, const std::string& canvasId)
+  {
+    // only "#window" can start with a #
+    if (canvasId[0] == '#')
+    {
+      ORTHANC_ASSERT(canvasId == "#window");
+    }
+#if DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR == 1
+    if (canvasId == "#window")
+    {
+      // we store this in the payload so that the callback can 
+      outCanvasCssSelector = "#window";
+      outCanvasCssSelectorSz = EMSCRIPTEN_EVENT_TARGET_WINDOW;
+    }
+    else
+    {
+      outCanvasCssSelector = "#" + canvasId;
+      outCanvasCssSelectorSz = outCanvasCssSelector.c_str();
+    }
+#else
+    if (canvasId == "#window")
+    {
+      // we store this in the payload so that the callback can 
+      outCanvasCssSelector = "#window";
+      outCanvasCssSelectorSz = outCanvasCssSelector.c_str();;
+    }
+    else
+    {
+      outCanvasCssSelector = canvasId;
+      outCanvasCssSelectorSz = outCanvasCssSelector.c_str();;
+    }
+#endif
+  }
+
   // resize: (const char* target, void* userData, EM_BOOL useCapture, em_ui_callback_func callback)
   template<
     typename GenericFunc,
@@ -212,24 +290,26 @@ namespace OrthancStone
       EmscriptenSetCallbackFunc emFunc,
       std::string canvasId, void* userData, bool capture, GenericFunc func)
   {
-    // TODO: write RemoveCallback with an int id that gets returned from
-    // here
-    FuncAdapterPayload<GenericFunc>* payload =
-      new FuncAdapterPayload<GenericFunc>();
-    std::unique_ptr<FuncAdapterPayload<GenericFunc> > payloadP(payload);
-    payload->canvasId = canvasId;
+    std::string canvasCssSelector;
+    const char* canvasCssSelectorSz = NULL;
+    convertElementTarget(canvasCssSelectorSz, canvasCssSelector, canvasId);
+
+    // TODO: write RemoveCallback with an int id that gets returned from here
+
+    // create userdata payload
+    std::unique_ptr<FuncAdapterPayload<GenericFunc> > payload(new FuncAdapterPayload<GenericFunc>());
+    payload->canvasCssSelector = canvasCssSelector;
     payload->callback = func;
     payload->userData = userData;
-    void* userDataRaw = reinterpret_cast<void*>(payload);
-    // LOG(INFO) << "SetCallback -- userDataRaw: " << userDataRaw <<
-    //   " payload: " << payload << " payload->userData: " << payload->userData;
+    void* userDataRaw = reinterpret_cast<void*>(payload.release());
+
+    // call the registration function
     (*emFunc)(
-      canvasId.c_str(),
+      canvasCssSelectorSz,
       userDataRaw,
       static_cast<EM_BOOL>(capture),
       &OnEventAdapterFunc<GenericFunc, GuiAdapterEvent, EmscriptenEvent>,
       EM_CALLBACK_THREAD_CONTEXT_CALLING_THREAD);
-    payloadP.release();
   }
 
   template<
@@ -241,15 +321,22 @@ namespace OrthancStone
       EmscriptenSetCallbackFunc emFunc,
       std::string canvasId, void* userData, bool capture, GenericFunc func)
   {
-    std::unique_ptr<FuncAdapterPayload<GenericFunc> > payload(
-      new FuncAdapterPayload<GenericFunc>()
-    );
-    payload->canvasId = canvasId;
+    std::string canvasCssSelector;
+    const char* canvasCssSelectorSz = NULL;
+    convertElementTarget(canvasCssSelectorSz, canvasCssSelector, canvasId);
+
+    // TODO: write RemoveCallback with an int id that gets returned from here
+
+    // create userdata payload
+    std::unique_ptr<FuncAdapterPayload<GenericFunc> > payload(new FuncAdapterPayload<GenericFunc>());
+    payload->canvasCssSelector = canvasCssSelector;
     payload->callback = func;
     payload->userData = userData;
     void* userDataRaw = reinterpret_cast<void*>(payload.release());
+
+    // call the registration function
     (*emFunc)(
-      canvasId.c_str(),
+      canvasCssSelectorSz,
       userDataRaw,
       static_cast<EM_BOOL>(capture),
       &OnEventAdapterFunc2<GenericFunc, GuiAdapterEvent, EmscriptenEvent>,
@@ -263,11 +350,10 @@ namespace OrthancStone
       EmscriptenSetCallbackFunc emFunc,
       void* userData, GenericFunc func)
   {
-    // LOG(ERROR) << "SetAnimationFrameCallback !!!!!! (RequestAnimationFrame)";
     std::unique_ptr<FuncAdapterPayload<GenericFunc> > payload(
       new FuncAdapterPayload<GenericFunc>()
     );
-    payload->canvasId = "UNDEFINED";
+    payload->canvasCssSelector = "UNDEFINED";
     payload->callback = func;
     payload->userData = userData;
     void* userDataRaw = reinterpret_cast<void*>(payload.release());
@@ -358,6 +444,8 @@ namespace OrthancStone
       func);
   }
 
+#if 0
+  // useless under Wasm where canvas resize is handled automatically
   void GuiAdapter::SetResizeCallback(
     std::string canvasId, void* userData, bool capture, OnWindowResizeFunc func)
   {
@@ -368,13 +456,11 @@ namespace OrthancStone
       capture,
       func);
   }
+#endif
 
   void GuiAdapter::RequestAnimationFrame(
     OnAnimationFrameFunc func, void* userData)
   {
-    // LOG(ERROR) << "-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+";
-    // LOG(ERROR) << "RequestAnimationFrame";
-    // LOG(ERROR) << "-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+";
     SetAnimationFrameCallback<OnAnimationFrameFunc>(
       &emscripten_request_animation_frame_loop,
       userData,
@@ -393,10 +479,11 @@ namespace OrthancStone
     emscripten_set_keyup_callback(canvasId.c_str(), userData, static_cast<EM_BOOL>(capture), func);
   }
 
-  void GuiAdapter::SetResizeCallback(std::string canvasId, void* userData, bool capture, OnWindowResizeFunc func)
-  {
-    emscripten_set_resize_callback(canvasId.c_str(), userData, static_cast<EM_BOOL>(capture), func);
-  }
+  // handled from within WebAssemblyViewport
+  //void GuiAdapter::SetResizeCallback(std::string canvasId, void* userData, bool capture, OnWindowResizeFunc func)
+  //{
+  //  emscripten_set_resize_callback(canvasId.c_str(), userData, static_cast<EM_BOOL>(capture), func);
+  //}
 
   void GuiAdapter::RequestAnimationFrame(OnAnimationFrameFunc func, void* userData)
   {
@@ -516,13 +603,11 @@ namespace OrthancStone
       dest.altKey = false;
   }
 
-
-
   // SDL ONLY
-  void GuiAdapter::SetResizeCallback(
-    std::string canvasId, void* userData, bool capture, OnWindowResizeFunc func)
+  void GuiAdapter::SetSdlResizeCallback(
+    std::string canvasId, void* userData, bool capture, OnSdlWindowResizeFunc func)
   {
-    resizeHandlers_.push_back(EventHandlerData<OnWindowResizeFunc>(canvasId, func, userData));
+    resizeHandlers_.push_back(EventHandlerData<OnSdlWindowResizeFunc>(canvasId, func, userData));
   }
 
   // SDL ONLY
@@ -575,6 +660,13 @@ namespace OrthancStone
   }
 
   // SDL ONLY
+  void GuiAdapter::SetGenericSdlEventCallback(
+    std::string canvasId, void* userData, bool capture, OnSdlEventCallback func)
+  {
+    sdlEventHandlers_.push_back(EventHandlerData<OnSdlEventCallback>(canvasId, func, userData));
+  }
+
+  // SDL ONLY
   void GuiAdapter::OnAnimationFrame()
   {
     std::vector<size_t> disabledAnimationHandlers;
@@ -596,19 +688,91 @@ namespace OrthancStone
   }
 
   // SDL ONLY
-  void GuiAdapter::OnResize()
+  void GuiAdapter::OnResize(unsigned int width, unsigned int height)
   {
     for (size_t i = 0; i < resizeHandlers_.size(); i++)
     {
       (*(resizeHandlers_[i].func))(
-        resizeHandlers_[i].canvasName, 0, resizeHandlers_[i].userData);
+        resizeHandlers_[i].canvasName, NULL, width, height, resizeHandlers_[i].userData);
+    }
+  }
+
+
+
+  void GuiAdapter::OnSdlGenericEvent(const SDL_Event& sdlEvent)
+  {
+    // Events related to a window are only sent to the related canvas
+    // User events are sent to everyone (we can't filter them here)
+    
+    /*
+    SDL_WindowEvent    SDL_WINDOWEVENT
+    SDL_KeyboardEvent     SDL_KEYDOWN
+                          SDL_KEYUP
+    SDL_TextEditingEvent  SDL_TEXTEDITING
+    SDL_TextInputEvent    SDL_TEXTINPUT
+    SDL_MouseMotionEvent  SDL_MOUSEMOTION
+    SDL_MouseButtonEvent  SDL_MOUSEBUTTONDOWN 
+                          SDL_MOUSEBUTTONUP
+    SDL_MouseWheelEvent   SDL_MOUSEWHEEL
+    SDL_UserEvent         SDL_USEREVENT through ::SDL_LASTEVENT-1
+    */
+
+    // if this string is left empty, it means the message will be sent to
+    // all widgets.
+    // otherwise, it contains the originating message window title
+
+    std::string windowTitle;
+    uint32_t windowId = 0;
+
+    if (sdlEvent.type == SDL_WINDOWEVENT)
+      windowId = sdlEvent.window.windowID;
+    else if (sdlEvent.type == SDL_KEYDOWN || sdlEvent.type == SDL_KEYUP)
+      windowId = sdlEvent.key.windowID;
+    else if (sdlEvent.type == SDL_TEXTEDITING)
+      windowId = sdlEvent.edit.windowID;
+    else if (sdlEvent.type == SDL_TEXTINPUT)
+      windowId = sdlEvent.text.windowID;
+    else if (sdlEvent.type == SDL_MOUSEMOTION)
+      windowId = sdlEvent.motion.windowID;
+    else if (sdlEvent.type == SDL_MOUSEBUTTONDOWN || sdlEvent.type == SDL_MOUSEBUTTONUP)
+      windowId = sdlEvent.button.windowID;
+    else if (sdlEvent.type == SDL_MOUSEWHEEL)
+      windowId = sdlEvent.wheel.windowID;
+    else if (sdlEvent.type >= SDL_USEREVENT && sdlEvent.type <= (SDL_LASTEVENT-1))
+      windowId = sdlEvent.user.windowID;
+
+    if (windowId != 0)
+    {
+      SDL_Window* sdlWindow = SDL_GetWindowFromID(windowId);
+      ORTHANC_ASSERT(sdlWindow != NULL, "Window ID \"" << windowId << "\" is not a valid SDL window ID!");
+      const char* windowTitleSz = SDL_GetWindowTitle(sdlWindow);
+      ORTHANC_ASSERT(windowTitleSz != NULL, "Window ID \"" << windowId << "\" has a NULL window title!");
+      windowTitle = windowTitleSz;
+      ORTHANC_ASSERT(windowTitle != "", "Window ID \"" << windowId << "\" has an empty window title!");
+    }
+
+    for (size_t i = 0; i < sdlEventHandlers_.size(); i++)
+    {
+      // normally, the handlers return a bool indicating whether they
+      // have handled the event or not, but we don't really care about this
+      std::string& canvasName = sdlEventHandlers_[i].canvasName;
+      
+      bool sendEvent = true;
+
+      if (windowTitle != "" && (canvasName != windowTitle))
+        sendEvent = false;
+
+      if (sendEvent)
+      {
+        OnSdlEventCallback func = sdlEventHandlers_[i].func;
+        (*func)(canvasName, sdlEvent, sdlEventHandlers_[i].userData);
+      }
     }
   }
 
   // SDL ONLY
   void GuiAdapter::OnMouseWheelEvent(uint32_t windowID, const GuiAdapterWheelEvent& event)
   {
-
     // the SDL window name IS the canvas name ("canvas" is used because this lib
     // is designed for Wasm
     SDL_Window* sdlWindow = SDL_GetWindowFromID(windowID);
@@ -726,17 +890,6 @@ namespace OrthancStone
         ORTHANC_ASSERT(false, "Wrong event.type: " << event.type << " in GuiAdapter::OnMouseEvent(...)");
         break;
       }
-
-      ////boost::shared_ptr<IGuiAdapterWidget> GetWidgetFromWindowId();
-      //boost::shared_ptr<IGuiAdapterWidget> foundWidget;
-      //VisitWidgets([foundWidget, windowID](auto widget)
-      //  {
-      //    if (widget->GetSdlWindowID() == windowID)
-      //      foundWidget = widget;
-      //  });
-      //ORTHANC_ASSERT(foundWidget, "WindowID " << windowID << " was not found in the registered widgets!");
-      //if(foundWidget)
-      //  foundWidget->
     }
   }
 
@@ -771,6 +924,31 @@ namespace OrthancStone
   }
 # endif
 
+#if 0
+  // TODO: remove this when generic sdl event handlers are implemented in 
+  // the DoseView
+  // SDL ONLY
+  bool GuiAdapter::IsSdlViewPortRefreshEvent(const SDL_Event& event) const
+  {
+    SDL_Window* sdlWindow = SDL_GetWindowFromID(event.window.windowID);
+
+    ORTHANC_ASSERT(sdlWindow != NULL, "Window ID \"" << event.window.windowID << "\" is not a valid SDL window ID!");
+
+    const char* windowTitleSz = SDL_GetWindowTitle(sdlWindow);
+
+    // now we need to find the DoseView from from the canvas name!
+    // (and retrieve the SdlViewport)
+    boost::shared_ptr<IGuiAdapterWidget> foundWidget;
+    VisitWidgets([&foundWidget, windowTitleSz](auto widget)
+    {
+      if (widget->GetCanvasIdentifier() == std::string(windowTitleSz))
+        foundWidget = widget;
+    });
+    ORTHANC_ASSERT(foundWidget, "The window named: \"" << windowTitleSz << "\" was not found in the registered widgets!");
+    return foundWidget->GetSdlViewport().IsRefreshEvent(event);
+  }
+#endif
+
   // SDL ONLY
   void GuiAdapter::Run(GuiAdapterRunFunc func, void* cookie)
   {
@@ -789,141 +967,171 @@ namespace OrthancStone
     while (!stop)
     {
       {
-        LockingEmitter::WriterLock lock(lockingEmitter_);
+        // TODO: lock all viewports here! (use a scoped object)
         if(func != NULL)
           (*func)(cookie);
         OnAnimationFrame(); // in SDL we must call it
       }
 
-      SDL_Event event;
-
-      while (!stop && SDL_PollEvent(&event))
+      while (!stop)
       {
-        LockingEmitter::WriterLock lock(lockingEmitter_);
+        std::vector<SDL_Event> sdlEvents;
+        std::map<Uint32,SDL_Event> userEventsMap;
+        
+        SDL_Event sdlEvent;
 
-        if (event.type == SDL_QUIT)
+        // FIRST: collect all pending events
+        while (SDL_PollEvent(&sdlEvent) != 0)
         {
-          // TODO: call exit callbacks here
-          stop = true;
-          break;
-        }
-        else if ((event.type == SDL_MOUSEMOTION) ||
-          (event.type == SDL_MOUSEBUTTONDOWN) ||
-          (event.type == SDL_MOUSEBUTTONUP))
-        {
-          int scancodeCount = 0;
-          const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
-          bool ctrlPressed(false);
-          bool shiftPressed(false);
-          bool altPressed(false);
-
-          if (SDL_SCANCODE_LCTRL < scancodeCount && keyboardState[SDL_SCANCODE_LCTRL])
-            ctrlPressed = true;
-          if (SDL_SCANCODE_RCTRL < scancodeCount && keyboardState[SDL_SCANCODE_RCTRL])
-            ctrlPressed = true;
-          if (SDL_SCANCODE_LSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_LSHIFT])
-            shiftPressed = true;
-          if (SDL_SCANCODE_RSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_RSHIFT])
-            shiftPressed = true;
-          if (SDL_SCANCODE_LALT < scancodeCount && keyboardState[SDL_SCANCODE_LALT])
-            altPressed = true;
-
-          GuiAdapterMouseEvent dest;
-          ConvertFromPlatform(dest, ctrlPressed, shiftPressed, altPressed, event);
-          OnMouseEvent(event.window.windowID, dest);
-#if 0
-          // for reference, how to create trackers
-          if (tracker)
+          if ( (sdlEvent.type >= SDL_USEREVENT) && 
+               (sdlEvent.type <= SDL_USEREVENT) )
           {
-            PointerEvent e;
-            e.AddPosition(compositor.GetPixelCenterCoordinates(
-              event.button.x, event.button.y));
-            tracker->PointerMove(e);
+            // we don't want to have multiple events with the same event.type
+            userEventsMap[sdlEvent.type] = sdlEvent;
           }
-#endif
-        }
-        else if (event.type == SDL_MOUSEWHEEL)
-        {
-
-          int scancodeCount = 0;
-          const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
-          bool ctrlPressed(false);
-          bool shiftPressed(false);
-          bool altPressed(false);
-
-          if (SDL_SCANCODE_LCTRL < scancodeCount && keyboardState[SDL_SCANCODE_LCTRL])
-            ctrlPressed = true;
-          if (SDL_SCANCODE_RCTRL < scancodeCount && keyboardState[SDL_SCANCODE_RCTRL])
-            ctrlPressed = true;
-          if (SDL_SCANCODE_LSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_LSHIFT])
-            shiftPressed = true;
-          if (SDL_SCANCODE_RSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_RSHIFT])
-            shiftPressed = true;
-          if (SDL_SCANCODE_LALT < scancodeCount && keyboardState[SDL_SCANCODE_LALT])
-            altPressed = true;
-
-          GuiAdapterWheelEvent dest;
-          ConvertFromPlatform(dest, ctrlPressed, shiftPressed, altPressed, event);
-          OnMouseWheelEvent(event.window.windowID, dest);
-
-          //KeyboardModifiers modifiers = GetKeyboardModifiers(keyboardState, scancodeCount);
-
-          //int x, y;
-          //SDL_GetMouseState(&x, &y);
-
-          //if (event.wheel.y > 0)
-          //{
-          //  locker.GetCentralViewport().MouseWheel(MouseWheelDirection_Up, x, y, modifiers);
-          //}
-          //else if (event.wheel.y < 0)
-          //{
-          //  locker.GetCentralViewport().MouseWheel(MouseWheelDirection_Down, x, y, modifiers);
-          //}
-        }
-        else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-        {
-#if 0
-          tracker.reset();
-#endif
-          OnResize();
-        }
-        else if (event.type == SDL_KEYDOWN && event.key.repeat == 0 /* Ignore key bounce */)
-        {
-          switch (event.key.keysym.sym)
+          else
           {
-          case SDLK_f:
-            // window.GetWindow().ToggleMaximize(); //TODO: move to particular handler
-            break;
+            sdlEvents.push_back(sdlEvent);
+          }
+        }
 
-          // This commented out code was used to debug the context
-          // loss/restoring code (2019-08-10)
-          // case SDLK_k:
-          //   {
-          //     SDL_Window* window = SDL_GetWindowFromID(event.window.windowID);
-          //     std::string windowTitle(SDL_GetWindowTitle(window));
-          //     Debug_SetContextToBeKilled(windowTitle);
-          //   }
-          //   break;
-          // case SDLK_l:
-          //   {
-          //     SDL_Window* window = SDL_GetWindowFromID(event.window.windowID);
-          //     std::string windowTitle(SDL_GetWindowTitle(window));
-          //     Debug_SetContextToBeRestored(windowTitle);
-          //   }
-          //   break;
+        // SECOND: collect all user events
+        for (std::map<Uint32,SDL_Event>::const_iterator it = userEventsMap.begin(); it != userEventsMap.end(); ++it)
+          sdlEvents.push_back(it->second);
+                
+        // now process the events
+        for (std::vector<SDL_Event>::const_iterator it = sdlEvents.begin(); it != sdlEvents.end(); ++it)
+        {
+          const SDL_Event& sdlEvent = *it;
+          // TODO: lock all viewports here! (use a scoped object)
 
-          case SDLK_q:
+          if (sdlEvent.type == SDL_QUIT)
+          {
+            // TODO: call exit callbacks here
             stop = true;
             break;
-
-          default:
-            GuiAdapterKeyboardEvent dest;
-            ConvertFromPlatform(dest, event);
-            OnKeyboardEvent(event.window.windowID, dest);
-            break;
           }
+          else if ((sdlEvent.type == SDL_MOUSEMOTION) ||
+            (sdlEvent.type == SDL_MOUSEBUTTONDOWN) ||
+                   (sdlEvent.type == SDL_MOUSEBUTTONUP))
+          {
+            int scancodeCount = 0;
+            const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
+            bool ctrlPressed(false);
+            bool shiftPressed(false);
+            bool altPressed(false);
+
+            if (SDL_SCANCODE_LCTRL < scancodeCount && keyboardState[SDL_SCANCODE_LCTRL])
+              ctrlPressed = true;
+            if (SDL_SCANCODE_RCTRL < scancodeCount && keyboardState[SDL_SCANCODE_RCTRL])
+              ctrlPressed = true;
+            if (SDL_SCANCODE_LSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_LSHIFT])
+              shiftPressed = true;
+            if (SDL_SCANCODE_RSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_RSHIFT])
+              shiftPressed = true;
+            if (SDL_SCANCODE_LALT < scancodeCount && keyboardState[SDL_SCANCODE_LALT])
+              altPressed = true;
+
+            GuiAdapterMouseEvent dest;
+            ConvertFromPlatform(dest, ctrlPressed, shiftPressed, altPressed, sdlEvent);
+            OnMouseEvent(sdlEvent.window.windowID, dest);
+  #if 0
+            // for reference, how to create trackers
+            if (tracker)
+            {
+              PointerEvent e;
+              e.AddPosition(compositor.GetPixelCenterCoordinates(
+                sdlEvent.button.x, sdlEvent.button.y));
+              tracker->PointerMove(e);
+            }
+  #endif
+          }
+          else if (sdlEvent.type == SDL_MOUSEWHEEL)
+          {
+
+            int scancodeCount = 0;
+            const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
+            bool ctrlPressed(false);
+            bool shiftPressed(false);
+            bool altPressed(false);
+
+            if (SDL_SCANCODE_LCTRL < scancodeCount && keyboardState[SDL_SCANCODE_LCTRL])
+              ctrlPressed = true;
+            if (SDL_SCANCODE_RCTRL < scancodeCount && keyboardState[SDL_SCANCODE_RCTRL])
+              ctrlPressed = true;
+            if (SDL_SCANCODE_LSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_LSHIFT])
+              shiftPressed = true;
+            if (SDL_SCANCODE_RSHIFT < scancodeCount && keyboardState[SDL_SCANCODE_RSHIFT])
+              shiftPressed = true;
+            if (SDL_SCANCODE_LALT < scancodeCount && keyboardState[SDL_SCANCODE_LALT])
+              altPressed = true;
+
+            GuiAdapterWheelEvent dest;
+            ConvertFromPlatform(dest, ctrlPressed, shiftPressed, altPressed, sdlEvent);
+            OnMouseWheelEvent(sdlEvent.window.windowID, dest);
+
+            //KeyboardModifiers modifiers = GetKeyboardModifiers(keyboardState, scancodeCount);
+
+            //int x, y;
+            //SDL_GetMouseState(&x, &y);
+
+            //if (sdlEvent.wheel.y > 0)
+            //{
+            //  locker.GetCentralViewport().MouseWheel(MouseWheelDirection_Up, x, y, modifiers);
+            //}
+            //else if (sdlEvent.wheel.y < 0)
+            //{
+            //  locker.GetCentralViewport().MouseWheel(MouseWheelDirection_Down, x, y, modifiers);
+            //}
+          }
+          else if (sdlEvent.type == SDL_WINDOWEVENT &&
+            (sdlEvent.window.event == SDL_WINDOWEVENT_RESIZED ||
+             sdlEvent.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
+          {
+  #if 0
+            tracker.reset();
+  #endif
+            OnResize(sdlEvent.window.data1, sdlEvent.window.data2);
+          }
+          else if (sdlEvent.type == SDL_KEYDOWN && sdlEvent.key.repeat == 0 /* Ignore key bounce */)
+          {
+            switch (sdlEvent.key.keysym.sym)
+            {
+            case SDLK_f:
+              // window.GetWindow().ToggleMaximize(); //TODO: move to particular handler
+              break;
+
+            // This commented out code was used to debug the context
+            // loss/restoring code (2019-08-10)
+            // case SDLK_k:
+            //   {
+            //     SDL_Window* window = SDL_GetWindowFromID(sdlEvent.window.windowID);
+            //     std::string windowTitle(SDL_GetWindowTitle(window));
+            //     Debug_SetContextToBeKilled(windowTitle);
+            //   }
+            //   break;
+            // case SDLK_l:
+            //   {
+            //     SDL_Window* window = SDL_GetWindowFromID(sdlEvent.window.windowID);
+            //     std::string windowTitle(SDL_GetWindowTitle(window));
+            //     Debug_SetContextToBeRestored(windowTitle);
+            //   }
+            //   break;
+
+            case SDLK_q:
+              stop = true;
+              break;
+
+            default:
+              GuiAdapterKeyboardEvent dest;
+              ConvertFromPlatform(dest, sdlEvent);
+              OnKeyboardEvent(sdlEvent.window.windowID, dest);
+              break;
+            }
+          }
+        
+          OnSdlGenericEvent(sdlEvent);
         }
-        //        HandleApplicationEvent(controller, compositor, event, tracker);
       }
 
       SDL_Delay(1);

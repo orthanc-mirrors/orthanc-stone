@@ -21,7 +21,6 @@
 
 #include "SmartLoader.h"
 
-#include "../Messages/MessageForwarder.h"
 #include "../StoneException.h"
 #include "Core/Images/Image.h"
 #include "Core/Logging.h"
@@ -68,11 +67,6 @@ namespace Deprecated
     CachedSliceStatus               status_;
 
   public:
-    CachedSlice(OrthancStone::MessageBroker& broker) :
-    IVolumeSlicer(broker)
-    {
-    }
-
     virtual ~CachedSlice()
     {
     }
@@ -106,7 +100,7 @@ namespace Deprecated
 
     CachedSlice* Clone() const
     {
-      CachedSlice* output = new CachedSlice(GetBroker());
+      CachedSlice* output = new CachedSlice;
       output->sliceIndex_ = sliceIndex_;
       output->slice_.reset(slice_->Clone());
       output->image_ = image_;
@@ -119,10 +113,7 @@ namespace Deprecated
   };
 
 
-  SmartLoader::SmartLoader(OrthancStone::MessageBroker& broker,  
-                           OrthancApiClient& orthancApiClient) :
-    IObservable(broker),
-    IObserver(broker),
+  SmartLoader::SmartLoader(boost::shared_ptr<OrthancApiClient> orthancApiClient) :
     imageQuality_(SliceImageQuality_FullPam),
     orthancApiClient_(orthancApiClient)
   {
@@ -140,7 +131,7 @@ namespace Deprecated
     //   the messages to its observables
     // in both cases, we must be carefull about objects lifecycle !!!
 
-    std::unique_ptr<IVolumeSlicer> layerSource;
+    boost::shared_ptr<IVolumeSlicer> layerSource;
     std::string sliceKeyId = instanceId + ":" + boost::lexical_cast<std::string>(frame);
     SmartLoader::CachedSlice* cachedSlice = NULL;
 
@@ -151,22 +142,23 @@ namespace Deprecated
     }
     else
     {
-      layerSource.reset(new DicomSeriesVolumeSlicer(IObserver::GetBroker(), orthancApiClient_));
+      layerSource.reset(new DicomSeriesVolumeSlicer);
+      dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->Connect(orthancApiClient_);
       dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->SetImageQuality(imageQuality_);
-      layerSource->RegisterObserverCallback(new OrthancStone::Callable<SmartLoader, IVolumeSlicer::GeometryReadyMessage>(*this, &SmartLoader::OnLayerGeometryReady));
-      layerSource->RegisterObserverCallback(new OrthancStone::Callable<SmartLoader, DicomSeriesVolumeSlicer::FrameReadyMessage>(*this, &SmartLoader::OnFrameReady));
-      layerSource->RegisterObserverCallback(new OrthancStone::Callable<SmartLoader, IVolumeSlicer::LayerReadyMessage>(*this, &SmartLoader::OnLayerReady));
+      Register<IVolumeSlicer::GeometryReadyMessage>(*layerSource, &SmartLoader::OnLayerGeometryReady);
+      Register<DicomSeriesVolumeSlicer::FrameReadyMessage>(*layerSource, &SmartLoader::OnFrameReady);
+      Register<IVolumeSlicer::LayerReadyMessage>(*layerSource, &SmartLoader::OnLayerReady);
       dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->LoadFrame(instanceId, frame);
     }
 
     // make sure that the widget registers the events before we trigger them
     if (sliceViewer.GetLayerCount() == layerIndex)
     {
-      sliceViewer.AddLayer(layerSource.release());
+      sliceViewer.AddLayer(layerSource);
     }
     else if (sliceViewer.GetLayerCount() > layerIndex)
     {
-      sliceViewer.ReplaceLayer(layerIndex, layerSource.release());
+      sliceViewer.ReplaceLayer(layerIndex, layerSource);
     }
     else
     {
@@ -190,7 +182,7 @@ namespace Deprecated
 
 
     // create the slice in the cache with "empty" data
-    boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::GetBroker()));
+    boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice);
     cachedSlice->slice_.reset(new Slice(instanceId, frame));
     cachedSlice->status_ = CachedSliceStatus_ScheduledToLoad;
     std::string sliceKeyId = instanceId + ":" + boost::lexical_cast<std::string>(frame);
@@ -199,12 +191,12 @@ namespace Deprecated
 
     cachedSlices_[sliceKeyId] = boost::shared_ptr<CachedSlice>(cachedSlice);
 
-    std::unique_ptr<IVolumeSlicer> layerSource(new DicomSeriesVolumeSlicer(IObserver::GetBroker(), orthancApiClient_));
-
+    std::unique_ptr<IVolumeSlicer> layerSource(new DicomSeriesVolumeSlicer);
+    dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->Connect(orthancApiClient_);
     dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->SetImageQuality(imageQuality_);
-    layerSource->RegisterObserverCallback(new OrthancStone::Callable<SmartLoader, IVolumeSlicer::GeometryReadyMessage>(*this, &SmartLoader::OnLayerGeometryReady));
-    layerSource->RegisterObserverCallback(new OrthancStone::Callable<SmartLoader, DicomSeriesVolumeSlicer::FrameReadyMessage>(*this, &SmartLoader::OnFrameReady));
-    layerSource->RegisterObserverCallback(new OrthancStone::Callable<SmartLoader, IVolumeSlicer::LayerReadyMessage>(*this, &SmartLoader::OnLayerReady));
+    Register<IVolumeSlicer::GeometryReadyMessage>(*layerSource, &SmartLoader::OnLayerGeometryReady);
+    Register<DicomSeriesVolumeSlicer::FrameReadyMessage>(*layerSource, &SmartLoader::OnFrameReady);
+    Register<IVolumeSlicer::LayerReadyMessage>(*layerSource, &SmartLoader::OnLayerReady);
     dynamic_cast<DicomSeriesVolumeSlicer*>(layerSource.get())->LoadFrame(instanceId, frame);
 
     // keep a ref to the VolumeSlicer until the slice is fully loaded and saved to cache
@@ -235,7 +227,7 @@ namespace Deprecated
 
     LOG(WARNING) << "Geometry ready: " << sliceKeyId;
 
-    boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::GetBroker()));
+    boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice);
     cachedSlice->slice_.reset(slice.Clone());
     cachedSlice->effectiveQuality_ = source.GetImageQuality();
     cachedSlice->status_ = CachedSliceStatus_GeometryLoaded;
@@ -256,7 +248,7 @@ namespace Deprecated
 
     LOG(WARNING) << "Image ready: " << sliceKeyId;
 
-    boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice(IObserver::GetBroker()));
+    boost::shared_ptr<CachedSlice> cachedSlice(new CachedSlice);
     cachedSlice->image_.reset(Orthanc::Image::Clone(message.GetFrame()));
     cachedSlice->effectiveQuality_ = message.GetImageQuality();
     cachedSlice->slice_.reset(message.GetSlice().Clone());

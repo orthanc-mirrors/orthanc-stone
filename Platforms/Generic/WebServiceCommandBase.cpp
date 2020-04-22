@@ -25,16 +25,14 @@
 
 namespace Deprecated
 {
-  WebServiceCommandBase::WebServiceCommandBase(OrthancStone::MessageBroker& broker,
-                                               OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                                               OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
+  WebServiceCommandBase::WebServiceCommandBase(MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                                               MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                                const Orthanc::WebServiceParameters& parameters,
                                                const std::string& url,
                                                const IWebService::HttpHeaders& headers,
                                                unsigned int timeoutInSeconds,
                                                Orthanc::IDynamicObject* payload /* takes ownership */,
                                                OrthancStone::NativeStoneApplicationContext& context) :
-    IObservable(broker),
     successCallback_(successCallback),
     failureCallback_(failureCallback),
     parameters_(parameters),

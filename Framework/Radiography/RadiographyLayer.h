@@ -240,7 +240,7 @@ namespace OrthancStone
                      double zoom);
 
   public:
-    RadiographyLayer(MessageBroker& broker, const RadiographyScene& scene);
+    RadiographyLayer(const RadiographyScene& scene);
 
     virtual ~RadiographyLayer()
     {

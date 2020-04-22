@@ -23,18 +23,22 @@
 
 #if ORTHANC_ENABLE_SDL == 1
 
-#include <SDL_render.h>
-#include <SDL_video.h>
 #include <boost/noncopyable.hpp>
+
+// Forward declaration of SDL type to avoid clashes with DCMTK headers
+// on "typedef Sint8", in "StoneInitialization.cpp"
+struct SDL_Window;
+struct SDL_Renderer;
+struct SDL_Surface;
 
 namespace OrthancStone
 {
   class SdlWindow : public boost::noncopyable
   {
   private:
-    SDL_Window    *window_;
-    SDL_Renderer  *renderer_;
-    bool           maximized_;
+    struct SDL_Window   *window_;
+    struct SDL_Renderer *renderer_;
+    bool                 maximized_;
 
   public:
     SdlWindow(const char* title,
@@ -54,7 +58,12 @@ namespace OrthancStone
 
     unsigned int GetHeight() const;
 
-    void Render(SDL_Surface* surface);
+    /**
+     * WARNING: "Refresh()" cannot only be called from the main SDL
+     * thread, in which the window was created. Otherwise, the
+     * renderer displays nothing!
+     **/
+    void Render(struct SDL_Surface* surface);
 
     void ToggleMaximize();
 

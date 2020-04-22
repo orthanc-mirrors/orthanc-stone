@@ -23,21 +23,16 @@
 
 #include <Core/OrthancException.h>
 
+#ifdef _MSC_VER
+// 'Json::Reader': Use CharReader and CharReaderBuilder instead
+#pragma warning(disable:4996)
+#endif
+
 #include <json/reader.h>
 #include <json/writer.h>
 
 namespace OrthancStone
 {
-  HttpCommand::SuccessMessage::SuccessMessage(const HttpCommand& command,
-                                              const HttpHeaders& answerHeaders,
-                                              std::string& answer) :
-    OriginMessage(command),
-    headers_(answerHeaders),
-    answer_(answer)
-  {
-  }
-
-
   void HttpCommand::SuccessMessage::ParseJsonBody(Json::Value& target) const
   {
     Json::Reader reader;
@@ -73,6 +68,32 @@ namespace OrthancStone
     else
     {
       LOG(ERROR) << "HttpCommand::GetBody(): method_  not _Post or _Put";
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+
+
+  const std::string& HttpCommand::GetUsername() const
+  {
+    if (HasCredentials())
+    {
+      return username_;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+
+
+  const std::string& HttpCommand::GetPassword() const
+  {
+    if (HasCredentials())
+    {
+      return password_;
+    }
+    else
+    {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }

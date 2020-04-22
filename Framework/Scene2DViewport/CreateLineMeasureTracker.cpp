@@ -26,16 +26,17 @@
 namespace OrthancStone
 {
   CreateLineMeasureTracker::CreateLineMeasureTracker(
-    MessageBroker&                  broker,
-    boost::weak_ptr<ViewportController>          controllerW,
+    boost::shared_ptr<IViewport>          viewport,
     const PointerEvent&             e)
-    : CreateMeasureTracker(controllerW)
+    : CreateMeasureTracker(viewport)
   {
-    command_.reset(
-      new CreateLineMeasureCommand(
-        broker,
-        controllerW,
-        e.GetMainPosition().Apply(GetScene().GetCanvasToSceneTransform())));
+    ScenePoint2D point = e.GetMainPosition();
+    {
+      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+      ViewportController& controller = lock->GetController();
+      point = e.GetMainPosition().Apply(controller.GetScene().GetCanvasToSceneTransform());
+    }
+    command_.reset(new CreateLineMeasureCommand(viewport, point));
   }
 
   CreateLineMeasureTracker::~CreateLineMeasureTracker()
@@ -52,12 +53,15 @@ namespace OrthancStone
         "PointerMove: active_ == false");
     }
 
-    ScenePoint2D scenePos = event.GetMainPosition().Apply(
-      GetScene().GetCanvasToSceneTransform());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    ViewportController& controller = lock->GetController();
 
+    ScenePoint2D scenePos = event.GetMainPosition().Apply(
+      controller.GetScene().GetCanvasToSceneTransform());
+      
     //LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
     //  "scenePos.GetY() = " << scenePos.GetY();
-
+      
     CreateLineMeasureTracker* concreteThis =
       dynamic_cast<CreateLineMeasureTracker*>(this);
     assert(concreteThis != NULL);
@@ -84,5 +88,4 @@ namespace OrthancStone
   {
     return boost::dynamic_pointer_cast<CreateLineMeasureCommand>(command_);
   }
-
 }

@@ -37,7 +37,7 @@ namespace OrthancStone
   private:
     typedef std::map<size_t, GlyphBitmapAlphabet*>   Fonts;
 
-    Internals::CompositorHelper  helper_;
+    std::unique_ptr<Internals::CompositorHelper>  helper_;
     CairoSurface                 canvas_;
     Fonts                        fonts_;
 
@@ -49,8 +49,7 @@ namespace OrthancStone
     virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer) ORTHANC_OVERRIDE;
 
   public:
-    CairoCompositor(const Scene2D& scene,
-                    unsigned int canvasWidth,
+    CairoCompositor(unsigned int canvasWidth,
                     unsigned int canvasHeight);
     
     virtual ~CairoCompositor();
@@ -80,7 +79,12 @@ namespace OrthancStone
                          Orthanc::Encoding codepage) ORTHANC_OVERRIDE;
 #endif
 
-    virtual void Refresh() ORTHANC_OVERRIDE;
+    virtual void Refresh(const Scene2D& scene) ORTHANC_OVERRIDE;
+
+    virtual void ResetScene() ORTHANC_OVERRIDE
+    {
+      helper_.reset(new Internals::CompositorHelper(*this));
+    }
 
     void UpdateSize(unsigned int canvasWidth,
                     unsigned int canvasHeight);

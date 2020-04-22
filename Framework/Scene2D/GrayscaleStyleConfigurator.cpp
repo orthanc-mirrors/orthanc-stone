@@ -27,6 +27,18 @@
 
 namespace OrthancStone
 {
+  GrayscaleStyleConfigurator::GrayscaleStyleConfigurator() :
+    revision_(0),
+    linearInterpolation_(false),
+    hasWindowingOverride_(false),
+    customWindowWidth_(0),
+    customWindowCenter_(0),
+    hasInversionOverride_(false),
+    inverted_(false),
+    applyLog_(false)
+  {
+  }
+
   void GrayscaleStyleConfigurator::SetWindowing(ImageWindowing windowing)
   {
     hasWindowingOverride_ = true;
@@ -57,6 +69,12 @@ namespace OrthancStone
   void GrayscaleStyleConfigurator::SetLinearInterpolation(bool enabled)
   {
     linearInterpolation_ = enabled;
+    revision_++;
+  }
+
+  void GrayscaleStyleConfigurator::SetApplyLog(bool apply)
+  {
+    applyLog_ = apply;
     revision_++;
   }
 
@@ -100,9 +118,12 @@ namespace OrthancStone
         l.SetCustomWindowing(customWindowCenter_, customWindowWidth_);
       }
     }
+
     if (hasInversionOverride_)
     {
       l.SetInverted(inverted_);
     }
+
+    l.SetApplyLog(applyLog_);
   }
 }

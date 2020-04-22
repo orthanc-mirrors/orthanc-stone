@@ -22,19 +22,19 @@
 #include "ZoomSceneTracker.h"
 #include "../Scene2DViewport/ViewportController.h"
 
-using boost::weak_ptr;
-using boost::shared_ptr;
-
 namespace OrthancStone
 {
-  ZoomSceneTracker::ZoomSceneTracker(weak_ptr<ViewportController> controllerW,
+  ZoomSceneTracker::ZoomSceneTracker(boost::shared_ptr<IViewport> viewport,
                                      const PointerEvent& event,
                                      unsigned int canvasHeight)
-    : OneGesturePointerTracker(controllerW)
+    : OneGesturePointerTracker(viewport)
     , clickY_(event.GetMainPosition().GetY())
-    , aligner_(controllerW, event.GetMainPosition())
-    , originalSceneToCanvas_(GetController()->GetSceneToCanvasTransform())
+    , aligner_(viewport, event.GetMainPosition())
   {
+    
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    originalSceneToCanvas_ = lock->GetController().GetSceneToCanvasTransform();
+
     if (canvasHeight <= 3)
     {
       active_ = false;
@@ -76,26 +76,20 @@ namespace OrthancStone
 
       double zoom = pow(2.0, z);
 
-      // The controller is a weak pointer. It could be deleted when the
-      // tracker is still alive (for instance, because of a lost WebGL
-      // context)
-      if(GetController().get() != NULL)
-      {
-        GetController()->SetSceneToCanvasTransform(
-          AffineTransform2D::Combine(
-            AffineTransform2D::CreateScaling(zoom, zoom),
-            originalSceneToCanvas_));
-
-        aligner_.Apply();
-      }
+      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+      lock->GetController().SetSceneToCanvasTransform(
+        AffineTransform2D::Combine(
+          AffineTransform2D::CreateScaling(zoom, zoom),
+          originalSceneToCanvas_));
+      aligner_.Apply();
+      lock->Invalidate();
     }
   }
 
   void ZoomSceneTracker::Cancel()
   {
-      if(GetController().get() != NULL)
-      {
-        GetController()->SetSceneToCanvasTransform(originalSceneToCanvas_);
-      }
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    lock->GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
+    lock->Invalidate();
   }
 }

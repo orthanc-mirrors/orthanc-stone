@@ -37,13 +37,13 @@ namespace Deprecated
   class BaseWebService::BaseWebServicePayload : public Orthanc::IDynamicObject
   {
   private:
-    std::unique_ptr< OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage> >   userSuccessHandler_;
-    std::unique_ptr< OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage> >     userFailureHandler_;
+    std::unique_ptr< MessageHandler<IWebService::HttpRequestSuccessMessage> >   userSuccessHandler_;
+    std::unique_ptr< MessageHandler<IWebService::HttpRequestErrorMessage> >     userFailureHandler_;
     std::unique_ptr< Orthanc::IDynamicObject>                                   userPayload_;
 
   public:
-    BaseWebServicePayload(OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* userSuccessHandler,
-                          OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* userFailureHandler,
+    BaseWebServicePayload(MessageHandler<IWebService::HttpRequestSuccessMessage>* userSuccessHandler,
+                          MessageHandler<IWebService::HttpRequestErrorMessage>* userFailureHandler,
                           Orthanc::IDynamicObject* userPayload) :
       userSuccessHandler_(userSuccessHandler),
       userFailureHandler_(userFailureHandler),
@@ -88,18 +88,18 @@ namespace Deprecated
   void BaseWebService::GetAsync(const std::string& uri,
                                 const HttpHeaders& headers,
                                 Orthanc::IDynamicObject* payload  /* takes ownership */,
-                                OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
-                                OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
+                                MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,
+                                MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,
                                 unsigned int timeoutInSeconds)
   {
     if (!cacheEnabled_ || cache_.find(uri) == cache_.end())
     {
       GetAsyncInternal(uri, headers,
                        new BaseWebService::BaseWebServicePayload(successCallback, failureCallback, payload), // ownership is transfered
-                       new OrthancStone::Callable<BaseWebService, IWebService::HttpRequestSuccessMessage>
-                       (*this, &BaseWebService::CacheAndNotifyHttpSuccess),
-                       new OrthancStone::Callable<BaseWebService, IWebService::HttpRequestErrorMessage>
-                       (*this, &BaseWebService::NotifyHttpError),
+                       new DeprecatedCallable<BaseWebService, IWebService::HttpRequestSuccessMessage>
+                       (GetSharedObserver(), &BaseWebService::CacheAndNotifyHttpSuccess),
+                       new DeprecatedCallable<BaseWebService, IWebService::HttpRequestErrorMessage>
+                       (GetSharedObserver(), &BaseWebService::NotifyHttpError),
                        timeoutInSeconds);
     }
     else

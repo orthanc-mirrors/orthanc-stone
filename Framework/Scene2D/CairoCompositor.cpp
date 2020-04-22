@@ -85,11 +85,10 @@ namespace OrthancStone
   }
 
 
-  CairoCompositor::CairoCompositor(const Scene2D& scene,
-                                   unsigned int canvasWidth,
-                                   unsigned int canvasHeight) :
-    helper_(scene, *this)
+  CairoCompositor::CairoCompositor(unsigned int canvasWidth,
+                                   unsigned int canvasHeight)
   {
+    ResetScene();
     UpdateSize(canvasWidth, canvasHeight);
   }
 
@@ -154,7 +153,7 @@ namespace OrthancStone
 #endif
 
 
-  void CairoCompositor::Refresh()
+  void CairoCompositor::Refresh(const Scene2D& scene)
   {
     context_.reset(new CairoContext(canvas_));
 
@@ -162,7 +161,7 @@ namespace OrthancStone
     cairo_set_source_rgba(context_->GetObject(), 0, 0, 0, 255);
     cairo_paint(context_->GetObject());
 
-    helper_.Refresh(canvas_.GetWidth(), canvas_.GetHeight());
+    helper_->Refresh(scene, canvas_.GetWidth(), canvas_.GetHeight());
     context_.reset();
   }
 

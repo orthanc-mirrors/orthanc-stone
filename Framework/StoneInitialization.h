@@ -21,6 +21,18 @@
 
 #pragma once
 
+#if !defined(ORTHANC_ENABLE_WASM)
+#  error Macro ORTHANC_ENABLE_WASM must be defined
+#endif
+
+#if !defined(ORTHANC_ENABLE_LOGGING_PLUGIN)
+#  error Macro ORTHANC_ENABLE_LOGGING_PLUGIN must be defined
+#endif
+
+#if ORTHANC_ENABLE_WASM == 1
+#  include "Viewport/WebGLViewportsRegistry.h"
+#endif
+
 #include <Core/Logging.h>
 
 namespace OrthancStone
@@ -32,4 +44,12 @@ namespace OrthancStone
 #endif
 
   void StoneFinalize();
+
+#if ORTHANC_ENABLE_WASM == 1
+  void SetWebGLViewportsRegistryTimeout(double timeout);
+#endif
+
+#if ORTHANC_ENABLE_WASM == 1
+  WebGLViewportsRegistry& GetWebGLViewportsRegistry();
+#endif
 }

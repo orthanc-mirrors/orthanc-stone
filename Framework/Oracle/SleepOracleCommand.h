@@ -22,11 +22,11 @@
 #pragma once
 
 #include "../Messages/IMessage.h"
-#include "OracleCommandWithPayload.h"
+#include "OracleCommandBase.h"
 
 namespace OrthancStone
 {
-  class SleepOracleCommand : public OracleCommandWithPayload
+  class SleepOracleCommand : public OracleCommandBase
   {
   private:
     unsigned int  milliseconds_;
@@ -42,6 +42,11 @@ namespace OrthancStone
     virtual Type GetType() const
     {
       return Type_Sleep;
+    }
+
+    virtual IOracleCommand* Clone() const
+    {
+      return new SleepOracleCommand(milliseconds_);
     }
 
     unsigned int GetDelay() const

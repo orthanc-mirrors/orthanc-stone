@@ -24,7 +24,7 @@
 #include "WorldSceneWidget.h"
 #include "../Layers/IVolumeSlicer.h"
 #include "../../Toolbox/Extent2D.h"
-#include "../../Messages/IObserver.h"
+#include "../../Messages/ObserverBase.h"
 
 #include <map>
 
@@ -32,7 +32,7 @@ namespace Deprecated
 {
   class SliceViewerWidget :
     public WorldSceneWidget,
-    public OrthancStone::IObserver,
+    public OrthancStone::ObserverBase<SliceViewerWidget>,
     public OrthancStone::IObservable
   {
   public:
@@ -66,13 +66,67 @@ namespace Deprecated
     SliceViewerWidget(const SliceViewerWidget&);
     SliceViewerWidget& operator=(const SliceViewerWidget&);
 
-    class Scene;
+    class Scene : public boost::noncopyable
+    {
+    private:
+      OrthancStone::CoordinateSystem3D  plane_;
+      double                            thickness_;
+      size_t                            countMissing_;
+      std::vector<ILayerRenderer*>      renderers_;
+
+    public:
+      void DeleteLayer(size_t index);
+
+      Scene(const OrthancStone::CoordinateSystem3D& plane,
+            double thickness,
+            size_t countLayers);
+
+      ~Scene();
+
+      void SetLayer(size_t index,
+                    ILayerRenderer* renderer);  // Takes ownership
+
+      const OrthancStone::CoordinateSystem3D& GetPlane() const
+      {
+        return plane_;
+      }
+
+      bool HasRenderer(size_t index)
+      {
+        return renderers_[index] != NULL;
+      }
+
+      bool IsComplete() const
+      {
+        return countMissing_ == 0;
+      }
+
+      unsigned int GetCountMissing() const
+      {
+        return static_cast<unsigned int>(countMissing_);
+      }
+
+      bool RenderScene(OrthancStone::CairoContext& context,
+                       const ViewportGeometry& view,
+                       const OrthancStone::CoordinateSystem3D& viewportPlane);
+
+      void SetLayerStyle(size_t index,
+                         const RenderStyle& style);
+
+      bool ContainsPlane(const OrthancStone::CoordinateSystem3D& plane) const;
+
+      double GetThickness() const
+      {
+        return thickness_;
+      }
+    };
+
     
     typedef std::map<const IVolumeSlicer*, size_t>  LayersIndex;
 
     bool                         started_;
     LayersIndex                  layersIndex_;
-    std::vector<IVolumeSlicer*>  layers_;
+    std::vector<boost::shared_ptr<IVolumeSlicer> >  layers_;
     std::vector<RenderStyle>     styles_;
     OrthancStone::CoordinateSystem3D           plane_;
     std::unique_ptr<Scene>         currentScene_;
@@ -100,8 +154,7 @@ namespace Deprecated
     void ResetChangedLayers();
 
   public:
-    SliceViewerWidget(OrthancStone::MessageBroker& broker, 
-                      const std::string& name);
+    SliceViewerWidget(const std::string& name);
 
     virtual OrthancStone::Extent2D GetSceneExtent();
 
@@ -120,11 +173,13 @@ namespace Deprecated
     void InvalidateLayer(size_t layer);
     
   public:
-    virtual ~SliceViewerWidget();
+    virtual ~SliceViewerWidget()
+    {
+    }
 
-    size_t AddLayer(IVolumeSlicer* layer);  // Takes ownership
+    size_t AddLayer(boost::shared_ptr<IVolumeSlicer> layer);
 
-    void ReplaceLayer(size_t layerIndex, IVolumeSlicer* layer); // Takes ownership
+    void ReplaceLayer(size_t layerIndex, boost::shared_ptr<IVolumeSlicer> layer); // Takes ownership
 
     void RemoveLayer(size_t layerIndex);
 

@@ -28,10 +28,12 @@ namespace OrthancStone
 {
   InfoPanelSceneLayer::InfoPanelSceneLayer(const Orthanc::ImageAccessor& texture,
                                            BitmapAnchor anchor,
-                                           bool isLinearInterpolation) :
+                                           bool isLinearInterpolation,
+                                           bool applySceneRotation) :
     texture_(Orthanc::Image::Clone(texture)),
     anchor_(anchor),
-    isLinearInterpolation_(isLinearInterpolation)
+    isLinearInterpolation_(isLinearInterpolation),
+    applySceneRotation_(applySceneRotation)
   {
     if (texture_->GetFormat() != Orthanc::PixelFormat_RGBA32 &&
         texture_->GetFormat() != Orthanc::PixelFormat_RGB24)

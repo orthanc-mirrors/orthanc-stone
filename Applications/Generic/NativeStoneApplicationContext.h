@@ -56,7 +56,7 @@ namespace OrthancStone
       {
       }
 
-      Deprecated::IWidget& SetCentralWidget(Deprecated::IWidget* widget);   // Takes ownership
+      void SetCentralWidget(boost::shared_ptr<Deprecated::IWidget> widget);
 
       Deprecated::IViewport& GetCentralViewport() 
       {
@@ -67,14 +67,9 @@ namespace OrthancStone
       {
         that_.updateDelayInMs_ = delayInMs;
       }
-
-      MessageBroker& GetMessageBroker()
-      {
-        return that_.GetMessageBroker();
-      }
     };
 
-    NativeStoneApplicationContext(MessageBroker& broker);
+    NativeStoneApplicationContext();
 
     void Start();
 

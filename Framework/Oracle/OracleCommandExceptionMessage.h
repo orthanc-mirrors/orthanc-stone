@@ -28,34 +28,28 @@
 
 namespace OrthancStone
 {
-  class OracleCommandExceptionMessage : public IMessage
+  class OracleCommandExceptionMessage : public OriginMessage<IOracleCommand>
   {
     ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
 
   private:
-    const IOracleCommand&       command_;
-    Orthanc::OrthancException   exception_;
+    Orthanc::OrthancException  exception_;
 
   public:
     OracleCommandExceptionMessage(const IOracleCommand& command,
-                                  const Orthanc::OrthancException& exception) :
-      command_(command),
-      exception_(exception)
-    {
-    }
-
-    OracleCommandExceptionMessage(const IOracleCommand& command,
                                   const Orthanc::ErrorCode& error) :
-      command_(command),
+      OriginMessage(command),
       exception_(error)
     {
     }
 
-    const IOracleCommand& GetCommand() const
+    OracleCommandExceptionMessage(const IOracleCommand& command,
+                                  const Orthanc::OrthancException& exception) :
+      OriginMessage(command),
+      exception_(exception)
     {
-      return command_;
     }
-    
+
     const Orthanc::OrthancException& GetException() const
     {
       return exception_;

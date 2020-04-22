@@ -22,6 +22,7 @@
 #pragma once
 
 #include "LinearAlgebra.h"
+#include "../Scene2D/ScenePoint2D.h"
 
 #include <Plugins/Samples/Common/IDicomDataset.h>
 
@@ -95,11 +96,23 @@ namespace OrthancStone
     Vector MapSliceToWorldCoordinates(double x,
                                       double y) const;
     
+    Vector MapSliceToWorldCoordinates(const ScenePoint2D& p) const
+    {
+      return MapSliceToWorldCoordinates(p.GetX(), p.GetY());
+    }
+    
     double ProjectAlongNormal(const Vector& point) const;
 
     void ProjectPoint(double& offsetX,
                       double& offsetY,
                       const Vector& point) const;
+
+    ScenePoint2D ProjectPoint(const Vector& point) const
+    {
+      double x, y;
+      ProjectPoint(x, y, point);
+      return ScenePoint2D(x, y);
+    }
 
     /*
     Alternated faster implementation (untested yet)
@@ -120,5 +133,9 @@ namespace OrthancStone
     static bool ComputeDistance(double& distance,
                                 const CoordinateSystem3D& a,
                                 const CoordinateSystem3D& b);
+
+    // Normalize a cutting plane so that the origin (0,0,0) of the 3D
+    // world is mapped to the origin of its (x,y) coordinate system
+    static CoordinateSystem3D NormalizeCuttingPlane(const CoordinateSystem3D& plane);
   };
 }

@@ -42,7 +42,7 @@ namespace OrthancStone
     void ApplyConverter();
 
   public:
-    RadiographyDicomLayer(MessageBroker& broker, const RadiographyScene& scene);
+    RadiographyDicomLayer(const RadiographyScene& scene);
 
     void SetInstance(const std::string& instanceId, unsigned int frame)
     {

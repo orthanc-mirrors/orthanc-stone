@@ -71,8 +71,12 @@ namespace OrthancStone
       bool IsPlaneWithinSlice(unsigned int frame,
                               const CoordinateSystem3D& plane) const;
       
-      void ApplyRescaleAndDoseScaling(
-        Orthanc::ImageAccessor& image, bool useDouble) const;
+      void ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
+                                      bool useDouble) const;
+
+      double ApplyRescale(double value) const;
+
+      bool ComputeRegularSpacing(double& target) const;
     };
 
     
@@ -207,9 +211,25 @@ namespace OrthancStone
       return data_.doseUnits_;
     }
 
+    void SetDoseGridScaling(double value)
+    {
+      data_.doseGridScaling_ = value;
+    }
+
     double GetDoseGridScaling() const
     {
       return data_.doseGridScaling_;
+    }
+
+    double ApplyRescale(double value) const
+    {
+      return data_.ApplyRescale(value);
+    }
+
+    // Required for RT-DOSE
+    bool ComputeRegularSpacing(double& target) const
+    {
+      return data_.ComputeRegularSpacing(target);
     }
   };
 }

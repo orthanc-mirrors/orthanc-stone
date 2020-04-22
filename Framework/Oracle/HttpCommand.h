@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Messages/IMessage.h"
-#include "OracleCommandWithPayload.h"
+#include "OracleCommandBase.h"
 
 #include <Core/Enumerations.h>
 
@@ -31,7 +31,7 @@
 
 namespace OrthancStone
 {
-  class HttpCommand : public OracleCommandWithPayload
+  class HttpCommand : public OracleCommandBase
   {
   public:
     typedef std::map<std::string, std::string>  HttpHeaders;
@@ -41,13 +41,18 @@ namespace OrthancStone
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      HttpHeaders   headers_;
-      std::string   answer_;
+      const HttpHeaders&  headers_;
+      const std::string&  answer_;
 
     public:
       SuccessMessage(const HttpCommand& command,
                      const HttpHeaders& answerHeaders,
-                     std::string& answer  /* will be swapped to avoid a memcpy() */);
+                     const std::string& answer) :
+        OriginMessage(command),
+        headers_(answerHeaders),
+        answer_(answer)
+      {
+      }
 
       const std::string& GetAnswer() const
       {
@@ -56,7 +61,7 @@ namespace OrthancStone
 
       void ParseJsonBody(Json::Value& target) const;
 
-      const HttpHeaders&  GetAnswerHeaders() const
+      const HttpHeaders& GetAnswerHeaders() const
       {
         return headers_;
       }
@@ -69,6 +74,19 @@ namespace OrthancStone
     std::string          body_;
     HttpHeaders          headers_;
     unsigned int         timeout_;
+    std::string          username_;
+    std::string          password_;
+
+    HttpCommand(const HttpCommand& other) :
+      method_(other.method_),
+      url_(other.url_),
+      body_(other.body_),
+      headers_(other.headers_),
+      timeout_(other.timeout_),
+      username_(other.username_),
+      password_(other.password_)
+    {
+    }
 
   public:
     HttpCommand();
@@ -76,6 +94,11 @@ namespace OrthancStone
     virtual Type GetType() const
     {
       return Type_Http;
+    }
+
+    virtual IOracleCommand* Clone() const
+    {
+      return new HttpCommand(*this);
     }
 
     void SetMethod(Orthanc::HttpMethod method)
@@ -137,5 +160,27 @@ namespace OrthancStone
     {
       return timeout_;
     }
+
+    void SetCredentials(const std::string& username,
+                        const std::string& password)
+    {
+      username_ = username;
+      password_ = password;
+    }
+
+    void ClearCredentials()
+    {
+      username_.clear();
+      password_.clear();
+    }
+
+    bool HasCredentials() const
+    {
+      return !username_.empty();
+    }
+
+    const std::string& GetUsername() const;
+
+    const std::string& GetPassword() const;
   };
 }

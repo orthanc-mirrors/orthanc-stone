@@ -24,44 +24,69 @@
 #include "MeasureCommands.h"
 
 #include "../StoneException.h"
+#include "../Scene2D/PanSceneTracker.h"
+#include "../Scene2D/RotateSceneTracker.h"
+#include "../Scene2D/ZoomSceneTracker.h"
 
 #include <boost/make_shared.hpp>
 
 namespace OrthancStone
 {
-  ViewportController::ViewportController(boost::weak_ptr<UndoStack> undoStackW,
-                                         MessageBroker& broker,
-                                         IViewport& viewport)
-    : IObservable(broker)
-    , undoStackW_(undoStackW)
-    , canvasToSceneFactor_(0.0)
-    , viewport_(viewport)
+  IFlexiblePointerTracker* DefaultViewportInteractor::CreateTracker(
+    boost::shared_ptr<IViewport>          viewport,
+    const PointerEvent& event,
+    unsigned int        viewportWidth,
+    unsigned int        viewportHeight)
   {
+    switch (event.GetMouseButton())
+    {
+      case MouseButton_Left:
+        return new RotateSceneTracker(viewport, event);
+
+      case MouseButton_Middle:
+        return new PanSceneTracker(viewport, event);
+      
+      case MouseButton_Right:
+      {
+        if (viewportWidth != 0)
+        {
+          return new ZoomSceneTracker(viewport, event, viewportWidth);
+        }
+        else
+        {
+          return NULL;
+        }
+      }
+
+      default:
+        return NULL;
+    }
   }
- 
+
+  ViewportController::ViewportController(boost::shared_ptr<IViewport> viewport)
+    : viewport_(viewport)
+    , scene_(new Scene2D)
+    , canvasToSceneFactor_(1)
+  {
+    // undoStack_ is not default-initialized, which basically means empty.
+    // The controller must be able to cope with this.
+  }
+
   ViewportController::~ViewportController()
   {
-
   }
 
-  boost::shared_ptr<UndoStack> ViewportController::GetUndoStack()
-  {
-    return undoStackW_.lock();
-  }
-
-  boost::shared_ptr<const UndoStack> ViewportController::GetUndoStack() const
-  {
-    return undoStackW_.lock();
-  }
-
-  void ViewportController::PushCommand(boost::shared_ptr<MeasureCommand> command)
+  void ViewportController::PushCommand(
+    boost::shared_ptr<MeasureCommand> command)
   {
     boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
-    if(undoStack.get() != NULL)
+    if (undoStack.get() != NULL)
+    {
       undoStack->PushCommand(command);
+    }
     else
     {
-      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+      LOG(ERROR) << "Internal error: no undo stack!";
     }
   }
 
@@ -69,10 +94,12 @@ namespace OrthancStone
   {
     boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
     if (undoStack.get() != NULL)
+    {
       undoStack->Undo();
+    }
     else
     {
-      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+      LOG(ERROR) << "Internal error: no undo stack!";
     }
   }
 
@@ -80,10 +107,12 @@ namespace OrthancStone
   {
     boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
     if (undoStack.get() != NULL)
+    {
       undoStack->Redo();
+    }
     else
     {
-      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+      LOG(ERROR) << "Internal error: no undo stack!";
     }
   }
 
@@ -91,10 +120,12 @@ namespace OrthancStone
   {
     boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
     if (undoStack.get() != NULL)
+    {
       return undoStack->CanUndo();
+    }
     else
     {
-      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+      LOG(ERROR) << "Internal error: no undo stack!";
       return false;
     }
   }
@@ -103,21 +134,18 @@ namespace OrthancStone
   {
     boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
     if (undoStack.get() != NULL)
+    {
       return undoStack->CanRedo();
+    }
     else
     {
-      LOG(ERROR) << "Internal error: no undo stack in the viewport controller!";
+      LOG(ERROR) << "Internal error: no undo stack!";
       return false;
     }
   }
   
-  bool ViewportController::HandlePointerEvent(PointerEvent e)
-  {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-  }
-
-  std::vector<boost::shared_ptr<MeasureTool> > ViewportController::HitTestMeasureTools(
-    ScenePoint2D p)
+  std::vector<boost::shared_ptr<MeasureTool> > 
+    ViewportController::HitTestMeasureTools(ScenePoint2D p)
   {
     std::vector<boost::shared_ptr<MeasureTool> > ret;
     
@@ -128,8 +156,7 @@ namespace OrthancStone
     }
     return ret;
   }
-
-
+  
   void ViewportController::ResetMeasuringToolsHighlight()
   {
     for (size_t i = 0; i < measureTools_.size(); ++i)
@@ -138,68 +165,59 @@ namespace OrthancStone
     }
   }
 
-  const OrthancStone::AffineTransform2D& ViewportController::GetCanvasToSceneTransform() const
+  OrthancStone::AffineTransform2D 
+    ViewportController::GetCanvasToSceneTransform() const
   {
-    return GetScene().GetCanvasToSceneTransform();
+    return scene_->GetCanvasToSceneTransform();
   }
 
-  const OrthancStone::AffineTransform2D& ViewportController::GetSceneToCanvasTransform() const
+  OrthancStone::AffineTransform2D 
+    ViewportController::GetSceneToCanvasTransform() const
   {
-    return GetScene().GetSceneToCanvasTransform();
+    return scene_->GetSceneToCanvasTransform();
   }
 
   void ViewportController::SetSceneToCanvasTransform(
     const AffineTransform2D& transform)
   {
-    viewport_.GetScene().SetSceneToCanvasTransform(transform);
-    BroadcastMessage(SceneTransformChanged(*this));
-    
-    // update the canvas to scene factor
-    canvasToSceneFactor_ = 0.0;
-    canvasToSceneFactor_ = GetCanvasToSceneFactor();
-  }
+    scene_->SetSceneToCanvasTransform(transform);
 
-  void ViewportController::FitContent(
-    unsigned int canvasWidth, unsigned int canvasHeight)
-  {
-    viewport_.GetScene().FitContent(canvasWidth, canvasHeight);
+    canvasToSceneFactor_ = scene_->GetCanvasToSceneTransform().ComputeZoom();
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
-  void ViewportController::FitContent()
+  void ViewportController::FitContent(unsigned int viewportWidth,
+                                      unsigned int viewportHeight)
   {
-    if (viewport_.HasCompositor())
-    {
-      const ICompositor& compositor = viewport_.GetCompositor();
-      viewport_.GetScene().FitContent(compositor.GetCanvasWidth(), compositor.GetCanvasHeight());
-      BroadcastMessage(SceneTransformChanged(*this));
-    }
+    scene_->FitContent(viewportWidth, viewportHeight);
+    canvasToSceneFactor_ = scene_->GetCanvasToSceneTransform().ComputeZoom();
+    BroadcastMessage(SceneTransformChanged(*this));
   }
 
-  void ViewportController::AddMeasureTool(boost::shared_ptr<MeasureTool> measureTool)
+  void ViewportController::AddMeasureTool(
+    boost::shared_ptr<MeasureTool> measureTool)
   {
-    ORTHANC_ASSERT(std::find(measureTools_.begin(), measureTools_.end(), measureTool)
-      == measureTools_.end(), "Duplicate measure tool");
+    ORTHANC_ASSERT(std::find(measureTools_.begin(), 
+                             measureTools_.end(), 
+                             measureTool) == measureTools_.end(), 
+                  "Duplicate measure tool");
     measureTools_.push_back(measureTool);
   }
 
-  void ViewportController::RemoveMeasureTool(boost::shared_ptr<MeasureTool> measureTool)
+  void ViewportController::RemoveMeasureTool(
+    boost::shared_ptr<MeasureTool> measureTool)
   {
-    ORTHANC_ASSERT(std::find(measureTools_.begin(), measureTools_.end(), measureTool)
-      != measureTools_.end(), "Measure tool not found");
+    ORTHANC_ASSERT(std::find(measureTools_.begin(), 
+                             measureTools_.end(), 
+                             measureTool) != measureTools_.end(), 
+                  "Measure tool not found");
     measureTools_.erase(
       std::remove(measureTools_.begin(), measureTools_.end(), measureTool), 
       measureTools_.end());
   }
 
-
   double ViewportController::GetCanvasToSceneFactor() const
   {
-    if (canvasToSceneFactor_ == 0)
-    {
-      canvasToSceneFactor_ =
-        GetScene().GetCanvasToSceneTransform().ComputeZoom();
-    }
     return canvasToSceneFactor_;
   }
 
@@ -221,5 +239,69 @@ namespace OrthancStone
   double ViewportController::GetAngleTopTextLabelDistanceS() const
   {
     return TEXT_CENTER_DISTANCE_CANVAS_COORD * GetCanvasToSceneFactor();
+  }
+
+
+  void ViewportController::HandleMousePress(
+    OrthancStone::IViewportInteractor&  interactor,
+    const PointerEvent&                 event,
+    unsigned int                        viewportWidth,
+    unsigned int                        viewportHeight)
+  {
+    if (activeTracker_)
+    {
+      // We are dealing with a multi-stage tracker (that is made of several 
+      // interactions)
+      activeTracker_->PointerDown(event);
+
+      if (!activeTracker_->IsAlive())
+      {
+        activeTracker_.reset();
+      }
+    }
+    else
+    {
+      // Check whether there is already a measure tool at that position
+      for (size_t i = 0; i < measureTools_.size(); ++i)
+      {
+        if (measureTools_[i]->HitTest(event.GetMainPosition()))
+        {
+          activeTracker_ = measureTools_[i]->CreateEditionTracker(event);
+          return;
+        }
+      }
+
+      // No measure tool, create new tracker from the interactor
+      activeTracker_.reset(interactor.CreateTracker(viewport_, 
+                                                    event, 
+                                                    viewportWidth, 
+                                                    viewportHeight));
+    }
+  }
+
+  bool ViewportController::HandleMouseMove(const PointerEvent& event)
+  {
+    if (activeTracker_)
+    {
+      activeTracker_->PointerMove(event);
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+  void ViewportController::HandleMouseRelease(const PointerEvent& event)
+  {
+    if (activeTracker_)
+    {
+      activeTracker_->PointerUp(event);
+
+      if (!activeTracker_->IsAlive())
+      {
+        activeTracker_.reset();
+      }
+    }
   }
 }

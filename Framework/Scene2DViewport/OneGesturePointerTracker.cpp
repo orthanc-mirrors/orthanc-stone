@@ -28,8 +28,8 @@
 namespace OrthancStone
 {
   OneGesturePointerTracker::OneGesturePointerTracker(
-    boost::weak_ptr<ViewportController> controllerW)
-    : controllerW_(controllerW)
+    boost::shared_ptr<IViewport> viewport)
+    : viewport_(viewport)
     , alive_(true)
     , currentTouchCount_(1)
   {
@@ -41,10 +41,10 @@ namespace OrthancStone
     // gesture
     ORTHANC_ASSERT(currentTouchCount_ > 0, "Wrong state in tracker");
     currentTouchCount_--;
-    LOG(INFO) << "currentTouchCount_ becomes: " << currentTouchCount_;
+    //LOG(TRACE) << "currentTouchCount_ becomes: " << currentTouchCount_;
     if (currentTouchCount_ == 0)
     {
-      LOG(INFO) << "currentTouchCount_ == 0 --> alive_ = false";
+      //LOG(TRACE) << "currentTouchCount_ == 0 --> alive_ = false";
       alive_ = false;
     }
   }
@@ -54,16 +54,20 @@ namespace OrthancStone
     // additional touches are not taken into account but we need to count 
     // the number of active touches
     currentTouchCount_++;
-    LOG(INFO) << "currentTouchCount_ becomes: " << currentTouchCount_;
+    //LOG(TRACE) << "currentTouchCount_ becomes: " << currentTouchCount_;
+
+    /**
+     * 2019-12-06 (SJO): Patch to have consistent behavior when mouse
+     * leaves the canvas while the tracker is still active, then
+     * button is released while out-of-canvas. Such an event is not
+     * caught (at least in WebAssembly), so we delete the tracker on
+     * the next click inside the canvas.
+     **/
+    alive_ = false;
   }
 
   bool OneGesturePointerTracker::IsAlive() const
   {
     return alive_;
-  }
-
-  boost::shared_ptr<ViewportController> OneGesturePointerTracker::GetController()
-  {
-    return controllerW_.lock();
   }
 }

@@ -26,16 +26,10 @@
 
 #include <boost/math/constants/constants.hpp>
 
+#include "../Viewport/IViewport.h"
+
 namespace OrthancStone
 {
-  MeasureTool::~MeasureTool()
-  {
-    // if the controller is dead, let's not bother.
-    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
-    if (controller)
-      controller->Unregister(this);
-  }
-
   void MeasureTool::Enable()
   {
     enabled_ = true;
@@ -53,48 +47,30 @@ namespace OrthancStone
     return enabled_;
   }
 
-
-  boost::shared_ptr<const ViewportController> MeasureTool::GetController() const
-  {
-    boost::shared_ptr<const ViewportController> controller = controllerW_.lock();
-    if (!controller)
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-        "Using dead ViewportController object!");
-    return controller;
-  }
-
-  boost::shared_ptr<ViewportController> MeasureTool::GetController()
-  {
-#if 1
-    return boost::const_pointer_cast<ViewportController>
-      (const_cast<const MeasureTool*>(this)->GetController());
-    //return boost::const_<boost::shared_ptr<ViewportController>>
-    //  (const_cast<const MeasureTool*>(this)->GetController());
-#else
-    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
-    if (!controller)
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, 
-        "Using dead ViewportController object!");
-    return controller;
-#endif
-  }
-
-  MeasureTool::MeasureTool(MessageBroker& broker,
-    boost::weak_ptr<ViewportController> controllerW)
-    : IObserver(broker)
-    , controllerW_(controllerW)
+  MeasureTool::MeasureTool(
+    boost::shared_ptr<IViewport> viewport)
+    : viewport_(viewport)
     , enabled_(true)
   {
-    GetController()->RegisterObserverCallback(
-      new Callable<MeasureTool, ViewportController::SceneTransformChanged>
-      (*this, &MeasureTool::OnSceneTransformChanged));
+
   }
 
+  void MeasureTool::PostConstructor()
+  {
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    ViewportController& controller = lock->GetController();
+
+    Register<ViewportController::SceneTransformChanged>(
+      controller, 
+      &MeasureTool::OnSceneTransformChanged);
+  }
 
   bool MeasureTool::IsSceneAlive() const
   {
-    boost::shared_ptr<ViewportController> controller = controllerW_.lock();
-    return (controller.get() != NULL);
+    // since the lifetimes of the viewport, viewportcontroller (and the
+    // measuring tools inside it) are linked, the scene is always alive as 
+    // long as "this" is alive
+    return true;
   }
 
   void MeasureTool::OnSceneTransformChanged(

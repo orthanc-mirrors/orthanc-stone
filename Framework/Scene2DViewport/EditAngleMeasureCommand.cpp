@@ -23,31 +23,30 @@
 namespace OrthancStone
 {
   EditAngleMeasureCommand::EditAngleMeasureCommand(
-    boost::shared_ptr<AngleMeasureTool>  measureTool,
-    MessageBroker& broker,
-    boost::weak_ptr<ViewportController> controllerW)
-    : EditMeasureCommand(measureTool, controllerW)
+    boost::shared_ptr<MeasureTool>  measureTool,
+    boost::shared_ptr<IViewport> viewport)
+    : EditMeasureCommand(measureTool, viewport)
     , measureTool_(measureTool)
   {
   }
 
   void EditAngleMeasureCommand::SetCenter(ScenePoint2D scenePos)
   {
-    measureTool_->SetCenter(scenePos);
+    dynamic_cast<AngleMeasureTool&>(*measureTool_).SetCenter(scenePos);
     mementoModified_ = measureTool_->GetMemento();
   }
 
 
   void EditAngleMeasureCommand::SetSide1End(ScenePoint2D scenePos)
   {
-    measureTool_->SetSide1End(scenePos);
+    dynamic_cast<AngleMeasureTool&>(*measureTool_).SetSide1End(scenePos);
     mementoModified_ = measureTool_->GetMemento();
   }
 
 
   void EditAngleMeasureCommand::SetSide2End(ScenePoint2D scenePos)
   {
-    measureTool_->SetSide2End(scenePos);
+    dynamic_cast<AngleMeasureTool&>(*measureTool_).SetSide2End(scenePos);
     mementoModified_ = measureTool_->GetMemento();
   }
 }

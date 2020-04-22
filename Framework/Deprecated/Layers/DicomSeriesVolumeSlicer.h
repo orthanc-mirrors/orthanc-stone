@@ -22,6 +22,7 @@
 #pragma once
 
 #include "IVolumeSlicer.h"
+#include "../../Messages/ObserverBase.h"
 #include "../Toolbox/IWebService.h"
 #include "../Toolbox/OrthancSlicesLoader.h"
 #include "../Toolbox/OrthancApiClient.h"
@@ -33,7 +34,7 @@ namespace Deprecated
   // messages are sent to observers so they can use it
   class DicomSeriesVolumeSlicer :
     public IVolumeSlicer,
-    public OrthancStone::IObserver
+    public OrthancStone::ObserverBase<DicomSeriesVolumeSlicer>
     //private OrthancSlicesLoader::ISliceLoaderObserver
   {
   public:
@@ -79,13 +80,14 @@ namespace Deprecated
   private:
     class RendererFactory;
     
-    OrthancSlicesLoader  loader_;
+    boost::shared_ptr<OrthancSlicesLoader> loader_;
     SliceImageQuality    quality_;
 
   public:
-    DicomSeriesVolumeSlicer(OrthancStone::MessageBroker& broker,
-                            OrthancApiClient& orthanc);
+    DicomSeriesVolumeSlicer();
 
+    void Connect(boost::shared_ptr<OrthancApiClient> orthanc);
+    
     void LoadSeries(const std::string& seriesId);
 
     void LoadInstance(const std::string& instanceId);
@@ -105,12 +107,12 @@ namespace Deprecated
 
     size_t GetSlicesCount() const
     {
-      return loader_.GetSlicesCount();
+      return loader_->GetSlicesCount();
     }
 
     const Slice& GetSlice(size_t slice) const 
     {
-      return loader_.GetSlice(slice);
+      return loader_->GetSlice(slice);
     }
 
     virtual bool GetExtent(std::vector<OrthancStone::Vector>& points,

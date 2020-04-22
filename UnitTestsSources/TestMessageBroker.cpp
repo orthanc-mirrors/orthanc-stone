@@ -21,10 +21,8 @@
 
 #include "gtest/gtest.h"
 
-#include "../Framework/Messages/MessageBroker.h"
-#include "../Framework/Messages/IObservable.h"
-#include "../Framework/Messages/IObserver.h"
-#include "../Framework/Messages/MessageForwarder.h"
+#include "Framework/Messages/IObservable.h"
+#include "Framework/Messages/ObserverBase.h"
 
 
 int testCounter = 0;
@@ -47,38 +45,14 @@ namespace {
       {
       }
     };
-
-    MyObservable(MessageBroker& broker) :
-      IObservable(broker)
-    {
-    }
   };
 
-  class MyObserver : public IObserver
+  class MyObserver : public ObserverBase<MyObserver>
   {
   public:
-    MyObserver(MessageBroker& broker)
-      : IObserver(broker)
-    {}
-
     void HandleCompletedMessage(const MyObservable::MyCustomMessage& message)
     {
       testCounter += message.payload_;
-    }
-
-  };
-
-
-  class MyIntermediate : public IObserver, public IObservable
-  {
-    IObservable& observedObject_;
-  public:
-    MyIntermediate(MessageBroker& broker, IObservable& observedObject)
-      : IObserver(broker),
-        IObservable(broker),
-        observedObject_(observedObject)
-    {
-      observedObject_.RegisterObserverCallback(new MessageForwarder<MyObservable::MyCustomMessage>(broker, *this));
     }
   };
 }
@@ -86,12 +60,11 @@ namespace {
 
 TEST(MessageBroker, TestPermanentConnectionSimpleUseCase)
 {
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyObserver    observer(broker);
+  MyObservable  observable;
+  boost::shared_ptr<MyObserver>  observer(new MyObserver);
 
   // create a permanent connection between an observable and an observer
-  observable.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
+  observer->Register<MyObservable::MyCustomMessage>(observable, &MyObserver::HandleCompletedMessage);
 
   testCounter = 0;
   observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
@@ -103,155 +76,29 @@ TEST(MessageBroker, TestPermanentConnectionSimpleUseCase)
   ASSERT_EQ(20, testCounter);
 
   // Unregister the observer; make sure it's not called anymore
-  observable.Unregister(&observer);
+  observer.reset();
   testCounter = 0;
   observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
   ASSERT_EQ(0, testCounter);
-}
-
-TEST(MessageBroker, TestMessageForwarderSimpleUseCase)
-{
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyIntermediate intermediate(broker, observable);
-  MyObserver    observer(broker);
-
-  // let the observer observers the intermediate that is actually forwarding the messages from the observable
-  intermediate.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
-
-  testCounter = 0;
-  observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
-  ASSERT_EQ(12, testCounter);
-
-  // the connection is permanent; if we emit the same message again, the observer will be notified again
-  testCounter = 0;
-  observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
-  ASSERT_EQ(20, testCounter);
 }
 
 TEST(MessageBroker, TestPermanentConnectionDeleteObserver)
 {
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyObserver*   observer = new MyObserver(broker);
+  MyObservable  observable;
+  boost::shared_ptr<MyObserver>  observer(new MyObserver);
 
   // create a permanent connection between an observable and an observer
-  observable.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(*observer, &MyObserver::HandleCompletedMessage));
+  observer->Register<MyObservable::MyCustomMessage>(observable, &MyObserver::HandleCompletedMessage);
 
   testCounter = 0;
   observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
   ASSERT_EQ(12, testCounter);
 
   // delete the observer and check that the callback is not called anymore
-  delete observer;
+  observer.reset();
 
   // the connection is permanent; if we emit the same message again, the observer will be notified again
   testCounter = 0;
   observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
   ASSERT_EQ(0, testCounter);
 }
-
-TEST(MessageBroker, TestMessageForwarderDeleteIntermediate)
-{
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyIntermediate* intermediate = new MyIntermediate(broker, observable);
-  MyObserver    observer(broker);
-
-  // let the observer observers the intermediate that is actually forwarding the messages from the observable
-  intermediate->RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
-
-  testCounter = 0;
-  observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
-  ASSERT_EQ(12, testCounter);
-
-  delete intermediate;
-
-  observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
-  ASSERT_EQ(12, testCounter);
-}
-
-TEST(MessageBroker, TestCustomMessage)
-{
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyIntermediate intermediate(broker, observable);
-  MyObserver    observer(broker);
-
-  // let the observer observers the intermediate that is actually forwarding the messages from the observable
-  intermediate.RegisterObserverCallback(new Callable<MyObserver, MyObservable::MyCustomMessage>(observer, &MyObserver::HandleCompletedMessage));
-
-  testCounter = 0;
-  observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
-  ASSERT_EQ(12, testCounter);
-
-  // the connection is permanent; if we emit the same message again, the observer will be notified again
-  testCounter = 0;
-  observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
-  ASSERT_EQ(20, testCounter);
-}
-
-
-#if 0 /* __cplusplus >= 201103L*/
-
-TEST(MessageBroker, TestLambdaSimpleUseCase)
-{
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyObserver*   observer = new MyObserver(broker);
-
-  // create a permanent connection between an observable and an observer
-  observable.RegisterObserverCallback(new LambdaCallable<MyObservable::MyCustomMessage>(*observer, [&](const MyObservable::MyCustomMessage& message) {testCounter += 2 * message.payload_;}));
-
-  testCounter = 0;
-  observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
-  ASSERT_EQ(24, testCounter);
-
-  // delete the observer and check that the callback is not called anymore
-  delete observer;
-
-  // the connection is permanent; if we emit the same message again, the observer will be notified again
-  testCounter = 0;
-  observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
-  ASSERT_EQ(0, testCounter);
-}
-
-namespace {
-  class MyObserverWithLambda : public IObserver {
-  private:
-    int multiplier_;  // this is a private variable we want to access in a lambda
-
-  public:
-    MyObserverWithLambda(MessageBroker& broker, int multiplier, MyObservable& observable)
-      : IObserver(broker),
-        multiplier_(multiplier)
-    {
-      // register a callable to a lambda that access private members
-      observable.RegisterObserverCallback(new LambdaCallable<MyObservable::MyCustomMessage>(*this, [this](const MyObservable::MyCustomMessage& message) {
-        testCounter += multiplier_ * message.payload_;
-      }));
-
-    }
-  };
-}
-
-TEST(MessageBroker, TestLambdaCaptureThisAndAccessPrivateMembers)
-{
-  MessageBroker broker;
-  MyObservable  observable(broker);
-  MyObserverWithLambda*   observer = new MyObserverWithLambda(broker, 3, observable);
-
-  testCounter = 0;
-  observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
-  ASSERT_EQ(36, testCounter);
-
-  // delete the observer and check that the callback is not called anymore
-  delete observer;
-
-  // the connection is permanent; if we emit the same message again, the observer will be notified again
-  testCounter = 0;
-  observable.BroadcastMessage(MyObservable::MyCustomMessage(20));
-  ASSERT_EQ(0, testCounter);
-}
-
-#endif // C++ 11

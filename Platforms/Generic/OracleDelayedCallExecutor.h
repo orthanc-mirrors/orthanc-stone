@@ -36,19 +36,17 @@ namespace Deprecated
     OrthancStone::NativeStoneApplicationContext& context_;
 
   public:
-    OracleDelayedCallExecutor(OrthancStone::MessageBroker& broker,
-                              Oracle& oracle,
+    OracleDelayedCallExecutor(Oracle& oracle,
                               OrthancStone::NativeStoneApplicationContext& context) :
-      IDelayedCallExecutor(broker),
       oracle_(oracle),
       context_(context)
     {
     }
 
-    virtual void Schedule(OrthancStone::MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
+    virtual void Schedule(MessageHandler<IDelayedCallExecutor::TimeoutMessage>* callback,
                           unsigned int timeoutInMs = 1000)
     {
-      oracle_.Submit(new DelayedCallCommand(broker_, callback, timeoutInMs, NULL, context_));
+      oracle_.Submit(new DelayedCallCommand(callback, timeoutInMs, NULL, context_));
     }
   };
 }

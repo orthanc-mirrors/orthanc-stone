@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Messages/IObservable.h"
-#include "../Messages/IObserver.h"
+#include "../Messages/ObserverBase.h"
 #include "../Oracle/GetOrthancImageCommand.h"
 #include "../Oracle/GetOrthancWebViewerJpegCommand.h"
 #include "../Oracle/IOracle.h"
@@ -35,15 +35,23 @@
 
 namespace OrthancStone
 {
+  class ILoadersContext;
+
   /**
      This class is supplied with Oracle commands and will schedule up to 
      simultaneousDownloads_ of them at the same time, then will schedule the 
      rest once slots become available. It is used, a.o., by the 
      OrtancMultiframeVolumeLoader class.
+
+     To use it, you need to create commands that derive from State.
+
+     You need to initialize them with the object that must be called when 
+     an answer is received. 
   */
-  class LoaderStateMachine : public IObserver
+
+  class LoaderStateMachine : public OrthancStone::ObserverBase<LoaderStateMachine>
   {
-  protected:
+  public:
     class State : public Orthanc::IDynamicObject
     {
     private:
@@ -60,7 +68,7 @@ namespace OrthancStone
       {
       }
 
-      void Schedule(OracleCommandWithPayload* command) const
+      void Schedule(OrthancStone::OracleCommandBase* command) const
       {
         that_.Schedule(command);
       }
@@ -71,14 +79,14 @@ namespace OrthancStone
         return dynamic_cast<T&>(that_);
       }
       
-      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message);
+      virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message);
       
-      virtual void Handle(const GetOrthancImageCommand::SuccessMessage& message);
+      virtual void Handle(const OrthancStone::GetOrthancImageCommand::SuccessMessage& message);
       
-      virtual void Handle(const GetOrthancWebViewerJpegCommand::SuccessMessage& message);
+      virtual void Handle(const OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage& message);
     };
 
-    void Schedule(OracleCommandWithPayload* command);
+    void Schedule(OrthancStone::OracleCommandBase* command);
 
     void Start();
 
@@ -87,23 +95,24 @@ namespace OrthancStone
 
     void Clear();
 
-    void HandleExceptionMessage(const OracleCommandExceptionMessage& message);
+    void HandleExceptionMessage(const OrthancStone::OracleCommandExceptionMessage& message);
 
     template <typename T>
     void HandleSuccessMessage(const T& message);
 
-    typedef std::list<IOracleCommand*>  PendingCommands;
+    typedef std::list<OrthancStone::IOracleCommand*>  PendingCommands;
 
-    IOracle&         oracle_;
-    IObservable&     oracleObservable_;
-    bool             active_;
-    unsigned int     simultaneousDownloads_;
-    PendingCommands  pendingCommands_;
-    unsigned int     activeCommands_;
+    OrthancStone::ILoadersContext&  loadersContext_;
+    bool                            active_;
+    unsigned int                    simultaneousDownloads_;
+    PendingCommands                 pendingCommands_;
+    unsigned int                    activeCommands_;
+
 
   public:
-    LoaderStateMachine(IOracle& oracle,
-                       IObservable& oracleObservable);
+    LoaderStateMachine(OrthancStone::ILoadersContext& loadersContext);
+
+    void PostConstructor();
 
     virtual ~LoaderStateMachine();
 

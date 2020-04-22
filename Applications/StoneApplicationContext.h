@@ -59,18 +59,15 @@ namespace OrthancStone
   class StoneApplicationContext : public boost::noncopyable
   {
   private:
-    MessageBroker&                   broker_;
-    Deprecated::IWebService*         webService_;
-    Deprecated::IDelayedCallExecutor*            delayedCallExecutor_;
-    std::unique_ptr<Deprecated::OrthancApiClient>  orthanc_;
+    boost::shared_ptr<Deprecated::IWebService>     webService_;
+    Deprecated::IDelayedCallExecutor*  delayedCallExecutor_;   // TODO => shared_ptr ??
+    boost::shared_ptr<Deprecated::OrthancApiClient>  orthanc_;
     std::string                      orthancBaseUrl_;
 
     void InitializeOrthanc();
 
   public:
-    StoneApplicationContext(MessageBroker& broker) :
-      broker_(broker),
-      webService_(NULL),
+    StoneApplicationContext() :
       delayedCallExecutor_(NULL)
     {
     }
@@ -79,21 +76,11 @@ namespace OrthancStone
     {
     }
 
-    MessageBroker& GetMessageBroker()
-    {
-      return broker_;
-    }
+    boost::shared_ptr<Deprecated::IWebService> GetWebService();
 
-    bool HasWebService() const
-    {
-      return webService_ != NULL;
-    }
+    boost::shared_ptr<Deprecated::OrthancApiClient> GetOrthancApiClient();
 
-    Deprecated::IWebService& GetWebService();
-
-    Deprecated::OrthancApiClient& GetOrthancApiClient();
-
-    void SetWebService(Deprecated::IWebService& webService);
+    void SetWebService(boost::shared_ptr<Deprecated::IWebService> webService);
 
     void SetOrthancBaseUrl(const std::string& baseUrl);
 

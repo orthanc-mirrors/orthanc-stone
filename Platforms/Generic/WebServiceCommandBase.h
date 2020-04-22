@@ -37,8 +37,8 @@ namespace Deprecated
   class WebServiceCommandBase : public IOracleCommand, OrthancStone::IObservable
   {
   protected:
-    std::unique_ptr<OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
-    std::unique_ptr<OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage> >    failureCallback_;
+    std::unique_ptr<MessageHandler<IWebService::HttpRequestSuccessMessage> >  successCallback_;
+    std::unique_ptr<MessageHandler<IWebService::HttpRequestErrorMessage> >    failureCallback_;
     Orthanc::WebServiceParameters           parameters_;
     std::string                             url_;
     IWebService::HttpHeaders                headers_;
@@ -51,9 +51,8 @@ namespace Deprecated
     unsigned int                            timeoutInSeconds_;
 
   public:
-    WebServiceCommandBase(OrthancStone::MessageBroker& broker,
-                          OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
-                          OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
+    WebServiceCommandBase(MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                           const Orthanc::WebServiceParameters& parameters,
                           const std::string& url,
                           const IWebService::HttpHeaders& headers,

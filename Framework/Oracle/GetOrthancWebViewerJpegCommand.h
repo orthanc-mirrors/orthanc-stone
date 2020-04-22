@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../Messages/IMessageEmitter.h"
-#include "OracleCommandWithPayload.h"
+#include "OracleCommandBase.h"
 
 #include <Core/Images/ImageAccessor.h>
 
@@ -30,7 +30,7 @@
 
 namespace OrthancStone
 {
-  class GetOrthancWebViewerJpegCommand : public OracleCommandWithPayload
+  class GetOrthancWebViewerJpegCommand : public OracleCommandBase
   {
   public:
     typedef std::map<std::string, std::string>  HttpHeaders;
@@ -40,15 +40,19 @@ namespace OrthancStone
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      std::unique_ptr<Orthanc::ImageAccessor>  image_;
+      const Orthanc::ImageAccessor&  image_;
 
     public:
       SuccessMessage(const GetOrthancWebViewerJpegCommand& command,
-                     Orthanc::ImageAccessor* image);   // Takes ownership
+                     const Orthanc::ImageAccessor& image) :
+        OriginMessage(command),
+        image_(image)
+      {
+      }
 
       const Orthanc::ImageAccessor& GetImage() const
       {
-        return *image_;
+        return image_;
       }
     };
 
@@ -60,12 +64,27 @@ namespace OrthancStone
     unsigned int          timeout_;
     Orthanc::PixelFormat  expectedFormat_;
 
+    GetOrthancWebViewerJpegCommand(const GetOrthancWebViewerJpegCommand& other) :
+      instanceId_(other.instanceId_),
+      frame_(other.frame_),
+      quality_(other.quality_),
+      headers_(other.headers_),
+      timeout_(other.timeout_),
+      expectedFormat_(other.expectedFormat_)
+    {
+    }
+    
   public:
     GetOrthancWebViewerJpegCommand();
 
     virtual Type GetType() const
     {
       return Type_GetOrthancWebViewerJpeg;
+    }
+
+    virtual IOracleCommand* Clone() const
+    {
+      return new GetOrthancWebViewerJpegCommand(*this);
     }
 
     void SetExpectedPixelFormat(Orthanc::PixelFormat format)
@@ -128,8 +147,8 @@ namespace OrthancStone
 
     std::string GetUri() const;
 
-    void ProcessHttpAnswer(IMessageEmitter& emitter,
-                           const IObserver& receiver,
+    void ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
+                           IMessageEmitter& emitter,
                            const std::string& answer) const;
   };
 }

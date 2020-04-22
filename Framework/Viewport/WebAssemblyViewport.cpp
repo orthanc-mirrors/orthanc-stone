@@ -21,311 +21,314 @@
 
 #include "WebAssemblyViewport.h"
 
-#include "../StoneException.h"
+#include "../Toolbox/GenericToolbox.h"
 
-#include <emscripten/html5.h>
+#include <Core/OrthancException.h>
+
+#include <boost/make_shared.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 namespace OrthancStone
 {
-  WebAssemblyOpenGLViewport::WebAssemblyOpenGLViewport(const std::string& canvas) 
-    : WebAssemblyViewport(canvas)
-    , context_(canvas)
-    , cssWidth_(0)    // will be set in Refresh()
-    , cssHeight_(0)   // ditto
-    , pixelWidth_(0)  // ditto
-    , pixelHeight_(0) // ditto
+  static void ConvertMouseEvent(PointerEvent& target,
+                                const EmscriptenMouseEvent& source,
+                                const ICompositor& compositor)
   {
-    compositor_.reset(new OpenGLCompositor(context_, GetScene()));
-    RegisterContextCallbacks();
-  }
+    int x = static_cast<int>(source.targetX);
+    int y = static_cast<int>(source.targetY);
 
-  WebAssemblyOpenGLViewport::WebAssemblyOpenGLViewport(const std::string& canvas,
-    boost::shared_ptr<Scene2D>& scene) 
-    : WebAssemblyViewport(canvas, scene)
-    , context_(canvas)
-    , cssWidth_(0)    // will be set in Refresh()
-    , cssHeight_(0)   // ditto
-    , pixelWidth_(0)  // ditto
-    , pixelHeight_(0) // ditto
-  {
-    compositor_.reset(new OpenGLCompositor(context_, GetScene()));
-    RegisterContextCallbacks();
-  }
-
-  void WebAssemblyOpenGLViewport::UpdateSize()
-  {
-    context_.UpdateSize();  // First read the size of the canvas
-
-    if (compositor_.get() != NULL)
+    switch (source.button)
     {
-      compositor_->Refresh();  // Then refresh the content of the canvas
+      case 0:
+        target.SetMouseButton(MouseButton_Left);
+        break;
+
+      case 1:
+        target.SetMouseButton(MouseButton_Middle);
+        break;
+
+      case 2:
+        target.SetMouseButton(MouseButton_Right);
+        break;
+
+      default:
+        target.SetMouseButton(MouseButton_None);
+        break;
     }
+      
+    target.AddPosition(compositor.GetPixelCenterCoordinates(x, y));
+    target.SetAltModifier(source.altKey);
+    target.SetControlModifier(source.ctrlKey);
+    target.SetShiftModifier(source.shiftKey);
   }
 
-  /*
-  typedef EM_BOOL (*em_webgl_context_callback)(int eventType, const void *reserved, void *userData);
 
-  EMSCRIPTEN_EVENT_WEBGLCONTEXTLOST EMSCRIPTEN_EVENT_WEBGLCONTEXTRESTORED
-
-  EMSCRIPTEN_RESULT emscripten_set_webglcontextlost_callback(
-    const char *target, void *userData, EM_BOOL useCapture, em_webgl_context_callback callback)
-
-  EMSCRIPTEN_RESULT emscripten_set_webglcontextrestored_callback(
-    const char *target, void *userData, EM_BOOL useCapture, em_webgl_context_callback callback)
-
-  */
-
-  EM_BOOL WebAssemblyOpenGLViewport_OpenGLContextLost_callback(
-    int eventType, const void* reserved, void* userData)
+  class WebAssemblyViewport::WasmLock : public ILock
   {
-    ORTHANC_ASSERT(eventType == EMSCRIPTEN_EVENT_WEBGLCONTEXTLOST);
-    WebAssemblyOpenGLViewport* viewport = reinterpret_cast<WebAssemblyOpenGLViewport*>(userData);
-    return viewport->OpenGLContextLost();
-  }
+  private:
+    WebAssemblyViewport& that_;
 
-  EM_BOOL WebAssemblyOpenGLViewport_OpenGLContextRestored_callback(
-    int eventType, const void* reserved, void* userData)
-  {
-    ORTHANC_ASSERT(eventType == EMSCRIPTEN_EVENT_WEBGLCONTEXTRESTORED);
-    WebAssemblyOpenGLViewport* viewport = reinterpret_cast<WebAssemblyOpenGLViewport*>(userData);
-    return viewport->OpenGLContextRestored();
-  }
-
-  void WebAssemblyOpenGLViewport::DisableCompositor()
-  {
-    compositor_.reset();
-  }
-
-  ICompositor& WebAssemblyOpenGLViewport::GetCompositor()
-  {
-    if (compositor_.get() == NULL)
+  public:
+    WasmLock(WebAssemblyViewport& that) :
+      that_(that)
     {
-      // "HasCompositor()" should have been called
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-    else
+
+    virtual bool HasCompositor() const ORTHANC_OVERRIDE
     {
-      return *compositor_;
+      return that_.compositor_.get() != NULL;
     }
-  }
 
-  void WebAssemblyOpenGLViewport::UpdateSizeIfNeeded()
-  {
-    bool needsRefresh = false;
-    std::string canvasId = GetCanvasIdentifier();
-
+    virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE
     {
-      double cssWidth = 0;
-      double cssHeight = 0;
-      EMSCRIPTEN_RESULT res = EMSCRIPTEN_RESULT_SUCCESS;
-      res =
-        emscripten_get_element_css_size(canvasId.c_str(), &cssWidth, &cssHeight);
-
-      if (res == EMSCRIPTEN_RESULT_SUCCESS)
+      if (that_.compositor_.get() == NULL)
       {
-        if ((cssWidth != cssWidth_) || (cssHeight != cssHeight_))
-        {
-          cssWidth_ = cssWidth;
-          cssHeight_ = cssHeight;
-          needsRefresh = true;
-        }
-      }
-    }
-
-    {
-      int pixelWidth = 0;
-      int pixelHeight = 0;
-      EMSCRIPTEN_RESULT res = EMSCRIPTEN_RESULT_SUCCESS;
-      res =
-        emscripten_get_canvas_element_size(canvasId.c_str(), &pixelWidth, &pixelHeight);
-
-      if (res == EMSCRIPTEN_RESULT_SUCCESS)
-      {
-        if ((pixelWidth != pixelWidth_) || (pixelHeight != pixelHeight_))
-        {
-          pixelWidth_ = pixelWidth;
-          pixelHeight_ = pixelHeight;
-          needsRefresh = true;
-        }
-      }
-    }
-
-    if (needsRefresh)
-      UpdateSize();
-  }
-
-  void WebAssemblyOpenGLViewport::Refresh()
-  {
-    try
-    {
-      // first, we check if the canvas size (both css size in css pixels and
-      // backing store) have changed. if so, we call UpdateSize to deal with
-      // it
-
-      LOG(TRACE) << "WebAssemblyOpenGLViewport::Refresh";
-
-      // maybe the canvas size has changed and we need to update the 
-      // canvas backing store size
-      UpdateSizeIfNeeded();
-           
-      if (HasCompositor())
-      {
-        GetCompositor().Refresh();
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
       else
       {
-        // this block was added because of (perceived?) bugs in the 
-        // browser where the WebGL contexts are NOT automatically restored 
-        // after being lost. 
-        // the WebGL context has been lost. Sce 
-
-        //LOG(ERROR) << "About to call WebAssemblyOpenGLContext::TryRecreate().";
-        //LOG(ERROR) << "Before calling it, isContextLost == " << context_.IsContextLost();
-
-        if (!context_.IsContextLost())
-        {
-          LOG(TRACE) << "Context restored!";
-          //LOG(ERROR) << "After calling it, isContextLost == " << context_.IsContextLost();
-          RestoreCompositor();
-          UpdateSize();
-        }
+        return *that_.compositor_;
       }
     }
-    catch (const StoneException& e)
+
+    virtual ViewportController& GetController() ORTHANC_OVERRIDE
     {
-      if (e.GetErrorCode() == ErrorCode_WebGLContextLost)
-      {
-        LOG(WARNING) << "Context is lost! Compositor will be disabled.";
-        DisableCompositor();
-        // we now need to wait for the "context restored" callback
-      }
-      else
-      {
-        throw;
-      }
+      assert(that_.controller_);
+      return *that_.controller_;
     }
-    catch (...)
-    {
-      // something else nasty happened
-      throw;
-    }
-  }
 
-  void WebAssemblyOpenGLViewport::RestoreCompositor()
+    virtual void Invalidate() ORTHANC_OVERRIDE
+    {
+      that_.Invalidate();
+    }
+  };
+
+
+  EM_BOOL WebAssemblyViewport::OnRequestAnimationFrame(double time, void *userData)
   {
-    // the context must have been restored!
-    ORTHANC_ASSERT(!context_.IsContextLost());
-    if (compositor_.get() == NULL)
-    {
-      compositor_.reset(new OpenGLCompositor(context_, GetScene()));
-    }
-    else
-    {
-      LOG(WARNING) << "RestoreCompositor() called for \"" << GetCanvasIdentifier() << "\" while it was NOT lost! Nothing done.";
-    }
-  }
+    LOG(TRACE) << __func__;
+    WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
 
-  bool WebAssemblyOpenGLViewport::OpenGLContextLost()
-  {
-    LOG(ERROR) << "WebAssemblyOpenGLViewport::OpenGLContextLost() for canvas: " << GetCanvasIdentifier();
-    DisableCompositor();
+    if (that->compositor_.get() != NULL &&
+        that->controller_ /* should always be true */)
+    {
+      that->Paint(*that->compositor_, *that->controller_);
+    }
+      
+    LOG(TRACE) << "Exiting: " << __func__;
     return true;
   }
 
-  bool WebAssemblyOpenGLViewport::OpenGLContextRestored()
+  EM_BOOL WebAssemblyViewport::OnResize(int eventType, const EmscriptenUiEvent *uiEvent, void *userData)
   {
-    LOG(ERROR) << "WebAssemblyOpenGLViewport::OpenGLContextRestored() for canvas: " << GetCanvasIdentifier();
+    LOG(TRACE) << __func__;
+    WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
+
+    if (that->compositor_.get() != NULL)
+    {
+      that->UpdateSize(*that->compositor_);
+      that->Invalidate();
+    }
+      
+    LOG(TRACE) << "Exiting: " << __func__;
+    return true;
+  }
+
+
+  EM_BOOL WebAssemblyViewport::OnMouseDown(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
+  {
+    WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
+
+    LOG(TRACE) << "mouse down: " << that->GetCanvasCssSelector();      
+
+    if (that->compositor_.get() != NULL &&
+        that->interactor_.get() != NULL)
+    {
+      PointerEvent pointer;
+      ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
+
+      that->controller_->HandleMousePress(*that->interactor_, pointer,
+                                         that->compositor_->GetCanvasWidth(),
+                                         that->compositor_->GetCanvasHeight());        
+      that->Invalidate();
+    }
+
+    LOG(TRACE) << "Exiting: " << __func__;
+    return true;
+  }
+
     
-    // maybe the context has already been restored by other means (the 
-    // Refresh() function)
-    if (!HasCompositor())
+  EM_BOOL WebAssemblyViewport::OnMouseMove(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
+  {
+    WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
+
+    if (that->compositor_.get() != NULL &&
+        that->controller_->HasActiveTracker())
     {
-      RestoreCompositor();
-      UpdateSize();
+      PointerEvent pointer;
+      ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
+      if (that->controller_->HandleMouseMove(pointer))
+      {
+        that->Invalidate();
+      }
     }
-    return false;
+
+    LOG(TRACE) << "Exiting: " << __func__;
+    return true;
+  }
+    
+  EM_BOOL WebAssemblyViewport::OnMouseUp(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
+  {
+    LOG(TRACE) << __func__;
+    WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
+
+    if (that->compositor_.get() != NULL)
+    {
+      PointerEvent pointer;
+      ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
+      that->controller_->HandleMouseRelease(pointer);
+      that->Invalidate();
+    }
+
+    LOG(TRACE) << "Exiting: " << __func__;
+    return true;
   }
 
-  void WebAssemblyOpenGLViewport::RegisterContextCallbacks()
+  void WebAssemblyViewport::Invalidate()
   {
-#if 0
-    // DISABLED ON 2019-08-20 and replaced by external JS calls because I could
-    // not get emscripten API to work
-    // TODO: what's the impact of userCapture=true ?
-    const char* canvasId = GetCanvasIdentifier().c_str();
-    void* that = reinterpret_cast<void*>(this);
-    EMSCRIPTEN_RESULT status = EMSCRIPTEN_RESULT_SUCCESS;
+    emscripten_request_animation_frame(OnRequestAnimationFrame, reinterpret_cast<void*>(this));
+  }
 
-    //status = emscripten_set_webglcontextlost_callback(canvasId, that, true, WebAssemblyOpenGLViewport_OpenGLContextLost_callback);
-    //if (status != EMSCRIPTEN_RESULT_SUCCESS)
-    //{
-    //  std::stringstream ss;
-    //  ss << "Error while calling emscripten_set_webglcontextlost_callback for: \"" << GetCanvasIdentifier() << "\"";
-    //  std::string msg = ss.str();
-    //  LOG(ERROR) << msg;
-    //  ORTHANC_ASSERT(false, msg.c_str());
-    //}
-
-    status = emscripten_set_webglcontextrestored_callback(canvasId, that, true, WebAssemblyOpenGLViewport_OpenGLContextRestored_callback);
-    if (status != EMSCRIPTEN_RESULT_SUCCESS)
+  void WebAssemblyViewport::AcquireCompositor(ICompositor* compositor /* takes ownership */)
+  {
+    if (compositor == NULL)
     {
-      std::stringstream ss;
-      ss << "Error while calling emscripten_set_webglcontextrestored_callback for: \"" << GetCanvasIdentifier() << "\"";
-      std::string msg = ss.str();
-      LOG(ERROR) << msg;
-      ORTHANC_ASSERT(false, msg.c_str());
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
-    LOG(TRACE) << "WebAssemblyOpenGLViewport::RegisterContextCallbacks() SUCCESS!!!";
+    else
+    {
+      compositor_.reset(compositor);
+    }
+  }
+
+#if DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR == 1
+// everything OK..... we're using the new setting
+#else
+#pragma message("WARNING: DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR is not defined or equal to 0. Stone will use the OLD Emscripten rules for DOM element selection.")
 #endif
-  }
 
-  WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvas) :
-    WebAssemblyViewport(canvas),
-    canvas_(canvas),
-    compositor_(GetScene(), 1024, 768)
+  WebAssemblyViewport::WebAssemblyViewport(
+    const std::string& canvasId, bool enableEmscriptenMouseEvents) :
+    canvasId_(canvasId),
+#if DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR == 1
+    canvasCssSelector_("#" + canvasId),
+#else
+    canvasCssSelector_(canvasId),
+#endif
+    interactor_(new DefaultViewportInteractor),
+    enableEmscriptenMouseEvents_(enableEmscriptenMouseEvents)
   {
   }
 
-  WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvas,
-    boost::shared_ptr<Scene2D>& scene) :
-    WebAssemblyViewport(canvas, scene),
-    canvas_(canvas),
-    compositor_(GetScene(), 1024, 768)
+  void WebAssemblyViewport::PostConstructor()
   {
-  }
+    boost::shared_ptr<IViewport> viewport = shared_from_this();
+    controller_.reset(new ViewportController(viewport));
 
-  void WebAssemblyCairoViewport::UpdateSize()
-  {
-    LOG(INFO) << "updating cairo viewport size";
-    double w, h;
-    emscripten_get_element_css_size(canvas_.c_str(), &w, &h);
+    LOG(INFO) << "Initializing Stone viewport on HTML canvas: " 
+      << canvasId_;
 
-    /**
-     * Emscripten has the function emscripten_get_element_css_size()
-     * to query the width and height of a named HTML element. I'm
-     * calling this first to get the initial size of the canvas DOM
-     * element, and then call emscripten_set_canvas_size() to
-     * initialize the framebuffer size of the canvas to the same
-     * size as its DOM element.
-     * https://floooh.github.io/2017/02/22/emsc-html.html
-     **/
-    unsigned int canvasWidth = 0;
-    unsigned int canvasHeight = 0;
-
-    if (w > 0 ||
-      h > 0)
+    if (canvasId_.empty() ||
+        canvasId_[0] == '#')
     {
-      canvasWidth = static_cast<unsigned int>(boost::math::iround(w));
-      canvasHeight = static_cast<unsigned int>(boost::math::iround(h));
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
+        "The canvas identifier must not start with '#'");
     }
 
-    emscripten_set_canvas_element_size(canvas_.c_str(), canvasWidth, canvasHeight);
-    compositor_.UpdateSize(canvasWidth, canvasHeight);
+    // Disable right-click on the canvas (i.e. context menu)
+    EM_ASM({
+        document.getElementById(UTF8ToString($0)).oncontextmenu = 
+        function(event)
+        {
+          event.preventDefault();
+        }
+      },
+      canvasId_.c_str()   // $0
+      );
+
+    // It is not possible to monitor the resizing of individual
+    // canvas, so we track the full window of the browser
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,
+                                   reinterpret_cast<void*>(this),
+                                   false,
+                                   OnResize);
+
+    if (enableEmscriptenMouseEvents_)
+    {
+
+      // if any of this function causes an error in the console, please
+      // make sure you are using the new (as of 1.39.x) version of 
+      // emscripten element lookup rules( pass 
+      // "-s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1" to the linker.
+
+      emscripten_set_mousedown_callback(canvasCssSelector_.c_str(),
+                                        reinterpret_cast<void*>(this),
+                                        false,
+                                        OnMouseDown);
+
+      emscripten_set_mousemove_callback(canvasCssSelector_.c_str(),
+                                        reinterpret_cast<void*>(this),
+                                        false,
+                                        OnMouseMove);
+
+      emscripten_set_mouseup_callback(canvasCssSelector_.c_str(),
+                                      reinterpret_cast<void*>(this),
+                                      false,
+                                      OnMouseUp);
+    }
   }
 
-  void WebAssemblyCairoViewport::Refresh()
+  WebAssemblyViewport::~WebAssemblyViewport()
   {
-    LOG(INFO) << "refreshing cairo viewport, TODO: blit to the canvans.getContext('2d')";
-    GetCompositor().Refresh();
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,
+                                   reinterpret_cast<void*>(this),
+                                   false,
+                                   NULL);
+
+    if (enableEmscriptenMouseEvents_)
+    {
+
+      emscripten_set_mousedown_callback(canvasCssSelector_.c_str(),
+                                        reinterpret_cast<void*>(this),
+                                        false,
+                                        OnMouseDown);
+
+      emscripten_set_mousemove_callback(canvasCssSelector_.c_str(),
+                                        reinterpret_cast<void*>(this),
+                                        false,
+                                        OnMouseMove);
+
+      emscripten_set_mouseup_callback(canvasCssSelector_.c_str(),
+                                      reinterpret_cast<void*>(this),
+                                      false,
+                                      OnMouseUp);
+    }
+  }
+  
+  IViewport::ILock* WebAssemblyViewport::Lock()
+  {
+    return new WasmLock(*this);
+  }
+  
+  void WebAssemblyViewport::AcquireInteractor(IViewportInteractor* interactor)
+  {
+    if (interactor == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+    else
+    {
+      interactor_.reset(interactor);
+    }
   }
 }

@@ -31,9 +31,8 @@ namespace Deprecated
     std::string  body_;
 
   public:
-    WebServicePostCommand(OrthancStone::MessageBroker& broker,
-                          OrthancStone::MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
-                          OrthancStone::MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
+    WebServicePostCommand(MessageHandler<IWebService::HttpRequestSuccessMessage>* successCallback,  // takes ownership
+                          MessageHandler<IWebService::HttpRequestErrorMessage>* failureCallback,  // takes ownership
                           const Orthanc::WebServiceParameters& parameters,
                           const std::string& url,
                           const IWebService::HttpHeaders& headers,

@@ -29,6 +29,7 @@
 
 #include <Core/Compatibility.h>
 
+#include <SDL_render.h>
 #include <boost/thread/mutex.hpp>
 
 namespace OrthancStone

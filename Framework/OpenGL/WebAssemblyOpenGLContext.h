@@ -54,7 +54,7 @@ namespace OrthancStone
       boost::shared_ptr<PImpl>  pimpl_;
 
     public:
-      WebAssemblyOpenGLContext(const std::string& canvas);
+      WebAssemblyOpenGLContext(const std::string& canvasSelector);
 
       virtual bool IsContextLost() ORTHANC_OVERRIDE;
 
@@ -73,7 +73,7 @@ namespace OrthancStone
 
       void UpdateSize();
 
-      const std::string& GetCanvasIdentifier() const;
+      const std::string& GetCanvasSelector() const;
 
 
       /**

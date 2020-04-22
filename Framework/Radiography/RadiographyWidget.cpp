@@ -174,12 +174,9 @@ namespace OrthancStone
   }
 
 
-  RadiographyWidget::RadiographyWidget(MessageBroker& broker,
-                                       boost::shared_ptr<RadiographyScene> scene,
+  RadiographyWidget::RadiographyWidget(boost::shared_ptr<RadiographyScene> scene,
                                        const std::string& name) :
     WorldSceneWidget(name),
-    IObserver(broker),
-    IObservable(broker),
     invert_(false),
     interpolation_(ImageInterpolation_Nearest),
     hasSelection_(false),
@@ -271,24 +268,11 @@ namespace OrthancStone
 
   void RadiographyWidget::SetScene(boost::shared_ptr<RadiographyScene> scene)
   {
-    if (scene_ != NULL)
-    {
-      scene_->Unregister(this);
-    }
-
     scene_ = scene;
 
-    scene_->RegisterObserverCallback(
-          new Callable<RadiographyWidget, RadiographyScene::GeometryChangedMessage>
-          (*this, &RadiographyWidget::OnGeometryChanged));
-
-    scene_->RegisterObserverCallback(
-          new Callable<RadiographyWidget, RadiographyScene::ContentChangedMessage>
-          (*this, &RadiographyWidget::OnContentChanged));
-
-    scene_->RegisterObserverCallback(
-          new Callable<RadiographyWidget, RadiographyScene::LayerRemovedMessage>
-          (*this, &RadiographyWidget::OnLayerRemoved));
+    Register<RadiographyScene::GeometryChangedMessage>(*scene_, &RadiographyWidget::OnGeometryChanged);
+    Register<RadiographyScene::ContentChangedMessage>(*scene_, &RadiographyWidget::OnContentChanged);
+    Register<RadiographyScene::LayerRemovedMessage>(*scene_, &RadiographyWidget::OnLayerRemoved);
 
     Unselect();
 

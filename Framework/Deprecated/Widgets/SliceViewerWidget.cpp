@@ -35,206 +35,174 @@ static const double THIN_SLICE_THICKNESS = 100.0 * std::numeric_limits<double>::
 
 namespace Deprecated
 {
-  class SliceViewerWidget::Scene : public boost::noncopyable
+  void SliceViewerWidget::Scene::DeleteLayer(size_t index)
   {
-  private:
-    OrthancStone::CoordinateSystem3D            plane_;
-    double                        thickness_;
-    size_t                        countMissing_;
-    std::vector<ILayerRenderer*>  renderers_;
-
-  public:
-    void DeleteLayer(size_t index)
+    if (index >= renderers_.size())
     {
-      if (index >= renderers_.size())
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    assert(countMissing_ <= renderers_.size());
+
+    if (renderers_[index] != NULL)
+    {
+      assert(countMissing_ < renderers_.size());
+      delete renderers_[index];
+      renderers_[index] = NULL;
+      countMissing_++;
+    }
+  }
+
+  
+  SliceViewerWidget::Scene::Scene(const OrthancStone::CoordinateSystem3D& plane,
+                                  double thickness,
+                                  size_t countLayers) :
+    plane_(plane),
+    thickness_(thickness),
+    countMissing_(countLayers),
+    renderers_(countLayers, NULL)
+  {
+    if (thickness <= 0)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+  }
+
+  
+  SliceViewerWidget::Scene::~Scene()
+  {
+    for (size_t i = 0; i < renderers_.size(); i++)
+    {
+      DeleteLayer(i);
+    }
+  }
+
+  void SliceViewerWidget::Scene::SetLayer(size_t index,
+                                          ILayerRenderer* renderer)  // Takes ownership
+  {
+    if (renderer == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+
+    DeleteLayer(index);
+
+    renderers_[index] = renderer;
+    countMissing_--;
+  }
+
+
+  bool SliceViewerWidget::Scene::RenderScene(OrthancStone::CairoContext& context,
+                                             const ViewportGeometry& view,
+                                             const OrthancStone::CoordinateSystem3D& viewportPlane)
+  {
+    bool fullQuality = true;
+    cairo_t *cr = context.GetObject();
+
+    for (size_t i = 0; i < renderers_.size(); i++)
+    {
+      if (renderers_[i] != NULL)
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
+        const OrthancStone::CoordinateSystem3D& framePlane = renderers_[i]->GetLayerPlane();
+          
+        double x0, y0, x1, y1, x2, y2;
+        viewportPlane.ProjectPoint(x0, y0, framePlane.GetOrigin());
+        viewportPlane.ProjectPoint(x1, y1, framePlane.GetOrigin() + framePlane.GetAxisX());
+        viewportPlane.ProjectPoint(x2, y2, framePlane.GetOrigin() + framePlane.GetAxisY());
 
-      assert(countMissing_ <= renderers_.size());
+        /**
+         * Now we solve the system of linear equations Ax + b = x', given:
+         *   A [0 ; 0] + b = [x0 ; y0]
+         *   A [1 ; 0] + b = [x1 ; y1]
+         *   A [0 ; 1] + b = [x2 ; y2]
+         * <=>
+         *   b = [x0 ; y0]
+         *   A [1 ; 0] = [x1 ; y1] - b = [x1 - x0 ; y1 - y0]
+         *   A [0 ; 1] = [x2 ; y2] - b = [x2 - x0 ; y2 - y0]
+         * <=>
+         *   b = [x0 ; y0]
+         *   [a11 ; a21] = [x1 - x0 ; y1 - y0]
+         *   [a12 ; a22] = [x2 - x0 ; y2 - y0]
+         **/
 
-      if (renderers_[index] != NULL)
-      {
-        assert(countMissing_ < renderers_.size());
-        delete renderers_[index];
-        renderers_[index] = NULL;
-        countMissing_++;
-      }
-    }
+        cairo_matrix_t transform;
+        cairo_matrix_init(&transform, x1 - x0, y1 - y0, x2 - x0, y2 - y0, x0, y0);
 
-    Scene(const OrthancStone::CoordinateSystem3D& plane,
-          double thickness,
-          size_t countLayers) :
-      plane_(plane),
-      thickness_(thickness),
-      countMissing_(countLayers),
-      renderers_(countLayers, NULL)
-    {
-      if (thickness <= 0)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-    }
-
-    ~Scene()
-    {
-      for (size_t i = 0; i < renderers_.size(); i++)
-      {
-        DeleteLayer(i);
-      }
-    }
-
-    void SetLayer(size_t index,
-                  ILayerRenderer* renderer)  // Takes ownership
-    {
-      if (renderer == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
-
-      DeleteLayer(index);
-
-      renderers_[index] = renderer;
-      countMissing_--;
-    }
-
-    const OrthancStone::CoordinateSystem3D& GetPlane() const
-    {
-      return plane_;
-    }
-
-    bool HasRenderer(size_t index)
-    {
-      return renderers_[index] != NULL;
-    }
-
-    bool IsComplete() const
-    {
-      return countMissing_ == 0;
-    }
-
-    unsigned int GetCountMissing() const
-    {
-      return static_cast<unsigned int>(countMissing_);
-    }
-
-    bool RenderScene(OrthancStone::CairoContext& context,
-                     const ViewportGeometry& view,
-                     const OrthancStone::CoordinateSystem3D& viewportPlane)
-    {
-      bool fullQuality = true;
-      cairo_t *cr = context.GetObject();
-
-      for (size_t i = 0; i < renderers_.size(); i++)
-      {
-        if (renderers_[i] != NULL)
+        cairo_save(cr);
+        cairo_transform(cr, &transform);
+          
+        if (!renderers_[i]->RenderLayer(context, view))
         {
-          const OrthancStone::CoordinateSystem3D& framePlane = renderers_[i]->GetLayerPlane();
-          
-          double x0, y0, x1, y1, x2, y2;
-          viewportPlane.ProjectPoint(x0, y0, framePlane.GetOrigin());
-          viewportPlane.ProjectPoint(x1, y1, framePlane.GetOrigin() + framePlane.GetAxisX());
-          viewportPlane.ProjectPoint(x2, y2, framePlane.GetOrigin() + framePlane.GetAxisY());
-
-          /**
-           * Now we solve the system of linear equations Ax + b = x', given:
-           *   A [0 ; 0] + b = [x0 ; y0]
-           *   A [1 ; 0] + b = [x1 ; y1]
-           *   A [0 ; 1] + b = [x2 ; y2]
-           * <=>
-           *   b = [x0 ; y0]
-           *   A [1 ; 0] = [x1 ; y1] - b = [x1 - x0 ; y1 - y0]
-           *   A [0 ; 1] = [x2 ; y2] - b = [x2 - x0 ; y2 - y0]
-           * <=>
-           *   b = [x0 ; y0]
-           *   [a11 ; a21] = [x1 - x0 ; y1 - y0]
-           *   [a12 ; a22] = [x2 - x0 ; y2 - y0]
-           **/
-
-          cairo_matrix_t transform;
-          cairo_matrix_init(&transform, x1 - x0, y1 - y0, x2 - x0, y2 - y0, x0, y0);
-
-          cairo_save(cr);
-          cairo_transform(cr, &transform);
-          
-          if (!renderers_[i]->RenderLayer(context, view))
-          {
-            cairo_restore(cr);
-            return false;
-          }
-
           cairo_restore(cr);
+          return false;
         }
 
-        if (renderers_[i] != NULL &&
-            !renderers_[i]->IsFullQuality())
-        {
-          fullQuality = false;
-        }
+        cairo_restore(cr);
       }
 
-      if (!fullQuality)
+      if (renderers_[i] != NULL &&
+          !renderers_[i]->IsFullQuality())
       {
-        double x, y;
-        view.MapDisplayToScene(x, y, static_cast<double>(view.GetDisplayWidth()) / 2.0, 10);
+        fullQuality = false;
+      }
+    }
 
-        cairo_translate(cr, x, y);
+    if (!fullQuality)
+    {
+      double x, y;
+      view.MapDisplayToScene(x, y, static_cast<double>(view.GetDisplayWidth()) / 2.0, 10);
+
+      cairo_translate(cr, x, y);
 
 #if 1
-        double s = 5.0 / view.GetZoom();
-        cairo_rectangle(cr, -s, -s, 2.0 * s, 2.0 * s);
+      double s = 5.0 / view.GetZoom();
+      cairo_rectangle(cr, -s, -s, 2.0 * s, 2.0 * s);
 #else
-        // TODO Drawing filled circles makes WebAssembly crash!
-        cairo_arc(cr, 0, 0, 5.0 / view.GetZoom(), 0, 2.0 * boost::math::constants::pi<double>());
+      // TODO Drawing filled circles makes WebAssembly crash!
+      cairo_arc(cr, 0, 0, 5.0 / view.GetZoom(), 0, 2.0 * boost::math::constants::pi<double>());
 #endif
         
-        cairo_set_line_width(cr, 2.0 / view.GetZoom());
-        cairo_set_source_rgb(cr, 1, 1, 1);
-        cairo_stroke_preserve(cr);
-        cairo_set_source_rgb(cr, 1, 0, 0);
-        cairo_fill(cr);
-      }
-
-      return true;
+      cairo_set_line_width(cr, 2.0 / view.GetZoom());
+      cairo_set_source_rgb(cr, 1, 1, 1);
+      cairo_stroke_preserve(cr);
+      cairo_set_source_rgb(cr, 1, 0, 0);
+      cairo_fill(cr);
     }
 
-    void SetLayerStyle(size_t index,
-                       const RenderStyle& style)
+    return true;
+  }
+
+  void SliceViewerWidget::Scene::SetLayerStyle(size_t index,
+                                               const RenderStyle& style)
+  {
+    if (renderers_[index] != NULL)
     {
-      if (renderers_[index] != NULL)
-      {
-        renderers_[index]->SetLayerStyle(style);
-      }
+      renderers_[index]->SetLayerStyle(style);
     }
+  }
 
-    bool ContainsPlane(const OrthancStone::CoordinateSystem3D& plane) const
+  bool SliceViewerWidget::Scene::ContainsPlane(const OrthancStone::CoordinateSystem3D& plane) const
+  {
+    bool isOpposite;
+    if (!OrthancStone::GeometryToolbox::IsParallelOrOpposite(isOpposite,
+                                                             plane.GetNormal(),
+                                                             plane_.GetNormal()))
     {
-      bool isOpposite;
-      if (!OrthancStone::GeometryToolbox::IsParallelOrOpposite(isOpposite,
-                                                               plane.GetNormal(),
-                                                               plane_.GetNormal()))
-      {
-        return false;
-      }
-      else
-      {
-        double z = (plane_.ProjectAlongNormal(plane.GetOrigin()) -
-                    plane_.ProjectAlongNormal(plane_.GetOrigin()));
-
-        if (z < 0)
-        {
-          z = -z;
-        }
-
-        return z <= thickness_;
-      }
+      return false;
     }
-
-    double GetThickness() const
+    else
     {
-      return thickness_;
+      double z = (plane_.ProjectAlongNormal(plane.GetOrigin()) -
+                  plane_.ProjectAlongNormal(plane_.GetOrigin()));
+
+      if (z < 0)
+      {
+        z = -z;
+      }
+
+      return z <= thickness_;
     }
-  };
+  }
 
   
   bool SliceViewerWidget::LookupLayer(size_t& index /* out */,
@@ -250,7 +218,7 @@ namespace Deprecated
     {
       index = found->second;
       assert(index < layers_.size() &&
-             layers_[index] == &layer);
+             layers_[index].get() == &layer);
       return true;
     }
   }
@@ -369,42 +337,27 @@ namespace Deprecated
   }
 
   
-  SliceViewerWidget::SliceViewerWidget(OrthancStone::MessageBroker& broker, 
-                                       const std::string& name) :
+  SliceViewerWidget::SliceViewerWidget(const std::string& name) :
     WorldSceneWidget(name),
-    IObserver(broker),
-    IObservable(broker),
     started_(false)
   {
     SetBackgroundCleared(true);
   }
   
   
-  SliceViewerWidget::~SliceViewerWidget()
-  {
-    for (size_t i = 0; i < layers_.size(); i++)
-    {
-      delete layers_[i];
-    }
-  }
-  
   void SliceViewerWidget::ObserveLayer(IVolumeSlicer& layer)
   {
-    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::GeometryReadyMessage>
-                                   (*this, &SliceViewerWidget::OnGeometryReady));
-    // currently ignore errors layer->RegisterObserverCallback(new Callable<SliceViewerWidget, IVolumeSlicer::GeometryErrorMessage>(*this, &SliceViewerWidget::...));
-    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::SliceContentChangedMessage>
-                                   (*this, &SliceViewerWidget::OnSliceChanged));
-    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::ContentChangedMessage>
-                                   (*this, &SliceViewerWidget::OnContentChanged));
-    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::LayerReadyMessage>
-                                   (*this, &SliceViewerWidget::OnLayerReady));
-    layer.RegisterObserverCallback(new OrthancStone::Callable<SliceViewerWidget, IVolumeSlicer::LayerErrorMessage>
-                                   (*this, &SliceViewerWidget::OnLayerError));
+    // currently ignoring errors of type IVolumeSlicer::GeometryErrorMessage
+
+    Register<IVolumeSlicer::GeometryReadyMessage>(layer, &SliceViewerWidget::OnGeometryReady);
+    Register<IVolumeSlicer::SliceContentChangedMessage>(layer, &SliceViewerWidget::OnSliceChanged);
+    Register<IVolumeSlicer::ContentChangedMessage>(layer, &SliceViewerWidget::OnContentChanged);
+    Register<IVolumeSlicer::LayerReadyMessage>(layer, &SliceViewerWidget::OnLayerReady);
+    Register<IVolumeSlicer::LayerErrorMessage>(layer, &SliceViewerWidget::OnLayerError);
   }
 
 
-  size_t SliceViewerWidget::AddLayer(IVolumeSlicer* layer)  // Takes ownership
+  size_t SliceViewerWidget::AddLayer(boost::shared_ptr<IVolumeSlicer> layer)
   {
     if (layer == NULL)
     {
@@ -414,7 +367,7 @@ namespace Deprecated
     size_t index = layers_.size();
     layers_.push_back(layer);
     styles_.push_back(RenderStyle());
-    layersIndex_[layer] = index;
+    layersIndex_[layer.get()] = index;
 
     ResetPendingScene();
 
@@ -426,7 +379,8 @@ namespace Deprecated
   }
 
 
-  void SliceViewerWidget::ReplaceLayer(size_t index, IVolumeSlicer* layer)  // Takes ownership
+  void SliceViewerWidget::ReplaceLayer(size_t index,
+                                       boost::shared_ptr<IVolumeSlicer> layer)
   {
     if (layer == NULL)
     {
@@ -438,9 +392,8 @@ namespace Deprecated
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    delete layers_[index];
     layers_[index] = layer;
-    layersIndex_[layer] = index;
+    layersIndex_[layer.get()] = index;
 
     ResetPendingScene();
 
@@ -457,13 +410,13 @@ namespace Deprecated
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    IVolumeSlicer* previousLayer = layers_[index];
+    IVolumeSlicer* previousLayer = layers_[index].get();
     layersIndex_.erase(layersIndex_.find(previousLayer));
     layers_.erase(layers_.begin() + index);
     changedLayers_.erase(changedLayers_.begin() + index);
     styles_.erase(styles_.begin() + index);
 
-    delete layers_[index];
+    layers_[index].reset();
 
     currentScene_->DeleteLayer(index);
     ResetPendingScene();

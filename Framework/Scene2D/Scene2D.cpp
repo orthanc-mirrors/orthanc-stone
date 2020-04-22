@@ -208,7 +208,7 @@ namespace OrthancStone
          it != content_.end(); ++it)
     {
       assert(it->second != NULL);
-      visitor.Visit(it->second->GetLayer(), it->second->GetIdentifier(), it->first);
+      visitor.Visit(*this, it->second->GetLayer(), it->second->GetIdentifier(), it->first);
     }
   }
 

@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "../Messages/ObserverBase.h"
 #include "../Scene2D/PolylineSceneLayer.h"
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2D/ScenePoint2D.h"
@@ -27,7 +28,6 @@
 #include "../Scene2DViewport/PredeclaredTypes.h"
 #include "../Scene2DViewport/ViewportController.h"
 
-#include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
 #include <vector>
@@ -38,10 +38,12 @@ namespace OrthancStone
   class IFlexiblePointerTracker;
   class MeasureToolMemento;
 
-  class MeasureTool : public IObserver
+  class MeasureTool : public ObserverBase<MeasureTool>
   {
   public:
-    virtual ~MeasureTool();
+    virtual ~MeasureTool()
+    {
+    }
 
     /**
     Enabled tools are rendered in the scene.
@@ -73,7 +75,7 @@ namespace OrthancStone
     true, then a click at that position will return a tracker to edit the 
     measuring tool
     */
-    virtual bool HitTest(ScenePoint2D p) const = 0;
+    virtual bool HitTest(ScenePoint2D p) = 0;
 
     /**
     This method must return a memento the captures the tool state (not including
@@ -111,7 +113,9 @@ namespace OrthancStone
     virtual std::string GetDescription() = 0;
 
   protected:
-    MeasureTool(MessageBroker& broker, boost::weak_ptr<ViewportController> controllerW);
+    MeasureTool(boost::shared_ptr<IViewport> viewport);
+
+    void PostConstructor();
 
     /**
     The measuring tool may exist in a standalone fashion, without any available
@@ -127,17 +131,20 @@ namespace OrthancStone
     */
     virtual void RefreshScene() = 0;
 
-    boost::shared_ptr<const ViewportController> GetController() const;
-    boost::shared_ptr<ViewportController>      GetController();
-
     /**
     enabled_ is not accessible by subclasses because there is a state machine
     that we do not wanna mess with
     */
     bool IsEnabled() const;
 
+    /**
+    Protected to allow sub-classes to use this weak pointer in factory methods
+    (pass them to created objects)
+    */
+    boost::shared_ptr<IViewport> viewport_;
+
+
   private:
-    boost::weak_ptr<ViewportController> controllerW_;
     bool     enabled_;
   };
 

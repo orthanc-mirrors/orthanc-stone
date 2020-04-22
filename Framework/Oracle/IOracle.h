@@ -24,6 +24,8 @@
 #include "../Messages/IObserver.h"
 #include "IOracleCommand.h"
 
+#include <boost/shared_ptr.hpp>
+
 namespace OrthancStone
 {
   class IOracle : public boost::noncopyable
@@ -33,7 +35,12 @@ namespace OrthancStone
     {
     }
 
-    virtual void Schedule(const IObserver& receiver,
+    /**
+     * Returns "true" iff the command has actually been queued. If
+     * "false" is returned, the command has been freed, and it won't
+     * be processed (this is the case if the oracle is stopped).
+     **/
+    virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
                           IOracleCommand* command) = 0;  // Takes ownership
   };
 }

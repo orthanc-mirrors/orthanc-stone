@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <boost/noncopyable.hpp>
+#include <Core/IDynamicObject.h>
 
 namespace OrthancStone
 {
@@ -30,11 +30,14 @@ namespace OrthancStone
   public:
     enum Type
     {
-      Type_Http,
-      Type_Sleep,
-      Type_OrthancRestApi,
       Type_GetOrthancImage,
-      Type_GetOrthancWebViewerJpeg
+      Type_GetOrthancWebViewerJpeg,
+      Type_Http,
+      Type_OrthancRestApi,
+      Type_ParseDicomFromFile,
+      Type_ParseDicomFromWado,
+      Type_ReadFile,
+      Type_Sleep
     };
 
     virtual ~IOracleCommand()
@@ -42,5 +45,8 @@ namespace OrthancStone
     }
 
     virtual Type GetType() const = 0;
+
+    // This only clones the command, *not* its possibly associated payload
+    virtual IOracleCommand* Clone() const = 0;
   };
 }

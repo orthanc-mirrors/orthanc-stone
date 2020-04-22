@@ -28,14 +28,6 @@
 
 namespace OrthancStone
 {
-  class IGeometryProvider
-  {
-  public:
-    virtual ~IGeometryProvider() {}
-    virtual bool HasGeometry() const = 0;
-    virtual const VolumeImageGeometry& GetImageGeometry() const = 0;
-  };
-
   /**
   This class combines a 3D image buffer, a 3D volume geometry and
   information about the DICOM parameters of the series.
@@ -44,6 +36,7 @@ namespace OrthancStone
   class DicomVolumeImage : public boost::noncopyable
   {
   public:
+    // TODO - Are these messages still useful?
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, GeometryReadyMessage, DicomVolumeImage);
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, ContentUpdatedMessage, DicomVolumeImage);
 
@@ -67,8 +60,10 @@ namespace OrthancStone
     }
 
     void Initialize(const VolumeImageGeometry& geometry,
-                    Orthanc::PixelFormat format, bool computeRange = false);
+                    Orthanc::PixelFormat format, 
+                    bool computeRange = false);
 
+    // Used by volume slicers
     void SetDicomParameters(const DicomInstanceParameters& parameters);
     
     uint64_t GetRevision() const

@@ -26,6 +26,8 @@
 #include "IOpenGLContext.h"
 #include "../Viewport/SdlWindow.h"
 
+#include <SDL_render.h>
+
 #include <Core/Enumerations.h>
 
 namespace OrthancStone
@@ -62,6 +64,11 @@ namespace OrthancStone
     virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE;
 
     virtual unsigned int GetCanvasHeight() const ORTHANC_OVERRIDE;
+
+    void ToggleMaximize()
+    {
+      window_.ToggleMaximize();
+    }
   };
 }
 

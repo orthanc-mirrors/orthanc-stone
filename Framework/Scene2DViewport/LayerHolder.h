@@ -43,7 +43,7 @@ namespace OrthancStone
     performed at this time
     */
     LayerHolder(
-      boost::weak_ptr<ViewportController> controllerW,
+      boost::shared_ptr<IViewport> viewport,
       int polylineLayerCount, int textLayerCount, int infoTextCount = 0);
 
     /**
@@ -97,12 +97,11 @@ namespace OrthancStone
     int GetPolylineLayerIndex(int index = 0);
     int GetTextLayerIndex(int index = 0);
     int GetInfoTextLayerIndex(int index = 0);
-    Scene2D& GetScene();
 
     int textLayerCount_;
     int polylineLayerCount_;
     int infoTextCount_;
-    boost::weak_ptr<ViewportController> controllerW_;
+    boost::shared_ptr<IViewport> viewport_;
     int baseLayerIndex_;
   };
 }

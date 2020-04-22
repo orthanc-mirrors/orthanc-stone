@@ -1,6 +1,12 @@
 
 #include "SdlSimpleViewerApplication.h"
 
+#include <string>
+
+#include <boost/program_options.hpp>
+
+#include <SDL.h>
+
 #include <Core/OrthancException.h>
 
 #include <Framework/Loaders/GenericLoadersContext.h>
@@ -9,91 +15,70 @@
 #include <Framework/StoneInitialization.h>
 #include <Framework/Viewport/SdlViewport.h>
 
-#include <SDL.h>
+#include "../SdlHelpers.h"
+#include "../../CommonHelpers.h"
 
-namespace OrthancStone
+std::string orthancUrl;
+std::string instanceId;
+int frameIndex = 0;
+
+static void ProcessOptions(int argc, char* argv[])
 {
-  static KeyboardModifiers GetKeyboardModifiers(const uint8_t* keyboardState,
-                                                const int scancodeCount)
+  namespace po = boost::program_options;
+  po::options_description desc("Usage:");
+
+  desc.add_options()
+    ("log_level", po::value<std::string>()->default_value("WARNING"),
+     "You can choose WARNING, INFO or TRACE for the logging level: Errors and warnings will always be displayed. (default: WARNING)")
+
+    ("orthanc", po::value<std::string>()->default_value("http://localhost:8042"),
+     "Base URL of the Orthanc instance")
+
+    ("instance", po::value<std::string>()->default_value("285dece8-e1956b38-cdc7d084-6ce3371e-536a9ffc"),
+     "Orthanc ID of the instance to display")
+
+    ("frame_index", po::value<int>()->default_value(0),
+     "The zero-based index of the frame (for multi-frame instances)")
+    ;
+
+  po::variables_map vm;
+  try
   {
-    int result = KeyboardModifiers_None;
-
-    if (keyboardState != NULL)
-    {
-      if (SDL_SCANCODE_LSHIFT < scancodeCount &&
-          keyboardState[SDL_SCANCODE_LSHIFT])
-      {
-        result |= KeyboardModifiers_Shift;
-      }
-
-      if (SDL_SCANCODE_RSHIFT < scancodeCount &&
-          keyboardState[SDL_SCANCODE_RSHIFT])
-      {
-        result |= KeyboardModifiers_Shift;
-      }
-
-      if (SDL_SCANCODE_LCTRL < scancodeCount &&
-          keyboardState[SDL_SCANCODE_LCTRL])
-      {
-        result |= KeyboardModifiers_Control;
-      }
-
-      if (SDL_SCANCODE_RCTRL < scancodeCount &&
-          keyboardState[SDL_SCANCODE_RCTRL])
-      {
-        result |= KeyboardModifiers_Control;
-      }
-
-      if (SDL_SCANCODE_LALT < scancodeCount &&
-          keyboardState[SDL_SCANCODE_LALT])
-      {
-        result |= KeyboardModifiers_Alt;
-      }
-
-      if (SDL_SCANCODE_RALT < scancodeCount &&
-          keyboardState[SDL_SCANCODE_RALT])
-      {
-        result |= KeyboardModifiers_Alt;
-      }
-    }
-
-    return static_cast<KeyboardModifiers>(result);
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+  }
+  catch (std::exception& e)
+  {
+    std::cerr << "Please check your command line options! (\"" << e.what() << "\")" << std::endl;
   }
 
-
-  static void GetPointerEvent(PointerEvent& p,
-                              const ICompositor& compositor,
-                              SDL_Event event,
-                              const uint8_t* keyboardState,
-                              const int scancodeCount)
+  if (vm.count("log_level") > 0)
   {
-    KeyboardModifiers modifiers = GetKeyboardModifiers(keyboardState, scancodeCount);
-
-    switch (event.button.button)
-    {
-    case SDL_BUTTON_LEFT:
-      p.SetMouseButton(OrthancStone::MouseButton_Left);
-      break;
-
-    case SDL_BUTTON_RIGHT:
-      p.SetMouseButton(OrthancStone::MouseButton_Right);
-      break;
-
-    case SDL_BUTTON_MIDDLE:
-      p.SetMouseButton(OrthancStone::MouseButton_Middle);
-      break;
-
-    default:
-      p.SetMouseButton(OrthancStone::MouseButton_None);
-      break;
-    }
-
-    p.AddPosition(compositor.GetPixelCenterCoordinates(event.button.x, event.button.y));
-    p.SetAltModifier(modifiers & KeyboardModifiers_Alt);
-    p.SetControlModifier(modifiers & KeyboardModifiers_Control);
-    p.SetShiftModifier(modifiers & KeyboardModifiers_Shift);
+    std::string logLevel = vm["log_level"].as<std::string>();
+    OrthancStoneHelpers::SetLogLevel(logLevel);
   }
 
+  if (vm.count("orthanc") > 0)
+  {
+    // maybe check URL validity here
+    orthancUrl = vm["orthanc"].as<std::string>();
+  }
+
+  if (vm.count("instance") > 0)
+  {
+    instanceId = vm["instance"].as<std::string>();
+  }
+
+  if (vm.count("frame_index") > 0)
+  {
+    frameIndex = vm["frame_index"].as<int>();
+  }
+
+}
+
+extern void f()
+{
+  std::cout << "f()" << std::endl;
 }
 
 /**
@@ -103,16 +88,21 @@ namespace OrthancStone
  **/
 int main(int argc, char* argv[])
 {
+  f();
+
   try
   {
     OrthancStone::StoneInitialize();
-    Orthanc::Logging::EnableInfoLevel(true);
+
+    ProcessOptions(argc, argv);
+
+    //Orthanc::Logging::EnableInfoLevel(true);
     //Orthanc::Logging::EnableTraceLevel(true);
 
     {
 
 #if 1
-      boost::shared_ptr<OrthancStone::SdlViewport> viewport = 
+      boost::shared_ptr<OrthancStone::SdlViewport> viewport =
         OrthancStone::SdlOpenGLViewport::Create("Stone of Orthanc", 800, 600);
 #else
       boost::shared_ptr<OrthancStone::SdlViewport> viewport =
@@ -120,7 +110,7 @@ int main(int argc, char* argv[])
 #endif
 
       OrthancStone::GenericLoadersContext context(1, 4, 1);
-      
+
       context.StartOracle();
 
       {
@@ -129,30 +119,6 @@ int main(int argc, char* argv[])
           SdlSimpleViewerApplication::Create(context, viewport));
 
         OrthancStone::DicomSource source;
-
-        // Default and command-line parameters
-        const char* instanceId = "285dece8-e1956b38-cdc7d084-6ce3371e-536a9ffc";
-        unsigned int frameIndex = 0;
-
-        if (argc == 1)
-        {
-          LOG(ERROR) << "No instanceId supplied. The default of " << instanceId << " will be used. "
-            << "Please supply the Orthanc instance ID of the frame you wish to display then, optionally, "
-            << "the zero-based index of the frame (for multi-frame instances)";
-          // TODO: frame number as second argument...
-        }
-
-        if (argc >= 2)
-          instanceId = argv[1];
-
-        if (argc >= 3)
-          frameIndex = atoi(argv[1]);
-
-        if (argc > 3)
-        {
-          LOG(ERROR) << "Extra arguments ignored!";
-        }
-         
 
         application->LoadOrthancFrame(source, instanceId, frameIndex);
 
@@ -179,14 +145,14 @@ int main(int argc, char* argv[])
                 paint = true;
               }
               else if (event.type == SDL_WINDOWEVENT &&
-                (event.window.event == SDL_WINDOWEVENT_RESIZED ||
-                 event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
+                       (event.window.event == SDL_WINDOWEVENT_RESIZED ||
+                        event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
               {
                 viewport->UpdateSize(event.window.data1, event.window.data2);
               }
               else if (event.type == SDL_WINDOWEVENT &&
-                (event.window.event == SDL_WINDOWEVENT_SHOWN ||
-                 event.window.event == SDL_WINDOWEVENT_EXPOSED))
+                       (event.window.event == SDL_WINDOWEVENT_SHOWN ||
+                        event.window.event == SDL_WINDOWEVENT_EXPOSED))
               {
                 paint = true;
               }
@@ -219,8 +185,8 @@ int main(int argc, char* argv[])
                 if (lock->HasCompositor())
                 {
                   OrthancStone::PointerEvent p;
-                  OrthancStone::GetPointerEvent(p, lock->GetCompositor(),
-                                                event, keyboardState, scancodeCount);
+                  OrthancStoneHelpers::GetPointerEvent(p, lock->GetCompositor(),
+                                                       event, keyboardState, scancodeCount);
 
                   switch (event.type)
                   {
@@ -267,19 +233,19 @@ int main(int argc, char* argv[])
     OrthancStone::StoneFinalize();
     return 0;
   }
-  catch (Orthanc::OrthancException & e)
+  catch (Orthanc::OrthancException& e)
   {
     auto test = e.What();
     fprintf(stdout, test);
     LOG(ERROR) << "OrthancException: " << e.What();
     return -1;
   }
-  catch (OrthancStone::StoneException & e)
+  catch (OrthancStone::StoneException& e)
   {
     LOG(ERROR) << "StoneException: " << e.What();
     return -1;
   }
-  catch (std::runtime_error & e)
+  catch (std::runtime_error& e)
   {
     LOG(ERROR) << "Runtime error: " << e.what();
     return -1;

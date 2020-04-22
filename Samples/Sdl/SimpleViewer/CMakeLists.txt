@@ -32,6 +32,8 @@ add_definitions(
 SortFilesInSourceGroups()
 
 add_executable(SdlSimpleViewer
+  ../SdlHelpers.h
+  ../../CommonHelpers.h
   SdlSimpleViewerApplication.h
   SdlSimpleViewer.cpp
   ${ORTHANC_STONE_SOURCES}

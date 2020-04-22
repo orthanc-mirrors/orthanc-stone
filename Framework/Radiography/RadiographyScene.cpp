@@ -26,6 +26,9 @@
 #include "RadiographyTextLayer.h"
 #include "RadiographyMaskLayer.h"
 #include "../Deprecated/Toolbox/DicomFrameConverter.h"
+#include "../Scene2D/CairoCompositor.h"
+#include "../Scene2D/FloatTextureSceneLayer.h"
+#include "../Scene2D/TextSceneLayer.h"
 
 #include <Core/Images/Image.h>
 #include <Core/Images/ImageProcessing.h>
@@ -910,4 +913,56 @@ namespace OrthancStone
     }
   }
 
+  void RadiographyScene::ExportToScene2D(Scene2D& output) const
+  {
+    int depth = 0;
+    for (Layers::const_iterator it = layers_.begin();
+         it != layers_.end(); ++it)
+    {
+      assert(it->second != NULL);
+
+      std::unique_ptr<ISceneLayer> layer;
+      if (dynamic_cast<RadiographyDicomLayer*>(it->second))
+      {
+        RadiographyDicomLayer* oldLayer = dynamic_cast<RadiographyDicomLayer*>(it->second);
+
+        std::unique_ptr<FloatTextureSceneLayer> newLayer(new FloatTextureSceneLayer(*(oldLayer->GetSourceImage())));
+
+        newLayer->SetOrigin(oldLayer->GetGeometry().GetPanX(),
+                            oldLayer->GetGeometry().GetPanY()
+                            );
+        newLayer->SetAngle(oldLayer->GetGeometry().GetAngle());
+
+        layer.reset(newLayer.release());
+
+        // TODO: windowing dynamic_cast
+      }
+      else if (dynamic_cast<RadiographyTextLayer*>(it->second))
+      {
+        RadiographyTextLayer* oldLayer = dynamic_cast<RadiographyTextLayer*>(it->second);
+
+        std::unique_ptr<TextSceneLayer> newLayer(new TextSceneLayer());
+
+        newLayer->SetText(oldLayer->GetText());
+        newLayer->SetColor(oldLayer->GetForegroundGreyLevel(),
+                           oldLayer->GetForegroundGreyLevel(),
+                           oldLayer->GetForegroundGreyLevel()
+                           );
+        newLayer->SetPosition(oldLayer->GetGeometry().GetPanX(),
+                              oldLayer->GetGeometry().GetPanY()
+                              );
+        newLayer->SetFontIndex(1);
+        newLayer->SetAnchor(BitmapAnchor_TopLeft);
+        //newLayer->SetAngle(oldLayer->GetGeometry().GetAngle());
+
+        layer.reset(newLayer.release());
+      }
+
+      output.SetLayer(depth++, layer.release());
+
+    }
+
+  }
+
 }
+

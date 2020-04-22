@@ -222,22 +222,29 @@ namespace OrthancStone
     canvasToScene_ = inverse;
   }
 
+  void Scene2D::GetBoundingBox(Extent2D &target) const
+  {
+    target.Reset();
+
+    for (Content::const_iterator it = content_.begin();
+         it != content_.end(); ++it)
+    {
+      assert(it->second != NULL);
+
+      Extent2D tmp;
+      if (it->second->GetLayer().GetBoundingBox(tmp))
+      {
+        target.Union(tmp);
+      }
+    }
+  }
+
   void Scene2D::FitContent(unsigned int canvasWidth,
                            unsigned int canvasHeight)
   {
     Extent2D extent;
 
-    for (Content::const_iterator it = content_.begin(); 
-         it != content_.end(); ++it)
-    {
-      assert(it->second != NULL);
-      
-      Extent2D tmp;
-      if (it->second->GetLayer().GetBoundingBox(tmp))
-      {
-        extent.Union(tmp);
-      }
-    }
+    GetBoundingBox(extent);
 
     if (!extent.IsEmpty())
     {

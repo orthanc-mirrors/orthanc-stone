@@ -29,6 +29,8 @@
 #include "Core/Images/Image.h"
 #include "Core/Images/ImageProcessing.h"
 
+#include "../Scene2D/Scene2D.h"
+
 namespace OrthancStone
 {
   class RadiographyDicomLayer;
@@ -298,6 +300,8 @@ namespace OrthancStone
 
     void GetRange(float& minValue,
                   float& maxValue) const;
+
+    void ExportToScene2D(Scene2D& output) const;
 
     // Export using PAM is faster than using PNG, but requires Orthanc
     // core >= 1.4.3

@@ -85,8 +85,7 @@ namespace OrthancStone
     { // get the extent of the in-mask area
       Extent2D sceneExtent;
 
-      for (std::vector<Orthanc::ImageProcessing::ImagePoint>::const_iterator
-             corner = corners_.begin(); corner != corners_.end(); ++corner)
+      for (std::vector<Orthanc::ImageProcessing::ImagePoint>::const_iterator corner = corners_.begin(); corner != corners_.end(); ++corner)
       {
         double x = static_cast<double>(corner->GetX());
         double y = static_cast<double>(corner->GetY());

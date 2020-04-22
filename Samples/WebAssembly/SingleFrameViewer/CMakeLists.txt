@@ -47,7 +47,7 @@ include_directories(${STONE_ROOT})
 # Define the WASM module
 # ---------------------------------------------------------------
 add_executable(SingleFrameViewerWasm
-  test.cpp
+  SingleFrameViewer.cpp
   ${ORTHANC_STONE_SOURCES}
   )
 

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 
+project(SingleFrameViewer)
+
 # Configuration of the Emscripten compiler for WebAssembly target
 # ---------------------------------------------------------------
 set(USE_WASM ON CACHE BOOL "")

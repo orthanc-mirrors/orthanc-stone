@@ -16,7 +16,7 @@
 #include <Framework/Viewport/SdlViewport.h>
 
 #include "../SdlHelpers.h"
-#include "../../CommonHelpers.h"
+#include "../../Common/SampleHelpers.h"
 
 std::string orthancUrl;
 std::string instanceId;

@@ -33,7 +33,7 @@ SortFilesInSourceGroups()
 
 add_executable(SdlSimpleViewer
   ../SdlHelpers.h
-  ../../CommonHelpers.h
+  ../../Common/SampleHelpers.h
   SdlSimpleViewerApplication.h
   SdlSimpleViewer.cpp
   ${ORTHANC_STONE_SOURCES}

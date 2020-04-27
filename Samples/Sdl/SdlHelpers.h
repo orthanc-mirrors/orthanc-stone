@@ -1,5 +1,11 @@
 #pragma once
 
+#if ORTHANC_ENABLE_SDL != 1
+# error This file cannot be used if ORTHANC_ENABLE_SDL != 1
+#endif
+
+#include <SDL.h>
+
 #include <map>
 #include <string>
 

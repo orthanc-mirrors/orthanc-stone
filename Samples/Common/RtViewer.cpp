@@ -18,23 +18,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+// Sample app
 #include "RtViewer.h"
 
-#include <stdio.h>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
-#include <boost/make_shared.hpp>
-
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/Images/PngWriter.h>
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
-
+// Stone of Orthanc
 #include <Framework/OpenGL/SdlOpenGLContext.h>
 #include <Framework/StoneInitialization.h>
-
 #include <Framework/Scene2D/CairoCompositor.h>
 #include <Framework/Scene2D/ColorTextureSceneLayer.h>
 #include <Framework/Scene2D/OpenGLCompositor.h>
@@ -56,6 +45,21 @@
 #include <Framework/Scene2D/LookupTableStyleConfigurator.h>
 #include <Framework/Volumes/DicomVolumeImageMPRSlicer.h>
 #include <Framework/StoneException.h>
+
+// Orthanc
+#include <Core/Images/Image.h>
+#include <Core/Images/ImageProcessing.h>
+#include <Core/Images/PngWriter.h>
+#include <Core/Logging.h>
+#include <Core/OrthancException.h>
+
+// System 
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
+#include <boost/make_shared.hpp>
+
+#include <stdio.h>
+
 
 namespace OrthancStone
 {
@@ -263,6 +267,18 @@ namespace OrthancStone
         }
         break;
 
+      case SDLK_r:
+        UpdateLayers();
+        {
+          std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+          lock->Invalidate();
+        }
+        break;
+
+      case SDLK_s:
+        compositor.FitContent(scene);
+        break;
+
       case SDLK_t:
         if (!activeTracker_)
           SelectNextTool();
@@ -271,9 +287,6 @@ namespace OrthancStone
           LOG(WARNING) << "You cannot change the active tool when an interaction"
             " is taking place";
         }
-        break;
-      case SDLK_s:
-        compositor.FitContent(scene);
         break;
 
       case SDLK_z:
@@ -466,15 +479,11 @@ namespace OrthancStone
 
 
   RtViewerApp::RtViewerApp()
-    : oracle_(*this)
-    , currentTool_(RtViewerGuiTool_Rotate)
+    : currentTool_(RtViewerGuiTool_Rotate)
     , undoStack_(new UndoStack)
     , currentPlane_(0)
     , projection_(VolumeProjection_Coronal)
   {
-    loadersContext_.reset(new GenericLoadersContext(1, 4, 1));
-    loadersContext_->StartOracle();
-
     // False means we do NOT let Windows treat this as a legacy application that needs to be scaled
     viewport_ = SdlOpenGLViewport::Create("CT RTDOSE RTSTRUCT viewer", 1024, 1024, false);
 
@@ -482,18 +491,9 @@ namespace OrthancStone
     ViewportController& controller = lock->GetController();
     Scene2D& scene = controller.GetScene();
 
-    //oracleObservable.RegisterObserverCallback
-    //(new Callable
-    //  <RtViewerApp, SleepOracleCommand::TimeoutMessage>(*this, &RtViewerApp::Handle));
-
-    //oracleObservable.RegisterObserverCallback
-    //(new Callable
-    //  <Toto, GetOrthancImageCommand::SuccessMessage>(*this, &RtViewerApp::Handle));
-
-    //oracleObservable.RegisterObserverCallback
-    //(new Callable
-    //  <RtViewerApp, GetOrthancWebViewerJpegCommand::SuccessMessage>(*this, &ToRtViewerAppto::Handle));
-
+    // Create the volumes that will be filled later on
+    ctVolume_ = boost::make_shared<DicomVolumeImage>();
+    doseVolume_ = boost::make_shared<DicomVolumeImage>();
 
     TEXTURE_2x2_1_ZINDEX = 1;
     TEXTURE_1x1_ZINDEX = 2;
@@ -509,7 +509,6 @@ namespace OrthancStone
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
     Scene2D& scene = controller.GetScene();
-    Register<OracleCommandExceptionMessage>(oracleObservable_, &RtViewerApp::Handle);
     Register<ViewportController::SceneTransformChanged>(controller, &RtViewerApp::OnSceneTransformChanged);
   }
 
@@ -520,6 +519,7 @@ namespace OrthancStone
     return thisOne;
   }
 
+#if 0
   void RtViewerApp::PrepareScene()
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
@@ -551,6 +551,7 @@ namespace OrthancStone
       scene.SetLayer(TEXTURE_2x2_1_ZINDEX, new ColorTextureSceneLayer(i));
     }
   }
+#endif
 
   void RtViewerApp::DisableTracker()
   {
@@ -588,33 +589,107 @@ namespace OrthancStone
     // std::vector<boost::shared_ptr<MeasureTool>> measureTools_;
     return boost::shared_ptr<IFlexiblePointerTracker>();
   }
-
-  static void GLAPIENTRY
-    OpenGLMessageCallback(GLenum source,
-                          GLenum type,
-                          GLuint id,
-                          GLenum severity,
-                          GLsizei length,
-                          const GLchar* message,
-                          const void* userParam)
+    
+  void RtViewerApp::PrepareLoadersAndSlicers()
   {
-    if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
+
+    //{
+    //  Orthanc::WebServiceParameters p;
+    //  //p.SetUrl("http://localhost:8043/");
+    //  p.SetCredentials("orthanc", "orthanc");
+    //  oracle_.SetOrthancParameters(p);
+    //}
+
     {
-      fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-              (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
-              type, severity, message);
+      // "true" means use progressive quality (jpeg 50 --> jpeg 90 --> 16-bit raw)
+      // "false" means only using hi quality
+      // TODO: add flag for quality
+      ctLoader_ = OrthancSeriesVolumeProgressiveLoader::Create(*loadersContext_, ctVolume_, false);
+
+      // we need to store the CT loader to ask from geometry details later on when geometry is loaded
+      geometryProvider_ = ctLoader_;
+
+      doseLoader_ = OrthancMultiframeVolumeLoader::Create(*loadersContext_, doseVolume_);
+      rtstructLoader_ = DicomStructureSetLoader::Create(*loadersContext_);
     }
+
+    /**
+    Register for notifications issued by the loaders
+    */
+
+    Register<DicomVolumeImage::GeometryReadyMessage>                              
+       (*ctLoader_, &RtViewerApp::HandleGeometryReady);
+    
+    Register<OrthancSeriesVolumeProgressiveLoader::VolumeImageReadyInHighQuality>
+      (*ctLoader_, &RtViewerApp::HandleCTLoaded);
+    
+    Register<DicomVolumeImage::ContentUpdatedMessage>                             
+      (*ctLoader_, &RtViewerApp::HandleCTContentUpdated);
+    
+    Register<DicomVolumeImage::ContentUpdatedMessage>                             
+      (*doseLoader_, &RtViewerApp::HandleDoseLoaded);
+    
+    Register<DicomStructureSetLoader::StructuresReady>                            
+      (*rtstructLoader_, &RtViewerApp::HandleStructuresReady);
+    
+    Register<DicomStructureSetLoader::StructuresUpdated>                          
+      (*rtstructLoader_, &RtViewerApp::HandleStructuresUpdated);
+
+    /**
+    Configure the CT
+    */
+
+
+    std::auto_ptr<GrayscaleStyleConfigurator> style(new GrayscaleStyleConfigurator);
+    style->SetLinearInterpolation(true);
+
+    this->SetCtVolumeSlicer(LAYER_POSITION + 0, ctLoader_, style.release());
+
+    {
+      std::unique_ptr<LookupTableStyleConfigurator> config(new LookupTableStyleConfigurator);
+      config->SetLookupTable(Orthanc::EmbeddedResources::COLORMAP_HOT);
+
+      boost::shared_ptr<DicomVolumeImageMPRSlicer> tmp(new DicomVolumeImageMPRSlicer(doseVolume_));
+      this->SetDoseVolumeSlicer(LAYER_POSITION + 1, tmp, config.release());
+    }
+
+    this->SetStructureSet(LAYER_POSITION + 2, rtstructLoader_);
+
+#if 1 
+    LOG(INFO) << "About to load:";
+    LOG(INFO) << "  CT       : " << ctSeriesId_;;
+    LOG(INFO) << "  RTDOSE   : " << doseInstanceId_;
+    LOG(INFO) << "  RTSTRUCT : " << rtStructInstanceId_;
+    ctLoader_->LoadSeries(ctSeriesId_);
+    doseLoader_->LoadInstance(doseInstanceId_);
+    rtstructLoader_->LoadInstanceFullVisibility(rtStructInstanceId_);
+
+#elif 0
+    /*
+    BGO data
+    http://localhost:8042/twiga-orthanc-viewer-demo/twiga-orthanc-viewer-demo.html?ct-series=a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa
+    &
+    dose-instance=830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb
+    &
+    struct-instance=54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9
+    */
+    ctLoader_->LoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // CT
+    doseLoader_->LoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // RT-DOSE
+    rtstructLoader_->LoadInstanceFullVisibility("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // RT-STRUCT
+#else
+    //SJO data
+    //ctLoader->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
+    //doseLoader->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
+    //rtstructLoader->LoadInstanceFullVisibility("83d9c0c3-913a7fee-610097d7-cbf0522d-fd75bee6");  // RT-STRUCT
+
+    // 2017-05-16
+    ctLoader_->LoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // CT
+    doseLoader_->LoadInstance("eac822ef-a395f94e-e8121fe0-8411fef8-1f7bffad");  // RT-DOSE
+    rtstructLoader_->LoadInstanceFullVisibility("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // RT-STRUCT
+#endif
   }
 
-  static bool g_stopApplication = false;
-
-
-  void RtViewerApp::Handle(const DicomVolumeImage::GeometryReadyMessage& message)
-  {
-    RetrieveGeometry();
-  }
-
-
+#if 0
   void RtViewerApp::Handle(const OracleCommandExceptionMessage& message)
   {
     const OracleCommandBase& command = dynamic_cast<const OracleCommandBase&>(message.GetOrigin());
@@ -631,7 +706,13 @@ namespace OrthancStone
       break;
     }
   }
+#endif
 
+
+  void RtViewerApp::HandleGeometryReady(const DicomVolumeImage::GeometryReadyMessage& message)
+  {
+    RetrieveGeometry();
+  }
 
   void RtViewerApp::HandleCTLoaded(const OrthancSeriesVolumeProgressiveLoader::VolumeImageReadyInHighQuality& message)
   {
@@ -659,7 +740,7 @@ namespace OrthancStone
     UpdateLayers();
   }
 
-  void RtViewerApp::SetCtVolume(int depth,
+  void RtViewerApp::SetCtVolumeSlicer(int depth,
                                             const boost::shared_ptr<OrthancStone::IVolumeSlicer>& volume,
                                             OrthancStone::ILayerStyleConfigurator* style)
   {
@@ -675,7 +756,7 @@ namespace OrthancStone
     }
   }
 
-  void RtViewerApp::SetDoseVolume(int depth,
+  void RtViewerApp::SetDoseVolumeSlicer(int depth,
                                             const boost::shared_ptr<OrthancStone::IVolumeSlicer>& volume,
                                             OrthancStone::ILayerStyleConfigurator* style)
   {
@@ -701,170 +782,6 @@ namespace OrthancStone
     structLayerSource_.reset(new OrthancStone::VolumeSceneLayerSource(scene, depth, volume));
   }
 
-  void RtViewerApp::Run()
-  {
-    {
-      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-      ViewportController& controller = lock->GetController();
-      Scene2D& scene = controller.GetScene();
-      ICompositor& compositor = lock->GetCompositor();
-
-      // False means we do NOT let Windows treat this as a legacy application
-      // that needs to be scaled
-      controller.FitContent(compositor.GetCanvasWidth(), compositor.GetCanvasHeight());
-
-      glEnable(GL_DEBUG_OUTPUT);
-      glDebugMessageCallback(OpenGLMessageCallback, 0);
-
-      compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,
-                         FONT_SIZE_0, Orthanc::Encoding_Latin1);
-      compositor.SetFont(1, Orthanc::EmbeddedResources::UBUNTU_FONT,
-                         FONT_SIZE_1, Orthanc::Encoding_Latin1);
-    }
-                     //////// from loader
-    {
-      Orthanc::WebServiceParameters p;
-      //p.SetUrl("http://localhost:8043/");
-      p.SetCredentials("orthanc", "orthanc");
-      oracle_.SetOrthancParameters(p);
-    }
-
-    //////// from Run
-
-    boost::shared_ptr<DicomVolumeImage>  ctVolume(new DicomVolumeImage);
-    boost::shared_ptr<DicomVolumeImage>  doseVolume(new DicomVolumeImage);
-
-
-    boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> ctLoader;
-    boost::shared_ptr<OrthancMultiframeVolumeLoader> doseLoader;
-    boost::shared_ptr<DicomStructureSetLoader>  rtstructLoader;
-
-    {
-      // "true" means use progressive quality (jpeg 50 --> jpeg 90 --> 16-bit raw)
-      ctLoader = OrthancSeriesVolumeProgressiveLoader::Create(*loadersContext_, ctVolume, false);
-      
-      // we need to store the CT loader to ask from geometry details later on when geometry is loaded
-      geometryProvider_ = ctLoader;
-
-      doseLoader = OrthancMultiframeVolumeLoader::Create(*loadersContext_, doseVolume);
-      rtstructLoader = DicomStructureSetLoader::Create(*loadersContext_);
-    }
-
-    Register<DicomVolumeImage::GeometryReadyMessage>(*ctLoader, &RtViewerApp::Handle);
-    Register<OrthancSeriesVolumeProgressiveLoader::VolumeImageReadyInHighQuality>(*ctLoader, &RtViewerApp::HandleCTLoaded);
-    Register<DicomVolumeImage::ContentUpdatedMessage>(*ctLoader, &RtViewerApp::HandleCTContentUpdated);
-    Register<DicomVolumeImage::ContentUpdatedMessage>(*doseLoader, &RtViewerApp::HandleDoseLoaded);
-    Register<DicomStructureSetLoader::StructuresReady>(*rtstructLoader, &RtViewerApp::HandleStructuresReady);
-    Register<DicomStructureSetLoader::StructuresUpdated>(*rtstructLoader, &RtViewerApp::HandleStructuresUpdated);
-
-    std::auto_ptr<GrayscaleStyleConfigurator> style(new GrayscaleStyleConfigurator);
-    style->SetLinearInterpolation(true);
-
-    this->SetCtVolume(LAYER_POSITION + 0, ctLoader, style.release());
-
-    {
-      std::unique_ptr<LookupTableStyleConfigurator> config(new LookupTableStyleConfigurator);
-      config->SetLookupTable(Orthanc::EmbeddedResources::COLORMAP_HOT);
-
-      boost::shared_ptr<DicomVolumeImageMPRSlicer> tmp(new DicomVolumeImageMPRSlicer(doseVolume));
-      this->SetDoseVolume(LAYER_POSITION + 1, tmp, config.release());
-    }
-
-    this->SetStructureSet(LAYER_POSITION + 2, rtstructLoader);
-
-#if 1
-    /*
-    BGO data
-    http://localhost:8042/twiga-orthanc-viewer-demo/twiga-orthanc-viewer-demo.html?ct-series=a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa
-    &
-    dose-instance=830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb
-    &
-    struct-instance=54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9
-    */
-    ctLoader->LoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // CT
-    doseLoader->LoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // RT-DOSE
-    rtstructLoader->LoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // RT-STRUCT
-#else
-    //ctLoader->LoadSeries("cb3ea4d1-d08f3856-ad7b6314-74d88d77-60b05618");  // CT
-    //doseLoader->LoadInstance("41029085-71718346-811efac4-420e2c15-d39f99b6");  // RT-DOSE
-    //rtstructLoader->LoadInstance("83d9c0c3-913a7fee-610097d7-cbf0522d-fd75bee6");  // RT-STRUCT
-
-    // 2017-05-16
-    ctLoader->LoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // CT
-    doseLoader->LoadInstance("eac822ef-a395f94e-e8121fe0-8411fef8-1f7bffad");  // RT-DOSE
-    rtstructLoader->LoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // RT-STRUCT
-#endif
-
-    oracle_.Start();
-
-//// END from loader
-
-    while (!g_stopApplication)
-    {
-      //compositor.Refresh(scene);
-
-//////// from loader
-//// END from loader
-
-      SDL_Event event;
-      while (!g_stopApplication && SDL_PollEvent(&event))
-      {
-        if (event.type == SDL_QUIT)
-        {
-          g_stopApplication = true;
-          break;
-        }
-        else if (event.type == SDL_WINDOWEVENT &&
-                 event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-        {
-          DisableTracker(); // was: tracker.reset(NULL);
-        }
-        else if (event.type == SDL_KEYDOWN &&
-                 event.key.repeat == 0 /* Ignore key bounce */)
-        {
-          switch (event.key.keysym.sym)
-          {
-          case SDLK_f:
-            // TODO: implement GetWindow!!!
-            // viewport_->GetContext()->GetWindow().ToggleMaximize();
-            ORTHANC_ASSERT(false, "Please implement GetWindow()");
-            break;
-
-          case SDLK_r:
-            break;
-
-          case SDLK_s:
-            FitContent();
-            break;
-
-          case SDLK_q:
-            g_stopApplication = true;
-            break;
-          default:
-            break;
-          }
-        }
-        HandleApplicationEvent(event);
-      }
-      SDL_Delay(1);
-    }
-
-    //// from loader
-
-    //Orthanc::SystemToolbox::ServerBarrier();
-
-    /**
-     * WARNING => The oracle must be stopped BEFORE the objects using
-     * it are destroyed!!! This forces to wait for the completion of
-     * the running callback methods. Otherwise, the callbacks methods
-     * might still be running while their parent object is destroyed,
-     * resulting in crashes. This is very visible if adding a sleep(),
-     * as in (*).
-     **/
-
-    oracle_.Stop();
-    //// END from loader
-  }
 
   void RtViewerApp::SetInfoDisplayMessage(
     std::string key, std::string value)
@@ -900,15 +817,12 @@ int main(int argc, char* argv[])
   using namespace OrthancStone;
 
   StoneInitialize();
-  Orthanc::Logging::EnableInfoLevel(true);
-  //Orthanc::Logging::EnableTraceLevel(true);
 
   try
   {
     boost::shared_ptr<RtViewerApp> app = RtViewerApp::Create();
     g_app = app;
-    //app->PrepareScene();
-    app->Run();
+    app->RunSdl(argc,argv);
   }
   catch (Orthanc::OrthancException& e)
   {

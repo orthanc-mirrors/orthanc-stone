@@ -1,9 +1,11 @@
 #pragma once
 
+#include <Core/Logging.h>
+
+#include <boost/algorithm/string.hpp>
+
 #include <string>
 #include <iostream>
-
-#include <Core/Logging.h>
 
 namespace OrthancStoneHelpers
 {

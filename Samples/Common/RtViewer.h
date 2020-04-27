@@ -36,7 +36,9 @@
 #include <boost/thread.hpp>
 #include <boost/noncopyable.hpp>
 
+#if ORTHANC_ENABLE_SDL
 #include <SDL.h>
+#endif
 
 namespace OrthancStone
 {
@@ -74,17 +76,23 @@ namespace OrthancStone
   can be sent from multiple threads)
   */
   class RtViewerApp : public ObserverBase<RtViewerApp>
-    , public IMessageEmitter
   {
   public:
 
-
     void PrepareScene();
-    void Run();
+
+#if ORTHANC_ENABLE_SDL
+  public:
+    void RunSdl(int argc, char* argv[]);
+  private:
+    void ProcessOptions(int argc, char* argv[]);
+    void HandleApplicationEvent(const SDL_Event& event);
+#elif ORTHANC_ENABLE_WASM
+#endif
+
+  public:
     void SetInfoDisplayMessage(std::string key, std::string value);
     void DisableTracker();
-
-    void HandleApplicationEvent(const SDL_Event& event);
 
     /**
     This method is called when the scene transform changes. It allows to
@@ -103,6 +111,7 @@ namespace OrthancStone
 
     void Refresh();
 
+#if 0
     virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
       const IMessage& message) ORTHANC_OVERRIDE
     {
@@ -117,6 +126,7 @@ namespace OrthancStone
         throw;
       }
     }
+#endif
 
     static boost::shared_ptr<RtViewerApp> Create();
     void RegisterMessages();
@@ -125,11 +135,42 @@ namespace OrthancStone
     RtViewerApp();
 
   private:
-#if 1
+    void PrepareLoadersAndSlicers();
+
+    /**
+    Url of the Orthanc instance
+    Typically, in a native application (Qt, SDL), it will be an absolute URL like "http://localhost:8042". In 
+    wasm on the browser, it could be an absolute URL, provided you do not have cross-origin problems, or a relative
+    URL. In our wasm samples, it is set to "..", because we set up either a reverse proxy or an Orthanc ServeFolders
+    plugin that serves the main web application from an URL like "http://localhost:8042/rtviewer" (with ".." leading 
+    to the main Orthanc root URL)
+    */
+    std::string orthancUrl_;
+
+    /**
+    Orthanc ID of the CT series to load. Only used between startup and loading time.
+    */
+    std::string ctSeriesId_;
+
+    /**
+    Orthanc ID of the RTDOSE instance to load. Only used between startup and loading time.
+    */
+    std::string doseInstanceId_;
+
+    /**
+    Orthanc ID of the RTSTRUCT instance to load. Only used between startup and loading time.
+    */
+    std::string rtStructInstanceId_;
+
+
+#if ORTHANC_ENABLE_SDL
     // if threaded (not wasm)
-    IObservable oracleObservable_;
-    ThreadedOracle oracle_;
-    boost::shared_mutex mutex_; // to serialize messages from the ThreadedOracle
+    //IObservable oracleObservable_;
+    //ThreadedOracle oracle_;
+    //boost::shared_mutex mutex_; // to serialize messages from the ThreadedOracle
+#elif ORTHANC_ENABLE_WASM
+
+
 #endif
 
     void SelectNextTool();
@@ -159,8 +200,7 @@ namespace OrthancStone
     void Redo();
 
 
-    void Handle(const DicomVolumeImage::GeometryReadyMessage& message);
-    void Handle(const OracleCommandExceptionMessage& message);
+    void HandleGeometryReady(const DicomVolumeImage::GeometryReadyMessage& message);
     
     // TODO: wire this
     void HandleCTLoaded(const OrthancSeriesVolumeProgressiveLoader::VolumeImageReadyInHighQuality& message);
@@ -169,12 +209,12 @@ namespace OrthancStone
     void HandleStructuresReady(const OrthancStone::DicomStructureSetLoader::StructuresReady& message);
     void HandleStructuresUpdated(const OrthancStone::DicomStructureSetLoader::StructuresUpdated& message);
 
-    void SetCtVolume(
+    void SetCtVolumeSlicer(
       int depth,
       const boost::shared_ptr<IVolumeSlicer>& volume,
       ILayerStyleConfigurator* style);
     
-    void SetDoseVolume(
+    void SetDoseVolumeSlicer(
       int depth,
       const boost::shared_ptr<IVolumeSlicer>& volume,
       ILayerStyleConfigurator* style);
@@ -191,9 +231,25 @@ namespace OrthancStone
     void FitContent();
 
   private:
-    boost::shared_ptr<GenericLoadersContext> loadersContext_;
-    boost::shared_ptr<VolumeSceneLayerSource>  ctVolumeLayerSource_, doseVolumeLayerSource_, structLayerSource_;
-    boost::shared_ptr<OrthancStone::IGeometryProvider> geometryProvider_;
+    boost::shared_ptr<DicomVolumeImage>  ctVolume_;
+    boost::shared_ptr<DicomVolumeImage>  doseVolume_;
+
+    boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> ctLoader_;
+    boost::shared_ptr<OrthancMultiframeVolumeLoader> doseLoader_;
+    boost::shared_ptr<DicomStructureSetLoader>  rtstructLoader_;
+
+    /** encapsulates resources shared by loaders */
+    boost::shared_ptr<GenericLoadersContext>            loadersContext_;
+    boost::shared_ptr<VolumeSceneLayerSource>           ctVolumeLayerSource_, doseVolumeLayerSource_, structLayerSource_;
+    
+    /**
+    another interface to the ctLoader object (that also implements the IVolumeSlicer interface), that serves as the 
+    reference for the geometry (position and dimensions of the volume + size of each voxel). It could be changed to be 
+    the dose instead, but the CT is chosen because it usually has a better spatial resolution.
+    */
+    boost::shared_ptr<OrthancStone::IGeometryProvider>  geometryProvider_;
+
+    // collection of cutting planes for this particular view
     std::vector<OrthancStone::CoordinateSystem3D>       planes_;
     size_t                                              currentPlane_;
 

@@ -21,11 +21,13 @@
 
 #pragma once
 
-#include "Core/OrthancException.h"
 #include "Toolbox/LinearAlgebra.h"
 
-#include <iostream>
+#include <Core/OrthancException.h>
+
 #include <boost/lexical_cast.hpp>
+
+#include <iostream>
 
 namespace OrthancStone
 {

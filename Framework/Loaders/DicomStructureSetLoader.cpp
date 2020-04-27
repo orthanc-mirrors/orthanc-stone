@@ -392,6 +392,12 @@ namespace OrthancStone
     }
   }
 
+  void DicomStructureSetLoader::LoadInstanceFullVisibility(const std::string& instanceId)
+  {
+    std::vector<std::string> initiallyVisibleStructures;
+    initiallyVisibleStructures.push_back("*"); // wildcard to make all structure sets visible
+    LoadInstance(instanceId, initiallyVisibleStructures);
+  }
 
   OrthancStone::IVolumeSlicer::IExtractedSlice* DicomStructureSetLoader::ExtractSlice(const OrthancStone::CoordinateSystem3D& cuttingPlane)
   {

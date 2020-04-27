@@ -97,6 +97,9 @@ namespace OrthancStone
     void LoadInstance(const std::string& instanceId, 
                       const std::vector<std::string>& initiallyVisibleStructures = std::vector<std::string>());
 
+    void LoadInstanceFullVisibility(const std::string& instanceId);
+
+
     virtual IExtractedSlice* ExtractSlice(const OrthancStone::CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
 
     void SetStructuresReady();

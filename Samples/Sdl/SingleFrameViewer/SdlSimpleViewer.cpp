@@ -1,13 +1,7 @@
 
 #include "SdlSimpleViewerApplication.h"
-
-#include <string>
-
-#include <boost/program_options.hpp>
-
-#include <SDL.h>
-
-#include <Core/OrthancException.h>
+#include "../SdlHelpers.h"
+#include "../../Common/SampleHelpers.h"
 
 #include <Framework/Loaders/GenericLoadersContext.h>
 #include <Framework/StoneException.h>
@@ -15,12 +9,18 @@
 #include <Framework/StoneInitialization.h>
 #include <Framework/Viewport/SdlViewport.h>
 
-#include "../SdlHelpers.h"
-#include "../../Common/SampleHelpers.h"
+#include <Core/OrthancException.h>
+
+#include <boost/program_options.hpp>
+#include <SDL.h>
+
+#include <string>
+
 
 std::string orthancUrl;
 std::string instanceId;
 int frameIndex = 0;
+
 
 static void ProcessOptions(int argc, char* argv[])
 {
@@ -28,7 +28,7 @@ static void ProcessOptions(int argc, char* argv[])
   po::options_description desc("Usage:");
 
   desc.add_options()
-    ("log_level", po::value<std::string>()->default_value("WARNING"),
+    ("loglevel", po::value<std::string>()->default_value("WARNING"),
      "You can choose WARNING, INFO or TRACE for the logging level: Errors and warnings will always be displayed. (default: WARNING)")
 
     ("orthanc", po::value<std::string>()->default_value("http://localhost:8042"),
@@ -52,9 +52,9 @@ static void ProcessOptions(int argc, char* argv[])
     std::cerr << "Please check your command line options! (\"" << e.what() << "\")" << std::endl;
   }
 
-  if (vm.count("log_level") > 0)
+  if (vm.count("loglevel") > 0)
   {
-    std::string logLevel = vm["log_level"].as<std::string>();
+    std::string logLevel = vm["loglevel"].as<std::string>();
     OrthancStoneHelpers::SetLogLevel(logLevel);
   }
 
@@ -76,11 +76,6 @@ static void ProcessOptions(int argc, char* argv[])
 
 }
 
-extern void f()
-{
-  std::cout << "f()" << std::endl;
-}
-
 /**
  * IMPORTANT: The full arguments to "main()" are needed for SDL on
  * Windows. Otherwise, one gets the linking error "undefined reference
@@ -88,8 +83,6 @@ extern void f()
  **/
 int main(int argc, char* argv[])
 {
-  f();
-
   try
   {
     OrthancStone::StoneInitialize();

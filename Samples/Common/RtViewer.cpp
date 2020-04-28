@@ -334,6 +334,7 @@ namespace OrthancStone
     }
     else if (viewport_->IsRefreshEvent(event))
     {
+      // the viewport has been invalidated and requires repaint
       viewport_->Paint();
     }
   }

@@ -52,11 +52,6 @@ namespace OrthancStone
     namespace po = boost::program_options;
     po::options_description desc("Usage:");
 
-    //ctLoader->LoadSeries("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa");  // CT
-    //doseLoader->LoadInstance("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");  // RT-DOSE
-    //rtstructLoader->LoadInstance("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");  // RT-STRUCT
-
-
     desc.add_options()
       ("loglevel", po::value<std::string>()->default_value("WARNING"),
        "You can choose WARNING, INFO or TRACE for the logging level: Errors and warnings will always be displayed. (default: WARNING)")
@@ -123,8 +118,8 @@ namespace OrthancStone
       Scene2D& scene = controller.GetScene();
       ICompositor& compositor = lock->GetCompositor();
 
-      // False means we do NOT let Windows treat this as a legacy application
-      // that needs to be scaled
+      // False means we do NOT let a hi-DPI aware desktop managedr treat this as a legacy application that requires
+      // scaling.
       controller.FitContent(compositor.GetCanvasWidth(), compositor.GetCanvasHeight());
 
       glEnable(GL_DEBUG_OUTPUT);
@@ -141,7 +136,7 @@ namespace OrthancStone
     loadersContext_->StartOracle();
 
     /**
-    It is very important that the Oracle (responsible for network I/O be started before creating and firing the 
+    It is very important that the Oracle (responsible for network I/O) be started before creating and firing the 
     loaders, for any command scheduled by the loader before the oracle is started will be lost.
     */
     PrepareLoadersAndSlicers();
@@ -150,8 +145,6 @@ namespace OrthancStone
 
     while (!stopApplication)
     {
-      //compositor.Refresh(scene);
-
       SDL_Event event;
       while (!stopApplication && SDL_PollEvent(&event))
       {
@@ -163,7 +156,7 @@ namespace OrthancStone
         else if (event.type == SDL_WINDOWEVENT &&
                  event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
         {
-          DisableTracker(); // was: tracker.reset(NULL);
+          DisableTracker();
         }
         else if (event.type == SDL_KEYDOWN &&
                  event.key.repeat == 0 /* Ignore key bounce */)
@@ -171,8 +164,8 @@ namespace OrthancStone
           switch (event.key.keysym.sym)
           {
           case SDLK_f:
-            // TODO: implement GetWindow!!!
-            // viewport_->GetContext()->GetWindow().ToggleMaximize();
+            // TODO: implement GetWindow to be able to do:
+            // viewport_->GetWindow().ToggleMaximize();
             ORTHANC_ASSERT(false, "Please implement GetWindow()");
             break;
           case SDLK_q:
@@ -182,6 +175,8 @@ namespace OrthancStone
             break;
           }
         }
+        // the code above is rather application-neutral.
+        // the following call handles events specific to the application
         HandleApplicationEvent(event);
       }
       SDL_Delay(1);

@@ -27,10 +27,6 @@
     <p>
       Orthanc instance: <input type="text" id="orthancInstance" size="80"
                                value="5eb2dd5f-3fca21a8-fa7565fd-63e112ae-344830a4">
-      <!-- Orthanc instance: <input type="text" id="orthancInstance" size="80"
-                               value="61f3143e-96f34791-ad6bbb8d-62559e75-45943e1b"> -->
-      <!-- Orthanc instance: <input type="text" id="orthancInstance" size="80"
-                               value="8dddbd75-f4095768-6e66f851-22305751-18782bdd"> -->
     </p>
     <p>
       Frame number: <input type="text" id="orthancFrame" value="0">
@@ -39,33 +35,9 @@
       <button id="orthancLoad">Load</button>
     </p>
 
-    <h1>Load from DICOMweb</h1>
-    <p>
-      Server name in Orthanc: <input type="text" id="dicomWebServer" value="self">
-    </p>
-    <p>
-      Study instance UID: <input type="text" id="dicomWebStudy" size="80"
-                                 value="1.2.840.113543.6.6.4.7.64067529866380271256212683512383713111129">
-    </p>
-    <p>
-      Series instance UID: <input type="text" id="dicomWebSeries" size="80"
-                                  value="1.2.840.113543.6.6.4.7.63556916880112768082712975118701689357177">
-    </p>
-    <p>
-      SOP instance UID: <input type="text" id="dicomWebInstance" size="80"
-                               value="1.2.840.113543.6.6.4.7.64234348190163144631511103849051737563212">
-    </p>
-    <p>
-      Frame number: <input type="text" id="dicomWebFrame" value="0">
-    </p>
-    <p>
-      <button id="dicomWebLoad">Load</button>
-    </p>
-
     <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.js"></script>
     
-    <script src="WasmWrapper.js"></script>
     <script src="SingleFrameViewerApp.js"></script>
   </body>
 </html>

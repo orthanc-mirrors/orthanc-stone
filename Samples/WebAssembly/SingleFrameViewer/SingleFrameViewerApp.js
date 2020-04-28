@@ -9,35 +9,35 @@ const WasmModuleWrapper = function() {
 
 WasmModuleWrapper.prototype.Setup = function(Module) {
   this._InitializeViewport = Module.cwrap('InitializeViewport', null, [ 'string' ]);
-  this._LoadOrthanc = Module.cwrap('LoadOrthanc', null, [ 'string', 'int' ]);
-  this._LoadDicomWeb = Module.cwrap('LoadDicomWeb', null, [ 'string', 'string', 'string', 'string', 'int' ]);
+  this._LoadFromOrthanc = Module.cwrap('LoadFromOrthanc', null, [ 'string', 'int' ]);
+  this._LoadFromDicomWeb = Module.cwrap('LoadFromDicomWeb', null, [ 'string', 'string', 'string', 'string', 'int' ]);
 };
 
 WasmModuleWrapper.prototype.InitializeViewport = function(canvasId) {
   this._InitializeViewport(canvasId);
 };
 
-WasmModuleWrapper.prototype.LoadOrthanc = function(instance, frame) {
-  this._LoadOrthanc(instance, frame);
+WasmModuleWrapper.prototype.LoadFromOrthanc = function(instance, frame) {
+  this._LoadFromOrthanc(instance, frame);
 };
 
-WasmModuleWrapper.prototype.LoadDicomWeb = function(server, studyInstanceUid, seriesInstanceUid, sopInstanceUid, frame) {
-  this._LoadDicomWeb(server, studyInstanceUid, seriesInstanceUid, sopInstanceUid, frame);
+WasmModuleWrapper.prototype.LoadFromDicomWeb = function(server, studyInstanceUid, seriesInstanceUid, sopInstanceUid, frame) {
+  this._LoadFromDicomWeb(server, studyInstanceUid, seriesInstanceUid, sopInstanceUid, frame);
 };
 
-var moduleWrapper = new WasmModuleWrapper();
+var wasmModuleWrapper = new WasmModuleWrapper();
 
 $(document).ready(function() {
 
-  window.addEventListener('StoneInitialized', function() {
-    stone.Setup(Module);
-    console.warn('Native Stone properly intialized');
+  window.addEventListener('WasmModuleInitialized', function() {
+    wasmModuleWrapper.Setup(Module);
+    console.warn('Native C++ module initialized');
 
-    stone.InitializeViewport('viewport');
+    wasmModuleWrapper.InitializeViewport('viewport');
   });
 
   window.addEventListener('StoneException', function() {
-    alert('Exception caught in Stone');
+    alert('Exception caught in C++ code');
   });    
 
   var scriptSource;
@@ -75,15 +75,6 @@ $(document).ready(function() {
 
 
 $('#orthancLoad').click(function() {
-  stone.LoadOrthanc($('#orthancInstance').val(),
+  wasmModuleWrapper.LoadFromOrthanc($('#orthancInstance').val(),
                     $('#orthancFrame').val());
-});
-
-
-$('#dicomWebLoad').click(function() {
-  stone.LoadDicomWeb($('#dicomWebServer').val(),
-                     $('#dicomWebStudy').val(),
-                     $('#dicomWebSeries').val(),
-                     $('#dicomWebInstance').val(),
-                     $('#dicomWebFrame').val());
 });

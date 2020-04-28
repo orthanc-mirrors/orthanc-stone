@@ -70,6 +70,5 @@ install(
   ${CMAKE_SOURCE_DIR}/SingleFrameViewerApp.js
   ${CMAKE_SOURCE_DIR}/index.html
   ${CMAKE_CURRENT_BINARY_DIR}/SingleFrameViewerWasm.wasm
-  ${CMAKE_SOURCE_DIR}/WasmWrapper.js
   DESTINATION ${CMAKE_INSTALL_PREFIX}
   )

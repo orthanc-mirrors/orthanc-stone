@@ -119,6 +119,8 @@ namespace OrthancStone
       return new SdlLock(*this);
     }
 
+    virtual uint32_t GetSdlWindowId() = 0;
+
     virtual void UpdateSize(unsigned int width,
                             unsigned int height) = 0;
 
@@ -147,6 +149,8 @@ namespace OrthancStone
 
 
     virtual ~SdlOpenGLViewport();
+
+    virtual uint32_t GetSdlWindowId() ORTHANC_OVERRIDE;
 
     virtual void Paint() ORTHANC_OVERRIDE;
 
@@ -178,6 +182,8 @@ namespace OrthancStone
 
 
     virtual ~SdlCairoViewport();
+
+    virtual uint32_t GetSdlWindowId() ORTHANC_OVERRIDE;
 
     virtual void Paint() ORTHANC_OVERRIDE;
 

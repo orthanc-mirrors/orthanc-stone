@@ -95,6 +95,14 @@ namespace OrthancStone
     return that;
   }
 
+  uint32_t SdlOpenGLViewport::GetSdlWindowId()
+  {
+    SdlWindow& sdlWindowWrapper = context_.GetWindow();
+    SDL_Window* sdlWindow = sdlWindowWrapper.GetObject();
+    Uint32 sdlWindowId = SDL_GetWindowID(sdlWindow);
+    return sdlWindowId;
+  }
+
   SdlOpenGLViewport::~SdlOpenGLViewport()
   {
     // Make sure that the "OpenGLCompositor" is destroyed BEFORE the
@@ -146,6 +154,13 @@ namespace OrthancStone
     }
   }
   
+  uint32_t SdlCairoViewport::GetSdlWindowId()
+  {
+    SDL_Window* sdlWindow = window_.GetObject();
+    Uint32 sdlWindowId = SDL_GetWindowID(sdlWindow);
+    return sdlWindowId;
+  }
+
   void SdlCairoViewport::Paint()
   {
     SdlLock lock(*this);

@@ -117,6 +117,11 @@ int main(int argc, char* argv[])
 
         OrthancStone::DefaultViewportInteractor interactor;
 
+#if 1
+        OrthancStoneHelpers::SdlRunLoop(viewport, interactor);
+
+#else
+
         {
           int scancodeCount = 0;
           const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
@@ -218,7 +223,7 @@ int main(int argc, char* argv[])
             SDL_Delay(1);
           }
         }
-
+#endif
         context.StopOracle();
       }
     }

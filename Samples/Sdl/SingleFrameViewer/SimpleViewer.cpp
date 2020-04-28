@@ -1,3 +1,4 @@
+#error TO BE DELETED
 
 #include "SdlSimpleViewerApplication.h"
 

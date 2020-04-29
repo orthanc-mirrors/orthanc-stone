@@ -288,8 +288,6 @@ if (ENABLE_WASM)
 endif()
 
 list(APPEND ORTHANC_STONE_SOURCES
-  #${ORTHANC_STONE_ROOT}/Framework/Layers/SeriesFrameRendererFactory.cpp
-  #${ORTHANC_STONE_ROOT}/Framework/Layers/SingleFrameRendererFactory.cpp
 
   ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomDatasetReader.cpp
   ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomPath.cpp

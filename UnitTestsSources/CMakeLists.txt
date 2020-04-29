@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(OrthancStone)
 
+set(ORTHANC_FRAMEWORK_SOURCE "path")
+set(ORTHANC_FRAMEWORK_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../orthanc)
+set(STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../)
+
 include(../Resources/CMake/OrthancStoneParameters.cmake)
 
 set(ENABLE_STONE_DEPRECATED ON)  # Need deprecated classes for these samples
@@ -11,7 +15,7 @@ endif()
 
 set(ENABLE_SDL OFF CACHE BOOL "Target SDL Native application")
 set(ENABLE_WASM OFF CACHE BOOL "Target WASM application")
-set(ENABLE_UNITTESTS ON 
+set(ENABLE_UNITTESTS ON BOOL "Enable unit tests")
 
 
 if (ENABLE_WASM)

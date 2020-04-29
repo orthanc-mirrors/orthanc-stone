@@ -3846,7 +3846,7 @@ TEST(GenericToolbox, TestStringToDoubleHardNeg)
   }
 }
 
-static const size_t NUM_TIMINGS_CONVS = 2000;
+static const size_t NUM_TIMINGS_CONVS = 1; // set to 2000 if you want to measure perfs;
 
 
 //4444444444444444$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$

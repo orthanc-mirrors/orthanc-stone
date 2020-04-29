@@ -21,15 +21,10 @@
 
 #include "gtest/gtest.h"
 
-#include "../Framework/Deprecated/Layers/FrameRenderer.h"
-#include "../Framework/Deprecated/Toolbox/DownloadStack.h"
-#include "../Framework/Deprecated/Toolbox/MessagingToolbox.h"
-#include "../Framework/Deprecated/Toolbox/OrthancSlicesLoader.h"
 #include "../Framework/StoneInitialization.h"
 #include "../Framework/Toolbox/FiniteProjectiveCamera.h"
 #include "../Framework/Toolbox/GeometryToolbox.h"
 #include "../Framework/Volumes/ImageBuffer3D.h"
-#include "../Platforms/Generic/OracleWebService.h"
 
 #include <Core/HttpClient.h>
 #include <Core/Images/ImageProcessing.h>
@@ -632,14 +627,6 @@ TEST(GeometryToolbox, AlignVectorsWithRotation)
     OrthancStone::LinearAlgebra::Print(boost::numeric::ublas::prod(r, a));
   */
 }
-
-TEST(MessagingToolbox, ParseJson)
-{
-  Json::Value response;
-  std::string source = "{\"command\":\"panel:takeDarkImage\",\"commandType\":\"simple\",\"args\":{}}";
-  ASSERT_TRUE(Deprecated::MessagingToolbox::ParseJson(response, source.c_str(), source.size()));
-}
-
 
 
 static bool IsEqualVectorL1(OrthancStone::Vector a,

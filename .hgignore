@@ -4,19 +4,8 @@ syntax: glob
 *.h.orig
 .vs/
 .vscode/
-Applications/Qt/archive/
-Applications/Samples/Deprecated/ThirdPartyDownloads/
-Applications/Samples/Deprecated/build-wasm/
-Applications/Samples/Deprecated/build-web/
-Applications/Samples/Deprecated/node_modules/
-Applications/Samples/Deprecated/rt-viewer-demo/ThirdPartyDownloads/
-Applications/Samples/Deprecated/rt-viewer-demo/build-sdl-msvc15/
-Applications/Samples/Deprecated/rt-viewer-demo/build-tsc-output/
-Applications/Samples/Deprecated/rt-viewer-demo/build-wasm/
-Applications/Samples/Deprecated/rt-viewer-demo/build-web/
-Applications/build-*
+build*/
 CMakeLists.txt.user
-Platforms/Generic/ThirdPartyDownloads/
 Resources/CodeGeneration/.env
 Resources/CodeGeneration/.idea
 Resources/CodeGeneration/__pycache__
@@ -42,6 +31,6 @@ Samples/Deprecated/Qt/ThirdPartyDownloads/
 Samples/Deprecated/WebAssembly/build/
 Samples/Deprecated/WebAssembly/ThirdPartyDownloads/
 Samples/Deprecated/WebAssembly/installDir/
-
+UnitTestsSources/ThirdPartyDownloads/
 node_modules/
 

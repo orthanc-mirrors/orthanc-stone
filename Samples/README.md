@@ -68,72 +68,27 @@ Dicomweb server functionality of Orthanc.
 This barebones sample uses plain Javascript and requires the 
 Emscripten toolchain and cmake, in addition to a few standard packages.
 
-Here's how you can build it: create the following script (for instance, 
-`build-wasm-SingleFrameViewer.sh`) one level above the orthanc-stone repository,
-thus, in the folder we have called `devroot`.
-
-If you feel confident, you can also simply read the following script and 
-enter the commands interactively in the terminal.
-
-```
-#!/bin/bash
-
-if [ ! -d "orthanc-stone" ]; then
-  echo "This script must be run from the folder one level above orthanc-stone"
-  exit 1
-fi
-
-if [[ ! $# -eq 1 ]]; then
-  echo "Usage:"
-  echo "  $0 [BUILD_TYPE]"
-  echo ""
-  echo "  with:"
-  echo "    BUILD_TYPE = Debug, RelWithDebInfo or Release"
-  echo ""
-  exit 1
-fi
-
-# define the variables that we'll use
-buildType=$1
-buildFolderName="`pwd`/out/build-stone-wasm-SingleFrameViewer-$buildType"
-installFolderName="`pwd`/out/install-stone-wasm-SingleFrameViewer-$buildType"
-
-# configure the environment to use Emscripten
-. ~/apps/emsdk/emsdk_env.sh
-
-
-mkdir -p $buildFolderName
-
-# change current folder to the build folder
-pushd $buildFolderName
-
-emcmake cmake -G "Ninja" \
-  -DCMAKE_BUILD_TYPE=$buildType \
-  -DCMAKE_INSTALL_PREFIX=$installFolderName \
-  -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DALLOW_DOWNLOADS=ON \
-  ../orthanc-stone/Samples/WebAssembly/SingleFrameViewer
-
-# perform build + installation
-ninja install
-
-# restore the original working folder
-popd
-
-echo "If all went well, the output files can be found in $installFolderName:"
-
-ls $installFolderName```
-```
-
-Simply navigate to the dev root, and execute the script:
-
-```
-./build-wasm-SingleFrameViewer.sh RelWithDebInfo
-```
-
-I suggest that you do *not* use the `Debug` confirmation unless you really 
+To build it, just launch the `build-wasm-SingleFrameViewer.sh` script from
+this folder.  Optionaly, you can pass the build type as an argument.
+We suggest that you do *not* use the `Debug` configuration unless you really 
 need it, for the additional checks that are made will lead to a very long 
 build time and much slower execution (more severe than with a native non-wasm
 target)
+
+In order to run the sample, you may serve it with the ServeFolders plugin.
+You can i.e: add such a section in your orthanc configuration file:
+
+```
+{
+  "Plugins" : ["LibServeFolders.so],
+  "ServeFolders" : {
+    "/single-frame-viewer" : "..../out/install-stone-wasm-SingleFrameViewer-RelWithDebInfo"
+  }
+}
+```
+
+You'll then be able to open the demo at `http://localhost:8042/single-frame-viewer/index.html`
+
 
 Native samples
 =================
@@ -181,3 +136,9 @@ IDE and choose Build --> Build solution.
 An alternative is to execute `cmake --build .` in the build folder created by
 the script.
 
+In order to run the sample, make sure you've an Orthanc server running i.e. on 
+port 8042 and launch:
+
+```
+./SingleFrameViewer --orthanc http://localhost:8042 --instance 7fc84013-abef174e-3354ca83-b9cdb2a4-f1a74368
+```

@@ -35,6 +35,7 @@ Samples/WebAssembly/*/ThirdPartyDownloads/
 Samples/WebAssembly/*/out
 Samples/Sdl/*/ThirdPartyDownloads/
 Samples/Sdl/*/out
+Samples/Sdl/build*/
 Samples/Deprecated/Sdl/ThirdPartyDownloads/
 Samples/Deprecated/Sdl/CMakeLists.txt.orig
 Samples/Deprecated/Qt/ThirdPartyDownloads/

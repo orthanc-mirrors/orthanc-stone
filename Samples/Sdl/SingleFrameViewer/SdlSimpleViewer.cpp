@@ -104,6 +104,10 @@ int main(int argc, char* argv[])
 
       OrthancStone::GenericLoadersContext context(1, 4, 1);
 
+      Orthanc::WebServiceParameters orthancWebService;
+      orthancWebService.SetUrl(orthancUrl);
+      context.SetOrthancParameters(orthancWebService);
+
       context.StartOracle();
 
       {

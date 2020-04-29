@@ -99,8 +99,23 @@ namespace OrthancStoneHelpers
     p.SetShiftModifier(modifiers & KeyboardModifiers_Shift);
   }
 
+  static boost::shared_ptr<OrthancStone::SdlViewport> GetSdlViewportFromWindowId(
+    const std::vector<boost::shared_ptr<OrthancStone::SdlViewport> >& viewports,
+    Uint32 windowID)
+  {
+    using namespace OrthancStone;
+    for (size_t i = 0; i < viewports.size(); ++i)
+    {
+      boost::shared_ptr<IViewport> viewport = viewports[i];
+      boost::shared_ptr<SdlViewport> sdlViewport = boost::dynamic_pointer_cast<SdlViewport>(viewport);
+      Uint32 curWindowID = sdlViewport->GetSdlWindowId();
+      if (windowID == curWindowID)
+        return sdlViewport;
+    }
+    return NULL;
+  }
 
-  inline void SdlRunLoop(boost::shared_ptr<OrthancStone::SdlViewport> viewport,
+  inline void SdlRunLoop(const std::vector<boost::shared_ptr<OrthancStone::SdlViewport> >& viewports,
                          OrthancStone::IViewportInteractor& interactor)
   {
     using namespace OrthancStone;
@@ -120,25 +135,28 @@ namespace OrthancStoneHelpers
             stop = true;
             break;
           }
-          else if (viewport->IsRefreshEvent(event))
-          {
-            paint = true;
-          }
           else if (event.type == SDL_WINDOWEVENT &&
                    (event.window.event == SDL_WINDOWEVENT_RESIZED ||
                     event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
           {
+            boost::shared_ptr<SdlViewport> viewport = GetSdlViewportFromWindowId(
+              viewports, event.window.windowID);
             viewport->UpdateSize(event.window.data1, event.window.data2);
           }
           else if (event.type == SDL_WINDOWEVENT &&
                    (event.window.event == SDL_WINDOWEVENT_SHOWN ||
                     event.window.event == SDL_WINDOWEVENT_EXPOSED))
           {
-            paint = true;
+            boost::shared_ptr<SdlViewport> viewport = GetSdlViewportFromWindowId(
+              viewports, event.window.windowID);
+            viewport->Paint();
           }
           else if (event.type == SDL_KEYDOWN &&
                    event.key.repeat == 0 /* Ignore key bounce */)
           {
+            boost::shared_ptr<SdlViewport> viewport = GetSdlViewportFromWindowId(
+              viewports, event.window.windowID);
+
             switch (event.key.keysym.sym)
             {
             case SDLK_f:
@@ -146,12 +164,12 @@ namespace OrthancStoneHelpers
               break;
 
             case SDLK_s:
-              {
-                std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
-                lock->GetCompositor().FitContent(lock->GetController().GetScene());
-                lock->Invalidate();
-              }
-              break;
+            {
+              std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+              lock->GetCompositor().FitContent(lock->GetController().GetScene());
+              lock->Invalidate();
+            }
+            break;
 
             case SDLK_q:
               stop = true;
@@ -165,6 +183,9 @@ namespace OrthancStoneHelpers
                    event.type == SDL_MOUSEMOTION ||
                    event.type == SDL_MOUSEBUTTONUP)
           {
+            boost::shared_ptr<SdlViewport> viewport = GetSdlViewportFromWindowId(
+              viewports, event.window.windowID);
+
             std::auto_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
             if (lock->HasCompositor())
             {
@@ -198,21 +219,21 @@ namespace OrthancStoneHelpers
               }
             }
           }
+          else
+          {
+            for (size_t i = 0; i < viewports.size(); ++i)
+            {
+              boost::shared_ptr<SdlViewport> viewport = viewports[i];
+              if (viewport->IsRefreshEvent(event))
+                viewport->Paint();
+            }
+          }
         }
-
-        if (paint)
-        {
-          viewport->Paint();
-        }
-
-        // Small delay to avoid using 100% of CPU
-        SDL_Delay(1);
       }
+      // Small delay to avoid using 100% of CPU
+      SDL_Delay(1);
     }
   }
-
-
-
-
 }
+
 

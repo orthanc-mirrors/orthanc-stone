@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en-us">
   <head>
     <title>Stone of Orthanc Single Frame Viewer </title>
@@ -23,38 +23,38 @@
       display: block;  /* No floating content on sides */
       }
 
-      #mycanvas1 {
-      position:absolute;
-      left:0%;
-      top:0%;
-      background-color: red;
-      width: 50%;
-      height: 100%;
+      #RtViewer_Axial {
+        position: absolute;
+        left: 0%;
+        top: 0%;
+        background-color: red;
+        width: 50%;
+        height: 100%;
       }
 
-      #mycanvas2 {
-      position:absolute;
-      left:50%;
-      top:0%;
-      background-color: green;
-      width: 50%;
-      height: 50%;
+      #RtViewer_Coronal {
+        position: absolute;
+        left: 50%;
+        top: 0%;
+        background-color: green;
+        width: 50%;
+        height: 50%;
       }
 
-      #mycanvas3 {
-      position:absolute;
-      left:50%;
-      top:50%;
-      background-color: blue;
-      width: 50%;
-      height: 50%;
+      #RtViewer_Sagittal {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        background-color: blue;
+        width: 50%;
+        height: 50%;
       }
     </style>
   </head>
   <body>
-    <canvas id="mycanvas1" oncontextmenu="return false;"></canvas>
-    <canvas id="mycanvas2" oncontextmenu="return false;"></canvas>
-    <canvas id="mycanvas3" oncontextmenu="return false;"></canvas>
+    <canvas id="RtViewer_Axial" oncontextmenu="return false;"></canvas>
+    <canvas id="RtViewer_Coronal" oncontextmenu="return false;"></canvas>
+    <canvas id="RtViewer_Sagittal" oncontextmenu="return false;"></canvas>
 
     <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.js"></script>

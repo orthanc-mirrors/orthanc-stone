@@ -49,6 +49,7 @@ namespace OrthancStone
   class ThreadedOracle;
   class VolumeSceneLayerSource;
   class SdlOpenGLViewport;
+  class RtViewerView;
    
   enum RtViewerGuiTool
   {
@@ -94,7 +95,6 @@ namespace OrthancStone
 #endif
 
   public:
-    void SetInfoDisplayMessage(std::string key, std::string value);
     void DisableTracker();
 
     /**
@@ -103,48 +103,18 @@ namespace OrthancStone
     */
     void SetArgument(const std::string& key, const std::string& value);
 
-    /**
-    This method is called when the scene transform changes. It allows to
-    recompute the visual elements whose content depend upon the scene transform
-    */
-    void OnSceneTransformChanged(
-      const ViewportController::SceneTransformChanged& message);
-
-    /**
-    This method will ask the VolumeSceneLayerSource, that are responsible to 
-    generated 2D content based on a volume and a cutting plane, to regenerate
-    it. This is required if the volume itself changes (during loading) or if 
-    the cutting plane is changed
-    */
-    void UpdateLayers();
-
-    void Refresh();
-
-#if 0
-    virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
-      const IMessage& message) ORTHANC_OVERRIDE
-    {
-      try
-      {
-        boost::unique_lock<boost::shared_mutex>  lock(mutex_);
-        oracleObservable_.EmitMessage(observer, message);
-      }
-      catch (Orthanc::OrthancException& e)
-      {
-        LOG(ERROR) << "Exception while emitting a message: " << e.What();
-        throw;
-      }
-    }
-#endif
+    const VolumeImageGeometry& GetMainGeometry();
 
     static boost::shared_ptr<RtViewerApp> Create();
-    void RegisterMessages();
+
+    void CreateView(const std::string& canvasId, VolumeProjection projection);
 
   protected:
     RtViewerApp();
 
   private:
-    void PrepareLoadersAndSlicers();
+    void CreateLoaders();
+    void StartLoaders();
     void SelectNextTool();
 
     // argument handling
@@ -154,18 +124,12 @@ namespace OrthancStone
     const std::string& GetArgument(const std::string& key) const;
     bool HasArgument(const std::string& key) const;
 
-    void TakeScreenshot(
-      const std::string& target,
-      unsigned int canvasWidth,
-      unsigned int canvasHeight);
-
     /**
       This adds the command at the top of the undo stack
     */
     //void Commit(boost::shared_ptr<TrackerCommand> cmd);
     void Undo();
     void Redo();
-
 
     void HandleGeometryReady(const DicomVolumeImage::GeometryReadyMessage& message);
     
@@ -176,31 +140,18 @@ namespace OrthancStone
     void HandleStructuresReady(const OrthancStone::DicomStructureSetLoader::StructuresReady& message);
     void HandleStructuresUpdated(const OrthancStone::DicomStructureSetLoader::StructuresUpdated& message);
 
-    void SetCtVolumeSlicer(
-      int depth,
-      const boost::shared_ptr<IVolumeSlicer>& volume,
-      ILayerStyleConfigurator* style);
-    
-    void SetDoseVolumeSlicer(
-      int depth,
-      const boost::shared_ptr<IVolumeSlicer>& volume,
-      ILayerStyleConfigurator* style);
-
-    void SetStructureSet(
-      int depth, 
-      const boost::shared_ptr<DicomStructureSetLoader>& volume);
 
   private:
-    void CreateViewport();
-    void DisplayFloatingCtrlInfoText(const PointerEvent& e);
-    void DisplayInfoText();
-    void HideInfoText();
     void RetrieveGeometry();
     void FitContent();
+    void InvalidateAllViewports();
+    void UpdateLayersInAllViews();
 
   private:
     boost::shared_ptr<DicomVolumeImage>  ctVolume_;
     boost::shared_ptr<DicomVolumeImage>  doseVolume_;
+
+    std::vector<boost::shared_ptr<RtViewerView> >  views_;
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> ctLoader_;
     boost::shared_ptr<OrthancMultiframeVolumeLoader> doseLoader_;
@@ -209,8 +160,6 @@ namespace OrthancStone
     /** encapsulates resources shared by loaders */
     boost::shared_ptr<ILoadersContext>                  loadersContext_;
 
-    boost::shared_ptr<VolumeSceneLayerSource>           ctVolumeLayerSource_, doseVolumeLayerSource_, structLayerSource_;
-    
     /**
     another interface to the ctLoader object (that also implements the IVolumeSlicer interface), that serves as the 
     reference for the geometry (position and dimensions of the volume + size of each voxel). It could be changed to be 
@@ -218,28 +167,11 @@ namespace OrthancStone
     */
     boost::shared_ptr<OrthancStone::IGeometryProvider>  geometryProvider_;
 
-    // collection of cutting planes for this particular view
-    std::vector<OrthancStone::CoordinateSystem3D>       planes_;
-    size_t                                              currentPlane_;
 
-    VolumeProjection                      projection_;
-
-    std::map<std::string, std::string> infoTextMap_;
     boost::shared_ptr<IFlexiblePointerTracker> activeTracker_;
-
-    static const int LAYER_POSITION = 150;
-
-    int TEXTURE_2x2_1_ZINDEX;
-    int TEXTURE_1x1_ZINDEX;
-    int TEXTURE_2x2_2_ZINDEX;
-    int LINESET_1_ZINDEX;
-    int LINESET_2_ZINDEX;
-    int FLOATING_INFOTEXT_LAYER_ZINDEX;
-    int FIXED_INFOTEXT_LAYER_ZINDEX;
 
     RtViewerGuiTool currentTool_;
     boost::shared_ptr<UndoStack> undoStack_;
-    boost::shared_ptr<IViewport> viewport_;
   };
 
 }

@@ -18,7 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "RtViewer.h"
+#include "RtViewerApp.h"
+#include "RtViewerView.h"
 #include "SampleHelpers.h"
 
 // Stone of Orthanc includes
@@ -74,12 +75,13 @@
 
 namespace OrthancStone
 {
-  void RtViewerApp::CreateViewport()
+  boost::shared_ptr<IViewport> RtViewerView::CreateViewport(
+    const std::string& canvasId)
   {
-    viewport_ = WebGLViewport::Create("mycanvas1");
+    return WebGLViewport::Create(canvasId);
   }
 
-  void RtViewerApp::TakeScreenshot(const std::string& target,
+  void RtViewerView::TakeScreenshot(const std::string& target,
                                    unsigned int canvasWidth,
                                    unsigned int canvasHeight)
   {
@@ -89,20 +91,6 @@ namespace OrthancStone
 
   void RtViewerApp::RunWasm()
   {
-    {
-      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-      ViewportController& controller = lock->GetController();
-      Scene2D& scene = controller.GetScene();
-      ICompositor& compositor = lock->GetCompositor();
-
-      controller.FitContent(compositor.GetCanvasWidth(), compositor.GetCanvasHeight());
-
-      compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,
-                         FONT_SIZE_0, Orthanc::Encoding_Latin1);
-      compositor.SetFont(1, Orthanc::EmbeddedResources::UBUNTU_FONT,
-                         FONT_SIZE_1, Orthanc::Encoding_Latin1);
-    }
-
     loadersContext_.reset(new OrthancStone::WebAssemblyLoadersContext(1, 4, 1));
 
     // we are in WASM --> downcast to concrete type
@@ -116,7 +104,18 @@ namespace OrthancStone
 
     loadersContext->SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
 
-    PrepareLoadersAndSlicers();
+    CreateLoaders();
+    
+    CreateView("RtViewer_Axial", VolumeProjection_Axial);
+    CreateView("RtViewer_Coronal", VolumeProjection_Coronal);
+    CreateView("RtViewer_Sagittal", VolumeProjection_Sagittal);
+
+    for (size_t i = 0; i < views_.size(); ++i)
+    {
+      views_[i]->PrepareViewport();
+    }
+
+    StartLoaders();
 
     DefaultViewportInteractor interactor;
   }

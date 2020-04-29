@@ -65,9 +65,10 @@ include_directories(../../Common)
 # ---------------------------------------------------------------
 add_executable(RtViewerWasm
   RtViewerWasm.cpp
-  ../../Common/RtViewer.cpp
-  ../../Common/RtViewer.h
-
+  ../../Common/RtViewerApp.cpp
+  ../../Common/RtViewerApp.h
+  ../../Common/RtViewerView.cpp
+  ../../Common/RtViewerView.h
   ${ORTHANC_STONE_SOURCES}
   )
 

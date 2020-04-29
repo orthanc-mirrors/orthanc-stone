@@ -258,19 +258,6 @@ if (NOT ORTHANC_SANDBOXED)
   set(PLATFORM_SOURCES
     ${ORTHANC_STONE_ROOT}/Framework/Loaders/GenericLoadersContext.cpp
     ${ORTHANC_STONE_ROOT}/Framework/Loaders/GenericLoadersContext.h
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/DelayedCallCommand.cpp
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/DelayedCallCommand.h
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/Oracle.cpp
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/Oracle.h
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/OracleDelayedCallExecutor.h
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceCommandBase.cpp
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceCommandBase.h
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceDeleteCommand.cpp
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceDeleteCommand.h
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceGetCommand.cpp
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServiceGetCommand.h
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServicePostCommand.cpp
-    ${ORTHANC_STONE_ROOT}/Platforms/Generic/WebServicePostCommand.h
     )
 
   if (ENABLE_SDL)
@@ -494,14 +481,6 @@ if (ENABLE_WASM)
     ${ORTHANC_STONE_ROOT}/Framework/Viewport/WebAssemblyViewport.h
     )
 endif()
-
-if (ENABLE_SDL OR ENABLE_WASM)
-list(APPEND APPLICATIONS_SOURCES
-  ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.cpp
-  ${ORTHANC_STONE_ROOT}/Applications/Generic/GuiAdapter.h
-  )
-endif()
-
 
 list(APPEND ORTHANC_STONE_SOURCES
   #${ORTHANC_STONE_ROOT}/Framework/Layers/SeriesFrameRendererFactory.cpp

@@ -11,7 +11,6 @@ include(${ORTHANC_ROOT}/Resources/CMake/DownloadPackage.cmake)
 
 SET(ENABLE_GOOGLE_TEST OFF)
 SET(ENABLE_LOCALE ON)  # Necessary for text rendering
-SET(ENABLE_QT OFF)
 SET(ENABLE_SDL ON)
 SET(ENABLE_DCMTK ON)  # <==
 SET(ENABLE_OPENGL ON)  #  <==

@@ -20,8 +20,8 @@ samplesRootDir=$(pwd)
 devrootDir=$(pwd)/../../
 
 buildType=${1:-RelWithDebInfo}
-buildFolderName="$devrootDir/out/build-stone-wasm-SingleFrameViewer-$buildType"
-installFolderName="$devrootDir/out/install-stone-wasm-SingleFrameViewer-$buildType"
+buildFolderName="$devrootDir/out/build-stone-wasm-RtViewer-$buildType"
+installFolderName="$devrootDir/out/install-stone-wasm-RtViewer-$buildType"
 
 mkdir -p $buildFolderName
 # change current folder to the build folder
@@ -34,7 +34,7 @@ emcmake cmake -G "Ninja" \
   -DCMAKE_BUILD_TYPE=$buildType \
   -DCMAKE_INSTALL_PREFIX=$installFolderName \
   -DSTATIC_BUILD=ON -DALLOW_DOWNLOADS=ON \
-  $samplesRootDir/WebAssembly/SingleFrameViewer
+  $samplesRootDir/WebAssembly/RtViewer
 
 # perform build + installation
 ninja install

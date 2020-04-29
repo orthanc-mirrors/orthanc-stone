@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(OrthancStone)
 
+set(ORTHANC_FRAMEWORK_SOURCE "path")
+set(ORTHANC_FRAMEWORK_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../orthanc)
+set(STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../)
+
 include(../Resources/CMake/OrthancStoneParameters.cmake)
 
 set(ENABLE_STONE_DEPRECATED ON)  # Need deprecated classes for these samples
@@ -10,9 +14,8 @@ add_definitions(-DOPENSSL_NO_CAPIENG=1)
 endif()
 
 set(ENABLE_SDL OFF CACHE BOOL "Target SDL Native application")
-set(ENABLE_QT OFF CACHE BOOL "Target Qt Native application")
 set(ENABLE_WASM OFF CACHE BOOL "Target WASM application")
-set(ENABLE_UNITTESTS ON 
+set(ENABLE_UNITTESTS ON BOOL "Enable unit tests")
 
 
 if (ENABLE_WASM)
@@ -20,15 +23,12 @@ if (ENABLE_WASM)
   if (ENABLE_SDL)
     message("ENABLE_SDL is only supported in native (incompatible with ENABLE_WASM)")
   endif()
-  if (ENABLE_QT)
-    message("ENABLE_QT is only supported in native (incompatible with ENABLE_WASM)")
-  endif()
   set(ENABLE_NATIVE OFF)
   set(ORTHANC_SANDBOXED OFF)
   set(ENABLE_CRYPTO_OPTIONS ON)
   set(ENABLE_GOOGLE_TEST ON)
   set(ENABLE_WEB_CLIENT ON)
-elseif (ENABLE_QT OR ENABLE_SDL)
+elseif (ENABLE_SDL)
   set(ENABLE_NATIVE ON)
   set(ORTHANC_SANDBOXED OFF)
   set(ENABLE_CRYPTO_OPTIONS ON)

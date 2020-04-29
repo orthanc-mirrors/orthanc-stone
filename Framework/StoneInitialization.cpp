@@ -25,10 +25,6 @@
 #  error Macro ORTHANC_ENABLE_SDL must be defined
 #endif
 
-#if !defined(ORTHANC_ENABLE_QT)
-#  error Macro ORTHANC_ENABLE_QT must be defined
-#endif
-
 #if !defined(ORTHANC_ENABLE_SSL)
 #  error Macro ORTHANC_ENABLE_SSL must be defined
 #endif
@@ -46,10 +42,6 @@
 
 #if ORTHANC_ENABLE_SDL == 1
 #  include "Viewport/SdlWindow.h"
-#endif
-
-#if ORTHANC_ENABLE_QT == 1
-#  include <QCoreApplication>
 #endif
 
 #if ORTHANC_ENABLE_CURL == 1
@@ -122,14 +114,6 @@ namespace OrthancStone
       // Run-time checks of locale settings, to be run after Qt has
       // been initialized, as Qt changes locale settings
 
-#if ORTHANC_ENABLE_QT == 1
-      if (QCoreApplication::instance() == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls,
-                                        "Qt must be initialized before Stone");
-      }
-#endif
-      
       {
         OrthancStone::Vector v;
         if (!OrthancStone::LinearAlgebra::ParseVector(v, "1.3671875\\-1.3671875") ||

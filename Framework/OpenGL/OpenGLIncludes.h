@@ -42,15 +42,6 @@
 #  include <GL/glext.h>
 #endif
 
-#if ORTHANC_ENABLE_QT == 1
-// TODO: currently there are no checks in QT
-
-#   define ORTHANC_OPENGL_CHECK(name)
-#   define ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT(msg)
-#   define ORTHANC_CHECK_CURRENT_CONTEXT(context)
-
-#endif
-
 #if ORTHANC_ENABLE_SDL == 1
 # include <SDL_video.h>
 

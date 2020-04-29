@@ -18,19 +18,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include <Framework/Viewport/SdlViewport.h>
-#include <Framework/Loaders/GenericLoadersContext.h>
-#include <Framework/Messages/IObserver.h>
+#include <Framework/Viewport/IViewport.h>
+
+#include <Framework/Loaders/DicomStructureSetLoader.h>
+#include <Framework/Loaders/OrthancMultiframeVolumeLoader.h>
+#include <Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h>
+#include <Framework/Loaders/ILoadersContext.h>
 #include <Framework/Messages/IMessageEmitter.h>
+#include <Framework/Messages/IObserver.h>
+#include <Framework/Messages/ObserverBase.h>
 #include <Framework/Oracle/OracleCommandExceptionMessage.h>
 #include <Framework/Scene2DViewport/ViewportController.h>
 #include <Framework/Volumes/DicomVolumeImage.h>
-#include <Framework/Oracle/ThreadedOracle.h>
-#include <Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h>
-#include <Framework/Loaders/OrthancMultiframeVolumeLoader.h>
-#include <Framework/Loaders/DicomStructureSetLoader.h>
-
-#include <Framework/Messages/ObserverBase.h>
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/thread.hpp>
@@ -88,11 +87,21 @@ namespace OrthancStone
     void ProcessOptions(int argc, char* argv[]);
     void HandleApplicationEvent(const SDL_Event& event);
 #elif ORTHANC_ENABLE_WASM
+  public:
+    void RunWasm();
+#else
+#  error Either ORTHANC_ENABLE_SDL or ORTHANC_ENABLE_WASM must be enabled
 #endif
 
   public:
     void SetInfoDisplayMessage(std::string key, std::string value);
     void DisableTracker();
+
+    /**
+    Called by command-line option processing or when parsing the URL 
+    parameters.
+    */
+    void SetArgument(const std::string& key, const std::string& value);
 
     /**
     This method is called when the scene transform changes. It allows to
@@ -136,56 +145,14 @@ namespace OrthancStone
 
   private:
     void PrepareLoadersAndSlicers();
-
-    /**
-    Url of the Orthanc instance
-    Typically, in a native application (Qt, SDL), it will be an absolute URL like "http://localhost:8042". In 
-    wasm on the browser, it could be an absolute URL, provided you do not have cross-origin problems, or a relative
-    URL. In our wasm samples, it is set to "..", because we set up either a reverse proxy or an Orthanc ServeFolders
-    plugin that serves the main web application from an URL like "http://localhost:8042/rtviewer" (with ".." leading 
-    to the main Orthanc root URL)
-    */
-    std::string orthancUrl_;
-
-    /**
-    Orthanc ID of the CT series to load. Only used between startup and loading time.
-    */
-    std::string ctSeriesId_;
-
-    /**
-    Orthanc ID of the RTDOSE instance to load. Only used between startup and loading time.
-    */
-    std::string doseInstanceId_;
-
-    /**
-    Orthanc ID of the RTSTRUCT instance to load. Only used between startup and loading time.
-    */
-    std::string rtStructInstanceId_;
-
-
-#if ORTHANC_ENABLE_SDL
-    // if threaded (not wasm)
-    //IObservable oracleObservable_;
-    //ThreadedOracle oracle_;
-    //boost::shared_mutex mutex_; // to serialize messages from the ThreadedOracle
-#elif ORTHANC_ENABLE_WASM
-
-
-#endif
-
     void SelectNextTool();
 
-    /**
-    This returns a random point in the canvas part of the scene, but in
-    scene coordinates
-    */
-    ScenePoint2D GetRandomPointInScene() const;
+    // argument handling
+    // SetArgument is above (public section)
+    std::map<std::string, std::string> arguments_;
 
-    boost::shared_ptr<IFlexiblePointerTracker> TrackerHitTest(const PointerEvent& e);
-
-    boost::shared_ptr<IFlexiblePointerTracker> CreateSuitableTracker(
-      const SDL_Event& event,
-      const PointerEvent& e);
+    const std::string& GetArgument(const std::string& key) const;
+    bool HasArgument(const std::string& key) const;
 
     void TakeScreenshot(
       const std::string& target,
@@ -224,6 +191,7 @@ namespace OrthancStone
       const boost::shared_ptr<DicomStructureSetLoader>& volume);
 
   private:
+    void CreateViewport();
     void DisplayFloatingCtrlInfoText(const PointerEvent& e);
     void DisplayInfoText();
     void HideInfoText();
@@ -239,7 +207,8 @@ namespace OrthancStone
     boost::shared_ptr<DicomStructureSetLoader>  rtstructLoader_;
 
     /** encapsulates resources shared by loaders */
-    boost::shared_ptr<GenericLoadersContext>            loadersContext_;
+    boost::shared_ptr<ILoadersContext>                  loadersContext_;
+
     boost::shared_ptr<VolumeSceneLayerSource>           ctVolumeLayerSource_, doseVolumeLayerSource_, structLayerSource_;
     
     /**
@@ -270,7 +239,7 @@ namespace OrthancStone
 
     RtViewerGuiTool currentTool_;
     boost::shared_ptr<UndoStack> undoStack_;
-    boost::shared_ptr<SdlOpenGLViewport> viewport_;
+    boost::shared_ptr<IViewport> viewport_;
   };
 
 }

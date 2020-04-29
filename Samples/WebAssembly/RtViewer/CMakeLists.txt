@@ -33,6 +33,7 @@ set(ALLOW_DOWNLOADS ON)
 set(ORTHANC_FRAMEWORK_SOURCE "path")
 
 include(${STONE_ROOT}/Resources/CMake/OrthancStoneParameters.cmake)
+include(${ORTHANC_ROOT}/Resources/CMake/DownloadPackage.cmake)
 
 SET(ENABLE_DCMTK ON)
 SET(ENABLE_GOOGLE_TEST OFF)
@@ -40,11 +41,25 @@ SET(ENABLE_LOCALE ON)  # Necessary for text rendering
 SET(ENABLE_WASM ON)
 SET(ORTHANC_SANDBOXED ON)
 
+
+# We embed a font to be used for on-screen overlays
+# ---------------------------------------------------------------
+
+DownloadPackage(
+  "a24b8136b8f3bb93f166baf97d9328de"
+  "http://orthanc.osimis.io/ThirdPartyDownloads/ubuntu-font-family-0.83.zip"
+  "${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83")
+
+set(ORTHANC_STONE_APPLICATION_RESOURCES
+  UBUNTU_FONT  ${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83/Ubuntu-R.ttf
+  )
+
 # this will set up the build system for Stone of Orthanc and will
 # populate the ORTHANC_STONE_SOURCES CMake variable
 include(${STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
 
 include_directories(${STONE_ROOT})
+include_directories(../../Common)
 
 # Define the WASM module
 # ---------------------------------------------------------------
@@ -71,9 +86,8 @@ install(
 # ---------------------------------------------------------------
 install(
   FILES
-  ${CMAKE_SOURCE_DIR}/RtViewerApp.js
+  ${CMAKE_SOURCE_DIR}/RtViewerWasmApp.js
   ${CMAKE_SOURCE_DIR}/index.html
   ${CMAKE_CURRENT_BINARY_DIR}/RtViewerWasm.wasm
-  ${CMAKE_SOURCE_DIR}/WasmWrapper.js
   DESTINATION ${CMAKE_INSTALL_PREFIX}
   )

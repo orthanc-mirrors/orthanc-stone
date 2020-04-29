@@ -61,9 +61,10 @@ install(
   )
 
 # Declare installation files for the companion files (web scaffolding)
-# please note that ${CMAKE_CURRENT_BINARY_DIR}/SingleFrameViewerWasm.js 
+# please note that ${CMAKE_CURRENT_BINARY_DIR}/RtViewerWasm.js
 # (the generated JS loader for the WASM module) is handled by the `install1`
-# section above
+# section above: it is considered to be the binary output of 
+# the linker.
 # ---------------------------------------------------------------
 install(
   FILES

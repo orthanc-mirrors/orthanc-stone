@@ -20,14 +20,24 @@
 
 #include "RtViewer.h"
 #include "../SdlHelpers.h"
-#include "SampleHelpers.h"
 
+// Stone of Orthanc includes
+#include <Framework/Loaders/GenericLoadersContext.h>
+#include <Framework/OpenGL/SdlOpenGLContext.h>
 #include <Framework/StoneException.h>
 #include <Framework/StoneInitialization.h>
 
-#include <Framework/OpenGL/SdlOpenGLContext.h>
+// Orthanc (a.o. for screenshot capture)
+#include <Core/Images/Image.h>
+#include <Core/Images/ImageProcessing.h>
+#include <Core/Images/PngWriter.h>
+
 
 #include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
+
+// #include <boost/pointer_cast.hpp> this include might be necessary in more recent boost versions
+
 #include <SDL.h>
 
 #include <string>
@@ -51,6 +61,12 @@ OpenGLMessageCallback(GLenum source,
 
 namespace OrthancStone
 {
+  void RtViewerApp::CreateViewport()
+  {
+    // False means we do NOT let Windows treat this as a legacy application that needs to be scaled
+    viewport_ = SdlOpenGLViewport::Create("CT RTDOSE RTSTRUCT viewer", 1024, 1024, false);
+  }
+
   void RtViewerApp::ProcessOptions(int argc, char* argv[])
   {
     namespace po = boost::program_options;
@@ -84,31 +100,12 @@ namespace OrthancStone
       std::cerr << "Please check your command line options! (\"" << e.what() << "\")" << std::endl;
     }
 
-    if (vm.count("loglevel") > 0)
+    for (po::variables_map::iterator it = vm.begin(); it != vm.end(); ++it)
     {
-      std::string logLevel = vm["loglevel"].as<std::string>();
-      OrthancStoneHelpers::SetLogLevel(logLevel);
-    }
-
-    if (vm.count("orthanc") > 0)
-    {
-      // maybe check URL validity here
-      orthancUrl_ = vm["orthanc"].as<std::string>();
-    }
-
-    if (vm.count("ctseries") > 0)
-    {
-      ctSeriesId_ = vm["ctseries"].as<std::string>();
-    }
-
-    if (vm.count("rtdose") > 0)
-    {
-      doseInstanceId_ = vm["rtdose"].as<std::string>();
-    }
-
-    if (vm.count("rtstruct") > 0)
-    {
-      rtStructInstanceId_ = vm["rtstruct"].as<std::string>();
+      std::string key = it->first;
+      const po::variable_value& value = it->second;
+      const std::string& strValue = value.as<std::string>();
+      SetArgument(key, strValue);
     }
   }
 
@@ -139,7 +136,39 @@ namespace OrthancStone
     Create the shared loaders context
     */
     loadersContext_.reset(new GenericLoadersContext(1, 4, 1));
-    loadersContext_->StartOracle();
+
+    // we are in SDL --> downcast to concrete type
+    boost::shared_ptr<GenericLoadersContext> loadersContext = boost::dynamic_pointer_cast<GenericLoadersContext>(loadersContext_);
+
+    /**
+      Url of the Orthanc instance
+      Typically, in a native application (Qt, SDL), it will be an absolute URL like "http://localhost:8042". In 
+      wasm on the browser, it could be an absolute URL, provided you do not have cross-origin problems, or a relative
+      URL. In our wasm samples, it is set to "..", because we set up either a reverse proxy or an Orthanc ServeFolders
+      plugin that serves the main web application from an URL like "http://localhost:8042/rtviewer" (with ".." leading 
+      to the main Orthanc root URL)
+    */
+    std::string orthancUrl = arguments_["orthanc"];
+
+    {
+      Orthanc::WebServiceParameters p;
+      if (HasArgument("orthanc"))
+      {
+        p.SetUrl(orthancUrl);
+      }
+      if (HasArgument("user"))
+      {
+        ORTHANC_ASSERT(HasArgument("password"));
+        p.SetCredentials(GetArgument("user"), GetArgument("password"));
+      } 
+      else
+      {
+        ORTHANC_ASSERT(!HasArgument("password"));
+      }
+      loadersContext->SetOrthancParameters(p);
+    }
+
+    loadersContext->StartOracle();
 
     /**
     It is very important that the Oracle (responsible for network I/O) be started before creating and firing the 
@@ -147,12 +176,37 @@ namespace OrthancStone
     */
     PrepareLoadersAndSlicers();
 
-    OrthancStone::DefaultViewportInteractor interactor;
+    DefaultViewportInteractor interactor;
 
-    OrthancStoneHelpers::SdlRunLoop(viewport_, interactor);
+    boost::shared_ptr<SdlViewport> viewport = boost::dynamic_pointer_cast<SdlViewport>(viewport_);
 
-    loadersContext_->StopOracle();
+    OrthancStoneHelpers::SdlRunLoop(viewport, interactor);
+
+    loadersContext->StopOracle();
   }
+
+  void RtViewerApp::TakeScreenshot(const std::string& target,
+                                   unsigned int canvasWidth,
+                                   unsigned int canvasHeight)
+  {
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    ViewportController& controller = lock->GetController();
+    Scene2D& scene = controller.GetScene();
+
+    CairoCompositor compositor(canvasWidth, canvasHeight);
+    compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, FONT_SIZE_0, Orthanc::Encoding_Latin1);
+    compositor.Refresh(scene);
+
+    Orthanc::ImageAccessor canvas;
+    compositor.GetCanvas().GetReadOnlyAccessor(canvas);
+
+    Orthanc::Image png(Orthanc::PixelFormat_RGB24, canvas.GetWidth(), canvas.GetHeight(), false);
+    Orthanc::ImageProcessing::Convert(png, canvas);
+
+    Orthanc::PngWriter writer;
+    writer.WriteToFile(target, png);
+  }
+
 
 #if 0
   void RtViewerApp::HandleApplicationEvent(

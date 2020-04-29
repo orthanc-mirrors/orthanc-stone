@@ -20,6 +20,7 @@
 
 // Sample app
 #include "RtViewer.h"
+#include "SampleHelpers.h"
 
 // Stone of Orthanc
 #include <Framework/StoneInitialization.h>
@@ -39,16 +40,12 @@
 #include <Framework/Volumes/VolumeSceneLayerSource.h>
 
 #include <Framework/Oracle/GetOrthancWebViewerJpegCommand.h>
-#include <Framework/Oracle/ThreadedOracle.h>
 #include <Framework/Scene2D/GrayscaleStyleConfigurator.h>
 #include <Framework/Scene2D/LookupTableStyleConfigurator.h>
 #include <Framework/Volumes/DicomVolumeImageMPRSlicer.h>
 #include <Framework/StoneException.h>
 
 // Orthanc
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/Images/PngWriter.h>
 #include <Core/Logging.h>
 #include <Core/OrthancException.h>
 
@@ -249,8 +246,8 @@ namespace OrthancStone
     , currentPlane_(0)
     , projection_(VolumeProjection_Coronal)
   {
-    // False means we do NOT let Windows treat this as a legacy application that needs to be scaled
-    viewport_ = SdlOpenGLViewport::Create("CT RTDOSE RTSTRUCT viewer", 1024, 1024, false);
+    // the viewport hosts the scene
+    CreateViewport();
 
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
@@ -326,35 +323,7 @@ namespace OrthancStone
       activeTracker_.reset();
     }
   }
-
-  void RtViewerApp::TakeScreenshot(const std::string& target,
-                                                unsigned int canvasWidth,
-                                                unsigned int canvasHeight)
-  {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = lock->GetController();
-    Scene2D& scene = controller.GetScene();
-
-    CairoCompositor compositor(canvasWidth, canvasHeight);
-    compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, FONT_SIZE_0, Orthanc::Encoding_Latin1);
-    compositor.Refresh(scene);
-
-    Orthanc::ImageAccessor canvas;
-    compositor.GetCanvas().GetReadOnlyAccessor(canvas);
-
-    Orthanc::Image png(Orthanc::PixelFormat_RGB24, canvas.GetWidth(), canvas.GetHeight(), false);
-    Orthanc::ImageProcessing::Convert(png, canvas);
-
-    Orthanc::PngWriter writer;
-    writer.WriteToFile(target, png);
-  }
-
-  boost::shared_ptr<IFlexiblePointerTracker> RtViewerApp::TrackerHitTest(const PointerEvent& e)
-  {
-    // std::vector<boost::shared_ptr<MeasureTool>> measureTools_;
-    return boost::shared_ptr<IFlexiblePointerTracker>();
-  }
-    
+  
   void RtViewerApp::PrepareLoadersAndSlicers()
   {
 
@@ -369,7 +338,7 @@ namespace OrthancStone
       // "true" means use progressive quality (jpeg 50 --> jpeg 90 --> 16-bit raw)
       // "false" means only using hi quality
       // TODO: add flag for quality
-      ctLoader_ = OrthancSeriesVolumeProgressiveLoader::Create(*loadersContext_, ctVolume_, false);
+      ctLoader_ = OrthancSeriesVolumeProgressiveLoader::Create(*loadersContext_, ctVolume_, true);
 
       // we need to store the CT loader to ask from geometry details later on when geometry is loaded
       geometryProvider_ = ctLoader_;
@@ -421,13 +390,15 @@ namespace OrthancStone
     this->SetStructureSet(LAYER_POSITION + 2, rtstructLoader_);
 
 #if 1 
+    ORTHANC_ASSERT(HasArgument("ctseries") && HasArgument("rtdose") && HasArgument("rtstruct"));
+
     LOG(INFO) << "About to load:";
-    LOG(INFO) << "  CT       : " << ctSeriesId_;;
-    LOG(INFO) << "  RTDOSE   : " << doseInstanceId_;
-    LOG(INFO) << "  RTSTRUCT : " << rtStructInstanceId_;
-    ctLoader_->LoadSeries(ctSeriesId_);
-    doseLoader_->LoadInstance(doseInstanceId_);
-    rtstructLoader_->LoadInstanceFullVisibility(rtStructInstanceId_);
+    LOG(INFO) << "  CT       : " << GetArgument("ctseries");
+    LOG(INFO) << "  RTDOSE   : " << GetArgument("rtdose");
+    LOG(INFO) << "  RTSTRUCT : " << GetArgument("rtstruct");
+    ctLoader_->LoadSeries(GetArgument("ctseries"));
+    doseLoader_->LoadInstance(GetArgument("rtdose"));
+    rtstructLoader_->LoadInstanceFullVisibility(GetArgument("rtstruct"));
 
 #elif 0
     /*
@@ -547,6 +518,23 @@ namespace OrthancStone
     structLayerSource_.reset(new OrthancStone::VolumeSceneLayerSource(scene, depth, volume));
   }
 
+  void RtViewerApp::SetArgument(const std::string& key, const std::string& value)
+  {
+    if (key == "loglevel")
+      OrthancStoneHelpers::SetLogLevel(value);
+    else
+      arguments_[key] = value;
+  }
+
+  const std::string& RtViewerApp::GetArgument(const std::string& key) const
+  {
+    ORTHANC_ASSERT(HasArgument(key));
+    return arguments_.at(key);
+  }
+  bool RtViewerApp::HasArgument(const std::string& key) const
+  {
+    return (arguments_.find(key) != arguments_.end());
+  }
 
   void RtViewerApp::SetInfoDisplayMessage(
     std::string key, std::string value)

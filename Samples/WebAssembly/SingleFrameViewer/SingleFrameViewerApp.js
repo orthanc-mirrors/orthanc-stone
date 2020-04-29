@@ -3,14 +3,12 @@
 
 const WasmModuleWrapper = function() {
   this._InitializeViewport = undefined;
-  this._LoadOrthanc = undefined;
-  this._LoadDicomWeb = undefined;
+  this._LoadFromOrthanc = undefined;
 };
 
 WasmModuleWrapper.prototype.Setup = function(Module) {
   this._InitializeViewport = Module.cwrap('InitializeViewport', null, [ 'string' ]);
   this._LoadFromOrthanc = Module.cwrap('LoadFromOrthanc', null, [ 'string', 'int' ]);
-  this._LoadFromDicomWeb = Module.cwrap('LoadFromDicomWeb', null, [ 'string', 'string', 'string', 'string', 'int' ]);
 };
 
 WasmModuleWrapper.prototype.InitializeViewport = function(canvasId) {
@@ -19,10 +17,6 @@ WasmModuleWrapper.prototype.InitializeViewport = function(canvasId) {
 
 WasmModuleWrapper.prototype.LoadFromOrthanc = function(instance, frame) {
   this._LoadFromOrthanc(instance, frame);
-};
-
-WasmModuleWrapper.prototype.LoadFromDicomWeb = function(server, studyInstanceUid, seriesInstanceUid, sopInstanceUid, frame) {
-  this._LoadFromDicomWeb(server, studyInstanceUid, seriesInstanceUid, sopInstanceUid, frame);
 };
 
 var wasmModuleWrapper = new WasmModuleWrapper();

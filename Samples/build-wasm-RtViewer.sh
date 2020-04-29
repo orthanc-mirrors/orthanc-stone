@@ -2,10 +2,10 @@
 #
 # usage:
 # to build the sample in Debug:
-# ./build-wasm-SingleFrameViewer.sh
+# ./build-wasm-RtViewer.sh
 #
 # to build the sample in Debug:
-# ./build-wasm-SingleFrameViewer.sh Release
+# ./build-wasm-RtViewer.sh Release
 
 set -e
 

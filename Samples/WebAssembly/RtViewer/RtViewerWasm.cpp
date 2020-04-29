@@ -75,10 +75,44 @@
 
 namespace OrthancStone
 {
+  //   typedef EM_BOOL (*OnMouseWheelFunc)(int eventType, const EmscriptenWheelEvent* wheelEvent, void* userData);
+
+  EM_BOOL RtViewerView_Scroll(int eventType, 
+                              const EmscriptenWheelEvent* wheelEvent, 
+                              void* userData)
+  {
+    RtViewerView* that = reinterpret_cast<RtViewerView*>(userData);
+
+    int delta = 0;
+    if (wheelEvent->deltaY < 0)
+      delta = -1;
+    if (wheelEvent->deltaY > 0)
+      delta = 1;
+
+    that->Scroll(delta);
+
+    return 1;
+  }
+  
   boost::shared_ptr<IViewport> RtViewerView::CreateViewport(
     const std::string& canvasId)
   {
-    return WebGLViewport::Create(canvasId);
+    boost::shared_ptr<IViewport> viewport = WebGLViewport::Create(canvasId);
+
+    void* userData = reinterpret_cast<void*>(this);
+
+    // manually add the mouse wheel handler
+
+    std::string selector = "#" + canvasId;
+
+    emscripten_set_wheel_callback_on_thread(
+      selector.c_str(),
+      userData,
+      false,
+      &RtViewerView_Scroll,
+      EM_CALLBACK_THREAD_CONTEXT_CALLING_THREAD);
+
+    return viewport;
   }
 
   void RtViewerView::TakeScreenshot(const std::string& target,

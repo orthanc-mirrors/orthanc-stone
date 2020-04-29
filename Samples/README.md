@@ -90,6 +90,42 @@ You can i.e: add such a section in your orthanc configuration file:
 You'll then be able to open the demo at `http://localhost:8042/single-frame-viewer/index.html`
 
 
+RtViewer
+-----------------
+
+This sample application displays three MPR views of a CT+RTDOSE+RTSTRUCT dataset, loaded from Orthanc. The Orthanc IDs of the dataset must be supplied as URL parameters like:
+
+```
+http://localhost:9979/rtviewer/index.html?loglevel=info&ctseries=a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa&rtdose=830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb&rtstruct=54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9
+```
+
+(notice the loglevel parameter that can be `warning`, `info` or `trace`, in increasing verbosity order)
+
+This sample uses plain Javascript and requires the 
+Emscripten toolchain and cmake, in addition to a few standard packages.
+
+To build it, just launch the `build-wasm-RtViewer.sh` script from
+this folder.  Optionaly, you can pass the build type as an argument.
+We suggest that you do *not* use the `Debug` configuration unless you really 
+need it, for the additional checks that are made will lead to a very long 
+build time and much slower execution (more severe than with a native non-wasm
+target)
+
+In order to run the sample, you may serve it with the ServeFolders plugin.
+You can i.e: add such a section in your orthanc configuration file:
+
+```
+{
+  "Plugins" : ["LibServeFolders.so],
+  "ServeFolders" : {
+    "/rt-viewer" : "..../out/install-stone-wasm-RtViewer-RelWithDebInfo"
+  }
+}
+```
+
+You'll then be able to open the demo at `http://localhost:8042/rt-viewer/index.html`
+
+
 Native samples
 =================
 
@@ -142,3 +178,38 @@ port 8042 and launch:
 ```
 ./SingleFrameViewer --orthanc http://localhost:8042 --instance 7fc84013-abef174e-3354ca83-b9cdb2a4-f1a74368
 ```
+
+RtViewer
+---------------
+
+### Windows build 
+
+Here's how to build the SdlSimpleViewer example using Visual Studio 2019
+(the shell is Powershell, but the legacy shell can also be used with some 
+tweaks). This example is meant to be launched from the folder above 
+orthanc-stone.
+
+```
+  $buildRootDir = "out"
+  $buildDirName = "build-stone-sdl-RtViewer-msvc16-x64"
+  $buildDir = Join-Path -Path $buildRootDir -ChildPath $buildDirName
+
+  if (-not (Test-Path $buildDir)) {
+    mkdir -p $buildDir | Out-Null
+  }
+  
+  cd $buildDir
+  
+  cmake -G "Visual Studio 16 2019" -A x64 `
+    -DMSVC_MULTIPLE_PROCESSES=ON `
+    -DALLOW_DOWNLOADS=ON `
+    -DSTATIC_BUILD=ON `
+    -DOPENSSL_NO_CAPIENG=ON `
+    ../../orthanc-stone/Samples/Sdl/RtViewer
+```
+
+Executing `cmake --build .` in the build folder will launch the Microsoft 
+builder on the solution.
+
+Alternatively, you can open and build the solution using Visual Studio 2019.
+

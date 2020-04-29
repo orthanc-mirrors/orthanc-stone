@@ -182,16 +182,7 @@ namespace OrthancStone
     StartLoaders();
 
 
-    std::vector<boost::shared_ptr<SdlViewport>> sdlViewports;
-    for(size_t i = 0; i < views_.size(); ++i)
-    {
-      boost::shared_ptr<RtViewerView> view = views_[i];
-      boost::shared_ptr<IViewport> viewport = view->GetViewport();
-      boost::shared_ptr<SdlViewport> sdlViewport = 
-        boost::dynamic_pointer_cast<SdlViewport>(viewport);
-      sdlViewports.push_back(sdlViewport);
-    }
-    OrthancStoneHelpers::SdlRunLoop(sdlViewports, interactor);
+    SdlRunLoop(views_, interactor);
     loadersContext->StopOracle();
   }
 
@@ -215,6 +206,179 @@ namespace OrthancStone
 
     Orthanc::PngWriter writer;
     writer.WriteToFile(target, png);
+  }
+
+  static boost::shared_ptr<OrthancStone::RtViewerView> GetViewFromWindowId(
+    const std::vector<boost::shared_ptr<OrthancStone::RtViewerView> >& views,
+    Uint32 windowID)
+  {
+    using namespace OrthancStone;
+    for (size_t i = 0; i < views.size(); ++i)
+    {
+      boost::shared_ptr<OrthancStone::RtViewerView> view = views[i];
+      boost::shared_ptr<IViewport> viewport = view->GetViewport();
+      boost::shared_ptr<SdlViewport> sdlViewport = boost::dynamic_pointer_cast<SdlViewport>(viewport);
+      Uint32 curWindowID = sdlViewport->GetSdlWindowId();
+      if (windowID == curWindowID)
+        return view;
+    }
+    return NULL;
+  }
+
+  void RtViewerApp::SdlRunLoop(const std::vector<boost::shared_ptr<OrthancStone::RtViewerView> >& views,
+                               OrthancStone::IViewportInteractor& interactor)
+  {
+    using namespace OrthancStone;
+
+    // const std::vector<boost::shared_ptr<OrthancStone::RtViewerView> >& views
+    std::vector<boost::shared_ptr<OrthancStone::SdlViewport> > viewports;
+    for (size_t i = 0; i < views.size(); ++i)
+    {
+      boost::shared_ptr<RtViewerView> view = views[i];
+      boost::shared_ptr<IViewport> viewport = view->GetViewport();
+      boost::shared_ptr<SdlViewport> sdlViewport =
+        boost::dynamic_pointer_cast<SdlViewport>(viewport);
+      viewports.push_back(sdlViewport);
+    }
+
+    {
+      int scancodeCount = 0;
+      const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
+
+      bool stop = false;
+      while (!stop)
+      {
+        bool paint = false;
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+          if (event.type == SDL_QUIT)
+          {
+            stop = true;
+            break;
+          }
+          else if (event.type == SDL_WINDOWEVENT &&
+                   (event.window.event == SDL_WINDOWEVENT_RESIZED ||
+                    event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
+          {
+            boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
+              views, event.window.windowID);
+
+            boost::shared_ptr<SdlViewport> sdlViewport =
+              boost::dynamic_pointer_cast<SdlViewport>(view->GetViewport());
+
+            sdlViewport->UpdateSize(event.window.data1, event.window.data2);
+          }
+          else if (event.type == SDL_WINDOWEVENT &&
+                   (event.window.event == SDL_WINDOWEVENT_SHOWN ||
+                    event.window.event == SDL_WINDOWEVENT_EXPOSED))
+          {
+            boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
+              views, event.window.windowID);
+            boost::shared_ptr<SdlViewport> sdlViewport =
+              boost::dynamic_pointer_cast<SdlViewport>(view->GetViewport());
+            sdlViewport->Paint();
+          }
+          else if (event.type == SDL_KEYDOWN &&
+                   event.key.repeat == 0 /* Ignore key bounce */)
+          {
+            boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
+              views, event.window.windowID);
+
+            switch (event.key.keysym.sym)
+            {
+            case SDLK_f:
+            {
+              boost::shared_ptr<SdlViewport> sdlViewport =
+                boost::dynamic_pointer_cast<SdlViewport>(view->GetViewport());
+              sdlViewport->ToggleMaximize();
+            }
+            break;
+
+            case SDLK_s:
+            {
+              std::unique_ptr<OrthancStone::IViewport::ILock> lock(view->GetViewport()->Lock());
+              lock->GetCompositor().FitContent(lock->GetController().GetScene());
+              lock->Invalidate();
+            }
+            break;
+
+            case SDLK_q:
+              stop = true;
+              break;
+
+            default:
+              break;
+            }
+          }
+          else if (event.type == SDL_MOUSEBUTTONDOWN ||
+                   event.type == SDL_MOUSEMOTION ||
+                   event.type == SDL_MOUSEBUTTONUP)
+          {
+            boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
+              views, event.window.windowID);
+
+            std::auto_ptr<OrthancStone::IViewport::ILock> lock(view->GetViewport()->Lock());
+            if (lock->HasCompositor())
+            {
+              OrthancStone::PointerEvent p;
+              OrthancStoneHelpers::GetPointerEvent(p, lock->GetCompositor(),
+                                                   event, keyboardState, scancodeCount);
+
+              switch (event.type)
+              {
+              case SDL_MOUSEBUTTONDOWN:
+                lock->GetController().HandleMousePress(interactor, p,
+                                                       lock->GetCompositor().GetCanvasWidth(),
+                                                       lock->GetCompositor().GetCanvasHeight());
+                lock->Invalidate();
+                break;
+
+              case SDL_MOUSEMOTION:
+                if (lock->GetController().HandleMouseMove(p))
+                {
+                  lock->Invalidate();
+                }
+                break;
+
+              case SDL_MOUSEBUTTONUP:
+                lock->GetController().HandleMouseRelease(p);
+                lock->Invalidate();
+                break;
+
+              default:
+                throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+              }
+            }
+          }
+          else if (event.type == SDL_MOUSEWHEEL)
+          {
+            boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
+              views, event.window.windowID);
+
+            int delta = 0;
+            if (event.wheel.y < 0)
+              delta = -1;
+            if (event.wheel.y > 0)
+              delta = 1;
+
+            view->Scroll(delta);
+          }
+          else
+          {
+            for (size_t i = 0; i < views.size(); ++i)
+            {
+              boost::shared_ptr<SdlViewport> sdlViewport =
+                boost::dynamic_pointer_cast<SdlViewport>(views[i]->GetViewport());
+              if (sdlViewport->IsRefreshEvent(event))
+                sdlViewport->Paint();
+            }
+          }
+        }
+      }
+      // Small delay to avoid using 100% of CPU
+      SDL_Delay(1);
+    }
   }
 }
 

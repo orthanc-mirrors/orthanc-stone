@@ -78,6 +78,8 @@ namespace OrthancStone
       unsigned int canvasWidth,
       unsigned int canvasHeight);
 
+    void Scroll(int delta);
+
     void Invalidate();
     void FitContent();
     void RetrieveGeometry();
@@ -101,7 +103,7 @@ namespace OrthancStone
   private:
     void SetInfoDisplayMessage(std::string key, std::string value);
     boost::shared_ptr<RtViewerApp> GetApp();
-    static boost::shared_ptr<IViewport> CreateViewport(const std::string& canvasId);
+    boost::shared_ptr<IViewport> CreateViewport(const std::string& canvasId);
     void DisplayInfoText();
     void HideInfoText();
     void DisplayFloatingCtrlInfoText(const PointerEvent& e);

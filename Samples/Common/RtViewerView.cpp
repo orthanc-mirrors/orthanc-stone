@@ -171,6 +171,35 @@ namespace OrthancStone
     lock->Invalidate();
   }
 
+  void RtViewerView::Scroll(int delta)
+  {
+    if (!planes_.empty())
+    {
+      int next = 0;
+      int temp = static_cast<int>(currentPlane_) + delta;
+
+      if (temp < 0)
+      {
+        next = 0;
+      }
+      else if (temp >= static_cast<int>(planes_.size()))
+      {
+        next = static_cast<unsigned int>(planes_.size()) - 1;
+      }
+      else
+      {
+        next = static_cast<size_t>(temp);
+      }
+      LOG(INFO) << "RtViewerView::Scroll(" << delta << ") --> slice is now = " << next;
+
+      if (next != currentPlane_)
+      {
+        currentPlane_ = next;
+        UpdateLayers();
+      }
+    }
+  }
+
   void RtViewerView::RetrieveGeometry()
   {
     const VolumeImageGeometry& geometry = GetApp()->GetMainGeometry();

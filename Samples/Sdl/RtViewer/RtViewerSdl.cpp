@@ -375,9 +375,9 @@ namespace OrthancStone
             }
           }
         }
+        // Small delay to avoid using 100% of CPU
+        SDL_Delay(1);
       }
-      // Small delay to avoid using 100% of CPU
-      SDL_Delay(1);
     }
   }
 }

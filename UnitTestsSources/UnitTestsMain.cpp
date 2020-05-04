@@ -25,6 +25,7 @@
 #include "../Framework/Toolbox/FiniteProjectiveCamera.h"
 #include "../Framework/Toolbox/GeometryToolbox.h"
 #include "../Framework/Volumes/ImageBuffer3D.h"
+#include "../Framework/Loaders/LoaderCache.h"
 
 #include <Core/HttpClient.h>
 #include <Core/Images/ImageProcessing.h>
@@ -811,6 +812,72 @@ TEST(LinearAlgebra, ParseVectorLocale)
   ASSERT_DOUBLE_EQ(1.3671875, v[1]); 
 }
 
+TEST(LoaderCache, NormalizeUuid)
+{
+  std::string ref("44ca5051-14ef-4d2f-8bd7-db20bfb61fbb");
+
+  {
+    std::string u("44ca5051-14ef-4d2f-8bd7-db20bfb61fbb");
+    OrthancStone::LoaderCache::NormalizeUuid(u);
+    ASSERT_EQ(ref, u);
+  }
+
+  // space left
+  {
+    std::string u("  44ca5051-14ef-4d2f-8bd7-db20bfb61fbb");
+    OrthancStone::LoaderCache::NormalizeUuid(u);
+    ASSERT_EQ(ref, u);
+  }
+
+  // space right
+  {
+    std::string u("44ca5051-14ef-4d2f-8bd7-db20bfb61fbb  ");
+    OrthancStone::LoaderCache::NormalizeUuid(u);
+    ASSERT_EQ(ref, u);
+  }
+
+  // space l & r 
+  {
+    std::string u("  44ca5051-14ef-4d2f-8bd7-db20bfb61fbb  ");
+    OrthancStone::LoaderCache::NormalizeUuid(u);
+    ASSERT_EQ(ref, u);
+  }
+
+  // space left + case 
+  {
+    std::string u("  44CA5051-14ef-4d2f-8bd7-dB20bfb61fbb");
+    OrthancStone::LoaderCache::NormalizeUuid(u);
+    ASSERT_EQ(ref, u);
+  }
+
+  // space right + case 
+  {
+    std::string u("44ca5051-14EF-4D2f-8bd7-db20bfb61fbB  ");
+    OrthancStone::LoaderCache::NormalizeUuid(u);
+    ASSERT_EQ(ref, u);
+  }
+
+  // space l & r + case
+  {
+    std::string u("  44cA5051-14Ef-4d2f-8bD7-db20bfb61fbb  ");
+    OrthancStone::LoaderCache::NormalizeUuid(u);
+    ASSERT_EQ(ref, u);
+  }
+
+  // no
+  {
+    std::string u("  44ca5051-14ef-4d2f-8bd7-  db20bfb61fbb");
+    OrthancStone::LoaderCache::NormalizeUuid(u);
+    ASSERT_NE(ref, u);
+  }
+
+  // no
+  {
+    std::string u("44ca5051-14ef-4d2f-8bd7-db20bfb61fb");
+    OrthancStone::LoaderCache::NormalizeUuid(u);
+    ASSERT_NE(ref, u);
+  }
+}
 
 int main(int argc, char **argv)
 {

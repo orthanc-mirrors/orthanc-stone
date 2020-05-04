@@ -53,10 +53,8 @@ namespace OrthancStone
   {
     try
     {
-      
       // normalize keys a little
-      seriesUuid = Orthanc::Toolbox::StripSpaces(seriesUuid);
-      Orthanc::Toolbox::ToLowerCase(seriesUuid);
+      NormalizeUuid(seriesUuid);
 
       // find in cache
       if (seriesVolumeProgressiveLoaders_.find(seriesUuid) == seriesVolumeProgressiveLoaders_.end())
@@ -104,6 +102,9 @@ namespace OrthancStone
 
   boost::shared_ptr<OrthancMultiframeVolumeLoader> LoaderCache::GetMultiframeVolumeLoader(std::string instanceUuid)
   {
+    // normalize keys a little
+    NormalizeUuid(instanceUuid);
+
     // if the loader is not available, let's trigger its creation
     if(multiframeVolumeLoaders_.find(instanceUuid) == multiframeVolumeLoaders_.end())
     {
@@ -119,8 +120,7 @@ namespace OrthancStone
     try
     {
       // normalize keys a little
-      instanceUuid = Orthanc::Toolbox::StripSpaces(instanceUuid);
-      Orthanc::Toolbox::ToLowerCase(instanceUuid);
+      NormalizeUuid(instanceUuid);
 
       // find in cache
       if (dicomVolumeImageMPRSlicers_.find(instanceUuid) == dicomVolumeImageMPRSlicers_.end())
@@ -194,8 +194,7 @@ namespace OrthancStone
     try
     {
       // normalize keys a little
-      inInstanceUuid = Orthanc::Toolbox::StripSpaces(inInstanceUuid);
-      Orthanc::Toolbox::ToLowerCase(inInstanceUuid);
+      NormalizeUuid(inInstanceUuid);
 
       std::string initiallyVisibleStructuresKey = 
         SortAndJoin(initiallyVisibleStructures);
@@ -274,5 +273,16 @@ namespace OrthancStone
     DebugDisplayObjRefCountsInMap("multiframeVolumeLoaders_", multiframeVolumeLoaders_);
     DebugDisplayObjRefCountsInMap("dicomVolumeImageMPRSlicers_", dicomVolumeImageMPRSlicers_);
     DebugDisplayObjRefCountsInMap("dicomStructureSetLoaders_", dicomStructureSetLoaders_);
+  }
+
+  /**
+  This method could have been called StripSpacesAndChangeToLower but we might want to 
+  add some UUID validation to the argument
+  */
+  void LoaderCache::NormalizeUuid(std::string& uuid)
+  {
+    std::string temp = Orthanc::Toolbox::StripSpaces(uuid);
+    Orthanc::Toolbox::ToLowerCase(temp);
+    uuid.swap(temp);
   }
 }

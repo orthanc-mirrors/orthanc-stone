@@ -41,6 +41,9 @@ namespace OrthancStone
   class LoaderCache
   {
   public:
+
+    virtual ~LoaderCache() {}
+
     LoaderCache(OrthancStone::ILoadersContext& loadersContext);
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader>
@@ -59,7 +62,12 @@ namespace OrthancStone
 
     void ClearCache();
 
-  private:
+    /**
+    Service method static and exposed for unit tests.
+    */
+    static void NormalizeUuid(std::string& uuid);
+
+  protected:
     
     void DebugDisplayObjRefCounts();
 

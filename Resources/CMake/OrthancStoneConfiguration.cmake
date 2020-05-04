@@ -287,6 +287,15 @@ if (ENABLE_WASM)
     )
 endif()
 
+if ( (ENABLE_SDL OR ENABLE_WASM) AND ENABLE_GUIADAPTER )
+  list(APPEND APPLICATIONS_SOURCES
+    ${ORTHANC_STONE_ROOT}/Deprecated/Applications/Generic/GuiAdapter.cpp
+    ${ORTHANC_STONE_ROOT}/Deprecated/Applications/Generic/GuiAdapter.h
+    )
+    include_directories(${ORTHANC_STONE_ROOT}/Deprecated)
+endif()
+
+
 list(APPEND ORTHANC_STONE_SOURCES
 
   ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomDatasetReader.cpp
@@ -594,7 +603,6 @@ if (ENABLE_OPENGL)
       )
   endif()
 endif()
-
 
 ##
 ## TEST - Automatically add all ".h" headers to the list of sources

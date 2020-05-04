@@ -41,10 +41,10 @@
 # endif
 #endif
 
-#include "../../Framework/StoneException.h"
+#include "../../../Framework/StoneException.h"
 
 #if ORTHANC_ENABLE_THREADS == 1
-# include "../../Framework/Deprecated/Messages/LockingEmitter.h"
+# include "../../../Framework/Deprecated/Messages/LockingEmitter.h"
 #endif
 
 #include <vector>

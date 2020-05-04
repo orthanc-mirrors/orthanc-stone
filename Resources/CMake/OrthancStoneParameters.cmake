@@ -55,3 +55,5 @@ set(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 set(ENABLE_OPENGL ON CACHE BOOL "Enable support of OpenGL")
 set(ENABLE_WASM OFF CACHE INTERNAL "Enable support of WebAssembly")
 set(ENABLE_STONE_DEPRECATED OFF CACHE INTERNAL "Enable backward compatibility with deprecated Stone classes")
+set(ENABLE_GUIADAPTER OFF CACHE INTERNAL "Enable backward compatibility with the Stone GuiAdapter class")
+

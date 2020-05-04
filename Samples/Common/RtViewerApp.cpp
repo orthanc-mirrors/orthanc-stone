@@ -60,33 +60,6 @@
 
 namespace OrthancStone
 {
-  const char* RtViewerGuiToolToString(size_t i)
-  {
-    static const char* descs[] = {
-      "RtViewerGuiTool_Rotate",
-      "RtViewerGuiTool_Pan",
-      "RtViewerGuiTool_Zoom",
-      "RtViewerGuiTool_LineMeasure",
-      "RtViewerGuiTool_CircleMeasure",
-      "RtViewerGuiTool_AngleMeasure",
-      "RtViewerGuiTool_EllipseMeasure",
-      "RtViewerGuiTool_LAST"
-    };
-    if (i >= RtViewerGuiTool_LAST)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, "Wrong tool index");
-    }
-    return descs[i];
-  }
-
-  void RtViewerApp::SelectNextTool()
-  {
-    currentTool_ = static_cast<RtViewerGuiTool>(currentTool_ + 1);
-    if (currentTool_ == RtViewerGuiTool_LAST)
-      currentTool_ = static_cast<RtViewerGuiTool>(0);;
-    printf("Current tool is now: %s\n", RtViewerGuiToolToString(currentTool_));
-  }
-
   void RtViewerApp::InvalidateAllViewports()
   {
     for (size_t i = 0; i < views_.size(); ++i)
@@ -104,8 +77,7 @@ namespace OrthancStone
   }
 
   RtViewerApp::RtViewerApp()
-    : currentTool_(RtViewerGuiTool_Rotate)
-    , undoStack_(new UndoStack)
+    : undoStack_(new UndoStack)
   {
     // Create the volumes that will be filled later on
     ctVolume_ = boost::make_shared<DicomVolumeImage>();

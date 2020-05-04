@@ -51,20 +51,6 @@ namespace OrthancStone
   class SdlOpenGLViewport;
   class RtViewerView;
    
-  enum RtViewerGuiTool
-  {
-    RtViewerGuiTool_Rotate = 0,
-    RtViewerGuiTool_Pan,
-    RtViewerGuiTool_Zoom,
-    RtViewerGuiTool_LineMeasure,
-    RtViewerGuiTool_CircleMeasure,
-    RtViewerGuiTool_AngleMeasure,
-    RtViewerGuiTool_EllipseMeasure,
-    RtViewerGuiTool_LAST
-  };
-
-  const char* MeasureToolToString(size_t i);
-
   static const unsigned int FONT_SIZE_0 = 32;
   static const unsigned int FONT_SIZE_1 = 24;
 
@@ -172,7 +158,6 @@ namespace OrthancStone
 
     boost::shared_ptr<IFlexiblePointerTracker> activeTracker_;
 
-    RtViewerGuiTool currentTool_;
     boost::shared_ptr<UndoStack> undoStack_;
   };
 

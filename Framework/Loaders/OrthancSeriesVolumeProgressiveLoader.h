@@ -57,6 +57,12 @@ namespace OrthancStone
     static const unsigned int QUALITY_02 = 2;
         
     class ExtractedSlice;
+
+    class ISlicePostProcessor
+    {
+    public:
+      virtual void ProcessCTDicomSlice(const Orthanc::DicomMap& dicom) = 0;
+    };
     
     /** Helper class internal to OrthancSeriesVolumeProgressiveLoader */
     class SeriesGeometry : public boost::noncopyable
@@ -121,6 +127,8 @@ namespace OrthancStone
     std::vector<unsigned int>     slicesQuality_;
     bool                          volumeImageReadyInHighQuality_;
     
+    boost::shared_ptr<ISlicePostProcessor>  slicePostProcessor_;
+
     OrthancSeriesVolumeProgressiveLoader(
       OrthancStone::ILoadersContext& loadersContext,
       boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
@@ -140,6 +148,12 @@ namespace OrthancStone
     virtual ~OrthancSeriesVolumeProgressiveLoader();
 
     void SetSimultaneousDownloads(unsigned int count);
+
+    void SetDicomSlicePostProcessor(boost::shared_ptr<ISlicePostProcessor> slicePostProcessor)
+    {
+      // this will delete the previously stored slice processor, if any
+      slicePostProcessor_ = slicePostProcessor;
+    }
 
     bool IsVolumeImageReadyInHighQuality() const
     {

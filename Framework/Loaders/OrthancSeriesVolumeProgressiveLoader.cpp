@@ -362,6 +362,9 @@ namespace OrthancStone
         // the 3D plane corresponding to the slice
         OrthancStone::CoordinateSystem3D geometry = instance->GetGeometry();
         slices.AddSlice(geometry, instance.release());
+
+        if (slicePostProcessor_)
+          slicePostProcessor_->ProcessCTDicomSlice(dicom);
       }
 
       seriesGeometry_.ComputeGeometry(slices);

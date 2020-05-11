@@ -42,8 +42,10 @@
 
 namespace OrthancStone
 {
-  LoaderCache::LoaderCache(OrthancStone::ILoadersContext& loadersContext)
+  LoaderCache::LoaderCache(OrthancStone::ILoadersContext& loadersContext, bool useCtProgressiveQuality)
     : loadersContext_(loadersContext)
+    , useCtProgressiveQuality_(useCtProgressiveQuality)
+
   {
 
   }
@@ -66,7 +68,7 @@ namespace OrthancStone
       
         // true means "use progressive quality"
         // false means "load high quality slices only"
-        loader = OrthancSeriesVolumeProgressiveLoader::Create(loadersContext_, volumeImage, false);
+        loader = OrthancSeriesVolumeProgressiveLoader::Create(loadersContext_, volumeImage, useCtProgressiveQuality_);
         loader->LoadSeries(seriesUuid);
         seriesVolumeProgressiveLoaders_[seriesUuid] = loader;
       }

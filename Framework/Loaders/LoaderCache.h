@@ -44,7 +44,12 @@ namespace OrthancStone
 
     virtual ~LoaderCache() {}
 
-    LoaderCache(OrthancStone::ILoadersContext& loadersContext);
+    /**
+    By default, the CT loader in loader cache will only download the highest quality slices.
+    If you pass true for useCtProgressiveQuality, jpeg (50/100 quality), then jpeg (90/100 quality) 
+    then eventually uncompressed 16-bit images will be loaded. 
+    */
+    LoaderCache(OrthancStone::ILoadersContext& loadersContext, bool useCtProgressiveQuality = false);
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader>
       GetSeriesVolumeProgressiveLoader      (std::string seriesUuid);
@@ -72,6 +77,7 @@ namespace OrthancStone
     void DebugDisplayObjRefCounts();
 
     OrthancStone::ILoadersContext& loadersContext_;
+    bool                           useCtProgressiveQuality_;
 
     std::map<std::string, boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> >
       seriesVolumeProgressiveLoaders_;

@@ -32,6 +32,11 @@
 #include "Framework/Toolbox/DicomStructureSet2.h"
 #include "Framework/Toolbox/DisjointDataSet.h"
 
+#include "Framework/Loaders/GenericLoadersContext.h"
+#include "Framework/Loaders/DicomStructureSetLoader.h"
+
+#include "boost/date_time/posix_time/posix_time.hpp"
+
 #include <Core/SystemToolbox.h>
 
 #include "gtest/gtest.h"
@@ -5406,9 +5411,83 @@ TEST(StructureSet, ReadFromJsonPart2)
   const std::vector<DicomStructure2>& structures = structureSet.structures_;
 }
 
-
 #endif 
 // BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
+namespace
+{
+  void Initialize(const char* orthancApiUrl, OrthancStone::ILoadersContext& loadersContext)
+  {
+    Orthanc::WebServiceParameters p;
+
+    OrthancStone::GenericLoadersContext& typedLoadersContext =
+      dynamic_cast<OrthancStone::GenericLoadersContext&>(loadersContext);
+    // Default is http://localhost:8042
+    // Here's how you may change it
+    p.SetUrl(orthancApiUrl);
+    p.SetCredentials("orthanc", "orthanc");
+    typedLoadersContext.SetOrthancParameters(p);
+
+    typedLoadersContext.StartOracle();
+  }
+
+  void Exitialize(OrthancStone::ILoadersContext& loadersContext)
+  {
+    OrthancStone::GenericLoadersContext& typedLoadersContext =
+      dynamic_cast<OrthancStone::GenericLoadersContext&>(loadersContext);
+
+    typedLoadersContext.StopOracle();
+  }
+
+
+#if 0
+  class TestObserver : public ObserverBase<TestObserver>
+  {
+  public:
+    TestObserver() {};
+
+    virtual void Handle
+
+  };
+#endif
+
+}
+
+
+TEST(StructureSet, DISABLED_StructureSetLoader_injection_feature_2020_05_10)
+{
+  namespace pt = boost::posix_time;
+
+  std::unique_ptr<OrthancStone::ILoadersContext> loadersContext(new OrthancStone::GenericLoadersContext(1,4,1));
+  Initialize("http://localhost:8042/", *loadersContext);
+
+  boost::shared_ptr<DicomStructureSetLoader> loader = DicomStructureSetLoader::Create(*loadersContext);
+
+  // replace with Orthanc ID of an uploaded RTSTRUCT instance!
+  loader->LoadInstanceFullVisibility("72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661");
+
+  bool bContinue(true);
+
+  pt::ptime initialTime = pt::second_clock::local_time();
+
+  while (bContinue)
+  {
+    bContinue = !loader->AreStructuresReady();
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
+
+    {
+      pt::ptime nowTime = pt::second_clock::local_time();
+      pt::time_duration diff = nowTime - initialTime;
+      double seconds = static_cast<double>(diff.total_milliseconds()) * 0.001;
+      std::cout << seconds << " seconds elapsed...\n";
+      if (seconds > 30)
+      {
+        std::cout << "More than 30 seconds elapsed... Aborting test :(\n";
+        //GTEST_FATAL_FAILURE_("More than 30 seconds elapsed... Aborting test :(");
+        //bContinue = false;
+      }
+    }
+  }
+}
 
 

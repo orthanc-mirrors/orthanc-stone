@@ -48,8 +48,37 @@ namespace OrthancStone
   }
 #endif
 
+  // implementation of IInstanceLookupHandler that uses Orthanc REST API calls to retrive the 
+  // geometry of referenced instances
+  class DicomStructureSetLoader::RestInstanceLookupHandler : public DicomStructureSetLoader::IInstanceLookupHandler,
+    public LoaderStateMachine
+  {
+  public:
+    static boost::shared_ptr<RestInstanceLookupHandler > Create(DicomStructureSetLoader& loader)
+    {
+      boost::shared_ptr<RestInstanceLookupHandler> obj(new RestInstanceLookupHandler(loader));
+      obj->LoaderStateMachine::PostConstructor();
+      return obj;
+    }
 
-  class DicomStructureSetLoader::AddReferencedInstance : public LoaderStateMachine::State
+  protected:
+    RestInstanceLookupHandler(DicomStructureSetLoader& loader) 
+      : LoaderStateMachine(loader.loadersContext_)
+      , loader_(loader)
+    {
+    }
+
+    virtual void RetrieveReferencedSlices(const std::set<std::string>& nonEmptyInstances) ORTHANC_OVERRIDE;
+
+  private:
+    // these subclasses hold the loading state
+    class AddReferencedInstance;   // 2nd state
+    class LookupInstance;          // 1st state
+
+    DicomStructureSetLoader& loader_;
+  };
+
+  class DicomStructureSetLoader::RestInstanceLookupHandler::AddReferencedInstance : public LoaderStateMachine::State
   {
   private:
     std::string instanceId_;
@@ -71,27 +100,14 @@ namespace OrthancStone
       dicom.FromDicomAsJson(tags);
 
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
-
-      loader.content_->AddReferencedSlice(dicom);
-      loader.countProcessedInstances_ ++;
-      assert(loader.countProcessedInstances_ <= loader.countReferencedInstances_);
-
-      loader.revision_++;
-      loader.SetStructuresUpdated();
-
-      if (loader.countProcessedInstances_ == loader.countReferencedInstances_)
-      {
-        // All the referenced instances have been loaded, finalize the RT-STRUCT
-        loader.content_->CheckReferencedSlices();
-        loader.revision_++;
-        loader.SetStructuresReady();
-      }
+    
+      loader.AddReferencedSlice(dicom);
     }
   };
 
 
   // State that converts a "SOP Instance UID" to an Orthanc identifier
-  class DicomStructureSetLoader::LookupInstance : public LoaderStateMachine::State
+  class DicomStructureSetLoader::RestInstanceLookupHandler::LookupInstance : public LoaderStateMachine::State
   {
   private:
     std::string  sopInstanceUid_;
@@ -106,9 +122,6 @@ namespace OrthancStone
 
     virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
     {
-#if 0
-      LOG(TRACE) << "DicomStructureSetLoader::LookupInstance::Handle() (SUCCESS)";
-#endif
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
 
       Json::Value lookup;
@@ -147,6 +160,21 @@ namespace OrthancStone
     }
   };
 
+  void DicomStructureSetLoader::RestInstanceLookupHandler::RetrieveReferencedSlices(
+    const std::set<std::string>& nonEmptyInstances)
+  {
+    for (std::set<std::string>::const_iterator it = nonEmptyInstances.begin(); 
+         it != nonEmptyInstances.end(); 
+         ++it)
+    {
+      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+      command->SetUri("/tools/lookup");
+      command->SetMethod(Orthanc::HttpMethod_Post);
+      command->SetBody(*it);
+      command->AcquirePayload(new LookupInstance(loader_, *it));
+      Schedule(command.release());
+    }
+  }
 
   class DicomStructureSetLoader::LoadStructure : public LoaderStateMachine::State
   {
@@ -159,53 +187,28 @@ namespace OrthancStone
     virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
     {
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
-        
+
+      // Set the actual structure set content
       {
         OrthancPlugins::FullOrthancDataset dicom(message.GetAnswer());
+
         loader.content_.reset(new OrthancStone::DicomStructureSet(dicom));
-        size_t structureCount = loader.content_->GetStructuresCount();
-        loader.structureVisibility_.resize(structureCount);
-        bool everythingVisible = false;
-        if ((loader.initiallyVisibleStructures_.size() == 1)
-          && (loader.initiallyVisibleStructures_[0].size() == 1)
-          && (loader.initiallyVisibleStructures_[0][0] == '*'))
-        {
-          everythingVisible = true;
-        }
-
-        for (size_t i = 0; i < structureCount; ++i)
-        {
-          // if a single "*" string is supplied, this means we want everything 
-          // to be visible...
-          if(everythingVisible)
-          {
-            loader.structureVisibility_.at(i) = true;
-          }
-          else
-          {
-            // otherwise, we only enable visibility for those structures whose 
-            // names are mentioned in the initiallyVisibleStructures_ array
-            const std::string& structureName = loader.content_->GetStructureName(i);
-
-            std::vector<std::string>::iterator foundIt =
-              std::find(
-                loader.initiallyVisibleStructures_.begin(),
-                loader.initiallyVisibleStructures_.end(),
-                structureName);
-            std::vector<std::string>::iterator endIt = loader.initiallyVisibleStructures_.end();
-            if (foundIt != endIt)
-              loader.structureVisibility_.at(i) = true;
-            else
-              loader.structureVisibility_.at(i) = false;
-          }
-        }
       }
 
+      // initialize visibility flags
+      SetDefaultStructureVisibility();
+
+      // retrieve the (non-empty) referenced instances (the CT slices containing the corresponding structures)
       // Some (admittedly invalid) Dicom files have empty values in the 
       // 0008,1155 tag. We try our best to cope with this.
+      // this is why we use `nonEmptyInstances` and not `instances`
       std::set<std::string> instances;
       std::set<std::string> nonEmptyInstances;
+
+      // this traverses the polygon collection for all structures and retrieve the SOPInstanceUID of 
+      // the referenced instances
       loader.content_->GetReferencedInstances(instances);
+
       for (std::set<std::string>::const_iterator
         it = instances.begin(); it != instances.end(); ++it)
       {
@@ -214,20 +217,55 @@ namespace OrthancStone
           nonEmptyInstances.insert(instance);
       }
 
-      loader.countReferencedInstances_ = 
-        static_cast<unsigned int>(nonEmptyInstances.size());
+      loader.RetrieveReferencedSlices(nonEmptyInstances);
+    }
 
-      for (std::set<std::string>::const_iterator
-        it = nonEmptyInstances.begin(); it != nonEmptyInstances.end(); ++it)
+    void SetDefaultStructureVisibility()
+    {
+      DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
+
+      size_t structureCount = loader.content_->GetStructuresCount();
+
+      loader.structureVisibility_.resize(structureCount);
+      bool everythingVisible = false;
+      if ((loader.initiallyVisibleStructures_.size() == 1)
+          && (loader.initiallyVisibleStructures_[0].size() == 1)
+          && (loader.initiallyVisibleStructures_[0][0] == '*'))
       {
-        std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
-        command->SetUri("/tools/lookup");
-        command->SetMethod(Orthanc::HttpMethod_Post);
-        command->SetBody(*it);
-        command->AcquirePayload(new LookupInstance(loader, *it));
-        Schedule(command.release());
+        everythingVisible = true;
+      }
+
+      for (size_t i = 0; i < structureCount; ++i)
+      {
+        // if a single "*" string is supplied, this means we want everything 
+        // to be visible...
+        if (everythingVisible)
+        {
+          loader.structureVisibility_.at(i) = true;
+        }
+        else
+        {
+          // otherwise, we only enable visibility for those structures whose 
+          // names are mentioned in the initiallyVisibleStructures_ array
+          const std::string& structureName = loader.content_->GetStructureName(i);
+
+          std::vector<std::string>::iterator foundIt =
+            std::find(
+              loader.initiallyVisibleStructures_.begin(),
+              loader.initiallyVisibleStructures_.end(),
+              structureName);
+          std::vector<std::string>::iterator endIt = loader.initiallyVisibleStructures_.end();
+          if (foundIt != endIt)
+            loader.structureVisibility_.at(i) = true;
+          else
+            loader.structureVisibility_.at(i) = false;
+        }
       }
     }
+
+    private:
+
+
   };
     
 
@@ -347,8 +385,9 @@ namespace OrthancStone
     , countReferencedInstances_(0)
     , structuresReady_(false)
   {
+    // the default handler to retrieve slice geometry is RestInstanceLookupHandler
+    instanceLookupHandler_ = RestInstanceLookupHandler::Create(*this);
   }
-   
     
   boost::shared_ptr<OrthancStone::DicomStructureSetLoader> DicomStructureSetLoader::Create(OrthancStone::ILoadersContext& loadersContext)
   {
@@ -357,7 +396,31 @@ namespace OrthancStone
         loadersContext));
     obj->LoaderStateMachine::PostConstructor();
     return obj;
+  }
 
+  void DicomStructureSetLoader::AddReferencedSlice(const Orthanc::DicomMap& dicom)
+  {
+    content_->AddReferencedSlice(dicom);
+    countProcessedInstances_ ++;
+    assert(countProcessedInstances_ <= countReferencedInstances_);
+
+    revision_++;
+    SetStructuresUpdated();
+
+    if (countProcessedInstances_ == countReferencedInstances_)
+    {
+      // All the referenced instances have been loaded, finalize the RT-STRUCT
+      content_->CheckReferencedSlices();
+      revision_++;
+      SetStructuresReady();
+    }
+  }
+
+  void DicomStructureSetLoader::RetrieveReferencedSlices(const std::set<std::string>& nonEmptyInstances)
+  {
+    // we set the number of referenced instances. This allows to know, in the method above, when we're done
+    countReferencedInstances_ = static_cast<unsigned int>(nonEmptyInstances.size());
+    instanceLookupHandler_->RetrieveReferencedSlices(nonEmptyInstances);
   }
 
   void DicomStructureSetLoader::SetStructureDisplayState(size_t structureIndex, bool display)

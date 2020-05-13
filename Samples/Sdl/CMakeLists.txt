@@ -56,8 +56,10 @@ project(RtViewerSdl)
 add_executable(RtViewerSdl
   RtViewer/RtViewerSdl.cpp
   SdlHelpers.h
-  ../Common/RtViewer.cpp
-  ../Common/RtViewer.h
+  ../Common/RtViewerApp.cpp
+  ../Common/RtViewerApp.h
+  ../Common/RtViewerView.cpp
+  ../Common/RtViewerView.h
   ../Common/SampleHelpers.h
   )
 

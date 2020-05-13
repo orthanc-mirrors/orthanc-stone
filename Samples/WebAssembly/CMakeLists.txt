@@ -74,8 +74,10 @@ project(RtViewerWasm)
 
 add_executable(RtViewerWasm
   RtViewer/RtViewerWasm.cpp
-  ../Common/RtViewer.cpp
-  ../Common/RtViewer.h
+  ../Common/RtViewerApp.cpp
+  ../Common/RtViewerApp.h
+  ../Common/RtViewerView.cpp
+  ../Common/RtViewerView.h
   )
 
 target_link_libraries(RtViewerWasm OrthancStone)

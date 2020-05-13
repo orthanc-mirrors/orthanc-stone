@@ -29,6 +29,27 @@ When Dicom resources are to be displayed, their IDs can be supplied in the
 various ways suitable for the platform (command-line arguments, URL parameters
 or through the GUI)
 
+
+This repo contains two sample projects:
+
+SingleFrameViewer
+-----------------
+
+This sample application displays a single frame of a Dicom instance that can
+be loaded from Orthanc, either by using the Orthanc REST API or through the 
+Dicomweb server functionality of Orthanc.
+
+RtViewer
+--------
+
+This sample application displays set of Radiotherapy data:
+- a CT scan
+- an RT-Dose
+- an RT-Struct
+
+The WebAssembly version displays 3 viewports with MPR data
+while the SDL sample displays a single viewport.
+
  
 WebAssembly samples
 ===================
@@ -58,17 +79,7 @@ sudo apt-get install -y build-essential curl wget git python cmake pkg-config
 sudo apt-get install -y mercurial unzip npm ninja-build p7zip-full gettext-base 
 ```
 
-SingleFrameViewer
------------------
-
-This sample application displays a single frame of a Dicom instance that can
-be loaded from Orthanc, either by using the Orthanc REST API or through the 
-Dicomweb server functionality of Orthanc.
-
-This barebones sample uses plain Javascript and requires the 
-Emscripten toolchain and cmake, in addition to a few standard packages.
-
-To build it, just launch the `build-wasm-SingleFrameViewer.sh` script from
+To build the Wasm samples, just launch the `build-wasm-samples.sh` script from
 this folder.  Optionaly, you can pass the build type as an argument.
 We suggest that you do *not* use the `Debug` configuration unless you really 
 need it, for the additional checks that are made will lead to a very long 
@@ -82,12 +93,20 @@ You can i.e: add such a section in your orthanc configuration file:
 {
   "Plugins" : ["LibServeFolders.so],
   "ServeFolders" : {
-    "/single-frame-viewer" : "..../out/install-stone-wasm-SingleFrameViewer-RelWithDebInfo"
+    "/single-frame-viewer" : "..../out/install-stone-wasm-samples-RelWithDebInfo/SingleFrameViewer",
+    "/rt-viewer": "..../out/install-stone-wasm-samples-RelWithDebInfo/RtViewer"
   }
 }
 ```
 
-You'll then be able to open the demo at `http://localhost:8042/single-frame-viewer/index.html`
+You'll then be able to open the single-frame-viewer demo at `http://localhost:8042/single-frame-viewer/index.html` 
+
+The rt-viewer demo at
+`http://localhost:8044/rt-viewer/index.html?ctseries=a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa&rtdose=eac822ef-a395f94e-e8121fe0-8411fef8-1f7bffad&rtstruct=54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9`.  Note that you must provide 3 ids in the url:
+
+- the CT series Orthanc ID
+- the RT-Dose instance Orthanc ID
+- the RT-Struct instance Orthanc ID
 
 
 RtViewer
@@ -129,9 +148,6 @@ You'll then be able to open the demo at `http://localhost:8042/rt-viewer/index.h
 Native samples
 =================
 
-SdlSimpleViewer
----------------
-
 ### Windows build 
 
 Here's how to build the SdlSimpleViewer example using Visual Studio 2019
@@ -155,7 +171,7 @@ orthanc-stone.
     -DALLOW_DOWNLOADS=ON `
     -DSTATIC_BUILD=ON `
     -DOPENSSL_NO_CAPIENG=ON `
-    ../orthanc-stone/Samples/Sdl/SimpleViewer
+    ../orthanc-stone/Samples/Sdl
   
   $solutionPath = ls -filter *.sln
   Write-Host "Solution file(s) available at: $solutionPath"
@@ -176,7 +192,9 @@ In order to run the sample, make sure you've an Orthanc server running i.e. on
 port 8042 and launch:
 
 ```
-./SingleFrameViewer --orthanc http://localhost:8042 --instance 7fc84013-abef174e-3354ca83-b9cdb2a4-f1a74368
+./SdlSimpleViewer --orthanc http://localhost:8042 --instance 7fc84013-abef174e-3354ca83-b9cdb2a4-f1a74368
+
+./RtViewerSdl --orthanc http://localhost:8042 --ctseries a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa --rtdose 830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb --rtstruct 54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9
 ```
 
 RtViewer

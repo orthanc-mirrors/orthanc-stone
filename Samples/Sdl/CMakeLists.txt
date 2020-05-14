@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8.10)
 
 project(OrthancStone)
 
-set(ORTHANC_FRAMEWORK_SOURCE "path")
-set(ORTHANC_FRAMEWORK_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../orthanc)
+set(ORTHANC_FRAMEWORK_SOURCE "path" CACHE STRING "select the source of Orthanc")
+set(ORTHANC_FRAMEWORK_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../orthanc CACHE STRING "select the root path of Orthanc")
 set(STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../)
 
 include(${STONE_ROOT}/Resources/CMake/OrthancStoneParameters.cmake)

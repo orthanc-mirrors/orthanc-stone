@@ -222,7 +222,7 @@ namespace OrthancStone
       if (windowID == curWindowID)
         return view;
     }
-    return NULL;
+    return boost::shared_ptr<OrthancStone::RtViewerView>();
   }
 
   void RtViewerApp::SdlRunLoop(const std::vector<boost::shared_ptr<OrthancStone::RtViewerView> >& views,

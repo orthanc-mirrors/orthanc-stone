@@ -109,7 +109,7 @@ namespace OrthancStone
     // SetArgument is above (public section)
     std::map<std::string, std::string> arguments_;
 
-    const std::string& GetArgument(const std::string& key) const;
+    std::string GetArgument(const std::string& key) const;
     bool HasArgument(const std::string& key) const;
 
     /**

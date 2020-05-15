@@ -227,10 +227,17 @@ namespace OrthancStone
       arguments_[key] = value;
   }
 
-  const std::string& RtViewerApp::GetArgument(const std::string& key) const
+  std::string RtViewerApp::GetArgument(const std::string& key) const
   {
-    ORTHANC_ASSERT(HasArgument(key));
-    return arguments_.at(key);
+    std::map<std::string, std::string>::const_iterator found = arguments_.find(key);
+    if (found == arguments_.end())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      return found->second;
+    }
   }
 
   bool RtViewerApp::HasArgument(const std::string& key) const

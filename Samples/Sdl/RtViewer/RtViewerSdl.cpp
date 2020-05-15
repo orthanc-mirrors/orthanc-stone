@@ -44,7 +44,12 @@
 
 #include <string>
 
-static void APIENTRY  /* GLAPIENTRY */
+#if !defined(GLAPIENTRY)
+// For OS X compatibility
+#  define GLAPIENTRY
+#endif
+
+static void GLAPIENTRY
 OpenGLMessageCallback(GLenum source,
                       GLenum type,
                       GLuint id,

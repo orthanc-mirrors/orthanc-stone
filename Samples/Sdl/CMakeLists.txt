@@ -30,6 +30,7 @@ set(ORTHANC_STONE_APPLICATION_RESOURCES
   UBUNTU_FONT  ${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83/Ubuntu-R.ttf
   )
 
+include(${STONE_ROOT}/Resources/CMake/BoostExtendedConfiguration.cmake)
 include(${STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
 include(${STONE_ROOT}/Resources/CMake/Utilities.cmake)
 
@@ -73,6 +74,7 @@ add_executable(SdlSimpleViewer
   ../Common/SampleHelpers.h
   SingleFrameViewer/SdlSimpleViewerApplication.h
   SingleFrameViewer/SdlSimpleViewer.cpp
+  ${BOOST_EXTENDED_SOURCES}
   )
 
 target_link_libraries(SdlSimpleViewer ${DCMTK_LIBRARIES} OrthancStone)

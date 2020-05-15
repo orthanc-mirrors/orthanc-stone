@@ -35,5 +35,9 @@ if (BOOST_STATIC)
     #${BOOST_SOURCES_DIR}/libs/program_options/src/winmain.cpp
     )
   add_definitions(-DBOOST_PROGRAM_OPTIONS_NO_LIB)
+else()
+  find_package(Boost COMPONENTS program_options)
+  include_directories(${Boost_INCLUDE_DIRS})
+  link_libraries(${Boost_LIBRARIES})
 endif()
 

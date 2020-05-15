@@ -30,8 +30,9 @@ set(ORTHANC_STONE_APPLICATION_RESOURCES
   UBUNTU_FONT  ${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83/Ubuntu-R.ttf
   )
 
-include(${STONE_ROOT}/Resources/CMake/BoostExtendedConfiguration.cmake)
+list(APPEND ORTHANC_BOOST_COMPONENTS program_options)
 include(${STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
+include(${STONE_ROOT}/Resources/CMake/BoostExtendedConfiguration.cmake)
 include(${STONE_ROOT}/Resources/CMake/Utilities.cmake)
 
 include_directories(${STONE_ROOT})

@@ -65,7 +65,7 @@ add_executable(RtViewerSdl
   ../Common/SampleHelpers.h
   )
 
-target_link_libraries(RtViewerSdl ${DCMTK_LIBRARIES} OrthancStone)
+target_link_libraries(RtViewerSdl OrthancStone ${DCMTK_LIBRARIES})
 
 #############################
 project(SdlSimpleViewer)
@@ -78,7 +78,7 @@ add_executable(SdlSimpleViewer
   ${BOOST_EXTENDED_SOURCES}
   )
 
-target_link_libraries(SdlSimpleViewer ${DCMTK_LIBRARIES} OrthancStone)
+target_link_libraries(SdlSimpleViewer OrthancStone ${DCMTK_LIBRARIES})
 
 #############################
 project(UnitTests)
@@ -105,4 +105,4 @@ add_custom_command(
     "$<TARGET_FILE_DIR:UnitTests>/72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json"
 )
 
-target_link_libraries(UnitTests ${DCMTK_LIBRARIES} OrthancStone)
+target_link_libraries(UnitTests OrthancStone ${DCMTK_LIBRARIES})

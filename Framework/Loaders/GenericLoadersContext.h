@@ -52,7 +52,7 @@ namespace OrthancStone
     std::list< boost::shared_ptr<IObserver> >  loaders_; 
 
     virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
-                             const IMessage& message);
+                             const IMessage& message) ORTHANC_OVERRIDE;
 
   public:
     GenericLoadersContext(unsigned int maxHighPriority,

@@ -44,7 +44,7 @@
 
 #include <string>
 
-static void GLAPIENTRY
+static void APIENTRY  /* GLAPIENTRY */
 OpenGLMessageCallback(GLenum source,
                       GLenum type,
                       GLuint id,

@@ -24,6 +24,7 @@
 
 // Stone of Orthanc includes
 #include <Framework/Loaders/GenericLoadersContext.h>
+#include <Framework/OpenGL/OpenGLIncludes.h>
 #include <Framework/OpenGL/SdlOpenGLContext.h>
 #include <Framework/StoneException.h>
 #include <Framework/StoneInitialization.h>

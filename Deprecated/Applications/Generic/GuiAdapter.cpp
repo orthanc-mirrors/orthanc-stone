@@ -56,6 +56,8 @@ namespace OrthancStone
     return os;
   }
 
+  int GuiAdapter::s_instanceCount = 0;
+
 #if ORTHANC_ENABLE_WASM == 1
   void GuiAdapter::Run(GuiAdapterRunFunc /*func*/, void* /*cookie*/)
   {
@@ -1132,9 +1134,8 @@ namespace OrthancStone
         
           OnSdlGenericEvent(sdlEvent);
         }
+        SDL_Delay(1);
       }
-
-      SDL_Delay(1);
     }
   }
 #endif

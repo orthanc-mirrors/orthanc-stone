@@ -164,30 +164,6 @@ namespace OrthancStone
     }
   }
   
-  /**
-  This method allows to convert a list of string into a string by 
-  sorting the strings then joining them
-  */
-  static std::string SortAndJoin(const std::vector<std::string>& stringList)
-  {
-    if (stringList.size() == 0)
-    {
-      return "";
-    } 
-    else
-    {
-      std::vector<std::string> sortedStringList = stringList;
-      std::sort(sortedStringList.begin(), sortedStringList.end());
-      std::stringstream s;
-      s << sortedStringList[0];
-      for (size_t i = 1; i < sortedStringList.size(); ++i)
-      {
-        s << "-" << sortedStringList[i];
-      }
-      return s.str();
-    }
-  }
-
   std::string LoaderCache::BuildDicomStructureSetLoaderKey(
     const std::string& instanceUuid,
     const std::string& uniqueKey)

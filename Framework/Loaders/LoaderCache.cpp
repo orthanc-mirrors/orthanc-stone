@@ -187,21 +187,25 @@ namespace OrthancStone
       return s.str();
     }
   }
-  
-  boost::shared_ptr<DicomStructureSetLoader> 
-    LoaderCache::GetDicomStructureSetLoader(
+
+  std::string LoaderCache::BuildDicomStructureSetLoaderKey(
+    const std::string& instanceUuid,
+    const std::string& uniqueKey)
+  {
+    return instanceUuid + "_" + uniqueKey;
+  }
+
+  boost::shared_ptr<DicomStructureSetLoader> LoaderCache::GetDicomStructureSetLoader(
       std::string inInstanceUuid, 
-      const std::vector<std::string>& initiallyVisibleStructures)
+      const std::vector<std::string>& initiallyVisibleStructures,
+      const std::string& uniqueKey)
   {
     try
     {
       // normalize keys a little
       NormalizeUuid(inInstanceUuid);
 
-      std::string initiallyVisibleStructuresKey = 
-        SortAndJoin(initiallyVisibleStructures);
-
-      std::string entryKey = inInstanceUuid + "_" + initiallyVisibleStructuresKey;
+      std::string entryKey = BuildDicomStructureSetLoaderKey(inInstanceUuid, uniqueKey);
 
       // find in cache
       if (dicomStructureSetLoaders_.find(entryKey) == dicomStructureSetLoaders_.end())

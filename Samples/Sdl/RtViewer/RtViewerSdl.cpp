@@ -259,44 +259,70 @@ namespace OrthancStone
       bool stop = false;
       while (!stop)
       {
-        bool paint = false;
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
+        std::vector<SDL_Event> sdlEvents;
+        std::map<Uint32,SDL_Event> userEventsMap;
+        SDL_Event sdlEvent;
+
+        // FIRST: collect all pending events
+        while (SDL_PollEvent(&sdlEvent) != 0)
         {
-          if (event.type == SDL_QUIT)
+          if ( (sdlEvent.type >= SDL_USEREVENT) && 
+               (sdlEvent.type < SDL_LASTEVENT) )
+          {
+            // we don't want to have multiple refresh events ,
+            // and since every refresh event is a user event with a special type,
+            // we use a map
+            userEventsMap[sdlEvent.type] = sdlEvent;
+          }
+          else
+          {
+            sdlEvents.push_back(sdlEvent);
+          }
+        }
+
+        // SECOND: add all user events to sdlEvents
+        for (std::map<Uint32,SDL_Event>::const_iterator it = userEventsMap.begin(); it != userEventsMap.end(); ++it)
+          sdlEvents.push_back(it->second);
+
+        // now process the events
+        for (std::vector<SDL_Event>::const_iterator it = sdlEvents.begin(); it != sdlEvents.end(); ++it)
+        {
+          const SDL_Event& sdlEvent = *it;
+
+          if (sdlEvent.type == SDL_QUIT)
           {
             stop = true;
             break;
           }
-          else if (event.type == SDL_WINDOWEVENT &&
-                   (event.window.event == SDL_WINDOWEVENT_RESIZED ||
-                    event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
+          else if (sdlEvent.type == SDL_WINDOWEVENT &&
+                   (sdlEvent.window.event == SDL_WINDOWEVENT_RESIZED ||
+                    sdlEvent.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
           {
             boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
-              views, event.window.windowID);
+              views, sdlEvent.window.windowID);
 
             boost::shared_ptr<SdlViewport> sdlViewport =
               boost::dynamic_pointer_cast<SdlViewport>(view->GetViewport());
 
-            sdlViewport->UpdateSize(event.window.data1, event.window.data2);
+            sdlViewport->UpdateSize(sdlEvent.window.data1, sdlEvent.window.data2);
           }
-          else if (event.type == SDL_WINDOWEVENT &&
-                   (event.window.event == SDL_WINDOWEVENT_SHOWN ||
-                    event.window.event == SDL_WINDOWEVENT_EXPOSED))
+          else if (sdlEvent.type == SDL_WINDOWEVENT &&
+                   (sdlEvent.window.event == SDL_WINDOWEVENT_SHOWN ||
+                    sdlEvent.window.event == SDL_WINDOWEVENT_EXPOSED))
           {
             boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
-              views, event.window.windowID);
+              views, sdlEvent.window.windowID);
             boost::shared_ptr<SdlViewport> sdlViewport =
               boost::dynamic_pointer_cast<SdlViewport>(view->GetViewport());
             sdlViewport->Paint();
           }
-          else if (event.type == SDL_KEYDOWN &&
-                   event.key.repeat == 0 /* Ignore key bounce */)
+          else if (sdlEvent.type == SDL_KEYDOWN &&
+                   sdlEvent.key.repeat == 0 /* Ignore key bounce */)
           {
             boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
-              views, event.window.windowID);
+              views, sdlEvent.window.windowID);
 
-            switch (event.key.keysym.sym)
+            switch (sdlEvent.key.keysym.sym)
             {
             case SDLK_f:
             {
@@ -322,21 +348,21 @@ namespace OrthancStone
               break;
             }
           }
-          else if (event.type == SDL_MOUSEBUTTONDOWN ||
-                   event.type == SDL_MOUSEMOTION ||
-                   event.type == SDL_MOUSEBUTTONUP)
+          else if (sdlEvent.type == SDL_MOUSEBUTTONDOWN ||
+                   sdlEvent.type == SDL_MOUSEMOTION ||
+                   sdlEvent.type == SDL_MOUSEBUTTONUP)
           {
             boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
-              views, event.window.windowID);
+              views, sdlEvent.window.windowID);
 
             std::auto_ptr<OrthancStone::IViewport::ILock> lock(view->GetViewport()->Lock());
             if (lock->HasCompositor())
             {
               OrthancStone::PointerEvent p;
               OrthancStoneHelpers::GetPointerEvent(p, lock->GetCompositor(),
-                                                   event, keyboardState, scancodeCount);
+                                                   sdlEvent, keyboardState, scancodeCount);
 
-              switch (event.type)
+              switch (sdlEvent.type)
               {
               case SDL_MOUSEBUTTONDOWN:
                 lock->GetController().HandleMousePress(interactor, p,
@@ -362,15 +388,15 @@ namespace OrthancStone
               }
             }
           }
-          else if (event.type == SDL_MOUSEWHEEL)
+          else if (sdlEvent.type == SDL_MOUSEWHEEL)
           {
             boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
-              views, event.window.windowID);
+              views, sdlEvent.window.windowID);
 
             int delta = 0;
-            if (event.wheel.y < 0)
+            if (sdlEvent.wheel.y < 0)
               delta = -1;
-            if (event.wheel.y > 0)
+            if (sdlEvent.wheel.y > 0)
               delta = 1;
 
             view->Scroll(delta);
@@ -381,8 +407,10 @@ namespace OrthancStone
             {
               boost::shared_ptr<SdlViewport> sdlViewport =
                 boost::dynamic_pointer_cast<SdlViewport>(views[i]->GetViewport());
-              if (sdlViewport->IsRefreshEvent(event))
+              if (sdlViewport->IsRefreshEvent(sdlEvent))
+              {
                 sdlViewport->Paint();
+              }
             }
           }
         }

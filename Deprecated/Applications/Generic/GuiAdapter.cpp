@@ -984,7 +984,7 @@ namespace OrthancStone
         while (SDL_PollEvent(&sdlEvent) != 0)
         {
           if ( (sdlEvent.type >= SDL_USEREVENT) && 
-               (sdlEvent.type <= SDL_USEREVENT) )
+               (sdlEvent.type < SDL_LASTEVENT) )
           {
             // we don't want to have multiple events with the same event.type
             userEventsMap[sdlEvent.type] = sdlEvent;

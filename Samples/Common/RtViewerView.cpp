@@ -312,7 +312,7 @@ namespace OrthancStone
     Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
-    ctVolumeLayerSource_.reset(new OrthancStone::VolumeSceneLayerSource(scene, depth, volume));
+    ctVolumeLayerSource_.reset(new OrthancStone::VolumeSceneLayerSource(viewport_, depth, volume));
 
     if (style != NULL)
     {
@@ -328,7 +328,7 @@ namespace OrthancStone
     Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
-    doseVolumeLayerSource_.reset(new OrthancStone::VolumeSceneLayerSource(scene, depth, volume));
+    doseVolumeLayerSource_.reset(new OrthancStone::VolumeSceneLayerSource(viewport_, depth, volume));
 
     if (style != NULL)
     {
@@ -343,6 +343,6 @@ namespace OrthancStone
     Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
-    structLayerSource_.reset(new OrthancStone::VolumeSceneLayerSource(scene, depth, volume));
+    structLayerSource_.reset(new OrthancStone::VolumeSceneLayerSource(viewport_, depth, volume));
   }
 }

@@ -28,6 +28,7 @@
 
 namespace OrthancStone
 {
+  class IViewport;
   /**
      This class applies one "volume slicer" to a "3D volume", in order
      to create one "2D scene layer" that will be set onto the "2D
@@ -38,7 +39,7 @@ namespace OrthancStone
   class VolumeSceneLayerSource : public boost::noncopyable
   {
   private:
-    Scene2D&                                  scene_;
+    boost::shared_ptr<OrthancStone::IViewport>  viewport_;
     int                                       layerDepth_;
     boost::shared_ptr<IVolumeSlicer>          slicer_;
     std::unique_ptr<ILayerStyleConfigurator>  configurator_;
@@ -50,7 +51,7 @@ namespace OrthancStone
     void ClearLayer();
 
   public:
-    VolumeSceneLayerSource(Scene2D& scene,
+    VolumeSceneLayerSource(boost::shared_ptr<OrthancStone::IViewport>  viewport,
                            int layerDepth,
                            const boost::shared_ptr<IVolumeSlicer>& slicer);
 

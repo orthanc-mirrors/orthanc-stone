@@ -396,7 +396,7 @@ namespace OrthancStone
     }
     else
     {
-      LOG(WARNING) << "Starting oracle with " << workers_.size() << " worker threads";
+      LOG(INFO) << "Starting oracle with " << workers_.size() << " worker threads";
       state_ = State_Running;
 
       for (unsigned int i = 0; i < workers_.size(); i++)

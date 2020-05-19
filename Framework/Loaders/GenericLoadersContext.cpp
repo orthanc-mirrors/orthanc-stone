@@ -108,7 +108,7 @@ namespace OrthancStone
 
   GenericLoadersContext::~GenericLoadersContext()
   {
-    LOG(WARNING) << "scheduled commands: " << scheduler_->GetTotalScheduled()
+    LOG(INFO) << "scheduled commands: " << scheduler_->GetTotalScheduled()
                  << ", processed commands: " << scheduler_->GetTotalProcessed();
     scheduler_.reset();
     //LOG(INFO) << "counter: " << scheduler_.use_count();

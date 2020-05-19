@@ -73,7 +73,7 @@ namespace OrthancStone
     }
 
     virtual void GetStatistics(uint64_t& scheduledCommands,
-                               uint64_t& processedCommands)
+                               uint64_t& processedCommands) ORTHANC_OVERRIDE
     {
       scheduledCommands = that_.scheduler_->GetTotalScheduled();
       processedCommands = that_.scheduler_->GetTotalProcessed();

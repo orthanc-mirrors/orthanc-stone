@@ -112,7 +112,8 @@ namespace OrthancStoneHelpers
       if (windowID == curWindowID)
         return sdlViewport;
     }
-    return NULL;
+    
+    return boost::shared_ptr<OrthancStone::SdlViewport>();
   }
 }
 

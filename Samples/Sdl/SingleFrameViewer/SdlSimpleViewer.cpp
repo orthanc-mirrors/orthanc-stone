@@ -231,8 +231,6 @@ int main(int argc, char* argv[])
   }
   catch (Orthanc::OrthancException& e)
   {
-    auto test = e.What();
-    fprintf(stdout, test);
     LOG(ERROR) << "OrthancException: " << e.What();
     return -1;
   }

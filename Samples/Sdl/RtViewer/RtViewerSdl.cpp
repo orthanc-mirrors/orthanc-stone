@@ -24,6 +24,7 @@
 
 // Stone of Orthanc includes
 #include <Framework/Loaders/GenericLoadersContext.h>
+#include <Framework/OpenGL/OpenGLIncludes.h>
 #include <Framework/OpenGL/SdlOpenGLContext.h>
 #include <Framework/StoneException.h>
 #include <Framework/StoneInitialization.h>
@@ -43,6 +44,13 @@
 
 #include <string>
 
+
+#if !defined(__APPLE__)
+/**
+ * OpenGL: "OS X does not seem to support debug output functionality
+ * (as gathered online)."
+ * https://learnopengl.com/In-Practice/Debugging
+ **/
 static void GLAPIENTRY
 OpenGLMessageCallback(GLenum source,
                       GLenum type,
@@ -59,13 +67,16 @@ OpenGLMessageCallback(GLenum source,
             type, severity, message);
   }
 }
+#endif
 
 namespace OrthancStone
 {
   void RtViewerView::EnableGLDebugOutput()
   {
+#if !defined(__APPLE__)
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(OpenGLMessageCallback, 0);
+#endif
   }
 
   boost::shared_ptr<IViewport> RtViewerView::CreateViewport(const std::string& canvasId)
@@ -222,7 +233,7 @@ namespace OrthancStone
       if (windowID == curWindowID)
         return view;
     }
-    return NULL;
+    return boost::shared_ptr<OrthancStone::RtViewerView>();
   }
 
   void RtViewerApp::SdlRunLoop(const std::vector<boost::shared_ptr<OrthancStone::RtViewerView> >& views,

@@ -34,6 +34,7 @@
 
 #include "Framework/Loaders/GenericLoadersContext.h"
 #include "Framework/Loaders/DicomStructureSetLoader.h"
+#include "Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
 
 #include "boost/date_time/posix_time/posix_time.hpp"
 
@@ -5453,7 +5454,6 @@ namespace
 
 }
 
-
 TEST(StructureSet, DISABLED_StructureSetLoader_injection_feature_2020_05_10)
 {
   namespace pt = boost::posix_time;
@@ -5490,4 +5490,209 @@ TEST(StructureSet, DISABLED_StructureSetLoader_injection_feature_2020_05_10)
   }
 }
 
+class SliceProcessor :
+  public OrthancStone::OrthancSeriesVolumeProgressiveLoader::ISlicePostProcessor,
+  public OrthancStone::DicomStructureSetLoader::IInstanceLookupHandler
+{
+public:
+  SliceProcessor(OrthancStone::DicomStructureSetLoader& structLoader) : structLoader_(structLoader)
+  {
+  }
 
+  virtual void ProcessCTDicomSlice(const Orthanc::DicomMap& instance) ORTHANC_OVERRIDE
+  {
+    std::string sopInstanceUid;
+    if (!instance.LookupStringValue(sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Missing SOPInstanceUID in a DICOM instance");
+    }
+    slicesDicom_[sopInstanceUid] = boost::shared_ptr<DicomMap>(instance.Clone());
+  }
+
+  virtual void RetrieveReferencedSlices(const std::set<std::string>& nonEmptyInstances) ORTHANC_OVERRIDE
+  {
+    for (std::set<std::string>::const_iterator it = nonEmptyInstances.begin(); 
+         it != nonEmptyInstances.end(); 
+         ++it)
+    {
+      const std::string nonEmptyInstance = *it;
+      if (slicesDicom_.find(nonEmptyInstance) == slicesDicom_.end())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Referenced SOPInstanceUID not found in CT");
+      }
+      boost::shared_ptr<Orthanc::DicomMap> instance = slicesDicom_[nonEmptyInstance];
+      structLoader_.AddReferencedSlice(*instance);
+    }
+  }
+
+  OrthancStone::DicomStructureSetLoader& structLoader_;
+  std::map<std::string, boost::shared_ptr<Orthanc::DicomMap> > slicesDicom_;
+};
+
+void LoadCtSeriesBlocking(boost::shared_ptr<OrthancStone::OrthancSeriesVolumeProgressiveLoader> ctLoader, std::string seriesId)
+{
+  namespace pt = boost::posix_time;
+  
+  // Load the CT 
+  ctLoader->LoadSeries(seriesId);
+
+  // Wait for CT to be loaded
+  pt::ptime initialTime = pt::second_clock::local_time();
+  {
+    bool bContinue(true);
+    while (bContinue)
+    {
+      bContinue = !ctLoader->IsVolumeImageReadyInHighQuality();
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
+
+      {
+        pt::ptime nowTime = pt::second_clock::local_time();
+        pt::time_duration diff = nowTime - initialTime;
+        double seconds = static_cast<double>(diff.total_milliseconds()) * 0.001;
+        std::cout << seconds << " seconds elapsed...\n";
+        if (seconds > 30)
+        {
+          const char* msg = "More than 30 seconds elapsed when waiting for CT... Aborting test :(\n";
+          GTEST_FATAL_FAILURE_(msg);
+          bContinue = false;
+        }
+      }
+    }
+  }
+}
+
+
+void LoadRtStructBlocking(boost::shared_ptr<OrthancStone::DicomStructureSetLoader> structLoader, std::string instanceId)
+{
+  namespace pt = boost::posix_time;
+
+  // Load RTSTRUCT
+  structLoader->LoadInstanceFullVisibility(instanceId);
+
+  pt::ptime initialTime = pt::second_clock::local_time();
+
+  // Wait for the loading process to complete
+  {
+    bool bContinue(true);
+    while (bContinue)
+    {
+      bContinue = !structLoader->AreStructuresReady();
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
+
+      {
+        pt::ptime nowTime = pt::second_clock::local_time();
+        pt::time_duration diff = nowTime - initialTime;
+        double seconds = static_cast<double>(diff.total_milliseconds()) * 0.001;
+        std::cout << seconds << " seconds elapsed...\n";
+        if (seconds > 30)
+        {
+          const char* msg = "More than 30 seconds elapsed when waiting for RTSTRUCT... Aborting test :(\n";
+          GTEST_FATAL_FAILURE_(msg);
+          bContinue = false;
+        }
+      }
+    }
+  }
+}
+
+TEST(StructureSet, DISABLED_Integration_Compound_CT_Struct_Loading)
+{
+  const double TOLERANCE = 0.0000001;
+
+  // create loaders context
+  std::unique_ptr<OrthancStone::ILoadersContext> loadersContext(new OrthancStone::GenericLoadersContext(1,4,1));
+  Initialize("http://localhost:8042/", *loadersContext);
+
+  const char* ctSeriesId = "a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa";
+  const char* rtStructInstanceId = "54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9";
+
+  // we'll compare normal loading and optimized loading with SliceProcessor to store the dicom
+
+  boost::shared_ptr<OrthancStone::DicomStructureSetLoader> normalStructLoader;
+  boost::shared_ptr<OrthancStone::DicomStructureSetLoader> optimizedStructLoader;
+  
+  {
+    // Create the CT volume
+    boost::shared_ptr<OrthancStone::DicomVolumeImage> volume = boost::make_shared<OrthancStone::DicomVolumeImage>();
+
+    // Create CT loader
+    boost::shared_ptr<OrthancStone::OrthancSeriesVolumeProgressiveLoader> ctLoader =
+      OrthancStone::OrthancSeriesVolumeProgressiveLoader::Create(*loadersContext, volume);
+
+    // Create struct loader
+    normalStructLoader = OrthancStone::DicomStructureSetLoader::Create(*loadersContext);
+
+    // Load the CT
+    LoadCtSeriesBlocking(ctLoader, ctSeriesId);
+    
+    const OrthancStone::VolumeImageGeometry& imageGeometry = ctLoader->GetImageGeometry();
+    unsigned int width = imageGeometry.GetWidth();
+    EXPECT_EQ(512u, width);
+    unsigned int height = imageGeometry.GetHeight();
+    EXPECT_EQ(512u, height);
+    unsigned int depth = imageGeometry.GetDepth();
+    EXPECT_EQ(109u, depth);
+
+    // Load the RTStruct
+    LoadRtStructBlocking(normalStructLoader, rtStructInstanceId);
+  }
+
+  {
+    // Create the CT volume
+    boost::shared_ptr<OrthancStone::DicomVolumeImage> volume = boost::make_shared<OrthancStone::DicomVolumeImage>();
+
+    // Create CT loader
+    boost::shared_ptr<OrthancStone::OrthancSeriesVolumeProgressiveLoader> ctLoader =
+      OrthancStone::OrthancSeriesVolumeProgressiveLoader::Create(*loadersContext, volume);
+
+    // Create struct loader
+    optimizedStructLoader = OrthancStone::DicomStructureSetLoader::Create(*loadersContext);
+
+    // create the slice processor / instance lookup
+    boost::shared_ptr<SliceProcessor> sliceProcessor = boost::make_shared<SliceProcessor>(*optimizedStructLoader);
+
+    // Inject it into CT loader
+    ctLoader->SetDicomSlicePostProcessor(sliceProcessor);
+
+    // Inject it into RTSTRUCT loader
+    optimizedStructLoader->SetInstanceLookupHandler(sliceProcessor);
+
+    // Load the CT
+    LoadCtSeriesBlocking(ctLoader, ctSeriesId);
+  
+    // now, the slices are collected. let's do some checks
+    EXPECT_EQ(109u, sliceProcessor->slicesDicom_.size());
+
+    // Load the RTStruct
+    LoadRtStructBlocking(optimizedStructLoader, rtStructInstanceId);
+  }
+
+  // DO NOT DELETE THOSE!
+  OrthancStone::DicomStructureSet* normalContent = normalStructLoader->GetContent();
+  OrthancStone::DicomStructureSet* optimizedContent = optimizedStructLoader->GetContent();
+
+  EXPECT_EQ(normalContent->GetStructuresCount(), optimizedContent->GetStructuresCount());
+
+  for (size_t i = 0; i < normalContent->GetStructuresCount(); ++i)
+  {
+    Vector structureCenter1                     = normalContent->GetStructureCenter(i);
+    const std::string& structureName1           = normalContent->GetStructureName(i);
+    const std::string& structureInterpretation1 = normalContent->GetStructureInterpretation(i);
+    Color structureColor1                       = normalContent->GetStructureColor(i);
+
+    Vector structureCenter2                     = optimizedContent->GetStructureCenter(i);
+    const std::string& structureName2           = optimizedContent->GetStructureName(i);
+    const std::string& structureInterpretation2 = optimizedContent->GetStructureInterpretation(i);
+    Color structureColor2                       = optimizedContent->GetStructureColor(i);
+
+    EXPECT_NEAR(structureCenter1[0], structureCenter2[0], TOLERANCE);
+    EXPECT_NEAR(structureCenter1[1], structureCenter2[1], TOLERANCE);
+    EXPECT_NEAR(structureCenter1[2], structureCenter2[2], TOLERANCE);
+    
+    EXPECT_EQ(structureName1, structureName2);
+    EXPECT_EQ(structureInterpretation1, structureInterpretation2);
+    EXPECT_EQ(structureColor1.GetRed(), structureColor2.GetRed());
+    EXPECT_EQ(structureColor1.GetGreen(), structureColor2.GetGreen());
+    EXPECT_EQ(structureColor1.GetBlue(), structureColor2.GetBlue());
+  }
+}

@@ -157,6 +157,12 @@ namespace OrthancStone
       slicePostProcessor_ = slicePostProcessor;
     }
 
+    boost::shared_ptr<ISlicePostProcessor> GetDicomSlicePostProcessor()
+    {
+      // this could be empty!
+      return slicePostProcessor_;
+    }
+
     bool IsVolumeImageReadyInHighQuality() const
     {
       return volumeImageReadyInHighQuality_;

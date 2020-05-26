@@ -249,9 +249,13 @@ namespace OrthancStone
   public:
     GuiAdapter()
     {
-      static int instanceCount = 0;
-      ORTHANC_ASSERT(instanceCount == 0);
-      instanceCount = 1;
+      ORTHANC_ASSERT(s_instanceCount == 0);
+      s_instanceCount = 1;
+    }
+
+    ~GuiAdapter()
+    {
+      s_instanceCount -= 1;
     }
 
     /**
@@ -371,5 +375,7 @@ namespace OrthancStone
     deals with this)
     */
     void ViewportsUpdateSize();
+
+    static int s_instanceCount;
   };
 }

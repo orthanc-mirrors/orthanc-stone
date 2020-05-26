@@ -22,6 +22,7 @@
 #include "VolumeSceneLayerSource.h"
 
 #include "../Scene2D/NullLayer.h"
+#include "../Viewport/IViewport.h"
 #include "../StoneException.h"
 
 #include <Core/OrthancException.h>
@@ -40,16 +41,20 @@ namespace OrthancStone
 
   void VolumeSceneLayerSource::ClearLayer()
   {
-    scene_.DeleteLayer(layerDepth_);
+    {
+      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+      ViewportController& controller = lock->GetController();
+      Scene2D& scene = controller.GetScene();
+      scene.DeleteLayer(layerDepth_);
+    }
     lastPlane_.reset(NULL);
   }
 
-
   VolumeSceneLayerSource::VolumeSceneLayerSource(
-    Scene2D& scene,
+    boost::shared_ptr<OrthancStone::IViewport>  viewport,
     int layerDepth,
     const boost::shared_ptr<IVolumeSlicer>& slicer)
-    : scene_(scene)
+    : viewport_(viewport)
     , layerDepth_(layerDepth)
     , slicer_(slicer)
   {
@@ -57,11 +62,17 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
-    ORTHANC_ASSERT(!scene_.HasLayer(layerDepth_));
 
-    // we need to book the scene layer depth by adding a dummy layer
-    std::unique_ptr<NullLayer> nullLayer(new NullLayer);
-    scene_.SetLayer(layerDepth_,nullLayer.release());
+    {
+      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+      ViewportController& controller = lock->GetController();
+      Scene2D& scene = controller.GetScene();
+      ORTHANC_ASSERT(!scene.HasLayer(layerDepth_));
+
+      // we need to book the scene layer depth by adding a dummy layer
+      std::unique_ptr<NullLayer> nullLayer(new NullLayer);
+      scene.SetLayer(layerDepth_,nullLayer.release());
+    }
   }
 
   VolumeSceneLayerSource::~VolumeSceneLayerSource()
@@ -104,6 +115,10 @@ namespace OrthancStone
 
   void VolumeSceneLayerSource::Update(const CoordinateSystem3D& plane)
   {
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    ViewportController& controller = lock->GetController();
+    Scene2D& scene = controller.GetScene();
+
     assert(slicer_.get() != NULL);
     std::unique_ptr<IVolumeSlicer::IExtractedSlice> slice(slicer_->ExtractSlice(plane));
 
@@ -126,9 +141,9 @@ namespace OrthancStone
 
       if (configurator_.get() != NULL &&
           configurator_->GetRevision() != lastConfiguratorRevision_ &&
-          scene_.HasLayer(layerDepth_))
+          scene.HasLayer(layerDepth_))
       {
-        configurator_->ApplyStyle(scene_.GetLayer(layerDepth_));
+        configurator_->ApplyStyle(scene.GetLayer(layerDepth_));
       }
     }
     else
@@ -153,7 +168,7 @@ namespace OrthancStone
           configurator_->ApplyStyle(*layer);
         }
 
-        scene_.SetLayer(layerDepth_, layer.release());
+        scene.SetLayer(layerDepth_, layer.release());
       }
     }
   }

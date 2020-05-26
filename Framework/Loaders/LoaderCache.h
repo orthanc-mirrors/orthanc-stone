@@ -60,10 +60,24 @@ namespace OrthancStone
     boost::shared_ptr<OrthancMultiframeVolumeLoader>
       GetMultiframeVolumeLoader(std::string instanceUuid);
 
+    /**
+    The DicomStructureSetLoader instances are stored in a map and indexed
+    by a key built from instanceUuid and uniqueKey.
+
+    If instanceUuid and uniqueKey correspond to an already existing loader, it is returned.
+
+    Please note that initiallyVisibleStructures is only used if the call results in the creation
+    of a new loader. In that case, the value is passed to the constructor.
+    */
     boost::shared_ptr<DicomStructureSetLoader>
       GetDicomStructureSetLoader(
         std::string instanceUuid,
-        const std::vector<std::string>& initiallyVisibleStructures);
+        const std::vector<std::string>& initiallyVisibleStructures,
+        const std::string& uniqueKey = "");
+
+    std::string BuildDicomStructureSetLoaderKey(
+        const std::string& instanceUuid,
+        const std::string& uniqueKey = "");
 
     void ClearCache();
 

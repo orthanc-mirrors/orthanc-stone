@@ -56,6 +56,8 @@ namespace OrthancStone
     return os;
   }
 
+  int GuiAdapter::s_instanceCount = 0;
+
 #if ORTHANC_ENABLE_WASM == 1
   void GuiAdapter::Run(GuiAdapterRunFunc /*func*/, void* /*cookie*/)
   {
@@ -984,7 +986,7 @@ namespace OrthancStone
         while (SDL_PollEvent(&sdlEvent) != 0)
         {
           if ( (sdlEvent.type >= SDL_USEREVENT) && 
-               (sdlEvent.type <= SDL_USEREVENT) )
+               (sdlEvent.type < SDL_LASTEVENT) )
           {
             // we don't want to have multiple events with the same event.type
             userEventsMap[sdlEvent.type] = sdlEvent;
@@ -1132,9 +1134,8 @@ namespace OrthancStone
         
           OnSdlGenericEvent(sdlEvent);
         }
+        SDL_Delay(1);
       }
-
-      SDL_Delay(1);
     }
   }
 #endif

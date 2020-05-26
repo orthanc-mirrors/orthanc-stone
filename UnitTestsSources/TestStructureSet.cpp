@@ -5562,6 +5562,26 @@ void LoadCtSeriesBlocking(boost::shared_ptr<OrthancStone::OrthancSeriesVolumePro
 }
 
 
+/**
+Will fill planes
+*/
+void GetCTPlanes(std::vector<OrthancStone::CoordinateSystem3D>& planes, 
+                 OrthancStone::VolumeProjection projection,
+                 boost::shared_ptr<OrthancStone::OrthancSeriesVolumeProgressiveLoader> ctLoader)
+{
+    planes.clear(); // inefficient : we don't care
+
+    const VolumeImageGeometry& geometry = ctLoader->GetImageGeometry();
+    const unsigned int depth = geometry.GetProjectionDepth(projection);
+
+    planes.resize(depth);
+
+    for (unsigned int z = 0; z < depth; z++)
+    {
+      planes[z] = geometry.GetProjectionSlice(projection, z);
+    }
+}
+
 void LoadRtStructBlocking(boost::shared_ptr<OrthancStone::DicomStructureSetLoader> structLoader, std::string instanceId)
 {
   namespace pt = boost::posix_time;
@@ -5637,6 +5657,10 @@ TEST(StructureSet, DISABLED_Integration_Compound_CT_Struct_Loading)
     LoadRtStructBlocking(normalStructLoader, rtStructInstanceId);
   }
 
+  std::vector<OrthancStone::CoordinateSystem3D> axialPlanes;
+  std::vector<OrthancStone::CoordinateSystem3D> coronalPlanes;
+  std::vector<OrthancStone::CoordinateSystem3D> sagittalPlanes;
+
   {
     // Create the CT volume
     boost::shared_ptr<OrthancStone::DicomVolumeImage> volume = boost::make_shared<OrthancStone::DicomVolumeImage>();
@@ -5665,6 +5689,10 @@ TEST(StructureSet, DISABLED_Integration_Compound_CT_Struct_Loading)
 
     // Load the RTStruct
     LoadRtStructBlocking(optimizedStructLoader, rtStructInstanceId);
+
+    GetCTPlanes(axialPlanes, VolumeProjection_Axial, ctLoader);
+    GetCTPlanes(coronalPlanes, VolumeProjection_Coronal, ctLoader);
+    GetCTPlanes(sagittalPlanes, VolumeProjection_Sagittal, ctLoader);
   }
 
   // DO NOT DELETE THOSE!
@@ -5672,6 +5700,19 @@ TEST(StructureSet, DISABLED_Integration_Compound_CT_Struct_Loading)
   OrthancStone::DicomStructureSet* optimizedContent = optimizedStructLoader->GetContent();
 
   EXPECT_EQ(normalContent->GetStructuresCount(), optimizedContent->GetStructuresCount());
+
+  /*void GetCTPlanes(std::vector<OrthancStone::CoordinateSystem3D>& planes, 
+                 OrthancStone::VolumeProjection projection,
+                 boost::shared_ptr<OrthancStone::OrthancSeriesVolumeProgressiveLoader> ctLoader)*/
+
+
+  std::vector<OrthancStone::CoordinateSystem3D> allPlanes;
+  for (const auto& plane : axialPlanes)
+    allPlanes.push_back(plane);
+  for (const auto& plane : coronalPlanes)
+    allPlanes.push_back(plane);
+  for (const auto& plane : sagittalPlanes)
+    allPlanes.push_back(plane);
 
   for (size_t i = 0; i < normalContent->GetStructuresCount(); ++i)
   {
@@ -5694,5 +5735,20 @@ TEST(StructureSet, DISABLED_Integration_Compound_CT_Struct_Loading)
     EXPECT_EQ(structureColor1.GetRed(), structureColor2.GetRed());
     EXPECT_EQ(structureColor1.GetGreen(), structureColor2.GetGreen());
     EXPECT_EQ(structureColor1.GetBlue(), structureColor2.GetBlue());
+
+    for (const auto& plane : allPlanes)
+    {
+      std::vector< std::pair<Point2D, Point2D> > segments1;
+      std::vector< std::pair<Point2D, Point2D> > segments2;
+      
+      bool ok1 = normalContent->ProjectStructure(segments1, i, plane);
+      bool ok2 = optimizedContent->ProjectStructure(segments2, i, plane);
+
+      // checks here
+      EXPECT_EQ(ok1, ok2);
+      EXPECT_EQ(segments1.size(), segments2.size());
+    }
   }
+
+  Exitialize(loadersContext);
 }

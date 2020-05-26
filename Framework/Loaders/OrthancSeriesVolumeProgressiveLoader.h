@@ -51,6 +51,13 @@ namespace OrthancStone
     public OrthancStone::IVolumeSlicer,
     public IGeometryProvider
   {
+  public:
+    class ISlicePostProcessor
+    {
+    public:
+      virtual void ProcessCTDicomSlice(const Orthanc::DicomMap& dicom) = 0;
+    };
+
   private:
     static const unsigned int QUALITY_00 = 0;
     static const unsigned int QUALITY_01 = 1;
@@ -58,12 +65,7 @@ namespace OrthancStone
         
     class ExtractedSlice;
 
-    class ISlicePostProcessor
-    {
-    public:
-      virtual void ProcessCTDicomSlice(const Orthanc::DicomMap& dicom) = 0;
-    };
-    
+   
     /** Helper class internal to OrthancSeriesVolumeProgressiveLoader */
     class SeriesGeometry : public boost::noncopyable
     {

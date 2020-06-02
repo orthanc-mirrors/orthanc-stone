@@ -5673,7 +5673,7 @@ TEST(StructureSet, DISABLED_Integration_Compound_CT_Struct_Loading)
     optimizedStructLoader = OrthancStone::DicomStructureSetLoader::Create(*loadersContext);
 
     // create the slice processor / instance lookup
-    boost::shared_ptr<SliceProcessor> sliceProcessor = boost::make_shared<SliceProcessor>(*optimizedStructLoader);
+    boost::shared_ptr<SliceProcessor> sliceProcessor(new SliceProcessor(*optimizedStructLoader));
 
     // Inject it into CT loader
     ctLoader->SetDicomSlicePostProcessor(sliceProcessor);
@@ -5707,15 +5707,20 @@ TEST(StructureSet, DISABLED_Integration_Compound_CT_Struct_Loading)
 
 
   std::vector<OrthancStone::CoordinateSystem3D> allPlanes;
-  for (const auto& plane : axialPlanes)
-    allPlanes.push_back(plane);
-  for (const auto& plane : coronalPlanes)
-    allPlanes.push_back(plane);
-  for (const auto& plane : sagittalPlanes)
-    allPlanes.push_back(plane);
+
+  // let's gather all the possible cutting planes in a single struct
+  for (size_t i = 0; i < axialPlanes.size(); ++i)
+    allPlanes.push_back(axialPlanes[i]);
+
+  for (size_t i = 0; i < coronalPlanes.size(); ++i)
+    allPlanes.push_back(coronalPlanes[i]);
+
+  for (size_t i = 0; i < sagittalPlanes.size(); ++i)
+    allPlanes.push_back(sagittalPlanes[i]);
 
   for (size_t i = 0; i < normalContent->GetStructuresCount(); ++i)
   {
+    std::cout << "Testing structure (" << i << "/" << normalContent->GetStructuresCount() << ")\n";
     Vector structureCenter1                     = normalContent->GetStructureCenter(i);
     const std::string& structureName1           = normalContent->GetStructureName(i);
     const std::string& structureInterpretation1 = normalContent->GetStructureInterpretation(i);
@@ -5736,8 +5741,11 @@ TEST(StructureSet, DISABLED_Integration_Compound_CT_Struct_Loading)
     EXPECT_EQ(structureColor1.GetGreen(), structureColor2.GetGreen());
     EXPECT_EQ(structureColor1.GetBlue(), structureColor2.GetBlue());
 
-    for (const auto& plane : allPlanes)
+    // "random" walk through the planes. Processing them all takes too long (~ 1 min)
+    for (size_t j = 0; j < allPlanes.size(); j += 37)
     {
+      const OrthancStone::CoordinateSystem3D& plane = allPlanes[j];
+
       std::vector< std::pair<Point2D, Point2D> > segments1;
       std::vector< std::pair<Point2D, Point2D> > segments2;
       
@@ -5747,6 +5755,14 @@ TEST(StructureSet, DISABLED_Integration_Compound_CT_Struct_Loading)
       // checks here
       EXPECT_EQ(ok1, ok2);
       EXPECT_EQ(segments1.size(), segments2.size());
+
+      for (size_t k = 0; k < segments1.size(); ++k)
+      {
+        EXPECT_NEAR(segments1[k].first.x, segments2[k].first.x, TOLERANCE);
+        EXPECT_NEAR(segments1[k].first.y, segments2[k].first.y, TOLERANCE);
+        EXPECT_NEAR(segments1[k].second.x, segments2[k].second.x, TOLERANCE);
+        EXPECT_NEAR(segments1[k].second.y, segments2[k].second.y, TOLERANCE);
+      }
     }
   }
 

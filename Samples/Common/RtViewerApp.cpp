@@ -119,6 +119,10 @@ namespace OrthancStone
       // "false" means only using hi quality
       // TODO: add flag for quality
       ctLoader_ = OrthancSeriesVolumeProgressiveLoader::Create(*loadersContext_, ctVolume_, true);
+      
+      // better priority for CT vs dose and struct
+      ctLoader_->SetSchedulingPriority(-100);
+
 
       // we need to store the CT loader to ask from geometry details later on when geometry is loaded
       geometryProvider_ = ctLoader_;

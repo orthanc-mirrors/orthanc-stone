@@ -131,6 +131,12 @@ namespace OrthancStone
     
     boost::shared_ptr<ISlicePostProcessor>  slicePostProcessor_;
 
+    /** See priority setters/getters below */
+    int medadataSchedulingPriority_;
+
+    /** See priority setters/getters below */
+    int sliceSchedulingPriority_;
+
     OrthancSeriesVolumeProgressiveLoader(
       OrthancStone::ILoadersContext& loadersContext,
       boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
@@ -150,6 +156,28 @@ namespace OrthancStone
     virtual ~OrthancSeriesVolumeProgressiveLoader();
 
     void SetSimultaneousDownloads(unsigned int count);
+
+    /**
+      Sets the relative priority of the requests for metadata.
+      - if p < PRIORITY_HIGH (-1)                 , the requests will be high priority
+      - if PRIORITY_LOW (100) > p > PRIORITY_HIGH , the requests will be medium priority
+      - if p > PRIORITY_LOW                       , the requests will be low priority
+
+      Default is 0 (medium)
+    */
+    void  SetMetadataSchedulingPriority(int p);
+
+    /** @see SetMetadataSchedulingPriority */
+    int   GetMetadataSchedulingPriority() const;
+
+    /** Same as SetMetadataSchedulingPriority, for slices. Default is 0. */
+    void  SetSliceSchedulingPriority(int p);
+    
+    /** @see SetSliceSchedulingPriority */
+    int   GetSliceSchedulingPriority() const;
+
+    /** Sets priorities for all requests. @see SetMetadataSchedulingPriority */
+    void  SetSchedulingPriority(int p);
 
     void SetDicomSlicePostProcessor(boost::shared_ptr<ISlicePostProcessor> slicePostProcessor)
     {

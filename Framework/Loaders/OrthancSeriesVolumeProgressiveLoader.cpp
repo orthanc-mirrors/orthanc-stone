@@ -322,7 +322,7 @@ namespace OrthancStone
       {
         std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext_.Lock());
         boost::shared_ptr<IObserver> observer(GetSharedObserver());
-        lock->Schedule(observer, 0, command.release()); // TODO: priority!
+        lock->Schedule(observer, sliceSchedulingPriority_, command.release());
       }
     }
     else
@@ -479,6 +479,33 @@ namespace OrthancStone
     SetSliceContent(GetSliceIndexPayload(message.GetOrigin()), message.GetImage(), quality);
   }
 
+
+  void  OrthancSeriesVolumeProgressiveLoader::SetMetadataSchedulingPriority(int p)
+  {
+    medadataSchedulingPriority_ = p;
+  }
+
+  int   OrthancSeriesVolumeProgressiveLoader::GetMetadataSchedulingPriority() const
+  {
+    return medadataSchedulingPriority_;
+  }
+
+  void  OrthancSeriesVolumeProgressiveLoader::SetSliceSchedulingPriority(int p)
+  {
+    sliceSchedulingPriority_ = p;
+  }
+    
+  int   OrthancSeriesVolumeProgressiveLoader::GetSliceSchedulingPriority() const
+  {
+    return sliceSchedulingPriority_;
+  }
+
+  void  OrthancSeriesVolumeProgressiveLoader::SetSchedulingPriority(int p)
+  {
+    medadataSchedulingPriority_ = p;
+    sliceSchedulingPriority_ = p;
+  }
+
   OrthancSeriesVolumeProgressiveLoader::OrthancSeriesVolumeProgressiveLoader(
     OrthancStone::ILoadersContext& loadersContext,
     boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
@@ -490,6 +517,8 @@ namespace OrthancStone
     , volume_(volume)
     , sorter_(new OrthancStone::BasicFetchingItemsSorter::Factory)
     , volumeImageReadyInHighQuality_(false)
+    , medadataSchedulingPriority_(0)
+    , sliceSchedulingPriority_(0)
   {
   }
 
@@ -560,7 +589,7 @@ namespace OrthancStone
       {
         std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext_.Lock());
         boost::shared_ptr<IObserver> observer(GetSharedObserver());
-        lock->Schedule(observer, 0, command.release()); //TODO: priority!
+        lock->Schedule(observer, medadataSchedulingPriority_, command.release());
       }
     }
   }

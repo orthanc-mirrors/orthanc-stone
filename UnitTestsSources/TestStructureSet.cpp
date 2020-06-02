@@ -5750,5 +5750,5 @@ TEST(StructureSet, DISABLED_Integration_Compound_CT_Struct_Loading)
     }
   }
 
-  Exitialize(loadersContext);
+  Exitialize(*loadersContext);
 }

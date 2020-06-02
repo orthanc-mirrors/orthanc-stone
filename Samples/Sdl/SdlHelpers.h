@@ -94,9 +94,9 @@ namespace OrthancStoneHelpers
     }
 
     p.AddPosition(compositor.GetPixelCenterCoordinates(event.button.x, event.button.y));
-    p.SetAltModifier(modifiers & KeyboardModifiers_Alt);
-    p.SetControlModifier(modifiers & KeyboardModifiers_Control);
-    p.SetShiftModifier(modifiers & KeyboardModifiers_Shift);
+    p.SetAltModifier( (modifiers & KeyboardModifiers_Alt) != 0);
+    p.SetControlModifier( (modifiers & KeyboardModifiers_Control) != 0);
+    p.SetShiftModifier( (modifiers & KeyboardModifiers_Shift) != 0);
   }
 
   static boost::shared_ptr<OrthancStone::SdlViewport> GetSdlViewportFromWindowId(

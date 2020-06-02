@@ -51,13 +51,21 @@ namespace OrthancStone
     public OrthancStone::IVolumeSlicer,
     public IGeometryProvider
   {
+  public:
+    class ISlicePostProcessor
+    {
+    public:
+      virtual void ProcessCTDicomSlice(const Orthanc::DicomMap& dicom) = 0;
+    };
+
   private:
     static const unsigned int QUALITY_00 = 0;
     static const unsigned int QUALITY_01 = 1;
     static const unsigned int QUALITY_02 = 2;
         
     class ExtractedSlice;
-    
+
+   
     /** Helper class internal to OrthancSeriesVolumeProgressiveLoader */
     class SeriesGeometry : public boost::noncopyable
     {
@@ -121,6 +129,14 @@ namespace OrthancStone
     std::vector<unsigned int>     slicesQuality_;
     bool                          volumeImageReadyInHighQuality_;
     
+    boost::shared_ptr<ISlicePostProcessor>  slicePostProcessor_;
+
+    /** See priority setters/getters below */
+    int medadataSchedulingPriority_;
+
+    /** See priority setters/getters below */
+    int sliceSchedulingPriority_;
+
     OrthancSeriesVolumeProgressiveLoader(
       OrthancStone::ILoadersContext& loadersContext,
       boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
@@ -140,6 +156,40 @@ namespace OrthancStone
     virtual ~OrthancSeriesVolumeProgressiveLoader();
 
     void SetSimultaneousDownloads(unsigned int count);
+
+    /**
+      Sets the relative priority of the requests for metadata.
+      - if p < PRIORITY_HIGH (-1)                 , the requests will be high priority
+      - if PRIORITY_LOW (100) > p > PRIORITY_HIGH , the requests will be medium priority
+      - if p > PRIORITY_LOW                       , the requests will be low priority
+
+      Default is 0 (medium)
+    */
+    void  SetMetadataSchedulingPriority(int p);
+
+    /** @see SetMetadataSchedulingPriority */
+    int   GetMetadataSchedulingPriority() const;
+
+    /** Same as SetMetadataSchedulingPriority, for slices. Default is 0. */
+    void  SetSliceSchedulingPriority(int p);
+    
+    /** @see SetSliceSchedulingPriority */
+    int   GetSliceSchedulingPriority() const;
+
+    /** Sets priorities for all requests. @see SetMetadataSchedulingPriority */
+    void  SetSchedulingPriority(int p);
+
+    void SetDicomSlicePostProcessor(boost::shared_ptr<ISlicePostProcessor> slicePostProcessor)
+    {
+      // this will delete the previously stored slice processor, if any
+      slicePostProcessor_ = slicePostProcessor;
+    }
+
+    boost::shared_ptr<ISlicePostProcessor> GetDicomSlicePostProcessor()
+    {
+      // this could be empty!
+      return slicePostProcessor_;
+    }
 
     bool IsVolumeImageReadyInHighQuality() const
     {

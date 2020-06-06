@@ -36,7 +36,8 @@
 #include "Framework/Loaders/DicomStructureSetLoader.h"
 #include "Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
 
-#include "boost/date_time/posix_time/posix_time.hpp"
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <Core/SystemToolbox.h>
 

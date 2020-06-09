@@ -50,6 +50,9 @@ namespace OrthancStone
     float                                computedDistributionMin_;
     float                                computedDistributionMax_;
 
+    /** Informational only */
+    std::map<std::string,uint64_t>       timingUSecMap_;
+
     const std::string& GetInstanceId() const;
 
     void ScheduleFrameDownloads();
@@ -119,5 +122,7 @@ namespace OrthancStone
       (float& minValue, float& maxValue) const;
 
     void LoadInstance(const std::string& instanceId);
+
+    const std::map<std::string,uint64_t>& GetTimingInfo() const { return timingUSecMap_; }
   };
 }

@@ -24,6 +24,9 @@
 #include <Core/Endianness.h>
 #include <Core/Toolbox.h>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+
 namespace OrthancStone
 {
   class OrthancMultiframeVolumeLoader::LoadRTDoseGeometry : public LoaderStateMachine::State
@@ -262,10 +265,23 @@ namespace OrthancStone
     CopyPixel(*targetUp, source);
   }
 
+
+  #define TIME_CHECKPOINT(name)                            \
+    {                                                      \
+      pt::ptime nowTime = pt::second_clock::local_time();  \
+      pt::time_duration diff = nowTime - initialTime;      \
+      uint64_t us = diff.total_microseconds();             \
+      timingUSecMap_[name] = us;                         \
+    }
+
   template <typename T>
   void OrthancMultiframeVolumeLoader::CopyPixelDataAndComputeDistribution(
     const std::string& pixelData, std::map<T,uint64_t>& distribution)
   {
+    namespace pt = boost::posix_time;
+
+    pt::ptime initialTime = pt::second_clock::local_time();
+
     OrthancStone::ImageBuffer3D& target = volume_->GetPixelData();
       
     const unsigned int bpp = target.GetBytesPerPixel();
@@ -284,6 +300,7 @@ namespace OrthancStone
       return;
     }
 
+    TIME_CHECKPOINT("start")
     // first pass to initialize map
     {
       const uint8_t* source = reinterpret_cast<const uint8_t*>(pixelData.c_str());
@@ -302,7 +319,7 @@ namespace OrthancStone
         }
       }
     }
-
+    TIME_CHECKPOINT("map_initialized")
     {
       const uint8_t* source = reinterpret_cast<const uint8_t*>(pixelData.c_str());
 
@@ -353,6 +370,7 @@ namespace OrthancStone
 #endif
       }
     }
+    TIME_CHECKPOINT("pixels_and_distribution_ok")
   }
 
   template <typename T>

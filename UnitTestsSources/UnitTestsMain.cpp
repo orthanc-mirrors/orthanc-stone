@@ -26,6 +26,7 @@
 #include "../Framework/Toolbox/GeometryToolbox.h"
 #include "../Framework/Volumes/ImageBuffer3D.h"
 #include "../Framework/Loaders/LoaderCache.h"
+#include "../Framework/Loaders/OrthancMultiframeVolumeLoader.h"
 
 #include <Core/HttpClient.h>
 #include <Core/Images/ImageProcessing.h>
@@ -37,6 +38,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/thread/thread.hpp> 
 #include <boost/math/special_functions/round.hpp>
+#include "Framework/Loaders/GenericLoadersContext.h"
 
 
 TEST(GeometryToolbox, Interpolation)
@@ -878,6 +880,93 @@ TEST(LoaderCache, NormalizeUuid)
     ASSERT_NE(ref, u);
   }
 }
+
+void LoadRtDoseBlocking(boost::shared_ptr<OrthancStone::OrthancMultiframeVolumeLoader> doseLoader, std::string instanceId)
+{
+  namespace pt = boost::posix_time;
+
+  // Load RTSTRUCT
+  doseLoader->LoadInstance(instanceId);
+
+  pt::ptime initialTime = pt::second_clock::local_time();
+
+  // Wait for the loading process to complete
+  {
+    bool bContinue(true);
+    while (bContinue)
+    {
+      bContinue = !doseLoader->IsPixelDataLoaded();
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
+
+      {
+        pt::ptime nowTime = pt::second_clock::local_time();
+        pt::time_duration diff = nowTime - initialTime;
+        double seconds = static_cast<double>(diff.total_milliseconds()) * 0.001;
+        std::cout << seconds << " seconds elapsed...\n";
+        if (seconds > 30)
+        {
+          const char* msg = "More than 30 seconds elapsed when waiting for RTSTRUCT... Aborting test :(\n";
+          GTEST_FATAL_FAILURE_(msg);
+          bContinue = false;
+        }
+      }
+    }
+  }
+}
+
+static void InitializeLoadersContext(const char* orthancApiUrl, OrthancStone::ILoadersContext& loadersContext)
+{
+  Orthanc::WebServiceParameters p;
+
+  OrthancStone::GenericLoadersContext& typedLoadersContext =
+    dynamic_cast<OrthancStone::GenericLoadersContext&>(loadersContext);
+  // Default is http://localhost:8042
+  // Here's how you may change it
+  p.SetUrl(orthancApiUrl);
+  p.SetCredentials("orthanc", "orthanc");
+  typedLoadersContext.SetOrthancParameters(p);
+
+  typedLoadersContext.StartOracle();
+}
+
+void ExitializeLoadersContext(OrthancStone::ILoadersContext& loadersContext)
+{
+  OrthancStone::GenericLoadersContext& typedLoadersContext =
+    dynamic_cast<OrthancStone::GenericLoadersContext&>(loadersContext);
+
+  typedLoadersContext.StopOracle();
+}
+
+TEST(DoseLoader, DISABLED_DoseLoadingTiming)
+{
+  using namespace OrthancStone;
+
+  // create loaders context
+  std::unique_ptr<OrthancStone::ILoadersContext> loadersContext(new GenericLoadersContext(1,4,1));
+  InitializeLoadersContext("http://localhost:8042/", *loadersContext);
+
+  auto doseVolume = boost::make_shared<DicomVolumeImage>();
+  auto doseLoader = OrthancMultiframeVolumeLoader::Create(*loadersContext, doseVolume);
+
+  LoadRtDoseBlocking(doseLoader, "830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb");
+
+
+  std::map<std::string,uint64_t> timing = doseLoader->GetTimingInfo();
+
+  for (std::map<std::string, uint64_t>::iterator it = timing.begin(); it != timing.end(); ++it)
+  {
+    const std::string& checkPtName = it->first;
+    uint64_t value = it->second;
+    double valueSec = static_cast<double>(value)/1000000.0;
+    std::cout << checkPtName << " : " << value << " usec (" << valueSec << " secs)" << std::endl;
+  }
+
+  //auto ti = doseLoader->GetTimingInfo();
+
+  //Register<DicomVolumeImage::ContentUpdatedMessage>(*doseLoader_, &RtViewerApp::HandleDoseLoaded);
+  ExitializeLoadersContext(*loadersContext);
+}
+
 
 int main(int argc, char **argv)
 {

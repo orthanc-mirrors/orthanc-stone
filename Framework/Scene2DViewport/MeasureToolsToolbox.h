@@ -18,6 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+
+#pragma once
+
 #include "PredeclaredTypes.h"
 #include "../Scene2D/PolylineSceneLayer.h"
 #include "../Scene2D/Scene2D.h"

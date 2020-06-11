@@ -1,7 +1,7 @@
 /**
  * Stone of Orthanc
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
-4 * Department, University Hospital of Liege, Belgium
+ * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2020 Osimis S.A., Belgium
  *
  * This program is free software: you can redistribute it and/or

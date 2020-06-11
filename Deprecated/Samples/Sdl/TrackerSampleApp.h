@@ -19,6 +19,8 @@
  **/
 
 
+#pragma once
+
 #include "../../Framework/Messages/IObserver.h"
 #include "../../Framework/Scene2D/OpenGLCompositor.h"
 #include "../../Framework/Scene2DViewport/IFlexiblePointerTracker.h"

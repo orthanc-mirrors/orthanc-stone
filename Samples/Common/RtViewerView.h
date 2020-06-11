@@ -19,6 +19,8 @@
  **/
 
 
+#pragma once
+
 #include "../../Framework/Loaders/DicomStructureSetLoader.h"
 #include "../../Framework/Loaders/ILoadersContext.h"
 #include "../../Framework/Loaders/OrthancMultiframeVolumeLoader.h"

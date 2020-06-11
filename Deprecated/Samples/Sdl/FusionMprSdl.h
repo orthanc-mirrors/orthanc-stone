@@ -18,6 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+
+#pragma once
+
 #include "../../Framework/Viewport/SdlViewport.h"
 
 #include "../../Framework/Messages/IObserver.h"

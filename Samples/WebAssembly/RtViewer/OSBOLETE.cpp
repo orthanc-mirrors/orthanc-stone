@@ -18,19 +18,19 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include <Framework/Viewport/WebAssemblyViewport.h>
-#include <Framework/Scene2D/OpenGLCompositor.h>
-#include <Framework/Scene2D/PanSceneTracker.h>
-#include <Framework/Scene2D/RotateSceneTracker.h>
-#include <Framework/Scene2D/ZoomSceneTracker.h>
-#include <Framework/Scene2DViewport/UndoStack.h>
-#include <Framework/Scene2DViewport/ViewportController.h>
-#include <Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h>
-#include <Framework/Oracle/SleepOracleCommand.h>
-#include <Framework/Oracle/WebAssemblyOracle.h>
-#include <Framework/Scene2D/GrayscaleStyleConfigurator.h>
-#include <Framework/StoneInitialization.h>
-#include <Framework/Volumes/VolumeSceneLayerSource.h>
+#include "../../../Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
+#include "../../../Framework/Oracle/SleepOracleCommand.h"
+#include "../../../Framework/Oracle/WebAssemblyOracle.h"
+#include "../../../Framework/Scene2D/GrayscaleStyleConfigurator.h"
+#include "../../../Framework/Scene2D/OpenGLCompositor.h"
+#include "../../../Framework/Scene2D/PanSceneTracker.h"
+#include "../../../Framework/Scene2D/RotateSceneTracker.h"
+#include "../../../Framework/Scene2D/ZoomSceneTracker.h"
+#include "../../../Framework/Scene2DViewport/UndoStack.h"
+#include "../../../Framework/Scene2DViewport/ViewportController.h"
+#include "../../../Framework/StoneInitialization.h"
+#include "../../../Framework/Viewport/WebAssemblyViewport.h"
+#include "../../../Framework/Volumes/VolumeSceneLayerSource.h"
 
 #include <Core/OrthancException.h>
 

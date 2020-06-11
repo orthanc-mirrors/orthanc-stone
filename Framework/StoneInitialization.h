@@ -35,7 +35,7 @@ namespace OrthancStone
 {
   void StoneInitialize(void* pluginContext);
 
-  void StoneInitialize()
+  inline void StoneInitialize()
   {
     StoneInitialize(NULL);
   }

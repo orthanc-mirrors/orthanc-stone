@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/Logging.h>
+#include <Logging.h>
 
 #include <boost/algorithm/string.hpp>
 

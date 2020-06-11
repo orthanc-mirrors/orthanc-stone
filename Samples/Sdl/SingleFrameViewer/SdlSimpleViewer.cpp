@@ -3,13 +3,13 @@
 #include "../SdlHelpers.h"
 #include "../../Common/SampleHelpers.h"
 
-#include <Framework/Loaders/GenericLoadersContext.h>
-#include <Framework/StoneException.h>
-#include <Framework/StoneEnumerations.h>
-#include <Framework/StoneInitialization.h>
-#include <Framework/Viewport/SdlViewport.h>
+#include "../../../Framework/Loaders/GenericLoadersContext.h"
+#include "../../../Framework/StoneException.h"
+#include "../../../Framework/StoneEnumerations.h"
+#include "../../../Framework/StoneInitialization.h"
+#include "../../../Framework/Viewport/SdlViewport.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #include <boost/program_options.hpp>
 #include <SDL.h>

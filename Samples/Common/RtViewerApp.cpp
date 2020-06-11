@@ -24,31 +24,29 @@
 #include "SampleHelpers.h"
 
 // Stone of Orthanc
-#include <Framework/StoneInitialization.h>
-#include <Framework/Scene2D/CairoCompositor.h>
-#include <Framework/Scene2D/ColorTextureSceneLayer.h>
-#include <Framework/Scene2D/OpenGLCompositor.h>
-#include <Framework/Scene2D/PanSceneTracker.h>
-#include <Framework/Scene2D/ZoomSceneTracker.h>
-#include <Framework/Scene2D/RotateSceneTracker.h>
-
-#include <Framework/Scene2DViewport/UndoStack.h>
-#include <Framework/Scene2DViewport/CreateLineMeasureTracker.h>
-#include <Framework/Scene2DViewport/CreateAngleMeasureTracker.h>
-#include <Framework/Scene2DViewport/IFlexiblePointerTracker.h>
-#include <Framework/Scene2DViewport/MeasureTool.h>
-#include <Framework/Scene2DViewport/PredeclaredTypes.h>
-#include <Framework/Volumes/VolumeSceneLayerSource.h>
-
-#include <Framework/Oracle/GetOrthancWebViewerJpegCommand.h>
-#include <Framework/Scene2D/GrayscaleStyleConfigurator.h>
-#include <Framework/Scene2D/LookupTableStyleConfigurator.h>
-#include <Framework/Volumes/DicomVolumeImageMPRSlicer.h>
-#include <Framework/StoneException.h>
+#include "../../Framework/StoneInitialization.h"
+#include "../../Framework/Scene2D/CairoCompositor.h"
+#include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
+#include "../../Framework/Scene2D/OpenGLCompositor.h"
+#include "../../Framework/Scene2D/PanSceneTracker.h"
+#include "../../Framework/Scene2D/ZoomSceneTracker.h"
+#include "../../Framework/Scene2D/RotateSceneTracker.h"
+#include "../../Framework/Scene2DViewport/UndoStack.h"
+#include "../../Framework/Scene2DViewport/CreateLineMeasureTracker.h"
+#include "../../Framework/Scene2DViewport/CreateAngleMeasureTracker.h"
+#include "../../Framework/Scene2DViewport/IFlexiblePointerTracker.h"
+#include "../../Framework/Scene2DViewport/MeasureTool.h"
+#include "../../Framework/Scene2DViewport/PredeclaredTypes.h"
+#include "../../Framework/Volumes/VolumeSceneLayerSource.h"
+#include "../../Framework/Oracle/GetOrthancWebViewerJpegCommand.h"
+#include "../../Framework/Scene2D/GrayscaleStyleConfigurator.h"
+#include "../../Framework/Scene2D/LookupTableStyleConfigurator.h"
+#include "../../Framework/Volumes/DicomVolumeImageMPRSlicer.h"
+#include "../../Framework/StoneException.h"
 
 // Orthanc
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
+#include <Logging.h>
+#include <OrthancException.h>
 
 // System 
 #include <boost/shared_ptr.hpp>

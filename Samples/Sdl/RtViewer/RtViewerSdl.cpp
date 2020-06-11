@@ -18,21 +18,21 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "RtViewerApp.h"
-#include "RtViewerView.h"
+#include "../../Common/RtViewerApp.h"
+#include "../../Common/RtViewerView.h"
 #include "../SdlHelpers.h"
 
 // Stone of Orthanc includes
-#include <Framework/Loaders/GenericLoadersContext.h>
-#include <Framework/OpenGL/OpenGLIncludes.h>
-#include <Framework/OpenGL/SdlOpenGLContext.h>
-#include <Framework/StoneException.h>
-#include <Framework/StoneInitialization.h>
+#include "../../../Framework/Loaders/GenericLoadersContext.h"
+#include "../../../Framework/OpenGL/OpenGLIncludes.h"
+#include "../../../Framework/OpenGL/SdlOpenGLContext.h"
+#include "../../../Framework/StoneException.h"
+#include "../../../Framework/StoneInitialization.h"
 
 // Orthanc (a.o. for screenshot capture)
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/Images/PngWriter.h>
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
+#include <Images/PngWriter.h>
 
 
 #include <boost/program_options.hpp>

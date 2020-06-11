@@ -18,20 +18,19 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include <Framework/Viewport/IViewport.h>
 
-#include <Framework/Loaders/DicomStructureSetLoader.h>
-#include <Framework/Loaders/OrthancMultiframeVolumeLoader.h>
-#include <Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h>
-#include <Framework/Loaders/ILoadersContext.h>
-#include <Framework/Messages/IMessageEmitter.h>
-#include <Framework/Messages/IObserver.h>
-#include <Framework/Messages/ObserverBase.h>
-#include <Framework/Oracle/OracleCommandExceptionMessage.h>
-#include <Framework/Scene2DViewport/ViewportController.h>
-
-#include <Framework/Volumes/DicomVolumeImage.h>
-#include <Framework/Volumes/VolumeSceneLayerSource.h>
+#include "../../Framework/Loaders/DicomStructureSetLoader.h"
+#include "../../Framework/Loaders/ILoadersContext.h"
+#include "../../Framework/Loaders/OrthancMultiframeVolumeLoader.h"
+#include "../../Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
+#include "../../Framework/Messages/IMessageEmitter.h"
+#include "../../Framework/Messages/IObserver.h"
+#include "../../Framework/Messages/ObserverBase.h"
+#include "../../Framework/Oracle/OracleCommandExceptionMessage.h"
+#include "../../Framework/Scene2DViewport/ViewportController.h"
+#include "../../Framework/Viewport/IViewport.h"
+#include "../../Framework/Volumes/DicomVolumeImage.h"
+#include "../../Framework/Volumes/VolumeSceneLayerSource.h"
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/thread.hpp>

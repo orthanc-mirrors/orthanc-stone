@@ -26,10 +26,11 @@
 #include "../Deprecated/Toolbox/DicomFrameConverter.h"
 #include "../Deprecated/Toolbox/OrthancApiClient.h"
 #include "../StoneEnumerations.h"
-#include "Core/Images/Image.h"
-#include "Core/Images/ImageProcessing.h"
-
 #include "../Scene2D/Scene2D.h"
+
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
+
 
 namespace OrthancStone
 {

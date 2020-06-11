@@ -25,13 +25,13 @@
 #include "../Oracle/ParseDicomFromWadoCommand.h"
 
 #if ORTHANC_ENABLE_DCMTK == 1
-#  include <Core/DicomParsing/Internals/DicomImageDecoder.h>
+#  include <DicomParsing/Internals/DicomImageDecoder.h>
 #endif
 
-#include <Core/DicomFormat/DicomInstanceHasher.h>
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/Images/JpegReader.h>
+#include <DicomFormat/DicomInstanceHasher.h>
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
+#include <Images/JpegReader.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 

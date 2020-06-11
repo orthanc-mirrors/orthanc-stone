@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include <Core/Compatibility.h>
-#include <Core/IDynamicObject.h>
-#include <Core/Images/ImageAccessor.h>
+#include <Compatibility.h>
+#include <IDynamicObject.h>
+#include <Images/ImageAccessor.h>
 
 #include <memory>
 

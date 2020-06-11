@@ -24,11 +24,11 @@
 #include "../../Messages/IObservable.h"
 #include "../../../Platforms/Generic/IOracleCommand.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #include <boost/shared_ptr.hpp>
 #include <algorithm>
-#include <Core/Logging.h>
+#include <Logging.h>
 
 namespace Deprecated
 {

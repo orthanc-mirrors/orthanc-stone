@@ -21,7 +21,7 @@
 
 #include "Scene2D.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 
 namespace OrthancStone

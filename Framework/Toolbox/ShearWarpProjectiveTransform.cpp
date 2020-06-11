@@ -26,10 +26,10 @@
 #include "FiniteProjectiveCamera.h"
 #include "GeometryToolbox.h"
 
-#include <Core/Images/PixelTraits.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/OrthancException.h>
-#include <Core/Logging.h>
+#include <Images/PixelTraits.h>
+#include <Images/ImageProcessing.h>
+#include <OrthancException.h>
+#include <Logging.h>
 
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/math/special_functions/round.hpp>

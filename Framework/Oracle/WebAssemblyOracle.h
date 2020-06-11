@@ -41,7 +41,7 @@
 #  include "../Toolbox/ParsedDicomCache.h"
 #endif
 
-#include <Core/WebServiceParameters.h>
+#include <WebServiceParameters.h>
 
 
 namespace OrthancStone

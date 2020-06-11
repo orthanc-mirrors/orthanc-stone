@@ -21,8 +21,8 @@
 
 #include "LayoutWidget.h"
 
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
+#include <Logging.h>
+#include <OrthancException.h>
 
 #include <boost/math/special_functions/round.hpp>
 

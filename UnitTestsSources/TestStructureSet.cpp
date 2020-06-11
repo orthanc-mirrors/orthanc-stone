@@ -28,20 +28,19 @@
 #  pragma warning(disable: 4748)
 #endif
 
-#include "Framework/Toolbox/DicomStructureSetUtils.h"
-#include "Framework/Toolbox/DicomStructureSet2.h"
-#include "Framework/Toolbox/DisjointDataSet.h"
-
-#include "Framework/Loaders/GenericLoadersContext.h"
-#include "Framework/Loaders/DicomStructureSetLoader.h"
-#include "Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
+#include "../Framework/Loaders/DicomStructureSetLoader.h"
+#include "../Framework/Loaders/GenericLoadersContext.h"
+#include "../Framework/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
+#include "../Framework/Toolbox/DicomStructureSet2.h"
+#include "../Framework/Toolbox/DicomStructureSetUtils.h"
+#include "../Framework/Toolbox/DisjointDataSet.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/make_shared.hpp>
 
-#include <Core/SystemToolbox.h>
+#include <SystemToolbox.h>
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <string>
 
 using namespace Orthanc;

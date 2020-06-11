@@ -29,8 +29,8 @@
 static unsigned int BUCKET_SOP = 1;
 #endif
 
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
+#include <OrthancException.h>
+#include <Toolbox.h>
 
 #include <emscripten.h>
 #include <emscripten/html5.h>

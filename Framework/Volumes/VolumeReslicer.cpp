@@ -24,9 +24,9 @@
 #include "../Toolbox/GeometryToolbox.h"
 #include "../Toolbox/SubvoxelReader.h"
 
-#include <Core/Images/ImageTraits.h>
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
+#include <Images/ImageTraits.h>
+#include <Logging.h>
+#include <OrthancException.h>
 
 #include <boost/math/special_functions/round.hpp>
 

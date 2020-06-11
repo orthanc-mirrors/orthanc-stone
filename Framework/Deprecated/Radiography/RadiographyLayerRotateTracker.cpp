@@ -23,7 +23,7 @@
 
 #include "RadiographySceneCommand.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #include <boost/math/constants/constants.hpp>
 #include <boost/math/special_functions/round.hpp>

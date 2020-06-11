@@ -24,7 +24,7 @@
 
 #include "../../Fonts/OpenGLTextCoordinates.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 
 static const unsigned int COMPONENTS = 2;

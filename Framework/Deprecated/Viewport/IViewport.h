@@ -24,9 +24,10 @@
 #include "IStatusBar.h"
 #include "../../StoneEnumerations.h"
 #include "../../Messages/IObservable.h"
-
-#include <Core/Images/ImageAccessor.h>
 #include "../Viewport/IMouseTracker.h" // only to get the "Touch" definition
+
+#include <Images/ImageAccessor.h>
+
 
 namespace Deprecated
 {

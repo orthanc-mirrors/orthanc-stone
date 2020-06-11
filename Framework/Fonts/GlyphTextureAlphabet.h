@@ -23,7 +23,7 @@
 
 #include "GlyphBitmapAlphabet.h"
 
-#include <Core/Images/ImageAccessor.h>
+#include <Images/ImageAccessor.h>
 
 namespace OrthancStone
 {

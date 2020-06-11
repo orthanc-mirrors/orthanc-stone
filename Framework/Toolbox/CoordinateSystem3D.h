@@ -24,7 +24,7 @@
 #include "LinearAlgebra.h"
 #include "../Scene2D/ScenePoint2D.h"
 
-#include <Plugins/Samples/Common/IDicomDataset.h>
+#include <IDicomDataset.h>
 
 #include <iosfwd>
 

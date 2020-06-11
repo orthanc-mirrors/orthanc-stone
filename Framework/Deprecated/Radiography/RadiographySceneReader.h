@@ -29,7 +29,7 @@
 #include "../Deprecated/Toolbox/OrthancApiClient.h"
 
 #include <json/value.h>
-#include <Core/Images/FontRegistry.h>
+#include <Images/FontRegistry.h>
 
 namespace OrthancStone
 {

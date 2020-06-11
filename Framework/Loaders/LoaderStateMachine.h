@@ -29,7 +29,7 @@
 #include "../Oracle/OracleCommandExceptionMessage.h"
 #include "../Oracle/OrthancRestApiCommand.h"
 
-#include <Core/IDynamicObject.h>
+#include <IDynamicObject.h>
 
 #include <list>
 

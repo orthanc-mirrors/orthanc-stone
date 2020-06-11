@@ -20,9 +20,10 @@
 
 #include "RadiographyTextLayer.h"
 
-#include "Core/OrthancException.h"
 #include "RadiographyScene.h"
 #include "../Toolbox/TextRenderer.h"
+
+#include <OrthancException.h>
 
 namespace OrthancStone
 {

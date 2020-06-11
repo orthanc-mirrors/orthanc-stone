@@ -24,7 +24,7 @@
 #include "../../Volumes/ImageBuffer3D.h"
 #include "../Toolbox/DicomFrameConverter.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 namespace Deprecated
 {

@@ -25,7 +25,7 @@
 #include "../Viewport/IViewport.h"
 #include "../StoneException.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 namespace OrthancStone
 {

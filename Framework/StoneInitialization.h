@@ -25,23 +25,20 @@
 #  error Macro ORTHANC_ENABLE_WASM must be defined
 #endif
 
-#if !defined(ORTHANC_ENABLE_LOGGING_PLUGIN)
-#  error Macro ORTHANC_ENABLE_LOGGING_PLUGIN must be defined
-#endif
-
 #if ORTHANC_ENABLE_WASM == 1
 #  include "Viewport/WebGLViewportsRegistry.h"
 #endif
 
-#include <Core/Logging.h>
+#include <Logging.h>
 
 namespace OrthancStone
 {
-#if ORTHANC_ENABLE_LOGGING_PLUGIN == 1
-  void StoneInitialize(OrthancPluginContext* context);
-#else
-  void StoneInitialize();
-#endif
+  void StoneInitialize(void* pluginContext);
+
+  void StoneInitialize()
+  {
+    StoneInitialize(NULL);
+  }
 
   void StoneFinalize();
 

@@ -24,7 +24,7 @@
 #include "LayerHolder.h"
 #include "../StoneException.h"
 
-#include <Core/Logging.h>
+#include <Logging.h>
 
 #include <boost/math/constants/constants.hpp>
 #include <boost/make_shared.hpp>

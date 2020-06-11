@@ -21,7 +21,7 @@
 
 #include "DicomVolumeLoader.h"
 
-#include <Core/Images/ImageProcessing.h>
+#include <Images/ImageProcessing.h>
 
 namespace OrthancStone
 {

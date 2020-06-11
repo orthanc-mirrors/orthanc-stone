@@ -24,7 +24,7 @@
 #include "../Messages/IMessageEmitter.h"
 #include "OracleCommandBase.h"
 
-#include <Core/Images/ImageAccessor.h>
+#include <Images/ImageAccessor.h>
 
 #include <map>
 

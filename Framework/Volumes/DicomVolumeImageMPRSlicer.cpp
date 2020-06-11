@@ -25,9 +25,9 @@
 
 #include "../Toolbox/ImageToolbox.h"
 
-#include <Core/OrthancException.h>
-//#include <Core/Images/PngWriter.h>
-#include <Core/Images/JpegWriter.h>
+#include <OrthancException.h>
+//#include <Images/PngWriter.h>
+#include <Images/JpegWriter.h>
 
 namespace OrthancStone
 {

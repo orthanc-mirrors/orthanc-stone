@@ -25,7 +25,7 @@
 #include "../PolylineSceneLayer.h"
 #include "CompositorHelper.h"
 
-#include <Core/Compatibility.h>
+#include <Compatibility.h>
 
 namespace OrthancStone
 {

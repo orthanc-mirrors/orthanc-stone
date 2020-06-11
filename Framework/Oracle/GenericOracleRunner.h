@@ -32,8 +32,8 @@
 #include "IOracleCommand.h"
 #include "../Messages/IMessageEmitter.h"
 
-#include <Core/Enumerations.h>  // For ORTHANC_OVERRIDE
-#include <Core/WebServiceParameters.h>
+#include <Enumerations.h>  // For ORTHANC_OVERRIDE
+#include <WebServiceParameters.h>
 
 namespace OrthancStone
 {

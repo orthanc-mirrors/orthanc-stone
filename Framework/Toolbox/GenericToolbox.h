@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include <Core/Compatibility.h>
-#include <Core/OrthancException.h>
+#include <Compatibility.h>
+#include <OrthancException.h>
 
 #include <boost/shared_ptr.hpp>
 

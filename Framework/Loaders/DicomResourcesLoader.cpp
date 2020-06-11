@@ -27,7 +27,7 @@
 
 #if ORTHANC_ENABLE_DCMTK == 1
 #  include "../Oracle/ParseDicomFromFileCommand.h"
-#  include <Core/DicomParsing/ParsedDicomFile.h>
+#  include <DicomParsing/ParsedDicomFile.h>
 #endif
 
 #include <boost/filesystem/path.hpp>

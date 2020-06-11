@@ -21,8 +21,8 @@
 
 #include "GrayscaleFrameRenderer.h"
 
-#include <Core/Images/Image.h>
-#include <Core/OrthancException.h>
+#include <Images/Image.h>
+#include <OrthancException.h>
 
 namespace Deprecated
 {

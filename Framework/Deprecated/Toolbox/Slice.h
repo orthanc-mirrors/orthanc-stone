@@ -24,8 +24,8 @@
 #include "../../Toolbox/CoordinateSystem3D.h"
 #include "DicomFrameConverter.h"
 
-#include <Core/DicomFormat/DicomImageInformation.h>
-#include <Core/IDynamicObject.h>
+#include <DicomFormat/DicomImageInformation.h>
+#include <IDynamicObject.h>
 
 namespace Deprecated
 {

@@ -20,7 +20,7 @@
 
 #include "LockingEmitter.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 namespace Deprecated
 {

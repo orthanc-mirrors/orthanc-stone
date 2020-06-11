@@ -24,7 +24,7 @@
 
 #include "../StoneException.h"
 
-#include <Core/Images/ImageAccessor.h>
+#include <Images/ImageAccessor.h>
 
 #include <string>
 #include <stdint.h>

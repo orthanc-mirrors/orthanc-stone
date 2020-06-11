@@ -18,18 +18,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include <Framework/Toolbox/ImageToolbox.h>
+#include "../Framework/Toolbox/ImageToolbox.h"
 
 // #include <boost/chrono.hpp>
 // #include <boost/lexical_cast.hpp>
 
-#include <Core/Compatibility.h>
-#include <Core/Images/Image.h>
-#include <Core/Images/PixelTraits.h>
+#include <Compatibility.h>
+#include <Images/Image.h>
+#include <Images/PixelTraits.h>
 
 #include "stdint.h"
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include <cmath>
 

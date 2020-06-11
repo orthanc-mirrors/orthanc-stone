@@ -24,7 +24,7 @@
 #include "../Deprecated/Toolbox/DicomFrameConverter.h"
 #include "RadiographyLayer.h"
 
-#include <Plugins/Samples/Common/FullOrthancDataset.h>
+#include <FullOrthancDataset.h>
 
 namespace OrthancStone
 {

@@ -26,7 +26,7 @@
 #include "../../OpenGL/OpenGLTexture.h"
 #include "../../Toolbox/AffineTransform2D.h"
 
-#include <Core/Compatibility.h>
+#include <Compatibility.h>
 
 namespace OrthancStone
 {

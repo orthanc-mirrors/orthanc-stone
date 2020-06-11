@@ -23,7 +23,7 @@
 
 #include "../StoneException.h"
 
-#include <Core/Logging.h>
+#include <Logging.h>
 
 #include <cassert>
 

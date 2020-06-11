@@ -19,12 +19,12 @@
  **/
 
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "../Framework/Loaders/BasicFetchingStrategy.h"
 #include "../Framework/Loaders/BasicFetchingItemsSorter.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 
 namespace

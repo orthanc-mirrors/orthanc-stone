@@ -21,7 +21,7 @@
 
 #include "OrthancRestApiCommand.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #ifdef _MSC_VER
 // 'Json::Reader': Use CharReader and CharReaderBuilder instead

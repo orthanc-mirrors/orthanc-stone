@@ -26,8 +26,8 @@
 #include "../Toolbox/DicomFrameConverter.h"
 
 #include <OrthancException.h>
-#include <Plugins/Samples/Common/FullOrthancDataset.h>
-#include <Plugins/Samples/Common/DicomDatasetReader.h>
+#include <FullOrthancDataset.h>
+#include <DicomDatasetReader.h>
 
 namespace Deprecated
 {

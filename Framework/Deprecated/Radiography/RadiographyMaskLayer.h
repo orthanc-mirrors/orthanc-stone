@@ -23,9 +23,9 @@
 
 #include "RadiographyLayer.h"
 
-#include <Core/Compatibility.h>
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
+#include <Compatibility.h>
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
 
 namespace OrthancStone
 {

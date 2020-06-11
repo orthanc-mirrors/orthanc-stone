@@ -32,7 +32,7 @@
 #  include <GL/glew.h>
 #endif
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 namespace OrthancStone
 {

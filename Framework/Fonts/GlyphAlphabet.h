@@ -23,7 +23,7 @@
 
 #include "FontRenderer.h"
 
-#include <Core/Enumerations.h>
+#include <Enumerations.h>
 
 #include <map>
 

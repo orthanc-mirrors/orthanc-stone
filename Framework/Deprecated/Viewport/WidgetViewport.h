@@ -24,7 +24,7 @@
 #include "IViewport.h"
 #include "../Widgets/IWidget.h"
 
-#include <Core/Compatibility.h>
+#include <Compatibility.h>
 
 #include <memory>
 

@@ -31,7 +31,10 @@ else()
 endif()
 
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
-include_directories(${ORTHANC_ROOT})
+include_directories(
+  ${ORTHANC_ROOT}/Core
+  ${ORTHANC_ROOT}/Plugins/Samples/Common
+  )
 
 
 #####################################################################
@@ -287,12 +290,11 @@ if (ENABLE_WASM)
     )
 endif()
 
-if ( (ENABLE_SDL OR ENABLE_WASM) AND ENABLE_GUIADAPTER )
+if ((ENABLE_SDL OR ENABLE_WASM) AND ENABLE_GUIADAPTER)
   list(APPEND APPLICATIONS_SOURCES
     ${ORTHANC_STONE_ROOT}/Deprecated/Applications/Generic/GuiAdapter.cpp
     ${ORTHANC_STONE_ROOT}/Deprecated/Applications/Generic/GuiAdapter.h
     )
-    include_directories(${ORTHANC_STONE_ROOT}/Deprecated)
 endif()
 
 

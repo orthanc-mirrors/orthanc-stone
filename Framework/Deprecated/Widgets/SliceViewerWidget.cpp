@@ -25,8 +25,8 @@
 #include "../../Toolbox/GeometryToolbox.h"
 #include "../Layers/FrameRenderer.h"
 
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
+#include <Logging.h>
+#include <OrthancException.h>
 
 #include <boost/math/constants/constants.hpp>
 

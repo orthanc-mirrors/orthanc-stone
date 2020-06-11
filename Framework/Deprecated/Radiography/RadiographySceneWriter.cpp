@@ -21,9 +21,9 @@
 
 #include "RadiographySceneWriter.h"
 
-#include <Core/OrthancException.h>
-#include <Core/Images/PngWriter.h>
-#include <Core/Toolbox.h>
+#include <OrthancException.h>
+#include <Images/PngWriter.h>
+#include <Toolbox.h>
 
 namespace OrthancStone
 {

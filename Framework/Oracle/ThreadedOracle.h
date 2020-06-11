@@ -41,7 +41,7 @@
 #include "GenericOracleRunner.h"
 #include "../Messages/IMessageEmitter.h"
 
-#include <Core/MultiThreading/SharedMessageQueue.h>
+#include <MultiThreading/SharedMessageQueue.h>
 
 
 namespace OrthancStone

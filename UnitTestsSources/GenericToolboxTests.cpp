@@ -18,16 +18,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include <Framework/Toolbox/GenericToolbox.h>
+#include "../Framework/Toolbox/GenericToolbox.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
-#include "gtest/gtest.h"
-
-#include "stdint.h"
-
+#include <gtest/gtest.h>
+#include <stdint.h>
 #include <cmath>
 
 TEST(GenericToolbox, TestLegitDoubleString)

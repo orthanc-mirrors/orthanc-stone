@@ -24,7 +24,7 @@
 #include "../Messages/IMessage.h"
 #include "IOracleCommand.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 namespace OrthancStone
 {

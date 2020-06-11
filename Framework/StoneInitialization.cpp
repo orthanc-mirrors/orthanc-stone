@@ -45,11 +45,11 @@
 #endif
 
 #if ORTHANC_ENABLE_CURL == 1
-#  include <Core/HttpClient.h>
+#  include <HttpClient.h>
 #endif
 
 #if ORTHANC_ENABLE_DCMTK == 1
-#  include <Core/DicomParsing/FromDcmtkBridge.h>
+#  include <DicomParsing/FromDcmtkBridge.h>
 #endif
 
 #if ORTHANC_ENABLE_WASM == 1
@@ -59,25 +59,25 @@ static std::unique_ptr<OrthancStone::WebGLViewportsRegistry>  viewportsRegistry_
 
 #include "Toolbox/LinearAlgebra.h"
 
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
+#include <Logging.h>
+#include <OrthancException.h>
+#include <Toolbox.h>
 
 #include <locale>
 
 
 namespace OrthancStone
 {
-#if ORTHANC_ENABLE_LOGGING_PLUGIN == 1
-  void StoneInitialize(OrthancPluginContext* context)
-#else
-  void StoneInitialize()
-#endif
+  void StoneInitialize(void* pluginContext)
   {
-#if ORTHANC_ENABLE_LOGGING_PLUGIN == 1
-    Orthanc::Logging::Initialize(context);
-#else
-    Orthanc::Logging::Initialize();
-#endif
+    if (pluginContext != NULL)
+    {
+      Orthanc::Logging::InitializePluginContext(pluginContext);
+    }
+    else
+    {
+      Orthanc::Logging::Initialize();
+    }
 
 #if ORTHANC_ENABLE_SSL == 1
     // Must be before curl

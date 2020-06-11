@@ -27,7 +27,7 @@
 #include "Extent2D.h"
 #include "../Scene2D/Color.h"
 
-#include <Plugins/Samples/Common/FullOrthancDataset.h>
+#include <FullOrthancDataset.h>
 
 #include <list>
 

@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include <Plugins/Samples/Common/IDicomDataset.h>
-#include <Core/Compatibility.h>
-#include <Core/DicomFormat/DicomMap.h>
-#include <Core/Images/ImageAccessor.h>
+#include <IDicomDataset.h>
+#include <Compatibility.h>
+#include <DicomFormat/DicomMap.h>
+#include <Images/ImageAccessor.h>
 
 #include <memory>
 

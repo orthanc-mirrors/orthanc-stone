@@ -21,9 +21,9 @@
 
 #include "ParseDicomSuccessMessage.h"
 
-#include <Core/DicomParsing/ParsedDicomFile.h>
-#include <Core/HttpServer/MultipartStreamReader.h>
-#include <Core/OrthancException.h>
+#include <DicomParsing/ParsedDicomFile.h>
+#include <HttpServer/MultipartStreamReader.h>
+#include <OrthancException.h>
 
 namespace OrthancStone
 {

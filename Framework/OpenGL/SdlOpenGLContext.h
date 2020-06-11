@@ -28,7 +28,7 @@
 
 #include <SDL_render.h>
 
-#include <Core/Enumerations.h>
+#include <Enumerations.h>
 
 namespace OrthancStone
 {

@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include <Core/Cache/MemoryObjectCache.h>
-#include <Core/DicomParsing/ParsedDicomFile.h>
+#include <Cache/MemoryObjectCache.h>
+#include <DicomParsing/ParsedDicomFile.h>
 
 namespace OrthancStone
 {

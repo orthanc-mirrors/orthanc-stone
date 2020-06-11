@@ -21,11 +21,11 @@
 
 #include "SeriesThumbnailsLoader.h"
 
-#include <Core/DicomFormat/DicomMap.h>
-#include <Core/DicomFormat/DicomInstanceHasher.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/Images/JpegWriter.h>
-#include <Core/OrthancException.h>
+#include <DicomFormat/DicomMap.h>
+#include <DicomFormat/DicomInstanceHasher.h>
+#include <Images/ImageProcessing.h>
+#include <Images/JpegWriter.h>
+#include <OrthancException.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 

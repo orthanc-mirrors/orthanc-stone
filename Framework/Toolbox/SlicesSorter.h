@@ -23,7 +23,7 @@
 
 #include "CoordinateSystem3D.h"
 
-#include <Core/IDynamicObject.h>
+#include <IDynamicObject.h>
 
 namespace OrthancStone
 {

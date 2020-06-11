@@ -24,8 +24,8 @@
 #include "ISceneLayer.h"
 #include "../StoneEnumerations.h"
 
-#include <Core/Compatibility.h>
-#include <Core/Images/ImageAccessor.h>
+#include <Compatibility.h>
+#include <Images/ImageAccessor.h>
 
 #include <memory>
 

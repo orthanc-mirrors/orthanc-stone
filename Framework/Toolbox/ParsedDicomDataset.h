@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include <Core/DicomParsing/ParsedDicomFile.h>
-#include <Plugins/Samples/Common/IDicomDataset.h>
+#include <DicomParsing/ParsedDicomFile.h>
+#include <IDicomDataset.h>
 
 namespace OrthancStone
 {

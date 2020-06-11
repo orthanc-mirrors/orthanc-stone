@@ -24,7 +24,7 @@
 #include "../StoneEnumerations.h"
 #include "GeometryToolbox.h"
 
-#include <Core/Images/ImageTraits.h>
+#include <Images/ImageTraits.h>
 
 #include <boost/noncopyable.hpp>
 #include <cmath>

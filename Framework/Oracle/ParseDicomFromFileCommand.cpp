@@ -21,7 +21,7 @@
 
 #include "ParseDicomFromFileCommand.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #include <boost/filesystem/path.hpp>
 

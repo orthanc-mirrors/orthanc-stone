@@ -21,7 +21,7 @@
 
 #include "PolylineSceneLayer.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 namespace OrthancStone
 {

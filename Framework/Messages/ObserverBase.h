@@ -25,7 +25,7 @@
 #include "IObserver.h"
 #include "IObservable.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #include <boost/enable_shared_from_this.hpp>
 

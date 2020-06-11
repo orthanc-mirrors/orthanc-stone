@@ -24,10 +24,10 @@
 
 #include "../Toolbox/GeometryToolbox.h"
 
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
-#include <Plugins/Samples/Common/DicomDatasetReader.h>
+#include <Logging.h>
+#include <OrthancException.h>
+#include <Toolbox.h>
+#include <DicomDatasetReader.h>
 
 #if defined(_MSC_VER)
 #  pragma warning(push)

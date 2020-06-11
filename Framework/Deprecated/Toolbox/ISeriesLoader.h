@@ -24,7 +24,7 @@
 #include "ParallelSlices.h"
 
 #include <Images/ImageAccessor.h>
-#include <Plugins/Samples/Common/IDicomDataset.h>
+#include <IDicomDataset.h>
 
 namespace Deprecated
 {

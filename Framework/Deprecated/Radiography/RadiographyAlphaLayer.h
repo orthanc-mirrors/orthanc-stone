@@ -23,7 +23,7 @@
 
 #include "RadiographyLayer.h"
 
-#include <Core/Compatibility.h>
+#include <Compatibility.h>
 
 namespace OrthancStone
 {

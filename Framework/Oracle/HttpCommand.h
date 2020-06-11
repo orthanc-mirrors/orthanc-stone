@@ -24,7 +24,7 @@
 #include "../Messages/IMessage.h"
 #include "OracleCommandBase.h"
 
-#include <Core/Enumerations.h>
+#include <Enumerations.h>
 
 #include <map>
 #include <json/value.h>

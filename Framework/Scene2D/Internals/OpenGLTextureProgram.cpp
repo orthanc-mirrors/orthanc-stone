@@ -22,7 +22,7 @@
 #include "OpenGLTextureProgram.h"
 #include "OpenGLShaderVersionDirective.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 static const unsigned int COMPONENTS = 2;
 static const unsigned int COUNT = 6;  // 2 triangles in 2D

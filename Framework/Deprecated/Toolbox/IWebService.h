@@ -24,9 +24,9 @@
 #include "../../Messages/IObserver.h"
 #include "../../Messages/ICallable.h"
 
-#include <Core/Enumerations.h>
-#include <Core/IDynamicObject.h>
-#include <Core/Logging.h>
+#include <Enumerations.h>
+#include <IDynamicObject.h>
+#include <Logging.h>
 
 #include <string>
 #include <map>

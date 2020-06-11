@@ -19,7 +19,7 @@
  **/
 
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "../Framework/StoneInitialization.h"
 #include "../Framework/Toolbox/FiniteProjectiveCamera.h"
@@ -27,11 +27,11 @@
 #include "../Framework/Volumes/ImageBuffer3D.h"
 #include "../Framework/Loaders/LoaderCache.h"
 
-#include <Core/HttpClient.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/Logging.h>
-#include <Core/MultiThreading/SharedMessageQueue.h>
-#include <Core/OrthancException.h>
+#include <HttpClient.h>
+#include <Images/ImageProcessing.h>
+#include <Logging.h>
+#include <MultiThreading/SharedMessageQueue.h>
+#include <OrthancException.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>

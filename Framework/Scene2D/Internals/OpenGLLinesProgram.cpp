@@ -22,7 +22,7 @@
 #include "OpenGLLinesProgram.h"
 #include "OpenGLShaderVersionDirective.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 
 static const unsigned int COMPONENTS_POSITION = 3;

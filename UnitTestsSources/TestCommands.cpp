@@ -19,10 +19,10 @@
  **/
 
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 //#include "../Applications/Commands/BaseCommandFactory.h"
-//#include "Core/OrthancException.h"
+//#include "OrthancException.h"
 
 //class CommandIncrement: public OrthancStone::BaseCommand<CommandIncrement>
 //{

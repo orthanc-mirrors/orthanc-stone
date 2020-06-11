@@ -21,9 +21,9 @@
 
 #include "StoneEnumerations.h"
 
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
+#include <Logging.h>
+#include <OrthancException.h>
+#include <Toolbox.h>
 
 namespace OrthancStone
 {  

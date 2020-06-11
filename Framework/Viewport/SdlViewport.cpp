@@ -20,7 +20,7 @@
 
 #include "SdlViewport.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #include <boost/make_shared.hpp>
 

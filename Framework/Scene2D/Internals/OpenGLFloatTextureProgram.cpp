@@ -22,9 +22,9 @@
 #include "OpenGLFloatTextureProgram.h"
 #include "OpenGLShaderVersionDirective.h"
 
-#include <Core/OrthancException.h>
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
+#include <OrthancException.h>
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
 
 
 static const char* FRAGMENT_SHADER = 

@@ -21,9 +21,9 @@
 
 #include "RadiographyWidget.h"
 
-#include <Core/OrthancException.h>
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
+#include <OrthancException.h>
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
 
 #include "RadiographyMaskLayer.h"
 

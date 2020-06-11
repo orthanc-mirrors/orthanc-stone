@@ -25,13 +25,13 @@
 #include "../Toolbox/LinearAlgebra.h"
 #include "../StoneException.h"
 
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
-#include <Core/DicomFormat/DicomTag.h>
+#include <Logging.h>
+#include <OrthancException.h>
+#include <Toolbox.h>
+#include <DicomFormat/DicomTag.h>
 
-#include <Plugins/Samples/Common/FullOrthancDataset.h>
-#include <Plugins/Samples/Common/DicomDatasetReader.h>
+#include <FullOrthancDataset.h>
+#include <DicomDatasetReader.h>
 
 namespace OrthancStone
 {

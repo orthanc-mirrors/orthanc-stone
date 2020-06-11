@@ -42,11 +42,11 @@ static unsigned int BUCKET_DICOMDIR = 0;
 static unsigned int BUCKET_SOP = 1;
 #endif
 
-#include <Core/Compression/GzipCompressor.h>
-#include <Core/HttpClient.h>
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
-#include <Core/SystemToolbox.h>
+#include <Compression/GzipCompressor.h>
+#include <HttpClient.h>
+#include <OrthancException.h>
+#include <Toolbox.h>
+#include <SystemToolbox.h>
 
 #include <boost/filesystem.hpp>
 

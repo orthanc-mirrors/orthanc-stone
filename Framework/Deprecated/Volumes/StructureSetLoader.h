@@ -26,7 +26,7 @@
 #include "../Toolbox/OrthancApiClient.h"
 #include "IVolumeLoader.h"
 
-#include <Core/Compatibility.h>
+#include <Compatibility.h>
 
 namespace Deprecated
 {

@@ -21,7 +21,7 @@
 
 #include "UndoRedoStack.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #include <cassert>
 

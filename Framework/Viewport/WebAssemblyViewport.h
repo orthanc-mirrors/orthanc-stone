@@ -31,7 +31,7 @@
 
 #include "IViewport.h"
 
-#include <Core/Compatibility.h>
+#include <Compatibility.h>
 
 #include <emscripten.h>
 #include <emscripten/html5.h>

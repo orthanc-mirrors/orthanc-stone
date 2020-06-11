@@ -26,7 +26,7 @@
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2DViewport/IFlexiblePointerTracker.h"
 
-#include <Core/Compatibility.h>
+#include <Compatibility.h>
 
 #include <boost/enable_shared_from_this.hpp>
 #include <stack>

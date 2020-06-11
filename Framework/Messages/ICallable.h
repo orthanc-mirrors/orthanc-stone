@@ -24,7 +24,7 @@
 #include "IMessage.h"
 #include "IObserver.h"
 
-#include <Core/Logging.h>
+#include <Logging.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/weak_ptr.hpp>

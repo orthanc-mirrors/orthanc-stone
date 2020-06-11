@@ -23,7 +23,7 @@
 
 #include "../Toolbox/DynamicBitmap.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 
 #include <ft2build.h>

@@ -23,7 +23,7 @@
 
 #include "../Oracle/IOracleCommand.h"
 
-#include <Core/WebServiceParameters.h>
+#include <WebServiceParameters.h>
 
 namespace OrthancStone
 {

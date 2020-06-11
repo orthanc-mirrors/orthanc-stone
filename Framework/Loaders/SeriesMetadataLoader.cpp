@@ -21,7 +21,7 @@
 
 #include "SeriesMetadataLoader.h"
 
-#include <Core/DicomFormat/DicomInstanceHasher.h>
+#include <DicomFormat/DicomInstanceHasher.h>
 
 namespace OrthancStone
 {

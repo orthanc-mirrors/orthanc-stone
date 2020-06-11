@@ -24,7 +24,7 @@
 #include "CairoColorTextureRenderer.h"
 #include "../LookupTableTextureSceneLayer.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 namespace OrthancStone
 {

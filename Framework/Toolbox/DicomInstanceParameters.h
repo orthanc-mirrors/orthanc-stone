@@ -25,8 +25,8 @@
 #include "../Scene2D/LookupTableTextureSceneLayer.h"
 #include "../Toolbox/CoordinateSystem3D.h"
 
-#include <Core/IDynamicObject.h>
-#include <Core/DicomFormat/DicomImageInformation.h>
+#include <IDynamicObject.h>
+#include <DicomFormat/DicomImageInformation.h>
 
 namespace OrthancStone
 {

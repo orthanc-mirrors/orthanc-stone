@@ -23,7 +23,7 @@
 
 #include "../StoneException.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #include <emscripten/html5.h>
 #include <emscripten/em_asm.h>

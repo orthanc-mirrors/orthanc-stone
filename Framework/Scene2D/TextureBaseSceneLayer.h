@@ -24,8 +24,8 @@
 #include "ISceneLayer.h"
 #include "../Toolbox/AffineTransform2D.h"
 
-#include <Core/Compatibility.h>
-#include <Core/Images/ImageAccessor.h>
+#include <Compatibility.h>
+#include <Images/ImageAccessor.h>
 
 namespace OrthancStone
 {

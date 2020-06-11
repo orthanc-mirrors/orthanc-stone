@@ -29,7 +29,7 @@
 #include "../Scene2D/Color.h"
 #include "../StoneException.h"
 
-#include <Plugins/Samples/Common/FullOrthancDataset.h>
+#include <FullOrthancDataset.h>
 
 #include <list>
 #include <string>

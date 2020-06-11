@@ -24,7 +24,7 @@
 
 #include "RadiographySceneCommand.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 namespace OrthancStone
 {

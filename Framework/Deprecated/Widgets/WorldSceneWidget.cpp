@@ -25,8 +25,8 @@
 #include "ZoomMouseTracker.h"
 #include "PanZoomMouseTracker.h"
 
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
+#include <Logging.h>
+#include <OrthancException.h>
 
 #include <math.h>
 #include <memory>

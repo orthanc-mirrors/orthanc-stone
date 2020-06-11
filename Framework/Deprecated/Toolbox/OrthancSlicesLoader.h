@@ -29,7 +29,7 @@
 #include "OrthancApiClient.h"
 #include "Slice.h"
 
-#include <Core/Images/Image.h>
+#include <Images/Image.h>
 
 
 namespace Deprecated

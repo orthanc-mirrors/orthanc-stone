@@ -23,10 +23,10 @@
 
 #include "../Deprecated/Toolbox/DicomFrameConverter.h"
 
-#include <Core/Images/FontRegistry.h>
-#include <Core/Images/PngReader.h>
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
+#include <Images/FontRegistry.h>
+#include <Images/PngReader.h>
+#include <OrthancException.h>
+#include <Toolbox.h>
 
 namespace OrthancStone
 {

@@ -26,8 +26,8 @@
 #include <OrthancException.h>
 #include <Logging.h>
 #include <Toolbox.h>
-#include <Plugins/Samples/Common/OrthancPluginException.h>
-#include <Plugins/Samples/Common/DicomDatasetReader.h>
+#include <OrthancPluginException.h>
+#include <DicomDatasetReader.h>
 
 
 namespace Deprecated

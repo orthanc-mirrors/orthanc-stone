@@ -21,8 +21,8 @@
 
 #include "ColorTextureSceneLayer.h"
 
-#include <Core/OrthancException.h>
-#include <Core/Images/Image.h>
+#include <OrthancException.h>
+#include <Images/Image.h>
 
 
 namespace OrthancStone

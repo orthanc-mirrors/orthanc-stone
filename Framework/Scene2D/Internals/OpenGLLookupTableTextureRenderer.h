@@ -25,7 +25,7 @@
 #include "CompositorHelper.h"
 #include "../LookupTableTextureSceneLayer.h"
 
-#include <Core/Images/Image.h>
+#include <Images/Image.h>
 
 namespace OrthancStone
 {

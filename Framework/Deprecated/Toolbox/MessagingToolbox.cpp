@@ -20,13 +20,13 @@
 
 #include "MessagingToolbox.h"
 
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/Images/JpegReader.h>
-#include <Core/Images/PngReader.h>
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
-#include <Core/Logging.h>
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
+#include <Images/JpegReader.h>
+#include <Images/PngReader.h>
+#include <OrthancException.h>
+#include <Toolbox.h>
+#include <Logging.h>
 
 #include <boost/lexical_cast.hpp>
 

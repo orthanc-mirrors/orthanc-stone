@@ -22,7 +22,7 @@
 #pragma once
 
 #include "ILayerRendererFactory.h"
-#include <Plugins/Samples/Common/IOrthancConnection.h>
+#include <IOrthancConnection.h>
 
 namespace Deprecated
 {

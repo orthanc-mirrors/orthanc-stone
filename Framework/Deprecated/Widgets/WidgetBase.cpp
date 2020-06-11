@@ -21,9 +21,9 @@
 
 #include "WidgetBase.h"
 
-#include <Core/OrthancException.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/Logging.h>
+#include <OrthancException.h>
+#include <Images/ImageProcessing.h>
+#include <Logging.h>
 
 namespace Deprecated
 {

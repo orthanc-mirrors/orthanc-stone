@@ -24,7 +24,7 @@
 #include "ParallelSlices.h"
 #include "../../StoneEnumerations.h"
 
-#include <Core/Compatibility.h>
+#include <Compatibility.h>
 
 namespace Deprecated
 {

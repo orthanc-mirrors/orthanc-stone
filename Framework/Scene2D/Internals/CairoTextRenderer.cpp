@@ -21,7 +21,7 @@
 
 #include "CairoTextRenderer.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 namespace OrthancStone
 {

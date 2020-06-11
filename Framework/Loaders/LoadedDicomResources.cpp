@@ -21,7 +21,7 @@
 
 #include "LoadedDicomResources.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #include <cassert>
 

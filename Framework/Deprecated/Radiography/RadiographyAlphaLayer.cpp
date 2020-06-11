@@ -22,12 +22,12 @@
 #include "RadiographyAlphaLayer.h"
 
 #include "RadiographyScene.h"
-
-#include <Core/Compatibility.h>
-#include <Core/Images/Image.h>
-#include <Core/OrthancException.h>
-
 #include "../Toolbox/ImageGeometry.h"
+
+#include <Compatibility.h>
+#include <Images/Image.h>
+#include <OrthancException.h>
+
 
 namespace OrthancStone
 {

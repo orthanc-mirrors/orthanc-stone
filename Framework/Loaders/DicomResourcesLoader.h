@@ -27,7 +27,7 @@
 
 #if ORTHANC_ENABLE_DCMTK == 1
 #  include "../Oracle/ParseDicomFromFileCommand.h"
-#  include <Core/DicomParsing/ParsedDicomDir.h>
+#  include <DicomParsing/ParsedDicomDir.h>
 #endif
 
 #include "../Oracle/HttpCommand.h"

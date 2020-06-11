@@ -24,8 +24,8 @@
 #include "../StoneEnumerations.h"
 #include "../Toolbox/LinearAlgebra.h"
 
-#include <Core/Compatibility.h>
-#include <Core/Images/Image.h>
+#include <Compatibility.h>
+#include <Images/Image.h>
 
 namespace OrthancStone
 {

@@ -23,10 +23,10 @@
 
 #include "../../Toolbox/LinearAlgebra.h"
 
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
+#include <OrthancException.h>
+#include <Toolbox.h>
 
 namespace Deprecated
 {

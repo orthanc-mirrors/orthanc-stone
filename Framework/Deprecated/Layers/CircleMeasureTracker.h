@@ -25,7 +25,7 @@
 #include "../Viewport/IStatusBar.h"
 #include "../../Toolbox/CoordinateSystem3D.h"
 
-#include <Core/Images/Font.h>
+#include <Images/Font.h>
 
 namespace Deprecated
 {

@@ -32,12 +32,12 @@
 #include "../Scene2D/PolylineSceneLayer.h"
 
 #if ORTHANC_ENABLE_DCMTK == 1
-#  include <Core/DicomParsing/ParsedDicomFile.h>
+#  include <DicomParsing/ParsedDicomFile.h>
 #endif
 
 //#define USE_BOOST_UNION_FOR_POLYGONS 1
 
-#include <Plugins/Samples/Common/FullOrthancDataset.h>
+#include <FullOrthancDataset.h>
 
 #include <list>
 

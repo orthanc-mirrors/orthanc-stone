@@ -21,8 +21,8 @@
 
 #include "WidgetViewport.h"
 
-#include <Core/Images/ImageProcessing.h>
-#include <Core/OrthancException.h>
+#include <Images/ImageProcessing.h>
+#include <OrthancException.h>
 
 namespace Deprecated
 {

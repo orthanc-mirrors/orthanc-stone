@@ -23,7 +23,7 @@
 
 #include "Toolbox/LinearAlgebra.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #include <boost/lexical_cast.hpp>
 

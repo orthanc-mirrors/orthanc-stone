@@ -24,7 +24,7 @@
 #include "GrayscaleFrameRenderer.h"
 #include "ColorFrameRenderer.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 namespace Deprecated
 {

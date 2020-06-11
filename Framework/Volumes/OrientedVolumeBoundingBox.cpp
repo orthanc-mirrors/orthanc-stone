@@ -24,7 +24,7 @@
 #include "../Toolbox/GeometryToolbox.h"
 #include "ImageBuffer3D.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #include <cassert>
 

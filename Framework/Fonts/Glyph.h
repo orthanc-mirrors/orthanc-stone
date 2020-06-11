@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include <Core/Compatibility.h>
-#include <Core/IDynamicObject.h>
+#include <Compatibility.h>
+#include <IDynamicObject.h>
 
 #include <memory>
 

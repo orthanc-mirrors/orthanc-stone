@@ -26,11 +26,11 @@
 #include "../Toolbox/GeometryToolbox.h"
 #include "../Toolbox/ImageToolbox.h"
 
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
+#include <Logging.h>
+#include <OrthancException.h>
+#include <Toolbox.h>
 
 
 namespace OrthancStone

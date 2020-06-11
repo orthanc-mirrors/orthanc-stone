@@ -24,7 +24,7 @@
 #include "IFetchingItemsSorter.h"
 #include "IFetchingStrategy.h"
 
-#include <Core/Compatibility.h>
+#include <Compatibility.h>
 
 #include <memory>
 

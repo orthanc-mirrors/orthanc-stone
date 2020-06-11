@@ -21,7 +21,7 @@
 
 #include "ParallelSlicesCursor.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 namespace Deprecated
 {

@@ -22,7 +22,7 @@
 #include "RadiographyWindowingTracker.h"
 #include "RadiographyWidget.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 
 namespace OrthancStone

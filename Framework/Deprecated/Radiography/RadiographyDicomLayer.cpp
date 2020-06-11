@@ -23,12 +23,12 @@
 
 #include "RadiographyScene.h"
 #include "../Deprecated/Toolbox/DicomFrameConverter.h"
-
-#include <Core/OrthancException.h>
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Plugins/Samples/Common/DicomDatasetReader.h>
 #include "../Toolbox/ImageGeometry.h"
+
+#include <OrthancException.h>
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
+#include <DicomDatasetReader.h>
 
 static OrthancPlugins::DicomTag  ConvertTag(const Orthanc::DicomTag& tag)
 {

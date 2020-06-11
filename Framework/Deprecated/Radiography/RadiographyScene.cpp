@@ -30,15 +30,15 @@
 #include "../Scene2D/FloatTextureSceneLayer.h"
 #include "../Scene2D/TextSceneLayer.h"
 
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/Images/PamReader.h>
-#include <Core/Images/PamWriter.h>
-#include <Core/Images/PngWriter.h>
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
-#include <Plugins/Samples/Common/DicomDatasetReader.h>
-#include <Plugins/Samples/Common/FullOrthancDataset.h>
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
+#include <Images/PamReader.h>
+#include <Images/PamWriter.h>
+#include <Images/PngWriter.h>
+#include <OrthancException.h>
+#include <Toolbox.h>
+#include <DicomDatasetReader.h>
+#include <FullOrthancDataset.h>
 
 #include <boost/math/special_functions/round.hpp>
 

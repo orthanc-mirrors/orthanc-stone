@@ -24,8 +24,8 @@
 #include "TextBoundingBox.h"
 #include "../Toolbox/DynamicBitmap.h"
 
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
 
 namespace OrthancStone
 {

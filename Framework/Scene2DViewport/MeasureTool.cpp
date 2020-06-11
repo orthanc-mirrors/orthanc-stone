@@ -20,9 +20,9 @@
 
 #include "MeasureTool.h"
 
-#include <Core/Logging.h>
-#include <Core/Enumerations.h>
-#include <Core/OrthancException.h>
+#include <Logging.h>
+#include <Enumerations.h>
+#include <OrthancException.h>
 
 #include <boost/math/constants/constants.hpp>
 

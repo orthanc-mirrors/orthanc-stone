@@ -25,7 +25,7 @@
 #include "../Toolbox/Slice.h"
 #include "../../Messages/IObservable.h"
 #include "../../Messages/IMessage.h"
-#include "Core/Images/Image.h"
+#include "Images/Image.h"
 #include <boost/shared_ptr.hpp>
 
 namespace Deprecated

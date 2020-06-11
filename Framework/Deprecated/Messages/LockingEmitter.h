@@ -20,13 +20,11 @@
 
 #pragma once
 
-#include <Core/Enumerations.h>
-#include <Core/OrthancException.h>
+#include <Enumerations.h>
+#include <OrthancException.h>
 
 #include "../../Messages/IMessageEmitter.h"
 #include "../../Messages/IObservable.h"
-
-#include <Core/Enumerations.h>  // For ORTHANC_OVERRIDE
 
 #include <boost/thread/shared_mutex.hpp>
 

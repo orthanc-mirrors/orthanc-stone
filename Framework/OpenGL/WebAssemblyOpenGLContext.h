@@ -39,7 +39,7 @@
 
 #include "IOpenGLContext.h"
 
-#include <Core/Enumerations.h>
+#include <Enumerations.h>
 
 #include <boost/shared_ptr.hpp>
 

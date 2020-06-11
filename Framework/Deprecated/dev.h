@@ -31,9 +31,9 @@
 #include "Volumes/ImageBuffer3D.h"
 #include "Widgets/SliceViewerWidget.h"
 
-#include <Core/Logging.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/OrthancException.h>
+#include <Logging.h>
+#include <Images/ImageProcessing.h>
+#include <OrthancException.h>
 
 #include <boost/math/special_functions/round.hpp>
 

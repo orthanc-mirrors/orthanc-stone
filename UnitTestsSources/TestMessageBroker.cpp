@@ -19,10 +19,10 @@
  **/
 
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
-#include "Framework/Messages/IObservable.h"
-#include "Framework/Messages/ObserverBase.h"
+#include "../Framework/Messages/IObservable.h"
+#include "../Framework/Messages/ObserverBase.h"
 
 
 int testCounter = 0;

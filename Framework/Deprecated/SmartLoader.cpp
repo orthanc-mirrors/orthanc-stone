@@ -22,11 +22,12 @@
 #include "SmartLoader.h"
 
 #include "../StoneException.h"
-#include "Core/Images/Image.h"
-#include "Core/Logging.h"
 #include "Layers/DicomSeriesVolumeSlicer.h"
 #include "Layers/FrameRenderer.h"
 #include "Widgets/SliceViewerWidget.h"
+
+#include <Images/Image.h>
+#include <Logging.h>
 
 namespace Deprecated
 {

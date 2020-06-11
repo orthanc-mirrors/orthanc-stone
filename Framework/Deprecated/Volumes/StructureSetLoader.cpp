@@ -23,7 +23,7 @@
 
 #include "../Toolbox/MessagingToolbox.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 namespace Deprecated
 {

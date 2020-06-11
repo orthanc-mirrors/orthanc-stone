@@ -22,11 +22,11 @@
 
 #include "../StoneException.h"
 
-#include <Core/Images/ImageProcessing.h>
-#include <Core/Images/PixelTraits.h>
+#include <Images/ImageProcessing.h>
+#include <Images/PixelTraits.h>
 
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
+#include <Logging.h>
+#include <OrthancException.h>
 
 #include <boost/static_assert.hpp>
 #include <boost/type_traits.hpp>

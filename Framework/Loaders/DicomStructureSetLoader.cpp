@@ -25,7 +25,7 @@
 #include "../StoneException.h"
 #include "../Toolbox/GeometryToolbox.h"
 
-#include <Core/Toolbox.h>
+#include <Toolbox.h>
 
 #include <algorithm>
 

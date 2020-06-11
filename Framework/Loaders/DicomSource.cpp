@@ -24,7 +24,7 @@
 #include "../Oracle/HttpCommand.h"
 #include "../Oracle/OrthancRestApiCommand.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 

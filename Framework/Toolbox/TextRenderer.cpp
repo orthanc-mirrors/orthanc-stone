@@ -27,11 +27,11 @@
 #include "../Scene2D/TextSceneLayer.h"
 #include "../Fonts/GlyphBitmapAlphabet.h"
 #include "../Fonts/FontRenderer.h"
-#include <Core/Images/PngWriter.h>
-#include <Core/Toolbox.h>
 
-#include "Core/Images/Image.h"
-#include "Core/Images/ImageProcessing.h"
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
+#include <Images/PngWriter.h>
+#include <Toolbox.h>
 
 namespace OrthancStone
 {

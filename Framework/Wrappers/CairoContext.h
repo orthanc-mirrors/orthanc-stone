@@ -24,7 +24,7 @@
 #include "CairoSurface.h"
 #include "../StoneEnumerations.h"
 
-#include <Core/Images/Font.h>
+#include <Images/Font.h>
 
 namespace OrthancStone
 {

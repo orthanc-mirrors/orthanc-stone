@@ -23,17 +23,17 @@
 
 #include "../Toolbox/MessagingToolbox.h"
 
-#include <Core/Compression/GzipCompressor.h>
-#include <Core/Endianness.h>
-#include <Core/Images/Image.h>
-#include <Core/Images/ImageProcessing.h>
-#include <Core/Images/JpegReader.h>
-#include <Core/Images/PngReader.h>
-#include <Core/Images/PamReader.h>
-#include <Core/Logging.h>
-#include <Core/OrthancException.h>
-#include <Core/Toolbox.h>
-#include <Plugins/Samples/Common/FullOrthancDataset.h>
+#include <Compression/GzipCompressor.h>
+#include <Endianness.h>
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
+#include <Images/JpegReader.h>
+#include <Images/PngReader.h>
+#include <Images/PamReader.h>
+#include <Logging.h>
+#include <OrthancException.h>
+#include <Toolbox.h>
+#include <FullOrthancDataset.h>
 
 #include <boost/lexical_cast.hpp>
 

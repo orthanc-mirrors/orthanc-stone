@@ -22,7 +22,7 @@
 
 #include "ISceneLayer.h"
 
-#include <Core/Enumerations.h>
+#include <Enumerations.h>
 
 #include <stdint.h>
 

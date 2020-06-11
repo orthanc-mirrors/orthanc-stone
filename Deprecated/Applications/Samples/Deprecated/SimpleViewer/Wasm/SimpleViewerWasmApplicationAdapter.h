@@ -21,7 +21,7 @@
 #pragma once
 
 #include <string>
-#include <Framework/Messages/IObserver.h>
+#include "../../../../../../Framework/Messages/IObserver.h"
 #include <Platforms/Wasm/WasmPlatformApplicationAdapter.h>
 
 #include "../../SimpleViewerApplication.h"

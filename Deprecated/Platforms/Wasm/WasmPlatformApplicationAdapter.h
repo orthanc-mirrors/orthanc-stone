@@ -22,7 +22,7 @@
 #pragma once
 
 #include <string>
-#include <Framework/Messages/IObserver.h>
+#include "../../../Framework/Messages/IObserver.h"
 #include <Applications/IStoneApplication.h>
 
 namespace OrthancStone

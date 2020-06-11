@@ -419,8 +419,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateAngleMeasureCommand.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateAngleMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateAngleMeasureTracker.h
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateCircleMeasureCommand.cpp
-  ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateCircleMeasureCommand.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateCircleMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateCircleMeasureTracker.h
   ${ORTHANC_STONE_ROOT}/Framework/Scene2DViewport/CreateLineMeasureCommand.cpp
@@ -495,7 +493,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ImageToolbox.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/LinearAlgebra.h
-  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/PixelTestPatterns.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/PixelTestPatterns.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.h

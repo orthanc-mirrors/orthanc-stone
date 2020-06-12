@@ -10,6 +10,7 @@ include(${STONE_ROOT}/Resources/CMake/OrthancStoneParameters.cmake)
 include(${ORTHANC_ROOT}/Resources/CMake/DownloadPackage.cmake)
 
 set(ALLOW_DOWNLOADS ON)
+set(STANDALONE_BUILD ON)  # To have DCMTK_USE_EMBEDDED_DICTIONARIES defined
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   set(STATIC_BUILD ON)
 endif()

@@ -105,8 +105,12 @@ namespace OrthancStone
       command_(command),
       expectedContentType_(expectedContentType)
     {
-      LOG(TRACE) << "WebAssemblyOracle::FetchContext::FetchContext() | "
-                 << "receiver address = " << std::hex << &receiver;
+      if (Orthanc::Logging::IsTraceLevelEnabled())
+      {
+        // Calling "receiver.lock()" is expensive, hence the quick check if TRACE is enabled
+        LOG(TRACE) << "WebAssemblyOracle::FetchContext::FetchContext() | "
+                   << "receiver address = " << std::hex << receiver.lock().get();
+      }
 
       if (command == NULL)
       {
@@ -131,8 +135,13 @@ namespace OrthancStone
 
     void EmitMessage(const IMessage& message)
     {
-      LOG(TRACE) << "WebAssemblyOracle::FetchContext::EmitMessage receiver_ = "
-        << std::hex << &receiver_ << std::dec;
+      if (Orthanc::Logging::IsTraceLevelEnabled())
+      {
+        // Calling "receiver_.lock()" is expensive, hence the quick check if TRACE is enabled
+        LOG(TRACE) << "WebAssemblyOracle::FetchContext::EmitMessage receiver_ = "
+                   << std::hex << receiver_.lock().get() << std::dec;
+      }
+      
       oracle_.EmitMessage(receiver_, message);
     }
 
@@ -731,7 +740,7 @@ namespace OrthancStone
                                    IOracleCommand* command)
   {
     LOG(TRACE) << "WebAssemblyOracle::Schedule : receiver = "
-               << std::hex << &receiver;
+               << std::hex << receiver.get();
     
     std::unique_ptr<IOracleCommand> protection(command);
 

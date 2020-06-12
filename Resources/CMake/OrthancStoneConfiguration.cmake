@@ -30,10 +30,6 @@ else()
   endif()
 endif()
 
-# "BoostExtendedConfiguration.cmake" *must* be included before
-# "OrthancFrameworkConfiguration.cmake"
-include(${CMAKE_CURRENT_LIST_DIR}/BoostExtendedConfiguration.cmake)
-
 include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
 include_directories(
   ${ORTHANC_ROOT}/Core
@@ -96,6 +92,7 @@ endif()
 SET(ORTHANC_STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
 
 include(FindPkgConfig)
+include(${CMAKE_CURRENT_LIST_DIR}/BoostExtendedConfiguration.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/CairoConfiguration.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/FreetypeConfiguration.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/PixmanConfiguration.cmake)

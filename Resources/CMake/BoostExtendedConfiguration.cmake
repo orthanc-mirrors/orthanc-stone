@@ -35,5 +35,7 @@ if (BOOST_STATIC)
     #${BOOST_SOURCES_DIR}/libs/program_options/src/winmain.cpp
     )
   add_definitions(-DBOOST_PROGRAM_OPTIONS_NO_LIB)
+else()
+  list(APPEND ORTHANC_BOOST_COMPONENTS program_options)
 endif()
 

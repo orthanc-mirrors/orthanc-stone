@@ -29,9 +29,6 @@ set(ORTHANC_STONE_APPLICATION_RESOURCES
 include(${STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
 include(${STONE_ROOT}/Resources/CMake/Utilities.cmake)
 
-include_directories(${STONE_ROOT})
-include_directories(../../Common)
-
 add_definitions(
   -DORTHANC_ENABLE_LOGGING=1
   -DORTHANC_ENABLE_LOGGING_PLUGIN=0
@@ -53,4 +50,3 @@ add_executable(RtViewerSdl
   )
 
 target_link_libraries(RtViewerSdl ${DCMTK_LIBRARIES})
-

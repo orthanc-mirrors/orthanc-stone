@@ -58,9 +58,6 @@ set(ORTHANC_STONE_APPLICATION_RESOURCES
 # populate the ORTHANC_STONE_SOURCES CMake variable
 include(${STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
 
-include_directories(${STONE_ROOT})
-include_directories(../Common)
-
 add_library(OrthancStone STATIC
   ${ORTHANC_STONE_SOURCES}
   )

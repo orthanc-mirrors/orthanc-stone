@@ -44,8 +44,6 @@ SET(ORTHANC_SANDBOXED ON)
 # populate the ORTHANC_STONE_SOURCES CMake variable
 include(${STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
 
-include_directories(${STONE_ROOT})
-
 # Define the WASM module
 # ---------------------------------------------------------------
 add_executable(SingleFrameViewerWasm

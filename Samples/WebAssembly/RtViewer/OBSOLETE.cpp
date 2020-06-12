@@ -32,7 +32,7 @@
 #include "../../../Framework/Viewport/WebAssemblyViewport.h"
 #include "../../../Framework/Volumes/VolumeSceneLayerSource.h"
 
-#include <Core/OrthancException.h>
+#include <OrthancException.h>
 
 #include <emscripten/html5.h>
 #include <emscripten.h>

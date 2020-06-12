@@ -18,9 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "RtViewerApp.h"
-#include "RtViewerView.h"
-#include "SampleHelpers.h"
+#include "../../Common/RtViewerApp.h"
+#include "../../Common/RtViewerView.h"
+#include "../../Common/SampleHelpers.h"
 
 // Stone of Orthanc includes
 #include "../../../Framework/Loaders/WebAssemblyLoadersContext.h"
@@ -32,7 +32,7 @@
 #include "../../../Framework/Viewport/WebGLViewport.h"
 //#include "../../../Framework/OpenGL/WebAssemblyOpenGLContext.h"
 
-#include <Core/Toolbox.h>
+#include <Toolbox.h>
 
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>

@@ -24,10 +24,7 @@
 
 // Stone of Orthanc includes
 #include "../../../Framework/Loaders/WebAssemblyLoadersContext.h"
-#include "../../../Framework/Loaders/WebAssemblyLoadersContext.h"
 #include "../../../Framework/StoneException.h"
-#include "../../../Framework/StoneException.h"
-#include "../../../Framework/StoneInitialization.h"
 #include "../../../Framework/StoneInitialization.h"
 #include "../../../Framework/Viewport/WebGLViewport.h"
 //#include "../../../Framework/OpenGL/WebAssemblyOpenGLContext.h"

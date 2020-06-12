@@ -17,7 +17,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-if (BOOST_STATIC)
+if (STATIC_BUILD OR NOT USE_SYSTEM_BOOST)
   list(APPEND BOOST_EXTENDED_SOURCES
     ${BOOST_SOURCES_DIR}/libs/program_options/src/cmdline.cpp
     ${BOOST_SOURCES_DIR}/libs/program_options/src/config_file.cpp

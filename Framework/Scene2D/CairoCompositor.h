@@ -74,7 +74,7 @@ namespace OrthancStone
 
 #if ORTHANC_ENABLE_LOCALE == 1
     virtual void SetFont(size_t index,
-                         Orthanc::EmbeddedResources::FileResourceId resource,
+                         const std::string& ttf,
                          unsigned int fontSize,
                          Orthanc::Encoding codepage) ORTHANC_OVERRIDE;
 #endif

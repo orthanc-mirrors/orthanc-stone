@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "../OrthancStone.h"
+
 #if !defined(ORTHANC_ENABLE_WASM)
 #  error The macro ORTHANC_ENABLE_WASM must be defined
 #endif

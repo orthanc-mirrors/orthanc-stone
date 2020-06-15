@@ -23,8 +23,6 @@
 
 #include "ILayerStyleConfigurator.h"
 
-#include <EmbeddedResources.h>
-
 namespace OrthancStone
 {
   /**
@@ -43,8 +41,6 @@ namespace OrthancStone
 
   public:
     LookupTableStyleConfigurator();
-
-    void SetLookupTable(Orthanc::EmbeddedResources::FileResourceId resource);
 
     void SetLookupTable(const std::string& lut);
 

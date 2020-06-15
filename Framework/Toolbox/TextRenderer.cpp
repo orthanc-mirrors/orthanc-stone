@@ -35,13 +35,12 @@
 
 namespace OrthancStone
 {
-  Orthanc::ImageAccessor* TextRenderer::Render(Orthanc::EmbeddedResources::FileResourceId font,
+  Orthanc::ImageAccessor* TextRenderer::Render(const std::string& ttf,
                                                unsigned int fontSize,
-                                               const std::string& utf8String
-                                               )
+                                               const std::string& utf8String)
   {
     FontRenderer renderer;
-    renderer.LoadFont(font, fontSize);
+    renderer.LoadFont(ttf, fontSize);
 
     // add each char to be rendered to the alphabet
     std::unique_ptr<GlyphBitmapAlphabet> alphabet(new GlyphBitmapAlphabet);
@@ -76,12 +75,12 @@ namespace OrthancStone
   }
 
 
-  Orthanc::ImageAccessor* TextRenderer::RenderWithAlpha(Orthanc::EmbeddedResources::FileResourceId resource,
+  Orthanc::ImageAccessor* TextRenderer::RenderWithAlpha(const std::string& ttf,
                                                         unsigned int fontSize,
                                                         const std::string& utf8String,
                                                         uint8_t foreground)
   {
-    std::unique_ptr<Orthanc::ImageAccessor> renderedText8(Render(resource, fontSize, utf8String));
+    std::unique_ptr<Orthanc::ImageAccessor> renderedText8(Render(ttf, fontSize, utf8String));
     std::unique_ptr<Orthanc::Image> target(new Orthanc::Image(Orthanc::PixelFormat_RGBA32, renderedText8->GetWidth(), renderedText8->GetHeight(), true));
 
     Orthanc::ImageProcessing::Set(*target, foreground, foreground, foreground, *renderedText8);
@@ -92,14 +91,14 @@ namespace OrthancStone
   // currently disabled because the background is actually not transparent once we use the Cairo Compositor !
   //
   //  // renders text in color + a border with alpha in a RGBA32 image
-  //  Orthanc::ImageAccessor* TextRenderer::RenderWithAlpha(Orthanc::EmbeddedResources::FileResourceId resource,
+  //  Orthanc::ImageAccessor* TextRenderer::RenderWithAlpha(const std::string& ttf,
   //                                                        unsigned int fontSize,
   //                                                        const std::string& utf8String,
   //                                                        uint8_t foreground,
   //                                                        uint8_t borderColor)
   //  {
-  //    std::unique_ptr<Orthanc::ImageAccessor> renderedBorderAlpha(RenderWithAlpha(resource, fontSize, utf8String, borderColor));
-  //    std::unique_ptr<Orthanc::ImageAccessor> renderedTextAlpha(RenderWithAlpha(resource, fontSize, utf8String, foreground));
+  //    std::unique_ptr<Orthanc::ImageAccessor> renderedBorderAlpha(RenderWithAlpha(ttf, fontSize, utf8String, borderColor));
+  //    std::unique_ptr<Orthanc::ImageAccessor> renderedTextAlpha(RenderWithAlpha(ttf, fontSize, utf8String, foreground));
 
   //    unsigned int textWidth = renderedBorderAlpha->GetWidth();
   //    unsigned int textHeight = renderedBorderAlpha->GetHeight();

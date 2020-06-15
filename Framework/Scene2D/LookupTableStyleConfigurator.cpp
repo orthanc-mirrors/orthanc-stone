@@ -44,14 +44,6 @@ namespace OrthancStone
   {
   }
 
-  void LookupTableStyleConfigurator::SetLookupTable(Orthanc::EmbeddedResources::FileResourceId resource)
-  {
-    hasLut_ = true;
-    std::string tmp;
-    Orthanc::EmbeddedResources::GetFileResource(tmp, resource);
-    SetLookupTable(tmp);
-  }
-
   void LookupTableStyleConfigurator::SetLookupTable(const std::vector<uint8_t>& lut)
   {
     hasLut_ = true;

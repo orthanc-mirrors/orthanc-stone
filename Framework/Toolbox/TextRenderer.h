@@ -22,7 +22,6 @@
 #pragma once
 
 #include <Images/Image.h>
-#include <EmbeddedResources.h>
 
 namespace OrthancStone
 {
@@ -33,18 +32,18 @@ namespace OrthancStone
   {
   public:
     // simply renders text in GrayScale8 with a black background and a white text
-    static Orthanc::ImageAccessor* Render(Orthanc::EmbeddedResources::FileResourceId resource,
+    static Orthanc::ImageAccessor* Render(const std::string& ttf,
                                           unsigned int fontSize,
                                           const std::string& utf8String);
 
     // renders text in "color" with alpha in a RGBA32 image
-    static Orthanc::ImageAccessor* RenderWithAlpha(Orthanc::EmbeddedResources::FileResourceId resource,
+    static Orthanc::ImageAccessor* RenderWithAlpha(const std::string& ttf,
                                                    unsigned int fontSize,
                                                    const std::string& utf8String,
                                                    uint8_t foreground);
 
     //    // renders text in color + a border with alpha in a RGBA32 image
-    //    static Orthanc::ImageAccessor* RenderWithAlpha(Orthanc::EmbeddedResources::FileResourceId resource,
+    //    static Orthanc::ImageAccessor* RenderWithAlpha(const std::string& ttf,
     //                                                   unsigned int fontSize,
     //                                                   const std::string& utf8String,
     //                                                   uint8_t foreground,

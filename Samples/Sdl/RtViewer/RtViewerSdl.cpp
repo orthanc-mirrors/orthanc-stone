@@ -22,6 +22,8 @@
 #include "../../Common/RtViewerView.h"
 #include "../SdlHelpers.h"
 
+#include <EmbeddedResources.h>
+
 // Stone of Orthanc includes
 #include "../../../Framework/Loaders/GenericLoadersContext.h"
 #include "../../../Framework/OpenGL/OpenGLIncludes.h"
@@ -205,8 +207,11 @@ namespace OrthancStone
     ViewportController& controller = lock->GetController();
     Scene2D& scene = controller.GetScene();
 
+    std::string ttf;
+    Orthanc::EmbeddedResources::GetFileResource(ttf, Orthanc::EmbeddedResources::UBUNTU_FONT);
+    
     CairoCompositor compositor(canvasWidth, canvasHeight);
-    compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT, FONT_SIZE_0, Orthanc::Encoding_Latin1);
+    compositor.SetFont(0, ttf, FONT_SIZE_0, Orthanc::Encoding_Latin1);
     compositor.Refresh(scene);
 
     Orthanc::ImageAccessor canvas;

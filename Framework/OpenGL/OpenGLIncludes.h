@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "../OrthancStone.h"
+
 #if !defined(ORTHANC_ENABLE_OPENGL)
 #  error The macro ORTHANC_ENABLE_OPENGL must be defined
 #endif

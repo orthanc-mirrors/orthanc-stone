@@ -228,14 +228,14 @@ namespace OrthancStone
 
 #if ORTHANC_ENABLE_LOCALE == 1
   void OpenGLCompositor::SetFont(size_t index,
-                                 Orthanc::EmbeddedResources::FileResourceId resource,
+                                 const std::string& ttf,
                                  unsigned int fontSize,
                                  Orthanc::Encoding codepage)
   {
     if (!context_.IsContextLost())
     {
       FontRenderer renderer;
-      renderer.LoadFont(resource, fontSize);
+      renderer.LoadFont(ttf, fontSize);
 
       GlyphBitmapAlphabet dict;
       dict.LoadCodepage(renderer, codepage);

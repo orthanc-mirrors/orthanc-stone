@@ -28,6 +28,7 @@
 #include "../Toolbox/GeometryToolbox.h"
 #include "../Volumes/DicomVolumeImageMPRSlicer.h"
 
+#include <Compatibility.h>
 #include <Images/ImageProcessing.h>
 #include <OrthancException.h>
 
@@ -528,7 +529,7 @@ namespace OrthancStone
       boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
       bool progressiveQuality)
   {
-    std::auto_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext.Lock());
+    std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext.Lock());
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> obj(
         new OrthancSeriesVolumeProgressiveLoader(

@@ -24,8 +24,6 @@
 #include "Scene2D.h"
 #include "ScenePoint2D.h"
 
-#include <EmbeddedResources.h>
-
 namespace OrthancStone
 {
   class ICompositor : public boost::noncopyable
@@ -50,7 +48,7 @@ namespace OrthancStone
 
 #if ORTHANC_ENABLE_LOCALE == 1
     virtual void SetFont(size_t index,
-                         Orthanc::EmbeddedResources::FileResourceId resource,
+                         const std::string& ttf,
                          unsigned int fontSize,
                          Orthanc::Encoding codepage) = 0;
 #endif

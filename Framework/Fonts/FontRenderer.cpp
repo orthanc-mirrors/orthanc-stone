@@ -171,15 +171,6 @@ namespace OrthancStone
   }
 
   
-  void FontRenderer::LoadFont(Orthanc::EmbeddedResources::FileResourceId resource,
-                              unsigned int fontSize)
-  {
-    std::string content;
-    Orthanc::EmbeddedResources::GetFileResource(content, resource);
-    LoadFont(content, fontSize);
-  }
-
-  
   Glyph* FontRenderer::Render(uint32_t unicode)
   {
     return pimpl_->Render(unicode);

@@ -32,7 +32,6 @@ set(ENABLE_OPENSSL_ENGINES ON)
 set(ENABLE_PNG ON)
 set(ENABLE_SQLITE OFF)
 set(ENABLE_ZLIB ON)
-set(HAS_EMBEDDED_RESOURCES ON)
 
 
 #####################################################################

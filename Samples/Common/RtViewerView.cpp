@@ -24,6 +24,8 @@
 #include "RtViewerApp.h"
 #include "SampleHelpers.h"
 
+#include <EmbeddedResources.h>
+
 // Stone of Orthanc
 #include "../../Framework/Oracle/GetOrthancWebViewerJpegCommand.h"
 #include "../../Framework/Scene2D/CairoCompositor.h"
@@ -254,11 +256,10 @@ namespace OrthancStone
     // scaling.
     controller.FitContent(compositor.GetCanvasWidth(), compositor.GetCanvasHeight());
 
-
-    compositor.SetFont(0, Orthanc::EmbeddedResources::UBUNTU_FONT,
-                       FONT_SIZE_0, Orthanc::Encoding_Latin1);
-    compositor.SetFont(1, Orthanc::EmbeddedResources::UBUNTU_FONT,
-                       FONT_SIZE_1, Orthanc::Encoding_Latin1);
+    std::string ttf;
+    Orthanc::EmbeddedResources::GetFileResource(ttf, Orthanc::EmbeddedResources::UBUNTU_FONT);
+    compositor.SetFont(0, ttf, FONT_SIZE_0, Orthanc::Encoding_Latin1);
+    compositor.SetFont(1, ttf, FONT_SIZE_1, Orthanc::Encoding_Latin1);
   }
 
   void RtViewerView::SetInfoDisplayMessage(
@@ -293,8 +294,11 @@ namespace OrthancStone
     this->SetCtVolumeSlicer(ctLoader, style.release());
 
     {
+      std::string lut;
+      Orthanc::EmbeddedResources::GetFileResource(lut, Orthanc::EmbeddedResources::COLORMAP_HOT);
+
       std::unique_ptr<LookupTableStyleConfigurator> config(new LookupTableStyleConfigurator);
-      config->SetLookupTable(Orthanc::EmbeddedResources::COLORMAP_HOT);
+      config->SetLookupTable(lut);
 
       boost::shared_ptr<DicomVolumeImageMPRSlicer> tmp(new DicomVolumeImageMPRSlicer(doseVolume));
       this->SetDoseVolumeSlicer(tmp, config.release());

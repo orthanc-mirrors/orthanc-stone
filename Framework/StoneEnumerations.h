@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "OrthancFramework.h"
+
 #include <string>
 
 

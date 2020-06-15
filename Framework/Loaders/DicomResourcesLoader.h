@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "../OrthancStone.h"
+
 #if !defined(ORTHANC_ENABLE_DCMTK)
 #  error The macro ORTHANC_ENABLE_DCMTK must be defined
 #endif

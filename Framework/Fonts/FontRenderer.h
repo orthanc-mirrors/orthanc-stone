@@ -23,8 +23,6 @@
 
 #include "Glyph.h"
 
-#include <EmbeddedResources.h>
-
 #include <stdint.h>
 #include <boost/shared_ptr.hpp>
 
@@ -43,9 +41,6 @@ namespace OrthancStone
     void LoadFont(const std::string& fontContent,
                   unsigned int fontSize);
     
-    void LoadFont(Orthanc::EmbeddedResources::FileResourceId resource,
-                  unsigned int fontSize);
-
     Glyph* Render(uint32_t unicode);
   };
 }

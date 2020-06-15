@@ -155,7 +155,7 @@ This call uses the embedded `UBUNTU_FONT` resource that has been defined in
 the `CMakeLists.txt` file with:
 
 ```
-set(ORTHANC_STONE_APPLICATION_RESOURCES 
+EmbedResources(
   UBUNTU_FONT  ${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83/Ubuntu-R.ttf
 )
 ```

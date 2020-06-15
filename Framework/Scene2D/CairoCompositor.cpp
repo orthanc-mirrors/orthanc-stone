@@ -138,12 +138,12 @@ namespace OrthancStone
 
 #if ORTHANC_ENABLE_LOCALE == 1
   void CairoCompositor::SetFont(size_t index,
-                                Orthanc::EmbeddedResources::FileResourceId resource,
+                                const std::string& ttf,
                                 unsigned int fontSize,
                                 Orthanc::Encoding codepage)
   {
     FontRenderer renderer;
-    renderer.LoadFont(resource, fontSize);
+    renderer.LoadFont(ttf, fontSize);
 
     std::unique_ptr<GlyphBitmapAlphabet> alphabet(new GlyphBitmapAlphabet);
     alphabet->LoadCodepage(renderer, codepage);

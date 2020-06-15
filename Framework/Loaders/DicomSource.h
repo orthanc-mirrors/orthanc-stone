@@ -98,6 +98,13 @@ namespace OrthancStone
                                           const std::map<std::string, std::string>& headers,
                                           Orthanc::IDynamicObject* payload /* takes ownership */) const;
     
+    IOracleCommand* CreateDicomWebCommand(const std::string& uri,
+                                          Orthanc::IDynamicObject* payload /* takes ownership */) const
+    {
+      std::map<std::string, std::string> none;
+      return CreateDicomWebCommand(uri, none, none, payload);
+    }
+    
     void AutodetectOrthancFeatures(const std::string& system,
                                    const std::string& plugins);
 

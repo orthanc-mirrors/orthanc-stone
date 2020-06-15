@@ -77,7 +77,7 @@ namespace OrthancStone
     };
 
   public:
-    class ThumbnailLoadedMessage : public OriginMessage<SeriesThumbnailsLoader>
+    class SuccessMessage : public OriginMessage<SeriesThumbnailsLoader>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
@@ -88,11 +88,11 @@ namespace OrthancStone
       const Thumbnail&     thumbnail_;
 
     public:
-      ThumbnailLoadedMessage(const SeriesThumbnailsLoader& origin,
-                             const DicomSource& source,
-                             const std::string& studyInstanceUid,
-                             const std::string& seriesInstanceUid,
-                             const Thumbnail& thumbnail) :
+      SuccessMessage(const SeriesThumbnailsLoader& origin,
+                     const DicomSource& source,
+                     const std::string& studyInstanceUid,
+                     const std::string& seriesInstanceUid,
+                     const Thumbnail& thumbnail) :
         OriginMessage(origin),
         source_(source),
         studyInstanceUid_(studyInstanceUid),
@@ -130,6 +130,8 @@ namespace OrthancStone
       {
         return thumbnail_.GetMime();
       }
+
+      Orthanc::ImageAccessor* DecodeImage() const;
     };
 
   private:
@@ -184,7 +186,10 @@ namespace OrthancStone
         priority_ = priority;
       }
 
-      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& context);
+      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& context)
+      {
+        return SeriesThumbnailsLoader::Create(context, priority_);
+      }
     };
 
 
@@ -192,6 +197,10 @@ namespace OrthancStone
     {
       Clear();
     }
+
+
+    static boost::shared_ptr<SeriesThumbnailsLoader> Create(ILoadersContext::ILock& context,
+                                                            int priority);
 
     void SetThumbnailSize(unsigned int width,
                           unsigned int height);

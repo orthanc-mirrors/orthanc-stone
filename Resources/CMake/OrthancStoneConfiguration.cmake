@@ -92,7 +92,6 @@ endif()
 SET(ORTHANC_STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
 
 include(FindPkgConfig)
-include(${CMAKE_CURRENT_LIST_DIR}/BoostExtendedConfiguration.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/CairoConfiguration.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/FreetypeConfiguration.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/PixmanConfiguration.cmake)
@@ -521,7 +520,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   # Optional components
   ${SDL_SOURCES}
   ${QT_SOURCES}
-  ${BOOST_EXTENDED_SOURCES}
   ${GLEW_SOURCES}
   )
 

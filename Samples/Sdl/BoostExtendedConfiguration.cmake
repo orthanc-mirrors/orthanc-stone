@@ -18,7 +18,7 @@
 
 
 if (STATIC_BUILD OR NOT USE_SYSTEM_BOOST)
-  list(APPEND BOOST_EXTENDED_SOURCES
+  set(BOOST_EXTENDED_SOURCES
     ${BOOST_SOURCES_DIR}/libs/program_options/src/cmdline.cpp
     ${BOOST_SOURCES_DIR}/libs/program_options/src/config_file.cpp
     ${BOOST_SOURCES_DIR}/libs/program_options/src/convert.cpp
@@ -36,6 +36,5 @@ if (STATIC_BUILD OR NOT USE_SYSTEM_BOOST)
     )
   add_definitions(-DBOOST_PROGRAM_OPTIONS_NO_LIB)
 else()
-  list(APPEND ORTHANC_BOOST_COMPONENTS program_options)
+  link_libraries(boost_program_options)
 endif()
-

@@ -24,6 +24,7 @@
 #include <DicomFormat/DicomMap.h>
 #include <DicomFormat/DicomInstanceHasher.h>
 #include <Images/ImageProcessing.h>
+#include <Images/JpegReader.h>
 #include <Images/JpegWriter.h>
 #include <OrthancException.h>
 
@@ -71,6 +72,37 @@ namespace OrthancStone
   }
 
 
+  Orthanc::ImageAccessor* SeriesThumbnailsLoader::SuccessMessage::DecodeImage() const
+  {
+    if (GetType() != SeriesThumbnailType_Image)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
+    Orthanc::MimeType mime;
+    if (!Orthanc::LookupMimeType(mime, GetMime()))
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+                                      "Unsupported MIME type for thumbnail: " + GetMime());
+    }
+
+    switch (mime)
+    {
+      case Orthanc::MimeType_Jpeg:
+      {
+        std::unique_ptr<Orthanc::JpegReader> reader(new Orthanc::JpegReader);
+        reader->ReadFromMemory(GetEncodedImage());
+        return reader.release();
+      }
+
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+                                        "Cannot decode MIME type for thumbnail: " + GetMime());
+    }
+  }
+
+
+
   void SeriesThumbnailsLoader::AcquireThumbnail(const DicomSource& source,
                                                 const std::string& studyInstanceUid,
                                                 const std::string& seriesInstanceUid,
@@ -92,7 +124,7 @@ namespace OrthancStone
       found->second = protection.release();
     }
 
-    ThumbnailLoadedMessage message(*this, source, studyInstanceUid, seriesInstanceUid, *thumbnail);
+    SuccessMessage message(*this, source, studyInstanceUid, seriesInstanceUid, *thumbnail);
     BroadcastMessage(message);
   }
 
@@ -247,16 +279,12 @@ namespace OrthancStone
     virtual void HandleError()
     {
       // The DICOMweb wasn't able to generate a thumbnail, try to
-      // retrieve the SopClassUID tag using QIDO-RS
-
-      std::map<std::string, std::string> arguments, headers;
-      arguments["0020000D"] = GetStudyInstanceUid();
-      arguments["0020000E"] = GetSeriesInstanceUid();
-      arguments["includefield"] = "00080016";
+      // retrieve the SopClassUID tag using a call to "/metadata"
 
       std::unique_ptr<IOracleCommand> command(
         GetSource().CreateDicomWebCommand(
-          "/instances", arguments, headers, new DicomWebSopClassHandler(
+          "/studies/" + GetStudyInstanceUid() + "/series/" + GetSeriesInstanceUid() + "/metadata",
+          new DicomWebSopClassHandler(
             GetLoader(), GetSource(), GetStudyInstanceUid(), GetSeriesInstanceUid())));
       GetLoader()->Schedule(command.release());
     }
@@ -455,9 +483,10 @@ namespace OrthancStone
   }
     
   
-  boost::shared_ptr<IObserver> SeriesThumbnailsLoader::Factory::Create(ILoadersContext::ILock& stone)
+  boost::shared_ptr<SeriesThumbnailsLoader> SeriesThumbnailsLoader::Create(ILoadersContext::ILock& stone,
+                                                                           int priority)
   {
-    boost::shared_ptr<SeriesThumbnailsLoader> result(new SeriesThumbnailsLoader(stone.GetContext(), priority_));
+    boost::shared_ptr<SeriesThumbnailsLoader> result(new SeriesThumbnailsLoader(stone.GetContext(), priority));
     result->Register<GetOrthancImageCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
     result->Register<HttpCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
     result->Register<OracleCommandExceptionMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);

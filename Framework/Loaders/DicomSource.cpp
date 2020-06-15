@@ -153,7 +153,7 @@ namespace OrthancStone
         std::unique_ptr<HttpCommand> command(new HttpCommand);
         
         command->SetMethod(Orthanc::HttpMethod_Get);
-        command->SetUrl(webService_.GetUrl() + "/" + EncodeGetArguments(uri, arguments));
+        command->SetUrl(webService_.GetUrl() + EncodeGetArguments(uri, arguments));
         command->SetHttpHeaders(webService_.GetHttpHeaders());
 
         for (std::map<std::string, std::string>::const_iterator

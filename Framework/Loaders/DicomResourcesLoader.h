@@ -147,8 +147,14 @@ namespace OrthancStone
     class Factory : public ILoaderFactory
     {
     public:
-      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& stone);
+      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& stone)
+      {
+        return DicomResourcesLoader::Create(stone);
+      }
     };
+
+
+    static boost::shared_ptr<DicomResourcesLoader> Create(ILoadersContext::ILock& stone);
 
     void ScheduleGetDicomWeb(boost::shared_ptr<LoadedDicomResources> target,
                              int priority,

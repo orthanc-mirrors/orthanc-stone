@@ -57,8 +57,7 @@ public:
 
     {
       std::auto_ptr<ILoadersContext::ILock> lock(context.Lock());
-      DicomResourcesLoader::Factory f;
-      application->dicomLoader_ = boost::dynamic_pointer_cast<DicomResourcesLoader>(f.Create(*lock));
+      application->dicomLoader_ = DicomResourcesLoader::Create(*lock);
     }
 
     application->Register<DicomResourcesLoader::SuccessMessage>(*application->dicomLoader_, &SdlSimpleViewerApplication::Handle);

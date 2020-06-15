@@ -189,9 +189,7 @@ namespace OrthancStone
 
   boost::shared_ptr<IObserver> SeriesMetadataLoader::Factory::Create(ILoadersContext::ILock& context)
   {
-    DicomResourcesLoader::Factory factory;
-    boost::shared_ptr<DicomResourcesLoader> loader
-      (boost::dynamic_pointer_cast<DicomResourcesLoader>(factory.Create(context)));
+    boost::shared_ptr<DicomResourcesLoader> loader(DicomResourcesLoader::Create(context));
       
     boost::shared_ptr<SeriesMetadataLoader> obj(new SeriesMetadataLoader(loader));
     obj->Register<DicomResourcesLoader::SuccessMessage>(*loader, &SeriesMetadataLoader::Handle);

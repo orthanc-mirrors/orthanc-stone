@@ -79,9 +79,10 @@ namespace OrthancStone
                                                        unsigned int maxStandardPriority,
                                                        unsigned int maxLowPriority)
   {
+    oracle_.GetOracleObservable();
     scheduler_ = OracleScheduler::Create(oracle_, oracle_.GetOracleObservable(), oracle_,
                                          maxHighPriority, maxStandardPriority, maxLowPriority);
-    
+
     if (!scheduler_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);

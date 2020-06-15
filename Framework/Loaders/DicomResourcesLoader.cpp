@@ -602,7 +602,7 @@ namespace OrthancStone
   }
 
 
-  boost::shared_ptr<IObserver> DicomResourcesLoader::Factory::Create(ILoadersContext::ILock& stone)
+  boost::shared_ptr<DicomResourcesLoader> DicomResourcesLoader::Create(ILoadersContext::ILock& stone)
   {
     boost::shared_ptr<DicomResourcesLoader> result(new DicomResourcesLoader(stone.GetContext()));
     result->Register<HttpCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
@@ -614,7 +614,7 @@ namespace OrthancStone
     result->Register<ParseDicomSuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
 #endif
     
-    return boost::shared_ptr<IObserver>(result);
+    return result;
   }
 
 

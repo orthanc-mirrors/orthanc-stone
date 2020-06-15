@@ -200,7 +200,7 @@ namespace OrthancStone
       return new Orthanc::SingleValueObject<Type>(type);
     }
     
-    void HandleThumbnail(const SeriesThumbnailsLoader::ThumbnailLoadedMessage& message)
+    void HandleThumbnail(const SeriesThumbnailsLoader::SuccessMessage& message)
     {
       if (observer_.get() != NULL)
       {
@@ -326,7 +326,7 @@ namespace OrthancStone
         application->Register<DicomResourcesLoader::SuccessMessage>(
           *application->resourcesLoader_, &WebViewerLoaders::HandleLoadedResources);
 
-        application->Register<SeriesThumbnailsLoader::ThumbnailLoadedMessage>(
+        application->Register<SeriesThumbnailsLoader::SuccessMessage>(
           *application->thumbnailsLoader_, &WebViewerLoaders::HandleThumbnail);
 
         lock->AddLoader(application);

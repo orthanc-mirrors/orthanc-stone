@@ -34,7 +34,7 @@
 #  include "../../../Framework/Deprecated/Messages/LockingEmitter.h"
 #endif
 
-#include <Core/Compatibility.h>
+#include <Compatibility.h>
 
 namespace OrthancStone
 {

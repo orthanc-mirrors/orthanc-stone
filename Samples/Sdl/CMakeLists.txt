@@ -22,7 +22,7 @@ set(ENABLE_DCMTK ON)  # <==
 set(ENABLE_OPENGL ON)  #  <==
 set(ENABLE_WEB_CLIENT ON)
 set(ORTHANC_SANDBOXED OFF)
-
+  
 include(${STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
 include(${CMAKE_SOURCE_DIR}/BoostExtendedConfiguration.cmake)
 include(${CMAKE_SOURCE_DIR}/Utilities.cmake)

@@ -145,11 +145,12 @@ namespace OrthancStone
     // Maps a "Series Instance UID" to a thumbnail
     typedef std::map<std::string, Thumbnail*>  Thumbnails;
 
-    ILoadersContext&  context_;
-    Thumbnails      thumbnails_;
-    int             priority_;
-    unsigned int    width_;
-    unsigned int    height_;
+    ILoadersContext&       context_;
+    Thumbnails             thumbnails_;
+    int                    priority_;
+    unsigned int           width_;
+    unsigned int           height_;
+    std::set<std::string>  scheduledSeries_;
 
     void AcquireThumbnail(const DicomSource& source,
                           const std::string& studyInstanceUid,
@@ -215,5 +216,10 @@ namespace OrthancStone
                                const std::string& patientId,
                                const std::string& studyInstanceUid,
                                const std::string& seriesInstanceUid);
+
+    bool IsScheduledSeries(const std::string& seriesInstanceUid) const
+    {
+      return scheduledSeries_.find(seriesInstanceUid) != scheduledSeries_.end();
+    }
   };
 }

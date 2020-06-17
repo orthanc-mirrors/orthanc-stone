@@ -99,7 +99,7 @@ namespace OrthancStone
     public:
       Factory(LoadedDicomResources& instances);
 
-      Factory(const SeriesMetadataLoader::SeriesLoadedMessage& metadata);
+      Factory(const SeriesMetadataLoader::SuccessMessage& metadata);
 
       void SetComputeRange(bool computeRange)
       {

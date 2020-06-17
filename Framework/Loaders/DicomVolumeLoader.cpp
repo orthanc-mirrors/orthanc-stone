@@ -142,7 +142,7 @@ namespace OrthancStone
   {
   }
 
-  DicomVolumeLoader::Factory::Factory(const SeriesMetadataLoader::SeriesLoadedMessage& metadata) :
+  DicomVolumeLoader::Factory::Factory(const SeriesMetadataLoader::SuccessMessage& metadata) :
     framesFactory_(metadata.GetInstances()),
     computeRange_(false)
   {

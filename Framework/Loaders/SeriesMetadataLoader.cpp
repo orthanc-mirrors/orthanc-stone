@@ -69,8 +69,8 @@ namespace OrthancStone
         {
           series_[seriesInstanceUid] = message.GetResources();
 
-          SeriesLoadedMessage loadedMessage(*this, message.GetDicomSource(), studyInstanceUid,
-                                            seriesInstanceUid, *message.GetResources());
+          SuccessMessage loadedMessage(*this, message.GetDicomSource(), studyInstanceUid,
+                                       seriesInstanceUid, *message.GetResources());
           BroadcastMessage(loadedMessage);
         }
 
@@ -151,7 +151,7 @@ namespace OrthancStone
               else if (series->second->GetSize() == size->second)
               {
                 // The series is complete
-                SeriesLoadedMessage loadedMessage(
+                SuccessMessage loadedMessage(
                   *this, message.GetDicomSource(),
                   studyInstanceUid, seriesInstanceUid, *series->second);
                 loadedMessage.SetDicomDir(dicomDirPath_, dicomDir_);
@@ -170,7 +170,7 @@ namespace OrthancStone
   }
 
 
-  SeriesMetadataLoader::SeriesLoadedMessage::SeriesLoadedMessage(
+  SeriesMetadataLoader::SuccessMessage::SuccessMessage(
     const SeriesMetadataLoader& loader,
     const DicomSource& source,
     const std::string& studyInstanceUid,
@@ -187,7 +187,7 @@ namespace OrthancStone
   }
 
 
-  boost::shared_ptr<IObserver> SeriesMetadataLoader::Factory::Create(ILoadersContext::ILock& context)
+  boost::shared_ptr<SeriesMetadataLoader> SeriesMetadataLoader::Create(ILoadersContext::ILock& context)
   {
     boost::shared_ptr<DicomResourcesLoader> loader(DicomResourcesLoader::Create(context));
       

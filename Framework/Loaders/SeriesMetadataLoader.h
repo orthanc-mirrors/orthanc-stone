@@ -56,7 +56,7 @@ namespace OrthancStone
     void Handle(const DicomResourcesLoader::SuccessMessage& message);
 
   public:
-    class SeriesLoadedMessage : public OriginMessage<SeriesMetadataLoader>
+    class SuccessMessage : public OriginMessage<SeriesMetadataLoader>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
 
@@ -69,11 +69,11 @@ namespace OrthancStone
       boost::shared_ptr<LoadedDicomResources>  dicomDir_;
 
     public:
-      SeriesLoadedMessage(const SeriesMetadataLoader& loader,
-                          const DicomSource& source,
-                          const std::string& studyInstanceUid,
-                          const std::string& seriesInstanceUid,
-                          LoadedDicomResources& instances);
+      SuccessMessage(const SeriesMetadataLoader& loader,
+                     const DicomSource& source,
+                     const std::string& studyInstanceUid,
+                     const std::string& seriesInstanceUid,
+                     LoadedDicomResources& instances);
 
       const DicomSource& GetDicomSource() const
       {
@@ -128,8 +128,14 @@ namespace OrthancStone
     class Factory : public ILoaderFactory
     {
     public:
-      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& context);
+      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& context)
+      {
+        return SeriesMetadataLoader::Create(context);
+      }
     };
+
+
+    static boost::shared_ptr<SeriesMetadataLoader> Create(ILoadersContext::ILock& context);
 
   
     class Accessor : public boost::noncopyable

@@ -279,12 +279,16 @@ namespace OrthancStone
     virtual void HandleError()
     {
       // The DICOMweb wasn't able to generate a thumbnail, try to
-      // retrieve the SopClassUID tag using a call to "/metadata"
+      // retrieve the SopClassUID tag using QIDO-RS
 
+      std::map<std::string, std::string> arguments, headers;
+      arguments["0020000D"] = GetStudyInstanceUid();
+      arguments["0020000E"] = GetSeriesInstanceUid();
+      arguments["includefield"] = "00080016";
+      
       std::unique_ptr<IOracleCommand> command(
         GetSource().CreateDicomWebCommand(
-          "/studies/" + GetStudyInstanceUid() + "/series/" + GetSeriesInstanceUid() + "/metadata",
-          new DicomWebSopClassHandler(
+          "/instances", arguments, headers, new DicomWebSopClassHandler(
             GetLoader(), GetSource(), GetStudyInstanceUid(), GetSeriesInstanceUid())));
       GetLoader()->Schedule(command.release());
     }
@@ -548,6 +552,11 @@ namespace OrthancStone
                                                      const std::string& studyInstanceUid,
                                                      const std::string& seriesInstanceUid)
   {
+    if (IsScheduledSeries(seriesInstanceUid))
+    {
+      return;
+    }
+    
     if (source.IsDicomWeb())
     {
       if (!source.HasDicomWebRendered())
@@ -574,6 +583,8 @@ namespace OrthancStone
           uri, arguments, headers, new DicomWebThumbnailHandler(
             shared_from_this(), source, studyInstanceUid, seriesInstanceUid)));
       Schedule(command.release());
+
+      scheduledSeries_.insert(seriesInstanceUid);
     }
     else if (source.IsOrthanc())
     {
@@ -585,6 +596,8 @@ namespace OrthancStone
       command->AcquirePayload(new SelectOrthancInstanceHandler(
                                 shared_from_this(), source, studyInstanceUid, seriesInstanceUid));
       Schedule(command.release());
+
+      scheduledSeries_.insert(seriesInstanceUid);
     }
     else
     {

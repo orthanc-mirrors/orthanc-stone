@@ -109,6 +109,12 @@ namespace OrthancStone
                                   const Vector& a,
                                   const Vector& b);
 
+    void ComputeNormalFromCosines(Vector& normal,
+                                  const Vector& cosines);
+
+    bool ComputeNormal(Vector& normal,
+                       const Orthanc::DicomMap& dicom);
+
     inline float ComputeBilinearInterpolationUnitSquare(float x,
                                                         float y,
                                                         float f00,    // source(0, 0)

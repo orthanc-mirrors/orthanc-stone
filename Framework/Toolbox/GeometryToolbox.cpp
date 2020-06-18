@@ -534,5 +534,39 @@ namespace OrthancStone
            boost::numeric::ublas::prod(k, k) / (1 + cosine));
 #endif
     }
+
+    
+    void ComputeNormalFromCosines(Vector& normal,
+                                  const Vector& cosines)
+    {
+      if (cosines.size() != 6)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+      else
+      {
+        normal.resize(3);
+        normal[0] = cosines[1] * cosines[5] - cosines[2] * cosines[4];
+        normal[1] = cosines[2] * cosines[3] - cosines[0] * cosines[5];
+        normal[2] = cosines[0] * cosines[4] - cosines[1] * cosines[3];
+      }
+    }
+
+    
+    bool ComputeNormal(Vector& normal,
+                       const Orthanc::DicomMap& dicom)
+    {
+      Vector cosines;
+      if (LinearAlgebra::ParseVector(cosines, dicom, Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT) &&
+          cosines.size() == 6)
+      {
+        ComputeNormalFromCosines(normal, cosines);
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
   }
 }

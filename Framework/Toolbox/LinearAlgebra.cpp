@@ -195,7 +195,7 @@ namespace OrthancStone
     double DotProduct(const Vector& u, const Vector& v)
     {
       if (u.size() != 3 ||
-        v.size() != 3)
+          v.size() != 3)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }

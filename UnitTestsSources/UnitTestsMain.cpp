@@ -879,6 +879,7 @@ TEST(LoaderCache, NormalizeUuid)
   }
 }
 
+
 int main(int argc, char **argv)
 {
   Orthanc::Logging::Initialize();

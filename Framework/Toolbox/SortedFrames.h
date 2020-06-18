@@ -113,7 +113,12 @@ namespace OrthancStone
     {
     }
   
-    ~SortedFrames();
+    ~SortedFrames()
+    {
+      Clear();
+    }
+    
+    void Clear();
 
     const std::string& GetStudyInstanceUid() const
     {

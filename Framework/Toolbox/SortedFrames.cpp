@@ -123,13 +123,18 @@ namespace OrthancStone
   }
 
   
-  SortedFrames::~SortedFrames()
+  void SortedFrames::Clear()
   {
     for (size_t i = 0; i < instances_.size(); i++)
     {
       assert(instances_[i] != NULL);
       delete instances_[i];
     }
+
+    studyInstanceUid_.clear();
+    seriesInstanceUid_.clear();
+    frames_.clear();
+    sorted_ = true;
   }
 
 

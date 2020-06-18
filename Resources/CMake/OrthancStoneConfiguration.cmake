@@ -432,7 +432,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/StoneEnumerations.cpp
   ${ORTHANC_STONE_ROOT}/Framework/StoneException.h
   ${ORTHANC_STONE_ROOT}/Framework/StoneInitialization.cpp
-  
+
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/AffineTransform2D.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/AffineTransform2D.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/CoordinateSystem3D.cpp
@@ -471,6 +471,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/ShearWarpProjectiveTransform.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SlicesSorter.h
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SortedFrames.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SortedFrames.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SubpixelReader.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/SubvoxelReader.h
   ${ORTHANC_STONE_ROOT}/Framework/Toolbox/TextRenderer.cpp

@@ -236,7 +236,7 @@ namespace OrthancStone
     controller_.reset(new ViewportController(viewport));
 
     LOG(INFO) << "Initializing Stone viewport on HTML canvas: " 
-      << canvasId_;
+              << canvasId_;
 
     if (canvasId_.empty() ||
         canvasId_[0] == '#')
@@ -301,17 +301,17 @@ namespace OrthancStone
       emscripten_set_mousedown_callback(canvasCssSelector_.c_str(),
                                         reinterpret_cast<void*>(this),
                                         false,
-                                        OnMouseDown);
+                                        NULL);
 
       emscripten_set_mousemove_callback(canvasCssSelector_.c_str(),
                                         reinterpret_cast<void*>(this),
                                         false,
-                                        OnMouseMove);
+                                        NULL);
 
       emscripten_set_mouseup_callback(canvasCssSelector_.c_str(),
                                       reinterpret_cast<void*>(this),
                                       false,
-                                      OnMouseUp);
+                                      NULL);
     }
   }
   

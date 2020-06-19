@@ -25,6 +25,8 @@
 
 #include <Images/Image.h>
 
+#include <boost/math/special_functions/round.hpp>
+
 namespace OrthancStone
 {
   void WebAssemblyCairoViewport::GetCanvasSize(unsigned int& width,

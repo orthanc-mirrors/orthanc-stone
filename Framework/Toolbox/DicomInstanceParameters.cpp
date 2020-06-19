@@ -347,7 +347,7 @@ namespace OrthancStone
     }
     else
     {
-      LOG(ERROR) << "DicomInstanceParameters::GetDefaultWindowingCenter(): !data_.hasRescale_";
+      LOG(ERROR) << "DicomInstanceParameters::GetDefaultWindowingCenter(): no default windowing";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
@@ -361,7 +361,7 @@ namespace OrthancStone
     }
     else
     {
-      LOG(ERROR) << "DicomInstanceParameters::GetDefaultWindowingWidth(): !data_.hasRescale_";
+      LOG(ERROR) << "DicomInstanceParameters::GetDefaultWindowingWidth(): no default windowing";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }

@@ -43,6 +43,11 @@ namespace OrthancStone
       virtual unsigned int GetCanvasWidth() const = 0;
 
       virtual unsigned int GetCanvasHeight() const = 0;
+
+      // Getting the size of the canvas can be expensive, especially
+      // in WebAssembly => avoid calling this method too often
+      // (e.g. on each refresh)
+      virtual void RefreshCanvasSize() = 0;
     };
   }
 }

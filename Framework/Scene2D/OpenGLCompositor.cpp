@@ -187,7 +187,6 @@ namespace OrthancStone
     if (!context_.IsContextLost())
     {
       context_.MakeCurrent(); // this can throw if context lost!
-
       canvasWidth_ = context_.GetCanvasWidth();
       canvasHeight_ = context_.GetCanvasHeight();
 
@@ -244,4 +243,16 @@ namespace OrthancStone
     }
   }
 #endif
+
+
+  void OpenGLCompositor::RefreshCanvasSize()
+  {
+    if (!context_.IsContextLost())
+    {
+      context_.MakeCurrent(); // this can throw if context lost!
+      context_.RefreshCanvasSize();  // Difference with Refresh(scene)
+      canvasWidth_ = context_.GetCanvasWidth();
+      canvasHeight_ = context_.GetCanvasHeight();
+    }
+  }
 }

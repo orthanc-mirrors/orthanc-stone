@@ -33,6 +33,9 @@ namespace OrthancStone
     {
     }
 
+    // This function can be expensive (notably in wasm)
+    virtual void RefreshCanvasSize() = 0; 
+    
     virtual unsigned int GetCanvasWidth() const = 0;
 
     virtual unsigned int GetCanvasHeight() const = 0;

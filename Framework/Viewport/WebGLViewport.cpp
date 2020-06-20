@@ -63,7 +63,7 @@ namespace OrthancStone
   {
     try
     {
-      context_.UpdateSize();
+      context_.RefreshCanvasSize();
     }
     catch (const StoneException& e)
     {

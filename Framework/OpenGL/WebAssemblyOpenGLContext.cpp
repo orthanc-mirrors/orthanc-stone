@@ -240,7 +240,7 @@ namespace OrthancStone
       return pimpl_->GetCanvasHeight();
     }
 
-    void WebAssemblyOpenGLContext::UpdateSize()
+    void WebAssemblyOpenGLContext::RefreshCanvasSize()
     {
       assert(pimpl_.get() != NULL);
       pimpl_->UpdateSize();

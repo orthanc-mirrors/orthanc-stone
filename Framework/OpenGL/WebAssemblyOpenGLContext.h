@@ -71,7 +71,7 @@ namespace OrthancStone
       */
       //bool TryRecreate();
 
-      void UpdateSize();
+      virtual void RefreshCanvasSize() ORTHANC_OVERRIDE;
 
       const std::string& GetCanvasSelector() const;
 

@@ -69,6 +69,11 @@ namespace OrthancStone
     {
       window_.ToggleMaximize();
     }
+
+    virtual void RefreshCanvasSize() ORTHANC_OVERRIDE
+    {
+      // Nothing to do for SDL
+    }
   };
 }
 

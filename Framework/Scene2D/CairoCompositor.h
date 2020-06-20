@@ -59,6 +59,12 @@ namespace OrthancStone
       return canvas_;
     }
 
+    virtual void RefreshCanvasSize() ORTHANC_OVERRIDE
+    {
+      // The canvas size is constant in Cairo, except if
+      // "UpdateSize()" is called
+    }
+
     virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE
     {
       return canvas_.GetWidth();

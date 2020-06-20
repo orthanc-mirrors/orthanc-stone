@@ -243,7 +243,23 @@ namespace OrthancStone
     void WebAssemblyOpenGLContext::RefreshCanvasSize()
     {
       assert(pimpl_.get() != NULL);
-      pimpl_->UpdateSize();
+
+      try
+      {
+        pimpl_->UpdateSize();
+      }
+      catch (const StoneException& e)
+      {
+        // Ignore problems about the loss of the WebGL context (edge case)
+        if (e.GetErrorCode() == ErrorCode_WebGLContextLost)
+        {
+          return;
+        }
+        else
+        {
+          throw;
+        }
+      }
     }
 
     const std::string& WebAssemblyOpenGLContext::GetCanvasSelector() const

@@ -37,7 +37,10 @@ namespace OrthancStone
     virtual void Paint(ICompositor& compositor,
                        ViewportController& controller) ORTHANC_OVERRIDE;
     
-    virtual void UpdateSize(ICompositor& compositor) ORTHANC_OVERRIDE;
+    virtual void UpdateSize(ICompositor& compositor) ORTHANC_OVERRIDE
+    {
+      context_.RefreshCanvasSize();
+    }
 
   public:
     static boost::shared_ptr<WebGLViewport> Create(const std::string& canvasId, bool enableEmscriptenMouseEvents = true);

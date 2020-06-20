@@ -59,26 +59,6 @@ namespace OrthancStone
   }
     
 
-  void WebGLViewport::UpdateSize(ICompositor& compositor)
-  {
-    try
-    {
-      context_.RefreshCanvasSize();
-    }
-    catch (const StoneException& e)
-    {
-      // Ignore problems about the loss of the WebGL context (edge case)
-      if (e.GetErrorCode() == ErrorCode_WebGLContextLost)
-      {
-        return;
-      }
-      else
-      {
-        throw;
-      }
-    }
-  }
-
   WebGLViewport::WebGLViewport(const std::string& canvasId, bool enableEmscriptenMouseEvents) :
     WebAssemblyViewport(canvasId,enableEmscriptenMouseEvents),
     context_(GetCanvasCssSelector())

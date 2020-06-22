@@ -69,7 +69,7 @@ namespace OrthancStone
     struct Frame
     {
     private:
-      const Instance&  instance_;
+      const Instance*  instance_;
       unsigned int     frameIndex_;
 
     public:
@@ -78,7 +78,7 @@ namespace OrthancStone
 
       const Instance& GetInstance() const
       {
-        return instance_;
+        return *instance_;
       }
 
       unsigned int GetFrameIndex() const

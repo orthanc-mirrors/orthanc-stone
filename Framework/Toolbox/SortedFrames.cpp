@@ -81,7 +81,7 @@ namespace OrthancStone
   
   SortedFrames::Frame::Frame(const Instance& instance,
                              unsigned int frameIndex) :
-    instance_(instance),
+    instance_(&instance),
     frameIndex_(frameIndex)
   {
     if (frameIndex >= instance.GetNumberOfFrames())

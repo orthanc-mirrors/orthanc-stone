@@ -27,11 +27,6 @@
 #  error The macro ORTHANC_ENABLE_DCMTK must be defined
 #endif
 
-#if ORTHANC_ENABLE_DCMTK == 1
-#  include "../Oracle/ParseDicomFromFileCommand.h"
-#  include <DicomParsing/ParsedDicomDir.h>
-#endif
-
 #include "../Oracle/HttpCommand.h"
 #include "../Oracle/OracleCommandExceptionMessage.h"
 #include "../Oracle/OrthancRestApiCommand.h"
@@ -41,8 +36,19 @@
 #include "LoadedDicomResources.h"
 #include "OracleScheduler.h"
 
+namespace Orthanc
+{
+#if ORTHANC_ENABLE_DCMTK == 1
+  class ParsedDicomDir;
+#endif
+}
+
 namespace OrthancStone
 {
+#if ORTHANC_ENABLE_DCMTK == 1
+  class ParseDicomFromFileCommand;
+#endif
+  
   class DicomResourcesLoader :
     public ObserverBase<DicomResourcesLoader>,
     public IObservable

@@ -345,7 +345,8 @@ namespace OrthancStone
            reader.HasPixelData()))
       {
         // Reuse the DICOM file from the cache
-        ParseDicomSuccessMessage message(command, reader.GetDicom(), reader.GetFileSize(), reader.HasPixelData());
+        ParseDicomSuccessMessage message(command, command.GetSource(), reader.GetDicom(),
+                                         reader.GetFileSize(), reader.HasPixelData());
         emitter.EmitMessage(receiver, message);
         return;
       }
@@ -362,7 +363,8 @@ namespace OrthancStone
     
     {
       ParseDicomSuccessMessage message
-        (command, *parsed, static_cast<size_t>(fileSize), command.IsPixelDataIncluded());
+        (command, command.GetSource(), *parsed,
+         static_cast<size_t>(fileSize), command.IsPixelDataIncluded());
       emitter.EmitMessage(receiver, message);
     }
 
@@ -393,7 +395,8 @@ namespace OrthancStone
           reader.HasPixelData())
       {
         // Reuse the DICOM file from the cache
-        ParseDicomSuccessMessage message(command, reader.GetDicom(), reader.GetFileSize(), reader.HasPixelData());
+        ParseDicomSuccessMessage message(command, command.GetSource(), reader.GetDicom(),
+                                         reader.GetFileSize(), reader.HasPixelData());
         emitter.EmitMessage(receiver, message);
         return;
       }
@@ -421,7 +424,7 @@ namespace OrthancStone
     std::unique_ptr<Orthanc::ParsedDicomFile> parsed(ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, answerHeaders));
 
     {
-      ParseDicomSuccessMessage message(command, *parsed, fileSize,
+      ParseDicomSuccessMessage message(command, command.GetSource(), *parsed, fileSize,
                                        true /* pixel data always is included in WADO-RS */);
       emitter.EmitMessage(receiver, message);
     }

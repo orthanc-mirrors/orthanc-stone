@@ -73,4 +73,10 @@ namespace OrthancStone
   void ComputeMinMax(const Orthanc::ImageAccessor& img, 
                      double& minValue, double& maxValue);
 
+
+  class ImageToolbox
+  {
+  public:
+    static bool IsDecodingSupported(Orthanc::DicomTransferSyntax& transferSyntax);
+  };
 }

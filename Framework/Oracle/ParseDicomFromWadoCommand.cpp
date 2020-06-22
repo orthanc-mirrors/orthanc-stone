@@ -25,8 +25,10 @@
 
 namespace OrthancStone
 {
-  ParseDicomFromWadoCommand::ParseDicomFromWadoCommand(const std::string& sopInstanceUid,
+  ParseDicomFromWadoCommand::ParseDicomFromWadoCommand(const DicomSource& source,
+                                                       const std::string& sopInstanceUid,
                                                        IOracleCommand* restCommand) :
+    source_(source),
     sopInstanceUid_(sopInstanceUid),
     restCommand_(restCommand)
   {
@@ -46,7 +48,7 @@ namespace OrthancStone
   IOracleCommand* ParseDicomFromWadoCommand::Clone() const
   {
     assert(restCommand_.get() != NULL);
-    return new ParseDicomFromWadoCommand(sopInstanceUid_, restCommand_->Clone());
+    return new ParseDicomFromWadoCommand(source_, sopInstanceUid_, restCommand_->Clone());
   }
 
 
@@ -54,5 +56,48 @@ namespace OrthancStone
   {
     assert(restCommand_.get() != NULL);
     return *restCommand_;
+  }
+
+
+  ParseDicomFromWadoCommand* ParseDicomFromWadoCommand::Create(
+    const DicomSource& source,
+    const std::string& studyInstanceUid,
+    const std::string& seriesInstanceUid,
+    const std::string& sopInstanceUid,
+    bool transcode,
+    Orthanc::DicomTransferSyntax transferSyntax,
+    Orthanc::IDynamicObject* payload)
+  {
+    std::unique_ptr<Orthanc::IDynamicObject> protection(payload);
+    
+    const std::string uri = ("/studies/" + studyInstanceUid +
+                             "/series/" + seriesInstanceUid +
+                             "/instances/" + sopInstanceUid);
+
+    std::string s;
+    if (transcode)
+    {
+      s = Orthanc::GetTransferSyntaxUid(transferSyntax);      
+    }
+    else
+    {
+      s = "*";  // No transcoding, keep source transfer syntax
+    }
+    
+    std::map<std::string, std::string> arguments, headers;
+    headers["Accept"] = ("multipart/related; type=\"application/dicom\"; transfer-syntax=" + s);
+                         
+    std::unique_ptr<IOracleCommand> rest(
+      source.CreateDicomWebCommand(uri, arguments, headers, NULL));
+
+    std::unique_ptr<ParseDicomFromWadoCommand> command(
+      new ParseDicomFromWadoCommand(source, sopInstanceUid, rest.release()));
+
+    if (protection.get() != NULL)
+    {
+      command->AcquirePayload(protection.release());
+    }
+                            
+    return command.release();
   }
 }

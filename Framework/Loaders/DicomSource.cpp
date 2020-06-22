@@ -190,11 +190,11 @@ namespace OrthancStone
         {
           h[it->first] = it->second;
         }
-          
+        
         Json::Value body = Json::objectValue;
         body["Uri"] = uri;
         body["Arguments"] = args;
-        body["Headers"] = h;
+        body["HttpHeaders"] = h;
 
         std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
         command->SetMethod(Orthanc::HttpMethod_Post);

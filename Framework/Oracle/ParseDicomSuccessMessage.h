@@ -44,27 +44,37 @@ namespace Orthanc
 
 namespace OrthancStone
 {
+  class DicomSource;
+  
   class ParseDicomSuccessMessage : public OriginMessage<OracleCommandBase>
   {
     ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
     
   private:
+    const DicomSource&         source_;
     Orthanc::ParsedDicomFile&  dicom_;
     size_t                     fileSize_;
     bool                       hasPixelData_;
     
   public:
     ParseDicomSuccessMessage(const OracleCommandBase& command,
+                             const DicomSource& source,
                              Orthanc::ParsedDicomFile& dicom,
                              size_t fileSize,
                              bool hasPixelData) :
       OriginMessage(command),
+      source_(source),
       dicom_(dicom),
       fileSize_(fileSize),
       hasPixelData_(hasPixelData)
     {
     }
-      
+
+    const DicomSource& GetSource() const
+    {
+      return source_;
+    }
+
     Orthanc::ParsedDicomFile& GetDicom() const
     {
       return dicom_;

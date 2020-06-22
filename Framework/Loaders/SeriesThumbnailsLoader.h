@@ -21,6 +21,13 @@
 
 #pragma once
 
+#include "../OrthancStone.h"
+
+#if !defined(ORTHANC_ENABLE_DCMTK)
+#  error Macro ORTHANC_ENABLE_DCMTK must be defined
+#endif 
+
+
 #include "../Oracle/GetOrthancImageCommand.h"
 #include "../Oracle/HttpCommand.h"
 #include "../Oracle/OracleCommandExceptionMessage.h"
@@ -141,6 +148,10 @@ namespace OrthancStone
     class ThumbnailInformation;
     class OrthancSopClassHandler;
     class SelectOrthancInstanceHandler;
+
+#if ORTHANC_ENABLE_DCMTK == 1
+    class SelectDicomWebInstanceHandler;
+#endif
     
     // Maps a "Series Instance UID" to a thumbnail
     typedef std::map<std::string, Thumbnail*>  Thumbnails;
@@ -164,6 +175,10 @@ namespace OrthancStone
     void Handle(const OrthancRestApiCommand::SuccessMessage& message);
 
     void Handle(const GetOrthancImageCommand::SuccessMessage& message);
+
+#if ORTHANC_ENABLE_DCMTK == 1
+    void Handle(const ParseDicomSuccessMessage& message);
+#endif
 
     void Handle(const OracleCommandExceptionMessage& message);
 

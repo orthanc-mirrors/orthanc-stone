@@ -22,6 +22,7 @@
 #pragma once
 
 #include "OracleCommandBase.h"
+#include "../Loaders/DicomSource.h"
 
 #include <string>
 
@@ -30,24 +31,30 @@ namespace OrthancStone
   class ParseDicomFromFileCommand : public OracleCommandBase
   {
   private:
+    DicomSource  source_;
     std::string  path_;
     bool         pixelDataIncluded_;
 
     ParseDicomFromFileCommand(const ParseDicomFromFileCommand& other) :
+      source_(other.source_),
       path_(other.path_),
       pixelDataIncluded_(other.pixelDataIncluded_)
     {
     }
 
   public:
-    ParseDicomFromFileCommand(const std::string& path) :
+    ParseDicomFromFileCommand(const DicomSource& source,
+                              const std::string& path) :
+      source_(source),
       path_(path),
       pixelDataIncluded_(true)
     {
     }
 
-    ParseDicomFromFileCommand(const std::string& dicomDirPath,
+    ParseDicomFromFileCommand(const DicomSource& source,
+                              const std::string& dicomDirPath,
                               const std::string& file) :
+      source_(source),
       path_(GetDicomDirPath(dicomDirPath, file)),
       pixelDataIncluded_(true)
     {
@@ -64,6 +71,11 @@ namespace OrthancStone
     virtual IOracleCommand* Clone() const
     {
       return new ParseDicomFromFileCommand(*this);
+    }
+
+    const DicomSource& GetSource() const
+    {
+      return source_;
     }
 
     const std::string& GetPath() const

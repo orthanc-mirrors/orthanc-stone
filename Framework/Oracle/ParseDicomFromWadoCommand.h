@@ -22,6 +22,9 @@
 #pragma once
 
 #include "OracleCommandBase.h"
+#include "../Loaders/DicomSource.h"
+
+#include <Enumerations.h>
 
 #include <string>
 
@@ -30,11 +33,13 @@ namespace OrthancStone
   class ParseDicomFromWadoCommand : public OracleCommandBase
   {
   private:
-    std::string                    sopInstanceUid_;
+    DicomSource                      source_;
+    std::string                      sopInstanceUid_;
     std::unique_ptr<IOracleCommand>  restCommand_;
 
   public:
-    ParseDicomFromWadoCommand(const std::string& sopInstanceUid,
+    ParseDicomFromWadoCommand(const DicomSource& source,
+                              const std::string& sopInstanceUid,
                               IOracleCommand* restCommand);
 
     virtual Type GetType() const
@@ -44,11 +49,24 @@ namespace OrthancStone
 
     virtual IOracleCommand* Clone() const;
 
+    const DicomSource& GetSource() const
+    {
+      return source_;
+    }
+    
     const std::string& GetSopInstanceUid() const
     {
       return sopInstanceUid_;
     }
     
     const IOracleCommand& GetRestCommand() const;
+
+    static ParseDicomFromWadoCommand* Create(const DicomSource& source,
+                                             const std::string& studyInstanceUid,
+                                             const std::string& seriesInstanceUid,
+                                             const std::string& sopInstanceUid,
+                                             bool transcode,
+                                             Orthanc::DicomTransferSyntax transferSyntax,
+                                             Orthanc::IDynamicObject* payload);
   };
 }

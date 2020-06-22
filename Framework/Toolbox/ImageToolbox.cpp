@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#include "../OrthancStone.h"
 #include "ImageToolbox.h"
 
 #include "../StoneException.h"
@@ -32,6 +33,19 @@
 #include <boost/type_traits.hpp>
 
 #include <vector>
+
+#if !defined(ORTHANC_ENABLE_DCMTK)
+#  error ORTHANC_ENABLE_DCMTK is not defined
+#endif
+
+#if !defined(ORTHANC_ENABLE_DCMTK_JPEG)
+#  error ORTHANC_ENABLE_DCMTK_JPEG is not defined
+#endif
+
+#if !defined(ORTHANC_ENABLE_DCMTK_JPEG_LOSSLESS)
+#  error ORTHANC_ENABLE_DCMTK_JPEG_LOSSLESS is not defined
+#endif
+
 
 namespace OrthancStone
 {
@@ -288,5 +302,36 @@ namespace OrthancStone
     }
     ss << "total pix. count: " << pixCount << "\n";
     s = ss.str();
+  }
+
+
+  bool ImageToolbox::IsDecodingSupported(Orthanc::DicomTransferSyntax& transferSyntax)
+  {
+    switch (transferSyntax)
+    {
+      case Orthanc::DicomTransferSyntax_LittleEndianImplicit:
+      case Orthanc::DicomTransferSyntax_LittleEndianExplicit:
+      case Orthanc::DicomTransferSyntax_DeflatedLittleEndianExplicit:
+      case Orthanc::DicomTransferSyntax_BigEndianExplicit:
+      case Orthanc::DicomTransferSyntax_RLELossless:
+        return true;
+
+#if (ORTHANC_ENABLE_DCMTK == 1) && (ORTHANC_ENABLE_DCMTK_JPEG == 1)
+      case Orthanc::DicomTransferSyntax_JPEGProcess1:
+      case Orthanc::DicomTransferSyntax_JPEGProcess2_4:
+      case Orthanc::DicomTransferSyntax_JPEGProcess14:
+      case Orthanc::DicomTransferSyntax_JPEGProcess14SV1:
+        return true;
+#endif
+      
+#if (ORTHANC_ENABLE_DCMTK == 1) && (ORTHANC_ENABLE_DCMTK_JPEG_LOSSLESS == 1)
+      case Orthanc::DicomTransferSyntax_JPEGLSLossless:
+      case Orthanc::DicomTransferSyntax_JPEGLSLossy:
+        return true;
+#endif
+      
+      default:
+        return false;
+    }
   }
 }

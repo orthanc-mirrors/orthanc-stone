@@ -29,6 +29,12 @@
 static unsigned int BUCKET_SOP = 1;
 #endif
 
+#include "GetOrthancImageCommand.h"
+#include "GetOrthancWebViewerJpegCommand.h"
+#include "HttpCommand.h"
+#include "OrthancRestApiCommand.h"
+#include "ParseDicomFromWadoCommand.h"
+
 #include <OrthancException.h>
 #include <Toolbox.h>
 
@@ -305,7 +311,7 @@ namespace OrthancStone
                 (ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, headers));
 
               {
-                ParseDicomSuccessMessage message(command, *dicom, fileSize, true);
+                ParseDicomSuccessMessage message(command, command.GetSource(), *dicom, fileSize, true);
                 context->EmitMessage(message);
               }
 
@@ -674,7 +680,7 @@ namespace OrthancStone
           reader.HasPixelData())
       {
         // Reuse the DICOM file from the cache
-        ParseDicomSuccessMessage message(*protection, reader.GetDicom(),
+        ParseDicomSuccessMessage message(*protection, protection->GetSource(), reader.GetDicom(),
                                          reader.GetFileSize(), reader.HasPixelData());
         EmitMessage(receiver, message);
         return;

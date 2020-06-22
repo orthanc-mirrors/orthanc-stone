@@ -21,14 +21,25 @@
 
 #include "SeriesThumbnailsLoader.h"
 
+#include "LoadedDicomResources.h"
+#include "../Oracle/ParseDicomFromWadoCommand.h"
+#include "../Toolbox/ImageToolbox.h"
+
 #include <DicomFormat/DicomMap.h>
 #include <DicomFormat/DicomInstanceHasher.h>
+#include <Images/Image.h>
 #include <Images/ImageProcessing.h>
 #include <Images/JpegReader.h>
 #include <Images/JpegWriter.h>
 #include <OrthancException.h>
 
 #include <boost/algorithm/string/predicate.hpp>
+
+#if ORTHANC_ENABLE_DCMTK == 1
+#  include <DicomParsing/ParsedDicomFile.h>
+#  include <DicomParsing/Internals/DicomImageDecoder.h>
+#endif 
+
 
 static const unsigned int JPEG_QUALITY = 70;  // Only used for Orthanc source
 
@@ -111,7 +122,7 @@ namespace OrthancStone
     assert(thumbnail != NULL);
   
     std::unique_ptr<Thumbnail> protection(thumbnail);
-  
+
     Thumbnails::iterator found = thumbnails_.find(seriesInstanceUid);
     if (found == thumbnails_.end())
     {
@@ -120,10 +131,21 @@ namespace OrthancStone
     else
     {
       assert(found->second != NULL);
-      delete found->second;
-      found->second = protection.release();
+      if (protection->GetType() == SeriesThumbnailType_NotLoaded ||
+          protection->GetType() == SeriesThumbnailType_Unsupported)
+      {
+        // Don't replace an old entry if the current one is worse
+        return;
+      }
+      else
+      {
+        delete found->second;
+        found->second = protection.release();
+      }
     }
 
+    LOG(INFO) << "Thumbnail updated for series: " << seriesInstanceUid << ": " << thumbnail->GetType();
+    
     SuccessMessage message(*this, source, studyInstanceUid, seriesInstanceUid, *thumbnail);
     BroadcastMessage(message);
   }
@@ -284,7 +306,7 @@ namespace OrthancStone
       std::map<std::string, std::string> arguments, headers;
       arguments["0020000D"] = GetStudyInstanceUid();
       arguments["0020000E"] = GetSeriesInstanceUid();
-      arguments["includefield"] = "00080016";
+      arguments["includefield"] = "00080016";  // SOP Class UID
       
       std::unique_ptr<IOracleCommand> command(
         GetSource().CreateDicomWebCommand(
@@ -419,6 +441,52 @@ namespace OrthancStone
   };
 
     
+#if ORTHANC_ENABLE_DCMTK == 1
+  class SeriesThumbnailsLoader::SelectDicomWebInstanceHandler : public SeriesThumbnailsLoader::Handler
+  {
+  public:
+    SelectDicomWebInstanceHandler(boost::shared_ptr<SeriesThumbnailsLoader> loader,
+                                  const DicomSource& source,
+                                  const std::string& studyInstanceUid,
+                                  const std::string& seriesInstanceUid) :
+      Handler(loader, source, studyInstanceUid, seriesInstanceUid)
+    {
+    }
+
+    virtual void HandleSuccess(const std::string& body,
+                               const std::map<std::string, std::string>& headers)
+    {
+      Json::Value json;
+      Json::Reader reader;
+      if (!reader.parse(body, json) ||
+          json.type() != Json::arrayValue)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
+      }
+
+      LoadedDicomResources instances(Orthanc::DICOM_TAG_SOP_INSTANCE_UID);
+      instances.AddFromDicomWeb(json);
+      
+      std::string sopInstanceUid;      
+      if (instances.GetSize() == 0 ||
+          !instances.GetResource(0).LookupStringValue(sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
+      {
+        LOG(ERROR) << "Series without an instance: " << GetSeriesInstanceUid();
+      }
+      else
+      {
+        GetLoader()->Schedule(
+          ParseDicomFromWadoCommand::Create(
+            GetSource(), GetStudyInstanceUid(), GetSeriesInstanceUid(), sopInstanceUid, false,
+            Orthanc::DicomTransferSyntax_LittleEndianExplicit /* useless, as no transcoding */,
+            new ThumbnailInformation(
+              GetSource(), GetStudyInstanceUid(), GetSeriesInstanceUid())));
+      }
+    }
+  };
+#endif
+
+    
   void SeriesThumbnailsLoader::Schedule(IOracleCommand* command)
   {
     std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
@@ -443,6 +511,7 @@ namespace OrthancStone
   void SeriesThumbnailsLoader::Handle(const GetOrthancImageCommand::SuccessMessage& message)
   {
     assert(message.GetOrigin().HasPayload());
+    const ThumbnailInformation& info = dynamic_cast<ThumbnailInformation&>(message.GetOrigin().GetPayload());
 
     std::unique_ptr<Orthanc::ImageAccessor> resized(Orthanc::ImageProcessing::FitSize(message.GetImage(), width_, height_));
 
@@ -451,10 +520,89 @@ namespace OrthancStone
     writer.SetQuality(JPEG_QUALITY);
     writer.WriteToMemory(jpeg, *resized);
 
-    const ThumbnailInformation& info = dynamic_cast<ThumbnailInformation&>(message.GetOrigin().GetPayload());
     AcquireThumbnail(info.GetDicomSource(), info.GetStudyInstanceUid(),
                      info.GetSeriesInstanceUid(), new Thumbnail(jpeg, Orthanc::MIME_JPEG));      
   }
+
+
+#if ORTHANC_ENABLE_DCMTK == 1
+  void SeriesThumbnailsLoader::Handle(const ParseDicomSuccessMessage& message)
+  {
+    assert(message.GetOrigin().HasPayload());
+    const ParseDicomFromWadoCommand& origin =
+      dynamic_cast<const ParseDicomFromWadoCommand&>(message.GetOrigin());
+    const ThumbnailInformation& info = dynamic_cast<ThumbnailInformation&>(origin.GetPayload());
+
+    std::string tmp;
+    Orthanc::DicomTransferSyntax transferSyntax;
+    if (!message.GetDicom().LookupTransferSyntax(tmp))
+    {
+      
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                      "DICOM instance without a transfer syntax: " + origin.GetSopInstanceUid());
+    }
+    else if (!Orthanc::LookupTransferSyntax(transferSyntax, tmp) ||
+             !ImageToolbox::IsDecodingSupported(transferSyntax))
+    {
+      LOG(INFO) << "Asking the DICOMweb server to transcode, "
+                << "as I don't support this transfer syntax: " << tmp;
+
+      Schedule(ParseDicomFromWadoCommand::Create(
+                 origin.GetSource(), info.GetStudyInstanceUid(), info.GetSeriesInstanceUid(),
+                 origin.GetSopInstanceUid(), true, Orthanc::DicomTransferSyntax_LittleEndianExplicit,
+                 new ThumbnailInformation(
+                   origin.GetSource(), info.GetStudyInstanceUid(), info.GetSeriesInstanceUid())));
+    }
+    else
+    {
+      std::unique_ptr<Orthanc::ImageAccessor> frame(
+        Orthanc::DicomImageDecoder::Decode(message.GetDicom(), 0));
+
+      std::unique_ptr<Orthanc::ImageAccessor> thumbnail;
+
+      if (frame->GetFormat() == Orthanc::PixelFormat_RGB24)
+      {
+        thumbnail.reset(Orthanc::ImageProcessing::FitSize(*frame, width_, height_));
+      }
+      else
+      {
+        const unsigned int width = frame->GetWidth();
+        const unsigned int height = frame->GetHeight();
+
+        std::unique_ptr<Orthanc::ImageAccessor> converted(
+          new Orthanc::Image(Orthanc::PixelFormat_Float32, width, height, false));
+        Orthanc::ImageProcessing::Convert(*converted, *frame);
+
+        std::unique_ptr<Orthanc::ImageAccessor> resized(
+          Orthanc::ImageProcessing::FitSize(*converted, width, height));
+      
+        float minValue, maxValue;
+        Orthanc::ImageProcessing::GetMinMaxFloatValue(minValue, maxValue, *resized);
+        if (minValue + 0.01f < maxValue)
+        {
+          Orthanc::ImageProcessing::ShiftScale(*resized, -minValue, 255.0f / (maxValue - minValue), false);
+        }
+        else
+        {
+          Orthanc::ImageProcessing::Set(*resized, 0);
+        }
+
+        converted.reset(NULL);
+
+        thumbnail.reset(new Orthanc::Image(Orthanc::PixelFormat_Grayscale8, width, height, false));
+        Orthanc::ImageProcessing::Convert(*thumbnail, *resized);
+      }
+    
+      std::string jpeg;
+      Orthanc::JpegWriter writer;
+      writer.SetQuality(JPEG_QUALITY);
+      writer.WriteToMemory(jpeg, *thumbnail);
+
+      AcquireThumbnail(info.GetDicomSource(), info.GetStudyInstanceUid(),
+                       info.GetSeriesInstanceUid(), new Thumbnail(jpeg, Orthanc::MIME_JPEG));
+    }
+  }
+#endif
 
 
   void SeriesThumbnailsLoader::Handle(const OracleCommandExceptionMessage& message)
@@ -495,6 +643,11 @@ namespace OrthancStone
     result->Register<HttpCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
     result->Register<OracleCommandExceptionMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
     result->Register<OrthancRestApiCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
+
+#if ORTHANC_ENABLE_DCMTK == 1
+    result->Register<ParseDicomSuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
+#endif
+    
     return result;
   }
 
@@ -556,33 +709,48 @@ namespace OrthancStone
     {
       return;
     }
-    
+
     if (source.IsDicomWeb())
     {
       if (!source.HasDicomWebRendered())
       {
-        // TODO - Could use DCMTK here
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
-                                        "DICOMweb server is not able to generate renderings of DICOM series");
+#if ORTHANC_ENABLE_DCMTK == 1
+        // Issue a QIDO-RS request to select one of the instances in the series
+        std::map<std::string, std::string> arguments, headers;
+        arguments["0020000D"] = studyInstanceUid;
+        arguments["0020000E"] = seriesInstanceUid;
+        arguments["includefield"] = "00080018";  // SOP Instance UID is mandatory
+        
+        std::unique_ptr<IOracleCommand> command(
+          source.CreateDicomWebCommand(
+            "/instances", arguments, headers, new SelectDicomWebInstanceHandler(
+              GetSharedObserver(), source, studyInstanceUid, seriesInstanceUid)));
+        Schedule(command.release());
+#else
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+                                        "Stone of Orthanc was built without support to decode DICOM images");
+#endif
       }
-      
-      const std::string uri = ("/studies/" + studyInstanceUid +
-                               "/series/" + seriesInstanceUid + "/rendered");
+      else
+      {
+        const std::string uri = ("/studies/" + studyInstanceUid +
+                                 "/series/" + seriesInstanceUid + "/rendered");
 
-      std::map<std::string, std::string> arguments, headers;
-      arguments["viewport"] = (boost::lexical_cast<std::string>(width_) + "," +
-                               boost::lexical_cast<std::string>(height_));
+        std::map<std::string, std::string> arguments, headers;
+        arguments["viewport"] = (boost::lexical_cast<std::string>(width_) + "," +
+                                 boost::lexical_cast<std::string>(height_));
 
-      // Needed to set this header explicitly, as long as emscripten
-      // does not include macro "EMSCRIPTEN_FETCH_RESPONSE_HEADERS"
-      // https://github.com/emscripten-core/emscripten/pull/8486
-      headers["Accept"] = Orthanc::MIME_JPEG;
+        // Needed to set this header explicitly, as long as emscripten
+        // does not include macro "EMSCRIPTEN_FETCH_RESPONSE_HEADERS"
+        // https://github.com/emscripten-core/emscripten/pull/8486
+        headers["Accept"] = Orthanc::MIME_JPEG;
 
-      std::unique_ptr<IOracleCommand> command(
-        source.CreateDicomWebCommand(
-          uri, arguments, headers, new DicomWebThumbnailHandler(
-            shared_from_this(), source, studyInstanceUid, seriesInstanceUid)));
-      Schedule(command.release());
+        std::unique_ptr<IOracleCommand> command(
+          source.CreateDicomWebCommand(
+            uri, arguments, headers, new DicomWebThumbnailHandler(
+              GetSharedObserver(), source, studyInstanceUid, seriesInstanceUid)));
+        Schedule(command.release());
+      }
 
       scheduledSeries_.insert(seriesInstanceUid);
     }
@@ -594,7 +762,7 @@ namespace OrthancStone
       std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetUri("/series/" + hasher.HashSeries());
       command->AcquirePayload(new SelectOrthancInstanceHandler(
-                                shared_from_this(), source, studyInstanceUid, seriesInstanceUid));
+                                GetSharedObserver(), source, studyInstanceUid, seriesInstanceUid));
       Schedule(command.release());
 
       scheduledSeries_.insert(seriesInstanceUid);

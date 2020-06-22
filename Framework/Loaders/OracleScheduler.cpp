@@ -411,7 +411,7 @@ namespace OrthancStone
 
     ParseDicomSuccessMessage bis(
       dynamic_cast<const OracleCommandBase&>(payload.GetOriginalCommand()),
-      message.GetDicom(), message.GetFileSize(), message.HasPixelData());
+      message.GetSource(), message.GetDicom(), message.GetFileSize(), message.HasPixelData());
     emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }
 #endif

@@ -415,7 +415,7 @@ namespace OrthancStone
       std::string file;
       if (dicomDir_->LookupStringValue(file, sopInstanceUid, Orthanc::DICOM_TAG_REFERENCED_FILE_ID))
       {
-        std::unique_ptr<ParseDicomFromFileCommand> command(new ParseDicomFromFileCommand(dicomDirPath_, file));
+        std::unique_ptr<ParseDicomFromFileCommand> command(new ParseDicomFromFileCommand(source, dicomDirPath_, file));
         command->SetPixelDataIncluded(true);
         command->AcquirePayload(new Payload(source, index, sopInstanceUid, quality, protection.release()));
 
@@ -474,7 +474,7 @@ namespace OrthancStone
         const std::map<std::string, std::string> empty;
 
         std::unique_ptr<ParseDicomFromWadoCommand> command(
-          new ParseDicomFromWadoCommand(sopInstanceUid, source.CreateDicomWebCommand(uri, empty, empty, NULL)));
+          new ParseDicomFromWadoCommand(source, sopInstanceUid, source.CreateDicomWebCommand(uri, empty, empty, NULL)));
         command->AcquirePayload(payload.release());
 
         {

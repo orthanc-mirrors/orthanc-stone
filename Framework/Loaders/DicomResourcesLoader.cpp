@@ -27,6 +27,7 @@
 
 #if ORTHANC_ENABLE_DCMTK == 1
 #  include "../Oracle/ParseDicomFromFileCommand.h"
+#  include <DicomParsing/ParsedDicomDir.h>
 #  include <DicomParsing/ParsedDicomFile.h>
 #endif
 
@@ -864,7 +865,7 @@ namespace OrthancStone
     boost::shared_ptr<Orthanc::IDynamicObject> protection(userPayload);
     
 #if ORTHANC_ENABLE_DCMTK == 1
-    std::unique_ptr<ParseDicomFromFileCommand> command(new ParseDicomFromFileCommand(path));
+    std::unique_ptr<ParseDicomFromFileCommand> command(new ParseDicomFromFileCommand(source, path));
     command->SetPixelDataIncluded(includePixelData);
     command->AcquirePayload(new Handler(shared_from_this(), target, priority, source, protection));
 

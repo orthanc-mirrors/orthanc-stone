@@ -32,12 +32,8 @@
 #endif
 
 #include "../Messages/IObservable.h"
-#include "GetOrthancImageCommand.h"
-#include "GetOrthancWebViewerJpegCommand.h"
-#include "HttpCommand.h"
+#include "../Messages/IMessageEmitter.h"
 #include "IOracle.h"
-#include "OrthancRestApiCommand.h"
-#include "ParseDicomFromWadoCommand.h"
 
 #if ORTHANC_ENABLE_DCMTK == 1
 #  include "../Toolbox/ParsedDicomCache.h"
@@ -48,6 +44,12 @@
 
 namespace OrthancStone
 {
+  class GetOrthancImageCommand;
+  class GetOrthancWebViewerJpegCommand;
+  class HttpCommand;
+  class OrthancRestApiCommand;
+  class ParseDicomFromWadoCommand;
+  
   class WebAssemblyOracle :
     public IOracle,
     public IMessageEmitter

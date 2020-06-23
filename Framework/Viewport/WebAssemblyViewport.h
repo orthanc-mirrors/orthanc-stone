@@ -99,6 +99,7 @@ namespace OrthancStone
 
     ~WebAssemblyViewport();
 
+    virtual void UpdateCanvasSize();
 
     /**
     This method takes ownership

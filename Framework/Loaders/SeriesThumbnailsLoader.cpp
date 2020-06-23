@@ -562,19 +562,16 @@ namespace OrthancStone
 
       if (frame->GetFormat() == Orthanc::PixelFormat_RGB24)
       {
-        thumbnail.reset(Orthanc::ImageProcessing::FitSize(*frame, width_, height_));
+        thumbnail.reset(Orthanc::ImageProcessing::FitSizeKeepAspectRatio(*frame, width_, height_));
       }
       else
       {
-        const unsigned int width = frame->GetWidth();
-        const unsigned int height = frame->GetHeight();
-
         std::unique_ptr<Orthanc::ImageAccessor> converted(
-          new Orthanc::Image(Orthanc::PixelFormat_Float32, width, height, false));
+          new Orthanc::Image(Orthanc::PixelFormat_Float32, frame->GetWidth(), frame->GetHeight(), false));
         Orthanc::ImageProcessing::Convert(*converted, *frame);
 
         std::unique_ptr<Orthanc::ImageAccessor> resized(
-          Orthanc::ImageProcessing::FitSize(*converted, width, height));
+          Orthanc::ImageProcessing::FitSizeKeepAspectRatio(*converted, width_, height_));
       
         float minValue, maxValue;
         Orthanc::ImageProcessing::GetMinMaxFloatValue(minValue, maxValue, *resized);
@@ -589,7 +586,7 @@ namespace OrthancStone
 
         converted.reset(NULL);
 
-        thumbnail.reset(new Orthanc::Image(Orthanc::PixelFormat_Grayscale8, width, height, false));
+        thumbnail.reset(new Orthanc::Image(Orthanc::PixelFormat_Grayscale8, width_, height_, false));
         Orthanc::ImageProcessing::Convert(*thumbnail, *resized);
       }
     

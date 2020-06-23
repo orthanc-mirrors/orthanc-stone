@@ -29,6 +29,44 @@
 
 namespace OrthancStone
 {
+  /*
+
+  This classes stores volume images sliced across the Z axis, vertically, in the decreasing Z order :
+
+  +---------------+
+  |               |
+  |   SLICE N-1   |
+  |               |
+  +---------------+
+  |               |
+  |   SLICE N-2   |
+  |               |
+  +---------------+
+  |               |
+  |   SLICE N-3   |
+  |               |
+  .               .
+  ......     ......
+  .               .
+  |               |
+  |   SLICE   2   |
+  |               |
+  +---------------+
+  |               |
+  |   SLICE   1   |
+  |               |
+  +---------------+
+  |               |
+  |   SLICE   0   |
+  |               |
+  +---------------+
+
+  As you can see, if the 3d image has size width, height, depth, the 2d image has :
+  - 2d width  = 3d width
+  - 2d height = 3d height * 3d depth
+
+  */
+
   class ImageBuffer3D : public boost::noncopyable
   {
   private:

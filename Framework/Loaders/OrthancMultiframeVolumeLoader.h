@@ -90,9 +90,6 @@ namespace OrthancStone
 
     void SetUncompressedPixelData(const std::string& pixelData);
 
-    bool HasGeometry() const;
-    const OrthancStone::VolumeImageGeometry& GetImageGeometry() const;
-
   protected:
     OrthancMultiframeVolumeLoader(
       OrthancStone::ILoadersContext& loadersContext,
@@ -106,6 +103,9 @@ namespace OrthancStone
       float outliersHalfRejectionRate = 0.0005);
 
     virtual ~OrthancMultiframeVolumeLoader();
+
+    bool HasGeometry() const;
+    const OrthancStone::VolumeImageGeometry& GetImageGeometry() const;
 
     bool IsPixelDataLoaded() const
     {

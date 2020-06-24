@@ -41,6 +41,7 @@
 
 #include <WebServiceParameters.h>
 
+#include <Enumerations.h>
 
 namespace OrthancStone
 {

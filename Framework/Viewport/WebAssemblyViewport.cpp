@@ -288,6 +288,11 @@ namespace OrthancStone
     }
   }
 
+  void WebAssemblyViewport::UpdateCanvasSize()
+  {
+    UpdateSize(*compositor_);
+  }
+
   WebAssemblyViewport::~WebAssemblyViewport()
   {
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,

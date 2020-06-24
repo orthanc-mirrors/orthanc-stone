@@ -76,7 +76,7 @@ namespace OrthancStone
       return normal_;
     }
 
-    const Vector& GetOrigin() const
+    const Vector& GetOrigin() const  // This is the "Image Position Patient" tag
     {
       return origin_;
     }

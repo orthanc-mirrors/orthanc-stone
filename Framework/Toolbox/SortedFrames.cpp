@@ -21,9 +21,10 @@
 
 #include "SortedFrames.h"
 
-#include <OrthancException.h>
-
 #include "GeometryToolbox.h"
+
+#include <OrthancException.h>
+#include <Toolbox.h>
 
 namespace OrthancStone
 {
@@ -44,6 +45,17 @@ namespace OrthancStone
     else
     {
       numberOfFrames_ = 1;
+    }
+
+    std::string photometric;
+    if (tags.LookupStringValue(photometric, Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION, false))
+    {
+      Orthanc::Toolbox::StripSpaces(photometric);
+      monochrome1_ = (photometric == "MONOCHROME1");
+    }
+    else
+    {
+      monochrome1_ = false;
     }
 
     hasPosition_ = (

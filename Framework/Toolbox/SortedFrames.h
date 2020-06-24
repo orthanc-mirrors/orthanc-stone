@@ -35,8 +35,9 @@ namespace OrthancStone
       Orthanc::DicomMap  tags_;
       std::string        sopInstanceUid_;
       unsigned int       numberOfFrames_;
-      Vector             normal_;
-      Vector             position_;
+      Vector             normal_;    // Only used in "Sort()"
+      Vector             position_;  // Only used in "Sort()"
+      bool               monochrome1_;
 
     public:
       Instance(const Orthanc::DicomMap& tags);
@@ -64,6 +65,11 @@ namespace OrthancStone
       const Vector& GetNormal() const;
 
       const Vector& GetPosition() const;
+
+      bool IsMonochrome1() const
+      {
+        return monochrome1_;
+      }
     };
 
     struct Frame
@@ -164,14 +170,19 @@ namespace OrthancStone
       return GetFrame(index).GetInstance().GetSopInstanceUid();
     }
 
-    const unsigned int GetFrameSiblingsCount(size_t index) const
+    unsigned int GetFrameSiblingsCount(size_t index) const
     {
       return GetFrame(index).GetInstance().GetNumberOfFrames();
     }
 
-    const unsigned int GetFrameIndex(size_t index) const
+    unsigned int GetFrameIndex(size_t index) const
     {
       return GetFrame(index).GetFrameIndex();
+    }
+
+    bool IsFrameMonochrome1(size_t index) const
+    {
+      return GetFrame(index).GetInstance().IsMonochrome1();
     }
 
     void Sort();

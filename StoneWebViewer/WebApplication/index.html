@@ -1,0 +1,488 @@
+<!doctype html>
+<html class="wv-html">
+  <head>
+    <title>Stone Web Viewer</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+    <link rel="stylesheet" href="app.css">
+
+    <!-- https://stackoverflow.com/a/16863182/881731 -->
+    <style>
+      .tooltip {
+      position: fixed;
+      }
+    </style>
+
+    <!-- Fix if Bootstrap CSS is not used -->
+    <!--style>
+        *,
+        *::before,
+        *::after {
+        box-sizing: border-box;
+        }
+        </style-->
+  </head>
+  <body class="wv-body">
+    <div id="wv">
+      <div class="wvLoadingScreen" v-show="!ready">
+        <span class="wvLoadingSpinner">
+          <div class="bounce1"></div>
+          <div class="bounce2"></div>
+          <div class="bounce3"></div>
+        </span>
+      </div>
+
+      <div class="fluid-height fluid-width" v-show="ready">
+
+        <div class="wvWarning wvPrintExclude" v-show="showWarning">
+          <div class="wvWarning-content clearfix">
+            <span class="wvWarning-text">
+              <h2 class="mb10"><i class="fa fa-exclamation-triangle wvWarning-icon mr5"></i>Warning!</h2>
+              <p class="mn mb10" style="color:#000">
+                You browser is not supported. You might expect
+                inconsistent behaviours and must not use the viewer to
+                produce a diagnostic.
+              </p>
+            </span> 
+          </div>
+          <div class="text-right mb10 mr10">
+            <button class="btn btn-primary" @click="showWarning=false">OK</button>
+          </div>
+        </div>
+
+
+        <div class="wvLayoutLeft wvLayoutLeft--closed" v-show="!leftVisible">
+          <div class="wvLayoutLeft__actions--outside" style="z-index:10">
+            <button class="wvLayoutLeft__action button__base wh__25 lh__25 text-center"
+                    @click="leftVisible = true">
+              <i class="fa fa-angle-double-right"></i>
+            </button>
+          </div>
+        </div>
+
+
+        <div class="wvLayoutLeft" v-show="leftVisible"
+             v-bind:class="{ 'wvLayoutLeft--small': leftMode == 'small' }" 
+             >
+          <div class="wvLayoutLeft__actions" style="z-index:10">
+            <button class="wvLayoutLeft__action button__base wh__25 lh__25 text-center"
+                    @click="leftVisible = false">
+              <i class="fa fa-angle-double-left"></i>
+            </button>
+          </div>
+          <div class="wvLayoutLeft__content">
+            <div class="wvLayoutLeft__contentTop">
+              <div class="float__left dropdown" style="max-width: calc(100% - 4.5rem); height:4.5rem !important" v-show="leftMode != 'small'">
+                <button type="button" class="wvButton--border" data-toggle="dropdown">
+                  {{ getSelectedStudies }}
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu checkbox-menu allow-focus">
+                  <li v-for="study in studies"
+                      v-bind:class="{ active: study.selected }" 
+                      @click="study.selected = !study.selected">
+                    <a>
+                      {{ study.tags['0008,1030'] }}
+                      <span v-if="study.selected">&nbsp;<i class="fa fa-check"></i></span>
+                    </a> 
+                  </li>
+                </ul>
+              </div>
+
+              <div class="float__right wvButton" v-if="leftMode == 'grid'" @click="leftMode = 'full'">
+                <i class="fa fa-th-list"></i>
+              </div>
+              <div class="float__right wvButton" v-if="leftMode == 'full'" @click="leftMode = 'small'">
+                <i class="fa fa-ellipsis-v"></i>
+              </div>
+              <div class="float__right wvButton" v-if="leftMode == 'small'" @click="leftMode = 'grid'">
+                <i class="fa fa-th"></i>
+              </div>
+
+              <p class="clear disclaimer mbn">For patients, teachers and researchers.</p>
+            </div>        
+            <div class="wvLayoutLeft__contentMiddle">
+
+              <div v-for="study in studies">
+                <div v-if="study.selected">
+                  <div v-bind:class="'wvStudyIsland--' + study.color">
+                    <div v-bind:class="'wvStudyIsland__header--' + study.color">
+                      <!-- Actions -->
+                      <div class="wvStudyIsland__actions"
+                           v-bind:class="{ 'wvStudyIsland__actions--oneCol': leftMode == 'small' }">
+                        <a class="wvButton">
+                          <!-- download --> 
+                          <i class="fa fa-download"></i>
+                        </a>
+                      </div>
+                      
+                      <!-- Title -->
+                      {{ study.tags['0008,1030'] }}
+                      <br/>
+                      <small>{{ study.tags['0008,0020'] }}</small>
+                    </div>
+
+                    <div class="wvStudyIsland__main">
+                      <ul class="wvSerieslist">
+                        <li class="wvSerieslist__seriesItem"
+                            v-bind:class="{ highlighted : GetActiveSeries().includes(series[seriesIndex].tags['0020,000e']), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
+                            v-on:dragstart="SeriesDragStart($event, seriesIndex)"
+                            v-on:click="ClickSeries(seriesIndex)"
+                            v-for="seriesIndex in study.series">
+                          <div class="wvSerieslist__picture" style="z-index:0"
+                               draggable="true"
+                               v-if="series[seriesIndex].type != stone.ThumbnailType.UNKNOWN"
+                               >
+                            <div v-if="series[seriesIndex].type == stone.ThumbnailType.LOADING">
+                              <img src="img/loading.gif"
+                                   style="vertical-align:baseline"
+                                   width="65px" height="65px"
+                                   />
+                            </div>
+
+                            <i v-if="series[seriesIndex].type == stone.ThumbnailType.PDF"
+                               class="wvSerieslist__placeholderIcon fa fa-file-text"></i>
+
+                            <i v-if="series[seriesIndex].type == stone.ThumbnailType.VIDEO"
+                               class="wvSerieslist__placeholderIcon fa fa-video-camera"></i>
+
+                            
+                            <div v-if="[stone.ThumbnailType.IMAGE, stone.ThumbnailType.NO_PREVIEW].includes(series[seriesIndex].type)"
+                                 class="wvSerieslist__placeholderIcon"
+                                 v-bind:title="leftMode == 'full' ? null : '[' + series[seriesIndex].tags['0008,0060'] + '] ' + series[seriesIndex].tags['0008,103e']">
+                              <i v-if="series[seriesIndex].type == stone.ThumbnailType.NO_PREVIEW"
+                                 class="fa fa-eye-slash"></i>
+
+                              <img v-if="series[seriesIndex].type == stone.ThumbnailType.IMAGE"
+                                   v-bind:src="series[seriesIndex].thumbnail"
+                                   style="vertical-align:baseline"
+                                   width="65px" height="65px"
+                                   v-bind:title="leftMode == 'full' ? null : '[' + series[seriesIndex].tags['0008,0060'] + '] ' + series[seriesIndex].tags['0008,103e']"
+                                   />
+                              
+                              <div v-bind:class="'wvSerieslist__badge--' + study.color"
+                                   v-if="'length' in series[seriesIndex]">{{ series[seriesIndex].length }}</div>
+                            </div>
+                          </div>
+
+                          <div v-if="leftMode == 'full'" class="wvSerieslist__information"
+                               draggable="true"
+                               v-on:dragstart="SeriesDragStart($event, seriesIndex)"
+                               v-on:click="ClickSeries(seriesIndex)">
+                            <p class="wvSerieslist__label">
+                              [{{ series[seriesIndex].tags['0008,0060'] }}]
+                              {{ series[seriesIndex].tags['0008,103e'] }}
+                            </p>
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>        
+            <div class="wvLayoutLeft__contentBottom">
+            </div>        
+          </div>
+        </div>
+        <div class="wvLayout__main"
+             v-bind:class="{ 'wvLayout__main--smallleftpadding': leftVisible && leftMode == 'small', 'wvLayout__main--leftpadding': leftVisible && leftMode != 'small' }" 
+             >
+
+          <div class="wvToolbar wvToolbar--top">
+            <div class="ng-scope inline-object">
+              <div class="tbGroup">
+                <div class="tbGroup__toggl">
+                  <button class="wvButton"
+                          v-bind:class="{ 'wvButton--underline' : !viewportLayoutButtonsVisible }"
+                          @click="viewportLayoutButtonsVisible = !viewportLayoutButtonsVisible">
+                    <i class="fa fa-th"></i>
+                  </button>
+                </div>
+                
+                <div class="tbGroup__buttons--bottom" v-show="viewportLayoutButtonsVisible">
+                  <div class="inline-object">
+                    <button class="wvButton" @click="SetViewportLayout('1x1')">
+                      <img src="img/grid1x1.png" style="width:1em;height:1em" />
+                    </button>
+                  </div>
+                  <div class="inline-object">
+                    <button class="wvButton" @click="SetViewportLayout('2x1')">
+                      <img src="img/grid2x1.png" style="width:1em;height:1em" />
+                    </button>
+                  </div>
+                  <div class="inline-object">
+                    <button class="wvButton" @click="SetViewportLayout('1x2')">
+                      <img src="img/grid1x2.png" style="width:1em;height:1em" />
+                    </button>
+                  </div>
+                  <div class="inline-object">
+                    <button class="wvButton" @click="SetViewportLayout('2x2')">
+                      <img src="img/grid2x2.png" style="width:1em;height:1em" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!--div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center active">
+                <i class="fa fa-hand-pointer-o"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center">
+                <i class="fa fa-search"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center">
+                <i class="fa fa-arrows"></i>
+              </button>
+            </div-->
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      v-on:click="InvertContrast()">
+                <i class="fa fa-adjust"></i>
+              </button>
+            </div>
+            
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center" id="windowing-popover">
+                <i class="fa fa-sun-o"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      v-bind:class="{ 'active' : showInfo }"
+                      v-on:click="showInfo = !showInfo">
+                <i class="fa fa-info-circle"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      v-bind:class="{ 'active' : showReferenceLines }"
+                      v-on:click="showReferenceLines = !showReferenceLines">
+                <i class="fa fa-bars"></i>
+              </button>
+            </div>
+          </div>
+
+          
+          <div class="wvLayout__splitpane--toolbarAtTop">
+            <div id="viewport" class="wvSplitpane">
+              <viewport v-on:updated-series="SetViewportSeries(1, $event)"
+                        v-on:selected-viewport="activeViewport=1"
+                        v-show="viewport1Visible"
+                        canvas-id="canvas1"
+                        v-bind:series="viewport1Series"
+                        v-bind:left="viewport1Left"
+                        v-bind:top="viewport1Top"
+                        v-bind:width="viewport1Width"
+                        v-bind:height="viewport1Height"
+                        v-bind:quality="viewport1Quality"
+                        v-bind:current-frame="viewport1CurrentFrame"
+                        v-bind:frames-count="viewport1FramesCount"
+                        v-bind:show-info="showInfo"
+                        v-bind:active="activeViewport==1"></viewport>
+              <viewport v-on:updated-series="SetViewportSeries(2, $event)"
+                        v-on:selected-viewport="activeViewport=2"
+                        v-show="viewport2Visible"
+                        canvas-id="canvas2"
+                        v-bind:series="viewport2Series"
+                        v-bind:left="viewport2Left"
+                        v-bind:top="viewport2Top"
+                        v-bind:width="viewport2Width"
+                        v-bind:height="viewport2Height"
+                        v-bind:quality="viewport2Quality"
+                        v-bind:current-frame="viewport2CurrentFrame"
+                        v-bind:frames-count="viewport2FramesCount"
+                        v-bind:show-info="showInfo"
+                        v-bind:active="activeViewport==2"></viewport>
+              <viewport v-on:updated-series="SetViewportSeries(3, $event)"
+                        v-on:selected-viewport="activeViewport=3"
+                        v-show="viewport3Visible"
+                        canvas-id="canvas3"
+                        v-bind:series="viewport3Series"
+                        v-bind:left="viewport3Left"
+                        v-bind:top="viewport3Top"
+                        v-bind:width="viewport3Width"
+                        v-bind:height="viewport3Height"
+                        v-bind:quality="viewport3Quality"
+                        v-bind:current-frame="viewport3CurrentFrame"
+                        v-bind:frames-count="viewport3FramesCount"
+                        v-bind:show-info="showInfo"
+                        v-bind:active="activeViewport==3"></viewport>
+              <viewport v-on:updated-series="SetViewportSeries(4, $event)"
+                        v-on:selected-viewport="activeViewport=4"
+                        v-show="viewport4Visible"
+                        canvas-id="canvas4"
+                        v-bind:series="viewport4Series"
+                        v-bind:left="viewport4Left"
+                        v-bind:top="viewport4Top"
+                        v-bind:width="viewport4Width"
+                        v-bind:height="viewport4Height"
+                        v-bind:quality="viewport4Quality"
+                        v-bind:current-frame="viewport4CurrentFrame"
+                        v-bind:frames-count="viewport4FramesCount"
+                        v-bind:show-info="showInfo"
+                        v-bind:active="activeViewport==4"></viewport>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+
+    <script type="text/x-template" id="windowing-content">
+      <p class="wvToolbar__windowingPresetConfigNotice">
+        Click on the button to toggle the windowing tool or apply a preset to the selected viewport.
+      </p>
+
+      <ul class="wvToolbar__windowingPresetList">
+        <li class="wvToolbar__windowingPresetListItem">
+          <a href="#" onclick="app.SetDefaultWindowing()">
+            Default
+          </a>
+        </li>
+        <li class="wvToolbar__windowingPresetListItem">
+          <a href="#" onclick="app.SetWindowing(-400, 1600)">
+            CT Lung <small>(L -400, W 1,600)</small>
+          </a>
+        </li>
+        <li class="wvToolbar__windowingPresetListItem">
+          <a href="#" onclick="app.SetWindowing(300, 1500)">
+            CT Abdomen <small>(L 300, W 1,500)</small>
+          </a>
+        </li>
+        <li class="wvToolbar__windowingPresetListItem">
+          <a href="#" onclick="app.SetWindowing(40, 80)">
+            CT Bone <small>(L 40, W 80)</small>
+          </a>
+        </li>
+        <li class="wvToolbar__windowingPresetListItem">
+          <a href="#" onclick="app.SetWindowing(40, 400)">
+            CT Brain <small>(L 40, W 400)</small>
+          </a>
+        </li>
+        <li class="wvToolbar__windowingPresetListItem">
+          <a href="#" onclick="app.SetWindowing(-400, 1600)">
+            CT Chest <small>(L -400, W 1,600)</small>
+          </a>
+        </li>
+        <li class="wvToolbar__windowingPresetListItem">
+          <a href="#" onclick="app.SetWindowing(300, 600)">
+            CT Angio <small>(L 300, W 600)</small>
+          </a>
+        </li>
+      </ul>
+    </script>
+    
+
+    <script type="text/x-template" id="viewport-template">
+      <div v-bind:style="{ padding:'2px', 
+                         position:'absolute', 
+                         left: left, 
+                         top: top,
+                         width: width, 
+                         height: height }">
+        <div v-bind:class="{ 'wvSplitpane__cellBorder--selected' : active, 
+                           'wvSplitpane__cellBorder' : series.color == '', 
+                           'wvSplitpane__cellBorder--blue' : series.color == 'blue', 
+                           'wvSplitpane__cellBorder--red' : series.color == 'red',
+                           'wvSplitpane__cellBorder--green' : series.color == 'green', 
+                           'wvSplitpane__cellBorder--yellow' : series.color == 'yellow', 
+                           'wvSplitpane__cellBorder--violet' : series.color == 'violet'
+                           }" 
+             v-on:dragover="SeriesDragAccept($event)"
+             v-on:drop="SeriesDragDrop($event)"
+             style="width:100%;height:100%">
+          <div class="wvSplitpane__cell"
+               v-on:click="MakeActive()">
+            <div v-show="status == 'ready'"
+                 style="position:absolute; left:0; top:0; width:100%; height:100%">
+              <!--div style="width: 100%; height: 100%; background-color: red"></div-->
+              <canvas v-bind:id="canvasId"
+                      style="position:absolute; left:0; top:0; width:100%; height:100%"
+                      oncontextmenu="return false"></canvas>
+
+              <div v-if="'tags' in series" v-show="showInfo">
+                <div class="wv-overlay">
+                  <div class="wv-overlay-topleft">
+                    {{ series.tags['0010,0010'] }}<br/>
+                    {{ series.tags['0010,0020'] }}
+                  </div>
+                  <div class="wv-overlay-topright">
+                    {{ series.tags['0008,1030'] }}<br/>
+                    {{ series.tags['0008,0020'] }}<br/>
+                    {{ series.tags['0020,0011'] }} | {{ series.tags['0008,103e'] }}
+                  </div>
+                  <div class="wv-overlay-bottomleft"
+                       v-show="framesCount != 0">
+                    <button class="btn btn-primary" @click="DecrementFrame()">
+                      <i class="fa fa-chevron-circle-left"></i>
+                    </button>
+                    &nbsp;&nbsp;{{ currentFrame }} / {{ framesCount }}&nbsp;&nbsp;
+                    <button class="btn btn-primary" @click="IncrementFrame()">
+                      <i class="fa fa-chevron-circle-right"></i>
+                    </button>
+                  </div>
+                  <div class="wv-overlay-bottomright">
+                    <div v-show="quality == stone.DisplayedFrameQuality.NONE"
+                         style="display:block;background-color:red;width:1em;height:1em" />
+                    <div v-show="quality == stone.DisplayedFrameQuality.LOW"
+                         style="display:block;background-color:orange;width:1em;height:1em" />
+                    <div v-show="quality == stone.DisplayedFrameQuality.HIGH"
+                         style="display:block;background-color:green;width:1em;height:1em" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="status == 'waiting'" class="wvPaneOverlay">
+              [ drop a series here ]
+            </div>
+                
+            <!--div v-if="status == 'video'" class="wvPaneOverlay">
+              <video class="wvVideo" autoplay="" loop="" controls="" preload="auto" type="video/mp4"
+                     src="http://viewer-pro.osimis.io/instances/e465dd27-83c96343-96848735-7035a133-1facf1a0/frames/0/raw">
+              </video>
+            </div-->
+                
+            <div v-if="status == 'loading'" class="wvPaneOverlay">
+              <span class="wvLoadingSpinner">
+                <div class="bounce1"></div>
+                <div class="bounce2"></div>
+                <div class="bounce3"></div>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </script>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.js"></script>
+    
+    <script src="stone.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

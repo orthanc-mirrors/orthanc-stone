@@ -25,4 +25,4 @@ docker run -t ${DOCKER_FLAGS} --rm \
     -v ${ROOT_DIR}/wasm-binaries:/target:rw ${IMAGE} \
     bash /source/StoneWebViewer/Plugin/docker-internal.sh $1
 
-ls -lR ${ROOT_DIR}/wasm-binaries/StoneWebViewer/
+ls -lR ${ROOT_DIR}/wasm-binaries/share/

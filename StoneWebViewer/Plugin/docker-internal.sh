@@ -25,3 +25,4 @@ LSB_CC=gcc-4.8 LSB_CXX=g++-4.8 cmake /tmp/source-writeable/StoneWebViewer/Plugin
       -G Ninja
 
 ninja -j2 install
+

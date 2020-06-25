@@ -1,0 +1,22 @@
+
+Building WebAssembly samples using Docker
+=========================================
+
+The script "./docker-build.sh" can be used to quickly build the
+WebAssembly samples on any GNU/Linux distribution equipped with
+Docker. This avoids newcomers to install Emscripten and learn the
+CMake options. Just type:
+
+$ ./docker-build.sh Release
+
+After successful build, the binaries will be installed in the
+following folder (i.e. in the folder "wasm-binaries" at the root of
+the source distribution):
+
+$ ls -l ../../wasm-binaries
+
+
+NB: The source code of the Docker build environment can be found at
+the following location:
+https://github.com/jodogne/OrthancDocker/tree/master/wasm-builder
+

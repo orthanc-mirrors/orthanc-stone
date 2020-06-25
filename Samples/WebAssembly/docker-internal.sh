@@ -12,9 +12,13 @@ hg clone https://hg.orthanc-server.com/orthanc/
 
 # Make a copy of the source code in a writeable folder, because of
 # "DownloadPackage.cmake" that writes to the "ThirdPartyDownloads"
-# folder next to the "CMakeLists.txt"
+# folder next to the "CMakeLists.txt". We don't use "hg archive", but
+# "hg clone", as the "/source" folder might be created by a more
+# recent version of Mercurial, triggering the error "repository
+# requires features unknown to this Mercurial: sparserevlog!"
+# (cf. https://www.mercurial-scm.org/wiki/MissingRequirement).
 cd /source
-hg archive /tmp/source-writeable
+hg clone /source /tmp/source-writeable
 
 mkdir /tmp/build
 cd /tmp/build

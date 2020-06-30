@@ -5,7 +5,7 @@ project(StoneWebViewerPlugin)
 set(ORTHANC_PLUGIN_VERSION "mainline")
 
 
-set(ORTHANC_FRAMEWORK_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../orthanc CACHE PATH "")
+set(ORTHANC_FRAMEWORK_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../orthanc/OrthancFramework CACHE PATH "")
 set(STONE_BINARIES CACHE PATH "")
 set(USE_SYSTEM_ORTHANC_SDK ON CACHE BOOL "Use the system version of the Orthanc plugin SDK")
 
@@ -16,8 +16,8 @@ set(ENABLE_MODULE_DICOM OFF)
 include(${ORTHANC_FRAMEWORK_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
 
 include_directories(
-  ${ORTHANC_FRAMEWORK_ROOT}/Core
-  ${ORTHANC_FRAMEWORK_ROOT}/Plugins/Samples/Common
+  ${ORTHANC_FRAMEWORK_ROOT}/Sources
+  ${CMAKE_SOURCE_DIR}/../Resources/Orthanc
   )
 
 

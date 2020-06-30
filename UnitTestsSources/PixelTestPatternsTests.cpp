@@ -135,9 +135,6 @@ TEST(PixelTestPatterns, MultiGradient)
   uint8_t eeendG[NCELLS] = {000,255,000,255,255,000,255,000 };
   uint8_t eeendB[NCELLS] = {000,255,000,255,255,000,255,000 };
 
-  // vertical?
-  bool verticality[NCELLS] = { false,true,false,true,true,false,true,false };
-
   for(size_t slot = 0; slot < NCELLS; ++slot)
   {
     int x0 = (slot % 4) * CELLW;

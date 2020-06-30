@@ -193,7 +193,7 @@ namespace OrthancStone
       }
       LOG(INFO) << "RtViewerView::Scroll(" << delta << ") --> slice is now = " << next;
 
-      if (next != currentPlane_)
+      if (next != static_cast<int>(currentPlane_))
       {
         currentPlane_ = next;
         UpdateLayers();
@@ -249,7 +249,6 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
-    Scene2D& scene = controller.GetScene();
     ICompositor& compositor = lock->GetCompositor();
 
     // False means we do NOT let a hi-DPI aware desktop managedr treat this as a legacy application that requires
@@ -276,7 +275,6 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
-    Scene2D& scene = controller.GetScene();
     Register<ViewportController::SceneTransformChanged>(controller, &RtViewerView::OnSceneTransformChanged);
   }
 

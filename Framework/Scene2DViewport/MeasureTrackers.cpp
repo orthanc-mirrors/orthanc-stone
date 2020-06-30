@@ -49,7 +49,6 @@ namespace OrthancStone
     // otherwise, we simply undo it
 
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = lock->GetController();
 
     if (commitResult_)
       lock->GetController().PushCommand(command_);
@@ -65,10 +64,9 @@ namespace OrthancStone
     , commitResult_(true)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = lock->GetController();
 
     originalClickPosition_ = e.GetMainPosition().Apply(
-      controller.GetScene().GetCanvasToSceneTransform());
+      lock->GetController().GetScene().GetCanvasToSceneTransform());
   }
 
   void EditMeasureTracker::Cancel()
@@ -89,7 +87,6 @@ namespace OrthancStone
     // otherwise, we simply undo it
 
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = lock->GetController();
 
     if (commitResult_)
       lock->GetController().PushCommand(command_);

@@ -120,7 +120,8 @@ namespace OrthancStoneHelpers
     p.SetShiftModifier( (modifiers & KeyboardModifiers_Shift) != 0);
   }
 
-  static boost::shared_ptr<OrthancStone::SdlViewport> GetSdlViewportFromWindowId(
+  
+  inline boost::shared_ptr<OrthancStone::SdlViewport> GetSdlViewportFromWindowId(
     const std::vector<boost::shared_ptr<OrthancStone::SdlViewport> >& viewports,
     Uint32 windowID)
   {

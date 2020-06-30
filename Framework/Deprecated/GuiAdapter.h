@@ -41,11 +41,7 @@
 # endif
 #endif
 
-#include "../../../Framework/StoneException.h"
-
-#if ORTHANC_ENABLE_THREADS == 1
-# include "../../../Framework/Deprecated/Messages/LockingEmitter.h"
-#endif
+#include "../StoneException.h"
 
 #include <vector>
 #include <boost/shared_ptr.hpp>

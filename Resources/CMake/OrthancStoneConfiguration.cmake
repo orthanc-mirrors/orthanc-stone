@@ -265,8 +265,8 @@ endif()
 
 if ((ENABLE_SDL OR ENABLE_WASM) AND ENABLE_GUIADAPTER)
   list(APPEND APPLICATIONS_SOURCES
-    ${ORTHANC_STONE_ROOT}/Deprecated/Applications/Generic/GuiAdapter.cpp
-    ${ORTHANC_STONE_ROOT}/Deprecated/Applications/Generic/GuiAdapter.h
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/GuiAdapter.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Deprecated/GuiAdapter.h
     )
 endif()
 

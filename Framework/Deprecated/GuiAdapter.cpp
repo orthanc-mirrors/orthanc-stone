@@ -21,17 +21,13 @@
 #include "GuiAdapter.h"
 
 #if ORTHANC_ENABLE_OPENGL == 1
-#  include "../../../Framework/OpenGL/OpenGLIncludes.h"
+#  include "../OpenGL/OpenGLIncludes.h"
 #endif
 
 #if ORTHANC_ENABLE_SDL == 1
 #  include <SDL_video.h>
 #  include <SDL_render.h>
 #  include <SDL.h>
-#endif
-
-#if ORTHANC_ENABLE_THREADS == 1
-#  include "../../../Framework/Deprecated/Messages/LockingEmitter.h"
 #endif
 
 #include <Compatibility.h>

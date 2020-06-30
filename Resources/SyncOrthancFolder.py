@@ -11,14 +11,26 @@ import stat
 import urllib2
 
 TARGET = os.path.join(os.path.dirname(__file__), 'Orthanc')
+PLUGIN_SDK_VERSION = '1.0.0'
 REPOSITORY = 'https://hg.orthanc-server.com/orthanc/raw-file'
 
 FILES = [
-    'CMake/DownloadOrthancFramework.cmake',
-    'LinuxStandardBaseToolchain.cmake',
-    'MinGW-W64-Toolchain32.cmake',
-    'MinGW-W64-Toolchain64.cmake',
-    'MinGWToolchain.cmake',
+    ('OrthancFramework/Resources/CMake/DownloadOrthancFramework.cmake', '.'),
+    ('OrthancFramework/Resources/Toolchains/LinuxStandardBaseToolchain.cmake', '.'),
+    ('OrthancFramework/Resources/Toolchains/MinGW-W64-Toolchain32.cmake', '.'),
+    ('OrthancFramework/Resources/Toolchains/MinGW-W64-Toolchain64.cmake', '.'),
+    ('OrthancFramework/Resources/Toolchains/MinGWToolchain.cmake', '.'),
+
+    ('OrthancServer/Plugins/Samples/Common/OrthancPluginCppWrapper.h',
+     '../../StoneWebViewer/Resources/Orthanc'),
+    ('OrthancServer/Plugins/Samples/Common/OrthancPluginCppWrapper.cpp',
+     '../../StoneWebViewer/Resources/Orthanc'),
+    ('OrthancServer/Plugins/Samples/Common/OrthancPluginException.h',
+     '../../StoneWebViewer/Resources/Orthanc'),
+]
+
+SDK = [
+    'orthanc/OrthancCPlugin.h',
 ]
 
 
@@ -43,8 +55,15 @@ commands = []
 
 for f in FILES:
     commands.append([ 'default',
-                      os.path.join('Resources', f),
-                      os.path.basename(f) ])
+                      f[0],
+                      os.path.join(f[1], os.path.basename(f[0])) ])
+
+for f in SDK:
+    commands.append([
+        'Orthanc-%s' % PLUGIN_SDK_VERSION, 
+        'Plugins/Include/%s' % f,
+        '../../StoneWebViewer/Resources/OrthancSdk-%s/%s' % (PLUGIN_SDK_VERSION, f) 
+    ])
 
 pool = multiprocessing.Pool(10)  # simultaneous downloads
 pool.map(Download, commands)

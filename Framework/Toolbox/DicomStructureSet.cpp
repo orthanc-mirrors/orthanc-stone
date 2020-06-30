@@ -23,11 +23,11 @@
 #include "DicomStructureSetUtils.h"
 
 #include "../Toolbox/GeometryToolbox.h"
+#include "OrthancDatasets/DicomDatasetReader.h"
 
 #include <Logging.h>
 #include <OrthancException.h>
 #include <Toolbox.h>
-#include <DicomDatasetReader.h>
 
 #if defined(_MSC_VER)
 #  pragma warning(push)
@@ -131,18 +131,18 @@ namespace OrthancStone
 
 namespace OrthancStone
 {
-  static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_GEOMETRIC_TYPE(0x3006, 0x0042);
-  static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_IMAGE_SEQUENCE(0x3006, 0x0016);
-  static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_SEQUENCE(0x3006, 0x0040);
-  static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_DATA(0x3006, 0x0050);
-  static const OrthancPlugins::DicomTag DICOM_TAG_NUMBER_OF_CONTOUR_POINTS(0x3006, 0x0046);
-  static const OrthancPlugins::DicomTag DICOM_TAG_REFERENCED_SOP_INSTANCE_UID(0x0008, 0x1155);
-  static const OrthancPlugins::DicomTag DICOM_TAG_ROI_CONTOUR_SEQUENCE(0x3006, 0x0039);
-  static const OrthancPlugins::DicomTag DICOM_TAG_ROI_DISPLAY_COLOR(0x3006, 0x002a);
-  static const OrthancPlugins::DicomTag DICOM_TAG_ROI_NAME(0x3006, 0x0026);
-  static const OrthancPlugins::DicomTag DICOM_TAG_RT_ROI_INTERPRETED_TYPE(0x3006, 0x00a4);
-  static const OrthancPlugins::DicomTag DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE(0x3006, 0x0080);
-  static const OrthancPlugins::DicomTag DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE(0x3006, 0x0020);
+  static const Orthanc::DicomTag DICOM_TAG_CONTOUR_GEOMETRIC_TYPE(0x3006, 0x0042);
+  static const Orthanc::DicomTag DICOM_TAG_CONTOUR_IMAGE_SEQUENCE(0x3006, 0x0016);
+  static const Orthanc::DicomTag DICOM_TAG_CONTOUR_SEQUENCE(0x3006, 0x0040);
+  static const Orthanc::DicomTag DICOM_TAG_CONTOUR_DATA(0x3006, 0x0050);
+  static const Orthanc::DicomTag DICOM_TAG_NUMBER_OF_CONTOUR_POINTS(0x3006, 0x0046);
+  static const Orthanc::DicomTag DICOM_TAG_REFERENCED_SOP_INSTANCE_UID(0x0008, 0x1155);
+  static const Orthanc::DicomTag DICOM_TAG_ROI_CONTOUR_SEQUENCE(0x3006, 0x0039);
+  static const Orthanc::DicomTag DICOM_TAG_ROI_DISPLAY_COLOR(0x3006, 0x002a);
+  static const Orthanc::DicomTag DICOM_TAG_ROI_NAME(0x3006, 0x0026);
+  static const Orthanc::DicomTag DICOM_TAG_RT_ROI_INTERPRETED_TYPE(0x3006, 0x00a4);
+  static const Orthanc::DicomTag DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE(0x3006, 0x0080);
+  static const Orthanc::DicomTag DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE(0x3006, 0x0020);
 
 
   static uint8_t ConvertColor(double v)
@@ -163,8 +163,8 @@ namespace OrthancStone
 
 
   static bool ParseVector(Vector& target,
-                          const OrthancPlugins::IDicomDataset& dataset,
-                          const OrthancPlugins::DicomPath& tag)
+                          const IDicomDataset& dataset,
+                          const DicomPath& tag)
   {
     std::string value;
     return (dataset.GetStringValue(value, tag) &&
@@ -465,9 +465,9 @@ namespace OrthancStone
     return structures_[index];
   }
 
-  void DicomStructureSet::Setup(const OrthancPlugins::IDicomDataset& tags)
+  void DicomStructureSet::Setup(const IDicomDataset& tags)
   {
-    OrthancPlugins::DicomDatasetReader reader(tags);
+    DicomDatasetReader reader(tags);
     
     size_t count, tmp;
     if (!tags.GetSequenceSize(count, DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE) ||
@@ -483,18 +483,18 @@ namespace OrthancStone
     for (size_t i = 0; i < count; i++)
     {
       structures_[i].interpretation_ = reader.GetStringValue
-        (OrthancPlugins::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
-                                   DICOM_TAG_RT_ROI_INTERPRETED_TYPE),
+        (DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
+                   DICOM_TAG_RT_ROI_INTERPRETED_TYPE),
          "No interpretation");
 
       structures_[i].name_ = reader.GetStringValue
-        (OrthancPlugins::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
-                                   DICOM_TAG_ROI_NAME),
+        (DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
+                   DICOM_TAG_ROI_NAME),
          "No name");
 
       Vector color;
-      if (ParseVector(color, tags, OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                             DICOM_TAG_ROI_DISPLAY_COLOR)) &&
+      if (ParseVector(color, tags, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                             DICOM_TAG_ROI_DISPLAY_COLOR)) &&
           color.size() == 3)
       {
         structures_[i].red_ = ConvertColor(color[0]);
@@ -509,8 +509,8 @@ namespace OrthancStone
       }
 
       size_t countSlices;
-      if (!tags.GetSequenceSize(countSlices, OrthancPlugins::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                                       DICOM_TAG_CONTOUR_SEQUENCE)))
+      if (!tags.GetSequenceSize(countSlices, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                       DICOM_TAG_CONTOUR_SEQUENCE)))
       {
         countSlices = 0;
       }
@@ -523,27 +523,27 @@ namespace OrthancStone
                 << static_cast<int>(structures_[i].blue_) << ")";
 
       // These temporary variables avoid allocating many vectors in the loop below
-      OrthancPlugins::DicomPath countPointsPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                                DICOM_TAG_NUMBER_OF_CONTOUR_POINTS);
+      DicomPath countPointsPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                DICOM_TAG_NUMBER_OF_CONTOUR_POINTS);
 
-      OrthancPlugins::DicomPath geometricTypePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                  DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                                  DICOM_TAG_CONTOUR_GEOMETRIC_TYPE);
+      DicomPath geometricTypePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                  DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                  DICOM_TAG_CONTOUR_GEOMETRIC_TYPE);
       
-      OrthancPlugins::DicomPath imageSequencePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                  DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                                  DICOM_TAG_CONTOUR_IMAGE_SEQUENCE);
+      DicomPath imageSequencePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                  DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                  DICOM_TAG_CONTOUR_IMAGE_SEQUENCE);
 
       // (3006,0039)[i] / (0x3006, 0x0040)[0] / (0x3006, 0x0016)[0] / (0x0008, 0x1155)
-      OrthancPlugins::DicomPath referencedInstancePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                       DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                                       DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
-                                                       DICOM_TAG_REFERENCED_SOP_INSTANCE_UID);
+      DicomPath referencedInstancePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                       DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                       DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
+                                       DICOM_TAG_REFERENCED_SOP_INSTANCE_UID);
 
-      OrthancPlugins::DicomPath contourDataPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                                DICOM_TAG_CONTOUR_DATA);
+      DicomPath contourDataPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                DICOM_TAG_CONTOUR_DATA);
 
       for (size_t j = 0; j < countSlices; j++)
       {

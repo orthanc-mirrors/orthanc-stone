@@ -30,6 +30,7 @@
 #include "DicomStructureSetUtils.h"
 #include "CoordinateSystem3D.h"
 #include "Extent2D.h"
+#include "OrthancDatasets/FullOrthancDataset.h"
 #include "../Scene2D/Color.h"
 #include "../Scene2D/PolylineSceneLayer.h"
 
@@ -39,7 +40,6 @@
 
 //#define USE_BOOST_UNION_FOR_POLYGONS 1
 
-#include <FullOrthancDataset.h>
 
 #include <list>
 
@@ -148,7 +148,7 @@ namespace OrthancStone
     Structures        structures_;
     ReferencedSlices  referencedSlices_;
 
-    void Setup(const OrthancPlugins::IDicomDataset& dataset);
+    void Setup(const IDicomDataset& dataset);
     
     const Structure& GetStructure(size_t index) const;
 
@@ -164,7 +164,7 @@ namespace OrthancStone
       const CoordinateSystem3D& slice) const;
 
   public:
-    DicomStructureSet(const OrthancPlugins::FullOrthancDataset& instance)
+    DicomStructureSet(const FullOrthancDataset& instance)
     {
       Setup(instance);
     }

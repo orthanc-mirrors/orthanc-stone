@@ -21,27 +21,42 @@
 
 #pragma once
 
-#include "OrthancDatasets/IDicomDataset.h"
+#include "IOrthancConnection.h"
+#include "IDicomDataset.h"
 
-#include <DicomParsing/ParsedDicomFile.h>
+#include <json/value.h>
 
 namespace OrthancStone
 {
-  class ParsedDicomDataset : public IDicomDataset
+  class FullOrthancDataset : public IDicomDataset
   {
   private:
-    Orthanc::ParsedDicomFile&  dicom_;
+    Json::Value   root_;
+
+    const Json::Value* LookupPath(const DicomPath& path) const;
+
+    void CheckRoot() const;
 
   public:
-    ParsedDicomDataset(Orthanc::ParsedDicomFile& dicom) :
-      dicom_(dicom)
-    {
-    }
+    FullOrthancDataset(IOrthancConnection& orthanc,
+                       const std::string& uri);
+
+    FullOrthancDataset(const std::string& content);
+
+    FullOrthancDataset(const void* content,
+                       size_t size);
+
+    FullOrthancDataset(const Json::Value& root);
 
     virtual bool GetStringValue(std::string& result,
-                                const DicomPath& path) const ORTHANC_OVERRIDE;
+                                const DicomPath& path) const;
 
     virtual bool GetSequenceSize(size_t& size,
-                                 const DicomPath& path) const ORTHANC_OVERRIDE;
+                                 const DicomPath& path) const;
+
+    FullOrthancDataset* Clone() const
+    {
+      return new FullOrthancDataset(this->root_);
+    }
   };
 }

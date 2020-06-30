@@ -190,7 +190,7 @@ namespace OrthancStone
 
       // Set the actual structure set content
       {
-        OrthancPlugins::FullOrthancDataset dicom(message.GetAnswer());
+        FullOrthancDataset dicom(message.GetAnswer());
 
         loader.content_.reset(new OrthancStone::DicomStructureSet(dicom));
       }

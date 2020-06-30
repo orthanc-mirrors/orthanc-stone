@@ -30,10 +30,9 @@ else()
   endif()
 endif()
 
-include(${ORTHANC_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
+include(${ORTHANC_FRAMEWORK_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
 include_directories(
-  ${ORTHANC_ROOT}/Core
-  ${ORTHANC_ROOT}/Plugins/Samples/Common
+  ${ORTHANC_FRAMEWORK_ROOT}/Sources/
   )
 
 
@@ -104,7 +103,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/PixmanConfiguration.cmake)
 
 if (NOT ORTHANC_SANDBOXED)
   list(APPEND ORTHANC_STONE_SOURCES
-    ${ORTHANC_ROOT}/Plugins/Samples/Common/OrthancHttpConnection.cpp
+    ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrthancDatasets/OrthancHttpConnection.cpp
     )
 endif()
 
@@ -272,12 +271,10 @@ endif()
 
 
 list(APPEND ORTHANC_STONE_SOURCES
-
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomDatasetReader.cpp
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomPath.cpp
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/DicomTag.cpp
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/FullOrthancDataset.cpp
-  ${ORTHANC_ROOT}/Plugins/Samples/Common/IOrthancConnection.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrthancDatasets/DicomDatasetReader.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrthancDatasets/DicomPath.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrthancDatasets/FullOrthancDataset.cpp
+  ${ORTHANC_STONE_ROOT}/Framework/Toolbox/OrthancDatasets/IOrthancConnection.cpp
 
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/FontRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Framework/Fonts/Glyph.cpp

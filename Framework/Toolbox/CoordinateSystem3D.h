@@ -21,10 +21,9 @@
 
 #pragma once
 
-#include "LinearAlgebra.h"
 #include "../Scene2D/ScenePoint2D.h"
-
-#include <IDicomDataset.h>
+#include "LinearAlgebra.h"
+#include "OrthancDatasets/IDicomDataset.h"
 
 #include <iosfwd>
 
@@ -61,7 +60,7 @@ namespace OrthancStone
                        const Vector& axisX,
                        const Vector& axisY);
 
-    CoordinateSystem3D(const OrthancPlugins::IDicomDataset& dicom);
+    CoordinateSystem3D(const IDicomDataset& dicom);
 
     CoordinateSystem3D(const std::string& imagePositionPatient,
                        const std::string& imageOrientationPatient)

@@ -26,13 +26,13 @@
 namespace OrthancStone
 {
   static DcmItem* LookupPath(Orthanc::ParsedDicomFile& dicom,
-                             const OrthancPlugins::DicomPath& path)
+                             const DicomPath& path)
   {
     DcmItem* node = dicom.GetDcmtkObject().getDataset();
       
     for (size_t i = 0; i < path.GetPrefixLength(); i++)
     {
-      const OrthancPlugins::DicomTag& tmp = path.GetPrefixTag(i);
+      const Orthanc::DicomTag& tmp = path.GetPrefixTag(i);
       DcmTagKey tag(tmp.GetGroup(), tmp.GetElement());
 
       DcmSequenceOfItems* sequence = NULL;
@@ -60,7 +60,7 @@ namespace OrthancStone
 
     
   bool ParsedDicomDataset::GetStringValue(std::string& result,
-                                          const OrthancPlugins::DicomPath& path) const
+                                          const DicomPath& path) const
   {
     DcmItem* node = LookupPath(dicom_, path);
       
@@ -82,7 +82,7 @@ namespace OrthancStone
 
 
   bool ParsedDicomDataset::GetSequenceSize(size_t& size,
-                                           const OrthancPlugins::DicomPath& path) const
+                                           const DicomPath& path) const
   {
     DcmItem* node = LookupPath(dicom_, path);
       

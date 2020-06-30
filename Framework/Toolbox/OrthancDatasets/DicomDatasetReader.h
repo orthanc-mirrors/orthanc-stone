@@ -21,27 +21,41 @@
 
 #pragma once
 
-#include "OrthancDatasets/IDicomDataset.h"
+#include "IDicomDataset.h"
 
-#include <DicomParsing/ParsedDicomFile.h>
+#include <memory>
+#include <vector>
 
 namespace OrthancStone
 {
-  class ParsedDicomDataset : public IDicomDataset
+  class DicomDatasetReader : public boost::noncopyable
   {
   private:
-    Orthanc::ParsedDicomFile&  dicom_;
+    const IDicomDataset&  dataset_;
 
   public:
-    ParsedDicomDataset(Orthanc::ParsedDicomFile& dicom) :
-      dicom_(dicom)
+    DicomDatasetReader(const IDicomDataset& dataset);
+
+    const IDicomDataset& GetDataset() const
     {
+      return dataset_;
     }
 
-    virtual bool GetStringValue(std::string& result,
-                                const DicomPath& path) const ORTHANC_OVERRIDE;
+    std::string GetStringValue(const DicomPath& path,
+                               const std::string& defaultValue) const;
 
-    virtual bool GetSequenceSize(size_t& size,
-                                 const DicomPath& path) const ORTHANC_OVERRIDE;
+    std::string GetMandatoryStringValue(const DicomPath& path) const;
+
+    bool GetIntegerValue(int& target,
+                         const DicomPath& path) const;
+
+    bool GetUnsignedIntegerValue(unsigned int& target,
+                                 const DicomPath& path) const;
+
+    bool GetFloatValue(float& target,
+                       const DicomPath& path) const;
+
+    bool GetDoubleValue(double& target,
+                        const DicomPath& path) const;
   };
 }

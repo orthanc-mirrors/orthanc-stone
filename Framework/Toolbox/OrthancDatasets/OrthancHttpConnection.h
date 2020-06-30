@@ -21,27 +21,40 @@
 
 #pragma once
 
-#include "OrthancDatasets/IDicomDataset.h"
+#include "IOrthancConnection.h"
 
-#include <DicomParsing/ParsedDicomFile.h>
+#include <HttpClient.h>
+
+#include <boost/thread/mutex.hpp>
 
 namespace OrthancStone
 {
-  class ParsedDicomDataset : public IDicomDataset
+  // This class is thread-safe
+  class OrthancHttpConnection : public IOrthancConnection
   {
   private:
-    Orthanc::ParsedDicomFile&  dicom_;
+    boost::mutex         mutex_;
+    Orthanc::HttpClient  client_;
+    std::string          url_;
+
+    void Setup();
 
   public:
-    ParsedDicomDataset(Orthanc::ParsedDicomFile& dicom) :
-      dicom_(dicom)
-    {
-    }
+    OrthancHttpConnection();
 
-    virtual bool GetStringValue(std::string& result,
-                                const DicomPath& path) const ORTHANC_OVERRIDE;
+    OrthancHttpConnection(const Orthanc::WebServiceParameters& parameters);
 
-    virtual bool GetSequenceSize(size_t& size,
-                                 const DicomPath& path) const ORTHANC_OVERRIDE;
+    virtual void RestApiGet(std::string& result,
+                            const std::string& uri);
+
+    virtual void RestApiPost(std::string& result,
+                             const std::string& uri,
+                             const std::string& body);
+
+    virtual void RestApiPut(std::string& result,
+                            const std::string& uri,
+                            const std::string& body);
+
+    virtual void RestApiDelete(const std::string& uri);
   };
 }

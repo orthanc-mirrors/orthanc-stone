@@ -11,10 +11,10 @@ import stat
 import urllib2
 
 TARGET = os.path.join(os.path.dirname(__file__), 'Orthanc')
-REPOSITORY = 'https://bitbucket.org/sjodogne/orthanc/raw'
+REPOSITORY = 'https://hg.orthanc-server.com/orthanc/raw-file'
 
 FILES = [
-    'DownloadOrthancFramework.cmake',
+    'CMake/DownloadOrthancFramework.cmake',
     'LinuxStandardBaseToolchain.cmake',
     'MinGW-W64-Toolchain32.cmake',
     'MinGW-W64-Toolchain64.cmake',
@@ -44,7 +44,7 @@ commands = []
 for f in FILES:
     commands.append([ 'default',
                       os.path.join('Resources', f),
-                      f ])
+                      os.path.basename(f) ])
 
 pool = multiprocessing.Pool(10)  # simultaneous downloads
 pool.map(Download, commands)

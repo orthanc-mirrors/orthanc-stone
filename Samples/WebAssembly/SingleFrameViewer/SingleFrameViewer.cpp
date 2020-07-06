@@ -25,6 +25,7 @@
 #include "../../../Framework/StoneException.h"
 #include "../../../Framework/StoneInitialization.h"
 
+#include <Compatibility.h>  // For std::unique_ptr<>
 #include <Toolbox.h>
 
 #include <emscripten.h>
@@ -66,7 +67,7 @@ namespace OrthancStone
 {
 }
 
-static std::auto_ptr<OrthancStone::WebAssemblyLoadersContext>  context_;
+static std::unique_ptr<OrthancStone::WebAssemblyLoadersContext>  context_;
 static boost::shared_ptr<OrthancStone::Application>  application_;
 
 extern "C"

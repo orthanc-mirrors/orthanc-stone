@@ -48,6 +48,7 @@
 #include "../../Framework/Volumes/VolumeSceneLayerSource.h"
 
 // Orthanc
+#include <Compatibility.h>  // For std::unique_ptr<>
 #include <Logging.h>
 #include <OrthancException.h>
 
@@ -286,7 +287,7 @@ namespace OrthancStone
     /**
     Configure the CT
     */
-    std::auto_ptr<GrayscaleStyleConfigurator> style(new GrayscaleStyleConfigurator);
+    std::unique_ptr<GrayscaleStyleConfigurator> style(new GrayscaleStyleConfigurator);
     style->SetLinearInterpolation(true);
 
     this->SetCtVolumeSlicer(ctLoader, style.release());

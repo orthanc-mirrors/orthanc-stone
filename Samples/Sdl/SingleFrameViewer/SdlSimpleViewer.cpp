@@ -29,6 +29,7 @@
 #include "../../../Framework/StoneInitialization.h"
 #include "../../../Framework/Viewport/SdlViewport.h"
 
+#include <Compatibility.h>  // For std::unique_ptr<>
 #include <OrthancException.h>
 
 #include <boost/program_options.hpp>
@@ -198,7 +199,7 @@ int main(int argc, char* argv[])
                        event.type == SDL_MOUSEMOTION ||
                        event.type == SDL_MOUSEBUTTONUP)
               {
-                std::auto_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+                std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
                 if (lock->HasCompositor())
                 {
                   OrthancStone::PointerEvent p;

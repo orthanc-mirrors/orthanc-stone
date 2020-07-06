@@ -32,6 +32,7 @@
 #include "../../../Framework/StoneInitialization.h"
 
 // Orthanc (a.o. for screenshot capture)
+#include <Compatibility.h>  // For std::unique_ptr<>
 #include <Images/Image.h>
 #include <Images/ImageProcessing.h>
 #include <Images/PngWriter.h>
@@ -360,7 +361,7 @@ namespace OrthancStone
             boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
               views, sdlEvent.window.windowID);
 
-            std::auto_ptr<OrthancStone::IViewport::ILock> lock(view->GetViewport()->Lock());
+            std::unique_ptr<OrthancStone::IViewport::ILock> lock(view->GetViewport()->Lock());
             if (lock->HasCompositor())
             {
               OrthancStone::PointerEvent p;

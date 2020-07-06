@@ -27,6 +27,8 @@
 #include "../../../Framework/Loaders/SeriesThumbnailsLoader.h"
 #include "../../../Framework/Viewport/IViewport.h"
 
+#include <Compatibility.h>  // For std::unique_ptr<>
+
 #include <boost/make_shared.hpp>
 
 
@@ -53,12 +55,12 @@ namespace OrthancStone
                 << message.GetImage().GetWidth() << "x" << message.GetImage().GetHeight()
                 << " " << Orthanc::EnumerationToString(message.GetImage().GetFormat());
 
-      std::auto_ptr<TextureBaseSceneLayer> layer(
+      std::unique_ptr<TextureBaseSceneLayer> layer(
         message.GetInstanceParameters().CreateTexture(message.GetImage()));
       layer->SetLinearInterpolation(true);
 
       {
-        std::auto_ptr<IViewport::ILock> lock(viewport_->Lock());
+        std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
         lock->GetController().GetScene().SetLayer(0, layer.release());
         lock->GetCompositor().FitContent(lock->GetController().GetScene());
         lock->Invalidate();
@@ -75,7 +77,7 @@ namespace OrthancStone
       //message.GetResources()->GetResource(0).Print(stdout);
 
       {
-        std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+        std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
         SeriesFramesLoader::Factory f(*message.GetResources());
 
         framesLoader_ = boost::dynamic_pointer_cast<SeriesFramesLoader>(f.Create(*lock));
@@ -100,7 +102,7 @@ namespace OrthancStone
       boost::shared_ptr<Application> application(new Application(context, viewport));
 
       {
-        std::auto_ptr<ILoadersContext::ILock> lock(context.Lock());
+        std::unique_ptr<ILoadersContext::ILock> lock(context.Lock());
         application->dicomLoader_ = DicomResourcesLoader::Create(*lock);
       }
 
@@ -113,7 +115,7 @@ namespace OrthancStone
                           const std::string& instanceId,
                           unsigned int frame)
     {
-      std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
 
       dicomLoader_->ScheduleLoadOrthancResource(
         boost::make_shared<LoadedDicomResources>(Orthanc::DICOM_TAG_SOP_INSTANCE_UID), 
@@ -127,7 +129,7 @@ namespace OrthancStone
                            const std::string& sopInstanceUid,
                            unsigned int frame)
     {
-      std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
 
       // We first must load the "/metadata" to know the number of frames
       dicomLoader_->ScheduleGetDicomWeb(
@@ -138,7 +140,7 @@ namespace OrthancStone
 
     void FitContent()
     {
-      std::auto_ptr<IViewport::ILock> lock(viewport_->Lock());
+      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
       lock->GetCompositor().FitContent(lock->GetController().GetScene());
       lock->Invalidate();
     }
@@ -174,7 +176,7 @@ namespace OrthancStone
     };
 
     ILoadersContext&                           context_;
-    std::auto_ptr<IWebViewerLoadersObserver>   observer_;
+    std::unique_ptr<IWebViewerLoadersObserver>   observer_;
     bool                                       loadThumbnails_;
     DicomSource                                source_;
     std::set<std::string>                      scheduledSeries_;
@@ -310,7 +312,7 @@ namespace OrthancStone
       application->loadThumbnails_ = loadThumbnails;
 
       {
-        std::auto_ptr<ILoadersContext::ILock> lock(context.Lock());
+        std::unique_ptr<ILoadersContext::ILock> lock(context.Lock());
 
         application->resourcesLoader_ = DicomResourcesLoader::Create(*lock);
 
@@ -337,7 +339,7 @@ namespace OrthancStone
     
     void AddDicomAllSeries()
     {
-      std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
 
       if (source_.IsDicomWeb())
       {
@@ -348,7 +350,7 @@ namespace OrthancStone
       }
       else if (source_.IsOrthanc())
       {
-        std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+        std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
         command->SetMethod(Orthanc::HttpMethod_Get);
         command->SetUri("/series");
         lock->Schedule(GetSharedObserver(), PRIORITY_ADD_RESOURCES, command.release());
@@ -374,7 +376,7 @@ namespace OrthancStone
           std::set<Orthanc::DicomTag> tags;
           
           {
-            std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());      
+            std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());      
             
             resourcesLoader_->ScheduleQido(loadedStudies_, PRIORITY_ADD_RESOURCES, source_,
                                            Orthanc::ResourceType_Study, filter, tags, CreatePayload(Type_DicomWeb));
@@ -385,7 +387,7 @@ namespace OrthancStone
         }
         else if (source_.IsOrthanc())
         {
-          std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+          std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
           command->SetMethod(Orthanc::HttpMethod_Post);
           command->SetUri("/tools/find");
 
@@ -396,7 +398,7 @@ namespace OrthancStone
           command->SetBody(body);
 
           {
-            std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());      
+            std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());      
             lock->Schedule(GetSharedObserver(), PRIORITY_ADD_RESOURCES, command.release());
           }
         }
@@ -412,7 +414,7 @@ namespace OrthancStone
     {
       std::set<Orthanc::DicomTag> tags;
 
-      std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());      
+      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());      
 
       if (scheduledStudies_.find(studyInstanceUid) == scheduledStudies_.end())
       {
@@ -443,7 +445,7 @@ namespace OrthancStone
         }
         else if (source_.IsOrthanc())
         {
-          std::auto_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+          std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
           command->SetMethod(Orthanc::HttpMethod_Post);
           command->SetUri("/tools/find");
 
@@ -467,7 +469,7 @@ namespace OrthancStone
     {
       if (source_.IsOrthanc())
       {
-        std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());      
+        std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());      
         resourcesLoader_->ScheduleLoadOrthancResources(
           loadedSeries_, PRIORITY_ADD_RESOURCES, source_,
           Orthanc::ResourceType_Study, orthancId, Orthanc::ResourceType_Series,
@@ -484,7 +486,7 @@ namespace OrthancStone
     {
       if (source_.IsOrthanc())
       {
-        std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());      
+        std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());      
         resourcesLoader_->ScheduleLoadOrthancResource(
           loadedSeries_, PRIORITY_ADD_RESOURCES,
           source_, Orthanc::ResourceType_Series, orthancId,

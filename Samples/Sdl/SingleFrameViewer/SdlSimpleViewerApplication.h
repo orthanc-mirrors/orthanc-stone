@@ -27,6 +27,8 @@
 #include "../../../Framework/Loaders/SeriesFramesLoader.h"
 #include "../../../Framework/Loaders/SeriesThumbnailsLoader.h"
 
+#include <Compatibility.h>  // For std::unique_ptr<>
+
 #include <boost/make_shared.hpp>
 
 
@@ -56,7 +58,7 @@ public:
     boost::shared_ptr<SdlSimpleViewerApplication> application(new SdlSimpleViewerApplication(context, viewport));
 
     {
-      std::auto_ptr<ILoadersContext::ILock> lock(context.Lock());
+      std::unique_ptr<ILoadersContext::ILock> lock(context.Lock());
       application->dicomLoader_ = DicomResourcesLoader::Create(*lock);
     }
 
@@ -67,7 +69,7 @@ public:
 
   void LoadOrthancFrame(const DicomSource& source, const std::string& instanceId, unsigned int frame)
   {
-    std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+    std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
 
     dicomLoader_->ScheduleLoadOrthancResource(boost::make_shared<LoadedDicomResources>(Orthanc::DICOM_TAG_SOP_INSTANCE_UID),
                                               0, source, Orthanc::ResourceType_Instance, instanceId,
@@ -81,7 +83,7 @@ public:
                          const std::string& sopInstanceUid,
                          unsigned int frame)
   {
-    std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+    std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
 
     // We first must load the "/metadata" to know the number of frames
     dicomLoader_->ScheduleGetDicomWeb(
@@ -93,7 +95,7 @@ public:
 
   void FitContent()
   {
-    std::auto_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     lock->GetCompositor().FitContent(lock->GetController().GetScene());
     lock->Invalidate();
   }
@@ -117,12 +119,12 @@ private:
       << message.GetImage().GetWidth() << "x" << message.GetImage().GetHeight()
       << " " << Orthanc::EnumerationToString(message.GetImage().GetFormat());
 
-    std::auto_ptr<TextureBaseSceneLayer> layer(
+    std::unique_ptr<TextureBaseSceneLayer> layer(
       message.GetInstanceParameters().CreateTexture(message.GetImage()));
     layer->SetLinearInterpolation(true);
 
     {
-      std::auto_ptr<IViewport::ILock> lock(viewport_->Lock());
+      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
       lock->GetController().GetScene().SetLayer(0, layer.release());
       lock->GetCompositor().FitContent(lock->GetController().GetScene());
       lock->Invalidate();
@@ -139,7 +141,7 @@ private:
     //message.GetResources()->GetResource(0).Print(stdout);
 
     {
-      std::auto_ptr<ILoadersContext::ILock> lock(context_.Lock());
+      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
       SeriesFramesLoader::Factory f(*message.GetResources());
 
       framesLoader_ = boost::dynamic_pointer_cast<SeriesFramesLoader>(

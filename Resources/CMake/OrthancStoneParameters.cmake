@@ -54,6 +54,9 @@ if (NOT ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
   include(${CMAKE_CURRENT_LIST_DIR}/../Orthanc/CMake/DownloadOrthancFramework.cmake)
   include(${ORTHANC_FRAMEWORK_ROOT}/Resources/CMake/OrthancFrameworkParameters.cmake)
   
+  unset(STANDALONE_BUILD CACHE)
+  set(STANDALONE_BUILD ON)       # Embed DCMTK's dictionaries in static builds
+
   set(ENABLE_DCMTK OFF)
   set(ENABLE_GOOGLE_TEST ON)
   set(ENABLE_JPEG ON)

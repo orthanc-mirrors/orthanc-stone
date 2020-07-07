@@ -28,17 +28,17 @@ FILES = [
     ('OrthancFramework/Resources/Toolchains/MinGWToolchain.cmake', 'Toolchains'),
 
     ('OrthancServer/Plugins/Samples/Common/OrthancPluginCppWrapper.h',
-     '../../StoneWebViewer/Resources/Orthanc/Plugins'),
+     '../../../StoneWebViewer/Resources/Orthanc/Plugins'),
     ('OrthancServer/Plugins/Samples/Common/OrthancPluginCppWrapper.cpp',
-     '../../StoneWebViewer/Resources/Orthanc/Plugins'),
+     '../../../StoneWebViewer/Resources/Orthanc/Plugins'),
     ('OrthancServer/Plugins/Samples/Common/OrthancPluginException.h',
-     '../../StoneWebViewer/Resources/Orthanc/Plugins'),
+     '../../../StoneWebViewer/Resources/Orthanc/Plugins'),
     ('OrthancServer/Plugins/Samples/Common/ExportedSymbolsPlugins.list',
-     '../../StoneWebViewer/Resources/Orthanc/Plugins'),
+     '../../../StoneWebViewer/Resources/Orthanc/Plugins'),
     ('OrthancServer/Plugins/Samples/Common/OrthancPluginsExports.cmake',
-     '../../StoneWebViewer/Resources/Orthanc/Plugins'),
+     '../../../StoneWebViewer/Resources/Orthanc/Plugins'),
     ('OrthancServer/Plugins/Samples/Common/VersionScriptPlugins.map',
-     '../../StoneWebViewer/Resources/Orthanc/Plugins'),
+     '../../../StoneWebViewer/Resources/Orthanc/Plugins'),
 ]
 
 SDK = [
@@ -74,7 +74,7 @@ for f in SDK:
     commands.append([
         'Orthanc-%s' % PLUGIN_SDK_VERSION, 
         'Plugins/Include/%s' % f,
-        '../../StoneWebViewer/Resources/OrthancSdk-%s/%s' % (PLUGIN_SDK_VERSION, f) 
+        '../../../StoneWebViewer/Resources/OrthancSdk-%s/%s' % (PLUGIN_SDK_VERSION, f) 
     ])
 
 pool = multiprocessing.Pool(10)  # simultaneous downloads

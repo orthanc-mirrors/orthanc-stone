@@ -61,20 +61,20 @@
 #include <Images/JpegReader.h>
 #include <Logging.h>
 
-#include "../../Framework/Loaders/DicomResourcesLoader.h"
-#include "../../Framework/Loaders/SeriesMetadataLoader.h"
-#include "../../Framework/Loaders/SeriesThumbnailsLoader.h"
-#include "../../Framework/Loaders/WebAssemblyLoadersContext.h"
-#include "../../Framework/Messages/ObserverBase.h"
-#include "../../Framework/Oracle/ParseDicomFromWadoCommand.h"
-#include "../../Framework/Scene2D/ColorTextureSceneLayer.h"
-#include "../../Framework/Scene2D/FloatTextureSceneLayer.h"
-#include "../../Framework/Scene2D/PolylineSceneLayer.h"
-#include "../../Framework/StoneException.h"
-#include "../../Framework/Toolbox/DicomInstanceParameters.h"
-#include "../../Framework/Toolbox/GeometryToolbox.h"
-#include "../../Framework/Toolbox/SortedFrames.h"
-#include "../../Framework/Viewport/WebGLViewport.h"
+#include "../../OrthancStone/Sources/Loaders/DicomResourcesLoader.h"
+#include "../../OrthancStone/Sources/Loaders/SeriesMetadataLoader.h"
+#include "../../OrthancStone/Sources/Loaders/SeriesThumbnailsLoader.h"
+#include "../../OrthancStone/Sources/Loaders/WebAssemblyLoadersContext.h"
+#include "../../OrthancStone/Sources/Messages/ObserverBase.h"
+#include "../../OrthancStone/Sources/Oracle/ParseDicomFromWadoCommand.h"
+#include "../../OrthancStone/Sources/Scene2D/ColorTextureSceneLayer.h"
+#include "../../OrthancStone/Sources/Scene2D/FloatTextureSceneLayer.h"
+#include "../../OrthancStone/Sources/Scene2D/PolylineSceneLayer.h"
+#include "../../OrthancStone/Sources/StoneException.h"
+#include "../../OrthancStone/Sources/Toolbox/DicomInstanceParameters.h"
+#include "../../OrthancStone/Sources/Toolbox/GeometryToolbox.h"
+#include "../../OrthancStone/Sources/Toolbox/SortedFrames.h"
+#include "../../OrthancStone/Sources/Viewport/WebGLViewport.h"
 
 #include <boost/make_shared.hpp>
 #include <stdio.h>

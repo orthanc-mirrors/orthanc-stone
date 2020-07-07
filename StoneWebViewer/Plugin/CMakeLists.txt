@@ -32,7 +32,7 @@ mark_as_advanced(ORTHANC_FRAMEWORK_STATIC)
 
 
 # Download and setup the Orthanc framework
-include(${CMAKE_SOURCE_DIR}/../../Resources/Orthanc/CMake/DownloadOrthancFramework.cmake)
+include(${CMAKE_SOURCE_DIR}/../../OrthancStone/Resources/Orthanc/CMake/DownloadOrthancFramework.cmake)
 
 if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
   link_libraries(${ORTHANC_FRAMEWORK_LIBRARIES})

@@ -19,7 +19,6 @@ else()
   set(ENABLE_LOCALE ON)  # Necessary for text rendering
   set(ENABLE_OPENGL ON)  #  <==
   set(ENABLE_WEB_CLIENT ON)
-  include(${CMAKE_SOURCE_DIR}/BoostExtendedConfiguration.cmake)
 endif()
 
 set(ENABLE_DCMTK ON)  # <==
@@ -28,6 +27,11 @@ set(ENABLE_SDL ON)
 include(${STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
 include(${CMAKE_SOURCE_DIR}/Utilities.cmake)
 
+if (NOT ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
+  # This include must be after "OrthancStoneConfiguration.cmake" to
+  # have "BOOST_SOURCES_DIR" defined
+  include(${CMAKE_SOURCE_DIR}/BoostExtendedConfiguration.cmake)
+endif()
 
 
 DownloadPackage(

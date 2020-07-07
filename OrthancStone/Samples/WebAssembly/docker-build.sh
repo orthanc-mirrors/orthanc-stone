@@ -14,7 +14,7 @@ if [ -t 1 ]; then
     DOCKER_FLAGS='-i'
 fi
 
-ROOT_DIR=`dirname $(readlink -f $0)`/../..
+ROOT_DIR=`dirname $(readlink -f $0)`/../../..
 
 mkdir -p ${ROOT_DIR}/wasm-binaries
 

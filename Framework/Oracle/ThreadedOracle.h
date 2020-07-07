@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <OrthancFramework.h>  // To have the macros properly defined
+
 #if !defined(ORTHANC_ENABLE_THREADS)
 #  error The macro ORTHANC_ENABLE_THREADS must be defined
 #endif

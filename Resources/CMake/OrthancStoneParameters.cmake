@@ -19,19 +19,50 @@
 
 
 #####################################################################
+## Select the location of the Orthanc framework
+#####################################################################
+
+include(${CMAKE_CURRENT_LIST_DIR}/Version.cmake)
+
+if (ORTHANC_STONE_VERSION STREQUAL "mainline")
+  set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "mainline")
+  set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "hg")
+else()
+  set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "1.7.2")
+  set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "web")
+endif()
+
+# Parameters of the build
+set(STATIC_BUILD OFF CACHE BOOL "Static build of the third-party libraries (necessary for Windows)")
+set(ALLOW_DOWNLOADS OFF CACHE BOOL "Allow CMake to download packages")
+set(ORTHANC_FRAMEWORK_SOURCE "${ORTHANC_FRAMEWORK_DEFAULT_SOURCE}" CACHE STRING "Source of the Orthanc framework (can be \"system\", \"hg\", \"archive\", \"web\" or \"path\")")
+set(ORTHANC_FRAMEWORK_VERSION "${ORTHANC_FRAMEWORK_DEFAULT_VERSION}" CACHE STRING "Version of the Orthanc framework")
+set(ORTHANC_FRAMEWORK_ARCHIVE "" CACHE STRING "Path to the Orthanc archive, if ORTHANC_FRAMEWORK_SOURCE is \"archive\"")
+set(ORTHANC_FRAMEWORK_ROOT "" CACHE STRING "Path to the Orthanc source directory, if ORTHANC_FRAMEWORK_SOURCE is \"path\"")
+
+# Advanced parameters to fine-tune linking against system libraries
+set(ORTHANC_FRAMEWORK_STATIC OFF CACHE BOOL "If linking against the Orthanc framework system library, indicates whether this library was statically linked")
+mark_as_advanced(ORTHANC_FRAMEWORK_STATIC)
+
+
+
+#####################################################################
 ## Import the parameters of the Orthanc Framework
 #####################################################################
 
-include(${CMAKE_CURRENT_LIST_DIR}/../Orthanc/CMake/DownloadOrthancFramework.cmake)
-include(${ORTHANC_FRAMEWORK_ROOT}/Resources/CMake/OrthancFrameworkParameters.cmake)
-
-set(ENABLE_DCMTK OFF)
-set(ENABLE_GOOGLE_TEST ON)
-set(ENABLE_JPEG ON)
-set(ENABLE_OPENSSL_ENGINES ON)
-set(ENABLE_PNG ON)
-set(ENABLE_SQLITE OFF)
-set(ENABLE_ZLIB ON)
+if (NOT ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
+  include(${CMAKE_CURRENT_LIST_DIR}/../Orthanc/CMake/DownloadOrthancFramework.cmake)
+  include(${ORTHANC_FRAMEWORK_ROOT}/Resources/CMake/OrthancFrameworkParameters.cmake)
+  
+  set(ENABLE_DCMTK OFF)
+  set(ENABLE_GOOGLE_TEST ON)
+  set(ENABLE_JPEG ON)
+  set(ENABLE_OPENSSL_ENGINES ON)
+  set(ENABLE_PNG ON)
+  set(ENABLE_SQLITE OFF)
+  set(ENABLE_ZLIB ON)
+endif()
+  
 
 
 #####################################################################
@@ -44,6 +75,7 @@ set(USE_SYSTEM_FREETYPE ON CACHE BOOL "Use the system version of Freetype")
 set(USE_SYSTEM_GLEW ON CACHE BOOL "Use the system version of glew (for Windows only)")
 set(USE_SYSTEM_PIXMAN ON CACHE BOOL "Use the system version of Pixman")
 set(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
+
 
 
 #####################################################################

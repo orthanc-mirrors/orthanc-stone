@@ -29,6 +29,11 @@ Samples/Deprecated/Qt/ThirdPartyDownloads/
 Samples/Deprecated/WebAssembly/build/
 Samples/Deprecated/WebAssembly/ThirdPartyDownloads/
 Samples/Deprecated/WebAssembly/installDir/
+StoneWebViewer/Plugin/ThirdPartyDownloads/
+StoneWebViewer/WebAssembly/ThirdPartyDownloads/
 UnitTestsSources/ThirdPartyDownloads/
 node_modules/
+wasm-binaries/
+out/
+
 

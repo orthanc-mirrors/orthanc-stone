@@ -157,12 +157,36 @@ namespace OrthancStone
     ORTHANC_ASSERT(HasArgument("ctseries") && HasArgument("rtdose") && HasArgument("rtstruct"));
 
     LOG(INFO) << "About to load:";
-    LOG(INFO) << "  CT       : " << GetArgument("ctseries");
-    LOG(INFO) << "  RTDOSE   : " << GetArgument("rtdose");
-    LOG(INFO) << "  RTSTRUCT : " << GetArgument("rtstruct");
-    ctLoader_->LoadSeries(GetArgument("ctseries"));
-    doseLoader_->LoadInstance(GetArgument("rtdose"));
-    rtstructLoader_->LoadInstanceFullVisibility(GetArgument("rtstruct"));
+
+    if (GetArgument("ctseries") == "")
+    {
+      LOG(INFO) << "  CT       : <unspecified>";
+    }
+    else
+    {
+      LOG(INFO) << "  CT       : " << GetArgument("ctseries");
+      ctLoader_->LoadSeries(GetArgument("ctseries"));
+    }
+    
+    if (GetArgument("rtdose") == "")
+    {
+      LOG(INFO) << "  RTDOSE   : <unspecified>";
+    }
+    else
+    {
+      LOG(INFO) << "  RTDOSE   : " << GetArgument("rtdose");
+      doseLoader_->LoadInstance(GetArgument("rtdose"));
+    }
+
+    if (GetArgument("rtstruct") == "")
+    {
+      LOG(INFO) << "  RTSTRUCT : : <unspecified>";
+    }
+    else
+    {
+      LOG(INFO) << "  RTSTRUCT : : " << GetArgument("rtstruct");
+      rtstructLoader_->LoadInstanceFullVisibility(GetArgument("rtstruct"));
+    }
   }
 
   void RtViewerApp::HandleGeometryReady(const DicomVolumeImage::GeometryReadyMessage& message)

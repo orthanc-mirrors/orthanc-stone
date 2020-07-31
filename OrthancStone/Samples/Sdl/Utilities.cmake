@@ -69,8 +69,8 @@ macro(SortFilesInSourceGroups)
   source_group("Stone Library\\Headers" REGULAR_EXPRESSION ".*/orthanc-stone/.*hpp")
   source_group("Stone Library\\Headers" REGULAR_EXPRESSION ".*/orthanc-stone/.*h")
 
-  source_group("Stone Samples\\Source" REGULAR_EXPRESSION ".*orthanc-stone/Samples/.*\\.cpp")
-  source_group("Stone Samples\\Headers" REGULAR_EXPRESSION ".*orthanc-stone/Samples/.*\\.h")
+  source_group("Stone Samples\\Source" REGULAR_EXPRESSION ".*orthanc-stone/OrthancStone/Samples/.*\\.cpp")
+  source_group("Stone Samples\\Headers" REGULAR_EXPRESSION ".*orthanc-stone/OrthancStone/Samples/.*\\.h")
 
   source_group("ThirdParty\\cairo" REGULAR_EXPRESSION ".*${CMAKE_BINARY_DIR}/cairo[^/]*/.*")
   source_group("ThirdParty\\pixman" REGULAR_EXPRESSION ".*${CMAKE_BINARY_DIR}/pixman[^/]*/.*")

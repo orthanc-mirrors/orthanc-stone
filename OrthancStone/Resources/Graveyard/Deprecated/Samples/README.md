@@ -2,7 +2,7 @@
 **These samples are deprecated and not guaranteed to work. A migration to a 
 new version of the Stone API is underway.**
 
-Please read orthanc-stone/Samples/README.md first for general requirements.
+Please read orthanc-stone/OrthancStone/Samples/README.md first for general requirements.
 
 
 
@@ -165,24 +165,24 @@ folder that is sibling to the orthanc-stone folder:
 **Visual Studio 2019 (v142) **
 
 ```
-cmake -G "Visual Studio 16 2019" -A x64 -DMSVC_MULTIPLE_PROCESSES=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Samples/Sdl
+cmake -G "Visual Studio 16 2019" -A x64 -DMSVC_MULTIPLE_PROCESSES=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/OrthancStone/Samples/Sdl
 ```
 
 **Visual Studio 2017 (v140) **
 
 ```
-cmake -G "Visual Studio 15 2017 Win64" -DMSVC_MULTIPLE_PROCESSES=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Samples/Sdl
+cmake -G "Visual Studio 15 2017 Win64" -DMSVC_MULTIPLE_PROCESSES=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/OrthancStone/Samples/Sdl
 ```
 
 **Visual Studio 2008 (v90) **
 
 ```
-cmake -G "Visual Studio 9 2008" -DUSE_LEGACY_JSONCPP=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Samples/Sdl
+cmake -G "Visual Studio 9 2008" -DUSE_LEGACY_JSONCPP=ON -DENABLE_OPENGL=ON -DSTATIC_BUILD=ON -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="$($pwd)\..\orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/OrthancStone/Samples/Sdl
 ```
 
 And under Ubuntu (note the /mnt/c/osi/dev/orthanc folder):
 ```
-cmake -G "Ninja" -DENABLE_OPENGL=ON -DSTATIC_BUILD=OFF -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="/mnt/c/osi/dev/orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/Samples/Sdl
+cmake -G "Ninja" -DENABLE_OPENGL=ON -DSTATIC_BUILD=OFF -DOPENSSL_NO_CAPIENG=ON -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT="/mnt/c/osi/dev/orthanc" -DALLOW_DOWNLOADS=ON -DENABLE_SDL=ON ../orthanc-stone/OrthancStone/Samples/Sdl
 ```
 
 TODO trackers:

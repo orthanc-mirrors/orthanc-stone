@@ -20,7 +20,7 @@ cd /mnt/c/osi/dev/
 mkdir -p build_stone_newsamples_wasm_wsl
 mkdir -p build_install_stone_newsamples_wasm_wsl
 cd build_stone_newsamples_wasm_wsl
-cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON /mnt/c/osi/dev/orthanc-stone/Samples/WebAssembly -DCMAKE_INSTALL_PREFIX=/mnt/c/osi/dev/build_install_stone_newsamples_wasm_wsl
+cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON /mnt/c/osi/dev/orthanc-stone/OrthancStone/Samples/WebAssembly -DCMAKE_INSTALL_PREFIX=/mnt/c/osi/dev/build_install_stone_newsamples_wasm_wsl
 ninja install
 
 Then, on Windows
@@ -45,7 +45,7 @@ cd /mnt/c/osi/dev/
 mkdir -p build_stone_newsamples_wasm_wsl
 mkdir -p build_install_stone_newsamples_wasm_wsl
 cd build_stone_newsamples_wasm_wsl
-cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON /mnt/c/osi/dev/orthanc-stone/Samples/WebAssembly -DCMAKE_INSTALL_PREFIX=/mnt/c/osi/dev/build_install_stone_newsamples_wasm_wsl
+cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON /mnt/c/osi/dev/orthanc-stone/OrthancStone/Samples/WebAssembly -DCMAKE_INSTALL_PREFIX=/mnt/c/osi/dev/build_install_stone_newsamples_wasm_wsl
 
 
 
@@ -72,5 +72,5 @@ cd /mnt/c/o/
 mkdir -p build_stone_newsamples_wasm_wsl
 mkdir -p build_install_stone_newsamples_wasm_wsl
 cd build_stone_newsamples_wasm_wsl
-cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSDK}/fastcomp/emscripten/cmake/Modules/Platform/Emscripten.cmake -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT=/mnt/c/o/orthanc/ -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON /mnt/c/o/orthanc-stone/Samples/WebAssembly -DCMAKE_INSTALL_PREFIX=/mnt/c/o/build_install_stone_newsamples_wasm_wsl
+cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=${EMSDK}/fastcomp/emscripten/cmake/Modules/Platform/Emscripten.cmake -DORTHANC_FRAMEWORK_SOURCE=path -DORTHANC_FRAMEWORK_ROOT=/mnt/c/o/orthanc/ -DCMAKE_BUILD_TYPE=Release -DALLOW_DOWNLOADS=ON /mnt/c/o/orthanc-stone/OrthancStone/Samples/WebAssembly -DCMAKE_INSTALL_PREFIX=/mnt/c/o/build_install_stone_newsamples_wasm_wsl
 ninja

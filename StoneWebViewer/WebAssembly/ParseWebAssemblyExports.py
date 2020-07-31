@@ -19,11 +19,13 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
+# Ubuntu 20.04:
+# sudo apt-get install python-clang-6.0
+# ./ParseWebAssemblyExports.py --libclang=libclang-6.0.so.1 ./Test.cpp
 
 # Ubuntu 18.04:
 # sudo apt-get install python-clang-4.0
 # ./ParseWebAssemblyExports.py --libclang=libclang-4.0.so.1 ./Test.cpp
-
 
 # Ubuntu 14.04:
 # ./ParseWebAssemblyExports.py --libclang=libclang-3.6.so.1 ./Test.cpp
@@ -33,8 +35,6 @@ import sys
 import clang.cindex
 import pystache
 import argparse
-
-
 
 ##
 ## Parse the command-line arguments

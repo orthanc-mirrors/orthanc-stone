@@ -43,6 +43,15 @@ SET(ORTHANC_SANDBOXED ON)
 # populate the ORTHANC_STONE_SOURCES CMake variable
 include(${ORTHANC_STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
 
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+  # specific flags go here
+elseif (CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
+  # specific flags go here
+elseif (CMAKE_BUILD_TYPE MATCHES Release)
+  # specific flags go here
+else()
+  message(FATAL_ERROR "CMAKE_BUILD_TYPE must match either Debug, RelWithDebInfo or Release" )
+endif()
 
 ################################################################################
 
@@ -95,7 +104,7 @@ install(
 
 # Declare installation files for the companion files (web scaffolding)
 # please note that ${CMAKE_CURRENT_BINARY_DIR}/StoneWebViewer.js
-# (the generated JS loader for the WASM module) is handled by the `install1`
+# (the generated JS loader for the WASM module) is handled by the `install`
 # section above: it is considered to be the binary output of 
 # the linker.
 # ---------------------------------------------------------------

@@ -191,6 +191,8 @@ extern "C"
         explorer, Orthanc::EmbeddedResources::ORTHANC_EXPLORER);
       OrthancPluginExtendOrthancExplorer(OrthancPlugins::GetGlobalContext(), explorer.c_str());
       
+      // Stone Web Viewer files
+      // ---------------------
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFile<Orthanc::EmbeddedResources::STONE_WEB_VIEWER_WASM> >
         ("/stone-webviewer/StoneWebViewer.wasm", true);
@@ -210,6 +212,28 @@ extern "C"
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFolder<Orthanc::EmbeddedResources::WEB_APPLICATION> >
         ("/stone-webviewer/(.*)", true);
+
+      // RtViewer files below.
+      // ---------------------
+      // we do not serve the whole directory at once (with ServeEmbeddedFolder)
+      // because it contains uppercase characters that are forbidden by the
+      // resource embedding system
+
+      OrthancPlugins::RegisterRestCallback
+        <ServeEmbeddedFile<Orthanc::EmbeddedResources::RT_VIEWER_WASM_JS> >
+        ("/stone-rtviewer/RtViewerWasm.js", true);
+
+      OrthancPlugins::RegisterRestCallback
+        <ServeEmbeddedFile<Orthanc::EmbeddedResources::RT_VIEWER_WASM> >
+        ("/stone-rtviewer/RtViewerWasm.wasm", true);
+
+      OrthancPlugins::RegisterRestCallback
+        <ServeEmbeddedFile<Orthanc::EmbeddedResources::RT_VIEWER_WASM_APP_JS> >
+        ("/stone-rtviewer/RtViewerWasmApp.js", true);
+
+      OrthancPlugins::RegisterRestCallback
+        <ServeEmbeddedFile<Orthanc::EmbeddedResources::RT_VIEWER_INDEX_HTML> >
+        ("/stone-rtviewer/index.html", true);
 
       OrthancPluginRegisterOnChangeCallback(context, OnChangeCallback);
     }

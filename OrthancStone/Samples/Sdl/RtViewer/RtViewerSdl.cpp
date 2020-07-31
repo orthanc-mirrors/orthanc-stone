@@ -147,8 +147,8 @@ namespace OrthancStone
       Typically, in a native application (Qt, SDL), it will be an absolute URL like "http://localhost:8042". In 
       wasm on the browser, it could be an absolute URL, provided you do not have cross-origin problems, or a relative
       URL. In our wasm samples, it is set to "..", because we set up either a reverse proxy or an Orthanc ServeFolders
-      plugin that serves the main web application from an URL like "http://localhost:8042/rtviewer" (with ".." leading 
-      to the main Orthanc root URL)
+      plugin that serves the main web application from an URL like "http://localhost:8042/stone-rtviewer" (with ".." 
+      leading to the main Orthanc root URL)
     */
     std::string orthancUrl = arguments_["orthanc"];
 

@@ -115,7 +115,7 @@ RtViewer
 This sample application displays three MPR views of a CT+RTDOSE+RTSTRUCT dataset, loaded from Orthanc. The Orthanc IDs of the dataset must be supplied as URL parameters like:
 
 ```
-http://localhost:9979/rtviewer/index.html?loglevel=info&ctseries=a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa&rtdose=830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb&rtstruct=54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9
+http://localhost:9979/stone-rtviewer/index.html?loglevel=info&ctseries=a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa&rtdose=830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb&rtstruct=54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9
 ```
 
 (notice the loglevel parameter that can be `warning`, `info` or `trace`, in increasing verbosity order)

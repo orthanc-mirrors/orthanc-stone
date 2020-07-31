@@ -81,5 +81,5 @@ $(document).ready(function() {
     });
 });
 
-// http://localhost:9979/rtviewer/index.html?loglevel=trace&ctseries=a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa&rtdose=830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb&rtstruct=54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9
+// http://localhost:9979/stone-rtviewer/index.html?loglevel=trace&ctseries=a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa&rtdose=830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb&rtstruct=54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9
 

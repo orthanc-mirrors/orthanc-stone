@@ -101,13 +101,13 @@ namespace OrthancStone
        "Base URL of the Orthanc instance")
 
       ("ctseries", po::value<std::string>()->default_value("a04ecf01-79b2fc33-58239f7e-ad9db983-28e81afa"),
-       "Orthanc ID of the CT series to load")
+       "Orthanc ID of the CT series to load. This must be supplied.")
 
       ("rtdose", po::value<std::string>()->default_value("830a69ff-8e4b5ee3-b7f966c8-bccc20fb-d322dceb"),
-       "Orthanc ID of the RTDOSE instance to load")
+       "Orthanc ID of the RTDOSE instance to load. This may be an empty string.")
 
       ("rtstruct", po::value<std::string>()->default_value("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9"),
-       "Orthanc ID of the RTSTRUCT instance to load")
+       "Orthanc ID of the RTSTRUCT instance to load. This may be an empty string.")
       ;
 
     po::variables_map vm;

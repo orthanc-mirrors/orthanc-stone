@@ -116,7 +116,7 @@ namespace OrthancStone
       // "true" means use progressive quality (jpeg 50 --> jpeg 90 --> 16-bit raw)
       // "false" means only using hi quality
       // TODO: add flag for quality
-      ctLoader_ = OrthancSeriesVolumeProgressiveLoader::Create(*loadersContext_, ctVolume_, false);
+      ctLoader_ = OrthancSeriesVolumeProgressiveLoader::Create(*loadersContext_, ctVolume_, true);
       
       // better priority for CT vs dose and struct
       ctLoader_->SetSchedulingPriority(-100);

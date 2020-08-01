@@ -770,6 +770,7 @@ namespace OrthancStone
         break;
 
       case IOracleCommand::Type_GetOrthancWebViewerJpeg:
+        Execute(receiver, dynamic_cast<GetOrthancWebViewerJpegCommand*>(protection.release()));
         break;          
             
       case IOracleCommand::Type_Sleep:

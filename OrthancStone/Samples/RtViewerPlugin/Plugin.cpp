@@ -26,6 +26,32 @@
 #include <SystemToolbox.h>
 #include <Toolbox.h>
 
+OrthancPluginErrorCode OnChangeCallback(OrthancPluginChangeType changeType,
+                                        OrthancPluginResourceType resourceType,
+                                        const char* resourceId)
+{
+  try
+  {
+    if (changeType == OrthancPluginChangeType_OrthancStarted)
+    {
+      Json::Value info;
+      if (!OrthancPlugins::RestApiGet(info, "/plugins/web-viewer", false))
+      {
+        throw Orthanc::OrthancException(
+          Orthanc::ErrorCode_InternalError,
+          "The Stone MPR RT viewer requires the Web Viewer plugin to be installed");
+      }
+    }
+  }
+  catch (Orthanc::OrthancException& e)
+  {
+    LOG(ERROR) << "Exception: " << e.What();
+    return static_cast<OrthancPluginErrorCode>(e.GetErrorCode());
+  }
+
+  return OrthancPluginErrorCode_Success;
+}
+
 template <enum Orthanc::EmbeddedResources::DirectoryResourceId folder>
 void ServeEmbeddedFolder(OrthancPluginRestOutput* output,
                          const char* url,
@@ -128,6 +154,8 @@ extern "C"
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFile<Orthanc::EmbeddedResources::RT_VIEWER_INDEX_HTML> >
         ("/stone-rtviewer/index.html", true);
+
+      OrthancPluginRegisterOnChangeCallback(context, OnChangeCallback);
     }
     catch (...)
     {

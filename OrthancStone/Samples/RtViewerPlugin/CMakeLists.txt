@@ -63,7 +63,7 @@ endif()
 add_definitions(
   -DHAS_ORTHANC_EXCEPTION=1
   -DPLUGIN_VERSION="${ORTHANC_PLUGIN_VERSION}"
-  -DPLUGIN_NAME="stone-webviewer"
+  -DPLUGIN_NAME="stone-rtviewer"
   )
 
 

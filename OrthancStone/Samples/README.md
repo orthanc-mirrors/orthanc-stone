@@ -145,6 +145,40 @@ You can i.e: add such a section in your orthanc configuration file:
 You'll then be able to open the demo at `http://localhost:8042/rt-viewer/index.html`
 
 
+RtViewerPlugin
+---------------
+This C++ plugin allows to extend the Orthanc Explorer to add a button labeled "Stone RT Viewer" 
+in the series page. 
+
+It also embeds and serves the RT Viewer files and is thus a standalone way of using this viewer.
+
+Please note that building this plugin requires that the RtViewer be built inside the wasm-binaries 
+folder of the repo.
+
+This will automatically be the case if you use the `<REPO-ROOT>/OrthancStone/Samples/WebAssembly/docker-build.sh` script.
+
+If you use the `build-wasm-samples.sh` script above, you will have the copy `RtViewer` **folder**
+from `<REPO-ROOT>/out/install-stone-wasm-RtViewer-RelWithDebInfo` to `<REPO-ROOT>/wasm-binaries/`.
+
+TL;DR: Build like this (assuming `~/orthanc-stone` is the repo ):
+
+```
+~/orthanc-stone/OrthancStone/Samples/WebAssembly/docker-build.sh
+~/orthanc-stone/OrthancStone/Samples/RtViewerPlugin/docker-build.sh
+```
+
+Once this is done, the plugin can be found in:
+
+```
+~/orthanc-stone/wasm-binaries/share/orthanc/plugins/libRtViewerPlugin.so
+```
+
+Add this path to the `"Plugins"` section of your Orthanc configuration, start Orthanc, and you 
+should now see a "Stone MPR RT Viewer" button in the Orthanc Explorer, at the *series* level.
+
+Open it on a CT series, and the RTSTRUCT and RTDOSE series of the same study will be loaded in
+the viewer.
+
 Native samples
 =================
 

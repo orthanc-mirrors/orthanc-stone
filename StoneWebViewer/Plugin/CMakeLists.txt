@@ -14,8 +14,7 @@ endif()
 
 
 
-set(STONE_BINARIES_WEB_VIEWER CACHE PATH "Path to the binaries of the WebViewer \"../WebAssembly\" folder")
-set(STONE_BINARIES_RT_VIEWER CACHE PATH "Path to the binaries of the RtViewer \"../WebAssembly\" folder")
+set(STONE_BINARIES CACHE PATH "Path to the binaries of the \"../WebAssembly\" folder")
 
 # Parameters of the build
 set(STATIC_BUILD OFF CACHE BOOL "Static build of the third-party libraries (necessary for Windows)")
@@ -71,23 +70,15 @@ add_definitions(
 
 
 EmbedResources(
-  # Web Viewer Folders
-  IMAGES                 ${STONE_BINARIES_WEB_VIEWER}/img/
+  # Folders
+  IMAGES                 ${STONE_BINARIES}/img/
   WEB_APPLICATION        ${CMAKE_SOURCE_DIR}/../WebApplication
 
-  # Explorer extension code
+  # Individual files
   ORTHANC_EXPLORER       ${CMAKE_SOURCE_DIR}/OrthancExplorer.js
-
-  # Web viewer individual files
-  STONE_WEB_VIEWER_JS    ${STONE_BINARIES_WEB_VIEWER}/StoneWebViewer.js
-  STONE_WEB_VIEWER_WASM  ${STONE_BINARIES_WEB_VIEWER}/StoneWebViewer.wasm
-  STONE_WRAPPER          ${STONE_BINARIES_WEB_VIEWER}/stone.js
-
-  # RtViewer folder
-  RT_VIEWER_WASM_JS      ${STONE_BINARIES_RT_VIEWER}/RtViewerWasm.js
-  RT_VIEWER_WASM         ${STONE_BINARIES_RT_VIEWER}/RtViewerWasm.wasm
-  RT_VIEWER_WASM_APP_JS  ${STONE_BINARIES_RT_VIEWER}/RtViewerWasmApp.js
-  RT_VIEWER_INDEX_HTML   ${STONE_BINARIES_RT_VIEWER}/index.html
+  STONE_WEB_VIEWER_JS    ${STONE_BINARIES}/StoneWebViewer.js
+  STONE_WEB_VIEWER_WASM  ${STONE_BINARIES}/StoneWebViewer.wasm
+  STONE_WRAPPER          ${STONE_BINARIES}/stone.js
   )
 
 add_library(StoneWebViewer SHARED

@@ -20,8 +20,7 @@ LSB_CC=gcc-4.8 LSB_CXX=g++-4.8 cmake /tmp/source-writeable/StoneWebViewer/Plugin
       -DCMAKE_TOOLCHAIN_FILE=/tmp/orthanc/OrthancFramework/Resources/Toolchains/LinuxStandardBaseToolchain.cmake \
       -DORTHANC_FRAMEWORK_ROOT=/tmp/orthanc/OrthancFramework \
       -DSTATIC_BUILD=ON \
-      -DSTONE_BINARIES_WEB_VIEWER=/target/StoneWebViewer/ \
-      -DSTONE_BINARIES_RT_VIEWER=/target/RtViewer/ \
+      -DSTONE_BINARIES=/target/StoneWebViewer/ \
       -DUSE_LEGACY_JSONCPP=ON \
       -G Ninja
 

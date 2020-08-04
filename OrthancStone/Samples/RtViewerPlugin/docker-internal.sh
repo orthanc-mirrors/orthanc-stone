@@ -19,7 +19,7 @@ LSB_CC=gcc-4.8 LSB_CXX=g++-4.8 cmake /tmp/source-writeable/OrthancStone/Samples/
       -DCMAKE_BUILD_TYPE=$1 \
       -DCMAKE_INSTALL_PREFIX=/target/ \
       -DCMAKE_TOOLCHAIN_FILE=/tmp/orthanc/OrthancFramework/Resources/Toolchains/LinuxStandardBaseToolchain.cmake \
-      -DORTHANC_FRAMEWORK_ROOT=/tmp/orthanc/OrthancFramework \
+      -DORTHANC_FRAMEWORK_ROOT=/tmp/orthanc/OrthancFramework/Sources \
       -DSTATIC_BUILD=ON \
       -DSTONE_BINARIES_RT_VIEWER=/target/RtViewer/ \
       -DUSE_LEGACY_JSONCPP=ON \

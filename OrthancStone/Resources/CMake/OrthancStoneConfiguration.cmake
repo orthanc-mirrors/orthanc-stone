@@ -26,32 +26,6 @@ if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
   include(${CMAKE_CURRENT_LIST_DIR}/../Orthanc/CMake/DownloadOrthancFramework.cmake)
   link_libraries(${ORTHANC_FRAMEWORK_LIBRARIES})
 
-  # Switch to the C++11 standard if the version of JsonCpp is 1.y.z
-  if (EXISTS ${JSONCPP_INCLUDE_DIR}/json/version.h)
-    file(STRINGS
-      "${JSONCPP_INCLUDE_DIR}/json/version.h" 
-      JSONCPP_VERSION_MAJOR1 REGEX
-      ".*define JSONCPP_VERSION_MAJOR.*")
-
-    if (NOT JSONCPP_VERSION_MAJOR1)
-      message(FATAL_ERROR "Unable to extract the major version of JsonCpp")
-    endif()
-    
-    string(REGEX REPLACE
-      ".*JSONCPP_VERSION_MAJOR.*([0-9]+)$" "\\1" 
-      JSONCPP_VERSION_MAJOR ${JSONCPP_VERSION_MAJOR1})
-    message("JsonCpp major version: ${JSONCPP_VERSION_MAJOR}")
-
-    if (JSONCPP_VERSION_MAJOR GREATER 0)
-      message("Switching to C++11 standard")
-      if (CMAKE_COMPILER_IS_GNUCXX)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
-      elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-      endif()
-    endif()
-  endif()
-  
 else()
   if (ENABLE_DCMTK)
     set(ENABLE_LOCALE ON)
@@ -61,10 +35,8 @@ else()
     endif()
   endif()
   
-  include(${ORTHANC_FRAMEWORK_ROOT}/Resources/CMake/OrthancFrameworkConfiguration.cmake)
-  include_directories(
-    ${ORTHANC_FRAMEWORK_ROOT}/Sources/
-    )
+  include(${ORTHANC_FRAMEWORK_ROOT}/../Resources/CMake/OrthancFrameworkConfiguration.cmake)
+  include_directories(${ORTHANC_FRAMEWORK_ROOT})
 endif()
 
 

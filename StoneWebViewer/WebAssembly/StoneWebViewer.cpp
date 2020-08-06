@@ -1125,7 +1125,7 @@ private:
     virtual void Handle(const OrthancStone::ParseDicomSuccessMessage& message) const ORTHANC_OVERRIDE
     {
       Orthanc::DicomMap tags;
-      message.GetDicom().ExtractDicomSummary(tags);
+      message.GetDicom().ExtractDicomSummary(tags, ORTHANC_STONE_MAX_TAG_LENGTH);
 
       std::string s;
       if (!tags.LookupStringValue(s, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))

@@ -178,6 +178,7 @@ endif()
 
 add_definitions(
   -DHAS_ORTHANC_EXCEPTION=1
+  -DORTHANC_STONE_MAX_TAG_LENGTH=256
   )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")

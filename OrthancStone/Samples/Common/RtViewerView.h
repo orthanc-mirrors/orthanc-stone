@@ -51,6 +51,7 @@ namespace OrthancStone
       : app_(app)
       , currentPlane_(0)
       , projection_(projection)
+      , ctLayer_(0)
     {
       viewport_ = CreateViewport(canvasId);
       FLOATING_INFOTEXT_LAYER_ZINDEX = 6;
@@ -101,6 +102,11 @@ namespace OrthancStone
       return viewport_;
     }
 
+    int GetCtLayerIndex() const
+    {
+      return ctLayer_;
+    }
+
   private:
     void SetInfoDisplayMessage(std::string key, std::string value);
     boost::shared_ptr<RtViewerApp> GetApp();
@@ -132,5 +138,7 @@ namespace OrthancStone
     int FLOATING_INFOTEXT_LAYER_ZINDEX;
     int FIXED_INFOTEXT_LAYER_ZINDEX;
     boost::shared_ptr<IViewport> viewport_;
+
+    int ctLayer_;
   };
 }

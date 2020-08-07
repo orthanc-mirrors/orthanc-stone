@@ -51,7 +51,27 @@ namespace OrthancStone
   // TODO - Move this to another file
   class DefaultViewportInteractor : public IViewportInteractor
   {
+  private:
+    // Index of the layer whose windowing is altered by clicking the
+    // left mouse button
+    int  windowingLayer_;
+    
   public:
+    DefaultViewportInteractor() :
+      windowingLayer_(0)
+    {
+    }
+
+    int GetWindowingLayer() const
+    {
+      return windowingLayer_;
+    }
+
+    void SetWindowingLayer(int layerIndex)
+    {
+      windowingLayer_ = layerIndex;
+    }
+    
     virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<IViewport> viewport,
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,

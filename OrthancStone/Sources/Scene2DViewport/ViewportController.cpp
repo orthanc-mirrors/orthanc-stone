@@ -34,18 +34,18 @@
 namespace OrthancStone
 {
   IFlexiblePointerTracker* DefaultViewportInteractor::CreateTracker(
-    boost::shared_ptr<IViewport>          viewport,
-    const PointerEvent& event,
-    unsigned int        viewportWidth,
-    unsigned int        viewportHeight)
+    boost::shared_ptr<IViewport>  viewport,
+    const PointerEvent&           event,
+    unsigned int                  viewportWidth,
+    unsigned int                  viewportHeight)
   {
     switch (event.GetMouseButton())
     {
       case MouseButton_Left:
         //return new RotateSceneTracker(viewport, event);
 
-        // Assumes that the layer whose windowing is controlled, is the one with index "0"
-        return new GrayscaleWindowingSceneTracker(viewport, 0, event, viewportWidth, viewportHeight);
+        return new GrayscaleWindowingSceneTracker(
+          viewport, windowingLayer_, event, viewportWidth, viewportHeight);
 
       case MouseButton_Middle:
         return new PanSceneTracker(viewport, event);

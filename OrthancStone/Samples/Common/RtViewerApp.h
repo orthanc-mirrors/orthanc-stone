@@ -73,7 +73,7 @@ namespace OrthancStone
   public:
     void RunSdl(int argc, char* argv[]);
     void SdlRunLoop(const std::vector<boost::shared_ptr<OrthancStone::RtViewerView> >& views,
-                    OrthancStone::IViewportInteractor& interactor);
+                    OrthancStone::DefaultViewportInteractor& interactor);
   private:
     void ProcessOptions(int argc, char* argv[]);
     void HandleApplicationEvent(const SDL_Event& event);

@@ -245,7 +245,7 @@ namespace OrthancStone
   }
 
   void RtViewerApp::SdlRunLoop(const std::vector<boost::shared_ptr<OrthancStone::RtViewerView> >& views,
-                               OrthancStone::IViewportInteractor& interactor)
+                               OrthancStone::DefaultViewportInteractor& interactor)
   {
     using namespace OrthancStone;
 
@@ -373,6 +373,7 @@ namespace OrthancStone
               switch (sdlEvent.type)
               {
               case SDL_MOUSEBUTTONDOWN:
+                interactor.SetWindowingLayer(view->GetCtLayerIndex());
                 lock->GetController().HandleMousePress(interactor, p,
                                                        lock->GetCompositor().GetCanvasWidth(),
                                                        lock->GetCompositor().GetCanvasHeight());

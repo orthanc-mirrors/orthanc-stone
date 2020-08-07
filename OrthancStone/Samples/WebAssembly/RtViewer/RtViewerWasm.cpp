@@ -145,8 +145,6 @@ namespace OrthancStone
     }
 
     StartLoaders();
-
-    DefaultViewportInteractor interactor;
   }
 }
 

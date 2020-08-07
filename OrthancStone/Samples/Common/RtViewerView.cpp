@@ -320,6 +320,8 @@ namespace OrthancStone
     {
       ctVolumeLayerSource_->SetConfigurator(style);
     }
+
+    ctLayer_ = depth;
   }
 
   void RtViewerView::SetDoseVolumeSlicer(const boost::shared_ptr<OrthancStone::IVolumeSlicer>& volume,

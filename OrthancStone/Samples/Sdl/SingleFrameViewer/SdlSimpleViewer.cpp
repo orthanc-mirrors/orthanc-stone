@@ -143,6 +143,7 @@ int main(int argc, char* argv[])
         application->LoadOrthancFrame(source, instanceId, frameIndex);
 
         OrthancStone::DefaultViewportInteractor interactor;
+        interactor.SetWindowingLayer(0);
 
         {
           int scancodeCount = 0;

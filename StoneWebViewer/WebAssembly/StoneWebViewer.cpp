@@ -1378,6 +1378,23 @@ private:
     FramesCache::Accessor accessor(*cache_, sopInstanceUid, frame);
     if (accessor.IsValid())
     {
+      {
+        std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+
+        OrthancStone::Scene2D& scene = lock->GetController().GetScene();
+
+        // Save the current windowing (that could have been altered by
+        // GrayscaleWindowingSceneTracker), so that it can be reused
+        // by the next frames
+        if (scene.HasLayer(LAYER_TEXTURE) &&
+            scene.GetLayer(LAYER_TEXTURE).GetType() == OrthancStone::ISceneLayer::Type_FloatTexture)
+        {
+          OrthancStone::FloatTextureSceneLayer& layer =
+            dynamic_cast<OrthancStone::FloatTextureSceneLayer&>(scene.GetLayer(LAYER_TEXTURE));
+          layer.GetWindowing(windowingCenter_, windowingWidth_);
+        }
+      }
+      
       quality = accessor.GetQuality();
 
       std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer;
@@ -1416,16 +1433,19 @@ private:
       else
       {
         std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-        lock->GetController().GetScene().SetLayer(LAYER_TEXTURE, layer.release());
+
+        OrthancStone::Scene2D& scene = lock->GetController().GetScene();
+
+        scene.SetLayer(LAYER_TEXTURE, layer.release());
 
         if (fitNextContent_)
         {
           lock->GetCompositor().RefreshCanvasSize();
-          lock->GetCompositor().FitContent(lock->GetController().GetScene());
+          lock->GetCompositor().FitContent(scene);
           fitNextContent_ = false;
         }
         
-        //lock->GetCompositor().Refresh(lock->GetController().GetScene());
+        //lock->GetCompositor().Refresh(scene);
         lock->Invalidate();
         return true;
       }

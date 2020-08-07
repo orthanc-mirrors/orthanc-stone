@@ -46,7 +46,7 @@ int frameIndex = 0;
 static void ProcessOptions(int argc, char* argv[])
 {
   namespace po = boost::program_options;
-  po::options_description desc("Usage:");
+  po::options_description desc("Usage");
 
   desc.add_options()
     ("loglevel", po::value<std::string>()->default_value("WARNING"),
@@ -61,6 +61,8 @@ static void ProcessOptions(int argc, char* argv[])
     ("frame_index", po::value<int>()->default_value(0),
      "The zero-based index of the frame (for multi-frame instances)")
     ;
+
+  std::cout << desc << std::endl;
 
   po::variables_map vm;
   try

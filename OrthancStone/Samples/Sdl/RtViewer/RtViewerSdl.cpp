@@ -91,7 +91,7 @@ namespace OrthancStone
   void RtViewerApp::ProcessOptions(int argc, char* argv[])
   {
     namespace po = boost::program_options;
-    po::options_description desc("Usage:");
+    po::options_description desc("Usage");
 
     desc.add_options()
       ("loglevel", po::value<std::string>()->default_value("WARNING"),
@@ -109,6 +109,8 @@ namespace OrthancStone
       ("rtstruct", po::value<std::string>()->default_value("54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9"),
        "Orthanc ID of the RTSTRUCT instance to load. This may be an empty string.")
       ;
+
+    std::cout << desc << std::endl;
 
     po::variables_map vm;
     try

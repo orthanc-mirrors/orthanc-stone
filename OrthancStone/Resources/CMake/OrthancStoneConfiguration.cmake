@@ -338,12 +338,14 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/FloatTextureSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/GrayscaleStyleConfigurator.cpp
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/GrayscaleStyleConfigurator.h
+  ${ORTHANC_STONE_ROOT}/Sources/Scene2D/GrayscaleWindowingSceneTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Sources/Scene2D/GrayscaleWindowingSceneTracker.h
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/ICompositor.h
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/ILayerStyleConfigurator.h
-  ${ORTHANC_STONE_ROOT}/Sources/Scene2D/InfoPanelSceneLayer.cpp
-  ${ORTHANC_STONE_ROOT}/Sources/Scene2D/InfoPanelSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/IPointerTracker.h
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/ISceneLayer.h
+  ${ORTHANC_STONE_ROOT}/Sources/Scene2D/InfoPanelSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Sources/Scene2D/InfoPanelSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/LookupTableStyleConfigurator.cpp
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/LookupTableStyleConfigurator.h
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/LookupTableTextureSceneLayer.cpp

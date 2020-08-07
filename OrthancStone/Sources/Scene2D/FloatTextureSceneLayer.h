@@ -33,6 +33,9 @@ namespace OrthancStone
     float            customWidth_;
     bool             inverted_;
     bool             applyLog_;
+    bool             isRangeComputed_;
+    float            minValue_;
+    float            maxValue_;
 
   public:
     // The pixel format must be convertible to "Float32"
@@ -67,6 +70,9 @@ namespace OrthancStone
     {
       return applyLog_;
     }
+
+    void GetRange(float& minValue,
+                  float& maxValue);
 
     virtual ISceneLayer* Clone() const;
 

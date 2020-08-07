@@ -31,7 +31,10 @@ namespace OrthancStone
 {
   FloatTextureSceneLayer::FloatTextureSceneLayer(const Orthanc::ImageAccessor& texture) :
     inverted_(false),
-    applyLog_(false)
+    applyLog_(false),
+    isRangeComputed_(false),
+    minValue_(0),
+    maxValue_(0)
   {
     {
       std::unique_ptr<Orthanc::ImageAccessor> t(
@@ -107,11 +110,11 @@ namespace OrthancStone
   void FloatTextureSceneLayer::FitRange()
   {
     float minValue, maxValue;
-    Orthanc::ImageProcessing::GetMinMaxFloatValue(minValue, maxValue, GetTexture());
+    GetRange(minValue, maxValue);
+    assert(minValue <= maxValue);
 
     float width;
 
-    assert(minValue <= maxValue);
     if (LinearAlgebra::IsCloseToZero(maxValue - minValue))
     {
       width = 1;
@@ -125,6 +128,22 @@ namespace OrthancStone
   }
 
     
+  void FloatTextureSceneLayer::GetRange(float& minValue,
+                                        float& maxValue)
+  {
+    if (!isRangeComputed_)
+    {
+      Orthanc::ImageProcessing::GetMinMaxFloatValue(minValue_, maxValue_, GetTexture());
+      isRangeComputed_ = true;
+    }
+
+    assert(minValue_ <= maxValue_);
+
+    minValue = minValue_;
+    maxValue = maxValue_;
+  }
+
+
   ISceneLayer* FloatTextureSceneLayer::Clone() const
   {
     std::unique_ptr<FloatTextureSceneLayer> cloned
@@ -136,6 +155,9 @@ namespace OrthancStone
     cloned->customWidth_ = customWidth_;
     cloned->inverted_ = inverted_;
     cloned->applyLog_ = applyLog_;
+    cloned->isRangeComputed_ = isRangeComputed_;
+    cloned->minValue_ = minValue_;
+    cloned->maxValue_ = maxValue_;
 
     return cloned.release();
   }

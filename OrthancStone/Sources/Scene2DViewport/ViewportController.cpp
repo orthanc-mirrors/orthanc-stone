@@ -23,10 +23,11 @@
 #include "UndoStack.h"
 #include "MeasureCommands.h"
 
-#include "../StoneException.h"
+#include "../Scene2D/GrayscaleWindowingSceneTracker.h"
 #include "../Scene2D/PanSceneTracker.h"
 #include "../Scene2D/RotateSceneTracker.h"
 #include "../Scene2D/ZoomSceneTracker.h"
+#include "../StoneException.h"
 
 #include <boost/make_shared.hpp>
 
@@ -41,22 +42,16 @@ namespace OrthancStone
     switch (event.GetMouseButton())
     {
       case MouseButton_Left:
-        return new RotateSceneTracker(viewport, event);
+        //return new RotateSceneTracker(viewport, event);
+
+        // Assumes that the layer whose windowing is controlled, is the one with index "0"
+        return new GrayscaleWindowingSceneTracker(viewport, 0, event, viewportWidth, viewportHeight);
 
       case MouseButton_Middle:
         return new PanSceneTracker(viewport, event);
       
       case MouseButton_Right:
-      {
-        if (viewportWidth != 0)
-        {
-          return new ZoomSceneTracker(viewport, event, viewportWidth);
-        }
-        else
-        {
-          return NULL;
-        }
-      }
+        return new ZoomSceneTracker(viewport, event, viewportHeight);
 
       default:
         return NULL;

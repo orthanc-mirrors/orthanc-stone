@@ -29,7 +29,7 @@ add_definitions(
 # ---------------------------------------------------------------
 set(ALLOW_DOWNLOADS ON)
 
-include(${CMAKE_SOURCE_DIR}/../../OrthancStone/Resources/CMake/OrthancStoneParameters.cmake)
+include(${CMAKE_SOURCE_DIR}/../../../OrthancStone/Resources/CMake/OrthancStoneParameters.cmake)
 
 SET(ENABLE_DCMTK ON)
 SET(ENABLE_DCMTK_NETWORKING OFF)

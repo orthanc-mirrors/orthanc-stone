@@ -14,7 +14,7 @@ endif()
 
 
 
-set(STONE_BINARIES "${CMAKE_SOURCE_DIR}/../../wasm-binaries/StoneWebViewer/" CACHE PATH "Path to the binaries of the \"../WebAssembly\" folder")
+set(STONE_BINARIES "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/StoneWebViewer/" CACHE PATH "Path to the binaries of the \"../WebAssembly\" folder")
 
 # Parameters of the build
 set(STATIC_BUILD OFF CACHE BOOL "Static build of the third-party libraries (necessary for Windows)")
@@ -51,7 +51,7 @@ include(${CMAKE_SOURCE_DIR}/../Resources/Orthanc/Plugins/OrthancPluginsExports.c
 
 
 if (STATIC_BUILD OR NOT USE_SYSTEM_ORTHANC_SDK)
-  include_directories(${CMAKE_SOURCE_DIR}/../Resources/OrthancSdk-1.0.0)
+  include_directories(${CMAKE_SOURCE_DIR}/../../Resources/Orthanc/Sdk-1.0.0)
 else ()
   CHECK_INCLUDE_FILE_CXX(orthanc/OrthancCPlugin.h HAVE_ORTHANC_H)
   if (NOT HAVE_ORTHANC_H)

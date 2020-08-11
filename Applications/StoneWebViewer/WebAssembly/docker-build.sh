@@ -15,7 +15,7 @@ if [ -t 1 ]; then
     DOCKER_FLAGS='-i'
 fi
 
-ROOT_DIR=`dirname $(readlink -f $0)`/../..
+ROOT_DIR=`dirname $(readlink -f $0)`/../../..
 
 mkdir -p ${ROOT_DIR}/wasm-binaries
 
@@ -23,6 +23,6 @@ docker run -t ${DOCKER_FLAGS} --rm \
     --user $(id -u):$(id -g) \
     -v ${ROOT_DIR}:/source:ro \
     -v ${ROOT_DIR}/wasm-binaries:/target:rw ${IMAGE} \
-    bash /source/StoneWebViewer/WebAssembly/docker-internal.sh $1
+    bash /source/Applications/StoneWebViewer/WebAssembly/docker-internal.sh $1
 
 ls -lR ${ROOT_DIR}/wasm-binaries/StoneWebViewer/

@@ -21,9 +21,9 @@
 
 #include "SingleFrameViewerApplication.h"
 
-#include "../../../Sources/Loaders/WebAssemblyLoadersContext.h"
-#include "../../../Sources/StoneException.h"
-#include "../../../Sources/StoneInitialization.h"
+#include "../../../../OrthancStone/Sources/Loaders/WebAssemblyLoadersContext.h"
+#include "../../../../OrthancStone/Sources/StoneException.h"
+#include "../../../../OrthancStone/Sources/StoneInitialization.h"
 
 #include <Compatibility.h>  // For std::unique_ptr<>
 #include <Toolbox.h>

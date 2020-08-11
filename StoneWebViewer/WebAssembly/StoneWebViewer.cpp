@@ -1498,14 +1498,14 @@ private:
 
       std::map<std::string, std::string> headers, arguments;
       arguments["window"] = (
-        boost::lexical_cast<std::string>(defaultWindowingCenter_) + ","  +
-        boost::lexical_cast<std::string>(defaultWindowingWidth_) + ",linear");
+        boost::lexical_cast<std::string>(windowingCenter_) + ","  +
+        boost::lexical_cast<std::string>(windowingWidth_) + ",linear");
 
       std::unique_ptr<OrthancStone::IOracleCommand> command(
         source_.CreateDicomWebCommand(
           uri, arguments, headers, new SetLowQualityFrame(
             GetSharedObserver(), sopInstanceUid, frame,
-            defaultWindowingCenter_, defaultWindowingWidth_, isMonochrome1, isPrefetch)));
+            windowingCenter_, windowingWidth_, isMonochrome1, isPrefetch)));
 
       {
         std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());

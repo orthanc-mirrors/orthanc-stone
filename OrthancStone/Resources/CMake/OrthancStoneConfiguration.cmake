@@ -23,9 +23,16 @@
 #####################################################################
 
 if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
+  # DCMTK and curl are necessarily enabled if using Orthanc framework:
+  # "DownloadOrthancFramework.cmake" must be aware of this fact
+  set(ENABLE_DCMTK ON)   
+  set(ENABLE_WEB_CLIENT ON)
+
   include(${CMAKE_CURRENT_LIST_DIR}/../Orthanc/CMake/DownloadOrthancFramework.cmake)
   link_libraries(${ORTHANC_FRAMEWORK_LIBRARIES})
 
+  set(ENABLE_LOCALE ON)
+  
 else()
   if (ENABLE_DCMTK)
     set(ENABLE_LOCALE ON)

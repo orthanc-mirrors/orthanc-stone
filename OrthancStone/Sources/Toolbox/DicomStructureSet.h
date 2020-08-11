@@ -164,13 +164,13 @@ namespace OrthancStone
       const CoordinateSystem3D& slice) const;
 
   public:
-    DicomStructureSet(const FullOrthancDataset& instance)
+    explicit DicomStructureSet(const FullOrthancDataset& instance)
     {
       Setup(instance);
     }
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    DicomStructureSet(Orthanc::ParsedDicomFile& instance);
+    explicit DicomStructureSet(Orthanc::ParsedDicomFile& instance);
 #endif
 
     size_t GetStructuresCount() const

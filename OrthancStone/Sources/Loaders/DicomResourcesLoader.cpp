@@ -534,7 +534,13 @@ namespace OrthancStone
       ignoreTagLength.insert(Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR);  // Needed for RT-DOSE
 
       Orthanc::DicomMap summary;
+
+#if ORTHANC_FRAMEWORK_VERSION_IS_ABOVE(1, 7, 3)
       message.GetDicom().ExtractDicomSummary(summary, ORTHANC_STONE_MAX_TAG_LENGTH, ignoreTagLength);
+#else
+      message.GetDicom().ExtractDicomSummary(summary, ignoreTagLength);
+#endif
+      
       handler.GetTarget()->AddResource(summary);
 
       handler.BroadcastSuccess();

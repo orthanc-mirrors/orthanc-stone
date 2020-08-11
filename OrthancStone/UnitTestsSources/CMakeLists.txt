@@ -17,7 +17,6 @@ else()
   set(ENABLE_GOOGLE_TEST ON)
 endif()
 
-set(ENABLE_DCMTK OFF)
 set(ENABLE_OPENGL OFF)
 
 include(${ORTHANC_STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)

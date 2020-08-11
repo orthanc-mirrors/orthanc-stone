@@ -4,7 +4,7 @@ $('#series').live('pagebeforecreate', function() {
       .attr('href', '#')
       .attr('data-icon', 'search')
       .attr('data-theme', 'e')
-      .text('Stone MPR RT Viewer');``
+      .text('Stone MPR RT Sample Viewer');``
 
   b.insertBefore($('#series-delete').parent().parent());
   b.click(function() {

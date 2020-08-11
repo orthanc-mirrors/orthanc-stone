@@ -12,7 +12,7 @@ else()
   set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "web")
 endif()
 
-set(STONE_BINARIES_RT_VIEWER CACHE PATH "Path to the binaries of the RtViewer \"../WebAssembly\" folder")
+set(STONE_BINARIES "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/RtViewer/" CACHE PATH "Path to the binaries of the \"../WebAssembly\" folder")
 
 # Parameters of the build
 set(STATIC_BUILD OFF CACHE BOOL "Static build of the third-party libraries (necessary for Windows)")
@@ -74,10 +74,10 @@ EmbedResources(
   ORTHANC_EXPLORER       ${CMAKE_SOURCE_DIR}/OrthancExplorer.js
 
   # RtViewer individual files
-  RT_VIEWER_WASM_JS      ${STONE_BINARIES_RT_VIEWER}/RtViewerWasm.js
-  RT_VIEWER_WASM         ${STONE_BINARIES_RT_VIEWER}/RtViewerWasm.wasm
-  RT_VIEWER_WASM_APP_JS  ${STONE_BINARIES_RT_VIEWER}/RtViewerWasmApp.js
-  RT_VIEWER_INDEX_HTML   ${STONE_BINARIES_RT_VIEWER}/index.html
+  RT_VIEWER_WASM_JS      ${STONE_BINARIES}/RtViewerWasm.js
+  RT_VIEWER_WASM         ${STONE_BINARIES}/RtViewerWasm.wasm
+  RT_VIEWER_WASM_APP_JS  ${STONE_BINARIES}/RtViewerWasmApp.js
+  RT_VIEWER_INDEX_HTML   ${STONE_BINARIES}/index.html
   )
 
 add_library(RtViewerPlugin SHARED

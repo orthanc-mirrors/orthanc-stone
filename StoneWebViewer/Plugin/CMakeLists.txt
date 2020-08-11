@@ -14,7 +14,7 @@ endif()
 
 
 
-set(STONE_BINARIES CACHE PATH "Path to the binaries of the \"../WebAssembly\" folder")
+set(STONE_BINARIES "${CMAKE_SOURCE_DIR}/../../wasm-binaries/StoneWebViewer/" CACHE PATH "Path to the binaries of the \"../WebAssembly\" folder")
 
 # Parameters of the build
 set(STATIC_BUILD OFF CACHE BOOL "Static build of the third-party libraries (necessary for Windows)")

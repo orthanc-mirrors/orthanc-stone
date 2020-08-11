@@ -74,6 +74,7 @@ if (ENABLE_WASM)
   endif()
 
   set(ENABLE_THREADS OFF)
+  set(ENABLE_WEB_CLIENT OFF)
   add_definitions(-DORTHANC_ENABLE_WASM=1)
 else()
   if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten" OR
@@ -103,7 +104,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/PixmanConfiguration.cmake)
 ## Configure optional third-party components
 #####################################################################
 
-if (NOT ORTHANC_SANDBOXED)
+if (ENABLE_WEB_CLIENT)
   list(APPEND ORTHANC_STONE_SOURCES
     ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OrthancDatasets/OrthancHttpConnection.cpp
     )
@@ -213,28 +214,19 @@ endif()
 ## All the source files required to build Stone of Orthanc
 #####################################################################
 
-if (NOT ORTHANC_SANDBOXED)
-  set(PLATFORM_SOURCES
-    ${ORTHANC_STONE_ROOT}/Sources/Loaders/GenericLoadersContext.cpp
-    ${ORTHANC_STONE_ROOT}/Sources/Loaders/GenericLoadersContext.h
+if (ENABLE_SDL)
+  list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Sources/Viewport/SdlWindow.cpp
+    ${ORTHANC_STONE_ROOT}/Sources/Viewport/SdlWindow.h
     )
 
-  if (ENABLE_SDL)
+  if (ENABLE_OPENGL)
     list(APPEND ORTHANC_STONE_SOURCES
-      ${ORTHANC_STONE_ROOT}/Sources/Viewport/SdlWindow.cpp
-      ${ORTHANC_STONE_ROOT}/Sources/Viewport/SdlWindow.h
+      ${ORTHANC_STONE_ROOT}/Sources/OpenGL/SdlOpenGLContext.cpp
+      ${ORTHANC_STONE_ROOT}/Sources/OpenGL/SdlOpenGLContext.h
+      ${ORTHANC_STONE_ROOT}/Sources/Viewport/SdlViewport.cpp
+      ${ORTHANC_STONE_ROOT}/Sources/Viewport/SdlViewport.h
       )
-  endif()
-
-  if (ENABLE_SDL)
-    if (ENABLE_OPENGL)
-      list(APPEND ORTHANC_STONE_SOURCES
-        ${ORTHANC_STONE_ROOT}/Sources/OpenGL/SdlOpenGLContext.cpp
-        ${ORTHANC_STONE_ROOT}/Sources/OpenGL/SdlOpenGLContext.h
-        ${ORTHANC_STONE_ROOT}/Sources/Viewport/SdlViewport.cpp
-        ${ORTHANC_STONE_ROOT}/Sources/Viewport/SdlViewport.h
-        )
-    endif()
   endif()
 endif()
 
@@ -247,10 +239,13 @@ if (ENABLE_DCMTK)
     )
 endif()
 
-if (ENABLE_THREADS)
+
+if (NOT ORTHANC_SANDBOXED AND ENABLE_THREADS AND ENABLE_WEB_CLIENT)
   list(APPEND ORTHANC_STONE_SOURCES
-    ${ORTHANC_STONE_ROOT}/Sources/Oracle/ThreadedOracle.cpp
+    ${ORTHANC_STONE_ROOT}/Sources/Loaders/GenericLoadersContext.cpp
+    ${ORTHANC_STONE_ROOT}/Sources/Loaders/GenericLoadersContext.h
     ${ORTHANC_STONE_ROOT}/Sources/Oracle/GenericOracleRunner.cpp
+    ${ORTHANC_STONE_ROOT}/Sources/Oracle/ThreadedOracle.cpp
     )
 endif()
 

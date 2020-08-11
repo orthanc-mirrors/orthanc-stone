@@ -27,7 +27,6 @@
 #include "../Sources/Volumes/ImageBuffer3D.h"
 #include "../Sources/Loaders/LoaderCache.h"
 
-#include <HttpClient.h>
 #include <Images/ImageProcessing.h>
 #include <Logging.h>
 #include <MultiThreading/SharedMessageQueue.h>

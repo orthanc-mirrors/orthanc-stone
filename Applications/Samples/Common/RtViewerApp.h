@@ -21,17 +21,17 @@
 
 #pragma once
 
-#include "../../Sources/Loaders/DicomStructureSetLoader.h"
-#include "../../Sources/Loaders/ILoadersContext.h"
-#include "../../Sources/Loaders/OrthancMultiframeVolumeLoader.h"
-#include "../../Sources/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
-#include "../../Sources/Messages/IMessageEmitter.h"
-#include "../../Sources/Messages/IObserver.h"
-#include "../../Sources/Messages/ObserverBase.h"
-#include "../../Sources/Oracle/OracleCommandExceptionMessage.h"
-#include "../../Sources/Scene2DViewport/ViewportController.h"
-#include "../../Sources/Viewport/IViewport.h"
-#include "../../Sources/Volumes/DicomVolumeImage.h"
+#include "../../../OrthancStone/Sources/Loaders/DicomStructureSetLoader.h"
+#include "../../../OrthancStone/Sources/Loaders/ILoadersContext.h"
+#include "../../../OrthancStone/Sources/Loaders/OrthancMultiframeVolumeLoader.h"
+#include "../../../OrthancStone/Sources/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
+#include "../../../OrthancStone/Sources/Messages/IMessageEmitter.h"
+#include "../../../OrthancStone/Sources/Messages/IObserver.h"
+#include "../../../OrthancStone/Sources/Messages/ObserverBase.h"
+#include "../../../OrthancStone/Sources/Oracle/OracleCommandExceptionMessage.h"
+#include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
+#include "../../../OrthancStone/Sources/Viewport/IViewport.h"
+#include "../../../OrthancStone/Sources/Volumes/DicomVolumeImage.h"
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/thread.hpp>

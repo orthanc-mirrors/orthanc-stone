@@ -22,6 +22,6 @@ docker run -t ${DOCKER_FLAGS} --rm \
     --user $(id -u):$(id -g) \
     -v ${ROOT_DIR}:/source:ro \
     -v ${ROOT_DIR}/wasm-binaries:/target:rw ${IMAGE} \
-    bash /source/OrthancStone/Samples/WebAssembly/docker-internal.sh $1
+    bash /source/Applications/Samples/WebAssembly/docker-internal.sh $1
 
 ls -lR ${ROOT_DIR}/wasm-binaries/

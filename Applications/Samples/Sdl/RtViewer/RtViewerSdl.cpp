@@ -25,11 +25,11 @@
 #include <EmbeddedResources.h>
 
 // Stone of Orthanc includes
-#include "../../../Sources/Loaders/GenericLoadersContext.h"
-#include "../../../Sources/OpenGL/OpenGLIncludes.h"
-#include "../../../Sources/OpenGL/SdlOpenGLContext.h"
-#include "../../../Sources/StoneException.h"
-#include "../../../Sources/StoneInitialization.h"
+#include "../../../../OrthancStone/Sources/Loaders/GenericLoadersContext.h"
+#include "../../../../OrthancStone/Sources/OpenGL/OpenGLIncludes.h"
+#include "../../../../OrthancStone/Sources/OpenGL/SdlOpenGLContext.h"
+#include "../../../../OrthancStone/Sources/StoneException.h"
+#include "../../../../OrthancStone/Sources/StoneInitialization.h"
 
 // Orthanc (a.o. for screenshot capture)
 #include <Compatibility.h>  // For std::unique_ptr<>

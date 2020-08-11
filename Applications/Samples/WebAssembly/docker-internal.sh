@@ -19,7 +19,7 @@ hg clone /source /tmp/source-writeable
 mkdir /tmp/build
 cd /tmp/build
 
-cmake /tmp/source-writeable/OrthancStone/Samples/WebAssembly \
+cmake /tmp/source-writeable/Applications/Samples/WebAssembly \
       -DCMAKE_BUILD_TYPE=$1 \
       -DCMAKE_INSTALL_PREFIX=/target \
       -DCMAKE_TOOLCHAIN_FILE=${EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \

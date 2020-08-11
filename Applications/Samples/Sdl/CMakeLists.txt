@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.10)
 
 project(OrthancStone)
 
-include(${CMAKE_SOURCE_DIR}/../../Resources/CMake/OrthancStoneParameters.cmake)
+include(${CMAKE_SOURCE_DIR}/../../../OrthancStone/Resources/CMake/OrthancStoneParameters.cmake)
 
 if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
   set(ORTHANC_BOOST_COMPONENTS program_options)

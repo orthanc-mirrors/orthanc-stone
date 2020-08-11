@@ -23,11 +23,11 @@
 #include "../SdlHelpers.h"
 #include "../../Common/SampleHelpers.h"
 
-#include "../../../Sources/Loaders/GenericLoadersContext.h"
-#include "../../../Sources/StoneException.h"
-#include "../../../Sources/StoneEnumerations.h"
-#include "../../../Sources/StoneInitialization.h"
-#include "../../../Sources/Viewport/SdlViewport.h"
+#include "../../../../OrthancStone/Sources/Loaders/GenericLoadersContext.h"
+#include "../../../../OrthancStone/Sources/StoneException.h"
+#include "../../../../OrthancStone/Sources/StoneEnumerations.h"
+#include "../../../../OrthancStone/Sources/StoneInitialization.h"
+#include "../../../../OrthancStone/Sources/Viewport/SdlViewport.h"
 
 #include <Compatibility.h>  // For std::unique_ptr<>
 #include <OrthancException.h>

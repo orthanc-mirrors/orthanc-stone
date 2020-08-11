@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "../../../Sources/Viewport/IViewport.h"
-#include "../../../Sources/Loaders/DicomResourcesLoader.h"
-#include "../../../Sources/Loaders/ILoadersContext.h"
-#include "../../../Sources/Loaders/SeriesFramesLoader.h"
-#include "../../../Sources/Loaders/SeriesThumbnailsLoader.h"
+#include "../../../../OrthancStone/Sources/Viewport/IViewport.h"
+#include "../../../../OrthancStone/Sources/Loaders/DicomResourcesLoader.h"
+#include "../../../../OrthancStone/Sources/Loaders/ILoadersContext.h"
+#include "../../../../OrthancStone/Sources/Loaders/SeriesFramesLoader.h"
+#include "../../../../OrthancStone/Sources/Loaders/SeriesThumbnailsLoader.h"
 
 #include <Compatibility.h>  // For std::unique_ptr<>
 

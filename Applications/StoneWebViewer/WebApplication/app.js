@@ -78,7 +78,9 @@ Vue.component('viewport', {
     },
     SeriesDragDrop: function(event) {
       event.preventDefault();
-      this.$emit('updated-series', event.dataTransfer.getData('seriesIndex'));
+
+      // The "parseInt()" is because of Microsoft Edge Legacy (*)
+      this.$emit('updated-series', parseInt(event.dataTransfer.getData('seriesIndex'), 10));
     },
     MakeActive: function() {
       this.$emit('selected-viewport');
@@ -280,7 +282,8 @@ var app = new Vue({
     },
     
     SeriesDragStart: function(event, seriesIndex) {
-      event.dataTransfer.setData('seriesIndex', seriesIndex);
+      // It is necessary to use ".toString()" for Microsoft Edge Legacy (*)
+      event.dataTransfer.setData('seriesIndex', seriesIndex.toString());
     },
     
     SetViewportSeries: function(viewportIndex, seriesIndex) {

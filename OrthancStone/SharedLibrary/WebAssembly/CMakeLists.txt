@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(OrthancStoneModule)
 
+
+# Warning message related to WebAssembly modules: We know that 1.38.41
+# DOES NOT work, but that 1.39.17 works.
+message("")
+message("=== IMPORTANT: Make sure to use a recent version of Emscripten (preferably >= 2.0.0) ===")
+message("")
+
+
 set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/OrthancStoneModule" CACHE PATH "Where to put the WebAssembly binaries")
 
 
@@ -51,7 +59,7 @@ include(${CMAKE_SOURCE_DIR}/../../Resources/CMake/OrthancStoneConfiguration.cmak
 # The source files that register a callback cannot be part of a side
 # module, and must be compiled in the main module. The following
 # command can be used to identify such files:
-#  $ grep -l -r emscripten_ ../../Sources/
+#  $ grep -lrE 'emscripten_' ../../Sources/
 
 set(SOURCES_WITH_EMSCRIPTEN_CALLBACKS
   ${ORTHANC_STONE_ROOT}/Sources/Oracle/WebAssemblyOracle.cpp

@@ -51,6 +51,7 @@ add_definitions(
 
 include_directories(
   ${ORTHANC_STONE_MODULE_PREFIX}/include
+  ${ORTHANC_STONE_MODULE_PREFIX}/include/cairo
   ${ORTHANC_STONE_MODULE_PREFIX}/include/orthanc-framework
   ${ORTHANC_STONE_MODULE_PREFIX}/include/orthanc-stone
   )

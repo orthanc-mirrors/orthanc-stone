@@ -64,6 +64,7 @@ include(${CMAKE_SOURCE_DIR}/../../Resources/CMake/OrthancStoneConfiguration.cmak
 set(SOURCES_WITH_EMSCRIPTEN_CALLBACKS
   ${ORTHANC_STONE_ROOT}/Sources/Oracle/WebAssemblyOracle.cpp
   ${ORTHANC_STONE_ROOT}/Sources/Viewport/WebAssemblyViewport.cpp
+  ${ORTHANC_STONE_ROOT}/Sources/Viewport/WebAssemblyCairoViewport.cpp
   )
 
 list(REMOVE_ITEM ORTHANC_STONE_SOURCES
@@ -139,6 +140,14 @@ file(
   PATTERN "*.h"
   )
 
+file(
+  COPY ${CAIRO_SOURCES_DIR}/src/
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Include/cairo/
+  NO_SOURCE_PERMISSIONS
+  FILES_MATCHING
+  PATTERN "*.h"
+  )
+
 set(DCMTK_MODULES
   dcmdata
   config
@@ -170,6 +179,7 @@ install(FILES
 install(
   DIRECTORY
   ${CMAKE_CURRENT_BINARY_DIR}/Include/boost
+  ${CMAKE_CURRENT_BINARY_DIR}/Include/cairo
   ${CMAKE_CURRENT_BINARY_DIR}/Include/dcmtk
   ${CMAKE_CURRENT_BINARY_DIR}/Include/json
   ${CMAKE_CURRENT_BINARY_DIR}/Include/orthanc-framework

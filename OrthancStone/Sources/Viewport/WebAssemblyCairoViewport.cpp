@@ -19,9 +19,15 @@
  **/
 
 
-#include "WebAssemblyCairoViewport.h"
-
-#include "../Scene2D/CairoCompositor.h"
+#if defined(ORTHANC_BUILDING_STONE_LIBRARY) && ORTHANC_BUILDING_STONE_LIBRARY == 1
+#  include "WebAssemblyCairoViewport.h"
+#  include "../Scene2D/CairoCompositor.h"
+#else
+// This is the case when using the WebAssembly side module, and this
+// source file must be compiled within the WebAssembly main module
+#  include <Viewport/WebAssemblyCairoViewport.h>
+#  include <Scene2D/CairoCompositor.h>
+#endif
 
 #include <Images/Image.h>
 
@@ -124,16 +130,25 @@ namespace OrthancStone
   }
 
 
-  WebAssemblyCairoViewport::WebAssemblyCairoViewport(
-    const std::string& canvasId) :
-    WebAssemblyViewport(canvasId)
+  WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvasId,
+                                                     bool enableEmscriptenMouseEvents) :
+    WebAssemblyViewport(canvasId,enableEmscriptenMouseEvents)
   {
     unsigned int width, height;
     GetCanvasSize(width, height);
-    emscripten_set_canvas_element_size(GetCanvasCssSelector().c_str(), 
-                                       width, 
-                                       height);
+    emscripten_set_canvas_element_size(GetCanvasCssSelector().c_str(), width, height);
 
     AcquireCompositor(new CairoCompositor(width, height));
+  }
+  
+
+  boost::shared_ptr<WebAssemblyCairoViewport> WebAssemblyCairoViewport::Create(
+    const std::string& canvasId, bool enableEmscriptenMouseEvents)
+  {
+    boost::shared_ptr<WebAssemblyCairoViewport> that = boost::shared_ptr<WebAssemblyCairoViewport>(
+        new WebAssemblyCairoViewport(canvasId, enableEmscriptenMouseEvents));
+    
+    that->WebAssemblyViewport::PostConstructor();
+    return that;
   }
 }

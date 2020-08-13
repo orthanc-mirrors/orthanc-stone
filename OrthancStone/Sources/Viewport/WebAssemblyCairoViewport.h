@@ -33,6 +33,9 @@ namespace OrthancStone
     void GetCanvasSize(unsigned int& width,
                        unsigned int& height);
 
+    WebAssemblyCairoViewport(const std::string& canvasId,
+                             bool enableEmscriptenMouseEvents);
+
   protected:
     virtual void Paint(ICompositor& compositor,
                        ViewportController& controller) ORTHANC_OVERRIDE;
@@ -40,7 +43,8 @@ namespace OrthancStone
     virtual void UpdateSize(ICompositor& compositor) ORTHANC_OVERRIDE;
 
   public:
-    WebAssemblyCairoViewport(const std::string& canvasId);
+    static boost::shared_ptr<WebAssemblyCairoViewport> Create(const std::string& canvasId,
+                                                              bool enableEmscriptenMouseEvents = true);
 
     virtual ~WebAssemblyCairoViewport()
     {

@@ -79,6 +79,7 @@
 #include <Toolbox/GeometryToolbox.h>
 #include <Toolbox/SortedFrames.h>
 #include <Viewport/WebGLViewport.h>
+#include <Viewport/WebAssemblyCairoViewport.h>
 
 #include <boost/make_shared.hpp>
 #include <stdio.h>
@@ -1222,7 +1223,7 @@ private:
 
   std::unique_ptr<IObserver>                    observer_;
   OrthancStone::ILoadersContext&               context_;
-  boost::shared_ptr<OrthancStone::WebGLViewport>   viewport_;
+  boost::shared_ptr<OrthancStone::WebAssemblyViewport>   viewport_;
   boost::shared_ptr<OrthancStone::DicomResourcesLoader> loader_;
   OrthancStone::DicomSource                    source_;
   boost::shared_ptr<FramesCache>               cache_;  
@@ -1525,6 +1526,7 @@ private:
     context_(context),
     source_(source),
     viewport_(OrthancStone::WebGLViewport::Create(canvas)),
+    //viewport_(OrthancStone::WebAssemblyCairoViewport::Create(canvas)),
     cache_(cache),
     fitNextContent_(true),
     isCtrlDown_(false)

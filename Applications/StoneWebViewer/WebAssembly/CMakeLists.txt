@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(OrthancStone)
 
+set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/StoneWebViewer" CACHE PATH "Where to put the WebAssembly binaries")
+
+
 # Configuration of the Emscripten compiler for WebAssembly target
 # ---------------------------------------------------------------
 set(USE_WASM ON CACHE BOOL "")
@@ -98,7 +101,7 @@ add_dependencies(StoneWebViewer StoneWrapper)
 
 install(
   TARGETS StoneWebViewer
-  RUNTIME DESTINATION .
+  RUNTIME DESTINATION ${ORTHANC_STONE_INSTALL_PREFIX}
   )
 
 
@@ -115,7 +118,7 @@ install(
   ${CMAKE_SOURCE_DIR}/../WebApplication/app.js
   ${CMAKE_SOURCE_DIR}/../WebApplication/index.html
   ${STONE_WRAPPER}
-  DESTINATION .
+  DESTINATION ${ORTHANC_STONE_INSTALL_PREFIX}
   )
 
 install(
@@ -125,5 +128,5 @@ install(
   ${CMAKE_SOURCE_DIR}/../WebApplication/img/grid2x1.png
   ${CMAKE_SOURCE_DIR}/../WebApplication/img/grid2x2.png
   ${CMAKE_SOURCE_DIR}/../WebApplication/img/loading.gif
-  DESTINATION img
+  DESTINATION ${ORTHANC_STONE_INSTALL_PREFIX}/img
   )

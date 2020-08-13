@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(OrthancStone)
 
+set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/" CACHE PATH "Where to put the WebAssembly binaries")
+
+
 # Configuration of the Emscripten compiler for WebAssembly target
 # ---------------------------------------------------------------
 set(USE_WASM ON CACHE BOOL "")
@@ -81,7 +84,7 @@ target_link_libraries(RtViewerWasm OrthancStone)
 # ---------------------------------------------------------------
 install(
   TARGETS RtViewerWasm
-  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/RtViewer/
+  RUNTIME DESTINATION ${ORTHANC_STONE_INSTALL_PREFIX}/RtViewer/
   )
 
 # Declare installation files for the companion files (web scaffolding)
@@ -95,7 +98,7 @@ install(
   ${CMAKE_SOURCE_DIR}/RtViewer/RtViewerWasmApp.js
   ${CMAKE_SOURCE_DIR}/RtViewer/index.html
   ${CMAKE_CURRENT_BINARY_DIR}/RtViewerWasm.wasm
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/RtViewer/
+  DESTINATION ${ORTHANC_STONE_INSTALL_PREFIX}/RtViewer/
   )
 
 ################################################################################
@@ -115,7 +118,7 @@ target_link_libraries(SingleFrameViewerWasm OrthancStone)
 # ---------------------------------------------------------------
 install(
   TARGETS SingleFrameViewerWasm
-  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/SingleFrameViewer/
+  RUNTIME DESTINATION ${ORTHANC_STONE_INSTALL_PREFIX}/SingleFrameViewer/
   )
 
 # Declare installation files for the companion files (web scaffolding)
@@ -129,5 +132,5 @@ install(
   ${CMAKE_SOURCE_DIR}/SingleFrameViewer/SingleFrameViewerApp.js
   ${CMAKE_SOURCE_DIR}/SingleFrameViewer/index.html
   ${CMAKE_CURRENT_BINARY_DIR}/SingleFrameViewerWasm.wasm
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/SingleFrameViewer/
+  DESTINATION ${ORTHANC_STONE_INSTALL_PREFIX}/SingleFrameViewer/
   )

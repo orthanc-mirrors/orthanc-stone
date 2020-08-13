@@ -21,7 +21,7 @@ cd /tmp/build
 
 cmake /tmp/source-writeable/Applications/StoneWebViewer/WebAssembly \
       -DCMAKE_BUILD_TYPE=$1 \
-      -DCMAKE_INSTALL_PREFIX=/target/StoneWebViewer \
+      -DORTHANC_STONE_INSTALL_PREFIX=/target/StoneWebViewer \
       -DCMAKE_TOOLCHAIN_FILE=${EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
       -DORTHANC_FRAMEWORK_ROOT=/tmp/orthanc/OrthancFramework/Sources \
       -DSTATIC_BUILD=ON \

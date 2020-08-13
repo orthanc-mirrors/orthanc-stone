@@ -14,7 +14,7 @@ endif()
 
 
 
-set(STONE_BINARIES "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/StoneWebViewer/" CACHE PATH "Path to the binaries of the \"../WebAssembly\" folder")
+set(ORTHANC_STONE_BINARIES "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/StoneWebViewer/" CACHE PATH "Path to the binaries of the \"../WebAssembly\" folder")
 
 # Parameters of the build
 set(STATIC_BUILD OFF CACHE BOOL "Static build of the third-party libraries (necessary for Windows)")
@@ -69,14 +69,14 @@ add_definitions(
 
 EmbedResources(
   # Folders
-  IMAGES                 ${STONE_BINARIES}/img/
+  IMAGES                 ${ORTHANC_STONE_BINARIES}/img/
   WEB_APPLICATION        ${CMAKE_SOURCE_DIR}/../WebApplication
 
   # Individual files
   ORTHANC_EXPLORER       ${CMAKE_SOURCE_DIR}/OrthancExplorer.js
-  STONE_WEB_VIEWER_JS    ${STONE_BINARIES}/StoneWebViewer.js
-  STONE_WEB_VIEWER_WASM  ${STONE_BINARIES}/StoneWebViewer.wasm
-  STONE_WRAPPER          ${STONE_BINARIES}/stone.js
+  STONE_WEB_VIEWER_JS    ${ORTHANC_STONE_BINARIES}/StoneWebViewer.js
+  STONE_WEB_VIEWER_WASM  ${ORTHANC_STONE_BINARIES}/StoneWebViewer.wasm
+  STONE_WRAPPER          ${ORTHANC_STONE_BINARIES}/stone.js
   )
 
 add_library(StoneWebViewer SHARED

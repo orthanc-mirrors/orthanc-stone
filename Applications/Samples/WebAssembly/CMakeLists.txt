@@ -16,17 +16,15 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(WASM_FLAGS "${WASM_FLAGS} -s SAFE_HEAP=1")
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WASM_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WASM_FLAGS}")
-
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ERROR_ON_UNDEFINED_SYMBOLS=1")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ASSERTIONS=1 -s DISABLE_EXCEPTION_CATCHING=0")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_MEMORY=268435456")  # 256MB + resize
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1")
+set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'")
+set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s ERROR_ON_UNDEFINED_SYMBOLS=1")
+set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s ASSERTIONS=1 -s DISABLE_EXCEPTION_CATCHING=0")
+set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_MEMORY=268435456")  # 256MB + resize
+set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1")
 add_definitions(
   -DDISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1
 )
+
 
 # Stone of Orthanc configuration
 # ---------------------------------------------------------------
@@ -78,6 +76,12 @@ add_executable(RtViewerWasm
   ../Common/RtViewerView.h
   )
 
+set_target_properties(RtViewerWasm
+  PROPERTIES
+  COMPILE_FLAGS "${WASM_FLAGS}"
+  LINK_FLAGS "${WASM_LINKER_FLAGS}"
+  )
+
 target_link_libraries(RtViewerWasm OrthancStone)
 
 # Declare installation files for the module
@@ -110,6 +114,12 @@ project(SingleFrameViewerWasm)
 
 add_executable(SingleFrameViewerWasm
   SingleFrameViewer/SingleFrameViewer.cpp
+  )
+
+set_target_properties(SingleFrameViewerWasm
+  PROPERTIES
+  COMPILE_FLAGS "${WASM_FLAGS}"
+  LINK_FLAGS "${WASM_LINKER_FLAGS}"
   )
 
 target_link_libraries(SingleFrameViewerWasm OrthancStone)

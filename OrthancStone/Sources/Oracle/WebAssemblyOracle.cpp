@@ -19,21 +19,13 @@
  **/
 
 
-#include "WebAssemblyOracle.h"
-
-#include "OracleCommandExceptionMessage.h"
-#include "SleepOracleCommand.h"
-
-#if ORTHANC_ENABLE_DCMTK == 1
-#  include "ParseDicomSuccessMessage.h"
-static unsigned int BUCKET_SOP = 1;
+#if defined(ORTHANC_BUILDING_STONE_LIBRARY) && ORTHANC_BUILDING_STONE_LIBRARY == 1
+#  include "WebAssemblyOracle_Includes.h"
+#else
+// This is the case when using the WebAssembly side module, and this
+// source file must be compiled within the WebAssembly main module
+#  include <Oracle/WebAssemblyOracle_Includes.h>
 #endif
-
-#include "GetOrthancImageCommand.h"
-#include "GetOrthancWebViewerJpegCommand.h"
-#include "HttpCommand.h"
-#include "OrthancRestApiCommand.h"
-#include "ParseDicomFromWadoCommand.h"
 
 #include <OrthancException.h>
 #include <Toolbox.h>
@@ -41,6 +33,12 @@ static unsigned int BUCKET_SOP = 1;
 #include <emscripten.h>
 #include <emscripten/html5.h>
 #include <emscripten/fetch.h>
+
+
+#if ORTHANC_ENABLE_DCMTK == 1
+static unsigned int BUCKET_SOP = 1;
+#endif
+
 
 namespace OrthancStone
 {

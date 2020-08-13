@@ -1,0 +1,63 @@
+#pragma once
+
+/**
+ * Besides the "pragma once" above that only protects this file,
+ * define a macro to prevent including different versions of
+ * "OrthancFramework.h"
+ **/
+#ifndef __ORTHANC_STONE_H
+#define __ORTHANC_STONE_H
+
+#include <OrthancFramework.h>
+
+
+/**
+ * Configuration macros that must be renamed, prefixing them by
+ * "ORTHANC_"
+ **/
+
+#cmakedefine01 ENABLE_WASM
+#if !defined(ENABLE_WASM)
+#  error CMake error
+#elif ENABLE_WASM == 1
+#  define ORTHANC_ENABLE_WASM 1
+#else
+#  define ORTHANC_ENABLE_WASM 0
+#endif
+#undef ENABLE_WASM
+
+#cmakedefine01 ENABLE_OPENGL
+#if !defined(ENABLE_OPENGL)
+#  error CMake error
+#elif ENABLE_OPENGL == 1
+#  define ORTHANC_ENABLE_OPENGL 1
+#else
+#  define ORTHANC_ENABLE_OPENGL 0
+#endif
+#undef ENABLE_OPENGL
+
+#cmakedefine01 ENABLE_SDL
+#if !defined(ENABLE_SDL)
+#  error CMake error
+#elif ENABLE_SDL == 1
+#  define ORTHANC_ENABLE_SDL 1
+#else
+#  define ORTHANC_ENABLE_SDL 0
+#endif
+#undef ENABLE_SDL
+
+
+/**
+ * Fine-tuning
+ **/
+
+#if ORTHANC_ENABLE_OPENGL == 1
+#  define GL_GLEXT_PROTOTYPES 1
+#endif
+
+#if ORTHANC_ENABLE_WASM == 1
+#  define DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR 1
+#endif
+
+
+#endif /* __ORTHANC_STONE_H */

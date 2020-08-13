@@ -18,6 +18,7 @@ FILES = [
     ('OrthancFramework/Resources/CMake/Compiler.cmake',                 'CMake'),
     ('OrthancFramework/Resources/CMake/DownloadOrthancFramework.cmake', 'CMake'),
     ('OrthancFramework/Resources/CMake/DownloadPackage.cmake',          'CMake'),
+    ('OrthancFramework/Resources/CMake/EmscriptenParameters.cmake',     'CMake'),
     ('OrthancFramework/Resources/CMake/GoogleTestConfiguration.cmake',  'CMake'),
     ('OrthancFramework/Resources/EmbedResources.py',                    'CMake'),
 

@@ -53,28 +53,32 @@
   }
 
 
+// Orthanc framework includes
 #include <Cache/MemoryObjectCache.h>
 #include <DicomFormat/DicomArray.h>
 #include <DicomParsing/Internals/DicomImageDecoder.h>
+#include <DicomParsing/ParsedDicomFile.h>
 #include <Images/Image.h>
 #include <Images/ImageProcessing.h>
 #include <Images/JpegReader.h>
 #include <Logging.h>
 
-#include "../../../OrthancStone/Sources/Loaders/DicomResourcesLoader.h"
-#include "../../../OrthancStone/Sources/Loaders/SeriesMetadataLoader.h"
-#include "../../../OrthancStone/Sources/Loaders/SeriesThumbnailsLoader.h"
-#include "../../../OrthancStone/Sources/Loaders/WebAssemblyLoadersContext.h"
-#include "../../../OrthancStone/Sources/Messages/ObserverBase.h"
-#include "../../../OrthancStone/Sources/Oracle/ParseDicomFromWadoCommand.h"
-#include "../../../OrthancStone/Sources/Scene2D/ColorTextureSceneLayer.h"
-#include "../../../OrthancStone/Sources/Scene2D/FloatTextureSceneLayer.h"
-#include "../../../OrthancStone/Sources/Scene2D/PolylineSceneLayer.h"
-#include "../../../OrthancStone/Sources/StoneException.h"
-#include "../../../OrthancStone/Sources/Toolbox/DicomInstanceParameters.h"
-#include "../../../OrthancStone/Sources/Toolbox/GeometryToolbox.h"
-#include "../../../OrthancStone/Sources/Toolbox/SortedFrames.h"
-#include "../../../OrthancStone/Sources/Viewport/WebGLViewport.h"
+// Stone includes
+#include <Loaders/DicomResourcesLoader.h>
+#include <Loaders/SeriesMetadataLoader.h>
+#include <Loaders/SeriesThumbnailsLoader.h>
+#include <Loaders/WebAssemblyLoadersContext.h>
+#include <Messages/ObserverBase.h>
+#include <Oracle/ParseDicomFromWadoCommand.h>
+#include <Oracle/ParseDicomSuccessMessage.h>
+#include <Scene2D/ColorTextureSceneLayer.h>
+#include <Scene2D/FloatTextureSceneLayer.h>
+#include <Scene2D/PolylineSceneLayer.h>
+#include <StoneException.h>
+#include <Toolbox/DicomInstanceParameters.h>
+#include <Toolbox/GeometryToolbox.h>
+#include <Toolbox/SortedFrames.h>
+#include <Viewport/WebGLViewport.h>
 
 #include <boost/make_shared.hpp>
 #include <stdio.h>

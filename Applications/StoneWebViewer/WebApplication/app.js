@@ -103,11 +103,18 @@ var app = new Vue({
       ready: false,
       leftMode: 'grid',   // Can be 'small', 'grid' or 'full'
       leftVisible: true,
-      showWarning: false,
       viewportLayoutButtonsVisible: false,
       activeViewport: 0,
       showInfo: true,
       showReferenceLines: true,
+
+      modalWarning: false,
+      modalNotDiagnostic: false,
+      modalPreferences: false,
+
+      // User preferences (stored in the local storage)
+      settingNotDiagnostic: true,
+      settingSoftwareRendering: false,
       
       viewport1Width: '100%',
       viewport1Height: '100%',
@@ -177,6 +184,12 @@ var app = new Vue({
     },
     showReferenceLines: function(newVal, oldVal) {
       stone.ShowReferenceLines(newVal ? 1 : 0);
+    },
+    settingNotDiagnostic: function(newVal, oldVal) {
+      localStorage.settingNotDiagnostic = (newVal ? '1' : '0');
+    },
+    settingSoftwareRendering: function(newVal, oldVal) {
+      localStorage.settingSoftwareRendering = (newVal ? '1' : '0');
     }
   },
   methods: {
@@ -451,11 +464,29 @@ var app = new Vue({
       if (canvas != '') {
         stone.InvertContrast(canvas);
       }
+    },
+
+    ApplyPreferences() {
+      this.modalPreferences = false;
+
+      if ((stone.IsSoftwareRendering() != 0) != this.settingSoftwareRendering) {
+        document.location.reload();
+      }
     }
   },
   
   mounted: function() {
     this.SetViewportLayout('1x1');
+
+    if (localStorage.settingNotDiagnostic) {
+      this.settingNotDiagnostic = (localStorage.settingNotDiagnostic == '1');
+    }
+    
+    if (localStorage.settingSoftwareRendering) {
+      this.settingSoftwareRendering = (localStorage.settingSoftwareRendering == '1');
+    }
+    
+    this.modalNotDiagnostic = this.settingNotDiagnostic;
   }
 });
 
@@ -464,6 +495,7 @@ var app = new Vue({
 window.addEventListener('StoneInitialized', function() {
   stone.Setup(Module);
   stone.SetOrthancRoot('..', true);
+  stone.SetSoftwareRendering(localStorage.settingSoftwareRendering == '1');
   console.warn('Native Stone properly intialized');
 
   var study = getParameterFromUrl('study');
@@ -565,7 +597,7 @@ $(document).ready(function() {
   // Enable support for tooltips in Bootstrap
   //$('[data-toggle="tooltip"]').tooltip();
 
-  //app.showWarning = true;
+  //app.modalWarning = true;
 
 
   $('#windowing-popover').popover({

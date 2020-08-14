@@ -41,7 +41,7 @@
 
       <div class="fluid-height fluid-width" v-show="ready">
 
-        <div class="wvWarning wvPrintExclude" v-show="showWarning">
+        <div class="wvWarning wvPrintExclude" v-show="modalWarning">
           <div class="wvWarning-content clearfix">
             <span class="wvWarning-text">
               <h2 class="mb10"><i class="fa fa-exclamation-triangle wvWarning-icon mr5"></i>Warning!</h2>
@@ -53,7 +53,55 @@
             </span> 
           </div>
           <div class="text-right mb10 mr10">
-            <button class="btn btn-primary" @click="showWarning=false">OK</button>
+            <button class="btn btn-primary" @click="modalWarning=false">OK</button>
+          </div>
+        </div>
+
+
+        <div class="wvWarning wvPrintExclude" v-show="modalNotDiagnostic">
+          <div class="wvWarning-content clearfix">
+            <span class="wvWarning-text">
+              <h2 class="mb10"><i class="fa fa-exclamation-triangle wvWarning-icon mr5"></i>Warning!</h2>
+              <p class="mn mb10" style="color:#000">
+                This viewer is not suitable for diagnostic usage.
+              </p>
+
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" v-model="settingNotDiagnostic" id="checkboxNotDiagnostic1">
+                <label class="form-check-label" for="checkboxNotDiagnostic1" style="color:#000;display:inline">
+                  Show this warning at startup
+                </label>
+              </div>
+            </span> 
+          </div>
+          <div class="text-right mb10 mr10">
+            <button class="btn btn-primary" @click="modalNotDiagnostic=false">OK</button>
+          </div>
+        </div>
+
+
+        <div class="wvWarning wvPrintExclude" v-show="modalPreferences">
+          <div class="wvWarning-content clearfix">
+            <span class="wvWarning-text">
+              <h2 class="mb10">Preferences</h2>
+              
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" v-model="settingNotDiagnostic" id="checkboxNotDiagnostic2">
+                <label class="form-check-label" for="checkboxNotDiagnostic2" style="color:#000;display:inline">
+                  Warn about diagnostic usage at startup
+                </label>
+              </div>
+
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" v-model="settingSoftwareRendering" id="checkboxSoftwareRendering">
+                <label class="form-check-label" for="checkboxSoftwareRendering" style="color:#000;display:inline">
+                  Use software rendering (will reload the viewer)
+                </label>
+              </div>
+            </span> 
+          </div>
+          <div class="text-right mb10 mr10">
+            <button class="btn btn-primary" @click="ApplyPreferences()">OK</button>
           </div>
         </div>
 
@@ -106,7 +154,7 @@
                 <i class="fa fa-th"></i>
               </div>
 
-              <p class="clear disclaimer mbn">For patients, teachers and researchers.</p>
+              <!--p class="clear disclaimer mbn">For patients, teachers and researchers.</p-->
             </div>        
             <div class="wvLayoutLeft__contentMiddle">
 
@@ -277,6 +325,13 @@
                       v-bind:class="{ 'active' : showReferenceLines }"
                       v-on:click="showReferenceLines = !showReferenceLines">
                 <i class="fa fa-bars"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      v-on:click="modalPreferences = true">
+                <i class="fa fa-user"></i>
               </button>
             </div>
           </div>

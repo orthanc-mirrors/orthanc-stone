@@ -1522,11 +1522,10 @@ private:
   ViewerViewport(OrthancStone::ILoadersContext& context,
                  const OrthancStone::DicomSource& source,
                  const std::string& canvas,
-                 boost::shared_ptr<FramesCache> cache) :
+                 boost::shared_ptr<FramesCache> cache,
+                 bool softwareRendering) :
     context_(context),
     source_(source),
-    viewport_(OrthancStone::WebGLViewport::Create(canvas)),
-    //viewport_(OrthancStone::WebAssemblyCairoViewport::Create(canvas)),
     cache_(cache),
     fitNextContent_(true),
     isCtrlDown_(false)
@@ -1534,6 +1533,17 @@ private:
     if (!cache_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+
+    if (softwareRendering)
+    {
+      LOG(INFO) << "Creating Cairo viewport in canvas: " << canvas;
+      viewport_ = OrthancStone::WebAssemblyCairoViewport::Create(canvas);
+    }
+    else
+    {
+      LOG(INFO) << "Creating WebGL viewport in canvas: " << canvas;
+      viewport_ = OrthancStone::WebGLViewport::Create(canvas);
     }
     
     emscripten_set_wheel_callback(viewport_->GetCanvasCssSelector().c_str(), this, true, OnWheel);
@@ -1598,10 +1608,11 @@ public:
   static boost::shared_ptr<ViewerViewport> Create(OrthancStone::ILoadersContext::ILock& lock,
                                                   const OrthancStone::DicomSource& source,
                                                   const std::string& canvas,
-                                                  boost::shared_ptr<FramesCache> cache)
+                                                  boost::shared_ptr<FramesCache> cache,
+                                                  bool softwareRendering)
   {
     boost::shared_ptr<ViewerViewport> viewport(
-      new ViewerViewport(lock.GetContext(), source, canvas, cache));
+      new ViewerViewport(lock.GetContext(), source, canvas, cache, softwareRendering));
 
     viewport->loader_ = OrthancStone::DicomResourcesLoader::Create(lock);
     viewport->Register<OrthancStone::DicomResourcesLoader::SuccessMessage>(
@@ -1910,6 +1921,7 @@ static OrthancStone::DicomSource source_;
 static boost::shared_ptr<FramesCache> cache_;
 static boost::shared_ptr<OrthancStone::WebAssemblyLoadersContext> context_;
 static std::string stringBuffer_;
+static bool softwareRendering_ = false;
 
 
 
@@ -1954,7 +1966,8 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
   if (found == allViewports_.end())
   {
     std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_->Lock());
-    boost::shared_ptr<ViewerViewport> viewport(ViewerViewport::Create(*lock, source_, canvas, cache_));
+    boost::shared_ptr<ViewerViewport> viewport(
+      ViewerViewport::Create(*lock, source_, canvas, cache_, softwareRendering_));
     viewport->AcquireObserver(new WebAssemblyObserver);
     allViewports_[canvas] = viewport;
     return viewport;
@@ -2268,5 +2281,19 @@ extern "C"
       GetViewport(canvas)->Invert();
     }
     EXTERN_CATCH_EXCEPTIONS;
+  }  
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void SetSoftwareRendering(int softwareRendering)
+  {
+    softwareRendering_ = softwareRendering;
+  }  
+
+
+  EMSCRIPTEN_KEEPALIVE
+  int IsSoftwareRendering()
+  {
+    return softwareRendering_;
   }  
 }

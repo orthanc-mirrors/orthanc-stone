@@ -47,6 +47,8 @@ namespace OrthancStone
     pixelSpacingY_ = other.pixelSpacingY_;
     angle_ = other.angle_;
     isLinearInterpolation_ = other.isLinearInterpolation_;
+    flipX_ = other.flipX_;
+    flipY_ = other.flipY_;
   }
 
 
@@ -57,6 +59,8 @@ namespace OrthancStone
     pixelSpacingY_(1),
     angle_(0),
     isLinearInterpolation_(false),
+    flipX_(false),
+    flipY_(false),
     revision_(0)
   {
     if (pixelSpacingX_ <= 0 ||
@@ -107,6 +111,20 @@ namespace OrthancStone
   }
     
 
+  void TextureBaseSceneLayer::SetFlipX(bool flip)
+  {
+    flipX_ = flip;
+    IncrementRevision();
+  }
+  
+    
+  void TextureBaseSceneLayer::SetFlipY(bool flip)
+  {
+    flipY_ = flip;
+    IncrementRevision();
+  }
+    
+
   const Orthanc::ImageAccessor& TextureBaseSceneLayer::GetTexture() const
   {
     if (!HasTexture())
@@ -123,11 +141,21 @@ namespace OrthancStone
   
   AffineTransform2D TextureBaseSceneLayer::GetTransform() const
   {
+    unsigned int width = 0;
+    unsigned int height = 0;
+
+    if (texture_.get() != NULL)
+    {
+      width = texture_->GetWidth();
+      height = texture_->GetHeight();
+    }
+    
     return AffineTransform2D::Combine(
       AffineTransform2D::CreateOffset(originX_, originY_),
       AffineTransform2D::CreateRotation(angle_),
       AffineTransform2D::CreateScaling(pixelSpacingX_, pixelSpacingY_),
-      AffineTransform2D::CreateOffset(-0.5, -0.5));
+      AffineTransform2D::CreateOffset(-0.5, -0.5),
+      AffineTransform2D::CreateFlip(flipX_, flipY_, width, height));
   }
 
   

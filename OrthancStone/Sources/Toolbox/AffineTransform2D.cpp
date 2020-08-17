@@ -268,4 +268,19 @@ namespace OrthancStone
     
     return t;
   }
+
+  
+  AffineTransform2D AffineTransform2D::CreateFlip(bool flipX,
+                                                  bool flipY,
+                                                  unsigned int width,
+                                                  unsigned int height)
+  {
+    AffineTransform2D t;
+    t.matrix_(0, 0) = (flipX ? -1 : 1);
+    t.matrix_(0, 2) = (flipX ? width : 0);
+    t.matrix_(1, 1) = (flipY ? -1 : 1);
+    t.matrix_(1, 2) = (flipY ? height : 0);
+
+    return t;
+  }
 }

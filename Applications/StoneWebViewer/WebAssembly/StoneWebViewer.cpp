@@ -1234,6 +1234,8 @@ private:
   float                                        defaultWindowingCenter_;
   float                                        defaultWindowingWidth_;
   bool                                         inverted_;
+  bool                                         flipX_;
+  bool                                         flipY_;
   bool                                         fitNextContent_;
   bool                                         isCtrlDown_;
   FrameGeometry                                currentFrameGeometry_;
@@ -1425,6 +1427,8 @@ private:
       }
 
       layer->SetLinearInterpolation(true);
+      layer->SetFlipX(flipX_);
+      layer->SetFlipY(flipY_);
 
       double pixelSpacingX, pixelSpacingY;
       OrthancStone::GeometryToolbox::GetPixelSpacing(
@@ -1519,6 +1523,34 @@ private:
     }
   }
 
+  void UpdateCurrentTextureParameters()
+  {
+    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+
+    if (lock->GetController().GetScene().HasLayer(LAYER_TEXTURE))
+    {
+      if (lock->GetController().GetScene().GetLayer(LAYER_TEXTURE).GetType() ==
+          OrthancStone::ISceneLayer::Type_FloatTexture)
+      {
+        dynamic_cast<OrthancStone::FloatTextureSceneLayer&>(
+          lock->GetController().GetScene().GetLayer(LAYER_TEXTURE)).
+          SetCustomWindowing(windowingCenter_, windowingWidth_);
+      }
+
+      {
+        OrthancStone::TextureBaseSceneLayer& layer = 
+          dynamic_cast<OrthancStone::TextureBaseSceneLayer&>(
+            lock->GetController().GetScene().GetLayer(LAYER_TEXTURE));
+
+        layer.SetFlipX(flipX_);
+        layer.SetFlipY(flipY_);
+      }
+        
+      lock->Invalidate();
+    }
+  }
+  
+
   ViewerViewport(OrthancStone::ILoadersContext& context,
                  const OrthancStone::DicomSource& source,
                  const std::string& canvas,
@@ -1528,7 +1560,9 @@ private:
     source_(source),
     cache_(cache),
     fitNextContent_(true),
-    isCtrlDown_(false)
+    isCtrlDown_(false),
+    flipX_(false),
+    flipY_(false)
   {
     if (!cache_)
     {
@@ -1551,6 +1585,29 @@ private:
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, OnKey);
 
     ResetDefaultWindowing();
+
+    /*{
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+      std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
+      OrthancStone::PolylineSceneLayer::Chain chain;
+      chain.push_back(OrthancStone::ScenePoint2D(-10, 0));
+      chain.push_back(OrthancStone::ScenePoint2D(10, 0));
+      layer->AddChain(chain, false, 255, 0, 0);
+      chain.clear();
+      chain.push_back(OrthancStone::ScenePoint2D(0, -10));
+      chain.push_back(OrthancStone::ScenePoint2D(0, 10));
+      layer->AddChain(chain, false, 255, 0, 0);
+      chain.clear();
+      chain.push_back(OrthancStone::ScenePoint2D(40, 30));
+      chain.push_back(OrthancStone::ScenePoint2D(40, 50));
+      layer->AddChain(chain, false, 255, 0, 0);
+      chain.clear();
+      chain.push_back(OrthancStone::ScenePoint2D(30, 40));
+      chain.push_back(OrthancStone::ScenePoint2D(50, 40));
+      layer->AddChain(chain, false, 255, 0, 0);
+      lock->GetController().GetScene().SetLayer(1000, layer.release());
+      lock->Invalidate();
+      }*/
   }
 
   static EM_BOOL OnKey(int eventType,
@@ -1634,6 +1691,8 @@ public:
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
 
+    flipX_ = false;
+    flipY_ = false;
     fitNextContent_ = true;
 
     frames_.reset(frames);
@@ -1776,20 +1835,19 @@ public:
   {
     windowingCenter_ = windowingCenter;
     windowingWidth_ = windowingWidth;
+    UpdateCurrentTextureParameters();
+  }
 
-    {
-      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+  void FlipX()
+  {
+    flipX_ = !flipX_;
+    UpdateCurrentTextureParameters();
+  }
 
-      if (lock->GetController().GetScene().HasLayer(LAYER_TEXTURE) &&
-          lock->GetController().GetScene().GetLayer(LAYER_TEXTURE).GetType() ==
-          OrthancStone::ISceneLayer::Type_FloatTexture)
-      {
-        dynamic_cast<OrthancStone::FloatTextureSceneLayer&>(
-          lock->GetController().GetScene().GetLayer(LAYER_TEXTURE)).
-          SetCustomWindowing(windowingCenter_, windowingWidth_);
-        lock->Invalidate();
-      }
-    }
+  void FlipY()
+  {
+    flipY_ = !flipY_;
+    UpdateCurrentTextureParameters();
   }
 
   void Invert()
@@ -2283,6 +2341,28 @@ extern "C"
     EXTERN_CATCH_EXCEPTIONS;
   }  
 
+
+  EMSCRIPTEN_KEEPALIVE
+  void FlipX(const char* canvas)
+  {
+    try
+    {
+      GetViewport(canvas)->FlipX();
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }  
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void FlipY(const char* canvas)
+  {
+    try
+    {
+      GetViewport(canvas)->FlipY();
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }  
+  
 
   EMSCRIPTEN_KEEPALIVE
   void SetSoftwareRendering(int softwareRendering)

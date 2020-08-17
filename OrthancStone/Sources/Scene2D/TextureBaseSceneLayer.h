@@ -39,6 +39,8 @@ namespace OrthancStone
     double                                 pixelSpacingY_;
     double                                 angle_;
     bool                                   isLinearInterpolation_;
+    bool                                   flipX_;
+    bool                                   flipY_;
     uint64_t                               revision_;
 
   protected:
@@ -65,6 +67,10 @@ namespace OrthancStone
     void SetAngle(double angle);
 
     void SetLinearInterpolation(bool isLinearInterpolation);
+
+    void SetFlipX(bool flip);
+    
+    void SetFlipY(bool flip);
     
     double GetOriginX() const
     {
@@ -99,6 +105,16 @@ namespace OrthancStone
     bool HasTexture() const
     {
       return (texture_.get() != NULL);
+    }
+
+    bool IsFlipX() const
+    {
+      return flipX_;
+    }
+
+    bool IsFlipY() const
+    {
+      return flipY_;
     }
 
     const Orthanc::ImageAccessor& GetTexture() const;

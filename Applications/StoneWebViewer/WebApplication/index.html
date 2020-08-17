@@ -315,6 +315,18 @@
             </div>
 
             <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center" v-on:click="FlipX()">
+                <i class="fas fa-exchange-alt"></i>X
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center" v-on:click="FlipY()">
+                <i class="fa fa-exchange-alt fa-rotate-90"></i>Y
+              </button>
+            </div>
+            
+            <div class="ng-scope inline-object">
               <button class="wvButton--underline text-center"
                       v-bind:class="{ 'active' : showInfo }"
                       v-on:click="showInfo = !showInfo">

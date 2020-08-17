@@ -466,6 +466,20 @@ var app = new Vue({
       }
     },
 
+    FlipX() {
+      var canvas = this.GetActiveCanvas();
+      if (canvas != '') {
+        stone.FlipX(canvas);
+      }
+    },
+
+    FlipY() {
+      var canvas = this.GetActiveCanvas();
+      if (canvas != '') {
+        stone.FlipY(canvas);
+      }
+    },
+
     ApplyPreferences() {
       this.modalPreferences = false;
 

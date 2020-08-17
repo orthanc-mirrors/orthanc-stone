@@ -99,5 +99,10 @@ namespace OrthancStone
 
     static AffineTransform2D CreateOpenGLClipspace(unsigned int canvasWidth,
                                                    unsigned int canvasHeight);
+
+    static AffineTransform2D CreateFlip(bool flipX,
+                                        bool flipY,
+                                        unsigned int width,
+                                        unsigned int height);
   };
 }

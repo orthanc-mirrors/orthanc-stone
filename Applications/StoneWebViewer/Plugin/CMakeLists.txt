@@ -71,6 +71,9 @@ EmbedResources(
   # Folders
   IMAGES                 ${ORTHANC_STONE_BINARIES}/img/
   WEB_APPLICATION        ${CMAKE_SOURCE_DIR}/../WebApplication
+  LIBRARIES_CSS          ${ORTHANC_STONE_BINARIES}/css/
+  LIBRARIES_JS           ${ORTHANC_STONE_BINARIES}/js/
+  LIBRARIES_WEBFONTS     ${ORTHANC_STONE_BINARIES}/webfonts/
 
   # Individual files
   ORTHANC_EXPLORER       ${CMAKE_SOURCE_DIR}/OrthancExplorer.js

@@ -117,6 +117,8 @@ install(
 # section above: it is considered to be the binary output of 
 # the linker.
 # ---------------------------------------------------------------
+include(${CMAKE_SOURCE_DIR}/JavaScriptLibraries.cmake)
+
 install(
   FILES
   ${CMAKE_CURRENT_BINARY_DIR}/StoneWebViewer.wasm

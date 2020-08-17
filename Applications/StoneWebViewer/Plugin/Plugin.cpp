@@ -206,6 +206,18 @@ extern "C"
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFolder<Orthanc::EmbeddedResources::IMAGES> >
         ("/stone-webviewer/img/(.*)", true);
+      
+      OrthancPlugins::RegisterRestCallback
+        <ServeEmbeddedFolder<Orthanc::EmbeddedResources::LIBRARIES_CSS> >
+        ("/stone-webviewer/css/(.*)", true);
+      
+      OrthancPlugins::RegisterRestCallback
+        <ServeEmbeddedFolder<Orthanc::EmbeddedResources::LIBRARIES_JS> >
+        ("/stone-webviewer/js/(.*)", true);
+      
+      OrthancPlugins::RegisterRestCallback
+        <ServeEmbeddedFolder<Orthanc::EmbeddedResources::LIBRARIES_WEBFONTS> >
+        ("/stone-webviewer/webfonts/(.*)", true);
 
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFolder<Orthanc::EmbeddedResources::WEB_APPLICATION> >

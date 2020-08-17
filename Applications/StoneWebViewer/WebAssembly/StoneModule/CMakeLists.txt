@@ -44,6 +44,7 @@ add_definitions(
 
 
 include(${CMAKE_SOURCE_DIR}/../../../../OrthancStone/Resources/Orthanc/CMake/Compiler.cmake)
+include(${CMAKE_SOURCE_DIR}/../../../../OrthancStone/Resources/Orthanc/CMake/DownloadPackage.cmake)
 
 add_definitions(
   -DORTHANC_STONE_MAX_TAG_LENGTH=256  # TODO => share with OrthancStone

@@ -104,6 +104,7 @@ var app = new Vue({
       leftMode: 'grid',   // Can be 'small', 'grid' or 'full'
       leftVisible: true,
       viewportLayoutButtonsVisible: false,
+      mouseActionsVisible: false,
       activeViewport: 0,
       showInfo: true,
       showReferenceLines: true,
@@ -193,7 +194,7 @@ var app = new Vue({
     }
   },
   methods: {
-    FitContent() {
+    FitContent: function() {
       // This function can be used even if WebAssembly is not initialized yet
       if (typeof stone._AllViewportsUpdateSize !== 'undefined') {
         this.$nextTick(function () {
@@ -202,7 +203,7 @@ var app = new Vue({
       }
     },
     
-    GetActiveSeries() {
+    GetActiveSeries: function() {
       var s = [];
 
       if ('tags' in this.viewport1Series)
@@ -220,7 +221,7 @@ var app = new Vue({
       return s;
     },
 
-    GetActiveCanvas() {
+    GetActiveCanvas: function() {
       if (this.activeViewport == 1) {
         return 'canvas1';
       }
@@ -445,48 +446,57 @@ var app = new Vue({
       }
     },
 
-    SetWindowing(center, width) {
+    SetWindowing: function(center, width) {
       var canvas = this.GetActiveCanvas();
       if (canvas != '') {
         stone.SetWindowing(canvas, center, width);
       }
     },
 
-    SetDefaultWindowing() {
+    SetDefaultWindowing: function() {
       var canvas = this.GetActiveCanvas();
       if (canvas != '') {
         stone.SetDefaultWindowing(canvas);
       }
     },
 
-    InvertContrast() {
+    InvertContrast: function() {
       var canvas = this.GetActiveCanvas();
       if (canvas != '') {
         stone.InvertContrast(canvas);
       }
     },
 
-    FlipX() {
+    FlipX: function() {
       var canvas = this.GetActiveCanvas();
       if (canvas != '') {
         stone.FlipX(canvas);
       }
     },
 
-    FlipY() {
+    FlipY: function() {
       var canvas = this.GetActiveCanvas();
       if (canvas != '') {
         stone.FlipY(canvas);
       }
     },
 
-    ApplyPreferences() {
+    ApplyPreferences: function() {
       this.modalPreferences = false;
 
       if ((stone.IsSoftwareRendering() != 0) != this.settingSoftwareRendering) {
         document.location.reload();
       }
-    }
+    },
+
+    HideAllTooltips: function() {
+      $('[data-toggle="tooltip"]').tooltip('hide');
+    },
+
+    SetMouseButtonActions: function(left, middle, right) {
+      this.mouseActionsVisible = false;
+      stone.SetMouseButtonActions(left, middle, right);
+    }    
   },
   
   mounted: function() {
@@ -609,7 +619,11 @@ window.addEventListener('StoneException', function() {
 
 $(document).ready(function() {
   // Enable support for tooltips in Bootstrap
-  //$('[data-toggle="tooltip"]').tooltip();
+  $('[data-toggle="tooltip"]').tooltip({
+    placement: 'bottom',
+    container: 'body',
+    trigger: 'hover'
+  });
 
   //app.modalWarning = true;
 

@@ -25,30 +25,64 @@
 #include "../Scene2D/RotateSceneTracker.h"
 #include "../Scene2D/ZoomSceneTracker.h"
 
+#include <OrthancException.h>
+
 namespace OrthancStone
 {
+  IFlexiblePointerTracker* DefaultViewportInteractor::CreateTrackerInternal(
+    boost::shared_ptr<IViewport> viewport,
+    MouseAction action,
+    const PointerEvent& event,
+    unsigned int viewportWidth,
+    unsigned int viewportHeight)
+  {
+    switch (action)
+    {
+      case MouseAction_Rotate:
+        return new RotateSceneTracker(viewport, event);
+
+      case MouseAction_GrayscaleWindowing:
+        return new GrayscaleWindowingSceneTracker(
+          viewport, windowingLayer_, event, viewportWidth, viewportHeight);
+
+      case MouseAction_Pan:
+        return new PanSceneTracker(viewport, event);
+      
+      case MouseAction_Zoom:
+        return new ZoomSceneTracker(viewport, event, viewportHeight);
+
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+  }
+
+
   IFlexiblePointerTracker* DefaultViewportInteractor::CreateTracker(
     boost::shared_ptr<IViewport>  viewport,
     const PointerEvent&           event,
     unsigned int                  viewportWidth,
     unsigned int                  viewportHeight)
   {
+    MouseAction action;
+    
     switch (event.GetMouseButton())
     {
       case MouseButton_Left:
-        //return new RotateSceneTracker(viewport, event);
-
-        return new GrayscaleWindowingSceneTracker(
-          viewport, windowingLayer_, event, viewportWidth, viewportHeight);
+        action = leftButtonAction_;
+        break;
 
       case MouseButton_Middle:
-        return new PanSceneTracker(viewport, event);
+        action = middleButtonAction_;
+        break;
       
       case MouseButton_Right:
-        return new ZoomSceneTracker(viewport, event, viewportHeight);
+        action = rightButtonAction_;
+        break;
 
       default:
         return NULL;
     }
+
+    return CreateTrackerInternal(viewport, action, event, viewportWidth, viewportHeight);
   }
 }

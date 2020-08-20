@@ -27,13 +27,24 @@ namespace OrthancStone
   class DefaultViewportInteractor : public IViewportInteractor
   {
   private:
-    // Index of the layer whose windowing is altered by clicking the
-    // left mouse button
-    int  windowingLayer_;
+    // Index of the layer whose windowing is altered by grayscale windowing action
+    int          windowingLayer_;
+    MouseAction  leftButtonAction_;
+    MouseAction  middleButtonAction_;
+    MouseAction  rightButtonAction_;
+
+    IFlexiblePointerTracker* CreateTrackerInternal(boost::shared_ptr<IViewport> viewport,
+                                                   MouseAction action,
+                                                   const PointerEvent& event,
+                                                   unsigned int viewportWidth,
+                                                   unsigned int viewportHeight);
     
   public:
     DefaultViewportInteractor() :
-      windowingLayer_(0)
+      windowingLayer_(0),
+      leftButtonAction_(MouseAction_GrayscaleWindowing),
+      middleButtonAction_(MouseAction_Pan),
+      rightButtonAction_(MouseAction_Zoom)
     {
     }
 
@@ -45,6 +56,36 @@ namespace OrthancStone
     void SetWindowingLayer(int layerIndex)
     {
       windowingLayer_ = layerIndex;
+    }
+
+    MouseAction GetLeftButtonAction() const
+    {
+      return leftButtonAction_;
+    }
+
+    void SetLeftButtonAction(MouseAction action)
+    {
+      leftButtonAction_ = action;
+    }
+
+    MouseAction GetMiddleButtonAction() const
+    {
+      return middleButtonAction_;
+    }
+
+    void SetMiddleButtonAction(MouseAction action)
+    {
+      middleButtonAction_ = action;
+    }
+
+    MouseAction GetRightButtonAction() const
+    {
+      return rightButtonAction_;
+    }
+
+    void SetRightButtonAction(MouseAction action)
+    {
+      rightButtonAction_ = action;
     }
     
     virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<IViewport> viewport,

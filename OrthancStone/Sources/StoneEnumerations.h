@@ -132,6 +132,14 @@ namespace OrthancStone
     SliceAction_FastMinus
   };
 
+  enum MouseAction
+  {
+    MouseAction_Pan,
+    MouseAction_Zoom,
+    MouseAction_Rotate,
+    MouseAction_GrayscaleWindowing
+  };
+
   SopClassUid StringToSopClassUid(const std::string& source);
 
   void ComputeWindowing(float& targetCenter,

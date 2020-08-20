@@ -255,7 +255,8 @@
                 <div class="tbGroup__toggl">
                   <button class="wvButton"
                           v-bind:class="{ 'wvButton--underline' : !viewportLayoutButtonsVisible }"
-                          @click="viewportLayoutButtonsVisible = !viewportLayoutButtonsVisible">
+                          data-toggle="tooltip" data-title="Change layout"
+                          @click="viewportLayoutButtonsVisible = !viewportLayoutButtonsVisible;HideAllTooltips()">
                     <i class="fa fa-th"></i>
                   </button>
                 </div>
@@ -285,6 +286,46 @@
               </div>
             </div>
 
+
+            <div class="ng-scope inline-object">
+              <div class="tbGroup">
+                <div class="tbGroup__toggl">
+                  <button class="wvButton"
+                          v-bind:class="{ 'wvButton--underline' : !mouseActionsVisible }"
+                          data-toggle="tooltip" data-title="Mouse actions"
+                          @click="mouseActionsVisible = !mouseActionsVisible;HideAllTooltips()">
+                    <i class="fa fa-mouse-pointer"></i>
+                  </button>
+                </div>
+                
+                <div class="tbGroup__buttons--bottom" v-show="mouseActionsVisible">
+                  <div class="inline-object">
+                    <button class="wvButton"
+                            data-toggle="tooltip" data-title="Combined tool"
+                            @click="SetMouseButtonActions(stone.MouseAction.GRAYSCALE_WINDOWING, stone.MouseAction.PAN, stone.MouseAction.ZOOM)">
+                      <i class="far fa-hand-point-up"></i>
+                    </button>
+                  </div>
+                  <div class="inline-object">
+                    <button class="wvButton"
+                            data-toggle="tooltip" data-title="Zoom"
+                            @click="SetMouseButtonActions(stone.MouseAction.ZOOM, stone.MouseAction.ZOOM, stone.MouseAction.ZOOM)">
+                      <i class="fas fa-search"></i>
+                    </button>
+                  </div>
+                  <div class="inline-object">
+                    <button class="wvButton"
+                            data-toggle="tooltip" data-title="Pan"
+                            @click="SetMouseButtonActions(stone.MouseAction.PAN, stone.MouseAction.PAN, stone.MouseAction.PAN)">
+                      <i class="fas fa-arrows-alt"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+
             <!--div class="ng-scope inline-object">
               <button class="wvButton--underline text-center active">
                 <i class="fa fa-hand-pointer-o"></i>
@@ -305,31 +346,39 @@
 
             <div class="ng-scope inline-object">
               <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Invert contrast"
                       v-on:click="InvertContrast()">
                 <i class="fa fa-adjust"></i>
               </button>
             </div>
             
             <div class="ng-scope inline-object">
-              <button class="wvButton--underline text-center" id="windowing-popover">
+              <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Change windowing"
+                      id="windowing-popover">
                 <i class="fa fa-sun"></i>
               </button>
             </div>
 
             <div class="ng-scope inline-object">
-              <button class="wvButton--underline text-center" v-on:click="FlipX()">
+              <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Flip horizontally"
+                      v-on:click="FlipX()">
                 <i class="fas fa-exchange-alt"></i>
               </button>
             </div>
 
             <div class="ng-scope inline-object">
-              <button class="wvButton--underline text-center" v-on:click="FlipY()">
+              <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Flip vertically"
+                      v-on:click="FlipY()">
                 <i class="fas fa-exchange-alt fa-rotate-90"></i>
               </button>
             </div>
             
             <div class="ng-scope inline-object">
               <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Show image information"
                       v-bind:class="{ 'active' : showInfo }"
                       v-on:click="showInfo = !showInfo">
                 <i class="fa fa-info-circle"></i>
@@ -338,6 +387,7 @@
 
             <div class="ng-scope inline-object">
               <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Reference lines"
                       v-bind:class="{ 'active' : showReferenceLines }"
                       v-on:click="showReferenceLines = !showReferenceLines">
                 <i class="fa fa-bars"></i>
@@ -346,6 +396,7 @@
 
             <div class="ng-scope inline-object">
               <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="User preferences"
                       v-on:click="modalPreferences = true">
                 <i class="fa fa-user"></i>
               </button>

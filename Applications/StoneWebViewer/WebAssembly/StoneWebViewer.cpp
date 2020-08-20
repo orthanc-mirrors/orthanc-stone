@@ -79,6 +79,7 @@
 #include <Toolbox/DicomInstanceParameters.h>
 #include <Toolbox/GeometryToolbox.h>
 #include <Toolbox/SortedFrames.h>
+#include <Viewport/DefaultViewportInteractor.h>
 #include <Viewport/WebAssemblyCairoViewport.h>
 #include <Viewport/WebGLViewport.h>
 
@@ -99,10 +100,19 @@ enum EMSCRIPTEN_KEEPALIVE ThumbnailType
 
 enum EMSCRIPTEN_KEEPALIVE DisplayedFrameQuality
 {
-DisplayedFrameQuality_None,
-  DisplayedFrameQuality_Low,
-  DisplayedFrameQuality_High
-  };
+  DisplayedFrameQuality_None,
+    DisplayedFrameQuality_Low,
+    DisplayedFrameQuality_High
+    };
+
+
+enum EMSCRIPTEN_KEEPALIVE MouseAction
+{
+  MouseAction_GrayscaleWindowing,
+    MouseAction_Zoom,
+    MouseAction_Pan,
+    MouseAction_Rotate
+    };
   
 
 
@@ -1372,6 +1382,27 @@ private:
     }
   }
 
+
+  void SaveCurrentWindowing()
+  {
+    // Save the current windowing (that could have been altered by
+    // GrayscaleWindowingSceneTracker), so that it can be reused
+    // by the next frames
+
+    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+
+    OrthancStone::Scene2D& scene = lock->GetController().GetScene();
+
+    if (scene.HasLayer(LAYER_TEXTURE) &&
+        scene.GetLayer(LAYER_TEXTURE).GetType() == OrthancStone::ISceneLayer::Type_FloatTexture)
+    {
+      OrthancStone::FloatTextureSceneLayer& layer =
+        dynamic_cast<OrthancStone::FloatTextureSceneLayer&>(scene.GetLayer(LAYER_TEXTURE));
+      layer.GetWindowing(windowingCenter_, windowingWidth_);
+    }
+  }
+  
+
   bool DisplayFrame(unsigned int& quality,
                     size_t index)
   {
@@ -1386,22 +1417,7 @@ private:
     FramesCache::Accessor accessor(*cache_, sopInstanceUid, frame);
     if (accessor.IsValid())
     {
-      {
-        std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-
-        OrthancStone::Scene2D& scene = lock->GetController().GetScene();
-
-        // Save the current windowing (that could have been altered by
-        // GrayscaleWindowingSceneTracker), so that it can be reused
-        // by the next frames
-        if (scene.HasLayer(LAYER_TEXTURE) &&
-            scene.GetLayer(LAYER_TEXTURE).GetType() == OrthancStone::ISceneLayer::Type_FloatTexture)
-        {
-          OrthancStone::FloatTextureSceneLayer& layer =
-            dynamic_cast<OrthancStone::FloatTextureSceneLayer&>(scene.GetLayer(LAYER_TEXTURE));
-          layer.GetWindowing(windowingCenter_, windowingWidth_);
-        }
-      }
+      SaveCurrentWindowing();
       
       quality = accessor.GetQuality();
 
@@ -1842,12 +1858,14 @@ public:
   void FlipX()
   {
     flipX_ = !flipX_;
+    SaveCurrentWindowing();
     UpdateCurrentTextureParameters();
   }
 
   void FlipY()
   {
     flipY_ = !flipY_;
+    SaveCurrentWindowing();
     UpdateCurrentTextureParameters();
   }
 
@@ -1872,6 +1890,21 @@ public:
         lock->Invalidate();
       }
     }
+  }
+
+  void SetMouseButtonActions(OrthancStone::MouseAction leftAction,
+                             OrthancStone::MouseAction middleAction,
+                             OrthancStone::MouseAction rightAction)
+  {
+    std::unique_ptr<OrthancStone::DefaultViewportInteractor> interactor(
+      new OrthancStone::DefaultViewportInteractor);
+    
+    interactor->SetLeftButtonAction(leftAction);
+    interactor->SetMiddleButtonAction(middleAction);
+    interactor->SetRightButtonAction(rightAction);
+
+    assert(viewport_ != NULL);
+    viewport_->AcquireInteractor(interactor.release());
   }
 };
 
@@ -1981,7 +2014,9 @@ static boost::shared_ptr<FramesCache> cache_;
 static boost::shared_ptr<OrthancStone::WebAssemblyLoadersContext> context_;
 static std::string stringBuffer_;
 static bool softwareRendering_ = false;
-
+static OrthancStone::MouseAction leftButtonAction_ = OrthancStone::MouseAction_GrayscaleWindowing;
+static OrthancStone::MouseAction middleButtonAction_ = OrthancStone::MouseAction_Pan;
+static OrthancStone::MouseAction rightButtonAction_ = OrthancStone::MouseAction_Zoom;
 
 
 static void FormatTags(std::string& target,
@@ -2027,6 +2062,7 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
     std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_->Lock());
     boost::shared_ptr<ViewerViewport> viewport(
       ViewerViewport::Create(*lock, source_, canvas, cache_, softwareRendering_));
+    viewport->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
     viewport->AcquireObserver(new WebAssemblyObserver);
     allViewports_[canvas] = viewport;
     return viewport;
@@ -2036,6 +2072,30 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
     return found->second;
   }
 }
+
+
+
+static OrthancStone::MouseAction ConvertMouseAction(int action)
+{
+  switch (action)
+  {
+    case MouseAction_GrayscaleWindowing:
+      return OrthancStone::MouseAction_GrayscaleWindowing;
+      
+    case MouseAction_Zoom:
+      return OrthancStone::MouseAction_Zoom;
+      
+    case MouseAction_Pan:
+      return OrthancStone::MouseAction_Pan;
+      
+    case MouseAction_Rotate:
+      return OrthancStone::MouseAction_Rotate;
+
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+  }
+}
+
 
 
 extern "C"
@@ -2377,4 +2437,25 @@ extern "C"
   {
     return softwareRendering_;
   }  
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void SetMouseButtonActions(int leftAction,
+                             int middleAction,
+                             int rightAction)
+  {
+    try
+    {
+      leftButtonAction_ = ConvertMouseAction(leftAction);
+      middleButtonAction_ = ConvertMouseAction(middleAction);
+      rightButtonAction_ = ConvertMouseAction(rightAction);
+      
+      for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
+      {
+        assert(it->second != NULL);
+        it->second->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
+      }
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
 }

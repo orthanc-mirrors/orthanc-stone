@@ -116,6 +116,9 @@ var app = new Vue({
       // User preferences (stored in the local storage)
       settingNotDiagnostic: true,
       settingSoftwareRendering: false,
+
+      layoutCountX: 1,
+      layoutCountY: 1,
       
       viewport1Width: '100%',
       viewport1Height: '100%',
@@ -374,24 +377,32 @@ var app = new Vue({
         this.HideViewport(2);
         this.HideViewport(3);
         this.HideViewport(4);
+        this.layoutCountX = 1;
+        this.layoutCountY = 1;
       }
       else if (layout == '2x2') {
         this.ShowViewport(1, '0%', '0%', '50%', '50%');
         this.ShowViewport(2, '50%', '0%', '50%', '50%');
         this.ShowViewport(3, '0%', '50%', '50%', '50%');
         this.ShowViewport(4, '50%', '50%', '50%', '50%');
+        this.layoutCountX = 2;
+        this.layoutCountY = 2;
       }
       else if (layout == '2x1') {
         this.ShowViewport(1, '0%', '0%', '50%', '100%');
         this.ShowViewport(2, '50%', '0%', '50%', '100%');
         this.HideViewport(3);
         this.HideViewport(4);
+        this.layoutCountX = 2;
+        this.layoutCountY = 1;
       }
       else if (layout == '1x2') {
         this.ShowViewport(1, '0%', '0%', '100%', '50%');
         this.ShowViewport(2, '0%', '50%', '100%', '50%');
         this.HideViewport(3);
         this.HideViewport(4);
+        this.layoutCountX = 1;
+        this.layoutCountY = 2;
       }
 
       this.FitContent();

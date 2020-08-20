@@ -24,6 +24,7 @@
 #include "../Scene2D/Scene2D.h"
 #include "../Viewport/IViewport.h"
 #include "../StoneException.h"
+#include "ViewportController.h"
 
 namespace OrthancStone
 {

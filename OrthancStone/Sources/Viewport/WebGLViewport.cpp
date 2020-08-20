@@ -23,6 +23,7 @@
 
 #include "../StoneException.h"
 #include "../Scene2D/OpenGLCompositor.h"
+#include "../Scene2DViewport/ViewportController.h"
 
 namespace OrthancStone
 {

@@ -21,10 +21,11 @@
 #pragma once
 
 #include "../Scene2D/ICompositor.h"
-#include "../Scene2DViewport/ViewportController.h"
 
 namespace OrthancStone
 {
+  class ViewportController;
+  
   /**
    * Class that combines a Scene2D with a canvas where to draw the
    * scene. A call to "Refresh()" will update the content of the

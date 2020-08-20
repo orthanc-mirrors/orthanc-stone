@@ -22,6 +22,7 @@
 #include "WebGLViewportsRegistry.h"
 
 #include "../Toolbox/GenericToolbox.h"
+#include "../Scene2DViewport/ViewportController.h"
 
 #include <OrthancException.h>
 

@@ -24,6 +24,7 @@
 #include "../Scene2D/NullLayer.h"
 #include "../Viewport/IViewport.h"
 #include "../StoneException.h"
+#include "../Scene2DViewport/ViewportController.h"
 
 #include <OrthancException.h>
 

@@ -74,12 +74,13 @@
 #include <Scene2D/ColorTextureSceneLayer.h>
 #include <Scene2D/FloatTextureSceneLayer.h>
 #include <Scene2D/PolylineSceneLayer.h>
+#include <Scene2DViewport/ViewportController.h>
 #include <StoneException.h>
 #include <Toolbox/DicomInstanceParameters.h>
 #include <Toolbox/GeometryToolbox.h>
 #include <Toolbox/SortedFrames.h>
-#include <Viewport/WebGLViewport.h>
 #include <Viewport/WebAssemblyCairoViewport.h>
+#include <Viewport/WebGLViewport.h>
 
 #include <boost/make_shared.hpp>
 #include <stdio.h>

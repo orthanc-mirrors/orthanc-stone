@@ -20,11 +20,11 @@
 
 #pragma once
 
+#include "IViewport.h"
+#include "../Scene2DViewport/IFlexiblePointerTracker.h"
+
 namespace OrthancStone
 {
-  class IViewport;
-  class PointerEvent;
-  
   class IViewportInteractor : public boost::noncopyable
   {
   public:

@@ -32,6 +32,7 @@
 #endif
 
 #include "IViewport.h"
+#include "IViewportInteractor.h"
 
 #include <Compatibility.h>
 
@@ -40,6 +41,7 @@
 
 #include <memory>
 #include <string>
+#include <boost/enable_shared_from_this.hpp>
 
 namespace OrthancStone
 {

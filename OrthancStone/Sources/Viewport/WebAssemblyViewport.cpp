@@ -21,15 +21,18 @@
 
 #if defined(ORTHANC_BUILDING_STONE_LIBRARY) && ORTHANC_BUILDING_STONE_LIBRARY == 1
 #  include "WebAssemblyViewport.h"
+#  include "DefaultViewportInteractor.h"
 #  include "../Toolbox/GenericToolbox.h"
+#  include "../Scene2DViewport/ViewportController.h"
 #else
 // This is the case when using the WebAssembly side module, and this
 // source file must be compiled within the WebAssembly main module
 #  include <Viewport/WebAssemblyViewport.h>
 #  include <Toolbox/GenericToolbox.h>
+#  include <Scene2DViewport/ViewportController.h>
+#  include <Viewport/DefaultViewportInteractor.h>
 #endif
 
-#include "DefaultViewportInteractor.h"
 
 #include <OrthancException.h>
 

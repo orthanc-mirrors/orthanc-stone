@@ -48,6 +48,7 @@
 #include <boost/weak_ptr.hpp>
 
 #include <boost/thread/recursive_mutex.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 namespace OrthancStone
 {

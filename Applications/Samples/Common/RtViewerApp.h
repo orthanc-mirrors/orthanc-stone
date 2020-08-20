@@ -30,6 +30,7 @@
 #include "../../../OrthancStone/Sources/Messages/ObserverBase.h"
 #include "../../../OrthancStone/Sources/Oracle/OracleCommandExceptionMessage.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
+#include "../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
 #include "../../../OrthancStone/Sources/Viewport/IViewport.h"
 #include "../../../OrthancStone/Sources/Volumes/DicomVolumeImage.h"
 

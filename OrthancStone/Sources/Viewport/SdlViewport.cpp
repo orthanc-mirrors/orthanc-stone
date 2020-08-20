@@ -20,6 +20,8 @@
 
 #include "SdlViewport.h"
 
+#include "../Scene2DViewport/ViewportController.h"
+
 #include <OrthancException.h>
 
 #include <boost/make_shared.hpp>

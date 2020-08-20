@@ -25,6 +25,7 @@
 #include "../Messages/IObservable.h"
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2DViewport/IFlexiblePointerTracker.h"
+#include "../Viewport/IViewportInteractor.h"
 
 #include <Compatibility.h>
 
@@ -33,52 +34,6 @@
 
 namespace OrthancStone
 {
-  // TODO - Move this to another file
-  class IViewportInteractor : public boost::noncopyable
-  {
-  public:
-    virtual ~IViewportInteractor()
-    {
-    }
-
-    virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<IViewport> viewport,
-                                                   const PointerEvent& event,
-                                                   unsigned int viewportWidth,
-                                                   unsigned int viewportHeight) = 0;
-  };
-
-
-  // TODO - Move this to another file
-  class DefaultViewportInteractor : public IViewportInteractor
-  {
-  private:
-    // Index of the layer whose windowing is altered by clicking the
-    // left mouse button
-    int  windowingLayer_;
-    
-  public:
-    DefaultViewportInteractor() :
-      windowingLayer_(0)
-    {
-    }
-
-    int GetWindowingLayer() const
-    {
-      return windowingLayer_;
-    }
-
-    void SetWindowingLayer(int layerIndex)
-    {
-      windowingLayer_ = layerIndex;
-    }
-    
-    virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<IViewport> viewport,
-                                                   const PointerEvent& event,
-                                                   unsigned int viewportWidth,
-                                                   unsigned int viewportHeight) ORTHANC_OVERRIDE;
-  };
-
-
   class UndoStack;
 
   const double ARC_RADIUS_CANVAS_COORD = 30.0;

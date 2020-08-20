@@ -20,44 +20,14 @@
 
 #include "ViewportController.h"
 
-#include "UndoStack.h"
+#include "../StoneException.h"   // For ORTHANC_ASSERT
 #include "MeasureCommands.h"
-
-#include "../Scene2D/GrayscaleWindowingSceneTracker.h"
-#include "../Scene2D/PanSceneTracker.h"
-#include "../Scene2D/RotateSceneTracker.h"
-#include "../Scene2D/ZoomSceneTracker.h"
-#include "../StoneException.h"
+#include "UndoStack.h"
 
 #include <boost/make_shared.hpp>
 
 namespace OrthancStone
 {
-  IFlexiblePointerTracker* DefaultViewportInteractor::CreateTracker(
-    boost::shared_ptr<IViewport>  viewport,
-    const PointerEvent&           event,
-    unsigned int                  viewportWidth,
-    unsigned int                  viewportHeight)
-  {
-    switch (event.GetMouseButton())
-    {
-      case MouseButton_Left:
-        //return new RotateSceneTracker(viewport, event);
-
-        return new GrayscaleWindowingSceneTracker(
-          viewport, windowingLayer_, event, viewportWidth, viewportHeight);
-
-      case MouseButton_Middle:
-        return new PanSceneTracker(viewport, event);
-      
-      case MouseButton_Right:
-        return new ZoomSceneTracker(viewport, event, viewportHeight);
-
-      default:
-        return NULL;
-    }
-  }
-
   ViewportController::ViewportController(boost::shared_ptr<IViewport> viewport)
     : viewport_(viewport)
     , scene_(new Scene2D)

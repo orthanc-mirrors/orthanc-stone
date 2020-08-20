@@ -29,6 +29,8 @@
 #  include <Toolbox/GenericToolbox.h>
 #endif
 
+#include "DefaultViewportInteractor.h"
+
 #include <OrthancException.h>
 
 #include <boost/make_shared.hpp>

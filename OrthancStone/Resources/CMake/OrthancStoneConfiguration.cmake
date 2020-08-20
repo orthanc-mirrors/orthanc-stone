@@ -345,7 +345,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/GrayscaleWindowingSceneTracker.h
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/ICompositor.h
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/ILayerStyleConfigurator.h
-  ${ORTHANC_STONE_ROOT}/Sources/Scene2D/IPointerTracker.h
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/ISceneLayer.h
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/InfoPanelSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Sources/Scene2D/InfoPanelSceneLayer.h
@@ -405,7 +404,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Sources/Scene2DViewport/CreateLineMeasureTracker.h
   ${ORTHANC_STONE_ROOT}/Sources/Scene2DViewport/CreateMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Sources/Scene2DViewport/CreateMeasureTracker.h
-  ${ORTHANC_STONE_ROOT}/Sources/Scene2DViewport/CreateSimpleTrackerAdapter.cpp
   ${ORTHANC_STONE_ROOT}/Sources/Scene2DViewport/EditAngleMeasureCommand.cpp
   ${ORTHANC_STONE_ROOT}/Sources/Scene2DViewport/EditAngleMeasureCommand.h
   ${ORTHANC_STONE_ROOT}/Sources/Scene2DViewport/EditAngleMeasureTracker.cpp

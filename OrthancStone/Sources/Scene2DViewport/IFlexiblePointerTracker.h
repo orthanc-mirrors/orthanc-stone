@@ -77,12 +77,4 @@ namespace OrthancStone
     */
     virtual void Cancel() = 0;
   };
-
-
-  /**
-  This factory adopts the supplied simple tracker and creates a flexible 
-  tracker wrapper around it.
-  */
-  boost::shared_ptr<IFlexiblePointerTracker> CreateSimpleTrackerAdapter(boost::shared_ptr<IPointerTracker>);
 }
-

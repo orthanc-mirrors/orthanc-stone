@@ -24,7 +24,6 @@ function beforePrint(event){
 
   console.log('body size', $body.width(), $body.height());
   
-  //var panes = vm.paneManager.getAllPanes();
   var $splitpane = $('#viewport');
   var splitpaneSize = {width: $splitpane.width(), height: $splitpane.height()};
   console.log(splitpaneSize);
@@ -32,14 +31,22 @@ function beforePrint(event){
     x: app.layoutCountX,
     y: app.layoutCountY
   }
+
+  var panes = [];
+  $('#viewport canvas').each(function(key, value) {
+    if ($(value).is(':visible')) {
+      console.log(value);
+      panes.push(value);
+    }
+  });
+  
   console.log(panesCount);
   
   for(var i = 0; i < panes.length; i++){
-    var $pane = panes[i];
-    var viewport = vm.viewports[$pane.$$hashKey];
+    var canvas = panes[i];
     var paneSize = {
-      originalWidth: viewport.getCanvasSize().width,
-      originalHeight: viewport.getCanvasSize().height,
+      originalWidth: canvas.getBoundingClientRect().width,
+      originalHeight: canvas.getBoundingClientRect().height,
       originalRatio: 0,
       paneFinalWidth: splitpaneSize.width / panesCount.x,
       paneFinalHeight: splitpaneSize.height / panesCount.y,
@@ -87,12 +94,31 @@ function beforePrint(event){
     
     paneSize.canvasFinalRatio = paneSize.canvasFinalWidth / paneSize.canvasFinalHeight;
     console.log('paneSizes:', paneSize, 'splitpaneSize:', splitpaneSize, 'panesCount:', panesCount);
-    // viewport.resizeCanvas(paneSize.canvasFinalWidth, paneSize.canvasFinalHeight);
-    // viewport.draw();
-    var $canvas = $("[data-pane-hashkey='" + $pane.$$hashKey + "']").find('canvas');
-    $canvas.width(paneSize.canvasFinalWidth);
-    $canvas.height(paneSize.canvasFinalHeight);
+    //canvas.resizeCanvas(paneSize.canvasFinalWidth, paneSize.canvasFinalHeight);
+    //canvas.draw();
+
+    console.log(paneSize.canvasFinalWidth + ' ' + paneSize.canvasFinalHeight);
+    canvas.width = Math.round(paneSize.canvasFinalWidth);
+    canvas.height = Math.round(paneSize.canvasFinalHeight);
+
+
+    /*
+      https://stackoverflow.com/questions/27863783/javascript-canvas-disappears-after-changing-width
+
+    var buffer = document.getElementById('buffer');
+    var context = canvas.getContext('2d');
+    console.log(context);
+    var bufferContext = buffer.getContext('2d');
+    console.log(bufferContext);
+    
+    bufferContext.drawImage(canvas, 0, 0); //Make a copy of the canvas to hidden buffer
+    canvas.width = Math.round(paneSize.canvasFinalWidth);
+    canvas.height = Math.round(paneSize.canvasFinalHeight);
+    context.drawImage(buffer, 0, 0); */    
   }  
+
+  stone.AllViewportsUpdateSize(false);
+  $(window).trigger('resize');  // to force screen and canvas recalculation
 };
 
 function afterPrint(){
@@ -104,14 +130,16 @@ function afterPrint(){
   $body.css('height', '100%');
   // $html.css('width', '100%');
   // $html.css('height', '100%');
-  $('.wv-cornerstone-enabled-image canvas').css('width', 'auto');
-  $('.wv-cornerstone-enabled-image canvas').css('height', 'auto');
+  $('#viewport canvas').css('width', '100%');
+  $('#viewport canvas').css('height', '100%');
+  stone.AllViewportsUpdateSize(0);
   $(window).trigger('resize');  // to force screen and canvas recalculation
 }
 
 window.addEventListener('beforeprint', function(event){
   beforePrint(event)
-})
+});
+
 var printMedia = window.matchMedia('print');
 printMedia.addListener(function(mql) {
   if(mql.matches) {

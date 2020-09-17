@@ -26,6 +26,8 @@
 #include "IOpenGLContext.h"
 #include "../Viewport/SdlWindow.h"
 
+#include <Compatibility.h>  // For ORTHANC_OVERRIDE
+
 #include <SDL_render.h>
 
 #include <Enumerations.h>

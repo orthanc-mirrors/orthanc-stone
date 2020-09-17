@@ -39,6 +39,7 @@
 #  include "../Toolbox/ParsedDicomCache.h"
 #endif
 
+#include <Compatibility.h>  // For ORTHANC_OVERRIDE
 #include <WebServiceParameters.h>
 
 #include <Enumerations.h>

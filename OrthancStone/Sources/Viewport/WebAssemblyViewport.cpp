@@ -207,7 +207,15 @@ namespace OrthancStone
 
   void WebAssemblyViewport::Invalidate()
   {
-    emscripten_request_animation_frame(OnRequestAnimationFrame, reinterpret_cast<void*>(this));
+    if (compositor_.get() != NULL &&
+        controller_ /* should always be true */)
+    {
+      printf("TOTO3\n");
+      UpdateSize(*compositor_);
+      OnRequestAnimationFrame(0, reinterpret_cast<void*>(this));
+    }
+    
+    //emscripten_request_animation_frame(OnRequestAnimationFrame, reinterpret_cast<void*>(this));
   }
 
   void WebAssemblyViewport::AcquireCompositor(ICompositor* compositor /* takes ownership */)

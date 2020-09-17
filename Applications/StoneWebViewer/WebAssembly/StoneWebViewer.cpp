@@ -56,7 +56,6 @@
 // Orthanc framework includes
 #include <Cache/MemoryObjectCache.h>
 #include <DicomFormat/DicomArray.h>
-#include <DicomParsing/Internals/DicomImageDecoder.h>
 #include <DicomParsing/ParsedDicomFile.h>
 #include <Images/Image.h>
 #include <Images/ImageProcessing.h>

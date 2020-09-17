@@ -24,6 +24,8 @@
 
 #include "../Viewport/IViewport.h"
 
+#include <Compatibility.h>  // For ORTHANC_OVERRIDE
+
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 

@@ -22,6 +22,8 @@
 
 #include "IViewportInteractor.h"
 
+#include <Compatibility.h>  // For ORTHANC_OVERRIDE
+
 namespace OrthancStone
 {
   class DefaultViewportInteractor : public IViewportInteractor

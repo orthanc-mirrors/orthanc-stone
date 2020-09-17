@@ -25,7 +25,7 @@
 #include "../Oracle/ParseDicomFromWadoCommand.h"
 
 #if ORTHANC_ENABLE_DCMTK == 1
-#  include <DicomParsing/Internals/DicomImageDecoder.h>
+#  include <DicomParsing/ParsedDicomFile.h>
 #endif
 
 #include <DicomFormat/DicomInstanceHasher.h>
@@ -170,9 +170,7 @@ namespace OrthancStone
     size_t frameIndex = frames_.GetFrameIndex(payload.GetSeriesIndex());
 
     std::unique_ptr<Orthanc::ImageAccessor> decoded;
-    decoded.reset(Orthanc::DicomImageDecoder::Decode(
-      dicom, 
-      static_cast<unsigned int>(frameIndex)));
+    decoded.reset(dicom.DecodeFrame(static_cast<unsigned int>(frameIndex)));
 
     if (decoded.get() == NULL)
     {

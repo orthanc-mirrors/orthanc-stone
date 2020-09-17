@@ -24,7 +24,7 @@
 #include "ISceneLayer.h"
 #include "Color.h"
 
-#include <Enumerations.h>  // For ORTHANC_OVERRIDE
+#include <Compatibility.h>  // For ORTHANC_OVERRIDE
 
 namespace OrthancStone
 {

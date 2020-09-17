@@ -1150,8 +1150,7 @@ private:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }      
       
-      std::unique_ptr<Orthanc::ImageAccessor> frame(
-        Orthanc::DicomImageDecoder::Decode(message.GetDicom(), frameIndex_));
+      std::unique_ptr<Orthanc::ImageAccessor> frame(message.GetDicom().DecodeFrame(frameIndex_));
 
       if (frame.get() == NULL)
       {

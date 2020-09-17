@@ -31,7 +31,7 @@ namespace OrthancStone
 {
   void ImageBuffer3D::GetAxialSliceAccessor(Orthanc::ImageAccessor& target,
                                             unsigned int slice,
-                                            bool readOnly) const
+                                            bool readOnly)
   {
     if (slice >= depth_)
     {
@@ -53,7 +53,7 @@ namespace OrthancStone
 
   void ImageBuffer3D::GetCoronalSliceAccessor(Orthanc::ImageAccessor& target,
                                               unsigned int slice,
-                                              bool readOnly) const
+                                              bool readOnly)
   {
     if (slice >= height_)
     {
@@ -203,14 +203,20 @@ namespace OrthancStone
                                           VolumeProjection projection,
                                           unsigned int slice)
   {
+    /**
+     * NB: The "const_cast" below are OK, as the "readonly" argument
+     * to "GetAxialSliceAccessor()" and "GetCoronalSliceAccessor()"
+     * are set to "true", which implies read-only access.
+     **/
+    
     switch (projection)
     {
       case VolumeProjection_Axial:
-        that.GetAxialSliceAccessor(accessor_, slice, true);
+        const_cast<ImageBuffer3D&>(that).GetAxialSliceAccessor(accessor_, slice, true);
         break;
 
       case VolumeProjection_Coronal:
-        that.GetCoronalSliceAccessor(accessor_, slice, true);
+        const_cast<ImageBuffer3D&>(that).GetCoronalSliceAccessor(accessor_, slice, true);
         break;
 
       case VolumeProjection_Sagittal:

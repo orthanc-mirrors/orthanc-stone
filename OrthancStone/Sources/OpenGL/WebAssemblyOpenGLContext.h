@@ -39,7 +39,7 @@
 
 #include "IOpenGLContext.h"
 
-#include <Enumerations.h>
+#include <Compatibility.h>  // For ORTHANC_OVERRIDE
 
 #include <boost/shared_ptr.hpp>
 

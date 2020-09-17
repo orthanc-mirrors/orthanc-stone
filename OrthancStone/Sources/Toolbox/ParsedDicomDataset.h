@@ -23,6 +23,7 @@
 
 #include "OrthancDatasets/IDicomDataset.h"
 
+#include <Compatibility.h>  // For ORTHANC_OVERRIDE
 #include <DicomParsing/ParsedDicomFile.h>
 
 namespace OrthancStone

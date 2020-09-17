@@ -37,7 +37,6 @@
 
 #if ORTHANC_ENABLE_DCMTK == 1
 #  include <DicomParsing/ParsedDicomFile.h>
-#  include <DicomParsing/Internals/DicomImageDecoder.h>
 #endif 
 
 
@@ -555,8 +554,7 @@ namespace OrthancStone
     }
     else
     {
-      std::unique_ptr<Orthanc::ImageAccessor> frame(
-        Orthanc::DicomImageDecoder::Decode(message.GetDicom(), 0));
+      std::unique_ptr<Orthanc::ImageAccessor> frame(message.GetDicom().DecodeFrame(0));
 
       std::unique_ptr<Orthanc::ImageAccessor> thumbnail;
 

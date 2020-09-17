@@ -86,11 +86,11 @@ namespace OrthancStone
 
     void GetAxialSliceAccessor(Orthanc::ImageAccessor& target,
                                unsigned int slice,
-                               bool readOnly) const;
+                               bool readOnly);
     
     void GetCoronalSliceAccessor(Orthanc::ImageAccessor& target,
                                  unsigned int slice,
-                                 bool readOnly) const;
+                                 bool readOnly);
 
     Orthanc::Image*  ExtractSagittalSlice(unsigned int slice) const;
 

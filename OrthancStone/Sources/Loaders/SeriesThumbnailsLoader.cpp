@@ -226,7 +226,7 @@ namespace OrthancStone
     }
 
     virtual void HandleSuccess(const std::string& body,
-                               const std::map<std::string, std::string>& headers)
+                               const std::map<std::string, std::string>& headers) ORTHANC_OVERRIDE
     {
       Json::Reader reader;
       Json::Value value;
@@ -281,7 +281,7 @@ namespace OrthancStone
     }
 
     virtual void HandleSuccess(const std::string& body,
-                               const std::map<std::string, std::string>& headers)
+                               const std::map<std::string, std::string>& headers) ORTHANC_OVERRIDE
     {
       std::string mime = Orthanc::MIME_JPEG;
       for (std::map<std::string, std::string>::const_iterator
@@ -297,7 +297,7 @@ namespace OrthancStone
                                     GetSeriesInstanceUid(), new Thumbnail(body, mime));
     }
 
-    virtual void HandleError()
+    virtual void HandleError() ORTHANC_OVERRIDE
     {
       // The DICOMweb wasn't able to generate a thumbnail, try to
       // retrieve the SopClassUID tag using QIDO-RS
@@ -367,7 +367,7 @@ namespace OrthancStone
     }
 
     virtual void HandleSuccess(const std::string& body,
-                               const std::map<std::string, std::string>& headers)
+                               const std::map<std::string, std::string>& headers) ORTHANC_OVERRIDE
     {
       SeriesThumbnailType type = ExtractSopClassUid(body);
 
@@ -402,7 +402,7 @@ namespace OrthancStone
     }
 
     virtual void HandleSuccess(const std::string& body,
-                               const std::map<std::string, std::string>& headers)
+                               const std::map<std::string, std::string>& headers) ORTHANC_OVERRIDE
     {
       static const char* const INSTANCES = "Instances";
       
@@ -422,10 +422,6 @@ namespace OrthancStone
         Json::Value::ArrayIndex index = json[INSTANCES].size() / 2;
         if (json[INSTANCES][index].type() == Json::stringValue)
         {
-          std::map<std::string, std::string> arguments, headers;
-          arguments["quality"] = boost::lexical_cast<std::string>(JPEG_QUALITY);
-          headers["Accept"] = Orthanc::MIME_JPEG;
-
           const std::string instance = json[INSTANCES][index].asString();
 
           std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
@@ -453,7 +449,7 @@ namespace OrthancStone
     }
 
     virtual void HandleSuccess(const std::string& body,
-                               const std::map<std::string, std::string>& headers)
+                               const std::map<std::string, std::string>& headers) ORTHANC_OVERRIDE
     {
       Json::Value json;
       Json::Reader reader;
@@ -630,8 +626,9 @@ namespace OrthancStone
   }
     
   
-  boost::shared_ptr<SeriesThumbnailsLoader> SeriesThumbnailsLoader::Create(ILoadersContext::ILock& stone,
-                                                                           int priority)
+  boost::shared_ptr<SeriesThumbnailsLoader> SeriesThumbnailsLoader::Create(
+    const ILoadersContext::ILock& stone,
+    int priority)
   {
     boost::shared_ptr<SeriesThumbnailsLoader> result(new SeriesThumbnailsLoader(stone.GetContext(), priority));
     result->Register<GetOrthancImageCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
@@ -650,8 +647,8 @@ namespace OrthancStone
   void SeriesThumbnailsLoader::SetThumbnailSize(unsigned int width,
                                                 unsigned int height)
   {
-    if (width <= 0 ||
-        height <= 0)
+    if (width == 0 ||
+        height == 0)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }

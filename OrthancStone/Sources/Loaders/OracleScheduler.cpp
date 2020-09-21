@@ -464,7 +464,7 @@ namespace OrthancStone
     assert(PRIORITY_HIGH < 0 &&
            PRIORITY_LOW > 0);
 
-    if (maxLowPriority <= 0)
+    if (maxLowPriority == 0)
     {
       // There must be at least 1 lane available to deal with low-priority commands
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);

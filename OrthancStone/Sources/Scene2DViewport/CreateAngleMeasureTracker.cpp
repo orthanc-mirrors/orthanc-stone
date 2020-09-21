@@ -25,18 +25,19 @@
 
 namespace OrthancStone
 {
-  CreateAngleMeasureTracker::CreateAngleMeasureTracker(
-    boost::shared_ptr<IViewport> viewport,
-    const PointerEvent& e)
-    : CreateMeasureTracker(viewport)
-    , state_(CreatingSide1)
+  CreateAngleMeasureTracker::CreateAngleMeasureTracker(boost::shared_ptr<IViewport> viewport,
+                                                       const PointerEvent& e) :
+    CreateMeasureTracker(viewport),
+    state_(CreatingSide1)
   {
-    ScenePoint2D point = e.GetMainPosition();
+    ScenePoint2D point;
+    
     {    
       std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
       Scene2D& scene = lock->GetController().GetScene();
       point = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
     }
+    
     command_.reset(new CreateAngleMeasureCommand(viewport, point));
   }
 

@@ -49,7 +49,8 @@ namespace OrthancStone
     If you pass true for useCtProgressiveQuality, jpeg (50/100 quality), then jpeg (90/100 quality) 
     then eventually uncompressed 16-bit images will be loaded. 
     */
-    LoaderCache(OrthancStone::ILoadersContext& loadersContext, bool useCtProgressiveQuality = false);
+    LoaderCache(OrthancStone::ILoadersContext& loadersContext,
+                bool useCtProgressiveQuality);
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader>
       GetSeriesVolumeProgressiveLoader      (std::string seriesUuid);

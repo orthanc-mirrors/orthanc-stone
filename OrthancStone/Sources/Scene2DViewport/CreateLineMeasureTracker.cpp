@@ -30,12 +30,14 @@ namespace OrthancStone
     const PointerEvent&             e)
     : CreateMeasureTracker(viewport)
   {
-    ScenePoint2D point = e.GetMainPosition();
+    ScenePoint2D point;
+    
     {
       std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
       ViewportController& controller = lock->GetController();
       point = e.GetMainPosition().Apply(controller.GetScene().GetCanvasToSceneTransform());
     }
+    
     command_.reset(new CreateLineMeasureCommand(viewport, point));
   }
 

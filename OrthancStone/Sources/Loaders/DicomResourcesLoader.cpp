@@ -166,7 +166,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void HandleJson(const Json::Value& body)
+    virtual void HandleJson(const Json::Value& body) ORTHANC_OVERRIDE
     {
       GetTarget()->AddFromDicomWeb(body);
       BroadcastSuccess();
@@ -236,7 +236,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void HandleJson(const Json::Value& body)
+    virtual void HandleJson(const Json::Value& body) ORTHANC_OVERRIDE
     {
       GetTarget()->AddFromOrthanc(body);
       CloseCommand();
@@ -257,7 +257,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void HandleJson(const Json::Value& body)
+    virtual void HandleJson(const Json::Value& body) ORTHANC_OVERRIDE
     {
       static const char* const ID = "ID";
       
@@ -305,7 +305,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void HandleJson(const Json::Value& body)
+    virtual void HandleJson(const Json::Value& body) ORTHANC_OVERRIDE
     {
       static const char* const ID = "ID";
       static const char* const INSTANCES = "Instances";
@@ -481,12 +481,12 @@ namespace OrthancStone
     {
     }
 
-    virtual void HandleJson(const Json::Value& body)
+    virtual void HandleJson(const Json::Value& body) ORTHANC_OVERRIDE
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
       
-    virtual void HandleString(const std::string& body)
+    virtual void HandleString(const std::string& body) ORTHANC_OVERRIDE
     {
       Orthanc::ParsedDicomDir dicomDir(body);
       GetDicomDirInstances(*GetTarget(), dicomDir);
@@ -609,7 +609,7 @@ namespace OrthancStone
   }
 
 
-  boost::shared_ptr<DicomResourcesLoader> DicomResourcesLoader::Create(ILoadersContext::ILock& stone)
+  boost::shared_ptr<DicomResourcesLoader> DicomResourcesLoader::Create(const ILoadersContext::ILock& stone)
   {
     boost::shared_ptr<DicomResourcesLoader> result(new DicomResourcesLoader(stone.GetContext()));
     result->Register<HttpCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);

@@ -142,7 +142,7 @@ namespace OrthancStone
   template <typename T>
   void LoaderStateMachine::HandleSuccessMessage(const T& message)
   {
-    if (activeCommands_ <= 0) {
+    if (activeCommands_ == 0) {
       LOG(ERROR) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::HandleSuccessMessage : activeCommands_ should be > 0 but is: " << activeCommands_;
     }
     else {

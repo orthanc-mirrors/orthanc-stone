@@ -60,15 +60,15 @@ namespace OrthancStone
                        const Vector& axisX,
                        const Vector& axisY);
 
-    CoordinateSystem3D(const IDicomDataset& dicom);
-
     CoordinateSystem3D(const std::string& imagePositionPatient,
                        const std::string& imageOrientationPatient)
     {
       Setup(imagePositionPatient, imageOrientationPatient);
     }
 
-    CoordinateSystem3D(const Orthanc::DicomMap& dicom);
+    explicit CoordinateSystem3D(const IDicomDataset& dicom);
+
+    explicit CoordinateSystem3D(const Orthanc::DicomMap& dicom);
 
     const Vector& GetNormal() const
     {

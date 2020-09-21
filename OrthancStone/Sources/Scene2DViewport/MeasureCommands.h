@@ -34,62 +34,69 @@ namespace OrthancStone
 {
   class MeasureCommand : public boost::noncopyable
   {
-  public:
-    MeasureCommand(boost::shared_ptr<IViewport> viewport) : viewport_(viewport)
-    {}
-    virtual void Undo() = 0;
-    virtual void Redo() = 0;
-    
-    virtual ~MeasureCommand() {};
-
   protected:
     boost::shared_ptr<IViewport> viewport_;
+
+  public:
+    explicit MeasureCommand(boost::shared_ptr<IViewport> viewport) :
+      viewport_(viewport)
+    {
+    }
+
+    virtual ~MeasureCommand()
+    {
+    }
+    
+    virtual void Undo() = 0;
+
+    virtual void Redo() = 0;
   };
 
+  
   class CreateMeasureCommand : public MeasureCommand
   {
-  public:
-    CreateMeasureCommand(boost::shared_ptr<IViewport> viewport);
-    virtual ~CreateMeasureCommand();
-    virtual void Undo() ORTHANC_OVERRIDE;
-    virtual void Redo() ORTHANC_OVERRIDE;
   private:
     /** Must be implemented by the subclasses that create the actual tool */
     virtual boost::shared_ptr<MeasureTool> GetMeasureTool() = 0;
+
+  public:
+    explicit CreateMeasureCommand(boost::shared_ptr<IViewport> viewport);
+    
+    virtual ~CreateMeasureCommand();
+    
+    virtual void Undo() ORTHANC_OVERRIDE;
+    
+    virtual void Redo() ORTHANC_OVERRIDE;
   };
+
   
   class EditMeasureCommand : public MeasureCommand
   {
-  public:
-    EditMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, boost::shared_ptr<IViewport> viewport);
-    virtual ~EditMeasureCommand();
-    virtual void Undo() ORTHANC_OVERRIDE;
-    virtual void Redo() ORTHANC_OVERRIDE;
-
-    /** This memento is the original object state */
-    boost::shared_ptr<MeasureToolMemento> mementoOriginal_;
-
   private:
     /** Must be implemented by the subclasses that edit the actual tool */
     virtual boost::shared_ptr<MeasureTool> GetMeasureTool() = 0;
 
   protected:
-
     /** This memento is updated by the subclasses upon modifications */
     boost::shared_ptr<MeasureToolMemento> mementoModified_;
-  };
 
-  class DeleteMeasureCommand : public MeasureCommand
-  {
   public:
-    DeleteMeasureCommand(boost::shared_ptr<MeasureTool> measureTool, boost::shared_ptr<IViewport> viewport);
-    virtual ~DeleteMeasureCommand();
-    virtual void Undo() ORTHANC_OVERRIDE;
-    virtual void Redo() ORTHANC_OVERRIDE;
+    EditMeasureCommand(boost::shared_ptr<MeasureTool> measureTool,
+                       boost::shared_ptr<IViewport> viewport);
 
+    virtual ~EditMeasureCommand();
+
+    virtual void Undo() ORTHANC_OVERRIDE;
+
+    virtual void Redo() ORTHANC_OVERRIDE;
+    
     /** This memento is the original object state */
     boost::shared_ptr<MeasureToolMemento> mementoOriginal_;
+  };
 
+  
+  class DeleteMeasureCommand : public MeasureCommand
+  {
   private:
     /** Must be implemented by the subclasses that edit the actual tool */
     virtual boost::shared_ptr<MeasureTool> GetMeasureTool()
@@ -100,9 +107,21 @@ namespace OrthancStone
     boost::shared_ptr<MeasureTool> measureTool_;
 
   protected:
-
     /** This memento is updated by the subclasses upon modifications */
     boost::shared_ptr<MeasureToolMemento> mementoModified_;
+
+  public:
+    DeleteMeasureCommand(boost::shared_ptr<MeasureTool> measureTool,
+                         boost::shared_ptr<IViewport> viewport);
+
+    virtual ~DeleteMeasureCommand();
+    
+    virtual void Undo() ORTHANC_OVERRIDE;
+    
+    virtual void Redo() ORTHANC_OVERRIDE;
+
+    /** This memento is the original object state */
+    boost::shared_ptr<MeasureToolMemento> mementoOriginal_;
   };
 }
 

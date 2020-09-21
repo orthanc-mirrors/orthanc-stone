@@ -45,7 +45,7 @@ namespace OrthancStone
 
       virtual void Render(const AffineTransform2D& transform,
                           unsigned int canvasWidth,
-                          unsigned int canvasHeight)
+                          unsigned int canvasHeight) ORTHANC_OVERRIDE
       {
         if (!context_.IsContextLost())
         {
@@ -53,7 +53,7 @@ namespace OrthancStone
         }
       }
 
-      virtual void Update(const ISceneLayer& layer)
+      virtual void Update(const ISceneLayer& layer) ORTHANC_OVERRIDE
       {
         LoadLayer(dynamic_cast<const PolylineSceneLayer&>(layer));
       }

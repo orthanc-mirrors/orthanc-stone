@@ -87,9 +87,11 @@ namespace OrthancStone
       bool IsPointOnSliceIfAny(const Vector& v) const;
 
     public:
-      Polygon(const std::string& sopInstanceUid) :
+      explicit Polygon(const std::string& sopInstanceUid) :
         sopInstanceUid_(sopInstanceUid),
-        hasSlice_(false)
+        hasSlice_(false),
+        projectionAlongNormal_(0),
+        sliceThickness_(0)
       {
       }
 

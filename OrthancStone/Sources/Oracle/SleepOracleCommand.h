@@ -34,17 +34,17 @@ namespace OrthancStone
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, TimeoutMessage, SleepOracleCommand);
 
-    SleepOracleCommand(unsigned int milliseconds) : 
+    explicit SleepOracleCommand(unsigned int milliseconds) : 
       milliseconds_(milliseconds)
     {
     }
 
-    virtual Type GetType() const
+    virtual Type GetType() const ORTHANC_OVERRIDE
     {
       return Type_Sleep;
     }
 
-    virtual IOracleCommand* Clone() const
+    virtual IOracleCommand* Clone() const ORTHANC_OVERRIDE
     {
       return new SleepOracleCommand(milliseconds_);
     }

@@ -40,7 +40,7 @@ namespace OrthancStone
       bool               monochrome1_;
 
     public:
-      Instance(const Orthanc::DicomMap& tags);
+      explicit Instance(const Orthanc::DicomMap& tags);
 
       const Orthanc::DicomMap& GetTags() const
       {

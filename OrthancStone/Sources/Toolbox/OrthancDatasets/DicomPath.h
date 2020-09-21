@@ -41,7 +41,7 @@ namespace OrthancStone
     Prefix& GetPrefixItem(size_t depth);
 
   public:
-    DicomPath(const Orthanc::DicomTag& finalTag) :
+    explicit DicomPath(const Orthanc::DicomTag& finalTag) :
       finalTag_(finalTag)
     {
     }

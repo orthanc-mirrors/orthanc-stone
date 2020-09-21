@@ -45,7 +45,7 @@ namespace OrthancStone
                        int y,
                        unsigned int width,
                        unsigned int height,
-                       const Orthanc::IDynamicObject* payload /* ignored */);
+                       const Orthanc::IDynamicObject* payload /* ignored */) ORTHANC_OVERRIDE;
 
   public:
     TextBoundingBox(const GlyphAlphabet& alphabet,

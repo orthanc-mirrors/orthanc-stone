@@ -39,7 +39,7 @@ namespace OrthancStone
 
   public:
     // The pixel format must be convertible to "Float32"
-    FloatTextureSceneLayer(const Orthanc::ImageAccessor& texture);
+    explicit FloatTextureSceneLayer(const Orthanc::ImageAccessor& texture);
 
     void SetWindowing(ImageWindowing windowing);
 
@@ -74,9 +74,9 @@ namespace OrthancStone
     void GetRange(float& minValue,
                   float& maxValue);
 
-    virtual ISceneLayer* Clone() const;
+    virtual ISceneLayer* Clone() const ORTHANC_OVERRIDE;
 
-    virtual Type GetType() const
+    virtual Type GetType() const ORTHANC_OVERRIDE
     {
       return Type_FloatTexture;
     }

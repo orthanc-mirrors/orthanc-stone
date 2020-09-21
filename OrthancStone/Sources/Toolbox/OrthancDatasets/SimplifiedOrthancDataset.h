@@ -21,8 +21,18 @@
 
 #pragma once
 
+#if !defined(ORTHANC_ENABLE_DCMTK)
+#  error The macro ORTHANC_ENABLE_DCMTK must be defined
+#endif
+
+#if ORTHANC_ENABLE_DCMTK != 1
+#  error Support for DCMTK must be enabled to use SimplifiedOrthancDataset
+#endif
+
 #include "IOrthancConnection.h"
 #include "IDicomDataset.h"
+
+#include <Compatibility.h>  // For ORTHANC_OVERRIDE
 
 namespace OrthancStone
 {
@@ -39,12 +49,12 @@ namespace OrthancStone
     SimplifiedOrthancDataset(IOrthancConnection& orthanc,
                              const std::string& uri);
 
-    SimplifiedOrthancDataset(const std::string& content);
+    explicit SimplifiedOrthancDataset(const std::string& content);
 
     virtual bool GetStringValue(std::string& result,
-                                const DicomPath& path) const;
+                                const DicomPath& path) const ORTHANC_OVERRIDE;
 
     virtual bool GetSequenceSize(size_t& size,
-                                 const DicomPath& path) const;
+                                 const DicomPath& path) const ORTHANC_OVERRIDE;
   };
 }

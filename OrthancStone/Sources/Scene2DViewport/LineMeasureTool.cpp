@@ -30,16 +30,16 @@
 
 namespace OrthancStone
 {
-
   LineMeasureTool::LineMeasureTool(
-    boost::shared_ptr<IViewport> viewport)
-    : MeasureTool(viewport)
+    boost::shared_ptr<IViewport> viewport):
+    MeasureTool(viewport),
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
-    , layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(viewport,1,5)))
+    layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(viewport,1,5))),
 #else
-    , layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(viewport,1,1)))
+    layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(viewport,1,1))),
 #endif
-    , lineHighlightArea_(LineHighlightArea_None)
+    baseLayerIndex_(0),
+    lineHighlightArea_(LineHighlightArea_None)
   {
 
   }
@@ -118,7 +118,7 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
-    Scene2D& scene = controller.GetScene();
+    const Scene2D& scene = controller.GetScene();
 
     const double pixelToScene = scene.GetCanvasToSceneTransform().ComputeZoom();
     const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = 
@@ -154,7 +154,7 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
-    Scene2D& scene = controller.GetScene();
+    const Scene2D& scene = controller.GetScene();
 
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
       scene.GetCanvasToSceneTransform());

@@ -53,7 +53,7 @@ namespace OrthancStone
       Setup(k, r, c);
     }
 
-    FiniteProjectiveCamera(const Matrix& p)
+    explicit FiniteProjectiveCamera(const Matrix& p)
     {
       Setup(p);
     }
@@ -62,7 +62,7 @@ namespace OrthancStone
                            const double r[9],
                            const double c[3]);
 
-    FiniteProjectiveCamera(const double p[12]);
+    explicit FiniteProjectiveCamera(const double p[12]);
 
     // Constructor that implements camera calibration
     FiniteProjectiveCamera(const Vector& camera,

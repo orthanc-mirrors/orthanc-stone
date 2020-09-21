@@ -32,6 +32,7 @@ namespace OrthancStone
                     const PointerEvent& event);
 
     virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;
+    
     virtual void Cancel() ORTHANC_OVERRIDE;
 
   private:

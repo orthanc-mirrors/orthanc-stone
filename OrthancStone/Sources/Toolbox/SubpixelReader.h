@@ -41,7 +41,7 @@ namespace OrthancStone
       unsigned int                  height_;
 
     public:
-      SubpixelReaderBase(const Orthanc::ImageAccessor& source) :
+      explicit SubpixelReaderBase(const Orthanc::ImageAccessor& source) :
         source_(source),
         width_(source.GetWidth()),
         height_(source.GetHeight())
@@ -82,7 +82,7 @@ namespace OrthancStone
     typedef Orthanc::PixelTraits<Format>  Traits;
     typedef typename Traits::PixelType    PixelType;
 
-    SubpixelReader(const Orthanc::ImageAccessor& source) :
+    explicit SubpixelReader(const Orthanc::ImageAccessor& source) :
       SubpixelReaderBase(source)
     {
     }
@@ -106,7 +106,7 @@ namespace OrthancStone
     typedef Orthanc::PixelTraits<Format>  Traits;
     typedef typename Traits::PixelType    PixelType;
 
-    SubpixelReader(const Orthanc::ImageAccessor& source) :
+    explicit SubpixelReader(const Orthanc::ImageAccessor& source) :
       SubpixelReaderBase(source)
     {
     }

@@ -40,121 +40,122 @@ namespace OrthancStone
 
   class MeasureTool : public ObserverBase<MeasureTool>
   {
+  private:
+    bool     enabled_;
+
   public:
     virtual ~MeasureTool()
     {
     }
 
     /**
-    Enabled tools are rendered in the scene.
+       Enabled tools are rendered in the scene.
     */
     void Enable();
 
     /**
-    Disabled tools are not rendered in the scene. This is useful to be able
-    to use them as their own memento in command stacks (when a measure tool
-    creation command has been undone, the measure remains alive in the
-    command object but is disabled so that it can be redone later on easily)
+       Disabled tools are not rendered in the scene. This is useful to be able
+       to use them as their own memento in command stacks (when a measure tool
+       creation command has been undone, the measure remains alive in the
+       command object but is disabled so that it can be redone later on easily)
     */
     void Disable();
 
     /**
-    This method is called when the scene transform changes. It allows to 
-    recompute the visual elements whose content depend upon the scene transform
+       This method is called when the scene transform changes. It allows to 
+       recompute the visual elements whose content depend upon the scene transform
     */
     void OnSceneTransformChanged(
       const ViewportController::SceneTransformChanged& message);
     
     /**
-    This function must be implemented by the measuring tool to return whether
-    a given point in scene coords is close to the measuring tool.
+       This function must be implemented by the measuring tool to return whether
+       a given point in scene coords is close to the measuring tool.
 
-    This is used for mouse hover highlighting.
+       This is used for mouse hover highlighting.
 
-    It is assumed that if the pointer position leads to this function returning
-    true, then a click at that position will return a tracker to edit the 
-    measuring tool
+       It is assumed that if the pointer position leads to this function returning
+       true, then a click at that position will return a tracker to edit the 
+       measuring tool
     */
     virtual bool HitTest(ScenePoint2D p) = 0;
 
     /**
-    This method must return a memento the captures the tool state (not including
-    the highlighting state
+       This method must return a memento the captures the tool state (not including
+       the highlighting state
     */
     virtual boost::shared_ptr<MeasureToolMemento> GetMemento() const = 0;
 
     /**
-    This method must apply the supplied memento (this requires RTTI to check
-    the type)
+       This method must apply the supplied memento (this requires RTTI to check
+       the type)
     */
     virtual void SetMemento(boost::shared_ptr<MeasureToolMemento>) = 0;
 
     /**
-    This must create an edition tracker suitable for the supplied click position,
-    or an empty pointer if no hit test (although this should have been checked
-    first)
+       This must create an edition tracker suitable for the supplied click position,
+       or an empty pointer if no hit test (although this should have been checked
+       first)
     */
     virtual boost::shared_ptr<IFlexiblePointerTracker> CreateEditionTracker(const PointerEvent& e) = 0;
 
     /**
-    Will change the measuring tool to provide visual feedback on the GUI 
-    element that is in the pointer hit zone
+       Will change the measuring tool to provide visual feedback on the GUI 
+       element that is in the pointer hit zone
     */
     virtual void Highlight(ScenePoint2D p) = 0;
 
     /**
-    This function must reset the visual highlighted hot zone feedback
+       This function must reset the visual highlighted hot zone feedback
     */
     virtual void ResetHighlightState() = 0;
 
     /**
-    A description of the measuring tool, useful in debug logs
+       A description of the measuring tool, useful in debug logs
     */
     virtual std::string GetDescription() = 0;
 
   protected:
-    MeasureTool(boost::shared_ptr<IViewport> viewport);
+    explicit MeasureTool(boost::shared_ptr<IViewport> viewport);
 
     void PostConstructor();
 
     /**
-    The measuring tool may exist in a standalone fashion, without any available
-    scene (because the controller is dead or dying). This call allows to check 
-    before accessing the scene.
+       The measuring tool may exist in a standalone fashion, without any available
+       scene (because the controller is dead or dying). This call allows to check 
+       before accessing the scene.
     */
     bool IsSceneAlive() const;
     
     /**
-    This is the meat of the tool: this method must [create (if needed) and]
-    update the layers and their data according to the measure tool kind and
-    current state. This is repeatedly called during user interaction
+       This is the meat of the tool: this method must [create (if needed) and]
+       update the layers and their data according to the measure tool kind and
+       current state. This is repeatedly called during user interaction
     */
     virtual void RefreshScene() = 0;
 
     /**
-    enabled_ is not accessible by subclasses because there is a state machine
-    that we do not wanna mess with
+       enabled_ is not accessible by subclasses because there is a state machine
+       that we do not wanna mess with
     */
     bool IsEnabled() const;
 
     /**
-    Protected to allow sub-classes to use this weak pointer in factory methods
-    (pass them to created objects)
+       Protected to allow sub-classes to use this weak pointer in factory methods
+       (pass them to created objects)
     */
     boost::shared_ptr<IViewport> viewport_;
-
-
-  private:
-    bool     enabled_;
   };
 
   class MeasureToolMemento
   {
-    public:
-      virtual ~MeasureToolMemento() {};
+  public:
+    virtual ~MeasureToolMemento()
+    {
+    }
   };
 
 }
 
- //extern void TrackerSample_SetInfoDisplayMessage(
- //  std::string key, std::string value);
+//extern void TrackerSample_SetInfoDisplayMessage(
+//  std::string key, std::string value);

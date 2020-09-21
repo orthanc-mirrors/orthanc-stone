@@ -23,6 +23,7 @@
 
 #include "IOrthancConnection.h"
 
+#include <Compatibility.h>  // For ORTHANC_OVERRIDE
 #include <HttpClient.h>
 
 #include <boost/thread/mutex.hpp>
@@ -42,19 +43,19 @@ namespace OrthancStone
   public:
     OrthancHttpConnection();
 
-    OrthancHttpConnection(const Orthanc::WebServiceParameters& parameters);
+    explicit OrthancHttpConnection(const Orthanc::WebServiceParameters& parameters);
 
     virtual void RestApiGet(std::string& result,
-                            const std::string& uri);
+                            const std::string& uri) ORTHANC_OVERRIDE;
 
     virtual void RestApiPost(std::string& result,
                              const std::string& uri,
-                             const std::string& body);
+                             const std::string& body) ORTHANC_OVERRIDE;
 
     virtual void RestApiPut(std::string& result,
                             const std::string& uri,
-                            const std::string& body);
+                            const std::string& body) ORTHANC_OVERRIDE;
 
-    virtual void RestApiDelete(const std::string& uri);
+    virtual void RestApiDelete(const std::string& uri) ORTHANC_OVERRIDE;
   };
 }

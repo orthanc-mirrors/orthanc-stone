@@ -99,7 +99,7 @@ namespace OrthancStone
 
   uint32_t SdlOpenGLViewport::GetSdlWindowId()
   {
-    SdlWindow& sdlWindowWrapper = context_.GetWindow();
+    const SdlWindow& sdlWindowWrapper = context_.GetWindow();
     SDL_Window* sdlWindow = sdlWindowWrapper.GetObject();
     Uint32 sdlWindowId = SDL_GetWindowID(sdlWindow);
     return sdlWindowId;
@@ -196,7 +196,7 @@ namespace OrthancStone
 
   
   // Assumes that the mutex is locked
-  void SdlCairoViewport::CreateSdlSurfaceFromCompositor(CairoCompositor& compositor)
+  void SdlCairoViewport::CreateSdlSurfaceFromCompositor(const CairoCompositor& compositor)
   {
     static const uint32_t rmask = 0x00ff0000;
     static const uint32_t gmask = 0x0000ff00;

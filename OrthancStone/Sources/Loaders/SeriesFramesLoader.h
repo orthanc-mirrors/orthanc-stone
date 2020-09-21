@@ -56,7 +56,7 @@ namespace OrthancStone
 
 #if ORTHANC_ENABLE_DCMTK == 1
     void HandleDicom(const Payload& payload,
-                     Orthanc::ParsedDicomFile& dicom);
+                     const Orthanc::ParsedDicomFile& dicom);
 #endif
     
     void HandleDicomWebRendered(const Payload& payload,
@@ -153,15 +153,15 @@ namespace OrthancStone
 
     public:
       // No "const" because "LoadedDicomResources::GetResource()" will call "Flatten()"
-      Factory(LoadedDicomResources& instances) :
-      instances_(instances)
+      explicit Factory(LoadedDicomResources& instances) :
+        instances_(instances)
       {
       }
 
       void SetDicomDir(const std::string& dicomDirPath,
                        boost::shared_ptr<LoadedDicomResources> dicomDir);
 
-      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& context);
+      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& context) ORTHANC_OVERRIDE;
     };
 
     const SeriesOrderedFrames& GetOrderedFrames() const

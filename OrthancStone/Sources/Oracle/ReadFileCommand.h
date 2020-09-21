@@ -55,17 +55,17 @@ namespace OrthancStone
     std::string  path_;
 
   public:
-    ReadFileCommand(const std::string& path) : 
+    explicit ReadFileCommand(const std::string& path) : 
       path_(path)
     {
     }
 
-    virtual Type GetType() const
+    virtual Type GetType() const ORTHANC_OVERRIDE
     {
       return Type_ReadFile;
     }
 
-    virtual IOracleCommand* Clone() const
+    virtual IOracleCommand* Clone() const ORTHANC_OVERRIDE
     {
       return new ReadFileCommand(path_);
     }

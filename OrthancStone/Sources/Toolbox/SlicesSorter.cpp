@@ -315,8 +315,8 @@ namespace OrthancStone
 
     for (size_t i = 1; i < GetSlicesCount(); i++)
     {
-      OrthancStone::Vector p = reference.GetOrigin() + spacing * static_cast<double>(i) * reference.GetNormal();
-      double d = boost::numeric::ublas::norm_2(p - GetSliceGeometry(i).GetOrigin());
+      OrthancStone::Vector q = reference.GetOrigin() + spacing * static_cast<double>(i) * reference.GetNormal();
+      double d = boost::numeric::ublas::norm_2(q - GetSliceGeometry(i).GetOrigin());
 
       if (!OrthancStone::LinearAlgebra::IsNear(d, 0, 0.001 /* tolerance expressed in mm */))
       {

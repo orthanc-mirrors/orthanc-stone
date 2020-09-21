@@ -49,7 +49,7 @@ namespace OrthancStone
     const Frame& GetFrame(size_t seriesIndex) const;
 
   public:
-    SeriesOrderedFrames(LoadedDicomResources& instances);
+    explicit SeriesOrderedFrames(LoadedDicomResources& instances);
 
     ~SeriesOrderedFrames()
     {

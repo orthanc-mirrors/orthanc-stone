@@ -29,7 +29,7 @@ namespace OrthancStone
     WebAssemblyLoadersContext&  that_;
 
   public:
-    Locker(WebAssemblyLoadersContext& that) :
+    explicit Locker(WebAssemblyLoadersContext& that) :
       that_(that)
     {
     }      

@@ -44,7 +44,7 @@ namespace OrthancStone
 
     }
 
-    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
+    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message) ORTHANC_OVERRIDE
     {
       // Complete the DICOM tags with just-received "Grid Frame Offset Vector"
       std::string s = Orthanc::Toolbox::StripSpaces(message.GetAnswer());
@@ -73,8 +73,8 @@ namespace OrthancStone
   class OrthancMultiframeVolumeLoader::LoadGeometry : public State
   {
   public:
-    LoadGeometry(OrthancMultiframeVolumeLoader& that) :
-    State(that)
+    explicit LoadGeometry(OrthancMultiframeVolumeLoader& that) :
+      State(that)
     {
     }
       
@@ -115,8 +115,8 @@ namespace OrthancStone
   class OrthancMultiframeVolumeLoader::LoadTransferSyntax : public State
   {
   public:
-    LoadTransferSyntax(OrthancMultiframeVolumeLoader& that) :
-    State(that)
+    explicit LoadTransferSyntax(OrthancMultiframeVolumeLoader& that) :
+      State(that)
     {
     }
       
@@ -129,8 +129,8 @@ namespace OrthancStone
   class OrthancMultiframeVolumeLoader::LoadUncompressedPixelData : public State
   {
   public:
-    LoadUncompressedPixelData(OrthancMultiframeVolumeLoader& that) :
-    State(that)
+    explicit LoadUncompressedPixelData(OrthancMultiframeVolumeLoader& that) :
+      State(that)
     {
     }
       
@@ -385,7 +385,7 @@ namespace OrthancStone
           T pixelValue = it->first;
           uint64_t count = it->second;
           totalCount += count;
-          it++;
+          ++it;
           if (it == distribution.end())
             distributionRawMax_ = static_cast<float>(pixelValue);
         }
@@ -443,7 +443,7 @@ namespace OrthancStone
             currentCount += count;
           }
           // and continue walking along the distribution
-          it++;
+          ++it;
         }
       }
 
@@ -473,7 +473,7 @@ namespace OrthancStone
             currentCount += count;
           }
           // and continue walking along the distribution
-          it++;
+          ++it;
         }
       }
       if (resultMin > resultMax)

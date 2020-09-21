@@ -79,9 +79,9 @@ namespace OrthancStone
 
 
     OpenGLShader::OpenGLShader(GLenum type,
-                               const std::string& source)
+                               const std::string& source) :
+      shader_(CompileShader(type, source))
     {
-      shader_ = CompileShader(type, source);
       isValid_ = true;
     }
 

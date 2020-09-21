@@ -32,26 +32,23 @@ namespace OrthancStone
     const PointerEvent& e)
     : EditMeasureTracker(viewport, e)
   {
-    ScenePoint2D scenePos = e.GetMainPosition();
+    ScenePoint2D scenePos;
+    
     {
       std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
       Scene2D& scene = lock->GetController().GetScene();
       scenePos = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
     }
+    
     modifiedZone_ = dynamic_cast<LineMeasureTool&>(*measureTool).LineHitTest(scenePos);
     command_.reset(new EditLineMeasureCommand(measureTool, viewport));
-  }
-
-  EditLineMeasureTracker::~EditLineMeasureTracker()
-  {
-
   }
 
   void EditLineMeasureTracker::PointerMove(const PointerEvent& e)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
-    Scene2D& scene = controller.GetScene();
+    const Scene2D& scene = controller.GetScene();
 
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
       scene.GetCanvasToSceneTransform());

@@ -37,7 +37,7 @@ namespace OrthancStone
     AffineTransform2D();
 
     // The matrix must be 3x3, without perspective effects
-    AffineTransform2D(const Matrix& m);
+    explicit AffineTransform2D(const Matrix& m);
 
     AffineTransform2D(const AffineTransform2D& other) :
       matrix_(other.matrix_)

@@ -58,13 +58,13 @@ namespace OrthancStone
       LoaderStateMachine&  that_;
 
     public:
-      State(LoaderStateMachine& that) :
-      that_(that)
+      explicit State(LoaderStateMachine& that) :
+        that_(that)
       {
       }
 
-      State(const State& currentState) :
-      that_(currentState.that_)
+      explicit State(const State& currentState) :
+        that_(currentState.that_)
       {
       }
 
@@ -110,7 +110,7 @@ namespace OrthancStone
 
 
   public:
-    LoaderStateMachine(OrthancStone::ILoadersContext& loadersContext);
+    explicit LoaderStateMachine(OrthancStone::ILoadersContext& loadersContext);
 
     void PostConstructor();
 

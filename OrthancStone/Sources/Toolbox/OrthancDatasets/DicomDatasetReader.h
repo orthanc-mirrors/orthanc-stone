@@ -34,7 +34,7 @@ namespace OrthancStone
     const IDicomDataset&  dataset_;
 
   public:
-    DicomDatasetReader(const IDicomDataset& dataset);
+    explicit DicomDatasetReader(const IDicomDataset& dataset);
 
     const IDicomDataset& GetDataset() const
     {

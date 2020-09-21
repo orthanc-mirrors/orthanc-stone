@@ -29,15 +29,16 @@ namespace OrthancStone
   {
     class OpenGLColorTextureProgram : public boost::noncopyable
     {
+    private:
+      OpenGLTextureProgram  program_;
+      OpenGL::IOpenGLContext& context_;
+
     public:
-      OpenGLColorTextureProgram(OpenGL::IOpenGLContext&  context);
+      explicit OpenGLColorTextureProgram(OpenGL::IOpenGLContext&  context);
 
       void Apply(OpenGL::OpenGLTexture& texture,
                  const AffineTransform2D& transform,
                  bool useAlpha);
-    private:
-      OpenGLTextureProgram  program_;
-      OpenGL::IOpenGLContext& context_;
     };
   }
 }

@@ -62,12 +62,12 @@ namespace OrthancStone
   namespace Internals
   {
     OpenGLFloatTextureProgram::Data::Data(
-        OpenGL::IOpenGLContext& context
-      , const Orthanc::ImageAccessor& texture
-      , bool isLinearInterpolation) 
-      : texture_(context)
-      , offset_(0.0f)
-      , slope_(0.0f)
+      OpenGL::IOpenGLContext& context,
+      const Orthanc::ImageAccessor& texture,
+      bool isLinearInterpolation) :
+      texture_(context),
+      offset_(0.0f),
+      slope_(0.0f)
     {
       if (texture.GetFormat() != Orthanc::PixelFormat_Float32)
       {
@@ -107,17 +107,17 @@ namespace OrthancStone
            * <=> texture = (value - offset) / slope
            **/
 
-          float texture = (*p - offset_) / slope_;
-          if (texture < 0)
+          float value = (*p - offset_) / slope_;
+          if (value < 0)
           {
-            texture = 0;
+            value = 0;
           }
-          else if (texture >= 65535.0f)
+          else if (value >= 65535.0f)
           {
-            texture = 65535.0f;
+            value = 65535.0f;
           }
 
-          uint16_t t = static_cast<uint16_t>(texture);
+          uint16_t t = static_cast<uint16_t>(value);
 
           q[0] = t / 256;  // red
           q[1] = t % 256;  // green

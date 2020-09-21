@@ -23,6 +23,8 @@
 
 #include "IFetchingItemsSorter.h"
 
+#include <Compatibility.h>  // For ORTHANC_OVERRIDE
+
 namespace OrthancStone
 {
   class BasicFetchingItemsSorter : public IFetchingItemsSorter
@@ -34,20 +36,20 @@ namespace OrthancStone
     class Factory : public IFactory
     {
     public:
-      virtual IFetchingItemsSorter* CreateSorter(unsigned int itemsCount) const
+      virtual IFetchingItemsSorter* CreateSorter(unsigned int itemsCount) const ORTHANC_OVERRIDE
       {
         return new BasicFetchingItemsSorter(itemsCount);
       }
     };
 
-    BasicFetchingItemsSorter(unsigned int itemsCount);
+    explicit BasicFetchingItemsSorter(unsigned int itemsCount);
 
-    virtual unsigned int GetItemsCount() const
+    virtual unsigned int GetItemsCount() const ORTHANC_OVERRIDE
     {
       return itemsCount_;
     }
 
     virtual void Sort(std::vector<unsigned int>& target,
-                      unsigned int current);
+                      unsigned int current) ORTHANC_OVERRIDE;
   };
 }

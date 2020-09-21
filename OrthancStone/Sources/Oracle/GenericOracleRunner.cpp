@@ -58,7 +58,7 @@ namespace OrthancStone
                               const Orthanc::HttpClient::HttpHeaders& headers)
   {
     for (Orthanc::HttpClient::HttpHeaders::const_iterator
-           it = headers.begin(); it != headers.end(); it++ )
+           it = headers.begin(); it != headers.end(); ++it )
     {
       client.AddHeader(it->first, it->second);
     }

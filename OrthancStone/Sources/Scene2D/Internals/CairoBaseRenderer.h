@@ -56,7 +56,7 @@ namespace OrthancStone
         Update(layer);
       }
 
-      virtual void Update(const ISceneLayer& layer)
+      virtual void Update(const ISceneLayer& layer) ORTHANC_OVERRIDE
       {
         layer_.reset(layer.Clone());
       }

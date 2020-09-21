@@ -31,6 +31,7 @@ namespace OrthancStone
     revision_(0),
     linearInterpolation_(false),
     hasWindowingOverride_(false),
+    windowing_(ImageWindowing_Custom),
     customWindowWidth_(0),
     customWindowCenter_(0),
     hasInversionOverride_(false),

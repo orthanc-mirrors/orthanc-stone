@@ -87,7 +87,7 @@ namespace OrthancStone
                                         SceneTransformChanged, \
                                         ViewportController);
 
-    ViewportController(boost::shared_ptr<IViewport> viewport);
+    explicit ViewportController(boost::shared_ptr<IViewport> viewport);
 
     ~ViewportController();
 

@@ -24,10 +24,10 @@
 namespace OrthancStone
 {
 
-  CreateMeasureTracker::CreateMeasureTracker(boost::shared_ptr<IViewport> viewport)
-    : viewport_(viewport)
-    , alive_(true)
-    , commitResult_(true)
+  CreateMeasureTracker::CreateMeasureTracker(boost::shared_ptr<IViewport> viewport) :
+    commitResult_(true),
+    viewport_(viewport),
+    alive_(true)
   {
   }
 
@@ -58,10 +58,11 @@ namespace OrthancStone
     lock->Invalidate();
   }
 
-  EditMeasureTracker::EditMeasureTracker(boost::shared_ptr<IViewport> viewport, const PointerEvent& e)
-    : viewport_(viewport)
-    , alive_(true)
-    , commitResult_(true)
+  EditMeasureTracker::EditMeasureTracker(boost::shared_ptr<IViewport> viewport,
+                                         const PointerEvent& e) :
+    commitResult_(true),
+    viewport_(viewport),
+    alive_(true)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
 

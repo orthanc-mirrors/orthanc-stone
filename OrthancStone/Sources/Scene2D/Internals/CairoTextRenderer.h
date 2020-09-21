@@ -42,7 +42,7 @@ namespace OrthancStone
     
       virtual void Render(const AffineTransform2D& transform,
                           unsigned int canvasWidth,
-                          unsigned int canvasHeight);
+                          unsigned int canvasHeight) ORTHANC_OVERRIDE;
     };
   }
 }

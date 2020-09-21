@@ -65,7 +65,7 @@ namespace OrthancStone
       Thumbnail(const std::string& image,
                 const std::string& mime);
 
-      Thumbnail(SeriesThumbnailType type);
+      explicit Thumbnail(SeriesThumbnailType type);
 
       SeriesThumbnailType GetType() const
       {
@@ -215,7 +215,7 @@ namespace OrthancStone
     }
 
 
-    static boost::shared_ptr<SeriesThumbnailsLoader> Create(ILoadersContext::ILock& context,
+    static boost::shared_ptr<SeriesThumbnailsLoader> Create(const ILoadersContext::ILock& context,
                                                             int priority);
 
     void SetThumbnailSize(unsigned int width,

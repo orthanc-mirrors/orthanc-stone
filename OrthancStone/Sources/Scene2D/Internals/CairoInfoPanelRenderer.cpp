@@ -68,9 +68,6 @@ namespace OrthancStone
         int32_t halfHeight =
           static_cast<int32_t>(0.5 * texture_.GetHeight());
 
-        AffineTransform2D translation1 =
-          AffineTransform2D::CreateOffset(-halfWidth, -halfHeight);
-
         const Matrix& sceneTransformM = transform.GetHomogeneousMatrix();
         Matrix r;
         Matrix q;
@@ -82,28 +79,28 @@ namespace OrthancStone
           &m, q(0, 0), q(1, 0), q(0, 1), q(1, 1), q(0, 2), q(1, 2));
 
         // now let's build the transform piece by piece
-        // first translation (directly written in `transform`)
-        cairo_matrix_t transform;
-        cairo_matrix_init_identity(&transform);
-        cairo_matrix_translate(&transform, -halfWidth, -halfHeight);
+        // first translation (directly written in `t`)
+        cairo_matrix_t t;
+        cairo_matrix_init_identity(&t);
+        cairo_matrix_translate(&t, -halfWidth, -halfHeight);
 
         // then the rotation
-        cairo_matrix_multiply(&transform, &transform, &m);
+        cairo_matrix_multiply(&t, &t, &m);
 
         // then the second translation
         {
           cairo_matrix_t translation2;
           cairo_matrix_init_translate(&translation2, halfWidth, halfHeight);
-          cairo_matrix_multiply(&transform, &transform, &m);
+          cairo_matrix_multiply(&t, &t, &m);
         }
 
         // then the last translation
         {
           cairo_matrix_t translation3;
           cairo_matrix_init_translate(&translation3, dx, dy);
-          cairo_matrix_multiply(&transform, &transform, &translation3);
+          cairo_matrix_multiply(&t, &t, &translation3);
         }
-        cairo_transform(cr, &transform);
+        cairo_transform(cr, &t);
       } 
       else
       {

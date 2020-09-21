@@ -63,12 +63,12 @@ namespace OrthancStone
     static std::string GetDicomDirPath(const std::string& dicomDirPath,
                                        const std::string& file);
 
-    virtual Type GetType() const
+    virtual Type GetType() const ORTHANC_OVERRIDE
     {
       return Type_ParseDicomFromFile;
     }
 
-    virtual IOracleCommand* Clone() const
+    virtual IOracleCommand* Clone() const ORTHANC_OVERRIDE
     {
       return new ParseDicomFromFileCommand(*this);
     }

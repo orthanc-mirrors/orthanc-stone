@@ -121,13 +121,13 @@ namespace OrthancStone
       };
       
     private:
-      OpenGL::IOpenGLContext&               context_;
+      OpenGL::IOpenGLContext&                 context_;
       std::unique_ptr<OpenGL::OpenGLProgram>  program_;
-      GLint                                 positionLocation_;
-      GLint                                 textureLocation_;
+      GLint                                   positionLocation_;
+      GLint                                   textureLocation_;
 
     public:
-      OpenGLTextProgram(OpenGL::IOpenGLContext&  context);
+      explicit OpenGLTextProgram(OpenGL::IOpenGLContext&  context);
 
       void Apply(OpenGL::OpenGLTexture& fontTexture,
                  const Data& data,

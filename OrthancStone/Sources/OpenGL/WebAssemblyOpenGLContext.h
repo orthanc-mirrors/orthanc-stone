@@ -54,7 +54,7 @@ namespace OrthancStone
       boost::shared_ptr<PImpl>  pimpl_;
 
     public:
-      WebAssemblyOpenGLContext(const std::string& canvasSelector);
+      explicit WebAssemblyOpenGLContext(const std::string& canvasSelector);
 
       virtual bool IsContextLost() ORTHANC_OVERRIDE;
 

@@ -72,7 +72,7 @@ namespace OrthancStone
   DicomInstanceParameters::Data::Data(const Orthanc::DicomMap& dicom) :
     imageInformation_(dicom)
   {
-    if (imageInformation_.GetNumberOfFrames() <= 0)
+    if (imageInformation_.GetNumberOfFrames() == 0)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }

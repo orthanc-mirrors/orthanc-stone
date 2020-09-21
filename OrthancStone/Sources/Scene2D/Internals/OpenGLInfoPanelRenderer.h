@@ -47,9 +47,9 @@ namespace OrthancStone
 
       virtual void Render(const AffineTransform2D& transform,
                           unsigned int canvasWidth,
-                          unsigned int canvasHeight);
+                          unsigned int canvasHeight) ORTHANC_OVERRIDE;
 
-      virtual void Update(const ISceneLayer& layer)
+      virtual void Update(const ISceneLayer& layer) ORTHANC_OVERRIDE
       {
         LoadTexture(dynamic_cast<const InfoPanelSceneLayer&>(layer));
       }

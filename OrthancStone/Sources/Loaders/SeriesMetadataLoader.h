@@ -48,7 +48,7 @@ namespace OrthancStone
     std::string                              dicomDirPath_;
     std::map<std::string, unsigned int>      seriesSize_;
 
-    SeriesMetadataLoader(boost::shared_ptr<DicomResourcesLoader>& loader);
+    explicit SeriesMetadataLoader(boost::shared_ptr<DicomResourcesLoader>& loader);
 
     bool IsScheduledWithHigherPriority(const std::string& seriesInstanceUid,
                                        int priority) const;
@@ -128,14 +128,14 @@ namespace OrthancStone
     class Factory : public ILoaderFactory
     {
     public:
-      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& context)
+      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& context) ORTHANC_OVERRIDE
       {
         return SeriesMetadataLoader::Create(context);
       }
     };
 
 
-    static boost::shared_ptr<SeriesMetadataLoader> Create(ILoadersContext::ILock& context);
+    static boost::shared_ptr<SeriesMetadataLoader> Create(const ILoadersContext::ILock& context);
 
   
     class Accessor : public boost::noncopyable

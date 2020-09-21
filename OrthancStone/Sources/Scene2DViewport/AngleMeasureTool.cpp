@@ -142,9 +142,9 @@ namespace OrthancStone
   AngleMeasureTool::AngleHighlightArea AngleMeasureTool::AngleHitTest(ScenePoint2D p) const
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = lock->GetController();
-    Scene2D& scene = controller.GetScene();
-
+    const ViewportController& controller = lock->GetController();
+    const Scene2D& scene = controller.GetScene();
+    
     const double pixelToScene = scene.GetCanvasToSceneTransform().ComputeZoom();
 
     const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = 
@@ -203,7 +203,7 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
-    Scene2D& scene = controller.GetScene();
+    const Scene2D& scene = controller.GetScene();
 
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
       scene.GetCanvasToSceneTransform());

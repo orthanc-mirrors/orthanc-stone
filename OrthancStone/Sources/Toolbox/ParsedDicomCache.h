@@ -37,7 +37,7 @@ namespace OrthancStone
     Orthanc::MemoryObjectCache  cache_;
 
   public:
-    ParsedDicomCache(size_t size)
+    explicit ParsedDicomCache(size_t size)
     {
       cache_.SetMaximumSize(size);
     }

@@ -67,18 +67,18 @@ namespace OrthancStone
       return applyLog_;
     }
 
-    virtual uint64_t GetRevision() const
+    virtual uint64_t GetRevision() const ORTHANC_OVERRIDE
     {
       return revision_;
     }
     
     virtual TextureBaseSceneLayer* CreateTextureFromImage(
-      const Orthanc::ImageAccessor& image) const;
+      const Orthanc::ImageAccessor& image) const ORTHANC_OVERRIDE;
 
     virtual TextureBaseSceneLayer* CreateTextureFromDicom(
       const Orthanc::ImageAccessor& frame,
-      const DicomInstanceParameters& parameters) const;
+      const DicomInstanceParameters& parameters) const ORTHANC_OVERRIDE;
 
-    virtual void ApplyStyle(ISceneLayer& layer) const;
+    virtual void ApplyStyle(ISceneLayer& layer) const ORTHANC_OVERRIDE;
   };
 }

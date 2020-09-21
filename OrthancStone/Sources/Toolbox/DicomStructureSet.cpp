@@ -259,12 +259,12 @@ namespace OrthancStone
 
         extent_.Reset();
         
-        for (Points::const_iterator it = points_.begin(); it != points_.end(); ++it)
+        for (Points::const_iterator it2 = points_.begin(); it2 != points_.end(); ++it2)
         {
-          if (IsPointOnSliceIfAny(*it))
+          if (IsPointOnSliceIfAny(*it2))
           {
             double x, y;
-            geometry.ProjectPoint2(x, y, *it);
+            geometry.ProjectPoint2(x, y, *it2);
             extent_.AddPoint(x, y);
           }
         }
@@ -470,10 +470,10 @@ namespace OrthancStone
     DicomDatasetReader reader(tags);
     
     size_t count, tmp;
-    if (!tags.GetSequenceSize(count, DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE) ||
-        !tags.GetSequenceSize(tmp, DICOM_TAG_ROI_CONTOUR_SEQUENCE) ||
+    if (!tags.GetSequenceSize(count, DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE)) ||
+        !tags.GetSequenceSize(tmp, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE)) ||
         tmp != count ||
-        !tags.GetSequenceSize(tmp, DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE) ||
+        !tags.GetSequenceSize(tmp, DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE)) ||
         tmp != count)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);

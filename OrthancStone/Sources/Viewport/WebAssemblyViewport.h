@@ -91,10 +91,10 @@ namespace OrthancStone
 
     /**
     The second argument is temporary and should be deleted once the migration 
-    to interactors is finished.
+    to interactors is finished. It should be set to "true" for new applications.
     */
     WebAssemblyViewport(const std::string& canvasId, 
-                        bool enableEmscriptenMouseEvents = true);
+                        bool enableEmscriptenMouseEvents);
 
     void PostConstructor();
 

@@ -84,7 +84,7 @@ namespace OrthancStone
     boost::shared_ptr<DicomVolumeImage>  volume_;
 
   public:
-    DicomVolumeImageMPRSlicer(const boost::shared_ptr<DicomVolumeImage>& volume) :
+    explicit DicomVolumeImageMPRSlicer(const boost::shared_ptr<DicomVolumeImage>& volume) :
       volume_(volume)
     {
     }

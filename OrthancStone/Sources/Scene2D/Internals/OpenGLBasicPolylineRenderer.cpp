@@ -34,12 +34,14 @@ namespace OrthancStone
       layer_.Copy(layer);
     }
 
-    void OpenGLBasicPolylineRenderer::Render(const AffineTransform2D& transform)
+    void OpenGLBasicPolylineRenderer::Render(const AffineTransform2D& transform,
+                                             unsigned int canvasWidth,
+                                             unsigned int canvasHeight)
     {
       if (!context_.IsContextLost())
       {
         AffineTransform2D t = AffineTransform2D::Combine(
-          AffineTransform2D::CreateOpenGLClipspace(context_.GetCanvasWidth(), context_.GetCanvasHeight()),
+          AffineTransform2D::CreateOpenGLClipspace(canvasWidth, canvasHeight),
           transform);
 
         glUseProgram(0);

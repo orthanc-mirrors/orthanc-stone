@@ -21,6 +21,9 @@
 
 #include "SimplifiedOrthancDataset.h"
 
+#include <OrthancException.h>
+#include <DicomParsing/FromDcmtkBridge.h>
+
 namespace OrthancStone
 {
   const Json::Value* SimplifiedOrthancDataset::LookupPath(const DicomPath& path) const
@@ -29,7 +32,8 @@ namespace OrthancStone
                                   
     for (unsigned int depth = 0; depth < path.GetPrefixLength(); depth++)
     {
-      const char* name = path.GetPrefixTag(depth).GetName();
+      const std::string name = Orthanc::FromDcmtkBridge::GetTagName(
+        path.GetPrefixTag(depth), "" /* no private creator */);
       if (content->type() != Json::objectValue)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
@@ -57,7 +61,8 @@ namespace OrthancStone
       }
     }
 
-    const char* name = path.GetFinalTag().GetName();
+    const std::string name = Orthanc::FromDcmtkBridge::GetTagName(
+      path.GetFinalTag(), "" /* no private creator */);
 
     if (content->type() != Json::objectValue)
     {

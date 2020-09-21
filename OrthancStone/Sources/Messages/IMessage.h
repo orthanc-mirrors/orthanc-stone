@@ -115,7 +115,7 @@ namespace OrthancStone
     const TOrigin&  origin_;
 
   public:
-    OriginMessage(const TOrigin& origin) :
+    explicit OriginMessage(const TOrigin& origin) :
       origin_(origin)
     {
     }
@@ -136,7 +136,7 @@ namespace OrthancStone
     return id;                                                          \
   }                                                                     \
                                                                         \
-  virtual const ::OrthancStone::MessageIdentifier& GetIdentifier() const \
+  virtual const ::OrthancStone::MessageIdentifier& GetIdentifier() const ORTHANC_OVERRIDE \
   {                                                                     \
     return GetStaticIdentifier();                                       \
   }
@@ -147,7 +147,7 @@ namespace OrthancStone
   {                                                                     \
     ORTHANC_STONE_MESSAGE(FILE, LINE);                                  \
                                                                         \
-    NAME(const ORIGIN& origin) :                                        \
+    explicit NAME(const ORIGIN& origin) :                               \
       OriginMessage(origin)                                             \
     {                                                                   \
     }                                                                   \

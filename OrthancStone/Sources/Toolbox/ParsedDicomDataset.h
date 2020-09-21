@@ -34,7 +34,7 @@ namespace OrthancStone
     Orthanc::ParsedDicomFile&  dicom_;
 
   public:
-    ParsedDicomDataset(Orthanc::ParsedDicomFile& dicom) :
+    explicit ParsedDicomDataset(Orthanc::ParsedDicomFile& dicom) :
       dicom_(dicom)
     {
     }

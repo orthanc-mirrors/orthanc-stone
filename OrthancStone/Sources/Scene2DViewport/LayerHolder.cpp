@@ -100,7 +100,7 @@ namespace OrthancStone
   PolylineSceneLayer* LayerHolder::GetPolylineLayer(int index /*= 0*/)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    Scene2D& scene = lock->GetController().GetScene();
+    const Scene2D& scene = lock->GetController().GetScene();
 
     using namespace Orthanc;
     ORTHANC_ASSERT(baseLayerIndex_ != -1);
@@ -117,7 +117,7 @@ namespace OrthancStone
   TextSceneLayer* LayerHolder::GetTextLayer(int index /*= 0*/)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    Scene2D& scene = lock->GetController().GetScene();
+    const Scene2D& scene = lock->GetController().GetScene();
 
     using namespace Orthanc;
     ORTHANC_ASSERT(baseLayerIndex_ != -1);

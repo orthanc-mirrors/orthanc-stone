@@ -187,7 +187,7 @@ namespace OrthancStone
   }
 
 
-  boost::shared_ptr<SeriesMetadataLoader> SeriesMetadataLoader::Create(ILoadersContext::ILock& context)
+  boost::shared_ptr<SeriesMetadataLoader> SeriesMetadataLoader::Create(const ILoadersContext::ILock& context)
   {
     boost::shared_ptr<DicomResourcesLoader> loader(DicomResourcesLoader::Create(context));
       

@@ -33,7 +33,7 @@ namespace OrthancStone
     DicomInstanceParameters           parameters_;
 
   public:
-    Instance(const Orthanc::DicomMap& dicom) :
+    explicit Instance(const Orthanc::DicomMap& dicom) :
       dicom_(dicom.Clone()),
       parameters_(dicom)
     {
@@ -134,8 +134,8 @@ namespace OrthancStone
     int             index_;
 
   public:
-    InstanceWithIndexInSeries(const Instance& instance) :
-    instance_(&instance)
+    explicit InstanceWithIndexInSeries(const Instance& instance) :
+      instance_(&instance)
     {
       if (!instance_->LookupIndexInSeries(index_))
       {

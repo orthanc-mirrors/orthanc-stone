@@ -28,6 +28,11 @@ namespace OrthancStone
 
   class EditLineMeasureTracker : public EditMeasureTracker
   {
+  private:
+    LineMeasureTool::LineHighlightArea modifiedZone_;
+
+    boost::shared_ptr<EditLineMeasureCommand> GetCommand();
+
   public:
     /**
     When you create this tracker, you need to supply it with the undo stack
@@ -38,18 +43,13 @@ namespace OrthancStone
     */
     EditLineMeasureTracker(
       boost::shared_ptr<MeasureTool>  measureTool,
-      boost::shared_ptr<IViewport> viewport,
-      const PointerEvent&                 e);
-
-    ~EditLineMeasureTracker();
+      boost::shared_ptr<IViewport>    viewport,
+      const PointerEvent&             e);
 
     virtual void PointerMove(const PointerEvent& e) ORTHANC_OVERRIDE;
+    
     virtual void PointerUp(const PointerEvent& e) ORTHANC_OVERRIDE;
+    
     virtual void PointerDown(const PointerEvent& e) ORTHANC_OVERRIDE;
-
-  private:
-    LineMeasureTool::LineHighlightArea modifiedZone_;
-
-    boost::shared_ptr<EditLineMeasureCommand> GetCommand();
   };
 }

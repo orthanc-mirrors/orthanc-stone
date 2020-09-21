@@ -27,8 +27,8 @@ namespace OrthancStone
   {
   private:
     std::unique_ptr<Orthanc::ParsedDicomFile>  dicom_;
-    size_t                                   fileSize_;
-    bool                                     hasPixelData_;
+    size_t                                     fileSize_;
+    bool                                       hasPixelData_;
     
   public:
     Item(Orthanc::ParsedDicomFile* dicom,
@@ -44,7 +44,7 @@ namespace OrthancStone
       }
     }
            
-    virtual size_t GetMemoryUsage() const
+    virtual size_t GetMemoryUsage() const ORTHANC_OVERRIDE
     {
       return fileSize_;
     }

@@ -141,6 +141,6 @@ namespace OrthancStone
     void RetrieveReferencedSlices(const std::set<std::string>& nonEmptyInstances);
 
   protected:
-    DicomStructureSetLoader(OrthancStone::ILoadersContext& loadersContext);
+    explicit DicomStructureSetLoader(OrthancStone::ILoadersContext& loadersContext);
   };
 }

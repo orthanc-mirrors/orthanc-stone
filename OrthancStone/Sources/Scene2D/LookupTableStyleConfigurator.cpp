@@ -40,6 +40,8 @@ namespace OrthancStone
     revision_(0),
     hasLut_(false),
     hasRange_(false),
+    minValue_(0),
+    maxValue_(0),
     applyLog_(false)
   {
   }

@@ -78,7 +78,7 @@ namespace OrthancStone
       std::unique_ptr<OpenGL::OpenGLProgram>  program_;
 
     public:
-      OpenGLLinesProgram(OpenGL::IOpenGLContext&  context);
+      explicit OpenGLLinesProgram(OpenGL::IOpenGLContext& context);
 
       void Apply(const Data& data,
                  const AffineTransform2D& transform,

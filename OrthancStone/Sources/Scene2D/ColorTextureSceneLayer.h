@@ -29,11 +29,11 @@ namespace OrthancStone
   {
   public:
     // If using RGBA32, premultiplied alpha is assumed
-    ColorTextureSceneLayer(const Orthanc::ImageAccessor& texture);
+    explicit ColorTextureSceneLayer(const Orthanc::ImageAccessor& texture);
 
-    virtual ISceneLayer* Clone() const;
+    virtual ISceneLayer* Clone() const ORTHANC_OVERRIDE;
 
-    virtual Type GetType() const
+    virtual Type GetType() const ORTHANC_OVERRIDE
     {
       return Type_ColorTexture;
     }

@@ -98,7 +98,7 @@ namespace OrthancStone
 
       case ISceneLayer::Type_Polyline:
         return new Internals::OpenGLAdvancedPolylineRenderer
-        (context_, linesProgram_, dynamic_cast<const PolylineSceneLayer&>(layer));
+          (context_, linesProgram_, dynamic_cast<const PolylineSceneLayer&>(layer));
         //return new Internals::OpenGLBasicPolylineRenderer(context_, dynamic_cast<const PolylineSceneLayer&>(layer));
 
       case ISceneLayer::Type_Text:

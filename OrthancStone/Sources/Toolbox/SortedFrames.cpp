@@ -388,7 +388,7 @@ namespace OrthancStone
       // The following could in theory happen if several instances
       // have the same SOPInstanceUID, no ordering is available
       for (std::set<size_t>::const_iterator it = remainingInstances.begin();
-           it != remainingInstances.end(); it++)
+           it != remainingInstances.end(); ++it)
       {
         AddFramesOfInstance(remainingInstances, *it);
       }

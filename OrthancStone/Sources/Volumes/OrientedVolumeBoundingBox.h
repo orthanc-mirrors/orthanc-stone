@@ -40,7 +40,7 @@ namespace OrthancStone
     double  hw_;  // half depth
 
   public:
-    OrientedVolumeBoundingBox(const VolumeImageGeometry& geometry);
+    explicit OrientedVolumeBoundingBox(const VolumeImageGeometry& geometry);
 
     const Vector& GetCenter() const
     {

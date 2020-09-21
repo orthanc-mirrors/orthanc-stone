@@ -39,7 +39,7 @@ namespace OrthancStone
     unsigned int  height_;
 
   public:
-    CairoContext(CairoSurface& surface);
+    explicit CairoContext(CairoSurface& surface);
 
     ~CairoContext();
 

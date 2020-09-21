@@ -54,7 +54,7 @@ namespace OrthancStone
                        int y,
                        unsigned int width,
                        unsigned int height,
-                       const Orthanc::IDynamicObject* payload)
+                       const Orthanc::IDynamicObject* payload) ORTHANC_OVERRIDE
     {
       int left = x + offsetX_;
       int top = y + offsetY_;

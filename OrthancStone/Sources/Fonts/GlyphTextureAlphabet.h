@@ -66,7 +66,7 @@ namespace OrthancStone
     unsigned int                           textureHeight_;
     
   public:
-    GlyphTextureAlphabet(const GlyphBitmapAlphabet& sourceAlphabet);
+    explicit GlyphTextureAlphabet(const GlyphBitmapAlphabet& sourceAlphabet);
     
     const Orthanc::ImageAccessor& GetTexture() const;
     

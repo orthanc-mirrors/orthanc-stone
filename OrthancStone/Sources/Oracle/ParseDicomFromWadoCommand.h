@@ -42,12 +42,12 @@ namespace OrthancStone
                               const std::string& sopInstanceUid,
                               IOracleCommand* restCommand);
 
-    virtual Type GetType() const
+    virtual Type GetType() const ORTHANC_OVERRIDE
     {
       return Type_ParseDicomFromWado;
     }
 
-    virtual IOracleCommand* Clone() const;
+    virtual IOracleCommand* Clone() const ORTHANC_OVERRIDE;
 
     const DicomSource& GetSource() const
     {

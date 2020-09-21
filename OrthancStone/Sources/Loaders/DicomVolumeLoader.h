@@ -49,7 +49,7 @@ namespace OrthancStone
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
 
     public:
-      VolumeReadyMessage(const DicomVolumeLoader& loader) :
+      explicit VolumeReadyMessage(const DicomVolumeLoader& loader) :
         OriginMessage(loader)
       {
       }
@@ -97,9 +97,9 @@ namespace OrthancStone
       bool                         computeRange_;
 
     public:
-      Factory(LoadedDicomResources& instances);
+      explicit Factory(LoadedDicomResources& instances);
 
-      Factory(const SeriesMetadataLoader::SuccessMessage& metadata);
+      explicit Factory(const SeriesMetadataLoader::SuccessMessage& metadata);
 
       void SetComputeRange(bool computeRange)
       {

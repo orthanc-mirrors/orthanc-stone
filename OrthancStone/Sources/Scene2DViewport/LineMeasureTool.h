@@ -67,7 +67,7 @@ namespace OrthancStone
     LineHighlightArea LineHitTest(ScenePoint2D p);
 
   private:
-    LineMeasureTool(boost::shared_ptr<IViewport> viewport);
+    explicit LineMeasureTool(boost::shared_ptr<IViewport> viewport);
 
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();

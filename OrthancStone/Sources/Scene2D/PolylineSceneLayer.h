@@ -25,6 +25,8 @@
 #include "ScenePoint2D.h"
 #include "ISceneLayer.h"
 
+#include <Compatibility.h>  // For ORTHANC_OVERRIDE
+
 #include <vector>
 
 namespace OrthancStone
@@ -57,12 +59,12 @@ namespace OrthancStone
 
     void Copy(const PolylineSceneLayer& other);
 
-    virtual uint64_t GetRevision() const
+    virtual uint64_t GetRevision() const ORTHANC_OVERRIDE
     {
       return revision_;
     }
 
-    virtual ISceneLayer* Clone() const;
+    virtual ISceneLayer* Clone() const ORTHANC_OVERRIDE;
 
     void SetThickness(double thickness);
 
@@ -111,12 +113,11 @@ namespace OrthancStone
       return GetItem(i).color_;
     }
 
-    virtual Type GetType() const
+    virtual Type GetType() const ORTHANC_OVERRIDE
     {
       return Type_Polyline;
     }
 
-    virtual bool GetBoundingBox(Extent2D& target) const;
-   
+    virtual bool GetBoundingBox(Extent2D& target) const ORTHANC_OVERRIDE;
   };
 }

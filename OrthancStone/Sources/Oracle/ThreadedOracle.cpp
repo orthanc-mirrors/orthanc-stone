@@ -324,7 +324,7 @@ namespace OrthancStone
   {
     boost::mutex::scoped_lock lock(mutex_);
 
-    if (count <= 0)
+    if (count == 0)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
@@ -344,7 +344,7 @@ namespace OrthancStone
   {
     boost::mutex::scoped_lock lock(mutex_);
 
-    if (milliseconds <= 0)
+    if (milliseconds == 0)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }

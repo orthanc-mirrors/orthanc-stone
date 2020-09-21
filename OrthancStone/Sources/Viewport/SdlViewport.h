@@ -73,9 +73,9 @@ namespace OrthancStone
       boost::recursive_mutex::scoped_lock lock_;
 
     public:
-      SdlLock(SdlViewport& that) :
-      that_(that),
-      lock_(that.mutex_)
+      explicit SdlLock(SdlViewport& that) :
+        that_(that),
+        lock_(that.mutex_)
       {
       }
 
@@ -168,7 +168,7 @@ namespace OrthancStone
     SdlWindow     window_;
     SDL_Surface*  sdlSurface_;
 
-    void CreateSdlSurfaceFromCompositor(CairoCompositor& compositor);
+    void CreateSdlSurfaceFromCompositor(const CairoCompositor& compositor);
 
   private:
     SdlCairoViewport(const char* title,

@@ -57,17 +57,18 @@ namespace OrthancStone
         }
       };
 
+    private:
+      OpenGLTextureProgram     program_;
+      OpenGL::IOpenGLContext&  context_;
+
     public:
-      OpenGLFloatTextureProgram(OpenGL::IOpenGLContext&  context);
+      explicit OpenGLFloatTextureProgram(OpenGL::IOpenGLContext&  context);
 
       void Apply(Data& data,
                  const AffineTransform2D& transform,
                  float windowCenter,
                  float windowWidth,
                  bool  invert);
-    private:
-      OpenGLTextureProgram  program_;
-      OpenGL::IOpenGLContext& context_;
     };
   }
 }

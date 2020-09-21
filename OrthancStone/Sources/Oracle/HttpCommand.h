@@ -91,12 +91,12 @@ namespace OrthancStone
   public:
     HttpCommand();
 
-    virtual Type GetType() const
+    virtual Type GetType() const ORTHANC_OVERRIDE
     {
       return Type_Http;
     }
 
-    virtual IOracleCommand* Clone() const
+    virtual IOracleCommand* Clone() const ORTHANC_OVERRIDE
     {
       return new HttpCommand(*this);
     }

@@ -62,9 +62,9 @@ namespace OrthancStone
     }
 
   protected:
-    RestInstanceLookupHandler(DicomStructureSetLoader& loader) 
-      : LoaderStateMachine(loader.loadersContext_)
-      , loader_(loader)
+    explicit RestInstanceLookupHandler(DicomStructureSetLoader& loader) :
+      LoaderStateMachine(loader.loadersContext_),
+      loader_(loader)
     {
     }
 
@@ -91,7 +91,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
+    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message) ORTHANC_OVERRIDE
     {
       Json::Value tags;
       message.ParseJsonBody(tags);
@@ -120,7 +120,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
+    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message) ORTHANC_OVERRIDE
     {
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
 
@@ -179,12 +179,12 @@ namespace OrthancStone
   class DicomStructureSetLoader::LoadStructure : public LoaderStateMachine::State
   {
   public:
-    LoadStructure(DicomStructureSetLoader& that) :
-    State(that)
+    explicit LoadStructure(DicomStructureSetLoader& that) :
+      State(that)
     {
     }
     
-    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
+    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message) ORTHANC_OVERRIDE
     {
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
 
@@ -291,10 +291,10 @@ namespace OrthancStone
     Slice(const OrthancStone::DicomStructureSet& content,
           uint64_t revision,
           const OrthancStone::CoordinateSystem3D& cuttingPlane,
-          std::vector<bool> visibility = std::vector<bool>()) 
-      : content_(content)
-      , revision_(revision)
-      , visibility_(visibility)
+          const std::vector<bool>& visibility) :
+      content_(content),
+      revision_(revision),
+      visibility_(visibility)
     {
       ORTHANC_ASSERT((visibility_.size() == content_.GetStructuresCount())
         || (visibility_.size() == 0u));
@@ -308,19 +308,19 @@ namespace OrthancStone
         OrthancStone::GeometryToolbox::IsParallelOrOpposite(opposite, normal, cuttingPlane.GetAxisY()));
     }
       
-    virtual bool IsValid()
+    virtual bool IsValid() ORTHANC_OVERRIDE
     {
       return isValid_;
     }
 
-    virtual uint64_t GetRevision()
+    virtual uint64_t GetRevision() ORTHANC_OVERRIDE
     {
       return revision_;
     }
 
     virtual OrthancStone::ISceneLayer* CreateSceneLayer(
       const OrthancStone::ILayerStyleConfigurator* configurator,
-      const OrthancStone::CoordinateSystem3D& cuttingPlane)
+      const OrthancStone::CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE
     {
       assert(isValid_);
 

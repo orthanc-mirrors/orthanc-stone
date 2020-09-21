@@ -39,18 +39,18 @@ namespace OrthancStone
     {
     }
       
-    virtual bool IsValid()
+    virtual bool IsValid() ORTHANC_OVERRIDE
     {
       return true;
     }
 
-    virtual uint64_t GetRevision()
+    virtual uint64_t GetRevision() ORTHANC_OVERRIDE
     {
       return that_.volume_->GetRevision();
     }
 
     virtual ISceneLayer* CreateSceneLayer(const ILayerStyleConfigurator* configurator,
-                                          const CoordinateSystem3D& cuttingPlane)
+                                          const CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE
     {
       VolumeReslicer& reslicer = that_.reslicer_;
         

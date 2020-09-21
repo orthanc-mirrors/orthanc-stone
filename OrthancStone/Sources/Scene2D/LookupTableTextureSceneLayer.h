@@ -38,7 +38,7 @@ namespace OrthancStone
 
   public:
     // The pixel format must be convertible to Float32
-    LookupTableTextureSceneLayer(const Orthanc::ImageAccessor& texture);
+    explicit LookupTableTextureSceneLayer(const Orthanc::ImageAccessor& texture);
 
     void SetLookupTableGrayscale();
 
@@ -74,9 +74,9 @@ namespace OrthancStone
       return applyLog_;
     }
 
-    virtual ISceneLayer* Clone() const;
+    virtual ISceneLayer* Clone() const ORTHANC_OVERRIDE;
 
-    virtual Type GetType() const
+    virtual Type GetType() const ORTHANC_OVERRIDE
     {
       return Type_LookupTableTexture;
     }

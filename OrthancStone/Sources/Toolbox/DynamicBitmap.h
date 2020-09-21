@@ -35,7 +35,7 @@ namespace OrthancStone
     std::unique_ptr<Orthanc::ImageAccessor>  bitmap_;
 
   public:
-    DynamicBitmap(const Orthanc::ImageAccessor& bitmap);
+    explicit DynamicBitmap(const Orthanc::ImageAccessor& bitmap);
 
     const Orthanc::ImageAccessor& GetBitmap() const
     {

@@ -104,8 +104,9 @@ namespace OrthancStone
 
     virtual ~OrthancMultiframeVolumeLoader();
 
-    bool HasGeometry() const;
-    const OrthancStone::VolumeImageGeometry& GetImageGeometry() const;
+    bool HasGeometry() const ORTHANC_OVERRIDE;
+    
+    virtual const OrthancStone::VolumeImageGeometry& GetImageGeometry() const ORTHANC_OVERRIDE;
 
     bool IsPixelDataLoaded() const
     {

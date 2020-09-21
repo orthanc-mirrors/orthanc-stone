@@ -72,12 +72,12 @@ namespace OrthancStone
     BasicFetchingStrategy(IFetchingItemsSorter* sorter,   // Takes ownership
                           unsigned int maxQuality);
 
-    virtual unsigned int GetItemsCount() const
+    virtual unsigned int GetItemsCount() const ORTHANC_OVERRIDE
     {
       return sorter_->GetItemsCount();
     }
 
-    virtual unsigned int GetMaxQuality() const
+    virtual unsigned int GetMaxQuality() const ORTHANC_OVERRIDE
     {
       return maxQuality_;
     }
@@ -87,10 +87,10 @@ namespace OrthancStone
     void SetBlockSize(unsigned int size);
 
     virtual bool GetNext(unsigned int& item,
-                         unsigned int& quality);
+                         unsigned int& quality) ORTHANC_OVERRIDE;
     
-    virtual void SetCurrent(unsigned int item);
+    virtual void SetCurrent(unsigned int item) ORTHANC_OVERRIDE;
 
-    virtual void RecycleFurthest(unsigned int& item);
+    virtual void RecycleFurthest(unsigned int& item) ORTHANC_OVERRIDE;
   };
 }

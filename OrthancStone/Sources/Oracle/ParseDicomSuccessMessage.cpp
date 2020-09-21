@@ -41,7 +41,7 @@ namespace OrthancStone
       
     virtual void HandlePart(const std::map<std::string, std::string>& headers,
                             const void* part,
-                            size_t size)
+                            size_t size) ORTHANC_OVERRIDE
     {
       if (dicom_.get())
       {

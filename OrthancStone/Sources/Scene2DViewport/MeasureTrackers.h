@@ -36,45 +36,50 @@ namespace OrthancStone
 {
   class CreateMeasureTracker : public IFlexiblePointerTracker
   {
+  private:
+    bool  commitResult_;
+    
+  protected:
+    boost::shared_ptr<CreateMeasureCommand>  command_;
+    boost::shared_ptr<IViewport>             viewport_;
+    bool                                     alive_;
+
+    explicit CreateMeasureTracker(boost::shared_ptr<IViewport> viewport);
+
+    virtual ~CreateMeasureTracker();
+    
   public:
     virtual void Cancel() ORTHANC_OVERRIDE;
+    
     virtual bool IsAlive() const ORTHANC_OVERRIDE;
-  protected:
-    CreateMeasureTracker(boost::shared_ptr<IViewport> viewport);
-
-    ~CreateMeasureTracker();
-  
-  protected:
-    boost::shared_ptr<CreateMeasureCommand>         command_;
-    boost::shared_ptr<IViewport>          viewport_;
-    bool                            alive_;
-
-  private:
-    bool                            commitResult_;
   };
+
 
   class EditMeasureTracker : public IFlexiblePointerTracker
   {
-  public:
-    virtual void Cancel() ORTHANC_OVERRIDE;
-    virtual bool IsAlive() const ORTHANC_OVERRIDE;
+  private:
+    ScenePoint2D  originalClickPosition_;
+    bool          commitResult_;
+
   protected:
-    EditMeasureTracker(boost::shared_ptr<IViewport> viewport, const PointerEvent& e);
+    boost::shared_ptr<EditMeasureCommand>  command_;
+    boost::shared_ptr<IViewport>           viewport_;
+    bool                                   alive_;
+    
+    EditMeasureTracker(boost::shared_ptr<IViewport> viewport,
+                       const PointerEvent& e);
 
     ~EditMeasureTracker();
 
-  protected:
-    boost::shared_ptr<EditMeasureCommand> command_;
-    boost::shared_ptr<IViewport>   viewport_;
-    bool                                  alive_;
-    
-    ScenePoint2D                          GetOriginalClickPosition() const
+    ScenePoint2D GetOriginalClickPosition() const
     {
       return originalClickPosition_;
     }
-  private:
-    ScenePoint2D                          originalClickPosition_;
-    bool                                  commitResult_;
+
+  public:
+    virtual void Cancel() ORTHANC_OVERRIDE;
+    
+    virtual bool IsAlive() const ORTHANC_OVERRIDE;
   };
 }
 

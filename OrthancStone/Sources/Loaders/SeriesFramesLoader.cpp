@@ -60,6 +60,8 @@ namespace OrthancStone
       sopInstanceUid_(sopInstanceUid),
       quality_(quality),
       hasWindowing_(false),
+      windowingCenter_(0),
+      windowingWidth_(0),
       userPayload_(userPayload)
     {
     }
@@ -165,7 +167,7 @@ namespace OrthancStone
 
 #if ORTHANC_ENABLE_DCMTK == 1
   void SeriesFramesLoader::HandleDicom(const Payload& payload,
-                                       Orthanc::ParsedDicomFile& dicom)
+                                       const Orthanc::ParsedDicomFile& dicom)
   {     
     size_t frameIndex = frames_.GetFrameIndex(payload.GetSeriesIndex());
 

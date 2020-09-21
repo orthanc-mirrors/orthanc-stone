@@ -31,12 +31,14 @@ namespace OrthancStone
     const PointerEvent& e)
     : EditMeasureTracker(viewport, e)
   {
-    ScenePoint2D scenePos = e.GetMainPosition();
+    ScenePoint2D scenePos;
+    
     {
       std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
       ViewportController& controller = lock->GetController();
       scenePos = e.GetMainPosition().Apply(controller.GetScene().GetCanvasToSceneTransform());
     }
+    
     modifiedZone_ = dynamic_cast<AngleMeasureTool&>(*measureTool).AngleHitTest(scenePos);
     command_.reset(new EditAngleMeasureCommand(measureTool, viewport));
   }
@@ -49,8 +51,9 @@ namespace OrthancStone
   void EditAngleMeasureTracker::PointerMove(const PointerEvent& e)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    
     ViewportController& controller = lock->GetController();
-    Scene2D& scene = controller.GetScene();
+    const Scene2D& scene = controller.GetScene();
 
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
       scene.GetCanvasToSceneTransform());

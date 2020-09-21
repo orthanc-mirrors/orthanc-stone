@@ -44,9 +44,9 @@ namespace OrthancStone
       bool                            isContextLost_;
 
     public:
-      PImpl(const std::string& canvasSelector)
-        : canvasSelector_(canvasSelector)
-        , isContextLost_(false)
+      explicit PImpl(const std::string& canvasSelector) :
+        canvasSelector_(canvasSelector),
+        isContextLost_(false)
       {
         // Context configuration
         EmscriptenWebGLContextAttributes attr; 

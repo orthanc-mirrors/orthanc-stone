@@ -32,7 +32,8 @@ namespace OrthancStone
   GetOrthancImageCommand::GetOrthancImageCommand() :
     uri_("/"),
     timeout_(600),
-    hasExpectedFormat_(false)
+    hasExpectedFormat_(false),
+    expectedFormat_(Orthanc::PixelFormat_Grayscale8)
   {
   }
 

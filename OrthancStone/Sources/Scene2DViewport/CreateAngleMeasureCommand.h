@@ -42,6 +42,7 @@ namespace OrthancStone
     {
       return measureTool_;
     }
+
     boost::shared_ptr<AngleMeasureTool> measureTool_;
   };
 }

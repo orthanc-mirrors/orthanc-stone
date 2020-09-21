@@ -51,7 +51,7 @@ namespace OrthancStone
                         bool isLinearInterpolation,
                         bool applySceneRotation = false);
 
-    virtual ISceneLayer* Clone() const
+    virtual ISceneLayer* Clone() const ORTHANC_OVERRIDE
     {
       return new InfoPanelSceneLayer(*texture_, 
                                      anchor_, 
@@ -79,17 +79,17 @@ namespace OrthancStone
       return isLinearInterpolation_;
     }
 
-    virtual Type GetType() const
+    virtual Type GetType() const ORTHANC_OVERRIDE
     {
       return Type_InfoPanel;
     }
 
-    virtual bool GetBoundingBox(Extent2D& target) const
+    virtual bool GetBoundingBox(Extent2D& target) const ORTHANC_OVERRIDE
     {
       return false;
     }
 
-    virtual uint64_t GetRevision() const
+    virtual uint64_t GetRevision() const ORTHANC_OVERRIDE
     {
       return 0;
     }

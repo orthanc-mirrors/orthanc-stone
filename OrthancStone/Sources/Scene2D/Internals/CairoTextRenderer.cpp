@@ -38,11 +38,11 @@ namespace OrthancStone
       {
         text_.SetSize(source->GetWidth(), source->GetHeight(), true);
 
-        Orthanc::ImageAccessor target;
-        text_.GetWriteableAccessor(target);
+        Orthanc::ImageAccessor accessor;
+        text_.GetWriteableAccessor(accessor);
         
         if (source->GetFormat() != Orthanc::PixelFormat_Grayscale8 ||
-            target.GetFormat() != Orthanc::PixelFormat_BGRA32)
+            accessor.GetFormat() != Orthanc::PixelFormat_BGRA32)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
         }
@@ -53,7 +53,7 @@ namespace OrthancStone
         for (unsigned int y = 0; y < source->GetHeight(); y++)
         {
           const uint8_t* p = reinterpret_cast<const uint8_t*>(source->GetConstRow(y));
-          uint8_t* q = reinterpret_cast<uint8_t*>(target.GetRow(y));
+          uint8_t* q = reinterpret_cast<uint8_t*>(accessor.GetRow(y));
           
           for (unsigned int x = 0; x < width; x++)
           {

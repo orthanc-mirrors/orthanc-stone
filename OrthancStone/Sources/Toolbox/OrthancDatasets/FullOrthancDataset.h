@@ -24,6 +24,8 @@
 #include "IOrthancConnection.h"
 #include "IDicomDataset.h"
 
+#include <Compatibility.h>  // For ORTHANC_OVERRIDE
+
 #include <json/value.h>
 
 namespace OrthancStone
@@ -41,18 +43,18 @@ namespace OrthancStone
     FullOrthancDataset(IOrthancConnection& orthanc,
                        const std::string& uri);
 
-    FullOrthancDataset(const std::string& content);
+    explicit FullOrthancDataset(const std::string& content);
 
     FullOrthancDataset(const void* content,
                        size_t size);
 
-    FullOrthancDataset(const Json::Value& root);
+    explicit FullOrthancDataset(const Json::Value& root);
 
     virtual bool GetStringValue(std::string& result,
-                                const DicomPath& path) const;
+                                const DicomPath& path) const ORTHANC_OVERRIDE;
 
     virtual bool GetSequenceSize(size_t& size,
-                                 const DicomPath& path) const;
+                                 const DicomPath& path) const ORTHANC_OVERRIDE;
 
     FullOrthancDataset* Clone() const
     {

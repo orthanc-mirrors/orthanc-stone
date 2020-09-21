@@ -46,7 +46,6 @@ namespace OrthancStone
     std::unique_ptr<CoordinateSystem3D>       lastPlane_;
     uint64_t                                  lastRevision_;
     uint64_t                                  lastConfiguratorRevision_;
-    bool                                      layerInScene_;
 
     void ClearLayer();
 

@@ -49,7 +49,7 @@ namespace OrthancStone
       unsigned int         depth_;
 
     public:
-      SubvoxelReaderBase(const ImageBuffer3D& source) :
+      explicit SubvoxelReaderBase(const ImageBuffer3D& source) :
         source_(source),
         width_(source.GetWidth()),
         height_(source.GetHeight()),
@@ -118,7 +118,7 @@ namespace OrthancStone
     typedef Orthanc::PixelTraits<Format>  Traits;
     typedef typename Traits::PixelType    PixelType;
 
-    SubvoxelReader(const ImageBuffer3D& source) :
+    explicit SubvoxelReader(const ImageBuffer3D& source) :
       SubvoxelReaderBase(source)
     {
     }
@@ -150,7 +150,7 @@ namespace OrthancStone
     typedef Orthanc::PixelTraits<Format>  Traits;
     typedef typename Traits::PixelType    PixelType;
 
-    SubvoxelReader(const ImageBuffer3D& source) :
+    explicit SubvoxelReader(const ImageBuffer3D& source) :
       SubvoxelReaderBase(source)
     {
     }
@@ -193,7 +193,7 @@ namespace OrthancStone
     typedef Orthanc::PixelTraits<Format>  Traits;
     typedef typename Traits::PixelType    PixelType;
 
-    SubvoxelReader(const ImageBuffer3D& source) :
+    explicit SubvoxelReader(const ImageBuffer3D& source) :
       SubvoxelReaderBase(source),
       bilinear_(source)
     {

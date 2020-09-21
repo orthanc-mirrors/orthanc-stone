@@ -64,7 +64,7 @@ namespace OrthancStone
 
       void ComputeDoseOffsets(const Orthanc::DicomMap& dicom);
 
-      Data(const Orthanc::DicomMap& dicom);
+      explicit Data(const Orthanc::DicomMap& dicom);
 
       CoordinateSystem3D  GetFrameGeometry(unsigned int frame) const;
 
@@ -84,12 +84,12 @@ namespace OrthancStone
 
 
   public:
-    DicomInstanceParameters(const DicomInstanceParameters& other) :
-    data_(other.data_)
+    explicit DicomInstanceParameters(const DicomInstanceParameters& other) :
+      data_(other.data_)
     {
     }
 
-    DicomInstanceParameters(const Orthanc::DicomMap& dicom) :
+    explicit DicomInstanceParameters(const Orthanc::DicomMap& dicom) :
       data_(dicom)
     {
     }

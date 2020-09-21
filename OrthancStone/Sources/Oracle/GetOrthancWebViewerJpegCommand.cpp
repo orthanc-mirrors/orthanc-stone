@@ -50,7 +50,7 @@ namespace OrthancStone
 
   void GetOrthancWebViewerJpegCommand::SetQuality(unsigned int quality)
   {
-    if (quality <= 0 ||
+    if (quality == 0 ||
         quality > 100)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);

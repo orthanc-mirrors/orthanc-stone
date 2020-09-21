@@ -121,9 +121,9 @@ namespace OrthancStone
 
     AffineTransform2D GetTransform() const;
     
-    virtual bool GetBoundingBox(Extent2D& target) const;
+    virtual bool GetBoundingBox(Extent2D& target) const ORTHANC_OVERRIDE;
 
-    virtual uint64_t GetRevision() const
+    virtual uint64_t GetRevision() const ORTHANC_OVERRIDE
     {
       return revision_;
     }

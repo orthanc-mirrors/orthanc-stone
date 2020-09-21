@@ -89,12 +89,12 @@ namespace OrthancStone
   public:
     OrthancRestApiCommand();
 
-    virtual Type GetType() const
+    virtual Type GetType() const ORTHANC_OVERRIDE
     {
       return Type_OrthancRestApi;
     }
 
-    virtual IOracleCommand* Clone() const
+    virtual IOracleCommand* Clone() const ORTHANC_OVERRIDE
     {
       return new OrthancRestApiCommand(*this);
     }

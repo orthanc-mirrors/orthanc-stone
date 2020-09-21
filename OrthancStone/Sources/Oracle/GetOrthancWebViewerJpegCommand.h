@@ -77,12 +77,12 @@ namespace OrthancStone
   public:
     GetOrthancWebViewerJpegCommand();
 
-    virtual Type GetType() const
+    virtual Type GetType() const ORTHANC_OVERRIDE
     {
       return Type_GetOrthancWebViewerJpeg;
     }
 
-    virtual IOracleCommand* Clone() const
+    virtual IOracleCommand* Clone() const ORTHANC_OVERRIDE
     {
       return new GetOrthancWebViewerJpegCommand(*this);
     }

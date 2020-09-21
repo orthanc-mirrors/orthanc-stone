@@ -41,9 +41,11 @@ namespace OrthancStone
       OpenGLBasicPolylineRenderer(OpenGL::IOpenGLContext& context,
                                   const PolylineSceneLayer& layer);
 
-      virtual void Render(const AffineTransform2D& transform);
+      virtual void Render(const AffineTransform2D& transform,
+                          unsigned int canvasWidth,
+                          unsigned int canvasHeight) ORTHANC_OVERRIDE;
 
-      virtual void Update(const ISceneLayer& layer);
+      virtual void Update(const ISceneLayer& layer) ORTHANC_OVERRIDE;
     };
   }
 }

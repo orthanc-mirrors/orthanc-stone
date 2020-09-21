@@ -44,7 +44,7 @@ namespace OrthancStone
     void AddFromDicomWebInternal(const Json::Value& dicomweb);
 
   public:
-    LoadedDicomResources(const Orthanc::DicomTag& indexedTag) :
+    explicit LoadedDicomResources(const Orthanc::DicomTag& indexedTag) :
       indexedTag_(indexedTag)
     {
     }

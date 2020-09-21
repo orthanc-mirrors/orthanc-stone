@@ -43,7 +43,7 @@ namespace OrthancStone
   public:
     TextSceneLayer();
 
-    virtual ISceneLayer* Clone() const;
+    virtual ISceneLayer* Clone() const ORTHANC_OVERRIDE;
 
     void SetPosition(double x,
                      double y);
@@ -86,17 +86,17 @@ namespace OrthancStone
       return anchor_;
     }
 
-    virtual Type GetType() const
+    virtual Type GetType() const ORTHANC_OVERRIDE
     {
       return Type_Text;
     }
 
-    virtual bool GetBoundingBox(Extent2D& target) const
+    virtual bool GetBoundingBox(Extent2D& target) const ORTHANC_OVERRIDE
     {
       return false;
     }
 
-    virtual uint64_t GetRevision() const
+    virtual uint64_t GetRevision() const ORTHANC_OVERRIDE
     {
       return revision_;
     }

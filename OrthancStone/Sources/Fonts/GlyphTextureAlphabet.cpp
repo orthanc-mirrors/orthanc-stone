@@ -56,7 +56,7 @@ namespace OrthancStone
     }
       
     virtual void Visit(uint32_t unicode,
-                       const Glyph& glyph)
+                       const Glyph& glyph) ORTHANC_OVERRIDE
     {
       maxWidth_ = std::max(maxWidth_, glyph.GetWidth());
       maxHeight_ = std::max(maxHeight_, glyph.GetHeight());
@@ -125,7 +125,7 @@ namespace OrthancStone
       
       
     virtual void Visit(uint32_t unicode,
-                       const Glyph& glyph)
+                       const Glyph& glyph) ORTHANC_OVERRIDE
     {
       if (!glyph.HasPayload())
       {
@@ -138,9 +138,6 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
 
-      unsigned int x = column_ * glyphMaxWidth_;
-      unsigned int y = row_ * glyphMaxHeight_;
-
       const Orthanc::ImageAccessor& source = dynamic_cast<const DynamicBitmap&>(glyph.GetPayload()).GetBitmap();
 
       if (source.GetFormat() != Orthanc::PixelFormat_Grayscale8)
@@ -148,10 +145,14 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
         
-      targetAlphabet_.Register(unicode, glyph, new TextureLocation(x, y));
-
       Orthanc::ImageAccessor target;
-      texture_->GetRegion(target, x, y, source.GetWidth(), source.GetHeight());
+
+      {
+        unsigned int x = column_ * glyphMaxWidth_;
+        unsigned int y = row_ * glyphMaxHeight_;
+        targetAlphabet_.Register(unicode, glyph, new TextureLocation(x, y));
+        texture_->GetRegion(target, x, y, source.GetWidth(), source.GetHeight());
+      }
 
       //Orthanc::ImageProcessing::Copy(target, bitmap->GetBitmap());
 
@@ -214,7 +215,7 @@ namespace OrthancStone
                        int y,
                        unsigned int width,
                        unsigned int height,
-                       const Orthanc::IDynamicObject* payload)
+                       const Orthanc::IDynamicObject* payload) ORTHANC_OVERRIDE
     {
       int left = x + offsetX_;
       int top = y + offsetY_;

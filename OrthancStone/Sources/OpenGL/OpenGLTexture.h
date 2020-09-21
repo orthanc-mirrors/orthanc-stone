@@ -43,7 +43,7 @@ namespace OrthancStone
       OpenGL::IOpenGLContext& context_;
 
     public:
-      OpenGLTexture(OpenGL::IOpenGLContext& context);
+      explicit OpenGLTexture(OpenGL::IOpenGLContext& context);
 
       ~OpenGLTexture();
 

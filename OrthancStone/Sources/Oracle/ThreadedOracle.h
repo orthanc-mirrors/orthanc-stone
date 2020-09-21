@@ -85,7 +85,7 @@ namespace OrthancStone
     void StopInternal();
 
   public:
-    ThreadedOracle(IMessageEmitter& emitter);
+    explicit ThreadedOracle(IMessageEmitter& emitter);
 
     virtual ~ThreadedOracle();
 

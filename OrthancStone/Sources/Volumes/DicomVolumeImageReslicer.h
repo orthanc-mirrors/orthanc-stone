@@ -42,7 +42,7 @@ namespace OrthancStone
     VolumeReslicer                       reslicer_;
 
   public:
-    DicomVolumeImageReslicer(const boost::shared_ptr<DicomVolumeImage>& volume);
+    explicit DicomVolumeImageReslicer(const boost::shared_ptr<DicomVolumeImage>& volume);
 
     ImageInterpolation GetInterpolation() const
     {
@@ -64,6 +64,6 @@ namespace OrthancStone
       reslicer_.EnableFastMode(fast);
     }
     
-    virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane);
+    virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
   };
 }

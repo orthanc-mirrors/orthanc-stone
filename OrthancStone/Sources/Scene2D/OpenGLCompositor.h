@@ -52,7 +52,7 @@ namespace OrthancStone
     virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer) ORTHANC_OVERRIDE;
 
   public:
-    OpenGLCompositor(OpenGL::IOpenGLContext& context);
+    explicit OpenGLCompositor(OpenGL::IOpenGLContext& context);
 
     virtual ~OpenGLCompositor();
 

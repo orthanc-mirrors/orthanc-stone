@@ -24,17 +24,18 @@
 namespace OrthancStone
 {
   RotateSceneTracker::RotateSceneTracker(boost::shared_ptr<IViewport> viewport,
-                                         const PointerEvent& event)
-    : OneGesturePointerTracker(viewport)
-    , click_(event.GetMainPosition())
-    , aligner_(viewport, click_)
-    , isFirst_(true)
+                                         const PointerEvent& event) :
+    OneGesturePointerTracker(viewport),
+    click_(event.GetMainPosition()),
+    aligner_(viewport, click_),
+    referenceAngle_(0),
+    isFirst_(true)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     originalSceneToCanvas_ = lock->GetController().GetSceneToCanvasTransform();
-
   }
 
+  
   void RotateSceneTracker::PointerMove(const PointerEvent& event)
   {
     ScenePoint2D p = event.GetMainPosition();
@@ -63,6 +64,7 @@ namespace OrthancStone
     }
   }
 
+  
   void RotateSceneTracker::Cancel()
   {
     // See remark above

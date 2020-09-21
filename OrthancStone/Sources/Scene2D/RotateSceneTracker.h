@@ -29,18 +29,19 @@ namespace OrthancStone
 {
   class RotateSceneTracker : public OneGesturePointerTracker
   {
-  public:
-    RotateSceneTracker(boost::shared_ptr<IViewport> viewport,
-                       const PointerEvent& event);
-
-    virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;
-    virtual void Cancel() ORTHANC_OVERRIDE;
-
   private:
     ScenePoint2D                 click_;
     Internals::FixedPointAligner aligner_;
     double                       referenceAngle_;
     bool                         isFirst_;
     AffineTransform2D            originalSceneToCanvas_;
+
+  public:
+    RotateSceneTracker(boost::shared_ptr<IViewport> viewport,
+                       const PointerEvent& event);
+
+    virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;
+    
+    virtual void Cancel() ORTHANC_OVERRIDE;
   };
 }

@@ -52,7 +52,7 @@ namespace OrthancStone
     static void OnTimeoutCallback(void *userData);
     
   public:
-    WebGLViewportsRegistry(double timeoutMS /* in milliseconds */);
+    explicit WebGLViewportsRegistry(double timeoutMS /* in milliseconds */);
     
     ~WebGLViewportsRegistry();
 

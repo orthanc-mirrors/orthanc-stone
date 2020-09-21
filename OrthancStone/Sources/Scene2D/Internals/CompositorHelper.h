@@ -23,8 +23,10 @@
 
 #include "../Scene2D.h"
 #include "../ScenePoint2D.h"
-#include <boost/noncopyable.hpp>
 
+#include <Compatibility.h>  // For ORTHANC_OVERRIDE
+
+#include <boost/noncopyable.hpp>
 #include <map>
 
 namespace OrthancStone
@@ -77,12 +79,14 @@ namespace OrthancStone
       virtual void Visit(const Scene2D& scene,
                          const ISceneLayer& layer,
                          uint64_t layerIdentifier,
-                         int depth);
+                         int depth) ORTHANC_OVERRIDE;
 
     public:
-      CompositorHelper(IRendererFactory& factory) :
-      factory_(factory),
-      lastScene_(NULL)
+      explicit CompositorHelper(IRendererFactory& factory) :
+        factory_(factory),
+        lastScene_(NULL),
+        canvasWidth_(0),
+        canvasHeight_(0)
       {
       }
 

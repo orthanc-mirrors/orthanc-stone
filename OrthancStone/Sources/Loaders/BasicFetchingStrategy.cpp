@@ -58,7 +58,7 @@ namespace OrthancStone
 
   void BasicFetchingStrategy::SetBlockSize(unsigned int size)
   {
-    if (size <= 0)
+    if (size == 0)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }

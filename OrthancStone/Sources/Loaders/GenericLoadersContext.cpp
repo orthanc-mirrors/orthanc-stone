@@ -30,7 +30,7 @@ namespace OrthancStone
     boost::recursive_mutex::scoped_lock lock_;
 
   public:
-    Locker(GenericLoadersContext& that) :
+    explicit Locker(GenericLoadersContext& that) :
       that_(that),
       lock_(that.mutex_)
     {

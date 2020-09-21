@@ -342,19 +342,21 @@ namespace OrthancStone
     {
       std::unique_ptr<FetchContext> context(reinterpret_cast<FetchContext*>(fetch->userData));
 
+#if 0
       {
         const size_t kEmscriptenStatusTextSize = sizeof(emscripten_fetch_t::statusText);
         char message[kEmscriptenStatusTextSize + 1];
         memcpy(message, fetch->statusText, kEmscriptenStatusTextSize);
         message[kEmscriptenStatusTextSize] = 0;
 
-        /*LOG(ERROR) << "Fetching " << fetch->url
+        LOG(ERROR) << "Fetching " << fetch->url
                    << " failed, HTTP failure status code: " << fetch->status
                    << " | statusText = " << message
                    << " | numBytes = " << fetch->numBytes
                    << " | totalBytes = " << fetch->totalBytes
-                   << " | readyState = " << fetch->readyState;*/
+                   << " | readyState = " << fetch->readyState;
       }
+#endif
 
       {
         OracleCommandExceptionMessage message

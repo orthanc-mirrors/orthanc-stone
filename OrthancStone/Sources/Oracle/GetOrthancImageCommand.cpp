@@ -134,7 +134,7 @@ namespace OrthancStone
         image.reset(new Orthanc::PamReader(true));
 #else
         // potentially unaligned, with is faster and consumes less heap memory
-        image.reset(new Orthanc::PamReader);
+        image.reset(new Orthanc::PamReader(false));
 #endif
         dynamic_cast<Orthanc::PamReader&>(*image).ReadFromMemory(answer);
         break;

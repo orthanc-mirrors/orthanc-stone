@@ -75,10 +75,10 @@ namespace OrthancStone
   }
 
   RtViewerApp::RtViewerApp() :
-    undoStack_(new UndoStack),
     // Create the volumes that will be filled later on
     ctVolume_(boost::make_shared<DicomVolumeImage>()),
-    doseVolume_(boost::make_shared<DicomVolumeImage>())
+    doseVolume_(boost::make_shared<DicomVolumeImage>()),
+    undoStack_(new UndoStack)
   {
   }
 

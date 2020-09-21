@@ -158,7 +158,6 @@ namespace OrthancStone
     */
     boost::shared_ptr<OrthancStone::IGeometryProvider>  geometryProvider_;
 
-
     boost::shared_ptr<IFlexiblePointerTracker> activeTracker_;
 
     boost::shared_ptr<UndoStack> undoStack_;

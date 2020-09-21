@@ -151,7 +151,7 @@ private:
   boost::shared_ptr<OrthancStone::SeriesThumbnailsLoader>  thumbnailsLoader_;
   boost::shared_ptr<OrthancStone::SeriesMetadataLoader>    metadataLoader_;
 
-  ResourcesLoader(const OrthancStone::DicomSource& source) :
+  explicit ResourcesLoader(const OrthancStone::DicomSource& source) :
     source_(source),
     pending_(0),
     studies_(new OrthancStone::LoadedDicomResources(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID)),
@@ -385,7 +385,7 @@ private:
       assert(image != NULL);
     }
 
-    virtual size_t GetMemoryUsage() const
+    virtual size_t GetMemoryUsage() const ORTHANC_OVERRIDE
     {    
       assert(image_.get() != NULL);
       return (image_->GetBytesPerPixel() * image_->GetPitch() * image_->GetHeight());
@@ -705,7 +705,7 @@ private:
   }
   
 public:
-  SeriesCursor(size_t framesCount) :
+  explicit SeriesCursor(size_t framesCount) :
     framesCount_(framesCount),
     currentFrame_(framesCount / 2),  // Start at the middle frame    
     isCircular_(false),
@@ -792,12 +792,14 @@ private:
   OrthancStone::Extent2D            extent_;
 
 public:
-  FrameGeometry() :
-    isValid_(false)
+  explicit FrameGeometry() :
+    isValid_(false),
+    pixelSpacingX_(1),
+    pixelSpacingY_(1)
   {
   }
     
-  FrameGeometry(const Orthanc::DicomMap& tags) :
+  explicit FrameGeometry(const Orthanc::DicomMap& tags) :
     isValid_(false),
     coordinates_(tags)
   {
@@ -945,7 +947,7 @@ private:
     boost::shared_ptr<ViewerViewport>  viewport_;
     
   public:
-    ICommand(boost::shared_ptr<ViewerViewport> viewport) :
+    explicit ICommand(boost::shared_ptr<ViewerViewport> viewport) :
       viewport_(viewport)
     {
       if (viewport == NULL)
@@ -983,7 +985,7 @@ private:
   class SetDefaultWindowingCommand : public ICommand
   {
   public:
-    SetDefaultWindowingCommand(boost::shared_ptr<ViewerViewport> viewport) :
+    explicit SetDefaultWindowingCommand(boost::shared_ptr<ViewerViewport> viewport) :
       ICommand(viewport)
     {
     }

@@ -191,10 +191,10 @@ namespace OrthancStone
                      IWebViewerLoadersObserver* observer) :
       context_(context),
       observer_(observer),
-      loadThumbnails_(false)
+      loadThumbnails_(false),
+      loadedSeries_(boost::make_shared<LoadedDicomResources>(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID)),
+      loadedStudies_(boost::make_shared<LoadedDicomResources>(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID))
     {
-      loadedSeries_ = boost::make_shared<LoadedDicomResources>(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID);
-      loadedStudies_ = boost::make_shared<LoadedDicomResources>(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID);
     }
 
     static Orthanc::IDynamicObject* CreatePayload(Type type)

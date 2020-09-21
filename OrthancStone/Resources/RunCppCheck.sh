@@ -9,16 +9,19 @@ if [ $# -ge 1 ]; then
 fi
 
 cat <<EOF > /tmp/cppcheck-suppressions.txt
+stlFindInsert:../../Applications/Samples/WebAssembly/SingleFrameViewer/SingleFrameViewerApplication.h
+stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:658
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/Internals/CairoFloatTextureRenderer.cpp
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/LookupTableTextureSceneLayer.cpp
-unusedFunction
-useInitializationList:../../OrthancStone/Sources/OpenGL/OpenGLProgram.cpp:36
 unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:135
 unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:193
+unusedFunction
+useInitializationList:../../OrthancStone/Sources/OpenGL/OpenGLProgram.cpp:36
 EOF
 
 ${CPPCHECK} --enable=all --quiet --std=c++11 \
             --suppressions-list=/tmp/cppcheck-suppressions.txt \
+            -DHAS_ORTHANC_EXCEPTION=1 \
             -DORTHANC_BUILDING_FRAMEWORK_LIBRARY=1 \
             -DORTHANC_ENABLE_BASE64=1 \
             -DORTHANC_ENABLE_CIVETWEB=0 \
@@ -46,9 +49,12 @@ ${CPPCHECK} --enable=all --quiet --std=c++11 \
             -D__GNUC__ \
             -D__cplusplus=201103 \
             -D__linux__ \
+            -DEM_ASM \
             -UNDEBUG \
             -I/home/jodogne/Subversion/orthanc/OrthancFramework/Sources \
             \
             ../../OrthancStone/Sources \
+            ../../Applications/Samples \
+            ../../Applications/StoneWebViewer \
             \
             2>&1

@@ -208,7 +208,7 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
-    Scene2D& scene = controller.GetScene();
+    const Scene2D& scene = controller.GetScene();
 
     std::string ttf;
     Orthanc::EmbeddedResources::GetFileResource(ttf, Orthanc::EmbeddedResources::UBUNTU_FONT);
@@ -269,28 +269,33 @@ namespace OrthancStone
       {
         std::vector<SDL_Event> sdlEvents;
         std::map<Uint32,SDL_Event> userEventsMap;
-        SDL_Event sdlEvent;
 
-        // FIRST: collect all pending events
-        while (SDL_PollEvent(&sdlEvent) != 0)
         {
-          if ( (sdlEvent.type >= SDL_USEREVENT) && 
-               (sdlEvent.type < SDL_LASTEVENT) )
+          SDL_Event sdlEvent;
+
+          // FIRST: collect all pending events
+          while (SDL_PollEvent(&sdlEvent) != 0)
           {
-            // we don't want to have multiple refresh events ,
-            // and since every refresh event is a user event with a special type,
-            // we use a map
-            userEventsMap[sdlEvent.type] = sdlEvent;
-          }
-          else
-          {
-            sdlEvents.push_back(sdlEvent);
+            if ( (sdlEvent.type >= SDL_USEREVENT) && 
+                 (sdlEvent.type < SDL_LASTEVENT) )
+            {
+              // we don't want to have multiple refresh events ,
+              // and since every refresh event is a user event with a special type,
+              // we use a map
+              userEventsMap[sdlEvent.type] = sdlEvent;
+            }
+            else
+            {
+              sdlEvents.push_back(sdlEvent);
+            }
           }
         }
 
         // SECOND: add all user events to sdlEvents
         for (std::map<Uint32,SDL_Event>::const_iterator it = userEventsMap.begin(); it != userEventsMap.end(); ++it)
+        {
           sdlEvents.push_back(it->second);
+        }
 
         // now process the events
         for (std::vector<SDL_Event>::const_iterator it = sdlEvents.begin(); it != sdlEvents.end(); ++it)

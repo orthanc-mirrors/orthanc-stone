@@ -74,7 +74,7 @@ namespace OrthancStone
     Scene2D& scene = controller.GetScene();
 
     // do not try to use stuff too early!
-    OrthancStone::ICompositor& compositor = lock->GetCompositor();
+    const OrthancStone::ICompositor& compositor = lock->GetCompositor();
 
     std::stringstream msg;
 
@@ -262,8 +262,8 @@ namespace OrthancStone
     compositor.SetFont(1, ttf, FONT_SIZE_1, Orthanc::Encoding_Latin1);
   }
 
-  void RtViewerView::SetInfoDisplayMessage(
-    std::string key, std::string value)
+  void RtViewerView::SetInfoDisplayMessage(const std::string& key,
+                                           const std::string& value)
   {
     if (value == "")
       infoTextMap_.erase(key);

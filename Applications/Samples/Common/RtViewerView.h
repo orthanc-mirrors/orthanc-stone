@@ -108,7 +108,8 @@ namespace OrthancStone
     }
 
   private:
-    void SetInfoDisplayMessage(std::string key, std::string value);
+    void SetInfoDisplayMessage(const std::string& key,
+                               const std::string& value);
     boost::shared_ptr<RtViewerApp> GetApp();
     boost::shared_ptr<IViewport> CreateViewport(const std::string& canvasId);
     void DisplayInfoText();

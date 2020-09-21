@@ -74,12 +74,12 @@ namespace OrthancStone
     return geometry;
   }
 
-  RtViewerApp::RtViewerApp()
-    : undoStack_(new UndoStack)
-  {
+  RtViewerApp::RtViewerApp() :
+    undoStack_(new UndoStack),
     // Create the volumes that will be filled later on
-    ctVolume_ = boost::make_shared<DicomVolumeImage>();
-    doseVolume_ = boost::make_shared<DicomVolumeImage>();
+    ctVolume_(boost::make_shared<DicomVolumeImage>()),
+    doseVolume_(boost::make_shared<DicomVolumeImage>())
+  {
   }
 
   boost::shared_ptr<RtViewerApp> RtViewerApp::Create()

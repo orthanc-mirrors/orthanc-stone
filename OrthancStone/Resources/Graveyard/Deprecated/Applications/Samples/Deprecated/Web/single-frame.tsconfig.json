@@ -1,8 +1,0 @@
-{
-    "extends" : "./tsconfig-samples",
-    "compilerOptions": {
-    },
-    "include" : [
-        "single-frame.ts"
-    ]
-}

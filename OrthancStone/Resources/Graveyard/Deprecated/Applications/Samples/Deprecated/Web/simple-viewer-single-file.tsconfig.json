@@ -1,9 +1,0 @@
-{
-    "extends" : "./tsconfig-samples",
-    "compilerOptions": {
-        // "outFile": "../build-web/app-simple-viewer-single-file.js"
-    },
-    "include" : [
-        "simple-viewer-single-file.ts"
-    ]
-}

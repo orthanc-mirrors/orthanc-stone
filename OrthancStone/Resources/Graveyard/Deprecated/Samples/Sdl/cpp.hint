@@ -1,2 +1,0 @@
-#define ORTHANC_OVERRIDE
-#define ORTHANC_STONE_DEFINE_EMPTY_MESSAGE(FILE, LINE, NAME) class NAME : public ::OrthancStone::IMessage {};

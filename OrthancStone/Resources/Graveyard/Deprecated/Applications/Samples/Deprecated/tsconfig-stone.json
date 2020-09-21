@@ -1,7 +1,0 @@
-{
-    "include" : [
-        "../../Platforms/Wasm/stone-framework-loader.ts",
-        "../../Platforms/Wasm/wasm-application-runner.ts",
-        "../../Platforms/Wasm/wasm-viewport.ts"
-    ]
-}

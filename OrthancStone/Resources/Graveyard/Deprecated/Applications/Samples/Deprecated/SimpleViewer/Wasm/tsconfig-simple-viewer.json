@@ -1,9 +1,0 @@
-{
-    "extends" : "../../Web/tsconfig-samples",
-    "compilerOptions": {
-    },
-    "include" : [
-        "simple-viewer.ts",
-        "../../build-wasm/ApplicationCommands_generated.ts"
-    ]
-}

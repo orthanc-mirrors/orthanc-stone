@@ -1,8 +1,0 @@
-{
-    "include" : [
-        "stone-framework-loader.ts",
-        "logger.ts",
-        "wasm-application-runner.ts",
-        "wasm-viewport.ts"
-    ]
-}

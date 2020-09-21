@@ -268,13 +268,6 @@ if (ENABLE_WASM)
     )
 endif()
 
-if ((ENABLE_SDL OR ENABLE_WASM) AND ENABLE_GUIADAPTER)
-  list(APPEND APPLICATIONS_SOURCES
-    ${ORTHANC_STONE_ROOT}/Sources/Deprecated/GuiAdapter.cpp
-    ${ORTHANC_STONE_ROOT}/Sources/Deprecated/GuiAdapter.h
-    )
-endif()
-
 
 list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OrthancDatasets/DicomDatasetReader.cpp

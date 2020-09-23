@@ -1906,6 +1906,13 @@ public:
     assert(viewport_ != NULL);
     viewport_->AcquireInteractor(interactor.release());
   }
+
+
+
+  void FitForPrint()  // TODO - REMOVE
+  {
+    viewport_->FitForPrint();
+  }
 };
 
 
@@ -2454,6 +2461,21 @@ extern "C"
       {
         assert(it->second != NULL);
         it->second->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
+      }
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void FitForPrint()  // TODO - REMOVE
+  {
+    try
+    {
+      for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
+      {
+        assert(it->second != NULL);
+        it->second->FitForPrint();
       }
     }
     EXTERN_CATCH_EXCEPTIONS;

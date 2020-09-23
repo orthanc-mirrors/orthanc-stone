@@ -210,6 +210,17 @@ namespace OrthancStone
     emscripten_request_animation_frame(OnRequestAnimationFrame, reinterpret_cast<void*>(this));
   }
 
+  void WebAssemblyViewport::FitForPrint()
+  {
+    if (compositor_.get() != NULL &&
+        controller_ /* should always be true */)
+    {
+      UpdateSize(*compositor_);
+      compositor_->FitContent(controller_->GetScene());
+      OnRequestAnimationFrame(0, reinterpret_cast<void*>(this));
+    }
+  }
+
   void WebAssemblyViewport::AcquireCompositor(ICompositor* compositor /* takes ownership */)
   {
     if (compositor == NULL)

@@ -66,8 +66,11 @@ namespace OrthancStone
 
       /**
        * This function must be called when the layout has changed, and
-       * thus the size of the canvas must be re-computed. Avoid
-       * calling this method too often for performance.
+       * thus the size of the canvas must be re-computed. After a call
+       * to this method, the canvas size can be accessed through
+       * "GetCompositor().GetCanvasWidth()" and
+       * "GetCompositor().GetCanvasHeight()". Avoid calling this
+       * method too often for performance.
        **/
       virtual void RefreshCanvasSize() = 0;
     };   

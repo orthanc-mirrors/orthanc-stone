@@ -98,12 +98,22 @@ namespace OrthancStone
 
     void PostConstructor();
 
+    void RefreshCanvasSize();
+
+    unsigned int GetCanvasWidth() const
+    {
+      return canvasWidth_;
+    }
+    
+    unsigned int GetCanvasHeight()
+    {
+      return canvasHeight_;
+    }
+
   public:
     virtual ILock* Lock() ORTHANC_OVERRIDE;
 
     ~WebAssemblyViewport();
-
-    virtual void UpdateCanvasSize();
 
     /**
     This method takes ownership
@@ -124,19 +134,6 @@ namespace OrthancStone
       return canvasCssSelector_;
     }
 
-
-    void RefreshCanvasSize();
-
-    unsigned int GetCanvasWidth() const
-    {
-      return canvasWidth_;
-    }
-    
-    unsigned int GetCanvasHeight()
-    {
-      return canvasHeight_;
-    }
-    
     void FitForPrint();  // TODO - REMOVE
   };
 }

@@ -181,7 +181,9 @@ namespace OrthancStone
 
     void OpenGLTextProgram::Apply(OpenGL::OpenGLTexture& fontTexture,
                                   const Data& data,
-                                  const AffineTransform2D& transform)
+                                  const AffineTransform2D& transform,
+                                  unsigned int canvasWidth,
+                                  unsigned int canvasHeight)
     {
       if (!context_.IsContextLost() && !data.IsEmpty())
       {
@@ -200,7 +202,7 @@ namespace OrthancStone
         const AffineTransform2D t = AffineTransform2D::CreateOffset(x + dx, y + dy);
 
         float m[16];
-        t.ConvertToOpenGLMatrix(m, context_.GetCanvasWidth(), context_.GetCanvasHeight());
+        t.ConvertToOpenGLMatrix(m, canvasWidth, canvasHeight);
 
         fontTexture.Bind(program_->GetUniformLocation("u_texture"));
         glUniformMatrix4fv(program_->GetUniformLocation("u_matrix"), 1, GL_FALSE, m);

@@ -327,7 +327,11 @@ namespace OrthancStone
               views, sdlEvent.window.windowID);
             boost::shared_ptr<SdlViewport> sdlViewport =
               boost::dynamic_pointer_cast<SdlViewport>(view->GetViewport());
-            sdlViewport->Paint();
+
+            {
+              std::unique_ptr<OrthancStone::IViewport::ILock> lock(sdlViewport->Lock());
+              lock->RefreshCanvasSize();
+            }
           }
           else if (sdlEvent.type == SDL_KEYDOWN &&
                    sdlEvent.key.repeat == 0 /* Ignore key bounce */)

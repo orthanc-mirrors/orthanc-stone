@@ -53,7 +53,8 @@ namespace OrthancStone
     {
       if (!context_.IsContextLost() && texture_.get() != NULL)
       {
-        program_.Apply(*texture_, AffineTransform2D::Combine(transform, layerTransform_), true);
+        program_.Apply(*texture_, AffineTransform2D::Combine(transform, layerTransform_),
+                       canvasWidth, canvasHeight, true);
       }
     }
 

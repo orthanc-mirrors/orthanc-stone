@@ -38,6 +38,7 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/math/special_functions/round.hpp>
 
 namespace OrthancStone
 {
@@ -112,6 +113,11 @@ namespace OrthancStone
     {
       that_.Invalidate();
     }
+
+    virtual void RefreshCanvasSize() ORTHANC_OVERRIDE
+    {
+      that_.RefreshCanvasSize();
+    }
   };
 
 
@@ -137,7 +143,7 @@ namespace OrthancStone
 
     if (that->compositor_.get() != NULL)
     {
-      that->UpdateSize(*that->compositor_);
+      that->RefreshCanvasSize();
       that->Invalidate();
     }
       
@@ -215,7 +221,7 @@ namespace OrthancStone
     if (compositor_.get() != NULL &&
         controller_ /* should always be true */)
     {
-      UpdateSize(*compositor_);
+      RefreshCanvasSize();
       compositor_->FitContent(controller_->GetScene());
       OnRequestAnimationFrame(0, reinterpret_cast<void*>(this));
     }
@@ -248,7 +254,9 @@ namespace OrthancStone
     canvasCssSelector_(canvasId),
 #endif
     interactor_(new DefaultViewportInteractor),
-    enableEmscriptenMouseEvents_(enableEmscriptenMouseEvents)
+    enableEmscriptenMouseEvents_(enableEmscriptenMouseEvents),
+    canvasWidth_(0),
+    canvasHeight_(0)
   {
   }
 
@@ -312,7 +320,7 @@ namespace OrthancStone
 
   void WebAssemblyViewport::UpdateCanvasSize()
   {
-    UpdateSize(*compositor_);
+    RefreshCanvasSize();
   }
 
   WebAssemblyViewport::~WebAssemblyViewport()
@@ -356,6 +364,41 @@ namespace OrthancStone
     else
     {
       interactor_.reset(interactor);
+    }
+  }
+
+
+  void WebAssemblyViewport::RefreshCanvasSize()
+  {
+    double w, h;
+    emscripten_get_element_css_size(GetCanvasCssSelector().c_str(), &w, &h);
+
+    /**
+     * Emscripten has the function emscripten_get_element_css_size()
+     * to query the width and height of a named HTML element. I'm
+     * calling this first to get the initial size of the canvas DOM
+     * element, and then call emscripten_set_canvas_size() to
+     * initialize the framebuffer size of the canvas to the same
+     * size as its DOM element.
+     * https://floooh.github.io/2017/02/22/emsc-html.html
+     **/
+    if (w > 0 &&
+        h > 0)
+    {
+      canvasWidth_ = static_cast<unsigned int>(boost::math::iround(w));
+      canvasHeight_ = static_cast<unsigned int>(boost::math::iround(h));
+    }
+    else
+    {
+      canvasWidth_ = 0;
+      canvasHeight_ = 0;
+    }
+
+    emscripten_set_canvas_element_size(GetCanvasCssSelector().c_str(), canvasWidth_, canvasHeight_);
+
+    if (compositor_.get() != NULL)
+    {
+      compositor_->SetCanvasSize(canvasWidth_, canvasHeight_);
     }
   }
 }

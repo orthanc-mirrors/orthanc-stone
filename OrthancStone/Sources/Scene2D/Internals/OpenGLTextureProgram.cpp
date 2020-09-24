@@ -45,7 +45,9 @@ namespace OrthancStone
   namespace Internals
   {
     void OpenGLTextureProgram::InitializeExecution(OpenGL::OpenGLTexture& texture,
-                                                   const AffineTransform2D& transform)
+                                                   const AffineTransform2D& transform,
+                                                   unsigned int canvasWidth,
+                                                   unsigned int canvasHeight)
     {
       if (!context_.IsContextLost())
       {
@@ -58,7 +60,7 @@ namespace OrthancStone
         AffineTransform2D t = AffineTransform2D::Combine(transform, scale);
 
         float m[16];
-        t.ConvertToOpenGLMatrix(m, context_.GetCanvasWidth(), context_.GetCanvasHeight());
+        t.ConvertToOpenGLMatrix(m, canvasWidth, canvasHeight);
 
         texture.Bind(program_->GetUniformLocation("u_texture"));
         glUniformMatrix4fv(program_->GetUniformLocation("u_matrix"), 1, GL_FALSE, m);

@@ -58,6 +58,8 @@ namespace OrthancStone
     std::unique_ptr<ViewportController>   controller_;
     std::unique_ptr<IViewportInteractor>  interactor_;
     bool                                  enableEmscriptenMouseEvents_;
+    unsigned int                          canvasWidth_;
+    unsigned int                          canvasHeight_;
 
     static EM_BOOL OnRequestAnimationFrame(double time, void *userData);
     
@@ -86,8 +88,6 @@ namespace OrthancStone
 
     virtual void Paint(ICompositor& compositor,
                        ViewportController& controller) = 0;
-
-    virtual void UpdateSize(ICompositor& compositor) = 0;
 
     /**
     The second argument is temporary and should be deleted once the migration 
@@ -124,6 +124,19 @@ namespace OrthancStone
       return canvasCssSelector_;
     }
 
+
+    void RefreshCanvasSize();
+
+    unsigned int GetCanvasWidth() const
+    {
+      return canvasWidth_;
+    }
+    
+    unsigned int GetCanvasHeight()
+    {
+      return canvasHeight_;
+    }
+    
     void FitForPrint();  // TODO - REMOVE
   };
 }

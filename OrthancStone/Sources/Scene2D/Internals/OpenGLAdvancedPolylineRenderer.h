@@ -49,7 +49,7 @@ namespace OrthancStone
       {
         if (!context_.IsContextLost())
         {
-          program_.Apply(*data_, transform, true, true);
+          program_.Apply(*data_, transform, canvasWidth, canvasHeight, true, true);
         }
       }
 

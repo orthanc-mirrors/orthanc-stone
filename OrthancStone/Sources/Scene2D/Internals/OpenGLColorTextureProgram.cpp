@@ -45,11 +45,13 @@ namespace OrthancStone
     
     void OpenGLColorTextureProgram::Apply(OpenGL::OpenGLTexture& texture,
                                           const AffineTransform2D& transform,
+                                          unsigned int canvasWidth,
+                                          unsigned int canvasHeight,
                                           bool useAlpha)
     {
       if (!context_.IsContextLost())
       {
-        OpenGLTextureProgram::Execution execution(program_, texture, transform);
+        OpenGLTextureProgram::Execution execution(program_, texture, transform, canvasWidth, canvasHeight);
 
         if (useAlpha)
         {

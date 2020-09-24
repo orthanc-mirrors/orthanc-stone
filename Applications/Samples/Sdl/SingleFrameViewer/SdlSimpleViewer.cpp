@@ -176,7 +176,8 @@ int main(int argc, char* argv[])
                        (event.window.event == SDL_WINDOWEVENT_SHOWN ||
                         event.window.event == SDL_WINDOWEVENT_EXPOSED))
               {
-                paint = true;
+                std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+                lock->RefreshCanvasSize();
               }
               else if (event.type == SDL_KEYDOWN &&
                        event.key.repeat == 0 /* Ignore key bounce */)

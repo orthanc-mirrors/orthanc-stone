@@ -137,12 +137,6 @@ namespace OrthancStone
     canvasWidth_(0),
     canvasHeight_(0)
   {
-    if (!context_.IsContextLost())
-    {
-      canvasWidth_ = context_.GetCanvasWidth();
-      canvasHeight_ = context_.GetCanvasHeight();
-    }
-
     ResetScene();
   }
 
@@ -187,8 +181,6 @@ namespace OrthancStone
     if (!context_.IsContextLost())
     {
       context_.MakeCurrent(); // this can throw if context lost!
-      canvasWidth_ = context_.GetCanvasWidth();
-      canvasHeight_ = context_.GetCanvasHeight();
 
       glViewport(0, 0, canvasWidth_, canvasHeight_);
       glClearColor(0, 0, 0, 1);
@@ -245,14 +237,10 @@ namespace OrthancStone
 #endif
 
 
-  void OpenGLCompositor::RefreshCanvasSize()
+  void OpenGLCompositor::SetCanvasSize(unsigned int canvasWidth,
+                                       unsigned int canvasHeight)
   {
-    if (!context_.IsContextLost())
-    {
-      context_.MakeCurrent(); // this can throw if context lost!
-      context_.RefreshCanvasSize();  // Difference with Refresh(scene)
-      canvasWidth_ = context_.GetCanvasWidth();
-      canvasHeight_ = context_.GetCanvasHeight();
-    }
+    canvasWidth_ = canvasWidth;
+    canvasHeight_ = canvasHeight;
   }
 }

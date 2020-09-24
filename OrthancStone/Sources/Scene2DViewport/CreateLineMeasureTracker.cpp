@@ -64,9 +64,10 @@ namespace OrthancStone
     //LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
     //  "scenePos.GetY() = " << scenePos.GetY();
       
-    CreateLineMeasureTracker* concreteThis =
+    /*CreateLineMeasureTracker* concreteThis =
       dynamic_cast<CreateLineMeasureTracker*>(this);
-    assert(concreteThis != NULL);
+      assert(concreteThis != NULL);*/
+
     GetCommand()->SetEnd(scenePos);
   }
 

@@ -63,18 +63,13 @@ namespace OrthancStone
 
     virtual void SwapBuffer() ORTHANC_OVERRIDE;
 
-    virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE;
+    unsigned int GetCanvasWidth() const;
 
-    virtual unsigned int GetCanvasHeight() const ORTHANC_OVERRIDE;
+    unsigned int GetCanvasHeight() const;
 
     void ToggleMaximize()
     {
       window_.ToggleMaximize();
-    }
-
-    virtual void RefreshCanvasSize() ORTHANC_OVERRIDE
-    {
-      // Nothing to do for SDL
     }
   };
 }

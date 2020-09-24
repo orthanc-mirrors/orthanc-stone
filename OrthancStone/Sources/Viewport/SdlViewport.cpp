@@ -52,6 +52,7 @@ namespace OrthancStone
     compositor_.reset(compositor);
   }
 
+
   SdlViewport::SdlViewport()
   {
     refreshEvent_ = SDL_RegisterEvents(1);
@@ -76,6 +77,14 @@ namespace OrthancStone
   }
 
   
+  void SdlViewport::UpdateSize(unsigned int width, unsigned int height)
+  {
+    SdlLock lock(*this);
+    lock.GetCompositor().SetCanvasSize(width, height);
+    lock.Invalidate();
+  }
+
+
   SdlOpenGLViewport::SdlOpenGLViewport(const std::string& title,
                                        unsigned int width,
                                        unsigned int height,
@@ -84,6 +93,13 @@ namespace OrthancStone
   {
     AcquireCompositor(new OpenGLCompositor(context_));  // (*)
   }
+
+
+  void SdlOpenGLViewport::RefreshCanvasSize()
+  {
+    UpdateSize(context_.GetCanvasWidth(), context_.GetCanvasHeight());
+  }
+
 
   boost::shared_ptr<SdlOpenGLViewport> SdlOpenGLViewport::Create(
     const std::string& title,
@@ -120,14 +136,6 @@ namespace OrthancStone
   }
 
 
-  void SdlOpenGLViewport::UpdateSize(unsigned int width, unsigned int height)
-  {
-    // nothing to do in OpenGL, the OpenGLCompositor::UpdateSize will be called automatically
-    SdlLock lock(*this);
-    lock.Invalidate();
-  }
-
-
   void SdlOpenGLViewport::ToggleMaximize()
   {
     // No need to call "Invalidate()" here, as "UpdateSize()" will
@@ -137,6 +145,11 @@ namespace OrthancStone
   }
 
 
+
+  void SdlCairoViewport::RefreshCanvasSize()
+  {
+    UpdateSize(window_.GetWidth(), window_.GetHeight());
+  }
 
   SdlCairoViewport::SdlCairoViewport(const char* title,
                                      unsigned int width,
@@ -176,15 +189,6 @@ namespace OrthancStone
     }
   }
 
-
-  void SdlCairoViewport::UpdateSize(unsigned int width,
-                                    unsigned int height)
-  {
-    SdlLock lock(*this);
-    dynamic_cast<CairoCompositor&>(lock.GetCompositor()).UpdateSize(width, height);
-    lock.Invalidate();
-  }
-  
 
   void SdlCairoViewport::ToggleMaximize()
   {

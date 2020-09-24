@@ -141,13 +141,16 @@ namespace OrthancStone
 
     void OpenGLFloatTextureProgram::Apply(Data& data,
                                           const AffineTransform2D& transform,
+                                          unsigned int canvasWidth,
+                                          unsigned int canvasHeight,
                                           float windowCenter,
                                           float windowWidth,
                                           bool invert)
     {
       if (!context_.IsContextLost())
       {
-        OpenGLTextureProgram::Execution execution(program_, data.GetTexture(), transform);
+        OpenGLTextureProgram::Execution execution(
+          program_, data.GetTexture(), transform, canvasWidth, canvasHeight);
 
         glUniform1f(execution.GetUniformLocation("u_slope"), data.GetSlope());
         glUniform1f(execution.GetUniformLocation("u_offset"), data.GetOffset());

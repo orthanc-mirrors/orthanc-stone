@@ -110,7 +110,7 @@ namespace OrthancStone
                                                        translation1);
         }
 
-        program_.Apply(*texture_, actualTransform, true);
+        program_.Apply(*texture_, actualTransform, canvasWidth, canvasHeight, true);
       }
     }
   }

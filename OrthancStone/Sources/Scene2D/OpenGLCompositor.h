@@ -72,7 +72,8 @@ namespace OrthancStone
                  Orthanc::Encoding codepage) ORTHANC_OVERRIDE;
 #endif
 
-    virtual void RefreshCanvasSize() ORTHANC_OVERRIDE;
+    virtual void SetCanvasSize(unsigned int canvasWidth,
+                               unsigned int canvasHeight) ORTHANC_OVERRIDE;
 
     virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE
     {

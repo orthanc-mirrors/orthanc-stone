@@ -42,7 +42,9 @@ namespace OrthancStone
       GLuint                                buffers_[2];
 
       void InitializeExecution(OpenGL::OpenGLTexture& texture,
-                               const AffineTransform2D& transform);
+                               const AffineTransform2D& transform,
+                               unsigned int canvasWidth,
+                               unsigned int canvasHeight);
 
       void FinalizeExecution();
 
@@ -60,10 +62,12 @@ namespace OrthancStone
       public:
         Execution(OpenGLTextureProgram& that,
                   OpenGL::OpenGLTexture& texture,
-                  const AffineTransform2D& transform) :
+                  const AffineTransform2D& transform,
+                  unsigned int canvasWidth,
+                  unsigned int canvasHeight) :
           that_(that)
         {
-          that_.InitializeExecution(texture, transform);
+          that_.InitializeExecution(texture, transform, canvasWidth, canvasHeight);
         }
 
         ~Execution()

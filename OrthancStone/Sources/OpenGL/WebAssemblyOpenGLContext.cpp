@@ -39,8 +39,6 @@ namespace OrthancStone
     private:
       std::string                     canvasSelector_;
       EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context_;
-      unsigned int                    canvasWidth_;
-      unsigned int                    canvasHeight_;
       bool                            isContextLost_;
 
     public:
@@ -52,7 +50,7 @@ namespace OrthancStone
         EmscriptenWebGLContextAttributes attr; 
         emscripten_webgl_init_context_attributes(&attr);
 
-#if 0
+#if 1
         // The next line might be necessary to print on Firefox 71
         // using WebGL. Sometimes, if set to "false" (the default
         // value), the canvas was rendered as a fully white or black
@@ -69,8 +67,6 @@ namespace OrthancStone
           LOG(ERROR) << message;
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, message);
         }
-
-        UpdateSize();
       }
 
       void* DebugGetInternalContext() const
@@ -161,46 +157,6 @@ namespace OrthancStone
          * "explicitSwapControl" option were set to "true".
          **/
       }
-
-      unsigned int GetCanvasWidth() const
-      {
-        return canvasWidth_;
-      }
-
-      unsigned int GetCanvasHeight() const
-      {
-        return canvasHeight_;
-      }
-
-      void UpdateSize()
-      {
-        double w, h;
-        emscripten_get_element_css_size(canvasSelector_.c_str(), &w, &h);
-
-        /**
-         * Emscripten has the function emscripten_get_element_css_size()
-         * to query the width and height of a named HTML element. I'm
-         * calling this first to get the initial size of the canvas DOM
-         * element, and then call emscripten_set_canvas_size() to
-         * initialize the framebuffer size of the canvas to the same
-         * size as its DOM element.
-         * https://floooh.github.io/2017/02/22/emsc-html.html
-         **/
-
-        if (w <= 0 ||
-            h <= 0)
-        {
-          canvasWidth_ = 0;
-          canvasHeight_ = 0;
-        }
-        else
-        {
-          canvasWidth_ = static_cast<unsigned int>(boost::math::iround(w));
-          canvasHeight_ = static_cast<unsigned int>(boost::math::iround(h));
-        }
-        
-        emscripten_set_canvas_element_size(canvasSelector_.c_str(), canvasWidth_, canvasHeight_);
-      }
     };
 
 
@@ -234,40 +190,6 @@ namespace OrthancStone
     {
       assert(pimpl_.get() != NULL);
       pimpl_->SwapBuffer();
-    }
-
-    unsigned int WebAssemblyOpenGLContext::GetCanvasWidth() const
-    {
-      assert(pimpl_.get() != NULL);
-      return pimpl_->GetCanvasWidth();
-    }
-
-    unsigned int WebAssemblyOpenGLContext::GetCanvasHeight() const
-    {
-      assert(pimpl_.get() != NULL);
-      return pimpl_->GetCanvasHeight();
-    }
-
-    void WebAssemblyOpenGLContext::RefreshCanvasSize()
-    {
-      assert(pimpl_.get() != NULL);
-
-      try
-      {
-        pimpl_->UpdateSize();
-      }
-      catch (const StoneException& e)
-      {
-        // Ignore problems about the loss of the WebGL context (edge case)
-        if (e.GetErrorCode() == ErrorCode_WebGLContextLost)
-        {
-          return;
-        }
-        else
-        {
-          throw;
-        }
-      }
     }
 
     const std::string& WebAssemblyOpenGLContext::GetCanvasSelector() const

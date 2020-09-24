@@ -43,6 +43,39 @@ namespace OrthancStone
   private:
     bool     enabled_;
 
+
+  protected:
+    explicit MeasureTool(boost::shared_ptr<IViewport> viewport);
+
+    void PostConstructor();
+
+    /**
+       The measuring tool may exist in a standalone fashion, without any available
+       scene (because the controller is dead or dying). This call allows to check 
+       before accessing the scene.
+    */
+    bool IsSceneAlive() const;
+    
+    /**
+       This is the meat of the tool: this method must [create (if needed) and]
+       update the layers and their data according to the measure tool kind and
+       current state. This is repeatedly called during user interaction
+    */
+    virtual void RefreshScene() = 0;
+
+    /**
+       enabled_ is not accessible by subclasses because there is a state machine
+       that we do not wanna mess with
+    */
+    bool IsEnabled() const;
+
+    /**
+       Protected to allow sub-classes to use this weak pointer in factory methods
+       (pass them to created objects)
+    */
+    boost::shared_ptr<IViewport> viewport_;
+
+
   public:
     virtual ~MeasureTool()
     {
@@ -114,37 +147,6 @@ namespace OrthancStone
        A description of the measuring tool, useful in debug logs
     */
     virtual std::string GetDescription() = 0;
-
-  protected:
-    explicit MeasureTool(boost::shared_ptr<IViewport> viewport);
-
-    void PostConstructor();
-
-    /**
-       The measuring tool may exist in a standalone fashion, without any available
-       scene (because the controller is dead or dying). This call allows to check 
-       before accessing the scene.
-    */
-    bool IsSceneAlive() const;
-    
-    /**
-       This is the meat of the tool: this method must [create (if needed) and]
-       update the layers and their data according to the measure tool kind and
-       current state. This is repeatedly called during user interaction
-    */
-    virtual void RefreshScene() = 0;
-
-    /**
-       enabled_ is not accessible by subclasses because there is a state machine
-       that we do not wanna mess with
-    */
-    bool IsEnabled() const;
-
-    /**
-       Protected to allow sub-classes to use this weak pointer in factory methods
-       (pass them to created objects)
-    */
-    boost::shared_ptr<IViewport> viewport_;
   };
 
   class MeasureToolMemento

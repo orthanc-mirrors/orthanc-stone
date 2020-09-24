@@ -54,7 +54,7 @@ namespace OrthancStone
     {
       if (!context_.IsContextLost() && data_.get() != NULL)
       {
-        program_.Apply(texture_, *data_, transform);
+        program_.Apply(texture_, *data_, transform, canvasWidth, canvasHeight);
       }
     }
 

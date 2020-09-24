@@ -415,6 +415,8 @@ namespace OrthancStone
 
     void OpenGLLinesProgram::Apply(const Data& data,
                                    const AffineTransform2D& transform,
+                                   unsigned int canvasWidth,
+                                   unsigned int canvasHeight,
                                    bool antialiasing,
                                    bool scaleIndependantThickness)
     {
@@ -428,7 +430,7 @@ namespace OrthancStone
         GLint locationColor = program_->GetAttributeLocation("a_color");
 
         float m[16];
-        transform.ConvertToOpenGLMatrix(m, context_.GetCanvasWidth(), context_.GetCanvasHeight());
+        transform.ConvertToOpenGLMatrix(m, canvasWidth, canvasHeight);
 
         glUniformMatrix4fv(program_->GetUniformLocation("u_matrix"), 1, GL_FALSE, m);
 

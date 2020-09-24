@@ -95,6 +95,11 @@ namespace OrthancStone
       {
         that_.SendRefreshEvent();
       }
+      
+      virtual void RefreshCanvasSize() ORTHANC_OVERRIDE
+      {
+        that_.RefreshCanvasSize();
+      }
     };
 
     void ClearCompositor()
@@ -104,12 +109,14 @@ namespace OrthancStone
 
     void AcquireCompositor(ICompositor* compositor /* takes ownership */);
 
+    virtual void RefreshCanvasSize() = 0;
+    
   protected:
     SdlViewport();
+
     void PostConstructor();
 
   public:
-
     bool IsRefreshEvent(const SDL_Event& event) const
     {
       return (event.type == refreshEvent_);
@@ -122,8 +129,8 @@ namespace OrthancStone
 
     virtual uint32_t GetSdlWindowId() = 0;
 
-    virtual void UpdateSize(unsigned int width,
-                            unsigned int height) = 0;
+    void UpdateSize(unsigned int width,
+                    unsigned int height);
 
     virtual void ToggleMaximize() = 0;
 
@@ -137,11 +144,14 @@ namespace OrthancStone
   private:
     SdlOpenGLContext  context_;
 
-  private:
     SdlOpenGLViewport(const std::string& title,
                       unsigned int       width,
                       unsigned int       height,
                       bool               allowDpiScaling = true);
+
+  protected:
+    virtual void RefreshCanvasSize() ORTHANC_OVERRIDE;
+    
   public:
     static boost::shared_ptr<SdlOpenGLViewport> Create(const std::string&,
                                                        unsigned int width,
@@ -155,9 +165,6 @@ namespace OrthancStone
 
     virtual void Paint() ORTHANC_OVERRIDE;
 
-    virtual void UpdateSize(unsigned int width, 
-                            unsigned int height) ORTHANC_OVERRIDE;
-
     virtual void ToggleMaximize() ORTHANC_OVERRIDE;
   };
 
@@ -170,11 +177,14 @@ namespace OrthancStone
 
     void CreateSdlSurfaceFromCompositor(const CairoCompositor& compositor);
 
-  private:
     SdlCairoViewport(const char* title,
                      unsigned int width,
                      unsigned int height,
                      bool allowDpiScaling = true);
+
+  protected:
+    virtual void RefreshCanvasSize() ORTHANC_OVERRIDE;
+    
   public:
     static boost::shared_ptr<SdlCairoViewport> Create(const char* title,
                      unsigned int width,
@@ -187,9 +197,6 @@ namespace OrthancStone
     virtual uint32_t GetSdlWindowId() ORTHANC_OVERRIDE;
 
     virtual void Paint() ORTHANC_OVERRIDE;
-
-    virtual void UpdateSize(unsigned int width,
-                            unsigned int height) ORTHANC_OVERRIDE;
 
     virtual void ToggleMaximize() ORTHANC_OVERRIDE;
   };

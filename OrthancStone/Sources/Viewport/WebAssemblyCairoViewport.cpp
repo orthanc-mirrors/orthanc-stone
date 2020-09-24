@@ -34,39 +34,8 @@
 
 #include <Images/Image.h>
 
-#include <boost/math/special_functions/round.hpp>
-
 namespace OrthancStone
 {
-  void WebAssemblyCairoViewport::GetCanvasSize(unsigned int& width,
-                                               unsigned int& height)
-  {
-    double w, h;
-    emscripten_get_element_css_size(GetCanvasCssSelector().c_str(), &w, &h);
-
-    /**
-     * Emscripten has the function emscripten_get_element_css_size()
-     * to query the width and height of a named HTML element. I'm
-     * calling this first to get the initial size of the canvas DOM
-     * element, and then call emscripten_set_canvas_size() to
-     * initialize the framebuffer size of the canvas to the same
-     * size as its DOM element.
-     * https://floooh.github.io/2017/02/22/emsc-html.html
-     **/
-    if (w > 0 &&
-        h > 0)
-    {
-      width = static_cast<unsigned int>(boost::math::iround(w));
-      height = static_cast<unsigned int>(boost::math::iround(h));
-    }
-    else
-    {
-      width = 0;
-      height = 0;
-    }
-  }
-
-
   void WebAssemblyCairoViewport::Paint(ICompositor& compositor,
                                        ViewportController& controller)
   {
@@ -123,25 +92,12 @@ namespace OrthancStone
   }
     
 
-  void WebAssemblyCairoViewport::UpdateSize(ICompositor& compositor)
-  {
-    unsigned int width, height;
-    GetCanvasSize(width, height);
-    emscripten_set_canvas_element_size(GetCanvasCssSelector().c_str(), width, height);
-
-    dynamic_cast<CairoCompositor&>(compositor).UpdateSize(width, height);
-  }
-
-
   WebAssemblyCairoViewport::WebAssemblyCairoViewport(const std::string& canvasId,
                                                      bool enableEmscriptenMouseEvents) :
     WebAssemblyViewport(canvasId,enableEmscriptenMouseEvents)
   {
-    unsigned int width, height;
-    GetCanvasSize(width, height);
-    emscripten_set_canvas_element_size(GetCanvasCssSelector().c_str(), width, height);
-
-    AcquireCompositor(new CairoCompositor(width, height));
+    RefreshCanvasSize();
+    AcquireCompositor(new CairoCompositor(GetCanvasWidth(), GetCanvasHeight()));
   }
   
 

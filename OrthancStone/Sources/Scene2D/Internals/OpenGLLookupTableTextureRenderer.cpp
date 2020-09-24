@@ -75,7 +75,7 @@ namespace OrthancStone
         program_.Apply(
           *glTexture_, 
           AffineTransform2D::Combine(transform, layerTransform_), 
-          true);
+          canvasWidth, canvasHeight, true);
       }
     }
 

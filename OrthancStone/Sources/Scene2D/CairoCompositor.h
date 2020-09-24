@@ -59,11 +59,8 @@ namespace OrthancStone
       return canvas_;
     }
 
-    virtual void RefreshCanvasSize() ORTHANC_OVERRIDE
-    {
-      // The canvas size is constant in Cairo, except if
-      // "UpdateSize()" is called
-    }
+    virtual void SetCanvasSize(unsigned int canvasWidth,
+                               unsigned int canvasHeight) ORTHANC_OVERRIDE;
 
     virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE
     {
@@ -91,9 +88,6 @@ namespace OrthancStone
     {
       helper_.reset(new Internals::CompositorHelper(*this));
     }
-
-    void UpdateSize(unsigned int canvasWidth,
-                    unsigned int canvasHeight);
 
     Orthanc::ImageAccessor* RenderText(size_t fontIndex,
                                        const std::string& utf8) const;

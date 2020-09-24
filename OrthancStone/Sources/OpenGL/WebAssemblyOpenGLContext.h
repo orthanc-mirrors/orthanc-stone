@@ -62,16 +62,10 @@ namespace OrthancStone
 
       virtual void SwapBuffer() ORTHANC_OVERRIDE;
 
-      virtual unsigned int GetCanvasWidth() const ORTHANC_OVERRIDE;
-
-      virtual unsigned int GetCanvasHeight() const ORTHANC_OVERRIDE;
-
       /**
       Returns true if the underlying context has been successfully recreated
       */
       //bool TryRecreate();
-
-      virtual void RefreshCanvasSize() ORTHANC_OVERRIDE;
 
       const std::string& GetCanvasSelector() const;
 

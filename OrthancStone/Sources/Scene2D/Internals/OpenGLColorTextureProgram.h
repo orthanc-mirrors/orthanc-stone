@@ -38,6 +38,8 @@ namespace OrthancStone
 
       void Apply(OpenGL::OpenGLTexture& texture,
                  const AffineTransform2D& transform,
+                 unsigned int canvasWidth,
+                 unsigned int canvasHeight,
                  bool useAlpha);
     };
   }

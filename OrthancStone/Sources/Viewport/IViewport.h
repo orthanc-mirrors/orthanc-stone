@@ -62,6 +62,14 @@ namespace OrthancStone
       virtual ViewportController& GetController() = 0;
 
       virtual void Invalidate() = 0;
+
+
+      /**
+       * This function must be called when the layout has changed, and
+       * thus the size of the canvas must be re-computed. Avoid
+       * calling this method too often for performance.
+       **/
+      virtual void RefreshCanvasSize() = 0;
     };   
     
     virtual ~IViewport()

@@ -66,6 +66,8 @@ namespace OrthancStone
 
       void Apply(Data& data,
                  const AffineTransform2D& transform,
+                 unsigned int canvasWidth,
+                 unsigned int canvasHeight,
                  float windowCenter,
                  float windowWidth,
                  bool  invert);

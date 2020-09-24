@@ -82,6 +82,8 @@ namespace OrthancStone
 
       void Apply(const Data& data,
                  const AffineTransform2D& transform,
+                 unsigned int canvasWidth,
+                 unsigned int canvasHeight,
                  bool antialiasing,
                  bool scaleIndependantThickness);
     };

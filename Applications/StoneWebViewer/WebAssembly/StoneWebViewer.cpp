@@ -1466,7 +1466,7 @@ private:
 
         if (fitNextContent_)
         {
-          lock->GetCompositor().RefreshCanvasSize();
+          lock->RefreshCanvasSize();
           lock->GetCompositor().FitContent(scene);
           fitNextContent_ = false;
         }
@@ -1750,7 +1750,7 @@ public:
   void UpdateSize(bool fitContent)
   {
     std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-    lock->GetCompositor().RefreshCanvasSize();
+    lock->RefreshCanvasSize();
 
     if (fitContent)
     {

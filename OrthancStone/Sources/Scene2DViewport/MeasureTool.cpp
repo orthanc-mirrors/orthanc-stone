@@ -47,12 +47,10 @@ namespace OrthancStone
     return enabled_;
   }
 
-  MeasureTool::MeasureTool(
-    boost::shared_ptr<IViewport> viewport)
-    : viewport_(viewport)
-    , enabled_(true)
+  MeasureTool::MeasureTool(boost::shared_ptr<IViewport> viewport) :
+    enabled_(true),
+    viewport_(viewport)
   {
-
   }
 
   void MeasureTool::PostConstructor()
@@ -78,7 +76,4 @@ namespace OrthancStone
   {
     RefreshScene();
   }
-
-
 }
-

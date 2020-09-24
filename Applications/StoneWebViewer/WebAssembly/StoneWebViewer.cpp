@@ -1907,9 +1907,7 @@ public:
     viewport_->AcquireInteractor(interactor.release());
   }
 
-
-
-  void FitForPrint()  // TODO - REMOVE
+  void FitForPrint()
   {
     viewport_->FitForPrint();
   }
@@ -2468,7 +2466,7 @@ extern "C"
 
 
   EMSCRIPTEN_KEEPALIVE
-  void FitForPrint()  // TODO - REMOVE
+  void FitForPrint()
   {
     try
     {

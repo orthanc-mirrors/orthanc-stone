@@ -50,13 +50,11 @@ namespace OrthancStone
         EmscriptenWebGLContextAttributes attr; 
         emscripten_webgl_init_context_attributes(&attr);
 
-#if 1
-        // The next line might be necessary to print on Firefox 71
-        // using WebGL. Sometimes, if set to "false" (the default
-        // value), the canvas was rendered as a fully white or black
-        // area. UNCONFIRMED, so disabled.
+        // The next line might be necessary to print using
+        // WebGL. Sometimes, if set to "false" (the default value),
+        // the canvas was rendered as a fully white or black
+        // area. UNCONFIRMED.
         attr.preserveDrawingBuffer = true;
-#endif
 
         context_ = emscripten_webgl_create_context(canvasSelector.c_str(), &attr);
         if (context_ == 0)

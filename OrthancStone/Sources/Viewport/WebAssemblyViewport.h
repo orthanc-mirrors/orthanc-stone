@@ -134,6 +134,6 @@ namespace OrthancStone
       return canvasCssSelector_;
     }
 
-    void FitForPrint();  // TODO - REMOVE
+    void FitForPrint();
   };
 }

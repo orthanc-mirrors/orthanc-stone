@@ -223,7 +223,7 @@ namespace OrthancStone
     {
       RefreshCanvasSize();
       compositor_->FitContent(controller_->GetScene());
-      OnRequestAnimationFrame(0, reinterpret_cast<void*>(this));
+      OnRequestAnimationFrame(0, reinterpret_cast<void*>(this));  // Mandatory to work with Firefox
     }
   }
 

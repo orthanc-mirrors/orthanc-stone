@@ -137,7 +137,8 @@ namespace OrthancStone
     MouseAction_Pan,
     MouseAction_Zoom,
     MouseAction_Rotate,
-    MouseAction_GrayscaleWindowing
+    MouseAction_GrayscaleWindowing,
+    MouseAction_None
   };
 
   SopClassUid StringToSopClassUid(const std::string& source);

@@ -105,14 +105,41 @@ enum EMSCRIPTEN_KEEPALIVE DisplayedFrameQuality
     };
 
 
-enum EMSCRIPTEN_KEEPALIVE MouseAction
+enum EMSCRIPTEN_KEEPALIVE WebViewerAction
 {
-  MouseAction_GrayscaleWindowing,
-    MouseAction_Zoom,
-    MouseAction_Pan,
-    MouseAction_Rotate
+  WebViewerAction_GrayscaleWindowing,
+    WebViewerAction_Zoom,
+    WebViewerAction_Pan,
+    WebViewerAction_Rotate,
+    WebViewerAction_Crosshair
     };
   
+
+
+static OrthancStone::MouseAction ConvertWebViewerAction(int action)
+{
+  switch (action)
+  {
+    case WebViewerAction_GrayscaleWindowing:
+      return OrthancStone::MouseAction_GrayscaleWindowing;
+      
+    case WebViewerAction_Zoom:
+      return OrthancStone::MouseAction_Zoom;
+      
+    case WebViewerAction_Pan:
+      return OrthancStone::MouseAction_Pan;
+      
+    case WebViewerAction_Rotate:
+      return OrthancStone::MouseAction_Rotate;
+      
+    case WebViewerAction_Crosshair:
+      return OrthancStone::MouseAction_None;
+
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+  }
+}
+
 
 
 static const int PRIORITY_HIGH = -100;
@@ -1892,19 +1919,73 @@ public:
     }
   }
 
-  void SetMouseButtonActions(OrthancStone::MouseAction leftAction,
-                             OrthancStone::MouseAction middleAction,
-                             OrthancStone::MouseAction rightAction)
-  {
-    std::unique_ptr<OrthancStone::DefaultViewportInteractor> interactor(
-      new OrthancStone::DefaultViewportInteractor);
-    
-    interactor->SetLeftButtonAction(leftAction);
-    interactor->SetMiddleButtonAction(middleAction);
-    interactor->SetRightButtonAction(rightAction);
 
+
+  class Interactor : public OrthancStone::DefaultViewportInteractor
+  {
+  private:
+    WebViewerAction leftAction_;
+    WebViewerAction middleAction_;
+    WebViewerAction rightAction_;
+
+    bool IsAction(const OrthancStone::PointerEvent& event,
+                  WebViewerAction action)
+    {
+      switch (event.GetMouseButton())
+      {
+        case OrthancStone::MouseButton_Left:
+          return (leftAction_ == action);
+
+        case OrthancStone::MouseButton_Middle:
+          return (middleAction_ == action);
+      
+        case OrthancStone::MouseButton_Right:
+          return (rightAction_ == action);
+
+        default:
+          return false;
+      }
+    }
+    
+  public:
+    Interactor(WebViewerAction leftAction,
+               WebViewerAction middleAction,
+               WebViewerAction rightAction) :
+      leftAction_(leftAction),
+      middleAction_(middleAction),
+      rightAction_(rightAction)
+    {
+      SetLeftButtonAction(ConvertWebViewerAction(leftAction));
+      SetMiddleButtonAction(ConvertWebViewerAction(middleAction));
+      SetRightButtonAction(ConvertWebViewerAction(rightAction));
+    }
+
+    virtual OrthancStone::IFlexiblePointerTracker* CreateTracker(
+      boost::shared_ptr<OrthancStone::IViewport> viewport,
+      const OrthancStone::PointerEvent& event,
+      unsigned int viewportWidth,
+      unsigned int viewportHeight) ORTHANC_OVERRIDE
+    {
+      if (IsAction(event, WebViewerAction_Crosshair))
+      {
+        printf("CROSS-HAIR!\n");
+        return NULL;
+      }
+      else
+      {
+        return DefaultViewportInteractor::CreateTracker(
+          viewport, event, viewportWidth, viewportHeight);
+      }
+    }
+  };
+  
+
+  void SetMouseButtonActions(WebViewerAction leftAction,
+                             WebViewerAction middleAction,
+                             WebViewerAction rightAction)
+  {
     assert(viewport_ != NULL);
-    viewport_->AcquireInteractor(interactor.release());
+    viewport_->AcquireInteractor(new Interactor(leftAction, middleAction, rightAction));
   }
 
   void FitForPrint()
@@ -2019,9 +2100,9 @@ static boost::shared_ptr<FramesCache> cache_;
 static boost::shared_ptr<OrthancStone::WebAssemblyLoadersContext> context_;
 static std::string stringBuffer_;
 static bool softwareRendering_ = false;
-static OrthancStone::MouseAction leftButtonAction_ = OrthancStone::MouseAction_GrayscaleWindowing;
-static OrthancStone::MouseAction middleButtonAction_ = OrthancStone::MouseAction_Pan;
-static OrthancStone::MouseAction rightButtonAction_ = OrthancStone::MouseAction_Zoom;
+static WebViewerAction leftButtonAction_ = WebViewerAction_GrayscaleWindowing;
+static WebViewerAction middleButtonAction_ = WebViewerAction_Pan;
+static WebViewerAction rightButtonAction_ = WebViewerAction_Zoom;
 
 
 static void FormatTags(std::string& target,
@@ -2077,30 +2158,6 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
     return found->second;
   }
 }
-
-
-
-static OrthancStone::MouseAction ConvertMouseAction(int action)
-{
-  switch (action)
-  {
-    case MouseAction_GrayscaleWindowing:
-      return OrthancStone::MouseAction_GrayscaleWindowing;
-      
-    case MouseAction_Zoom:
-      return OrthancStone::MouseAction_Zoom;
-      
-    case MouseAction_Pan:
-      return OrthancStone::MouseAction_Pan;
-      
-    case MouseAction_Rotate:
-      return OrthancStone::MouseAction_Rotate;
-
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-  }
-}
-
 
 
 extern "C"
@@ -2451,9 +2508,9 @@ extern "C"
   {
     try
     {
-      leftButtonAction_ = ConvertMouseAction(leftAction);
-      middleButtonAction_ = ConvertMouseAction(middleAction);
-      rightButtonAction_ = ConvertMouseAction(rightAction);
+      leftButtonAction_ = static_cast<WebViewerAction>(leftAction);
+      middleButtonAction_ = static_cast<WebViewerAction>(middleAction);
+      rightButtonAction_ = static_cast<WebViewerAction>(rightAction);
       
       for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
       {

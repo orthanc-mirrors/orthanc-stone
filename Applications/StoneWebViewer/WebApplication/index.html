@@ -302,22 +302,29 @@
                   <div class="inline-object">
                     <button class="wvButton"
                             data-toggle="tooltip" data-title="Combined tool"
-                            @click="SetMouseButtonActions(stone.MouseAction.GRAYSCALE_WINDOWING, stone.MouseAction.PAN, stone.MouseAction.ZOOM)">
+                            @click="SetMouseButtonActions(stone.WebViewerAction.GRAYSCALE_WINDOWING, stone.WebViewerAction.PAN, stone.WebViewerAction.ZOOM)">
                       <i class="far fa-hand-point-up"></i>
                     </button>
                   </div>
                   <div class="inline-object">
                     <button class="wvButton"
                             data-toggle="tooltip" data-title="Zoom"
-                            @click="SetMouseButtonActions(stone.MouseAction.ZOOM, stone.MouseAction.ZOOM, stone.MouseAction.ZOOM)">
+                            @click="SetMouseButtonActions(stone.WebViewerAction.ZOOM, stone.WebViewerAction.ZOOM, stone.WebViewerAction.ZOOM)">
                       <i class="fas fa-search"></i>
                     </button>
                   </div>
                   <div class="inline-object">
                     <button class="wvButton"
                             data-toggle="tooltip" data-title="Pan"
-                            @click="SetMouseButtonActions(stone.MouseAction.PAN, stone.MouseAction.PAN, stone.MouseAction.PAN)">
+                            @click="SetMouseButtonActions(stone.WebViewerAction.PAN, stone.WebViewerAction.PAN, stone.WebViewerAction.PAN)">
                       <i class="fas fa-arrows-alt"></i>
+                    </button>
+                  </div>
+                  <div class="inline-object">
+                    <button class="wvButton"
+                            data-toggle="tooltip" data-title="3D cross-hair"
+                            @click="SetMouseButtonActions(stone.WebViewerAction.CROSSHAIR, stone.WebViewerAction.PAN, stone.WebViewerAction.ZOOM)">
+                      <i class="fas fa-crosshairs"></i>
                     </button>
                   </div>
                 </div>

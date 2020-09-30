@@ -38,6 +38,9 @@ namespace OrthancStone
   {
     switch (action)
     {
+      case MouseAction_None:
+        return NULL;
+
       case MouseAction_Rotate:
         return new RotateSceneTracker(viewport, event);
 
@@ -50,7 +53,7 @@ namespace OrthancStone
       
       case MouseAction_Zoom:
         return new ZoomSceneTracker(viewport, event, viewportHeight);
-
+      
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }

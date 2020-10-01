@@ -1969,7 +1969,7 @@ public:
       if (IsAction(event, WebViewerAction_Crosshair))
       {
         printf("CROSS-HAIR!\n");
-        return NULL;
+        return NULL;  // No need for a tracker, this is just a click
       }
       else
       {

@@ -10,11 +10,11 @@ fi
 
 cat <<EOF > /tmp/cppcheck-suppressions.txt
 stlFindInsert:../../Applications/Samples/WebAssembly/SingleFrameViewer/SingleFrameViewerApplication.h
-stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:658
+stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:685
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/Internals/CairoFloatTextureRenderer.cpp
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/LookupTableTextureSceneLayer.cpp
-unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:135
-unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:193
+unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:143
+unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:197
 unusedFunction
 useInitializationList:../../OrthancStone/Sources/OpenGL/OpenGLProgram.cpp:36
 EOF
@@ -53,8 +53,15 @@ ${CPPCHECK} --enable=all --quiet --std=c++11 \
             -UNDEBUG \
             -I/home/jodogne/Subversion/orthanc/OrthancFramework/Sources \
             \
-            ../../OrthancStone/Sources \
             ../../Applications/Samples \
             ../../Applications/StoneWebViewer \
+            ../../OrthancStone/Sources \
+            \
+            -i ../../Applications/Samples/RtViewerPlugin/i \
+            -i ../../Applications/Samples/Sdl/i \
+            -i ../../Applications/Samples/WebAssembly/i \
+            -i ../../Applications/StoneWebViewer/Plugin/i \
+            -i ../../Applications/StoneWebViewer/WebAssembly/StoneModule/i \
+            -i ../../Applications/StoneWebViewer/WebAssembly/i \
             \
             2>&1

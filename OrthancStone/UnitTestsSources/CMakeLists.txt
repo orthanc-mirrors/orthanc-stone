@@ -29,7 +29,6 @@ add_executable(UnitTests
   ${ORTHANC_STONE_ROOT}/UnitTestsSources/ImageToolboxTests.cpp
   ${ORTHANC_STONE_ROOT}/UnitTestsSources/PixelTestPatternsTests.cpp
   ${ORTHANC_STONE_ROOT}/UnitTestsSources/SortedFramesTests.cpp
-  ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestCommands.cpp
   ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestMessageBroker.cpp
   ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestStrategy.cpp
   ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestStructureSet.cpp

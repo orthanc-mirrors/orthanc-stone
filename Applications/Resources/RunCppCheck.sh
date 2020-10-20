@@ -52,6 +52,7 @@ ${CPPCHECK} --enable=all --quiet --std=c++11 \
             -DEM_ASM \
             -UNDEBUG \
             -I/home/jodogne/Subversion/orthanc/OrthancFramework/Sources \
+            -I/home/jodogne/Subversion/orthanc/OrthancServer/Plugins/Include/ \
             \
             ../../Applications/Samples \
             ../../Applications/StoneWebViewer \

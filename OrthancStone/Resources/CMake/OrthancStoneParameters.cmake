@@ -60,7 +60,7 @@ if (NOT ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
   set(STANDALONE_BUILD ON)       # Embed DCMTK's dictionaries in static builds
 
   set(ENABLE_DCMTK OFF)
-  set(ENABLE_GOOGLE_TEST ON)
+  set(ENABLE_GOOGLE_TEST OFF)
   set(ENABLE_JPEG ON)
   set(ENABLE_OPENSSL_ENGINES ON)
   set(ENABLE_PNG ON)

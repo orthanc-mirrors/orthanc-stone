@@ -22,6 +22,7 @@ endif()
 
 set(ENABLE_DCMTK ON)  # <==
 set(ENABLE_SDL ON)
+SET(ENABLE_PUGIXML ON)   # To test compilation of OsiriX annotations
 
 include(${ORTHANC_STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
 include(${CMAKE_SOURCE_DIR}/Utilities.cmake)

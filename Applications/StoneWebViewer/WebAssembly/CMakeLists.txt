@@ -38,6 +38,7 @@ SET(ENABLE_DCMTK_TRANSCODING OFF)
 SET(ENABLE_GOOGLE_TEST OFF)
 SET(ENABLE_LOCALE ON)  # Necessary for text rendering
 SET(ENABLE_WASM ON)
+SET(ENABLE_PUGIXML ON) # Necessary for OsiriX annotations
 SET(ORTHANC_SANDBOXED ON)
 
 # this will set up the build system for Stone of Orthanc and will

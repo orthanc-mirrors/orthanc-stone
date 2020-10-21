@@ -18,6 +18,7 @@ else()
 endif()
 
 set(ENABLE_OPENGL OFF)
+set(ENABLE_PUGIXML ON)
 
 include(${ORTHANC_STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
 

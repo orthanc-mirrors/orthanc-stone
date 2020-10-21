@@ -270,6 +270,21 @@ if (ENABLE_WASM)
 endif()
 
 
+if (ENABLE_PUGIXML)
+  list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OsiriX/AngleAnnotation.cpp
+    ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OsiriX/Annotation.cpp
+    ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OsiriX/ArrayValue.cpp
+    ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OsiriX/CollectionOfAnnotations.cpp
+    ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OsiriX/DictionaryValue.cpp
+    ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OsiriX/IValue.cpp
+    ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OsiriX/LineAnnotation.cpp
+    ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OsiriX/StringValue.cpp
+    ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OsiriX/TextAnnotation.cpp
+    )
+endif()
+
+
 list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OrthancDatasets/DicomDatasetReader.cpp
   ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OrthancDatasets/DicomPath.cpp

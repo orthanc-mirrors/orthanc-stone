@@ -28,12 +28,12 @@
 #  pragma warning(disable: 4748)
 #endif
 
-#include "../Sources/Loaders/DicomStructureSetLoader.h"
-#include "../Sources/Loaders/GenericLoadersContext.h"
-#include "../Sources/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
-#include "../Sources/Toolbox/DicomStructureSet2.h"
-#include "../Sources/Toolbox/DicomStructureSetUtils.h"
-#include "../Sources/Toolbox/DisjointDataSet.h"
+#include "../OrthancStone/Sources/Loaders/DicomStructureSetLoader.h"
+#include "../OrthancStone/Sources/Loaders/GenericLoadersContext.h"
+#include "../OrthancStone/Sources/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
+#include "../OrthancStone/Sources/Toolbox/DicomStructureSet2.h"
+#include "../OrthancStone/Sources/Toolbox/DicomStructureSetUtils.h"
+#include "../OrthancStone/Sources/Toolbox/DisjointDataSet.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/make_shared.hpp>

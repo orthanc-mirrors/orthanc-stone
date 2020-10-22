@@ -19,7 +19,7 @@
  **/
 
 
-#include "../Sources/Toolbox/PixelTestPatterns.h"
+#include "../OrthancStone/Sources/Toolbox/PixelTestPatterns.h"
 
 #include <Images/Image.h>
 #include <Images/PngWriter.h>

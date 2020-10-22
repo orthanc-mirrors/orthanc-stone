@@ -21,7 +21,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../Sources/Toolbox/SortedFrames.h"
+#include "../OrthancStone/Sources/Toolbox/SortedFrames.h"
 
 #include <OrthancException.h>
 

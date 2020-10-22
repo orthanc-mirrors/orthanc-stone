@@ -21,8 +21,8 @@
 
 #include <gtest/gtest.h>
 
-#include "../Sources/Loaders/BasicFetchingStrategy.h"
-#include "../Sources/Loaders/BasicFetchingItemsSorter.h"
+#include "../OrthancStone/Sources/Loaders/BasicFetchingStrategy.h"
+#include "../OrthancStone/Sources/Loaders/BasicFetchingItemsSorter.h"
 
 #include <OrthancException.h>
 

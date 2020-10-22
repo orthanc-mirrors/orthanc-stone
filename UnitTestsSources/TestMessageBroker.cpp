@@ -21,8 +21,8 @@
 
 #include <gtest/gtest.h>
 
-#include "../Sources/Messages/IObservable.h"
-#include "../Sources/Messages/ObserverBase.h"
+#include "../OrthancStone/Sources/Messages/IObservable.h"
+#include "../OrthancStone/Sources/Messages/ObserverBase.h"
 
 
 int testCounter = 0;

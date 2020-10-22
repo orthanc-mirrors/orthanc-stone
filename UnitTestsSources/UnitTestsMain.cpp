@@ -21,11 +21,11 @@
 
 #include <gtest/gtest.h>
 
-#include "../Sources/StoneInitialization.h"
-#include "../Sources/Toolbox/FiniteProjectiveCamera.h"
-#include "../Sources/Toolbox/GeometryToolbox.h"
-#include "../Sources/Volumes/ImageBuffer3D.h"
-#include "../Sources/Loaders/LoaderCache.h"
+#include "../OrthancStone/Sources/StoneInitialization.h"
+#include "../OrthancStone/Sources/Toolbox/FiniteProjectiveCamera.h"
+#include "../OrthancStone/Sources/Toolbox/GeometryToolbox.h"
+#include "../OrthancStone/Sources/Volumes/ImageBuffer3D.h"
+#include "../OrthancStone/Sources/Loaders/LoaderCache.h"
 
 #include <Images/ImageProcessing.h>
 #include <Logging.h>

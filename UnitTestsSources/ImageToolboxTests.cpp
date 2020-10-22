@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "../Sources/Toolbox/ImageToolbox.h"
+#include "../OrthancStone/Sources/Toolbox/ImageToolbox.h"
 
 // #include <boost/chrono.hpp>
 // #include <boost/lexical_cast.hpp>

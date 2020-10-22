@@ -88,14 +88,14 @@ project(UnitTests)
 
 add_executable(UnitTests
   ${GOOGLE_TEST_SOURCES}
-  ${ORTHANC_STONE_ROOT}/UnitTestsSources/GenericToolboxTests.cpp
-  ${ORTHANC_STONE_ROOT}/UnitTestsSources/ImageToolboxTests.cpp
-  ${ORTHANC_STONE_ROOT}/UnitTestsSources/PixelTestPatternsTests.cpp
-  ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestMessageBroker.cpp
-  ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestStrategy.cpp
-  ${ORTHANC_STONE_ROOT}/UnitTestsSources/TestStructureSet.cpp
-  ${ORTHANC_STONE_ROOT}/UnitTestsSources/SortedFramesTests.cpp
-  ${ORTHANC_STONE_ROOT}/UnitTestsSources/UnitTestsMain.cpp
+  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/GenericToolboxTests.cpp
+  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/ImageToolboxTests.cpp
+  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/PixelTestPatternsTests.cpp
+  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/TestMessageBroker.cpp
+  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/TestStrategy.cpp
+  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/TestStructureSet.cpp
+  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/SortedFramesTests.cpp
+  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/UnitTestsMain.cpp
   )
 
 target_link_libraries(UnitTests OrthancStone)
@@ -104,7 +104,7 @@ add_custom_command(
   TARGET UnitTests
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy
-    "${ORTHANC_STONE_ROOT}/UnitTestsSources/72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json" 
+    "${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json" 
     "$<TARGET_FILE_DIR:UnitTests>/72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json"
 )
 

@@ -52,7 +52,7 @@ DownloadPackage(
   "${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83")
 
 EmbedResources(
-  COLORMAP_HOT ${ORTHANC_STONE_ROOT}/Resources/Colormaps/hot.lut  
+  COLORMAP_HOT ${CMAKE_SOURCE_DIR}/../../Resources/Colormaps/hot.lut
   UBUNTU_FONT  ${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83/Ubuntu-R.ttf
   )
 

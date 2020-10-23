@@ -21,6 +21,8 @@
 
 #include "GenericToolbox.h"
 
+#include <Toolbox.h>
+
 #include <boost/regex.hpp>
 
 namespace OrthancStone
@@ -100,5 +102,12 @@ namespace OrthancStone
       }
     }
 
+
+    void NormalizeUuid(std::string& uuid)
+    {
+      std::string temp = Orthanc::Toolbox::StripSpaces(uuid);
+      Orthanc::Toolbox::ToLowerCase(temp);
+      uuid.swap(temp);
+    }
   }
 }

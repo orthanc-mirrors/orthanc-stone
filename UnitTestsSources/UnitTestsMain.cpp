@@ -23,9 +23,9 @@
 
 #include "../OrthancStone/Sources/StoneInitialization.h"
 #include "../OrthancStone/Sources/Toolbox/FiniteProjectiveCamera.h"
+#include "../OrthancStone/Sources/Toolbox/GenericToolbox.h"
 #include "../OrthancStone/Sources/Toolbox/GeometryToolbox.h"
 #include "../OrthancStone/Sources/Volumes/ImageBuffer3D.h"
-#include "../OrthancStone/Sources/Loaders/LoaderCache.h"
 
 #include <Images/ImageProcessing.h>
 #include <Logging.h>
@@ -811,69 +811,69 @@ TEST(LinearAlgebra, ParseVectorLocale)
   ASSERT_DOUBLE_EQ(1.3671875, v[1]); 
 }
 
-TEST(LoaderCache, NormalizeUuid)
+TEST(GenericToolbox, NormalizeUuid)
 {
   std::string ref("44ca5051-14ef-4d2f-8bd7-db20bfb61fbb");
 
   {
     std::string u("44ca5051-14ef-4d2f-8bd7-db20bfb61fbb");
-    OrthancStone::LoaderCache::NormalizeUuid(u);
+    OrthancStone::GenericToolbox::NormalizeUuid(u);
     ASSERT_EQ(ref, u);
   }
 
   // space left
   {
     std::string u("  44ca5051-14ef-4d2f-8bd7-db20bfb61fbb");
-    OrthancStone::LoaderCache::NormalizeUuid(u);
+    OrthancStone::GenericToolbox::NormalizeUuid(u);
     ASSERT_EQ(ref, u);
   }
 
   // space right
   {
     std::string u("44ca5051-14ef-4d2f-8bd7-db20bfb61fbb  ");
-    OrthancStone::LoaderCache::NormalizeUuid(u);
+    OrthancStone::GenericToolbox::NormalizeUuid(u);
     ASSERT_EQ(ref, u);
   }
 
   // space l & r 
   {
     std::string u("  44ca5051-14ef-4d2f-8bd7-db20bfb61fbb  ");
-    OrthancStone::LoaderCache::NormalizeUuid(u);
+    OrthancStone::GenericToolbox::NormalizeUuid(u);
     ASSERT_EQ(ref, u);
   }
 
   // space left + case 
   {
     std::string u("  44CA5051-14ef-4d2f-8bd7-dB20bfb61fbb");
-    OrthancStone::LoaderCache::NormalizeUuid(u);
+    OrthancStone::GenericToolbox::NormalizeUuid(u);
     ASSERT_EQ(ref, u);
   }
 
   // space right + case 
   {
     std::string u("44ca5051-14EF-4D2f-8bd7-db20bfb61fbB  ");
-    OrthancStone::LoaderCache::NormalizeUuid(u);
+    OrthancStone::GenericToolbox::NormalizeUuid(u);
     ASSERT_EQ(ref, u);
   }
 
   // space l & r + case
   {
     std::string u("  44cA5051-14Ef-4d2f-8bD7-db20bfb61fbb  ");
-    OrthancStone::LoaderCache::NormalizeUuid(u);
+    OrthancStone::GenericToolbox::NormalizeUuid(u);
     ASSERT_EQ(ref, u);
   }
 
   // no
   {
     std::string u("  44ca5051-14ef-4d2f-8bd7-  db20bfb61fbb");
-    OrthancStone::LoaderCache::NormalizeUuid(u);
+    OrthancStone::GenericToolbox::NormalizeUuid(u);
     ASSERT_NE(ref, u);
   }
 
   // no
   {
     std::string u("44ca5051-14ef-4d2f-8bd7-db20bfb61fb");
-    OrthancStone::LoaderCache::NormalizeUuid(u);
+    OrthancStone::GenericToolbox::NormalizeUuid(u);
     ASSERT_NE(ref, u);
   }
 }

@@ -304,5 +304,12 @@ namespace OrthancStone
     {
       return GetRgbaValuesFromString(red, green, blue, alpha, text.c_str());
     }
+
+    
+    /**
+    This method could have been called StripSpacesAndChangeToLower but we might want to 
+    add some UUID validation to the argument
+    */
+    void NormalizeUuid(std::string& uuid);
   }
 }

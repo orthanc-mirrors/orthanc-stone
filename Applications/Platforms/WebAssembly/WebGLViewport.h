@@ -13,7 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  **/
@@ -21,43 +21,32 @@
 
 #pragma once
 
-#include "ILoadersContext.h"
-#include "../Oracle/WebAssemblyOracle.h"
-#include "OracleScheduler.h"
-
-#include <list>
+#include "WebAssemblyOpenGLContext.h"
+#include "WebAssemblyViewport.h"
 
 namespace OrthancStone
 {
-  class WebAssemblyLoadersContext : public ILoadersContext
+  class WebGLViewport : public WebAssemblyViewport
   {
   private:
-    class Locker;
+    OpenGL::WebAssemblyOpenGLContext  context_;
     
-    WebAssemblyOracle                          oracle_;
-    boost::shared_ptr<OracleScheduler>         scheduler_;
-    std::list< boost::shared_ptr<IObserver> >  loaders_;
+    WebGLViewport(const std::string& canvasId,
+                  bool enableEmscriptenMouseEvents);
+
+  protected:
+    virtual void Paint(ICompositor& compositor,
+                       ViewportController& controller) ORTHANC_OVERRIDE;
     
   public:
-    WebAssemblyLoadersContext(unsigned int maxHighPriority,
-                              unsigned int maxStandardPriority,
-                              unsigned int maxLowPriority);
+    static boost::shared_ptr<WebGLViewport> Create(const std::string& canvasId,
+                                                   bool enableEmscriptenMouseEvents = true);
 
-    void SetLocalOrthanc(const std::string& root)
+    virtual ~WebGLViewport();
+
+    bool IsContextLost()
     {
-      oracle_.SetLocalOrthanc(root);
-    }
-
-    void SetRemoteOrthanc(const Orthanc::WebServiceParameters& orthanc)
-    {
-      oracle_.SetRemoteOrthanc(orthanc);
-    }
-
-    void SetDicomCacheSize(size_t size)
-    {
-      oracle_.SetDicomCacheSize(size);
-    }
-
-    virtual ILock* Lock() ORTHANC_OVERRIDE;
+      return context_.IsContextLost();
+    } 
   };
 }

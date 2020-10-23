@@ -25,7 +25,7 @@
 # error This file cannot be used if ORTHANC_ENABLE_SDL != 1
 #endif
 
-#include "../../../OrthancStone/Sources/Viewport/SdlViewport.h"
+#include "../../Platforms/Sdl/SdlViewport.h"
 
 #include <boost/shared_ptr.hpp>
 

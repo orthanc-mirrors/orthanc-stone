@@ -24,6 +24,7 @@
 #include "OrthancSeriesVolumeProgressiveLoader.h"
 #include "OrthancMultiframeVolumeLoader.h"
 #include "DicomStructureSetLoader.h"
+#include "../Toolbox/GenericToolbox.h"
 
 #include "../Loaders/ILoadersContext.h"
 
@@ -56,7 +57,7 @@ namespace OrthancStone
     try
     {
       // normalize keys a little
-      NormalizeUuid(seriesUuid);
+      GenericToolbox::NormalizeUuid(seriesUuid);
 
       // find in cache
       if (seriesVolumeProgressiveLoaders_.find(seriesUuid) == seriesVolumeProgressiveLoaders_.end())
@@ -105,7 +106,7 @@ namespace OrthancStone
   boost::shared_ptr<OrthancMultiframeVolumeLoader> LoaderCache::GetMultiframeVolumeLoader(std::string instanceUuid)
   {
     // normalize keys a little
-    NormalizeUuid(instanceUuid);
+    GenericToolbox::NormalizeUuid(instanceUuid);
 
     // if the loader is not available, let's trigger its creation
     if(multiframeVolumeLoaders_.find(instanceUuid) == multiframeVolumeLoaders_.end())
@@ -122,7 +123,7 @@ namespace OrthancStone
     try
     {
       // normalize keys a little
-      NormalizeUuid(instanceUuid);
+      GenericToolbox::NormalizeUuid(instanceUuid);
 
       // find in cache
       if (dicomVolumeImageMPRSlicers_.find(instanceUuid) == dicomVolumeImageMPRSlicers_.end())
@@ -179,7 +180,7 @@ namespace OrthancStone
     try
     {
       // normalize keys a little
-      NormalizeUuid(inInstanceUuid);
+      GenericToolbox::NormalizeUuid(inInstanceUuid);
 
       std::string entryKey = BuildDicomStructureSetLoaderKey(inInstanceUuid, uniqueKey);
 
@@ -255,16 +256,5 @@ namespace OrthancStone
     DebugDisplayObjRefCountsInMap("multiframeVolumeLoaders_", multiframeVolumeLoaders_);
     DebugDisplayObjRefCountsInMap("dicomVolumeImageMPRSlicers_", dicomVolumeImageMPRSlicers_);
     DebugDisplayObjRefCountsInMap("dicomStructureSetLoaders_", dicomStructureSetLoaders_);
-  }
-
-  /**
-  This method could have been called StripSpacesAndChangeToLower but we might want to 
-  add some UUID validation to the argument
-  */
-  void LoaderCache::NormalizeUuid(std::string& uuid)
-  {
-    std::string temp = Orthanc::Toolbox::StripSpaces(uuid);
-    Orthanc::Toolbox::ToLowerCase(temp);
-    uuid.swap(temp);
   }
 }

@@ -28,7 +28,7 @@
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
 #include "../../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
-#include "../../../../OrthancStone/Sources/Viewport/SdlViewport.h"
+#include "../../../Platforms/Sdl/SdlViewport.h"
 
 #include <Compatibility.h>  // For std::unique_ptr<>
 #include <OrthancException.h>
@@ -110,7 +110,8 @@ int main(int argc, char* argv[])
   try
   {
     OrthancStone::StoneInitialize();
-
+    OrthancStone::SdlWindow::GlobalInitialize();
+    
     ProcessOptions(argc, argv);
 
     //Orthanc::Logging::EnableInfoLevel(true);
@@ -252,6 +253,7 @@ int main(int argc, char* argv[])
       }
     }
 
+    OrthancStone::SdlWindow::GlobalFinalize();
     OrthancStone::StoneFinalize();
     return 0;
   }

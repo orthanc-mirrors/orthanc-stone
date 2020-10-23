@@ -21,9 +21,11 @@
 
 #include "SingleFrameViewerApplication.h"
 
-#include "../../../../OrthancStone/Sources/Loaders/WebAssemblyLoadersContext.h"
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
+#include "../../../Platforms/WebAssembly/WebGLViewport.h"
+#include "../../../Platforms/WebAssembly/WebAssemblyLoadersContext.h"
+#include "../../../Platforms/WebAssembly/WebGLViewportsRegistry.h"
 
 #include <Compatibility.h>  // For std::unique_ptr<>
 #include <Toolbox.h>
@@ -114,12 +116,13 @@ extern "C"
                                         "Only one single viewport is available for this application");
       }
 
-      boost::shared_ptr<OrthancStone::WebGLViewport> viewport(OrthancStone::GetWebGLViewportsRegistry().Add(canvasId));
+      boost::shared_ptr<OrthancStone::WebGLViewport> viewport(
+        OrthancStone::WebGLViewportsRegistry::GetGlobalRegistry().Add(canvasId));
       application_ = OrthancStone::Application::Create(*context_, viewport);
 
       {
         OrthancStone::WebGLViewportsRegistry::Accessor accessor(
-          OrthancStone::GetWebGLViewportsRegistry(), canvasId);
+          OrthancStone::WebGLViewportsRegistry::GetGlobalRegistry(), canvasId);
 
         if (accessor.IsValid())
         {

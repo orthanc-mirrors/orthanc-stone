@@ -56,45 +56,11 @@ if (ORTHANC_SANDBOXED)
     message(FATAL_ERROR "Cannot enable curl in sandboxed environments")
   endif()
 
-  if (ENABLE_SDL)
-    message(FATAL_ERROR "Cannot enable SDL in sandboxed environments")
-  endif()
-
   if (ENABLE_SSL)
     message(FATAL_ERROR "Cannot enable SSL in sandboxed environments")
   endif()
 endif()
 
-if (ENABLE_OPENGL)
-  if (NOT ENABLE_SDL AND NOT ENABLE_WASM)
-    message(FATAL_ERROR "Cannot enable OpenGL if WebAssembly and SDL are both disabled")
-  endif()
-endif()
-
-if (ENABLE_WASM)
-  if (NOT ORTHANC_SANDBOXED)
-    message(FATAL_ERROR "WebAssembly target must me configured as sandboxed")
-  endif()
-
-  if (NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-    message(FATAL_ERROR "WebAssembly target requires the emscripten compiler")    
-  endif()
-
-  set(ENABLE_THREADS OFF)
-  set(ENABLE_WEB_CLIENT OFF)
-  add_definitions(-DORTHANC_ENABLE_WASM=1)
-else()
-  if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten" OR
-      CMAKE_SYSTEM_NAME STREQUAL "PNaCl" OR
-      CMAKE_SYSTEM_NAME STREQUAL "NaCl32" OR
-      CMAKE_SYSTEM_NAME STREQUAL "NaCl64")
-    message(FATAL_ERROR "Trying to use a Web compiler for a native build")
-  endif()
-
-  set(ENABLE_THREADS ON)
-  add_definitions(-DORTHANC_ENABLE_WASM=0)
-endif()
-  
 
 #####################################################################
 ## Configure mandatory third-party components
@@ -114,21 +80,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/PixmanConfiguration.cmake)
 if (ENABLE_WEB_CLIENT)
   list(APPEND ORTHANC_STONE_SOURCES
     ${ORTHANC_STONE_ROOT}/Sources/Toolbox/OrthancDatasets/OrthancHttpConnection.cpp
-    )
-endif()
-
-
-if(ENABLE_SDL)
-  message("SDL is enabled")
-  include(${CMAKE_CURRENT_LIST_DIR}/SdlConfiguration.cmake)
-  add_definitions(
-    -DORTHANC_ENABLE_SDL=1
-    )
-else()
-  message("SDL is disabled")
-  unset(USE_SYSTEM_SDL CACHE)
-  add_definitions(
-    -DORTHANC_ENABLE_SDL=0
     )
 endif()
 
@@ -200,13 +151,6 @@ endif()
 ## System-specific patches
 #####################################################################
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows" AND
-    NOT MSVC AND
-    ENABLE_SDL)
-  # This is necessary when compiling EXE for Windows using MinGW
-  link_libraries(mingw32)
-endif()
-
 if (ORTHANC_SANDBOXED)
   # Remove functions not suitable for a sandboxed environment
   list(REMOVE_ITEM ORTHANC_CORE_SOURCES
@@ -221,23 +165,6 @@ endif()
 #####################################################################
 ## All the source files required to build Stone of Orthanc
 #####################################################################
-
-if (ENABLE_SDL)
-  list(APPEND ORTHANC_STONE_SOURCES
-    ${ORTHANC_STONE_ROOT}/Sources/Viewport/SdlWindow.cpp
-    ${ORTHANC_STONE_ROOT}/Sources/Viewport/SdlWindow.h
-    )
-
-  if (ENABLE_OPENGL)
-    list(APPEND ORTHANC_STONE_SOURCES
-      ${ORTHANC_STONE_ROOT}/Sources/OpenGL/SdlOpenGLContext.cpp
-      ${ORTHANC_STONE_ROOT}/Sources/OpenGL/SdlOpenGLContext.h
-      ${ORTHANC_STONE_ROOT}/Sources/Viewport/SdlViewport.cpp
-      ${ORTHANC_STONE_ROOT}/Sources/Viewport/SdlViewport.h
-      )
-  endif()
-endif()
-
 
 if (ENABLE_DCMTK)
   list(APPEND ORTHANC_STONE_SOURCES
@@ -255,17 +182,6 @@ if (NOT ORTHANC_SANDBOXED AND ENABLE_THREADS AND ENABLE_WEB_CLIENT)
     ${ORTHANC_STONE_ROOT}/Sources/Loaders/GenericLoadersContext.h
     ${ORTHANC_STONE_ROOT}/Sources/Oracle/GenericOracleRunner.cpp
     ${ORTHANC_STONE_ROOT}/Sources/Oracle/ThreadedOracle.cpp
-    )
-endif()
-
-
-if (ENABLE_WASM)
-  list(APPEND ORTHANC_STONE_SOURCES
-    ${ORTHANC_STONE_ROOT}/Sources/Loaders/WebAssemblyLoadersContext.cpp
-    ${ORTHANC_STONE_ROOT}/Sources/Oracle/WebAssemblyOracle.cpp
-    ${ORTHANC_STONE_ROOT}/Sources/Viewport/WebAssemblyCairoViewport.cpp
-    ${ORTHANC_STONE_ROOT}/Sources/Viewport/WebAssemblyViewport.cpp
-    ${ORTHANC_STONE_ROOT}/Sources/Viewport/WebAssemblyViewport.h
     )
 endif()
 
@@ -310,8 +226,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Sources/Loaders/IFetchingItemsSorter.h
   ${ORTHANC_STONE_ROOT}/Sources/Loaders/IFetchingStrategy.h
   ${ORTHANC_STONE_ROOT}/Sources/Loaders/LoadedDicomResources.cpp
-  ${ORTHANC_STONE_ROOT}/Sources/Loaders/LoaderCache.cpp
-  ${ORTHANC_STONE_ROOT}/Sources/Loaders/LoaderCache.h
   ${ORTHANC_STONE_ROOT}/Sources/Loaders/LoaderStateMachine.cpp
   ${ORTHANC_STONE_ROOT}/Sources/Loaders/LoaderStateMachine.h
   ${ORTHANC_STONE_ROOT}/Sources/Loaders/OrthancMultiframeVolumeLoader.cpp
@@ -533,8 +447,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${PIXMAN_SOURCES}
 
   # Optional components
-  ${SDL_SOURCES}
-  ${QT_SOURCES}
   ${GLEW_SOURCES}
   )
 
@@ -578,16 +490,8 @@ if (ENABLE_OPENGL)
     ${ORTHANC_STONE_ROOT}/Sources/Scene2D/Internals/OpenGLTextureProgram.cpp
     ${ORTHANC_STONE_ROOT}/Sources/Scene2D/Internals/OpenGLTextureProgram.h
     )
-
-  if (ENABLE_WASM)
-    list(APPEND ORTHANC_STONE_SOURCES
-      ${ORTHANC_STONE_ROOT}/Sources/OpenGL/WebAssemblyOpenGLContext.cpp
-      ${ORTHANC_STONE_ROOT}/Sources/OpenGL/WebAssemblyOpenGLContext.h
-      ${ORTHANC_STONE_ROOT}/Sources/Viewport/WebGLViewport.cpp
-      ${ORTHANC_STONE_ROOT}/Sources/Viewport/WebGLViewportsRegistry.cpp
-      )
-  endif()
 endif()
+
 
 ##
 ## TEST - Automatically add all ".h" headers to the list of sources

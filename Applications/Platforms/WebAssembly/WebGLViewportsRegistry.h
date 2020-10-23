@@ -79,5 +79,13 @@ namespace OrthancStone
 
       IViewport::ILock& GetViewport() const;
     };
+
+
+
+    static void FinalizeGlobalRegistry();
+  
+    static void SetGlobalRegistryTimeout(double timeout);
+
+    static WebGLViewportsRegistry& GetGlobalRegistry();
   };
 }

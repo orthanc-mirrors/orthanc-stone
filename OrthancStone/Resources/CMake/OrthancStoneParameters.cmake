@@ -74,12 +74,13 @@ endif()
 ## CMake parameters tunable by the user
 #####################################################################
 
+set(ENABLE_OPENGL ON CACHE BOOL "Enable support of OpenGL")
+
 # Advanced parameters to fine-tune linking against system libraries
 set(USE_SYSTEM_CAIRO ON CACHE BOOL "Use the system version of Cairo")
 set(USE_SYSTEM_FREETYPE ON CACHE BOOL "Use the system version of Freetype")
 set(USE_SYSTEM_GLEW ON CACHE BOOL "Use the system version of glew (for Windows only)")
 set(USE_SYSTEM_PIXMAN ON CACHE BOOL "Use the system version of Pixman")
-set(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 
 
 
@@ -88,5 +89,4 @@ set(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 ## the Stone of Orthanc
 #####################################################################
 
-set(ENABLE_OPENGL ON CACHE BOOL "Enable support of OpenGL")
-set(ENABLE_WASM OFF CACHE INTERNAL "Enable support of WebAssembly")
+set(ENABLE_THREADS ON CACHE INTERNAL "Enable threading support (must be false for WebAssembly)")

@@ -21,9 +21,9 @@
 
 #include "WebGLViewport.h"
 
-#include "../StoneException.h"
-#include "../Scene2D/OpenGLCompositor.h"
-#include "../Scene2DViewport/ViewportController.h"
+#include "../../../OrthancStone/Sources/StoneException.h"
+#include "../../../OrthancStone/Sources/Scene2D/OpenGLCompositor.h"
+#include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
 
 namespace OrthancStone
 {

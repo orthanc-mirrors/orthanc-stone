@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../OrthancStone.h"
+#include "../../../OrthancStone/Sources/OrthancStone.h"
 
 #if !defined(ORTHANC_ENABLE_WASM)
 #  error The macro ORTHANC_ENABLE_WASM must be defined
@@ -31,12 +31,12 @@
 #  error This file can only compiled for WebAssembly
 #endif
 
-#include "../Messages/IObservable.h"
-#include "../Messages/IMessageEmitter.h"
-#include "IOracle.h"
+#include "../../../OrthancStone/Sources/Messages/IObservable.h"
+#include "../../../OrthancStone/Sources/Messages/IMessageEmitter.h"
+#include "../../../OrthancStone/Sources/Oracle/IOracle.h"
 
 #if ORTHANC_ENABLE_DCMTK == 1
-#  include "../Toolbox/ParsedDicomCache.h"
+#  include "../../../OrthancStone/Sources/Toolbox/ParsedDicomCache.h"
 #endif
 
 #include <Compatibility.h>  // For ORTHANC_OVERRIDE

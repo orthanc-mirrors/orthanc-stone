@@ -21,8 +21,8 @@
 
 #if defined(ORTHANC_BUILDING_STONE_LIBRARY) && ORTHANC_BUILDING_STONE_LIBRARY == 1
 #  include "WebAssemblyCairoViewport.h"
-#  include "../Scene2D/CairoCompositor.h"
-#  include "../Scene2DViewport/ViewportController.h"
+#  include "../../../OrthancStone/Sources/Scene2D/CairoCompositor.h"
+#  include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
 #else
 // This is the case when using the WebAssembly side module, and this
 // source file must be compiled within the WebAssembly main module

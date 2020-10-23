@@ -20,7 +20,7 @@
 
 
 #include "SdlOpenGLContext.h"
-#include "../StoneException.h"
+#include "../../../OrthancStone/Sources/StoneException.h"
 
 #if ORTHANC_ENABLE_SDL == 1
 

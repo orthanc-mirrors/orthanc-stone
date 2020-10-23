@@ -66,7 +66,6 @@
 #include <Loaders/DicomResourcesLoader.h>
 #include <Loaders/SeriesMetadataLoader.h>
 #include <Loaders/SeriesThumbnailsLoader.h>
-#include <Loaders/WebAssemblyLoadersContext.h>
 #include <Messages/ObserverBase.h>
 #include <Oracle/ParseDicomFromWadoCommand.h>
 #include <Oracle/ParseDicomSuccessMessage.h>
@@ -79,8 +78,12 @@
 #include <Toolbox/GeometryToolbox.h>
 #include <Toolbox/SortedFrames.h>
 #include <Viewport/DefaultViewportInteractor.h>
-#include <Viewport/WebAssemblyCairoViewport.h>
-#include <Viewport/WebGLViewport.h>
+
+// WebAssembly includes
+#include <WebAssemblyCairoViewport.h>
+#include <WebAssemblyLoadersContext.h>
+#include <WebGLViewport.h>
+
 
 #include <boost/make_shared.hpp>
 #include <stdio.h>

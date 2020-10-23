@@ -21,12 +21,17 @@
 
 #include "WebGLViewportsRegistry.h"
 
-#include "../Toolbox/GenericToolbox.h"
-#include "../Scene2DViewport/ViewportController.h"
+#include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
+#include "../../../OrthancStone/Sources/Toolbox/GenericToolbox.h"
 
 #include <OrthancException.h>
 
 #include <boost/make_shared.hpp>
+
+
+static double viewportsTimeout_ = 1000;
+static std::unique_ptr<OrthancStone::WebGLViewportsRegistry>  globalRegistry_;
+
 
 namespace OrthancStone
 {
@@ -182,5 +187,35 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
+  }
+
+
+  void WebGLViewportsRegistry::FinalizeGlobalRegistry()
+  {
+    globalRegistry_.reset();
+  }
+
+
+  void WebGLViewportsRegistry::SetGlobalRegistryTimeout(double timeout)
+  {
+    if (globalRegistry_.get())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      viewportsTimeout_ = timeout;
+    }
+  }
+
+
+  WebGLViewportsRegistry& WebGLViewportsRegistry::GetGlobalRegistry()
+  {
+    if (globalRegistry_.get() == NULL)
+    {
+      globalRegistry_.reset(new WebGLViewportsRegistry(viewportsTimeout_));
+    }
+
+    return *globalRegistry_;
   }
 }

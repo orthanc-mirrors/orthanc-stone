@@ -82,11 +82,6 @@ namespace OrthancStone
 
     void ClearCache();
 
-    /**
-    Service method static and exposed for unit tests.
-    */
-    static void NormalizeUuid(std::string& uuid);
-
   protected:
     
     void DebugDisplayObjRefCounts();

@@ -36,10 +36,10 @@
 #  error Support for OpenGL is disabled
 #endif
 
-#include "../OpenGL/SdlOpenGLContext.h"
-#include "../Scene2D/OpenGLCompositor.h"
-#include "../Scene2D/CairoCompositor.h"
-#include "IViewport.h"
+#include "SdlOpenGLContext.h"
+#include "../../../OrthancStone/Sources/Scene2D/OpenGLCompositor.h"
+#include "../../../OrthancStone/Sources/Scene2D/CairoCompositor.h"
+#include "../../../OrthancStone/Sources/Viewport/IViewport.h"
 
 #include <SDL_events.h>
 

@@ -23,6 +23,14 @@
 
 #include "../OrthancStone.h"
 
+#if !defined(ORTHANC_ENABLE_SDL)
+#  error The macro ORTHANC_ENABLE_SDL must be defined
+#endif
+
+#if !defined(ORTHANC_ENABLE_WASM)
+#  error The macro ORTHANC_ENABLE_WASM must be defined
+#endif
+
 #if !defined(ORTHANC_ENABLE_OPENGL)
 #  error The macro ORTHANC_ENABLE_OPENGL must be defined
 #endif
@@ -44,73 +52,94 @@
 #  include <GL/glext.h>
 #endif
 
+
+
 #if ORTHANC_ENABLE_SDL == 1
-# include <SDL_video.h>
+#  include <SDL_video.h>
 
-# ifdef NDEBUG
+#  if !defined(NDEBUG)  // Is build type "debug"?
+//   glGetError is very expensive!
+#    include <OrthancException.h>
+#    define ORTHANC_OPENGL_CHECK(name)                                  \
+  if(true)                                                              \
+  {                                                                     \
+    GLenum error = glGetError();                                        \
+    if (error != GL_NO_ERROR) {                                         \
+      SDL_GLContext ctx = SDL_GL_GetCurrentContext();                   \
+      LOG(ERROR) << "Error when calling " << name << " | current context is: 0x" \
+                 << std::hex << ctx <<  " | error code is " << error;   \
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,"OpenGL error in " name " | See log."); \
+    }                                                                   \
+  } else (void)0
 
-// glGetError is very expensive!
+#   define ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT(msg)                    \
+  if(true)                                                              \
+  {                                                                     \
+    SDL_GLContext ctx = SDL_GL_GetCurrentContext();                     \
+    LOG(TRACE) << msg << " | Current OpenGL context is " << std::hex << ctx; \
+  } else (void)0
 
-#   define ORTHANC_OPENGL_CHECK(name)
-#   define ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT(msg)
+#  endif /* NDEBUG */
+#endif  /* SDL */
 
-# else 
 
-#   define ORTHANC_OPENGL_CHECK(name) \
-if(true)                                                                                                                                \
-{                                                                                                                                       \
-  GLenum error = glGetError();                                                                                                          \
-  if (error != GL_NO_ERROR) {                                                                                                           \
-    SDL_GLContext ctx = SDL_GL_GetCurrentContext();                                                                                     \
-    LOG(ERROR) << "Error when calling " << name << " | current context is: 0x" << std::hex << ctx <<  " | error code is " << error;     \
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,"OpenGL error in " name " | See log.");                            \
-  }                                                                                                                                     \
-} else (void)0
-
-#   define ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT(msg)                          \
-if(true)                                                                   \
-{                                                                          \
-  SDL_GLContext ctx = SDL_GL_GetCurrentContext();                          \
-  LOG(TRACE) << msg << " | Current OpenGL context is " << std::hex << ctx; \
-} else (void)0
-
-# endif
-
-#endif
 
 #if ORTHANC_ENABLE_WASM == 1
-#include <emscripten/html5.h>
+#  include <emscripten/html5.h>
 
-#define ORTHANC_OPENGL_CHECK(name) \
-if(true)                                                                                                                                                                                    \
-{                                                                                                                                                                                           \
-  GLenum error = glGetError();                                                                                                                                                              \
-  if (error != GL_NO_ERROR) {                                                                                                                                                               \
-    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();                                                                                                           \
-    EM_BOOL lost = emscripten_is_webgl_context_lost(ctx);                                                                                                                                   \
-    LOG(ERROR) << "Error when calling " << name << " | current context is: 0x" << std::hex << ctx <<  " | error code is " << error << " | emscripten_is_webgl_context_lost = " << lost;     \
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,"OpenGL error in " name " | See log.");                                                                                \
-  }                                                                                                                                                                                         \
-} else (void)0
+#  if !defined(NDEBUG)  // Is build type "debug"?
+#    include <OrthancException.h>
+#    define ORTHANC_OPENGL_CHECK(name)                                  \
+  if(true)                                                              \
+  {                                                                     \
+    GLenum error = glGetError();                                        \
+    if (error != GL_NO_ERROR) {                                         \
+      EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context(); \
+      EM_BOOL lost = emscripten_is_webgl_context_lost(ctx);             \
+      LOG(ERROR) << "Error when calling " << name << " | current context is: 0x" \
+                 << std::hex << ctx <<  " | error code is " << error << " | emscripten_is_webgl_context_lost = " << lost; \
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,"OpenGL error in " name " | See log."); \
+    }                                                                   \
+  } else (void)0
 
-#define ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT(msg)                                 \
-if(true)                                                                          \
-{                                                                                 \
-  EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();   \
-  LOG(TRACE) << msg << " | Current OpenGL context is " << std::hex << ctx;        \
-} else (void)0
+#    define ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT(msg)                   \
+  if(true)                                                              \
+  {                                                                     \
+    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context(); \
+    LOG(TRACE) << msg << " | Current OpenGL context is " << std::hex << ctx; \
+  } else (void)0
 
-#define ORTHANC_CHECK_CURRENT_CONTEXT(context)                                                                                                         \
-if(true)                                                                                                                                               \
-{                                                                                                                                                      \
-  EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();                                                                        \
-  void* actualCtx = reinterpret_cast<void*>(ctx);                                                                                                      \
-  void* expectedCtx = context.DebugGetInternalContext();                                                                                               \
-  if(expectedCtx != actualCtx)                                                                                                                         \
-  {                                                                                                                                                    \
-    LOG(ERROR) << "Expected context was " << std::hex << expectedCtx << " while actual context is " << std::hex << actualCtx;                          \
-  }                                                                                                                                                    \
-} else (void)0
+#    define ORTHANC_CHECK_CURRENT_CONTEXT(context)                      \
+  if(true)                                                              \
+  {                                                                     \
+    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context(); \
+    void* actualCtx = reinterpret_cast<void*>(ctx);                     \
+    void* expectedCtx = context.DebugGetInternalContext();              \
+    if(expectedCtx != actualCtx)                                        \
+    {                                                                   \
+      LOG(ERROR) << "Expected context was " << std::hex << expectedCtx  \
+                 << " while actual context is " << std::hex << actualCtx; \
+    }                                                                   \
+  } else (void)0
 
+#  endif /* NDEBUG */
+#endif /* WASM */
+
+
+
+
+
+// Define void implementation of debug macros if they were not defined above
+
+#if !defined(ORTHANC_OPENGL_CHECK)
+#  define ORTHANC_OPENGL_CHECK(name)
+#endif
+
+#if !defined(ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT)
+#  define ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT(msg)
+#endif
+
+#if !defined(ORTHANC_CHECK_CURRENT_CONTEXT)
+#  define ORTHANC_CHECK_CURRENT_CONTEXT(context)
 #endif
 

@@ -21,7 +21,7 @@
 
 #include "WebAssemblyOpenGLContext.h"
 
-#include "../StoneException.h"
+#include "../../../OrthancStone/Sources/StoneException.h"
 
 #include <OrthancException.h>
 

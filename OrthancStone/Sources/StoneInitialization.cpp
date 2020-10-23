@@ -21,10 +21,6 @@
 
 #include "StoneInitialization.h"
 
-#if !defined(ORTHANC_ENABLE_SDL)
-#  error Macro ORTHANC_ENABLE_SDL must be defined
-#endif
-
 #if !defined(ORTHANC_ENABLE_SSL)
 #  error Macro ORTHANC_ENABLE_SSL must be defined
 #endif
@@ -40,21 +36,12 @@
 #  endif
 #endif
 
-#if ORTHANC_ENABLE_SDL == 1
-#  include "Viewport/SdlWindow.h"
-#endif
-
 #if ORTHANC_ENABLE_CURL == 1
 #  include <HttpClient.h>
 #endif
 
 #if ORTHANC_ENABLE_DCMTK == 1
 #  include <DicomParsing/FromDcmtkBridge.h>
-#endif
-
-#if ORTHANC_ENABLE_WASM == 1
-static double viewportsTimeout_ = 1000;
-static std::unique_ptr<OrthancStone::WebGLViewportsRegistry>  viewportsRegistry_;
 #endif
 
 #include "Toolbox/LinearAlgebra.h"
@@ -150,23 +137,11 @@ namespace OrthancStone
         }
       }
     }
-
-#if ORTHANC_ENABLE_SDL == 1
-    OrthancStone::SdlWindow::GlobalInitialize();
-#endif
   }
   
 
   void StoneFinalize()
   {
-#if ORTHANC_ENABLE_WASM == 1
-    viewportsRegistry_.reset();
-#endif
-    
-#if ORTHANC_ENABLE_SDL == 1
-    OrthancStone::SdlWindow::GlobalFinalize();
-#endif
-    
 #if ORTHANC_ENABLE_DCMTK == 1
     Orthanc::FromDcmtkBridge::FinalizeCodecs();
 #endif
@@ -181,32 +156,4 @@ namespace OrthancStone
 
     Orthanc::Logging::Finalize();
   }
-
-
-#if ORTHANC_ENABLE_WASM == 1
-  void SetWebGLViewportsRegistryTimeout(double timeout)
-  {
-    if (viewportsRegistry_.get())
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    else
-    {
-      viewportsTimeout_ = timeout;
-    }
-  }
-#endif
-
-
-#if ORTHANC_ENABLE_WASM == 1
-  WebGLViewportsRegistry& GetWebGLViewportsRegistry()
-  {
-    if (viewportsRegistry_.get() == NULL)
-    {
-      viewportsRegistry_.reset(new WebGLViewportsRegistry(viewportsTimeout_));
-    }
-
-    return *viewportsRegistry_;
-  }
-#endif
 }

@@ -20,7 +20,7 @@
 
 #include "SdlViewport.h"
 
-#include "../Scene2DViewport/ViewportController.h"
+#include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
 
 #include <OrthancException.h>
 

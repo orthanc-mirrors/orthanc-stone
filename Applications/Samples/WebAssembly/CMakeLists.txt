@@ -49,17 +49,16 @@ add_definitions(
 # ---------------------------------------------------------------
 set(ALLOW_DOWNLOADS ON)
 
-include(${CMAKE_SOURCE_DIR}/../../../OrthancStone/Resources/CMake/OrthancStoneParameters.cmake)
+include(${CMAKE_SOURCE_DIR}/../../Platforms/WebAssembly/OrthancStoneWebAssemblyParameters.cmake)
 
 SET(ENABLE_DCMTK OFF)  # Not necessary
 SET(ENABLE_GOOGLE_TEST OFF)
 SET(ENABLE_LOCALE ON)  # Necessary for text rendering
-SET(ENABLE_WASM ON)
 SET(ORTHANC_SANDBOXED ON)
 
 # this will set up the build system for Stone of Orthanc and will
 # populate the ORTHANC_STONE_SOURCES CMake variable
-include(${ORTHANC_STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
+include(${CMAKE_SOURCE_DIR}/../../Platforms/WebAssembly/OrthancStoneWebAssemblyConfiguration.cmake)
 
 
 # We embed a font to be used for on-screen overlays

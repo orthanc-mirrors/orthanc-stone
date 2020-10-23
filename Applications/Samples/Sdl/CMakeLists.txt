@@ -21,7 +21,7 @@ cmake_minimum_required(VERSION 2.8.10)
 
 project(OrthancStone)
 
-include(${CMAKE_SOURCE_DIR}/../../../OrthancStone/Resources/CMake/OrthancStoneParameters.cmake)
+include(${CMAKE_SOURCE_DIR}/../../Platforms/Sdl/OrthancStoneSdlParameters.cmake)
 
 if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
   set(ORTHANC_BOOST_COMPONENTS program_options)
@@ -43,7 +43,7 @@ set(ENABLE_DCMTK ON)  # <==
 set(ENABLE_SDL ON)
 SET(ENABLE_PUGIXML ON)   # To test compilation of OsiriX annotations
 
-include(${ORTHANC_STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
+include(${CMAKE_SOURCE_DIR}/../../Platforms/Sdl/OrthancStoneSdlConfiguration.cmake)
 include(${CMAKE_SOURCE_DIR}/Utilities.cmake)
 
 if (NOT ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")

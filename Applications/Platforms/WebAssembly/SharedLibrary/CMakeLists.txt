@@ -58,17 +58,16 @@ add_definitions(
 # Stone of Orthanc configuration
 # ---------------------------------------------------------------
 
-include(${CMAKE_SOURCE_DIR}/../../Resources/CMake/OrthancStoneParameters.cmake)
+include(${CMAKE_SOURCE_DIR}/../OrthancStoneWebAssemblyParameters.cmake)
 
 SET(ENABLE_DCMTK ON)
 SET(ENABLE_DCMTK_NETWORKING OFF)
 SET(ENABLE_DCMTK_TRANSCODING OFF)
 SET(ENABLE_GOOGLE_TEST OFF)
 SET(ENABLE_LOCALE ON)  # Necessary for text rendering
-SET(ENABLE_WASM ON)
 SET(ORTHANC_SANDBOXED ON)
 
-include(${CMAKE_SOURCE_DIR}/../../Resources/CMake/OrthancStoneConfiguration.cmake)
+include(${CMAKE_SOURCE_DIR}/../OrthancStoneWebAssemblyConfiguration.cmake)
 
 
 

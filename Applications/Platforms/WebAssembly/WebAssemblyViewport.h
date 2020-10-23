@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../OrthancStone.h"
+#include "../../../OrthancStone/Sources/OrthancStone.h"
 
 #if !defined(ORTHANC_ENABLE_WASM)
 #  error Macro ORTHANC_ENABLE_WASM must be defined
@@ -31,8 +31,8 @@
 #  error This file can only be used if targeting WebAssembly
 #endif
 
-#include "IViewport.h"
-#include "IViewportInteractor.h"
+#include "../../../OrthancStone/Sources/Viewport/IViewport.h"
+#include "../../../OrthancStone/Sources/Viewport/IViewportInteractor.h"
 
 #include <Compatibility.h>
 

@@ -27,9 +27,9 @@
 // Stone of Orthanc includes
 #include "../../../../OrthancStone/Sources/Loaders/GenericLoadersContext.h"
 #include "../../../../OrthancStone/Sources/OpenGL/OpenGLIncludes.h"
-#include "../../../../OrthancStone/Sources/OpenGL/SdlOpenGLContext.h"
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
+#include "../../../Platforms/Sdl/SdlOpenGLContext.h"
 
 // Orthanc (a.o. for screenshot capture)
 #include <Compatibility.h>  // For std::unique_ptr<>
@@ -451,6 +451,7 @@ int main(int argc, char* argv[])
   using namespace OrthancStone;
 
   StoneInitialize();
+  OrthancStone::SdlWindow::GlobalInitialize();
 
   try
   {
@@ -462,7 +463,8 @@ int main(int argc, char* argv[])
   {
     LOG(ERROR) << "EXCEPTION: " << e.What();
   }
-
+  
+  OrthancStone::SdlWindow::GlobalFinalize();
   StoneFinalize();
 
   return 0;

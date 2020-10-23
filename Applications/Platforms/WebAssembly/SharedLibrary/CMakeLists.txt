@@ -18,6 +18,7 @@
 
 
 cmake_minimum_required(VERSION 2.8.3)
+cmake_policy(SET CMP0058 NEW)
 
 project(OrthancStoneModule)
 
@@ -29,7 +30,7 @@ message("=== IMPORTANT: Make sure to use a recent version of Emscripten (prefera
 message("")
 
 
-set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/OrthancStoneModule" CACHE PATH "Where to put the WebAssembly binaries")
+set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../../../wasm-binaries/OrthancStoneModule" CACHE PATH "Where to put the WebAssembly binaries")
 
 
 # Ask for the generation of a side module
@@ -80,9 +81,9 @@ include(${CMAKE_SOURCE_DIR}/../OrthancStoneWebAssemblyConfiguration.cmake)
 #  $ grep -lrE 'emscripten_' ../../Sources/
 
 set(SOURCES_WITH_EMSCRIPTEN_CALLBACKS
-  ${ORTHANC_STONE_ROOT}/Sources/Oracle/WebAssemblyOracle.cpp
-  ${ORTHANC_STONE_ROOT}/Sources/Viewport/WebAssemblyViewport.cpp
-  ${ORTHANC_STONE_ROOT}/Sources/Viewport/WebAssemblyCairoViewport.cpp
+  ${CMAKE_SOURCE_DIR}/../WebAssemblyOracle.cpp
+  ${CMAKE_SOURCE_DIR}/../WebAssemblyViewport.cpp
+  ${CMAKE_SOURCE_DIR}/../WebAssemblyCairoViewport.cpp
   )
 
 list(REMOVE_ITEM ORTHANC_STONE_SOURCES
@@ -90,7 +91,7 @@ list(REMOVE_ITEM ORTHANC_STONE_SOURCES
   )
 
 configure_file(
-  ${CMAKE_SOURCE_DIR}/../OrthancStone.h.in
+  ${ORTHANC_STONE_ROOT}/SharedLibrary/OrthancStone.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/Include/orthanc-stone/OrthancStone.h
   )
 
@@ -100,7 +101,7 @@ configure_file(
   )
 
 file(
-  COPY ${CMAKE_SOURCE_DIR}/../../Sources/
+  COPY ${CMAKE_SOURCE_DIR}/../../../../OrthancStone/Sources/
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Include/orthanc-stone
   NO_SOURCE_PERMISSIONS
   FILES_MATCHING

@@ -19,6 +19,7 @@
  **/
 
 
+#include <EmbeddedResources.h>
 #include <emscripten.h>
 
 
@@ -72,10 +73,15 @@
 #include <Scene2D/ColorTextureSceneLayer.h>
 #include <Scene2D/FloatTextureSceneLayer.h>
 #include <Scene2D/PolylineSceneLayer.h>
+#include <Scene2D/TextSceneLayer.h>
 #include <Scene2DViewport/ViewportController.h>
 #include <StoneException.h>
 #include <Toolbox/DicomInstanceParameters.h>
 #include <Toolbox/GeometryToolbox.h>
+#include <Toolbox/OsiriX/AngleAnnotation.h>
+#include <Toolbox/OsiriX/CollectionOfAnnotations.h>
+#include <Toolbox/OsiriX/LineAnnotation.h>
+#include <Toolbox/OsiriX/TextAnnotation.h>
 #include <Toolbox/SortedFrames.h>
 #include <Viewport/DefaultViewportInteractor.h>
 
@@ -946,6 +952,22 @@ public:
       return false;
     }
   }
+
+
+  bool ProjectPoint(double& x,
+                    double& y,
+                    const OrthancStone::Vector& v) const
+  {
+    if (IsValid())
+    {
+      coordinates_.ProjectPoint(x, y, v);
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
 };
   
 
@@ -969,6 +991,8 @@ public:
 private:
   static const int LAYER_TEXTURE = 0;
   static const int LAYER_REFERENCE_LINES = 1;
+  static const int LAYER_ANNOTATIONS = 2;
+  static const int LAYER_TEMP = 3;  // TODO - REMOVE
   
   
   class ICommand : public Orthanc::IDynamicObject
@@ -1052,6 +1076,7 @@ private:
       GetViewport().DisplayCurrentFrame();
     }
   };
+
 
   class SetLowQualityFrame : public ICommand
   {
@@ -1282,6 +1307,8 @@ private:
   FrameGeometry                                currentFrameGeometry_;
   std::list<PrefetchItem>                      prefetchQueue_;
 
+  boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  annotations_;  
+
   void ScheduleNextPrefetch()
   {
     while (!prefetchQueue_.empty())
@@ -1339,6 +1366,7 @@ private:
       }
     }
   }
+
 
   void DisplayCurrentFrame()
   {
@@ -1401,6 +1429,7 @@ private:
       currentFrameGeometry_ = FrameGeometry();
     }
   }
+  
 
   void ClearViewport()
   {
@@ -1482,6 +1511,96 @@ private:
         pixelSpacingX, pixelSpacingY, frames_->GetFrameTags(index));
       layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
 
+
+      /****
+       * BEGINNING OF EXPERIMENTAL CODE
+       ****/
+      
+      std::unique_ptr<OrthancStone::ISceneLayer>  annotationsLayer;  // TODO - Macro layer
+      std::unique_ptr<OrthancStone::ISceneLayer>  tempLayer;  // TODO - Macro layer
+
+      if (annotations_)
+      {
+        std::set<size_t> a;
+        annotations_->LookupSopInstanceUid(a, sopInstanceUid);
+        if (!a.empty())
+        {
+          using namespace OrthancStone::OsiriX;
+
+          std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
+          
+          for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
+          {
+            const Annotation& annotation = annotations_->GetAnnotation(*it);
+
+            switch (annotation.GetType())
+            {
+              case Annotation::Type_Line:
+              {
+                const LineAnnotation& line = dynamic_cast<const LineAnnotation&>(annotation);
+                double x1, y1, x2, y2;
+                if (GetCurrentFrameGeometry().ProjectPoint(x1, y1, line.GetPoint1()) &&
+                    GetCurrentFrameGeometry().ProjectPoint(x2, y2, line.GetPoint2()))
+                {
+                  OrthancStone::PolylineSceneLayer::Chain chain;
+                  chain.push_back(OrthancStone::ScenePoint2D(x1, y1));
+                  chain.push_back(OrthancStone::ScenePoint2D(x2, y2));
+
+                  // TODO - IsArrow
+                  
+                  layer->AddChain(chain, false, 0, 255, 0);
+                }
+                break;
+              }
+
+              case Annotation::Type_Angle:
+              {
+                const AngleAnnotation& angle = dynamic_cast<const AngleAnnotation&>(annotation);
+                double x1, y1, x2, y2, x3, y3;
+                if (GetCurrentFrameGeometry().ProjectPoint(x1, y1, angle.GetA()) &&
+                    GetCurrentFrameGeometry().ProjectPoint(x2, y2, angle.GetCenter()) &&
+                    GetCurrentFrameGeometry().ProjectPoint(x3, y3, angle.GetB()))
+                {
+                  OrthancStone::PolylineSceneLayer::Chain chain;
+                  chain.push_back(OrthancStone::ScenePoint2D(x1, y1));
+                  chain.push_back(OrthancStone::ScenePoint2D(x2, y2));
+                  chain.push_back(OrthancStone::ScenePoint2D(x3, y3));
+                  layer->AddChain(chain, false, 0, 255, 0);
+                }
+                break;
+              }
+
+              case Annotation::Type_Text:
+              {
+                const TextAnnotation& text = dynamic_cast<const TextAnnotation&>(annotation);
+                double x, y;
+                OrthancStone::LinearAlgebra::Print(text.GetCenter());
+                if (GetCurrentFrameGeometry().ProjectPoint(x, y, text.GetCenter()))
+                {
+                  std::unique_ptr<OrthancStone::TextSceneLayer> layer2(new OrthancStone::TextSceneLayer());
+                  layer2->SetPosition(x, y);
+                  layer2->SetText(text.GetText());
+                  layer2->SetAnchor(OrthancStone::BitmapAnchor_Center);
+                  layer2->SetColor(255, 0, 0);
+                  tempLayer.reset(layer2.release());
+                }
+                break;
+              }
+
+              default:
+                LOG(ERROR) << "Annotation type not implemented: " << annotation.GetType();
+            }
+          }
+
+          annotationsLayer.reset(layer.release());
+        }
+      }
+
+      /****
+       * END OF EXPERIMENTAL CODE
+       ****/     
+
+      
       if (layer.get() == NULL)
       {
         return false;
@@ -1493,6 +1612,24 @@ private:
         OrthancStone::Scene2D& scene = lock->GetController().GetScene();
 
         scene.SetLayer(LAYER_TEXTURE, layer.release());
+
+        if (annotationsLayer.get() != NULL)
+        {
+          scene.SetLayer(LAYER_ANNOTATIONS, annotationsLayer.release());
+        }
+        else
+        {
+          scene.DeleteLayer(LAYER_ANNOTATIONS);
+        }
+
+        if (tempLayer.get() != NULL)   // TODO - REMOVE
+        {
+          scene.SetLayer(LAYER_TEMP, tempLayer.release());
+        }
+        else
+        {
+          scene.DeleteLayer(LAYER_TEMP);
+        }
 
         if (fitNextContent_)
         {
@@ -1625,6 +1762,13 @@ private:
     {
       LOG(INFO) << "Creating WebGL viewport in canvas: " << canvas;
       viewport_ = OrthancStone::WebGLViewport::Create(canvas);
+    }
+
+    {
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+      std::string ttf;
+      Orthanc::EmbeddedResources::GetFileResource(ttf, Orthanc::EmbeddedResources::UBUNTU_FONT);
+      lock->GetCompositor().SetFont(0, ttf, 24 /* font size */, Orthanc::Encoding_Latin1);
     }
     
     emscripten_set_wheel_callback(viewport_->GetCanvasCssSelector().c_str(), this, true, OnWheel);
@@ -1774,6 +1918,17 @@ public:
       }
     }
   }
+
+
+  void UpdateCurrentFrame()
+  {
+    if (cursor_.get() != NULL)
+    {
+      unsigned int quality;
+      DisplayFrame(quality, cursor_->GetCurrentIndex());
+    }
+  }
+
 
   // This method is used when the layout of the HTML page changes,
   // which does not trigger the "emscripten_set_resize_callback()"
@@ -1995,6 +2150,12 @@ public:
   {
     viewport_->FitForPrint();
   }
+
+  void SetAnnotations(boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations> annotations)
+  {
+    annotations_ = annotations;
+  }
+
 };
 
 
@@ -2004,6 +2165,7 @@ public:
 typedef std::map<std::string, boost::shared_ptr<ViewerViewport> >  Viewports;
 static Viewports allViewports_;
 static bool showReferenceLines_ = true;
+static boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  annotations_;
 
 
 static void UpdateReferenceLines()
@@ -2153,6 +2315,7 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
       ViewerViewport::Create(*lock, source_, canvas, cache_, softwareRendering_));
     viewport->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
     viewport->AcquireObserver(new WebAssemblyObserver);
+    viewport->SetAnnotations(annotations_);
     allViewports_[canvas] = viewport;
     return viewport;
   }
@@ -2174,6 +2337,7 @@ extern "C"
 
     context_.reset(new OrthancStone::WebAssemblyLoadersContext(1, 4, 1));
     cache_.reset(new FramesCache);
+    annotations_.reset(new OrthancStone::OsiriX::CollectionOfAnnotations);
     
     DISPATCH_JAVASCRIPT_EVENT("StoneInitialized");
   }
@@ -2537,5 +2701,39 @@ extern "C"
       }
     }
     EXTERN_CATCH_EXCEPTIONS;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  int LoadOsiriXAnnotations(const char* xml,
+                            int clearPreviousAnnotations)
+  {
+    try
+    {
+      if (clearPreviousAnnotations)
+      {
+        annotations_->Clear();
+      }
+      
+      annotations_->LoadXml(xml);
+
+      for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
+      {
+        // TODO - Check if the viewport contains one of the SOP
+        // Instance UID from the loaded annotations => focus on this
+        // instance
+
+        // TODO - If no viewport contains the instance => monitor the
+        // "ResourcesLoader" as new series get loaded
+
+        assert(it->second != NULL);
+        it->second->UpdateCurrentFrame();
+      }
+
+      LOG(WARNING) << "Loaded " << annotations_->GetSize() << " annotations from OsiriX";
+      return 1;
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+    return 0;
   }
 }

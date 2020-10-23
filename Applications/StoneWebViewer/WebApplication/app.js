@@ -548,6 +548,31 @@ window.addEventListener('StoneInitialized', function() {
       app.leftMode = 'full';
     }
   }
+
+
+
+  // TODO - TEST
+  axios.get('length.xml')
+    .then(function (response) {
+      stone.LoadOsiriXAnnotations(response.data, false);
+    });
+  
+  axios.get('angle.xml')
+    .then(function (response) {
+      stone.LoadOsiriXAnnotations(response.data, false);
+    });
+  
+  axios.get('arrow.xml')
+    .then(function (response) {
+      stone.LoadOsiriXAnnotations(response.data, false);
+    });
+  
+  axios.get('text.xml')
+    .then(function (response) {
+      stone.LoadOsiriXAnnotations(response.data, false);
+    });
+  
+  
 });
 
 

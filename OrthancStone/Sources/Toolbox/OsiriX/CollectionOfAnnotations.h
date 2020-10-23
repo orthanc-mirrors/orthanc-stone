@@ -23,6 +23,7 @@
 
 #include "Annotation.h"
 
+#include <set>
 #include <vector>
 
 namespace OrthancStone
@@ -32,11 +33,19 @@ namespace OrthancStone
     class CollectionOfAnnotations : public boost::noncopyable
     {
     private:
+      typedef std::map<std::string, std::set<size_t> >  SopInstanceUidIndex;
+      
       std::vector<Annotation*>  annotations_;
+      SopInstanceUidIndex       index_;
 
     public:
-      ~CollectionOfAnnotations();
+      ~CollectionOfAnnotations()
+      {
+        Clear();
+      }
 
+      void Clear();
+      
       size_t GetSize() const
       {
         return annotations_.size();
@@ -46,8 +55,17 @@ namespace OrthancStone
 
       void AddAnnotation(Annotation* annotation);  // takes ownership
 
-      // Parse an XML from OsiriX
-      void ParseXml(const std::string& xml);
+      void LookupSopInstanceUid(std::set<size_t>& target,
+                                const std::string& sopInstanceUid) const;
+
+      // Load an XML from OsiriX
+      void LoadXml(const char* xml,
+                    size_t size);
+
+      void LoadXml(const std::string& xml)
+      {
+        LoadXml(xml.empty() ? NULL : xml.c_str(), xml.size());
+      }
     };
   }
 }

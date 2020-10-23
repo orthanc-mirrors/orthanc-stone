@@ -42,13 +42,16 @@ namespace OrthancStone
     }
 
       
-    CollectionOfAnnotations::~CollectionOfAnnotations()
+    void CollectionOfAnnotations::Clear()
     {
       for (size_t i = 0; i < annotations_.size(); i++)
       {
         assert(annotations_[i] != NULL);
         delete annotations_[i];
       }
+
+      annotations_.clear();
+      index_.clear();
     }
 
 
@@ -74,14 +77,44 @@ namespace OrthancStone
       }
       else
       {
+        size_t pos = annotations_.size();
         annotations_.push_back(annotation);
+
+        SopInstanceUidIndex::iterator found = index_.find(annotation->GetSopInstanceUid());
+        if (found == index_.end())
+        {
+          std::set<size_t> s;
+          s.insert(pos);
+          index_[annotation->GetSopInstanceUid()] = s;
+        }
+        else
+        {
+          found->second.insert(pos);
+        }
       }
     }
 
-    void CollectionOfAnnotations::ParseXml(const std::string& xml)
+
+    void CollectionOfAnnotations::LookupSopInstanceUid(std::set<size_t>& target,
+                                                       const std::string& sopInstanceUid) const
+    {
+      SopInstanceUidIndex::const_iterator found = index_.find(sopInstanceUid);
+      if (found == index_.end())
+      {
+        target.clear();
+      }
+      else
+      {
+        target = found->second;
+      }
+    }
+    
+
+    void CollectionOfAnnotations::LoadXml(const char* xml,
+                                          size_t size)
     {
       pugi::xml_document doc;
-      pugi::xml_parse_result result = doc.load_buffer(xml.empty() ? NULL : xml.c_str(), xml.size());
+      pugi::xml_parse_result result = doc.load_buffer(xml, size);
       if (!result)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);

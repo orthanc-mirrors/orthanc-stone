@@ -79,6 +79,20 @@ else()
   message(FATAL_ERROR "CMAKE_BUILD_TYPE must match either Debug, RelWithDebInfo or Release" )
 endif()
 
+
+# We embed a font to be used for on-screen overlays
+# ---------------------------------------------------------------
+
+DownloadPackage(
+  "a24b8136b8f3bb93f166baf97d9328de"
+  "http://orthanc.osimis.io/ThirdPartyDownloads/ubuntu-font-family-0.83.zip"
+  "${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83")
+
+EmbedResources(
+  UBUNTU_FONT  ${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83/Ubuntu-R.ttf
+  )
+
+
 ################################################################################
 
 

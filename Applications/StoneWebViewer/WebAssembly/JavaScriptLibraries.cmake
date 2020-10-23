@@ -48,6 +48,7 @@ install(
   FILES
   ${CMAKE_CURRENT_BINARY_DIR}/fontawesome-free-5.14.0-web/css/all.css
   ${CMAKE_CURRENT_BINARY_DIR}/bootstrap-3.4.1-dist/css/bootstrap.css
+  ${CMAKE_CURRENT_BINARY_DIR}/bootstrap-3.4.1-dist/css/bootstrap.css.map
   DESTINATION ${ORTHANC_STONE_INSTALL_PREFIX}/css
   )
 

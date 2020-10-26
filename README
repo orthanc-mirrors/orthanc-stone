@@ -116,6 +116,10 @@ Licensing
 
 Stone of Orthanc is licensed under the AGPLv3+ license.
 
+The files in the "./OrthancStone/Sources/" sub-directory are licensed
+under the LGPLv3+ (Lesser GPL). The related COPYING file can be found
+in "./OrthancStone/".
+
 We also kindly ask scientific works and clinical studies that make use
 of Orthanc to cite Orthanc in their associated publications.
 Similarly, we ask open-source and closed-source products that make use

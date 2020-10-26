@@ -157,7 +157,8 @@ extern "C"
     {
       OrthancStone::StoneInitialize();
       Orthanc::Logging::Initialize();
-      Orthanc::Logging::EnableTraceLevel(true);
+      //Orthanc::Logging::EnableTraceLevel(true);
+      Orthanc::Logging::EnableInfoLevel(true);
 
       LOG(WARNING) << "Initializing native Stone";
 

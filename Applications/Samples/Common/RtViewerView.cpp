@@ -249,6 +249,14 @@ namespace OrthancStone
   void RtViewerView::PrepareViewport()
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+
+    /**
+     * The method "RefreshCanvasSize()" must be used before the first
+     * rendering, or when the layout of the HTML page changes, which
+     * does not trigger the "emscripten_set_resize_callback()" event
+     **/
+    lock->RefreshCanvasSize();
+    
     ViewportController& controller = lock->GetController();
     ICompositor& compositor = lock->GetCompositor();
 

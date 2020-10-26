@@ -29,8 +29,8 @@ if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
   set(USE_SYSTEM_GOOGLE_TEST ON CACHE BOOL "Use the system version of Google Test")
   set(USE_GOOGLE_TEST_DEBIAN_PACKAGE OFF CACHE BOOL "Use the sources of Google Test shipped with libgtest-dev (Debian only)")
   mark_as_advanced(USE_GOOGLE_TEST_DEBIAN_PACKAGE)
-  include(${ORTHANC_STONE_ROOT}/Resources/Orthanc/CMake/DownloadPackage.cmake)
-  include(${ORTHANC_STONE_ROOT}/Resources/Orthanc/CMake/GoogleTestConfiguration.cmake)
+  include(${ORTHANC_STONE_ROOT}/../Resources/Orthanc/CMake/DownloadPackage.cmake)
+  include(${ORTHANC_STONE_ROOT}/../Resources/Orthanc/CMake/GoogleTestConfiguration.cmake)
 
 else()
   set(ENABLE_GOOGLE_TEST ON)
@@ -39,7 +39,7 @@ endif()
 set(ENABLE_OPENGL OFF)
 set(ENABLE_PUGIXML ON)
 
-include(${ORTHANC_STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
+include(${ORTHANC_STONE_ROOT}/../Resources/CMake/OrthancStoneConfiguration.cmake)
 
 add_executable(UnitTests
   ${CMAKE_SOURCE_DIR}/GenericToolboxTests.cpp
@@ -58,3 +58,23 @@ add_executable(UnitTests
   )
 
 target_link_libraries(UnitTests ${DCMTK_LIBRARIES})
+
+
+#####################################################################
+## Generate the documentation if Doxygen is present
+#####################################################################
+
+find_package(Doxygen)
+if (DOXYGEN_FOUND)
+  configure_file(
+    ${ORTHANC_STONE_ROOT}/../Resources/OrthancStone.doxygen
+    ${CMAKE_CURRENT_BINARY_DIR}/OrthancStone.doxygen
+    @ONLY)
+
+  add_custom_target(doc
+    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/OrthancStone.doxygen
+    COMMENT "Generating documentation with Doxygen" VERBATIM
+    )
+else()
+  message("Doxygen not found. The documentation will not be built.")
+endif()

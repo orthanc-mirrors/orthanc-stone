@@ -22,7 +22,7 @@
 ## Select the location of the Orthanc framework
 #####################################################################
 
-set(ORTHANC_STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
+set(ORTHANC_STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../Sources)
 
 include(${CMAKE_CURRENT_LIST_DIR}/Version.cmake)
 

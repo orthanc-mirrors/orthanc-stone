@@ -22,7 +22,7 @@
 ## Sanity check of the configuration
 #####################################################################
 
-include(${ORTHANC_STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
+include(${ORTHANC_STONE_ROOT}/../Resources/CMake/OrthancStoneConfiguration.cmake)
 
 if (ORTHANC_SANDBOXED)
   message(FATAL_ERROR "Cannot enable SDL in sandboxed environments")

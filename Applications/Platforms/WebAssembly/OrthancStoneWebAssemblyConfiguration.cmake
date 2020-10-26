@@ -23,7 +23,7 @@
 #####################################################################
 
 set(ENABLE_WEB_CLIENT OFF)
-include(${ORTHANC_STONE_ROOT}/Resources/CMake/OrthancStoneConfiguration.cmake)
+include(${ORTHANC_STONE_ROOT}/../Resources/CMake/OrthancStoneConfiguration.cmake)
 
 if (NOT ORTHANC_SANDBOXED)
   message(FATAL_ERROR "WebAssembly target must me configured as sandboxed")

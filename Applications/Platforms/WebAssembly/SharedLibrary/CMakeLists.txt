@@ -91,7 +91,7 @@ list(REMOVE_ITEM ORTHANC_STONE_SOURCES
   )
 
 configure_file(
-  ${ORTHANC_STONE_ROOT}/SharedLibrary/OrthancStone.h.in
+  ${ORTHANC_STONE_ROOT}/../SharedLibrary/OrthancStone.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/Include/orthanc-stone/OrthancStone.h
   )
 

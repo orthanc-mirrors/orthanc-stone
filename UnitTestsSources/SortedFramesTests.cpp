@@ -39,7 +39,7 @@ TEST(SortedFrames, Basic)
   ASSERT_THROW(f.GetFrameTags(0), Orthanc::OrthancException);
   ASSERT_THROW(f.GetFrameSopInstanceUid(0), Orthanc::OrthancException);
   ASSERT_THROW(f.GetFrameSiblingsCount(0), Orthanc::OrthancException);
-  ASSERT_THROW(f.GetFrameIndex(0), Orthanc::OrthancException);
+  ASSERT_THROW(f.GetFrameNumberInInstance(0), Orthanc::OrthancException);
 
   Orthanc::DicomMap tags;
   ASSERT_THROW(f.AddInstance(tags), Orthanc::OrthancException);
@@ -62,7 +62,7 @@ TEST(SortedFrames, Basic)
   ASSERT_THROW(f.GetFrameTags(0), Orthanc::OrthancException);
   ASSERT_THROW(f.GetFrameSopInstanceUid(0), Orthanc::OrthancException);
   ASSERT_THROW(f.GetFrameSiblingsCount(0), Orthanc::OrthancException);
-  ASSERT_THROW(f.GetFrameIndex(0), Orthanc::OrthancException);
+  ASSERT_THROW(f.GetFrameNumberInInstance(0), Orthanc::OrthancException);
 
   f.Sort();
   ASSERT_TRUE(f.IsSorted());
@@ -71,7 +71,7 @@ TEST(SortedFrames, Basic)
   ASSERT_EQ("sop", s);
   ASSERT_EQ("sop", f.GetFrameSopInstanceUid(0));
   ASSERT_EQ(1u, f.GetFrameSiblingsCount(0));
-  ASSERT_EQ(0u, f.GetFrameIndex(0));
+  ASSERT_EQ(0u, f.GetFrameNumberInInstance(0));
   ASSERT_THROW(f.GetFrameTags(1), Orthanc::OrthancException);
 }
 
@@ -105,12 +105,12 @@ TEST(SortedFrames, SortSopInstanceUid)
   ASSERT_EQ("sop1", f.GetSopInstanceUid(1));
   ASSERT_EQ("sop2", f.GetSopInstanceUid(2));
   ASSERT_EQ(6u, f.GetFramesCount());
-  ASSERT_EQ("sop1", f.GetFrameSopInstanceUid(0));  ASSERT_EQ(0u, f.GetFrameIndex(0));
-  ASSERT_EQ("sop1", f.GetFrameSopInstanceUid(1));  ASSERT_EQ(1u, f.GetFrameIndex(1));
-  ASSERT_EQ("sop1", f.GetFrameSopInstanceUid(2));  ASSERT_EQ(2u, f.GetFrameIndex(2));
-  ASSERT_EQ("sop2", f.GetFrameSopInstanceUid(3));  ASSERT_EQ(0u, f.GetFrameIndex(3));
-  ASSERT_EQ("sop2", f.GetFrameSopInstanceUid(4));  ASSERT_EQ(1u, f.GetFrameIndex(4));
-  ASSERT_EQ("sop3", f.GetFrameSopInstanceUid(5));  ASSERT_EQ(0u, f.GetFrameIndex(5));
+  ASSERT_EQ("sop1", f.GetFrameSopInstanceUid(0));  ASSERT_EQ(0u, f.GetFrameNumberInInstance(0));
+  ASSERT_EQ("sop1", f.GetFrameSopInstanceUid(1));  ASSERT_EQ(1u, f.GetFrameNumberInInstance(1));
+  ASSERT_EQ("sop1", f.GetFrameSopInstanceUid(2));  ASSERT_EQ(2u, f.GetFrameNumberInInstance(2));
+  ASSERT_EQ("sop2", f.GetFrameSopInstanceUid(3));  ASSERT_EQ(0u, f.GetFrameNumberInInstance(3));
+  ASSERT_EQ("sop2", f.GetFrameSopInstanceUid(4));  ASSERT_EQ(1u, f.GetFrameNumberInInstance(4));
+  ASSERT_EQ("sop3", f.GetFrameSopInstanceUid(5));  ASSERT_EQ(0u, f.GetFrameNumberInInstance(5));
 
   // The instances must not have been reordered, only the frames
   ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop1"));  ASSERT_EQ(1u, i);
@@ -155,12 +155,12 @@ TEST(SortedFrames, SortInstanceNumber)
   ASSERT_EQ("sop3", f.GetSopInstanceUid(4));
   ASSERT_EQ("sop5", f.GetSopInstanceUid(5));
   ASSERT_EQ(6u, f.GetFramesCount());
-  ASSERT_EQ("sop2", f.GetFrameSopInstanceUid(0));  ASSERT_EQ(0u, f.GetFrameIndex(0));
-  ASSERT_EQ("sop3", f.GetFrameSopInstanceUid(1));  ASSERT_EQ(0u, f.GetFrameIndex(1));
-  ASSERT_EQ("sop4", f.GetFrameSopInstanceUid(2));  ASSERT_EQ(0u, f.GetFrameIndex(2));
-  ASSERT_EQ("sop5", f.GetFrameSopInstanceUid(3));  ASSERT_EQ(0u, f.GetFrameIndex(3));
-  ASSERT_EQ("sop1", f.GetFrameSopInstanceUid(4));  ASSERT_EQ(0u, f.GetFrameIndex(4));
-  ASSERT_EQ("sop2a", f.GetFrameSopInstanceUid(5));  ASSERT_EQ(0u, f.GetFrameIndex(5));
+  ASSERT_EQ("sop2", f.GetFrameSopInstanceUid(0));  ASSERT_EQ(0u, f.GetFrameNumberInInstance(0));
+  ASSERT_EQ("sop3", f.GetFrameSopInstanceUid(1));  ASSERT_EQ(0u, f.GetFrameNumberInInstance(1));
+  ASSERT_EQ("sop4", f.GetFrameSopInstanceUid(2));  ASSERT_EQ(0u, f.GetFrameNumberInInstance(2));
+  ASSERT_EQ("sop5", f.GetFrameSopInstanceUid(3));  ASSERT_EQ(0u, f.GetFrameNumberInInstance(3));
+  ASSERT_EQ("sop1", f.GetFrameSopInstanceUid(4));  ASSERT_EQ(0u, f.GetFrameNumberInInstance(4));
+  ASSERT_EQ("sop2a", f.GetFrameSopInstanceUid(5));  ASSERT_EQ(0u, f.GetFrameNumberInInstance(5));
 }
 
 
@@ -194,10 +194,10 @@ TEST(SortedFrames, SortInstanceNumberAndImageIndex)
   ASSERT_EQ("sop4", f.GetSopInstanceUid(3));
   ASSERT_EQ(4u, f.GetFramesCount());
   // First instance number, then image index
-  ASSERT_EQ("sop1", f.GetFrameSopInstanceUid(0));  ASSERT_EQ(0u, f.GetFrameIndex(0));
-  ASSERT_EQ("sop4", f.GetFrameSopInstanceUid(1));  ASSERT_EQ(0u, f.GetFrameIndex(1));
-  ASSERT_EQ("sop2", f.GetFrameSopInstanceUid(2));  ASSERT_EQ(0u, f.GetFrameIndex(2));
-  ASSERT_EQ("sop3", f.GetFrameSopInstanceUid(3));  ASSERT_EQ(0u, f.GetFrameIndex(3));
+  ASSERT_EQ("sop1", f.GetFrameSopInstanceUid(0));  ASSERT_EQ(0u, f.GetFrameNumberInInstance(0));
+  ASSERT_EQ("sop4", f.GetFrameSopInstanceUid(1));  ASSERT_EQ(0u, f.GetFrameNumberInInstance(1));
+  ASSERT_EQ("sop2", f.GetFrameSopInstanceUid(2));  ASSERT_EQ(0u, f.GetFrameNumberInInstance(2));
+  ASSERT_EQ("sop3", f.GetFrameSopInstanceUid(3));  ASSERT_EQ(0u, f.GetFrameNumberInInstance(3));
 }
 
 

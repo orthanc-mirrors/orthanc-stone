@@ -302,6 +302,13 @@ var app = new Vue({
       // It is necessary to use ".toString()" for Microsoft Edge Legacy (*)
       event.dataTransfer.setData('seriesIndex', seriesIndex.toString());
     },
+
+    SetViewportSeriesInstanceUid: function(viewportIndex, seriesInstanceUid) {
+      if (seriesInstanceUid in this.seriesIndex) {
+        this.SetViewportSeries(viewportIndex, this.seriesIndex[seriesInstanceUid]);
+
+      }
+    },
     
     SetViewportSeries: function(viewportIndex, seriesIndex) {
       var series = this.series[seriesIndex];
@@ -507,7 +514,20 @@ var app = new Vue({
     SetMouseButtonActions: function(left, middle, right) {
       this.mouseActionsVisible = false;
       stone.SetMouseButtonActions(left, middle, right);
-    }    
+    },
+
+    LoadOsiriXAnnotations: function(xml, clearPrevious)
+    {
+      if (stone.LoadOsiriXAnnotations(xml, clearPrevious)) {
+        var seriesInstanceUid = stone.GetStringBuffer();
+
+        this.SetViewportLayout('1x1');
+        this.leftVisible = false;
+        this.SetViewportSeriesInstanceUid(1, seriesInstanceUid);
+          
+        stone.FocusFirstOsiriXAnnotation('canvas1');
+      }
+    }
   },
   
   mounted: function() {
@@ -548,31 +568,6 @@ window.addEventListener('StoneInitialized', function() {
       app.leftMode = 'full';
     }
   }
-
-
-
-  // TODO - TEST
-  axios.get('length.xml')
-    .then(function (response) {
-      stone.LoadOsiriXAnnotations(response.data, false);
-    });
-  
-  axios.get('angle.xml')
-    .then(function (response) {
-      stone.LoadOsiriXAnnotations(response.data, false);
-    });
-  
-  axios.get('arrow.xml')
-    .then(function (response) {
-      stone.LoadOsiriXAnnotations(response.data, false);
-    });
-  
-  axios.get('text.xml')
-    .then(function (response) {
-      stone.LoadOsiriXAnnotations(response.data, false);
-    });
-  
-  
 });
 
 
@@ -711,3 +706,45 @@ $('.dropdown-menu').click(function(e) {
 
 // Disable the selection of text using the mouse
 document.onselectstart = new Function ('return false');
+
+
+
+
+
+
+
+//var expectedOrigin = 'http://localhost:8042';
+var expectedOrigin = '';   // TODO - INSECURE - CONFIGURATION
+
+window.addEventListener('message', function(e) {
+  if (expectedOrigin != '' &&
+      e.origin !== expectedOrigin) {
+    alert('Bad origin for the message');
+    return;
+  }
+  
+  if (e.data.type == 'show-osirix-annotations') {
+    app.LoadOsiriXAnnotations(e.data.xml, true /* clear previous annotations */);
+  } else {
+    alert('Unknown message type: ' + e.data.type);
+  }
+});
+
+
+function Test()
+{
+  var s = [ 'length.xml', 'arrow.xml', 'text.xml', 'angle.xml' ];
+
+  for (var i = 0; i < s.length; i++) {
+    axios.get(s[i])
+      .then(function (response) {
+        //var targetOrigin = 'http://localhost:8000';
+        var targetOrigin = '*';  // TODO - INSECURE
+        
+        window.postMessage({
+          'type': 'show-osirix-annotations',
+          'xml': response.data
+        }, targetOrigin);
+      });
+  }
+}

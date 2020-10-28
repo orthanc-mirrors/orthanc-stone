@@ -1310,6 +1310,7 @@ private:
 
   bool         hasFocusOnInstance_;
   std::string  focusSopInstanceUid_;
+  size_t       focusFrameNumber_;
   
   boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  annotations_;
 
@@ -1578,7 +1579,6 @@ private:
               {
                 const TextAnnotation& text = dynamic_cast<const TextAnnotation&>(annotation);
                 double x, y;
-                OrthancStone::LinearAlgebra::Print(text.GetCenter());
                 if (GetCurrentFrameGeometry().ProjectPoint(x, y, text.GetCenter()))
                 {
                   std::unique_ptr<OrthancStone::TextSceneLayer> layer2(new OrthancStone::TextSceneLayer());
@@ -1751,7 +1751,8 @@ private:
     isCtrlDown_(false),
     flipX_(false),
     flipY_(false),
-    hasFocusOnInstance_(false)
+    hasFocusOnInstance_(false),
+    focusFrameNumber_(0)
   {
     if (!cache_)
     {
@@ -1857,20 +1858,6 @@ private:
     dynamic_cast<const ICommand&>(message.GetOrigin().GetPayload()).Handle(message);
   }
 
-  void ApplyScheduledFocus()
-  {
-    size_t instanceIndex;
-    
-    if (hasFocusOnInstance_ &&
-        frames_.get() != NULL &&
-        frames_->LookupSopInstanceUid(instanceIndex, focusSopInstanceUid_))
-    {
-      // TODO
-      
-      hasFocusOnInstance_ = false;
-    }
-  }
-  
 public:
   static boost::shared_ptr<ViewerViewport> Create(OrthancStone::ILoadersContext::ILock& lock,
                                                   const OrthancStone::DicomSource& source,
@@ -1936,10 +1923,12 @@ public:
           0, source_, uri, new SetDefaultWindowingCommand(GetSharedObserver()));
       }
     }
+
+    ApplyScheduledFocus();
   }
 
 
-  void UpdateCurrentFrame()
+  void Redraw()
   {
     if (cursor_.get() != NULL)
     {
@@ -2175,6 +2164,36 @@ public:
     annotations_ = annotations;
   }
 
+  void ScheduleFrameFocus(const std::string& sopInstanceUid,
+                          unsigned int frameNumber)
+  {
+    hasFocusOnInstance_ = true;
+    focusSopInstanceUid_ = sopInstanceUid;
+    focusFrameNumber_ = frameNumber;
+    
+    ApplyScheduledFocus();
+  }
+
+  void ApplyScheduledFocus()
+  {
+    size_t frameIndex;
+    
+    if (hasFocusOnInstance_ &&
+        cursor_.get() != NULL &&
+        frames_.get() != NULL &&
+        frames_->LookupFrame(frameIndex, focusSopInstanceUid_, focusFrameNumber_))
+    {
+      size_t current = cursor_->GetCurrentIndex();
+
+      if (current != frameIndex)
+      {
+        cursor_->SetCurrentIndex(frameIndex);
+        DisplayCurrentFrame();
+      }
+      
+      hasFocusOnInstance_ = false;
+    }
+  }
 };
 
 
@@ -2251,6 +2270,12 @@ public:
       },
       studyInstanceUid.c_str(),
       seriesInstanceUid.c_str());
+
+    for (Viewports::const_iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
+    {
+      assert(it->second != NULL);
+      it->second->ApplyScheduledFocus();
+    }
   }
 
   virtual void SignalFrameUpdated(const ViewerViewport& viewport,
@@ -2723,6 +2748,8 @@ extern "C"
   }
 
 
+  // Side-effect: "GetStringBuffer()" is filled with the "Series
+  // Instance UID" of the first loaded annotation
   EMSCRIPTEN_KEEPALIVE
   int LoadOsiriXAnnotations(const char* xml,
                             int clearPreviousAnnotations)
@@ -2735,18 +2762,21 @@ extern "C"
       }
       
       annotations_->LoadXml(xml);
-
+      
+      // Force redraw, as the annotations might have changed
       for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
       {
-        // TODO - Check if the viewport contains one of the SOP
-        // Instance UID from the loaded annotations => focus on this
-        // instance
-
-        // TODO - If no viewport contains the instance => monitor the
-        // "ResourcesLoader" as new series get loaded
-
         assert(it->second != NULL);
-        it->second->UpdateCurrentFrame();
+        it->second->Redraw();
+      }
+
+      if (annotations_->GetSize() == 0)
+      {
+        stringBuffer_.clear();
+      }
+      else
+      {
+        stringBuffer_ = annotations_->GetAnnotation(0).GetSeriesInstanceUid();
       }
 
       LOG(WARNING) << "Loaded " << annotations_->GetSize() << " annotations from OsiriX";
@@ -2754,5 +2784,25 @@ extern "C"
     }
     EXTERN_CATCH_EXCEPTIONS;
     return 0;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void FocusFirstOsiriXAnnotation(const char* canvas)
+  {
+    try
+    {
+      if (annotations_->GetSize() != 0)
+      {
+        const OrthancStone::OsiriX::Annotation& annotation = annotations_->GetAnnotation(0);
+        
+        boost::shared_ptr<ViewerViewport> viewport = GetViewport(canvas);
+        viewport->ScheduleFrameFocus(annotation.GetSopInstanceUid(), 0 /* focus on first frame */);
+
+        // Force redraw, as the annotations might already have changed
+        viewport->Redraw();
+      }
+    }
+    EXTERN_CATCH_EXCEPTIONS;
   }
 }

@@ -144,10 +144,13 @@ namespace OrthancStone
       delete instances_[i];
     }
 
-    instancesIndex_.clear();
     studyInstanceUid_.clear();
     seriesInstanceUid_.clear();
     frames_.clear();
+
+    instancesIndex_.clear();
+    framesIndex_.clear();
+
     sorted_ = true;
   }
 
@@ -218,6 +221,7 @@ namespace OrthancStone
     
     for (unsigned int i = 0; i < instance.GetNumberOfFrames(); i++)
     {
+      framesIndex_[std::make_pair(instance.GetSopInstanceUid(), i)] = frames_.size();      
       frames_.push_back(Frame(instance, i));
     }
 
@@ -390,6 +394,33 @@ namespace OrthancStone
   }
 
 
+  bool SortedFrames::LookupFrame(size_t& frameIndex,
+                                 const std::string& sopInstanceUid,
+                                 unsigned int frameNumber) const
+  {
+    if (sorted_)
+    {
+      FramesIndex::const_iterator found = framesIndex_.find(
+        std::make_pair(sopInstanceUid, frameNumber));
+      
+      if (found == framesIndex_.end())
+      {
+        return false;
+      }
+      else
+      {
+        frameIndex = found->second;
+        return true;
+      }      
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls,
+                                      "Sort() has not been called");
+    }
+  }
+  
+
   void SortedFrames::Sort()
   {
     if (!sorted_)
@@ -407,6 +438,7 @@ namespace OrthancStone
 
       frames_.clear();
       frames_.reserve(totalFrames);
+      framesIndex_.clear();
 
       SortUsingIntegerTag(remainingInstances, Orthanc::DICOM_TAG_INSTANCE_NUMBER);  // VR is "IS"
       SortUsingIntegerTag(remainingInstances, Orthanc::DICOM_TAG_IMAGE_INDEX);  // VR is "US"

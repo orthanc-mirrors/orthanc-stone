@@ -98,12 +98,17 @@ namespace OrthancStone
     // Maps "SOPInstanceUID" to an index in "instances_"
     typedef std::map<std::string, size_t>  InstancesIndex;
 
+    // Maps pair "(SOPInstanceUID, FrameNumber)" to an index in
+    // "frames_" (only once "Sort()" is called)
+    typedef std::map<std::pair<std::string, unsigned int>, size_t>  FramesIndex;
+
     std::string             studyInstanceUid_;
     std::string             seriesInstanceUid_;
     std::vector<Instance*>  instances_;
     std::vector<Frame>      frames_;
     bool                    sorted_;
     InstancesIndex          instancesIndex_;
+    FramesIndex             framesIndex_;
 
     const Instance& GetInstance(size_t instanceIndex) const;
 
@@ -193,6 +198,10 @@ namespace OrthancStone
     {
       return GetFrame(frameIndex).GetInstance().IsMonochrome1();
     }
+
+    bool LookupFrame(size_t& frameIndex,
+                     const std::string& sopInstanceUid,
+                     unsigned int frameNumber) const;
 
     void Sort();
   };

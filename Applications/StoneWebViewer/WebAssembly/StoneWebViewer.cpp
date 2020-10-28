@@ -441,9 +441,9 @@ private:
 
 
   static std::string GetKey(const std::string& sopInstanceUid,
-                            size_t frameIndex)
+                            size_t frameNumber)
   {
-    return sopInstanceUid + "|" + boost::lexical_cast<std::string>(frameIndex);
+    return sopInstanceUid + "|" + boost::lexical_cast<std::string>(frameNumber);
   }
   
 
@@ -470,7 +470,7 @@ public:
    * previously cached one, or if no cache was previously available.
    **/
   bool Acquire(const std::string& sopInstanceUid,
-               size_t frameIndex,
+               size_t frameNumber,
                Orthanc::ImageAccessor* image /* transfer ownership */,
                unsigned int quality)
   {
@@ -486,7 +486,7 @@ public:
       throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
     }
 
-    const std::string& key = GetKey(sopInstanceUid, frameIndex);
+    const std::string& key = GetKey(sopInstanceUid, frameNumber);
 
     bool invalidate = false;
     
@@ -548,8 +548,8 @@ public:
   public:
     Accessor(FramesCache& that,
              const std::string& sopInstanceUid,
-             size_t frameIndex) :
-      accessor_(that.cache_, GetKey(sopInstanceUid, frameIndex), false /* shared lock */)
+             size_t frameNumber) :
+      accessor_(that.cache_, GetKey(sopInstanceUid, frameNumber), false /* shared lock */)
     {
     }
 
@@ -1082,7 +1082,7 @@ private:
   {
   private:
     std::string   sopInstanceUid_;
-    unsigned int  frameIndex_;
+    unsigned int  frameNumber_;
     float         windowCenter_;
     float         windowWidth_;
     bool          isMonochrome1_;
@@ -1091,14 +1091,14 @@ private:
   public:
     SetLowQualityFrame(boost::shared_ptr<ViewerViewport> viewport,
                        const std::string& sopInstanceUid,
-                       unsigned int frameIndex,
+                       unsigned int frameNumber,
                        float windowCenter,
                        float windowWidth,
                        bool isMonochrome1,
                        bool isPrefetch) :
       ICommand(viewport),
       sopInstanceUid_(sopInstanceUid),
-      frameIndex_(frameIndex),
+      frameNumber_(frameNumber),
       windowCenter_(windowCenter),
       windowWidth_(windowWidth),
       isMonochrome1_(isMonochrome1),
@@ -1117,7 +1117,7 @@ private:
       {
         case Orthanc::PixelFormat_RGB24:
           updatedCache = GetViewport().cache_->Acquire(
-            sopInstanceUid_, frameIndex_, jpeg.release(), QUALITY_JPEG);
+            sopInstanceUid_, frameNumber_, jpeg.release(), QUALITY_JPEG);
           break;
 
         case Orthanc::PixelFormat_Grayscale8:
@@ -1154,7 +1154,7 @@ private:
 
           Orthanc::ImageProcessing::ShiftScale(*converted, offset, scaling, false);
           updatedCache = GetViewport().cache_->Acquire(
-            sopInstanceUid_, frameIndex_, converted.release(), QUALITY_JPEG);
+            sopInstanceUid_, frameNumber_, converted.release(), QUALITY_JPEG);
           break;
         }
 
@@ -1164,7 +1164,7 @@ private:
 
       if (updatedCache)
       {
-        GetViewport().SignalUpdatedFrame(sopInstanceUid_, frameIndex_);
+        GetViewport().SignalUpdatedFrame(sopInstanceUid_, frameNumber_);
       }
 
       if (isPrefetch_)
@@ -1179,17 +1179,17 @@ private:
   {
   private:
     std::string   sopInstanceUid_;
-    unsigned int  frameIndex_;
+    unsigned int  frameNumber_;
     bool          isPrefetch_;
     
   public:
     SetFullDicomFrame(boost::shared_ptr<ViewerViewport> viewport,
                       const std::string& sopInstanceUid,
-                      unsigned int frameIndex,
+                      unsigned int frameNumber,
                       bool isPrefetch) :
       ICommand(viewport),
       sopInstanceUid_(sopInstanceUid),
-      frameIndex_(frameIndex),
+      frameNumber_(frameNumber),
       isPrefetch_(isPrefetch)
     {
     }
@@ -1206,7 +1206,7 @@ private:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }      
       
-      std::unique_ptr<Orthanc::ImageAccessor> frame(message.GetDicom().DecodeFrame(frameIndex_));
+      std::unique_ptr<Orthanc::ImageAccessor> frame(message.GetDicom().DecodeFrame(frameNumber_));
 
       if (frame.get() == NULL)
       {
@@ -1218,7 +1218,7 @@ private:
       if (frame->GetFormat() == Orthanc::PixelFormat_RGB24)
       {
         updatedCache = GetViewport().cache_->Acquire(
-          sopInstanceUid_, frameIndex_, frame.release(), QUALITY_FULL);
+          sopInstanceUid_, frameNumber_, frame.release(), QUALITY_FULL);
       }
       else
       {
@@ -1245,12 +1245,12 @@ private:
         Orthanc::ImageProcessing::ShiftScale2(*converted, b, a, false);
 
         updatedCache = GetViewport().cache_->Acquire(
-          sopInstanceUid_, frameIndex_, converted.release(), QUALITY_FULL);
+          sopInstanceUid_, frameNumber_, converted.release(), QUALITY_FULL);
       }
       
       if (updatedCache)
       {
-        GetViewport().SignalUpdatedFrame(sopInstanceUid_, frameIndex_);
+        GetViewport().SignalUpdatedFrame(sopInstanceUid_, frameNumber_);
       }
 
       if (isPrefetch_)
@@ -1287,7 +1287,7 @@ private:
   };
   
 
-  std::unique_ptr<IObserver>                    observer_;
+  std::unique_ptr<IObserver>                   observer_;
   OrthancStone::ILoadersContext&               context_;
   boost::shared_ptr<OrthancStone::WebAssemblyViewport>   viewport_;
   boost::shared_ptr<OrthancStone::DicomResourcesLoader> loader_;
@@ -1307,7 +1307,11 @@ private:
   FrameGeometry                                currentFrameGeometry_;
   std::list<PrefetchItem>                      prefetchQueue_;
 
-  boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  annotations_;  
+
+  bool         hasFocusOnInstance_;
+  std::string  focusSopInstanceUid_;
+  
+  boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  annotations_;
 
   void ScheduleNextPrefetch()
   {
@@ -1318,10 +1322,10 @@ private:
       prefetchQueue_.pop_front();
       
       const std::string sopInstanceUid = frames_->GetFrameSopInstanceUid(index);
-      unsigned int frame = frames_->GetFrameIndex(index);
+      unsigned int frameNumber = frames_->GetFrameNumberInInstance(index);
 
       {
-        FramesCache::Accessor accessor(*cache_, sopInstanceUid, frame);
+        FramesCache::Accessor accessor(*cache_, sopInstanceUid, frameNumber);
         if (!accessor.IsValid() ||
             (isFull && accessor.GetQuality() == 0))
         {
@@ -1352,7 +1356,7 @@ private:
   }
 
   void SignalUpdatedFrame(const std::string& sopInstanceUid,
-                          unsigned int frameIndex)
+                          unsigned int frameNumber)
   {
     if (cursor_.get() != NULL &&
         frames_.get() != NULL)
@@ -1360,7 +1364,7 @@ private:
       size_t index = cursor_->GetCurrentIndex();
 
       if (frames_->GetFrameSopInstanceUid(index) == sopInstanceUid &&
-          frames_->GetFrameIndex(index) == frameIndex)
+          frames_->GetFrameNumberInInstance(index) == frameNumber)
       {
         DisplayCurrentFrame();
       }
@@ -1471,9 +1475,9 @@ private:
     }
 
     const std::string sopInstanceUid = frames_->GetFrameSopInstanceUid(index);
-    unsigned int frame = frames_->GetFrameIndex(index);
+    size_t frameNumber = frames_->GetFrameNumberInInstance(index);
 
-    FramesCache::Accessor accessor(*cache_, sopInstanceUid, frame);
+    FramesCache::Accessor accessor(*cache_, sopInstanceUid, frameNumber);
     if (accessor.IsValid())
     {
       SaveCurrentWindowing();
@@ -1656,7 +1660,7 @@ private:
     if (frames_.get() != NULL)
     {
       std::string sopInstanceUid = frames_->GetFrameSopInstanceUid(index);
-      unsigned int frame = frames_->GetFrameIndex(index);
+      unsigned int frameNumber = frames_->GetFrameNumberInInstance(index);
       
       {
         std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
@@ -1665,7 +1669,7 @@ private:
             source_, frames_->GetStudyInstanceUid(), frames_->GetSeriesInstanceUid(),
             sopInstanceUid, false /* transcoding (TODO) */,
             Orthanc::DicomTransferSyntax_LittleEndianExplicit /* TODO */,
-            new SetFullDicomFrame(GetSharedObserver(), sopInstanceUid, frame, isPrefetch)));
+            new SetFullDicomFrame(GetSharedObserver(), sopInstanceUid, frameNumber, isPrefetch)));
       }
     }
   }
@@ -1681,13 +1685,13 @@ private:
     else if (frames_.get() != NULL)
     {
       std::string sopInstanceUid = frames_->GetFrameSopInstanceUid(index);
-      unsigned int frame = frames_->GetFrameIndex(index);
+      unsigned int frameNumber = frames_->GetFrameNumberInInstance(index);
       bool isMonochrome1 = frames_->IsFrameMonochrome1(index);
 
       const std::string uri = ("studies/" + frames_->GetStudyInstanceUid() +
                                "/series/" + frames_->GetSeriesInstanceUid() +
                                "/instances/" + sopInstanceUid +
-                               "/frames/" + boost::lexical_cast<std::string>(frame + 1) + "/rendered");
+                               "/frames/" + boost::lexical_cast<std::string>(frameNumber + 1) + "/rendered");
 
       std::map<std::string, std::string> headers, arguments;
       arguments["window"] = (
@@ -1697,7 +1701,7 @@ private:
       std::unique_ptr<OrthancStone::IOracleCommand> command(
         source_.CreateDicomWebCommand(
           uri, arguments, headers, new SetLowQualityFrame(
-            GetSharedObserver(), sopInstanceUid, frame,
+            GetSharedObserver(), sopInstanceUid, frameNumber,
             windowingCenter_, windowingWidth_, isMonochrome1, isPrefetch)));
 
       {
@@ -1746,7 +1750,8 @@ private:
     fitNextContent_(true),
     isCtrlDown_(false),
     flipX_(false),
-    flipY_(false)
+    flipY_(false),
+    hasFocusOnInstance_(false)
   {
     if (!cache_)
     {
@@ -1850,6 +1855,20 @@ private:
   void Handle(const OrthancStone::ParseDicomSuccessMessage& message)
   {
     dynamic_cast<const ICommand&>(message.GetOrigin().GetPayload()).Handle(message);
+  }
+
+  void ApplyScheduledFocus()
+  {
+    size_t instanceIndex;
+    
+    if (hasFocusOnInstance_ &&
+        frames_.get() != NULL &&
+        frames_->LookupSopInstanceUid(instanceIndex, focusSopInstanceUid_))
+    {
+      // TODO
+      
+      hasFocusOnInstance_ = false;
+    }
   }
   
 public:

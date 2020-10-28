@@ -77,20 +77,20 @@ namespace OrthancStone
     {
     private:
       const Instance*  instance_;
-      unsigned int     frameIndex_;
+      unsigned int     frameNumber_;
 
     public:
       Frame(const Instance& instance,
-            unsigned int frameIndex);
+            unsigned int frameNumber);
 
       const Instance& GetInstance() const
       {
         return *instance_;
       }
 
-      unsigned int GetFrameIndex() const
+      unsigned int GetFrameNumberInInstance() const
       {
-        return frameIndex_;
+        return frameNumber_;
       }
     };
 
@@ -105,12 +105,12 @@ namespace OrthancStone
     bool                    sorted_;
     InstancesIndex          instancesIndex_;
 
-    const Instance& GetInstance(size_t index) const;
+    const Instance& GetInstance(size_t instanceIndex) const;
 
-    const Frame& GetFrame(size_t index) const;
+    const Frame& GetFrame(size_t frameIndex) const;
 
     void AddFramesOfInstance(std::set<size_t>& remainingInstances,
-                             size_t index);
+                             size_t instanceIndex);
 
     void SortUsingIntegerTag(std::set<size_t>& remainingInstances,
                              const Orthanc::DicomTag& tag);
@@ -149,14 +149,14 @@ namespace OrthancStone
       return instances_.size();
     }
 
-    const Orthanc::DicomMap& GetInstanceTags(size_t index) const
+    const Orthanc::DicomMap& GetInstanceTags(size_t instanceIndex) const
     {
-      return GetInstance(index).GetTags();
+      return GetInstance(instanceIndex).GetTags();
     }
 
-    const std::string& GetSopInstanceUid(size_t index) const
+    const std::string& GetSopInstanceUid(size_t instanceIndex) const
     {
-      return GetInstance(index).GetSopInstanceUid();
+      return GetInstance(instanceIndex).GetSopInstanceUid();
     }
 
     bool LookupSopInstanceUid(size_t& instanceIndex,
@@ -169,29 +169,29 @@ namespace OrthancStone
 
     size_t GetFramesCount() const;
 
-    const Orthanc::DicomMap& GetFrameTags(size_t index) const
+    const Orthanc::DicomMap& GetFrameTags(size_t frameIndex) const
     {
-      return GetFrame(index).GetInstance().GetTags();
+      return GetFrame(frameIndex).GetInstance().GetTags();
     }
 
-    const std::string& GetFrameSopInstanceUid(size_t index) const
+    const std::string& GetFrameSopInstanceUid(size_t frameIndex) const
     {
-      return GetFrame(index).GetInstance().GetSopInstanceUid();
+      return GetFrame(frameIndex).GetInstance().GetSopInstanceUid();
     }
 
-    unsigned int GetFrameSiblingsCount(size_t index) const
+    unsigned int GetFrameSiblingsCount(size_t frameIndex) const
     {
-      return GetFrame(index).GetInstance().GetNumberOfFrames();
+      return GetFrame(frameIndex).GetInstance().GetNumberOfFrames();
     }
 
-    unsigned int GetFrameIndex(size_t index) const
+    unsigned int GetFrameNumberInInstance(size_t frameIndex) const
     {
-      return GetFrame(index).GetFrameIndex();
+      return GetFrame(frameIndex).GetFrameNumberInInstance();
     }
 
-    bool IsFrameMonochrome1(size_t index) const
+    bool IsFrameMonochrome1(size_t frameIndex) const
     {
-      return GetFrame(index).GetInstance().IsMonochrome1();
+      return GetFrame(frameIndex).GetInstance().IsMonochrome1();
     }
 
     void Sort();

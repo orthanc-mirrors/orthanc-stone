@@ -93,45 +93,45 @@ namespace OrthancStone
 
   
   SortedFrames::Frame::Frame(const Instance& instance,
-                             unsigned int frameIndex) :
+                             unsigned int frameNumber) :
     instance_(&instance),
-    frameIndex_(frameIndex)
+    frameNumber_(frameNumber)
   {
-    if (frameIndex >= instance.GetNumberOfFrames())
+    if (frameNumber >= instance.GetNumberOfFrames())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
   }
 
 
-  const SortedFrames::Instance& SortedFrames::GetInstance(size_t index) const
+  const SortedFrames::Instance& SortedFrames::GetInstance(size_t instanceIndex) const
   {
-    if (index >= instances_.size())
+    if (instanceIndex >= instances_.size())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
     else
     {
-      assert(instances_[index] != NULL);
-      return *instances_[index];
+      assert(instances_[instanceIndex] != NULL);
+      return *instances_[instanceIndex];
     }
   }
 
   
-  const SortedFrames::Frame& SortedFrames::GetFrame(size_t index) const
+  const SortedFrames::Frame& SortedFrames::GetFrame(size_t frameIndex) const
   {
     if (!sorted_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls,
                                       "Sort() has not been called");
     }
-    if (index >= frames_.size())
+    if (frameIndex >= frames_.size())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
     else
     {
-      return frames_[index];
+      return frames_[frameIndex];
     }    
   }
 
@@ -211,18 +211,18 @@ namespace OrthancStone
 
   
   void SortedFrames::AddFramesOfInstance(std::set<size_t>& remainingInstances,
-                                         size_t index)
+                                         size_t instanceIndex)
   {
-    assert(instances_[index] != NULL);
-    const Instance& instance = *instances_[index];
+    assert(instances_[instanceIndex] != NULL);
+    const Instance& instance = *instances_[instanceIndex];
     
     for (unsigned int i = 0; i < instance.GetNumberOfFrames(); i++)
     {
       frames_.push_back(Frame(instance, i));
     }
 
-    assert(remainingInstances.find(index) != remainingInstances.end());
-    remainingInstances.erase(index);
+    assert(remainingInstances.find(instanceIndex) != remainingInstances.end());
+    remainingInstances.erase(instanceIndex);
   }
 
 
@@ -233,22 +233,22 @@ namespace OrthancStone
     {
     private:
       T            value_;
-      size_t       instance_;
+      size_t       instanceIndex_;
       std::string  sopInstanceUid_;
 
     public:
       SortableItem(const T& value,
-                   size_t instance,
+                   size_t instanceIndex,
                    const std::string& sopInstanceUid) :
         value_(value),
-        instance_(instance),
+        instanceIndex_(instanceIndex),
         sopInstanceUid_(sopInstanceUid)
       {
       }
 
       size_t GetInstanceIndex() const
       {
-        return instance_;
+        return instanceIndex_;
       }
 
       bool operator< (const SortableItem& other) const

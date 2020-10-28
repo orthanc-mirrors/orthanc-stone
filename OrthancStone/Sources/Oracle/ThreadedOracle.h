@@ -23,6 +23,7 @@
 #pragma once
 
 #include <OrthancFramework.h>  // To have the macros properly defined
+#include <Compatibility.h>  // ORTHANC_OVERRIDE
 
 #if !defined(ORTHANC_ENABLE_THREADS)
 #  error The macro ORTHANC_ENABLE_THREADS must be defined

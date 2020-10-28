@@ -2127,7 +2127,7 @@ public:
     }
 
     virtual OrthancStone::IFlexiblePointerTracker* CreateTracker(
-      boost::shared_ptr<OrthancStone::IViewport> viewport,
+      boost::weak_ptr<OrthancStone::IViewport> viewport,
       const OrthancStone::PointerEvent& event,
       unsigned int viewportWidth,
       unsigned int viewportHeight) ORTHANC_OVERRIDE

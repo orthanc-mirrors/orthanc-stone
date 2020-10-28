@@ -28,11 +28,20 @@
 
 namespace OrthancStone
 {
-  OneGesturePointerTracker::OneGesturePointerTracker(boost::shared_ptr<IViewport> viewport) :
+  OneGesturePointerTracker::OneGesturePointerTracker(boost::weak_ptr<IViewport> viewport) :
     alive_(true),
     currentTouchCount_(1),
     viewport_(viewport)
   {
+  }
+
+  IViewport::ILock* OneGesturePointerTracker::GetViewportLock()
+  {
+	  boost::shared_ptr<IViewport> viewport = viewport_.lock();
+	  if (viewport)
+		  return viewport->Lock();
+	  else
+		  return nullptr;
   }
 
   void OneGesturePointerTracker::PointerUp(const PointerEvent& event)

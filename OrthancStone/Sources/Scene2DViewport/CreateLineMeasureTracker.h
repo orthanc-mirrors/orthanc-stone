@@ -39,7 +39,7 @@ namespace OrthancStone
     must be supplied, too
     */
     CreateLineMeasureTracker(
-      boost::shared_ptr<IViewport>          viewport,
+      boost::weak_ptr<IViewport>          viewport,
       const PointerEvent&             e);
 
     ~CreateLineMeasureTracker();

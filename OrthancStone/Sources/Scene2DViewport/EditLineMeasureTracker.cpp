@@ -29,14 +29,14 @@ namespace OrthancStone
 {
   EditLineMeasureTracker::EditLineMeasureTracker(
     boost::shared_ptr<MeasureTool>  measureTool,
-    boost::shared_ptr<IViewport> viewport,
+    boost::weak_ptr<IViewport> viewport,
     const PointerEvent& e)
     : EditMeasureTracker(viewport, e)
   {
     ScenePoint2D scenePos;
     
     {
-      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+      std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
       Scene2D& scene = lock->GetController().GetScene();
       scenePos = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
     }
@@ -47,7 +47,7 @@ namespace OrthancStone
 
   void EditLineMeasureTracker::PointerMove(const PointerEvent& e)
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     ViewportController& controller = lock->GetController();
     const Scene2D& scene = controller.GetScene();
 

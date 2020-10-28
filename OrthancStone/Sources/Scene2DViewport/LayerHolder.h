@@ -23,6 +23,8 @@
 
 #include "PredeclaredTypes.h"
 
+#include "../Viewport/IViewport.h"
+
 #include <boost/noncopyable.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
@@ -44,7 +46,7 @@ namespace OrthancStone
     performed at this time
     */
     LayerHolder(
-      boost::shared_ptr<IViewport> viewport,
+      boost::weak_ptr<IViewport> viewport,
       int polylineLayerCount, int textLayerCount, int infoTextCount = 0);
 
     /**
@@ -95,6 +97,13 @@ namespace OrthancStone
     //TextSceneLayer* GetTextLayer(int index = 0);
 
   private:
+
+    /**
+    This will return a scoped lock to the viewport.
+    If the viewport does not exist anymore, then nullptr is returned.
+    */
+    IViewport::ILock* GetViewportLock();
+
     int GetPolylineLayerIndex(int index = 0);
     int GetTextLayerIndex(int index = 0);
     int GetInfoTextLayerIndex(int index = 0);
@@ -102,7 +111,7 @@ namespace OrthancStone
     int textLayerCount_;
     int polylineLayerCount_;
     int infoTextCount_;
-    boost::shared_ptr<IViewport> viewport_;
+    boost::weak_ptr<IViewport> viewport_;
     int baseLayerIndex_;
   };
 }

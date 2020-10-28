@@ -36,12 +36,18 @@ namespace OrthancStone
     class FixedPointAligner : public boost::noncopyable
     {
     private:
-      boost::shared_ptr<IViewport> viewport_;
-      ScenePoint2D           pivot_;
-      ScenePoint2D           canvas_;
+      boost::weak_ptr<IViewport> viewport_;
+      ScenePoint2D               pivot_;
+      ScenePoint2D               canvas_;
+
+      /**
+      This will return a scoped lock to the viewport.
+      If the viewport does not exist anymore, then nullptr is returned.
+      */
+      IViewport::ILock* GetViewportLock();
 
     public:
-      FixedPointAligner(boost::shared_ptr<IViewport> viewport,
+      FixedPointAligner(boost::weak_ptr<IViewport> viewport,
                         const ScenePoint2D& p);
 
       void Apply();

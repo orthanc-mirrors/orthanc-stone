@@ -46,7 +46,7 @@ namespace OrthancStone
                       float width);
     
   public:
-    GrayscaleWindowingSceneTracker(boost::shared_ptr<IViewport> viewport,
+    GrayscaleWindowingSceneTracker(boost::weak_ptr<IViewport> viewport,
                                    int layerIndex,
                                    const PointerEvent& event,
                                    unsigned int canvasWidth,

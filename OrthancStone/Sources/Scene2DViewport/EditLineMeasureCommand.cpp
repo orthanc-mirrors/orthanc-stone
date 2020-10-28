@@ -25,7 +25,7 @@ namespace OrthancStone
 {
   EditLineMeasureCommand::EditLineMeasureCommand(
     boost::shared_ptr<MeasureTool>  measureTool,
-    boost::shared_ptr<IViewport> viewport)
+    boost::weak_ptr<IViewport> viewport)
     : EditMeasureCommand(measureTool, viewport)
     , measureTool_(measureTool)
   {

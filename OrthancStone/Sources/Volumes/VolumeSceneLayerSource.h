@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../Scene2D/Scene2D.h"
+#include "../Viewport/IViewport.h"
 #include "IVolumeSlicer.h"
 
 #include <boost/shared_ptr.hpp>
@@ -40,7 +41,7 @@ namespace OrthancStone
   class VolumeSceneLayerSource : public boost::noncopyable
   {
   private:
-    boost::shared_ptr<OrthancStone::IViewport>  viewport_;
+    boost::weak_ptr<OrthancStone::IViewport>  viewport_;
     int                                       layerDepth_;
     boost::shared_ptr<IVolumeSlicer>          slicer_;
     std::unique_ptr<ILayerStyleConfigurator>  configurator_;
@@ -50,8 +51,15 @@ namespace OrthancStone
 
     void ClearLayer();
 
+    /**
+    This will return a scoped lock to the viewport.
+    If the viewport does not exist anymore, then nullptr is returned.
+    */
+    IViewport::ILock* GetViewportLock();
+    IViewport::ILock* GetViewportLock() const;
+
   public:
-    VolumeSceneLayerSource(boost::shared_ptr<OrthancStone::IViewport>  viewport,
+    VolumeSceneLayerSource(boost::weak_ptr<OrthancStone::IViewport>  viewport,
                            int layerDepth,
                            const boost::shared_ptr<IVolumeSlicer>& slicer);
 

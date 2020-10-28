@@ -30,7 +30,7 @@
 namespace OrthancStone
 {
   LayerHolder::LayerHolder(
-    boost::shared_ptr<IViewport> viewport,
+    boost::weak_ptr<IViewport> viewport,
     int        polylineLayerCount,
     int        textLayerCount,
     int        infoTextCount)
@@ -43,9 +43,18 @@ namespace OrthancStone
 
   }
 
+  IViewport::ILock* LayerHolder::GetViewportLock()
+  {
+    boost::shared_ptr<IViewport> viewport = viewport_.lock();
+    if (viewport)
+      return viewport->Lock();
+    else
+      return nullptr;
+  }
+
   void LayerHolder::CreateLayers()
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     ViewportController& controller = lock->GetController();
     Scene2D& scene = controller.GetScene();
 
@@ -86,7 +95,7 @@ namespace OrthancStone
   
   void LayerHolder::DeleteLayers()
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     Scene2D& scene = lock->GetController().GetScene();
 
     for (int i = 0; i < textLayerCount_ + polylineLayerCount_; ++i)
@@ -100,7 +109,7 @@ namespace OrthancStone
   
   PolylineSceneLayer* LayerHolder::GetPolylineLayer(int index /*= 0*/)
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     const Scene2D& scene = lock->GetController().GetScene();
 
     using namespace Orthanc;
@@ -117,7 +126,7 @@ namespace OrthancStone
 
   TextSceneLayer* LayerHolder::GetTextLayer(int index /*= 0*/)
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     const Scene2D& scene = lock->GetController().GetScene();
 
     using namespace Orthanc;

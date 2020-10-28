@@ -40,11 +40,10 @@ namespace OrthancStone
             LinearAlgebra::IsCloseToZero(distance));
   }
 
-
   void VolumeSceneLayerSource::ClearLayer()
   {
     {
-      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+      std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
       ViewportController& controller = lock->GetController();
       Scene2D& scene = controller.GetScene();
       scene.DeleteLayer(layerDepth_);
@@ -52,8 +51,27 @@ namespace OrthancStone
     lastPlane_.reset(NULL);
   }
 
+  IViewport::ILock* VolumeSceneLayerSource::GetViewportLock()
+  {
+    boost::shared_ptr<IViewport> viewport = viewport_.lock();
+    if (viewport)
+      return viewport->Lock();
+    else
+      return nullptr;
+  }
+
+  IViewport::ILock* VolumeSceneLayerSource::GetViewportLock() const
+  {
+    boost::shared_ptr<IViewport> viewport = viewport_.lock();
+    if (viewport)
+      return viewport->Lock();
+    else
+      return nullptr;
+  }
+
+
   VolumeSceneLayerSource::VolumeSceneLayerSource(
-    boost::shared_ptr<OrthancStone::IViewport>  viewport,
+    boost::weak_ptr<OrthancStone::IViewport>  viewport,
     int layerDepth,
     const boost::shared_ptr<IVolumeSlicer>& slicer) :
     viewport_(viewport),
@@ -68,7 +86,7 @@ namespace OrthancStone
     }
 
     {
-      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+      std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
       ViewportController& controller = lock->GetController();
       Scene2D& scene = controller.GetScene();
       ORTHANC_ASSERT(!scene.HasLayer(layerDepth_));
@@ -119,7 +137,7 @@ namespace OrthancStone
 
   void VolumeSceneLayerSource::Update(const CoordinateSystem3D& plane)
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     ViewportController& controller = lock->GetController();
     Scene2D& scene = controller.GetScene();
 

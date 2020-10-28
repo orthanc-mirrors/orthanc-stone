@@ -42,10 +42,16 @@ namespace OrthancStone
     
   protected:
     boost::shared_ptr<CreateMeasureCommand>  command_;
-    boost::shared_ptr<IViewport>             viewport_;
+    boost::weak_ptr<IViewport>               viewport_;
     bool                                     alive_;
 
-    explicit CreateMeasureTracker(boost::shared_ptr<IViewport> viewport);
+    /**
+    This will return a scoped lock to the viewport.
+    If the viewport does not exist anymore, then nullptr is returned.
+    */
+    IViewport::ILock* GetViewportLock();
+
+    explicit CreateMeasureTracker(boost::weak_ptr<IViewport> viewport);
 
     virtual ~CreateMeasureTracker();
     
@@ -64,10 +70,16 @@ namespace OrthancStone
 
   protected:
     boost::shared_ptr<EditMeasureCommand>  command_;
-    boost::shared_ptr<IViewport>           viewport_;
+    boost::weak_ptr<IViewport>             viewport_;
     bool                                   alive_;
     
-    EditMeasureTracker(boost::shared_ptr<IViewport> viewport,
+    /**
+    This will return a scoped lock to the viewport.
+    If the viewport does not exist anymore, then nullptr is returned.
+    */
+    IViewport::ILock* GetViewportLock();
+
+    EditMeasureTracker(boost::weak_ptr<IViewport> viewport,
                        const PointerEvent& e);
 
     ~EditMeasureTracker();

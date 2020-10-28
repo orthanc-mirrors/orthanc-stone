@@ -25,6 +25,7 @@
 #include <Enumerations.h>
 #include <OrthancException.h>
 
+#include <boost/shared_ptr.hpp>
 #include <boost/math/constants/constants.hpp>
 
 #include "../Viewport/IViewport.h"
@@ -48,7 +49,25 @@ namespace OrthancStone
     return enabled_;
   }
 
-  MeasureTool::MeasureTool(boost::shared_ptr<IViewport> viewport) :
+  IViewport::ILock* MeasureTool::GetViewportLock()
+  {
+    boost::shared_ptr<IViewport> viewport = viewport_.lock();
+    if(viewport)
+        return viewport->Lock();
+    else
+        return nullptr;
+  }
+
+  IViewport::ILock* MeasureTool::GetViewportLock() const
+  {
+    boost::shared_ptr<IViewport> viewport = viewport_.lock();
+    if (viewport)
+      return viewport->Lock();
+    else
+      return nullptr;
+  }
+
+  MeasureTool::MeasureTool(boost::weak_ptr<IViewport> viewport) :
     enabled_(true),
     viewport_(viewport)
   {
@@ -56,7 +75,7 @@ namespace OrthancStone
 
   void MeasureTool::PostConstructor()
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     ViewportController& controller = lock->GetController();
 
     Register<ViewportController::SceneTransformChanged>(

@@ -46,7 +46,7 @@ namespace OrthancStone
 
 
   protected:
-    explicit MeasureTool(boost::shared_ptr<IViewport> viewport);
+    explicit MeasureTool(boost::weak_ptr<IViewport> viewport);
 
     void PostConstructor();
 
@@ -74,8 +74,14 @@ namespace OrthancStone
        Protected to allow sub-classes to use this weak pointer in factory methods
        (pass them to created objects)
     */
-    boost::shared_ptr<IViewport> viewport_;
+    boost::weak_ptr<IViewport> viewport_;
 
+    /**
+    This will return a scoped lock to the viewport. 
+    If the viewport does not exist anymore, then nullptr is returned.
+    */
+    IViewport::ILock* GetViewportLock();
+    IViewport::ILock* GetViewportLock() const;
 
   public:
     virtual ~MeasureTool()

@@ -24,7 +24,7 @@
 
 namespace OrthancStone
 {
-  RotateSceneTracker::RotateSceneTracker(boost::shared_ptr<IViewport> viewport,
+  RotateSceneTracker::RotateSceneTracker(boost::weak_ptr<IViewport> viewport,
                                          const PointerEvent& event) :
     OneGesturePointerTracker(viewport),
     click_(event.GetMainPosition()),
@@ -32,7 +32,7 @@ namespace OrthancStone
     referenceAngle_(0),
     isFirst_(true)
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     originalSceneToCanvas_ = lock->GetController().GetSceneToCanvasTransform();
   }
 
@@ -54,7 +54,7 @@ namespace OrthancStone
         isFirst_ = false;
       }
 
-      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+      std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
 
       lock->GetController().SetSceneToCanvasTransform(
         AffineTransform2D::Combine(
@@ -69,7 +69,7 @@ namespace OrthancStone
   void RotateSceneTracker::Cancel()
   {
     // See remark above
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     lock->GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
     lock->Invalidate();
   }

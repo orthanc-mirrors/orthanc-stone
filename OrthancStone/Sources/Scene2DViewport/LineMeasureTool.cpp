@@ -32,7 +32,7 @@
 namespace OrthancStone
 {
   LineMeasureTool::LineMeasureTool(
-    boost::shared_ptr<IViewport> viewport):
+    boost::weak_ptr<IViewport> viewport):
     MeasureTool(viewport),
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
     layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(viewport,1,5))),
@@ -45,7 +45,7 @@ namespace OrthancStone
 
   }
 
-  boost::shared_ptr<LineMeasureTool> LineMeasureTool::Create(boost::shared_ptr<IViewport> viewport)
+  boost::shared_ptr<LineMeasureTool> LineMeasureTool::Create(boost::weak_ptr<IViewport> viewport)
   {
     boost::shared_ptr<LineMeasureTool> obj(new LineMeasureTool(viewport));
     obj->MeasureTool::PostConstructor();
@@ -117,7 +117,7 @@ namespace OrthancStone
 
   LineMeasureTool::LineHighlightArea LineMeasureTool::LineHitTest(ScenePoint2D p)
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     ViewportController& controller = lock->GetController();
     const Scene2D& scene = controller.GetScene();
 
@@ -153,7 +153,7 @@ namespace OrthancStone
 
   boost::shared_ptr<IFlexiblePointerTracker> LineMeasureTool::CreateEditionTracker(const PointerEvent& e)
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     ViewportController& controller = lock->GetController();
     const Scene2D& scene = controller.GetScene();
 
@@ -196,7 +196,7 @@ namespace OrthancStone
       if (IsEnabled())
       {
         
-        std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+        std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
         ViewportController& controller = lock->GetController();
         Scene2D& scene = controller.GetScene();
 

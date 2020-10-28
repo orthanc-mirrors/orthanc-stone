@@ -29,6 +29,7 @@
 #include "AngleMeasureTool.h"
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
 namespace OrthancStone
@@ -36,10 +37,16 @@ namespace OrthancStone
   class MeasureCommand : public boost::noncopyable
   {
   protected:
-    boost::shared_ptr<IViewport> viewport_;
+    boost::weak_ptr<IViewport> viewport_;
+
+    /**
+    This will return a scoped lock to the viewport.
+    If the viewport does not exist anymore, then nullptr is returned.
+    */
+    IViewport::ILock* GetViewportLock();
 
   public:
-    explicit MeasureCommand(boost::shared_ptr<IViewport> viewport) :
+    explicit MeasureCommand(boost::weak_ptr<IViewport> viewport) :
       viewport_(viewport)
     {
     }
@@ -61,7 +68,7 @@ namespace OrthancStone
     virtual boost::shared_ptr<MeasureTool> GetMeasureTool() = 0;
 
   public:
-    explicit CreateMeasureCommand(boost::shared_ptr<IViewport> viewport);
+    explicit CreateMeasureCommand(boost::weak_ptr<IViewport> viewport);
     
     virtual ~CreateMeasureCommand();
     
@@ -83,7 +90,7 @@ namespace OrthancStone
 
   public:
     EditMeasureCommand(boost::shared_ptr<MeasureTool> measureTool,
-                       boost::shared_ptr<IViewport> viewport);
+                       boost::weak_ptr<IViewport> viewport);
 
     virtual ~EditMeasureCommand();
 
@@ -113,7 +120,7 @@ namespace OrthancStone
 
   public:
     DeleteMeasureCommand(boost::shared_ptr<MeasureTool> measureTool,
-                         boost::shared_ptr<IViewport> viewport);
+                         boost::weak_ptr<IViewport> viewport);
 
     virtual ~DeleteMeasureCommand();
     

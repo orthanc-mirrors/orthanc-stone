@@ -31,7 +31,7 @@
 namespace OrthancStone
 {
   IFlexiblePointerTracker* DefaultViewportInteractor::CreateTrackerInternal(
-    boost::shared_ptr<IViewport> viewport,
+    boost::weak_ptr<IViewport> viewport,
     MouseAction action,
     const PointerEvent& event,
     unsigned int viewportWidth,
@@ -62,10 +62,10 @@ namespace OrthancStone
 
 
   IFlexiblePointerTracker* DefaultViewportInteractor::CreateTracker(
-    boost::shared_ptr<IViewport>  viewport,
-    const PointerEvent&           event,
-    unsigned int                  viewportWidth,
-    unsigned int                  viewportHeight)
+    boost::weak_ptr<IViewport>  viewport,
+    const PointerEvent&         event,
+    unsigned int                viewportWidth,
+    unsigned int                viewportHeight)
   {
     MouseAction action;
     

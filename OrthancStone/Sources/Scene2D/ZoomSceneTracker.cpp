@@ -25,7 +25,7 @@
 
 namespace OrthancStone
 {
-  ZoomSceneTracker::ZoomSceneTracker(boost::shared_ptr<IViewport> viewport,
+  ZoomSceneTracker::ZoomSceneTracker(boost::weak_ptr<IViewport> viewport,
                                      const PointerEvent& event,
                                      unsigned int canvasHeight)
     : OneGesturePointerTracker(viewport)
@@ -33,7 +33,7 @@ namespace OrthancStone
     , aligner_(viewport, event.GetMainPosition())
   {
     
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     originalSceneToCanvas_ = lock->GetController().GetSceneToCanvasTransform();
 
     if (canvasHeight <= 3)
@@ -77,7 +77,7 @@ namespace OrthancStone
 
       double zoom = pow(2.0, z);
 
-      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+      std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
       lock->GetController().SetSceneToCanvasTransform(
         AffineTransform2D::Combine(
           AffineTransform2D::CreateScaling(zoom, zoom),
@@ -89,7 +89,7 @@ namespace OrthancStone
 
   void ZoomSceneTracker::Cancel()
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     lock->GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
     lock->Invalidate();
   }

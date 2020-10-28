@@ -38,10 +38,11 @@ namespace OrthancStone
       FloatTextureSceneLayer*             layer_;
 
     public:
-      GrayscaleLayerAccessor(boost::shared_ptr<IViewport> viewport,
+      GrayscaleLayerAccessor(boost::weak_ptr<IViewport> viewportWeak,
                              int layerIndex) :
         layer_(NULL)
       {
+        boost::shared_ptr<IViewport> viewport = viewportWeak.lock();
         if (viewport != NULL)
         {
           lock_.reset(viewport->Lock());
@@ -89,7 +90,8 @@ namespace OrthancStone
   {
     if (active_)
     {
-      GrayscaleLayerAccessor accessor(viewport_, layerIndex_);
+      boost::shared_ptr<IViewport> viewport = viewport_.lock();
+      GrayscaleLayerAccessor accessor(viewport, layerIndex_);
       
       if (accessor.IsValid())
       {
@@ -100,7 +102,7 @@ namespace OrthancStone
   }
     
 
-  GrayscaleWindowingSceneTracker::GrayscaleWindowingSceneTracker(boost::shared_ptr<IViewport> viewport,
+  GrayscaleWindowingSceneTracker::GrayscaleWindowingSceneTracker(boost::weak_ptr<IViewport> viewport,
                                                                  int layerIndex,
                                                                  const PointerEvent& event,
                                                                  unsigned int canvasWidth,
@@ -115,7 +117,8 @@ namespace OrthancStone
     if (canvasWidth > 3 &&
         canvasHeight > 3)
     {
-      GrayscaleLayerAccessor accessor(viewport_, layerIndex_);
+      boost::weak_ptr<IViewport> viewport = viewport_.lock();
+      GrayscaleLayerAccessor accessor(viewport, layerIndex_);
       
       if (accessor.IsValid())
       {
@@ -143,8 +146,8 @@ namespace OrthancStone
       const double x = event.GetMainPosition().GetX();
       const double y = event.GetMainPosition().GetY();
 
-      float center = originalCenter_ + (x - clickX_) * normalization_;
-      float width = originalWidth_ + (y - clickY_) * normalization_;
+      float center = originalCenter_ + static_cast<float>((x - clickX_) * normalization_);
+      float width = originalWidth_ + static_cast<float>((y - clickY_) * normalization_);
 
       if (width <= 1)
       {

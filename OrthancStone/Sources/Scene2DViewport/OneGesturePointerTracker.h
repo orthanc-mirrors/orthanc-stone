@@ -51,10 +51,16 @@ namespace OrthancStone
     int   currentTouchCount_;
 
   protected:
-    boost::shared_ptr<IViewport> viewport_;
+    boost::weak_ptr<IViewport> viewport_;
+
+    /**
+    This will return a scoped lock to the viewport.
+    If the viewport does not exist anymore, then nullptr is returned.
+    */
+    IViewport::ILock* GetViewportLock();
 
   public:
-    explicit OneGesturePointerTracker(boost::shared_ptr<IViewport> viewport);
+    explicit OneGesturePointerTracker(boost::weak_ptr<IViewport> viewport);
     
     virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE;
     

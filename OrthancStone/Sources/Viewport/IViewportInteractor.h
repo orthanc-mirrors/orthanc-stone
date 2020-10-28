@@ -33,7 +33,7 @@ namespace OrthancStone
     {
     }
 
-    virtual IFlexiblePointerTracker* CreateTracker(boost::shared_ptr<IViewport> viewport,
+    virtual IFlexiblePointerTracker* CreateTracker(boost::weak_ptr<IViewport> viewport,
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) = 0;

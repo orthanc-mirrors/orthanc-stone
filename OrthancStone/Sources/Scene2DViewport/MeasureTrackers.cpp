@@ -25,11 +25,20 @@
 namespace OrthancStone
 {
 
-  CreateMeasureTracker::CreateMeasureTracker(boost::shared_ptr<IViewport> viewport) :
+  CreateMeasureTracker::CreateMeasureTracker(boost::weak_ptr<IViewport> viewport) :
     commitResult_(true),
     viewport_(viewport),
     alive_(true)
   {
+  }
+
+  IViewport::ILock* CreateMeasureTracker::GetViewportLock()
+  {
+    boost::shared_ptr<IViewport> viewport = viewport_.lock();
+    if (viewport)
+      return viewport->Lock();
+    else
+      return nullptr;
   }
 
   void CreateMeasureTracker::Cancel()
@@ -49,7 +58,7 @@ namespace OrthancStone
     // to the undo stack
     // otherwise, we simply undo it
 
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
 
     if (commitResult_)
       lock->GetController().PushCommand(command_);
@@ -59,16 +68,25 @@ namespace OrthancStone
     lock->Invalidate();
   }
 
-  EditMeasureTracker::EditMeasureTracker(boost::shared_ptr<IViewport> viewport,
-                                         const PointerEvent& e) :
+  EditMeasureTracker::EditMeasureTracker(boost::weak_ptr<IViewport> viewport,
+    const PointerEvent& e) :
     commitResult_(true),
     viewport_(viewport),
     alive_(true)
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
 
     originalClickPosition_ = e.GetMainPosition().Apply(
       lock->GetController().GetScene().GetCanvasToSceneTransform());
+  }
+
+  IViewport::ILock* EditMeasureTracker::GetViewportLock()
+  {
+    boost::shared_ptr<IViewport> viewport = viewport_.lock();
+    if (viewport)
+      return viewport->Lock();
+    else
+      return nullptr;
   }
 
   void EditMeasureTracker::Cancel()
@@ -88,7 +106,7 @@ namespace OrthancStone
     // to the undo stack
     // otherwise, we simply undo it
 
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
 
     if (commitResult_)
       lock->GetController().PushCommand(command_);

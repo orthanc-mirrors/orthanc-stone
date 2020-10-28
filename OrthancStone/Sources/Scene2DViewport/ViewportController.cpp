@@ -29,7 +29,7 @@
 
 namespace OrthancStone
 {
-  ViewportController::ViewportController(boost::shared_ptr<IViewport> viewport)
+  ViewportController::ViewportController(boost::weak_ptr<IViewport> viewport)
     : viewport_(viewport)
     , scene_(new Scene2D)
     , canvasToSceneFactor_(1)

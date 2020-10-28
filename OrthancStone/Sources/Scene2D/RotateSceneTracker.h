@@ -38,7 +38,7 @@ namespace OrthancStone
     AffineTransform2D            originalSceneToCanvas_;
 
   public:
-    RotateSceneTracker(boost::shared_ptr<IViewport> viewport,
+    RotateSceneTracker(boost::weak_ptr<IViewport> viewport,
                        const PointerEvent& event);
 
     virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;

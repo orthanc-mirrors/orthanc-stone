@@ -88,7 +88,7 @@ namespace OrthancStone
                                         SceneTransformChanged, \
                                         ViewportController);
 
-    explicit ViewportController(boost::shared_ptr<IViewport> viewport);
+    explicit ViewportController(boost::weak_ptr<IViewport> viewport);
 
     ~ViewportController();
 
@@ -233,7 +233,7 @@ namespace OrthancStone
   private:
     double GetCanvasToSceneFactor() const;
 
-    boost::shared_ptr<IViewport>                  viewport_;
+    boost::weak_ptr<IViewport>                    viewport_;
     boost::weak_ptr<UndoStack>                    undoStackW_;  // Global stack, possibly shared by all viewports
     std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;
     boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Couldn't this be a "std::unique_ptr"?

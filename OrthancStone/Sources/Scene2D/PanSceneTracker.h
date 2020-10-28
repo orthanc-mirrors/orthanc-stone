@@ -29,7 +29,7 @@ namespace OrthancStone
   class PanSceneTracker : public OneGesturePointerTracker
   {
   public:
-    PanSceneTracker(boost::shared_ptr<IViewport> viewport,
+    PanSceneTracker(boost::weak_ptr<IViewport> viewport,
                     const PointerEvent& event);
 
     virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;

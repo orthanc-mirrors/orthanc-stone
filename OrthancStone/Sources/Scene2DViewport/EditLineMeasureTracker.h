@@ -44,7 +44,7 @@ namespace OrthancStone
     */
     EditLineMeasureTracker(
       boost::shared_ptr<MeasureTool>  measureTool,
-      boost::shared_ptr<IViewport>    viewport,
+      boost::weak_ptr<IViewport>      viewport,
       const PointerEvent&             e);
 
     virtual void PointerMove(const PointerEvent& e) ORTHANC_OVERRIDE;

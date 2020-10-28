@@ -30,7 +30,7 @@ namespace OrthancStone
     /** Ctor sets end of side 1*/
     EditAngleMeasureCommand(
       boost::shared_ptr<MeasureTool>  measureTool,
-      boost::shared_ptr<IViewport> viewport);
+      boost::weak_ptr<IViewport> viewport);
 
     /** This method sets center*/
     void SetCenter(ScenePoint2D scenePos);

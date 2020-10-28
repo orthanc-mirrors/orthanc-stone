@@ -365,7 +365,7 @@ namespace OrthancStone
             sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
       {
         double p = LinearAlgebra::DotProduct(meanNormal, instance.GetPosition());
-        items.push_back(SortableItem<float>(p, *it, sopInstanceUid));
+        items.push_back(SortableItem<float>(static_cast<float>(p), *it, sopInstanceUid));
       }
     }
 

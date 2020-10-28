@@ -144,6 +144,7 @@ namespace OrthancStone
       delete instances_[i];
     }
 
+    instancesIndex_.clear();
     studyInstanceUid_.clear();
     seriesInstanceUid_.clear();
     frames_.clear();
@@ -155,9 +156,10 @@ namespace OrthancStone
   {
     std::unique_ptr<Instance> instance(new Instance(tags));
 
-    std::string studyInstanceUid, seriesInstanceUid;
+    std::string studyInstanceUid, seriesInstanceUid, sopInstanceUid;
     if (!tags.LookupStringValue(studyInstanceUid, Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, false) ||
-        !tags.LookupStringValue(seriesInstanceUid, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false))
+        !tags.LookupStringValue(seriesInstanceUid, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false) ||
+        !tags.LookupStringValue(sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
@@ -177,12 +179,37 @@ namespace OrthancStone
       }
     }
 
+    if (instancesIndex_.find(sopInstanceUid) != instancesIndex_.end())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
+                                      "Cannot register twice the same SOP Instance UID");
+    }
+
+    instancesIndex_[sopInstanceUid] = instances_.size();
+
     instances_.push_back(instance.release());
     sorted_ = false;
     frames_.clear();
   }
 
 
+  bool SortedFrames::LookupSopInstanceUid(size_t& instanceIndex,
+                                          const std::string& sopInstanceUid) const
+  {
+    InstancesIndex::const_iterator found = instancesIndex_.find(sopInstanceUid);
+    
+    if (found == instancesIndex_.end())
+    {
+      return false;
+    }
+    else
+    {
+      instanceIndex = found->second;
+      return true;
+    }
+  }
+
+  
   void SortedFrames::AddFramesOfInstance(std::set<size_t>& remainingInstances,
                                          size_t index)
   {

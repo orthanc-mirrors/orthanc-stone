@@ -92,6 +92,12 @@ TEST(SortedFrames, SortSopInstanceUid)
   tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop2", false);
   tags.SetValue(Orthanc::DICOM_TAG_NUMBER_OF_FRAMES, "2", false);
   f.AddInstance(tags);
+
+  size_t i;
+  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop1"));  ASSERT_EQ(1u, i);
+  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2"));  ASSERT_EQ(2u, i);
+  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop3"));  ASSERT_EQ(0u, i);
+  ASSERT_FALSE(f.LookupSopInstanceUid(i, "nope"));
     
   f.Sort();
   ASSERT_EQ(3u, f.GetInstancesCount());
@@ -105,6 +111,12 @@ TEST(SortedFrames, SortSopInstanceUid)
   ASSERT_EQ("sop2", f.GetFrameSopInstanceUid(3));  ASSERT_EQ(0u, f.GetFrameIndex(3));
   ASSERT_EQ("sop2", f.GetFrameSopInstanceUid(4));  ASSERT_EQ(1u, f.GetFrameIndex(4));
   ASSERT_EQ("sop3", f.GetFrameSopInstanceUid(5));  ASSERT_EQ(0u, f.GetFrameIndex(5));
+
+  // The instances must not have been reordered, only the frames
+  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop1"));  ASSERT_EQ(1u, i);
+  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2"));  ASSERT_EQ(2u, i);
+  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop3"));  ASSERT_EQ(0u, i);
+  ASSERT_FALSE(f.LookupSopInstanceUid(i, "nope"));
 }
 
 
@@ -173,7 +185,7 @@ TEST(SortedFrames, SortInstanceNumberAndImageIndex)
   tags.Remove(Orthanc::DICOM_TAG_IMAGE_INDEX);
   tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "30", false);
   f.AddInstance(tags);
-    
+
   f.Sort();
   ASSERT_EQ(4u, f.GetInstancesCount());
   ASSERT_EQ("sop1", f.GetSopInstanceUid(0));

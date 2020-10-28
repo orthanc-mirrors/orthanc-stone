@@ -94,11 +94,16 @@ namespace OrthancStone
       }
     };
 
+
+    // Maps "SOPInstanceUID" to an index in "instances_"
+    typedef std::map<std::string, size_t>  InstancesIndex;
+
     std::string             studyInstanceUid_;
     std::string             seriesInstanceUid_;
     std::vector<Instance*>  instances_;
     std::vector<Frame>      frames_;
     bool                    sorted_;
+    InstancesIndex          instancesIndex_;
 
     const Instance& GetInstance(size_t index) const;
 
@@ -153,6 +158,9 @@ namespace OrthancStone
     {
       return GetInstance(index).GetSopInstanceUid();
     }
+
+    bool LookupSopInstanceUid(size_t& instanceIndex,
+                              const std::string& sopInstanceUid) const;
 
     bool IsSorted() const
     {

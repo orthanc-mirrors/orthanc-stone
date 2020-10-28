@@ -34,7 +34,7 @@ namespace OrthancStone
     if (viewport)
       return viewport->Lock();
     else
-      return nullptr;
+      return NULL;
   }
 
 

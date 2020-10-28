@@ -38,7 +38,7 @@ namespace OrthancStone
     if (viewport)
       return viewport->Lock();
     else
-      return nullptr;
+      return NULL;
   }
 
   void CreateMeasureTracker::Cancel()
@@ -86,7 +86,7 @@ namespace OrthancStone
     if (viewport)
       return viewport->Lock();
     else
-      return nullptr;
+      return NULL;
   }
 
   void EditMeasureTracker::Cancel()

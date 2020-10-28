@@ -37,11 +37,11 @@ namespace OrthancStone
 
   IViewport::ILock* OneGesturePointerTracker::GetViewportLock()
   {
-	  boost::shared_ptr<IViewport> viewport = viewport_.lock();
-	  if (viewport)
-		  return viewport->Lock();
-	  else
-		  return nullptr;
+    boost::shared_ptr<IViewport> viewport = viewport_.lock();
+    if (viewport)
+      return viewport->Lock();
+    else
+      return NULL;
   }
 
   void OneGesturePointerTracker::PointerUp(const PointerEvent& event)

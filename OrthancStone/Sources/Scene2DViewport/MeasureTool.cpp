@@ -52,10 +52,10 @@ namespace OrthancStone
   IViewport::ILock* MeasureTool::GetViewportLock()
   {
     boost::shared_ptr<IViewport> viewport = viewport_.lock();
-    if(viewport)
-        return viewport->Lock();
+    if (viewport)
+      return viewport->Lock();
     else
-        return nullptr;
+      return NULL;
   }
 
   IViewport::ILock* MeasureTool::GetViewportLock() const
@@ -64,7 +64,7 @@ namespace OrthancStone
     if (viewport)
       return viewport->Lock();
     else
-      return nullptr;
+      return NULL;
   }
 
   MeasureTool::MeasureTool(boost::weak_ptr<IViewport> viewport) :

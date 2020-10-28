@@ -57,7 +57,7 @@ namespace OrthancStone
     if (viewport)
       return viewport->Lock();
     else
-      return nullptr;
+      return NULL;
   }
 
   IViewport::ILock* VolumeSceneLayerSource::GetViewportLock() const
@@ -66,7 +66,7 @@ namespace OrthancStone
     if (viewport)
       return viewport->Lock();
     else
-      return nullptr;
+      return NULL;
   }
 
 

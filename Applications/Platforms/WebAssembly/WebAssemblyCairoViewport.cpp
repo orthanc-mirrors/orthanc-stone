@@ -77,18 +77,22 @@ namespace OrthancStone
       }
     }
 
-    // Execute JavaScript commands to blit the image buffer onto the
-    // 2D drawing context of the HTML5 canvas
-    EM_ASM({
-        const data = new Uint8ClampedArray(Module.HEAP8.buffer, $1, 4 * $2 * $3);
-        const img = new ImageData(data, $2, $3);
-        const ctx = document.getElementById(UTF8ToString($0)).getContext('2d');
-        ctx.putImageData(img, 0, 0);
-      },
-      GetCanvasId().c_str(), // $0
-      javascript_->GetBuffer(),   // $1
-      javascript_->GetWidth(),    // $2
-      javascript_->GetHeight());  // $3
+    if (width != 0 &&
+        height != 0)
+    {
+      // Execute JavaScript commands to blit the image buffer onto the
+      // 2D drawing context of the HTML5 canvas
+      EM_ASM({
+          const data = new Uint8ClampedArray(Module.HEAP8.buffer, $1, 4 * $2 * $3);
+          const img = new ImageData(data, $2, $3);
+          const ctx = document.getElementById(UTF8ToString($0)).getContext('2d');
+          ctx.putImageData(img, 0, 0);
+        },
+        GetCanvasId().c_str(),      // $0
+        javascript_->GetBuffer(),   // $1
+        javascript_->GetWidth(),    // $2
+        javascript_->GetHeight());  // $3
+    }
   }
     
 

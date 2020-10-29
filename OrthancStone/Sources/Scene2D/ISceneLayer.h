@@ -52,7 +52,7 @@ namespace OrthancStone
 
     virtual Type GetType() const = 0;
 
-    virtual bool GetBoundingBox(Extent2D& target) const = 0;
+    virtual void GetBoundingBox(Extent2D& target) const = 0;
 
     virtual uint64_t GetRevision() const = 0;
   };

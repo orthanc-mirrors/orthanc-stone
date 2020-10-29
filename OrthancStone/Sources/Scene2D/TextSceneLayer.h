@@ -92,9 +92,9 @@ namespace OrthancStone
       return Type_Text;
     }
 
-    virtual bool GetBoundingBox(Extent2D& target) const ORTHANC_OVERRIDE
+    virtual void GetBoundingBox(Extent2D& target) const ORTHANC_OVERRIDE
     {
-      return false;
+      target.Clear();
     }
 
     virtual uint64_t GetRevision() const ORTHANC_OVERRIDE

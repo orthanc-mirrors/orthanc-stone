@@ -223,9 +223,9 @@ namespace OrthancStone
     canvasToScene_ = inverse;
   }
 
-  void Scene2D::GetBoundingBox(Extent2D &target) const
+  void Scene2D::GetBoundingBox(Extent2D& target) const
   {
-    target.Reset();
+    target.Clear();
 
     for (Content::const_iterator it = content_.begin();
          it != content_.end(); ++it)
@@ -233,10 +233,8 @@ namespace OrthancStone
       assert(it->second != NULL);
 
       Extent2D tmp;
-      if (it->second->GetLayer().GetBoundingBox(tmp))
-      {
-        target.Union(tmp);
-      }
+      it->second->GetLayer().GetBoundingBox(tmp);
+      target.Union(tmp);
     }
   }
 

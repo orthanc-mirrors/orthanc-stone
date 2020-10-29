@@ -50,7 +50,7 @@ namespace OrthancStone
   }
 
 
-  void Extent2D::Reset()
+  void Extent2D::Clear()
   {
     empty_ = true;
     x1_ = 0;

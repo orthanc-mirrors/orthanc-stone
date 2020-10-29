@@ -93,9 +93,9 @@ namespace OrthancStone
   }
 
   
-  bool PolylineSceneLayer::GetBoundingBox(Extent2D& target) const
+  void PolylineSceneLayer::GetBoundingBox(Extent2D& target) const
   {
-    target.Reset();
+    target.Clear();
 
     for (size_t i = 0; i < items_.size(); i++)
     {
@@ -105,7 +105,5 @@ namespace OrthancStone
         target.AddPoint(p.GetX(), p.GetY());
       }
     }
-
-    return true;
   }
 }

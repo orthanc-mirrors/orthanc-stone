@@ -119,6 +119,6 @@ namespace OrthancStone
       return Type_Polyline;
     }
 
-    virtual bool GetBoundingBox(Extent2D& target) const ORTHANC_OVERRIDE;
+    virtual void GetBoundingBox(Extent2D& target) const ORTHANC_OVERRIDE;
   };
 }

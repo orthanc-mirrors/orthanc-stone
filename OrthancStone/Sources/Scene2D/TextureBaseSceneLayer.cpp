@@ -160,18 +160,14 @@ namespace OrthancStone
   }
 
   
-  bool TextureBaseSceneLayer::GetBoundingBox(Extent2D& target) const
+  void TextureBaseSceneLayer::GetBoundingBox(Extent2D& target) const
   {
-    if (texture_.get() == NULL)
-    {
-      return false;
-    }
-    else
+    target.Clear();
+    
+    if (texture_.get() != NULL)
     {
       const AffineTransform2D t = GetTransform();
 
-      target.Reset();
-    
       double x, y;
 
       x = 0;
@@ -193,8 +189,6 @@ namespace OrthancStone
       y = static_cast<double>(texture_->GetHeight());
       t.Apply(x, y);
       target.AddPoint(x, y);    
-
-      return true;
     }
   }
 }

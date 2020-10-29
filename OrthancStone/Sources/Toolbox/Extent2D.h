@@ -36,7 +36,7 @@ namespace OrthancStone
   public:
     Extent2D()
     {
-      Reset();
+      Clear();
     }
 
     Extent2D(double x1,
@@ -44,7 +44,7 @@ namespace OrthancStone
              double x2,
              double y2);
 
-    void Reset();
+    void Clear();
 
     void AddPoint(double x,
                   double y);

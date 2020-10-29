@@ -37,7 +37,9 @@ namespace OrthancStone
   class NullLayer : public ISceneLayer
   {
   public:
-    NullLayer() {}
+    NullLayer()
+    {
+    }
 
     virtual ISceneLayer* Clone() const ORTHANC_OVERRIDE
     {
@@ -49,10 +51,9 @@ namespace OrthancStone
       return Type_NullLayer;
     }
 
-    virtual bool GetBoundingBox(Extent2D& target) const ORTHANC_OVERRIDE
+    virtual void GetBoundingBox(Extent2D& target) const ORTHANC_OVERRIDE
     {
-      target = Extent2D();
-      return false; 
+      target.Clear();
     }
 
     virtual uint64_t GetRevision() const ORTHANC_OVERRIDE

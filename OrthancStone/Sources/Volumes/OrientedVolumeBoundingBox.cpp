@@ -247,7 +247,7 @@ namespace OrthancStone
   bool OrientedVolumeBoundingBox::ComputeExtent(Extent2D& extent,
                                                 const CoordinateSystem3D& plane) const
   {
-    extent.Reset();
+    extent.Clear();
     
     std::vector<Vector> points;
     if (HasIntersection(points, plane))

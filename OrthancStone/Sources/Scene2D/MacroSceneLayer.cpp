@@ -69,21 +69,17 @@ namespace OrthancStone
   }
   
 
-  bool MacroSceneLayer::GetBoundingBox(Extent2D& target) const
+  void MacroSceneLayer::GetBoundingBox(Extent2D& target) const
   {
-    target.Reset();
+    target.Clear();
 
     for (size_t i = 0; i < layers_.size(); i++)
     {
       assert(layers_[i] != NULL);
 
       Extent2D subextent;
-      if (layers_[i]->GetBoundingBox(subextent))
-      {
-        target.Union(subextent);
-      }
+      layers_[i]->GetBoundingBox(subextent);
+      target.Union(subextent);
     }
-
-    return true;
   }
 }

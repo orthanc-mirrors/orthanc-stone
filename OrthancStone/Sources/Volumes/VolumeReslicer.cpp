@@ -535,7 +535,7 @@ namespace OrthancStone
   void VolumeReslicer::Reset()
   {
     success_ = false;
-    extent_.Reset();
+    extent_.Clear();
     slice_.reset(NULL);
   }
 

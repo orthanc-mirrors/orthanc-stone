@@ -28,6 +28,7 @@
 #include "Internals/CairoLookupTableTextureRenderer.h"
 #include "Internals/CairoPolylineRenderer.h"
 #include "Internals/CairoTextRenderer.h"
+#include "Internals/MacroLayerRenderer.h"
 
 #include <OrthancException.h>
 
@@ -79,6 +80,9 @@ namespace OrthancStone
           return new Internals::CairoTextRenderer(*this, *found->second, l);
         }
       }
+
+      case ISceneLayer::Type_Macro:
+        return new Internals::MacroLayerRenderer(*this, layer);
 
       default:
         return NULL;

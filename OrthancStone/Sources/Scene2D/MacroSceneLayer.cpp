@@ -53,6 +53,20 @@ namespace OrthancStone
   }
 
   
+  const ISceneLayer& MacroSceneLayer::GetLayer(size_t i) const
+  {
+    if (i >= layers_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      assert(layers_[i] != NULL);
+      return *layers_[i];
+    }
+  }
+
+
   ISceneLayer* MacroSceneLayer::Clone() const
   {
     std::unique_ptr<MacroSceneLayer> copy(new MacroSceneLayer);

@@ -724,7 +724,12 @@ window.addEventListener('message', function(e) {
   }
   
   if (e.data.type == 'show-osirix-annotations') {
-    app.LoadOsiriXAnnotations(e.data.xml, true /* clear previous annotations */);
+    var clear = true;  // Whether to clear previous annotations
+    if ('clear' in e.data) {
+      clear = e.data.clear;
+    }
+    
+    app.LoadOsiriXAnnotations(e.data.xml, clear);
   } else {
     alert('Unknown message type: ' + e.data.type);
   }
@@ -743,7 +748,8 @@ function Test()
         
         window.postMessage({
           'type': 'show-osirix-annotations',
-          'xml': response.data
+          'xml': response.data,
+          'clear': true
         }, targetOrigin);
       });
   }

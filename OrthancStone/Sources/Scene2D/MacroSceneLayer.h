@@ -72,6 +72,8 @@ namespace OrthancStone
       return layers_.size();
     }
 
+    const ISceneLayer& GetLayer(size_t i) const;
+
     virtual ISceneLayer* Clone() const ORTHANC_OVERRIDE;
 
     virtual Type GetType() const ORTHANC_OVERRIDE

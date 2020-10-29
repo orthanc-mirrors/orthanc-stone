@@ -72,6 +72,7 @@
 #include <Oracle/ParseDicomSuccessMessage.h>
 #include <Scene2D/ColorTextureSceneLayer.h>
 #include <Scene2D/FloatTextureSceneLayer.h>
+#include <Scene2D/MacroSceneLayer.h>
 #include <Scene2D/PolylineSceneLayer.h>
 #include <Scene2D/TextSceneLayer.h>
 #include <Scene2DViewport/ViewportController.h>
@@ -992,8 +993,7 @@ private:
   static const int LAYER_TEXTURE = 0;
   static const int LAYER_REFERENCE_LINES = 1;
   static const int LAYER_ANNOTATIONS = 2;
-  static const int LAYER_TEMP = 3;  // TODO - REMOVE
-  
+
   
   class ICommand : public Orthanc::IDynamicObject
   {
@@ -1518,11 +1518,11 @@ private:
 
 
       /****
-       * BEGINNING OF EXPERIMENTAL CODE
+       * BEGINNING OF EXPERIMENTAL CODE => TODO => Move this to class
+       * "CollectionOfAnnotations"?
        ****/
       
-      std::unique_ptr<OrthancStone::ISceneLayer>  annotationsLayer;  // TODO - Macro layer
-      std::unique_ptr<OrthancStone::ISceneLayer>  tempLayer;  // TODO - Macro layer
+      std::unique_ptr<OrthancStone::MacroSceneLayer>  annotationsLayer;
 
       if (annotations_)
       {
@@ -1530,9 +1530,10 @@ private:
         annotations_->LookupSopInstanceUid(a, sopInstanceUid);
         if (!a.empty())
         {
+          annotationsLayer.reset(new OrthancStone::MacroSceneLayer);
+          annotationsLayer->Reserve(a.size());
+          
           using namespace OrthancStone::OsiriX;
-
-          std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
           
           for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
           {
@@ -1547,6 +1548,7 @@ private:
                 if (GetCurrentFrameGeometry().ProjectPoint(x1, y1, line.GetPoint1()) &&
                     GetCurrentFrameGeometry().ProjectPoint(x2, y2, line.GetPoint2()))
                 {
+                  std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
                   OrthancStone::PolylineSceneLayer::Chain chain;
                   chain.push_back(OrthancStone::ScenePoint2D(x1, y1));
                   chain.push_back(OrthancStone::ScenePoint2D(x2, y2));
@@ -1554,6 +1556,7 @@ private:
                   // TODO - IsArrow
                   
                   layer->AddChain(chain, false, 0, 255, 0);
+                  annotationsLayer->AddLayer(layer.release());
                 }
                 break;
               }
@@ -1566,11 +1569,13 @@ private:
                     GetCurrentFrameGeometry().ProjectPoint(x2, y2, angle.GetCenter()) &&
                     GetCurrentFrameGeometry().ProjectPoint(x3, y3, angle.GetB()))
                 {
+                  std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
                   OrthancStone::PolylineSceneLayer::Chain chain;
                   chain.push_back(OrthancStone::ScenePoint2D(x1, y1));
                   chain.push_back(OrthancStone::ScenePoint2D(x2, y2));
                   chain.push_back(OrthancStone::ScenePoint2D(x3, y3));
                   layer->AddChain(chain, false, 0, 255, 0);
+                  annotationsLayer->AddLayer(layer.release());
                 }
                 break;
               }
@@ -1581,12 +1586,12 @@ private:
                 double x, y;
                 if (GetCurrentFrameGeometry().ProjectPoint(x, y, text.GetCenter()))
                 {
-                  std::unique_ptr<OrthancStone::TextSceneLayer> layer2(new OrthancStone::TextSceneLayer());
-                  layer2->SetPosition(x, y);
-                  layer2->SetText(text.GetText());
-                  layer2->SetAnchor(OrthancStone::BitmapAnchor_Center);
-                  layer2->SetColor(255, 0, 0);
-                  tempLayer.reset(layer2.release());
+                  std::unique_ptr<OrthancStone::TextSceneLayer> layer(new OrthancStone::TextSceneLayer());
+                  layer->SetPosition(x, y);
+                  layer->SetText(text.GetText());
+                  layer->SetAnchor(OrthancStone::BitmapAnchor_Center);
+                  layer->SetColor(255, 0, 0);
+                  annotationsLayer->AddLayer(layer.release());
                 }
                 break;
               }
@@ -1595,8 +1600,6 @@ private:
                 LOG(ERROR) << "Annotation type not implemented: " << annotation.GetType();
             }
           }
-
-          annotationsLayer.reset(layer.release());
         }
       }
 
@@ -1624,15 +1627,6 @@ private:
         else
         {
           scene.DeleteLayer(LAYER_ANNOTATIONS);
-        }
-
-        if (tempLayer.get() != NULL)   // TODO - REMOVE
-        {
-          scene.SetLayer(LAYER_TEMP, tempLayer.release());
-        }
-        else
-        {
-          scene.DeleteLayer(LAYER_TEMP);
         }
 
         if (fitNextContent_)

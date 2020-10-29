@@ -315,6 +315,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Scene2D/Internals/FixedPointAligner.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/Internals/FixedPointAligner.h
   ${ORTHANC_STONE_ROOT}/Scene2D/Internals/ICairoContextProvider.h
+  ${ORTHANC_STONE_ROOT}/Scene2D/Internals/MacroLayerRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Scene2D/Internals/MacroLayerRenderer.h
   
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/AngleMeasureTool.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/AngleMeasureTool.h

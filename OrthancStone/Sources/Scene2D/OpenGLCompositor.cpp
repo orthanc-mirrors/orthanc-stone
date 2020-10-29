@@ -28,6 +28,7 @@
 #include "Internals/OpenGLInfoPanelRenderer.h"
 #include "Internals/OpenGLLookupTableTextureRenderer.h"
 #include "Internals/OpenGLTextRenderer.h"
+#include "Internals/MacroLayerRenderer.h"
 
 namespace OrthancStone
 {
@@ -117,6 +118,9 @@ namespace OrthancStone
           (context_, textProgram_, font->GetAlphabet(), font->GetTexture(), l);
         }
       }
+
+      case ISceneLayer::Type_Macro:
+        return new Internals::MacroLayerRenderer(*this, layer);
 
       default:
         return NULL;

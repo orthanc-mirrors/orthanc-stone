@@ -40,7 +40,8 @@ namespace OrthancStone
       Type_Polyline,
       Type_Text,
       Type_FloatTexture,
-      Type_LookupTableTexture
+      Type_LookupTableTexture,
+      Type_Macro
     };
 
     virtual ~ISceneLayer()

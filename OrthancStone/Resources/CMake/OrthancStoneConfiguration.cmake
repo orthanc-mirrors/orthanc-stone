@@ -276,6 +276,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Scene2D/LookupTableStyleConfigurator.h
   ${ORTHANC_STONE_ROOT}/Scene2D/LookupTableTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/LookupTableTextureSceneLayer.h
+  ${ORTHANC_STONE_ROOT}/Scene2D/MacroSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Scene2D/MacroSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Scene2D/NullLayer.h
   ${ORTHANC_STONE_ROOT}/Scene2D/PanSceneTracker.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/PanSceneTracker.h

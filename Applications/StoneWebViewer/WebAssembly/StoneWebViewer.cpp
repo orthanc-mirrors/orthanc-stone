@@ -74,6 +74,7 @@
 #include <Scene2D/ColorTextureSceneLayer.h>
 #include <Scene2D/FloatTextureSceneLayer.h>
 #include <Scene2D/MacroSceneLayer.h>
+#include <Scene2D/OsiriXLayerFactory.h>
 #include <Scene2D/PolylineSceneLayer.h>
 #include <Scene2D/TextSceneLayer.h>
 #include <Scene2DViewport/ViewportController.h>
@@ -1518,103 +1519,32 @@ private:
       layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
 
 
-      /****
-       * BEGINNING OF EXPERIMENTAL CODE => TODO => Move this to class
-       * "CollectionOfAnnotations"?
-       ****/
-      
       std::unique_ptr<OrthancStone::MacroSceneLayer>  annotationsLayer;
 
       if (annotations_)
       {
+        const FrameGeometry& geometry = GetCurrentFrameGeometry();
+        
         std::set<size_t> a;
         annotations_->LookupSopInstanceUid(a, sopInstanceUid);
-        if (!a.empty())
+        if (geometry.IsValid() &&
+            !a.empty())
         {
           annotationsLayer.reset(new OrthancStone::MacroSceneLayer);
           annotationsLayer->Reserve(a.size());
-          
-          using namespace OrthancStone::OsiriX;
+
+          OrthancStone::OsiriXLayerFactory factory;
+          factory.SetColor(0, 255, 0);
+          factory.SetArrowLength(100);
+          factory.SetArrowAngle(3.14159/4.0);
           
           for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
           {
-            const Annotation& annotation = annotations_->GetAnnotation(*it);
-
-            switch (annotation.GetType())
-            {
-              case Annotation::Type_Line:
-              {
-                const LineAnnotation& line = dynamic_cast<const LineAnnotation&>(annotation);
-                double x1, y1, x2, y2;
-                if (GetCurrentFrameGeometry().ProjectPoint(x1, y1, line.GetPoint1()) &&
-                    GetCurrentFrameGeometry().ProjectPoint(x2, y2, line.GetPoint2()))
-                {
-                  if (line.IsArrow())
-                  {
-                    std::unique_ptr<OrthancStone::ArrowSceneLayer> layer(
-                      new OrthancStone::ArrowSceneLayer(OrthancStone::ScenePoint2D(x1, y1),
-                                                        OrthancStone::ScenePoint2D(x2, y2)));
-                    layer->SetColor(0, 255, 0);
-                    annotationsLayer->AddLayer(layer.release());
-                  }
-                  else
-                  {
-                    std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
-                    OrthancStone::PolylineSceneLayer::Chain chain;
-                    chain.push_back(OrthancStone::ScenePoint2D(x1, y1));
-                    chain.push_back(OrthancStone::ScenePoint2D(x2, y2));
-                    layer->AddChain(chain, false, 0, 255, 0);
-                    annotationsLayer->AddLayer(layer.release());
-                  }
-                }
-                break;
-              }
-
-              case Annotation::Type_Angle:
-              {
-                const AngleAnnotation& angle = dynamic_cast<const AngleAnnotation&>(annotation);
-                double x1, y1, x2, y2, x3, y3;
-                if (GetCurrentFrameGeometry().ProjectPoint(x1, y1, angle.GetA()) &&
-                    GetCurrentFrameGeometry().ProjectPoint(x2, y2, angle.GetCenter()) &&
-                    GetCurrentFrameGeometry().ProjectPoint(x3, y3, angle.GetB()))
-                {
-                  std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
-                  OrthancStone::PolylineSceneLayer::Chain chain;
-                  chain.push_back(OrthancStone::ScenePoint2D(x1, y1));
-                  chain.push_back(OrthancStone::ScenePoint2D(x2, y2));
-                  chain.push_back(OrthancStone::ScenePoint2D(x3, y3));
-                  layer->AddChain(chain, false, 0, 255, 0);
-                  annotationsLayer->AddLayer(layer.release());
-                }
-                break;
-              }
-
-              case Annotation::Type_Text:
-              {
-                const TextAnnotation& text = dynamic_cast<const TextAnnotation&>(annotation);
-                double x, y;
-                if (GetCurrentFrameGeometry().ProjectPoint(x, y, text.GetCenter()))
-                {
-                  std::unique_ptr<OrthancStone::TextSceneLayer> layer(new OrthancStone::TextSceneLayer());
-                  layer->SetPosition(x, y);
-                  layer->SetText(text.GetText());
-                  layer->SetAnchor(OrthancStone::BitmapAnchor_Center);
-                  layer->SetColor(255, 0, 0);
-                  annotationsLayer->AddLayer(layer.release());
-                }
-                break;
-              }
-
-              default:
-                LOG(ERROR) << "Annotation type not implemented: " << annotation.GetType();
-            }
+            const OrthancStone::OsiriX::Annotation& annotation = annotations_->GetAnnotation(*it);
+            annotationsLayer->AddLayer(factory.Create(annotation, geometry.GetCoordinates()));
           }
         }
       }
-
-      /****
-       * END OF EXPERIMENTAL CODE
-       ****/     
 
       
       if (layer.get() == NULL)

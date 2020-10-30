@@ -732,7 +732,7 @@ window.addEventListener('message', function(e) {
       
       app.LoadOsiriXAnnotations(e.data.xml, clear);
     } else {
-      alert('Unknown message type: ' + e.data.type);
+      console.log('Unknown message type: ' + e.data.type);
     }
   }
 });

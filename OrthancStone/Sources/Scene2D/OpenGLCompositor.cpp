@@ -22,6 +22,7 @@
 #include "OpenGLCompositor.h"
 
 #include "Internals/OpenGLAdvancedPolylineRenderer.h"
+#include "Internals/OpenGLArrowRenderer.h"
 #include "Internals/OpenGLBasicPolylineRenderer.h"
 #include "Internals/OpenGLColorTextureRenderer.h"
 #include "Internals/OpenGLFloatTextureRenderer.h"
@@ -121,6 +122,10 @@ namespace OrthancStone
 
       case ISceneLayer::Type_Macro:
         return new Internals::MacroLayerRenderer(*this, layer);
+
+      case ISceneLayer::Type_Arrow:
+        return new Internals::OpenGLArrowRenderer
+          (context_, linesProgram_, dynamic_cast<const ArrowSceneLayer&>(layer));
 
       default:
         return NULL;

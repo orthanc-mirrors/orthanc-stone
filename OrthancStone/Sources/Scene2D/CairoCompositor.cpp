@@ -22,6 +22,7 @@
 
 #include "CairoCompositor.h"
 
+#include "Internals/CairoArrowRenderer.h"
 #include "Internals/CairoColorTextureRenderer.h"
 #include "Internals/CairoFloatTextureRenderer.h"
 #include "Internals/CairoInfoPanelRenderer.h"
@@ -83,6 +84,9 @@ namespace OrthancStone
 
       case ISceneLayer::Type_Macro:
         return new Internals::MacroLayerRenderer(*this, layer);
+
+      case ISceneLayer::Type_Arrow:
+        return new Internals::CairoArrowRenderer(*this, layer);
 
       default:
         return NULL;

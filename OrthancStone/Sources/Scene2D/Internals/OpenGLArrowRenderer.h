@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../ArrowSceneLayer.h"
 #include "CompositorHelper.h"
 #include "OpenGLLinesProgram.h"
 
@@ -30,28 +31,27 @@ namespace OrthancStone
 {
   namespace Internals
   {
-    class OpenGLAdvancedPolylineRenderer : public CompositorHelper::ILayerRenderer
+    class OpenGLArrowRenderer : public CompositorHelper::ILayerRenderer
     {
     private:
-      OpenGL::IOpenGLContext&                  context_;
-      OpenGLLinesProgram&                      program_;
-      std::unique_ptr<OpenGLLinesProgram::Data>  data_;
+      OpenGL::IOpenGLContext&                    context_;
+      OpenGLLinesProgram&                        program_;
+      std::unique_ptr<OpenGLLinesProgram::Data>  dataBody_;
+      std::unique_ptr<OpenGLLinesProgram::Data>  dataHead_;
+      AffineTransform2D                          transformHead_;
 
-      void LoadLayer(const PolylineSceneLayer& layer);
+      void LoadLayer(const ArrowSceneLayer& layer);
 
     public:
-      OpenGLAdvancedPolylineRenderer(OpenGL::IOpenGLContext& context,
-                                     OpenGLLinesProgram& program,
-                                     const PolylineSceneLayer& layer);
+      OpenGLArrowRenderer(OpenGL::IOpenGLContext& context,
+                          OpenGLLinesProgram& program,
+                          const ArrowSceneLayer& layer);
 
       virtual void Render(const AffineTransform2D& transform,
                           unsigned int canvasWidth,
                           unsigned int canvasHeight) ORTHANC_OVERRIDE;
 
-      virtual void Update(const ISceneLayer& layer) ORTHANC_OVERRIDE
-      {
-        LoadLayer(dynamic_cast<const PolylineSceneLayer&>(layer));
-      }
+      virtual void Update(const ISceneLayer& layer) ORTHANC_OVERRIDE;
     };
   }
 }

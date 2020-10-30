@@ -70,6 +70,7 @@
 #include <Messages/ObserverBase.h>
 #include <Oracle/ParseDicomFromWadoCommand.h>
 #include <Oracle/ParseDicomSuccessMessage.h>
+#include <Scene2D/ArrowSceneLayer.h>
 #include <Scene2D/ColorTextureSceneLayer.h>
 #include <Scene2D/FloatTextureSceneLayer.h>
 #include <Scene2D/MacroSceneLayer.h>
@@ -1548,15 +1549,23 @@ private:
                 if (GetCurrentFrameGeometry().ProjectPoint(x1, y1, line.GetPoint1()) &&
                     GetCurrentFrameGeometry().ProjectPoint(x2, y2, line.GetPoint2()))
                 {
-                  std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
-                  OrthancStone::PolylineSceneLayer::Chain chain;
-                  chain.push_back(OrthancStone::ScenePoint2D(x1, y1));
-                  chain.push_back(OrthancStone::ScenePoint2D(x2, y2));
-
-                  // TODO - IsArrow
-                  
-                  layer->AddChain(chain, false, 0, 255, 0);
-                  annotationsLayer->AddLayer(layer.release());
+                  if (line.IsArrow())
+                  {
+                    std::unique_ptr<OrthancStone::ArrowSceneLayer> layer(
+                      new OrthancStone::ArrowSceneLayer(OrthancStone::ScenePoint2D(x1, y1),
+                                                        OrthancStone::ScenePoint2D(x2, y2)));
+                    layer->SetColor(0, 255, 0);
+                    annotationsLayer->AddLayer(layer.release());
+                  }
+                  else
+                  {
+                    std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
+                    OrthancStone::PolylineSceneLayer::Chain chain;
+                    chain.push_back(OrthancStone::ScenePoint2D(x1, y1));
+                    chain.push_back(OrthancStone::ScenePoint2D(x2, y2));
+                    layer->AddChain(chain, false, 0, 255, 0);
+                    annotationsLayer->AddLayer(layer.release());
+                  }
                 }
                 break;
               }
@@ -2303,7 +2312,7 @@ static boost::shared_ptr<FramesCache> cache_;
 static boost::shared_ptr<OrthancStone::WebAssemblyLoadersContext> context_;
 static std::string stringBuffer_;
 static bool softwareRendering_ = false;
-static WebViewerAction leftButtonAction_ = WebViewerAction_GrayscaleWindowing;
+static WebViewerAction leftButtonAction_ = WebViewerAction_Rotate;  // WebViewerAction_GrayscaleWindowing;
 static WebViewerAction middleButtonAction_ = WebViewerAction_Pan;
 static WebViewerAction rightButtonAction_ = WebViewerAction_Zoom;
 

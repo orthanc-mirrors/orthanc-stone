@@ -255,6 +255,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Oracle/ParseDicomFromFileCommand.cpp
   ${ORTHANC_STONE_ROOT}/Oracle/ParseDicomFromWadoCommand.cpp
 
+  ${ORTHANC_STONE_ROOT}/Scene2D/ArrowSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Scene2D/ArrowSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Scene2D/CairoCompositor.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/CairoCompositor.h
   ${ORTHANC_STONE_ROOT}/Scene2D/Color.h
@@ -297,6 +299,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Scene2D/ZoomSceneTracker.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/ZoomSceneTracker.h
 
+  ${ORTHANC_STONE_ROOT}/Scene2D/Internals/CairoArrowRenderer.cpp
+  ${ORTHANC_STONE_ROOT}/Scene2D/Internals/CairoArrowRenderer.h
   ${ORTHANC_STONE_ROOT}/Scene2D/Internals/CairoBaseRenderer.h
   ${ORTHANC_STONE_ROOT}/Scene2D/Internals/CairoColorTextureRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/Internals/CairoColorTextureRenderer.h
@@ -471,6 +475,8 @@ if (ENABLE_OPENGL)
 
     ${ORTHANC_STONE_ROOT}/Scene2D/Internals/OpenGLAdvancedPolylineRenderer.cpp
     ${ORTHANC_STONE_ROOT}/Scene2D/Internals/OpenGLAdvancedPolylineRenderer.h
+    ${ORTHANC_STONE_ROOT}/Scene2D/Internals/OpenGLArrowRenderer.cpp
+    ${ORTHANC_STONE_ROOT}/Scene2D/Internals/OpenGLArrowRenderer.h
     ${ORTHANC_STONE_ROOT}/Scene2D/Internals/OpenGLBasicPolylineRenderer.cpp
     ${ORTHANC_STONE_ROOT}/Scene2D/Internals/OpenGLBasicPolylineRenderer.h
     ${ORTHANC_STONE_ROOT}/Scene2D/Internals/OpenGLColorTextureProgram.cpp

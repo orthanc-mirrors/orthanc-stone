@@ -35,7 +35,7 @@ namespace OrthancStone
 
       if (data_.get() == NULL)
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
     }
 
@@ -47,6 +47,17 @@ namespace OrthancStone
       program_(program)
     {
       LoadLayer(layer);
+    }
+
+
+    void OpenGLAdvancedPolylineRenderer::Render(const AffineTransform2D& transform,
+                                                unsigned int canvasWidth,
+                                                unsigned int canvasHeight)
+    {
+      if (!context_.IsContextLost())
+      {
+        program_.Apply(*data_, transform, canvasWidth, canvasHeight, true, true);
+      }
     }
   }
 }

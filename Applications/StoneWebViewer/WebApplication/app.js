@@ -751,7 +751,7 @@ function Test()
         window.postMessage({
           'type': 'show-osirix-annotations',
           'xml': response.data,
-          'clear': true
+          'clear': false
         }, targetOrigin);
       });
   }

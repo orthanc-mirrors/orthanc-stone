@@ -22,39 +22,24 @@
 
 #pragma once
 
-#include "../Toolbox/Extent2D.h"
-
-#include <boost/noncopyable.hpp>
-#include <stdint.h>
+#include "CairoBaseRenderer.h"
 
 namespace OrthancStone
 {
-  class ISceneLayer : public boost::noncopyable
+  namespace Internals
   {
-  public:
-    enum Type
+    class CairoArrowRenderer : public CairoBaseRenderer
     {
-      Type_NullLayer,
-      Type_InfoPanel,
-      Type_ColorTexture,
-      Type_Polyline,
-      Type_Text,
-      Type_FloatTexture,
-      Type_LookupTableTexture,
-      Type_Macro,
-      Type_Arrow
+    public:
+      CairoArrowRenderer(ICairoContextProvider& target,
+                         const ISceneLayer& layer) :
+        CairoBaseRenderer(target, layer)
+      {
+      }
+    
+      virtual void Render(const AffineTransform2D& transform,
+                          unsigned int canvasWidth,
+                          unsigned int canvasHeight) ORTHANC_OVERRIDE;
     };
-
-    virtual ~ISceneLayer()
-    {
-    }
-
-    virtual ISceneLayer* Clone() const = 0;
-
-    virtual Type GetType() const = 0;
-
-    virtual void GetBoundingBox(Extent2D& target) const = 0;
-
-    virtual uint64_t GetRevision() const = 0;
-  };
+  }
 }

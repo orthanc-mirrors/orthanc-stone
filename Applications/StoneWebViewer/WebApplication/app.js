@@ -717,21 +717,23 @@ document.onselectstart = new Function ('return false');
 var expectedOrigin = '';   // TODO - INSECURE - CONFIGURATION
 
 window.addEventListener('message', function(e) {
-  if (expectedOrigin != '' &&
-      e.origin !== expectedOrigin) {
-    alert('Bad origin for the message');
-    return;
-  }
-  
-  if (e.data.type == 'show-osirix-annotations') {
-    var clear = true;  // Whether to clear previous annotations
-    if ('clear' in e.data) {
-      clear = e.data.clear;
+  if ('type' in e.data) {
+    if (expectedOrigin != '' &&
+        e.origin !== expectedOrigin) {
+      alert('Bad origin for the message');
+      return;
     }
     
-    app.LoadOsiriXAnnotations(e.data.xml, clear);
-  } else {
-    alert('Unknown message type: ' + e.data.type);
+    if (e.data.type == 'show-osirix-annotations') {
+      var clear = true;  // Whether to clear previous annotations
+      if ('clear' in e.data) {
+        clear = e.data.clear;
+      }
+      
+      app.LoadOsiriXAnnotations(e.data.xml, clear);
+    } else {
+      alert('Unknown message type: ' + e.data.type);
+    }
   }
 });
 

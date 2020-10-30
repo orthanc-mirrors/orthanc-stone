@@ -189,6 +189,8 @@ endif()
 
 if (ENABLE_PUGIXML)
   list(APPEND ORTHANC_STONE_SOURCES
+    ${ORTHANC_STONE_ROOT}/Scene2D/OsiriXLayerFactory.cpp
+    ${ORTHANC_STONE_ROOT}/Scene2D/OsiriXLayerFactory.h
     ${ORTHANC_STONE_ROOT}/Toolbox/OsiriX/AngleAnnotation.cpp
     ${ORTHANC_STONE_ROOT}/Toolbox/OsiriX/Annotation.cpp
     ${ORTHANC_STONE_ROOT}/Toolbox/OsiriX/ArrayValue.cpp
@@ -281,8 +283,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Scene2D/MacroSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/MacroSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Scene2D/NullLayer.h
-  ${ORTHANC_STONE_ROOT}/Scene2D/OsiriXLayerFactory.cpp
-  ${ORTHANC_STONE_ROOT}/Scene2D/OsiriXLayerFactory.h
   ${ORTHANC_STONE_ROOT}/Scene2D/PanSceneTracker.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/PanSceneTracker.h
   ${ORTHANC_STONE_ROOT}/Scene2D/PointerEvent.cpp

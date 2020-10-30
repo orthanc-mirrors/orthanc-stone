@@ -1535,8 +1535,6 @@ private:
 
           OrthancStone::OsiriXLayerFactory factory;
           factory.SetColor(0, 255, 0);
-          factory.SetArrowLength(100);
-          factory.SetArrowAngle(3.14159/4.0);
           
           for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
           {

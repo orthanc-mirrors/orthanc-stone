@@ -109,6 +109,18 @@ namespace OrthancStone
     return viewport;
   }
 
+  void RtViewerView::CleanupViewportEvents()
+  {
+    void* userData = reinterpret_cast<void*>(this);
+    std::string selector = "#" + canvasId_;
+    emscripten_set_wheel_callback_on_thread(
+      selector.c_str(),
+      userData,
+      false,
+      NULL,
+      EM_CALLBACK_THREAD_CONTEXT_CALLING_THREAD);
+  }
+
   void RtViewerView::TakeScreenshot(const std::string& target,
                                    unsigned int canvasWidth,
                                    unsigned int canvasHeight)

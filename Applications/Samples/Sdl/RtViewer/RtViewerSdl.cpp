@@ -88,6 +88,11 @@ namespace OrthancStone
     return SdlOpenGLViewport::Create(canvasId, 1024, 1024, false);
   }
 
+  void RtViewerView::CleanupViewportEvents()
+  {
+    // only used in WASM at the moment
+  }
+
   void RtViewerApp::ProcessOptions(int argc, char* argv[])
   {
     namespace po = boost::program_options;

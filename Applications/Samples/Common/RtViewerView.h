@@ -52,10 +52,16 @@ namespace OrthancStone
       , currentPlane_(0)
       , projection_(projection)
       , ctLayer_(0)
+      , canvasId_(canvasId)
     {
       viewport_ = CreateViewport(canvasId);
       FLOATING_INFOTEXT_LAYER_ZINDEX = 6;
       FIXED_INFOTEXT_LAYER_ZINDEX = 7;
+    }
+
+    ~RtViewerView()
+    {
+      CleanupViewportEvents();
     }
 
     /**
@@ -112,6 +118,7 @@ namespace OrthancStone
                                const std::string& value);
     boost::shared_ptr<RtViewerApp> GetApp();
     boost::shared_ptr<IViewport> CreateViewport(const std::string& canvasId);
+    void CleanupViewportEvents();
     void DisplayInfoText();
     void HideInfoText();
     void DisplayFloatingCtrlInfoText(const PointerEvent& e);
@@ -141,5 +148,6 @@ namespace OrthancStone
     boost::shared_ptr<IViewport> viewport_;
 
     int ctLayer_;
+    std::string canvasId_;
   };
 }

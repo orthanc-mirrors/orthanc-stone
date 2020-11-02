@@ -129,6 +129,7 @@ namespace OrthancStone
     if (that->compositor_.get() != NULL &&
         that->controller_ /* should always be true */)
     {
+      that->animationFrameCallbackIds_.clear();
       that->Paint(*that->compositor_, *that->controller_);
     }
       
@@ -213,7 +214,9 @@ namespace OrthancStone
 
   void WebAssemblyViewport::Invalidate()
   {
-    emscripten_request_animation_frame(OnRequestAnimationFrame, reinterpret_cast<void*>(this));
+    long id = emscripten_request_animation_frame(OnRequestAnimationFrame, 
+                                                 reinterpret_cast<void*>(this));
+    animationFrameCallbackIds_.push_back(id);
   }
 
   void WebAssemblyViewport::FitForPrint()
@@ -320,6 +323,13 @@ namespace OrthancStone
 
   WebAssemblyViewport::~WebAssemblyViewport()
   {
+    // cancel the pending RequestAnimationFrame callbacks
+    for(size_t i = 0; i < animationFrameCallbackIds_.size(); ++i)
+    {
+      long id = animationFrameCallbackIds_[i];
+      emscripten_cancel_animation_frame(id);
+    }
+
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,
                                    reinterpret_cast<void*>(this),
                                    false,

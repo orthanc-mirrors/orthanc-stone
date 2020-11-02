@@ -41,6 +41,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include <boost/enable_shared_from_this.hpp>
 
 namespace OrthancStone
@@ -60,6 +61,7 @@ namespace OrthancStone
     bool                                  enableEmscriptenMouseEvents_;
     unsigned int                          canvasWidth_;
     unsigned int                          canvasHeight_;
+    std::vector<long>                     animationFrameCallbackIds_;
 
     static EM_BOOL OnRequestAnimationFrame(double time, void *userData);
     

@@ -120,19 +120,27 @@ namespace OrthancStone
     }
   };
 
-
   EM_BOOL WebAssemblyViewport::OnRequestAnimationFrame(double time, void *userData)
   {
     LOG(TRACE) << __func__;
-    WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
 
-    if (that->compositor_.get() != NULL &&
-        that->controller_ /* should always be true */)
+    WebAssemblyViewport* that = 
+      WebAssemblyViewport::DereferenceObjectCookie(userData);
+    
+    if (that != NULL)
     {
-      that->animationFrameCallbackIds_.clear();
-      that->Paint(*that->compositor_, *that->controller_);
+      if (that->compositor_.get() != NULL &&
+          that->controller_ /* should always be true */)
+      {
+        that->Paint(*that->compositor_, *that->controller_);
+      }
+    } 
+    else
+    {
+      LOG(INFO) << "WebAssemblyViewport::OnRequestAnimationFrame " 
+        << "-- the WebAssemblyViewport is deleted and Paint will " 
+        << "not be called";
     }
-      
     LOG(TRACE) << "Exiting: " << __func__;
     return true;
   }
@@ -212,10 +220,48 @@ namespace OrthancStone
     return true;
   }
 
+  void* WebAssemblyViewport::GetObjectCookie()
+  {
+    if(objectCookie_ != NULL)
+      return objectCookie_;
+    
+    boost::shared_ptr<WebAssemblyViewport>* sharedFromThisPtr = 
+      new boost::shared_ptr<WebAssemblyViewport>();
+    
+    *sharedFromThisPtr = shared_from_this();
+
+    objectCookie_ = reinterpret_cast<void*>(sharedFromThisPtr);
+    
+    return objectCookie_;
+  }
+
+  void WebAssemblyViewport::ReleaseObjectCookie(void* cookie)
+  {
+    WebAssemblyViewport* This = DereferenceObjectCookie(cookie);
+    
+    if (This != NULL)
+      This->objectCookie_ = NULL;
+
+    boost::weak_ptr<WebAssemblyViewport>* weakThisPtr = 
+      reinterpret_cast<boost::weak_ptr<WebAssemblyViewport>*>(cookie);
+    
+    delete weakThisPtr;
+  }
+
+  WebAssemblyViewport* WebAssemblyViewport::DereferenceObjectCookie(void* cookie)
+  {
+    boost::weak_ptr<WebAssemblyViewport>* weakThisPtr = 
+      reinterpret_cast<boost::weak_ptr<WebAssemblyViewport>*>(cookie);
+
+    boost::shared_ptr<WebAssemblyViewport> sharedThis = weakThisPtr->lock();
+
+    return sharedThis.get();
+  }
+
   void WebAssemblyViewport::Invalidate()
   {
     long id = emscripten_request_animation_frame(OnRequestAnimationFrame, 
-                                                 reinterpret_cast<void*>(this));
+                                                 GetObjectCookie());
     animationFrameCallbackIds_.push_back(id);
   }
 
@@ -259,7 +305,8 @@ namespace OrthancStone
     interactor_(new DefaultViewportInteractor),
     enableEmscriptenMouseEvents_(enableEmscriptenMouseEvents),
     canvasWidth_(0),
-    canvasHeight_(0)
+    canvasHeight_(0),
+    objectCookie_(NULL)
   {
   }
 

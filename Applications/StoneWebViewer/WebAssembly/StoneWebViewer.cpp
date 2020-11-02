@@ -1738,6 +1738,13 @@ private:
       }*/
   }
 
+  ~ViewerViewport()
+  {
+    emscripten_set_wheel_callback(viewport_->GetCanvasCssSelector().c_str(), this, true, NULL);
+    emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, NULL);
+    emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, NULL);
+  }
+
   static EM_BOOL OnKey(int eventType,
                        const EmscriptenKeyboardEvent *event,
                        void *userData)

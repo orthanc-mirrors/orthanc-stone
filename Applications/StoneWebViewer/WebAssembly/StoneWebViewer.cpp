@@ -1738,13 +1738,6 @@ private:
       }*/
   }
 
-  ~ViewerViewport()
-  {
-    emscripten_set_wheel_callback(viewport_->GetCanvasCssSelector().c_str(), this, true, NULL);
-    emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, NULL);
-    emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, NULL);
-  }
-
   static EM_BOOL OnKey(int eventType,
                        const EmscriptenKeyboardEvent *event,
                        void *userData)
@@ -1797,6 +1790,16 @@ private:
   }
 
 public:
+  virtual ~ViewerViewport()
+  {
+    // Unregister the callbacks to avoid any call with a "void*" that
+    // has been destroyed. "WebAssemblyViewport::GetObjectCookie()"
+    // provides a more advanced alternative.
+    emscripten_set_wheel_callback(viewport_->GetCanvasCssSelector().c_str(), this, true, NULL);
+    emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, NULL);
+    emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, NULL);
+  }
+
   static boost::shared_ptr<ViewerViewport> Create(OrthancStone::ILoadersContext::ILock& lock,
                                                   const OrthancStone::DicomSource& source,
                                                   const std::string& canvas,

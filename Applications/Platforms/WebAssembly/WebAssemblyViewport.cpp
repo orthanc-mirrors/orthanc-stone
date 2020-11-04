@@ -137,10 +137,10 @@ namespace OrthancStone
     } 
     else
     {
-      LOG(INFO) << "WebAssemblyViewport::OnRequestAnimationFrame " 
-        << "-- the WebAssemblyViewport is deleted and Paint will " 
-        << "not be called";
+      LOG(TRACE) << "WebAssemblyViewport::OnRequestAnimationFrame: the " << 
+        "WebAssemblyViewport is deleted and Paint will not be called.";
     }
+    WebAssemblyViewport::ReleaseObjectCookie(userData);
     LOG(TRACE) << "Exiting: " << __func__;
     return true;
   }
@@ -220,36 +220,26 @@ namespace OrthancStone
     return true;
   }
 
-  void* WebAssemblyViewport::GetObjectCookie()
+  void* WebAssemblyViewport::CreateObjectCookie()
   {
-    if(objectCookie_ != NULL)
-      return objectCookie_;
-    
-    boost::shared_ptr<WebAssemblyViewport>* sharedFromThisPtr = 
-      new boost::shared_ptr<WebAssemblyViewport>();
-    
-    *sharedFromThisPtr = shared_from_this();
-
-    objectCookie_ = reinterpret_cast<void*>(sharedFromThisPtr);
-    
-    return objectCookie_;
-  }
-
-  void WebAssemblyViewport::ReleaseObjectCookie(void* cookie)
-  {
-    WebAssemblyViewport* This = DereferenceObjectCookie(cookie);
-    
-    if (This != NULL)
-      This->objectCookie_ = NULL;
-
     boost::weak_ptr<WebAssemblyViewport>* weakThisPtr = 
-      reinterpret_cast<boost::weak_ptr<WebAssemblyViewport>*>(cookie);
+      new boost::weak_ptr<WebAssemblyViewport>();
     
-    delete weakThisPtr;
+    *weakThisPtr = shared_from_this();
+
+    void* cookie = reinterpret_cast<void*>(weakThisPtr);
+
+    LOG(TRACE) << "WebAssemblyViewport::CreateObjectCookie() => cookie = " 
+      << cookie << "\n";
+
+    return cookie;
   }
 
   WebAssemblyViewport* WebAssemblyViewport::DereferenceObjectCookie(void* cookie)
   {
+    LOG(TRACE) << "WebAssemblyViewport::DereferenceObjectCookie(cookie = " 
+      << cookie << ")\n";
+
     boost::weak_ptr<WebAssemblyViewport>* weakThisPtr = 
       reinterpret_cast<boost::weak_ptr<WebAssemblyViewport>*>(cookie);
 
@@ -258,11 +248,23 @@ namespace OrthancStone
     return sharedThis.get();
   }
 
+  void WebAssemblyViewport::ReleaseObjectCookie(void* cookie)
+  {
+    LOG(TRACE) << "WebAssemblyViewport::ReleaseObjectCookie(cookie = " 
+      << cookie << ")\n";
+
+    boost::weak_ptr<WebAssemblyViewport>* weakThisPtr = 
+      reinterpret_cast<boost::weak_ptr<WebAssemblyViewport>*>(cookie);
+    
+    delete weakThisPtr;
+  }
+
   void WebAssemblyViewport::Invalidate()
   {
+    LOG(TRACE) << "WebAssemblyViewport::Invalidate()\n";
     long id = emscripten_request_animation_frame(OnRequestAnimationFrame, 
-                                                 GetObjectCookie());
-    animationFrameCallbackIds_.push_back(id);
+                                                 CreateObjectCookie());
+    //animationFrameCallbackIds_.push_back(id);
   }
 
   void WebAssemblyViewport::FitForPrint()
@@ -305,8 +307,7 @@ namespace OrthancStone
     interactor_(new DefaultViewportInteractor),
     enableEmscriptenMouseEvents_(enableEmscriptenMouseEvents),
     canvasWidth_(0),
-    canvasHeight_(0),
-    objectCookie_(NULL)
+    canvasHeight_(0)
   {
   }
 
@@ -370,13 +371,8 @@ namespace OrthancStone
 
   WebAssemblyViewport::~WebAssemblyViewport()
   {
-    // cancel the pending RequestAnimationFrame callbacks
-    for(size_t i = 0; i < animationFrameCallbackIds_.size(); ++i)
-    {
-      long id = animationFrameCallbackIds_[i];
-      emscripten_cancel_animation_frame(id);
-    }
-
+    LOG(TRACE) << "WebAssemblyViewport::~WebAssemblyViewport()\n";
+    
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,
                                    reinterpret_cast<void*>(this),
                                    false,

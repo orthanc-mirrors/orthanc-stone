@@ -1793,7 +1793,7 @@ public:
   virtual ~ViewerViewport()
   {
     // Unregister the callbacks to avoid any call with a "void*" that
-    // has been destroyed. "WebAssemblyViewport::GetObjectCookie()"
+    // has been destroyed. "WebAssemblyViewport::CreateObjectCookie()"
     // provides a more advanced alternative.
     emscripten_set_wheel_callback(viewport_->GetCanvasCssSelector().c_str(), this, true, NULL);
     emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, NULL);

@@ -32,7 +32,10 @@
 #  include <GL/glew.h>
 #endif
 
+#include <Logging.h>
 #include <OrthancException.h>
+
+#include <boost/thread/mutex.hpp>
 
 namespace OrthancStone
 {

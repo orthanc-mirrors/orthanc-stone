@@ -23,6 +23,7 @@
 
 #include <EmbeddedResources.h>
 
+#include <Logging.h>
 #include <SystemToolbox.h>
 #include <Toolbox.h>
 

@@ -24,6 +24,8 @@
 
 #include <OrthancException.h>
 
+#include <cassert>
+
 namespace OrthancStone
 {
   BasicFetchingItemsSorter::BasicFetchingItemsSorter(unsigned int itemsCount) :

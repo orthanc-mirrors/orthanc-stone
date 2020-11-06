@@ -157,12 +157,15 @@ namespace OrthancStone
 
       //Orthanc::ImageProcessing::Copy(target, bitmap->GetBitmap());
 
-      for (unsigned int y = 0; y < source.GetHeight(); y++)
+      const unsigned int width = source.GetWidth();
+      const unsigned int height = source.GetHeight();
+      
+      for (unsigned int y = 0; y < height; y++)
       {
         const uint8_t* p = reinterpret_cast<const uint8_t*>(source.GetConstRow(y));
         uint8_t* q = reinterpret_cast<uint8_t*>(target.GetRow(y));
 
-        for (unsigned int x = 0; x < source.GetWidth(); x++)
+        for (unsigned int x = 0; x < width; x++)
         {
           // Premultiplied alpha
           q[0] = 0;

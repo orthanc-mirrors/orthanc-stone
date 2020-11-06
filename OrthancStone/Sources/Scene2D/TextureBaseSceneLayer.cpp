@@ -22,6 +22,7 @@
 
 #include "TextureBaseSceneLayer.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
 
 namespace OrthancStone

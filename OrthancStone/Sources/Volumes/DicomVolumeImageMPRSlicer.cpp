@@ -26,6 +26,7 @@
 
 #include "../Toolbox/ImageToolbox.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
 //#include <Images/PngWriter.h>
 #include <Images/JpegWriter.h>

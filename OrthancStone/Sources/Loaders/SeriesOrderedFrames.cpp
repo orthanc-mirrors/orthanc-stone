@@ -23,6 +23,7 @@
 #include "../Toolbox/SlicesSorter.h"
 #include "SeriesOrderedFrames.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
 
 namespace OrthancStone

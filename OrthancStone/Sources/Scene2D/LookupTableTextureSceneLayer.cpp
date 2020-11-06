@@ -24,6 +24,7 @@
 
 #include <Images/Image.h>
 #include <Images/ImageProcessing.h>
+#include <Logging.h>
 #include <OrthancException.h>
 
 namespace OrthancStone

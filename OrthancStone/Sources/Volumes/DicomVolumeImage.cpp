@@ -22,6 +22,7 @@
 
 #include "DicomVolumeImage.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
 
 

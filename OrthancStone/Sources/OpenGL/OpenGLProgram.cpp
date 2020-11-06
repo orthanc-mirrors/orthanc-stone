@@ -25,7 +25,10 @@
 #include "OpenGLShader.h"
 #include "IOpenGLContext.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
+
+#include <cassert>
 
 namespace OrthancStone
 {

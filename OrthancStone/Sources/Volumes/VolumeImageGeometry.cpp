@@ -24,6 +24,7 @@
 
 #include "../Toolbox/GeometryToolbox.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
 
 

@@ -22,6 +22,11 @@
 
 #include "ParsedDicomCache.h"
 
+#include <Logging.h>
+
+#include <cassert>
+
+
 namespace OrthancStone
 {
   class ParsedDicomCache::Item : public Orthanc::ICacheable

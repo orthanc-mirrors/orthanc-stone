@@ -23,6 +23,7 @@
 #include "OpenGLTexture.h"
 #include "IOpenGLContext.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
 
 namespace OrthancStone

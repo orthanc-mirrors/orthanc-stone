@@ -23,6 +23,7 @@
 
 #include "../../../OrthancStone/Sources/StoneException.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
 
 #include <emscripten/html5.h>

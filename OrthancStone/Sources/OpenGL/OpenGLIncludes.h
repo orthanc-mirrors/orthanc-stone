@@ -60,6 +60,7 @@
 
 #  if !defined(NDEBUG)  // Is build type "debug"?
 //   glGetError is very expensive!
+#    include <Logging.h>
 #    include <OrthancException.h>
 #    define ORTHANC_OPENGL_CHECK(name)                                  \
   if(true)                                                              \
@@ -89,6 +90,7 @@
 #  include <emscripten/html5.h>
 
 #  if !defined(NDEBUG)  // Is build type "debug"?
+#    include <Logging.h>
 #    include <OrthancException.h>
 #    define ORTHANC_OPENGL_CHECK(name)                                  \
   if(true)                                                              \

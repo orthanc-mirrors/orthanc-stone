@@ -23,6 +23,7 @@
 #include "OpenGLLinesProgram.h"
 #include "OpenGLShaderVersionDirective.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
 
 

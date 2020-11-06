@@ -25,6 +25,7 @@
 
 #include "../../Fonts/OpenGLTextCoordinates.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
 
 

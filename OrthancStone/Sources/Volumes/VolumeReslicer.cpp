@@ -504,12 +504,15 @@ namespace OrthancStone
                                       const CoordinateSystem3D& plane,
                                       const OrientedVolumeBoundingBox& box) const
   {
-    for (unsigned int y = 0; y < slice_->GetHeight(); y++)
+    const unsigned int width = slice_->GetWidth();
+    const unsigned int height = slice_->GetHeight();
+    
+    for (unsigned int y = 0; y < height; y++)
     {
       FastRowIterator fast(*slice_, extent_, plane, box, y);
       SlowRowIterator slow(*slice_, extent_, plane, box, y);
 
-      for (unsigned int x = 0; x < slice_->GetWidth(); x++)
+      for (unsigned int x = 0; x < width; x++)
       {
         float px, py, pz;
         fast.GetVolumeCoordinates(px, py, pz);

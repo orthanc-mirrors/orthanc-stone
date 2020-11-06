@@ -24,6 +24,8 @@
 
 #include <OrthancException.h>
 
+#include <cassert>
+
 namespace OrthancStone
 {
   ParseDicomFromWadoCommand::ParseDicomFromWadoCommand(const DicomSource& source,

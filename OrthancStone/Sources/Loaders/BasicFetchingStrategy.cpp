@@ -24,6 +24,8 @@
 
 #include <OrthancException.h>
 
+#include <cassert>
+
 namespace OrthancStone
 {
   void BasicFetchingStrategy::Schedule(unsigned int item,

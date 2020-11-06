@@ -45,9 +45,10 @@ static unsigned int BUCKET_SOP = 1;
 
 #include <Compression/GzipCompressor.h>
 #include <HttpClient.h>
+#include <Logging.h>
 #include <OrthancException.h>
-#include <Toolbox.h>
 #include <SystemToolbox.h>
+#include <Toolbox.h>
 
 #include <boost/filesystem.hpp>
 

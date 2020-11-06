@@ -22,6 +22,7 @@
 
 #include "OrthancRestApiCommand.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
 
 #ifdef _MSC_VER

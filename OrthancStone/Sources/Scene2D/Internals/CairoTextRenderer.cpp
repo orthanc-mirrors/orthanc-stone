@@ -48,10 +48,11 @@ namespace OrthancStone
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
         }
         
+        const unsigned int height = source->GetHeight();
         const unsigned int width = source->GetWidth();
         const Color& color = layer.GetColor();
-
-        for (unsigned int y = 0; y < source->GetHeight(); y++)
+        
+        for (unsigned int y = 0; y < height; y++)
         {
           const uint8_t* p = reinterpret_cast<const uint8_t*>(source->GetConstRow(y));
           uint8_t* q = reinterpret_cast<uint8_t*>(accessor.GetRow(y));

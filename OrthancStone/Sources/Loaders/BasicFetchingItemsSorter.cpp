@@ -24,6 +24,7 @@
 
 #include <OrthancException.h>
 
+#include <algorithm>
 #include <cassert>
 
 namespace OrthancStone

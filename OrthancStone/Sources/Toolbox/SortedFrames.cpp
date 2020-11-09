@@ -24,6 +24,7 @@
 
 #include "GeometryToolbox.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
 #include <Toolbox.h>
 
@@ -40,7 +41,8 @@ namespace OrthancStone
     }
 
     uint32_t tmp;
-    if (tags.ParseUnsignedInteger32(tmp, Orthanc::DICOM_TAG_NUMBER_OF_FRAMES))
+    if (tags.ParseUnsignedInteger32(tmp, Orthanc::DICOM_TAG_NUMBER_OF_FRAMES) &&
+        tmp > 0)
     {
       numberOfFrames_ = tmp;
     }
@@ -59,8 +61,67 @@ namespace OrthancStone
     {
       monochrome1_ = false;
     }
+
+    bool ok = false;
+
+    if (numberOfFrames_ > 1)
+    {
+      std::string offsets, increment;
+      if (tags.LookupStringValue(offsets, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR, false) &&
+          tags.LookupStringValue(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
+      {
+        Orthanc::Toolbox::ToUpperCase(increment);
+        if (increment != "3004,000C")
+        {
+          LOG(WARNING) << "Bad value for the FrameIncrementPointer tags in a multiframe image";
+        }
+        else if (LinearAlgebra::ParseVector(frameOffsets_, offsets))
+        {
+          if (frameOffsets_.size() == numberOfFrames_)
+          {
+            ok = true;
+          }
+          else
+          {
+            LOG(WARNING) << "The size of the GridFrameOffsetVector does not correspond to the number of frames";
+          }
+        }
+        else
+        {
+          LOG(WARNING) << "Cannot parse the GridFrameOffsetVector tag";
+        }
+      }
+      else
+      {
+        LOG(INFO) << "Missing the frame offset information in a multiframe image";
+      }
+    }
+
+    if (!ok)
+    {
+      frameOffsets_.resize(numberOfFrames_);
+      for (size_t i = 0; i < numberOfFrames_; i++)
+      {
+        frameOffsets_[i] = 0;
+      }
+    }
   }
 
+
+  double SortedFrames::Instance::GetFrameOffset(unsigned int frame) const
+  {
+    assert(GetNumberOfFrames() == frameOffsets_.size());
+    
+    if (frame >= GetNumberOfFrames())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      return frameOffsets_[frame];
+    }
+  }
+  
 
   SortedFrames::Frame::Frame(const Instance& instance,
                              unsigned int frameNumber) :
@@ -360,6 +421,24 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls,
                                       "Sort() has not been called");
+    }
+  }
+
+
+  CoordinateSystem3D SortedFrames::GetFrameGeometry(size_t frameIndex) const
+  {
+    const Frame& frame = GetFrame(frameIndex);
+    CoordinateSystem3D geometry = frame.GetInstance().GetGeometry();
+
+    if (geometry.IsValid())
+    {
+      geometry.SetOrigin(geometry.GetOrigin() + geometry.GetNormal() *
+                         frame.GetInstance().GetFrameOffset(frame.GetFrameNumberInInstance()));
+      return geometry;
+    }
+    else
+    {
+      return geometry;
     }
   }
 

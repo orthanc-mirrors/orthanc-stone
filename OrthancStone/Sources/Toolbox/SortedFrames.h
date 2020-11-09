@@ -38,6 +38,7 @@ namespace OrthancStone
       unsigned int        numberOfFrames_;
       CoordinateSystem3D  geometry_;
       bool                monochrome1_;
+      Vector              frameOffsets_;
 
     public:
       explicit Instance(const Orthanc::DicomMap& tags);
@@ -66,6 +67,8 @@ namespace OrthancStone
       {
         return monochrome1_;
       }
+
+      double GetFrameOffset(unsigned int frame) const;
     };
 
     struct Frame
@@ -198,6 +201,8 @@ namespace OrthancStone
     {
       return GetFrame(frameIndex).GetInstance().IsMonochrome1();
     }
+
+    CoordinateSystem3D GetFrameGeometry(size_t frameIndex) const;
 
     bool LookupFrame(size_t& frameIndex,
                      const std::string& sopInstanceUid,

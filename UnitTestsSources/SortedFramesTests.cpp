@@ -245,6 +245,47 @@ TEST(SortedFrames, SortInstanceNumberAndImageIndex)
 }
 
 
+TEST(SortedFrames, FrameOffset)
+{
+  Orthanc::DicomMap tags;
+  tags.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, "study", false);
+  tags.SetValue(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, "series", false);
+  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "1.2.276.0.7230010.3.1.4.296485376.1.1568899779.944133", false);
+  tags.SetValue(Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT, "-350\\-145\\-985", false);
+  tags.SetValue(Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT, "1\\0\\0\\0\\1\\0", false);
+  tags.SetValue(Orthanc::DICOM_TAG_NUMBER_OF_FRAMES, "2", false);
+
+  for (unsigned int i = 0; i < 3; i++)
+  {
+    tags.SetValue(Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, i != 1 ? "3004,000c" : "nope", false);
+    tags.SetValue(Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR, i != 2 ? "8\\11" : "1\\2\\3", false);
+
+    OrthancStone::SortedFrames f;
+    f.AddInstance(tags);
+    f.Sort();
+
+    ASSERT_EQ(2u, f.GetFramesCount());
+    ASSERT_TRUE(f.GetFrameGeometry(0).IsValid());
+    ASSERT_TRUE(f.GetFrameGeometry(1).IsValid());
+    ASSERT_FLOAT_EQ(-350.0f, f.GetFrameGeometry(0).GetOrigin() [0]);
+    ASSERT_FLOAT_EQ(-145.0f, f.GetFrameGeometry(0).GetOrigin() [1]);
+    ASSERT_FLOAT_EQ(-350.0f, f.GetFrameGeometry(1).GetOrigin() [0]);
+    ASSERT_FLOAT_EQ(-145.0f, f.GetFrameGeometry(1).GetOrigin() [1]);
+
+    if (i == 0)
+    {
+      ASSERT_FLOAT_EQ(-985.0f + 8.0f, f.GetFrameGeometry(0).GetOrigin() [2]);
+      ASSERT_FLOAT_EQ(-985.0f + 11.0f, f.GetFrameGeometry(1).GetOrigin() [2]);
+    }
+    else
+    {
+      ASSERT_FLOAT_EQ(-985.0f, f.GetFrameGeometry(0).GetOrigin() [2]);
+      ASSERT_FLOAT_EQ(-985.0f, f.GetFrameGeometry(1).GetOrigin() [2]);
+    }
+  }
+}
+
+
 TEST(SortedFrames, Knix)  // Created using "SortedFramesCreateTest.py"
 {
   Orthanc::DicomMap tags;

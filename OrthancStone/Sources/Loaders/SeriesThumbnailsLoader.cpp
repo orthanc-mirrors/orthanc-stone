@@ -514,7 +514,7 @@ namespace OrthancStone
     std::string jpeg;
     Orthanc::JpegWriter writer;
     writer.SetQuality(JPEG_QUALITY);
-    writer.WriteToMemory(jpeg, *resized);
+    Orthanc::IImageWriter::WriteToMemory(writer, jpeg, *resized);
 
     AcquireThumbnail(info.GetDicomSource(), info.GetStudyInstanceUid(),
                      info.GetSeriesInstanceUid(), new Thumbnail(jpeg, Orthanc::MIME_JPEG));      
@@ -588,7 +588,7 @@ namespace OrthancStone
       std::string jpeg;
       Orthanc::JpegWriter writer;
       writer.SetQuality(JPEG_QUALITY);
-      writer.WriteToMemory(jpeg, *thumbnail);
+      Orthanc::IImageWriter::WriteToMemory(writer, jpeg, *thumbnail);
 
       AcquireThumbnail(info.GetDicomSource(), info.GetStudyInstanceUid(),
                        info.GetSeriesInstanceUid(), new Thumbnail(jpeg, Orthanc::MIME_JPEG));

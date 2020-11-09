@@ -229,7 +229,7 @@ namespace OrthancStone
     Orthanc::ImageProcessing::Convert(png, canvas);
 
     Orthanc::PngWriter writer;
-    writer.WriteToFile(target, png);
+    Orthanc::IImageWriter::WriteToFile(writer, target, png);
   }
 
   static boost::shared_ptr<OrthancStone::RtViewerView> GetViewFromWindowId(

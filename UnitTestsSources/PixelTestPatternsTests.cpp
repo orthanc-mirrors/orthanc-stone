@@ -51,10 +51,10 @@ TEST(PixelTestPatterns, SimpleRedHGradient)
 
   Orthanc::PngWriter writer;
 #if 0
-  writer.WriteToFile("SimpleRedBlueHGradient.png", *texture);
+  Orthanc::IImageWriter::WriteToFile(writer, "SimpleRedBlueHGradient.png", *texture);
 #else
   std::string contents;
-  writer.WriteToMemory(contents, *texture);
+  Orthanc::IImageWriter::WriteToMemory(writer, contents, *texture);
 
   ASSERT_EQ(1u, sizeof(unsigned char));
   ASSERT_EQ(391u, sizeof(bin2c_SimpleRedBlueHGradient_png));
@@ -87,10 +87,10 @@ TEST(PixelTestPatterns, SimpleRedBlueVGradient)
 
   Orthanc::PngWriter writer;
 #if 0
-  writer.WriteToFile("SimpleRedBlueVGradient.png", *texture);
+  Orthanc::IImageWriter::WriteToFile(writer, "SimpleRedBlueVGradient.png", *texture);
 #else
   std::string contents;
-  writer.WriteToMemory(contents, *texture);
+  Orthanc::IImageWriter::WriteToMemory(writer, contents, *texture);
 
   ASSERT_EQ(1u, sizeof(unsigned char));
   ASSERT_EQ(400u, sizeof(bin2c_SimpleRedBlueVGradient_png));
@@ -150,10 +150,10 @@ TEST(PixelTestPatterns, MultiGradient)
  
   Orthanc::PngWriter writer;
 #if 0
-  writer.WriteToFile("MultiGradient.png", *texture);
+  Orthanc::IImageWriter::WriteToFile(writer, "MultiGradient.png", *texture);
 #else
   std::string contents;
-  writer.WriteToMemory(contents, *texture);
+  Orthanc::IImageWriter::WriteToMemory(writer, contents, *texture);
 
   ASSERT_EQ(1u, sizeof(unsigned char));
   ASSERT_EQ(774u, sizeof(bin2c_MultiGradient_png));

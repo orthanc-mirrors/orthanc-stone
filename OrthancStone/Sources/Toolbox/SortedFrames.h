@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "CoordinateSystem3D.h"
 #include "LinearAlgebra.h"
 
 namespace OrthancStone
@@ -32,13 +33,11 @@ namespace OrthancStone
     class Instance : public boost::noncopyable
     {
     private:
-      bool               hasPosition_;
-      Orthanc::DicomMap  tags_;
-      std::string        sopInstanceUid_;
-      unsigned int       numberOfFrames_;
-      Vector             normal_;    // Only used in "Sort()"
-      Vector             position_;  // Only used in "Sort()"
-      bool               monochrome1_;
+      Orthanc::DicomMap   tags_;
+      std::string         sopInstanceUid_;
+      unsigned int        numberOfFrames_;
+      CoordinateSystem3D  geometry_;
+      bool                monochrome1_;
 
     public:
       explicit Instance(const Orthanc::DicomMap& tags);
@@ -58,14 +57,10 @@ namespace OrthancStone
         return numberOfFrames_;
       }
 
-      bool HasPosition() const
+      const CoordinateSystem3D& GetGeometry() const
       {
-        return hasPosition_;
+        return geometry_;
       }
-
-      const Vector& GetNormal() const;
-
-      const Vector& GetPosition() const;
 
       bool IsMonochrome1() const
       {
@@ -162,6 +157,11 @@ namespace OrthancStone
     const std::string& GetSopInstanceUid(size_t instanceIndex) const
     {
       return GetInstance(instanceIndex).GetSopInstanceUid();
+    }
+
+    const CoordinateSystem3D& GetInstanceGeometry(size_t instanceIndex) const
+    {
+      return GetInstance(instanceIndex).GetGeometry();
     }
 
     bool LookupSopInstanceUid(size_t& instanceIndex,

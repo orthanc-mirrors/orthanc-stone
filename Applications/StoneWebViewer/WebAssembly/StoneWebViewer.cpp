@@ -2250,7 +2250,7 @@ static boost::shared_ptr<FramesCache> cache_;
 static boost::shared_ptr<OrthancStone::WebAssemblyLoadersContext> context_;
 static std::string stringBuffer_;
 static bool softwareRendering_ = false;
-static WebViewerAction leftButtonAction_ = WebViewerAction_Rotate;  // WebViewerAction_GrayscaleWindowing;
+static WebViewerAction leftButtonAction_ = WebViewerAction_Crosshair; //WebViewerAction_GrayscaleWindowing;
 static WebViewerAction middleButtonAction_ = WebViewerAction_Pan;
 static WebViewerAction rightButtonAction_ = WebViewerAction_Zoom;
 

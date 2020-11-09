@@ -879,6 +879,26 @@ TEST(GenericToolbox, NormalizeUuid)
 }
 
 
+TEST(CoordinateSystem3D, Basic)
+{
+  {
+    OrthancStone::CoordinateSystem3D c;
+    ASSERT_FALSE(c.IsValid());
+    ASSERT_FLOAT_EQ(c.GetNormal()[0], 0);
+    ASSERT_FLOAT_EQ(c.GetNormal()[1], 0);
+    ASSERT_FLOAT_EQ(c.GetNormal()[2], 1);
+  }
+
+  {
+    OrthancStone::CoordinateSystem3D c("nope1", "nope2");
+    ASSERT_FALSE(c.IsValid());
+    ASSERT_FLOAT_EQ(c.GetNormal()[0], 0);
+    ASSERT_FLOAT_EQ(c.GetNormal()[1], 0);
+    ASSERT_FLOAT_EQ(c.GetNormal()[2], 1);
+  }
+}
+
+
 int main(int argc, char **argv)
 {
   Orthanc::Logging::Initialize();

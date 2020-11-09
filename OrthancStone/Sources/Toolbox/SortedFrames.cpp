@@ -29,7 +29,8 @@
 
 namespace OrthancStone
 {
-  SortedFrames::Instance::Instance(const Orthanc::DicomMap& tags)
+  SortedFrames::Instance::Instance(const Orthanc::DicomMap& tags) :
+    geometry_(tags)
   {
     tags_.Assign(tags);
 
@@ -58,40 +59,9 @@ namespace OrthancStone
     {
       monochrome1_ = false;
     }
-
-    hasPosition_ = (
-      LinearAlgebra::ParseVector(position_, tags, Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT) &&
-      position_.size() == 3 &&
-      GeometryToolbox::ComputeNormal(normal_, tags));
   }
 
 
-  const Vector& SortedFrames::Instance::GetNormal() const
-  {
-    if (hasPosition_)
-    {
-      return normal_;
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-  }
-
-
-  const Vector& SortedFrames::Instance::GetPosition() const
-  {
-    if (hasPosition_)
-    {
-      return position_;
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-  }
-
-  
   SortedFrames::Frame::Frame(const Instance& instance,
                              unsigned int frameNumber) :
     instance_(&instance),
@@ -343,10 +313,10 @@ namespace OrthancStone
       assert(instances_[*it] != NULL);
       const Instance& instance = *instances_[*it];
 
-      if (instance.HasPosition())
+      if (instance.GetGeometry().IsValid())
       {
         n += 1;
-        meanNormal += (instance.GetNormal() - meanNormal) / static_cast<float>(n);
+        meanNormal += (instance.GetGeometry().GetNormal() - meanNormal) / static_cast<float>(n);
       }
     }
 
@@ -358,13 +328,13 @@ namespace OrthancStone
     {
       assert(instances_[*it] != NULL);
       const Instance& instance = *instances_[*it];
-        
+      
       std::string sopInstanceUid;
-      if (instance.HasPosition() &&
+      if (instance.GetGeometry().IsValid() &&
           instance.GetTags().LookupStringValue(
             sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
       {
-        double p = LinearAlgebra::DotProduct(meanNormal, instance.GetPosition());
+        double p = LinearAlgebra::DotProduct(meanNormal, instance.GetGeometry().GetOrigin());
         items.push_back(SortableItem<float>(static_cast<float>(p), *it, sopInstanceUid));
       }
     }

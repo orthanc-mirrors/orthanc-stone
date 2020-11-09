@@ -41,7 +41,8 @@ namespace OrthancStone
     if (!LinearAlgebra::IsNear(boost::numeric::ublas::norm_2(axisX_), 1.0) ||
         !LinearAlgebra::IsNear(boost::numeric::ublas::norm_2(axisY_), 1.0))
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      LOG(WARNING) << "Invalid 3D geometry: Axes are not normal vectors";
+      SetupCanonical();
     }
 
     // The vectors within "Image Orientation Patient" must be
@@ -49,32 +50,39 @@ namespace OrthancStone
     // column direction cosine vectors shall be orthogonal, i.e.,
     // their dot product shall be zero."
     // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.2.html
-    if (!LinearAlgebra::IsCloseToZero(boost::numeric::ublas::inner_prod(axisX_, axisY_)))
+    else if (!LinearAlgebra::IsCloseToZero(boost::numeric::ublas::inner_prod(axisX_, axisY_)))
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      LOG(WARNING) << "Invalid 3D geometry: Image orientation patient is not orthogonal";
+      SetupCanonical();
     }
+    else
+    {
+      LinearAlgebra::CrossProduct(normal_, axisX_, axisY_);
 
-    LinearAlgebra::CrossProduct(normal_, axisX_, axisY_);
+      d_ = -(normal_[0] * origin_[0] + normal_[1] * origin_[1] + normal_[2] * origin_[2]);
 
-    d_ = -(normal_[0] * origin_[0] + normal_[1] * origin_[1] + normal_[2] * origin_[2]);
-
-    // Just a sanity check, it should be useless by construction
-    assert(LinearAlgebra::IsNear(boost::numeric::ublas::norm_2(normal_), 1.0));
+      // Just a sanity check, it should be useless by construction
+      assert(LinearAlgebra::IsNear(boost::numeric::ublas::norm_2(normal_), 1.0));
+    }
   }
 
 
   void CoordinateSystem3D::SetupCanonical()
   {
+    valid_ = false;
+
     LinearAlgebra::AssignVector(origin_, 0, 0, 0);
     LinearAlgebra::AssignVector(axisX_, 1, 0, 0);
     LinearAlgebra::AssignVector(axisY_, 0, 1, 0);
-    CheckAndComputeNormal();
+    LinearAlgebra::AssignVector(normal_, 0, 0, 1);
+    d_ = 0;
   }
 
 
   CoordinateSystem3D::CoordinateSystem3D(const Vector& origin,
                                          const Vector& axisX,
                                          const Vector& axisY) :
+    valid_(true),
     origin_(origin),
     axisX_(axisX),
     axisY_(axisY)
@@ -86,6 +94,8 @@ namespace OrthancStone
   void CoordinateSystem3D::Setup(const std::string& imagePositionPatient,
                                  const std::string& imageOrientationPatient)
   {
+    valid_ = true;
+    
     std::string tmpPosition = Orthanc::Toolbox::StripSpaces(imagePositionPatient);
     std::string tmpOrientation = Orthanc::Toolbox::StripSpaces(imageOrientationPatient);
 
@@ -95,20 +105,24 @@ namespace OrthancStone
         origin_.size() != 3 ||
         orientation.size() != 6)
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      LOG(WARNING) << "Bad 3D geometry: image position/orientation patient: \""
+                   << tmpPosition << "\" / \"" << tmpOrientation << "\"";
+      SetupCanonical();
     }
+    else
+    {
+      axisX_.resize(3);
+      axisX_[0] = orientation[0];
+      axisX_[1] = orientation[1];
+      axisX_[2] = orientation[2];
 
-    axisX_.resize(3);
-    axisX_[0] = orientation[0];
-    axisX_[1] = orientation[1];
-    axisX_[2] = orientation[2];
+      axisY_.resize(3);
+      axisY_[0] = orientation[3];
+      axisY_[1] = orientation[4];
+      axisY_[2] = orientation[5];
 
-    axisY_.resize(3);
-    axisY_[0] = orientation[3];
-    axisY_[1] = orientation[4];
-    axisY_[2] = orientation[5];
-
-    CheckAndComputeNormal();
+      CheckAndComputeNormal();
+    }
   }   
 
 

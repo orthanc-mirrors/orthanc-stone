@@ -34,6 +34,7 @@ namespace OrthancStone
   class CoordinateSystem3D
   {
   private:
+    bool      valid_;
     Vector    origin_;
     Vector    normal_;
     Vector    axisX_;
@@ -71,6 +72,11 @@ namespace OrthancStone
 
     explicit CoordinateSystem3D(const Orthanc::DicomMap& dicom);
 
+    bool IsValid() const
+    {
+      return valid_;
+    }
+    
     const Vector& GetNormal() const
     {
       return normal_;

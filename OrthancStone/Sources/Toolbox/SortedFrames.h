@@ -23,6 +23,7 @@
 #pragma once
 
 #include "CoordinateSystem3D.h"
+#include "DicomInstanceParameters.h"
 #include "LinearAlgebra.h"
 
 namespace OrthancStone
@@ -30,58 +31,17 @@ namespace OrthancStone
   class SortedFrames : public boost::noncopyable
   {
   private:
-    class Instance : public boost::noncopyable
-    {
-    private:
-      Orthanc::DicomMap   tags_;
-      std::string         sopInstanceUid_;
-      unsigned int        numberOfFrames_;
-      CoordinateSystem3D  geometry_;
-      bool                monochrome1_;
-      Vector              frameOffsets_;
-
-    public:
-      explicit Instance(const Orthanc::DicomMap& tags);
-
-      const Orthanc::DicomMap& GetTags() const
-      {
-        return tags_;
-      }
-
-      const std::string& GetSopInstanceUid() const
-      {
-        return sopInstanceUid_;
-      }
-
-      unsigned int GetNumberOfFrames() const
-      {
-        return numberOfFrames_;
-      }
-
-      const CoordinateSystem3D& GetGeometry() const
-      {
-        return geometry_;
-      }
-
-      bool IsMonochrome1() const
-      {
-        return monochrome1_;
-      }
-
-      double GetFrameOffset(unsigned int frame) const;
-    };
-
     struct Frame
     {
     private:
-      const Instance*  instance_;
-      unsigned int     frameNumber_;
+      const DicomInstanceParameters*  instance_;
+      unsigned int                    frameNumber_;
 
     public:
-      Frame(const Instance& instance,
+      Frame(const DicomInstanceParameters& instance,
             unsigned int frameNumber);
 
-      const Instance& GetInstance() const
+      const DicomInstanceParameters& GetInstance() const
       {
         return *instance_;
       }
@@ -100,15 +60,15 @@ namespace OrthancStone
     // "frames_" (only once "Sort()" is called)
     typedef std::map<std::pair<std::string, unsigned int>, size_t>  FramesIndex;
 
-    std::string             studyInstanceUid_;
-    std::string             seriesInstanceUid_;
-    std::vector<Instance*>  instances_;
-    std::vector<Frame>      frames_;
-    bool                    sorted_;
-    InstancesIndex          instancesIndex_;
-    FramesIndex             framesIndex_;
+    std::string                            studyInstanceUid_;
+    std::string                            seriesInstanceUid_;
+    std::vector<DicomInstanceParameters*>  instances_;
+    std::vector<Frame>                     frames_;
+    bool                                   sorted_;
+    InstancesIndex                         instancesIndex_;
+    FramesIndex                            framesIndex_;
 
-    const Instance& GetInstance(size_t instanceIndex) const;
+    const DicomInstanceParameters& GetInstance(size_t instanceIndex) const;
 
     const Frame& GetFrame(size_t frameIndex) const;
 
@@ -197,9 +157,10 @@ namespace OrthancStone
       return GetFrame(frameIndex).GetFrameNumberInInstance();
     }
 
-    bool IsFrameMonochrome1(size_t frameIndex) const
+    bool IsFrameMonochrome1(size_t frameIndex) const  // TODO - REMOVE
     {
-      return GetFrame(frameIndex).GetInstance().IsMonochrome1();
+      return GetFrame(frameIndex).GetInstance().GetImageInformation().GetPhotometricInterpretation() ==
+        Orthanc::PhotometricInterpretation_Monochrome1;
     }
 
     CoordinateSystem3D GetFrameGeometry(size_t frameIndex) const;

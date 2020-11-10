@@ -30,100 +30,7 @@
 
 namespace OrthancStone
 {
-  SortedFrames::Instance::Instance(const Orthanc::DicomMap& tags) :
-    geometry_(tags)
-  {
-    tags_.Assign(tags);
-
-    if (!tags.LookupStringValue(sopInstanceUid_, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-    }
-
-    uint32_t tmp;
-    if (tags.ParseUnsignedInteger32(tmp, Orthanc::DICOM_TAG_NUMBER_OF_FRAMES) &&
-        tmp > 0)
-    {
-      numberOfFrames_ = tmp;
-    }
-    else
-    {
-      numberOfFrames_ = 1;
-    }
-
-    std::string photometric;
-    if (tags.LookupStringValue(photometric, Orthanc::DICOM_TAG_PHOTOMETRIC_INTERPRETATION, false))
-    {
-      Orthanc::Toolbox::StripSpaces(photometric);
-      monochrome1_ = (photometric == "MONOCHROME1");
-    }
-    else
-    {
-      monochrome1_ = false;
-    }
-
-    bool ok = false;
-
-    if (numberOfFrames_ > 1)
-    {
-      std::string offsets, increment;
-      if (tags.LookupStringValue(offsets, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR, false) &&
-          tags.LookupStringValue(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
-      {
-        Orthanc::Toolbox::ToUpperCase(increment);
-        if (increment != "3004,000C")
-        {
-          LOG(WARNING) << "Bad value for the FrameIncrementPointer tags in a multiframe image";
-        }
-        else if (LinearAlgebra::ParseVector(frameOffsets_, offsets))
-        {
-          if (frameOffsets_.size() == numberOfFrames_)
-          {
-            ok = true;
-          }
-          else
-          {
-            LOG(WARNING) << "The size of the GridFrameOffsetVector does not correspond to the number of frames";
-          }
-        }
-        else
-        {
-          LOG(WARNING) << "Cannot parse the GridFrameOffsetVector tag";
-        }
-      }
-      else
-      {
-        LOG(INFO) << "Missing the frame offset information in a multiframe image";
-      }
-    }
-
-    if (!ok)
-    {
-      frameOffsets_.resize(numberOfFrames_);
-      for (size_t i = 0; i < numberOfFrames_; i++)
-      {
-        frameOffsets_[i] = 0;
-      }
-    }
-  }
-
-
-  double SortedFrames::Instance::GetFrameOffset(unsigned int frame) const
-  {
-    assert(GetNumberOfFrames() == frameOffsets_.size());
-    
-    if (frame >= GetNumberOfFrames())
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-    else
-    {
-      return frameOffsets_[frame];
-    }
-  }
-  
-
-  SortedFrames::Frame::Frame(const Instance& instance,
+  SortedFrames::Frame::Frame(const DicomInstanceParameters& instance,
                              unsigned int frameNumber) :
     instance_(&instance),
     frameNumber_(frameNumber)
@@ -135,7 +42,7 @@ namespace OrthancStone
   }
 
 
-  const SortedFrames::Instance& SortedFrames::GetInstance(size_t instanceIndex) const
+  const DicomInstanceParameters& SortedFrames::GetInstance(size_t instanceIndex) const
   {
     if (instanceIndex >= instances_.size())
     {
@@ -188,38 +95,30 @@ namespace OrthancStone
 
   void SortedFrames::AddInstance(const Orthanc::DicomMap& tags)
   {
-    std::unique_ptr<Instance> instance(new Instance(tags));
+    std::unique_ptr<DicomInstanceParameters> instance(new DicomInstanceParameters(tags));
 
-    std::string studyInstanceUid, seriesInstanceUid, sopInstanceUid;
-    if (!tags.LookupStringValue(studyInstanceUid, Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, false) ||
-        !tags.LookupStringValue(seriesInstanceUid, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false) ||
-        !tags.LookupStringValue(sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-    }
-    
     if (instances_.empty())
     {
-      studyInstanceUid_ = studyInstanceUid;
-      seriesInstanceUid_ = seriesInstanceUid;
+      studyInstanceUid_ = instance->GetStudyInstanceUid();
+      seriesInstanceUid_ = instance->GetSeriesInstanceUid();
     }
     else
     {
-      if (studyInstanceUid_ != studyInstanceUid ||
-          seriesInstanceUid_ != seriesInstanceUid)
+      if (studyInstanceUid_ != instance->GetStudyInstanceUid() ||
+          seriesInstanceUid_ != instance->GetSeriesInstanceUid())
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
                                         "Mixing instances from different series");
       }
     }
 
-    if (instancesIndex_.find(sopInstanceUid) != instancesIndex_.end())
+    if (instancesIndex_.find(instance->GetSopInstanceUid()) != instancesIndex_.end())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
                                       "Cannot register twice the same SOP Instance UID");
     }
 
-    instancesIndex_[sopInstanceUid] = instances_.size();
+    instancesIndex_[instance->GetSopInstanceUid()] = instances_.size();
 
     instances_.push_back(instance.release());
     sorted_ = false;
@@ -248,7 +147,7 @@ namespace OrthancStone
                                          size_t instanceIndex)
   {
     assert(instances_[instanceIndex] != NULL);
-    const Instance& instance = *instances_[instanceIndex];
+    const DicomInstanceParameters& instance = *instances_[instanceIndex];
     
     for (unsigned int i = 0; i < instance.GetNumberOfFrames(); i++)
     {
@@ -306,7 +205,7 @@ namespace OrthancStone
          it != remainingInstances.end(); ++it)
     {
       assert(instances_[*it] != NULL);
-      const Instance& instance = *instances_[*it];
+      const DicomInstanceParameters& instance = *instances_[*it];
 
       int32_t value;
       std::string sopInstanceUid;
@@ -336,7 +235,7 @@ namespace OrthancStone
          it != remainingInstances.end(); ++it)
     {
       assert(instances_[*it] != NULL);
-      const Instance& instance = *instances_[*it];
+      const DicomInstanceParameters& instance = *instances_[*it];
 
       std::string sopInstanceUid;
       if (instance.GetTags().LookupStringValue(
@@ -372,7 +271,7 @@ namespace OrthancStone
          it != remainingInstances.end(); ++it)
     {
       assert(instances_[*it] != NULL);
-      const Instance& instance = *instances_[*it];
+      const DicomInstanceParameters& instance = *instances_[*it];
 
       if (instance.GetGeometry().IsValid())
       {
@@ -388,7 +287,7 @@ namespace OrthancStone
          it != remainingInstances.end(); ++it)
     {
       assert(instances_[*it] != NULL);
-      const Instance& instance = *instances_[*it];
+      const DicomInstanceParameters& instance = *instances_[*it];
       
       std::string sopInstanceUid;
       if (instance.GetGeometry().IsValid() &&
@@ -428,18 +327,7 @@ namespace OrthancStone
   CoordinateSystem3D SortedFrames::GetFrameGeometry(size_t frameIndex) const
   {
     const Frame& frame = GetFrame(frameIndex);
-    CoordinateSystem3D geometry = frame.GetInstance().GetGeometry();
-
-    if (geometry.IsValid())
-    {
-      geometry.SetOrigin(geometry.GetOrigin() + geometry.GetNormal() *
-                         frame.GetInstance().GetFrameOffset(frame.GetFrameNumberInInstance()));
-      return geometry;
-    }
-    else
-    {
-      return geometry;
-    }
+    return frame.GetInstance().GetFrameGeometry(frame.GetFrameNumberInInstance());
   }
 
 

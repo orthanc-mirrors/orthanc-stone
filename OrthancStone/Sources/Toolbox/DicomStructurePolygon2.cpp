@@ -193,8 +193,8 @@ namespace OrthancStone
 
             /*
               void CoordinateSystem3D::ProjectPoint(double& offsetX,
-                double& offsetY,
-                const Vector& point) const
+              double& offsetY,
+              const Vector& point) const
             */
             double alpha = (v2 - planeV) / (v2 - v1);
 
@@ -241,64 +241,62 @@ namespace OrthancStone
     }
   } 
 
-void OrthancStone::DicomStructurePolygon2::ProjectOnParallelPlane(
-  std::vector< std::pair<Point2D, Point2D> >& segments, 
-  const CoordinateSystem3D& plane) const
-{
-  if (points_.size() < 3)
-    return;
-
-  // the plane is horizontal
-  ORTHANC_ASSERT(LinearAlgebra::IsNear(plane.GetNormal()[0], 0.0));
-  ORTHANC_ASSERT(LinearAlgebra::IsNear(plane.GetNormal()[1], 0.0));
-
-  segments.clear();
-  segments.reserve(points_.size());
-  // since the returned values need to be expressed in the supplied coordinate
-  // system, we need to subtract origin_ from the returned points
-
-  double planeOriginX = plane.GetOrigin()[0];
-  double planeOriginY = plane.GetOrigin()[1];
-
-  // precondition: points_.size() >= 3
-  for (size_t j = 0; j < points_.size()-1; ++j)
+  void DicomStructurePolygon2::ProjectOnParallelPlane(
+    std::vector< std::pair<Point2D, Point2D> >& segments, 
+    const CoordinateSystem3D& plane) const
   {
-    // segment between point j and j+1
+    if (points_.size() < 3)
+      return;
 
-    const Point3D& point0 = GetPoint(j);
+    // the plane is horizontal
+    ORTHANC_ASSERT(LinearAlgebra::IsNear(plane.GetNormal()[0], 0.0));
+    ORTHANC_ASSERT(LinearAlgebra::IsNear(plane.GetNormal()[1], 0.0));
+
+    segments.clear();
+    segments.reserve(points_.size());
+    // since the returned values need to be expressed in the supplied coordinate
+    // system, we need to subtract origin_ from the returned points
+
+    double planeOriginX = plane.GetOrigin()[0];
+    double planeOriginY = plane.GetOrigin()[1];
+
+    // precondition: points_.size() >= 3
+    for (size_t j = 0; j < points_.size()-1; ++j)
+    {
+      // segment between point j and j+1
+
+      const Point3D& point0 = GetPoint(j);
+      // subtract plane origin x and y
+      Point2D p0(point0[0] - planeOriginX, point0[1] - planeOriginY);
+    
+      const Point3D& point1 = GetPoint(j+1);
+      // subtract plane origin x and y
+      Point2D p1(point1[0] - planeOriginX, point1[1] - planeOriginY);
+
+      segments.push_back(std::pair<Point2D, Point2D>(p0,p1));
+    }
+
+
+    // final segment 
+
+    const Point3D& point0 = GetPoint(points_.size() - 1);
     // subtract plane origin x and y
     Point2D p0(point0[0] - planeOriginX, point0[1] - planeOriginY);
-    
-    const Point3D& point1 = GetPoint(j+1);
+
+    const Point3D& point1 = GetPoint(0);
     // subtract plane origin x and y
     Point2D p1(point1[0] - planeOriginX, point1[1] - planeOriginY);
 
-    segments.push_back(std::pair<Point2D, Point2D>(p0,p1));
+    segments.push_back(std::pair<Point2D, Point2D>(p0, p1));
   }
 
-
-  // final segment 
-
-  const Point3D& point0 = GetPoint(points_.size() - 1);
-  // subtract plane origin x and y
-  Point2D p0(point0[0] - planeOriginX, point0[1] - planeOriginY);
-
-  const Point3D& point1 = GetPoint(0);
-  // subtract plane origin x and y
-  Point2D p1(point1[0] - planeOriginX, point1[1] - planeOriginY);
-
-  segments.push_back(std::pair<Point2D, Point2D>(p0, p1));
-}
-
-double OrthancStone::DicomStructurePolygon2::GetZ() const
-{
-  ORTHANC_ASSERT(LinearAlgebra::IsNear(normal_[0], 0.0));
-  ORTHANC_ASSERT(LinearAlgebra::IsNear(normal_[1], 0.0));
-  ORTHANC_ASSERT(LinearAlgebra::IsNear(minZ_, maxZ_));
-  return minZ_;
-}
-
-
+  double DicomStructurePolygon2::GetZ() const
+  {
+    ORTHANC_ASSERT(LinearAlgebra::IsNear(normal_[0], 0.0));
+    ORTHANC_ASSERT(LinearAlgebra::IsNear(normal_[1], 0.0));
+    ORTHANC_ASSERT(LinearAlgebra::IsNear(minZ_, maxZ_));
+    return minZ_;
+  }
 }
 
 #endif 

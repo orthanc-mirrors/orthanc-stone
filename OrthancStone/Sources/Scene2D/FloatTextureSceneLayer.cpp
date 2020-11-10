@@ -89,8 +89,8 @@ namespace OrthancStone
   void FloatTextureSceneLayer::GetWindowing(float& targetCenter,
                                             float& targetWidth) const
   {
-    ::OrthancStone::ComputeWindowing(targetCenter, targetWidth,
-                                     windowing_, customCenter_, customWidth_);
+    ComputeWindowing(targetCenter, targetWidth,
+                     windowing_, customCenter_, customWidth_);
   }
 
 

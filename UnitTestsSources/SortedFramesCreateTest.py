@@ -81,5 +81,5 @@ slices = r.json() ['SlicesShort']
 print('  ASSERT_EQ(%du, f.GetFramesCount());' % len(slices))
 
 for i in range(len(slices)):
-    print('  ASSERT_EQ(f.GetFrameSopInstanceUid(%d), "%s");' % (i, slices[i][0]))
+    print('  ASSERT_EQ(f.GetInstanceOfFrame(%d).GetSopInstanceUid(), "%s");' % (i, slices[i][0]))
 

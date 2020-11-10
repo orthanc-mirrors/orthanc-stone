@@ -68,8 +68,6 @@ namespace OrthancStone
     InstancesIndex                         instancesIndex_;
     FramesIndex                            framesIndex_;
 
-    const DicomInstanceParameters& GetInstance(size_t instanceIndex) const;
-
     const Frame& GetFrame(size_t frameIndex) const;
 
     void AddFramesOfInstance(std::set<size_t>& remainingInstances,
@@ -112,20 +110,8 @@ namespace OrthancStone
       return instances_.size();
     }
 
-    const Orthanc::DicomMap& GetInstanceTags(size_t instanceIndex) const
-    {
-      return GetInstance(instanceIndex).GetTags();
-    }
-
-    const std::string& GetSopInstanceUid(size_t instanceIndex) const
-    {
-      return GetInstance(instanceIndex).GetSopInstanceUid();
-    }
-
-    const CoordinateSystem3D& GetInstanceGeometry(size_t instanceIndex) const
-    {
-      return GetInstance(instanceIndex).GetGeometry();
-    }
+    // TODO - REMOVE THIS DANGEROUS FUNCTION (might be taken for GetInstanceOfFrame())
+    const DicomInstanceParameters& GetInstance(size_t instanceIndex) const;
 
     bool LookupSopInstanceUid(size_t& instanceIndex,
                               const std::string& sopInstanceUid) const;
@@ -137,30 +123,14 @@ namespace OrthancStone
 
     size_t GetFramesCount() const;
 
-    const Orthanc::DicomMap& GetFrameTags(size_t frameIndex) const
+    const DicomInstanceParameters& GetInstanceOfFrame(size_t frameIndex) const
     {
-      return GetFrame(frameIndex).GetInstance().GetTags();
-    }
-
-    const std::string& GetFrameSopInstanceUid(size_t frameIndex) const
-    {
-      return GetFrame(frameIndex).GetInstance().GetSopInstanceUid();
-    }
-
-    unsigned int GetFrameSiblingsCount(size_t frameIndex) const
-    {
-      return GetFrame(frameIndex).GetInstance().GetNumberOfFrames();
+      return GetFrame(frameIndex).GetInstance();
     }
 
     unsigned int GetFrameNumberInInstance(size_t frameIndex) const
     {
       return GetFrame(frameIndex).GetFrameNumberInInstance();
-    }
-
-    bool IsFrameMonochrome1(size_t frameIndex) const  // TODO - REMOVE
-    {
-      return GetFrame(frameIndex).GetInstance().GetImageInformation().GetPhotometricInterpretation() ==
-        Orthanc::PhotometricInterpretation_Monochrome1;
     }
 
     CoordinateSystem3D GetFrameGeometry(size_t frameIndex) const;

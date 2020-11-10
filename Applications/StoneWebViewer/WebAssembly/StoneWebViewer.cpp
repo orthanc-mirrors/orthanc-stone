@@ -1330,7 +1330,7 @@ private:
       bool isFull = prefetchQueue_.front().IsFull();
       prefetchQueue_.pop_front();
       
-      const std::string sopInstanceUid = frames_->GetFrameSopInstanceUid(index);
+      const std::string sopInstanceUid = frames_->GetInstanceOfFrame(index).GetSopInstanceUid();
       unsigned int frameNumber = frames_->GetFrameNumberInInstance(index);
 
       {
@@ -1372,7 +1372,7 @@ private:
     {
       size_t index = cursor_->GetCurrentIndex();
 
-      if (frames_->GetFrameSopInstanceUid(index) == sopInstanceUid &&
+      if (frames_->GetInstanceOfFrame(index).GetSopInstanceUid() == sopInstanceUid &&
           frames_->GetFrameNumberInInstance(index) == frameNumber)
       {
         DisplayCurrentFrame();
@@ -1414,7 +1414,7 @@ private:
         quality = DisplayedFrameQuality_High;
       }
 
-      currentFrameExtent_ = FrameExtent(frames_->GetFrameTags(index));
+      currentFrameExtent_ = FrameExtent(frames_->GetInstanceOfFrame(index).GetTags());
 
       {
         // Prepare prefetching
@@ -1473,8 +1473,17 @@ private:
       layer.GetWindowing(windowingCenter_, windowingWidth_);
     }
   }
-  
 
+
+  static bool IsFrameMonochrome1(const OrthancStone::SortedFrames& frames,
+                                 size_t frameIndex)
+  {
+    const OrthancStone::DicomInstanceParameters& instance = frames.GetInstanceOfFrame(frameIndex);
+    return (instance.GetImageInformation().GetPhotometricInterpretation() ==
+            Orthanc::PhotometricInterpretation_Monochrome1);
+  }
+  
+  
   bool DisplayFrame(unsigned int& quality,
                     size_t index)
   {
@@ -1483,7 +1492,7 @@ private:
       return false;
     }
 
-    const std::string sopInstanceUid = frames_->GetFrameSopInstanceUid(index);
+    const std::string sopInstanceUid = frames_->GetInstanceOfFrame(index).GetSopInstanceUid();
     size_t frameNumber = frames_->GetFrameNumberInInstance(index);
 
     FramesCache::Accessor accessor(*cache_, sopInstanceUid, frameNumber);
@@ -1506,7 +1515,7 @@ private:
           std::unique_ptr<OrthancStone::FloatTextureSceneLayer> tmp(
             new OrthancStone::FloatTextureSceneLayer(accessor.GetImage()));
           tmp->SetCustomWindowing(windowingCenter_, windowingWidth_);
-          tmp->SetInverted(inverted_ ^ frames_->IsFrameMonochrome1(index));
+          tmp->SetInverted(inverted_ ^ IsFrameMonochrome1(*frames_, index));
           layer.reset(tmp.release());
           break;
         }
@@ -1521,7 +1530,7 @@ private:
 
       double pixelSpacingX, pixelSpacingY;
       OrthancStone::GeometryToolbox::GetPixelSpacing(
-        pixelSpacingX, pixelSpacingY, frames_->GetFrameTags(index));
+        pixelSpacingX, pixelSpacingY, frames_->GetInstanceOfFrame(index).GetTags());
       layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
 
 
@@ -1596,7 +1605,7 @@ private:
   {
     if (frames_.get() != NULL)
     {
-      std::string sopInstanceUid = frames_->GetFrameSopInstanceUid(index);
+      std::string sopInstanceUid = frames_->GetInstanceOfFrame(index).GetSopInstanceUid();
       unsigned int frameNumber = frames_->GetFrameNumberInInstance(index);
       
       {
@@ -1621,9 +1630,9 @@ private:
     }
     else if (frames_.get() != NULL)
     {
-      std::string sopInstanceUid = frames_->GetFrameSopInstanceUid(index);
+      std::string sopInstanceUid = frames_->GetInstanceOfFrame(index).GetSopInstanceUid();
       unsigned int frameNumber = frames_->GetFrameNumberInInstance(index);
-      bool isMonochrome1 = frames_->IsFrameMonochrome1(index);
+      bool isMonochrome1 = IsFrameMonochrome1(*frames_, index);
 
       const std::string uri = ("studies/" + frames_->GetStudyInstanceUid() +
                                "/series/" + frames_->GetSeriesInstanceUid() +
@@ -1857,7 +1866,7 @@ public:
     
     if (frames_->GetFramesCount() != 0)
     {
-      const std::string& sopInstanceUid = frames_->GetFrameSopInstanceUid(cursor_->GetCurrentIndex());
+      const std::string& sopInstanceUid = frames_->GetInstanceOfFrame(cursor_->GetCurrentIndex()).GetSopInstanceUid();
 
       {
         // Fetch the default windowing for the central instance

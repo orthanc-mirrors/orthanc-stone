@@ -98,7 +98,13 @@
 #include <stdio.h>
 
 
-enum EMSCRIPTEN_KEEPALIVE ThumbnailType
+#if !defined(STONE_WEB_VIEWER_EXPORT)
+// We are not running ParseWebAssemblyExports.py, but we're compiling the wasm
+#  define STONE_WEB_VIEWER_EXPORT
+#endif
+
+
+enum STONE_WEB_VIEWER_EXPORT ThumbnailType
 {
   ThumbnailType_Image,
     ThumbnailType_NoPreview,
@@ -109,7 +115,7 @@ enum EMSCRIPTEN_KEEPALIVE ThumbnailType
 };
 
 
-enum EMSCRIPTEN_KEEPALIVE DisplayedFrameQuality
+enum STONE_WEB_VIEWER_EXPORT DisplayedFrameQuality
 {
   DisplayedFrameQuality_None,
     DisplayedFrameQuality_Low,
@@ -117,7 +123,7 @@ enum EMSCRIPTEN_KEEPALIVE DisplayedFrameQuality
     };
 
 
-enum EMSCRIPTEN_KEEPALIVE WebViewerAction
+enum STONE_WEB_VIEWER_EXPORT WebViewerAction
 {
   WebViewerAction_GrayscaleWindowing,
     WebViewerAction_Zoom,

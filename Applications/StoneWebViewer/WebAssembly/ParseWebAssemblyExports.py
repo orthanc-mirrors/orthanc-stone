@@ -59,7 +59,8 @@ index = clang.cindex.Index.create()
 # PARSE_SKIP_FUNCTION_BODIES prevents clang from failing because of
 # undefined types, which prevents compilation of functions
 tu = index.parse(args.source,
-                 [ '-DEMSCRIPTEN_KEEPALIVE=__attribute__((annotate("WebAssembly")))' ],
+                 [ '-DEMSCRIPTEN_KEEPALIVE=__attribute__((annotate("WebAssembly")))',
+                   '-DSTONE_WEB_VIEWER_EXPORT=__attribute__((annotate("WebAssembly")))'],
                  options = clang.cindex.TranslationUnit.PARSE_SKIP_FUNCTION_BODIES)
 
 

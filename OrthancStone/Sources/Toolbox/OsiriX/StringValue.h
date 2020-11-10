@@ -40,7 +40,7 @@ namespace OrthancStone
       std::string  value_;
 
     public:
-      StringValue(const std::string& value) :
+      explicit StringValue(const std::string& value) :
         value_(value)
       {
       }

@@ -39,7 +39,7 @@ namespace OrthancStone
       int64_t  value_;
 
     public:
-      IntegerValue(int64_t value) :
+      explicit IntegerValue(int64_t value) :
         value_(value)
       {
       }

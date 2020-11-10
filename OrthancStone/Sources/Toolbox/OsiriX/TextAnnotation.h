@@ -37,8 +37,8 @@ namespace OrthancStone
       Vector  center_;
 
     public:
-      TextAnnotation(const DictionaryValue& dict);
-
+      explicit TextAnnotation(const DictionaryValue& dict);
+      
       virtual Type GetType() const ORTHANC_OVERRIDE
       {
         return Type_Text;

@@ -35,6 +35,10 @@ namespace OrthancStone
 
     class OpenGLProgram : public boost::noncopyable
     {
+    private:
+      OpenGL::IOpenGLContext& context_;
+      GLuint                  program_;
+
     public:
       // WARNING: A global OpenGL context must be active to create this object!
       // the context is only passed so that it can be checked for loss
@@ -52,10 +56,6 @@ namespace OrthancStone
       GLint GetUniformLocation(const std::string& name);
 
       GLint GetAttributeLocation(const std::string& name);
-
-    private:
-      GLuint  program_;
-      OpenGL::IOpenGLContext& context_;
     };
   }
 }

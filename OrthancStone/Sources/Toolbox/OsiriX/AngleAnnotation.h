@@ -39,7 +39,7 @@ namespace OrthancStone
       Vector  b_;
 
     public:
-      AngleAnnotation(const DictionaryValue& dict);
+      explicit AngleAnnotation(const DictionaryValue& dict);
 
       virtual Type GetType() const ORTHANC_OVERRIDE
       {

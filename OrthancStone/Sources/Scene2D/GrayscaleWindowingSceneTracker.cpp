@@ -117,24 +117,28 @@ namespace OrthancStone
     if (canvasWidth > 3 &&
         canvasHeight > 3)
     {
-      boost::weak_ptr<IViewport> viewport = viewport_.lock();
-      GrayscaleLayerAccessor accessor(viewport, layerIndex_);
+      boost::shared_ptr<IViewport> locked = viewport_.lock();
+
+      if (locked)
+      {
+        GrayscaleLayerAccessor accessor(locked, layerIndex_);
       
-      if (accessor.IsValid())
-      {
-        FloatTextureSceneLayer& layer = accessor.GetLayer();
+        if (accessor.IsValid())
+        {
+          FloatTextureSceneLayer& layer = accessor.GetLayer();
         
-        layer.GetWindowing(originalCenter_, originalWidth_);
+          layer.GetWindowing(originalCenter_, originalWidth_);
         
-        float minValue, maxValue;
-        layer.GetRange(minValue, maxValue);
+          float minValue, maxValue;
+          layer.GetRange(minValue, maxValue);
         
-        normalization_ = (maxValue - minValue) / static_cast<double>(std::min(canvasWidth, canvasHeight) - 1);
-        active_ = true;
-      }
-      else
-      {
-        LOG(INFO) << "Cannot create GrayscaleWindowingSceneTracker on a non-float texture";
+          normalization_ = (maxValue - minValue) / static_cast<double>(std::min(canvasWidth, canvasHeight) - 1);
+          active_ = true;
+        }
+        else
+        {
+          LOG(INFO) << "Cannot create GrayscaleWindowingSceneTracker on a non-float texture";
+        }
       }
     }
   }

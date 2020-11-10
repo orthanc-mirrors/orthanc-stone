@@ -37,7 +37,7 @@ namespace OrthancStone
       double  value_;
 
     public:
-      RealValue(double value) :
+      explicit RealValue(double value) :
         value_(value)
       {
       }

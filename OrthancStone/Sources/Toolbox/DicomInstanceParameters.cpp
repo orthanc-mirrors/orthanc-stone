@@ -125,7 +125,14 @@ namespace OrthancStone
     }
 
     // Must be AFTER setting "numberOfFrames_"
-    ExtractFrameOffsets(frameOffsets_, dicom, numberOfFrames_);
+    if (numberOfFrames_ > 1)
+    {
+      ExtractFrameOffsets(frameOffsets_, dicom, numberOfFrames_);
+    }
+    else
+    {
+      frameOffsets_.resize(0);
+    }
 
     if (sopClassUid_ == SopClassUid_RTDose)
     {

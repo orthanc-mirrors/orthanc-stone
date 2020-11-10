@@ -29,13 +29,12 @@ fi
 
 cat <<EOF > /tmp/cppcheck-suppressions.txt
 stlFindInsert:../../Applications/Samples/WebAssembly/SingleFrameViewer/SingleFrameViewerApplication.h
-stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:685
+stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:703
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/Internals/CairoFloatTextureRenderer.cpp
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/LookupTableTextureSceneLayer.cpp
 unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:143
 unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:197
 unusedFunction
-useInitializationList:../../OrthancStone/Sources/OpenGL/OpenGLProgram.cpp:36
 EOF
 
 ${CPPCHECK} --enable=all --quiet --std=c++11 \
@@ -58,7 +57,7 @@ ${CPPCHECK} --enable=all --quiet --std=c++11 \
             -DORTHANC_ENABLE_OPENGL=1 \
             -DORTHANC_ENABLE_PKCS11=0 \
             -DORTHANC_ENABLE_PNG=1 \
-            -DORTHANC_ENABLE_PUGIXML=0 \
+            -DORTHANC_ENABLE_PUGIXML=1 \
             -DORTHANC_ENABLE_SDL=1 \
             -DORTHANC_ENABLE_SSL=1 \
             -DORTHANC_ENABLE_THREADS=1 \
@@ -83,5 +82,6 @@ ${CPPCHECK} --enable=all --quiet --std=c++11 \
             -i ../../Applications/StoneWebViewer/Plugin/i \
             -i ../../Applications/StoneWebViewer/WebAssembly/StoneModule/i \
             -i ../../Applications/StoneWebViewer/WebAssembly/i \
+            -i ../../Applications/StoneWebViewer/WebAssembly/debug/ \
             \
             2>&1

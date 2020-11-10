@@ -35,9 +35,9 @@ namespace OrthancStone
   namespace OpenGL
   {
     OpenGLProgram::OpenGLProgram(OpenGL::IOpenGLContext& context) :
-      context_(context)
+      context_(context),
+      program_(glCreateProgram())
     {
-      program_ = glCreateProgram();
       ORTHANC_OPENGL_CHECK("glCreateProgram");
 
       if (program_ == 0)

@@ -826,7 +826,7 @@ public:
 
 
 
-class FrameGeometry
+class FrameExtent
 {
 private:
   bool                              isValid_;
@@ -837,14 +837,14 @@ private:
   OrthancStone::Extent2D            extent_;
 
 public:
-  explicit FrameGeometry() :
+  explicit FrameExtent() :
     isValid_(false),
     pixelSpacingX_(1),
     pixelSpacingY_(1)
   {
   }
     
-  explicit FrameGeometry(const Orthanc::DicomMap& tags) :
+  explicit FrameExtent(const Orthanc::DicomMap& tags) :
     isValid_(false),
     coordinates_(tags)
   {
@@ -929,7 +929,7 @@ public:
                  double& y1,
                  double& x2,
                  double& y2,
-                 const FrameGeometry& other) const
+                 const FrameExtent& other) const
   {
     if (this == &other)
     {
@@ -1312,7 +1312,7 @@ private:
   bool                                         flipY_;
   bool                                         fitNextContent_;
   bool                                         isCtrlDown_;
-  FrameGeometry                                currentFrameGeometry_;
+  FrameExtent                                  currentFrameExtent_;
   std::list<PrefetchItem>                      prefetchQueue_;
 
 
@@ -1414,7 +1414,7 @@ private:
         quality = DisplayedFrameQuality_High;
       }
 
-      currentFrameGeometry_ = FrameGeometry(frames_->GetFrameTags(index));
+      currentFrameExtent_ = FrameExtent(frames_->GetFrameTags(index));
 
       {
         // Prepare prefetching
@@ -1439,7 +1439,7 @@ private:
     }
     else
     {
-      currentFrameGeometry_ = FrameGeometry();
+      currentFrameExtent_ = FrameExtent();
     }
   }
   
@@ -1529,11 +1529,11 @@ private:
 
       if (annotations_)
       {
-        const FrameGeometry& geometry = GetCurrentFrameGeometry();
+        const FrameExtent& extent = GetCurrentFrameExtent();
         
         std::set<size_t> a;
         annotations_->LookupSopInstanceUid(a, sopInstanceUid);
-        if (geometry.IsValid() &&
+        if (extent.IsValid() &&
             !a.empty())
         {
           annotationsLayer.reset(new OrthancStone::MacroSceneLayer);
@@ -1545,7 +1545,7 @@ private:
           for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
           {
             const OrthancStone::OsiriX::Annotation& annotation = annotations_->GetAnnotation(*it);
-            annotationsLayer->AddLayer(factory.Create(annotation, geometry.GetCoordinates()));
+            annotationsLayer->AddLayer(factory.Create(annotation, extent.GetCoordinates()));
           }
         }
       }
@@ -1847,7 +1847,7 @@ public:
     ResetDefaultWindowing();
     ClearViewport();
     prefetchQueue_.clear();
-    currentFrameGeometry_ = FrameGeometry();
+    currentFrameExtent_ = FrameExtent();
 
     if (observer_.get() != NULL)
     {
@@ -1927,24 +1927,24 @@ public:
     }
   }
 
-  const FrameGeometry& GetCurrentFrameGeometry() const
+  const FrameExtent& GetCurrentFrameExtent() const
   {
-    return currentFrameGeometry_;
+    return currentFrameExtent_;
   }
 
-  void UpdateReferenceLines(const std::list<const FrameGeometry*>& planes)
+  void UpdateReferenceLines(const std::list<const FrameExtent*>& planes)
   {
     std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
     
-    if (GetCurrentFrameGeometry().IsValid())
+    if (GetCurrentFrameExtent().IsValid())
     {
-      for (std::list<const FrameGeometry*>::const_iterator
+      for (std::list<const FrameExtent*>::const_iterator
              it = planes.begin(); it != planes.end(); ++it)
       {
         assert(*it != NULL);
         
         double x1, y1, x2, y2;
-        if (GetCurrentFrameGeometry().Intersect(x1, y1, x2, y2, **it))
+        if (GetCurrentFrameExtent().Intersect(x1, y1, x2, y2, **it))
         {
           OrthancStone::PolylineSceneLayer::Chain chain;
           chain.push_back(OrthancStone::ScenePoint2D(x1, y1));
@@ -2157,12 +2157,12 @@ static void UpdateReferenceLines()
 {
   if (showReferenceLines_)
   {
-    std::list<const FrameGeometry*> planes;
+    std::list<const FrameExtent*> planes;
     
     for (Viewports::const_iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
     {
       assert(it->second != NULL);
-      planes.push_back(&it->second->GetCurrentFrameGeometry());
+      planes.push_back(&it->second->GetCurrentFrameExtent());
     }
 
     for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)

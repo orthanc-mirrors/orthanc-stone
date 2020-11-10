@@ -36,7 +36,9 @@
 
 namespace OrthancStone
 {
-  void DicomInstanceParameters::Data::ExtractFrameOffsets(const Orthanc::DicomMap& dicom)
+  static void ExtractFrameOffsets(Vector& target,
+                                  const Orthanc::DicomMap& dicom,
+                                  unsigned int numberOfFrames)
   {
     // http://dicom.nema.org/medical/Dicom/2016a/output/chtml/part03/sect_C.8.8.3.2.html
 
@@ -50,18 +52,18 @@ namespace OrthancStone
       if (increment != "3004,000C")
       {
         LOG(WARNING) << "Bad value for the FrameIncrementPointer tags in a multiframe image";
-        frameOffsets_.resize(0);
+        target.resize(0);
         return;
       }
     }
 
-    if (!LinearAlgebra::ParseVector(frameOffsets_, dicom, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR) ||
-        frameOffsets_.size() != numberOfFrames_)
+    if (!LinearAlgebra::ParseVector(target, dicom, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR) ||
+        target.size() != numberOfFrames)
     {
       LOG(INFO) << "The frame offset information is missing in a multiframe image";
 
       // DO NOT use ".clear()" here, as the "Vector" class doesn't behave like std::vector!
-      frameOffsets_.resize(0);
+      target.resize(0);
     }
   }
 
@@ -123,7 +125,7 @@ namespace OrthancStone
     }
 
     // Must be AFTER setting "numberOfFrames_"
-    ExtractFrameOffsets(dicom);
+    ExtractFrameOffsets(frameOffsets_, dicom, numberOfFrames_);
 
     if (sopClassUid_ == SopClassUid_RTDose)
     {
@@ -227,37 +229,37 @@ namespace OrthancStone
   }
 
 
-  CoordinateSystem3D  DicomInstanceParameters::Data::GetFrameGeometry(unsigned int frame) const
+  CoordinateSystem3D  DicomInstanceParameters::GetFrameGeometry(unsigned int frame) const
   {
-    if (frame >= numberOfFrames_)
+    if (frame >= data_.numberOfFrames_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-    else if (frameOffsets_.empty())
+    else if (data_.frameOffsets_.empty())
     {
-      return geometry_;
+      return data_.geometry_;
     }
     else
     {
-      assert(frameOffsets_.size() == numberOfFrames_);
+      assert(data_.frameOffsets_.size() == data_.numberOfFrames_);
 
       return CoordinateSystem3D(
-        geometry_.GetOrigin() + frameOffsets_[frame] * geometry_.GetNormal(),
-        geometry_.GetAxisX(),
-        geometry_.GetAxisY());
+        data_.geometry_.GetOrigin() + data_.frameOffsets_[frame] * data_.geometry_.GetNormal(),
+        data_.geometry_.GetAxisX(),
+        data_.geometry_.GetAxisY());
     }
   }
 
 
-  bool DicomInstanceParameters::Data::IsPlaneWithinSlice(unsigned int frame,
-                                                         const CoordinateSystem3D& plane) const
+  bool DicomInstanceParameters::IsPlaneWithinSlice(unsigned int frame,
+                                                   const CoordinateSystem3D& plane) const
   {
-    if (frame >= numberOfFrames_)
+    if (frame >= data_.numberOfFrames_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    CoordinateSystem3D tmp = geometry_;
+    CoordinateSystem3D tmp = data_.geometry_;
 
     if (frame != 0)
     {
@@ -267,24 +269,24 @@ namespace OrthancStone
     double distance;
 
     return (CoordinateSystem3D::ComputeDistance(distance, tmp, plane) &&
-            distance <= sliceThickness_ / 2.0);
+            distance <= data_.sliceThickness_ / 2.0);
   }
 
-  void DicomInstanceParameters::Data::ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
-                                                                 bool useDouble) const
+  void DicomInstanceParameters::ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
+                                                           bool useDouble) const
   {
     if (image.GetFormat() != Orthanc::PixelFormat_Float32)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
     }
 
-    double factor = doseGridScaling_;
+    double factor = data_.doseGridScaling_;
     double offset = 0.0;
 
-    if (hasRescale_)
+    if (data_.hasRescale_)
     {
-      factor *= rescaleSlope_;
-      offset = rescaleIntercept_;
+      factor *= data_.rescaleSlope_;
+      offset = data_.rescaleIntercept_;
     }
 
     if (!LinearAlgebra::IsNear(factor, 1) ||
@@ -384,8 +386,8 @@ namespace OrthancStone
 
                                                    
     // Correct rescale slope/intercept if need be
-    //data_.ApplyRescaleAndDoseScaling(*converted, (pixelData.GetFormat() == Orthanc::PixelFormat_Grayscale32));
-    data_.ApplyRescaleAndDoseScaling(*converted, false);
+    //ApplyRescaleAndDoseScaling(*converted, (pixelData.GetFormat() == Orthanc::PixelFormat_Grayscale32));
+    ApplyRescaleAndDoseScaling(*converted, false);
 
     return converted.release();
   }
@@ -494,39 +496,41 @@ namespace OrthancStone
   }
 
 
-  double DicomInstanceParameters::Data::ApplyRescale(double value) const
+  double DicomInstanceParameters::ApplyRescale(double value) const
   {
-    double factor = doseGridScaling_;
+    double factor = data_.doseGridScaling_;
     double offset = 0.0;
 
-    if (hasRescale_)
+    if (data_.hasRescale_)
     {
-      factor *= rescaleSlope_;
-      offset = rescaleIntercept_;
+      factor *= data_.rescaleSlope_;
+      offset = data_.rescaleIntercept_;
     }
 
     return (value * factor + offset);
   }
 
 
-  bool DicomInstanceParameters::Data::ComputeRegularSpacing(double& spacing) const
+  bool DicomInstanceParameters::ComputeRegularSpacing(double& spacing) const
   {
-    if (frameOffsets_.size() == 0)  // Not a RT-DOSE
+    if (data_.frameOffsets_.size() == 0)  // Not a RT-DOSE
     {
       return false;
     }
-    else if (frameOffsets_.size() == 1)
+    else if (data_.frameOffsets_.size() == 1)
     {
       spacing = 1;   // Edge case: RT-DOSE with one single frame
       return true;
     }
     else
     {
-      spacing = std::abs(frameOffsets_[1] - frameOffsets_[0]);
+      assert(data_.frameOffsets_.size() == GetNumberOfFrames());
+      
+      spacing = std::abs(data_.frameOffsets_[1] - data_.frameOffsets_[0]);
 
-      for (size_t i = 1; i + 1 < frameOffsets_.size(); i++)
+      for (size_t i = 1; i + 1 < data_.frameOffsets_.size(); i++)
       {
-        double s = frameOffsets_[i + 1] - frameOffsets_[i];
+        double s = data_.frameOffsets_[i + 1] - data_.frameOffsets_[i];
         if (!LinearAlgebra::IsNear(spacing, s, 0.001))
         {
           return false;

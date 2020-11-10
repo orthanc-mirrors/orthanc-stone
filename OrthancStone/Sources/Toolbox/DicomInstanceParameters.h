@@ -37,7 +37,7 @@ namespace OrthancStone
     // This class supersedes the deprecated "DicomFrameConverter"
 
   private:
-    struct Data   // Struct to ease the copy constructor
+    struct Data   // Plain old struct to ease the copy constructor
     {
       std::string                       orthancInstanceId_;
       std::string                       studyInstanceUid_;
@@ -66,26 +66,14 @@ namespace OrthancStone
       std::string                       doseUnits_;
       double                            doseGridScaling_;
 
-      void ExtractFrameOffsets(const Orthanc::DicomMap& dicom);
-
       explicit Data(const Orthanc::DicomMap& dicom);
-
-      CoordinateSystem3D  GetFrameGeometry(unsigned int frame) const;
-
-      bool IsPlaneWithinSlice(unsigned int frame,
-                              const CoordinateSystem3D& plane) const;
-      
-      void ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
-                                      bool useDouble) const;
-
-      double ApplyRescale(double value) const;
-
-      bool ComputeRegularSpacing(double& target) const;
     };
 
     
     Data  data_;
 
+    void ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
+                                    bool useDouble) const;
 
   public:
     explicit DicomInstanceParameters(const DicomInstanceParameters& other) :
@@ -173,16 +161,10 @@ namespace OrthancStone
       return data_.geometry_;
     }
 
-    CoordinateSystem3D  GetFrameGeometry(unsigned int frame) const
-    {
-      return data_.GetFrameGeometry(frame);
-    }
+    CoordinateSystem3D GetFrameGeometry(unsigned int frame) const;
 
     bool IsPlaneWithinSlice(unsigned int frame,
-                            const CoordinateSystem3D& plane) const
-    {
-      return data_.IsPlaneWithinSlice(frame, plane);
-    }
+                            const CoordinateSystem3D& plane) const;
 
     bool IsColor() const
     {
@@ -240,15 +222,9 @@ namespace OrthancStone
       return data_.doseGridScaling_;
     }
 
-    double ApplyRescale(double value) const
-    {
-      return data_.ApplyRescale(value);
-    }
+    double ApplyRescale(double value) const;
 
     // Required for RT-DOSE
-    bool ComputeRegularSpacing(double& target) const
-    {
-      return data_.ComputeRegularSpacing(target);
-    }
+    bool ComputeRegularSpacing(double& target) const;
   };
 }

@@ -43,21 +43,24 @@ namespace OrthancStone
       std::string                       studyInstanceUid_;
       std::string                       seriesInstanceUid_;
       std::string                       sopInstanceUid_;
-      Orthanc::DicomImageInformation    imageInformation_;
+      Orthanc::DicomImageInformation    imageInformation_;  // TODO REMOVE
       SopClassUid                       sopClassUid_;
+      unsigned int                      numberOfFrames_;
+      unsigned int                      width_;
+      unsigned int                      height_;
       double                            sliceThickness_;
       double                            pixelSpacingX_;
       double                            pixelSpacingY_;
       CoordinateSystem3D                geometry_;
       Vector                            frameOffsets_;
-      bool                              isColor_;
+      bool                              isColor_;   // TODO REMOVE
       bool                              hasRescale_;
       double                            rescaleIntercept_;
       double                            rescaleSlope_;
       bool                              hasDefaultWindowing_;
       float                             defaultWindowingCenter_;
       float                             defaultWindowingWidth_;
-      Orthanc::PixelFormat              expectedPixelFormat_;
+      Orthanc::PixelFormat              expectedPixelFormat_;  // TODO REMOVE
       bool                              hasIndexInSeries_;
       unsigned int                      indexInSeries_;
       std::string                       doseUnits_;
@@ -133,6 +136,21 @@ namespace OrthancStone
     SopClassUid GetSopClassUid() const
     {
       return data_.sopClassUid_;
+    }
+
+    unsigned int GetNumberOfFrames() const
+    {
+      return data_.numberOfFrames_;
+    }
+
+    unsigned int GetWidth() const
+    {
+      return data_.width_;
+    }
+
+    unsigned int GetHeight() const
+    {
+      return data_.height_;
     }
 
     double GetSliceThickness() const

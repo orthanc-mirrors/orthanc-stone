@@ -45,18 +45,23 @@ namespace OrthancStone
     if (dicom.LookupStringValue(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
     {
       Orthanc::Toolbox::ToUpperCase(increment);
-      if (increment != "3004,000C")  // This is the "Grid Frame Offset Vector" tag (DICOM_TAG_GRID_FRAME_OFFSET_VECTOR)
+
+      // This is the "Grid Frame Offset Vector" tag (DICOM_TAG_GRID_FRAME_OFFSET_VECTOR)
+      if (increment != "3004,000C")
       {
         LOG(WARNING) << "Bad value for the FrameIncrementPointer tags in a multiframe image";
+        frameOffsets_.resize(0);
         return;
       }
     }
 
     if (!LinearAlgebra::ParseVector(frameOffsets_, dicom, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR) ||
-        frameOffsets_.size() != imageInformation_.GetNumberOfFrames())
+        frameOffsets_.size() != numberOfFrames_)
     {
       LOG(INFO) << "The frame offset information is missing in a multiframe image";
-      frameOffsets_.clear();
+
+      // DO NOT use ".clear()" here, as the "Vector" class doesn't behave like std::vector!
+      frameOffsets_.resize(0);
     }
   }
 
@@ -64,11 +69,6 @@ namespace OrthancStone
   DicomInstanceParameters::Data::Data(const Orthanc::DicomMap& dicom) :
     imageInformation_(dicom)
   {
-    if (imageInformation_.GetNumberOfFrames() == 0)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-    }
-
     if (!dicom.LookupStringValue(studyInstanceUid_, Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, false) ||
         !dicom.LookupStringValue(seriesInstanceUid_, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false) ||
         !dicom.LookupStringValue(sopInstanceUid_, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
@@ -77,14 +77,36 @@ namespace OrthancStone
     }
         
     std::string s;
-    if (!dicom.LookupStringValue(s, Orthanc::DICOM_TAG_SOP_CLASS_UID, false))
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-    }
-    else
+    if (dicom.LookupStringValue(s, Orthanc::DICOM_TAG_SOP_CLASS_UID, false))
     {
       sopClassUid_ = StringToSopClassUid(s);
     }
+    else
+    {
+      sopClassUid_ = SopClassUid_Other;
+    }
+
+    uint32_t n;
+    if (dicom.ParseUnsignedInteger32(n, Orthanc::DICOM_TAG_NUMBER_OF_FRAMES))
+    {
+      numberOfFrames_ = n;
+    }
+    else
+    {
+      numberOfFrames_ = 1;
+    }
+
+    if (!dicom.HasTag(Orthanc::DICOM_TAG_COLUMNS) ||
+        !dicom.GetValue(Orthanc::DICOM_TAG_COLUMNS).ParseFirstUnsignedInteger(width_))
+    {
+      width_ = 0;
+    }    
+
+    if (!dicom.HasTag(Orthanc::DICOM_TAG_ROWS) ||
+        !dicom.GetValue(Orthanc::DICOM_TAG_ROWS).ParseFirstUnsignedInteger(height_))
+    {
+      height_ = 0;
+     }
 
     if (!dicom.ParseDouble(sliceThickness_, Orthanc::DICOM_TAG_SLICE_THICKNESS))
     {
@@ -100,6 +122,7 @@ namespace OrthancStone
       geometry_ = CoordinateSystem3D(position, orientation);
     }
 
+    // Must be AFTER setting "numberOfFrames_"
     ExtractFrameOffsets(dicom);
 
     if (sopClassUid_ == SopClassUid_RTDose)
@@ -206,11 +229,7 @@ namespace OrthancStone
 
   CoordinateSystem3D  DicomInstanceParameters::Data::GetFrameGeometry(unsigned int frame) const
   {
-    if (frame == 0)
-    {
-      return geometry_;
-    }
-    else if (frame >= imageInformation_.GetNumberOfFrames())
+    if (frame >= numberOfFrames_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
@@ -220,7 +239,7 @@ namespace OrthancStone
     }
     else
     {
-      assert(frameOffsets_.size() == imageInformation_.GetNumberOfFrames());
+      assert(frameOffsets_.size() == numberOfFrames_);
 
       return CoordinateSystem3D(
         geometry_.GetOrigin() + frameOffsets_[frame] * geometry_.GetNormal(),
@@ -233,7 +252,7 @@ namespace OrthancStone
   bool DicomInstanceParameters::Data::IsPlaneWithinSlice(unsigned int frame,
                                                          const CoordinateSystem3D& plane) const
   {
-    if (frame >= imageInformation_.GetNumberOfFrames())
+    if (frame >= numberOfFrames_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }

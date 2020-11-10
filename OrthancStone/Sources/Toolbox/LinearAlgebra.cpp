@@ -107,7 +107,8 @@ namespace OrthancStone
         }
         catch (std::exception&)
         {
-          target.clear();
+          // DO NOT use ".clear()" here, as the "Vector" class doesn't behave like std::vector!
+          target.resize(0);
           return false;
         }
 
@@ -147,7 +148,8 @@ namespace OrthancStone
         }
         catch (boost::bad_lexical_cast&)
         {
-          target.clear();
+          // DO NOT use ".clear()" here, as the "Vector" class doesn't behave like std::vector!
+          target.resize(0);
           return false;
         }
 #endif

@@ -30,6 +30,14 @@ namespace OrthancStone
 {
   class SortedFrames : public boost::noncopyable
   {
+#if defined(FRIEND_TEST)
+    // We're compiling the unit tests
+    FRIEND_TEST(SortedFrames, Basic);
+    FRIEND_TEST(SortedFrames, SortSopInstanceUid);
+    FRIEND_TEST(SortedFrames, SortInstanceNumber);
+    FRIEND_TEST(SortedFrames, SortInstanceNumberAndImageIndex);
+#endif
+    
   private:
     struct Frame
     {
@@ -67,6 +75,11 @@ namespace OrthancStone
     bool                                   sorted_;
     InstancesIndex                         instancesIndex_;
     FramesIndex                            framesIndex_;
+
+    const DicomInstanceParameters& GetInstance(size_t instanceIndex) const;
+
+    bool LookupSopInstanceUid(size_t& instanceIndex,
+                              const std::string& sopInstanceUid) const;
 
     const Frame& GetFrame(size_t frameIndex) const;
 
@@ -109,12 +122,6 @@ namespace OrthancStone
     {
       return instances_.size();
     }
-
-    // TODO - REMOVE THIS DANGEROUS FUNCTION (might be taken for GetInstanceOfFrame())
-    const DicomInstanceParameters& GetInstance(size_t instanceIndex) const;
-
-    bool LookupSopInstanceUid(size_t& instanceIndex,
-                              const std::string& sopInstanceUid) const;
 
     bool IsSorted() const
     {

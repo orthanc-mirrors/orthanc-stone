@@ -19,6 +19,7 @@
  **/
 
 
+// Make sure to define FRIEND_TEST before including "SortedFrames.h"
 #include <gtest/gtest.h>
 
 #include "../OrthancStone/Sources/Toolbox/SortedFrames.h"
@@ -26,222 +27,226 @@
 #include <OrthancException.h>
 
 
-TEST(SortedFrames, Basic)
+// Namespace is necessary for FRIEND_TEST() to work in "SortedFrames.h"
+namespace OrthancStone
 {
-  OrthancStone::SortedFrames f;
-  ASSERT_TRUE(f.GetStudyInstanceUid().empty());
-  ASSERT_TRUE(f.GetSeriesInstanceUid().empty());
-  ASSERT_EQ(0u, f.GetInstancesCount());
-  ASSERT_THROW(f.GetInstance(0).GetTags(), Orthanc::OrthancException);
-  ASSERT_THROW(f.GetInstance(0).GetSopInstanceUid(), Orthanc::OrthancException);
-  ASSERT_TRUE(f.IsSorted());
-  ASSERT_EQ(0u, f.GetFramesCount());
-  ASSERT_THROW(f.GetInstanceOfFrame(0).GetTags(), Orthanc::OrthancException);
-  ASSERT_THROW(f.GetInstanceOfFrame(0).GetSopInstanceUid(), Orthanc::OrthancException);
-  ASSERT_THROW(f.GetInstanceOfFrame(0).GetNumberOfFrames(), Orthanc::OrthancException);
-  ASSERT_THROW(f.GetFrameNumberInInstance(0), Orthanc::OrthancException);
+  TEST(SortedFrames, Basic)
+  {
+    SortedFrames f;
+    ASSERT_TRUE(f.GetStudyInstanceUid().empty());
+    ASSERT_TRUE(f.GetSeriesInstanceUid().empty());
+    ASSERT_EQ(0u, f.GetInstancesCount());
+    ASSERT_THROW(f.GetInstance(0).GetTags(), Orthanc::OrthancException);
+    ASSERT_THROW(f.GetInstance(0).GetSopInstanceUid(), Orthanc::OrthancException);
+    ASSERT_TRUE(f.IsSorted());
+    ASSERT_EQ(0u, f.GetFramesCount());
+    ASSERT_THROW(f.GetInstanceOfFrame(0).GetTags(), Orthanc::OrthancException);
+    ASSERT_THROW(f.GetInstanceOfFrame(0).GetSopInstanceUid(), Orthanc::OrthancException);
+    ASSERT_THROW(f.GetInstanceOfFrame(0).GetNumberOfFrames(), Orthanc::OrthancException);
+    ASSERT_THROW(f.GetFrameNumberInInstance(0), Orthanc::OrthancException);
 
-  Orthanc::DicomMap tags;
-  ASSERT_THROW(f.AddInstance(tags), Orthanc::OrthancException);
-  tags.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, "study", false);
-  ASSERT_THROW(f.AddInstance(tags), Orthanc::OrthancException);
-  tags.SetValue(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, "series", false);
-  ASSERT_THROW(f.AddInstance(tags), Orthanc::OrthancException);
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop", false);
-  f.AddInstance(tags);
+    Orthanc::DicomMap tags;
+    ASSERT_THROW(f.AddInstance(tags), Orthanc::OrthancException);
+    tags.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, "study", false);
+    ASSERT_THROW(f.AddInstance(tags), Orthanc::OrthancException);
+    tags.SetValue(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, "series", false);
+    ASSERT_THROW(f.AddInstance(tags), Orthanc::OrthancException);
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop", false);
+    f.AddInstance(tags);
 
-  ASSERT_EQ("study", f.GetStudyInstanceUid());
-  ASSERT_EQ("series", f.GetSeriesInstanceUid());
-  ASSERT_EQ(1u, f.GetInstancesCount());
-  std::string s;
-  ASSERT_TRUE(f.GetInstance(0).GetTags().LookupStringValue(s, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false));
-  ASSERT_EQ("sop", s);
-  ASSERT_EQ("sop", f.GetInstance(0).GetSopInstanceUid());
-  ASSERT_FALSE(f.IsSorted());
-  ASSERT_THROW(f.GetFramesCount(), Orthanc::OrthancException);
-  ASSERT_THROW(f.GetInstanceOfFrame(0).GetTags(), Orthanc::OrthancException);
-  ASSERT_THROW(f.GetInstanceOfFrame(0).GetSopInstanceUid(), Orthanc::OrthancException);
-  ASSERT_THROW(f.GetInstanceOfFrame(0).GetNumberOfFrames(), Orthanc::OrthancException);
-  ASSERT_THROW(f.GetFrameNumberInInstance(0), Orthanc::OrthancException);
+    ASSERT_EQ("study", f.GetStudyInstanceUid());
+    ASSERT_EQ("series", f.GetSeriesInstanceUid());
+    ASSERT_EQ(1u, f.GetInstancesCount());
+    std::string s;
+    ASSERT_TRUE(f.GetInstance(0).GetTags().LookupStringValue(s, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false));
+    ASSERT_EQ("sop", s);
+    ASSERT_EQ("sop", f.GetInstance(0).GetSopInstanceUid());
+    ASSERT_FALSE(f.IsSorted());
+    ASSERT_THROW(f.GetFramesCount(), Orthanc::OrthancException);
+    ASSERT_THROW(f.GetInstanceOfFrame(0).GetTags(), Orthanc::OrthancException);
+    ASSERT_THROW(f.GetInstanceOfFrame(0).GetSopInstanceUid(), Orthanc::OrthancException);
+    ASSERT_THROW(f.GetInstanceOfFrame(0).GetNumberOfFrames(), Orthanc::OrthancException);
+    ASSERT_THROW(f.GetFrameNumberInInstance(0), Orthanc::OrthancException);
 
-  f.Sort();
-  ASSERT_TRUE(f.IsSorted());
-  ASSERT_EQ(1u, f.GetFramesCount());
-  ASSERT_TRUE(f.GetInstanceOfFrame(0).GetTags().LookupStringValue(s, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false));
-  ASSERT_EQ("sop", s);
-  ASSERT_EQ("sop", f.GetInstanceOfFrame(0).GetSopInstanceUid());
-  ASSERT_EQ(1u, f.GetInstanceOfFrame(0).GetNumberOfFrames());
-  ASSERT_EQ(0u, f.GetFrameNumberInInstance(0));
-  ASSERT_THROW(f.GetInstanceOfFrame(1).GetTags(), Orthanc::OrthancException);
-}
+    f.Sort();
+    ASSERT_TRUE(f.IsSorted());
+    ASSERT_EQ(1u, f.GetFramesCount());
+    ASSERT_TRUE(f.GetInstanceOfFrame(0).GetTags().LookupStringValue(s, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false));
+    ASSERT_EQ("sop", s);
+    ASSERT_EQ("sop", f.GetInstanceOfFrame(0).GetSopInstanceUid());
+    ASSERT_EQ(1u, f.GetInstanceOfFrame(0).GetNumberOfFrames());
+    ASSERT_EQ(0u, f.GetFrameNumberInInstance(0));
+    ASSERT_THROW(f.GetInstanceOfFrame(1).GetTags(), Orthanc::OrthancException);
+  }
 
 
-TEST(SortedFrames, SortSopInstanceUid)
-{
-  Orthanc::DicomMap tags;
-  tags.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, "study", false);
-  tags.SetValue(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, "series", false);
+  TEST(SortedFrames, SortSopInstanceUid)
+  {
+    Orthanc::DicomMap tags;
+    tags.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, "study", false);
+    tags.SetValue(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, "series", false);
     
-  OrthancStone::SortedFrames f;
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop3", false);
-  tags.SetValue(Orthanc::DICOM_TAG_NUMBER_OF_FRAMES, "1", false);
-  f.AddInstance(tags);
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop1", false);
-  tags.SetValue(Orthanc::DICOM_TAG_NUMBER_OF_FRAMES, "3", false);
-  f.AddInstance(tags);
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop2", false);
-  tags.SetValue(Orthanc::DICOM_TAG_NUMBER_OF_FRAMES, "2", false);
-  f.AddInstance(tags);
+    SortedFrames f;
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop3", false);
+    tags.SetValue(Orthanc::DICOM_TAG_NUMBER_OF_FRAMES, "1", false);
+    f.AddInstance(tags);
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop1", false);
+    tags.SetValue(Orthanc::DICOM_TAG_NUMBER_OF_FRAMES, "3", false);
+    f.AddInstance(tags);
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop2", false);
+    tags.SetValue(Orthanc::DICOM_TAG_NUMBER_OF_FRAMES, "2", false);
+    f.AddInstance(tags);
 
-  size_t i;
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop3"));  ASSERT_EQ(0u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop1"));  ASSERT_EQ(1u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2"));  ASSERT_EQ(2u, i);
-  ASSERT_FALSE(f.LookupSopInstanceUid(i, "nope"));
+    size_t i;
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop3"));  ASSERT_EQ(0u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop1"));  ASSERT_EQ(1u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2"));  ASSERT_EQ(2u, i);
+    ASSERT_FALSE(f.LookupSopInstanceUid(i, "nope"));
 
-  ASSERT_THROW(f.LookupFrame(i, "sop3", 0), Orthanc::OrthancException);  // Not sorted yet
+    ASSERT_THROW(f.LookupFrame(i, "sop3", 0), Orthanc::OrthancException);  // Not sorted yet
   
-  f.Sort();
-  ASSERT_EQ(3u, f.GetInstancesCount());
-  ASSERT_EQ("sop3", f.GetInstance(0).GetSopInstanceUid());
-  ASSERT_EQ("sop1", f.GetInstance(1).GetSopInstanceUid());
-  ASSERT_EQ("sop2", f.GetInstance(2).GetSopInstanceUid());
-  ASSERT_EQ(6u, f.GetFramesCount());
-  ASSERT_EQ("sop1", f.GetInstanceOfFrame(0).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(0));
-  ASSERT_EQ("sop1", f.GetInstanceOfFrame(1).GetSopInstanceUid());  ASSERT_EQ(1u, f.GetFrameNumberInInstance(1));
-  ASSERT_EQ("sop1", f.GetInstanceOfFrame(2).GetSopInstanceUid());  ASSERT_EQ(2u, f.GetFrameNumberInInstance(2));
-  ASSERT_EQ("sop2", f.GetInstanceOfFrame(3).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(3));
-  ASSERT_EQ("sop2", f.GetInstanceOfFrame(4).GetSopInstanceUid());  ASSERT_EQ(1u, f.GetFrameNumberInInstance(4));
-  ASSERT_EQ("sop3", f.GetInstanceOfFrame(5).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(5));
+    f.Sort();
+    ASSERT_EQ(3u, f.GetInstancesCount());
+    ASSERT_EQ("sop3", f.GetInstance(0).GetSopInstanceUid());
+    ASSERT_EQ("sop1", f.GetInstance(1).GetSopInstanceUid());
+    ASSERT_EQ("sop2", f.GetInstance(2).GetSopInstanceUid());
+    ASSERT_EQ(6u, f.GetFramesCount());
+    ASSERT_EQ("sop1", f.GetInstanceOfFrame(0).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(0));
+    ASSERT_EQ("sop1", f.GetInstanceOfFrame(1).GetSopInstanceUid());  ASSERT_EQ(1u, f.GetFrameNumberInInstance(1));
+    ASSERT_EQ("sop1", f.GetInstanceOfFrame(2).GetSopInstanceUid());  ASSERT_EQ(2u, f.GetFrameNumberInInstance(2));
+    ASSERT_EQ("sop2", f.GetInstanceOfFrame(3).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(3));
+    ASSERT_EQ("sop2", f.GetInstanceOfFrame(4).GetSopInstanceUid());  ASSERT_EQ(1u, f.GetFrameNumberInInstance(4));
+    ASSERT_EQ("sop3", f.GetInstanceOfFrame(5).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(5));
 
-  // The instances must not have been reordered, only the frames
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop1"));  ASSERT_EQ(1u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2"));  ASSERT_EQ(2u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop3"));  ASSERT_EQ(0u, i);
-  ASSERT_FALSE(f.LookupSopInstanceUid(i, "nope"));
+    // The instances must not have been reordered, only the frames
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop1"));  ASSERT_EQ(1u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2"));  ASSERT_EQ(2u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop3"));  ASSERT_EQ(0u, i);
+    ASSERT_FALSE(f.LookupSopInstanceUid(i, "nope"));
 
-  ASSERT_TRUE(f.LookupFrame(i, "sop1", 0));  ASSERT_EQ(0u, i);
-  ASSERT_TRUE(f.LookupFrame(i, "sop1", 1));  ASSERT_EQ(1u, i);
-  ASSERT_TRUE(f.LookupFrame(i, "sop1", 2));  ASSERT_EQ(2u, i);
-  ASSERT_TRUE(f.LookupFrame(i, "sop2", 0));  ASSERT_EQ(3u, i);
-  ASSERT_TRUE(f.LookupFrame(i, "sop2", 1));  ASSERT_EQ(4u, i);
-  ASSERT_TRUE(f.LookupFrame(i, "sop3", 0));  ASSERT_EQ(5u, i);
+    ASSERT_TRUE(f.LookupFrame(i, "sop1", 0));  ASSERT_EQ(0u, i);
+    ASSERT_TRUE(f.LookupFrame(i, "sop1", 1));  ASSERT_EQ(1u, i);
+    ASSERT_TRUE(f.LookupFrame(i, "sop1", 2));  ASSERT_EQ(2u, i);
+    ASSERT_TRUE(f.LookupFrame(i, "sop2", 0));  ASSERT_EQ(3u, i);
+    ASSERT_TRUE(f.LookupFrame(i, "sop2", 1));  ASSERT_EQ(4u, i);
+    ASSERT_TRUE(f.LookupFrame(i, "sop3", 0));  ASSERT_EQ(5u, i);
 
-  ASSERT_FALSE(f.LookupFrame(i, "nope", 0));
-  ASSERT_FALSE(f.LookupFrame(i, "sop1", 3));
-  ASSERT_FALSE(f.LookupFrame(i, "sop2", 2));
-  ASSERT_FALSE(f.LookupFrame(i, "sop3", 1));
-}
+    ASSERT_FALSE(f.LookupFrame(i, "nope", 0));
+    ASSERT_FALSE(f.LookupFrame(i, "sop1", 3));
+    ASSERT_FALSE(f.LookupFrame(i, "sop2", 2));
+    ASSERT_FALSE(f.LookupFrame(i, "sop3", 1));
+  }
 
 
-TEST(SortedFrames, SortInstanceNumber)
-{
-  Orthanc::DicomMap tags;
-  tags.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, "study", false);
-  tags.SetValue(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, "series", false);
+  TEST(SortedFrames, SortInstanceNumber)
+  {
+    Orthanc::DicomMap tags;
+    tags.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, "study", false);
+    tags.SetValue(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, "series", false);
     
-  OrthancStone::SortedFrames f;
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop1", false);
-  tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "20", false);
-  f.AddInstance(tags);
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop2", false);
-  tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "-20", false);
-  f.AddInstance(tags);
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop2a", false);
-  tags.Remove(Orthanc::DICOM_TAG_INSTANCE_NUMBER);
-  f.AddInstance(tags);
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop4", false);
-  tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "10", false);
-  f.AddInstance(tags);
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop3", false);
-  tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "10", false);
-  f.AddInstance(tags);
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop5", false);
-  tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "10", false);
-  f.AddInstance(tags);
+    SortedFrames f;
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop1", false);
+    tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "20", false);
+    f.AddInstance(tags);
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop2", false);
+    tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "-20", false);
+    f.AddInstance(tags);
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop2a", false);
+    tags.Remove(Orthanc::DICOM_TAG_INSTANCE_NUMBER);
+    f.AddInstance(tags);
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop4", false);
+    tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "10", false);
+    f.AddInstance(tags);
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop3", false);
+    tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "10", false);
+    f.AddInstance(tags);
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop5", false);
+    tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "10", false);
+    f.AddInstance(tags);
     
-  size_t i;
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop1"));  ASSERT_EQ(0u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2"));  ASSERT_EQ(1u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2a")); ASSERT_EQ(2u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop4"));  ASSERT_EQ(3u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop3"));  ASSERT_EQ(4u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop5"));  ASSERT_EQ(5u, i);
-  ASSERT_FALSE(f.LookupSopInstanceUid(i, "nope"));
+    size_t i;
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop1"));  ASSERT_EQ(0u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2"));  ASSERT_EQ(1u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2a")); ASSERT_EQ(2u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop4"));  ASSERT_EQ(3u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop3"));  ASSERT_EQ(4u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop5"));  ASSERT_EQ(5u, i);
+    ASSERT_FALSE(f.LookupSopInstanceUid(i, "nope"));
 
-  ASSERT_THROW(f.LookupFrame(i, "sop1", 0), Orthanc::OrthancException);  // Not sorted yet
+    ASSERT_THROW(f.LookupFrame(i, "sop1", 0), Orthanc::OrthancException);  // Not sorted yet
 
-  f.Sort();
-  ASSERT_EQ(6u, f.GetInstancesCount());
-  ASSERT_EQ("sop1", f.GetInstance(0).GetSopInstanceUid());
-  ASSERT_EQ("sop2", f.GetInstance(1).GetSopInstanceUid());
-  ASSERT_EQ("sop2a", f.GetInstance(2).GetSopInstanceUid());
-  ASSERT_EQ("sop4", f.GetInstance(3).GetSopInstanceUid());
-  ASSERT_EQ("sop3", f.GetInstance(4).GetSopInstanceUid());
-  ASSERT_EQ("sop5", f.GetInstance(5).GetSopInstanceUid());
-  ASSERT_EQ(6u, f.GetFramesCount());
-  ASSERT_EQ("sop2", f.GetInstanceOfFrame(0).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(0));
-  ASSERT_EQ("sop3", f.GetInstanceOfFrame(1).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(1));
-  ASSERT_EQ("sop4", f.GetInstanceOfFrame(2).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(2));
-  ASSERT_EQ("sop5", f.GetInstanceOfFrame(3).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(3));
-  ASSERT_EQ("sop1", f.GetInstanceOfFrame(4).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(4));
-  ASSERT_EQ("sop2a", f.GetInstanceOfFrame(5).GetSopInstanceUid()); ASSERT_EQ(0u, f.GetFrameNumberInInstance(5));
+    f.Sort();
+    ASSERT_EQ(6u, f.GetInstancesCount());
+    ASSERT_EQ("sop1", f.GetInstance(0).GetSopInstanceUid());
+    ASSERT_EQ("sop2", f.GetInstance(1).GetSopInstanceUid());
+    ASSERT_EQ("sop2a", f.GetInstance(2).GetSopInstanceUid());
+    ASSERT_EQ("sop4", f.GetInstance(3).GetSopInstanceUid());
+    ASSERT_EQ("sop3", f.GetInstance(4).GetSopInstanceUid());
+    ASSERT_EQ("sop5", f.GetInstance(5).GetSopInstanceUid());
+    ASSERT_EQ(6u, f.GetFramesCount());
+    ASSERT_EQ("sop2", f.GetInstanceOfFrame(0).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(0));
+    ASSERT_EQ("sop3", f.GetInstanceOfFrame(1).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(1));
+    ASSERT_EQ("sop4", f.GetInstanceOfFrame(2).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(2));
+    ASSERT_EQ("sop5", f.GetInstanceOfFrame(3).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(3));
+    ASSERT_EQ("sop1", f.GetInstanceOfFrame(4).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(4));
+    ASSERT_EQ("sop2a", f.GetInstanceOfFrame(5).GetSopInstanceUid()); ASSERT_EQ(0u, f.GetFrameNumberInInstance(5));
 
-  // The instances must not have been reordered, only the frames
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop1"));  ASSERT_EQ(0u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2"));  ASSERT_EQ(1u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2a")); ASSERT_EQ(2u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop4"));  ASSERT_EQ(3u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop3"));  ASSERT_EQ(4u, i);
-  ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop5"));  ASSERT_EQ(5u, i);
-  ASSERT_FALSE(f.LookupSopInstanceUid(i, "nope"));
+    // The instances must not have been reordered, only the frames
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop1"));  ASSERT_EQ(0u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2"));  ASSERT_EQ(1u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop2a")); ASSERT_EQ(2u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop4"));  ASSERT_EQ(3u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop3"));  ASSERT_EQ(4u, i);
+    ASSERT_TRUE(f.LookupSopInstanceUid(i, "sop5"));  ASSERT_EQ(5u, i);
+    ASSERT_FALSE(f.LookupSopInstanceUid(i, "nope"));
 
-  ASSERT_TRUE(f.LookupFrame(i, "sop2", 0));  ASSERT_EQ(0u, i);
-  ASSERT_TRUE(f.LookupFrame(i, "sop3", 0));  ASSERT_EQ(1u, i);
-  ASSERT_TRUE(f.LookupFrame(i, "sop4", 0));  ASSERT_EQ(2u, i);
-  ASSERT_TRUE(f.LookupFrame(i, "sop5", 0));  ASSERT_EQ(3u, i);
-  ASSERT_TRUE(f.LookupFrame(i, "sop1", 0));  ASSERT_EQ(4u, i);
-  ASSERT_TRUE(f.LookupFrame(i, "sop2a", 0)); ASSERT_EQ(5u, i);
+    ASSERT_TRUE(f.LookupFrame(i, "sop2", 0));  ASSERT_EQ(0u, i);
+    ASSERT_TRUE(f.LookupFrame(i, "sop3", 0));  ASSERT_EQ(1u, i);
+    ASSERT_TRUE(f.LookupFrame(i, "sop4", 0));  ASSERT_EQ(2u, i);
+    ASSERT_TRUE(f.LookupFrame(i, "sop5", 0));  ASSERT_EQ(3u, i);
+    ASSERT_TRUE(f.LookupFrame(i, "sop1", 0));  ASSERT_EQ(4u, i);
+    ASSERT_TRUE(f.LookupFrame(i, "sop2a", 0)); ASSERT_EQ(5u, i);
 
-  ASSERT_FALSE(f.LookupFrame(i, "nope", 0));
-  ASSERT_FALSE(f.LookupFrame(i, "sop1", 1));
-}
+    ASSERT_FALSE(f.LookupFrame(i, "nope", 0));
+    ASSERT_FALSE(f.LookupFrame(i, "sop1", 1));
+  }
 
 
-TEST(SortedFrames, SortInstanceNumberAndImageIndex)
-{
-  Orthanc::DicomMap tags;
-  tags.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, "study", false);
-  tags.SetValue(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, "series", false);
+  TEST(SortedFrames, SortInstanceNumberAndImageIndex)
+  {
+    Orthanc::DicomMap tags;
+    tags.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, "study", false);
+    tags.SetValue(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, "series", false);
     
-  OrthancStone::SortedFrames f;
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop1", false);
-  tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "20", false);
-  f.AddInstance(tags);
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop2", false);
-  tags.Remove(Orthanc::DICOM_TAG_INSTANCE_NUMBER);
-  tags.SetValue(Orthanc::DICOM_TAG_IMAGE_INDEX, "20", false);
-  f.AddInstance(tags);
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop3", false);
-  tags.SetValue(Orthanc::DICOM_TAG_IMAGE_INDEX, "30", false);
-  f.AddInstance(tags);
-  tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop4", false);
-  tags.Remove(Orthanc::DICOM_TAG_IMAGE_INDEX);
-  tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "30", false);
-  f.AddInstance(tags);
+    SortedFrames f;
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop1", false);
+    tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "20", false);
+    f.AddInstance(tags);
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop2", false);
+    tags.Remove(Orthanc::DICOM_TAG_INSTANCE_NUMBER);
+    tags.SetValue(Orthanc::DICOM_TAG_IMAGE_INDEX, "20", false);
+    f.AddInstance(tags);
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop3", false);
+    tags.SetValue(Orthanc::DICOM_TAG_IMAGE_INDEX, "30", false);
+    f.AddInstance(tags);
+    tags.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop4", false);
+    tags.Remove(Orthanc::DICOM_TAG_IMAGE_INDEX);
+    tags.SetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER, "30", false);
+    f.AddInstance(tags);
 
-  f.Sort();
-  ASSERT_EQ(4u, f.GetInstancesCount());
-  ASSERT_EQ("sop1", f.GetInstance(0).GetSopInstanceUid());
-  ASSERT_EQ("sop2", f.GetInstance(1).GetSopInstanceUid());
-  ASSERT_EQ("sop3", f.GetInstance(2).GetSopInstanceUid());
-  ASSERT_EQ("sop4", f.GetInstance(3).GetSopInstanceUid());
-  ASSERT_EQ(4u, f.GetFramesCount());
-  // First instance number, then image index
-  ASSERT_EQ("sop1", f.GetInstanceOfFrame(0).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(0));
-  ASSERT_EQ("sop4", f.GetInstanceOfFrame(1).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(1));
-  ASSERT_EQ("sop2", f.GetInstanceOfFrame(2).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(2));
-  ASSERT_EQ("sop3", f.GetInstanceOfFrame(3).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(3));
+    f.Sort();
+    ASSERT_EQ(4u, f.GetInstancesCount());
+    ASSERT_EQ("sop1", f.GetInstance(0).GetSopInstanceUid());
+    ASSERT_EQ("sop2", f.GetInstance(1).GetSopInstanceUid());
+    ASSERT_EQ("sop3", f.GetInstance(2).GetSopInstanceUid());
+    ASSERT_EQ("sop4", f.GetInstance(3).GetSopInstanceUid());
+    ASSERT_EQ(4u, f.GetFramesCount());
+    // First instance number, then image index
+    ASSERT_EQ("sop1", f.GetInstanceOfFrame(0).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(0));
+    ASSERT_EQ("sop4", f.GetInstanceOfFrame(1).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(1));
+    ASSERT_EQ("sop2", f.GetInstanceOfFrame(2).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(2));
+    ASSERT_EQ("sop3", f.GetInstanceOfFrame(3).GetSopInstanceUid());  ASSERT_EQ(0u, f.GetFrameNumberInInstance(3));
+  }
 }
 
 

@@ -8,7 +8,7 @@
  * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
@@ -38,7 +38,7 @@
 /**
  * The definition of ORTHANC_PLUGINS_VERSION_IS_ABOVE below is for
  * backward compatibility with Orthanc SDK <= 1.3.0.
- *
+ * 
  *   $ hg diff -r Orthanc-1.3.0:Orthanc-1.3.1 ../../../Plugins/Include/orthanc/OrthancCPlugin.h
  *
  **/
@@ -779,7 +779,7 @@ namespace OrthancPlugins
     void UpdateProgress(float progress);
     
   public:
-    OrthancJob(const std::string& jobType);
+    explicit OrthancJob(const std::string& jobType);
     
     virtual ~OrthancJob()
     {

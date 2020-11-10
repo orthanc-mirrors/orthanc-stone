@@ -5,7 +5,7 @@
  * can be loaded into Orthanc to extend its functionality. Each
  * Orthanc plugin must expose 4 public functions with the following
  * signatures:
- *
+ * 
  * -# <tt>int32_t OrthancPluginInitialize(const OrthancPluginContext* context)</tt>:
  *    This function is invoked by Orthanc when it loads the plugin on startup.
  *    The plugin must:
@@ -31,7 +31,7 @@
  * The name and the version of a plugin is only used to prevent it
  * from being loaded twice. Note that, in C++, it is mandatory to
  * declare these functions within an <tt>extern "C"</tt> section.
- *
+ * 
  * To ensure multi-threading safety, the various REST callbacks are
  * guaranteed to be executed in mutual exclusion since Orthanc
  * 0.8.5. If this feature is undesired (notably when developing
@@ -88,7 +88,7 @@
  * you do not wish to do so, delete this exception statement from your
  * version. If you delete this exception statement from all source files
  * in the program, then also delete it here.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU

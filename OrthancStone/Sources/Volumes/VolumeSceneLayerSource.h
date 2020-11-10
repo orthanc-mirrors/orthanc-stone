@@ -41,7 +41,7 @@ namespace OrthancStone
   class VolumeSceneLayerSource : public boost::noncopyable
   {
   private:
-    boost::weak_ptr<OrthancStone::IViewport>  viewport_;
+    boost::weak_ptr<IViewport>                viewport_;
     int                                       layerDepth_;
     boost::shared_ptr<IVolumeSlicer>          slicer_;
     std::unique_ptr<ILayerStyleConfigurator>  configurator_;
@@ -59,7 +59,7 @@ namespace OrthancStone
     IViewport::ILock* GetViewportLock() const;
 
   public:
-    VolumeSceneLayerSource(boost::weak_ptr<OrthancStone::IViewport>  viewport,
+    VolumeSceneLayerSource(boost::weak_ptr<IViewport>  viewport,
                            int layerDepth,
                            const boost::shared_ptr<IVolumeSlicer>& slicer);
 

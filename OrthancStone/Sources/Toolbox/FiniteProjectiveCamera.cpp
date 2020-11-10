@@ -318,7 +318,7 @@ namespace OrthancStone
     LOG(WARNING) << "Output pixel format: " << Orthanc::EnumerationToString(target.GetFormat());
 
     const unsigned int slicesCount = geometry.GetProjectionDepth(projection);
-    const OrthancStone::Vector pixelSpacing = geometry.GetVoxelDimensions(projection);
+    const Vector pixelSpacing = geometry.GetVoxelDimensions(projection);
     const unsigned int targetWidth = target.GetWidth();
     const unsigned int targetHeight = target.GetHeight();
 
@@ -333,8 +333,8 @@ namespace OrthancStone
     {
       LOG(INFO) << "Applying raytracer on slice: " << z << "/" << slicesCount;
 
-      OrthancStone::CoordinateSystem3D slice = geometry.GetProjectionSlice(projection, z);
-      OrthancStone::ImageBuffer3D::SliceReader sliceReader(source, projection, static_cast<unsigned int>(z));
+      CoordinateSystem3D slice = geometry.GetProjectionSlice(projection, z);
+      ImageBuffer3D::SliceReader sliceReader(source, projection, static_cast<unsigned int>(z));
 
       SourceReader pixelReader(sliceReader.GetAccessor());
       
@@ -346,11 +346,11 @@ namespace OrthancStone
         for (unsigned int x = 0; x < targetWidth; x++)
         {
           // Backproject the ray originating from the center of the target pixel
-          OrthancStone::Vector direction = camera.GetRayDirection(static_cast<double>(x + 0.5),
-                                                                  static_cast<double>(y + 0.5));
+          Vector direction = camera.GetRayDirection(static_cast<double>(x + 0.5),
+                                                    static_cast<double>(y + 0.5));
 
           // Compute the 3D intersection of the ray with the slice plane
-          OrthancStone::Vector p;
+          Vector p;
           if (slice.IntersectLine(p, camera.GetCenter(), direction))
           {
             // Compute the 2D coordinates of the intersections, in slice coordinates

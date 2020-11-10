@@ -88,7 +88,7 @@ namespace OrthancStone
       return receiver_;
     }
   
-    bool IsSameReceiver(boost::shared_ptr<OrthancStone::IObserver> receiver) const
+    bool IsSameReceiver(boost::shared_ptr<IObserver> receiver) const
     {
       boost::shared_ptr<IObserver> lock(receiver_.lock());
 

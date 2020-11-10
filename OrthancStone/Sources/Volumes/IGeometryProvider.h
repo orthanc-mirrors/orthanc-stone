@@ -29,8 +29,12 @@ namespace OrthancStone
   class IGeometryProvider
   {
   public:
-    virtual ~IGeometryProvider() {}
+    virtual ~IGeometryProvider()
+    {
+    }
+    
     virtual bool HasGeometry() const = 0;
-    virtual const OrthancStone::VolumeImageGeometry& GetImageGeometry() const = 0;
+    
+    virtual const VolumeImageGeometry& GetImageGeometry() const = 0;
   };
 }

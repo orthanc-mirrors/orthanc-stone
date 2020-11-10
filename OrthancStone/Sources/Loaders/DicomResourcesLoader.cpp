@@ -387,7 +387,7 @@ namespace OrthancStone
 
 
 #if ORTHANC_ENABLE_DCMTK == 1
-  static void ExploreDicomDir(OrthancStone::LoadedDicomResources& instances,
+  static void ExploreDicomDir(LoadedDicomResources& instances,
                               const Orthanc::ParsedDicomDir& dicomDir,
                               Orthanc::ResourceType level,
                               size_t index,

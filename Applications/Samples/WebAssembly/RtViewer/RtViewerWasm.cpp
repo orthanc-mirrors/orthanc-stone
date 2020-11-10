@@ -131,7 +131,7 @@ namespace OrthancStone
 
   void RtViewerApp::RunWasm()
   {
-    loadersContext_.reset(new OrthancStone::WebAssemblyLoadersContext(1, 4, 1));
+    loadersContext_.reset(new WebAssemblyLoadersContext(1, 4, 1));
 
     // we are in WASM --> downcast to concrete type
     boost::shared_ptr<WebAssemblyLoadersContext> loadersContext = 

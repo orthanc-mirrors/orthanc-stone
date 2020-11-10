@@ -33,7 +33,7 @@ namespace OrthancStone
     started_(false),
     remaining_(0)
   {
-    volume_.reset(new OrthancStone::DicomVolumeImage);
+    volume_.reset(new DicomVolumeImage);
 
     const SeriesOrderedFrames& frames = framesLoader_->GetOrderedFrames();
 
@@ -43,11 +43,11 @@ namespace OrthancStone
       // TODO - Is "0" the good choice for the reference frame?
       // Shouldn't we use "count - 1" depending on the direction
       // of the normal?
-      const OrthancStone::DicomInstanceParameters& parameters = frames.GetInstanceParameters(0);
+      const DicomInstanceParameters& parameters = frames.GetInstanceParameters(0);
 
-      OrthancStone::CoordinateSystem3D plane(frames.GetInstance(0));
+      CoordinateSystem3D plane(frames.GetInstance(0));
 
-      OrthancStone::VolumeImageGeometry geometry;
+      VolumeImageGeometry geometry;
       geometry.SetSizeInVoxels(parameters.GetImageInformation().GetWidth(),
                                parameters.GetImageInformation().GetHeight(),
                                static_cast<unsigned int>(frames.GetFramesCount()));
@@ -83,7 +83,7 @@ namespace OrthancStone
   }
 
 
-  void DicomVolumeLoader::Handle(const OrthancStone::SeriesFramesLoader::FrameLoadedMessage& message)
+  void DicomVolumeLoader::Handle(const SeriesFramesLoader::FrameLoadedMessage& message)
   {
     if (remaining_ == 0 ||
         !message.HasUserPayload())

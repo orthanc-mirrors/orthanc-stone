@@ -73,8 +73,8 @@ namespace OrthancStone
 #if ORTHANC_ENABLE_SDL
   public:
     void RunSdl(int argc, char* argv[]);
-    void SdlRunLoop(const std::vector<boost::shared_ptr<OrthancStone::RtViewerView> >& views,
-                    OrthancStone::DefaultViewportInteractor& interactor);
+    void SdlRunLoop(const std::vector<boost::shared_ptr<RtViewerView> >& views,
+                    DefaultViewportInteractor& interactor);
   private:
     void ProcessOptions(int argc, char* argv[]);
     void HandleApplicationEvent(const SDL_Event& event);
@@ -126,10 +126,10 @@ namespace OrthancStone
     
     // TODO: wire this
     void HandleCTLoaded(const OrthancSeriesVolumeProgressiveLoader::VolumeImageReadyInHighQuality& message);
-    void HandleCTContentUpdated(const OrthancStone::DicomVolumeImage::ContentUpdatedMessage& message);
-    void HandleDoseLoaded(const OrthancStone::DicomVolumeImage::ContentUpdatedMessage& message);
-    void HandleStructuresReady(const OrthancStone::DicomStructureSetLoader::StructuresReady& message);
-    void HandleStructuresUpdated(const OrthancStone::DicomStructureSetLoader::StructuresUpdated& message);
+    void HandleCTContentUpdated(const DicomVolumeImage::ContentUpdatedMessage& message);
+    void HandleDoseLoaded(const DicomVolumeImage::ContentUpdatedMessage& message);
+    void HandleStructuresReady(const DicomStructureSetLoader::StructuresReady& message);
+    void HandleStructuresUpdated(const DicomStructureSetLoader::StructuresUpdated& message);
 
 
   private:
@@ -156,7 +156,7 @@ namespace OrthancStone
     reference for the geometry (position and dimensions of the volume + size of each voxel). It could be changed to be 
     the dose instead, but the CT is chosen because it usually has a better spatial resolution.
     */
-    boost::shared_ptr<OrthancStone::IGeometryProvider>  geometryProvider_;
+    boost::shared_ptr<IGeometryProvider>  geometryProvider_;
 
     boost::shared_ptr<IFlexiblePointerTracker> activeTracker_;
 

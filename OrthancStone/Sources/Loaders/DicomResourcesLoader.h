@@ -103,7 +103,7 @@ namespace OrthancStone
 
 
   public:
-    class SuccessMessage : public OrthancStone::OriginMessage<DicomResourcesLoader>
+    class SuccessMessage : public OriginMessage<DicomResourcesLoader>
     {
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       

@@ -28,29 +28,29 @@
 
 namespace OrthancStone
 {
-  void LoaderStateMachine::State::Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
+  void LoaderStateMachine::State::Handle(const OrthancRestApiCommand::SuccessMessage& message)
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
       
 
-  void LoaderStateMachine::State::Handle(const OrthancStone::GetOrthancImageCommand::SuccessMessage& message)
+  void LoaderStateMachine::State::Handle(const GetOrthancImageCommand::SuccessMessage& message)
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
 
       
-  void LoaderStateMachine::State::Handle(const OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage& message)
+  void LoaderStateMachine::State::Handle(const GetOrthancWebViewerJpegCommand::SuccessMessage& message)
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
 
 
-  void LoaderStateMachine::Schedule(OrthancStone::OracleCommandBase* command)
+  void LoaderStateMachine::Schedule(OracleCommandBase* command)
   {
     LOG(TRACE) << "LoaderStateMachine(" << std::hex << this << std::dec << ")::Schedule()";
 
-    std::unique_ptr<OrthancStone::OracleCommandBase> protection(command);
+    std::unique_ptr<OracleCommandBase> protection(command);
 
     if (command == NULL)
     {
@@ -93,7 +93,7 @@ namespace OrthancStone
         activeCommands_ < simultaneousDownloads_)
     {
 
-      OrthancStone::IOracleCommand* nextCommand = pendingCommands_.front();
+      IOracleCommand* nextCommand = pendingCommands_.front();
 
       LOG(TRACE) << "    LoaderStateMachine(" << std::hex << this << std::dec << 
         ")::Step(): activeCommands_ (" << activeCommands_ << 
@@ -101,7 +101,7 @@ namespace OrthancStone
         ") --> will Schedule command addr " << std::hex << nextCommand << std::dec;
 
       {
-        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext_.Lock());
+        std::unique_ptr<ILoadersContext::ILock> lock(loadersContext_.Lock());
         boost::shared_ptr<IObserver> observer(GetSharedObserver());
         lock->Schedule(observer, 0, nextCommand); // TODO: priority!
       }
@@ -132,7 +132,7 @@ namespace OrthancStone
   }
   
 
-  void LoaderStateMachine::HandleExceptionMessage(const OrthancStone::OracleCommandExceptionMessage& message)
+  void LoaderStateMachine::HandleExceptionMessage(const OracleCommandExceptionMessage& message)
   {
     LOG(ERROR) << "LoaderStateMachine::HandleExceptionMessage: error in the state machine, stopping all processing";
     LOG(ERROR) << "Error: " << message.GetException().What() << " Details: " <<
@@ -164,34 +164,31 @@ namespace OrthancStone
 
 
   LoaderStateMachine::LoaderStateMachine(
-    OrthancStone::ILoadersContext& loadersContext)
+    ILoadersContext& loadersContext)
     : loadersContext_(loadersContext)
     , active_(false)
     , simultaneousDownloads_(4)
     , activeCommands_(0)
   {
-    using OrthancStone::ILoadersContext;
-
-    LOG(TRACE) 
-      << "LoaderStateMachine(" << std::hex << this 
-      << std::dec << ")::LoaderStateMachine()";
+    LOG(TRACE) << "LoaderStateMachine(" << std::hex << this 
+               << std::dec << ")::LoaderStateMachine()";
   }
 
   void LoaderStateMachine::PostConstructor()
   {
-    std::unique_ptr<OrthancStone::ILoadersContext::ILock>
+    std::unique_ptr<ILoadersContext::ILock>
       lock(loadersContext_.Lock());
 
-    OrthancStone::IObservable& observable = lock->GetOracleObservable();
+    IObservable& observable = lock->GetOracleObservable();
 
     // TODO => Move this out of constructor
-    Register<OrthancStone::OrthancRestApiCommand::SuccessMessage>(
+    Register<OrthancRestApiCommand::SuccessMessage>(
       observable, &LoaderStateMachine::HandleSuccessMessage);
-    Register<OrthancStone::GetOrthancImageCommand::SuccessMessage>(
+    Register<GetOrthancImageCommand::SuccessMessage>(
       observable, &LoaderStateMachine::HandleSuccessMessage);
-    Register<OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage>(
+    Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(
       observable, &LoaderStateMachine::HandleSuccessMessage);
-    Register<OrthancStone::OracleCommandExceptionMessage>(
+    Register<OracleCommandExceptionMessage>(
       observable, &LoaderStateMachine::HandleExceptionMessage);
   }
 

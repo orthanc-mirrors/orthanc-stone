@@ -50,7 +50,7 @@ namespace OrthancStone
   class StoneException
   {
   protected:
-    OrthancStone::ErrorCode     errorCode_;
+    ErrorCode     errorCode_;
 
   public:
     explicit StoneException(ErrorCode errorCode) :

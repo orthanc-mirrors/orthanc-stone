@@ -152,7 +152,7 @@ namespace OrthancStone
       ComputeSliceThickness(); // this will change state_ from NormalComputed to Valid
   }
 
-  OrthancStone::Vector DicomStructure2::GetNormal() const
+  Vector DicomStructure2::GetNormal() const
   {
     if (state_ != Valid && state_ != Invalid)
     {

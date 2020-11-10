@@ -92,7 +92,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message) ORTHANC_OVERRIDE
+    virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) ORTHANC_OVERRIDE
     {
       Json::Value tags;
       message.ParseJsonBody(tags);
@@ -121,7 +121,7 @@ namespace OrthancStone
     {
     }
 
-    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message) ORTHANC_OVERRIDE
+    virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) ORTHANC_OVERRIDE
     {
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
 
@@ -138,7 +138,7 @@ namespace OrthancStone
       {
         std::stringstream msg;
         msg << "Unknown resource! message.GetAnswer() = " << message.GetAnswer() << " message.GetAnswerHeaders() = ";
-        for (OrthancStone::OrthancRestApiCommand::HttpHeaders::const_iterator it = message.GetAnswerHeaders().begin();
+        for (OrthancRestApiCommand::HttpHeaders::const_iterator it = message.GetAnswerHeaders().begin();
              it != message.GetAnswerHeaders().end(); ++it)
         {
           msg << "\nkey: \"" << it->first << "\" value: \"" << it->second << "\"\n";
@@ -151,7 +151,7 @@ namespace OrthancStone
       const std::string instanceId = lookup[0]["ID"].asString();
 
       {
-        std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+        std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
         command->SetHttpHeader("Accept-Encoding", "gzip");
         std::string uri = "/instances/" + instanceId + "/tags";
         command->SetUri(uri);
@@ -168,7 +168,7 @@ namespace OrthancStone
          it != nonEmptyInstances.end(); 
          ++it)
     {
-      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+      std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetUri("/tools/lookup");
       command->SetMethod(Orthanc::HttpMethod_Post);
       command->SetBody(*it);
@@ -185,7 +185,7 @@ namespace OrthancStone
     {
     }
     
-    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message) ORTHANC_OVERRIDE
+    virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) ORTHANC_OVERRIDE
     {
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
 
@@ -193,7 +193,7 @@ namespace OrthancStone
       {
         FullOrthancDataset dicom(message.GetAnswer());
 
-        loader.content_.reset(new OrthancStone::DicomStructureSet(dicom));
+        loader.content_.reset(new DicomStructureSet(dicom));
       }
 
       // initialize visibility flags
@@ -273,7 +273,7 @@ namespace OrthancStone
   class DicomStructureSetLoader::Slice : public IExtractedSlice
   {
   private:
-    const OrthancStone::DicomStructureSet&  content_;
+    const DicomStructureSet&  content_;
     uint64_t                  revision_;
     bool                      isValid_;
     std::vector<bool>         visibility_;
@@ -289,9 +289,9 @@ namespace OrthancStone
     In the second case, the visibility of each structure is defined by the 
     content of the vector at the corresponding index.
     */
-    Slice(const OrthancStone::DicomStructureSet& content,
+    Slice(const DicomStructureSet& content,
           uint64_t revision,
-          const OrthancStone::CoordinateSystem3D& cuttingPlane,
+          const CoordinateSystem3D& cuttingPlane,
           const std::vector<bool>& visibility) :
       content_(content),
       revision_(revision),
@@ -302,11 +302,11 @@ namespace OrthancStone
 
       bool opposite;
 
-      const OrthancStone::Vector normal = content.GetNormal();
+      const Vector normal = content.GetNormal();
       isValid_ = (
-        OrthancStone::GeometryToolbox::IsParallelOrOpposite(opposite, normal, cuttingPlane.GetNormal()) ||
-        OrthancStone::GeometryToolbox::IsParallelOrOpposite(opposite, normal, cuttingPlane.GetAxisX()) ||
-        OrthancStone::GeometryToolbox::IsParallelOrOpposite(opposite, normal, cuttingPlane.GetAxisY()));
+        GeometryToolbox::IsParallelOrOpposite(opposite, normal, cuttingPlane.GetNormal()) ||
+        GeometryToolbox::IsParallelOrOpposite(opposite, normal, cuttingPlane.GetAxisX()) ||
+        GeometryToolbox::IsParallelOrOpposite(opposite, normal, cuttingPlane.GetAxisY()));
     }
       
     virtual bool IsValid() ORTHANC_OVERRIDE
@@ -319,23 +319,23 @@ namespace OrthancStone
       return revision_;
     }
 
-    virtual OrthancStone::ISceneLayer* CreateSceneLayer(
-      const OrthancStone::ILayerStyleConfigurator* configurator,
-      const OrthancStone::CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE
+    virtual ISceneLayer* CreateSceneLayer(
+      const ILayerStyleConfigurator* configurator,
+      const CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE
     {
       assert(isValid_);
 
-      std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
+      std::unique_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
       layer->SetThickness(2);
 
       for (size_t i = 0; i < content_.GetStructuresCount(); i++)
       {
         if ((visibility_.size() == 0) || visibility_.at(i))
         {
-          const OrthancStone::Color& color = content_.GetStructureColor(i);
+          const Color& color = content_.GetStructureColor(i);
 
 #ifdef USE_BOOST_UNION_FOR_POLYGONS 
-          std::vector< std::vector<OrthancStone::Point2D> > polygons;
+          std::vector< std::vector<Point2D> > polygons;
 
           if (content_.ProjectStructure(polygons, i, cuttingPlane))
           {
@@ -353,17 +353,17 @@ namespace OrthancStone
   }
         }
 #else
-          std::vector< std::pair<OrthancStone::Point2D, OrthancStone::Point2D> > segments;
+          std::vector< std::pair<Point2D, Point2D> > segments;
 
           if (content_.ProjectStructure(segments, i, cuttingPlane))
           {
             for (size_t j = 0; j < segments.size(); j++)
             {
-              OrthancStone::PolylineSceneLayer::Chain chain;
+              PolylineSceneLayer::Chain chain;
               chain.resize(2);
 
-              chain[0] = OrthancStone::ScenePoint2D(segments[j].first.x, segments[j].first.y);
-              chain[1] = OrthancStone::ScenePoint2D(segments[j].second.x, segments[j].second.y);
+              chain[0] = ScenePoint2D(segments[j].first.x, segments[j].first.y);
+              chain[1] = ScenePoint2D(segments[j].second.x, segments[j].second.y);
 
               layer->AddChain(chain, false /* NOT closed */, color);
             }
@@ -378,7 +378,7 @@ namespace OrthancStone
     
 
   DicomStructureSetLoader::DicomStructureSetLoader(
-    OrthancStone::ILoadersContext& loadersContext) 
+    ILoadersContext& loadersContext) 
     : LoaderStateMachine(loadersContext)
     , loadersContext_(loadersContext)
     , revision_(0)
@@ -390,7 +390,7 @@ namespace OrthancStone
     instanceLookupHandler_ = RestInstanceLookupHandler::Create(*this);
   }
     
-  boost::shared_ptr<OrthancStone::DicomStructureSetLoader> DicomStructureSetLoader::Create(OrthancStone::ILoadersContext& loadersContext)
+  boost::shared_ptr<DicomStructureSetLoader> DicomStructureSetLoader::Create(ILoadersContext& loadersContext)
   {
     boost::shared_ptr<DicomStructureSetLoader> obj(
       new DicomStructureSetLoader(
@@ -445,7 +445,7 @@ namespace OrthancStone
     initiallyVisibleStructures_ = initiallyVisibleStructures;
 
     {
-      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+      std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
 
       std::string uri = "/instances/" + instanceId + "/tags?ignore-length=3006-0050";
@@ -463,12 +463,12 @@ namespace OrthancStone
     LoadInstance(instanceId, initiallyVisibleStructures);
   }
 
-  OrthancStone::IVolumeSlicer::IExtractedSlice* DicomStructureSetLoader::ExtractSlice(const OrthancStone::CoordinateSystem3D& cuttingPlane)
+  IVolumeSlicer::IExtractedSlice* DicomStructureSetLoader::ExtractSlice(const CoordinateSystem3D& cuttingPlane)
   {
     if (content_.get() == NULL)
     {
       // Geometry is not available yet
-      return new OrthancStone::IVolumeSlicer::InvalidSlice;
+      return new IVolumeSlicer::InvalidSlice;
     }
     else
     {

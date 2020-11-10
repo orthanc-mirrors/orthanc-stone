@@ -47,9 +47,9 @@ namespace OrthancStone
     is stored in a Dicom series.
   */
   class OrthancSeriesVolumeProgressiveLoader : 
-    public OrthancStone::ObserverBase<OrthancSeriesVolumeProgressiveLoader>,
-    public OrthancStone::IObservable,
-    public OrthancStone::IVolumeSlicer,
+    public ObserverBase<OrthancSeriesVolumeProgressiveLoader>,
+    public IObservable,
+    public IVolumeSlicer,
     public IGeometryProvider
   {
   public:
@@ -72,7 +72,7 @@ namespace OrthancStone
     {
     private:
       void CheckSlice(size_t index,
-                      const OrthancStone::DicomInstanceParameters& reference) const;
+                      const DicomInstanceParameters& reference) const;
     
       void CheckVolume() const;
 
@@ -80,8 +80,8 @@ namespace OrthancStone
 
       void CheckSliceIndex(size_t index) const;
 
-      std::unique_ptr<OrthancStone::VolumeImageGeometry>     geometry_;
-      std::vector<OrthancStone::DicomInstanceParameters*>  slices_;
+      std::unique_ptr<VolumeImageGeometry>   geometry_;
+      std::vector<DicomInstanceParameters*>  slices_;
       std::vector<uint64_t>                  slicesRevision_;
 
     public:
@@ -90,16 +90,16 @@ namespace OrthancStone
         Clear();
       }
 
-      void ComputeGeometry(OrthancStone::SlicesSorter& slices);
+      void ComputeGeometry(SlicesSorter& slices);
 
       virtual bool HasGeometry() const
       {
         return geometry_.get() != NULL;
       }
 
-      virtual const OrthancStone::VolumeImageGeometry& GetImageGeometry() const;
+      virtual const VolumeImageGeometry& GetImageGeometry() const;
 
-      const OrthancStone::DicomInstanceParameters& GetSliceParameters(size_t index) const;
+      const DicomInstanceParameters& GetSliceParameters(size_t index) const;
 
       uint64_t GetSliceRevision(size_t index) const;
 
@@ -108,29 +108,27 @@ namespace OrthancStone
 
     void ScheduleNextSliceDownload();
 
-    void LoadGeometry(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message);
+    void LoadGeometry(const OrthancRestApiCommand::SuccessMessage& message);
 
     void SetSliceContent(unsigned int sliceIndex,
                          const Orthanc::ImageAccessor& image,
                          unsigned int quality);
 
-    void LoadBestQualitySliceContent(const OrthancStone::GetOrthancImageCommand::SuccessMessage& message);
+    void LoadBestQualitySliceContent(const GetOrthancImageCommand::SuccessMessage& message);
 
-    void LoadJpegSliceContent(const OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage& message);
+    void LoadJpegSliceContent(const GetOrthancWebViewerJpegCommand::SuccessMessage& message);
 
-    OrthancStone::ILoadersContext&  loadersContext_;
-    bool                            active_;
-    bool                            progressiveQuality_;
-    unsigned int                    simultaneousDownloads_;
-    SeriesGeometry                  seriesGeometry_;
-    boost::shared_ptr<OrthancStone::DicomVolumeImage>             volume_;
-    std::unique_ptr<OrthancStone::IFetchingItemsSorter::IFactory> sorter_;
-    std::unique_ptr<OrthancStone::IFetchingStrategy>              strategy_;
-    
-    std::vector<unsigned int>     slicesQuality_;
-    bool                          volumeImageReadyInHighQuality_;
-    
-    boost::shared_ptr<ISlicePostProcessor>  slicePostProcessor_;
+    ILoadersContext&                                loadersContext_;
+    bool                                            active_;
+    bool                                            progressiveQuality_;
+    unsigned int                                    simultaneousDownloads_;
+    SeriesGeometry                                  seriesGeometry_;
+    boost::shared_ptr<DicomVolumeImage>             volume_;
+    std::unique_ptr<IFetchingItemsSorter::IFactory> sorter_;
+    std::unique_ptr<IFetchingStrategy>              strategy_;
+    std::vector<unsigned int>                       slicesQuality_;
+    bool                                            volumeImageReadyInHighQuality_;
+    boost::shared_ptr<ISlicePostProcessor>          slicePostProcessor_;
 
     /** See priority setters/getters below */
     int medadataSchedulingPriority_;
@@ -139,8 +137,8 @@ namespace OrthancStone
     int sliceSchedulingPriority_;
 
     OrthancSeriesVolumeProgressiveLoader(
-      OrthancStone::ILoadersContext& loadersContext,
-      boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+      ILoadersContext& loadersContext,
+      boost::shared_ptr<DicomVolumeImage> volume,
       bool progressiveQuality);
   
   public:
@@ -150,8 +148,8 @@ namespace OrthancStone
     See doc for the progressiveQuality_ field
     */
     static boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> Create(
-      OrthancStone::ILoadersContext& context,
-      boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+      ILoadersContext& context,
+      boost::shared_ptr<DicomVolumeImage> volume,
       bool progressiveQuality = false);
 
     virtual ~OrthancSeriesVolumeProgressiveLoader();
@@ -212,7 +210,7 @@ namespace OrthancStone
     /**
     Same remark as HasGeometry
     */
-    const OrthancStone::VolumeImageGeometry& GetImageGeometry() const ORTHANC_OVERRIDE
+    const VolumeImageGeometry& GetImageGeometry() const ORTHANC_OVERRIDE
     {
       return seriesGeometry_.GetImageGeometry();
     }
@@ -223,6 +221,6 @@ namespace OrthancStone
     take into account this request (this is done in the ExtractedSlice ctor)
     */
     virtual IExtractedSlice*
-      ExtractSlice(const OrthancStone::CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
+      ExtractSlice(const CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
   };
 }

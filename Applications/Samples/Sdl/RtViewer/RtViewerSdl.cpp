@@ -232,30 +232,30 @@ namespace OrthancStone
     Orthanc::IImageWriter::WriteToFile(writer, target, png);
   }
 
-  static boost::shared_ptr<OrthancStone::RtViewerView> GetViewFromWindowId(
-    const std::vector<boost::shared_ptr<OrthancStone::RtViewerView> >& views,
+  static boost::shared_ptr<RtViewerView> GetViewFromWindowId(
+    const std::vector<boost::shared_ptr<RtViewerView> >& views,
     Uint32 windowID)
   {
     using namespace OrthancStone;
     for (size_t i = 0; i < views.size(); ++i)
     {
-      boost::shared_ptr<OrthancStone::RtViewerView> view = views[i];
+      boost::shared_ptr<RtViewerView> view = views[i];
       boost::shared_ptr<IViewport> viewport = view->GetViewport();
       boost::shared_ptr<SdlViewport> sdlViewport = boost::dynamic_pointer_cast<SdlViewport>(viewport);
       Uint32 curWindowID = sdlViewport->GetSdlWindowId();
       if (windowID == curWindowID)
         return view;
     }
-    return boost::shared_ptr<OrthancStone::RtViewerView>();
+    return boost::shared_ptr<RtViewerView>();
   }
 
-  void RtViewerApp::SdlRunLoop(const std::vector<boost::shared_ptr<OrthancStone::RtViewerView> >& views,
-                               OrthancStone::DefaultViewportInteractor& interactor)
+  void RtViewerApp::SdlRunLoop(const std::vector<boost::shared_ptr<RtViewerView> >& views,
+                               DefaultViewportInteractor& interactor)
   {
     using namespace OrthancStone;
 
-    // const std::vector<boost::shared_ptr<OrthancStone::RtViewerView> >& views
-    std::vector<boost::shared_ptr<OrthancStone::SdlViewport> > viewports;
+    // const std::vector<boost::shared_ptr<RtViewerView> >& views
+    std::vector<boost::shared_ptr<SdlViewport> > viewports;
     for (size_t i = 0; i < views.size(); ++i)
     {
       boost::shared_ptr<RtViewerView> view = views[i];
@@ -334,7 +334,7 @@ namespace OrthancStone
               boost::dynamic_pointer_cast<SdlViewport>(view->GetViewport());
 
             {
-              std::unique_ptr<OrthancStone::IViewport::ILock> lock(sdlViewport->Lock());
+              std::unique_ptr<IViewport::ILock> lock(sdlViewport->Lock());
               lock->RefreshCanvasSize();
             }
           }
@@ -356,7 +356,7 @@ namespace OrthancStone
 
             case SDLK_s:
             {
-              std::unique_ptr<OrthancStone::IViewport::ILock> lock(view->GetViewport()->Lock());
+              std::unique_ptr<IViewport::ILock> lock(view->GetViewport()->Lock());
               lock->GetCompositor().FitContent(lock->GetController().GetScene());
               lock->Invalidate();
             }
@@ -377,10 +377,10 @@ namespace OrthancStone
             boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
               views, sdlEvent.window.windowID);
 
-            std::unique_ptr<OrthancStone::IViewport::ILock> lock(view->GetViewport()->Lock());
+            std::unique_ptr<IViewport::ILock> lock(view->GetViewport()->Lock());
             if (lock->HasCompositor())
             {
-              OrthancStone::PointerEvent p;
+              PointerEvent p;
               OrthancStoneHelpers::GetPointerEvent(p, lock->GetCompositor(),
                                                    sdlEvent, keyboardState, scancodeCount);
 

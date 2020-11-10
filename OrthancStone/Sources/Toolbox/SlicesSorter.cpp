@@ -301,7 +301,7 @@ namespace OrthancStone
       return true;
     }
     
-    const OrthancStone::CoordinateSystem3D& reference = GetSliceGeometry(0);
+    const CoordinateSystem3D& reference = GetSliceGeometry(0);
 
     double referencePosition = reference.ProjectAlongNormal(reference.GetOrigin());
         
@@ -317,10 +317,10 @@ namespace OrthancStone
 
     for (size_t i = 1; i < GetSlicesCount(); i++)
     {
-      OrthancStone::Vector q = reference.GetOrigin() + spacing * static_cast<double>(i) * reference.GetNormal();
+      Vector q = reference.GetOrigin() + spacing * static_cast<double>(i) * reference.GetNormal();
       double d = boost::numeric::ublas::norm_2(q - GetSliceGeometry(i).GetOrigin());
 
-      if (!OrthancStone::LinearAlgebra::IsNear(d, 0, 0.001 /* tolerance expressed in mm */))
+      if (!LinearAlgebra::IsNear(d, 0, 0.001 /* tolerance expressed in mm */))
       {
         return false;
       }
@@ -338,14 +338,14 @@ namespace OrthancStone
     }
     else
     {
-      const OrthancStone::CoordinateSystem3D& reference = GetSliceGeometry(0);
+      const CoordinateSystem3D& reference = GetSliceGeometry(0);
       double previousPosition = reference.ProjectAlongNormal(GetSliceGeometry(0).GetOrigin());
      
       for (size_t i = 1; i < GetSlicesCount(); i++)
       {
         double position = reference.ProjectAlongNormal(GetSliceGeometry(i).GetOrigin());
 
-        if (OrthancStone::LinearAlgebra::IsNear(position, previousPosition, 0.001 /* tolerance expressed in mm */))
+        if (LinearAlgebra::IsNear(position, previousPosition, 0.001 /* tolerance expressed in mm */))
         {
           return false;
         }

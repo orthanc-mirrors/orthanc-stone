@@ -50,7 +50,7 @@ namespace OrthancStone
      an answer is received. 
   */
 
-  class LoaderStateMachine : public OrthancStone::ObserverBase<LoaderStateMachine>
+  class LoaderStateMachine : public ObserverBase<LoaderStateMachine>
   {
   public:
     class State : public Orthanc::IDynamicObject
@@ -69,7 +69,7 @@ namespace OrthancStone
       {
       }
 
-      void Schedule(OrthancStone::OracleCommandBase* command) const
+      void Schedule(OracleCommandBase* command) const
       {
         that_.Schedule(command);
       }
@@ -80,14 +80,14 @@ namespace OrthancStone
         return dynamic_cast<T&>(that_);
       }
       
-      virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message);
+      virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message);
       
-      virtual void Handle(const OrthancStone::GetOrthancImageCommand::SuccessMessage& message);
+      virtual void Handle(const GetOrthancImageCommand::SuccessMessage& message);
       
-      virtual void Handle(const OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage& message);
+      virtual void Handle(const GetOrthancWebViewerJpegCommand::SuccessMessage& message);
     };
 
-    void Schedule(OrthancStone::OracleCommandBase* command);
+    void Schedule(OracleCommandBase* command);
 
     void Start();
 
@@ -96,14 +96,14 @@ namespace OrthancStone
 
     void Clear();
 
-    void HandleExceptionMessage(const OrthancStone::OracleCommandExceptionMessage& message);
+    void HandleExceptionMessage(const OracleCommandExceptionMessage& message);
 
     template <typename T>
     void HandleSuccessMessage(const T& message);
 
-    typedef std::list<OrthancStone::IOracleCommand*>  PendingCommands;
+    typedef std::list<IOracleCommand*>  PendingCommands;
 
-    OrthancStone::ILoadersContext&  loadersContext_;
+    ILoadersContext&  loadersContext_;
     bool                            active_;
     unsigned int                    simultaneousDownloads_;
     PendingCommands                 pendingCommands_;
@@ -111,7 +111,7 @@ namespace OrthancStone
 
 
   public:
-    explicit LoaderStateMachine(OrthancStone::ILoadersContext& loadersContext);
+    explicit LoaderStateMachine(ILoadersContext& loadersContext);
 
     void PostConstructor();
 

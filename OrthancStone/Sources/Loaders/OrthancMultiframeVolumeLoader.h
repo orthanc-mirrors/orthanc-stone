@@ -32,7 +32,7 @@ namespace OrthancStone
 {
   class OrthancMultiframeVolumeLoader :
     public LoaderStateMachine,
-    public OrthancStone::IObservable,
+    public IObservable,
     public IGeometryProvider
   {
   private:
@@ -41,7 +41,7 @@ namespace OrthancStone
     class LoadTransferSyntax;    
     class LoadUncompressedPixelData;
 
-    boost::shared_ptr<OrthancStone::DicomVolumeImage>  volume_;
+    boost::shared_ptr<DicomVolumeImage>  volume_;
     std::string                          instanceId_;
     std::string                          transferSyntaxUid_;
     bool                                 pixelDataLoaded_;
@@ -80,34 +80,31 @@ namespace OrthancStone
       
     /** Service method for CopyPixelDataAndComputeMinMax*/
     template <typename T>
-    void CopyPixelDataAndComputeDistribution(
-      const std::string& pixelData, 
-      std::map<T, uint64_t>& distribution);
+    void CopyPixelDataAndComputeDistribution(const std::string& pixelData, 
+                                             std::map<T, uint64_t>& distribution);
 
     /** Service method for CopyPixelDataAndComputeMinMax*/
     template <typename T>
-    void ComputeMinMaxWithOutlierRejection(
-      const std::map<T, uint64_t>& distribution);
+    void ComputeMinMaxWithOutlierRejection(const std::map<T, uint64_t>& distribution);
 
     void SetUncompressedPixelData(const std::string& pixelData);
 
   protected:
-    OrthancMultiframeVolumeLoader(
-      OrthancStone::ILoadersContext& loadersContext,
-      boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
-      float outliersHalfRejectionRate);
+    OrthancMultiframeVolumeLoader(ILoadersContext& loadersContext,
+                                  boost::shared_ptr<DicomVolumeImage> volume,
+                                  float outliersHalfRejectionRate);
+    
   public:
-
     static boost::shared_ptr<OrthancMultiframeVolumeLoader> Create(
-      OrthancStone::ILoadersContext& loadersContext,
-      boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+      ILoadersContext& loadersContext,
+      boost::shared_ptr<DicomVolumeImage> volume,
       float outliersHalfRejectionRate = 0.0005);
 
     virtual ~OrthancMultiframeVolumeLoader();
 
     bool HasGeometry() const ORTHANC_OVERRIDE;
     
-    virtual const OrthancStone::VolumeImageGeometry& GetImageGeometry() const ORTHANC_OVERRIDE;
+    virtual const VolumeImageGeometry& GetImageGeometry() const ORTHANC_OVERRIDE;
 
     bool IsPixelDataLoaded() const
     {

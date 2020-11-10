@@ -74,7 +74,7 @@ namespace OrthancStone
     Scene2D& scene = controller.GetScene();
 
     // do not try to use stuff too early!
-    const OrthancStone::ICompositor& compositor = lock->GetCompositor();
+    const ICompositor& compositor = lock->GetCompositor();
 
     std::stringstream msg;
 
@@ -161,14 +161,14 @@ namespace OrthancStone
 
   void RtViewerView::Invalidate()
   {
-    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     lock->GetCompositor().FitContent(lock->GetController().GetScene());
     lock->Invalidate();
   }
 
   void RtViewerView::FitContent()
   {
-    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     lock->GetCompositor().FitContent(lock->GetController().GetScene());
     lock->Invalidate();
   }
@@ -314,15 +314,15 @@ namespace OrthancStone
     this->SetStructureSet(rtstructLoader);
   }
 
-  void RtViewerView::SetCtVolumeSlicer(const boost::shared_ptr<OrthancStone::IVolumeSlicer>& volume,
-                                       OrthancStone::ILayerStyleConfigurator* style)
+  void RtViewerView::SetCtVolumeSlicer(const boost::shared_ptr<IVolumeSlicer>& volume,
+                                       ILayerStyleConfigurator* style)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
     Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
-    ctVolumeLayerSource_.reset(new OrthancStone::VolumeSceneLayerSource(viewport_, depth, volume));
+    ctVolumeLayerSource_.reset(new VolumeSceneLayerSource(viewport_, depth, volume));
 
     if (style != NULL)
     {
@@ -332,15 +332,15 @@ namespace OrthancStone
     ctLayer_ = depth;
   }
 
-  void RtViewerView::SetDoseVolumeSlicer(const boost::shared_ptr<OrthancStone::IVolumeSlicer>& volume,
-                                         OrthancStone::ILayerStyleConfigurator* style)
+  void RtViewerView::SetDoseVolumeSlicer(const boost::shared_ptr<IVolumeSlicer>& volume,
+                                         ILayerStyleConfigurator* style)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
     Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
-    doseVolumeLayerSource_.reset(new OrthancStone::VolumeSceneLayerSource(viewport_, depth, volume));
+    doseVolumeLayerSource_.reset(new VolumeSceneLayerSource(viewport_, depth, volume));
 
     if (style != NULL)
     {
@@ -348,13 +348,13 @@ namespace OrthancStone
     }
   }
 
-  void RtViewerView::SetStructureSet(const boost::shared_ptr<OrthancStone::DicomStructureSetLoader>& volume)
+  void RtViewerView::SetStructureSet(const boost::shared_ptr<DicomStructureSetLoader>& volume)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
     Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
-    structLayerSource_.reset(new OrthancStone::VolumeSceneLayerSource(viewport_, depth, volume));
+    structLayerSource_.reset(new VolumeSceneLayerSource(viewport_, depth, volume));
   }
 }

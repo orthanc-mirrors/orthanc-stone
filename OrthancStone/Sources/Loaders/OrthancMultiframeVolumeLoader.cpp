@@ -45,7 +45,7 @@ namespace OrthancStone
 
     }
 
-    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message) ORTHANC_OVERRIDE
+    virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) ORTHANC_OVERRIDE
     {
       // Complete the DICOM tags with just-received "Grid Frame Offset Vector"
       std::string s = Orthanc::Toolbox::StripSpaces(message.GetAnswer());
@@ -79,7 +79,7 @@ namespace OrthancStone
     {
     }
       
-    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
+    virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
     {
       OrthancMultiframeVolumeLoader& loader = GetLoader<OrthancMultiframeVolumeLoader>();
         
@@ -94,12 +94,12 @@ namespace OrthancStone
       std::unique_ptr<Orthanc::DicomMap> dicom(new Orthanc::DicomMap);
       dicom->FromDicomAsJson(body);
 
-      if (OrthancStone::StringToSopClassUid(GetSopClassUid(*dicom)) == OrthancStone::SopClassUid_RTDose)
+      if (StringToSopClassUid(GetSopClassUid(*dicom)) == SopClassUid_RTDose)
       {
         // Download the "Grid Frame Offset Vector" DICOM tag, that is
         // mandatory for RT-DOSE, but is too long to be returned by default
           
-        std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+        std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
         command->SetUri("/instances/" + loader.GetInstanceId() + "/content/" +
                         Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR.Format());
         command->AcquirePayload(new LoadRTDoseGeometry(loader, dicom.release()));
@@ -121,7 +121,7 @@ namespace OrthancStone
     {
     }
       
-    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
+    virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
     {
       GetLoader<OrthancMultiframeVolumeLoader>().SetTransferSyntax(message.GetAnswer());
     }
@@ -135,7 +135,7 @@ namespace OrthancStone
     {
     }
       
-    virtual void Handle(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
+    virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message)
     {
       GetLoader<OrthancMultiframeVolumeLoader>().SetUncompressedPixelData(message.GetAnswer());
     }
@@ -172,7 +172,7 @@ namespace OrthancStone
         transferSyntaxUid_ == "1.2.840.10008.1.2.1" ||
         transferSyntaxUid_ == "1.2.840.10008.1.2.2")
     {
-      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+      std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetUri("/instances/" + instanceId_ + "/content/" +
                       Orthanc::DICOM_TAG_PIXEL_DATA.Format() + "/0");
@@ -195,7 +195,7 @@ namespace OrthancStone
 
   void OrthancMultiframeVolumeLoader::SetGeometry(const Orthanc::DicomMap& dicom)
   {
-    OrthancStone::DicomInstanceParameters parameters(dicom);
+    DicomInstanceParameters parameters(dicom);
     volume_->SetDicomParameters(parameters);
       
     Orthanc::PixelFormat format;
@@ -207,7 +207,7 @@ namespace OrthancStone
     double spacingZ;
     switch (parameters.GetSopClassUid())
     {
-      case OrthancStone::SopClassUid_RTDose:
+      case SopClassUid_RTDose:
         spacingZ = parameters.GetSliceThickness();
         break;
 
@@ -222,7 +222,7 @@ namespace OrthancStone
     const unsigned int depth = parameters.GetImageInformation().GetNumberOfFrames();
 
     {
-      OrthancStone::VolumeImageGeometry geometry;
+      VolumeImageGeometry geometry;
       geometry.SetSizeInVoxels(width, height, depth);
       geometry.SetAxialGeometry(parameters.GetGeometry());
       geometry.SetVoxelDimensions(parameters.GetPixelSpacingX(),
@@ -236,7 +236,7 @@ namespace OrthancStone
 
 
 
-    BroadcastMessage(OrthancStone::DicomVolumeImage::GeometryReadyMessage(*volume_));
+    BroadcastMessage(DicomVolumeImage::GeometryReadyMessage(*volume_));
   }
 
 
@@ -267,7 +267,7 @@ namespace OrthancStone
   void OrthancMultiframeVolumeLoader::CopyPixelDataAndComputeDistribution(
     const std::string& pixelData, std::map<T,uint64_t>& distribution)
   {
-    OrthancStone::ImageBuffer3D& target = volume_->GetPixelData();
+    ImageBuffer3D& target = volume_->GetPixelData();
       
     const unsigned int bpp = target.GetBytesPerPixel();
     const unsigned int width = target.GetWidth();
@@ -309,7 +309,7 @@ namespace OrthancStone
 
       for (unsigned int z = 0; z < depth; z++)
       {
-        OrthancStone::ImageBuffer3D::SliceWriter writer(target, OrthancStone::VolumeProjection_Axial, z);
+        ImageBuffer3D::SliceWriter writer(target, VolumeProjection_Axial, z);
 
         assert(writer.GetAccessor().GetWidth() == width &&
           writer.GetAccessor().GetHeight() == height);
@@ -366,7 +366,7 @@ namespace OrthancStone
     }
     else
     {
-      OrthancStone::ImageBuffer3D& target = volume_->GetPixelData();
+      ImageBuffer3D& target = volume_->GetPixelData();
 
       const uint64_t width = target.GetWidth();
       const uint64_t height = target.GetHeight();
@@ -517,7 +517,7 @@ namespace OrthancStone
     volume_->IncrementRevision();
 
     pixelDataLoaded_ = true;
-    BroadcastMessage(OrthancStone::DicomVolumeImage::ContentUpdatedMessage(*volume_));
+    BroadcastMessage(DicomVolumeImage::ContentUpdatedMessage(*volume_));
   }
   
   bool OrthancMultiframeVolumeLoader::HasGeometry() const
@@ -525,14 +525,14 @@ namespace OrthancStone
     return volume_->HasGeometry();
   }
 
-  const OrthancStone::VolumeImageGeometry& OrthancMultiframeVolumeLoader::GetImageGeometry() const
+  const VolumeImageGeometry& OrthancMultiframeVolumeLoader::GetImageGeometry() const
   {
     return volume_->GetGeometry();
   }
 
   OrthancMultiframeVolumeLoader::OrthancMultiframeVolumeLoader(
-    OrthancStone::ILoadersContext& loadersContext,
-    boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+    ILoadersContext& loadersContext,
+    boost::shared_ptr<DicomVolumeImage> volume,
     float outliersHalfRejectionRate) 
     : LoaderStateMachine(loadersContext)
     , volume_(volume)
@@ -552,8 +552,8 @@ namespace OrthancStone
 
   boost::shared_ptr<OrthancMultiframeVolumeLoader>
     OrthancMultiframeVolumeLoader::Create(
-      OrthancStone::ILoadersContext& loadersContext, 
-      boost::shared_ptr<OrthancStone::DicomVolumeImage> volume, 
+      ILoadersContext& loadersContext, 
+      boost::shared_ptr<DicomVolumeImage> volume, 
       float outliersHalfRejectionRate /*= 0.0005*/)
   {
     boost::shared_ptr<OrthancMultiframeVolumeLoader> obj(
@@ -599,7 +599,7 @@ namespace OrthancStone
     instanceId_ = instanceId;
 
     {
-      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+      std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetUri("/instances/" + instanceId + "/tags");
       command->AcquirePayload(new LoadGeometry(*this));
@@ -607,7 +607,7 @@ namespace OrthancStone
     }
 
     {
-      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+      std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetUri("/instances/" + instanceId + "/metadata/TransferSyntax");
       command->AcquirePayload(new LoadTransferSyntax(*this));
       Schedule(command.release());

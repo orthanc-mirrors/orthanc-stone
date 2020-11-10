@@ -33,8 +33,8 @@ namespace OrthancStone
 {
   class DicomStructureSetLoader :
     public LoaderStateMachine,
-    public OrthancStone::IVolumeSlicer,
-    public OrthancStone::IObservable
+    public IVolumeSlicer,
+    public IObservable
   {
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, StructuresReady, DicomStructureSetLoader);
@@ -62,14 +62,14 @@ namespace OrthancStone
     class RestInstanceLookupHandler;
 
     static boost::shared_ptr<DicomStructureSetLoader> Create(
-      OrthancStone::ILoadersContext& loadersContext);
+      ILoadersContext& loadersContext);
 
     void SetInstanceLookupHandler(boost::shared_ptr<IInstanceLookupHandler> instanceLookupHandler)
     {
       instanceLookupHandler_ = instanceLookupHandler;
     }
 
-    OrthancStone::DicomStructureSet* GetContent()
+    DicomStructureSet* GetContent()
     {
       return content_.get();
     }
@@ -89,7 +89,7 @@ namespace OrthancStone
     void LoadInstanceFullVisibility(const std::string& instanceId);
 
 
-    virtual IExtractedSlice* ExtractSlice(const OrthancStone::CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
+    virtual IExtractedSlice* ExtractSlice(const CoordinateSystem3D& cuttingPlane) ORTHANC_OVERRIDE;
 
     void SetStructuresReady();
     void SetStructuresUpdated();
@@ -108,15 +108,15 @@ namespace OrthancStone
     // Only state of LoaderStateMachine
     class LoadStructure;           // 1st state
     
-    OrthancStone::ILoadersContext&                    loadersContext_;
-    std::unique_ptr<OrthancStone::DicomStructureSet>  content_;
-    uint64_t                                          revision_;
-    std::string                                       instanceId_;
-    unsigned int                                      countProcessedInstances_;
-    unsigned int                                      countReferencedInstances_;  
+    ILoadersContext&                    loadersContext_;
+    std::unique_ptr<DicomStructureSet>  content_;
+    uint64_t                            revision_;
+    std::string                         instanceId_;
+    unsigned int                        countProcessedInstances_;
+    unsigned int                        countReferencedInstances_;  
 
     // will be set to true once the loading is finished
-    bool                                              structuresReady_;
+    bool                                structuresReady_;
 
     /**
     At load time, these strings are used to initialize the structureVisibility_ 
@@ -142,6 +142,6 @@ namespace OrthancStone
     void RetrieveReferencedSlices(const std::set<std::string>& nonEmptyInstances);
 
   protected:
-    explicit DicomStructureSetLoader(OrthancStone::ILoadersContext& loadersContext);
+    explicit DicomStructureSetLoader(ILoadersContext& loadersContext);
   };
 }

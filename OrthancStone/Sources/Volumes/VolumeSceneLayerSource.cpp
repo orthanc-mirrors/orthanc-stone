@@ -70,10 +70,9 @@ namespace OrthancStone
   }
 
 
-  VolumeSceneLayerSource::VolumeSceneLayerSource(
-    boost::weak_ptr<OrthancStone::IViewport>  viewport,
-    int layerDepth,
-    const boost::shared_ptr<IVolumeSlicer>& slicer) :
+  VolumeSceneLayerSource::VolumeSceneLayerSource(boost::weak_ptr<IViewport>  viewport,
+                                                 int layerDepth,
+                                                 const boost::shared_ptr<IVolumeSlicer>& slicer) :
     viewport_(viewport),
     layerDepth_(layerDepth),
     slicer_(slicer),

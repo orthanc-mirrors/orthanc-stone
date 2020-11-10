@@ -131,13 +131,13 @@ namespace OrthancStone
     }
   }
 
-  OrthancStone::AffineTransform2D 
+  AffineTransform2D 
     ViewportController::GetCanvasToSceneTransform() const
   {
     return scene_->GetCanvasToSceneTransform();
   }
 
-  OrthancStone::AffineTransform2D 
+  AffineTransform2D 
     ViewportController::GetSceneToCanvasTransform() const
   {
     return scene_->GetSceneToCanvasTransform();
@@ -208,11 +208,10 @@ namespace OrthancStone
   }
 
 
-  void ViewportController::HandleMousePress(
-    OrthancStone::IViewportInteractor&  interactor,
-    const PointerEvent&                 event,
-    unsigned int                        viewportWidth,
-    unsigned int                        viewportHeight)
+  void ViewportController::HandleMousePress(IViewportInteractor&  interactor,
+                                            const PointerEvent&   event,
+                                            unsigned int          viewportWidth,
+                                            unsigned int          viewportHeight)
   {
     if (activeTracker_)
     {

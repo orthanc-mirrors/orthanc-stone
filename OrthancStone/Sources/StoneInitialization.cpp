@@ -103,11 +103,11 @@ namespace OrthancStone
       // been initialized, as Qt changes locale settings
 
       {
-        OrthancStone::Vector v;
-        if (!OrthancStone::LinearAlgebra::ParseVector(v, "1.3671875\\-1.3671875") ||
+        Vector v;
+        if (!LinearAlgebra::ParseVector(v, "1.3671875\\-1.3671875") ||
             v.size() != 2 ||
-            !OrthancStone::LinearAlgebra::IsNear(1.3671875f, v[0]) ||
-            !OrthancStone::LinearAlgebra::IsNear(-1.3671875f, v[1]))
+            !LinearAlgebra::IsNear(1.3671875f, v[0]) ||
+            !LinearAlgebra::IsNear(-1.3671875f, v[1]))
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
                                           "Error in the locale settings, giving up");
@@ -126,12 +126,12 @@ namespace OrthancStone
         source.FromDicomWeb(dicomweb);
 
         std::string s;
-        OrthancStone::Vector v;
+        Vector v;
         if (!source.LookupStringValue(s, Orthanc::DICOM_TAG_PIXEL_SPACING, false) ||
-            !OrthancStone::LinearAlgebra::ParseVector(v, s) ||
+            !LinearAlgebra::ParseVector(v, s) ||
             v.size() != 2 ||
-            !OrthancStone::LinearAlgebra::IsNear(1.2f, v[0]) ||
-            !OrthancStone::LinearAlgebra::IsNear(-1.5f, v[1]))
+            !LinearAlgebra::IsNear(1.2f, v[0]) ||
+            !LinearAlgebra::IsNear(-1.5f, v[1]))
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
                                           "Error in the locale settings, giving up");

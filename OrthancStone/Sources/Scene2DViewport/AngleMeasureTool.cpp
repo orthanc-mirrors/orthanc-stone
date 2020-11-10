@@ -105,7 +105,7 @@ namespace OrthancStone
   }
 
 
-  boost::shared_ptr<OrthancStone::MeasureToolMemento> AngleMeasureTool::GetMemento() const
+  boost::shared_ptr<MeasureToolMemento> AngleMeasureTool::GetMemento() const
   {
     boost::shared_ptr<AngleMeasureToolMemento> memento(new AngleMeasureToolMemento());
     memento->center_ = center_;

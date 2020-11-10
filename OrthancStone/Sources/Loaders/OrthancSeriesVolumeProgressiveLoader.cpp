@@ -36,22 +36,20 @@
 
 namespace OrthancStone
 {
-  using OrthancStone::ILoadersContext;
-
-  class OrthancSeriesVolumeProgressiveLoader::ExtractedSlice : public OrthancStone::DicomVolumeImageMPRSlicer::Slice
+  class OrthancSeriesVolumeProgressiveLoader::ExtractedSlice : public DicomVolumeImageMPRSlicer::Slice
   {
   private:
     const OrthancSeriesVolumeProgressiveLoader&  that_;
 
   public:
     ExtractedSlice(const OrthancSeriesVolumeProgressiveLoader& that,
-                   const OrthancStone::CoordinateSystem3D& plane) :
-      OrthancStone::DicomVolumeImageMPRSlicer::Slice(*that.volume_, plane),
+                   const CoordinateSystem3D& plane) :
+      DicomVolumeImageMPRSlicer::Slice(*that.volume_, plane),
       that_(that)
     {
       if (IsValid())
       {
-        if (GetProjection() == OrthancStone::VolumeProjection_Axial)
+        if (GetProjection() == VolumeProjection_Axial)
         {
           // For coronal and sagittal projections, we take the global
           // revision of the volume because even if a single slice changes,
@@ -61,7 +59,7 @@ namespace OrthancStone
         }
       
         if (that_.strategy_.get() != NULL &&
-            GetProjection() == OrthancStone::VolumeProjection_Axial)
+            GetProjection() == VolumeProjection_Axial)
         {
           that_.strategy_->SetCurrent(GetSliceIndex());
         }
@@ -70,11 +68,11 @@ namespace OrthancStone
   };
     
   void OrthancSeriesVolumeProgressiveLoader::SeriesGeometry::CheckSlice(
-    size_t index, const OrthancStone::DicomInstanceParameters& reference) const
+    size_t index, const DicomInstanceParameters& reference) const
   {
-    const OrthancStone::DicomInstanceParameters& slice = *slices_[index];
+    const DicomInstanceParameters& slice = *slices_[index];
       
-    if (!OrthancStone::GeometryToolbox::IsParallel(
+    if (!GeometryToolbox::IsParallel(
           reference.GetGeometry().GetNormal(),
           slice.GetGeometry().GetNormal()))
     {
@@ -95,8 +93,8 @@ namespace OrthancStone
                                       "The width/height of slices are not constant in the volume image");
     }
 
-    if (!OrthancStone::LinearAlgebra::IsNear(reference.GetPixelSpacingX(), slice.GetPixelSpacingX()) ||
-        !OrthancStone::LinearAlgebra::IsNear(reference.GetPixelSpacingY(), slice.GetPixelSpacingY()))
+    if (!LinearAlgebra::IsNear(reference.GetPixelSpacingX(), slice.GetPixelSpacingX()) ||
+        !LinearAlgebra::IsNear(reference.GetPixelSpacingY(), slice.GetPixelSpacingY()))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadGeometry,
                                       "The pixel spacing of the slices change across the volume image");
@@ -118,7 +116,7 @@ namespace OrthancStone
 
     if (slices_.size() != 0)
     {
-      const OrthancStone::DicomInstanceParameters& reference = *slices_[0];
+      const DicomInstanceParameters& reference = *slices_[0];
 
       for (size_t i = 1; i < slices_.size(); i++)
       {
@@ -162,7 +160,7 @@ namespace OrthancStone
 
   // WARNING: The payload of "slices" must be of class "DicomInstanceParameters"
   // (called with the slices created in LoadGeometry)
-  void OrthancSeriesVolumeProgressiveLoader::SeriesGeometry::ComputeGeometry(OrthancStone::SlicesSorter& slices)
+  void OrthancSeriesVolumeProgressiveLoader::SeriesGeometry::ComputeGeometry(SlicesSorter& slices)
   {
     Clear();
       
@@ -174,7 +172,7 @@ namespace OrthancStone
 
     if (slices.GetSlicesCount() == 0)
     {
-      geometry_.reset(new OrthancStone::VolumeImageGeometry);
+      geometry_.reset(new VolumeImageGeometry);
     }
     else
     {
@@ -183,9 +181,9 @@ namespace OrthancStone
 
       for (size_t i = 0; i < slices.GetSlicesCount(); i++)
       {
-        const OrthancStone::DicomInstanceParameters& slice =
-          dynamic_cast<const OrthancStone::DicomInstanceParameters&>(slices.GetSlicePayload(i));
-        slices_.push_back(new OrthancStone::DicomInstanceParameters(slice));
+        const DicomInstanceParameters& slice =
+          dynamic_cast<const DicomInstanceParameters&>(slices.GetSlicePayload(i));
+        slices_.push_back(new DicomInstanceParameters(slice));
       }
 
       CheckVolume();
@@ -196,9 +194,9 @@ namespace OrthancStone
       {
         LOG(TRACE) << "Computed spacing between slices: " << spacingZ << "mm";
       
-        const OrthancStone::DicomInstanceParameters& parameters = *slices_[0];
+        const DicomInstanceParameters& parameters = *slices_[0];
 
-        geometry_.reset(new OrthancStone::VolumeImageGeometry);
+        geometry_.reset(new VolumeImageGeometry);
         geometry_->SetSizeInVoxels(parameters.GetImageInformation().GetWidth(),
                                    parameters.GetImageInformation().GetHeight(),
                                    static_cast<unsigned int>(slices.GetSlicesCount()));
@@ -215,7 +213,7 @@ namespace OrthancStone
   }
 
 
-  const OrthancStone::VolumeImageGeometry& OrthancSeriesVolumeProgressiveLoader::SeriesGeometry::GetImageGeometry() const
+  const VolumeImageGeometry& OrthancSeriesVolumeProgressiveLoader::SeriesGeometry::GetImageGeometry() const
   {
     if (!HasGeometry())
     {
@@ -230,7 +228,7 @@ namespace OrthancStone
   }
 
 
-  const OrthancStone::DicomInstanceParameters& OrthancSeriesVolumeProgressiveLoader::SeriesGeometry::GetSliceParameters(size_t index) const
+  const DicomInstanceParameters& OrthancSeriesVolumeProgressiveLoader::SeriesGeometry::GetSliceParameters(size_t index) const
   {
     CheckSliceIndex(index);
     return *slices_[index];
@@ -251,7 +249,7 @@ namespace OrthancStone
   }
 
 
-  static unsigned int GetSliceIndexPayload(const OrthancStone::OracleCommandBase& command)
+  static unsigned int GetSliceIndexPayload(const OracleCommandBase& command)
   {
     assert(command.HasPayload());
     return dynamic_cast< const Orthanc::SingleValueObject<unsigned int>& >(command.GetPayload()).GetValue();
@@ -272,7 +270,7 @@ namespace OrthancStone
                        << "OrthancSeriesVolumeProgressiveLoader::ScheduleNextSliceDownload");
       }
 
-      const OrthancStone::DicomInstanceParameters& slice = seriesGeometry_.GetSliceParameters(sliceIndex);
+      const DicomInstanceParameters& slice = seriesGeometry_.GetSliceParameters(sliceIndex);
           
       const std::string& instance = slice.GetOrthancInstanceIdentifier();
       if (instance.empty())
@@ -280,11 +278,11 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
 
-      std::unique_ptr<OrthancStone::OracleCommandBase> command;
+      std::unique_ptr<OracleCommandBase> command;
         
       if (!progressiveQuality_ || quality == QUALITY_02)
       {
-        std::unique_ptr<OrthancStone::GetOrthancImageCommand> tmp(new OrthancStone::GetOrthancImageCommand);
+        std::unique_ptr<GetOrthancImageCommand> tmp(new GetOrthancImageCommand);
         // TODO: review the following comment. 
         // - Commented out by bgo on 2019-07-19 | reason: Alain has seen cases 
         //   where gzipping the uint16 image took 11 sec to produce 5mb. 
@@ -304,8 +302,8 @@ namespace OrthancStone
       }
       else // progressive mode is true AND quality is not final (different from QUALITY_02
       {
-        std::unique_ptr<OrthancStone::GetOrthancWebViewerJpegCommand> tmp(
-          new OrthancStone::GetOrthancWebViewerJpegCommand);
+        std::unique_ptr<GetOrthancWebViewerJpegCommand> tmp(
+          new GetOrthancWebViewerJpegCommand);
 
         // TODO: review the following comment. Commented out by bgo on 2019-07-19
         // (gzip for jpeg seems overkill)
@@ -322,7 +320,7 @@ namespace OrthancStone
       command->AcquirePayload(new Orthanc::SingleValueObject<unsigned int>(sliceIndex));
       
       {
-        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext_.Lock());
+        std::unique_ptr<ILoadersContext::ILock> lock(loadersContext_.Lock());
         boost::shared_ptr<IObserver> observer(GetSharedObserver());
         lock->Schedule(observer, sliceSchedulingPriority_, command.release());
       }
@@ -338,7 +336,7 @@ namespace OrthancStone
 /**
    This is called in response to GET "/series/XXXXXXXXXXXXX/instances-tags"
 */
-  void OrthancSeriesVolumeProgressiveLoader::LoadGeometry(const OrthancStone::OrthancRestApiCommand::SuccessMessage& message)
+  void OrthancSeriesVolumeProgressiveLoader::LoadGeometry(const OrthancRestApiCommand::SuccessMessage& message)
   {
     Json::Value body;
     message.ParseJsonBody(body);
@@ -351,18 +349,18 @@ namespace OrthancStone
     {
       Json::Value::Members instances = body.getMemberNames();
 
-      OrthancStone::SlicesSorter slices;
+      SlicesSorter slices;
         
       for (size_t i = 0; i < instances.size(); i++)
       {
         Orthanc::DicomMap dicom;
         dicom.FromDicomAsJson(body[instances[i]]);
 
-        std::unique_ptr<OrthancStone::DicomInstanceParameters> instance(new OrthancStone::DicomInstanceParameters(dicom));
+        std::unique_ptr<DicomInstanceParameters> instance(new DicomInstanceParameters(dicom));
         instance->SetOrthancInstanceIdentifier(instances[i]);
 
         // the 3D plane corresponding to the slice
-        OrthancStone::CoordinateSystem3D geometry = instance->GetGeometry();
+        CoordinateSystem3D geometry = instance->GetGeometry();
         slices.AddSlice(geometry, instance.release());
 
         if (slicePostProcessor_)
@@ -380,7 +378,7 @@ namespace OrthancStone
     }
     else
     {
-      const OrthancStone::DicomInstanceParameters& parameters = seriesGeometry_.GetSliceParameters(0);
+      const DicomInstanceParameters& parameters = seriesGeometry_.GetSliceParameters(0);
         
       volume_->Initialize(seriesGeometry_.GetImageGeometry(), parameters.GetExpectedPixelFormat());
       volume_->SetDicomParameters(parameters);
@@ -392,7 +390,7 @@ namespace OrthancStone
       if (progressiveQuality_)
         maxQuality = QUALITY_02;
 
-      strategy_.reset(new OrthancStone::BasicFetchingStrategy(
+      strategy_.reset(new BasicFetchingStrategy(
         sorter_->CreateSorter(static_cast<unsigned int>(slicesCount)),
         maxQuality));
 
@@ -405,7 +403,7 @@ namespace OrthancStone
 
     slicesQuality_.resize(slicesCount, 0);
 
-    BroadcastMessage(OrthancStone::DicomVolumeImage::GeometryReadyMessage(*volume_));
+    BroadcastMessage(DicomVolumeImage::GeometryReadyMessage(*volume_));
   }
 
 
@@ -425,8 +423,8 @@ namespace OrthancStone
     if (quality >= slicesQuality_[sliceIndex])
     {
       {
-        OrthancStone::ImageBuffer3D::SliceWriter writer(volume_->GetPixelData(), 
-                                                        OrthancStone::VolumeProjection_Axial, 
+        ImageBuffer3D::SliceWriter writer(volume_->GetPixelData(), 
+                                                        VolumeProjection_Axial, 
                                                         sliceIndex);
         
         Orthanc::ImageProcessing::Copy(writer.GetAccessor(), image);
@@ -436,7 +434,7 @@ namespace OrthancStone
       seriesGeometry_.IncrementSliceRevision(sliceIndex);
       slicesQuality_[sliceIndex] = quality;
 
-      BroadcastMessage(OrthancStone::DicomVolumeImage::ContentUpdatedMessage(*volume_));
+      BroadcastMessage(DicomVolumeImage::ContentUpdatedMessage(*volume_));
     }
     LOG(TRACE) << "SetSliceContent sliceIndex = " << sliceIndex << " -- will "
       << " now call ScheduleNextSliceDownload()";
@@ -444,7 +442,7 @@ namespace OrthancStone
   }
 
   void OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent(
-    const OrthancStone::GetOrthancImageCommand::SuccessMessage& message)
+    const GetOrthancImageCommand::SuccessMessage& message)
   {
     unsigned int quality = QUALITY_00;
     if (progressiveQuality_)
@@ -456,7 +454,7 @@ namespace OrthancStone
   }
 
   void OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent(
-    const OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage& message)
+    const GetOrthancWebViewerJpegCommand::SuccessMessage& message)
   {
     ORTHANC_ASSERT(progressiveQuality_, "INTERNAL ERROR: OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent"
                    << " called while progressiveQuality_ is false!");
@@ -464,7 +462,7 @@ namespace OrthancStone
     LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent";
     unsigned int quality;
       
-    switch (dynamic_cast<const OrthancStone::GetOrthancWebViewerJpegCommand&>(message.GetOrigin()).GetQuality())
+    switch (dynamic_cast<const GetOrthancWebViewerJpegCommand&>(message.GetOrigin()).GetQuality())
     {
       case 50:
         quality = QUALITY_00;
@@ -509,15 +507,15 @@ namespace OrthancStone
   }
 
   OrthancSeriesVolumeProgressiveLoader::OrthancSeriesVolumeProgressiveLoader(
-    OrthancStone::ILoadersContext& loadersContext,
-    boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+    ILoadersContext& loadersContext,
+    boost::shared_ptr<DicomVolumeImage> volume,
     bool progressiveQuality)
     : loadersContext_(loadersContext)
     , active_(false)
     , progressiveQuality_(progressiveQuality)
     , simultaneousDownloads_(4)
     , volume_(volume)
-    , sorter_(new OrthancStone::BasicFetchingItemsSorter::Factory)
+    , sorter_(new BasicFetchingItemsSorter::Factory)
     , volumeImageReadyInHighQuality_(false)
     , medadataSchedulingPriority_(0)
     , sliceSchedulingPriority_(0)
@@ -526,25 +524,25 @@ namespace OrthancStone
 
   boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> 
     OrthancSeriesVolumeProgressiveLoader::Create(
-      OrthancStone::ILoadersContext& loadersContext,
-      boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+      ILoadersContext& loadersContext,
+      boost::shared_ptr<DicomVolumeImage> volume,
       bool progressiveQuality)
   {
-    std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext.Lock());
+    std::unique_ptr<ILoadersContext::ILock> lock(loadersContext.Lock());
 
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> obj(
         new OrthancSeriesVolumeProgressiveLoader(
           loadersContext, volume, progressiveQuality));
 
-    obj->Register<OrthancStone::OrthancRestApiCommand::SuccessMessage>(
+    obj->Register<OrthancRestApiCommand::SuccessMessage>(
       lock->GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadGeometry);
 
-    obj->Register<OrthancStone::GetOrthancImageCommand::SuccessMessage>(
+    obj->Register<GetOrthancImageCommand::SuccessMessage>(
       lock->GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent);
 
-    obj->Register<OrthancStone::GetOrthancWebViewerJpegCommand::SuccessMessage>(
+    obj->Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(
       lock->GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent);
 
@@ -586,10 +584,10 @@ namespace OrthancStone
     {
       active_ = true;
 
-      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+      std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetUri("/series/" + seriesId + "/instances-tags");
       {
-        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(loadersContext_.Lock());
+        std::unique_ptr<ILoadersContext::ILock> lock(loadersContext_.Lock());
         boost::shared_ptr<IObserver> observer(GetSharedObserver());
         lock->Schedule(observer, medadataSchedulingPriority_, command.release());
       }
@@ -597,8 +595,8 @@ namespace OrthancStone
   }
   
 
-  OrthancStone::IVolumeSlicer::IExtractedSlice* 
-  OrthancSeriesVolumeProgressiveLoader::ExtractSlice(const OrthancStone::CoordinateSystem3D& cuttingPlane)
+  IVolumeSlicer::IExtractedSlice* 
+  OrthancSeriesVolumeProgressiveLoader::ExtractSlice(const CoordinateSystem3D& cuttingPlane)
   {
     if (volume_->HasGeometry())
     {

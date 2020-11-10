@@ -135,13 +135,11 @@ namespace OrthancStone
     boost::weak_ptr<RtViewerApp> app_;
     boost::shared_ptr<VolumeSceneLayerSource>  ctVolumeLayerSource_, doseVolumeLayerSource_, structLayerSource_;
 
-  // collection of cutting planes for this particular view
-    std::vector<OrthancStone::CoordinateSystem3D>       planes_;
-    size_t                                              currentPlane_;
-
-    VolumeProjection                                    projection_;
-
-    std::map<std::string, std::string> infoTextMap_;
+    // collection of cutting planes for this particular view
+    std::vector<CoordinateSystem3D>       planes_;
+    size_t                                currentPlane_;
+    VolumeProjection                      projection_;
+    std::map<std::string, std::string>    infoTextMap_;
 
     int FLOATING_INFOTEXT_LAYER_ZINDEX;
     int FIXED_INFOTEXT_LAYER_ZINDEX;

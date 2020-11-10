@@ -91,8 +91,8 @@ namespace OrthancStone
           if (message.GetResources()->GetResource(i).LookupStringValue
               (seriesInstanceUid, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false))
           {
-            boost::shared_ptr<OrthancStone::LoadedDicomResources> target
-              (new OrthancStone::LoadedDicomResources(Orthanc::DICOM_TAG_SOP_INSTANCE_UID));
+            boost::shared_ptr<LoadedDicomResources> target
+              (new LoadedDicomResources(Orthanc::DICOM_TAG_SOP_INSTANCE_UID));
 
             if (loader_->ScheduleLoadDicomFile(target, message.GetPriority(), message.GetDicomSource(), dicomDirPath_, 
                                                message.GetResources()->GetResource(i), false /* no need for pixel data */,
@@ -102,7 +102,7 @@ namespace OrthancStone
               if (found == seriesSize_.end())
               {
                 series_[seriesInstanceUid].reset
-                  (new OrthancStone::LoadedDicomResources(Orthanc::DICOM_TAG_SOP_INSTANCE_UID));
+                  (new LoadedDicomResources(Orthanc::DICOM_TAG_SOP_INSTANCE_UID));
                 seriesSize_[seriesInstanceUid] = 1;
               }
               else

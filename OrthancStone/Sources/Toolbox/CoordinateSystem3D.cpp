@@ -235,8 +235,7 @@ namespace OrthancStone
   {
     bool opposite = false;   // Ignored
 
-    if (OrthancStone::GeometryToolbox::IsParallelOrOpposite(
-          opposite, a.GetNormal(), b.GetNormal()))
+    if (GeometryToolbox::IsParallelOrOpposite(opposite, a.GetNormal(), b.GetNormal()))
     {
       distance = std::abs(a.ProjectAlongNormal(a.GetOrigin()) -
                           a.ProjectAlongNormal(b.GetOrigin()));

@@ -68,8 +68,7 @@ namespace OrthancStone
   }
 
 
-  DicomInstanceParameters::Data::Data(const Orthanc::DicomMap& dicom) :
-    imageInformation_(dicom)
+  DicomInstanceParameters::Data::Data(const Orthanc::DicomMap& dicom)
   {
     if (!dicom.LookupStringValue(studyInstanceUid_, Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, false) ||
         !dicom.LookupStringValue(seriesInstanceUid_, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false) ||
@@ -206,6 +205,25 @@ namespace OrthancStone
   }
 
 
+  const Orthanc::DicomImageInformation& DicomInstanceParameters::GetImageInformation() const
+  {
+    assert(tags_.get() != NULL);
+    
+    if (imageInformation_.get() == NULL)
+    {
+      const_cast<DicomInstanceParameters&>(*this).imageInformation_.
+        reset(new Orthanc::DicomImageInformation(GetTags()));
+
+      assert(imageInformation_->GetWidth() == GetWidth());
+      assert(imageInformation_->GetHeight() == GetHeight());
+      assert(imageInformation_->GetNumberOfFrames() == GetNumberOfFrames());
+    }
+
+    assert(imageInformation_.get() != NULL);
+    return *imageInformation_;
+  }
+  
+
   CoordinateSystem3D  DicomInstanceParameters::GetFrameGeometry(unsigned int frame) const
   {
     if (frame >= data_.numberOfFrames_)
@@ -253,7 +271,7 @@ namespace OrthancStone
   bool DicomInstanceParameters::IsColor() const
   {
     Orthanc::PhotometricInterpretation photometric =
-      data_.imageInformation_.GetPhotometricInterpretation();
+      GetImageInformation().GetPhotometricInterpretation();
     
     return (photometric != Orthanc::PhotometricInterpretation_Monochrome1 &&
             photometric != Orthanc::PhotometricInterpretation_Monochrome2);
@@ -465,7 +483,7 @@ namespace OrthancStone
                                     data_.defaultWindowingWidth_);
       }
       
-      switch (data_.imageInformation_.GetPhotometricInterpretation())
+      switch (GetImageInformation().GetPhotometricInterpretation())
       {
         case Orthanc::PhotometricInterpretation_Monochrome1:
           texture->SetInverted(true);

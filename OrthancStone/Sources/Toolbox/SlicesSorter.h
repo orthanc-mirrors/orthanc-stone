@@ -28,7 +28,7 @@
 
 namespace OrthancStone
 {
-  // TODO - Rename this as "PlanesSorter"
+  // TODO - Replace this with "SortedFrames"
   class SlicesSorter : public boost::noncopyable
   {
   private:

@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "../StoneEnumerations.h"
 #include "../Scene2D/LookupTableTextureSceneLayer.h"
+#include "../StoneEnumerations.h"
 #include "../Toolbox/CoordinateSystem3D.h"
 
 #include <IDynamicObject.h>
@@ -39,48 +39,51 @@ namespace OrthancStone
   private:
     struct Data   // Plain old struct to ease the copy constructor
     {
-      std::string                       orthancInstanceId_;
-      std::string                       studyInstanceUid_;
-      std::string                       seriesInstanceUid_;
-      std::string                       sopInstanceUid_;
-      Orthanc::DicomImageInformation    imageInformation_;  // TODO REMOVE
-      SopClassUid                       sopClassUid_;
-      unsigned int                      numberOfFrames_;
-      unsigned int                      width_;
-      unsigned int                      height_;
-      double                            sliceThickness_;
-      double                            pixelSpacingX_;
-      double                            pixelSpacingY_;
-      CoordinateSystem3D                geometry_;
-      Vector                            frameOffsets_;
-      bool                              hasRescale_;
-      double                            rescaleIntercept_;
-      double                            rescaleSlope_;
-      bool                              hasDefaultWindowing_;
-      float                             defaultWindowingCenter_;
-      float                             defaultWindowingWidth_;
-      bool                              hasIndexInSeries_;
-      unsigned int                      indexInSeries_;
-      std::string                       doseUnits_;
-      double                            doseGridScaling_;
+      std::string         orthancInstanceId_;
+      std::string         studyInstanceUid_;
+      std::string         seriesInstanceUid_;
+      std::string         sopInstanceUid_;
+      SopClassUid         sopClassUid_;
+      unsigned int        numberOfFrames_;
+      unsigned int        width_;
+      unsigned int        height_;
+      double              sliceThickness_;
+      double              pixelSpacingX_;
+      double              pixelSpacingY_;
+      CoordinateSystem3D  geometry_;
+      Vector              frameOffsets_;
+      bool                hasRescale_;
+      double              rescaleIntercept_;
+      double              rescaleSlope_;
+      bool                hasDefaultWindowing_;
+      float               defaultWindowingCenter_;
+      float               defaultWindowingWidth_;
+      bool                hasIndexInSeries_;
+      unsigned int        indexInSeries_;
+      std::string         doseUnits_;
+      double              doseGridScaling_;
 
       explicit Data(const Orthanc::DicomMap& dicom);
     };
 
     
-    Data  data_;
+    Data                                             data_;
+    std::unique_ptr<Orthanc::DicomMap>               tags_;
+    std::unique_ptr<Orthanc::DicomImageInformation>  imageInformation_;  // Lazy evaluation
 
     void ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
                                     bool useDouble) const;
 
   public:
     explicit DicomInstanceParameters(const DicomInstanceParameters& other) :
-      data_(other.data_)
+      data_(other.data_),
+      tags_(other.tags_->Clone())
     {
     }
 
     explicit DicomInstanceParameters(const Orthanc::DicomMap& dicom) :
-      data_(dicom)
+      data_(dicom),
+      tags_(dicom.Clone())
     {
     }
 
@@ -99,9 +102,9 @@ namespace OrthancStone
       return data_.orthancInstanceId_;
     }
 
-    const Orthanc::DicomImageInformation& GetImageInformation() const
+    const Orthanc::DicomMap& GetTags() const
     {
-      return data_.imageInformation_;
+      return *tags_;
     }
 
     const std::string& GetStudyInstanceUid() const
@@ -158,6 +161,9 @@ namespace OrthancStone
     {
       return data_.geometry_;
     }
+
+    // WARNING - Calling this method can throw exception
+    const Orthanc::DicomImageInformation& GetImageInformation() const;
 
     CoordinateSystem3D GetFrameGeometry(unsigned int frame) const;
 

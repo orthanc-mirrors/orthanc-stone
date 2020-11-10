@@ -45,7 +45,7 @@ namespace OrthancStone
       std::string                       sopInstanceUid_;
       Orthanc::DicomImageInformation    imageInformation_;
       SopClassUid                       sopClassUid_;
-      double                            thickness_;
+      double                            sliceThickness_;
       double                            pixelSpacingX_;
       double                            pixelSpacingY_;
       CoordinateSystem3D                geometry_;
@@ -63,7 +63,7 @@ namespace OrthancStone
       std::string                       doseUnits_;
       double                            doseGridScaling_;
 
-      void ComputeDoseOffsets(const Orthanc::DicomMap& dicom);
+      void ExtractFrameOffsets(const Orthanc::DicomMap& dicom);
 
       explicit Data(const Orthanc::DicomMap& dicom);
 
@@ -135,9 +135,9 @@ namespace OrthancStone
       return data_.sopClassUid_;
     }
 
-    double GetThickness() const
+    double GetSliceThickness() const
     {
-      return data_.thickness_;
+      return data_.sliceThickness_;
     }
 
     double GetPixelSpacingX() const

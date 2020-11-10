@@ -36,36 +36,27 @@
 
 namespace OrthancStone
 {
-  void DicomInstanceParameters::Data::ComputeDoseOffsets(const Orthanc::DicomMap& dicom)
+  void DicomInstanceParameters::Data::ExtractFrameOffsets(const Orthanc::DicomMap& dicom)
   {
     // http://dicom.nema.org/medical/Dicom/2016a/output/chtml/part03/sect_C.8.8.3.2.html
 
-    {
-      std::string increment;
+    std::string increment;
 
-      if (dicom.LookupStringValue(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
+    if (dicom.LookupStringValue(increment, Orthanc::DICOM_TAG_FRAME_INCREMENT_POINTER, false))
+    {
+      Orthanc::Toolbox::ToUpperCase(increment);
+      if (increment != "3004,000C")  // This is the "Grid Frame Offset Vector" tag (DICOM_TAG_GRID_FRAME_OFFSET_VECTOR)
       {
-        Orthanc::Toolbox::ToUpperCase(increment);
-        if (increment != "3004,000C")  // This is the "Grid Frame Offset Vector" tag (DICOM_TAG_GRID_FRAME_OFFSET_VECTOR)
-        {
-          LOG(ERROR) << "RT-DOSE: Bad value for the \"FrameIncrementPointer\" tag";
-          return;
-        }
+        LOG(WARNING) << "Bad value for the FrameIncrementPointer tags in a multiframe image";
+        return;
       }
     }
 
     if (!LinearAlgebra::ParseVector(frameOffsets_, dicom, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR) ||
-        frameOffsets_.size() < imageInformation_.GetNumberOfFrames())
+        frameOffsets_.size() != imageInformation_.GetNumberOfFrames())
     {
-      LOG(ERROR) << "RT-DOSE: No information about the 3D location of some slice(s)";
+      LOG(INFO) << "The frame offset information is missing in a multiframe image";
       frameOffsets_.clear();
-    }
-    else
-    {
-      if (frameOffsets_.size() >= 2)
-      {
-        thickness_ = std::abs(frameOffsets_[1] - frameOffsets_[0]);
-      }
     }
   }
 
@@ -95,9 +86,9 @@ namespace OrthancStone
       sopClassUid_ = StringToSopClassUid(s);
     }
 
-    if (!dicom.ParseDouble(thickness_, Orthanc::DICOM_TAG_SLICE_THICKNESS))
+    if (!dicom.ParseDouble(sliceThickness_, Orthanc::DICOM_TAG_SLICE_THICKNESS))
     {
-      thickness_ = 100.0 * std::numeric_limits<double>::epsilon();
+      sliceThickness_ = 100.0 * std::numeric_limits<double>::epsilon();
     }
 
     GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, dicom);
@@ -109,16 +100,16 @@ namespace OrthancStone
       geometry_ = CoordinateSystem3D(position, orientation);
     }
 
+    ExtractFrameOffsets(dicom);
+
     if (sopClassUid_ == SopClassUid_RTDose)
     {
-      ComputeDoseOffsets(dicom);
-
       static const Orthanc::DicomTag DICOM_TAG_DOSE_UNITS(0x3004, 0x0002);
 
       if (!dicom.LookupStringValue(doseUnits_, DICOM_TAG_DOSE_UNITS, false))
       {
         LOG(ERROR) << "Tag DoseUnits (0x3004, 0x0002) is missing in " << sopInstanceUid_;
-        doseUnits_ = "";
+        doseUnits_.clear();
       }
     }
 
@@ -178,6 +169,8 @@ namespace OrthancStone
       defaultWindowingWidth_  = 0;
     }
 
+    expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;  // Rough guess
+    
     if (sopClassUid_ == SopClassUid_RTDose)
     {
       switch (imageInformation_.GetBitsStored())
@@ -191,7 +184,7 @@ namespace OrthancStone
           break;
 
         default:
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+          break;
       } 
     }
     else if (isColor_)
@@ -201,10 +194,6 @@ namespace OrthancStone
     else if (imageInformation_.IsSigned())
     {
       expectedPixelFormat_ = Orthanc::PixelFormat_SignedGrayscale16;
-    }
-    else
-    {
-      expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
     }
 
     // This computes the "IndexInSeries" metadata from Orthanc (check
@@ -225,21 +214,18 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-    else if (sopClassUid_ == SopClassUid_RTDose)
+    else if (frameOffsets_.empty())
     {
-      if (frame >= frameOffsets_.size())
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }
+      return geometry_;
+    }
+    else
+    {
+      assert(frameOffsets_.size() == imageInformation_.GetNumberOfFrames());
 
       return CoordinateSystem3D(
         geometry_.GetOrigin() + frameOffsets_[frame] * geometry_.GetNormal(),
         geometry_.GetAxisX(),
         geometry_.GetAxisY());
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
     }
   }
 
@@ -262,7 +248,7 @@ namespace OrthancStone
     double distance;
 
     return (CoordinateSystem3D::ComputeDistance(distance, tmp, plane) &&
-            distance <= thickness_ / 2.0);
+            distance <= sliceThickness_ / 2.0);
   }
 
   void DicomInstanceParameters::Data::ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
@@ -282,7 +268,8 @@ namespace OrthancStone
       offset = rescaleIntercept_;
     }
 
-    if ( (factor != 1.0) || (offset != 0.0) )
+    if (!LinearAlgebra::IsNear(factor, 1) ||
+        !LinearAlgebra::IsNear(offset, 0))
     {
       const unsigned int width = image.GetWidth();
       const unsigned int height = image.GetHeight();
@@ -371,9 +358,9 @@ namespace OrthancStone
   Orthanc::ImageAccessor* DicomInstanceParameters::ConvertToFloat(const Orthanc::ImageAccessor& pixelData) const
   {
     std::unique_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_Float32, 
-                                                               pixelData.GetWidth(), 
-                                                               pixelData.GetHeight(),
-                                                               false));
+                                                                 pixelData.GetWidth(), 
+                                                                 pixelData.GetHeight(),
+                                                                 false));
     Orthanc::ImageProcessing::Convert(*converted, pixelData);
 
                                                    
@@ -438,16 +425,18 @@ namespace OrthancStone
                                     data_.defaultWindowingWidth_);
       }
       
+      switch (data_.imageInformation_.GetPhotometricInterpretation())
+      {
+        case Orthanc::PhotometricInterpretation_Monochrome1:
+          texture->SetInverted(true);
+          break;
+          
+        case Orthanc::PhotometricInterpretation_Monochrome2:
+          texture->SetInverted(false);
+          break;
 
-      if (data_.imageInformation_.GetPhotometricInterpretation()
-        == Orthanc::PhotometricInterpretation_Monochrome1)
-      {
-        texture->SetInverted(true);
-      }
-      else if (data_.imageInformation_.GetPhotometricInterpretation()
-        == Orthanc::PhotometricInterpretation_Monochrome2)
-      {
-        texture->SetInverted(false);
+        default:
+          break;
       }
 
       return texture.release();

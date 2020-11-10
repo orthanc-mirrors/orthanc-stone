@@ -208,7 +208,7 @@ namespace OrthancStone
     switch (parameters.GetSopClassUid())
     {
       case OrthancStone::SopClassUid_RTDose:
-        spacingZ = parameters.GetThickness();
+        spacingZ = parameters.GetSliceThickness();
         break;
 
       default:

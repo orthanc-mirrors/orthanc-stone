@@ -138,9 +138,6 @@ namespace OrthancStone
       }
     }
 
-    isColor_ = (imageInformation_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome1 &&
-                imageInformation_.GetPhotometricInterpretation() != Orthanc::PhotometricInterpretation_Monochrome2);
-
     if (dicom.ParseDouble(rescaleIntercept_, Orthanc::DICOM_TAG_RESCALE_INTERCEPT) &&
         dicom.ParseDouble(rescaleSlope_, Orthanc::DICOM_TAG_RESCALE_SLOPE))
     {
@@ -194,33 +191,6 @@ namespace OrthancStone
       defaultWindowingWidth_  = 0;
     }
 
-    expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;  // Rough guess
-    
-    if (sopClassUid_ == SopClassUid_RTDose)
-    {
-      switch (imageInformation_.GetBitsStored())
-      {
-        case 16:
-          expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale16;
-          break;
-
-        case 32:
-          expectedPixelFormat_ = Orthanc::PixelFormat_Grayscale32;
-          break;
-
-        default:
-          break;
-      } 
-    }
-    else if (isColor_)
-    {
-      expectedPixelFormat_ = Orthanc::PixelFormat_RGB24;
-    }
-    else if (imageInformation_.IsSigned())
-    {
-      expectedPixelFormat_ = Orthanc::PixelFormat_SignedGrayscale16;
-    }
-
     // This computes the "IndexInSeries" metadata from Orthanc (check
     // out "Orthanc::ServerIndex::Store()")
     hasIndexInSeries_ = (
@@ -271,6 +241,17 @@ namespace OrthancStone
     return (CoordinateSystem3D::ComputeDistance(distance, tmp, plane) &&
             distance <= data_.sliceThickness_ / 2.0);
   }
+
+
+  bool DicomInstanceParameters::IsColor() const
+  {
+    Orthanc::PhotometricInterpretation photometric =
+      data_.imageInformation_.GetPhotometricInterpretation();
+    
+    return (photometric != Orthanc::PhotometricInterpretation_Monochrome1 &&
+            photometric != Orthanc::PhotometricInterpretation_Monochrome2);
+  }
+
 
   void DicomInstanceParameters::ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
                                                            bool useDouble) const
@@ -344,6 +325,37 @@ namespace OrthancStone
     {
       LOG(ERROR) << "DicomInstanceParameters::GetRescaleSlope(): !data_.hasRescale_";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+
+
+  Orthanc::PixelFormat DicomInstanceParameters::GetExpectedPixelFormat() const
+  {
+    if (GetSopClassUid() == SopClassUid_RTDose)
+    {
+      switch (GetImageInformation().GetBitsStored())
+      {
+        case 16:
+          return Orthanc::PixelFormat_Grayscale16;
+
+        case 32:
+          return Orthanc::PixelFormat_Grayscale32;
+
+        default:
+          return Orthanc::PixelFormat_Grayscale16;  // Rough guess
+      } 
+    }
+    else if (IsColor())
+    {
+      return Orthanc::PixelFormat_RGB24;
+    }
+    else if (GetImageInformation().IsSigned())
+    {
+      return Orthanc::PixelFormat_SignedGrayscale16;
+    }
+    else
+    {
+      return Orthanc::PixelFormat_Grayscale16;  // Rough guess
     }
   }
 

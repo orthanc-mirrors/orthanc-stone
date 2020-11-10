@@ -53,14 +53,12 @@ namespace OrthancStone
       double                            pixelSpacingY_;
       CoordinateSystem3D                geometry_;
       Vector                            frameOffsets_;
-      bool                              isColor_;   // TODO REMOVE
       bool                              hasRescale_;
       double                            rescaleIntercept_;
       double                            rescaleSlope_;
       bool                              hasDefaultWindowing_;
       float                             defaultWindowingCenter_;
       float                             defaultWindowingWidth_;
-      Orthanc::PixelFormat              expectedPixelFormat_;  // TODO REMOVE
       bool                              hasIndexInSeries_;
       unsigned int                      indexInSeries_;
       std::string                       doseUnits_;
@@ -166,10 +164,7 @@ namespace OrthancStone
     bool IsPlaneWithinSlice(unsigned int frame,
                             const CoordinateSystem3D& plane) const;
 
-    bool IsColor() const
-    {
-      return data_.isColor_;
-    }
+    bool IsColor() const;
 
     bool HasRescale() const
     {
@@ -189,10 +184,7 @@ namespace OrthancStone
 
     float GetDefaultWindowingWidth() const;
 
-    Orthanc::PixelFormat GetExpectedPixelFormat() const
-    {
-      return data_.expectedPixelFormat_;
-    }
+    Orthanc::PixelFormat GetExpectedPixelFormat() const;
 
     Orthanc::ImageAccessor* ConvertToFloat(const Orthanc::ImageAccessor& pixelData) const;
     

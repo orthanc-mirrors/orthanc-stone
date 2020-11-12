@@ -62,6 +62,7 @@ namespace OrthancStone
       unsigned int        indexInSeries_;
       std::string         doseUnits_;
       double              doseGridScaling_;
+      std::string         frameOfReferenceUid_;
 
       explicit Data(const Orthanc::DicomMap& dicom);
     };
@@ -224,5 +225,10 @@ namespace OrthancStone
 
     // Required for RT-DOSE
     bool ComputeRegularSpacing(double& target) const;
+
+    const std::string& GetFrameOfReferenceUid() const
+    {
+      return data_.frameOfReferenceUid_;
+    }
   };
 }

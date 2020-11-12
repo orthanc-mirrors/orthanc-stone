@@ -202,6 +202,12 @@ namespace OrthancStone
     hasIndexInSeries_ = (
       dicom.ParseUnsignedInteger32(indexInSeries_, Orthanc::DICOM_TAG_INSTANCE_NUMBER) ||
       dicom.ParseUnsignedInteger32(indexInSeries_, Orthanc::DICOM_TAG_IMAGE_INDEX));
+
+    if (!dicom.LookupStringValue(
+          frameOfReferenceUid_, Orthanc::DICOM_TAG_FRAME_OF_REFERENCE_UID, false))
+    {
+      frameOfReferenceUid_.clear();
+    }
   }
 
 

@@ -826,6 +826,69 @@ public:
 
 
 
+// Coordinates of the clipped line for "instance1" (out)
+static bool GetReferenceLineCoordinates(double& x1,
+                                        double& y1,
+                                        double& x2,
+                                        double& y2,
+                                        const OrthancStone::DicomInstanceParameters& instance1,
+                                        unsigned int frame1,
+                                        const OrthancStone::DicomInstanceParameters& instance2,
+                                        unsigned int frame2)
+{
+  if (instance1.GetWidth() == 0 &&
+      instance1.GetHeight() == 0)
+  {
+    return false;
+  }
+  else
+  {
+    /**
+     * Compute the 2D extent of the "instance1", expressed in
+     * centimeters, in the 2D plane defined by this DICOM instance.
+     *
+     * In a multiframe image (cf. "ExtractFrameOffsets()"), the plane of
+     * each frame is a translation of the plane of the first frame along
+     * its normal. As a consequence, the extent is the same for each
+     * frame, so we can ignore the frame number.
+     **/
+    OrthancStone::Extent2D extent;
+
+    double ox = -instance1.GetPixelSpacingX() / 2.0;
+    double oy = -instance1.GetPixelSpacingY() / 2.0;
+    extent.AddPoint(ox, oy);
+    extent.AddPoint(ox + instance1.GetPixelSpacingX() * static_cast<double>(instance1.GetWidth()),
+                    oy + instance1.GetPixelSpacingY() * static_cast<double>(instance1.GetHeight()));
+
+    const OrthancStone::CoordinateSystem3D c1 = instance1.GetFrameGeometry(frame1);
+    const OrthancStone::CoordinateSystem3D c2 = instance2.GetFrameGeometry(frame2);
+  
+    OrthancStone::Vector direction, origin;
+  
+    if (!extent.IsEmpty() &&
+        instance1.GetFrameOfReferenceUid() == instance1.GetFrameOfReferenceUid() &&
+        OrthancStone::GeometryToolbox::IntersectTwoPlanes(origin, direction,
+                                                          c1.GetOrigin(), c1.GetNormal(),
+                                                          c2.GetOrigin(), c2.GetNormal()))
+    {
+      double ax, ay, bx, by;
+      c1.ProjectPoint(ax, ay, origin);
+      c1.ProjectPoint(bx, by, origin + 100.0 * direction);
+    
+      return OrthancStone::GeometryToolbox::ClipLineToRectangle(
+        x1, y1, x2, y2,
+        ax, ay, bx, by,
+        extent.GetX1(), extent.GetY1(), extent.GetX2(), extent.GetY2());
+    }
+    else
+    {
+      return false;
+    }
+  }
+}
+
+
+
 class FrameExtent
 {
 private:

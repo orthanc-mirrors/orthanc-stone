@@ -826,7 +826,11 @@ public:
 
 
 
-// Coordinates of the clipped line for "instance1" (out)
+/**
+ * Returns a clipped line (out: x1, y1, x2, y2), in the coordinate
+ * system of "instance1". Note that the frame of reference UID is not
+ * checked by this function.
+ **/
 static bool GetReferenceLineCoordinates(double& x1,
                                         double& y1,
                                         double& x2,
@@ -864,7 +868,6 @@ static bool GetReferenceLineCoordinates(double& x1,
     OrthancStone::Vector direction, origin;
   
     if (!extent.IsEmpty() &&
-        instance1.GetFrameOfReferenceUid() == instance1.GetFrameOfReferenceUid() &&
         OrthancStone::GeometryToolbox::IntersectTwoPlanes(origin, direction,
                                                           c1.GetOrigin(), c1.GetNormal(),
                                                           plane2.GetOrigin(), plane2.GetNormal()))
@@ -1837,6 +1840,20 @@ public:
     }
   }
 
+  bool GetCurrentFrameOfReferenceUid(std::string& frameOfReferenceUid) const
+  {
+    if (cursor_.get() != NULL &&
+        frames_.get() != NULL)
+    {
+      frameOfReferenceUid = frames_->GetInstanceOfFrame(cursor_->GetCurrentIndex()).GetFrameOfReferenceUid();
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
   bool GetCurrentPlane(OrthancStone::CoordinateSystem3D& plane) const
   {
     if (cursor_.get() != NULL &&
@@ -1861,17 +1878,20 @@ public:
       const size_t index = cursor_->GetCurrentIndex();
       const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(index);
       const unsigned int frame = frames_->GetFrameNumberInInstance(index);
-      
+
       for (std::list<const ViewerViewport*>::const_iterator
              it = viewports.begin(); it != viewports.end(); ++it)
       {
         assert(*it != NULL);
 
-        OrthancStone::CoordinateSystem3D plane;
-        if ((*it)->GetCurrentPlane(plane))
+        OrthancStone::CoordinateSystem3D otherPlane;
+        std::string otherFrameOfReferenceUid;
+        if ((*it)->GetCurrentPlane(otherPlane) &&
+            (*it)->GetCurrentFrameOfReferenceUid(otherFrameOfReferenceUid) &&
+            otherFrameOfReferenceUid == instance.GetFrameOfReferenceUid())
         {
           double x1, y1, x2, y2;
-          if (GetReferenceLineCoordinates(x1, y1, x2, y2, instance, frame, plane))
+          if (GetReferenceLineCoordinates(x1, y1, x2, y2, instance, frame, otherPlane))
           {
             OrthancStone::PolylineSceneLayer::Chain chain;
             chain.push_back(OrthancStone::ScenePoint2D(x1, y1));
@@ -2094,7 +2114,8 @@ public:
 
   void FocusOnPoint(const OrthancStone::Vector& p)
   {
-    static const double MAX_DISTANCE = 0.5;   // 0.5 cm => TODO parameter?
+    //static const double MAX_DISTANCE = 0.5;   // 0.5 cm => TODO parameter?
+    static const double MAX_DISTANCE = std::numeric_limits<double>::infinity();
 
     OrthancStone::LinearAlgebra::Print(p);
     size_t frameIndex;
@@ -2104,10 +2125,6 @@ public:
     {
       cursor_->SetCurrentIndex(frameIndex);
       DisplayCurrentFrame();
-    }
-    else
-    {
-      printf("nope\n");
     }
   }
 };

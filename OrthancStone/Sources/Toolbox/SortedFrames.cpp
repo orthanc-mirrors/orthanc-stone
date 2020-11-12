@@ -426,7 +426,6 @@ namespace OrthancStone
         for (size_t i = 1; i < frames_.size(); i++)
         {
           double d = frames_[i].ComputeDistance(point);
-          printf("%f ", d);
           if (d < closestDistance)
           {
             frameIndex = i;
@@ -434,7 +433,6 @@ namespace OrthancStone
           }
         }
 
-        printf("\n>> %f\n", closestDistance);
         return (closestDistance <= maximumDistance);
       }
     }

@@ -833,8 +833,7 @@ static bool GetReferenceLineCoordinates(double& x1,
                                         double& y2,
                                         const OrthancStone::DicomInstanceParameters& instance1,
                                         unsigned int frame1,
-                                        const OrthancStone::DicomInstanceParameters& instance2,
-                                        unsigned int frame2)
+                                        const OrthancStone::CoordinateSystem3D& plane2)
 {
   if (instance1.GetWidth() == 0 &&
       instance1.GetHeight() == 0)
@@ -861,7 +860,6 @@ static bool GetReferenceLineCoordinates(double& x1,
                     oy + instance1.GetPixelSpacingY() * static_cast<double>(instance1.GetHeight()));
 
     const OrthancStone::CoordinateSystem3D c1 = instance1.GetFrameGeometry(frame1);
-    const OrthancStone::CoordinateSystem3D c2 = instance2.GetFrameGeometry(frame2);
   
     OrthancStone::Vector direction, origin;
   
@@ -869,7 +867,7 @@ static bool GetReferenceLineCoordinates(double& x1,
         instance1.GetFrameOfReferenceUid() == instance1.GetFrameOfReferenceUid() &&
         OrthancStone::GeometryToolbox::IntersectTwoPlanes(origin, direction,
                                                           c1.GetOrigin(), c1.GetNormal(),
-                                                          c2.GetOrigin(), c2.GetNormal()))
+                                                          plane2.GetOrigin(), plane2.GetNormal()))
     {
       double ax, ay, bx, by;
       c1.ProjectPoint(ax, ay, origin);
@@ -887,161 +885,6 @@ static bool GetReferenceLineCoordinates(double& x1,
   }
 }
 
-
-
-class FrameExtent
-{
-private:
-  bool                              isValid_;
-  std::string                       frameOfReferenceUid_;
-  OrthancStone::CoordinateSystem3D  coordinates_;
-  double                            pixelSpacingX_;
-  double                            pixelSpacingY_;
-  OrthancStone::Extent2D            extent_;
-
-public:
-  explicit FrameExtent() :
-    isValid_(false),
-    pixelSpacingX_(1),
-    pixelSpacingY_(1)
-  {
-  }
-    
-  explicit FrameExtent(const Orthanc::DicomMap& tags) :
-    isValid_(false),
-    coordinates_(tags)
-  {
-    if (!tags.LookupStringValue(
-          frameOfReferenceUid_, Orthanc::DICOM_TAG_FRAME_OF_REFERENCE_UID, false))
-    {
-      frameOfReferenceUid_.clear();
-    }
-
-    OrthancStone::GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, tags);
-
-    unsigned int rows, columns;
-    if (tags.HasTag(Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT) &&
-        tags.HasTag(Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT) &&
-        tags.ParseUnsignedInteger32(rows, Orthanc::DICOM_TAG_ROWS) &&
-        tags.ParseUnsignedInteger32(columns, Orthanc::DICOM_TAG_COLUMNS))
-    {
-      double ox = -pixelSpacingX_ / 2.0;
-      double oy = -pixelSpacingY_ / 2.0;
-      extent_.AddPoint(ox, oy);
-      extent_.AddPoint(ox + pixelSpacingX_ * static_cast<double>(columns),
-                       oy + pixelSpacingY_ * static_cast<double>(rows));
-
-      isValid_ = true;
-    }
-  }
-
-  bool IsValid() const
-  {
-    return isValid_;
-  }
-
-  const std::string& GetFrameOfReferenceUid() const
-  {
-    if (isValid_)
-    {
-      return frameOfReferenceUid_;
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-  }
-
-  const OrthancStone::CoordinateSystem3D& GetCoordinates() const
-  {
-    if (isValid_)
-    {
-      return coordinates_;
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-  }
-
-  double GetPixelSpacingX() const
-  {
-    if (isValid_)
-    {
-      return pixelSpacingX_;
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-  }
-
-  double GetPixelSpacingY() const
-  {
-    if (isValid_)
-    {
-      return pixelSpacingY_;
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-  }
-
-  bool Intersect(double& x1,  // Coordinates of the clipped line (out)
-                 double& y1,
-                 double& x2,
-                 double& y2,
-                 const FrameExtent& other) const
-  {
-    if (this == &other)
-    {
-      return false;
-    }
-    
-    OrthancStone::Vector direction, origin;
-        
-    if (IsValid() &&
-        other.IsValid() &&
-        !extent_.IsEmpty() &&
-        frameOfReferenceUid_ == other.frameOfReferenceUid_ &&
-        OrthancStone::GeometryToolbox::IntersectTwoPlanes(
-          origin, direction,
-          coordinates_.GetOrigin(), coordinates_.GetNormal(),
-          other.coordinates_.GetOrigin(), other.coordinates_.GetNormal()))
-    {
-      double ax, ay, bx, by;
-      coordinates_.ProjectPoint(ax, ay, origin);
-      coordinates_.ProjectPoint(bx, by, origin + 100.0 * direction);
-      
-      return OrthancStone::GeometryToolbox::ClipLineToRectangle(
-        x1, y1, x2, y2,
-        ax, ay, bx, by,
-        extent_.GetX1(), extent_.GetY1(), extent_.GetX2(), extent_.GetY2());
-    }
-    else
-    {
-      return false;
-    }
-  }
-
-
-  bool ProjectPoint(double& x,
-                    double& y,
-                    const OrthancStone::Vector& v) const
-  {
-    if (IsValid())
-    {
-      coordinates_.ProjectPoint(x, y, v);
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  }
-};
-  
 
 
 class ViewerViewport : public OrthancStone::ObserverBase<ViewerViewport>
@@ -1375,7 +1218,6 @@ private:
   bool                                         flipY_;
   bool                                         fitNextContent_;
   bool                                         isCtrlDown_;
-  FrameExtent                                  currentFrameExtent_;
   std::list<PrefetchItem>                      prefetchQueue_;
 
 
@@ -1477,8 +1319,6 @@ private:
         quality = DisplayedFrameQuality_High;
       }
 
-      currentFrameExtent_ = FrameExtent(frames_->GetInstanceOfFrame(index).GetTags());
-
       {
         // Prepare prefetching
         prefetchQueue_.clear();
@@ -1499,10 +1339,6 @@ private:
         observer_->SignalFrameUpdated(*this, cursor_->GetCurrentIndex(),
                                       frames_->GetFramesCount(), quality);
       }
-    }
-    else
-    {
-      currentFrameExtent_ = FrameExtent();
     }
   }
   
@@ -1599,13 +1435,14 @@ private:
 
       std::unique_ptr<OrthancStone::MacroSceneLayer>  annotationsLayer;
 
-      if (annotations_)
+      if (annotations_ &&
+          cursor_.get() != NULL)
       {
-        const FrameExtent& extent = GetCurrentFrameExtent();
+        const OrthancStone::CoordinateSystem3D plane = frames_->GetFrameGeometry(cursor_->GetCurrentIndex());
         
         std::set<size_t> a;
         annotations_->LookupSopInstanceUid(a, sopInstanceUid);
-        if (extent.IsValid() &&
+        if (plane.IsValid() &&
             !a.empty())
         {
           annotationsLayer.reset(new OrthancStone::MacroSceneLayer);
@@ -1617,7 +1454,7 @@ private:
           for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
           {
             const OrthancStone::OsiriX::Annotation& annotation = annotations_->GetAnnotation(*it);
-            annotationsLayer->AddLayer(factory.Create(annotation, extent.GetCoordinates()));
+            annotationsLayer->AddLayer(factory.Create(annotation, plane));
           }
         }
       }
@@ -1919,7 +1756,6 @@ public:
     ResetDefaultWindowing();
     ClearViewport();
     prefetchQueue_.clear();
-    currentFrameExtent_ = FrameExtent();
 
     if (observer_.get() != NULL)
     {
@@ -1999,33 +1835,51 @@ public:
     }
   }
 
-  const FrameExtent& GetCurrentFrameExtent() const
+  bool GetCurrentPlane(OrthancStone::CoordinateSystem3D& plane) const
   {
-    return currentFrameExtent_;
+    if (cursor_.get() != NULL &&
+        frames_.get() != NULL)
+    {
+      plane = frames_->GetFrameGeometry(cursor_->GetCurrentIndex());      
+      return true;
+    }
+    else
+    {
+      return false;
+    }
   }
 
-  void UpdateReferenceLines(const std::list<const FrameExtent*>& planes)
+  void UpdateReferenceLines(const std::list<const ViewerViewport*>& viewports)
   {
     std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
     
-    if (GetCurrentFrameExtent().IsValid())
+    if (cursor_.get() != NULL &&
+        frames_.get() != NULL)
     {
-      for (std::list<const FrameExtent*>::const_iterator
-             it = planes.begin(); it != planes.end(); ++it)
+      const size_t index = cursor_->GetCurrentIndex();
+      const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(index);
+      const unsigned int frame = frames_->GetFrameNumberInInstance(index);
+      
+      for (std::list<const ViewerViewport*>::const_iterator
+             it = viewports.begin(); it != viewports.end(); ++it)
       {
         assert(*it != NULL);
-        
-        double x1, y1, x2, y2;
-        if (GetCurrentFrameExtent().Intersect(x1, y1, x2, y2, **it))
+
+        OrthancStone::CoordinateSystem3D plane;
+        if ((*it)->GetCurrentPlane(plane))
         {
-          OrthancStone::PolylineSceneLayer::Chain chain;
-          chain.push_back(OrthancStone::ScenePoint2D(x1, y1));
-          chain.push_back(OrthancStone::ScenePoint2D(x2, y2));
-          layer->AddChain(chain, false, 0, 255, 0);
+          double x1, y1, x2, y2;
+          if (GetReferenceLineCoordinates(x1, y1, x2, y2, instance, frame, plane))
+          {
+            OrthancStone::PolylineSceneLayer::Chain chain;
+            chain.push_back(OrthancStone::ScenePoint2D(x1, y1));
+            chain.push_back(OrthancStone::ScenePoint2D(x2, y2));
+            layer->AddChain(chain, false, 0, 255, 0);
+          }
         }
       }
     }
-    
+
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
 
@@ -2229,18 +2083,18 @@ static void UpdateReferenceLines()
 {
   if (showReferenceLines_)
   {
-    std::list<const FrameExtent*> planes;
+    std::list<const ViewerViewport*> viewports;
     
     for (Viewports::const_iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
     {
       assert(it->second != NULL);
-      planes.push_back(&it->second->GetCurrentFrameExtent());
+      viewports.push_back(it->second.get());
     }
 
     for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
     {
       assert(it->second != NULL);
-      it->second->UpdateReferenceLines(planes);
+      it->second->UpdateReferenceLines(viewports);
     }
   }
   else

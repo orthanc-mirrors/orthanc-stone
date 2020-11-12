@@ -887,6 +887,11 @@ TEST(CoordinateSystem3D, Basic)
     ASSERT_FLOAT_EQ(c.GetNormal()[0], 0);
     ASSERT_FLOAT_EQ(c.GetNormal()[1], 0);
     ASSERT_FLOAT_EQ(c.GetNormal()[2], 1);
+
+    ASSERT_FLOAT_EQ(0, c.ComputeDistance(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0)));
+    ASSERT_FLOAT_EQ(0, c.ComputeDistance(OrthancStone::LinearAlgebra::CreateVector(5, 0, 0)));
+    ASSERT_FLOAT_EQ(0, c.ComputeDistance(OrthancStone::LinearAlgebra::CreateVector(0, 5, 0)));
+    ASSERT_FLOAT_EQ(5, c.ComputeDistance(OrthancStone::LinearAlgebra::CreateVector(0, 0, 5)));
   }
 
   {
@@ -895,6 +900,13 @@ TEST(CoordinateSystem3D, Basic)
     ASSERT_FLOAT_EQ(c.GetNormal()[0], 0);
     ASSERT_FLOAT_EQ(c.GetNormal()[1], 0);
     ASSERT_FLOAT_EQ(c.GetNormal()[2], 1);
+  }
+
+  {
+    // https://www.vedantu.com/maths/perpendicular-distance-of-a-point-from-a-plane
+    OrthancStone::CoordinateSystem3D c =
+      OrthancStone::CoordinateSystem3D::CreateFromPlaneGeneralForm(2, 4, -4, -6);
+    ASSERT_FLOAT_EQ(3, c.ComputeDistance(OrthancStone::LinearAlgebra::CreateVector(0, 3, 6)));
   }
 }
 

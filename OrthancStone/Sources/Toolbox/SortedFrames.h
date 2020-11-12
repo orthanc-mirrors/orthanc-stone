@@ -58,6 +58,8 @@ namespace OrthancStone
       {
         return frameNumber_;
       }
+
+      double ComputeDistance(const Vector& p) const;
     };
 
 
@@ -147,5 +149,9 @@ namespace OrthancStone
                      unsigned int frameNumber) const;
 
     void Sort();
+
+    bool FindClosestFrame(size_t& frameIndex,
+                          const Vector& point,
+                          double maximumDistance) const;
   };
 }

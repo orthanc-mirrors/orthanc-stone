@@ -42,6 +42,13 @@ namespace OrthancStone
   }
 
 
+  double SortedFrames::Frame::ComputeDistance(const Vector& p) const
+  {
+    const CoordinateSystem3D& plane = instance_->GetFrameGeometry(frameNumber_);
+    return plane.ComputeDistance(p);
+  }
+
+
   const DicomInstanceParameters& SortedFrames::GetInstance(size_t instanceIndex) const
   {
     if (instanceIndex >= instances_.size())
@@ -397,6 +404,44 @@ namespace OrthancStone
       }
       
       sorted_ = true;
+    }
+  }
+
+
+  bool SortedFrames::FindClosestFrame(size_t& frameIndex,
+                                      const Vector& point,
+                                      double maximumDistance) const
+  {
+    if (sorted_)
+    {
+      if (frames_.empty())
+      {
+        return false;
+      }
+      else
+      {
+        frameIndex = 0;
+        double closestDistance = frames_[0].ComputeDistance(point);
+
+        for (size_t i = 1; i < frames_.size(); i++)
+        {
+          double d = frames_[i].ComputeDistance(point);
+          printf("%f ", d);
+          if (d < closestDistance)
+          {
+            frameIndex = i;
+            closestDistance = d;
+          }
+        }
+
+        printf("\n>> %f\n", closestDistance);
+        return (closestDistance <= maximumDistance);
+      }
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls,
+                                      "Sort() has not been called");
     }
   }
 }

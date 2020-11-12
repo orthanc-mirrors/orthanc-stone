@@ -135,6 +135,9 @@ namespace OrthancStone
                        const Vector& origin,
                        const Vector& direction) const;
 
+    // Point-to-plane distance
+    double ComputeDistance(const Vector& p) const;
+
     // Returns "false" is the two planes are not parallel
     static bool ComputeDistance(double& distance,
                                 const CoordinateSystem3D& a,
@@ -143,5 +146,14 @@ namespace OrthancStone
     // Normalize a cutting plane so that the origin (0,0,0) of the 3D
     // world is mapped to the origin of its (x,y) coordinate system
     static CoordinateSystem3D NormalizeCuttingPlane(const CoordinateSystem3D& plane);
+
+    // Construct one possible coordinate system from the general form
+    // of the equation of a plane "a*x+b*y+c*z+d=0". Note that the
+    // axes are not determined in this case, and so they are chosen
+    // arbitrarily.
+    static CoordinateSystem3D CreateFromPlaneGeneralForm(double a,
+                                                         double b,
+                                                         double c,
+                                                         double d);
   };
 }

@@ -901,6 +901,8 @@ public:
                                     size_t currentFrame,
                                     size_t countFrames,
                                     DisplayedFrameQuality quality) = 0;
+
+    virtual void SignalCrosshair(const OrthancStone::Vector& click) = 0;
   };
 
 private:
@@ -1963,9 +1965,10 @@ public:
   class Interactor : public OrthancStone::DefaultViewportInteractor
   {
   private:
-    WebViewerAction leftAction_;
-    WebViewerAction middleAction_;
-    WebViewerAction rightAction_;
+    ViewerViewport&  viewer_;
+    WebViewerAction  leftAction_;
+    WebViewerAction  middleAction_;
+    WebViewerAction  rightAction_;
 
     bool IsAction(const OrthancStone::PointerEvent& event,
                   WebViewerAction action)
@@ -1987,9 +1990,11 @@ public:
     }
     
   public:
-    Interactor(WebViewerAction leftAction,
+    Interactor(ViewerViewport& viewer,
+               WebViewerAction leftAction,
                WebViewerAction middleAction,
                WebViewerAction rightAction) :
+      viewer_(viewer),
       leftAction_(leftAction),
       middleAction_(middleAction),
       rightAction_(rightAction)
@@ -2005,9 +2010,28 @@ public:
       unsigned int viewportWidth,
       unsigned int viewportHeight) ORTHANC_OVERRIDE
     {
-      if (IsAction(event, WebViewerAction_Crosshair))
+      boost::shared_ptr<OrthancStone::IViewport> lock1(viewport.lock());
+      
+      if (lock1 &&
+          IsAction(event, WebViewerAction_Crosshair))
       {
-        printf("CROSS-HAIR!\n");
+        OrthancStone::CoordinateSystem3D plane;
+        if (viewer_.GetCurrentPlane(plane))
+        {
+          std::unique_ptr<OrthancStone::IViewport::ILock> lock2(lock1->Lock());
+
+          const OrthancStone::ScenePoint2D p = event.GetMainPosition();
+          double x = p.GetX();
+          double y = p.GetY();
+          lock2->GetController().GetCanvasToSceneTransform().Apply(x, y);
+          
+          OrthancStone::Vector click = plane.MapSliceToWorldCoordinates(x, y);
+          if (viewer_.observer_.get() != NULL)
+          {
+            viewer_.observer_->SignalCrosshair(click);
+          }
+        }
+        
         return NULL;  // No need for a tracker, this is just a click
       }
       else
@@ -2024,7 +2048,7 @@ public:
                              WebViewerAction rightAction)
   {
     assert(viewport_ != NULL);
-    viewport_->AcquireInteractor(new Interactor(leftAction, middleAction, rightAction));
+    viewport_->AcquireInteractor(new Interactor(*this, leftAction, middleAction, rightAction));
   }
 
   void FitForPrint()
@@ -2065,6 +2089,25 @@ public:
       }
       
       hasFocusOnInstance_ = false;
+    }
+  }
+
+  void FocusOnPoint(const OrthancStone::Vector& p)
+  {
+    static const double MAX_DISTANCE = 0.5;   // 0.5 cm => TODO parameter?
+
+    OrthancStone::LinearAlgebra::Print(p);
+    size_t frameIndex;
+    if (cursor_.get() != NULL &&
+        frames_.get() != NULL &&
+        frames_->FindClosestFrame(frameIndex, p, MAX_DISTANCE))
+    {
+      cursor_->SetCurrentIndex(frameIndex);
+      DisplayCurrentFrame();
+    }
+    else
+    {
+      printf("nope\n");
     }
   }
 };
@@ -2172,7 +2215,16 @@ public:
 
 
     UpdateReferenceLines();
-  };
+  }
+
+  virtual void SignalCrosshair(const OrthancStone::Vector& click) ORTHANC_OVERRIDE
+  {
+    for (Viewports::const_iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
+    {
+      assert(it->second != NULL);
+      it->second->FocusOnPoint(click);
+    }
+  }
 };
 
 

@@ -29,8 +29,6 @@
 #include <Toolbox.h>
 #include <OrthancException.h>
 
-#include <boost/math/constants/constants.hpp>
-
 namespace OrthancStone
 {
   void CoordinateSystem3D::CheckAndComputeNormal()
@@ -355,5 +353,23 @@ namespace OrthancStone
     LinearAlgebra::NormalizeVector(axisY);
 
     return CoordinateSystem3D(origin, axisX, axisY);
+  }
+
+
+  CoordinateSystem3D CoordinateSystem3D::CreateFromThreePoints(const Vector& a,
+                                                               const Vector& b,
+                                                               const Vector& c)
+  {
+    Vector axisX = b - a;
+    LinearAlgebra::NormalizeVector(axisX);
+    
+    Vector normal;
+    LinearAlgebra::CrossProduct(normal, axisX, c - a);
+
+    Vector axisY;
+    LinearAlgebra::CrossProduct(axisY, axisX, normal);
+    LinearAlgebra::NormalizeVector(axisY);
+
+    return CoordinateSystem3D(a, axisX, axisY);
   }
 }

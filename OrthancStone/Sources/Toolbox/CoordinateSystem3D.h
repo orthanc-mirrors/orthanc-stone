@@ -155,5 +155,9 @@ namespace OrthancStone
                                                          double b,
                                                          double c,
                                                          double d);
+
+    static CoordinateSystem3D CreateFromThreePoints(const Vector& a,
+                                                    const Vector& b,
+                                                    const Vector& c);
   };
 }

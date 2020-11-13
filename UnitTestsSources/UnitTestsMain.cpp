@@ -43,24 +43,24 @@ TEST(GeometryToolbox, Interpolation)
   using namespace OrthancStone::GeometryToolbox;
   
   // https://en.wikipedia.org/wiki/Bilinear_interpolation#Application_in_image_processing
-  ASSERT_FLOAT_EQ(146.1f, ComputeBilinearInterpolationUnitSquare(0.5f, 0.2f, 91, 210, 162, 95));
+  ASSERT_DOUBLE_EQ(146.1f, ComputeBilinearInterpolationUnitSquare(0.5f, 0.2f, 91, 210, 162, 95));
 
-  ASSERT_FLOAT_EQ(91,  ComputeBilinearInterpolationUnitSquare(0, 0, 91, 210, 162, 95));
-  ASSERT_FLOAT_EQ(210, ComputeBilinearInterpolationUnitSquare(1, 0, 91, 210, 162, 95));
-  ASSERT_FLOAT_EQ(162, ComputeBilinearInterpolationUnitSquare(0, 1, 91, 210, 162, 95));
-  ASSERT_FLOAT_EQ(95,  ComputeBilinearInterpolationUnitSquare(1, 1, 91, 210, 162, 95));
+  ASSERT_DOUBLE_EQ(91,  ComputeBilinearInterpolationUnitSquare(0, 0, 91, 210, 162, 95));
+  ASSERT_DOUBLE_EQ(210, ComputeBilinearInterpolationUnitSquare(1, 0, 91, 210, 162, 95));
+  ASSERT_DOUBLE_EQ(162, ComputeBilinearInterpolationUnitSquare(0, 1, 91, 210, 162, 95));
+  ASSERT_DOUBLE_EQ(95,  ComputeBilinearInterpolationUnitSquare(1, 1, 91, 210, 162, 95));
 
-  ASSERT_FLOAT_EQ(123.35f, ComputeTrilinearInterpolationUnitSquare
+  ASSERT_DOUBLE_EQ(123.35f, ComputeTrilinearInterpolationUnitSquare
                   (0.5f, 0.2f, 0.7f,
                    91, 210, 162, 95,
                    51, 190, 80, 92));
 
-  ASSERT_FLOAT_EQ(ComputeBilinearInterpolationUnitSquare(0.5f, 0.2f, 91, 210, 162, 95),
+  ASSERT_DOUBLE_EQ(ComputeBilinearInterpolationUnitSquare(0.5f, 0.2f, 91, 210, 162, 95),
                   ComputeTrilinearInterpolationUnitSquare(0.5f, 0.2f, 0,
                                                           91, 210, 162, 95,
                                                           51, 190, 80, 92));
 
-  ASSERT_FLOAT_EQ(ComputeBilinearInterpolationUnitSquare(0.5f, 0.2f, 51, 190, 80, 92),
+  ASSERT_DOUBLE_EQ(ComputeBilinearInterpolationUnitSquare(0.5f, 0.2f, 51, 190, 80, 92),
                   ComputeTrilinearInterpolationUnitSquare(0.5f, 0.2f, 1,
                                                           91, 210, 162, 95,
                                                           51, 190, 80, 92));
@@ -881,32 +881,61 @@ TEST(GenericToolbox, NormalizeUuid)
 
 TEST(CoordinateSystem3D, Basic)
 {
+  using namespace OrthancStone;
+  
   {
-    OrthancStone::CoordinateSystem3D c;
+    CoordinateSystem3D c;
     ASSERT_FALSE(c.IsValid());
-    ASSERT_FLOAT_EQ(c.GetNormal()[0], 0);
-    ASSERT_FLOAT_EQ(c.GetNormal()[1], 0);
-    ASSERT_FLOAT_EQ(c.GetNormal()[2], 1);
+    ASSERT_DOUBLE_EQ(c.GetNormal()[0], 0);
+    ASSERT_DOUBLE_EQ(c.GetNormal()[1], 0);
+    ASSERT_DOUBLE_EQ(c.GetNormal()[2], 1);
 
-    ASSERT_FLOAT_EQ(0, c.ComputeDistance(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0)));
-    ASSERT_FLOAT_EQ(0, c.ComputeDistance(OrthancStone::LinearAlgebra::CreateVector(5, 0, 0)));
-    ASSERT_FLOAT_EQ(0, c.ComputeDistance(OrthancStone::LinearAlgebra::CreateVector(0, 5, 0)));
-    ASSERT_FLOAT_EQ(5, c.ComputeDistance(OrthancStone::LinearAlgebra::CreateVector(0, 0, 5)));
+    ASSERT_DOUBLE_EQ(0, c.ComputeDistance(LinearAlgebra::CreateVector(0, 0, 0)));
+    ASSERT_DOUBLE_EQ(0, c.ComputeDistance(LinearAlgebra::CreateVector(5, 0, 0)));
+    ASSERT_DOUBLE_EQ(0, c.ComputeDistance(LinearAlgebra::CreateVector(0, 5, 0)));
+    ASSERT_DOUBLE_EQ(5, c.ComputeDistance(LinearAlgebra::CreateVector(0, 0, 5)));
   }
 
   {
-    OrthancStone::CoordinateSystem3D c("nope1", "nope2");
+    CoordinateSystem3D c("nope1", "nope2");
     ASSERT_FALSE(c.IsValid());
-    ASSERT_FLOAT_EQ(c.GetNormal()[0], 0);
-    ASSERT_FLOAT_EQ(c.GetNormal()[1], 0);
-    ASSERT_FLOAT_EQ(c.GetNormal()[2], 1);
+    ASSERT_DOUBLE_EQ(c.GetNormal()[0], 0);
+    ASSERT_DOUBLE_EQ(c.GetNormal()[1], 0);
+    ASSERT_DOUBLE_EQ(c.GetNormal()[2], 1);
   }
 
   {
     // https://www.vedantu.com/maths/perpendicular-distance-of-a-point-from-a-plane
-    OrthancStone::CoordinateSystem3D c =
-      OrthancStone::CoordinateSystem3D::CreateFromPlaneGeneralForm(2, 4, -4, -6);
-    ASSERT_FLOAT_EQ(3, c.ComputeDistance(OrthancStone::LinearAlgebra::CreateVector(0, 3, 6)));
+    CoordinateSystem3D c = CoordinateSystem3D::CreateFromPlaneGeneralForm(2, 4, -4, -6);
+    ASSERT_DOUBLE_EQ(3, c.ComputeDistance(LinearAlgebra::CreateVector(0, 3, 6)));
+  }
+
+  {
+    // https://mathinsight.org/distance_point_plane_examples
+    CoordinateSystem3D c = CoordinateSystem3D::CreateFromPlaneGeneralForm(2, -2, 5, 8);
+    ASSERT_DOUBLE_EQ(39.0 / sqrt(33.0), c.ComputeDistance(LinearAlgebra::CreateVector(4, -4, 3)));
+  }
+
+  {
+    // https://www.ck12.org/calculus/distance-between-a-point-and-a-plane/lesson/Distance-Between-a-Point-and-a-Plane-MAT-ALY/
+    const Vector a = LinearAlgebra::CreateVector(3, 6, 9);
+    const Vector b = LinearAlgebra::CreateVector(9, 6, 3);
+    const Vector c = LinearAlgebra::CreateVector(6, -9, 9);
+    CoordinateSystem3D d = CoordinateSystem3D::CreateFromThreePoints(a, b, c);
+    ASSERT_DOUBLE_EQ(0, d.ComputeDistance(a));
+    ASSERT_DOUBLE_EQ(0, d.ComputeDistance(b));
+    ASSERT_DOUBLE_EQ(0, d.ComputeDistance(c));
+  }
+
+  {
+    // https://tutorial.math.lamar.edu/classes/calcii/eqnsofplanes.aspx
+    const Vector a = LinearAlgebra::CreateVector(1, -2, 0);
+    const Vector b = LinearAlgebra::CreateVector(3, 1, 4);
+    const Vector c = LinearAlgebra::CreateVector(0, -1, 2);
+    CoordinateSystem3D d = CoordinateSystem3D::CreateFromThreePoints(a, b, c);
+    double r = d.GetNormal() [0] / 2.0;
+    ASSERT_DOUBLE_EQ(-8 * r, d.GetNormal() [1]);
+    ASSERT_DOUBLE_EQ(5 * r, d.GetNormal() [2]);
   }
 }
 

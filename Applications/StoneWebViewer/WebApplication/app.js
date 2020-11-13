@@ -92,7 +92,7 @@ Vue.component('viewport', {
       stone.IncrementFrame(this.canvasId);
     }
   }
-})
+});
 
 
 var app = new Vue({

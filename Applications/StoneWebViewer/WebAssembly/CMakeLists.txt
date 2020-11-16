@@ -160,6 +160,7 @@ install(
   ${CMAKE_SOURCE_DIR}/../WebApplication/app.css
   ${CMAKE_SOURCE_DIR}/../WebApplication/app.js
   ${CMAKE_SOURCE_DIR}/../WebApplication/index.html
+  ${CMAKE_SOURCE_DIR}/../WebApplication/pdf-viewer.js
   ${CMAKE_SOURCE_DIR}/../WebApplication/print.js
   ${CMAKE_SOURCE_DIR}/../WebApplication/ua-parser.js  # TODO => Package this from https://github.com/faisalman/ua-parser-js/releases
   ${STONE_WRAPPER}

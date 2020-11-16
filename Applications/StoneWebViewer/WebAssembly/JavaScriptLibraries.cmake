@@ -43,6 +43,18 @@ DownloadFile(
   "220afd743d9e9643852e31a135a9f3ae"
   "${BASE_URL}/jquery-3.4.1.min.js")
 
+if (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/pdfjs)
+  DownloadPackage(
+    "f2e0f7eacd8946bd3111a2d10dceaa72"
+    "${BASE_URL}/web-viewer/pdfjs-2.5.207-dist.zip"
+    "${CMAKE_CURRENT_BINARY_DIR}/build")
+
+  # Reorganize the PDF.js package
+  file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/LICENSE)
+  file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/web)
+  file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/build ${CMAKE_CURRENT_BINARY_DIR}/pdfjs)
+endif()
+
 
 install(
   FILES
@@ -59,6 +71,10 @@ install(
   ${CMAKE_CURRENT_BINARY_DIR}/vue-2.6.10/dist/vue.min.js
   ${CMAKE_CURRENT_BINARY_DIR}/axios-0.19.0/dist/axios.min.js
   ${CMAKE_CURRENT_BINARY_DIR}/axios-0.19.0/dist/axios.min.map
+  ${CMAKE_CURRENT_BINARY_DIR}/pdfjs/pdf.js
+  ${CMAKE_CURRENT_BINARY_DIR}/pdfjs/pdf.js.map
+  ${CMAKE_CURRENT_BINARY_DIR}/pdfjs/pdf.worker.js
+  ${CMAKE_CURRENT_BINARY_DIR}/pdfjs/pdf.worker.js.map
   DESTINATION ${ORTHANC_STONE_INSTALL_PREFIX}/js
   )
 

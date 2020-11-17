@@ -20,7 +20,14 @@ wv-webviewer {
 
 /* wvb-ui stuffs */
 @import "wv-overlay.scss";
-@import "wv-pdf-viewer.scss";
+
+// PDF.js in Stone uses the "Display" layer, not the "Viewer" layer as in Osimis Web Viewer
+/*@import "wv-pdf-viewer.scss";*/
+
+// The following line was part of "wv-pdf-viewer.scss" and is
+// necessary to avoid headers/footers while printing
+@page { margin: 0; }
+
 @import "wv-splitpane.scss";
 @import "wv-timeline.scss";
 @import "wv-timeline-controls.scss";

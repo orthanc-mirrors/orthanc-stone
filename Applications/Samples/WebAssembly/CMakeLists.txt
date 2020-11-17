@@ -29,8 +29,6 @@ set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/" C
 # ---------------------------------------------------------------
 set(USE_WASM ON CACHE BOOL "")
 
-set(EMSCRIPTEN_SET_LLVM_WASM_BACKEND ON CACHE BOOL "")
-
 set(WASM_FLAGS "-s WASM=1 -s FETCH=1")
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(WASM_FLAGS "${WASM_FLAGS} -s SAFE_HEAP=1")

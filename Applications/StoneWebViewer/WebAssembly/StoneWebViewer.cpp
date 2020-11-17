@@ -2117,7 +2117,6 @@ public:
     //static const double MAX_DISTANCE = 0.5;   // 0.5 cm => TODO parameter?
     static const double MAX_DISTANCE = std::numeric_limits<double>::infinity();
 
-    OrthancStone::LinearAlgebra::Print(p);
     size_t frameIndex;
     if (cursor_.get() != NULL &&
         frames_.get() != NULL &&

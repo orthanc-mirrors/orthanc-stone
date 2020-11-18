@@ -25,6 +25,9 @@ var STUDY_INSTANCE_UID = '0020,000d';
 var STUDY_DESCRIPTION = '0008,1030';
 var STUDY_DATE = '0008,0020';
 
+// Registry of the PDF series for which the instance metadata is still waiting
+var pendingSeriesPdf_ = {};
+
 
 function getParameterFromUrl(key) {
   var url = window.location.search.substring(1);
@@ -66,11 +69,60 @@ Vue.component('viewport', {
           stone.LoadSeriesInViewport(that.canvasId, seriesInstanceUid);
         });
       }
-      else if (newVal.type == stone.ThumbnailType.PDF ||
-               newVal.type == stone.ThumbnailType.VIDEO) {
+      else if (newVal.type == stone.ThumbnailType.PDF) {
+        if (newVal.complete) {
+          /**
+           * Series is complete <=> One already knows about the
+           * SOPInstanceUIDs that are available in this series. As a
+           * consequence,
+           * "OrthancStone::SeriesMetadataLoader::Accessor" will not
+           * be empty in "ResourcesLoader::FetchPdf()" in C++ code.
+           **/
+          stone.FetchPdf(studyInstanceUid, seriesInstanceUid);
+        } else {
+          /**
+           * The SOPInstanceUIDs in this series are not known
+           * yet. Schedule an "stone.FetchPdf()" one the series
+           * metadata is available.
+           **/
+          pendingSeriesPdf_[seriesInstanceUid] = true;
+        }
+      }
+      else if (newVal.type == stone.ThumbnailType.VIDEO) {
         // TODO
+        console.warn('Videos are not supported yet by the Stone Web viewer');
       }
     }
+  },
+  mounted: function() {
+    var that = this;
+    
+    window.addEventListener('PdfLoaded', function(args) {
+      var studyInstanceUid = args.detail.studyInstanceUid;
+      var seriesInstanceUid = args.detail.seriesInstanceUid;
+      var pdfPointer = args.detail.pdfPointer;
+      var pdfSize = args.detail.pdfSize;
+
+      if ('tags' in that.series &&
+          that.series.tags[STUDY_INSTANCE_UID] == studyInstanceUid &&
+          that.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+
+        that.status = 'pdf';
+        var pdf = new Uint8Array(HEAPU8.subarray(pdfPointer, pdfPointer + pdfSize));
+
+        /**
+         * It is not possible to bind an "Uint8Array" to a "props"
+         * in the "pdf-viewer" component. So we have to directly
+         * call the method of a component. But, "$refs are only
+         * populated after the component has been rendered", so we
+         * wait for the next rendering.
+         * https://vuejs.org/v2/guide/components-edge-cases.html#Accessing-Child-Component-Instances-amp-Child-Elements
+         **/
+        Vue.nextTick(function() {
+          that.$refs.pdfViewer.LoadPdf(pdf);
+        });
+      }
+    });
   },
   methods: {
     SeriesDragAccept: function(event) {
@@ -306,7 +358,6 @@ var app = new Vue({
     SetViewportSeriesInstanceUid: function(viewportIndex, seriesInstanceUid) {
       if (seriesInstanceUid in this.seriesIndex) {
         this.SetViewportSeries(viewportIndex, this.seriesIndex[seriesInstanceUid]);
-
       }
     },
     
@@ -432,12 +483,21 @@ var app = new Vue({
       }
     },
 
-    UpdateIsSeriesComplete: function(seriesInstanceUid) {
+    UpdateIsSeriesComplete: function(studyInstanceUid, seriesInstanceUid) {
       if (seriesInstanceUid in this.seriesIndex) {
         var index = this.seriesIndex[seriesInstanceUid];
         var series = this.series[index];
 
+        var oldComplete = series.complete;
+        
         series.complete = stone.IsSeriesComplete(seriesInstanceUid);
+        
+        if (!oldComplete &&
+            series.complete &&
+            seriesInstanceUid in pendingSeriesPdf_) {
+          stone.FetchPdf(studyInstanceUid, seriesInstanceUid);
+          delete pendingSeriesPdf_[seriesInstanceUid];
+        }
 
         // https://fr.vuejs.org/2016/02/06/common-gotchas/#Why-isn%E2%80%99t-the-DOM-updating
         this.$set(this.series, index, series);
@@ -589,9 +649,10 @@ window.addEventListener('ResourcesLoaded', function() {
   app.SetResources(studies, series);
 
   for (var i = 0; i < app.series.length; i++) {
+    var studyInstanceUid = app.series[i].tags[STUDY_INSTANCE_UID];
     var seriesInstanceUid = app.series[i].tags[SERIES_INSTANCE_UID];
     app.UpdateSeriesThumbnail(seriesInstanceUid);
-    app.UpdateIsSeriesComplete(seriesInstanceUid);
+    app.UpdateIsSeriesComplete(studyInstanceUid, seriesInstanceUid);
   }
 });
 
@@ -604,9 +665,9 @@ window.addEventListener('ThumbnailLoaded', function(args) {
 
 
 window.addEventListener('MetadataLoaded', function(args) {
-  //var studyInstanceUid = args.detail.studyInstanceUid;
+  var studyInstanceUid = args.detail.studyInstanceUid;
   var seriesInstanceUid = args.detail.seriesInstanceUid;
-  app.UpdateIsSeriesComplete(seriesInstanceUid);
+  app.UpdateIsSeriesComplete(studyInstanceUid, seriesInstanceUid);
 });
 
 

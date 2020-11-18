@@ -262,7 +262,7 @@ namespace OrthancStone
             type = ExtractSopClassUid(sopClassUid);
           }
         }
-      
+
         GetLoader()->AcquireThumbnail(GetSource(), GetStudyInstanceUid(),
                                       GetSeriesInstanceUid(), new Thumbnail(type));
       }
@@ -302,7 +302,7 @@ namespace OrthancStone
     {
       // The DICOMweb wasn't able to generate a thumbnail, try to
       // retrieve the SopClassUID tag using QIDO-RS
-
+      
       std::map<std::string, std::string> arguments, headers;
       arguments["0020000D"] = GetStudyInstanceUid();
       arguments["0020000E"] = GetSeriesInstanceUid();

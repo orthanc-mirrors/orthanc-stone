@@ -20,6 +20,30 @@
 
 
 
+/**
+ * This source file is an adaptation for Vue.js of the sample code
+ * "Previous/Next example" of PDF.js:
+ * https://mozilla.github.io/pdf.js/examples/
+ *
+ * =======================================================================
+ *
+ * Original license of the sample code:
+ *
+ * Copyright 2014 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ **/
+
 
 // Loaded via <script> tag, create shortcut to access PDF.js exports.
 var pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -30,16 +54,17 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dis
 
 
 var ZOOM_FACTOR = 1.3;
-var FIT_MARGIN = 10;
+var FIT_MARGIN = 10;    // Additional margin for width/height fitting, in order to avoid spurious scrollbars
 
 Vue.component('pdf-viewer', {
-  props: [ 'prefix', 'pdf' ],  // "pdf" must correspond to a "Uint8Array"
+  props: [ 'prefix' ],
   template: '#pdf-viewer',
   data: function() {
     return {
       container: null,
       canvas: null,
       ctx: null,
+      pdf: null, // "pdf" must correspond to a "Uint8Array"
       
       scale: 1,
       countPages: 0,
@@ -47,11 +72,6 @@ Vue.component('pdf-viewer', {
       pdfDoc: null,
       isRendering: false,
       pageNumPending: null
-    }
-  },
-  watch: {
-    pdf: function(newVal, oldVal) {
-      this.LoadPdf();
     }
   },
   mounted: function() {
@@ -106,7 +126,6 @@ Vue.component('pdf-viewer', {
           // https://github.com/mozilla/pdf.js/issues/5628
           var scrollbarHeight = window.innerHeight - document.body.clientHeight + FIT_MARGIN;
           that.scale = (that.container.offsetHeight - scrollbarHeight) / page.getViewport({ scale: 1.0 }).height;
-          //that.scale = that.container.clientHeight / page.getViewport({ scale: 1.0 }).height;
           that.QueueRenderPage(that.currentPage);
         });
       }
@@ -120,18 +139,24 @@ Vue.component('pdf-viewer', {
       this.QueueRenderPage(this.currentPage);  
     },
     LoadPdf: function(pdf) {
-      var that = this;
-      pdfjsLib.getDocument(new Uint8Array(this.pdf)).promise.then(function(pdfDoc_) {
-        that.pdfDoc = pdfDoc_;
-        that.currentPage = 0;
-        that.countPages = pdfDoc_.numPages;
-        that.scale = 1;
-        that.isRendering = false;
-        that.pageNumPending = null;
-        
-        // Initial/first page rendering
-        that.RenderPage(1);
-      });
+      if (!this.isRendering &&
+          pdf.length > 0) {
+        this.pdf = pdf;
+        this.isRendering = true;
+
+        var that = this;
+        pdfjsLib.getDocument(this.pdf).promise.then(function(pdfDoc_) {
+          that.pdfDoc = pdfDoc_;
+          that.currentPage = 1;
+          that.countPages = pdfDoc_.numPages;
+          that.scale = 1;
+          that.isRendering = false;
+          that.pageNumPending = null;
+          
+          // Initial/first page rendering, after fitting the PDF to the available viewport
+          that.FitHeight();
+        });
+      }
     },
     RenderPage: function(pageNum) {
       var that = this;
@@ -187,11 +212,25 @@ Vue.component('pdf-viewer', {
       if (event.ctrlKey) {
         if (event.deltaY < 0) {
           this.ZoomIn();
+          event.preventDefault();
         } else if (event.deltaY > 0) {
           this.ZoomOut();
+          event.preventDefault();
         }
-        
-        event.preventDefault();
+      } else if (!event.shiftKey &&
+                 !event.altKey &&
+                 !event.metaKey) {
+        // Is the vertical scrollbar hidden?
+        // https://stackoverflow.com/a/4814526/881731
+        if (this.container.scrollHeight <= this.container.clientHeight) {
+          if (event.deltaY < 0) {
+            this.PreviousPage();
+            event.preventDefault();
+          } else if (event.deltaY > 0) {
+            this.NextPage();
+            event.preventDefault();
+          }
+        }
       }
     }
   }

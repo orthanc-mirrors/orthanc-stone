@@ -200,10 +200,10 @@
                             </div>
 
                             <i v-if="series[seriesIndex].type == stone.ThumbnailType.PDF"
-                               class="wvSerieslist__placeholderIcon fa fa-file-text"></i>
+                               class="wvSerieslist__placeholderIcon fa fa-file-pdf"></i>
 
                             <i v-if="series[seriesIndex].type == stone.ThumbnailType.VIDEO"
-                               class="wvSerieslist__placeholderIcon fa fa-video-camera"></i>
+                               class="wvSerieslist__placeholderIcon fa fa-video-video"></i>
 
                             
                             <div v-if="[stone.ThumbnailType.IMAGE, stone.ThumbnailType.NO_PREVIEW].includes(series[seriesIndex].type)"
@@ -524,7 +524,8 @@
     
 
     <script type="text/x-template" id="viewport-template">
-      <div v-bind:style="{ padding:'2px', 
+      <div v-bind:id="canvasId + '-container'"
+           v-bind:style="{ padding:'2px', 
                          position:'absolute', 
                          left: left, 
                          top: top,
@@ -546,7 +547,7 @@
             <div v-show="status == 'ready'"
                  style="position:absolute; left:0; top:0; width:100%; height:100%;">
               <!--div style="width: 100%; height: 100%; background-color: red"></div-->
-              <canvas v-bind:id="canvasId"
+              <canvas v-bind:id="canvasId" class="viewport-canvas"
                       style="position:absolute; left:0; top:0; width:100%; height:100%"
                       oncontextmenu="return false"></canvas>
 
@@ -587,8 +588,9 @@
               [ drop a series here ]
             </div>
 
-            <div v-if="status == 'pdf'" >
-              <pdf-viewer v-bind:prefix="canvasId + '-pdf'"></pdf-viewer>
+            <!-- Don't use "v-if" here, otherwise the tooltips of the PDF viewer are not initialized -->
+            <div v-show="status == 'pdf'" >
+              <pdf-viewer v-bind:prefix="canvasId + '-pdf'" ref="pdfViewer"></pdf-viewer>
             </div>
                 
             <!--div v-if="status == 'video'" class="wvPaneOverlay">
@@ -622,15 +624,29 @@
 
         <div class="wv-overlay">
           <div class="wv-overlay-bottomleft wvPrintExclude">
-            <button class="btn btn-primary" @click="FitWidth()"><i class="fas fa-text-width"></i></button>
-            <button class="btn btn-primary" @click="FitHeight()"><i class="fas fa-text-height"></i></button>
-            <button class="btn btn-primary" @click="ZoomIn()"><i class="fas fa-search-plus"></i></button>
-            <button class="btn btn-primary" @click="ZoomOut()"><i class="fas fa-search-minus"></i></button>
-            <button class="btn btn-primary" @click="PreviousPage()">
+            <button class="btn btn-primary" @click="FitWidth()"
+                    data-toggle="tooltip" data-title="Fit page width">
+              <i class="fas fa-text-width"></i>
+            </button>
+            <button class="btn btn-primary" @click="FitHeight()"
+                    data-toggle="tooltip" data-title="Fit page height">
+              <i class="fas fa-text-height"></i>
+            </button>
+            <button class="btn btn-primary" @click="ZoomIn()"
+                    data-toggle="tooltip" data-title="Zoom in">
+              <i class="fas fa-search-plus"></i>
+            </button>
+            <button class="btn btn-primary" @click="ZoomOut()"
+                    data-toggle="tooltip" data-title="Zoom out">
+              <i class="fas fa-search-minus"></i>
+            </button>
+            <button class="btn btn-primary" @click="PreviousPage()"
+                    data-toggle="tooltip" data-title="Show previous page">
               <i class="fa fa-chevron-circle-left"></i>
             </button>
             &nbsp;&nbsp;{{currentPage}} / {{countPages}}&nbsp;&nbsp;
-            <button class="btn btn-primary" @click="NextPage()">
+            <button class="btn btn-primary" @click="NextPage()"
+                    data-toggle="tooltip" data-title="Show next page">
               <i class="fa fa-chevron-circle-right"></i>
             </button>
           </div>

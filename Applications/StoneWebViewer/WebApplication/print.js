@@ -36,7 +36,7 @@ function beforePrint(event) {
   // https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html
   var realToCSSPixels = window.devicePixelRatio;
 
-  $('#viewport canvas').each(function(key, canvas) {
+  $('.viewport-canvas').each(function(key, canvas) {
     if ($(canvas).is(':visible')) {
       $(canvas).width(Math.floor(realToCSSPixels * $(canvas).get(0).clientWidth));
       $(canvas).height(Math.floor(realToCSSPixels * $(canvas).get(0).clientHeight));
@@ -52,8 +52,8 @@ function afterPrint() {
   body.removeClass('print');
   body.css('width', '100%');
   body.css('height', '100%');
-  $('#viewport canvas').css('width', '100%');
-  $('#viewport canvas').css('height', '100%');
+  $('.viewport-canvas').css('width', '100%');
+  $('.viewport-canvas').css('height', '100%');
   
   stone.FitForPrint();
 }

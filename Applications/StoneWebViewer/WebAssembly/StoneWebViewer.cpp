@@ -184,9 +184,14 @@ public:
 
     virtual void SignalSeriesMetadataLoaded(const std::string& studyInstanceUid,
                                             const std::string& seriesInstanceUid) = 0;
+
+    virtual void SignalSeriesPdfLoaded(const std::string& studyInstanceUid,
+                                       const std::string& seriesInstanceUid,
+                                       const std::string& pdf) = 0;
   };
   
 private:
+  OrthancStone::ILoadersContext&                           context_;
   std::unique_ptr<IObserver>                               observer_;
   OrthancStone::DicomSource                                source_;
   size_t                                                   pending_;
@@ -196,7 +201,9 @@ private:
   boost::shared_ptr<OrthancStone::SeriesThumbnailsLoader>  thumbnailsLoader_;
   boost::shared_ptr<OrthancStone::SeriesMetadataLoader>    metadataLoader_;
 
-  explicit ResourcesLoader(const OrthancStone::DicomSource& source) :
+  explicit ResourcesLoader(OrthancStone::ILoadersContext& context,
+                           const OrthancStone::DicomSource& source) :
+    context_(context),
     source_(source),
     pending_(0),
     studies_(new OrthancStone::LoadedDicomResources(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID)),
@@ -292,11 +299,56 @@ private:
     pending_ += 2;
   }
 
+
+  class PdfInfo : public Orthanc::IDynamicObject
+  {
+  private:
+    std::string  studyInstanceUid_;
+    std::string  seriesInstanceUid_;
+
+  public:
+    PdfInfo(const std::string& studyInstanceUid,
+            const std::string& seriesInstanceUid) :
+      studyInstanceUid_(studyInstanceUid),
+      seriesInstanceUid_(seriesInstanceUid)
+    {
+    }
+
+    const std::string& GetStudyInstanceUid() const
+    {
+      return studyInstanceUid_;
+    }
+
+    const std::string& GetSeriesInstanceUid() const
+    {
+      return seriesInstanceUid_;
+    }
+  };
+
+
+  void Handle(const OrthancStone::ParseDicomSuccessMessage& message)
+  {
+    const PdfInfo& info = dynamic_cast<const PdfInfo&>(message.GetOrigin().GetPayload());
+
+    if (observer_.get() != NULL)
+    {
+      std::string pdf;
+      if (message.GetDicom().ExtractPdf(pdf))
+      {
+        observer_->SignalSeriesPdfLoaded(info.GetStudyInstanceUid(), info.GetSeriesInstanceUid(), pdf);
+      }
+      else
+      {
+        LOG(ERROR) << "Unable to extract PDF from series: " << info.GetSeriesInstanceUid();
+      }
+    }
+  }
+
 public:
   static boost::shared_ptr<ResourcesLoader> Create(OrthancStone::ILoadersContext::ILock& lock,
                                                    const OrthancStone::DicomSource& source)
   {
-    boost::shared_ptr<ResourcesLoader> loader(new ResourcesLoader(source));
+    boost::shared_ptr<ResourcesLoader> loader(new ResourcesLoader(lock.GetContext(), source));
 
     loader->resourcesLoader_ = OrthancStone::DicomResourcesLoader::Create(lock);
     loader->thumbnailsLoader_ = OrthancStone::SeriesThumbnailsLoader::Create(lock, PRIORITY_LOW);
@@ -310,6 +362,9 @@ public:
 
     loader->Register<OrthancStone::SeriesMetadataLoader::SuccessMessage>(
       *loader->metadataLoader_, &ResourcesLoader::Handle);
+
+    loader->Register<OrthancStone::ParseDicomSuccessMessage>(
+      lock.GetOracleObservable(), &ResourcesLoader::Handle);
     
     return loader;
   }
@@ -407,6 +462,41 @@ public:
   void AcquireObserver(IObserver* observer)
   {  
     observer_.reset(observer);
+  }
+
+  void FetchPdf(const std::string& studyInstanceUid,
+                const std::string& seriesInstanceUid)
+  {
+    OrthancStone::SeriesMetadataLoader::Accessor accessor(*metadataLoader_, seriesInstanceUid);
+    
+    if (accessor.IsComplete())
+    {
+      if (accessor.GetInstancesCount() > 1)
+      {
+        LOG(INFO) << "Series with more than one instance, will show the first PDF: "
+                  << seriesInstanceUid;
+      }
+
+      for (size_t i = 0; i < accessor.GetInstancesCount(); i++)
+      {
+        std::string sopClassUid, sopInstanceUid;
+        if (accessor.GetInstance(i).LookupStringValue(sopClassUid, Orthanc::DICOM_TAG_SOP_CLASS_UID, false) &&
+            accessor.GetInstance(i).LookupStringValue(sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false) &&
+            sopClassUid == "1.2.840.10008.5.1.4.1.1.104.1")
+        {
+          std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
+          lock->Schedule(
+            GetSharedObserver(), PRIORITY_NORMAL, OrthancStone::ParseDicomFromWadoCommand::Create(
+              source_, studyInstanceUid, seriesInstanceUid, sopInstanceUid,
+              false /* no transcoding */, Orthanc::DicomTransferSyntax_LittleEndianExplicit /* dummy value */,
+              new PdfInfo(studyInstanceUid, seriesInstanceUid)));
+          
+          return;
+        }
+      }
+
+      LOG(WARNING) << "Series without a PDF: " << seriesInstanceUid;
+    }
   }
 };
 
@@ -2229,7 +2319,6 @@ public:
       static_cast<int>(countFrames),
       quality);
 
-
     UpdateReferenceLines();
   }
 
@@ -2240,6 +2329,25 @@ public:
       assert(it->second != NULL);
       it->second->FocusOnPoint(click);
     }
+  }
+
+  virtual void SignalSeriesPdfLoaded(const std::string& studyInstanceUid,
+                                     const std::string& seriesInstanceUid,
+                                     const std::string& pdf) ORTHANC_OVERRIDE
+  {
+    EM_ASM({
+        const customEvent = document.createEvent("CustomEvent");
+        customEvent.initCustomEvent("PdfLoaded", false, false,
+                                    { "studyInstanceUid" : UTF8ToString($0),
+                                        "seriesInstanceUid" : UTF8ToString($1),
+                                        "pdfPointer" : $2,
+                                        "pdfSize": $3});
+        window.dispatchEvent(customEvent);
+      },
+      studyInstanceUid.c_str(),
+      seriesInstanceUid.c_str(),
+      pdf.empty() ? 0 : reinterpret_cast<intptr_t>(pdf.c_str()),  // Explicit conversion to an integer
+      pdf.size());
   }
 };
 
@@ -2743,6 +2851,19 @@ extern "C"
         // Force redraw, as the annotations might already have changed
         viewport->Redraw();
       }
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void FetchPdf(const char* studyInstanceUid,
+                const char* seriesInstanceUid)
+  {
+    try
+    {
+      LOG(INFO) << "Fetching PDF series: " << seriesInstanceUid;
+      GetResourcesLoader().FetchPdf(studyInstanceUid, seriesInstanceUid);
     }
     EXTERN_CATCH_EXCEPTIONS;
   }

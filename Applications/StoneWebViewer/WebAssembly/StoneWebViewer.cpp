@@ -899,7 +899,7 @@ public:
     return prefetch_.size();
   }
 
-  size_t GetPrefetchFrameIndex(size_t i) const
+  size_t GetPrefetchIndex(size_t i) const
   {
     if (i >= prefetch_.size())
     {
@@ -1273,20 +1273,20 @@ private:
   class PrefetchItem
   {
   private:
-    size_t   frameIndex_;
+    size_t   cursorIndex_;
     bool     isFull_;
 
   public:
-    PrefetchItem(size_t frameIndex,
+    PrefetchItem(size_t cursorIndex,
                  bool isFull) :
-      frameIndex_(frameIndex),
+      cursorIndex_(cursorIndex),
       isFull_(isFull)
     {
     }
 
-    size_t GetFrameIndex() const
+    size_t GetCursorIndex() const
     {
-      return frameIndex_;
+      return cursorIndex_;
     }
 
     bool IsFull() const
@@ -1326,12 +1326,12 @@ private:
   {
     while (!prefetchQueue_.empty())
     {
-      size_t index = prefetchQueue_.front().GetFrameIndex();
+      size_t cursorIndex = prefetchQueue_.front().GetCursorIndex();
       bool isFull = prefetchQueue_.front().IsFull();
       prefetchQueue_.pop_front();
       
-      const std::string sopInstanceUid = frames_->GetInstanceOfFrame(index).GetSopInstanceUid();
-      unsigned int frameNumber = frames_->GetFrameNumberInInstance(index);
+      const std::string sopInstanceUid = frames_->GetInstanceOfFrame(cursorIndex).GetSopInstanceUid();
+      unsigned int frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
 
       {
         FramesCache::Accessor accessor(*cache_, sopInstanceUid, frameNumber);
@@ -1340,11 +1340,11 @@ private:
         {
           if (isFull)
           {
-            ScheduleLoadFullDicomFrame(index, PRIORITY_NORMAL, true);
+            ScheduleLoadFullDicomFrame(cursorIndex, PRIORITY_NORMAL, true);
           }
           else
           {
-            ScheduleLoadRenderedFrame(index, PRIORITY_NORMAL, true);
+            ScheduleLoadRenderedFrame(cursorIndex, PRIORITY_NORMAL, true);
           }
           return;
         }
@@ -1370,10 +1370,10 @@ private:
     if (cursor_.get() != NULL &&
         frames_.get() != NULL)
     {
-      size_t index = cursor_->GetCurrentIndex();
+      size_t cursorIndex = cursor_->GetCurrentIndex();
 
-      if (frames_->GetInstanceOfFrame(index).GetSopInstanceUid() == sopInstanceUid &&
-          frames_->GetFrameNumberInInstance(index) == frameNumber)
+      if (frames_->GetInstanceOfFrame(cursorIndex).GetSopInstanceUid() == sopInstanceUid &&
+          frames_->GetFrameNumberInInstance(cursorIndex) == frameNumber)
       {
         DisplayCurrentFrame();
       }
@@ -1388,25 +1388,25 @@ private:
     if (cursor_.get() != NULL &&
         frames_.get() != NULL)
     {
-      const size_t index = cursor_->GetCurrentIndex();
+      const size_t cursorIndex = cursor_->GetCurrentIndex();
       
       unsigned int cachedQuality;
-      if (!DisplayFrame(cachedQuality, index))
+      if (!DisplayFrame(cachedQuality, cursorIndex))
       {
         // This frame is not cached yet: Load it
         if (source_.HasDicomWebRendered())
         {
-          ScheduleLoadRenderedFrame(index, PRIORITY_HIGH, false /* not a prefetch */);
+          ScheduleLoadRenderedFrame(cursorIndex, PRIORITY_HIGH, false /* not a prefetch */);
         }
         else
         {
-          ScheduleLoadFullDicomFrame(index, PRIORITY_HIGH, false /* not a prefetch */);
+          ScheduleLoadFullDicomFrame(cursorIndex, PRIORITY_HIGH, false /* not a prefetch */);
         }
       }
       else if (cachedQuality < QUALITY_FULL)
       {
         // This frame is only available in low-res: Download the full DICOM
-        ScheduleLoadFullDicomFrame(index, PRIORITY_HIGH, false /* not a prefetch */);
+        ScheduleLoadFullDicomFrame(cursorIndex, PRIORITY_HIGH, false /* not a prefetch */);
         quality = DisplayedFrameQuality_Low;
       }
       else
@@ -1419,8 +1419,8 @@ private:
         prefetchQueue_.clear();
         for (size_t i = 0; i < cursor_->GetPrefetchSize() && i < 16; i++)
         {
-          size_t a = cursor_->GetPrefetchFrameIndex(i);
-          if (a != index)
+          size_t a = cursor_->GetPrefetchIndex(i);
+          if (a != cursorIndex)
           {
             prefetchQueue_.push_back(PrefetchItem(a, i < 2));
           }
@@ -1469,25 +1469,17 @@ private:
   }
 
 
-  static bool IsFrameMonochrome1(const OrthancStone::SortedFrames& frames,
-                                 size_t frameIndex)
-  {
-    const OrthancStone::DicomInstanceParameters& instance = frames.GetInstanceOfFrame(frameIndex);
-    return (instance.GetImageInformation().GetPhotometricInterpretation() ==
-            Orthanc::PhotometricInterpretation_Monochrome1);
-  }
-  
-  
   bool DisplayFrame(unsigned int& quality,
-                    size_t index)
+                    size_t cursorIndex)
   {
     if (frames_.get() == NULL)
     {
       return false;
     }
 
-    const std::string sopInstanceUid = frames_->GetInstanceOfFrame(index).GetSopInstanceUid();
-    size_t frameNumber = frames_->GetFrameNumberInInstance(index);
+    const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
+    const std::string sopInstanceUid = instance.GetSopInstanceUid();
+    size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
 
     FramesCache::Accessor accessor(*cache_, sopInstanceUid, frameNumber);
     if (accessor.IsValid())
@@ -1496,6 +1488,9 @@ private:
       
       quality = accessor.GetQuality();
 
+      bool isMonochrome1 = (instance.GetImageInformation().GetPhotometricInterpretation() ==
+                            Orthanc::PhotometricInterpretation_Monochrome1);
+      
       std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer;
 
       switch (accessor.GetImage().GetFormat())
@@ -1509,7 +1504,7 @@ private:
           std::unique_ptr<OrthancStone::FloatTextureSceneLayer> tmp(
             new OrthancStone::FloatTextureSceneLayer(accessor.GetImage()));
           tmp->SetCustomWindowing(windowingCenter_, windowingWidth_);
-          tmp->SetInverted(inverted_ ^ IsFrameMonochrome1(*frames_, index));
+          tmp->SetInverted(inverted_ ^ isMonochrome1);
           layer.reset(tmp.release());
           break;
         }
@@ -1523,10 +1518,8 @@ private:
       layer->SetFlipY(flipY_);
 
       double pixelSpacingX, pixelSpacingY;
-      OrthancStone::GeometryToolbox::GetPixelSpacing(
-        pixelSpacingX, pixelSpacingY, frames_->GetInstanceOfFrame(index).GetTags());
+      OrthancStone::GeometryToolbox::GetPixelSpacing(pixelSpacingX, pixelSpacingY, instance.GetTags());
       layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
-
 
       std::unique_ptr<OrthancStone::MacroSceneLayer>  annotationsLayer;
 
@@ -1594,14 +1587,14 @@ private:
     }
   }
 
-  void ScheduleLoadFullDicomFrame(size_t index,
+  void ScheduleLoadFullDicomFrame(size_t cursorIndex,
                                   int priority,
                                   bool isPrefetch)
   {
     if (frames_.get() != NULL)
     {
-      std::string sopInstanceUid = frames_->GetInstanceOfFrame(index).GetSopInstanceUid();
-      unsigned int frameNumber = frames_->GetFrameNumberInInstance(index);
+      std::string sopInstanceUid = frames_->GetInstanceOfFrame(cursorIndex).GetSopInstanceUid();
+      unsigned int frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
       
       {
         std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
@@ -1615,23 +1608,25 @@ private:
     }
   }
 
-  void ScheduleLoadRenderedFrame(size_t index,
+  void ScheduleLoadRenderedFrame(size_t cursorIndex,
                                  int priority,
                                  bool isPrefetch)
   {
     if (!source_.HasDicomWebRendered())
     {
-      ScheduleLoadFullDicomFrame(index, priority, isPrefetch);
+      ScheduleLoadFullDicomFrame(cursorIndex, priority, isPrefetch);
     }
     else if (frames_.get() != NULL)
     {
-      std::string sopInstanceUid = frames_->GetInstanceOfFrame(index).GetSopInstanceUid();
-      unsigned int frameNumber = frames_->GetFrameNumberInInstance(index);
-      bool isMonochrome1 = IsFrameMonochrome1(*frames_, index);
+      const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
+      unsigned int frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
+
+      bool isMonochrome1 = (instance.GetImageInformation().GetPhotometricInterpretation() ==
+                            Orthanc::PhotometricInterpretation_Monochrome1);
 
       const std::string uri = ("studies/" + frames_->GetStudyInstanceUid() +
                                "/series/" + frames_->GetSeriesInstanceUid() +
-                               "/instances/" + sopInstanceUid +
+                               "/instances/" + instance.GetSopInstanceUid() +
                                "/frames/" + boost::lexical_cast<std::string>(frameNumber + 1) + "/rendered");
 
       std::map<std::string, std::string> headers, arguments;
@@ -1642,7 +1637,7 @@ private:
       std::unique_ptr<OrthancStone::IOracleCommand> command(
         source_.CreateDicomWebCommand(
           uri, arguments, headers, new SetLowQualityFrame(
-            GetSharedObserver(), sopInstanceUid, frameNumber,
+            GetSharedObserver(), instance.GetSopInstanceUid(), frameNumber,
             windowingCenter_, windowingWidth_, isMonochrome1, isPrefetch)));
 
       {
@@ -1954,9 +1949,9 @@ public:
     if (cursor_.get() != NULL &&
         frames_.get() != NULL)
     {
-      const size_t index = cursor_->GetCurrentIndex();
-      const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(index);
-      const unsigned int frame = frames_->GetFrameNumberInInstance(index);
+      const size_t cursorIndex = cursor_->GetCurrentIndex();
+      const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
+      const unsigned int frame = frames_->GetFrameNumberInInstance(cursorIndex);
 
       for (std::list<const ViewerViewport*>::const_iterator
              it = viewports.begin(); it != viewports.end(); ++it)
@@ -2172,18 +2167,18 @@ public:
 
   void ApplyScheduledFocus()
   {
-    size_t frameIndex;
+    size_t cursorIndex;
     
     if (hasFocusOnInstance_ &&
         cursor_.get() != NULL &&
         frames_.get() != NULL &&
-        frames_->LookupFrame(frameIndex, focusSopInstanceUid_, focusFrameNumber_))
+        frames_->LookupFrame(cursorIndex, focusSopInstanceUid_, focusFrameNumber_))
     {
       size_t current = cursor_->GetCurrentIndex();
 
-      if (current != frameIndex)
+      if (current != cursorIndex)
       {
-        cursor_->SetCurrentIndex(frameIndex);
+        cursor_->SetCurrentIndex(cursorIndex);
         DisplayCurrentFrame();
       }
       
@@ -2196,12 +2191,12 @@ public:
     //static const double MAX_DISTANCE = 0.5;   // 0.5 cm => TODO parameter?
     static const double MAX_DISTANCE = std::numeric_limits<double>::infinity();
 
-    size_t frameIndex;
+    size_t cursorIndex;
     if (cursor_.get() != NULL &&
         frames_.get() != NULL &&
-        frames_->FindClosestFrame(frameIndex, p, MAX_DISTANCE))
+        frames_->FindClosestFrame(cursorIndex, p, MAX_DISTANCE))
     {
-      cursor_->SetCurrentIndex(frameIndex);
+      cursor_->SetCurrentIndex(cursorIndex);
       DisplayCurrentFrame();
     }
   }

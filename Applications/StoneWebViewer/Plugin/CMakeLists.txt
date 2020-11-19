@@ -87,6 +87,8 @@ add_definitions(
 
 
 EmbedResources(
+  --no-upcase-check  # For 2017-11-13-OpenSans-Regular.ttf
+  
   # Folders
   IMAGES                 ${ORTHANC_STONE_BINARIES}/img/
   WEB_APPLICATION        ${CMAKE_SOURCE_DIR}/../WebApplication

@@ -95,5 +95,7 @@ install(
   ${CMAKE_CURRENT_BINARY_DIR}/fontawesome-free-5.14.0-web/webfonts/fa-solid-900.ttf
   ${CMAKE_CURRENT_BINARY_DIR}/fontawesome-free-5.14.0-web/webfonts/fa-solid-900.woff
   ${CMAKE_CURRENT_BINARY_DIR}/fontawesome-free-5.14.0-web/webfonts/fa-solid-900.woff2
+  ${CMAKE_SOURCE_DIR}/../Resources/OpenSans/2017-11-13-OpenSans-Regular.ttf
+  ${CMAKE_SOURCE_DIR}/../Resources/OpenSans/2017-11-13-OpenSans-Regular.woff2
   DESTINATION ${ORTHANC_STONE_INSTALL_PREFIX}/webfonts
   )

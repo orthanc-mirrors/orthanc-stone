@@ -19,6 +19,8 @@
  **/
 
 
+// DEPENDENCY: https://github.com/faisalman/ua-parser-js
+
 function beforePrint(event) {
   var body = $('body');
   body.addClass('print');

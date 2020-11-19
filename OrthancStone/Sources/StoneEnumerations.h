@@ -119,7 +119,7 @@ namespace OrthancStone
 
   enum SeriesThumbnailType
   {
-    SeriesThumbnailType_NotLoaded = 1,  // The remote server cannot decode this image
+    SeriesThumbnailType_NotLoaded = 1,  // "SeriesThumbnailsLoader" has not information about this series yet
     SeriesThumbnailType_Unsupported = 2,  // The remote server cannot decode this image
     SeriesThumbnailType_Pdf = 3,
     SeriesThumbnailType_Video = 4,

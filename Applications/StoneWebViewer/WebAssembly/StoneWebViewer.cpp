@@ -1723,29 +1723,6 @@ private:
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, OnKey);
 
     ResetDefaultWindowing();
-
-    /*{
-      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-      std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
-      OrthancStone::PolylineSceneLayer::Chain chain;
-      chain.push_back(OrthancStone::ScenePoint2D(-10, 0));
-      chain.push_back(OrthancStone::ScenePoint2D(10, 0));
-      layer->AddChain(chain, false, 255, 0, 0);
-      chain.clear();
-      chain.push_back(OrthancStone::ScenePoint2D(0, -10));
-      chain.push_back(OrthancStone::ScenePoint2D(0, 10));
-      layer->AddChain(chain, false, 255, 0, 0);
-      chain.clear();
-      chain.push_back(OrthancStone::ScenePoint2D(40, 30));
-      chain.push_back(OrthancStone::ScenePoint2D(40, 50));
-      layer->AddChain(chain, false, 255, 0, 0);
-      chain.clear();
-      chain.push_back(OrthancStone::ScenePoint2D(30, 40));
-      chain.push_back(OrthancStone::ScenePoint2D(50, 40));
-      layer->AddChain(chain, false, 255, 0, 0);
-      lock->GetController().GetScene().SetLayer(1000, layer.release());
-      lock->Invalidate();
-      }*/
   }
 
   static EM_BOOL OnKey(int eventType,

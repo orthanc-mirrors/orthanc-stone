@@ -1857,16 +1857,28 @@ public:
       observer_->SignalFrameUpdated(*this, cursor_->GetCurrentIndex(),
                                     frames_->GetFramesCount(), DisplayedFrameQuality_None);
     }
-    
+
     if (frames_->GetFramesCount() != 0)
     {
-      const std::string& sopInstanceUid = frames_->GetInstanceOfFrame(cursor_->GetCurrentIndex()).GetSopInstanceUid();
+      const OrthancStone::DicomInstanceParameters& centralInstance = frames_->GetInstanceOfFrame(cursor_->GetCurrentIndex());
 
+      /**
+       * Avoid loading metadata if we know that this cannot be a
+       * "true" image with pixel data. Retrieving instance metadata on
+       * RTSTRUCT can lead to very large JSON whose parsing will
+       * freeze the browser for several seconds.
+       **/
+      const OrthancStone::SopClassUid uid = centralInstance.GetSopClassUid();
+      if (uid != OrthancStone::SopClassUid_EncapsulatedPdf &&
+          uid != OrthancStone::SopClassUid_RTDose &&
+          uid != OrthancStone::SopClassUid_RTPlan &&
+          uid != OrthancStone::SopClassUid_RTStruct &&
+          GetSeriesThumbnailType(uid) != OrthancStone::SeriesThumbnailType_Video)
       {
         // Fetch the default windowing for the central instance
         const std::string uri = ("studies/" + frames_->GetStudyInstanceUid() +
                                  "/series/" + frames_->GetSeriesInstanceUid() +
-                                 "/instances/" + sopInstanceUid + "/metadata");
+                                 "/instances/" + centralInstance.GetSopInstanceUid() + "/metadata");
         
         loader_->ScheduleGetDicomWeb(
           boost::make_shared<OrthancStone::LoadedDicomResources>(Orthanc::DICOM_TAG_SOP_INSTANCE_UID),
@@ -2423,7 +2435,7 @@ extern "C"
 {
   int main(int argc, char const *argv[]) 
   {
-    printf("OK\n");
+    printf("Initializing Stone\n");
     Orthanc::InitializeFramework("", true);
     Orthanc::Logging::EnableInfoLevel(true);
     //Orthanc::Logging::EnableTraceLevel(true);

@@ -36,6 +36,30 @@ namespace OrthancStone
     {
       return SopClassUid_RTDose;
     }
+    else if (s == "1.2.840.10008.5.1.4.1.1.481.5")
+    {
+      return SopClassUid_RTPlan;
+    }
+    else if (s == "1.2.840.10008.5.1.4.1.1.481.3")
+    {
+      return SopClassUid_RTStruct;
+    }
+    else if (s == "1.2.840.10008.5.1.4.1.1.104.1")
+    {
+      return SopClassUid_EncapsulatedPdf;
+    }
+    else if (s == "1.2.840.10008.5.1.4.1.1.77.1.1.1")
+    {
+      return SopClassUid_VideoEndoscopicImageStorage;
+    }      
+    else if (s == "1.2.840.10008.5.1.4.1.1.77.1.2.1")
+    {
+      return SopClassUid_VideoMicroscopicImageStorage;
+    }      
+    else if (s == "1.2.840.10008.5.1.4.1.1.77.1.4.1")
+    {
+      return SopClassUid_VideoPhotographicImageStorage;
+    }      
     else
     {
       //LOG(INFO) << "Other SOP class UID: " << source;
@@ -173,6 +197,24 @@ namespace OrthancStone
         default:
           break;
       }
+    }
+  }
+
+
+  SeriesThumbnailType GetSeriesThumbnailType(SopClassUid sopClassUid)
+  {
+    switch (sopClassUid)
+    {
+      case SopClassUid_EncapsulatedPdf:
+        return SeriesThumbnailType_Pdf;
+        
+      case SopClassUid_VideoEndoscopicImageStorage:
+      case SopClassUid_VideoMicroscopicImageStorage:
+      case SopClassUid_VideoPhotographicImageStorage:
+        return SeriesThumbnailType_Video;
+
+      default:
+        return SeriesThumbnailType_Unsupported;
     }
   }
 }

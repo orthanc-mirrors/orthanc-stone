@@ -45,25 +45,6 @@ static const unsigned int JPEG_QUALITY = 70;  // Only used for Orthanc source
 
 namespace OrthancStone
 {
-  static SeriesThumbnailType ExtractSopClassUid(const std::string& sopClassUid)
-  {
-    if (sopClassUid == "1.2.840.10008.5.1.4.1.1.104.1")  // Encapsulated PDF Storage
-    {
-      return SeriesThumbnailType_Pdf;
-    }
-    else if (sopClassUid == "1.2.840.10008.5.1.4.1.1.77.1.1.1" ||  // Video Endoscopic Image Storage
-             sopClassUid == "1.2.840.10008.5.1.4.1.1.77.1.2.1" ||  // Video Microscopic Image Storage
-             sopClassUid == "1.2.840.10008.5.1.4.1.1.77.1.4.1")    // Video Photographic Image Storage
-    {
-      return SeriesThumbnailType_Video;
-    }
-    else
-    {
-      return SeriesThumbnailType_Unsupported;
-    }
-  }
-
-
   SeriesThumbnailsLoader::Thumbnail::Thumbnail(const std::string& image,
                                                const std::string& mime) :
     type_(SeriesThumbnailType_Image),
@@ -259,7 +240,7 @@ namespace OrthancStone
 
           if (ok)
           {
-            type = ExtractSopClassUid(sopClassUid);
+            type = GetSeriesThumbnailType(StringToSopClassUid(sopClassUid));
           }
         }
 
@@ -370,7 +351,7 @@ namespace OrthancStone
     virtual void HandleSuccess(const std::string& body,
                                const std::map<std::string, std::string>& headers) ORTHANC_OVERRIDE
     {
-      SeriesThumbnailType type = ExtractSopClassUid(body);
+      SeriesThumbnailType type = GetSeriesThumbnailType(StringToSopClassUid(body));
 
       if (type == SeriesThumbnailType_Pdf ||
           type == SeriesThumbnailType_Video)

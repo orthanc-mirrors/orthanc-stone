@@ -611,7 +611,7 @@ window.addEventListener('StoneInitialized', function() {
   stone.Setup(Module);
   stone.SetOrthancRoot('..', true);
   stone.SetSoftwareRendering(localStorage.settingSoftwareRendering == '1');
-  console.warn('Native Stone properly intialized');
+  console.warn('Stone properly initialized');
 
   var study = getParameterFromUrl('study');
   var series = getParameterFromUrl('series');

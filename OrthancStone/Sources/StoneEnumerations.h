@@ -108,7 +108,22 @@ namespace OrthancStone
   enum SopClassUid
   {
     SopClassUid_Other,
-    SopClassUid_RTDose
+    SopClassUid_RTDose,
+    SopClassUid_RTStruct,
+    SopClassUid_RTPlan,
+    SopClassUid_EncapsulatedPdf,
+    SopClassUid_VideoEndoscopicImageStorage,
+    SopClassUid_VideoMicroscopicImageStorage,
+    SopClassUid_VideoPhotographicImageStorage
+  };
+
+  enum SeriesThumbnailType
+  {
+    SeriesThumbnailType_NotLoaded = 1,  // The remote server cannot decode this image
+    SeriesThumbnailType_Unsupported = 2,  // The remote server cannot decode this image
+    SeriesThumbnailType_Pdf = 3,
+    SeriesThumbnailType_Video = 4,
+    SeriesThumbnailType_Image = 5
   };
 
   enum BitmapAnchor
@@ -156,4 +171,6 @@ namespace OrthancStone
                                 unsigned int bitmapWidth,
                                 unsigned int bitmapHeight,
                                 unsigned int border = 0);
+
+  SeriesThumbnailType GetSeriesThumbnailType(SopClassUid sopClassUid);
 }

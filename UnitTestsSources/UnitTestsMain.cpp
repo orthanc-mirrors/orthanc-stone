@@ -940,6 +940,29 @@ TEST(CoordinateSystem3D, Basic)
 }
 
 
+TEST(Enumerations, Basic)
+{
+  using namespace OrthancStone;
+  ASSERT_EQ(SopClassUid_EncapsulatedPdf, StringToSopClassUid("1.2.840.10008.5.1.4.1.1.104.1"));
+  ASSERT_EQ(SopClassUid_RTStruct, StringToSopClassUid("1.2.840.10008.5.1.4.1.1.481.3"));
+  ASSERT_EQ(SopClassUid_RTDose, StringToSopClassUid("1.2.840.10008.5.1.4.1.1.481.2"));
+  ASSERT_EQ(SopClassUid_RTPlan, StringToSopClassUid("1.2.840.10008.5.1.4.1.1.481.5"));
+  ASSERT_EQ(SopClassUid_VideoEndoscopicImageStorage, StringToSopClassUid("1.2.840.10008.5.1.4.1.1.77.1.1.1"));
+  ASSERT_EQ(SopClassUid_VideoMicroscopicImageStorage, StringToSopClassUid("1.2.840.10008.5.1.4.1.1.77.1.2.1"));
+  ASSERT_EQ(SopClassUid_VideoPhotographicImageStorage, StringToSopClassUid("1.2.840.10008.5.1.4.1.1.77.1.4.1"));
+  ASSERT_EQ(SopClassUid_Other, StringToSopClassUid("nope"));
+
+  ASSERT_EQ(SeriesThumbnailType_Pdf, GetSeriesThumbnailType(SopClassUid_EncapsulatedPdf));
+  ASSERT_EQ(SeriesThumbnailType_Video, GetSeriesThumbnailType(SopClassUid_VideoEndoscopicImageStorage));
+  ASSERT_EQ(SeriesThumbnailType_Video, GetSeriesThumbnailType(SopClassUid_VideoMicroscopicImageStorage));
+  ASSERT_EQ(SeriesThumbnailType_Video, GetSeriesThumbnailType(SopClassUid_VideoPhotographicImageStorage));
+  ASSERT_EQ(SeriesThumbnailType_Unsupported, GetSeriesThumbnailType(SopClassUid_Other));
+  ASSERT_EQ(SeriesThumbnailType_Unsupported, GetSeriesThumbnailType(SopClassUid_RTDose));
+  ASSERT_EQ(SeriesThumbnailType_Unsupported, GetSeriesThumbnailType(SopClassUid_RTStruct));
+  ASSERT_EQ(SeriesThumbnailType_Unsupported, GetSeriesThumbnailType(SopClassUid_RTPlan));
+}
+
+
 int main(int argc, char **argv)
 {
   Orthanc::Logging::Initialize();

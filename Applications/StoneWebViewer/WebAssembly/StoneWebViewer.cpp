@@ -2358,7 +2358,7 @@ static boost::shared_ptr<FramesCache> cache_;
 static boost::shared_ptr<OrthancStone::WebAssemblyLoadersContext> context_;
 static std::string stringBuffer_;
 static bool softwareRendering_ = false;
-static WebViewerAction leftButtonAction_ = WebViewerAction_Crosshair; //WebViewerAction_GrayscaleWindowing;
+static WebViewerAction leftButtonAction_ = WebViewerAction_GrayscaleWindowing;
 static WebViewerAction middleButtonAction_ = WebViewerAction_Pan;
 static WebViewerAction rightButtonAction_ = WebViewerAction_Zoom;
 
@@ -2429,6 +2429,8 @@ extern "C"
     //Orthanc::Logging::EnableTraceLevel(true);
 
     context_.reset(new OrthancStone::WebAssemblyLoadersContext(1, 4, 1));
+    context_->SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
+    
     cache_.reset(new FramesCache);
     annotations_.reset(new OrthancStone::OsiriX::CollectionOfAnnotations);
     

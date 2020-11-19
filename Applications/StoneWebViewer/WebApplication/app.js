@@ -89,8 +89,8 @@ Vue.component('viewport', {
         }
       }
       else if (newVal.type == stone.ThumbnailType.VIDEO) {
-        // TODO
-        console.warn('Videos are not supported yet by the Stone Web viewer');
+        this.status = 'video';
+        console.warn('Videos are not supported by the Stone Web viewer yet');
       }
     }
   },

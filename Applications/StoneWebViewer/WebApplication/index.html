@@ -592,11 +592,12 @@
               <pdf-viewer v-bind:prefix="canvasId + '-pdf'" ref="pdfViewer"></pdf-viewer>
             </div>
                 
-            <!--div v-if="status == 'video'" class="wvPaneOverlay">
-              <video class="wvVideo" autoplay="" loop="" controls="" preload="auto" type="video/mp4"
+            <div v-if="status == 'video'" class="wvPaneOverlay">
+              [ this viewer cannot play videos ]
+              <!--video class="wvVideo" autoplay="" loop="" controls="" preload="auto" type="video/mp4"
                      src="http://viewer-pro.osimis.io/instances/e465dd27-83c96343-96848735-7035a133-1facf1a0/frames/0/raw">
-              </video>
-            </div-->
+              </video-->
+            </div>
                 
             <div v-if="status == 'loading'" class="wvPaneOverlay">
               <span class="wvLoadingSpinner">
@@ -617,7 +618,7 @@
         <div v-bind:id="prefix + '-container'"
              style="position: absolute; left: 0; top: 0; width:100%;height:100%;overflow:auto;line-height: 0px;">
           <canvas v-bind:id="prefix + '-canvas'"
-                  style="position: absolute; top:0px; left:0px; background-color: white;"
+                  style="position: absolute; top:0px; left:0px;"
                   oncontextmenu="return false"></canvas>
         </div>
 

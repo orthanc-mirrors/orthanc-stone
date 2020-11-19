@@ -168,6 +168,7 @@ Vue.component('pdf-viewer', {
         this.pdfDoc.getPage(pageNum).then(function(page) {
           var viewport = page.getViewport({scale: that.scale});
 
+          that.canvas.style['background-color'] = 'white';  // avoids flickering while the page changes
           that.canvas.height = viewport.height;
           that.canvas.width = viewport.width;
           

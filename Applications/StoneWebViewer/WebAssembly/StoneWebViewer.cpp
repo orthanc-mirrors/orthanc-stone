@@ -1120,13 +1120,12 @@ private:
       std::unique_ptr<Orthanc::JpegReader> jpeg(new Orthanc::JpegReader);
       jpeg->ReadFromMemory(message.GetAnswer());
 
-      bool updatedCache;
+      std::unique_ptr<Orthanc::ImageAccessor> converted;
       
       switch (jpeg->GetFormat())
       {
         case Orthanc::PixelFormat_RGB24:
-          updatedCache = GetViewport().cache_->Acquire(
-            sopInstanceUid_, frameNumber_, jpeg.release(), QUALITY_JPEG);
+          converted.reset(jpeg.release());
           break;
 
         case Orthanc::PixelFormat_Grayscale8:
@@ -1136,9 +1135,8 @@ private:
             Orthanc::ImageProcessing::Invert(*jpeg);
           }
 
-          std::unique_ptr<Orthanc::Image> converted(
-            new Orthanc::Image(Orthanc::PixelFormat_Float32, jpeg->GetWidth(),
-                               jpeg->GetHeight(), false));
+          converted.reset(new Orthanc::Image(Orthanc::PixelFormat_Float32, jpeg->GetWidth(),
+                                             jpeg->GetHeight(), false));
 
           Orthanc::ImageProcessing::Convert(*converted, *jpeg);
 
@@ -1162,8 +1160,6 @@ private:
                                 (windowCenter_ - windowWidth_ / 2.0f) / scaling);
 
           Orthanc::ImageProcessing::ShiftScale(*converted, offset, scaling, false);
-          updatedCache = GetViewport().cache_->Acquire(
-            sopInstanceUid_, frameNumber_, converted.release(), QUALITY_JPEG);
           break;
         }
 
@@ -1171,10 +1167,9 @@ private:
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
 
-      if (updatedCache)
-      {
-        GetViewport().SignalUpdatedFrame(sopInstanceUid_, frameNumber_);
-      }
+      assert(converted.get() != NULL);
+      GetViewport().RenderCurrentSceneFromCommand(*converted, sopInstanceUid_, frameNumber_, DisplayedFrameQuality_Low);
+      GetViewport().cache_->Acquire(sopInstanceUid_, frameNumber_, converted.release(), QUALITY_JPEG);
 
       if (isPrefetch_)
       {
@@ -1222,12 +1217,11 @@ private:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
 
-      bool updatedCache;
-
+      std::unique_ptr<Orthanc::ImageAccessor> converted;
+      
       if (frame->GetFormat() == Orthanc::PixelFormat_RGB24)
       {
-        updatedCache = GetViewport().cache_->Acquire(
-          sopInstanceUid_, frameNumber_, frame.release(), QUALITY_FULL);
+        converted.reset(frame.release());
       }
       else
       {
@@ -1248,19 +1242,14 @@ private:
           b = rescaleIntercept;
         }
 
-        std::unique_ptr<Orthanc::ImageAccessor> converted(
-          new Orthanc::Image(Orthanc::PixelFormat_Float32, frame->GetWidth(), frame->GetHeight(), false));
+        converted.reset(new Orthanc::Image(Orthanc::PixelFormat_Float32, frame->GetWidth(), frame->GetHeight(), false));
         Orthanc::ImageProcessing::Convert(*converted, *frame);
-        Orthanc::ImageProcessing::ShiftScale2(*converted, b, a, false);
+        Orthanc::ImageProcessing::ShiftScale2(*converted, b, a, false);        
+      }
 
-        updatedCache = GetViewport().cache_->Acquire(
-          sopInstanceUid_, frameNumber_, converted.release(), QUALITY_FULL);
-      }
-      
-      if (updatedCache)
-      {
-        GetViewport().SignalUpdatedFrame(sopInstanceUid_, frameNumber_);
-      }
+      assert(converted.get() != NULL);
+      GetViewport().RenderCurrentSceneFromCommand(*converted, sopInstanceUid_, frameNumber_, DisplayedFrameQuality_High);
+      GetViewport().cache_->Acquire(sopInstanceUid_, frameNumber_, converted.release(), QUALITY_FULL);
 
       if (isPrefetch_)
       {
@@ -1364,22 +1353,6 @@ private:
     inverted_ = false;
   }
 
-  void SignalUpdatedFrame(const std::string& sopInstanceUid,
-                          unsigned int frameNumber)
-  {
-    if (cursor_.get() != NULL &&
-        frames_.get() != NULL)
-    {
-      size_t cursorIndex = cursor_->GetCurrentIndex();
-
-      if (frames_->GetInstanceOfFrame(cursorIndex).GetSopInstanceUid() == sopInstanceUid &&
-          frames_->GetFrameNumberInInstance(cursorIndex) == frameNumber)
-      {
-        Redraw();
-      }
-    }
-  }
-  
 
   void ClearViewport()
   {
@@ -1412,6 +1385,38 @@ private:
   }
 
 
+  void SetupPrefetchAfterRendering(DisplayedFrameQuality quality)
+  {
+    const size_t cursorIndex = cursor_->GetCurrentIndex();
+
+    // Prepare prefetching
+    prefetchQueue_.clear();
+    for (size_t i = 0; i < cursor_->GetPrefetchSize() && i < 16; i++)
+    {
+      size_t a = cursor_->GetPrefetchIndex(i);
+      if (a == cursorIndex)
+      {
+        if (quality == DisplayedFrameQuality_Low)
+        {
+          prefetchQueue_.push_back(PrefetchItem(a, true));
+        }
+      }
+      else
+      {
+        prefetchQueue_.push_back(PrefetchItem(a, i < 2));
+      }
+    }
+
+    ScheduleNextPrefetch();
+
+    if (observer_.get() != NULL)
+    {
+      observer_->SignalFrameUpdated(*this, cursor_->GetCurrentIndex(),
+                                    frames_->GetFramesCount(), quality);
+    }
+  }
+  
+  
   void RenderCurrentScene(const Orthanc::ImageAccessor& frame,
                           const OrthancStone::DicomInstanceParameters& instance,
                           const OrthancStone::CoordinateSystem3D& plane)
@@ -1510,20 +1515,40 @@ private:
     
     const size_t cursorIndex = cursor_->GetCurrentIndex();
     const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
-    const OrthancStone::CoordinateSystem3D plane = frames_->GetFrameGeometry(cursorIndex);
-
     const size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
 
     FramesCache::Accessor accessor(*cache_, instance.GetSopInstanceUid(), frameNumber);
     if (accessor.IsValid())
     {
       quality = accessor.GetQuality();
-      RenderCurrentScene(accessor.GetImage(), instance, plane);
+      RenderCurrentScene(accessor.GetImage(), instance, frames_->GetFrameGeometry(cursorIndex));
       return true;
     }
     else
     {
       return false;
+    }
+  }
+
+  void RenderCurrentSceneFromCommand(const Orthanc::ImageAccessor& frame,
+                                     const std::string& loadedSopInstanceUid,
+                                     unsigned int loadedFrameNumber,
+                                     DisplayedFrameQuality quality)
+  {
+    if (cursor_.get() != NULL &&
+        frames_.get() != NULL)
+    {
+      const size_t cursorIndex = cursor_->GetCurrentIndex();
+      const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
+      const size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
+
+      // Only change the same if the loaded frame still corresponds to the current cursor
+      if (instance.GetSopInstanceUid() == loadedSopInstanceUid &&
+          frameNumber == loadedFrameNumber)
+      {
+        RenderCurrentScene(frame, instance, frames_->GetFrameGeometry(cursorIndex));
+        SetupPrefetchAfterRendering(quality);
+      }
     }
   }
 
@@ -1828,7 +1853,7 @@ public:
     return viewport_->GetCanvasId();
   }
 
-  
+
   void Redraw()
   {
     DisplayedFrameQuality quality = DisplayedFrameQuality_None;
@@ -1862,26 +1887,7 @@ public:
         quality = DisplayedFrameQuality_High;
       }
 
-      {
-        // Prepare prefetching
-        prefetchQueue_.clear();
-        for (size_t i = 0; i < cursor_->GetPrefetchSize() && i < 16; i++)
-        {
-          size_t a = cursor_->GetPrefetchIndex(i);
-          if (a != cursorIndex)
-          {
-            prefetchQueue_.push_back(PrefetchItem(a, i < 2));
-          }
-        }
-
-        ScheduleNextPrefetch();
-      }      
-
-      if (observer_.get() != NULL)
-      {
-        observer_->SignalFrameUpdated(*this, cursor_->GetCurrentIndex(),
-                                      frames_->GetFramesCount(), quality);
-      }
+      SetupPrefetchAfterRendering(quality);
     }
   }
 

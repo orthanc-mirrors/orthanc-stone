@@ -112,7 +112,7 @@ enum STONE_WEB_VIEWER_EXPORT ThumbnailType
     ThumbnailType_Video,
     ThumbnailType_Loading,
     ThumbnailType_Unknown
-};
+    };
 
 
 enum STONE_WEB_VIEWER_EXPORT DisplayedFrameQuality
@@ -1082,7 +1082,7 @@ private:
         }
       }
 
-      GetViewport().DisplayCurrentFrame();
+      GetViewport().Redraw();
     }
   };
 
@@ -1375,64 +1375,7 @@ private:
       if (frames_->GetInstanceOfFrame(cursorIndex).GetSopInstanceUid() == sopInstanceUid &&
           frames_->GetFrameNumberInInstance(cursorIndex) == frameNumber)
       {
-        DisplayCurrentFrame();
-      }
-    }
-  }
-
-
-  void DisplayCurrentFrame()
-  {
-    DisplayedFrameQuality quality = DisplayedFrameQuality_None;
-    
-    if (cursor_.get() != NULL &&
-        frames_.get() != NULL)
-    {
-      const size_t cursorIndex = cursor_->GetCurrentIndex();
-      
-      unsigned int cachedQuality;
-      if (!DisplayFrame(cachedQuality, cursorIndex))
-      {
-        // This frame is not cached yet: Load it
-        if (source_.HasDicomWebRendered())
-        {
-          ScheduleLoadRenderedFrame(cursorIndex, PRIORITY_HIGH, false /* not a prefetch */);
-        }
-        else
-        {
-          ScheduleLoadFullDicomFrame(cursorIndex, PRIORITY_HIGH, false /* not a prefetch */);
-        }
-      }
-      else if (cachedQuality < QUALITY_FULL)
-      {
-        // This frame is only available in low-res: Download the full DICOM
-        ScheduleLoadFullDicomFrame(cursorIndex, PRIORITY_HIGH, false /* not a prefetch */);
-        quality = DisplayedFrameQuality_Low;
-      }
-      else
-      {
-        quality = DisplayedFrameQuality_High;
-      }
-
-      {
-        // Prepare prefetching
-        prefetchQueue_.clear();
-        for (size_t i = 0; i < cursor_->GetPrefetchSize() && i < 16; i++)
-        {
-          size_t a = cursor_->GetPrefetchIndex(i);
-          if (a != cursorIndex)
-          {
-            prefetchQueue_.push_back(PrefetchItem(a, i < 2));
-          }
-        }
-
-        ScheduleNextPrefetch();
-      }      
-
-      if (observer_.get() != NULL)
-      {
-        observer_->SignalFrameUpdated(*this, cursor_->GetCurrentIndex(),
-                                      frames_->GetFramesCount(), quality);
+        Redraw();
       }
     }
   }
@@ -1469,117 +1412,114 @@ private:
   }
 
 
-  bool DisplayFrame(unsigned int& quality,
-                    size_t cursorIndex)
+  void RenderCurrentScene(const Orthanc::ImageAccessor& frame,
+                          const OrthancStone::DicomInstanceParameters& instance,
+                          const OrthancStone::CoordinateSystem3D& plane)
   {
-    if (frames_.get() == NULL)
+    SaveCurrentWindowing();
+      
+    bool isMonochrome1 = (instance.GetImageInformation().GetPhotometricInterpretation() ==
+                          Orthanc::PhotometricInterpretation_Monochrome1);
+      
+    std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer;
+
+    switch (frame.GetFormat())
     {
-      return false;
+      case Orthanc::PixelFormat_RGB24:
+        layer.reset(new OrthancStone::ColorTextureSceneLayer(frame));
+        break;
+
+      case Orthanc::PixelFormat_Float32:
+      {
+        std::unique_ptr<OrthancStone::FloatTextureSceneLayer> tmp(
+          new OrthancStone::FloatTextureSceneLayer(frame));
+        tmp->SetCustomWindowing(windowingCenter_, windowingWidth_);
+        tmp->SetInverted(inverted_ ^ isMonochrome1);
+        layer.reset(tmp.release());
+        break;
+      }
+
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
     }
 
-    const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
-    const std::string sopInstanceUid = instance.GetSopInstanceUid();
-    size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
+    assert(layer.get() != NULL);
 
-    FramesCache::Accessor accessor(*cache_, sopInstanceUid, frameNumber);
+    layer->SetLinearInterpolation(true);
+    layer->SetFlipX(flipX_);
+    layer->SetFlipY(flipY_);
+
+    double pixelSpacingX, pixelSpacingY;
+    OrthancStone::GeometryToolbox::GetPixelSpacing(pixelSpacingX, pixelSpacingY, instance.GetTags());
+    layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
+
+    std::unique_ptr<OrthancStone::MacroSceneLayer>  annotationsLayer;
+
+    if (annotations_)
+    {
+      std::set<size_t> a;
+      annotations_->LookupSopInstanceUid(a, instance.GetSopInstanceUid());
+      if (plane.IsValid() &&
+          !a.empty())
+      {
+        annotationsLayer.reset(new OrthancStone::MacroSceneLayer);
+        annotationsLayer->Reserve(a.size());
+
+        OrthancStone::OsiriXLayerFactory factory;
+        factory.SetColor(0, 255, 0);
+          
+        for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
+        {
+          const OrthancStone::OsiriX::Annotation& annotation = annotations_->GetAnnotation(*it);
+          annotationsLayer->AddLayer(factory.Create(annotation, plane));
+        }
+      }
+    }
+
+    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+
+    OrthancStone::Scene2D& scene = lock->GetController().GetScene();
+
+    scene.SetLayer(LAYER_TEXTURE, layer.release());
+
+    if (annotationsLayer.get() != NULL)
+    {
+      scene.SetLayer(LAYER_ANNOTATIONS, annotationsLayer.release());
+    }
+    else
+    {
+      scene.DeleteLayer(LAYER_ANNOTATIONS);
+    }
+
+    if (fitNextContent_)
+    {
+      lock->RefreshCanvasSize();
+      lock->GetCompositor().FitContent(scene);
+      fitNextContent_ = false;
+    }
+        
+    //lock->GetCompositor().Refresh(scene);
+    lock->Invalidate();
+  }
+
+
+  bool RenderCurrentSceneUsingCache(unsigned int& quality)
+  {
+    assert(cursor_.get() != NULL);
+    assert(frames_.get() != NULL);
+    
+    const size_t cursorIndex = cursor_->GetCurrentIndex();
+    const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
+    const OrthancStone::CoordinateSystem3D plane = frames_->GetFrameGeometry(cursorIndex);
+
+    const size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
+
+    FramesCache::Accessor accessor(*cache_, instance.GetSopInstanceUid(), frameNumber);
     if (accessor.IsValid())
     {
-      SaveCurrentWindowing();
-      
       quality = accessor.GetQuality();
-
-      bool isMonochrome1 = (instance.GetImageInformation().GetPhotometricInterpretation() ==
-                            Orthanc::PhotometricInterpretation_Monochrome1);
-      
-      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer;
-
-      switch (accessor.GetImage().GetFormat())
-      {
-        case Orthanc::PixelFormat_RGB24:
-          layer.reset(new OrthancStone::ColorTextureSceneLayer(accessor.GetImage()));
-          break;
-
-        case Orthanc::PixelFormat_Float32:
-        {
-          std::unique_ptr<OrthancStone::FloatTextureSceneLayer> tmp(
-            new OrthancStone::FloatTextureSceneLayer(accessor.GetImage()));
-          tmp->SetCustomWindowing(windowingCenter_, windowingWidth_);
-          tmp->SetInverted(inverted_ ^ isMonochrome1);
-          layer.reset(tmp.release());
-          break;
-        }
-
-        default:
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
-      }
-
-      layer->SetLinearInterpolation(true);
-      layer->SetFlipX(flipX_);
-      layer->SetFlipY(flipY_);
-
-      double pixelSpacingX, pixelSpacingY;
-      OrthancStone::GeometryToolbox::GetPixelSpacing(pixelSpacingX, pixelSpacingY, instance.GetTags());
-      layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
-
-      std::unique_ptr<OrthancStone::MacroSceneLayer>  annotationsLayer;
-
-      if (annotations_ &&
-          cursor_.get() != NULL)
-      {
-        const OrthancStone::CoordinateSystem3D plane = frames_->GetFrameGeometry(cursor_->GetCurrentIndex());
-        
-        std::set<size_t> a;
-        annotations_->LookupSopInstanceUid(a, sopInstanceUid);
-        if (plane.IsValid() &&
-            !a.empty())
-        {
-          annotationsLayer.reset(new OrthancStone::MacroSceneLayer);
-          annotationsLayer->Reserve(a.size());
-
-          OrthancStone::OsiriXLayerFactory factory;
-          factory.SetColor(0, 255, 0);
-          
-          for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
-          {
-            const OrthancStone::OsiriX::Annotation& annotation = annotations_->GetAnnotation(*it);
-            annotationsLayer->AddLayer(factory.Create(annotation, plane));
-          }
-        }
-      }
-
-      
-      if (layer.get() == NULL)
-      {
-        return false;
-      }
-      else
-      {
-        std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-
-        OrthancStone::Scene2D& scene = lock->GetController().GetScene();
-
-        scene.SetLayer(LAYER_TEXTURE, layer.release());
-
-        if (annotationsLayer.get() != NULL)
-        {
-          scene.SetLayer(LAYER_ANNOTATIONS, annotationsLayer.release());
-        }
-        else
-        {
-          scene.DeleteLayer(LAYER_ANNOTATIONS);
-        }
-
-        if (fitNextContent_)
-        {
-          lock->RefreshCanvasSize();
-          lock->GetCompositor().FitContent(scene);
-          fitNextContent_ = false;
-        }
-        
-        //lock->GetCompositor().Refresh(scene);
-        lock->Invalidate();
-        return true;
-      }
+      RenderCurrentScene(accessor.GetImage(), instance, plane);
+      return true;
     }
     else
     {
@@ -1862,16 +1802,6 @@ public:
   }
 
 
-  void Redraw()
-  {
-    if (cursor_.get() != NULL)
-    {
-      unsigned int quality;
-      DisplayFrame(quality, cursor_->GetCurrentIndex());
-    }
-  }
-
-
   // This method is used when the layout of the HTML page changes,
   // which does not trigger the "emscripten_set_resize_callback()"
   void UpdateSize(bool fitContent)
@@ -1898,6 +1828,64 @@ public:
     return viewport_->GetCanvasId();
   }
 
+  
+  void Redraw()
+  {
+    DisplayedFrameQuality quality = DisplayedFrameQuality_None;
+    
+    if (cursor_.get() != NULL &&
+        frames_.get() != NULL)
+    {
+      const size_t cursorIndex = cursor_->GetCurrentIndex();
+
+      unsigned int cachedQuality;
+      if (!RenderCurrentSceneUsingCache(cachedQuality))
+      {
+        // This frame is not cached yet: Load it
+        if (source_.HasDicomWebRendered())
+        {
+          ScheduleLoadRenderedFrame(cursorIndex, PRIORITY_HIGH, false /* not a prefetch */);
+        }
+        else
+        {
+          ScheduleLoadFullDicomFrame(cursorIndex, PRIORITY_HIGH, false /* not a prefetch */);
+        }
+      }
+      else if (cachedQuality < QUALITY_FULL)
+      {
+        // This frame is only available in low-res: Download the full DICOM
+        ScheduleLoadFullDicomFrame(cursorIndex, PRIORITY_HIGH, false /* not a prefetch */);
+        quality = DisplayedFrameQuality_Low;
+      }
+      else
+      {
+        quality = DisplayedFrameQuality_High;
+      }
+
+      {
+        // Prepare prefetching
+        prefetchQueue_.clear();
+        for (size_t i = 0; i < cursor_->GetPrefetchSize() && i < 16; i++)
+        {
+          size_t a = cursor_->GetPrefetchIndex(i);
+          if (a != cursorIndex)
+          {
+            prefetchQueue_.push_back(PrefetchItem(a, i < 2));
+          }
+        }
+
+        ScheduleNextPrefetch();
+      }      
+
+      if (observer_.get() != NULL)
+      {
+        observer_->SignalFrameUpdated(*this, cursor_->GetCurrentIndex(),
+                                      frames_->GetFramesCount(), quality);
+      }
+    }
+  }
+
+
   void ChangeFrame(SeriesCursor::Action action)
   {
     if (cursor_.get() != NULL)
@@ -1909,7 +1897,7 @@ public:
       size_t current = cursor_->GetCurrentIndex();
       if (previous != current)
       {
-        DisplayCurrentFrame();
+        Redraw();
       }
     }
   }
@@ -2179,7 +2167,7 @@ public:
       if (current != cursorIndex)
       {
         cursor_->SetCurrentIndex(cursorIndex);
-        DisplayCurrentFrame();
+        Redraw();
       }
       
       hasFocusOnInstance_ = false;
@@ -2197,7 +2185,7 @@ public:
         frames_->FindClosestFrame(cursorIndex, p, MAX_DISTANCE))
     {
       cursor_->SetCurrentIndex(cursorIndex);
-      DisplayCurrentFrame();
+      Redraw();
     }
   }
 };

@@ -1263,13 +1263,13 @@ private:
   {
   private:
     size_t   cursorIndex_;
-    bool     isFull_;
+    bool     isFullQuality_;
 
   public:
     PrefetchItem(size_t cursorIndex,
-                 bool isFull) :
+                 bool isFullQuality) :
       cursorIndex_(cursorIndex),
-      isFull_(isFull)
+      isFullQuality_(isFullQuality)
     {
     }
 
@@ -1278,9 +1278,9 @@ private:
       return cursorIndex_;
     }
 
-    bool IsFull() const
+    bool IsFullQuality() const
     {
-      return isFull_;
+      return isFullQuality_;
     }
   };
   
@@ -1316,7 +1316,7 @@ private:
     while (!prefetchQueue_.empty())
     {
       size_t cursorIndex = prefetchQueue_.front().GetCursorIndex();
-      bool isFull = prefetchQueue_.front().IsFull();
+      bool isFullQuality = prefetchQueue_.front().IsFullQuality();
       prefetchQueue_.pop_front();
       
       const std::string sopInstanceUid = frames_->GetInstanceOfFrame(cursorIndex).GetSopInstanceUid();
@@ -1325,9 +1325,9 @@ private:
       {
         FramesCache::Accessor accessor(*cache_, sopInstanceUid, frameNumber);
         if (!accessor.IsValid() ||
-            (isFull && accessor.GetQuality() == 0))
+            (isFullQuality && accessor.GetQuality() == 0))
         {
-          if (isFull)
+          if (isFullQuality)
           {
             ScheduleLoadFullDicomFrame(cursorIndex, PRIORITY_NORMAL, true);
           }
@@ -1335,7 +1335,8 @@ private:
           {
             ScheduleLoadRenderedFrame(cursorIndex, PRIORITY_NORMAL, true);
           }
-          return;
+          
+          return;  // We have found a new frame to cache, stop the lookup loop
         }
       }
     }

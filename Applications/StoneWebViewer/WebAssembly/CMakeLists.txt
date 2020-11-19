@@ -172,5 +172,6 @@ install(
   ${CMAKE_SOURCE_DIR}/../WebApplication/img/grid2x1.png
   ${CMAKE_SOURCE_DIR}/../WebApplication/img/grid2x2.png
   ${CMAKE_SOURCE_DIR}/../WebApplication/img/loading.gif
+  ${CMAKE_SOURCE_DIR}/../WebApplication/img/orthanc.png
   DESTINATION ${ORTHANC_STONE_INSTALL_PREFIX}/img
   )

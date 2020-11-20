@@ -1392,24 +1392,21 @@ private:
 
     // Prepare prefetching
     prefetchQueue_.clear();
-    for (size_t i = 0; i < cursor_->GetPrefetchSize() && i < 16; i++)
+
+    if (1)  // TODO - DISABLE PREFETCHING
     {
-      size_t a = cursor_->GetPrefetchIndex(i);
-      if (a == cursorIndex)
+      for (size_t i = 0; i < cursor_->GetPrefetchSize() && i < 16; i++)
       {
-        if (quality == DisplayedFrameQuality_Low)
+        size_t a = cursor_->GetPrefetchIndex(i);
+        if (a != cursorIndex)
         {
-          prefetchQueue_.push_back(PrefetchItem(a, true));
+          prefetchQueue_.push_back(PrefetchItem(a, i < 2));
         }
-      }
-      else
-      {
-        prefetchQueue_.push_back(PrefetchItem(a, i < 2));
       }
     }
 
     ScheduleNextPrefetch();
-
+    
     if (observer_.get() != NULL)
     {
       observer_->SignalFrameUpdated(*this, cursor_->GetCurrentIndex(),
@@ -1509,28 +1506,6 @@ private:
   }
 
 
-  bool RenderCurrentSceneUsingCache(unsigned int& quality)
-  {
-    assert(cursor_.get() != NULL);
-    assert(frames_.get() != NULL);
-    
-    const size_t cursorIndex = cursor_->GetCurrentIndex();
-    const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
-    const size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
-
-    FramesCache::Accessor accessor(*cache_, instance.GetSopInstanceUid(), frameNumber);
-    if (accessor.IsValid())
-    {
-      quality = accessor.GetQuality();
-      RenderCurrentScene(accessor.GetImage(), instance, frames_->GetFrameGeometry(cursorIndex));
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  }
-
   void RenderCurrentSceneFromCommand(const Orthanc::ImageAccessor& frame,
                                      const std::string& loadedSopInstanceUid,
                                      unsigned int loadedFrameNumber,
@@ -1543,12 +1518,45 @@ private:
       const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
       const size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
 
-      // Only change the same if the loaded frame still corresponds to the current cursor
+      // Only change the scene if the loaded frame still corresponds to the current cursor
       if (instance.GetSopInstanceUid() == loadedSopInstanceUid &&
           frameNumber == loadedFrameNumber)
       {
-        RenderCurrentScene(frame, instance, frames_->GetFrameGeometry(cursorIndex));
-        SetupPrefetchAfterRendering(quality);
+        const OrthancStone::CoordinateSystem3D plane = frames_->GetFrameGeometry(cursorIndex);
+        
+        if (quality == DisplayedFrameQuality_Low)
+        {
+          FramesCache::Accessor accessor(*cache_, instance.GetSopInstanceUid(), frameNumber);
+          if (accessor.IsValid() &&
+              accessor.GetQuality() == QUALITY_FULL)
+          {
+            // A high-res image was downloaded in between: Use this cached image instead of the low-res
+            RenderCurrentScene(accessor.GetImage(), instance, plane);
+            SetupPrefetchAfterRendering(DisplayedFrameQuality_High);
+          }
+          else
+          {
+            // This frame is only available in low-res: Download the full DICOM
+            RenderCurrentScene(frame, instance, plane);
+            SetupPrefetchAfterRendering(quality);
+
+            /**
+             * The command "SetupPrefetchAfterRendering()" must be
+             * after "SetupPrefetchAfterRendering(quality)", as the
+             * DICOM instance might already be cached by the oracle,
+             * which makes a call to "observer_->SignalFrameUpdated()"
+             * with a low quality, whereas the high quality is
+             * available.
+             **/
+            ScheduleLoadFullDicomFrame(cursorIndex, PRIORITY_HIGH, false /* not a prefetch */);
+          }
+        }
+        else
+        {
+          assert(quality == DisplayedFrameQuality_High);
+          SetupPrefetchAfterRendering(quality);
+          RenderCurrentScene(frame, instance, plane);
+        }
       }
     }
   }
@@ -1864,8 +1872,30 @@ public:
     {
       const size_t cursorIndex = cursor_->GetCurrentIndex();
 
-      unsigned int cachedQuality;
-      if (!RenderCurrentSceneUsingCache(cachedQuality))
+      const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
+      const size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
+
+      FramesCache::Accessor accessor(*cache_, instance.GetSopInstanceUid(), frameNumber);
+      if (accessor.IsValid())
+      {
+        RenderCurrentScene(accessor.GetImage(), instance, frames_->GetFrameGeometry(cursorIndex));
+
+        DisplayedFrameQuality quality;
+        
+        if (accessor.GetQuality() < QUALITY_FULL)
+        {
+          // This frame is only available in low-res: Download the full DICOM
+          ScheduleLoadFullDicomFrame(cursorIndex, PRIORITY_HIGH, false /* not a prefetch */);
+          quality = DisplayedFrameQuality_Low;
+        }
+        else
+        {
+          quality = DisplayedFrameQuality_High;
+        }
+
+        SetupPrefetchAfterRendering(quality);
+      }
+      else
       {
         // This frame is not cached yet: Load it
         if (source_.HasDicomWebRendered())
@@ -1877,18 +1907,6 @@ public:
           ScheduleLoadFullDicomFrame(cursorIndex, PRIORITY_HIGH, false /* not a prefetch */);
         }
       }
-      else if (cachedQuality < QUALITY_FULL)
-      {
-        // This frame is only available in low-res: Download the full DICOM
-        ScheduleLoadFullDicomFrame(cursorIndex, PRIORITY_HIGH, false /* not a prefetch */);
-        quality = DisplayedFrameQuality_Low;
-      }
-      else
-      {
-        quality = DisplayedFrameQuality_High;
-      }
-
-      SetupPrefetchAfterRendering(quality);
     }
   }
 

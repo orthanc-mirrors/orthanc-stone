@@ -167,6 +167,9 @@ static const int PRIORITY_NORMAL = 0;
 static const unsigned int QUALITY_JPEG = 0;
 static const unsigned int QUALITY_FULL = 1;
 
+static const unsigned int DEFAULT_CINE_RATE = 30;
+
+
 class ResourcesLoader : public OrthancStone::ObserverBase<ResourcesLoader>
 {
 public:
@@ -687,12 +690,13 @@ private:
   std::vector<size_t>  prefetch_;
   int                  framesCount_;
   int                  currentFrame_;
-  bool                 isCircular_;
+  bool                 isCircularPrefetch_;
   int                  fastDelta_;
   Action               lastAction_;
 
   int ComputeNextFrame(int currentFrame,
-                       Action action) const
+                       Action action,
+                       bool isCircular) const
   {
     if (framesCount_ == 0)
     {
@@ -727,7 +731,7 @@ private:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
 
-    if (isCircular_)
+    if (isCircular)
     {
       while (nextFrame < 0)
       {
@@ -797,31 +801,31 @@ private:
         {
           case Action_None:
           case Action_Plus:
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Plus), Action_Plus));
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Minus), Action_Minus));
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastPlus), Action_FastPlus));
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastMinus), Action_FastMinus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Plus, isCircularPrefetch_), Action_Plus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Minus, isCircularPrefetch_), Action_Minus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastPlus, isCircularPrefetch_), Action_FastPlus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastMinus, isCircularPrefetch_), Action_FastMinus));
             break;
           
           case Action_Minus:
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Minus), Action_Minus));
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Plus), Action_Plus));
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastMinus), Action_FastMinus));
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastPlus), Action_FastPlus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Minus, isCircularPrefetch_), Action_Minus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Plus, isCircularPrefetch_), Action_Plus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastMinus, isCircularPrefetch_), Action_FastMinus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastPlus, isCircularPrefetch_), Action_FastPlus));
             break;
 
           case Action_FastPlus:
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastPlus), Action_FastPlus));
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastMinus), Action_FastMinus));
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Plus), Action_Plus));
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Minus), Action_Minus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastPlus, isCircularPrefetch_), Action_FastPlus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastMinus, isCircularPrefetch_), Action_FastMinus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Plus, isCircularPrefetch_), Action_Plus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Minus, isCircularPrefetch_), Action_Minus));
             break;
               
           case Action_FastMinus:
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastMinus), Action_FastMinus));
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastPlus), Action_FastPlus));
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Minus), Action_Minus));
-            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Plus), Action_Plus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastMinus, isCircularPrefetch_), Action_FastMinus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_FastPlus, isCircularPrefetch_), Action_FastPlus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Minus, isCircularPrefetch_), Action_Minus));
+            queue.push_back(std::make_pair(ComputeNextFrame(frame, Action_Plus, isCircularPrefetch_), Action_Plus));
             break;
 
           default:
@@ -843,16 +847,16 @@ public:
   explicit SeriesCursor(size_t framesCount) :
     framesCount_(framesCount),
     currentFrame_(framesCount / 2),  // Start at the middle frame    
-    isCircular_(false),
+    isCircularPrefetch_(false),
     lastAction_(Action_None)
   {
     SetFastDelta(framesCount / 20);
     UpdatePrefetch();
   }
 
-  void SetCircular(bool isCircular)
+  void SetCircularPrefetch(bool isCircularPrefetch)
   {
-    isCircular_ = isCircular;
+    isCircularPrefetch_ = isCircularPrefetch;
     UpdatePrefetch();
   }
 
@@ -886,9 +890,10 @@ public:
     return static_cast<size_t>(currentFrame_);
   }
 
-  void Apply(Action action)
+  void Apply(Action action,
+             bool isCircular)
   {
-    currentFrame_ = ComputeNextFrame(currentFrame_, action);
+    currentFrame_ = ComputeNextFrame(currentFrame_, action, isCircular);
     lastAction_ = action;
     UpdatePrefetch();
   }
@@ -990,6 +995,8 @@ public:
     {
     }
 
+    virtual void SignalSeriesDetailsReady(const ViewerViewport& viewport) = 0;
+
     virtual void SignalFrameUpdated(const ViewerViewport& viewport,
                                     size_t currentFrame,
                                     size_t countFrames,
@@ -1045,10 +1052,10 @@ private:
     }
   };
 
-  class SetDefaultWindowingCommand : public ICommand
+  class LoadSeriesDetailsFromInstance : public ICommand
   {
   public:
-    explicit SetDefaultWindowingCommand(boost::shared_ptr<ViewerViewport> viewport) :
+    explicit LoadSeriesDetailsFromInstance(boost::shared_ptr<ViewerViewport> viewport) :
       ICommand(viewport)
     {
     }
@@ -1082,7 +1089,28 @@ private:
         }
       }
 
+      uint32_t cineRate;
+      if (dicom.ParseUnsignedInteger32(cineRate, Orthanc::DICOM_TAG_CINE_RATE) &&
+          cineRate > 0)
+      {
+        /**
+         * If we detect a cine sequence, start on the first frame
+         * instead of on the middle frame.
+         **/
+        GetViewport().cursor_->SetCurrentIndex(0);
+        GetViewport().cineRate_ = cineRate;
+      }
+      else
+      {
+        GetViewport().cineRate_ = DEFAULT_CINE_RATE;
+      }
+
       GetViewport().Redraw();
+
+      if (GetViewport().observer_.get() != NULL)
+      {
+        GetViewport().observer_->SignalSeriesDetailsReady(GetViewport());
+      }
     }
   };
 
@@ -1297,6 +1325,7 @@ private:
   float                                        windowingWidth_;
   float                                        defaultWindowingCenter_;
   float                                        defaultWindowingWidth_;
+  unsigned int                                 cineRate_;
   bool                                         inverted_;
   bool                                         flipX_;
   bool                                         flipY_;
@@ -1719,11 +1748,11 @@ private:
     {
       if (wheelEvent->deltaY < 0)
       {
-        that.ChangeFrame(that.isCtrlDown_ ? SeriesCursor::Action_FastMinus : SeriesCursor::Action_Minus);
+        that.ChangeFrame(that.isCtrlDown_ ? SeriesCursor::Action_FastMinus : SeriesCursor::Action_Minus, false /* not circular */);
       }
       else if (wheelEvent->deltaY > 0)
       {
-        that.ChangeFrame(that.isCtrlDown_ ? SeriesCursor::Action_FastPlus : SeriesCursor::Action_Plus);
+        that.ChangeFrame(that.isCtrlDown_ ? SeriesCursor::Action_FastPlus : SeriesCursor::Action_Plus, false /* not circular */);
       }
     }
     
@@ -1788,7 +1817,8 @@ public:
     flipX_ = false;
     flipY_ = false;
     fitNextContent_ = true;
-
+    cineRate_ = DEFAULT_CINE_RATE;
+    
     frames_.reset(frames);
     cursor_.reset(new SeriesCursor(frames_->GetFramesCount()));
 
@@ -1821,14 +1851,14 @@ public:
           uid != OrthancStone::SopClassUid_RTStruct &&
           GetSeriesThumbnailType(uid) != OrthancStone::SeriesThumbnailType_Video)
       {
-        // Fetch the default windowing for the central instance
+        // Fetch the details of the series from the central instance
         const std::string uri = ("studies/" + frames_->GetStudyInstanceUid() +
                                  "/series/" + frames_->GetSeriesInstanceUid() +
                                  "/instances/" + centralInstance.GetSopInstanceUid() + "/metadata");
         
         loader_->ScheduleGetDicomWeb(
           boost::make_shared<OrthancStone::LoadedDicomResources>(Orthanc::DICOM_TAG_SOP_INSTANCE_UID),
-          0, source_, uri, new SetDefaultWindowingCommand(GetSharedObserver()));
+          0, source_, uri, new LoadSeriesDetailsFromInstance(GetSharedObserver()));
       }
     }
 
@@ -1911,21 +1941,27 @@ public:
   }
 
 
-  void ChangeFrame(SeriesCursor::Action action)
+  // Returns "true" iff the frame has indeed changed
+  bool ChangeFrame(SeriesCursor::Action action,
+                   bool isCircular)
   {
     if (cursor_.get() != NULL)
     {
       size_t previous = cursor_->GetCurrentIndex();
       
-      cursor_->Apply(action);
+      cursor_->Apply(action, isCircular);
       
       size_t current = cursor_->GetCurrentIndex();
       if (previous != current)
       {
         Redraw();
+        return true;
       }
     }
+
+    return false;
   }
+  
 
   bool GetCurrentFrameOfReferenceUid(std::string& frameOfReferenceUid) const
   {
@@ -2213,6 +2249,11 @@ public:
       Redraw();
     }
   }
+
+  unsigned int GetCineRate() const
+  {
+    return cineRate_;
+  }
 };
 
 
@@ -2295,6 +2336,18 @@ public:
       assert(it->second != NULL);
       it->second->ApplyScheduledFocus();
     }
+  }
+
+  virtual void SignalSeriesDetailsReady(const ViewerViewport& viewport) ORTHANC_OVERRIDE
+  {
+    EM_ASM({
+        const customEvent = document.createEvent("CustomEvent");
+        customEvent.initCustomEvent("SeriesDetailsReady", false, false,
+                                    { "canvasId" : UTF8ToString($0) });
+        window.dispatchEvent(customEvent);
+      },
+      viewport.GetCanvasId().c_str()
+      );
   }
 
   virtual void SignalFrameUpdated(const ViewerViewport& viewport,
@@ -2654,26 +2707,28 @@ extern "C"
 
 
   EMSCRIPTEN_KEEPALIVE
-  void DecrementFrame(const char* canvas,
-                      int fitContent)
+  int DecrementFrame(const char* canvas,
+                     int isCircular)
   {
     try
     {
-      GetViewport(canvas)->ChangeFrame(SeriesCursor::Action_Minus);
+      return GetViewport(canvas)->ChangeFrame(SeriesCursor::Action_Minus, isCircular) ? 1 : 0;
     }
     EXTERN_CATCH_EXCEPTIONS;
+    return 0;
   }
 
 
   EMSCRIPTEN_KEEPALIVE
-  void IncrementFrame(const char* canvas,
-                      int fitContent)
+  int IncrementFrame(const char* canvas,
+                     int isCircular)
   {
     try
     {
-      GetViewport(canvas)->ChangeFrame(SeriesCursor::Action_Plus);
+      return GetViewport(canvas)->ChangeFrame(SeriesCursor::Action_Plus, isCircular) ? 1 : 0;
     }
     EXTERN_CATCH_EXCEPTIONS;
+    return 0;
   }  
 
 
@@ -2865,5 +2920,17 @@ extern "C"
       GetResourcesLoader().FetchPdf(studyInstanceUid, seriesInstanceUid);
     }
     EXTERN_CATCH_EXCEPTIONS;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  unsigned int GetCineRate(const char* canvas)
+  {
+    try
+    {
+      return GetViewport(canvas)->GetCineRate();
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+    return 0;
   }
 }

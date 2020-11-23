@@ -48,17 +48,39 @@ Vue.component('viewport', {
   data: function () {
     return {
       stone: stone,  // To access global object "stone" from "index.html"
-      status: 'waiting'
+      status: 'waiting',
+      cineControls: false,
+      cineIncrement: 0,
+      cineFramesPerSecond: 30,
+      cineTimeoutId: null,
+      cineLoadingFrame: false
     }
   },
-  watch: { 
+  watch: {
+    currentFrame: function(newVal, oldVal) {
+      /**
+       * The "FrameUpdated" event has been received, which indicates
+       * that the schedule frame has been displayed: The cine loop can
+       * proceed to the next frame (check out "CineCallback()").
+       **/
+      this.cineLoadingFrame = false;
+    },
     series: function(newVal, oldVal) {
       this.status = 'loading';
+      this.cineControls = false;
+      this.cineMode = '';
+      this.cineLoadingFrame = false;
+      this.cineRate = 30;   // Default value
+      
+      if (this.cineTimeoutId !== null) {
+        clearTimeout(this.cineTimeoutId);
+        this.cineTimeoutId = null;
+      }
 
       var studyInstanceUid = newVal.tags[STUDY_INSTANCE_UID];
       var seriesInstanceUid = newVal.tags[SERIES_INSTANCE_UID];
       stone.SpeedUpFetchSeriesMetadata(studyInstanceUid, seriesInstanceUid);
-      
+
       if ((newVal.type == stone.ThumbnailType.IMAGE ||
            newVal.type == stone.ThumbnailType.NO_PREVIEW) &&
           newVal.complete) {
@@ -96,7 +118,14 @@ Vue.component('viewport', {
   },
   mounted: function() {
     var that = this;
-    
+
+    window.addEventListener('SeriesDetailsReady', function(args) {
+      var canvasId = args.detail.canvasId;
+      if (canvasId == that.canvasId) {
+        that.cineFramesPerSecond = stone.GetCineRate(canvasId);
+      }
+    });
+
     window.addEventListener('PdfLoaded', function(args) {
       var studyInstanceUid = args.detail.studyInstanceUid;
       var seriesInstanceUid = args.detail.seriesInstanceUid;
@@ -137,11 +166,72 @@ Vue.component('viewport', {
     MakeActive: function() {
       this.$emit('selected-viewport');
     },
-    DecrementFrame: function() {
-      stone.DecrementFrame(this.canvasId);
+    DecrementFrame: function(isCircular) {
+      return stone.DecrementFrame(this.canvasId, isCircular);
     },
-    IncrementFrame: function() {
-      stone.IncrementFrame(this.canvasId);
+    IncrementFrame: function(isCircular) {
+      return stone.IncrementFrame(this.canvasId, isCircular);
+    },
+    CinePlay: function() {
+      this.cineControls = true;
+      this.cineIncrement = 1;
+      this.UpdateCine();
+    },
+    CinePause: function() {
+      if (this.cineIncrement == 0) {
+        // Two clicks on the "pause" button will hide the playback control
+        this.cineControls = !this.cineControls;
+      } else {
+        this.cineIncrement = 0;
+        this.UpdateCine();
+      }
+    },
+    CineBackward: function() {
+      this.cineControls = true;
+      this.cineIncrement = -1;
+      this.UpdateCine();
+    },
+    UpdateCine: function() {
+      // Cancel the previous cine loop, if any
+      if (this.cineTimeoutId !== null) {
+        clearTimeout(this.cineTimeoutId);
+        this.cineTimeoutId = null;
+      }
+      
+      this.cineLoadingFrame = false;
+
+      if (this.cineIncrement != 0) {
+        this.CineCallback();
+      }
+    },
+    CineCallback: function() {
+      var reschedule;
+      
+      if (this.cineLoadingFrame) {
+        /**
+         * Wait until the frame scheduled by the previous call to
+         * "CineCallback()" is actually displayed (i.e. we monitor the
+         * "FrameUpdated" event). Otherwise, the background loading
+         * process of the DICOM frames in C++ might be behind the
+         * advancement of the current frame, which freezes the
+         * display.
+         **/
+        reschedule = true;
+      } else {
+        this.cineLoadingFrame = true;
+        
+        if (this.cineIncrement == 1) {
+          reschedule = this.DecrementFrame(true /* circular */);
+        } else if (this.cineIncrement == -1) {
+          reschedule = this.IncrementFrame(true /* circular */);
+        } else {
+          reschedule = false;  // Increment is zero, this test is just for safety
+        }
+      }
+      
+      if (reschedule) {
+        this.cineTimeoutId = setTimeout(this.CineCallback, 1000.0 / this.cineFramesPerSecond);
+      }     
     }
   }
 });

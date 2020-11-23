@@ -556,28 +556,50 @@
                       style="position:absolute; left:0; top:0; width:100%; height:100%"
                       oncontextmenu="return false"></canvas>
 
-              <div v-if="'tags' in series" v-show="showInfo">
+              <div v-show="showInfo">
                 <div class="wv-overlay">
-                  <div class="wv-overlay-topleft">
+                  <div v-if="'tags' in series" class="wv-overlay-topleft">
                     {{ series.tags['0010,0010'] }}<br/>
                     {{ series.tags['0010,0020'] }}
                   </div>
-                  <div class="wv-overlay-topright">
+                  <div v-if="'tags' in series" class="wv-overlay-topright">
                     {{ series.tags['0008,1030'] }}<br/>
                     {{ series.tags['0008,0020'] }}<br/>
                     {{ series.tags['0020,0011'] }} | {{ series.tags['0008,103e'] }}
                   </div>
-                  <div class="wv-overlay-bottomleft wvPrintExclude"
-                       v-show="framesCount != 0">
-                    <button class="btn btn-primary" @click="DecrementFrame()">
-                      <i class="fa fa-chevron-circle-left"></i>
-                    </button>
-                    &nbsp;&nbsp;{{ currentFrame }} / {{ framesCount }}&nbsp;&nbsp;
-                    <button class="btn btn-primary" @click="IncrementFrame()">
-                      <i class="fa fa-chevron-circle-right"></i>
-                    </button>
+                  <div class="wv-overlay-timeline-wrapper wvPrintExclude">
+                    <div style="text-align:left; padding:5px" v-show="framesCount != 0">
+                      <div style="width: 12em; padding: 1em;" v-show="cineControls">
+                        <label>
+                          Frame rate
+                          <span class="wv-play-button-config-framerate-wrapper">
+                            <input type="range" min="1" max="60" v-model="cineFramesPerSecond"
+                                   class="wv-play-button-config-framerate">
+                          </span>
+                          {{ cineFramesPerSecond }} fps
+                        </label>
+                      </div>
+                      <button class="btn btn-primary btn-sm" @click="DecrementFrame()">
+                        <i class="fa fa-chevron-circle-left"></i>
+                      </button>
+                      &nbsp;&nbsp;{{ currentFrame }} / {{ framesCount }}&nbsp;&nbsp;
+                      <button class="btn btn-primary btn-sm" @click="IncrementFrame()">
+                        <i class="fa fa-chevron-circle-right"></i>
+                      </button>
+                      <div class="btn-group btn-group-sm" role="group">                        
+                        <button type="button" class="btn btn-primary" @click="CinePlay()">
+                          <i class="fas fa-play fa-flip-horizontal"></i>
+                        </button>
+                        <button type="button" class="btn btn-primary" @click="CinePause()">
+                          <i class="fas fa-pause"></i>
+                        </button>
+                        <button type="button" class="btn btn-primary" @click="CineBackward()">
+                          <i class="fas fa-play"></i>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div class="wv-overlay-bottomright wvPrintExclude">
+                  <div class="wv-overlay-bottomright wvPrintExclude" style="bottom: 0px">
                     <div v-show="quality == stone.DisplayedFrameQuality.NONE"
                          style="display:block;background-color:red;width:1em;height:1em" />
                     <div v-show="quality == stone.DisplayedFrameQuality.LOW"
@@ -599,7 +621,7 @@
             </div>
                 
             <div v-if="status == 'video'" class="wvPaneOverlay">
-              [ this viewer cannot play videos ]
+              [ videos are not supported yet ]
               <!--video class="wvVideo" autoplay="" loop="" controls="" preload="auto" type="video/mp4"
                      src="http://viewer-pro.osimis.io/instances/e465dd27-83c96343-96848735-7035a133-1facf1a0/frames/0/raw">
               </video-->

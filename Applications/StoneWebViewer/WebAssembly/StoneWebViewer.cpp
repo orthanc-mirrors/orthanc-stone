@@ -1102,20 +1102,21 @@ private:
       {
         OrthancStone::DicomInstanceParameters params(dicom);
 
-        if (params.HasDefaultWindowing())
+        // TODO - WINDOWING
+        if (params.GetPresetWindowingsCount() > 0)
         {
-          GetViewport().defaultWindowingCenter_ = params.GetDefaultWindowingCenter();
-          GetViewport().defaultWindowingWidth_ = params.GetDefaultWindowingWidth();
-          LOG(INFO) << "Default windowing: " << params.GetDefaultWindowingCenter()
-                    << "," << params.GetDefaultWindowingWidth();
+          GetViewport().presetWindowingCenter_ = params.GetPresetWindowingCenter(0);
+          GetViewport().presetWindowingWidth_ = params.GetPresetWindowingWidth(0);
+          LOG(INFO) << "Preset windowing: " << params.GetPresetWindowingCenter(0)
+                    << "," << params.GetPresetWindowingWidth(0);
 
-          GetViewport().windowingCenter_ = params.GetDefaultWindowingCenter();
-          GetViewport().windowingWidth_ = params.GetDefaultWindowingWidth();
+          GetViewport().windowingCenter_ = params.GetPresetWindowingCenter(0);
+          GetViewport().windowingWidth_ = params.GetPresetWindowingWidth(0);
         }
         else
         {
-          LOG(INFO) << "No default windowing";
-          GetViewport().ResetDefaultWindowing();
+          LOG(INFO) << "No preset windowing";
+          GetViewport().ResetPresetWindowing();
         }
       }
 
@@ -1361,8 +1362,8 @@ private:
   std::unique_ptr<SeriesCursor>                cursor_;
   float                                        windowingCenter_;
   float                                        windowingWidth_;
-  float                                        defaultWindowingCenter_;
-  float                                        defaultWindowingWidth_;
+  float                                        presetWindowingCenter_;
+  float                                        presetWindowingWidth_;
   unsigned int                                 cineRate_;
   bool                                         inverted_;
   bool                                         flipX_;
@@ -1410,13 +1411,13 @@ private:
   }
   
   
-  void ResetDefaultWindowing()
+  void ResetPresetWindowing()
   {
-    defaultWindowingCenter_ = 128;
-    defaultWindowingWidth_ = 256;
+    presetWindowingCenter_ = 128;
+    presetWindowingWidth_ = 256;
 
-    windowingCenter_ = defaultWindowingCenter_;
-    windowingWidth_ = defaultWindowingWidth_;
+    windowingCenter_ = presetWindowingCenter_;
+    windowingWidth_ = presetWindowingWidth_;
 
     inverted_ = false;
   }
@@ -1789,7 +1790,7 @@ private:
     emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, OnKey);
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, OnKey);
 
-    ResetDefaultWindowing();
+    ResetPresetWindowing();
   }
 
   static EM_BOOL OnKey(int eventType,
@@ -1897,7 +1898,7 @@ public:
 
     LOG(INFO) << "Number of frames in series: " << frames_->GetFramesCount();
 
-    ResetDefaultWindowing();
+    ResetPresetWindowing();
     ClearViewport();
     prefetchQueue_.clear();
 
@@ -2126,9 +2127,9 @@ public:
   }
 
 
-  void SetDefaultWindowing()
+  void SetPresetWindowing()
   {
-    SetWindowing(defaultWindowingCenter_, defaultWindowingWidth_);
+    SetWindowing(presetWindowingCenter_, presetWindowingWidth_);
   }
 
   void SetWindowing(float windowingCenter,
@@ -2817,11 +2818,11 @@ extern "C"
 
 
   EMSCRIPTEN_KEEPALIVE
-  void SetDefaultWindowing(const char* canvas)
+  void SetPresetWindowing(const char* canvas)
   {
     try
     {
-      GetViewport(canvas)->SetDefaultWindowing();
+      GetViewport(canvas)->SetPresetWindowing();
     }
     EXTERN_CATCH_EXCEPTIONS;
   }  

@@ -307,6 +307,16 @@ namespace OrthancStone
   }
 
 
+  static void GetBounds(float& low,
+                        float& high,
+                        double center,  // in
+                        double width)   // in
+  {
+    low = static_cast<float>(center - width / 2.0);
+    high = static_cast<float>(center + width / 2.0);
+  }
+  
+  
   void SeriesFramesLoader::GetPreviewWindowing(float& center,
                                                float& width,
                                                size_t index) const
@@ -314,11 +324,39 @@ namespace OrthancStone
     const Orthanc::DicomMap& instance = frames_.GetInstance(index);
     const DicomInstanceParameters& parameters = frames_.GetInstanceParameters(index);
 
-    if (parameters.HasDefaultWindowing())
+    size_t s = parameters.GetPresetWindowingsCount();
+
+    if (s > 0)
     {
-      // TODO - Handle multiple presets (take the largest width)
-      center = parameters.GetDefaultWindowingCenter();
-      width = parameters.GetDefaultWindowingWidth();
+      // Use the largest windowing given all the preset windowings
+      // that are available in the DICOM tags
+      float low, high;
+      GetBounds(low, high, parameters.GetPresetWindowingCenter(0),
+                parameters.GetPresetWindowingWidth(0));
+
+      for (size_t i = 1; i < s; i++)
+      {
+        float a, b;
+        GetBounds(a, b, parameters.GetPresetWindowingCenter(i),
+                  parameters.GetPresetWindowingWidth(i));
+        low = std::min(low, a);
+        high = std::max(high, b);
+      }
+
+      assert(low <= high);
+
+      if (LinearAlgebra::IsNear(low, high))
+      {
+        // Cannot infer a suitable windowing from the available tags
+        center = 128.0f;
+        width = 256.0f;
+      }
+      else
+      {
+        center = (low + high) / 2.0f;
+        width = (high - low);
+        printf(">> %f %f\n", center, width);
+      }
     }
     else
     {

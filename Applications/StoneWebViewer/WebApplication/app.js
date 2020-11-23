@@ -623,10 +623,10 @@ var app = new Vue({
       }
     },
 
-    SetDefaultWindowing: function() {
+    SetPresetWindowing: function() {
       var canvas = this.GetActiveCanvas();
       if (canvas != '') {
-        stone.SetDefaultWindowing(canvas);
+        stone.SetPresetWindowing(canvas);
       }
     },
 

@@ -1227,7 +1227,7 @@ private:
 
       assert(converted.get() != NULL);
       GetViewport().RenderCurrentSceneFromCommand(*converted, sopInstanceUid_, frameNumber_, DisplayedFrameQuality_Low);
-      GetViewport().cache_->Acquire(sopInstanceUid_, frameNumber_, converted.release(), QUALITY_JPEG);
+      GetViewport().framesCache_->Acquire(sopInstanceUid_, frameNumber_, converted.release(), QUALITY_JPEG);
 
       if (isPrefetch_)
       {
@@ -1320,7 +1320,7 @@ private:
 
       assert(converted.get() != NULL);
       viewport.RenderCurrentSceneFromCommand(*converted, sopInstanceUid, frameNumber, DisplayedFrameQuality_High);
-      viewport.cache_->Acquire(sopInstanceUid, frameNumber, converted.release(), QUALITY_FULL);
+      viewport.framesCache_->Acquire(sopInstanceUid, frameNumber, converted.release(), QUALITY_FULL);
     }
   };
 
@@ -1356,7 +1356,7 @@ private:
   boost::shared_ptr<OrthancStone::WebAssemblyViewport>   viewport_;
   boost::shared_ptr<OrthancStone::DicomResourcesLoader> loader_;
   OrthancStone::DicomSource                    source_;
-  boost::shared_ptr<FramesCache>               cache_;  
+  boost::shared_ptr<FramesCache>               framesCache_;  
   std::unique_ptr<OrthancStone::SortedFrames>  frames_;
   std::unique_ptr<SeriesCursor>                cursor_;
   float                                        windowingCenter_;
@@ -1390,7 +1390,7 @@ private:
       unsigned int frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
 
       {
-        FramesCache::Accessor accessor(*cache_, sopInstanceUid, frameNumber);
+        FramesCache::Accessor accessor(*framesCache_, sopInstanceUid, frameNumber);
         if (!accessor.IsValid() ||
             (isFullQuality && accessor.GetQuality() == 0))
         {
@@ -1453,21 +1453,31 @@ private:
   }
 
 
-  void SetupPrefetchAfterRendering(DisplayedFrameQuality quality)
+  /**
+   * NB: "frame" is only used to estimate the memory size to store 1
+   * frame, in order to avoid prefetching too much data.
+   **/
+  void SetupPrefetchAfterRendering(const Orthanc::ImageAccessor& frame,
+                                   DisplayedFrameQuality quality)
   {
+    const size_t frameSize = frame.GetPitch() * frame.GetHeight();
     const size_t cursorIndex = cursor_->GetCurrentIndex();
 
     // Prepare prefetching
     prefetchQueue_.clear();
 
-    if (1)  // TODO - DISABLE PREFETCHING
+    size_t prefetchedSize = 0;
+    
+    if (1)  // DISABLE PREFETCHING
     {
-      for (size_t i = 0; i < cursor_->GetPrefetchSize() && i < 16; i++)
+      for (size_t i = 0; i < cursor_->GetPrefetchSize() && i < 16 &&
+             prefetchedSize <= framesCache_->GetMaximumSize() / 2; i++)
       {
         size_t a = cursor_->GetPrefetchIndex(i);
         if (a != cursorIndex)
         {
           prefetchQueue_.push_back(PrefetchItem(a, i < 2));
+          prefetchedSize += frameSize;
         }
       }
     }
@@ -1593,19 +1603,19 @@ private:
         
         if (quality == DisplayedFrameQuality_Low)
         {
-          FramesCache::Accessor accessor(*cache_, instance.GetSopInstanceUid(), frameNumber);
+          FramesCache::Accessor accessor(*framesCache_, instance.GetSopInstanceUid(), frameNumber);
           if (accessor.IsValid() &&
               accessor.GetQuality() == QUALITY_FULL)
           {
             // A high-res image was downloaded in between: Use this cached image instead of the low-res
             RenderCurrentScene(accessor.GetImage(), instance, plane);
-            SetupPrefetchAfterRendering(DisplayedFrameQuality_High);
+            SetupPrefetchAfterRendering(frame, DisplayedFrameQuality_High);
           }
           else
           {
             // This frame is only available in low-res: Download the full DICOM
             RenderCurrentScene(frame, instance, plane);
-            SetupPrefetchAfterRendering(quality);
+            SetupPrefetchAfterRendering(frame, quality);
 
             /**
              * The command "SetupPrefetchAfterRendering()" must be
@@ -1621,7 +1631,7 @@ private:
         else
         {
           assert(quality == DisplayedFrameQuality_High);
-          SetupPrefetchAfterRendering(quality);
+          SetupPrefetchAfterRendering(frame, quality);
           RenderCurrentScene(frame, instance, plane);
         }
       }
@@ -1744,7 +1754,7 @@ private:
                  bool softwareRendering) :
     context_(context),
     source_(source),
-    cache_(cache),
+    framesCache_(cache),
     fitNextContent_(true),
     isCtrlDown_(false),
     flipX_(false),
@@ -1752,7 +1762,7 @@ private:
     hasFocusOnInstance_(false),
     focusFrameNumber_(0)
   {
-    if (!cache_)
+    if (!framesCache_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
@@ -1968,7 +1978,7 @@ public:
       const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
       const size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
 
-      FramesCache::Accessor accessor(*cache_, instance.GetSopInstanceUid(), frameNumber);
+      FramesCache::Accessor accessor(*framesCache_, instance.GetSopInstanceUid(), frameNumber);
       if (accessor.IsValid())
       {
         RenderCurrentScene(accessor.GetImage(), instance, frames_->GetFrameGeometry(cursorIndex));
@@ -1986,7 +1996,7 @@ public:
           quality = DisplayedFrameQuality_High;
         }
 
-        SetupPrefetchAfterRendering(quality);
+        SetupPrefetchAfterRendering(accessor.GetImage(), quality);
       }
       else
       {
@@ -2467,7 +2477,7 @@ public:
 
 
 static OrthancStone::DicomSource source_;
-static boost::shared_ptr<FramesCache> cache_;
+static boost::shared_ptr<FramesCache> framesCache_;
 static boost::shared_ptr<OrthancStone::WebAssemblyLoadersContext> context_;
 static std::string stringBuffer_;
 static bool softwareRendering_ = false;
@@ -2517,7 +2527,7 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
   if (found == allViewports_.end())
   {
     boost::shared_ptr<ViewerViewport> viewport(
-      ViewerViewport::Create(*context_, source_, canvas, cache_, softwareRendering_));
+      ViewerViewport::Create(*context_, source_, canvas, framesCache_, softwareRendering_));
     viewport->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
     viewport->AcquireObserver(new WebAssemblyObserver);
     viewport->SetAnnotations(annotations_);
@@ -2543,7 +2553,7 @@ extern "C"
     context_.reset(new OrthancStone::WebAssemblyLoadersContext(1, 4, 1));
     context_->SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
     
-    cache_.reset(new FramesCache);
+    framesCache_.reset(new FramesCache);
     annotations_.reset(new OrthancStone::OsiriX::CollectionOfAnnotations);
     
     DISPATCH_JAVASCRIPT_EVENT("StoneInitialized");

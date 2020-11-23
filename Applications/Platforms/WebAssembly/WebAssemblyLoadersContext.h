@@ -58,6 +58,11 @@ namespace OrthancStone
       oracle_.SetDicomCacheSize(size);
     }
 
+    WebAssemblyOracle::CachedInstanceAccessor* AccessCachedInstance(const std::string& sopInstanceUid)
+    {
+      return new WebAssemblyOracle::CachedInstanceAccessor(oracle_, sopInstanceUid);
+    }
+
     virtual ILock* Lock() ORTHANC_OVERRIDE;
   };
 }

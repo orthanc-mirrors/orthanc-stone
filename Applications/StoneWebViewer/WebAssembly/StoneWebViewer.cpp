@@ -584,6 +584,7 @@ public:
   FramesCache()
   {
     SetMaximumSize(100 * 1024 * 1024);  // 100 MB
+    //SetMaximumSize(1);  // DISABLE CACHE
   }
   
   size_t GetMaximumSize()
@@ -1257,8 +1258,21 @@ private:
     
     virtual void Handle(const OrthancStone::ParseDicomSuccessMessage& message) const ORTHANC_OVERRIDE
     {
+      Apply(GetViewport(), message.GetDicom(), sopInstanceUid_, frameNumber_);
+
+      if (isPrefetch_)
+      {
+        GetViewport().ScheduleNextPrefetch();
+      }
+    }
+
+    static void Apply(ViewerViewport& viewport,
+                      const Orthanc::ParsedDicomFile& dicom,
+                      const std::string& sopInstanceUid,
+                      unsigned int frameNumber)
+    {
       Orthanc::DicomMap tags;
-      message.GetDicom().ExtractDicomSummary(tags, ORTHANC_STONE_MAX_TAG_LENGTH);
+      dicom.ExtractDicomSummary(tags, ORTHANC_STONE_MAX_TAG_LENGTH);
 
       std::string s;
       if (!tags.LookupStringValue(s, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
@@ -1267,7 +1281,7 @@ private:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }      
       
-      std::unique_ptr<Orthanc::ImageAccessor> frame(message.GetDicom().DecodeFrame(frameNumber_));
+      std::unique_ptr<Orthanc::ImageAccessor> frame(dicom.DecodeFrame(frameNumber));
 
       if (frame.get() == NULL)
       {
@@ -1305,13 +1319,8 @@ private:
       }
 
       assert(converted.get() != NULL);
-      GetViewport().RenderCurrentSceneFromCommand(*converted, sopInstanceUid_, frameNumber_, DisplayedFrameQuality_High);
-      GetViewport().cache_->Acquire(sopInstanceUid_, frameNumber_, converted.release(), QUALITY_FULL);
-
-      if (isPrefetch_)
-      {
-        GetViewport().ScheduleNextPrefetch();
-      }
+      viewport.RenderCurrentSceneFromCommand(*converted, sopInstanceUid, frameNumber, DisplayedFrameQuality_High);
+      viewport.cache_->Acquire(sopInstanceUid, frameNumber, converted.release(), QUALITY_FULL);
     }
   };
 
@@ -1343,7 +1352,7 @@ private:
   
 
   std::unique_ptr<IObserver>                   observer_;
-  OrthancStone::ILoadersContext&               context_;
+  OrthancStone::WebAssemblyLoadersContext&               context_;
   boost::shared_ptr<OrthancStone::WebAssemblyViewport>   viewport_;
   boost::shared_ptr<OrthancStone::DicomResourcesLoader> loader_;
   OrthancStone::DicomSource                    source_;
@@ -1653,6 +1662,27 @@ private:
       const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
       unsigned int frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
 
+      /**
+       * If the full-resolution DICOM file is already available in the
+       * cache of the oracle, skip the loading of the "rendered".
+       **/
+      std::unique_ptr<OrthancStone::WebAssemblyOracle::CachedInstanceAccessor> accessor(
+        context_.AccessCachedInstance(instance.GetSopInstanceUid()));
+
+      if (accessor.get() != NULL &&
+          accessor->IsValid())
+      {
+        try
+        {
+          SetFullDicomFrame::Apply(*this, accessor->GetDicom(), instance.GetSopInstanceUid(), frameNumber);
+          return;
+        }
+        catch (Orthanc::OrthancException&)
+        {
+          // This happens in the case of a JPEG2k image unsupported by DCMTK
+        }
+      }
+
       bool isMonochrome1 = (instance.GetImageInformation().GetPhotometricInterpretation() ==
                             Orthanc::PhotometricInterpretation_Monochrome1);
 
@@ -1707,7 +1737,7 @@ private:
   }
   
 
-  ViewerViewport(OrthancStone::ILoadersContext& context,
+  ViewerViewport(OrthancStone::WebAssemblyLoadersContext& context,
                  const OrthancStone::DicomSource& source,
                  const std::string& canvas,
                  boost::shared_ptr<FramesCache> cache,
@@ -1814,24 +1844,28 @@ public:
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, NULL);
   }
 
-  static boost::shared_ptr<ViewerViewport> Create(OrthancStone::ILoadersContext::ILock& lock,
+  static boost::shared_ptr<ViewerViewport> Create(OrthancStone::WebAssemblyLoadersContext& context,
                                                   const OrthancStone::DicomSource& source,
                                                   const std::string& canvas,
                                                   boost::shared_ptr<FramesCache> cache,
                                                   bool softwareRendering)
   {
     boost::shared_ptr<ViewerViewport> viewport(
-      new ViewerViewport(lock.GetContext(), source, canvas, cache, softwareRendering));
+      new ViewerViewport(context, source, canvas, cache, softwareRendering));
 
-    viewport->loader_ = OrthancStone::DicomResourcesLoader::Create(lock);
-    viewport->Register<OrthancStone::DicomResourcesLoader::SuccessMessage>(
-      *viewport->loader_, &ViewerViewport::Handle);
+    {
+      std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context.Lock());
+    
+      viewport->loader_ = OrthancStone::DicomResourcesLoader::Create(*lock);
+      viewport->Register<OrthancStone::DicomResourcesLoader::SuccessMessage>(
+        *viewport->loader_, &ViewerViewport::Handle);
 
-    viewport->Register<OrthancStone::HttpCommand::SuccessMessage>(
-      lock.GetOracleObservable(), &ViewerViewport::Handle);
+      viewport->Register<OrthancStone::HttpCommand::SuccessMessage>(
+        lock->GetOracleObservable(), &ViewerViewport::Handle);
 
-    viewport->Register<OrthancStone::ParseDicomSuccessMessage>(
-      lock.GetOracleObservable(), &ViewerViewport::Handle);
+      viewport->Register<OrthancStone::ParseDicomSuccessMessage>(
+        lock->GetOracleObservable(), &ViewerViewport::Handle);
+    }
 
     return viewport;    
   }
@@ -2482,9 +2516,8 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
   Viewports::iterator found = allViewports_.find(canvas);
   if (found == allViewports_.end())
   {
-    std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_->Lock());
     boost::shared_ptr<ViewerViewport> viewport(
-      ViewerViewport::Create(*lock, source_, canvas, cache_, softwareRendering_));
+      ViewerViewport::Create(*context_, source_, canvas, cache_, softwareRendering_));
     viewport->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
     viewport->AcquireObserver(new WebAssemblyObserver);
     viewport->SetAnnotations(annotations_);

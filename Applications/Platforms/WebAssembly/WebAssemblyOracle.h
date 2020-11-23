@@ -123,5 +123,26 @@ namespace OrthancStone
     }
 
     void SetDicomCacheSize(size_t size);
+
+    class CachedInstanceAccessor : public boost::noncopyable
+    {
+    private:
+#if ORTHANC_ENABLE_DCMTK == 1
+      std::unique_ptr<ParsedDicomCache::Reader>  reader_;
+#endif
+
+    public:
+      CachedInstanceAccessor(WebAssemblyOracle& oracle,
+                             const std::string& sopInstanceUid);
+
+      bool IsValid() const;
+
+      const Orthanc::ParsedDicomFile& GetDicom() const;
+
+      size_t GetFileSize() const;
+
+      bool HasPixelData() const;
+    };
+    
   };
 }

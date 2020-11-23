@@ -815,4 +815,71 @@ namespace OrthancStone
     LOG(INFO) << "DCMTK support is disabled, the DICOM cache is disabled";
 #endif
   }
+
+  
+  WebAssemblyOracle::CachedInstanceAccessor::CachedInstanceAccessor(WebAssemblyOracle& oracle,
+                                                                    const std::string& sopInstanceUid)
+  {
+#if ORTHANC_ENABLE_DCMTK == 1
+    if (oracle.dicomCache_.get() != NULL)
+    {
+      reader_.reset(new ParsedDicomCache::Reader(*oracle.dicomCache_, BUCKET_SOP, sopInstanceUid));
+    }
+#endif
+  }
+
+  bool WebAssemblyOracle::CachedInstanceAccessor::IsValid() const
+  {
+#if ORTHANC_ENABLE_DCMTK == 1
+    return (reader_.get() != NULL &&
+            reader_->IsValid());
+#else
+    return false;
+#endif
+  }
+
+  const Orthanc::ParsedDicomFile& WebAssemblyOracle::CachedInstanceAccessor::GetDicom() const
+  {
+    if (IsValid())
+    {
+#if ORTHANC_ENABLE_DCMTK == 1
+      assert(reader_.get() != NULL);
+      return reader_->GetDicom();
+#endif
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+
+  size_t WebAssemblyOracle::CachedInstanceAccessor::GetFileSize() const
+  {
+    if (IsValid())
+    {
+#if ORTHANC_ENABLE_DCMTK == 1
+      assert(reader_.get() != NULL);
+      return reader_->GetFileSize();
+#endif
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+
+  bool WebAssemblyOracle::CachedInstanceAccessor::HasPixelData() const
+  {
+    if (IsValid())
+    {
+#if ORTHANC_ENABLE_DCMTK == 1
+      assert(reader_.get() != NULL);
+      return reader_->HasPixelData();
+#endif
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
 }

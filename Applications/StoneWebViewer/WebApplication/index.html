@@ -219,7 +219,7 @@
                                    />
                               
                               <div v-bind:class="'wvSerieslist__badge--' + study.color"
-                                   v-if="'length' in series[seriesIndex]">{{ series[seriesIndex].length }}</div>
+                                   v-if="series[seriesIndex].numberOfFrames != 0">{{ series[seriesIndex].numberOfFrames }}</div>
                             </div>
                           </div>
 
@@ -556,7 +556,7 @@
                     {{ series.tags['0020,0011'] }} | {{ series.tags['0008,103e'] }}
                   </div>
                   <div class="wv-overlay-timeline-wrapper wvPrintExclude">
-                    <div style="text-align:left; padding:5px" v-show="framesCount != 0">
+                    <div style="text-align:left; padding:5px" v-show="numberOfFrames != 0">
                       <div style="width: 12em; padding: 1em;" v-show="cineControls">
                         <label>
                           Frame rate
@@ -570,7 +570,7 @@
                       <button class="btn btn-primary btn-sm" @click="DecrementFrame()">
                         <i class="fa fa-chevron-circle-left"></i>
                       </button>
-                      &nbsp;&nbsp;{{ currentFrame }} / {{ framesCount }}&nbsp;&nbsp;
+                      &nbsp;&nbsp;{{ currentFrame }} / {{ numberOfFrames }}&nbsp;&nbsp;
                       <button class="btn btn-primary btn-sm" @click="IncrementFrame()">
                         <i class="fa fa-chevron-circle-right"></i>
                       </button>

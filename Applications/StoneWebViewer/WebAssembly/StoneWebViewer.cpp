@@ -462,6 +462,35 @@ public:
     }
   }
 
+  size_t GetSeriesNumberOfFrames(const std::string& seriesInstanceUid) const
+  {
+    OrthancStone::SeriesMetadataLoader::Accessor accessor(*metadataLoader_, seriesInstanceUid);
+    
+    if (accessor.IsComplete())
+    {
+      size_t count = 0;
+      
+      for (size_t i = 0; i < accessor.GetInstancesCount(); i++)
+      {
+        uint32_t f;
+        if (accessor.GetInstance(i).ParseUnsignedInteger32(f, Orthanc::DICOM_TAG_NUMBER_OF_FRAMES))
+        {
+          count += f;
+        }
+        else
+        {
+          count++;
+        }
+      }
+
+      return count;
+    }
+    else
+    {
+      return 0;
+    }
+  }
+
   void AcquireObserver(IObserver* observer)
   {  
     observer_.reset(observer);
@@ -2360,7 +2389,7 @@ public:
         customEvent.initCustomEvent("FrameUpdated", false, false,
                                     { "canvasId" : UTF8ToString($0),
                                         "currentFrame" : $1,
-                                        "framesCount" : $2,
+                                        "numberOfFrames" : $2,
                                         "quality" : $3 });
         window.dispatchEvent(customEvent);
       },
@@ -2933,4 +2962,16 @@ extern "C"
     EXTERN_CATCH_EXCEPTIONS;
     return 0;
   }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  unsigned int GetSeriesNumberOfFrames(const char* seriesInstanceUid)
+  {
+    try
+    {
+      return GetResourcesLoader().GetSeriesNumberOfFrames(seriesInstanceUid);
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+    return 0;
+  }    
 }

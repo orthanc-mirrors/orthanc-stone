@@ -50,7 +50,7 @@ Vue.component('viewport', {
       stone: stone,  // To access global object "stone" from "index.html"
       status: 'waiting',
       currentFrame: 0,
-      framesCount: 0,
+      numberOfFrames: 0,
       quality: '',
       cineControls: false,
       cineIncrement: 0,
@@ -125,7 +125,7 @@ Vue.component('viewport', {
     window.addEventListener('FrameUpdated', function(args) {
       if (args.detail.canvasId == that.canvasId) {
         that.currentFrame = (args.detail.currentFrame + 1);
-        that.framesCount = args.detail.framesCount;
+        that.numberOfFrames = args.detail.numberOfFrames;
         that.quality = args.detail.quality;
       }
     });
@@ -422,7 +422,7 @@ var app = new Vue({
             var study = studies[indexStudies[studyInstanceUid]];
             study.series.push(i);
             series.push({
-              //'length' : 4,
+              'numberOfFrames' : 0,
               'complete' : false,
               'type' : stone.ThumbnailType.LOADING,
               'color': study.color,
@@ -581,10 +581,14 @@ var app = new Vue({
         series.complete = stone.IsSeriesComplete(seriesInstanceUid);
         
         if (!oldComplete &&
-            series.complete &&
-            seriesInstanceUid in pendingSeriesPdf_) {
-          stone.FetchPdf(studyInstanceUid, seriesInstanceUid);
-          delete pendingSeriesPdf_[seriesInstanceUid];
+            series.complete)
+        {
+          series.numberOfFrames = stone.GetSeriesNumberOfFrames(seriesInstanceUid);
+          
+          if (seriesInstanceUid in pendingSeriesPdf_) {
+            stone.FetchPdf(studyInstanceUid, seriesInstanceUid);
+            delete pendingSeriesPdf_[seriesInstanceUid];
+          }
         }
 
         // https://fr.vuejs.org/2016/02/06/common-gotchas/#Why-isn%E2%80%99t-the-DOM-updating

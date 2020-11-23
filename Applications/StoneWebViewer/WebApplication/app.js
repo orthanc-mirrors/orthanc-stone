@@ -43,12 +43,15 @@ function getParameterFromUrl(key) {
 
 Vue.component('viewport', {
   props: [ 'left', 'top', 'width', 'height', 'canvasId', 'active', 'series', 'viewportIndex',
-           'quality', 'framesCount', 'currentFrame', 'showInfo' ],
+           'showInfo' ],
   template: '#viewport-template',
   data: function () {
     return {
       stone: stone,  // To access global object "stone" from "index.html"
       status: 'waiting',
+      currentFrame: 0,
+      framesCount: 0,
+      quality: '',
       cineControls: false,
       cineIncrement: 0,
       cineFramesPerSecond: 30,
@@ -119,10 +122,17 @@ Vue.component('viewport', {
   mounted: function() {
     var that = this;
 
+    window.addEventListener('FrameUpdated', function(args) {
+      if (args.detail.canvasId == that.canvasId) {
+        that.currentFrame = (args.detail.currentFrame + 1);
+        that.framesCount = args.detail.framesCount;
+        that.quality = args.detail.quality;
+      }
+    });
+
     window.addEventListener('SeriesDetailsReady', function(args) {
-      var canvasId = args.detail.canvasId;
-      if (canvasId == that.canvasId) {
-        that.cineFramesPerSecond = stone.GetCineRate(canvasId);
+      if (args.detail.canvasId == that.canvasId) {
+        that.cineFramesPerSecond = stone.GetCineRate(that.canvasId);
       }
     });
 
@@ -268,9 +278,6 @@ var app = new Vue({
       viewport1Top: '0%',
       viewport1Visible: true,
       viewport1Series: {},
-      viewport1Quality: '',
-      viewport1FramesCount: 0,
-      viewport1CurrentFrame: 0,
       
       viewport2Width: '100%',
       viewport2Height: '100%',
@@ -278,9 +285,6 @@ var app = new Vue({
       viewport2Top: '0%',
       viewport2Visible: false,
       viewport2Series: {},
-      viewport2Quality: '',
-      viewport2FramesCount: 0,
-      viewport2CurrentFrame: 0,
 
       viewport3Width: '100%',
       viewport3Height: '100%',
@@ -288,9 +292,6 @@ var app = new Vue({
       viewport3Top: '0%',
       viewport3Visible: false,
       viewport3Series: {},
-      viewport3Quality: '',
-      viewport3FramesCount: 0,
-      viewport3CurrentFrame: 0,
 
       viewport4Width: '100%',
       viewport4Height: '100%',
@@ -298,9 +299,6 @@ var app = new Vue({
       viewport4Top: '0%',
       viewport4Visible: false,
       viewport4Series: {},
-      viewport4Quality: '',
-      viewport4FramesCount: 0,
-      viewport4CurrentFrame: 0,
 
       series: [],
       studies: [],
@@ -758,35 +756,6 @@ window.addEventListener('MetadataLoaded', function(args) {
   var studyInstanceUid = args.detail.studyInstanceUid;
   var seriesInstanceUid = args.detail.seriesInstanceUid;
   app.UpdateIsSeriesComplete(studyInstanceUid, seriesInstanceUid);
-});
-
-
-window.addEventListener('FrameUpdated', function(args) {
-  var canvasId = args.detail.canvasId;
-  var framesCount = args.detail.framesCount;
-  var currentFrame = (args.detail.currentFrame + 1);
-  var quality = args.detail.quality;
-  
-  if (canvasId == 'canvas1') {
-    app.viewport1CurrentFrame = currentFrame;
-    app.viewport1FramesCount = framesCount;
-    app.viewport1Quality = quality;
-  }
-  else if (canvasId == 'canvas2') {
-    app.viewport2CurrentFrame = currentFrame;
-    app.viewport2FramesCount = framesCount;
-    app.viewport2Quality = quality;
-  }
-  else if (canvasId == 'canvas3') {
-    app.viewport3CurrentFrame = currentFrame;
-    app.viewport3FramesCount = framesCount;
-    app.viewport3Quality = quality;
-  }
-  else if (canvasId == 'canvas4') {
-    app.viewport4CurrentFrame = currentFrame;
-    app.viewport4FramesCount = framesCount;
-    app.viewport4Quality = quality;
-  }
 });
 
 

@@ -427,9 +427,6 @@
                         v-bind:top="viewport1Top"
                         v-bind:width="viewport1Width"
                         v-bind:height="viewport1Height"
-                        v-bind:quality="viewport1Quality"
-                        v-bind:current-frame="viewport1CurrentFrame"
-                        v-bind:frames-count="viewport1FramesCount"
                         v-bind:show-info="showInfo"
                         v-bind:active="activeViewport==1"></viewport>
               <viewport v-on:updated-series="SetViewportSeries(2, $event)"
@@ -441,9 +438,6 @@
                         v-bind:top="viewport2Top"
                         v-bind:width="viewport2Width"
                         v-bind:height="viewport2Height"
-                        v-bind:quality="viewport2Quality"
-                        v-bind:current-frame="viewport2CurrentFrame"
-                        v-bind:frames-count="viewport2FramesCount"
                         v-bind:show-info="showInfo"
                         v-bind:active="activeViewport==2"></viewport>
               <viewport v-on:updated-series="SetViewportSeries(3, $event)"
@@ -455,9 +449,6 @@
                         v-bind:top="viewport3Top"
                         v-bind:width="viewport3Width"
                         v-bind:height="viewport3Height"
-                        v-bind:quality="viewport3Quality"
-                        v-bind:current-frame="viewport3CurrentFrame"
-                        v-bind:frames-count="viewport3FramesCount"
                         v-bind:show-info="showInfo"
                         v-bind:active="activeViewport==3"></viewport>
               <viewport v-on:updated-series="SetViewportSeries(4, $event)"
@@ -469,9 +460,6 @@
                         v-bind:top="viewport4Top"
                         v-bind:width="viewport4Width"
                         v-bind:height="viewport4Height"
-                        v-bind:quality="viewport4Quality"
-                        v-bind:current-frame="viewport4CurrentFrame"
-                        v-bind:frames-count="viewport4FramesCount"
                         v-bind:show-info="showInfo"
                         v-bind:active="activeViewport==4"></viewport>
             </div>

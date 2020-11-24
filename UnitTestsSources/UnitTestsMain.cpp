@@ -64,7 +64,7 @@ int main(int argc, char **argv)
   int result;
 
   {
-    Orthanc::Logging::Initialize();
+    OrthancStone::StoneInitialize();
     Orthanc::Logging::EnableInfoLevel(true);
 
     ::testing::InitGoogleTest(&argc, argv);
@@ -75,16 +75,17 @@ int main(int argc, char **argv)
   
     result = RUN_ALL_TESTS();
 
-    Orthanc::Logging::Finalize();
-
 #if defined(__EMSCRIPTEN__)
     output = testing::internal::GetCapturedStdout();
 #endif
+
+    OrthancStone::StoneFinalize();
   }
 
 #if defined(__EMSCRIPTEN__)
   EM_ASM({
       document.getElementById("output").innerHTML = UTF8ToString($0);
+      window.scrollTo(0, document.body.scrollHeight); // Scroll to the end of the page
     },
     output.c_str());
 #endif

@@ -1466,16 +1466,16 @@ private:
   void SetupPrefetchAfterRendering(const Orthanc::ImageAccessor& frame,
                                    DisplayedFrameQuality quality)
   {
-    const size_t frameSize = frame.GetPitch() * frame.GetHeight();
     const size_t cursorIndex = cursor_->GetCurrentIndex();
 
     // Prepare prefetching
     prefetchQueue_.clear();
 
-    size_t prefetchedSize = 0;
-    
     if (1)  // DISABLE PREFETCHING
     {
+      const size_t frameSize = frame.GetPitch() * frame.GetHeight();
+      size_t prefetchedSize = 0;
+    
       for (size_t i = 0; i < cursor_->GetPrefetchSize() && i < 16 &&
              prefetchedSize <= framesCache_->GetMaximumSize() / 2; i++)
       {
@@ -1492,8 +1492,7 @@ private:
     
     if (observer_.get() != NULL)
     {
-      observer_->SignalFrameUpdated(*this, cursor_->GetCurrentIndex(),
-                                    frames_->GetFramesCount(), quality);
+      observer_->SignalFrameUpdated(*this, cursorIndex, frames_->GetFramesCount(), quality);
     }
   }
   
@@ -1974,8 +1973,6 @@ public:
 
   void Redraw()
   {
-    DisplayedFrameQuality quality = DisplayedFrameQuality_None;
-    
     if (cursor_.get() != NULL &&
         frames_.get() != NULL)
     {

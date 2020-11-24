@@ -319,7 +319,7 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
-    Scene2D& scene = controller.GetScene();
+    const Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
     ctVolumeLayerSource_.reset(new VolumeSceneLayerSource(viewport_, depth, volume));
@@ -337,7 +337,7 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
-    Scene2D& scene = controller.GetScene();
+    const Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
     doseVolumeLayerSource_.reset(new VolumeSceneLayerSource(viewport_, depth, volume));
@@ -352,7 +352,7 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
-    Scene2D& scene = controller.GetScene();
+    const Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
     structLayerSource_.reset(new VolumeSceneLayerSource(viewport_, depth, volume));

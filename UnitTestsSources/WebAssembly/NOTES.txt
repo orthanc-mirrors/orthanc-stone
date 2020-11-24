@@ -8,7 +8,7 @@ Then, if the installation path is "~/Downloads/emsdk/":
 
 # source ~/Downloads/emsdk/emsdk_env.sh
 # mkdir Build && cd Build
-# cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=${EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DALLOW_DOWNLOADS=ON -G Ninja
+# cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DALLOW_DOWNLOADS=ON -G Ninja
 # ninja install
 
 => The binaries will be put in "../../../wasm-binaries/UnitTests/"

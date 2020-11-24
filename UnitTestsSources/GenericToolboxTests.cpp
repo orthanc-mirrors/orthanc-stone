@@ -26,8 +26,13 @@
 
 #include <gtest/gtest.h>
 #include <stdint.h>
-#include <inttypes.h>  // For PRId64
 #include <cmath>
+
+#if __cplusplus >= 201103L   // Is C++11?
+#  include <cinttypes>  // For PRId64
+#else
+#  define PRId64 "%lld"
+#endif
 
 TEST(GenericToolbox, TestLegitDoubleString)
 {

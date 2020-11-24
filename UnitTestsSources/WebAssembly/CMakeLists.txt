@@ -49,13 +49,12 @@ set(ALLOW_DOWNLOADS ON)
 
 include(${CMAKE_SOURCE_DIR}/../../Applications/Platforms/WebAssembly/OrthancStoneWebAssemblyParameters.cmake)
 
-SET(ENABLE_DCMTK OFF)  # Not necessary
+SET(ENABLE_DCMTK ON)  # Necessary for the tests of the Orthanc framework
+SET(ENABLE_PUGIXML ON)  # Necessary for the tests of the Orthanc framework
 SET(ENABLE_GOOGLE_TEST OFF)
 SET(ENABLE_LOCALE ON)  # Necessary for text rendering
+SET(ENABLE_LUA ON)  # Necessary for the tests of the Orthanc framework
 SET(ORTHANC_SANDBOXED ON)
-
-# Needed to redirect std::cout to a <div>
-set(ORTHANC_ENABLE_LOGGING_STDIO OFF CACHE INTERNAL "")
 
 # this will set up the build system for Stone of Orthanc and will
 # populate the ORTHANC_STONE_SOURCES CMake variable
@@ -75,7 +74,32 @@ include(${ORTHANC_STONE_ROOT}/../Resources/Orthanc/CMake/GoogleTestConfiguration
 
 
 include(${CMAKE_SOURCE_DIR}/../UnitTestsSources.cmake)
-add_executable(UnitTests ${UNIT_TESTS_SOURCES})
+add_executable(UnitTests
+  # Testing Stone
+  ${UNIT_TESTS_SOURCES}
+
+  # Testing the Orthanc Framework
+  ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/DicomMapTests.cpp
+  ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/FrameworkTests.cpp
+  ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/FromDcmtkTests.cpp
+  ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/ImageProcessingTests.cpp
+  ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/ImageTests.cpp
+  ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/JpegLosslessTests.cpp
+  ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/LoggingTests.cpp
+  ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/LuaTests.cpp
+  ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/RestApiTests.cpp
+  ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/StreamTests.cpp
+  ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/ToolboxTests.cpp
+
+  # Tests that are not compatible with WebAssembly
+
+  # ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/FileStorageTests.cpp
+  # ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/JobsTests.cpp
+  # ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/MemoryCacheTests.cpp
+  # ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/SQLiteChromiumTests.cpp
+  # ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/SQLiteTests.cpp
+  # ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/ZipTests.cpp
+  )
 
   
 # Declare installation files for the module

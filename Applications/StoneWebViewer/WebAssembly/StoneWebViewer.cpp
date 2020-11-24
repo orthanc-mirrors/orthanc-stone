@@ -94,6 +94,7 @@
 #include <WebGLViewport.h>
 
 
+#include <boost/math/special_functions/round.hpp>
 #include <boost/make_shared.hpp>
 #include <stdio.h>
 
@@ -1102,27 +1103,25 @@ private:
       {
         OrthancStone::DicomInstanceParameters params(dicom);
 
+        GetViewport().windowingPresetCenters_.resize(params.GetWindowingPresetsCount());
+        GetViewport().windowingPresetWidths_.resize(params.GetWindowingPresetsCount());
+
         for (size_t i = 0; i < params.GetWindowingPresetsCount(); i++)
         {
-          LOG(INFO) << "Preset windowing " << i << "/" << params.GetWindowingPresetsCount()
+          LOG(INFO) << "Preset windowing " << (i + 1) << "/" << params.GetWindowingPresetsCount()
                     << ": " << params.GetWindowingPresetCenter(i)
                     << "," << params.GetWindowingPresetWidth(i);
+
+          GetViewport().windowingPresetCenters_[i] = params.GetWindowingPresetCenter(i);
+          GetViewport().windowingPresetWidths_[i] = params.GetWindowingPresetWidth(i);
         }
 
-        // TODO - WINDOWING
-        if (params.GetWindowingPresetsCount() > 0)
-        {
-          GetViewport().presetWindowingCenter_ = params.GetWindowingPresetCenter(0);
-          GetViewport().presetWindowingWidth_ = params.GetWindowingPresetWidth(0);
-
-          GetViewport().windowingCenter_ = params.GetWindowingPresetCenter(0);
-          GetViewport().windowingWidth_ = params.GetWindowingPresetWidth(0);
-        }
-        else
+        if (params.GetWindowingPresetsCount() == 0)
         {
           LOG(INFO) << "No preset windowing";
-          GetViewport().ResetWindowingPreset();
         }
+
+        GetViewport().SetWindowingPreset();
       }
 
       uint32_t cineRate;
@@ -1367,8 +1366,8 @@ private:
   std::unique_ptr<SeriesCursor>                cursor_;
   float                                        windowingCenter_;
   float                                        windowingWidth_;
-  float                                        presetWindowingCenter_;
-  float                                        presetWindowingWidth_;
+  std::vector<float>                           windowingPresetCenters_;
+  std::vector<float>                           windowingPresetWidths_;
   unsigned int                                 cineRate_;
   bool                                         inverted_;
   bool                                         flipX_;
@@ -1416,18 +1415,6 @@ private:
   }
   
   
-  void ResetWindowingPreset()
-  {
-    presetWindowingCenter_ = 128;
-    presetWindowingWidth_ = 256;
-
-    windowingCenter_ = presetWindowingCenter_;
-    windowingWidth_ = presetWindowingWidth_;
-
-    inverted_ = false;
-  }
-
-
   void ClearViewport()
   {
     {
@@ -1794,7 +1781,7 @@ private:
     emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, OnKey);
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, OnKey);
 
-    ResetWindowingPreset();
+    SetWindowingPreset();
   }
 
   static EM_BOOL OnKey(int eventType,
@@ -1896,13 +1883,14 @@ public:
     flipY_ = false;
     fitNextContent_ = true;
     cineRate_ = DEFAULT_CINE_RATE;
-    
+    inverted_ = false;
+
     frames_.reset(frames);
     cursor_.reset(new SeriesCursor(frames_->GetFramesCount()));
 
     LOG(INFO) << "Number of frames in series: " << frames_->GetFramesCount();
 
-    ResetWindowingPreset();
+    SetWindowingPreset();
     ClearViewport();
     prefetchQueue_.clear();
 
@@ -2131,7 +2119,18 @@ public:
 
   void SetWindowingPreset()
   {
-    SetWindowing(presetWindowingCenter_, presetWindowingWidth_);
+    assert(windowingPresetCenters_.size() == windowingPresetWidths_.size());
+    
+    if (windowingPresetCenters_.empty())
+    {
+      windowingCenter_ = 128;
+      windowingWidth_ = 256;
+    }
+    else
+    {
+      windowingCenter_ = windowingPresetCenters_[0];
+      windowingWidth_ = windowingPresetWidths_[0];
+    }
   }
 
   void SetWindowing(float windowingCenter,
@@ -2333,7 +2332,30 @@ public:
 
   void FormatWindowingPresets(Json::Value& target) const
   {
+    assert(windowingPresetCenters_.size() == windowingPresetWidths_.size());
+
     target = Json::arrayValue;
+
+    for (size_t i = 0; i < windowingPresetCenters_.size(); i++)
+    {
+      const float c = windowingPresetCenters_[i];
+      const float w = windowingPresetWidths_[i];
+      
+      std::string name = "Preset";
+      if (windowingPresetCenters_.size() > 1)
+      {
+        name += " " + boost::lexical_cast<std::string>(i + 1);
+      }
+
+      Json::Value preset = Json::objectValue;
+      preset["name"] = name;
+      preset["info"] = ("C " + boost::lexical_cast<std::string>(boost::math::iround(c)) +
+                        ", W " + boost::lexical_cast<std::string>(boost::math::iround(w)));
+      preset["center"] = c;
+      preset["width"] = w;
+
+      target.append(preset);
+    }
   }
 };
 
@@ -2819,17 +2841,6 @@ extern "C"
     {
       showReferenceLines_ = (show != 0);
       UpdateReferenceLines();
-    }
-    EXTERN_CATCH_EXCEPTIONS;
-  }  
-
-
-  EMSCRIPTEN_KEEPALIVE
-  void SetWindowingPreset(const char* canvas)
-  {
-    try
-    {
-      GetViewport(canvas)->SetWindowingPreset();
     }
     EXTERN_CATCH_EXCEPTIONS;
   }  

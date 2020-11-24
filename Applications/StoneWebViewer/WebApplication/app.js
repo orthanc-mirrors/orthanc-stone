@@ -300,6 +300,9 @@ var app = new Vue({
       viewport4Visible: false,
       viewport4Series: {},
 
+      showWindowing: false,
+      windowingPresets: [],
+
       series: [],
       studies: [],
       seriesIndex: {}  // Maps "SeriesInstanceUID" to "index in this.series"
@@ -617,16 +620,10 @@ var app = new Vue({
     },
 
     SetWindowing: function(center, width) {
+      this.showWindowing = false;
       var canvas = this.GetActiveCanvas();
       if (canvas != '') {
         stone.SetWindowing(canvas, center, width);
-      }
-    },
-
-    SetPresetWindowing: function() {
-      var canvas = this.GetActiveCanvas();
-      if (canvas != '') {
-        stone.SetPresetWindowing(canvas);
       }
     },
 
@@ -678,6 +675,27 @@ var app = new Vue({
         this.SetViewportSeriesInstanceUid(1, seriesInstanceUid);
           
         stone.FocusFirstOsiriXAnnotation('canvas1');
+      }
+    },
+
+    ToggleWindowing: function()
+    {
+      if (this.showWindowing)
+      {
+        this.showWindowing = false;
+      }
+      else
+      {
+        stone.LoadWindowingPresets(this.GetActiveCanvas());
+        this.windowingPresets = JSON.parse(stone.GetStringBuffer());
+
+        var p = $('#windowing-popover').last();
+        var top = p.offset().top + p.height() + 10;
+        $('#windowing-content').css('top', top);
+        //$('#windowing-content').css('right', '10');
+        //$('#windowing-content').css('left', 'auto');
+
+        this.showWindowing = true;
       }
     }
   },
@@ -783,17 +801,6 @@ $(document).ready(function() {
   //app.modalWarning = true;
 
 
-  $('#windowing-popover').popover({
-    container: 'body',
-    content: $('#windowing-content').html(),
-    template: '<div class="popover wvToolbar__windowingPresetConfigPopover" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>',
-    placement: 'auto',
-    html: true,
-    sanitize: false,
-    trigger: 'focus'   // Close on click
-  });
-  
-  
   var wasmSource = 'StoneWebViewer.js';
   
   // Option 1: Loading script using plain HTML

@@ -368,6 +368,7 @@
               <button class="wvButton--underline text-center"
                       data-toggle="tooltip" data-title="Change windowing"
                       id="windowing-popover"
+                      v-bind:class="{ 'active' : showWindowing }"
                       v-on:click="ToggleWindowing()">
                 <i class="fa fa-sun"></i>
               </button>

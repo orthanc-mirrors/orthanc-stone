@@ -1247,23 +1247,26 @@ private:
   private:
     std::string   sopInstanceUid_;
     unsigned int  frameNumber_;
+    int           priority_;
     bool          isPrefetch_;
     
   public:
     SetFullDicomFrame(boost::shared_ptr<ViewerViewport> viewport,
                       const std::string& sopInstanceUid,
                       unsigned int frameNumber,
+                      int priority,
                       bool isPrefetch) :
       ICommand(viewport),
       sopInstanceUid_(sopInstanceUid),
       frameNumber_(frameNumber),
+      priority_(priority),
       isPrefetch_(isPrefetch)
     {
     }
     
     virtual void Handle(const OrthancStone::ParseDicomSuccessMessage& message) const ORTHANC_OVERRIDE
     {
-      Apply(GetViewport(), message.GetDicom(), sopInstanceUid_, frameNumber_);
+      Apply(GetViewport(), message.GetDicom(), sopInstanceUid_, frameNumber_, priority_, isPrefetch_);
 
       if (isPrefetch_)
       {
@@ -1274,7 +1277,9 @@ private:
     static void Apply(ViewerViewport& viewport,
                       const Orthanc::ParsedDicomFile& dicom,
                       const std::string& sopInstanceUid,
-                      unsigned int frameNumber)
+                      unsigned int frameNumber,
+                      int priority,
+                      bool isPrefetch)
     {
       Orthanc::DicomMap tags;
       dicom.ExtractDicomSummary(tags, ORTHANC_STONE_MAX_TAG_LENGTH);
@@ -1285,8 +1290,27 @@ private:
         // Safety check
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }      
+
+      std::unique_ptr<Orthanc::ImageAccessor> frame;
       
-      std::unique_ptr<Orthanc::ImageAccessor> frame(dicom.DecodeFrame(frameNumber));
+      try
+      {
+        frame.reset(dicom.DecodeFrame(frameNumber));
+      }
+      catch (Orthanc::OrthancException& e)
+      {
+        if (e.GetErrorCode() == Orthanc::ErrorCode_NotImplemented)
+        {
+          viewport.serverSideTranscoding_ = true;
+          LOG(INFO) << "Switching to server-side transcoding";
+          viewport.ScheduleLoadFullDicomFrame(sopInstanceUid, frameNumber, priority, isPrefetch);
+          return;
+        }
+        else
+        {
+          throw;
+        }
+      }
 
       if (frame.get() == NULL)
       {
@@ -1375,6 +1399,7 @@ private:
   bool                                         fitNextContent_;
   bool                                         isCtrlDown_;
   std::list<PrefetchItem>                      prefetchQueue_;
+  bool                                         serverSideTranscoding_;
 
 
   bool         hasFocusOnInstance_;
@@ -1630,6 +1655,23 @@ private:
     }
   }
 
+  void ScheduleLoadFullDicomFrame(const std::string& sopInstanceUid,
+                                  unsigned int frameNumber,
+                                  int priority,
+                                  bool isPrefetch)
+  {
+    if (frames_.get() != NULL)
+    {
+      std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
+      lock->Schedule(
+        GetSharedObserver(), priority, OrthancStone::ParseDicomFromWadoCommand::Create(
+          source_, frames_->GetStudyInstanceUid(), frames_->GetSeriesInstanceUid(),
+          sopInstanceUid, serverSideTranscoding_,
+          Orthanc::DicomTransferSyntax_LittleEndianExplicit,
+          new SetFullDicomFrame(GetSharedObserver(), sopInstanceUid, frameNumber, priority, isPrefetch)));
+    }
+  }
+
   void ScheduleLoadFullDicomFrame(size_t cursorIndex,
                                   int priority,
                                   bool isPrefetch)
@@ -1638,16 +1680,7 @@ private:
     {
       std::string sopInstanceUid = frames_->GetInstanceOfFrame(cursorIndex).GetSopInstanceUid();
       unsigned int frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
-      
-      {
-        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
-        lock->Schedule(
-          GetSharedObserver(), priority, OrthancStone::ParseDicomFromWadoCommand::Create(
-            source_, frames_->GetStudyInstanceUid(), frames_->GetSeriesInstanceUid(),
-            sopInstanceUid, false /* transcoding (TODO) */,
-            Orthanc::DicomTransferSyntax_LittleEndianExplicit /* TODO */,
-            new SetFullDicomFrame(GetSharedObserver(), sopInstanceUid, frameNumber, isPrefetch)));
-      }
+      ScheduleLoadFullDicomFrame(sopInstanceUid, frameNumber, priority, isPrefetch);
     }
   }
 
@@ -1676,7 +1709,8 @@ private:
       {
         try
         {
-          SetFullDicomFrame::Apply(*this, accessor->GetDicom(), instance.GetSopInstanceUid(), frameNumber);
+          SetFullDicomFrame::Apply(*this, accessor->GetDicom(), instance.GetSopInstanceUid(),
+                                   frameNumber, priority, isPrefetch);
           return;
         }
         catch (Orthanc::OrthancException&)
@@ -1884,6 +1918,7 @@ public:
     fitNextContent_ = true;
     cineRate_ = DEFAULT_CINE_RATE;
     inverted_ = false;
+    serverSideTranscoding_ = false;
 
     frames_.reset(frames);
     cursor_.reset(new SeriesCursor(frames_->GetFramesCount()));

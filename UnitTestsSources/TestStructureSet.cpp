@@ -29,7 +29,6 @@
 #endif
 
 #include "../OrthancStone/Sources/Loaders/DicomStructureSetLoader.h"
-#include "../OrthancStone/Sources/Loaders/GenericLoadersContext.h"
 #include "../OrthancStone/Sources/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
 #include "../OrthancStone/Sources/Toolbox/DicomStructureSet2.h"
 #include "../OrthancStone/Sources/Toolbox/DicomStructureSetUtils.h"
@@ -37,8 +36,6 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/make_shared.hpp>
-
-#include <SystemToolbox.h>
 
 #include <gtest/gtest.h>
 #include <string>

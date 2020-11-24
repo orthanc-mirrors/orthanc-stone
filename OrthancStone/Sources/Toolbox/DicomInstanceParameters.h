@@ -55,8 +55,8 @@ namespace OrthancStone
       bool                hasRescale_;
       double              rescaleIntercept_;
       double              rescaleSlope_;
-      Vector              presetWindowingCenters_;
-      Vector              presetWindowingWidths_;
+      Vector              windowingPresetCenters_;
+      Vector              windowingPresetWidths_;
       bool                hasIndexInSeries_;
       unsigned int        indexInSeries_;
       std::string         doseUnits_;
@@ -181,11 +181,14 @@ namespace OrthancStone
 
     double GetRescaleSlope() const;
 
-    size_t GetPresetWindowingsCount() const;
+    size_t GetWindowingPresetsCount() const;
 
-    float GetPresetWindowingCenter(size_t i) const;
+    float GetWindowingPresetCenter(size_t i) const;
 
-    float GetPresetWindowingWidth(size_t i) const;
+    float GetWindowingPresetWidth(size_t i) const;
+
+    void GetWindowingPresetsUnion(float& center,
+                                  float& width) const;
 
     Orthanc::PixelFormat GetExpectedPixelFormat() const;
 

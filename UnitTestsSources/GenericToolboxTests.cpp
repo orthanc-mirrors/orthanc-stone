@@ -26,6 +26,7 @@
 
 #include <gtest/gtest.h>
 #include <stdint.h>
+#include <inttypes.h>  // For PRId64
 #include <cmath>
 
 TEST(GenericToolbox, TestLegitDoubleString)
@@ -115,15 +116,27 @@ TEST(GenericToolbox, TestLegitIntegerString)
   EXPECT_FALSE(LegitIntegerString("\n0."));
 }
 
-TEST(GenericToolbox, TestStringToDouble)
+
+/**
+ * The very long "TestStringToDouble" was split in 4 parts. Otherwise,
+ * while running in WebAssembly (at least in "Debug" CMAKE_BUILD_TYPE
+ * with Emscripten 2.0.0), one get error "failed to asynchronously
+ * prepare wasm: CompileError: WebAssembly.instantiate(): Compiling
+ * function [...] failed: local count too large". This is because the
+ * function is too long.
+ **/
+TEST(GenericToolbox, TestStringToDouble1)
 {
   using OrthancStone::GenericToolbox::StringToDouble;
 
   const double TOLERANCE = 0.00000000000001;
   double r = 0.0;
-  bool ok = StringToDouble(r, "0.0001");
-  EXPECT_TRUE(ok);
-  EXPECT_NEAR(0.0001, r, TOLERANCE);
+
+  {
+    bool ok = StringToDouble(r, "0.0001");
+    EXPECT_TRUE(ok);
+    EXPECT_NEAR(0.0001, r, TOLERANCE);
+  }
 
   {
     bool ok = StringToDouble(r, "0.0001");
@@ -964,6 +977,14 @@ TEST(GenericToolbox, TestStringToDouble)
     EXPECT_TRUE(ok);
     EXPECT_NEAR(-0.83191012798055900000, r, TOLERANCE);
   }
+}
+
+TEST(GenericToolbox, TestStringToDouble2)
+{
+  using OrthancStone::GenericToolbox::StringToDouble;
+
+  const double TOLERANCE = 0.00000000000001;
+  double r = 0.0;
 
   {
     bool ok = StringToDouble(r, "2.58090819604341000000");
@@ -1816,6 +1837,14 @@ TEST(GenericToolbox, TestStringToDouble)
     EXPECT_TRUE(ok);
     EXPECT_NEAR(0.89377268220461400000, r, TOLERANCE);
   }
+}
+
+TEST(GenericToolbox, TestStringToDouble3)
+{
+  using OrthancStone::GenericToolbox::StringToDouble;
+
+  const double TOLERANCE = 0.00000000000001;
+  double r = 0.0;
 
   {
     bool ok = StringToDouble(r, "1.45674815825147000000");
@@ -2782,6 +2811,14 @@ TEST(GenericToolbox, TestStringToDouble)
     EXPECT_TRUE(ok);
     EXPECT_NEAR(-1.49620375847259000000, r, TOLERANCE);
   }
+}
+
+TEST(GenericToolbox, TestStringToDouble4)
+{
+  using OrthancStone::GenericToolbox::StringToDouble;
+
+  const double TOLERANCE = 0.00000000000001;
+  double r = 0.0;
 
   {
     bool ok = StringToDouble(r, "-2.04336416841016000000");
@@ -4177,6 +4214,7 @@ TEST(GenericToolbox, TestStringToIntegerHard)
   for (double b = DBL_EPSILON; b < DBL_MAX && i < COUNT; ++i, b *= FACTOR)
   {
     int64_t bi = static_cast<int64_t>(b);
+
     char txt[1024];
 #if defined(_MSC_VER)
 #  if (_MSC_VER > 1800)
@@ -4185,8 +4223,9 @@ TEST(GenericToolbox, TestStringToIntegerHard)
     sprintf_s(txt, "%I64d", bi);
 #  endif
 #else
-    snprintf(txt, sizeof(txt) - 1, "%ld", bi);
+    snprintf(txt, sizeof(txt) - 1, "%" PRId64, bi);  // https://stackoverflow.com/a/9225648/881731
 #endif
+    
     int64_t r = 0;
     bool ok = StringToInteger<int64_t>(r, txt);
     EXPECT_TRUE(ok);
@@ -4194,11 +4233,11 @@ TEST(GenericToolbox, TestStringToIntegerHard)
 #if 0
     if (ok)
     {
-      printf("OK for b = %.17f bi = %lld txt = \"%s\" and r = %lld\n", b, bi, txt, r);
+      printf("OK for b = %.17f bi = %" PRId64 " txt = \"%s\" and r = %" PRId64 "\n", b, bi, txt, r);
     }
     else
     {
-      printf("NOK for b = %.17f bi = %lld txt = \"%s\" and r = %lld\n", b, bi, txt,r);
+      printf("NOK for b = %.17f bi = %" PRId64 " txt = \"%s\" and r = %" PRId64 "\n", b, bi, txt, r);
       ok = StringToInteger<int64_t>(r, txt);
     }
 #endif

@@ -182,10 +182,10 @@ namespace OrthancStone
 
     bool ok = false;
     
-    if (LinearAlgebra::ParseVector(presetWindowingCenters_, dicom, Orthanc::DICOM_TAG_WINDOW_CENTER) &&
-        LinearAlgebra::ParseVector(presetWindowingWidths_, dicom, Orthanc::DICOM_TAG_WINDOW_WIDTH))
+    if (LinearAlgebra::ParseVector(windowingPresetCenters_, dicom, Orthanc::DICOM_TAG_WINDOW_CENTER) &&
+        LinearAlgebra::ParseVector(windowingPresetWidths_, dicom, Orthanc::DICOM_TAG_WINDOW_WIDTH))
     {
-      if (presetWindowingCenters_.size() == presetWindowingWidths_.size())
+      if (windowingPresetCenters_.size() == windowingPresetWidths_.size())
       {
         ok = true;
       }
@@ -199,8 +199,8 @@ namespace OrthancStone
     if (!ok)
     {
       // Don't use "Vector::clear()", as it has not the same meaning as "std::vector::clear()"
-      presetWindowingCenters_.resize(0);
-      presetWindowingWidths_.resize(0);
+      windowingPresetCenters_.resize(0);
+      windowingPresetWidths_.resize(0);
     }      
 
     // This computes the "IndexInSeries" metadata from Orthanc (check
@@ -397,18 +397,18 @@ namespace OrthancStone
   }
 
 
-  size_t DicomInstanceParameters::GetPresetWindowingsCount() const
+  size_t DicomInstanceParameters::GetWindowingPresetsCount() const
   {
-    assert(data_.presetWindowingCenters_.size() == data_.presetWindowingWidths_.size());
-    return data_.presetWindowingCenters_.size();
+    assert(data_.windowingPresetCenters_.size() == data_.windowingPresetWidths_.size());
+    return data_.windowingPresetCenters_.size();
   }
   
 
-  float DicomInstanceParameters::GetPresetWindowingCenter(size_t i) const
+  float DicomInstanceParameters::GetWindowingPresetCenter(size_t i) const
   {
-    if (i < GetPresetWindowingsCount())
+    if (i < GetWindowingPresetsCount())
     {
-      return static_cast<float>(data_.presetWindowingCenters_[i]);
+      return static_cast<float>(data_.windowingPresetCenters_[i]);
     }
     else
     {
@@ -417,11 +417,11 @@ namespace OrthancStone
   }
 
 
-  float DicomInstanceParameters::GetPresetWindowingWidth(size_t i) const
+  float DicomInstanceParameters::GetWindowingPresetWidth(size_t i) const
   {
-    if (i < GetPresetWindowingsCount())
+    if (i < GetWindowingPresetsCount())
     {
-      return static_cast<float>(data_.presetWindowingWidths_[i]);
+      return static_cast<float>(data_.windowingPresetWidths_[i]);
     }
     else
     {
@@ -429,7 +429,72 @@ namespace OrthancStone
     }
   }
 
+
+  static void GetWindowingBounds(float& low,
+                                 float& high,
+                                 double center,  // in
+                                 double width)   // in
+  {
+    low = static_cast<float>(center - width / 2.0);
+    high = static_cast<float>(center + width / 2.0);
+  }
+
   
+  void DicomInstanceParameters::GetWindowingPresetsUnion(float& center,
+                                                         float& width) const
+  {
+    assert(tags_.get() != NULL);
+    size_t s = GetWindowingPresetsCount();
+
+    if (s > 0)
+    {
+      // Use the largest windowing given all the preset windowings
+      // that are available in the DICOM tags
+      float low, high;
+      GetWindowingBounds(low, high, GetWindowingPresetCenter(0), GetWindowingPresetWidth(0));
+
+      for (size_t i = 1; i < s; i++)
+      {
+        float a, b;
+        GetWindowingBounds(a, b, GetWindowingPresetCenter(i), GetWindowingPresetWidth(i));
+        low = std::min(low, a);
+        high = std::max(high, b);
+      }
+
+      assert(low <= high);
+
+      if (LinearAlgebra::IsNear(low, high))
+      {
+        // Cannot infer a suitable windowing from the available tags
+        center = 128.0f;
+        width = 256.0f;
+      }
+      else
+      {
+        center = (low + high) / 2.0f;
+        width = (high - low);
+      }
+    }
+    else
+    {
+      float a, b;
+      if (tags_->ParseFloat(a, Orthanc::DICOM_TAG_SMALLEST_IMAGE_PIXEL_VALUE) &&
+          tags_->ParseFloat(b, Orthanc::DICOM_TAG_LARGEST_IMAGE_PIXEL_VALUE) &&
+          a < b)
+      {
+        center = (a + b) / 2.0f;
+        width = (b - a);
+      }
+      else
+      {
+        // Cannot infer a suitable windowing from the available tags
+        center = 128.0f;
+        width = 256.0f;
+      }
+    }
+  }
+
+
   Orthanc::ImageAccessor* DicomInstanceParameters::ConvertToFloat(const Orthanc::ImageAccessor& pixelData) const
   {
     std::unique_ptr<Orthanc::Image> converted(new Orthanc::Image(Orthanc::PixelFormat_Float32, 
@@ -494,9 +559,9 @@ namespace OrthancStone
         texture.reset(new FloatTextureSceneLayer(*converted));
       }
 
-      if (GetPresetWindowingsCount() > 0)
+      if (GetWindowingPresetsCount() > 0)
       {
-        texture->SetCustomWindowing(GetPresetWindowingCenter(0), GetPresetWindowingWidth(0));
+        texture->SetCustomWindowing(GetWindowingPresetCenter(0), GetWindowingPresetWidth(0));
       }
       
       switch (GetImageInformation().GetPhotometricInterpretation())

@@ -1102,21 +1102,26 @@ private:
       {
         OrthancStone::DicomInstanceParameters params(dicom);
 
-        // TODO - WINDOWING
-        if (params.GetPresetWindowingsCount() > 0)
+        for (size_t i = 0; i < params.GetWindowingPresetsCount(); i++)
         {
-          GetViewport().presetWindowingCenter_ = params.GetPresetWindowingCenter(0);
-          GetViewport().presetWindowingWidth_ = params.GetPresetWindowingWidth(0);
-          LOG(INFO) << "Preset windowing: " << params.GetPresetWindowingCenter(0)
-                    << "," << params.GetPresetWindowingWidth(0);
+          LOG(INFO) << "Preset windowing " << i << "/" << params.GetWindowingPresetsCount()
+                    << ": " << params.GetWindowingPresetCenter(i)
+                    << "," << params.GetWindowingPresetWidth(i);
+        }
 
-          GetViewport().windowingCenter_ = params.GetPresetWindowingCenter(0);
-          GetViewport().windowingWidth_ = params.GetPresetWindowingWidth(0);
+        // TODO - WINDOWING
+        if (params.GetWindowingPresetsCount() > 0)
+        {
+          GetViewport().presetWindowingCenter_ = params.GetWindowingPresetCenter(0);
+          GetViewport().presetWindowingWidth_ = params.GetWindowingPresetWidth(0);
+
+          GetViewport().windowingCenter_ = params.GetWindowingPresetCenter(0);
+          GetViewport().windowingWidth_ = params.GetWindowingPresetWidth(0);
         }
         else
         {
           LOG(INFO) << "No preset windowing";
-          GetViewport().ResetPresetWindowing();
+          GetViewport().ResetWindowingPreset();
         }
       }
 
@@ -1411,7 +1416,7 @@ private:
   }
   
   
-  void ResetPresetWindowing()
+  void ResetWindowingPreset()
   {
     presetWindowingCenter_ = 128;
     presetWindowingWidth_ = 256;
@@ -1790,7 +1795,7 @@ private:
     emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, OnKey);
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, OnKey);
 
-    ResetPresetWindowing();
+    ResetWindowingPreset();
   }
 
   static EM_BOOL OnKey(int eventType,
@@ -1898,7 +1903,7 @@ public:
 
     LOG(INFO) << "Number of frames in series: " << frames_->GetFramesCount();
 
-    ResetPresetWindowing();
+    ResetWindowingPreset();
     ClearViewport();
     prefetchQueue_.clear();
 
@@ -2127,7 +2132,7 @@ public:
   }
 
 
-  void SetPresetWindowing()
+  void SetWindowingPreset()
   {
     SetWindowing(presetWindowingCenter_, presetWindowingWidth_);
   }
@@ -2327,6 +2332,11 @@ public:
   unsigned int GetCineRate() const
   {
     return cineRate_;
+  }
+
+  void FormatWindowingPresets(Json::Value& target) const
+  {
+    target = Json::arrayValue;
   }
 };
 
@@ -2818,11 +2828,11 @@ extern "C"
 
 
   EMSCRIPTEN_KEEPALIVE
-  void SetPresetWindowing(const char* canvas)
+  void SetWindowingPreset(const char* canvas)
   {
     try
     {
-      GetViewport(canvas)->SetPresetWindowing();
+      GetViewport(canvas)->SetWindowingPreset();
     }
     EXTERN_CATCH_EXCEPTIONS;
   }  
@@ -3017,5 +3027,18 @@ extern "C"
     }
     EXTERN_CATCH_EXCEPTIONS;
     return 0;
-  }    
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void LoadWindowingPresets(const char* canvas)
+  {
+    try
+    {
+      Json::Value v;
+      GetViewport(canvas)->FormatWindowingPresets(v);
+      stringBuffer_ = v.toStyledString();
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
 }

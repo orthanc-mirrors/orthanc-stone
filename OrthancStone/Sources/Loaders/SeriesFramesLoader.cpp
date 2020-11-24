@@ -307,77 +307,6 @@ namespace OrthancStone
   }
 
 
-  static void GetBounds(float& low,
-                        float& high,
-                        double center,  // in
-                        double width)   // in
-  {
-    low = static_cast<float>(center - width / 2.0);
-    high = static_cast<float>(center + width / 2.0);
-  }
-  
-  
-  void SeriesFramesLoader::GetPreviewWindowing(float& center,
-                                               float& width,
-                                               size_t index) const
-  {
-    const Orthanc::DicomMap& instance = frames_.GetInstance(index);
-    const DicomInstanceParameters& parameters = frames_.GetInstanceParameters(index);
-
-    size_t s = parameters.GetPresetWindowingsCount();
-
-    if (s > 0)
-    {
-      // Use the largest windowing given all the preset windowings
-      // that are available in the DICOM tags
-      float low, high;
-      GetBounds(low, high, parameters.GetPresetWindowingCenter(0),
-                parameters.GetPresetWindowingWidth(0));
-
-      for (size_t i = 1; i < s; i++)
-      {
-        float a, b;
-        GetBounds(a, b, parameters.GetPresetWindowingCenter(i),
-                  parameters.GetPresetWindowingWidth(i));
-        low = std::min(low, a);
-        high = std::max(high, b);
-      }
-
-      assert(low <= high);
-
-      if (LinearAlgebra::IsNear(low, high))
-      {
-        // Cannot infer a suitable windowing from the available tags
-        center = 128.0f;
-        width = 256.0f;
-      }
-      else
-      {
-        center = (low + high) / 2.0f;
-        width = (high - low);
-        printf(">> %f %f\n", center, width);
-      }
-    }
-    else
-    {
-      float a, b;
-      if (instance.ParseFloat(a, Orthanc::DICOM_TAG_SMALLEST_IMAGE_PIXEL_VALUE) &&
-          instance.ParseFloat(b, Orthanc::DICOM_TAG_LARGEST_IMAGE_PIXEL_VALUE) &&
-          a < b)
-      {
-        center = (a + b) / 2.0f;
-        width = (b - a);
-      }
-      else
-      {
-        // Cannot infer a suitable windowing from the available tags
-        center = 128.0f;
-        width = 256.0f;
-      }
-    }
-  }
-
-  
   Orthanc::IDynamicObject& SeriesFramesLoader::FrameLoadedMessage::GetUserPayload() const
   {
     if (userPayload_)
@@ -485,8 +414,10 @@ namespace OrthancStone
       if (source.HasDicomWebRendered() &&
           quality == 0)
       {
+        const DicomInstanceParameters& parameters = frames_.GetInstanceParameters(index);
+
         float c, w;
-        GetPreviewWindowing(c, w, index);
+        parameters.GetWindowingPresetsUnion(c, w);
 
         std::map<std::string, std::string> arguments, headers;
         arguments["window"] = (boost::lexical_cast<std::string>(c) + "," +

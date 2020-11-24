@@ -76,10 +76,6 @@ namespace OrthancStone
 
     void Handle(const HttpCommand::SuccessMessage& message);
 
-    void GetPreviewWindowing(float& center,
-                             float& width,
-                             size_t index) const;
-
   public:
     class FrameLoadedMessage : public OriginMessage<SeriesFramesLoader>
     {

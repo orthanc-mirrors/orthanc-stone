@@ -255,7 +255,7 @@ namespace OrthancStone
       }
       while (*p >= '0' && *p <= '9')
       {
-        r = (r * 10) + (*p - '0'); // 1 12 123 123 12345
+        r = (r * 10) + static_cast<T>(*p - '0'); // 1 12 123 123 12345
         ++p;
       }
       r *= neg;

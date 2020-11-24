@@ -838,31 +838,31 @@ namespace OrthancStone
 #endif
   }
 
+#if ORTHANC_ENABLE_DCMTK == 1
   const Orthanc::ParsedDicomFile& WebAssemblyOracle::CachedInstanceAccessor::GetDicom() const
   {
     if (IsValid())
     {
-#if ORTHANC_ENABLE_DCMTK == 1
       assert(reader_.get() != NULL);
       return reader_->GetDicom();
-#endif
     }
     else
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
+#endif
 
   size_t WebAssemblyOracle::CachedInstanceAccessor::GetFileSize() const
   {
+#if ORTHANC_ENABLE_DCMTK == 1
     if (IsValid())
     {
-#if ORTHANC_ENABLE_DCMTK == 1
       assert(reader_.get() != NULL);
       return reader_->GetFileSize();
-#endif
     }
     else
+#endif
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
@@ -870,14 +870,14 @@ namespace OrthancStone
 
   bool WebAssemblyOracle::CachedInstanceAccessor::HasPixelData() const
   {
+#if ORTHANC_ENABLE_DCMTK == 1
     if (IsValid())
     {
-#if ORTHANC_ENABLE_DCMTK == 1
       assert(reader_.get() != NULL);
       return reader_->HasPixelData();
-#endif
     }
     else
+#endif
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }

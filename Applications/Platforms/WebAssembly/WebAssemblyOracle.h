@@ -137,12 +137,13 @@ namespace OrthancStone
 
       bool IsValid() const;
 
+#if ORTHANC_ENABLE_DCMTK == 1
       const Orthanc::ParsedDicomFile& GetDicom() const;
+#endif
 
       size_t GetFileSize() const;
 
       bool HasPixelData() const;
-    };
-    
+    };    
   };
 }

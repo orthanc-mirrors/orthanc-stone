@@ -96,15 +96,18 @@ namespace OrthancStone
   void LayerHolder::DeleteLayers()
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    Scene2D& scene = lock->GetController().GetScene();
-
-    for (int i = 0; i < textLayerCount_ + polylineLayerCount_; ++i)
+    if (lock)
     {
-      ORTHANC_ASSERT(scene.HasLayer(baseLayerIndex_ + i), "No layer");
-      scene.DeleteLayer(baseLayerIndex_ + i);
+      Scene2D& scene = lock->GetController().GetScene();
+
+      for (int i = 0; i < textLayerCount_ + polylineLayerCount_; ++i)
+      {
+        ORTHANC_ASSERT(scene.HasLayer(baseLayerIndex_ + i), "No layer");
+        scene.DeleteLayer(baseLayerIndex_ + i);
+      }
+      baseLayerIndex_ = -1;
+      lock->Invalidate();
     }
-    baseLayerIndex_ = -1;
-    lock->Invalidate();
   }
   
   PolylineSceneLayer* LayerHolder::GetPolylineLayer(int index /*= 0*/)

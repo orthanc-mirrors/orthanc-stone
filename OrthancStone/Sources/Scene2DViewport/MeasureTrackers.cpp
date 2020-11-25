@@ -60,12 +60,15 @@ namespace OrthancStone
 
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
 
-    if (commitResult_)
-      lock->GetController().PushCommand(command_);
-    else
-      command_->Undo();
+    if(lock)
+    {
+      if (commitResult_)
+        lock->GetController().PushCommand(command_);
+      else
+        command_->Undo();
 
-    lock->Invalidate();
+      lock->Invalidate();
+    }
   }
 
   EditMeasureTracker::EditMeasureTracker(boost::weak_ptr<IViewport> viewport,
@@ -108,12 +111,15 @@ namespace OrthancStone
 
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
 
-    if (commitResult_)
-      lock->GetController().PushCommand(command_);
-    else
-      command_->Undo();
+    if(lock)
+    {
+      if (commitResult_)
+        lock->GetController().PushCommand(command_);
+      else
+        command_->Undo();
 
-    lock->Invalidate();
+      lock->Invalidate();
+    }
   }
 }
 

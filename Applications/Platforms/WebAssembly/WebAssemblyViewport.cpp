@@ -420,8 +420,15 @@ namespace OrthancStone
 
   void WebAssemblyViewport::RefreshCanvasSize()
   {
-    double w, h;
-    emscripten_get_element_css_size(GetCanvasCssSelector().c_str(), &w, &h);
+    double w = -1, h = -1;
+    EMSCRIPTEN_RESULT result = 
+      emscripten_get_element_css_size(GetCanvasCssSelector().c_str(), &w, &h);
+
+    if (result != EMSCRIPTEN_RESULT_SUCCESS)
+    {
+      LOG(WARNING) << "WebAssemblyViewport::RefreshCanvasSize failed to "
+        << "retrieve CSS size for " << GetCanvasCssSelector();
+    }
 
     /**
      * Emscripten has the function emscripten_get_element_css_size()

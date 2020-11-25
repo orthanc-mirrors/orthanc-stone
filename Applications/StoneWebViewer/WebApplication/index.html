@@ -13,26 +13,54 @@
     <link rel="stylesheet" href="css/bootstrap.css">
     <link rel="stylesheet" href="open-sans.css">
     <link rel="stylesheet" href="app.css">
-
-    <!-- https://stackoverflow.com/a/16863182/881731 -->
-    <style>
-      .tooltip {
-      position: fixed;
-      }
-    </style>
-
-    <!-- Fix if Bootstrap CSS is not used -->
-    <!--style>
-        *,
-        *::before,
-        *::after {
-        box-sizing: border-box;
-        }
-        </style-->
+    <link rel="stylesheet" href="app-fixes.css">
   </head>
+  
   <body class="wv-body">
     <div id="wv">
-      <div class="wvLoadingScreen" v-show="!ready">
+
+      <div class="wvInfoScreen" v-show="modalNotDiagnostic" style="display: none">
+        <div class="wvInfoPopup">
+          <div class="wvInfoPopupLogo">
+            <a href="https://www.osimis.io" target="_blank">
+              <img style="width: 340px;" src="img/orthanc.png"/>
+            </a>
+          </div>
+          <div class="wvInfoPopupText">
+            <h3>Usage</h3>
+            <p>
+              The Stone Web Viewer is intended for<br> patients
+              reviewing their images,<br> for research and for quality
+              assurance.
+            </p>
+            <!--
+                <h3>Documentation</h3>
+            <p>
+              <a href="#" target="_blank">User Manual</a>
+            </p>
+            <h3>Versions</h3>
+            <p>
+              Orthanc: aa<br>
+              Osimis WebViewer: bb
+            </p>
+            -->
+          </div>
+          <div class="wvInfoPopupForm">
+            <br>
+            <label>Show this info panel at startup
+              <input type="checkbox" style="margin-left: 20px" v-model="settingNotDiagnostic">
+            </label>
+            <br><br>
+            <div style="text-align: center;">
+              <button class="wvInfoPopupCloseButton" @click="modalNotDiagnostic = false">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="wvLoadingScreen" v-show="!ready && !modalNotDiagnostic" style="display: none">
         <span class="wvLoadingSpinner">
           <div class="bounce1"></div>
           <div class="bounce2"></div>
@@ -40,7 +68,8 @@
         </span>
       </div>
 
-      <div class="fluid-height fluid-width" v-show="ready">
+      <div class="fluid-height fluid-width" v-show="ready && !modalNotDiagnostic"
+           style="display: none">
 
         <div class="wvWarning wvPrintExclude" v-show="modalWarning">
           <div class="wvWarning-content clearfix">
@@ -55,30 +84,6 @@
           </div>
           <div class="text-right mb10 mr10">
             <button class="btn btn-primary" @click="modalWarning=false">OK</button>
-          </div>
-        </div>
-
-
-        <div class="wvWarning wvPrintExclude" v-show="modalNotDiagnostic">
-          <div class="wvWarning-content clearfix">
-            <span class="wvWarning-text">
-              <h2 class="mb10"><i class="fa fa-exclamation-triangle wvWarning-icon mr5"></i>Warning!</h2>
-              <p class="mn mb10" style="color:#000">
-                The Stone Web Viewer is intended for <b>patients
-                reviewing their images<b>, for research purpose and
-                for quality assurance.
-              </p>
-
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" v-model="settingNotDiagnostic" id="checkboxNotDiagnostic1">
-                <label class="form-check-label" for="checkboxNotDiagnostic1" style="color:#000;display:inline">
-                  Show this warning at startup
-                </label>
-              </div>
-            </span> 
-          </div>
-          <div class="text-right mb10 mr10">
-            <button class="btn btn-primary" @click="modalNotDiagnostic=false">OK</button>
           </div>
         </div>
 

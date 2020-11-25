@@ -154,6 +154,7 @@ include(${CMAKE_SOURCE_DIR}/JavaScriptLibraries.cmake)
 install(
   FILES
   ${CMAKE_CURRENT_BINARY_DIR}/StoneWebViewer.wasm
+  ${CMAKE_SOURCE_DIR}/../WebApplication/app-fixes.css
   ${CMAKE_SOURCE_DIR}/../WebApplication/app.css
   ${CMAKE_SOURCE_DIR}/../WebApplication/app.js
   ${CMAKE_SOURCE_DIR}/../WebApplication/index.html

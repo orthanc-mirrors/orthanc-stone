@@ -233,12 +233,17 @@ namespace OrthancStone
   private:
     double GetCanvasToSceneFactor() const;
 
+    // The scene can be used by the higher-level objects (including the
+    // measuring tools), possibly in their destructor, and so it must be 
+    // deleted last (and, thus, constructed first)
+    std::unique_ptr<Scene2D>   scene_;
+
     boost::weak_ptr<IViewport>                    viewport_;
+
     boost::weak_ptr<UndoStack>                    undoStackW_;  // Global stack, possibly shared by all viewports
     std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;
     boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Couldn't this be a "std::unique_ptr"?
 
-    std::unique_ptr<Scene2D>   scene_;
 
     // this is cached
     double  canvasToSceneFactor_;    

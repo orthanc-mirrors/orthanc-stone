@@ -729,11 +729,17 @@ window.addEventListener('StoneInitialized', function() {
   if (study === undefined) {
     alert('No study was provided in the URL!');
   } else {
-    if (series === undefined) {
+    var studies = study.split(',');
+    if (studies.length > 1) {
+      for (var i = 0; i < studies.length; i++) {
+        console.warn('Loading study: ' + studies[i]);
+        stone.FetchStudy(studies[i]);
+      }
+    } else if (series === undefined) {
       console.warn('Loading study: ' + study);
       stone.FetchStudy(study);
     } else {
-      console.warn('Loading series: ' + series + ' from study ' + study);
+      console.warn('Loading series: ' + series + ' from study: ' + study);
       stone.FetchSeries(study, series);
       app.leftMode = 'full';
     }

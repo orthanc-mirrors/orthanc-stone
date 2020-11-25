@@ -1,0 +1,30 @@
+
+
+Differences with Osimis Web viewer
+==================================
+
+- The images are retrieved using DICOMweb.
+
+- The Stone Web viewer uses the DICOM identifiers. The Osimis Web
+  viewer the Orthanc identifiers.
+  https://book.orthanc-server.com/faq/orthanc-ids.html
+
+  In the Stone Web viewer, the studies are indexed by their "Study
+  Instance UID" tag (0020,000d). The series are indexed by their
+  "Series Instance UID" tag (0020,000e). To open a single series,
+  the parent study must be provided.
+
+  To open a single study:
+  http://.../index.html?study=<StudyInstanceUID>
+
+  To open a single series:
+  http://.../index.html?study=<StudyInstanceUID>&series=<SeriesInstanceUID>
+
+- The "pickableStudyIds" parameter in the URL (to specify a list of
+  studies to be displayed) is replaced by the single "study" GET
+  argument, that is allowed to contain a comma-separated list of
+  studies. The "series" parameter is ignored in this case.
+
+  To open a list of studies:
+  http://.../index.html?study=<StudyInstanceUID1>,<StudyInstanceUID2>,...
+  

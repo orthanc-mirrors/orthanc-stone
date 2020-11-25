@@ -303,6 +303,7 @@ var app = new Vue({
       showWindowing: false,
       windowingPresets: [],
 
+      selectedStudies: [],
       series: [],
       studies: [],
       seriesIndex: {}  // Maps "SeriesInstanceUID" to "index in this.series"
@@ -398,12 +399,15 @@ var app = new Vue({
             console.error('Twice the same study: ' + studyInstanceUid);
           } else {
             indexStudies[studyInstanceUid] = studies.length;
+
+            var isSelected = (this.selectedStudies.length == 0 ? true :
+                              this.selectedStudies.includes(studyInstanceUid));
             
             studies.push({
               'studyInstanceUid' : studyInstanceUid,
               'series' : [ ],
               'color' : COLORS[posColor],
-              'selected' : true,
+              'selected' : isSelected,
               'tags' : sourceStudies[i]
             });
 
@@ -723,9 +727,16 @@ window.addEventListener('StoneInitialized', function() {
   stone.SetSoftwareRendering(localStorage.settingSoftwareRendering == '1');
   console.warn('Stone properly initialized');
 
+  var selectedStudies = getParameterFromUrl('selectedStudies');
   var study = getParameterFromUrl('study');
   var series = getParameterFromUrl('series');
 
+  if (selectedStudies !== undefined) {
+    app.selectedStudies = selectedStudies.split(',');
+  } else {
+    app.selectedStudies = [];
+  }
+  
   if (study === undefined) {
     alert('No study was provided in the URL!');
   } else {

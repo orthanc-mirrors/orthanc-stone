@@ -20,11 +20,30 @@ Differences with Osimis Web viewer
   To open a single series:
   http://.../index.html?study=<StudyInstanceUID>&series=<SeriesInstanceUID>
 
-- The "pickableStudyIds" parameter in the URL (to specify a list of
-  studies to be displayed) is replaced by the single "study" GET
-  argument, that is allowed to contain a comma-separated list of
-  studies. The "series" parameter is ignored in this case.
+- In the Osimis Web viewer, the "pickableStudyIds" parameter in the
+  URL defines the list of studies that are available for display, and
+  that are listed in the dropdown at the top-left of the interface.
+
+  In the Stone Web viewer, "pickableStudyIds" is replaced by the
+  single "study" GET argument, that is allowed to contain a
+  comma-separated list of studies. The "series" parameter is ignored
+  in this case.
 
   To open a list of studies:
   http://.../index.html?study=<StudyInstanceUID1>,<StudyInstanceUID2>,...
   
+- In the Osimis Web viewer, the "selectedStudyIds" defines the list of
+  studies that are selected in the dropdown (and therefore displayed
+  when the viewer starts).
+
+  In the Stone Web viewer, "selectedStudyIds" is replaced by the
+  "selectedStudies" GET argument, that is allowed to contain a
+  comma-separated list of studies.
+
+  To make a list of studies available, but display only one of those
+  studies when the viewer starts:
+  http://.../index.html?study=<StudyInstanceUID1>,<StudyInstanceUID2>,...&selectedStudies=<StudyInstanceUID1>
+
+  If the "selectedStudies" is not provided, then all the studies are
+  displayed at the startup.
+

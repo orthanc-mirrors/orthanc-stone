@@ -86,9 +86,11 @@ namespace OrthancStone
   bool MeasureTool::IsSceneAlive() const
   {
     // since the lifetimes of the viewport, viewportcontroller (and the
-    // measuring tools inside it) are linked, the scene is always alive as 
-    // long as "this" is alive
-    return true;
+    // measuring tools inside it) are linked, the scene is alive as 
+    // long as the viewport is alive (which is technically not the case
+    // during its dtor)
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
+    return (lock != NULL);
   }
 
   void MeasureTool::OnSceneTransformChanged(

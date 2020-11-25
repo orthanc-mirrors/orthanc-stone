@@ -27,27 +27,16 @@
             </a>
           </div>
           <div class="wvInfoPopupText">
-            <h3>Usage</h3>
+            <h3>Intended use</h3>
             <p>
               The Stone Web Viewer is intended for<br> patients
               reviewing their images,<br> for research and for quality
               assurance.
             </p>
-            <!--
-                <h3>Documentation</h3>
-            <p>
-              <a href="#" target="_blank">User Manual</a>
-            </p>
-            <h3>Versions</h3>
-            <p>
-              Orthanc: aa<br>
-              Osimis WebViewer: bb
-            </p>
-            -->
           </div>
           <div class="wvInfoPopupForm">
             <br>
-            <label>Show this info panel at startup
+            <label>Show this information at startup
               <input type="checkbox" style="margin-left: 20px" v-model="settingNotDiagnostic">
             </label>
             <br><br>
@@ -60,7 +49,41 @@
         </div>
       </div>
       
-      <div class="wvLoadingScreen" v-show="!ready && !modalNotDiagnostic" style="display: none">
+      <div class="wvInfoScreen" v-show="modalPreferences" style="display: none">
+        <div class="wvInfoPopup">
+          <div class="wvInfoPopupLogo">
+            <a href="https://www.osimis.io" target="_blank">
+              <img style="width: 340px;" src="img/orthanc.png"/>
+            </a>
+          </div>
+          <div class="wvInfoPopupText">
+            <h3>Intended use</h3>
+            <p>
+              The Stone Web Viewer is intended for<br> patients
+              reviewing their images,<br> for research and for quality
+              assurance.
+            </p>
+            <h3>User preferences</h3>
+          </div>
+          <div class="wvInfoPopupForm">
+            <label>Warn about the intended use at startup
+              <input type="checkbox" style="margin-left: 20px" v-model="settingNotDiagnostic">
+            </label>
+            <br>
+            <label>Use software rendering (will reload the viewer)
+              <input type="checkbox" style="margin-left: 20px" v-model="settingSoftwareRendering">
+            </label>
+            <br><br>
+            <div style="text-align: center;">
+              <button class="wvInfoPopupCloseButton" @click="ApplyPreferences()">
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="wvLoadingScreen" v-show="!ready && !modalNotDiagnostic && !modalPreferences" style="display: none">
         <span class="wvLoadingSpinner">
           <div class="bounce1"></div>
           <div class="bounce2"></div>
@@ -68,7 +91,7 @@
         </span>
       </div>
 
-      <div class="fluid-height fluid-width" v-show="ready && !modalNotDiagnostic"
+      <div class="fluid-height fluid-width" v-show="ready && !modalNotDiagnostic && !modalPreferences"
            style="display: none">
 
         <div class="wvWarning wvPrintExclude" v-show="modalWarning">
@@ -84,32 +107,6 @@
           </div>
           <div class="text-right mb10 mr10">
             <button class="btn btn-primary" @click="modalWarning=false">OK</button>
-          </div>
-        </div>
-
-
-        <div class="wvWarning wvPrintExclude" v-show="modalPreferences">
-          <div class="wvWarning-content clearfix">
-            <span class="wvWarning-text">
-              <h2 class="mb10">Preferences</h2>
-              
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" v-model="settingNotDiagnostic" id="checkboxNotDiagnostic2">
-                <label class="form-check-label" for="checkboxNotDiagnostic2" style="color:#000;display:inline">
-                  Warn about diagnostic usage at startup
-                </label>
-              </div>
-
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" v-model="settingSoftwareRendering" id="checkboxSoftwareRendering">
-                <label class="form-check-label" for="checkboxSoftwareRendering" style="color:#000;display:inline">
-                  Use software rendering (will reload the viewer)
-                </label>
-              </div>
-            </span> 
-          </div>
-          <div class="text-right mb10 mr10">
-            <button class="btn btn-primary" @click="ApplyPreferences()">OK</button>
           </div>
         </div>
 

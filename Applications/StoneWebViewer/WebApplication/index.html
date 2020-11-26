@@ -446,10 +446,10 @@
             
             <div class="ng-scope inline-object">
               <button class="wvButton--underline text-center"
-                      data-toggle="tooltip" data-title="Show image information"
-                      v-bind:class="{ 'active' : showInfo }"
-                      v-on:click="showInfo = !showInfo">
-                <i class="fa fa-info-circle"></i>
+                      data-toggle="tooltip" data-title="Synchronized browsing"
+                      v-bind:class="{ 'active' : synchronizedBrowsing }"
+                      v-on:click="synchronizedBrowsing = !synchronizedBrowsing">
+                <i class="fa fa-link"></i>
               </button>
             </div>
 
@@ -459,6 +459,15 @@
                       v-bind:class="{ 'active' : showReferenceLines }"
                       v-on:click="showReferenceLines = !showReferenceLines">
                 <i class="fa fa-bars"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Show image information"
+                      v-bind:class="{ 'active' : showInfo }"
+                      v-on:click="showInfo = !showInfo">
+                <i class="fa fa-info-circle"></i>
               </button>
             </div>
 

@@ -1033,7 +1033,8 @@ public:
                                     size_t countFrames,
                                     DisplayedFrameQuality quality) = 0;
 
-    virtual void SignalCrosshair(const OrthancStone::Vector& click) = 0;
+    virtual void SignalCrosshair(const ViewerViewport& viewport,
+                                 const OrthancStone::Vector& click) = 0;
   };
 
 private:
@@ -1397,9 +1398,10 @@ private:
   bool                                         flipX_;
   bool                                         flipY_;
   bool                                         fitNextContent_;
-  bool                                         isCtrlDown_;
   std::list<PrefetchItem>                      prefetchQueue_;
   bool                                         serverSideTranscoding_;
+  OrthancStone::Vector                         synchronizationOffset_;
+  bool                                         synchronizationEnabled_;
 
 
   bool         hasFocusOnInstance_;
@@ -1782,11 +1784,12 @@ private:
     source_(source),
     framesCache_(cache),
     fitNextContent_(true),
-    isCtrlDown_(false),
     flipX_(false),
     flipY_(false),
     hasFocusOnInstance_(false),
-    focusFrameNumber_(0)
+    focusFrameNumber_(0),
+    synchronizationOffset_(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0)),
+    synchronizationEnabled_(false)
   {
     if (!framesCache_)
     {
@@ -1812,24 +1815,8 @@ private:
     }
     
     emscripten_set_wheel_callback(viewport_->GetCanvasCssSelector().c_str(), this, true, OnWheel);
-    emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, OnKey);
-    emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, OnKey);
 
     SetWindowingPreset();
-  }
-
-  static EM_BOOL OnKey(int eventType,
-                       const EmscriptenKeyboardEvent *event,
-                       void *userData)
-  {
-    /**
-     * WARNING: There is a problem with Firefox 71 that seems to mess
-     * the "ctrlKey" value.
-     **/
-    
-    ViewerViewport& that = *reinterpret_cast<ViewerViewport*>(userData);
-    that.isCtrlDown_ = event->ctrlKey;
-    return false;
   }
 
   
@@ -1839,15 +1826,41 @@ private:
   {
     ViewerViewport& that = *reinterpret_cast<ViewerViewport*>(userData);
 
-    if (that.cursor_.get() != NULL)
+    if (that.frames_.get() != NULL &&
+        that.cursor_.get() != NULL)
     {
+      const bool isCtrl = wheelEvent->mouse.ctrlKey;
+      const bool isShift = wheelEvent->mouse.shiftKey;
+      
+      const size_t previousCursorIndex = that.cursor_->GetCurrentIndex();
+      
       if (wheelEvent->deltaY < 0)
       {
-        that.ChangeFrame(that.isCtrlDown_ ? SeriesCursor::Action_FastMinus : SeriesCursor::Action_Minus, false /* not circular */);
+        that.ChangeFrame(isCtrl ? SeriesCursor::Action_FastMinus :
+                         SeriesCursor::Action_Minus, false /* not circular */);
       }
       else if (wheelEvent->deltaY > 0)
       {
-        that.ChangeFrame(that.isCtrlDown_ ? SeriesCursor::Action_FastPlus : SeriesCursor::Action_Plus, false /* not circular */);
+        that.ChangeFrame(isCtrl ? SeriesCursor::Action_FastPlus :
+                         SeriesCursor::Action_Plus, false /* not circular */);
+      }
+
+      if (that.synchronizationEnabled_)
+      {
+        const size_t currentCursorIndex = that.cursor_->GetCurrentIndex();
+
+        const OrthancStone::CoordinateSystem3D current =
+          that.frames_->GetFrameGeometry(currentCursorIndex);
+      
+        if (isShift &&
+            previousCursorIndex != currentCursorIndex)
+        {
+          const OrthancStone::CoordinateSystem3D previous =
+            that.frames_->GetFrameGeometry(previousCursorIndex);
+          that.synchronizationOffset_ += previous.GetOrigin() - current.GetOrigin();
+        }
+
+        that.observer_->SignalCrosshair(that, current.GetOrigin() + that.synchronizationOffset_);
       }
     }
     
@@ -1876,8 +1889,6 @@ public:
     // has been destroyed. "WebAssemblyViewport::CreateObjectCookie()"
     // provides a more advanced alternative.
     emscripten_set_wheel_callback(viewport_->GetCanvasCssSelector().c_str(), this, true, NULL);
-    emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, NULL);
-    emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, false, NULL);
   }
 
   static boost::shared_ptr<ViewerViewport> Create(OrthancStone::WebAssemblyLoadersContext& context,
@@ -1919,6 +1930,7 @@ public:
     cineRate_ = DEFAULT_CINE_RATE;
     inverted_ = false;
     serverSideTranscoding_ = false;
+    OrthancStone::LinearAlgebra::AssignVector(synchronizationOffset_, 0, 0, 0);
 
     frames_.reset(frames);
     cursor_.reset(new SeriesCursor(frames_->GetFramesCount()));
@@ -2281,7 +2293,7 @@ public:
           OrthancStone::Vector click = plane.MapSliceToWorldCoordinates(x, y);
           if (viewer_.observer_.get() != NULL)
           {
-            viewer_.observer_->SignalCrosshair(click);
+            viewer_.observer_->SignalCrosshair(viewer_, click);
           }
         }
         
@@ -2384,13 +2396,21 @@ public:
 
       Json::Value preset = Json::objectValue;
       preset["name"] = name;
-      preset["info"] = ("C " + boost::lexical_cast<std::string>(boost::math::iround(c)) +
-                        ", W " + boost::lexical_cast<std::string>(boost::math::iround(w)));
       preset["center"] = c;
       preset["width"] = w;
-
+      preset["info"] =
+        ("C " + boost::lexical_cast<std::string>(static_cast<int>(boost::math::iround<double>(c))) +
+         ", W " + boost::lexical_cast<std::string>(static_cast<int>(boost::math::iround<double>(w))));
+      
       target.append(preset);
     }
+  }
+
+
+  void SetSynchronizedBrowsingEnabled(int enabled)
+  {
+    OrthancStone::LinearAlgebra::AssignVector(synchronizationOffset_, 0, 0, 0);
+    synchronizationEnabled_ = enabled;
   }
 };
 
@@ -2510,12 +2530,16 @@ public:
     UpdateReferenceLines();
   }
 
-  virtual void SignalCrosshair(const OrthancStone::Vector& click) ORTHANC_OVERRIDE
+  virtual void SignalCrosshair(const ViewerViewport& viewport,
+                               const OrthancStone::Vector& click) ORTHANC_OVERRIDE
   {
     for (Viewports::const_iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
     {
-      assert(it->second != NULL);
-      it->second->FocusOnPoint(click);
+      assert(it->second.get() != NULL);
+      if (it->second.get() != &viewport)
+      {
+        it->second->FocusOnPoint(click);
+      }
     }
   }
 
@@ -3081,6 +3105,21 @@ extern "C"
       Json::Value v;
       GetViewport(canvas)->FormatWindowingPresets(v);
       stringBuffer_ = v.toStyledString();
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void SetSynchronizedBrowsingEnabled(int enabled)
+  {
+    try
+    {
+      for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
+      {
+        assert(it->second != NULL);
+        it->second->SetSynchronizedBrowsingEnabled(enabled);
+      }
     }
     EXTERN_CATCH_EXCEPTIONS;
   }

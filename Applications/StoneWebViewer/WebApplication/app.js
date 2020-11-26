@@ -260,6 +260,7 @@ var app = new Vue({
       activeViewport: 0,
       showInfo: true,
       showReferenceLines: true,
+      synchronizedBrowsing: false,
 
       modalWarning: false,
       modalNotDiagnostic: false,
@@ -332,6 +333,9 @@ var app = new Vue({
     },
     showReferenceLines: function(newVal, oldVal) {
       stone.ShowReferenceLines(newVal ? 1 : 0);
+    },
+    synchronizedBrowsing: function(newVal, oldVal) {
+      stone.SetSynchronizedBrowsingEnabled(newVal ? 1 : 0);
     },
     settingNotDiagnostic: function(newVal, oldVal) {
       localStorage.settingNotDiagnostic = (newVal ? '1' : '0');

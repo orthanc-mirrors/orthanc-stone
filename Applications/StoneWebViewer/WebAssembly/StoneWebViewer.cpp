@@ -1035,6 +1035,10 @@ public:
 
     virtual void SignalCrosshair(const ViewerViewport& viewport,
                                  const OrthancStone::Vector& click) = 0;
+
+    virtual void SignalSynchronizedBrowsing(const ViewerViewport& viewport,
+                                            const OrthancStone::Vector& click,
+                                            const OrthancStone::Vector& normal) = 0;
   };
 
 private:
@@ -1860,7 +1864,8 @@ private:
           that.synchronizationOffset_ += previous.GetOrigin() - current.GetOrigin();
         }
 
-        that.observer_->SignalCrosshair(that, current.GetOrigin() + that.synchronizationOffset_);
+        that.observer_->SignalSynchronizedBrowsing(
+          that, current.GetOrigin() + that.synchronizationOffset_, current.GetNormal());
       }
     }
     
@@ -2535,8 +2540,29 @@ public:
   {
     for (Viewports::const_iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
     {
+      // TODO - One could check the "Frame Of Reference UID" here
       assert(it->second.get() != NULL);
       if (it->second.get() != &viewport)
+      {
+        it->second->FocusOnPoint(click);
+      }
+    }
+  }
+
+  virtual void SignalSynchronizedBrowsing(const ViewerViewport& viewport,
+                                          const OrthancStone::Vector& click,
+                                          const OrthancStone::Vector& normal) ORTHANC_OVERRIDE
+  {
+    for (Viewports::const_iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
+    {
+      assert(it->second.get() != NULL);
+
+      OrthancStone::CoordinateSystem3D plane;
+      bool isOpposite;
+      
+      if (it->second.get() != &viewport &&
+          it->second->GetCurrentPlane(plane) &&
+          OrthancStone::GeometryToolbox::IsParallelOrOpposite(isOpposite, plane.GetNormal(), normal))
       {
         it->second->FocusOnPoint(click);
       }

@@ -105,6 +105,9 @@
 #endif
 
 
+#define FIX_LSD_479  1
+
+
 enum STONE_WEB_VIEWER_EXPORT ThumbnailType
 {
   ThumbnailType_Image,
@@ -1406,7 +1409,8 @@ private:
   bool                                         serverSideTranscoding_;
   OrthancStone::Vector                         synchronizationOffset_;
   bool                                         synchronizationEnabled_;
-
+  double                                       centralPhysicalWidth_;   // LSD-479
+  double                                       centralPhysicalHeight_;
 
   bool         hasFocusOnInstance_;
   std::string  focusSopInstanceUid_;
@@ -1519,8 +1523,19 @@ private:
                           const OrthancStone::DicomInstanceParameters& instance,
                           const OrthancStone::CoordinateSystem3D& plane)
   {
+    /**
+     * IMPORTANT - DO NOT use "instance.GetWidth()" and
+     * "instance.GetHeight()" in this method. Use the information from
+     * "frame" instead. Indeed, the "instance" information is taken
+     * from DICOMweb "/studies/.../series/.../metadata". But,
+     * "SeriesMetadataExtrapolatedTags" includes the "Columns" and
+     * "Rows" DICOM tags for performance, which make this information
+     * unreliable if the series includes instances with varying sizes
+     * (cf. LSD-479).
+     **/
+    
     SaveCurrentWindowing();
-      
+    
     bool isMonochrome1 = (instance.GetImageInformation().GetPhotometricInterpretation() ==
                           Orthanc::PhotometricInterpretation_Monochrome1);
       
@@ -1554,7 +1569,38 @@ private:
 
     double pixelSpacingX, pixelSpacingY;
     OrthancStone::GeometryToolbox::GetPixelSpacing(pixelSpacingX, pixelSpacingY, instance.GetTags());
-    layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
+
+    if (FIX_LSD_479)
+    {
+      /**
+       * Some series contain a first instance (secondary capture) that
+       * is completely different from others wrt. to resolution and
+       * pixel spacing. We make sure to rescale each frame to fit in a
+       * square that corresponds to the extent of the frame in the
+       * middle of the series.
+       **/
+      double physicalWidth = pixelSpacingX * static_cast<double>(frame.GetWidth()); 
+      double physicalHeight = pixelSpacingY * static_cast<double>(frame.GetHeight());
+
+      if (OrthancStone::LinearAlgebra::IsCloseToZero(physicalWidth) ||
+          OrthancStone::LinearAlgebra::IsCloseToZero(physicalHeight))
+      {
+        // Numerical instability, don't try further processing
+        layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
+      }
+      else
+      {
+        double scale = std::max(centralPhysicalWidth_ / physicalWidth,
+                                centralPhysicalHeight_ / physicalHeight);
+        layer->SetPixelSpacing(pixelSpacingX * scale, pixelSpacingY * scale);
+        layer->SetOrigin((centralPhysicalWidth_ - physicalWidth * scale) / 2.0,
+                         (centralPhysicalHeight_ - physicalHeight * scale) / 2.0);
+      }
+    }
+    else
+    {
+      layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
+    }
 
     std::unique_ptr<OrthancStone::MacroSceneLayer>  annotationsLayer;
 
@@ -1793,7 +1839,9 @@ private:
     hasFocusOnInstance_(false),
     focusFrameNumber_(0),
     synchronizationOffset_(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0)),
-    synchronizationEnabled_(false)
+    synchronizationEnabled_(false),
+    centralPhysicalWidth_(1),
+    centralPhysicalHeight_(1)
   {
     if (!framesCache_)
     {
@@ -1952,6 +2000,9 @@ public:
                                     frames_->GetFramesCount(), DisplayedFrameQuality_None);
     }
 
+    centralPhysicalWidth_ = 1;
+    centralPhysicalHeight_ = 1;
+
     if (frames_->GetFramesCount() != 0)
     {
       const OrthancStone::DicomInstanceParameters& centralInstance = frames_->GetInstanceOfFrame(cursor_->GetCurrentIndex());
@@ -1977,6 +2028,17 @@ public:
         loader_->ScheduleGetDicomWeb(
           boost::make_shared<OrthancStone::LoadedDicomResources>(Orthanc::DICOM_TAG_SOP_INSTANCE_UID),
           0, source_, uri, new LoadSeriesDetailsFromInstance(GetSharedObserver()));
+      }
+
+      if (centralInstance.GetPixelSpacingX() != 0 &&
+          centralInstance.GetPixelSpacingY() != 0 &&
+          centralInstance.GetWidth() != 0 &&
+          centralInstance.GetHeight())
+      {
+        centralPhysicalWidth_ = (centralInstance.GetPixelSpacingX() *
+                                 static_cast<double>(centralInstance.GetWidth()));
+        centralPhysicalHeight_ = (centralInstance.GetPixelSpacingY() *
+                                  static_cast<double>(centralInstance.GetHeight()));
       }
     }
 

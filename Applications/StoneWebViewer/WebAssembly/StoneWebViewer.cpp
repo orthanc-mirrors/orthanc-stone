@@ -575,6 +575,35 @@ public:
     }
   }
 
+  bool SortMultipartInstanceFrames(OrthancStone::SortedFrames& target,
+                                   const std::string& seriesInstanceUid,
+                                   const std::string& sopInstanceUid) const
+  {
+    OrthancStone::SeriesMetadataLoader::Accessor accessor(*metadataLoader_, seriesInstanceUid);
+    
+    if (accessor.IsComplete())
+    {
+      for (size_t i = 0; i < accessor.GetInstancesCount(); i++)
+      {
+        std::string s;
+        if (accessor.GetInstance(i).LookupStringValue(s, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false) &&
+            s == sopInstanceUid)
+        {
+          target.Clear();
+          target.AddInstance(accessor.GetInstance(i));
+          target.Sort();
+          return true;
+        }
+      }
+      
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
   size_t GetSeriesNumberOfFrames(const std::string& seriesInstanceUid) const
   {
     OrthancStone::SeriesMetadataLoader::Accessor accessor(*metadataLoader_, seriesInstanceUid);
@@ -3063,6 +3092,30 @@ extern "C"
       std::unique_ptr<OrthancStone::SortedFrames> frames(new OrthancStone::SortedFrames);
       
       if (GetResourcesLoader().SortSeriesFrames(*frames, seriesInstanceUid))
+      {
+        GetViewport(canvas)->SetFrames(frames.release());
+        return 1;
+      }
+      else
+      {
+        return 0;
+      }
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+    return 0;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  int LoadMultipartInstanceInViewport(const char* canvas,
+                                      const char* seriesInstanceUid,
+                                      const char* sopInstanceUid)
+  {
+    try
+    {
+      std::unique_ptr<OrthancStone::SortedFrames> frames(new OrthancStone::SortedFrames);
+      
+      if (GetResourcesLoader().SortMultipartInstanceFrames(*frames, seriesInstanceUid, sopInstanceUid))
       {
         GetViewport(canvas)->SetFrames(frames.release());
         return 1;

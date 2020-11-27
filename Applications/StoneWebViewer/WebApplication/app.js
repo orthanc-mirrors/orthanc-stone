@@ -102,7 +102,7 @@ function ConvertMouseAction(config, defaultAction)
 
 
 Vue.component('viewport', {
-  props: [ 'left', 'top', 'width', 'height', 'canvasId', 'active', 'series', 'viewportIndex',
+  props: [ 'left', 'top', 'width', 'height', 'canvasId', 'active', 'content', 'viewportIndex',
            'showInfo' ],
   template: '#viewport-template',
   data: function () {
@@ -128,7 +128,7 @@ Vue.component('viewport', {
        **/
       this.cineLoadingFrame = false;
     },
-    series: function(newVal, oldVal) {
+    content: function(newVal, oldVal) {
       this.status = 'loading';
       this.cineControls = false;
       this.cineMode = '';
@@ -202,9 +202,9 @@ Vue.component('viewport', {
       var pdfPointer = args.detail.pdfPointer;
       var pdfSize = args.detail.pdfSize;
 
-      if ('tags' in that.series &&
-          that.series.tags[STUDY_INSTANCE_UID] == studyInstanceUid &&
-          that.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+      if ('tags' in that.content &&
+          that.content.tags[STUDY_INSTANCE_UID] == studyInstanceUid &&
+          that.content.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
 
         that.status = 'pdf';
         var pdf = new Uint8Array(HEAPU8.subarray(pdfPointer, pdfPointer + pdfSize));
@@ -228,7 +228,10 @@ Vue.component('viewport', {
       event.preventDefault();
 
       // The "parseInt()" is because of Microsoft Edge Legacy (*)
-      this.$emit('updated-series', parseInt(event.dataTransfer.getData('seriesIndex'), 10));
+      this.$emit('updated-series', {
+        seriesIndex: parseInt(event.dataTransfer.getData('seriesIndex'), 10),
+        sopInstanceUid: event.dataTransfer.getData('sopInstanceUid')
+      });
     },
     MakeActive: function() {
       this.$emit('selected-viewport');
@@ -336,28 +339,28 @@ var app = new Vue({
       viewport1Left: '0%',
       viewport1Top: '0%',
       viewport1Visible: true,
-      viewport1Series: {},
+      viewport1Content: {},
       
       viewport2Width: '100%',
       viewport2Height: '100%',
       viewport2Left: '0%',
       viewport2Top: '0%',
       viewport2Visible: false,
-      viewport2Series: {},
+      viewport2Content: {},
 
       viewport3Width: '100%',
       viewport3Height: '100%',
       viewport3Left: '0%',
       viewport3Top: '0%',
       viewport3Visible: false,
-      viewport3Series: {},
+      viewport3Content: {},
 
       viewport4Width: '100%',
       viewport4Height: '100%',
       viewport4Left: '0%',
       viewport4Top: '0%',
       viewport4Visible: false,
-      viewport4Series: {},
+      viewport4Content: {},
 
       showWindowing: false,
       windowingPresets: [],
@@ -420,17 +423,17 @@ var app = new Vue({
     GetActiveSeries: function() {
       var s = [];
 
-      if ('tags' in this.viewport1Series)
-        s.push(this.viewport1Series.tags[SERIES_INSTANCE_UID]);
+      if ('tags' in this.viewport1Content)
+        s.push(this.viewport1Content.tags[SERIES_INSTANCE_UID]);
 
-      if ('tags' in this.viewport2Series)
-        s.push(this.viewport2Series.tags[SERIES_INSTANCE_UID]);
+      if ('tags' in this.viewport2Content)
+        s.push(this.viewport2Content.tags[SERIES_INSTANCE_UID]);
 
-      if ('tags' in this.viewport3Series)
-        s.push(this.viewport3Series.tags[SERIES_INSTANCE_UID]);
+      if ('tags' in this.viewport3Content)
+        s.push(this.viewport3Content.tags[SERIES_INSTANCE_UID]);
 
-      if ('tags' in this.viewport4Series)
-        s.push(this.viewport4Series.tags[SERIES_INSTANCE_UID]);
+      if ('tags' in this.viewport4Content)
+        s.push(this.viewport4Content.tags[SERIES_INSTANCE_UID]);
 
       return s;
     },
@@ -518,31 +521,40 @@ var app = new Vue({
       event.dataTransfer.setData('seriesIndex', seriesIndex.toString());
     },
 
+    MultiframeInstanceDragStart: function(event, seriesIndex, sopInstanceUid) {
+      event.dataTransfer.setData('seriesIndex', seriesIndex.toString());
+      event.dataTransfer.setData('sopInstanceUid', sopInstanceUid.toString());
+    },
+
     SetViewportSeriesInstanceUid: function(viewportIndex, seriesInstanceUid) {
       if (seriesInstanceUid in this.seriesIndex) {
-        this.SetViewportSeries(viewportIndex, this.seriesIndex[seriesInstanceUid]);
+        this.SetViewportSeries(viewportIndex, {
+          seriesIndex: this.seriesIndex[seriesInstanceUid]
+        });
       }
     },
     
-    SetViewportSeries: function(viewportIndex, seriesIndex) {
-      var series = this.series[seriesIndex];
+    SetViewportSeries: function(viewportIndex, info) {
+      var series = this.series[info.seriesIndex];
       
       if (viewportIndex == 1) {
-        this.viewport1Series = series;
+        this.viewport1Content = series;
       }
       else if (viewportIndex == 2) {
-        this.viewport2Series = series;
+        this.viewport2Content = series;
       }
       else if (viewportIndex == 3) {
-        this.viewport3Series = series;
+        this.viewport3Content = series;
       }
       else if (viewportIndex == 4) {
-        this.viewport4Series = series;
+        this.viewport4Content = series;
       }
     },
     
     ClickSeries: function(seriesIndex) {
-      this.SetViewportSeries(this.activeViewport, seriesIndex);
+      this.SetViewportSeries(this.activeViewport, {
+        seriesIndex: seriesIndex
+      });
     },
     
     HideViewport: function(index) {
@@ -673,24 +685,24 @@ var app = new Vue({
         // https://fr.vuejs.org/2016/02/06/common-gotchas/#Why-isn%E2%80%99t-the-DOM-updating
         this.$set(this.series, index, series);
 
-        if ('tags' in this.viewport1Series &&
-            this.viewport1Series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
-          this.$set(this.viewport1Series, series);
+        if ('tags' in this.viewport1Content &&
+            this.viewport1Content.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+          this.$set(this.viewport1Content, series);
         }
 
-        if ('tags' in this.viewport2Series &&
-            this.viewport2Series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
-          this.$set(this.viewport2Series, series);
+        if ('tags' in this.viewport2Content &&
+            this.viewport2Content.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+          this.$set(this.viewport2Content, series);
         }
 
-        if ('tags' in this.viewport3Series &&
-            this.viewport3Series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
-          this.$set(this.viewport3Series, series);
+        if ('tags' in this.viewport3Content &&
+            this.viewport3Content.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+          this.$set(this.viewport3Content, series);
         }
 
-        if ('tags' in this.viewport4Series &&
-            this.viewport4Series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
-          this.$set(this.viewport4Series, series);
+        if ('tags' in this.viewport4Content &&
+            this.viewport4Content.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+          this.$set(this.viewport4Content, series);
         }
       }
     },

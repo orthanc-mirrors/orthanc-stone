@@ -245,9 +245,9 @@
                           <!-- Series with multiple multiframe instances (CINE) -->
                           <li class="wvSerieslist__seriesItem"
                               v-bind:class="{ highlighted : GetActiveSeries().includes(series[seriesIndex].tags['0020,000e']), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
-                              v-on:dragstart="SeriesDragStart($event, seriesIndex)"
-                              v-on:click="ClickSeries(seriesIndex)"
-                              v-for="(numberOfFrames, sopInstanceUid) in series[seriesIndex].multiframeInstances">
+                              v-for="(numberOfFrames, sopInstanceUid) in series[seriesIndex].multiframeInstances"
+                              v-on:dragstart="MultiframeInstanceDragStart($event, seriesIndex, sopInstanceUid)"
+                              v-on:click="ClickMultiframeInstance(seriesIndex, sopInstanceUid)">
                             <div class="wvSerieslist__picture" style="z-index:0"
                                  draggable="true">
                               <img v-if="series[seriesIndex].type == stone.ThumbnailType.IMAGE"
@@ -264,8 +264,8 @@
 
                             <div v-if="leftMode == 'full'" class="wvSerieslist__information"
                                  draggable="true"
-                                 v-on:dragstart="SeriesDragStart($event, seriesIndex)"
-                                 v-on:click="ClickSeries(seriesIndex)">
+                                 v-on:dragstart="MultiframeInstanceDragStart($event, seriesIndex, sopInstanceUid)"
+                                 v-on:click="MultiframeInstanceDragStart($event, seriesIndex, sopInstanceUid)">
                               <p class="wvSerieslist__label">
                                 [{{ series[seriesIndex].tags['0008,0060'] }}]
                                 {{ series[seriesIndex].tags['0008,103e'] }}
@@ -523,7 +523,7 @@
                         v-on:selected-viewport="activeViewport=1"
                         v-show="viewport1Visible"
                         canvas-id="canvas1"
-                        v-bind:series="viewport1Series"
+                        v-bind:content="viewport1Content"
                         v-bind:left="viewport1Left"
                         v-bind:top="viewport1Top"
                         v-bind:width="viewport1Width"
@@ -534,7 +534,7 @@
                         v-on:selected-viewport="activeViewport=2"
                         v-show="viewport2Visible"
                         canvas-id="canvas2"
-                        v-bind:series="viewport2Series"
+                        v-bind:content="viewport2Content"
                         v-bind:left="viewport2Left"
                         v-bind:top="viewport2Top"
                         v-bind:width="viewport2Width"
@@ -545,7 +545,7 @@
                         v-on:selected-viewport="activeViewport=3"
                         v-show="viewport3Visible"
                         canvas-id="canvas3"
-                        v-bind:series="viewport3Series"
+                        v-bind:content="viewport3Content"
                         v-bind:left="viewport3Left"
                         v-bind:top="viewport3Top"
                         v-bind:width="viewport3Width"
@@ -556,7 +556,7 @@
                         v-on:selected-viewport="activeViewport=4"
                         v-show="viewport4Visible"
                         canvas-id="canvas4"
-                        v-bind:series="viewport4Series"
+                        v-bind:content="viewport4Content"
                         v-bind:left="viewport4Left"
                         v-bind:top="viewport4Top"
                         v-bind:width="viewport4Width"
@@ -579,12 +579,12 @@
                          width: width, 
                          height: height }">
         <div v-bind:class="{ 'wvSplitpane__cellBorder--selected' : active, 
-                           'wvSplitpane__cellBorder' : series.color == '', 
-                           'wvSplitpane__cellBorder--blue' : series.color == 'blue', 
-                           'wvSplitpane__cellBorder--red' : series.color == 'red',
-                           'wvSplitpane__cellBorder--green' : series.color == 'green', 
-                           'wvSplitpane__cellBorder--yellow' : series.color == 'yellow', 
-                           'wvSplitpane__cellBorder--violet' : series.color == 'violet'
+                           'wvSplitpane__cellBorder' : content.color == '', 
+                           'wvSplitpane__cellBorder--blue' : content.color == 'blue', 
+                           'wvSplitpane__cellBorder--red' : content.color == 'red',
+                           'wvSplitpane__cellBorder--green' : content.color == 'green', 
+                           'wvSplitpane__cellBorder--yellow' : content.color == 'yellow', 
+                           'wvSplitpane__cellBorder--violet' : content.color == 'violet'
                            }" 
              ondragover="event.preventDefault()"
              v-on:drop="DragDrop($event)"
@@ -600,14 +600,14 @@
 
               <div v-show="showInfo">
                 <div class="wv-overlay">
-                  <div v-if="'tags' in series" class="wv-overlay-topleft">
-                    {{ series.tags['0010,0010'] }}<br/>
-                    {{ series.tags['0010,0020'] }}
+                  <div v-if="'tags' in content" class="wv-overlay-topleft">
+                    {{ content.tags['0010,0010'] }}<br/>
+                    {{ content.tags['0010,0020'] }}
                   </div>
-                  <div v-if="'tags' in series" class="wv-overlay-topright">
-                    {{ series.tags['0008,1030'] }}<br/>
-                    {{ app.FormatDate(series.tags['0008,0020']) }}<br/>
-                    {{ series.tags['0020,0011'] }} | {{ series.tags['0008,103e'] }}
+                  <div v-if="'tags' in content" class="wv-overlay-topright">
+                    {{ content.tags['0008,1030'] }}<br/>
+                    {{ app.FormatDate(content.tags['0008,0020']) }}<br/>
+                    {{ content.tags['0020,0011'] }} | {{ content.tags['0008,103e'] }}
                   </div>
                   <div class="wv-overlay-timeline-wrapper wvPrintExclude">
                     <div style="text-align:left; padding:5px" v-show="numberOfFrames != 0">

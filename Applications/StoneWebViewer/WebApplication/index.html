@@ -187,57 +187,93 @@
 
                     <div class="wvStudyIsland__main">
                       <ul class="wvSerieslist">
-                        <li class="wvSerieslist__seriesItem"
-                            v-bind:class="{ highlighted : GetActiveSeries().includes(series[seriesIndex].tags['0020,000e']), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
-                            v-on:dragstart="SeriesDragStart($event, seriesIndex)"
-                            v-on:click="ClickSeries(seriesIndex)"
-                            v-for="seriesIndex in study.series">
-                          <div class="wvSerieslist__picture" style="z-index:0"
-                               draggable="true"
-                               v-if="series[seriesIndex].type != stone.ThumbnailType.UNKNOWN"
-                               >
-                            <div v-if="series[seriesIndex].type == stone.ThumbnailType.LOADING">
-                              <img src="img/loading.gif"
-                                   style="vertical-align:baseline"
-                                   width="65px" height="65px"
-                                   />
+
+                        <!-- Series without multiple multiframe instances -->
+                        <span v-for="seriesIndex in study.series">
+                          <li class="wvSerieslist__seriesItem"
+                              v-bind:class="{ highlighted : GetActiveSeries().includes(series[seriesIndex].tags['0020,000e']), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
+                              v-on:dragstart="SeriesDragStart($event, seriesIndex)"
+                              v-on:click="ClickSeries(seriesIndex)"
+                              v-if="series[seriesIndex].multiframeInstances === null">
+                            <div class="wvSerieslist__picture" style="z-index:0"
+                                 draggable="true"
+                                 v-if="series[seriesIndex].type != stone.ThumbnailType.UNKNOWN"
+                                 >
+                              <div v-if="series[seriesIndex].type == stone.ThumbnailType.LOADING">
+                                <img src="img/loading.gif"
+                                     style="vertical-align:baseline"
+                                     width="65px" height="65px"
+                                     />
+                              </div>
+
+                              <i v-if="series[seriesIndex].type == stone.ThumbnailType.PDF"
+                                 class="wvSerieslist__placeholderIcon fa fa-file-pdf"></i>
+
+                              <i v-if="series[seriesIndex].type == stone.ThumbnailType.VIDEO"
+                                 class="wvSerieslist__placeholderIcon fa fa-video-video"></i>
+                              
+                              <div v-if="[stone.ThumbnailType.IMAGE, stone.ThumbnailType.NO_PREVIEW].includes(series[seriesIndex].type)"
+                                   class="wvSerieslist__placeholderIcon"
+                                   v-bind:title="leftMode == 'full' ? null : '[' + series[seriesIndex].tags['0008,0060'] + '] ' + series[seriesIndex].tags['0008,103e']">
+                                <i v-if="series[seriesIndex].type == stone.ThumbnailType.NO_PREVIEW"
+                                   class="fa fa-eye-slash"></i>
+
+                                <img v-if="series[seriesIndex].type == stone.ThumbnailType.IMAGE"
+                                     v-bind:src="series[seriesIndex].thumbnail"
+                                     style="vertical-align:baseline"
+                                     width="65px" height="65px"
+                                     v-bind:title="leftMode == 'full' ? null : '[' + series[seriesIndex].tags['0008,0060'] + '] ' + series[seriesIndex].tags['0008,103e']"
+                                     />
+                                
+                                <div v-bind:class="'wvSerieslist__badge--' + study.color"
+                                     v-if="series[seriesIndex].numberOfFrames != 0">{{ series[seriesIndex].numberOfFrames }}</div>
+                              </div>
                             </div>
 
-                            <i v-if="series[seriesIndex].type == stone.ThumbnailType.PDF"
-                               class="wvSerieslist__placeholderIcon fa fa-file-pdf"></i>
+                            <div v-if="leftMode == 'full'" class="wvSerieslist__information"
+                                 draggable="true"
+                                 v-on:dragstart="SeriesDragStart($event, seriesIndex)"
+                                 v-on:click="ClickSeries(seriesIndex)">
+                              <p class="wvSerieslist__label">
+                                [{{ series[seriesIndex].tags['0008,0060'] }}]
+                                {{ series[seriesIndex].tags['0008,103e'] }}
+                              </p>
+                            </div>
+                          </li>
 
-                            <i v-if="series[seriesIndex].type == stone.ThumbnailType.VIDEO"
-                               class="wvSerieslist__placeholderIcon fa fa-video-video"></i>
 
-                            
-                            <div v-if="[stone.ThumbnailType.IMAGE, stone.ThumbnailType.NO_PREVIEW].includes(series[seriesIndex].type)"
-                                 class="wvSerieslist__placeholderIcon"
-                                 v-bind:title="leftMode == 'full' ? null : '[' + series[seriesIndex].tags['0008,0060'] + '] ' + series[seriesIndex].tags['0008,103e']">
-                              <i v-if="series[seriesIndex].type == stone.ThumbnailType.NO_PREVIEW"
-                                 class="fa fa-eye-slash"></i>
-
+                          <!-- Series with multiple multiframe instances (CINE) -->
+                          <li class="wvSerieslist__seriesItem"
+                              v-bind:class="{ highlighted : GetActiveSeries().includes(series[seriesIndex].tags['0020,000e']), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
+                              v-on:dragstart="SeriesDragStart($event, seriesIndex)"
+                              v-on:click="ClickSeries(seriesIndex)"
+                              v-for="(numberOfFrames, sopInstanceUid) in series[seriesIndex].multiframeInstances">
+                            <div class="wvSerieslist__picture" style="z-index:0"
+                                 draggable="true">
                               <img v-if="series[seriesIndex].type == stone.ThumbnailType.IMAGE"
-                                   v-bind:src="series[seriesIndex].thumbnail"
+                                   v-bind:src="sopInstanceUid in multiframeInstanceThumbnails ? multiframeInstanceThumbnails[sopInstanceUid] : series[seriesIndex].thumbnail"
                                    style="vertical-align:baseline"
                                    width="65px" height="65px"
                                    v-bind:title="leftMode == 'full' ? null : '[' + series[seriesIndex].tags['0008,0060'] + '] ' + series[seriesIndex].tags['0008,103e']"
                                    />
                               
-                              <div v-bind:class="'wvSerieslist__badge--' + study.color"
-                                   v-if="series[seriesIndex].numberOfFrames != 0">{{ series[seriesIndex].numberOfFrames }}</div>
+                              <div v-bind:class="'wvSerieslist__badge--' + study.color">
+                                {{ numberOfFrames }}
+                              </div>
                             </div>
-                          </div>
 
-                          <div v-if="leftMode == 'full'" class="wvSerieslist__information"
-                               draggable="true"
-                               v-on:dragstart="SeriesDragStart($event, seriesIndex)"
-                               v-on:click="ClickSeries(seriesIndex)">
-                            <p class="wvSerieslist__label">
-                              [{{ series[seriesIndex].tags['0008,0060'] }}]
-                              {{ series[seriesIndex].tags['0008,103e'] }}
-                            </p>
-                          </div>
-                        </li>
+                            <div v-if="leftMode == 'full'" class="wvSerieslist__information"
+                                 draggable="true"
+                                 v-on:dragstart="SeriesDragStart($event, seriesIndex)"
+                                 v-on:click="ClickSeries(seriesIndex)">
+                              <p class="wvSerieslist__label">
+                                [{{ series[seriesIndex].tags['0008,0060'] }}]
+                                {{ series[seriesIndex].tags['0008,103e'] }}
+                              </p>
+                            </div>
+                          </li>
+                          
+                        </span>
                       </ul>
                     </div>
                   </div>
@@ -550,8 +586,8 @@
                            'wvSplitpane__cellBorder--yellow' : series.color == 'yellow', 
                            'wvSplitpane__cellBorder--violet' : series.color == 'violet'
                            }" 
-             v-on:dragover="SeriesDragAccept($event)"
-             v-on:drop="SeriesDragDrop($event)"
+             ondragover="event.preventDefault()"
+             v-on:drop="DragDrop($event)"
              style="width:100%;height:100%">
           <div class="wvSplitpane__cell" 
                v-on:click="MakeActive()">

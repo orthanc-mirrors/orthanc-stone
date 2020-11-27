@@ -224,10 +224,7 @@ Vue.component('viewport', {
     });
   },
   methods: {
-    SeriesDragAccept: function(event) {
-      event.preventDefault();
-    },
-    SeriesDragDrop: function(event) {
+    DragDrop: function(event) {
       event.preventDefault();
 
       // The "parseInt()" is because of Microsoft Edge Legacy (*)
@@ -368,7 +365,8 @@ var app = new Vue({
       selectedStudies: [],
       series: [],
       studies: [],
-      seriesIndex: {}  // Maps "SeriesInstanceUID" to "index in this.series"
+      seriesIndex: {},  // Maps "SeriesInstanceUID" to "index in this.series"
+      multiframeInstanceThumbnails: {}
     }
   },
   computed: {
@@ -502,7 +500,8 @@ var app = new Vue({
               'complete' : false,
               'type' : stone.ThumbnailType.LOADING,
               'color': study.color,
-              'tags': sourceSeries[i]
+              'tags': sourceSeries[i],
+              'multiframeInstances': null
             });
           }
         }
@@ -664,6 +663,10 @@ var app = new Vue({
           if (seriesInstanceUid in pendingSeriesPdf_) {
             stone.FetchPdf(studyInstanceUid, seriesInstanceUid);
             delete pendingSeriesPdf_[seriesInstanceUid];
+          }
+
+          if (stone.LoadMultiframeInstancesFromSeries(seriesInstanceUid)) {
+            series.multiframeInstances = JSON.parse(stone.GetStringBuffer());
           }
         }
 
@@ -828,6 +831,24 @@ var app = new Vue({
     }
     
     this.modalNotDiagnostic = this.settingNotDiagnostic;
+
+    var that = this;
+    
+    window.addEventListener('MultiframeInstanceThumbnailLoaded', function(args) {
+      that.$set(that.multiframeInstanceThumbnails, args.detail.sopInstanceUid, args.detail.thumbnail);
+    });
+
+    window.addEventListener('ThumbnailLoaded', function(args) {
+      //var studyInstanceUid = args.detail.studyInstanceUid;
+      var seriesInstanceUid = args.detail.seriesInstanceUid;
+      that.UpdateSeriesThumbnail(seriesInstanceUid);
+    });
+
+    window.addEventListener('MetadataLoaded', function(args) {
+      var studyInstanceUid = args.detail.studyInstanceUid;
+      var seriesInstanceUid = args.detail.seriesInstanceUid;
+      that.UpdateIsSeriesComplete(studyInstanceUid, seriesInstanceUid);
+    });
   }
 });
 
@@ -913,20 +934,6 @@ window.addEventListener('ResourcesLoaded', function() {
     app.UpdateSeriesThumbnail(seriesInstanceUid);
     app.UpdateIsSeriesComplete(studyInstanceUid, seriesInstanceUid);
   }
-});
-
-
-window.addEventListener('ThumbnailLoaded', function(args) {
-  //var studyInstanceUid = args.detail.studyInstanceUid;
-  var seriesInstanceUid = args.detail.seriesInstanceUid;
-  app.UpdateSeriesThumbnail(seriesInstanceUid);
-});
-
-
-window.addEventListener('MetadataLoaded', function(args) {
-  var studyInstanceUid = args.detail.studyInstanceUid;
-  var seriesInstanceUid = args.detail.seriesInstanceUid;
-  app.UpdateIsSeriesComplete(studyInstanceUid, seriesInstanceUid);
 });
 
 

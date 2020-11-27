@@ -213,6 +213,16 @@ namespace OrthancStone
                           unsigned int height);
     
     void Clear();
+
+    unsigned int GetThumbnailWidth() const
+    {
+      return width_;      
+    }
+
+    unsigned int GetThumbnailHeight() const
+    {
+      return height_;      
+    }
     
     SeriesThumbnailType GetSeriesThumbnail(std::string& image,
                                            std::string& mime,

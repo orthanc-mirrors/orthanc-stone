@@ -195,6 +195,9 @@ public:
     virtual void SignalSeriesPdfLoaded(const std::string& studyInstanceUid,
                                        const std::string& seriesInstanceUid,
                                        const std::string& pdf) = 0;
+
+    virtual void SignalMultiframeInstanceThumbnailLoaded(const std::string& sopInstanceUid,
+                                                         const std::string& jpeg) = 0;
   };
   
 private:
@@ -207,6 +210,7 @@ private:
   boost::shared_ptr<OrthancStone::DicomResourcesLoader>    resourcesLoader_;
   boost::shared_ptr<OrthancStone::SeriesThumbnailsLoader>  thumbnailsLoader_;
   boost::shared_ptr<OrthancStone::SeriesMetadataLoader>    metadataLoader_;
+  std::set<std::string>                                    scheduledMultiframeInstances_;
 
   explicit ResourcesLoader(OrthancStone::ILoadersContext& context,
                            const OrthancStone::DicomSource& source) :
@@ -361,6 +365,44 @@ private:
     }
   }
 
+  void FetchInstanceThumbnail(const std::string& studyInstanceUid,
+                              const std::string& seriesInstanceUid,
+                              const std::string& sopInstanceUid)
+  {
+    if (scheduledMultiframeInstances_.find(sopInstanceUid) == scheduledMultiframeInstances_.end())
+    {
+      scheduledMultiframeInstances_.insert(sopInstanceUid);
+      
+      std::map<std::string, std::string> arguments;
+      std::map<std::string, std::string> headers;
+      arguments["viewport"] = (
+        boost::lexical_cast<std::string>(thumbnailsLoader_->GetThumbnailWidth()) + "," +
+        boost::lexical_cast<std::string>(thumbnailsLoader_->GetThumbnailHeight()));
+      headers["Accept"] = Orthanc::MIME_JPEG;
+
+      const std::string uri = ("studies/" + studyInstanceUid + "/series/" + seriesInstanceUid +
+                               "/instances/" + sopInstanceUid + "/frames/1/rendered");
+
+      {
+        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
+        lock->Schedule(
+          GetSharedObserver(), PRIORITY_LOW + 2, source_.CreateDicomWebCommand(
+            uri, arguments, headers, new Orthanc::SingleValueObject<std::string>(sopInstanceUid)));
+      }
+    }
+  }
+
+  void HandleInstanceThumbnail(const OrthancStone::HttpCommand::SuccessMessage& message)
+  {
+    if (observer_.get() != NULL)
+    {
+      const std::string& sopInstanceUid =
+        dynamic_cast<const Orthanc::SingleValueObject<std::string>&>(
+          message.GetOrigin().GetPayload()).GetValue();
+      observer_->SignalMultiframeInstanceThumbnailLoaded(sopInstanceUid, message.GetAnswer());
+    }
+  }
+
 public:
   static boost::shared_ptr<ResourcesLoader> Create(OrthancStone::ILoadersContext::ILock& lock,
                                                    const OrthancStone::DicomSource& source)
@@ -382,7 +424,10 @@ public:
 
     loader->Register<OrthancStone::ParseDicomSuccessMessage>(
       lock.GetOracleObservable(), &ResourcesLoader::Handle);
-    
+
+    loader->Register<OrthancStone::HttpCommand::SuccessMessage>(
+      lock.GetOracleObservable(), &ResourcesLoader::HandleInstanceThumbnail);
+
     return loader;
   }
   
@@ -428,13 +473,13 @@ public:
   }
 
   void GetStudy(Orthanc::DicomMap& target,
-                size_t i)
+                size_t i) const
   {
     target.Assign(studies_->GetResource(i));
   }
 
   void GetSeries(Orthanc::DicomMap& target,
-                 size_t i)
+                 size_t i) const
   {
     target.Assign(series_->GetResource(i));
 
@@ -449,26 +494,65 @@ public:
 
   OrthancStone::SeriesThumbnailType GetSeriesThumbnail(std::string& image,
                                                        std::string& mime,
-                                                       const std::string& seriesInstanceUid)
+                                                       const std::string& seriesInstanceUid) const
   {
     return thumbnailsLoader_->GetSeriesThumbnail(image, mime, seriesInstanceUid);
   }
 
   void FetchSeriesMetadata(int priority,
                            const std::string& studyInstanceUid,
-                           const std::string& seriesInstanceUid)
+                           const std::string& seriesInstanceUid) const
   {
     metadataLoader_->ScheduleLoadSeries(priority, source_, studyInstanceUid, seriesInstanceUid);
   }
 
-  bool IsSeriesComplete(const std::string& seriesInstanceUid)
+  bool IsSeriesComplete(const std::string& seriesInstanceUid) const
   {
     OrthancStone::SeriesMetadataLoader::Accessor accessor(*metadataLoader_, seriesInstanceUid);
     return accessor.IsComplete();
   }
 
+  bool LookupMultiframeSeries(std::map<std::string, unsigned int>& numberOfFramesPerInstance,
+                              const std::string& seriesInstanceUid)
+  {
+    numberOfFramesPerInstance.clear();
+
+    OrthancStone::SeriesMetadataLoader::Accessor accessor(*metadataLoader_, seriesInstanceUid);
+    if (accessor.IsComplete() &&
+        accessor.GetInstancesCount() >= 2)
+    {
+      bool isMultiframe = false;
+      
+      for (size_t i = 0; i < accessor.GetInstancesCount(); i++)
+      {
+        OrthancStone::DicomInstanceParameters p(accessor.GetInstance(i));
+        numberOfFramesPerInstance[p.GetSopInstanceUid()] = p.GetNumberOfFrames();
+
+        if (p.GetNumberOfFrames() > 1)
+        {
+          isMultiframe = true;
+        }
+      }
+
+      if (isMultiframe)
+      {
+        for (size_t i = 0; i < accessor.GetInstancesCount(); i++)
+        {
+          OrthancStone::DicomInstanceParameters p(accessor.GetInstance(i));
+          FetchInstanceThumbnail(p.GetStudyInstanceUid(), p.GetSeriesInstanceUid(), p.GetSopInstanceUid());
+        }
+      }
+
+      return isMultiframe;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
   bool SortSeriesFrames(OrthancStone::SortedFrames& target,
-                        const std::string& seriesInstanceUid)
+                        const std::string& seriesInstanceUid) const
   {
     OrthancStone::SeriesMetadataLoader::Accessor accessor(*metadataLoader_, seriesInstanceUid);
     
@@ -2674,6 +2758,24 @@ public:
       pdf.empty() ? 0 : reinterpret_cast<intptr_t>(pdf.c_str()),  // Explicit conversion to an integer
       pdf.size());
   }
+
+
+  virtual void SignalMultiframeInstanceThumbnailLoaded(const std::string& sopInstanceUid,
+                                                       const std::string& jpeg) ORTHANC_OVERRIDE
+  {
+    std::string dataUriScheme;
+    Orthanc::Toolbox::EncodeDataUriScheme(dataUriScheme, "image/jpeg", jpeg);    
+    
+    EM_ASM({
+        const customEvent = document.createEvent("CustomEvent");
+        customEvent.initCustomEvent("MultiframeInstanceThumbnailLoaded", false, false,
+                                    { "sopInstanceUid" : UTF8ToString($0),
+                                        "thumbnail" : UTF8ToString($1) });
+        window.dispatchEvent(customEvent);
+      },
+      sopInstanceUid.c_str(),
+      dataUriScheme.c_str());
+  }
 };
 
 
@@ -3245,5 +3347,33 @@ extern "C"
       }
     }
     EXTERN_CATCH_EXCEPTIONS;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  int LoadMultiframeInstancesFromSeries(const char* seriesInstanceUid)
+  {
+    try
+    {
+      std::map<std::string, unsigned int> numberOfFramesPerInstance;
+      if (GetResourcesLoader().LookupMultiframeSeries(numberOfFramesPerInstance, seriesInstanceUid))
+      {
+        Json::Value json = Json::objectValue;
+        for (std::map<std::string, unsigned int>::const_iterator it =
+               numberOfFramesPerInstance.begin(); it != numberOfFramesPerInstance.end(); ++it)
+        {
+          json[it->first] = it->second;
+        }
+
+        stringBuffer_ = json.toStyledString();
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+    return false;
   }
 }

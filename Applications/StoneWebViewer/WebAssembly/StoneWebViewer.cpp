@@ -277,12 +277,22 @@ private:
     }
   }
 
-  void FetchInternal(const std::string& studyInstanceUid,
+  void FetchInternal(const std::string& patientId,
+                     const std::string& studyInstanceUid,
                      const std::string& seriesInstanceUid)
   {
     // Firstly, load the study
     Orthanc::DicomMap filter;
-    filter.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, studyInstanceUid, false);
+
+    if (!patientId.empty())
+    {
+      filter.SetValue(Orthanc::DICOM_TAG_PATIENT_ID, patientId, false);
+    }
+
+    if (!studyInstanceUid.empty())
+    {
+      filter.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, studyInstanceUid, false);
+    }
 
     std::set<Orthanc::DicomTag> tags;
     tags.insert(Orthanc::DICOM_TAG_STUDY_DESCRIPTION);  // Necessary for Orthanc DICOMweb plugin
@@ -305,7 +315,7 @@ private:
 
     pending_ += 2;
   }
-
+  
 
   class PdfInfo : public Orthanc::IDynamicObject
   {
@@ -378,18 +388,33 @@ public:
   
   void FetchAllStudies()
   {
-    FetchInternal("", "");
+    FetchInternal("", "", "");
+  }
+  
+  void FetchPatient(const std::string& patientId)
+  {
+    if (!patientId.empty())
+    {
+      FetchInternal(patientId, "", "");
+    }
   }
   
   void FetchStudy(const std::string& studyInstanceUid)
   {
-    FetchInternal(studyInstanceUid, "");
+    if (!studyInstanceUid.empty())
+    {
+      FetchInternal("", studyInstanceUid, "");
+    }
   }
   
   void FetchSeries(const std::string& studyInstanceUid,
                    const std::string& seriesInstanceUid)
   {
-    FetchInternal(studyInstanceUid, seriesInstanceUid);
+    if (!studyInstanceUid.empty() &&
+        !seriesInstanceUid.empty())
+    {
+      FetchInternal("", studyInstanceUid, seriesInstanceUid);
+    }
   }
 
   size_t GetStudiesCount() const
@@ -2770,6 +2795,16 @@ extern "C"
     try
     {
       GetResourcesLoader().FetchAllStudies();
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
+
+  EMSCRIPTEN_KEEPALIVE
+  void FetchPatient(const char* patientId)
+  {
+    try
+    {
+      GetResourcesLoader().FetchPatient(patientId);
     }
     EXTERN_CATCH_EXCEPTIONS;
   }

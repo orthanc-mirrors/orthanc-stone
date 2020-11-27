@@ -5,6 +5,7 @@ Differences with Osimis Web viewer
 
 - The images are retrieved using DICOMweb.
 
+
 - The Stone Web viewer uses the DICOM identifiers. The Osimis Web
   viewer the Orthanc identifiers.
   https://book.orthanc-server.com/faq/orthanc-ids.html
@@ -20,21 +21,40 @@ Differences with Osimis Web viewer
   To open a single series:
   http://.../index.html?study=<StudyInstanceUID>&series=<SeriesInstanceUID>
 
+
+- In the Osimis Web viewer, the "OpenAllPatientStudies" configuration
+  option can be provided to search Orthanc for all studies from
+  patients with the same PatientID as the selected study, then display
+  them.
+
+  In the Stone Web viewer, the "OpenAllPatientStudies" configuration
+  option is replaced by the single "patient" GET argument. This option
+  contains a comma-separated list of "Patient ID" tag (0010,0020).
+
+  To open all the studies of one patient:
+  http://.../index.html?patient=<PatientID>
+
+  To open all the studies of several patients:
+  http://.../index.html?patient=<PatientID1>,<PatientID2>,...
+
+
 - In the Osimis Web viewer, the "pickableStudyIds" parameter in the
   URL defines the list of studies that are available for display, and
   that are listed in the dropdown at the top-left of the interface.
 
   In the Stone Web viewer, "pickableStudyIds" is replaced by the
   single "study" GET argument, that is allowed to contain a
-  comma-separated list of studies. The "series" parameter is ignored
-  in this case.
+  comma-separated list of studies. The "series" parameter must not be
+  provided in this case.
 
   To open a list of studies:
   http://.../index.html?study=<StudyInstanceUID1>,<StudyInstanceUID2>,...
-  
-- In the Osimis Web viewer, the "selectedStudyIds" defines the list of
-  studies that are selected in the dropdown (and therefore displayed
-  when the viewer starts).
+
+
+- In the Osimis Web viewer, the "selectedStudyIds" parameter in the
+  URL defines the list of studies that are selected in the dropdown at
+  the top-left corner of the viewer (those studies are therefore
+  displayed when the viewer starts).
 
   In the Stone Web viewer, "selectedStudyIds" is replaced by the
   "selectedStudies" GET argument, that is allowed to contain a

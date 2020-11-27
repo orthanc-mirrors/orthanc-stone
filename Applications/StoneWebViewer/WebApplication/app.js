@@ -842,6 +842,7 @@ window.addEventListener('StoneInitialized', function() {
   app.SetCombinedToolActions();
   
   var selectedStudies = getParameterFromUrl('selectedStudies');
+  var patient = getParameterFromUrl('patient');
   var study = getParameterFromUrl('study');
   var series = getParameterFromUrl('series');
 
@@ -850,23 +851,40 @@ window.addEventListener('StoneInitialized', function() {
   } else {
     app.selectedStudies = [];
   }
-  
-  if (study === undefined) {
-    alert('No study was provided in the URL!');
-  } else {
-    var studies = study.split(',');
-    if (studies.length > 1) {
-      for (var i = 0; i < studies.length; i++) {
-        console.warn('Loading study: ' + studies[i]);
-        stone.FetchStudy(studies[i]);
+
+  if (study !== undefined &&
+      series !== undefined) {
+    console.warn('Loading series: ' + series + ' from study: ' + study);
+    stone.FetchSeries(study, series);
+    app.leftMode = 'full';
+  }
+  else {
+    var empty = true;
+
+    if (study !== undefined) {
+      var studies = study.split(',');
+      if (studies.length != 0) {
+        empty = false;
+        for (var i = 0; i < studies.length; i++) {
+          console.warn('Loading study: ' + studies[i]);
+          stone.FetchStudy(studies[i]);
+        }
       }
-    } else if (series === undefined) {
-      console.warn('Loading study: ' + study);
-      stone.FetchStudy(study);
-    } else {
-      console.warn('Loading series: ' + series + ' from study: ' + study);
-      stone.FetchSeries(study, series);
-      app.leftMode = 'full';
+    }
+
+    if (patient !== undefined) {
+      var patients = patient.split(',');
+      if (patients.length != 0) {
+        empty = false;
+        for (var i = 0; i < patients.length; i++) {
+          console.warn('Loading patient: ' + patients[i]);
+          stone.FetchPatient(patients[i]);
+        }
+      }
+    }
+
+    if (empty) {
+      alert('No study, nor patient was provided in the URL!');
     }
   }
 });

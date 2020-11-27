@@ -392,39 +392,19 @@
                     </p-->
 
                 <ul class="wvToolbar__windowingPresetList">
-                  <li v-for="preset in windowingPresets" class="wvToolbar__windowingPresetListItem">
+                  <li v-for="preset in windowingPresets"
+                      class="wvToolbar__windowingPresetListItem">
                     <a href="#" v-on:click="SetWindowing(preset.center, preset.width)">
                       {{ preset.name }} <small>({{ preset.info }})</small>
                     </a>
                   </li>
-                  <li class="wvToolbar__windowingPresetListItem">
-                    <a href="#" v-on:click="SetWindowing(-400, 1600)">
-                      CT Lung <small>(C -400, W 1600)</small>
-                    </a>
-                  </li>
-                  <li class="wvToolbar__windowingPresetListItem">
-                    <a href="#" v-on:click="SetWindowing(300, 1500)">
-                      CT Abdomen <small>(C 300, W 1500)</small>
-                    </a>
-                  </li>
-                  <li class="wvToolbar__windowingPresetListItem">
-                    <a href="#" v-on:click="SetWindowing(40, 80)">
-                      CT Bone <small>(C 40, W 80)</small>
-                    </a>
-                  </li>
-                  <li class="wvToolbar__windowingPresetListItem">
-                    <a href="#" v-on:click="SetWindowing(40, 400)">
-                      CT Brain <small>(C 40, W 400)</small>
-                    </a>
-                  </li>
-                  <li class="wvToolbar__windowingPresetListItem">
-                    <a href="#" v-on:click="SetWindowing(-400, 1600)">
-                      CT Chest <small>(C -400, W 1600)</small>
-                    </a>
-                  </li>
-                  <li class="wvToolbar__windowingPresetListItem">
-                    <a href="#" v-on:click="SetWindowing(300, 600)">
-                      CT Angio <small>(C 300, W 600)</small>
+                  <li v-for="preset in globalConfiguration.WindowingPresets"
+                      class="wvToolbar__windowingPresetListItem">
+                    <a href="#" v-on:click="SetWindowing(preset.WindowCenter, preset.WindowWidth)">
+                      {{ preset.Name }}
+                      <small>
+                        (C {{preset.WindowCenter}}, W {{preset.WindowWidth}})
+                      </small>
                     </a>
                   </li>
                 </ul>

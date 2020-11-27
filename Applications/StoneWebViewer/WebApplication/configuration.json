@@ -10,6 +10,20 @@
    * replaced by the day, "MM" by the month, and "YYYY" by the year.
    **/
   // "DateFormat" : "DD/MM/YYYY",
+
+  /**
+   * This option allows you to define windowing presets.
+   * For each preset, you must provide a name, the window width
+   * and window center.
+   **/
+  "WindowingPresets" : [
+    {"Name": "CT Lung", "WindowCenter": -400, "WindowWidth": 1600},
+    {"Name": "CT Abdomen", "WindowCenter": 60, "WindowWidth": 400},
+    {"Name": "CT Bone", "WindowCenter": 300, "WindowWidth": 1500},
+    {"Name": "CT Brain", "WindowCenter": 40, "WindowWidth": 80},
+    {"Name": "CT Chest", "WindowCenter": 40, "WindowWidth": 400},
+    {"Name": "CT Angio", "WindowCenter": 300, "WindowWidth": 600}
+  ],
   
   /**
    * The allowed origin for messages corresponding to dynamic actions

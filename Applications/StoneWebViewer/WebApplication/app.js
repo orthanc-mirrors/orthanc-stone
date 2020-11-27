@@ -862,7 +862,6 @@ $(document).ready(function() {
   axios.get(CONFIGURATION_SOURCE)
     .then(function(response) {
       app.globalConfiguration = ParseJsonWithComments(response.data);
-      console.log(app.globalConfiguration);
 
       // Option 1: Loading script using plain HTML
       

@@ -160,6 +160,46 @@ void ServeEmbeddedFile(OrthancPluginRestOutput* output,
 }
 
 
+void ServeConfiguration(OrthancPluginRestOutput* output,
+                        const char* url,
+                        const OrthancPluginHttpRequest* request)
+{
+  OrthancPluginContext* context = OrthancPlugins::GetGlobalContext();
+
+  if (request->method != OrthancPluginHttpMethod_Get)
+  {
+    OrthancPluginSendMethodNotAllowed(context, output, "GET");
+  }
+  else
+  {
+    static const char* CONFIG_SECTION = "StoneWebViewer";
+
+    std::string config;
+    
+    OrthancPlugins::OrthancConfiguration orthanc;
+    if (orthanc.IsSection(CONFIG_SECTION))
+    {
+      OrthancPlugins::OrthancConfiguration section(false);
+      orthanc.GetSection(section, CONFIG_SECTION);
+
+      Json::Value wrapper = Json::objectValue;
+      wrapper[CONFIG_SECTION] = section.GetJson();
+      config = wrapper.toStyledString();
+    }
+    else
+    {
+      LOG(WARNING) << "The Orthanc configuration file doesn't contain a section \""
+                   << CONFIG_SECTION << "\" to configure the Stone Web viewer: "
+                   << "Will use default settings";
+      Orthanc::EmbeddedResources::GetDirectoryResource(
+        config, Orthanc::EmbeddedResources::WEB_APPLICATION, "/configuration.json");
+    }
+
+    OrthancPluginAnswerBuffer(context, output, config.c_str(), config.size(), "application/json");
+  }
+}
+
+
 extern "C"
 {
   ORTHANC_PLUGINS_API int32_t OrthancPluginInitialize(OrthancPluginContext* context)
@@ -191,6 +231,9 @@ extern "C"
       Orthanc::EmbeddedResources::GetFileResource(
         explorer, Orthanc::EmbeddedResources::ORTHANC_EXPLORER);
       OrthancPluginExtendOrthancExplorer(OrthancPlugins::GetGlobalContext(), explorer.c_str());
+      
+      OrthancPlugins::RegisterRestCallback<ServeConfiguration>
+        ("/stone-webviewer/configuration.json", true);
       
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFile<Orthanc::EmbeddedResources::STONE_WEB_VIEWER_WASM> >

@@ -861,7 +861,12 @@ $(document).ready(function() {
 
   axios.get(CONFIGURATION_SOURCE)
     .then(function(response) {
-      app.globalConfiguration = ParseJsonWithComments(response.data);
+      app.globalConfiguration = ParseJsonWithComments(response.data) ['StoneWebViewer'];
+
+      if (app.globalConfiguration === undefined) {
+        console.warn('Empty configuration file');
+        app.globalConfiguration = {};
+      }
 
       // Option 1: Loading script using plain HTML
       

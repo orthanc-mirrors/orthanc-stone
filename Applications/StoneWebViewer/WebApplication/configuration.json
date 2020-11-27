@@ -1,5 +1,10 @@
 {
   /**
+   * Enables/disables the print button.
+   **/
+  "PrintEnabled" : true,
+
+  /**
    * The allowed origin for messages corresponding to dynamic actions
    * triggered by another Web page using "window.postMessage()". The
    * special value "*" will allow any origin, which is an insecure

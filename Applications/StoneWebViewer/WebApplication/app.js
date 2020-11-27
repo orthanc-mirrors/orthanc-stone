@@ -31,8 +31,6 @@ var STUDY_DATE = '0008,0020';
 // Registry of the PDF series for which the instance metadata is still waiting
 var pendingSeriesPdf_ = {};
 
-var globalConfiguration_ = {};
-
 
 function getParameterFromUrl(key) {
   var url = window.location.search.substring(1);
@@ -266,6 +264,7 @@ var app = new Vue({
       showInfo: true,
       showReferenceLines: true,
       synchronizedBrowsing: false,
+      globalConfiguration: {},
 
       modalWarning: false,
       modalNotDiagnostic: false,
@@ -838,8 +837,9 @@ $(document).ready(function() {
 
   axios.get(CONFIGURATION_SOURCE)
     .then(function(response) {
-      globalConfiguration_ = ParseJsonWithComments(response.data);
-      
+      app.globalConfiguration = ParseJsonWithComments(response.data);
+      console.log(app.globalConfiguration);
+
       // Option 1: Loading script using plain HTML
       
       /*
@@ -882,7 +882,7 @@ document.onselectstart = new Function ('return false');
 
 window.addEventListener('message', function(e) {
   if ('type' in e.data) {
-    var expectedOrigin = globalConfiguration_['ExpectedMessageOrigin'];
+    var expectedOrigin = app.globalConfiguration['ExpectedMessageOrigin'];
     
     if (expectedOrigin === undefined) {
       alert('Dynamic actions are disabled in the Stone Web viewer, ' +

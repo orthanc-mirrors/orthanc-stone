@@ -19,6 +19,9 @@
  **/
 
 
+var CONFIGURATION_SOURCE = 'configuration.json';
+var WASM_SOURCE = 'StoneWebViewer.js';
+  
 var COLORS = [ 'blue', 'red', 'green', 'yellow', 'violet' ];
 var SERIES_INSTANCE_UID = '0020,000e';
 var STUDY_INSTANCE_UID = '0020,000d';
@@ -27,6 +30,8 @@ var STUDY_DATE = '0008,0020';
 
 // Registry of the PDF series for which the instance metadata is still waiting
 var pendingSeriesPdf_ = {};
+
+var globalConfiguration_ = {};
 
 
 function getParameterFromUrl(key) {
@@ -809,6 +814,16 @@ window.addEventListener('StoneException', function() {
 
 
 
+function ParseJsonWithComments(json)
+{
+  if (typeof(json) == 'string') {
+    // https://stackoverflow.com/a/62945875/881731
+    return JSON.parse(json.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g,
+                                   (m, g) => g ? "" : m));
+  } else {
+    return json;
+  }
+}
 
 
 $(document).ready(function() {
@@ -821,31 +836,36 @@ $(document).ready(function() {
 
   //app.modalWarning = true;
 
+  axios.get(CONFIGURATION_SOURCE)
+    .then(function(response) {
+      globalConfiguration_ = ParseJsonWithComments(response.data);
+      
+      // Option 1: Loading script using plain HTML
+      
+      /*
+        var script = document.createElement('script');
+        script.src = WASM_SOURCE;
+        script.type = 'text/javascript';
+        document.body.appendChild(script);
+      */
 
-  var wasmSource = 'StoneWebViewer.js';
-  
-  // Option 1: Loading script using plain HTML
-  
-  /*
-    var script = document.createElement('script');
-    script.src = wasmSource;
-    script.type = 'text/javascript';
-    document.body.appendChild(script);
-  */
+      // Option 2: Loading script using AJAX (gives the opportunity to
+      // explicitly report errors)
 
-  // Option 2: Loading script using AJAX (gives the opportunity to
-  // report explicit errors)
-
-  axios.get(wasmSource)
-    .then(function (response) {
-      var script = document.createElement('script');
-      script.innerHTML = response.data;
-      script.type = 'text/javascript';
-      document.body.appendChild(script);
+      axios.get(WASM_SOURCE)
+        .then(function (response) {
+          var script = document.createElement('script');
+          script.innerHTML = response.data;
+          script.type = 'text/javascript';
+          document.body.appendChild(script);
+        })
+        .catch(function (error) {
+          alert('Cannot load the WebAssembly framework');
+        });
     })
     .catch(function (error) {
-      alert('Cannot load the WebAssembly framework');
-    });
+      alert('Cannot load the configuration file');
+    });  
 });
 
 
@@ -860,51 +880,29 @@ $('.dropdown-menu').click(function(e) {
 document.onselectstart = new Function ('return false');
 
 
-
-
-
-
-
-//var expectedOrigin = 'http://localhost:8042';
-var expectedOrigin = '';   // TODO - INSECURE - CONFIGURATION
-
 window.addEventListener('message', function(e) {
   if ('type' in e.data) {
-    if (expectedOrigin != '' &&
-        e.origin !== expectedOrigin) {
-      alert('Bad origin for the message');
-      return;
-    }
+    var expectedOrigin = globalConfiguration_['ExpectedMessageOrigin'];
     
-    if (e.data.type == 'show-osirix-annotations') {
+    if (expectedOrigin === undefined) {
+      alert('Dynamic actions are disabled in the Stone Web viewer, ' +
+            'set the configuration option "ExpectedMessageOrigin".');
+    }    
+    else if (expectedOrigin != '*' &&
+             e.origin !== expectedOrigin) {
+      alert('Bad origin for a dynamic action in the Stone Web viewer: "' + e.origin +
+            '", whereas the message must have origin: "' + expectedOrigin + '"');
+    }
+    else if (e.data.type == 'show-osirix-annotations') {
       var clear = true;  // Whether to clear previous annotations
       if ('clear' in e.data) {
         clear = e.data.clear;
       }
       
       app.LoadOsiriXAnnotations(e.data.xml, clear);
-    } else {
-      console.log('Unknown message type: ' + e.data.type);
+    }
+    else {
+      alert('Unknown type of dynamic action in the Stone Web viewer: ' + e.data.type);
     }
   }
 });
-
-
-function Test()
-{
-  var s = [ 'length.xml', 'arrow.xml', 'text.xml', 'angle.xml' ];
-
-  for (var i = 0; i < s.length; i++) {
-    axios.get(s[i])
-      .then(function (response) {
-        //var targetOrigin = 'http://localhost:8000';
-        var targetOrigin = '*';  // TODO - INSECURE
-        
-        window.postMessage({
-          'type': 'show-osirix-annotations',
-          'xml': response.data,
-          'clear': false
-        }, targetOrigin);
-      });
-  }
-}

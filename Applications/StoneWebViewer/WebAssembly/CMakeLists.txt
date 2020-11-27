@@ -157,6 +157,7 @@ install(
   ${CMAKE_SOURCE_DIR}/../WebApplication/app-fixes.css
   ${CMAKE_SOURCE_DIR}/../WebApplication/app.css
   ${CMAKE_SOURCE_DIR}/../WebApplication/app.js
+  ${CMAKE_SOURCE_DIR}/../WebApplication/configuration.json
   ${CMAKE_SOURCE_DIR}/../WebApplication/index.html
   ${CMAKE_SOURCE_DIR}/../WebApplication/open-sans.css
   ${CMAKE_SOURCE_DIR}/../WebApplication/pdf-viewer.js

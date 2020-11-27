@@ -1,0 +1,11 @@
+{
+  /**
+   * The allowed origin for messages corresponding to dynamic actions
+   * triggered by another Web page using "window.postMessage()". The
+   * special value "*" will allow any origin, which is an insecure
+   * value to be used only during development. If this option is not
+   * set, all the requests for dynamic actions will be rejected.
+   * https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+   **/
+  "ExpectedMessageOrigin" : "http://localhost:8042"
+}

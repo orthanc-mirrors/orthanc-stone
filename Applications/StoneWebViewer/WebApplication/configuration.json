@@ -5,6 +5,13 @@
   "PrintEnabled" : true,
 
   /**
+   * Defines how dates are displayed in the UI. If this option is not
+   * set, the DICOM tags will be displayed as such. "DD" will be
+   * replaced by the day, "MM" by the month, and "YYYY" by the year.
+   **/
+  // "DateFormat" : "DD/MM/YYYY",
+  
+  /**
    * The allowed origin for messages corresponding to dynamic actions
    * triggered by another Web page using "window.postMessage()". The
    * special value "*" will allow any origin, which is an insecure

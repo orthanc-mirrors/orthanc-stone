@@ -143,6 +143,9 @@
                       @click="study.selected = !study.selected">
                     <a>
                       {{ study.tags['0008,1030'] }}
+                      <small v-if="study.tags['0008,0020'].length > 0">
+                        [{{ FormatDate(study.tags['0008,0020']) }}]
+                      </small>
                       <span v-if="study.selected">&nbsp;<i class="fa fa-check"></i></span>
                     </a> 
                   </li>
@@ -179,7 +182,7 @@
                       <!-- Title -->
                       {{ study.tags['0008,1030'] }}
                       <br/>
-                      <small>{{ study.tags['0008,0020'] }}</small>
+                      <small>{{ FormatDate(study.tags['0008,0020']) }}</small>
                     </div>
 
                     <div class="wvStudyIsland__main">
@@ -579,7 +582,7 @@
                   </div>
                   <div v-if="'tags' in series" class="wv-overlay-topright">
                     {{ series.tags['0008,1030'] }}<br/>
-                    {{ series.tags['0008,0020'] }}<br/>
+                    {{ app.FormatDate(series.tags['0008,0020']) }}<br/>
                     {{ series.tags['0020,0011'] }} | {{ series.tags['0008,103e'] }}
                   </div>
                   <div class="wv-overlay-timeline-wrapper wvPrintExclude">

@@ -321,8 +321,12 @@ var app = new Vue({
         if (this.studies[i].selected) {
           if (s.length > 0)
             s += ', ';
-          s += (this.studies[i].tags[STUDY_DESCRIPTION] + ' [' +
-                this.studies[i].tags[STUDY_DATE] + ']');
+          s += this.studies[i].tags[STUDY_DESCRIPTION];
+
+          var date = this.studies[i].tags[STUDY_DATE];
+          if (date.length > 0) {
+            s += ' [' + this.FormatDate(date) + ']';
+          }
         }
       }
       if (s.length == 0) 
@@ -708,6 +712,26 @@ var app = new Vue({
         //$('#windowing-content').css('left', 'auto');
 
         this.showWindowing = true;
+      }
+    },
+    
+    FormatDate(date) {
+      if (date === undefined ||
+          date.length == 0) {
+        return '';
+      }
+      else {
+        var format = this.globalConfiguration['DateFormat'];
+        if (format === undefined) {
+          // No configuration for the date format, use the DICOM tag as such
+          return date;
+        }
+        else {
+          var year = date.replace(/^([0-9]{4})([0-9]{2})([0-9]{2})$/, '$1');
+          var month = date.replace(/^([0-9]{4})([0-9]{2})([0-9]{2})$/, '$2');
+          var day = date.replace(/^([0-9]{4})([0-9]{2})([0-9]{2})$/, '$3');
+          return format.replace(/YYYY/g, year).replace(/MM/g, month).replace(/DD/g, day);
+        }
       }
     }
   },

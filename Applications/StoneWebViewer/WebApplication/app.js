@@ -1072,7 +1072,8 @@ document.onselectstart = new Function ('return false');
 
 
 window.addEventListener('message', function(e) {
-  if ('type' in e.data) {
+  if ('type' in e.data &&
+      (e.data.type == 'show-osirix-annotations')) {
     var expectedOrigin = app.globalConfiguration['ExpectedMessageOrigin'];
     
     if (expectedOrigin === undefined) {
@@ -1092,8 +1093,8 @@ window.addEventListener('message', function(e) {
       
       app.LoadOsiriXAnnotations(e.data.xml, clear);
     }
-    else {
-      alert('Unknown type of dynamic action in the Stone Web viewer: ' + e.data.type);
-    }
+  }
+  else {
+    console.log('Unknown type of dynamic action in the Stone Web viewer: ' + e.data.type);
   }
 });

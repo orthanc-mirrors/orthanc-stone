@@ -560,7 +560,6 @@ var app = new Vue({
     },
     
     SetViewportSeries: function(viewportIndex, info) {
-      console.log(info);
       var series = this.series[info.seriesIndex];
       
       if (viewportIndex == 1) {

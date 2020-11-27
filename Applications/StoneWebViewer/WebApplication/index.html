@@ -244,7 +244,7 @@
 
                           <!-- Series with multiple multiframe instances (CINE) -->
                           <li class="wvSerieslist__seriesItem"
-                              v-bind:class="{ highlighted : GetActiveSeries().includes(series[seriesIndex].tags['0020,000e']), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
+                              v-bind:class="{ highlighted : GetActiveMultiframeInstances().includes(sopInstanceUid), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
                               v-for="(numberOfFrames, sopInstanceUid) in series[seriesIndex].multiframeInstances"
                               v-on:dragstart="MultiframeInstanceDragStart($event, seriesIndex, sopInstanceUid)"
                               v-on:click="ClickMultiframeInstance(seriesIndex, sopInstanceUid)">
@@ -579,12 +579,12 @@
                          width: width, 
                          height: height }">
         <div v-bind:class="{ 'wvSplitpane__cellBorder--selected' : active, 
-                           'wvSplitpane__cellBorder' : content.color == '', 
-                           'wvSplitpane__cellBorder--blue' : content.color == 'blue', 
-                           'wvSplitpane__cellBorder--red' : content.color == 'red',
-                           'wvSplitpane__cellBorder--green' : content.color == 'green', 
-                           'wvSplitpane__cellBorder--yellow' : content.color == 'yellow', 
-                           'wvSplitpane__cellBorder--violet' : content.color == 'violet'
+                           'wvSplitpane__cellBorder' : content.series.color == '', 
+                           'wvSplitpane__cellBorder--blue' : content.series.color == 'blue', 
+                           'wvSplitpane__cellBorder--red' : content.series.color == 'red',
+                           'wvSplitpane__cellBorder--green' : content.series.color == 'green', 
+                           'wvSplitpane__cellBorder--yellow' : content.series.color == 'yellow', 
+                           'wvSplitpane__cellBorder--violet' : content.series.color == 'violet'
                            }" 
              ondragover="event.preventDefault()"
              v-on:drop="DragDrop($event)"
@@ -600,14 +600,14 @@
 
               <div v-show="showInfo">
                 <div class="wv-overlay">
-                  <div v-if="'tags' in content" class="wv-overlay-topleft">
-                    {{ content.tags['0010,0010'] }}<br/>
-                    {{ content.tags['0010,0020'] }}
+                  <div v-if="'tags' in content.series" class="wv-overlay-topleft">
+                    {{ content.series.tags['0010,0010'] }}<br/>
+                    {{ content.series.tags['0010,0020'] }}
                   </div>
-                  <div v-if="'tags' in content" class="wv-overlay-topright">
-                    {{ content.tags['0008,1030'] }}<br/>
-                    {{ app.FormatDate(content.tags['0008,0020']) }}<br/>
-                    {{ content.tags['0020,0011'] }} | {{ content.tags['0008,103e'] }}
+                  <div v-if="'tags' in content.series" class="wv-overlay-topright">
+                    {{ content.series.tags['0008,1030'] }}<br/>
+                    {{ app.FormatDate(content.series.tags['0008,0020']) }}<br/>
+                    {{ content.series.tags['0020,0011'] }} | {{ content.series.tags['0008,103e'] }}
                   </div>
                   <div class="wv-overlay-timeline-wrapper wvPrintExclude">
                     <div style="text-align:left; padding:5px" v-show="numberOfFrames != 0">

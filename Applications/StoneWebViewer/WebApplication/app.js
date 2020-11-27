@@ -140,22 +140,29 @@ Vue.component('viewport', {
         this.cineTimeoutId = null;
       }
 
-      var studyInstanceUid = newVal.tags[STUDY_INSTANCE_UID];
-      var seriesInstanceUid = newVal.tags[SERIES_INSTANCE_UID];
+      var studyInstanceUid = newVal.series.tags[STUDY_INSTANCE_UID];
+      var seriesInstanceUid = newVal.series.tags[SERIES_INSTANCE_UID];
       stone.SpeedUpFetchSeriesMetadata(studyInstanceUid, seriesInstanceUid);
 
-      if ((newVal.type == stone.ThumbnailType.IMAGE ||
-           newVal.type == stone.ThumbnailType.NO_PREVIEW) &&
-          newVal.complete) {
+      if ((newVal.series.type == stone.ThumbnailType.IMAGE ||
+           newVal.series.type == stone.ThumbnailType.NO_PREVIEW) &&
+          newVal.series.complete) {
         this.status = 'ready';
 
         var that = this;
         Vue.nextTick(function() {
-          stone.LoadSeriesInViewport(that.canvasId, seriesInstanceUid);
+          if (newVal.sopInstanceUid !== undefined &&
+              newVal.sopInstanceUid.length > 0) {
+            stone.LoadMultipartInstanceInViewport(
+              that.canvasId, seriesInstanceUid, newVal.sopInstanceUid);
+          }
+          else {
+            stone.LoadSeriesInViewport(that.canvasId, seriesInstanceUid);
+          }
         });
       }
-      else if (newVal.type == stone.ThumbnailType.PDF) {
-        if (newVal.complete) {
+      else if (newVal.series.type == stone.ThumbnailType.PDF) {
+        if (newVal.series.complete) {
           /**
            * Series is complete <=> One already knows about the
            * SOPInstanceUIDs that are available in this series. As a
@@ -173,7 +180,7 @@ Vue.component('viewport', {
           pendingSeriesPdf_[seriesInstanceUid] = true;
         }
       }
-      else if (newVal.type == stone.ThumbnailType.VIDEO) {
+      else if (newVal.series.type == stone.ThumbnailType.VIDEO) {
         this.status = 'video';
         console.warn('Videos are not supported by the Stone Web viewer yet');
       }
@@ -202,9 +209,9 @@ Vue.component('viewport', {
       var pdfPointer = args.detail.pdfPointer;
       var pdfSize = args.detail.pdfSize;
 
-      if ('tags' in that.content &&
-          that.content.tags[STUDY_INSTANCE_UID] == studyInstanceUid &&
-          that.content.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+      if ('tags' in that.content.series &&
+          that.content.series.tags[STUDY_INSTANCE_UID] == studyInstanceUid &&
+          that.content.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
 
         that.status = 'pdf';
         var pdf = new Uint8Array(HEAPU8.subarray(pdfPointer, pdfPointer + pdfSize));
@@ -339,28 +346,28 @@ var app = new Vue({
       viewport1Left: '0%',
       viewport1Top: '0%',
       viewport1Visible: true,
-      viewport1Content: {},
+      viewport1Content: { series: {} },
       
       viewport2Width: '100%',
       viewport2Height: '100%',
       viewport2Left: '0%',
       viewport2Top: '0%',
       viewport2Visible: false,
-      viewport2Content: {},
+      viewport2Content: { series: {} },
 
       viewport3Width: '100%',
       viewport3Height: '100%',
       viewport3Left: '0%',
       viewport3Top: '0%',
       viewport3Visible: false,
-      viewport3Content: {},
+      viewport3Content: { series: {} },
 
       viewport4Width: '100%',
       viewport4Height: '100%',
       viewport4Left: '0%',
       viewport4Top: '0%',
       viewport4Visible: false,
-      viewport4Content: {},
+      viewport4Content: { series: {} },
 
       showWindowing: false,
       windowingPresets: [],
@@ -423,17 +430,35 @@ var app = new Vue({
     GetActiveSeries: function() {
       var s = [];
 
-      if ('tags' in this.viewport1Content)
-        s.push(this.viewport1Content.tags[SERIES_INSTANCE_UID]);
+      if ('tags' in this.viewport1Content.series)
+        s.push(this.viewport1Content.series.tags[SERIES_INSTANCE_UID]);
 
-      if ('tags' in this.viewport2Content)
-        s.push(this.viewport2Content.tags[SERIES_INSTANCE_UID]);
+      if ('tags' in this.viewport2Content.series)
+        s.push(this.viewport2Content.series.tags[SERIES_INSTANCE_UID]);
 
-      if ('tags' in this.viewport3Content)
-        s.push(this.viewport3Content.tags[SERIES_INSTANCE_UID]);
+      if ('tags' in this.viewport3Content.series)
+        s.push(this.viewport3Content.series.tags[SERIES_INSTANCE_UID]);
 
-      if ('tags' in this.viewport4Content)
-        s.push(this.viewport4Content.tags[SERIES_INSTANCE_UID]);
+      if ('tags' in this.viewport4Content.series)
+        s.push(this.viewport4Content.series.tags[SERIES_INSTANCE_UID]);
+
+      return s;
+    },
+
+    GetActiveMultiframeInstances: function() {
+      var s = [];
+
+      if ('sopInstanceUid' in this.viewport1Content)
+        s.push(this.viewport1Content.sopInstanceUid);
+
+      if ('sopInstanceUid' in this.viewport2Content)
+        s.push(this.viewport2Content.sopInstanceUid);
+
+      if ('sopInstanceUid' in this.viewport3Content)
+        s.push(this.viewport3Content.sopInstanceUid);
+
+      if ('sopInstanceUid' in this.viewport4Content)
+        s.push(this.viewport4Content.sopInstanceUid);
 
       return s;
     },
@@ -535,25 +560,45 @@ var app = new Vue({
     },
     
     SetViewportSeries: function(viewportIndex, info) {
+      console.log(info);
       var series = this.series[info.seriesIndex];
       
       if (viewportIndex == 1) {
-        this.viewport1Content = series;
+        this.viewport1Content = {
+          series: series,
+          sopInstanceUid: info.sopInstanceUid
+        };
       }
       else if (viewportIndex == 2) {
-        this.viewport2Content = series;
+        this.viewport2Content = {
+          series: series,
+          sopInstanceUid: info.sopInstanceUid
+        };
       }
       else if (viewportIndex == 3) {
-        this.viewport3Content = series;
+        this.viewport3Content = {
+          series: series,
+          sopInstanceUid: info.sopInstanceUid
+        };
       }
       else if (viewportIndex == 4) {
-        this.viewport4Content = series;
+        this.viewport4Content = {
+          series: series,
+          sopInstanceUid: info.sopInstanceUid
+        };
       }
     },
     
     ClickSeries: function(seriesIndex) {
       this.SetViewportSeries(this.activeViewport, {
         seriesIndex: seriesIndex
+      });
+    },
+    
+    ClickMultiframeInstance: function(seriesIndex, sopInstanceUid) {
+      this.SetViewportSeries(this.activeViewport, {
+        seriesIndex: seriesIndex,
+        sopInstanceUid: sopInstanceUid
       });
     },
     
@@ -685,24 +730,24 @@ var app = new Vue({
         // https://fr.vuejs.org/2016/02/06/common-gotchas/#Why-isn%E2%80%99t-the-DOM-updating
         this.$set(this.series, index, series);
 
-        if ('tags' in this.viewport1Content &&
-            this.viewport1Content.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
-          this.$set(this.viewport1Content, series);
+        if ('tags' in this.viewport1Content.series &&
+            this.viewport1Content.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+          this.$set(this.viewport1Content.series, series);
         }
 
-        if ('tags' in this.viewport2Content &&
-            this.viewport2Content.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
-          this.$set(this.viewport2Content, series);
+        if ('tags' in this.viewport2Content.series &&
+            this.viewport2Content.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+          this.$set(this.viewport2Content.series, series);
         }
 
-        if ('tags' in this.viewport3Content &&
-            this.viewport3Content.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
-          this.$set(this.viewport3Content, series);
+        if ('tags' in this.viewport3Content.series &&
+            this.viewport3Content.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+          this.$set(this.viewport3Content.series, series);
         }
 
-        if ('tags' in this.viewport4Content &&
-            this.viewport4Content.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
-          this.$set(this.viewport4Content, series);
+        if ('tags' in this.viewport4Content.series &&
+            this.viewport4Content.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+          this.$set(this.viewport4Content.series, series);
         }
       }
     },

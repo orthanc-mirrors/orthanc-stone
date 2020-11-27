@@ -309,10 +309,10 @@
                 </div>
                 
                 <div class="tbGroup__buttons--bottom" v-show="mouseActionsVisible">
-                  <div class="inline-object">
+                  <div class="inline-object" v-if="globalConfiguration.CombinedToolEnabled">
                     <button class="wvButton"
                             data-toggle="tooltip" data-title="Combined tool"
-                            @click="SetMouseButtonActions(stone.WebViewerAction.GRAYSCALE_WINDOWING, stone.WebViewerAction.PAN, stone.WebViewerAction.ZOOM)">
+                            @click="SetCombinedToolActions()">
                       <i class="far fa-hand-point-up"></i>
                     </button>
                   </div>
@@ -460,6 +460,14 @@
                       data-toggle="tooltip" data-title="Print"
                       onclick="window.print()">
                 <i class="fas fa-print"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object" v-if="globalConfiguration.DownloadAsJpegEnabled">
+              <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Download as JPEG"
+                      v-on:click="DownloadJpeg()">
+                <i class="fas fa-file-download"></i>
               </button>
             </div>
 

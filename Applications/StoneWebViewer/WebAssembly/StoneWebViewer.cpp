@@ -129,7 +129,7 @@ enum STONE_WEB_VIEWER_EXPORT DisplayedFrameQuality
 
 enum STONE_WEB_VIEWER_EXPORT WebViewerAction
 {
-  WebViewerAction_GrayscaleWindowing,
+  WebViewerAction_Windowing,
     WebViewerAction_Zoom,
     WebViewerAction_Pan,
     WebViewerAction_Rotate,
@@ -142,7 +142,7 @@ static OrthancStone::MouseAction ConvertWebViewerAction(int action)
 {
   switch (action)
   {
-    case WebViewerAction_GrayscaleWindowing:
+    case WebViewerAction_Windowing:
       return OrthancStone::MouseAction_GrayscaleWindowing;
       
     case WebViewerAction_Zoom:
@@ -2658,7 +2658,7 @@ static boost::shared_ptr<FramesCache> framesCache_;
 static boost::shared_ptr<OrthancStone::WebAssemblyLoadersContext> context_;
 static std::string stringBuffer_;
 static bool softwareRendering_ = false;
-static WebViewerAction leftButtonAction_ = WebViewerAction_GrayscaleWindowing;
+static WebViewerAction leftButtonAction_ = WebViewerAction_Windowing;
 static WebViewerAction middleButtonAction_ = WebViewerAction_Pan;
 static WebViewerAction rightButtonAction_ = WebViewerAction_Zoom;
 

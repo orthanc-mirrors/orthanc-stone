@@ -44,6 +44,63 @@ function getParameterFromUrl(key) {
 }
 
 
+// https://stackoverflow.com/a/21797381/881731
+function Base64ToArrayBuffer(base64) {
+  var binary_string = window.atob(base64);
+  var len = binary_string.length;
+  var bytes = new Uint8Array(len);
+  for (var i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+
+function SaveDataUriScheme(filename, dataUriScheme) {
+  var mimeType = dataUriScheme.split(',')[0].split(':')[1].split(';')[0];
+  var base64 = dataUriScheme.split(',')[1];
+
+  var blob = new Blob([ Base64ToArrayBuffer(base64) ], {
+    type: mimeType
+  });
+
+  var link = document.createElement('a');
+  link.href = window.URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+};
+
+
+// Check out "enum WebViewerAction" in "StoneWebViewer.cpp" for the
+// possible values
+function ConvertMouseAction(config, defaultAction)
+{
+  if (config === undefined) {
+    return defaultAction;
+  }
+  if (config == "Windowing") {
+    return stone.WebViewerAction.WINDOWING;
+  }
+  else if (config == "Zoom") {
+    return stone.WebViewerAction.ZOOM;
+  }
+  else if (config == "Pan") {
+    return stone.WebViewerAction.PAN;
+  }
+  else if (config == "Rotate") {
+    return stone.WebViewerAction.ROTATE;
+  }
+  else if (config == "Crosshair") {
+    return stone.WebViewerAction.CROSSHAIR;
+  }
+  else {
+    alert('Unsupported mouse action in the configuration file: ' + config);
+    return stone.WebViewerAction.PAN;
+  }
+}
+
+
+
 Vue.component('viewport', {
   props: [ 'left', 'top', 'width', 'height', 'canvasId', 'active', 'series', 'viewportIndex',
            'showInfo' ],
@@ -715,7 +772,8 @@ var app = new Vue({
       }
     },
     
-    FormatDate(date) {
+    FormatDate: function(date)
+    {
       if (date === undefined ||
           date.length == 0) {
         return '';
@@ -733,6 +791,28 @@ var app = new Vue({
           return format.replace(/YYYY/g, year).replace(/MM/g, month).replace(/DD/g, day);
         }
       }
+    },
+
+    DownloadJpeg: function()
+    {
+      var canvas = document.getElementById(this.GetActiveCanvas());
+      SaveDataUriScheme('StoneWebViewerScreenshot.jpg', canvas.toDataURL('image/jpeg'));
+    },
+
+    SetCombinedToolActions: function()
+    {
+      var left = stone.WebViewerAction.WINDOWING;
+      var middle = stone.WebViewerAction.PAN;
+      var right = stone.WebViewerAction.ZOOM;
+
+      var behaviour = this.globalConfiguration['CombinedToolBehaviour'];
+      if (behaviour !== undefined) {
+        left = ConvertMouseAction(behaviour['LeftMouseButton'], left);
+        middle = ConvertMouseAction(behaviour['MiddleMouseButton'], middle);
+        right = ConvertMouseAction(behaviour['RightMouseButton'], right);
+      }
+      
+      this.SetMouseButtonActions(left, middle, right);
     }
   },
   
@@ -759,6 +839,8 @@ window.addEventListener('StoneInitialized', function() {
   stone.SetSoftwareRendering(localStorage.settingSoftwareRendering == '1');
   console.warn('Stone properly initialized');
 
+  app.SetCombinedToolActions();
+  
   var selectedStudies = getParameterFromUrl('selectedStudies');
   var study = getParameterFromUrl('study');
   var series = getParameterFromUrl('series');

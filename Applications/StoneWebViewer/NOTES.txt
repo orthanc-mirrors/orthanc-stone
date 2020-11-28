@@ -6,6 +6,12 @@ Differences with Osimis Web viewer
 - The images are retrieved using DICOMweb.
 
 
+- In the Stone Web viewer, the individual instances are loaded on
+  need, in order to reduce the use of the network bandwidth. This
+  contrasts with the Osimis Web viewer that loads the entire images in
+  background.
+
+
 - The Stone Web viewer uses the DICOM identifiers. The Osimis Web
   viewer the Orthanc identifiers.
   https://book.orthanc-server.com/faq/orthanc-ids.html

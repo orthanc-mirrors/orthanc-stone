@@ -27,6 +27,10 @@
 #include <SystemToolbox.h>
 #include <Toolbox.h>
 
+
+static const std::string STONE_WEB_VIEWER_ROOT = "/stone-webviewer";
+
+
 OrthancPluginErrorCode OnChangeCallback(OrthancPluginChangeType changeType,
                                         OrthancPluginResourceType resourceType,
                                         const char* resourceId)
@@ -173,6 +177,8 @@ void ServeConfiguration(OrthancPluginRestOutput* output,
   else
   {
     static const char* CONFIG_SECTION = "StoneWebViewer";
+    static const char* ORTHANC_API_ROOT = "OrthancApiRoot";
+    static const char* DICOM_WEB_ROOT = "DicomWebRoot";
 
     Json::Value config = Json::objectValue;
     
@@ -202,8 +208,16 @@ void ServeConfiguration(OrthancPluginRestOutput* output,
       }
     }
 
-    config[CONFIG_SECTION]["OrthancApiRoot"] = "..";
+    assert(config[CONFIG_SECTION].type() == Json::objectValue);
 
+    // Assume that the Stone Web viewer is mapped at "/stone-webviewer" in the REST API
+    config[CONFIG_SECTION][ORTHANC_API_ROOT] = "..";
+
+    if (!config[CONFIG_SECTION].isMember(DICOM_WEB_ROOT))
+    {
+      config[CONFIG_SECTION][DICOM_WEB_ROOT] = "../dicom-web";
+    }
+    
     const std::string s = config.toStyledString();
     OrthancPluginAnswerBuffer(context, output, s.c_str(), s.size(), "application/json");
   }
@@ -243,39 +257,39 @@ extern "C"
       OrthancPluginExtendOrthancExplorer(OrthancPlugins::GetGlobalContext(), explorer.c_str());
       
       OrthancPlugins::RegisterRestCallback<ServeConfiguration>
-        ("/stone-webviewer/configuration.json", true);
+        (STONE_WEB_VIEWER_ROOT + "/configuration.json", true);
       
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFile<Orthanc::EmbeddedResources::STONE_WEB_VIEWER_WASM> >
-        ("/stone-webviewer/StoneWebViewer.wasm", true);
+        (STONE_WEB_VIEWER_ROOT + "/StoneWebViewer.wasm", true);
       
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFile<Orthanc::EmbeddedResources::STONE_WEB_VIEWER_JS> >
-        ("/stone-webviewer/StoneWebViewer.js", true);
+        (STONE_WEB_VIEWER_ROOT + "/StoneWebViewer.js", true);
       
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFile<Orthanc::EmbeddedResources::STONE_WRAPPER> >
-        ("/stone-webviewer/stone.js", true);
+        (STONE_WEB_VIEWER_ROOT + "/stone.js", true);
       
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFolder<Orthanc::EmbeddedResources::IMAGES> >
-        ("/stone-webviewer/img/(.*)", true);
+        (STONE_WEB_VIEWER_ROOT + "/img/(.*)", true);
       
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFolder<Orthanc::EmbeddedResources::LIBRARIES_CSS> >
-        ("/stone-webviewer/css/(.*)", true);
+        (STONE_WEB_VIEWER_ROOT + "/css/(.*)", true);
       
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFolder<Orthanc::EmbeddedResources::LIBRARIES_JS> >
-        ("/stone-webviewer/js/(.*)", true);
+        (STONE_WEB_VIEWER_ROOT + "/js/(.*)", true);
       
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFolder<Orthanc::EmbeddedResources::LIBRARIES_WEBFONTS> >
-        ("/stone-webviewer/webfonts/(.*)", true);
+        (STONE_WEB_VIEWER_ROOT + "/webfonts/(.*)", true);
 
       OrthancPlugins::RegisterRestCallback
         <ServeEmbeddedFolder<Orthanc::EmbeddedResources::WEB_APPLICATION> >
-        ("/stone-webviewer/(.*)", true);
+        (STONE_WEB_VIEWER_ROOT + "/(.*)", true);
 
       OrthancPluginRegisterOnChangeCallback(context, OnChangeCallback);
     }

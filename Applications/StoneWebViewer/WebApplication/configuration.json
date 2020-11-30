@@ -65,12 +65,19 @@
     "ExpectedMessageOrigin" : "http://localhost:8042",
 
     /**
+     * Root path of the DICOMweb server. This option is automatically
+     * set by the Orthanc plugin if missing.
+     **/
+    "DicomWebRoot" : "../dicom-web",
+    
+    /**
      * The following parameter can be set if running the Stone Web
-     * viewer from Orthanc, but without using the associated plugin.
-     * Using the plugin would overwrite this setting. This will enable
-     * features that are only available if the Orthanc REST API is
-     * accessible (download of studies, and playing videos). This
-     * option is typically used by the developers of Stone.
+     * viewer from Orthanc, but without using the associated plugin
+     * (e.g. using the "Serve Folders" sample plugin). Using the
+     * plugin would overwrite this setting. This will enable features
+     * that are only available if the Orthanc REST API is accessible
+     * (download of studies, and playing videos). This option is
+     * typically used by the developers of Stone.
      **/
     "OrthancApiRoot" : ".."
   }

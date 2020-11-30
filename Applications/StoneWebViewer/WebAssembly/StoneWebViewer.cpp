@@ -2894,13 +2894,12 @@ extern "C"
 
 
   EMSCRIPTEN_KEEPALIVE
-  void SetOrthancRoot(const char* uri,
-                      int useRendered)
+  void SetDicomWebRoot(const char* uri,
+                       int useRendered)
   {
     try
     {
-      context_->SetLocalOrthanc(uri);  // For "source_.SetDicomWebThroughOrthancSource()"
-      source_.SetDicomWebSource(std::string(uri) + "/dicom-web");
+      source_.SetDicomWebSource(uri);
       source_.SetDicomWebRendered(useRendered != 0);
     }
     EXTERN_CATCH_EXCEPTIONS;
@@ -2908,11 +2907,13 @@ extern "C"
   
 
   EMSCRIPTEN_KEEPALIVE
-  void SetDicomWebServer(const char* serverName,
-                         int hasRendered)
+  void SetDicomWebThroughOrthanc(const char* orthancRoot,
+                                 const char* serverName,
+                                 int hasRendered)
   {
     try
     {
+      context_->SetLocalOrthanc(orthancRoot);
       source_.SetDicomWebThroughOrthancSource(serverName);
       source_.SetDicomWebRendered(hasRendered != 0);
     }

@@ -1020,7 +1020,8 @@ var app = new Vue({
 
 window.addEventListener('StoneInitialized', function() {
   stone.Setup(Module);
-  stone.SetOrthancRoot('..', true);
+  stone.SetDicomWebRoot(app.globalConfiguration.DicomWebRoot,
+                        true /* assume "/rendered" is available in DICOMweb (could be a configuration option) */);
   stone.SetSoftwareRendering(localStorage.settingSoftwareRendering == '1');
   console.warn('Stone properly initialized');
 

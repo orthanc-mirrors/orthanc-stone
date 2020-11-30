@@ -174,28 +174,38 @@ void ServeConfiguration(OrthancPluginRestOutput* output,
   {
     static const char* CONFIG_SECTION = "StoneWebViewer";
 
-    std::string config;
+    Json::Value config = Json::objectValue;
     
     OrthancPlugins::OrthancConfiguration orthanc;
     if (orthanc.IsSection(CONFIG_SECTION))
     {
       OrthancPlugins::OrthancConfiguration section(false);
       orthanc.GetSection(section, CONFIG_SECTION);
-
-      Json::Value wrapper = Json::objectValue;
-      wrapper[CONFIG_SECTION] = section.GetJson();
-      config = wrapper.toStyledString();
+      config[CONFIG_SECTION] = section.GetJson();
     }
     else
     {
       LOG(WARNING) << "The Orthanc configuration file doesn't contain a section \""
                    << CONFIG_SECTION << "\" to configure the Stone Web viewer: "
                    << "Will use default settings";
+
+      std::string s;
       Orthanc::EmbeddedResources::GetDirectoryResource(
-        config, Orthanc::EmbeddedResources::WEB_APPLICATION, "/configuration.json");
+        s, Orthanc::EmbeddedResources::WEB_APPLICATION, "/configuration.json");
+
+      Json::Reader reader;
+      if (!reader.parse(s, config) ||
+          config.type() != Json::objectValue)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                        "Cannot read the default configuration");
+      }
     }
 
-    OrthancPluginAnswerBuffer(context, output, config.c_str(), config.size(), "application/json");
+    config[CONFIG_SECTION]["OrthancApiRoot"] = "..";
+
+    const std::string s = config.toStyledString();
+    OrthancPluginAnswerBuffer(context, output, s.c_str(), s.size(), "application/json");
   }
 }
 

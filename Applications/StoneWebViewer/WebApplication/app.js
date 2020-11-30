@@ -27,6 +27,11 @@ var SERIES_INSTANCE_UID = '0020,000e';
 var STUDY_INSTANCE_UID = '0020,000d';
 var STUDY_DESCRIPTION = '0008,1030';
 var STUDY_DATE = '0008,0020';
+var PATIENT_ID = '0010,0020';
+var PATIENT_NAME = '0010,0010';
+var SERIES_NUMBER = '0020,0011';
+var SERIES_DESCRIPTION = '0008,103e';
+var MODALITY = '0008,0060';
 
 // Registry of the PDF series for which the instance metadata is still waiting
 var pendingSeriesPdf_ = {};
@@ -97,6 +102,21 @@ function ConvertMouseAction(config, defaultAction)
     alert('Unsupported mouse action in the configuration file: ' + config);
     return stone.WebViewerAction.PAN;
   }
+}
+
+
+/**
+ * Enable support for tooltips in Bootstrap. This function must be
+ * called after each modification to the DOM that introduces new
+ * tooltips (e.g. after loading studies).
+ **/
+function RefreshTooltips()
+{
+  $('[data-toggle="tooltip"]').tooltip({
+    placement: 'bottom',
+    container: 'body',
+    trigger: 'hover'
+  });
 }
 
 
@@ -329,6 +349,8 @@ var app = new Vue({
       showReferenceLines: true,
       synchronizedBrowsing: false,
       globalConfiguration: {},
+      creatingArchive: false,
+      archiveJob: '',
 
       modalWarning: false,
       modalNotDiagnostic: false,
@@ -539,6 +561,10 @@ var app = new Vue({
       this.series = series;
       this.seriesIndex = seriesIndex;
       this.ready = true;
+
+      Vue.nextTick(function() {
+        RefreshTooltips();
+      });
     },
     
     SeriesDragStart: function(event, seriesIndex) {
@@ -872,6 +898,63 @@ var app = new Vue({
       }
       
       this.SetMouseButtonActions(left, middle, right);
+    },
+
+    CheckIsDownloadComplete: function()
+    {
+      if (this.creatingArchive &&
+          this.archiveJob.length > 0) {      
+
+        var that = this;
+        axios.get(that.globalConfiguration.OrthancApiRoot + '/jobs/' + that.archiveJob)
+          .then(function(response) {
+            console.log('Progress of archive job ' + that.archiveJob + ': ' + response.data['Progress'] + '%');
+            var state = response.data['State'];
+            if (state == 'Success') {
+              that.creatingArchive = false;
+              window.open(that.globalConfiguration.OrthancApiRoot + '/jobs/' + that.archiveJob + '/archive');
+            }
+            else if (state == 'Running') {
+              setTimeout(that.CheckIsDownloadComplete, 1000);
+            }
+            else {
+              alert('Error while creating the archive in Orthanc: ' + response.data['ErrorDescription']);
+              that.creatingArchive = false;
+            }
+          })
+          .catch(function(error) {
+            alert('The archive job is not available anymore in Orthanc');
+            that.creatingArchive = false;
+          });
+        }
+    },
+
+    DownloadStudy: function(studyInstanceUid)
+    {
+      console.log('Creating archive for study: ' + studyInstanceUid);
+
+      var that = this;
+      axios.post(this.globalConfiguration.OrthancApiRoot + '/tools/lookup', studyInstanceUid)
+        .then(function(response) {
+          if (response.data.length != 1) {
+            throw('');
+          }
+          else {
+            var orthancId = response.data[0]['ID'];
+            axios.post(that.globalConfiguration.OrthancApiRoot + '/studies/' + orthancId + '/archive',
+                       {
+                         'Asynchronous' : true
+                       })
+              .then(function(response) {
+                that.creatingArchive = true;
+                that.archiveJob = response.data.ID;
+                setTimeout(that.CheckIsDownloadComplete, 1000);
+              });
+          }
+        })
+        .catch(function (error) {
+          alert('Cannot find the study in Orthanc');
+        });
     }
   },
   
@@ -1013,12 +1096,7 @@ function ParseJsonWithComments(json)
 
 
 $(document).ready(function() {
-  // Enable support for tooltips in Bootstrap
-  $('[data-toggle="tooltip"]').tooltip({
-    placement: 'bottom',
-    container: 'body',
-    trigger: 'hover'
-  });
+  RefreshTooltips();
 
   //app.modalWarning = true;
 

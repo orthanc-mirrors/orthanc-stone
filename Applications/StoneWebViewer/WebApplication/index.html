@@ -142,9 +142,9 @@
                       v-bind:class="{ active: study.selected }" 
                       @click="study.selected = !study.selected">
                     <a>
-                      {{ study.tags['0008,1030'] }}
-                      <small v-if="study.tags['0008,0020'].length > 0">
-                        [{{ FormatDate(study.tags['0008,0020']) }}]
+                      {{ study.tags[STUDY_DESCRIPTION] }}
+                      <small v-if="study.tags[STUDY_DATE].length > 0">
+                        [{{ FormatDate(study.tags[STUDY_DATE]) }}]
                       </small>
                       <span v-if="study.selected">&nbsp;<i class="fa fa-check"></i></span>
                     </a> 
@@ -173,16 +173,21 @@
                       <!-- Actions -->
                       <div class="wvStudyIsland__actions"
                            v-bind:class="{ 'wvStudyIsland__actions--oneCol': leftMode == 'small' }">
-                        <a class="wvButton">
+                        <a class="wvButton"
+                           v-show="globalConfiguration.DownloadStudyEnabled && 'OrthancApiRoot' in globalConfiguration">
                           <!-- download --> 
-                          <i class="fa fa-download"></i>
+                          <i class="fa fa-download" v-show="!creatingArchive"
+                             data-toggle="tooltip" data-title="Download the study"
+                             @click="DownloadStudy(study.tags[STUDY_INSTANCE_UID])"></i>
+                          <i class="fas fa-sync fa-spin" v-show="creatingArchive"
+                             data-toggle="tooltip" data-title="A ZIP archive is being created by Orthanc..."></i>
                         </a>
                       </div>
                       
                       <!-- Title -->
-                      {{ study.tags['0008,1030'] }}
+                      {{ study.tags[STUDY_DESCRIPTION] }}
                       <br/>
-                      <small>{{ FormatDate(study.tags['0008,0020']) }}</small>
+                      <small>{{ FormatDate(study.tags[STUDY_DATE]) }}</small>
                     </div>
 
                     <div class="wvStudyIsland__main">
@@ -191,7 +196,7 @@
                         <!-- Series without multiple multiframe instances -->
                         <span v-for="seriesIndex in study.series">
                           <li class="wvSerieslist__seriesItem"
-                              v-bind:class="{ highlighted : GetActiveSeries().includes(series[seriesIndex].tags['0020,000e']), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
+                              v-bind:class="{ highlighted : GetActiveSeries().includes(series[seriesIndex].tags[SERIES_INSTANCE_UID]), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
                               v-on:dragstart="SeriesDragStart($event, seriesIndex)"
                               v-on:click="ClickSeries(seriesIndex)"
                               v-if="series[seriesIndex].multiframeInstances === null">
@@ -214,7 +219,7 @@
                               
                               <div v-if="[stone.ThumbnailType.IMAGE, stone.ThumbnailType.NO_PREVIEW].includes(series[seriesIndex].type)"
                                    class="wvSerieslist__placeholderIcon"
-                                   v-bind:title="leftMode == 'full' ? null : '[' + series[seriesIndex].tags['0008,0060'] + '] ' + series[seriesIndex].tags['0008,103e']">
+                                   v-bind:title="leftMode == 'full' ? null : '[' + series[seriesIndex].tags[MODALITY] + '] ' + series[seriesIndex].tags[SERIES_DESCRIPTION]">
                                 <i v-if="series[seriesIndex].type == stone.ThumbnailType.NO_PREVIEW"
                                    class="fa fa-eye-slash"></i>
 
@@ -222,7 +227,7 @@
                                      v-bind:src="series[seriesIndex].thumbnail"
                                      style="vertical-align:baseline"
                                      width="65px" height="65px"
-                                     v-bind:title="leftMode == 'full' ? null : '[' + series[seriesIndex].tags['0008,0060'] + '] ' + series[seriesIndex].tags['0008,103e']"
+                                     v-bind:title="leftMode == 'full' ? null : '[' + series[seriesIndex].tags[MODALITY] + '] ' + series[seriesIndex].tags[SERIES_DESCRIPTION]"
                                      />
                                 
                                 <div v-bind:class="'wvSerieslist__badge--' + study.color"
@@ -235,8 +240,8 @@
                                  v-on:dragstart="SeriesDragStart($event, seriesIndex)"
                                  v-on:click="ClickSeries(seriesIndex)">
                               <p class="wvSerieslist__label">
-                                [{{ series[seriesIndex].tags['0008,0060'] }}]
-                                {{ series[seriesIndex].tags['0008,103e'] }}
+                                [{{ series[seriesIndex].tags[MODALITY] }}]
+                                {{ series[seriesIndex].tags[SERIES_DESCRIPTION] }}
                               </p>
                             </div>
                           </li>
@@ -254,7 +259,7 @@
                                    v-bind:src="sopInstanceUid in multiframeInstanceThumbnails ? multiframeInstanceThumbnails[sopInstanceUid] : series[seriesIndex].thumbnail"
                                    style="vertical-align:baseline"
                                    width="65px" height="65px"
-                                   v-bind:title="leftMode == 'full' ? null : '[' + series[seriesIndex].tags['0008,0060'] + '] ' + series[seriesIndex].tags['0008,103e']"
+                                   v-bind:title="leftMode == 'full' ? null : '[' + series[seriesIndex].tags[MODALITY] + '] ' + series[seriesIndex].tags[SERIES_DESCRIPTION]"
                                    />
                               
                               <div v-bind:class="'wvSerieslist__badge--' + study.color">
@@ -267,8 +272,8 @@
                                  v-on:dragstart="MultiframeInstanceDragStart($event, seriesIndex, sopInstanceUid)"
                                  v-on:click="MultiframeInstanceDragStart($event, seriesIndex, sopInstanceUid)">
                               <p class="wvSerieslist__label">
-                                [{{ series[seriesIndex].tags['0008,0060'] }}]
-                                {{ series[seriesIndex].tags['0008,103e'] }}
+                                [{{ series[seriesIndex].tags[MODALITY] }}]
+                                {{ series[seriesIndex].tags[SERIES_DESCRIPTION] }}
                               </p>
                             </div>
                           </li>
@@ -601,13 +606,13 @@
               <div v-show="showInfo">
                 <div class="wv-overlay">
                   <div v-if="'tags' in content.series" class="wv-overlay-topleft">
-                    {{ content.series.tags['0010,0010'] }}<br/>
-                    {{ content.series.tags['0010,0020'] }}
+                    {{ content.series.tags[PATIENT_NAME] }}<br/>
+                    {{ content.series.tags[PATIENT_ID] }}
                   </div>
                   <div v-if="'tags' in content.series" class="wv-overlay-topright">
-                    {{ content.series.tags['0008,1030'] }}<br/>
-                    {{ app.FormatDate(content.series.tags['0008,0020']) }}<br/>
-                    {{ content.series.tags['0020,0011'] }} | {{ content.series.tags['0008,103e'] }}
+                    {{ content.series.tags[STUDY_DESCRIPTION] }}<br/>
+                    {{ app.FormatDate(content.series.tags[STUDY_DATE]) }}<br/>
+                    {{ content.series.tags[SERIES_NUMBER] }} | {{ content.series.tags[SERIES_DESCRIPTION] }}
                   </div>
                   <div class="wv-overlay-timeline-wrapper wvPrintExclude">
                     <div style="text-align:left; padding:5px" v-show="numberOfFrames != 0">

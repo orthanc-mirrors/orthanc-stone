@@ -12,6 +12,10 @@ Differences with Osimis Web viewer
   background.
 
 
+- Contrarily to the Osimis Web viewer, the Stone Web viewer doesn't
+  currently support annotations, and will not support Live Share.
+
+
 - The Stone Web viewer uses the DICOM identifiers. The Osimis Web
   viewer the Orthanc identifiers.
   https://book.orthanc-server.com/faq/orthanc-ids.html

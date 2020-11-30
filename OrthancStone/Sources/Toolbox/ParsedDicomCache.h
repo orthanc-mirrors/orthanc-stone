@@ -36,9 +36,11 @@ namespace OrthancStone
                                 const std::string& bucketKey);
     
     Orthanc::MemoryObjectCache  cache_;
+    size_t                      lowCacheSizeWarning_;
 
   public:
-    explicit ParsedDicomCache(size_t size)
+    explicit ParsedDicomCache(size_t size) :
+      lowCacheSizeWarning_(0)
     {
       cache_.SetMaximumSize(size);
     }

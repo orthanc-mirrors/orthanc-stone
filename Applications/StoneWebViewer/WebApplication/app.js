@@ -1023,6 +1023,11 @@ window.addEventListener('StoneInitialized', function() {
   stone.SetDicomWebRoot(app.globalConfiguration.DicomWebRoot,
                         true /* assume "/rendered" is available in DICOMweb (could be a configuration option) */);
   stone.SetSoftwareRendering(localStorage.settingSoftwareRendering == '1');
+
+  if ('DicomCacheSize' in app.globalConfiguration) {
+    stone.SetDicomCacheSize(app.globalConfiguration.DicomCacheSize);
+  }
+  
   console.warn('Stone properly initialized');
 
   app.SetCombinedToolActions();
@@ -1176,29 +1181,30 @@ document.onselectstart = new Function ('return false');
 
 
 window.addEventListener('message', function(e) {
-  if ('type' in e.data &&
-      (e.data.type == 'show-osirix-annotations')) {
-    var expectedOrigin = app.globalConfiguration['ExpectedMessageOrigin'];
-    
-    if (expectedOrigin === undefined) {
-      alert('Dynamic actions are disabled in the Stone Web viewer, ' +
-            'set the configuration option "ExpectedMessageOrigin".');
-    }    
-    else if (expectedOrigin != '*' &&
-             e.origin !== expectedOrigin) {
-      alert('Bad origin for a dynamic action in the Stone Web viewer: "' + e.origin +
-            '", whereas the message must have origin: "' + expectedOrigin + '"');
-    }
-    else if (e.data.type == 'show-osirix-annotations') {
-      var clear = true;  // Whether to clear previous annotations
-      if ('clear' in e.data) {
-        clear = e.data.clear;
-      }
+  if ('type' in e.data) {
+    if (e.data.type == 'show-osirix-annotations') {
+      var expectedOrigin = app.globalConfiguration['ExpectedMessageOrigin'];
       
-      app.LoadOsiriXAnnotations(e.data.xml, clear);
+      if (expectedOrigin === undefined) {
+        alert('Dynamic actions are disabled in the Stone Web viewer, ' +
+              'set the configuration option "ExpectedMessageOrigin".');
+      }    
+      else if (expectedOrigin != '*' &&
+               e.origin !== expectedOrigin) {
+        alert('Bad origin for a dynamic action in the Stone Web viewer: "' + e.origin +
+              '", whereas the message must have origin: "' + expectedOrigin + '"');
+      }
+      else if (e.data.type == 'show-osirix-annotations') {
+        var clear = true;  // Whether to clear previous annotations
+        if ('clear' in e.data) {
+          clear = e.data.clear;
+        }
+        
+        app.LoadOsiriXAnnotations(e.data.xml, clear);
+      }
     }
-  }
-  else {
-    console.log('Unknown type of dynamic action in the Stone Web viewer: ' + e.data.type);
+    else {
+      console.log('Unknown type of dynamic action in the Stone Web viewer: ' + e.data.type);
+    }
   }
 });

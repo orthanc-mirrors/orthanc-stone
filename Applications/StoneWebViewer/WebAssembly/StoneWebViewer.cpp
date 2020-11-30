@@ -2922,6 +2922,29 @@ extern "C"
   
 
   EMSCRIPTEN_KEEPALIVE
+  void SetDicomCacheSize(int sizeMB)
+  {
+    try
+    {
+      if (sizeMB == 0)
+      {
+        LOG(WARNING) << "The DICOM cache is disabled";
+      }
+      else
+      {
+        LOG(INFO) << "The DICOM cache size is set to " << sizeMB << "MB";
+      }
+
+      if (sizeMB >= 0)
+      {
+        context_->SetDicomCacheSize(sizeMB * 1024 * 1024);
+      }
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
+  
+
+  EMSCRIPTEN_KEEPALIVE
   void FetchAllStudies()
   {
     try

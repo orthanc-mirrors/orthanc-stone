@@ -82,6 +82,17 @@ namespace OrthancStone
                                  bool hasPixelData)
   {
     LOG(TRACE) << "new item stored in cache: bucket " << bucket << ", key " << bucketKey;
+
+    if (lowCacheSizeWarning_ < fileSize &&
+        cache_.GetMaximumSize() > 0 &&
+        fileSize >= cache_.GetMaximumSize())
+    {
+      lowCacheSizeWarning_ = fileSize;
+      LOG(WARNING) << "The DICOM cache size should be larger: Storing a DICOM instance of "
+                   << (fileSize / (1024 * 1024)) << "MB, whereas the cache size is only "
+                   << (cache_.GetMaximumSize() / (1024 * 1024)) << "MB wide";
+    }
+    
     cache_.Acquire(GetIndex(bucket, bucketKey), new Item(dicom, fileSize, hasPixelData));
   }
 

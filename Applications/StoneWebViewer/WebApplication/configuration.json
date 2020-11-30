@@ -69,6 +69,16 @@
      * set by the Orthanc plugin if missing.
      **/
     "DicomWebRoot" : "../dicom-web",
+
+    /**
+     * Set the size of the cache that stores the DICOM files. This
+     * size is expressed in megabytes. The default value of 128MB
+     * should work in most setups, except if very large multiframe
+     * instances are encountered, which might for instance be the case
+     * for mammography. Setting this parameter to zero will disable
+     * the cache, which should only be done for testing.
+     **/
+    "DicomCacheSize" : 128,
     
     /**
      * The following parameter can be set if running the Stone Web

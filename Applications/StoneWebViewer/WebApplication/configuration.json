@@ -61,13 +61,13 @@
      * set, all the requests for dynamic actions will be rejected.
      * https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
      **/
-    "ExpectedMessageOrigin" : "http://localhost:8042",
+    "ExpectedMessageOrigin" : "http://localhost:8042"
 
     /**
      * The following parameter can be set if running the Stone Web
      * viewer from Orthanc, but without using the associated plugin.
      * Using the plugin would overwrite this setting.
      **/
-    "OrthancApiRoot" : "schnol"
+    // "OrthancApiRoot" : ".."
   }
 }

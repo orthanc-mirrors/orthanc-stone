@@ -215,7 +215,7 @@
                                  class="wvSerieslist__placeholderIcon fa fa-file-pdf"></i>
 
                               <i v-if="series[seriesIndex].type == stone.ThumbnailType.VIDEO"
-                                 class="wvSerieslist__placeholderIcon fa fa-video-video"></i>
+                                 class="wvSerieslist__placeholderIcon fa fa-video"></i>
                               
                               <div v-if="[stone.ThumbnailType.IMAGE, stone.ThumbnailType.NO_PREVIEW].includes(series[seriesIndex].type)"
                                    class="wvSerieslist__placeholderIcon"
@@ -534,6 +534,7 @@
                         v-bind:width="viewport1Width"
                         v-bind:height="viewport1Height"
                         v-bind:show-info="showInfo"
+                        v-bind:global-configuration="globalConfiguration"
                         v-bind:active="activeViewport==1"></viewport>
               <viewport v-on:updated-series="SetViewportSeries(2, $event)"
                         v-on:selected-viewport="activeViewport=2"
@@ -545,6 +546,7 @@
                         v-bind:width="viewport2Width"
                         v-bind:height="viewport2Height"
                         v-bind:show-info="showInfo"
+                        v-bind:global-configuration="globalConfiguration"
                         v-bind:active="activeViewport==2"></viewport>
               <viewport v-on:updated-series="SetViewportSeries(3, $event)"
                         v-on:selected-viewport="activeViewport=3"
@@ -556,6 +558,7 @@
                         v-bind:width="viewport3Width"
                         v-bind:height="viewport3Height"
                         v-bind:show-info="showInfo"
+                        v-bind:global-configuration="globalConfiguration"
                         v-bind:active="activeViewport==3"></viewport>
               <viewport v-on:updated-series="SetViewportSeries(4, $event)"
                         v-on:selected-viewport="activeViewport=4"
@@ -567,6 +570,7 @@
                         v-bind:width="viewport4Width"
                         v-bind:height="viewport4Height"
                         v-bind:show-info="showInfo"
+                        v-bind:global-configuration="globalConfiguration"
                         v-bind:active="activeViewport==4"></viewport>
             </div>
           </div>
@@ -668,10 +672,14 @@
             </div>
                 
             <div v-if="status == 'video'" class="wvPaneOverlay">
-              [ videos are not supported yet ]
-              <!--video class="wvVideo" autoplay="" loop="" controls="" preload="auto" type="video/mp4"
-                     src="http://viewer-pro.osimis.io/instances/e465dd27-83c96343-96848735-7035a133-1facf1a0/frames/0/raw">
-              </video-->
+              <div v-if="!('OrthancApiRoot' in globalConfiguration) || videoUri.length == 0">
+                [ cannot play videos using only DICOMweb yet ]
+              </div>
+              <div v-if="'OrthancApiRoot' in globalConfiguration && videoUri.length > 0">
+                <video class="wvVideo" autoplay="" loop="" controls="" preload="auto" type="video/mp4"
+                       v-bind:src="videoUri">
+                </video>
+              </div>
             </div>
                 
             <div v-if="status == 'loading'" class="wvPaneOverlay">

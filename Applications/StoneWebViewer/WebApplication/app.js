@@ -123,7 +123,7 @@ function RefreshTooltips()
 
 Vue.component('viewport', {
   props: [ 'left', 'top', 'width', 'height', 'canvasId', 'active', 'content', 'viewportIndex',
-           'showInfo' ],
+           'showInfo', 'globalConfiguration' ],
   template: '#viewport-template',
   data: function () {
     return {
@@ -136,7 +136,8 @@ Vue.component('viewport', {
       cineIncrement: 0,
       cineFramesPerSecond: 30,
       cineTimeoutId: null,
-      cineLoadingFrame: false
+      cineLoadingFrame: false,
+      videoUri: ''
     }
   },
   watch: {
@@ -202,7 +203,31 @@ Vue.component('viewport', {
       }
       else if (newVal.series.type == stone.ThumbnailType.VIDEO) {
         this.status = 'video';
-        console.warn('Videos are not supported by the Stone Web viewer yet');
+        this.videoUri = '';
+        if (this.globalConfiguration.OrthancApiRoot) {
+          var that = this;
+          axios.post(that.globalConfiguration.OrthancApiRoot + '/tools/find',
+                     {
+                       Level : 'Instance',
+                       Query : {
+                         StudyInstanceUID: studyInstanceUid
+                       }
+                     })
+            .then(function(response) {
+              if (response.data.length != 1) {
+                throw('');
+              }
+              else {
+                that.videoUri = that.globalConfiguration.OrthancApiRoot + '/instances/' + response.data[0] + '/frames/0/raw';
+              }
+            })
+            .catch(function(error) {
+              alert('Cannot find the video in Orthanc');
+            });
+        }
+        else {
+          console.warn('Videos are not supported by the Stone Web viewer alone yet, the Orthanc REST API is needed');
+        }
       }
     }
   },

@@ -673,7 +673,7 @@
                 
             <div v-if="status == 'video'" class="wvPaneOverlay">
               <div v-if="!('OrthancApiRoot' in globalConfiguration) || videoUri.length == 0">
-                [ cannot play videos using only DICOMweb yet ]
+                [ cannot play videos using DICOMweb yet ]
               </div>
               <div v-if="'OrthancApiRoot' in globalConfiguration && videoUri.length > 0">
                 <video class="wvVideo" autoplay="" loop="" controls="" preload="auto" type="video/mp4"

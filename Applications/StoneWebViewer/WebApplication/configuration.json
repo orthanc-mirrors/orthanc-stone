@@ -50,6 +50,7 @@
 
     /**
      * Enables/disables the button to download the display study.
+     * Only used if "OrthancApiRoot" is properly set.
      **/
     "DownloadStudyEnabled" : true,
 
@@ -61,13 +62,16 @@
      * set, all the requests for dynamic actions will be rejected.
      * https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
      **/
-    "ExpectedMessageOrigin" : "http://localhost:8042"
+    "ExpectedMessageOrigin" : "http://localhost:8042",
 
     /**
      * The following parameter can be set if running the Stone Web
      * viewer from Orthanc, but without using the associated plugin.
-     * Using the plugin would overwrite this setting.
+     * Using the plugin would overwrite this setting. This will enable
+     * features that are only available if the Orthanc REST API is
+     * accessible (download of studies, and playing videos). This
+     * option is typically used by the developers of Stone.
      **/
-    // "OrthancApiRoot" : ".."
+    "OrthancApiRoot" : ".."
   }
 }

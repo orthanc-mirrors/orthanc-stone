@@ -83,13 +83,13 @@ namespace OrthancStone
     
 
   /**
-  This object is created on the heap for every http request.
-  It is deleted in the success (or error) callbacks.
+     This object is created on the heap for every http request.
+     It is deleted in the success (or error) callbacks.
 
-  This object references the receiver of the request. Since this is a raw
-  reference, we need additional checks to make sure we send the response to
-  the same object, for the object can be deleted and a new one recreated at the
-  same address (it often happens in the [single-threaded] browser context).
+     This object references the receiver of the request. Since this is a raw
+     reference, we need additional checks to make sure we send the response to
+     the same object, for the object can be deleted and a new one recreated at the
+     same address (it often happens in the [single-threaded] browser context).
   */
   class WebAssemblyOracle::FetchContext : public boost::noncopyable
   {
@@ -127,52 +127,19 @@ namespace OrthancStone
       return expectedContentType_;
     }
 
-    IMessageEmitter& GetEmitter() const
+    void EmitException(const Orthanc::OrthancException& exception)
     {
-      return oracle_;
-    }
-
-    boost::weak_ptr<IObserver> GetReceiver() const
-    {
-      return receiver_;
-    }
-
-    void EmitMessage(const IMessage& message)
-    {
-      if (Orthanc::Logging::IsTraceLevelEnabled())
-      {
-        // Calling "receiver_.lock()" is expensive, hence the quick check if TRACE is enabled
-        LOG(TRACE) << "WebAssemblyOracle::FetchContext::EmitMessage receiver_ = "
-                   << std::hex << receiver_.lock().get() << std::dec;
-      }
-      
+      assert(command_.get() != NULL);
+      OracleCommandExceptionMessage message(*command_, exception);
       oracle_.EmitMessage(receiver_, message);
     }
 
-    IOracleCommand& GetCommand() const
+    void ProcessFetchResult(const std::string& answer,
+                            const HttpHeaders& headers)
     {
-      return *command_;
+      assert(command_.get() != NULL);
+      oracle_.ProcessFetchResult(receiver_, answer, headers, *command_);
     }
-
-    template <typename T>
-    const T& GetTypedCommand() const
-    {
-      return dynamic_cast<T&>(*command_);
-    }
-
-#if ORTHANC_ENABLE_DCMTK == 1
-    void StoreInCache(const std::string& sopInstanceUid,
-                      std::unique_ptr<Orthanc::ParsedDicomFile>& dicom,
-                      size_t fileSize)
-    {
-      if (oracle_.dicomCache_.get())
-      {
-        // Store it into the cache for future use
-        oracle_.dicomCache_->Acquire(BUCKET_SOP, sopInstanceUid,
-                                     dicom.release(), fileSize, true);
-      }              
-    }
-#endif
 
     static void SuccessCallback(emscripten_fetch_t *fetch)
     {
@@ -183,7 +150,7 @@ namespace OrthancStone
       
       if (fetch->userData == NULL)
       {
-        LOG(ERROR) << "WebAssemblyOracle::FetchContext::SuccessCallback fetch->userData is NULL!!!!!!!";
+        LOG(ERROR) << "WebAssemblyOracle::FetchContext::SuccessCallback fetch->userData is NULL!";
         return;
       }
 
@@ -266,75 +233,13 @@ namespace OrthancStone
         }
         else
         {
-          switch (context->GetCommand().GetType())
-          {
-            case IOracleCommand::Type_Http:
-            {
-              HttpCommand::SuccessMessage message(context->GetTypedCommand<HttpCommand>(), headers, answer);
-              context->EmitMessage(message);
-              break;
-            }
-
-            case IOracleCommand::Type_OrthancRestApi:
-            {
-              LOG(TRACE) << "WebAssemblyOracle::FetchContext::SuccessCallback. About to call context->EmitMessage(message);";
-              OrthancRestApiCommand::SuccessMessage message
-                (context->GetTypedCommand<OrthancRestApiCommand>(), headers, answer);
-              context->EmitMessage(message);
-              break;
-            }
-
-            case IOracleCommand::Type_GetOrthancImage:
-            {
-              context->GetTypedCommand<GetOrthancImageCommand>().ProcessHttpAnswer
-                (context->GetReceiver(), context->GetEmitter(), answer, headers);
-              break;
-            }
-
-            case IOracleCommand::Type_GetOrthancWebViewerJpeg:
-            {
-              context->GetTypedCommand<GetOrthancWebViewerJpegCommand>().ProcessHttpAnswer
-                (context->GetReceiver(), context->GetEmitter(), answer);
-              break;
-            }
-
-            case IOracleCommand::Type_ParseDicomFromWado:
-            {
-#if ORTHANC_ENABLE_DCMTK == 1
-              const ParseDicomFromWadoCommand& command =
-                context->GetTypedCommand<ParseDicomFromWadoCommand>();
-              
-              size_t fileSize;
-              std::unique_ptr<Orthanc::ParsedDicomFile> dicom
-                (ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, headers));
-
-              {
-                ParseDicomSuccessMessage message(command, command.GetSource(), *dicom, fileSize, true);
-                context->EmitMessage(message);
-              }
-
-              context->StoreInCache(command.GetSopInstanceUid(), dicom, fileSize);
-#else
-              throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-#endif
-              break;
-            }
-
-            default:
-              LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle (in SuccessCallback): "
-                         << context->GetCommand().GetType();
-              throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-          }
+          context->ProcessFetchResult(answer, headers);
         }
       }
       catch (Orthanc::OrthancException& e)
       {
         LOG(INFO) << "Error while processing a fetch answer in the oracle: " << e.What();
-
-        {
-          OracleCommandExceptionMessage message(context->GetCommand(), e);
-          context->EmitMessage(message);
-        }
+        context->EmitException(e);
       }
     }
 
@@ -358,11 +263,7 @@ namespace OrthancStone
       }
 #endif
 
-      {
-        OracleCommandExceptionMessage message
-          (context->GetCommand(), Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol));
-        context->EmitMessage(message);
-      }
+      context->EmitException(Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol));
       
       /**
        * TODO - The following code leads to an infinite recursion, at
@@ -412,9 +313,19 @@ namespace OrthancStone
       method_ = method;
     }
 
+    Orthanc::HttpMethod GetMethod() const
+    {
+      return method_;
+    }
+
     void SetUrl(const std::string& url)
     {
       url_ = url;
+    }
+
+    const std::string& GetUrl() const
+    {
+      return url_;
     }
 
     void SetBody(std::string& body /* will be swapped */)
@@ -430,9 +341,19 @@ namespace OrthancStone
       }
     }
 
+    const HttpHeaders& GetHttpHeaders() const
+    {
+      return headers_;
+    }
+
     void SetTimeout(unsigned int timeout)
     {
       timeout_ = timeout;
+    }
+
+    unsigned int GetTimeout() const
+    {
+      return timeout_;
     }
 
     void SetCredentials(const std::string& username,
@@ -546,6 +467,74 @@ namespace OrthancStone
   };
 
 
+  void WebAssemblyOracle::ProcessFetchResult(boost::weak_ptr<IObserver>& receiver,
+                                             const std::string& answer,
+                                             const HttpHeaders& headers,
+                                             const IOracleCommand& command)
+  {
+    switch (command.GetType())
+    {
+      case IOracleCommand::Type_Http:
+      {
+        HttpCommand::SuccessMessage message(dynamic_cast<const HttpCommand&>(command), headers, answer);
+        EmitMessage(receiver, message);
+        break;
+      }
+
+      case IOracleCommand::Type_OrthancRestApi:
+      {
+        LOG(TRACE) << "WebAssemblyOracle::FetchContext::SuccessCallback. About to call EmitMessage(message);";
+        OrthancRestApiCommand::SuccessMessage message
+          (dynamic_cast<const OrthancRestApiCommand&>(command), headers, answer);
+        EmitMessage(receiver, message);
+        break;
+      }
+
+      case IOracleCommand::Type_GetOrthancImage:
+      {
+        dynamic_cast<const GetOrthancImageCommand&>(command).ProcessHttpAnswer(receiver, *this, answer, headers);
+        break;
+      }
+
+      case IOracleCommand::Type_GetOrthancWebViewerJpeg:
+      {
+        dynamic_cast<const GetOrthancWebViewerJpegCommand&>(command).ProcessHttpAnswer(receiver, *this, answer);
+        break;
+      }
+
+      case IOracleCommand::Type_ParseDicomFromWado:
+      {
+#if ORTHANC_ENABLE_DCMTK == 1
+        const ParseDicomFromWadoCommand& c = dynamic_cast<const ParseDicomFromWadoCommand&>(command);
+              
+        size_t fileSize;
+        std::unique_ptr<Orthanc::ParsedDicomFile> dicom
+          (ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, headers));
+
+        {
+          ParseDicomSuccessMessage message(c, c.GetSource(), *dicom, fileSize, true);
+          EmitMessage(receiver, message);
+        }
+
+        if (dicomCache_.get())
+        {
+          // Store it into the cache for future use
+          dicomCache_->Acquire(BUCKET_SOP, c.GetSopInstanceUid(), dicom.release(), fileSize, true);
+        }
+#else
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+#endif
+        break;
+      }
+
+      default:
+        LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle (in SuccessCallback): "
+                   << command.GetType();
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
+  }
+
+
   void WebAssemblyOracle::SetOrthancUrl(FetchCommand& command,
                                         const std::string& uri) const
   {
@@ -603,7 +592,7 @@ namespace OrthancStone
       fetch.SetTimeout(command->GetTimeout());
 
       if (command->GetMethod() == Orthanc::HttpMethod_Post ||
-        command->GetMethod() == Orthanc::HttpMethod_Put)
+          command->GetMethod() == Orthanc::HttpMethod_Put)
       {
         std::string body;
         command->SwapBody(body);
@@ -785,8 +774,8 @@ namespace OrthancStone
 #if ORTHANC_ENABLE_DCMTK == 1
         Execute(receiver, dynamic_cast<ParseDicomFromWadoCommand*>(protection.release()));
 #else
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
-                                          "DCMTK must be enabled to parse DICOM files");
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+                                        "DCMTK must be enabled to parse DICOM files");
 #endif
         break;
             

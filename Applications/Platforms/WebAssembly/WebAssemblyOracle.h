@@ -90,6 +90,11 @@ namespace OrthancStone
     std::unique_ptr<ParsedDicomCache>  dicomCache_;
 #endif
 
+    void ProcessFetchResult(boost::weak_ptr<IObserver>& receiver,
+                            const std::string& answer,
+                            const HttpHeaders& headers,
+                            const IOracleCommand& command);
+
   public:
     WebAssemblyOracle() :
       isLocalOrthanc_(false)

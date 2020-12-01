@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 
 #include "../OrthancStone/Sources/Toolbox/DicomInstanceParameters.h"
+#include "../OrthancStone/Sources/Loaders/DicomSource.h"
 
 #include <OrthancException.h>
 
@@ -106,4 +107,117 @@ TEST(DicomInstanceParameters, Windowing)
   p.GetWindowingPresetsUnion(c, w);
   ASSERT_FLOAT_EQ((a + b) / 2.0f, c);
   ASSERT_FLOAT_EQ(b - a, w);
+}
+
+
+TEST(DicomSource, Equality)
+{
+  {
+    OrthancStone::DicomSource s1;
+
+    {
+      OrthancStone::DicomSource s2;
+      ASSERT_TRUE(s1.IsSameSource(s2));
+
+      s2.SetDicomDirSource();
+      ASSERT_FALSE(s1.IsSameSource(s2));
+
+      s2.SetDicomWebSource("toto");
+      ASSERT_FALSE(s1.IsSameSource(s2));
+
+      s2.SetDicomWebThroughOrthancSource("toto");
+      ASSERT_FALSE(s1.IsSameSource(s2));
+
+      s2.SetOrthancSource();
+      ASSERT_TRUE(s1.IsSameSource(s2));
+    }
+  }
+
+  {
+    OrthancStone::DicomSource s1;
+
+    {
+      Orthanc::WebServiceParameters p;
+      p.SetUrl("http://localhost:8042/");
+
+      OrthancStone::DicomSource s2;
+      s2.SetOrthancSource(p);
+      ASSERT_TRUE(s1.IsSameSource(s2));
+
+      p.SetCredentials("toto", "tutu");
+      s2.SetOrthancSource(p);
+      ASSERT_FALSE(s1.IsSameSource(s2));
+      
+      p.ClearCredentials();
+      s2.SetOrthancSource(p);
+      ASSERT_TRUE(s1.IsSameSource(s2));
+
+      p.SetUrl("http://localhost:8043/");
+      s2.SetOrthancSource(p);
+      ASSERT_FALSE(s1.IsSameSource(s2));
+    }
+  }
+
+  {
+    OrthancStone::DicomSource s1;
+    s1.SetDicomDirSource();
+
+    {
+      OrthancStone::DicomSource s2;
+      ASSERT_FALSE(s1.IsSameSource(s2));
+
+      s2.SetDicomDirSource();
+      ASSERT_TRUE(s1.IsSameSource(s2));
+
+      s2.SetDicomWebSource("toto");
+      ASSERT_FALSE(s1.IsSameSource(s2));
+
+      s2.SetDicomWebThroughOrthancSource("toto");
+      ASSERT_FALSE(s1.IsSameSource(s2));
+    }
+  }
+
+  {
+    OrthancStone::DicomSource s1;
+    s1.SetDicomWebSource("http");
+
+    {
+      OrthancStone::DicomSource s2;
+      ASSERT_FALSE(s1.IsSameSource(s2));
+
+      s2.SetDicomDirSource();
+      ASSERT_FALSE(s1.IsSameSource(s2));
+
+      s2.SetDicomWebSource("http");
+      ASSERT_TRUE(s1.IsSameSource(s2));
+
+      s2.SetDicomWebSource("http2");
+      ASSERT_FALSE(s1.IsSameSource(s2));
+
+      s2.SetDicomWebThroughOrthancSource("toto");
+      ASSERT_FALSE(s1.IsSameSource(s2));
+    }
+  }
+
+  {
+    OrthancStone::DicomSource s1;
+    s1.SetDicomWebThroughOrthancSource("server");
+
+    {
+      OrthancStone::DicomSource s2;
+      ASSERT_FALSE(s1.IsSameSource(s2));
+
+      s2.SetDicomDirSource();
+      ASSERT_FALSE(s1.IsSameSource(s2));
+
+      s2.SetDicomWebSource("http");
+      ASSERT_FALSE(s1.IsSameSource(s2));
+
+      s2.SetDicomWebThroughOrthancSource("server");
+      ASSERT_TRUE(s1.IsSameSource(s2));
+
+      s2.SetDicomWebThroughOrthancSource("server2");
+      ASSERT_FALSE(s1.IsSameSource(s2));
+    }
+  }
 }

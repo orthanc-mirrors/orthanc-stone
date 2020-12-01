@@ -68,6 +68,47 @@ namespace OrthancStone
   }
 
 
+  bool DicomSource::IsSameSource(const DicomSource& other) const
+  {
+    if (type_ != other.type_)
+    {
+      return false;
+    }
+    else
+    {
+      switch (type_)
+      {
+        case DicomSourceType_Orthanc:
+          return (webService_.GetUrl() == other.webService_.GetUrl() &&
+                  webService_.GetUsername() == other.webService_.GetUsername() &&
+                  webService_.GetHttpHeaders() == other.webService_.GetHttpHeaders() &&
+                  hasOrthancWebViewer1_ == other.hasOrthancWebViewer1_ &&
+                  hasOrthancAdvancedPreview_ == other.hasOrthancAdvancedPreview_);
+          
+        case DicomSourceType_DicomWeb:
+          return (webService_.GetUrl() == other.webService_.GetUrl() &&
+                  webService_.GetUsername() == other.webService_.GetUsername() &&
+                  webService_.GetHttpHeaders() == other.webService_.GetHttpHeaders() &&
+                  hasDicomWebRendered_ == other.hasDicomWebRendered_);
+          
+        case DicomSourceType_DicomWebThroughOrthanc:
+          return (webService_.GetUrl() == other.webService_.GetUrl() &&
+                  webService_.GetUsername() == other.webService_.GetUsername() &&
+                  webService_.GetHttpHeaders() == other.webService_.GetHttpHeaders() &&
+                  orthancDicomWebRoot_ == other.orthancDicomWebRoot_ &&
+                  serverName_ == other.serverName_ &&
+                  hasDicomWebRendered_ == other.hasDicomWebRendered_);
+          
+        case DicomSourceType_DicomDir:
+          return true;
+          
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+    }
+  }
+
+
   void DicomSource::SetOrthancSource()
   {
     Orthanc::WebServiceParameters parameters;

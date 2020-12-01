@@ -57,6 +57,9 @@ namespace OrthancStone
       SetOrthancSource();
     }
 
+    // Makes a rough comparison to test whether these two sources match
+    bool IsSameSource(const DicomSource& other) const;
+
     DicomSourceType GetType() const
     {
       return type_;

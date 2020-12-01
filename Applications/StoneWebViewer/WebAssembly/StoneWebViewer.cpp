@@ -1918,6 +1918,7 @@ private:
                                "/frames/" + boost::lexical_cast<std::string>(frameNumber + 1) + "/rendered");
 
       std::map<std::string, std::string> headers, arguments;
+      // arguments["quality"] = "10";   // Low-level quality for test purpose
       arguments["window"] = (
         boost::lexical_cast<std::string>(windowingCenter_) + ","  +
         boost::lexical_cast<std::string>(windowingWidth_) + ",linear");

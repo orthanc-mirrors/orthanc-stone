@@ -33,24 +33,32 @@ namespace OrthancStone
 {
   void CoordinateSystem3D::CheckAndComputeNormal()
   {
-    // DICOM expects normal vectors to define the axes: "The row and
-    // column direction cosine vectors shall be normal, i.e., the dot
-    // product of each direction cosine vector with itself shall be
-    // unity."
-    // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.2.html
+    /**
+     * DICOM expects normal vectors to define the axes: "The row and
+     * column direction cosine vectors shall be normal, i.e., the dot
+     * product of each direction cosine vector with itself shall be
+     * unity."
+     * http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.2.html
+     **/
     if (!LinearAlgebra::IsNear(boost::numeric::ublas::norm_2(axisX_), 1.0) ||
         !LinearAlgebra::IsNear(boost::numeric::ublas::norm_2(axisY_), 1.0))
     {
       LOG(WARNING) << "Invalid 3D geometry: Axes are not normal vectors";
       SetupCanonical();
     }
-
-    // The vectors within "Image Orientation Patient" must be
-    // orthogonal, according to the DICOM specification: "The row and
-    // column direction cosine vectors shall be orthogonal, i.e.,
-    // their dot product shall be zero."
-    // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.2.html
-    else if (!LinearAlgebra::IsCloseToZero(boost::numeric::ublas::inner_prod(axisX_, axisY_)))
+    
+    /**
+     * The vectors within "Image Orientation Patient" must be
+     * orthogonal, according to the DICOM specification: "The row and
+     * column direction cosine vectors shall be orthogonal, i.e.,
+     * their dot product shall be zero."
+     * http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.2.html
+     *
+     * The "0.00001" threshold is needed for KNIX (on this sample
+     * image, the inner product equals "0.000003", which is rejected
+     * by "LinearAlgebra::IsCloseToZero()").
+     **/
+    else if (!LinearAlgebra::IsNear(0, boost::numeric::ublas::inner_prod(axisX_, axisY_), 0.00001))
     {
       LOG(WARNING) << "Invalid 3D geometry: Image orientation patient is not orthogonal";
       SetupCanonical();

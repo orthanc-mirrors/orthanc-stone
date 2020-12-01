@@ -1177,7 +1177,8 @@ public:
     virtual void SignalFrameUpdated(const ViewerViewport& viewport,
                                     size_t currentFrame,
                                     size_t countFrames,
-                                    DisplayedFrameQuality quality) = 0;
+                                    DisplayedFrameQuality quality,
+                                    unsigned int instanceNumber) = 0;
 
     virtual void SignalCrosshair(const ViewerViewport& viewport,
                                  const OrthancStone::Vector& click) = 0;
@@ -1185,6 +1186,10 @@ public:
     virtual void SignalSynchronizedBrowsing(const ViewerViewport& viewport,
                                             const OrthancStone::Vector& click,
                                             const OrthancStone::Vector& normal) = 0;
+
+    virtual void SignalWindowingUpdated(const ViewerViewport& viewport,
+                                        double windowingCenter,
+                                        double windowingWidth) = 0;
   };
 
 private:
@@ -1655,9 +1660,19 @@ private:
 
     ScheduleNextPrefetch();
     
-    if (observer_.get() != NULL)
+    if (frames_.get() != NULL &&
+        cursor_.get() != NULL &&
+        observer_.get() != NULL)
     {
-      observer_->SignalFrameUpdated(*this, cursorIndex, frames_->GetFramesCount(), quality);
+      const Orthanc::DicomMap& instance = frames_->GetInstanceOfFrame(cursor_->GetCurrentIndex()).GetTags();
+
+      uint32_t instanceNumber;
+      if (!instance.ParseUnsignedInteger32(instanceNumber, Orthanc::DICOM_TAG_INSTANCE_NUMBER))
+      {
+        instanceNumber = 0;
+      }
+      
+      observer_->SignalFrameUpdated(*this, cursorIndex, frames_->GetFramesCount(), quality, instanceNumber);
     }
   }
   
@@ -2141,7 +2156,7 @@ public:
     if (observer_.get() != NULL)
     {
       observer_->SignalFrameUpdated(*this, cursor_->GetCurrentIndex(),
-                                    frames_->GetFramesCount(), DisplayedFrameQuality_None);
+                                    frames_->GetFramesCount(), DisplayedFrameQuality_None, 0);
     }
 
     centralPhysicalWidth_ = 1;
@@ -2406,13 +2421,11 @@ public:
     
     if (windowingPresetCenters_.empty())
     {
-      windowingCenter_ = 128;
-      windowingWidth_ = 256;
+      SetWindowing(128, 256);
     }
     else
     {
-      windowingCenter_ = windowingPresetCenters_[0];
-      windowingWidth_ = windowingPresetWidths_[0];
+      SetWindowing(windowingPresetCenters_[0], windowingPresetWidths_[0]);
     }
   }
 
@@ -2422,6 +2435,11 @@ public:
     windowingCenter_ = windowingCenter;
     windowingWidth_ = windowingWidth;
     UpdateCurrentTextureParameters();
+
+    if (observer_.get() != NULL)
+    {
+      observer_->SignalWindowingUpdated(*this, windowingCenter, windowingWidth);
+    }
   }
 
   void FlipX()
@@ -2747,7 +2765,8 @@ public:
   virtual void SignalFrameUpdated(const ViewerViewport& viewport,
                                   size_t currentFrame,
                                   size_t countFrames,
-                                  DisplayedFrameQuality quality) ORTHANC_OVERRIDE
+                                  DisplayedFrameQuality quality,
+                                  unsigned int instanceNumber) ORTHANC_OVERRIDE
   {
     EM_ASM({
         const customEvent = document.createEvent("CustomEvent");
@@ -2755,13 +2774,14 @@ public:
                                     { "canvasId" : UTF8ToString($0),
                                         "currentFrame" : $1,
                                         "numberOfFrames" : $2,
-                                        "quality" : $3 });
+                                        "quality" : $3,
+                                        "instanceNumber" : $4 });
         window.dispatchEvent(customEvent);
       },
       viewport.GetCanvasId().c_str(),
       static_cast<int>(currentFrame),
       static_cast<int>(countFrames),
-      quality);
+      quality, instanceNumber);
 
     UpdateReferenceLines();
   }
@@ -2835,6 +2855,25 @@ public:
       },
       sopInstanceUid.c_str(),
       dataUriScheme.c_str());
+  }
+
+  virtual void SignalWindowingUpdated(const ViewerViewport& viewport,
+                                      double windowingCenter,
+                                      double windowingWidth) ORTHANC_OVERRIDE
+  {
+    EM_ASM({
+        const customEvent = document.createEvent("CustomEvent");
+        customEvent.initCustomEvent("WindowingUpdated", false, false,
+                                    { "canvasId" : UTF8ToString($0),
+                                        "windowingCenter" : $1,
+                                        "windowingWidth" : $2 });
+        window.dispatchEvent(customEvent);
+      },
+      viewport.GetCanvasId().c_str(),
+      static_cast<int>(boost::math::iround<double>(windowingCenter)),
+      static_cast<int>(boost::math::iround<double>(windowingWidth)));
+
+    UpdateReferenceLines();
   }
 };
 

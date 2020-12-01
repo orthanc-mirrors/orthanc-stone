@@ -137,7 +137,10 @@ Vue.component('viewport', {
       cineFramesPerSecond: 30,
       cineTimeoutId: null,
       cineLoadingFrame: false,
-      videoUri: ''
+      videoUri: '',
+      windowingCenter: 0, 
+      windowingWidth: 0,
+      instanceNumber: 0
     }
   },
   watch: {
@@ -155,6 +158,9 @@ Vue.component('viewport', {
       this.cineMode = '';
       this.cineLoadingFrame = false;
       this.cineRate = 30;   // Default value
+      this.windowingCenter = 0;
+      this.windowingWidth = 0;
+      this.instanceNumber = 0;
       
       if (this.cineTimeoutId !== null) {
         clearTimeout(this.cineTimeoutId);
@@ -239,6 +245,7 @@ Vue.component('viewport', {
         that.currentFrame = (args.detail.currentFrame + 1);
         that.numberOfFrames = args.detail.numberOfFrames;
         that.quality = args.detail.quality;
+        that.instanceNumber = args.detail.instanceNumber;
       }
     });
 
@@ -272,6 +279,14 @@ Vue.component('viewport', {
         Vue.nextTick(function() {
           that.$refs.pdfViewer.LoadPdf(pdf);
         });
+      }
+    });
+
+    window.addEventListener('WindowingUpdated', function(args) {
+      if (args.detail.canvasId == that.canvasId) {
+        that.windowingCenter = args.detail.windowingCenter;
+        that.windowingWidth = args.detail.windowingWidth;
+        console.log(that.windowingCenter + ' ' + that.windowingWidth);
       }
     });
   },

@@ -22,6 +22,14 @@ Differences with Osimis Web viewer
   current frame by skipping 1/20th of the frames in the series.
 
 
+- The Stone Web viewer displays a color block at the bottom-right of
+  each viewport. A "red" color means that the current frame is still
+  being loaded, so don't trust what is currently displayed. A "yellow"
+  color means that the viewport displays a low-quality preview (JPEG).
+  A "green" color means that the viewport contains an image with the
+  same quality as the source DICOM image.
+
+
 - The Stone Web viewer uses the DICOM identifiers, while the Osimis Web
   viewer uses the Orthanc identifiers.
   https://book.orthanc-server.com/faq/orthanc-ids.html

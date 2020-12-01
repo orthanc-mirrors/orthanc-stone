@@ -618,9 +618,12 @@
                     {{ app.FormatDate(content.series.tags[STUDY_DATE]) }}<br/>
                     {{ content.series.tags[SERIES_NUMBER] }} | {{ content.series.tags[SERIES_DESCRIPTION] }}
                   </div>
-                  <div class="wv-overlay-timeline-wrapper wvPrintExclude">
-                    <div style="text-align:left; padding:5px" v-show="numberOfFrames != 0">
-                      <div style="width: 12em; padding: 1em;" v-show="cineControls">
+                  <div class="wv-overlay-bottomleft wvPrintExclude" style="bottom: 0px">
+                    <div v-show="instanceNumber != 0" style="padding-bottom: 1em">
+                      Instance number: {{ instanceNumber }}
+                    </div>
+                    <span v-show="numberOfFrames != 0">
+                      <div style="width: 12em;" v-show="cineControls">
                         <label>
                           Frame rate
                           <span class="wv-play-button-config-framerate-wrapper">
@@ -638,7 +641,9 @@
                           <i class="fas fa-step-backward"></i>
                         </button>
                       </div>
-                      &nbsp;&nbsp;{{ currentFrame }} / {{ numberOfFrames }}&nbsp;&nbsp;
+                      <span data-toggle="tooltip" data-title="Current frame number">
+                        &nbsp;&nbsp;{{ currentFrame }} / {{ numberOfFrames }}&nbsp;&nbsp;
+                      </span>
                       <div class="btn-group btn-group-sm" role="group">                        
                         <button class="btn btn-primary" @click="IncrementFrame()">
                           <i class="fas fa-step-forward"></i>
@@ -658,15 +663,20 @@
                           <i class="fas fa-play"></i>
                         </button>
                       </div>
-                    </div>
+                    </span>
                   </div>
                   <div class="wv-overlay-bottomright wvPrintExclude" style="bottom: 0px">
-                    <div v-show="quality == stone.DisplayedFrameQuality.NONE"
-                         style="display:block;background-color:red;width:1em;height:1em" />
-                    <div v-show="quality == stone.DisplayedFrameQuality.LOW"
-                         style="display:block;background-color:orange;width:1em;height:1em" />
-                    <div v-show="quality == stone.DisplayedFrameQuality.HIGH"
-                         style="display:block;background-color:green;width:1em;height:1em" />
+                    <div v-if="windowingWidth != 0">
+                      ww/cc: {{ windowingCenter }} / {{ windowingWidth }}
+                    </div>
+                    <div style="padding-top: 0.5em">
+                      <div v-show="quality == stone.DisplayedFrameQuality.NONE"
+                           style="display:inline-block;background-color:red;width:1em;height:1em" />
+                      <div v-show="quality == stone.DisplayedFrameQuality.LOW"
+                           style="display:inline-block;background-color:orange;width:1em;height:1em" />
+                      <div v-show="quality == stone.DisplayedFrameQuality.HIGH"
+                           style="display:inline-block;background-color:green;width:1em;height:1em" />
+                    </div>
                   </div>
                 </div>
               </div>

@@ -937,7 +937,16 @@ var app = new Vue({
             var state = response.data['State'];
             if (state == 'Success') {
               that.creatingArchive = false;
-              window.open(that.globalConfiguration.OrthancApiRoot + '/jobs/' + that.archiveJob + '/archive');
+              var uri = that.globalConfiguration.OrthancApiRoot + '/jobs/' + that.archiveJob + '/archive';
+
+              /**
+               * The use of "window.open()" below might be blocked
+               * (depending on the browser criteria to block popup).
+               * As a consequence, we prefer to set "window.location".
+               * https://www.nngroup.com/articles/the-top-ten-web-design-mistakes-of-1999/
+               **/
+              // window.open(uri, '_blank');
+              window.location = uri;
             }
             else if (state == 'Running') {
               setTimeout(that.CheckIsDownloadComplete, 1000);

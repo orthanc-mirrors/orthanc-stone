@@ -7,17 +7,17 @@ Differences with Osimis Web viewer
 
 
 - In the Stone Web viewer, the individual instances are loaded on
-  need, in order to reduce the use of the network bandwidth. This
-  contrasts with the Osimis Web viewer that loads the entire images in
-  background.
+  an as-needed basis, in order to reduce the network bandwidth usage.
+  This contrasts with the Osimis Web viewer that loads the entire images
+  in the background.
 
 
-- Contrarily to the Osimis Web viewer, the Stone Web viewer doesn't
+- Contrarily to the Osimis Web viewer, the Stone Web viewer does not
   currently support annotations, and will not support Live Share.
 
 
-- The Stone Web viewer uses the DICOM identifiers. The Osimis Web
-  viewer the Orthanc identifiers.
+- The Stone Web viewer uses the DICOM identifiers, while the Osimis Web
+  viewer uses the Orthanc identifiers.
   https://book.orthanc-server.com/faq/orthanc-ids.html
 
   In the Stone Web viewer, the studies are indexed by their "Study
@@ -71,7 +71,7 @@ Differences with Osimis Web viewer
   comma-separated list of studies.
 
   To make a list of studies available, but display only one of those
-  studies when the viewer starts:
+  studies when the viewer starts, please use:
   http://.../index.html?study=<StudyInstanceUID1>,<StudyInstanceUID2>,...&selectedStudies=<StudyInstanceUID1>
 
   If the "selectedStudies" is not provided, then all the studies are

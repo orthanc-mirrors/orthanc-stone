@@ -30,8 +30,8 @@
 namespace OrthancStone
 {
   ViewportController::ViewportController(boost::weak_ptr<IViewport> viewport)
-    : viewport_(viewport)
-    , scene_(new Scene2D)
+    : scene_(new Scene2D)
+    , viewport_(viewport)
     , canvasToSceneFactor_(1)
   {
     // undoStack_ is not default-initialized, which basically means empty.

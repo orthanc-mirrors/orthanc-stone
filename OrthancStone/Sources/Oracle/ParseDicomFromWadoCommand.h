@@ -36,11 +36,15 @@ namespace OrthancStone
   private:
     DicomSource                      source_;
     std::string                      sopInstanceUid_;
+    bool                             transcode_;
+    Orthanc::DicomTransferSyntax     transferSyntax_;
     std::unique_ptr<IOracleCommand>  restCommand_;
 
   public:
     ParseDicomFromWadoCommand(const DicomSource& source,
                               const std::string& sopInstanceUid,
+                              bool transcode,
+                              Orthanc::DicomTransferSyntax transferSyntax,
                               IOracleCommand* restCommand);
 
     virtual Type GetType() const ORTHANC_OVERRIDE
@@ -59,6 +63,15 @@ namespace OrthancStone
     {
       return sopInstanceUid_;
     }
+
+    bool IsTranscode() const
+    {
+      return transcode_;
+    }
+
+    Orthanc::DicomTransferSyntax GetTranscodeTransferSyntax() const;
+
+    bool IsSameCommand(const ParseDicomFromWadoCommand& other) const;
     
     const IOracleCommand& GetRestCommand() const;
 

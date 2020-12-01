@@ -60,6 +60,7 @@ Optimizations
 
 * Speedup RT-STRUCT projection in sagittal + coronal views
 * Speedup RT-STRUCT loading
+* "ParseDicomFromOrthanc": new command
 
 
 -----------------

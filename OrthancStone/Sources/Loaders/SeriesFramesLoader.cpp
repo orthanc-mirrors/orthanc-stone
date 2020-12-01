@@ -444,7 +444,9 @@ namespace OrthancStone
         const std::map<std::string, std::string> empty;
 
         std::unique_ptr<ParseDicomFromWadoCommand> command(
-          new ParseDicomFromWadoCommand(source, sopInstanceUid, source.CreateDicomWebCommand(uri, empty, empty, NULL)));
+          new ParseDicomFromWadoCommand(source, sopInstanceUid, false /* no server-side transcoding */,
+                                        Orthanc::DicomTransferSyntax_LittleEndianExplicit /* dummy value */,
+                                        source.CreateDicomWebCommand(uri, empty, empty, NULL)));
         command->AcquirePayload(payload.release());
 
         {

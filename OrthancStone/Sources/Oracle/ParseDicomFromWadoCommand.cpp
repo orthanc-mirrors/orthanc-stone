@@ -30,16 +30,20 @@ namespace OrthancStone
 {
   ParseDicomFromWadoCommand::ParseDicomFromWadoCommand(const DicomSource& source,
                                                        const std::string& sopInstanceUid,
+                                                       bool transcode,
+                                                       Orthanc::DicomTransferSyntax transferSyntax,
                                                        IOracleCommand* restCommand) :
     source_(source),
     sopInstanceUid_(sopInstanceUid),
+    transcode_(transcode),
+    transferSyntax_(transferSyntax),
     restCommand_(restCommand)
   {
     if (restCommand == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
-
+    
     if (restCommand_->GetType() != Type_Http &&
         restCommand_->GetType() != Type_OrthancRestApi)
     {
@@ -51,10 +55,46 @@ namespace OrthancStone
   IOracleCommand* ParseDicomFromWadoCommand::Clone() const
   {
     assert(restCommand_.get() != NULL);
-    return new ParseDicomFromWadoCommand(source_, sopInstanceUid_, restCommand_->Clone());
+    return new ParseDicomFromWadoCommand(source_, sopInstanceUid_, transcode_, transferSyntax_, restCommand_->Clone());
   }
 
 
+  Orthanc::DicomTransferSyntax ParseDicomFromWadoCommand::GetTranscodeTransferSyntax() const
+  {
+    if (transcode_)
+    {
+      return transferSyntax_;
+    }
+    else
+    {
+      // "IsTranscode()" should have been called
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+  
+
+  bool ParseDicomFromWadoCommand::IsSameCommand(const ParseDicomFromWadoCommand& other) const
+  {
+    if (source_.IsSameSource(other.source_) &&
+        sopInstanceUid_ == other.sopInstanceUid_ &&
+        transcode_ == other.transcode_)
+    {
+      if (transcode_)
+      {
+        return transferSyntax_ == other.transferSyntax_;
+      }
+      else
+      {
+        return true;
+      }
+    }
+    else
+    {
+      return false;
+    }      
+  }    
+
+  
   const IOracleCommand& ParseDicomFromWadoCommand::GetRestCommand() const
   {
     assert(restCommand_.get() != NULL);
@@ -94,7 +134,7 @@ namespace OrthancStone
       source.CreateDicomWebCommand(uri, arguments, headers, NULL));
 
     std::unique_ptr<ParseDicomFromWadoCommand> command(
-      new ParseDicomFromWadoCommand(source, sopInstanceUid, rest.release()));
+      new ParseDicomFromWadoCommand(source, sopInstanceUid, transcode, transferSyntax, rest.release()));
 
     if (protection.get() != NULL)
     {

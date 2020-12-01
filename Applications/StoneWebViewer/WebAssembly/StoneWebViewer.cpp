@@ -1026,6 +1026,11 @@ public:
     UpdatePrefetch();
   }
 
+  size_t GetFramesCount() const
+  {
+    return framesCount_;
+  }
+
   void SetCircularPrefetch(bool isCircularPrefetch)
   {
     isCircularPrefetch_ = isCircularPrefetch;
@@ -2278,6 +2283,31 @@ public:
 
     return false;
   }
+
+
+  void GoToFirstFrame()
+  {
+    if (cursor_.get() != NULL &&
+        cursor_->GetCurrentIndex() != 0)
+    {
+      cursor_->SetCurrentIndex(0);
+      Redraw();
+    }
+  }
+
+
+  void GoToLastFrame()
+  {
+    if (cursor_.get() != NULL)
+    {
+      size_t last = cursor_->GetFramesCount() - 1;
+      if (cursor_->GetCurrentIndex() != last)
+      {
+        cursor_->SetCurrentIndex(last);
+        Redraw();
+      }
+    }
+  }
   
 
   bool GetCurrentFrameOfReferenceUid(std::string& frameOfReferenceUid) const
@@ -3194,6 +3224,28 @@ extern "C"
     EXTERN_CATCH_EXCEPTIONS;
     return 0;
   }  
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void GoToFirstFrame(const char* canvas)
+  {
+    try
+    {
+      GetViewport(canvas)->GoToFirstFrame();
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void GoToLastFrame(const char* canvas)
+  {
+    try
+    {
+      GetViewport(canvas)->GoToLastFrame();
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
 
 
   EMSCRIPTEN_KEEPALIVE

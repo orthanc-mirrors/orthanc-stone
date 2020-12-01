@@ -16,6 +16,12 @@ Differences with Osimis Web viewer
   currently support annotations, and will not support Live Share.
 
 
+- The Stone Web viewer has no "timeline" bar to see the position of
+  the current frame in the series. However, pressing the "Ctrl" key
+  together with mouse wheel enables fast move, i.e. this changes the
+  current frame by skipping 1/20th of the frames in the series.
+
+
 - The Stone Web viewer uses the DICOM identifiers, while the Osimis Web
   viewer uses the Orthanc identifiers.
   https://book.orthanc-server.com/faq/orthanc-ids.html

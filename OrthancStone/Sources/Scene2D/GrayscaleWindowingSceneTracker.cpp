@@ -82,6 +82,15 @@ namespace OrthancStone
           lock_->Invalidate();
         }
       }
+
+      void BroadcastGrayscaleWindowingChanged(double center,
+                                              double width)
+      {
+        if (lock_.get() != NULL)
+        {
+          lock_->GetController().BroadcastGrayscaleWindowingChanged(center, width);
+        }
+      }        
     };
   }
   
@@ -96,6 +105,7 @@ namespace OrthancStone
       if (accessor.IsValid())
       {
         accessor.GetLayer().SetCustomWindowing(center, width);
+        accessor.BroadcastGrayscaleWindowingChanged(center, width);
         accessor.Invalidate();
       }
     }      

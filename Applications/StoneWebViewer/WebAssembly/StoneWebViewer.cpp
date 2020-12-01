@@ -1609,26 +1609,6 @@ private:
   }
 
 
-  void SaveCurrentWindowing()
-  {
-    // Save the current windowing (that could have been altered by
-    // GrayscaleWindowingSceneTracker), so that it can be reused
-    // by the next frames
-
-    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-
-    OrthancStone::Scene2D& scene = lock->GetController().GetScene();
-
-    if (scene.HasLayer(LAYER_TEXTURE) &&
-        scene.GetLayer(LAYER_TEXTURE).GetType() == OrthancStone::ISceneLayer::Type_FloatTexture)
-    {
-      OrthancStone::FloatTextureSceneLayer& layer =
-        dynamic_cast<OrthancStone::FloatTextureSceneLayer&>(scene.GetLayer(LAYER_TEXTURE));
-      layer.GetWindowing(windowingCenter_, windowingWidth_);
-    }
-  }
-
-
   /**
    * NB: "frame" is only used to estimate the memory size to store 1
    * frame, in order to avoid prefetching too much data.
@@ -1691,8 +1671,6 @@ private:
      * unreliable if the series includes instances with varying sizes
      * (cf. LSD-479).
      **/
-    
-    SaveCurrentWindowing();
     
     bool isMonochrome1 = (instance.GetImageInformation().GetPhotometricInterpretation() ==
                           Orthanc::PhotometricInterpretation_Monochrome1);
@@ -2030,6 +2008,19 @@ private:
     SetWindowingPreset();
   }
 
+
+  void Handle(const OrthancStone::ViewportController::GrayscaleWindowingChanged& message)
+  {
+    // This event is triggered by the windowing mouse action, from class "GrayscaleWindowingSceneTracker"
+    windowingCenter_ = message.GetWindowingCenter();
+    windowingWidth_ = message.GetWindowingWidth();
+
+    if (observer_.get() != NULL)
+    {
+      observer_->SignalWindowingUpdated(*this, message.GetWindowingCenter(), message.GetWindowingWidth());
+    }
+  }
+
   
   static EM_BOOL OnWheel(int eventType,
                          const EmscriptenWheelEvent *wheelEvent,
@@ -2124,6 +2115,11 @@ public:
 
       viewport->Register<OrthancStone::ParseDicomSuccessMessage>(
         lock->GetOracleObservable(), &ViewerViewport::Handle);
+    }
+
+    {
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->viewport_->Lock());
+      viewport->Register<OrthancStone::ViewportController::GrayscaleWindowingChanged>(lock->GetController(), &ViewerViewport::Handle);
     }
 
     return viewport;    
@@ -2445,14 +2441,12 @@ public:
   void FlipX()
   {
     flipX_ = !flipX_;
-    SaveCurrentWindowing();
     UpdateCurrentTextureParameters();
   }
 
   void FlipY()
   {
     flipY_ = !flipY_;
-    SaveCurrentWindowing();
     UpdateCurrentTextureParameters();
   }
 

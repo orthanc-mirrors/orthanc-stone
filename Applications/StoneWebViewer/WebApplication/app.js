@@ -286,7 +286,6 @@ Vue.component('viewport', {
       if (args.detail.canvasId == that.canvasId) {
         that.windowingCenter = args.detail.windowingCenter;
         that.windowingWidth = args.detail.windowingWidth;
-        console.log(that.windowingCenter + ' ' + that.windowingWidth);
       }
     });
   },

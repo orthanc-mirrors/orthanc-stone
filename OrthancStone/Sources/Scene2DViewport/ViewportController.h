@@ -88,6 +88,35 @@ namespace OrthancStone
                                         SceneTransformChanged, \
                                         ViewportController);
 
+    class GrayscaleWindowingChanged : public OriginMessage<ViewportController>
+    {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+      
+    private:
+      double  windowingCenter_;
+      double  windowingWidth_;
+      
+    public:
+      GrayscaleWindowingChanged(const ViewportController& origin,
+                                double windowingCenter,
+                                double windowingWidth) :
+        OriginMessage(origin),
+        windowingCenter_(windowingCenter),
+        windowingWidth_(windowingWidth)        
+      {
+      }
+
+      double GetWindowingCenter() const
+      {
+        return windowingCenter_;
+      }
+
+      double GetWindowingWidth() const
+      {
+        return windowingWidth_;
+      }
+    };
+
     explicit ViewportController(boost::weak_ptr<IViewport> viewport);
 
     ~ViewportController();
@@ -120,6 +149,10 @@ namespace OrthancStone
 
     /** Forwarded to the underlying scene, and broadcasted to the observers */
     void SetSceneToCanvasTransform(const AffineTransform2D& transform);
+
+    /** Info broadcasted to the observers */
+    void BroadcastGrayscaleWindowingChanged(double windowingCenter,
+                                            double windowingWidth);
 
     /** Forwarded to the underlying scene, and broadcasted to the observers */
     void FitContent(unsigned int viewportWidth,

@@ -28,7 +28,8 @@
 #include <Toolbox.h>
 
 
-static const std::string STONE_WEB_VIEWER_ROOT = "/stone-webviewer";
+static const std::string STONE_WEB_VIEWER_ROOT = "/stone-webviewer";  // (*)
+static const char* CONFIG_SECTION = "StoneWebViewer";
 
 
 OrthancPluginErrorCode OnChangeCallback(OrthancPluginChangeType changeType,
@@ -164,6 +165,27 @@ void ServeEmbeddedFile(OrthancPluginRestOutput* output,
 }
 
 
+static void GetDefaultConfiguration(Json::Value& target)
+{
+  std::string s;
+  Orthanc::EmbeddedResources::GetDirectoryResource(
+    s, Orthanc::EmbeddedResources::WEB_APPLICATION, "/configuration.json");
+
+  Json::Reader reader;
+  Json::Value full;
+  if (!reader.parse(s, full) ||
+      full.type() != Json::objectValue ||
+      !full.isMember(CONFIG_SECTION) ||
+      full[CONFIG_SECTION].type() != Json::objectValue)
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                    "Cannot read the default configuration");
+  }
+
+  Orthanc::Toolbox::CopyJsonWithoutComments(target, full);
+}
+
+
 void ServeConfiguration(OrthancPluginRestOutput* output,
                         const char* url,
                         const OrthancPluginHttpRequest* request)
@@ -176,10 +198,14 @@ void ServeConfiguration(OrthancPluginRestOutput* output,
   }
   else
   {
-    static const char* CONFIG_SECTION = "StoneWebViewer";
     static const char* ORTHANC_API_ROOT = "OrthancApiRoot";
     static const char* DICOM_WEB_ROOT = "DicomWebRoot";
+    static const char* EXPECTED_MESSAGE_ORIGIN = "ExpectedMessageOrigin";
 
+    Json::Value defaultConfig;
+    GetDefaultConfiguration(defaultConfig);
+    defaultConfig[CONFIG_SECTION][EXPECTED_MESSAGE_ORIGIN] = "";  // By default, disable messages for security
+    
     Json::Value config = Json::objectValue;
     
     OrthancPlugins::OrthancConfiguration orthanc;
@@ -194,28 +220,29 @@ void ServeConfiguration(OrthancPluginRestOutput* output,
       LOG(WARNING) << "The Orthanc configuration file doesn't contain a section \""
                    << CONFIG_SECTION << "\" to configure the Stone Web viewer: "
                    << "Will use default settings";
-
-      std::string s;
-      Orthanc::EmbeddedResources::GetDirectoryResource(
-        s, Orthanc::EmbeddedResources::WEB_APPLICATION, "/configuration.json");
-
-      Json::Reader reader;
-      if (!reader.parse(s, config) ||
-          config.type() != Json::objectValue)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
-                                        "Cannot read the default configuration");
-      }
+      config = defaultConfig;
     }
 
     assert(config[CONFIG_SECTION].type() == Json::objectValue);
 
-    // Assume that the Stone Web viewer is mapped at "/stone-webviewer" in the REST API
+    // Assume that the Stone Web viewer is mapped at "/stone-webviewer" in the REST API (*)
     config[CONFIG_SECTION][ORTHANC_API_ROOT] = "..";
 
     if (!config[CONFIG_SECTION].isMember(DICOM_WEB_ROOT))
     {
-      config[CONFIG_SECTION][DICOM_WEB_ROOT] = "../dicom-web";
+      config[CONFIG_SECTION][DICOM_WEB_ROOT] = "../dicom-web";  // (*)
+    }
+
+
+    // Copy the default values for the missing options
+    std::vector<std::string> defaultOptions = defaultConfig[CONFIG_SECTION].getMemberNames();
+
+    for (size_t i = 0; i < defaultOptions.size(); i++)
+    {
+      if (!config[CONFIG_SECTION].isMember(defaultOptions[i]))
+      {
+        config[CONFIG_SECTION][defaultOptions[i]] = defaultConfig[CONFIG_SECTION][defaultOptions[i]];
+      }
     }
     
     const std::string s = config.toStyledString();

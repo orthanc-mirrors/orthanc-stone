@@ -1405,61 +1405,43 @@ private:
     unsigned int  frameNumber_;
     int           priority_;
     bool          isPrefetch_;
+    bool          serverSideTranscoding_;
     
   public:
     SetFullDicomFrame(boost::shared_ptr<ViewerViewport> viewport,
                       const std::string& sopInstanceUid,
                       unsigned int frameNumber,
                       int priority,
-                      bool isPrefetch) :
+                      bool isPrefetch,
+                      bool serverSideTranscoding) :
       ICommand(viewport),
       sopInstanceUid_(sopInstanceUid),
       frameNumber_(frameNumber),
       priority_(priority),
-      isPrefetch_(isPrefetch)
+      isPrefetch_(isPrefetch),
+      serverSideTranscoding_(serverSideTranscoding)
     {
     }
     
     virtual void Handle(const OrthancStone::ParseDicomSuccessMessage& message) const ORTHANC_OVERRIDE
     {
-      Apply(GetViewport(), message.GetDicom(), sopInstanceUid_, frameNumber_, priority_, isPrefetch_);
-
-      if (isPrefetch_)
-      {
-        GetViewport().ScheduleNextPrefetch();
-      }
-    }
-
-    static void Apply(ViewerViewport& viewport,
-                      const Orthanc::ParsedDicomFile& dicom,
-                      const std::string& sopInstanceUid,
-                      unsigned int frameNumber,
-                      int priority,
-                      bool isPrefetch)
-    {
-      Orthanc::DicomMap tags;
-      dicom.ExtractDicomSummary(tags, ORTHANC_STONE_MAX_TAG_LENGTH);
-
-      std::string s;
-      if (!tags.LookupStringValue(s, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
-      {
-        // Safety check
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-      }      
-
       std::unique_ptr<Orthanc::ImageAccessor> frame;
       
       try
       {
-        frame.reset(dicom.DecodeFrame(frameNumber));
+        frame.reset(message.GetDicom().DecodeFrame(frameNumber_));
       }
       catch (Orthanc::OrthancException& e)
       {
         if (e.GetErrorCode() == Orthanc::ErrorCode_NotImplemented)
         {
-          viewport.serverSideTranscoding_ = true;
-          LOG(INFO) << "Switching to server-side transcoding";
-          viewport.ScheduleLoadFullDicomFrame(sopInstanceUid, frameNumber, priority, isPrefetch);
+          if (!serverSideTranscoding_)
+          {
+            // If we haven't tried server-side rendering yet, give it a try
+            LOG(INFO) << "Switching to server-side transcoding";
+            GetViewport().serverSideTranscoding_ = true;
+            GetViewport().ScheduleLoadFullDicomFrame(sopInstanceUid_, frameNumber_, priority_, isPrefetch_);
+          }
           return;
         }
         else
@@ -1472,12 +1454,33 @@ private:
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
+      else
+      {
+        Apply(GetViewport(), message.GetDicom(), frame.release(), sopInstanceUid_, frameNumber_);
+
+        if (isPrefetch_)
+        {
+          GetViewport().ScheduleNextPrefetch();
+        }
+      }
+    }
+
+    static void Apply(ViewerViewport& viewport,
+                      const Orthanc::ParsedDicomFile& dicom,
+                      Orthanc::ImageAccessor* f,
+                      const std::string& sopInstanceUid,
+                      unsigned int frameNumber)
+    {
+      std::unique_ptr<Orthanc::ImageAccessor> frameProtection(f);
+      
+      Orthanc::DicomMap tags;
+      dicom.ExtractDicomSummary(tags, ORTHANC_STONE_MAX_TAG_LENGTH);
 
       std::unique_ptr<Orthanc::ImageAccessor> converted;
       
-      if (frame->GetFormat() == Orthanc::PixelFormat_RGB24)
+      if (frameProtection->GetFormat() == Orthanc::PixelFormat_RGB24)
       {
-        converted.reset(frame.release());
+        converted.reset(frameProtection.release());
       }
       else
       {
@@ -1498,8 +1501,8 @@ private:
           b = rescaleIntercept;
         }
 
-        converted.reset(new Orthanc::Image(Orthanc::PixelFormat_Float32, frame->GetWidth(), frame->GetHeight(), false));
-        Orthanc::ImageProcessing::Convert(*converted, *frame);
+        converted.reset(new Orthanc::Image(Orthanc::PixelFormat_Float32, frameProtection->GetWidth(), frameProtection->GetHeight(), false));
+        Orthanc::ImageProcessing::Convert(*converted, *frameProtection);
         Orthanc::ImageProcessing::ShiftScale2(*converted, b, a, false);        
       }
 
@@ -1856,7 +1859,7 @@ private:
           source_, frames_->GetStudyInstanceUid(), frames_->GetSeriesInstanceUid(),
           sopInstanceUid, serverSideTranscoding_,
           Orthanc::DicomTransferSyntax_LittleEndianExplicit,
-          new SetFullDicomFrame(GetSharedObserver(), sopInstanceUid, frameNumber, priority, isPrefetch)));
+          new SetFullDicomFrame(GetSharedObserver(), sopInstanceUid, frameNumber, priority, isPrefetch, serverSideTranscoding_)));
     }
   }
 
@@ -1887,7 +1890,8 @@ private:
 
       /**
        * If the full-resolution DICOM file is already available in the
-       * cache of the oracle, skip the loading of the "rendered".
+       * cache of the oracle, bypass the loading of the "rendered" and
+       * use the cached DICOM file.
        **/
       std::unique_ptr<OrthancStone::WebAssemblyOracle::CachedInstanceAccessor> accessor(
         context_.AccessCachedInstance(instance.GetSopInstanceUid()));
@@ -1897,13 +1901,19 @@ private:
       {
         try
         {
-          SetFullDicomFrame::Apply(*this, accessor->GetDicom(), instance.GetSopInstanceUid(),
-                                   frameNumber, priority, isPrefetch);
-          return;
+          std::unique_ptr<Orthanc::ImageAccessor> frame(accessor->GetDicom().DecodeFrame(frameNumber));
+          SetFullDicomFrame::Apply(*this, accessor->GetDicom(), frame.release(), instance.GetSopInstanceUid(), frameNumber);
+          return;  // Success
         }
         catch (Orthanc::OrthancException&)
         {
-          // This happens in the case of a JPEG2k image unsupported by DCMTK
+          /**
+           * This happens if the cached DICOM file uses a transfer
+           * syntax that is not supported by DCMTK (such as
+           * JPEG2k). Fallback to "/rendered" in order to re-download
+           * the DICOM file using server-side transcoding. This
+           * happens on WRIX dataset.
+           **/
         }
       }
 

@@ -29,7 +29,8 @@ fi
 
 cat <<EOF > /tmp/cppcheck-suppressions.txt
 stlFindInsert:../../Applications/Samples/WebAssembly/SingleFrameViewer/SingleFrameViewerApplication.h
-stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:827
+stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:374
+stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:969
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/Internals/CairoFloatTextureRenderer.cpp
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/LookupTableTextureSceneLayer.cpp
 unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:143

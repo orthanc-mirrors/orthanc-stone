@@ -21,6 +21,7 @@ cmake_minimum_required(VERSION 2.8.3)
 cmake_policy(SET CMP0058 NEW)
 
 project(OrthancStone)
+include(${CMAKE_SOURCE_DIR}/../Version.cmake)
 
 set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/StoneWebViewer" CACHE PATH "Where to put the WebAssembly binaries")
 

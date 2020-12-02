@@ -21,18 +21,7 @@ cmake_minimum_required(VERSION 2.8.3)
 cmake_policy(SET CMP0058 NEW)
 
 project(StoneWebViewerPlugin)
-
-set(ORTHANC_PLUGIN_VERSION "mainline")
-
-if (ORTHANC_PLUGIN_VERSION STREQUAL "mainline")
-  set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "mainline")
-  set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "hg")
-else()
-  set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "1.7.2")
-  set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "web")
-endif()
-
-
+include(${CMAKE_SOURCE_DIR}/../Version.cmake)
 
 set(ORTHANC_STONE_BINARIES "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/StoneWebViewer/" CACHE PATH "Path to the binaries of the \"../WebAssembly\" folder")
 
@@ -82,7 +71,7 @@ endif()
 
 add_definitions(
   -DHAS_ORTHANC_EXCEPTION=1
-  -DPLUGIN_VERSION="${ORTHANC_PLUGIN_VERSION}"
+  -DPLUGIN_VERSION="${STONE_WEB_VIEWER_VERSION}"
   -DPLUGIN_NAME="stone-webviewer"
   )
 
@@ -112,8 +101,8 @@ add_library(StoneWebViewer SHARED
   )
 
 set_target_properties(StoneWebViewer PROPERTIES 
-  VERSION ${ORTHANC_PLUGIN_VERSION} 
-  SOVERSION ${ORTHANC_PLUGIN_VERSION})
+  VERSION ${STONE_WEB_VIEWER_VERSION} 
+  SOVERSION ${STONE_WEB_VIEWER_VERSION})
 
 install(
   TARGETS StoneWebViewer

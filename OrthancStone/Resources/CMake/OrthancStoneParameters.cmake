@@ -25,20 +25,6 @@
 
 set(ORTHANC_STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../Sources)
 
-set(ORTHANC_STONE_VERSION "mainline")
-
-if (ORTHANC_STONE_VERSION STREQUAL "mainline")
-  set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "mainline")
-  set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "hg")
-else()
-  set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "82652c5fc04f")
-  set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "web")
-endif()
-
-add_definitions(
-  -DORTHANC_STONE_VERSION="${ORTHANC_STONE_VERSION}"
-  )
-
 # Parameters of the build
 set(STATIC_BUILD OFF CACHE BOOL "Static build of the third-party libraries (necessary for Windows)")
 set(ALLOW_DOWNLOADS OFF CACHE BOOL "Allow CMake to download packages")

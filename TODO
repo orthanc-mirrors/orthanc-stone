@@ -17,6 +17,8 @@ Improvements
   not the texture. Flipping the texture makes the reference lines and
   crosshair invalid.
 
+* Handle mobile gestures.
+
 
 --------
 Wishlist

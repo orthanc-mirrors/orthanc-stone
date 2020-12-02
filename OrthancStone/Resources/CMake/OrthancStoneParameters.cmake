@@ -25,7 +25,7 @@
 
 set(ORTHANC_STONE_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../Sources)
 
-include(${CMAKE_CURRENT_LIST_DIR}/Version.cmake)
+set(ORTHANC_STONE_VERSION "mainline")
 
 if (ORTHANC_STONE_VERSION STREQUAL "mainline")
   set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "mainline")
@@ -34,6 +34,10 @@ else()
   set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "1.7.2")
   set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "web")
 endif()
+
+add_definitions(
+  -DORTHANC_STONE_VERSION="${ORTHANC_STONE_VERSION}"
+  )
 
 # Parameters of the build
 set(STATIC_BUILD OFF CACHE BOOL "Static build of the third-party libraries (necessary for Windows)")

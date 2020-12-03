@@ -22,6 +22,8 @@ cmake_policy(SET CMP0058 NEW)
 
 project(OrthancStone)
 
+set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "mainline")
+set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "hg")
 set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../wasm-binaries/" CACHE PATH "Where to put the WebAssembly binaries")
 
 

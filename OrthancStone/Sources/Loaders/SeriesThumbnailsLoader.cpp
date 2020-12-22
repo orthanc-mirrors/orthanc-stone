@@ -433,8 +433,7 @@ namespace OrthancStone
                                const std::map<std::string, std::string>& headers) ORTHANC_OVERRIDE
     {
       Json::Value json;
-      Json::Reader reader;
-      if (!reader.parse(body, json) ||
+      if (!Orthanc::Toolbox::ReadJson(json, body) ||
           json.type() != Json::arrayValue)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);

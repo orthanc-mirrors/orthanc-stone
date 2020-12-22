@@ -24,21 +24,14 @@
 
 #include <Logging.h>
 #include <OrthancException.h>
+#include <Toolbox.h>
 
-#ifdef _MSC_VER
-// 'Json::Reader': Use CharReader and CharReaderBuilder instead
-#pragma warning(disable:4996)
-#endif
-
-#include <json/reader.h>
-#include <json/writer.h>
 
 namespace OrthancStone
 {
   void HttpCommand::SuccessMessage::ParseJsonBody(Json::Value& target) const
   {
-    Json::Reader reader;
-    if (!reader.parse(answer_, target))
+    if (!Orthanc::Toolbox::ReadJson(target, answer_))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
@@ -55,8 +48,7 @@ namespace OrthancStone
 
   void HttpCommand::SetBody(const Json::Value& json)
   {
-    Json::FastWriter writer;
-    body_ = writer.write(json);
+    Orthanc::Toolbox::WriteFastJson(body_, json);
   }
 
 

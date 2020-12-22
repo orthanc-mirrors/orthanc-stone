@@ -171,9 +171,8 @@ static void GetDefaultConfiguration(Json::Value& target)
   Orthanc::EmbeddedResources::GetDirectoryResource(
     s, Orthanc::EmbeddedResources::WEB_APPLICATION, "/configuration.json");
 
-  Json::Reader reader;
   Json::Value full;
-  if (!reader.parse(s, full) ||
+  if (!Orthanc::Toolbox::ReadJson(full, s) ||
       full.type() != Json::objectValue ||
       !full.isMember(CONFIG_SECTION) ||
       full[CONFIG_SECTION].type() != Json::objectValue)

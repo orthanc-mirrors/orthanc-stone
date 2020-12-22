@@ -32,6 +32,8 @@
 #  include <DicomParsing/ParsedDicomFile.h>
 #endif
 
+#include <Toolbox.h>
+
 #include <boost/filesystem/path.hpp>
 
 namespace OrthancStone
@@ -141,9 +143,8 @@ namespace OrthancStone
       
     virtual void HandleString(const std::string& body)
     {
-      Json::Reader reader;
       Json::Value value;
-      if (reader.parse(body, value))
+      if (Orthanc::Toolbox::ReadJson(value, body))
       {
         HandleJson(value);
       }

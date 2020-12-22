@@ -33,6 +33,7 @@
 #include <Images/JpegReader.h>
 #include <Images/JpegWriter.h>
 #include <OrthancException.h>
+#include <Toolbox.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -210,10 +211,9 @@ namespace OrthancStone
     virtual void HandleSuccess(const std::string& body,
                                const std::map<std::string, std::string>& headers) ORTHANC_OVERRIDE
     {
-      Json::Reader reader;
       Json::Value value;
 
-      if (!reader.parse(body, value) ||
+      if (!Orthanc::Toolbox::ReadJson(value, body) ||
           value.type() != Json::arrayValue)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
@@ -389,8 +389,7 @@ namespace OrthancStone
       static const char* const INSTANCES = "Instances";
       
       Json::Value json;
-      Json::Reader reader;
-      if (!reader.parse(body, json) ||
+      if (!Orthanc::Toolbox::ReadJson(json, body) ||
           json.type() != Json::objectValue)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);

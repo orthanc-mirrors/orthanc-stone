@@ -26,6 +26,7 @@
 #include "../Oracle/OrthancRestApiCommand.h"
 
 #include <OrthancException.h>
+#include <Toolbox.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -268,9 +269,8 @@ namespace OrthancStone
     }
 
     Json::Value a, b;
-    Json::Reader reader;
-    if (reader.parse(system, a) &&
-        reader.parse(plugins, b) &&
+    if (Orthanc::Toolbox::ReadJson(a, system) &&
+        Orthanc::Toolbox::ReadJson(b, plugins) &&
         a.type() == Json::objectValue &&
         b.type() == Json::arrayValue &&
         a.isMember(REST_API_VERSION) &&

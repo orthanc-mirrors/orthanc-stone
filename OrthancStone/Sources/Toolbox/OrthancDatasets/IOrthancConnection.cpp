@@ -23,17 +23,14 @@
 #include "IOrthancConnection.h"
 
 #include <OrthancException.h>
-
-#include <json/reader.h>
+#include <Toolbox.h>
 
 namespace OrthancStone
 {
   void IOrthancConnection::ParseJson(Json::Value& result,
                                      const std::string& content)
   {
-    Json::Reader reader;
-    
-    if (!reader.parse(content, result))
+    if (!Orthanc::Toolbox::ReadJson(result, content))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
@@ -44,10 +41,7 @@ namespace OrthancStone
                                      const void* content,
                                      size_t size)
   {
-    Json::Reader reader;
-    
-    if (!reader.parse(reinterpret_cast<const char*>(content),
-                      reinterpret_cast<const char*>(content) + size, result))
+    if (!Orthanc::Toolbox::ReadJson(result, content, size))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }

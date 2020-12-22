@@ -30,12 +30,6 @@
 #include <OrthancException.h>
 #include <Toolbox.h>
 
-#ifdef _MSC_VER
-// 'Json::Reader': Use CharReader and CharReaderBuilder instead
-#pragma warning(disable:4996)
-#endif
-
-#include <json/reader.h>
 #include <json/value.h>
 
 namespace OrthancStone
@@ -77,13 +71,9 @@ namespace OrthancStone
     // This code comes from older "OrthancSlicesLoader::ParseSliceImageJpeg()"
       
     Json::Value encoded;
-
+    if (!Orthanc::Toolbox::ReadJson(encoded, answer))
     {
-      Json::Reader reader;
-      if (!reader.parse(answer, encoded))
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-      }
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
 
     if (encoded.type() != Json::objectValue ||

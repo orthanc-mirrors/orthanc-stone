@@ -115,7 +115,6 @@ namespace OrthancStone
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     const Scene2D& scene = lock->GetController().GetScene();
 
-    using namespace Orthanc;
     ORTHANC_ASSERT(baseLayerIndex_ != -1);
     ORTHANC_ASSERT(scene.HasLayer(GetPolylineLayerIndex(index)));
     ISceneLayer* layer = &(scene.GetLayer(GetPolylineLayerIndex(index)));
@@ -132,7 +131,6 @@ namespace OrthancStone
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     const Scene2D& scene = lock->GetController().GetScene();
 
-    using namespace Orthanc;
     ORTHANC_ASSERT(baseLayerIndex_ != -1);
     ORTHANC_ASSERT(scene.HasLayer(GetTextLayerIndex(index)));
     ISceneLayer* layer = &(scene.GetLayer(GetTextLayerIndex(index)));
@@ -146,14 +144,12 @@ namespace OrthancStone
 
   int LayerHolder::GetPolylineLayerIndex(int index /*= 0*/)
   {
-    using namespace Orthanc;
     ORTHANC_ASSERT(index < polylineLayerCount_);
     return baseLayerIndex_ + index;
   }
   
   int LayerHolder::GetTextLayerIndex(int index /*= 0*/)
   {
-    using namespace Orthanc;
     ORTHANC_ASSERT(index < textLayerCount_);
 
     // the text layers are placed right after the polyline layers

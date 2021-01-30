@@ -220,30 +220,28 @@ namespace OrthancStone
   void ComputeHistogram(const Orthanc::ImageAccessor& img,
                         HistogramData& hd, double binSize)
   {
-    using namespace Orthanc;
-
     hd.binSize = binSize;
 
     // dynamic/static bridge
     switch (img.GetFormat())
     {
-    case PixelFormat_Grayscale8:
-      ComputeHistogram_<PixelFormat_Grayscale8>       (img, hd);
+    case Orthanc::PixelFormat_Grayscale8:
+      ComputeHistogram_<Orthanc::PixelFormat_Grayscale8>       (img, hd);
       break;
-    case PixelFormat_Grayscale16:
-      ComputeHistogram_<PixelFormat_Grayscale16>      (img, hd);
+    case Orthanc::PixelFormat_Grayscale16:
+      ComputeHistogram_<Orthanc::PixelFormat_Grayscale16>      (img, hd);
       break;
-    case PixelFormat_SignedGrayscale16:
-      ComputeHistogram_<PixelFormat_SignedGrayscale16>(img, hd);
+    case Orthanc::PixelFormat_SignedGrayscale16:
+      ComputeHistogram_<Orthanc::PixelFormat_SignedGrayscale16>(img, hd);
       break;
-    case PixelFormat_Float32:
-      ComputeHistogram_<PixelFormat_Float32>          (img, hd);
+    case Orthanc::PixelFormat_Float32:
+      ComputeHistogram_<Orthanc::PixelFormat_Float32>          (img, hd);
       break;
-    case PixelFormat_Grayscale32:
-      ComputeHistogram_<PixelFormat_Grayscale32>      (img, hd);
+    case Orthanc::PixelFormat_Grayscale32:
+      ComputeHistogram_<Orthanc::PixelFormat_Grayscale32>      (img, hd);
       break;
-    case PixelFormat_Grayscale64:
-      ComputeHistogram_<PixelFormat_Grayscale64>      (img, hd);
+    case Orthanc::PixelFormat_Grayscale64:
+      ComputeHistogram_<Orthanc::PixelFormat_Grayscale64>      (img, hd);
       break;
     default:
       throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
@@ -253,28 +251,26 @@ namespace OrthancStone
   void ComputeMinMax(const Orthanc::ImageAccessor& img,
                      double& minValue, double& maxValue)
   {
-    using namespace Orthanc;
-
     // dynamic/static bridge
     switch (img.GetFormat())
     {
-    case PixelFormat_Grayscale8:
-      ComputeMinMax_<PixelFormat_Grayscale8>       (img, minValue, maxValue);
+    case Orthanc::PixelFormat_Grayscale8:
+      ComputeMinMax_<Orthanc::PixelFormat_Grayscale8>       (img, minValue, maxValue);
       break;                                                
-    case PixelFormat_Grayscale16:                           
-      ComputeMinMax_<PixelFormat_Grayscale16>      (img, minValue, maxValue);
+    case Orthanc::PixelFormat_Grayscale16:                           
+      ComputeMinMax_<Orthanc::PixelFormat_Grayscale16>      (img, minValue, maxValue);
       break;                                                
-    case PixelFormat_SignedGrayscale16:                     
-      ComputeMinMax_<PixelFormat_SignedGrayscale16>(img, minValue, maxValue);
+    case Orthanc::PixelFormat_SignedGrayscale16:                     
+      ComputeMinMax_<Orthanc::PixelFormat_SignedGrayscale16>(img, minValue, maxValue);
       break;                                                
-    case PixelFormat_Float32:                               
-      ComputeMinMax_<PixelFormat_Float32>          (img, minValue, maxValue);
+    case Orthanc::PixelFormat_Float32:                               
+      ComputeMinMax_<Orthanc::PixelFormat_Float32>          (img, minValue, maxValue);
       break;                                                
-    case PixelFormat_Grayscale32:                           
-      ComputeMinMax_<PixelFormat_Grayscale32>      (img, minValue, maxValue);
+    case Orthanc::PixelFormat_Grayscale32:                           
+      ComputeMinMax_<Orthanc::PixelFormat_Grayscale32>      (img, minValue, maxValue);
       break;                                                
-    case PixelFormat_Grayscale64:                           
-      ComputeMinMax_<PixelFormat_Grayscale64>      (img, minValue, maxValue);
+    case Orthanc::PixelFormat_Grayscale64:                           
+      ComputeMinMax_<Orthanc::PixelFormat_Grayscale64>      (img, minValue, maxValue);
       break;
     default:
       throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);

@@ -508,19 +508,16 @@ namespace OrthancStone
       dynamic_cast<const ParseDicomFromWadoCommand&>(message.GetOrigin());
     const ThumbnailInformation& info = dynamic_cast<ThumbnailInformation&>(origin.GetPayload());
 
-    std::string tmp;
     Orthanc::DicomTransferSyntax transferSyntax;
-    if (!message.GetDicom().LookupTransferSyntax(tmp))
-    {
-      
+    if (!message.GetDicom().LookupTransferSyntax(transferSyntax))
+    {      
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
                                       "DICOM instance without a transfer syntax: " + origin.GetSopInstanceUid());
     }
-    else if (!Orthanc::LookupTransferSyntax(transferSyntax, tmp) ||
-             !ImageToolbox::IsDecodingSupported(transferSyntax))
+    else if (!ImageToolbox::IsDecodingSupported(transferSyntax))
     {
       LOG(INFO) << "Asking the DICOMweb server to transcode, "
-                << "as I don't support this transfer syntax: " << tmp;
+                << "as I don't support this transfer syntax: " << Orthanc::GetTransferSyntaxUid(transferSyntax);
 
       Schedule(ParseDicomFromWadoCommand::Create(
                  origin.GetSource(), info.GetStudyInstanceUid(), info.GetSeriesInstanceUid(),

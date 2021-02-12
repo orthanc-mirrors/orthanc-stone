@@ -37,9 +37,9 @@ def GenerateColormap(name):
 
         colormap += map(lambda k: int(round(color[k] * 255)), range(3))
 
-    colormap[0] = 0
-    colormap[1] = 0
-    colormap[2] = 0
+    #colormap[0] = 0
+    #colormap[1] = 0
+    #colormap[2] = 0
 
     return array.array('B', colormap).tostring()
 

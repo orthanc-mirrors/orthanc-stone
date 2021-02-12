@@ -48,7 +48,8 @@ namespace OrthancStone
     {
       Orthanc::Toolbox::ToUpperCase(increment);
 
-      // This is the "Grid Frame Offset Vector" tag (DICOM_TAG_GRID_FRAME_OFFSET_VECTOR)
+      // We only support volumes where the FrameIncrementPointer (0028,0009) (required) contains 
+      // the "Grid Frame Offset Vector" tag (DICOM_TAG_GRID_FRAME_OFFSET_VECTOR)
       if (increment != "3004,000C")
       {
         LOG(WARNING) << "Bad value for the FrameIncrementPointer tags in a multiframe image";
@@ -60,7 +61,7 @@ namespace OrthancStone
     if (!LinearAlgebra::ParseVector(target, dicom, Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR) ||
         target.size() != numberOfFrames)
     {
-      LOG(INFO) << "The frame offset information is missing in a multiframe image";
+      LOG(ERROR) << "The frame offset information (GridFrameOffsetVector (3004,000C)) is missing in a multiframe image";
 
       // DO NOT use ".clear()" here, as the "Vector" class doesn't behave like std::vector!
       target.resize(0);
@@ -109,9 +110,13 @@ namespace OrthancStone
       height_ = 0;
      }
 
+
+    bool sliceThicknessPresent = true;
     if (!dicom.ParseDouble(sliceThickness_, Orthanc::DICOM_TAG_SLICE_THICKNESS))
     {
+      LOG(INFO) << "The (non-madatory) slice thickness information is missing in a multiframe image";
       sliceThickness_ = 100.0 * std::numeric_limits<double>::epsilon();
+      sliceThicknessPresent = false;
     }
 
     GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, dicom);
@@ -127,6 +132,42 @@ namespace OrthancStone
     if (numberOfFrames_ > 1)
     {
       ExtractFrameOffsets(frameOffsets_, dicom, numberOfFrames_);
+
+      // if the slice thickness is unknown, we try to infer it from the sequence of grid frame offsets
+      // this only works if:
+      // - the first offset is 0.0 (case (a) of http://dicom.nema.org/medical/Dicom/2017c/output/chtml/part03/sect_C.8.8.3.2.html)
+      // - the offsets are all equal, to some small tolerance
+      // - the offsets is positive (increasing throughout the frames)
+      if (!sliceThicknessPresent)
+      {
+        if (frameOffsets_.size() >= 2)
+        {
+          double sliceThickness = frameOffsets_[1] - frameOffsets_[0];
+          bool sameSized = true;
+          if (sliceThickness > 0)
+          {
+            for (size_t i = 2; i < frameOffsets_.size(); ++i)
+            {
+              double currentThickness = frameOffsets_[i] - frameOffsets_[i-1];
+              if (!LinearAlgebra::IsNear(sliceThickness, currentThickness))
+              {
+                LOG(ERROR) << "Unable to extract slice thickness from GridFrameOffsetVector (3004,000C) (reason: varying spacing)";
+                sameSized = false;
+                break;
+              }
+            }
+            if (sameSized)
+            {
+              sliceThickness_ = sliceThickness;
+              LOG(INFO) << "SliceThickness was not specified in the Dicom but was inferred from GridFrameOffsetVector (3004,000C).";
+            }
+          }
+        }
+        else
+        {
+          LOG(ERROR) << "Unable to extract slice thickness from GridFrameOffsetVector (3004,000C) (reason: GridFrameOffsetVector not present or too small)";
+        }
+      }
     }
     else
     {

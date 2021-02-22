@@ -23,7 +23,9 @@
 #include "DicomStructureSet.h"
 #include "DicomStructureSetUtils.h"
 
-#include "../Toolbox/GeometryToolbox.h"
+#include "GeometryToolbox.h"
+#include "GenericToolbox.h"
+
 #include "OrthancDatasets/DicomDatasetReader.h"
 
 #include <Logging.h>
@@ -33,6 +35,10 @@
 #if defined(_MSC_VER)
 #  pragma warning(push)
 #  pragma warning(disable:4244)
+#endif
+
+#if STONE_TIME_BLOCKING_OPS
+# include <boost/date_time/posix_time/posix_time.hpp>
 #endif
 
 #include <limits>
@@ -163,13 +169,13 @@ namespace OrthancStone
   }
 
 
-  static bool ParseVector(Vector& target,
+  static bool FastParseVector(Vector& target,
                           const IDicomDataset& dataset,
                           const DicomPath& tag)
   {
     std::string value;
     return (dataset.GetStringValue(value, tag) &&
-            LinearAlgebra::ParseVector(target, value));
+            GenericToolbox::FastParseVector(target, value));
   }
 
   void DicomStructureSet::Polygon::CheckPointIsOnSlice(const Vector& v) const
@@ -468,6 +474,10 @@ namespace OrthancStone
 
   void DicomStructureSet::Setup(const IDicomDataset& tags)
   {
+#if STONE_TIME_BLOCKING_OPS
+    boost::posix_time::ptime timerStart = boost::posix_time::microsec_clock::universal_time();
+#endif
+
     DicomDatasetReader reader(tags);
     
     size_t count, tmp;
@@ -481,6 +491,9 @@ namespace OrthancStone
     }
 
     structures_.resize(count);
+#if STONE_TIME_BLOCKING_OPS
+    LOG(WARNING) << "DicomStructureSet::Setup(...) structures_.size()  = " << structures_.size();
+#endif
     for (size_t i = 0; i < count; i++)
     {
       structures_[i].interpretation_ = reader.GetStringValue
@@ -494,7 +507,7 @@ namespace OrthancStone
          "No name");
 
       Vector color;
-      if (ParseVector(color, tags, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+      if (FastParseVector(color, tags, DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
                                              DICOM_TAG_ROI_DISPLAY_COLOR)) &&
           color.size() == 3)
       {
@@ -515,6 +528,10 @@ namespace OrthancStone
       {
         countSlices = 0;
       }
+
+#if STONE_TIME_BLOCKING_OPS
+      LOG(WARNING) << "DicomStructureSet::Setup(...) structure # " << i << " : countSlices = " << countSlices;
+#endif
 
       LOG(INFO) << "New RT structure: \"" << structures_[i].name_ 
                 << "\" with interpretation \"" << structures_[i].interpretation_
@@ -582,7 +599,8 @@ namespace OrthancStone
         std::string slicesData = reader.GetMandatoryStringValue(contourDataPath);
 
         Vector points;
-        if (!LinearAlgebra::ParseVector(points, slicesData) ||
+
+        if (!GenericToolbox::FastParseVector(points, slicesData) ||
             points.size() != 3 * countPoints)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);          
@@ -609,6 +627,12 @@ namespace OrthancStone
         structures_[i].polygons_.push_back(polygon);
       }
     }
+#if STONE_TIME_BLOCKING_OPS
+    boost::posix_time::ptime timerEnd = boost::posix_time::microsec_clock::universal_time();
+    boost::posix_time::time_duration duration = timerEnd - timerStart;
+    int64_t durationMs = duration.total_milliseconds();
+    LOG(WARNING) << "DicomStructureSet::Setup took " << durationMs << " ms";
+#endif
   }
 
 

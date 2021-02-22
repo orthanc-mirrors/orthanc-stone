@@ -33,6 +33,9 @@
 #include <Images/ImageProcessing.h>
 #include <OrthancException.h>
 
+#if STONE_TIME_BLOCKING_OPS
+# include <boost/date_time/posix_time/posix_time.hpp>
+#endif
 
 namespace OrthancStone
 {
@@ -338,6 +341,10 @@ namespace OrthancStone
 */
   void OrthancSeriesVolumeProgressiveLoader::LoadGeometry(const OrthancRestApiCommand::SuccessMessage& message)
   {
+#if STONE_TIME_BLOCKING_OPS
+    boost::posix_time::ptime timerStart = boost::posix_time::microsec_clock::universal_time();
+#endif
+
     Json::Value body;
     message.ParseJsonBody(body);
       
@@ -404,6 +411,14 @@ namespace OrthancStone
     slicesQuality_.resize(slicesCount, 0);
 
     BroadcastMessage(DicomVolumeImage::GeometryReadyMessage(*volume_));
+    
+#if STONE_TIME_BLOCKING_OPS
+      boost::posix_time::ptime timerEnd = boost::posix_time::microsec_clock::universal_time();
+    boost::posix_time::time_duration duration = timerEnd - timerStart;
+    int64_t durationMs = duration.total_milliseconds();
+    LOG(WARNING) << "OrthancSeriesVolumeProgressiveLoader::LoadGeometry took " << durationMs << " ms";
+#endif
+
   }
 
 

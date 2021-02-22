@@ -71,7 +71,7 @@ namespace OrthancStone
   {
     std::string value;
     return (dataset.GetStringValue(value, tag) &&
-      LinearAlgebra::ParseVector(target, value));
+      GenericToolbox::FastParseVector(target, value));
   }
 
 
@@ -271,7 +271,7 @@ namespace OrthancStone
         std::string slicesData = reader.GetMandatoryStringValue(contourDataPath);
 
         Vector points;
-        if (!LinearAlgebra::ParseVector(points, slicesData) ||
+        if (!GenericToolbox::FastParseVector(points, slicesData) ||
           points.size() != 3 * countPoints)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);

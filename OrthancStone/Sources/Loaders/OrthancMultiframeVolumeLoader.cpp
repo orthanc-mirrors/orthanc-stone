@@ -25,6 +25,10 @@
 #include <Endianness.h>
 #include <Toolbox.h>
 
+#if STONE_TIME_BLOCKING_OPS
+# include <boost/date_time/posix_time/posix_time.hpp>
+#endif
+
 namespace OrthancStone
 {
   class OrthancMultiframeVolumeLoader::LoadRTDoseGeometry : public LoaderStateMachine::State
@@ -267,6 +271,10 @@ namespace OrthancStone
   void OrthancMultiframeVolumeLoader::CopyPixelDataAndComputeDistribution(
     const std::string& pixelData, std::map<T,uint64_t>& distribution)
   {
+#if STONE_TIME_BLOCKING_OPS
+    boost::posix_time::ptime timerStart = boost::posix_time::microsec_clock::universal_time();
+#endif
+
     ImageBuffer3D& target = volume_->GetPixelData();
       
     const unsigned int bpp = target.GetBytesPerPixel();
@@ -354,6 +362,12 @@ namespace OrthancStone
 #endif
       }
     }
+#if STONE_TIME_BLOCKING_OPS
+    boost::posix_time::ptime timerEnd = boost::posix_time::microsec_clock::universal_time();
+    boost::posix_time::time_duration duration = timerEnd - timerStart;
+    int64_t durationMs = duration.total_milliseconds();
+    LOG(WARNING) << "OrthancMultiframeVolumeLoader::CopyPixelDataAndComputeDistribution took " << durationMs << " ms";
+#endif
   }
 
   template <typename T>

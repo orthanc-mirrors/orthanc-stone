@@ -28,6 +28,10 @@
 
 #include <Toolbox.h>
 
+#if STONE_TIME_BLOCKING_OPS
+# include <boost/date_time/posix_time/posix_time.hpp>
+#endif
+
 #include <algorithm>
 
 namespace OrthancStone
@@ -187,6 +191,10 @@ namespace OrthancStone
     
     virtual void Handle(const OrthancRestApiCommand::SuccessMessage& message) ORTHANC_OVERRIDE
     {
+#if STONE_TIME_BLOCKING_OPS
+      boost::posix_time::ptime timerStart = boost::posix_time::microsec_clock::universal_time();
+#endif
+
       DicomStructureSetLoader& loader = GetLoader<DicomStructureSetLoader>();
 
       // Set the actual structure set content
@@ -219,6 +227,13 @@ namespace OrthancStone
       }
 
       loader.RetrieveReferencedSlices(nonEmptyInstances);
+#if STONE_TIME_BLOCKING_OPS
+      boost::posix_time::ptime timerEnd = boost::posix_time::microsec_clock::universal_time();
+      boost::posix_time::time_duration duration = timerEnd - timerStart;
+      int64_t durationMs = duration.total_milliseconds();
+      LOG(WARNING) << "DicomStructureSetLoader::LoadStructure::Handle took " << durationMs << " ms";
+#endif
+
     }
 
     void SetDefaultStructureVisibility()

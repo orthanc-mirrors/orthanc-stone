@@ -272,20 +272,20 @@ TEST(SortedFrames, FrameOffset)
     ASSERT_EQ(2u, f.GetFramesCount());
     ASSERT_TRUE(f.GetFrameGeometry(0).IsValid());
     ASSERT_TRUE(f.GetFrameGeometry(1).IsValid());
-    ASSERT_FLOAT_EQ(-350.0f, f.GetFrameGeometry(0).GetOrigin() [0]);
-    ASSERT_FLOAT_EQ(-145.0f, f.GetFrameGeometry(0).GetOrigin() [1]);
-    ASSERT_FLOAT_EQ(-350.0f, f.GetFrameGeometry(1).GetOrigin() [0]);
-    ASSERT_FLOAT_EQ(-145.0f, f.GetFrameGeometry(1).GetOrigin() [1]);
+    ASSERT_FLOAT_EQ(-350.0f, static_cast<float>(f.GetFrameGeometry(0).GetOrigin() [0]));
+    ASSERT_FLOAT_EQ(-145.0f, static_cast<float>(f.GetFrameGeometry(0).GetOrigin() [1]));
+    ASSERT_FLOAT_EQ(-350.0f, static_cast<float>(f.GetFrameGeometry(1).GetOrigin() [0]));
+    ASSERT_FLOAT_EQ(-145.0f, static_cast<float>(f.GetFrameGeometry(1).GetOrigin() [1]));
 
     if (i == 0)
     {
-      ASSERT_FLOAT_EQ(-985.0f + 8.0f, f.GetFrameGeometry(0).GetOrigin() [2]);
-      ASSERT_FLOAT_EQ(-985.0f + 11.0f, f.GetFrameGeometry(1).GetOrigin() [2]);
+      ASSERT_FLOAT_EQ(-985.0f + 8.0f, static_cast<float>(f.GetFrameGeometry(0).GetOrigin() [2]));
+      ASSERT_FLOAT_EQ(-985.0f + 11.0f, static_cast<float>(f.GetFrameGeometry(1).GetOrigin() [2]));
     }
     else
     {
-      ASSERT_FLOAT_EQ(-985.0f, f.GetFrameGeometry(0).GetOrigin() [2]);
-      ASSERT_FLOAT_EQ(-985.0f, f.GetFrameGeometry(1).GetOrigin() [2]);
+      ASSERT_FLOAT_EQ(-985.0f, static_cast<float>(f.GetFrameGeometry(0).GetOrigin() [2]));
+      ASSERT_FLOAT_EQ(-985.0f, static_cast<float>(f.GetFrameGeometry(1).GetOrigin() [2]));
     }
   }
 }

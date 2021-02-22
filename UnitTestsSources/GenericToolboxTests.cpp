@@ -72,11 +72,11 @@ TEST(GenericToolbox, TestLegitDoubleString)
   EXPECT_FALSE(LegitDoubleString(" 1 2 "));
   EXPECT_FALSE(LegitDoubleString(" 0.12\t"));
   EXPECT_FALSE(LegitDoubleString(" 0.12"));
-  EXPECT_FALSE(LegitDoubleString("0.12\t"));
-  EXPECT_FALSE(LegitDoubleString("12\t"));
+  EXPECT_TRUE(LegitDoubleString("0.12\t"));
+  EXPECT_TRUE(LegitDoubleString("12\t"));
   EXPECT_FALSE(LegitDoubleString(".01 23"));
   EXPECT_FALSE(LegitDoubleString(". 123"));
-  EXPECT_FALSE(LegitDoubleString(".5 "));
+  EXPECT_TRUE(LegitDoubleString(".5 "));
   EXPECT_FALSE(LegitDoubleString(" ."));
   EXPECT_FALSE(LegitDoubleString("\n0."));
 }

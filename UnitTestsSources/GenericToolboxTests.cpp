@@ -4287,9 +4287,212 @@ TEST(GenericToolbox, TestGetRgbValuesFromString)
   EXPECT_EQ(0, blue);
 }
 
+TEST(GenericToolbox, FastParseTest_StringToDoubleEx01)
+{
+  using OrthancStone::GenericToolbox::StringToDoubleEx;
+
+  const char* s = "0.0/.123/3/12.5//-43.1";
+
+  int32_t size;
+  double r;
+  const char* p = s;
+
+  size = StringToDoubleEx(r, p, '/');
+  // -->
+  // r = 0 and size = 3
+  ASSERT_EQ(3, size);
+  ASSERT_DOUBLE_EQ(0, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(4, size);
+  ASSERT_DOUBLE_EQ(0.123, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(1, size);
+  ASSERT_DOUBLE_EQ(3, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(4, size);
+  ASSERT_DOUBLE_EQ(12.5, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(0, size);
+  ASSERT_DOUBLE_EQ(0, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(5, size);
+  ASSERT_DOUBLE_EQ(-43.1, r);
+
+  p += size;
+  ASSERT_EQ(0, *p);
+}
+
+TEST(GenericToolbox, FastParseTest_StringToDoubleEx02)
+{
+  using OrthancStone::GenericToolbox::StringToDoubleEx;
+
+  const char* s = "  \t   0.0/.123/3  \t/12.5e-3//-43.1   \t     ";
+
+  int32_t size;
+  double r;
+  const char* p = s;
+
+  while (*p == ' ' || *p == '\t')
+    ++p;
+
+  size = StringToDoubleEx(r, p, '/');
+  // -->
+  // r = 0 and size = 3
+  ASSERT_EQ(3, size);
+  ASSERT_DOUBLE_EQ(0, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(4, size);
+  ASSERT_DOUBLE_EQ(0.123, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(4, size);
+  ASSERT_DOUBLE_EQ(3, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(7, size);
+  ASSERT_DOUBLE_EQ(12.5e-3, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(0, size);
+  ASSERT_DOUBLE_EQ(0, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(14, size);
+  ASSERT_DOUBLE_EQ(-43.1, r);
+
+  p += size;
+  ASSERT_EQ(0, *p);
+}
+
+TEST(GenericToolbox, FastParseTest_StringToDoubleEx03)
+{
+  using OrthancStone::GenericToolbox::StringToDoubleEx;
+
+  const char* s = "  \t   0.0/.123/3/12.5e-3//-43.1e-2   \t     ";
+
+  int32_t size;
+  double r;
+  const char* p = s;
+
+  while (*p == ' ' || *p == '\t')
+    ++p;
+
+  size = StringToDoubleEx(r, p, '/');
+  // -->
+  // r = 0 and size = 3
+  ASSERT_EQ(3, size);
+  ASSERT_DOUBLE_EQ(0, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(4, size);
+  ASSERT_DOUBLE_EQ(0.123, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(1, size);
+  ASSERT_DOUBLE_EQ(3, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(7, size);
+  ASSERT_DOUBLE_EQ(12.5e-3, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(0, size);
+  ASSERT_DOUBLE_EQ(0, r);
+
+  p += (size + 1);
+  size = StringToDoubleEx(r, p, '/');
+  ASSERT_EQ(17, size);
+  ASSERT_DOUBLE_EQ(-43.1e-2, r);
+
+  p += size;
+  ASSERT_EQ(0, *p);
+}
 
 
+TEST(GenericToolbox, FastParseTest_GetCharCount)
+{
+  using OrthancStone::GenericToolbox::GetCharCount;
+
+  ASSERT_EQ(0u, GetCharCount("-1e-22", '\\'));
+  ASSERT_EQ(0u, GetCharCount("   -1e-22", '\\'));
+  ASSERT_EQ(0u, GetCharCount("   -1e-22   ", '\\'));
+  ASSERT_EQ(0u, GetCharCount("-1e-22   ", '\\'));
+
+  ASSERT_EQ(1u, GetCharCount("-1e-2\\2", '\\'));
+  ASSERT_EQ(1u, GetCharCount("     -1e-2\\2", '\\'));
+  ASSERT_EQ(1u, GetCharCount("-1e-2\\2       ", '\\'));
+  ASSERT_EQ(1u, GetCharCount("    -1e-2\\2   ", '\\'));
 
 
+  ASSERT_EQ(11u, GetCharCount("    -1e-2\\\\3\\12.473\\-2.34e4\\-284\\423.23\\\\0.234423\\.786 \\ 9093\\   ", '\\'));
+}
 
 
+TEST(GenericToolbox, FastParseTest_FastParseVector01)
+{
+  using OrthancStone::GenericToolbox::FastParseVector;
+
+  OrthancStone::Vector v;
+
+  ASSERT_TRUE(FastParseVector(v, "1.2"));
+  ASSERT_EQ(1u, v.size());
+  ASSERT_DOUBLE_EQ(1.2, v[0]);
+
+  ASSERT_TRUE(FastParseVector(v, "-1.2e+2"));
+  ASSERT_EQ(1u, v.size());
+  ASSERT_DOUBLE_EQ(-120.0, v[0]);
+
+  ASSERT_TRUE(FastParseVector(v, "-1e-2\\2"));
+  ASSERT_EQ(2u, v.size());
+  ASSERT_DOUBLE_EQ(-0.01, v[0]);
+  ASSERT_DOUBLE_EQ(2.0, v[1]);
+
+  ASSERT_TRUE(FastParseVector(v, "1.3671875\\1.3671875"));
+  ASSERT_EQ(2u, v.size());
+  ASSERT_DOUBLE_EQ(1.3671875, v[0]);
+  ASSERT_DOUBLE_EQ(1.3671875, v[1]);
+}
+
+TEST(GenericToolbox, FastParseTest_FastParseVector02)
+{
+  using OrthancStone::GenericToolbox::FastParseVector;
+
+  const char* vectorString = "    -1e-2\\\\3\\12.473\\-2.34e4\\-284\\423.23\\\\0.234423\\.786 \\9093\\   ";
+
+  OrthancStone::Vector v;
+
+  ASSERT_TRUE(FastParseVector(v, vectorString));
+  ASSERT_EQ(12u, v.size());
+  ASSERT_DOUBLE_EQ(-1e-2    , v[ 0]);
+  ASSERT_DOUBLE_EQ(0        , v[ 1]);
+  ASSERT_DOUBLE_EQ(3        , v[ 2]);
+  ASSERT_DOUBLE_EQ(12.473   , v[ 3]);
+  ASSERT_DOUBLE_EQ(-2.34e4  , v[ 4]);
+  ASSERT_DOUBLE_EQ(-284     , v[ 5]);
+  ASSERT_DOUBLE_EQ(423.23   , v[ 6]);
+  ASSERT_DOUBLE_EQ(0        , v[ 7]);
+  ASSERT_DOUBLE_EQ(0.234423 , v[ 8]);
+  ASSERT_DOUBLE_EQ(.786     , v[ 9]);
+  ASSERT_DOUBLE_EQ(9093     , v[10]);
+  ASSERT_DOUBLE_EQ(0        , v[11]);
+}

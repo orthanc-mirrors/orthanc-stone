@@ -23,8 +23,8 @@
 
 #include "DicomStructure2.h"
 
-#include "../Toolbox/GeometryToolbox.h"
-#include "../Toolbox/DisjointDataSet.h"
+#include "GeometryToolbox.h"
+#include "DisjointDataSet.h"
 
 namespace OrthancStone
 {

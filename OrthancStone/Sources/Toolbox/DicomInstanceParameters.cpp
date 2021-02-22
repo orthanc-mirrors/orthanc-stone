@@ -24,8 +24,8 @@
 
 #include "../Scene2D/ColorTextureSceneLayer.h"
 #include "../Scene2D/FloatTextureSceneLayer.h"
-#include "../Toolbox/GeometryToolbox.h"
-#include "../Toolbox/ImageToolbox.h"
+#include "GeometryToolbox.h"
+#include "ImageToolbox.h"
 
 #include <Images/Image.h>
 #include <Images/ImageProcessing.h>

@@ -50,6 +50,9 @@ Wishlist
 * Configuration option related to the "DicomSource" class in order to
   systematically request server-side transcoding.
 
+* Fully implement "Basic Image Review" profile from IHE:
+  https://wiki.ihe.net/index.php/Basic_Image_Review
+
 
 
 ==================================

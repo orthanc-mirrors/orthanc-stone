@@ -491,9 +491,6 @@ namespace OrthancStone
     }
 
     structures_.resize(count);
-#if STONE_TIME_BLOCKING_OPS
-    LOG(WARNING) << "DicomStructureSet::Setup(...) structures_.size()  = " << structures_.size();
-#endif
     for (size_t i = 0; i < count; i++)
     {
       structures_[i].interpretation_ = reader.GetStringValue
@@ -528,10 +525,6 @@ namespace OrthancStone
       {
         countSlices = 0;
       }
-
-#if STONE_TIME_BLOCKING_OPS
-      LOG(WARNING) << "DicomStructureSet::Setup(...) structure # " << i << " : countSlices = " << countSlices;
-#endif
 
       LOG(INFO) << "New RT structure: \"" << structures_[i].name_ 
                 << "\" with interpretation \"" << structures_[i].interpretation_

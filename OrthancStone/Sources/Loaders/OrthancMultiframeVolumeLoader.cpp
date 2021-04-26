@@ -269,7 +269,7 @@ namespace OrthancStone
 
   template <typename T>
   void OrthancMultiframeVolumeLoader::CopyPixelDataAndComputeDistribution(
-    const std::string& pixelData, std::map<T,uint64_t>& distribution)
+    const std::string& pixelData, std::map<T, PixelCount>& distribution)
   {
 #if STONE_TIME_BLOCKING_OPS
     boost::posix_time::ptime timerStart = boost::posix_time::microsec_clock::universal_time();
@@ -294,6 +294,7 @@ namespace OrthancStone
     }
 
     // first pass to initialize map
+#if 0
     {
       const uint8_t* source = reinterpret_cast<const uint8_t*>(pixelData.c_str());
 
@@ -311,6 +312,7 @@ namespace OrthancStone
         }
       }
     }
+#endif
 
     {
       const uint8_t* source = reinterpret_cast<const uint8_t*>(pixelData.c_str());
@@ -351,7 +353,7 @@ namespace OrthancStone
           {
             CopyPixel(*targetAddrPix, source);
 
-            distribution[*targetAddrPix] += 1;
+            distribution[*targetAddrPix].count_ += 1;
 
             targetAddrPix++;
             source += bpp;
@@ -372,7 +374,7 @@ namespace OrthancStone
 
   template <typename T>
   void OrthancMultiframeVolumeLoader::ComputeMinMaxWithOutlierRejection(
-    const std::map<T, uint64_t>& distribution)
+    const std::map<T, PixelCount>& distribution)
   {
     if (distribution.size() == 0)
     {
@@ -391,15 +393,14 @@ namespace OrthancStone
       // compute number of values and check (assertion) that it is equal to 
       // width * height * depth 
       {
-        typename std::map<T, uint64_t>::const_iterator it = distribution.begin();
+        typename std::map<T, PixelCount>::const_iterator it = distribution.begin();
         uint64_t totalCount = 0;
         distributionRawMin_ = static_cast<float>(it->first);
 
         while (it != distribution.end())
         {
           T pixelValue = it->first;
-          uint64_t count = it->second;
-          totalCount += count;
+          totalCount += it->second.count_;
           ++it;
           if (it == distribution.end())
             distributionRawMax_ = static_cast<float>(pixelValue);
@@ -436,14 +437,14 @@ namespace OrthancStone
       // then start from start and remove pixel values up to 
       // endRejectionCount voxels rejected
       {
-        typename std::map<T, uint64_t>::const_iterator it = distribution.begin();
+        typename std::map<T, PixelCount>::const_iterator it = distribution.begin();
         
         uint64_t currentCount = 0;
 
         while (it != distribution.end())
         {
           T pixelValue = it->first;
-          uint64_t count = it->second;
+          uint64_t count = it->second.count_;
 
           // if this pixelValue crosses the rejection threshold, let's set it
           // and exit the loop
@@ -468,14 +469,14 @@ namespace OrthancStone
       // now start from END and remove pixel values up to 
       // endRejectionCount voxels rejected
       {
-        typename std::map<T, uint64_t>::const_reverse_iterator it = distribution.rbegin();
+        typename std::map<T, PixelCount>::const_reverse_iterator it = distribution.rbegin();
 
         uint64_t currentCount = 0;
 
         while (it != distribution.rend())
         {
           T pixelValue = it->first;
-          uint64_t count = it->second;
+          uint64_t count = it->second.count_;
 
           if ((currentCount <= endRejectionCount) &&
               (currentCount + count > endRejectionCount))
@@ -506,7 +507,7 @@ namespace OrthancStone
   void OrthancMultiframeVolumeLoader::CopyPixelDataAndComputeMinMax(
     const std::string& pixelData)
   {
-    std::map<T, uint64_t> distribution;
+    std::map<T, PixelCount> distribution;
     CopyPixelDataAndComputeDistribution(pixelData, distribution);
     ComputeMinMaxWithOutlierRejection(distribution);
   }

@@ -41,6 +41,12 @@ namespace OrthancStone
     class LoadTransferSyntax;    
     class LoadUncompressedPixelData;
 
+    struct PixelCount
+    {
+        uint64_t count_;
+        PixelCount() { count_ = 0; }
+    };
+
     boost::shared_ptr<DicomVolumeImage>  volume_;
     std::string                          instanceId_;
     std::string                          transferSyntaxUid_;
@@ -81,11 +87,11 @@ namespace OrthancStone
     /** Service method for CopyPixelDataAndComputeMinMax*/
     template <typename T>
     void CopyPixelDataAndComputeDistribution(const std::string& pixelData, 
-                                             std::map<T, uint64_t>& distribution);
+                                             std::map<T, PixelCount>& distribution);
 
     /** Service method for CopyPixelDataAndComputeMinMax*/
     template <typename T>
-    void ComputeMinMaxWithOutlierRejection(const std::map<T, uint64_t>& distribution);
+    void ComputeMinMaxWithOutlierRejection(const std::map<T, PixelCount>& distribution);
 
     void SetUncompressedPixelData(const std::string& pixelData);
 

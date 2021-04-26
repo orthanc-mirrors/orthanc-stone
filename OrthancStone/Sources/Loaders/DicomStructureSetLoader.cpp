@@ -149,7 +149,7 @@ namespace OrthancStone
         }
         const std::string msgStr = msg.str();
         LOG(ERROR) << msgStr;
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_UnknownResource);          
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadJson);
       }
 
       const std::string instanceId = lookup[0]["ID"].asString();

@@ -92,7 +92,7 @@ namespace OrthancStone
         
       if (body.type() != Json::objectValue)
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadJson, "JSON body should be an object value");
       }
 
       std::unique_ptr<Orthanc::DicomMap> dicom(new Orthanc::DicomMap);

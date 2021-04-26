@@ -53,7 +53,7 @@ source ~/apps/emsdk/emsdk_env.sh
 
 emcmake cmake -G "Ninja" \
   -DCMAKE_BUILD_TYPE=$buildType \
-  -DCMAKE_INSTALL_PREFIX=$installFolderName \
+  -DORTHANC_STONE_INSTALL_PREFIX=$installFolderName \
   -DSTATIC_BUILD=ON -DALLOW_DOWNLOADS=ON \
   $samplesRootDir/WebAssembly
 

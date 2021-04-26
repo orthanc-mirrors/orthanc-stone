@@ -42,7 +42,8 @@ namespace OrthancStone
     
 
   BasicFetchingStrategy::BasicFetchingStrategy(IFetchingItemsSorter* sorter,   // Takes ownership
-                                               unsigned int maxQuality) :
+                                               unsigned int maxQuality,
+                                               unsigned int initialItem) :
     sorter_(sorter),
     maxQuality_(maxQuality),
     position_(0),
@@ -55,7 +56,7 @@ namespace OrthancStone
 
     nextQuality_.resize(sorter_->GetItemsCount(), 0);   // Does not change along calls to "SetCurrent()"
       
-    SetCurrent(0);
+    SetCurrent(initialItem);
   }
 
 

@@ -71,7 +71,8 @@ namespace OrthancStone
     
   public:
     BasicFetchingStrategy(IFetchingItemsSorter* sorter,   // Takes ownership
-                          unsigned int maxQuality);
+                          unsigned int maxQuality,
+                          unsigned int initialItem = 0);
 
     virtual unsigned int GetItemsCount() const ORTHANC_OVERRIDE
     {

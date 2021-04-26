@@ -121,6 +121,7 @@ namespace OrthancStone
     ILoadersContext&                                loadersContext_;
     bool                                            active_;
     bool                                            progressiveQuality_;
+    bool                                            startCenter_;
     unsigned int                                    simultaneousDownloads_;
     SeriesGeometry                                  seriesGeometry_;
     boost::shared_ptr<DicomVolumeImage>             volume_;
@@ -153,6 +154,8 @@ namespace OrthancStone
       bool progressiveQuality = false);
 
     virtual ~OrthancSeriesVolumeProgressiveLoader();
+
+    void SetStartCenter(bool startCenter);
 
     void SetSimultaneousDownloads(unsigned int count);
 

@@ -397,9 +397,14 @@ namespace OrthancStone
       if (progressiveQuality_)
         maxQuality = QUALITY_02;
 
+      unsigned int initialSlice = 0;
+      if (startCenter_)
+          initialSlice = static_cast<unsigned int>(slicesCount) / 2;
+
       strategy_.reset(new BasicFetchingStrategy(
         sorter_->CreateSorter(static_cast<unsigned int>(slicesCount)),
-        maxQuality));
+        maxQuality,
+        initialSlice));
 
       assert(simultaneousDownloads_ != 0);
       for (unsigned int i = 0; i < simultaneousDownloads_; i++)
@@ -528,6 +533,7 @@ namespace OrthancStone
     : loadersContext_(loadersContext)
     , active_(false)
     , progressiveQuality_(progressiveQuality)
+    , startCenter_(false)
     , simultaneousDownloads_(4)
     , volume_(volume)
     , sorter_(new BasicFetchingItemsSorter::Factory)
@@ -568,6 +574,11 @@ namespace OrthancStone
   OrthancSeriesVolumeProgressiveLoader::~OrthancSeriesVolumeProgressiveLoader()
   {
     LOG(TRACE) << "OrthancSeriesVolumeProgressiveLoader::~OrthancSeriesVolumeProgressiveLoader()";
+  }
+
+  void OrthancSeriesVolumeProgressiveLoader::SetStartCenter(bool startCenter)
+  {
+      startCenter_ = startCenter;
   }
 
   void OrthancSeriesVolumeProgressiveLoader::SetSimultaneousDownloads(unsigned int count)

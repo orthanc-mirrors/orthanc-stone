@@ -127,10 +127,12 @@ namespace OrthancStone
     if (command.GetMethod() == Orthanc::HttpMethod_Post ||
         command.GetMethod() == Orthanc::HttpMethod_Put)
     {
-      client.SetBody(command.GetBody());
+      client.SetExternalBody(command.GetBody());
     }
 
     client.ApplyAndThrowException(answer, answerHeaders);
+    client.ClearBody();
+
     DecodeAnswer(answer, answerHeaders);
   }
 
@@ -163,10 +165,11 @@ namespace OrthancStone
     if (command.GetMethod() == Orthanc::HttpMethod_Post ||
         command.GetMethod() == Orthanc::HttpMethod_Put)
     {
-      client.SetBody(command.GetBody());
+      client.SetExternalBody(command.GetBody());
     }
 
     client.ApplyAndThrowException(answer, answerHeaders);
+    client.ClearBody();
     DecodeAnswer(answer, answerHeaders);
   }
 

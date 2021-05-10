@@ -2993,6 +2993,18 @@ extern "C"
     }
     EXTERN_CATCH_EXCEPTIONS;
   }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void AddHttpHeader(const char* header,
+                     const char* value)
+  {
+    try
+    {
+      source_.AddHttpHeader(header, value);
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
   
 
   EMSCRIPTEN_KEEPALIVE

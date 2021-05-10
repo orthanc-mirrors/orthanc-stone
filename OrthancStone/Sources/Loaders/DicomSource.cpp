@@ -395,4 +395,20 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
     }
   }
+
+
+  void DicomSource::AddHttpHeader(const std::string& header,
+                                  const std::string& value)
+  {
+    if (type_ == DicomSourceType_Orthanc ||
+        type_ == DicomSourceType_DicomWeb ||
+        type_ == DicomSourceType_DicomWebThroughOrthanc)
+    {
+      webService_.AddHttpHeader(header, value);
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadParameterType);
+    }
+  }
 }

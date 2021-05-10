@@ -1,6 +1,9 @@
 Pending changes in the mainline
 ===============================
 
+* New argument "token" to set HTTP header "Authorization: Bearer <token>"
+  for each request to the DICOMweb server
+* Fix issue #197 (Support for passing credentials with all HTTP requests)
 
 
 Version 1.0 (2020-12-02)

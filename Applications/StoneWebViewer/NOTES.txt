@@ -92,6 +92,27 @@ Differences with Osimis Web viewer
   displayed at the startup.
 
 
+Authorization to the DICOMweb server (new in 2.0)
+====================================
+
+The function "stone.AddHttpHeader()" exposed in the WebAssembly API
+can be used to add custom HTTP headers to each XMLHttpRequest that is
+sent to the DICOMweb server. This notably gives the opportunity to
+provide an authentication token using the "Authorization" HTTP header.
+
+The Vue.js application will set the "Authorization" HTTP header to the
+value "Bearer <token>" where "<token>" is value of the GET argument
+"token" provided when opening "index.html". If the "token" GET
+argument is absent, the "Authorization" header is not altered.
+
+For instance, if the user opens the following URL:
+
+http://.../index.html?study=<StudyInstanceUID1>&token=Hello
+
+Then each request to the DICOMweb will set the HTTP header:
+"Authorization: Bearer Hello"
+
+
 Dynamic actions using messages
 ==============================
 

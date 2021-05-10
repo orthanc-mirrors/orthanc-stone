@@ -125,5 +125,8 @@ namespace OrthancStone
     bool HasDicomWebRendered() const;
 
     unsigned int GetQualityCount() const;
+
+    void AddHttpHeader(const std::string& header,
+                       const std::string& value);
   };
 }

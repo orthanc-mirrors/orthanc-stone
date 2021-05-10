@@ -1050,6 +1050,13 @@ window.addEventListener('StoneInitialized', function() {
   if ('DicomCacheSize' in app.globalConfiguration) {
     stone.SetDicomCacheSize(app.globalConfiguration.DicomCacheSize);
   }
+
+  // Bearer token is new in Stone Web viewer 2.0
+  var token = getParameterFromUrl('token');
+  if (token !== undefined)
+  {
+    stone.AddHttpHeader('Authorization', 'Bearer ' + token);
+  }
   
   console.warn('Stone properly initialized');
 

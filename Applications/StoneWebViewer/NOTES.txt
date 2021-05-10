@@ -105,11 +105,12 @@ value "Bearer <token>" where "<token>" is value of the GET argument
 "token" provided when opening "index.html". If the "token" GET
 argument is absent, the "Authorization" header is not altered.
 
-For instance, if the user opens the following URL:
+For instance, if the user opens the Stone Web viewer using the
+following URL:
 
 http://.../index.html?study=<StudyInstanceUID1>&token=Hello
 
-Then each request to the DICOMweb will set the HTTP header:
+Then each request to the DICOMweb server will contain the HTTP header:
 "Authorization: Bearer Hello"
 
 

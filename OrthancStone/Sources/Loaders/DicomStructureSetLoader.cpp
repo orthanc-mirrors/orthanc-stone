@@ -349,24 +349,24 @@ namespace OrthancStone
         {
           const Color& color = content_.GetStructureColor(i);
 
-#ifdef USE_BOOST_UNION_FOR_POLYGONS 
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
           std::vector< std::vector<Point2D> > polygons;
-
+          
           if (content_.ProjectStructure(polygons, i, cuttingPlane))
           {
             for (size_t j = 0; j < polygons.size(); j++)
             {
               PolylineSceneLayer::Chain chain;
               chain.resize(polygons[j].size());
-
+              
               for (size_t k = 0; k < polygons[j].size(); k++)
               {
                 chain[k] = ScenePoint2D(polygons[j][k].x, polygons[j][k].y);
-    }
-
+              }
+              
               layer->AddChain(chain, true /* closed */, color);
-  }
-        }
+            }
+          }
 #else
           std::vector< std::pair<Point2D, Point2D> > segments;
 

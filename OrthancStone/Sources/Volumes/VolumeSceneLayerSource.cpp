@@ -44,9 +44,12 @@ namespace OrthancStone
   {
     {
       std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-      ViewportController& controller = lock->GetController();
-      Scene2D& scene = controller.GetScene();
-      scene.DeleteLayer(layerDepth_);
+      if (lock.get())
+      {
+        ViewportController& controller = lock->GetController();
+        Scene2D& scene = controller.GetScene();
+        scene.DeleteLayer(layerDepth_);
+      }
     }
     lastPlane_.reset(NULL);
   }

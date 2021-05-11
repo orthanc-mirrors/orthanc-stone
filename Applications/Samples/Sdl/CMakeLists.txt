@@ -108,13 +108,15 @@ project(UnitTests)
 
 add_executable(UnitTests
   ${GOOGLE_TEST_SOURCES}
+  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/DicomTests.cpp
   ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/GenericToolboxTests.cpp
+  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/GeometryToolboxTests.cpp
   ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/ImageToolboxTests.cpp
   ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/PixelTestPatternsTests.cpp
+  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/SortedFramesTests.cpp
   ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/TestMessageBroker.cpp
   ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/TestStrategy.cpp
   ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/TestStructureSet.cpp
-  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/SortedFramesTests.cpp
   ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/UnitTestsMain.cpp
   )
 

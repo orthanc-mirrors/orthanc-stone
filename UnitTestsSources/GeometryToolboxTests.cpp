@@ -21,9 +21,11 @@
 
 #include <gtest/gtest.h>
 
+#include "../OrthancStone/Sources/Toolbox/DicomInstanceParameters.h"
 #include "../OrthancStone/Sources/Toolbox/FiniteProjectiveCamera.h"
 #include "../OrthancStone/Sources/Toolbox/GenericToolbox.h"
 #include "../OrthancStone/Sources/Toolbox/GeometryToolbox.h"
+#include "../OrthancStone/Sources/Toolbox/SlicesSorter.h"
 
 #include <Logging.h>
 #include <OrthancException.h>
@@ -929,5 +931,145 @@ TEST(CoordinateSystem3D, Basic)
     double r = d.GetNormal() [0] / 2.0;
     ASSERT_DOUBLE_EQ(-8 * r, d.GetNormal() [1]);
     ASSERT_DOUBLE_EQ(5 * r, d.GetNormal() [2]);
+  }
+}
+
+
+TEST(SlicesSorter, HFP)
+{
+  // 2021-04-27-repro-bug-HFP-HFS-cartman
+  
+  {
+    // This is the last instance in the CT series ("InstanceNumber" is 368):
+    // CT1.2.752.243.1.1.20210202150623868.3730.61448.dcm
+    const OrthancStone::CoordinateSystem3D system("300\\302.5\\323.11", "-1\\0\\0\\0\\-1\\0");
+
+    /**
+     * The first instance in the series ("InstanceNumber" is 1) is
+     * CT1.2.752.243.1.1.20210202150623381.2000.76318.dcm, and its
+     * "ImagePositionPatient" is "300\\302.5\\690.11". It cannot be
+     * taken as the origin of the volume, otherwise the Z axis is
+     * shifted by the depth of the volume.
+     **/
+
+    const double spacingXY = 1.171875;
+    const double width = 512;
+    const double height = 512;
+    const double depth = 368;  // Number of instances in the series
+  
+    OrthancStone::VolumeImageGeometry geometry;
+    geometry.SetAxialGeometry(system);
+    geometry.SetSizeInVoxels(width, height, depth);
+    geometry.SetVoxelDimensions(spacingXY, spacingXY, 1 /* pixel spacing Z */);
+
+    OrthancStone::Vector p, q;
+
+    p = OrthancStone::LinearAlgebra::CreateVector(0.5 / double(width),
+                                                  0.5 / double(height),
+                                                  0.5 / double(depth), 1);
+    q = OrthancStone::LinearAlgebra::Product(geometry.GetTransform(), p);
+    ASSERT_FLOAT_EQ(300, q[0]);
+    ASSERT_FLOAT_EQ(302.5, q[1]);
+    ASSERT_FLOAT_EQ(323.11, q[2]);
+    ASSERT_FLOAT_EQ(1, q[3]);
+  
+    p = OrthancStone::LinearAlgebra::CreateVector((width - 0.5) / double(width),
+                                                  (height - 0.5) / double(height),
+                                                  (depth - 0.5) / double(depth), 1);
+    q = OrthancStone::LinearAlgebra::Product(geometry.GetTransform(), p);
+
+    ASSERT_FLOAT_EQ(300.0 - (width - 1.0) * spacingXY, q[0]);   // "X" is swapped
+    ASSERT_FLOAT_EQ(302.5 - (height - 1.0) * spacingXY, q[1]);  // "Y" is swapped
+    ASSERT_FLOAT_EQ(690.11, q[2]);
+    ASSERT_FLOAT_EQ(1, q[3]);
+  }
+
+  {
+    // DOSE instance: RD1.2.752.243.1.1.20210202150624529.3790.85357_DoseTPS.dcm
+    OrthancStone::CoordinateSystem3D system("-217.0492\\-161.4141\\376.61", "1\\0\\0\\0\\1\\0");
+    const double spacingXY = 3;
+    const double width = 146; // Columns
+    const double height = 84; // Row
+    const double depth = 86;  // Number of frames, same as the length of "GridFrameOffsetVector"
+  
+    OrthancStone::VolumeImageGeometry geometry;
+    geometry.SetAxialGeometry(system);
+    geometry.SetSizeInVoxels(width, height, depth);
+    geometry.SetVoxelDimensions(spacingXY, spacingXY, 3 /* pixel spacing Z, cf. "GridFrameOffsetVector" */);
+
+    OrthancStone::Vector p, q;
+
+    p = OrthancStone::LinearAlgebra::CreateVector(0.5 / double(width), 0.5 / double(height), 0.5 / double(depth), 1);
+    q = OrthancStone::LinearAlgebra::Product(geometry.GetTransform(), p);
+    ASSERT_FLOAT_EQ(-217.0492, q[0]);
+    ASSERT_FLOAT_EQ(-161.4141, q[1]);
+    ASSERT_FLOAT_EQ(376.61, q[2]);
+    ASSERT_FLOAT_EQ(1, q[3]);
+  
+    p = OrthancStone::LinearAlgebra::CreateVector((width - 0.5) / double(width),
+                                                  (height - 0.5) / double(height),
+                                                  (depth - 0.5) / double(depth), 1);
+    q = OrthancStone::LinearAlgebra::Product(geometry.GetTransform(), p);
+
+    ASSERT_FLOAT_EQ(-217.0492 + (width - 1.0) * spacingXY, q[0]);
+    ASSERT_FLOAT_EQ(-161.4141 + (height - 1.0) * spacingXY, q[1]);
+    ASSERT_FLOAT_EQ(376.61 + 255.0 /* last item in "GridFrameOffsetVector" */, q[2]);
+    ASSERT_FLOAT_EQ(1, q[3]);
+  }
+
+  for (unsigned int upward = 0; upward < 2; upward++)
+  {
+    OrthancStone::SlicesSorter slices;
+
+    for (unsigned int i = 0; i < 368; i++)
+    {
+      unsigned int z = (upward ? 323 + i : 690 - i);
+      OrthancStone::CoordinateSystem3D p("300\\302.5\\" + boost::lexical_cast<std::string>(z) + ".11",
+                                         "-1\\0\\0\\0\\-1\\0");
+      slices.AddSlice(p, new Orthanc::SingleValueObject<unsigned int>(z));
+    }
+
+    slices.Sort();
+
+    double spacingZ;
+    ASSERT_TRUE(slices.ComputeSpacingBetweenSlices(spacingZ));
+    ASSERT_FLOAT_EQ(1, spacingZ);
+
+    ASSERT_FLOAT_EQ(300.0, slices.GetSliceGeometry(0).GetOrigin() [0]);
+    ASSERT_FLOAT_EQ(302.5, slices.GetSliceGeometry(0).GetOrigin() [1]);
+    ASSERT_FLOAT_EQ(323.11, slices.GetSliceGeometry(0).GetOrigin() [2]);
+
+    ASSERT_FLOAT_EQ(300.0, slices.GetSliceGeometry(367).GetOrigin() [0]);
+    ASSERT_FLOAT_EQ(302.5, slices.GetSliceGeometry(367).GetOrigin() [1]);
+    ASSERT_FLOAT_EQ(690.11, slices.GetSliceGeometry(367).GetOrigin() [2]);
+
+    ASSERT_EQ(323u, dynamic_cast<const Orthanc::SingleValueObject<unsigned int>&>(slices.GetSlicePayload(0)).GetValue());
+    ASSERT_EQ(690u, dynamic_cast<const Orthanc::SingleValueObject<unsigned int>&>(slices.GetSlicePayload(367)).GetValue());
+
+    const unsigned int width = 512;
+    const unsigned int height = 512;
+    const unsigned int depth = 368;
+    const double spacingXY = 1.171875;
+    
+    OrthancStone::VolumeImageGeometry geometry;
+    geometry.SetSizeInVoxels(width, height, depth);
+    geometry.SetVoxelDimensions(spacingXY, spacingXY, 1);
+    geometry.SetAxialGeometry(slices.GetSliceGeometry(0));
+
+    OrthancStone::Vector p, q;
+
+    p = OrthancStone::LinearAlgebra::CreateVector(0, 0, 0, 1);
+    q = OrthancStone::LinearAlgebra::Product(geometry.GetTransform(), p);
+    ASSERT_FLOAT_EQ(300 + spacingXY / 2.0, q[0]);
+    ASSERT_FLOAT_EQ(302.5 + spacingXY / 2.0, q[1]);
+    ASSERT_FLOAT_EQ(323.11 - 0.5, q[2]);
+    ASSERT_FLOAT_EQ(1, q[3]);
+
+    p = OrthancStone::LinearAlgebra::CreateVector(1, 1, 1, 1);
+    q = OrthancStone::LinearAlgebra::Product(geometry.GetTransform(), p);
+    ASSERT_FLOAT_EQ(300 - double(width) * spacingXY + spacingXY / 2.0, q[0]);
+    ASSERT_FLOAT_EQ(302.5 - double(height) * spacingXY + spacingXY / 2.0, q[1]);
+    ASSERT_FLOAT_EQ(323.11 + 368.0 - 0.5, q[2]);
+    ASSERT_FLOAT_EQ(1, q[3]);
   }
 }

@@ -259,38 +259,6 @@ namespace OrthancStone
   }
 
 
-  bool SlicesSorter::LookupClosestSlice(size_t& index,
-                                        double& distance,
-                                        const CoordinateSystem3D& slice) const
-  {
-    // TODO Turn this linear-time lookup into a log-time lookup,
-    // keeping track of whether the slices are sorted along the normal
-
-    bool found = false;
-    
-    distance = std::numeric_limits<double>::infinity();
-    
-    for (size_t i = 0; i < slices_.size(); i++)
-    {
-      assert(slices_[i] != NULL);
-
-      double tmp;
-      if (CoordinateSystem3D::ComputeDistance(tmp, slices_[i]->GetGeometry(), slice))
-      {
-        if (!found ||
-            tmp < distance)
-        {
-          index = i;
-          distance = tmp;
-          found = true;
-        }
-      }
-    }
-
-    return found;
-  }
-
-
   bool SlicesSorter::ComputeSpacingBetweenSlices(double& spacing /* out */) const
   {
     if (GetSlicesCount() <= 1)

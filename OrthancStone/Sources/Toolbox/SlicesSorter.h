@@ -86,11 +86,6 @@ namespace OrthancStone
     // parallel to the reference normal that will be selected.
     bool Sort();
 
-    // TODO - Remove this
-    bool LookupClosestSlice(size_t& index,
-                            double& distance,
-                            const CoordinateSystem3D& slice) const;
-
     // WARNING - The slices must have been sorted before calling this method
     bool ComputeSpacingBetweenSlices(double& spacing /* out */) const;
 

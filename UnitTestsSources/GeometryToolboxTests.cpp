@@ -666,12 +666,16 @@ TEST(VolumeImageGeometry, Basic)
   ASSERT_DOUBLE_EQ(-3.0 / 2.0 + 30.0 * 3.0, p[2]);
 
   VolumeProjection proj;
-  ASSERT_TRUE(g.DetectProjection(proj, g.GetAxialGeometry().GetNormal()));
+  bool isOpposite;
+  ASSERT_TRUE(g.DetectProjection(proj, isOpposite, g.GetAxialGeometry().GetNormal()));
   ASSERT_EQ(VolumeProjection_Axial, proj);
-  ASSERT_TRUE(g.DetectProjection(proj, g.GetCoronalGeometry().GetNormal()));
+  ASSERT_FALSE(isOpposite);
+  ASSERT_TRUE(g.DetectProjection(proj, isOpposite, g.GetCoronalGeometry().GetNormal()));
   ASSERT_EQ(VolumeProjection_Coronal, proj);
-  ASSERT_TRUE(g.DetectProjection(proj, g.GetSagittalGeometry().GetNormal()));
+  ASSERT_FALSE(isOpposite);
+  ASSERT_TRUE(g.DetectProjection(proj, isOpposite, g.GetSagittalGeometry().GetNormal()));
   ASSERT_EQ(VolumeProjection_Sagittal, proj);
+  ASSERT_FALSE(isOpposite);
 
   ASSERT_EQ(10u, g.GetProjectionWidth(VolumeProjection_Axial));
   ASSERT_EQ(20u, g.GetProjectionHeight(VolumeProjection_Axial));
@@ -1034,6 +1038,7 @@ TEST(SlicesSorter, HFP)
     double spacingZ;
     ASSERT_TRUE(slices.ComputeSpacingBetweenSlices(spacingZ));
     ASSERT_FLOAT_EQ(1, spacingZ);
+    ASSERT_TRUE(slices.AreAllSlicesDistinct());
 
     ASSERT_FLOAT_EQ(300.0, slices.GetSliceGeometry(0).GetOrigin() [0]);
     ASSERT_FLOAT_EQ(302.5, slices.GetSliceGeometry(0).GetOrigin() [1]);
@@ -1056,20 +1061,31 @@ TEST(SlicesSorter, HFP)
     geometry.SetVoxelDimensions(spacingXY, spacingXY, 1);
     geometry.SetAxialGeometry(slices.GetSliceGeometry(0));
 
-    OrthancStone::Vector p, q;
-
-    p = OrthancStone::LinearAlgebra::CreateVector(0, 0, 0, 1);
-    q = OrthancStone::LinearAlgebra::Product(geometry.GetTransform(), p);
+    OrthancStone::Vector q = geometry.GetCoordinates(0, 0, 0);
+    ASSERT_EQ(3u, q.size());
     ASSERT_FLOAT_EQ(300 + spacingXY / 2.0, q[0]);
     ASSERT_FLOAT_EQ(302.5 + spacingXY / 2.0, q[1]);
     ASSERT_FLOAT_EQ(323.11 - 0.5, q[2]);
-    ASSERT_FLOAT_EQ(1, q[3]);
 
-    p = OrthancStone::LinearAlgebra::CreateVector(1, 1, 1, 1);
-    q = OrthancStone::LinearAlgebra::Product(geometry.GetTransform(), p);
+    q = geometry.GetCoordinates(1, 1, 1);
+    ASSERT_EQ(3u, q.size());
     ASSERT_FLOAT_EQ(300 - double(width) * spacingXY + spacingXY / 2.0, q[0]);
     ASSERT_FLOAT_EQ(302.5 - double(height) * spacingXY + spacingXY / 2.0, q[1]);
     ASSERT_FLOAT_EQ(323.11 + 368.0 - 0.5, q[2]);
-    ASSERT_FLOAT_EQ(1, q[3]);
+
+    OrthancStone::VolumeProjection projection;
+    unsigned int slice;
+    ASSERT_TRUE(geometry.DetectSlice(projection, slice, OrthancStone::CoordinateSystem3D("300\\302.5\\690.11", "-1\\0\\0\\0\\-1\\0")));
+    ASSERT_EQ(OrthancStone::VolumeProjection_Axial, projection);
+    ASSERT_EQ(367u, slice);
+    ASSERT_TRUE(geometry.DetectSlice(projection, slice, OrthancStone::CoordinateSystem3D("300\\302.5\\323.11", "-1\\0\\0\\0\\-1\\0")));
+    ASSERT_EQ(OrthancStone::VolumeProjection_Axial, projection);
+    ASSERT_EQ(0u, slice);
+
+    // DOSE instance: RD1.2.752.243.1.1.20210202150624529.3790.85357_DoseTPS.dcm
+    ASSERT_TRUE(geometry.DetectSlice(projection, slice,
+                                     OrthancStone::CoordinateSystem3D("-217.0492\\-161.4141\\376.61", "1\\0\\0\\0\\1\\0")));
+    ASSERT_EQ(OrthancStone::VolumeProjection_Axial, projection);
+    ASSERT_EQ(376u - 323u, slice);
   }
 }

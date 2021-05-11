@@ -92,8 +92,8 @@ namespace OrthancStone
     }
 
     void SetSizeInVoxels(unsigned int width,
-                 unsigned int height,
-                 unsigned int depth);
+                         unsigned int height,
+                         unsigned int depth);
 
     // Set the geometry of the first axial slice (i.e. the one whose
     // depth == 0)
@@ -118,6 +118,7 @@ namespace OrthancStone
                           float z) const;
 
     bool DetectProjection(VolumeProjection& projection,
+                          bool& isOpposite,
                           const Vector& planeNormal) const;
 
     /**

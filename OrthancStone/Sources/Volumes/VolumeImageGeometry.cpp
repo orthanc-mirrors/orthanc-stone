@@ -229,19 +229,20 @@ namespace OrthancStone
 
 
   bool VolumeImageGeometry::DetectProjection(VolumeProjection& projection,
+                                             bool& isOpposite,
                                              const Vector& planeNormal) const
   {
-    if (GeometryToolbox::IsParallel(planeNormal, axialGeometry_.GetNormal()))
+    if (GeometryToolbox::IsParallelOrOpposite(isOpposite, planeNormal, axialGeometry_.GetNormal()))
     {
       projection = VolumeProjection_Axial;
       return true;
     }
-    else if (GeometryToolbox::IsParallel(planeNormal, coronalGeometry_.GetNormal()))
+    else if (GeometryToolbox::IsParallelOrOpposite(isOpposite, planeNormal, coronalGeometry_.GetNormal()))
     {
       projection = VolumeProjection_Coronal;
       return true;
     }
-    else if (GeometryToolbox::IsParallel(planeNormal, sagittalGeometry_.GetNormal()))
+    else if (GeometryToolbox::IsParallelOrOpposite(isOpposite, planeNormal, sagittalGeometry_.GetNormal()))
     {
       projection = VolumeProjection_Sagittal;
       return true;
@@ -257,7 +258,8 @@ namespace OrthancStone
                                         unsigned int& slice,
                                         const CoordinateSystem3D& plane) const
   {
-    if (!DetectProjection(projection, plane.GetNormal()))
+    bool isOpposite;
+    if (!DetectProjection(projection, isOpposite, plane.GetNormal()))
     {
       return false;
     }

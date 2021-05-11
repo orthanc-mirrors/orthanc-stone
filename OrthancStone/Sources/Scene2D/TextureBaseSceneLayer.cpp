@@ -51,6 +51,11 @@ namespace OrthancStone
     isLinearInterpolation_ = other.isLinearInterpolation_;
     flipX_ = other.flipX_;
     flipY_ = other.flipY_;
+
+    if (other.transform_.get() != NULL)
+    {
+      transform_.reset(new AffineTransform2D(*other.transform_));
+    }
   }
 
 
@@ -141,23 +146,44 @@ namespace OrthancStone
   }
 
   
+  void TextureBaseSceneLayer::SetTransform(const AffineTransform2D& transform)
+  {
+    transform_.reset(new AffineTransform2D(transform));
+    IncrementRevision();    
+  }
+  
+
+  void TextureBaseSceneLayer::ClearTransform()
+  {
+    transform_.reset(NULL);
+    IncrementRevision();    
+  }
+
+
   AffineTransform2D TextureBaseSceneLayer::GetTransform() const
   {
-    unsigned int width = 0;
-    unsigned int height = 0;
-
-    if (texture_.get() != NULL)
+    if (transform_.get() == NULL)
     {
-      width = texture_->GetWidth();
-      height = texture_->GetHeight();
-    }
+      unsigned int width = 0;
+      unsigned int height = 0;
+
+      if (texture_.get() != NULL)
+      {
+        width = texture_->GetWidth();
+        height = texture_->GetHeight();
+      }
     
-    return AffineTransform2D::Combine(
-      AffineTransform2D::CreateOffset(originX_, originY_),
-      AffineTransform2D::CreateRotation(angle_),
-      AffineTransform2D::CreateScaling(pixelSpacingX_, pixelSpacingY_),
-      AffineTransform2D::CreateOffset(-0.5, -0.5),
-      AffineTransform2D::CreateFlip(flipX_, flipY_, width, height));
+      return AffineTransform2D::Combine(
+        AffineTransform2D::CreateOffset(originX_, originY_),
+        AffineTransform2D::CreateRotation(angle_),
+        AffineTransform2D::CreateScaling(pixelSpacingX_, pixelSpacingY_),
+        AffineTransform2D::CreateOffset(-0.5, -0.5),
+        AffineTransform2D::CreateFlip(flipX_, flipY_, width, height));
+    }
+    else
+    {
+      return *transform_;
+    }
   }
 
   

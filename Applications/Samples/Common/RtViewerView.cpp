@@ -307,7 +307,7 @@ namespace OrthancStone
       std::unique_ptr<LookupTableStyleConfigurator> config(new LookupTableStyleConfigurator);
       config->SetLookupTable(lut);
 
-      boost::shared_ptr<DicomVolumeImageMPRSlicer> tmp(new DicomVolumeImageMPRSlicer(doseVolume));
+      boost::shared_ptr<IVolumeSlicer> tmp(new DicomVolumeImageMPRSlicer(doseVolume));
       this->SetDoseVolumeSlicer(tmp, config.release());
     }
 

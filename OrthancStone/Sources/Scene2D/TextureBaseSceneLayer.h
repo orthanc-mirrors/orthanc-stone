@@ -43,6 +43,7 @@ namespace OrthancStone
     bool                                   flipX_;
     bool                                   flipY_;
     uint64_t                               revision_;
+    std::unique_ptr<AffineTransform2D>     transform_;   // Manually-specified transformation
 
   protected:
     void SetTexture(Orthanc::ImageAccessor* texture);
@@ -119,6 +120,10 @@ namespace OrthancStone
     }
 
     const Orthanc::ImageAccessor& GetTexture() const;
+
+    void SetTransform(const AffineTransform2D& transform);
+
+    void ClearTransform();
 
     AffineTransform2D GetTransform() const;
     

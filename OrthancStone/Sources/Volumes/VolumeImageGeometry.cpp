@@ -259,7 +259,8 @@ namespace OrthancStone
                                         const CoordinateSystem3D& plane) const
   {
     bool isOpposite;
-    if (!DetectProjection(projection, isOpposite, plane.GetNormal()))
+    if (!DetectProjection(projection, isOpposite, plane.GetNormal()) ||
+        isOpposite /* TODO - Error in 2021-04-27-repro-bug-HFP-HFS-cartman */)
     {
       return false;
     }

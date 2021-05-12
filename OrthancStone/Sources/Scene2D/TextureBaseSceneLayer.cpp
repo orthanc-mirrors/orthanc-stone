@@ -165,10 +165,17 @@ namespace OrthancStone
                                                        const Vector& pixelOffsetX,
                                                        const Vector& pixelOffsetY)
   {
+    /**
+     * Shift from the center of the voxel (DICOM convention for 3D
+     * slices) to the corner of the voxel, because 2D textures are
+     * expressed relatively to their borders. (*)
+     **/
+    Vector p = origin + cuttingPlane.GetOrigin() - 0.5 * pixelOffsetX - 0.5 * pixelOffsetY;
+    
     double x0, y0, x1, y1, x2, y2;
-    cuttingPlane.ProjectPoint(x0, y0, origin + cuttingPlane.GetOrigin());
-    cuttingPlane.ProjectPoint(x1, y1, origin + cuttingPlane.GetOrigin() + pixelOffsetX);
-    cuttingPlane.ProjectPoint(x2, y2, origin + cuttingPlane.GetOrigin() + pixelOffsetY);
+    cuttingPlane.ProjectPoint(x0, y0, p);
+    cuttingPlane.ProjectPoint(x1, y1, p + pixelOffsetX);
+    cuttingPlane.ProjectPoint(x2, y2, p + pixelOffsetY);
 
     /**
 
@@ -215,7 +222,7 @@ namespace OrthancStone
         AffineTransform2D::CreateOffset(originX_, originY_),
         AffineTransform2D::CreateRotation(angle_),
         AffineTransform2D::CreateScaling(pixelSpacingX_, pixelSpacingY_),
-        AffineTransform2D::CreateOffset(-0.5, -0.5),
+        AffineTransform2D::CreateOffset(-0.5, -0.5),  // (*)
         AffineTransform2D::CreateFlip(flipX_, flipY_, width, height));
     }
     else

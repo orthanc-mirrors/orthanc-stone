@@ -87,11 +87,14 @@ namespace OrthancStone
         const Vector p1 = cuttingPlane.MapSliceToWorldCoordinates(x1, y1);        
         const Vector p2 = cuttingPlane.MapSliceToWorldCoordinates(x1, y2);
 
+        // The "0.5" shift is to move from the corner of voxel to the center of the voxel
+        
         if (1)
         {
-          texture->SetCuttingPlaneTransform(cuttingPlane, p1,
-                                            s * cuttingPlane.GetAxisX(),
-                                            s * cuttingPlane.GetAxisY());
+          texture->SetCuttingPlaneTransform(
+            cuttingPlane, p1 + 0.5 * s * cuttingPlane.GetAxisX() + 0.5 * s * cuttingPlane.GetAxisY(),
+            s * cuttingPlane.GetAxisX(),
+            s * cuttingPlane.GetAxisY());
         }
         else
         {
@@ -100,9 +103,10 @@ namespace OrthancStone
            * possible for the X axis?
            **/
           
-          texture->SetCuttingPlaneTransform(cuttingPlane, p2,
-                                            s * cuttingPlane.GetAxisX(),
-                                            -s * cuttingPlane.GetAxisY());
+          texture->SetCuttingPlaneTransform(
+            cuttingPlane, p2 + 0.5 * s * cuttingPlane.GetAxisX() + 0.5 * s * cuttingPlane.GetAxisY(),
+            s * cuttingPlane.GetAxisX(),
+            -s * cuttingPlane.GetAxisY());
         }
 
 #else

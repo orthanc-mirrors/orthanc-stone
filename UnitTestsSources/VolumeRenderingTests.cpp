@@ -21,6 +21,7 @@
 
 #include "../OrthancStone/Sources/Scene2D/CairoCompositor.h"
 #include "../OrthancStone/Sources/Scene2D/CopyStyleConfigurator.h"
+#include "../OrthancStone/Sources/Scene2D/ColorTextureSceneLayer.h"
 #include "../OrthancStone/Sources/Volumes/DicomVolumeImageMPRSlicer.h"
 #include "../OrthancStone/Sources/Volumes/DicomVolumeImageReslicer.h"
 
@@ -29,7 +30,7 @@
 
 #include <gtest/gtest.h>
 
-TEST(VolumeRendering, Basic)
+TEST(VolumeRendering, Axial)
 {
   Orthanc::DicomMap dicom;
   dicom.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, "study", false);
@@ -43,7 +44,7 @@ TEST(VolumeRendering, Basic)
   OrthancStone::VolumeImageGeometry geometry;
   geometry.SetSizeInVoxels(3, 3, 1);
   geometry.SetAxialGeometry(axial);
-  
+
   boost::shared_ptr<OrthancStone::DicomVolumeImage> volume(new OrthancStone::DicomVolumeImage);
   volume->Initialize(geometry, Orthanc::PixelFormat_Grayscale8, false);
   volume->SetDicomParameters(OrthancStone::DicomInstanceParameters(dicom));
@@ -62,6 +63,11 @@ TEST(VolumeRendering, Basic)
     }
   }
 
+  OrthancStone::Vector v = volume->GetGeometry().GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
+  ASSERT_FLOAT_EQ(1, v[0]);
+  ASSERT_FLOAT_EQ(1, v[1]);
+  ASSERT_FLOAT_EQ(1, v[2]);
+  
   OrthancStone::CoordinateSystem3D viewpoint;
 
   for (unsigned int mode = 0; mode < 2; mode++)
@@ -83,6 +89,15 @@ TEST(VolumeRendering, Basic)
     OrthancStone::CopyStyleConfigurator configurator;
     std::unique_ptr<OrthancStone::ISceneLayer> layer(slice->CreateSceneLayer(&configurator, viewpoint));
 
+    ASSERT_EQ(OrthancStone::ISceneLayer::Type_FloatTexture, layer->GetType());
+
+    OrthancStone::Extent2D box;
+    layer->GetBoundingBox(box);
+    ASSERT_FLOAT_EQ(-1.0f, box.GetX1());
+    ASSERT_FLOAT_EQ(-1.0f, box.GetY1());
+    ASSERT_FLOAT_EQ(2.0f, box.GetX2());
+    ASSERT_FLOAT_EQ(2.0f, box.GetY2());
+    
     {
       const Orthanc::ImageAccessor& a = dynamic_cast<OrthancStone::TextureBaseSceneLayer&>(*layer).GetTexture();
       Orthanc::Image i(Orthanc::PixelFormat_Grayscale8, a.GetWidth(), a.GetHeight(), false);
@@ -144,4 +159,3 @@ TEST(VolumeRendering, Basic)
     Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 4, 4);  ASSERT_EQ(200, pixel.red_);
   }
 }
-

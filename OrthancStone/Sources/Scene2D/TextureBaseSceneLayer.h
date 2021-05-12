@@ -59,6 +59,12 @@ namespace OrthancStone
   public:
     TextureBaseSceneLayer();
 
+  private:
+    /**
+     * TODO - The methods below could be removed, as well as the
+     * corresponding members
+     **/
+    
     // Center of the top-left pixel
     void SetOrigin(double x,
                    double y);
@@ -68,8 +74,6 @@ namespace OrthancStone
 
     // In radians
     void SetAngle(double angle);
-
-    void SetLinearInterpolation(bool isLinearInterpolation);
 
     void SetFlipX(bool flip);
     
@@ -100,16 +104,6 @@ namespace OrthancStone
       return angle_;
     }
 
-    bool IsLinearInterpolation() const
-    {
-      return isLinearInterpolation_;
-    }
-
-    bool HasTexture() const
-    {
-      return (texture_.get() != NULL);
-    }
-
     bool IsFlipX() const
     {
       return flipX_;
@@ -120,15 +114,32 @@ namespace OrthancStone
       return flipY_;
     }
 
+  public:
+    bool IsLinearInterpolation() const
+    {
+      return isLinearInterpolation_;
+    }
+
+    void SetLinearInterpolation(bool isLinearInterpolation);
+
+    bool HasTexture() const
+    {
+      return (texture_.get() != NULL);
+    }
+
     const Orthanc::ImageAccessor& GetTexture() const;
 
     void SetTransform(const AffineTransform2D& transform);
 
     void ClearTransform();
 
-    // Initialize a transform that maps a texture slice in 3D, to a
-    // cutting plane (the cutting plane should be parallel to the 3D
-    // slice). The "pixelOffsetX/Y" must take pixel spacing into account.
+    /**
+     * Initialize a transform that maps a texture slice in 3D, to a
+     * cutting plane (the cutting plane should be parallel to the 3D
+     * slice). The "pixelOffsetX/Y" must take pixel spacing into
+     * account. This method automatically converts from voxel centers
+     * (3D) to pixel corners (2D).
+     **/
     void SetCuttingPlaneTransform(const CoordinateSystem3D& cuttingPlane,
                                   const Vector& origin,        // coordinates of the center of the voxel
                                   const Vector& pixelOffsetX,  // 3D offset from (0,0) voxel to (1,0) voxel

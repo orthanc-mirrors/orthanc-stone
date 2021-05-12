@@ -1,0 +1,24 @@
+
+Some notes about the coordinate systems
+=======================================
+
+* The 3D coordinates are expressed in the PATIENT system, *not* the
+  "gantry" coordinates. As a consequence, the tags "Image Position
+  Patient" (0020,0032) and "Image Orientation Patient" (0020,0037)
+  describe the 3D geometry of a slice.
+
+* The tag "Patient Position" (0018,5100) could be used to convert from
+  patient coordinates to gantry coordinates, but this would be useful
+  to device manufacturers, whereas Stone primarly deals with users of
+  modalities.
+
+* The "Image Position Patient" gives the 3D coordinates of the CENTER
+  of the voxel of slice.
+
+* In 2D compositors, the origin of a texture corresponds to the CORNER
+  of the texture (*not* to the center of the first pixel). Roughly
+  speaking, the operation "floor()" must be applied to move from
+  floating coordinates to pixel coordinates.
+
+* The classes deriving from "IVolumeSlicer" must pay to attention to
+  convert from centers of 3D voxels to bounding boxes of 2D pixels.

@@ -95,11 +95,6 @@ namespace OrthancStone
     
     const CoordinateSystem3D& system = volume_.GetGeometry().GetProjectionGeometry(projection_);
 
-    /**
-     * TODO => There was a shift of (0.5, 0.5) introduced by
-     * TextureBaseSceneLayer::GetTransform(). Is it an error?
-     **/
-    
     Vector pixelSpacing = volume_.GetGeometry().GetVoxelDimensions(projection_);
 
     texture->SetCuttingPlaneTransform(cuttingPlane, system.GetOrigin(),

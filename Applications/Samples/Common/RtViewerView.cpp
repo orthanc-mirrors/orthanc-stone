@@ -45,6 +45,7 @@
 #include "../../../OrthancStone/Sources/StoneException.h"
 #include "../../../OrthancStone/Sources/StoneInitialization.h"
 #include "../../../OrthancStone/Sources/Volumes/DicomVolumeImageMPRSlicer.h"
+#include "../../../OrthancStone/Sources/Volumes/DicomVolumeImageReslicer.h"
 #include "../../../OrthancStone/Sources/Volumes/VolumeSceneLayerSource.h"
 
 // Orthanc
@@ -308,6 +309,7 @@ namespace OrthancStone
       config->SetLookupTable(lut);
 
       boost::shared_ptr<IVolumeSlicer> tmp(new DicomVolumeImageMPRSlicer(doseVolume));
+      //boost::shared_ptr<IVolumeSlicer> tmp(new DicomVolumeImageReslicer(doseVolume));
       this->SetDoseVolumeSlicer(tmp, config.release());
     }
 

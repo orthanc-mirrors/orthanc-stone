@@ -166,9 +166,9 @@ namespace OrthancStone
                                                        const Vector& pixelOffsetY)
   {
     double x0, y0, x1, y1, x2, y2;
-    cuttingPlane.ProjectPoint(x0, y0, origin);
-    cuttingPlane.ProjectPoint(x1, y1, origin + pixelOffsetX);
-    cuttingPlane.ProjectPoint(x2, y2, origin + pixelOffsetY);
+    cuttingPlane.ProjectPoint(x0, y0, origin + cuttingPlane.GetOrigin());
+    cuttingPlane.ProjectPoint(x1, y1, origin + cuttingPlane.GetOrigin() + pixelOffsetX);
+    cuttingPlane.ProjectPoint(x2, y2, origin + cuttingPlane.GetOrigin() + pixelOffsetY);
 
     /**
 

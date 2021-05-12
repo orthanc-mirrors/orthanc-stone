@@ -265,6 +265,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Scene2D/ColorSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Scene2D/ColorTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/ColorTextureSceneLayer.h
+  ${ORTHANC_STONE_ROOT}/Scene2D/CopyStyleConfigurator.cpp
+  ${ORTHANC_STONE_ROOT}/Scene2D/CopyStyleConfigurator.h
   ${ORTHANC_STONE_ROOT}/Scene2D/FloatTextureSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/FloatTextureSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Scene2D/GrayscaleStyleConfigurator.cpp

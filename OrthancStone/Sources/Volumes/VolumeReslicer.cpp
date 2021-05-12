@@ -459,8 +459,16 @@ namespace OrthancStone
                              float scaling,
                              float offset)
     {
-      if (source.GetFormat() == Orthanc::PixelFormat_Grayscale16 &&
+      if (source.GetFormat() == Orthanc::PixelFormat_Grayscale8 &&
           slice.GetFormat() == Orthanc::PixelFormat_Grayscale8)
+      {
+        ProcessImage<RowIterator,
+                     Orthanc::PixelFormat_Grayscale8,
+                     Orthanc::PixelFormat_Grayscale8>
+          (slice, extent, source, plane, box, interpolation, hasLinearFunction, scaling, offset);
+      }
+      else if (source.GetFormat() == Orthanc::PixelFormat_Grayscale16 &&
+               slice.GetFormat() == Orthanc::PixelFormat_Grayscale8)
       {
         ProcessImage<RowIterator,
                      Orthanc::PixelFormat_Grayscale16,

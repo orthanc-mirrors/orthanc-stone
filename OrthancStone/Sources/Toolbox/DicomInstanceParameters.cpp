@@ -108,13 +108,17 @@ namespace OrthancStone
         !dicom.GetValue(Orthanc::DICOM_TAG_ROWS).ParseFirstUnsignedInteger(height_))
     {
       height_ = 0;
-     }
+    }
 
 
     bool sliceThicknessPresent = true;
     if (!dicom.ParseDouble(sliceThickness_, Orthanc::DICOM_TAG_SLICE_THICKNESS))
     {
-      LOG(INFO) << "The (non-madatory) slice thickness information is missing in a multiframe image";
+      if (numberOfFrames_ > 1)
+      {
+        LOG(INFO) << "The (non-madatory) slice thickness information is missing in a multiframe image";
+      }
+      
       sliceThickness_ = 100.0 * std::numeric_limits<double>::epsilon();
       sliceThicknessPresent = false;
     }

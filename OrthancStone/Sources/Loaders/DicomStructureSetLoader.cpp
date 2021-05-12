@@ -343,6 +343,24 @@ namespace OrthancStone
       std::unique_ptr<PolylineSceneLayer> layer(new PolylineSceneLayer);
       layer->SetThickness(2);
 
+#if 0
+      // For testing - This displays a cross at the origin of the 3D
+      // cutting plane in the 2D viewport
+      {
+        PolylineSceneLayer::Chain chain;
+        chain.push_back(ScenePoint2D(-100, 0));
+        chain.push_back(ScenePoint2D(100, 0));
+        layer->AddChain(chain, false, Color(255, 0, 0));
+      }
+
+      {
+        PolylineSceneLayer::Chain chain;
+        chain.push_back(ScenePoint2D(0, -100));
+        chain.push_back(ScenePoint2D(0, 100));
+        layer->AddChain(chain, false, Color(255, 0, 0));
+      }
+#endif
+
       for (size_t i = 0; i < content_.GetStructuresCount(); i++)
       {
         if ((visibility_.size() == 0) || visibility_.at(i))

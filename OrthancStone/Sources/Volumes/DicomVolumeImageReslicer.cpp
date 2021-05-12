@@ -60,7 +60,7 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
                                         "Must provide a layer style configurator");
       }
-        
+
       reslicer.SetOutputFormat(that_.volume_->GetPixelData().GetFormat());
       reslicer.Apply(that_.volume_->GetPixelData(),
                      that_.volume_->GetGeometry(),
@@ -68,22 +68,53 @@ namespace OrthancStone
 
       if (reslicer.IsSuccess())
       {
-        std::unique_ptr<TextureBaseSceneLayer> layer
+        std::unique_ptr<TextureBaseSceneLayer> texture
           (configurator->CreateTextureFromDicom(reslicer.GetOutputSlice(),
                                                 that_.volume_->GetDicomParameters()));
-        if (layer.get() == NULL)
+        if (texture.get() == NULL)
         {
           return NULL;
         }
 
-        double s = reslicer.GetPixelSpacing();
-        layer->SetPixelSpacing(s, s);
-        layer->SetOrigin(reslicer.GetOutputExtent().GetX1() + 0.5 * s,
-                         reslicer.GetOutputExtent().GetY1() + 0.5 * s);
+        const double s = reslicer.GetPixelSpacing();
+        
+#if 1
+        const double x1 = reslicer.GetOutputExtent().GetX1();
+        //const double x2 = reslicer.GetOutputExtent().GetX2();
+        const double y1 = reslicer.GetOutputExtent().GetY1();
+        const double y2 = reslicer.GetOutputExtent().GetY2();
+
+        const Vector p1 = cuttingPlane.MapSliceToWorldCoordinates(x1, y1);        
+        const Vector p2 = cuttingPlane.MapSliceToWorldCoordinates(x1, y2);
+
+        if (1)
+        {
+          texture->SetCuttingPlaneTransform(cuttingPlane, p1,
+                                            s * cuttingPlane.GetAxisX(),
+                                            s * cuttingPlane.GetAxisY());
+        }
+        else
+        {
+          /**
+           * TODO - ONE WAS TO SOMETIMES FLIP the Y axis. Is it also
+           * possible for the X axis?
+           **/
+          
+          texture->SetCuttingPlaneTransform(cuttingPlane, p2,
+                                            s * cuttingPlane.GetAxisX(),
+                                            -s * cuttingPlane.GetAxisY());
+        }
+
+#else
+        texture->SetPixelSpacing(s, s);
+        texture->SetOrigin(reslicer.GetOutputExtent().GetX1() + 0.5 * s,
+                           reslicer.GetOutputExtent().GetY1() + 0.5 * s);
+        //texture->SetFlipY(true);
 
         // TODO - Angle!!
+#endif
                            
-        return layer.release();
+        return texture.release();
       }
       else
       {

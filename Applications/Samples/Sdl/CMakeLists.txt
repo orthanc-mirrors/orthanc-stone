@@ -22,6 +22,8 @@ cmake_policy(SET CMP0058 NEW)
 
 project(OrthancStone)
 
+set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "hg")
+set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "mainline")
 include(${CMAKE_SOURCE_DIR}/../../Platforms/Sdl/OrthancStoneSdlParameters.cmake)
 
 if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
@@ -46,6 +48,7 @@ SET(ENABLE_PUGIXML ON)   # To test compilation of OsiriX annotations
 
 include(${CMAKE_SOURCE_DIR}/../../Platforms/Sdl/OrthancStoneSdlConfiguration.cmake)
 include(${CMAKE_SOURCE_DIR}/Utilities.cmake)
+include(${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/UnitTestsSources.cmake)
 
 if (NOT ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
   # This include must be after "OrthancStoneConfiguration.cmake" to
@@ -108,16 +111,7 @@ project(UnitTests)
 
 add_executable(UnitTests
   ${GOOGLE_TEST_SOURCES}
-  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/DicomTests.cpp
-  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/GenericToolboxTests.cpp
-  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/GeometryToolboxTests.cpp
-  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/ImageToolboxTests.cpp
-  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/PixelTestPatternsTests.cpp
-  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/SortedFramesTests.cpp
-  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/TestMessageBroker.cpp
-  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/TestStrategy.cpp
-  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/TestStructureSet.cpp
-  ${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/UnitTestsMain.cpp
+  ${UNIT_TESTS_SOURCES}
   )
 
 target_link_libraries(UnitTests OrthancStone)

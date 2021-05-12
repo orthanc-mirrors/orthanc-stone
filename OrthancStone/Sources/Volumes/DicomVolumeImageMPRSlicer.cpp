@@ -86,6 +86,11 @@ namespace OrthancStone
 
       texture.reset(dynamic_cast<TextureBaseSceneLayer*>
                     (configurator->CreateTextureFromDicom(reader.GetAccessor(), parameters)));
+
+      if (texture.get() == NULL)
+      {
+        return NULL;
+      }
     }
     
     const CoordinateSystem3D& system = volume_.GetGeometry().GetProjectionGeometry(projection_);

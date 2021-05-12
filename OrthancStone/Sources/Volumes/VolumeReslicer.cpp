@@ -239,12 +239,12 @@ namespace OrthancStone
         assert(y < height);
 
         Vector q1 = plane.MapSliceToWorldCoordinates
-          (extent.GetX1() + extent.GetWidth() * static_cast<double>(0) / static_cast<double>(width + 1),
-           extent.GetY1() + extent.GetHeight() * static_cast<double>(y) / static_cast<double>(height + 1));
+          (extent.GetX1() + extent.GetWidth() * 0.5 / width,
+           extent.GetY1() + extent.GetHeight() * (static_cast<double>(y) + 0.5) / height);
 
         Vector q2 = plane.MapSliceToWorldCoordinates
-          (extent.GetX1() + extent.GetWidth() * static_cast<double>(width - 1) / static_cast<double>(width + 1),
-           extent.GetY1() + extent.GetHeight() * static_cast<double>(y) / static_cast<double>(height + 1));
+          (extent.GetX1() + extent.GetWidth() * (static_cast<double>(width - 1) + 0.5) / width,
+           extent.GetY1() + extent.GetHeight() * (static_cast<double>(y) + 0.5) / height);
 
         Vector r1, r2;
         box.ToInternalCoordinates(r1, q1);
@@ -321,8 +321,8 @@ namespace OrthancStone
         const double height = static_cast<double>(slice_.GetHeight());
         
         Vector q = plane_.MapSliceToWorldCoordinates
-          (extent_.GetX1() + extent_.GetWidth() * static_cast<double>(x_) / (width + 1.0),
-           extent_.GetY1() + extent_.GetHeight() * static_cast<double>(y_) / (height + 1.0));
+          (extent_.GetX1() + extent_.GetWidth() * (static_cast<double>(x_) + 0.5) / width,
+           extent_.GetY1() + extent_.GetHeight() * (static_cast<double>(y_) + 0.5) / height);
 
         Vector r;
         box_.ToInternalCoordinates(r, q);

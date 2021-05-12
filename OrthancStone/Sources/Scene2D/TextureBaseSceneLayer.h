@@ -24,6 +24,7 @@
 
 #include "ISceneLayer.h"
 #include "../Toolbox/AffineTransform2D.h"
+#include "../Toolbox/CoordinateSystem3D.h"
 
 #include <Compatibility.h>
 #include <Images/ImageAccessor.h>
@@ -124,6 +125,14 @@ namespace OrthancStone
     void SetTransform(const AffineTransform2D& transform);
 
     void ClearTransform();
+
+    // Initialize a transform that maps a texture slice in 3D, to a
+    // cutting plane (the cutting plane should be parallel to the 3D
+    // slice). The "pixelOffsetX/Y" must take pixel spacing into account.
+    void SetCuttingPlaneTransform(const CoordinateSystem3D& cuttingPlane,
+                                  const Vector& origin,        // coordinates of the center of the voxel
+                                  const Vector& pixelOffsetX,  // 3D offset from (0,0) voxel to (1,0) voxel
+                                  const Vector& pixelOffsetY); // 3D offset from (0,0) voxel to (0,1) voxel
 
     AffineTransform2D GetTransform() const;
     

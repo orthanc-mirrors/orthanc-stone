@@ -97,36 +97,9 @@ namespace OrthancStone
     
     Vector pixelSpacing = volume_.GetGeometry().GetVoxelDimensions(projection_);
 
-    double x0, y0, x1, y1, x2, y2;
-    cuttingPlane.ProjectPoint(x0, y0, system.GetOrigin());
-    cuttingPlane.ProjectPoint(x1, y1, system.GetOrigin() + system.GetAxisX() * pixelSpacing[0]);
-    cuttingPlane.ProjectPoint(x2, y2, system.GetOrigin() + system.GetAxisY() * pixelSpacing[1]);
-
-    /**
-
-       A = [ a11 a12 ; a21 a22 ]
-       
-       (1) A * (0 ; 0) + (b1 ; b2) = (x0 ; y0)
-       (2) A * (1 ; 0) + (b1 ; b2) = (x1 ; y1)
-       (3) A * (0 ; 1) + (b1 ; b2) = (x2 ; y2)
-
-       (2-1) A * (1 ; 0) = (x1 - x0 ; y1 - y0) <=> (a11 ; a21) = (x1 - x0 ; y1 - y0)
-       (3-1) A * (0 ; 1) = (x2 - x0 ; y2 - y0) <=> (a12 ; a22) = (x2 - x0 ; y2 - y0)
-
-    **/
-
-    Matrix m(3, 3);
-    m(0, 0) = x1 - x0;  // a11
-    m(0, 1) = x2 - x0;  // a12
-    m(0, 2) = x0;       // b1
-    m(1, 0) = y1 - y0;  // a21
-    m(1, 1) = y2 - y0;  // a22
-    m(1, 2) = y0;       // b2
-    m(2, 0) = 0;
-    m(2, 1) = 0;
-    m(2, 2) = 1;
-    
-    texture->SetTransform(AffineTransform2D(m));
+    texture->SetCuttingPlaneTransform(cuttingPlane, system.GetOrigin(),
+                                      system.GetAxisX() * pixelSpacing[0],
+                                      system.GetAxisY() * pixelSpacing[1]);
 
     return texture.release();
   }

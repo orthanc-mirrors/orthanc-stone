@@ -32,7 +32,9 @@ namespace OrthancStone
 {
   /*
 
-  This classes stores volume images sliced across the Z axis, vertically, in the decreasing Z order :
+  This classes stores volume images sliced across the Z axis,
+  vertically, in the DECREASING Z-order along the normal (this is the
+  REVERSE of the intuitive order):
 
   +---------------+
   |               |
@@ -65,6 +67,14 @@ namespace OrthancStone
   As you can see, if the 3d image has size width, height, depth, the 2d image has :
   - 2d width  = 3d width
   - 2d height = 3d height * 3d depth
+
+  This explains the "depth_ - 1 - z" that are used throughout this class.
+
+  EXPLANATION: This allows to have the "SliceReader" and "SliceWriter"
+  accessors for axial and coronal projections to directly access the
+  same memory buffer (no memcpy is required), while being consistent
+  with the Z-axis in coronal projection. The sagittal projection
+  nevertheless needs a memcpy.
 
   */
 

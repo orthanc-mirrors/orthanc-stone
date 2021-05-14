@@ -22,6 +22,7 @@
 #include "../OrthancStone/Sources/Scene2D/CairoCompositor.h"
 #include "../OrthancStone/Sources/Scene2D/ColorTextureSceneLayer.h"
 #include "../OrthancStone/Sources/Scene2D/CopyStyleConfigurator.h"
+#include "../OrthancStone/Sources/Toolbox/SubvoxelReader.h"
 #include "../OrthancStone/Sources/Volumes/DicomVolumeImageMPRSlicer.h"
 #include "../OrthancStone/Sources/Volumes/DicomVolumeImageReslicer.h"
 
@@ -30,6 +31,7 @@
 #include <OrthancException.h>
 
 #include <gtest/gtest.h>
+
 
 
 static float GetPixelValue(const Orthanc::ImageAccessor& image,
@@ -295,6 +297,161 @@ static OrthancStone::TextureBaseSceneLayer* Slice3x3x1Pattern(OrthancStone::Volu
   }
 
   return SliceVolume(volume, volumeCoordinates, cuttingPlane, type);
+}
+
+
+TEST(VolumeRendering, Pattern)
+{
+  {
+    // Axial
+    OrthancStone::ImageBuffer3D image(Orthanc::PixelFormat_Grayscale8, 3, 3, 1, true);
+
+    {
+      OrthancStone::ImageBuffer3D::SliceWriter writer(image, OrthancStone::VolumeProjection_Axial, 0);
+      Assign3x3Pattern(writer.GetAccessor());
+    }
+
+    float a, b;
+    ASSERT_TRUE(image.GetRange(a, b));
+    ASSERT_FLOAT_EQ(0, a);
+    ASSERT_FLOAT_EQ(200, b);
+
+    ASSERT_EQ(0, image.GetVoxelGrayscale8(0, 0, 0));
+    ASSERT_EQ(25, image.GetVoxelGrayscale8(1, 0, 0));
+    ASSERT_EQ(50, image.GetVoxelGrayscale8(2, 0, 0));
+    ASSERT_EQ(75, image.GetVoxelGrayscale8(0, 1, 0));
+    ASSERT_EQ(100, image.GetVoxelGrayscale8(1, 1, 0));
+    ASSERT_EQ(125, image.GetVoxelGrayscale8(2, 1, 0));
+    ASSERT_EQ(150, image.GetVoxelGrayscale8(0, 2, 0));
+    ASSERT_EQ(175, image.GetVoxelGrayscale8(1, 2, 0));
+    ASSERT_EQ(200, image.GetVoxelGrayscale8(2, 2, 0));
+
+    float v;
+    OrthancStone::SubvoxelReader<Orthanc::PixelFormat_Grayscale8,
+                                 OrthancStone::ImageInterpolation_Nearest> reader(image);
+    
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.01, 0.01, 0.01));  ASSERT_FLOAT_EQ(0, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 1.01, 0.01, 0.01));  ASSERT_FLOAT_EQ(25, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 2.01, 0.01, 0.01));  ASSERT_FLOAT_EQ(50, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.01, 1.01, 0.01));  ASSERT_FLOAT_EQ(75, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 1.01, 1.01, 0.01));  ASSERT_FLOAT_EQ(100, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 2.01, 1.01, 0.01));  ASSERT_FLOAT_EQ(125, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.01, 2.01, 0.01));  ASSERT_FLOAT_EQ(150, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 1.01, 2.01, 0.01));  ASSERT_FLOAT_EQ(175, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 2.01, 2.01, 0.01));  ASSERT_FLOAT_EQ(200, v);
+    
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 0.99, 0.99));  ASSERT_FLOAT_EQ(0, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 1.99, 0.99, 0.99));  ASSERT_FLOAT_EQ(25, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 2.99, 0.99, 0.99));  ASSERT_FLOAT_EQ(50, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 1.99, 0.99));  ASSERT_FLOAT_EQ(75, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 1.99, 1.99, 0.99));  ASSERT_FLOAT_EQ(100, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 2.99, 1.99, 0.99));  ASSERT_FLOAT_EQ(125, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 2.99, 0.99));  ASSERT_FLOAT_EQ(150, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 1.99, 2.99, 0.99));  ASSERT_FLOAT_EQ(175, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 2.99, 2.99, 0.99));  ASSERT_FLOAT_EQ(200, v);
+  }
+
+  {
+    // Coronal
+    OrthancStone::ImageBuffer3D image(Orthanc::PixelFormat_Grayscale8, 3, 1, 3, true);
+
+    {
+      OrthancStone::ImageBuffer3D::SliceWriter writer(image, OrthancStone::VolumeProjection_Coronal, 0);
+      Assign3x3Pattern(writer.GetAccessor());
+    }
+
+    float a, b;
+    ASSERT_TRUE(image.GetRange(a, b));
+    ASSERT_FLOAT_EQ(0, a);
+    ASSERT_FLOAT_EQ(200, b);
+
+    // "Z" is in reverse order in "Assign3x3Pattern()", because important note in "ImageBuffer3D"
+    ASSERT_EQ(0, image.GetVoxelGrayscale8(0, 0, 2));
+    ASSERT_EQ(25, image.GetVoxelGrayscale8(1, 0, 2));
+    ASSERT_EQ(50, image.GetVoxelGrayscale8(2, 0, 2));
+    ASSERT_EQ(75, image.GetVoxelGrayscale8(0, 0, 1));
+    ASSERT_EQ(100, image.GetVoxelGrayscale8(1, 0, 1));
+    ASSERT_EQ(125, image.GetVoxelGrayscale8(2, 0, 1));
+    ASSERT_EQ(150, image.GetVoxelGrayscale8(0, 0, 0));
+    ASSERT_EQ(175, image.GetVoxelGrayscale8(1, 0, 0));
+    ASSERT_EQ(200, image.GetVoxelGrayscale8(2, 0, 0));
+
+    // Ensure that "SubvoxelReader" is consistent with "image.GetVoxelGrayscale8()"
+    float v;
+    OrthancStone::SubvoxelReader<Orthanc::PixelFormat_Grayscale8,
+                                 OrthancStone::ImageInterpolation_Nearest> reader(image);
+
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.01, 0.01, 2.01));  ASSERT_FLOAT_EQ(0, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 1.01, 0.01, 2.01));  ASSERT_FLOAT_EQ(25, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 2.01, 0.01, 2.01));  ASSERT_FLOAT_EQ(50, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.01, 0.01, 1.01));  ASSERT_FLOAT_EQ(75, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 1.01, 0.01, 1.01));  ASSERT_FLOAT_EQ(100, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 2.01, 0.01, 1.01));  ASSERT_FLOAT_EQ(125, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.01, 0.01, 0.01));  ASSERT_FLOAT_EQ(150, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 1.01, 0.01, 0.01));  ASSERT_FLOAT_EQ(175, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 2.01, 0.01, 0.01));  ASSERT_FLOAT_EQ(200, v);
+    
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 0.99, 2.99));  ASSERT_FLOAT_EQ(0, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 1.99, 0.99, 2.99));  ASSERT_FLOAT_EQ(25, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 2.99, 0.99, 2.99));  ASSERT_FLOAT_EQ(50, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 0.99, 1.99));  ASSERT_FLOAT_EQ(75, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 1.99, 0.99, 1.99));  ASSERT_FLOAT_EQ(100, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 2.99, 0.99, 1.99));  ASSERT_FLOAT_EQ(125, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 0.99, 0.99));  ASSERT_FLOAT_EQ(150, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 1.99, 0.99, 0.99));  ASSERT_FLOAT_EQ(175, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 2.99, 0.99, 0.99));  ASSERT_FLOAT_EQ(200, v);
+  }
+
+  {
+    // Sagittal
+    OrthancStone::ImageBuffer3D image(Orthanc::PixelFormat_Grayscale8, 1, 3, 3, true);
+
+    {
+      OrthancStone::ImageBuffer3D::SliceWriter writer(image, OrthancStone::VolumeProjection_Sagittal, 0);
+      Assign3x3Pattern(writer.GetAccessor());
+    }
+
+    float a, b;
+    ASSERT_TRUE(image.GetRange(a, b));
+    ASSERT_FLOAT_EQ(0, a);
+    ASSERT_FLOAT_EQ(200, b);
+
+    // "Z" is in reverse order in "Assign3x3Pattern()", because important note in "ImageBuffer3D"
+    ASSERT_EQ(0, image.GetVoxelGrayscale8(0, 0, 2));
+    ASSERT_EQ(25, image.GetVoxelGrayscale8(0, 1, 2));
+    ASSERT_EQ(50, image.GetVoxelGrayscale8(0, 2, 2));
+    ASSERT_EQ(75, image.GetVoxelGrayscale8(0, 0, 1));
+    ASSERT_EQ(100, image.GetVoxelGrayscale8(0, 1, 1));
+    ASSERT_EQ(125, image.GetVoxelGrayscale8(0, 2, 1));
+    ASSERT_EQ(150, image.GetVoxelGrayscale8(0, 0, 0));
+    ASSERT_EQ(175, image.GetVoxelGrayscale8(0, 1, 0));
+    ASSERT_EQ(200, image.GetVoxelGrayscale8(0, 2, 0));
+
+    // Ensure that "SubvoxelReader" is consistent with "image.GetVoxelGrayscale8()"
+    float v;
+    OrthancStone::SubvoxelReader<Orthanc::PixelFormat_Grayscale8,
+                                 OrthancStone::ImageInterpolation_Nearest> reader(image);
+
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.1, 0.01, 2.01));  ASSERT_FLOAT_EQ(0, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.1, 1.01, 2.01));  ASSERT_FLOAT_EQ(25, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.1, 2.01, 2.01));  ASSERT_FLOAT_EQ(50, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.1, 0.01, 1.01));  ASSERT_FLOAT_EQ(75, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.1, 1.01, 1.01));  ASSERT_FLOAT_EQ(100, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.1, 2.01, 1.01));  ASSERT_FLOAT_EQ(125, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.1, 0.01, 0.01));  ASSERT_FLOAT_EQ(150, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.1, 1.01, 0.01));  ASSERT_FLOAT_EQ(175, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.1, 2.01, 0.01));  ASSERT_FLOAT_EQ(200, v);
+    
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 0.99, 2.99));  ASSERT_FLOAT_EQ(0, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 1.99, 2.99));  ASSERT_FLOAT_EQ(25, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 2.99, 2.99));  ASSERT_FLOAT_EQ(50, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 0.99, 1.99));  ASSERT_FLOAT_EQ(75, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 1.99, 1.99));  ASSERT_FLOAT_EQ(100, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 2.99, 1.99));  ASSERT_FLOAT_EQ(125, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 0.99, 0.99));  ASSERT_FLOAT_EQ(150, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 1.99, 0.99));  ASSERT_FLOAT_EQ(175, v);
+    ASSERT_TRUE(reader.GetFloatValue(v, 0.99, 2.99, 0.99));  ASSERT_FLOAT_EQ(200, v);
+  }        
 }
 
 

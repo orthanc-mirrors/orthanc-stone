@@ -34,13 +34,6 @@ namespace OrthancStone
 {
   namespace Internals
   {
-    /*
-    WARNING : the slice order is different between this class and ImageBuffer3D
-
-    See the comment above ImageBuffer3D declaration.
-
-    The slices are supposed to be stored in INCREASING z-order in this class!
-    */
     class SubvoxelReaderBase : public boost::noncopyable
     {
     private:
@@ -86,31 +79,32 @@ namespace OrthancStone
       unsigned int ComputeRow(unsigned int y,
                               unsigned int z) const
       {
-        return z * height_ + y;
+        /**
+         * The "(depth_ - 1 - z)" comes from the fact that
+         * "ImageBuffer3D" class stores its slices in DECREASING
+         * z-order along the normal. This computation makes the
+         * "SubvoxelReader" class use the same convention as
+         * "ImageBuffer3D::GetVoxelXXX()".
+         *
+         * WARNING: Until changeset 1782:f053c80ea411, "z" was
+         * directly used, causing this class to have a slice order
+         * that was reversed between "SubvoxelReader" and
+         * "ImageBuffer3D". This notably made
+         * "DicomVolumeImageMPRSlicer" and "DicomVolumeImageReslicer"
+         * inconsistent in sagittal and coronal views (the texture was
+         * flipped along the Y-axis in the canvas).
+         **/
+        return (depth_ - 1 - z) * height_ + y;
       }
     };
   }
 
     
-  /*
-  WARNING : the slice order is different between this class and ImageBuffer3D
-
-  See the comment above ImageBuffer3D declaration.
-
-  The slices are supposed to be stored in INCREASING z-order in this class!
-  */
   template <Orthanc::PixelFormat Format,
             ImageInterpolation Interpolation>
   class SubvoxelReader;
 
     
-  /*
-  WARNING : the slice order is different between this class and ImageBuffer3D
-
-  See the comment above ImageBuffer3D declaration.
-
-  The slices are supposed to be stored in INCREASING z-order in this class!
-  */
   template <Orthanc::PixelFormat Format>
   class SubvoxelReader<Format, ImageInterpolation_Nearest> : 
     public Internals::SubvoxelReaderBase
@@ -136,13 +130,6 @@ namespace OrthancStone
   };
     
     
-  /*
-  WARNING : the slice order is different between this class and ImageBuffer3D
-
-  See the comment above ImageBuffer3D declaration.
-
-  The slices are supposed to be stored in INCREASING z-order in this class!
-  */
   template <Orthanc::PixelFormat Format>
   class SubvoxelReader<Format, ImageInterpolation_Bilinear> : 
     public Internals::SubvoxelReaderBase
@@ -176,13 +163,6 @@ namespace OrthancStone
   };
     
 
-  /*
-  WARNING : the slice order is different between this class and ImageBuffer3D
-
-  See the comment above ImageBuffer3D declaration.
-
-  The slices are supposed to be stored in INCREASING z-order in this class!
-  */
   template <Orthanc::PixelFormat Format>
   class SubvoxelReader<Format, ImageInterpolation_Trilinear> : 
     public Internals::SubvoxelReaderBase
@@ -211,10 +191,6 @@ namespace OrthancStone
                               float z) const;
   };
 
-
-  /*
-  See important comment above
-  */
 
   template <Orthanc::PixelFormat Format>
   bool SubvoxelReader<Format, ImageInterpolation_Nearest>::GetValue(PixelType& target,
@@ -269,10 +245,6 @@ namespace OrthancStone
   }
 
 
-  /*
-  See important comment above
-  */
-
   template <Orthanc::PixelFormat Format>
   bool SubvoxelReader<Format, ImageInterpolation_Bilinear>::Sample(float& f00,
                                                                    float& f01,
@@ -326,10 +298,6 @@ namespace OrthancStone
   }
 
 
-  /*
-  See important comment above
-  */
-
   template <Orthanc::PixelFormat Format>
   bool SubvoxelReader<Format, ImageInterpolation_Bilinear>::GetFloatValue(float& target,
                                                                           float x,
@@ -368,10 +336,6 @@ namespace OrthancStone
   }
 
 
-  /*
-  See important comment above
-  */
-
   template <Orthanc::PixelFormat Format>
   bool SubvoxelReader<Format, ImageInterpolation_Bilinear>::GetValue(PixelType& target,
                                                                      float x,
@@ -390,7 +354,6 @@ namespace OrthancStone
       return false;
     }
   }
-
 
 
   template <Orthanc::PixelFormat Format>
@@ -443,11 +406,6 @@ namespace OrthancStone
       }
     }
   }
-
-
-  /*
-  See important comment above
-  */
 
 
   template <Orthanc::PixelFormat Format>

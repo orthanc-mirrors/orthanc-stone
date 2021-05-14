@@ -59,12 +59,6 @@ namespace OrthancStone
   public:
     TextureBaseSceneLayer();
 
-  private:
-    /**
-     * TODO - The methods below could be removed, as well as the
-     * corresponding members
-     **/
-    
     // Center of the top-left pixel
     void SetOrigin(double x,
                    double y);
@@ -114,7 +108,6 @@ namespace OrthancStone
       return flipY_;
     }
 
-  public:
     bool IsLinearInterpolation() const
     {
       return isLinearInterpolation_;

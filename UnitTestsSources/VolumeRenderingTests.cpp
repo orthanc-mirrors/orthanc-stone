@@ -117,26 +117,92 @@ static void Assign3x3Pattern(Orthanc::ImageAccessor& image)
     throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
   }
 }
+
+
+static Orthanc::ImageAccessor* Render(const OrthancStone::Scene2D& scene,
+                                      unsigned int width,
+                                      unsigned int height)
+{
+  OrthancStone::CairoCompositor compositor(width, height);
+  compositor.Refresh(scene);
+    
+  Orthanc::ImageAccessor rendered;
+  compositor.GetCanvas().GetReadOnlyAccessor(rendered);
+
+  return Orthanc::Image::Clone(rendered);
+}
   
 
-TEST(VolumeRendering, Axial)
+
+// Render the scene using the identity viewpoint (default)
+static Orthanc::ImageAccessor* Render(OrthancStone::ISceneLayer* layer,
+                                      unsigned int width,
+                                      unsigned int height)
+{
+  OrthancStone::Scene2D scene;
+  scene.SetLayer(0, layer);
+  return Render(scene, width, height);
+}
+
+
+enum SlicerType
+{
+  SlicerType_MPR = 0,
+  SlicerType_Reslicer = 1
+};
+
+
+static OrthancStone::TextureBaseSceneLayer* SliceVolume(boost::shared_ptr<OrthancStone::DicomVolumeImage> volume,
+                                                        const OrthancStone::CoordinateSystem3D& volumeCoordinates,
+                                                        const OrthancStone::CoordinateSystem3D& cuttingPlane,
+                                                        SlicerType type)
 {
   Orthanc::DicomMap dicom;
   dicom.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, "study", false);
   dicom.SetValue(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, "series", false);
   dicom.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, "sop", false);
   
-  OrthancStone::CoordinateSystem3D axial(OrthancStone::LinearAlgebra::CreateVector(-0.5, -0.5, 0),
-                                         OrthancStone::LinearAlgebra::CreateVector(1, 0, 0),
-                                         OrthancStone::LinearAlgebra::CreateVector(0, 1, 0));
-  
+  volume->SetDicomParameters(OrthancStone::DicomInstanceParameters(dicom));
+
+  std::unique_ptr<OrthancStone::IVolumeSlicer> slicer;
+
+  switch (type)
+  {
+    case SlicerType_MPR:
+      slicer.reset(new OrthancStone::DicomVolumeImageMPRSlicer(volume));
+      break;
+      
+    case SlicerType_Reslicer:
+      slicer.reset(new OrthancStone::DicomVolumeImageReslicer(volume));
+      break;
+
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+  }
+
+  std::unique_ptr<OrthancStone::IVolumeSlicer::IExtractedSlice> slice(slicer->ExtractSlice(cuttingPlane));
+  if (slice->IsValid())
+  {
+    OrthancStone::CopyStyleConfigurator configurator;
+    return dynamic_cast<OrthancStone::TextureBaseSceneLayer*>(slice->CreateSceneLayer(&configurator, cuttingPlane));
+  }
+  else
+  {
+    return NULL;
+  }
+}
+
+
+static OrthancStone::TextureBaseSceneLayer* Slice3x3x1Pattern(const OrthancStone::CoordinateSystem3D& volumeCoordinates,
+                                                              const OrthancStone::CoordinateSystem3D& cuttingPlane,
+                                                              SlicerType type)
+{
   OrthancStone::VolumeImageGeometry geometry;
   geometry.SetSizeInVoxels(3, 3, 1);
-  geometry.SetAxialGeometry(axial);
+  geometry.SetAxialGeometry(volumeCoordinates);
 
   boost::shared_ptr<OrthancStone::DicomVolumeImage> volume(new OrthancStone::DicomVolumeImage);
   volume->Initialize(geometry, Orthanc::PixelFormat_Grayscale8, false);
-  volume->SetDicomParameters(OrthancStone::DicomInstanceParameters(dicom));
 
   {
     OrthancStone::ImageBuffer3D::SliceWriter writer(volume->GetPixelData(), OrthancStone::VolumeProjection_Axial, 0);
@@ -144,31 +210,30 @@ TEST(VolumeRendering, Axial)
   }
 
   OrthancStone::Vector v = volume->GetGeometry().GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
-  ASSERT_FLOAT_EQ(1, v[0]);
-  ASSERT_FLOAT_EQ(1, v[1]);
-  ASSERT_FLOAT_EQ(1, v[2]);
-  
-  OrthancStone::CoordinateSystem3D viewpoint;
+  if (!OrthancStone::LinearAlgebra::IsNear(1, v[0]) ||
+      !OrthancStone::LinearAlgebra::IsNear(1, v[1]) ||
+      !OrthancStone::LinearAlgebra::IsNear(1, v[2]))
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+  }
 
+  return SliceVolume(volume, volumeCoordinates, cuttingPlane, type);
+}
+
+
+TEST(VolumeRendering, Axial)
+{
+  OrthancStone::CoordinateSystem3D axial(OrthancStone::LinearAlgebra::CreateVector(-0.5, -0.5, 0),
+                                         OrthancStone::LinearAlgebra::CreateVector(1, 0, 0),
+                                         OrthancStone::LinearAlgebra::CreateVector(0, 1, 0));
+  
   for (unsigned int mode = 0; mode < 2; mode++)
   {
-    std::unique_ptr<OrthancStone::IVolumeSlicer> slicer;
+    OrthancStone::CoordinateSystem3D cuttingPlane;
+    
+    std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(Slice3x3x1Pattern(axial, cuttingPlane, static_cast<SlicerType>(mode)));
 
-    if (mode == 1)
-    {
-      slicer.reset(new OrthancStone::DicomVolumeImageReslicer(volume));
-    }
-    else
-    {    
-      slicer.reset(new OrthancStone::DicomVolumeImageMPRSlicer(volume));
-    }
-  
-    std::unique_ptr<OrthancStone::IVolumeSlicer::IExtractedSlice> slice(slicer->ExtractSlice(viewpoint));
-    ASSERT_TRUE(slice->IsValid());
-
-    OrthancStone::CopyStyleConfigurator configurator;
-    std::unique_ptr<OrthancStone::ISceneLayer> layer(slice->CreateSceneLayer(&configurator, viewpoint));
-
+    ASSERT_TRUE(layer.get() != NULL);
     ASSERT_EQ(OrthancStone::ISceneLayer::Type_FloatTexture, layer->GetType());
 
     OrthancStone::Extent2D box;
@@ -193,45 +258,36 @@ TEST(VolumeRendering, Axial)
       ASSERT_FLOAT_EQ(200, GetPixelValue(texture, 2, 2));
     }
 
-    OrthancStone::Scene2D scene;  // Scene is initialized with the identity viewpoint
-    scene.SetLayer(0, layer.release());
-
-    OrthancStone::CairoCompositor compositor(5, 5);
-    compositor.Refresh(scene);
-
-    Orthanc::ImageAccessor rendered;
-    compositor.GetCanvas().GetReadOnlyAccessor(rendered);
-
-    ASSERT_EQ(5u, rendered.GetWidth());
-    ASSERT_EQ(5u, rendered.GetHeight());
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 0));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 0));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 2, 0));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 3, 0));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 4, 0));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 1));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 1));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 2, 1));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 3, 1));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 4, 1));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 2));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 2));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 2, 2));
-    ASSERT_FLOAT_EQ(25, GetPixelValue(rendered, 3, 2));
-    ASSERT_FLOAT_EQ(50, GetPixelValue(rendered, 4, 2));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 3));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 3));
-    ASSERT_FLOAT_EQ(75, GetPixelValue(rendered, 2, 3));
-    ASSERT_FLOAT_EQ(100, GetPixelValue(rendered, 3, 3));
-    ASSERT_FLOAT_EQ(125, GetPixelValue(rendered, 4, 3));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 4));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 4));
-    ASSERT_FLOAT_EQ(150, GetPixelValue(rendered, 2, 4));
-    ASSERT_FLOAT_EQ(175, GetPixelValue(rendered, 3, 4));
-    ASSERT_FLOAT_EQ(200, GetPixelValue(rendered, 4, 4));
+    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 5, 5));
+    ASSERT_EQ(5u, rendered->GetWidth());
+    ASSERT_EQ(5u, rendered->GetHeight());
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 1, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 2, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 3, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 4, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 1, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 2, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 3, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 4, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 2));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 1, 2));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 2, 2));
+    ASSERT_FLOAT_EQ(25, GetPixelValue(*rendered, 3, 2));
+    ASSERT_FLOAT_EQ(50, GetPixelValue(*rendered, 4, 2));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 3));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 1, 3));
+    ASSERT_FLOAT_EQ(75, GetPixelValue(*rendered, 2, 3));
+    ASSERT_FLOAT_EQ(100, GetPixelValue(*rendered, 3, 3));
+    ASSERT_FLOAT_EQ(125, GetPixelValue(*rendered, 4, 3));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 4));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 1, 4));
+    ASSERT_FLOAT_EQ(150, GetPixelValue(*rendered, 2, 4));
+    ASSERT_FLOAT_EQ(175, GetPixelValue(*rendered, 3, 4));
+    ASSERT_FLOAT_EQ(200, GetPixelValue(*rendered, 4, 4));
   }
 }
-
 
 
 TEST(VolumeRendering, TextureCorners)
@@ -247,75 +303,129 @@ TEST(VolumeRendering, TextureCorners)
     std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
     layer->SetOrigin(0, 0);
 
-    OrthancStone::Scene2D scene;
-    scene.SetLayer(0, layer.release());
-
-    OrthancStone::CairoCompositor compositor(2, 2);
-    compositor.Refresh(scene);
-    
-    Orthanc::ImageAccessor rendered;
-    compositor.GetCanvas().GetReadOnlyAccessor(rendered);
-    
-    ASSERT_EQ(2u, rendered.GetWidth());
-    ASSERT_EQ(2u, rendered.GetHeight());
-  
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 0));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 0));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 1));
-    ASSERT_FLOAT_EQ(255, GetPixelValue(rendered, 1, 1));
+    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 2, 2));
+    ASSERT_EQ(2u, rendered->GetWidth());
+    ASSERT_EQ(2u, rendered->GetHeight());  
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 1, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 1));
+    ASSERT_FLOAT_EQ(255, GetPixelValue(*rendered, 1, 1));
   }
   
   {    
     std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
     layer->SetOrigin(-0.01, 0);
 
-    OrthancStone::Scene2D scene;
-    scene.SetLayer(0, layer.release());
-
-    OrthancStone::CairoCompositor compositor(2, 2);
-    compositor.Refresh(scene);
-    
-    Orthanc::ImageAccessor rendered;
-    compositor.GetCanvas().GetReadOnlyAccessor(rendered);
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 0));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 0));
-    ASSERT_FLOAT_EQ(255, GetPixelValue(rendered, 0, 1));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 1));
+    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 2, 2));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 1, 0));
+    ASSERT_FLOAT_EQ(255, GetPixelValue(*rendered, 0, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 1, 1));
   }
   
   {    
     std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
     layer->SetOrigin(-0.01, -0.01);
 
-    OrthancStone::Scene2D scene;
-    scene.SetLayer(0, layer.release());
-
-    OrthancStone::CairoCompositor compositor(2, 2);
-    compositor.Refresh(scene);
-    
-    Orthanc::ImageAccessor rendered;
-    compositor.GetCanvas().GetReadOnlyAccessor(rendered);
-    ASSERT_FLOAT_EQ(255, GetPixelValue(rendered, 0, 0));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 0));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 1));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 1));
+    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 2, 2));
+    ASSERT_FLOAT_EQ(255, GetPixelValue(*rendered, 0, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 1, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 1, 1));
   }
   
   {    
     std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
     layer->SetOrigin(0, -0.01);
 
+    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 2, 2));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 0));
+    ASSERT_FLOAT_EQ(255, GetPixelValue(*rendered, 1, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 1, 1));
+  }
+}
+
+
+
+TEST(VolumeRendering, FitTexture)
+{
+  Orthanc::Image pixel(Orthanc::PixelFormat_RGB24, 1, 1, false);
+  Orthanc::ImageProcessing::Set(pixel, 255, 0, 0, 255);
+  
+  {    
+    std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
+    layer->SetOrigin(-42.0f, 35.0f);
+    layer->SetPixelSpacing(2, 3);
+
     OrthancStone::Scene2D scene;
     scene.SetLayer(0, layer.release());
-
-    OrthancStone::CairoCompositor compositor(2, 2);
-    compositor.Refresh(scene);
+    scene.FitContent(30, 30);
     
-    Orthanc::ImageAccessor rendered;
-    compositor.GetCanvas().GetReadOnlyAccessor(rendered);
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 0));
-    ASSERT_FLOAT_EQ(255, GetPixelValue(rendered, 1, 0));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 1));
-    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 1));
+    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(scene, 30, 30));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 0, 5, 30));
+    ASSERT_TRUE(IsConstRegion(255.0f, *rendered, 5, 0, 20, 30));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 25, 0, 5, 30));
+
+    rendered.reset(Render(scene, 40, 30));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 0, 10, 30));
+    ASSERT_TRUE(IsConstRegion(255.0f, *rendered, 10, 0, 20, 30));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 30, 0, 5, 30));
+
+    scene.FitContent(40, 30);
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 0, 10, 30));
+    ASSERT_TRUE(IsConstRegion(255.0f, *rendered, 10, 0, 20, 30));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 30, 0, 5, 30));
+    
+    rendered.reset(Render(scene, 30, 36));  // The scene has not been fitted
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 0, 30, 3));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 0, 3, 36));
+    ASSERT_TRUE(IsConstRegion(255.0f, *rendered, 5, 3, 20, 30));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 25, 0, 5, 36));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 33, 30, 3));
+
+    scene.FitContent(30, 36);  // Refit
+    rendered.reset(Render(scene, 30, 36));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 0, 3, 36));
+    ASSERT_TRUE(IsConstRegion(255.0f, *rendered, 3, 0, 24, 36));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 27, 0, 3, 36));
+  }
+  
+  {    
+    std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
+    layer->SetOrigin(42.0f, -35.0f);
+    layer->SetPixelSpacing(3, 2);
+
+    OrthancStone::Scene2D scene;
+    scene.SetLayer(0, layer.release());
+    scene.FitContent(30, 30);
+    
+    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(scene, 30, 30));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 0, 30, 5));
+    ASSERT_TRUE(IsConstRegion(255.0f, *rendered, 0, 5, 30, 20));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 25, 30, 5));
+
+    rendered.reset(Render(scene, 30, 40));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 0, 30, 10));
+    ASSERT_TRUE(IsConstRegion(255.0f, *rendered, 0, 10, 30, 20));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 30, 30, 5));
+
+    scene.FitContent(30, 40);
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 0, 30, 10));
+    ASSERT_TRUE(IsConstRegion(255.0f, *rendered, 0, 10, 30, 20));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 30, 30, 5));
+    
+    rendered.reset(Render(scene, 36, 30));  // The scene has not been fitted
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 0, 3, 30));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 0, 36, 3));
+    ASSERT_TRUE(IsConstRegion(255.0f, *rendered, 3, 5, 30, 20));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 25, 36, 5));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 33, 0, 3, 30));
+
+    scene.FitContent(36, 30);  // Refit
+    rendered.reset(Render(scene, 36, 30));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 0, 36, 3));
+    ASSERT_TRUE(IsConstRegion(255.0f, *rendered, 0, 3, 36, 24));
+    ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 27, 36, 3));
   }
 }

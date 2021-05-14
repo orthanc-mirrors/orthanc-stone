@@ -25,10 +25,74 @@
 #include "../OrthancStone/Sources/Volumes/DicomVolumeImageMPRSlicer.h"
 #include "../OrthancStone/Sources/Volumes/DicomVolumeImageReslicer.h"
 
-#include <Images/ImageProcessing.h>
 #include <Images/ImageTraits.h>
+#include <OrthancException.h>
 
 #include <gtest/gtest.h>
+
+
+static float GetPixelValue(const Orthanc::ImageAccessor& image,
+                           unsigned int x,
+                           unsigned int y)
+{
+  switch (image.GetFormat())
+  {
+    case Orthanc::PixelFormat_Grayscale8:
+      return Orthanc::ImageTraits<Orthanc::PixelFormat_Grayscale8>::GetFloatPixel(image, x, y);
+    
+    case Orthanc::PixelFormat_Float32:
+      return Orthanc::ImageTraits<Orthanc::PixelFormat_Float32>::GetFloatPixel(image, x, y);
+    
+    case Orthanc::PixelFormat_RGB24:
+    {
+      Orthanc::PixelTraits<Orthanc::PixelFormat_RGB24>::PixelType pixel;
+      Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, image, x, y);
+      return pixel.red_;
+    }
+    
+    case Orthanc::PixelFormat_BGRA32:
+    {
+      Orthanc::PixelTraits<Orthanc::PixelFormat_BGRA32>::PixelType pixel;
+      Orthanc::ImageTraits<Orthanc::PixelFormat_BGRA32>::GetPixel(pixel, image, x, y);
+      return pixel.red_;
+    }
+    
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+  }
+}
+
+
+static bool IsConstImage(float value,
+                         const Orthanc::ImageAccessor& image)
+{
+  for (unsigned int y = 0; y < image.GetHeight(); y++)
+  {
+    for (unsigned int x = 0; x < image.GetWidth(); x++)
+    {
+      if (!OrthancStone::LinearAlgebra::IsNear(value, GetPixelValue(image, x, y)))
+      {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+  
+
+static bool IsConstRegion(float value,
+                          const Orthanc::ImageAccessor& image,
+                          unsigned int x,
+                          unsigned int y,
+                          unsigned int width,
+                          unsigned int height)
+{
+  Orthanc::ImageAccessor region;
+  image.GetRegion(region, x, y, width, height);
+  return IsConstImage(value, region);
+}
+  
 
 TEST(VolumeRendering, Axial)
 {
@@ -99,22 +163,18 @@ TEST(VolumeRendering, Axial)
     ASSERT_FLOAT_EQ(2.0f, box.GetY2());
     
     {
-      const Orthanc::ImageAccessor& a = dynamic_cast<OrthancStone::TextureBaseSceneLayer&>(*layer).GetTexture();
-      Orthanc::Image i(Orthanc::PixelFormat_Grayscale8, a.GetWidth(), a.GetHeight(), false);
-      Orthanc::ImageProcessing::Convert(i, a);
-
-      ASSERT_EQ(3u, i.GetWidth());
-      ASSERT_EQ(3u, i.GetHeight());
-
-      ASSERT_FLOAT_EQ(0, Orthanc::ImageTraits<Orthanc::PixelFormat_Grayscale8>::GetFloatPixel(i, 0, 0));
-      ASSERT_FLOAT_EQ(25, Orthanc::ImageTraits<Orthanc::PixelFormat_Grayscale8>::GetFloatPixel(i, 1, 0));
-      ASSERT_FLOAT_EQ(50, Orthanc::ImageTraits<Orthanc::PixelFormat_Grayscale8>::GetFloatPixel(i, 2, 0));
-      ASSERT_FLOAT_EQ(75, Orthanc::ImageTraits<Orthanc::PixelFormat_Grayscale8>::GetFloatPixel(i, 0, 1));
-      ASSERT_FLOAT_EQ(100, Orthanc::ImageTraits<Orthanc::PixelFormat_Grayscale8>::GetFloatPixel(i, 1, 1));
-      ASSERT_FLOAT_EQ(125, Orthanc::ImageTraits<Orthanc::PixelFormat_Grayscale8>::GetFloatPixel(i, 2, 1));
-      ASSERT_FLOAT_EQ(150, Orthanc::ImageTraits<Orthanc::PixelFormat_Grayscale8>::GetFloatPixel(i, 0, 2));
-      ASSERT_FLOAT_EQ(175, Orthanc::ImageTraits<Orthanc::PixelFormat_Grayscale8>::GetFloatPixel(i, 1, 2));
-      ASSERT_FLOAT_EQ(200, Orthanc::ImageTraits<Orthanc::PixelFormat_Grayscale8>::GetFloatPixel(i, 2, 2));
+      const Orthanc::ImageAccessor& texture = dynamic_cast<OrthancStone::TextureBaseSceneLayer&>(*layer).GetTexture();
+      ASSERT_EQ(3u, texture.GetWidth());
+      ASSERT_EQ(3u, texture.GetHeight());
+      ASSERT_FLOAT_EQ(0, GetPixelValue(texture, 0, 0));
+      ASSERT_FLOAT_EQ(25, GetPixelValue(texture, 1, 0));
+      ASSERT_FLOAT_EQ(50, GetPixelValue(texture, 2, 0));
+      ASSERT_FLOAT_EQ(75, GetPixelValue(texture, 0, 1));
+      ASSERT_FLOAT_EQ(100, GetPixelValue(texture, 1, 1));
+      ASSERT_FLOAT_EQ(125, GetPixelValue(texture, 2, 1));
+      ASSERT_FLOAT_EQ(150, GetPixelValue(texture, 0, 2));
+      ASSERT_FLOAT_EQ(175, GetPixelValue(texture, 1, 2));
+      ASSERT_FLOAT_EQ(200, GetPixelValue(texture, 2, 2));
     }
 
     OrthancStone::Scene2D scene;  // Scene is initialized with the identity viewpoint
@@ -123,39 +183,35 @@ TEST(VolumeRendering, Axial)
     OrthancStone::CairoCompositor compositor(5, 5);
     compositor.Refresh(scene);
 
-    Orthanc::ImageAccessor i;
-    compositor.GetCanvas().GetReadOnlyAccessor(i);
+    Orthanc::ImageAccessor rendered;
+    compositor.GetCanvas().GetReadOnlyAccessor(rendered);
 
-    Orthanc::Image j(Orthanc::PixelFormat_RGB24, i.GetWidth(), i.GetHeight(), false);
-    Orthanc::ImageProcessing::Convert(j, i);
-
-    ASSERT_EQ(5u, j.GetWidth());
-    ASSERT_EQ(5u, j.GetHeight());
-    Orthanc::PixelTraits<Orthanc::PixelFormat_RGB24>::PixelType pixel;
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 0, 0);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 1, 0);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 2, 0);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 3, 0);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 4, 0);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 0, 1);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 1, 1);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 2, 1);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 3, 1);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 4, 1);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 0, 2);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 1, 2);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 2, 2);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 3, 2);  ASSERT_EQ(25, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 4, 2);  ASSERT_EQ(50, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 0, 3);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 1, 3);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 2, 3);  ASSERT_EQ(75, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 3, 3);  ASSERT_EQ(100, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 4, 3);  ASSERT_EQ(125, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 0, 4);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 1, 4);  ASSERT_EQ(0, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 2, 4);  ASSERT_EQ(150, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 3, 4);  ASSERT_EQ(175, pixel.red_);
-    Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(pixel, j, 4, 4);  ASSERT_EQ(200, pixel.red_);
+    ASSERT_EQ(5u, rendered.GetWidth());
+    ASSERT_EQ(5u, rendered.GetHeight());
+    ASSERT_EQ(0, GetPixelValue(rendered, 0, 0));
+    ASSERT_EQ(0, GetPixelValue(rendered, 1, 0));
+    ASSERT_EQ(0, GetPixelValue(rendered, 2, 0));
+    ASSERT_EQ(0, GetPixelValue(rendered, 3, 0));
+    ASSERT_EQ(0, GetPixelValue(rendered, 4, 0));
+    ASSERT_EQ(0, GetPixelValue(rendered, 0, 1));
+    ASSERT_EQ(0, GetPixelValue(rendered, 1, 1));
+    ASSERT_EQ(0, GetPixelValue(rendered, 2, 1));
+    ASSERT_EQ(0, GetPixelValue(rendered, 3, 1));
+    ASSERT_EQ(0, GetPixelValue(rendered, 4, 1));
+    ASSERT_EQ(0, GetPixelValue(rendered, 0, 2));
+    ASSERT_EQ(0, GetPixelValue(rendered, 1, 2));
+    ASSERT_EQ(0, GetPixelValue(rendered, 2, 2));
+    ASSERT_EQ(25, GetPixelValue(rendered, 3, 2));
+    ASSERT_EQ(50, GetPixelValue(rendered, 4, 2));
+    ASSERT_EQ(0, GetPixelValue(rendered, 0, 3));
+    ASSERT_EQ(0, GetPixelValue(rendered, 1, 3));
+    ASSERT_EQ(75, GetPixelValue(rendered, 2, 3));
+    ASSERT_EQ(100, GetPixelValue(rendered, 3, 3));
+    ASSERT_EQ(125, GetPixelValue(rendered, 4, 3));
+    ASSERT_EQ(0, GetPixelValue(rendered, 0, 4));
+    ASSERT_EQ(0, GetPixelValue(rendered, 1, 4));
+    ASSERT_EQ(150, GetPixelValue(rendered, 2, 4));
+    ASSERT_EQ(175, GetPixelValue(rendered, 3, 4));
+    ASSERT_EQ(200, GetPixelValue(rendered, 4, 4));
   }
 }

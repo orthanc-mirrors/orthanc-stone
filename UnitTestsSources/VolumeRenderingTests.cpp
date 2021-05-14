@@ -20,8 +20,8 @@
 
 
 #include "../OrthancStone/Sources/Scene2D/CairoCompositor.h"
-#include "../OrthancStone/Sources/Scene2D/CopyStyleConfigurator.h"
 #include "../OrthancStone/Sources/Scene2D/ColorTextureSceneLayer.h"
+#include "../OrthancStone/Sources/Scene2D/CopyStyleConfigurator.h"
 #include "../OrthancStone/Sources/Volumes/DicomVolumeImageMPRSlicer.h"
 #include "../OrthancStone/Sources/Volumes/DicomVolumeImageReslicer.h"
 
@@ -94,6 +94,57 @@ static bool IsConstRegion(float value,
   return IsConstImage(value, region);
 }
 
+
+static bool IsConstImageWithExclusion(float value,
+                                      const Orthanc::ImageAccessor& image,
+                                      unsigned int exclusionX,
+                                      unsigned int exclusionY,
+                                      unsigned int exclusionWidth,
+                                      unsigned int exclusionHeight)
+{
+  for (unsigned int y = 0; y < image.GetHeight(); y++)
+  {
+    for (unsigned int x = 0; x < image.GetWidth(); x++)
+    {
+      if ((x < exclusionX ||
+           y < exclusionY ||
+           x >= exclusionX + exclusionWidth ||
+           y >= exclusionY + exclusionHeight) &&
+          !OrthancStone::LinearAlgebra::IsNear(value, GetPixelValue(image, x, y)))
+      {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+
+static bool AreSameImages(const Orthanc::ImageAccessor& image1,
+                          const Orthanc::ImageAccessor& image2)
+{
+  if (image1.GetWidth() != image2.GetWidth() ||
+      image1.GetHeight() != image2.GetHeight())
+  {
+    return false;
+  }
+  
+  for (unsigned int y = 0; y < image1.GetHeight(); y++)
+  {
+    for (unsigned int x = 0; x < image1.GetWidth(); x++)
+    {
+      if (!OrthancStone::LinearAlgebra::IsNear(GetPixelValue(image1, x, y),
+                                               GetPixelValue(image2, x, y)))
+      {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+  
 
 static void Assign3x3Pattern(Orthanc::ImageAccessor& image)
 {
@@ -427,5 +478,149 @@ TEST(VolumeRendering, FitTexture)
     ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 0, 36, 3));
     ASSERT_TRUE(IsConstRegion(255.0f, *rendered, 0, 3, 36, 24));
     ASSERT_TRUE(IsConstRegion(0.0f, *rendered, 0, 27, 36, 3));
+  }
+}
+
+
+TEST(VolumeRendering, FlipAxial)
+{
+  double x = 2;
+  double y = 1;
+  OrthancStone::CoordinateSystem3D axial(OrthancStone::LinearAlgebra::CreateVector(x, y, 0),
+                                         OrthancStone::LinearAlgebra::CreateVector(1, 0, 0),
+                                         OrthancStone::LinearAlgebra::CreateVector(0, 1, 0));
+
+  Orthanc::Image pattern(Orthanc::PixelFormat_Grayscale8, 3, 3, false);
+  Assign3x3Pattern(pattern);
+  
+  Orthanc::Image patternX(Orthanc::PixelFormat_Grayscale8, 3, 3, false);
+  Assign3x3Pattern(patternX);
+  Orthanc::ImageProcessing::FlipX(patternX);
+  
+  Orthanc::Image patternY(Orthanc::PixelFormat_Grayscale8, 3, 3, false);
+  Assign3x3Pattern(patternY);
+  Orthanc::ImageProcessing::FlipY(patternY);
+  
+  Orthanc::Image patternXY(Orthanc::PixelFormat_Grayscale8, 3, 3, false);
+  Assign3x3Pattern(patternXY);
+  Orthanc::ImageProcessing::FlipX(patternXY);
+  Orthanc::ImageProcessing::FlipY(patternXY);
+    
+  for (unsigned int mode = 0; mode < 2; mode++)
+  {
+    {
+      OrthancStone::CoordinateSystem3D cuttingPlane(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(1, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(0, 1, 0));
+
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(Slice3x3x1Pattern(axial, cuttingPlane, static_cast<SlicerType>(mode)));
+      ASSERT_TRUE(AreSameImages(layer->GetTexture(), pattern));
+
+      OrthancStone::Extent2D extent;
+      layer->GetBoundingBox(extent);
+      ASSERT_FLOAT_EQ(x - 0.5, extent.GetX1());
+      ASSERT_FLOAT_EQ(y - 0.5, extent.GetY1());
+      ASSERT_FLOAT_EQ(x + 2.5, extent.GetX2());
+      ASSERT_FLOAT_EQ(y + 2.5, extent.GetY2());
+
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 15, 15));
+      ASSERT_TRUE(IsConstImageWithExclusion(0.0f, *rendered, 9, 8, 3, 3));
+
+      Orthanc::ImageAccessor p;
+      rendered->GetRegion(p, 9, 8, 3, 3);
+      ASSERT_TRUE(AreSameImages(p, pattern));
+    }
+
+    {
+      OrthancStone::CoordinateSystem3D cuttingPlane(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(-1, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(0, 1, 0));
+
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(Slice3x3x1Pattern(axial, cuttingPlane, static_cast<SlicerType>(mode)));
+      if (mode == 1)
+      {
+        // Reslicer directly flips the pixels of the texture
+        ASSERT_TRUE(AreSameImages(layer->GetTexture(), patternX));
+      }
+      else
+      {
+        // MPR slicer uses "TextureBaseSceneLayer::SetTransform()" to flip
+        ASSERT_TRUE(AreSameImages(layer->GetTexture(), pattern));
+      }
+
+      OrthancStone::Extent2D extent;
+      layer->GetBoundingBox(extent);
+      ASSERT_FLOAT_EQ(-(x + 2.5), extent.GetX1());
+      ASSERT_FLOAT_EQ(y - 0.5, extent.GetY1());
+      ASSERT_FLOAT_EQ(-(x - 0.5), extent.GetX2());
+      ASSERT_FLOAT_EQ(y + 2.5, extent.GetY2());
+
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 15, 15));
+      ASSERT_TRUE(IsConstImageWithExclusion(0.0f, *rendered, 3, 8, 3, 3));
+
+      Orthanc::ImageAccessor p;
+      rendered->GetRegion(p, 3, 8, 3, 3);
+      ASSERT_TRUE(AreSameImages(p, patternX));
+    }
+
+    {
+      OrthancStone::CoordinateSystem3D cuttingPlane(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(1, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(0, -1, 0));
+
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(Slice3x3x1Pattern(axial, cuttingPlane, static_cast<SlicerType>(mode)));
+      if (mode == 1)
+      {
+        ASSERT_TRUE(AreSameImages(layer->GetTexture(), patternY));
+      }
+      else
+      {
+        ASSERT_TRUE(AreSameImages(layer->GetTexture(), pattern));
+      }
+
+      OrthancStone::Extent2D extent;
+      layer->GetBoundingBox(extent);
+      ASSERT_FLOAT_EQ(x - 0.5, extent.GetX1());
+      ASSERT_FLOAT_EQ(-(y + 2.5), extent.GetY1());
+      ASSERT_FLOAT_EQ(x + 2.5, extent.GetX2());
+      ASSERT_FLOAT_EQ(-(y - 0.5), extent.GetY2());
+
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 15, 15));
+      ASSERT_TRUE(IsConstImageWithExclusion(0.0f, *rendered, 9, 4, 3, 3));
+
+      Orthanc::ImageAccessor p;
+      rendered->GetRegion(p, 9, 4, 3, 3);
+      ASSERT_TRUE(AreSameImages(p, patternY));
+    }
+
+    {
+      OrthancStone::CoordinateSystem3D cuttingPlane(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(-1, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(0, -1, 0));
+
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(Slice3x3x1Pattern(axial, cuttingPlane, static_cast<SlicerType>(mode)));
+      if (mode == 1)
+      {
+        ASSERT_TRUE(AreSameImages(layer->GetTexture(), patternXY));
+      }
+      else
+      {
+        ASSERT_TRUE(AreSameImages(layer->GetTexture(), pattern));
+      }
+
+      OrthancStone::Extent2D extent;
+      layer->GetBoundingBox(extent);
+      ASSERT_FLOAT_EQ(-(x + 2.5), extent.GetX1());
+      ASSERT_FLOAT_EQ(-(y + 2.5), extent.GetY1());
+      ASSERT_FLOAT_EQ(-(x - 0.5), extent.GetX2());
+      ASSERT_FLOAT_EQ(-(y - 0.5), extent.GetY2());
+
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 15, 15));
+      ASSERT_TRUE(IsConstImageWithExclusion(0.0f, *rendered, 3, 4, 3, 3));
+
+      Orthanc::ImageAccessor p;
+      rendered->GetRegion(p, 3, 4, 3, 3);
+      ASSERT_TRUE(AreSameImages(p, patternXY));
+    }
   }
 }

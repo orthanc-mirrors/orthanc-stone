@@ -13,12 +13,13 @@ Some notes about the coordinate systems
   modalities.
 
 * The "Image Position Patient" gives the 3D coordinates of the CENTER
-  of the voxel of slice.
+  of the top-left voxel of slice.
 
 * In 2D compositors, the origin of a texture corresponds to the CORNER
-  of the texture (*not* to the center of the first pixel). Roughly
-  speaking, the operation "floor()" must be applied to move from
-  floating coordinates to pixel coordinates.
+  of the top-left pixel of the texture (*not* to the center of this
+  pixel). Roughly speaking, the operation "floor()" must be applied to
+  move from canvas coordinates (floating-point numbers) to pixel
+  coordinates in the image buffer (integer numbers).
 
 * The classes deriving from "IVolumeSlicer" must pay to attention to
   convert from centers of 3D voxels to bounding boxes of 2D pixels.

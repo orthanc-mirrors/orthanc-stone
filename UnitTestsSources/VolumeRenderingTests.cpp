@@ -25,6 +25,7 @@
 #include "../OrthancStone/Sources/Volumes/DicomVolumeImageMPRSlicer.h"
 #include "../OrthancStone/Sources/Volumes/DicomVolumeImageReslicer.h"
 
+#include <Images/ImageProcessing.h>
 #include <Images/ImageTraits.h>
 #include <OrthancException.h>
 
@@ -92,6 +93,30 @@ static bool IsConstRegion(float value,
   image.GetRegion(region, x, y, width, height);
   return IsConstImage(value, region);
 }
+
+
+static void Assign3x3Pattern(Orthanc::ImageAccessor& image)
+{
+  if (image.GetFormat() == Orthanc::PixelFormat_Grayscale8 &&
+      image.GetWidth() == 3 &&
+      image.GetHeight() == 3)
+  {
+    unsigned int v = 0;
+    for (unsigned int y = 0; y < image.GetHeight(); y++)
+    {
+      uint8_t *p = reinterpret_cast<uint8_t*>(image.GetRow(y));
+      for (unsigned int x = 0; x < image.GetWidth(); x++, p++)
+      {
+        *p = v;
+        v += 25;
+      }
+    }
+  }
+  else
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+  }
+}
   
 
 TEST(VolumeRendering, Axial)
@@ -115,16 +140,7 @@ TEST(VolumeRendering, Axial)
 
   {
     OrthancStone::ImageBuffer3D::SliceWriter writer(volume->GetPixelData(), OrthancStone::VolumeProjection_Axial, 0);
-    unsigned int v = 0;
-    for (unsigned int y = 0; y < writer.GetAccessor().GetHeight(); y++)
-    {
-      uint8_t *p = reinterpret_cast<uint8_t*>(writer.GetAccessor().GetRow(y));
-      for (unsigned int x = 0; x < writer.GetAccessor().GetWidth(); x++, p++)
-      {
-        *p = v;
-        v += 25;
-      }
-    }
+    Assign3x3Pattern(writer.GetAccessor());
   }
 
   OrthancStone::Vector v = volume->GetGeometry().GetVoxelDimensions(OrthancStone::VolumeProjection_Axial);
@@ -188,30 +204,118 @@ TEST(VolumeRendering, Axial)
 
     ASSERT_EQ(5u, rendered.GetWidth());
     ASSERT_EQ(5u, rendered.GetHeight());
-    ASSERT_EQ(0, GetPixelValue(rendered, 0, 0));
-    ASSERT_EQ(0, GetPixelValue(rendered, 1, 0));
-    ASSERT_EQ(0, GetPixelValue(rendered, 2, 0));
-    ASSERT_EQ(0, GetPixelValue(rendered, 3, 0));
-    ASSERT_EQ(0, GetPixelValue(rendered, 4, 0));
-    ASSERT_EQ(0, GetPixelValue(rendered, 0, 1));
-    ASSERT_EQ(0, GetPixelValue(rendered, 1, 1));
-    ASSERT_EQ(0, GetPixelValue(rendered, 2, 1));
-    ASSERT_EQ(0, GetPixelValue(rendered, 3, 1));
-    ASSERT_EQ(0, GetPixelValue(rendered, 4, 1));
-    ASSERT_EQ(0, GetPixelValue(rendered, 0, 2));
-    ASSERT_EQ(0, GetPixelValue(rendered, 1, 2));
-    ASSERT_EQ(0, GetPixelValue(rendered, 2, 2));
-    ASSERT_EQ(25, GetPixelValue(rendered, 3, 2));
-    ASSERT_EQ(50, GetPixelValue(rendered, 4, 2));
-    ASSERT_EQ(0, GetPixelValue(rendered, 0, 3));
-    ASSERT_EQ(0, GetPixelValue(rendered, 1, 3));
-    ASSERT_EQ(75, GetPixelValue(rendered, 2, 3));
-    ASSERT_EQ(100, GetPixelValue(rendered, 3, 3));
-    ASSERT_EQ(125, GetPixelValue(rendered, 4, 3));
-    ASSERT_EQ(0, GetPixelValue(rendered, 0, 4));
-    ASSERT_EQ(0, GetPixelValue(rendered, 1, 4));
-    ASSERT_EQ(150, GetPixelValue(rendered, 2, 4));
-    ASSERT_EQ(175, GetPixelValue(rendered, 3, 4));
-    ASSERT_EQ(200, GetPixelValue(rendered, 4, 4));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 2, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 3, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 4, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 2, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 3, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 4, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 2));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 2));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 2, 2));
+    ASSERT_FLOAT_EQ(25, GetPixelValue(rendered, 3, 2));
+    ASSERT_FLOAT_EQ(50, GetPixelValue(rendered, 4, 2));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 3));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 3));
+    ASSERT_FLOAT_EQ(75, GetPixelValue(rendered, 2, 3));
+    ASSERT_FLOAT_EQ(100, GetPixelValue(rendered, 3, 3));
+    ASSERT_FLOAT_EQ(125, GetPixelValue(rendered, 4, 3));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 4));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 4));
+    ASSERT_FLOAT_EQ(150, GetPixelValue(rendered, 2, 4));
+    ASSERT_FLOAT_EQ(175, GetPixelValue(rendered, 3, 4));
+    ASSERT_FLOAT_EQ(200, GetPixelValue(rendered, 4, 4));
+  }
+}
+
+
+
+TEST(VolumeRendering, TextureCorners)
+{
+  // The origin of a 2D texture is the coordinate of the BORDER of the
+  // top-left pixel, *not* the center of the top-left pixel (as in
+  // DICOM 3D convention)
+  
+  Orthanc::Image pixel(Orthanc::PixelFormat_RGB24, 1, 1, false);
+  Orthanc::ImageProcessing::Set(pixel, 255, 0, 0, 255);
+  
+  {    
+    std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
+    layer->SetOrigin(0, 0);
+
+    OrthancStone::Scene2D scene;
+    scene.SetLayer(0, layer.release());
+
+    OrthancStone::CairoCompositor compositor(2, 2);
+    compositor.Refresh(scene);
+    
+    Orthanc::ImageAccessor rendered;
+    compositor.GetCanvas().GetReadOnlyAccessor(rendered);
+    
+    ASSERT_EQ(2u, rendered.GetWidth());
+    ASSERT_EQ(2u, rendered.GetHeight());
+  
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 1));
+    ASSERT_FLOAT_EQ(255, GetPixelValue(rendered, 1, 1));
+  }
+  
+  {    
+    std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
+    layer->SetOrigin(-0.01, 0);
+
+    OrthancStone::Scene2D scene;
+    scene.SetLayer(0, layer.release());
+
+    OrthancStone::CairoCompositor compositor(2, 2);
+    compositor.Refresh(scene);
+    
+    Orthanc::ImageAccessor rendered;
+    compositor.GetCanvas().GetReadOnlyAccessor(rendered);
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 0));
+    ASSERT_FLOAT_EQ(255, GetPixelValue(rendered, 0, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 1));
+  }
+  
+  {    
+    std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
+    layer->SetOrigin(-0.01, -0.01);
+
+    OrthancStone::Scene2D scene;
+    scene.SetLayer(0, layer.release());
+
+    OrthancStone::CairoCompositor compositor(2, 2);
+    compositor.Refresh(scene);
+    
+    Orthanc::ImageAccessor rendered;
+    compositor.GetCanvas().GetReadOnlyAccessor(rendered);
+    ASSERT_FLOAT_EQ(255, GetPixelValue(rendered, 0, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 1));
+  }
+  
+  {    
+    std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
+    layer->SetOrigin(0, -0.01);
+
+    OrthancStone::Scene2D scene;
+    scene.SetLayer(0, layer.release());
+
+    OrthancStone::CairoCompositor compositor(2, 2);
+    compositor.Refresh(scene);
+    
+    Orthanc::ImageAccessor rendered;
+    compositor.GetCanvas().GetReadOnlyAccessor(rendered);
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 0));
+    ASSERT_FLOAT_EQ(255, GetPixelValue(rendered, 1, 0));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 0, 1));
+    ASSERT_FLOAT_EQ(0, GetPixelValue(rendered, 1, 1));
   }
 }

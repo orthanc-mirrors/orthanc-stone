@@ -28,8 +28,6 @@
 
 #include <Logging.h>
 #include <OrthancException.h>
-//#include <Images/PngWriter.h>
-#include <Images/JpegWriter.h>
 
 namespace OrthancStone
 {

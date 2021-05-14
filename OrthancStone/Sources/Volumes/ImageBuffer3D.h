@@ -32,9 +32,22 @@ namespace OrthancStone
 {
   /*
 
-  This classes stores volume images sliced across the Z axis,
-  vertically, in the DECREASING Z-order along the normal (this is the
-  REVERSE of the intuitive order):
+    IMPORTANT: The "ImageBuffer3D" class is *not* meant to be accessed
+    directly by the end users using the "GetVoxelXXX()" methods,
+    because of the swapping of the Z-axis (see below). The public
+    interactions with this class should be limited to:
+
+    1- Using "SliceReader" and "SliceWriter" to access the raw slices,
+       but only on the axial projection, *and* using the "z"
+       coordinates returned by some "SlicesSorter" object
+
+    2- Extracting slices using a cutting plane through class deriving
+      from the "IVolumeSlicer" interface
+
+
+  IMPLEMENTATION NOTE: This classes stores volume images sliced across
+  the Z axis, vertically, in the DECREASING Z-order along the normal
+  (this is the REVERSE of the intuitive order):
 
   +---------------+
   |               |

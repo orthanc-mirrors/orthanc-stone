@@ -76,34 +76,63 @@ namespace OrthancStone
 
   Orthanc::Image*  ImageBuffer3D::ExtractSagittalSlice(unsigned int slice) const
   {
-    //LOG(TRACE) << "ImageBuffer3D::ExtractSagittalSlice this= " << std::hex << this << std::dec << " width_ = " << width_ << " height_ = " << height_ << " depth_ = " << depth_ << " slice = " << slice;
     if (slice >= width_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-
+    
     std::unique_ptr<Orthanc::Image> result(new Orthanc::Image(format_, height_, depth_, false));
-    //LOG(TRACE) << "ImageBuffer3D::ExtractSagittalSlice result will be an image of WIDTH = " << height_ << " and HEIGHT = " << depth_;
 
-    unsigned int bytesPerPixel = Orthanc::GetBytesPerPixel(format_);
+    const unsigned int bytesPerPixel = Orthanc::GetBytesPerPixel(format_);
 
     for (unsigned int z = 0; z < depth_; z++)
     {
-      //uint8_t* target = reinterpret_cast<uint8_t*>(result->GetRow(depth_ - 1 - z));
-      uint8_t* target = reinterpret_cast<uint8_t*>(result->GetRow(z));
+      uint8_t* q = reinterpret_cast<uint8_t*>(result->GetRow(z));
 
       for (unsigned int y = 0; y < height_; y++)
       {
-        const void* source = (reinterpret_cast<const uint8_t*>(image_.GetConstRow(y + z * height_)) + bytesPerPixel * slice);
-        const uint8_t* byteSrc = reinterpret_cast<const uint8_t*>(source);
-        for (size_t byte = 0; byte < bytesPerPixel; ++byte)
-          target[byte] = byteSrc[byte];
-        target += bytesPerPixel;
+        const uint8_t* p = reinterpret_cast<const uint8_t*>(image_.GetConstRow(y + z * height_)) + bytesPerPixel * slice;
+        
+        for (size_t x = 0; x < bytesPerPixel; ++x)
+        {
+          q[x] = p[x];
+        }
+        
+        q += bytesPerPixel;
       }
     }
 
     return result.release();
   }
+
+
+  void ImageBuffer3D::CommitSagittalSlice(unsigned int slice,
+                                          const Orthanc::ImageAccessor& source)
+  {
+    if (slice >= width_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    
+    const unsigned int bytesPerPixel = Orthanc::GetBytesPerPixel(format_);
+
+    for (unsigned int z = 0; z < depth_; z++)
+    {
+      const uint8_t* p = reinterpret_cast<const uint8_t*>(source.GetConstRow(z));
+
+      for (unsigned int y = 0; y < height_; y++)
+      {
+        uint8_t* q = reinterpret_cast<uint8_t*>(image_.GetRow(y + z * height_)) + bytesPerPixel * slice;
+
+        for (size_t x = 0; x < bytesPerPixel; ++x)
+        {
+          q[x] = p[x];
+        }
+        
+        p += bytesPerPixel;
+      }
+    }
+  }    
 
 
   ImageBuffer3D::ImageBuffer3D(Orthanc::PixelFormat format,
@@ -237,8 +266,11 @@ namespace OrthancStone
     {
       if (sagittal_.get() != NULL)
       {
-        // TODO
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+        assert(sagittal_->GetWidth() == that_.height_ &&
+               sagittal_->GetHeight() == that_.depth_ &&
+               sagittal_->GetFormat() == that_.format_);
+
+        that_.CommitSagittalSlice(slice_, *sagittal_);
       }
 
       // Update the dynamic range of the underlying image, if
@@ -252,7 +284,8 @@ namespace OrthancStone
                                           VolumeProjection projection,
                                           unsigned int slice) :
     that_(that),
-    modified_(false)
+    modified_(false),
+    slice_(slice)
   {
     switch (projection)
     {

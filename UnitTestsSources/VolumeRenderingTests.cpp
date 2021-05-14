@@ -188,10 +188,17 @@ static Orthanc::ImageAccessor* Render(const OrthancStone::Scene2D& scene,
 // Render the scene using the identity viewpoint (default)
 static Orthanc::ImageAccessor* Render(OrthancStone::ISceneLayer* layer,
                                       unsigned int width,
-                                      unsigned int height)
+                                      unsigned int height,
+                                      bool fitScene)
 {
   OrthancStone::Scene2D scene;
   scene.SetLayer(0, layer);
+
+  if (fitScene)
+  {
+    scene.FitContent(width, height);
+  }
+  
   return Render(scene, width, height);
 }
 
@@ -244,19 +251,38 @@ static OrthancStone::TextureBaseSceneLayer* SliceVolume(boost::shared_ptr<Orthan
 }
 
 
-static OrthancStone::TextureBaseSceneLayer* Slice3x3x1Pattern(const OrthancStone::CoordinateSystem3D& volumeCoordinates,
+static OrthancStone::TextureBaseSceneLayer* Slice3x3x1Pattern(OrthancStone::VolumeProjection projection,
+                                                              const OrthancStone::CoordinateSystem3D& volumeCoordinates,
                                                               const OrthancStone::CoordinateSystem3D& cuttingPlane,
                                                               SlicerType type)
 {
   OrthancStone::VolumeImageGeometry geometry;
-  geometry.SetSizeInVoxels(3, 3, 1);
+
+  switch (projection)
+  {
+    case OrthancStone::VolumeProjection_Axial:
+      geometry.SetSizeInVoxels(3, 3, 1);
+      break;
+
+    case OrthancStone::VolumeProjection_Sagittal:
+      geometry.SetSizeInVoxels(1, 3, 3);
+      break;
+
+    case OrthancStone::VolumeProjection_Coronal:
+      geometry.SetSizeInVoxels(3, 1, 3);
+      break;
+
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+  }
+  
   geometry.SetAxialGeometry(volumeCoordinates);
 
   boost::shared_ptr<OrthancStone::DicomVolumeImage> volume(new OrthancStone::DicomVolumeImage);
   volume->Initialize(geometry, Orthanc::PixelFormat_Grayscale8, false);
 
   {
-    OrthancStone::ImageBuffer3D::SliceWriter writer(volume->GetPixelData(), OrthancStone::VolumeProjection_Axial, 0);
+    OrthancStone::ImageBuffer3D::SliceWriter writer(volume->GetPixelData(), projection, 0);
     Assign3x3Pattern(writer.GetAccessor());
   }
 
@@ -282,7 +308,8 @@ TEST(VolumeRendering, Axial)
   {
     OrthancStone::CoordinateSystem3D cuttingPlane;
     
-    std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(Slice3x3x1Pattern(axial, cuttingPlane, static_cast<SlicerType>(mode)));
+    std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(
+      Slice3x3x1Pattern(OrthancStone::VolumeProjection_Axial, axial, cuttingPlane, static_cast<SlicerType>(mode)));
 
     ASSERT_TRUE(layer.get() != NULL);
     ASSERT_EQ(OrthancStone::ISceneLayer::Type_FloatTexture, layer->GetType());
@@ -309,7 +336,7 @@ TEST(VolumeRendering, Axial)
       ASSERT_FLOAT_EQ(200, GetPixelValue(texture, 2, 2));
     }
 
-    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 5, 5));
+    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 5, 5, false));
     ASSERT_EQ(5u, rendered->GetWidth());
     ASSERT_EQ(5u, rendered->GetHeight());
     ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 0));
@@ -354,7 +381,7 @@ TEST(VolumeRendering, TextureCorners)
     std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
     layer->SetOrigin(0, 0);
 
-    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 2, 2));
+    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 2, 2, false));
     ASSERT_EQ(2u, rendered->GetWidth());
     ASSERT_EQ(2u, rendered->GetHeight());  
     ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 0));
@@ -367,7 +394,7 @@ TEST(VolumeRendering, TextureCorners)
     std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
     layer->SetOrigin(-0.01, 0);
 
-    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 2, 2));
+    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 2, 2, false));
     ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 0));
     ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 1, 0));
     ASSERT_FLOAT_EQ(255, GetPixelValue(*rendered, 0, 1));
@@ -378,7 +405,7 @@ TEST(VolumeRendering, TextureCorners)
     std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
     layer->SetOrigin(-0.01, -0.01);
 
-    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 2, 2));
+    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 2, 2, false));
     ASSERT_FLOAT_EQ(255, GetPixelValue(*rendered, 0, 0));
     ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 1, 0));
     ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 1));
@@ -389,7 +416,7 @@ TEST(VolumeRendering, TextureCorners)
     std::unique_ptr<OrthancStone::ColorTextureSceneLayer> layer(new OrthancStone::ColorTextureSceneLayer(pixel));
     layer->SetOrigin(0, -0.01);
 
-    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 2, 2));
+    std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 2, 2, false));
     ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 0));
     ASSERT_FLOAT_EQ(255, GetPixelValue(*rendered, 1, 0));
     ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 1));
@@ -482,6 +509,7 @@ TEST(VolumeRendering, FitTexture)
 }
 
 
+
 TEST(VolumeRendering, FlipAxial)
 {
   double x = 2;
@@ -513,7 +541,8 @@ TEST(VolumeRendering, FlipAxial)
                                                     OrthancStone::LinearAlgebra::CreateVector(1, 0, 0),
                                                     OrthancStone::LinearAlgebra::CreateVector(0, 1, 0));
 
-      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(Slice3x3x1Pattern(axial, cuttingPlane, static_cast<SlicerType>(mode)));
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(
+        Slice3x3x1Pattern(OrthancStone::VolumeProjection_Axial, axial, cuttingPlane, static_cast<SlicerType>(mode)));
       ASSERT_TRUE(AreSameImages(layer->GetTexture(), pattern));
 
       OrthancStone::Extent2D extent;
@@ -523,7 +552,7 @@ TEST(VolumeRendering, FlipAxial)
       ASSERT_FLOAT_EQ(x + 2.5, extent.GetX2());
       ASSERT_FLOAT_EQ(y + 2.5, extent.GetY2());
 
-      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 15, 15));
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 15, 15, false));
       ASSERT_TRUE(IsConstImageWithExclusion(0.0f, *rendered, 9, 8, 3, 3));
 
       Orthanc::ImageAccessor p;
@@ -536,7 +565,8 @@ TEST(VolumeRendering, FlipAxial)
                                                     OrthancStone::LinearAlgebra::CreateVector(-1, 0, 0),
                                                     OrthancStone::LinearAlgebra::CreateVector(0, 1, 0));
 
-      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(Slice3x3x1Pattern(axial, cuttingPlane, static_cast<SlicerType>(mode)));
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(
+        Slice3x3x1Pattern(OrthancStone::VolumeProjection_Axial, axial, cuttingPlane, static_cast<SlicerType>(mode)));
       if (mode == 1)
       {
         // Reslicer directly flips the pixels of the texture
@@ -555,7 +585,7 @@ TEST(VolumeRendering, FlipAxial)
       ASSERT_FLOAT_EQ(-(x - 0.5), extent.GetX2());
       ASSERT_FLOAT_EQ(y + 2.5, extent.GetY2());
 
-      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 15, 15));
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 15, 15, false));
       ASSERT_TRUE(IsConstImageWithExclusion(0.0f, *rendered, 3, 8, 3, 3));
 
       Orthanc::ImageAccessor p;
@@ -568,7 +598,8 @@ TEST(VolumeRendering, FlipAxial)
                                                     OrthancStone::LinearAlgebra::CreateVector(1, 0, 0),
                                                     OrthancStone::LinearAlgebra::CreateVector(0, -1, 0));
 
-      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(Slice3x3x1Pattern(axial, cuttingPlane, static_cast<SlicerType>(mode)));
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(
+        Slice3x3x1Pattern(OrthancStone::VolumeProjection_Axial, axial, cuttingPlane, static_cast<SlicerType>(mode)));
       if (mode == 1)
       {
         ASSERT_TRUE(AreSameImages(layer->GetTexture(), patternY));
@@ -585,7 +616,7 @@ TEST(VolumeRendering, FlipAxial)
       ASSERT_FLOAT_EQ(x + 2.5, extent.GetX2());
       ASSERT_FLOAT_EQ(-(y - 0.5), extent.GetY2());
 
-      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 15, 15));
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 15, 15, false));
       ASSERT_TRUE(IsConstImageWithExclusion(0.0f, *rendered, 9, 4, 3, 3));
 
       Orthanc::ImageAccessor p;
@@ -598,7 +629,8 @@ TEST(VolumeRendering, FlipAxial)
                                                     OrthancStone::LinearAlgebra::CreateVector(-1, 0, 0),
                                                     OrthancStone::LinearAlgebra::CreateVector(0, -1, 0));
 
-      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(Slice3x3x1Pattern(axial, cuttingPlane, static_cast<SlicerType>(mode)));
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(
+        Slice3x3x1Pattern(OrthancStone::VolumeProjection_Axial, axial, cuttingPlane, static_cast<SlicerType>(mode)));
       if (mode == 1)
       {
         ASSERT_TRUE(AreSameImages(layer->GetTexture(), patternXY));
@@ -615,7 +647,7 @@ TEST(VolumeRendering, FlipAxial)
       ASSERT_FLOAT_EQ(-(x - 0.5), extent.GetX2());
       ASSERT_FLOAT_EQ(-(y - 0.5), extent.GetY2());
 
-      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 15, 15));
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 15, 15, false));
       ASSERT_TRUE(IsConstImageWithExclusion(0.0f, *rendered, 3, 4, 3, 3));
 
       Orthanc::ImageAccessor p;

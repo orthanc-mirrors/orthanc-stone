@@ -95,6 +95,9 @@ namespace OrthancStone
 
     Orthanc::Image*  ExtractSagittalSlice(unsigned int slice) const;
 
+    void CommitSagittalSlice(unsigned int slice,
+                             const Orthanc::ImageAccessor& source);
+
     template <typename T>
     T GetPixelUnchecked(unsigned int x,
                         unsigned int y,
@@ -204,6 +207,7 @@ namespace OrthancStone
       bool                           modified_;
       Orthanc::ImageAccessor         accessor_;
       std::unique_ptr<Orthanc::Image>  sagittal_;  // Unused for axial and coronal
+      unsigned int                   slice_;
 
       void Flush();
 

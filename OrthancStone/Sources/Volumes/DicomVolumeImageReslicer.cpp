@@ -78,46 +78,17 @@ namespace OrthancStone
 
         const double s = reslicer.GetPixelSpacing();
         
-#if 1
         const double x1 = reslicer.GetOutputExtent().GetX1();
-        //const double x2 = reslicer.GetOutputExtent().GetX2();
         const double y1 = reslicer.GetOutputExtent().GetY1();
-        const double y2 = reslicer.GetOutputExtent().GetY2();
-
         const Vector p1 = cuttingPlane.MapSliceToWorldCoordinates(x1, y1);        
-        const Vector p2 = cuttingPlane.MapSliceToWorldCoordinates(x1, y2);
 
         // The "0.5" shift is to move from the corner of voxel to the center of the voxel
         
-        if (1)
-        {
-          texture->SetCuttingPlaneTransform(
-            cuttingPlane, p1 + 0.5 * s * cuttingPlane.GetAxisX() + 0.5 * s * cuttingPlane.GetAxisY(),
-            s * cuttingPlane.GetAxisX(),
-            s * cuttingPlane.GetAxisY());
-        }
-        else
-        {
-          /**
-           * TODO - ONE WAS TO SOMETIMES FLIP the Y axis. Is it also
-           * possible for the X axis?
-           **/
-          
-          texture->SetCuttingPlaneTransform(
-            cuttingPlane, p2 + 0.5 * s * cuttingPlane.GetAxisX() + 0.5 * s * cuttingPlane.GetAxisY(),
-            s * cuttingPlane.GetAxisX(),
-            -s * cuttingPlane.GetAxisY());
-        }
+        texture->SetCuttingPlaneTransform(
+          cuttingPlane, p1 + 0.5 * s * cuttingPlane.GetAxisX() + 0.5 * s * cuttingPlane.GetAxisY(),
+          s * cuttingPlane.GetAxisX(),
+          s * cuttingPlane.GetAxisY());
 
-#else
-        texture->SetPixelSpacing(s, s);
-        texture->SetOrigin(reslicer.GetOutputExtent().GetX1() + 0.5 * s,
-                           reslicer.GetOutputExtent().GetY1() + 0.5 * s);
-        //texture->SetFlipY(true);
-
-        // TODO - Angle!!
-#endif
-                           
         return texture.release();
       }
       else

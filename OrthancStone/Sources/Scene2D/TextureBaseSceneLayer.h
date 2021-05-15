@@ -46,6 +46,8 @@ namespace OrthancStone
     uint64_t                               revision_;
     std::unique_ptr<AffineTransform2D>     transform_;   // Manually-specified transformation
 
+    void CheckNoManualTransform() const;
+
   protected:
     void SetTexture(Orthanc::ImageAccessor* texture);
 

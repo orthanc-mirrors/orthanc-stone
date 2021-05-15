@@ -27,6 +27,16 @@
 
 namespace OrthancStone
 {
+  void TextureBaseSceneLayer::CheckNoManualTransform() const
+  {
+    if (transform_.get() != NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls,
+                                      "A transform has been manually set, first call ClearTransform()");
+    }
+  }
+
+
   void TextureBaseSceneLayer::SetTexture(Orthanc::ImageAccessor* texture)
   {
     if (texture == NULL)
@@ -81,6 +91,8 @@ namespace OrthancStone
   void TextureBaseSceneLayer::SetOrigin(double x,
                                         double y)
   {
+    CheckNoManualTransform();
+    
     originX_ = x;
     originY_ = y;
     IncrementRevision();
@@ -90,6 +102,8 @@ namespace OrthancStone
   void TextureBaseSceneLayer::SetPixelSpacing(double sx,
                                               double sy)
   {
+    CheckNoManualTransform();
+    
     if (sx <= 0 ||
         sy <= 0)
     {
@@ -106,6 +120,8 @@ namespace OrthancStone
   
   void TextureBaseSceneLayer::SetAngle(double angle)
   {
+    CheckNoManualTransform();
+    
     angle_ = angle;
     IncrementRevision();
   }
@@ -120,6 +136,8 @@ namespace OrthancStone
 
   void TextureBaseSceneLayer::SetFlipX(bool flip)
   {
+    CheckNoManualTransform();
+    
     flipX_ = flip;
     IncrementRevision();
   }
@@ -127,6 +145,8 @@ namespace OrthancStone
     
   void TextureBaseSceneLayer::SetFlipY(bool flip)
   {
+    CheckNoManualTransform();
+    
     flipY_ = flip;
     IncrementRevision();
   }

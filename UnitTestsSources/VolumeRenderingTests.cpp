@@ -857,6 +857,48 @@ TEST(VolumeRendering, MPR)
       ASSERT_FLOAT_EQ(50, GetPixelValue(*rendered, 0, 2));
     }
 
+    {
+      OrthancStone::CoordinateSystem3D cuttingPlane(OrthancStone::LinearAlgebra::CreateVector(0, 0, 2),
+                                                    OrthancStone::LinearAlgebra::CreateVector(-1, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(0, 1, 0));
+
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(
+        Slice3x3x1Pattern(OrthancStone::VolumeProjection_Sagittal, axial, cuttingPlane, static_cast<SlicerType>(mode)));
+
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 1, 3, true));
+      ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 0));
+      ASSERT_FLOAT_EQ(25, GetPixelValue(*rendered, 0, 1));
+      ASSERT_FLOAT_EQ(50, GetPixelValue(*rendered, 0, 2));
+    }
+
+    {
+      OrthancStone::CoordinateSystem3D cuttingPlane(OrthancStone::LinearAlgebra::CreateVector(0, 0, 2),
+                                                    OrthancStone::LinearAlgebra::CreateVector(1, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(0, -1, 0));
+
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(
+        Slice3x3x1Pattern(OrthancStone::VolumeProjection_Sagittal, axial, cuttingPlane, static_cast<SlicerType>(mode)));
+
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 1, 3, true));
+      ASSERT_FLOAT_EQ(50, GetPixelValue(*rendered, 0, 0));
+      ASSERT_FLOAT_EQ(25, GetPixelValue(*rendered, 0, 1));
+      ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 2));
+    }
+
+    {
+      OrthancStone::CoordinateSystem3D cuttingPlane(OrthancStone::LinearAlgebra::CreateVector(0, 0, 2),
+                                                    OrthancStone::LinearAlgebra::CreateVector(-1, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(0, -1, 0));
+
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(
+        Slice3x3x1Pattern(OrthancStone::VolumeProjection_Sagittal, axial, cuttingPlane, static_cast<SlicerType>(mode)));
+
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 1, 3, true));
+      ASSERT_FLOAT_EQ(50, GetPixelValue(*rendered, 0, 0));
+      ASSERT_FLOAT_EQ(25, GetPixelValue(*rendered, 0, 1));
+      ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 2));
+    }
+
     for (double z = -1; z < 4; z += 4)  // z in { -1, 3 }, out of volume
     {
       OrthancStone::CoordinateSystem3D cuttingPlane(OrthancStone::LinearAlgebra::CreateVector(0, 0, z),
@@ -911,6 +953,48 @@ TEST(VolumeRendering, MPR)
       ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 0));
       ASSERT_FLOAT_EQ(25, GetPixelValue(*rendered, 1, 0));
       ASSERT_FLOAT_EQ(50, GetPixelValue(*rendered, 2, 0));      
+    }
+
+    {
+      OrthancStone::CoordinateSystem3D cuttingPlane(OrthancStone::LinearAlgebra::CreateVector(0, 0, 2),
+                                                    OrthancStone::LinearAlgebra::CreateVector(1, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(0, -1, 0));
+
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(
+        Slice3x3x1Pattern(OrthancStone::VolumeProjection_Coronal, axial, cuttingPlane, static_cast<SlicerType>(mode)));
+
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 3, 1, true));
+      ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 0, 0));
+      ASSERT_FLOAT_EQ(25, GetPixelValue(*rendered, 1, 0));
+      ASSERT_FLOAT_EQ(50, GetPixelValue(*rendered, 2, 0));      
+    }
+
+    {
+      OrthancStone::CoordinateSystem3D cuttingPlane(OrthancStone::LinearAlgebra::CreateVector(0, 0, 2),
+                                                    OrthancStone::LinearAlgebra::CreateVector(-1, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(0, 1, 0));
+
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(
+        Slice3x3x1Pattern(OrthancStone::VolumeProjection_Coronal, axial, cuttingPlane, static_cast<SlicerType>(mode)));
+
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 3, 1, true));
+      ASSERT_FLOAT_EQ(50, GetPixelValue(*rendered, 0, 0));
+      ASSERT_FLOAT_EQ(25, GetPixelValue(*rendered, 1, 0));
+      ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 2, 0));      
+    }
+
+    {
+      OrthancStone::CoordinateSystem3D cuttingPlane(OrthancStone::LinearAlgebra::CreateVector(0, 0, 2),
+                                                    OrthancStone::LinearAlgebra::CreateVector(-1, 0, 0),
+                                                    OrthancStone::LinearAlgebra::CreateVector(0, -1, 0));
+
+      std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer(
+        Slice3x3x1Pattern(OrthancStone::VolumeProjection_Coronal, axial, cuttingPlane, static_cast<SlicerType>(mode)));
+
+      std::unique_ptr<Orthanc::ImageAccessor> rendered(Render(layer.release(), 3, 1, true));
+      ASSERT_FLOAT_EQ(50, GetPixelValue(*rendered, 0, 0));
+      ASSERT_FLOAT_EQ(25, GetPixelValue(*rendered, 1, 0));
+      ASSERT_FLOAT_EQ(0, GetPixelValue(*rendered, 2, 0));      
     }
 
     for (double z = -1; z < 4; z += 4)  // z in { -1, 3 }, out of volume

@@ -25,6 +25,10 @@
 #include "Scene2D.h"
 #include "ScenePoint2D.h"
 
+#if ORTHANC_ENABLE_LOCALE == 1
+#  include "../Fonts/TextBoundingBox.h"
+#endif
+
 namespace OrthancStone
 {
   class ICompositor : public boost::noncopyable
@@ -69,5 +73,10 @@ namespace OrthancStone
     {
       scene.FitContent(GetCanvasWidth(), GetCanvasHeight());
     }
+
+#if ORTHANC_ENABLE_LOCALE == 1
+    virtual TextBoundingBox* ComputeTextBoundingBox(size_t fontIndex,
+                                                    const std::string& utf8) = 0;
+#endif
   };
 }

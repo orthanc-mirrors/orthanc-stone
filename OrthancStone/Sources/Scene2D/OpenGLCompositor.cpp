@@ -253,4 +253,24 @@ namespace OrthancStone
     canvasWidth_ = canvasWidth;
     canvasHeight_ = canvasHeight;
   }
+  
+
+#if ORTHANC_ENABLE_LOCALE == 1
+  TextBoundingBox* OpenGLCompositor::ComputeTextBoundingBox(size_t fontIndex,
+                                                            const std::string& utf8)
+  {
+    Fonts::const_iterator found = fonts_.find(fontIndex);
+
+    if (found == fonts_.end())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
+                                      "No such font: " + boost::lexical_cast<std::string>(fontIndex));
+    }
+    else
+    {
+      assert(found->second != NULL);
+      return new TextBoundingBox(found->second->GetAlphabet().GetAlphabet(), utf8);
+    }
+  }
+#endif
 }

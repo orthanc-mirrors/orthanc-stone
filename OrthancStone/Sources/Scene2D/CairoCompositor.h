@@ -92,5 +92,10 @@ namespace OrthancStone
 
     Orthanc::ImageAccessor* RenderText(size_t fontIndex,
                                        const std::string& utf8) const;
+
+#if ORTHANC_ENABLE_LOCALE == 1
+    virtual TextBoundingBox* ComputeTextBoundingBox(size_t fontIndex,
+                                                    const std::string& utf8) ORTHANC_OVERRIDE;
+#endif
   };
 }

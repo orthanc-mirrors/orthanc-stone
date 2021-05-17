@@ -24,6 +24,7 @@
 #include "../../Common/SampleHelpers.h"
 
 #include "../../../../OrthancStone/Sources/Loaders/GenericLoadersContext.h"
+#include "../../../../OrthancStone/Sources/Scene2DViewport/AngleMeasureTool.h"
 #include "../../../../OrthancStone/Sources/Scene2DViewport/LineMeasureTool.h"
 #include "../../../../OrthancStone/Sources/Scene2DViewport/UndoStack.h"
 #include "../../../../OrthancStone/Sources/StoneEnumerations.h"
@@ -69,14 +70,17 @@ static void ProcessOptions(int argc, char* argv[])
   std::cout << desc << std::endl;
 
   std::cout << std::endl << "Keyboard shorcuts:" << std::endl
+            << "  a\tEnable/disable the angle measure tool" << std::endl
             << "  f\tToggle fullscreen display" << std::endl
             << "  l\tEnable/disable the line measure tool" << std::endl
             << "  q\tExit" << std::endl
+            << "  r\tRedo the last edit to the measure tools" << std::endl
             << "  s\tFit the viewpoint to the image" << std::endl
+            << "  u\tUndo the last edit to the measure tools" << std::endl
             << std::endl << "Mouse buttons:" << std::endl
             << "  left  \tChange windowing, or edit measure" << std::endl
-            << "  center\tMove the viewpoint, or move measure" << std::endl
-            << "  right \tZoom, or move measure" << std::endl
+            << "  center\tMove the viewpoint, or edit measure" << std::endl
+            << "  right \tZoom, or edit measure" << std::endl
             << std::endl;
 
   po::variables_map vm;
@@ -111,8 +115,16 @@ static void ProcessOptions(int argc, char* argv[])
   {
     frameIndex = vm["frame_index"].as<int>();
   }
-
 }
+
+
+enum ActiveTool
+{
+  ActiveTool_None,
+  ActiveTool_Line,
+  ActiveTool_Angle
+};
+
 
 /**
  * IMPORTANT: The full arguments to "main()" are needed for SDL on
@@ -161,10 +173,15 @@ int main(int argc, char* argv[])
           lock->GetController().SetUndoStack(undoStack);
         }
 
+        ActiveTool activeTool = ActiveTool_None;
+
         boost::shared_ptr<OrthancStone::LineMeasureTool> lineMeasureTool(OrthancStone::LineMeasureTool::Create(viewport));
         bool lineMeasureFirst = true;
-        bool lineMeasureEnabled = false;
         lineMeasureTool->Disable();
+
+        boost::shared_ptr<OrthancStone::AngleMeasureTool> angleMeasureTool(OrthancStone::AngleMeasureTool::Create(viewport));
+        bool angleMeasureFirst = true;
+        angleMeasureTool->Disable();
 
         boost::shared_ptr<SdlSimpleViewerApplication> application(
           SdlSimpleViewerApplication::Create(context, viewport));
@@ -226,11 +243,31 @@ int main(int argc, char* argv[])
                     stop = true;
                     break;
 
+                  case SDLK_u:
+                  {
+                    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+                    if (lock->GetController().CanUndo())
+                    {
+                      lock->GetController().Undo();
+                    }
+                    break;
+                  }
+
+                  case SDLK_r:
+                  {
+                    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+                    if (lock->GetController().CanRedo())
+                    {
+                      lock->GetController().Redo();
+                    }
+                    break;
+                  }
+
                   case SDLK_l:
-                    if (lineMeasureEnabled)
+                    if (activeTool == ActiveTool_Line)
                     {
                       lineMeasureTool->Disable();
-                      lineMeasureEnabled = false;
+                      activeTool = ActiveTool_None;
                     }
                     else
                     {
@@ -248,7 +285,42 @@ int main(int argc, char* argv[])
                       }
                       
                       lineMeasureTool->Enable();
-                      lineMeasureEnabled = true;
+                      angleMeasureTool->Disable();
+                      activeTool = ActiveTool_Line;
+                    }
+                    break;
+
+                  case SDLK_a:
+                    if (activeTool == ActiveTool_Angle)
+                    {
+                      angleMeasureTool->Disable();
+                      activeTool = ActiveTool_None;
+                    }
+                    else
+                    {
+                      if (angleMeasureFirst)
+                      {
+                        std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+                        OrthancStone::Extent2D extent;
+                        lock->GetController().GetScene().GetBoundingBox(extent);
+                        if (!extent.IsEmpty())
+                        {
+                          OrthancStone::ScenePoint2D p1(1.0 * extent.GetX1() / 3.0 + 2.0 * extent.GetX2() / 3.0,
+                                                        2.0 * extent.GetY1() / 3.0 + 2.0 * extent.GetY2() / 3.0);
+                          OrthancStone::ScenePoint2D p2(1.0 * extent.GetX1() / 2.0 + 1.0 * extent.GetX2() / 2.0,
+                                                        1.0 * extent.GetY1() / 3.0 + 1.0 * extent.GetY2() / 3.0);
+                          OrthancStone::ScenePoint2D p3(2.0 * extent.GetX1() / 3.0 + 1.0 * extent.GetX2() / 3.0,
+                                                        2.0 * extent.GetY1() / 3.0 + 2.0 * extent.GetY2() / 3.0);
+                          angleMeasureTool->SetSide1End(p1);
+                          angleMeasureTool->SetCenter(p2);
+                          angleMeasureTool->SetSide2End(p3);
+                        }
+                        angleMeasureFirst = false;
+                      }
+                      
+                      lineMeasureTool->Disable();
+                      angleMeasureTool->Enable();
+                      activeTool = ActiveTool_Angle;
                     }
                     break;
 
@@ -272,9 +344,21 @@ int main(int argc, char* argv[])
                     case SDL_MOUSEBUTTONDOWN:
                     {
                       boost::shared_ptr<OrthancStone::IFlexiblePointerTracker> t;
-                      if (lineMeasureEnabled)
+                      switch (activeTool)
                       {
-                        t = lineMeasureTool->CreateEditionTracker(p);
+                        case ActiveTool_Angle:
+                          t = angleMeasureTool->CreateEditionTracker(p);
+                          break;
+
+                        case ActiveTool_Line:
+                          t = lineMeasureTool->CreateEditionTracker(p);
+                          break;
+
+                        case ActiveTool_None:
+                          break;
+                          
+                        default:
+                          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
                       }
                       
                       if (t.get() != NULL)

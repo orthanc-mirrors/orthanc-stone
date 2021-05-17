@@ -31,6 +31,8 @@
 #include "Internals/OpenGLTextRenderer.h"
 #include "Internals/MacroLayerRenderer.h"
 
+#include <OrthancException.h>
+
 namespace OrthancStone
 {
   class OpenGLCompositor::Font : public boost::noncopyable

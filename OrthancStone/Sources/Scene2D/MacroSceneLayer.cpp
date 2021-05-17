@@ -41,7 +41,7 @@ namespace OrthancStone
   }
 
   
-  void MacroSceneLayer::AddLayer(ISceneLayer* layer)
+  size_t MacroSceneLayer::AddLayer(ISceneLayer* layer)
   {
     if (layer == NULL)
     {
@@ -49,8 +49,10 @@ namespace OrthancStone
     }
     else
     {
+      size_t index = layers_.size();
       layers_.push_back(layer);
       BumpRevision();
+      return index;
     }
   }
 
@@ -72,8 +74,6 @@ namespace OrthancStone
   ISceneLayer* MacroSceneLayer::Clone() const
   {
     std::unique_ptr<MacroSceneLayer> copy(new MacroSceneLayer);
-
-    copy->Reserve(layers_.size());
 
     for (size_t i = 0; i < layers_.size(); i++)
     {

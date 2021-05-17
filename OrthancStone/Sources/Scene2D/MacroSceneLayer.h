@@ -26,7 +26,7 @@
 
 #include <Compatibility.h>  // For ORTHANC_OVERRIDE
 
-#include <vector>
+#include <deque>
 
 namespace OrthancStone
 {
@@ -37,8 +37,10 @@ namespace OrthancStone
   class MacroSceneLayer : public ISceneLayer
   {
   private:
-    std::vector<ISceneLayer*>  layers_;
-    uint64_t                   revision_;
+    // A deque is used because we need to quickly add new layers, and
+    // to randomly access the layers
+    std::deque<ISceneLayer*>  layers_;
+    uint64_t                  revision_;
 
   protected:
     void BumpRevision()
@@ -60,12 +62,7 @@ namespace OrthancStone
 
     void Clear();      
 
-    void Reserve(size_t size)
-    {
-      layers_.reserve(size);
-    }
-
-    void AddLayer(ISceneLayer* layer);  // takes ownership
+    size_t AddLayer(ISceneLayer* layer);  // takes ownership
 
     size_t GetSize() const
     {

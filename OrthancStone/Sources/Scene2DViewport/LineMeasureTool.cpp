@@ -166,15 +166,19 @@ namespace OrthancStone
         scene.GetCanvasToSceneTransform());
 
       if (!HitTest(scenePos))
-        return boost::shared_ptr<IFlexiblePointerTracker>();
-
-      boost::shared_ptr<EditLineMeasureTracker> editLineMeasureTracker(
-        new EditLineMeasureTracker(shared_from_this(), viewport_, e));
-      return editLineMeasureTracker;
+      {
+        return boost::shared_ptr<IFlexiblePointerTracker>();  // NULL
+      }
+      else
+      {
+        boost::shared_ptr<EditLineMeasureTracker> editLineMeasureTracker(
+          new EditLineMeasureTracker(shared_from_this(), viewport_, e));
+        return editLineMeasureTracker;
+      }
     }
     else
     {
-      return NULL;
+      return boost::shared_ptr<IFlexiblePointerTracker>();  // NULL
     }
   }
 

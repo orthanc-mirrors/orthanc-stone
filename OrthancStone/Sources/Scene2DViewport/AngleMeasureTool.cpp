@@ -207,19 +207,23 @@ namespace OrthancStone
       scene.GetCanvasToSceneTransform());
 
     if (!HitTest(scenePos))
-      return boost::shared_ptr<IFlexiblePointerTracker>();
+    {
+      return boost::shared_ptr<IFlexiblePointerTracker>(); // NULL
+    }
+    else
+    {
+      /**
+         new EditLineMeasureTracker(
+         boost::shared_ptr<LineMeasureTool> measureTool;
+         MessageBroker & broker,
+         boost::weak_ptr<IViewport>          viewport,
+         const PointerEvent & e);
+      */
 
-    /**
-      new EditLineMeasureTracker(
-        boost::shared_ptr<LineMeasureTool> measureTool;
-        MessageBroker & broker,
-        boost::weak_ptr<IViewport>          viewport,
-        const PointerEvent & e);
-    */
-
-    boost::shared_ptr<EditAngleMeasureTracker> editAngleMeasureTracker(
-      new EditAngleMeasureTracker(shared_from_this(), viewport_, e));
-    return editAngleMeasureTracker;
+      boost::shared_ptr<EditAngleMeasureTracker> editAngleMeasureTracker(
+        new EditAngleMeasureTracker(shared_from_this(), viewport_, e));
+      return editAngleMeasureTracker;
+    }
   }
 
   void AngleMeasureTool::SetCenter(ScenePoint2D pt)

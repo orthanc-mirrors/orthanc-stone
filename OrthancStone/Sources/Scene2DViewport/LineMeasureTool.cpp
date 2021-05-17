@@ -178,24 +178,19 @@ namespace OrthancStone
     }
   }
 
-  boost::shared_ptr<MeasureToolMemento> LineMeasureTool::GetMemento() const
+  MeasureToolMemento* LineMeasureTool::CreateMemento() const
   {
-    boost::shared_ptr<LineMeasureToolMemento> memento(new LineMeasureToolMemento());
+    std::unique_ptr<LineMeasureToolMemento> memento(new LineMeasureToolMemento());
     memento->start_ = start_;
     memento->end_ = end_;
-    return memento;
+    return memento.release();
   }
 
-  void LineMeasureTool::SetMemento(
-    boost::shared_ptr<MeasureToolMemento> mementoBase)
+  void LineMeasureTool::SetMemento(const MeasureToolMemento& mementoBase)
   {
-    boost::shared_ptr<LineMeasureToolMemento> memento = 
-      boost::dynamic_pointer_cast<LineMeasureToolMemento>(mementoBase);
-    
-    ORTHANC_ASSERT(memento.get() != NULL, "Internal error: wrong (or bad) memento");
-    
-    start_ = memento->start_;
-    end_ = memento->end_;
+    const LineMeasureToolMemento& memento = dynamic_cast<const LineMeasureToolMemento&>(mementoBase);
+    start_ = memento.start_;
+    end_ = memento.end_;
     RefreshScene();
   }
 

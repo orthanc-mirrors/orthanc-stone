@@ -32,7 +32,7 @@ namespace OrthancStone
 {
   /**
    * A "macro layer" is a group of sublayers that are handled as a
-   * whole.
+   * whole, and that share the same depth in the scene.
    **/
   class MacroSceneLayer : public ISceneLayer
   {

@@ -52,8 +52,8 @@ namespace OrthancStone
     virtual void Highlight(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void ResetHighlightState() ORTHANC_OVERRIDE;
     virtual boost::shared_ptr<IFlexiblePointerTracker> CreateEditionTracker(const PointerEvent& e) ORTHANC_OVERRIDE;
-    virtual boost::shared_ptr<MeasureToolMemento> GetMemento() const ORTHANC_OVERRIDE;
-    virtual void SetMemento(boost::shared_ptr<MeasureToolMemento>) ORTHANC_OVERRIDE;
+    virtual MeasureToolMemento* CreateMemento() const ORTHANC_OVERRIDE;
+    virtual void SetMemento(const MeasureToolMemento& memento) ORTHANC_OVERRIDE;
     virtual std::string GetDescription() ORTHANC_OVERRIDE;
 
     enum LineHighlightArea

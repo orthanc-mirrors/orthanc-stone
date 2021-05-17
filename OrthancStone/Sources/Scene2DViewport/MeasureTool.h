@@ -124,13 +124,13 @@ namespace OrthancStone
        This method must return a memento the captures the tool state (not including
        the highlighting state
     */
-    virtual boost::shared_ptr<MeasureToolMemento> GetMemento() const = 0;
+    virtual MeasureToolMemento* CreateMemento() const = 0;
 
     /**
        This method must apply the supplied memento (this requires RTTI to check
        the type)
     */
-    virtual void SetMemento(boost::shared_ptr<MeasureToolMemento>) = 0;
+    virtual void SetMemento(const MeasureToolMemento& memento) = 0;
 
     /**
        This must create an edition tracker suitable for the supplied click position,

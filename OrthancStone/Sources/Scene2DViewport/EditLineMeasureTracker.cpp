@@ -56,36 +56,37 @@ namespace OrthancStone
 
     ScenePoint2D delta = scenePos - GetOriginalClickPosition();
 
-    boost::shared_ptr<LineMeasureToolMemento> memento =
-      boost::dynamic_pointer_cast<LineMeasureToolMemento>(command_->mementoOriginal_);
-
-    ORTHANC_ASSERT(memento.get() != NULL);
+    const LineMeasureToolMemento& memento =
+      dynamic_cast<const LineMeasureToolMemento&>(command_->GetMementoOriginal());
 
     switch (modifiedZone_)
     {
-    case LineMeasureTool::LineHighlightArea_Start:
-    {
-      ScenePoint2D newStart = memento->start_ + delta;
-      GetCommand()->SetStart(newStart);
-    }
-    break;
-    case LineMeasureTool::LineHighlightArea_End:
-    {
-      ScenePoint2D newEnd = memento->end_ + delta;
-      GetCommand()->SetEnd(newEnd);
-    }
-    break;
-    case LineMeasureTool::LineHighlightArea_Segment:
-    {
-      ScenePoint2D newStart = memento->start_ + delta;
-      ScenePoint2D newEnd = memento->end_ + delta;
-      GetCommand()->SetStart(newStart);
-      GetCommand()->SetEnd(newEnd);
-    }
-    break;
-    default:
-      LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
-      break;
+      case LineMeasureTool::LineHighlightArea_Start:
+      {
+        ScenePoint2D newStart = memento.start_ + delta;
+        GetCommand()->SetStart(newStart);
+        break;
+      }
+      
+      case LineMeasureTool::LineHighlightArea_End:
+      {
+        ScenePoint2D newEnd = memento.end_ + delta;
+        GetCommand()->SetEnd(newEnd);
+        break;
+      }
+      
+      case LineMeasureTool::LineHighlightArea_Segment:
+      {
+        ScenePoint2D newStart = memento.start_ + delta;
+        ScenePoint2D newEnd = memento.end_ + delta;
+        GetCommand()->SetStart(newStart);
+        GetCommand()->SetEnd(newEnd);
+        break;
+      }
+      
+      default:
+        LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
+        break;
     }
   }
 
@@ -106,5 +107,4 @@ namespace OrthancStone
     ORTHANC_ASSERT(ret.get() != NULL, "Internal error in EditLineMeasureTracker::GetCommand()");
     return ret;
   }
-
 }

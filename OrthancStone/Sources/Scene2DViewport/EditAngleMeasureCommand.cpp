@@ -34,20 +34,20 @@ namespace OrthancStone
   void EditAngleMeasureCommand::SetCenter(ScenePoint2D scenePos)
   {
     dynamic_cast<AngleMeasureTool&>(*measureTool_).SetCenter(scenePos);
-    mementoModified_ = measureTool_->GetMemento();
+    SetMementoModified(measureTool_->CreateMemento());
   }
 
 
   void EditAngleMeasureCommand::SetSide1End(ScenePoint2D scenePos)
   {
     dynamic_cast<AngleMeasureTool&>(*measureTool_).SetSide1End(scenePos);
-    mementoModified_ = measureTool_->GetMemento();
+    SetMementoModified(measureTool_->CreateMemento());
   }
 
 
   void EditAngleMeasureCommand::SetSide2End(ScenePoint2D scenePos)
   {
     dynamic_cast<AngleMeasureTool&>(*measureTool_).SetSide2End(scenePos);
-    mementoModified_ = measureTool_->GetMemento();
+    SetMementoModified(measureTool_->CreateMemento());
   }
 }

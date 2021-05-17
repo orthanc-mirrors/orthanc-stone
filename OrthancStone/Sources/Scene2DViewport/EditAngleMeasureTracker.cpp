@@ -61,42 +61,44 @@ namespace OrthancStone
 
     ScenePoint2D delta = scenePos - GetOriginalClickPosition();
 
-    boost::shared_ptr<AngleMeasureToolMemento> memento =
-      boost::dynamic_pointer_cast<AngleMeasureToolMemento>(command_->mementoOriginal_);
-
-    ORTHANC_ASSERT(memento.get() != NULL);
+    const AngleMeasureToolMemento& memento =
+      dynamic_cast<const AngleMeasureToolMemento&>(command_->GetMementoOriginal());
 
     switch (modifiedZone_)
     {
       case AngleMeasureTool::AngleHighlightArea_Center:
       {
-        ScenePoint2D newCenter = memento->center_ + delta;
+        ScenePoint2D newCenter = memento.center_ + delta;
         GetCommand()->SetCenter(newCenter);
+        break;
       }
-      break;
+      
       case AngleMeasureTool::AngleHighlightArea_Side1:
       case AngleMeasureTool::AngleHighlightArea_Side2:
       {
-        ScenePoint2D newCenter = memento->center_ + delta;
-        ScenePoint2D newSide1End = memento->side1End_ + delta;
-        ScenePoint2D newSide2End = memento->side2End_ + delta;
+        ScenePoint2D newCenter = memento.center_ + delta;
+        ScenePoint2D newSide1End = memento.side1End_ + delta;
+        ScenePoint2D newSide2End = memento.side2End_ + delta;
         GetCommand()->SetCenter(newCenter);
         GetCommand()->SetSide1End(newSide1End);
         GetCommand()->SetSide2End(newSide2End);
+        break;
       }
-      break;
+      
       case AngleMeasureTool::AngleHighlightArea_Side1End:
       {
-        ScenePoint2D newSide1End = memento->side1End_ + delta;
+        ScenePoint2D newSide1End = memento.side1End_ + delta;
         GetCommand()->SetSide1End(newSide1End);
+        break;
       }
-      break;
+
       case AngleMeasureTool::AngleHighlightArea_Side2End:
       {
-        ScenePoint2D newSide2End = memento->side2End_ + delta;
+        ScenePoint2D newSide2End = memento.side2End_ + delta;
         GetCommand()->SetSide2End(newSide2End);
+        break;
       }
-      break;
+      
       default:
         LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
         break;

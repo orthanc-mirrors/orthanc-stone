@@ -105,24 +105,21 @@ namespace OrthancStone
   }
 
 
-  boost::shared_ptr<MeasureToolMemento> AngleMeasureTool::GetMemento() const
+  MeasureToolMemento* AngleMeasureTool::CreateMemento() const
   {
-    boost::shared_ptr<AngleMeasureToolMemento> memento(new AngleMeasureToolMemento());
+    std::unique_ptr<AngleMeasureToolMemento> memento(new AngleMeasureToolMemento());
     memento->center_ = center_;
     memento->side1End_ = side1End_;
     memento->side2End_ = side2End_;
-    return memento;
+    return memento.release();
   }
   
-  void AngleMeasureTool::SetMemento(boost::shared_ptr<MeasureToolMemento> mementoBase)
+  void AngleMeasureTool::SetMemento(const MeasureToolMemento& mementoBase)
   {
-    boost::shared_ptr<AngleMeasureToolMemento> memento = 
-      boost::dynamic_pointer_cast<AngleMeasureToolMemento>(mementoBase);
-
-    ORTHANC_ASSERT(memento.get() != NULL, "Internal error: wrong (or bad) memento");
-    center_   = memento->center_;
-    side1End_ = memento->side1End_;
-    side2End_ = memento->side2End_;
+    const AngleMeasureToolMemento& memento = dynamic_cast<const AngleMeasureToolMemento&>(mementoBase);
+    center_   = memento.center_;
+    side1End_ = memento.side1End_;
+    side2End_ = memento.side2End_;
     RefreshScene();
   }
 
@@ -352,7 +349,7 @@ namespace OrthancStone
           double pointY = center_.GetY() + oy;
 
           char buf[64];
-          double angleDeg = RadiansToDegrees(delta);
+          double angleDeg = std::abs(RadiansToDegrees(delta));
 
           // http://www.ltg.ed.ac.uk/~richard/utf-8.cgi?input=00B0&mode=hex
           sprintf(buf, "%0.02f\xc2\xb0", angleDeg);

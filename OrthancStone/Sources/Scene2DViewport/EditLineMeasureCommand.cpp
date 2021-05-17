@@ -35,13 +35,13 @@ namespace OrthancStone
   void EditLineMeasureCommand::SetStart(ScenePoint2D scenePos)
   {
     dynamic_cast<LineMeasureTool&>(*measureTool_).SetStart(scenePos);
-    mementoModified_ = measureTool_->GetMemento();
+    SetMementoModified(measureTool_->CreateMemento());
   }
 
 
   void EditLineMeasureCommand::SetEnd(ScenePoint2D scenePos)
   {
     dynamic_cast<LineMeasureTool&>(*measureTool_).SetEnd(scenePos);
-    mementoModified_ = measureTool_->GetMemento();
+    SetMementoModified(measureTool_->CreateMemento());
   }
 }

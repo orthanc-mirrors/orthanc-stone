@@ -90,8 +90,8 @@ namespace OrthancStone
                                              boost::weak_ptr<IViewport> viewport) :
     MeasureCommand(viewport),
     measureTool_(measureTool),
-    mementoModified_(measureTool->GetMemento()),
-    mementoOriginal_(measureTool->GetMemento())
+    mementoModified_(measureTool->CreateMemento()),
+    mementoOriginal_(measureTool->CreateMemento())
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     GetMeasureTool()->Disable();
@@ -101,8 +101,8 @@ namespace OrthancStone
   EditMeasureCommand::EditMeasureCommand(boost::shared_ptr<MeasureTool> measureTool,
                                          boost::weak_ptr<IViewport> viewport) :
     MeasureCommand(viewport),
-    mementoModified_(measureTool->GetMemento()),
-    mementoOriginal_(measureTool->GetMemento())
+    mementoModified_(measureTool->CreateMemento()),
+    mementoOriginal_(measureTool->CreateMemento())
   {
   }
 
@@ -113,11 +113,49 @@ namespace OrthancStone
   void EditMeasureCommand::Undo()
   {
     // simply disable the measure tool upon undo
-    GetMeasureTool()->SetMemento(mementoOriginal_);
+    assert(mementoOriginal_.get() != NULL);
+    GetMeasureTool()->SetMemento(*mementoOriginal_);
   }
 
   void EditMeasureCommand::Redo()
   {
-    GetMeasureTool()->SetMemento(mementoModified_);
+    assert(mementoModified_.get() != NULL);
+    GetMeasureTool()->SetMemento(*mementoModified_);
+  }
+
+  const MeasureToolMemento& EditMeasureCommand::GetMementoOriginal() const
+  {
+    assert(mementoOriginal_.get() != NULL);
+    return *mementoOriginal_;
+  }    
+
+  void EditMeasureCommand::SetMementoModified(MeasureToolMemento* memento)
+  {
+    if (memento == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+    else
+    {
+      mementoModified_.reset(memento);
+    }
+  }
+
+  const MeasureToolMemento& DeleteMeasureCommand::GetMementoOriginal() const
+  {
+    assert(mementoOriginal_.get() != NULL);
+    return *mementoOriginal_;
+  }    
+
+  void DeleteMeasureCommand::SetMementoModified(MeasureToolMemento* memento)
+  {
+    if (memento == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+    else
+    {
+      mementoModified_.reset(memento);
+    }
   }
 }

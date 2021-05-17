@@ -139,7 +139,10 @@ namespace OrthancStone
     With this method, the object takes ownership of the supplied tracker and
     updates it according to user interaction
     */
-    void AcquireActiveTracker(IFlexiblePointerTracker* tracker);
+    void AcquireActiveTracker(const boost::shared_ptr<IFlexiblePointerTracker>& tracker)
+    {
+      activeTracker_ = tracker;
+    }
 
     /** Forwarded to the underlying scene */
     AffineTransform2D GetCanvasToSceneTransform() const;

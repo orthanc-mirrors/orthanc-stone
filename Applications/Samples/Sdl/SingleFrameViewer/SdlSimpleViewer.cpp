@@ -24,12 +24,15 @@
 #include "../../Common/SampleHelpers.h"
 
 #include "../../../../OrthancStone/Sources/Loaders/GenericLoadersContext.h"
+#include "../../../../OrthancStone/Sources/Scene2DViewport/LineMeasureTool.h"
+#include "../../../../OrthancStone/Sources/Scene2DViewport/UndoStack.h"
 #include "../../../../OrthancStone/Sources/StoneEnumerations.h"
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
 #include "../../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
 #include "../../../Platforms/Sdl/SdlViewport.h"
 
+#include <EmbeddedResources.h>
 #include <Compatibility.h>  // For std::unique_ptr<>
 #include <OrthancException.h>
 
@@ -64,6 +67,17 @@ static void ProcessOptions(int argc, char* argv[])
     ;
 
   std::cout << desc << std::endl;
+
+  std::cout << std::endl << "Keyboard shorcuts:" << std::endl
+            << "  f\tToggle fullscreen display" << std::endl
+            << "  l\tEnable/disable the line measure tool" << std::endl
+            << "  q\tExit" << std::endl
+            << "  s\tFit the viewpoint to the image" << std::endl
+            << std::endl << "Mouse buttons:" << std::endl
+            << "  left  \tChange windowing, or edit measure" << std::endl
+            << "  center\tMove the viewpoint, or move measure" << std::endl
+            << "  right \tZoom, or move measure" << std::endl
+            << std::endl;
 
   po::variables_map vm;
   try
@@ -127,6 +141,8 @@ int main(int argc, char* argv[])
         OrthancStone::SdlCairoViewport::Create("Stone of Orthanc", 800, 600);
 #endif
 
+      boost::shared_ptr<OrthancStone::UndoStack> undoStack(new OrthancStone::UndoStack);
+
       OrthancStone::GenericLoadersContext context(1, 4, 1);
 
       Orthanc::WebServiceParameters orthancWebService;
@@ -136,6 +152,19 @@ int main(int argc, char* argv[])
       context.StartOracle();
 
       {
+        {
+          std::string font;
+          Orthanc::EmbeddedResources::GetFileResource(font, Orthanc::EmbeddedResources::UBUNTU_FONT);
+          
+          std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+          lock->GetCompositor().SetFont(0, font, 16, Orthanc::Encoding_Latin1);
+          lock->GetController().SetUndoStack(undoStack);
+        }
+
+        boost::shared_ptr<OrthancStone::LineMeasureTool> lineMeasureTool(OrthancStone::LineMeasureTool::Create(viewport));
+        bool lineMeasureFirst = true;
+        bool lineMeasureEnabled = false;
+        lineMeasureTool->Disable();
 
         boost::shared_ptr<SdlSimpleViewerApplication> application(
           SdlSimpleViewerApplication::Create(context, viewport));
@@ -185,20 +214,46 @@ int main(int argc, char* argv[])
               {
                 switch (event.key.keysym.sym)
                 {
-                case SDLK_f:
-                  viewport->ToggleMaximize();
-                  break;
+                  case SDLK_f:
+                    viewport->ToggleMaximize();
+                    break;
 
-                case SDLK_s:
-                  application->FitContent();
-                  break;
+                  case SDLK_s:
+                    application->FitContent();
+                    break;
 
-                case SDLK_q:
-                  stop = true;
-                  break;
+                  case SDLK_q:
+                    stop = true;
+                    break;
 
-                default:
-                  break;
+                  case SDLK_l:
+                    if (lineMeasureEnabled)
+                    {
+                      lineMeasureTool->Disable();
+                      lineMeasureEnabled = false;
+                    }
+                    else
+                    {
+                      if (lineMeasureFirst)
+                      {
+                        std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+                        OrthancStone::Extent2D extent;
+                        lock->GetController().GetScene().GetBoundingBox(extent);
+                        if (!extent.IsEmpty())
+                        {
+                          OrthancStone::ScenePoint2D p(extent.GetCenterX(), extent.GetCenterY());
+                          lineMeasureTool->Set(p, p);
+                        }
+                        lineMeasureFirst = false;
+                      }
+                      
+                      lineMeasureTool->Enable();
+                      lineMeasureEnabled = true;
+                    }
+                    break;
+
+                  default:
+                    break;
                 }
               }
               else if (event.type == SDL_MOUSEBUTTONDOWN ||
@@ -214,27 +269,42 @@ int main(int argc, char* argv[])
 
                   switch (event.type)
                   {
-                  case SDL_MOUSEBUTTONDOWN:
-                    lock->GetController().HandleMousePress(interactor, p,
-                                                           lock->GetCompositor().GetCanvasWidth(),
-                                                           lock->GetCompositor().GetCanvasHeight());
-                    lock->Invalidate();
-                    break;
-
-                  case SDL_MOUSEMOTION:
-                    if (lock->GetController().HandleMouseMove(p))
+                    case SDL_MOUSEBUTTONDOWN:
                     {
+                      boost::shared_ptr<OrthancStone::IFlexiblePointerTracker> t;
+                      if (lineMeasureEnabled)
+                      {
+                        t = lineMeasureTool->CreateEditionTracker(p);
+                      }
+                      
+                      if (t.get() != NULL)
+                      {
+                        lock->GetController().AcquireActiveTracker(t);
+                      }
+                      else
+                      {
+                        lock->GetController().HandleMousePress(interactor, p,
+                                                               lock->GetCompositor().GetCanvasWidth(),
+                                                               lock->GetCompositor().GetCanvasHeight());
+                      }
                       lock->Invalidate();
+                      break;
                     }
-                    break;
 
-                  case SDL_MOUSEBUTTONUP:
-                    lock->GetController().HandleMouseRelease(p);
-                    lock->Invalidate();
-                    break;
+                    case SDL_MOUSEMOTION:
+                      if (lock->GetController().HandleMouseMove(p))
+                      {
+                        lock->Invalidate();
+                      }
+                      break;
 
-                  default:
-                    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+                    case SDL_MOUSEBUTTONUP:
+                      lock->GetController().HandleMouseRelease(p);
+                      lock->Invalidate();
+                      break;
+
+                    default:
+                      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
                   }
                 }
               }

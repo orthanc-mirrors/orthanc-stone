@@ -118,30 +118,33 @@ namespace OrthancStone
   LineMeasureTool::LineHighlightArea LineMeasureTool::LineHitTest(ScenePoint2D p)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    ViewportController& controller = lock->GetController();
-    const Scene2D& scene = controller.GetScene();
+    if (lock.get() != NULL)
+    {
+      ViewportController& controller = lock->GetController();
+      const Scene2D& scene = controller.GetScene();
 
-    const double pixelToScene = scene.GetCanvasToSceneTransform().ComputeZoom();
-    const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = 
-      pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD * 
-      pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD;
+      const double pixelToScene = scene.GetCanvasToSceneTransform().ComputeZoom();
+      const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = 
+        pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD * 
+        pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD;
 
-    const double sqDistanceFromStart = 
-      ScenePoint2D::SquaredDistancePtPt(p, start_);
+      const double sqDistanceFromStart = 
+        ScenePoint2D::SquaredDistancePtPt(p, start_);
     
-    if (sqDistanceFromStart <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
-      return LineHighlightArea_Start;
+      if (sqDistanceFromStart <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+        return LineHighlightArea_Start;
     
-    const double sqDistanceFromEnd = ScenePoint2D::SquaredDistancePtPt(p, end_);
+      const double sqDistanceFromEnd = ScenePoint2D::SquaredDistancePtPt(p, end_);
 
-    if (sqDistanceFromEnd <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
-      return LineHighlightArea_End;
+      if (sqDistanceFromEnd <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+        return LineHighlightArea_End;
 
-    const double sqDistanceFromPtSegment = 
-      ScenePoint2D::SquaredDistancePtSegment(start_, end_, p);
+      const double sqDistanceFromPtSegment = 
+        ScenePoint2D::SquaredDistancePtSegment(start_, end_, p);
     
-    if (sqDistanceFromPtSegment <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
-      return LineHighlightArea_Segment;
+      if (sqDistanceFromPtSegment <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+        return LineHighlightArea_Segment;
+    }
 
     return LineHighlightArea_None;
   }
@@ -154,18 +157,25 @@ namespace OrthancStone
   boost::shared_ptr<IFlexiblePointerTracker> LineMeasureTool::CreateEditionTracker(const PointerEvent& e)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    ViewportController& controller = lock->GetController();
-    const Scene2D& scene = controller.GetScene();
+    if (lock.get() != NULL)
+    {
+      ViewportController& controller = lock->GetController();
+      const Scene2D& scene = controller.GetScene();
 
-    ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      scene.GetCanvasToSceneTransform());
+      ScenePoint2D scenePos = e.GetMainPosition().Apply(
+        scene.GetCanvasToSceneTransform());
 
-    if (!HitTest(scenePos))
-      return boost::shared_ptr<IFlexiblePointerTracker>();
+      if (!HitTest(scenePos))
+        return boost::shared_ptr<IFlexiblePointerTracker>();
 
-    boost::shared_ptr<EditLineMeasureTracker> editLineMeasureTracker(
-      new EditLineMeasureTracker(shared_from_this(), viewport_, e));
-    return editLineMeasureTracker;
+      boost::shared_ptr<EditLineMeasureTracker> editLineMeasureTracker(
+        new EditLineMeasureTracker(shared_from_this(), viewport_, e));
+      return editLineMeasureTracker;
+    }
+    else
+    {
+      return NULL;
+    }
   }
 
   boost::shared_ptr<MeasureToolMemento> LineMeasureTool::GetMemento() const

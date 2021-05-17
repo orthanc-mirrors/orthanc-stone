@@ -156,7 +156,7 @@ namespace OrthancStone
     virtual std::string GetDescription() = 0;
   };
 
-  class MeasureToolMemento
+  class MeasureToolMemento : public boost::noncopyable
   {
   public:
     virtual ~MeasureToolMemento()

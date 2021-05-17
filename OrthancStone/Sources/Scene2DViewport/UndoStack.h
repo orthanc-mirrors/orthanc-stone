@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <vector>
@@ -29,7 +30,7 @@ namespace OrthancStone
 {
   class MeasureCommand;
 
-  class UndoStack
+  class UndoStack : public boost::noncopyable
   {
   public:
     UndoStack();

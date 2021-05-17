@@ -76,11 +76,13 @@ namespace OrthancStone
   void MeasureTool::PostConstructor()
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    ViewportController& controller = lock->GetController();
 
-    Register<ViewportController::SceneTransformChanged>(
-      controller, 
-      &MeasureTool::OnSceneTransformChanged);
+    if (lock.get() != NULL)
+    {
+      Register<ViewportController::SceneTransformChanged>(
+        lock->GetController(), 
+        &MeasureTool::OnSceneTransformChanged);
+    }
   }
 
   bool MeasureTool::IsSceneAlive() const

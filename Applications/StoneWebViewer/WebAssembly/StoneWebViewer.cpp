@@ -1751,7 +1751,7 @@ private:
           !a.empty())
       {
         annotationsLayer.reset(new OrthancStone::MacroSceneLayer);
-        annotationsLayer->Reserve(a.size());
+        // annotationsLayer->Reserve(a.size());
 
         OrthancStone::OsiriXLayerFactory factory;
         factory.SetColor(0, 255, 0);

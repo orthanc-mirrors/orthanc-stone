@@ -71,8 +71,8 @@ namespace OrthancStone
       return new Scene2D(*this);
     }
 
-    void SetLayer(int depth,
-                  ISceneLayer* layer);  // Takes ownership
+    ISceneLayer& SetLayer(int depth,
+                          ISceneLayer* layer);  // Takes ownership
 
     /**
     Removes the layer at specified depth and deletes the underlying object

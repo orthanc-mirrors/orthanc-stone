@@ -102,8 +102,8 @@ namespace OrthancStone
   }
 
 
-  void Scene2D::SetLayer(int depth,
-                         ISceneLayer* layer)  // Takes ownership
+  ISceneLayer& Scene2D::SetLayer(int depth,
+                                 ISceneLayer* layer)  // Takes ownership
   {
     LOG(TRACE) << "SetLayer(" << depth << ", " << reinterpret_cast<intptr_t>(layer) << ")";
     std::unique_ptr<Item> item(new Item(layer, layerCounter_++));
@@ -125,6 +125,8 @@ namespace OrthancStone
       delete found->second;
       found->second = item.release();
     }
+
+    return *layer;
   }
 
 

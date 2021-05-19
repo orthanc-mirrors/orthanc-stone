@@ -57,6 +57,28 @@ namespace OrthancStone
   }
 
   
+  void MacroSceneLayer::UpdateLayer(size_t index,
+                                    ISceneLayer* layer)
+  {
+    if (layer == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+    else if (index >= layers_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      assert(layers_[index] != NULL);
+      delete layers_[index];
+
+      layers_[index] = layer;
+      BumpRevision();
+    }
+  }    
+
+
   const ISceneLayer& MacroSceneLayer::GetLayer(size_t i) const
   {
     if (i >= layers_.size())

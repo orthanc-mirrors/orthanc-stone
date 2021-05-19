@@ -69,6 +69,9 @@ namespace OrthancStone
       return layers_.size();
     }
 
+    void UpdateLayer(size_t index,
+                     ISceneLayer* layer);  // takes ownership
+
     const ISceneLayer& GetLayer(size_t i) const;
 
     virtual ISceneLayer* Clone() const ORTHANC_OVERRIDE;

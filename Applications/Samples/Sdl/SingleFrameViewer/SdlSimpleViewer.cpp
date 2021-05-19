@@ -43,6 +43,1066 @@
 #include <string>
 
 
+
+#if 1
+#include "../../../../OrthancStone/Sources/Scene2D/MacroSceneLayer.h"
+
+#include <boost/math/constants/constants.hpp>
+
+static const double HANDLE_SIZE = 10.0;
+static const double PI = boost::math::constants::pi<double>();
+    
+namespace OrthancStone
+{
+  class AnnotationsOverlay : public boost::noncopyable
+  {
+  private:
+    class Measure;
+    
+    class Primitive : public boost::noncopyable
+    {
+    private:
+      bool      modified_;
+      Measure&  parentMeasure_;
+      Color     color_;
+      Color     hoverColor_;
+      bool      isHover_;
+      int       depth_;
+
+    protected:
+      Measure& GetParentMeasure() const
+      {
+        return parentMeasure_;
+      }
+      
+    public:
+      Primitive(Measure& parentMeasure,
+                int depth) :
+        modified_(true),
+        parentMeasure_(parentMeasure),
+        color_(192, 192, 192),
+        hoverColor_(0, 255, 0),
+        isHover_(false),
+        depth_(depth)
+      {
+      }
+      
+      virtual ~Primitive()
+      {
+      }
+
+      int GetDepth() const
+      {
+        return depth_;
+      }
+
+      void SetHover(bool hover)
+      {
+        if (hover != isHover_)
+        {
+          isHover_ = hover;
+          modified_ = true;
+        }
+      }
+
+      bool IsHover() const
+      {
+        return isHover_;
+      }
+      
+      void SetModified(bool modified)
+      {
+        modified_ = modified;
+      }
+      
+      bool IsModified() const
+      {
+        return modified_;
+      }
+
+      void SetColor(const Color& color)
+      {
+        SetModified(true);
+        color_ = color;
+      }
+
+      void SetHoverColor(const Color& color)
+      {
+        SetModified(true);
+        hoverColor_ = color;
+      }
+
+      const Color& GetColor() const
+      {
+        return color_;
+      }
+
+      const Color& GetHoverColor() const
+      {
+        return hoverColor_;
+      }
+
+      virtual bool IsHit(const ScenePoint2D& p,
+                         const Scene2D& scene) const = 0;
+
+      // Always called, even if not modified
+      virtual void RenderPolylineLayer(PolylineSceneLayer& polyline,
+                                       const Scene2D& scene) = 0;
+
+      // Only called if modified
+      virtual void RenderOtherLayers(MacroSceneLayer& macro,
+                                     const Scene2D& scene) = 0;
+
+      virtual void MovePreview(const ScenePoint2D& delta) = 0;
+
+      virtual void MoveDone(const ScenePoint2D& delta) = 0;
+    };
+    
+
+    class Measure : public boost::noncopyable
+    {
+    private:
+      typedef std::list<Primitive*>  Primitives;
+      
+      AnnotationsOverlay&  that_;
+      Primitives           primitives_;
+      
+    public:
+      Measure(AnnotationsOverlay& that) :
+        that_(that)
+      {
+      }
+      
+      virtual ~Measure()
+      {
+        for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+        {
+          assert(*it != NULL);
+          assert(that_.primitives_.find(*it) != that_.primitives_.end());
+          that_.primitives_.erase(*it);
+          delete *it;
+        }
+      }
+
+      Primitive* AddPrimitive(Primitive* primitive)
+      {
+        if (primitive == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        }
+        else
+        {
+          assert(that_.primitives_.find(primitive) == that_.primitives_.end());
+          primitives_.push_back(primitive);  // For automated deallocation
+          that_.primitives_.insert(primitive);
+          return primitive;
+        }
+      }
+
+      template <typename T>
+      T& AddTypedPrimitive(T* primitive)
+      {
+        AddPrimitive(primitive);
+        return *primitive;
+      }
+
+      virtual void SignalMove(Primitive& primitive) = 0;
+    };
+
+
+    class Handle : public Primitive
+    {
+    private:
+      ScenePoint2D  center_;
+      ScenePoint2D  delta_;
+
+    public:
+      explicit Handle(Measure& parentMeasure,
+                      const ScenePoint2D& center) :
+        Primitive(parentMeasure, 0),  // Highest priority
+        center_(center),
+        delta_(0, 0)
+      {
+      }
+
+      void SetSize(unsigned int size)
+      {
+        SetModified(true);
+      }
+
+      void SetCenter(const ScenePoint2D& center)
+      {
+        SetModified(true);
+        center_ = center;
+        delta_ = ScenePoint2D(0, 0);
+      }
+
+      ScenePoint2D GetCenter() const
+      {
+        return center_ + delta_;
+      }
+
+      virtual bool IsHit(const ScenePoint2D& p,
+                         const Scene2D& scene) const
+      {
+        const double zoom = scene.GetSceneToCanvasTransform().ComputeZoom();
+
+        double dx = (center_.GetX() + delta_.GetX() - p.GetX()) * zoom;
+        double dy = (center_.GetY() + delta_.GetY() - p.GetY()) * zoom;
+
+        return (std::abs(dx) <= HANDLE_SIZE / 2.0 &&
+                std::abs(dy) <= HANDLE_SIZE / 2.0);
+      }
+
+      virtual void RenderPolylineLayer(PolylineSceneLayer& polyline,
+                                       const Scene2D& scene) ORTHANC_OVERRIDE
+      {
+        const double zoom = scene.GetSceneToCanvasTransform().ComputeZoom();
+
+        // TODO: take DPI into account 
+        double x1 = center_.GetX() + delta_.GetX() - (HANDLE_SIZE / 2.0) / zoom;
+        double y1 = center_.GetY() + delta_.GetY() - (HANDLE_SIZE / 2.0) / zoom;
+        double x2 = center_.GetX() + delta_.GetX() + (HANDLE_SIZE / 2.0) / zoom;
+        double y2 = center_.GetY() + delta_.GetY() + (HANDLE_SIZE / 2.0) / zoom;
+
+        PolylineSceneLayer::Chain chain;
+        chain.reserve(4);
+        chain.push_back(ScenePoint2D(x1, y1));
+        chain.push_back(ScenePoint2D(x2, y1));
+        chain.push_back(ScenePoint2D(x2, y2));
+        chain.push_back(ScenePoint2D(x1, y2));
+
+        if (IsHover())
+        {
+          polyline.AddChain(chain, true /* closed */, GetHoverColor());
+        }
+        else
+        {
+          polyline.AddChain(chain, true /* closed */, GetColor());
+        }
+      }
+      
+      virtual void RenderOtherLayers(MacroSceneLayer& macro,
+                                     const Scene2D& scene) ORTHANC_OVERRIDE
+      {
+      }
+
+      virtual void MovePreview(const ScenePoint2D& delta) ORTHANC_OVERRIDE
+      {
+        SetModified(true);
+        delta_ = delta;
+        GetParentMeasure().SignalMove(*this);
+      }
+
+      virtual void MoveDone(const ScenePoint2D& delta) ORTHANC_OVERRIDE
+      {
+        SetModified(true);
+        center_ = center_ + delta;
+        delta_ = ScenePoint2D(0, 0);
+        GetParentMeasure().SignalMove(*this);
+      }
+    };
+
+    
+    class Segment : public Primitive
+    {
+    private:
+      ScenePoint2D  p1_;
+      ScenePoint2D  p2_;
+      ScenePoint2D  delta_;
+      
+    public:
+      Segment(Measure& parentMeasure,
+              const ScenePoint2D& p1,
+              const ScenePoint2D& p2) :
+        Primitive(parentMeasure, 1),  // Can only be selected if no handle matches
+        p1_(p1),
+        p2_(p2),
+        delta_(0, 0)
+      {
+      }
+
+      void SetPosition(const ScenePoint2D& p1,
+                       const ScenePoint2D& p2)
+      {
+        SetModified(true);
+        p1_ = p1;
+        p2_ = p2;
+        delta_ = ScenePoint2D(0, 0);
+      }
+
+      ScenePoint2D GetPosition1() const
+      {
+        return p1_ + delta_;
+      }
+
+      ScenePoint2D GetPosition2() const
+      {
+        return p2_ + delta_;
+      }
+
+      virtual bool IsHit(const ScenePoint2D& p,
+                         const Scene2D& scene) const
+      {
+        const double zoom = scene.GetSceneToCanvasTransform().ComputeZoom();
+        return (ScenePoint2D::SquaredDistancePtSegment(p1_ + delta_, p2_ + delta_, p) * zoom * zoom <=
+                (HANDLE_SIZE / 2.0) * (HANDLE_SIZE / 2.0));
+      }
+
+      virtual void RenderPolylineLayer(PolylineSceneLayer& polyline,
+                                       const Scene2D& scene) ORTHANC_OVERRIDE
+      {
+        PolylineSceneLayer::Chain chain;
+        chain.reserve(2);
+        chain.push_back(p1_ + delta_);
+        chain.push_back(p2_ + delta_);
+
+        if (IsHover())
+        {
+          polyline.AddChain(chain, false /* closed */, GetHoverColor());
+        }
+        else
+        {
+          polyline.AddChain(chain, false /* closed */, GetColor());
+        }
+      }
+      
+      virtual void RenderOtherLayers(MacroSceneLayer& macro,
+                                     const Scene2D& scene) ORTHANC_OVERRIDE
+      {
+      }
+
+      virtual void MovePreview(const ScenePoint2D& delta) ORTHANC_OVERRIDE
+      {
+        SetModified(true);
+        delta_ = delta;
+        GetParentMeasure().SignalMove(*this);
+      }
+
+      virtual void MoveDone(const ScenePoint2D& delta) ORTHANC_OVERRIDE
+      {
+        SetModified(true);
+        p1_ = p1_ + delta;
+        p2_ = p2_ + delta;
+        delta_ = ScenePoint2D(0, 0);
+        GetParentMeasure().SignalMove(*this);
+      }
+    };
+
+    
+    class Circle : public Primitive
+    {
+    private:
+      ScenePoint2D  p1_;
+      ScenePoint2D  p2_;
+      
+    public:
+      Circle(Measure& parentMeasure,
+             const ScenePoint2D& p1,
+             const ScenePoint2D& p2) :
+        Primitive(parentMeasure, 2),
+        p1_(p1),
+        p2_(p2)
+      {
+      }
+
+      void SetPosition(const ScenePoint2D& p1,
+                       const ScenePoint2D& p2)
+      {
+        SetModified(true);
+        p1_ = p1;
+        p2_ = p2;
+      }
+
+      ScenePoint2D GetPosition1() const
+      {
+        return p1_;
+      }
+
+      ScenePoint2D GetPosition2() const
+      {
+        return p2_;
+      }
+
+      virtual bool IsHit(const ScenePoint2D& p,
+                         const Scene2D& scene) const
+      {
+        return false;
+      }
+
+      virtual void RenderPolylineLayer(PolylineSceneLayer& polyline,
+                                       const Scene2D& scene) ORTHANC_OVERRIDE
+      {
+        static unsigned int NUM_SEGMENTS = 128;
+
+        ScenePoint2D middle((p1_.GetX() + p2_.GetX()) / 2.0,
+                            (p1_.GetY() + p2_.GetY()) / 2.0);
+        
+        const double radius = ScenePoint2D::DistancePtPt(middle, p1_);
+
+        double increment = 2.0 * PI / static_cast<double>(NUM_SEGMENTS - 1);
+
+        PolylineSceneLayer::Chain chain;
+        chain.reserve(NUM_SEGMENTS);
+
+        double theta = 0;
+        for (unsigned int i = 0; i < NUM_SEGMENTS; i++)
+        {
+          chain.push_back(ScenePoint2D(middle.GetX() + radius * cos(theta),
+                                       middle.GetY() + radius * sin(theta)));
+          theta += increment;
+        }
+        
+        if (IsHover())
+        {
+          polyline.AddChain(chain, false /* closed */, GetHoverColor());
+        }
+        else
+        {
+          polyline.AddChain(chain, false /* closed */, GetColor());
+        }
+      }
+      
+      virtual void RenderOtherLayers(MacroSceneLayer& macro,
+                                     const Scene2D& scene) ORTHANC_OVERRIDE
+      {
+      }
+
+      virtual void MovePreview(const ScenePoint2D& delta) ORTHANC_OVERRIDE
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);  // No hit is possible
+      }
+
+      virtual void MoveDone(const ScenePoint2D& delta) ORTHANC_OVERRIDE
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);  // No hit is possible
+      }
+    };
+
+    
+    class Arc : public Primitive
+    {
+    private:
+      ScenePoint2D  start_;
+      ScenePoint2D  middle_;
+      ScenePoint2D  end_;
+      double        radius_;  // in pixels
+
+      void ComputeAngles(double& fullAngle,
+                         double& startAngle,
+                         double& endAngle) const
+      {
+        const double x1 = start_.GetX();
+        const double y1 = start_.GetY();
+        const double xc = middle_.GetX();
+        const double yc = middle_.GetY();
+        const double x2 = end_.GetX();
+        const double y2 = end_.GetY();
+        
+        startAngle = atan2(y1 - yc, x1 - xc);
+        endAngle = atan2(y2 - yc, x2 - xc);
+
+        fullAngle = endAngle - startAngle;
+        
+        while (fullAngle < -PI)
+        {
+          fullAngle += 2.0 * PI;
+        }
+        
+        while (fullAngle >= PI)
+        {
+          fullAngle -= 2.0 * PI;
+        }
+      }
+      
+    public:
+      Arc(Measure& parentMeasure,
+          const ScenePoint2D& start,
+          const ScenePoint2D& middle,
+          const ScenePoint2D& end) :
+        Primitive(parentMeasure, 2),
+        start_(start),
+        middle_(middle),
+        end_(end),
+        radius_(20)
+      {
+      }
+
+      double GetAngle() const
+      {
+        double fullAngle, startAngle, endAngle;
+        ComputeAngles(fullAngle, startAngle, endAngle);
+        return fullAngle;
+      }
+
+      void SetStart(const ScenePoint2D& p)
+      {
+        SetModified(true);
+        start_ = p;
+      }
+
+      void SetMiddle(const ScenePoint2D& p)
+      {
+        SetModified(true);
+        middle_ = p;
+      }
+
+      void SetEnd(const ScenePoint2D& p)
+      {
+        SetModified(true);
+        end_ = p;
+      }
+
+      virtual bool IsHit(const ScenePoint2D& p,
+                         const Scene2D& scene) const
+      {
+        return false;
+      }
+
+      virtual void RenderPolylineLayer(PolylineSceneLayer& polyline,
+                                       const Scene2D& scene) ORTHANC_OVERRIDE
+      {
+        static unsigned int NUM_SEGMENTS = 64;
+
+        const double radius = radius_ / scene.GetSceneToCanvasTransform().ComputeZoom();
+
+        double fullAngle, startAngle, endAngle;
+        ComputeAngles(fullAngle, startAngle, endAngle);
+
+        double increment = fullAngle / static_cast<double>(NUM_SEGMENTS - 1);
+
+        PolylineSceneLayer::Chain chain;
+        chain.reserve(NUM_SEGMENTS);
+
+        double theta = startAngle;
+        for (unsigned int i = 0; i < NUM_SEGMENTS; i++)
+        {
+          chain.push_back(ScenePoint2D(middle_.GetX() + radius * cos(theta),
+                                       middle_.GetY() + radius * sin(theta)));
+          theta += increment;
+        }
+        
+        if (IsHover())
+        {
+          polyline.AddChain(chain, false /* closed */, GetHoverColor());
+        }
+        else
+        {
+          polyline.AddChain(chain, false /* closed */, GetColor());
+        }
+      }
+      
+      virtual void RenderOtherLayers(MacroSceneLayer& macro,
+                                     const Scene2D& scene) ORTHANC_OVERRIDE
+      {
+      }
+
+      virtual void MovePreview(const ScenePoint2D& delta) ORTHANC_OVERRIDE
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);  // No hit is possible
+      }
+
+      virtual void MoveDone(const ScenePoint2D& delta) ORTHANC_OVERRIDE
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);  // No hit is possible
+      }
+    };
+
+    
+    class Text : public Primitive
+    {
+    private:
+      bool                             first_;
+      size_t                           sublayer_;
+      std::unique_ptr<TextSceneLayer>  content_;
+
+    public:
+      Text(Measure& parentMeasure) :
+        Primitive(parentMeasure, 2),
+        first_(true)
+      {
+      }
+      
+      void SetContent(const TextSceneLayer& content)
+      {
+        SetModified(true);
+        content_.reset(dynamic_cast<TextSceneLayer*>(content.Clone()));
+      }        
+
+      virtual bool IsHit(const ScenePoint2D& p,
+                         const Scene2D& scene) const
+      {
+        return false;
+      }
+
+      virtual void RenderPolylineLayer(PolylineSceneLayer& polyline,
+                                       const Scene2D& scene) ORTHANC_OVERRIDE
+      {
+      }
+      
+      virtual void RenderOtherLayers(MacroSceneLayer& macro,
+                                     const Scene2D& scene) ORTHANC_OVERRIDE
+      {
+        if (content_.get() != NULL)
+        {
+          std::unique_ptr<TextSceneLayer> layer(reinterpret_cast<TextSceneLayer*>(content_->Clone()));
+
+          layer->SetColor(IsHover() ? GetHoverColor() : GetColor());
+          
+          if (first_)
+          {
+            sublayer_ = macro.AddLayer(layer.release());
+            first_ = false;
+          }
+          else
+          {
+            macro.UpdateLayer(sublayer_, layer.release());
+          }
+        }
+      }
+
+      virtual void MovePreview(const ScenePoint2D& delta) ORTHANC_OVERRIDE
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);  // No hit is possible
+      }
+
+      virtual void MoveDone(const ScenePoint2D& delta) ORTHANC_OVERRIDE
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);  // No hit is possible
+      }
+    };
+
+
+    class EditPrimitiveTracker : public IFlexiblePointerTracker
+    {
+    private:
+      Primitive&         primitive_;
+      ScenePoint2D       sceneClick_;
+      AffineTransform2D  canvasToScene_;
+      bool               alive_;
+      
+    public:
+      EditPrimitiveTracker(Primitive& primitive,
+                           const ScenePoint2D& sceneClick,
+                           const AffineTransform2D& canvasToScene) :
+        primitive_(primitive),
+        sceneClick_(sceneClick),
+        canvasToScene_(canvasToScene),
+        alive_(true)
+      {
+      }
+
+      virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE
+      {
+        primitive_.MovePreview(event.GetMainPosition().Apply(canvasToScene_) - sceneClick_);
+      }
+      
+      virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE
+      {
+        primitive_.MoveDone(event.GetMainPosition().Apply(canvasToScene_) - sceneClick_);
+        alive_ = false;
+      }
+
+      virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE
+      {
+      }
+
+      virtual bool IsAlive() const ORTHANC_OVERRIDE
+      {
+        return alive_;
+      }
+
+      virtual void Cancel() ORTHANC_OVERRIDE
+      {
+        primitive_.MoveDone(ScenePoint2D(0, 0));
+      }
+    };
+
+
+    class SegmentMeasure : public Measure
+    {
+    private:
+      Handle&   handle1_;
+      Handle&   handle2_;
+      Segment&  segment_;
+      Text&     label_;
+
+      void UpdateLabel()
+      {
+        TextSceneLayer content;
+
+        double x1 = handle1_.GetCenter().GetX();
+        double y1 = handle1_.GetCenter().GetY();
+        double x2 = handle2_.GetCenter().GetX();
+        double y2 = handle2_.GetCenter().GetY();
+        
+        // Put the label to the right of the right-most handle
+        if (x1 < x2)
+        {
+          content.SetPosition(x2, y2);
+        }
+        else
+        {
+          content.SetPosition(x1, y1);
+        }
+
+        content.SetAnchor(BitmapAnchor_CenterLeft);
+        content.SetBorder(10);
+
+        double dx = x1 - x2;
+        double dy = y1 - y2;
+        char buf[32];
+        sprintf(buf, "%0.2f cm", sqrt(dx * dx + dy * dy) / 10.0);
+        content.SetText(buf);
+
+        label_.SetContent(content);
+      }
+
+    public:
+      SegmentMeasure(AnnotationsOverlay& that,
+                     const ScenePoint2D& p1,
+                     const ScenePoint2D& p2) :
+        Measure(that),
+        handle1_(AddTypedPrimitive<Handle>(new Handle(*this, p1))),
+        handle2_(AddTypedPrimitive<Handle>(new Handle(*this, p2))),
+        segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
+        label_(AddTypedPrimitive<Text>(new Text(*this)))
+      {
+        label_.SetColor(Color(255, 0, 0));
+        UpdateLabel();
+      }
+
+      virtual void SignalMove(Primitive& primitive) ORTHANC_OVERRIDE
+      {
+        if (&primitive == &handle1_ ||
+            &primitive == &handle2_)
+        {
+          segment_.SetPosition(handle1_.GetCenter(), handle2_.GetCenter());
+        }
+        else if (&primitive == &segment_)
+        {
+          handle1_.SetCenter(segment_.GetPosition1());
+          handle2_.SetCenter(segment_.GetPosition2());
+        }
+        
+        UpdateLabel();
+      }
+    };
+
+    
+    class AngleMeasure : public Measure
+    {
+    private:
+      Handle&   startHandle_;
+      Handle&   middleHandle_;
+      Handle&   endHandle_;
+      Segment&  segment1_;
+      Segment&  segment2_;
+      Arc&      arc_;
+      Text&     label_;
+
+      void UpdateLabel()
+      {
+        TextSceneLayer content;
+
+        const double x1 = startHandle_.GetCenter().GetX();
+        const double x2 = middleHandle_.GetCenter().GetX();
+        const double y2 = middleHandle_.GetCenter().GetY();
+        const double x3 = endHandle_.GetCenter().GetX();
+        
+        if (x2 < x1 &&
+            x2 < x3)
+        {
+          content.SetAnchor(BitmapAnchor_CenterRight);
+        }
+        else
+        {
+          content.SetAnchor(BitmapAnchor_CenterLeft);
+        }
+
+        content.SetPosition(x2, y2);
+        content.SetBorder(10);
+
+        char buf[32];
+        sprintf(buf, "%.01f%c%c", std::abs(arc_.GetAngle()) / PI * 180.0,
+                0xc2, 0xb0 /* two bytes corresponding to degree symbol in UTF-8 */);
+        content.SetText(buf);
+
+        label_.SetContent(content);
+      }
+
+    public:
+      AngleMeasure(AnnotationsOverlay& that,
+                   const ScenePoint2D& start,
+                   const ScenePoint2D& middle,
+                   const ScenePoint2D& end) :
+        Measure(that),
+        startHandle_(AddTypedPrimitive<Handle>(new Handle(*this, start))),
+        middleHandle_(AddTypedPrimitive<Handle>(new Handle(*this, middle))),
+        endHandle_(AddTypedPrimitive<Handle>(new Handle(*this, end))),
+        segment1_(AddTypedPrimitive<Segment>(new Segment(*this, start, middle))),
+        segment2_(AddTypedPrimitive<Segment>(new Segment(*this, middle, end))),
+        arc_(AddTypedPrimitive<Arc>(new Arc(*this, start, middle, end))),
+        label_(AddTypedPrimitive<Text>(new Text(*this)))
+      {
+        label_.SetColor(Color(255, 0, 0));
+        UpdateLabel();
+      }
+
+      virtual void SignalMove(Primitive& primitive) ORTHANC_OVERRIDE
+      {
+        if (&primitive == &startHandle_)
+        {
+          segment1_.SetPosition(startHandle_.GetCenter(), middleHandle_.GetCenter());
+          arc_.SetStart(startHandle_.GetCenter());
+        }
+        else if (&primitive == &middleHandle_)
+        {
+          segment1_.SetPosition(startHandle_.GetCenter(), middleHandle_.GetCenter());
+          segment2_.SetPosition(middleHandle_.GetCenter(), endHandle_.GetCenter());
+          arc_.SetMiddle(middleHandle_.GetCenter());
+        }
+        else if (&primitive == &endHandle_)
+        {
+          segment2_.SetPosition(middleHandle_.GetCenter(), endHandle_.GetCenter());
+          arc_.SetEnd(endHandle_.GetCenter());
+        }
+        else if (&primitive == &segment1_)
+        {
+          startHandle_.SetCenter(segment1_.GetPosition1());
+          middleHandle_.SetCenter(segment1_.GetPosition2());
+          segment2_.SetPosition(segment1_.GetPosition2(), segment2_.GetPosition2());
+          arc_.SetStart(segment1_.GetPosition1());
+          arc_.SetMiddle(segment1_.GetPosition2());
+        }
+        else if (&primitive == &segment2_)
+        {
+          middleHandle_.SetCenter(segment2_.GetPosition1());
+          endHandle_.SetCenter(segment2_.GetPosition2());
+          segment1_.SetPosition(segment1_.GetPosition1(), segment2_.GetPosition1());
+          arc_.SetMiddle(segment2_.GetPosition1());
+          arc_.SetEnd(segment2_.GetPosition2());
+        }
+
+        UpdateLabel();
+      }
+    };
+
+    
+    class CircleMeasure : public Measure
+    {
+    private:
+      Handle&   handle1_;
+      Handle&   handle2_;
+      Segment&  segment_;
+      Circle&   circle_;
+      Text&     label_;
+
+      void UpdateLabel()
+      {
+        TextSceneLayer content;
+
+        double x1 = handle1_.GetCenter().GetX();
+        double y1 = handle1_.GetCenter().GetY();
+        double x2 = handle2_.GetCenter().GetX();
+        double y2 = handle2_.GetCenter().GetY();
+        
+        // Put the label to the right of the right-most handle
+        if (x1 < x2)
+        {
+          content.SetPosition(x2, y2);
+        }
+        else
+        {
+          content.SetPosition(x1, y1);
+        }
+
+        content.SetAnchor(BitmapAnchor_CenterLeft);
+        content.SetBorder(10);
+
+        double dx = x1 - x2;
+        double dy = y1 - y2;
+        double diameter = sqrt(dx * dx + dy * dy);  // in millimeters
+
+        double area = PI * diameter * diameter / 4.0;
+        
+        char buf[32];
+        sprintf(buf, "%0.2f cm\n%0.2f cm%c%c",
+                diameter / 10.0,
+                area / 100.0,
+                0xc2, 0xb2 /* two bytes corresponding to two power in UTF-8 */);
+        content.SetText(buf);
+
+        label_.SetContent(content);
+      }
+
+    public:
+      CircleMeasure(AnnotationsOverlay& that,
+                    const ScenePoint2D& p1,
+                    const ScenePoint2D& p2) :
+        Measure(that),
+        handle1_(AddTypedPrimitive<Handle>(new Handle(*this, p1))),
+        handle2_(AddTypedPrimitive<Handle>(new Handle(*this, p2))),
+        segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
+        circle_(AddTypedPrimitive<Circle>(new Circle(*this, p1, p2))),
+        label_(AddTypedPrimitive<Text>(new Text(*this)))
+      {
+        label_.SetColor(Color(255, 0, 0));
+        UpdateLabel();
+      }
+
+      virtual void SignalMove(Primitive& primitive) ORTHANC_OVERRIDE
+      {
+        if (&primitive == &handle1_ ||
+            &primitive == &handle2_)
+        {
+          segment_.SetPosition(handle1_.GetCenter(), handle2_.GetCenter());
+          circle_.SetPosition(handle1_.GetCenter(), handle2_.GetCenter());          
+        }
+        else if (&primitive == &segment_)
+        {
+          handle1_.SetCenter(segment_.GetPosition1());
+          handle2_.SetCenter(segment_.GetPosition2());
+          circle_.SetPosition(segment_.GetPosition1(), segment_.GetPosition2());
+        }
+        
+        UpdateLabel();
+      }
+    };
+
+    
+    typedef std::set<Primitive*>  Primitives;
+    typedef std::set<Measure*>    Measures;
+
+    size_t      macroLayerIndex_;
+    size_t      polylineSublayer_;
+    Primitives  primitives_;
+    Measures    measures_;
+    
+  public:
+    AnnotationsOverlay(size_t macroLayerIndex) :
+      macroLayerIndex_(macroLayerIndex),
+      polylineSublayer_(0)  // dummy initialization
+    {
+      measures_.insert(new SegmentMeasure(*this, ScenePoint2D(0, 0), ScenePoint2D(100, 100)));
+      measures_.insert(new AngleMeasure(*this, ScenePoint2D(100, 50), ScenePoint2D(150, 40), ScenePoint2D(200, 50)));
+      measures_.insert(new CircleMeasure(*this, ScenePoint2D(50, 200), ScenePoint2D(100, 250)));
+    }
+    
+    ~AnnotationsOverlay()
+    {
+      for (Measures::iterator it = measures_.begin(); it != measures_.end(); ++it)
+      {
+        assert(*it != NULL);
+        delete *it;
+      }
+
+      measures_.clear();
+    }
+
+    void Render(Scene2D& scene)
+    {
+      MacroSceneLayer* macro = NULL;
+
+      if (scene.HasLayer(macroLayerIndex_))
+      {
+        macro = &dynamic_cast<MacroSceneLayer&>(scene.GetLayer(macroLayerIndex_));
+      }
+      else
+      {
+        macro = &dynamic_cast<MacroSceneLayer&>(scene.SetLayer(macroLayerIndex_, new MacroSceneLayer));
+        polylineSublayer_ = macro->AddLayer(new PolylineSceneLayer);
+      }
+
+      std::unique_ptr<PolylineSceneLayer> polyline(new PolylineSceneLayer);
+
+      for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+      {
+        assert(*it != NULL);
+        Primitive& primitive = **it;        
+        
+        primitive.RenderPolylineLayer(*polyline, scene);
+
+        if (primitive.IsModified())
+        {
+          primitive.RenderOtherLayers(*macro, scene);
+          primitive.SetModified(false);
+        }
+      }
+
+      macro->UpdateLayer(polylineSublayer_, polyline.release());
+    }
+
+    bool ClearHover()
+    {
+      bool needsRefresh = false;
+      
+      for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+      {
+        assert(*it != NULL);
+        if ((*it)->IsHover())
+        {
+          (*it)->SetHover(false);
+          needsRefresh = true;
+        }
+      }
+
+      return needsRefresh;
+    }
+
+    bool SetMouseHover(const ScenePoint2D& p /* expressed in canvas coordinates */,
+                       const Scene2D& scene)
+    {
+      bool needsRefresh = false;
+      
+      const ScenePoint2D s = p.Apply(scene.GetCanvasToSceneTransform());
+      
+      for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+      {
+        assert(*it != NULL);
+        bool hover = (*it)->IsHit(s, scene);
+
+        if ((*it)->IsHover() != hover)
+        {
+          needsRefresh = true;
+        }
+        
+        (*it)->SetHover(hover);
+      }
+
+      return needsRefresh;
+    }
+
+    IFlexiblePointerTracker* CreateTracker(const ScenePoint2D& p /* expressed in canvas coordinates */,
+                                           const Scene2D& scene)
+    {
+      const ScenePoint2D s = p.Apply(scene.GetCanvasToSceneTransform());
+
+      int bestDepth;
+      std::unique_ptr<IFlexiblePointerTracker> tracker;
+      
+      for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+      {
+        assert(*it != NULL);
+        if ((*it)->IsHit(s, scene))
+        {
+          if (tracker.get() == NULL ||
+              bestDepth > (*it)->GetDepth())
+          {
+            tracker.reset(new EditPrimitiveTracker(**it, s, scene.GetCanvasToSceneTransform()));
+            bestDepth = (*it)->GetDepth();
+          }
+        }
+      }
+
+      return tracker.release();
+    }
+  };
+}
+#endif
+
+
+
 std::string orthancUrl;
 std::string instanceId;
 int frameIndex = 0;
@@ -182,6 +1242,8 @@ int main(int argc, char* argv[])
         boost::shared_ptr<OrthancStone::AngleMeasureTool> angleMeasureTool(OrthancStone::AngleMeasureTool::Create(viewport));
         bool angleMeasureFirst = true;
         angleMeasureTool->Disable();
+
+        OrthancStone::AnnotationsOverlay overlay(10);
 
         boost::shared_ptr<SdlSimpleViewerApplication> application(
           SdlSimpleViewerApplication::Create(context, viewport));
@@ -344,21 +1406,26 @@ int main(int argc, char* argv[])
                     case SDL_MOUSEBUTTONDOWN:
                     {
                       boost::shared_ptr<OrthancStone::IFlexiblePointerTracker> t;
-                      switch (activeTool)
+
+                      t.reset(overlay.CreateTracker(p.GetMainPosition(), lock->GetController().GetScene()));
+                      if (t.get() == NULL)
                       {
-                        case ActiveTool_Angle:
-                          t = angleMeasureTool->CreateEditionTracker(p);
-                          break;
+                        switch (activeTool)
+                        {
+                          case ActiveTool_Angle:
+                            t = angleMeasureTool->CreateEditionTracker(p);
+                            break;
 
-                        case ActiveTool_Line:
-                          t = lineMeasureTool->CreateEditionTracker(p);
-                          break;
+                          case ActiveTool_Line:
+                            t = lineMeasureTool->CreateEditionTracker(p);
+                            break;
 
-                        case ActiveTool_None:
-                          break;
+                          case ActiveTool_None:
+                            break;
                           
-                        default:
-                          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+                          default:
+                            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+                        }
                       }
                       
                       if (t.get() != NULL)
@@ -379,6 +1446,17 @@ int main(int argc, char* argv[])
                       if (lock->GetController().HandleMouseMove(p))
                       {
                         lock->Invalidate();
+                        if (overlay.ClearHover())
+                        {
+                          paint = true;
+                        }                          
+                      }
+                      else
+                      {
+                        if (overlay.SetMouseHover(p.GetMainPosition(), lock->GetController().GetScene()))
+                        {
+                          paint = true;
+                        }
                       }
                       break;
 
@@ -396,6 +1474,11 @@ int main(int argc, char* argv[])
 
             if (paint)
             {
+              {
+                std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+                overlay.Render(lock->GetController().GetScene());
+              }
+              
               viewport->Paint();
             }
 

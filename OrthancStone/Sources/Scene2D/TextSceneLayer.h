@@ -94,7 +94,7 @@ namespace OrthancStone
 
     virtual void GetBoundingBox(Extent2D& target) const ORTHANC_OVERRIDE
     {
-      target.Clear();
+      target.Clear();  // Not implemented
     }
 
     virtual uint64_t GetRevision() const ORTHANC_OVERRIDE

@@ -24,16 +24,16 @@
 
 #include <OrthancException.h>
 
-#include <cassert>
-
 namespace OrthancStone
 {
   void MacroSceneLayer::Clear()
   {
     for (size_t i = 0; i < layers_.size(); i++)
     {
-      assert(layers_[i] != NULL);
-      delete layers_[i];
+      if (layers_[i] != NULL)
+      {
+        delete layers_[i];
+      }
     }
 
     layers_.clear();
@@ -49,6 +49,8 @@ namespace OrthancStone
     }
     else
     {
+      // TODO - Use recycling list from DeleteLayer()
+      
       size_t index = layers_.size();
       layers_.push_back(layer);
       BumpRevision();
@@ -70,8 +72,10 @@ namespace OrthancStone
     }
     else
     {
-      assert(layers_[index] != NULL);
-      delete layers_[index];
+      if (layers_[index] != NULL)
+      {
+        delete layers_[index];
+      }
 
       layers_[index] = layer;
       BumpRevision();
@@ -79,16 +83,52 @@ namespace OrthancStone
   }    
 
 
-  const ISceneLayer& MacroSceneLayer::GetLayer(size_t i) const
+  bool MacroSceneLayer::HasLayer(size_t index) const
   {
-    if (i >= layers_.size())
+    if (index >= layers_.size())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
     else
     {
-      assert(layers_[i] != NULL);
-      return *layers_[i];
+      return (layers_[index] != NULL);
+    }
+  }
+  
+
+  void MacroSceneLayer::DeleteLayer(size_t index)
+  {
+    if (index >= layers_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else if (layers_[index] == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem);
+    }
+    else
+    {
+      // TODO - Add to a recycling list
+      
+      delete layers_[index];
+      layers_[index] = NULL;
+    }
+  }
+
+
+  const ISceneLayer& MacroSceneLayer::GetLayer(size_t index) const
+  {
+    if (index >= layers_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else if (layers_[index] == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem);
+    }
+    else
+    {
+      return *layers_[index];
     }
   }
 
@@ -99,9 +139,17 @@ namespace OrthancStone
 
     for (size_t i = 0; i < layers_.size(); i++)
     {
-      assert(layers_[i] != NULL);
-      copy->layers_.push_back(layers_[i]->Clone());
+      if (layers_[i] == NULL)
+      {
+        copy->layers_.push_back(NULL);
+      }
+      else
+      {
+        copy->layers_.push_back(layers_[i]->Clone());
+      }
     }
+
+    // TODO - Copy recycling list
 
     return copy.release();
   }
@@ -113,11 +161,12 @@ namespace OrthancStone
 
     for (size_t i = 0; i < layers_.size(); i++)
     {
-      assert(layers_[i] != NULL);
-
-      Extent2D subextent;
-      layers_[i]->GetBoundingBox(subextent);
-      target.Union(subextent);
+      if (layers_[i] != NULL)
+      {
+        Extent2D subextent;
+        layers_[i]->GetBoundingBox(subextent);
+        target.Union(subextent);
+      }
     }
   }
 }

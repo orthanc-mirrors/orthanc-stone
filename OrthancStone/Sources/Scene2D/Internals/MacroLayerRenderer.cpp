@@ -61,7 +61,10 @@ namespace OrthancStone
 
       for (size_t i = 0; i < macro.GetSize(); i++)
       {
-        renderers_.push_back(factory_.Create(macro.GetLayer(i)));
+        if (macro.HasLayer(i))
+        {
+          renderers_.push_back(factory_.Create(macro.GetLayer(i)));
+        }
       }
     }
   }

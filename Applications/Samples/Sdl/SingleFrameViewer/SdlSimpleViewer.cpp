@@ -171,16 +171,14 @@ namespace OrthancStone
       Measure(AnnotationsOverlay& that) :
         that_(that)
       {
+        that.AddMeasure(this);
       }
       
       virtual ~Measure()
       {
         for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
         {
-          assert(*it != NULL);
-          assert(that_.primitives_.find(*it) != that_.primitives_.end());
-          that_.primitives_.erase(*it);
-          delete *it;
+          that_.DeletePrimitive(*it);
         }
       }
 
@@ -612,15 +610,26 @@ namespace OrthancStone
     class Text : public Primitive
     {
     private:
+      AnnotationsOverlay&              that_;
       bool                             first_;
-      size_t                           sublayer_;
+      size_t                           subLayer_;
       std::unique_ptr<TextSceneLayer>  content_;
 
     public:
-      Text(Measure& parentMeasure) :
+      Text(AnnotationsOverlay& that,
+           Measure& parentMeasure) :
         Primitive(parentMeasure, 2),
+        that_(that),
         first_(true)
       {
+      }
+
+      virtual ~Text()
+      {
+        if (content_.get() != NULL)
+        {
+          that_.TagSubLayerToRemove(subLayer_);
+        }
       }
       
       void SetContent(const TextSceneLayer& content)
@@ -651,12 +660,12 @@ namespace OrthancStone
           
           if (first_)
           {
-            sublayer_ = macro.AddLayer(layer.release());
+            subLayer_ = macro.AddLayer(layer.release());
             first_ = false;
           }
           else
           {
-            macro.UpdateLayer(sublayer_, layer.release());
+            macro.UpdateLayer(subLayer_, layer.release());
           }
         }
       }
@@ -766,10 +775,15 @@ namespace OrthancStone
         handle1_(AddTypedPrimitive<Handle>(new Handle(*this, p1))),
         handle2_(AddTypedPrimitive<Handle>(new Handle(*this, p2))),
         segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
-        label_(AddTypedPrimitive<Text>(new Text(*this)))
+        label_(AddTypedPrimitive<Text>(new Text(that, *this)))
       {
         label_.SetColor(Color(255, 0, 0));
         UpdateLabel();
+      }
+
+      Handle& GetHandle2() const
+      {
+        return handle2_;
       }
 
       virtual void SignalMove(Primitive& primitive) ORTHANC_OVERRIDE
@@ -843,7 +857,7 @@ namespace OrthancStone
         segment1_(AddTypedPrimitive<Segment>(new Segment(*this, start, middle))),
         segment2_(AddTypedPrimitive<Segment>(new Segment(*this, middle, end))),
         arc_(AddTypedPrimitive<Arc>(new Arc(*this, start, middle, end))),
-        label_(AddTypedPrimitive<Text>(new Text(*this)))
+        label_(AddTypedPrimitive<Text>(new Text(that, *this)))
       {
         label_.SetColor(Color(255, 0, 0));
         UpdateLabel();
@@ -945,10 +959,15 @@ namespace OrthancStone
         handle2_(AddTypedPrimitive<Handle>(new Handle(*this, p2))),
         segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
         circle_(AddTypedPrimitive<Circle>(new Circle(*this, p1, p2))),
-        label_(AddTypedPrimitive<Text>(new Text(*this)))
+        label_(AddTypedPrimitive<Text>(new Text(that, *this)))
       {
         label_.SetColor(Color(255, 0, 0));
         UpdateLabel();
+      }
+
+      Handle& GetHandle2() const
+      {
+        return handle2_;
       }
 
       virtual void SignalMove(Primitive& primitive) ORTHANC_OVERRIDE
@@ -971,18 +990,121 @@ namespace OrthancStone
     };
 
     
+    class CreateSegmentOrCircleTracker : public IFlexiblePointerTracker
+    {
+    private:
+      AnnotationsOverlay&  that_;
+      Measure*             measure_;
+      AffineTransform2D    canvasToScene_;
+      Handle*              handle2_;
+      
+    public:
+      CreateSegmentOrCircleTracker(AnnotationsOverlay& that,
+                                   bool isCircle,
+                                   const ScenePoint2D& sceneClick,
+                                   const AffineTransform2D& canvasToScene) :
+        that_(that),
+        measure_(NULL),
+        canvasToScene_(canvasToScene),
+        handle2_(NULL)
+      {
+        if (isCircle)
+        {
+          measure_ = new CircleMeasure(that, sceneClick, sceneClick);
+          handle2_ = &dynamic_cast<CircleMeasure*>(measure_)->GetHandle2();
+        }
+        else
+        {
+          measure_ = new SegmentMeasure(that, sceneClick, sceneClick);
+          handle2_ = &dynamic_cast<SegmentMeasure*>(measure_)->GetHandle2();
+        }
+        
+        assert(measure_ != NULL &&
+               handle2_ != NULL);
+      }
+
+      virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE
+      {
+        if (measure_ != NULL)
+        {
+          assert(handle2_ != NULL);
+          handle2_->SetCenter(event.GetMainPosition().Apply(canvasToScene_));
+          measure_->SignalMove(*handle2_);
+        }
+      }
+      
+      virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE
+      {
+        measure_ = NULL;  // IsAlive() becomes false
+      }
+
+      virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE
+      {
+      }
+
+      virtual bool IsAlive() const ORTHANC_OVERRIDE
+      {
+        return (measure_ != NULL);
+      }
+
+      virtual void Cancel() ORTHANC_OVERRIDE
+      {
+        if (measure_ != NULL)
+        {
+          that_.DeleteMeasure(measure_);
+          measure_ = NULL;
+        }
+      }
+    };
+
+
     typedef std::set<Primitive*>  Primitives;
     typedef std::set<Measure*>    Measures;
+    typedef std::set<size_t>      SubLayers;
 
     size_t      macroLayerIndex_;
-    size_t      polylineSublayer_;
+    size_t      polylineSubLayer_;
     Primitives  primitives_;
     Measures    measures_;
+    SubLayers   subLayersToRemove_;
+
+    void AddMeasure(Measure* measure)
+    {
+      assert(measure != NULL);
+      assert(measures_.find(measure) == measures_.end());
+      measures_.insert(measure);
+    }
+
+    void DeleteMeasure(Measure* measure)
+    {
+      if (measure != NULL)
+      {
+        assert(measures_.find(measure) != measures_.end());
+        measures_.erase(measure);
+        delete measure;
+      }
+    }
+
+    void DeletePrimitive(Primitive* primitive)
+    {
+      if (primitive != NULL)
+      {
+        assert(primitives_.find(primitive) != primitives_.end());
+        primitives_.erase(primitive);
+        delete primitive;
+      }
+    }
+
+    void TagSubLayerToRemove(size_t subLayerIndex)
+    {
+      assert(subLayersToRemove_.find(subLayerIndex) == subLayersToRemove_.end());
+      subLayersToRemove_.insert(subLayerIndex);
+    }
     
   public:
     AnnotationsOverlay(size_t macroLayerIndex) :
       macroLayerIndex_(macroLayerIndex),
-      polylineSublayer_(0)  // dummy initialization
+      polylineSubLayer_(0)  // dummy initialization
     {
       measures_.insert(new SegmentMeasure(*this, ScenePoint2D(0, 0), ScenePoint2D(100, 100)));
       measures_.insert(new AngleMeasure(*this, ScenePoint2D(100, 50), ScenePoint2D(150, 40), ScenePoint2D(200, 50)));
@@ -1011,8 +1133,16 @@ namespace OrthancStone
       else
       {
         macro = &dynamic_cast<MacroSceneLayer&>(scene.SetLayer(macroLayerIndex_, new MacroSceneLayer));
-        polylineSublayer_ = macro->AddLayer(new PolylineSceneLayer);
+        polylineSubLayer_ = macro->AddLayer(new PolylineSceneLayer);
       }
+
+      for (SubLayers::const_iterator it = subLayersToRemove_.begin(); it != subLayersToRemove_.end(); ++it)
+      {
+        assert(macro->HasLayer(*it));
+        macro->DeleteLayer(*it);
+      }
+
+      subLayersToRemove_.clear();
 
       std::unique_ptr<PolylineSceneLayer> polyline(new PolylineSceneLayer);
 
@@ -1030,7 +1160,7 @@ namespace OrthancStone
         }
       }
 
-      macro->UpdateLayer(polylineSublayer_, polyline.release());
+      macro->UpdateLayer(polylineSubLayer_, polyline.release());
     }
 
     bool ClearHover()
@@ -1093,6 +1223,11 @@ namespace OrthancStone
             bestDepth = (*it)->GetDepth();
           }
         }
+      }
+
+      if (tracker.get() == NULL)
+      {
+        tracker.reset(new CreateSegmentOrCircleTracker(*this, true /* circle */, s, scene.GetCanvasToSceneTransform()));
       }
 
       return tracker.release();

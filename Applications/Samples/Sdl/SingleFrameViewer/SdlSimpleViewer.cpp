@@ -84,7 +84,7 @@ namespace OrthancStone
   private:
     class Annotation;
     
-    class Primitive : public boost::noncopyable
+    class GeometricPrimitive : public boost::noncopyable
     {
     private:
       bool         modified_;
@@ -95,8 +95,8 @@ namespace OrthancStone
       int          depth_;
 
     public:
-      Primitive(Annotation& parentAnnotation,
-                int depth) :
+      GeometricPrimitive(Annotation& parentAnnotation,
+                         int depth) :
         modified_(true),
         parentAnnotation_(parentAnnotation),
         color_(192, 192, 192),
@@ -106,7 +106,7 @@ namespace OrthancStone
       {
       }
       
-      virtual ~Primitive()
+      virtual ~GeometricPrimitive()
       {
       }
 
@@ -186,10 +186,10 @@ namespace OrthancStone
     class Annotation : public boost::noncopyable
     {
     private:
-      typedef std::list<Primitive*>  Primitives;
+      typedef std::list<GeometricPrimitive*>  GeometricPrimitives;
       
       AnnotationsOverlay&  that_;
-      Primitives           primitives_;
+      GeometricPrimitives  primitives_;
       
     public:
       Annotation(AnnotationsOverlay& that) :
@@ -200,13 +200,13 @@ namespace OrthancStone
       
       virtual ~Annotation()
       {
-        for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+        for (GeometricPrimitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
         {
           that_.DeletePrimitive(*it);
         }
       }
 
-      Primitive* AddPrimitive(Primitive* primitive)
+      GeometricPrimitive* AddPrimitive(GeometricPrimitive* primitive)
       {
         if (primitive == NULL)
         {
@@ -228,13 +228,13 @@ namespace OrthancStone
         return *primitive;
       }
 
-      virtual void SignalMove(Primitive& primitive) = 0;
+      virtual void SignalMove(GeometricPrimitive& primitive) = 0;
 
       virtual void Serialize(Json::Value& target) = 0;
     };
 
 
-    class Handle : public Primitive
+    class Handle : public GeometricPrimitive
     {
     private:
       ScenePoint2D  center_;
@@ -243,7 +243,7 @@ namespace OrthancStone
     public:
       explicit Handle(Annotation& parentAnnotation,
                       const ScenePoint2D& center) :
-        Primitive(parentAnnotation, 0),  // Highest priority
+        GeometricPrimitive(parentAnnotation, 0),  // Highest priority
         center_(center),
         delta_(0, 0)
       {
@@ -328,7 +328,7 @@ namespace OrthancStone
     };
 
     
-    class Segment : public Primitive
+    class Segment : public GeometricPrimitive
     {
     private:
       ScenePoint2D  p1_;
@@ -339,7 +339,7 @@ namespace OrthancStone
       Segment(Annotation& parentAnnotation,
               const ScenePoint2D& p1,
               const ScenePoint2D& p2) :
-        Primitive(parentAnnotation, 1),  // Can only be selected if no handle matches
+        GeometricPrimitive(parentAnnotation, 1),  // Can only be selected if no handle matches
         p1_(p1),
         p2_(p2),
         delta_(0, 0)
@@ -414,7 +414,7 @@ namespace OrthancStone
     };
 
     
-    class Circle : public Primitive
+    class Circle : public GeometricPrimitive
     {
     private:
       ScenePoint2D  p1_;
@@ -424,7 +424,7 @@ namespace OrthancStone
       Circle(Annotation& parentAnnotation,
              const ScenePoint2D& p1,
              const ScenePoint2D& p2) :
-        Primitive(parentAnnotation, 2),
+        GeometricPrimitive(parentAnnotation, 2),
         p1_(p1),
         p2_(p2)
       {
@@ -504,7 +504,7 @@ namespace OrthancStone
     };
 
     
-    class Arc : public Primitive
+    class Arc : public GeometricPrimitive
     {
     private:
       ScenePoint2D  start_;
@@ -544,7 +544,7 @@ namespace OrthancStone
           const ScenePoint2D& start,
           const ScenePoint2D& middle,
           const ScenePoint2D& end) :
-        Primitive(parentAnnotation, 2),
+        GeometricPrimitive(parentAnnotation, 2),
         start_(start),
         middle_(middle),
         end_(end),
@@ -633,7 +633,7 @@ namespace OrthancStone
     };
 
     
-    class Text : public Primitive
+    class Text : public GeometricPrimitive
     {
     private:
       AnnotationsOverlay&              that_;
@@ -644,7 +644,7 @@ namespace OrthancStone
     public:
       Text(AnnotationsOverlay& that,
            Annotation& parentAnnotation) :
-        Primitive(parentAnnotation, 2),
+        GeometricPrimitive(parentAnnotation, 2),
         that_(that),
         first_(true)
       {
@@ -711,13 +711,13 @@ namespace OrthancStone
     class EditPrimitiveTracker : public IFlexiblePointerTracker
     {
     private:
-      Primitive&         primitive_;
-      ScenePoint2D       sceneClick_;
-      AffineTransform2D  canvasToScene_;
-      bool               alive_;
+      GeometricPrimitive&  primitive_;
+      ScenePoint2D         sceneClick_;
+      AffineTransform2D    canvasToScene_;
+      bool                 alive_;
       
     public:
-      EditPrimitiveTracker(Primitive& primitive,
+      EditPrimitiveTracker(GeometricPrimitive& primitive,
                            const ScenePoint2D& sceneClick,
                            const AffineTransform2D& canvasToScene) :
         primitive_(primitive),
@@ -823,7 +823,7 @@ namespace OrthancStone
         return handle2_;
       }
 
-      virtual void SignalMove(Primitive& primitive) ORTHANC_OVERRIDE
+      virtual void SignalMove(GeometricPrimitive& primitive) ORTHANC_OVERRIDE
       {
         if (&primitive == &handle1_ ||
             &primitive == &handle2_)
@@ -937,7 +937,7 @@ namespace OrthancStone
         return endHandle_;
       }
 
-      virtual void SignalMove(Primitive& primitive) ORTHANC_OVERRIDE
+      virtual void SignalMove(GeometricPrimitive& primitive) ORTHANC_OVERRIDE
       {
         if (&primitive == &startHandle_)
         {
@@ -1083,7 +1083,7 @@ namespace OrthancStone
         return handle2_;
       }
 
-      virtual void SignalMove(Primitive& primitive) ORTHANC_OVERRIDE
+      virtual void SignalMove(GeometricPrimitive& primitive) ORTHANC_OVERRIDE
       {
         if (&primitive == &handle1_ ||
             &primitive == &handle2_)
@@ -1316,16 +1316,16 @@ namespace OrthancStone
     };
 
 
-    typedef std::set<Primitive*>   Primitives;
-    typedef std::set<Annotation*>  Annotations;
-    typedef std::set<size_t>       SubLayers;
+    typedef std::set<GeometricPrimitive*>  GeometricPrimitives;
+    typedef std::set<Annotation*>          Annotations;
+    typedef std::set<size_t>               SubLayers;
 
-    Tool         activeTool_;
-    size_t       macroLayerIndex_;
-    size_t       polylineSubLayer_;
-    Primitives   primitives_;
-    Annotations  annotations_;
-    SubLayers    subLayersToRemove_;
+    Tool                 activeTool_;
+    size_t               macroLayerIndex_;
+    size_t               polylineSubLayer_;
+    GeometricPrimitives  primitives_;
+    Annotations          annotations_;
+    SubLayers            subLayersToRemove_;
 
     void AddAnnotation(Annotation* annotation)
     {
@@ -1344,7 +1344,7 @@ namespace OrthancStone
       }
     }
 
-    void DeletePrimitive(Primitive* primitive)
+    void DeletePrimitive(GeometricPrimitive* primitive)
     {
       if (primitive != NULL)
       {
@@ -1421,10 +1421,10 @@ namespace OrthancStone
 
       std::unique_ptr<PolylineSceneLayer> polyline(new PolylineSceneLayer);
 
-      for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+      for (GeometricPrimitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
       {
         assert(*it != NULL);
-        Primitive& primitive = **it;        
+        GeometricPrimitive& primitive = **it;        
         
         primitive.RenderPolylineLayer(*polyline, scene);
 
@@ -1442,7 +1442,7 @@ namespace OrthancStone
     {
       bool needsRefresh = false;
       
-      for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+      for (GeometricPrimitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
       {
         assert(*it != NULL);
         if ((*it)->IsHover())
@@ -1468,7 +1468,7 @@ namespace OrthancStone
       
         const ScenePoint2D s = p.Apply(scene.GetCanvasToSceneTransform());
       
-        for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+        for (GeometricPrimitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
         {
           assert(*it != NULL);
           bool hover = (*it)->IsHit(s, scene);
@@ -1497,9 +1497,9 @@ namespace OrthancStone
       {
         const ScenePoint2D s = p.Apply(scene.GetCanvasToSceneTransform());
 
-        Primitive* bestHit = NULL;
+        GeometricPrimitive* bestHit = NULL;
       
-        for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+        for (GeometricPrimitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
         {
           assert(*it != NULL);
           if ((*it)->IsHit(s, scene))

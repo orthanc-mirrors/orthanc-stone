@@ -32,14 +32,13 @@
 #  error The macro ORTHANC_ENABLE_OPENGL must be defined
 #endif
 
-#if ORTHANC_ENABLE_OPENGL != 1
-#  error Support for OpenGL is disabled
-#endif
-
 #include "SdlOpenGLContext.h"
-#include "../../../OrthancStone/Sources/Scene2D/OpenGLCompositor.h"
 #include "../../../OrthancStone/Sources/Scene2D/CairoCompositor.h"
 #include "../../../OrthancStone/Sources/Viewport/IViewport.h"
+
+#if ORTHANC_ENABLE_OPENGL == 1
+#  include "../../../OrthancStone/Sources/Scene2D/OpenGLCompositor.h"
+#endif
 
 #include <SDL_events.h>
 
@@ -139,6 +138,7 @@ namespace OrthancStone
   };
 
 
+#if ORTHANC_ENABLE_OPENGL == 1
   class SdlOpenGLViewport : public SdlViewport
   {
   private:
@@ -153,7 +153,7 @@ namespace OrthancStone
     virtual void RefreshCanvasSize() ORTHANC_OVERRIDE;
     
   public:
-    static boost::shared_ptr<SdlOpenGLViewport> Create(const std::string&,
+    static boost::shared_ptr<SdlOpenGLViewport> Create(const std::string& title,
                                                        unsigned int width,
                                                        unsigned int height,
                                                        bool allowDpiScaling = true);
@@ -167,6 +167,7 @@ namespace OrthancStone
 
     virtual void ToggleMaximize() ORTHANC_OVERRIDE;
   };
+#endif
 
 
   class SdlCairoViewport : public SdlViewport
@@ -177,20 +178,19 @@ namespace OrthancStone
 
     void CreateSdlSurfaceFromCompositor(const CairoCompositor& compositor);
 
-    SdlCairoViewport(const char* title,
+    SdlCairoViewport(const std::string& title,
                      unsigned int width,
                      unsigned int height,
-                     bool allowDpiScaling = true);
+                     bool allowDpiScaling);
 
   protected:
     virtual void RefreshCanvasSize() ORTHANC_OVERRIDE;
     
   public:
-    static boost::shared_ptr<SdlCairoViewport> Create(const char* title,
-                     unsigned int width,
-                     unsigned int height,
-                     bool allowDpiScaling = true);
-
+    static boost::shared_ptr<SdlCairoViewport> Create(const std::string& title,
+                                                      unsigned int width,
+                                                      unsigned int height,
+                                                      bool allowDpiScaling = true);
 
     virtual ~SdlCairoViewport();
 

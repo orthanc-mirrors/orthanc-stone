@@ -62,6 +62,7 @@ endif()
 #####################################################################
 
 list(APPEND ORTHANC_STONE_SOURCES
+  ${CMAKE_CURRENT_LIST_DIR}/SdlViewport.cpp
   ${CMAKE_CURRENT_LIST_DIR}/SdlWindow.cpp
   ${SDL_SOURCES}
   )
@@ -69,6 +70,5 @@ list(APPEND ORTHANC_STONE_SOURCES
 if (ENABLE_OPENGL)
   list(APPEND ORTHANC_STONE_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/SdlOpenGLContext.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/SdlViewport.cpp
     )
 endif()

@@ -257,6 +257,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Oracle/ParseDicomFromFileCommand.cpp
   ${ORTHANC_STONE_ROOT}/Oracle/ParseDicomFromWadoCommand.cpp
 
+  ${ORTHANC_STONE_ROOT}/Scene2D/AnnotationsSceneLayer.cpp
+  ${ORTHANC_STONE_ROOT}/Scene2D/AnnotationsSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Scene2D/ArrowSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/ArrowSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Scene2D/CairoCompositor.cpp
@@ -295,6 +297,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Scene2D/RotateSceneTracker.h
   ${ORTHANC_STONE_ROOT}/Scene2D/Scene2D.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/Scene2D.h
+  ${ORTHANC_STONE_ROOT}/Scene2D/ScenePoint2D.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/ScenePoint2D.h
   ${ORTHANC_STONE_ROOT}/Scene2D/TextSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/TextSceneLayer.h

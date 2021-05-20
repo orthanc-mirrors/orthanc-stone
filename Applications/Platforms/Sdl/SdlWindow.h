@@ -24,6 +24,7 @@
 #if ORTHANC_ENABLE_SDL == 1
 
 #include <boost/noncopyable.hpp>
+#include <string>
 
 // Forward declaration of SDL type to avoid clashes with DCMTK headers
 // on "typedef Sint8", in "StoneInitialization.cpp"
@@ -41,7 +42,7 @@ namespace OrthancStone
     bool                 maximized_;
 
   public:
-    SdlWindow(const char* title,
+    SdlWindow(const std::string& title,
               unsigned int width,
               unsigned int height,
               bool enableOpenGl,

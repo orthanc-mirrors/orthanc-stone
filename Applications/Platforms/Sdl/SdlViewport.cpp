@@ -85,6 +85,7 @@ namespace OrthancStone
   }
 
 
+#if ORTHANC_ENABLE_OPENGL == 1
   SdlOpenGLViewport::SdlOpenGLViewport(const std::string& title,
                                        unsigned int width,
                                        unsigned int height,
@@ -93,26 +94,32 @@ namespace OrthancStone
   {
     AcquireCompositor(new OpenGLCompositor(context_));  // (*)
   }
+#endif
 
 
+#if ORTHANC_ENABLE_OPENGL == 1
   void SdlOpenGLViewport::RefreshCanvasSize()
   {
     UpdateSize(context_.GetCanvasWidth(), context_.GetCanvasHeight());
   }
+#endif
 
 
-  boost::shared_ptr<SdlOpenGLViewport> SdlOpenGLViewport::Create(
-    const std::string& title,
-    unsigned int width,
-    unsigned int height,
-    bool allowDpiScaling)
+#if ORTHANC_ENABLE_OPENGL == 1
+  boost::shared_ptr<SdlOpenGLViewport> SdlOpenGLViewport::Create(const std::string& title,
+                                                                 unsigned int width,
+                                                                 unsigned int height,
+                                                                 bool allowDpiScaling)
   {
     boost::shared_ptr<SdlOpenGLViewport> that =
       boost::shared_ptr<SdlOpenGLViewport>(new SdlOpenGLViewport(title, width, height, allowDpiScaling));
     that->SdlViewport::PostConstructor();
     return that;
   }
+#endif
 
+
+#if ORTHANC_ENABLE_OPENGL == 1
   uint32_t SdlOpenGLViewport::GetSdlWindowId()
   {
     const SdlWindow& sdlWindowWrapper = context_.GetWindow();
@@ -120,22 +127,29 @@ namespace OrthancStone
     Uint32 sdlWindowId = SDL_GetWindowID(sdlWindow);
     return sdlWindowId;
   }
+#endif
+  
 
+#if ORTHANC_ENABLE_OPENGL == 1
   SdlOpenGLViewport::~SdlOpenGLViewport()
   {
     // Make sure that the "OpenGLCompositor" is destroyed BEFORE the
     // "OpenGLContext" it references (*)
     ClearCompositor();
   }
+#endif
 
 
+#if ORTHANC_ENABLE_OPENGL == 1
   void SdlOpenGLViewport::Paint()
   {
     SdlLock lock(*this);
     lock.GetCompositor().Refresh(lock.GetController().GetScene());
   }
+#endif
 
 
+#if ORTHANC_ENABLE_OPENGL == 1
   void SdlOpenGLViewport::ToggleMaximize()
   {
     // No need to call "Invalidate()" here, as "UpdateSize()" will
@@ -143,7 +157,7 @@ namespace OrthancStone
     SdlLock lock(*this);
     context_.ToggleMaximize();
   }
-
+#endif
 
 
   void SdlCairoViewport::RefreshCanvasSize()
@@ -151,7 +165,7 @@ namespace OrthancStone
     UpdateSize(window_.GetWidth(), window_.GetHeight());
   }
 
-  SdlCairoViewport::SdlCairoViewport(const char* title,
+  SdlCairoViewport::SdlCairoViewport(const std::string& title,
                                      unsigned int width,
                                      unsigned int height,
                                      bool allowDpiScaling) :
@@ -232,5 +246,17 @@ namespace OrthancStone
       LOG(ERROR) << "Cannot create a SDL surface from a Cairo surface";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
+  }
+
+
+  boost::shared_ptr<SdlCairoViewport> SdlCairoViewport::Create(const std::string& title,
+                                                               unsigned int width,
+                                                               unsigned int height,
+                                                               bool allowDpiScaling)
+  {
+    boost::shared_ptr<SdlCairoViewport> that =
+      boost::shared_ptr<SdlCairoViewport>(new SdlCairoViewport(title, width, height, allowDpiScaling));
+    that->SdlViewport::PostConstructor();
+    return that;
   }
 }

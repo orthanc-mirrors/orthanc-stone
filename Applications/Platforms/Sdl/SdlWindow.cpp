@@ -37,7 +37,7 @@
 
 namespace OrthancStone
 {
-  SdlWindow::SdlWindow(const char* title,
+  SdlWindow::SdlWindow(const std::string& title,
                        unsigned int width,
                        unsigned int height,
                        bool enableOpenGl,
@@ -87,7 +87,7 @@ namespace OrthancStone
 #endif 
 // WIN32
     
-    window_ = SDL_CreateWindow(title,
+    window_ = SDL_CreateWindow(title.c_str(),
                                SDL_WINDOWPOS_UNDEFINED,
                                SDL_WINDOWPOS_UNDEFINED,
                                width, height, windowFlags);

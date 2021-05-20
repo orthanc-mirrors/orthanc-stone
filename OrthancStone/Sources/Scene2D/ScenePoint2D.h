@@ -23,7 +23,6 @@
 #pragma once
 
 #include "../Toolbox/AffineTransform2D.h"
-#include "../Toolbox/LinearAlgebra.h"
 
 namespace OrthancStone
 {
@@ -41,7 +40,7 @@ namespace OrthancStone
     }
 
     ScenePoint2D(double x,
-      double y) :
+                 double y) :
       x_(x),
       y_(y)
     {
@@ -57,124 +56,36 @@ namespace OrthancStone
       return y_;
     }
 
-    ScenePoint2D Apply(const AffineTransform2D& t) const
-    {
-      double x = x_;
-      double y = y_;
-      t.Apply(x, y);
-      return ScenePoint2D(x, y);
-    }
+    ScenePoint2D Apply(const AffineTransform2D& t) const;
 
-    const ScenePoint2D operator-(const ScenePoint2D& a) const
-    {
-      ScenePoint2D v;
-      v.x_ = x_ - a.x_;
-      v.y_ = y_ - a.y_;
+    const ScenePoint2D operator-(const ScenePoint2D& a) const;
 
-      return v;
-    }
+    const ScenePoint2D operator+(const ScenePoint2D& a) const;
 
-    const ScenePoint2D operator+(const ScenePoint2D& a) const
-    {
-      ScenePoint2D v;
-      v.x_ = x_ + a.x_;
-      v.y_ = y_ + a.y_;
+    const ScenePoint2D operator*(double a) const;
 
-      return v;
-    }
+    const ScenePoint2D operator/(double a) const;
 
-    const ScenePoint2D operator*(double a) const
-    {
-      ScenePoint2D v;
-      v.x_ = x_ * a;
-      v.y_ = y_ * a;
+    static void MidPoint(ScenePoint2D& result,
+                         const ScenePoint2D& a,
+                         const ScenePoint2D& b);
 
-      return v;
-    }
+    static double Dot(const ScenePoint2D& a,
+                      const ScenePoint2D& b);
 
-    const ScenePoint2D operator/(double a) const
-    {
-      ScenePoint2D v;
-      v.x_ = x_ / a;
-      v.y_ = y_ / a;
+    static double SquaredMagnitude(const ScenePoint2D& v);
 
-      return v;
-    }
+    static double Magnitude(const ScenePoint2D& v);
 
-    static void MidPoint(ScenePoint2D& result, const ScenePoint2D& a, const ScenePoint2D& b)
-    {
-      result.x_ = 0.5 * (a.x_ + b.x_);
-      result.y_ = 0.5 * (a.y_ + b.y_);
-    }
+    static double SquaredDistancePtPt(const ScenePoint2D& a,
+                                      const ScenePoint2D& b);
 
-    static double Dot(const ScenePoint2D& a, const ScenePoint2D& b)
-    {
-      return a.x_ * b.x_ + a.y_ * b.y_;
-    }
+    static double DistancePtPt(const ScenePoint2D& a,
+                               const ScenePoint2D& b);
 
-    static double SquaredMagnitude(const ScenePoint2D& v)
-    {
-      return v.x_ * v.x_ + v.y_ * v.y_;
-    }
-
-    static double Magnitude(const ScenePoint2D& v)
-    {
-      double squaredMagnitude = SquaredMagnitude(v);
-      if (LinearAlgebra::IsCloseToZero(squaredMagnitude))
-        return 0.0;
-      return sqrt(squaredMagnitude);
-    }
-
-    static double SquaredDistancePtPt(const ScenePoint2D& a, const ScenePoint2D& b)
-    {
-      ScenePoint2D n = b - a;
-      return Dot(n, n);
-    }
-
-    static double DistancePtPt(const ScenePoint2D& a, const ScenePoint2D& b)
-    {
-      double squaredDist = SquaredDistancePtPt(a, b);
-      return sqrt(squaredDist);
-    }
-
-    /**
-    Distance from point p to [a,b] segment
-
-    Rewritten from https://www.randygaul.net/2014/07/23/distance-point-to-line-segment/
-    */
-    static double SquaredDistancePtSegment(const ScenePoint2D& a, const ScenePoint2D& b, const ScenePoint2D& p)
-    {
-      ScenePoint2D n = b - a;
-      ScenePoint2D pa = a - p;
-
-      double c = Dot(n, pa);
-
-      // Closest point is a
-      if (c > 0.0)
-        return Dot(pa, pa);
-
-      ScenePoint2D bp = p - b;
-
-      // Closest point is b
-      if (Dot(n, bp) > 0.0)
-        return Dot(bp, bp);
-
-      // if segment length is very short, we approximate distance to the
-      // distance with a
-      double nq = Dot(n, n);
-      if (LinearAlgebra::IsCloseToZero(nq))
-      {
-        // segment is very small: approximate distance from point to segment
-        // with distance from p to a
-        return Dot(pa, pa);
-      }
-      else
-      {
-        // Closest point is between a and b
-        ScenePoint2D e = pa - n * (c / nq);
-        return Dot(e, e);
-      }
-    }
+    // Distance from point p to [a,b] segment
+    static double SquaredDistancePtSegment(const ScenePoint2D& a,
+                                           const ScenePoint2D& b,
+                                           const ScenePoint2D& p);
   };
 }
-

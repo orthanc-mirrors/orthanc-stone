@@ -193,6 +193,17 @@ int main(int argc, char* argv[])
 #if SAMPLE_USE_ANNOTATIONS_LAYER == 1
         OrthancStone::AnnotationsSceneLayer annotations(10);
         annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
+
+        /*
+        annotations.AddSegmentAnnotation(OrthancStone::ScenePoint2D(0, 0),
+                                         OrthancStone::ScenePoint2D(100, 100));
+        annotations.AddAngleAnnotation(OrthancStone::ScenePoint2D(100, 50),
+                                       OrthancStone::ScenePoint2D(150, 40),
+                                       OrthancStone::ScenePoint2D(200, 50));
+        annotations.AddCircleAnnotation(OrthancStone::ScenePoint2D(50, 200),
+                                        OrthancStone::ScenePoint2D(100, 250));
+        */
+        
 #else
         ActiveTool activeTool = ActiveTool_None;
 

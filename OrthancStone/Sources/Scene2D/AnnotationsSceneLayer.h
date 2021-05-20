@@ -99,6 +99,16 @@ namespace OrthancStone
       return activeTool_;
     }
 
+    void AddSegmentAnnotation(const ScenePoint2D& p1,
+                              const ScenePoint2D& p2);
+
+    void AddCircleAnnotation(const ScenePoint2D& p1,
+                             const ScenePoint2D& p2);
+
+    void AddAngleAnnotation(const ScenePoint2D& p1,
+                            const ScenePoint2D& p2,
+                            const ScenePoint2D& p3);
+
     void Render(Scene2D& scene);
     
     bool ClearHover();

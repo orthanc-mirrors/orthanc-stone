@@ -1328,9 +1328,6 @@ namespace OrthancStone
     macroLayerIndex_(macroLayerIndex),
     polylineSubLayer_(0)  // dummy initialization
   {
-    annotations_.insert(new SegmentAnnotation(*this, true /* show label */, ScenePoint2D(0, 0), ScenePoint2D(100, 100)));
-    annotations_.insert(new AngleAnnotation(*this, ScenePoint2D(100, 50), ScenePoint2D(150, 40), ScenePoint2D(200, 50)));
-    annotations_.insert(new CircleAnnotation(*this, ScenePoint2D(50, 200), ScenePoint2D(100, 250)));
   }
     
 
@@ -1345,6 +1342,28 @@ namespace OrthancStone
     annotations_.clear();
   }
 
+
+  void AnnotationsSceneLayer::AddSegmentAnnotation(const ScenePoint2D& p1,
+                                                   const ScenePoint2D& p2)
+  {
+    annotations_.insert(new SegmentAnnotation(*this, true /* show label */, p1, p2));
+  }
+  
+
+  void AnnotationsSceneLayer::AddCircleAnnotation(const ScenePoint2D& p1,
+                                                  const ScenePoint2D& p2)
+  {
+    annotations_.insert(new CircleAnnotation(*this, p1, p2));
+  }
+  
+
+  void AnnotationsSceneLayer::AddAngleAnnotation(const ScenePoint2D& p1,
+                                                 const ScenePoint2D& p2,
+                                                 const ScenePoint2D& p3)
+  {
+    annotations_.insert(new AngleAnnotation(*this, p1, p2, p3));
+  }
+  
 
   void AnnotationsSceneLayer::Render(Scene2D& scene)
   {

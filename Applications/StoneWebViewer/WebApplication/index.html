@@ -212,10 +212,12 @@
                               </div>
 
                               <i v-if="series[seriesIndex].type == stone.ThumbnailType.PDF"
-                                 class="wvSerieslist__placeholderIcon fa fa-file-pdf"></i>
+                                 class="wvSerieslist__placeholderIcon fa fa-file-pdf"
+                                 v-bind:title="leftMode == 'full' ? null : series[seriesIndex].tags[SERIES_DESCRIPTION]"></i>
 
                               <i v-if="series[seriesIndex].type == stone.ThumbnailType.VIDEO"
-                                 class="wvSerieslist__placeholderIcon fa fa-video"></i>
+                                 class="wvSerieslist__placeholderIcon fa fa-video"
+                                 v-bind:title="leftMode == 'full' ? null : series[seriesIndex].tags[SERIES_DESCRIPTION]"></i>
                               
                               <div v-if="[stone.ThumbnailType.IMAGE, stone.ThumbnailType.NO_PREVIEW].includes(series[seriesIndex].type)"
                                    class="wvSerieslist__placeholderIcon"

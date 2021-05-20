@@ -51,7 +51,21 @@
 
 static const double HANDLE_SIZE = 10.0;
 static const double PI = boost::math::constants::pi<double>();
-    
+
+static const char* const KEY_ANNOTATIONS = "annotations";
+static const char* const KEY_TYPE = "type";
+static const char* const KEY_X1 = "x1";
+static const char* const KEY_Y1 = "y1";
+static const char* const KEY_X2 = "x2";
+static const char* const KEY_Y2 = "y2";
+static const char* const KEY_X3 = "x3";
+static const char* const KEY_Y3 = "y3";
+
+static const char* const VALUE_ANGLE = "angle";
+static const char* const VALUE_CIRCLE = "circle";
+static const char* const VALUE_SEGMENT = "segment";
+
+
 namespace OrthancStone
 {
   class AnnotationsOverlay : public boost::noncopyable
@@ -68,23 +82,23 @@ namespace OrthancStone
     };
     
   private:
-    class Measure;
+    class Annotation;
     
     class Primitive : public boost::noncopyable
     {
     private:
-      bool      modified_;
-      Measure&  parentMeasure_;
-      Color     color_;
-      Color     hoverColor_;
-      bool      isHover_;
-      int       depth_;
+      bool         modified_;
+      Annotation&  parentAnnotation_;
+      Color        color_;
+      Color        hoverColor_;
+      bool         isHover_;
+      int          depth_;
 
     public:
-      Primitive(Measure& parentMeasure,
+      Primitive(Annotation& parentAnnotation,
                 int depth) :
         modified_(true),
-        parentMeasure_(parentMeasure),
+        parentAnnotation_(parentAnnotation),
         color_(192, 192, 192),
         hoverColor_(0, 255, 0),
         isHover_(false),
@@ -96,9 +110,9 @@ namespace OrthancStone
       {
       }
 
-      Measure& GetParentMeasure() const
+      Annotation& GetParentAnnotation() const
       {
-        return parentMeasure_;
+        return parentAnnotation_;
       }
       
       int GetDepth() const
@@ -169,7 +183,7 @@ namespace OrthancStone
     };
     
 
-    class Measure : public boost::noncopyable
+    class Annotation : public boost::noncopyable
     {
     private:
       typedef std::list<Primitive*>  Primitives;
@@ -178,13 +192,13 @@ namespace OrthancStone
       Primitives           primitives_;
       
     public:
-      Measure(AnnotationsOverlay& that) :
+      Annotation(AnnotationsOverlay& that) :
         that_(that)
       {
-        that.AddMeasure(this);
+        that.AddAnnotation(this);
       }
       
-      virtual ~Measure()
+      virtual ~Annotation()
       {
         for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
         {
@@ -215,6 +229,8 @@ namespace OrthancStone
       }
 
       virtual void SignalMove(Primitive& primitive) = 0;
+
+      virtual void Serialize(Json::Value& target) = 0;
     };
 
 
@@ -225,9 +241,9 @@ namespace OrthancStone
       ScenePoint2D  delta_;
 
     public:
-      explicit Handle(Measure& parentMeasure,
+      explicit Handle(Annotation& parentAnnotation,
                       const ScenePoint2D& center) :
-        Primitive(parentMeasure, 0),  // Highest priority
+        Primitive(parentAnnotation, 0),  // Highest priority
         center_(center),
         delta_(0, 0)
       {
@@ -299,7 +315,7 @@ namespace OrthancStone
       {
         SetModified(true);
         delta_ = delta;
-        GetParentMeasure().SignalMove(*this);
+        GetParentAnnotation().SignalMove(*this);
       }
 
       virtual void MoveDone(const ScenePoint2D& delta) ORTHANC_OVERRIDE
@@ -307,7 +323,7 @@ namespace OrthancStone
         SetModified(true);
         center_ = center_ + delta;
         delta_ = ScenePoint2D(0, 0);
-        GetParentMeasure().SignalMove(*this);
+        GetParentAnnotation().SignalMove(*this);
       }
     };
 
@@ -320,10 +336,10 @@ namespace OrthancStone
       ScenePoint2D  delta_;
       
     public:
-      Segment(Measure& parentMeasure,
+      Segment(Annotation& parentAnnotation,
               const ScenePoint2D& p1,
               const ScenePoint2D& p2) :
-        Primitive(parentMeasure, 1),  // Can only be selected if no handle matches
+        Primitive(parentAnnotation, 1),  // Can only be selected if no handle matches
         p1_(p1),
         p2_(p2),
         delta_(0, 0)
@@ -384,7 +400,7 @@ namespace OrthancStone
       {
         SetModified(true);
         delta_ = delta;
-        GetParentMeasure().SignalMove(*this);
+        GetParentAnnotation().SignalMove(*this);
       }
 
       virtual void MoveDone(const ScenePoint2D& delta) ORTHANC_OVERRIDE
@@ -393,7 +409,7 @@ namespace OrthancStone
         p1_ = p1_ + delta;
         p2_ = p2_ + delta;
         delta_ = ScenePoint2D(0, 0);
-        GetParentMeasure().SignalMove(*this);
+        GetParentAnnotation().SignalMove(*this);
       }
     };
 
@@ -405,10 +421,10 @@ namespace OrthancStone
       ScenePoint2D  p2_;
       
     public:
-      Circle(Measure& parentMeasure,
+      Circle(Annotation& parentAnnotation,
              const ScenePoint2D& p1,
              const ScenePoint2D& p2) :
-        Primitive(parentMeasure, 2),
+        Primitive(parentAnnotation, 2),
         p1_(p1),
         p2_(p2)
       {
@@ -524,11 +540,11 @@ namespace OrthancStone
       }
       
     public:
-      Arc(Measure& parentMeasure,
+      Arc(Annotation& parentAnnotation,
           const ScenePoint2D& start,
           const ScenePoint2D& middle,
           const ScenePoint2D& end) :
-        Primitive(parentMeasure, 2),
+        Primitive(parentAnnotation, 2),
         start_(start),
         middle_(middle),
         end_(end),
@@ -627,8 +643,8 @@ namespace OrthancStone
 
     public:
       Text(AnnotationsOverlay& that,
-           Measure& parentMeasure) :
-        Primitive(parentMeasure, 2),
+           Annotation& parentAnnotation) :
+        Primitive(parentAnnotation, 2),
         that_(that),
         first_(true)
       {
@@ -738,7 +754,7 @@ namespace OrthancStone
     };
 
 
-    class SegmentMeasure : public Measure
+    class SegmentAnnotation : public Annotation
     {
     private:
       bool      showLabel_;
@@ -782,11 +798,11 @@ namespace OrthancStone
       }
 
     public:
-      SegmentMeasure(AnnotationsOverlay& that,
-                     bool showLabel,
-                     const ScenePoint2D& p1,
-                     const ScenePoint2D& p2) :
-        Measure(that),
+      SegmentAnnotation(AnnotationsOverlay& that,
+                        bool showLabel,
+                        const ScenePoint2D& p1,
+                        const ScenePoint2D& p2) :
+        Annotation(that),
         showLabel_(showLabel),
         handle1_(AddTypedPrimitive<Handle>(new Handle(*this, p1))),
         handle2_(AddTypedPrimitive<Handle>(new Handle(*this, p2))),
@@ -822,10 +838,20 @@ namespace OrthancStone
         
         UpdateLabel();
       }
+
+      virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
+      {
+        target = Json::objectValue;
+        target[KEY_TYPE] = VALUE_SEGMENT;
+        target[KEY_X1] = handle1_.GetCenter().GetX();
+        target[KEY_Y1] = handle1_.GetCenter().GetY();
+        target[KEY_X2] = handle2_.GetCenter().GetX();
+        target[KEY_Y2] = handle2_.GetCenter().GetY();
+      }
     };
 
     
-    class AngleMeasure : public Measure
+    class AngleAnnotation : public Annotation
     {
     private:
       Handle&   startHandle_;
@@ -867,11 +893,11 @@ namespace OrthancStone
       }
 
     public:
-      AngleMeasure(AnnotationsOverlay& that,
-                   const ScenePoint2D& start,
-                   const ScenePoint2D& middle,
-                   const ScenePoint2D& end) :
-        Measure(that),
+      AngleAnnotation(AnnotationsOverlay& that,
+                      const ScenePoint2D& start,
+                      const ScenePoint2D& middle,
+                      const ScenePoint2D& end) :
+        Annotation(that),
         startHandle_(AddTypedPrimitive<Handle>(new Handle(*this, start))),
         middleHandle_(AddTypedPrimitive<Handle>(new Handle(*this, middle))),
         endHandle_(AddTypedPrimitive<Handle>(new Handle(*this, end))),
@@ -926,10 +952,22 @@ namespace OrthancStone
 
         UpdateLabel();
       }
+
+      virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
+      {
+        target = Json::objectValue;
+        target[KEY_TYPE] = VALUE_ANGLE;
+        target[KEY_X1] = startHandle_.GetCenter().GetX();
+        target[KEY_Y1] = startHandle_.GetCenter().GetY();
+        target[KEY_X2] = middleHandle_.GetCenter().GetX();
+        target[KEY_Y2] = middleHandle_.GetCenter().GetY();
+        target[KEY_X3] = endHandle_.GetCenter().GetX();
+        target[KEY_Y3] = endHandle_.GetCenter().GetY();
+      }
     };
 
     
-    class CircleMeasure : public Measure
+    class CircleAnnotation : public Annotation
     {
     private:
       Handle&   handle1_;
@@ -977,10 +1015,10 @@ namespace OrthancStone
       }
 
     public:
-      CircleMeasure(AnnotationsOverlay& that,
-                    const ScenePoint2D& p1,
-                    const ScenePoint2D& p2) :
-        Measure(that),
+      CircleAnnotation(AnnotationsOverlay& that,
+                       const ScenePoint2D& p1,
+                       const ScenePoint2D& p2) :
+        Annotation(that),
         handle1_(AddTypedPrimitive<Handle>(new Handle(*this, p1))),
         handle2_(AddTypedPrimitive<Handle>(new Handle(*this, p2))),
         segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
@@ -1013,6 +1051,16 @@ namespace OrthancStone
         
         UpdateLabel();
       }
+
+      virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
+      {
+        target = Json::objectValue;
+        target[KEY_TYPE] = VALUE_CIRCLE;
+        target[KEY_X1] = handle1_.GetCenter().GetX();
+        target[KEY_Y1] = handle1_.GetCenter().GetY();
+        target[KEY_X2] = handle2_.GetCenter().GetX();
+        target[KEY_Y2] = handle2_.GetCenter().GetY();
+      }
     };
 
     
@@ -1020,7 +1068,7 @@ namespace OrthancStone
     {
     private:
       AnnotationsOverlay&  that_;
-      Measure*             measure_;
+      Annotation*          annotation_;
       AffineTransform2D    canvasToScene_;
       Handle*              handle2_;
       
@@ -1030,38 +1078,38 @@ namespace OrthancStone
                                    const ScenePoint2D& sceneClick,
                                    const AffineTransform2D& canvasToScene) :
         that_(that),
-        measure_(NULL),
+        annotation_(NULL),
         canvasToScene_(canvasToScene),
         handle2_(NULL)
       {
         if (isCircle)
         {
-          measure_ = new CircleMeasure(that, sceneClick, sceneClick);
-          handle2_ = &dynamic_cast<CircleMeasure*>(measure_)->GetHandle2();
+          annotation_ = new CircleAnnotation(that, sceneClick, sceneClick);
+          handle2_ = &dynamic_cast<CircleAnnotation*>(annotation_)->GetHandle2();
         }
         else
         {
-          measure_ = new SegmentMeasure(that, true /* show label */, sceneClick, sceneClick);
-          handle2_ = &dynamic_cast<SegmentMeasure*>(measure_)->GetHandle2();
+          annotation_ = new SegmentAnnotation(that, true /* show label */, sceneClick, sceneClick);
+          handle2_ = &dynamic_cast<SegmentAnnotation*>(annotation_)->GetHandle2();
         }
         
-        assert(measure_ != NULL &&
+        assert(annotation_ != NULL &&
                handle2_ != NULL);
       }
 
       virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE
       {
-        if (measure_ != NULL)
+        if (annotation_ != NULL)
         {
           assert(handle2_ != NULL);
           handle2_->SetCenter(event.GetMainPosition().Apply(canvasToScene_));
-          measure_->SignalMove(*handle2_);
+          annotation_->SignalMove(*handle2_);
         }
       }
       
       virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE
       {
-        measure_ = NULL;  // IsAlive() becomes false
+        annotation_ = NULL;  // IsAlive() becomes false
       }
 
       virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE
@@ -1070,15 +1118,15 @@ namespace OrthancStone
 
       virtual bool IsAlive() const ORTHANC_OVERRIDE
       {
-        return (measure_ != NULL);
+        return (annotation_ != NULL);
       }
 
       virtual void Cancel() ORTHANC_OVERRIDE
       {
-        if (measure_ != NULL)
+        if (annotation_ != NULL)
         {
-          that_.DeleteMeasure(measure_);
-          measure_ = NULL;
+          that_.DeleteAnnotation(annotation_);
+          annotation_ = NULL;
         }
       }
     };
@@ -1088,8 +1136,8 @@ namespace OrthancStone
     {
     private:
       AnnotationsOverlay&  that_;
-      SegmentMeasure*      segment_;
-      AngleMeasure*        angle_;
+      SegmentAnnotation*   segment_;
+      AngleAnnotation*     angle_;
       AffineTransform2D    canvasToScene_;
       
     public:
@@ -1101,7 +1149,7 @@ namespace OrthancStone
         angle_(NULL),
         canvasToScene_(canvasToScene)
       {
-        segment_ = new SegmentMeasure(that, false /* no length label */, sceneClick, sceneClick);
+        segment_ = new SegmentAnnotation(that, false /* no length label */, sceneClick, sceneClick);
       }
 
       virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE
@@ -1125,11 +1173,11 @@ namespace OrthancStone
         {
           // End of first step: The first segment is available, now create the angle
 
-          angle_ = new AngleMeasure(that_, segment_->GetHandle1().GetCenter(),
-                                    segment_->GetHandle2().GetCenter(),
-                                    segment_->GetHandle2().GetCenter());
+          angle_ = new AngleAnnotation(that_, segment_->GetHandle1().GetCenter(),
+                                       segment_->GetHandle2().GetCenter(),
+                                       segment_->GetHandle2().GetCenter());
           
-          that_.DeleteMeasure(segment_);
+          that_.DeleteAnnotation(segment_);
           segment_ = NULL;
         }
         else
@@ -1152,13 +1200,13 @@ namespace OrthancStone
       {
         if (segment_ != NULL)
         {
-          that_.DeleteMeasure(segment_);
+          that_.DeleteAnnotation(segment_);
           segment_ = NULL;
         }
 
         if (angle_ != NULL)
         {
-          that_.DeleteMeasure(angle_);
+          that_.DeleteAnnotation(angle_);
           angle_ = NULL;
         }
       }
@@ -1197,31 +1245,31 @@ namespace OrthancStone
     };
 
 
-    typedef std::set<Primitive*>  Primitives;
-    typedef std::set<Measure*>    Measures;
-    typedef std::set<size_t>      SubLayers;
+    typedef std::set<Primitive*>   Primitives;
+    typedef std::set<Annotation*>  Annotations;
+    typedef std::set<size_t>       SubLayers;
 
-    Tool        activeTool_;
-    size_t      macroLayerIndex_;
-    size_t      polylineSubLayer_;
-    Primitives  primitives_;
-    Measures    measures_;
-    SubLayers   subLayersToRemove_;
+    Tool         activeTool_;
+    size_t       macroLayerIndex_;
+    size_t       polylineSubLayer_;
+    Primitives   primitives_;
+    Annotations  annotations_;
+    SubLayers    subLayersToRemove_;
 
-    void AddMeasure(Measure* measure)
+    void AddAnnotation(Annotation* annotation)
     {
-      assert(measure != NULL);
-      assert(measures_.find(measure) == measures_.end());
-      measures_.insert(measure);
+      assert(annotation != NULL);
+      assert(annotations_.find(annotation) == annotations_.end());
+      annotations_.insert(annotation);
     }
 
-    void DeleteMeasure(Measure* measure)
+    void DeleteAnnotation(Annotation* annotation)
     {
-      if (measure != NULL)
+      if (annotation != NULL)
       {
-        assert(measures_.find(measure) != measures_.end());
-        measures_.erase(measure);
-        delete measure;
+        assert(annotations_.find(annotation) != annotations_.end());
+        annotations_.erase(annotation);
+        delete annotation;
       }
     }
 
@@ -1247,20 +1295,25 @@ namespace OrthancStone
       macroLayerIndex_(macroLayerIndex),
       polylineSubLayer_(0)  // dummy initialization
     {
-      measures_.insert(new SegmentMeasure(*this, true /* show label */, ScenePoint2D(0, 0), ScenePoint2D(100, 100)));
-      measures_.insert(new AngleMeasure(*this, ScenePoint2D(100, 50), ScenePoint2D(150, 40), ScenePoint2D(200, 50)));
-      measures_.insert(new CircleMeasure(*this, ScenePoint2D(50, 200), ScenePoint2D(100, 250)));
+      annotations_.insert(new SegmentAnnotation(*this, true /* show label */, ScenePoint2D(0, 0), ScenePoint2D(100, 100)));
+      annotations_.insert(new AngleAnnotation(*this, ScenePoint2D(100, 50), ScenePoint2D(150, 40), ScenePoint2D(200, 50)));
+      annotations_.insert(new CircleAnnotation(*this, ScenePoint2D(50, 200), ScenePoint2D(100, 250)));
     }
     
     ~AnnotationsOverlay()
     {
-      for (Measures::iterator it = measures_.begin(); it != measures_.end(); ++it)
+      Clear();
+    }
+
+    void Clear()
+    {
+      for (Annotations::iterator it = annotations_.begin(); it != annotations_.end(); ++it)
       {
         assert(*it != NULL);
         delete *it;
       }
 
-      measures_.clear();
+      annotations_.clear();
     }
 
     void SetActiveTool(Tool tool)
@@ -1392,7 +1445,7 @@ namespace OrthancStone
         {
           if (activeTool_ == Tool_Erase)
           {
-            DeleteMeasure(&bestHit->GetParentMeasure());
+            DeleteAnnotation(&bestHit->GetParentAnnotation());
             return new EraseTracker;
           }
           else
@@ -1418,6 +1471,24 @@ namespace OrthancStone
           }
         }
       }
+    }
+
+
+    void Serialize(Json::Value& target) const
+    {
+      Json::Value annotations = Json::arrayValue;
+      
+      for (Annotations::const_iterator it = annotations_.begin(); it != annotations_.end(); ++it)
+      {
+        assert(*it != NULL);
+
+        Json::Value item;
+        (*it)->Serialize(item);
+        annotations.append(item);
+      }
+
+      target = Json::objectValue;
+      target[KEY_ANNOTATIONS] = annotations;
     }
   };
 }
@@ -1452,17 +1523,17 @@ static void ProcessOptions(int argc, char* argv[])
   std::cout << desc << std::endl;
 
   std::cout << std::endl << "Keyboard shorcuts:" << std::endl
-            << "  a\tEnable/disable the angle measure tool" << std::endl
+            << "  a\tEnable/disable the angle annotation tool" << std::endl
             << "  f\tToggle fullscreen display" << std::endl
-            << "  l\tEnable/disable the line measure tool" << std::endl
+            << "  l\tEnable/disable the line annotation tool" << std::endl
             << "  q\tExit" << std::endl
-            << "  r\tRedo the last edit to the measure tools" << std::endl
+            << "  r\tRedo the last edit to the annotation tools" << std::endl
             << "  s\tFit the viewpoint to the image" << std::endl
-            << "  u\tUndo the last edit to the measure tools" << std::endl
+            << "  u\tUndo the last edit to the annotation tools" << std::endl
             << std::endl << "Mouse buttons:" << std::endl
-            << "  left  \tChange windowing, or edit measure" << std::endl
-            << "  center\tMove the viewpoint, or edit measure" << std::endl
-            << "  right \tZoom, or edit measure" << std::endl
+            << "  left  \tChange windowing, or edit annotation" << std::endl
+            << "  center\tMove the viewpoint, or edit annotation" << std::endl
+            << "  right \tZoom, or edit annotation" << std::endl
             << std::endl;
 
   po::variables_map vm;
@@ -1552,7 +1623,7 @@ int main(int argc, char* argv[])
           
           std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
           lock->GetCompositor().SetFont(0, font, 16, Orthanc::Encoding_Latin1);
-          lock->GetController().SetUndoStack(undoStack);
+          //lock->GetController().SetUndoStack(undoStack);
         }
 
         ActiveTool activeTool = ActiveTool_None;
@@ -1567,6 +1638,12 @@ int main(int argc, char* argv[])
 
         OrthancStone::AnnotationsOverlay overlay(10);
         overlay.SetActiveTool(OrthancStone::AnnotationsOverlay::Tool_Angle);
+
+        {
+          Json::Value v;
+          overlay.Serialize(v);
+          std::cout << v.toStyledString() << std::endl;
+        }
 
         boost::shared_ptr<SdlSimpleViewerApplication> application(
           SdlSimpleViewerApplication::Create(context, viewport));
@@ -1730,7 +1807,11 @@ int main(int argc, char* argv[])
                     {
                       boost::shared_ptr<OrthancStone::IFlexiblePointerTracker> t;
 
-                      t.reset(overlay.CreateTracker(p.GetMainPosition(), lock->GetController().GetScene()));
+                      if (p.GetMouseButton() == OrthancStone::MouseButton_Left)
+                      {
+                        t.reset(overlay.CreateTracker(p.GetMainPosition(), lock->GetController().GetScene()));
+                      }
+                      
                       if (t.get() == NULL)
                       {
                         switch (activeTool)

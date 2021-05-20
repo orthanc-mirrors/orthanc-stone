@@ -91,7 +91,6 @@ namespace OrthancStone
     }
     else
     {
-      LOG(ERROR) << "Internal error: no undo stack!";
       return false;
     }
   }
@@ -105,7 +104,6 @@ namespace OrthancStone
     }
     else
     {
-      LOG(ERROR) << "Internal error: no undo stack!";
       return false;
     }
   }
